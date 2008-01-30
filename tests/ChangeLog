@@ -1,3 +1,9 @@
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el:
+	Check for a bug Mike Sperber reported; check algorithms used, if
+	available. 
+
 2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (test-file-name): 

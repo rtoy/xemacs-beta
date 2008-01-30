@@ -1,3 +1,16 @@
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (debug-xemacs-searches): 
+	New variable, available on debug builds. Used in
+	tests/automated/case-tests.el. 
+	(search_buffer): Only store the charset_base for characters with
+	translations. Correct some comments, correct some checks. If
+	debug_xemacs_searches is non-zero, record which search was used. 
+	(boyer_moore): Remove an assertion that was incorrect. Remove its
+	documentation. Correct an assertion dealing with equivalence
+	tables; we may end up looking through the equivalence table if a
+	non-ASCII non-case character was searched for. 
+
 2008-01-24 Mike Sperber   <mike@xemacs.org>
 
 	* make-src-depend (PrintDeps): Fix Perl code that no longer works

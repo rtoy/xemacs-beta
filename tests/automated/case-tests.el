@@ -268,3 +268,37 @@
       (goto-char (point-max))
       (Assert (not (search-backward string nil t 6))))))
 
+;; Bug reported in http://mid.gmane.org/y9lk5lu5orq.fsf@deinprogramm.de from
+;; Michael Sperber. Fixed 2008-01-29.
+(with-string-as-buffer-contents "\n\nDer beruhmte deutsche Flei\xdf\n\n"
+  (goto-char (point-min))
+  (Assert (search-forward "Flei\xdf")))
+
+(Skip-Test-Unless
+ (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
+ "not a DEBUG_XEMACS build"
+ (let ((debug-xemacs-searches 1))
+   (with-temp-buffer
+     (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
+     (goto-char (point-min))
+     (search-forward "Fleiss")
+     (delete-region (point-min) (point-max))
+     (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+     (goto-char (point-min))
+     (search-forward "Flei\xdf")
+     (Assert (eq 'boyer-moore search-algorithm-used))
+     (delete-region (point-min) (point-max))
+     (when (featurep 'mule)
+       (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+       (goto-char (point-min))
+       (Assert 
+        (search-forward (format "Fle%c\xdf"
+                                (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (eq 'boyer-moore search-algorithm-used))
+       (insert (make-char 'latin-iso8859-9 #xfd))
+       (goto-char (point-min))
+       (Assert 
+        (search-forward (format "Fle%c\xdf"
+                                (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (eq 'simple-search search-algorithm-used))))))
+

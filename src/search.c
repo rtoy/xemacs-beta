@@ -47,6 +47,15 @@ Boston, MA 02111-1307, USA.  */
 
 #define REGEXP_CACHE_SIZE 20
 
+#ifdef DEBUG_XEMACS
+
+/* Used in tests/automated/case-tests.el if available. */
+Fixnum debug_xemacs_searches;
+
+Lisp_Object Qsearch_algorithm_used, Qboyer_moore, Qsimple_search;
+
+#endif
+
 /* If the regexp is non-nil, then the buffer contains the compiled form
    of that regexp, suitable for searching.  */
 struct regexp_cache
@@ -1370,16 +1379,10 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  inv_bytelen = set_itext_ichar (tmp_str, inverse);
 	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
-          if (-1 == charset_base)
-            {
-              /* Keep track of which charset and character set row
-                 contains the characters that need translation.
-
-                 Zero out the bits corresponding to the last byte. */
-              charset_base = c & ~ICHAR_FIELD3_MASK;
-            }
-
-          if (boyer_moore_ok && (translated != c || inverse != c))
+          if (boyer_moore_ok
+              /* Only do the Boyer-Moore check for characters needing
+                 translation. */
+              && (translated != c || inverse != c))
             {
 	      Ichar starting_c = c;
 	      int charset_base_code;
@@ -1396,21 +1399,34 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
                   if (c > 0xFF && nothing_greater_than_0xff)
                     continue;
 
-                  charset_base_code = c & ~ICHAR_FIELD3_MASK;
-
-                  if (charset_base_code != charset_base)
+                  if (-1 == charset_base) /* No charset yet specified. */
                     {
-                      /* If two different rows, or two different charsets,
-                         appear, needing translation, then we cannot use
-                         boyer_moore search.  See the comment at the head of
-                         boyer_moore(). */
-                      boyer_moore_ok = 0;
-                      break;
+                      /* Keep track of which charset and character set row
+                         contains the characters that need translation.
+
+                         Zero out the bits corresponding to the last
+                         byte. */
+                      charset_base = c & ~ICHAR_FIELD3_MASK;
+                    }
+                  else
+                    {
+                      charset_base_code = c & ~ICHAR_FIELD3_MASK;
+
+                      if (charset_base_code != charset_base)
+                        {
+                          /* If two different rows, or two different
+                             charsets, appear, needing non-ASCII
+                             translation, then we cannot use boyer_moore
+                             search.  See the comment at the head of
+                             boyer_moore(). */
+                          boyer_moore_ok = 0;
+                          break;
+                        }
                     }
                 } while (c != starting_c);
 
-              if (boyer_moore_ok && (charset_base != 
-                                     (translated & ~ICHAR_FIELD3_MASK)))
+              if (boyer_moore_ok && charset_base != -1 && 
+                  charset_base != (translated & ~ICHAR_FIELD3_MASK))
                 {
                   /* In the rare event that the CANON entry for this
                      character is not in the desired set, choose one
@@ -1437,6 +1453,12 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  base_pat += orig_bytelen;
 	  len -= orig_bytelen;
 	}
+
+      if (-1 == charset_base)
+        {
+          charset_base = 'a' & ~ICHAR_FIELD3_MASK; /* Default to ASCII. */
+        }
+
 #else /* not MULE */
       while (--len >= 0)
 	{
@@ -1453,6 +1475,15 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 #endif /* MULE */
       len = pat - patbuf;
       pat = base_pat = patbuf;
+
+#ifdef DEBUG_XEMACS
+      if (debug_xemacs_searches)
+        {
+          Lisp_Symbol *sym = XSYMBOL (Qsearch_algorithm_used);
+          sym->value = boyer_moore_ok ? Qboyer_moore : Qsimple_search;
+        }
+#endif
+
       if (boyer_moore_ok)
 	return boyer_moore (buf, base_pat, len, pos, lim, n,
 			    trt, inverse_trt, charset_base);
@@ -1595,9 +1626,9 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
    TRT and INVERSE_TRT are translation tables.
 
    This kind of search works if all the characters in PAT that have
-   nontrivial translation are the same aside from the last byte.  This
-   makes it possible to translate just the last byte of a character,
-   and do so after just a simple test of the context.
+   (non-ASCII) translation are the same aside from the last byte.  This
+   makes it possible to translate just the last byte of a character, and do
+   so after just a simple test of the context.
 
    If that criterion is not satisfied, do not call this function.  You will
    get an assertion failure. */
@@ -1740,11 +1771,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		charstart--;
 	      untranslated = itext_ichar (charstart);
 
-              /* We shouldn't have been passed a string with varying
-                 character sets or rows. That's what simple_search is
-                 for.  */
-              assert (charset_base == (untranslated & ~ICHAR_FIELD3_MASK));
-
               ch = TRANSLATE (trt, untranslated);
               if (!ibyte_first_byte_p (*ptr))
                 {
@@ -1753,7 +1779,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
                     translate_anteprev_byte = ptr[-2];
                 }
 
-              if (charset_base != (ch & ~ICHAR_FIELD3_MASK))
+              if (ch != untranslated && /* Was translation done? */
+                  charset_base != (ch & ~ICHAR_FIELD3_MASK))
                 {
                   /* In the very rare event that the CANON entry for this
                      character is not in the desired set, choose one that
@@ -1765,21 +1792,23 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
                      We can get here if search_buffer has worked out that
                      the buffer is entirely single width. */
                   Ichar starting_ch = ch;
+                  int count = 0;
                   do
                     {
                       ch = TRANSLATE (inverse_trt, ch);
                       if (charset_base == (ch & ~ICHAR_FIELD3_MASK))
                         break;
-
+                      ++count;
                     } while (starting_ch != ch);
 
-                  /* If starting_ch is equal to ch, the case table is
-                     corrupt. (Any mapping in the canon table should be
-                     reflected in the equivalence table, and we know from
-                     the canon table that untranslated maps to starting_ch
-                     and that untranslated has the correct value for
-                     charset_base.) */
-                  assert (starting_ch != ch);
+                  /* If starting_ch is equal to ch (and count is not one,
+                     which means no translation is necessary), the case
+                     table is corrupt. (Any mapping in the canon table
+                     should be reflected in the equivalence table, and we
+                     know from the canon table that untranslated maps to
+                     starting_ch and that untranslated has the correct value
+                     for charset_base.) */
+                  assert (1 == count || starting_ch != ch);
 		}
 	    }
 	  else
@@ -3320,4 +3349,15 @@ occur and a back reference to one of them is directly followed by a digit.
 
   Vskip_chars_range_table = Fmake_range_table (Qstart_closed_end_closed);
   staticpro (&Vskip_chars_range_table);
+#ifdef DEBUG_XEMACS 
+  DEFSYMBOL (Qsearch_algorithm_used);
+  DEFSYMBOL (Qboyer_moore);
+  DEFSYMBOL (Qsimple_search);
+
+  DEFVAR_INT ("debug-xemacs-searches", &debug_xemacs_searches /*
+If non-zero, bind `search-algorithm-used' to `boyer-moore' or `simple-search',
+depending on the algorithm used for each search.  Used for testing.
+*/ );
+  debug_xemacs_searches = 0;
+#endif 
 }
