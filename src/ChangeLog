@@ -1,3 +1,9 @@
+2008-02-01  Jerry James  <james@xemacs.org>
+
+	* event-Xt.c (emacs_Xt_event_handler): Remove unnecessary call to
+	SET_EVENT_MAGIC_X_EVENT.  See xemacs-beta message
+	<870180fe080131201011b191ae5g1d70cbd2136f570c@mail.gmail.com>.
+
 2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* search.c (debug-xemacs-searches): 
