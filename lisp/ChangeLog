@@ -1,3 +1,8 @@
+2008-02-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* iso8859-1.el (ascii-case-table): 
+	Correct the order of the arguments to #'put-case-table-pair. 
+
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* info.el (Info-suffix-list): 
