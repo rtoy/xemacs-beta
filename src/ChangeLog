@@ -1,3 +1,10 @@
+2008-02-03  Jerry James  <james@xemacs.org>
+
+	* redisplay.c (generate_displayable_area): If a line has been
+	generated in place in the dynarray, use Dynarr_increment instead
+	of Dynarr_add.
+	* redisplay.c (regenerate_window): Ditto.
+
 2008-02-01  Jerry James  <james@xemacs.org>
 
 	* event-Xt.c (emacs_Xt_event_handler): Remove unnecessary call to

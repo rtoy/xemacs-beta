@@ -5395,8 +5395,12 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
       else
 	dlp->clip = 0;
 
-      assert (pos_of_dlp < 0 || pos_of_dlp == Dynarr_length (dla));
-      Dynarr_add (dla, *dlp);
+      if (pos_of_dlp < 0)
+	Dynarr_add (dla, *dlp);
+      else if (pos_of_dlp == Dynarr_length (dla))
+	Dynarr_increment (dla);
+      else
+	ABORT ();
 
       /* #### This type of check needs to be done down in the
 	 generate_display_line call. */
@@ -5602,8 +5606,12 @@ Info on Re-entrancy crashes, with backtraces given:
       if (dlp->num_chars > w->max_line_len)
 	w->max_line_len = dlp->num_chars;
 
-      assert (pos_of_dlp < 0 || pos_of_dlp == Dynarr_length (dla));
-      Dynarr_add (dla, *dlp);
+      if (pos_of_dlp < 0)
+	Dynarr_add (dla, *dlp);
+      else if (pos_of_dlp == Dynarr_length (dla))
+	Dynarr_increment (dla);
+      else
+	ABORT ();
 
       /* #### This isn't right, but it is close enough for now. */
       w->window_end_pos[type] = start_pos;
