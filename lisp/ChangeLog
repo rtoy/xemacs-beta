@@ -3,6 +3,11 @@
 	* iso8859-1.el (ascii-case-table): 
 	Correct the order of the arguments to #'put-case-table-pair. 
 
+2008-01-25  Michael Sperber  <mike@xemacs.org>
+
+	* build-report.el (build-report-version-file-regexp): Adjust to
+	handle Mercurial hash.
+
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* info.el (Info-suffix-list): 

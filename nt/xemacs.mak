@@ -74,6 +74,13 @@ BLDROOT=$(MAKEROOT)
 !endif
 !endif
 
+!if [copy $(SRCROOT)\version.sh.in $(SRCROOT)\version.sh]
+!endif
+!if exist($(SRCROOT)\.hg)
+!if [hg identify >> $(SRCROOT)\version.sh]
+!endif
+!endif
+
 # Program name and version
 !include "$(SRCROOT)\version.sh"
 
@@ -816,7 +823,7 @@ TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
  $(EMACS_BETA_VERSION) $(EMACS_PATCH_LEVEL) \
  -DXEMACS_CODENAME=\"$(xemacs_codename:&=and)\" \
 !if defined(xemacs_extra_name)
- -DXEMACS_EXTRA_NAME=\"$(xemacs_extra_name:"=)\" \
+ -DXEMACS_EXTRA_NAME=\""$(xemacs_extra_name:"=)"\" \
 !endif
 !if defined(PATH_LATE_PACKAGE_DIRECTORIES)
  -DPATH_LATE_PACKAGE_DIRECTORIES=\"$(PATH_LATE_PACKAGE_DIRECTORIES)\" \

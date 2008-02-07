@@ -52,3 +52,4 @@ info/.*\.info(-[0-9]+)?$
 ^src/REBUILD_AUTOLOADS$
 ^src/(temacs|xemacs)\.(exe|exe\.manifest|pdb|map|bsc)$
 ^TAGS$
+^version\.sh$

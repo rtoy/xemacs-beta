@@ -1176,6 +1176,11 @@ dnl -------------------------------------------------------------------------
 dnl ----------------------------------------
 dnl Find out which version of XEmacs this is
 dnl ----------------------------------------
+dnl This should be the same code as in Makefile.in.in
+cp "$srcdir/version.sh.in" "$srcdir/version.sh"
+if test -d "$srcdir/.hg"; then
+    (cd "$srcdir"; hg identify | cut -d " " -f 1 >> version.sh)
+fi
 . "$srcdir/version.sh" || exit 1;
 dnl Must do the following first to determine verbosity for AC_DEFINE
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi

@@ -24,6 +24,10 @@
 	tables; we may end up looking through the equivalence table if a
 	non-ASCII non-case character was searched for. 
 
+2008-01-25  Michael Sperber  <mike@xemacs.org>
+
+	* emacs.c (vars_of_emacs): Zap mention of CVS.
+
 2008-01-24 Mike Sperber   <mike@xemacs.org>
 
 	* make-src-depend (PrintDeps): Fix Perl code that no longer works

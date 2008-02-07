@@ -1,3 +1,7 @@
+2008-01-25  Michael Sperber  <mike@xemacs.org>
+
+	* xemacs.mak (version.sh): Generate version.sh via Mercurial.
+
 2008-01-24 Mike Sperber   <mike@xemacs.org>
 
 	* config.inc.samp: Fix URL for optional libraries.

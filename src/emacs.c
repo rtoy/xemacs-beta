@@ -4246,10 +4246,9 @@ Arbitrary string to place in the version string after the codename.
 Appropriate surrounding whitespace will be added, but typically looks best
 if enclosed in parentheses.
 
-A standard use is to indicate the date version.sh was last updated from
-the CVS mainline, where it is automatically given a value similar to
-\"(+CVS-20050221)\".  Developers may also use it to indicate particular
-branches, etc.
+A standard use is to indicate the topmost hash id of the Mercurial
+changeset from which XEmacs was compiled.  Developers may also use it
+to indicate particular branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
   Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);

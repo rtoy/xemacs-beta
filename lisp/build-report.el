@@ -69,7 +69,7 @@
 emacs_minor_version\\s-*=\\s-*\\([0-9]+\\)
 emacs_beta_version\\s-*=\\s-*\\([0-9]+\\)?
 xemacs_codename\\s-*=\\s-*\"\\([^\"]+\\)\"\\(
-xemacs_extra_name\\s-*=\\s-*\"\\([^\"]+\\)\"\\)?"
+xemacs_extra_name\\s-*=\\s-*\"?\\([^\"]+\\)\"?\\)?"
   "*REGEXP matching XEmacs Beta Version variable assignments in
 `build-report-version-file' file.  This variable is used by
 `build-report-version-file-data'.")
