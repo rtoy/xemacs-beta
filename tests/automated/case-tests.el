@@ -284,6 +284,9 @@
   (goto-char (point-min))
   (Assert (search-forward "Flei\xdf")))
 
+(with-temp-buffer
+  (Assert (search-forward "M\xe9zard" nil t)))
+
 (Skip-Test-Unless
  (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
  "not a DEBUG_XEMACS build"

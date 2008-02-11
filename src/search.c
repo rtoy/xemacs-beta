@@ -1385,7 +1385,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
               && (translated != c || inverse != c))
             {
 	      Ichar starting_c = c;
-	      int charset_base_code;
+	      int charset_base_code, checked = 0;
 
 	      do 
 		{
@@ -1398,6 +1398,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 
                   if (c > 0xFF && nothing_greater_than_0xff)
                     continue;
+
+                  checked = 1;
 
                   if (-1 == charset_base) /* No charset yet specified. */
                     {
@@ -1424,6 +1426,23 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
                         }
                     }
                 } while (c != starting_c);
+
+              if (!checked)
+                {
+#ifdef DEBUG_XEMACS
+                  if (debug_xemacs_searches)
+                    {
+                      Lisp_Symbol *sym = XSYMBOL (Qsearch_algorithm_used);
+                      sym->value = Qnil;
+                    }
+#endif
+                  /* The "continue" clauses were used above, for every
+                     translation of the character. As such, this character
+                     is not to be found in the buffer and neither is the
+                     string as a whole. Return immediately; also avoid
+                     triggering the assertion a few lines down. */
+                  return n > 0 ? -n : n;
+                }
 
               if (boyer_moore_ok && charset_base != -1 && 
                   charset_base != (translated & ~ICHAR_FIELD3_MASK))

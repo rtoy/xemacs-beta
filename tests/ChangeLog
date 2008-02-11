@@ -1,3 +1,8 @@
+2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (Assert): 
+	New test case; thank you Michael Sperber. 
+
 2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (pristine-case-table): 

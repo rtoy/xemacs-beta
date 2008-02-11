@@ -1,3 +1,11 @@
+2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (search_buffer): 
+	In the event that a character is not representable in the buffer,
+	fail immediately. Prevents an assertion failure in the code to
+	deal with whether Boyer-Moore search can be used for such
+	characters.
+
 2008-02-03  Jerry James  <james@xemacs.org>
 
 	* redisplay.c (generate_displayable_area): If a line has been
