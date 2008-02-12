@@ -1,3 +1,7 @@
+2008-02-12  Jerry James  <james@xemacs.org>
+
+	* install.sh: Rename to install-sh and update to latest FSF version.
+
 2008-01-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (--with-database): 'gnudbm' -> 'gdbm' in docstrings.
