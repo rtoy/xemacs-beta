@@ -285,7 +285,19 @@
   (Assert (search-forward "Flei\xdf")))
 
 (with-temp-buffer
-  (Assert (search-forward "M\xe9zard" nil t)))
+  (let ((target "M\xe9zard")
+        (debug-xemacs-searches 1))
+    (Assert (not (search-forward target nil t)))
+    (insert target)
+    (goto-char (point-min))
+    ;; #### search-algorithm-used is simple-search after the following,
+    ;; which shouldn't be necessary; it should be possible to use
+    ;; Boyer-Moore. 
+    ;;
+    ;; But searches for ASCII strings in buffers with nothing above ?\xFF
+    ;; use Boyer Moore with the current implementation, which is the
+    ;; important thing for the Gnus use case.
+    (Assert (= (1+ (length target)) (search-forward target nil t)))))
 
 (Skip-Test-Unless
  (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS

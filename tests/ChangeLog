@@ -1,3 +1,8 @@
+2008-02-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (let):
+	Correct and extend the previous test, thank you Stephen. 
+
 2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (Assert): 
