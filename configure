@@ -5355,7 +5355,7 @@ if test "$enable_newgc" = "yes"; then
   if test "$enable_vdb" = "auto"; then
     case "$opsys" in
       darwin )  case "$machine" in
-		  i686 ) check_vdb_posix=yes ;;
+		  i[3-9]86 ) check_vdb_posix=yes ;;
 		  * ) cat >>confdefs.h <<\_ACEOF
 #define VDB_MACH 1
 _ACEOF

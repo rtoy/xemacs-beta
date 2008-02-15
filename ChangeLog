@@ -1,3 +1,9 @@
+2008-02-15  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure.ac: Look for all x86 machines to determine which write
+	barrier to use on MacOSX.
+	* configure : Rebuild.
+
 2008-02-12  Jerry James  <james@xemacs.org>
 
 	* install.sh: Rename to install-sh and update to latest FSF version.
