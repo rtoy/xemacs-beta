@@ -1,3 +1,10 @@
+2008-02-16  Michael Sperber  <mike@xemacs.org>
+
+	* autoload.el (autoload-make-autoload-operators,
+	autoload-make-autoload-complex-operators): Move autoload operator
+	definitons to autoload-operators.el in xemacs-base package.
+	Continue to work with older packages.
+
 2008-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* iso8859-1.el (ascii-case-table): 
