@@ -103,7 +103,7 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   if (print_readably)
     printing_unreadable_object ("#<color-instance 0x%x>",
-           c->header.uid);
+	   c->header.uid);
   write_fmt_string_lisp (printcharfun, "#<color-instance %s", 1, c->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, c->device);
   if (!NILP (c->device)) /* Vthe_null_color_instance */
@@ -153,7 +153,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
 			       0, /*dumpable-flag*/
 			       mark_color_instance, print_color_instance,
 			       finalize_color_instance, color_instance_equal,
-			       color_instance_hash, 
+			       color_instance_hash,
 			       color_instance_description,
 			       Lisp_Color_Instance);
 
@@ -295,7 +295,7 @@ static const struct memory_description font_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, truename)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, device)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, charset)},
-  { XD_UNION, offsetof (Lisp_Font_Instance, data), 
+  { XD_UNION, offsetof (Lisp_Font_Instance, data),
     XD_INDIRECT (0, 0), { &font_instance_data_description } },
   { XD_END }
 };
@@ -596,7 +596,7 @@ color_mark (Lisp_Object obj)
 static Lisp_Object
 color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		   Lisp_Object domain, Lisp_Object instantiator,
-		   Lisp_Object depth)
+		   Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -606,10 +606,10 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
   if (COLOR_INSTANCEP (instantiator))
     {
       /* If we are on the same device then we're done.  Otherwise change
-         the instantiator to the name used to generate the pixel and let the
-         STRINGP case deal with it. */
+	 the instantiator to the name used to generate the pixel and let the
+	 STRINGP case deal with it. */
       if (NILP (device) /* Vthe_null_color_instance */
-          || EQ (device, XCOLOR_INSTANCE (instantiator)->device))
+	  || EQ (device, XCOLOR_INSTANCE (instantiator)->device))
 	return instantiator;
       else
 	instantiator = Fcolor_instance_name (instantiator);
@@ -647,13 +647,15 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 				 instantiator);
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
-		   COLOR_SPECIFIER_FACE_PROPERTY (XCOLOR_SPECIFIER (specifier)),
-		   domain, ERROR_ME, 0, depth));
+		   COLOR_SPECIFIER_FACE_PROPERTY
+		   (XCOLOR_SPECIFIER (specifier)),
+		   domain, ERROR_ME, no_fallback, depth));
 
 	case 2:
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
-		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME, 0, depth));
+		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME,
+		   no_fallback, depth));
 
 	default:
 	  ABORT ();
@@ -830,11 +832,11 @@ invalidate_charset_font_caches (Lisp_Object charset)
       hash_table = Fgethash (charset, d->charset_font_cache_stage_1,
 			     Qunbound);
       if (!UNBOUNDP (hash_table))
-        Fclrhash (hash_table);
+	Fclrhash (hash_table);
       hash_table = Fgethash (charset, d->charset_font_cache_stage_2,
 			     Qunbound);
       if (!UNBOUNDP (hash_table))
-        Fclrhash (hash_table);
+	Fclrhash (hash_table);
     }
 }
 
@@ -845,7 +847,7 @@ static Lisp_Object
 font_instantiate (Lisp_Object UNUSED (specifier),
 		  Lisp_Object USED_IF_MULE (matchspec),
 		  Lisp_Object domain, Lisp_Object instantiator,
-		  Lisp_Object depth)
+		  Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -877,7 +879,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   if (FONT_INSTANCEP (instantiator))
     {
       if (NILP (device)
-          || EQ (device, XFONT_INSTANCE (instantiator)->device))
+	  || EQ (device, XFONT_INSTANCE (instantiator)->device))
 	{
 #ifdef MULE
 	  if (font_spec_matches_charset (d, charset, 0,
@@ -895,7 +897,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 #ifdef MULE
       /* #### rename these caches. */
       Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
-        d->charset_font_cache_stage_1;
+	d->charset_font_cache_stage_1;
 #else
       Lisp_Object cache = d->font_instance_cache;
 #endif
@@ -926,9 +928,9 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 	    {
 	      /* make sure we cache the failures, too. */
 	      matching_font =
-                DEVMETH_OR_GIVEN (d, find_charset_font,
-                                  (device, instantiator, charset, stage),
-                                  instantiator);
+		DEVMETH_OR_GIVEN (d, find_charset_font,
+				  (device, instantiator, charset, stage),
+				  instantiator);
 	      Fputhash (instantiator, matching_font, hash_table);
 	    }
 	  if (NILP (matching_font))
@@ -956,13 +958,13 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 
       match_inst = face_property_matching_instance
 	(Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	 charset, domain, ERROR_ME, 0, depth, initial);
+	 charset, domain, ERROR_ME, no_fallback, depth, initial);
 
-      if (UNBOUNDP(match_inst)) 
+      if (UNBOUNDP(match_inst))
 	{
 	  match_inst = face_property_matching_instance
 	    (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	     charset, domain, ERROR_ME, 0, depth, final);
+	     charset, domain, ERROR_ME, no_fallback, depth, final);
 	}
 
       return match_inst;
@@ -1067,7 +1069,7 @@ static Lisp_Object
 face_boolean_instantiate (Lisp_Object specifier,
 			  Lisp_Object UNUSED (matchspec),
 			  Lisp_Object domain, Lisp_Object instantiator,
-			  Lisp_Object depth)
+			  Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -1094,7 +1096,7 @@ face_boolean_instantiate (Lisp_Object specifier,
 
       retval = (FACE_PROPERTY_INSTANCE_1
 		(Fget_face (XVECTOR_DATA (instantiator)[0]),
-		 prop, domain, ERROR_ME, 0, depth));
+		 prop, domain, ERROR_ME, no_fallback, depth));
 
       if (instantiator_len == 3 && !NILP (XVECTOR_DATA (instantiator)[2]))
 	retval = NILP (retval) ? Qt : Qnil;

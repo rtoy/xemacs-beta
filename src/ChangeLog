@@ -1,6 +1,20 @@
+2008-02-26  Didier Verna  <didier@xemacs.org>
+
+	* specifier.c (CHECK_INSTANCE_ENTRY): See below.
+	* specifier.c (specifier_instance_1): Propagate the no_fallback
+	flag to ...
+	* specifier.c (specifier_instance_from_inst_list): ... here, and
+	in turn propagate it to the <specifier>_instantiate methods.
+	* glyphs.c (image_instantiate): Handle the no_fallback flag.
+	* objects.c (color_instantiate): Ditto.
+	* objects.c (font_instantiate): Ditto.
+	* objects.c (face_boolean_instantiate): Ditto.
+	* specifier.c (specifier_matching_foo_from_inst_list): Update call
+	to specifier_instance_from_inst_list accordingly.
+
 2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* search.c (search_buffer): 
+	* search.c (search_buffer):
 	In the event that a character is not representable in the buffer,
 	fail immediately. Prevents an assertion failure in the code to
 	deal with whether Boyer-Moore search can be used for such
@@ -21,16 +35,16 @@
 
 2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* search.c (debug-xemacs-searches): 
+	* search.c (debug-xemacs-searches):
 	New variable, available on debug builds. Used in
-	tests/automated/case-tests.el. 
+	tests/automated/case-tests.el.
 	(search_buffer): Only store the charset_base for characters with
 	translations. Correct some comments, correct some checks. If
-	debug_xemacs_searches is non-zero, record which search was used. 
+	debug_xemacs_searches is non-zero, record which search was used.
 	(boyer_moore): Remove an assertion that was incorrect. Remove its
 	documentation. Correct an assertion dealing with equivalence
 	tables; we may end up looking through the equivalence table if a
-	non-ASCII non-case character was searched for. 
+	non-ASCII non-case character was searched for.
 
 2008-01-25  Michael Sperber  <mike@xemacs.org>
 
@@ -43,13 +57,13 @@
 
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* elhash.c (Fputhash): Document the return value. 
-	(Fclrhash): Ditto. 
+	* elhash.c (Fputhash): Document the return value.
+	(Fclrhash): Ditto.
 
 2007-12-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* casetab.c:
-	Extend and correct some case table documentation. 
+	Extend and correct some case table documentation.
 	* search.c (search_buffer):
 	Correct a bug where only the first entry for a character in the
 	case equivalence table was examined in determining if the
@@ -64,7 +78,7 @@
 	* search.c (boyer_moore):
 	Assert that we haven't been passed a string with varying
 	characters sets or rows within character sets. That's what
-	simple_search is for. 
+	simple_search is for.
 
 	In the very rare event that a character in the search string has a
 	canonical case mapping that is not in the same character set and
@@ -74,14 +88,14 @@
 
 	Do not search for any character case mappings that cannot possibly
 	occur in the buffer, given the buffer metadata about its
-	contents. 
+	contents.
 
 2008-01-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* dired.c (Ffile_attributes): If bignums are available, use them
 	for the file size when necessary. If they are not, be clearer
 	about the check for whether the file size can fit in a Lisp
-	integer. 
+	integer.
 
 2008-01-18  Jerry James  <james@xemacs.org>
 
@@ -99,30 +113,30 @@
 
 	* print.c (prin1_to_string): New.
 	The guts of Fprin1_to_string, without resetting
-	Vprint_gensym_alist. 
-	(Fprin1_to_string): 
+	Vprint_gensym_alist.
+	(Fprin1_to_string):
 	Call prin1_to_string, wrapped with RESET_PRINT_GENSYM calls.
-	* doprnt.c (emacs_doprnt_1): 
+	* doprnt.c (emacs_doprnt_1):
 	Call prin1_to_string, not Fprin1_to_string (dos veces). Avoids an
-	inappropriate reset of print-gensym-alist. 
+	inappropriate reset of print-gensym-alist.
 
 2008-01-12  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* rangetab.c (Fmap_range_table): 
+	* rangetab.c (Fmap_range_table):
 	Clarify docstring. (If FUNCTION doesn't touch any range-table
 	entry, things will also be correct.)
 
 2008-01-09  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* config.h.in: 
+	* config.h.in:
 	Check that __STDC_VERSION__ is defined before examining its
-	value. Eliminates a Cygwin warning. 
+	value. Eliminates a Cygwin warning.
 
 2008-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.h (MAX_XETCHAR_SIZE): Remove, eliminating a redefinition
 	warning on Win32.
-	* dumper.c (pdump_load): 
+	* dumper.c (pdump_load):
 	Don't use PATH_MAX_EXTERNAL, instead allocate enough for the path
 	+ DUMP_SLACK (space for .dmp and version information), already
 	used on Win32 and #defined to be 100.
@@ -138,7 +152,7 @@
 2008-01-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fmake_temp_name): Correct the comment to cross
-	reference to make-temp-file, and not to this function. 
+	reference to make-temp-file, and not to this function.
 
 2008-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -146,8 +160,8 @@
 
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* emacs.c (main_1): 
-	Call the new vars_of_console_gtk function. 
+	* emacs.c (main_1):
+	Call the new vars_of_console_gtk function.
 	* console-gtk.c (vars_of_console_gtk): New.
 	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
 	Correct the initialisation of the hash table, on the model of the
@@ -157,7 +171,7 @@
 
 	* doc.c (Fbuilt_in_symbol_file):
 	Don't check is fun zero in the condition, check that it's not
-	nil. Fixes the union build; thank you Stephen. 
+	nil. Fixes the union build; thank you Stephen.
 
 2008-01-02  Mike Sperber  <mike@xemacs.org>
 
@@ -176,31 +190,31 @@
 
 2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* event-xlike-inc.c (x_keysym_to_character): 
+	* event-xlike-inc.c (x_keysym_to_character):
 	* event-xlike-inc.c (gtk_keysym_to_character):
 	Unify the typed character if possible, following the current value
-	for the unicode precedence list. 
+	for the unicode precedence list.
 
 2007-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* symbols.c (Fintern_soft): 
+	* symbols.c (Fintern_soft):
 	Provide a new optional third argument, DEFAULT, for those who want
 	to check if "nil" is a symbol or not. (More realistically, general
 	code that may get handed "nil" should probably use this argument.)
 
 2007-12-23  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* objects-tty.c (tty_find_charset_font): 
+	* objects-tty.c (tty_find_charset_font):
 	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
 	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
-	* objects-xlike-inc.c (x_font_spec_matches_charset): 
+	* objects-xlike-inc.c (x_font_spec_matches_charset):
 	* objects-xlike-inc.c (gtk_font_spec_matches_charset):
 	If the charset is not specified when calling the
 	font_spec_matches_charset device method, its value is Qnil, not
 	Qunbound. See
 	http://mid.gmane.org/E1EfbmW-00029r-5G@iwi191.iwi.uni-sb.de and
 	Ben Wing's patch of
-	http://mid.gmane.org/439FA06B.3090007@xemacs.org. 
+	http://mid.gmane.org/439FA06B.3090007@xemacs.org.
 
 2007-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -212,7 +226,7 @@
 	that's a great idea.
 	* database.c (print_database):
 	Give the coding system used for text conversion when printing a
-	database object. 
+	database object.
 
 2007-12-20  Jerry James  <james@xemacs.org>
 
@@ -228,11 +242,11 @@
 
 	* symbols.c (Fspecial_form_p):
 	Following commentary from Jerry James, don't error if not passed a
-	subr. 
+	subr.
 
 	Flesh out the docstring; give details of what a subr is, what a
 	special form is, and why one should probably not write special
-	forms oneself. 
+	forms oneself.
 
 2007-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -246,9 +260,9 @@
 	Add support for formatted printing of both longs and bignums as
 	base 2.
 	* editfns.c (Fformat):
-	Document the new %b escape for #'format. 
+	Document the new %b escape for #'format.
 	* lisp.h:
-	Make ulong_to_bit_string available beside long_to_string. 
+	Make ulong_to_bit_string available beside long_to_string.
 	* lread.c:
 	Fix a bug where the integer base was being ignored in certain
 	contexts; thank you Sebastian Freundt. This is necessary for
@@ -256,18 +270,18 @@
 	#'bit-vector-to-integer, just added to subr.el
 	* print.c (ulong_to_bit_string): New.
 	Analagous to long_to_string, but used all the time when %b is
-	encountered, since we can't pass that to sprintf. 	
+	encountered, since we can't pass that to sprintf.
 
 2007-12-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
-	Make the results of the checks for 
+	Make the results of the checks for
 	FcConfigGetRescanInterval, FcConfigSetRescanInterval
 	available.
 	* font-mgr.h:
 	If FcConfigSetRescanInterval and FcConfigGetRescanInterval are not
 	available as functions, #define them to map to their old
-	misspelled names. 	
+	misspelled names.
 	* font-mgr.c (Ffc_config_get_rescan_interval):
 	* font-mgr.c (Ffc_config_set_rescan_interval):
 	Use the correct spelling in
@@ -275,7 +289,7 @@
 
 2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* glyphs-eimage.c: 
+	* glyphs-eimage.c:
 	Merge Ron Isaacson's patch of
 	3ggprxj7ifh.wl_Ron.Isaacson@morganstanley.com , originally from
 	Gennady Khokhorin. Prevents library incompatibilities on Win32.
@@ -314,7 +328,7 @@
 	coding systems) and make_coding_system_1 (which has to).
 	* file-coding.c (Ffind_coding_system):
 	Move the implementation to find_coding_system; call that function
-	with a do_autoloads argument of 1. 
+	with a do_autoloads argument of 1.
 	* file-coding.c (Fautoload_coding_system):
 	New.
 	* file-coding.c (add_coding_system_to_list_mapper):
@@ -331,21 +345,21 @@
 	system as its argument.
 
 	This is also tied in with the POSIX locale infrastructure by means
-	of posix-charset-to-coding-system-hash. 
+	of posix-charset-to-coding-system-hash.
 
 2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):
-	Take out a static variable I was using for debugging. 
+	Take out a static variable I was using for debugging.
 
 2007-11-26  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* doprnt.c: 
+	* doprnt.c:
 	Default to a buffer size of 350 for the sprintf call, but increase
 	it if the precision and minwidth indicate that it should be
 	bigger. Issue reported by Hans de Graaff; bug originally fixed by
 	Sebastian Freundt in SXEmacs following the change I merged on
-	2006-11-28. Forks have their disadvantages. 
+	2006-11-28. Forks have their disadvantages.
 
 2007-11-11  Mats Lidell  <matsl@xemacs.org>
 
@@ -367,18 +381,18 @@
 
 	* lread.c (read_unicode_escape):
 	Correct the range check for Unicode characters specified with
-	source-level escapes. 
+	source-level escapes.
 	* unicode.c:
 	* unicode.c (unicode_to_ichar):
 	* unicode.c (coding_system_type_create_unicode):
 	Correct the dump behaviour for just-in-time Unicode code
 	points. Update the docstring for #'unicode-to-char to indicate
-	that code points will run out above around 400,000 in a session. 
+	that code points will run out above around 400,000 in a session.
 
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (vars_of_editfns):
-	Correct the docstring of user-full-name. 
+	Correct the docstring of user-full-name.
 	* fileio.c:
 	* fileio.c (Fmake_temp_name):
 	Document that make-temp-file is available and the best approach to
@@ -387,10 +401,10 @@
 	Take a new arg, MUSTBENEW, to error if the file to be written
 	already exists.
 	* fileio.c (auto_save_1):
-	Update a call to Fwrite_region_internal to pass the new argument. 
+	Update a call to Fwrite_region_internal to pass the new argument.
 	* fileio.c (syms_of_fileio):
 	Provide 'excl as a symbol, for the calls to
-	write-region-internal. 
+	write-region-internal.
 
 2007-11-05  Didier Verna  <didier@xemacs.org>
 
