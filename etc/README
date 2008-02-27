@@ -46,6 +46,9 @@ tests/			Testcases for external widget
 toolbar/		Image files for the toolbar
 trash.xpm		B&W garbage can icon (32x46)
 unicode/		Unicode conversion tables
+xemacs-X-16.png		Violet boxed X icon (16x16)
+xemacs-X-32.png		Violet boxed X icon (32x32)
+xemacs-X.ico		Violet boxed X icon in MS Windows format
 xemacs-beta.xpm		XEmacs Beta logo for splashscreen (388x145)
 xemacs-enhanced.png	"XEmacs-enhanced" logo (90x32)
 xemacs-fe.sh		XEmacs frontend driver

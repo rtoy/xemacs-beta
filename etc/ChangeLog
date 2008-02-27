@@ -1,3 +1,26 @@
+2008-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README: Add descriptions of Daniel Polansky's icons.
+
+2008-02-21  Daniel Polansky  <danielpolansky@gmail.com>
+
+	Two images for one icon for XEmacs, one 16x16 and 32x32.
+	Also, a Microsoft Windows icon file is attached.
+	Itemized:
+	- 16x16 icon in PNG
+	- 32x32 icon in PNG
+	- Both bundled as a Microsoft Windows icon.
+
+	The images are modeled on XEmacs violet logotype, as found at
+	http://www.xemacs.org/. The images are copyright (c) 2005 by
+	Daniel Polansky, and licensed under GNU General Public Licence V2
+	or later at your option.
+
+	* xemacs-X-16.png:
+	* xemacs-X-32.png:
+	* xemacs-X.ico:
+	New files.
+
 2008-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* README: Give more accurate descriptions of image files.
