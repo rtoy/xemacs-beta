@@ -740,6 +740,8 @@ Future Work Discussion
 
 Discussion -- Garbage Collection
 
+* Discussion -- KKCC::
+* Discussion -- Incremental Collector::
 * Discussion -- Pure Space::    
 * Discussion -- Hashtable-Based Marking and Cleanup::  
 * Discussion -- The Anti-Cons::  
@@ -8551,6 +8553,9 @@ more defensive but less efficient and is used for error-checking.)
 
   [see @file{lrecord.h}]
 
+@strong{This node needs updating for the ``new garbage collection
+algorithms'' (KKCC) and the ``incremental'' collector.}
+
   All lrecords have at the beginning of their structure a @code{struct
 lrecord_header}.  This just contains a type number and some flags,
 including the mark bit.  All builtin type numbers are defined as
@@ -8570,6 +8575,9 @@ has a pointer used to chain all lcrecords together, and a special ID
 field used to distinguish one lcrecord from another. (This field is used
 only for debugging and could be removed, but the space gain is not
 significant.)
+
+@strong{lcrecords are now obsolete when using the write-barrier-based
+collector.}
 
   Simple lrecords are created using @code{ALLOCATE_FIXED_TYPE()}, just
 like for other frob blocks.  The only change is that the implementation
@@ -28419,12 +28427,82 @@ into the normal Future Work section.
 @cindex garbage collection, discussion
 
 @menu
+* Discussion -- KKCC::
+* Discussion -- Incremental Collector::
 * Discussion -- Pure Space::    
 * Discussion -- Hashtable-Based Marking and Cleanup::  
 * Discussion -- The Anti-Cons::  
 @end menu
 
-@node Discussion -- Pure Space, Discussion -- Hashtable-Based Marking and Cleanup, Discussion -- Garbage Collection, Discussion -- Garbage Collection
+@node Discussion -- KKCC, Discussion -- Incremental Collector, Discussion -- Garbage Collection, Discussion -- Garbage Collection
+@subsection Discussion -- KKCC
+@cindex discussion, KKCC
+@cindex KKCC, discussion
+
+KKCC is the tag used for the ``new garbage collector algorithms,'' which
+are a refactoring of the garbage collector to make trying new collectors
+simpler.
+
+@node Discussion -- Incremental Collector, Discussion -- Pure Space, Discussion -- KKCC, Discussion -- Garbage Collection
+@subsection Discussion -- Incremental Collector
+@cindex discussion, Incremental Collector
+@cindex Incremental Collector, discussion
+
+The incremental collector is designed to allow better ``realtime''
+performance by not requiring a full mark and sweep pass.  This also
+allows removal of most finalizers, as described in
+@samp{<vpd8x1fomdx.fsf@@informatik.uni-tuebingen.de>} by Marcus Crestani
+on xemacs-beta:
+
+I was able to nuke many finalizers by transforming
+separately allocated data structures to Lisp objects.  Some of the
+remaining finalizers are also likely to go away, as soon as I (or
+someone else) find the time to ``lift'' the remaining, separately allocated
+objects to Lisp objects.
+
+Unfortunately, the current Lisp object layout leads to holes in the
+write barrier: Not all data structures that contain pointers to Lisp
+objects are allocated on the Lisp heap.  Some Lisp objects do not carry
+all their information in the object itself.  External parts are kept in
+separately allocated memory blocks that are not managed by the new Lisp
+allocator.  Examples for these objects are hash tables and dynamic
+arrays, two objects that can dynamically grow and shrink.  The separate
+memory blocks are not guaranteed to reside on page boundaries, and thus
+cannot be watched by the write barrier.
+
+Moreover, the separate parts can contain live pointers to other Lisp
+objects.  These pointers are not covered by the write barrier and
+modifications by the client during garbage collection do escape.  In
+this case, the client changes the connectivity of the reachability
+graph behind the collector's back, which eventually leads to erroneous
+collection of live objects.  To solve this problem, I transformed the
+separately allocated parts to fully qualified Lisp objects that are
+managed by the allocator and thus are covered by the write barrier.
+This also removes a lot of special allocation and removal code for the
+out-sourced parts.  Generally, allocating all data structures that
+contain pointers to Lisp objects on one heap makes the whole memory
+layout more consistent.
+
+A large part of the patch converts these data structures to Lisp
+objects.  The conversion of an additionally allocated data structure to
+an Lisp objects includes:
+@itemize
+@item Add new object type to @samp{enum lrecord_type} in @file{lrecord.h}.
+@item Add @samp{lrecord_header} to the object's struct.
+@item Add @samp{DECLARE_RECORD()}/@samp{XFOO}/etc. below the struct definition.
+@item Add lrecord definition.
+@item Change allocation with malloc to allocation with new allocator.
+@item Add object to @samp{syms_of_*()}.
+@item Change memory description of parent object.
+@item Modify finalizer, free, or delete functions.
+@end itemize
+
+The initial motivation for this is the write barrier and the consistent
+format for all objects that may contain Lisp pointers.  That we can get
+rid of finalizers this way follows naturally.
+
+
+@node Discussion -- Pure Space, Discussion -- Hashtable-Based Marking and Cleanup, Discussion -- Incremental Collector, Discussion -- Garbage Collection
 @subsection Discussion -- Pure Space
 @cindex discussion, pure space
 @cindex pure space, discussion

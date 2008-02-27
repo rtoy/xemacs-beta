@@ -1,3 +1,15 @@
+2008-02-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Discussion -- KKCC):
+	(Discussion -- Incremental Collector):
+	New nodes.
+	(Top):
+	(Discussion -- Garbage Collection):
+	(Discussion -- Pure Space):
+	Adjust pointers and menus for new nodes.
+
+	(lrecords): Remark that lcrecords are obsolete.
+
 2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):
