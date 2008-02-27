@@ -1,3 +1,7 @@
+2008-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README: Give more accurate descriptions of image files.
+
 2007-12-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bundled-packages/README: Document restriction on --with-late-packages.
