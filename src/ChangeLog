@@ -1,3 +1,8 @@
+2008-02-28  Didier Verna  <didier@xemacs.org>
+
+	* specifier.h (struct specifier_methods): Fix instantiate_method
+	prototype to match the changes below.
+
 2008-02-26  Didier Verna  <didier@xemacs.org>
 
 	* specifier.c (CHECK_INSTANCE_ENTRY): See below.

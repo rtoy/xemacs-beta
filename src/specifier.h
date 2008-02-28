@@ -139,7 +139,7 @@ struct specifier_methods
   void (*validate_matchspec_method) (Lisp_Object matchspec);
 
   /* Instantiate method: Return SPECIFIER instance in DOMAIN,
-     specified by INSTANTIATOR.  MATCHSPEC specifies an additional
+     specified by INSTANTIATOR.  MATCHSPEC specifies additional
      constraints on the instance value (see the docstring for
      Fspecifier_matching_instance function). MATCHSPEC is passed
      Qunbound when no matching constraints are imposed. The method is
@@ -151,6 +151,9 @@ struct specifier_methods
      to functions which also instantiate specifiers (of which I can
      name specifier_instance) to avoid creating "external"
      specification loops.
+
+     NO_FALLBACK indicates that the method should not try the fallbacks
+     (and thus simply return Qunbound) in case of a failure to instantiate.
 
      This method must presume that both INSTANTIATOR and MATCHSPEC are
      already validated by the corresponding validate_* methods, and
@@ -166,7 +169,8 @@ struct specifier_methods
 				     Lisp_Object matchspec,
 				     Lisp_Object domain,
 				     Lisp_Object instantiator,
-				     Lisp_Object depth);
+				     Lisp_Object depth,
+				     int no_fallback);
 
   /* Going-to-add method: Called when an instantiator is about
      to be added to a specifier.  This function can specify
@@ -343,7 +347,7 @@ do {									\
   INITIALIZE_SPECIFIER_TYPE (type, obj_name, pred_sym);			\
   type##_specifier_methods->extra_data_size =				\
     sizeof (struct type##_specifier);					\
-  type##_specifier_methods->extra_description = 			\
+  type##_specifier_methods->extra_description =			\
     &type##_specifier_description_0;					\
 } while (0)
 
@@ -573,13 +577,13 @@ DECLARE_SPECIFIER_TYPE (display_table);
    font for CHARSET that matches iso10646-1, since we haven't found a font
    that matches its registry."  */
 enum font_specifier_matchspec_stages {
-  initial, 
+  initial,
   final,
-  impossible, 
+  impossible,
 };
 
 Lisp_Object define_specifier_tag(Lisp_Object tag,
-				 Lisp_Object device_predicate, 
+				 Lisp_Object device_predicate,
 				 Lisp_Object charset_predicate);
 
 #endif /* INCLUDED_specifier_h_ */
