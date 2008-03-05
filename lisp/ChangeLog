@@ -1,3 +1,16 @@
+2008-03-05  Didier Verna  <didier@xemacs.org>
+
+	Ease customization of face(s) under point.
+	Suggested by Andreas Rohler.
+
+	* cus-edit.el (custom-face-prompt): New (interactive call). Offer
+	a prefix for choosing a face amongst those at point instead of all
+	of them.
+	* cus-edit.el (customize-face-1): New. Factor out from the
+	functions below.
+	* cus-edit.el (customize-face): Use it.
+	* cus-edit.el (customize-face-other-window): Ditto.
+
 2008-02-16  Michael Sperber  <mike@xemacs.org>
 
 	* autoload.el (autoload-make-autoload-operators,
@@ -7,8 +20,8 @@
 
 2008-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* iso8859-1.el (ascii-case-table): 
-	Correct the order of the arguments to #'put-case-table-pair. 
+	* iso8859-1.el (ascii-case-table):
+	Correct the order of the arguments to #'put-case-table-pair.
 
 2008-01-25  Michael Sperber  <mike@xemacs.org>
 
@@ -17,8 +30,8 @@
 
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* info.el (Info-suffix-list): 
-	Support LZMA compression, as used--oddly--by Mandriva Linux. 
+	* info.el (Info-suffix-list):
+	Support LZMA compression, as used--oddly--by Mandriva Linux.
 
 2008-01-17  Mike Sperber  <mike@xemacs.org>
 
@@ -29,10 +42,10 @@
 
 2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* keydefs.el (global-map): 
+	* keydefs.el (global-map):
 	Bind '(shift delete) to #'kill-primary-selection, as described by
 	Glynn Clements in
-	16434.49191.47038.991206@cerise.nosuchdomain.co.uk of 2004-02-08. 
+	16434.49191.47038.991206@cerise.nosuchdomain.co.uk of 2004-02-08.
 
 2008-01-14  Jerry James  <james@xemacs.org>
 
@@ -44,29 +57,29 @@
 
 2008-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* bytecomp.el (byte-compile-output-file-form): 
+	* bytecomp.el (byte-compile-output-file-form):
 	Bind print-gensym-alist to nil, as we do within
 	byte-compile-output-docform.
 
 2008-01-04  Michael Sperber  <mike@xemacs.org>
 
-        * code-files.el (insert-file-contents):
-        (load): Don't call `substitute-in-file-name' on the file name.
+	* code-files.el (insert-file-contents):
+	(load): Don't call `substitute-in-file-name' on the file name.
 
 2008-01-03  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cus-edit.el (custom-save-all): 
+	* cus-edit.el (custom-save-all):
 	If the directory containing the custom file doesn't exist, try to
-	create it. Fixes Nick's Crabtree's bug of 
+	create it. Fixes Nick's Crabtree's bug of
 	5fb265820712140145w512fa3bbh355cf76f7e2cf792@mail.gmail.com ;
 	thank you Nick.
 	* menubar-items.el (default-menubar):
 	In the code to edit the user's init file, try to create the
-	containing directory if it doesn't exist. 
+	containing directory if it doesn't exist.
 
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* gtk-init.el (init-post-gtk-win): 
+	* gtk-init.el (init-post-gtk-win):
 	Trust the X11 code to give us decent default fonts.
 
 2008-01-02  Aidan Kehoe  <kehoea@parhasard.net>
@@ -74,7 +87,7 @@
 	* x-iso8859-1.el: Removed.
 	* gtk-iso8859-1.el: Removed.
 	These haven't been used in a year and a half. No need to keep them
-	around. 
+	around.
 
 2008-01-02  Mike Sperber  <mike@xemacs.org>
 
@@ -92,7 +105,7 @@
 
 2007-12-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* menubar-items.el (default-menubar): 
+	* menubar-items.el (default-menubar):
 	Byte compile the specified lambdas. Correct some compile time
 	warnings uncovered by this.
 	* menubar-items.el (tutorials-menu-filter):
@@ -100,7 +113,7 @@
 	specified--which indicates we don't want it used except by those
 	who know what they're doing--don't show its tutorial in the menu.
 	* behavior.el (behavior-menu-filter):
-	Byte compile the lambdas in the generated menu. 
+	Byte compile the lambdas in the generated menu.
 
 2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -111,15 +124,15 @@
 
 	* subr.el (with-case-table): New.
 	Idea and implementation taken from GNU's code of April 2007,
-	before GPL V3 was implied. Thank you GNU. 
-	* iso8859-1.el (ascii-case-table): New. 
+	before GPL V3 was implied. Thank you GNU.
+	* iso8859-1.el (ascii-case-table): New.
 	Idea taken from GNU.
 	* iso8859-1.el :
 	Change Jamie's implicit compile-time call to a macro literal into
 	something comprehensible to and maintainable by mortals, using to
 	cl.el's #'loop.
 	* iso8859-1.el (ctl-arrow):
-	Initialise it to something more comprehensible. 
+	Initialise it to something more comprehensible.
 
 2007-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -127,10 +140,10 @@
 	Accept a new TYPE argument, compatible with GNU, saying
 	whether function or variable definitions should be searched for.
 	Implement the functionality for autoloads, handling TYPE
-	correctly. 
+	correctly.
 	Pass the TYPE argument to built-in-symbol-file correctly.
 	Document that TYPE is not implemented for non-autoloaded Lisp
-	definitions. Our load-history doesn't have the relevant metadata. 
+	definitions. Our load-history doesn't have the relevant metadata.
 
 2007-12-25  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -138,7 +151,7 @@
 	Revert part of Didier's 2007-10-15 commit, which broke
 	#'make-image-specifier with string arguments, and more noticeably
 	truncation-glyph, continuation-glyph, octal-escape-glyph,
-	control-arrow-glyph. 
+	control-arrow-glyph.
 
 2007-12-23  Mike Sperber  <mike@xemacs.org>
 
@@ -184,19 +197,19 @@
 	* help.el (describe-function-1):
 	Give details of bindings for commands, taking into account
 	global-window-system-map and global-tty-map when bindings differ
-	compared to the global map. 
+	compared to the global map.
 
 2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (integer-to-bit-vector): New.
 	* subr.el (bit-vector-to-integer): New.
-	Provide naive implementations using the Lisp reader for these. 
+	Provide naive implementations using the Lisp reader for these.
 
 2007-12-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.el (substitute-env-vars):
-	Merge an example from GNU's docstring. 
-	* process.el (setenv):	
+	Merge an example from GNU's docstring.
+	* process.el (setenv):
 	Pass nil as the default abbrev table to the #'read-from-minibuffer
 	call, instead of passing the current value of the variable. Bug
 	introduced by an incorrect sync from GNU by Ben; reported by
@@ -205,7 +218,7 @@
 	Document the #'set-time-zone-rule call when TZ is set. Push the
 	old value on to the beginning of setenv-history. (Both merged from
 	GNU.) Document that we don't do the coding-system frobbing at this
-	level that GNU does. 
+	level that GNU does.
 
 	Provide a commented-out, sample implementation of GNU's
 	#'environment; document why I think we shouldn't include it.
@@ -233,10 +246,10 @@
 
 	* unicode.el (load-unicode-mapping-tables):
 	Call #'set-default-unicode-precedence wrapped with
-	#'declare-fboundp, to avoid warnings on non-Mule builds. 
+	#'declare-fboundp, to avoid warnings on non-Mule builds.
 
 	* unicode.el (ccl-encode-to-ucs-2):
-	* unicode.el (unicode-error-sequence-regexp-range):	
+	* unicode.el (unicode-error-sequence-regexp-range):
 	* unicode.el (frob-unicode-errors-region):
 	* unicode.el (unicode-error-translate-region):
 	Unconditionally provide these functions and variables at top
@@ -247,11 +260,11 @@
 
 	Unintern the function and variable symbols if (featurep 'mule) is
 	not true, so their function definitions and so on get garbage
-	collected at dump time in non-Mule builds. 
+	collected at dump time in non-Mule builds.
 
-	* obsolete.el (add-menu-item): 
-	* obsolete.el (add-menu): 
-	* obsolete.el (add-menu): 
+	* obsolete.el (add-menu-item):
+	* obsolete.el (add-menu):
+	* obsolete.el (add-menu):
 	* obsolete.el (package-get-download-menu):
 	Provide these functions at top level, in order to make them
 	available to make-docfile.c, which has trouble interpreting byte
@@ -261,17 +274,17 @@
 
 2007-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/latin.el: 
+	* mule/latin.el:
 	Create clones of the English language environment with UTF-8 and
 	Windows-1252 as the associated coding system, for Joachim Schrod's
-	use case of f8q022$3o3$1@sea.gmane.org. 
+	use case of f8q022$3o3$1@sea.gmane.org.
 
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keydefs.el:
 	Bind mouse wheel movements by default, to a lambda that calls the
 	autoloaded #'mwheel-install and then #'mwheel-scroll with the
-	appropriate event. 
+	appropriate event.
 
 2007-12-07  Vin Shelton  <acs@xemacs.org>
 
@@ -281,20 +294,20 @@
 
 	* code-files.el (write-region):
 	Use a more concise and probably less confusing docstring from
-	Stephen. See 
-	87ve84323s.fsf@uwakimon.sk.tsukuba.ac.jp. 
+	Stephen. See
+	87ve84323s.fsf@uwakimon.sk.tsukuba.ac.jp.
 
 	Not following his suggestion of keeping the CODING-SYSTEM name for
 	the last argument, given that that would make reworking the
 	body of the necessary, and that I introduced a short-lived bug the
-	last time I did that. 
+	last time I did that.
 
 2007-12-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-file-form-custom-declare-variable):
 	Instead of using a keyword argument that's incompatible with 21.4,
 	modify the byte compiled init code to change the variable's
-	standard-value property itself. 
+	standard-value property itself.
 
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -302,12 +315,12 @@
 	* mule/iso-with-esc.el ('iso-latin-1-with-esc): New.
 	Provide the variable-length rarely-used ISO 2022 compatible coding
 	systems for Latin (that is, iso-8859-[1-16]) again, to address
-	Stephen's veto. 
+	Stephen's veto.
 
 2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* autoload.el (make-autoload):
-	Support auto-autoloads for coding systems. 
+	Support auto-autoloads for coding systems.
 
 2007-12-01  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -327,7 +340,7 @@
 	unification problems the old implementation had.
 
 	Add aliases for GNU compatibility.
-	  
+
 	Still no warning on the imminent corruption of data, though. I'm
 	working on it.
 	* mule/greek.el (windows-1253):
@@ -340,7 +353,7 @@
 	print-gensym-alist on exit from #'print. This is appropriate
 	because #'byte-compile-output-file-form may be called multiple
 	times for a given output file, and re-using the
-	#1=#:... placeholders in that context is inappropriate. 
+	#1=#:... placeholders in that context is inappropriate.
 
 2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -351,7 +364,7 @@
 	and run-time code didn't share this value.
 	* mule/mule-coding.el (make-8-bit-coding-system):
 	Mark the coding systems created by this code as such, for the sake
-	of automated testing of their round-trip compatibility. 
+	of automated testing of their round-trip compatibility.
 
 2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -365,7 +378,7 @@
 
 	* mule/mule-cmds.el (create-variant-language-environment):
 	Set tutorial-coding-system to correspond to the original coding
-	system when creating the variant language environment. 
+	system when creating the variant language environment.
 
 2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -380,9 +393,9 @@
 	a) the byte compilation warnings and b) since our interpreter is
 	proportionately so much slower than theirs, we are penalised more
 	strongly when we interpret code, especially when
-	#'custom-declare-variable calls cluster, as they tend to do. 
+	#'custom-declare-variable calls cluster, as they tend to do.
 	* cus-edit.el (customize-changed-options):
-	Wrap the #'interactive call to be less than 80 columns. 
+	Wrap the #'interactive call to be less than 80 columns.
 	Wrap the code to less than 80 columns.
 	* cus-edit.el (custom-variable-menu):
 	* cus-edit.el (custom-face-menu):
@@ -392,16 +405,16 @@
 	* custom.el (custom-initialize-changed):
 	Correct the docstring; change the defun to defsubst, since calls
 	to this are only done from one function, and calls to that
-	function cluster. 
+	function cluster.
 	* custom.el (custom-declare-variable):
 	Document the :default argument to #'custom-declare-variable;
-	implement it. 
+	implement it.
 
 2007-11-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-featurep):
 	Remove a useless let binding that was a hangover from an earlier
-	version of the code. Eliminates a byte-compile time warning. 
+	version of the code. Eliminates a byte-compile time warning.
 
 2007-11-22  Vin Shelton  <acs@xemacs.org>
 
@@ -412,19 +425,19 @@
 	* code-files.el (write-region):
 	Call #'find-coding-system on the (possible) coding system argument
 	before checking it with #'coding-system-p; the latter function
-	gives false results when passed coding system names as symbols. 
+	gives false results when passed coding system names as symbols.
 
 	Preserve the old order of determination of the coding system
 	better.
 
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* unicode.el (unicode-error-default-translation-table): 
+	* unicode.el (unicode-error-default-translation-table):
 	* unicode.el (unicode-error-sequence-regexp-range):
 	* unicode.el (frob-unicode-errors-region):
 	Make these variables and the single function available to
 	make-docfile, by moving them to the start of the line. This
-	conflicts with normal indentation of Lisp, unfortunately. 
+	conflicts with normal indentation of Lisp, unfortunately.
 
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -433,32 +446,32 @@
 	* subr.el (string-to-vector):
 	(append STRING nil) is faster than (mapcar #'identity STRING),
 	(vconcat STRING) is faster than (mapcar #'identity STRING). Change
-	from GNU. 
+	from GNU.
 
 2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (write-region):
 	Provide a new arg, CODING-SYSTEM-OR-MUSTBENEW, for compatibility
 	both with GNU (where it has the MUSTBENEW meaning) and earlier
-	XEmacs code (where it has the CODING-SYSTEM meaning). 
+	XEmacs code (where it has the CODING-SYSTEM meaning).
 	* files.el:
 	* files.el (normal-backup-enable-predicate):
 	* files.el (auto-save-file-name-transforms):
 	Correct the docstrings of #'normal-backup-enable-predicate,
 	#'auto-save-file-name-transforms.
 	* files.el (make-temp-file): New.
-	Merge from GNU. 
+	Merge from GNU.
 	* subr.el:
-	Document that #'make-temp-name is now in files.el. 
+	Document that #'make-temp-name is now in files.el.
 
 2007-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cus-edit.el (custom-save-all):
-	Merge Jason Spiro's fix of 
+	Merge Jason Spiro's fix of
 	c241693f0710021645g642f145n5925c7a35e7b2c58@mail.gmail.com , to
 	avoid corruption of the custom-set-variables and custom-set-fonts
 	calls in ~/.emacs if XEmacs doesn't understand any part of the
-	syntax of ~/.emacs . 
+	syntax of ~/.emacs .
 
 2007-10-31  Mike Sperber  <mike@xemacs.org>
 
@@ -471,15 +484,15 @@
 	* mule/general-late.el:
 	Now that all the dumped coding systems are available, decode
 	Installation-string using the value for
-	Installation-file-coding-system at dump time. 
+	Installation-file-coding-system at dump time.
 
 2007-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* dumped-lisp.el (preloaded-file-list):
-	Allow version.el to be compiled. 
+	Allow version.el to be compiled.
 	* help.el (describe-installation):
 	Use and-boundp instead of (and (boundp ...); don't decode
-	Installation-string. Call #'error with a DATUM arg. 
+	Installation-string. Call #'error with a DATUM arg.
 	* loadup.el:
 	* loadup.el (Installation-string): Removed.
 	Moved to version.el.
@@ -489,13 +502,13 @@
 	* update-elc-2.el (batch-update-elc-2):
 	Remove version.el from the ignored files; if Mule is available,
 	always recompile it, since Installation-file-coding-system depends
-	on relatively complex Mule code. 
+	on relatively complex Mule code.
 	* update-elc.el (unbytecompiled-lisp-files):
 	Remove version.el.
 	* version.el:
 	* version.el (Installation-file-coding-system): New.
 	Variable reflecting the native coding system at build time, to
-	better work out Installation-string. 
+	better work out Installation-string.
 	* version.el (Installation-string): New.
 	Moved from loadup.el; documented in more detail.
 
@@ -516,14 +529,14 @@
 	refuses to run on GNU Emacs. Also optimises away checks for cl,
 	cl-extra, cl-19 and backquote, a conservative list of those
 	features that have been available in every XEmacs build since the
-	last time our opcodes changed. 
+	last time our opcodes changed.
 
 2007-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el:
 	Use raw-text, not no-conversion for iso-8859-1 on non-Mule;
 	preserves the line ending autodetection, but doesn't do coding
-	system autodetection. Thank you Stephen. 
+	system autodetection. Thank you Stephen.
 
 2007-10-15  Didier Verna  <didier@xemacs.org>
 
