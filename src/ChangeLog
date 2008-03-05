@@ -1,5 +1,12 @@
 2008-03-05  Dominique Quatravaux  <domq@cpan.org>
 
+	* glyphs-gtk.c (init_image_instance_from_gdk_image):
+	(gtk_colorize_image_instance):
+	Use IMAGE_INSTANCE_PIXMAP_MASK (an lvalue), not
+	IMAGE_INSTANCE_GTK_MASK (an rvalue).
+
+2008-03-05  Dominique Quatravaux  <domq@cpan.org>
+
 	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults): Fix typo.
 
 2008-02-28  Didier Verna  <didier@xemacs.org>
