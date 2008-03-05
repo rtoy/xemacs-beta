@@ -1,5 +1,14 @@
 2008-03-05  Didier Verna  <didier@xemacs.org>
 
+	Fix auto-formatting of comments in auto-fill-mode.
+
+	* newcomment.el (comment-indent): Don't insert a space at bol.
+	* newcomment.el (comment-indent-new-line): Bind
+	block-comment-start to comment-start in order to preserve the
+	formatting of previous comment lines.
+
+2008-03-05  Didier Verna  <didier@xemacs.org>
+
 	Ease customization of face(s) under point.
 	Suggested by Andreas Rohler.
 

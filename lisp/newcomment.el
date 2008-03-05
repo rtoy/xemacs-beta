@@ -240,7 +240,7 @@ This is obsolete because you might as well use \\[newline-and-indent]."
 		   (substring comment-start 1)))
       ;; Hasn't been necessary yet.
       ;; (unless (string-match comment-start-skip comment-continue)
-      ;; 	(kill-local-variable 'comment-continue))
+      ;;	(kill-local-variable 'comment-continue))
       )
     ;; comment-skip regexps
     (unless (and comment-start-skip
@@ -443,12 +443,12 @@ Point is assumed to be just at the end of a comment."
 ;     (save-excursion
 ;       (beginning-of-line)
 ;       (let ((eol (save-excursion (end-of-line) (point))))
-; 	(and comment-start-skip
-; 	     (re-search-forward comment-start-skip eol t)
-; 	     (setq eol (match-beginning 0)))
-; 	(goto-char eol)
-; 	(skip-chars-backward " \t")
-; 	(max comment-column (1+ (current-column))))))
+;	(and comment-start-skip
+;	     (re-search-forward comment-start-skip eol t)
+;	     (setq eol (match-beginning 0)))
+;	(goto-char eol)
+;	(skip-chars-backward " \t")
+;	(max comment-column (1+ (current-column))))))
 ;   "Function to compute desired indentation for a comment.
 ; This function is called with no args with point at the beginning of
 ; the comment's starting delimiter.")
@@ -498,7 +498,8 @@ Comments starting in column 0 are not moved."
 	    (setq begpos (point))
 	    ;; Ensure there's a space before the comment for things
 	    ;; like sh where it matters (as well as being neater).
-	    (unless (eq ?\  (char-syntax (char-before)))
+	    ;; ... but unless we're at the beginning of a line -- dvl
+	    (unless (or (bolp) (eq ?\  (char-syntax (char-before))))
 	      (insert ?\ ))
 	    (insert starter)
 	    (setq cpos (point-marker))
@@ -516,8 +517,8 @@ Comments starting in column 0 are not moved."
 		     (+ (current-column)
 			(- (or comment-fill-column fill-column)
 			   (save-excursion (end-of-line) (current-column)))))))
-        ;; XEmacs change: Preserve indentation of comments starting in
-        ;; column 0, as documented.
+	;; XEmacs change: Preserve indentation of comments starting in
+	;; column 0, as documented.
 	(unless (or (= (current-column) 0) (= (current-column) indent))
 	  ;; If that's different from current, change it.
 	  (delete-region (point) (progn (skip-chars-backward " \t") (point)))
@@ -653,21 +654,21 @@ comment markers."
     (setq end (copy-marker end))
 
     (let* ((numarg (prefix-numeric-value arg))
-           (ccs comment-continue)
-           (srei (comment-padright ccs 're))
-           (sre (and srei (concat "^\\s-*?\\(" srei "\\)")))
-           spt)
+	   (ccs comment-continue)
+	   (srei (comment-padright ccs 're))
+	   (sre (and srei (concat "^\\s-*?\\(" srei "\\)")))
+	   spt)
       (while (and (< (point) end)
 		  (setq spt (comment-search-forward end t)))
 	(let ((ipt (point))
-              ;; Find the end of the comment.
-              (ept (progn
-                     (goto-char spt)
-                     (unless (comment-forward)
-                       (error "Can't find the comment end"))
-                     (point)))
-              (box nil)
-              (box-equal nil))     ;Whether we might be using `=' for boxes.
+	      ;; Find the end of the comment.
+	      (ept (progn
+		     (goto-char spt)
+		     (unless (comment-forward)
+		       (error "Can't find the comment end"))
+		     (point)))
+	      (box nil)
+	      (box-equal nil))     ;Whether we might be using `=' for boxes.
 	  (save-restriction
 	    (narrow-to-region spt ept)
 
@@ -1097,6 +1098,7 @@ unless optional argument SOFT is non-nil."
 			  (point))
 			 nil t)))))
 		 (comment-start comstart)
+		 (block-comment-start comment-start)
 		 (continuep (or comment-multi-line
 				(cadr (assoc comment-style comment-styles))))
 		 ;; Force comment-continue to be recreated from comment-start.
