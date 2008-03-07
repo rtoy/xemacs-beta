@@ -1,3 +1,8 @@
+2008-03-07  Michael Sperber  <mike@xemacs.org>
+
+	* gnuserv.el (gnuserv-temp-file-regexp): Quote the temp-directory
+	part.
+
 2008-03-05  Didier Verna  <didier@xemacs.org>
 
 	Fix auto-formatting of comments in auto-fill-mode.
