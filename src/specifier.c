@@ -2952,7 +2952,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 
 /* Given a SPECIFIER and a DOMAIN, return a specific instance for that
    specifier. Try to find one by checking the specifier types from most
-   specific (buffer) to most general (global).  If we find an instance,
+   specific (window) to most general (global).  If we find an instance,
    return it.  Otherwise return Qunbound. */
 
 #define CHECK_INSTANCE_ENTRY(key, matchspec, type) do {			\

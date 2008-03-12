@@ -1,3 +1,7 @@
+2008-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.c (CHECK_INSTANCE_ENTRY): Fix typo in comment.
+
 2008-03-05  Dominique Quatravaux  <domq@cpan.org>
 
 	* glyphs-gtk.c (init_image_instance_from_gdk_image):
