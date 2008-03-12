@@ -1,3 +1,9 @@
+2008-03-12  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (restore-saved-window): Restore window
+	parameters right after splitting, rather than after traversing the
+	other children.
+
 2008-03-07  Michael Sperber  <mike@xemacs.org>
 
 	* gnuserv.el (gnuserv-temp-file-regexp): Quote the temp-directory
