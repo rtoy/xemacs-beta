@@ -256,7 +256,7 @@ all: Makefile ${GENERATED_HEADERS} ${MAKE_SUBDIR} info
 .PHONY: ${SUBDIR} all beta
 
 ## Convenience target for XEmacs beta testers
-beta: elcclean all
+beta: elcclean update-version all
 
 ## Convenience target for XEmacs maintainers
 ## This would run `make-xemacsdist' if I were really confident that everything
@@ -315,6 +315,13 @@ FRC.lisp.finder-inf.el:
 
 ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
 	cd ./$@ && $(MAKE) $(RECURSIVE_MAKE_ARGS) all
+
+## This should be the same code as in configure.ac.
+update-version:
+	cp ${srcdir}/version.sh.in ${srcdir}/version.sh
+	if test -d ${srcdir}/.hg; then \
+	    (cd ${srcdir}; hg identify | cut -d " " -f 1 >> version.sh); \
+	fi
 
 ## Building modules depends on ellcc, found in lib-src.
 modules/sample modules/ldap modules/zlib modules/base64: lib-src

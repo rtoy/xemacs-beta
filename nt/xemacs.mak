@@ -74,6 +74,13 @@ BLDROOT=$(MAKEROOT)
 !endif
 !endif
 
+!if [copy $(SRCROOT)\version.sh.in $(SRCROOT)\version.sh]
+!endif
+!if exist($(SRCROOT)\.hg)
+!if [hg identify >> $(SRCROOT)\version.sh]
+!endif
+!endif
+
 # Program name and version
 !include "$(SRCROOT)\version.sh"
 
@@ -458,10 +465,10 @@ PATH_LATE_PACKAGE_DIRECTORIES="$(PACKAGE_PREFIX:\=\\)"
 !if $(INFODOCK)
 PATH_PREFIX=../..
 !else
-PATH_PREFIX=..
+PATH_PREFIX="$(INSTALL_DIR)"
 !endif
 
-PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
+PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX:\=\\)\"
 
 !if $(SEPARATE_BUILD)
 PATH_DEFINES=$(PATH_DEFINES) -DPATH_LOADSEARCH=\"$(LISP:\=\\)\" -DPATH_DATA=\"$(ETC:\=\\)\" -DPATH_INFO=\"$(INFO:\=\\)\"
@@ -691,8 +698,8 @@ CCV=@$(CC)
 # giving it.
 DEBUG_FLAG_LINK_DEBUG=-debug -opt:noref
 # This turns on additional run-time checking
-# For some reason it causes spawning of make-docfile to crash in VC 7
-DEBUG_FLAG_COMPILE_DEBUG=-RTC1
+# For some reason it causes spawning of make-docfile to crash in VC 7 and VC 8
+# DEBUG_FLAG_COMPILE_DEBUG=-RTC1
 ! else
 DEBUG_FLAG_LINK_DEBUG=-debug:full
 DEBUG_FLAG_COMPILE_DEBUG=
@@ -816,7 +823,7 @@ TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
  $(EMACS_BETA_VERSION) $(EMACS_PATCH_LEVEL) \
  -DXEMACS_CODENAME=\"$(xemacs_codename:&=and)\" \
 !if defined(xemacs_extra_name)
- -DXEMACS_EXTRA_NAME=\"$(xemacs_extra_name:"=)\" \
+ -DXEMACS_EXTRA_NAME=\""$(xemacs_extra_name:"=)"\" \
 !endif
 !if defined(PATH_LATE_PACKAGE_DIRECTORIES)
  -DPATH_LATE_PACKAGE_DIRECTORIES=\"$(PATH_LATE_PACKAGE_DIRECTORIES)\" \
@@ -1366,7 +1373,8 @@ TEMACS_DUMP_DEP = $(OUTDIR)\temacs.res
 !endif
 
 $(RAW_EXE): $(TEMACS_OBJS) $(LASTFILE) $(TEMACS_DUMP_DEP)
-	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
+# Command line too long for some Windows installation:
+#	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 	link.exe @<<
   $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 <<

@@ -45,3 +45,11 @@ info/.*\.info(-[0-9]+)?$
 ^src/xemacs\.dmp$
 ^src/Emacs\.ad\.h$
 ^etc/bundled-packages/.*\.tar\.gz$
+^lib-src/(etags|hexl|i|make-docfile|make-dump-id|minitar|mmencode|movemail|sorted-doc|wakeup|winclient)\.(exe|exe\.manifest|pdb)$
+\.obj$
+^nt/obj
+^nt/config.inc
+^src/REBUILD_AUTOLOADS$
+^src/(temacs|xemacs)\.(exe|exe\.manifest|pdb|map|bsc)$
+^TAGS$
+^version\.sh$

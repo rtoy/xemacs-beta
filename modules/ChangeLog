@@ -1,3 +1,11 @@
+2008-02-12  Jerry James  <james@xemacs.org>
+
+	* canna/install-sh: Update to latest FSF version.
+	* ldap/install-sh: Ditto.
+	* postgresql/install-sh: Ditto.
+	* sample/external/install-sh: Ditto.
+	* sample/internal/install-sh: Ditto.
+
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* canna/canna_api.c (Fcanna_set_bunsetsu):

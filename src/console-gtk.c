@@ -177,8 +177,8 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
     }
 
   if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
-    {
-      Fputhash(key, Qt, Vgtk_seen_characters;)
+    { 
+      Fputhash(key, Qt, Vgtk_seen_characters);
       Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
       if (SYMBOLP(key))
 	{

@@ -1661,7 +1661,7 @@ Database options
 
   --with-database=TYPE    Compile with database support. Valid types are `no'
                           or a comma-separated list of one or more of `berkdb'
-                          and either `dbm' or `gnudbm'.
+                          and either `dbm' or `gdbm'.
   --with-ldap             Support the LDAP protocol.
   --with-postgresql       Support the PostgreSQL RDBMS.
 
@@ -3772,7 +3772,7 @@ unset _with_database_args _database_found x y _require_database
 
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	(echo "$progname: Usage error:"
-echo " " "Only one of \`dbm' and \`gnudbm' may be specified
+echo " " "Only one of \`dbm' and \`gdbm' may be specified
 with the \`--with-database' option."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 fi
@@ -4779,6 +4779,10 @@ case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
 
 
 
+cp "$srcdir/version.sh.in" "$srcdir/version.sh"
+if test -d "$srcdir/.hg"; then
+    (cd "$srcdir"; hg identify | cut -d " " -f 1 >> version.sh)
+fi
 . "$srcdir/version.sh" || exit 1;
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
 : "${verbose=$beta}"
@@ -5351,7 +5355,7 @@ if test "$enable_newgc" = "yes"; then
   if test "$enable_vdb" = "auto"; then
     case "$opsys" in
       darwin )  case "$machine" in
-		  i686 ) check_vdb_posix=yes ;;
+		  i[3-9]86 ) check_vdb_posix=yes ;;
 		  * ) cat >>confdefs.h <<\_ACEOF
 #define VDB_MACH 1
 _ACEOF

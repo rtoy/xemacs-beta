@@ -1,6 +1,6 @@
 ;;; cus-edit.el --- Tools for customizating Emacs and Lisp packages.
 ;;
-;; Copyright (C) 2007 Didier Verna
+;; Copyright (C) 2007, 2008 Didier Verna
 ;; Copyright (C) 2003 Ben Wing
 ;; Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
 ;;
@@ -836,7 +836,7 @@ This means, in other words, variables defined with a `:version' keyword."
 		       (and version
 			    (or (null since-version)
 				(customize-version-lessp since-version
-                                                         version))))
+							 version))))
 		     (push (list symbol 'custom-variable) found))))
     (unless found
       (error "No user options have changed defaults %s"
@@ -870,39 +870,86 @@ Show the buffer in another window, but don't select it."
    (list (list symbol 'custom-variable))
    (format "*Customize Option: %s*" (custom-unlispify-tag-name symbol))))
 
-;;;###autoload
-(defun customize-face (&optional symbol)
-  "Customize SYMBOL, which should be a face name or nil.
-If SYMBOL is nil, customize all faces."
-  (interactive (list (completing-read "Customize face: (default all) "
-				      obarray 'find-face)))
-  (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
-      (custom-buffer-create (custom-sort-items
-			     (mapcar (lambda (symbol)
-				       (list symbol 'custom-face))
-				     (face-list))
-			     t nil)
-			    "*Customize Faces*")
-    (when (stringp symbol)
-      (setq symbol (intern symbol)))
-    (check-argument-type 'symbolp symbol)
-    (custom-buffer-create (list (list symbol 'custom-face))
-			  (format "*Customize Face: %s*"
-				  (custom-unlispify-tag-name symbol)))))
+
+(defun custom-face-prompt ()
+  ;; Interactive call for `customize-face' and `customize-face-other-window'.
+  ;; See their docstrings for more information. Note that this call returns a
+  ;; list of only one element. This is because the callers'second arg AT-POINT
+  ;; is only used in interactive calls.
+  (let ((faces (get-char-property (point) 'face)))
+    (if (or (null faces) (not current-prefix-arg))
+	;; The default behavior, which is to prompt for all faces, is also
+	;; used as a fall back when a prefix is given but there's no face
+	;; under point:
+	(let ((choice (completing-read "Customize face: (default all) "
+				       obarray 'find-face)))
+	  (if (zerop (length choice))
+	      nil
+	    (list (intern choice))))
+      (cond ((symbolp faces)
+	     ;; Customize only this one:
+	     (list (list faces)))
+	    ((listp faces)
+	     ;; Make a choice only amongst the faces under point:
+	     (let ((choice (completing-read
+			    "Customize face: (default all faces at point) "
+			    (mapcar (lambda (face)
+				      (list (symbol-name face) face))
+				    faces)
+			    nil t)))
+	       (if (zerop (length choice))
+		   (list faces)
+		 (list (intern choice)))))))))
+
+(defun customize-face-1 (face custom-buffer-create-fn)
+  ;; Customize FACE in a buffer created with BUFFER-CREATE-FN.
+  ;; See the docstring of `customize-face' and `customize-face-other-window'
+  ;; for more information.
+  (cond ((null face)
+	 (funcall custom-buffer-create-fn
+		  (custom-sort-items
+		   (mapcar (lambda (symbol)
+			     (list symbol 'custom-face))
+			   (face-list))
+		   t nil)
+		  "*Customize All Faces*"))
+	((listp face)
+	 (funcall custom-buffer-create-fn
+		  (custom-sort-items
+		   (mapcar (lambda (symbol)
+			     (list symbol 'custom-face))
+			   face)
+		   t nil)
+		  "*Customize Some Faces*"))
+	((symbolp face)
+	 (funcall custom-buffer-create-fn
+		  (list (list face 'custom-face))
+		  (format "*Customize Face: %s*"
+			  (custom-unlispify-tag-name face))))
+	(t
+	 (signal-error 'wrong-type-argument
+		       '((or null listp symbolp) face)))))
+
 
 ;;;###autoload
-(defun customize-face-other-window (&optional symbol)
-  "Show customization buffer for FACE in other window."
-  (interactive (list (completing-read "Customize face: "
-				      obarray 'find-face)))
-  (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
-      ()
-    (if (stringp symbol)
-	(setq symbol (intern symbol)))
-    (check-argument-type 'symbolp symbol)
-    (custom-buffer-create-other-window
-     (list (list symbol 'custom-face))
-     (format "*Customize Face: %s*" (custom-unlispify-tag-name symbol)))))
+(defun customize-face (&optional face at-point)
+  "Open a customization buffer for FACE.
+FACE should be either:
+- nil, meaning to customize all faces,
+- a list of symbols naming faces, meaning to customize only those,
+- a symbol naming a face, meaning to customize this face only.
+
+When called interactively, use a prefix (the AT-POINT argument) to
+make a choice among the faces found at current position."
+  (interactive (custom-face-prompt))
+  (customize-face-1 face #'custom-buffer-create))
+
+;;;###autoload
+(defun customize-face-other-window (&optional face at-point)
+  "Like `customize-face', but use another window."
+  (interactive (custom-face-prompt))
+  (customize-face-1 face #'custom-buffer-create-other-window))
+
 
 ;;;###autoload
 (defun customize-customized ()
@@ -2207,35 +2254,35 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 (defvar custom-variable-menu
   `(("Set for Current Session" custom-variable-set
      ,#'(lambda (widget)
-          (eq (widget-get widget :custom-state) 'modified)))
+	  (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-variable-save
      ,#'(lambda (widget)
-          (memq (widget-get widget :custom-state)
-                '(modified set changed rogue))))
+	  (memq (widget-get widget :custom-state)
+		'(modified set changed rogue))))
     ("Reset to Current" custom-redraw
      ,#'(lambda (widget)
-          (and (default-boundp (widget-value widget))
-               (memq (widget-get widget :custom-state) '(modified changed)))))
+	  (and (default-boundp (widget-value widget))
+	       (memq (widget-get widget :custom-state) '(modified changed)))))
     ("Reset to Saved" custom-variable-reset-saved
      ,#'(lambda (widget)
-          (and (or (get (widget-value widget) 'saved-value)
-                   (get (widget-value widget) 'saved-variable-comment))
-               (memq (widget-get widget :custom-state)
-                     '(modified set changed rogue)))))
+	  (and (or (get (widget-value widget) 'saved-value)
+		   (get (widget-value widget) 'saved-variable-comment))
+	       (memq (widget-get widget :custom-state)
+		     '(modified set changed rogue)))))
     ("Reset to Standard Settings" custom-variable-reset-standard
      ,#'(lambda (widget)
-          (and (get (widget-value widget) 'standard-value)
-               (memq (widget-get widget :custom-state)
-                     '(modified set changed saved rogue)))))
+	  (and (get (widget-value widget) 'standard-value)
+	       (memq (widget-get widget :custom-state)
+		     '(modified set changed saved rogue)))))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Don't show as Lisp expression" custom-variable-edit
      ,#'(lambda (widget)
-          (eq (widget-get widget :custom-form) 'lisp)))
+	  (eq (widget-get widget :custom-form) 'lisp)))
     ("Show as Lisp expression" custom-variable-edit-lisp
      ,#'(lambda (widget)
-          (eq (widget-get widget :custom-form) 'edit))))
+	  (eq (widget-get widget :custom-form) 'edit))))
   "Alist of actions for the `custom-variable' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -2701,23 +2748,23 @@ Match frames with dark backgrounds")
     ("Save for Future Sessions" custom-face-save)
     ("Reset to Saved" custom-face-reset-saved
      ,#'(lambda (widget)
-          (or (get (widget-value widget) 'saved-face)
-              (get (widget-value widget) 'saved-face-comment))))
+	  (or (get (widget-value widget) 'saved-face)
+	      (get (widget-value widget) 'saved-face-comment))))
     ("Reset to Standard Setting" custom-face-reset-standard
      ,#'(lambda (widget)
-          (get (widget-value widget) 'face-defface-spec)))
+	  (get (widget-value widget) 'face-defface-spec)))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Show all display specs" custom-face-edit-all
      ,#'(lambda (widget)
-          (not (eq (widget-get widget :custom-form) 'all))))
+	  (not (eq (widget-get widget :custom-form) 'all))))
     ("Just current attributes" custom-face-edit-selected
      ,#'(lambda (widget)
-          (not (eq (widget-get widget :custom-form) 'selected))))
+	  (not (eq (widget-get widget :custom-form) 'selected))))
     ("Show as Lisp expression" custom-face-edit-lisp
      ,#'(lambda (widget)
-          (not (eq (widget-get widget :custom-form) 'lisp)))))
+	  (not (eq (widget-get widget :custom-form) 'lisp)))))
   "Alist of actions for the `custom-face' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -3341,19 +3388,19 @@ Creating group members... %2d%%"
 (defvar custom-group-menu
   `(("Set for Current Session" custom-group-set
      ,#'(lambda (widget)
-          (eq (widget-get widget :custom-state) 'modified)))
+	  (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-group-save
      ,#'(lambda (widget)
-          (memq (widget-get widget :custom-state) '(modified set))))
+	  (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to Current" custom-group-reset-current
      ,#'(lambda (widget)
-          (memq (widget-get widget :custom-state) '(modified))))
+	  (memq (widget-get widget :custom-state) '(modified))))
     ("Reset to Saved" custom-group-reset-saved
      ,#'(lambda (widget)
-          (memq (widget-get widget :custom-state) '(modified set))))
+	  (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to standard setting" custom-group-reset-standard
      ,#'(lambda (widget)
-          (memq (widget-get widget :custom-state) '(modified set saved)))))
+	  (memq (widget-get widget :custom-state) '(modified set saved)))))
   "Alist of actions for the `custom-group' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -3767,12 +3814,12 @@ Hashes several heavily used functions for `custom-save-resets'")
     (custom-save-faces)
     (let ((find-file-hooks nil)
 	  (auto-mode-alist)
-          custom-file-directory)
-      (unless (file-directory-p (setq custom-file-directory 
-                                      (file-name-directory custom-file)))
-        (message "Creating %s... " custom-file-directory)
-        (make-directory custom-file-directory t)
-        (message "Creating %s... done." custom-file-directory))
+	  custom-file-directory)
+      (unless (file-directory-p (setq custom-file-directory
+				      (file-name-directory custom-file)))
+	(message "Creating %s... " custom-file-directory)
+	(make-directory custom-file-directory t)
+	(message "Creating %s... done." custom-file-directory))
       (with-current-buffer (find-file-noselect custom-file)
 	(save-buffer)))))
 

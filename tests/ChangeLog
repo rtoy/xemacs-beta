@@ -1,3 +1,34 @@
+2008-02-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (let):
+	Correct and extend the previous test, thank you Stephen. 
+
+2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (Assert): 
+	New test case; thank you Michael Sperber. 
+
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (pristine-case-table): 
+	New var, reflecting the standard case table before case-table.el
+	messes with it. 
+	* automated/case-tests.el: 
+	Call Skip-Test-Unless correctly, following Vin's report of
+	20a807210801300635v7533d26rdb32a8d82fb4239b@mail.gmail.com . 
+	Use pristine-case-table, add in a couple more tests.
+	* automated/test-harness.el (test-harness-from-buffer): 
+	Update the error message in the light of tests skipped for other
+	reasons (not to do with absent packages). In this case, because
+	we're exposing diagnostics in a DEBUG_XEMACS build that are no
+	appropriate to expose to non-DEBUG_XEMACS builds. 
+
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el:
+	Check for a bug Mike Sperber reported; check algorithms used, if
+	available. 
+
 2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (test-file-name): 

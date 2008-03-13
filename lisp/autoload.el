@@ -226,19 +226,40 @@ the section of autoloads for a file.")
 ;; Parsing the source file text.
 ;; Autoloads in C source differ from those in Lisp source.
 
-;; #### Eventually operators like defclass and defmethod (defined in an
-;; external package, EIEIO) may be factored out.  Don't add operators here
-;; without discussing whether and how to do that on the developers' channel.
-(defvar autoload-make-autoload-operators
-  '(defun define-skeleton defmacro define-derived-mode define-generic-mode
-    easy-mmode-define-minor-mode easy-mmode-define-global-mode
-    define-minor-mode defun* defmacro* defclass defmethod)
-  "`defun'-like operators that use `autoload' to load the library.")
+; Add operator definitions to autoload-operators.el in the xemacs-base
+; package.
+(ignore-errors (require 'autoload-operators))
 
-(defvar autoload-make-autoload-complex-operators
-  '(easy-mmode-define-minor-mode easy-mmode-define-global-mode
-    define-minor-mode)
-  "`defun'-like operators to macroexpand before using `autoload'.")
+; As autoload-operators is new, provide stopgap measure for a while.
+(if (not (boundp 'autoload-make-autoload-operators))
+    (progn
+      (defvar autoload-make-autoload-operators
+	'(defun define-skeleton defmacro define-derived-mode define-generic-mode
+	  easy-mmode-define-minor-mode easy-mmode-define-global-mode
+	  define-minor-mode defun* defmacro*)
+	"`defun'-like operators that use `autoload' to load the library.")
+      
+      (defvar autoload-make-autoload-complex-operators
+	'(easy-mmode-define-minor-mode easy-mmode-define-global-mode
+	  define-minor-mode)
+	"`defun'-like operators to macroexpand before using `autoload'.")
+      
+      (put 'autoload 'doc-string-elt 3)
+      (put 'defun    'doc-string-elt 3)
+      (put 'defun*   'doc-string-elt 3)
+      (put 'defvar   'doc-string-elt 3)
+      (put 'defcustom 'doc-string-elt 3)
+      (put 'defconst 'doc-string-elt 3)
+      (put 'defmacro 'doc-string-elt 3)
+      (put 'defmacro* 'doc-string-elt 3)
+      (put 'defsubst 'doc-string-elt 3)
+      (put 'define-skeleton 'doc-string-elt 2)
+      (put 'define-derived-mode 'doc-string-elt 4)
+      (put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
+      (put 'define-minor-mode 'doc-string-elt 2)
+      (put 'define-generic-mode 'doc-string-elt 7)
+      ;; defin-global-mode has no explicit docstring.
+      (put 'easy-mmode-define-global-mode 'doc-string-elt 1000)))
 
 (defun make-autoload (form file)
   "Turn FORM into an autoload or defvar for source file FILE.
@@ -779,43 +800,6 @@ at the beginning of lines and ^L characters."
 		(delete-char -1)
 		(insert "\\^L")))
 	    (goto-char p2))))))))
-
-;;; Forms which have doc-strings which should be printed specially.
-;;; A doc-string-elt property of ELT says that (nth ELT FORM) is
-;;; the doc-string in FORM.
-;;;
-;;; There used to be the following note here:
-;;; ;;; Note: defconst and defvar should NOT be marked in this way.
-;;; ;;; We don't want to produce defconsts and defvars that
-;;; ;;; make-docfile can grok, because then it would grok them twice,
-;;; ;;; once in foo.el (where they are given with ;;;###autoload) and
-;;; ;;; once in loaddefs.el.
-;;;
-;;; Counter-note: Yes, they should be marked in this way.
-;;; make-docfile only processes those files that are loaded into the
-;;; dumped Emacs, and those files should never have anything
-;;; autoloaded here.  The above-feared problem only occurs with files
-;;; which have autoloaded entries *and* are processed by make-docfile;
-;;; there should be no such files.
-
-(put 'autoload 'doc-string-elt 3)
-(put 'defun    'doc-string-elt 3)
-(put 'defun*   'doc-string-elt 3)
-(put 'defvar   'doc-string-elt 3)
-(put 'defcustom 'doc-string-elt 3)
-(put 'defconst 'doc-string-elt 3)
-(put 'defmacro 'doc-string-elt 3)
-(put 'defmacro* 'doc-string-elt 3)
-(put 'defsubst 'doc-string-elt 3)
-(put 'define-skeleton 'doc-string-elt 2)
-(put 'define-derived-mode 'doc-string-elt 4)
-(put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
-(put 'define-minor-mode 'doc-string-elt 2)
-(put 'define-generic-mode 'doc-string-elt 7)
-(put 'defclass 'doc-string-elt 4)
-(put 'defmethod 'doc-string-elt 3)
-;; defin-global-mode has no explicit docstring.
-(put 'easy-mmode-define-global-mode 'doc-string-elt 1000)
 
 (defun autoload-trim-file-name (file)
   "Returns relative pathname of FILE including the last directory.

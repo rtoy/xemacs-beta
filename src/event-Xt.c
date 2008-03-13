@@ -1493,7 +1493,6 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
           return 0;
 
 	SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
-	SET_EVENT_MAGIC_X_EVENT (emacs_event, *x_event_copy);
         break;
       }
     }

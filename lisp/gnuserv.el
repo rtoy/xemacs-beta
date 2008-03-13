@@ -214,7 +214,7 @@ current buffer set to the visiting buffer."
   :group 'gnuserv)
 
 (defcustom gnuserv-temp-file-regexp
-  (concat "^" (temp-directory) "/Re\\|/draft$")
+  (concat "^" (regexp-quote (temp-directory)) "/Re\\|/draft$")
   "*Regexp which should match filenames of temporary files deleted
 and reused by the programs that invoke the Emacs server."
   :type 'regexp

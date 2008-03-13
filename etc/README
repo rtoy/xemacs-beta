@@ -17,7 +17,7 @@ TUTORIAL		Tutorial for first time users (English version)
 TUTORIAL.*		Tutorials in non-English languages
 VEGETABLES		XEmacs 21.5 code names
 XKeysymDB		X Keysym Database with Motif bindings
-cbx.png			"Created by XEmacs" logo
+cbx.png			"Created by XEmacs" logo (150x54 8bpp)
 ctags.1			Ctags man page
 custom/			Images used in Custom mode
 editclient.sh		Either start up XEmacs or connect to a running one
@@ -30,12 +30,12 @@ gnuclient.1		Gnuclient man page
 gnudoit.1		Gnudoit man page
 gnuserv.1		Gnuserv man page
 gnuserv.README		Original README file from gnuserv
-gray1.xbm		Gray bitmap
+gray1.xbm		Halftone gray bitmap (16x16)
 idd/			?
 package-index.LATEST.gpg ?
 photos/*		Various pictures of XEmacs developers
-recycle.xpm
-recycle2.xpm		Two versions of oversized Recycle cursor
+recycle.xpm		Chartreuse recycle cursor (51x51)
+recycle2.xpm		Chartreuse recycle cursor (32x32)
 refcard.ps.gz		Postscript version of XEmacs reference card
 refcard.tex		XEmacs reference card
 sample.Xdefaults	(legacy -- to be removed)
@@ -44,15 +44,18 @@ sample.init.el		Example ~/.xemacs/init.el file
 sparcworks/		Support files for Sparcworks
 tests/			Testcases for external widget
 toolbar/		Image files for the toolbar
-trash.xpm		Garbage can icon
+trash.xpm		B&W garbage can icon (32x46)
 unicode/		Unicode conversion tables
-xemacs-beta.xpm		XEmacs Beta logo
-xemacs-enhanced.png	"XEmacs-enhanced" logo
+xemacs-X-16.png		Violet boxed X icon (16x16)
+xemacs-X-32.png		Violet boxed X icon (32x32)
+xemacs-X.ico		Violet boxed X icon in MS Windows format
+xemacs-beta.xpm		XEmacs Beta logo for splashscreen (388x145)
+xemacs-enhanced.png	"XEmacs-enhanced" logo (90x32)
 xemacs-fe.sh		XEmacs frontend driver
-xemacs-icon.xpm
-xemacs-icon2.xbm
-xemacs-icon2.xpm
-xemacs-icon3.xpm	Various versions of an XEmacs WM icon
+xemacs-icon.xpm		Color XE on page icon (48x48)
+xemacs-icon2.xbm	B&W kitchen sink icon (50x50)
+xemacs-icon2.xpm	Color kitchen sink icon (50x50)
+xemacs-icon3.xpm	Grayscale X icon (48x48)
 xemacs.1		XEmacs man page
-xemacs.xbm
-xemacs.xpm		XEmacs logo used on the splash screen
+xemacs.xbm		Half-tone XEmacs logo (266x61)
+xemacs.xpm		XEmacs logo for splashscreen (388x145)

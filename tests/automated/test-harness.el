@@ -444,9 +444,9 @@ BODY is a sequence of expressions and may contain several tests."
 		 skipped-test-reasons)
 	(when (> (length reasons) 1)
 	  (setq summary-msg (concat summary-msg reasons "
-    Probably XEmacs cannot find your installed packages.  Set EMACSPACKAGEPATH
-    to the package hierarchy root or configure with --package-path to enable
-    the skipped tests.")))
+    It may be that XEmacs cannot find your installed packages.  Set
+    EMACSPACKAGEPATH to the package hierarchy root or configure with
+    --package-path to enable the skipped tests.")))
 	(setq test-harness-file-results-alist
 	      (cons (list filename passes total)
 		    test-harness-file-results-alist))
