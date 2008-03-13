@@ -553,15 +553,24 @@ See that the documentation of `query-coding-region'; see also
   (check-argument-type #'integer-or-marker-p begin)
   (check-argument-type #'integer-or-marker-p end)
   (let ((from-unicode
-         (coding-system-get coding-system '8-bit-fixed-query-from-unicode))
+         (or (coding-system-get coding-system '8-bit-fixed-query-from-unicode)
+	     (coding-system-get (coding-system-base coding-system)
+				'8-bit-fixed-query-from-unicode)))
         (skip-chars-arg
-         (coding-system-get coding-system '8-bit-fixed-query-skip-chars))
+         (or (coding-system-get coding-system '8-bit-fixed-query-skip-chars)
+	     (coding-system-get (coding-system-base coding-system)
+				'8-bit-fixed-query-skip-chars)))
 	(ranges (make-range-table))
         char-after fail-range-start fail-range-end previous-fail extent
 	failed)
     (check-type from-unicode hash-table)
     (check-type skip-chars-arg string)
     (save-excursion
+      (when highlightp
+	(map-extents #'(lambda (extent ignored-arg)
+			 (when (eq 'query-coding-warning-face
+				   (extent-face extent))
+			   (delete-extent extent))) buffer begin end))
       (goto-char begin buffer)
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
@@ -588,7 +597,7 @@ See that the documentation of `query-coding-region'; see also
 	  (when errorp 
 	    (error 'text-conversion-error
 		   (format "Cannot encode %s using coding system"
-			   (buffer-substring fail-range-start (point buffeR)
+			   (buffer-substring fail-range-start (point buffer)
 					     buffer))
 		   (coding-system-name coding-system)))
 	  (put-range-table fail-range-start
@@ -603,8 +612,8 @@ See that the documentation of `query-coding-region'; see also
 	    (setq extent (make-extent fail-range-start fail-range-end buffer))
 	    (set-extent-priority extent (+ mouse-highlight-priority 2))
 	    (set-extent-face extent 'query-coding-warning-face))
-	  (skip-chars-forward skip-chars-arg end buffer))
-	(message "about to give the result, ranges %S" ranges))
+	  (skip-chars-forward skip-chars-arg end buffer)))
+      (message "about to give the result, ranges %S" ranges)
       (if failed 
 	  (values nil ranges)
 	(values t nil)))))

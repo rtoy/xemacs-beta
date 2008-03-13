@@ -299,8 +299,13 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
   (check-argument-type #'integer-or-marker-p begin)
   (check-argument-type #'integer-or-marker-p end)
   (let* ((safe-charsets
-          (coding-system-get coding-system 'safe-charsets))
-         (safe-chars (coding-system-get coding-system 'safe-chars))
+          (or (coding-system-get coding-system 'safe-charsets)
+	      (coding-system-get (coding-system-base coding-system)
+				 'safe-charsets)))
+         (safe-chars
+	  (or (coding-system-get coding-system 'safe-chars)
+	      (coding-system-get (coding-system-base coding-system)
+				 'safe-chars)))
          (skip-chars-arg
           (gethash safe-charsets
                    default-query-coding-region-safe-charset-skip-chars-map))
@@ -313,6 +318,11 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 		     (mapconcat #'charset-skip-chars-string
 				safe-charsets "")
 		     default-query-coding-region-safe-charset-skip-chars-map)))
+    (when highlightp
+      (map-extents #'(lambda (extent ignored-arg)
+		       (when (eq 'query-coding-warning-face
+				 (extent-face extent))
+			 (delete-extent extent))) buffer begin end))
     (if (and (zerop (length skip-chars-arg)) (null safe-chars))
 	(progn
 	    ;; Uh-oh, nothing known about this coding system. Fail. 

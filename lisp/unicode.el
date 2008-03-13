@@ -624,15 +624,20 @@ mapping from the error sequences to the desired characters.  "
   (let* ((skip-chars-arg unicode-query-coding-skip-chars-arg)
          (ranges (make-range-table))
          (looking-at-arg (concat "[" skip-chars-arg "]"))
-         fail-range-start fail-range-end previous-fail char-after
-	 failed extent)
+         fail-range-start fail-range-end previous-fail char-after failed
+	 extent)
     (save-excursion
+      (when highlightp
+	(map-extents #'(lambda (extent ignored-arg)
+			 (when (eq 'query-coding-warning-face
+				   (extent-face extent))
+			   (delete-extent extent))) buffer begin end))
       (goto-char begin buffer)
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
-        (message
-         "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
-         fail-range-start previous-fail (point buffer) end)
+;        (message
+;         "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
+;         fail-range-start previous-fail (point buffer) end)
         (setq char-after (char-after (point buffer) buffer)
               fail-range-start (point buffer))
         (while (and
@@ -646,7 +651,7 @@ mapping from the error sequences to the desired characters.  "
         (if (= fail-range-start (point buffer))
             ;; The character can actually be encoded by the coding
             ;; system; check the characters past it.
-            (forward-char 1 buffer)
+	    (forward-char 1 buffer)
           ;; Can't be encoded; note this.
           (when errorp 
             (error 'text-conversion-error
