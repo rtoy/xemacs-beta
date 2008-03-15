@@ -1,3 +1,8 @@
+2008-03-15  Michael Sperber  <mike@xemacs.org>
+
+	* lread.c (read1): Signal an error on ?\<newline>, thus preventing
+	an assertion failure higher up.
+
 2008-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.c (CHECK_INSTANCE_ENTRY): Fix typo in comment.
