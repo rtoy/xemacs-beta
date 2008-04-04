@@ -1,3 +1,8 @@
+2008-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* custom.el (custom-theme-reset-internal): Fix call to get (symbol
+	and property were reversed).
+
 2008-03-12  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (restore-saved-window): Restore window

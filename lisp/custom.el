@@ -1039,7 +1039,7 @@ stored in SYMBOL's property `standard-value'."
     (setq value (or value (get symbol 'standard-value)))
     (when value
       (put symbol 'saved-value was-in-theme)
-      (if (or (get 'force-value symbol) (default-boundp symbol))
+      (if (or (get symbol 'force-value) (default-boundp symbol))
           (funcall (or (get symbol 'custom-set) 'set-default) symbol
                    (eval (car value)))))
     value))
