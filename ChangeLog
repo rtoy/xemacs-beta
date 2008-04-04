@@ -1,3 +1,15 @@
+2008-04-01  Andreas Schwab  <schwab@suse.de>
+
+	Thanks to Mike Fabian for posting a patch to the mainline, to Martin
+	Buchholz for writing the ChangeLog, and to Aidan Kehoe for finding
+	the 2003-01-27 ChangeLog.  Tested against Xaw3d. -- stephen
+
+	* configure.ac (athena_3d):
+	AC_CHECK_LIB must always take a function as
+	argument, never a global variable.  Some linkers can tell the
+	difference.  So change:
+	threeDClassRec ==> XawSme3dComputeTopShadowRGB
+
 2008-02-15  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Look for all x86 machines to determine which write

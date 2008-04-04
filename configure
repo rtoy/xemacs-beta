@@ -25701,9 +25701,9 @@ ac_res=`eval echo '${'$as_ac_Lib'}'`
 echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_Lib'}'` = yes; then
 
-                as_ac_Lib=`echo "ac_cv_lib_$athena_variant''_threeDClassRec" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for threeDClassRec in -l$athena_variant" >&5
-echo $ECHO_N "checking for threeDClassRec in -l$athena_variant... $ECHO_C" >&6; }
+                as_ac_Lib=`echo "ac_cv_lib_$athena_variant''_XawSme3dComputeTopShadowRGB" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for XawSme3dComputeTopShadowRGB in -l$athena_variant" >&5
+echo $ECHO_N "checking for XawSme3dComputeTopShadowRGB in -l$athena_variant... $ECHO_C" >&6; }
 if { as_var=$as_ac_Lib; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -25722,11 +25722,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char threeDClassRec ();
+char XawSme3dComputeTopShadowRGB ();
 int
 main ()
 {
-return threeDClassRec ();
+return XawSme3dComputeTopShadowRGB ();
   ;
   return 0;
 }
@@ -25778,9 +25778,9 @@ echo "$as_me: WARNING: Could not find an Athena widget library." >&2;}
 fi
 
   else
-        as_ac_Lib=`echo "ac_cv_lib_$athena_variant''_threeDClassRec" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for threeDClassRec in -l$athena_variant" >&5
-echo $ECHO_N "checking for threeDClassRec in -l$athena_variant... $ECHO_C" >&6; }
+        as_ac_Lib=`echo "ac_cv_lib_$athena_variant''_XawSme3dComputeTopShadowRGB" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for XawSme3dComputeTopShadowRGB in -l$athena_variant" >&5
+echo $ECHO_N "checking for XawSme3dComputeTopShadowRGB in -l$athena_variant... $ECHO_C" >&6; }
 if { as_var=$as_ac_Lib; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -25799,11 +25799,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char threeDClassRec ();
+char XawSme3dComputeTopShadowRGB ();
 int
 main ()
 {
-return threeDClassRec ();
+return XawSme3dComputeTopShadowRGB ();
   ;
   return 0;
 }
@@ -25844,9 +25844,9 @@ echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   athena_lib=$athena_variant
 else
-              { echo "$as_me:$LINENO: checking for threeDClassRec in -lXaw" >&5
-echo $ECHO_N "checking for threeDClassRec in -lXaw... $ECHO_C" >&6; }
-if test "${ac_cv_lib_Xaw_threeDClassRec+set}" = set; then
+              { echo "$as_me:$LINENO: checking for XawSme3dComputeTopShadowRGB in -lXaw" >&5
+echo $ECHO_N "checking for XawSme3dComputeTopShadowRGB in -lXaw... $ECHO_C" >&6; }
+if test "${ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -25864,11 +25864,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char threeDClassRec ();
+char XawSme3dComputeTopShadowRGB ();
 int
 main ()
 {
-return threeDClassRec ();
+return XawSme3dComputeTopShadowRGB ();
   ;
   return 0;
 }
@@ -25891,21 +25891,21 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_Xaw_threeDClassRec=yes
+  ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_Xaw_threeDClassRec=no
+	ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_Xaw_threeDClassRec" >&5
-echo "${ECHO_T}$ac_cv_lib_Xaw_threeDClassRec" >&6; }
-if test $ac_cv_lib_Xaw_threeDClassRec = yes; then
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB" >&5
+echo "${ECHO_T}$ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB" >&6; }
+if test $ac_cv_lib_Xaw_XawSme3dComputeTopShadowRGB = yes; then
 
           athena_lib=Xaw;
           { echo "$as_me:$LINENO: WARNING: Assuming that libXaw is actually $athena_variant." >&5

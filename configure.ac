@@ -4241,17 +4241,17 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
     AC_CHECK_LIB($athena_variant, XawScrollbarSetThumb,
       [
         dnl Must not be a 3d library...
-        AC_CHECK_LIB($athena_variant, threeDClassRec,
+        AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB,
           [AC_MSG_WARN([Could not find a non-3d Athena widget library.])],
           athena_lib=$athena_variant)
       ],
       AC_MSG_WARN([Could not find an Athena widget library.]))
   else
     dnl The real configuration, need 3d library
-    AC_CHECK_LIB($athena_variant, threeDClassRec, athena_lib=$athena_variant,
+    AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB, athena_lib=$athena_variant,
       dnl OK, couldn't find it with a proper name, try the standard Athena lib
       dnl If that is 3d, presume the user asked for what they have installed.
-      AC_CHECK_LIB(Xaw, threeDClassRec,
+      AC_CHECK_LIB(Xaw, XawSme3dComputeTopShadowRGB,
         [
           athena_lib=Xaw;
           AC_MSG_WARN([Assuming that libXaw is actually $athena_variant.]);
