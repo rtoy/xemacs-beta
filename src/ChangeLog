@@ -1,3 +1,8 @@
+2008-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* depend: 
+	Regenerate with LF line endings, not CRLF. 
+
 2008-03-15  Michael Sperber  <mike@xemacs.org>
 
 	* lread.c (read1): Signal an error on ?\<newline>, thus preventing
