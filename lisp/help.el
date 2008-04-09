@@ -1424,8 +1424,6 @@ part of the documentation of internal subroutines."
             (t
              nil)))
     (princ "\n")
-    (if autoload-file
-	(princ (format "  -- autoloads from \"%s\"\n" autoload-file)))
     (or file-name
 	(setq file-name (symbol-file function)))
     (when file-name

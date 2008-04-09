@@ -1,3 +1,9 @@
+2008-04-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1): 
+	Rely on #'symbol-file to tell which file an autoloaded function
+	belongs to, don't special-case them.
+
 2008-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* custom.el (custom-theme-reset-internal): Fix call to get (symbol
