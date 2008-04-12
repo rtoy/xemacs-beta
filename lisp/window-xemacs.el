@@ -135,6 +135,10 @@ if a window manager employing virtual desktops is in use."
   min-width min-height
   saved-root-window)
 
+; make sure we don't get affected by harmful advice
+(fset 'real-split-window (symbol-function 'split-window))
+(fset 'real-delete-window (symbol-function 'delete-window))
+
 (defun window-configuration-equal (conf-1 conf-2)
   "Returns a boolean indicating whether the two given configurations
 are identical.
@@ -369,7 +373,7 @@ by `current-window-configuration'."
     (while window
       (if (window-live-p window)
 	  (let ((next (window-next-child window)))
-	    (delete-window window)
+	    (real-delete-window window)
 	    (setq window next)))))
   (cond
    ((window-first-hchild window)
@@ -383,9 +387,9 @@ by `current-window-configuration'."
    ((and (saved-window-next-child saved-window)
 	 (not (saved-window-minibufferp (saved-window-next-child saved-window))))
     (cond ((eq direction 'vertical)
-	   (split-window window nil nil))
+	   (real-split-window window nil nil))
 	  ((eq direction 'horizontal)
-	   (split-window window nil t)))
+	   (real-split-window window nil t)))
     (if (not (saved-window-minibufferp saved-window))
 	(restore-saved-window-parameters configuration window saved-window))
     (restore-saved-window configuration

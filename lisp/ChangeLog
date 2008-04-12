@@ -1,3 +1,10 @@
+2008-04-12  Henry S. Thompson <ht@inf.ed.ac.uk>
+
+	* window-xemacs.el (real-split-window, real-delete-window): Define
+	these to the original definitions of `split-window' and
+	`delete-window', and use them in the window-configuration code to
+	make sure it doesn't get affected by advice to these functions.
+	
 2008-04-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (describe-function-1): 
