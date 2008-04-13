@@ -124,7 +124,8 @@ if a window manager employing virtual desktops is in use."
   pixel-left pixel-top pixel-right pixel-bottom
   hscroll modeline-hscroll
   dedicatedp
-  first-hchild first-vchild next-child)
+  first-hchild first-vchild next-child
+  window)
 
 (defstruct window-configuration
   frame
@@ -260,6 +261,7 @@ its value is -not- saved."
 	  (bottom (nth 3 edges)))
       (let ((saved-window
 	     (make-saved-window
+	      :window window
 	      :currentp (eq window (selected-window (window-frame window)))
 	      :minibufferp (eq window (minibuffer-window (window-frame window)))
 	      :minibuffer-scrollp (eq window minibuffer-scroll-window)
@@ -290,10 +292,39 @@ its value is -not- saved."
 		    (copy-marker (mark-marker t buffer)))))
 	saved-window))))
 
+(defmacro save-window-excursion/mapping (&rest body)
+  "Execute body, preserving window sizes and contents.
+Restores which buffer appears in which window, where display starts,
+as well as the current buffer.
+Return alist mapping old windows to new windows.
+This alist maps the originally captured windows to the windows that correspond
+to them in the restored configuration.  It does not include entries for
+windows that have not changed identity.
+Does not restore the value of point in current buffer."
+  (let ((window-config (gensym 'window-config))
+	(mapping (gensym 'mapping)))
+    `(let ((,window-config (current-window-configuration))
+	   (,mapping))
+      (unwind-protect
+	  (progn ,@body)
+	(setq ,mapping (set-window-configuration/mapping ,window-config)))
+      ,mapping)))
+
 (defun set-window-configuration (configuration)
   "Set the configuration of windows and buffers as specified by CONFIGURATION.
 CONFIGURATION must be a value previously returned
 by `current-window-configuration'."
+  (set-window-configuration/mapping configuration)
+  nil) ; make sure nobody relies on mapping return value
+
+(defun set-window-configuration/mapping (configuration)
+  "Set the configuration of windows and buffers as specified by CONFIGURATION.
+CONFIGURATION must be a value previously returned
+by `current-window-configuration'.
+Return alist mapping old windows to new windows.
+This alist maps the originally captured windows to the windows that correspond
+to them in the restored configuration.  It does not include entries for
+windows that have not changed identity."
   (let ((frame (window-configuration-frame configuration)))
     (if (and (frame-live-p frame)
 	     (not (window-configuration-equal configuration
@@ -301,7 +332,8 @@ by `current-window-configuration'."
 	(really-set-window-configuration frame configuration))))
 
 (defun really-set-window-configuration (frame configuration)
-  "Set the window configuration CONFIGURATION on live frame FRAME."
+  "Set the window configuration CONFIGURATION on live frame FRAME.
+Return alist mapping old windows to new windows."
   ;; avoid potential temporary problems
   (setq window-min-width 0)
   (setq window-min-height 0)
@@ -332,22 +364,26 @@ by `current-window-configuration'."
     ;; the selected window
     (select-window (minibuffer-window frame))
 
-    (let ((window-configuration-current-window nil))
+    (let ((window-configuration-current-window nil)
+	  (mapping (list nil))) ; poor man's box
+      
       (declare (special window-configuration-current-window))
       (restore-saved-window configuration
 			    root-window
 			    (window-configuration-saved-root-window configuration)
-			    'vertical) 
+			    'vertical
+			    mapping) 
       (if window-configuration-current-window
-	  (select-window window-configuration-current-window))))
-
-  (setq window-min-width (window-configuration-min-width configuration))
-  (setq window-min-height (window-configuration-min-height configuration))
-
-  (let ((buffer (window-configuration-current-buffer configuration)))
-    (if (buffer-live-p buffer)
-	(set-buffer buffer)
-	(set-buffer (car (buffer-list))))))
+	  (select-window window-configuration-current-window))
+    
+      (setq window-min-width (window-configuration-min-width configuration))
+      (setq window-min-height (window-configuration-min-height configuration))
+      
+      (let ((buffer (window-configuration-current-buffer configuration)))
+	(if (buffer-live-p buffer)
+	    (set-buffer buffer)
+	  (set-buffer (car (buffer-list)))))
+      (car mapping))))
 
 (defun set-window-configuration-frame-size (configuration)
   "Restore the frame size of a window configuration."
@@ -381,8 +417,14 @@ by `current-window-configuration'."
    ((window-first-vchild window)
     (window-reduce-to-one (window-first-vchild window)))))
 
-(defun restore-saved-window (configuration window saved-window direction)
-  "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW."
+(defun restore-saved-window (configuration window saved-window direction mapping)
+  "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW.
+MAPPING is a one-element list whose element is an old-window-to-new-window
+mapping, which this function will extend."
+  (if (not (eq (saved-window-window saved-window) window))
+      (rplaca mapping
+	      (cons (cons (saved-window-window saved-window) window)
+		    (car mapping))))
   (cond
    ((and (saved-window-next-child saved-window)
 	 (not (saved-window-minibufferp (saved-window-next-child saved-window))))
@@ -395,7 +437,8 @@ by `current-window-configuration'."
     (restore-saved-window configuration
 			  (window-next-child window)
 			  (saved-window-next-child saved-window)
-			  direction))
+			  direction
+			  mapping))
   ((not (saved-window-minibufferp saved-window))
    (restore-saved-window-parameters configuration window saved-window)))
 
@@ -403,12 +446,14 @@ by `current-window-configuration'."
       (restore-saved-window configuration
 			    window
 			    (saved-window-first-hchild saved-window)
-			    'horizontal))
+			    'horizontal
+			    mapping))
   (if (saved-window-first-vchild saved-window)
       (restore-saved-window configuration
 			    window
 			    (saved-window-first-vchild saved-window)
-			    'vertical)))
+			    'vertical
+			    mapping)))
 
 (defun restore-saved-window-parameters (configuration window saved-window)
   "Restore the window parameters stored in SAVED-WINDOW on WINDOW."

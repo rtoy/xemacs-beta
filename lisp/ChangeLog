@@ -1,3 +1,16 @@
+2008-04-13  Henry S. Thompson <ht@inf.ed.ac.uk>, Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (save-window-excursion/mapping,
+	set-window-configuration/mapping): Add.  These function return an
+	alist mapping the window objects from the original window
+	configuration to the window objects corresponding to them in the
+	restored configuration.
+	(set-window-configuration): 
+	(saved-window): 
+	(root-window->saved-window): 
+	(really-set-window-configuration): 
+	(restore-saved-window): Record the mapping for above functions.
+
 2008-04-12  Henry S. Thompson <ht@inf.ed.ac.uk>
 
 	* window-xemacs.el (real-split-window, real-delete-window): Define
