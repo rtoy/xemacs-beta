@@ -3601,7 +3601,17 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 	  /* All but the last window should have a height which is
              a multiple of the default line height. */
 	  if (!NILP (c->next))
-	    pos = (pos / line_size) * line_size;
+	    {
+	      /*
+	       * Round up when we're shrinking, down when we're growing
+	       * to make sure that pairs of grow / shrink meant to
+	       * cancel out actually do cancel out.
+	       */
+	      if (pixel_adj_left < 0)
+		pos = ((pos + line_size -1) / line_size) * line_size;
+	      else
+		pos = (pos / line_size) * line_size;
+	    }
 
 	  /* Avoid confusion: don't delete child if it becomes too small */
 	  set_window_pixsize (child, pos + first - last_pos, 1, set_height);

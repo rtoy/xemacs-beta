@@ -1,3 +1,11 @@
+2008-04-26  Mike Sperber  <mike@xemacs.org>
+
+	* window.c (set_window_pixsize): Round up when we're shrinking,
+	down when we're growing * to make sure that pairs of grow / shrink
+	meant to * cancel out actually do cancel out.  This fixes a
+	problem with `resize-minibuffer-mode' where successive grow/shrink
+	actions are meant to cancel out, but previously didn't.
+
 2008-04-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* depend: 
