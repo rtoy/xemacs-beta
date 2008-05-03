@@ -83,6 +83,55 @@
 
 	* info.el (Info-suffix-list):
 	Support LZMA compression, as used--oddly--by Mandriva Linux.
+	* coding.el (decode-coding-string): 
+	(encode-coding-string): Accept GNU's NOCOPY argument for
+	these. Todo; write compiler macros to use it. 
+	(query-coding-warning-face): New face, to show unencodable
+	characters. 
+	(default-query-coding-region-safe-charset-skip-chars-map): 
+	New variable, a cache used by #'default-query-coding-region. 
+	(default-query-coding-region): Default implementation of
+	#'query-coding-region, using the safe-charsets and safe-chars
+	coding systemproperties. 
+	(query-coding-region): New function; can a given coding system
+	encode a given region? 
+	(query-coding-string): New function; can a given coding system
+	encode a given string? 
+	(unencodable-char-position): Function API taken from GNU; return
+	the first unencodable position given a string and coding system. 
+	(encode-coding-char): Function API taken from GNU; return CHAR
+	encoded using CODING-SYSTEM, or nil if CODING-SYSTEM would trash
+	CHAR. 
+	((unless (featurep 'mule)): Override the default
+	query-coding-region implementation on non-Mule. 
+	* mule/mule-coding.el (make-8-bit-generate-helper): Eliminate a
+	duplicate comment. 
+	(make-8-bit-choose-category): Simplify implementation. 
+	(8-bit-fixed-query-coding-region): Implementation of
+	#'query-coding-region for coding systems created with
+	#'make-8-bit-coding-system. 
+	(make-8-bit-coding-system): Initialise the #'query-coding-region
+	implementation for these character sets. 
+	(make-8-bit-coding-system): Ditto for the compiler macro version
+	of this function. 
+	* unicode.el (unicode-query-coding-skip-chars-arg): New variable,
+	used by unicode-query-coding-region, initialised in
+	mule/general-late.el. 
+	(unicode-query-coding-region): New function, the
+	#'query-coding-region implementation for Unicode coding systems. 
+	Initialise the query-coding-function property for the Unicode
+	coding systems to #'unicode-query-coding-region.
+	* mule/mule-charset.el (charset-skip-chars-string): New
+	function. Return a #'skip-chars-forward argument that skips all
+	characters in CHARSET. 
+	(map-charset-chars): Function synced from GNU, modified to work
+	with XEmacs. Map FUNC across the int value charset ranges of
+	CHARSET. 
+
+2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* info.el (Info-suffix-list): 
+	Support LZMA compression, as used--oddly--by Mandriva Linux. 
 
 2008-01-17  Mike Sperber  <mike@xemacs.org>
 
