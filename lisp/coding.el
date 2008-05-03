@@ -398,7 +398,7 @@ if some character in the region cannot be encoded, and defaults to nil.
 Optional argument HIGHLIGHT says to display unencodable characters in the
 region using `query-coding-warning-face'. It defaults to nil.
 
-This function returns a list; the intention is that callers use use
+This function returns a list; the intention is that callers use 
 `multiple-value-bind' or the related CL multiple value functions to deal
 with it.  The first element is `t' if the string can be encoded using
 CODING-SYSTEM, or `nil' if not.  The second element is `nil' if the string
