@@ -1,3 +1,10 @@
+2008-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el (windows-1250): Add the Central European Windows
+	coding system. 
+	* mule/mule-win32-init.el: Don't use the Windows-specific CP1250
+	implementation, rely on that in latin.el instead. 
+
 2008-04-13  Henry S. Thompson <ht@inf.ed.ac.uk>, Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (save-window-excursion/mapping,

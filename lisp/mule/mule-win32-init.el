@@ -153,10 +153,9 @@ as returned by
        ;; http://blogs.msdn.com/michkap/archive/2005/08/01/446475.aspx
        ; ("ANSI"        1200 utf-16-little-endian "Unicode (BMP of ISO 10646)")
 
-       ("ANSI"        1250 no-conversion "Windows 3.1 Eastern European")
-
        ;; We implement this ourselves, and keeping the same implementation
        ;; across platforms means behaviour is a bit more consistent.
+       ; ("ANSI"        1250 no-conversion "Windows 3.1 Eastern European")
        ; ("ANSI"        1251 no-conversion "Windows 3.1 Cyrillic")
        ; ("ANSI"        1252 no-conversion "Windows 3.1 US (ANSI)")
 
