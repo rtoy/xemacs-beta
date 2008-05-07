@@ -91,6 +91,9 @@ things are arranged in config.h.in.  In particular:
 /* Program name */
 #undef EMACS_PROGNAME
 
+/* Name of the link to the program to be used with #! scripts */
+#undef SHEBANG_PROGNAME
+
 /* Allow s&m files to differentiate OS versions without having
    multiple files to maintain. */
 #undef OS_RELEASE

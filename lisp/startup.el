@@ -234,6 +234,8 @@ after, and will not be true at any time before.")
     ("-eval"	. command-line-do-eval)
     ("-load"	. command-line-do-load)
     ("-l"	. command-line-do-load)
+    ("--script"	. command-line-do-script)
+    ("-script"	. command-line-do-script)
     ("-insert"	. command-line-do-insert)
     ("-i"	. command-line-do-insert)
     ("-kill"	. command-line-do-kill)
@@ -436,6 +438,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
     (if (file-exists-p (expand-file-name file))
 	(setq file (expand-file-name file)))
     (load file nil t)))
+
+(defun command-line-do-script (arg)
+  "Load the named file of Lisp code into XEmacs.
+<file>"
+  (let ((file (pop command-line-args-left)))
+    (load file nil t t)))
 
 (defun command-line-do-insert (arg)
   "Insert file into the current buffer.
