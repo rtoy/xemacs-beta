@@ -1,3 +1,11 @@
+2008-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac (XE_EXPAND_VARIABLE): Call AC_SUBST on
+	SHEBANG_PATHNAME, as suggested by Michael Sperber in
+	y9ly7aj1wfc.fsf@deinprogramm.de.
+	* Makefile.in.in: Regenerate.
+	* configure: Ditto.
+
 2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* Makefile.in.in (SHEBANG_PROGNAME): 

@@ -413,7 +413,7 @@ install-arch-dep: mkdir
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
 	-chmod 0755 ${bindir}/${PROGNAME}-${version}
 	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
-	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${SHEBANG_PROGNAME}
+	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${SHEBANG_PROGNAME}
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */
 	if test "${prefix}" != "${exec_prefix}"; then \
