@@ -48,23 +48,19 @@ as:
 
 \(defun-when-void put-display-table (range value display-table)
   \"Set the value for char RANGE to VALUE in DISPLAY-TABLE.  \"
-  (ecase (type-of display-table)
-    (vector
-     (aset display-table range value))
-    (char-table
-     (put-char-table range value display-table))))
+  (if (sequencep display-table)
+      (aset display-table range value)
+    (put-char-table range value display-table)))
 
 \(defun-when-void get-display-table (character display-table)
   \"Find value for CHARACTER in DISPLAY-TABLE.  \"
-  (ecase (type-of display-table)
-    (vector
-     (aref display-table character))
-    (char-table
-     (get-char-table character display-table))))
+  (if (sequencep display-table)
+      (aref display-table character)
+    (get-char-table character display-table)))
 
 In this implementation, `put-display-table' and `get-display-table' are
 aliases of `put-char-table' and `get-char-table' respectively, and are
-always available.   "
+always available."
   (make-char-table 'generic))
 
 ;;;###autoload

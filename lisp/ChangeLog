@@ -1,3 +1,9 @@
+2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* disp-table.el (make-display-table): 
+	Update the example code to make it more general, and more
+	compatible with GNU.
+
 2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyril-util.el:
