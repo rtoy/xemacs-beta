@@ -744,6 +744,25 @@ do {								\
     internal_bind_lisp_object (&Vfile_domain, Qnil);
 #endif
 
+    /* Is there a #!? If so, read it, and unread ;!.
+
+       GNU implement this by treating any #! anywhere in the source text as
+       commenting out the whole line. */
+    {
+      char shebangp[2];
+      int num_read;
+
+      num_read = Lstream_read (XLSTREAM (lispstream), shebangp,
+                               sizeof(shebangp));
+      if (sizeof(shebangp) == num_read
+	  && 0 == strncmp("#!", shebangp, sizeof(shebangp)))
+	{
+          shebangp[0] = ';';
+	}
+
+      Lstream_unread (XLSTREAM (lispstream), shebangp, num_read);
+    }
+
     /* Now determine what sort of ELC file we're reading in. */
     internal_bind_int (&load_byte_code_version, load_byte_code_version);
     if (reading_elc)

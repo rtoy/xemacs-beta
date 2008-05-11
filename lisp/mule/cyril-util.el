@@ -26,17 +26,11 @@
 
 ;;; Commentary:
 
+;;; #### Remove this, use the one in packages instead, but with the below
+;;; standard-display-cyrillic-translit. This file is unfortunately shadowed
+;;; if you have the Mule packages installed!
+
 ;;; Code:
-
-;;;###autoload
-(defun cyrillic-encode-koi8-r-char (char)
-  "Return KOI8-R external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-koi8-r-to-external-code-table))
-
-;;;###autoload
-(defun cyrillic-encode-alternativnyj-char (char)
-  "Return ALTERNATIVNYJ external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-alternativnyj-to-external-code-table))
 
 
 ;; Display 
@@ -44,14 +38,13 @@
 ;; Written by Valery Alexeev <valery@math.uga.edu>.
 
 (defvar cyrillic-language-alist
-      (list '("Belorussian") '("Bulgarian") '("Macedonian") 
-	    '("Russian") '("Serbian") '("Ukrainian"))
-      "*List of known cyrillic languages")
-
-(defvar standard-display-table)
+      '(("Belorussian") ("Bulgarian") ("Macedonian") ("Russian") ("Serbian")
+        ("Ukrainian"))
+      "*List of known Cyrillic languages")
 
 ;;;###autoload
-(defun standard-display-cyrillic-translit (&optional cyrillic-language)
+(defun standard-display-cyrillic-translit (&optional cyrillic-language
+					   disable)
   "Display a cyrillic buffer using a transliteration.
 For readability, the table is slightly
 different from the one used for the input method `cyrillic-translit'.
@@ -59,137 +52,137 @@ different from the one used for the input method `cyrillic-translit'.
 The argument is a string which specifies which language you are using;
 that affects the choice of transliterations slightly.
 Possible values are listed in 'cyrillic-language-alist'.
-If the argument is t, we use the default cyrillic transliteration.
-If the argument is nil, we return the display table to its standard state."
+
+Specifying a prefix arg, by preceding
+\\[standard-display-cyrillic-translit] with \\[universal-argument]
+turns off Cyrillic display.  Noninteractively, the DISABLE argument
+does the same thing.  "
   (interactive
    (list
-    (let* ((completion-ignore-case t))
-      (completing-read
-       "Cyrillic language (default nil): "
-       cyrillic-language-alist nil t nil nil nil))))
-
-  (or standard-display-table
-      (setq standard-display-table (make-display-table)))
-
-  (if (equal cyrillic-language "")
-      (setq cyrillic-language nil))
-
-  (if (null cyrillic-language)
-      (setq standard-display-table (make-display-table))
-    (aset standard-display-table ?,LP(B  [?a])
-    (aset standard-display-table ?,LQ(B  [?b])
-    (aset standard-display-table ?,LR(B  [?v])
-    (aset standard-display-table ?,LS(B  [?g])
-    (aset standard-display-table ?,LT(B  [?d])
-    (aset standard-display-table ?,LU(B  [?e])
-    (aset standard-display-table ?,Lq(B  [?y?o])
-    (aset standard-display-table ?,LV(B  [?z?h])
-    (aset standard-display-table ?,LW(B  [?z])
-    (aset standard-display-table ?,LX(B  [?i])
-    (aset standard-display-table ?,LY(B  [?j])
-    (aset standard-display-table ?,LZ(B  [?k])
-    (aset standard-display-table ?,L[(B  [?l])
-    (aset standard-display-table ?,L\(B  [?m])
-    (aset standard-display-table ?,L](B  [?n])
-    (aset standard-display-table ?,L^(B  [?o])
-    (aset standard-display-table ?,L_(B  [?p])
-    (aset standard-display-table ?,L`(B  [?r])
-    (aset standard-display-table ?,La(B  [?s])
-    (aset standard-display-table ?,Lb(B  [?t])
-    (aset standard-display-table ?,Lc(B  [?u])
-    (aset standard-display-table ?,Ld(B  [?f])
-    (aset standard-display-table ?,Le(B  [?k?h])
-    (aset standard-display-table ?,Lf(B  [?t?s])
-    (aset standard-display-table ?,Lg(B  [?c?h])
-    (aset standard-display-table ?,Lh(B  [?s?h])
-    (aset standard-display-table ?,Li(B  [?s?c?h])
-    (aset standard-display-table ?,Lj(B  [?~])
-    (aset standard-display-table ?,Lk(B  [?y])
-    (aset standard-display-table ?,Ll(B  [?'])
-    (aset standard-display-table ?,Lm(B  [?e?'])
-    (aset standard-display-table ?,Ln(B  [?y?u])
-    (aset standard-display-table ?,Lo(B  [?y?a])
+    (let* ((completion-ignore-case t)
+	   (default-language (if (assoc-ignore-case
+				  current-language-environment
+				  cyrillic-language-alist)
+				 current-language-environment
+			       "Russian")))
+      (or current-prefix-arg
+	  (completing-read
+	   (format "Cyrillic language (default %s): " default-language)
+	   cyrillic-language-alist nil t nil nil default-language)))))
+  (frob-display-table
+   (lambda (display-table)
+     (if (or disable current-prefix-arg)
+         (if (char-table-p display-table)
+             (remove-char-table 'cyrillic-iso8859-5 display-table))
+       (put-display-table ?,LP(B "a"   display-table)
+       (put-display-table ?,LQ(B "b"   display-table)
+       (put-display-table ?,LR(B "v"   display-table)
+       (put-display-table ?,LS(B "g"   display-table)
+       (put-display-table ?,LT(B "d"   display-table)
+       (put-display-table ?,LU(B "e"   display-table)
+       (put-display-table ?,Lq(B "yo"  display-table)
+       (put-display-table ?,LV(B "zh"  display-table)
+       (put-display-table ?,LW(B "z"   display-table)
+       (put-display-table ?,LX(B "i"   display-table)
+       (put-display-table ?,LY(B "j"   display-table)
+       (put-display-table ?,LZ(B "k"   display-table)
+       (put-display-table ?,L[(B "l"   display-table)
+       (put-display-table ?,L\(B "m"   display-table)
+       (put-display-table ?,L](B "n"   display-table)
+       (put-display-table ?,L^(B "o"   display-table)
+       (put-display-table ?,L_(B "p"   display-table)
+       (put-display-table ?,L`(B "r"   display-table)
+       (put-display-table ?,La(B "s"   display-table)
+       (put-display-table ?,Lb(B "t"   display-table)
+       (put-display-table ?,Lc(B "u"   display-table)
+       (put-display-table ?,Ld(B "f"   display-table)
+       (put-display-table ?,Le(B "kh"  display-table)
+       (put-display-table ?,Lf(B "ts"  display-table)
+       (put-display-table ?,Lg(B "ch"  display-table)
+       (put-display-table ?,Lh(B "sh"  display-table)
+       (put-display-table ?,Li(B "sch" display-table)
+       (put-display-table ?,Lj(B "~"   display-table)
+       (put-display-table ?,Lk(B "y"   display-table)
+       (put-display-table ?,Ll(B "'"   display-table)
+       (put-display-table ?,Lm(B "e'"  display-table)
+       (put-display-table ?,Ln(B "yu"  display-table)
+       (put-display-table ?,Lo(B "ya"  display-table)
+       (put-display-table ?,L0(B "A"   display-table)
+       (put-display-table ?,L1(B "B"   display-table)
+       (put-display-table ?,L2(B "V"   display-table)
+       (put-display-table ?,L3(B "G"   display-table)
+       (put-display-table ?,L4(B "D"   display-table)
+       (put-display-table ?,L5(B "E"   display-table)
+       (put-display-table ?,L!(B "Yo"  display-table)
+       (put-display-table ?,L6(B "Zh"  display-table)
+       (put-display-table ?,L7(B "Z"   display-table)
+       (put-display-table ?,L8(B "I"   display-table)
+       (put-display-table ?,L9(B "J"   display-table)
+       (put-display-table ?,L:(B "K"   display-table)
+       (put-display-table ?,L;(B "L"   display-table)
+       (put-display-table ?,L<(B "M"   display-table)
+       (put-display-table ?,L=(B "N"   display-table)
+       (put-display-table ?,L>(B "O"   display-table)
+       (put-display-table ?,L?(B "P"   display-table)
+       (put-display-table ?,L@(B "R"   display-table)
+       (put-display-table ?,LA(B "S"   display-table)
+       (put-display-table ?,LB(B "T"   display-table)
+       (put-display-table ?,LC(B "U"   display-table)
+       (put-display-table ?,LD(B "F"   display-table)
+       (put-display-table ?,LE(B "Kh"  display-table)
+       (put-display-table ?,LF(B "Ts"  display-table)
+       (put-display-table ?,LG(B "Ch"  display-table)
+       (put-display-table ?,LH(B "Sh"  display-table)
+       (put-display-table ?,LI(B "Sch" display-table)
+       (put-display-table ?,LJ(B "~"   display-table)
+       (put-display-table ?,LK(B "Y"   display-table)
+       (put-display-table ?,LL(B "'"   display-table)
+       (put-display-table ?,LM(B "E'"  display-table)
+       (put-display-table ?,LN(B "Yu"  display-table)
+       (put-display-table ?,LO(B "Ya"  display-table)
+       (put-display-table ?,Lt(B "ie"  display-table)
+       (put-display-table ?,Lw(B "i"   display-table)
+       (put-display-table ?,L~(B "u"   display-table)
+       (put-display-table ?,Lr(B "dj"  display-table)
+       (put-display-table ?,L{(B "chj" display-table)
+       (put-display-table ?,Ls(B "gj"  display-table)
+       (put-display-table ?,Lu(B "s"   display-table)
+       (put-display-table ?,L|(B "k"   display-table)
+       (put-display-table ?,Lv(B "i"   display-table)
+       (put-display-table ?,Lx(B "j"   display-table)
+       (put-display-table ?,Ly(B "lj"  display-table)
+       (put-display-table ?,Lz(B "nj"  display-table)
+       (put-display-table ?,L(B "dz"  display-table)
+       (put-display-table ?,L$(B "Ye"  display-table)
+       (put-display-table ?,L'(B "Yi"  display-table)
+       (put-display-table ?,L.(B "U"   display-table)
+       (put-display-table ?,L"(B "Dj"  display-table)
+       (put-display-table ?,L+(B "Chj" display-table)
+       (put-display-table ?,L#(B "Gj"  display-table)
+       (put-display-table ?,L%(B "S"   display-table)
+       (put-display-table ?,L,(B "K"   display-table)
+       (put-display-table ?,L&(B "I"   display-table)
+       (put-display-table ?,L((B "J"   display-table)
+       (put-display-table ?,L)(B "Lj"  display-table)
+       (put-display-table ?,L*(B "Nj"  display-table)
+       (put-display-table ?,L/(B "Dj"  display-table)
     
-    (aset standard-display-table ?,L0(B  [?A])
-    (aset standard-display-table ?,L1(B  [?B])
-    (aset standard-display-table ?,L2(B  [?V])
-    (aset standard-display-table ?,L3(B  [?G])
-    (aset standard-display-table ?,L4(B  [?D])
-    (aset standard-display-table ?,L5(B  [?E])
-    (aset standard-display-table ?,L!(B  [?Y?o])
-    (aset standard-display-table ?,L6(B  [?Z?h])
-    (aset standard-display-table ?,L7(B  [?Z])
-    (aset standard-display-table ?,L8(B  [?I])
-    (aset standard-display-table ?,L9(B  [?J])
-    (aset standard-display-table ?,L:(B  [?K])
-    (aset standard-display-table ?,L;(B  [?L])
-    (aset standard-display-table ?,L<(B  [?M])
-    (aset standard-display-table ?,L=(B  [?N])
-    (aset standard-display-table ?,L>(B  [?O])
-    (aset standard-display-table ?,L?(B  [?P])
-    (aset standard-display-table ?,L@(B  [?R])
-    (aset standard-display-table ?,LA(B  [?S])
-    (aset standard-display-table ?,LB(B  [?T])
-    (aset standard-display-table ?,LC(B  [?U])
-    (aset standard-display-table ?,LD(B  [?F])
-    (aset standard-display-table ?,LE(B  [?K?h])
-    (aset standard-display-table ?,LF(B  [?T?s])
-    (aset standard-display-table ?,LG(B  [?C?h])
-    (aset standard-display-table ?,LH(B  [?S?h])
-    (aset standard-display-table ?,LI(B  [?S?c?h])
-    (aset standard-display-table ?,LJ(B  [?~])
-    (aset standard-display-table ?,LK(B  [?Y])
-    (aset standard-display-table ?,LL(B  [?'])
-    (aset standard-display-table ?,LM(B  [?E?'])
-    (aset standard-display-table ?,LN(B  [?Y?u])
-    (aset standard-display-table ?,LO(B  [?Y?a])
-    
-    (aset standard-display-table ?,Lt(B  [?i?e])
-    (aset standard-display-table ?,Lw(B  [?i])
-    (aset standard-display-table ?,L~(B  [?u])
-    (aset standard-display-table ?,Lr(B  [?d?j])
-    (aset standard-display-table ?,L{(B  [?c?h?j])
-    (aset standard-display-table ?,Ls(B  [?g?j])
-    (aset standard-display-table ?,Lu(B  [?s])
-    (aset standard-display-table ?,L|(B  [?k])
-    (aset standard-display-table ?,Lv(B  [?i])
-    (aset standard-display-table ?,Lx(B  [?j])
-    (aset standard-display-table ?,Ly(B  [?l?j])
-    (aset standard-display-table ?,Lz(B  [?n?j])
-    (aset standard-display-table ?,L(B  [?d?z])
-    
-    (aset standard-display-table ?,L$(B  [?Y?e])
-    (aset standard-display-table ?,L'(B  [?Y?i])
-    (aset standard-display-table ?,L.(B  [?U])
-    (aset standard-display-table ?,L"(B  [?D?j])
-    (aset standard-display-table ?,L+(B  [?C?h?j])
-    (aset standard-display-table ?,L#(B  [?G?j])
-    (aset standard-display-table ?,L%(B  [?S])
-    (aset standard-display-table ?,L,(B  [?K])
-    (aset standard-display-table ?,L&(B  [?I])
-    (aset standard-display-table ?,L((B  [?J])
-    (aset standard-display-table ?,L)(B  [?L?j])
-    (aset standard-display-table ?,L*(B  [?N?j])
-    (aset standard-display-table ?,L/(B  [?D?j])
-    
-    (when (equal cyrillic-language "Bulgarian")
-      (aset standard-display-table ?,Li(B [?s?h?t])
-      (aset standard-display-table ?,LI(B [?S?h?t])
-      (aset standard-display-table ?,Ln(B [?i?u])
-      (aset standard-display-table ?,LN(B [?I?u])
-      (aset standard-display-table ?,Lo(B [?i?a])
-      (aset standard-display-table ?,LO(B [?I?a]))
-    
-    (when (equal cyrillic-language "Ukrainian") ; based on the official 
-					; transliteration table
-      (aset standard-display-table ?,LX(B [?y])
-      (aset standard-display-table ?,L8(B [?Y])
-      (aset standard-display-table ?,LY(B [?i])
-      (aset standard-display-table ?,L9(B [?Y])
-    (aset standard-display-table ?,Ln(B [?i?u])
-    (aset standard-display-table ?,Lo(B [?i?a]))))
+       (when (equal cyrillic-language "Bulgarian")
+         (put-display-table ?,Li(B "sht"  display-table)
+         (put-display-table ?,LI(B "Sht"  display-table)
+         (put-display-table ?,Ln(B "iu"   display-table)
+         (put-display-table ?,LN(B "Iu"   display-table)
+         (put-display-table ?,Lo(B "ia"   display-table)
+         (put-display-table ?,LO(B "Ia"   display-table))
 
-
+       (when (equal cyrillic-language "Ukrainian") ; based on the official 
+                                        ; transliteration table
+         (put-display-table ?,LX(B "y"    display-table)
+         (put-display-table ?,L8(B "Y"    display-table)
+         (put-display-table ?,LY(B "i"    display-table)
+         (put-display-table ?,L9(B "Y"    display-table)
+         (put-display-table ?,Ln(B "iu"   display-table)
+         (put-display-table ?,Lo(B "ia"   display-table)))) nil))
 ;;
 (provide 'cyril-util)
 

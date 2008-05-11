@@ -1224,12 +1224,18 @@ if test "$with_infodock" = "yes"; then
   AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
   version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
   PROGNAME=infodock
+  SHEBANG_PROGNAME=infodock-script
   CPPFLAGS="$CPPFLAGS -DINFODOCK"
 else
   PROGNAME=xemacs
+  SHEBANG_PROGNAME=xemacs-script
 fi
 
+AC_SUBST(SHEBANG_PROGNAME)
+
 AC_DEFINE_UNQUOTED(EMACS_PROGNAME, "$PROGNAME")
+
+AC_DEFINE_UNQUOTED(SHEBANG_PROGNAME, "${PROGNAME}-script")
 
 dnl ----------------------------------
 dnl Error checking and debugging flags

@@ -1,5 +1,73 @@
 2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* disp-table.el (make-display-table): 
+	Update the example code to make it more general, and more
+	compatible with GNU. Also, I previously said #xFF when I meant
+	?\xFF; correct this.
+	* mule/cyril-util.el (standard-display-cyrillic-translit): 
+	Make the selection of the default language more sensible; change
+	the API a little to make a sensible default Cyrillic language
+	available, checking current-language-environment. 
+
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/cyril-util.el:
+	* mule/cyril-util.el (cyrillic-encode-koi8-r-char): Removed.
+	* mule/cyril-util.el (cyrillic-encode-alternativnyj-char):
+	Removed.  No-one uses these functions in google.com/codesearch,
+	GNU have a comment doubting their utility, and their
+	implementation is trivial. 
+	* mule/cyril-util.el (cyrillic-language-alist):
+	Reformatted.
+	* mule/cyril-util.el (standard-display-table)): Removed. It wasn't
+	used anyway. 
+	* mule/cyril-util.el (standard-display-cyrillic-translit):
+	Rewrite it to work with character tables as display tables, and
+	not to abort with an error.
+
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* disp-table.el:
+	* disp-table.el (make-display-table): Moved earlier in the file in
+	a weak attempt at making syncing with GNU easier. 
+	* disp-table.el (frob-display-table):
+	Autoload it, accept TAG-SET, for editing specifiers.
+	* disp-table.el (describe-display-table):
+	Have it handle character sets. 	
+	* disp-table.el (standard-display-8bit-1):
+	* disp-table.el (standard-display-8bit):
+	* disp-table.el (standard-display-default-1):
+	* disp-table.el (standard-display-ascii):
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	* disp-table.el (standard-display-underline):
+	* disp-table.el (standard-display-european):
+	Rework them all to use put-char-table, remove-char-table instead
+	of aset. Limit standard-display-g1, standard-display-graphic to
+	TTYs; have standard-display-underline work on X11 too. 
+	
+	* font.el (font-caps-display-table):
+	Use put-char-table instead of aset when editing a display table.
+	* x-init.el:
+	* x-init.el (tab):
+	Create the initial display table as a char-table, not a vector. 
+
+2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (command-line-do-script): New.
+	(command-switch-alist): Use command-line-do-script.
+	New argument, compatible with GNU; --script or -script says "treat
+	the following argument as a file to load in batch mode".
+
+2008-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el (windows-1250): Add the Central European Windows
+	coding system. 
+	* mule/mule-win32-init.el: Don't use the Windows-specific CP1250
+	implementation, rely on that in latin.el instead. 
+
+2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (query-coding-clear-highlights): 
 	New function--clear any face information added by
 	`query-coding-region'. 

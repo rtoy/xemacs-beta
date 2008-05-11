@@ -1,3 +1,15 @@
+2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in: Add SHEBANG_PROGNAME.
+	* emacs.c (main_1): 
+	If we've been called using SHEBANG_PROGNAME, rewrite our arguments
+	to add a --script argument. 
+	Also, handle the --script argument by setting noninteractive and
+	vanilla. 
+	* lread.c (Fload_internal): 
+	If the first two characters of a file are #!, replace them with ;!
+	before they get to the Lisp reader. 
+
 2008-04-26  Mike Sperber  <mike@xemacs.org>
 
 	* window.c (set_window_pixsize): Round up when we're shrinking,

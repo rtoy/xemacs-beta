@@ -706,6 +706,7 @@ build
 build_cpu
 build_vendor
 build_os
+SHEBANG_PROGNAME
 configuration
 CC
 CFLAGS
@@ -4855,13 +4856,22 @@ _ACEOF
 
   version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
   PROGNAME=infodock
+  SHEBANG_PROGNAME=infodock-script
   CPPFLAGS="$CPPFLAGS -DINFODOCK"
 else
   PROGNAME=xemacs
+  SHEBANG_PROGNAME=xemacs-script
 fi
+
+
 
 cat >>confdefs.h <<_ACEOF
 #define EMACS_PROGNAME "$PROGNAME"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define SHEBANG_PROGNAME "${PROGNAME}-script"
 _ACEOF
 
 
@@ -40452,6 +40462,7 @@ build!$build$ac_delim
 build_cpu!$build_cpu$ac_delim
 build_vendor!$build_vendor$ac_delim
 build_os!$build_os$ac_delim
+SHEBANG_PROGNAME!$SHEBANG_PROGNAME$ac_delim
 configuration!$configuration$ac_delim
 CC!$CC$ac_delim
 CFLAGS!$CFLAGS$ac_delim
@@ -40503,7 +40514,6 @@ OBJECT_TO_BUILD!$OBJECT_TO_BUILD$ac_delim
 ldap_libs!$ldap_libs$ac_delim
 postgresql_libs!$postgresql_libs$ac_delim
 lwlib_objs!$lwlib_objs$ac_delim
-canna_libs!$canna_libs$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -40545,6 +40555,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+canna_libs!$canna_libs$ac_delim
 ALLOCA!$ALLOCA$ac_delim
 have_esd_config!$have_esd_config$ac_delim
 SRC_SUBDIR_DEPS!$SRC_SUBDIR_DEPS$ac_delim
@@ -40621,7 +40632,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 74; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 75; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

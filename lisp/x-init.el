@@ -336,11 +336,11 @@ This function is a trivial wrapper around `make-frame-on-device'."
 ;; due to a universally crocked font width specification.  Display it
 ;; as a space since that's what seems to be expected.
 ;;
-;; (make-vector 256 nil) instead of (make-display-table) because
-;; make-display-table doesn't exist when this file is loaded.
+;; (make-char-table 'generic) instead of (make-display-table) because
+;; make-display-table isn't dumped, and this file is. 
 
-(let ((tab (make-vector 256 nil)))
-  (aset tab 160 " ")
+(let ((tab (make-char-table 'generic)))
+  (put-char-table 160 " " tab)
   (set-specifier current-display-table tab 'global 'x))
 
 ;;; x-init.el ends here
