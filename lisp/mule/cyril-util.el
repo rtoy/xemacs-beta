@@ -43,7 +43,8 @@
       "*List of known Cyrillic languages")
 
 ;;;###autoload
-(defun standard-display-cyrillic-translit (&optional cyrillic-language)
+(defun standard-display-cyrillic-translit (&optional cyrillic-language
+					   disable)
   "Display a cyrillic buffer using a transliteration.
 For readability, the table is slightly
 different from the one used for the input method `cyrillic-translit'.
@@ -51,19 +52,26 @@ different from the one used for the input method `cyrillic-translit'.
 The argument is a string which specifies which language you are using;
 that affects the choice of transliterations slightly.
 Possible values are listed in 'cyrillic-language-alist'.
-If the argument is t, we use the default cyrillic transliteration.
-If the argument is nil, we return the display table to its standard state."
+
+Specifying a prefix arg, by preceding
+\\[standard-display-cyrillic-translit] with \\[universal-argument]
+turns off Cyrillic display.  Noninteractively, the DISABLE argument
+does the same thing.  "
   (interactive
    (list
-    (let* ((completion-ignore-case t))
-      (completing-read
-       "Cyrillic language (default nil): "
-       cyrillic-language-alist nil t nil nil nil))))
-  (when (equal cyrillic-language "")
-    (setq cyrillic-language nil))
+    (let* ((completion-ignore-case t)
+	   (default-language (if (assoc-ignore-case
+				  current-language-environment
+				  cyrillic-language-alist)
+				 current-language-environment
+			       "Russian")))
+      (or current-prefix-arg
+	  (completing-read
+	   (format "Cyrillic language (default %s): " default-language)
+	   cyrillic-language-alist nil t nil nil default-language)))))
   (frob-display-table
    (lambda (display-table)
-     (if (null cyrillic-language)
+     (if (or disable current-prefix-arg)
          (if (char-table-p display-table)
              (remove-char-table 'cyrillic-iso8859-5 display-table))
        (put-display-table ?,LP(B "a"   display-table)

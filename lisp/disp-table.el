@@ -39,7 +39,7 @@
 
 This returns a generic character table; previously it returned a vector, but
 that was not helpful when dealing with internationalized characters above
-#xFF.  See `make-char-table' for details of character tables in general.  To
+?\xFF.  See `make-char-table' for details of character tables in general.  To
 write code that works with both vectors and character tables, add something
 like the following to the beginning of your file, and use
 `put-display-table' to set what a given character is displayed as, and

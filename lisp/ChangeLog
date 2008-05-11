@@ -2,7 +2,12 @@
 
 	* disp-table.el (make-display-table): 
 	Update the example code to make it more general, and more
-	compatible with GNU.
+	compatible with GNU. Also, I previously said #xFF when I meant
+	?\xFF; correct this.
+	* mule/cyril-util.el (standard-display-cyrillic-translit): 
+	Make the selection of the default language more sensible; change
+	the API a little to make a sensible default Cyrillic language
+	available, checking current-language-environment. 
 
 2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
 
