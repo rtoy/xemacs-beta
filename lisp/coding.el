@@ -286,6 +286,20 @@ if does not differ from the encoded string. "
   #s(hash-table test equal data ())
   "A map from list of charsets to `skip-chars-forward' arguments for them.")
 
+(defsubst query-coding-clear-highlights (begin end &optional buffer)
+  "Remove extent faces added by `query-coding-region' between BEGIN and END.
+
+Optional argument BUFFER is the buffer to use, and defaults to the current
+buffer.
+
+The HIGHLIGHTP argument to `query-coding-region' indicates that it should
+display unencodable characters using `query-coding-warning-face'.  After
+this function has been called, this will no longer be the case.  "
+  (map-extents #'(lambda (extent ignored-arg)
+                   (when (eq 'query-coding-warning-face
+                             (extent-face extent))
+                     (delete-extent extent))) buffer begin end))
+
 (defun default-query-coding-region (begin end coding-system
 				    &optional buffer errorp highlightp)
   "The default `query-coding-region' implementation.
@@ -319,10 +333,7 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 				safe-charsets "")
 		     default-query-coding-region-safe-charset-skip-chars-map)))
     (when highlightp
-      (map-extents #'(lambda (extent ignored-arg)
-		       (when (eq 'query-coding-warning-face
-				 (extent-face extent))
-			 (delete-extent extent))) buffer begin end))
+      (query-coding-clear-highlights begin end buffer))
     (if (and (zerop (length skip-chars-arg)) (null safe-chars))
 	(progn
 	    ;; Uh-oh, nothing known about this coding system. Fail. 
@@ -384,7 +395,7 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 	    (values nil ranges)
 	  (values t nil))))))
 
-(defsubst query-coding-region (start end coding-system &optional buffer
+(defun query-coding-region (start end coding-system &optional buffer
                                errorp highlight)
   "Work out whether CODING-SYSTEM can losslessly encode a region.
 

@@ -1,3 +1,10 @@
+2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (query-coding-clear-highlights): 
+	New function--clear any face information added by
+	`query-coding-region'. 
+	(default-query-coding-region): Use it.
+
 2008-04-13  Henry S. Thompson <ht@inf.ed.ac.uk>, Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (save-window-excursion/mapping,
