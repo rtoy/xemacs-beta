@@ -1068,6 +1068,10 @@ done])dnl XE_EXPAND_VARIABLE
 
 XE_EXPAND_VARIABLE(prefix,prefix_expanded)
 XE_EXPAND_VARIABLE(datadir,datadir_expanded)
+XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
+XE_EXPAND_VARIABLE(libdir,libdir_expanded)
+XE_EXPAND_VARIABLE(mandir,mandir_expanded)
+XE_EXPAND_VARIABLE(infodir,infodir_expanded)
 
 if test "x$datadir_expanded" != "x$prefix_expanded/share"
 then
@@ -1076,31 +1080,14 @@ then
   AC_DEFINE(ETCDIR_USER_DEFINED)
 fi
 
-if test "x$lib_expanded" != "x$prefix_expanded/lib"
+if test "x$libdir_expanded" != "x$prefix_expanded/lib"
 then
   AC_DEFINE(MODULEDIR_USER_DEFINED)
   AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
   AC_DEFINE(DOCDIR_USER_DEFINED)
 fi
 
-XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
-XE_EXPAND_VARIABLE(libdir,libdir_expanded)
-
-if test "x$libdir_expanded" != "x$exec_prefix_expanded/lib"
-then
-  AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
-fi
-
-XE_EXPAND_VARIABLE(mandir,mandir_expanded)
-
-if test "x$mandir_expanded" = "x$prefix_expanded/man"
-then
-  mandir='${datarootdir}/man/man1'
-fi
-
-XE_EXPAND_VARIABLE(infodir,infodir_expanded)
-
-if test "x$infodir_expanded" != "x${prefix_expanded}/info"
+if test "x$infodir_expanded" != "x${prefix_expanded}/share/info"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
 else
@@ -5771,6 +5758,7 @@ AC_SUBST(INFODIR)
 AC_SUBST(infopath,$with_infopath)
 AC_SUBST(INFOPATH_USER_DEFINED)
 XE_EXPAND_VARIABLE(with_info_path,INFOPATH)
+AC_SUBST(INFOPATH)
 
 test -n "$with_user_packages" && with_early_packages=$with_user_packages
 AC_SUBST(early_packages,$with_early_packages)

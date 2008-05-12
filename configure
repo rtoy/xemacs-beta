@@ -779,6 +779,7 @@ INFODIR_USER_DEFINED
 INFODIR
 infopath
 INFOPATH_USER_DEFINED
+INFOPATH
 early_packages
 EARLY_PACKAGE_DIRECTORIES_USER_DEFINED
 EARLY_PACKAGE_DIRECTORIES
@@ -4548,6 +4549,34 @@ while true; do
     *) break ;;
   esac
 done
+exec_prefix_expanded=$exec_prefix
+while true; do
+  case "$exec_prefix_expanded" in
+    *\$* ) eval "exec_prefix_expanded=$exec_prefix_expanded" ;;
+    *) break ;;
+  esac
+done
+libdir_expanded=$libdir
+while true; do
+  case "$libdir_expanded" in
+    *\$* ) eval "libdir_expanded=$libdir_expanded" ;;
+    *) break ;;
+  esac
+done
+mandir_expanded=$mandir
+while true; do
+  case "$mandir_expanded" in
+    *\$* ) eval "mandir_expanded=$mandir_expanded" ;;
+    *) break ;;
+  esac
+done
+infodir_expanded=$infodir
+while true; do
+  case "$infodir_expanded" in
+    *\$* ) eval "infodir_expanded=$infodir_expanded" ;;
+    *) break ;;
+  esac
+done
 
 if test "x$datadir_expanded" != "x$prefix_expanded/share"
 then
@@ -4565,7 +4594,7 @@ _ACEOF
 
 fi
 
-if test "x$lib_expanded" != "x$prefix_expanded/lib"
+if test "x$libdir_expanded" != "x$prefix_expanded/lib"
 then
   cat >>confdefs.h <<\_ACEOF
 #define MODULEDIR_USER_DEFINED 1
@@ -4581,51 +4610,7 @@ _ACEOF
 
 fi
 
-exec_prefix_expanded=$exec_prefix
-while true; do
-  case "$exec_prefix_expanded" in
-    *\$* ) eval "exec_prefix_expanded=$exec_prefix_expanded" ;;
-    *) break ;;
-  esac
-done
-libdir_expanded=$libdir
-while true; do
-  case "$libdir_expanded" in
-    *\$* ) eval "libdir_expanded=$libdir_expanded" ;;
-    *) break ;;
-  esac
-done
-
-if test "x$libdir_expanded" != "x$exec_prefix_expanded/lib"
-then
-  cat >>confdefs.h <<\_ACEOF
-#define ARCHLIBDIR_USER_DEFINED 1
-_ACEOF
-
-fi
-
-mandir_expanded=$mandir
-while true; do
-  case "$mandir_expanded" in
-    *\$* ) eval "mandir_expanded=$mandir_expanded" ;;
-    *) break ;;
-  esac
-done
-
-if test "x$mandir_expanded" = "x$prefix_expanded/man"
-then
-  mandir='${datarootdir}/man/man1'
-fi
-
-infodir_expanded=$infodir
-while true; do
-  case "$infodir_expanded" in
-    *\$* ) eval "infodir_expanded=$infodir_expanded" ;;
-    *) break ;;
-  esac
-done
-
-if test "x$infodir_expanded" != "x${prefix_expanded}/info"
+if test "x$infodir_expanded" != "x${prefix_expanded}/share/info"
 then
   cat >>confdefs.h <<\_ACEOF
 #define INFODIR_USER_DEFINED 1
@@ -39134,6 +39119,7 @@ while true; do
   esac
 done
 
+
 test -n "$with_user_packages" && with_early_packages=$with_user_packages
 early_packages=$with_early_packages
 
@@ -40576,6 +40562,7 @@ INFODIR_USER_DEFINED!$INFODIR_USER_DEFINED$ac_delim
 INFODIR!$INFODIR$ac_delim
 infopath!$infopath$ac_delim
 INFOPATH_USER_DEFINED!$INFOPATH_USER_DEFINED$ac_delim
+INFOPATH!$INFOPATH$ac_delim
 early_packages!$early_packages$ac_delim
 EARLY_PACKAGE_DIRECTORIES_USER_DEFINED!$EARLY_PACKAGE_DIRECTORIES_USER_DEFINED$ac_delim
 EARLY_PACKAGE_DIRECTORIES!$EARLY_PACKAGE_DIRECTORIES$ac_delim
@@ -40632,7 +40619,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 75; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

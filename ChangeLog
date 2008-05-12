@@ -1,3 +1,10 @@
+2008-05-12  Michael Sperber  <mike@xemacs.org>
+
+	* configure.ac: 
+	A number of the checks that tried to determine whether an explicit
+	path was specified were wrong.
+	Also, add an AC_SUBST for INFOPATH.
+
 2008-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac (XE_EXPAND_VARIABLE): Call AC_SUBST on
