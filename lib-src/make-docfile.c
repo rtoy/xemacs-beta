@@ -306,12 +306,12 @@ scan_file (const char *filename)
   else if (ellcc == 0 && len > 3 && !strcmp (filename + len - 3, ".el"))
     {
       Current_file_type = el_file;
-      return scan_lisp_file (filename, READ_TEXT);
+      return scan_lisp_file (filename, READ_BINARY);
     }
   else
     {
       Current_file_type = c_file;
-      return scan_c_file (filename, READ_TEXT);
+      return scan_c_file (filename, READ_BINARY);
     }
 }
 

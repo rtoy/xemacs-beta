@@ -1,3 +1,11 @@
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (scan_file):
+	Pass READ_BINARY to scan_lisp_file, scan_c_file; avoids an
+	assertion failure with Visual C++ 2005 Express Edition, and is
+	logically more coherent, given that our Lisp and C files are saved
+	with Unix line endings. 
+
 2007-08-27  Mike Sperber  <mike@xemacs.org>
 
 	* config.values.in (datarootdir):  Add.
