@@ -1,3 +1,11 @@
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* printer.el (generic-print-region): 
+	(generic-print-buffer): 
+	Use #'valid-device-type-p instead of #'valid-specifier-tag-p to
+	check if the msprinter device is available, now that msprinter is
+	always available as a specifier tag. 
+
 2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* disp-table.el (make-display-table): 
