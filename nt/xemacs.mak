@@ -427,6 +427,7 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DPATH_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
 	-DPATH_PROGNAME=\"infodock\" 				\
 	-DEMACS_PROGNAME=\"infodock\"				\
+	-DSHEBANG_PROGNAME=\"infodock-script\"			\
 	-DEMACS_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
 	-DINFODOCK_MAJOR_VERSION=$(infodock_major_version)	\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
@@ -444,7 +445,7 @@ PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
 	-DPATH_PROGNAME=\"xemacs\"				\
 	-DEMACS_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
-	-DEMACS_PROGNAME=\"xemacs\"
+	-DEMACS_PROGNAME=\"xemacs\" -DSHEBANG_PROGNAME=\"xemacs-script\"
 !endif
 
 ########################### Set up installation and package directories.

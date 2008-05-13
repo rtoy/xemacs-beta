@@ -958,7 +958,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #define SHEBANG_PROGNAME_LENGTH                                         \
   (int)((sizeof (WEXTSTRING (SHEBANG_PROGNAME)) - sizeof (WEXTSTRING (""))))
 #define SHEBANG_EXE_PROGNAME_LENGTH                                     \
-  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME ".exe"))                   \
+  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME) WEXTSTRING(".exe"))       \
         - sizeof (WEXTSTRING ("")))
 
   {

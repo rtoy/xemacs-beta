@@ -1,5 +1,11 @@
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
+	Use WEXTSTRING separately on the two concatenated strings,
+	avoiding an error on Win32. 
+
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* config.h.in (_CRT_NONSTDC_NO_DEPRECATE): 
 	Define this, to avoid warnings about using standard POSIX and C9X
 	functions on Win32; fixes part of Matthew Persico's problems of
