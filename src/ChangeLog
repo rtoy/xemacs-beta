@@ -1,3 +1,10 @@
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in (_CRT_NONSTDC_NO_DEPRECATE): 
+	Define this, to avoid warnings about using standard POSIX and C9X
+	functions on Win32; fixes part of Matthew Persico's problems of
+	9ea6aaa80805081832r1a3308e9wb6d2bfea7457379f@mail.gmail.com .
+
 2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in: Add SHEBANG_PROGNAME.

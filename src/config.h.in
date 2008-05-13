@@ -875,6 +875,7 @@ things are arranged in config.h.in.  In particular:
    "deprecated" in favor of Microsoft-specific "secure" ones (!)
    This must go *before* the inclusion of any system files. */
 #define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_NONSTDC_NO_DEPRECATE
 #endif
 
 /* alloca twiddling.
