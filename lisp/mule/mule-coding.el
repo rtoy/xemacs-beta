@@ -240,8 +240,6 @@ returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
                            ((if (r0 == #xABAB)
                                 ;; #xBFFE is a sentinel in the compiled
                                 ;; program.
-                                ;; #xBFFE is a sentinel in the compiled
-                                ;; program.
 				((r0 = r1 & #x7F)
 				 (write r0 ,(make-vector vec-len #xBFFE)))
                               ((mule-to-unicode r0 r1)
@@ -531,12 +529,94 @@ DECODE-TABLE is a 256-entry vector describing the mapping from octets on
 disk to XEmacs characters for some fixed-width 8-bit coding system.  "
   (check-argument-type #'vectorp decode-table)
   (check-argument-range (length decode-table) #x100 #x100)
-  (block category
-    (loop
-      for i from #x80 to #xBF
-      do (unless (= i (aref decode-table i))
-           (return-from category 'no-conversion)))
-    'iso-8-1))
+  (loop
+    named category
+    for i from #x80 to #xBF
+    do (unless (= i (aref decode-table i))
+	 (return-from category 'no-conversion))
+    finally return 'iso-8-1))
+
+(defun 8-bit-fixed-query-coding-region (begin end coding-system
+                                        &optional buffer errorp highlightp)
+  "The `query-coding-region' implementation for 8-bit-fixed coding systems.
+
+Uses the `8-bit-fixed-query-from-unicode' and `8-bit-fixed-query-skip-chars'
+coding system properties.  The former is a hash table mapping from valid
+Unicode code points to on-disk octets in the coding system; the latter a set
+of characters as used by `skip-chars-forward'.  Both of these properties are
+generated automatically by `make-8-bit-coding-system'.
+
+See that the documentation of `query-coding-region'; see also
+`make-8-bit-coding-system'. "
+  (check-argument-type #'coding-system-p
+                       (setq coding-system (find-coding-system coding-system)))
+  (check-argument-type #'integer-or-marker-p begin)
+  (check-argument-type #'integer-or-marker-p end)
+  (let ((from-unicode
+         (or (coding-system-get coding-system '8-bit-fixed-query-from-unicode)
+	     (coding-system-get (coding-system-base coding-system)
+				'8-bit-fixed-query-from-unicode)))
+        (skip-chars-arg
+         (or (coding-system-get coding-system '8-bit-fixed-query-skip-chars)
+	     (coding-system-get (coding-system-base coding-system)
+				'8-bit-fixed-query-skip-chars)))
+	(ranges (make-range-table))
+        char-after fail-range-start fail-range-end previous-fail extent
+	failed)
+    (check-type from-unicode hash-table)
+    (check-type skip-chars-arg string)
+    (save-excursion
+      (when highlightp
+	(map-extents #'(lambda (extent ignored-arg)
+			 (when (eq 'query-coding-warning-face
+				   (extent-face extent))
+			   (delete-extent extent))) buffer begin end))
+      (goto-char begin buffer)
+      (skip-chars-forward skip-chars-arg end buffer)
+      (while (< (point buffer) end)
+        (message
+	 "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
+	 fail-range-start previous-fail (point buffer) end)
+	(setq char-after (char-after (point buffer) buffer)
+	      fail-range-start (point buffer))
+	(message "arguments are %S %S"
+		 (< (point buffer) end)
+		 (not (gethash (encode-char char-after 'ucs) from-unicode)))
+	(while (and
+		(< (point buffer) end)
+		(not (gethash (encode-char char-after 'ucs) from-unicode)))
+	  (forward-char 1 buffer)
+	  (setq char-after (char-after (point buffer) buffer)
+		failed t))
+	(if (= fail-range-start (point buffer))
+	    ;; The character can actually be encoded by the coding
+	    ;; system; check the characters past it.
+	    (forward-char 1 buffer)
+	  ;; The character actually failed. 
+	  (message "past the move through, point now %S" (point buffer))
+	  (when errorp 
+	    (error 'text-conversion-error
+		   (format "Cannot encode %s using coding system"
+			   (buffer-substring fail-range-start (point buffer)
+					     buffer))
+		   (coding-system-name coding-system)))
+	  (put-range-table fail-range-start
+			   ;; If char-after is non-nil, we're not at
+			   ;; the end of the buffer.
+			   (setq fail-range-end (if char-after
+						    (point buffer)
+						  (point-max buffer)))
+			   t ranges)
+	  (when highlightp
+	    (message "highlighting")
+	    (setq extent (make-extent fail-range-start fail-range-end buffer))
+	    (set-extent-priority extent (+ mouse-highlight-priority 2))
+	    (set-extent-face extent 'query-coding-warning-face))
+	  (skip-chars-forward skip-chars-arg end buffer)))
+      (message "about to give the result, ranges %S" ranges)
+      (if failed 
+	  (values nil ranges)
+	(values t nil)))))
 
 ;;;###autoload
 (defun make-8-bit-coding-system (name unicode-map &optional description props)
@@ -618,13 +698,27 @@ the code for tilde `~'.  "
     (coding-system-put name '8-bit-fixed t)
     (coding-system-put name 'category 
                        (make-8-bit-choose-category decode-table))
+    (coding-system-put name '8-bit-fixed-query-skip-chars
+                       (apply #'string (append decode-table nil)))
+    (coding-system-put name '8-bit-fixed-query-from-unicode encode-table)
+
+    (coding-system-put name 'query-coding-function
+                       #'8-bit-fixed-query-coding-region)
+    (coding-system-put (intern (format "%s-unix" name))
+		       'query-coding-function
+                       #'8-bit-fixed-query-coding-region)
+    (coding-system-put (intern (format "%s-dos" name))
+		       'query-coding-function
+                       #'8-bit-fixed-query-coding-region)
+    (coding-system-put (intern (format "%s-mac" name))
+		       'query-coding-function
+                       #'8-bit-fixed-query-coding-region)
     (loop for alias in aliases
       do (define-coding-system-alias alias name))
     result))
 
 (define-compiler-macro make-8-bit-coding-system (&whole form name unicode-map
 						 &optional description props)
-
   ;; We provide the compiler macro (= macro that is expanded only on
   ;; compilation, and that can punt to a runtime version of the
   ;; associate function if necessary) not for reasons of speed, though
@@ -674,8 +768,9 @@ the code for tilde `~'.  "
              ;; (invalid-read-syntax "Multiply defined symbol label" 1)
              ;;
              ;; when the file is byte compiled.
-             (case-fold-search t))
-        (define-translation-hash-table encode-table-sym ,encode-table)
+             (case-fold-search t)
+             (encode-table ,encode-table))
+        (define-translation-hash-table encode-table-sym encode-table)
         (make-coding-system 
          ',name 'ccl ,description
          (plist-put (plist-put ',props 'decode 
@@ -688,8 +783,22 @@ the code for tilde `~'.  "
                                    (symbol-value 'encode-table-sym)))
                             ',encode-program))))
 	(coding-system-put ',name '8-bit-fixed t)
-        (coding-system-put ',name 'category ',
-                           (make-8-bit-choose-category decode-table))
+        (coding-system-put ',name 'category 
+                           ',(make-8-bit-choose-category decode-table))
+        (coding-system-put ',name '8-bit-fixed-query-skip-chars
+                           ',(apply #'string (append decode-table nil)))
+        (coding-system-put ',name '8-bit-fixed-query-from-unicode encode-table)
+        (coding-system-put ',name 'query-coding-function
+                           #'8-bit-fixed-query-coding-region)
+	(coding-system-put ',(intern (format "%s-unix" name))
+			   'query-coding-function
+			   #'8-bit-fixed-query-coding-region)
+	(coding-system-put ',(intern (format "%s-dos" name))
+			   'query-coding-function
+			   #'8-bit-fixed-query-coding-region)
+	(coding-system-put ',(intern (format "%s-mac" name))
+			   'query-coding-function
+			   #'8-bit-fixed-query-coding-region)
         ,(macroexpand `(loop for alias in ',aliases
                         do (define-coding-system-alias alias
                              ',name)))
@@ -703,4 +812,3 @@ the code for tilde `~'.  "
  '(mnemonic "Latin 1"
    documentation "The most used encoding of Western Europe and the Americas."
    aliases (iso-latin-1 latin-1)))
-
