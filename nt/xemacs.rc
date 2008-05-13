@@ -1,0 +1,7 @@
+#ifdef INCLUDE_DUMP
+101    DUMP      "xemacs.dmp"
+#endif
+
+XEmacs ICON PRELOAD "xemacs.ico"
+XEmacsFile ICON "File.ico"
+XEmacsLisp ICON "Lisp.ico"

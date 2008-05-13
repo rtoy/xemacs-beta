@@ -1,0 +1,1130 @@
+2008-02-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (let):
+	Correct and extend the previous test, thank you Stephen. 
+
+2008-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (Assert): 
+	New test case; thank you Michael Sperber. 
+
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (pristine-case-table): 
+	New var, reflecting the standard case table before case-table.el
+	messes with it. 
+	* automated/case-tests.el: 
+	Call Skip-Test-Unless correctly, following Vin's report of
+	20a807210801300635v7533d26rdb32a8d82fb4239b@mail.gmail.com . 
+	Use pristine-case-table, add in a couple more tests.
+	* automated/test-harness.el (test-harness-from-buffer): 
+	Update the error message in the light of tests skipped for other
+	reasons (not to do with absent packages). In this case, because
+	we're exposing diagnostics in a DEBUG_XEMACS build that are no
+	appropriate to expose to non-DEBUG_XEMACS builds. 
+
+2008-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el:
+	Check for a bug Mike Sperber reported; check algorithms used, if
+	available. 
+
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (test-file-name): 
+	Call #'make-temp-file now it's available. Remove a long comment
+	saying, essentially, that it should be used, not
+	#'make-temp-name. 
+
+2008-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el: 
+	Assert that two short lists with the same contents in distinct
+	orders hash differently. 
+
+2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (literal-with-uninterned):
+	Use ?\x syntax for Latin-1 characters, don't assume that the file
+	will be read as UTF-8. 
+
+2008-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (thing): 
+	Check that printing a hash table literal doesn't clear
+	print-gensym-alist. 
+
+2008-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/symbol-tests.el (Symbol documentation): Add tests to
+	check documentation extraction.
+
+2007-12-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-test-compiled):
+	Improve docstring.
+
+	* automated/weak-tests.el (test-harness-test-compiled):
+	Remove debugging code.
+
+2007-12-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-crashes.el: Renamed from reproduce-bugs.el.  Update to-do.
+
+2007-12-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-bugs.el:  Reorganize.  Minor cosmetic improvements.
+	Update to-do list.
+	(defbug):  Include status and docstring in value.
+	(bug-hashtable):  Document the table format.
+	(reproduce-bug):  Handle revised table format.  Remove broken
+	autoload cookie.
+	(describe-bug):  New function.  Pop up description of one bug.
+	(list-bugs):  New function.  Pop up brief descriptions of all bugs.
+	(1,2,3,4,5,6,7,8,9,10,11):  (Re)number all bugs.  Move comments to
+	docstrings.
+
+2007-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/syntax-tests.el:
+	Check that substitute-in-file-name doesn't error when handed
+	non-existing environment variables, passing through the specified
+	string instead. Also check that existing environment variables are
+	correctly substituted. Also check that double slashes in the
+	middle of a path name are treated as re-starting the path. 
+
+2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-bugs.el (reproduce-bug): Add bug 10, crash in search.
+
+2007-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-bugs.el: Add some commentary.
+	Number the two unnumbered bugs.
+	Comment out the keybinding.
+
+2007-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Add a Known-Bug-Expect-Error call testing and documenting that we
+	don't support all of the Unicode code space in a single session.
+	* automated/test-harness.el (Known-Bug-Expect-Error):
+	Provide Known-Bug-Expect-Error, analagous to
+	Known-Bug-Expect-Failure and Check-Error.
+	* automated/test-harness.el (Silence-Message):
+	Dynamically bind the function definition of #'clear-message, as
+	well as that of #'append-message, to nil.
+
+2007-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	The native coding system specified in the language environment can
+	be either a list (which we used to handle fine) or a single coding
+	system expression (which we failed on). Handle the latter case. 
+
+2007-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Check the eight-bit fixed-width CCL coding systems for round-trip
+	compatibility with themselves. 
+
+2007-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that a couple of previously problematic calls to #'format
+	succeed.
+
+2007-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/os-tests.el: Suppress `executable-find' lossage.
+
+	* automated/regexp-tests.el (replace-regexp-in-string):
+	New tests for error conditions.
+
+	* automated/test-harness.el (test-harness-from-buffer): Comment
+	about inability to check the FROB in invalid_argument.
+
+2007-09-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (replace-regexp-in-string):
+	New tests for correct operation.  Comment need for `replace-match'
+	tests.
+
+2007-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (test-chars):
+	There are now 2^21 possible characters under Mule, not 2^19.
+	* automated/mule-tests.el (test-file-name):
+	Call #'make-temp-name instead of writing the file needed for the
+	rever-buffer test to the user's home directory. Wrap the following
+	#'save-buffer in a Silence-Message call.
+	* automated/mule-tests.el:
+	In the language environment tests, check that a given input method
+	exists before trying to activate it. If there are installed input
+	methods, assert that every input method specified in any language
+	environment exists. If the native-coding-system of the language
+	environment is specified as a function, don't assert that it is a
+	coding system. 
+
+	In the byte-compiler coding cookie tests, call #'read at runtime
+	on strings with non-Latin-1 Unicode escapes. This avoids errors
+	when make check is run under a non-Mule XEmacs, where unavailable
+	Unicode escapes throw an error in the Lisp reader.
+
+	Add a new Known-Bug-Expect-Failure call for a bug that occurred to
+	me yesterday; if non-Latin-1 is generated in an eval-when-compile
+	clause, that non-ASCII may be trashed and the compiled code
+	incorrectly saved as no-conversion if no other non-Latin-1 exists
+	in the input buffer. Add a comment giving more details of the bug
+	and how one might fix it. 
+
+2007-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (buffer-modified-p): Test after revert.
+
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk/event-stream-tests.el (timer-check):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/weak-tests.el (p):
+	* automated/weak-tests.el (inner_cons):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-05-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Make the file name coding system tests work on OS X. 
+	Check various slots of the language environment structure to make
+	sure they're well formed--we've been shipping without a Turkish or
+	Latin-10 input method for years, for example, which is an error. 
+
+2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Minimal tests of the non-BMP UTF-16 support. 
+
+2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (bytecomp):
+	Require it, since we're testing its Unicode support. 
+	* automated/mule-tests.el (featurep):
+	Assert that the escape-quoted coding cookie is added when needed,
+	and ignored when not. 
+
+2007-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Sort the results of charsets-in-region, charsets-in-string before
+	comparing them to the previously-determined list of character
+	sets. Eliminates a dependency on the algorithm
+	charsets-in-{region,string} uses. 
+
+2007-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el: Test for regression of bug fixed by
+	Olivier Galibert <20070324221053.GA48218@dspnet.fr.eu.org>.  Test
+	by Ralf Angeli http://article.gmane.org/gmane.emacs.xemacs.beta/17353.
+
+2006-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/iso-ir-196-test.el:
+	* automated/mule-tests.el (featurep):
+	Move the tested added in the previous commit to a separate file. 
+
+2006-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Add a test that ISO/IR 196 escape handling in ISO-2022-based
+	charsets don't choke on invalid bytes in UTF-8 text. 
+
+2006-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Add tests to make sure the fixes to the CCL bugs I just checked in
+	don't regress.
+
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	New file, imported from Martin Kuehl's SXEmacs commit; test the
+	new raw string syntax, including the Unicode escapes, which
+	SXEmacs doesn't have. 
+
+2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (Silence-Message): New macro.
+	* automated/mule-tests.el: Use it.
+	* automated/region-tests.el: Use it.
+	* automated/tag-tests.el: Use it.
+
+2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: Improve handling of unexpected errors.
+
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Add checks that several Unicode characters, expressed as
+	UTF-8-encoded strings, are handled correctly by the UTF-8 support
+	of the escape-quoted character set. 
+	* automated/mule-tests.el (unicode-code-point-to-utf-8-string): New.
+	Convert a Unicode code point to the equivalent UTF-8 string. 
+	This is a naive implementation in Lisp. 
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-12-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el (backward-up-list): New test.
+	Thanks to Zacjev Evgeny for report, Aidan Kehoe for reproduction.
+
+2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.23 "daikon" is released.
+
+2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.22 "cucumber" is released.
+
+2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.21 "corn" is released.
+
+2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.20 "cilantro" is released.
+
+2005-02-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/region-tests.el: Test regions and zmacs-regions.
+
+2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.19 "chives" is released.
+
+2005-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* automated/regexp-tests.el: Added test for stale match data with
+	shy groups authored by Arnaud Giersch <arnaud.giersch@free.fr>
+
+2005-01-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el:
+	Test trivial subpatterns and backreferences with shy groups.
+
+2005-03-05  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* autoconf/regressiontest.pl: Added explict test for '--with-athena=3d'
+
+2005-01-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoconf/regressiontest.pl: Basename of configure need not be
+	"configure" and arguments differ.  HAVE_DECL_SYS_SIGLIST
+	differences are known spurious.  Delete those lines before diff.
+	Add my standard configure line to test hash.
+	Add usage notes.
+
+2005-01-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoconf: New directory for tests for configure.
+	* autoconf/regressiontest.pl: New file from Malcolm Purvis.
+
+2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/os-tests.el: New file.  Add tests for bug reported by
+	Katsumi Yamaoka 2004-10-26 <b9yvfcyuscf.fsf@jpl.org>.  Test
+	suggested by Katsumi Yamaoka <b9yoeipvwn0.fsf@jpl.org>.
+
+2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.18 "chestnut" is released.
+
+2004-10-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Add tests for bug identified by Steve
+	Youngs 2004-09-30 <microsoft-free.87ekkjhj7t.fsf@youngs.au.com>.
+
+2004-09-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Add tests for bug identified by
+	Katsumi Yamaoka 2004-09-03 <b9ywtzbbpue.fsf_-_@jpl.org>.
+
+2004-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/tag-tests.el (first form): Put non-ASCII chars back.
+
+2004-05-13  Jerry James  <james@xemacs.org>
+
+	* automated/lisp-tests:el: Another test fix because
+	(eq most-negative-fixnum (- most-negative-fixnum)).
+
+2004-05-11  Vin Shelton  <acs@xemacs.org>
+
+	* automated/tag-test.el: Use a temp directory to avoid conflicts
+	with extra TAGS files.
+
+2004-05-08  Vin Shelton  <acs@xemacs.org>
+
+	* automated/tag-test.el: Created.
+
+2004-04-21  Jerry James  <james@xemacs.org>
+
+	* automated/test-harness.el (Assert): Add an optional failing-case
+	arg so we can see what the test was trying to do when it failed.
+	* automated/lisp-tests.el: Use the failing-case arg for Asserts
+	with variables.  Use eql on tests that might produce bignums.  Fix
+	test for non-bignum XEmacsen that fails because
+	(eq most-negative-fixnum (- most-negative-fixnum)).
+
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* automated/mule-tests.el: Inhibit GC to speed up BIG_STRING tests.
+
+2004-04-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el: Darwin doesn't like ISO 8859/2 filenames.
+
+2004-04-05  Jerry James  <james@xemacs.org>
+
+	* automated/lisp-tests.el: Add bignum and ratio tests.
+
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
+2003-11-01  Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* automated/weak-tests.el:
+	Added testing of the iterative marking calls needed for processing
+	weak data structures, especially ephemerons, correctly
+
+2003-10-22  Vin Shelton  <acs@xemacs.org>
+
+	* automated/hash-table-tests.el: Remove debugging print
+	statements.
+
+2003-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: List me as maintainer.
+
+2003-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-test-compiled): 
+	New variable to notify tests whether they are compiled or interpreted.
+	
+	* automated/weak-tests.el (test-harness-test-compiled):
+	Temporary hack to remind me of the reverted byte-interpreter patch.
+
+2003-10-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: Whitespace/readability tweaks.
+	(Copyright): Update.
+	(test-harness-file-summary-template): New constant.
+	(test-harness-null-summary-template): New constant.
+	(test-harness-from-buffer):
+	(batch-test-emacs):
+	Improve report formatting.
+
+2003-09-28  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el (batch-test-emacs): Emergency fix for
+	arithmetic error when no tests are run.
+
+2003-09-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el: Syntax emergency fix.
+
+2003-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: Give the maintainers what they want.
+
+2003-09-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Revert
+	logging results when running noninteractive per Stephen
+	J. Turnbull's veto.
+
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
+2003-09-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (multiple-match): Test \{m,n\}.
+
+2003-09-03  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.15 "celery" is released.
+
+2003-08-31  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Log
+	results when running noninteractive.
+	* automated/test-harness.el (batch-test-emacs): Remove misplaced
+	debugging code.
+
+2003-08-19  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* automated/weak-tests.el: Added tests for weak-lists.
+
+2003-08-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Update copyright notice and
+	maintainer name.  Improve comment on stale match tests.
+
+2003-06-01  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.14 "cassava" is released.
+
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (replace-match): Revert test to Assert
+	that registers are preserved on a failed match.
+	(stale match data): Test for preserve-on-failure behavior.
+
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.12 "carrot" is released.
+
+2003-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-risk-infloops):
+	New variable.
+
+	* automated/lisp-tests.el (split-string): Add tests for new API
+	spec.  Conditionally re-enable potential infloops.
+
+2003-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (stale match data): Update comment.
+	(replace-match): Check-Error after failed match.
+
+2003-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-known-bug): Deleted.
+	(test-harness-failure-tag, test-harness-success-tag): New variables.
+	(Known-Bug-Expect-Failure): Bind them.
+	(Implementation-Incomplete-Expect-Failure): New macro. Bind *-tag.
+	(Print-Failure, Print-Pass): Use *-tag instead of literal strings.
+
+	* automated/symbol-tests.el (weak reference uniqueness): Mike sez
+	tests of garbage collector are due to incomplete descriptorization
+	of lisp types.  Tag with Implementation-Incomplete-Expect-Failure
+	if KKCC.
+
+2003-04-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Change known-bug status of Mule ranges.
+
+2003-03-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Change known-bug status of "\\b".
+
+2003-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (charsets-in-string):
+	(charsets-in-string):
+	Not all that glitters is gold, nor eq that which is equal.  D'oh.
+
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
+2003-01-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* sigpipe.c: New file.  Crashes 21.1 but not 21.4 or 21.5 (I
+	think).  Thanks to Richard Mlynarik <mly@pobox.com>.
+
+2003-01-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Move
+	success rate report to end of line where it's easier to see.
+
+2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el: Test cases for charset-in-* functions.
+
+2003-01-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (stale match data): Stale match data
+	persists after failed match.  Thanks to <bjacob@ca.metsci.com>.
+
+2003-01-04  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.10 "burdock" is released.
+
+2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (Mule character class): New test
+	cases.  Based on draft patch by Daiki Ueno <daiki@xemacs.org>.
+
+	* automated/test-harness.el (Print-Pass): Comment.
+
+2002-10-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-expect-bug): New variable.
+	(Known-Bug-Expect-Failure): New macro.
+	(Skip-Test-Unless): New macro.
+	(Check-Message): Use Skip-Test-Unless.
+	(test-harness-from-buffer): Type fixes.
+
+	* automated/regexp-tests.el: Use Known-Bug-Expect-Failure.
+
+	* automated/syntax-tests.el: Use Skip-Test-Unless.
+
+2002-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Add test for stale subexpr match-data.
+	Thanks to Martin Stjernholm for the report.
+
+	* automated/syntax-tests.el: Conditionalize syntax-table property
+	tests on feature.  Enable feature if present.
+
+2002-09-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Add word-boundary regexp tests.
+
+2002-08-30  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.9 "brussels sprouts" is released.
+
+2002-08-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer):
+	Print-Skip: new local function.
+
+	* automated/syntax-tests.el (forward-comment at buffer boundaries):
+	* automated/test-harness.el (Check-Message):
+	Warn, not barf, if required packages are unavailable.
+
+2002-07-27  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.8 "broccoli" is released.
+
+2002-07-20  Mike Sperber <mike@xemacs.org>
+
+	* automated/test-harness.el (test-harness-read-from-buffer): Fix
+	incorrect call of `princ'.
+
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
+2002-06-27  Mike Sperber <mike@xemacs.org>
+
+	* automated/weak-tests.el: Create.
+
+2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el ((featurep 'mule)): Fix unicode test.
+
+2002-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Clean up
+	Check-Message and Check-Error-Message when done.
+
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* automated/lisp-tests.el:
+	* automated/symbol-tests.el:
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-from-buffer):
+	Fix test harness to output FAIL messages to stderr when in
+	batch mode.
+
+	Fix up some problems in lisp-tests/symbol-tests that were
+	causing spurious failures.
+
+2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.6 "bok choi" is released.
+
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el ((featurep 'mule)):
+	Fix for new Unicode support.
+
+2002-03-12  Ben Wing  <ben@xemacs.org>
+
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
+
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
+2002-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.4 "bamboo" is released.
+
+2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.3 "asparagus" is released.
+
+2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.2 "artichoke" is released.
+
+2001-05-29  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el:
+	Avoid test failure if (temp-directory) is a symlink.
+
+2001-05-09  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.5.1 "anise" is released.
+
+2001-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* XEmacs 21.5.0 "alfalfa" is released.
+
+2001-03-23  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el:
+	Add test for mis-byte-compilation of (- 0 x).
+
+2001-03-21  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.46 "Urania" is released.
+
+2001-03-09  William M. Perry  <wmperry@aventail.com>
+
+	* gtk/UNIMPLEMENTED:
+	* gtk/event-stream-tests.el:
+	* gtk/gnome-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/gtk-test.el:
+	* gtk/gtk-test.glade:
+	* gtk/statusbar-test.el:
+	* gtk/toolbar-test.el:
+	* gtk/xemacs-toolbar.el:
+	The Great GTK Merge: new directory and files.
+
+2001-03-02  Ben Wing  <ben@xemacs.org>
+
+	* automated\case-tests.el (string-0-through-32): 
+	(string-127-through-160): Created new strings which contain
+	unprintable characters, and initialize them in a loop.
+	Rewrite all strings using unprintable characters as concat's
+	with the above variables, so that this file can be made ASCII,
+	not binary.
+
+2001-02-23  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.45 "Thelxepeia" is released.
+
+2001-02-20  Matt Tucker  <tuck@whistlingfish.net>
+
+	* automated/syntax-tests.el: remove debug message
+
+2001-02-17  Matt Tucker  <tuck@whistlingfish.net>
+
+	* automated/syntax-tests.el:
+	Added tests for syntax-table extents.
+	Added regression tests for fencepost bugs with
+	`find_start_of_comment' and `find_end_of_comment'.
+
+2001-02-08  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.44 "Thalia" is released.
+
+2001-01-26  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.43 "Terspichore" is released.
+
+2001-01-20  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.42 "Poseidon" is released.
+
+2001-01-17  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.41 "Polyhymnia" is released.
+
+2001-01-15  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/byte-compiler-tests.el ((let ((z 1)) (or (setq z 42)) z)):
+	Add regression test for mis-byte-compilation.
+
+2001-01-08  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.40 is released.
+
+2000-12-31  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.39 is released.
+
+2000-12-28  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el:
+	Avoid triggering Solaris printf buffer overflow from (format).
+
+2000-12-04  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* redisplay-tests.el: New file.
+
+2000-12-12  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: Add/Change (format) tests.
+
+2000-12-04  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/lisp-test.el: Test if all-completions ignore
+	elements start with space.
+
+2000-12-04  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/regexp-tests.el: Test unmatched search doesn't
+	alter match-string.
+
+2000-12-05  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.38 is released.
+
+2000-12-01  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Throw away
+	all warnings, even those not influenced by byte-compiler-warnings.
+
+2000-11-30  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el:
+	Test byte-compiler arithmetic optimizations.
+
+2000-11-27  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/case-tests.el: Add more tests.
+
+2000-11-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/regexp-tests.el: New file.
+
+2000-11-22  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: 
+	Add 64-bit-correctness format tests.
+	Don't quote the first arg to Check-Error.
+
+2000-11-14  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/case-tests.el: New file.
+
+2000-11-14  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.37 is released.
+
+2000-11-09  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/lisp-test.el: More format tests.
+
+2000-11-10  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/ccl-tests.el (ccl-test-simple-read-and-write):
+	(ccl-test-read-write-multibyte-character): Use make-char
+	for non MULE XEmacs.
+
+2000-10-15  MIYASHITA Hisashi <himi@m17n.org>
+
+	* automated/ccl-tests.el: New file.
+
+2000-10-30  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/lisp-test.el: Add test for format.
+
+2000-10-13  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/byte-compiler-test.el: Add optimization test for
+	byte-after-unbind-ops.
+
+2000-10-13  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/hash-table-test.el: Make new cons cell for
+	equal and not eq object.
+
+2000-10-03  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/lisp-test.el: Add replace-match test.
+
+2000-10-04  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.36 is released.
+
+2000-09-27  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: Add `current-time' test.
+
+2000-09-16  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el: Add ucs tests.
+
+	* DLL/dltest.c: Remove reference to obsolete emacsfns.h
+
+2000-08-03  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* automated/lisp-test.el: Check matching \\= against string
+	doesn't crash XEmacs.
+	From: Markus Linnala <maage@cs.tut.fi>
+
+2000-07-26  Andy Piper  <andy@xemacs.org>
+
+	* glyph-test.el: fix for new glyph instantiation mechanism.
+
+2000-07-31  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/hash-table-tests.el:
+	Fix up test suite to comply with new hash table weakness API.
+
+2000-07-19  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.35 is released.
+
+2000-06-17  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/database-tests.el: Remove any previous .pag, .dir files.
+
+2000-05-28  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.34 is released.
+
+2000-05-01  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.33 is released.
+
+2000-03-20  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.32 is released.
+
+2000-03-10  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el: Check that (make-temp-name) returns
+	unique values.
+
+2000-03-06  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* gutter-test.el: Fix name of specifier.
+
+2000-02-23  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.31 is released.
+
+2000-02-21  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.30 is released.
+
+2000-02-17  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el: Added some fileio tests.
+
+2000-02-16  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.29 is released.
+
+2000-02-13  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: Add subseq tests.
+
+2000-02-07  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.28 is released.
+
+2000-02-07  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: Add plist manipulation tests.
+
+2000-02-02  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/symbol-tests.el: Crashes fixed, so resurrect
+	makunbound test for dontusethis-set-symbol-value-handler.
+	Add more dontusethis-set-symbol-value-handler tests.
+	Should fix any lingering problems with gnus playing with
+	pathname-coding-system.
+
+2000-01-25  Martin Buchholz  <martin@xemacs.org>
+
+	* mule-tests.el: Add coding-system tests.
+
+2000-01-18  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.27 is released.
+
+1999-12-24  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* automated/syntax-tests.el: New file.
+	Add test for scan_words using forward-word and backword-word.
+
+2000-01-08  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el: 
+	Test resizing of small and big (> 8k bytes) strings.
+
+1999-12-31  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.26 is released.
+
+1999-12-24  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.25 is released.
+
+1999-12-21  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/byte-compiler-tests.el: Add Jan's tests for equal
+	effect of bytecode and interpreted code.
+
+	* automated/lisp-tests.el: Add tests for near-text functions.
+
+1999-12-19  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el: Add tests for fillarray, aset.
+
+1999-12-17  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el:  Add tests for mapcar1() crashes.
+
+1999-12-14  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.24 is released.
+
+1999-12-07  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.23 is released.
+
+1999-11-29  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.22 is released
+
+1999-11-28  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.21 is released.
+
+1999-11-10  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.20 is released
+
+1999-07-30  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.19 is released
+
+1999-07-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.18 is released
+
+1999-06-22  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.17 is released
+
+1999-06-11  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.16 is released
+
+1999-06-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/base64-tests.el: Check for error instead for nil where 
+	error conditions are expected.
+
+	* automated/base64-tests.el: Comment out (for now) the code that
+	causes crashes.
+
+1999-06-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/base64-tests.el: Check that the decoder handles
+	arbitrary characters.  Cut down on the number of tests.
+
+1999-06-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.15 is released
+
+1999-06-02  Oscar Figueiredo  <oscar@xemacs.org>
+
+	* automated/lisp-tests.el: Test `split-string'
+
+1999-05-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/base64-tests.el: New file.
+
+1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.14 is released
+
+1999-05-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/symbol-tests.el: Add many more tests.
+
+1999-05-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/lisp-tests.el: Ditto.
+
+	* automated/hash-table-tests.el: Ditto.
+
+	* automated/database-tests.el: Don't use backquote where quote
+	would suffice.
+
+	* automated/symbol-tests.el: Add tests for magic symbols.
+
+1999-05-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/hash-table-tests.el: Fix comment.
+
+1999-04-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* automated/test-harness.el (batch-test-emacs): Minor fixes.
+
+1999-03-12  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.13 is released
+
+1999-03-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.12 is released
+
+1999-03-01  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.11 is released
+
+1999-02-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.10 is released
+
+1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.9 is released
+
+1999-01-30  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/lisp-tests.el: Add test for buffer-local function
+	parameter crash
+
+1998-12-30  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/database-tests.el: Minor tweaks
+
+	* ChangeLog: new file
+

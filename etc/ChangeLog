@@ -1,0 +1,1995 @@
+2008-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README: Add descriptions of Daniel Polansky's icons.
+
+2008-02-21  Daniel Polansky  <danielpolansky@gmail.com>
+
+	Two images for one icon for XEmacs, one 16x16 and 32x32.
+	Also, a Microsoft Windows icon file is attached.
+	Itemized:
+	- 16x16 icon in PNG
+	- 32x32 icon in PNG
+	- Both bundled as a Microsoft Windows icon.
+
+	The images are modeled on XEmacs violet logotype, as found at
+	http://www.xemacs.org/. The images are copyright (c) 2005 by
+	Daniel Polansky, and licensed under GNU General Public Licence V2
+	or later at your option.
+
+	* xemacs-X-16.png:
+	* xemacs-X-32.png:
+	* xemacs-X.ico:
+	New files.
+
+2008-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README: Give more accurate descriptions of image files.
+
+2007-12-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* bundled-packages/README: Document restriction on --with-late-packages.
+
+2007-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* bundled-packages/README: Documentation for bundled packages.
+	* bundled-packages/test.sh: Test suite for bundled packages.
+
+2007-11-22  Vin Shelton  <acs@xemacs.org>
+
+	* photos/vin.png:
+	* photos/vinm.png: Updated.
+
+2004-12-03  Shyamal Prasad  <shyamal@member.fsf.org>
+
+	* xemacs.1: Now describe $HOME/.xemacs/init.el as the
+        preferred init file. Fixed excessive space insertion 
+        in the description of the '-vanilla' option
+
+2007-09-19  Didier Verna  <didier@lrde.epita.fr>
+
+	* photos/dv.png: Remove.
+	* photos/didier.png: Add.
+
+2007-07-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode/unicode-consortium/BIG5.TXT:
+	Don't map any characters to U+FFFD; for round trip compatibility,
+	map those that were mapped to U+FFFD to the Unicode private use
+	area.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-05-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gdbinit.in (pobj): Nuke fc_fontset and fc_objectset, add fc_config.
+
+2007-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ETAGS.EBNF: Sync to pot_etags_version 17.19.
+	* etags.1: Sync to pot_etags_version 17.19.
+	* ChangeLog.etags: New.  Copy of upstream ChangeLog.
+
+2007-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to Mike Fabian <mfabian@suse.de> for bringing the issue
+	to my attention.
+
+	* unicode/unicode-consortium/COPYING:
+	* unicode/unicode-consortium/oreilly.html
+	* unicode/unicode-consortium/unicode-consortium.html
+	New files clarifying copying conditions for mapping tables.
+
+	* unicode/unicode-consortium/GB12345.TXT
+	* unicode/unicode-consortium/BIG5.TXT
+	* unicode/unicode-consortium/CNS11643.TXT
+	* unicode/unicode-consortium/HANGUL.TXT
+	* unicode/unicode-consortium/JIS0201.TXT
+	* unicode/unicode-consortium/JIS0208.TXT
+	* unicode/unicode-consortium/JIS0212.TXT
+	* unicode/unicode-consortium/JOHAB.TXT
+	* unicode/unicode-consortium/KSC5601.TXT
+	* unicode/unicode-consortium/KSX1001.TXT
+	* unicode/unicode-consortium/OLD5601.TXT
+	* unicode/unicode-consortium/SHIFTJIS.TXT
+	Mapping tables downloaded from a Unicode, Inc. URL with
+	permissive conditions.
+
+2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode/unicode-consortium/8859-7.TXT:
+	Update the mapping to the 2003 version of ISO 8859-7.
+
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS:
+	Add information on set-charset-registries, and the change to
+	define-specifier-tag.
+
+2006-10-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de: Small rephrasing as suggested by hroptatyr on
+	#xemacs.
+
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.1: Sync to pot_etags_version 17.19.
+	Thanks to Morgon Kanter <morgon@surgo.net>.
+
+2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gdbinit.in:
+	* dbxrc.in:
+	Moved from src/.  Update FSF address.  Improve comments.
+
+	* gdbinit.in: Use XCOMM for "don't edit" comment and copyright.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-12-10  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* photos/purvis.png, photos/purvism.png: Updated.
+
+2005-11-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO: Add Irish, Tajik. Don't give the local name for the
+	latter language, because we don't support CYRILLIC SMALL LETTER
+	CHE WITH DESCENDER nor CYRILLIC SMALL LETTER I WITH MACRON by
+	default.
+
+2005-11-16  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* .cvsignore: New
+
+2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.23 "daikon" is released.
+
+2005-09-17  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure-2.13: Remove.  autoconf 2.59 support is stable.
+
+2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.22 "cucumber" is released.
+
+2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS: Add information on the last argument to event-to-character
+	being ignored.
+
+2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.21 "corn" is released.
+
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS: reseource -> resources (spelling fix.)
+
+2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS: Mention the move to XEmacs as the application class.
+	* sample.Xresources: Emacs as app class -> XEmacs as app class
+
+2005-03-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL: Typo fixes from Jon Ericson.
+
+2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.20 "cilantro" is released.
+
+2005-03-11  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure-2.13: Added a copy of the old configure script in case
+	of major problems.
+
+2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.19 "chives" is released.
+
+2005-02-03  Jerry James  <james@xemacs.org>
+
+	* ETAGS.EBNF: Update to author version 17.11.
+
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	Delete stuff that is irrelevant, mislocated or woefully out-of-date.
+
+	* GNU: Delete.
+	* SERVICE: Delete.
+	* ORDERS, ORDERS.EUROPE, ORDERS.JAPAN: Delete.
+	* CHARSETS, CODINGS: Delete.
+	* DEBUG, LPF, MORE.STUFF, MOTIVATION: Delete.
+	* aliases.ksh: Delete. (moved to xemacs-builds/steve)
+	* README.HYPERBOLE, README.OO-BROWSER: Delete.
+	* chr.png, chrm.png: Move to photos/.
+	* check_cygwin_setup.sh: Delete.
+	* gnu.xpm, gnu.xbm, sink.xbm: Delete.
+	* ms-kermit, ms-kermit-7bit: Delete.
+	* TERMS: Delete.
+
+	* DISTRIB, FTP, MACHINES, MAILINGLISTS, PACKAGES:
+	Delete and move to FAQ.
+
+	* BETA:
+	Delete and move to man/beta.texi.
+
+	* README: Update.
+
+2004-11-13  Ben Wing  <ben@xemacs.org>
+
+	* CODING-STANDARDS: Delete and incorporate into Internals manual.
+
+2004-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnuserv.1: Various fixes and improvements.
+	* gnuserv.README: Strengthen self-deprecation.
+
+2004-11-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL: Typo fixes, courtesy of Andreas Eder
+	<Andreas.Eder@gmx.net>.
+
+2004-11-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* photos/purvis.png, photos/purvism.png: New files.
+
+2004-10-26  Ben Wing  <ben@xemacs.org>
+
+	* BETA:
+	* BETA (writing): Removed.
+	* BETA (--error-checking): New.
+	* BETA (--compiler): New.
+	* BETA (--xemacs-compiler): New.
+	* BETA (--package-path): New.
+	* BETA (--srcdir): New.
+	* BETA (--site-prefixes): New.
+	* BETA (Mail):
+	Rewrite section on configure to indicate what flags are important
+	and what not.
+
+2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.18 "chestnut" is released.
+
+2004-10-07  Jerry James  <james@xemacs.org>
+
+	* ETAGS.EBNF:
+	* etags.1:
+	Update to author version 17.6.
+
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* NEWS (Introduction): Rewording.
+	(Changes in XEmacs 21.5): New section.
+
+2004-08-10  Jerry James  <james@xemacs.org>
+
+	* ETAGS.EBNF: New file.  Describes the syntax of an ETAGS file.
+
+2004-08-10  Jerry James  <james@xemacs.org>
+
+	* SERVICE: Update to latest version from www.gnu.org.
+
+2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* etc/gtkrc: New file.  This is the GTK equivalent of the app-default
+	  file.
+
+2004-03-30  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES: Introduce new packages escreen, xlib, and xwem.
+
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
+2004-03-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* sample.init.el: Typo and copycat fix.
+
+2003-11-28  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (erc): new.
+
+2003-11-18  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (MH-E): Update the MH-E package information string.
+
+2003-10-25  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (riece): New package.
+	* PACKAGES (liece): Mark as deprecated.
+
+2003-10-02  Steve Youngs  <youngs@xemacs.org>
+
+	* youngs.png, youngsm.png: Removed.
+
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
+2003-09-03  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.15 "celery" is released.
+
+2003-08-28  Steve Youngs  <youngs@xemacs.org>
+
+	* PACKAGES: Update.
+
+2003-08-04  Norbert Koch  <viteno@xemacs.org>
+	    Stephen J. Turnbull <stephen@xemacs.org>
+
+	* PACKAGES: Sync with package-tree contents.  Style conformance.
+
+2003-07-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/README.HYPERBOLE:
+	* etc/README.OO-BROWSER:
+	Update.
+
+2003-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/sample.Xresources (menubar and popup fonts): Use X Font Sets.
+
+2003-06-29  Norbert Koch  <viteno@xemacs.org>
+
+	* package-index.LATEST.gpg: Official package release.
+
+2003-06-01  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.14 "cassava" is released.
+
+2003-05-24  Norbert Koch  <viteno@xemacs.org>
+
+	* package-index.LATEST.gpg: Official package release.
+
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
+2003-05-03  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.gpg: Updated to current reality.
+
+	* package-index.LATEST.pgp: Removed, 21.5 uses
+	'package-index.LATEST.gpg'.
+
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.12 "carrot" is released.
+
+2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Emacs.ad: Global substition of .Xresources for .Xdefaults.
+	* sample.Xresources: Replaces sample.Xdefaults.
+	* sample.Xdefaults: Replace contents with pointer to
+	sample.Xresources.
+	* README: Change name of sample.Xdefaults to sample.Xresources.
+	Substitute 21.4 for 21.2.
+
+2003-03-03  Ville Skyttä  <scop@xemacs.org>
+
+	* BETA (New packages): Introduce Norbert Koch.
+
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
+2003-02-13  Chris Palmer  <chris@nodewarrior.org>
+
+	* BETA: Fixed typos and made consistent use of <...> for Internet
+	addresses.
+
+2003-02-12  Jerry James  <james@xemacs.org>
+
+	* photos/james.png, photos/jamesm.png: New files.
+
+2003-02-04  Steve Youngs  <youngs@xemacs.org>
+
+	* BETA: '-no-autoloads' implies '-vanilla' so suggest people
+	invoke 'xemacs -no-autoloads' when trying to reproduce a bug.
+
+2003-02-03  Steve Youngs  <youngs@xemacs.org>
+
+	* BETA: Update.  General tidy up and rewrite sections dealing with
+	packages and building from scratch.
+
+2003-01-04  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.10 "burdock" is released.
+
+2002-11-11  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* etc/Emacs.ad (Emacs.bold-italic.attributeFont): Per G. Boffi.
+
+2002-11-04  giacomo boffi  <giacomo.boffi@polimi.it>
+
+	* sample.Xdefaults (Emacs.default.attributeForeground): Add an
+	example of setting the default bold-italic face.
+
+2002-10-30  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* etc/TUTORIAL.ja: Typo fix.
+
+2002-10-25  Steve Youngs  <youngs@xemacs.org>
+
+	* TUTORIAL.fr (suivante): Typo fix.
+	From juergen stuber <stuberj@mines.inpl-nancy.fr>.
+
+2002-10-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/BETA: Improve descriptions of XEmacs Patches; mention Design.
+
+2002-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Emacs.ad: Add charsets to *menubar*FontSet and *popup*FontSet.
+
+2002-08-31  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* Emacs.ad: Add *menubar*FontSet and *popup*FontSet entries,
+	(self-)obtained from Red Hat.
+
+2002-08-30  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.9 "brussels sprouts" is released.
+
+2002-07-27  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.8 "broccoli" is released.
+
+2002-07-21  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.pgp: Update.
+
+	* package-index.LATEST.gpg: Ditto.
+
+2002-07-14  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-icon.xpm: It's XEmacs, not Xemacs.
+
+2002-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/BETA (Large contributions): New section.  Reorganize file.
+
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
+2001-03-30  Ben Wing  <ben@xemacs.org>
+
+	* sample.init.el:
+	* sample.init.el (Init-kill-entire-line):
+	* sample.init.el (describe-foo-at-point):
+	* sample.init.el (kill-current-buffer):
+	* sample.init.el (kill-current-buffer-and-window):
+	* sample.init.el (grep-c-files): Removed.
+	* sample.init.el (grep-all-files-history): New.
+	* sample.init.el (grep-all-files-omitted-expressions): New.
+	* sample.init.el (grep-all-files-omitted-directories): New.
+	* sample.init.el (construct-grep-all-files-command): New.
+	* sample.init.el (grep-all-files-in-current-directory): New.
+	* sample.init.el (grep-lisp-files): Removed.
+	* sample.init.el (grep-all-files-in-current-directory-and-below): New.
+	* sample.init.el (clear-select):
+	* sample.init.el ((control kp-add)):
+	* sample.init.el (pause):
+	* sample.init.el ((eq system-type 'windows-nt)):
+
+	Add documentation for defined functions.  Change grep functions to
+	be more generally useful.  Document more specifically what the
+	`menu-force' setting actually does -- what commands are overridden
+	and how to access them.
+
+2002-04-22  Hrvoje Niksic  <hniksic@xemacs.org>
+
+	* photos/hniksic.png, photos/hniksic.png: Update.
+
+2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.6 "bok choi" is released.
+
+2002-03-30  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.gpg: Update to current reality.
+
+	* package-index.LATEST.pgp: Ditto.
+
+2002-03-25  Ben Wing  <ben@xemacs.org>
+
+	* unicode/unicode-consortium/8859-16.TXT:
+	New file.
+
+2002-03-24  Ben Wing  <ben@xemacs.org>
+
+	* DISTRIB:
+	* DISTRIB (donation): Removed.
+	Eliminate FSF distribution information; we're not FSF.
+
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* unicode\mule-ucs\*: New directory, containing translation
+	files for the remaining charsets that are not in
+	unicode\unicode-consortium but are in mule-ucs.
+
+	* unicode\other\*: New directory, containing translation
+	files made up on an ad-hoc basis.
+
+	* unicode\README: Update.
+
+2001-05-04  Ben Wing  <ben@xemacs.org>
+
+       * check_cygwin_setup.sh (distdir): Update for current
+       Cygwin reality.
+
+       * NEWS: Remove kill-whole-line changes.
+
+2001-04-17  Ben Wing  <ben@xemacs.org>
+
+       * NEWS: More changes.
+
+       * sample.init.el (grep-all-files-in-current-directory-and-below):
+       Missing argument.
+
+2001-04-15  Ben Wing  <ben@xemacs.org>
+
+       * NEWS:
+       * NEWS (C):
+       * NEWS (commands):
+       Many, many changes for XEmacs 21.4.
+
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
+2002-02-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* TUTORIAL.se: New from Mats Lidell.
+
+2002-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* BETA: General update.  Fix some broken URLs.
+
+2002-01-23  Jarl Friis  <jarl@diku.dk>
+
+	* BETA (http): Informing of xemacs-patches mailing list. Added
+	note on patch etiquette.
+
+2002-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.4 "bamboo" is released.
+
+2001-05-27  Kazuo Oishi  <oishi@n-pl.org>
+
+	* xemacs-ja.1: Replace with new translation.
+
+2001-12-29  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.gpg: Update.
+
+	* package-index.LATEST.pgp: Update.
+
+2001-12-18  Jan Vroonhof  <jan@xemacs.org>
+
+	* photos/jan.png: Add mug shot.
+
+2001-12-03  Didier Verna  <didier@xemacs.org>
+
+	* NEWS: advertise `C-x r p' (replace-rectangle) in global map.
+
+2001-09-19  Ben Wing  <ben@xemacs.org>
+
+	* TUTORIAL.de: Translate TERMINOLOGY section for TUTORIAL.de,
+	change menu entry separator from / to ->.  Change SPC to <Space>.
+
+2001-10-07  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de: Update of TUTORIAL.de according to Ben's
+	Updates and Syncing with Emacs 21.0.106.
+
+2001-08-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* BETA (writing): Advertise use of build-report.
+
+2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.3 "asparagus" is released.
+
+2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.2 "artichoke" is released.
+
+2001-07-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* MYTHOLOGY, etc/OXYMORONS: Remove.
+	etc/VEGETABLES: Copied from xemacs-builds module, file Codenames-21.5.
+	Bring codenames into synch with reality.
+
+2001-07-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL: Fix minor typo.
+	* TUTORIAL.de: Sync with TUTORIAL.
+
+2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* xemacs-ja.1: Removed.
+
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* sample.init.el:
+	* sample.init.el (Init-safe-require): New.
+	* sample.init.el ((fboundp 'pending-delete-mode)):
+	* sample.init.el ((eq system-type 'windows-nt)):
+	* sample.init.el (dired):
+	* sample.init.el ((Init-safe-require 'efs-auto)):
+	* sample.init.el (completer):
+	* sample.init.el (crypt):
+	* sample.init.el (filladapt):
+	* sample.init.el ((fboundp 'turn-on-lazy-lock)):
+	* sample.init.el ((fboundp 'resize-minibuffer-mode)):
+	* sample.init.el ((Init-safe-require 'scroll-in-place)):
+	Rewrite to be much more careful about loading features -- now
+	it decays gracefully even in the complete absence of packages.
+	Also avoid doing obnoxious things when loading efs.
+
+2001-05-10  Paul Stodghill  <stodghil@cs.cornell.edu>
+
+	* PACKAGES: Update to reflect new package dir tree.
+
+2001-05-15  Steve Youngs  <youngs@xemacs.org>
+
+	* PACKAGES: Update to reflect new package dir tree.
+
+2001-05-09  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.5.1 "anise" is released.
+
+2001-01-31  Jason R. Mastaler  <jason@xemacs.org>
+
+	* FTP: Updated FTP mirrors list.
+
+2001-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* XEmacs 21.5.0 "alfalfa" is released.
+
+2001-03-30  Ben Wing  <ben@xemacs.org>
+
+	* sample.init.el:
+	* sample.init.el (Init-kill-entire-line):
+	* sample.init.el (describe-foo-at-point):
+	* sample.init.el (kill-current-buffer):
+	* sample.init.el (kill-current-buffer-and-window):
+	* sample.init.el (grep-c-files): Removed.
+	* sample.init.el (grep-all-files-history): New.
+	* sample.init.el (grep-all-files-omitted-expressions): New.
+	* sample.init.el (grep-all-files-omitted-directories): New.
+	* sample.init.el (construct-grep-all-files-command): New.
+	* sample.init.el (grep-all-files-in-current-directory): New.
+	* sample.init.el (grep-lisp-files): Removed.
+	* sample.init.el (grep-all-files-in-current-directory-and-below): New.
+	* sample.init.el (clear-select):
+	* sample.init.el ((control kp-add)):
+	* sample.init.el (pause):
+	* sample.init.el ((eq system-type 'windows-nt)):
+
+	Add documentation for defined functions.  Change grep functions to
+	be more generally useful.  Document more specifically what the
+	`menu-force' setting actually does -- what commands are overridden
+	and how to access them.
+
+2001-03-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* OXYMORONS: Add 2 oxymorons, clean up numbering, close RFC.
+
+	* NEWS: Fix typo.
+
+2001-03-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnuserv.1 (UNIX_DOMAIN_SOCKETS:
+	Document TMPDIR lossage in gnuserv/gnuclient.
+
+2001-03-06  Ben Wing  <ben@xemacs.org>
+
+	* sample.init.el:
+	* sample.init.el (Init-kill-entire-line): New.
+	Fix to take into account the removed kill-whole-line changes.
+
+2001-03-21  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.46 "Urania" is released.
+
+2001-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* OXYMORONS: New file of 21.4 codenames.
+
+2001-03-02  Ben Wing  <ben@xemacs.org>
+
+	* README: sample.emacs -> sample.init.el.
+
+2001-02-23  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.45 "Thelxepeia" is released.
+
+2001-02-10  Martin Buchholz  <martin@xemacs.org>
+
+	* MACHINES: Rewritten.  Bitrot discarded.
+
+2001-02-08  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.44 "Thalia" is released.
+
+2001-01-26  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.43 "Terspichore" is released.
+
+2001-01-21  Steve Youngs  <youngs@xemacs.org>
+
+	* ./etc/PACKAGES: Doc fix.
+
+2001-01-17  Steve Youngs  <youngs@xemacs.org>
+
+	* ./etc/PACKAGES: Update.
+
+2001-01-20  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.42 "Poseidon" is released.
+
+2001-01-17  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.41 "Polyhymnia" is released.
+
+2001-01-08  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.40 is released.
+
+2000-12-31  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.39 is released.
+
+2000-12-05  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.38 is released.
+
+2000-11-14  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.37 is released.
+
+2000-10-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PACKAGES: Add details on os-utils contents.
+
+2000-10-04  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* NEWS: Change lprogress-display to progress-feedback.
+
+2000-10-04  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.36 is released.
+
+2000-08-29  Robert Pluim  <rpluim@bigfoot.com>
+
+	*  etc/NEWS: fix reference to progress-feedback-use-echo-area
+
+2000-09-20  Martin Buchholz  <martin@xemacs.org>
+
+	* xemacs.1: Spelling fixes.  Remove stuff that doesn't belong.
+
+2000-09-16  Martin Buchholz  <martin@xemacs.org>
+
+	* Emacs.ad: Remove Energize from comments.
+
+2000-08-02  Stephen J. Turnbull <stephen@xemacs.org>
+
+	* Emacs.ad: Document usage of FontSet resource for menubar.
+
+2000-07-19  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.35 is released.
+
+2000-05-28  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.34 is released.
+
+2000-04-15  Andy Piper  <andy@xemacs.org>
+
+	* Emacs.ad: add select-start() back into text translations.
+
+2000-05-01  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.33 is released.
+
+2000-04-12  Andy Piper  <andy@xemacs.org>
+
+	* Emacs.ad: give the gui-element face the same font as the
+	menubar and popups. Add translations for text widgets.
+
+2000-03-20  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.32 is released.
+
+2000-03-01  Didier Verna  <didier@xemacs.org>
+
+	* NEWS: update the rect.el entry.
+
+2000-02-23  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.31 is released.
+
+2000-02-21  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.30 is released.
+
+2000-01-05  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* TUTORIAL.ja: Synch with English version.
+
+2000-02-16  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.29 is released.
+
+2000-02-07  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.28 is released.
+
+2000-01-18  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.27 is released.
+
+2000-01-15  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* TUTORIAL.de: Update copyright and fix typo.
+
+2000-01-03  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* NEWS: Document mail spool locking overhaul.
+
+1999-12-31  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.26 is released.
+
+1999-12-24  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.25 is released.
+
+1999-12-14  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.24 is released.
+
+1999-12-07  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.23 is released.
+
+1999-11-28  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.21 is released.
+
+1999-10-12  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+
+	* sample.Xdefaults: adds a reference to beNiceToColormap,
+	  so that the user can guess what to do if xemacs' dialogs are
+	  butt ugly.
+
+1999-11-13  Jason R Mastaler  <jason@mastaler.com>
+
+	* FTP: Updated FTP mirrors list.  Replaced GNU FTP document
+	with a URL.
+
+1999-11-13  Jason R Mastaler  <jason@mastaler.com>
+
+	* MAILINGLISTS: Updated mailing list subscription information.
+	Replaced GNU MAILINGLISTS document with a URL.
+
+1999-08-01  Adrian Aichner  <adrian@xemacs.org>
+
+	* DISTRIB: Update IP address of ftp.xemacs.org.
+	* NEWS: Fix typo
+
+1999-07-23  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* custom/example-themes/example-theme.el:
+	* custom/example-themes/europe-theme.el:
+	* custom/example-themes/ex-custom-file: Some simple examples
+	illustrating the custom theme support.
+
+1999-07-17  MORIOKA Tomohiko  <tomo@etl.go.jp>
+
+	* HELLO (Thai): Modify for new font.
+
+1999-03-30  MORIOKA Tomohiko  <tomo@etl.go.jp>
+
+	* HELLO (Amharic): New language.
+	(Slovak): Likewise.
+	(Thai): Likewise (by Virach Sornlertlamvanich).
+	(Greek): Fixed (by Yannis Haralambous).
+
+1999-02-01  Glynn Clements  <glynn@sensei.co.uk>
+
+	* recycle.xpm: Fix colours so that they work on TrueColor
+	and DirectColor displays
+
+1998-12-28  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.8 is released.
+
+1998-12-24  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.7 is released.
+
+1998-11-28  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.2-beta4 is released.
+
+1998-10-15  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.2-beta3 is released.
+
+1998-10-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* xemacs.1: Remove misplace "\".
+
+1998-09-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.2-beta2 is released.
+
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* check_cygwin_setup.sh: grammar fix.
+
+1998-09-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* check_cygwin_setup.sh: fix a couple of buglets.
+
+1998-08-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* sample.emacs: Enable sound support on mswindows devices.
+
+1998-08-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de: Fixing typos and grammatical errors.  Fixing
+	inconsistent usage of RET, <Return>, and <return> (only using
+	<Return> now).  Changing TUTORIAL to TUTORIAL.de throughout
+	itself.  Adding english equivalent to german translation of all
+	concepts used in TUTORIAL.de.
+
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.2-beta1 is released.
+
+1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* GOATS: Removed.
+
+1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* README: Bump version numbers.
+	* NEWS: Ditto and purge pre-21.0 stuff.
+
+	* XEmacs 21.0-pre5 is released.
+
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Handle multiple database libraries.
+	From Gregory Neil Shapiro <gshapiro@sendmail.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+	* configure.in: Fix test for InfoDock sources.
+
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA (writing): Update patch creation instructions.
+
+	* FTP: Update FTP mirror list.
+
+	* DISTRIB: Remove duplicated FTP mirror list.
+	* xemacs.1 (ftp): Ditto.
+
+	* XEmacs 21.0-pre4 is released.
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* gnuserv.1 (this): Email address for Ben Wing is ben@xemacs.org.
+	* gnuserv.README (README): Ditto.
+	* xemacs-ja.1: Ditto.
+
+1998-06-28  SL Baur  <steve@altair.xemacs.org>
+
+	* BABYL: Moved to rmail package
+
+	* enriched.doc: Moved to xemacs-base package
+
+	* MSDOS:
+	* GNUS-NEWS: deleted
+
+1998-06-21  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* NEWS: Added references to documentation about packages and
+	path setup.
+
+	* README: Synched.
+
+1998-06-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre3 is released.
+
+1998-06-20  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* PACKAGES:
+	* BETA: Moved some package stuff into Texinfo docs.  Other nitpicks
+
+1998-06-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre2 is released.
+
+1998-06-14  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre1 is released.
+
+1998-06-14  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* NEWS: Updated information about customization of the
+	automatic info dir file generation using
+	`Info-auto-generate-directory' and `Info-save-auto-generated-dir'
+
+1998-06-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta43 is released.
+
+1998-06-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* check_cygwin_setup.sh: set more intelligent defaults for
+	windows 95.
+
+1998-06-01  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta42 is released.
+
+1998-06-01  SL Baur  <steve@altair.xemacs.org>
+
+	* sounds: Removed, now in the sounds-au package.
+
+1998-05-29  Andy Piper  <andyp@parallax.co.uk>
+
+	* check_cygwin_setup.sh: new file to check that cygwin is setup
+	correctly for XEmacs operation.
+
+1998-05-23  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta41 is released.
+
+1998-05-15  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta40 is released.
+
+1998-05-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta39 is released.
+
+1998-05-07  SL Baur  <steve@altair.xemacs.org>
+
+	* altrasoft-logo.xpm: Removed.
+
+1998-05-02  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta38 is released.
+
+1998-04-26  Jason R Mastaler  <jason@4b.org>
+
+	* BETA: Replaced SmartList references in favor of
+	Majordomo.
+
+1998-04-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-21.0-beta37 is released.
+
+1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* NEWS: Documented info dir rebuilding and LDAP support.
+
+1998-04-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-21.0-beta36 is released.
+
+1998-04-11  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* xemacs.1: -no-packages -> -no-early-packages.
+
+	* NEWS: Clarified site-lisp status.
+
+1998-04-10  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta35 is released.
+
+1998-04-10  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* NEWS: Documented that Info-default-directory-list and
+	site-directory are gone.
+
+1998-04-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta34 is released.
+
+1998-03-24  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta33 is released.
+
+1998-03-24  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta32 is released.
+
+1998-03-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0 beta31 is released.
+
+1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Emacs.ad: Example using leading dot resources to
+	  initalize faces changes to use Emacs.foo since the
+	  leading dot syntax doesn't work.  Initialization of
+	  text-cursor face moved to faces.el.
+
+1998-03-07  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta30 is released.
+
+1998-03-01  SL Baur  <steve@altair.xemacs.org>
+
+	* Emacs.ad: Remove explicit `Emacs' application resource
+	name.
+
+1998-02-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta28 is released.
+
+	* configure.in (with_session): Fix reporting of the setting.
+	(with_database_gnudbm): Correctly report setting.
+
+1998-02-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta27 is released.
+	* XEmacs-20.4-pre4 is released.
+
+	* configure.in (doug_lea_malloc): Requires USE_MINIMAL_TAGBITS.
+	(--with-gung): Implement it.
+
+	* configure.usage (--with-gung): Document.  Turns on
+	USE_MINIMAL_TAGBITS and USE_INDEXED_LRECORD_IMPLEMENTATION.
+	(--with-term): Remove.
+
+	* XEmacs-20.5-beta26 is released.
+
+1998-02-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.4-pre3 is released.
+
+	* Makefile.in: use better feedback while rebuilding finder database.
+	Suggested by Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>
+
+1998-02-14  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (OFFIX_O): Don't use OffiX if no real Xmu support.
+	Suggested by Pekka Marjola <pema@iki.fi>
+
+	* XEmacs-20.4-pre2 is released.
+	* XEmacs-20.5-beta25 is released.
+
+1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-pre1 is released.
+	* XEmacs 20.5-beta24 is released.
+
+1998-02-03  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta23 is released.
+
+1998-02-01  SL Baur  <steve@altair.xemacs.org>
+
+	* aliases.ksh: igrep from the shell command line.
+	From Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
+
+1998-01-31  SL Baur  <steve@altair.xemacs.org>
+
+	* aliases.ksh: Add `mak' function to create beta.err for
+	build-report.
+	From Adrian Aichner <adrian@xemacs.org>
+	Suggested by Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
+
+1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta22 is released.
+
+1998-01-26  SL Baur  <steve@altair.xemacs.org>
+
+	* aliases.ksh: New file.  Start tracking useful Maintainer
+	XEmacs commands.
+
+1998-01-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta21 is released.
+
+1998-01-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta20 is released.
+
+1998-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	* NEWS:
+	Remove doc for configure-time INFOPATH, no longer used.
+
+	* BETA: Update ftp addresses.
+	* INSTALL: Update ftp addresses.
+	* MAILINGLISTS: Sync with Emacs 20.2. Update ftp addresses.
+
+	* xemacs.1: Update author list.
+
+1998-01-12  SL Baur  <steve@altair.xemacs.org>
+
+	* INSTALL: Updated for recent Mule/package changes.
+
+	* XEmacs 20.5-beta19 is released.
+
+1998-01-10  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta18 is released.
+
+1998-01-10  SL Baur  <steve@altair.xemacs.org>
+
+	* FTP: Update address of what was formerly ftp.ibp.fr.
+
+1998-01-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta17 is released.
+
+	* Makefile.in (finder): Use -vanilla.
+	(lisp/finder-inf.el): Ditto.
+	(check-features): New target.  Do a sanity check prior to
+	installation.
+
+1997-01-03  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta16 is released.
+
+1997-12-30  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta15 is released.
+
+1997-12-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta14 is released.
+
+1997-12-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta13 is released.
+
+1997-12-21  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA (Prerequisite): Add cookbook procedures for maintaining
+	package lisp directories.
+
+1997-12-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta 12 is released.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Emacs.ad: Don't specify a default toolbar specific
+	  background color.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* toolbar: Added support for foregroundToolBarColor
+	  symbol to most icons.
+
+1997-12-17  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA: Update version numbers.
+
+	* NEWS: Update version number.
+
+1997-12-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta11 is released.
+
+1997-12-13  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (lisp/finder-inf.el): Add dependency on src/.
+
+	* XEmacs 20.5-beta10 is released.
+
+1997-12-09  SL Baur <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta9 is released.
+
+1997-12-06  SL Baur <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta8 is released.
+
+	* info/dir: update for further packaging.
+	* configure.in: remove `tree-x' from XEmacs build.
+
+1997-12-05  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* refcard.tex: Updated for 20.3
+
+1997-12-02  SL Baur  <steve@altair.xemacs.org>
+
+	* skk/SKK.tut.E (Hint): Fix typos.
+
+1997-11-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta7 is released.
+
+	* configure.in: When testing for -ltiff, fall back on the extra
+	libraries -ljpeg, and -lz since some -ltiff's need them.
+
+1997-11-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta6 is released.
+
+1997-11-19  SL Baur  <steve@altair.xemacs.org>
+
+	* xemacs.1: Document -no-packages, -vanilla.
+	Document -h.
+
+1997-11-17  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-pre4 is released.
+
+1997-11-15  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-pre3 is released.
+	* XEmacs 20.5-beta5 is released.
+
+1997-11-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta4 is released.
+
+1997-11-08  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta3 is released.
+	* XEmacs 20.3-pre2 is released.
+
+1997-11-04  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de:
+	Updated copyright information. Translated most of the COPYING
+	section. Translated the <<.*>> didactic line.
+
+1997-10-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de: Fixed two issues reported by
+	Achim Oppelt <aoppelt@theorie3.physik.uni-erlangen.de>
+
+	* TUTORIAL.de:
+	Manually applied rejected patch hunks from Marc Aurel's patch.
+	Some more fixes.
+
+	* TUTORIAL.de:
+	Applied patches supplied by Marc Aurel <4-tea-2@bong.saar.de>.
+	They fix yet more typos and quite a few awkward sentences.
+
+1997-10-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de: Manually merged a few more corrections by
+	Carsten Leonhardt <leo@arioch.oche.de>
+
+1997-10-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL.de:
+	Applied patches from Andreas Jaeger <aj@arthur.rhein-neckar.de> to 1.2,
+	then merged them with 1.3 via ediff-buffers.
+	Andreas found some quite nasty typos still and added many missing commas.
+
+	* TUTORIAL.de: Re-fill-ed paragraphs after patching.
+
+	* TUTORIAL.de: Applied the excellent patches courtesy of
+	Carsten Leonhardt <leo@arioch.oche.de>.
+
+1997-11-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* TUTORIAL.ko: Renamed from etc/TUTORIAL.kr to fit with ISO
+	639 (two letter language code).
+
+	* TUTORIAL.ja: Renamed from etc/TUTORIAL.jp to fit with ISO
+	639 (two letter language code).
+
+1997-11-02  SL Baur  <steve@altair.xemacs.org>
+
+	* CHARSETS:  New file imported from Emacs 20.1.
+
+1997-11-01  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-pre1 is released.
+
+1997-10-31  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16 is released.
+
+1997-10-31  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta2 is released.
+
+1997-10-30  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Emacs.ad: Added *XlwMenu*highlightForeground entry.
+	  Added *XlwMenu*titleForeground entry.
+
+1997-10-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* HELLO: Add Czech.
+
+	* HELLO: Delete Amharic, Thai and Tigrigna.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta94 is released.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta93 is released.
+
+1997-10-24  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta92 is released.
+
+1997-10-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta91 is released.
+
+1997-10-16  Hrvoje Niksic <hniksic@srce.hr>
+
+	* NEWS:  document changed package load semantics.
+
+1997-10-13  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Remove `site-lisp' from list of directories to
+	make symbolic links for.
+
+	* XEmacs 20.3-beta90 is released.
+
+1997-10-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* NEWS: Updates
+
+1997-10-12  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta1 is released.
+
+	* XEmacs 19.16-pre9 is released.
+
+	* XEmacs 19.16-pre8 is released.
+
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta28 is released.
+
+	* Makefile.in (src/paths.h): Update PATH_INFOPATH
+	(infopath): New shell variable.
+	(infopath_user_defined): Ditto.
+
+	* configure.in (infodir_user_defined): Spelling fixes.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* NEWS: Draft entry for the info changes.
+
+1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
+
+	* BETA:
+	  - remove Chuck as contact name
+	  - random small improvements
+	  - remove I/me references - the message should be that XEmacs
+	    maintenance is an inclusive community effort.
+
+1997-10-10  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA (Prerequisite): Add further documentation for
+	package installation.
+
+1997-10-07  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre7 is released.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre6 is released.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta27 is released.
+
+1997-10-02  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta26 is released.
+
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta25 is released.
+
+	* Makefile.in (install-arch-dep): Install the `Installation' for
+	future reference.
+
+	* Makefile.in (top_distclean): Remove finder-inf.el*.
+
+	* configure.in (use_union_type): Default to "yes".
+
+1997-09-30  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA: Document existence of `Installation' file.
+	- Document requirement of rebuilding finder-inf.el when building
+	from the full tarball.
+
+1997-09-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta24 is released.
+
+1997-09-24  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA (XEmacs 20.3 packages): Added explanation of package
+	hierarchy.
+
+1997-09-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre4 is released.
+
+1997-09-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta23 is released.
+
+1997-09-19  SL Baur <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre3 is released.
+
+1997-09-18  Colin Rafferty  <craffert@ml.com>
+
+	* NEWS: Various spelling corrections and some grammar
+		  corrections (which/that).
+
+1997-09-17  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta22 is released.
+
+1997-09-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta21 is released.
+
+	* XEmacs 19.16-pre2 is released.
+
+1997-09-13  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta20 is released.
+
+1997-09-12  SL Baur  <steve@altair.xemacs.org>
+
+	XEmacs 19.16-pre1 "Queens" is released.
+
+1997-09-02  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta19 is released.
+
+	* Makefile.in (finder): New target.
+
+1997-08-29  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-beta91 is released.
+
+1997-08-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-beta90 is released.
+
+1997-08-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta18 is released.
+
+1997-08-11  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* NEWS: add a section telling about the Info changes.
+
+1997-08-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta17 is released.
+
+1997-08-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* gnuserv.1: Described Hrvoje's mods in manpage
+
+1997-07-31  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta16 is released.
+
+1997-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* BETA: Update patching instructions.
+
+1997-07-26  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta15 is released.
+
+1997-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta14 is released.
+
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta13 is released.
+
+	* info/dir (Packages): Integrate texinfo manual for PH.
+
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta12 is released.
+
+1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lwlib/lwlib-Xm.c (xm_update_one_value): Hand application of mrb
+	fix.  Restoration of lossage from beta10->beta11 upgrade.
+
+	* XEmacs 20.3-beta11 is released.
+
+1997-06-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (CPP): Correct typo `print-lib-gcc-file-name'
+	should be `print-libgcc-file-name'
+	From Katsumi Yamaoka <yamaoka@ga.sony.co.jp>
+
+	* XEmacs 20.3-beta10 is released.
+
+1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta9 is released.
+
+	* Makefile.in (dist): Make `make dist' work for me.
+
+1997-06-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* HELLO: final byte for ethiopic was changed to sync with
+	Emacs/mule-19.34.94-zeta.
+
+1997-06-23  Steven L Baur  <steve@altair.xemacs.org>
+
+	* NEWS (Commands): Various updates by Hrvoje Niksic.
+
+1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in: Missing FRC.info.
+	(install-arch-dep): Add missing backslash.
+	From Glynn Clements <glynn@sensei.co.uk>
+
+	* XEmacs 20.3-beta8 is released.
+
+1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnuserv.1: Updates and cleanup.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta7 is released.
+
+1997-06-12  Steven L Baur  <steve@altair.xemacs.org>
+
+	* TUTORIAL (things): Synched by Hrvoje Niksic with previous
+	XEmacs version.
+
+1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b6 is released.
+
+	* configure.in (GNU_MALLOC): Check for (-l)PW instead of (-l)-lPW.
+	Suggested by Martin Buchholz  <mrb@eng.sun.com>
+
+1997-06-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* smilies/Face_smile.xbm, etc/smilies/Face_weep.xbm,
+	etc/smilies/Face_ase2.xbm, etc/smilies/Face_ase3.xbm,
+	etc/smilies/Face_ase.xbm: Add Japanese smiley faces.
+
+1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b5 is released.
+
+1997-06-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* NEWS: Updates for early beta20.3 stuffs.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b4 is released.
+
+1997-06-04  Martin Buchholz  <mrb@eng.sun.com>
+
+	* NEWS:
+	* etags.1:
+	Upgraded to etags 12.11
+
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta3 is released.
+
+	* INSTALL: Delete documentation of mocklisp support.
+
+	* configure.in: Delete mocklisp support.
+
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* FTP: Update mirror info.
+
+	* DISTRIB: Update mirror info.
+
+1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* FTP: Correct typo in ftp.cenatls.cena.dgac.fr.
+
+	* DISTRIB: Ditto.
+
+1997-05-22  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta2 is released.
+
+Tue Jun  4 10:15:54 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	* e/eterm.ti:  Add kcub1, kcuf1, kcuu1, kcud1 capabilities.
+
+Sat May 17 20:30:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b1 is released.
+
+Fri May 16 20:38:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* README: Update minor version number.
+
+Tue May 13 20:35:52 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.2 is released.
+
+Sat May 10 16:14:30 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b6 is released.
+
+Thu May  8 20:22:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b5 is released.
+
+Fri May  2 16:50:02 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b4 is released.
+
+Sun Apr 27 12:25:55 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b3 is released.
+
+Wed Apr 23 10:33:58 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b2 is released.
+
+	* configure.in (beta): OPENWINHOME misspelled.
+
+Mon Apr 21 14:48:29 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* BETA (writing): Update with information about how to create
+	patches.
+
+Sat Apr 19 16:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b1 is released.
+
+Wed Apr 16 17:44:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1 is re-released.
+
+Tue Apr 15 21:03:22 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1 is released.
+
+Sat Apr 12 20:11:08 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b15 is released.
+
+Thu Apr 10 19:07:26 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b14 is released.  (Beta 13 was skipped).
+
+Wed Apr  9 22:52:06 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b12 is released.
+
+Sat Apr  5 09:11:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b11 is released.
+
+Thu Mar 27 18:24:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b10 is released.
+
+Sun Mar 23 17:24:38 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.15-b104 is released.
+
+Sat Mar 22 19:56:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* sgml/CATALOG: Default to html-3.2final.
+
+Fri Mar 21 21:26:01 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b103 is released.
+	* XEmacs-20.0-b9 is released.
+
+	* Makefile.in (top_distclean): Add `Installation' to distclean
+	rule.
+
+Thu Mar 20 20:14:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b102 is released.
+
+Tue Mar 18 21:52:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b101 is released.
+
+Mon Mar 17 19:09:29 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.1-b8 is released.
+	* XEmacs-19.15-b100 is released.
+
+Sat Mar 15 17:15:18 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.1-b7 is released.
+	* XEmacs-19.15-b99 is released.
+
+Sat Mar 15 17:15:18 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* sgml/CATALOG: Added IE3 DTDs and htmlpro DTD.
+
+Sat Mar  8 15:19:33 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.1-b6 is released.
+	* XEmacs-19.15-b98 is released.
+
+Mon Mar  3 23:57:56 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b5 is released.
+
+Mon Mar  3 18:09:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b4 is released.
+
+Sat Mar  1 15:38:30 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (distclean): Correct typos.
+
+	* XEmacs 19.15-b96 is released.
+
+	* configure.in: Symlink site-lisp when using --srcdir.
+	Add special handling of lisp directory to allow for multiple
+	site-packages files.
+
+Tue Mar  4 00:41:38 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* sample.Xdefaults: Added customization of foreground and
+	background colors for the `default' face.
+
+Wed Feb 26 22:12:12 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (top_distclean): Reset src/PURESIZE.h for
+	distribution.
+
+	* XEmacs 20.1-b3 is released.
+
+Sun Feb 23 17:10:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b2 is released.
+
+Sat Feb 22 14:29:44 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19-15-b'95 is released.
+
+Fri Feb 21 22:29:51 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* toolbar/workshop-cap-up.xpm:  Moved caption up one pixel.
+
+Sat Feb 15 14:11:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b1 is released.
+	* XEmacs 19.15-b94 is released.
+
+Sun Feb  9 16:15:55 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.15-b93 is released.
+	XEmacs 20.0 is released to the 'net.
+
+Fri Feb  7 19:21:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.0try3 is released.
+
+Wed Feb  5 18:03:06 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.0try2 is released.
+
+Mon Feb  3 19:39:08 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.15-b92 is released.
+
+Sat Feb  1 18:17:38 1997  Steven L Baur <steve@altair.xemacs.org>
+
+	* XEmacs 20.0try1 is released.
+	* XEmacs 19.15-b91 AKA XEmacs '97 NOT! is released.
+
+Wed Jan 29 19:59:41 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* CHANGES-beta: XEmacs 20.0-b93 is released.
+
+Sat Jan 25 15:43:59 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* CHANGES-beta: XEmacs 20.0-b92 is released.
+
+Wed Jan 22 21:07:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0-b91 (prerelease 2) is released.
+
+	* configure.in (--with-scrollbars): Add Athena3d as a toolkit
+	type.
+
+	* lwlib/lwlib-Xaw.c (xaw_update_one_widget): Let Athena 3d have 0
+	borderwidth.
+	(xaw_scrollbar_scroll): Use SCROLLBAR_LINE_UP and
+	SCROLLBAR_LINE_DOWN since that's current the only to get to the
+	bottom of the buffer. :-(
+
+Tue Jan 21 20:01:19 1997  Steven L. Baur  <steve@altair.xemacs.org>
+
+	* sgml/HTML32.dtd: html-3.2 final dtd added.
+
+Sat Jan 11 12:05:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* sample.emacs: Remove code snippet that wipes out the cycle
+	buffer modeline feature.
+
+Sat Jan 11 12:05:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.0 beta90 (prerelease 1) is released.
+	* XEmacs 19.15 beta90 (prerelease 1) is released.
+
+Sat Jan  4 14:52:57 1997  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0 beta 34 is released.
+	* XEmacs 19.15 beta 7 is released.
+
+Sun Dec 29 05:37:43 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* sample.emacs: Add sample code to highlight continuation glyph
+
+Sat Dec 28 15:33:27 1996 Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.0 beta 33 is released.
+	* XEmacs 19.15 beta 6 is released.
+
+Fri Dec 27 20:34:58 1996  Richard Mlynarik  <mly@adoc.xerox.com>
+
+	* yow.lines: 20k of new zippy quotes.
+
+Sat Dec 21 15:20:20 1996  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0-b32 released.
+
+	* XEmacs 19.15-b5 released.
+
+Tue Dec 10 19:25:25 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* CHANGES-beta: XEmacs 20.0-b31 is released.
+
+Thu Dec  5 20:42:35 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* edt-user.doc (File): New file from Emacs 19.34.

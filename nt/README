@@ -1,0 +1,380 @@
+Building and Installing XEmacs on Windows 95/98/NT/2000/XP -*- mode:outline -*-
+
+			       Ben Wing
+
+                         based on old version by
+	
+			     David Hobley
+			     Marc Paquette
+			    Jonathan Harris
+
+This is a port of XEmacs to Windows 95/98/ME/NT/2000/XP.  If you are
+looking for a port of GNU Emacs, get the latest release of the 21.x series
+from gnu.org.  NT 4.0 or later is required for building on Windows NT.
+Note that the developers typically use NT 4.0 and Windows 2000 or XP, and
+there may possibly be problems under Windows 95/98. (One developer has
+successfully built on Windows ME, though, which is the successor of Windows
+98.)  If so, please report them to xemacs-nt@xemacs.org; we are committed
+to maintaining compatibility with all systems listed.
+
+* Required tools and sources
+============================
+
+1.  You will need Visual C++ V6.0, Visual Studio .NET or later to compile
+    everything.
+
+    Note that Visual C++ assumes that the environment variables INCLUDE and
+    LIB are set to specify the location of the includes and libraries.
+    Your PATH environment variable also needs to include the Visual Studio
+    vc\bin and sharedide\bin directories.
+
+    Visual C++ V6.0 installs a batch file called vcvars32.bat in
+    c:\Program Files\Microsoft Visual Studio\VC98\bin\ (or wherever you
+    installed it) that you can run before building to set up all of these
+    environment variables.  Alternatively, you can choose at setup time to
+    have these environment variables automatically set up in the registry,
+    which is generally a good idea.
+
+    Visual Studio .NET calls this batch file vsvars32.bat and installs it in
+    $Installdir\Common7\Tools, but doesn't offer at install time to
+    automatically set these environment variables up in the registry.
+
+2.  Grab the latest XEmacs source from
+
+      http://ftp.xemacs.org/pub/xemacs/
+
+    or one of its mirrors listed at http://www.xemacs.org/Download/index.html.
+
+    (NOTE: If you are behind a firewall and have problems with FTP access,
+    the URL http://ftp.xemacs.org/pub/xemacs/ works just as well.)
+
+    You'll also need the packages.  You probably want to get the unified
+    packages bundle from
+
+      http://ftp.xemacs.org/pub/xemacs/packages/xemacs-sumo.tar.gz
+
+    If you are building with international support, you also need
+
+      http://ftp.xemacs.org/pub/xemacs/packages/xemacs-mule-sumo.tar.gz
+
+    Although we don't recommend it, you can also retrieve just the packages
+    you really need if you have an extremely slow net connection or are very
+    short on disk space.  You can find the various packages in
+    http://ftp.xemacs.org/pub/xemacs/packages/.  You will need the xemacs-base
+    package (and mule-base, if building with international support).  You'll
+    also need the texinfo package unless you have a copy of makeinfo.exe on
+    your machine.  If you want to download additional or updated packages
+    from within XEmacs you'll need the efs, dired and vm packages.  You'll
+    probably also want at least the edit-utils, text-modes, fsf-compat,
+    cc-mode, prog-modes and xemacs-devel packages.
+
+    Unpack the packages into "x:\your\choice\XEmacs\xemacs-packages",
+    for example "c:\Program Files\XEmacs\xemacs-packages".
+
+3.  The native build no longer supports X Windows.  There is no point,
+    since the Cygwin build is actively maintained and supports X Windows
+    very well.  See the FAQ if you want to build with Cygwin.
+
+
+* Optional libraries
+====================
+
+The easiest way to get the optional libraries is to grab the appropriate
+set of precompiled versions for your compiler:
+
+http://www.xemacs.org/Download/win32/optional-libs.exe
+
+or for VC++ 2005 (VC8)
+
+http://www.xemacs.org/Download/win32/optional-libs-vc8.exe
+
+unpack them somewhere and set the OPTIONAL_LIBRARY_DIR in config.inc
+to point to where you put them.  This will automatically give you
+all the graphics libraries. (NOTE: optional-libs.exe was compiled with
+VC++ .NET and may or may not work with VC++ 6.0.  If not, you will have
+to build them yourself until we provide VC6 binaries.)
+
+* Alternative: Building the optional libraries yourself
+=======================================================
+
+If you need to build the libraries yourself, grab them from 
+http://ftp.xemacs.org/pub/xemacs/aux or get the latest version from the
+home page of the appropriate library, as listed on
+http://www.xemacs.org/Download/optLibs.html.  The following instructions
+assume that you have the appropriate libraries and have unpacked them
+somewhere, e.g. c:\src.
+
+Directions for building the various libraries:
+
+1.  You really want the XPM library.  Copy nt\xpm.mak from the xemacs sources
+    to the lib/ subdirectory of the XPM sources, cd to that directory and
+    build xpm with 'nmake -f xpm.mak'.
+
+2.  You probably also want PNG image support.  Get PNG and ZLIB and read the
+    respective READMEs for details on how to build them.
+
+    cd to the ZLIB source directory and type 'nmake -f win32\Makefile.msc'.
+
+    cd to the libpng source directory, rename or move the zlib directory to
+    ..\zlib and type 'nmake -f scripts\makefile.vcawin32'.
+
+3.  If you want TIFF support, cd to the TIFF source directory and type
+    'nmake -f Makefile.vc'.
+
+4.  If you want JPEG support, cd to the JPEG source directory and type
+    'nmake -f makefile.vc'.
+
+5.  If you want X-Face support, copy nt\compface.mak from the xemacs sources
+    to the compface directory, cd to that directory and build libcompface
+    with 'nmake -f compface.mak'.
+
+6.  It's also possible to build the Sleepycat DB libraries.  Open up the file
+
+    DB-SOURCE-DIR\docs\ref\build_win\intro.html
+
+    in a browser, where DB-SOURCE-DIR is the top-level source directory for
+    the Sleepcat DB libraries, and follow the directions.  You should build the
+    `Release_static' target if you want to use the static version of this
+    library, or the `Release' target if you want to use the DLL version of
+    the library.  To use the DLL version, you need to set BUILD_DATABASE_SHARED
+    to 1 in config.inc.  The DLL version will make the executable much smaller,
+    but you will have to have the DLL present at run-time -- either in the
+    same directory as the XEmacs executable or somewhere in your path.
+
+7.  It's possible, but difficult, to build shared libraries for GNU MP.
+    (Static libraries are not yet possible, as there is no makefile.vc for
+    this; you can't build static libraries for VC++ using MinGW.) Basically,
+    you need to build using MinGW and then generate native import libraries.
+    This is more or less described in the documentation, but the following
+    procedure seems to work:
+
+    -- In the top level of the GMP sources, configure using
+
+       CC='gcc -mno-cygwin' configure --build=pentium3-pc-mingw32 --disable-static --enable-shared
+
+    -- Edit the `libtool' script in the same directory and change the value
+       of CC from `gcc' to `gcc -mno-cygwin'.
+
+    -- Run `make'.
+
+    -- Run these commands:
+
+       lib /machine:IX86 /def:.libs/libgmp-3.dll-def
+       cp .libs/libgmp-3.dll-exp libgmp-3.exp
+       cp .libs/libgmp-3.dll .
+
+    -- You should now have an import library named libgmp-3.lib and a DLL
+       libgmp-3.dll.
+
+    -- NOTE: You will need to have this DLL accessible when XEmacs runs.
+       It either needs to be in the same directory as the XEmacs executable
+       or in your path.
+
+8.  There are also pre-built binaries for GMP-4.1.2 at
+
+    http://www.cs.nyu.edu/exact/core/gmp/.
+
+    However, they don't seem to work properly for our purposes, as they
+    require LIBC.LIB rather than MSVCRT.DLL.
+
+9.  You can build the client library for PostgreSQL by cd'ing to the src/
+    subdirectory of the PostgreSQL sources and running `nmake -f win32.mak'.
+
+10.  It does not appear to be very easy to build OpenLDAP under
+     native MS Windows, as it is only experimentally supported.  However, there
+     is a mailing list for this, which contains postings of recent binaries and
+     build patches; see
+
+     http://lucas.bergmans.us/hacks/openldap/
+
+     If you know how to build OpenLDAP, please write up a description of the
+     process and send it to us at xemacs-beta@xemacs.org.
+
+
+* Building
+==========
+
+1.  cd to the nt subdirectory of the xemacs distribution and copy the file
+    config.inc.samp to config.inc.  Make any necessary modifications.  This
+    file controls the options that XEmacs is built with:
+
+    -- If you want international (aka "Mule") support, modify the appropriate
+       line in config.inc as follows:
+
+       MULE=1
+
+    -- If you're using the pre-supplied optional library pack, all you should
+       have to do is set OPTIONAL_LIBRARY_DIR to the top-level directory
+       where you unpacked everything.
+
+    -- By default, support is enabled for all graphics formats, but not
+       currently for any of the other libraries in the optional library
+       pack.  If you want support for GMP, Berkeley DB or PostgreSQL, set
+       the appropriate flag (HAVE_BIGNUM, HAVE_DATABASE or HAVE_POSTGRESQL,
+       respectively) to 1.  We do not currently enable these by default
+       because of lack of sufficient testing, questionable usefulness in
+       the case of Berkeley DB and PostgreSQL, excessive library size in
+       the case of Berkeley DB (more than 2 MB for the static library!),
+       and lack of a static library in the case of GMP.
+
+    -- If you want to turn off support for any of the graphics libraries,
+       set the appropriate flag (HAVE_XPM, HAVE_GIF, HAVE_PNG, HAVE_JPEG,
+       HAVE_TIFF or HAVE_XFACE) to 0.
+
+    -- If you have compiled some of the libraries yourself, you will have to
+       specify the location of the top-level source directory for each of
+       these libraries.  XEmacs assumes that the directory structure under
+       these directories is as it is in the sources, rather than in any
+       installed format.
+
+       For example, for XPM support, modify the appropriate lines in
+       config.inc as follows:
+
+       HAVE_XPM=1
+       XPM_DIR="x:\location\of\your\xpm\sources"
+    
+       Similarly for JPEG, TIFF, etc. support.
+
+       For PNG support, you also need to specify ZLIB_DIR.
+       For GIF support, no directory is necessary as the appropriate code
+       is already in XEmacs.
+
+       If you want to use the DLL version of the Sleepycat DB library,
+       set BUILD_DATABASE_SHARED to 1.  You will have to have the DLL
+       present at run-time -- either in the same directory as the XEmacs
+       executable or somewhere in your path.
+
+    -- By default, XEmacs will expect to find its packages in the
+       subdirectories "site-packages", "mule-packages" and "xemacs-packages"
+       under the directory "c:\Program Files\XEmacs". If you want it to look
+       for these subdirectories elsewhere, modify the appropriate lines in
+       config.inc as follows:
+
+       PACKAGE_PREFIX="x:\your\package\directory"
+
+       Make sure that the directory pointed to by PACKAGE_PREFIX contains
+       the xemacs-packages directory into which you installed the packages.
+
+    -- XEmacs can build its info files more quickly if you have a copy of the
+       makeinfo program. If you have a copy, modify the appropriate lines in
+       config.inc as follows:
+
+       MAKEINFO="x:\location\of\makeinfo.exe"
+
+       If you don't have a copy of makeinfo then you'll need to have installed
+       the XEmacs texinfo package.
+
+2.  If you want to install XEmacs when you build it, modify the appropriate
+    lines in config.inc as follows (you can also run XEmacs from its build
+    directory):
+
+       INSTALL_DIR="x:\your\installation\directory"
+
+    (By default, XEmacs will be installed in directories under the directory
+    "c:\Program Files\XEmacs\XEmacs-21.5".)
+
+3.  If you want the built files to go into a different tree than the source
+    tree (e.g. this allows you to build multiple versions of XEmacs, with
+    different configuration settings, from the same source tree), use the
+    script `make-build-dir' to create a skeleton build tree, create a
+    config.inc in that tree, and then run nmake from that tree.  This is
+    similar to running `configure --srcdir=PATH' under Unix.  See the
+    comments in `config.inc.samp' for more information.
+
+4.  If you want to build xemacs on the command line, use
+    `nmake install -f xemacs.mak', or just `nmake -f xemacs.mak' if you want
+    to run XEmacs from its build directory.  nmake will build temacs, the DOC
+    file, update the elc's, dump xemacs and (optionally) install the relevant
+    files in the directories under the installation directory.
+
+    If you chose to install XEmacs, the file that you should run to start
+    XEmacs will be installed (by default) as
+        "c:\Program Files\XEmacs\XEmacs-21.5\i586-pc-win32\xemacs.exe".
+
+    To run from the build directory, run the file "src\xemacs.exe" off of the
+    root of the build directory.
+
+    You may want to create a shortcut to the file from your Desktop or
+    Start Menu.
+
+5.  To build using MS Visual Studio, you can use the workspace file
+    `nt/xemacs.dsw'. This was prepared for Visual C++ 6.0.  If you are using
+    Visual Studio .NET, open this file up inside of it and it will offer to
+    convert it to a .NET "solution" file.  The same procedure should work
+    for newer versions of Visual Studio (e.g. Visual Studio 2005).  If this
+    doesn't work (e.g. you are using Visual C++ 5 or even earlier), just
+    open up `nt/xemacs.mak' from within Visual Studio and it will offer to
+    wrap this Makefile in a workspace file, from which you can build.
+    Assuming you want to run from the build directory (which you will want
+    to do if you are planning on doing any development work on XEmacs), use
+    the following settings (for Visual C++ 6.0, at least) in
+    Project/Settings...:
+
+    Under the General tab:
+
+    Build command line: NMAKE /f xemacs.mak
+    Output file name: ..\src\xemacs.exe
+    Browse info file name: ..\src\temacs.bsc
+
+    Under the Debug tab:
+
+    Executable for debug session: ..\src\xemacs.exe
+
+
+    If you want to install XEmacs when it's built, change the build command
+    line to "NMAKE install /f xemacs.mak". (You will have to make the same
+    change even if you use the provided workspace nt/xemacs.dsw.)
+
+
+* Debugging under MS Developer Studio
+=====================================
+
+The build process always creates debugging and "Source Browser" information
+in the source tree for use with DevStudio. However that information is not
+very useful unless you build a debug version of XEmacs:
+
+1.  Set DEBUG_XEMACS=1 and DEPEND=1 in config.inc and rebuild.
+
+2.  See instructions above for obtaining a workspace file for use with
+    MS Developer Studio.  Build and debug your XEmacs this way.
+
+3.  To display the contents of a lisp variable, type Shift-F9 (or use the
+    menu) to bring up the QuickWatch window, type dp(variable) and click
+    Recalculate. The output will appear in a console window, as well as in
+    the Debug window in MS Developer Studio.
+
+4.  To display a current Lisp backtrace, type db() in the QuickWatch window,
+    as in the previous item.
+
+5.  To view Lisp variables in the "Watch" window wrap the variable in one of
+    the helper functions from the file src\console-msw.c, for example type
+    DSTRING(variable) in the "Watch" window to inspect a Lisp string.
+
+6.  For further information on debugging XEmacs, see the item
+    `How to Debug an XEmacs problem with a debugger' in the XEmacs FAQ.
+
+
+* Known Problems
+================
+
+Please look at the PROBLEMS file for known problems. Any other problems you
+need clarified, please email us and we will endeavour to provide any
+assistance we can:
+
+The XEmacs NT Mailing List: xemacs-nt@xemacs.org
+Subscribe address:          xemacs-nt-request@xemacs.org
+
+Ben Wing (current primary MS Windows maintainer; author of the MS Windows
+          Mule code and some of the dialog box code)
+Andy Piper (MS Windows contributor; author of the Cygwin support and the
+            MS Windows glyph and widget code)
+Jonathan Harris (MS Windows contributor; original author of the MS Windows
+                 redisplay and underlying GUI code)
+Kirill Katsnelson (MS Windows contributor; author of the MS Windows process
+                   and printing code and some of the dialog box code;
+                   general guru on obscure MS Windows programming topics)
+David Hobley (early MS Windows contributor)
+Marc Paquette (early MS Windows contributor)
+August Hill (early MS Windows contributor)
+
+and others.

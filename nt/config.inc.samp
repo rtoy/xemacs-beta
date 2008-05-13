@@ -1,0 +1,262 @@
+# -*- mode: makefile -*-
+
+############################################################################
+#                            Install options                               #
+############################################################################
+
+INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
+
+# PACKAGE_PREFIX is root of the installed package hierarchies.
+# This corresponds to the configure option --with-late-packages.
+# See 'Package Hierarchies' in the info for more documentation.
+# If you don't set this, XEmacs will attempt to find the packages at runtime.
+#PACKAGE_PREFIX=c:\Program Files\XEmacs
+
+############################################################################
+#                      Compiled-in features: basic                         #
+############################################################################
+
+# Multilingual support.
+MULE=0
+
+# Native MS Windows support.
+HAVE_MS_WINDOWS=1
+
+# GTK support.  Do NOT set this to 1; this does not currently work.
+HAVE_GTK=0
+GTK_DIR=
+
+############################################################################
+#                  Compiled-in features: graphics formats                  #
+############################################################################
+
+# Directory under which the optional libraries are placed.  To make your
+# life easy, just grab http://www.xemacs.org/Download/win32/optional-libs.exe
+# (a self-installing .ZIP) and unzip them into an appropriate directory
+# (by default, c:\src).  This gets you precompiled versions of all of
+# the libraries below.
+OPTIONAL_LIBRARY_DIR=c:\src
+
+# Set this to enable XPM support (virtually mandatory), and specify
+# the directory containing xpm.  Get the library from
+# http://ftp.xemacs.org/pub/xemacs/aux/xpm-3.4k.tar.gz, or the latest
+# version (note that the library hasn't been updated in years) from
+# http://www.inria.fr/koala/lehors/xpm.html.
+HAVE_XPM=1
+XPM_DIR=$(OPTIONAL_LIBRARY_DIR)\xpm-3.4k
+
+# Set this to enable GIF support (built-in).
+HAVE_GIF=1
+
+# Set this to enable PNG support (virtually mandatory), and specify the
+# directories containing png and zlib.  Get the latest version of PNG from
+# http://www.libpng.org/pub/png/libpng.html.  Get the latest version of ZLIB
+# from http://www.gzip.org/zlib/.  NOTE: In order to compile libpng, you will
+# have to rename the zlib directory to just `zlib'.  We don't do that here
+# so we can preserve the version number, like for the other libraries.
+HAVE_PNG=1
+PNG_DIR=$(OPTIONAL_LIBRARY_DIR)\libpng-1.2.8
+ZLIB_DIR=$(OPTIONAL_LIBRARY_DIR)\zlib-1.2.3
+
+# Set this to enable JPEG support (useful, but not necessary), and specify
+# the directory containing jpeg.  Get the latest version from
+# http://www.ijg.org/ or ftp://ftp.uu.net/graphics/jpeg/.
+HAVE_JPEG=1
+JPEG_DIR=$(OPTIONAL_LIBRARY_DIR)\jpeg-6b
+
+# Set this to enable TIFF support (not very important), and specify the
+# directory containing tiff.  Get the latest version from
+# http://www.remotesensing.org/libtiff/.
+HAVE_TIFF=1
+TIFF_DIR=$(OPTIONAL_LIBRARY_DIR)\tiff-3.7.3
+
+# Set this to enable XFace support (not very important), and specify the
+# directory containing compface.  Get the library from
+# http://ftp.xemacs.org/aux/compface-1.5.1.tar.gz.
+HAVE_XFACE=1
+COMPFACE_DIR=$(OPTIONAL_LIBRARY_DIR)\compface-1.5.1
+
+# Set this to enable bignum support (useful, but not necessary), and specify
+# the directory containing GNU MP.  Get the latest version from
+# http://www.swox.com/gmp/.
+HAVE_BIGNUM=0
+BIGNUM_DIR=$(OPTIONAL_LIBRARY_DIR)\gmp-4.1.4
+
+# Set this to enable Berkeley DB support (not very important), and specify
+# the directory containing Sleepcat DB.  Get the latest version from
+# http://www.sleepycat.com/products/db.shtml.  If you want to use the
+# shared-library (DLL) version instead of the static library, set
+# BUILD_DATABASE_SHARED to 1.
+HAVE_DATABASE=0
+BUILD_DATABASE_SHARED=0
+DATABASE_DIR=$(OPTIONAL_LIBRARY_DIR)\db-4.3.28
+
+# Set this to enable PostgreSQL support (not very important), and specify
+# the directory containing PostgreSQL.  Get the latest version from
+# http://www.postgresql.org/.
+HAVE_POSTGRESQL=0
+POSTGRESQL_DIR=$(OPTIONAL_LIBRARY_DIR)\postgresql-8.0.3
+
+# Set this to enable LDAP support (not very important), and specify
+# the directory containing LDAP.  It is not easy to build OpenLDAP under
+# native MS Windows, as it is only experimentally supported.  However, there
+# is a mailing list for this, which contains postings of recent binaries and
+# build patches; see
+#
+# http://lucas.bergmans.us/hacks/openldap/
+#
+# Get the latest version of OpenLDAP from http://www.openldap.org/.
+HAVE_LDAP=0
+LDAP_DIR=$(OPTIONAL_LIBRARY_DIR)\openldap-2.3.4
+
+############################################################################
+#                            Build settings                                #
+############################################################################
+
+# If you want to the built files to be placed outside of the source tree
+# (e.g. this allows you to build multiple versions of XEmacs, with
+# different configuration settings, from the same source tree), run
+# `make-build-dir' to create a skeleton build tree, giving it the name of a
+# path.  This creates the specified directory and the `nt' directory below
+# it, copies config.inc (if it exists), config.inc.samp and xemacs.mak into
+# the `nt' directory, and modifies the config files to contain the path of
+# the source tree in SOURCE_DIR.  This will not overwrite files that
+# already exist, so it can safely be run more than once on the same tree.
+#
+# Running nmake in the skeleton build tree will then build XEmacs in that
+# directory tree, using the source files as specified.  The paths of the
+# `lisp' and `etc' directories in the source tree will be compiled into the
+# executable as "last-resort" values -- i.e. they will be used if you
+# simply run the executable as-is, but will not override any local copy of
+# the `lisp' and/or `etc' directories that you may have made.
+#
+# Alternatively, you can just uncomment the line below for BUILD_DIR and
+# specify a (possibly non-existent) path.  Running nmake will then put its
+# build files into a parallel directory structure underneath the specified
+# path, creating the directories as necessary.  The problem with this is
+# that the first method above allows you to have a different copy of
+# `config.inc' for each build directory, but doing it this way means you
+# have only one version of config.inc, and have to manually change it for
+# each different build.
+
+# NOTE: These cannot be relative paths.  If you want the source and build to
+# be relatives of each other, use $(MAKEROOT) to refer to the root of the
+# current tree -- that's one level up from where xemacs.mak is located.
+
+# SOURCE_DIR=c:\src\xemacs\working
+
+# BUILD_DIR=c:\src\xemacs\msbuilds\working
+
+# Set this to specify the location of makeinfo. (If not set, XEmacs will
+# attempt to use its built-in, much slower texinfo support when building
+# info files.) If you are building XEmacs yourself, you probably have
+# Cygwin sitting around already.  If not, you should.  Cygwin provides a
+# `makeinfo.exe' in /usr/bin/makeinfo (/usr/bin is virtual, it's /bin in
+# the actual file system).
+MAKEINFO=c:\cygwin\bin\makeinfo.exe
+
+# Set this to enable debug code in XEmacs that doesn't slow things down,
+# and to add debugging information to the executable. (The code that's
+# enabled in XEmacs is primarily extra commands that aid in debugging
+# problems.  The kind of debugging code that slows things down --
+# i.e. internal error-checking -- is controlled by the ERROR_CHECK_ALL
+# variable, below.)
+DEBUG_XEMACS=1
+
+# Set this to turn on optimization when compiling.  Normally this should
+# be the opposite of DEBUG_XEMACS.
+!if $(DEBUG_XEMACS)
+OPTIMIZED_BUILD=0
+!else
+OPTIMIZED_BUILD=1
+!endif
+
+# Set this to build with the fastcall calling convention, which uses registers
+# instead of the stack and should speed things up a bit
+# #### Change to 1 when I check in the ws with support for fastcall
+USE_FASTCALL=0
+
+# Set this in order to avoid building against MSVCRTD.dll, since we can't
+# ship that DLL and since it requires VC installed on the target computer
+BUILD_FOR_SETUP_KIT=0
+
+############################################################################
+#                          Development options                             #
+############################################################################
+
+# Set this to compile in support for profiling.  If you want line-by-line
+# profiling under VC++, you also need debugging turned on.
+PROFILE_SUPPORT=0
+
+# Set this to enable support for edit-and-continue under VC++.
+# WARNING: This turns on incremental linking, which is known to lead to
+# occasional weird crashes in pdump loading.  If that happens, do a
+# nmake -f xemacs.mak clean so that temacs.exe and xemacs.exe get removed.
+SUPPORT_EDIT_AND_CONTINUE=0
+
+# Uncomment this to turn off or on the error-checking code, which adds
+# abundant internal error checking (and slows things down a lot).  Normally,
+# leave this alone -- it will be on for beta builds and off for release
+# builds.
+# ERROR_CHECK_ALL=0
+
+# Uncomment this to turn on or off whether we compile source files as C++
+# files.  This turns on additional error checking of various sorts.  Normally,
+# leave it alone -- it will be on when ERROR_CHECK_ALL is on.
+# CPLUSPLUS_COMPILE=0
+
+# Set this to speed up building, for development purposes.
+# WARNING: This may not completely rebuild all targets.  In particular,
+# DOC is not rebuilt, and changes to lisp.h and config.h do not trigger
+# mass rebuilding.  Other things may also be enabled that are not safe
+# for release builds.
+QUICK_BUILD=0
+
+# Set this to see exactly which compilation commands are being run (not
+# generally recommended).
+VERBOSECC=0
+
+# Set this to get nmake to use dependency info (recommended for development).
+# Requires cygwin or ActiveState versions of Perl to be installed.
+DEPEND=0
+
+# Set this to use the portable dumper for dumping the preloaded Lisp
+# routines, instead of the older "unexec" routines in unexnt.c.
+USE_PORTABLE_DUMPER=1
+
+# Set this to use the new experimental garbage-collection routines instead
+# of the traditional XEmacs garbage-collection routines.
+USE_KKCC=1
+
+# Set this to use the new experimental incremental garbage collector
+# and the new allocator routines
+NEW_GC=0
+
+# Set this to turn on the use of the union type, which gets you improved
+# type checking of Lisp_Objects -- they're declared as unions instead of
+# ints, and so places where a Lisp_Object is mistakenly passed to a routine
+# expecting an int (or vice-versa), or a check is written `if (foo)'
+# instead of `if (!NILP (foo))', will be flagged as errors. (All of these
+# do NOT lead to the expected results!  Qnil is not represented as 0 [so if
+# (foo) will *ALWAYS* be true for a Lisp_Object], and the representation of
+# an integer as a Lisp_Object is not just the integer's numeric value, but
+# usually 2x the integer +/- 1.)
+
+# There used to be a claim that it simplified debugging.  There may have
+# been a grain of truth to this pre-19.8, when there was no lrecord type
+# and all objects had a separate type appearing in the tag.  Nowadays,
+# however, there is no debugging gain, and in fact frequent debugging *LOSS*,
+# since many debuggers don't handle unions very well, and usually there is
+# no way to directly specify a union from a debugging prompt.
+
+# Furthermore, release builds should *NOT* be done this way because (a) you
+# may get less efficiency, with compilers that can't figure out how to
+# optimize the union into a machine word; (b) even worse, the union type
+# often triggers compiler bugs, especially when combined with Mule and
+# error-checking.  This has been the case with various times using GCC,
+# *AND CURRENTLY HAPPENS WITH VC++*, at least when using pdump.  Therefore,
+# be warned!
+USE_UNION_TYPE=0
+
+# Set this to build XEmacs with the Intel C Compiler.
+USE_INTEL_COMPILER=0

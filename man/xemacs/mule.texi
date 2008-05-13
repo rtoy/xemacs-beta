@@ -1,0 +1,1477 @@
+@c This is part of the Emacs manual.
+@c Copyright (C) 1997 Free Software Foundation, Inc.
+@c See file emacs.texi for copying conditions.
+@node Mule, Major Modes, Windows, Top
+@chapter World Scripts Support
+@cindex MULE
+@cindex international scripts
+@cindex multibyte characters
+@cindex encoding of characters
+
+@cindex Chinese
+@cindex Greek
+@cindex IPA
+@cindex Japanese
+@cindex Korean
+@cindex Cyrillic
+@cindex Russian
+@c #### It's a lie that this file tells you about Unicode....
+@cindex Unicode
+  If you build XEmacs using the @code{--with-mule} option, it supports a
+wide variety of world scripts, including the Latin script, the Arabic
+script, Simplified Chinese (for mainland of China), Traditional Chinese
+(for Taiwan and Hong-Kong), the Greek script, the Hebrew script, IPA
+symbols, Japanese scripts (Hiragana, Katakana and Kanji), Korean scripts
+(Hangul and Hanja) and the Cyrillic script (for Byelorussian, Bulgarian,
+Russian, Serbian and Ukrainian).  These features have been merged from
+the modified version of Emacs known as MULE (for ``MULti-lingual
+Enhancement to GNU Emacs'').
+
+@menu
+* Mule Intro::              Basic concepts of Mule.
+* Language Environments::   Setting things up for the language you use.
+* Input Methods::           Entering text characters not on your keyboard.
+* Select Input Method::     Specifying your choice of input methods.
+* Coding Systems::          Character set conversion when you read and
+                              write files, and so on.
+* Recognize Coding::        How XEmacs figures out which conversion to use.
+* Unification::             Integrating overlapping character sets.
+* Specify Coding::          Various ways to choose which conversion to use.
+* Charsets and Coding Systems:: Tables and other reference material.
+@end menu
+
+@node Mule Intro, Language Environments, Mule, Mule
+@section Introduction: The Wide Variety of Scripts and Codings in Use
+
+  There are hundreds of scripts in use world-wide.  The users of these
+scripts have established many more-or-less standard coding systems for
+storing text written in them in files.  XEmacs translates between its
+internal character encoding and various other coding systems when
+reading and writing files, when exchanging data with subprocesses, and
+(in some cases) in the @kbd{C-q} command (see below).
+@footnote{Historically the internal encoding was a specially designed
+encoding, called @dfn{Mule encoding}, intended for easy conversion to
+and from versions of ISO 2022.  However, this encoding shares many
+properties with UTF-8, and conversion to UTF-8 as the internal code is
+proposed.}
+
+@kindex C-h h
+@findex view-hello-file
+  The command @kbd{C-h h} (@code{view-hello-file}) displays the file
+@file{etc/HELLO}, which shows how to say ``hello'' in many languages.
+This illustrates various scripts.
+
+  Keyboards, even in the countries where these character sets are used,
+generally don't have keys for all the characters in them.  So XEmacs
+supports various @dfn{input methods}, typically one for each script or
+language, to make it convenient to type them.
+
+@kindex C-x RET
+  The prefix key @kbd{C-x @key{RET}} is used for commands that pertain
+to world scripts, coding systems, and input methods.
+
+
+@node Language Environments, Input Methods, Mule Intro, Mule
+@section Language Environments
+@cindex language environments
+
+  All supported character sets are supported in XEmacs buffers if it is
+compiled with mule; there is no need to select a particular language in
+order to display its characters in an XEmacs buffer.  However, it is
+important to select a @dfn{language environment} in order to set various
+defaults.  The language environment really represents a choice of
+preferred script (more or less) rather that a choice of language.
+
+  The language environment controls which coding systems to recognize
+when reading text (@pxref{Recognize Coding}).  This applies to files,
+incoming mail, netnews, and any other text you read into XEmacs.  It may
+also specify the default coding system to use when you create a file.
+Each language environment also specifies a default input method.
+
+@findex set-language-environment
+  The command to select a language environment is @kbd{M-x
+set-language-environment}.  It makes no difference which buffer is
+current when you use this command, because the effects apply globally to
+the XEmacs session.  The supported language environments include:
+
+@quotation
+ASCII, Chinese-BIG5, Chinese-GB, Croatian, Cyrillic-ALT, Cyrillic-ISO,
+Cyrillic-KOI8, Cyrillic-Win, Czech, English, Ethiopic, French, German,
+Greek, Hebrew, IPA, Japanese, Korean, Latin-1, Latin-2, Latin-3, Latin-4,
+Latin-5, Norwegian, Polish, Romanian, Slovenian, Thai-XTIS, Vietnamese.
+@end quotation
+
+  Some operating systems let you specify the language you are using by
+setting locale environment variables.  XEmacs handles one common special
+case of this: if your locale name for character types contains the
+string @samp{8859-@var{n}}, XEmacs automatically selects the
+corresponding language environment.
+
+@kindex C-h L
+@findex describe-language-environment
+  To display information about the effects of a certain language
+environment @var{lang-env}, use the command @kbd{C-h L @var{lang-env}
+@key{RET}} (@code{describe-language-environment}).  This tells you which
+languages this language environment is useful for, and lists the
+character sets, coding systems, and input methods that go with it.  It
+also shows some sample text to illustrate scripts used in this language
+environment.  By default, this command describes the chosen language
+environment.
+
+@node Input Methods, Select Input Method, Language Environments, Mule
+@section Input Methods
+
+@cindex input methods
+  An @dfn{input method} is a kind of character conversion designed
+specifically for interactive input.  In XEmacs, typically each language
+has its own input method; sometimes several languages which use the same
+characters can share one input method.  A few languages support several
+input methods.
+
+  The simplest kind of input method works by mapping ASCII letters into
+another alphabet.  This is how the Greek and Russian input methods work.
+
+  A more powerful technique is composition: converting sequences of
+characters into one letter.  Many European input methods use composition
+to produce a single non-ASCII letter from a sequence that consists of a
+letter followed by accent characters.  For example, some methods convert
+the sequence @kbd{'a} into a single accented letter.
+
+  The input methods for syllabic scripts typically use mapping followed
+by composition.  The input methods for Thai and Korean work this way.
+First, letters are mapped into symbols for particular sounds or tone
+marks; then, sequences of these which make up a whole syllable are
+mapped into one syllable sign.
+
+  Chinese and Japanese require more complex methods.  In Chinese input
+methods, first you enter the phonetic spelling of a Chinese word (in
+input method @code{chinese-py}, among others), or a sequence of portions
+of the character (input methods @code{chinese-4corner} and
+@code{chinese-sw}, and others).  Since one phonetic spelling typically
+corresponds to many different Chinese characters, you must select one of
+the alternatives using special XEmacs commands.  Keys such as @kbd{C-f},
+@kbd{C-b}, @kbd{C-n}, @kbd{C-p}, and digits have special definitions in
+this situation, used for selecting among the alternatives.  @key{TAB}
+displays a buffer showing all the possibilities.
+
+   In Japanese input methods, first you input a whole word using
+phonetic spelling; then, after the word is in the buffer, XEmacs
+converts it into one or more characters using a large dictionary.  One
+phonetic spelling corresponds to many differently written Japanese
+words, so you must select one of them; use @kbd{C-n} and @kbd{C-p} to
+cycle through the alternatives.
+
+  Sometimes it is useful to cut off input method processing so that the
+characters you have just entered will not combine with subsequent
+characters.  For example, in input method @code{latin-1-postfix}, the
+sequence @kbd{e '} combines to form an @samp{e} with an accent.  What if
+you want to enter them as separate characters?
+
+  One way is to type the accent twice; that is a special feature for
+entering the separate letter and accent.  For example, @kbd{e ' '} gives
+you the two characters @samp{e'}.  Another way is to type another letter
+after the @kbd{e}---something that won't combine with that---and
+immediately delete it.  For example, you could type @kbd{e e @key{DEL}
+'} to get separate @samp{e} and @samp{'}.
+
+  Another method, more general but not quite as easy to type, is to use
+@kbd{C-\ C-\} between two characters to stop them from combining.  This
+is the command @kbd{C-\} (@code{toggle-input-method}) used twice.
+@ifinfo
+@xref{Select Input Method}.
+@end ifinfo
+
+  @kbd{C-\ C-\} is especially useful inside an incremental search,
+because stops waiting for more characters to combine, and starts
+searching for what you have already entered.
+
+@vindex input-method-verbose-flag
+@vindex input-method-highlight-flag
+  The variables @code{input-method-highlight-flag} and
+@code{input-method-verbose-flag} control how input methods explain what
+is happening.  If @code{input-method-highlight-flag} is non-@code{nil},
+the partial sequence is highlighted in the buffer.  If
+@code{input-method-verbose-flag} is non-@code{nil}, the list of possible
+characters to type next is displayed in the echo area (but not when you
+are in the minibuffer).
+
+@node Select Input Method, Coding Systems, Input Methods, Mule
+@section Selecting an Input Method
+
+@table @kbd
+@item C-\
+Enable or disable use of the selected input method.
+
+@item C-x @key{RET} C-\ @var{method} @key{RET}
+Select a new input method for the current buffer.
+
+@item C-h I @var{method} @key{RET}
+@itemx C-h C-\ @var{method} @key{RET}
+@findex describe-input-method
+@kindex C-h I
+@kindex C-h C-\
+Describe the input method @var{method} (@code{describe-input-method}).
+By default, it describes the current input method (if any).
+
+@item M-x list-input-methods
+Display a list of all the supported input methods.
+@end table
+
+@findex select-input-method
+@vindex current-input-method
+@kindex C-x RET C-\
+  To choose an input method for the current buffer, use @kbd{C-x
+@key{RET} C-\} (@code{select-input-method}).  This command reads the
+input method name with the minibuffer; the name normally starts with the
+language environment that it is meant to be used with.  The variable
+@code{current-input-method} records which input method is selected.
+
+@findex toggle-input-method
+@kindex C-\
+  Input methods use various sequences of ASCII characters to stand for
+non-ASCII characters.  Sometimes it is useful to turn off the input
+method temporarily.  To do this, type @kbd{C-\}
+(@code{toggle-input-method}).  To reenable the input method, type
+@kbd{C-\} again.
+
+  If you type @kbd{C-\} and you have not yet selected an input method,
+it prompts for you to specify one.  This has the same effect as using
+@kbd{C-x @key{RET} C-\} to specify an input method.
+
+@vindex default-input-method
+  Selecting a language environment specifies a default input method for
+use in various buffers.  When you have a default input method, you can
+select it in the current buffer by typing @kbd{C-\}.  The variable
+@code{default-input-method} specifies the default input method
+(@code{nil} means there is none).
+
+@findex quail-set-keyboard-layout
+  Some input methods for alphabetic scripts work by (in effect)
+remapping the keyboard to emulate various keyboard layouts commonly used
+for those scripts.  How to do this remapping properly depends on your
+actual keyboard layout.  To specify which layout your keyboard has, use
+the command @kbd{M-x quail-set-keyboard-layout}.
+
+@findex list-input-methods
+  To display a list of all the supported input methods, type @kbd{M-x
+list-input-methods}.  The list gives information about each input
+method, including the string that stands for it in the mode line.
+
+@node Coding Systems, Recognize Coding, Select Input Method, Mule
+@section Coding Systems
+@cindex coding systems
+
+  Users of various languages have established many more-or-less standard
+coding systems for representing them.  XEmacs does not use these coding
+systems internally; instead, it converts from various coding systems to
+its own system when reading data, and converts the internal coding
+system to other coding systems when writing data.  Conversion is
+possible in reading or writing files, in sending or receiving from the
+terminal, and in exchanging data with subprocesses.
+
+  XEmacs assigns a name to each coding system.  Most coding systems are
+used for one language, and the name of the coding system starts with the
+language name.  Some coding systems are used for several languages;
+their names usually start with @samp{iso}.  There are also special
+coding systems @code{binary} and @code{no-conversion} which do not
+convert printing characters at all.
+
+  In addition to converting various representations of non-ASCII
+characters, a coding system can perform end-of-line conversion.  XEmacs
+handles three different conventions for how to separate lines in a file:
+newline, carriage-return linefeed, and just carriage-return.
+
+@table @kbd
+@item C-x @key{RET} C @var{coding} @key{RET}
+Describe coding system @var{coding}.
+
+@item C-x @key{RET} C @key{RET}
+Describe the coding systems currently in use.
+
+@item M-x list-coding-systems
+Display a list of all the supported coding systems.
+
+@item C-u M-x list-coding-systems
+Display comprehensive list of specific details of all supported coding
+systems.
+
+@end table
+
+@kindex C-x RET C
+@findex describe-coding-system
+  The command @kbd{C-x RET C} (@code{describe-coding-system}) displays
+information about particular coding systems.  You can specify a coding
+system name as argument; alternatively, with an empty argument, it
+describes the coding systems currently selected for various purposes,
+both in the current buffer and as the defaults, and the priority list
+for recognizing coding systems (@pxref{Recognize Coding}).
+
+@findex list-coding-systems
+  To display a list of all the supported coding systems, type @kbd{M-x
+list-coding-systems}.  The list gives information about each coding
+system, including the letter that stands for it in the mode line
+(@pxref{Mode Line}).
+
+  Each of the coding systems that appear in this list---except for
+@code{binary}, which means no conversion of any kind---specifies how and
+whether to convert printing characters, but leaves the choice of
+end-of-line conversion to be decided based on the contents of each file.
+For example, if the file appears to use carriage-return linefeed between
+lines, that end-of-line conversion will be used.
+
+  Each of the listed coding systems has three variants which specify
+exactly what to do for end-of-line conversion:
+
+@table @code
+@item @dots{}-unix
+Don't do any end-of-line conversion; assume the file uses
+newline to separate lines.  (This is the convention normally used
+on Unix and GNU systems.)
+
+@item @dots{}-dos
+Assume the file uses carriage-return linefeed to separate lines,
+and do the appropriate conversion.  (This is the convention normally used
+on Microsoft systems.)
+
+@item @dots{}-mac
+Assume the file uses carriage-return to separate lines, and do the
+appropriate conversion.  (This is the convention normally used on the
+Macintosh system.)
+@end table
+
+  These variant coding systems are omitted from the
+@code{list-coding-systems} display for brevity, since they are entirely
+predictable.  For example, the coding system @code{iso-8859-1} has
+variants @code{iso-8859-1-unix}, @code{iso-8859-1-dos} and
+@code{iso-8859-1-mac}.
+
+  In contrast, the coding system @code{binary} specifies no character
+code conversion at all---none for non-Latin-1 byte values and none for
+end of line.  This is useful for reading or writing binary files, tar
+files, and other files that must be examined verbatim.
+
+  The easiest way to edit a file with no conversion of any kind is with
+the @kbd{M-x find-file-literally} command.  This uses @code{binary}, and
+also suppresses other XEmacs features that might convert the file
+contents before you see them.  @xref{Visiting}.
+
+  The coding system @code{no-conversion} means that the file contains
+non-Latin-1 characters stored with the internal XEmacs encoding.  It
+handles end-of-line conversion based on the data encountered, and has
+the usual three variants to specify the kind of end-of-line conversion.
+
+
+@node Recognize Coding, Unification, Coding Systems, Mule
+@section Recognizing Coding Systems
+
+  Most of the time, XEmacs can recognize which coding system to use for
+any given file--once you have specified your preferences.
+
+  Some coding systems can be recognized or distinguished by which byte
+sequences appear in the data.  However, there are coding systems that
+cannot be distinguished, not even potentially.  For example, there is no
+way to distinguish between Latin-1 and Latin-2; they use the same byte
+values with different meanings.
+
+  XEmacs handles this situation by means of a priority list of coding
+systems.  Whenever XEmacs reads a file, if you do not specify the coding
+system to use, XEmacs checks the data against each coding system,
+starting with the first in priority and working down the list, until it
+finds a coding system that fits the data.  Then it converts the file
+contents assuming that they are represented in this coding system.
+
+  The priority list of coding systems depends on the selected language
+environment (@pxref{Language Environments}).  For example, if you use
+French, you probably want XEmacs to prefer Latin-1 to Latin-2; if you
+use Czech, you probably want Latin-2 to be preferred.  This is one of
+the reasons to specify a language environment.
+
+@findex prefer-coding-system
+  However, you can alter the priority list in detail with the command
+@kbd{M-x prefer-coding-system}.  This command reads the name of a coding
+system from the minibuffer, and adds it to the front of the priority
+list, so that it is preferred to all others.  If you use this command
+several times, each use adds one element to the front of the priority
+list.
+
+@vindex file-coding-system-alist
+  Sometimes a file name indicates which coding system to use for the
+file.  The variable @code{file-coding-system-alist} specifies this
+correspondence.  There is a special function
+@code{modify-coding-system-alist} for adding elements to this list.  For
+example, to read and write all @samp{.txt} using the coding system
+@code{china-iso-8bit}, you can execute this Lisp expression:
+
+@smallexample
+(modify-coding-system-alist 'file "\\.txt\\'" 'china-iso-8bit)
+@end smallexample
+
+@noindent
+The first argument should be @code{file}, the second argument should be
+a regular expression that determines which files this applies to, and
+the third argument says which coding system to use for these files.
+
+@vindex coding
+  You can specify the coding system for a particular file using the
+@samp{-*-@dots{}-*-} construct at the beginning of a file, or a local
+variables list at the end (@pxref{File Variables}).  You do this by
+defining a value for the ``variable'' named @code{coding}.  XEmacs does
+not really have a variable @code{coding}; instead of setting a variable,
+it uses the specified coding system for the file.  For example,
+@samp{-*-mode: C; coding: iso-8859-1;-*-} specifies use of the
+iso-8859-1 coding system, as well as C mode.
+
+@vindex buffer-file-coding-system
+  Once XEmacs has chosen a coding system for a buffer, it stores that
+coding system in @code{buffer-file-coding-system} and uses that coding
+system, by default, for operations that write from this buffer into a
+file.  This includes the commands @code{save-buffer} and
+@code{write-region}.  If you want to write files from this buffer using
+a different coding system, you can specify a different coding system for
+the buffer using @code{set-buffer-file-coding-system} (@pxref{Specify
+Coding}).
+
+
+@node Unification, Specify Coding, Recognize Coding, Mule
+@section Character Set Unification
+
+Mule suffers from a design defect that causes it to consider the ISO
+Latin character sets to be disjoint.  This results in oddities such as
+files containing both ISO 8859/1 and ISO 8859/15 codes, and using ISO
+2022 control sequences to switch between them, as well as more
+plausible but often unnecessary combinations like ISO 8859/1 with ISO
+8859/2.  This can be very annoying when sending messages or even in
+simple editing on a single host.  XEmacs works around the problem by
+converting as many characters as possible to use a single Latin coded
+character set before saving the buffer.
+
+Unification is planned for extension to other character set families,
+in particular the Han family of character sets based on the Chinese
+ideographic characters.  At least for the Han sets, however, the
+unification feature will be disabled by default.
+
+This functionality is based on the @file{latin-unity} package by
+Stephen Turnbull @email{stephen@@xemacs.org}, but is somewhat
+divergent.  This documentation is also based on the package
+documentation, and is likely to be inaccurate because of the different
+constraints we place on ``core'' and packaged functionality.
+
+@menu
+* Unification Overview::        History and general information.
+* Unification Usage::           An overview of operation.
+* Unification Configuration::   Configuring unification.
+* Unification FAQs::            Questions and answers from the mailing list.
+* Unification Theory::          How unification works.
+* What Unification Cannot Do for You::  Inherent problems of 8-bit charsets.
+@end menu
+
+@node Unification Overview, Unification Usage, Unification, Unification
+@subsection An Overview of Character Set Unification
+
+Mule suffers from a design defect that causes it to consider the ISO
+Latin character sets to be disjoint.  This manifests itself when a user
+enters characters using input methods associated with different coded
+character sets into a single buffer.
+
+A very important example involves email.  Many sites, especially in the
+U.S., default to use of the ISO 8859/1 coded character set (also called
+``Latin 1,'' though these are somewhat different concepts).  However,
+ISO 8859/1 provides a generic CURRENCY SIGN character.  Now that the
+Euro has become the official currency of most countries in Europe, this
+is unsatisfactory (and in practice, useless).  So Europeans generally
+use ISO 8859/15, which is nearly identical to ISO 8859/1 for most
+languages, except that it substitutes EURO SIGN for CURRENCY SIGN.
+
+Suppose a European user yanks text from a post encoded in ISO 8859/1
+into a message composition buffer, and enters some text including the
+Euro sign.  Then Mule will consider the buffer to contain both ISO
+8859/1 and ISO 8859/15 text, and MUAs such as Gnus will (if naively
+programmed) send the message as a multipart mixed MIME body!
+
+This is clearly stupid.  What is not as obvious is that, just as any
+European can include American English in their text because ASCII is a
+subset of ISO 8859/15, most European languages which use Latin
+characters (eg, German and Polish) can typically be mixed while using
+only one Latin coded character set (in this case, ISO 8859/2).  However,
+this often depends on exactly what text is to be encoded.
+
+Unification works around the problem by converting as many characters as
+possible to use a single Latin coded character set before saving the
+buffer.
+
+
+@node Unification Usage, Unification Configuration, Unification Overview, Unification
+@subsection Operation of Unification
+
+This is a description of the early hack to include unification in
+XEmacs 21.5.  This will almost surely change.
+
+Normally, unification works in the background by installing
+@code{unity-sanity-check} on @code{write-region-pre-hook}.
+Unification is on by default for the ISO-8859 Latin sets.  The user
+activates this functionality for other chacter set families by
+invoking @code{enable-unification}, either interactively or in her
+init file.  @xref{Init File, , , xemacs}.  Unification can be
+deactivated by invoking @code{disable-unification}.
+
+Unification also provides a few functions for remapping or recoding the
+buffer by hand.  To @dfn{remap} a character means to change the buffer
+representation of the character by using another coded character set.
+Remapping never changes the identity of the character, but may involve
+altering the code point of the character.  To @dfn{recode} a character
+means to simply change the coded character set.  Recoding never alters
+the code point of the character, but may change the identity of the
+character.  @xref{Unification Theory}.
+
+There are a few variables which determine which coding systems are
+always acceptable to unification: @code{unity-ucs-list},
+@code{unity-preferred-coding-system-list}, and
+@code{unity-preapproved-coding-system-list}.  The last defaults to
+@code{(buffer preferred)}, and you should probably avoid changing it
+because it short-circuits the sanity check.  If you find you need to
+use it, consider reporting it as a bug or request for enhancement.
+
+@menu
+* Basic Functionality::            User interface and customization.
+* Interactive Usage::              Treating text by hand.
+                                   Also documents the hook function(s).
+@end menu
+
+
+@node Basic Functionality, Interactive Usage, , Unification Usage
+@subsubsection Basic Functionality
+
+These functions and user options initialize and configure unification.
+In normal use, they are not needed.
+
+@strong{These interfaces will change.  Also, the @samp{unity-} prefix
+is likely to be changed for many of the variables and functions, as
+they are of more general usefulness.}
+
+@defun enable-unification
+Set up hooks and initialize variables for unification.
+
+There are no arguments.
+
+This function is idempotent.  It will reinitialize any hooks or variables
+that are not in initial state.
+@end defun
+
+@defun disable-unification
+There are no arguments.
+
+Clean up hooks and void variables used by unification.
+@end defun
+
+@c #### several changes should go to latin-unity.texi
+@defopt unity-ucs-list
+List of universal coding systems recommended for character set unification.
+
+The default value is @code{'(utf-8 iso-2022-7 ctext escape-quoted)}.
+
+Order matters; coding systems earlier in the list will be preferred when
+recommending a coding system.  These coding systems will not be used
+without querying the user (unless they are also present in
+@code{unity-preapproved-coding-system-list}), and follow the
+@code{unity-preferred-coding-system-list} in the list of suggested
+coding systems.
+
+If none of the preferred coding systems are feasible, the first in
+this list will be the default.
+
+Notes on certain coding systems:  @code{escape-quoted} is a special
+coding system used for autosaves and compiled Lisp in Mule.  You should
+never delete this, although it is rare that a user would want to use it
+directly.  Unification does not try to be ``smart'' about other general
+ISO 2022 coding systems, such as ISO-2022-JP.  (They are not recognized
+as equivalent to @code{iso-2022-7}.)  If your preferred coding system is
+one of these, you may consider adding it to @code{unity-ucs-list}.
+@end defopt
+
+Coding systems which are not Latin and not in
+@code{unity-ucs-list} are handled by short circuiting checks of
+coding system against the next two variables.
+
+@defopt unity-preapproved-coding-system-list
+List of coding systems used without querying the user if feasible.
+
+The default value is @samp{(buffer-default preferred)}.
+
+The first feasible coding system in this list is used.  The special values
+@samp{preferred} and @samp{buffer-default} may be present:
+
+@table @code
+@item buffer-default
+Use the coding system used by @samp{write-region}, if feasible.
+
+@item preferred
+Use the coding system specified by @samp{prefer-coding-system} if feasible.
+@end table
+
+"Feasible" means that all characters in the buffer can be represented by
+the coding system.  Coding systems in @samp{unity-ucs-list} are
+always considered feasible.  Other feasible coding systems are computed
+by @samp{unity-representations-feasible-region}.
+
+Note that, by definition, the first universal coding system in this
+list shadows all other coding systems.  In particular, if your
+preferred coding system is a universal coding system, and
+@code{preferred} is a member of this list, unification will blithely
+convert all your files to that coding system.  This is considered a
+feature, but it may surprise most users.  Users who don't like this
+behavior may put @code{preferred} in
+@code{unity-preferred-coding-system-list}, but not in
+@code{unity-preapproved-coding-system-list}.
+@end defopt
+
+
+@defopt unity-preferred-coding-system-list
+List of coding systems suggested to the user if feasible.
+
+The default value is @samp{(iso-8859-1 iso-8859-15 iso-8859-2 iso-8859-3
+iso-8859-4 iso-8859-9)}.
+
+If none of the coding systems in
+@samp{unity-preapproved-coding-system-list} are feasible, this list
+will be recommended to the user, followed by the
+@samp{unity-ucs-list} (so those coding systems should not be in
+this list).  The first coding system in this list is default.  The
+special values @samp{preferred} and @samp{buffer-default} may be
+present:
+
+@table @code
+@item buffer-default
+Use the coding system used by @samp{write-region}, if feasible.
+
+@item preferred
+Use the coding system specified by @samp{prefer-coding-system} if feasible.
+@end table
+
+"Feasible" means that all characters in the buffer can be represented by
+the coding system.  Coding systems in @samp{unity-ucs-list} are
+always considered feasible.  Other feasible coding systems are computed
+by @samp{unity-representations-feasible-region}.
+@end defopt
+
+
+@defvar unity-iso-8859-1-aliases
+List of coding systems to be treated as aliases of ISO 8859/1.
+
+The default value is '(iso-8859-1).
+
+This is not a user variable; to customize input of coding systems or
+charsets, @samp{unity-coding-system-alias-alist} or
+@samp{unity-charset-alias-alist}.
+@end defvar
+
+
+@node Interactive Usage, , Basic Functionality, Unification Usage
+@subsubsection Interactive Usage
+
+First, the hook function @code{unity-sanity-check} is documented.
+(It is placed here because it is not an interactive function, and there
+is not yet a programmer's section of the manual.)
+
+These functions provide access to internal functionality (such as the
+remapping function) and to extra functionality (the recoding functions
+and the test function).
+
+@defun unity-sanity-check begin end filename append visit lockname &optional coding-system
+
+Check if @var{coding-system} can represent all characters between
+@var{begin} and @var{end}.
+
+For compatibility with old broken versions of @code{write-region},
+@var{coding-system} defaults to @code{buffer-file-coding-system}.
+@var{filename}, @var{append}, @var{visit}, and @var{lockname} are
+ignored.
+
+Return nil if buffer-file-coding-system is not (ISO-2022-compatible)
+Latin.  If @code{buffer-file-coding-system} is safe for the charsets
+actually present in the buffer, return it.  Otherwise, ask the user to
+choose a coding system, and return that.
+
+This function does @emph{not} do the safe thing when
+@code{buffer-file-coding-system} is nil (aka no-conversion).  It
+considers that ``non-Latin,'' and passes it on to the Mule detection
+mechanism.
+
+This function is intended for use as a @code{write-region-pre-hook}.  It
+does nothing except return @var{coding-system} if @code{write-region}
+handlers are inhibited.
+@end defun
+
+@defun unity-buffer-representations-feasible
+There are no arguments.
+
+Apply unity-region-representations-feasible to the current buffer.
+@end defun
+
+@defun unity-region-representations-feasible begin end &optional buf
+Return character sets that can represent the text from @var{begin} to
+@var{end} in @var{buf}.
+
+@c #### Fix in latin-unity.texi.
+@var{buf} defaults to the current buffer.  Called interactively, will be
+applied to the region.  The function assumes @var{begin} <= @var{end}.
+
+The return value is a cons.  The car is the list of character sets
+that can individually represent all of the non-ASCII portion of the
+buffer, and the cdr is the list of character sets that can
+individually represent all of the ASCII portion.
+
+The following is taken from a comment in the source.  Please refer to
+the source to be sure of an accurate description.
+
+The basic algorithm is to map over the region, compute the set of
+charsets that can represent each character (the ``feasible charset''),
+and take the intersection of those sets.
+
+The current implementation takes advantage of the fact that ASCII
+characters are common and cannot change asciisets.  Then using
+skip-chars-forward makes motion over ASCII subregions very fast.
+
+This same strategy could be applied generally by precomputing classes
+of characters equivalent according to their effect on latinsets, and
+adding a whole class to the skip-chars-forward string once a member is
+found.
+
+Probably efficiency is a function of the number of characters matched,
+or maybe the length of the match string?  With @code{skip-category-forward}
+over a precomputed category table it should be really fast.  In practice
+for Latin character sets there are only 29 classes.
+@end defun
+
+@defun unity-remap-region begin end character-set &optional coding-system
+
+Remap characters between @var{begin} and @var{end} to equivalents in
+@var{character-set}.  Optional argument @var{coding-system} may be a
+coding system name (a symbol) or nil.  Characters with no equivalent are
+left as-is.
+
+When called interactively, @var{begin} and @var{end} are set to the
+beginning and end, respectively, of the active region, and the function
+prompts for @var{character-set}.  The function does completion, knows
+how to guess a character set name from a coding system name, and also
+provides some common aliases.  See @code{unity-guess-charset}.
+There is no way to specify @var{coding-system}, as it has no useful
+function interactively.
+
+Return @var{coding-system} if @var{coding-system} can encode all
+characters in the region, t if @var{coding-system} is nil and the coding
+system with G0 = 'ascii and G1 = @var{character-set} can encode all
+characters, and otherwise nil.  Note that a non-null return does
+@emph{not} mean it is safe to write the file, only the specified region.
+(This behavior is useful for multipart MIME encoding and the like.)
+
+Note:  by default this function is quite fascist about universal coding
+systems.  It only admits @samp{utf-8}, @samp{iso-2022-7}, and
+@samp{ctext}.  Customize @code{unity-approved-ucs-list} to change
+this.
+
+This function remaps characters that are artificially distinguished by Mule
+internal code.  It may change the code point as well as the character set.
+To recode characters that were decoded in the wrong coding system, use
+@code{unity-recode-region}.
+@end defun
+
+@defun unity-recode-region begin end wrong-cs right-cs
+
+Recode characters between @var{begin} and @var{end} from @var{wrong-cs}
+to @var{right-cs}.
+
+@var{wrong-cs} and @var{right-cs} are character sets.  Characters retain
+the same code point but the character set is changed.  Only characters
+from @var{wrong-cs} are changed to @var{right-cs}.  The identity of the
+character may change.  Note that this could be dangerous, if characters
+whose identities you do not want changed are included in the region.
+This function cannot guess which characters you want changed, and which
+should be left alone.
+
+When called interactively, @var{begin} and @var{end} are set to the
+beginning and end, respectively, of the active region, and the function
+prompts for @var{wrong-cs} and @var{right-cs}.  The function does
+completion, knows how to guess a character set name from a coding system
+name, and also provides some common aliases.  See
+@code{unity-guess-charset}.
+
+Another way to accomplish this, but using coding systems rather than
+character sets to specify the desired recoding, is
+@samp{unity-recode-coding-region}.  That function may be faster
+but is somewhat more dangerous, because it may recode more than one
+character set.
+
+To change from one Mule representation to another without changing identity
+of any characters, use @samp{unity-remap-region}.
+@end defun
+
+@defun unity-recode-coding-region begin end wrong-cs right-cs
+
+Recode text between @var{begin} and @var{end} from @var{wrong-cs} to
+@var{right-cs}.
+
+@var{wrong-cs} and @var{right-cs} are coding systems.  Characters retain
+the same code point but the character set is changed.  The identity of
+characters may change.  This is an inherently dangerous function;
+multilingual text may be recoded in unexpected ways.  #### It's also
+dangerous because the coding systems are not sanity-checked in the
+current implementation.
+
+When called interactively, @var{begin} and @var{end} are set to the
+beginning and end, respectively, of the active region, and the function
+prompts for @var{wrong-cs} and @var{right-cs}.  The function does
+completion, knows how to guess a coding system name from a character set
+name, and also provides some common aliases.  See
+@code{unity-guess-coding-system}.
+
+Another, safer, way to accomplish this, using character sets rather
+than coding systems to specify the desired recoding, is to use
+@code{unity-recode-region}.
+
+To change from one Mule representation to another without changing identity
+of any characters, use @code{unity-remap-region}.
+@end defun
+
+Helper functions for input of coding system and character set names.
+
+@defun unity-guess-charset candidate
+Guess a charset based on the symbol @var{candidate}.
+
+@var{candidate} itself is not tried as the value.
+
+Uses the natural mapping in @samp{unity-cset-codesys-alist}, and
+the values in @samp{unity-charset-alias-alist}."
+@end defun
+
+@defun unity-guess-coding-system candidate
+Guess a coding system based on the symbol @var{candidate}.
+
+@var{candidate} itself is not tried as the value.
+
+Uses the natural mapping in @samp{unity-cset-codesys-alist}, and
+the values in @samp{unity-coding-system-alias-alist}."
+@end defun
+
+@defun unity-example
+
+A cheesy example for unification.
+
+At present it just makes a multilingual buffer.  To test, setq
+buffer-file-coding-system to some value, make the buffer dirty (eg
+with RET BackSpace), and save.
+@end defun
+
+
+@node Unification Configuration, Unification FAQs, Unification Usage, Unification
+@subsection Configuring Unification for Use
+
+If you want unification to be automatically initialized, invoke
+@samp{enable-unification} with no arguments in your init file.
+@xref{Init File, , , xemacs}.  If you are using GNU Emacs or an XEmacs
+earlier than 21.1, you should also load @file{auto-autoloads} using the
+full path (@emph{never} @samp{require} @file{auto-autoloads} libraries).
+
+You may wish to define aliases for commonly used character sets and
+coding systems for convenience in input.
+
+@defopt unity-charset-alias-alist
+Alist mapping aliases to Mule charset names (symbols)."
+
+The default value is
+@example
+   ((latin-1 . latin-iso8859-1)
+    (latin-2 . latin-iso8859-2)
+    (latin-3 . latin-iso8859-3)
+    (latin-4 . latin-iso8859-4)
+    (latin-5 . latin-iso8859-9)
+    (latin-9 . latin-iso8859-15)
+    (latin-10 . latin-iso8859-16))
+@end example
+
+If a charset does not exist on your system, it will not complete and you
+will not be able to enter it in response to prompts.  A real charset
+with the same name as an alias in this list will shadow the alias.
+@end defopt
+
+@defopt unity-coding-system-alias-alist nil
+Alist mapping aliases to Mule coding system names (symbols).
+
+The default value is @samp{nil}.
+@end defopt
+
+
+@node Unification FAQs, Unification Theory, Unification Configuration, Unification
+@subsection Frequently Asked Questions About Unification
+
+@enumerate
+@item
+I'm smarter than XEmacs's unification feature!  How can that be?
+
+Don't be surprised.  Trust yourself.
+
+Unification is very young as yet.  Teach it what you know by
+Customizing its variables, and report your changes to the maintainer
+(@kbd{M-x report-xemacs-bug RET}).
+
+@item
+What is a UCS?
+
+According to ISO 10646, a Universal Coded character Set.  In
+XEmacs, it's Universal (Mule) Coding System.
+@ref{Coding Systems, , , xemacs}
+
+@item
+I know @code{utf-16-le-bom} is a UCS, but unification won't use it.
+Why not?
+
+There are an awful lot of UCSes in Mule, and you probably do not want to
+ever use, and definitely not be asked about, most of them.  So the
+default set includes a few that the author thought plausible, but
+they're surely not comprehensive or optimal.
+
+Customize @code{unity-ucs-list} to include the ones you use often, and
+report your favorites to the maintainer for consideration for
+inclusion in the defaults using @kbd{M-x report-xemacs-bug RET}.
+(Note that you @emph{must} include @code{escape-quoted} in this list,
+because Mule uses it internally as the coding system for auto-save
+files.)
+
+Alternatively, if you just want to use it this one time, simply type
+it in at the prompt.  Unification will confirm that is a real coding
+system, and then assume that you know what you're doing.
+
+@item
+This is crazy: I can't quit XEmacs and get queried on autosaves!  Why?
+
+You probably removed @code{escape-quoted} from
+@code{unity-ucs-list}.  Put it back.
+
+@item
+Unification is really buggy and I can't get any work done.
+
+First, use @kbd{M-x disable-unification RET}, then report your
+problems as a bug (@kbd{M-x report-xemacs-bug RET}).
+@end enumerate
+
+
+@node Unification Theory, What Unification Cannot Do for You, Unification FAQs, Unification
+@subsection Unification Theory
+
+Standard encodings suffer from the design defect that they do not
+provide a reliable way to recognize which coded character sets in use.
+@xref{What Unification Cannot Do for You}.  There are scores of
+character sets which can be represented by a single octet (8-bit
+byte), whose union contains many hundreds of characters.  Obviously
+this results in great confusion, since you can't tell the players
+without a scorecard, and there is no scorecard.
+
+There are two ways to solve this problem.  The first is to create a
+universal coded character set.  This is the concept behind Unicode.
+However, there have been satisfactory (nearly) universal character
+sets for several decades, but even today many Westerners resist using
+Unicode because they consider its space requirements excessive.  On
+the other hand, many Asians dislike Unicode because they consider it
+to be incomplete.  (This is partly, but not entirely, political.)
+
+In any case, Unicode only solves the internal representation problem.
+Many data sets will contain files in ``legacy'' encodings, and Unicode
+does not help distinguish among them.
+
+The second approach is to embed information about the encodings used in
+a document in its text.  This approach is taken by the ISO 2022
+standard.  This would solve the problem completely from the users' of
+view, except that ISO 2022 is basically not implemented at all, in the
+sense that few applications or systems implement more than a small
+subset of ISO 2022 functionality.  This is due to the fact that
+mono-literate users object to the presence of escape sequences in their
+texts (which they, with some justification, consider data corruption).
+Programmers are more than willing to cater to these users, since
+implementing ISO 2022 is a painstaking task.
+
+In fact, Emacs/Mule adopts both of these approaches.  Internally it uses
+a universal character set, @dfn{Mule code}.  Externally it uses ISO 2022
+techniques both to save files in forms robust to encoding issues, and as
+hints when attempting to ``guess'' an unknown encoding.  However, Mule
+suffers from a design defect, namely it embeds the character set
+information that ISO 2022 attaches to runs of characters by introducing
+them with a control sequence in each character.  That causes Mule to
+consider the ISO Latin character sets to be disjoint.  This manifests
+itself when a user enters characters using input methods associated with
+different coded character sets into a single buffer.
+
+There are two problems stemming from this design.  First, Mule
+represents the same character in different ways.  Abstractly, ',As(B'
+(LATIN SMALL LETTER O WITH ACUTE) can get represented as
+[latin-iso8859-1 #x73] or as [latin-iso8859-2 #x73].  So what looks like
+',Ass(B' in the display might actually be represented [latin-iso8859-1
+#x73][latin-iso8859-2 #x73] in the buffer, and saved as [#xF3 ESC - B
+#xF3 ESC - A] in the file.  In some cases this treatment would be
+appropriate (consider HYPHEN, MINUS SIGN, EN DASH, EM DASH, and U+4E00
+(the CJK ideographic character meaning ``one'')), and although arguably
+incorrect it is convenient when mixing the CJK scripts.  But in the case
+of the Latin scripts this is wrong.
+
+Worse yet, it is very likely to occur when mixing ``different'' encodings
+(such as ISO 8859/1 and ISO 8859/15) that differ only in a few code
+points that are almost never used.  A very important example involves
+email.  Many sites, especially in the U.S., default to use of the ISO
+8859/1 coded character set (also called ``Latin 1,'' though these are
+somewhat different concepts).  However, ISO 8859/1 provides a generic
+CURRENCY SIGN character.  Now that the Euro has become the official
+currency of most countries in Europe, this is unsatisfactory (and in
+practice, useless).  So Europeans generally use ISO 8859/15, which is
+nearly identical to ISO 8859/1 for most languages, except that it
+substitutes EURO SIGN for CURRENCY SIGN.
+
+Suppose a European user yanks text from a post encoded in ISO 8859/1
+into a message composition buffer, and enters some text including the
+Euro sign.  Then Mule will consider the buffer to contain both ISO
+8859/1 and ISO 8859/15 text, and MUAs such as Gnus will (if naively
+programmed) send the message as a multipart mixed MIME body!
+
+This is clearly stupid.  What is not as obvious is that, just as any
+European can include American English in their text because ASCII is a
+subset of ISO 8859/15, most European languages which use Latin
+characters (eg, German and Polish) can typically be mixed while using
+only one Latin coded character set (in the case of German and Polish,
+ISO 8859/2).  However, this often depends on exactly what text is to be
+encoded (even for the same pair of languages).
+
+Unification works around the problem by converting as many characters as
+possible to use a single Latin coded character set before saving the
+buffer.
+
+Because the problem is rarely noticable in editing a buffer, but tends
+to manifest when that buffer is exported to a file or process,
+unification uses the strategy of examining the buffer prior to export.
+If use of multiple Latin coded character sets is detected, unification
+attempts to unify them by finding a single coded character set which
+contains all of the Latin characters in the buffer.
+
+The primary purpose of unification is to fix the problem by giving the
+user the choice to change the representation of all characters to one
+character set and give sensible recommendations based on context.  In
+the ',As(B' example, either ISO 8859/1 or ISO 8859/2 is satisfactory, and
+both will be suggested.  In the EURO SIGN example, only ISO 8859/15
+makes sense, and that is what will be recommended.  In both cases, the
+user will be reminded that there are universal encodings available.
+
+I call this @dfn{remapping} (from the universal character set to a
+particular ISO 8859 coded character set).  It is mere accident that this
+letter has the same code point in both character sets.  (Not entirely,
+but there are many examples of Latin characters that have different code
+points in different Latin-X sets.)
+
+Note that, in the ',As(B' example, that treating the buffer in this way will
+result in a representation such as [latin-iso8859-2
+#x73][latin-iso8859-2 #x73], and the file will be saved as [#xF3 #xF3].
+This is guaranteed to occasionally result in the second problem you
+observed, to which we now turn.
+
+This problem is that, although the file is intended to be an
+ISO-8859/2-encoded file, in an ISO 8859/1 locale Mule (and every POSIX
+compliant program---this is required by the standard, obvious if you
+think a bit, @pxref{What Unification Cannot Do for You}) will read that
+file as [latin-iso8859-1 #x73] [latin-iso8859-1 #x73].  Of course this
+is no problem if all of the characters in the file are contained in ISO
+8859/1, but suppose there are some which are not, but are contained in
+the (intended) ISO 8859/2.
+
+You now want to fix this, but not by finding the same character in
+another set.  Instead, you want to simply change the character set
+that Mule associates with that buffer position without changing the
+code.  (This is conceptually somewhat distinct from the first problem,
+and logically ought to be handled in the code that defines coding
+systems.  However, unification is not an unreasonable place for it.)
+Unification provides two functions (one fast and dangerous, the other
+@c #### fix latin-unity.texi
+slower and careful) to handle this.  I call this @dfn{recoding}, because
+the transformation actually involves @emph{encoding} the buffer to
+file representation, then @emph{decoding} it to buffer representation
+(in a different character set).  This cannot be done automatically
+because Mule can have no idea what the correct encoding is---after
+all, it already gave you its best guess.  @xref{What Unification
+Cannot Do for You}.  So these functions must be invoked by the user.
+@xref{Interactive Usage}.
+
+
+@node What Unification Cannot Do for You, , Unification Theory, Unification
+@subsection What Unification Cannot Do for You
+
+Unification @strong{cannot} save you if you insist on exporting data in
+8-bit encodings in a multilingual environment.  @emph{You will
+eventually corrupt data if you do this.}  It is not Mule's, or any
+application's, fault.  You will have only yourself to blame; consider
+yourself warned.  (It is true that Mule has bugs, which make Mule
+somewhat more dangerous and inconvenient than some naive applications.
+We're working to address those, but no application can remedy the
+inherent defect of 8-bit encodings.)
+
+Use standard universal encodings, preferably Unicode (UTF-8) unless
+applicable standards indicate otherwise.  The most important such case
+is Internet messages, where MIME should be used, whether or not the
+subordinate encoding is a universal encoding.  (Note that since one of
+the important provisions of MIME is the @samp{Content-Type} header,
+which has the charset parameter, MIME is to be considered a universal
+encoding for the purposes of this manual.  Of course, technically
+speaking it's neither a coded character set nor a coding extension
+technique compliant with ISO 2022.)
+
+As mentioned earlier, the problem is that standard encodings suffer from
+the design defect that they do not provide a reliable way to recognize
+which coded character sets are in use.  There are scores of character
+sets which can be represented by a single octet (8-bit byte), whose
+union contains many hundreds of characters.  Thus any 8-bit coded
+character set must contain characters that share code points used for
+different characters in other coded character sets.
+
+This means that a given file's intended encoding cannot be identified
+with 100% reliability unless it contains encoding markers such as those
+provided by MIME or ISO 2022.
+
+Unification actually makes it more likely that you will have problems of
+this kind.  Traditionally Mule has been ``helpful'' by simply using an
+ISO 2022 universal coding system when the current buffer coding system
+cannot handle all the characters in the buffer.  This has the effect
+that, because the file contains control sequences, it is not recognized
+as being in the locale's normal 8-bit encoding.  It may be annoying if
+@c #### fix in latin-unity.texi
+you are not a Mule expert, but your data is guaranteed to be recoverable
+with a tool you already have: Mule.
+
+However, with unification, Mule converts to a single 8-bit character set
+when possible.  But typically this will @emph{not} be in your usual
+locale.  Ie, the times that an ISO 8859/1 user will need unification is
+when there are ISO 8859/2 characters in the buffer.  But then most
+likely the file will be saved in a pure 8-bit encoding that is not ISO
+8859/1, ie, ISO 8859/2.  Mule's autorecognizer (which is probably the
+most sophisticated yet available) cannot tell the difference between ISO
+8859/1 and ISO 8859/2, and in a Western European locale will choose the
+former even though the latter was intended.  Even the extension
+@c #### fix in latin-unity.texi
+(``statistical recognition'') planned for XEmacs 22 is unlikely to be
+acceptably accurate in the case of mixed codes.
+
+So now consider adding some additional ISO 8859/1 text to the buffer.
+If it includes any ISO 8859/1 codes that are used by different
+characters in ISO 8859/2, you now have a file that cannot be
+mechanically disentangled.  You need a human being who can recognize
+that @emph{this is German and Swedish} and stays in Latin-1, while
+@emph{that is Polish} and needs to be recoded to Latin-2.
+
+Moral: switch to a universal coded character set, preferably Unicode
+using the UTF-8 transformation format.  If you really need the space,
+compress your files.
+
+
+@node Specify Coding, Charsets and Coding Systems, Unification, Mule
+@section Specifying a Coding System
+
+  In cases where XEmacs does not automatically choose the right coding
+system, you can use these commands to specify one:
+
+@table @kbd
+@item C-x @key{RET} f @var{coding} @key{RET}
+Use coding system @var{coding} for the visited file
+in the current buffer.
+
+@item C-x @key{RET} c @var{coding} @key{RET}
+Specify coding system @var{coding} for the immediately following
+command.
+
+@item C-x @key{RET} k @var{coding} @key{RET}
+Use coding system @var{coding} for keyboard input.  (This feature is
+non-functional and is temporarily disabled.)
+
+@item C-x @key{RET} t @var{coding} @key{RET}
+Use coding system @var{coding} for terminal output.
+
+@item C-x @key{RET} p @var{coding} @key{RET}
+Use coding system @var{coding} for subprocess input and output
+in the current buffer.
+@end table
+
+@kindex C-x RET f
+@findex set-buffer-file-coding-system
+  The command @kbd{C-x RET f} (@code{set-buffer-file-coding-system})
+specifies the file coding system for the current buffer---in other
+words, which coding system to use when saving or rereading the visited
+file.  You specify which coding system using the minibuffer.  Since this
+command applies to a file you have already visited, it affects only the
+way the file is saved.
+
+@kindex C-x RET c
+@findex universal-coding-system-argument
+  Another way to specify the coding system for a file is when you visit
+the file.  First use the command @kbd{C-x @key{RET} c}
+(@code{universal-coding-system-argument}); this command uses the
+minibuffer to read a coding system name.  After you exit the minibuffer,
+the specified coding system is used for @emph{the immediately following
+command}.
+
+  So if the immediately following command is @kbd{C-x C-f}, for example,
+it reads the file using that coding system (and records the coding
+system for when the file is saved).  Or if the immediately following
+command is @kbd{C-x C-w}, it writes the file using that coding system.
+Other file commands affected by a specified coding system include
+@kbd{C-x C-i} and @kbd{C-x C-v}, as well as the other-window variants of
+@kbd{C-x C-f}.
+
+  In addition, if you run some file input commands with the precedent
+@kbd{C-u}, you can specify coding system to read from minibuffer.  So if
+the immediately following command is @kbd{C-x C-f}, for example, it
+reads the file using that coding system (and records the coding system
+for when the file is saved).  Other file commands affected by a
+specified coding system include @kbd{C-x C-i} and @kbd{C-x C-v}, as well
+as the other-window variants of @kbd{C-x C-f}.
+
+@vindex default-buffer-file-coding-system
+  The variable @code{default-buffer-file-coding-system} specifies the
+choice of coding system to use when you create a new file.  It applies
+when you find a new file, and when you create a buffer and then save it
+in a file.  Selecting a language environment typically sets this
+variable to a good choice of default coding system for that language
+environment.
+
+@kindex C-x RET t
+@findex set-terminal-coding-system
+  The command @kbd{C-x @key{RET} t} (@code{set-terminal-coding-system})
+specifies the coding system for terminal output.  If you specify a
+character code for terminal output, all characters output to the
+terminal are translated into that coding system.
+
+  This feature is useful for certain character-only terminals built to
+support specific languages or character sets---for example, European
+terminals that support one of the ISO Latin character sets.
+
+  By default, output to the terminal is not translated at all.
+
+@kindex C-x RET k
+@findex set-keyboard-coding-system
+  The command @kbd{C-x @key{RET} k} (@code{set-keyboard-coding-system})
+specifies the coding system for keyboard input.  Character-code
+translation of keyboard input is useful for terminals with keys that
+send non-ASCII graphic characters---for example, some terminals designed
+for ISO Latin-1 or subsets of it.
+
+(This feature is non-functional and is temporarily disabled.)
+
+  By default, keyboard input is not translated at all.
+
+  There is a similarity between using a coding system translation for
+keyboard input, and using an input method: both define sequences of
+keyboard input that translate into single characters.  However, input
+methods are designed to be convenient for interactive use by humans, and
+the sequences that are translated are typically sequences of ASCII
+printing characters.  Coding systems typically translate sequences of
+non-graphic characters.
+
+@kindex C-x RET p
+@findex set-buffer-process-coding-system
+  The command @kbd{C-x @key{RET} p} (@code{set-buffer-process-coding-system})
+specifies the coding system for input and output to a subprocess.  This
+command applies to the current buffer; normally, each subprocess has its
+own buffer, and thus you can use this command to specify translation to
+and from a particular subprocess by giving the command in the
+corresponding buffer.
+
+  By default, process input and output are not translated at all.
+
+@vindex file-name-coding-system
+  The variable @code{file-name-coding-system} specifies a coding system
+to use for encoding file names.  If you set the variable to a coding
+system name (as a Lisp symbol or a string), XEmacs encodes file names
+using that coding system for all file operations.  This makes it
+possible to use non-Latin-1 characters in file names---or, at least,
+those non-Latin-1 characters which the specified coding system can
+encode.  By default, this variable is @code{nil}, which implies that you
+cannot use non-Latin-1 characters in file names.
+
+
+@node Charsets and Coding Systems, , Specify Coding, Mule
+@section Charsets and Coding Systems
+
+This section provides reference lists of Mule charsets and coding
+systems.  Mule charsets are typically named by character set and
+standard.
+
+@table @strong
+@item ASCII variants
+
+Identification of equivalent characters in these sets is not properly
+implemented.  Unification does not distinguish the two charsets.
+
+@samp{ascii} @samp{latin-jisx0201}
+
+@item Extended Latin
+
+Characters from the following ISO 2022 conformant charsets are
+identified with equivalents in other charsets in the group by
+unification.
+
+@samp{latin-iso8859-1} @samp{latin-iso8859-15} @samp{latin-iso8859-2}
+@samp{latin-iso8859-3} @samp{latin-iso8859-4} @samp{latin-iso8859-9}
+@samp{latin-iso8859-13} @samp{latin-iso8859-16}
+
+The follow charsets are Latin variants which are not understood by
+unification.  In addition, many of the Asian language standards provide
+ASCII, at least, and sometimes other Latin characters.  None of these
+are identified with their ISO 8859 equivalents.
+
+@samp{vietnamese-viscii-lower}
+@samp{vietnamese-viscii-upper}
+
+@item Other character sets
+
+@samp{arabic-1-column}
+@samp{arabic-2-column}
+@samp{arabic-digit}
+@samp{arabic-iso8859-6}
+@samp{chinese-big5-1}
+@samp{chinese-big5-2}
+@samp{chinese-cns11643-1}
+@samp{chinese-cns11643-2}
+@samp{chinese-cns11643-3}
+@samp{chinese-cns11643-4}
+@samp{chinese-cns11643-5}
+@samp{chinese-cns11643-6}
+@samp{chinese-cns11643-7}
+@samp{chinese-gb2312}
+@samp{chinese-isoir165}
+@samp{cyrillic-iso8859-5}
+@samp{ethiopic}
+@samp{greek-iso8859-7}
+@samp{hebrew-iso8859-8}
+@samp{ipa}
+@samp{japanese-jisx0208}
+@samp{japanese-jisx0208-1978}
+@samp{japanese-jisx0212}
+@samp{katakana-jisx0201}
+@samp{korean-ksc5601}
+@samp{sisheng}
+@samp{thai-tis620}
+@samp{thai-xtis}
+
+@item Non-graphic charsets
+
+@samp{control-1}
+@end table
+
+@table @strong
+@item No conversion
+
+Some of these coding systems may specify EOL conventions.  Note that
+@samp{iso-8859-1} is a no-conversion coding system, not an ISO 2022
+coding system.  Although unification attempts to compensate for this, it
+is possible that the @samp{iso-8859-1} coding system will behave
+differently from other ISO 8859 coding systems.
+
+@samp{binary} @samp{no-conversion} @samp{raw-text} @samp{iso-8859-1}
+
+@item Latin coding systems
+
+These coding systems are all single-byte, 8-bit ISO 2022 coding systems,
+combining ASCII in the GL register (bytes with high-bit clear) and an
+extended Latin character set in the GR register (bytes with high-bit set).
+
+@samp{iso-8859-15} @samp{iso-8859-2} @samp{iso-8859-3} @samp{iso-8859-4}
+@samp{iso-8859-9} @samp{iso-8859-13} @samp{iso-8859-14} @samp{iso-8859-16}
+
+These coding systems are single-byte, 8-bit coding systems that do not
+conform to international standards.  They should be avoided in all
+potentially multilingual contexts, including any text distributed over
+the Internet and World Wide Web.
+
+@samp{windows-1251}
+
+@item Multilingual coding systems
+
+The following ISO-2022-based coding systems are useful for multilingual
+text.
+
+@samp{ctext} @samp{iso-2022-lock} @samp{iso-2022-7} @samp{iso-2022-7bit}
+@samp{iso-2022-7bit-ss2} @samp{iso-2022-8} @samp{iso-2022-8bit-ss2}
+
+XEmacs also supports Unicode with the Mule-UCS package.  These are the
+preferred coding systems for multilingual use.  (There is a possible
+exception for texts that mix several Asian ideographic character sets.)
+
+@samp{utf-16-be} @samp{utf-16-be-no-signature} @samp{utf-16-le}
+@samp{utf-16-le-no-signature} @samp{utf-7} @samp{utf-7-safe}
+@samp{utf-8} @samp{utf-8-ws}
+
+Development versions of XEmacs (the 21.5 series) support Unicode
+internally, with (at least) the following coding systems implemented:
+
+@samp{utf-16-be} @samp{utf-16-be-bom} @samp{utf-16-le}
+@samp{utf-16-le-bom} @samp{utf-8} @samp{utf-8-bom}
+
+@item Asian ideographic languages
+
+The following coding systems are based on ISO 2022, and are more or less
+suitable for encoding multilingual texts.  They all can represent ASCII
+at least, and sometimes several other foreign character sets, without
+resort to arbitrary ISO 2022 designations.  However, these subsets are
+not identified with the corresponding national standards in XEmacs Mule.
+
+@samp{chinese-euc} @samp{cn-big5} @samp{cn-gb-2312} @samp{gb2312}
+@samp{hz} @samp{hz-gb-2312} @samp{old-jis} @samp{japanese-euc}
+@samp{junet} @samp{euc-japan} @samp{euc-jp} @samp{iso-2022-jp}
+@samp{iso-2022-jp-1978-irv} @samp{iso-2022-jp-2} @samp{euc-kr}
+@samp{korean-euc} @samp{iso-2022-kr} @samp{iso-2022-int-1}
+
+The following coding systems cannot be used for general multilingual
+text and do not cooperate well with other coding systems.
+
+@samp{big5} @samp{shift_jis}
+
+@item Other languages
+
+The following coding systems are based on ISO 2022.  Though none of them
+provides any Latin characters beyond ASCII, XEmacs Mule allows (and up
+to 21.4 defaults to) use of ISO 2022 control sequences to designate
+other character sets for inclusion the text.
+
+@samp{iso-8859-5} @samp{iso-8859-7} @samp{iso-8859-8}
+@samp{ctext-hebrew}
+
+The following are character sets that do not conform to ISO 2022 and
+thus cannot be safely used in a multilingual context.
+
+@samp{alternativnyj} @samp{koi8-r} @samp{tis-620} @samp{viqr}
+@samp{viscii} @samp{vscii}
+
+@item Special coding systems
+
+Mule uses the following coding systems for special purposes.
+
+@samp{automatic-conversion} @samp{undecided} @samp{escape-quoted}
+
+@samp{escape-quoted} is especially important, as it is used internally
+as the coding system for autosaved data.
+
+The following coding systems are aliases for others, and are used for
+communication with the host operating system.
+
+@samp{file-name} @samp{keyboard} @samp{terminal}
+
+@end table
+
+Mule detection of coding systems is actually limited to detection of
+classes of coding systems called @dfn{coding categories}.  These coding
+categories are identified by the ISO 2022 control sequences they use, if
+any, by their conformance to ISO 2022 restrictions on code points that
+may be used, and by characteristic patterns of use of 8-bit code points.
+
+@samp{no-conversion}
+@samp{utf-8}
+@samp{ucs-4}
+@samp{iso-7}
+@samp{iso-lock-shift}
+@samp{iso-8-1}
+@samp{iso-8-2}
+@samp{iso-8-designate}
+@samp{shift-jis}
+@samp{big5}
+
+
