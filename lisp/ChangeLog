@@ -1,3 +1,9 @@
+2008-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-coding.el (make-8-bit-choose-category):=20
+	Control-1 characters extend from #x80 to #x9F (inclusive),
+	not from #x80 to #xBF.
+
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* printer.el (generic-print-region): 
