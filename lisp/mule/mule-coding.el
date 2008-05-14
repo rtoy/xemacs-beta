@@ -533,7 +533,7 @@ disk to XEmacs characters for some fixed-width 8-bit coding system.  "
   (check-argument-range (length decode-table) #x100 #x100)
   (block category
     (loop
-      for i from #x80 to #xBF
+      for i from #x80 to #x9F
       do (unless (= i (aref decode-table i))
            (return-from category 'no-conversion)))
     'iso-8-1))
