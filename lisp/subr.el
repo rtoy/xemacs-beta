@@ -402,9 +402,8 @@ until a certain package is loaded, you should put the call to `add-to-list'
 into a hook function that will be run only after loading the package.
 `eval-after-load' provides one way to do this.  In some cases
 other hooks, such as major mode hooks, can do the job."
-  (if (if (not compare-fn)
-         (member element (symbol-value list-var))
-       (member* element (symbol-value list-var) :test compare-fn))
+  (if (member* (member* element (symbol-value list-var)
+                        :test (or compare-fn #'equal)))
       (symbol-value list-var)
     (set list-var
          (if append
