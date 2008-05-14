@@ -1,3 +1,9 @@
+2008-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (add-to-list): Implement the same logic with a more
+	concise syntax; thank you Stephen, in 
+	http://mid.gmane.org/87ablomdwx.fsf@uwakimon.sk.tsukuba.ac.jp .
+
 2008-02-25  bpalmer  <bpalmer@gmail.com>
 
 	* subr.el(add-to-list): add support for `compare-fn' to sync with
