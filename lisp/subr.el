@@ -390,19 +390,21 @@ You don't need this any more.  It's equivalent to specifying the LOCAL
 argument to `add-one-shot-hook'."
   (add-one-shot-hook hook function append t))
 
-(defun add-to-list (list-var element &optional append)
+(defun add-to-list (list-var element &optional append compare-fn)
   "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
-The test for presence of ELEMENT is done with `equal'.
-If ELEMENT is added, it is added at the beginning of the list,
-unless the optional argument APPEND is non-nil, in which case
-ELEMENT is added at the end.
+The test for presence of ELEMENT is done with COMPARE-FN; if
+COMPARE-FN is nil, then it defaults to `equal'. If ELEMENT is added,
+it is added at the beginning of the list, unless the optional argument
+APPEND is non-nil, in which case ELEMENT is added at the end.
 
 If you want to use `add-to-list' on a variable that is not defined
 until a certain package is loaded, you should put the call to `add-to-list'
 into a hook function that will be run only after loading the package.
 `eval-after-load' provides one way to do this.  In some cases
 other hooks, such as major mode hooks, can do the job."
-  (if (member element (symbol-value list-var))
+  (if (if (not compare-fn)
+         (member element (symbol-value list-var))
+       (member* element (symbol-value list-var) :test compare-fn))
       (symbol-value list-var)
     (set list-var
          (if append
