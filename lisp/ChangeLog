@@ -1,3 +1,7 @@
+2008-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (add-to-list): Fix Aidan's last commit.
+
 2008-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (add-to-list): Implement the same logic with a more
