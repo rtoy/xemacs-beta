@@ -1,3 +1,8 @@
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-mswin-unicode.pl:
+	Check %WindowsSdkDir%, %MSSddk% for the Windows header files too. 
+
 2008-05-14  Vin Shelton  <acs@xemacs.org>
 
 	* winclient.c:  Create CONNECT_RETRIES and increase retry count
