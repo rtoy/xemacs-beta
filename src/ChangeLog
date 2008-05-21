@@ -1,3 +1,9 @@
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Fmake_symbolic_link):
+	Document behaviour when the underlying OS doesn't support symbolic
+	links. 
+
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):

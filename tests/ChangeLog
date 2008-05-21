@@ -1,3 +1,11 @@
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep): 
+	Make sure that working symlinks are available before testing
+	their functionality.
+	Also, don't bomb out on deleting the other temporary files if
+	deleting the first threw an error. 
+
 2008-02-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (let):

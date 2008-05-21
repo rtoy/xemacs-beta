@@ -104,7 +104,17 @@ my ($cout, $hout, $dir) = ($options{"c-output"},
                           $options{"includedir"});
 if (!$dir)
   {
-    $dir=$ENV{"MSVCDIR"} or die "Environment variable MSVCDIR undefined - run vcvars32.bat from your MSVC installation";
+    for my $sdkroot (("WindowsSdkDir", "MSSdk", "MSVCDIR"))
+      {
+        if (defined $ENV{$sdkroot}) {
+          $dir = $ENV{$sdkroot};
+          last;
+        }
+      }
+    unless (defined $dir)
+      {
+        die "Can't find the Windows SDK headers; run vcvars32.bat from your MSVC installation, or setenv.cmd from the Platform SDK installation";
+      }
     $dir.='/include';
   }
 die "Can't find MSVC include files in \"$dir\"" unless ((-f $dir.'/WINDOWS.H') || (-f $dir.'/windows.h'));
