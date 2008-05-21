@@ -1,3 +1,9 @@
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Ben's README): 
+	Add a couple of @itemize / @end itemize pairs, to prevent
+	#'batch-texinfo-format choking on the input. 
+
 2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/cmdargs.texi (Command Switches): 
