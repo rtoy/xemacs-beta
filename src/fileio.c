@@ -2199,6 +2199,10 @@ Signals a `file-already-exists' error if a file LINKNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
 A number as third arg means request confirmation if LINKNAME already exists.
 This happens for interactive use with M-x.
+
+On platforms where symbolic links are not available, any file handlers will
+be run, but the check for the existence of LINKNAME will not be done, and
+the symbolic link will not be created.
 */
        (filename, linkname, ok_if_already_exists))
 {

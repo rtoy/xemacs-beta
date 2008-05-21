@@ -372,19 +372,32 @@ This is a naive implementation in Lisp.  "
          ;; used scaron as the Latin-2 character, and make-temp-name errored
          ;; on OS X. LATIN CAPITAL LETTER D WITH STROKE does not decompose.
          (name1 (make-temp-name prefix))
-         (name2 (make-temp-name prefix)))
-    ;; This is how you suppress output from `message', called by `write-region'
+         (name2 (make-temp-name prefix))
+         (name3 (make-temp-name prefix))
+         working-symlinks)
     (Assert (not (equal name1 name2)))
     (Assert (not (file-exists-p name1)))
+    ;; This is how you suppress output from `message', called by `write-region'
     (Silence-Message
      (write-region (point-min) (point-max) name1))
     (Assert (file-exists-p name1))
-    (when (fboundp 'make-symbolic-link)
+    (Silence-Message 
+     (write-region (point-min) (point-max) name3))
+    (Assert (file-exists-p name3))
+    (condition-case nil
+        (make-symbolic-link name1 name3)
+      (file-already-exists
+       ;; If we actually have functioning symlinks, we end up here, since
+       ;; name3 already exists and OK-IF-ALREADY-EXISTS was not specified.
+       (setq working-symlinks t)))
+    (when working-symlinks
       (make-symbolic-link name1 name2)
       (Assert (file-exists-p name2))
       (Assert (equal (file-truename name2) name1))
       (Assert (equal (file-truename name1) name1)))
-    (ignore-file-errors (delete-file name1) (delete-file name2)))
+    (ignore-file-errors (delete-file name1))
+    (ignore-file-errors (delete-file name2))
+    (ignore-file-errors (delete-file name3)))
 
   ;; Add many more file operation tests here...
 
