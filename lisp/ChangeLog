@@ -1,3 +1,8 @@
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-coding.el (make-8-bit-choose-category): 
+	Merge my change of 2008-05-14 to the query-coding-region code.
+
 2008-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* subr.el (add-to-list): Fix Aidan's last commit.
