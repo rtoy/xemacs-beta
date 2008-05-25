@@ -506,7 +506,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
 ;; point). Make them available to user code. 
 (defvar unicode-error-default-translation-table
   (loop 
-    with char-table = (make-char-table 'char)
+    with char-table = (make-char-table 'generic)
     for i from ?\x00 to ?\xFF
     initially (unless (featurep 'mule) (return))
     do
