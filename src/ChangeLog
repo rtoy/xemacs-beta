@@ -1,3 +1,11 @@
+2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (Fmake_char_table): 
+	Document the default return values for the various char table
+	types. 
+	* editfns.c (Ftranslate_region): Document why `generic' char tables
+	are preferable to `char' char tables for this function. 
+
 2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fmake_symbolic_link):

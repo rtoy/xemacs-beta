@@ -566,25 +566,32 @@ Each char table type is used for a different purpose and allows different
 sorts of values.  The different char table types are
 
 `category'
-	Used for category tables, which specify the regexp categories
-	that a character is in.  The valid values are nil or a
-	bit vector of 95 elements.  Higher-level Lisp functions are
-	provided for working with category tables.  Currently categories
+	Used for category tables, which specify the regexp categories that a
+	character is in.  The valid values are nil or a bit vector of 95
+	elements, and values default to nil.  Higher-level Lisp functions
+	are provided for working with category tables.  Currently categories
 	and category tables only exist when Mule support is present.
 `char'
-	A generalized char table, for mapping from one character to
-	another.  Used for case tables, syntax matching tables,
-	`keyboard-translate-table', etc.  The valid values are characters.
+	A generalized char table, for mapping from one character to another.
+	Used for case tables, syntax matching tables,
+	`keyboard-translate-table', etc.  The valid values are characters,
+	and the default result given by `get-char-table' if a value hasn't
+	been set for a given character or for a range that includes it, is
+	?\x00.
 `generic'
-        An even more generalized char table, for mapping from a
-	character to anything.
+        An even more generalized char table, for mapping from a character to
+	anything. The default result given by `get-char-table' is nil.
 `display'
-	Used for display tables, which specify how a particular character
-	is to appear when displayed.  #### Not yet implemented.
+	Used for display tables, which specify how a particular character is
+	to appear when displayed.  #### Not yet implemented; currently, the
+	display table code uses generic char tables, and it's not clear that
+	implementing this char table type would be useful.
 `syntax'
 	Used for syntax tables, which specify the syntax of a particular
 	character.  Higher-level Lisp functions are provided for
-	working with syntax tables.  The valid values are integers.
+	working with syntax tables.  The valid values are integers, and the
+	default result given by `get-char-table' is the syntax code for
+	`inherit'.
 */
        (type))
 {
