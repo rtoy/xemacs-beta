@@ -1,3 +1,27 @@
+2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el: New.
+	Taken from GNU's GPLV2 version of 2007-02-14, with modifications
+	for XEmacs support and extensions for Unihan.txt support and
+	db/dbm caches.
+	* simple.el (what-cursor-position): 
+	Support an optional prefix argument, as does GNU, calling
+	#'describe-char to giving more detail on the character at point,
+	notably from UnicodeData and (in our case, optionally) Unihan.txt.
+	* syntax.el (syntax-after): 
+	Make this available for the sake of #'describe-char. 
+	* mule/mule-cmds.el (iso-2022-control-alist):
+	Make this available, for the sake of #'encoded-string-description
+	and #'describe-char. 
+	* mule/mule-cmds.el (encoded-string-description):
+	Make this available, for the sake of #'describe-char.
+	* unicode.el (unicode-error-default-translation-table): 
+	Make this a char table of type generic, not of type char. Makes it
+	possible to have the relevant logic in #'describe-char reasonably
+	clear; also, and this is undocumented, makes it much easier to
+	implement #'frob-unicode-errors-region. I should document this,
+	and revise #'frob-unicode-errors-region. 
+
 2008-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* subr.el (add-to-list): Fix Aidan's last commit.
