@@ -901,34 +901,24 @@ It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
 ;; Pretty description of encoded string
 
 ;; Alist of ISO 2022 control code vs the corresponding mnemonic string.
-;; (defvar iso-2022-control-alist
-;;   '((?\x1b . "ESC")
-;;     (?\x0e . "SO")
-;;     (?\x0f . "SI")
-;;     (?\x8e . "SS2")
-;;     (?\x8f . "SS3")
-;;     (?\x9b . "CSI")))
+(defvar iso-2022-control-alist
+  '((?\x1b . "ESC")
+    (?\x0e . "SO")
+    (?\x0f . "SI")
+    (?\x8e . "SS2")
+    (?\x8f . "SS3")
+    (?\x9b . "CSI")))
 
-;; (defun encoded-string-description (str coding-system)
-;;   "Return a pretty description of STR that is encoded by CODING-SYSTEM."
-;;   (setq str (string-as-unibyte str))
-;;   (let ((char (aref str 0))
-;;         desc)
-;;     (when (< char 128)
-;;       (setq desc (or (cdr (assq char iso-2022-control-alist))
-;;                      (char-to-string char)))
-;;       (let ((i 1)
-;;             (len (length str))) 
-;;         (while (< i len)
-;;           (setq char (aref str i))
-;;           (if (>= char 128)
-;;               (setq desc nil i len)
-;;             (setq desc (concat desc " "
-;;                                (or (cdr (assq char iso-2022-control-alist))
-;;                                    (char-to-string char)))
-;;                   i (1+ i))))))
-;;     (or desc
-;;         (mapconcat (function (lambda (x) (format "0x%02x" x))) str " "))))
+(defun encoded-string-description (str coding-system)
+  "Return a pretty description of STR that is encoded by CODING-SYSTEM."
+;  (setq str (string-as-unibyte str))
+  (mapconcat
+   (if (and coding-system (eq (coding-system-type coding-system) 'iso2022))
+       ;; Try to get a pretty description for ISO 2022 escape sequences.
+       (function (lambda (x) (or (cdr (assq x iso-2022-control-alist))
+				 (format "#x%02X" x))))
+     (function (lambda (x) (format "#x%02X" x))))
+   str " "))
 
 ;; (defun encode-coding-char (char coding-system)
 ;;   "Encode CHAR by CODING-SYSTEM and return the resulting string.

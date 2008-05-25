@@ -782,13 +782,16 @@ See also `line-number'."
 		done)))
 	(- (buffer-size) (forward-line (buffer-size)))))))
 
-(defun what-cursor-position ()
+(defun what-cursor-position (&optional detail)
   "Print info on cursor position (on screen and within buffer).
 Also describe the character after point, giving its UCS code point and Mule
 charset and codes; for ASCII characters, give its code in octal, decimal and
-hex."
-  ;; XEmacs change
-  (interactive "_")
+hex.
+
+With prefix argument, show extended details about the character in a
+separate buffer.  See also the command `describe-char'."
+  ;; XEmacs change "_"
+  (interactive "_P")
   (let* ((char (char-after (point))) ; XEmacs
 	 (beg (point-min))
 	 (end (point-max))
@@ -813,6 +816,8 @@ hex."
     (if (= pos end)
         (message "point=%d of %d(%d%%)%s column %d %s"
                  pos total percent narrowed-details col hscroll)
+      (if detail
+          (describe-char (point)))
       ;; XEmacs: don't use single-key-description, treat non-ASCII
       ;; characters differently.
       (if (< char ?\x80)
