@@ -1,3 +1,9 @@
+2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (Ftranslate_region):  
+	Correct a thinko in the last commit; I meant #'get-char-table, not
+	#'put-char-table. 
+
 2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (Fmake_char_table): 
