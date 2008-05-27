@@ -1825,11 +1825,11 @@ nil (nil meaning don't replace.)
 
 If TABLE is a char-table, its elements describe the mapping between
 characters and their replacements.  The char-table should be of type `char'
-or `generic'.  If the value given by `put-char-table' for a given character
+or `generic'.  If the value given by `get-char-table' for a given character
 is nil, that character will not be translated by `translate-region'.  Since
-`char' char-tables can never return nil to `put-char-table', and since most
-translation involves a subset of the possible XEmacs characters, not all of
-them, the most generally useful table type here is `generic'.
+`get-char-table' can never return nil with a char table of type `char', and
+since most translation involves a subset of the possible XEmacs characters,
+not all of them, the most generally useful table type here is `generic'.
 
 Returns the number of substitutions performed.
 */
