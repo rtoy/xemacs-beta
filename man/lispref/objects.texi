@@ -2247,10 +2247,12 @@ change in one will be reflected by the same change in the other.
 
 @code{eq} returns @code{t} if @var{object1} and @var{object2} are
 integers with the same value.  It is preferable to use @code{=} or
-@code{eql} in many contexts for numeric comparison; @pxref{Comparison of
-Numbers}. @code{eq} also returns @code{t} if @var{object1} and
-@var{object2} are identical characters, though in this case you may
-prefer to use @code{char=}.
+@code{eql} in many contexts for numeric comparison, especially since
+bignums (integers with values that would have otherwise overflowed, only
+available on some builds) with the same value are not @code{eq};
+@pxref{Comparison of Numbers}. @code{eq} also returns @code{t} if
+@var{object1} and @var{object2} are identical characters, though in this
+case you may prefer to use @code{char=}.
 
 Also, since symbol names are normally unique, if the arguments are
 symbols with the same name, they are @code{eq}.  For other types (e.g.,
@@ -2264,7 +2266,7 @@ are in use, symbol names are no longer unique.  Distinct symbols with
 the same name are not @code{eq}.  @xref{Creating Symbols}.)
 
 NOTE: Under XEmacs 19, characters are really just integers, and thus
-characters and integers with the same numeric are @code{eq}.  Under
+characters and integers with the same numeric code are @code{eq}.  Under
 XEmacs 20, it was necessary to preserve remnants of this in function
 such as @code{old-eq} in order to maintain byte-code compatibility.
 Byte code compiled under any Emacs 19 will automatically have calls to
