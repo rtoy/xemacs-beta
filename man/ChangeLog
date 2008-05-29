@@ -1,3 +1,9 @@
+2008-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Equality Predicates): 
+	Expand on bignum equality; correct an omitted word in the last
+	commit. 
+
 2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Equality Predicates): 
