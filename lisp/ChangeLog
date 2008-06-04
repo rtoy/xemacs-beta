@@ -1,3 +1,8 @@
+2008-06-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-property-list): 
+	#'require hyper-apropos, since we use hyper-apropos-face
+
 2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el: New.
