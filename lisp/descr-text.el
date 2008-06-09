@@ -82,6 +82,7 @@ The `category', `face' and `font-lock-face' properties are made
 into help buttons that call `describe-text-category' or
 `describe-face' when pushed."
   ;; Sort the properties by the size of their value.
+  (require 'hyper-apropos)
   (dolist (elt (sort (let (ret)
 		       (while properties
 			 (push (list (pop properties) (pop properties)) ret))
