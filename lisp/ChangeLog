@@ -1,3 +1,9 @@
+2008-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unicode-data): 
+	Don't leak the Unihan database handle when looking up non-Han
+	characters. 
+
 2008-06-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-property-list): 

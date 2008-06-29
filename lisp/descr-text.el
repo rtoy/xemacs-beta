@@ -729,16 +729,7 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 
       (goto-char (point-min))
       (let ((hex (format "%04X" char))
-            found first last unihan-match unihan-info
-            (unihan-database-handle
-	     (and describe-char-unihan-file
-		  (open-database (unidata-generate-database-file-name
-				  describe-char-unihan-file
-				  (eighth (file-attributes
-					   describe-char-unihan-file))
-				  unidata-database-format)
-				 unidata-database-format
-				 nil "r" #o644 'no-conversion-unix)))
+            found first last unihan-match unihan-info unihan-database-handle
             (coding-system-for-read 'no-conversion-unix))
         (if (re-search-forward (concat "^" hex) nil t)
             (setq found t)
@@ -920,7 +911,16 @@ character)")
                (if (and (> (length (nth 0 fields)) 13)
                         (equal "<CJK Ideograph"
                                (substring (nth 0 fields) 0 14)))
-                   (if (and unihan-database-handle
+                   (if (and describe-char-unihan-file
+                            (setq unihan-database-handle
+                                  (open-database
+                                   (unidata-generate-database-file-name
+                                    describe-char-unihan-file
+                                    (eighth (file-attributes
+                                             describe-char-unihan-file))
+                                    unidata-database-format)
+                                   unidata-database-format
+                                   nil "r" #o644 'no-conversion-unix))
                             (setq unihan-match
                                   (get-database (format "%04X" char)
                                                 unihan-database-handle)
