@@ -1,3 +1,9 @@
+2008-07-06  Ville Skyttä  <scop@xemacs.org>
+
+	* configure.ac (xe_fst):
+	New, to replace m4_fst which disappeared in autoconf 2.62 (#370).
+	(XE_EXPAND_COMPLEX_OPTIONS): Use xe_fst.
+
 2008-05-12  Michael Sperber  <mike@xemacs.org>
 
 	* configure.ac: 
