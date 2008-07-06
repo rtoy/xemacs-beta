@@ -387,9 +387,11 @@ dnl ----------------------------------------------
 dnl
 dnl Internal macro to recursively expand all the options in the option list.
 dnl
+dnl m4_fst disappeared without a trace in autoconf 2.62
+m4_define([xe_fst], [$1])dnl
 define([XE_EXPAND_COMPLEX_OPTIONS],
 [m4_if([$2], [], [],
-       [XE_EXPAND_COMPLEX_OPTION([$1], m4_fst($2))[]dnl
+       [XE_EXPAND_COMPLEX_OPTION([$1], xe_fst($2))[]dnl
 XE_EXPAND_COMPLEX_OPTIONS([$1], XE_CDR($2))])])dnl
 dnl
 dnl XE_INIT_COMPLEX_OPTION(prefix, option_list)
