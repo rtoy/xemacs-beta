@@ -108,7 +108,7 @@ or a function symbol which, when called, returns such a cons cell."
   terminal-coding-system)
 
 (defun set-terminal-coding-system (coding-system)
-  "Set the coding system used for TTY display output. Currently broken."
+  "Set the coding system used for TTY display output."
   (interactive "zterminal-coding-system: ")
   (get-coding-system coding-system) ; correctness check
   (setq terminal-coding-system coding-system)

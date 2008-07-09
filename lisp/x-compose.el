@@ -102,7 +102,8 @@
 
 ;; Giacomo Boffi's problem of
 ;; 20050324103919.8D22E4901@boffi95.stru.polimi.it is caused by Xlib doing
-;; the compose processing. To turn that off, I'm not certain what's 
+;; the compose processing. To turn that off, I'm not certain what's
+;; possible, beyond making C the current locale.
 
 ;;; Code:
 

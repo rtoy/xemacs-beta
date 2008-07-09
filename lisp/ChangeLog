@@ -1,3 +1,70 @@
+2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Patch to make it up to the device-specific code whether
+	various Lisp functions should be called during device creation,
+	not relying on the startup code to decide this. Also, rename
+	initial-window-system to initial-device-type (which makes more
+	sense in this scheme), always set it. 
+
+	* startup.el (command-line):
+	Use initial-device-type, not initial-window-system; just call
+	#'make-device, leave the special behaviour to be done the first
+	time a console type is initialised to be decided on by the
+	respective console code.
+
+	* x-init.el (x-app-defaults-directory): Declare that it should be
+	bound.
+	(x-define-dead-key): Have the macro take a DEVICE argument.
+	(x-initialize-compose): Have the function take a DEVICE argument,
+	and use it when checking if various keysyms are available on the
+	keyboard.
+	(x-initialize-keyboard): Have the function take a DEVICE argument,
+	allowing device-specific keyboard initialisation.
+	(make-device-early-x-entry-point-called-p): New.
+	(make-device-late-x-entry-point-called-p): New.  Rename
+	pre-x-win-initted, x-win-initted.
+	(make-device-early-x-entry-point): Rename init-pre-x-win, take the
+	call to make-x-device out (it should be called from the
+	device-creation code, not vice-versa).
+	(make-device-late-x-entry-point): Rename init-post-x-win, have it
+	take a DEVICE argument, use that DEVICE argument when working out
+	what device-specific things need doing. Don't use
+	create-console-hook in core code.
+	* x-win-xfree86.el (x-win-init-xfree86): Take a DEVICE argument;
+	use it. 
+	* x-win-sun.el (x-win-init-sun): Take a DEVICE argument; use it. 
+	* mule/mule-x-init.el: Remove #'init-mule-x-win, an empty
+	function. 
+
+	* tty-init.el (make-device-early-tty-entry-point-called-p): New.
+	Rename pre-tty-win-initted.
+	(make-device-early-tty-entry-point): New.
+	Rename init-pre-tty-win.
+	(make-frame-after-init-entry-point): New.
+	Rename init-post-tty-win to better reflect when it's called. 
+
+	* gtk-init.el (gtk-early-lisp-options-file): New.
+	Move this path to a documented variable. 
+	(gtk-command-switch-alist): Wrap the docstring to fewer than 79
+	columns. 
+	(make-device-early-gtk-entry-point-called-p): New.
+	(make-device-late-gtk-entry-point-called-p): New.
+	Renamed gtk-pre-win-initted, gtk-post-win-initted to these.
+	(make-device-early-gtk-entry-point): New. 
+	(make-device-late-gtk-entry-point): New.
+	Renamed init-pre-gtk-win, init-post-gtk-win to these.
+	Have make-device-late-gtk-entry-point take a device argument, and use
+	it; have make-device-early-gtk-entry-point load the GTK-specific
+	startup code, instead of doing that in C. 
+	(init-gtk-win): Deleted, functionality moved to the GTK device
+	creation code. 	
+	(gtk-define-dead-key): Have it take a DEVICE argument; use this
+	argument. 
+	(gtk-initialize-compose): Ditto. 
+
+	* coding.el (set-terminal-coding-system): 
+	Correct the docstring; the function isn't broken. 
+
 2008-06-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-char-unicode-data): 

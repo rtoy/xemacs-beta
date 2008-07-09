@@ -45,7 +45,7 @@
  '(x-keysym-on-keyboard-p x-keysym-on-keyboard-sans-modifiers-p))
 
 ;;;###autoload
-(defun x-win-init-xfree86 ()
+(defun x-win-init-xfree86 (device)
 
   ;; We know this keyboard is an XFree86 keyboard. As such, we can predict
   ;; what key scan codes will correspond to the keys on US keyboard layout,
@@ -91,8 +91,8 @@
       (f23 f11)
       (f24 f12))
     do
-    (when (and (x-keysym-on-keyboard-p key)
-	       (not (x-keysym-on-keyboard-sans-modifiers-p key)))
+    (when (and (x-keysym-on-keyboard-p key device)
+	       (not (x-keysym-on-keyboard-sans-modifiers-p key device)))
       ;; define also the control, meta, and meta-control versions.
       (loop for mods in '(() (control) (meta) (meta control)) do
 	(define-key function-key-map `[(,@mods ,key)] `[(shift ,@mods ,sane-key)])
