@@ -117,6 +117,65 @@ See `make-charset'."
   "Useless in XEmacs, returns 1."
    1)
 
+(defun charset-skip-chars-string (charset)
+  "Given  CHARSET, return a string suitable for for `skip-chars-forward'.
+Passing the string to `skip-chars-forward' will cause it to skip all
+characters in CHARSET."
+  (setq charset (get-charset charset))
+  (cond 
+   ;; Aargh, the general algorithm doesn't work for these charsets, because
+   ;; make-char strips the high bit. Hard code them.
+   ((eq (find-charset 'ascii) charset) "\x00-\x7f")
+   ((eq (find-charset 'control-1) charset) "\x80-\x9f")
+   (t 
+    (let (charset-lower charset-upper row-upper row-lower)
+      (if (= 1 (charset-dimension charset))
+          (condition-case args-out-of-range
+              (make-char charset #x100)
+            (args-out-of-range 
+             (setq charset-lower (third args-out-of-range)
+                   charset-upper (fourth args-out-of-range))
+             (format "%c-%c"
+                     (make-char charset charset-lower)
+                     (make-char charset charset-upper))))
+        (condition-case args-out-of-range
+            (make-char charset #x100 #x22)
+          (args-out-of-range
+           (setq row-lower (third args-out-of-range)
+                 row-upper (fourth args-out-of-range))))
+        (condition-case args-out-of-range
+            (make-char charset #x22 #x100)
+          (args-out-of-range
+           (setq charset-lower (third args-out-of-range)
+                 charset-upper (fourth args-out-of-range))))
+        (format "%c-%c"
+                (make-char charset row-lower charset-lower)
+                (make-char charset row-upper charset-upper)))))))
+;; From GNU. 
+(defun map-charset-chars (func charset)
+  "Use FUNC to map over all characters in CHARSET for side effects.
+FUNC is a function of two args, the start and end (inclusive) of a
+character code range.  Thus FUNC should iterate over [START, END]."
+  (check-argument-type #'functionp func)
+  (check-argument-type #'charsetp (setq charset (find-charset charset)))
+  (let* ((dim (charset-dimension charset))
+	 (chars (charset-chars charset))
+	 (start (if (= chars 94)
+		    33
+		  32)))
+    (if (= dim 1)
+        (cond 
+         ((eq (find-charset 'ascii) charset) (funcall func ?\x00 ?\x7f))
+         ((eq (find-charset 'control-1) charset) (funcall func ?\x80 ?\x9f))
+         (t 
+          (funcall func
+                   (make-char charset start)
+                   (make-char charset (+ start chars -1)))))
+      (dotimes (i chars)
+	(funcall func
+		 (make-char charset (+ i start) start)
+		 (make-char charset (+ i start) (+ start chars -1)))))))
+
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)
