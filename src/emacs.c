@@ -3008,13 +3008,14 @@ DEFUN_NORETURN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 */
 /* If this function is called from startup.el, it will be possible to run
-   temacs as an editor using `temacs -batch -l loadup.el run-temacs', instead
-   of having to dump an emacs and then run that (when debugging emacs itself,
-   this can be much faster)). [Actually, the speed difference isn't that
-   much as long as your filesystem is local, and you don't end up with
-   a dumped version in case you want to rerun it.  This function is most
-   useful when used as part of the `make all-elc' command. --ben]
-   This will "restart" emacs with the specified command-line arguments.
+   temacs as an editor using `temacs -batch -l ../lisp/loadup.el
+   run-temacs', instead of having to dump an emacs and then run that (when
+   debugging emacs itself, this can be much faster)). [Actually, the speed
+   difference isn't that much as long as your filesystem is local, and you
+   don't end up with a dumped version in case you want to rerun it.  This
+   function is most useful when used as part of the `make all-elc'
+   command. --ben] This will "restart" emacs with the specified command-line
+   arguments.
 
    Martin thinks this function is most useful when using debugging
    tools like Purify or tcov that get confused by XEmacs' dumping.  */

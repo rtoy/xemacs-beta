@@ -56,8 +56,8 @@ Boston, MA 02111-1307, USA.  */
 #include <bonobo.h>
 #endif
 
-/* Qdisplay in general.c */
-Lisp_Object Qinit_pre_gtk_win, Qinit_post_gtk_win;
+Lisp_Object Qmake_device_early_gtk_entry_point,
+   Qmake_device_late_gtk_entry_point;
 
 /* The application class of Emacs. */
 Lisp_Object Vgtk_emacs_application_class;
@@ -220,6 +220,9 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   GdkVisual *visual = NULL;
   GdkColormap *cmap = NULL;
 
+  /* Run the early elisp side of the GTK device initialization. */
+  call0 (Qmake_device_early_gtk_entry_point);
+
   /* gtk_init() and even gtk_check_init() are so brain dead that
      getting an empty argv array causes them to abort. */
   if (NILP (Vgtk_initial_argv_list))
@@ -266,13 +269,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 #ifdef __FreeBSD__
   gdk_set_use_xshm (FALSE);
 #endif
-
-  /* We attempt to load this file so that the user can set
-  ** gtk-initial-geometry and not need GNOME & session management to
-  ** set their default frame size.  It also avoids the flicker
-  ** associated with setting the frame size in your .emacs file.
-  */
-  call4 (Qload, build_string ("~/.xemacs/gtk-options.el"), Qt, Qt, Qt);
 
 #ifdef HAVE_GDK_IMLIB_INIT
   /* Some themes in Gtk are so lame (most notably the Pixmap theme)
@@ -336,15 +332,12 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_GTK_GRAY_PIXMAP (d) = NULL;
 
   gtk_init_device_class (d);
-
-  /* Run the elisp side of the X device initialization. */
-  call0 (Qinit_pre_gtk_win);
 }
 
 static void
-gtk_finish_init_device (struct device *UNUSED (d), Lisp_Object UNUSED (props))
+gtk_finish_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
-  call0 (Qinit_post_gtk_win);
+  call1 (Qmake_device_late_gtk_entry_point, wrap_device(d));
 }
 
 static void
@@ -709,8 +702,8 @@ syms_of_device_gtk (void)
   DEFSUBR (Fgtk_ungrab_keyboard);
   DEFSUBR (Fgtk_init);
 
-  DEFSYMBOL (Qinit_pre_gtk_win);
-  DEFSYMBOL (Qinit_post_gtk_win);
+  DEFSYMBOL (Qmake_device_early_gtk_entry_point);
+  DEFSYMBOL (Qmake_device_late_gtk_entry_point);
 }
 
 void
