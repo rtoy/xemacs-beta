@@ -51,6 +51,13 @@
 	(gtk_finish_init_device): Call #'make-device-late-gtk-entry-point
 	with the created device as an argument. 
 
+2008-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-msw.c (mswindows_text_width_single_run): 
+	Explicitly check for the null font instance, and return zero if
+	so. Avoids the crash documented in
+	http://mid.gmane.org/18473.32468.712317.149457@parhasard.net .
+
 2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (Ftranslate_region):  
