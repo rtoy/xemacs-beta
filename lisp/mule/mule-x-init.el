@@ -28,6 +28,7 @@
 
 ;;; Work around what is arguably a Sun CDE bug.
 
+;; #### This is unused, apparently.
 (defun x-use-halfwidth-roman-font (fullwidth-charset roman-registry)
   "Maybe set charset registry of the 'ascii charset to ROMAN-REGISTRY.
 
@@ -60,9 +61,3 @@ achieved by using a national variant roman font to display ASCII."
           (error (set-charset-registries 'ascii original-registries)))))))
 
 ;;;;
-
-(defvar mule-x-win-initted nil)
-
-(defun init-mule-x-win ()
-  "Initialize X Windows for MULE at startup.  Don't call this."
-  )

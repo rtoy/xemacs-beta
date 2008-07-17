@@ -148,6 +148,15 @@ mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   SIZE size;
 
+  /* The X11 code doesn't have to do this explicitly, because there we trust
+     the font instance to know whether it's actually proportional or not,
+     and we use the zero width that is stored in the monospace null font
+     instance.  */
+  if (EQ (Vthe_null_font_instance, font_inst))
+    {
+      return 0;
+    }
+
 #if 0 /* #### not the way of ikeyama's ws */
   if (!fi->proportional_p || !hdc)
     {

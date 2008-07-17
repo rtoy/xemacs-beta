@@ -31,13 +31,13 @@
 
 ;;; Code:
 
-(defvar pre-tty-win-initted nil)
+(defvar make-device-early-tty-entry-point-called-p nil
+  "Whether `make-device-early-tty-entry-point' has been called, at least once.")
 
-;; called both from init-tty-win and from the C code.
-(defun init-pre-tty-win ()
-  "Initialize TTY at startup (pre).  Don't call this."
+(defun make-device-early-tty-entry-point ()
+  "Entry point to set up the Lisp environment for TTY device creation."
   (with-fboundp 'register-tty-color
-    (unless pre-tty-win-initted
+    (unless make-device-early-tty-entry-point-called-p
       (register-tty-color "black"   "\e[30m" "\e[40m")
       (register-tty-color "red"     "\e[31m" "\e[41m")
       (register-tty-color "green"   "\e[32m" "\e[42m")
@@ -59,16 +59,17 @@
 
       (setq pre-tty-win-initted t))))
 
-;; called both from init-tty-win and from the C code.
-;; we have to do this for every created TTY console.
-(defun init-post-tty-win (console)
-  "Initialize TTY at console creation time (post).  Don't call this."
+;; We have to do this for every created TTY console, after the first frame
+;; has been created.
+(defun make-frame-after-init-entry-point (console)
+  "Entry point for Lisp called after first frame creation on a TTY device."
   ;; load the appropriate term-type-specific Lisp file.
   ;; we don't do this at startup here so that the user can
   ;; override term-file-prefix. (startup.el does it after
   ;; loading the init file.)
-  (if (featurep 'mule)
-      (declare-fboundp (init-mule-tty-win)))
+  (when (and (find-coding-system 'euc-jp)
+             (string-match "^kterm" (getenv "TERM")))
+    (set-console-tty-coding-system console 'euc-jp))
   (when init-file-loaded
     ;; temporarily select the console so that the changes
     ;; to function-key-map are made for the right console.
@@ -78,16 +79,6 @@
 	    (select-console console)
 	    (load-terminal-library))
 	(select-console foobar)))))
-
-(defvar tty-win-initted nil)
-
-(defun init-tty-win ()
-  "Initialize TTY at startup.  Don't call this."
-  (unless tty-win-initted
-    (init-pre-tty-win)
-    (make-tty-device nil nil)
-    (init-post-tty-win (selected-console))
-    (setq tty-win-initted t)))
 
 (defun make-frame-on-tty (tty &optional props)
   "Create a frame on the TTY connection named TTY.

@@ -1,3 +1,69 @@
+2008-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay.c (init_redisplay): 
+	Don't set window-system to 'stream if running noninteractively,
+	revert to the documented behaviour. 
+
+2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Patch to make it up to the device-specific code whether
+	various Lisp functions should be called during device creation,
+	not relying on the startup code to decide this. Also, rename
+	initial-window-system to initial-device-type (which makes more
+	sense in this scheme), always set it. 
+	
+	* redisplay.c (Vinitial_device_type): New.
+	(Vinitial_window_system): Removed.
+	Rename initial-window-system to initial-device type, making it
+	a stream if we're noninteractive. Update its docstring. 
+
+	* device-x.c (Qmake_device_early_x_entry_point,
+	Qmake_device_late_x_entry_point): New. 
+	Rename Qinit_pre_x_win, Qinit_post_x_win. 
+	(x_init_device): Call #'make-device-early-x-entry-point earlier,
+	now we rely on it to find the application class and the
+	app-defaults directory. 
+	(x_finish_init_device): Call #'make-device-late-x-entry-point with
+	the created device. 
+	(Vx_app_defaults_directory): Always make this available, to
+	simplify code in x-init.el. 
+
+	* device-tty.c (Qmake_device_early_tty_entry_point): New. 
+	Rename Qinit_pre_tty_win, rename Qinit_post_tty_win and move to
+	frame-tty.c as Qmake_frame_after_init_entry_point.
+	(tty_init_device): Call #'make-device-early-tty-entry-point before
+	doing anything. 
+	* frame-tty.c (Qmake_frame_after_init_entry_point): New.
+	* frame-tty.c (tty_after_init_frame): Have it call the
+	better-named #'make-frame-after-init-entry-point function
+	instead of #'init-post-tty-win (since it's called after frame, not
+	device, creation).
+
+	* device-msw.c (Qmake_device_early_mswindows_entry_point, 
+	Qmake_device_late_mswindows_entry_point): New.
+	Rename Qinit_pre_mswindows_win, Qinit_post_mswindows_win. 
+	(mswindows_init_device): Call
+	#'make-device-early-mswindows-entry-point here, instead of having
+	its predecessor call us. 
+	(mswindows_finish_init_device): Call
+	#'make-device-early-mswindows-entry-point, for symmetry with the
+	other device types (though it's an empty function).
+
+	* device-gtk.c (Qmake_device_early_gtk_entry_point,
+	Qmake_device_late_gtk_entry_point): New.
+	Rename Qinit_pre_gtk_win, Qinit_post_gtk_win. 
+	(gtk_init_device): Call #'make-device-early-gtk-entry-point; don't
+	load ~/.xemacs/gtk-options.el ourselves, leave that to lisp.
+	(gtk_finish_init_device): Call #'make-device-late-gtk-entry-point
+	with the created device as an argument. 
+
+2008-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-msw.c (mswindows_text_width_single_run): 
+	Explicitly check for the null font instance, and return zero if
+	so. Avoids the crash documented in
+	http://mid.gmane.org/18473.32468.712317.149457@parhasard.net .
+
 2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (Ftranslate_region):  

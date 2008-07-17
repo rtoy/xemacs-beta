@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "syssignal.h" /* for SIGWINCH */
 
-Lisp_Object Qinit_pre_tty_win, Qinit_post_tty_win;
+Lisp_Object Qmake_device_early_tty_entry_point;
 
 
 #ifdef NEW_GC
@@ -71,6 +71,10 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   Lisp_Object terminal_type = CONSOLE_TTY_DATA (con)->terminal_type;
+
+  /* Run part of the elisp side of the TTY device initialization.
+     The post-init is run in the tty_finish_init_device() method. */
+  call0 (Qmake_device_early_tty_entry_point);
 
   DEVICE_INFD (d) = CONSOLE_TTY_DATA (con)->infd;
   DEVICE_OUTFD (d) = CONSOLE_TTY_DATA (con)->outfd;
@@ -107,10 +111,6 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
     }
 
   init_one_device (d);
-
-  /* Run part of the elisp side of the TTY device initialization.
-     The post-init is run in the tty_after_init_frame() method. */
-  call0 (Qinit_pre_tty_win);
 }
 
 #ifndef NEW_GC
@@ -211,8 +211,7 @@ syms_of_device_tty (void)
   INIT_LRECORD_IMPLEMENTATION (tty_device);
 #endif /* NEW_GC */
 
-  DEFSYMBOL (Qinit_pre_tty_win);
-  DEFSYMBOL (Qinit_post_tty_win);
+  DEFSYMBOL (Qmake_device_early_tty_entry_point);
 }
 
 void

@@ -476,7 +476,7 @@ Lisp_Object Vwindow_system;	/* #### this variable is deprecated
 				   (`x', `gtk', `mswindows', and `tty' are
 				   supported -- yes, TTYs are window systems
 				   for this purpose. */
-Lisp_Object Vinitial_window_system;
+Lisp_Object Vinitial_device_type;
 
 Lisp_Object Vglobal_mode_string;
 
@@ -9748,9 +9748,14 @@ init_redisplay (void)
 	internal_cache = Dynarr_new (line_start_cache);
     }
 
-  /* window system is nil when in -batch mode */
-  if (!initialized || noninteractive)
+  if (!initialized)
     return;
+
+  if (noninteractive)
+    {
+      Vinitial_device_type = Qstream;
+      return;
+    }
 
   /* If the user wants to use a window system, we shouldn't bother
      initializing the terminal.  This is especially important when the
@@ -9765,7 +9770,7 @@ init_redisplay (void)
     {
       /* Some stuff checks this way early. */
       Vwindow_system = Qx;
-      Vinitial_window_system = Qx;
+      Vinitial_device_type = Qx;
       return;
     }
 #endif /* HAVE_X_WINDOWS */
@@ -9774,7 +9779,7 @@ init_redisplay (void)
   if (!strcmp (display_use, "gtk"))
     {
       Vwindow_system = Qgtk;
-      Vinitial_window_system = Qgtk;
+      Vinitial_device_type = Qgtk;
       return;
     }
 #endif
@@ -9784,7 +9789,7 @@ init_redisplay (void)
     {
       /* Some stuff checks this way early. */
       Vwindow_system = Qmswindows;
-      Vinitial_window_system = Qmswindows;
+      Vinitial_device_type = Qmswindows;
       return;
     }
 #endif /* HAVE_MS_WINDOWS */
@@ -9804,7 +9809,7 @@ init_redisplay (void)
       exit (1);
     }
 
-  Vinitial_window_system = Qtty;
+  Vinitial_device_type = Qtty;
   return;
 #else  /* not HAVE_TTY */
   /* No DISPLAY specified, and no TTY support. */
@@ -9948,11 +9953,13 @@ instead.
 */ );
   Vwindow_system = Qnil;
 
-  /* #### Temporary shit until window-system is eliminated. */
-  DEFVAR_CONST_LISP ("initial-window-system", &Vinitial_window_system /*
-DON'T TOUCH
+  DEFVAR_CONST_LISP ("initial-device-type", &Vinitial_device_type /*
+The type of the first XEmacs device to be created.
+
+This is constant; it's used by the command line handling code to communicate
+to Lisp what type the initial device to be created should be.
 */ );
-  Vinitial_window_system = Qnil;
+  Vinitial_device_type = Qnil;
 
   DEFVAR_BOOL ("cursor-in-echo-area", &cursor_in_echo_area /*
 Non-nil means put cursor in minibuffer, at end of any message there.
