@@ -65,14 +65,14 @@ Boston, MA 02111-1307, USA.  */
 #include "offix.h"
 #endif
 
-#ifdef MULE
 Lisp_Object Vx_app_defaults_directory;
+#ifdef MULE
 Lisp_Object Qget_coding_system_from_locale;
 #endif
 
 /* Qdisplay in general.c */
 Lisp_Object Qx_error;
-Lisp_Object Qinit_pre_x_win, Qinit_post_x_win;
+Lisp_Object Qmake_device_early_x_entry_point, Qmake_device_late_x_entry_point;
 
 /* The application class of Emacs. */
 Lisp_Object Vx_emacs_application_class;
@@ -542,6 +542,10 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   /* */
   int best_visual_found = 0;
 
+  /* Run the elisp side of the X device initialization, allowing it to set
+     x-emacs-application-class and x-app-defaults-directory.  */
+  call0 (Qmake_device_early_x_entry_point);
+
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
   /*
    * In order to avoid the lossage with flat Athena widgets dynamically
@@ -921,15 +925,12 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   Xatoms_of_select_x (d);
   Xatoms_of_objects_x (d);
   x_init_device_class (d);
-
-  /* Run the elisp side of the X device initialization. */
-  call0 (Qinit_pre_x_win);
 }
 
 static void
-x_finish_init_device (struct device *UNUSED (d), Lisp_Object UNUSED (props))
+x_finish_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
-  call0 (Qinit_post_x_win);
+  call1 (Qmake_device_late_x_entry_point, wrap_device (d));
 }
 
 static void
@@ -2133,8 +2134,8 @@ syms_of_device_x (void)
   DEFSUBR (Fx_set_font_path);
 
   DEFSYMBOL (Qx_error);
-  DEFSYMBOL (Qinit_pre_x_win);
-  DEFSYMBOL (Qinit_post_x_win);
+  DEFSYMBOL (Qmake_device_early_x_entry_point);
+  DEFSYMBOL (Qmake_device_late_x_entry_point);
 
 #ifdef MULE
   DEFSYMBOL (Qget_coding_system_from_locale);
@@ -2207,13 +2208,11 @@ just reside in C.
 */ );
   Vx_initial_argv_list = Qnil;
 
-#ifdef MULE
   DEFVAR_LISP ("x-app-defaults-directory", &Vx_app_defaults_directory /*
 Used by the Lisp code to communicate to the low level X initialization
 where the localized init files are.
 */ );
   Vx_app_defaults_directory = Qnil;
-#endif
 
   Fprovide (Qx);
 }

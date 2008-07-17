@@ -37,7 +37,7 @@
    x-server-vendor x-init-specifier-from-resources init-mule-x-win))
 
 (globally-declare-boundp
- '(x-initial-argv-list))
+ '(x-initial-argv-list x-app-defaults-directory))
 
 ;; If you want to change this variable, this is the place you must do it.
 ;; Do not set it to a string containing periods.  X doesn't like that.
@@ -86,12 +86,12 @@
 ;; Sun have done to the default keymap for the Sun keyboards.
 
 (eval-when-compile
-  (defmacro x-define-dead-key (key map)
-    `(when (x-keysym-on-keyboard-p ',key)
+  (defmacro x-define-dead-key (key map device)
+    `(when (x-keysym-on-keyboard-p ',key device)
        (define-key function-key-map [,key] ',map))))
 
-(defun x-initialize-compose ()
-  "Enable compose key and dead key processing."
+(defun x-initialize-compose (device)
+  "Enable compose key and dead key processing on DEVICE."
   (autoload 'compose-map	    "x-compose" nil t 'keymap)
   (autoload 'compose-acute-map	    "x-compose" nil t 'keymap)
   (autoload 'compose-grave-map	    "x-compose" nil t 'keymap)
@@ -100,7 +100,7 @@
   (autoload 'compose-circumflex-map "x-compose" nil t 'keymap)
   (autoload 'compose-tilde-map	    "x-compose" nil t 'keymap)
 
-  (when (x-keysym-on-keyboard-p 'multi-key)
+  (when (x-keysym-on-keyboard-p 'multi-key device)
     (define-key function-key-map [multi-key] 'compose-map))
 
   ;; The dead keys might really be called just about anything, depending
@@ -119,98 +119,98 @@
   ;; mixed up view of what these keys should be called.
 
   ;; Canonical names:
-  (x-define-dead-key acute			compose-acute-map)
-  (x-define-dead-key grave			compose-grave-map)
-  (x-define-dead-key cedilla			compose-cedilla-map)
-  (x-define-dead-key diaeresis			compose-diaeresis-map)
-  (x-define-dead-key circumflex			compose-circumflex-map)
-  (x-define-dead-key tilde			compose-tilde-map)
-  (x-define-dead-key degree			compose-ring-map)
+  (x-define-dead-key acute			compose-acute-map device)
+  (x-define-dead-key grave			compose-grave-map device)
+  (x-define-dead-key cedilla			compose-cedilla-map device)
+  (x-define-dead-key diaeresis			compose-diaeresis-map device)
+  (x-define-dead-key circumflex			compose-circumflex-map device)
+  (x-define-dead-key tilde			compose-tilde-map device)
+  (x-define-dead-key degree			compose-ring-map device)
 
   ;; Sun according to MIT:
-  (x-define-dead-key SunFA_Acute		compose-acute-map)
-  (x-define-dead-key SunFA_Grave		compose-grave-map)
-  (x-define-dead-key SunFA_Cedilla		compose-cedilla-map)
-  (x-define-dead-key SunFA_Diaeresis		compose-diaeresis-map)
-  (x-define-dead-key SunFA_Circum		compose-circumflex-map)
-  (x-define-dead-key SunFA_Tilde		compose-tilde-map)
+  (x-define-dead-key SunFA_Acute		compose-acute-map device)
+  (x-define-dead-key SunFA_Grave		compose-grave-map device)
+  (x-define-dead-key SunFA_Cedilla		compose-cedilla-map device)
+  (x-define-dead-key SunFA_Diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key SunFA_Circum		compose-circumflex-map device)
+  (x-define-dead-key SunFA_Tilde		compose-tilde-map device)
 
   ;; Sun according to OpenWindows 2:
-  (x-define-dead-key Dead_Grave			compose-grave-map)
-  (x-define-dead-key Dead_Circum		compose-circumflex-map)
-  (x-define-dead-key Dead_Tilde			compose-tilde-map)
+  (x-define-dead-key Dead_Grave			compose-grave-map device)
+  (x-define-dead-key Dead_Circum		compose-circumflex-map device)
+  (x-define-dead-key Dead_Tilde			compose-tilde-map device)
 
   ;; Sun according to OpenWindows 3:
-  (x-define-dead-key SunXK_FA_Acute		compose-acute-map)
-  (x-define-dead-key SunXK_FA_Grave		compose-grave-map)
-  (x-define-dead-key SunXK_FA_Cedilla		compose-cedilla-map)
-  (x-define-dead-key SunXK_FA_Diaeresis		compose-diaeresis-map)
-  (x-define-dead-key SunXK_FA_Circum		compose-circumflex-map)
-  (x-define-dead-key SunXK_FA_Tilde		compose-tilde-map)
+  (x-define-dead-key SunXK_FA_Acute		compose-acute-map device)
+  (x-define-dead-key SunXK_FA_Grave		compose-grave-map device)
+  (x-define-dead-key SunXK_FA_Cedilla		compose-cedilla-map device)
+  (x-define-dead-key SunXK_FA_Diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key SunXK_FA_Circum		compose-circumflex-map device)
+  (x-define-dead-key SunXK_FA_Tilde		compose-tilde-map device)
 
   ;; DEC according to MIT:
-  (x-define-dead-key Dacute_accent		compose-acute-map)
-  (x-define-dead-key Dgrave_accent		compose-grave-map)
-  (x-define-dead-key Dcedilla_accent		compose-cedilla-map)
-  (x-define-dead-key Dcircumflex_accent		compose-circumflex-map)
-  (x-define-dead-key Dtilde			compose-tilde-map)
-  (x-define-dead-key Dring_accent		compose-ring-map)
+  (x-define-dead-key Dacute_accent		compose-acute-map device)
+  (x-define-dead-key Dgrave_accent		compose-grave-map device)
+  (x-define-dead-key Dcedilla_accent		compose-cedilla-map device)
+  (x-define-dead-key Dcircumflex_accent		compose-circumflex-map device)
+  (x-define-dead-key Dtilde			compose-tilde-map device)
+  (x-define-dead-key Dring_accent		compose-ring-map device)
 
   ;; DEC according to OpenWindows 3:
-  (x-define-dead-key DXK_acute_accent		compose-acute-map)
-  (x-define-dead-key DXK_grave_accent		compose-grave-map)
-  (x-define-dead-key DXK_cedilla_accent		compose-cedilla-map)
-  (x-define-dead-key DXK_circumflex_accent	compose-circumflex-map)
-  (x-define-dead-key DXK_tilde			compose-tilde-map)
-  (x-define-dead-key DXK_ring_accent		compose-ring-map)
+  (x-define-dead-key DXK_acute_accent		compose-acute-map device)
+  (x-define-dead-key DXK_grave_accent		compose-grave-map device)
+  (x-define-dead-key DXK_cedilla_accent		compose-cedilla-map device)
+  (x-define-dead-key DXK_circumflex_accent	compose-circumflex-map device)
+  (x-define-dead-key DXK_tilde			compose-tilde-map device)
+  (x-define-dead-key DXK_ring_accent		compose-ring-map device)
 
   ;; HP according to MIT:
-  (x-define-dead-key hpmute_acute		compose-acute-map)
-  (x-define-dead-key hpmute_grave		compose-grave-map)
-  (x-define-dead-key hpmute_diaeresis		compose-diaeresis-map)
-  (x-define-dead-key hpmute_asciicircum		compose-circumflex-map)
-  (x-define-dead-key hpmute_asciitilde		compose-tilde-map)
+  (x-define-dead-key hpmute_acute		compose-acute-map device)
+  (x-define-dead-key hpmute_grave		compose-grave-map device)
+  (x-define-dead-key hpmute_diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key hpmute_asciicircum		compose-circumflex-map device)
+  (x-define-dead-key hpmute_asciitilde		compose-tilde-map device)
 
   ;; Empirically discovered on Linux XFree86 MetroX:
-  (x-define-dead-key usldead_acute		compose-acute-map)
-  (x-define-dead-key usldead_grave		compose-grave-map)
-  (x-define-dead-key usldead_diaeresis		compose-diaeresis-map)
-  (x-define-dead-key usldead_asciicircum	compose-circumflex-map)
-  (x-define-dead-key usldead_asciitilde		compose-tilde-map)
+  (x-define-dead-key usldead_acute		compose-acute-map device)
+  (x-define-dead-key usldead_grave		compose-grave-map device)
+  (x-define-dead-key usldead_diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key usldead_asciicircum	compose-circumflex-map device)
+  (x-define-dead-key usldead_asciitilde		compose-tilde-map device)
 
   ;; HP according to OpenWindows 3:
-  (x-define-dead-key hpXK_mute_acute		compose-acute-map)
-  (x-define-dead-key hpXK_mute_grave		compose-grave-map)
-  (x-define-dead-key hpXK_mute_diaeresis	compose-diaeresis-map)
-  (x-define-dead-key hpXK_mute_asciicircum	compose-circumflex-map)
-  (x-define-dead-key hpXK_mute_asciitilde	compose-tilde-map)
+  (x-define-dead-key hpXK_mute_acute		compose-acute-map device)
+  (x-define-dead-key hpXK_mute_grave		compose-grave-map device)
+  (x-define-dead-key hpXK_mute_diaeresis	compose-diaeresis-map device)
+  (x-define-dead-key hpXK_mute_asciicircum	compose-circumflex-map device)
+  (x-define-dead-key hpXK_mute_asciitilde	compose-tilde-map device)
 
   ;; HP according to HP-UX 8.0:
-  (x-define-dead-key XK_mute_acute		compose-acute-map)
-  (x-define-dead-key XK_mute_grave		compose-grave-map)
-  (x-define-dead-key XK_mute_diaeresis		compose-diaeresis-map)
-  (x-define-dead-key XK_mute_asciicircum	compose-circumflex-map)
-  (x-define-dead-key XK_mute_asciitilde		compose-tilde-map)
+  (x-define-dead-key XK_mute_acute		compose-acute-map device)
+  (x-define-dead-key XK_mute_grave		compose-grave-map device)
+  (x-define-dead-key XK_mute_diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key XK_mute_asciicircum	compose-circumflex-map device)
+  (x-define-dead-key XK_mute_asciitilde		compose-tilde-map device)
 
   ;; [[ XFree86 seems to use lower case and a hyphen ]] Not true; they use
   ;; lower case and an underscore. XEmacs converts the underscore to a
   ;; hyphen in x_keysym_to_emacs_keysym because the keysym is in the
   ;; "Keyboard" character set, which is just totally fucking random,
   ;; considering it doesn't happen for any other character sets. 
-  (x-define-dead-key dead-acute			compose-acute-map)
-  (x-define-dead-key dead-grave			compose-grave-map)
-  (x-define-dead-key dead-cedilla		compose-cedilla-map)
-  (x-define-dead-key dead-diaeresis		compose-diaeresis-map)
-  (x-define-dead-key dead-circum		compose-circumflex-map)
-  (x-define-dead-key dead-circumflex		compose-circumflex-map)
-  (x-define-dead-key dead-tilde			compose-tilde-map)
+  (x-define-dead-key dead-acute			compose-acute-map device)
+  (x-define-dead-key dead-grave			compose-grave-map device)
+  (x-define-dead-key dead-cedilla		compose-cedilla-map device)
+  (x-define-dead-key dead-diaeresis		compose-diaeresis-map device)
+  (x-define-dead-key dead-circum		compose-circumflex-map device)
+  (x-define-dead-key dead-circumflex		compose-circumflex-map device)
+  (x-define-dead-key dead-tilde			compose-tilde-map device)
   )
 
 (eval-when-compile
   (load "x-win-sun"     nil t)
   (load "x-win-xfree86" nil t))
 
-(defun x-initialize-keyboard ()
+(defun x-initialize-keyboard (device)
   "Perform X-Server-specific initializations.  Don't call this."
   ;; This is some heuristic junk that tries to guess whether this is
   ;; a Sun keyboard.
@@ -224,17 +224,17 @@
   ;; Note that we cannot use most vendor-provided proprietary keyboard
   ;; APIs to identify the keyboard - those only work on the console.
   ;; xkeycaps has the same problem when running `remotely'.
-  (let ((vendor (x-server-vendor)))
+  (let ((vendor (x-server-vendor device)))
     (cond ((or (string-match "Sun Microsystems" vendor)
 	       ;; MIT losingly fails to tell us what hardware the X server
 	       ;; is managing, so assume all MIT displays are Suns...  HA HA!
 	       (string-equal "MIT X Consortium" vendor)
 	       (string-equal "X Consortium" vendor))
            ;; Ok, we think this could be a Sun keyboard.  Run the Sun code.
-	   (x-win-init-sun))
+	   (x-win-init-sun device))
           ((string-match #r"XFree86\|Cygwin/X\|The X\.Org Foundation" vendor)
            ;; Those XFree86 people do some weird keysym stuff, too.
-	   (x-win-init-xfree86)))))
+	   (x-win-init-xfree86 device)))))
 
 ;; Moved from x-toolbar.el, since InfoDock doesn't dump x-toolbar.el.
 (defun x-init-toolbar-from-resources (locale)
@@ -252,69 +252,48 @@
     (x-init-specifier-from-resources
      specifier 'natnum locale (cons resname (upcase-initials resname)))))
 
-(defvar pre-x-win-initted nil)
+(defvar make-device-early-x-entry-point-called-p nil
+  "Whether `make-device-early-x-entry-point' has been called, at least once.
 
-(defun init-pre-x-win ()
-  "Initialize X Windows at startup (pre).  Don't call this."
-  (when (not pre-x-win-initted)
-    (setq initial-frame-plist (if initial-frame-unmapped-p
-                                  '(initially-unmapped t)
-                                nil))
-    (setq pre-x-win-initted t)))
+Much of the X11-specific Lisp init code should only be called the first time
+an X11 device is created; this variable allows for that.")
 
-(defvar x-win-initted nil)
+(defvar make-device-late-x-entry-point-called-p nil
+  "Whether `make-device-late-x-entry-point' has been called, at least once.
 
-(defun init-x-win ()
-  "Initialize X Windows at startup.  Don't call this."
-  (when (not x-win-initted)
-    (defvar x-app-defaults-directory)
-    (init-pre-x-win)
-    (if (featurep 'mule) (init-mule-x-win))
+Much of the X11-specific Lisp init code should only be called the first time
+an X11 device is created; this variable allows for that.")
 
-    ;; Open the X display when this file is loaded
-    ;; (Note that the first frame is created later.)
-    (setq x-initial-argv-list (cons (car command-line-args)
-                                    command-line-args-left))
-    ;; Locate the app-defaults directory
-    (when (and (boundp 'x-app-defaults-directory)
-	       (null x-app-defaults-directory))
-      (setq x-app-defaults-directory
-	    (locate-data-directory "app-defaults")))
-    (make-x-device nil)
+(defun make-device-early-x-entry-point ()
+  "Entry point to set up the Lisp environment for X device creation."
+  (unless make-device-early-x-entry-point-called-p
+    (setq initial-frame-plist
+          (and initial-frame-unmapped-p '(initially-unmapped t))
+          ;; Save the argv value. 
+          x-initial-argv-list
+          (cons (car command-line-args) command-line-args-left)
+          ;; Locate the app-defaults directory
+          x-app-defaults-directory
+          (or x-app-defaults-directory (locate-data-directory "app-defaults"))
+          make-device-early-x-entry-point-called-p t)))
+
+(defun make-device-late-x-entry-point (device)
+  "Entry point to do any Lisp-level X device-specific initialization."
+  ;; General code, called on every X device created:
+  (x-initialize-keyboard device)
+  (x-initialize-compose device)
+  ;; And the following code is to be called once, the first time an X11
+  ;; device is created:
+  (unless make-device-late-x-entry-point-called-p
     (setq command-line-args-left (cdr x-initial-argv-list))
-    (setq x-win-initted t)))
-
-(defvar post-x-win-initted nil)
-
-(defun init-post-x-win ()
-  "Initialize X Windows at startup (post).  Don't call this."
-  (when (not post-x-win-initted)
-    ;(if (featurep 'mule) (init-mule-x-win))
     ;; Motif-ish bindings
-    ;; The following two were generally unliked.
-    ;;(define-key global-map '(shift delete)   'kill-primary-selection)
-    ;;(define-key global-map '(control delete) 'delete-primary-selection)
     (define-key global-map '(shift insert)   'yank-clipboard-selection)
     (define-key global-map '(control insert) 'copy-primary-selection)
     ;; These are Sun-isms.
     (define-key global-map 'copy	'copy-primary-selection)
     (define-key global-map 'paste	'yank-clipboard-selection)
     (define-key global-map 'cut		'kill-primary-selection)
-
-    ;;(define-key global-map '(shift menu) 'x-goto-menubar) ;NYI
-
-    (setq post-x-win-initted t)))
-
-;;; Keyboard initialization needs to be done differently for each X
-;;; console, so use create-console-hook.
-(when (featurep 'x)
-  (add-hook
-   'create-console-hook
-   (lambda (console)
-     (letf (((selected-console) console))
-       (when (eq 'x (console-type console))
-	 (x-initialize-keyboard)
-	 (x-initialize-compose))))))
+    (setq make-device-late-x-entry-point-called-p t)))
 
 (defun make-frame-on-display (display &optional props)
   "Create a frame on the X display named DISPLAY.

@@ -60,7 +60,8 @@ HSZ mswindows_dde_item_result;
 HSZ mswindows_dde_item_open;
 #endif
 
-Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
+Lisp_Object Qmake_device_early_mswindows_entry_point, 
+  Qmake_device_late_mswindows_entry_point;
 Lisp_Object Qdevmodep;
 
 static Lisp_Object Q_allow_selection;
@@ -156,6 +157,8 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   HDC hdc;
   WNDCLASSEXW wc;
+
+  call0 (Qmake_device_early_mswindows_entry_point);
 
   DEVICE_CLASS (d) = Qcolor;
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
@@ -273,13 +276,14 @@ init_mswindows_dde_very_early (void)
 }
 
 static void
-mswindows_finish_init_device (struct device *UNUSED (d),
+mswindows_finish_init_device (struct device *d,
 			      Lisp_Object UNUSED (props))
 {
 #ifdef HAVE_DRAGNDROP
   /* Tell pending clients we are ready. */
   mswindows_dde_enable = 1;
 #endif
+  call1 (Qmake_device_late_mswindows_entry_point, wrap_device(d));
 }
 
 static void
@@ -1393,8 +1397,8 @@ syms_of_device_mswindows (void)
   DEFKEYWORD (Q_selected_page_button);
   DEFSYMBOL (Qselected_page_button);
 
-  DEFSYMBOL (Qinit_pre_mswindows_win);
-  DEFSYMBOL (Qinit_post_mswindows_win);
+  DEFSYMBOL (Qmake_device_early_mswindows_entry_point);
+  DEFSYMBOL (  Qmake_device_late_mswindows_entry_point);
 }
 
 void

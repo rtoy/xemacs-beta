@@ -726,13 +726,9 @@ If this is nil, no message will be displayed.")
 	      (require 'id-x-toolbar)
 	    (init-toolbar)))
 
-      ;; Run the window system's init function.  tty is considered to be
-      ;; a type of window system for this purpose.  This creates the
-      ;; initial (non stdio) device.
-      (when (and initial-window-system (not noninteractive))
-	(funcall (intern (concat "init-"
-				 (symbol-name initial-window-system)
-				 "-win"))))
+      ;; Create the initial device (which may be the already-created stdio
+      ;; device, if we're noninteractive).
+      (make-device initial-device-type nil nil)
 
       ;; When not in batch mode, this creates the first visible frame,
       ;; and deletes the stdio device.
@@ -1457,7 +1453,7 @@ returned value.  It can be `t' (omit all), one of the symbols `early',
 
 If SET-GLOBAL-PACKAGE-PATHS is non-nil, initialize the global package path
 variables referring to the particular types of packages
-(`early-package-hierarchies', `early-package-load-path',
+\(`early-package-hierarchies', `early-package-load-path',
 `late-package-hierarchies', `late-package-load-path',
 `last-package-hierarchies', `last-package-load-path')."
   (let (earlyp latep lastp earlyp-lp latep-lp lastp-lp)
