@@ -9753,7 +9753,6 @@ init_redisplay (void)
 
   if (noninteractive)
     {
-      Vwindow_system = Qstream;
       Vinitial_device_type = Qstream;
       return;
     }
