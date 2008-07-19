@@ -1,3 +1,13 @@
+2008-07-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-property-list): Move the (require
+	'hyper-apropos) call to top level, this isn't the only function
+	that uses the relevant face. 
+	(describe-char): Wrap the Unihan field descriptions if they are
+	longer than the windows width minus 50.
+	Rename the created buffer to reflect the character's position as
+	well as its value. 
+
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Patch to make it up to the device-specific code whether
