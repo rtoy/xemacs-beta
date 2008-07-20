@@ -1,3 +1,9 @@
+2008-07-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unicode-data): 
+	Correct three calls to #'error; it doesn't take #'message style
+	format strings and arguments.
+
 2008-07-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-property-list): Move the (require
