@@ -677,7 +677,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
   (when describe-char-unicodedata-file
     (unless (file-exists-p describe-char-unicodedata-file)
       (error 'file-error
-             "`unicodedata-file' %s not found" describe-char-unicodedata-file))
+             (format "`unicodedata-file' %s not found"
+                     describe-char-unicodedata-file)))
     ;; XEmacs change; accept a character argument, use the cache if
     ;; appropriate.
     (when (characterp char)
@@ -697,13 +698,14 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
                 (coding-system-for-read 'no-conversion-unix)
                 key lookup)
             (unless database-handle
-              (error 'io-error "Could not open %s as a %s database"
-                     (unidata-generate-database-file-name
-                      describe-char-unicodedata-file
-                      (eighth (file-attributes
-                               describe-char-unicodedata-file))
-                      unidata-database-format)
-                     unidata-database-format))
+              (error 'io-error 
+                     (format "Could not open %s as a %s database"
+                             (unidata-generate-database-file-name
+                              describe-char-unicodedata-file
+                              (eighth (file-attributes
+                                       describe-char-unicodedata-file))
+                              unidata-database-format)
+                             unidata-database-format)))
             (setq key (format "%04X" char)
                   lookup (get-database key database-handle))
             (if lookup
@@ -761,7 +763,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 	      (unless (or (= 13 (length fields))
 			  (= 14 (length fields)))
 		(error 'invalid-argument
-                       "Invalid contents in %s" describe-char-unicodedata-file))
+                       (format "Invalid contents in %s"
+                               describe-char-unicodedata-file)))
 	      ;; The field names and values lists are slightly
 	      ;; modified from Mule-UCS unidata.el.
 	      (apply #'list
