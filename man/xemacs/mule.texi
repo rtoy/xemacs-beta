@@ -509,7 +509,7 @@ XEmacs 21.5.  This will almost surely change.
 Normally, unification works in the background by installing
 @code{unity-sanity-check} on @code{write-region-pre-hook}.
 Unification is on by default for the ISO-8859 Latin sets.  The user
-activates this functionality for other chacter set families by
+activates this functionality for other character set families by
 invoking @code{enable-unification}, either interactively or in her
 init file.  @xref{Init File, , , xemacs}.  Unification can be
 deactivated by invoking @code{disable-unification}.
@@ -1041,7 +1041,7 @@ Unification works around the problem by converting as many characters as
 possible to use a single Latin coded character set before saving the
 buffer.
 
-Because the problem is rarely noticable in editing a buffer, but tends
+Because the problem is rarely noticeable in editing a buffer, but tends
 to manifest when that buffer is exported to a file or process,
 unification uses the strategy of examining the buffer prior to export.
 If use of multiple Latin coded character sets is detected, unification

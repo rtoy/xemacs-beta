@@ -1,3 +1,9 @@
+2008-07-26  Ville Skyttä  <scop@xemacs.org>
+
+	* xemacs/custom.texi, xemacs/frame.texi, xemacs/mule.texi,
+	xemacs/packages.texi, xemacs/programs.texi, xemacs/trouble.texi:
+	Spelling fixes.
+
 2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Character Type):

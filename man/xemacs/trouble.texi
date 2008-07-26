@@ -392,7 +392,7 @@ of the type that stimulates the bug.@refill
 The newsgroup @samp{comp.emacs.xemacs} may be used for bug reports,
 other discussions and requests for assistance.  
 
-If you don't have access to this newgroup, you can subscribe to the
+If you don't have access to this newsgroup, you can subscribe to the
 mailing list version: the newsgroup is bidirectionally gatewayed into
 the mailing list @samp{xemacs@@xemacs.org}.
 
