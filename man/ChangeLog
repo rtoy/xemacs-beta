@@ -1,3 +1,9 @@
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Extent): 
+	Correct a misspelling of macros, add a needed space. Thank you
+	John Paul Wallington, thank you Stephen Turnbull. 
+
 2008-05-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Equality Predicates): 
