@@ -1,3 +1,16 @@
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-init.el (x-initialize-compose): 
+	Rewrite to use #'loop, as does similar code in x-win-sun.el,
+	x-win-xfree86.el. Locally bind function-key-map to the correct
+	value for the device's console.
+	* x-win-xfree86.el (x-win-init-xfree86): 
+	Locally bind function-key-map to the correct value for the
+	device's console.
+	* x-win-sun.el (x-win-init-sun): 
+	Locally bind function-key-map to the correct value for the
+	device's console.
+
 2008-07-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-char-unicode-data): 

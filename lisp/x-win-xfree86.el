@@ -90,6 +90,11 @@
       (f22 f10)
       (f23 f11)
       (f24 f12))
+    ;; Get the correct value for function-key-map
+    with function-key-map = (symbol-value-in-console 'function-key-map
+                                                     (device-console device)
+                                                     function-key-map)
+
     do
     (when (and (x-keysym-on-keyboard-p key device)
 	       (not (x-keysym-on-keyboard-sans-modifiers-p key device)))
