@@ -2063,7 +2063,7 @@ close_file_data (file_data *p_file)
 /* Some miscellaneous functions that are Windows specific, but not GUI
    specific (ie. are applicable in terminal or batch mode as well).  */
 
-DEFUN ("mswindows-short-file-name", Fmswindows_short_file_name, 1, 1, "", /*
+DEFUN ("mswindows-short-file-name", Fmswindows_short_file_name, 1, 1, 0, /*
   Return the short file name version (8.3) of the full path of FILENAME.
 If FILENAME does not exist, return nil.
 All path elements in FILENAME are converted to their short names.
@@ -2092,7 +2092,7 @@ All path elements in FILENAME are converted to their short names.
 }
 
 
-DEFUN ("mswindows-long-file-name", Fmswindows_long_file_name, 1, 1, "", /*
+DEFUN ("mswindows-long-file-name", Fmswindows_long_file_name, 1, 1, 0, /*
   Return the long file name version of the full path of FILENAME.
 If FILENAME does not exist, return nil.
 All path elements in FILENAME are converted to their long names.
