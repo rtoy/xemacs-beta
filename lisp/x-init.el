@@ -84,12 +84,6 @@
 ;; Load X-server specific code.
 ;; Specifically, load some code to repair the grievous damage that MIT and
 ;; Sun have done to the default keymap for the Sun keyboards.
-
-(eval-when-compile
-  (defmacro x-define-dead-key (key map device)
-    `(when (x-keysym-on-keyboard-p ',key device)
-       (define-key function-key-map [,key] ',map))))
-
 (defun x-initialize-compose (device)
   "Enable compose key and dead key processing on DEVICE."
   (autoload 'compose-map	    "x-compose" nil t 'keymap)
@@ -100,111 +94,118 @@
   (autoload 'compose-circumflex-map "x-compose" nil t 'keymap)
   (autoload 'compose-tilde-map	    "x-compose" nil t 'keymap)
 
-  (when (x-keysym-on-keyboard-p 'multi-key device)
-    (define-key function-key-map [multi-key] 'compose-map))
+  (loop 
+    for (key map)
+    ;; The dead keys might really be called just about anything, depending
+    ;; on the vendor.  MIT thinks that the prefixes are "SunFA_", "D", and
+    ;; "hpmute_" for Sun, DEC, and HP respectively.  However, OpenWindows 3
+    ;; thinks that the prefixes are "SunXK_FA_", "DXK_", and "hpXK_mute_".
+    ;; And HP (who don't mention Sun and DEC at all) use "XK_mute_".  Go
+    ;; figure.
 
-  ;; The dead keys might really be called just about anything, depending
-  ;; on the vendor.  MIT thinks that the prefixes are "SunFA_", "D", and
-  ;; "hpmute_" for Sun, DEC, and HP respectively.  However, OpenWindows 3
-  ;; thinks that the prefixes are "SunXK_FA_", "DXK_", and "hpXK_mute_".
-  ;; And HP (who don't mention Sun and DEC at all) use "XK_mute_".
-  ;; Go figure.
+    ;; Presumably if someone is running OpenWindows, they won't be using the
+    ;; DEC or HP keysyms, but if they are defined then that is possible, so
+    ;; in that case we accept them all.
 
-  ;; Presumably if someone is running OpenWindows, they won't be using
-  ;; the DEC or HP keysyms, but if they are defined then that is possible,
-  ;; so in that case we accept them all.
+    ;; If things seem not to be working, you might want to check your
+    ;; /usr/lib/X11/XKeysymDB file to see if your vendor has an equally
+    ;; mixed up view of what these keys should be called.
 
-  ;; If things seem not to be working, you might want to check your
-  ;; /usr/lib/X11/XKeysymDB file to see if your vendor has an equally
-  ;; mixed up view of what these keys should be called.
+    ;; Canonical names:
+    in '((acute			compose-acute-map)
+         (grave			compose-grave-map)
+         (cedilla		compose-cedilla-map)
+         (diaeresis		compose-diaeresis-map)
+         (circumflex		compose-circumflex-map)
+         (tilde			compose-tilde-map)
+         (degree			compose-ring-map)
+         (multi-key              compose-map)
 
-  ;; Canonical names:
-  (x-define-dead-key acute			compose-acute-map device)
-  (x-define-dead-key grave			compose-grave-map device)
-  (x-define-dead-key cedilla			compose-cedilla-map device)
-  (x-define-dead-key diaeresis			compose-diaeresis-map device)
-  (x-define-dead-key circumflex			compose-circumflex-map device)
-  (x-define-dead-key tilde			compose-tilde-map device)
-  (x-define-dead-key degree			compose-ring-map device)
+         ;; Sun according to MIT:
+         (SunFA_Acute		compose-acute-map)
+         (SunFA_Grave		compose-grave-map)
+         (SunFA_Cedilla		compose-cedilla-map)
+         (SunFA_Diaeresis	compose-diaeresis-map)
+         (SunFA_Circum		compose-circumflex-map)
+         (SunFA_Tilde		compose-tilde-map)
 
-  ;; Sun according to MIT:
-  (x-define-dead-key SunFA_Acute		compose-acute-map device)
-  (x-define-dead-key SunFA_Grave		compose-grave-map device)
-  (x-define-dead-key SunFA_Cedilla		compose-cedilla-map device)
-  (x-define-dead-key SunFA_Diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key SunFA_Circum		compose-circumflex-map device)
-  (x-define-dead-key SunFA_Tilde		compose-tilde-map device)
+         ;; Sun according to OpenWindows 2:
+         (Dead_Grave		compose-grave-map)
+         (Dead_Circum		compose-circumflex-map)
+         (Dead_Tilde		compose-tilde-map)
 
-  ;; Sun according to OpenWindows 2:
-  (x-define-dead-key Dead_Grave			compose-grave-map device)
-  (x-define-dead-key Dead_Circum		compose-circumflex-map device)
-  (x-define-dead-key Dead_Tilde			compose-tilde-map device)
+         ;; Sun according to OpenWindows 3:
+         (SunXK_FA_Acute		compose-acute-map)
+         (SunXK_FA_Grave		compose-grave-map)
+         (SunXK_FA_Cedilla	compose-cedilla-map)
+         (SunXK_FA_Diaeresis	compose-diaeresis-map)
+         (SunXK_FA_Circum	compose-circumflex-map)
+         (SunXK_FA_Tilde		compose-tilde-map)
 
-  ;; Sun according to OpenWindows 3:
-  (x-define-dead-key SunXK_FA_Acute		compose-acute-map device)
-  (x-define-dead-key SunXK_FA_Grave		compose-grave-map device)
-  (x-define-dead-key SunXK_FA_Cedilla		compose-cedilla-map device)
-  (x-define-dead-key SunXK_FA_Diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key SunXK_FA_Circum		compose-circumflex-map device)
-  (x-define-dead-key SunXK_FA_Tilde		compose-tilde-map device)
+         ;; DEC according to MIT:
+         (Dacute_accent		compose-acute-map)
+         (Dgrave_accent		compose-grave-map)
+         (Dcedilla_accent	compose-cedilla-map)
+         (Dcircumflex_accent	compose-circumflex-map)
+         (Dtilde			compose-tilde-map)
+         (Dring_accent		compose-ring-map)
 
-  ;; DEC according to MIT:
-  (x-define-dead-key Dacute_accent		compose-acute-map device)
-  (x-define-dead-key Dgrave_accent		compose-grave-map device)
-  (x-define-dead-key Dcedilla_accent		compose-cedilla-map device)
-  (x-define-dead-key Dcircumflex_accent		compose-circumflex-map device)
-  (x-define-dead-key Dtilde			compose-tilde-map device)
-  (x-define-dead-key Dring_accent		compose-ring-map device)
+         ;; DEC according to OpenWindows 3:
+         (DXK_acute_accent	compose-acute-map)
+         (DXK_grave_accent	compose-grave-map)
+         (DXK_cedilla_accent	compose-cedilla-map)
+         (DXK_circumflex_accent	compose-circumflex-map)
+         (DXK_tilde		compose-tilde-map)
+         (DXK_ring_accent	compose-ring-map)
 
-  ;; DEC according to OpenWindows 3:
-  (x-define-dead-key DXK_acute_accent		compose-acute-map device)
-  (x-define-dead-key DXK_grave_accent		compose-grave-map device)
-  (x-define-dead-key DXK_cedilla_accent		compose-cedilla-map device)
-  (x-define-dead-key DXK_circumflex_accent	compose-circumflex-map device)
-  (x-define-dead-key DXK_tilde			compose-tilde-map device)
-  (x-define-dead-key DXK_ring_accent		compose-ring-map device)
+         ;; HP according to MIT:
+         (hpmute_acute		compose-acute-map)
+         (hpmute_grave		compose-grave-map)
+         (hpmute_diaeresis	compose-diaeresis-map)
+         (hpmute_asciicircum	compose-circumflex-map)
+         (hpmute_asciitilde	compose-tilde-map)
 
-  ;; HP according to MIT:
-  (x-define-dead-key hpmute_acute		compose-acute-map device)
-  (x-define-dead-key hpmute_grave		compose-grave-map device)
-  (x-define-dead-key hpmute_diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key hpmute_asciicircum		compose-circumflex-map device)
-  (x-define-dead-key hpmute_asciitilde		compose-tilde-map device)
+         ;; Empirically discovered on Linux XFree86 MetroX:
+         (usldead_acute		compose-acute-map)
+         (usldead_grave		compose-grave-map)
+         (usldead_diaeresis	compose-diaeresis-map)
+         (usldead_asciicircum	compose-circumflex-map)
+         (usldead_asciitilde	compose-tilde-map)
 
-  ;; Empirically discovered on Linux XFree86 MetroX:
-  (x-define-dead-key usldead_acute		compose-acute-map device)
-  (x-define-dead-key usldead_grave		compose-grave-map device)
-  (x-define-dead-key usldead_diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key usldead_asciicircum	compose-circumflex-map device)
-  (x-define-dead-key usldead_asciitilde		compose-tilde-map device)
+         ;; HP according to OpenWindows 3:
+         (hpXK_mute_acute	compose-acute-map)
+         (hpXK_mute_grave	compose-grave-map)
+         (hpXK_mute_diaeresis	compose-diaeresis-map)
+         (hpXK_mute_asciicircum	compose-circumflex-map)
+         (hpXK_mute_asciitilde	compose-tilde-map)
 
-  ;; HP according to OpenWindows 3:
-  (x-define-dead-key hpXK_mute_acute		compose-acute-map device)
-  (x-define-dead-key hpXK_mute_grave		compose-grave-map device)
-  (x-define-dead-key hpXK_mute_diaeresis	compose-diaeresis-map device)
-  (x-define-dead-key hpXK_mute_asciicircum	compose-circumflex-map device)
-  (x-define-dead-key hpXK_mute_asciitilde	compose-tilde-map device)
+         ;; HP according to HP-UX 8.0:
+         (XK_mute_acute		compose-acute-map)
+         (XK_mute_grave		compose-grave-map)
+         (XK_mute_diaeresis	compose-diaeresis-map)
+         (XK_mute_asciicircum	compose-circumflex-map)
+         (XK_mute_asciitilde	compose-tilde-map)
 
-  ;; HP according to HP-UX 8.0:
-  (x-define-dead-key XK_mute_acute		compose-acute-map device)
-  (x-define-dead-key XK_mute_grave		compose-grave-map device)
-  (x-define-dead-key XK_mute_diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key XK_mute_asciicircum	compose-circumflex-map device)
-  (x-define-dead-key XK_mute_asciitilde		compose-tilde-map device)
-
-  ;; [[ XFree86 seems to use lower case and a hyphen ]] Not true; they use
-  ;; lower case and an underscore. XEmacs converts the underscore to a
-  ;; hyphen in x_keysym_to_emacs_keysym because the keysym is in the
-  ;; "Keyboard" character set, which is just totally fucking random,
-  ;; considering it doesn't happen for any other character sets. 
-  (x-define-dead-key dead-acute			compose-acute-map device)
-  (x-define-dead-key dead-grave			compose-grave-map device)
-  (x-define-dead-key dead-cedilla		compose-cedilla-map device)
-  (x-define-dead-key dead-diaeresis		compose-diaeresis-map device)
-  (x-define-dead-key dead-circum		compose-circumflex-map device)
-  (x-define-dead-key dead-circumflex		compose-circumflex-map device)
-  (x-define-dead-key dead-tilde			compose-tilde-map device)
-  )
+         ;; [[ XFree86 seems to use lower case and a hyphen ]] Not true;
+         ;; they use lower case and an underscore. XEmacs converts the
+         ;; underscore to a hyphen in x_keysym_to_emacs_keysym because the
+         ;; keysym is in the "Keyboard" character set, which is just totally
+         ;; fucking random, considering it doesn't happen for any other
+         ;; character sets.
+         (dead-acute		compose-acute-map)
+         (dead-grave		compose-grave-map)
+         (dead-cedilla		compose-cedilla-map)
+         (dead-diaeresis		compose-diaeresis-map)
+         (dead-circum		compose-circumflex-map)
+         (dead-circumflex	compose-circumflex-map)
+         (dead-tilde		compose-tilde-map))
+    
+    ;; Get the correct value for function-key-map
+    with function-key-map = (symbol-value-in-console 'function-key-map
+                                                     (device-console device)
+                                                     function-key-map)
+    do (when (x-keysym-on-keyboard-p key device)
+         (define-key function-key-map (vector key) map))))
 
 (eval-when-compile
   (load "x-win-sun"     nil t)
