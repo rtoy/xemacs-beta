@@ -4,6 +4,12 @@
 	Don't set window-system to 'stream if running noninteractively,
 	revert to the documented behaviour. 
 
+2008-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_escape): 
+	Error if we're handed an over-long hex character escape, something
+	which arises reasonably frequently in code written for GNU. 
+
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Patch to make it up to the device-specific code whether
