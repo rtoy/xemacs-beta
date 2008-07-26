@@ -1,3 +1,8 @@
+2008-07-20  John Paul Wallington  <jpw@pobox.com>
+
+	* nt.c (Fmswindows_short_file_name, Fmswindows_long_file_name):
+	Remove their interactive specs; they shouldn't be called interactively.
+
 2008-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay.c (init_redisplay): 
