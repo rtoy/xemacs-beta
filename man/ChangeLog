@@ -1,5 +1,11 @@
 2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lispref/objects.texi (Character Type):
+	Document the error provoked when the reader sees an over-long
+	hexadecimal constant.
+
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lispref/variables.texi (Extent): 
 	Correct a misspelling of macros, add a needed space. Thank you
 	John Paul Wallington, thank you Stephen Turnbull. 
