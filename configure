@@ -1538,7 +1538,8 @@ Window-system options
                           `gauges'. Prefix component with `no' to disable its
                           use of Xft. Requires X11, Xft, Xrender, freetype,
                           and fontconfig support. Default is `noemacs,
-                          nomenubars, notabs, nogauges'.
+                          nomenubars, notabs, nogauges'. The default when
+                          selected is `emacs, nomenubars, notabs, nogauges'.
   --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
   --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
   --with-msw              Support MS Windows as a window system (only under
@@ -2888,12 +2889,12 @@ _ACEOF
 fi;
 
 _xft_notfirst=""
-_xft_emacs_default=no
+_xft_emacs_default=yes
 _xft_menubars_default=no
 _xft_tabs_default=no
 _xft_gauges_default=no
 _xft_types="emacs menubars tabs gauges"
-_xft_default="noemacs,nomenubars,notabs,nogauges"
+_xft_default="emacs,nomenubars,notabs,nogauges"
 
 # If --with-xft or --without-xft were given then copy the value to the
 # equivalent enable_xft variable.
@@ -2970,7 +2971,7 @@ for y in $_xft_types; do
     eval "enable_xft_$y=\$_xft_${y}_default"
     unset _xft_${y}_default
 done
-
+with_xft_emacs=no
 fi;
 # If --with-gtk or --without-gtk were given then copy the value to the
 # equivalent enable_gtk variable.

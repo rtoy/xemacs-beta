@@ -1,3 +1,8 @@
+2008-08-03  Mats Lidell  <matsl@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_ARG): Use different defaults for
+	with-xft and without-xft.
+
 2008-07-06  Ville Skyttä  <scop@xemacs.org>
 
 	* configure.ac (xe_fst):
