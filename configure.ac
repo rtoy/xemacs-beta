@@ -690,9 +690,10 @@ XE_COMPLEX_ARG([xft],
 		[Xft],
 		[`emacs' (buffers), `menubars', `tabs', and `gauges'],
 		[X11, Xft, Xrender, freetype, and fontconfig],
-		[`noemacs, nomenubars, notabs, nogauges'])],
-	[],[],
-	[XE_COMPLEX_OPTION([emacs],[no]),
+		[`noemacs, nomenubars, notabs, nogauges'.
+                 The default when selected is `emacs, nomenubars, notabs, nogauges'])],
+	[],[with_xft_emacs=no],
+	[XE_COMPLEX_OPTION([emacs],[yes]),
 	XE_COMPLEX_OPTION([menubars],[no]),
 	XE_COMPLEX_OPTION([tabs],[no]),
 	XE_COMPLEX_OPTION([gauges],[no])])
