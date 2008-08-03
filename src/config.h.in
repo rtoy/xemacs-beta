@@ -225,7 +225,7 @@ things are arranged in config.h.in.  In particular:
 /* Per-widget stuff will go away? */
 #undef USE_XFT_MENUBARS
 #undef USE_XFT_TABS
-#undef USE_XFT_GAUGE
+#undef USE_XFT_GAUGES
 
 /* Defines for building X applications */
 #ifdef HAVE_X_WINDOWS

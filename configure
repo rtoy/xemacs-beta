@@ -27333,11 +27333,11 @@ if test "$with_xft_tabs" != "no" ; then
     with_xft_tabs="no"
   fi
 fi
-if test "$with_xft_gauge" != "no" ; then
+if test "$with_xft_gauges" != "no" ; then
   if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
-    with_xft_gauge="yes"
+    with_xft_gauges="yes"
   else
-    with_xft_gauge="no"
+    with_xft_gauges="no"
   fi
 fi
 
@@ -27529,8 +27529,8 @@ test "$with_xft_tabs" = "yes"  && cat >>confdefs.h <<\_ACEOF
 #define USE_XFT_TABS 1
 _ACEOF
 
-test "$with_xft_gauge" = "yes"  && cat >>confdefs.h <<\_ACEOF
-#define USE_XFT_GAUGE 1
+test "$with_xft_gauges" = "yes"  && cat >>confdefs.h <<\_ACEOF
+#define USE_XFT_GAUGES 1
 _ACEOF
 
 
@@ -39583,7 +39583,7 @@ if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
   echo "      WARNING: This feature will be replaced with a face."
 fi
-if test "$with_xft_gauge" = "yes"; then
+if test "$with_xft_gauges" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
   echo "      WARNING: This feature will be replaced with a face."
   echo "      WARNING: This feature not yet implemented; setting ignored."
