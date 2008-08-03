@@ -3541,7 +3541,7 @@ extern Bool XRegisterIMInstantiateCallback(
       AC_DEFINE(HAVE_FONTCONFIG)
       AC_DEFINE(USE_XFT)
       dnl Due to interactions with other libraries, must postpone AC_DEFINE
-      dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGE.
+      dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGES.
       unset xft_includes_found
     fi
   fi
@@ -4430,11 +4430,11 @@ if test "$with_xft_tabs" != "no" ; then
   fi
 fi
 dnl this is not in xft reloaded #3
-if test "$with_xft_gauge" != "no" ; then
+if test "$with_xft_gauges" != "no" ; then
   if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
-    with_xft_gauge="yes"
+    with_xft_gauges="yes"
   else
-    with_xft_gauge="no"
+    with_xft_gauges="no"
   fi
 fi
 
@@ -4527,7 +4527,7 @@ test "$enable_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
 test "$with_xft_menubars" = "yes"  && AC_DEFINE(USE_XFT_MENUBARS)
 test "$with_xft_tabs" = "yes"  && AC_DEFINE(USE_XFT_TABS)
-test "$with_xft_gauge" = "yes"  && AC_DEFINE(USE_XFT_GAUGE)
+test "$with_xft_gauges" = "yes"  && AC_DEFINE(USE_XFT_GAUGES)
 
 dnl ----------------------
 dnl Mule-dependent options
@@ -6079,7 +6079,7 @@ if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
   echo "      WARNING: This feature will be replaced with a face."
 fi
-if test "$with_xft_gauge" = "yes"; then
+if test "$with_xft_gauges" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
   echo "      WARNING: This feature will be replaced with a face."
   echo "      WARNING: This feature not yet implemented; setting ignored."

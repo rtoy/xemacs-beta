@@ -1,3 +1,8 @@
+2008-08-03  Mats Lidell  <matsl@xemacs.org>
+
+	* config.h.in: Renamed USE_XFT_GAUGE to USE_XFT_GAUGES in sync
+	with configure.ac.
+
 2008-07-20  John Paul Wallington  <jpw@pobox.com>
 
 	* nt.c (Fmswindows_short_file_name, Fmswindows_long_file_name):
