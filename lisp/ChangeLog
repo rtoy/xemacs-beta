@@ -1,3 +1,20 @@
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/iso-with-esc.el (greek-iso-8bit-with-esc): 
+	(arabic-iso-8bit-with-esc): 
+	Add these two here. Move the implementation of the
+	'arabic-iso8859-6  character set here, with commentary on why that
+	is reasonable. 
+	* mule/arabic.el (iso-8859-6): 
+	Add iso-8859-6, windows-1256 implementations using
+	make-8-bit-coding-system. Remove our non-standard Mule character
+	sets. 
+	* unicode.el (load-unicode-tables): Remove Arabic since it's no
+	longer dumped.
+	* mule/mule-msw-init-late.el: Remove Arabic.
+	* mule/mule-category.el (predefined-category-list): Remove
+	Arabic. 
+
 2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-init.el (x-initialize-compose): 

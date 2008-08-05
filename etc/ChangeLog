@@ -1,3 +1,7 @@
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO: Encode the Arabic using UTF-8 sequences, not ISO-8859-6. 
+
 2008-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* README: Add descriptions of Daniel Polansky's icons.

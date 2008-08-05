@@ -47,7 +47,6 @@ Lisp_Object Vcharset_latin_iso8859_3;
 Lisp_Object Vcharset_latin_iso8859_4;
 Lisp_Object Vcharset_thai_tis620;
 Lisp_Object Vcharset_greek_iso8859_7;
-Lisp_Object Vcharset_arabic_iso8859_6;
 Lisp_Object Vcharset_hebrew_iso8859_8;
 Lisp_Object Vcharset_katakana_jisx0201;
 Lisp_Object Vcharset_latin_jisx0201;
@@ -94,7 +93,6 @@ Lisp_Object
   Qlatin_iso8859_4,
   Qthai_tis620,
   Qgreek_iso8859_7,
-  Qarabic_iso8859_6,
   Qhebrew_iso8859_8,
   Qkatakana_jisx0201,
   Qlatin_jisx0201,
@@ -1112,7 +1110,6 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qlatin_iso8859_4);
   DEFSYMBOL (Qthai_tis620);
   DEFSYMBOL (Qgreek_iso8859_7);
-  DEFSYMBOL (Qarabic_iso8859_6);
   DEFSYMBOL (Qhebrew_iso8859_8);
   DEFSYMBOL (Qkatakana_jisx0201);
   DEFSYMBOL (Qlatin_jisx0201);
@@ -1236,15 +1233,6 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("ISO8859-7 (Greek)"),
 		  build_msg_string ("ISO8859-7 (Greek)"),
 		  vector1(build_string("iso8859-7")), 0, 0);
-  staticpro (&Vcharset_arabic_iso8859_6);
-  Vcharset_arabic_iso8859_6 =
-    make_charset (LEADING_BYTE_ARABIC_ISO8859_6, Qarabic_iso8859_6, 2,
-		  CHARSET_TYPE_96, 1, 1, 'G',
-		  CHARSET_RIGHT_TO_LEFT,
-		  build_string ("ISO8859-6"),
-		  build_msg_string ("ISO8859-6 (Arabic)"),
-		  build_msg_string ("ISO8859-6 (Arabic)"),
-		  vector1(build_string ("iso8859-6")), 0, 0);
   staticpro (&Vcharset_hebrew_iso8859_8);
   Vcharset_hebrew_iso8859_8 =
     make_charset (LEADING_BYTE_HEBREW_ISO8859_8, Qhebrew_iso8859_8, 2,
