@@ -225,7 +225,15 @@ Meaningful values for PROP include
 
                      If there is no value for this property, the MS Windows
                      locale is assumed to have the same name as the
-                     language environment."
+                     language environment.
+
+  error-sequence-coding-system
+                     VALUE is a fixed-width 8-bit coding system used to
+                     display Unicode error sequences (using a face to make
+                     it clear that the data is invalid).  In Western Europe
+                     this is normally windows-1252; in the Russia and the
+                     former Soviet Union koi8-ru or windows-1251 makes more
+                     sense."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
   (let (lang-slot prop-slot)
@@ -759,6 +767,24 @@ the language environment for the major languages of Western Europe."
   (let ((func (get-language-info language-name 'setup-function)))
     (if (functionp func)
 	(funcall func)))
+
+  (let ((error-sequence-coding-system
+         (get-language-info language-name 'error-sequence-coding-system))
+        (disp-table (specifier-instance current-display-table))
+        glyph)
+    (when (consp error-sequence-coding-system)
+      (setq error-sequence-coding-system (car error-sequence-coding-system)))
+    (map-char-table
+     #'(lambda (key entry)
+         (setq glyph (make-glyph
+                      (vector
+                       'string :data
+                       (decode-coding-string (string entry)
+                                             error-sequence-coding-system))))
+         (set-glyph-face glyph 'unicode-error-sequence-warning-face)
+         (put-char-table key glyph disp-table)
+         nil)
+     unicode-error-default-translation-table))
 
   ;; Fit the charsets preferences in unicode conversions for the
   ;; language environment.

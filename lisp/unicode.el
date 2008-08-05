@@ -611,6 +611,9 @@ mapping from the error sequences to the desired characters.  "
        (translate-region start finish table))
      begin end buffer))
 
+;; Sure would be nice to be able to use defface here. 
+(copy-face 'highlight 'unicode-error-sequence-warning-face)
+
 (unless (featurep 'mule)
   ;; We do this in such a roundabout way--instead of having the above defun
   ;; and defvar calls inside a (when (featurep 'mule) ...) form--to have
