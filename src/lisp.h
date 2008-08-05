@@ -5229,7 +5229,6 @@ extern Lisp_Object Vcharset_latin_iso8859_3;
 extern Lisp_Object Vcharset_latin_iso8859_4;
 extern Lisp_Object Vcharset_thai_tis620;
 extern Lisp_Object Vcharset_greek_iso8859_7;
-extern Lisp_Object Vcharset_arabic_iso8859_6;
 extern Lisp_Object Vcharset_hebrew_iso8859_8;
 extern Lisp_Object Vcharset_katakana_jisx0201;
 extern Lisp_Object Vcharset_latin_jisx0201;

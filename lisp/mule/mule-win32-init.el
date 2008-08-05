@@ -162,7 +162,8 @@ as returned by
         ; ("ANSI"        1253 no-conversion "Windows 3.1 Greek")
        ("ANSI"        1254 no-conversion "Windows 3.1 Turkish")
        ("ANSI"        1255 no-conversion "Hebrew")
-       ("ANSI"        1256 no-conversion "Arabic")
+       ;; We implement these ourselves.
+       ; ("ANSI"        1256 no-conversion "Arabic")
        ("ANSI"        1257 no-conversion "Baltic")
        ("ANSI"        1258 no-conversion "VietNam")
        ;; #### Is this category right? I don't have Lunde to hand, and the

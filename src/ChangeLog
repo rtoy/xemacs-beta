@@ -1,3 +1,10 @@
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (complex_vars_of_mule_charset): 
+	Remove Vcharset_arabic_iso8859_7.
+	* lisp.h: Remove Vcharset_arabic_iso8859_7.
+	See commentary in lisp/mule/iso-with-esc.el for motivation. 
+
 2008-07-20  John Paul Wallington  <jpw@pobox.com>
 
 	* nt.c (Fmswindows_short_file_name, Fmswindows_long_file_name):
