@@ -1,3 +1,37 @@
+2008-08-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el: 
+	* mule/mule-cmds.el: 
+	* mule/latin.el: 
+	* mule/cyrillic.el: 
+	Rework the various identifiers using error-sequence to use
+	invalid-sequence instead.
+
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (current-display-table): Initialise this here, not
+	in x-init.el, since we want it even on non-X builds to use the
+	support for displaying Unicode error sequences according to the
+	current locale.
+	* mule/mule-cmds.el (set-language-info): 
+	Document error-sequence-coding-system, used to describe how to
+	display characters that are not valid Unicode on disk. 
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Implement error-sequence-coding-system. 
+	* unicode.el (unicode-error-sequence-warning-face): 
+	New face, to make it possible to distinguish invalid Unicode
+	sequences from the characters given by the valid Unicode
+	sequences. 
+	* mule/cyrillic.el ("Russian"): 
+	("Ukrainian"): 
+	("Bulgarian"): 
+	("Belarusian"): 
+	("Cyrillic-ALT"): Add support for error-sequence-coding-system for
+	all these languages.
+	* mule/latin.el: 
+	Add support for error-sequence-coding-system for the
+	Latin-alphabet language environments.
+
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/iso-with-esc.el (greek-iso-8bit-with-esc): 
