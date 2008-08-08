@@ -1,3 +1,12 @@
+2008-08-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el: 
+	* mule/mule-cmds.el: 
+	* mule/latin.el: 
+	* mule/cyrillic.el: 
+	Rework the various identifiers using error-sequence to use
+	invalid-sequence instead.
+
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.el (current-display-table): Initialise this here, not

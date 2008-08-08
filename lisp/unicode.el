@@ -526,7 +526,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
 To transform XEmacs Unicode error sequences to the Latin-1 characters that
 correspond to the octets on disk, you can use this variable.  ")
 
-(defvar unicode-error-sequence-regexp-range
+(defvar unicode-invalid-sequence-regexp-range
   (and (featurep 'mule)
        (format "%c%c-%c"
                (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
@@ -564,7 +564,7 @@ invalid octet.  You can use this variable (with `re-search-forward' or
     ;; Comment out until the issue in
     ;; 18179.49815.622843.336527@parhasard.net is fixed.
     (assert t ; (re-search-forward (concat "[" 
-              ;                        unicode-error-sequence-regexp-range
+              ;                        unicode-invalid-sequence-regexp-range
               ;                        "]"))
             nil
             (format "Could not find char ?\\x%x in buffer" i))))
@@ -586,12 +586,12 @@ such sequences.  "
 	  (setq begin
 		(progn
 		  (skip-chars-forward
-		   (concat "^" unicode-error-sequence-regexp-range))
+		   (concat "^" unicode-invalid-sequence-regexp-range))
 		  (point))
 		end (and (not (= (point) (point-max)))
 			 (progn
 			   (skip-chars-forward
-			    unicode-error-sequence-regexp-range)
+			    unicode-invalid-sequence-regexp-range)
 			   (point))))
 	  (if end
 	      (funcall frob-function begin end))))))
@@ -612,7 +612,7 @@ mapping from the error sequences to the desired characters.  "
      begin end buffer))
 
 ;; Sure would be nice to be able to use defface here. 
-(copy-face 'highlight 'unicode-error-sequence-warning-face)
+(copy-face 'highlight 'unicode-invalid-sequence-warning-face)
 
 (unless (featurep 'mule)
   ;; We do this in such a roundabout way--instead of having the above defun
@@ -622,8 +622,8 @@ mapping from the error sequences to the desired characters.  "
   ;; Lisp.
   (mapcar #'unintern
           '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
-            unicode-error-sequence-regexp-range
-            frob-unicode-errors-region unicode-error-translate-region)))
+            unicode-invalid-regexp-range frob-unicode-errors-region
+            unicode-error-translate-region)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
