@@ -328,7 +328,7 @@ that latter standard is not used in Greece,  "
 	   (coding-system iso-8859-7)
 	   (coding-priority iso-8859-7)
 	   (native-coding-system iso-8859-7)
-	   (error-sequence-coding-system iso-8859-7)
+	   (invalid-sequence-coding-system iso-8859-7)
 	   (locale "el")
 	   (input-method . "greek")
 	   (sample-text . "Greek (,FGkk]mija(B)	,FCei\(B ,Fsar(B")

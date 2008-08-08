@@ -227,7 +227,7 @@ Meaningful values for PROP include
                      locale is assumed to have the same name as the
                      language environment.
 
-  error-sequence-coding-system
+  invalid-sequence-coding-system
                      VALUE is a fixed-width 8-bit coding system used to
                      display Unicode error sequences (using a face to make
                      it clear that the data is invalid).  In Western Europe
@@ -768,20 +768,21 @@ the language environment for the major languages of Western Europe."
     (if (functionp func)
 	(funcall func)))
 
-  (let ((error-sequence-coding-system
-         (get-language-info language-name 'error-sequence-coding-system))
+  (let ((invalid-sequence-coding-system
+         (get-language-info language-name 'invalid-sequence-coding-system))
         (disp-table (specifier-instance current-display-table))
         glyph)
-    (when (consp error-sequence-coding-system)
-      (setq error-sequence-coding-system (car error-sequence-coding-system)))
+    (when (consp invalid-sequence-coding-system)
+      (setq invalid-sequence-coding-system
+            (car invalid-sequence-coding-system)))
     (map-char-table
      #'(lambda (key entry)
          (setq glyph (make-glyph
                       (vector
                        'string :data
                        (decode-coding-string (string entry)
-                                             error-sequence-coding-system))))
-         (set-glyph-face glyph 'unicode-error-sequence-warning-face)
+                                             invalid-sequence-coding-system))))
+         (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
          (put-char-table key glyph disp-table)
          nil)
      unicode-error-default-translation-table))
