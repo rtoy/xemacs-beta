@@ -1722,4 +1722,25 @@ one is kept."
 
 ;; define-mail-user-agent is in simple.el.
 
+;; XEmacs; added. 
+(defun skip-chars-quote (string)
+  "Return a string that means all characters in STRING will be skipped,
+if passed to `skip-chars-forward' or `skip-chars-backward'.
+
+Ranges and carets are not treated specially.  This implementation is
+in Lisp; do not use it in performance-critical code."
+  (let ((list (delete-duplicates (string-to-list string) :test #'=)))
+    (when (equal list '((?- ?\[) (?\[ ?\-)))
+      (error 'invalid-argument
+	     "Cannot create `skip-chars-forward' arg from string"
+	     string))
+    (when (memq ?\] list)
+      (setq list (cons ?\] (delq ?\] list))))
+    (when (eq ?^ (car list))
+      (setq list (nconc (cdr list) '(?^))))
+    (when (memq ?- list)
+      (setq list (delq ?- list)
+	    list (nconc list (list (second list) ?- (second list) ?-))))
+    (apply #'string list)))
+
 ;;; subr.el ends here
