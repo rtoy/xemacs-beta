@@ -1,13 +1,17 @@
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-coding.el (make-8-bit-coding-system): 
+	* mule/general-late.el (posix-charset-to-coding-system-hash): 
+	Use #'skip-chars-quote as appropriate. 
+
+2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* subr.el (skip-chars-quote): New.
 	Given STRING, return a string that means that all characters in
 	STRING will be skipped when passed to #'skip-chars-forward,
 	#'skip-chars-backward. 
 
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
-
-	* subr.el (skip-chars-quote): New.
 
 	* mule/cyril-util.el: Remove. Use the version in packages instead.
 

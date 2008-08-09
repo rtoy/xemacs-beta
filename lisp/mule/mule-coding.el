@@ -699,7 +699,8 @@ the code for tilde `~'.  "
     (coding-system-put name 'category 
                        (make-8-bit-choose-category decode-table))
     (coding-system-put name '8-bit-fixed-query-skip-chars
-                       (apply #'string (append decode-table nil)))
+                       (skip-chars-quote
+			      (apply #'string (append decode-table nil))))
     (coding-system-put name '8-bit-fixed-query-from-unicode encode-table)
 
     (coding-system-put name 'query-coding-function
@@ -786,7 +787,8 @@ the code for tilde `~'.  "
         (coding-system-put ',name 'category 
                            ',(make-8-bit-choose-category decode-table))
         (coding-system-put ',name '8-bit-fixed-query-skip-chars
-                           ',(apply #'string (append decode-table nil)))
+                           ',(skip-chars-quote
+			      (apply #'string (append decode-table nil))))
         (coding-system-put ',name '8-bit-fixed-query-from-unicode encode-table)
         (coding-system-put ',name 'query-coding-function
                            #'8-bit-fixed-query-coding-region)
