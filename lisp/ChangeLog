@@ -1,3 +1,96 @@
+2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (skip-chars-quote): New.
+	Given STRING, return a string that means that all characters in
+	STRING will be skipped when passed to #'skip-chars-forward,
+	#'skip-chars-backward. 
+
+2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (skip-chars-quote): New.
+
+	* mule/cyril-util.el: Remove. Use the version in packages instead.
+
+2008-08-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el: 
+	* mule/mule-cmds.el: 
+	* mule/latin.el: 
+	* mule/cyrillic.el: 
+	Rework the various identifiers using error-sequence to use
+	invalid-sequence instead.
+
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (current-display-table): Initialise this here, not
+	in x-init.el, since we want it even on non-X builds to use the
+	support for displaying Unicode error sequences according to the
+	current locale.
+	* mule/mule-cmds.el (set-language-info): 
+	Document error-sequence-coding-system, used to describe how to
+	display characters that are not valid Unicode on disk. 
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Implement error-sequence-coding-system. 
+	* unicode.el (unicode-error-sequence-warning-face): 
+	New face, to make it possible to distinguish invalid Unicode
+	sequences from the characters given by the valid Unicode
+	sequences. 
+	* mule/cyrillic.el ("Russian"): 
+	("Ukrainian"): 
+	("Bulgarian"): 
+	("Belarusian"): 
+	("Cyrillic-ALT"): Add support for error-sequence-coding-system for
+	all these languages.
+	* mule/latin.el: 
+	Add support for error-sequence-coding-system for the
+	Latin-alphabet language environments.
+
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/iso-with-esc.el (greek-iso-8bit-with-esc): 
+	(arabic-iso-8bit-with-esc): 
+	Add these two here. Move the implementation of the
+	'arabic-iso8859-6  character set here, with commentary on why that
+	is reasonable. 
+	* mule/arabic.el (iso-8859-6): 
+	Add iso-8859-6, windows-1256 implementations using
+	make-8-bit-coding-system. Remove our non-standard Mule character
+	sets. 
+	* unicode.el (load-unicode-tables): Remove Arabic since it's no
+	longer dumped.
+	* mule/mule-msw-init-late.el: Remove Arabic.
+	* mule/mule-category.el (predefined-category-list): Remove
+	Arabic. 
+
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-init.el (x-initialize-compose): 
+	Rewrite to use #'loop, as does similar code in x-win-sun.el,
+	x-win-xfree86.el. Locally bind function-key-map to the correct
+	value for the device's console.
+	* x-win-xfree86.el (x-win-init-xfree86): 
+	Locally bind function-key-map to the correct value for the
+	device's console.
+	* x-win-sun.el (x-win-init-sun): 
+	Locally bind function-key-map to the correct value for the
+	device's console.
+
+2008-07-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unicode-data): 
+	Correct three calls to #'error; it doesn't take #'message style
+	format strings and arguments.
+
+2008-07-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-property-list): Move the (require
+	'hyper-apropos) call to top level, this isn't the only function
+	that uses the relevant face. 
+	(describe-char): Wrap the Unihan field descriptions if they are
+	longer than the windows width minus 50.
+	Rename the created buffer to reflect the character's position as
+	well as its value. 
+
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Patch to make it up to the device-specific code whether

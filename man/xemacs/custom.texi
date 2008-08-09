@@ -136,7 +136,7 @@ behavior (denoted by a symbol), and enables it.  Conversely,
 @c functions to enable or disable a given behavior.  The behavior registry
 @c was introduced in XEmacs 21.5.6.
 @c
-@c @defun enable-behavior behavior &optionl force
+@c @defun enable-behavior behavior &optional force
 @c Called interactively, prompt the user, read a behavior symbol name with
 @c completion for @var{behavior}, and take @var{force} from the prefix
 @c argument.  Then enable the behavior registered under the symbol
@@ -2282,7 +2282,7 @@ convention which is @emph{precise}, @emph{accurate}, and
 @emph{convenient}.  Precision means that all properties available in the
 programming API can be individually specified.  Accuracy means that the
 truename of the font is exactly the list of all properties specified by
-the font.  Thus, the anomolies that occur with XLFDs on many servers
+the font.  Thus, the anomalies that occur with XLFDs on many servers
 (including modern Linux distributions with XFree86 or X.org servers)
 cannot occur.  Convenience is subjective, of course.  However,
 @file{fontconfig} provides a configuration system which (1) explicitly

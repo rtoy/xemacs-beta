@@ -75,7 +75,7 @@ write it. At this time many widely used programming languages are
 supported by XEmacs. Examples include Ada, Awk, C, C++, CORBA (IDL),
 Fortran, Java, Lisp, Modula 2, Objective-C, Perl, Pike, Prolog, Python,
 Ruby, Scheme, Simula, SQL, Tcl, Unix Shell scripts, and VHDL. Some of
-these language have seperate manuals, and some times more than one mode
+these language have separate manuals, and some times more than one mode
 may be available for a language.  For example, there are several
 variants of Lisp mode, which differ in the way they interface to Lisp
 execution.  @xref{Lisp Modes}. 
@@ -1649,7 +1649,7 @@ few of the the supported styles are listed below.
 
 @itemize @bullet
 @item
-``gnu'' --- The recommeded style from the Free Software Foundation for
+``gnu'' --- The recommended style from the Free Software Foundation for
 GNU software. 
 @item
 ``k&r'' --- The classic style from Kernighan and Ritchie.
@@ -1693,7 +1693,7 @@ initialization file (@pxref{Init File})
   Most customizations for indentation in various CC modes can be
 accomplished by choosing a style and then choosing value for
 @code{c-basic-offset} that meets the local coding convention. CC Mode
-has a very customizable indentation engine and a furthur discussion is
+has a very customizable indentation engine and a further discussion is
 really beyond the scope of this manual. @xref{Indentation
 Engine,,,cc-mode,The CC Mode Manual}.
 

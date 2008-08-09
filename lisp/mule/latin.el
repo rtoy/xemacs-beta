@@ -957,11 +957,12 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
   for ((charset codesys default-input nice-charset-1 nice-charset-2
                 ;; supported-langs is a list if the doc string is replaced
                 ;; entirely
-                supported-langs) 
+                supported-langs invalid-sequence-coding-system) 
        langenvs) in
   '(((latin-iso8859-1 iso-8859-1 "latin-1-prefix" "Latin-1" "ISO-8859-1"
 " Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
- Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.")
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish."
+      windows-1252)
      (("Danish" "da")
       ("Dutch" "nl" "TUTORIAL.nl")
       ("Faeroese" "fo")
@@ -1024,6 +1025,8 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
      (coding-system ,codesys)
      (coding-priority ,codesys)
      (native-coding-system ,codesys)
+     (invalid-sequence-coding-system ,(or invalid-sequence-coding-system
+                                          codesys))
      (documentation . ,(if (listp supported-langs) (car supported-langs)
 			 (format "\
 Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))

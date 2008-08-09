@@ -1,8 +1,26 @@
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (complex_vars_of_mule_charset): 
+	Remove Vcharset_arabic_iso8859_7.
+	* lisp.h: Remove Vcharset_arabic_iso8859_7.
+	See commentary in lisp/mule/iso-with-esc.el for motivation. 
+
+2008-07-20  John Paul Wallington  <jpw@pobox.com>
+
+	* nt.c (Fmswindows_short_file_name, Fmswindows_long_file_name):
+	Remove their interactive specs; they shouldn't be called interactively.
+
 2008-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay.c (init_redisplay): 
 	Don't set window-system to 'stream if running noninteractively,
 	revert to the documented behaviour. 
+
+2008-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_escape): 
+	Error if we're handed an over-long hex character escape, something
+	which arises reasonably frequently in code written for GNU. 
 
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 

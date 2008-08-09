@@ -73,7 +73,6 @@ Setting this at run-time does nothing.")
 	    ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
 	    ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)
 	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0 #xFF #x-80)
-	    ("8859-6.TXT" arabic-iso8859-6 #xA0 #xFF #x-80)
 	    ("8859-7.TXT" greek-iso8859-7 #xA0 #xFF #x-80)
 	    ("8859-8.TXT" hebrew-iso8859-8 #xA0 #xFF #x-80)
 	    ("8859-9.TXT" latin-iso8859-9 #xA0 #xFF #x-80)
@@ -154,12 +153,12 @@ Setting this at run-time does nothing.")
       '(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
 	greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
 	latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
-	vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
+	vietnamese-viscii-lower vietnamese-viscii-upper 
 	jit-ucs-charset-0 japanese-jisx0208 japanese-jisx0208-1978
 	japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
 	chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
 	indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
-	chinese-isoir165 arabic-1-column arabic-2-column arabic-digit
+	chinese-isoir165 
 	composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
 	katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
 	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
@@ -526,7 +525,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
 To transform XEmacs Unicode error sequences to the Latin-1 characters that
 correspond to the octets on disk, you can use this variable.  ")
 
-(defvar unicode-error-sequence-regexp-range
+(defvar unicode-invalid-sequence-regexp-range
   (and (featurep 'mule)
        (format "%c%c-%c"
                (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
@@ -564,7 +563,7 @@ invalid octet.  You can use this variable (with `re-search-forward' or
     ;; Comment out until the issue in
     ;; 18179.49815.622843.336527@parhasard.net is fixed.
     (assert t ; (re-search-forward (concat "[" 
-              ;                        unicode-error-sequence-regexp-range
+              ;                        unicode-invalid-sequence-regexp-range
               ;                        "]"))
             nil
             (format "Could not find char ?\\x%x in buffer" i))))
@@ -586,12 +585,12 @@ such sequences.  "
 	  (setq begin
 		(progn
 		  (skip-chars-forward
-		   (concat "^" unicode-error-sequence-regexp-range))
+		   (concat "^" unicode-invalid-sequence-regexp-range))
 		  (point))
 		end (and (not (= (point) (point-max)))
 			 (progn
 			   (skip-chars-forward
-			    unicode-error-sequence-regexp-range)
+			    unicode-invalid-sequence-regexp-range)
 			   (point))))
 	  (if end
 	      (funcall frob-function begin end))))))
@@ -610,6 +609,9 @@ mapping from the error sequences to the desired characters.  "
      (lambda (start finish)
        (translate-region start finish table))
      begin end buffer))
+
+;; Sure would be nice to be able to use defface here. 
+(copy-face 'highlight 'unicode-invalid-sequence-warning-face)
 
 (defvar unicode-query-coding-skip-chars-arg nil ;; Set in general-late.el
   "Used by `unicode-query-coding-region' to skip chars with known mappings.")
@@ -689,8 +691,8 @@ mapping from the error sequences to the desired characters.  "
   ;; Lisp.
   (mapcar #'unintern
           '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
-            unicode-error-sequence-regexp-range
-            frob-unicode-errors-region unicode-error-translate-region)))
+            unicode-invalid-regexp-range frob-unicode-errors-region
+            unicode-error-translate-region)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
