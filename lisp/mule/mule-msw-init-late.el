@@ -37,7 +37,6 @@
 	   (greek-iso8859-7 . "Greek") 
 	   (latin-iso8859-9 . "Turkish")
 	   (hebrew-iso8859-8 . "Hebrew")
-	   (arabic-iso8859-6 . "Arabic")
 	   (latin-iso8859-4 . "Baltic")
 	   (vietnamese-viscii-lower . "Viet Nam")
 	   (vietnamese-viscii-upper . "Viet Nam")

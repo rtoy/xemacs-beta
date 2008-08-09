@@ -647,17 +647,16 @@ representation.
 followed by a backslash and the character code in octal (up to three
 octal digits); thus, @samp{?\101} for the character @kbd{A},
 @samp{?\001} for the character @kbd{C-a}, and @code{?\002} for the
-character @kbd{C-b}.
+character @kbd{C-b}.  The reader will finalize the character and start
+reading the next token when a non-octal-digit is encountered or three
+octal digits are read. 
 
   The second consists of a question mark followed by a backslash, the
 character @samp{x}, and the character code in hexadecimal (up to two
 hexadecimal digits); thus, @samp{?\x41} for the character @kbd{A},
 @samp{?\x1} for the character @kbd{C-a}, and @code{?\x2} for the
-character @kbd{C-b}.
-
-In both cases, the reader will finalize the character when a non-digit
-is encountered or the maximum length of a character code is reached.  It
-then starts reading the next token.
+character @kbd{C-b}.  If more than two hexadecimal codes are given, the
+reader signals an error.
 
 @example
 @group

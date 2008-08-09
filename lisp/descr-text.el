@@ -32,6 +32,8 @@
 
 (eval-when-compile (require 'wid-edit))
 
+(require 'hyper-apropos)
+
 ;;; Describe-Text Utilities.
 
 (defun describe-text-widget (widget)
@@ -82,7 +84,6 @@ The `category', `face' and `font-lock-face' properties are made
 into help buttons that call `describe-text-category' or
 `describe-face' when pushed."
   ;; Sort the properties by the size of their value.
-  (require 'hyper-apropos)
   (dolist (elt (sort (let (ret)
 		       (while properties
 			 (push (list (pop properties) (pop properties)) ret))
@@ -676,7 +677,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
   (when describe-char-unicodedata-file
     (unless (file-exists-p describe-char-unicodedata-file)
       (error 'file-error
-             "`unicodedata-file' %s not found" describe-char-unicodedata-file))
+             (format "`unicodedata-file' %s not found"
+                     describe-char-unicodedata-file)))
     ;; XEmacs change; accept a character argument, use the cache if
     ;; appropriate.
     (when (characterp char)
@@ -696,13 +698,14 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
                 (coding-system-for-read 'no-conversion-unix)
                 key lookup)
             (unless database-handle
-              (error 'io-error "Could not open %s as a %s database"
-                     (unidata-generate-database-file-name
-                      describe-char-unicodedata-file
-                      (eighth (file-attributes
-                               describe-char-unicodedata-file))
-                      unidata-database-format)
-                     unidata-database-format))
+              (error 'io-error 
+                     (format "Could not open %s as a %s database"
+                             (unidata-generate-database-file-name
+                              describe-char-unicodedata-file
+                              (eighth (file-attributes
+                                       describe-char-unicodedata-file))
+                              unidata-database-format)
+                             unidata-database-format)))
             (setq key (format "%04X" char)
                   lookup (get-database key database-handle))
             (if lookup
@@ -760,7 +763,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 	      (unless (or (= 13 (length fields))
 			  (= 14 (length fields)))
 		(error 'invalid-argument
-                       "Invalid contents in %s" describe-char-unicodedata-file))
+                       (format "Invalid contents in %s"
+                               describe-char-unicodedata-file)))
 	      ;; The field names and values lists are slightly
 	      ;; modified from Mule-UCS unidata.el.
 	      (apply #'list
@@ -1029,7 +1033,8 @@ as well as widgets, buttons, overlays, and text properties."
 		  (describe-text-properties pos tmp-buf)
 		  (with-current-buffer tmp-buf (buffer-string)))
 	      (kill-buffer tmp-buf))))
-	 item-list max-width unicode unicode-formatted unicode-error)
+	 item-list max-width unicode unicode-formatted unicode-error
+	 unicodedata (max-unicode-description-width (- (window-width) 50)))
 
 
     (setq unicode-error
@@ -1185,13 +1190,29 @@ as well as widgets, buttons, overlays, and text properties."
 				     `(insert-gui-button
                                        (make-gui-button
                                         ,(symbol-name face)))))))
-	    ,@(let ((unicodedata (and unicode
-				      (describe-char-unicode-data unicode))))
+	    ,@(progn 
+		(setq unicodedata (and unicode
+				       (describe-char-unicode-data unicode)))
 		(if unicodedata
 		    (cons (list "Unicode data" " ") unicodedata)))))
     (setq max-width (apply #'max (mapcar #'(lambda (x)
 					     (if (cadr x) (length (car x)) 0))
 					 item-list)))
+    (when (and unicodedata (> max-width max-unicode-description-width))
+      (setq max-width max-unicode-description-width)
+      (with-temp-buffer
+	(let ((fill-column max-unicode-description-width)
+	      (indent-tabs-mode nil))
+	  (dolist (unidata-line unicodedata)
+	    (when (cadr unidata-line)
+	      (setf (car unidata-line)
+		    (progn (insert (car unidata-line))
+			   (goto-char (point-min))
+			   (fill-paragraph 'right)
+			   (delete-region (1- (point-max))
+					  (point-max))
+			   (buffer-string)))
+	      (delete-region (point-min) (point-max)))))))
     ; (help-setup-xref nil (interactive-p))
     (with-displaying-help-buffer
      (lambda ()
@@ -1274,7 +1295,7 @@ as well as widgets, buttons, overlays, and text properties."
 ;        (setq help-xref-stack-item (list 'help-insert-string (buffer-string)))
          (toggle-read-only 1)
          (print-help-return-message)))
-     (format "Describe %c" (char-after pos)))))
+       (format "Describe %c <%d>" (char-after pos) pos))))
 
 (defalias 'describe-char-after 'describe-char)
 (make-obsolete 'describe-char-after 'describe-char "22.1")

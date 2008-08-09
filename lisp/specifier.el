@@ -988,4 +988,18 @@ proceed as if LOCALE were a domain."
 			 (specifier-instance specifier domain))))
 		   (list (cons nil inst))))))))))
 
+;; Character 160 (octal 0240) displays incorrectly under some X
+;; installations apparently due to a universally crocked font width
+;; specification.  Display it as a space since that's what's expected. 
+;;
+;; (make-char-table 'generic) instead of (make-display-table) because
+;; make-display-table isn't dumped, and this file is. 
+;;
+;; We also want the global display table to be actually globally
+;; initialised; that's why this is here, and not in x-init.el, these days.
+
+(set-specifier current-display-table 
+               #s(char-table type generic data (?\xA0 ?\x20))
+               'global)
+
 ;;; specifier.el ends here

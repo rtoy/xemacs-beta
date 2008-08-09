@@ -392,11 +392,11 @@ packages.
 Because the exact files and their locations contained in a package may
 change it is recommended to remove a package first before installing a
 new version. In order to facilitate removal each package contains an
-@file{pgkinfo/MANIFEST.pkgname} file which list all the files belonging
+@file{pkginfo/MANIFEST.pkgname} file which lists all the files belonging
 to the package. 
 
 No need to panic, you don't have to go through the
-@file{pkinfo/MANIFEST.pkgname} and manually delete the files.  Instead, use
+@file{pkginfo/MANIFEST.pkgname} and manually delete the files.  Instead, use
 @code{M-x package-get-delete-package RET}.
 
 Note that the interactive package tools included with XEmacs already do

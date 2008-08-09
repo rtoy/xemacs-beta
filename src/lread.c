@@ -1855,6 +1855,28 @@ read_escape (Lisp_Object readcharfun)
 		break;
 	      }
 	  }
+
+        if (count == 3)
+          {
+            c = readchar (readcharfun);
+            if ((c >= '0' && c <= '9') ||
+                (c >= 'a' && c <= 'f') ||
+                (c >= 'A' && c <= 'F'))
+              {
+                Lisp_Object args[2];
+
+                if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
+                else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
+                else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
+
+                args[0] = build_string ("?\\x%x");
+                args[1] = make_int (i);
+                syntax_error ("Overlong hex character escape",
+                              Fformat (2, args));
+              }
+            unreadchar (readcharfun, c);
+          }
+
 	return i;
       }
     case 'U':

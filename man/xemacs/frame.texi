@@ -343,7 +343,7 @@ XEmacsen, the @samp{Mule} menu will be moved under @samp{Options}.)
 
 XEmacs scrollbars provide the usual interface.  Arrow buttons at either
 end allow for line by line scrolling, including autorepeat.  Clicking in
-the scrollbar itself provides scrolling by windowsfull, depending on
+the scrollbar itself provides scrolling by a windowful, depending on
 which side of the slider is clicked.  The slider itself may be dragged
 for smooth scrolling.
 
@@ -400,7 +400,7 @@ tend to be more transient than the other components.  Buffer tabs, for
 example, change every time the selected buffer in the frame changes.
 And for progress gauges a gutter to contain the gauge is typically
 created on the fly when needed, then destroyed when the operation whose
-staus is being displayed is completed.
+status is being displayed is completed.
 
 Buffer tabs, having somewhat complex behavior, deserve a closer look.
 By default, a row of buffer tabs is displayed at the top of every frame.

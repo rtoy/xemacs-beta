@@ -244,7 +244,6 @@ The descriptions are inserted in a buffer, which is then displayed."
     (latin-iso8859-4	?l)
     (latin-iso8859-9	?l)
     (cyrillic-iso8859-5 ?y "Cyrillic character set")
-    (arabic-iso8859-6	?b "Arabic character set")
     (greek-iso8859-7	?g "Greek character set")
     (hebrew-iso8859-8	?w "Hebrew character set")
     (katakana-jisx0201	?k "Japanese 1-byte Katakana character set")
