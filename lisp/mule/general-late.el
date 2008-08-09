@@ -90,7 +90,7 @@
               (setq skip-chars-string
                     (concat skip-chars-string
                             (charset-skip-chars-string charset))))
-            finally return skip-chars-string))))
+            finally return (skip-chars-quote skip-chars-string)))))
 
 ;; At this point in the dump, all the charsets have been loaded. Now, load
 ;; their Unicode mappings.
