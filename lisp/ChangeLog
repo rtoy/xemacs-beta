@@ -1,5 +1,14 @@
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* subr.el (skip-chars-quote): New.
+	Given STRING, return a string that means that all characters in
+	STRING will be skipped when passed to #'skip-chars-forward,
+	#'skip-chars-backward. 
+
+2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (skip-chars-quote): New.
+
 	* mule/cyril-util.el: Remove. Use the version in packages instead.
 
 2008-08-08  Aidan Kehoe  <kehoea@parhasard.net>
