@@ -527,20 +527,20 @@ This is a naive implementation in Lisp.  "
              ;; irrelevant.
              (sort (charsets-in-region (point-min) (point-max))
                    #'string<)
-             '(arabic-1-column arabic-2-column ascii chinese-big5-1
-               chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
-               hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
-               katakana-jisx0201 korean-ksc5601 latin-iso8859-1
-               latin-iso8859-2 thai-xtis vietnamese-viscii-lower)))
+             '(ascii chinese-big5-1 chinese-gb2312 cyrillic-iso8859-5
+               ethiopic greek-iso8859-7 hebrew-iso8859-8 japanese-jisx0208
+               japanese-jisx0212 jit-ucs-charset-0 katakana-jisx0201
+               korean-ksc5601 latin-iso8859-1 latin-iso8859-2 thai-xtis
+               vietnamese-viscii-lower)))
     (Assert (equal 
              (sort (charsets-in-string (buffer-substring (point-min)
 							 (point-max)))
                    #'string<)
-             '(arabic-1-column arabic-2-column ascii chinese-big5-1
-               chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
-               hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
-               katakana-jisx0201 korean-ksc5601 latin-iso8859-1
-               latin-iso8859-2 thai-xtis vietnamese-viscii-lower))))
+             '(ascii chinese-big5-1 chinese-gb2312 cyrillic-iso8859-5
+               ethiopic greek-iso8859-7 hebrew-iso8859-8 japanese-jisx0208
+               japanese-jisx0212 jit-ucs-charset-0 katakana-jisx0201
+               korean-ksc5601 latin-iso8859-1 latin-iso8859-2 thai-xtis
+               vietnamese-viscii-lower))))
 
   ;;---------------------------------------------------------------
   ;; Language environments, and whether the specified values are sane.

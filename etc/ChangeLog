@@ -1,3 +1,8 @@
+2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO: Add a coding cookie, now the UTF-8 sequences prevent the
+	file being recognised as ISO-2022-7 automatically.
+
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* HELLO: Encode the Arabic using UTF-8 sequences, not ISO-8859-6. 
