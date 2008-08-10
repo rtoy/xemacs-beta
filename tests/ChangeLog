@@ -1,3 +1,9 @@
+2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep): Update the list of character
+	sets in etc/HELLO to reflect that we've deleted the
+	XEmacs-specific Arabic character sets.
+
 2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep): 
