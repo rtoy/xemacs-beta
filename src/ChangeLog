@@ -1,3 +1,15 @@
+2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-xlike-inc.c (charset_table): Remove the entry for
+	Vcharset_arabic_iso8859_7, thank you Robert Delius Royar.
+
+2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (complex_vars_of_mule_charset): 
+	Remove Vcharset_arabic_iso8859_7.
+	* lisp.h: Remove Vcharset_arabic_iso8859_7.
+	See commentary in lisp/mule/iso-with-esc.el for motivation. 
+
 2008-08-03  Mats Lidell  <matsl@xemacs.org>
 
 	* config.h.in: Renamed USE_XFT_GAUGE to USE_XFT_GAUGES in sync
