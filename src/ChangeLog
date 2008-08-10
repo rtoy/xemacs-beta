@@ -1,3 +1,8 @@
+2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-xlike-inc.c (charset_table): Remove the entry for
+	Vcharset_arabic_iso8859_7, thank you Robert Delius Royar.
+
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (complex_vars_of_mule_charset): 
