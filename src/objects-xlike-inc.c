@@ -358,7 +358,6 @@ static struct charset_reporter charset_table[] =
     { &Vcharset_latin_iso8859_9, NULL, NULL },
     { &Vcharset_latin_iso8859_15, NULL, NULL },
     { &Vcharset_thai_tis620, NULL, NULL },
-    { &Vcharset_arabic_iso8859_6, NULL, NULL },
     { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
     { &Vcharset_cyrillic_iso8859_5, NULL, NULL },
     /* #### these probably are not quite right */
