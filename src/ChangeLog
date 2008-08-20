@@ -1,3 +1,12 @@
+2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Integrate Romain Francoise' 2005-09-14 (pre-GPLV3) GNU change,
+	which can allow much better performace with some stupid
+	filesystems:
+	* fileio.c (write_region_inhibit_fsync): New variable.
+	(Fwrite_region): Use it to skip call to fsync.
+	(syms_of_fileio): Initialize it.
+
 2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* objects-xlike-inc.c (charset_table): Remove the entry for

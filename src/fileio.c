@@ -111,6 +111,11 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Vdirectory_sep_char;
 
+#ifdef HAVE_FSYNC
+/* Nonzero means skip the call to fsync in Fwrite-region.  */
+int write_region_inhibit_fsync;
+#endif
+
 /* These variables describe handlers that have "already" had a chance
    to handle the current operation.
 
@@ -3568,7 +3573,7 @@ here because write-region handler writers need to be aware of it.
        Disk full in NFS may be reported here.  */
     /* mib says that closing the file will try to write as fast as NFS can do
        it, and that means the fsync here is not crucial for autosave files.  */
-    if (!auto_saving && fsync (desc) < 0
+    if (!auto_saving && !write_region_inhibit_fsync && fsync (desc) < 0
 	/* If fsync fails with EINTR, don't treat that as serious.  */
 	&& errno != EINTR)
       {
@@ -4559,6 +4564,15 @@ The operation for which `inhibit-file-name-handlers' is applicable.
 File name in which we write a list of all auto save file names.
 */ );
   Vauto_save_list_file_name = Qnil;
+
+#ifdef HAVE_FSYNC
+  DEFVAR_BOOL ("write-region-inhibit-fsync", &write_region_inhibit_fsync /*
+*Non-nil means don't call fsync in `write-region'.
+This variable affects calls to `write-region' as well as save commands.
+A non-nil value may result in data loss!
+*/ );
+  write_region_inhibit_fsync = 0;
+#endif
 
   DEFVAR_LISP ("auto-save-list-file-prefix", &Vauto_save_list_file_prefix /*
 Prefix for generating auto-save-list-file-name.
