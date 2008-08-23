@@ -1,3 +1,8 @@
+2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el: Move #'custom-variable-p to C, since it's now called
+	from #'user-variable-p. 
+
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (skip-chars-quote): New.
