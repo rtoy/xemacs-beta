@@ -2166,7 +2166,7 @@ This means that certain objects should be allocated in readonly space.
 */ );
 
   DEFVAR_BOOL ("garbage-collection-messages", &garbage_collection_messages /*
- Non-nil means display messages at start and end of garbage collection.
+*Non-nil means display messages at start and end of garbage collection.
 */ );
   garbage_collection_messages = 0;
 

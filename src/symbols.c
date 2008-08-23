@@ -84,6 +84,9 @@ static Lisp_Object fetch_value_maybe_past_magic (Lisp_Object sym,
 static Lisp_Object *value_slot_past_magic (Lisp_Object sym);
 static Lisp_Object follow_varalias_pointers (Lisp_Object symbol,
 					     Lisp_Object follow_past_lisp_magic);
+static Lisp_Object map_varalias_chain (Lisp_Object symbol,
+                                       Lisp_Object follow_past_lisp_magic,
+                                       Lisp_Object (*fn) (Lisp_Object arg));
 
 
 static Lisp_Object
@@ -2754,6 +2757,78 @@ A nil value for BUFFER is *not* the same as (current-buffer), but means
   else
     return local_info != 0 ? Qt : Qnil;
 }
+
+DEFUN ("custom-variable-p", Fcustom_variable_p, 1, 1, 0, /*
+Return non-nil if SYMBOL names a custom variable.
+Does not follow the variable alias chain.
+*/
+       (symbol))
+{
+  return (!(NILP (Fget(symbol, intern ("standard-value"), Qnil))) 
+          || !(NILP (Fget(symbol, intern ("custom-autoload"), Qnil)))) ?
+    Qt: Qnil;
+}
+
+static Lisp_Object
+user_variable_alias_check_fun (Lisp_Object symbol)
+{
+  Lisp_Object documentation = Fget (symbol, Qvariable_documentation, Qnil);
+      
+  if ((INTP (documentation) && XINT (documentation) < 0) ||
+      (STRINGP (documentation) &&
+       (string_byte (documentation, 0) == '*')) ||
+      /* If (STRING . INTEGER), a negative integer means a user variable. */
+      (CONSP (documentation)
+       && STRINGP (XCAR (documentation))
+       && INTP (XCDR (documentation))
+       && XINT (XCDR (documentation)) < 0) ||
+      !NILP (Fcustom_variable_p (symbol)))
+    {
+      return make_int(1);
+    }
+
+  return Qzero;
+}
+
+DEFUN ("user-variable-p", Fuser_variable_p, 1, 1, 0, /*
+Return t if SYMBOL names a variable intended to be set and modified by users.
+\(The alternative is a variable used internally in a Lisp program.)
+A symbol names a user variable if
+\(1) the first character of its documentation is `*', or
+\(2) it is customizable (`custom-variable-p' gives t), or
+\(3) it names a variable alias that eventually resolves to another user variable.
+
+The GNU Emacs implementation of `user-variable-p' returns nil if there is a
+loop in the chain of symbols.  Since this is indistinguishable from the case
+where a symbol names a non-user variable, XEmacs signals a
+`cyclic-variable-indirection' error instead; use `condition-case' to catch
+this error if you really want to avoid this.
+*/
+       (symbol))
+{
+  Lisp_Object mapped;
+
+  if (!SYMBOLP (symbol))
+    {
+      return Qnil; 
+    }
+
+  /* Called for its side-effects, we want it to signal if there's a loop. */
+  follow_varalias_pointers (symbol, Qt);
+
+  /* Look through the various aliases. */
+  mapped = map_varalias_chain (symbol, Qt, user_variable_alias_check_fun);
+  if (EQ (Qzero, mapped))
+    {
+      return Qnil;
+    }
+
+  assert (make_int (1) == mapped);
+
+  return Qt;
+}
+
+
 
 
 /*
@@ -3136,20 +3211,98 @@ follow_varalias_pointers (Lisp_Object symbol,
   return hare;
 }
 
-DEFUN ("defvaralias", Fdefvaralias, 2, 2, 0, /*
+/* Map FN over the chain of variable aliases for SYMBOL. If FN returns
+   something other than Qzero for some link in the chain, return that
+   immediately. Otherwise return Qzero (which is not a symbol).
+
+   FN may be called twice on the same symbol if the varalias chain is
+   cyclic. Prevent this by calling follow_varalias_pointers first for its
+   side-effects.
+
+   Signals a cyclic-variable-indirection error if a cyclic structure is
+   detected. */
+
+static Lisp_Object
+map_varalias_chain (Lisp_Object symbol,
+                    Lisp_Object follow_past_lisp_magic,
+                    Lisp_Object (*fn) (Lisp_Object arg))
+{
+#define VARALIAS_INDIRECTION_SUSPICION_LENGTH 16
+  Lisp_Object tortoise, hare, val, res;
+  int count;
+
+  assert (fn);
+
+  /* quick out just in case */
+  if (!SYMBOL_VALUE_MAGIC_P (XSYMBOL (symbol)->value))
+    {
+      return (fn)(symbol);
+    }
+
+  /* Compare implementation of indirect_function().  */
+  for (hare = tortoise = symbol, count = 0;
+       val = fetch_value_maybe_past_magic (hare, follow_past_lisp_magic),
+	 SYMBOL_VALUE_VARALIAS_P (val);
+       hare = symbol_value_varalias_aliasee (XSYMBOL_VALUE_VARALIAS (val)),
+	 count++)
+    {
+      res = (fn) (hare);
+      if (Qzero != res)
+        {
+          return res;
+        }
+
+      if (count < VARALIAS_INDIRECTION_SUSPICION_LENGTH) continue;
+
+      if (count & 1)
+	tortoise = symbol_value_varalias_aliasee
+	  (XSYMBOL_VALUE_VARALIAS (fetch_value_maybe_past_magic
+				   (tortoise, follow_past_lisp_magic)));
+      if (EQ (hare, tortoise))
+        return Fsignal (Qcyclic_variable_indirection, list1 (symbol));
+    }
+
+  return (fn) (hare);
+}
+
+/*
+
+OED entry, 2nd edition, IPA transliterated using Kirshenbaum: 
+
+alias ('eIlI@s, '&lI@s), adv. and n.
+[...]
+B. n. (with pl. aliases.)
+1. Another name, an assumed name.
+1605 Camden Rem. (1614) 147 An Alias or double name cannot preiudice the honest.
+1831 Edin. Rev. LIII. 364 He has been assuming various aliases.
+1861 Macaulay Hist. Eng. V. 92 The monk who was sometimes called Harrison
+and sometimes went by the alias of Johnson.
+
+The alias is the fake name. Let's try to follow that usage in our
+documentation.
+
+*/
+
+DEFUN ("defvaralias", Fdefvaralias, 2, 3, 0, /*
 Define a variable as an alias for another variable.
 Thenceforth, any operations performed on VARIABLE will actually be
-performed on ALIAS.  Both VARIABLE and ALIAS should be symbols.
-If ALIAS is nil, remove any aliases for VARIABLE.
-ALIAS can itself be aliased, and the chain of variable aliases
+performed on ALIASED.  Both VARIABLE and ALIASED should be symbols.
+If ALIASED is nil and VARIABLE is an existing alias, remove that alias.
+ALIASED can itself be an alias, and the chain of variable aliases
 will be followed appropriately.
 If VARIABLE already has a value, this value will be shadowed
 until the alias is removed, at which point it will be restored.
 Currently VARIABLE cannot be a built-in variable, a variable that
 has a buffer-local value in any buffer, or the symbols nil or t.
-\(ALIAS, however, can be any type of variable.)
+\(ALIASED, however, can be any type of variable.)
+
+Optional argument DOCSTRING is documentation for VARIABLE in its use as an
+alias for ALIASED.  The XEmacs help code ignores this documentation, using
+the documentation of ALIASED instead, and the docstring, if specified, is
+not shadowed in the same way that the value is.  Only use it if you know
+what you're doing.
 */
-       (variable, alias))
+       (variable, aliased, docstring))
 {
   struct symbol_value_varalias *bfwd;
   Lisp_Object valcontents;
@@ -3159,7 +3312,7 @@ has a buffer-local value in any buffer, or the symbols nil or t.
 
   valcontents = XSYMBOL (variable)->value;
 
-  if (NILP (alias))
+  if (NILP (aliased))
     {
       if (SYMBOL_VALUE_VARALIAS_P (valcontents))
 	{
@@ -3170,11 +3323,15 @@ has a buffer-local value in any buffer, or the symbols nil or t.
       return Qnil;
     }
 
-  CHECK_SYMBOL (alias);
+  CHECK_SYMBOL (aliased);
+
+  if (!NILP (docstring))
+    Fput (variable, Qvariable_documentation, docstring);
+
   if (SYMBOL_VALUE_VARALIAS_P (valcontents))
     {
       /* transmogrify */
-      XSYMBOL_VALUE_VARALIAS (valcontents)->aliasee = alias;
+      XSYMBOL_VALUE_VARALIAS (valcontents)->aliasee = aliased;
       return Qnil;
     }
 
@@ -3186,7 +3343,7 @@ has a buffer-local value in any buffer, or the symbols nil or t.
   bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_varalias,
 			      &lrecord_symbol_value_varalias);
   bfwd->magic.type = SYMVAL_VARALIAS;
-  bfwd->aliasee = alias;
+  bfwd->aliasee = aliased;
   bfwd->shadowed = valcontents;
 
   valcontents = wrap_symbol_value_magic (bfwd);
@@ -3195,8 +3352,8 @@ has a buffer-local value in any buffer, or the symbols nil or t.
 }
 
 DEFUN ("variable-alias", Fvariable_alias, 1, 2, 0, /*
-If VARIABLE is aliased to another variable, return that variable.
-VARIABLE should be a symbol.  If VARIABLE is not aliased, return nil.
+If VARIABLE is an alias of another variable, return that variable.
+VARIABLE should be a symbol.  If VARIABLE is not an alias, return nil.
 Variable aliases are created with `defvaralias'.  See also
 `indirect-variable'.
 */
@@ -3755,6 +3912,8 @@ syms_of_symbols (void)
   DEFSUBR (Fkill_local_variable);
   DEFSUBR (Fkill_console_local_variable);
   DEFSUBR (Flocal_variable_p);
+  DEFSUBR (Fcustom_variable_p);
+  DEFSUBR (Fuser_variable_p);
   DEFSUBR (Fdefvaralias);
   DEFSUBR (Fvariable_alias);
   DEFSUBR (Findirect_variable);

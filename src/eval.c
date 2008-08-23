@@ -1356,29 +1356,8 @@ Since `defconst' unconditionally assigns the variable,
   return sym;
 }
 
-DEFUN ("user-variable-p", Fuser_variable_p, 1, 1, 0, /*
-Return t if VARIABLE is intended to be set and modified by users.
-\(The alternative is a variable used internally in a Lisp program.)
-Determined by whether the first character of the documentation
-for the variable is `*'.
-*/
-       (variable))
-{
-  Lisp_Object documentation = Fget (variable, Qvariable_documentation, Qnil);
-
-  return
-    ((INTP (documentation) && XINT (documentation) < 0) ||
-
-     (STRINGP (documentation) &&
-      (string_byte (documentation, 0) == '*')) ||
-
-     /* If (STRING . INTEGER), a negative integer means a user variable. */
-     (CONSP (documentation)
-      && STRINGP (XCAR (documentation))
-      && INTP (XCDR (documentation))
-      && XINT (XCDR (documentation)) < 0)) ?
-    Qt : Qnil;
-}
+/* XEmacs: user-variable-p is in symbols.c, since it needs to mess around
+   with the symbol variable aliases. */
 
 DEFUN ("macroexpand-internal", Fmacroexpand_internal, 1, 2, 0, /*
 Return result of expanding macros at top level of FORM.
@@ -6582,7 +6561,6 @@ syms_of_eval (void)
   DEFSUBR (Fdefmacro);
   DEFSUBR (Fdefvar);
   DEFSUBR (Fdefconst);
-  DEFSUBR (Fuser_variable_p);
   DEFSUBR (Flet);
   DEFSUBR (FletX);
   DEFSUBR (Fwhile);

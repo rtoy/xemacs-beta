@@ -1,3 +1,27 @@
+2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fuser_variable_p): Moved to symbols.c
+	* symbols.c (Fcustom_variable_p): Moved here from custom.el. 
+	(user_variable_alias_check_fun): Mapper function used in
+	`user-variable-p'. 
+	(Fuser_variable_p): Moved here from eval.c, to allow it to examine
+	the variable alias chain. Expanded to check each entry in the
+	variable alias chain for signs of being a user variable;
+	documentation updated, noting the differences between GNU's
+	behaviour and ours (ours is a little more sensible)
+	(map_varalias_chain): New.
+	Given a C function, call it at least once for each symbol in a
+	symbol's varalias chain, signalling an error if there's a cycle,
+	and returning immediately if the function returns something other
+	than Qzero. 
+	(Fdefvaralias): Correct the use of the word "alias" in the
+	docstring and in the argument name. Motivate this in a
+	comment. Add support for a DOCSTRING argument, something GNU has
+	too, and document this
+	* gc.c (vars_of_gc): Start the docstring of
+	`garbage-collection-messages' with an asterisk, to indicate that
+	it's a user variable. 
+
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Integrate Romain Francoise' 2005-09-14 (pre-GPLV3) GNU change,

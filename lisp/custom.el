@@ -514,11 +514,9 @@ LOAD should be either a library file name, or a feature name."
   (put symbol 'custom-autoload t)
   (custom-add-load symbol load))
 
-;; This test is also in the C code of `user-variable-p'.
-(defun custom-variable-p (variable)
-  "Return non-nil if VARIABLE is a custom variable."
-  (or (get variable 'standard-value)
-      (get variable 'custom-autoload)))
+;; XEmacs; 
+;; #'custom-variable-p is in symbols.c, since it's called from
+;; #'user-variable-p.
 
 ;;; Loading files needed to customize a symbol.
 ;;; This is in custom.el because menu-bar.el needs it for toggle cmds.
