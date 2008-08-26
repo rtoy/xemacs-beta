@@ -2823,7 +2823,7 @@ this error if you really want to avoid this.
       return Qnil;
     }
 
-  assert (make_int (1) == mapped);
+  assert (EQ (make_int (1), mapped));
 
   return Qt;
 }
@@ -3247,7 +3247,7 @@ map_varalias_chain (Lisp_Object symbol,
 	 count++)
     {
       res = (fn) (hare);
-      if (Qzero != res)
+      if (!EQ (Qzero, res))
         {
           return res;
         }
