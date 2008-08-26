@@ -1,3 +1,10 @@
+2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fuser_variable_p): 
+	(map_varalias_chain): 
+	Use EQ() and !EQ(), don't compare two Lisp_Objects using == and
+	!=. Fixes the union build, thank you Robert Delius Royar. 
+
 2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Fuser_variable_p): Moved to symbols.c
