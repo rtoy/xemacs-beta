@@ -1,3 +1,9 @@
+2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el: 
+	Add a few basic #'skip-chars-forward, #'skip-chars-backward
+	tests. 
+
 2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep): Update the list of character

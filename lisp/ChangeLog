@@ -1,3 +1,10 @@
+2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (skip-chars-quote): 
+	Correct the implementation, following the docstring of
+	#'skip-char-forward more closely rather than the documentation of
+	character classes in the Lispref. 
+
 2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* custom.el: Move #'custom-variable-p to C, since it's now called

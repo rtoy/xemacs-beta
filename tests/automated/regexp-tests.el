@@ -522,6 +522,22 @@ baaaa
 						     2))
       )))
 
+;; Not very comprehensive tests of skip-chars-forward, skip-chars-background: 
+
+(with-string-as-buffer-contents 
+    "-]-----------------------------][]]------------------------"
+  (skip-chars-forward (skip-chars-quote "-[]"))
+  (Assert (= (point) (point-max)))
+  (skip-chars-backward (skip-chars-quote "-[]"))
+  (Assert (= (point) (point-min)))
+  ;; Testing in passing for an old bug in #'skip-chars-forward where I
+  ;; thought it was impossible to call it with a string containing only ?-
+  ;; and ?]: 
+  (Assert (= (skip-chars-forward (skip-chars-quote "-]"))
+             (position ?[ (buffer-string) :test #'=)))
+  ;; This used to error, incorrectly: 
+  (Assert (skip-chars-quote "[-")))
+
 ;; replace-match (REPLACEMENT &optional FIXEDCASE LITERAL STRING STRBUFFER)
 
 ;; #### Write some tests!  Much functionality is implicitly tested above
