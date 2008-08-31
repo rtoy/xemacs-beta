@@ -1878,4 +1878,21 @@ if none, call mouse-track.  "
             (find-variable (extent-property e 'find-variable-symbol)))
 	(mouse-track event)))))
 
+(define-minor-mode temp-buffer-resize-mode
+  "Toggle the mode which makes windows smaller for temporary buffers.
+With prefix argument ARG, turn the resizing of windows displaying temporary
+buffers on if ARG is positive or off otherwise.
+This makes the window the right height for its contents, but never
+less than `window-min-height' nor a higher proportion of its frame than
+`temp-buffer-max-height'. (Note the differing semantics of the latter
+versus GNU Emacs, where `temp-buffer-max-height' is an integer number of
+lines.)
+This applies to `help', `apropos' and `completion' buffers, and some others."
+    :global t :group 'help
+    ;; XEmacs; our implementation of this is very different. 
+    (setq temp-buffer-shrink-to-fit temp-buffer-resize-mode))
+
+;; GNU name for this function. 
+(defalias 'resize-temp-buffer-window 'shrink-window-if-larger-than-buffer)
+
 ;;; help.el ends here

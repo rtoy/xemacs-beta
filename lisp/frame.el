@@ -1850,6 +1850,8 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
   :type 'number
   :group 'frames)
 
+;; See also #'temp-buffer-resize-mode in help.el. 
+
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of `temp-buffer-show-function':
 always displays the buffer in the selected frame, regardless of the behavior
