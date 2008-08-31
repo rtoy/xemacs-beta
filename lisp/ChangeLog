@@ -1,3 +1,26 @@
+2008-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* window.el (only-window-p): New.
+	Check if WINDOW is the only window in some context, normally its
+	frame.
+	(one-window-p): 
+	Implemented this in terms of #'only-window-p, calling it on the
+	selected window. 
+	(window-buffer-height): Uncomment this, make it work. 
+	(count-screen-lines): Support a BUFFER argument. 
+	(fit-window-to-buffer): Uncomment this, correct its implementation
+	to work with XEmacs. 
+	* help.el (temp-buffer-resize-mode): New. Name taken from GNU,
+	implementation our own.
+	* (resize-temp-buffer-window): New. GNU-compatible alias for
+	#'shrink-window-if-larger-than-buffer.
+	* dumped-lisp.el (preloaded-file-list): Move easy-mmode before
+	help, now that the latter uses #'define-minor-mode.
+	* frame.el: Point to #'temp-buffer-resize-mode in a comment.
+	Some of this code is from GNU; help.el CVS version 1.327 of
+	2007-03-21, window.el CVS version 1.122, of 2007-06-24. Both these
+	are GPLV2 or later. 
+
 2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (skip-chars-quote): 

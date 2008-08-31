@@ -95,7 +95,6 @@ in dumped-lisp.el and is not itself listed.")
        ;; (pureload "profile")
        "loadhist"		; Must be dumped before loaddefs is loaded
 				; Used by help. 
-       "help"
        ;; (pureload "hyper-apropos")  Soon...
        "files"
        "lib-complete"
@@ -110,7 +109,8 @@ in dumped-lisp.el and is not itself listed.")
        "register"
        "iso8859-1"		; This must be before any modes
 				; (sets standard syntax table.)
-       "easy-mmode"		; Added for 21.5.
+       "easy-mmode"		; Added for 21.5. Used by help.
+       "help"
        "easymenu"		; Added for 20.3.
        "lisp-mode"
        "text-mode"
