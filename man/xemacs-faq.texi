@@ -433,6 +433,7 @@ library directory>/info/}. For example in
 * Q5.0.4::    How can I have the window title area display the full path?
 * Q5.0.5::    @samp{xemacs -name junk} doesn't work?
 * Q5.0.6::    @samp{-iconic} doesn't work.
+* Q5.0.7::    How can I use antialiased fonts under X11?
 
 5.1: Microsoft Windows
 * Q5.1.1::    Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
@@ -715,7 +716,10 @@ and was also the last version without international language support.
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @unnumberedsubsec Q1.0.3: How do you pronounce XEmacs?
 
-The most common pronounciation is @samp{Eks eemax}.
+The most common pronounciation is @samp{Eks eemax}, @samp{Eks'im&ks} in
+Kirshenbaum IPA. (See
+@uref{http://www.kirshenbaum.net/IPA/ascii-ipa.pdf} if you know the IPA
+already and want to know how to map from Kirshenbaum to it.)
 
 @node Q1.0.4, Q1.0.5, Q1.0.3, Introduction
 @unnumberedsubsec Q1.0.4: What does XEmacs look like?
@@ -6113,6 +6117,7 @@ as speakers and the printer.
 * Q5.0.4::    How can I have the window title area display the full path?
 * Q5.0.5::    @samp{xemacs -name junk} doesn't work?
 * Q5.0.6::    @samp{-iconic} doesn't work.
+* Q5.0.7::    How can I use antialiased fonts under X11?
 
 5.1: Microsoft Windows
 * Q5.1.1::    Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
@@ -6261,7 +6266,7 @@ To make a frame with a particular name use:
 (make-frame '((name . "the-name")))
 @end lisp
 
-@node Q5.0.6, Q5.1.1, Q5.0.5, External Subsystems
+@node Q5.0.6, Q5.0.7, Q5.0.5, External Subsystems
 @unnumberedsubsec Q5.0.6: @samp{-iconic} doesn't work.
 
 When I start up XEmacs using @samp{-iconic} it doesn't work right.
@@ -6276,9 +6281,48 @@ getting it to work.  The principal problem is numerous window-manager
 bugs...
 @end quotation
 
+@node Q5.0.7, Q5.1.1, Q5.0.6, External Subsystems
+@unnumberedsubsec Q5.0.7: How can I use antialiased fonts under X11?
+
+For this you need a recent beta version, and please consider the caveats
+that apply when using beta software from any source.  Rebuild xemacs
+using at least the following options to configure:
+
+@samp{./configure --enable-mule --with-xft=emacs,menubars}
+
+For further details on the XEmacs widgets that support XFT, see the
+output of @code{./configure --help}.  You may find that you have to
+install some lib[something]-dev packages to provide header files; see
+your packaging system's documentation.  Depending on your platform, your
+packaging system will normally be something like RPM, @code{apt} or
+DarwinPorts.
+
+To specify a particular antialiased font, put something like the
+following lines in your @file{~/.Xdefaults} or @file{~.Xresources}
+(using @code{#define} in @file{.Xresources} avoids boring hand
+substitution):
+
+@example
+#define MONO    Mono
+#define SANS    Sans
+#define PTSIZEM 12
+#define PTSIZES 11
+    XEmacs.default.attributeFont: MONO:size=PTSIZEM
+       XEmacs.bold.attributeFont: MONO:size=PTSIZEM:style=Bold
+     XEmacs.italic.attributeFont: MONO:size=PTSIZEM:style=Oblique
+XEmacs.bold-italic.attributeFont: MONO:size=PTSIZEM:style=Bold Oblique
+   XEmacs.modeline.attributeFont: SANS:size=PTSIZES
+             XEmacs.menubar.font: SANS:size=PTSIZES
+                  XEmacs*xftFont: SANS:size=PTSIZES
+@end example
+
+And run @code{xrdb -merge} before starting the new, XFT-enabled xemacs.
+You can choose the available fonts from the list given by
+@code{fc-list}; try @code{xfd -fa FONTNAME-SIZE} to preview a given font.
+
 @unnumberedsec 5.1: Microsoft Windows
 
-@node Q5.1.1, Q5.1.2, Q5.0.6, External Subsystems
+@node Q5.1.1, Q5.1.2, Q5.0.7, External Subsystems
 @unnumberedsubsec Q5.1.1: Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
 
 In his flavor of Emacs 20, Richard Stallman has renamed all the @samp{win32-*}

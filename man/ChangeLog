@@ -1,3 +1,10 @@
+2008-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs-faq.texi (Q5.0.7): Add a section on how one can use
+	antialiased fonts under X11; thank you Giacomo Boffi. 
+	(Q1.0.3): Clarify pronunciation using a serious phonetic
+	alphabet. 
+
 2008-07-26  Ville Skyttä  <scop@xemacs.org>
 
 	* xemacs/custom.texi, xemacs/frame.texi, xemacs/mule.texi,
