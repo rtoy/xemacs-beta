@@ -526,6 +526,7 @@ baaaa
 
 (with-string-as-buffer-contents 
     "-]-----------------------------][]]------------------------"
+  (goto-char (point-min))
   (skip-chars-forward (skip-chars-quote "-[]"))
   (Assert (= (point) (point-max)))
   (skip-chars-backward (skip-chars-quote "-[]"))
