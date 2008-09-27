@@ -1,3 +1,8 @@
+2008-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (with-string-as-buffer-contents):
+	Document initial position of point.
+
 2008-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* window.el (only-window-p): New.
