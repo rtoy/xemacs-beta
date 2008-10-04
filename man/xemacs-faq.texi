@@ -6284,41 +6284,53 @@ bugs...
 @node Q5.0.7, Q5.1.1, Q5.0.6, External Subsystems
 @unnumberedsubsec Q5.0.7: How can I use antialiased fonts under X11?
 
-For this you need a recent beta version, and please consider the caveats
-that apply when using beta software from any source.  Rebuild xemacs
-using at least the following options to configure:
+The X11 version of XEmacs can use antialiased fonts via the Xft,
+fontconfig, and freetype libraries.  To configure this you need a recent
+beta version (at least 21.5.24); the more recent, the better.  This is
+beta software, the usual caveats apply.  Rebuild xemacs using the
+following configure options, plus any others you normally use:
 
-@samp{./configure --enable-mule --with-xft=emacs,menubars}
+@samp{--enable-mule --with-xft=emacs,menubars}
 
-For further details on the XEmacs widgets that support XFT, see the
-output of @code{./configure --help}.  You may find that you have to
-install some lib[something]-dev packages to provide header files; see
-your packaging system's documentation.  Depending on your platform, your
-packaging system will normally be something like RPM, @code{apt} or
-DarwinPorts.
+Xft @emph{may} work without Mule but the developers working on the Xft
+code invariably build with Mule.  The tab control also supports Xft, and
+at some date the progress gauge will as well.  If they are configured in
+to XEmacs, you may add @samp{tabs} and @samp{gauges} to the value of the
+@samp{--with-xft} option (with a comma separating each value from the
+previous ones).  For further details on the XEmacs widgets that support
+XFT, see the output of @code{./configure --help}.  If you use a package
+manager from your OS distribution, you may need to install development
+packages for @file{fontconfig} and @file{Xft}, and possibly for their
+prequisites.
 
 To specify a particular antialiased font, put something like the
-following lines in your @file{~/.Xdefaults} or @file{~.Xresources}
-(using @code{#define} in @file{.Xresources} avoids boring hand
-substitution):
+following lines in your @file{~/.Xdefaults} or @file{~/.Xresources}:
 
 @example
-#define MONO    Mono
-#define SANS    Sans
-#define PTSIZEM 12
-#define PTSIZES 11
-    XEmacs.default.attributeFont: MONO:size=PTSIZEM
-       XEmacs.bold.attributeFont: MONO:size=PTSIZEM:style=Bold
-     XEmacs.italic.attributeFont: MONO:size=PTSIZEM:style=Oblique
-XEmacs.bold-italic.attributeFont: MONO:size=PTSIZEM:style=Bold Oblique
-   XEmacs.modeline.attributeFont: SANS:size=PTSIZES
-             XEmacs.menubar.font: SANS:size=PTSIZES
-                  XEmacs*xftFont: SANS:size=PTSIZES
+    XEmacs.default.attributeFont: monospace-12
+       XEmacs.bold.attributeFont: monospace-12:style=Bold
+     XEmacs.italic.attributeFont: monospace-12:style=Oblique
+XEmacs.bold-italic.attributeFont: monospace-12:style=Bold Oblique
+   XEmacs.modeline.attributeFont: sans-serif-11
+          XEmacs.menubar.xftFont: sans-serif-11
+                  XEmacs*XftFont: sans-serif-11
 @end example
 
-And run @code{xrdb -merge} before starting the new, XFT-enabled xemacs.
-You can choose the available fonts from the list given by
-@code{fc-list}; try @code{xfd -fa FONTNAME-SIZE} to preview a given font.
+@strong{Warning}: These resource naming conventions are just hacks to
+get the code running; you should expect them to change.  (Sorry about
+that, but this @emph{is} beta software!)
+
+Then run @code{xrdb -merge} before starting the new, XFT-enabled
+xemacs.  You can choose the available fonts from the list given by
+@code{fc-list}; try @code{xfd -fa FONTNAME-SIZE} to preview a given
+font.  Note that ``monospace'' and ``sans-serif'' are generic aliases
+defined by fontconfig which may correspond to any of many real fonts
+based on local configuration and availability of the aliased fonts,
+and so are likely to give good results in a well-set-up system.
+
+Although Customize does not yet handle fontconfig fontspecs, you can
+pass them as strings directly to @samp{set-face-font} to set fonts from
+Lisp.
 
 @unnumberedsec 5.1: Microsoft Windows
 
