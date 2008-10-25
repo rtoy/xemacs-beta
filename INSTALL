@@ -1,7 +1,7 @@
 XEmacs Installation Guide
 
 Copyright (c) 1994, 1995, 1996 Board of Trustees, University of Illinois
-Copyright (c) 1994-1999, 2003 Free Software Foundation, Inc.
+Copyright (c) 1994-1999, 2003, 2008 Free Software Foundation, Inc.
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the
@@ -61,11 +61,13 @@ installation, upgrade, and removal of applications written in Lisp.
 PACKAGE SYSTEM
 ==============
 
-The file README.packages contain information vital to have a fully
+The FAQ sections 1.7 and 2.1 contain information vital to have a fully
 working XEmacs.  It includes a description of available packages, and
 how to bootstrap XEmacs from a minimal or a complete set of packages.
 This information was not included in this file only because it is too
-large for this terse INSTALL.  Please read README.packages now!
+large for this terse INSTALL.  The FAQ is available in Texinfo format
+in man/xemacs-faq.texi, as an Info file once you build XEmacs, and
+online at http://www.xemacs.org/Documentation/21.5/html/xemacs-faq_1.html.
 
 ADD-ON LIBRARIES
 ================
@@ -794,8 +796,8 @@ object files from the build directory by typing `make clean'.  To also
 remove the files that `configure' created (so you can compile XEmacs
 for a different configuration), type `make distclean'.
 
-READ README.packages
-====================
+READ THE FAQ
+============
 
 Do it!
 
@@ -803,8 +805,8 @@ PROBLEMS
 ========
 
 The most common problem is that you forgot to read and follow the
-directions in README.packages.  You can not have a normal XEmacs
-without downloading some additional packages.
+directions for installing bootstrap packages in the FAQ.  You can not
+have a normal XEmacs without downloading some additional packages.
 
 See the file PROBLEMS in this directory for a list of various problems
 sometimes encountered, and what to do about them.  PROBLEMS is also
