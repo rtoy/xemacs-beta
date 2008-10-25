@@ -1,3 +1,7 @@
+2008-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (xemacs_cc_cc_mismatch): Improve g++ detection.
+
 2008-08-03  Mats Lidell  <matsl@xemacs.org>
 
 	* configure.ac: Fix typo xft_gauge to xft_gauges

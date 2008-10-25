@@ -3815,12 +3815,16 @@ extern Lisp_Object_ptr_dynarr *staticpros_nodump;
 
 MODULE_API void staticpro_1 (Lisp_Object *, Ascbyte *);
 MODULE_API void staticpro_nodump_1 (Lisp_Object *, Ascbyte *);
-#define staticpro(ptr) staticpro_1 (ptr, #ptr)
-#define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, #ptr)
+/* g++ 4.3 complains about the conversion of const char to char.
+   These end up in a dynarray, so we would need to define a whole new class
+   of dynarray just to handle the const char stuff.
+   ####Check to see how hard this might be. */
+#define staticpro(ptr) staticpro_1 (ptr, (Ascbyte *) #ptr)
+#define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, (Ascbyte *) #ptr)
 
 #ifdef HAVE_SHLIB
 MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, Ascbyte *);
-#define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, #ptr)
+#define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, (Ascbyte *) #ptr)
 #endif
 
 #else
