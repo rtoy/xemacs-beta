@@ -1,3 +1,10 @@
+2008-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lisp.h (static_pro): Cast out a warning.
+	g++ 4.3 complains about the conversion of const char to char.
+	These end up in a dynarray, so we would need to define a whole new
+	class of dynarray just to handle the const char stuff.
+
 2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fuser_variable_p): 

@@ -2239,18 +2239,25 @@ fi
 
 dnl If we're specifying XEMACS_CC, it'd better be in the same family
 dnl as CC or the following flag calculations are bogus.
-dnl #### We may want to actually error and abort here, but I am not sure.
+dnl No error/abort; detection is too fragile.
+
+xemacs_cc_cc_mismatch=no
 if test "$CC" != "$XEMACS_CC"; then
-  if test "$XEMACS_CC" = "g++" -a "$GCC" != "yes"; then
-    AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
-    xemacs_cc_cc_mismatch=yes
-  elif test -n "$GCC" -a "$XEMACS_CC" != "g++"; then
-    AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
-    xemacs_cc_cc_mismatch=yes
+  case "$XEMACS_CC" in
+  *g++* )
+    if test "$GCC" != "yes"; then
+      AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
+      xemacs_cc_cc_mismatch=yes ;;
+  esac
+  if test -n "$GCC"; then
+    case $XEMACS_CC in
+    *g++* )
+      ;;
+    * )
+      AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
+      xemacs_cc_cc_mismatch=yes ;;
+    esac
   dnl #### Add other detectable mismatches here.
-  else
-    xemacs_cc_cc_mismatch=no
-  fi
 fi
 
 dnl Calculate optimization flags.  These will be off by default in beta
