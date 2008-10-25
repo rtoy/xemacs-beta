@@ -1,3 +1,7 @@
+2008-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Give better pointers to package documentation.
+
 2008-07-06  Ville Skyttä  <scop@xemacs.org>
 
 	* configure.ac (xe_fst):
