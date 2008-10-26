@@ -377,7 +377,7 @@ xm_update_progress (widget_instance* UNUSED (instance), Widget scale,
       XtSetArg (al [ac], XmNscaleWidth, width); ac++;
     }
 
-  XtSetValues (scale, al, 1);
+  XtSetValues (scale, al, ac);
 }
 #endif /* LWLIB_WIDGETS_MOTIF */
 
