@@ -526,6 +526,7 @@ baaaa
 
 (with-string-as-buffer-contents 
     "-]-----------------------------][]]------------------------"
+  (goto-char (point-min))
   (skip-chars-forward (skip-chars-quote "-[]"))
   (Assert (= (point) (point-max)))
   (skip-chars-backward (skip-chars-quote "-[]"))
@@ -543,4 +544,22 @@ baaaa
 ;; #### Write some tests!  Much functionality is implicitly tested above
 ;; via `replace-regexp-in-string', but we should specifically test bogus
 ;; combinations of STRING and STRBUFFER.
+
+;; empty string at point
+;; Thanks Julian Bradford on XEmacs Beta
+;; <18652.54975.894512.880956@krk.inf.ed.ac.uk>
+(with-string-as-buffer-contents "aáa"
+  (goto-char (point-min))
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 1))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 2))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 3))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 4)))
+
 
