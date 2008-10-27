@@ -645,6 +645,7 @@ Value is what BODY returns."
 ;; Moved from mule-coding.el.
 (defmacro with-string-as-buffer-contents (str &rest body)
   "With the contents of the current buffer being STR, run BODY.
+Point starts positioned to end of buffer.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
   `(with-temp-buffer

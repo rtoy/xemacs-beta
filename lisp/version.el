@@ -33,7 +33,9 @@
 (defconst xemacs-betaname
   (and emacs-beta-version (format "(beta%d)" emacs-beta-version))
   "Non-nil when this is a test (beta) version of XEmacs.
-Warning, this variable did not exist in XEmacs versions prior to 20.3")
+Warning, this variable did not exist in XEmacs versions prior to 20.3.
+It value is derived from `emacs-beta-version'.  It is mutually exclusive
+with `emacs-patch-level'.")
 
 (defconst emacs-version
   (format "%d.%d %s%s%s%s%s"

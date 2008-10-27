@@ -1,3 +1,13 @@
+2008-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* version.el (xemacs-betaname):
+	Document relation to other version variables.
+
+2008-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (with-string-as-buffer-contents):
+	Document initial position of point.
+
 2008-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* window.el (only-window-p): New.
