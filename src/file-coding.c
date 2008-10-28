@@ -897,8 +897,8 @@ eol_type_to_symbol (enum eol_type type)
 
 struct subsidiary_type
 {
-  const Ascbyte *extension;
-  const Ascbyte *mnemonic_ext;
+  Ascbyte *extension;
+  Ascbyte *mnemonic_ext;
   enum eol_type eol;
 };
 
@@ -944,8 +944,8 @@ setup_eol_coding_systems (Lisp_Object codesys)
   
   for (i = 0; i < countof (coding_subsidiary_list); i++)
     {
-      const Ascbyte *extension = coding_subsidiary_list[i].extension;
-      const Ascbyte *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
+      Ascbyte *extension = coding_subsidiary_list[i].extension;
+      Ascbyte *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
       qxestrcpy_ascii (codesys_name + len, extension);
@@ -1021,7 +1021,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
    */
 
 static Lisp_Object
-make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
+make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
 		      Lisp_Object type, Lisp_Object description,
 		      Lisp_Object props)
 {
@@ -1192,7 +1192,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 }
 
 Lisp_Object
-make_internal_coding_system (Lisp_Object existing, const Ascbyte *prefix,
+make_internal_coding_system (Lisp_Object existing, Ascbyte *prefix,
 			     Lisp_Object type, Lisp_Object description,
 			     Lisp_Object props)
 {

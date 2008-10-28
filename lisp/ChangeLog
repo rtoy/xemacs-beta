@@ -1,7 +1,3 @@
-2008-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* version.el (xemacs-betaname): Fix docstring typo.  (Thanks, Ville!)
-
 2008-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* version.el (xemacs-betaname):

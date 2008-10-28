@@ -1527,7 +1527,7 @@ enum printing_badness
 
 static void
 printing_major_badness (Lisp_Object printcharfun,
-			const Ascbyte *badness_string, int type, void *val,
+			Ascbyte *badness_string, int type, void *val,
 			enum printing_badness badness)
 {
   Ibyte buf[666];

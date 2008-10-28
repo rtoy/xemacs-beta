@@ -255,7 +255,7 @@ static Lisp_Object QSexecute_internal_event;
 Fixnum debug_emacs_events;
 
 static void
-external_debugging_print_event (const char *event_description, Lisp_Object event)
+external_debugging_print_event (char *event_description, Lisp_Object event)
 {
   write_c_string (Qexternal_debugging_output, "(");
   write_c_string (Qexternal_debugging_output, event_description);

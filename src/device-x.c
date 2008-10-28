@@ -79,33 +79,29 @@ Lisp_Object Vx_emacs_application_class;
 
 Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
-/* Shut up G++ 4.3. */
-#define Xrm_ODR(option,resource,type,default) \
-  { (String) option, (String) resource, type, default }
-
 static XrmOptionDescRec emacs_options[] =
 {
-  Xrm_ODR ("-geometry", ".geometry", XrmoptionSepArg, NULL),
-  Xrm_ODR ("-iconic", ".iconic", XrmoptionNoArg, (String) "yes"),
+  {"-geometry", ".geometry", XrmoptionSepArg, NULL},
+  {"-iconic", ".iconic", XrmoptionNoArg, "yes"},
 
-  Xrm_ODR ("-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL),
-  Xrm_ODR ("-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL),
-  Xrm_ODR ("-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL),
-  Xrm_ODR ("-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL),
+  {"-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
+  {"-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
+  {"-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL},
+  {"-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL},
 
-  Xrm_ODR ("-privatecolormap", ".privateColormap", XrmoptionNoArg,  (String) "yes"),
-  Xrm_ODR ("-visual",   ".EmacsVisual",	    XrmoptionSepArg, NULL),
+  {"-privatecolormap", ".privateColormap", XrmoptionNoArg,  "yes"},
+  {"-visual",   ".EmacsVisual",	    XrmoptionSepArg, NULL},
 
   /* #### Beware!  If the type of the shell changes, update this. */
-  Xrm_ODR ("-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
-  Xrm_ODR ("-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
-  Xrm_ODR ("-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
+  {"-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
+  {"-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
+  {"-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
 
-  Xrm_ODR ("-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL),
-  Xrm_ODR ("-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL),
-  Xrm_ODR ("-mc",       "*pointerColor",                XrmoptionSepArg, NULL),
-  Xrm_ODR ("-cr",       "*cursorColor",                 XrmoptionSepArg, NULL),
-  Xrm_ODR ("-fontset",  "*FontSet",                     XrmoptionSepArg, NULL),
+  {"-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
+  {"-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
+  {"-mc",       "*pointerColor",                XrmoptionSepArg, NULL},
+  {"-cr",       "*cursorColor",                 XrmoptionSepArg, NULL},
+  {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
 };
 
 static const struct memory_description x_device_data_description_1 [] = {
@@ -333,7 +329,7 @@ compute_x_app_name (int argc, Extbyte **argv)
   if (argc > 0 && argv[0] && *argv[0])
     return (ptr = strrchr (argv[0], '/')) ? ++ptr : argv[0];
 
-  return (Extbyte *) "xemacs";	/* shut up g++ 4.3 */
+  return "xemacs";
 }
 
 /*
@@ -347,7 +343,7 @@ compute_x_app_name (int argc, Extbyte **argv)
 static int
 have_xemacs_resources_in_xrdb (Display *dpy)
 {
-  const char *xdefs, *key;
+  char *xdefs, *key;
   int len;
 
 #ifdef INFODOCK
@@ -692,9 +688,9 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
-    const Extbyte *format;
+    Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
@@ -743,11 +739,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     }
 
   no_data_directory:
-    {
-      /* Cast off const for G++ 4.3. */
-      Extbyte *temp = (Extbyte *) locale;
-      xfree (temp, Extbyte*);
-    }
+    xfree (locale, Extbyte*);
  }
 #endif /* MULE */
 
@@ -869,9 +861,9 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      be the place.  Make sure it doesn't conflict with GNOME. */
   {
     Arg al[3];
-    Xt_SET_ARG (al[0], XtNvisual,   visual);
-    Xt_SET_ARG (al[1], XtNdepth,    depth);
-    Xt_SET_ARG (al[2], XtNcolormap, cmap);
+    XtSetArg (al[0], XtNvisual,   visual);
+    XtSetArg (al[1], XtNdepth,    depth);
+    XtSetArg (al[2], XtNcolormap, cmap);
 
     app_shell = XtAppCreateShell (NULL, app_class,
 				  applicationShellWidgetClass,
@@ -888,13 +880,11 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      and set it to the size of the root window for child placement purposes */
   {
     Arg al[5];
-    Xt_SET_ARG (al[0], XtNmappedWhenManaged, False);
-    Xt_SET_ARG (al[1], XtNx, 0);
-    Xt_SET_ARG (al[2], XtNy, 0);
-    Xt_SET_ARG (al[3], XtNwidth,
-		WidthOfScreen  (ScreenOfDisplay (dpy, screen)));
-    Xt_SET_ARG (al[4], XtNheight,
-		HeightOfScreen (ScreenOfDisplay (dpy, screen)));
+    XtSetArg (al[0], XtNmappedWhenManaged, False);
+    XtSetArg (al[1], XtNx, 0);
+    XtSetArg (al[2], XtNy, 0);
+    XtSetArg (al[3], XtNwidth,  WidthOfScreen  (ScreenOfDisplay (dpy, screen)));
+    XtSetArg (al[4], XtNheight, HeightOfScreen (ScreenOfDisplay (dpy, screen)));
     XtSetValues (app_shell, al, countof (al));
     XtRealizeWidget (app_shell);
   }

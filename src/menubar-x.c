@@ -690,13 +690,13 @@ make_dummy_xbutton_event (XEvent *dummy, Widget daddy, Lisp_Event *eev)
       {
 	Widget shell = XtParent (daddy);
 
-	Xt_SET_ARG (al [0], XtNx, &shellx);
-	Xt_SET_ARG (al [1], XtNy, &shelly);
+	XtSetArg (al [0], XtNx, &shellx);
+	XtSetArg (al [1], XtNy, &shelly);
 	XtGetValues (shell, al, 2);
       }
 #endif
-      Xt_SET_ARG (al [0], XtNx, &framex);
-      Xt_SET_ARG (al [1], XtNy, &framey);
+      XtSetArg (al [0], XtNx, &framex);
+      XtSetArg (al [1], XtNy, &framey);
       XtGetValues (daddy, al, 2);
       btn->x_root = shellx + framex + btn->x;
       btn->y_root = shelly + framey + btn->y;

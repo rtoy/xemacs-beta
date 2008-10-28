@@ -79,7 +79,6 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/bitmaps/gray>
 
 #include "lwlib-colors.h"
-#include "xt-wrappers.h"
 
 #include "xlwscrollbarP.h"
 #include "xlwscrollbar.h"
@@ -114,79 +113,90 @@ typedef enum
 } SliderStyle;
 
 /*-------------------------- Resources ----------------------------------*/
+#define offset(field) XtOffset(XlwScrollBarWidget, field)
 
 static XtResource resources[] = {
-#define offset(field) XtOffset(XlwScrollBarWidget, field)
-#define res(name,_class,intrepr,type,member,extrepr,value) \
-  Xt_RESOURCE (name, _class, intrepr, type, offset(sb.member), extrepr, value)
+    { XmNforeground, XmCForeground, XtRPixel, sizeof(Pixel),
+      offset(sb.foreground), XtRImmediate, (XtPointer) XtDefaultForeground },
 
-  res (XmNforeground, XmCForeground, XtRPixel, Pixel, 
-       foreground,  XtRImmediate, XtDefaultForeground),
-  res (XmNtopShadowColor, XmCTopShadowColor, XtRPixel,
-       Pixel,  topShadowColor,  XtRImmediate, ~0),
-  res (XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel,
-       Pixel,  bottomShadowColor,  XtRImmediate, ~0),
+    { XmNtopShadowColor, XmCTopShadowColor, XtRPixel,
+      sizeof(Pixel), offset(sb.topShadowColor), XtRImmediate, (XtPointer) ~0 },
+    { XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel,
+      sizeof(Pixel), offset(sb.bottomShadowColor), XtRImmediate,
+      (XtPointer)~0 },
 
-  res (XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap,
-       Pixmap,  topShadowPixmap,  XtRImmediate, None),
-  res (XmNbottomShadowPixmap, XmCBottomShadowPixmap,
-       XtRPixmap, Pixmap, bottomShadowPixmap, XtRImmediate, None),
+    { XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap,
+      sizeof (Pixmap), offset(sb.topShadowPixmap), XtRImmediate,
+      (XtPointer)None},
+    { XmNbottomShadowPixmap, XmCBottomShadowPixmap,
+      XtRPixmap, sizeof (Pixmap), offset(sb.bottomShadowPixmap),
+      XtRImmediate, (XtPointer)None},
 
-  res (XmNtroughColor, XmCTroughColor, XtRPixel, Pixel, troughColor,
-       XtRImmediate, ~0),
+    { XmNtroughColor, XmCTroughColor, XtRPixel, sizeof(Pixel),
+      offset(sb.troughColor), XtRImmediate, (XtPointer)~0 },
 
-  res (XmNshadowThickness, XmCShadowThickness, XtRInt, int,
-       shadowThickness, XtRImmediate, 2),
+    { XmNshadowThickness, XmCShadowThickness, XtRInt,
+      sizeof(int), offset(sb.shadowThickness), XtRImmediate, (XtPointer)2 },
 
-  Xt_RESOURCE (XmNborderWidth, XmCBorderWidth, XtRDimension, Dimension,
-	       offset(core.border_width), XtRImmediate, 0),
+    { XmNborderWidth, XmCBorderWidth, XtRDimension,
+      sizeof(Dimension), offset(core.border_width), XtRImmediate,
+      (XtPointer)0 },
 
-  res (XmNshowArrows, XmCShowArrows, XtRBoolean, Boolean, showArrows,
-       XtRImmediate, True),
+    { XmNshowArrows, XmCShowArrows, XtRBoolean,
+      sizeof(Boolean), offset(sb.showArrows), XtRImmediate, (XtPointer)True },
 
-  res (XmNinitialDelay, XmCInitialDelay, XtRInt, int, initialDelay,
-       XtRImmediate, 250),
-  res (XmNrepeatDelay, XmCRepeatDelay, XtRInt, int, repeatDelay,
-       XtRImmediate, 50),
+    { XmNinitialDelay, XmCInitialDelay, XtRInt, sizeof(int),
+      offset(sb.initialDelay), XtRImmediate, (XtPointer) 250 },
+    { XmNrepeatDelay, XmCRepeatDelay, XtRInt, sizeof(int),
+      offset(sb.repeatDelay), XtRImmediate, (XtPointer) 50 },
 
-  res (XmNorientation, XmCOrientation, XtROrientation,
-       unsigned char,  orientation,  XtRImmediate, XmVERTICAL),
+    { XmNorientation, XmCOrientation, XtROrientation,
+      sizeof(unsigned char), offset(sb.orientation), XtRImmediate,
+      (XtPointer) XmVERTICAL },
 
-  res (XmNminimum, XmCMinimum, XtRInt, int, minimum,  XtRImmediate, 0),
-  res (XmNmaximum, XmCMaximum, XtRInt, int, maximum,  XtRImmediate, 100),
-  res (XmNvalue, XmCValue, XtRInt, int, value,  XtRImmediate, 0),
-  res (XmNsliderSize, XmCSliderSize, XtRInt, int, sliderSize, XtRImmediate, 10),
-  res (XmNincrement, XmCIncrement, XtRInt, int, increment,  XtRImmediate, 1),
-  res (XmNpageIncrement, XmCPageIncrement, XtRInt, int, 
-       pageIncrement,  XtRImmediate, 10),
+    { XmNminimum, XmCMinimum, XtRInt, sizeof(int),
+      offset(sb.minimum), XtRImmediate, (XtPointer) 0},
+    { XmNmaximum, XmCMaximum, XtRInt, sizeof(int),
+      offset(sb.maximum), XtRImmediate, (XtPointer) 100},
+    { XmNvalue, XmCValue, XtRInt, sizeof(int),
+      offset(sb.value), XtRImmediate, (XtPointer) 0},
+    { XmNsliderSize, XmCSliderSize, XtRInt, sizeof(int),
+      offset(sb.sliderSize), XtRImmediate, (XtPointer) 10},
+    { XmNincrement, XmCIncrement, XtRInt, sizeof(int),
+      offset(sb.increment), XtRImmediate, (XtPointer) 1},
+    { XmNpageIncrement, XmCPageIncrement, XtRInt, sizeof(int),
+      offset(sb.pageIncrement), XtRImmediate, (XtPointer) 10},
 
-  res (XmNvalueChangedCallback, XmCValueChangedCallback,
-       XtRCallback, XtPointer,  valueChangedCBL, XtRCallback, NULL),
-  res (XmNincrementCallback, XmCIncrementCallback,
-       XtRCallback, XtPointer,  incrementCBL, XtRCallback, NULL),
-  res (XmNdecrementCallback, XmCDecrementCallback,
-       XtRCallback, XtPointer,  decrementCBL, XtRCallback, NULL),
-  res (XmNpageIncrementCallback, XmCPageIncrementCallback,
-       XtRCallback, XtPointer,  pageIncrementCBL, XtRCallback, NULL),
-  res (XmNpageDecrementCallback, XmCPageDecrementCallback,
-       XtRCallback, XtPointer,  pageDecrementCBL, XtRCallback, NULL),
-  res (XmNtoTopCallback, XmCToTopCallback, XtRCallback,
-       XtPointer,  toTopCBL,  XtRCallback, NULL),
-  res (XmNtoBottomCallback, XmCToBottomCallback, XtRCallback,
-       XtPointer,  toBottomCBL,  XtRCallback, NULL),
-  res (XmNdragCallback, XmCDragCallback, XtRCallback,
-       XtPointer,  dragCBL,  XtRCallback, NULL),
+    { XmNvalueChangedCallback, XmCValueChangedCallback,
+      XtRCallback, sizeof(XtPointer), offset(sb.valueChangedCBL),
+      XtRCallback, NULL},
+    { XmNincrementCallback, XmCIncrementCallback,
+      XtRCallback, sizeof(XtPointer), offset(sb.incrementCBL),
+      XtRCallback, NULL},
+    { XmNdecrementCallback, XmCDecrementCallback,
+      XtRCallback, sizeof(XtPointer), offset(sb.decrementCBL),
+      XtRCallback, NULL},
+    { XmNpageIncrementCallback, XmCPageIncrementCallback,
+      XtRCallback, sizeof(XtPointer), offset(sb.pageIncrementCBL),
+      XtRCallback, NULL},
+    { XmNpageDecrementCallback, XmCPageDecrementCallback,
+      XtRCallback, sizeof(XtPointer), offset(sb.pageDecrementCBL),
+      XtRCallback, NULL},
+    { XmNtoTopCallback, XmCToTopCallback, XtRCallback,
+      sizeof(XtPointer), offset(sb.toTopCBL), XtRCallback, NULL},
+    { XmNtoBottomCallback, XmCToBottomCallback, XtRCallback,
+      sizeof(XtPointer), offset(sb.toBottomCBL), XtRCallback, NULL},
+    { XmNdragCallback, XmCDragCallback, XtRCallback,
+      sizeof(XtPointer), offset(sb.dragCBL), XtRCallback, NULL},
 
       /* "knob" is obsolete; use "slider" instead. */
-  res (XmNsliderStyle, XmCSliderStyle, XtRString, char *, 
-       sliderStyle,  XtRImmediate, NULL),
-  res (XmNknobStyle, XmCKnobStyle, XtRString, char *, 
-       knobStyle,  XtRImmediate, NULL),
+    { XmNsliderStyle, XmCSliderStyle, XtRString, sizeof(char *),
+      offset(sb.sliderStyle), XtRImmediate, NULL},
+    { XmNknobStyle, XmCKnobStyle, XtRString, sizeof(char *),
+       offset(sb.knobStyle), XtRImmediate, NULL},
 
-  res (XmNarrowPosition, XmCArrowPosition, XtRString, char *, 
-       arrowPosition,  XtRImmediate, NULL),
-#undef  offset
-#undef  res
+    { XmNarrowPosition, XmCArrowPosition, XtRString, sizeof(char *),
+      offset(sb.arrowPosition), XtRImmediate, NULL},
 };
 
 /*-------------------------- Prototypes ---------------------------------*/
@@ -208,13 +218,13 @@ static void Realize(Widget widget, XtValueMask *valuemask, XSetWindowAttributes 
 /*-------------------------- Actions Table ------------------------------*/
 static XtActionsRec actions[] =
 {
-  { (String) "Select",		Select},
-  { (String) "PageDownOrRight",	PageDownOrRight},
-  { (String) "PageUpOrLeft",	PageUpOrLeft},
-  { (String) "Drag",		Drag},
-  { (String) "Release",		Release},
-  { (String) "Jump",		Jump},
-  { (String) "Abort",		Abort},
+  {"Select",		Select},
+  {"PageDownOrRight",	PageDownOrRight},
+  {"PageUpOrLeft",	PageUpOrLeft},
+  {"Drag",		Drag},
+  {"Release",		Release},
+  {"Jump",		Jump},
+  {"Abort",		Abort},
 };
 
 /*--------------------- Default Translation Table -----------------------*/
@@ -233,7 +243,7 @@ XlwScrollBarClassRec xlwScrollBarClassRec = {
     /* core_class fields */
     {
     /* superclass          */ (WidgetClass) &coreClassRec,
-    /* class_name          */ (String) "XlwScrollBar",
+    /* class_name          */ "XlwScrollBar",
     /* widget_size         */ sizeof(XlwScrollBarRec),
     /* class_initialize    */ NULL,
     /* class_part_init     */ NULL,

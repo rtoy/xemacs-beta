@@ -4447,7 +4447,7 @@ tail_recurse:
     {
     invalid:
       {
-	const char *str = GETTEXT ("*invalid*");
+	char *str = GETTEXT ("*invalid*");
 	Charcount size = (Charcount) strlen (str); /* is this ok ?? -- dv */
 
 	if (size <= *offset)

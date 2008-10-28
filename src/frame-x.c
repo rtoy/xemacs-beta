@@ -280,8 +280,8 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
   if (cw <= 0 || ch <= 0)
     ABORT ();
 
-  Xt_SET_ARG (al[0], XtNwidthInc,  cw);
-  Xt_SET_ARG (al[1], XtNheightInc, ch);
+  XtSetArg (al[0], XtNwidthInc,  cw);
+  XtSetArg (al[1], XtNheightInc, ch);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -298,8 +298,8 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
   fflush (stdout);
 #endif
 
-  Xt_SET_ARG (al[0], XtNwidthCells,  width);
-  Xt_SET_ARG (al[1], XtNheightCells, height);
+  XtSetArg (al[0], XtNwidthCells,  width);
+  XtSetArg (al[1], XtNheightCells, height);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -668,8 +668,8 @@ x_set_frame_text_value (struct frame *f, Ibyte *value,
   if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
       Arg al[2];
-      Xt_SET_ARG (al[0], Xt_resource_name, new_XtValue);
-      Xt_SET_ARG (al[1], Xt_resource_encoding_name, encoding);
+      XtSetArg (al[0], Xt_resource_name, new_XtValue);
+      XtSetArg (al[1], Xt_resource_encoding_name, encoding);
       XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
     }
 }
@@ -1539,8 +1539,8 @@ x_initialize_frame_size (struct frame *f)
       if (! (frame_flags & (WidthValue | HeightValue)))
 	{
           Arg al[2];
-	  Xt_SET_ARG (al [0], XtNwidth,  &frame_w);
-	  Xt_SET_ARG (al [1], XtNheight, &frame_h);
+	  XtSetArg (al [0], XtNwidth,  &frame_w);
+	  XtSetArg (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
 	  if (!frame_w && !frame_h)
 	    {
@@ -1554,8 +1554,8 @@ x_initialize_frame_size (struct frame *f)
       if (frame_flags & (XValue | YValue))
 	{
           Arg al[2];
-	  Xt_SET_ARG (al [0], XtNwidth,  &frame_w);
-	  Xt_SET_ARG (al [1], XtNheight, &frame_h);
+	  XtSetArg (al [0], XtNwidth,  &frame_w);
+	  XtSetArg (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
 
 	  if (frame_flags & XNegative)
@@ -1563,8 +1563,8 @@ x_initialize_frame_size (struct frame *f)
 	  if (frame_flags & YNegative)
 	    frame_y += frame_h;
 
-	  Xt_SET_ARG (al [0], XtNx, frame_x);
-	  Xt_SET_ARG (al [1], XtNy, frame_y);
+	  XtSetArg (al [0], XtNx, frame_x);
+	  XtSetArg (al [1], XtNy, frame_y);
 	  XtSetValues (ew, al, 2);
 	}
       return;
@@ -1869,40 +1869,40 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       FRAME_X_TOP_LEVEL_FRAME_P (f) = 1;
 
   ac = 0;
-  Xt_SET_ARG (al[ac], XtNallowShellResize, True); ac++;
+  XtSetArg (al[ac], XtNallowShellResize, True); ac++;
 #ifdef LWLIB_USES_MOTIF
   /* Motif sucks beans.  Without this in here, it will delete the window
      out from under us when it receives a WM_DESTROY_WINDOW message
      from the WM. */
-  Xt_SET_ARG (al[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
+  XtSetArg (al[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
 #endif
 
 #ifdef EXTERNAL_WIDGET
   if (window_id)
     {
-      Xt_SET_ARG (al[ac], XtNwindow, window_id); ac++;
+      XtSetArg (al[ac], XtNwindow, window_id); ac++;
     }
   else
 #endif /* EXTERNAL_WIDGET */
     {
-      Xt_SET_ARG (al[ac], XtNinput, True);       ac++;
-      Xt_SET_ARG (al[ac], XtNminWidthCells, 10); ac++;
-      Xt_SET_ARG (al[ac], XtNminHeightCells, 1); ac++;
-      Xt_SET_ARG (al[ac], XtNvisual, visual);    ac++;
-      Xt_SET_ARG (al[ac], XtNdepth, depth);      ac++;
-      Xt_SET_ARG (al[ac], XtNcolormap, cmap);    ac++;
+      XtSetArg (al[ac], XtNinput, True);       ac++;
+      XtSetArg (al[ac], XtNminWidthCells, 10); ac++;
+      XtSetArg (al[ac], XtNminHeightCells, 1); ac++;
+      XtSetArg (al[ac], XtNvisual, visual);    ac++;
+      XtSetArg (al[ac], XtNdepth, depth);      ac++;
+      XtSetArg (al[ac], XtNcolormap, cmap);    ac++;
     }
 
   if (!NILP (overridep))
     {
-      Xt_SET_ARG (al[ac], XtNoverrideRedirect, True);    ac++;
+      XtSetArg (al[ac], XtNoverrideRedirect, True);    ac++;
     }
 
   /* #### maybe we should check for FRAMEP instead? */
   if (!NILP (parent))
     {
       parentwid = FRAME_X_SHELL_WIDGET (XFRAME (parent));
-      Xt_SET_ARG (al[ac], XtNtransientFor, parentwid); ac++;
+      XtSetArg (al[ac], XtNtransientFor, parentwid); ac++;
     }
 
   shell = XtCreatePopupShell ("shell",
@@ -1921,9 +1921,9 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
   /* Create the manager widget */
   ac = 0;
-  Xt_SET_ARG (al[ac], XtNvisual, visual); ac++;
-  Xt_SET_ARG (al[ac], XtNdepth, depth); ac++;
-  Xt_SET_ARG (al[ac], XtNcolormap, cmap); ac++;
+  XtSetArg (al[ac], XtNvisual, visual); ac++;
+  XtSetArg (al[ac], XtNdepth, depth); ac++;
+  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
 
   container = XtCreateWidget ("container",
 			      emacsManagerWidgetClass, shell, al, ac);
@@ -1935,11 +1935,11 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
   /* Create the text area */
   ac = 0;
-  Xt_SET_ARG (al[ac], XtNvisual, visual); ac++;
-  Xt_SET_ARG (al[ac], XtNdepth, depth); ac++;
-  Xt_SET_ARG (al[ac], XtNcolormap, cmap); ac++;
-  Xt_SET_ARG (al[ac], XtNborderWidth, 0); ac++; /* should this be settable? */
-  Xt_SET_ARG (al[ac], XtNemacsFrame,  f); ac++;
+  XtSetArg (al[ac], XtNvisual, visual); ac++;
+  XtSetArg (al[ac], XtNdepth, depth); ac++;
+  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
+  XtSetArg (al[ac], XtNborderWidth, 0); ac++; /* should this be settable? */
+  XtSetArg (al[ac], XtNemacsFrame,  f); ac++;
   text = XtCreateWidget (name, emacsFrameClass, container, al, ac);
   FRAME_X_TEXT_WIDGET (f) = text;
 
@@ -2198,8 +2198,8 @@ x_set_frame_icon (struct frame *f)
   /* Store the X data into the widget. */
   {
     Arg al[2];
-    Xt_SET_ARG (al[0], XtNiconPixmap, x_pixmap);
-    Xt_SET_ARG (al[1], XtNiconMask,   x_mask);
+    XtSetArg (al[0], XtNiconPixmap, x_pixmap);
+    XtSetArg (al[1], XtNiconMask,   x_mask);
     XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
   }
 }
@@ -2264,9 +2264,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
   int win_gravity;
   Arg al[3];
 
-  Xt_SET_ARG (al[0], XtNwidth,       &shell_w);
-  Xt_SET_ARG (al[1], XtNheight,      &shell_h);
-  Xt_SET_ARG (al[2], XtNborderWidth, &shell_bord);
+  XtSetArg (al[0], XtNwidth,       &shell_w);
+  XtSetArg (al[1], XtNheight,      &shell_h);
+  XtSetArg (al[2], XtNborderWidth, &shell_bord);
   XtGetValues (w, al, 3);
 
   win_gravity =
@@ -2283,9 +2283,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
      come back at the right place.  We can't look at s->visible to determine
      whether it is iconified because it might not be up-to-date yet (the queue
      might not be processed). */
-  Xt_SET_ARG (al[0], XtNwinGravity, win_gravity);
-  Xt_SET_ARG (al[1], XtNx, xoff);
-  Xt_SET_ARG (al[2], XtNy, yoff);
+  XtSetArg (al[0], XtNwinGravity, win_gravity);
+  XtSetArg (al[1], XtNx, xoff);
+  XtSetArg (al[2], XtNy, yoff);
   XtSetValues (w, al, 3);
 
   /* Sometimes you will find that
@@ -2709,7 +2709,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 fgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	 Xt_SET_ARG (al[ac], XtNforeground, (void *) fgc.pixel); ac++;
+	 XtSetArg (al[ac], XtNforeground, (void *) fgc.pixel); ac++;
        }
    }
   else if (EQ (name, Qbackground))
@@ -2720,7 +2720,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 bgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	 Xt_SET_ARG (al[ac], XtNbackground, (void *) bgc.pixel); ac++;
+	 XtSetArg (al[ac], XtNbackground, (void *) bgc.pixel); ac++;
        }
 
      /* Really crappy way to force the modeline shadows to be
@@ -2754,15 +2754,15 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 #ifdef USE_XFT
 	 else if (FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)))
 	   {
-	     Xt_SET_ARG (al[ac], XtNxftFont,
+	     XtSetArg (al[ac], XtNxftFont,
 		       (void *) FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)));
 	     ac++;
 	   }
 #endif
 	 else if (FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)))
 	   {
-	     Xt_SET_ARG (al[ac], XtNfont,
-			 (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
+	     XtSetArg (al[ac], XtNfont,
+		       (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
 	     ac++;
 	   }
        }
