@@ -142,64 +142,69 @@ static	char	accelTable[] = "	#augment\n\
 	 " ;
 static	XtAccelerators	defaultAccelerators ; /* #### Never used */
 
-#define	offset(field)	XtOffsetOf(TabsRec, tabs.field)
 static XtResource resources[] = {
+#define	offset(field)	XtOffsetOf(TabsRec, tabs.field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
 
-  {XtNselectInsensitive, XtCSelectInsensitive, XtRBoolean, sizeof(Boolean),
-	offset(selectInsensitive), XtRImmediate, (XtPointer) True},
-  {XtNfont, XtCFont, XtRFontStruct, sizeof(XFontStruct *),
-	offset(font), XtRString, (XtPointer) XtDefaultFont},
+  res (XtNselectInsensitive, XtCSelectInsensitive, XtRBoolean, Boolean, 
+       selectInsensitive,  XtRImmediate, True),
+  res (XtNfont, XtCFont, XtRFontStruct, XFontStruct *, 
+       font,  XtRString, XtDefaultFont),
 #ifdef USE_XFT_TABS
   /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here?
      or XtDefaultFont? */
-  {XtNfcFontName, XtCFcFontName, XtRString, sizeof(String),
-	offset(fcFontName), XtRString, (XtPointer) NULL },
+  res (XtNfcFontName, XtCFcFontName, XtRString, String,
+       fcFontName, XtRString, NULL),
   /* #### This needs to be fixed to give a proper type and converter for
      XftFonts.  See also xlwmenu.c. */
-  {XtNxftFont, XtCXftFont, XtRString, sizeof(String),
-	offset(xftFontName), XtRString, (XtPointer) "Helvetica-12" },
+  res (XtNxftFont, XtCXftFont, XtRString, String, 
+       xftFontName,  XtRString, "Helvetica-12"),
 #endif
-  {XtNinternalWidth, XtCWidth, XtRDimension, sizeof(Dimension),
-	offset(internalWidth), XtRImmediate, (XtPointer)4 },
-  {XtNinternalHeight, XtCHeight, XtRDimension, sizeof(Dimension),
-	offset(internalHeight), XtRImmediate, (XtPointer)4 },
-  {XtNborderWidth, XtCBorderWidth, XtRDimension, sizeof(Dimension),
-	XtOffsetOf(RectObjRec,rectangle.border_width), XtRImmediate, (XtPointer)0},
-  {XtNtopWidget, XtCTopWidget, XtRWidget, sizeof(Widget),
-	offset(topWidget), XtRImmediate, NULL},
-  {XtNcallback, XtCCallback, XtRCallback, sizeof(XtPointer),
-	offset(callbacks), XtRCallback, NULL},
-  {XtNpopdownCallback, XtCCallback, XtRCallback, sizeof(XtPointer),
-	offset(popdownCallbacks), XtRCallback, NULL},
-  {XtNbeNiceToColormap, XtCBeNiceToColormap, XtRBoolean, sizeof(Boolean),
-	offset(be_nice_to_cmap), XtRImmediate, (XtPointer) True},
-  {XtNtopShadowContrast, XtCTopShadowContrast, XtRInt, sizeof(int),
-	offset(top_shadow_contrast), XtRImmediate, (XtPointer) 20},
-  {XtNbottomShadowContrast, XtCBottomShadowContrast, XtRInt, sizeof(int),
-	offset(bot_shadow_contrast), XtRImmediate, (XtPointer) 40},
-  {XtNinsensitiveContrast, XtCInsensitiveContrast, XtRInt, sizeof(int),
-	offset(insensitive_contrast), XtRImmediate, (XtPointer) 33},
-  {XtNaccelerators, XtCAccelerators, XtRAcceleratorTable,sizeof(XtTranslations),
-	XtOffsetOf(TabsRec,core.accelerators), XtRString, accelTable},
-};
+  res (XtNinternalWidth, XtCWidth, XtRDimension, Dimension, 
+       internalWidth,  XtRImmediate, 4),
+  res (XtNinternalHeight, XtCHeight, XtRDimension, Dimension, 
+       internalHeight,  XtRImmediate, 4),
+  Xt_RESOURCE (XtNborderWidth, XtCBorderWidth, XtRDimension, Dimension, 
+	       XtOffsetOf(RectObjRec,rectangle.border_width), XtRImmediate, 0),
+  res (XtNtopWidget, XtCTopWidget, XtRWidget, Widget, 
+       topWidget,  XtRImmediate, NULL),
+  res (XtNcallback, XtCCallback, XtRCallback, XtPointer, 
+       callbacks,  XtRCallback, NULL),
+  res (XtNpopdownCallback, XtCCallback, XtRCallback, XtPointer, 
+       popdownCallbacks,  XtRCallback, NULL),
+  res (XtNbeNiceToColormap, XtCBeNiceToColormap, XtRBoolean, Boolean, 
+       be_nice_to_cmap,  XtRImmediate, True),
+  res (XtNtopShadowContrast, XtCTopShadowContrast, XtRInt, int, 
+       top_shadow_contrast,  XtRImmediate, 20),
+  res (XtNbottomShadowContrast, XtCBottomShadowContrast, XtRInt, int, 
+       bot_shadow_contrast,  XtRImmediate, 40),
+  res (XtNinsensitiveContrast, XtCInsensitiveContrast, XtRInt, int, 
+       insensitive_contrast,  XtRImmediate, 33),
+  Xt_RESOURCE (XtNaccelerators, XtCAccelerators, XtRAcceleratorTable,
+	       XtTranslations, XtOffsetOf(TabsRec,core.accelerators),
+	       XtRString, accelTable),
 #undef	offset
-
+#undef  res
+};
 
 
 	/* constraint resources */
 
-#define	offset(field)	XtOffsetOf(TabsConstraintsRec, tabs.field)
 static XtResource tabsConstraintResources[] = {
-  {XtNtabLabel, XtCLabel, XtRString, sizeof(String),
-	offset(label), XtRString, NULL},
-  {XtNtabLeftBitmap, XtCLeftBitmap, XtRBitmap, sizeof(Pixmap),
-	offset(left_bitmap), XtRImmediate, None},
-  {XtNtabForeground, XtCForeground, XtRPixel, sizeof(Pixel),
-	offset(foreground), XtRString, (XtPointer) XtDefaultForeground},
-  {XtNresizable, XtCResizable, XtRBoolean, sizeof(Boolean),
-	offset(resizable), XtRImmediate, (XtPointer) True},
-} ;
+#define	offset(field)	XtOffsetOf(TabsConstraintsRec, tabs.field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
+  res (XtNtabLabel, XtCLabel, XtRString, String, label,  XtRString, NULL),
+  res (XtNtabLeftBitmap, XtCLeftBitmap, XtRBitmap, Pixmap, left_bitmap,
+       XtRImmediate, None),
+  res (XtNtabForeground, XtCForeground, XtRPixel, Pixel, foreground,
+       XtRString, XtDefaultForeground),
+  res (XtNresizable, XtCResizable, XtRBoolean, Boolean, resizable,
+       XtRImmediate, True),
 #undef	offset
+#undef	res
+} ;
 
 
 
@@ -318,10 +323,10 @@ static	void	TabsAllocGreyGC( TabsWidget tw) ;
 
 static	XtActionsRec	actionsList[] =
   {
-    {"select",	TabsSelect},
-    {"page",	TabsPage},
-    {"highlight", TabsHighlight},
-    {"unhighlight", TabsUnhighlight},
+    { (String) "select",	TabsSelect },
+    { (String) "page",		TabsPage },
+    { (String) "highlight",	TabsHighlight },
+    { (String) "unhighlight",	TabsUnhighlight },
   } ;
 
 
@@ -341,7 +346,7 @@ TabsClassRec tabsClassRec = {
   {
 /* core_class fields      */
     /* superclass         */    (WidgetClass) SuperClass,
-    /* class_name         */    "Tabs",
+    /* class_name         */    (String) "Tabs",
     /* widget_size        */    sizeof(TabsRec),
     /* class_initialize   */    TabsClassInit,
     /* class_part_init    */	NULL,			/* TODO? */

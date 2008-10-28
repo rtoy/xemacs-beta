@@ -806,7 +806,7 @@ Return the directory name in which the Emacs executable was located.
    enough information to do it right.  */
 
 static int
-argmatch (Wexttext **argv, int argc, Ascbyte *sstr, Ascbyte *lstr,
+argmatch (Wexttext **argv, int argc, const Ascbyte *sstr, const Ascbyte *lstr,
 	  int minlen, Wexttext **valptr, int *skipptr)
 {
   Wexttext *p = NULL;
@@ -862,7 +862,7 @@ argmatch (Wexttext **argv, int argc, Ascbyte *sstr, Ascbyte *lstr,
 }
 
 static void
-check_compatible_window_system (Ascbyte *must)
+check_compatible_window_system (const Ascbyte *must)
 {
   if (display_use && strcmp (display_use, must))
     fatal ("Incompatible window system type `%s': `%s' already specified",
