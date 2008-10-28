@@ -2,7 +2,6 @@
 #define INCLUDED_lwlib_h_
 
 #include <X11/Intrinsic.h>
-#include "xt-wrappers.h"
 
 #if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_MENUBARS_ATHENA)
 #define NEED_MENUBARS

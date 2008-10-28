@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include <Xm/RowColumn.h>
 #endif /* LWLIB_MENUBARS_MOTIF */
 #include "compiler.h"
-#include "../lwlib/xt-wrappers.h"
 
 /* For I, Emacs, am a kind god.  Unlike the goddess Athena and the
    Titan Motif, I require no ritual sacrifices to placate the lesser
@@ -40,14 +39,15 @@ Boston, MA 02111-1307, USA.  */
 
 static XtResource resources[] = {
 #define offset(field) XtOffset(EmacsManagerWidget, emacs_manager.field)
-#define res(name,_class,intrepr,size,member,extrepr,value) \
-  Xt_RESOURCE (name, _class, intrepr, size, offset(member), extrepr, value)
-  res (XtNresizeCallback, XtCCallback, XtRCallback, XtCallbackList,
-       resize_callback, XtRImmediate, 0),
-  res (XtNqueryGeometryCallback, XtCCallback, XtRCallback, XtCallbackList,
-       query_geometry_callback, XtRImmediate, 0),
-  res (XtNuserData, XtCUserData, XtRPointer, XtPointer,
-       user_data, XtRImmediate, 0),
+  { XtNresizeCallback, XtCCallback,
+    XtRCallback, sizeof (XtCallbackList),
+    offset(resize_callback), XtRImmediate, (XtPointer) 0 },
+  { XtNqueryGeometryCallback, XtCCallback,
+    XtRCallback, sizeof (XtCallbackList),
+    offset(query_geometry_callback), XtRImmediate, (XtPointer) 0 },
+  { XtNuserData, XtCUserData,
+    XtRPointer, sizeof (XtPointer),
+    offset(user_data), XtRImmediate, (XtPointer) 0 },
 };
 
 /****************************************************************
@@ -75,7 +75,7 @@ EmacsManagerClassRec emacsManagerClassRec = {
 #else
     /* superclass         */    (WidgetClass) &compositeClassRec,
 #endif
-    /* class_name         */    (String) "EmacsManager",
+    /* class_name         */    "EmacsManager",
     /* widget_size        */    sizeof (EmacsManagerRec),
     /* class_initialize   */    ClassInitialize,
     /* class_part_init    */	NULL,

@@ -70,112 +70,100 @@ xlwMenuTranslations [] =
 
 extern Widget lw_menubar_widget;
 
+#define offset(field) XtOffset(XlwMenuWidget, field)
 static XtResource
 xlwMenuResources[] =
 {
-/* The offset macro is a standard trick.  The remaining macros are an
-   experiment to compress redundancies in resource descriptions, and shut
-   up GCC 4.3 (the String casts, which keep G++ from complaining about
-   implicit conversions from const char *). */
-#define offset(field) XtOffset(XlwMenuWidget, menu.field)
-#define fontres(name,_class,repr,type,member,value) \
-  Xt_RESOURCE (name, _class, repr, type, offset(member), XtRString, value)
-#define mflres(name,cls,member,repr,value) \
-  Xt_RESOURCE (name, cls, XmRFontList, XmFontList, offset(member), repr, value)
-#define dimres(name,cls,repr,member,value) \
-  Xt_RESOURCE (name, cls, repr, Dimension, offset(member), XtRImmediate, value)
-#define boolres(nm,cls,member,val) \
-  Xt_RESOURCE (nm, cls, XtRBoolean, Boolean, offset(member), XtRImmediate, val)
-#define cbres(name,member,value)					  \
-  Xt_RESOURCE (name, XtCCallback, XtRCallback, XtPointer, offset(member), \
-	       XtRCallback, value)
-#define pixres(name,_class,member,repr,value) \
-  Xt_RESOURCE (name, _class, XtRPixel, Pixel, offset(member), repr, value)
-#define fgpixres(name,_class,member) \
-  pixres (name, _class, member, XtRString, "XtDefaultForeground")
-#define nullpixres(name,_class,member) \
-  pixres (name, _class, member, XtRImmediate, -1)
-#define pmres(name,cls,member) \
-  Xt_RESOURCE (name, cls, XtRPixmap, Pixmap, offset(member), XtRImmediate, None)
-
 #if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
   /* There are three font list resources, so that we can accept either of
      the resources *fontList: or *font:, and so that we can tell the
      difference between them being specified, and being defaulted to a
      font from the XtRString specified here. */
-  mflres (XmNfontList,  XmCFontList, font_list,	  XtRImmediate, 0),
-  mflres (XtNfont,      XtCFont,     font_list_2, XtRImmediate, 0),
-  mflres (XmNfontList,  XmCFontList, fallback_font_list,
+  {XmNfontList,  XmCFontList, XmRFontList, sizeof(XmFontList),
+     offset(menu.font_list),  XtRImmediate, (XtPointer)0},
+  {XtNfont,      XtCFont,     XmRFontList, sizeof(XmFontList),
+     offset(menu.font_list_2),XtRImmediate, (XtPointer)0},
+  {XmNfontList,  XmCFontList, XmRFontList, sizeof(XmFontList),
+     offset(menu.fallback_font_list),
      /* We must use an iso8859-1 font here, or people without $LANG set lose.
 	It's fair to assume that those who do have $LANG set also have the
 	*fontList resource set, or at least know how to deal with this. */
-     XtRString, (XtPointer) "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"),
+     XtRString, (XtPointer) "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1"},
 #else
-  fontres (XtNfont, XtCFont, XtRFontStruct, XFontStruct *, font,
-	   "XtDefaultFont"),
+  {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
+     offset(menu.font), XtRString, (XtPointer) "XtDefaultFont"},
 #ifdef USE_XFT_MENUBARS
-  fontres (XtNfcFontName, XtCFcFontName, XtRString, String, fcFontName,
-	   "sans-serif-12:bold"),
+  {XtNfcFontName,  XtCFcFontName, XtRString, sizeof (String),
+   offset(menu.fcFontName), 
+   XtRString, (XtPointer) NULL},
   /* #### This needs to be fixed to give a proper type and converter for
      XftFonts.  See also xlwtabs.c. */
-  fontres (XtNxftFont, XtCXftFont, XtRString, XtPointer, xftFontName,
-	   "Helvetica-12:bold"),
+  {XtNxftFont, XtCXftFont, XtRString, sizeof(XtPointer),
+	offset(menu.xftFontName), XtRString, (XtPointer) "Helvetica-12:bold" },
 #endif
 # ifdef USE_XFONTSET
   /* #### Consider using the same method as for Motif; see the comment in
      XlwMenuInitialize(). */
-  fontres (XtNfontSet, XtCFontSet, XtRFontSet, XFontSet, font_set,
-	   "XtDefaultFontSet"),
+  {XtNfontSet,  XtCFontSet, XtRFontSet, sizeof(XFontSet),
+     offset(menu.font_set), XtRString, (XtPointer) "XtDefaultFontSet"},
 # endif
 #endif
-  fgpixres (XtNforeground, XtCForeground, foreground),
-  fgpixres (XtNbuttonForeground, XtCButtonForeground, button_foreground),
-  fgpixres (XtNhighlightForeground, XtCHighlightForeground,
-	    highlight_foreground),
-  fgpixres (XtNtitleForeground, XtCTitleForeground, title_foreground),
-  dimres (XtNmargin, XtCMargin, XtRDimension, margin, 2),
-  dimres (XmNmarginWidth, XmCMarginWidth, XmRHorizontalDimension,
-	  horizontal_margin, 2),
-  dimres (XmNmarginHeight, XmCMarginHeight, XmRVerticalDimension,
-	  vertical_margin, 1),
-  dimres (XmNspacing, XmCSpacing, XmRHorizontalDimension, column_spacing, 4),
-  dimres (XmNindicatorSize, XmCIndicatorSize, XtRDimension, indicator_size, 0),
+  {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.foreground), XtRString, (XtPointer) "XtDefaultForeground"},
+  {XtNbuttonForeground, XtCButtonForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.button_foreground), XtRString, (XtPointer) "XtDefaultForeground"},
+  {XtNhighlightForeground, XtCHighlightForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.highlight_foreground), XtRString, (XtPointer) "XtDefaultForeground"},
+  {XtNtitleForeground, XtCTitleForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.title_foreground), XtRString, (XtPointer) "XtDefaultForeground"},
+  {XtNmargin, XtCMargin, XtRDimension,  sizeof(Dimension),
+     offset(menu.margin), XtRImmediate, (XtPointer)2},
+  {XmNmarginWidth, XmCMarginWidth, XmRHorizontalDimension, sizeof(Dimension),
+     offset(menu.horizontal_margin), XtRImmediate, (XtPointer)2},
+  {XmNmarginHeight, XmCMarginHeight, XmRVerticalDimension, sizeof(Dimension),
+     offset(menu.vertical_margin), XtRImmediate, (XtPointer)1},
+  {XmNspacing, XmCSpacing, XmRHorizontalDimension,  sizeof(Dimension),
+     offset(menu.column_spacing), XtRImmediate, (XtPointer)4},
+  {XmNindicatorSize, XmCIndicatorSize, XtRDimension,  sizeof(Dimension),
+     offset(menu.indicator_size), XtRImmediate, (XtPointer)0},
 #if 0
-  dimres (XmNshadowThickness, XmCShadowThickness, XmRHorizontalDimension,
-	  shadow_thickness, 2),
+  {XmNshadowThickness, XmCShadowThickness, XmRHorizontalDimension,
+     sizeof (Dimension), offset (menu.shadow_thickness),
+     XtRImmediate, (XtPointer) 2},
 #else
-  dimres (XmNshadowThickness, XmCShadowThickness, XtRDimension,
-	  shadow_thickness, 2),
+  {XmNshadowThickness, XmCShadowThickness, XtRDimension,
+     sizeof (Dimension), offset (menu.shadow_thickness),
+     XtRImmediate, (XtPointer) 2},
 #endif
-  nullpixres (XmNselectColor, XmCSelectColor, select_color),
-  nullpixres (XmNtopShadowColor, XmCTopShadowColor, top_shadow_color),
-  nullpixres (XmNbottomShadowColor, XmCBottomShadowColor, bottom_shadow_color),
-  pmres (XmNtopShadowPixmap, XmCTopShadowPixmap, top_shadow_pixmap),
-  pmres (XmNbottomShadowPixmap, XmCBottomShadowPixmap, bottom_shadow_pixmap),
+  {XmNselectColor, XmCSelectColor, XtRPixel, sizeof (Pixel),
+     offset (menu.select_color), XtRImmediate, (XtPointer)-1},
+  {XmNtopShadowColor, XmCTopShadowColor, XtRPixel, sizeof (Pixel),
+     offset (menu.top_shadow_color), XtRImmediate, (XtPointer)-1},
+  {XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel, sizeof (Pixel),
+     offset (menu.bottom_shadow_color), XtRImmediate, (XtPointer)-1},
+  {XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap, sizeof (Pixmap),
+     offset (menu.top_shadow_pixmap), XtRImmediate, (XtPointer)None},
+  {XmNbottomShadowPixmap, XmCBottomShadowPixmap, XtRPixmap, sizeof (Pixmap),
+     offset (menu.bottom_shadow_pixmap), XtRImmediate, (XtPointer)None},
 
-  cbres (XtNopen, open, NULL),
-  cbres (XtNselect, select, NULL),
-  Xt_RESOURCE (XtNmenu, XtCMenu, XtRPointer, XtPointer, offset(contents),
-	       XtRImmediate, NULL),
-  Xt_RESOURCE (XtNcursor, XtCCursor, XtRCursor, Cursor, offset(cursor_shape),
-	       XtRString, "right_ptr"),
-  Xt_RESOURCE (XtNhorizontal, XtCHorizontal, XtRInt, int, offset(horizontal),
-	       XtRImmediate, True),
-  boolres (XtNuseBackingStore, XtCUseBackingStore, use_backing_store, False),
-  boolres (XtNbounceDown,      XtCBounceDown,      bounce_down,       True),
-  boolres (XtNresourceLabels,  XtCResourceLabels,  lookup_labels,     False),
-
-#undef offset
-#undef mflres
-#undef fontres
-#undef dimres
-#undef boolres
-#undef cbres
-#undef pixres
-#undef fgpixres
-#undef nullpixres
-#undef pmres
+  {XtNopen, XtCCallback, XtRCallback, sizeof(XtPointer),
+     offset(menu.open), XtRCallback, (XtPointer)NULL},
+  {XtNselect, XtCCallback, XtRCallback, sizeof(XtPointer),
+     offset(menu.select), XtRCallback, (XtPointer)NULL},
+  {XtNmenu, XtCMenu, XtRPointer, sizeof(XtPointer),
+     offset(menu.contents), XtRImmediate, (XtPointer)NULL},
+  {XtNcursor, XtCCursor, XtRCursor, sizeof(Cursor),
+     offset(menu.cursor_shape), XtRString, (XtPointer) "right_ptr"},
+  {XtNhorizontal, XtCHorizontal, XtRInt, sizeof(int),
+     offset(menu.horizontal), XtRImmediate, (XtPointer)True},
+  {XtNuseBackingStore, XtCUseBackingStore, XtRBoolean, sizeof (Boolean),
+     offset (menu.use_backing_store), XtRImmediate, (XtPointer)False},
+  {XtNbounceDown, XtCBounceDown, XtRBoolean, sizeof (Boolean),
+     offset (menu.bounce_down), XtRImmediate, (XtPointer)True},
+  {XtNresourceLabels, XtCResourceLabels, XtRBoolean, sizeof (Boolean),
+     offset (menu.lookup_labels), XtRImmediate, (XtPointer)False},
 };
+#undef offset
 
 static Boolean XlwMenuSetValues (Widget current, Widget request, Widget new_,
 				 ArgList args, Cardinal *num_args);
@@ -198,9 +186,9 @@ static XFontStruct *default_font_of_font_list (XmFontList);
 static XtActionsRec
 xlwMenuActionsList [] =
 {
-  { (String) "start",	Start},
-  { (String) "drag",	Drag},
-  { (String) "select",	Select},
+  {"start",	Start},
+  {"drag",	Drag},
+  {"select",	Select},
 };
 
 #define SuperClass ((CoreWidgetClass)&coreClassRec)
@@ -209,7 +197,7 @@ XlwMenuClassRec xlwMenuClassRec =
 {
   {  /* CoreClass fields initialization */
     (WidgetClass) SuperClass,		/* superclass		  */
-    (String) "XlwMenu",			/* class_name		  */
+    "XlwMenu",				/* class_name		  */
     sizeof(XlwMenuRec),			/* size			  */
     XlwMenuClassInitialize,		/* class_initialize	  */
     NULL,				/* class_part_initialize  */
@@ -507,7 +495,7 @@ massage_resource_name (const char *in, char *out)
 static XtResource
 nameResource[] =
 {
-  { (String) "labelString", (String) "LabelString", XtRString, sizeof(String),
+  { "labelString", "LabelString", XtRString, sizeof(String),
     0, XtRImmediate, 0 }
 };
 

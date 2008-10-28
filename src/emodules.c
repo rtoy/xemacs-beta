@@ -96,7 +96,7 @@ the variable `load-modules-quietly' is non-NIL.
 */
        (file, name, version))
 {
-  const CIbyte *mod, *mname, *mver;
+  CIbyte *mod, *mname, *mver;
   int speccount = specpdl_depth();
 
   CHECK_STRING(file);
@@ -136,7 +136,7 @@ soon as the last reference to symbols within the module is destroyed.
        (file, name, version))
 {
   int x;
-  const CIbyte *mod, *mname, *mver;
+  CIbyte *mod, *mname, *mver;
   Lisp_Object foundname = Qnil;
   struct gcpro gcpro1;
 
