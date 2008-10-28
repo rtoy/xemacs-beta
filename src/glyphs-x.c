@@ -2234,8 +2234,8 @@ x_redisplay_widget (Lisp_Image_Instance *p)
   if (XFRAME (IMAGE_INSTANCE_FRAME (p))->size_changed)
     {
       Arg al[2];
-      XtSetArg (al [0], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (p));
-      XtSetArg (al [1], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (p));
+      Xt_SET_ARG (al [0], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (p));
+      Xt_SET_ARG (al [1], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (p));
       XtGetValues (FRAME_X_TEXT_WIDGET
 		   (XFRAME (IMAGE_INSTANCE_FRAME (p))), al, 2);
     }
@@ -2424,7 +2424,7 @@ update_tab_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 	(IMAGE_INSTANCE_WIDGET_FACE (ii),
 	 domain);
       XColor fcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
-      lw_add_widget_value_arg (val, XtNtabForeground, fcolor.pixel);
+      lw_add_widget_value_arg (val, (String) XtNtabForeground, fcolor.pixel);
       wv->change = VISIBLE_CHANGE;
       val->change = VISIBLE_CHANGE;
 
@@ -2539,8 +2539,8 @@ x_widget_instantiate (Lisp_Object image_instance,
      offset the redisplay of the widget by the amount the text
      widget is inside the manager. */
   ac = 0;
-  XtSetArg (al [ac], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (ii)); ac++;
-  XtSetArg (al [ac], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (ii)); ac++;
+  Xt_SET_ARG (al [ac], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (ii)); ac++;
+  Xt_SET_ARG (al [ac], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (ii)); ac++;
   XtGetValues (FRAME_X_TEXT_WIDGET (f), al, ac);
 
   XtSetMappedWhenManaged (wid, TRUE);
@@ -2608,11 +2608,11 @@ x_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       Arg al [2];
       int ac =0;
 #ifdef LWLIB_WIDGETS_MOTIF
-      XtSetArg (al [ac], XmNlabelType, XmPIXMAP);	ac++;
-      XtSetArg (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));
+      Xt_SET_ARG (al [ac], XmNlabelType, XmPIXMAP);	ac++;
+      Xt_SET_ARG (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));
       ac++;
 #else
-      XtSetArg (al [ac], XtNpixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));	ac++;
+      Xt_SET_ARG (al [ac], XtNpixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));	ac++;
 #endif
       XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, ac);
     }
@@ -2683,11 +2683,9 @@ x_progress_gauge_redisplay (Lisp_Object image_instance)
 
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
-      Arg al [1];
       Lisp_Object val;
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p))->value;
-      XtSetArg (al[0], XtNvalue, XINT (val));
-      XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (p), al, 1);
+      Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (p), XtNvalue, XINT (val));
     }
 }
 
@@ -2773,7 +2771,6 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		  Lisp_Object old_selected =
 		    gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
-		  Arg al [1];
 		  char* name;
 		  unsigned int num_children, i;
 		  Widget* children;
@@ -2789,8 +2786,8 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		    {
 		      if (!strcmp (XtName (children [i]), name))
 			{
-			  XtSetArg (al [0], XtNtopWidget, children [i]);
-			  XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 1);
+			  Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (ii),
+					XtNtopWidget, children [i]);
 			  break;
 			}
 		    }

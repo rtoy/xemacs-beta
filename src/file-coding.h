@@ -1046,7 +1046,7 @@ Lisp_Object detect_coding_stream (Lisp_Object stream);
 Ichar decode_big5_char (int o1, int o2);
 void add_entry_to_coding_system_type_list (struct coding_system_methods *m);
 Lisp_Object make_internal_coding_system (Lisp_Object existing,
-					 Ascbyte *prefix,
+					 const Ascbyte *prefix,
 					 Lisp_Object type,
 					 Lisp_Object description,
 					 Lisp_Object props);
