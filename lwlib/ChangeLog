@@ -1,3 +1,7 @@
+2008-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xm.c (xm_update_progress): Set all values!
+
 2007-09-15  Jerry James  <james@xemacs.org>
 
 	* xlwmenu.c (XlwMenuDestroy): Release XftFont resources

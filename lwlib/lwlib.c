@@ -1385,7 +1385,7 @@ void lw_add_value_args_to_args (widget_value* wv, ArgList addto, int* offset)
     }
 }
 
-XtArgVal lw_get_value_arg (widget_value* wv, String name)
+XtArgVal lw_get_value_arg (widget_value* wv, const String name)
 {
   int i;
   if (wv->args)
