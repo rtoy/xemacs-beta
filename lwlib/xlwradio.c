@@ -55,6 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include ATHENA_XawInit_h_
 #include "../src/xmu.h"
+#include "xt-wrappers.h"
 #include "xlwradioP.h"
 
 #define	BOX_SIZE	13
@@ -116,8 +117,8 @@ static void RadioSize (RadioWidget, Dimension *, Dimension *);
 
 static XtActionsRec actionsList[] =
 {
-  {"highlight",		RadioHighlight},
-  {"unhighlight",	RadioUnhighlight},
+  { (String) "highlight",	RadioHighlight },
+  { (String) "unhighlight",	RadioUnhighlight },
 };
 
 #define SuperClass ((ToggleWidgetClass)&toggleClassRec)
@@ -125,7 +126,7 @@ static XtActionsRec actionsList[] =
 RadioClassRec radioClassRec = {
   {
     (WidgetClass) SuperClass,		/* superclass		*/
-    "Radio",				/* class_name		*/
+    (String) "Radio",			/* class_name		*/
     sizeof(RadioRec),			/* size			*/
     RadioClassInit,			/* class_initialize	*/
     RadioClassPartInit,			/* class_part_initialize  */

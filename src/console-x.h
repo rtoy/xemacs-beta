@@ -66,18 +66,6 @@ Boston, MA 02111-1307, USA.  */
 # define XPointer char *
 #endif
 
-#define Xt_SET_VALUE(widget, resource, value) do {	\
-  Arg al;						\
-  XtSetArg (al, resource, value);			\
-  XtSetValues (widget, &al, 1);				\
-} while (0)
-
-#define Xt_GET_VALUE(widget, resource, location) do {	\
-  Arg al;						\
-  XtSetArg (al, resource, location);			\
-  XtGetValues (widget, &al, 1);				\
-} while (0)
-
 #ifdef __cplusplus
 #define X_CLASSFIELD c_class
 #else
@@ -212,7 +200,7 @@ void describe_XIMStyle	 (XIMStyle   style);
 void describe_XIMStyles	 (XIMStyles *styles);
 void describe_XIC	 (XIC ic);
 void describe_event_mask (unsigned long mask);
-void describe_XRectangle (char *name, XRectangle *rect);
+void describe_XRectangle (const char *name, XRectangle *rect);
 void describe_Status	 (Status status);
 #endif /* DEBUG_XEMACS */
 #endif /* XIM_XLIB */

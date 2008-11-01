@@ -140,7 +140,7 @@ int GifClose(GifFileType *GifFile)
   return ((*(GifIO->CloseFunc))(GifIO->CloseFunc_data));
 }
 
-static char *GifErrorString[14] = {
+static const char *GifErrorString[14] = {
   "Failed to open given file",			/* D_GIF_ERR_OPEN_FAILED */
   "Failed to read from given file",		/* D_GIF_ERR_READ_FAILED */
   "Given file is NOT a GIF file",		/* D_GIF_ERR_NOT_GIF_FILE */
@@ -164,7 +164,7 @@ const char *GetGifError(int errore);
 *****************************************************************************/
 const char *GetGifError(int errore)
 {
-    char *Err;
+    const char *Err;
 
     switch(errore) {
 	case D_GIF_ERR_OPEN_FAILED:
