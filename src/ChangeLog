@@ -1,5 +1,10 @@
 2008-11-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* regex.c (re_search_2): Fix at_dot by changing charpos to bytepos.
+	From Julian Bradfield <18654.1143.304851.782755@krk.inf.ed.ac.uk>.
+
+2008-11-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* mule-ccl.c (ccl_driver): Fix off-by-one error.
 	By Julian Bradfield in <18691.16568.526264.972026@krk.inf.ed.ac.uk>.
 
