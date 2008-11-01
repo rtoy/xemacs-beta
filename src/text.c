@@ -3018,7 +3018,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       int record = x - best_below_byte > 5000;
 
 #ifdef OLD_LOOP /* old code */
-      while (best_below_byte < x)
+       (best_below_byte < x)
 	{
 	  best_below++;
 	  INC_BYTEBPOS (buf, best_below_byte);
