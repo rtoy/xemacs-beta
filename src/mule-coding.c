@@ -3339,7 +3339,7 @@ ccl_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   Lisp_Object sym;
   struct ccl_program test_ccl;
-  Ascbyte *suffix;
+  const Ascbyte *suffix;
 
   /* Check key first.  */
   if (EQ (key, Qdecode))
