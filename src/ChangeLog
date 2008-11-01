@@ -1,3 +1,8 @@
+2008-11-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule-ccl.c (ccl_driver): Fix off-by-one error.
+	By Julian Bradfield in <18691.16568.526264.972026@krk.inf.ed.ac.uk>.
+
 2008-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lisp.h (static_pro): Cast out a warning.
