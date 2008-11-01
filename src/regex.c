@@ -4313,8 +4313,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
     {
       if (!BUFFERP (lispobj))
 	return -1;
-      range = (BUF_PT (XBUFFER (lispobj)) - BUF_BEGV (XBUFFER (lispobj))
-	       - startpos);
+      range = (BYTE_BUF_PT (XBUFFER (lispobj))
+	       - BYTE_BUF_BEGV (XBUFFER (lispobj)) - startpos);
       if (range < 0)
 	return -1;
     }
