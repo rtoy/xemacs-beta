@@ -1,0 +1,21 @@
+The files in this directory were converted from data in the mule-ucs
+package (mule-ucs/lisp/reldata/*), using this code:
+
+(defun convert-mule-ucs-file (start end)
+  (interactive "r")
+  (with-output-to-temp-buffer "*mule-ucs-convert*"
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward "(\\?\\(.\\) \\. \"\\(.*\\)\") ;+ \\(.*\\)$"
+				end t)
+	(let ((ch (string-to-char (match-string 1)))
+	      (codepoint (match-string 2))
+	      (name (match-string 3)))
+	  (if (= 1 (charset-dimension (char-charset ch)))
+	      (princ (format "0x%x   %s  #   %s\n" (char-octet ch) codepoint name))
+	    (princ (format "0x%x%x   %s  #   %s\n" (char-octet ch 0) (char-octet ch 1) codepoint name))))))))
+
+Each file is named after the XEmacs charset it represents.  The CNS files
+contain more codepoints than those in unicode-consortium/ because they list
+codepoints above 0xFFFF, those handled by surrogates (supported starting in
+Windows 2000, I think, but not yet by XEmacs).

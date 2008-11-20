@@ -1,0 +1,476 @@
+2008-02-12  Jerry James  <james@xemacs.org>
+
+	* canna/install-sh: Update to latest FSF version.
+	* ldap/install-sh: Ditto.
+	* postgresql/install-sh: Ditto.
+	* sample/external/install-sh: Ditto.
+	* sample/internal/install-sh: Ditto.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/canna_api.c (Fcanna_set_bunsetsu):
+	(Fcanna_initialize):
+	Suppress warnings about loss of precision on amd64.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ldap/eldap.h: Declare that we use deprecated API.
+	Thanks to Mats Lidell <matsl@xemacs.org> for the report & patch:
+	<871wgnqunm.fsf@spencer.lidell.homelinux.net>.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/canna_api.c: Move CANNA_NEW_WCHAR_AWARE to config.h.
+	Clean up ancient cruft for IROHA (Canna v.1) support.
+
+2007-02-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* postgresql/postgresql.c: Update Steve L. Baur's address on his
+	request.
+	* postgresql/postgresql.h: Ditto.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common (mostlyclean):
+	Ignore errors from rm during clean.
+
+2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/canna_api.c: Small fixes to Mule-ization patch.
+
+2005-11-01  Ben Wing  <ben@xemacs.org>
+
+	* canna/canna_api.c: Mule-ization.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common:
+	* common/Makefile.common (.PHONY):
+	* common/Makefile.common (install):
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.  Put in some magic cookies in
+	comments so this file gets read as a make file by XEmacs.
+
+2005-11-02  Marcus Crestani  <crestani@xemacs.org>
+
+	* canna/.cvsignore: New.
+
+2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.23 "daikon" is released.
+
+2005-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Warning elimination:
+
+	* ldap/eldap.c (Fldap_add): Remove declaration of `current', which
+	is now declared by EXTERNAL_LIST_LOOP_2.
+	(Fldap_modify): Remove redundant variable `gcpro2',
+
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (allocate_pgconn):
+	* postgresql/postgresql.c (allocate_pgresult):
+	* postgresql/postgresql.h (struct Lisp_PGconn):
+	* postgresql/postgresql.h (struct Lisp_PGresult):
+	MC-Alloc refactoring.
+
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (allocate_ldap):
+	* ldap/eldap.h (struct Lisp_LDAP):
+	MC-Alloc refactoring.
+
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	UNDO:
+	* canna/canna-api.c:
+	* canna/Makefile.in.in (MODNAME,SRCS):
+	Rename module from canna_api to canna-api.
+
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/configure: Create and CVS add.
+
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/Makefile.in.in (MODVER): Bump to 0.5.
+
+	* canna/canna-api.c:
+	* canna/Makefile.in.in (MODNAME,SRCS):
+	Rename module from canna_api to canna-api.
+
+2005-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna: New module.
+
+	* canna/canna_api.c: Move from $srcdir/src/mule-canna.c.  Add module
+	initialization function and some boilerplate.  Change name to
+	canna_api to reflect changed role.
+
+	* canna/configure.ac:
+	* canna/Makefile.in.in:
+	* canna/install-sh:
+	Standard module boilerplate, adapted to Canna.
+
+2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.22 "cucumber" is released.
+
+2005-06-09  Craig Lanning  <CraigL@sc.rr.com>
+
+	* ldap/.cvsignore:
+	* sample/external/.cvsignore:
+	* sample/internal/.cvsignore:
+	Added GNUmakefile, Makefile, and Makefile.in
+
+2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.21 "corn" is released.
+
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	Remove Lcrecords:
+	
+	* postgresql/postgresql.c (allocate_pgconn): Allocate with new
+	allocator.
+	* postgresql/postgresql.c (allocate_pgresult): Allocate PGresult
+	with new allocator.  
+	* postgresql/postgresql.h (struct Lisp_PGconn): Add
+        lrecord_header.
+	* postgresql/postgresql.h (struct Lisp_PGresult): Add 
+	lrecord_header.
+	* ldap/eldap.c (allocate_ldap): Allocate with new allocator.
+	* ldap/eldap.h (struct Lisp_LDAP): Add lrecord_header.
+
+2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.20 "cilantro" is released.
+
+2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.19 "chives" is released.
+
+2004-11-13  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (Fldap_modify):
+	Need braces around EXTERNAL_LIST_LOOP_2.
+
+2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* common/Makefile.common (CFLAGS): Use XE_CFLAGS.
+
+2004-10-27  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c:
+	* ldap/eldap.c (Fldap_open):
+	* ldap/eldap.c (Fldap_search_basic):
+	* ldap/eldap.c (Fldap_add):
+	* ldap/eldap.c (Fldap_modify):
+	* ldap/eldap.c (Fldap_delete):
+	Mule-ize.
+	Use EXTERNAL_LIST_LOOP_2 instead of deleted EXTERNAL_LIST_LOOP.
+
+2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.18 "chestnut" is released.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* postgresql/postgresql.c:
+	* ldap/eldap.c:
+	Mark unused parameters with the UNUSED macro.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c (Fldap_open): Change ldap_passwd to ldap_password
+	to eliminate a gcc shadow warning.
+
+2004-09-13  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c (signal_ldap_error): Mark as noreturn.
+
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
+2003-09-21  Jerry James  <james@xemacs.org>
+
+	* postgresql/postgresql.c (unload_postgresql): Do not mangle the
+	unload function name when compiling with C++.
+	* ldap/eldap.c (unload_eldap): Ditto.
+
+2003-09-03  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.15 "celery" is released.
+
+2003-08-28  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common (LIBSTDCPP): New.
+	* common/Makefile.common (.c.o): Use it to avoid undefined symbol
+	errors when compiling  modules with g++.
+
+2003-08-18  Jerry James  <james@xemacs.org>
+
+	* postgresql/postgresql.c: Include emodules.h when building a module.
+	* ldap/eldap.c: Ditto.
+	* common/Makefile.common: Make module makefiles processable by cpp.
+	* common/Makefile.common (IMPORT_LIB): New.
+	* common/Makefile.common: Use it.
+
+2003-06-11  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common: The last change re-broke FreeBSD module
+	building.  Expand srcdir in SRC_SRCS with configure to fix it.
+
+2003-06-10  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common: Change GNUish := to =.
+
+2003-06-01  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.14 "cassava" is released.
+
+2003-05-09  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	* common/Makefile.common: Move use of srcdir below its definition.
+	* sample/internal/Makefile.in.in: Ditto.
+	* sample/external/Makefile.in.in: Ditto.
+
+2003-05-20  Jerry James  <james@xemacs.org>
+
+	* sample/internal/Makefile.in.in: Expand $^ for makes that don't
+	understand it.
+	* sample/external/Makefile.in.in: Ditto.
+	* common/Makefile.common: Ditto.
+
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.12 "carrot" is released.
+
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
+2003-02-07  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c: Add unload_eldap prototype to fix warning.
+
+2003-01-30  Robert Pluim  <rpluim@bigfoot.com>
+
+	* Makefile.common: FreeBSD make compatability fixes: expand
+	SRC_SRCS immediately, use MODCC rather than CC to prevent
+	overriding by top-level makefile.
+
+2003-01-15  Jerry James  <james@eecs.ku.edu>
+
+	* ldap/eldap.c: Apply Ben's postgresql change to LDAP also.
+
+2002-12-16  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c:
+	remove ifdef USE_KKCC.
+
+2003-01-04  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.10 "burdock" is released.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/Makefile.in.in:
+	* postgresql/Makefile.in.in (SRCS):
+	* postgresql/Makefile.in.in (SRC_SRCS): Removed.
+	* postgresql/Makefile.in.in (OBJS): Removed.
+	* postgresql/Makefile.in.in (SHELL): Removed.
+	* postgresql/Makefile.in.in (RM): Removed.
+	* postgresql/Makefile.in.in (PROGNAME): Removed.
+	* postgresql/Makefile.in.in (CFLAGS): Removed.
+	* postgresql/Makefile.in.in (INSTALL): Removed.
+	* postgresql/Makefile.in.in (version): Removed.
+	* postgresql/Makefile.in.in (prefix): Removed.
+	* postgresql/Makefile.in.in (exec_prefix): Removed.
+	* postgresql/Makefile.in.in (libdir): Removed.
+	* postgresql/Makefile.in.in (instvardir): Removed.
+	* postgresql/Makefile.in.in (configuration): Removed.
+	* postgresql/Makefile.in.in (moduledir): Removed.
+	* postgresql/Makefile.in.in (with_modules): Removed.
+	* postgresql/Makefile.in.in (srcdir): Removed.
+	* postgresql/Makefile.in.in (VPATH): Removed.
+	* postgresql/Makefile.in.in (CC): Removed.
+	* postgresql/Makefile.in.in (MODARCHDIR): Removed.
+	* postgresql/Makefile.in.in (MAKE_DOCFILE): Removed.
+	* postgresql/Makefile.in.in (MODCFLAGS): Removed.
+	* postgresql/Makefile.in.in (INSTALLPATH): Removed.
+	* postgresql/Makefile.in.in (INSTALL_PROGRAM): Removed.
+	* postgresql/Makefile.in.in (OBJECT_TO_BUILD): Removed.
+	* postgresql/Makefile.in.in (.PHONY): Removed.
+	* postgresql/Makefile.in.in (all): Removed.
+	* postgresql/Makefile.in.in (.c.o): Removed.
+	* postgresql/Makefile.in.in (clean): Removed.
+	* postgresql/Makefile.in.in (distclean): Removed.
+	* postgresql/Makefile.in.in (install): Removed.
+	Move common stuff into modues/common/Makefile.common. (Also
+	add extraclean target and a couple of other fixes in that file.)
+
+	* postgresql/configure.ac:
+	Extract out common configure stuff into
+	modules/common/configure-{pre,post}.ac.
+
+	* postgresql/postgresql.c (WARNING):
+	Fix warning.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* ldap/Makefile.in.in:
+	* ldap/Makefile.in.in (SRCS):
+	* ldap/Makefile.in.in (SRC_SRCS): Removed.
+	* ldap/Makefile.in.in (OBJS): Removed.
+	* ldap/Makefile.in.in (SHELL): Removed.
+	* ldap/Makefile.in.in (RM): Removed.
+	* ldap/Makefile.in.in (PROGNAME): Removed.
+	* ldap/Makefile.in.in (CFLAGS): Removed.
+	* ldap/Makefile.in.in (INSTALL): Removed.
+	* ldap/Makefile.in.in (version): Removed.
+	* ldap/Makefile.in.in (prefix): Removed.
+	* ldap/Makefile.in.in (exec_prefix): Removed.
+	* ldap/Makefile.in.in (libdir): Removed.
+	* ldap/Makefile.in.in (instvardir): Removed.
+	* ldap/Makefile.in.in (configuration): Removed.
+	* ldap/Makefile.in.in (moduledir): Removed.
+	* ldap/Makefile.in.in (with_modules): Removed.
+	* ldap/Makefile.in.in (srcdir): Removed.
+	* ldap/Makefile.in.in (VPATH): Removed.
+	* ldap/Makefile.in.in (CC): Removed.
+	* ldap/Makefile.in.in (MODARCHDIR): Removed.
+	* ldap/Makefile.in.in (MAKE_DOCFILE): Removed.
+	* ldap/Makefile.in.in (MODCFLAGS): Removed.
+	* ldap/Makefile.in.in (INSTALLPATH): Removed.
+	* ldap/Makefile.in.in (INSTALL_PROGRAM): Removed.
+	* ldap/Makefile.in.in (OBJECT_TO_BUILD): Removed.
+	* ldap/Makefile.in.in (.PHONY): Removed.
+	* ldap/Makefile.in.in (all): Removed.
+	* ldap/Makefile.in.in (.c.o): Removed.
+	* ldap/Makefile.in.in (clean): Removed.
+	* ldap/Makefile.in.in (distclean): Removed.
+	* ldap/Makefile.in.in (install): Removed.
+	Move common stuff into modues/common/Makefile.common. (Also
+	add extraclean target and a couple of other fixes in that file.)
+
+	* ldap/configure.ac:
+	* ldap/configure.ac (have_ldap):
+	Extract out common configure stuff into
+	modules/common/configure-{pre,post}.ac.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common:
+	* common/Makefile.common (SHELL):
+	Common stuff is here.
+
+2002-09-20  Steve Youngs  <youngs@xemacs.org>
+
+	* postgresql/Makefile.in.in (LDFLAGS): Add @ld_switch_all@ to pick
+	up '--site-libraries'.
+
+	* ldap/Makefile.in.in (LDFLAGS): Ditto.
+
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* auto-autoloads.el: New file containing module autoloads.
+	* auto-autoloads.elc: Ditto.
+	* README: Update to reflect the new architecture.
+	* ldap/configure.ac: New file.
+	* ldap/configure: Ditto.
+	* ldap/eldap.h: Copy the version from src.
+	* ldap/eldap.c: Ditto.  Add autoloads.
+	* ldap/eldap.c (unload_eldap): New function to unstaticpro symbols
+	defined in this file.
+	* ldap/install-sh: New script for independent module building.
+	* ldap/Makefile: Remove in favor of autoconf solution.
+	* ldap/Makefile.in.in: New file containing the autoconf solution.
+	* postgresql: New directory.
+	* postgresql/.cvsignore: New file.
+	* postgresql/configure.ac: Ditto.
+	* postgresql/configure: Ditto.
+	* postgresql/install-sh: New script for independent module
+	building.
+	* postgresql/Makefile.in.in: New file.
+	* postgresql/postgresql.h: Copy the version from src.
+	* postgresql/postgresql.c: Ditto.  Add autoloads.
+	* sample/Makefile: Move to internal and external subdirectories.
+	* sample/sample.c: Ditto.
+	* sample/external: New directory containing sample external
+	modules.
+	* sample/external/.cvsignore: New file.
+	* sample/external/configure.ac: Ditto.
+	* sample/external/install-sh: Ditto.
+	* sample/external/Makefile.in.in: New.
+	* sample/external/sample.c: Move from next higher directory.
+	* sample/internal: New directory containing sample internal
+	modules.
+	* sample/internal/.cvsignore: New file.
+	* sample/internal/configure.ac: Ditto.
+	* sample/internal/install-sh: Ditto.
+	* sample/internal/Makefile.in.in: New.
+	* sample/internal/sample.c: Move from next higher directory.
+
+2002-08-30  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.9 "brussels sprouts" is released.
+
+2002-07-27  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.8 "broccoli" is released.
+
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
+2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.6 "bok choi" is released.
+
+2002-03-12  Ben Wing  <ben@xemacs.org>
+
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
+
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
+2002-02-14  Sean MacLennan  <seanm@seanm.ca>
+
+	* base64/base64.c - update Bufpos => Charbpos
+
+

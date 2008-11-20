@@ -1,0 +1,1001 @@
+\input texinfo  @c -*-texinfo-*-
+
+@c This file is in Texinfo format.
+@c If for some reason you do not have the formatted version available,
+@c this file is more or less readable as plain text.
+@c Skip to the line beginning "@node Introduction".
+
+@c %**start of header
+@setfilename ../info/beta.info
+@settitle Info on beta versions of XEmacs
+@direntry
+* Beta: (beta).      Info on beta versions of XEmacs.
+@end direntry
+@c footnotestyle separate
+@c paragraphindent 2
+@c %**end of header
+
+@ifinfo
+This file describes info relevant to beta versions of XEmacs.
+
+Copyright @copyright{} 2005 Ben Wing.
+Copyright @copyright{} 2005 Free Software Foundation, Inc.
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+@end ifinfo
+
+@c Combine indices.
+@syncodeindex fn cp
+@syncodeindex vr cp
+@syncodeindex ky cp
+@syncodeindex pg cp
+@syncodeindex tp cp
+
+@setchapternewpage odd
+@finalout
+
+@titlepage
+@title Info on beta versions of XEmacs
+
+@author XEmacs Development Team
+@page
+@vskip 0pt plus 1fill
+
+@noindent
+Copyright @copyright{} 2006 Free Software Foundation. @*
+Copyright @copyright{} 2005 Ben Wing. @*
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+@end titlepage
+@page
+
+@ifinfo
+@node Top, Introduction, (dir), (dir)
+This Info file describes info relevant to beta versions of XEmacs.
+@menu
+* Introduction::                
+* Building Beta XEmacs::        
+* Packages::                    
+* Reporting Problems::          
+* Improving XEmacs::            
+* Index::                       
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Introduction
+
+* Mailing Lists::               
+* Beta Release Schedule::       
+
+Mailing Lists
+
+* XEmacs Beta Mailing List::    
+* XEmacs Patches Mailing List::  
+* XEmacs Design Mailing List::  
+* List Administrivia::          
+* Managing your subscription via the Web::  
+* Subscribing by e-mail::       
+* Unsubscribing by e-mail::     
+
+Building Beta XEmacs
+
+* Getting the Source::          
+* Building an XEmacs from patches::  
+* Building XEmacs from a full distribution::  
+
+Packages
+
+* Binary package installation::  
+* Manual procedures for package management::  
+* Building XEmacs and XEmacs packages from scratch::  
+
+Improving XEmacs
+
+* Creating patches for submission::  
+* Large contributions::         
+
+Creating patches for submission
+
+* Patch discussion etiquette::  
+
+Large contributions
+
+* Updates to existing packages::  
+* New packages::                
+* Syncing with GNU Emacs::      
+
+@end detailmenu
+@end menu
+
+@end ifinfo
+
+
+@node Introduction, Building Beta XEmacs, Top, Top
+@chapter Introduction
+
+You are running a potentially unstable version of XEmacs.  Please do
+not report problems with Beta XEmacs to comp.emacs.xemacs.  Report
+them to @uref{mailto:xemacs-beta@@xemacs.org}, preferably with 
+@kbd{M-x report-xemacs-bug RET}. 
+
+@menu
+* Mailing Lists::               
+* Beta Release Schedule::       
+@end menu
+
+
+@node Mailing Lists, Beta Release Schedule, Introduction, Introduction
+@section Mailing Lists
+
+@menu
+* XEmacs Beta Mailing List::    
+* XEmacs Patches Mailing List::  
+* XEmacs Design Mailing List::  
+* List Administrivia::          
+* Managing your subscription via the Web::  
+* Subscribing by e-mail::       
+* Unsubscribing by e-mail::     
+@end menu
+
+
+@node XEmacs Beta Mailing List, XEmacs Patches Mailing List, Mailing Lists, Mailing Lists
+@subsection XEmacs Beta Mailing List
+
+If you are not subscribed to the XEmacs beta list you should be.
+Currently all discussion of development issues, including bug reports
+and coding discussion, takes place on the XEmacs Beta mailing list.
+Only patches and administrative actions regarding patches are sent
+elsewhere (to the XEmacs Patches list).
+
+
+@node XEmacs Patches Mailing List, XEmacs Design Mailing List, XEmacs Beta Mailing List, Mailing Lists
+@subsection XEmacs Patches Mailing List
+
+XEmacs Patches records proposed changes to XEmacs, and their
+disposition.  It is open subscription, and all patches that are
+seriously proposed for inclusion in XEmacs should be posted here.  You
+can follow progress of your patch by subscribing to the mailing list
+or in the archives.
+
+Besides patches, only actions by members of the XEmacs Review Board
+should be posted to this list.  All discussion should be redirected to
+XEmacs Beta or XEmacs Design.
+
+
+@node XEmacs Design Mailing List, List Administrivia, XEmacs Patches Mailing List, Mailing Lists
+@subsection XEmacs Design Mailing List
+
+XEmacs Design is for design discussions such as adding major features
+or whole modules, or reimplementation of existing functions, to XEmacs.
+
+@node List Administrivia, Managing your subscription via the Web, XEmacs Design Mailing List, Mailing Lists
+@subsection List Administrivia
+
+In the descriptions below, the word LIST (all uppercase) is a
+variable.  Substitute "beta", "design", or "patches" as appropriate
+(to get "xemacs-beta" as the mailbox for the XEmacs Beta mailing list,
+or @uref{http://www.xemacs.org/Lists/#xemacs-beta} for its URL).
+
+The XEmacs mailing lists are managed by the Mailman mailing list package,
+and the usual Mailman commands work.  Do not send mailing list requests to
+the main address (@uref{mailto:xemacs-LIST@@xemacs.org}), always send them
+to @uref{mailto:xemacs-LIST-request@@xemacs.org}.  If you have problems with
+the list itself, they should be brought to the attention of the XEmacs
+Mailing List manager @uref{mailto:list-manager@@xemacs.org} (the same
+mailbox, "list-manager", for all lists).  All public mailing lists have
+searchable archives.  The URL is
+
+	     @uref{http://list-archive.xemacs.org/xemacs-LIST}
+
+Note that the xemacs-LIST-admin address is used internally by the
+Mailman software; it is NOT a synonym for xemacs-LIST-request.
+
+
+@node Managing your subscription via the Web, Subscribing by e-mail, List Administrivia, Mailing Lists
+@subsection Managing your subscription via the Web
+
+Subscription, unsubscription, and options (such as digests and
+temporarily suspending delivery) can be accomplished via the web
+interface at @uref{http://www.xemacs.org/Lists/#xemacs-LIST}.
+
+
+@node Subscribing by e-mail, Unsubscribing by e-mail, Managing your subscription via the Web, Mailing Lists
+@subsection Subscribing by e-mail
+
+Send an email message to @uref{mailto:xemacs-LIST-request@@xemacs.org} with
+@samp{subscribe} (without the quotes) as the BODY of the message.
+
+
+@node Unsubscribing by e-mail,  , Subscribing by e-mail, Mailing Lists
+@subsection Unsubscribing by e-mail
+
+Send an email message to @uref{mailto:xemacs-LIST-request@@xemacs.org} with
+@samp{unsubscribe} (without the quotes) as the BODY of the message.
+
+
+@node Beta Release Schedule,  , Mailing Lists, Introduction
+@section Beta Release Schedule
+
+We would like to achieve a weekly or fortnightly release cycle (you
+know the Open Source model: release early, release often), and in a
+perfect world that would indeed be the case.  There are at least three
+things that often get in the way of that goal: 1) The Release Manager
+has a life outside of XEmacs (hard to believe, I know, but true), 
+2) we like to make releases that will build (at least on the Release
+Manager's box), and 3) Murphy likes to throw a spanner in the works
+right when you least expect it (Murphy's Law: Whatever can go wrong,
+will go wrong).
+
+If you'd like to keep right up to date and ride the bleeding edge, use
+CVS (see @uref{http://www.xemacs.org/Develop/cvsaccess.html}).  If you
+can't use CVS for some reason and must use FTP, please let us know.
+it will make it more likely that we release betas more often.
+
+
+@node Building Beta XEmacs, Packages, Introduction, Top
+@chapter Building Beta XEmacs
+
+@menu
+* Getting the Source::          
+* Building an XEmacs from patches::  
+* Building XEmacs from a full distribution::  
+@end menu
+
+
+@node Getting the Source, Building an XEmacs from patches, Building Beta XEmacs, Building Beta XEmacs
+@section Getting the Source
+
+We provide the traditional tarballs and release-to-release patchkits for
+each beta release.  @xref{Beta Release Schedule}.  These are available
+at
+
+	    @uref{ftp://ftp.xemacs.org/pub/xemacs/beta/}
+
+In addition to the normal tar distribution, XEmacs source is now
+available via CVS.  Please see
+
+	    @uref{http://www.xemacs.org/Develop/cvsaccess.html}
+
+You can also browse the repository via ViewCVS
+
+            @uref{http://cvs.xemacs.org/}
+
+
+@node Building an XEmacs from patches, Building XEmacs from a full distribution, Getting the Source, Building Beta XEmacs
+@section Building an XEmacs from patches
+
+All beta releases of XEmacs provide patches from the previous version as
+an alternative to keep bandwidth requirements down.  These patches are
+actually scripts generated by the @file{makepatch} program, and can be
+run if you have the @file{applypatch} program.  Patches may also be
+applied with the GNU patch program in something like the following.
+Let's say you're upgrading XEmacs 21.5-beta9 to XEmacs 21.5-beta10 and
+you have a full unmodified XEmacs 21.5-beta9 source tree to work with.
+Change to the top level directory and issue the shell command:
+
+@example
+$ gunzip -c /tmp/xemacs-21.5.9-21.5.10.patch.gz | patch -p1
+@end example
+
+After patching, check to see that no patches were missed by doing
+
+@example
+$ find . -name \*.rej -print
+@end example
+
+Any rejections should be treated as serious problems to be resolved
+before building XEmacs.
+
+After seeing that there were no rejections, issue the commands
+
+@example
+$ ./config.status --recheck
+$ make beta > ./beta.err 2>&1
+$ make check > ./xemacs-make-check.err 2>&1
+@end example
+
+Redirect the output from make to those files because you'll use them
+later when you send off a build report with @kbd{M-x build-report RET}
+
+
+@node Building XEmacs from a full distribution,  , Building an XEmacs from patches, Building Beta XEmacs
+@section Building XEmacs from a full distribution
+
+@enumerate
+@item
+Locate a convenient place where you have at least 200MB of free space
+(approximately 100MB for sources and compiled Lisp, and 100MB for
+objects and other generated files) and issue the command
+
+@example
+$ gunzip -c /tmp/xemacs-21.5.10.tar.gz | tar xvf -
+@end example
+
+(or simply @code{tar zxvf /tmp/xemacs-21.5.10.tar.gz} if you use GNU tar).
+
+@item
+cd to the top level directory and issue an appropriate configure
+command.
+
+@item
+Run @code{configure}.  If you are new, just consider running it with no
+options, to see if you can get a successful build.  When you are more
+experienced, you should put various flags in.  Here is what we suggest:
+
+@enumerate
+@item
+It's a good idea to use
+
+@example
+--enable-debug
+--enable-memory-usage-stats
+--enable-error-checking=all
+@end example
+
+These turn on extra debugging info and checks.  The last one in particular
+will add a great deal of extra error-checking -- which will slow your XEmacs
+down somewhat but is likely to catch bugs much sooner and make your bug
+reports much more useful.
+
+@item
+You should also strongly consider
+
+@example
+--enable-mule
+--enable-kkcc
+--enable-pdump
+--enable-clash-detection
+--with-wmcommand
+--with-xfs
+@end example
+
+These turn on optional features, which can always use testing.
+
+@item
+If you have gcc, consider using
+
+@example
+--with-compiler=gcc
+--with-xemacs-compiler=g++
+@end example
+
+This will compile XEmacs using g++, which is generally much stricter
+about type-checking than C compilers like gcc.
+
+@item
+If your packages are not installed under /usr/local, you should add a
+line like
+
+@example
+--with-package-path=~/.xemacs::/xemacs/site-packages:/xemacs/xemacs-packages:/xemacs/mule-packages
+@end example
+
+@item
+If you want to build multiple configurations from the same source
+tree, make separate build directories for each configuration, run
+@code{configure} from the top level of these (currently empty)
+directories and use an option like
+
+@example
+--srcdir=/xemacs/source-tree
+@end example
+
+(or wherever your source tree is).  This will magically create symlinks and
+populate your build directory.
+
+@item
+Use --with-site-prefixes (or --with-site-includes and
+---with-site-libraries) if you have some packages that XEmacs can
+compile with that are located in an unusual place.  For example:
+
+@example
+--with-site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1
+@end example
+
+@item
+Depending on your build environment, consider setting or not setting
+options for menubars, scrollbars, window systems, native sound, etc.  If
+you're not sure, leave them out and let configure do the auto-detection.
+(If you get bugs compiling GTK, use @code{--with-gtk=no --with-gnome=no}.)
+
+Part of the configure output is a summary that looks something
+like the following.  (this summary is also available as the file
+'Installation' in the top directory of your build tree, and via
+the command @kbd{M-x describe-installation RET}).
+
+@example
+uname -a: Darwin laptop.local 7.7.0 Darwin Kernel Version 7.7.0: Sun Nov  7 16:06:51 PST 2004; root:xnu/xnu-517.9.5.obj~1/RELEASE_PPC  Power Macintosh powerpc
+
+./configure '--with-site-prefixes=/sw' '--without-ldap' '--with-dynamic=yes' '--with-gtk=no' '--with-gnome=no' '--enable-toolbars' '--with-wmcommand' '--with-athena=3d' '--enable-menubars=lucid' '--enable-scrollbars=athena' '--enable-dialogs=athena' '--enable-widgets=athena' '--with-gif' '--enable-sound=native,noesd' '--with-site-lisp=no' '--with-site-modules' '--enable-pdump' '--enable-mule' '--with-xfs' '--enable-debug' '--enable-error-checking=all' '--enable-memory-usage-stats' '--enable-kkcc' '--enable-clash-detection'
+
+
+XEmacs 21.5-b19 "chives" (+CVS-20050226) configured for `powerpc-apple-darwin7.7.0'.
+
+  WARNING: --------------------------------------------------------------
+  WARNING: This was produced from a new autoconf-2.5 based configuration.
+  WARNING: If this configuration seems buggy then copy etc/configure-2.13
+  WARNING: to configure and try again.  Also please report the bug.
+  WARNING: --------------------------------------------------------------
+
+Compilation Environment and Installation Defaults:
+  Source code location:              /usr/local/src/xemacs
+  Installation prefix:               /usr/local
+  Additional prefixes:               /sw
+  Operating system description file: `s/darwin.h'
+  Machine description file:          `m/powerpc.h'
+  Compiler version:                  gcc (GCC) 3.3 20030304 (Apple Computer, Inc. build 1671)
+    - GCC specs file:                /usr/libexec/gcc/darwin/ppc/3.3/specs
+    - Compiler command:              gcc -Wall -Wno-switch -Wundef -Wsign-compare -Wno-char-subscripts -Wpacked -Wpointer-arith -Wunused-parameter -g  
+  libc version:                      
+  Relocating allocator for buffers:  no
+  GNU version of malloc:             no
+    - The GNU allocators don't work with this system configuration.
+
+Window System:
+  Compiling in support for the X window system:
+    - X Windows headers location:                 /usr/X11R6/include
+    - X Windows libraries location:               /usr/X11R6/lib
+    - Handling WM_COMMAND properly.
+  Compiling in support for the Athena widget set:
+    - Athena headers location:                    X11/Xaw3d
+    - Athena library to link:                     Xaw3d
+  Using Lucid menubars.
+  Using Athena scrollbars.
+  Using Athena dialog boxes.
+  Using Athena native widgets.
+
+TTY:
+  Compiling in support for ncurses.
+
+Images:
+  Compiling in support for GIF  images (builtin).
+  Compiling in support for XPM  images.
+  Compiling in support for PNG  images.
+  Compiling in support for JPEG images.
+  Compiling in support for TIFF images.
+  Compiling in support for X-Face message headers.
+
+Sound:
+
+Databases:
+  Compiling in support for Berkeley database.
+  Compiling in support for GNU DBM.
+  Compiling in support for PostgreSQL.
+    - Using PostgreSQL header file:  postgresql/libpq-fe.h
+    - Using PostgreSQL V7 bindings.
+
+Internationalization:
+  Compiling in support for Mule (multi-lingual Emacs).
+  Compiling in support for XIM (X11R5+ I18N input method).
+    - Using raw Xlib to provide XIM support.
+    - Using XFontSet to provide bilingual menubar.
+
+Mail:
+  Compiling in support for "file" mail spool file locking method.
+
+Other Features:
+  Inhibiting IPv6 canonicalization at startup.
+  Compiling in support for dynamic shared object modules.
+  Using the new GC algorithms.
+  Using the new portable dumper.
+  Compiling in support for extra debugging code.
+  Compiling in support for runtime error checking.
+  WARNING: ---------------------------------------------------------
+  WARNING: XEmacs will run noticeably more slowly as a result.
+  WARNING: Error checking is on by default for XEmacs beta releases.
+  WARNING: ---------------------------------------------------------
+@end example
+@end enumerate
+
+
+@item
+Then...
+
+@example
+$ make > ./beta.err 2>&1
+$ make check > ./xemacs-make-check.err 2>&1
+@end example
+
+...and you should have a working XEmacs.
+
+@item
+After you have verified that you have a functional editor, fire up
+your favorite mail program and send a build report to
+@uref{mailto:xemacs-buildreports@@xemacs.org}.
+
+Preferably this is best done from XEmacs, following these simple steps:
+
+@enumerate
+@kbd{M-x customize-group RET build-report RET}
+@kbd{M-x build-report RET}
+@end enumerate
+
+See also
+@uref{http://www.xemacs.org/Releases/Public-21.2/tester.html#reporting}
+
+If you create the report manually by other means, here is what the
+build report should include:
+
+@enumerate
+@item
+Your hardware configuration (OS version, etc.)
+
+@item
+Version numbers of software in use (X11 version, system library
+versions if appropriate, graphics library versions if appropriate).
+If you're on a system like Linux, include all the version numbers
+you can because chances are it makes a difference.
+
+@item
+The options given to configure
+
+@item
+The configuration report illustrated above
+
+For convenience all of the above items are placed in a file called
+`Installation' in the top level build directory.  They are also
+available by performing @kbd{M-x describe-installation} inside XEmacs.
+
+@item
+Any other unusual items you feel should be brought to the attention
+of the developers.
+@end enumerate
+@end enumerate
+
+
+@node Packages, Reporting Problems, Building Beta XEmacs, Top
+@chapter Packages
+
+[Note: these instructions have been partly updated, but not carefully
+reviewed in some time.  Caveat tester.]
+
+Starting with XEmacs 21.1, much of the functionality of XEmacs has
+been unbundled into "the packages."  For more information about the
+package system, see the Info nodes on Packages (in the XEmacs User
+Manual) and on Packaging (in the Lisp Reference).
+
+When bootstrapping XEmacs, you may need to manually install some
+packages (at least xemacs-base and efs).  These packages are available
+by FTP at @uref{ftp://ftp.xemacs.org/pub/xemacs/packages/}.
+
+@menu
+* Binary package installation::  
+* Manual procedures for package management::  
+* Building XEmacs and XEmacs packages from scratch::  
+@end menu
+
+
+@node Binary package installation, Manual procedures for package management, Packages, Packages
+@section Binary package installation
+
+Prerequisite:  XEmacs 21.0-b1.
+
+Binary packages are complete entities that can be untarred at the top
+level of an XEmacs package hierarchy and work at runtime.  To install files
+in this directory, run the command @kbd{M-x package-admin-add-binary-package}
+and fill in appropriate values to the prompts.
+
+
+@node Manual procedures for package management, Building XEmacs and XEmacs packages from scratch, Binary package installation, Packages
+@section Manual procedures for package management
+
+Prerequisite: XEmacs 21.0
+
+When adding and deleting files from a lisp directory the
+auto-autoloads.el (global symbols) and custom-load.el (Customization
+groups) must be kept in synch.  Assuming one is manipulating a
+directory called `lisp-utils', the command to rebuild the
+auto-autoloads.el file is:
+
+@example
+xemacs -vanilla -batch \
+  -eval \("setq autoload-package-name \"lisp-utils\""\) \
+  -f batch-update-directory lisp-utils
+@end example
+
+The command to rebuild the custom-load.el file is:
+
+@example
+xemacs -vanilla -batch -f Custom-make-dependencies lisp-utils
+@end example
+
+To byte-compile both of these files the command is:
+
+@example
+xemacs -vanilla -batch -f batch-byte-compile \
+	lisp-utils/auto-autoloads.el lisp-utils/custom-load.el
+@end example
+
+Of course, being a beta tester, you'd be aware that it is much easier
+to manage your XEmacs packages with PUI.
+
+
+@node Building XEmacs and XEmacs packages from scratch, , Manual procedures for package management, Packages
+@section Building XEmacs and XEmacs packages from scratch
+
+To build everything completely from scratch isn't hard, just time
+consuming. 
+
+@subheading Step 1 - grab the sources (core and packages)
+
+@example
+$ cvs -d :pserver:cvs@@cvs.xemacs.org:/pack/xemacscvs login
+ [password: "cvs" (sans quotes)]
+
+$ cvs -d :pserver:cvs@@cvs.xemacs.org:/pack/xemacscvs co -d xemacs-21.5 xemacs
+
+$ cvs -d :pserver:cvs@@cvs.xemacs.org:/pack/xemacscvs co packages
+@end example
+
+@subheading Step 2 - build XEmacs
+
+@example
+$ cd xemacs-21.5
+$ ./configure [options...]
+$ make > ./beta.err 2>&1
+$ make check > ./xemacs-make-check.err 2>&1
+@end example
+
+And optionally:
+
+@example
+$ make install > ./xemacs-make-install.err 2>&1
+@end example
+
+@subheading Step 3 - build and install the packages
+
+@example
+$ cd packages
+$ cp Local.rules.template Local.rules
+@end example
+
+Then edit Local.rules to suit your needs/environment
+(@pxref{Local.rules file,,, xemacs, XEmacs User's Manual}) for details
+about this file.
+
+And then:
+
+@example
+$ make install
+@end example
+
+
+@node Reporting Problems, Improving XEmacs, Packages, Top
+@section Reporting Problems
+
+The best way to get problems fixed in XEmacs is to submit good problem
+reports, @kbd{M-x report-xemacs-bug RET} will help you do this (assuming
+you have a usable XEmacs).  Since this is beta software, problems are
+certain to exist.  Please read through all of part II of the XEmacs
+FAQ for an overview of problem reporting.
+@xref{Installation, Installation and Troubleshooting, , xemacs-faq}.
+The most relevant parts are in section 2.4, General Troubleshooting.
+@c #### Why doesn't this link work?
+@c @ref{Q2.4.1, General Troubleshooting, , xemacs-faq}.
+Other items which are most important are:
+
+@enumerate
+@item
+Do not submit C stack backtraces without line numbers.  Since it
+is possible to compile optimized with debug information with GCC
+it is never a good idea to compile XEmacs without the -g flag.
+XEmacs runs on a variety of platforms, and often it is not
+possible to recreate problems which afflict a specific platform.
+The line numbers in the C stack backtrace help isolate where the
+problem is actually occurring.
+ 
+@item
+Attempt to recreate the problem starting with an invocation of
+XEmacs with @code{xemacs -no-autoloads}.  Quite often, problems are
+due to package interdependencies, and the like.  An actual bug
+in XEmacs should be reproducible in a default configuration
+without loading any special packages (or the one or two specific
+packages that cause the bug to appear).  If you have trouble
+getting anything to work at all with the above invocation, use
+@code{xemacs -vanilla} instead.  If you need to load your user init
+file or the site file to get the problem to occur, then it has
+something to do with them, and you should try to isolate the
+issue in those files.
+
+@item
+A picture can be worth a thousand words.  When reporting an
+unusual display, it is generally best to capture the problem in a
+screen dump and include that with the problem report.  The easiest
+way to get a screen dump is to use the xv program and its grab
+function.  Save the image as a GIF to keep bandwidth requirements
+down without loss of information.  MIME is the preferred method
+for making the image attachments.
+@end enumerate
+
+
+@node Improving XEmacs, Index, Reporting Problems, Top
+@chapter Improving XEmacs
+
+@menu
+* Creating patches for submission::  
+* Large contributions::         
+@end menu
+
+@node Creating patches for submission, Large contributions, Improving XEmacs, Improving XEmacs
+@section Creating patches for submission
+
+All patches to XEmacs that are seriously proposed for inclusion (eg,
+bug fixes) should be mailed to @uref{mailto:xemacs-patches@@xemacs.org}.  Each
+patch will be reviewed by the patches review board, and will be
+acknowledged and added to the distribution, or rejected with an
+explanation.  Progress of the patch is tracked on the XEmacs Patches
+mailing list, which is open subscription.  (If a patch is simply
+intended to facilitate discussion, "I mean something that works like
+this but this is really rough", a Cc to XEmacs Patches is optional,
+but doesn't hurt.)
+
+Patches to XEmacs Lisp packages should be sent to the maintainer of
+the package.  If the maintainer is listed as `XEmacs Development Team'
+patches should be sent to @uref{mailto:xemacs-patches@@xemacs.org}.
+
+Emailed patches should preferably be sent in MIME format and quoted
+printable encoding (if necessary).
+
+The simplest way to create well-formed patches is to use CVS and
+Didier Verna's Patcher library (available as patcher.el in the
+xemacs-devel package).  Patcher is new and requires some setup, but
+most of the core developers are now using it for their own patches.
+Patcher also can be configured to create patches for several projects,
+and recognize the project from the directory it is invoked in.  This
+makes it a useful general tool (as long as XEmacs-style patches are
+accepted at your other projects, which is likely since they conform to
+the GNU standards).
+
+When making patches by hand, please use the `-u' option, or if your
+diff doesn't support it, `-c'.  Using ordinary (context-free) diffs
+are notoriously prone to error, since line numbers tend to change when
+others make changes to the same source file.
+
+An example of the `diff' usage:
+
+@example
+$ diff -u OLDFILE NEWFILE
+@end example
+
+-or-
+
+@example
+$ diff -c OLDFILE NEWFILE
+@end example
+
+Also, it is helpful if you create the patch in the top level of the
+XEmacs source directory:
+
+@example
+$ cp -p lwlib/xlwmenu.c lwlib/xlwmenu.c.orig
+  hack, hack, hack....
+$ diff -u lwlib/xlwmenu.c.orig lwlib/xlwmenu.c
+@end example
+
+Also note that if you cut & paste from an xterm to an XEmacs mail
+buffer you will probably lose due to tab expansion.  The best thing to
+do is to use an XEmacs shell buffer to run the diff commands, or ...
+@kbd{M-x cd} to the appropriate directory, and issue the command
+@kbd{C-u M-!} from within XEmacs.
+
+Patches should be as single-minded as possible.  Mammoth patches can
+be very difficult to place into the right slot.  They are much easier
+to deal with when broken down into functional or conceptual chunks.
+The patches submitted by Kyle Jones and Hrvoje Niksic are stellar
+examples of how to "Do The Right Thing".
+
+Each patch should be accompanied by an update to the appropriate
+ChangeLog file.  Guidelines for writing ChangeLog entries is governed
+by the GNU coding standards.  Please see
+@uref{http://www.gnu.org/prep/standards_toc.html}   [Change Logs section]
+for details.
+
+Do not submit context diffs (either -c or -u) of ChangeLogs.  Because
+of the "stack" nature of ChangeLogs (new entries are always pushed on
+the top), context diffs will fail to apply more often than they
+succeed.  Simply cutting and pasting the entry from an Emacs buffer to
+the mail buffer (beware of tab expansion!) is probably easiest.  The
+Patcher library also will set up your ChangeLogs for you, and copy
+them to the mail.  Context-less unified diffs (-U 0) are also
+acceptable.
+
+@menu
+* Patch discussion etiquette::  
+@end menu
+
+@node Patch discussion etiquette,  , Creating patches for submission, Creating patches for submission
+@subsection Patch discussion etiquette
+
+If you intend a patch for _application_ to the sources as is, _always_
+post it to xemacs-patches, even if there are minor points you would
+like to have discussed by others.  Not doing so will resulting in
+patches getting "lost".  If you expect that the patch will not be
+acceptable, but are using it to stimulate discussion, then don't post
+to xemacs-patches.  Intermediate cases are up to your judgment;
+unless you're sure you'll follow up with a "real" patch, better to err
+on the side of posting to xemacs-patches.
+
+Discussion of the _content_ of the patch (ie responses to reviewer
+comments beyond "that's right, ok, I'll do it your way") should _always_
+be posted to xemacs-beta or to xemacs-design.  If you're not sure
+which is more appropriate, send it to xemacs-beta.  That is the most
+widely read channel.
+
+If discussion results in a bright idea and you come up with a new
+patch, normally you should post it to both mailing lists.  The people
+discussing on XEmacs Beta will want to know the outcome of the thread,
+and you need to submit to XEmacs Patches as the "list of record."
+
+If the old patch has been applied to CVS, then just submit the new one
+as usual.  If it has not been applied, then it is best to submit a new
+patch against CVS.  If possible do this as a reply to the original
+patch post, or something following it in the thread.  (The point is to
+get the original patch post's Message-ID in your References header.)
+In this case, also use the keyword SUPERSEDES in the Subject header to
+indicate that the old patch is no longer valid, and that this one
+replaces it.
+
+These rules will result in a fair number of cross posts, but we don't
+yet have a better way to handle that.
+
+Note: Developers should never post to xemacs-patches unless there is a
+patch in the post.  We plan to enforce this with an automatic filter.
+
+The exceptions are administrative.  If you have commit authorization,
+then post a short COMMIT notice to xemacs-patches when you commit to
+CVS.  Members of the Review Board will also post short notices of
+administrative action (APPROVE, VETO, QUERY, etc) to xemacs-patches.
+
+@node Large contributions,  , Creating patches for submission, Improving XEmacs
+@section Large contributions
+
+Perhaps you have a whole new mode, or a major synchronization with
+upstream for a neglected package, or a synchronization with GNU Emacs
+you would like to contribute.  We welcome such contributions, but they
+are likely to be relatively controversial, generate more comments and
+requests for revision, and take longer to integrate.  Please be
+patient with the process.
+
+@menu
+* Updates to existing packages::  
+* New packages::                
+* Syncing with GNU Emacs::      
+@end menu
+
+@node Updates to existing packages, New packages, Large contributions, Large contributions
+@subsection Updates to existing packages
+
+If a package has gotten a bit out of date, or even started to bitrot,
+we welcome patches to synchronize it with upstream/GNU Emacs versions.
+Most packages end up varying somewhat from their GNU origins.  See
+"Syncing with GNU Emacs" for hints.  Note that if you do a reasonably
+large amount of syncing with GNU Emacs, you should log this in the
+file itself as well as in the ChangeLog.
+
+If the package is important to you, please consider becoming the
+maintainer.  (See "New packages", below.)
+
+@node New packages, Syncing with GNU Emacs, Updates to existing packages, Large contributions
+@subsection New packages
+
+If you have a new mode or other large addition that does not require
+changes to the core, please consider submitting it as a package, and
+becoming the maintainer.  You get direct commit privileges to the
+repository for your package, "approval" privileges for your own
+patches as well as third party patches to your package, and some
+degree of veto power over patches you don't like.  In return, you are
+expected to maintain friendly liaison with the upstream developer (if
+you aren't the upstream developer), keep watch on the XEmacs Patches
+list for relevant patches, and be available by email to other
+developers for discussion of changes that impact your package.  It's
+also a pretty standard route to the "core" development group, where we
+have plenty of extra work waiting for volunteers.
+
+You don't have to become the maintainer, but it virtually ensures
+rapid acceptance of the package.
+
+For help in creating new packages, see the (rather sparse) discussions
+in the XEmacs User's Guide and the Lisp Reference Manual.  The
+participants in the XEmacs Beta mailing list
+@uref{mailto:xemacs-beta@@xemacs.org} and the XEmacs Package Release
+Engineer are the most likely sources of advice.  See
+@uref{http://www.xemacs.org/Develop/jobs.html#package,jobs.html} for
+current information about package release engineers.
+
+
+@node Syncing with GNU Emacs,  , New packages, Large contributions
+@subsection Syncing with GNU Emacs
+
+Syncing with GNU Emacs is an important activity.  Although each
+version has its advantages and areas of concentration, it is very
+desirable that common functionality share specifications and APIs.
+When porting GNU code to XEmacs, the following points should be given
+special attention:
+
+@itemize @bullet
+@item
+Recent GNU Emacsen cannot be built without Mule, but XEmacs can.
+Make sure that changes that depend on the presence of Mule are
+appropriately conditionalized, with @samp{#ifdef MULE} in C code and
+with @samp{(featurep 'mule)} in Lisp.
+
+@item
+GNU Emacs nomenclature often differs from that of XEmacs.
+Sometimes syncing the names is desirable, other times not.
+
+@item
+GNU Emacs functionality often differs from that of XEmacs.
+Syncing functionality is often controversial.
+@end itemize
+
+It is important that you let other developers know that
+synchronization has taken place, to what degree, and when.  For this
+purpose, we use comments of the form
+
+@example
+/* Synched up with: GNU 21.3 by Stephen Turnbull */
+@end example
+
+in the source file itself, as the last element of the prefatory
+material (copyright notice and commentary).  Obviously the comment
+marker needs to be changed to leading semicolons for Lisp, but
+otherwise the format is the same.  (Older sync comments may have ``FSF''
+in place of ``GNU''.  They're equally accurate in our opinion, but
+Richard Stallman and other GNU developers consider the term ``FSF
+Emacs'' ``insulting''.  Please use ``GNU'' in new sync comments.)
+
+Of course you should note syncing as the purpose in the ChangeLog,
+too.  But entries get buried deep in the ChangeLog file, and may even
+get moved to a separate ChangeLog.OLD file for rarely synched files.
+
+Rather than dates we use the version of GNU Emacs to sync to.  If the
+synchronization is partial, add a new comment describing what has
+actually been synched, leaving the description of the last full sync
+in place.  At each full sync, remove all previous synchronization
+comments.
+
+This applies to Lisp that we have broken out into packages, but
+remains in the GNU Emacs core, as well to core Lisp in XEmacs.
+
+@c Print the tables of contents
+@contents
+@c That's all
+
+
+@node Index,  , Improving XEmacs, Top
+@unnumbered Index
+
+@printindex cp
+
+@bye

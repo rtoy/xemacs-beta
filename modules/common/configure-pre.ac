@@ -1,0 +1,9 @@
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_SUBST(CFLAGS)
+AC_SUBST(LDFLAGS)
+
+# Find ELLCC
+AC_ARG_VAR([ELLCC], [The path to the ellcc module compiler])
+AC_PATH_PROG([ELLCC], [ellcc], ["FAIL"])
+AS_IF([test "$ELLCC" = "FAIL"], [AS_ERROR([Cannot find ellcc])])

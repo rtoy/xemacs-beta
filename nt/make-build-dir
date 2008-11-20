@@ -1,0 +1,85 @@
+: #-*- Perl -*-
+
+# Create skeleton build tree
+#
+# Copyright (C) 2003 Ben Wing.
+#
+# This file is part of XEmacs.
+#
+# XEmacs is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+#
+# Author: Ben Wing <ben@xemacs.org>
+#
+# Synched up with: Not in FSF.
+
+eval 'exec perl -w -S $0 ${1+"$@"}'
+    if 0;
+
+use File::Copy;
+use File::Basename;
+use Cwd;
+
+die "Creates a skeleton build tree for use with SOURCE_DIR in config.inc.
+
+Usage: $0 PATH
+" if ($#ARGV);
+
+my $path = $ARGV[0];
+# Sometimes perl sucks, too.  To get the equivalent of expand-file-name
+# in a reliable way, you have to do really weird shit, it seems.
+my $cwd = cwd ();
+$0 =~ s|\\|/|g;
+chdir (dirname ($0));
+my $srcroot = dirname (cwd ());
+
+# Convert the path to MS Windows format if we're running Cygwin Perl.
+chomp ($srcroot = `cygpath -w $srcroot`) if ($^O eq "cygwin");
+$srcroot =~ s|/|\\|g;
+
+chdir ($cwd);
+
+print "Creating skeleton build tree in $path\n";
+mkdir $path if ! -e $path;
+mkdir "$path/nt" if ! -e "$path/nt";
+copy("$srcroot/nt/xemacs.mak", "$path/nt/xemacs.mak") if ! -e "$path/nt/xemacs.mak";
+
+&HackFile ("config.inc.samp");
+&HackFile ("config.inc") if -e "$srcroot/nt/config.inc";
+
+sub HackFile
+{
+  my $file = $_[0];
+  if (! -e "$path/nt/$file")
+    {	
+      open IN, "<$srcroot/nt/$file";
+      open OUT, ">$path/nt/$file";
+
+      while (<IN>)
+	{
+	  # Must hack away CRLF junk.  Perl sucks again.  Wouldn't it be
+	  # nice if perl handled this right??  Really can't be that hard!!!
+	  s/\r\n/\n/g;
+
+	  # hack the SOURCE_DIR line to point back to the source.
+	  s!^# SOURCE_DIR=.*!SOURCE_DIR=$srcroot!;
+
+	  print OUT;
+	}
+
+      close IN;
+      close OUT;
+    }
+}

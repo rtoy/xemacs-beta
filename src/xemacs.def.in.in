@@ -1,0 +1,287 @@
+/* The module API: core symbols that are visible to modules.
+   Copyright (C) 2008 Jerry James
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+XEmacs is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to the
+Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA. */
+
+/* The symbol to import/export is on the left.  If the symbol is not
+   meant to be used directly, but a macro or inline function in the
+   API expands to a form containing the symbol, then the macro or
+   inline function is named in a comment to the right. */
+#define NOT_C_CODE
+#include <config.h>
+NAME xemacs.exe
+EXPORTS
+/* Exported functions */
+acons
+#ifdef NEW_GC
+alloc_lrecord			/* alloc_lrecord_type */
+lrecord_subr			/* DEFSUBR */
+lrecord_symbol_value_forward	/* DEFVAR_SYMVAL_FWD */
+#ifdef DEBUG_XEMACS
+mcpro_1				/* mcpro */
+#endif
+mc_alloc			/* DEFSUBR */
+#else /* not NEW_GC */
+alloc_automanaged_lcrecord	/* old_alloc_lcrecord_type */
+#endif /* not NEW_GC */
+apply1
+#ifdef USE_ASSERTIONS
+assert_failed			/* abort(), assert(), etc. */
+#endif
+build_ext_string
+build_intstring
+build_msg_intstring
+build_msg_string
+build_string
+#ifdef MULE
+bytecount_to_charcount_fun	/* bytecount_to_charcount */
+#endif
+call0
+call1
+call2
+call3
+call4
+call5
+call6
+call7
+call8
+#ifdef MULE
+charcount_to_bytecount_fun	/* charcount_to_bytecount */
+#endif
+check_quit			/* QUITP */
+check_what_happened		/* QUIT */
+cons3
+copy_lisp_object
+dead_wrong_type_argument	/* CHECK_xxx */
+#ifdef DEBUG_GCPRO
+debug_gcpro1			/* GCPRO1 */
+debug_gcpro2			/* GCPRO2 */
+debug_gcpro3			/* GCPRO3 */
+debug_gcpro4			/* GCPRO4 */
+debug_gcpro5			/* GCPRO5 */
+debug_ungcpro			/* UNGCPRO */
+#endif
+deferror
+deferror_massage_name		/* DEFERROR */
+deferror_massage_name_and_message /* DEFERROR_STANDARD */
+defkeyword
+defkeyword_massage_name		/* DEFKEYWORD */
+defsubr				/* DEFSUBR */
+defsubr_macro			/* DEFSUBR_MACRO */
+defsymbol
+defsymbol_nodump		/* == defsymbol in modules */
+defsymbol_massage_multiword_predicate /* DEFSYMBOL_MULTIWORD_PREDICATE */
+defsymbol_massage_multiword_predicate_nodump /* DEFSYMBOL_MULTIWORD_PREDICATE_NO_DUMP */
+defsymbol_massage_name		/* DEFSYMBOL */
+defsymbol_massage_name_nodump	/* DEFSYMBOL_NO_DUMP == DEFSYMBOL in modules */
+defvar_magic			/* DEFVAR_LISP, DEFVAR_INT, ... */
+dfc_coding_system_is_unicode	/* TO_INTERNAL_FORMAT */
+dfc_convert_to_external_format	/* TO_EXTERNAL_FORMAT */
+dfc_convert_to_internal_format	/* TO_INTERNAL_FORMAT */
+egetenv				
+#ifndef EMODULES_GATHER_VERSION
+emodules_doc_subr		/* CDOCSUBR */
+emodules_doc_sym		/* CDOCSYM */
+#endif
+eputenv
+#ifdef DEBUG_XEMACS
+eq_with_ebola_notice		/* EQ_WITH_EBOLA_NOTICE */
+#endif
+#ifdef ERROR_CHECK_TYPES
+error_check_cons
+#ifdef HAVE_LDAP
+error_check_ldap
+#endif
+error_check_opaque_ptr
+#ifdef HAVE_POSTGRESQL
+error_check_pgconn
+error_check_pgresult
+#endif
+error_check_string
+#ifdef NEW_GC
+error_check_string_direct_data
+error_check_string_indirect_data
+#endif
+#endif
+free_opaque_ptr
+get_coding_system_for_text_file
+intern
+invalid_argument
+invalid_argument_2
+invalid_constant
+invalid_operation
+invalid_operation_2
+list1
+list2
+list3
+list4
+list5
+list6
+make_ext_string
+make_float
+make_opaque_ptr
+make_string
+make_vector
+maybe_invalid_operation
+message
+new_dfc_convert_copy_data	/* C_STRING_TO_EXTERNAL, ... */
+new_dfc_convert_malloc		/* C_STRING_TO_EXTERNAL_MALLOC, ... */
+new_dfc_convert_size		/* C_STRING_TO_EXTERNAL, ... */
+#ifdef MULE
+non_ascii_itext_copy_ichar	/* itext_copy_ichar */
+non_ascii_itext_ichar		/* itext_ichar */
+non_ascii_set_itext_ichar	/* set_itext_ichar */
+non_ascii_valid_ichar_p		/* valid_ichar_p */
+#endif
+out_of_memory			/* The postgresql module uses this */
+printing_unreadable_object
+record_unwind_protect
+record_unwind_protect_freeing
+report_process_error
+signal_circular_list_error	/* EXTERNAL_LIST_LOOP* */
+signal_circular_property_list_error	/* EXTERNAL_PROPERTY_LIST_LOOP* */
+signal_error
+signal_ferror
+signal_malformed_list_error	/* EXTERNAL_LIST_LOOP* */
+signal_malformed_property_list_error	/* EXTERNAL_PROPERTY_LIST_LOOP* */
+signal_quit			/* QUIT */
+slow_down_interrupts
+speed_up_interrupts
+#ifndef DEBUG_XEMACS
+staticpro
+staticpro_nodump
+#else
+staticpro_1
+staticpro_nodump_1
+#endif
+unbind_to_1			/* unbind_to */
+#ifndef DEBUG_XEMACS
+unstaticpro_nodump
+#else
+unstaticpro_nodump_1
+#endif
+vector1
+vector2
+vector3
+warn_when_safe
+#ifdef ERROR_CHECK_TYPES
+wrap_record_1
+#endif
+write_c_string
+write_fmt_string
+write_fmt_string_lisp
+write_string
+wrong_type_argument		/* CONCHECK_xxx */
+xemacs_c_alloca			/* ALLOCA */
+xfree_1				/* xfree */
+xmalloc
+xmalloc_and_zero
+xrealloc
+xstrdup
+Dynarr_delete_many		/* Dynarr_delete, Dynarr_delete_object, ... */
+Dynarr_free
+Dynarr_insert_many		/* Dynarr_add_{literal,lisp}_string */
+Dynarr_newf			/* Dynarr_new, Dynarr_new2 */
+Dynarr_resize			/* Dynarr_add */
+Fappend
+Fapply
+Fbuffer_modified_p
+Fbuffer_name
+Fcall_with_condition_handler
+Fcons
+Fcurrent_buffer
+Fequal
+Feval
+Fexpand_abbrev
+Ffuncall
+Fget
+Fkill_buffer
+Flength
+Flist
+Fmake_list
+Fmake_string
+Fmake_symbol
+Fmake_vector
+Fnreverse
+Fprovide
+Fput
+Freverse
+Fset_buffer
+Fsignal
+Fthrow
+Fvector
+#ifdef ERROR_CHECK_TYPES
+XINT_1
+#endif
+
+/* Exported variables */
+__temp_alloca_size__		/* ALLOCA */
+#ifdef DEBUG_XEMACS
+debug_issue_ebola_notices	/* EQ_WITH_EBOLA_NOTICE */
+#endif
+dont_check_for_quit		/* QUITP, QUIT */
+gcprolist			/* GCPRO1, GCPRO2, ... */
+initialized			/* LOADHIST_ATTACH */
+lrecord_cons			/* CONSP */
+lrecord_implementations_table	/* RECORD_DUMPABLE */
+lrecord_marker			/* MARKERP */
+#ifdef USE_KKCC
+lrecord_memory_descriptions	/* INIT_LRECORD_IMPLEMENTATION */
+#else
+lrecord_markers			/* INIT_LRECORD_IMPLEMENTATION */
+#endif
+lrecord_string			/* STRINGP */
+lrecord_symbol	 		/* SYMBOLP */
+lrecord_type_count		/* INIT_EXTERNAL_LRECORD_IMPLEMENTATION */
+lrecord_uid_counter
+need_to_check_c_alloca		/* ALLOCA */
+print_readably
+quit_check_signal_happened	/* QUITP */
+#ifdef ERROR_CHECK_MALLOC
+regex_malloc_disallowed		/* REGEX_MALLOC_CHECK */
+#endif
+#ifdef MULE
+rep_bytes_by_first_byte		/* itext_ichar_len, INC_IBYTEPTR, ... */
+#endif
+something_happened		/* QUIT */
+specpdl_depth_counter		/* specpdl_depth */
+Qconsp				/* CHECK_CONS */
+Qcritical			/* QUIT, QUITP */
+Qdelete
+Qfile_name			/* Qdll_filename_encoding */
+Qintegerp			/* CHECK_INT, CONCHECK_INT */
+Qinvalid_argument
+Qnative
+Qnil
+Qnotice
+#ifdef USE_UNION_TYPE
+Qnull_pointer			/* DEFVAR_xxx */
+#endif
+Qprocess_error
+Qsearch
+Qsimple
+Qstringp			/* CHECK_STRING */
+Qsymbolp			/* CHECK_SYMBOL */
+Qsyntax_error
+Qt
+Qunbound
+#ifdef USE_UNION_TYPE
+Qzero				/* ZEROP */
+#endif
+Vinhibit_quit			/* QUIT, QUITP */
+Vquit_flag			/* QUIT, QUITP */

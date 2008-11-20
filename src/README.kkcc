@@ -1,0 +1,73 @@
+2002-07-17  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+	    Mike Sperber <mike@xemacs.org>
+
+	updated 2003-07-29
+
+	New KKCC-GC mark algorithm:
+	configure flag : --use-kkcc
+
+	For better understanding, first a few words about the mark algorithm 
+	up to now:
+	Every Lisp_Object has its own mark method, which calls mark_object
+	with the stuff to be marked.
+	Also, many Lisp_Objects have pdump descriptions memory_descriptions, 
+	which are used by the portable dumper. The dumper gets all the 
+	information it needs about the Lisp_Object from the descriptions.
+
+	Also the garbage collector can use the information in the pdump
+	descriptions, so we can get rid of the mark methods.
+	That is what we have been doing.
+
+	
+	DUMPABLE FLAG
+	-------------
+	First we added a dumpable flag to lrecord_implementation. It shows,
+	if the object is dumpable and should be processed by the dumper.
+	The dumpable flag is the third argument of a lrecord_implementation
+	definition (DEFINE_LRECORD_IMPLEMENTATION).
+	If it is set to 1, the dumper processes the descriptions and dumps
+	the Object, if it is set to 0, the dumper does not care about it.
+		
+
+	KKCC MARKING
+	------------
+	All Lisp_Objects have memory_descriptions now, so we could get
+	rid of the mark_object calls.
+	The KKCC algorithm manages its own stack. Instead of calling 
+	mark_object, all the alive Lisp_Objects are pushed on the 
+	kkcc_gc_stack. Then these elements on the stack  are processed 
+	according to their descriptions.
+
+
+	TODO
+	----
+	- For weakness use weak datatypes instead of XD_FLAG_NO_KKCC.
+	  XD_FLAG_NO_KKCC occurs in:
+		* elhash.c: htentry
+		* extents.c: lispobject_gap_array, extent_list, extent_info
+		* marker.c: marker     
+	  Not everything has to be rewritten. See Ben's comment in lrecord.h.
+	- Clean up special case marking (weak_hash_tables, weak_lists,
+	  ephemerons).
+	- Stack optimization (have one stack during runtime instead of 
+	  malloc/free it for every garbage collect)
+
+	There are a few Lisp_Objects, where there occured differences and
+	inexactness between the mark-method and the pdump description.  All
+	these Lisp_Objects get dumped (except image instances), so their
+	descriptions have been written, before we started our work:
+	* alloc.c: string
+	description: size_, data_, and plist is described
+	mark: only plist is marked, but flush_cached_extent_info is called.
+	      flush_cached_extent_info ->
+		free_soe ->
+		  free_extent_list ->
+		    free_gap_array ->
+		      gap_array_delete_all_markers ->
+			Add gap_array to the gap_array_marker_freelist
+
+	* glyphs.c: image_instance
+	description: device is not set to nil
+	mark: mark method sets device to nil if dead
+	See comment above the description.

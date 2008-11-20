@@ -1,0 +1,305 @@
+<!-- gziped --><HTML>
+<HEAD>
+<!-- hennerik CVSweb $Revision: 1.2 $ -->
+<TITLE>charset/data/ucm/glibc-ISO_8859_15-2.1.2.ucm - view - 1.1</TITLE></HEAD>
+<BODY BGCOLOR="#EEEEEE">
+<table width="100%" border=0 cellspacing=0 cellpadding=1 bgcolor="#9999EE"><tr valign=bottom><td><a href="glibc-ISO_8859_15-2.1.2.ucm#rev1.1"><IMG SRC="/icons/back.gif" ALT="[BACK]" BORDER="0" WIDTH="20" HEIGHT="22"></a> <b>Return to <A HREF="glibc-ISO_8859_15-2.1.2.ucm#rev1.1">glibc-ISO_8859_15-2.1.2.ucm</A>
+ CVS log</b> <IMG SRC="/icons/text.gif" ALT="[TXT]" BORDER="0" WIDTH="20" HEIGHT="22"></td><td align=right><IMG SRC="/icons/dir.gif" ALT="[DIR]" BORDER="0" WIDTH="20" HEIGHT="22"> <b>Up to  <a href="/cvs/icu/#dirlist">[ICU]</a> / <a href="/cvs/icu/charset/#dirlist">charset</a> / <a href="/cvs/icu/charset/data/#dirlist">data</a> / <a href="/cvs/icu/charset/data/ucm/#dirlist">ucm</a></b></td></tr></table><HR noshade><table width="100%"><tr><td bgcolor="#FFFFFF">File:  <a href="/cvs/icu/#dirlist">[ICU]</a> / <a href="/cvs/icu/charset/#dirlist">charset</a> / <a href="/cvs/icu/charset/data/#dirlist">data</a> / <a href="/cvs/icu/charset/data/ucm/#dirlist">ucm</a> / <a href="/cvs/icu/charset/data/ucm/glibc-ISO_8859_15-2.1.2.ucm#dirlist">glibc-ISO_8859_15-2.1.2.ucm</a></b>&nbsp;(<A HREF="/cvs/icu/~checkout~/charset/data/ucm/glibc-ISO_8859_15-2.1.2.ucm?rev=1.1" target="cvs_checkout" onClick="window.open('/cvs/icu/~checkout~/charset/data/ucm/glibc-ISO_8859_15-2.1.2.ucm?rev=1.1','cvs_checkout','resizeable,scrollbars');"><b>download</b></A>)<BR>
+Revision <B>1.1</B>, <i>Wed Apr 18 21:37:42 2001 UTC</i> (6 weeks, 3 days ago) by <i>grhoten</i>
+<BR>Branch: <b>MAIN</b>
+<BR>CVS Tags: <b>HEAD</b><PRE>
+<A HREF="http://www10.software.ibm.com/developerworks/opensource/icu/bugs?findid=937">jitterbug 937</A>: Making the UCM form of these charsets available to the public
+</PRE>
+</td></tr></table><HR noshade><PRE>#________________________________________________________________________
+#
+# (C) COPYRIGHT International Business Machines Corp. 2001
+#     All Rights Reserved
+#
+#________________________________________________________________________
+#
+# File created on Thu Apr 05 09:39:00 PDT 2001
+#
+# File created by CharConv tool.
+# Platform: Linux redhat2 2.2.12-20 #1 Mon Sep 27 10:40:35 EDT 1999 i686 unkglibc-
+#
+# Table Version : 1.0
+# The 1st column is the Unicode scalar value.
+# The 2nd column is the codepage byte sequence.
+# The 3rd column is the fallback indicator.
+# The fallback indicator can have one of the following values:
+#   |0 for exact 1-1 roundtrip mapping
+#   |1 for the best fallback codepage byte sequence.
+#   |2 for the substitution character
+#   |3 for the best reverse fallback Unicode scaler value
+#
+&lt;code_set_name&gt;               &quot;ISO_8859_15&quot;
+&lt;mb_cur_max&gt;                  1
+&lt;mb_cur_min&gt;                  1
+&lt;uconv_class&gt;                 &quot;SBCS&quot;
+&lt;subchar&gt;                     \x1A
+#
+CHARMAP
+#
+#
+#UNICODE ISO_8859_15
+#_______ _________
+&lt;U0000&gt;  \x00 |0
+&lt;U0001&gt;  \x01 |0
+&lt;U0002&gt;  \x02 |0
+&lt;U0003&gt;  \x03 |0
+&lt;U0004&gt;  \x04 |0
+&lt;U0005&gt;  \x05 |0
+&lt;U0006&gt;  \x06 |0
+&lt;U0007&gt;  \x07 |0
+&lt;U0008&gt;  \x08 |0
+&lt;U0009&gt;  \x09 |0
+&lt;U000A&gt;  \x0A |0
+&lt;U000B&gt;  \x0B |0
+&lt;U000C&gt;  \x0C |0
+&lt;U000D&gt;  \x0D |0
+&lt;U000E&gt;  \x0E |0
+&lt;U000F&gt;  \x0F |0
+&lt;U0010&gt;  \x10 |0
+&lt;U0011&gt;  \x11 |0
+&lt;U0012&gt;  \x12 |0
+&lt;U0013&gt;  \x13 |0
+&lt;U0014&gt;  \x14 |0
+&lt;U0015&gt;  \x15 |0
+&lt;U0016&gt;  \x16 |0
+&lt;U0017&gt;  \x17 |0
+&lt;U0018&gt;  \x18 |0
+&lt;U0019&gt;  \x19 |0
+&lt;U001A&gt;  \x1A |0
+&lt;U001B&gt;  \x1B |0
+&lt;U001C&gt;  \x1C |0
+&lt;U001D&gt;  \x1D |0
+&lt;U001E&gt;  \x1E |0
+&lt;U001F&gt;  \x1F |0
+&lt;U0020&gt;  \x20 |0
+&lt;U0021&gt;  \x21 |0
+&lt;U0022&gt;  \x22 |0
+&lt;U0023&gt;  \x23 |0
+&lt;U0024&gt;  \x24 |0
+&lt;U0025&gt;  \x25 |0
+&lt;U0026&gt;  \x26 |0
+&lt;U0027&gt;  \x27 |0
+&lt;U0028&gt;  \x28 |0
+&lt;U0029&gt;  \x29 |0
+&lt;U002A&gt;  \x2A |0
+&lt;U002B&gt;  \x2B |0
+&lt;U002C&gt;  \x2C |0
+&lt;U002D&gt;  \x2D |0
+&lt;U002E&gt;  \x2E |0
+&lt;U002F&gt;  \x2F |0
+&lt;U0030&gt;  \x30 |0
+&lt;U0031&gt;  \x31 |0
+&lt;U0032&gt;  \x32 |0
+&lt;U0033&gt;  \x33 |0
+&lt;U0034&gt;  \x34 |0
+&lt;U0035&gt;  \x35 |0
+&lt;U0036&gt;  \x36 |0
+&lt;U0037&gt;  \x37 |0
+&lt;U0038&gt;  \x38 |0
+&lt;U0039&gt;  \x39 |0
+&lt;U003A&gt;  \x3A |0
+&lt;U003B&gt;  \x3B |0
+&lt;U003C&gt;  \x3C |0
+&lt;U003D&gt;  \x3D |0
+&lt;U003E&gt;  \x3E |0
+&lt;U003F&gt;  \x3F |0
+&lt;U0040&gt;  \x40 |0
+&lt;U0041&gt;  \x41 |0
+&lt;U0042&gt;  \x42 |0
+&lt;U0043&gt;  \x43 |0
+&lt;U0044&gt;  \x44 |0
+&lt;U0045&gt;  \x45 |0
+&lt;U0046&gt;  \x46 |0
+&lt;U0047&gt;  \x47 |0
+&lt;U0048&gt;  \x48 |0
+&lt;U0049&gt;  \x49 |0
+&lt;U004A&gt;  \x4A |0
+&lt;U004B&gt;  \x4B |0
+&lt;U004C&gt;  \x4C |0
+&lt;U004D&gt;  \x4D |0
+&lt;U004E&gt;  \x4E |0
+&lt;U004F&gt;  \x4F |0
+&lt;U0050&gt;  \x50 |0
+&lt;U0051&gt;  \x51 |0
+&lt;U0052&gt;  \x52 |0
+&lt;U0053&gt;  \x53 |0
+&lt;U0054&gt;  \x54 |0
+&lt;U0055&gt;  \x55 |0
+&lt;U0056&gt;  \x56 |0
+&lt;U0057&gt;  \x57 |0
+&lt;U0058&gt;  \x58 |0
+&lt;U0059&gt;  \x59 |0
+&lt;U005A&gt;  \x5A |0
+&lt;U005B&gt;  \x5B |0
+&lt;U005C&gt;  \x5C |0
+&lt;U005D&gt;  \x5D |0
+&lt;U005E&gt;  \x5E |0
+&lt;U005F&gt;  \x5F |0
+&lt;U0060&gt;  \x60 |0
+&lt;U0061&gt;  \x61 |0
+&lt;U0062&gt;  \x62 |0
+&lt;U0063&gt;  \x63 |0
+&lt;U0064&gt;  \x64 |0
+&lt;U0065&gt;  \x65 |0
+&lt;U0066&gt;  \x66 |0
+&lt;U0067&gt;  \x67 |0
+&lt;U0068&gt;  \x68 |0
+&lt;U0069&gt;  \x69 |0
+&lt;U006A&gt;  \x6A |0
+&lt;U006B&gt;  \x6B |0
+&lt;U006C&gt;  \x6C |0
+&lt;U006D&gt;  \x6D |0
+&lt;U006E&gt;  \x6E |0
+&lt;U006F&gt;  \x6F |0
+&lt;U0070&gt;  \x70 |0
+&lt;U0071&gt;  \x71 |0
+&lt;U0072&gt;  \x72 |0
+&lt;U0073&gt;  \x73 |0
+&lt;U0074&gt;  \x74 |0
+&lt;U0075&gt;  \x75 |0
+&lt;U0076&gt;  \x76 |0
+&lt;U0077&gt;  \x77 |0
+&lt;U0078&gt;  \x78 |0
+&lt;U0079&gt;  \x79 |0
+&lt;U007A&gt;  \x7A |0
+&lt;U007B&gt;  \x7B |0
+&lt;U007C&gt;  \x7C |0
+&lt;U007D&gt;  \x7D |0
+&lt;U007E&gt;  \x7E |0
+&lt;U007F&gt;  \x7F |0
+&lt;U0080&gt;  \x80 |0
+&lt;U0081&gt;  \x81 |0
+&lt;U0082&gt;  \x82 |0
+&lt;U0083&gt;  \x83 |0
+&lt;U0084&gt;  \x84 |0
+&lt;U0085&gt;  \x85 |0
+&lt;U0086&gt;  \x86 |0
+&lt;U0087&gt;  \x87 |0
+&lt;U0088&gt;  \x88 |0
+&lt;U0089&gt;  \x89 |0
+&lt;U008A&gt;  \x8A |0
+&lt;U008B&gt;  \x8B |0
+&lt;U008C&gt;  \x8C |0
+&lt;U008D&gt;  \x8D |0
+&lt;U008E&gt;  \x8E |0
+&lt;U008F&gt;  \x8F |0
+&lt;U0090&gt;  \x90 |0
+&lt;U0091&gt;  \x91 |0
+&lt;U0092&gt;  \x92 |0
+&lt;U0093&gt;  \x93 |0
+&lt;U0094&gt;  \x94 |0
+&lt;U0095&gt;  \x95 |0
+&lt;U0096&gt;  \x96 |0
+&lt;U0097&gt;  \x97 |0
+&lt;U0098&gt;  \x98 |0
+&lt;U0099&gt;  \x99 |0
+&lt;U009A&gt;  \x9A |0
+&lt;U009B&gt;  \x9B |0
+&lt;U009C&gt;  \x9C |0
+&lt;U009D&gt;  \x9D |0
+&lt;U009E&gt;  \x9E |0
+&lt;U009F&gt;  \x9F |0
+&lt;U00A0&gt;  \xA0 |0
+&lt;U00A1&gt;  \xA1 |0
+&lt;U00A2&gt;  \xA2 |0
+&lt;U00A3&gt;  \xA3 |0
+&lt;U00A5&gt;  \xA5 |0
+&lt;U00A7&gt;  \xA7 |0
+&lt;U00A9&gt;  \xA9 |0
+&lt;U00AA&gt;  \xAA |0
+&lt;U00AB&gt;  \xAB |0
+&lt;U00AC&gt;  \xAC |0
+&lt;U00AD&gt;  \xAD |0
+&lt;U00AE&gt;  \xAE |0
+&lt;U00AF&gt;  \xAF |0
+&lt;U00B0&gt;  \xB0 |0
+&lt;U00B1&gt;  \xB1 |0
+&lt;U00B2&gt;  \xB2 |0
+&lt;U00B3&gt;  \xB3 |0
+&lt;U00B5&gt;  \xB5 |0
+&lt;U00B6&gt;  \xB6 |0
+&lt;U00B7&gt;  \xB7 |0
+&lt;U00B9&gt;  \xB9 |0
+&lt;U00BA&gt;  \xBA |0
+&lt;U00BB&gt;  \xBB |0
+&lt;U00BF&gt;  \xBF |0
+&lt;U00C0&gt;  \xC0 |0
+&lt;U00C1&gt;  \xC1 |0
+&lt;U00C2&gt;  \xC2 |0
+&lt;U00C3&gt;  \xC3 |0
+&lt;U00C4&gt;  \xC4 |0
+&lt;U00C5&gt;  \xC5 |0
+&lt;U00C6&gt;  \xC6 |0
+&lt;U00C7&gt;  \xC7 |0
+&lt;U00C8&gt;  \xC8 |0
+&lt;U00C9&gt;  \xC9 |0
+&lt;U00CA&gt;  \xCA |0
+&lt;U00CB&gt;  \xCB |0
+&lt;U00CC&gt;  \xCC |0
+&lt;U00CD&gt;  \xCD |0
+&lt;U00CE&gt;  \xCE |0
+&lt;U00CF&gt;  \xCF |0
+&lt;U00D0&gt;  \xD0 |0
+&lt;U00D1&gt;  \xD1 |0
+&lt;U00D2&gt;  \xD2 |0
+&lt;U00D3&gt;  \xD3 |0
+&lt;U00D4&gt;  \xD4 |0
+&lt;U00D5&gt;  \xD5 |0
+&lt;U00D6&gt;  \xD6 |0
+&lt;U00D7&gt;  \xD7 |0
+&lt;U00D8&gt;  \xD8 |0
+&lt;U00D9&gt;  \xD9 |0
+&lt;U00DA&gt;  \xDA |0
+&lt;U00DB&gt;  \xDB |0
+&lt;U00DC&gt;  \xDC |0
+&lt;U00DD&gt;  \xDD |0
+&lt;U00DE&gt;  \xDE |0
+&lt;U00DF&gt;  \xDF |0
+&lt;U00E0&gt;  \xE0 |0
+&lt;U00E1&gt;  \xE1 |0
+&lt;U00E2&gt;  \xE2 |0
+&lt;U00E3&gt;  \xE3 |0
+&lt;U00E4&gt;  \xE4 |0
+&lt;U00E5&gt;  \xE5 |0
+&lt;U00E6&gt;  \xE6 |0
+&lt;U00E7&gt;  \xE7 |0
+&lt;U00E8&gt;  \xE8 |0
+&lt;U00E9&gt;  \xE9 |0
+&lt;U00EA&gt;  \xEA |0
+&lt;U00EB&gt;  \xEB |0
+&lt;U00EC&gt;  \xEC |0
+&lt;U00ED&gt;  \xED |0
+&lt;U00EE&gt;  \xEE |0
+&lt;U00EF&gt;  \xEF |0
+&lt;U00F0&gt;  \xF0 |0
+&lt;U00F1&gt;  \xF1 |0
+&lt;U00F2&gt;  \xF2 |0
+&lt;U00F3&gt;  \xF3 |0
+&lt;U00F4&gt;  \xF4 |0
+&lt;U00F5&gt;  \xF5 |0
+&lt;U00F6&gt;  \xF6 |0
+&lt;U00F7&gt;  \xF7 |0
+&lt;U00F8&gt;  \xF8 |0
+&lt;U00F9&gt;  \xF9 |0
+&lt;U00FA&gt;  \xFA |0
+&lt;U00FB&gt;  \xFB |0
+&lt;U00FC&gt;  \xFC |0
+&lt;U00FD&gt;  \xFD |0
+&lt;U00FE&gt;  \xFE |0
+&lt;U00FF&gt;  \xFF |0
+&lt;U0152&gt;  \xBC |0
+&lt;U0153&gt;  \xBD |0
+&lt;U0160&gt;  \xA6 |0
+&lt;U0161&gt;  \xA8 |0
+&lt;U0178&gt;  \xBE |0
+&lt;U017D&gt;  \xB4 |0
+&lt;U017E&gt;  \xB8 |0
+&lt;U20AC&gt;  \xA4 |0
+#
+END CHARMAP
+#
+</PRE>

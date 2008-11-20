@@ -1,0 +1,1014 @@
+XEmacs Installation Guide
+
+Copyright (c) 1994, 1995, 1996 Board of Trustees, University of Illinois
+Copyright (c) 1994-1999, 2003, 2008 Free Software Foundation, Inc.
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and permission notice are preserved,
+   and that the distributor grants the recipient permission
+   for further redistribution as permitted by this notice.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them,
+   and that any new or changed statements about the activities
+   of the Free Software Foundation are approved by the Foundation.
+
+BUILDING AND INSTALLATION FOR UNIX AND CYGWIN
+
+(for Microsoft Windows, see nt/README also.)
+
+PREREQUISITES
+=============
+
+Make sure your system has enough swapping space allocated to handle a
+program whose pure code is 900k bytes and whose data area is at least
+400k and can reach 8Mb or more.  Note that a typical XEmacs process
+can get much bigger: the instance this sentence was written with is
+over 100MB!  If the swapping space is insufficient, you will get an
+error in the command `temacs -batch -l loadup dump', found in
+`./src/Makefile.in.in', or possibly when running the final dumped
+XEmacs.
+
+Verify that your users have a high enough stack limit. On some systems
+such as OpenBSD and OSF/Tru64 the default is 2MB which is too low.  On
+MacOS/X (Darwin) before 10.3, it's 512kB.  See 'PROBLEMS' for details.
+
+Building XEmacs requires about 100 Mb of disk space (including the
+XEmacs sources).  Once installed, XEmacs occupies between 20 and 100
+MB in the file system where it is installed; this includes the
+executable files, Lisp libraries, miscellaneous data files, and
+on-line documentation. The exact amount depends greatly on the number
+of extra Lisp packages that are installed.
+
+XEmacs requires an ANSI C compiler, such as GCC.  If you wish to build the
+documentation yourself, you will need at least version 1.68 of makeinfo (GNU
+texinfo-3.11).  GNU Texinfo 4.2 is recommended; it is necessary for building
+Lisp packages, and we may move to it for the core.
+
+A note on terminology: unfortunately the terms "library" and "package"
+are heavily overloaded.  In the following, "library" refers to an
+external body of executable code which may be linked with XEmacs at
+build time to provide support for system features, such as images,
+audio, stream compression, databases, and input methods.  A "Lisp
+library" is a file of Lisp code which may be loaded into XEmacs at
+run-time to provide editor features.  A "package" is a specially
+prepared Lisp library or set of Lisp libraries, providing for easy
+installation, upgrade, and removal of applications written in Lisp.
+
+PACKAGE SYSTEM
+==============
+
+The FAQ sections 1.7 and 2.1 contain information vital to have a fully
+working XEmacs.  It includes a description of available packages, and
+how to bootstrap XEmacs from a minimal or a complete set of packages.
+This information was not included in this file only because it is too
+large for this terse INSTALL.  The FAQ is available in Texinfo format
+in man/xemacs-faq.texi, as an Info file once you build XEmacs, and
+online at http://www.xemacs.org/Documentation/21.5/html/xemacs-faq_1.html.
+
+ADD-ON LIBRARIES
+================
+
+Decide which libraries you would like to use with XEmacs, but are not
+yet available on your system.  On some systems, X11, Motif and CDE are
+optional additions.  On MacOS/X systems prior to 10.2, you may download
+X11R6 for Mac OS X from http://www.apple.com/macosx/x11/download/.  In
+later releases X11 is available as an optional package on the
+installation CDs.  In either case you need both the runtime libraries
+and the SDK (in a sidebar of that page at the time of writing).  There
+is also a 3rd-party implementation of X11R6 for the Mac at
+http://www.xdarwin.org/.  On Solaris, the SUNWaudmo package enables
+native sound support.  There are also a number of free software
+applications that XEmacs can use.  If these are not yet available on
+your system, obtain, build and install those external libraries before
+building XEmacs.  The libraries XEmacs can use are:
+
+   Xaw3d, XPM, JPEG, compface, PNG, zlib, GNU DBM, Berkeley DB, socks,
+   term, NAS, Canna, Kinput2, SJ3, Wnn, PostgreSQL, LDAP.
+
+You can get (most of) them from the XEmacs FTP archive at
+<ftp://ftp.xemacs.org/pub/xemacs/aux>.  Information about what
+each library does is available in the file
+<ftp://ftp.xemacs.org/pub/xemacs/aux/00README.txt>.
+
+Use the `--with-site-includes' and `--with-site-libraries' options when
+building XEmacs to allow configure to find the external software
+packages.  For your convenience these can be set together by using the
+`--with-site-prefixes' option.  This will set these variables as needed
+assuming your libraries are organised as a typical /usr tree.
+
+If you link dynamically with external libraries, usually denoted by
+".so" (Unix), ".dll" (Windows), or ".dylib" (MacOS) file extensions, on
+some systems you may also need to add the library directories to the
+`--with-site-runtime-libraries' option.  It is typically necessary only
+if you link with dynamic libraries that are installed in non-standard
+directories, or if you expect some of the libraries used to build XEmacs
+to be in a different directory at run time than at build time.
+
+NOTE: This option has unusual semantics.  ONLY libraries found in the
+directories specified in this option will be used at runtime.  This
+means you must specify ALL directories you want searched at runtime in
+this option (perhaps excluding a very small number of standard system
+library paths).
+
+Directories specified with `--with-site-libraries' are NOT automatically
+added.  The rationale is that most users will not need this option, and
+this allows the builder to specify exactly the needed directories.
+Specifying unnecessary directories leads to obscure problems (typically
+startup delays) if those directories are mounted over a network, and the
+automounter configuration changes.  Not all systems need this option;
+it's best to avoid using it if you can.
+
+Dynamic linking has pros and cons.  Dynamically linking 3rd party
+libraries to XEmacs decreases the size of the binary, and means you
+don't need to rebuild XEmacs to take advantage of improvements in the
+libraries.  On the other hand, XEmacs can fail subtly if the semantics
+of a library changes, other users may not be able to use your
+"private" copies of the libraries, and you may have to relink XEmacs,
+or even omit the feature, if the ABI changes when the libraries are
+upgraded.
+
+CONFIGURATION OPTIONS
+=====================
+
+In the top level directory of the XEmacs distribution, run the
+program `configure' as follows:
+
+    ./configure [CONFIGURATION-NAME] [--OPTION[=VALUE]] ...
+
+Options are generally of the form `--with-FEATURE' or
+`--enable-FEATURE' to use a feature or `--without-FEATURE' or
+`--disable-FEATURE' to not use a feature.  Unlike the `configure'
+program used in other applications, either `--with-FEATURE' or
+`--enable-FEATURE' can be used to use the same feature.
+
+If you haven't built XEmacs 21.5 recently, the change from the
+configure script based on Autoconf 2.13 can be a shock.  Appendix:
+Correspondence to Old Configure Options (at the end of this document)
+contains a list of old options and their new equivalents.
+
+Controlling the Host Type
+-------------------------
+
+Almost always, you should let `configure' (actually the shell script
+`config.guess') guess your host type, by omitting the
+CONFIGURATION-NAME argument.  If you like to experiment, specify a
+configuration name in the form MACHINE-VENDOR-OPSYS, for example:
+
+sparc-sun-solaris2.6
+
+See config.guess and configure.in for valid values for MACHINE,
+VENDOR, and OPSYS.  Also check `./etc/MACHINES' for advice on building
+on particular machines.
+
+Specifying Location of Headers and Libraries
+--------------------------------------------
+
+The `--with-site-includes=DIR' and `--with-site-libraries=DIR' options
+allow you to specify additional places the compiler should look for
+include files and object libraries.  You may specify multiple DIR's by
+enclosing the list in quotes.  All the external libraries you want to
+use with XEmacs (e.g. xpm, wnn, ...) described later should have their
+include and library directories defined using these options.
+
+The `--with-site-runtime-libraries=DIR' option specifies directories to
+search for shared libraries at run time.  If you use this option, you
+must specify ALL of the directories containing shared libraries at run
+time, including system directories.  Please read the information about
+"ADD-ON LIBRARIES" above very carefully.
+
+The `--x-includes=DIR' and `--x-libraries=DIR' options tell the build
+process where the compiler should look for the include files and
+object libraries used with the X Window System.  Normally, `configure'
+is able to find them; these options are necessary if you have your X
+Window System files installed in unusual places.
+
+Configuring the Build Process
+-----------------------------
+
+The `--with-gcc=PROGRAM' option specifies that the build process should
+compile XEmacs using GCC.  The `--with-compiler' option allows you to
+specify some other compiler to be used to compile XEmacs.  If neither
+option is specified, the environment variable CC is used instead.
+Otherwise the compiler will then default to 'cc'.
+
+The `--with-xemacs-compiler=PROGRAM' option specifies the compiler
+control program for the xemacs binary only.  Other C code will be
+compiled according to the `--with-gcc' and `--with-compiler' options
+above.  This is useful if you wish to compile XEmacs with a C++
+compiler, because the utilities in ./lib-src cannot be compiled as C++.
+This option is primarily intended for use by the maintainers.
+
+The `--with-cflags=FLAGS' option specifies all of the CFLAGS the build
+process should use when compiling XEmacs, except for flags controlling
+warning generation.  Otherwise the value of the environment variable
+CFLAGS is consulted.  If that is also undefined, CFLAGS defaults to "-g
+-O" for gcc and "-g" for all other compilers.
+
+The `--with-cflags-warning=FLAGS' option specifies the warnings to be
+generated.  There is normally no reason to use this flag, as XEmacs
+turns on as many warnings as possible, and is still intended to build
+with no warnings.  If you get any undocumented warnings, please report
+them as bugs---they very often are, or at least indicate possible
+bitrot.
+
+The `--with-cflags-optimization=FLAGS' option specifies the
+optimizations to be used.  There is normally no reason to use this
+flag, as XEmacs will already set the maximum safe optimization flags
+appropriate for the compiler being invoked.
+
+The `--with-cflags-debugging=FLAGS' option specifies debugging
+information to be generated.  You should avoid using this flag, as it
+makes most severe or fatal bugs hard-to-impossible to diagnose and
+fix.  Debugging information does not slow down XEmacs at runtime, and
+it doesn't make the binary very much bigger.
+
+The `--with-dynamic' option specifies that configure should try to
+link XEmacs dynamically rather than statically.  `--with-static'
+specifies the reverse.  XEmacs's configure script detects whether
+dynamic linking can be done on all platforms we know of; these options
+are normally unnecessary.
+
+The `--with-modules' option specifies that XEmacs be built with
+support for runtime loadable modules.  NOTE TO OEMS: XEmacs can be
+distributed configured to support several options based on external
+APIs (currently LDAP, PostgreSQL, and Canna) as loadable modules.  You
+can distribute an XEmacs binary package with these options enabled
+without depending on the external package.  XEmacs will fail
+gracefully at runtime, issuing an error message indicating that the
+required support was not found on the system.
+
+You can build XEmacs for several different machine types from a single
+source directory.  To do this, you must use a version of `make' that
+supports the `VPATH' variable, such as GNU `make'.  Create separate
+build directories for the different configuration types, and in each
+one, run the XEmacs `configure' script.  `configure' looks for the
+Emacs source code in the directory that `configure' is in.  The
+`--srcdir' option may not work correctly (traditionally it was
+overridden by the directory containing `configure').
+
+Configuring the Installation Layout
+-----------------------------------
+
+The `--prefix=PREFIXDIR' option specifies where the installation process
+should put XEmacs and its data files.  This defaults to `/usr/local'.
+- XEmacs (and the other utilities users run) go in PREFIXDIR/bin
+  (unless the `--exec-prefix' option says otherwise).
+- The architecture-independent files go in PREFIXDIR/lib/xemacs-VERSION
+  (where VERSION is the version number of XEmacs, like `21.0').
+- The architecture-dependent files go in
+  PREFIXDIR/lib/xemacs-VERSION/CONFIGURATION-NAME
+  (where CONFIGURATION-NAME is the host type, like mips-dec-ultrix4.2),
+  unless the `--exec-prefix' option says otherwise.
+
+The `--exec-prefix=EXECDIR' option allows you to specify a separate
+portion of the directory tree for installing architecture-specific
+files, like executables and utility programs.  If specified,
+- XEmacs (and the other utilities users run) go in EXECDIR/bin, and
+- The architecture-dependent files go in
+  EXECDIR/lib/xemacs-VERSION/CONFIGURATION-NAME.
+EXECDIR/bin should be a directory that is normally in users' PATHs.
+
+If you specify --prefix (or any of the other installation directory
+options), they will get compiled into the xemacs executable so it will
+be able to find its various associated files.  However, XEmacs has
+quite elaborate logic to find out the locations of these directories
+dynamically.  Sometimes, it is desirable *not* to compile these
+directories into the executable so you can move the XEmacs
+installation around (as whole) at will.  This is true for binary kits,
+for instance.  Therefore, you can specify --without-prefix on the
+configure command line to prevent the installation prefix to become
+part of the generated executable; everything else will continue to
+work as usual.
+
+Configuring Feature Support
+---------------------------
+
+If you don't want X Window System support, specify `--without-x'.  If
+you omit this option, `configure' will try to autodetect whether your
+system has X Window System support, and arrange to use it if present.
+
+The `--without-xmu' option can be used if your vendor doesn't ship
+the Xmu library.
+
+The `--with-menubars=TYPE' option allows you to specify which X
+toolkit you wish to use for the menubar.  The valid options are
+`lucid', `motif' and `no'.  The default is `lucid' which is a
+Motif-lookalike menubar.  We highly recommend its usage over the real
+Motif menubar. (In fact, the Motif menubar is currently broken.)  If
+`no' is specified then support for menubars will not be compiled in.
+
+The `--with-scrollbars=TYPE' option allows you to specify which X
+toolkit you wish to use for the scrollbars.  The valid options are
+`lucid', `motif', `athena', `athena3d', and `no'.  The default is
+`lucid' which is a Motif-lookalike scrollbar.  If `no' is specified then
+support for scrollbars will not be compiled in.
+
+The `--with-dialogs=TYPE' option allows you to specify which X toolkit
+you wish to use for the dialog boxes.  The valid options are `athena',
+`athena3d', `motif, and `no.  The `lucid' option is accepted and will
+result in the `athena' toolkit being used.  If the Motif toolkit can be
+found the default is `motif'.  Otherwise, the default is `athena'.  If
+`no' is specified then support for dialog boxes will not be compiled in.
+
+The `--with-toolbars' option allows you to enable or disable toolbar
+support.  The default is `yes' if support for a windowing system is
+included.
+
+The `--with-xpm' option specifies that XEmacs should support X11
+Pixmaps.  `configure' will attempt to detect if you have the Xpm
+libraries and define `--with-xpm' for you.
+
+The `--with-xface' option specifies that XEmacs should support
+X-Faces.  `configure' will attempt to detect if you have the compface
+library and define `--with-xface' for you.
+
+The `--with-database' option specifies that XEmacs should be built
+with simple database support.  The valid options are `no' or a
+comma-separated list of one or more of `dbm', `gnudbm' or `berkdb'.
+`configure' will attempt to detect the necessary libraries and header
+files and define `--with-database' for you.
+
+The `--with-postgresql' option specifies that XEmacs should be built
+with PostgreSQL support, linking with libpq.  `configure' will attempt
+to detect whether PostgreSQL support is available, and automatically
+define `--with-postgresql' for you.  NOTE TO OEMS: If modules are
+supported and enabled, the libpq API support will be build as a
+module.
+
+The `--with-ldap' option specifies that XEmacs should be build with
+LDAP support, using the OpenLDAP libraries.  `configure' will attempt
+to detect whether LDAP support is available, and automatically define
+`--with-ldap' for you.  NOTE TO OEMS: If modules are supported and
+enabled, the OpenLDAP API support will be build as a module.
+
+The `--with-socks' option specifies that XEmacs should be built with
+SOCKS support.  This requires the libsocks library.
+
+The `--with-external-widget' option specifies that XEmacs should be
+built with support for being used as a widget by other X11 applications.
+This functionality should be considered beta.
+
+The `--with-sound=TYPE' option specifies that XEmacs should be built
+with sound support.  Native (`--with-sound=native') sound support is
+currently available only on Sun SparcStations, SGI's, HP9000s, and
+systems (such as Linux) with soundcard.h.  Network Audio Support (NAS)
+(`--with-sound=nas') is an extension to X that you may or may not have
+for your system.  For NAS, you will probably need to provide the paths
+to the nas include and library directories to configure.  If
+`--with-sound' is not specified, `configure' will attempt to determine
+if your configuration supports native sound and define --with-sound
+for you.  If your native sound library is not in a standard location you
+can specify it with the `--with-native-sound-lib=LIB' flag.  For Linux,
+`/dev/audio' is required for SunAudio files and `/dev/dsp' is required
+for raw data and WAVE format files.
+
+The `--with-tooltalk' option specifies that XEmacs should be built
+with ToolTalk support for interconnecting with other applications.
+ToolTalk is not yet supported on all architectures.  If you use this
+option, you should have the tooltalk package (see etc/PACKAGES)
+installed prior to building XEmacs.
+
+The `--with-sparcworks' option specifies that XEmacs should be built
+with support for Sun Sparcworks 3.0.1 and up (including Sun WorkShop).
+This functionality is only of use on SunOS 4.1.x and Solaris 2.x
+systems.  If you use this option, you should have the Sun package (see
+etc/PACKAGES) installed prior to building XEmacs.
+
+The `--with-cde' option allows you to enable or disable CDE drag and
+drop support.  `configure' will attempt to detect this option and
+define `--with-cde' for you.
+
+The `--with-offix' option allows you to enable or disable OffiX drag
+and drop support.  This requires no external library support, so if
+X11 support is available, then this option defaults to `yes'.  OffiX
+support can be explicitly disabled via the `--with-offix=no' option.
+
+Internationalization Options
+----------------------------
+
+The `--with-mule' option enables MUlti-Lingual Emacs (Mule) support,
+needed to support non-Latin-1 (including Asian) languages.  Mule
+support is required for Asian language and Unicode (multibyte and wide
+character) support.  With the advent of the Euro and European
+Community expansion, Mule support is also recommended for Western
+Europeans.  Enabling Mule support requires the mule-base package
+installed prior to building XEmacs.  The `--with-xim', --with-xfs',
+`--with-canna', `--with-wnn' and `--with-wnn6' options require
+Mule support.
+
+The `--with-xim' option enables use of the X11 XIM mechanism to allow
+an input method to input text into XEmacs.  The input method is shared
+among all the X applications sharing an X display and using the same
+language.  The XIM support comes in two flavors: `motif' and `xlib'.
+The Motif support (the XmIm* functions) is preferred when available.
+The xlib XIM support works reasonably well so long as the X11 libraries
+are recent enough.  It has been fairly well tested on Linux with glibc
+2.0.5 and 2.0.6 and Kinput2 as an XIM server.  In this configuration
+X11 must be recompiled with X_LOCALE defined because glibc is lacking
+localization for Japanese.  The XIM support defaults to `no' except
+when Motif is detected where it is stable with OSF libraries.  The XIM
+support in Lesstif (a Free Motif replacement) does not work as of
+v0.82.  If you enable this option, you will probably wish to install
+the `locale' package which contains localized Splash screens and
+Menubars.
+
+The `--with-xfs' option enables use of a multilingual Menubar.  At the
+present time, only Japanese and French locales are supported.  In
+order to use a multilingual Menubar you must have the `locale' package
+installed.  The `locale' package does not have to be installed when
+building XEmacs.
+
+The `--with-canna' option enables the use of the Canna Japanese input
+method.  This is stable code and fairly well tested.  In order to use
+it, you will have to have the Canna server installed and running.  Canna
+versions 3.2pl2, 3.5b2, and 3.7p3 are known to work.  Version 3.2pl2 is
+considered more stable than version 3.5b2; the stability of 3.7p3 is
+still unknown.  If Canna is already installed, configure will autodetect
+it, so you never need to explicitly use this option unless your Canna
+libraries are somewhere strange.  Canna run time support is currently
+bundled with the `mule-base' package so there is nothing additional to
+install in order to use it.  NOTE TO OEMS: If modules are supported
+and enabled, the libcanna API support will be build as a module.
+
+The `--with-wnn' and `--with-wnn6' options are for compiling with the Wnn
+multi-language input method.  `--with-wnn' is for compiling with Wnn-4.2,
+the Free version of WNN.  `--with-wnn6' is for compiling against WNN6,
+the commercial version of WNN available from OMRON Corporation.  This is
+stable code and fairly well tested.  In order to build with this
+option, you will need to have the `egg-its' lisp package already
+installed.
+
+Please note that it is safe to build with as many of the options
+`--with-xim', `--with-canna' and `--with-wnn' as your system
+supports.
+
+Options for Developers and Special Requirements
+-----------------------------------------------
+
+The `--with-rel-alloc' option can be used to either enable or disable
+use of the relocating allocator.  Turning on --with-rel-alloc will allow
+XEmacs to return unused memory to the operating system, thereby reducing
+its memory footprint.  However, it may make XEmacs runs more slowly,
+especially if your system's `mmap' implementation is missing or
+inefficient.  Generally, it's best to go with the default configuration
+for your system.  You can tweak this based on how you use XEmacs, and
+the memory and cpu resources available on your system.
+
+The `--with-system-malloc' option can be used to either enable or
+disable use of the system malloc.  Generally, it's best to go with the
+default configuration for your system.  Note that on many systems
+using the system malloc disables the use of the relocating allocator.
+
+The `--with-debug-malloc' option can be used to link a special
+debugging version of malloc.  Debug Malloc is not included with XEmacs
+and is intended for use only by the developers. It may be obtained
+from <URL:http://www.letters.com/dmalloc/>.
+
+The `--enable-debug' and `--enable-error-checking' options are primarily
+useful to the developers.  `--enable-debug' incorporates code for
+performing various tests, but does not impose a speed penalty.
+`--enable-error-checking' adds additional tests to many of the commonly
+used macros, and imposes a speed penalty.  Using either or both of these
+options can make bug reports more useful to the developers.
+
+The `--verbose' option is useful only to the developers.  It displays
+additional information, useful for debugging `configure'.
+
+MAIL LOCKING
+============
+
+For most platforms, configure or the src/s file have the preferred
+method for locking mail spool files preconfigured.  Otherwise you must
+find out for youself.  Do not choose a locking protocol "on the
+objective merits."  XEmacs must use the same method as other mail
+utilities on your system, or you WILL lose mail.
+
+Presently, XEmacs supports lockf, flock, and dot locking.  Specify the
+locking method via the --with-mail-locking=METHOD option to configure.
+Valid values for METHOD are --with-mail-locking are `lockf', `flock',
+and `dot'.
+
+RUNNING CONFIGURE
+=================
+
+`configure' doesn't do any compilation or installation itself.  It
+just creates the files that influence those things: `./src/config.h',
+and all the Makefiles in the build tree.
+
+When it is done, `configure' prints a description of what it did and
+creates a shell script `config.status' which, when run, recreates the
+same configuration.  If `configure' exits with an error after
+disturbing the status quo, it removes `config.status'.  If `configure'
+doesn't work as expected, the file `config.log' contains details of
+the tests run and their results.
+
+AUXILIARY PATHS
+===============
+
+Look at `./lisp/paths.el'; if some of those values are not right for
+your system, set up the file `./lisp/site-init.el' with XEmacs Lisp
+code to override them; it is not a good idea to edit paths.el itself.
+YOU MUST USE THE LISP FUNCTION `setq' TO ASSIGN VALUES, rather than
+`defvar', as used by `./lisp/paths.el'.  For example,
+
+     (setq news-inews-program "/usr/bin/inews")
+
+is how you would override the default value of the variable
+news-inews-program (which is "/usr/local/inews").
+
+Before you override a variable this way, *look at the value* that the
+variable gets by default!  Make sure you know what kind of value the
+variable should have.  If you don't pay attention to what you are
+doing, you'll make a mistake.
+
+Things may malfunction if the variable `directory-abbrev-alist' is not
+set up to translate "temporary" automounter mount points into the
+canonical form.  XEmacs tries to detect how your automounter is
+configured.  If you have an unusual automounter configuration that
+XEmacs cannot detect, you may need to change the value of
+`directory-abbrev-alist'.
+
+SITE-SPECIFIC STARTUP CODE
+==========================
+
+Put into `./lisp/site-init.el' or `./lisp/site-load.el' any Emacs Lisp
+code you want XEmacs to load before it is dumped out.  Use
+site-load.el for additional libraries if you arrange for their
+documentation strings to be in the lib-src/DOC file (see
+src/Makefile.in.in if you wish to figure out how to do that).  For all
+else, use site-init.el.
+
+Note that, on some systems, the code you place in site-init.el must
+not use expand-file-name or any other function which may look
+something up in the system's password and user information database.
+See `./PROBLEMS' for more details on which systems this affects.
+
+The `site-*.el' files are nonexistent in the distribution.  You do not
+need to create them if you have nothing to put in them.
+
+TERMCAP CONFIGURATION
+=====================
+
+Refer to the file `./etc/TERMS' for information on fields you may
+wish to add to various termcap entries.  The files `./etc/termcap.ucb'
+and `./etc/termcap.dat' may already contain appropriately-modified
+entries.
+
+RUNNING MAKE
+============
+
+Run `make' in the top directory of the XEmacs distribution to finish
+building XEmacs in the standard way.  The final executable file is
+named `src/xemacs'.  You can execute this file in place without
+copying it, if you wish; then it automatically uses the sibling
+directories ../lisp, ../lib-src, ../info.
+
+Or you can install the executable and the other XEmacs into their
+permanent locations, with `make install'.  By default, XEmacs's files
+are installed in the following directories:
+
+`/usr/local/bin' holds the executable programs users normally run -
+		`xemacs', `etags', `ctags', `b2m', `emacsclient', `ellcc',
+		`gnuclient', `gnudoit', `gnuattach', and `rcs-checkin'.
+
+`/usr/local/lib/xemacs-VERSION/lisp' holds the Emacs Lisp libraries;
+		`VERSION' stands for the number of the XEmacs version
+		you are installing, like `18.59' or `19.14'.  Since
+		the lisp libraries change from one version of XEmacs to
+		another, including the version number in the path
+		allows you to have several versions of XEmacs installed
+		at the same time; this means that you don't have to
+		make XEmacs unavailable while installing a new version.
+
+		XEmacs searches for its lisp files in these
+		directories, and then in
+		`/usr/local/lib/xemacs/site-lisp/*'.
+
+`/usr/local/lib/xemacs-VERSION/etc' holds the XEmacs tutorial, the
+		`yow' database, and other architecture-independent
+		files XEmacs might need while running.  VERSION is as
+		specified for `.../lisp'.
+
+`/usr/local/lib/xemacs/lock' contains files indicating who is
+		editing what, so XEmacs can detect editing clashes
+		between users.
+
+`/usr/local/lib/xemacs-VERSION/CONFIGURATION-NAME' contains executable
+		programs used by XEmacs that users are not expected to
+		run themselves, and the DOC file. `VERSION' is the
+		number of the XEmacs version you are installing, and
+		`CONFIGURATION-NAME' is the host type of your system.
+		Since these files are specific to the version of
+		XEmacs, operating system, and architecture in use,
+		including the configuration name in the path allows
+		you to have several versions of XEmacs for any mix of
+		machines and operating systems installed at the same
+		time; this is useful for sites at which different
+		kinds of machines share the file system XEmacs is
+		installed on.
+
+`/usr/local/lib/xemacs-VERSION/CONFIGURATION-NAME/modules' holds the Emacs
+		dynamically loadable modules.  These are special programs
+		typically written in C that can be loaded in much the same
+		way that Lisp packages are.  Not all systems support
+		dynamic modules, so do not be alarmed if this directory
+		does not exist or is empty.
+
+		XEmacs searches for modules in this directory, or any
+		sub-directory of it, and then in
+		`/usr/local/lib/xemacs/site-modules/*'.
+
+`/usr/local/lib/xemacs-VERSION/info' holds the on-line documentation
+		for XEmacs, known as "info files".
+
+`/usr/local/man/man1' holds the man pages for the programs installed
+		in `/usr/local/bin'.
+
+If these directories are not what you want, you can specify where to
+install XEmacs's libraries and data files or where XEmacs should search
+for its lisp files by giving values for `make' variables as part of
+the command.
+
+You can change where the build process installs XEmacs and its data
+files by specifying values for `make' variables as part of the `make'
+command line.  For example, if you type
+
+    make install bindir=/usr/local/gnubin
+
+the `bindir=/usr/local/gnubin' argument indicates that the XEmacs
+executable files should go in `/usr/local/gnubin', not
+`/usr/local/bin'.
+
+Here is a complete list of the variables you may want to set.
+
+`bindir' indicates where to put executable programs that users can
+	run.  This defaults to /usr/local/bin.
+
+`datadir' indicates where to put the architecture-independent
+	read-only data files that XEmacs refers to while it runs; it
+	defaults to /usr/local/lib.  We create the following
+	subdirectories under `datadir':
+	- `xemacs-VERSION/lisp', containing the XEmacs lisp libraries, and
+
+	- `xemacs-VERSION/etc', containing the XEmacs tutorial and the
+		`yow' database.
+	`VERSION' is the number of the XEmacs version you are installing,
+	like `18.59' or `19.14'.  Since these files vary from one version
+	of XEmacs to another, including the version number in the path
+	allows you to have several versions of XEmacs installed at the
+	same time; this means that you don't have to make XEmacs
+	unavailable while installing a new version.
+
+`statedir' indicates where to put architecture-independent data files
+	that XEmacs modifies while it runs; it defaults to
+	/usr/local/lib as well.  We create the following
+	subdirectories under `statedir':
+	- `xemacs/lock', containing files indicating who is editing
+		what, so XEmacs can detect editing clashes between
+		users.
+
+`libdir' indicates where to put architecture-specific data files that
+	XEmacs refers to as it runs; it too defaults to `/usr/local/lib'.
+	We create the following subdirectories under `libdir':
+	- `xemacs-VERSION/CONFIGURATION-NAME', containing executable
+		programs used by XEmacs that users are not expected to run
+		themselves, and the DOC file.
+	`VERSION' is the number of the XEmacs version you are installing,
+	and `CONFIGURATION-NAME' is the host type of your system.
+	Since these files are specific to the version of XEmacs,
+	operating system, and architecture in use, including the
+	configuration name in the path allows you to have several
+	versions of XEmacs for any mix of machines and operating
+	systems installed at the same time; this is useful for sites
+	at which different kinds of machines share the file system
+	XEmacs is installed on.
+
+`infodir' indicates where to put the info files distributed with
+	XEmacs; it defaults to `/usr/local/lib/xemacs-VERSION/info'.
+
+`mandir' indicates where to put the man pages for XEmacs and its
+	utilities (like `etags'); it defaults to
+	`/usr/local/man/man1'.
+
+`prefix' doesn't give a path for any specific part of XEmacs; instead,
+	its value is used to determine the defaults for all the
+	architecture-independent path variables - `datadir',
+	`statedir', `infodir', and `mandir'.  Its default value is
+	`/usr/local'; the other variables add on `lib' or `man' to it
+	by default.
+
+	For example, suppose your site generally places GNU software
+	under `/usr/users/software/gnusoft' instead of `/usr/local'.
+	By including
+	    `prefix=/usr/users/software/gnusoft'
+	in the arguments to `make', you can instruct the build process
+	to place all of the XEmacs data files in the appropriate
+	directories under that path.
+
+`exec_prefix' serves the same purpose as `prefix', but instead
+	determines the default values for the architecture-dependent
+	path variables - `bindir' and `libdir'.
+
+The above variables serve analogous purposes in the makefiles for all
+GNU software; here are some variables specific to XEmacs.
+
+`lispdir' indicates where XEmacs installs and expects its lisp
+	libraries.  Its default value, based on `datadir' (see above),
+	is `/usr/local/lib/xemacs-VERSION/lisp' (where `VERSION' is as
+	described above).
+
+`sitelispdir' indicates where XEmacs should search for lisp libraries
+	specific to your site. XEmacs checks them in order before
+	checking `lispdir'.  Its default value, based on `datadir'
+	(see above), is `/usr/local/lib/xemacs/site-lisp'.
+
+`etcdir' indicates where XEmacs should install and expect the rest of
+	its architecture-independent data, like the tutorial and yow
+	database.  Its default value, based on `datadir'
+	(see above), is `/usr/local/lib/xemacs-VERSION/etc' (where
+	`VERSION' is as described above).
+
+`lockdir' indicates the directory where XEmacs keeps track of its
+	locking information.  Its default value, based on `statedir'
+	(see above), is `/usr/local/lib/xemacs/lock'.
+
+`archlibdir' indicates where XEmacs installs and expects the
+	executable files and other architecture-dependent data it uses
+	while running.  Its default value, based on `libdir' (see
+	above), is `/usr/local/lib/xemacs-VERSION/CONFIGURATION-NAME'
+	(where VERSION and CONFIGURATION-NAME are as described above).
+
+`docdir' indicates where to put Lisp documentation strings that XEmacs
+        refers to as it runs.  It defaults to the value of `archlibdir'
+        (see above).
+
+`moduledir' indicates where XEmacs installs and expects to find
+	any dynamic modules.  Its default value, based on
+	`archlibdir' (see above) is
+	`/usr/local/lib/xemacs-VERSION/CONFIGURATION-NAME/modules'
+	(where VERSION and CONFIGURATION-NAME are as described above).
+	By their very nature, dynamic loadable modules are architecture-
+	dependent, and care should be taken not to set this directory
+	to a system- or architecture-independent directory.
+
+Remember that you must specify any variable values you need each time
+you run `make' in the top directory.  If you run `make' once to build
+xemacs, test it, and then run `make' again to install the files, you
+must provide the same variable settings each time.  To make the
+settings persist, you can edit them into the `Makefile' in the top
+directory, but be aware that running the `configure' program erases
+`Makefile' and rebuilds it from `Makefile.in'.
+
+The top-level Makefile stores the variable settings it used in the
+Makefiles for the subdirectories, so you don't have to specify them
+when running make in the subdirectories.
+
+Using GNU Make allows for simultaneous builds with and without the
+--srcdir option.
+
+STRIPPING BINARIES
+==================
+
+This saves nothing but a small (by modern standards) amount of disk
+space; the symbol table is not loaded into memory at execution time.
+If you do encounter a crash or other serious bug, the first thing the
+developers will do is ask you to build an XEmacs with a full symbol
+table, anyway.  Don't strip the XEmacs binary.
+
+MAIL-LOCKING POST-INSTALLATION
+==============================
+
+If your system uses dot-locking to interlock access to mailer inbox
+files, then you might need to make the movemail program setuid or
+setgid to enable it to write the lock files.  We believe this is safe.
+The setuid/setgid bits need not be set on any other XEmacs-related
+executables.
+
+CLEANING UP
+==========
+
+You are done with the hard part!  You can remove executables and
+object files from the build directory by typing `make clean'.  To also
+remove the files that `configure' created (so you can compile XEmacs
+for a different configuration), type `make distclean'.
+
+READ THE FAQ
+============
+
+Do it!
+
+PROBLEMS
+========
+
+The most common problem is that you forgot to read and follow the
+directions for installing bootstrap packages in the FAQ.  You can not
+have a normal XEmacs without downloading some additional packages.
+
+See the file PROBLEMS in this directory for a list of various problems
+sometimes encountered, and what to do about them.  PROBLEMS is also
+the place where platform-specific build notes can be found.
+
+APPENDIX: CORRESPONDENCE TO OLD CONFIGURE OPTIONS
+=================================================
+
+Here is a full translation of command line arguments.  Note that any
+option starting with "--with" may also be specified with "--enable".
+This list may not be up-to-date.
+
+Old                     |  New
+------------------------------------------
+General options:
+----------------
+
+--help                    Unchanged
+--usage                   Removed
+--verbose                 Unchanged
+--extra-verbose           Removed
+
+Compilation options:
+--------------------
+
+--compiler                --with-compiler
+--xemacs-compiler         --with-xemacs-compiler
+--with-gcc                Unchanged
+--cflags                  --with-cflags
+--cflags-warning          --with-cflags-warning
+--debug                   --with-debug
+New                       --with-cflags-debug
+New                       --with-optimization
+New                       --with-cflags-optimization
+--cpp                     --with-cpp
+--cppflags                --with-cppflags
+--libs                    --with-libs
+--ldflags                 --with-ldflags
+--site-includes           --with-site-includes
+--site-libraries          --with-site-libraries
+--site-prefixes           --with-site-prefixes
+--site-runtime-libraries  --with-site-runtime-libraries 
+--dynamic                 --with-dynamic
+--srcdir                  Unchanged
+
+Installation options:
+---------------------
+
+--prefix                  Unchanged
+--with-prefix             Unchanged
+--with-netinstall         Unchanged
+--bindir                  Unchanged
+--datadir                 Unchanged
+--statedir                Unchanged
+--libdir                  Unchanged
+--infodir                 Unchanged
+--mandir                  Unchanged
+--lispdir                 --with-lispdir
+--sitelispdir             Removed
+--etcdir                  --with-etcdir
+--lockdir                 Removed
+--archlibdir              --with-archlibdir
+--docdir                  --with-docdir
+--moduledir               --with-moduledir
+
+Run-time path-searching options:
+--------------------------------
+
+--with-site-lisp          Unchanged
+--with-site-modules       Unchanged
+--package-path            --with-package-path
+--infopath                --with-infopath
+
+Window-system options:
+----------------------
+
+--with-gtk                Unchanged
+--with-gnome              Unchanged
+--with-x11                Unchanged
+--x-includes              Unchanged
+--x-libraries             Unchanged
+--with-msw                Unchanged
+--with-toolbars           Unchanged
+--with-wmcommand          Unchanged
+--with-athena             Unchanged
+--with-menubars           Unchanged
+--with-scrollbars         Unchanged
+--with-dialogs            Unchanged
+--with-widgets            Unchanged
+--with-dragndrop          Unchanged
+--with-cde                Unchanged
+--with-offix              Unchanged
+--with-xmu                Unchanged
+--external-widget         --with-external-widget
+
+TTY (character terminal) options:
+---------------------------------
+
+--with-tty                Unchanged
+--with-ncurses            Unchanged
+--with-gpm                Unchanged
+
+Image options:
+--------------
+
+--with-xpm                Unchanged
+--with-png                Unchanged
+--with-jpeg               Unchanged
+--with-tiff               Unchanged
+--with-xface              Unchanged
+--with-gif                Unchanged
+
+Sound options:
+--------------
+
+--with-sound              Unchanged
+--native-sound-lib=LIB    --with-native-sound-lib
+
+Internationalization options:
+-----------------------------
+
+--with-mule               Unchanged
+--with-xim                Unchanged
+--with-canna              Unchanged
+--with-wnn                Unchanged
+--with-wnn6               Unchanged
+--with-xfs                Unchanged
+
+File-related options:
+---------------------
+
+--with-default-eol-detection  Unchanged
+--with-clash-detection        Unchanged
+
+Database options:
+-----------------
+
+--with-database           Unchanged
+--with-ldap               Unchanged
+--with-postgresql         Unchanged
+
+Mail options:
+-------------
+
+--mail-locking=TYPE       --with-mail-locking
+--with-pop                Unchanged
+--with-kerberos           Unchanged
+--with-hesiod             Unchanged
+
+Networking options:
+-------------------
+
+--with-tooltalk           Unchanged
+--with-socks              Unchanged
+--with-dnet               Unchanged
+--with-ipv6-cname	  Unchanged
+
+Memory allocation options:
+--------------------------
+
+--rel-alloc               --with-rel-alloc
+--with-dlmalloc           Unchanged
+--with-system-malloc      Unchanged
+--with-debug-malloc       Unchanged
+
+Emacs Lisp options:
+-------------------
+
+--use-number-lib          --with-bignum
+
+Debugging options:
+------------------
+
+--debug                   --with-debug
+--error-checking          --with-error-checking
+--memory-usage-stats      --with-memory-usage-stats
+--quick-build             --with-quick-build
+--use-union-type          --with-union-type
+--with-quantify           Unchanged
+--with-purify             Unchanged
+
+Developer options:
+------------------
+
+--with-workshop           Unchanged
+--pdump                   --with-pdump
+--use-kkcc                --with-kkcc
+--with-modules            Unchanged
+
+The output files produced by this new configure should be almost
+identical to those produced by the old.  This can be tested with the
+provided regression test script.  This script runs the two versions of
+configure with the supplied list of command line arguments and reports
+any differences.  Please add your favorite configuration command lines
+to the list before running the test.  The script is run as:
+
+$ tests/autoconf/regressiontest.pl /absolute/path/to/2.13/configure \
+   /absolute/path/to/2.59/configure >diffs.txt
+
+The only differences should be:
+- those related to changes in the command line arguments
+- the change of SYS_SIGLIST_DECLARED to HAVE_DECL_SYS_SIGLIST (because the old
+  form has been removed), and
+- The removal of trailing comments in src/config.h.
+
