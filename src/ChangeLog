@@ -137,6 +137,13 @@
 	* input-method-xlib.c:
 	Use Xt_RESOURCE.
 
+2008-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* elhash.c (hash_table_data_validate):
+	* elhash.c (decode_hash_table_rehash_size):
+	* elhash.c (decode_hash_table_rehash_threshold):
+	Document side effects used in these functions.
+
 2008-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* console-x-impl.h (struct x_frame): Clarify comment.
