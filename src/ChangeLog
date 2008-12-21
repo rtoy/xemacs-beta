@@ -1,3 +1,10 @@
+2008-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.c (Fbuilt_in_face_specifiers): 
+	Don't simply warn the user not to modify
+	Vbuilt_in_face_specifiers, enforce this by returning a copy of the
+	list. 
+
 2008-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	G++ 4.3 complains a lot about implicit conversions of string
