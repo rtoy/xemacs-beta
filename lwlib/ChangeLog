@@ -1,3 +1,92 @@
+2008-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	G++ 4.3 complains a lot about implicit conversions of string
+	literals (const char *) to char *.  Shut it up.
+
+	* xt-wrappers.h: New file.
+	Contains wrappers for Xt functions and macros for C++
+	type-correctness and/or convenience.
+
+	* lwlib.h:
+	* lwlib-Xm.c:
+	* lwlib-Xaw.c:
+	#include xt-wrappers.h.
+
+	* xlwcheckbox.c:
+	* xlwgauge.c:
+	* xlwmenu.c:
+	* xlwradio.c:
+	* xlwscrollbar.c:
+	* xlwtabs.c:
+	#include xt-wrappers.h.
+	Cast class name to String.
+	Cast action names to String.
+	Rewrite resources to use Xt_RESOURCE.
+
+	* lwlib.h (lw_get_value_arg):
+	* lwlib.c (lw_get_value_arg):
+	Declare String argument const.
+
+	* lwlib-Xaw.c (xaw_actions):
+	Cast to string.
+
+	* lwlib-Xaw.c (xaw_update_scrollbar):
+	* lwlib-Xaw.c (xaw_update_one_widget):
+	* lwlib-Xaw.c (xaw_update_one_value):
+	* lwlib-Xaw.c (make_dialog):
+	* lwlib-Xaw.c (xaw_generic_callback):
+	* lwlib-Xaw.c (wm_delete_window):
+	* lwlib-Xaw.c (xaw_create_scrollbar):
+	* lwlib-Xaw.c (xaw_create_button):
+	* lwlib-Xaw.c (xaw_create_label):
+	* lwlib-Xaw.c (xaw_create_progress):
+	* lwlib-Xaw.c (xaw_create_text_field):
+	* lwlib-Xaw.c (xaw_creation_table):
+	* lwlib-Xlw.c (xlw_create_menubar):
+	* lwlib-Xlw.c (xlw_create_popup_menu):
+	* lwlib-Xlw.c (xlw_create_scrollbar):
+	* lwlib-Xlw.c (xlw_update_scrollbar):
+	* lwlib-Xlw.c (xlw_create_tab_control):
+	* lwlib-Xlw.c (build_tabs_in_widget):
+	* lwlib-Xlw.c (xlw_create_clip_window):
+	* lwlib-Xlw.c (xlw_update_one_widget):
+	* lwlib-Xm.c (xm_update_label):
+	* lwlib-Xm.c (xm_update_pushbutton):
+	* lwlib-Xm.c (xm_update_progress):
+	* lwlib-Xm.c (xm_update_toggle):
+	* lwlib-Xm.c (xm_update_radiobox):
+	* lwlib-Xm.c (make_menu_in_widget):
+	* lwlib-Xm.c (update_one_menu_entry):
+	* lwlib-Xm.c (xm_update_scrollbar):
+	* lwlib-Xm.c (xm_update_one_value):
+	* lwlib-Xm.c (make_dialog):
+	* lwlib-Xm.c (recenter_widget):
+	* lwlib-Xm.c (recycle_instance):
+	* lwlib-Xm.c (make_menubar):
+	* lwlib-Xm.c (make_scrollbar):
+	* lwlib-Xm.c (xm_create_button):
+	* lwlib-Xm.c (xm_create_progress):
+	* lwlib-Xm.c (xm_create_text_field):
+	* lwlib-Xm.c (xm_create_label):
+	* lwlib-Xm.c (xm_create_combo_box):
+	* lwlib-Xm.c (xm_popup_menu):
+	* lwlib-Xm.c (set_min_dialog_size):
+	* lwlib-Xm.c (do_call):
+	* lwlib-Xm.c (xm_generic_callback):
+	* xlwcheckbox.c (offset):
+	* xlwgauge.c (offset):
+	* xlwgauge.c (actionsList):
+	* xlwmenu.c (xlwMenuResources):
+	* xlwmenu.c (xlwMenuActionsList):
+	* xlwmenu.c (xlwMenuClassRec):
+	* xlwmenu.c (nameResource):
+	* xlwmenu.c (parameterize_string):
+	* xlwradio.c (actionsList):
+	* xlwscrollbar.c (offset):
+	* xlwscrollbar.c (actions):
+	Use Xt_SET_ARG, Xt_SET_VALUE, and Xt_GET_VALUE instead of raw Xt
+	equivalents.
+
 2008-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lwlib-Xm.c (xm_update_progress): Set all values!

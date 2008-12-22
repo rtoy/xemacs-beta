@@ -703,11 +703,10 @@ Return the name of the given face.
 
 DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers, 0, 0, 0, /*
 Return a list of all built-in face specifier properties.
-Don't modify this list!
 */
        ())
 {
-  return Vbuilt_in_face_specifiers;
+  return Fcopy_list(Vbuilt_in_face_specifiers);
 }
 
 /* These values are retrieved so often that we make a special

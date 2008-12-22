@@ -1618,7 +1618,10 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
 	(unless byte-compile-overwrite-file
 	  (ignore-file-errors (delete-file target-file)))
 	(if (file-writable-p target-file)
-	    (write-region 1 (point-max) target-file)
+	    ;; prevent generic hooks from changing our format, eg,
+	    ;; latin-unity is known to change the coding system!
+	    (let ((write-region-pre-hook nil))
+	      (write-region 1 (point-max) target-file))
 	  ;; This is just to give a better error message than write-region
 	  (signal 'file-error
 		  (list "Opening output file"
