@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include ATHENA_XawInit_h_
 #include "../src/xmu.h"
+#include "xt-wrappers.h"
 #include "xlwcheckboxP.h"
 
 
@@ -89,10 +90,12 @@ static char defaultTranslations[] =
 
 
 
-#define	offset(field)	XtOffsetOf(CheckboxRec, field)
+#define	offset(field)	XtOffsetOf(CheckboxRec, checkbox.field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
 static	XtResource	resources[] = {
-  {XtNtristate, XtCTristate, XtRBoolean, sizeof(Boolean),
-    offset(checkbox.tristate), XtRImmediate, (XtPointer)FALSE},
+  res (XtNtristate, XtCTristate, XtRBoolean, Boolean, tristate,
+       XtRImmediate, FALSE),
 } ;
 #undef	offset
 
@@ -127,7 +130,7 @@ static	XtActionsRec	actionsList[] =
 CheckboxClassRec checkboxClassRec = {
   {
     (WidgetClass) SuperClass,		/* superclass		*/
-    "Checkbox",				/* class_name		*/
+    (String) "Checkbox",		/* class_name		*/
     sizeof(CheckboxRec),		/* size			*/
     CheckboxClassInit,			/* class_initialize	*/
     NULL,				/* class_part_initialize  */

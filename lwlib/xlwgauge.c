@@ -53,6 +53,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Xatom.h>
 #include <X11/StringDefs.h>
 #include ATHENA_XawInit_h_
+#include "xt-wrappers.h"
 #include "xlwgaugeP.h"
 #include "../src/xmu.h"
 #ifdef HAVE_XMU
@@ -77,33 +78,29 @@ static	char	defaultTranslations[] =
 
 
 
-#define offset(field) XtOffsetOf(GaugeRec, field)
+#define offset(field) XtOffsetOf(GaugeRec, gauge.field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
 static XtResource resources[] = {
-    {XtNvalue, XtCValue, XtRInt, sizeof(int),
-	offset(gauge.value), XtRImmediate, (XtPointer)0},
-    {XtNminValue, XtCMinValue, XtRInt, sizeof(int),
-	offset(gauge.v0), XtRImmediate, (XtPointer)0},
-    {XtNmaxValue, XtCMaxValue, XtRInt, sizeof(int),
-	offset(gauge.v1), XtRImmediate, (XtPointer)100},
-    {XtNntics, XtCNTics, XtRInt, sizeof(int),
-	offset(gauge.ntics), XtRImmediate, (XtPointer) 0},
-    {XtNnlabels, XtCNLabels, XtRInt, sizeof(int),
-	offset(gauge.nlabels), XtRImmediate, (XtPointer) 0},
-    {XtNlabels, XtCLabels, XtRStringArray, sizeof(String *),
-	offset(gauge.labels), XtRStringArray, NULL},
-    {XtNautoScaleUp, XtCAutoScaleUp, XtRBoolean, sizeof(Boolean),
-	offset(gauge.autoScaleUp), XtRImmediate, FALSE},
-    {XtNautoScaleDown, XtCAutoScaleDown, XtRBoolean, sizeof(Boolean),
-	offset(gauge.autoScaleDown), XtRImmediate, FALSE},
-    {XtNorientation, XtCOrientation, XtROrientation, sizeof(XtOrientation),
-	offset(gauge.orientation), XtRImmediate, (XtPointer)XtorientHorizontal},
-    {XtNupdate, XtCInterval, XtRInt, sizeof(int),
-	offset(gauge.update), XtRImmediate, (XtPointer)0},
-    {XtNgetValue, XtCCallback, XtRCallback, sizeof(XtPointer),
-	offset(gauge.getValue), XtRImmediate, (XtPointer)NULL},
+    res (XtNvalue, XtCValue, XtRInt, int, value, XtRImmediate, 0),
+    res (XtNminValue, XtCMinValue, XtRInt, int, v0, XtRImmediate, 0),
+    res (XtNmaxValue, XtCMaxValue, XtRInt, int, v1, XtRImmediate, 100),
+    res (XtNntics, XtCNTics, XtRInt, int, ntics, XtRImmediate,  0),
+    res (XtNnlabels, XtCNLabels, XtRInt, int, nlabels, XtRImmediate,  0),
+    res (XtNlabels, XtCLabels, XtRStringArray, String *, labels,
+	 XtRStringArray, NULL),
+    res (XtNautoScaleUp, XtCAutoScaleUp, XtRBoolean, Boolean, autoScaleUp,
+	 XtRImmediate, FALSE),
+    res (XtNautoScaleDown, XtCAutoScaleDown, XtRBoolean, Boolean,
+	 autoScaleDown, XtRImmediate, FALSE),
+    res (XtNorientation, XtCOrientation, XtROrientation, XtOrientation,
+	 orientation, XtRImmediate, XtorientHorizontal),
+    res (XtNupdate, XtCInterval, XtRInt, int, update, XtRImmediate, 0),
+    res (XtNgetValue, XtCCallback, XtRCallback, XtPointer, getValue,
+	 XtRImmediate, NULL),
 };
 #undef offset
-
+#undef res
 
 
 	/* member functions */
@@ -146,8 +143,8 @@ static GC Get_GC (GaugeWidget, Pixel);
 
 static	XtActionsRec	actionsList[] =
 {
-  {"select",	GaugeSelect},
-  {"paste",	GaugePaste},
+  { (String) "select",	GaugeSelect },
+  { (String) "paste",	GaugePaste },
 } ;
 
 
@@ -162,7 +159,7 @@ GaugeClassRec gaugeClassRec = {
   {
 /* core_class fields */
     /* superclass	  	*/	(WidgetClass) &labelClassRec,
-    /* class_name	  	*/	"Gauge",
+    /* class_name	  	*/	(String) "Gauge",
     /* widget_size	  	*/	sizeof(GaugeRec),
     /* class_initialize   	*/	GaugeClassInit,
     /* class_part_initialize	*/	NULL,
