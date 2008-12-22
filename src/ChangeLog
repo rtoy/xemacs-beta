@@ -1,3 +1,8 @@
+2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.c (Fbuilt_in_face_specifiers): 
+	Document that we're returning a copy. 
+
 2008-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* faces.c (Fbuilt_in_face_specifiers): 
