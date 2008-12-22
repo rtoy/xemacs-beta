@@ -703,6 +703,9 @@ Return the name of the given face.
 
 DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers, 0, 0, 0, /*
 Return a list of all built-in face specifier properties.
+
+This is a copy; there is no way to modify XEmacs' idea of the built-in face
+specifier properties from Lisp.
 */
        ())
 {
