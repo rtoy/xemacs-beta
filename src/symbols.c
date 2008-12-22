@@ -718,7 +718,7 @@ Associates the function with the current load file, if any.
 {
   /* This function can GC */
   Ffset (symbol, newdef);
-  LOADHIST_ATTACH (symbol);
+  LOADHIST_ATTACH (Fcons (Qdefun, symbol));
   return newdef;
 }
 

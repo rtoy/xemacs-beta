@@ -1,3 +1,17 @@
+2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file): 
+	Add support for differentiating between variables and functions to
+	#'symbol-file. 
+	* help.el (describe-function-1): 
+	(describe-variable): 
+	Call #'symbol-function explicitly with a 'defun or 'defvar
+	argument, depending on whether we're looking for a variable or a
+	function. 
+	* cus-face.el (custom-declare-face): 
+	Record information about the face in the load history; code taken
+	from GNU, pre-GPLv3 revision 1.45.
+
 2008-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bytecomp.el (byte-compile-file): Protect encoding from latin-unity.
