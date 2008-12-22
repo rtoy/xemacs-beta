@@ -1425,7 +1425,7 @@ part of the documentation of internal subroutines."
              nil)))
     (princ "\n")
     (or file-name
-	(setq file-name (symbol-file function)))
+	(setq file-name (symbol-file function 'defun)))
     (when file-name
 	(princ "  -- loaded from \"")
 	(if (not (bufferp standard-output))
@@ -1651,7 +1651,7 @@ there is no variable around that point, nil is returned."
 	 (princ (built-in-variable-doc variable))
 	 (princ ".\n")
 	 (require 'hyper-apropos)
-	 (let ((file-name (symbol-file variable))
+	 (let ((file-name (symbol-file variable 'defvar))
 	       opoint e)
 	   (when file-name
 	       (princ "  -- loaded from \"")

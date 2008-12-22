@@ -1223,7 +1223,7 @@ static Lisp_Object
 define_function (Lisp_Object name, Lisp_Object defn)
 {
   Ffset (name, defn);
-  LOADHIST_ATTACH (name);
+  LOADHIST_ATTACH (Fcons (Qdefun, name));
   return name;
 }
 

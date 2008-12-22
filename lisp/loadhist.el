@@ -48,11 +48,12 @@ If TYPE is `defun', then function, subr, special form or macro definitions
 are acceptable.
 If TYPE is `defvar', then variable definitions are acceptable.
 
-#### For the moment the difference is not implemented for non-autoloaded
-Lisp symbols."
+`defface' specifies a face definition only, and for the moment, it won't
+return faces created with `make-face' or `copy-face', just those created
+with `defface' and `custom-declare-face'."
   (interactive "SFind source file for symbol: ") ; XEmacs
   (block look-up-symbol-file
-    (let (built-in-file autoload-cons)
+    (let (built-in-file autoload-cons symbol-details)
       (when (and 
              (eq 'autoload
                  (car-safe (setq autoload-cons
@@ -64,9 +65,25 @@ Lisp symbols."
                     (memq (fifth autoload-cons) '(nil macro)))))
         (return-from look-up-symbol-file
           (locate-library (second autoload-cons))))
-      (dolist (entry load-history)
-        (when (memq sym (cdr entry))
-          (return-from look-up-symbol-file (car entry))))
+      (cond ((eq 'defvar type)
+             ;; Load history entries corresponding to variables are just
+             ;; symbols.
+             (dolist (entry load-history)
+               (when (memq sym (cdr entry))
+                 (return-from look-up-symbol-file (car entry)))))
+            ((not (null type))
+             ;; Non-variables have the type stored as the car of the entry. 
+             (dolist (entry load-history)
+               (when (and (setq symbol-details (rassq sym (cdr entry)))
+                          (eq type (car symbol-details)))
+                 (return-from look-up-symbol-file (car entry)))))
+            (t
+             ;; If TYPE hasn't been specified, we need to check both for
+             ;; variables and other symbols.
+             (dolist (entry load-history)
+               (when (or (memq sym (cdr entry))
+                         (rassq sym (cdr entry)))
+                 (return-from look-up-symbol-file (car entry))))))
       (setq built-in-file (built-in-symbol-file sym type))
       (if built-in-file (concat source-directory "/src/" built-in-file)))))
 

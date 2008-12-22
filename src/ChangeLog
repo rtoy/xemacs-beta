@@ -1,5 +1,12 @@
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* symbols.c (Fdefine_function): 
+	* eval.c (define_function): 
+	Record explicitly that we're defining a function in the load
+	history, in both these files. 
+
+2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* faces.c (Fbuilt_in_face_specifiers): 
 	Document that we're returning a copy. 
 
