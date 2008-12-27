@@ -1,3 +1,13 @@
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac: Vladimir Ivanovic's change of 2008-09-17 was
+	effective, but not correct. The original issue was that m4
+	stripped [], so "char *v[]" in configure.ac became "char *v" in
+	configure. His change to configure.ac rendered the declaration
+	"char **v[]", which is effective but confusing; this change
+	renders it "char **v".
+	* configure: Regenerate.
+
 2008-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL: Give better pointers to package documentation.
