@@ -6,6 +6,11 @@
 
 	* configure.ac (xemacs_cc_cc_mismatch): Improve g++ detection.
 
+2008-09-17  Vladimir G. Ivanovic  <vladimir@acm.org>
+
+	* configure:    Fixed two typos in args of main: char *v -> char **v
+	* configure.ac: Fixed two typos in args of main: char *v -> char **v
+
 2008-08-03  Mats Lidell  <matsl@xemacs.org>
 
 	* configure.ac: Fix typo xft_gauge to xft_gauges
