@@ -1,5 +1,12 @@
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* loadhist.el (symbol-file): 
+	Use #'defun*, not #'defun, to allow the checks for autoloaded
+	functions and variables to call #'return-from correctly. Use
+	#'return-from instead of #'return throughout the function. 
+
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* loadup.el (load-history): 
 	Add the contents of current-load-list to load-history before
 	clearing it. Move the variable declarations earlier in the file to
