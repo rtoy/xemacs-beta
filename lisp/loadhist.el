@@ -41,7 +41,7 @@
 
 ;; XEmacs; this function is in subr.el in GNU, and does not deal with
 ;; built-in symbols.
-(defun symbol-file (sym &optional type)
+(defun* symbol-file (sym &optional type)
   "Return the input source from which SYM was loaded.
 This is a file name, or nil if the source was a buffer with no associated file.
 
@@ -63,26 +63,26 @@ with `defface' and `custom-declare-face'."
                          (eq (fifth autoload-cons) 'keymap))
                     (and (or (null type) (eq 'defun type))
                          (memq (fifth autoload-cons) '(nil macro)))))
-           (return (locate-library (second autoload-cons))))
+           (return-from symbol-file (locate-library (second autoload-cons))))
           ((eq 'defvar type)
            ;; Load history entries corresponding to variables are just
            ;; symbols.
            (dolist (entry load-history)
              (when (memq sym (cdr entry))
-               (return (car entry)))))
+               (return-from symbol-file (car entry)))))
            ((not (null type))
             ;; Non-variables have the type stored as the car of the entry. 
             (dolist (entry load-history)
               (when (and (setq symbol-details (rassq sym (cdr entry)))
                          (eq type (car symbol-details)))
-                (return (car entry)))))
+                (return-from symbol-file (car entry)))))
           (t
            ;; If TYPE hasn't been specified, we need to check both for
            ;; variables and other symbols.
            (dolist (entry load-history)
              (when (or (memq sym (cdr entry))
                        (rassq sym (cdr entry)))
-               (return (car entry))))))
+               (return-from symbol-file (car entry))))))
     (when (setq built-in-file (built-in-symbol-file sym type))
       (if (equal built-in-file (file-truename built-in-file))
           ;; Probably a full path name:
