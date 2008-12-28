@@ -1,3 +1,9 @@
+2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/query-coding-tests.el: 
+	New file, testing the functionality of #'query-coding-region and
+	#'query-coding-string.
+
 2008-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/regexp-tests.el: Add test for at_dot regexp.

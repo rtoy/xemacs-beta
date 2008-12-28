@@ -195,6 +195,8 @@
    seven t
    input-charset-conversion ((latin-jisx0201 ascii)
 			     (japanese-jisx0208-1978 japanese-jisx0208))
+   safe-charsets (ascii japanese-jisx0208-1978 japanese-jisx0208
+			latin-jisx0201 japanese-jisx0212 katakana-jisx0201)
    mnemonic "MULE/7bit"
    documentation
    "Coding system used for communication with mail and news in Japan."
@@ -210,6 +212,7 @@
    lock-shift t
    input-charset-conversion ((latin-jisx0201 ascii)
 			     (japanese-jisx0208-1978 japanese-jisx0208))
+   safe-charsets (latin-jisx0201 ascii japanese-jisx0208-1978 japanese-jisx0208)
    mnemonic "JIS7"
    documentation
    "Old JIS 7-bit encoding; mostly superseded by ISO-2022-JP.
@@ -224,6 +227,8 @@ Uses locking-shift (SI/SO) to select half-width katakana."
    short t
    input-charset-conversion ((latin-jisx0201 ascii)
 			     (japanese-jisx0208-1978 japanese-jisx0208))
+   safe-charsets (latin-jisx0201 ascii japanese-jisx0208-1978
+                                 japanese-jisx0208)
    mnemonic "JIS8"
    documentation
    "Old JIS 8-bit encoding; mostly superseded by ISO-2022-JP.
@@ -261,6 +266,8 @@ Uses high bytes for half-width katakana."
  "Shift-JIS"
  '(mnemonic "Ja/SJIS"
    documentation "The standard Japanese encoding in MS Windows."
+   safe-charsets (ascii japanese-jisx0208 japanese-jisx0208-1978
+                        latin-jisx0201 katakana-jisx0201)
 ))
 
 ;; A former name?
@@ -286,6 +293,8 @@ Uses high bytes for half-width katakana."
    seven t
    output-charset-conversion ((ascii latin-jisx0201)
 			      (japanese-jisx0208 japanese-jisx0208-1978))
+   safe-charsets (ascii latin-jisx0201 japanese-jisx0208
+                        japanese-jisx0208-1978)
    documentation
    "This is a coding system used for old JIS terminals.  It's an ISO
 2022 based 7-bit encoding for Japanese JISX0208-1978 and JISX0201-Roman."
@@ -314,6 +323,7 @@ Uses high bytes for half-width katakana."
    charset-g1 japanese-jisx0208
    charset-g2 katakana-jisx0201
    charset-g3 japanese-jisx0212
+   safe-charsets (ascii japanese-jisx0208 katakana-jisx0201 japanese-jisx0212)
    short t
    mnemonic "Ja/EUC"
    documentation

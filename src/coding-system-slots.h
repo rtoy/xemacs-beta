@@ -105,6 +105,10 @@ Boston, MA 02111-1307, USA.  */
      coding system). */
   MARKED_SLOT (canonical)
 
+  MARKED_SLOT (safe_charsets)
+
+  MARKED_SLOT (safe_chars)
+
 #undef MARKED_SLOT
 #undef MARKED_SLOT_ARRAY
 #undef CODING_SYSTEM_SLOT_DECLARATION

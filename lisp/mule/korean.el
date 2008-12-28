@@ -57,6 +57,7 @@
  "ISO-2022-INT-1 (Korean)"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
+   safe-charsets (ascii korean-ksc5601)
    short t
    seven t
    lock-shift t
@@ -92,6 +93,7 @@
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    mnemonic "ko/EUC"
+   safe-charsets (ascii korean-ksc5601)
    documentation
    "Korean EUC (Extended Unix Code), the standard Korean encoding on Unix.
 This follows the same overall EUC principles (see the description under
@@ -122,6 +124,7 @@ G1: Korean-KSC5601"
    force-g1-on-output t
    seven t
    lock-shift t
+   safe-charsets (ascii korean-ksc5601)
    mnemonic "Ko/7bit"
    documentation "Coding-System used for communication with mail in Korea."
    eol-type lf))

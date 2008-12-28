@@ -1125,9 +1125,9 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	else if (EQ (key, Qtranslation_table_for_encode))
 	  ;
 	else if (EQ (key, Qsafe_chars))
-	  ;
+	  CODING_SYSTEM_SAFE_CHARS (cs) = value;
 	else if (EQ (key, Qsafe_charsets))
-	  ;
+	  CODING_SYSTEM_SAFE_CHARSETS (cs) = value;
 	else if (EQ (key, Qmime_charset))
 	  ;
 	else if (EQ (key, Qvalid_codes))
@@ -1326,20 +1326,7 @@ ignored:
 `translation-table-for-encode'
      The value is a translation table to be applied on encoding.  This is
      not applicable to CCL-based coding systems.
-    
-`safe-chars'
-     The value is a char table.  If a character has non-nil value in it,
-     the character is safely supported by the coding system.  This
-     overrides the specification of safe-charsets.
-   
-`safe-charsets'
-     The value is a list of charsets safely supported by the coding
-     system.  The value t means that all charsets Emacs handles are
-     supported.  Even if some charset is not in this list, it doesn't
-     mean that the charset can't be encoded in the coding system;
-     it just means that some other receiver of text encoded
-     in the coding system won't be able to handle that charset.
-    
+     
 `mime-charset'
      The value is a symbol of which name is `MIME-charset' parameter of
      the coding system.
@@ -1350,7 +1337,27 @@ ignored:
      In the former case, the integer value is a valid byte code.  In the
      latter case, the integers specifies the range of valid byte codes.
 
+The following properties are used by `default-query-coding-region',
+the default implementation of `query-coding-region'. This
+implementation and these properties are not used by the Unicode coding
+systems, nor by those CCL coding systems created with
+`make-8-bit-coding-system'. 
 
+`safe-chars'
+     The value is a char table.  If a character has non-nil value in it,
+     the character is safely supported by the coding system.  
+     Under XEmacs, for the moment, this is used in addition to the
+     `safe-charsets' property. It does not override it as it does
+     under GNU Emacs. #### We need to consider if we should keep this
+     behaviour.
+   
+`safe-charsets'
+     The value is a list of charsets safely supported by the coding
+     system.  For coding systems based on ISO 2022, XEmacs may try to
+     encode characters outside these character sets, but outside of
+     East Asia and East Asian coding systems, it is unlikely that
+     consumers of the data will understand XEmacs' encoding.
+     The value t means that all XEmacs character sets handles are supported.  
 
 The following additional property is recognized if TYPE is `convert-eol':
 
@@ -1862,6 +1869,10 @@ Return the PROP property of CODING-SYSTEM.
     return XCODING_SYSTEM_POST_READ_CONVERSION (coding_system);
   else if (EQ (prop, Qpre_write_conversion))
     return XCODING_SYSTEM_PRE_WRITE_CONVERSION (coding_system);
+  else if (EQ (prop, Qsafe_charsets))
+    return XCODING_SYSTEM_SAFE_CHARSETS (coding_system);
+  else if (EQ (prop, Qsafe_chars))
+    return XCODING_SYSTEM_SAFE_CHARS (coding_system);
   else
     {
       Lisp_Object value = CODESYSMETH_OR_GIVEN (XCODING_SYSTEM (coding_system),

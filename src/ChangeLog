@@ -1,3 +1,17 @@
+2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (Fmake_coding_system): 
+	Document our use of the safe-chars and safe-charsets properties,
+	and the differences compared to GNU. 
+	(make_coding_system_1): Don't drop the safe-chars and
+	safe-charsets properties. 
+	(Fcoding_system_property): Return the safe-chars and safe-charsets
+	properties when asked for them.
+	* file-coding.h (CODING_SYSTEM_SAFE_CHARSETS): 
+	* coding-system-slots.h: 
+	Make the safe-chars and safe-charsets slots available in these
+	headers. 
+
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fdefine_function): 
@@ -149,6 +163,8 @@
 	* objects-xlike-inc.c (charset_table): Remove the entry for
 	Vcharset_arabic_iso8859_7, thank you Robert Delius Royar.
 
+=======
+>>>>>>> other
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (complex_vars_of_mule_charset): 
