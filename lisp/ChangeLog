@@ -1,5 +1,30 @@
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* coding.el (query-coding-region): 
+	(query-coding-string): 
+	Make these defsubsts, they're short enough and they're called
+	explicitly rarely enough that it make some sense. The alternative
+	would be compiler macros that avoid the binding of the arguments. 
+	(unencodable-char-position): 
+	Document where the docstring and API are from. 
+	Correct a special case for zero--check-argument-type returns nil
+	when it succeeds, we can't usefully chain its result in an and
+	here. 
+	(check-coding-systems-region): New. API taken from GNU; docstring
+	and implementation are independent. 
+	(encode-coding-char): 
+	Add an optional third argument, as used by recent GNU. Document
+	the origen of the docstring. 
+	(default-query-coding-region): Add a short docstring to the
+	non-Mule implementation of this function. 
+	* unicode.el: 
+	Don't set the query-coding-function property for unicode coding
+	systems if we're on non-mule. Unintern
+	unicode-query-coding-region, unicode-query-coding-skip-chars-arg
+	in the same context. 
+
+2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (default-query-coding-region): 
 	Declare using defun*, so we can #'return-from to it on
 	encountering a safe-charsets value of t. Comment out a few

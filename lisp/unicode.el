@@ -678,6 +678,7 @@ mapping from the error sequences to the desired characters.  "
 
 (loop
   for coding-system in (coding-system-list)
+  initially (unless (featurep 'mule) (return))
   do (when (eq 'unicode (coding-system-type coding-system))
        (coding-system-put coding-system 'query-coding-function
 			  #'unicode-query-coding-region)))
@@ -691,7 +692,8 @@ mapping from the error sequences to the desired characters.  "
   (mapcar #'unintern
           '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
             unicode-invalid-regexp-range frob-unicode-errors-region
-            unicode-error-translate-region)))
+            unicode-error-translate-region unicode-query-coding-region
+            unicode-query-coding-skip-chars-arg)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
