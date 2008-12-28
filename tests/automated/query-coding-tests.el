@@ -91,58 +91,31 @@
                                                   coding-system))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region (point-min) (point-max) coding-system)
-          (q-c-debug "checking type, coding-system, q-c-s, q-c-t %S"
-                     (list (coding-system-type coding-system)
-                           coding-system query-coding-succeeded
-                           query-coding-table))
-          (unless (and (eq t query-coding-succeeded)
-                       (null query-coding-table))
-            (q-c-debug "(eq t query-coding-succeeded) %S, (\
-null query-coding-table) %S" (eq t query-coding-succeeded)
-                             (null query-coding-table)))
           (Assert (eq t query-coding-succeeded))
           (Assert (null query-coding-table)))
-        (q-c-debug "testing the ASCII strings for %S" coding-system)
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-string ascii-chars-string coding-system)
-          (unless (and (eq t query-coding-succeeded)
-                       (null query-coding-table))
-            (q-c-debug "(eq t query-coding-succeeded) %S, (\
-null query-coding-table) %S" (eq t query-coding-succeeded)
-                             (null query-coding-table)))
           (Assert (eq t query-coding-succeeded))
           (Assert (null query-coding-table))))
-      (q-c-debug "past the loop through the coding systems")
       (delete-region (point-min) (point-max))
       ;; Check for success from the two Latin-1 coding systems 
       (insert latin-1-chars-string)
-      (q-c-debug "point is now %S" (point))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'iso-8859-1-unix)
         (Assert (eq t query-coding-succeeded))
         (Assert (null query-coding-table)))
-      (q-c-debug "point is now %S" (point))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-8859-1-unix)
         (Assert (eq t query-coding-succeeded))
         (Assert (null query-coding-table)))
-      (q-c-debug "point is now %S" (point))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-latin-1-with-esc-unix)
         (Assert (eq t query-coding-succeeded))
         (Assert (null query-coding-table)))
-      (q-c-debug "point is now %S" (point))
       ;; Make it fail, check that it fails correctly
       (insert (decode-char 'ucs #x20AC)) ;; EURO SIGN
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'iso-8859-1-unix)
-        (unless (and (null query-coding-succeeded)
-                     (equal query-coding-table
-                            #s(range-table type start-closed-end-open data
-                                           ((257 258) t))))
-          (q-c-debug "dealing with %S" 'iso-8859-1-unix)
-          (q-c-debug "query-coding-succeeded not null, query-coding-table \
-%S" query-coding-table))
         (Assert (null query-coding-succeeded))
         (Assert (equal query-coding-table
                        #s(range-table type start-closed-end-open data
@@ -153,12 +126,6 @@ null query-coding-table) %S" (eq t query-coding-succeeded)
         ;; Stupidly, this succeeds. The behaviour is compatible with
         ;; GNU, though, and we encourage people not to use
         ;; iso-latin-1-with-esc-unix anyway:
-
-        (unless (and query-coding-succeeded
-                     (null query-coding-table))
-          (q-c-debug "dealing with %S" 'iso-latin-1-with-esc-unix)
-          (q-c-debug "query-coding-succeeded %S, query-coding-table \
-%S" query-coding-succeeded query-coding-table))
         (Assert query-coding-succeeded)
         (Assert (null query-coding-table)))
       ;; Check that it errors correctly. 
@@ -186,13 +153,6 @@ null query-coding-table) %S" (eq t query-coding-succeeded)
       (insert ?\x80)
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'windows-1252-unix)
-        (unless (and (null query-coding-succeeded)
-                     (equal query-coding-table
-                            #s(range-table type start-closed-end-open data
-                                           ((257 258) t))))
-          (q-c-debug "dealing with %S" 'windows-1252-unix)
-          (q-c-debug "query-coding-succeeded not null, query-coding-table \
-%S" query-coding-table))
         (Assert (null query-coding-succeeded))
         (Assert (equal query-coding-table
                        #s(range-table type start-closed-end-open data
@@ -212,17 +172,6 @@ null query-coding-table) %S" (eq t query-coding-succeeded)
         (Assert (null query-coding-table)))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'windows-1252-unix)
-        (unless (and (null query-coding-succeeded)
-                     (equal query-coding-table
-                            #s(range-table type start-closed-end-open
-                                           data ((129 131) t (132 133) t
-                                                 (139 140) t (141 146) t
-                                                 (155 156) t (157 161) t
-                                                 (162 170) t (173 176) t
-                                                 (178 187) t (189 192) t
-                                                 (193 257) t))))
-          (q-c-debug "query-coding-succeeded not null, query-coding-table \
-%S" query-coding-table))
         (Assert (null query-coding-succeeded))
         (Assert (equal query-coding-table
                        #s(range-table type start-closed-end-open
@@ -290,4 +239,68 @@ null query-coding-table) %S" (eq t query-coding-succeeded)
             (query-coding-region (point-min) 173 coding-system nil t)
           (text-conversion-error
            (setq text-conversion-error-signalled t)))
-        (Assert (null text-conversion-error-signalled))))))
+        (Assert (null text-conversion-error-signalled)))
+
+      ;; Now to test #'encode-coding-char. Most of the functionality was
+      ;; tested in the query-coding-region tests above, so we don't go into
+      ;; as much detail here.
+      (Assert (null (encode-coding-char
+                     (decode-char 'ucs #x20ac) 'iso-8859-1)))
+      (Assert (equal "\x80" (encode-coding-char 
+                             (decode-char 'ucs #x20ac) 'windows-1252)))
+      (delete-region (point-min) (point-max))
+
+      ;; And #'unencodable-char-position. 
+      (insert latin-1-chars-string)
+      (insert (decode-char 'ucs #x20ac))
+      (Assert (= 257 (unencodable-char-position (point-min) (point-max)
+                                                'iso-8859-1)))
+      (Assert (equal '(257) (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 1)))
+      ;; Compatiblity, sigh: 
+      (Assert (equal '(257) (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 0)))
+      (dotimes (i 6) (insert (decode-char 'ucs #x20ac)))
+      ;; Check if it stops at one:
+      (Assert (equal '(257) (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 1)))
+      ;; Check if it stops at four:
+      (Assert (equal '(260 259 258 257)
+                     (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 4)))
+      ;; Check whether it stops at seven: 
+      (Assert (equal '(263 262 261 260 259 258 257)
+                     (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 7)))
+      ;; Check that it still stops at seven:
+      (Assert (equal '(263 262 261 260 259 258 257)
+                     (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 2000)))
+      ;; Now, #'check-coding-systems-region. 
+      ;; UTF-8 should certainly be able to encode these characters:
+      (Assert (eq t (check-coding-systems-region (point-min) (point-max)
+                                                 '(utf-8))))
+      (Assert (equal '((iso-8859-1 257 258 259 260 261 262 263)
+                       (windows-1252 129 131 132 133 134 135 136 137 138 139
+                                     140 141 143 146 147 148 149 150 151 152
+                                     153 154 155 156 157 159 160))
+                       (sort
+                        (check-coding-systems-region (point-min) (point-max)
+                                                     '(utf-8 iso-8859-1
+                                                       windows-1252))
+                        ;; (The sort is to make the algorithm irrelevant.)
+                        #'(lambda (left right)
+                            (string< (car left) (car right))))))
+      ;; Ensure that the indices are all decreased by one when passed a
+      ;; string:
+      (Assert (equal '((iso-8859-1 256 257 258 259 260 261 262)
+                       (windows-1252 128 130 131 132 133 134 135 136 137 138
+                                     139 140 142 145 146 147 148 149 150 151
+                                     152 153 154 155 156 158 159))
+                     (sort
+                      (check-coding-systems-region (buffer-string) nil
+                                                   '(utf-8 iso-8859-1
+                                                     windows-1252))
+                      #'(lambda (left right)
+                          (string< (car left) (car right)))))))))
+

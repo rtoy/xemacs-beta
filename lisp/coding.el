@@ -398,7 +398,7 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 	    (values nil ranges)
 	  (values t nil))))))
 
-(defun query-coding-region (start end coding-system &optional buffer
+(defsubst query-coding-region (start end coding-system &optional buffer
                                errorp highlight)
   "Work out whether CODING-SYSTEM can losslessly encode a region.
 
@@ -423,7 +423,7 @@ describing the positions of the unencodable characters. See
                #'default-query-coding-region)
            start end coding-system buffer errorp highlight))
 
-(defun query-coding-string (string coding-system &optional errorp highlight)
+(defsubst query-coding-string (string coding-system &optional errorp highlight)
   "Work out whether CODING-SYSTEM can losslessly encode STRING.
 CODING-SYSTEM is the coding system to check.
 
@@ -446,6 +446,7 @@ describing the positions of the unencodable characters. See
                          ;; ### Will highlight work here?
                          errorp highlight)))
 
+;; Function docstring and API are taken from GNU coding.c version 1.353, GPLv2. 
 (defun unencodable-char-position  (start end coding-system
                                    &optional count string) 
   "Return position of first un-encodable character in a region.
@@ -486,9 +487,9 @@ in the string."
     (check-argument-type #'integer-or-marker-p start)
     (check-argument-type #'integer-or-marker-p end)
     (check-coding-system coding-system)
-    (and count (check-argument-type #'natnump count)
-	 ;; Special-case zero, sigh. 
-	 (if (zerop count) (setq count 1)))
+    (when count (check-argument-type #'natnump count)
+	  ;; Special-case zero, sigh. 
+	  (if (zerop count) (setq count 1)))
     (and string (check-argument-type #'stringp string))
     (if string
 	(with-temp-buffer
@@ -496,9 +497,64 @@ in the string."
 	  (funcall thunk start end coding-system count))
       (funcall thunk start end coding-system count))))
 
-(defun encode-coding-char (char coding-system)
+;; XEmacs; this is a GPLv3 function in coding.c in GNU. This is why we have
+;; both a very divergent docstring and a very divergent implementation.
+(defun check-coding-systems-region (begin end coding-system-list)
+  "Can coding systems in CODING-SYSTEM-LIST encode text in a region?
+
+CODING-SYSTEM-LIST must be a list of coding systems.  BEGIN and END are
+normally buffer positions delimiting the region.  If some coding system in
+CODING-SYSTEM-LIST cannot encode the entire region, the return value of this
+function is an alist mapping coding system names to lists of individual
+buffer positions (not ranges) that the individual coding systems cannot
+encode.
+
+If all coding systems in CODING-SYSTEM-LIST can encode the region,
+this function returns t.  This conflicts with the documented, but not
+with the observed, GNU behavior.
+
+If BEGIN is a string, `check-coding-systems-region' ignores END, and checks
+whether the coding systems can encode BEGIN.  The alist that is returned
+uses zero-based string indices, not one-based buffer positions.
+
+This function is for GNU compatibility.  See also `query-coding-region'."
+  (let ((thunk
+	 #'(lambda (begin end coding-system-list stringp)
+	     (loop
+               for coding-system in coding-system-list
+               with result = nil
+               with intermediate = nil
+               with range-lambda = (if stringp
+                                       #'(lambda (begin end value)
+                                           (while (< begin end)
+                                             (push (1- begin) intermediate)
+                                             (incf begin)))
+                                     #'(lambda (begin end value)
+                                         (while (< begin end)
+                                           (push begin intermediate)
+                                           (incf begin))))
+               do (setq coding-system (check-coding-system coding-system))
+               (multiple-value-bind (encoded ranges)
+		   (query-coding-region begin end coding-system)
+                 (unless encoded
+                   (setq intermediate (list (coding-system-name coding-system)))
+                   (map-range-table range-lambda ranges)
+                   (push (nreverse intermediate) result)))
+               finally return (or result t)))))
+  (if (stringp begin)
+      (with-temp-buffer
+	(insert begin)
+	(funcall thunk (point-min) (point-max) coding-system-list t))
+    (check-argument-type #'integer-or-marker-p begin)
+    (check-argument-type #'integer-or-marker-p end)
+    (funcall thunk begin end coding-system-list nil))))
+
+;; XEmacs; docstring taken from GNU, international/mule-cmds.el, revision
+;; 1.311, GPLv2. 
+(defun encode-coding-char (char coding-system &optional charset)
   "Encode CHAR by CODING-SYSTEM and return the resulting string.
-If CODING-SYSTEM can't safely encode CHAR, return nil."
+If CODING-SYSTEM can't safely encode CHAR, return nil.
+The optional third argument CHARSET is, for the moment, ignored."
   (check-argument-type #'characterp char)
   (multiple-value-bind (succeededp)
       (query-coding-string char coding-system)
@@ -509,7 +565,9 @@ If CODING-SYSTEM can't safely encode CHAR, return nil."
   ;; If we're under non-Mule, every XEmacs character can be encoded
   ;; with every XEmacs coding system.
   (fset #'default-query-coding-region
-	#'(lambda (&rest ignored) (values t nil)))
+	#'(lambda (&rest ignored)
+	    "Stub `query-coding-region' implementation. Always succeeds."
+	    (values t nil)))
   (unintern 'default-query-coding-region-safe-charset-skip-chars-map))
 
 ;;; coding.el ends here
