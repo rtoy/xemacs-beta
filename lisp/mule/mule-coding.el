@@ -104,6 +104,7 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    eol-type nil
+   safe-charsets t ;; Reasonable
    mnemonic "CText"))
 
 (make-coding-system
@@ -113,6 +114,9 @@ The allowable range of REGISTER is 0 through 3."
    charset-g1 latin-iso8859-1
    charset-g2 t ;; unspecified but can be used later.
    short t
+   safe-charsets (ascii katakana-jisx0201 japanese-jisx0208-1978
+                  japanese-jisx0208 japanese-jisx0212 japanese-jisx0213-1
+                  japanese-jisx0213-2)
    mnemonic "ISO8/SS"
    documentation "ISO 2022 based 8-bit encoding using SS2 for 96-charset"
    ))
@@ -124,6 +128,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7/SS"
    documentation "ISO 2022 based 7-bit encoding using SS2 for 96-charset"
    eol-type nil))
@@ -136,6 +141,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7/SS"
    eol-type nil))
 
@@ -145,6 +151,7 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7"
    documentation "ISO-2022-based 7-bit encoding using only G0"
    ))
@@ -158,6 +165,7 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    short t
+   safe-charsets t
    mnemonic "ISO8"
    documentation "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
    ))
@@ -169,6 +177,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g1 latin-iso8859-1
    eol-type lf
    escape-quoted t
+   safe-charsets t
    mnemonic "ESC/Quot"
    documentation "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
    ))
@@ -180,6 +189,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g1 t ;; unspecified but can be used later.
    seven t
    lock-shift t
+   safe-charsets t
    mnemonic "ISO7/Lock"
    documentation "ISO-2022 coding system using Locking-Shift for 96-charset."
    ))
@@ -574,14 +584,14 @@ See that the documentation of `query-coding-region'; see also
       (goto-char begin buffer)
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
-        (message
-	 "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
-	 fail-range-start previous-fail (point buffer) end)
+        ; (message
+	; "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
+	; fail-range-start previous-fail (point buffer) end)
 	(setq char-after (char-after (point buffer) buffer)
 	      fail-range-start (point buffer))
-	(message "arguments are %S %S"
-		 (< (point buffer) end)
-		 (not (gethash (encode-char char-after 'ucs) from-unicode)))
+	; (message "arguments are %S %S"
+	;	 (< (point buffer) end)
+	;	 (not (gethash (encode-char char-after 'ucs) from-unicode)))
 	(while (and
 		(< (point buffer) end)
 		(not (gethash (encode-char char-after 'ucs) from-unicode)))
@@ -593,7 +603,7 @@ See that the documentation of `query-coding-region'; see also
 	    ;; system; check the characters past it.
 	    (forward-char 1 buffer)
 	  ;; The character actually failed. 
-	  (message "past the move through, point now %S" (point buffer))
+	  ; (message "past the move through, point now %S" (point buffer))
 	  (when errorp 
 	    (error 'text-conversion-error
 		   (format "Cannot encode %s using coding system"
@@ -608,12 +618,12 @@ See that the documentation of `query-coding-region'; see also
 						  (point-max buffer)))
 			   t ranges)
 	  (when highlightp
-	    (message "highlighting")
+	    ; (message "highlighting")
 	    (setq extent (make-extent fail-range-start fail-range-end buffer))
 	    (set-extent-priority extent (+ mouse-highlight-priority 2))
 	    (set-extent-face extent 'query-coding-warning-face))
 	  (skip-chars-forward skip-chars-arg end buffer)))
-      (message "about to give the result, ranges %S" ranges)
+      ; (message "about to give the result, ranges %S" ranges)
       (if failed 
 	  (values nil ranges)
 	(values t nil)))))

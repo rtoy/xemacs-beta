@@ -626,7 +626,7 @@ mapping from the error sequences to the desired characters.  "
   (let* ((skip-chars-arg unicode-query-coding-skip-chars-arg)
          (ranges (make-range-table))
          (looking-at-arg (concat "[" skip-chars-arg "]"))
-         fail-range-start fail-range-end previous-fail char-after failed
+         fail-range-start fail-range-end char-after failed
 	 extent)
     (save-excursion
       (when highlightp
@@ -638,8 +638,8 @@ mapping from the error sequences to the desired characters.  "
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
 ;        (message
-;         "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
-;         fail-range-start previous-fail (point buffer) end)
+;         "fail-range-start is %S, point is %S, end is %S"
+;         fail-range-start (point buffer) end)
         (setq char-after (char-after (point buffer) buffer)
               fail-range-start (point buffer))
         (while (and
@@ -647,7 +647,6 @@ mapping from the error sequences to the desired characters.  "
                 (not (looking-at looking-at-arg))
                 (= -1 (char-to-unicode char-after)))
           (forward-char 1 buffer)
-	  (message "what?!?")
           (setq char-after (char-after (point buffer) buffer)
                 failed t))
         (if (= fail-range-start (point buffer))
