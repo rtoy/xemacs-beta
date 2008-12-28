@@ -50,6 +50,7 @@
    charset-g2 t
    charset-g3 t
    mnemonic "In-13194"
+   safe-charsets (ascii indian-is13194)
    documentation
    "8-bit encoding for ASCII (MSB=0) and IS13194-Devanagari (MSB=1)"
    safe-charsets (ascii indian-is13194)

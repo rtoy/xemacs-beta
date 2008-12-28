@@ -613,6 +613,75 @@ mapping from the error sequences to the desired characters.  "
 ;; Sure would be nice to be able to use defface here. 
 (copy-face 'highlight 'unicode-invalid-sequence-warning-face)
 
+(defvar unicode-query-coding-skip-chars-arg nil ;; Set in general-late.el
+  "Used by `unicode-query-coding-region' to skip chars with known mappings.")
+
+(defun unicode-query-coding-region (begin end coding-system
+				    &optional buffer errorp highlightp)
+  "The `query-coding-region' implementation for Unicode coding systems."
+  (check-argument-type #'coding-system-p
+                       (setq coding-system (find-coding-system coding-system)))
+  (check-argument-type #'integer-or-marker-p begin)
+  (check-argument-type #'integer-or-marker-p end)
+  (let* ((skip-chars-arg unicode-query-coding-skip-chars-arg)
+         (ranges (make-range-table))
+         (looking-at-arg (concat "[" skip-chars-arg "]"))
+         fail-range-start fail-range-end char-after failed
+	 extent)
+    (save-excursion
+      (when highlightp
+	(map-extents #'(lambda (extent ignored-arg)
+			 (when (eq 'query-coding-warning-face
+				   (extent-face extent))
+			   (delete-extent extent))) buffer begin end))
+      (goto-char begin buffer)
+      (skip-chars-forward skip-chars-arg end buffer)
+      (while (< (point buffer) end)
+;        (message
+;         "fail-range-start is %S, point is %S, end is %S"
+;         fail-range-start (point buffer) end)
+        (setq char-after (char-after (point buffer) buffer)
+              fail-range-start (point buffer))
+        (while (and
+                (< (point buffer) end)
+                (not (looking-at looking-at-arg))
+                (= -1 (char-to-unicode char-after)))
+          (forward-char 1 buffer)
+          (setq char-after (char-after (point buffer) buffer)
+                failed t))
+        (if (= fail-range-start (point buffer))
+            ;; The character can actually be encoded by the coding
+            ;; system; check the characters past it.
+	    (forward-char 1 buffer)
+          ;; Can't be encoded; note this.
+          (when errorp 
+            (error 'text-conversion-error
+                   (format "Cannot encode %s using coding system"
+                           (buffer-substring fail-range-start (point buffer)
+                                             buffer))
+                   (coding-system-name coding-system)))
+          (put-range-table fail-range-start
+                           ;; If char-after is non-nil, we're not at
+                           ;; the end of the buffer.
+                           (setq fail-range-end (if char-after
+                                                    (point buffer)
+                                                  (point-max buffer)))
+                           t ranges)
+          (when highlightp
+            (setq extent (make-extent fail-range-start fail-range-end buffer))
+            (set-extent-priority extent (+ mouse-highlight-priority 2))
+            (set-extent-face extent 'query-coding-warning-face)))
+        (skip-chars-forward skip-chars-arg end buffer))
+      (if failed
+          (values nil ranges)
+        (values t nil)))))
+
+(loop
+  for coding-system in (coding-system-list)
+  do (when (eq 'unicode (coding-system-type coding-system))
+       (coding-system-put coding-system 'query-coding-function
+			  #'unicode-query-coding-region)))
+
 (unless (featurep 'mule)
   ;; We do this in such a roundabout way--instead of having the above defun
   ;; and defvar calls inside a (when (featurep 'mule) ...) form--to have
