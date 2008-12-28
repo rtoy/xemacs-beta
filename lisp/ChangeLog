@@ -1,3 +1,57 @@
+2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (default-query-coding-region): 
+	Declare using defun*, so we can #'return-from to it on
+	encountering a safe-charsets value of t. Comment out a few
+	debug messages. 
+	(query-coding-region): 
+	Correct the docstring, it deals with a region, not a string.
+	(unencodable-char-position): 
+	Correct the implementation for non-nil COUNT, special-case a zero
+	value for count, treat it as one. Don't rely on dynamic scope when
+	calling the main lambda.
+	* unicode.el (unicode-query-coding-region): 
+	Comment out some debug messages here. 
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
+	Comment out some debug messages here. 
+
+	* code-init.el (raw-text): 
+	Add a safe-charsets property to this coding system. 
+	* mule/korean.el (iso-2022-int-1): 
+	* mule/korean.el (euc-kr): 
+	* mule/korean.el (iso-2022-kr): 
+	Add safe-charsets properties for these coding systems. 
+	* mule/japanese.el (iso-2022-jp): 
+	* mule/japanese.el (jis7): 
+	* mule/japanese.el (jis8): 
+	* mule/japanese.el (shift-jis): 
+	* mule/japanese.el (iso-2022-jp-1978-irv): 
+	* mule/japanese.el (euc-jp): 
+	Add safe-charsets properties for all these coding systems. 
+	* mule/iso-with-esc.el: 
+	Add safe-charsets properties to all the coding systems in
+	here. Comment on the downside of a safe-charsets value of t for
+	iso-latin-1-with-esc.
+	* mule/hebrew.el (ctext-hebrew): 
+	Add a safe-charsets property for this coding system. 
+	* mule/devanagari.el (in-is13194-devanagari): 
+	Add a safe-charsets property for this coding system. 
+	* mule/chinese.el (cn-gb-2312): 
+	* mule/chinese.el (hz-gb-2312): 
+	* mule/chinese.el (big5): 
+	Add safe-charsets properties for these coding systems. 
+	* mule/latin.el (iso-8859-14): 
+	Add an implementation for this, using #'make-8-bit-coding-system.
+	* mule/mule-coding.el (ctext): 
+	* mule/mule-coding.el (iso-2022-8bit-ss2): 
+	* mule/mule-coding.el (iso-2022-7bit-ss2): 
+	* mule/mule-coding.el (iso-2022-jp-2): 
+	* mule/mule-coding.el (iso-2022-7bit): 
+	* mule/mule-coding.el (iso-2022-8): 
+	* mule/mule-coding.el (escape-quoted): 
+	* mule/mule-coding.el (iso-2022-lock): 
+	Add safe-charsets properties for all these coding systems. 
+	
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-coding.el (make-8-bit-coding-system): 

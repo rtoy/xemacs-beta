@@ -583,6 +583,8 @@ do {								\
 #define CODING_SYSTEM_AUTO_EOL_WRAPPER(codesys) ((codesys)->auto_eol_wrapper)
 #define CODING_SYSTEM_SUBSIDIARY_PARENT(codesys) ((codesys)->subsidiary_parent)
 #define CODING_SYSTEM_CANONICAL(codesys) ((codesys)->canonical)
+#define CODING_SYSTEM_SAFE_CHARSETS(codesys) ((codesys)->safe_charsets)
+#define CODING_SYSTEM_SAFE_CHARS(codesys) ((codesys)->safe_chars)
 
 #define CODING_SYSTEM_CHAIN_CHAIN(codesys) \
   (CODING_SYSTEM_TYPE_DATA (codesys, chain)->chain)
@@ -623,6 +625,10 @@ do {								\
   CODING_SYSTEM_SUBSIDIARY_PARENT (XCODING_SYSTEM (codesys))
 #define XCODING_SYSTEM_CANONICAL(codesys) \
   CODING_SYSTEM_CANONICAL (XCODING_SYSTEM (codesys))
+#define XCODING_SYSTEM_SAFE_CHARSETS(codesys) \
+  CODING_SYSTEM_SAFE_CHARSETS (XCODING_SYSTEM (codesys))
+#define XCODING_SYSTEM_SAFE_CHARS(codesys) \
+  CODING_SYSTEM_SAFE_CHARS (XCODING_SYSTEM (codesys))
 
 #define XCODING_SYSTEM_CHAIN_CHAIN(codesys) \
   CODING_SYSTEM_CHAIN_CHAIN (XCODING_SYSTEM (codesys))

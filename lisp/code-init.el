@@ -394,4 +394,6 @@ For more information, see `reset-coding-system-defaults' and
 
 (reset-language-environment)
 
+(coding-system-put 'raw-text 'safe-charsets '(ascii control-1 latin-iso8859-1))
+
 ;;; code-init.el ends here

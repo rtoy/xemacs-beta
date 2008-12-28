@@ -92,6 +92,7 @@
    charset-g1 hebrew-iso8859-8
    charset-g2 t
    charset-g3 t
+   safe-charsets (ascii hebrew-iso8859-8)
    mnemonic "CText/Hbrw"
    ))
 

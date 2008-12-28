@@ -300,8 +300,8 @@ this function has been called, this will no longer be the case.  "
                              (extent-face extent))
                      (delete-extent extent))) buffer begin end))
 
-(defun default-query-coding-region (begin end coding-system
-				    &optional buffer errorp highlightp)
+(defun* default-query-coding-region (begin end coding-system
+				     &optional buffer errorp highlightp)
   "The default `query-coding-region' implementation.
 
 Uses the `safe-charsets' and `safe-chars' coding system properties.
@@ -324,8 +324,11 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
           (gethash safe-charsets
                    default-query-coding-region-safe-charset-skip-chars-map))
          (ranges (make-range-table))
-         fail-range-start fail-range-end previous-fail char-after
+         fail-range-start fail-range-end char-after
 	 looking-at-arg failed extent)
+    ;; Coding systems with a value of t for safe-charsets support everything.
+    (when (eq t safe-charsets)
+      (return-from default-query-coding-region (values t nil)))
     (unless skip-chars-arg
       (setq skip-chars-arg
 	    (puthash safe-charsets
@@ -355,9 +358,9 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 	(goto-char begin buffer)
 	(skip-chars-forward skip-chars-arg end buffer)
 	(while (< (point buffer) end)
-	  (message
-	   "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
-	   fail-range-start previous-fail (point buffer) end)
+	  ; (message
+	  ; "fail-range-start is %S, point is %S, end is %S"
+	  ;  fail-range-start (point buffer) end)
 	  (setq char-after (char-after (point buffer) buffer)
 		fail-range-start (point buffer))
 	  (while (and
@@ -411,8 +414,8 @@ region using `query-coding-warning-face'. It defaults to nil.
 
 This function returns a list; the intention is that callers use 
 `multiple-value-bind' or the related CL multiple value functions to deal
-with it.  The first element is `t' if the string can be encoded using
-CODING-SYSTEM, or `nil' if not.  The second element is `nil' if the string
+with it.  The first element is `t' if the region can be encoded using
+CODING-SYSTEM, or `nil' if not.  The second element is `nil' if the region
 can be encoded using CODING-SYSTEM; otherwise, it is a range table
 describing the positions of the unencodable characters. See
 `make-range-table'."
@@ -456,33 +459,42 @@ list of positions.
 If optional 5th argument STRING is non-nil, it is a string to search
 for un-encodable characters.  In that case, START and END are indexes
 in the string."
-  (flet ((thunk ()
-	   (multiple-value-bind (result ranges)
-	       (query-coding-region start end coding-system)
-	     (if result
-		 ;; If query-coding-region thinks the entire region is
-		 ;; encodable, result will be t, and the thunk should
-		 ;; return nil, because there are no unencodable
-		 ;; positions in the region.
-                 nil
-               (if count 
-                   (block counted
-                     (map-range-table
-                      #'(lambda (begin end value)
-                          (while (and (<= begin end) (<= begin count))
-                            (push begin result)
-                            (incf begin))
-                          (if (> begin count) (return-from counted)))
-                      ranges))
-                 (map-range-table
-                  #'(lambda (begin end value)
-		      (while (<= begin end)
-			(push begin result)
-			(incf begin))) ranges))
-	       result))))
+  (let ((thunk
+	 #'(lambda (start end coding-system &optional count)
+	     (multiple-value-bind (result ranges)
+		 (query-coding-region start end coding-system)
+	       (if result
+		   nil
+		 (block worked-it-all-out
+		   (if count
+		       (map-range-table
+			#'(lambda (begin end value)
+			    (while (and (< begin end)
+					(< (length result) count))
+			      (push begin result)
+			      (incf begin))
+			    (when (= (length result) count)
+			      (return-from worked-it-all-out result)))
+			ranges)
+		     (map-range-table
+		      #'(lambda (begin end value)
+			  (return-from worked-it-all-out begin))
+		      ranges))
+		   (assert (not (null count)) t
+			   "We should never reach this point with null COUNT.")
+		   result))))))
+    (check-argument-type #'integer-or-marker-p start)
+    (check-argument-type #'integer-or-marker-p end)
+    (check-coding-system coding-system)
+    (and count (check-argument-type #'natnump count)
+	 ;; Special-case zero, sigh. 
+	 (if (zerop count) (setq count 1)))
+    (and string (check-argument-type #'stringp string))
     (if string
-	(with-temp-buffer (insert string) (thunk))
-      (thunk))))
+	(with-temp-buffer
+	  (insert string)
+	  (funcall thunk start end coding-system count))
+      (funcall thunk start end coding-system count))))
 
 (defun encode-coding-char (char coding-system)
   "Encode CHAR by CODING-SYSTEM and return the resulting string.
