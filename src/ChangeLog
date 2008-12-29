@@ -8,6 +8,11 @@
 	executed, but we may still want to check variable bindings; an
 	else clause isn't appropriate.
 
+2008-12-27  Vin Shelton  <acs@xemacs.org>
+
+	* syswindows.h: Don't define wide character interfaces for Cygwin
+	1.7 and up.
+
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fdefine_function): 
