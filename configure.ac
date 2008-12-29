@@ -3434,7 +3434,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_RUN_IFELSE([AC_LANG_SOURCE([#include <X11/Intrinsic.h>
-    int main(int c, char *v[]) { return c>1 ? XlibSpecificationRelease : 0; }])],
+    int main(int c, char **v) { return c>1 ? XlibSpecificationRelease : 0; }])],
     [./conftest foobar; x11_release=$?],[x11_release=4],[x11_release=4])
   AC_MSG_RESULT(R${x11_release})
   AC_DEFINE_UNQUOTED(THIS_IS_X11R${x11_release})
@@ -5582,7 +5582,7 @@ dnl Unfortunately, just because we can link doesn't mean we can run.
 dnl One of the above link tests may have succeeded but caused resulting
 dnl executables to fail to run.  Also any tests using AC_RUN_IFELSE will
 dnl have reported incorrect results.
-AC_RUN_IFELSE([AC_LANG_SOURCE([int main(int c,char *v[]){return 0;}])],[:],[
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main(int c,char **v){return 0;}])],[:],[
   echo ""
   echo "*** PANIC *** The C compiler can no longer build working executables."
   echo "*** PANIC *** Please examine the tail of config.log for runtime errors."
