@@ -2247,16 +2247,21 @@ if test "$CC" != "$XEMACS_CC"; then
   *g++* )
     if test "$GCC" != "yes"; then
       AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
-      xemacs_cc_cc_mismatch=yes ;;
+      xemacs_cc_cc_mismatch=yes
+    fi
+    ;;
   esac
   if test -n "$GCC"; then
     case $XEMACS_CC in
     *g++* )
+      # it's as expected, do nothing
       ;;
     * )
       AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
-      xemacs_cc_cc_mismatch=yes ;;
+      xemacs_cc_cc_mismatch=yes
+      ;;
     esac
+  fi
   dnl #### Add other detectable mismatches here.
 fi
 

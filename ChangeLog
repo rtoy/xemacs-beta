@@ -1,5 +1,9 @@
 2008-12-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* configure.ac (xemacs_cc_cc_mismatch): Fix my syntax errors.
+
+2008-12-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* .hgignore: Add terminating newline to .hgignore.
 
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
