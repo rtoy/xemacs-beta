@@ -1881,10 +1881,12 @@ With argument, insert value in current buffer after the form."
   ;; defalias calls are output directly by byte-compile-file-form-defmumble;
   ;; it does not pay to first build the defalias in defmumble and then parse
   ;; it here.
-  (if (and (memq (car-safe form) '(defun defmacro defvar defconst autoload))
+  (if (and (memq (car-safe form) '(defun defmacro defvar defconst autoload
+				   custom-declare-variable))
 	   (stringp (nth 3 form)))
       (byte-compile-output-docform nil nil '("\n(" 3 ")") form nil
-				   (eq (car form) 'autoload))
+				   (memq (car form)
+					 '(autoload custom-declare-variable)))
     (let ((print-escape-newlines t)
 	  (print-length nil)
 	  (print-level nil)

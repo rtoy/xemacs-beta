@@ -531,11 +531,33 @@ If TYPE is `defvar', then variable definitions are acceptable.
 	      return Qnil;
 	    }
 	  else
-	    filename = get_object_file_name 
-	      (make_int (- (EMACS_INT) XSUBR (fun)->doc));
+	    {
+	      filename = get_object_file_name 
+		(make_int (- (EMACS_INT) XSUBR (fun)->doc));
+	      return filename;
+	    }
+	}
+
+      if (COMPILED_FUNCTIONP (fun) || (CONSP(fun) &&
+				       (EQ (Qmacro, Fcar_safe (fun)))
+				       && (fun = Fcdr_safe (fun),
+					   COMPILED_FUNCTIONP (fun))))
+	{
+	  Lisp_Object tem;
+	  Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
+
+	  if (! (f->flags.documentationp))
+	    return Qnil;
+	  tem = compiled_function_documentation (f);
+	  if (NATNUMP (tem) || CONSP (tem))
+	    {
+	      filename = get_object_file_name (tem);
+	      return filename;
+	    }
 	}
     }
-  else if (EQ(Fboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefvar)))
+
+  if (EQ(Fboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefvar)))
     {
       Lisp_Object doc_offset = Fget (symbol, Qvariable_documentation, Qnil);
 
@@ -551,9 +573,11 @@ If TYPE is `defvar', then variable definitions are acceptable.
 	    {
 	      filename = get_object_file_name(doc_offset);
 	    }
+	  return filename;
 	}
     }
-  return filename;
+
+  return Qnil;
 }
 
 DEFUN ("documentation", Fdocumentation, 1, 2, 0, /*

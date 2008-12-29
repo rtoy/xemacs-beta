@@ -233,6 +233,15 @@ main (int argc, char **argv)
 	      err_count += scan_file (arg);
 	    }
 	}
+      else if (argc > i + 1 && !strcmp (argv[i], "-d"))
+        {
+          /* XEmacs change; allow more than one chdir. 
+             The idea is that the second chdir is to source-lisp, and that
+             any Lisp files not under there have the full path specified.  */
+          i += 1;
+          chdir (argv[i]);
+          continue;
+        }
       else
 	{
 	  int j;
@@ -269,14 +278,16 @@ main (int argc, char **argv)
 static void
 put_filename (const char *filename)
 {
+  /* XEmacs change; don't strip directory information. */
+#if 0
   const char *tmp;
 
-  /* Why are we cutting this off? */
   for (tmp = filename; *tmp; tmp++)
     {
       if (IS_DIRECTORY_SEP(*tmp))
 	filename = tmp + 1;
     }
+#endif 
 
   /* <= because sizeof includes the nul byte at the end. Not quite right,
      because it should include the length of the symbol + "\037[VF]" instead
@@ -1390,7 +1401,6 @@ scan_lisp_file (const char *filename, const char *mode)
 	 backslash-newline) have already been read.  */
 
       put_filename (filename);	/* XEmacs addition */
-      putc ('\n', outfile);	/* XEmacs addition */
       putc (037, outfile);
       putc (type, outfile);
       fprintf (outfile, "%s\n", buffer);
