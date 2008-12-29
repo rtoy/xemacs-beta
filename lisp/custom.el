@@ -203,9 +203,7 @@ keyword in your own programs.  "
     ;; Do the actual initialization.
     (unless custom-dont-initialize
       (funcall initialize symbol default)))
-  ;; #### This is a rough equivalent of LOADHIST_ATTACH.  However,
-  ;; LOADHIST_ATTACH also checks for `initialized'.
-  (push (cons 'defvar symbol) current-load-list)
+  (push symbol current-load-list)
   (run-hooks 'custom-define-hook)
   symbol)
 
