@@ -1,5 +1,12 @@
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* make-docfile.el: 
+	Use absolute source file names when checking if DOC is out of
+	date, don't use relative paths that may not be related to the
+	current directory.
+
+2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* frame.el (display-mouse-p): 
 	(display-popup-menus-p): 
 	(display-images-p): 
