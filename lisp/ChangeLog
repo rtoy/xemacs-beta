@@ -1,3 +1,10 @@
+2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el: 
+	Use absolute source file names when checking if DOC is out of
+	date, don't use relative paths that may not be related to the
+	current directory.	
+
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el (query-coding-region): 
@@ -22,6 +29,16 @@
 	systems if we're on non-mule. Unintern
 	unicode-query-coding-region, unicode-query-coding-skip-chars-arg
 	in the same context. 
+
+2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.el (display-mouse-p): 
+	(display-popup-menus-p): 
+	(display-images-p): 
+	(display-selections-p): 
+	(display-visual-class): 
+	Make all these functions more general, do not hard code device
+	type symbols where that is inappropriate. 
 
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -76,6 +93,42 @@
 	* mule/mule-coding.el (escape-quoted): 
 	* mule/mule-coding.el (iso-2022-lock): 
 	Add safe-charsets properties for all these coding systems. 
+
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file): 
+	Use #'defun*, not #'defun, to allow the checks for autoloaded
+	functions and variables to call #'return-from correctly. Use
+	#'return-from instead of #'return throughout the function. 
+
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadup.el (load-history): 
+	Add the contents of current-load-list to load-history before
+	clearing it. Move the variable declarations earlier in the file to
+	a format understood by make-docfile.c. 
+	* custom.el (custom-declare-variable): Add the variable's symbol
+	to the current file's load history entry correctly, don't use a
+	cons. Eliminate a comment that we don't need to worry about, we
+	don't need to check the `initialized' C variable in Lisp.
+	* bytecomp.el (byte-compile-output-file-form): 
+	Merge Andreas Schwab's pre-GPLv3 GNU change of 19970831 here;
+	treat #'custom-declare-variable correctly, generating the
+	docstrings in a format understood by make-docfile.c.
+	* loadhist.el (symbol-file): Correct behaviour for checking
+	autoloaded macros and functions when supplied with a TYPE
+	argument. Accept fully-qualified paths from
+	#'built-in-symbol-file; if a path is not fully-qualified, return
+	it relative to lisp-directory if the filename corresponds to a
+	Lisp file, and relative to (concat source-directory "/src/")
+	otherwise.
+	* make-docfile.el (preloaded-file-list): 
+	Rationalise some let bindings a little. Use the "-d" argument to
+	make-docfile.c to supply Lisp paths relative to lisp-directory,
+	not absolutely. Add in loadup.el explicitly to the list of files
+	to be processed by make-docfile.c--it doesn't make sense to add it
+	to preloaded-file-list, since that is used for purposes of
+	byte-compilation too. 
 
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
