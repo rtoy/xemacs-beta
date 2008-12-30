@@ -151,7 +151,7 @@
 (load "setup-paths.el")
 (load "raw-process.el")
 
-(let (preloaded-file-list arg0 arg package-preloaded-file-list)
+(let (preloaded-file-list arg0 arg package-preloaded-file-list absolute)
   (load (expand-file-name "dumped-lisp.el" source-lisp))
 
   (setq package-preloaded-file-list
@@ -168,7 +168,8 @@
 
   (while preloaded-file-list
     (setq arg0 (packages-add-suffix (car preloaded-file-list))
-	  arg (locate-library arg0))
+	  arg (locate-library arg0)
+          absolute arg)
     (if (null arg)
 	(progn
 	  (message "Error: dumped file %s does not exist" arg0)
@@ -191,7 +192,8 @@
       (if (null (member arg processed))
 	  (progn
 	    (if (and (null docfile-out-of-date)
-		     (file-newer-than-file-p arg docfile))
+                     ;; We need to check the absolute path here:
+		     (file-newer-than-file-p absolute docfile))
 		(setq docfile-out-of-date t))
 	    (setq processed (cons arg processed)))))
     (setq preloaded-file-list (cdr preloaded-file-list))))
