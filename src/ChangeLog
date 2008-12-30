@@ -1,3 +1,8 @@
+2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-x.c (Fx_get_font_path): 
+	Free the font path once we're finished with it. 
+
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (Fmake_coding_system): 
@@ -11,6 +16,21 @@
 	* coding-system-slots.h: 
 	Make the safe-chars and safe-charsets slots available in these
 	headers. 
+
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fbuilt_in_symbol_file): 
+	Return a subr's filename immediately if we've found it. Check for
+	compiled function and compiled macro docstrings in DOC too, and
+	return them if they exist. 
+	The branch of the if statement focused on functions may have
+	executed, but we may still want to check variable bindings; an
+	else clause isn't appropriate.
+
+2008-12-27  Vin Shelton  <acs@xemacs.org>
+
+	* syswindows.h: Don't define wide character interfaces for Cygwin
+	1.7 and up.
 
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -163,8 +183,6 @@
 	* objects-xlike-inc.c (charset_table): Remove the entry for
 	Vcharset_arabic_iso8859_7, thank you Robert Delius Royar.
 
-=======
->>>>>>> other
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (complex_vars_of_mule_charset): 

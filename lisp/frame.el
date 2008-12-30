@@ -1179,21 +1179,29 @@ that is beyond the control of Emacs and this command has no effect on it."
   "Return non-nil if DISPLAY has a mouse available.
 DISPLAY can be a frame, a device, a console, or nil (meaning the
 selected frame)."
-  (case (framep-on-display display)
-    ;; We assume X, NeXTstep, and GTK *always* have a pointing device
-    ((x ns gtk) t)
-    (mswindows (> (declare-boundp mswindows-num-mouse-buttons) 0))
-    (tty
+  (let (type)
+    (setq display (display-device display)
+          type (device-type display))
+    (cond
+     ((eq 'mswindows type)
+      (> (declare-boundp mswindows-num-mouse-buttons) 0))
+     ((device-on-window-system-p display)
+      ;; We assume X, NeXTstep, and GTK and the rest always have a pointing
+      ;; device. 
+      t)
+    ((eq 'tty type)
      (and-fboundp 'gpm-is-supported-p
-       (gpm-is-supported-p (display-device display))))
-    (t nil)))
+       (gpm-is-supported-p display)))
+    (t nil))))
 
 (defun display-popup-menus-p (&optional display)
   "Return non-nil if popup menus are supported on DISPLAY.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame).  Support for popup menus requires that the mouse be available."
+  (setq display (display-device display))
   (and
-   (memq (framep-on-display display) '(x ns gtk mswindows))
+   (featurep 'menubar)
+   (device-on-window-system-p display)
    (display-mouse-p display)))
 
 (defun display-graphic-p (&optional display)
@@ -1203,13 +1211,17 @@ frames and several different fonts at once.  This is true for displays
 that use a window system such as X, and false for text-only terminals.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (memq (framep-on-display display) '(x ns gtk mswindows)))
+  (device-on-window-system-p display))
 
 (defun display-images-p (&optional display)
   "Return non-nil if DISPLAY can display images.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (display-graphic-p display))
+  (and (memq (image-instance-type (specifier-instance
+                                   (glyph-image xemacs-logo)
+                                   display))
+             '(color-pixmap mono-pixmap))
+       t))
 
 (defalias 'display-multi-frame-p 'display-graphic-p)
 (defalias 'display-multi-font-p 'display-graphic-p)
@@ -1221,7 +1233,11 @@ via special system buffers called `selection' or `cut buffer' or
 `clipboard'.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (memq (framep-on-display display) '(x ns gtk mswindows)))
+  (or 
+   (device-on-window-system-p display)
+   ;; GPM supports #'get-selection-foreign, but not #'own-selection.
+   (and-fboundp 'gpm-is-supported-p
+     (gpm-is-supported-p display))))   
 
 (defun display-screens (&optional display)
   "Return the number of screens associated with DISPLAY."
@@ -1269,15 +1285,21 @@ the question is inapplicable to a certain kind of display."
   "Returns the visual class of DISPLAY.
 The value is one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'."
-  (case (framep-on-display display)
-    (x (declare-fboundp (x-display-visual-class (display-device display))))
-    (gtk (declare-fboundp (gtk-display-visual-class (display-device display))))
-    (mswindows (let ((planes (display-planes display)))
-		 (cond ((eq planes 1) 'static-gray)
-		       ((eq planes 4) 'static-color)
-		       ((> planes 8) 'true-color)
-		       (t 'pseudo-color))))
-    (t 'static-gray)))
+  (let (type planes)
+    (setq display (display-device display)
+          type (device-type display))
+    (cond
+     ((eq 'x type)
+      (declare-fboundp (x-display-visual-class display)))
+     ((eq 'gtk type)
+      (declare-fboundp (gtk-display-visual-class display)))
+     ((device-on-window-system-p display)
+      (setq planes (display-planes display))
+      (cond ((eq planes 1) 'static-gray)
+            ((eq planes 4) 'static-color)
+            ((> planes 8) 'true-color)
+            (t 'pseudo-color)))
+     (t 'static-gray))))
 
 
 ;; XEmacs change: omit the Emacs 18 compatibility functions:

@@ -479,7 +479,7 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
 #define BIF_NEWDIALOGSTYLE 64
 #endif
 
-#ifdef CYGWIN
+#if defined (CYGWIN) && (CYGWIN_VERSION_DLL_COMBINED < 190)
 
 /* All but wcscmp and wcslen left out of Cygwin headers -- but present
    in /usr/include/mingw/string.h! */

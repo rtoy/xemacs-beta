@@ -2060,6 +2060,8 @@ See also `x-set-font-path'.
                                            Qfile_name),
 			 font_path);
 
+  XFreeFontPath ((char **)directories);
+
   return font_path;
 }
 

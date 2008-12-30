@@ -1,3 +1,13 @@
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (main): Allow more than one -d argument, followed
+	by a directory to change to.
+	(put_filename): Don't strip directory information; with previous
+	change, allows retrieval of Lisp function and variable origin
+	files from #'built-in-symbol-file relative to lisp-directory. 
+	(scan_lisp_file): Don't add an extraneous newline after the file
+	name, put_filename has added the newline already. 
+
 2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-mswin-unicode.pl:

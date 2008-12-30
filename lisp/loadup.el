@@ -31,6 +31,12 @@
 ;; If you are wanting to add files to be dumped into your local version of
 ;; XEmacs, DO NOT add them here.  Use site-init.el or site-load.el instead.
 
+;; ***Note the docstrings for the variables in this file. They follow the
+;; conventions described in lib-src/make-docfile.c, and any new variables or
+;; functions added to this file should follow those conventions too, since
+;; this file is always loaded uncompiled, and the byte-compiler never gets a
+;; chance to format the docstrings in the way make-docfile.c understands.
+
 ;; This is loaded into a bare XEmacs to make a dumpable one.
 
 ;;; Code:
@@ -47,27 +53,27 @@
 (when (fboundp 'error)
   (error "loadup.el already loaded!"))
 
-(defconst running-xemacs t
-  "Non-nil when the current emacs is XEmacs.")
+(defconst running-xemacs t "\
+Non-nil when the current emacs is XEmacs.")
 
 ;; Can't make this constant for now because it causes an error in
 ;; update-elc.el. 
-(defvar source-lisp (file-name-directory (expand-file-name
-					  (nth 2 command-line-args)))
-  "Root of tree containing the Lisp source code for the current build. 
+(defvar source-lisp (file-name-directory (expand-file-name (nth 2 command-line-args))) "\
+Root of tree containing the Lisp source code for the current build. 
 Differs from `lisp-directory' if this XEmacs has been installed. ")
 
-(defconst build-directory (expand-file-name ".." invocation-directory)
-  "Root of tree containing object files and executables produced by build. 
+(defconst build-directory (expand-file-name ".." invocation-directory) "\
+Root of tree containing object files and executables produced by build. 
 Differs from `source-directory' if configured with --srcdir option, a practice 
 recommended for developers.")
 
-(defconst source-directory (expand-file-name ".." source-lisp)
-  "Root of tree containing source code for the current build. 
+(defconst source-directory (expand-file-name ".." source-lisp)  "\
+Root of tree containing source code for the current build. 
 Used during loadup and for documenting source of symbols defined in C.")
 
-(defvar preloaded-file-list nil
-  "List of files preloaded into the XEmacs binary image.")
+(defvar preloaded-file-list nil "\
+List of Lisp files preloaded into the XEmacs binary image,
+with the exception of `loadup.el'.")
 
 ;(start-profiling)
 
@@ -206,7 +212,15 @@ Used during loadup and for documenting source of symbols defined in C.")
 ;; See also "site-load" above.
 (when (stringp site-start-file)
   (load "site-init" t))
-(setq current-load-list nil)
+;; Add information from this file to the load history:
+(setq load-history (cons (nreverse current-load-list) load-history)
+      ;; Clear current-load-list; this (and adding information to
+      ;; load-history) is normally done in lread.c after reading the
+      ;; entirety of a file, something which never happens for loadup.el.
+      current-load-list nil)
+;; Make the path to this file look a little nicer: 
+(setcar (car load-history) (file-truename (caar load-history)))
+
 (garbage-collect)
 
 ;;; At this point, we're ready to resume undo recording for scratch.
