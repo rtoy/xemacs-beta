@@ -1,3 +1,13 @@
+2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.el (display-mouse-p): 
+	(display-popup-menus-p): 
+	(display-images-p): 
+	(display-selections-p): 
+	(display-visual-class): 
+	Make all these functions more general, do not hard code device
+	type symbols where that is inappropriate. 
+
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* loadhist.el (symbol-file): 
