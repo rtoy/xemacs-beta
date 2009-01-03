@@ -1,3 +1,14 @@
+2009-01-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/ccl-tests.el (ccl-test-setup): 
+	Use sane CCL programs for decoding and encoding with the test CCL
+	coding system by default. Correct a spelling in the docstring, add
+	a safe-chars property so that we don't confuse
+	query-coding-tests.el. 
+	(ccl-test-suites): 
+	Explicitly re-initialise the CCL programs for the test coding
+	system once finished. 
+
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/query-coding-tests.el: 
