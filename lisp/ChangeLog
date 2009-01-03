@@ -1,3 +1,8 @@
+2009-01-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* descr-text.el (describe-char-unicodedata-file):
+	Nuke build-breaking computation from defcustom initializer.
+
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-docfile.el: 
