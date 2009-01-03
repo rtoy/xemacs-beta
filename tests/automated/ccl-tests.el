@@ -117,21 +117,22 @@
 (defun ccl-test-setup ()
   (define-ccl-program
     ccl-test-decoder
-    '(1 (read r0)
-	(loop
-	  (write-read-repeat r0))))
+    '(1 (loop
+          (read r0)
+	  (write-repeat r0))))
   (define-ccl-program
     ccl-test-encoder
-    '(1 (read r0)
-	(loop
-	  (write-read-repeat r0))))
+    '(1 (loop
+          (read r0)
+	  (write-repeat r0))))
   (or (find-coding-system 'ccl-test-coding-system)
       (make-coding-system 
        'ccl-test-coding-system
        'ccl
-       "CCL TEST temprary coding-system."
+       "CCL TEST temporary coding-system."
        '(mnemonic "CCL-TEST"
 		  eol-type lf
+                  safe-chars t
 		  decode ccl-test-decoder
 		  encode ccl-test-encoder))))
 
@@ -601,7 +602,9 @@
   (ccl-test-simple-read-and-write)
   (ccl-test-read-write-multibyte-character)
   (ccl-test-ccl-call)
-  (ccl-test-map-instructions))
+  (ccl-test-map-instructions)
+  ;; Re-initialise the coding system:
+  (ccl-test-setup))
 
 ;;; start tests only when ccl-execute is enabled.
 (if (fboundp 'ccl-execute)
