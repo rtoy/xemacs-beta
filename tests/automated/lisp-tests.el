@@ -889,6 +889,20 @@
       (check-function-argcounts '(lambda ,arglist nil) ,min ,max)
       (check-function-argcounts (byte-compile '(lambda ,arglist nil)) ,min ,max))))
 
+;; Test subr-arity. 
+(loop for (function-name arity) in
+  '((let (1 . unevalled))
+    (prog1 (1 . unevalled))
+    (list (0 . many))
+    (type-of (1 . 1))
+    (garbage-collect (0 . 0)))
+  do (Assert (equal (subr-arity (symbol-function function-name)) arity)))
+  
+(Check-Error wrong-type-argument (subr-arity
+                                  (lambda () (message "Hi there!"))))
+  
+(Check-Error wrong-type-argument (subr-arity nil))
+
 ;;-----------------------------------------------------
 ;; Detection of cyclic variable indirection loops
 ;;-----------------------------------------------------

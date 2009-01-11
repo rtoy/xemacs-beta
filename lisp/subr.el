@@ -1699,7 +1699,7 @@ one is kept."
 
 ;; (defun make-syntax-table (&optional oldtable) in syntax.el.
 
-;; (defun syntax-after (pos) #### doesn't exist.
+;; (defun syntax-after (pos) in syntax.el.
 
 ;; global-set-key, local-set-key, global-unset-key, local-unset-key in
 ;; keymap.el.
@@ -1741,5 +1741,25 @@ in Lisp; do not use it in performance-critical code."
         (setq list (delq ?- list)
               list (nconc list '(?\\ ?-)))))
     (apply #'string list)))
+
+;; XEmacs addition to subr.el; docstring and API taken initially from GNU's
+;; data.c, revision 1.275, GPLv2.
+(defun subr-arity (subr)
+  "Return minimum and maximum number of args allowed for SUBR.
+SUBR must be a built-in function (not just a symbol that refers to one).
+The returned value is a pair (MIN . MAX).  MIN is the minimum number
+of args.  MAX is the maximum number or the symbol `many', for a
+function with `&rest' args, or `unevalled' for a special form.
+
+See also `special-form-p', `subr-min-args', `subr-max-args',
+`function-allows-args'. "
+  (check-argument-type #'subrp subr)
+  (cons (subr-min-args subr)
+        (cond
+         ((special-form-p subr)
+          'unevalled)
+         ((null (subr-max-args subr))
+          'many)
+         (t (subr-max-args subr)))))
 
 ;;; subr.el ends here

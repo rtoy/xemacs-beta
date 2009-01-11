@@ -1,3 +1,11 @@
+2009-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el: Correct a comment, we now have #'syntax-after in
+	syntax.el.
+	(subr-arity): New.
+	Docstring and API taken initially from GNU's data.c, revision
+	1.275, GPLv2.
+
 2009-01-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* descr-text.el (describe-char-unicodedata-file):
