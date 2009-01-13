@@ -1,3 +1,11 @@
+2009-01-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (set-language-environment-coding-systems): 
+	Fix a cosmetic bug; the relationship between
+	file-name-coding-system and the file-name coding system alias
+	established in coding.el wasn't being maintained. See Katsumi
+	Yamaoka's comment in http://mid.gmane.org/b4m4p03bt43.fsf@jpl.org .
+
 2009-01-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el: Correct a comment, we now have #'syntax-after in

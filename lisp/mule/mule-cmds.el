@@ -1410,15 +1410,17 @@ of buffer-file-coding-system set by this function."
 	(error
 	 (warn "Invalid native-coding-system %s in language environment %s"
 	       native language-name)))
-      (define-coding-system-alias 'file-name 
-        (or 
-         (let ((fncs (assq system-type system-type-file-name-coding)))
-           (and fncs (cdr fncs)))
-         'native))
-      ;; Set the default keyboard and terminal coding systems to the native
-      ;; coding system of the language environment. 
-      ;;
-      (setq keyboard-coding-system native
+      ;; These variables have magic handlers to make setting them equivalent
+      ;; to setting the file-name, terminal and keyboard coding system
+      ;; aliases. See coding.el. 
+      (setq file-name-coding-system 
+            (or 
+             (let ((fncs (assq system-type system-type-file-name-coding)))
+               (and fncs (cdr fncs)))
+             native)
+            ;; Set the default keyboard and terminal coding systems to the
+            ;; native coding system of the language environment.
+            keyboard-coding-system native
 	    terminal-coding-system native)
 
       ;; And do the same for any TTYs. 
