@@ -1,3 +1,17 @@
+2009-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (force-coding-system-equivalency): 
+	Move three functions that we don't want to advertise to being
+	anonymous lambdas instead.
+	* glyphs.el :
+	Remove #'define-constant-glyph and some functions it uses, replace
+	the latter with anonymous lambdas and the former and its uses with
+	a call to loop. 
+	Do the same with #'define-obsolete-pointer-glyph and the functions
+	it uses. 
+	(init-glyphs): Untern this symbol once the associated function has
+	been called; it's only needed at dump time, not at runtime. 
+
 2009-01-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (set-language-environment-coding-systems): 

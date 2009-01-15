@@ -1084,83 +1084,53 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 (set-glyph-face gc-pointer-glyph 'pointer)
 
 ;; Now add the magic access/set behavior.
-
-(defun dontusethis-set-value-glyph-handler (sym args fun harg handler)
-  (error "Use `set-glyph-image' to set `%s'" sym))
-(defun dontusethis-make-unbound-glyph-handler (sym args fun harg handler)
-  (error "Can't `makunbound' `%s'" sym))
-(defun dontusethis-make-local-glyph-handler (sym args fun harg handler)
-  (error "Use `set-glyph-image' to make local values for `%s'" sym))
-
-(defun define-constant-glyph (sym)
-  (dontusethis-set-symbol-value-handler
-   sym 'set-value
-   'dontusethis-set-value-glyph-handler)
-  (dontusethis-set-symbol-value-handler
-   sym 'make-unbound
-   'dontusethis-make-unbound-glyph-handler)
-  (dontusethis-set-symbol-value-handler
-   sym 'make-local
-   'dontusethis-make-local-glyph-handler)
-  ;; Make frame properties magically work with glyph variables.
+(loop
+  for sym in '(define-constant-glyphs text-pointer-glyph nontext-pointer-glyph
+               modeline-pointer-glyph selection-pointer-glyph
+               busy-pointer-glyph gc-pointer-glyph divider-pointer-glyph
+               toolbar-pointer-glyph menubar-pointer-glyph
+               scrollbar-pointer-glyph octal-escape-glyph
+               control-arrow-glyph invisible-text-glyph hscroll-glyph
+               truncation-glyph continuation-glyph frame-icon-glyph)
+  with set-value-handler = #'(lambda (sym args fun harg handler)
+                               (error 'invalid-change
+                                      (format
+                                       "Use `set-glyph-image' to set `%s'"
+                                       sym)))
+  with make-unbound-handler = #'(lambda (sym args fun harg handler)
+                                  (error 'invalid-change
+                                         (format
+                                          "Can't `makunbound' `%s'" sym)))
+  with make-local-handler =
+       #'(lambda (sym args fun harg handler)
+           (error 'invalid-change
+            (format "Use `set-glyph-image' to make local values for `%s'" sym)))
+  do
+  (dontusethis-set-symbol-value-handler sym 'set-value set-value-handler)
+  (dontusethis-set-symbol-value-handler sym 'make-unbound make-unbound-handler)
+  (dontusethis-set-symbol-value-handler sym 'make-local make-local-handler)
   (put sym 'const-glyph-variable t))
-
-(define-constant-glyph 'text-pointer-glyph)
-(define-constant-glyph 'nontext-pointer-glyph)
-(define-constant-glyph 'modeline-pointer-glyph)
-(define-constant-glyph 'selection-pointer-glyph)
-(define-constant-glyph 'busy-pointer-glyph)
-(define-constant-glyph 'gc-pointer-glyph)
-(define-constant-glyph 'divider-pointer-glyph)
-(define-constant-glyph 'toolbar-pointer-glyph)
-(define-constant-glyph 'menubar-pointer-glyph)
-(define-constant-glyph 'scrollbar-pointer-glyph)
-
-(define-constant-glyph 'octal-escape-glyph)
-(define-constant-glyph 'control-arrow-glyph)
-(define-constant-glyph 'invisible-text-glyph)
-(define-constant-glyph 'hscroll-glyph)
-(define-constant-glyph 'truncation-glyph)
-(define-constant-glyph 'continuation-glyph)
-
-(define-constant-glyph 'frame-icon-glyph)
 
 ;; backwards compatibility garbage
 
-(defun dontusethis-old-pointer-shape-handler (sym args fun harg handler)
-  (let ((value (car args)))
-    (if (null value)
-	(remove-specifier harg 'global)
-      (set-glyph-image (symbol-value harg) value))))
-
 ;; It might or might not be garbage, but it's rude.  Make these
 ;; `compatible' instead of `obsolete'.  -slb
-(defun define-obsolete-pointer-glyph (old new)
+(loop
+  for (old new) in '((x-pointer-shape text-pointer-glyph)
+                     (x-nontext-pointer-shape nontext-pointer-glyph)
+                     (x-mode-pointer-shape modeline-pointer-glyph)
+                     (x-selection-pointer-shape selection-pointer-glyph)
+                     (x-busy-pointer-shape busy-pointer-glyph)
+                     (x-gc-pointer-shape gc-pointer-glyph)
+                     (x-toolbar-pointer-shape toolbar-pointer-glyph))
+  with set-handler = #'(lambda (sym args fun harg handler)
+                         (let ((value (car args)))
+                           (if (null value)
+                               (remove-specifier harg 'global)
+                             (set-glyph-image (symbol-value harg) value))))
+  do
   (define-compatible-variable-alias old new)
-  (dontusethis-set-symbol-value-handler
-   old 'set-value 'dontusethis-old-pointer-shape-handler new))
-
-;;; (defvar x-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-pointer-shape 'text-pointer-glyph)
-
-;;; (defvar x-nontext-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-nontext-pointer-shape 'nontext-pointer-glyph)
-
-;;; (defvar x-mode-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-mode-pointer-shape 'modeline-pointer-glyph)
-
-;;; (defvar x-selection-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-selection-pointer-shape
-  'selection-pointer-glyph)
-
-;;; (defvar x-busy-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-busy-pointer-shape 'busy-pointer-glyph)
-
-;;; (defvar x-gc-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-gc-pointer-shape 'gc-pointer-glyph)
-
-;;; (defvar x-toolbar-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-toolbar-pointer-shape 'toolbar-pointer-glyph)
+  (dontusethis-set-symbol-value-handler old 'set-value set-handler))
 
 ;; for subwindows
 (defalias 'subwindow-xid 'image-instance-subwindow-id)
@@ -1266,5 +1236,8 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 )
 
 (init-glyphs)
+
+(unintern 'init-glyphs) ;; This was dump time thing, no need to keep the
+			;; function around.
 
 ;;; glyphs.el ends here.

@@ -243,30 +243,24 @@ if does not differ from the encoded string. "
 	)))
 
 
-;;; Make certain variables equivalent to coding-system aliases
-(defun dontusethis-set-value-file-name-coding-system-handler (sym args fun harg handlers)
-  (define-coding-system-alias 'file-name (or (car args) 'binary)))
-
-(dontusethis-set-symbol-value-handler
- 'file-name-coding-system
- 'set-value
- 'dontusethis-set-value-file-name-coding-system-handler)
-
-(defun dontusethis-set-value-terminal-coding-system-handler (sym args fun harg handlers)
-  (define-coding-system-alias 'terminal (or (car args) 'binary)))
-
-(dontusethis-set-symbol-value-handler
- 'terminal-coding-system
- 'set-value
- 'dontusethis-set-value-terminal-coding-system-handler)
-
-(defun dontusethis-set-value-keyboard-coding-system-handler (sym args fun harg handlers)
-  (define-coding-system-alias 'keyboard (or (car args) 'binary)))
-
-(dontusethis-set-symbol-value-handler
- 'keyboard-coding-system
- 'set-value
- 'dontusethis-set-value-keyboard-coding-system-handler)
+;;; Make certain variables equivalent to coding-system aliases:
+(macrolet
+    ((force-coding-system-equivalency (&rest details-list)
+       (loop for (alias variable-symbol)
+         in details-list
+         with result = (list 'progn)
+         do
+         (push 
+          `(dontusethis-set-symbol-value-handler ',variable-symbol
+            'set-value #'(lambda (sym args fun harg handlers)
+                           (define-coding-system-alias ',alias
+                             (or (car args) 'binary))))
+          result)
+         finally return (nreverse result))))
+  (force-coding-system-equivalency
+   (file-name file-name-coding-system)
+   (terminal terminal-coding-system)
+   (keyboard keyboard-coding-system)))
 
 (when (not (featurep 'mule))
   (define-coding-system-alias 'escape-quoted 'binary)
