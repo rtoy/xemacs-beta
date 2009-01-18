@@ -1330,6 +1330,7 @@
 
 (let ((char-table-with-string #s(char-table data (?\x00 "text")))
       (char-table-with-symbol #s(char-table data (?\x00 text))))
-  (Assert (not (string-equal char-table-with-string char-table-with-symbol))
+  (Assert (not (string-equal (prin1-to-string char-table-with-string)
+                             (prin1-to-string char-table-with-symbol)))
           "Check that char table elements are quoted correctly when printing"))
 
