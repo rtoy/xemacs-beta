@@ -3,6 +3,8 @@
 	* font.el (font-*-p): Docstring spelling fix.
 	(set-font-*-p): Ditto.
 
+	* modeline.el (modeline-3d-p): Fix docstring copy-pasto.
+
 2009-01-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (set-language-environment-coding-systems): 
