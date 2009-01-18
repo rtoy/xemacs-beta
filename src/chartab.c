@@ -317,7 +317,7 @@ print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
   a->first = 0;
   lisprange = encode_char_table_range (range);
   GCPRO1 (lisprange);
-  write_fmt_string_lisp (a->printcharfun, "%s %s", 2, lisprange, val);
+  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, lisprange, val);
   UNGCPRO;
   return 0;
 }

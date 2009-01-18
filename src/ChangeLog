@@ -1,3 +1,9 @@
+2009-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (print_table_entry): 
+	Print char table values correctly, eliminating some confusion
+	between symbols and strings. 
+
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c (Fx_get_font_path): 

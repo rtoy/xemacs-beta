@@ -1,3 +1,8 @@
+2009-01-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Check that a bug I fixed in char table printing is really gone. 
+
 2009-01-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (): 
