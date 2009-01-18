@@ -216,13 +216,13 @@ for use in the 'weight' field of an X font string.")
 	   "Bitmask for whether a font is to be rendered in %s or not."
 	   attr))
        (defun ,(intern (format "font-%s-p" attr)) (fontobj)
-	 ,(format "Whether FONTOBJ will be renderd in `%s' or not." attr)
+	 ,(format "Whether FONTOBJ will be rendered in `%s' or not." attr)
 	 (if (/= 0 (logand (font-style fontobj)
 		      ,(intern (format "font-%s-mask" attr))))
 	     t
 	   nil))
        (defun ,(intern (format "set-font-%s-p" attr)) (fontobj val)
-	 ,(format "Set whether FONTOBJ will be renderd in `%s' or not."
+	 ,(format "Set whether FONTOBJ will be rendered in `%s' or not."
 		  attr)
 	 (cond
 	  (val
