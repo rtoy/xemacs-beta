@@ -1,3 +1,8 @@
+2009-01-10  Aidan Kehoe <kehoea@parhasard.net>
+
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2): 
+	Accept msprinter as well as mswindows devices here. 
+
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c (Fx_get_font_path): 
