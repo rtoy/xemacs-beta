@@ -1,3 +1,9 @@
+2009-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (print_table_entry): 
+	Print char table values correctly, eliminating some confusion
+	between symbols and strings.
+
 2009-01-10  Aidan Kehoe <kehoea@parhasard.net>
 
 	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2): 
