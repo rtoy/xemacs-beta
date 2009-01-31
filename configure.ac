@@ -189,7 +189,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   elif test "$GCC" = "yes"; then
     dnl Compute runpath from gcc's -v output
     ld_switch_run_save="$ld_switch_run"; ld_switch_run=""
-    echo "int main(int argc, char *argv[[]]) {return 0;}" > conftest.c
+    echo "int main(int argc, char **argv) {return 0;}" > conftest.c
     xe_runpath_link='${CC-cc} -o conftest -v $CFLAGS '"$xe_ldflags"' conftest.$ac_ext 2>&1 1>/dev/null'
     for arg in `eval "$xe_runpath_link" | grep ' -L'`; do
       case "$arg" in P,* | -L* | -R* )
@@ -4983,7 +4983,7 @@ f2 (short c, void *ptr, long e)
 }
 
 int
-main (int argc, char *argv[])
+main (int argc, char **argv)
 {
   if (f2 (665, memset (alloca (1001), 0xFB, 1001), 776776776) != 42)
     return 1;
@@ -5038,7 +5038,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 #define MAP_FAILED -1
 #endif
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
   int fd = -1;
   caddr_t p;

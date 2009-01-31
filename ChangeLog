@@ -1,3 +1,8 @@
+2009-01-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac: Adopt Martin's suggestion of declaring argv as
+	char ** (from <18643.15864.667930.542671@gargle.gargle.HOWL>).
+
 2008-12-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (xemacs_cc_cc_mismatch): Fix my syntax errors.
