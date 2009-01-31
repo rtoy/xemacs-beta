@@ -446,12 +446,17 @@ This is a naive implementation in Lisp.  "
 		       (encode-coding-string xemacs-character 'ctext))))))
 
   (loop
-    for (code-point encoded) 
-    in '((#x10000 "\xd8\x00\xdc\x00")
-         (#x10FFFD "\xdb\xff\xdf\xfd"))
-    do (Assert (equal (encode-coding-string 
-                       (decode-char 'ucs code-point) 'utf-16)
-                      encoded)))
+    for (code-point utf-16-big-endian utf-16-little-endian) 
+    in '((#x10000 "\xd8\x00\xdc\x00" "\x00\xd8\x00\xdc")
+         (#x10FFFD "\xdb\xff\xdf\xfd" "\xff\xdb\xfd\xdf"))
+    do
+    (Assert (equal (encode-coding-string 
+                    (decode-char 'ucs code-point) 'utf-16)
+                   utf-16-big-endian))
+    (Assert (equal (encode-coding-string 
+                    (decode-char 'ucs code-point) 'utf-16-le)
+                   utf-16-little-endian))
+
          
   ;;---------------------------------------------------------------
   ;; Regression test for a couple of CCL-related bugs. 
