@@ -332,7 +332,7 @@ struct x_frame
      or partially hidden by another X window */
   unsigned int totally_visible_p :1;
 
-  /* NB: Both of the following flags are derivable from the 'shell'
+  /* NB: Both of the following flags are derivable from the 'widget'
      field above, but it's easier if we also have them separately here. */
 
   /* Are we a top-level frame?  This means that our shell is a
