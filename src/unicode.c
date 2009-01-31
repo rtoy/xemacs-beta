@@ -2115,23 +2115,47 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		{
 		  int tempch;
 
-		  if (!valid_utf_16_last_surrogate(ch & 0xFFFF))
-		    {
-                      DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst, data,
-                                        ignore_bom);
-                      DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
-                                        ignore_bom);
-                      DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-                                        ignore_bom);
-                      DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-                                        ignore_bom);
-		    }
-                  else 
+                  if (little_endian)
                     {
-                      tempch = utf_16_surrogates_to_code((ch >> 16), 
-                                                         (ch & 0xffff));
-                      decode_unicode_char(tempch, dst, data, ignore_bom);
+                      if (!valid_utf_16_last_surrogate(ch >> 16))
+                        {
+                          DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst, data,
+                                              ignore_bom);
+                        }
+                      else
+                        {
+                          tempch = utf_16_surrogates_to_code((ch & 0xffff),
+                                                             (ch >> 16));
+                          decode_unicode_char(tempch, dst, data, ignore_bom); 
+                        }
                     }
+                  else
+                    {
+                      if (!valid_utf_16_last_surrogate(ch & 0xFFFF))
+                        {
+                          DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+                                              ignore_bom);
+                          DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+                                              ignore_bom);
+                        }
+                      else 
+                        {
+                          tempch = utf_16_surrogates_to_code((ch >> 16), 
+                                                             (ch & 0xffff));
+                          decode_unicode_char(tempch, dst, data, ignore_bom); 
+                        }
+                    }
+
 		  ch = 0;
 		  counter = 0;
                 }
