@@ -5,6 +5,12 @@
 	invalid-sequence-coding-system handling, display them using the
 	caret notation. 
 
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.el (display-graphic-p): 
+	Call #'display-device on the DISPLAY argument, ensuring that the
+	argument to #'device-on-window-system-p is correct.
+
 2009-01-18  Ville Skyttä  <scop@xemacs.org>
 
 	* font.el (font-*-p): Docstring spelling fix.
