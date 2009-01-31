@@ -1,3 +1,8 @@
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el: 
+	Test little-endian Unicode surrogates too. 
+
 2009-01-18  Aidan Kehoe  <kehoea@parhasard.net>
 	
 	* automated/lisp-tests.el: (char-table-with-string): 
