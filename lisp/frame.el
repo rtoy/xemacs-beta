@@ -1211,7 +1211,7 @@ frames and several different fonts at once.  This is true for displays
 that use a window system such as X, and false for text-only terminals.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (device-on-window-system-p display))
+  (device-on-window-system-p (display-device display)))
 
 (defun display-images-p (&optional display)
   "Return non-nil if DISPLAY can display images.
