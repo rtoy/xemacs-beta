@@ -771,17 +771,18 @@ the language environment for the major languages of Western Europe."
   (let ((invalid-sequence-coding-system
          (get-language-info language-name 'invalid-sequence-coding-system))
         (disp-table (specifier-instance current-display-table))
-        glyph)
+        glyph string)
     (when (consp invalid-sequence-coding-system)
       (setq invalid-sequence-coding-system
             (car invalid-sequence-coding-system)))
     (map-char-table
      #'(lambda (key entry)
-         (setq glyph (make-glyph
-                      (vector
-                       'string :data
-                       (decode-coding-string (string entry)
-                                             invalid-sequence-coding-system))))
+         (setq string (decode-coding-string (string entry)
+                                            invalid-sequence-coding-system))
+         ;; Treat control characters specially:
+         (when (string-match "^[\x00-\x1f\x80-\x9f]$" string)
+           (setq string (format "^%c" (+ ?@ (aref string 0)))))
+         (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
          (put-char-table key glyph disp-table)
          nil)

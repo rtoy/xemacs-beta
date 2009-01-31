@@ -1,3 +1,10 @@
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Treat control characters specially in the
+	invalid-sequence-coding-system handling, display them using the
+	caret notation. 
+
 2009-01-18  Ville Skyttä  <scop@xemacs.org>
 
 	* font.el (font-*-p): Docstring spelling fix.
