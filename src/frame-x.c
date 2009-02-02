@@ -2165,7 +2165,8 @@ x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
    * lose the icon (openbox).  See <f5bhc3efb17@hildegard.inf.ed.ac.uk>.
    * SJT:
    * This probably means that the frame-icon library won't work with
-   * that WM.
+   * that WM.  Late breaking news: it *does* work, so possibly the
+   * problem at initialization is due to a race condition.
    */
   update_frame_icon (f);
 }

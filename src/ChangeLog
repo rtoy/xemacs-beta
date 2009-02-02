@@ -1,5 +1,9 @@
 2009-02-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* frame-x.c (x_init_frame_2): Update comment per new info from HT.
+
+2009-02-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* frame-x.c (x_init_frame_2): Placate openbox by calling
 	update_frame_icon.  Suggested by Henry S. Thompson
 	<ht@inf.ed.ac.uk> in <f5btz7ghm5k@hildegard.inf.ed.ac.uk>.
