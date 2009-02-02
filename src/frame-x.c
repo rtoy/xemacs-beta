@@ -2160,6 +2160,14 @@ x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
    *   We'll just  need to be careful in the modeline specs.
    */
   update_frame_title (f);
+  /* Henry S. Thompson:
+   * Must set icon resource before mapping frame, or some WMs may
+   * lose the icon (openbox).  See <f5bhc3efb17@hildegard.inf.ed.ac.uk>.
+   * SJT:
+   * This probably means that the frame-icon library won't work with
+   * that WM.
+   */
+  update_frame_icon (f);
 }
 
 static void
