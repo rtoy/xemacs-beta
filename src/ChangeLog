@@ -1,3 +1,7 @@
+2009-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eval.c (skip_debugger): Fix typo in preceding comment.
+
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (unicode_convert): 
