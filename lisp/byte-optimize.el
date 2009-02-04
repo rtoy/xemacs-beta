@@ -56,7 +56,6 @@
 ;;   (put 'debug-on-error 'binding-is-magic t)
 ;;   (put 'debug-on-abort 'binding-is-magic t)
 ;;   (put 'debug-on-next-call 'binding-is-magic t)
-;;   (put 'mocklisp-arguments 'binding-is-magic t)
 ;;   (put 'inhibit-quit 'binding-is-magic t)
 ;;   (put 'quit-flag 'binding-is-magic t)
 ;;   (put 't 'binding-is-magic t)

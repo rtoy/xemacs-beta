@@ -167,7 +167,6 @@ Emacs-Lisp mode (@pxref{Lisp Modes}).
 @menu
 * Loading::		Loading libraries of Lisp code into Emacs for use.
 * Compiling Libraries:: Compiling a library makes it load and run faster.
-* Mocklisp::		Converting Mocklisp to Lisp so XEmacs can run it.
 @end menu
 
 @node Loading, Compiling Libraries, Lisp Libraries, Lisp Libraries
@@ -266,7 +265,7 @@ name of a library, with no directory specified, since that is how load
 is normally called.  An error in @code{forms} does not undo the load, but
 it does prevent execution of the rest of the @code{forms}.
 
-@node Compiling Libraries, Mocklisp, Loading, Lisp Libraries
+@node Compiling Libraries, , Loading, Lisp Libraries
 @subsection Compiling Libraries
 
 @cindex byte code
@@ -336,21 +335,6 @@ file or directory names, then kills the Emacs process.
 argument is a function name.  It displays the byte-compiled code in a help
 window in symbolic form, one instruction per line.  If the instruction
 refers to a variable or constant, that is shown, too.
-
-@node Mocklisp,,Compiling Libraries,Lisp Libraries
-@subsection Converting Mocklisp to Lisp
-
-@cindex mocklisp
-@findex convert-mocklisp-buffer
-  XEmacs can run Mocklisp files by converting them to Emacs Lisp first.
-To convert a Mocklisp file, visit it and then type @kbd{M-x
-convert-mocklisp-buffer}.  Then save the resulting buffer of Lisp file in a
-file whose name ends in @file{.el} and use the new file as a Lisp library.
-
-  You cannot currently byte-compile converted Mocklisp code.
-The reason is that converted Mocklisp code uses some special Lisp features
-to deal with Mocklisp's incompatible ideas of how arguments are evaluated
-and which values signify ``true'' or ``false''.
 
 @node Lisp Eval, Lisp Debug, Lisp Libraries, Running
 @section Evaluating Emacs-Lisp Expressions
