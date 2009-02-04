@@ -1,16 +1,53 @@
 2009-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (force-coding-system-equivalency): 
+	* coding.el (force-coding-system-equivalency):
 	Move three functions that we don't want to advertise to being
 	anonymous lambdas instead.
 	* glyphs.el :
 	Remove #'define-constant-glyph and some functions it uses, replace
 	the latter with anonymous lambdas and the former and its uses with
-	a call to loop. 
+	a call to loop.
 	Do the same with #'define-obsolete-pointer-glyph and the functions
-	it uses. 
+	it uses.
 	(init-glyphs): Untern this symbol once the associated function has
-	been called; it's only needed at dump time, not at runtime. 
+	been called; it's only needed at dump time, not at runtime.
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (query-coding-region): 
+	Revert this to being a defun, add a compiler macro without
+	needless binding. 
+	(query-coding-string): 
+	Correct a bug here, string indices are zero- not one-based. 
+	* mule/general-late.el (unicode-query-coding-skip-chars-arg):
+	Correct the algorithm used to initialise this variable. 
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1): 
+	Distinguish between special forms and subrs; don't bind
+	autoload-file, #'symbol-file returns it like any other function
+	file name.
+
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Treat control characters specially in the
+	invalid-sequence-coding-system handling, display them using the
+	caret notation. 
+
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.el (display-graphic-p): 
+	Call #'display-device on the DISPLAY argument, ensuring that the
+	argument to #'device-on-window-system-p is correct.
+
+2009-01-18  Ville Skyttä  <scop@xemacs.org>
+
+	* font.el (font-*-p): Docstring spelling fix.
+	(set-font-*-p): Ditto.
+
+	* modeline.el (modeline-3d-p): Fix docstring copy-pasto.
 
 2009-01-13  Aidan Kehoe  <kehoea@parhasard.net>
 

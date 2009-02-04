@@ -755,6 +755,7 @@ hash_table_rehash_size_validate (Lisp_Object UNUSED (keyword),
 static double
 decode_hash_table_rehash_size (Lisp_Object rehash_size)
 {
+  /* -1.0 signals make_general_lisp_hash_table to use the default. */
   return NILP (rehash_size) ? -1.0 : XFLOAT_DATA (rehash_size);
 }
 
@@ -786,6 +787,7 @@ hash_table_rehash_threshold_validate (Lisp_Object UNUSED (keyword),
 static double
 decode_hash_table_rehash_threshold (Lisp_Object rehash_threshold)
 {
+  /* -1.0 signals make_general_lisp_hash_table to use the default. */
   return NILP (rehash_threshold) ? -1.0 : XFLOAT_DATA (rehash_threshold);
 }
 
@@ -795,6 +797,7 @@ hash_table_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 {
   int len;
 
+  /* Check for improper lists while getting length. */
   GET_EXTERNAL_LIST_LENGTH (value, len);
 
   if (len & 1)
@@ -804,6 +807,7 @@ hash_table_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 	 value, Qhash_table, errb);
       return 0;
     }
+  
   return 1;
 }
 
