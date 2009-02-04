@@ -1,3 +1,10 @@
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1): 
+	Distinguish between special forms and subrs; don't bind
+	autoload-file, #'symbol-file returns it like any other function
+	file name.
+
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (finish-set-language-environment): 
