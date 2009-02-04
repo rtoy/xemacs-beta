@@ -1,5 +1,13 @@
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/latin.el:
+	Specify windows-1250 as the invalid-sequence-coding-system for the
+	iso-8859-2 languages; actually *use* the
+	invalid-sequence-coding-system for German and the other iso-8859-1
+	language environments.
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (force-coding-system-equivalency): 
 	Document this macro and the motivation for it. 
 

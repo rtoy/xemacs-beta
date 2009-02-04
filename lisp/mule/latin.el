@@ -1022,7 +1022,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
     ((latin-iso8859-2 iso-8859-2 "latin-2-prefix" "Latin-2" "ISO-8859-2"
 " Albanian, Czech, English, German, Hungarian, Polish, Romanian,
  Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
- and Swedish.") ;; " added because fontification got screwed up, CVS-20061203.
+ and Swedish." windows-1250) 
      (("Albanian" "sq")
       ("Croatian" ("hrvatski" "hr") "TUTORIAL.hr")
       ("Czech" ("cs" "cz") "TUTORIAL.cs" "P,Bx(Bejeme v,Ba(Bm hezk,B}(B den!"
@@ -1076,6 +1076,8 @@ Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))
        (coding-system ,codesys)
        (coding-priority ,codesys)
        (native-coding-system ,codesys)
+       (invalid-sequence-coding-system ,(or invalid-sequence-coding-system
+                                          codesys))
        ,@(if locale `((locale . ,locale)))
        ,@(if tutorial `((tutorial . ,tutorial)
 			(tutorial-coding-system . ,codesys)))
