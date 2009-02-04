@@ -71,7 +71,7 @@
 
       unicode-query-coding-skip-chars-arg
       (eval-when-compile 
-        (when-fboundp #'map-charset-chars 
+        (when-fboundp 'map-charset-chars 
           (loop
             for charset in (charset-list)
             with skip-chars-string = ""
@@ -80,17 +80,16 @@
               (map-charset-chars
                #'(lambda (begin end)
                    (loop
-                     while (/= end begin)
+                     while (and begin (>= end begin))
                      do
                      (when (= -1 (char-to-unicode begin))
-                       (setq this-charset-works nil)
                        (return-from no-ucs-mapping))
                      (setq begin (int-to-char (1+ begin)))))
                charset)
               (setq skip-chars-string
                     (concat skip-chars-string
                             (charset-skip-chars-string charset))))
-            finally return (skip-chars-quote skip-chars-string)))))
+            finally return skip-chars-string))))
 
 ;; At this point in the dump, all the charsets have been loaded. Now, load
 ;; their Unicode mappings.
