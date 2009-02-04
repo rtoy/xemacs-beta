@@ -1,3 +1,13 @@
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/xemacs.texi (Top): 
+	* xemacs/misc.texi (Emulation): 
+	* xemacs/building.texi (Lisp Libraries): 
+	(Compiling Libraries): 
+	Remove any reference to mocklisp as an active technology.
+	Also remove documentation of the related #'set-gosmacs-bindings,
+	which is no longer available.
+
 2008-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q5.0.7): Fix broken instructions on use of

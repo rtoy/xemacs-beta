@@ -1,5 +1,12 @@
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* help.el: 
+	(describe-function-1): 
+	* byte-optimize.el: 
+	Remove any reference to mocklisp as an active technology.
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (force-coding-system-equivalency): 
 	Document this macro and the motivation for it. 
 
