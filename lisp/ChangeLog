@@ -1,5 +1,15 @@
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* coding.el (query-coding-region): 
+	Revert this to being a defun, add a compiler macro without
+	needless binding. 
+	(query-coding-string): 
+	Correct a bug here, string indices are zero- not one-based. 
+	* mule/general-late.el (unicode-query-coding-skip-chars-arg):
+	Correct the algorithm used to initialise this variable. 
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* help.el (describe-function-1): 
 	Distinguish between special forms and subrs; don't bind
 	autoload-file, #'symbol-file returns it like any other function
