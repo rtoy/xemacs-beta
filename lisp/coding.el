@@ -246,6 +246,14 @@ if does not differ from the encoded string. "
 ;;; Make certain variables equivalent to coding-system aliases:
 (macrolet
     ((force-coding-system-equivalency (&rest details-list)
+       "Certain coding-system aliases should correspond to certain variables.
+
+This macro implements that correspondence. This gives us compatiblity with
+other Mule implementations (which don't use the coding system aliases), and
+a certain amount of freedom of implementation for XEmacs; using a variable's
+value in C for every file operation or write to a terminal in C is probably
+an improvement on the hash-table lookup(s) necessary for a coding system
+alias, though we haven't profiled this yet to see if it makes a difference."
        (loop for (alias variable-symbol)
          in details-list
          with result = (list 'progn)

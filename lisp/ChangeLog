@@ -1,3 +1,8 @@
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (force-coding-system-equivalency): 
+	Document this macro and the motivation for it. 
+
 2009-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el (force-coding-system-equivalency):
