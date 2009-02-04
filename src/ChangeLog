@@ -1,3 +1,29 @@
+2009-02-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame-x.c (x_init_frame_2): Update comment per new info from HT.
+
+2009-02-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame-x.c (x_init_frame_2): Placate openbox by calling
+	update_frame_icon.  Suggested by Henry S. Thompson
+	<ht@inf.ed.ac.uk> in <f5btz7ghm5k@hildegard.inf.ed.ac.uk>.
+
+2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (unicode_convert): 
+	Correct little-endian UTF-16 surrogate handling. 
+
+2009-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (print_table_entry): 
+	Print char table values correctly, eliminating some confusion
+	between symbols and strings.
+
+2009-01-10  Aidan Kehoe <kehoea@parhasard.net>
+
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2): 
+	Accept msprinter as well as mswindows devices here. 
+
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c (Fx_get_font_path): 
@@ -120,6 +146,17 @@
 
 	* input-method-xlib.c:
 	Use Xt_RESOURCE.
+
+2008-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* elhash.c (hash_table_data_validate):
+	* elhash.c (decode_hash_table_rehash_size):
+	* elhash.c (decode_hash_table_rehash_threshold):
+	Document side effects used in these functions.
+
+2008-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* console-x-impl.h (struct x_frame): Clarify comment.
 
 2008-11-01  Stephen J. Turnbull  <stephen@xemacs.org>
 

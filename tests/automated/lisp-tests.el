@@ -1327,3 +1327,10 @@
 					printed-with-uninterned)))
   (Assert (null (string-match awkward-regexp printed-with-uninterned
 			      (1+ first-match-start)))))
+
+(let ((char-table-with-string #s(char-table data (?\x00 "text")))
+      (char-table-with-symbol #s(char-table data (?\x00 text))))
+  (Assert (not (string-equal (prin1-to-string char-table-with-string)
+                             (prin1-to-string char-table-with-symbol)))
+          "Check that char table elements are quoted correctly when printing"))
+

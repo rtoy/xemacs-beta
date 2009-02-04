@@ -392,8 +392,8 @@ addition, characters that can be safely encoded by CODING-SYSTEM."
 	    (values nil ranges)
 	  (values t nil))))))
 
-(defsubst query-coding-region (start end coding-system &optional buffer
-                               errorp highlight)
+(defun query-coding-region (start end coding-system &optional buffer
+                            errorp highlight)
   "Work out whether CODING-SYSTEM can losslessly encode a region.
 
 START and END are the beginning and end of the region to check.
@@ -417,7 +417,15 @@ describing the positions of the unencodable characters. See
                #'default-query-coding-region)
            start end coding-system buffer errorp highlight))
 
-(defsubst query-coding-string (string coding-system &optional errorp highlight)
+(define-compiler-macro query-coding-region (start end coding-system
+                                            &optional buffer errorp highlight)
+  `(funcall (or (coding-system-get ,coding-system 'query-coding-function)
+                #'default-query-coding-region)
+    ,start ,end ,coding-system ,@(append (if buffer (list buffer))
+                                         (if errorp (list errorp))
+                                         (if highlight (list highlight)))))
+
+(defun query-coding-string (string coding-system &optional errorp highlight)
   "Work out whether CODING-SYSTEM can losslessly encode STRING.
 CODING-SYSTEM is the coding system to check.
 
@@ -436,9 +444,21 @@ describing the positions of the unencodable characters. See
 `make-range-table'."
   (with-temp-buffer 
     (insert string)
-    (query-coding-region (point-min) (point-max) coding-system (current-buffer)
-                         ;; ### Will highlight work here?
-                         errorp highlight)))
+    (multiple-value-bind (result ranges)
+        (query-coding-region (point-min) (point-max) coding-system
+                             (current-buffer) errorp
+                             ;; #### Highlight won't work here,
+                             ;; query-coding-region may need to be modified.
+                             highlight)
+      (unless result
+        ;; Sigh, string indices are zero-based, buffer offsets are
+        ;; one-based.
+        (map-range-table
+         #'(lambda (begin end value)
+             (remove-range-table begin end ranges)
+             (put-range-table (1- begin) (1- end) value ranges))
+         ranges))
+      (values result ranges))))
 
 ;; Function docstring and API are taken from GNU coding.c version 1.353, GPLv2. 
 (defun unencodable-char-position  (start end coding-system

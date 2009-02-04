@@ -2064,8 +2064,21 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
   else
     {
       HDC hdc = CreateCompatibleDC (NULL);
-      Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
-      Lisp_Object truename;
+      Lisp_Object font_list = Qnil, truename; 
+
+      if (DEVICE_TYPE_P (d, mswindows))
+	{
+	  font_list = DEVICE_MSWINDOWS_FONTLIST (d);
+	}
+      else if (DEVICE_TYPE_P (d, msprinter))
+	{
+	  font_list = DEVICE_MSPRINTER_FONTLIST (d);
+	}
+      else
+	{
+	  assert(0);
+	}
+
       HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
 						 font_list,
 						 ERROR_ME_DEBUG_WARN,

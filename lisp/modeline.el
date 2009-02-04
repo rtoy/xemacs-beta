@@ -44,7 +44,7 @@
 	 (specifier-instance modeline-shadow-thickness)))
     (and (integerp thickness)
 	 (> thickness 0)))
-  "Whether the default toolbar is globally visible.
+  "Whether the modeline is displayed with raised, 3-d appearance.
 This option only has an effect when set using `customize-set-variable',
 or through the Options menu."
   :group 'display
