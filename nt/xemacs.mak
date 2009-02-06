@@ -1104,17 +1104,32 @@ LIB_SRC_CFLAGS = $(CFLAGS) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES)
 # Inferred rule
 {$(LIB_SRC)}.c{$(BLDLIB_SRC)}.exe :
 	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) $(LINK_STANDARD_LIBRARY_ARGS)
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(BLDLIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
 	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) -stack:0x800000 $(LINK_STANDARD_LIBRARY_ARGS)
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 $(BLDLIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 
 # Minitar uses zlib so just use cdecl to simplify things
 $(BLDLIB_SRC)/minitar.exe : $(NT)/minitar.c
 	$(CCV) -I$(SRC) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) -MD $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/etags.exe		\
@@ -1437,6 +1452,12 @@ $(DUMP_TARGET): $(DOC) $(RAW_EXE) $(BLDSRC)\NEEDTODUMP
   $(XEMACS_LFLAGS) -section:.rsrc,rw -out:$(BLDSRC)\xemacs.exe $(TEMACS_OBJS) $(OUTDIR)\xemacs.res $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
 <<
 	-$(DEL) $(BLDSRC)\xemacs.dmp
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
+
 !endif
 
 ## (6) Update the remaining .elc's, post-dumping
