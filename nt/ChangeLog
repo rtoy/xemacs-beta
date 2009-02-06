@@ -1,3 +1,7 @@
+2009-02-06  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Add support for Visual Studio 2005 manifests.
+
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs.mak (PROGRAM_DEFINES): 
