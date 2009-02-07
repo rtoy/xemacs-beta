@@ -1,5 +1,21 @@
 2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* descr-text.el (describe-text-sexp):
+	pp is in packages, use cl-prettyprint instead. 
+	* mule/mule-coding.el (make-8-bit-generate-helper): 
+	Don't uselessly bind args-out-of-range, thank you the byte
+	compiler. 	
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
+	Don't uselessly bind previous-fail, thank you the byte compiler.
+	* tty-init.el (make-device-early-tty-entry-point): 
+	Set make-device-early-tty-entry-point-called-p, not 
+	pre-tty-win-initted, thank you the byte compiler. 
+	* unicode.el (unicode-query-coding-region): 
+	Don't uselessly bind invalid-sequence-p, thank you the
+	byte-compiler. 
+
+2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (query-coding-clear-highlights): 
 	Rename the BUFFER argument to BUFFER-OR-STRING, describe it as
 	possibly being a string in its documentation. 

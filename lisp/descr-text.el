@@ -58,7 +58,9 @@
   "Insert a short description of SEXP in the current buffer."
   ;; XEmacs change; use the widget functions. 
   (let ((pp (condition-case signal
-		(pp-to-string sexp)
+                ;; XEmacs change; pp is in packages, use cl-prettyprint
+                ;; instead.
+		(with-output-to-string (cl-prettyprint sexp))
 	      (error (prin1-to-string signal)))))
     (when (string-match "\n\\'" pp)
       (setq pp (substring pp 0 (1- (length pp)))))
