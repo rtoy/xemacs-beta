@@ -108,7 +108,40 @@
 ;; And create the coding system.
 (make-8-bit-coding-system
  'iso-8859-5
- '((#xA1 ?\u0401) ;; CYRILLIC CAPITAL LETTER IO
+ '((#x80 ?\u0080) ;; <control>
+   (#x81 ?\u0081) ;; <control>
+   (#x82 ?\u0082) ;; <control>
+   (#x83 ?\u0083) ;; <control>
+   (#x84 ?\u0084) ;; <control>
+   (#x85 ?\u0085) ;; <control>
+   (#x86 ?\u0086) ;; <control>
+   (#x87 ?\u0087) ;; <control>
+   (#x88 ?\u0088) ;; <control>
+   (#x89 ?\u0089) ;; <control>
+   (#x8A ?\u008A) ;; <control>
+   (#x8B ?\u008B) ;; <control>
+   (#x8C ?\u008C) ;; <control>
+   (#x8D ?\u008D) ;; <control>
+   (#x8E ?\u008E) ;; <control>
+   (#x8F ?\u008F) ;; <control>
+   (#x90 ?\u0090) ;; <control>
+   (#x91 ?\u0091) ;; <control>
+   (#x92 ?\u0092) ;; <control>
+   (#x93 ?\u0093) ;; <control>
+   (#x94 ?\u0094) ;; <control>
+   (#x95 ?\u0095) ;; <control>
+   (#x96 ?\u0096) ;; <control>
+   (#x97 ?\u0097) ;; <control>
+   (#x98 ?\u0098) ;; <control>
+   (#x99 ?\u0099) ;; <control>
+   (#x9A ?\u009A) ;; <control>
+   (#x9B ?\u009B) ;; <control>
+   (#x9C ?\u009C) ;; <control>
+   (#x9D ?\u009D) ;; <control>
+   (#x9E ?\u009E) ;; <control>
+   (#x9F ?\u009F) ;; <control>
+   (#xA0 ?\u00A0) ;; NO-BREAK SPACE
+   (#xA1 ?\u0401) ;; CYRILLIC CAPITAL LETTER IO
    (#xA2 ?\u0402) ;; CYRILLIC CAPITAL LETTER DJE
    (#xA3 ?\u0403) ;; CYRILLIC CAPITAL LETTER GJE
    (#xA4 ?\u0404) ;; CYRILLIC CAPITAL LETTER UKRAINIAN IE
@@ -120,6 +153,7 @@
    (#xAA ?\u040A) ;; CYRILLIC CAPITAL LETTER NJE
    (#xAB ?\u040B) ;; CYRILLIC CAPITAL LETTER TSHE
    (#xAC ?\u040C) ;; CYRILLIC CAPITAL LETTER KJE
+   (#xAD ?\u00AD) ;; SOFT HYPHEN
    (#xAE ?\u040E) ;; CYRILLIC CAPITAL LETTER SHORT U
    (#xAF ?\u040F) ;; CYRILLIC CAPITAL LETTER DZHE
    (#xB0 ?\u0410) ;; CYRILLIC CAPITAL LETTER A
@@ -205,7 +239,7 @@
  "ISO-8859-5 (Cyrillic)"
  '(mnemonic "ISO8/Cyr"
    documentation "The ISO standard for encoding Cyrillic. Not used in practice.
-See `koi8-r' and `windows-1250'.  "
+See `koi8-r' and `windows-1251'.  "
    aliases (cyrillic-iso-8bit)))
 
 ;; Provide this locale; but don't allow it to be picked up from the Unix

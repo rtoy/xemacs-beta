@@ -1,3 +1,75 @@
+2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (query-coding-clear-highlights): 
+	Rename the BUFFER argument to BUFFER-OR-STRING, describe it as
+	possibly being a string in its documentation. 
+	(default-query-coding-region): 
+	Add a new IGNORE-INVALID-SEQUENCESP argument, document that this
+	function does not support it. 
+	Bind case-fold-search to nil, we don't want this to influence what the
+	function thinks is encodable or not.
+	(query-coding-region):
+	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
+	does; reflect this new argument in the associated compiler macro. 
+	(query-coding-string): 
+	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
+	does. Support the HIGHLIGHT argument correctly.
+	* unicode.el (unicode-query-coding-region): 
+	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
+	does, implement this. Document a potential problem. 
+	Use #'query-coding-clear-highlights instead of reimplementing it
+	ourselves. 
+	Remove some debugging messages. 
+	* mule/arabic.el (iso-8859-6): 
+	* mule/cyrillic.el (iso-8859-5): 
+	* mule/greek.el (iso-8859-7): 
+	* mule/hebrew.el (iso-8859-8): 
+	* mule/latin.el (iso-8859-2): 
+	* mule/latin.el (iso-8859-3): 
+	* mule/latin.el (iso-8859-4): 
+	* mule/latin.el (iso-8859-14): 
+	* mule/latin.el (iso-8859-15): 
+	* mule/latin.el (iso-8859-16): 
+	* mule/latin.el (iso-8859-9): 
+	* mule/latin.el (windows-1252): 
+	* mule/mule-coding.el (iso-8859-1): 
+	Avoid the assumption that characters not given an explicit mapping 
+	in these coding systems map to the ISO 8859-1 characters 
+	corresponding to the octets on disk; this makes it much more 
+	reasonable to implement the IGNORE-INVALID-SEQUENCESP argument to 
+	query-coding-region. 
+	* mule/mule-cmds.el (set-language-info): 
+	Correct the docstring. 
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Treat invalid Unicode sequences produced from 
+	invalid-sequence-coding-system and corresponding to control 
+	characters the same as control characters in redisplay. 
+	* mule/mule-cmds.el: 
+	Document that encode-coding-char is available in coding.el 
+	* mule/mule-coding.el (make-8-bit-generate-helper): 
+	Change to return the both the encode-program generated and the 
+	relevant non-ASCII charset; update the docstring to reflect this. 
+	* mule/mule-coding.el 
+	(make-8-bit-generate-encode-program-and-skip-chars-strings): 
+	Rename this function; have it return skip-chars-strings as well as 
+	the encode program. Have these skip-chars-strings use ranges for 
+	charsets, where possible. 
+	* mule/mule-coding.el (make-8-bit-create-decode-encode-tables): 
+	Revise this to allow people to specify explicitly characters that 
+	should be undefined (= corresponding to keys in 
+	unicode-error-default-translation-table), and treating unspecified 
+	octets above #x7f as undefined by default. 
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
+	Add a new IGNORE-INVALID-SEQUENCESP argument, implement support 
+	for it using the 8-bit-fixed-invalid-sequences-skip-chars coding 
+	system property; remove some debugging messages. 
+	* mule/mule-coding.el (make-8-bit-coding-system): 
+	This function is dumped, autoloading it makes no sense. 
+	Document what happens when characters above #x7f are not
+	specified, implement this. 
+	* mule/vietnamese.el: 
+	Correct spelling. 
+
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el: 

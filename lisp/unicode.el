@@ -617,38 +617,69 @@ mapping from the error sequences to the desired characters.  "
   "Used by `unicode-query-coding-region' to skip chars with known mappings.")
 
 (defun unicode-query-coding-region (begin end coding-system
-				    &optional buffer errorp highlightp)
-  "The `query-coding-region' implementation for Unicode coding systems."
+				    &optional buffer ignore-invalid-sequencesp
+                                    errorp highlightp)
+  "The `query-coding-region' implementation for Unicode coding systems.
+
+Supports IGNORE-INVALID-SEQUENCESP, that is, XEmacs characters that reflect
+invalid octets on disk will be treated as encodable if this argument is
+specified, and as not encodable if it is not specified."
+
+  ;; Potential problem here; the octets that correspond to octets from #x00
+  ;; to #x7f on disk will be treated by utf-8 and utf-7 as invalid
+  ;; sequences, and thus, in theory, encodable.
+
   (check-argument-type #'coding-system-p
                        (setq coding-system (find-coding-system coding-system)))
   (check-argument-type #'integer-or-marker-p begin)
   (check-argument-type #'integer-or-marker-p end)
-  (let* ((skip-chars-arg unicode-query-coding-skip-chars-arg)
+  (let* ((skip-chars-arg (concat unicode-query-coding-skip-chars-arg
+				 (if ignore-invalid-sequencesp
+				     unicode-invalid-sequence-regexp-range
+				   "")))
          (ranges (make-range-table))
          (looking-at-arg (concat "[" skip-chars-arg "]"))
+         (case-fold-search nil)
          fail-range-start fail-range-end char-after failed
-	 extent)
+	 extent char-unicode invalid-sequence-p failed-reason
+         previous-failed-reason)
     (save-excursion
       (when highlightp
-	(map-extents #'(lambda (extent ignored-arg)
-			 (when (eq 'query-coding-warning-face
-				   (extent-face extent))
-			   (delete-extent extent))) buffer begin end))
+        (query-coding-clear-highlights begin end buffer))
       (goto-char begin buffer)
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
-;        (message
-;         "fail-range-start is %S, point is %S, end is %S"
-;         fail-range-start (point buffer) end)
         (setq char-after (char-after (point buffer) buffer)
               fail-range-start (point buffer))
         (while (and
                 (< (point buffer) end)
                 (not (looking-at looking-at-arg))
-                (= -1 (char-to-unicode char-after)))
+                (or (and
+                     (= -1 (setq char-unicode (char-to-unicode char-after)))
+                     (setq failed-reason 'unencodable))
+                    (and (not ignore-invalid-sequencesp)
+                         ;; The default case, with ignore-invalid-sequencesp
+                         ;; not specified:
+                         ;; If the character is in the Unicode range that
+                         ;; corresponds to an invalid octet, we want to
+                         ;; treat it as unencodable.
+                         (<= (eval-when-compile 
+                               (char-to-unicode
+                                (aref (decode-coding-string "\xd8\x00\x00\x00"
+                                                        'utf-16-be) 3)))
+                             char-unicode)
+                         (<= char-unicode
+                             (eval-when-compile 
+                               (char-to-unicode
+                                (aref (decode-coding-string "\xd8\x00\x00\xFF"
+                                                            'utf-16-be) 3))))
+                         (setq failed-reason 'invalid-sequence)))
+                (or (null previous-failed-reason)
+                    (eq previous-failed-reason failed-reason)))
           (forward-char 1 buffer)
           (setq char-after (char-after (point buffer) buffer)
-                failed t))
+                failed t
+                previous-failed-reason failed-reason))
         (if (= fail-range-start (point buffer))
             ;; The character can actually be encoded by the coding
             ;; system; check the characters past it.
@@ -660,13 +691,17 @@ mapping from the error sequences to the desired characters.  "
                            (buffer-substring fail-range-start (point buffer)
                                              buffer))
                    (coding-system-name coding-system)))
+          (assert
+           (not (null previous-failed-reason)) t
+           "If we've got here, previous-failed-reason should be non-nil.")
           (put-range-table fail-range-start
                            ;; If char-after is non-nil, we're not at
                            ;; the end of the buffer.
                            (setq fail-range-end (if char-after
                                                     (point buffer)
                                                   (point-max buffer)))
-                           t ranges)
+                           previous-failed-reason ranges)
+          (setq previous-failed-reason nil)
           (when highlightp
             (setq extent (make-extent fail-range-start fail-range-end buffer))
             (set-extent-priority extent (+ mouse-highlight-priority 2))

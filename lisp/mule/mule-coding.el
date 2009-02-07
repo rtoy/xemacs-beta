@@ -231,11 +231,13 @@ a file is read, not changed, and then written.  ")
 
 (defun make-8-bit-generate-helper (decode-table encode-table
 				   encode-failure-octet)
-  "Helper function for `make-8-bit-generate-encode-program', which see.
+  "Helper function, `make-8-bit-generate-encode-program-and-skip-chars-strings',
+which see.
 
 Deals with the case where ASCII and another character set can both be
 encoded unambiguously and completely into the coding-system; if this is so,
-returns a list corresponding to such a ccl-program.  If not, it returns nil.  "
+returns a list comprised of such a ccl-program and the character set in
+question.  If not, it returns a list with both entries nil."
   (let ((tentative-encode-program-parts
 	 (eval-when-compile 
 	   (let* ((vec-len 128)
@@ -337,11 +339,11 @@ message--it will not work.  ")
               (append other-charset-vector nil)
               (copy-tree (second 
                           tentative-encode-program-parts))))))
-    encode-program))
+    (values encode-program worth-trying)))
 
-(defun make-8-bit-generate-encode-program (decode-table encode-table
-					   encode-failure-octet)
-  "Generate a CCL program to decode a 8-bit fixed-width charset.
+(defun make-8-bit-generate-encode-program-and-skip-chars-strings
+  (decode-table encode-table encode-failure-octet)
+  "Generate a CCL program to encode a 8-bit fixed-width charset.
 
 DECODE-TABLE must have 256 non-cons entries, and will be regarded as
 describing a map from the octet corresponding to an offset in the
@@ -399,7 +401,13 @@ be--that's why you're getting this message--it will not work.  ")
 in compiled CCL code.\nIf that is not the case, and it appears not to
 be--that's why you're getting this message--it will not work.  ")
 	     prog)))
-         (ascii-encodes-as-itself nil))
+         (ascii-encodes-as-itself nil)
+         (control-1-encodes-as-itself t)
+         (invalid-sequence-code-point-start
+          (eval-when-compile
+            (char-to-unicode
+             (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3))))
+         further-char-set skip-chars invalid-sequences-skip-chars)
 
     ;; Is this coding system ASCII-compatible? If so, we can avoid the hash
     ;; table lookup for those characters. 
@@ -418,17 +426,18 @@ be--that's why you're getting this message--it will not work.  ")
 	;; slow, a hash table lookup + mule-unicode conversion is done
 	;; for every character encoding. 
 	(setq encode-program general-encode-program)
-      (setq encode-program
-	    ;; Encode program with ascii-ascii mapping (based on a
-	    ;; character's mule character set), and one other mule
-	    ;; character set using table-based encoding, other
-	    ;; character sets using hash table lookups.
-	    ;; make-8-bit-non-ascii-completely-coveredp only returns
-	    ;; such a mapping if some non-ASCII charset with
-	    ;; characters in decode-table is entirely covered by
-	    ;; encode-table.
-	    (make-8-bit-generate-helper decode-table encode-table
-					encode-failure-octet))
+      (multiple-value-setq
+          (encode-program further-char-set)
+        ;; Encode program with ascii-ascii mapping (based on a
+        ;; character's mule character set), and one other mule
+        ;; character set using table-based encoding, other
+        ;; character sets using hash table lookups.
+        ;; make-8-bit-non-ascii-completely-coveredp only returns
+        ;; such a mapping if some non-ASCII charset with
+        ;; characters in decode-table is entirely covered by
+        ;; encode-table.
+        (make-8-bit-generate-helper decode-table encode-table
+                                    encode-failure-octet))
       (unless encode-program
 	;; If make-8-bit-non-ascii-completely-coveredp returned nil,
 	;; but ASCII still encodes as itself, do one-to-one mapping
@@ -441,7 +450,66 @@ be--that's why you're getting this message--it will not work.  ")
                        (logior (lsh encode-failure-octet 8)
                                #x14)))
            (copy-tree encode-program)))
-    encode-program))
+    (loop
+      for i from #x80 to #x9f
+      do (unless (= i (aref decode-table i))
+           (setq control-1-encodes-as-itself nil)
+           (return)))
+    (loop
+      for i from #x00 to #xFF
+      initially (setq skip-chars
+                      (cond
+                       ((and ascii-encodes-as-itself
+                             control-1-encodes-as-itself further-char-set)
+                        (concat "\x00-\x9f" (charset-skip-chars-string
+                                             further-char-set)))
+                       ((and ascii-encodes-as-itself
+                             control-1-encodes-as-itself)
+                        "\x00-\x9f")
+                       ((null ascii-encodes-as-itself)
+                        (skip-chars-quote (apply #'string
+                                                 (append decode-table nil))))
+                       (further-char-set
+                        (concat (charset-skip-chars-string 'ascii)
+                                (charset-skip-chars-string further-char-set)))
+                       (t 
+                        (charset-skip-chars-string 'ascii)))
+                      invalid-sequences-skip-chars "")
+      with decoded-ucs = nil
+      with decoded = nil
+      with no-ascii-transparency-skip-chars-list = 
+           (unless ascii-encodes-as-itself (append decode-table nil))
+      ;; Can't use #'match-string here, see:
+      ;; http://mid.gmane.org/18829.34118.709782.704574@parhasard.net
+      with skip-chars-test = 
+           #'(lambda (skip-chars-string testing)
+               (with-temp-buffer
+                 (insert testing)
+                 (goto-char (point-min))
+                 (skip-chars-forward skip-chars-string)
+                 (= (point) (point-max))))
+      do
+      (setq decoded (aref decode-table i)
+            decoded-ucs (char-to-unicode decoded))
+      (cond
+       ((<= invalid-sequence-code-point-start decoded-ucs
+            (+ invalid-sequence-code-point-start #xFF))
+        (setq invalid-sequences-skip-chars
+              (concat (string decoded)
+                      invalid-sequences-skip-chars))
+        (assert (not (funcall skip-chars-test skip-chars decoded))
+                "This char should only be skipped with \
+`invalid-sequences-skip-chars', not by `skip-chars'"))
+       ((not (funcall skip-chars-test skip-chars decoded))
+        (if ascii-encodes-as-itself
+            (setq skip-chars (concat skip-chars (string decoded)))
+          (push decoded no-ascii-transparency-skip-chars-list))))
+      finally (unless ascii-encodes-as-itself
+                (setq skip-chars
+                      (skip-chars-quote
+                       (apply #'string
+                              no-ascii-transparency-skip-chars-list)))))
+    (values encode-program skip-chars invalid-sequences-skip-chars)))
 
 (defun make-8-bit-create-decode-encode-tables (unicode-map)
   "Return a list \(DECODE-TABLE ENCODE-TABLE) given UNICODE-MAP. 
@@ -453,7 +521,11 @@ to 256 distinct characters.  "
   (let ((decode-table (make-vector 256 nil))
         (encode-table (make-hash-table :size 256))
 	(private-use-start (encode-char make-8-bit-private-use-start 'ucs))
-	desired-ucs)
+        (invalid-sequence-code-point-start
+         (eval-when-compile
+           (char-to-unicode
+            (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3))))
+	desired-ucs decode-table-entry)
 
     (loop for (external internal)
       in unicode-map
@@ -475,24 +547,51 @@ most of them, at run time.  ")
 	       (int-to-char external)
 	       encode-table))
 
-    ;; Now, go through the decode table looking at the characters that
-    ;; remain nil. If the XEmacs character with that integer is already in
-    ;; the encode table, map the on-disk octet to a Unicode private use
-    ;; character. Otherwise map the on-disk octet to the XEmacs character
-    ;; with that numeric value, to make it clearer what it is.
+    ;; Now, go through the decode table. For octet values above #x7f, if the
+    ;; decode table entry is nil, this means that they have an undefined
+    ;; mapping (= they map to XEmacs characters with keys in
+    ;; unicode-error-default-translation-table); for octet values below or
+    ;; equal to #x7f, it means that they map to ASCII.
+
+    ;; If any entry (whether below or above #x7f) in the decode-table
+    ;; already maps to some character with a key in
+    ;; unicode-error-default-translation-table, it is treated as an
+    ;; undefined octet by `query-coding-region'. That is, it is not
+    ;; necessary for an octet value to be above #x7f for this to happen.
+
     (dotimes (i 256)
-      (when (null (aref decode-table i))
-	;; Find a free code point. 
-	(setq desired-ucs i)
-	(while (gethash desired-ucs encode-table)
-	  ;; In the normal case, the code point chosen will be U+E0XY, where
-	  ;; XY is the hexadecimal octet on disk. In pathological cases
-	  ;; it'll be something else.
-	  (setq desired-ucs (+ private-use-start desired-ucs)
-		private-use-start (+ private-use-start 1)))
-	(puthash desired-ucs (int-to-char i) encode-table)
+      (setq decode-table-entry (aref decode-table i))
+      (if decode-table-entry
+          (when (get-char-table
+                 decode-table-entry
+                 unicode-error-default-translation-table)
+            ;; The caller is explicitly specifying that this octet
+            ;; corresponds to an invalid sequence on disk:
+            (assert (= (get-char-table
+                        decode-table-entry
+                        unicode-error-default-translation-table) i)
+                    "Bad argument to `make-8-bit-coding-system'.
+If you're going to designate an octet with value below #x80 as invalid
+for this coding system, make sure to map it to the invalid sequence
+character corresponding to its octet value on disk. "))
+
+        ;; decode-table-entry is nil; either the octet is to be treated as
+        ;; contributing to an error sequence (when (> #x7f i)), or it should
+        ;; be attempted to treat it as ASCII-equivalent. 
+        (setq desired-ucs (or (and (< i #x80) i)
+                              (+ invalid-sequence-code-point-start i)))
+        (while (gethash desired-ucs encode-table)
+          (assert (not (< i #x80))
+                  "UCS code point should not already be in encode-table!"
+                  ;; There is one invalid sequence char per octet value;
+                  ;; with eight-bit-fixed coding systems, it makes no sense
+                  ;; for us to be multiply allocating them.
+                  (gethash desired-ucs encode-table))
+          (setq desired-ucs (+ private-use-start desired-ucs)
+                private-use-start (+ private-use-start 1)))
+        (puthash desired-ucs (int-to-char i) encode-table)
         (setq desired-ucs (if (> desired-ucs #xFF)
-                              (decode-char 'ucs desired-ucs)
+                              (unicode-to-char desired-ucs)
                             ;; So we get Latin-1 when run at dump time,
                             ;; instead of JIT-allocated characters.
                             (int-to-char desired-ucs)))
@@ -546,8 +645,9 @@ disk to XEmacs characters for some fixed-width 8-bit coding system.  "
 	 (return-from category 'no-conversion))
     finally return 'iso-8-1))
 
-(defun 8-bit-fixed-query-coding-region (begin end coding-system
-                                        &optional buffer errorp highlightp)
+(defun 8-bit-fixed-query-coding-region (begin end coding-system &optional
+                                        buffer ignore-invalid-sequencesp
+                                        errorp highlightp)
   "The `query-coding-region' implementation for 8-bit-fixed coding systems.
 
 Uses the `8-bit-fixed-query-from-unicode' and `8-bit-fixed-query-skip-chars'
@@ -570,65 +670,79 @@ See that the documentation of `query-coding-region'; see also
          (or (coding-system-get coding-system '8-bit-fixed-query-skip-chars)
 	     (coding-system-get (coding-system-base coding-system)
 				'8-bit-fixed-query-skip-chars)))
+	(invalid-sequences-skip-chars
+	 (or (coding-system-get coding-system
+				'8-bit-fixed-invalid-sequences-skip-chars)
+	     (coding-system-get (coding-system-base coding-system)
+				'8-bit-fixed-invalid-sequences-skip-chars)))
 	(ranges (make-range-table))
+        (case-fold-search nil)
         char-after fail-range-start fail-range-end previous-fail extent
-	failed)
+	failed invalid-sequences-looking-at failed-reason
+        previous-failed-reason)
     (check-type from-unicode hash-table)
     (check-type skip-chars-arg string)
+    (check-type invalid-sequences-skip-chars string)
+    (setq invalid-sequences-looking-at
+	  (if (equal "" invalid-sequences-skip-chars)
+	      ;; Regexp that will never match.
+	      #r".\{0,0\}" 
+	      (concat "[" invalid-sequences-skip-chars "]")))
+    (when ignore-invalid-sequencesp
+      (setq skip-chars-arg
+	    (concat skip-chars-arg invalid-sequences-skip-chars)))
     (save-excursion
       (when highlightp
-	(map-extents #'(lambda (extent ignored-arg)
-			 (when (eq 'query-coding-warning-face
-				   (extent-face extent))
-			   (delete-extent extent))) buffer begin end))
+        (query-coding-clear-highlights begin end buffer))
       (goto-char begin buffer)
       (skip-chars-forward skip-chars-arg end buffer)
       (while (< (point buffer) end)
-        ; (message
-	; "fail-range-start is %S, previous-fail %S, point is %S, end is %S"
-	; fail-range-start previous-fail (point buffer) end)
 	(setq char-after (char-after (point buffer) buffer)
 	      fail-range-start (point buffer))
-	; (message "arguments are %S %S"
-	;	 (< (point buffer) end)
-	;	 (not (gethash (encode-char char-after 'ucs) from-unicode)))
 	(while (and
 		(< (point buffer) end)
-		(not (gethash (encode-char char-after 'ucs) from-unicode)))
+		(or (and 
+                     (not (gethash (encode-char char-after 'ucs) from-unicode))
+                     (setq failed-reason 'unencodable))
+                    (and (not ignore-invalid-sequencesp)
+                         (looking-at invalid-sequences-looking-at buffer)
+                         (setq failed-reason 'invalid-sequence)))
+                (or (null previous-failed-reason)
+                    (eq previous-failed-reason failed-reason)))
 	  (forward-char 1 buffer)
 	  (setq char-after (char-after (point buffer) buffer)
-		failed t))
+		failed t
+                previous-failed-reason failed-reason))
 	(if (= fail-range-start (point buffer))
 	    ;; The character can actually be encoded by the coding
 	    ;; system; check the characters past it.
 	    (forward-char 1 buffer)
 	  ;; The character actually failed. 
-	  ; (message "past the move through, point now %S" (point buffer))
 	  (when errorp 
 	    (error 'text-conversion-error
 		   (format "Cannot encode %s using coding system"
 			   (buffer-substring fail-range-start (point buffer)
 					     buffer))
 		   (coding-system-name coding-system)))
+          (assert (not (null previous-failed-reason)) t
+                  "previous-failed-reason should always be non-nil here")
 	  (put-range-table fail-range-start
 			   ;; If char-after is non-nil, we're not at
 			   ;; the end of the buffer.
 			   (setq fail-range-end (if char-after
 						    (point buffer)
 						  (point-max buffer)))
-			   t ranges)
+			   previous-failed-reason ranges)
+          (setq previous-failed-reason nil)
 	  (when highlightp
-	    ; (message "highlighting")
 	    (setq extent (make-extent fail-range-start fail-range-end buffer))
 	    (set-extent-priority extent (+ mouse-highlight-priority 2))
 	    (set-extent-face extent 'query-coding-warning-face))
 	  (skip-chars-forward skip-chars-arg end buffer)))
-      ; (message "about to give the result, ranges %S" ranges)
       (if failed 
 	  (values nil ranges)
 	(values t nil)))))
 
-;;;###autoload
 (defun make-8-bit-coding-system (name unicode-map &optional description props)
   "Make and return a fixed-width 8-bit CCL coding system named NAME.
 NAME must be a symbol, and UNICODE-MAP a list. 
@@ -644,12 +758,20 @@ also means that East Asian Han characters from different XEmacs
 character sets will not be distinct when written to disk, which is
 less often what is intended.
 
-Any octets not mapped will be decoded into the ISO 8859-1 characters with
-the corresponding numeric value; unless another octet maps to that
-character, in which case the Unicode private use area will be used.  This
-avoids spurious changes to files on disk when they contain octets that would
-be otherwise remapped to the canonical values for the corresponding
-characters in the coding system.
+Any octets not mapped, and with values above #x7f, will be decoded into
+XEmacs characters that reflect that their values are undefined.  These
+characters will be displayed in a language-environment-specific way. See
+`unicode-error-default-translation-table' and the
+`invalid-sequence-coding-system' argument to `set-language-info'.
+
+These characters will normally be treated as invalid when checking whether
+text can be encoded with `query-coding-region'--see the
+IGNORE-INVALID-SEQUENCESP argument to that function to avoid this.  It is
+possible to specify that octets with values less than #x80 (or indeed
+greater than it) be treated in this way, by specifying explicitly that they
+correspond to the character mapping to that octet in
+`unicode-error-default-translation-table'.  Far fewer coding systems
+override the ASCII mapping, though, so this is not the default.
 
 DESCRIPTION and PROPS are as in `make-coding-system', which see.  This
 function also accepts two additional (optional) properties in PROPS;
@@ -668,7 +790,8 @@ the code for tilde `~'.  "
 				   (char-to-int ?~)))
 	 (aliases (plist-get props 'aliases))
 	 (hash-table-sym (gentemp (format "%s-encode-table" name)))
-	 encode-program decode-program result decode-table encode-table)
+	 encode-program decode-program result decode-table encode-table
+         skip-chars invalid-sequences-skip-chars)
 
     ;; Some more sanity checking. 
     (check-argument-range encode-failure-octet 0 #xFF)
@@ -685,10 +808,13 @@ the code for tilde `~'.  "
     ;; Register the decode-table. 
     (define-translation-hash-table hash-table-sym encode-table)
 
-    ;; Generate the programs. 
-    (setq decode-program (make-8-bit-generate-decode-program decode-table)
-          encode-program (make-8-bit-generate-encode-program
-                          decode-table encode-table encode-failure-octet))
+    ;; Generate the programs and skip-chars strings. 
+    (setq decode-program (make-8-bit-generate-decode-program decode-table))
+    (multiple-value-setq
+        (encode-program skip-chars invalid-sequences-skip-chars)
+      (make-8-bit-generate-encode-program-and-skip-chars-strings
+       decode-table encode-table encode-failure-octet))
+
     (unless (vectorp encode-program) 
       (setq encode-program 
 	    (apply #'vector
@@ -709,10 +835,10 @@ the code for tilde `~'.  "
     (coding-system-put name 'category 
                        (make-8-bit-choose-category decode-table))
     (coding-system-put name '8-bit-fixed-query-skip-chars
-                       (skip-chars-quote
-			      (apply #'string (append decode-table nil))))
+                       skip-chars)
+    (coding-system-put name '8-bit-fixed-invalid-sequences-skip-chars
+                       invalid-sequences-skip-chars) 
     (coding-system-put name '8-bit-fixed-query-from-unicode encode-table)
-
     (coding-system-put name 'query-coding-function
                        #'8-bit-fixed-query-coding-region)
     (coding-system-put (intern (format "%s-unix" name))
@@ -751,7 +877,8 @@ the code for tilde `~'.  "
 	    (or (plist-get props 'encode-failure-octet) (char-to-int ?~)))
 	   (aliases (plist-get props 'aliases))
 	   encode-program decode-program
-	   decode-table encode-table)
+	   decode-table encode-table
+           skip-chars invalid-sequences-skip-chars)
 
       ;; Some sanity checking. 
       (check-argument-range encode-failure-octet 0 #xFF)
@@ -761,25 +888,21 @@ the code for tilde `~'.  "
       (setq props (plist-remprop props 'encode-failure-octet)
 	    props (plist-remprop props 'aliases))
 
-      ;; Work out encode-table and decode-table. 
+      ;; Work out encode-table and decode-table
       (multiple-value-setq
-	  (decode-table encode-table)
-	(make-8-bit-create-decode-encode-tables unicode-map))
+          (decode-table encode-table)
+        (make-8-bit-create-decode-encode-tables unicode-map))
 
-      ;; Generate the decode and encode programs. 
-      (setq decode-program (make-8-bit-generate-decode-program decode-table)
-	    encode-program (make-8-bit-generate-encode-program
-			    decode-table encode-table encode-failure-octet))
+      ;; Generate the decode and encode programs, and the skip-chars
+      ;; arguments.
+      (setq decode-program (make-8-bit-generate-decode-program decode-table))
+      (multiple-value-setq
+          (encode-program skip-chars invalid-sequences-skip-chars)
+        (make-8-bit-generate-encode-program-and-skip-chars-strings
+         decode-table encode-table encode-failure-octet))
 
       ;; And return the generated code. 
       `(let ((encode-table-sym (gentemp (format "%s-encode-table" ',name)))
-             ;; The case-fold-search bind shouldn't be necessary. If I take
-             ;; it, out, though, I get:
-             ;; 
-             ;; (invalid-read-syntax "Multiply defined symbol label" 1)
-             ;;
-             ;; when the file is byte compiled.
-             (case-fold-search t)
              (encode-table ,encode-table))
         (define-translation-hash-table encode-table-sym encode-table)
         (make-coding-system 
@@ -797,8 +920,9 @@ the code for tilde `~'.  "
         (coding-system-put ',name 'category 
                            ',(make-8-bit-choose-category decode-table))
         (coding-system-put ',name '8-bit-fixed-query-skip-chars
-                           ',(skip-chars-quote
-			      (apply #'string (append decode-table nil))))
+                           ,skip-chars)
+        (coding-system-put ',name '8-bit-fixed-invalid-sequences-skip-chars
+                           ,invalid-sequences-skip-chars) 
         (coding-system-put ',name '8-bit-fixed-query-from-unicode encode-table)
         (coding-system-put ',name 'query-coding-function
                            #'8-bit-fixed-query-coding-region)
@@ -819,7 +943,9 @@ the code for tilde `~'.  "
 ;; Ideally this would be in latin.el, but code-init.el uses it.
 (make-8-bit-coding-system
  'iso-8859-1 
- '() ;; No differences from Latin 1. 
+ (loop
+   for i from #x80 to #xff
+   collect (list i (int-char i))) ;; Identical to Latin-1.
  "ISO-8859-1 (Latin-1)"
  '(mnemonic "Latin 1"
    documentation "The most used encoding of Western Europe and the Americas."

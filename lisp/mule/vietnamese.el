@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; For Vietnames, the character sets VISCII and VSCII are supported.
+;; For Vietnamese, the character sets VISCII and VSCII are supported.
 
 ;;; Code:
 

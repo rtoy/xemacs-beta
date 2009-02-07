@@ -1,3 +1,11 @@
+2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/query-coding-tests.el: 
+	Add FAILING-CASE arguments to the Assert calls, making #'q-c-debug
+	mostly unnecessary. Remove #'q-c-debug.
+	Add new tests that use the IGNORE-INVALID-SEQUENCESP argument to
+	#'query-coding-region; rework the existing ones to respect it.
+
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el: 
