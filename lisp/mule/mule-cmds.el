@@ -231,9 +231,9 @@ Meaningful values for PROP include
                      VALUE is a fixed-width 8-bit coding system used to
                      display Unicode error sequences (using a face to make
                      it clear that the data is invalid).  In Western Europe
-                     this is normally windows-1252; in the Russia and the
-                     former Soviet Union koi8-ru or windows-1251 makes more
-                     sense."
+                     and the Americas this is normally windows-1252; in
+                     Russia and the former Soviet Union koi8-ru or
+                     windows-1251 makes more sense."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
   (let (lang-slot prop-slot)
@@ -771,7 +771,7 @@ the language environment for the major languages of Western Europe."
   (let ((invalid-sequence-coding-system
          (get-language-info language-name 'invalid-sequence-coding-system))
         (disp-table (specifier-instance current-display-table))
-        glyph string)
+        glyph string unicode-error-lookup)
     (when (consp invalid-sequence-coding-system)
       (setq invalid-sequence-coding-system
             (car invalid-sequence-coding-system)))
@@ -779,9 +779,15 @@ the language environment for the major languages of Western Europe."
      #'(lambda (key entry)
          (setq string (decode-coding-string (string entry)
                                             invalid-sequence-coding-system))
-         ;; Treat control characters specially:
-         (when (string-match "^[\x00-\x1f\x80-\x9f]$" string)
-           (setq string (format "^%c" (+ ?@ (aref string 0)))))
+         (when (= 1 (length string))
+           ;; Treat control characters specially:
+           (cond
+            ((string-match "^[\x00-\x1f\x80-\x9f]$" string)
+             (setq string (format "^%c" (+ ?@ (aref string 0)))))
+            ((setq unicode-error-lookup
+                   (get-char-table (aref string 0)
+                                   unicode-error-default-translation-table))
+             (setq string (format "^%c" (+ ?@ unicode-error-lookup))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
          (put-char-table key glyph disp-table)
@@ -939,7 +945,7 @@ It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
 
 (defun encoded-string-description (str coding-system)
   "Return a pretty description of STR that is encoded by CODING-SYSTEM."
-;  (setq str (string-as-unibyte str))
+  ;; XEmacs; no transformation to unibyte.
   (mapconcat
    (if (and coding-system (eq (coding-system-type coding-system) 'iso2022))
        ;; Try to get a pretty description for ISO 2022 escape sequences.
@@ -948,36 +954,8 @@ It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
      (function (lambda (x) (format "#x%02X" x))))
    str " "))
 
-;; (defun encode-coding-char (char coding-system)
-;;   "Encode CHAR by CODING-SYSTEM and return the resulting string.
-;; If CODING-SYSTEM can't safely encode CHAR, return nil."
-;;   (if (cmpcharp char)
-;;       (setq char (car (decompose-composite-char char 'list))))
-;;   (let ((str1 (char-to-string char))
-;;         (str2 (make-string 2 char))
-;;         (safe-charsets (and coding-system
-;;                             (coding-system-get coding-system 'safe-charsets)))
-;;         enc1 enc2 i1 i2)
-;;     (when (or (eq safe-charsets t)
-;;               (memq (char-charset char) safe-charsets))
-;;       ;; We must find the encoded string of CHAR.  But, just encoding
-;;       ;; CHAR will put extra control sequences (usually to designate
-;;       ;; ASCII charset) at the tail if type of CODING is ISO 2022.
-;;       ;; To exclude such tailing bytes, we at first encode one-char
-;;       ;; string and two-char string, then check how many bytes at the
-;;       ;; tail of both encoded strings are the same.
-;; 
-;;       (setq enc1 (string-as-unibyte (encode-coding-string str1 coding-system))
-;;             i1 (length enc1)
-;;             enc2 (string-as-unibyte (encode-coding-string str2 coding-system))
-;;             i2 (length enc2))
-;;       (while (and (> i1 0) (= (aref enc1 (1- i1)) (aref enc2 (1- i2))))
-;;         (setq i1 (1- i1) i2 (1- i2)))
-;; 
-;;       ;; Now (substring enc1 i1) and (substring enc2 i2) are the same,
-;;       ;; and they are the extra control sequences at the tail to
-;;       ;; exclude.
-;;       (substring enc2 0 i2))))
+;; XEmacs; 
+;; (defun encode-coding-char (char coding-system) in coding.el.
 
 
 ;; #### The following section is utter junk from mule-misc.el.

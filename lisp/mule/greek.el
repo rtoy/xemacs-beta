@@ -120,19 +120,67 @@
 
 (make-8-bit-coding-system
  'iso-8859-7
- '((#xA1 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
+ '((#x80 ?\u0080) ;; <control>
+   (#x81 ?\u0081) ;; <control>
+   (#x82 ?\u0082) ;; <control>
+   (#x83 ?\u0083) ;; <control>
+   (#x84 ?\u0084) ;; <control>
+   (#x85 ?\u0085) ;; <control>
+   (#x86 ?\u0086) ;; <control>
+   (#x87 ?\u0087) ;; <control>
+   (#x88 ?\u0088) ;; <control>
+   (#x89 ?\u0089) ;; <control>
+   (#x8A ?\u008A) ;; <control>
+   (#x8B ?\u008B) ;; <control>
+   (#x8C ?\u008C) ;; <control>
+   (#x8D ?\u008D) ;; <control>
+   (#x8E ?\u008E) ;; <control>
+   (#x8F ?\u008F) ;; <control>
+   (#x90 ?\u0090) ;; <control>
+   (#x91 ?\u0091) ;; <control>
+   (#x92 ?\u0092) ;; <control>
+   (#x93 ?\u0093) ;; <control>
+   (#x94 ?\u0094) ;; <control>
+   (#x95 ?\u0095) ;; <control>
+   (#x96 ?\u0096) ;; <control>
+   (#x97 ?\u0097) ;; <control>
+   (#x98 ?\u0098) ;; <control>
+   (#x99 ?\u0099) ;; <control>
+   (#x9A ?\u009A) ;; <control>
+   (#x9B ?\u009B) ;; <control>
+   (#x9C ?\u009C) ;; <control>
+   (#x9D ?\u009D) ;; <control>
+   (#x9E ?\u009E) ;; <control>
+   (#x9F ?\u009F) ;; <control>
+   (#xA0 ?\u00A0) ;; NO-BREAK SPACE
+   (#xA1 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
    (#xA2 ?\u2019) ;; RIGHT SINGLE QUOTATION MARK
+   (#xA3 ?\u00A3) ;; POUND SIGN
    (#xA4 ?\u20AC) ;; EURO SIGN
    (#xA5 ?\u20AF) ;; DRACHMA SIGN
+   (#xA6 ?\u00A6) ;; BROKEN BAR
+   (#xA7 ?\u00A7) ;; SECTION SIGN
+   (#xA8 ?\u00A8) ;; DIAERESIS
+   (#xA9 ?\u00A9) ;; COPYRIGHT SIGN
    (#xAA ?\u037A) ;; GREEK YPOGEGRAMMENI
+   (#xAB ?\u00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+   (#xAC ?\u00AC) ;; NOT SIGN
+   (#xAD ?\u00AD) ;; SOFT HYPHEN
    (#xAF ?\u2015) ;; HORIZONTAL BAR
+   (#xB0 ?\u00B0) ;; DEGREE SIGN
+   (#xB1 ?\u00B1) ;; PLUS-MINUS SIGN
+   (#xB2 ?\u00B2) ;; SUPERSCRIPT TWO
+   (#xB3 ?\u00B3) ;; SUPERSCRIPT THREE
    (#xB4 ?\u0384) ;; GREEK TONOS
    (#xB5 ?\u0385) ;; GREEK DIALYTIKA TONOS
    (#xB6 ?\u0386) ;; GREEK CAPITAL LETTER ALPHA WITH TONOS
+   (#xB7 ?\u00B7) ;; MIDDLE DOT
    (#xB8 ?\u0388) ;; GREEK CAPITAL LETTER EPSILON WITH TONOS
    (#xB9 ?\u0389) ;; GREEK CAPITAL LETTER ETA WITH TONOS
    (#xBA ?\u038A) ;; GREEK CAPITAL LETTER IOTA WITH TONOS
+   (#xBB ?\u00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
    (#xBC ?\u038C) ;; GREEK CAPITAL LETTER OMICRON WITH TONOS
+   (#xBD ?\u00BD) ;; VULGAR FRACTION ONE HALF
    (#xBE ?\u038E) ;; GREEK CAPITAL LETTER UPSILON WITH TONOS
    (#xBF ?\u038F) ;; GREEK CAPITAL LETTER OMEGA WITH TONOS
    (#xC0 ?\u0390) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
@@ -196,7 +244,7 @@
    (#xFB ?\u03CB) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA
    (#xFC ?\u03CC) ;; GREEK SMALL LETTER OMICRON WITH TONOS
    (#xFD ?\u03CD) ;; GREEK SMALL LETTER UPSILON WITH TONOS
-   (#xFE ?\u03CE)) ;; GREEK SMALL LETTER OMEGA WITH TONOS
+   (#xFE ?\u03CE));; GREEK SMALL LETTER OMEGA WITH TONOS
  "ISO-8859-7 (Greek)"
  '(mnemonic "Grk"
    aliases (greek-iso-8bit)))
