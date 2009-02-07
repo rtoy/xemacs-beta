@@ -57,7 +57,7 @@
       (register-tty-color "brightcyan"    "\e[1;36m" "\e[1;46m")
       (register-tty-color "brightwhite"   "\e[1;37m" "\e[1;47m")
 
-      (setq pre-tty-win-initted t))))
+      (setq make-device-early-tty-entry-point-called-p t))))
 
 ;; We have to do this for every created TTY console, after the first frame
 ;; has been created.

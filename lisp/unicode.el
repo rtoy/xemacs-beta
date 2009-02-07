@@ -641,8 +641,7 @@ specified, and as not encodable if it is not specified."
          (looking-at-arg (concat "[" skip-chars-arg "]"))
          (case-fold-search nil)
          fail-range-start fail-range-end char-after failed
-	 extent char-unicode invalid-sequence-p failed-reason
-         previous-failed-reason)
+	 extent char-unicode failed-reason previous-failed-reason)
     (save-excursion
       (when highlightp
         (query-coding-clear-highlights begin end buffer))

@@ -287,7 +287,7 @@ message--it will not work.  ")
 	(charset-lower -1)
 	(charset-upper -1)
 	worth-trying known-charsets encode-program
-	other-charset-vector ucs args-out-of-range)
+	other-charset-vector ucs)
 
     (loop for char across decode-table
       do (pushnew (char-charset char) known-charsets))
@@ -297,7 +297,6 @@ message--it will not work.  ")
       do
       ;; This is not possible for two dimensional charsets. 
       (when (eq 1 (charset-dimension known-charset))
-	(setq args-out-of-range t)
         (if (eq 'control-1 known-charset)
             (setq charset-lower 0
                   charset-upper 31)
@@ -677,7 +676,7 @@ See that the documentation of `query-coding-region'; see also
 				'8-bit-fixed-invalid-sequences-skip-chars)))
 	(ranges (make-range-table))
         (case-fold-search nil)
-        char-after fail-range-start fail-range-end previous-fail extent
+        char-after fail-range-start fail-range-end extent
 	failed invalid-sequences-looking-at failed-reason
         previous-failed-reason)
     (check-type from-unicode hash-table)
