@@ -3169,6 +3169,30 @@ surrounded by (block NAME ...)."
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
 
+;; XEmacs; inline delete-duplicates if it's called with a literal
+;; #'equal or #'eq and no other keywords, we want the speed in
+;; font-lock.el.
+(define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
+  (cond ((and (= 4 (length form))
+              (eq :test (third form))
+              (or (equal '(quote eq) (fourth form))
+                  (equal '(function eq) (fourth form))))
+         `(let* ((begin ,cl-seq)
+                 (cl-seq begin))
+           (while cl-seq
+             (setq cl-seq (setcdr cl-seq (delq (car cl-seq) (cdr cl-seq)))))
+           begin))
+        ((and (= 4 (length form))
+              (eq :test (third form))
+              (or (equal '(quote equal) (fourth form))
+                  (equal '(function equal) (fourth form))))
+         `(let* ((begin ,cl-seq)
+                 (cl-seq begin))
+           (while cl-seq
+             (setq cl-seq (setcdr cl-seq (delete (car cl-seq) (cdr cl-seq)))))
+           begin))
+        (t
+         form)))
 
 (mapc
  #'(lambda (y)

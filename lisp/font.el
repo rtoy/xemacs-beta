@@ -295,18 +295,6 @@ for use in the 'weight' field of an X font string.")
 ; 	  (setq retval (cons type retval))))
 ;     retval))
 
-;; #### only used in this file; maybe there's a cl.el function?
-(defun font-unique (list)
-  (let ((retval)
-	(cur))
-    (while list
-      (setq cur (car list)
-	    list (cdr list))
-      (if (member cur retval)
-	  nil
-	(setq retval (cons cur retval))))
-    (nreverse retval)))
-
 (defun font-higher-weight (w1 w2)
   (let ((index1 (length (memq w1 font-possible-weights)))
 	(index2 (length (memq w2 font-possible-weights))))
@@ -424,8 +412,10 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
 		     (font-spatial-to-canonical (font-size fontobj-2)))))
     (set-font-weight retval (font-higher-weight (font-weight fontobj-1)
 						(font-weight fontobj-2)))
-    (set-font-family retval (font-unique (append (font-family fontobj-1)
-						 (font-family fontobj-2))))
+    (set-font-family retval
+                     (delete-duplicates (append (font-family fontobj-1)
+                                                (font-family fontobj-2)))
+                     :test #'equal)
     (set-font-style retval (logior (font-style fontobj-1)
 				   (font-style fontobj-2)))
     (set-font-registry retval (or (font-registry fontobj-1)
@@ -651,7 +641,8 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
 				(aref menu 0)))
 		(normal (mapcar #'(lambda (x) (if x (aref x 0)))
 				(aref menu 1))))
-	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))
+	    (sort (delete-duplicates (nconc scaled normal) :test 'equal)
+                  'string-lessp))))
     (cons "monospace" (mapcar 'car font-x-family-mappings))))
 
 (defun x-font-create-name (fontobj &optional device)
@@ -842,7 +833,8 @@ Optional DEVICE defaults to `default-x-device'."
 				(aref menu 0)))
 		(normal (mapcar #'(lambda (x) (if x (aref x 0)))
 				(aref menu 1))))
-	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))
+	    (sort (delete-duplicates (nconc scaled normal) :test #'equal)
+                  'string-lessp))))
 	  ;; #### FIXME clearly bogus for Xft
     (cons "monospace" (mapcar 'car font-xft-family-mappings))))
 
@@ -872,7 +864,8 @@ Optional DEVICE defaults to `default-x-device'."
 				(aref menu 0)))
 		(normal (mapcar #'(lambda (x) (if x (aref x 0)))
 				(aref menu 1))))
-	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))))
+	    (sort (delete-duplicates (nconc scaled normal) :test #'equal)
+                  'string-lessp))))))
 
 (defun ns-font-create-name (fontobj &optional device)
   "Return a font name constructed from FONTOBJ, appropriate for NextSTEP devices."
