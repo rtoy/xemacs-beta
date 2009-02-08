@@ -494,13 +494,13 @@ selected device."
 	(objectset '("family" "style")))
     (let* ((all-fonts
 	    (fc-list-fonts-pattern-objects device pattern objectset)))
-      (fc-delete-duplicates
+      (delete-duplicates
        (mapcar
 	#'(lambda (pattern)
             (fc-pattern-get-family pattern 0))
 	(if filter-fun
-	    (fc-filter all-fonts filter-fun)
-	  all-fonts))))))
+	    (delete-if-not filter-fun all-fonts)
+	  all-fonts)) :test #'equal))))
 
 (defun fc-find-available-weights-for-family (family &optional style device)
   "Find available weights for font FAMILY."
@@ -533,28 +533,6 @@ selected device."
   (and (not (equal result 'fc-result-no-match))
        (not (equal result 'fc-result-no-id))
        (not (equal result 'fc-internal-error))))
-
-;;; DELETE-DUPLICATES and REMOVE-DUPLICATES from cl-seq.el do not
-;;; seem to work on list of strings...
-;;; #### Presumably just use :test 'equal!
-(defun fc-delete-duplicates (l)
-  (let ((res nil)
-	(in l))
-    (while (not (null in))
-      (if (not (member (car in) res))
-	  (setq res (append res (list (car in)))))
-      (setq in (cdr in)))
-    res))
-
-;; #### Use delete-if with :test 'equal.
-(defun fc-filter (l fun)
-  (let ((res nil)
-	(in l))
-    (while (not (null in))
-      (if (funcall fun (car in))
-	  (setq res (append res (list (car in)))))
-      (setq in (cdr in)))
-    res))
 
 (provide 'fontconfig)
 

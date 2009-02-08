@@ -1,3 +1,31 @@
+2009-02-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-duplicates): 
+	Add a new compiler macro, inlining this function if it's called
+	with a literal #'eq or #'equal test arguments and no other
+	keywords.
+	* font-lock.el (font-lock-unique): 
+	Remove this function. 
+	* font-lock.el (font-lock-prepend-text-property): 
+	(font-lock-append-text-property): 
+	Use #'delete-duplicates instead of #'font-lock-unique.
+	* font.el (font-unique):
+	Remove this function.
+	* font.el (font-combine-fonts-internal): 
+	(x-font-families-for-device): 
+	(xft-font-families-for-device): 
+	(ns-font-families-for-device): 
+	Use #'delete-duplicates instead of #'font-unique.
+	* fontconfig.el (fc-delete-duplicates): 
+	* fontconfig.el (fc-filter): 
+	Remove these functions. 	
+	* fontconfig.el (fc-find-available-font-families): 
+	Replace #'fc-delete-duplicates with #'delete-duplicates,
+	#'fc-filter with #'delete-if-not.
+	* format.el (format-make-relatively-unique): 
+	Document that this is equivalent to #'nset-exclusive-or with a
+	test of #'equal.
+
 2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-text-sexp):
