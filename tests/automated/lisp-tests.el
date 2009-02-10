@@ -1334,3 +1334,39 @@
                              (prin1-to-string char-table-with-symbol)))
           "Check that char table elements are quoted correctly when printing"))
 
+
+(let ((test-file-name
+       (make-temp-file (expand-file-name "sR4KDwU" (temp-directory))
+		       nil ".el")))
+  (find-file test-file-name)
+  (erase-buffer)
+  (insert 
+       "\
+;; Lisp should not be able to modify #$, which is
+;; Vload_file_name_internal of lread.c.
+(Check-Error setting-constant (aset #$ 0 ?\\ ))
+
+;; But modifying load-file-name should work:
+(let ((new-char ?\\ )
+      old-char)
+  (setq old-char (aref load-file-name 0))
+  (if (= new-char old-char)
+      (setq new-char ?/))
+  (aset load-file-name 0 new-char)
+  (Assert (= new-char (aref load-file-name 0))
+	  \"Check that we can modify the string value of load-file-name\"))
+
+(let* ((new-load-file-name \"hi there\")
+       (load-file-name new-load-file-name))
+  (Assert (eq new-load-file-name load-file-name)
+	  \"Checking that we can bind load-file-name successfully.\"))
+
+")
+   (write-region (point-min) (point-max) test-file-name nil 'quiet)
+   (set-buffer-modified-p nil)
+   (kill-buffer nil)
+   (load test-file-name nil t nil)
+   (delete-file test-file-name))
+
+
+

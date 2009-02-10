@@ -711,6 +711,8 @@ do {								\
 
   PRINT_LOADING_MESSAGE ("");
 
+  LISP_READONLY (found) = 1;
+
   {
     /* Lisp_Object's must be malloc'ed, not stack-allocated */
     Lisp_Object lispstream = Qnil;
@@ -738,7 +740,8 @@ do {								\
     record_unwind_protect (load_force_doc_string_unwind,
 			   Vload_force_doc_string_list);
     Vload_force_doc_string_list = Qnil;
-    internal_bind_lisp_object (&Vload_file_name, found);
+    /* load-file-name is not read-only to Lisp. */
+    internal_bind_lisp_object (&Vload_file_name, Fcopy_sequence(found));
 #ifdef I18N3
     /* set it to nil; a call to #'domain will set it. */
     internal_bind_lisp_object (&Vfile_domain, Qnil);
@@ -3266,6 +3269,9 @@ init_lread (void)
     Vread_buffer_stream = make_resizing_buffer_output_stream ();
 
   Vload_force_doc_string_list = Qnil;
+
+  Vload_file_name_internal = Qnil;
+  Vload_file_name = Qnil;
 }
 
 void
