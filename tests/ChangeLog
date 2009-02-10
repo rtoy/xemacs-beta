@@ -1,3 +1,9 @@
+2009-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el : 
+	Check that #$ is not modifiable from Lisp, and that load-file-name
+	is modifiable from Lisp.
+
 2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/query-coding-tests.el: 
