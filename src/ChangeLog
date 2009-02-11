@@ -1,3 +1,7 @@
+2009-02-11  Jerry James  <james@xemacs.org>
+
+	* number-gmp.c (bigfloat_to_string): Fix broken string conversion.
+
 2009-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (Fload_internal): 
