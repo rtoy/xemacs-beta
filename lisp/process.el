@@ -599,10 +599,17 @@ a side-effect."
     (if substitute-env-vars
 	(setq value (substitute-env-vars value))))
 
-  ;; XEmacs change: check whether the environment understands this variable,
-  ;; using our function for exactly that, don't use
-  ;; #'find-coding-systems-string or trust `undecided' to encode it.
-  (query-coding-string (concat variable "=" value) 'native nil t)
+  ;; GNU fuck around with coding systems here. We do it at a much lower
+  ;; level; an equivalent of the following code of Handa's would be
+  ;; worthwhile here, though:
+
+; (let ((codings (find-coding-systems-string (concat variable value))))
+;   (unless (or (eq 'undecided (car codings))
+;               (memq (coding-system-base locale-coding-system) codings))
+;     (error "Can't encode `%s=%s' with `locale-coding-system'"
+;            variable (or value "")))))
+
+  ;; But then right now our find-coding-systems analogue is in packages.
 
   (if (string-match "=" variable)
       (error "Environment variable name `%s' contains `='" variable)
