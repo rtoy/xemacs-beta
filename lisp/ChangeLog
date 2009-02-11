@@ -1,3 +1,11 @@
+2009-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (query-coding-string): 
+	Correct the order of arguments passed to #'query-coding-region. 
+	(unencodable-char-position): 
+	Handle string offsets correctly, they're one less than buffer
+	offsets. Handle START and END correctly if passed a string. 
+
 2009-02-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-duplicates): 

@@ -507,8 +507,8 @@ range tables."
     (insert string)
     (multiple-value-bind (result ranges extent)
         (query-coding-region (point-min) (point-max) coding-system
-                             (current-buffer) errorp
-                             nil ignore-invalid-sequencesp)
+                             (current-buffer) ignore-invalid-sequencesp
+			     errorp)
       (unless result
         (map-range-table
          #'(lambda (begin end value)
@@ -539,7 +539,7 @@ If optional 5th argument STRING is non-nil, it is a string to search
 for un-encodable characters.  In that case, START and END are indexes
 in the string."
   (let ((thunk
-	 #'(lambda (start end coding-system &optional count)
+	 #'(lambda (start end coding-system stringp count)
 	     (multiple-value-bind (result ranges)
 		 (query-coding-region start end coding-system)
 	       (if result
@@ -550,14 +550,15 @@ in the string."
 			#'(lambda (begin end value)
 			    (while (and (< begin end)
 					(< (length result) count))
-			      (push begin result)
+			      (push (if stringp (1- begin) begin) result)
 			      (incf begin))
 			    (when (= (length result) count)
 			      (return-from worked-it-all-out result)))
 			ranges)
 		     (map-range-table
 		      #'(lambda (begin end value)
-			  (return-from worked-it-all-out begin))
+			  (return-from worked-it-all-out
+                            (if stringp (1- begin) begin)))
 		      ranges))
 		   (assert (not (null count)) t
 			   "We should never reach this point with null COUNT.")
@@ -572,8 +573,8 @@ in the string."
     (if string
 	(with-temp-buffer
 	  (insert string)
-	  (funcall thunk start end coding-system count))
-      (funcall thunk start end coding-system count))))
+	  (funcall thunk (1+ start) (1+ end) coding-system t count))
+      (funcall thunk start end coding-system nil count))))
 
 ;; XEmacs; this is a GPLv3 function in coding.c in GNU. This is why we have
 ;; both a very divergent docstring and a very divergent implementation.
