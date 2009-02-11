@@ -1,5 +1,12 @@
 2009-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* process.el (setenv):
+	Check whether the environment variable and value can be encoded by
+	the native coding system, error if not, as does GNU Emacs (but our
+	implementation is different). 
+
+2009-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* coding.el (query-coding-string): 
 	Correct the order of arguments passed to #'query-coding-region. 
 	(unencodable-char-position): 
