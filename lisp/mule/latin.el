@@ -1909,7 +1909,7 @@ This language environment supports %s. " name)))
  "The Macintosh encoding for Western Europe and the Americas"
  '(mnemonic "MR"
    documentation "MacRoman, MIME name macintosh"
-   aliases (cp10000 MacRoman)))
+   aliases (cp10000 MacRoman mac-roman)))
 
 (make-8-bit-coding-system
  'windows-1252

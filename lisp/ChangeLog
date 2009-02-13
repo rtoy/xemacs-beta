@@ -1,3 +1,8 @@
+2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el (macintosh): 
+	Add GNU Emacs' name for this coding system as an alias. 
+
 2009-02-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (init-mule-at-startup): 
