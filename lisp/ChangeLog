@@ -1,3 +1,9 @@
+2009-02-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (init-mule-at-startup): 
+	Actually use leim-list-file-name, don't load a hardcoded
+	leim-list.el in this function. 
+
 2009-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el (query-coding-string): 
