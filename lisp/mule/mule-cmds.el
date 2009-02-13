@@ -1518,8 +1518,7 @@ of buffer-file-coding-system set by this function."
     (setq Manual-use-rosetta-man nil))
   
   ;; Register available input methods by loading LEIM list file.
-  (load "leim-list.el" 'noerror 'nomessage 'nosuffix)
-  )
+  (load leim-list-file-name 'noerror 'nomessage 'nosuffix))
 
 ;; Code deleted: init-mule-tm (Enable the tm package by default)
 
