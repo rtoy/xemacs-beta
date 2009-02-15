@@ -207,18 +207,40 @@ otherwise."
 	(insert "There are text properties here:\n")
 	(describe-property-list properties)))))
 
-;; XEmacs change
-(defcustom describe-char-unicodedata-file nil
+(defcustom describe-char-unicodedata-file
+  ;; XEmacs change; initialise this by default, using Perl. 
+  (let ((have-perl
+         (member-if 
+          #'(lambda (path) 
+              (file-exists-p (format "%s%cperl" path directory-sep-char))) 
+          exec-path)) 
+        installprivlib res)
+    (when have-perl 
+      (setq installprivlib  
+            (with-string-as-buffer-contents ""
+              (shell-command "perl -V:installprivlib" t) 
+              ;; 1+ because buffer offsets start at one. 
+              (delete-region 1 (1+ (length "installprivlib='"))) 
+              ;; Delete the final newline, semicolon and quotation mark. 
+              (delete-region (- (point-max) 3) (point-max)))) 
+      (cond 
+       ((file-exists-p 
+         (setq res
+               (format "%s%cunicore%cUnicodeData.txt" 
+                       installprivlib directory-sep-char directory-sep-char)))) 
+       ((file-exists-p 
+         (setq res
+               (format "%s%cunicode%cUnicodeData.txt" 
+                       installprivlib directory-sep-char directory-sep-char)))))
+      res))
   "Location of Unicode data file.
 This is the UnicodeData.txt file from the Unicode Consortium, used for
 diagnostics.  If it is non-nil `describe-char' will print data
 looked up from it.  This facility is mostly of use to people doing
 multilingual development.
 
-This is a fairly large file, installed on many systems by Perl, in the
-`unicore' subdirectory of the Perl library tree \(\"perl -V:installprivlib\"
-will tell you where that is.)  You can also get the current version from the
-Unicode Consortium at the URL
+This is a fairly large file, typically installed with Perl.
+At the time of writing it is at the URL
 `http://www.unicode.org/Public/UNIDATA/UnicodeData.txt'.
 
 It is possible to build a DBM or Berkeley index cache for this file, so that
