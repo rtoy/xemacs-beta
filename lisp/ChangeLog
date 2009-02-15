@@ -1,5 +1,12 @@
 2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* descr-text.el (describe-char-unicodedata-file):
+	Back out Stephen's change of 2009-01-01, 16c9098dd3d2; do a
+	Mercurial merge, add this ChangeLog entry.
+	See also http://mid.gmane.org/8763jbsyr7.fsf@xemacs.org .
+
+2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/latin.el (macintosh): 
 	Add GNU Emacs' name for this coding system as an alias. 
 
