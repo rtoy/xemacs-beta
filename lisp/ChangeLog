@@ -1,5 +1,11 @@
 2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Correct this function, don't try to format non-control characters
+	with ^ followed by their value plus (char-int ?@).
+
+2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* unicode.el (unicode-query-coding-region): 
 	Avoid eval-when-compile where that gives incorrect results when
 	compiled on a non-Mule XEmacs but run on a Mule XEmacs.  Fixes
