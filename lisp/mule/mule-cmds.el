@@ -780,14 +780,16 @@ the language environment for the major languages of Western Europe."
          (setq string (decode-coding-string (string entry)
                                             invalid-sequence-coding-system))
          (when (= 1 (length string))
+	   ;; Treat Unicode error sequence chars as the octets
+	   ;; corresponding to those on disk:
+	   (setq unicode-error-lookup
+		 (get-char-table (aref string 0)
+				 unicode-error-default-translation-table))
+	   (when unicode-error-lookup
+	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
-           (cond
-            ((string-match "^[\x00-\x1f\x80-\x9f]$" string)
-             (setq string (format "^%c" (+ ?@ (aref string 0)))))
-            ((setq unicode-error-lookup
-                   (get-char-table (aref string 0)
-                                   unicode-error-default-translation-table))
-             (setq string (format "^%c" (+ ?@ unicode-error-lookup))))))
+	   (when (string-match "^[\x00-\x1f\x80-\x9f]$" string)
+	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
          (put-char-table key glyph disp-table)
