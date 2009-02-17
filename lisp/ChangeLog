@@ -1,3 +1,16 @@
+2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (unicode-query-coding-region): 
+	Avoid eval-when-compile where that gives incorrect results when
+	compiled on a non-Mule XEmacs but run on a Mule XEmacs.  Fixes
+	problems seen by
+	20a807210902131835o2f25930apaffabb6b62a95e5f@mail.gmail.com ,
+	thank you Vin!
+	(An equivalent way to get the efficiency of the eval-when-compile
+	would be to provide two defvars, evaluated at dump time, but this
+	code will be in C soon enough, and we can use the relevant
+	preprocessor constants there.)	
+
 2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-char-unicodedata-file):
