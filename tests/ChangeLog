@@ -1,3 +1,9 @@
+2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep): 
+	Add a missing parenthesis here, thank you
+	Stephen. Cf. http://mid.gmane.org/871vtzrxey.fsf@xemacs.org .
+
 2009-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el : 

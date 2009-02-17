@@ -455,7 +455,7 @@ This is a naive implementation in Lisp.  "
                    utf-16-big-endian))
     (Assert (equal (encode-coding-string 
                     (decode-char 'ucs code-point) 'utf-16-le)
-                   utf-16-little-endian))
+                   utf-16-little-endian)))
 
          
   ;;---------------------------------------------------------------
