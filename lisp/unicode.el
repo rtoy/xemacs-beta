@@ -640,6 +640,14 @@ specified, and as not encodable if it is not specified."
          (ranges (make-range-table))
          (looking-at-arg (concat "[" skip-chars-arg "]"))
          (case-fold-search nil)
+	 (invalid-sequence-lower-unicode-bound
+	  (char-to-unicode
+	   (aref (decode-coding-string "\xd8\x00\x00\x00"
+				       'utf-16-be) 3)))
+	  (invalid-sequence-upper-unicode-bound
+	   (char-to-unicode
+	    (aref (decode-coding-string "\xd8\x00\x00\xFF"
+					'utf-16-be) 3)))
          fail-range-start fail-range-end char-after failed
 	 extent char-unicode failed-reason previous-failed-reason)
     (save-excursion
@@ -662,16 +670,10 @@ specified, and as not encodable if it is not specified."
                          ;; If the character is in the Unicode range that
                          ;; corresponds to an invalid octet, we want to
                          ;; treat it as unencodable.
-                         (<= (eval-when-compile 
-                               (char-to-unicode
-                                (aref (decode-coding-string "\xd8\x00\x00\x00"
-                                                        'utf-16-be) 3)))
+                         (<= invalid-sequence-lower-unicode-bound
                              char-unicode)
                          (<= char-unicode
-                             (eval-when-compile 
-                               (char-to-unicode
-                                (aref (decode-coding-string "\xd8\x00\x00\xFF"
-                                                            'utf-16-be) 3))))
+			     invalid-sequence-upper-unicode-bound)
                          (setq failed-reason 'invalid-sequence)))
                 (or (null previous-failed-reason)
                     (eq previous-failed-reason failed-reason)))
