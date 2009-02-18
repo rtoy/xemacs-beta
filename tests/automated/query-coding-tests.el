@@ -413,9 +413,9 @@ iso-latin-with-esc-unix-1"))
               "check #'unencodable-char-position stops at 7 if 2000 asked for")
       ;; Now, #'check-coding-systems-region. 
       ;; UTF-8 should certainly be able to encode these characters:
-      (Assert (eq t (check-coding-systems-region (point-min) (point-max)
+      (Assert (null (check-coding-systems-region (point-min) (point-max)
                                                  '(utf-8)))
-              "check #'check-coding-systems-region gives t if encoding works")
+              "check #'check-coding-systems-region gives nil if encoding works")
       (Assert
        (equal '((iso-8859-1 257 258 259 260 261 262 263)
                 (windows-1252 129 130 131 132 133 134 135 136

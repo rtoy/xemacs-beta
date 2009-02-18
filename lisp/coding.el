@@ -589,8 +589,7 @@ buffer positions (not ranges) that the individual coding systems cannot
 encode.
 
 If all coding systems in CODING-SYSTEM-LIST can encode the region,
-this function returns t.  This conflicts with the documented, but not
-with the observed, GNU behavior.
+this function returns nil.
 
 If BEGIN is a string, `check-coding-systems-region' ignores END, and checks
 whether the coding systems can encode BEGIN.  The alist that is returned
@@ -619,7 +618,7 @@ This function is for GNU compatibility.  See also `query-coding-region'."
                    (setq intermediate (list (coding-system-name coding-system)))
                    (map-range-table range-lambda ranges)
                    (push (nreverse intermediate) result)))
-               finally return (or result t)))))
+               finally return result))))
   (if (stringp begin)
       (with-temp-buffer
 	(insert begin)

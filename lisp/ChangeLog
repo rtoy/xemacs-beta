@@ -1,3 +1,9 @@
+2009-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* coding.el (check-coding-systems-region): 
+	Return null on success, not t. See
+	http://emacsbugs.donarmstrong.com/cgi-bin/bugreport.cgi?bug=1723
+
 2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (finish-set-language-environment): 

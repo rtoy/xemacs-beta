@@ -1,3 +1,8 @@
+2009-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/query-coding-tests.el : Check that
+	#'check-coding-systems-region returns null on success here, not t.
+
 2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep): 
