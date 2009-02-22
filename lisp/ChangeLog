@@ -1,3 +1,17 @@
+2009-02-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-force-escape-quoted): New variable,
+	used to force `byte-compile-insert-header' to treat the output as
+	having characters above ?\xFF. 
+	(byte-compile-from-buffer): 
+	If the compiled output contains characters above ?\xFF, and
+	byte-compile-dynamic-docstrings or byte-compile-dynamic is non-nil
+	(or we're using an inappropriate coding system) recompile the
+	file, turning off the dynamic features and using a more
+	appropriate header. 
+	(byte-compile-insert-header): Pay attention to
+	byte-compile-force-escape-quoted. 
+
 2009-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* coding.el (check-coding-systems-region): 
