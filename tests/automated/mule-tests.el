@@ -599,30 +599,24 @@ This is a naive implementation in Lisp.  "
         ((Assert-elc-is-escape-quoted ()
            "Assert the current buffer has an escape-quoted cookie if compiled."
            (save-excursion
-             (let ((byte-compile-result (byte-compile-from-buffer
-                                         (current-buffer) nil nil))
-                   (temporary-file-name (make-temp-name
-                                         (expand-file-name "zjPQ2Pk"
-                                                           (temp-directory)))))
-               (byte-compile-insert-header
-                temporary-file-name
-                (current-buffer)
-                byte-compile-result)
+             (let* ((temporary-file-name (make-temp-name
+					  (expand-file-name "zjPQ2Pk"
+							    (temp-directory))))
+		    (byte-compile-result (byte-compile-from-buffer
+					  (current-buffer) temporary-file-name
+					  nil)))
                (Assert (string-match
                         "^;;;###coding system: escape-quoted"
                         (buffer-substring nil nil byte-compile-result))))))
          (Assert-elc-has-no-specified-encoding ()
            "Assert the current buffer has no coding cookie if compiled."
            (save-excursion
-             (let ((byte-compile-result (byte-compile-from-buffer
-                                         (current-buffer) nil nil))
-                   (temporary-file-name (make-temp-name
-                                         (expand-file-name "zjPQ2Pk"
-                                                           (temp-directory)))))
-               (byte-compile-insert-header
-                temporary-file-name
-                (current-buffer)
-                byte-compile-result)
+             (let* ((temporary-file-name (make-temp-name
+					  (expand-file-name "zjPQ2Pk"
+							    (temp-directory))))
+		    (byte-compile-result (byte-compile-from-buffer
+					  (current-buffer) temporary-file-name
+					  nil)))
                (Assert (not (string-match
                              ";;;###coding system:"
                              (buffer-substring nil nil
@@ -703,8 +697,8 @@ This is a naive implementation in Lisp.  "
       (Assert-elc-has-no-specified-encoding)
       (delete-region (point-min) (point-max))
 
-      ;; This bug exists because the coding-cookie insertion code looks at
-      ;; the input buffer, not the output buffer.
+      ;; There used to be a bug here because the coding-cookie insertion code
+      ;; looks at the input buffer, not the output buffer.
       ;;
       ;; It looks at the input buffer because byte-compile-dynamic and
       ;; byte-compile-dynamic-docstrings currently need to be
@@ -712,19 +706,20 @@ This is a naive implementation in Lisp.  "
       ;; compilation of function bodies and docstrings fails if you can't
       ;; call (point) and trivially get the byte offset in the file.
       ;;
-      ;; And to unconditionally turn those two features off, you need to
-      ;; know before byte-compilation whether the byte-compilation output
-      ;; file contains non-Latin-1 characters, or perhaps to check after
-      ;; compilation and redo; but we don't do the latter.
+      ;; And to unconditionally turn those two features off, you need to know
+      ;; before byte-compilation whether the byte-compilation output file
+      ;; contains non-Latin-1 characters. Or to check after compilation and
+      ;; redo; the latter is what we do right now. This will only be necessary
+      ;; in a very small minority of cases, it's not a performance-critical
+      ;; issue.
       ;; 
-      ;; To fix this bug, we need to add Mule support to
-      ;; byte-compile-dynamic and byte-compile-dynamic-docstrings. Or drop
-      ;; support for those features entirely.
+      ;; Martin Buchholz thinks, in bytecomp.el, that we should implement lazy
+      ;; loading for Mule files; I (Aidan Kehoe) don't think that's worth the
+      ;; effort today (February 2009).
       (insert
        "(defvar testing-mule-compilation-handling (eval-when-compile
 	(decode-char 'ucs #x371e))) ;; kDefinition beautiful; pretty, used\"")
-      (Known-Bug-Expect-Failure
-       (Assert-elc-is-escape-quoted))
+      (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))))
 
   (Known-Bug-Expect-Error

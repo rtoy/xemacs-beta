@@ -1,3 +1,10 @@
+2009-02-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el: 
+	Use more realistic tests for the escape-quoted mule encoding
+	checks; update a comment, change a Known-Bug-Expect-Failure to a
+	normal test now that we've addressed an old bug. 
+
 2009-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/query-coding-tests.el : Check that

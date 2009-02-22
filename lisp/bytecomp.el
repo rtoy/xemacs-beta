@@ -439,6 +439,13 @@ early in the file.")
 that is, the current lexical environment.  This list lives partly
 on the specbind stack.  The cdr of each cell is an integer bitmask.")
 
+(defvar byte-compile-force-escape-quoted nil
+  "If non-nil, `byte-compile-insert-header' always adds a coding cookie.
+
+This is for situations where the byte compiler output file needs to be
+able to encode character values above ?\\xFF, but this cannot be
+easily determined from the input file.")
+
 (defconst byte-compile-referenced-bit 1)
 (defconst byte-compile-assigned-bit 2)
 (defconst byte-compile-arglist-bit 4)
@@ -1710,6 +1717,9 @@ With argument, insert value in current buffer after the form."
 	;;	  (byte-compile-warnings (if (eq byte-compile-warnings t)
 	;;				     byte-compile-warning-types
 	;;				   byte-compile-warnings))
+        (byte-compile-force-escape-quoted byte-compile-force-escape-quoted)
+        (byte-compile-using-dynamic nil)
+        (byte-compile-using-escape-quoted nil)
 	)
     (byte-compile-close-variables
      (save-excursion
@@ -1723,7 +1733,11 @@ With argument, insert value in current buffer after the form."
 	    (byte-compile-insert-header filename
 					byte-compile-inbuffer
 					byte-compile-outbuffer))
-
+       (setq byte-compile-using-dynamic
+             (or (symbol-value-in-buffer 'byte-compile-dynamic
+                                         byte-compile-inbuffer)
+                 (symbol-value-in-buffer 'byte-compile-dynamic-docstrings
+                                         byte-compile-inbuffer)))
        ;; This is a kludge.  Some operating systems (OS/2, DOS) need to
        ;; write files containing binary information specially.
        ;; Under most circumstances, such files will be in binary
@@ -1733,6 +1747,9 @@ With argument, insert value in current buffer after the form."
        (setq overwrite-mode 'overwrite-mode-binary))
      (displaying-byte-compile-warnings
       (save-excursion
+	;; All our save-excursions may have led to a less-than-useful
+	;; value for point in the outbuffer:
+	(goto-char (point-max byte-compile-outbuffer) byte-compile-outbuffer)
 	(set-buffer byte-compile-inbuffer)
 	(goto-char 1)
 
@@ -1753,7 +1770,22 @@ With argument, insert value in current buffer after the form."
 	(setq byte-compile-unresolved-functions nil)))
      (save-excursion
        (set-buffer byte-compile-outbuffer)
-       (goto-char (point-min))))
+       (goto-char (point-min))
+       (when (and (or byte-compile-using-dynamic
+                      (eq buffer-file-coding-system 'raw-text-unix))
+                  (re-search-forward "[^\x00-\xff]" nil t))
+	 (when (or noninteractive byte-compile-verbose)
+	   (message
+	    "%s: includes char above ?\\xFF, recompiling sans dynamic features."
+	    filename))
+         (set-symbol-value-in-buffer 'byte-compile-dynamic nil
+                                     byte-compile-inbuffer)
+         (set-symbol-value-in-buffer 'byte-compile-dynamic-docstrings nil
+                                     byte-compile-inbuffer)
+         (setq byte-compile-force-escape-quoted t
+               byte-compile-outbuffer
+               (byte-compile-from-buffer byte-compile-inbuffer 
+                                         filename eval)))))
     (if (not eval)
 	byte-compile-outbuffer
       (let (form)
@@ -1842,23 +1874,25 @@ With argument, insert value in current buffer after the form."
   ;; Otherwise, use `raw-text' for maximum portability with non-Mule
   ;; Emacsen.
   (if (or (featurep '(not mule)) ;; Don't scan buffer if we are not muleized
-	  (save-excursion
-	    (set-buffer byte-compile-inbuffer)
-	    (goto-char (point-min))
-            ;; Look for any non-Latin-1 literals or Unicode character
-            ;; escapes. Any such occurrences in a @#COUNT comment will lead
-            ;; to an escape-quoted coding cookie being inserted, but this is
-            ;; not true of ordinary comments.
-            (let ((non-latin-1-re
-                   (concat "[^\000-\377]" 
-                           #r"\|\\u[0-9a-fA-F]\{4,4\}\|\\U[0-9a-fA-F]\{8,8\}"))
-                  (case-fold-search nil))
-              (catch 'need-to-escape-quote
-                (while (re-search-forward non-latin-1-re nil t)
-                  (skip-chars-backward "^;" (point-at-bol))
-                  (if (bolp) (throw 'need-to-escape-quote nil))
-                  (forward-line 1))
-                t))))
+          (and
+	   (not byte-compile-force-escape-quoted)
+	   (save-excursion
+	     (set-buffer byte-compile-inbuffer)
+	     (goto-char (point-min))
+	     ;; Look for any non-Latin-1 literals or Unicode character
+	     ;; escapes. Any such occurrences in a @#COUNT comment will lead
+	     ;; to an escape-quoted coding cookie being inserted, but this is
+	     ;; not true of ordinary comments.
+	     (let ((non-latin-1-re
+		    (concat "[^\000-\377]" 
+			    #r"\|\\u[0-9a-fA-F]\{4,4\}\|\\U[0-9a-fA-F]\{8,8\}"))
+		   (case-fold-search nil))
+	       (catch 'need-to-escape-quote
+		 (while (re-search-forward non-latin-1-re nil t)
+		   (skip-chars-backward "^;" (point-at-bol))
+		   (if (bolp) (throw 'need-to-escape-quote nil))
+		   (forward-line 1))
+		 t)))))
       (setq buffer-file-coding-system 'raw-text-unix)
     (insert "(or (featurep 'mule) (error \"Loading this file requires Mule support\"))
 ;;;###coding system: escape-quoted\n")
