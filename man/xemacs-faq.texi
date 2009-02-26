@@ -341,6 +341,7 @@ library directory>/info/}. For example in
 * Q3.0.9::    HP Alt key as Meta.
 * Q3.0.10::   Why does edt emulation not work?
 * Q3.0.11::   How can I emulate VI and use it as my default mode?
+* Q3.0.12::   Mac Alt/Option key as Meta.
 
 3.1: The Mouse
 * Q3.1.1::    How can I turn off Mouse pasting?
@@ -4607,6 +4608,7 @@ them.
 * Q3.0.9::    HP Alt key as Meta.
 * Q3.0.10::   Why does edt emulation not work?
 * Q3.0.11::   How can I emulate VI and use it as my default mode?
+* Q3.0.12::   Mac Alt/Option key as Meta.
 
 3.1: The Mouse
 * Q3.1.1::    How can I turn off Mouse pasting?
@@ -4876,7 +4878,7 @@ add this as well:
 (global-set-key [(control h)] 'help-for-help)
 @end lisp
 
-@node Q3.0.11, Q3.1.1, Q3.0.10, Editing
+@node Q3.0.11, Q3.0.12, Q3.0.10, Editing
 @unnumberedsubsec Q3.0.11: How can I emulate VI and use it as my default mode?
 
 Our recommended VI emulator is viper. To make viper-mode the default,
@@ -4893,9 +4895,32 @@ This should be added as close to the top of @file{init.el} as you can get
 it, otherwise some minor modes may not get viper-ized.
 @end quotation
 
+@node Q3.0.12, Q3.1.1, Q3.0.11, Editing
+@unnumberedsubsec Q3.0.12: Mac Alt/Option key as Meta.
+
+Due to the Apple Command key being Meta, I can't use XEmacs on OS X.
+
+Didier Verna suggests:
+
+I use an X version of XEmacs on a Mac every day.  You have to tweak the
+keyboard configuration a bit but that's all.
+
+Here's my Xmodmap file on Darwin:
+
+@example
+clear mod1
+clear mod2
+keycode 66 = Meta_L
+keycode 63 = Mode_switch
+add mod1 = Meta_L
+@end example
+
+This leaves the command key alone and uses alt/option for Meta.
+
+
 @unnumberedsec 3.1: The Mouse
 
-@node Q3.1.1, Q3.1.2, Q3.0.11, Editing
+@node Q3.1.1, Q3.1.2, Q3.0.12, Editing
 @unnumberedsubsec Q3.1.1: How can I turn off Mouse pasting?
 
 I keep hitting the middle mouse button by accident and getting stuff
