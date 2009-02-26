@@ -1,3 +1,7 @@
+2009-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eval.c (skip_debugger): Fix typo in preceding comment.
+
 2009-02-11  Jerry James  <james@xemacs.org>
 
 	* number-gmp.c (bigfloat_to_string): Fix broken string conversion.

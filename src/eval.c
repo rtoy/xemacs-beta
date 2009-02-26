@@ -600,7 +600,7 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
 
 /* Return 1 if an error with condition-symbols CONDITIONS,
    and described by SIGNAL-DATA, should skip the debugger
-   according to debugger-ignore-errors.  */
+   according to debug-ignored-errors.  */
 
 static int
 skip_debugger (Lisp_Object conditions, Lisp_Object data)
