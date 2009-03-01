@@ -1,3 +1,35 @@
+2009-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-compose.el: 
+	Document an XIM bug, and how one might work around it. 
+	(define-compose-map): 
+	Revise this macro, call it with compose-caron-map,
+	compose-macron-map, compose-breve-map, compose-dot-map,
+	compose-doubleacute-map, compose-ogonek-map, compose-hook-map,
+	compose-horn-map as well as the previous existing maps. 
+	(compose-map): 
+	Add entries for caron, macron, doubleacute, ogonek, breve and
+	abovedot to this map. 
+	Add an assert, this code assumes that a non-Mule build has no
+	character codes above U+00FF. 
+	Incorporate all the precomposed Latin characters in
+	UnicodeData.txt that we can into the maps, deciding at runtime on
+	which exactly depending on whether this is a non-Mule or a Mule
+	build.
+	Remove a commented-out old X11 bug workaround. 
+	Use #'flet instead of defun + unintern for
+	#'alias-colon-to-doublequote.
+	Correct #'electric-diacritic to work with the keyboard macro
+	versions of the maps. 
+	(compose-help): 
+	This has been turned off since 1994; no-one appears to have
+	noticed, since the normal help mechanism offers similar
+	functionality and is actually maintained. Removed entirely. 
+	Remove a superflous setting of a default value for ctl-arrow. 
+	* x-init.el (x-initialize-compose): 
+	Support the new dead key maps we just added to x-compose.el with
+	autoloads here. 
+
 2009-02-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-force-escape-quoted): New variable,
