@@ -86,13 +86,14 @@
 ;; Sun have done to the default keymap for the Sun keyboards.
 (defun x-initialize-compose (device)
   "Enable compose key and dead key processing on DEVICE."
-  (autoload 'compose-map	    "x-compose" nil t 'keymap)
-  (autoload 'compose-acute-map	    "x-compose" nil t 'keymap)
-  (autoload 'compose-grave-map	    "x-compose" nil t 'keymap)
-  (autoload 'compose-cedilla-map    "x-compose" nil t 'keymap)
-  (autoload 'compose-diaeresis-map  "x-compose" nil t 'keymap)
-  (autoload 'compose-circumflex-map "x-compose" nil t 'keymap)
-  (autoload 'compose-tilde-map	    "x-compose" nil t 'keymap)
+  (loop for map in '(compose-map compose-acute-map compose-grave-map
+                     compose-cedilla-map compose-diaeresis-map
+                     compose-circumflex-map compose-tilde-map
+                     compose-ring-map compose-caron-map compose-macron-map
+                     compose-breve-map compose-dot-map
+                     compose-doubleacute-map compose-ogonek-map
+                     compose-hook-map compose-horn-map)
+    do (autoload map "x-compose" nil t 'keymap))
 
   (loop 
     for (key map)
@@ -195,10 +196,19 @@
          (dead-acute		compose-acute-map)
          (dead-grave		compose-grave-map)
          (dead-cedilla		compose-cedilla-map)
-         (dead-diaeresis		compose-diaeresis-map)
+         (dead-diaeresis	compose-diaeresis-map)
          (dead-circum		compose-circumflex-map)
          (dead-circumflex	compose-circumflex-map)
-         (dead-tilde		compose-tilde-map))
+         (dead-tilde		compose-tilde-map)
+         (dead-abovering        compose-ring-map)
+         (dead-caron            compose-caron-map)
+         (dead-macron           compose-macron-map)
+         (dead-breve            compose-breve-map)
+         (dead-abovedot         compose-dot-map)
+         (dead-doubleacute      compose-doubleacute-map)
+         (dead-ogonek           compose-ogonek-map)
+         (dead-hook             compose-hook-map)
+         (dead-horn             compose-horn-map))
     
     ;; Get the correct value for function-key-map
     with function-key-map = (symbol-value-in-console 'function-key-map
