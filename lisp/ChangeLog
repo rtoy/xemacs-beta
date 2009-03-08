@@ -1,3 +1,8 @@
+2009-03-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cus-edit.el (custom-face-prompt): Fix typo and improve
+	readability in comment.
+
 2009-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-compose.el: 
