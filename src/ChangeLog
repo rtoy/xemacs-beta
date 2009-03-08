@@ -1,3 +1,9 @@
+2009-03-08  Ville Skyttä  <scop@xemacs.org>
+
+	* glyphs-gtk.c (init_image_instance_from_gdk_pixmap): Apply the
+	2008-03-05 change from Dominique Quatravaux here as well even
+	though the code is not enabled at the moment.
+
 2009-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (skip_debugger): Fix typo in preceding comment.

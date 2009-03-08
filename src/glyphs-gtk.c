@@ -837,7 +837,7 @@ void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = Qnil;
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = gdk_pixmap;
-  IMAGE_INSTANCE_GTK_MASK (ii) = 0;
+  IMAGE_INSTANCE_PIXMAP_MASK (ii) = 0;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = width;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = height;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
