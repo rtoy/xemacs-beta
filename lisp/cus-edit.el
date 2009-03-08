@@ -873,9 +873,9 @@ Show the buffer in another window, but don't select it."
 
 (defun custom-face-prompt ()
   ;; Interactive call for `customize-face' and `customize-face-other-window'.
-  ;; See their docstrings for more information. Note that this call returns a
-  ;; list of only one element. This is because the callers'second arg AT-POINT
-  ;; is only used in interactive calls.
+  ;; See their docstrings for more information. Note that this call returns
+  ;; a list of only one element. This is because the callers' second arg
+  ;; AT-POINT is only used in interactive calls.
   (let ((faces (get-char-property (point) 'face)))
     (if (or (null faces) (not current-prefix-arg))
 	;; The default behavior, which is to prompt for all faces, is also
