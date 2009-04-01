@@ -33,14 +33,14 @@
 
 ;; This minor mode adds some services to Emacs-Lisp editing mode.
 ;;
-;; First, it knows about the header conventions for library packages.
-;; One entry point supports generating synopses from a library directory.
-;; Another can be used to check for missing headers in library files.
+;; It provides knowledge about the header conventions for library packages.
+;; `lm-synopsis' supports generating synopses from a library directory.
+;; `lm-verify' can be used to check for missing headers in library files.
 ;; 
-;; Another entry point automatically addresses bug mail to a package's
+;; `lm-report-bug' automatically addresses bug mail to a package's
 ;; maintainer or author.
 
-;; This file can be loaded by your lisp-mode-hook.  Have it (require 'lisp-mnt)
+;; This file can be loaded by your lisp-mode-hook with `(require 'lisp-mnt)'.
 
 ;; This file is an example of the header conventions.  Note the following
 ;; features:
@@ -90,7 +90,7 @@
 ;; package for the distribution.  (This file doesn't have one because the
 ;; author *is* one of the maintainers.)
 ;; 
-;;    * Keywords line --- used by the finder code (now under construction)
+;;    * Keywords line --- used by the finder code (now direly bit-rotted)
 ;; for finding Emacs Lisp code related to a topic.
 ;;
 ;;    * X-Bogus-Bureaucratic-Cruft line --- this is a joke and an example
@@ -118,7 +118,6 @@
 ;;; Code:
 
 (require 'picture)		; provides move-to-column-force
-;(require 'emacsbug) ; XEmacs, not needed for bytecompilation
 
 ;;; Variables:
 
@@ -247,6 +246,7 @@ The returned value is a list of strings, one per line."
 	  (kill-buffer (current-buffer)))
       )))
 
+;; #### This should be replaced by a call into mail-lib.
 (defun lm-crack-address (x)
   "Split up an email address into full name and real email address.
 The value is a cons of the form (FULLNAME . ADDRESS)."
@@ -422,13 +422,15 @@ with tag `Commentary' and ends with tag `Change Log' or `History'."
 	  (kill-buffer (current-buffer)))
       )))
 
-;;; Verification and synopses
+;;; Utilities
 
 (defun lm-insert-at-column (col &rest strings)
   "Insert list of STRINGS, at column COL."
   (if (> (current-column) col) (insert "\n"))
   (move-to-column-force col)
   (apply 'insert strings))
+
+;;; Entry points: verification, synopses, and bug reporting
 
 (defun lm-verify (&optional file showok &optional verb)
   "Check that the current buffer (or FILE if given) is in proper format.
@@ -515,13 +517,13 @@ a temporary buffer."
     ))
 
 (defun lm-synopsis (&optional file showall)
-  "Generate a synopsis listing for the buffer or the given FILE if given.
+  "Generate a synopsis listing for FILE, defaulting to the visited file.
 If FILE is a directory, recurse on its files and generate a report in
-a temporary buffer.  If SHOWALL is non-nil, also generate a line for files
-which do not include a recognizable synopsis."
-  (interactive
-   (list
-    (read-file-name "Synopsis for (file or dir): ")))
+a temporary buffer.  If optional SHOWALL is non-nil, also generate a line
+for files which do not include a recognizable synopsis.  Interactively,
+to specify the current directory, remove the trailing slash from the default
+string.  Interactively, SHOWALL is taken from the prefix argument."
+  (interactive "FSynopsis for (file or dir): \nP")
 
   (if (and file (file-directory-p file))
       (progn
@@ -550,6 +552,7 @@ which do not include a recognizable synopsis."
 	    (kill-buffer (current-buffer)))
 	))))
 
+;; #### This should call out to `report-xemacs-bug'.
 (defun lm-report-bug (topic)
   "Report a bug in the package currently being visited to its maintainer.
 Prompts for bug subject.  Leaves you in a mail buffer."
