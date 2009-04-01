@@ -1,3 +1,14 @@
+2009-04-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lisp-mnt.el:  Update FSF address.
+	Improve header comment.
+	Remove long-obsolete commented code.
+	(lm-crack-address, lm-report-bug):
+	Add #### remarks calling for use of superior external functions.
+	(lm-synopsis):
+	Convert interactive spec to use "F" specifier.
+	Adjust docstring to reality.
+
 2009-03-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* cus-edit.el (custom-face-prompt): Fix typo and improve
