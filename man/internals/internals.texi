@@ -20288,6 +20288,11 @@ standard interface and to do buffering.  Macros are defined to read or
 write characters, so the calling functions do not have to worry about
 blocking data together in order to achieve efficiency.
 
+Lstreams seem to be similar to Python 2.5 generators/coroutines.  David
+Beasley's tutorials on @uref{http://dabeaz.com/generators-uk/,generators}
+and @uref{http://dabeaz.com/coroutines/,coroutines} are an excellent
+resource.
+
 @menu
 * Creating an Lstream::         Creating an lstream object.
 * Lstream Types::               Different sorts of things that are streamed.
@@ -27538,7 +27543,7 @@ This section was written by Stephen Turnbull <stephen@@xemacs.org>, so
 don't blame Ben (or Eric and Matthias, for that matter).  Feel free to
 add, edit, and share the blame, guys!
 
-@c #### Make these @urlref's!!
+@c #### Make these @uref's!!
 As of late November 2004, this principally means adding support for the
 @file{Xft} library, which provides a more robust @emph{font
 configuration} mechanism via Keith Packard's @file{fontconfig} library
