@@ -1,3 +1,7 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2009-03-08  Ville Skyttä  <scop@xemacs.org>
 
 	* glyphs-gtk.c (init_image_instance_from_gdk_pixmap): Apply the
