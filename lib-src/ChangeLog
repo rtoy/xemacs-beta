@@ -1,3 +1,7 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-docfile.c (main): Allow more than one -d argument, followed

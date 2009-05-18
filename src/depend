@@ -36,8 +36,8 @@ objects-xlike-inc.o:
 #endif
 #if defined(HAVE_X_WINDOWS)
 EmacsFrame.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h EmacsFrameP.h EmacsManager.h charset.h compiler.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h dumper.h faces.h frame-impl.h frame.h frameslots.h gc.h general-slots.h glyphs-x.h glyphs.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h objects-x.h objects.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h text.h toolbar.h vdb.h window-impl.h window.h winslots.h xintrinsic.h xintrinsicp.h xmotif.h xmprimitivep.h xmu.h
-EmacsManager.o: $(CONFIG_H) EmacsManager.h EmacsManagerP.h compiler.h xintrinsicp.h xmmanagerp.h xmotif.h xmprimitivep.h
-EmacsShell-sub.o: $(CONFIG_H) EmacsShell.h EmacsShellP.h xintrinsic.h xintrinsicp.h
+EmacsManager.o: $(CONFIG_H) $(LWLIB_SRCDIR)/lwlib.h EmacsManager.h EmacsManagerP.h compiler.h xintrinsicp.h xmmanagerp.h xmotif.h xmprimitivep.h
+EmacsShell-sub.o: $(CONFIG_H) $(LWLIB_SRCDIR)/lwlib.h EmacsShell.h EmacsShellP.h xintrinsic.h xintrinsicp.h
 EmacsShell.o: $(CONFIG_H) EmacsShell.h ExternalShell.h xintrinsicp.h
 balloon-x.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h balloon_help.h compiler.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h specifier.h symeval.h symsinit.h text.h vdb.h xintrinsic.h
 balloon_help.o: $(CONFIG_H) balloon_help.h compiler.h xintrinsic.h

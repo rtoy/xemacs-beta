@@ -1,3 +1,7 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2009-02-06  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak: Add support for Visual Studio 2005 manifests.

@@ -1,3 +1,7 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2009-04-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi: s/@urlref/@uref/g.
