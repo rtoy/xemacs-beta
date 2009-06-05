@@ -1,3 +1,8 @@
+2009-06-02  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
+
+	* nt.c (mswindows_link): Fix off-by-one bug in mswindows_link:
+	need to include trailing NUL in length of file name.
+
 2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.29 "garbanzo" is released.
