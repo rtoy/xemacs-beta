@@ -1,3 +1,10 @@
+2009-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-lambda): 
+	Even if we are going to store uncompiled interactive forms in the
+	compiled-function object, byte compile (and discard) the code, for
+	the sake of the warnings generated. 
+
 2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.29 "garbanzo" is released.
