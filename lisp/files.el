@@ -595,12 +595,13 @@ colon-separated list of directories when resolving a relative directory name."
 				   (null (getenv "CDPATH"))))))
   (if (file-name-absolute-p dir)
       (cd-absolute (expand-file-name dir))
-    ;; XEmacs
+    ;; XEmacs change. I'm not sure respecting CDPATH is the right thing to
+    ;; do under Windows.
     (unless (and cd-path (equal (getenv "CDPATH") cdpath-previous))
-      ;;#### Unix-specific
-      (let ((trypath (parse-colon-path
-		      (setq cdpath-previous (getenv "CDPATH")))))
-	(setq cd-path (or trypath (list "./")))))
+      (let ((trypath (split-path (setq cdpath-previous (getenv "CDPATH")))))
+	(setq cd-path (or (and trypath 
+			       (mapcar #'file-name-as-directory trypath))
+                          (file-name-as-directory "")))))
     (or (catch 'found
 	  (mapcar #'(lambda (x)
 		        (let ((f (expand-file-name (concat x dir))))
