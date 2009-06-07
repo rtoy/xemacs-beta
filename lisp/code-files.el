@@ -443,6 +443,13 @@ and `insert-file-contents-post-hook'."
 			       filename visit err)
 	   (signal (car err) (cdr err))))
 	(setq coding-system used-codesys)
+        ;; If the file was zero-length, used-codesys is undecided. Set it to
+        ;; a more sane value. 
+        (when (eq 'undecided (coding-system-type coding-system))
+          (unless (zerop (buffer-size))
+            (warn "%s: autodetection failed: setting to default."
+                  (file-name-nondirectory (buffer-file-name))))
+          (setq coding-system (default-value 'buffer-file-coding-system)))
 	;; call any `post-read-conversion' for the coding system that
 	;; was used ...
 	(let ((func
