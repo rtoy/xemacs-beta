@@ -1,3 +1,16 @@
+2009-06-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (insert-file-contents): 
+        Autodetection may return undecided as a coding system. If the file
+	was zero-length, this is kosher, and we should set
+	buffer-file-coding-system to its default; if it is not
+	zero-length, we still need to set b-f-c-s, but we warn that the
+	autodetection fails. (Ignoring that for the user, autodetection
+	failing is something very distinct from what we use it to mean
+	here.) See
+	http://mid.gmane.org/18986.53111.800393.660612@parhasard.net and
+	the related thread. 
+
 2009-06-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (cd): 
