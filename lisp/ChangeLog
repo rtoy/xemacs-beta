@@ -1,3 +1,14 @@
+2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1): 
+	Check macro-p, not macrop, when describing whether a symbol has an
+	associated macro or an associated function. Relevant with
+	autoloaded macros. 
+	(function-arglist): 
+	Accept multi-line arglists in built-in functions, as found in
+	#'write-region-internal. #'dontusethis-set-symbol-value-handler
+	is still broken for other reasons. 
+
 2009-06-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (insert-file-contents): 
