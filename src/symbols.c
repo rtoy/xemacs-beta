@@ -3104,7 +3104,7 @@ this function (or change the semantics of its arguments) without
 pity, thereby invalidating your code.
 */
        (variable, handler_type, handler, harg,
-	UNUSED (keep_existing)))
+	UNUSED (keep_existing )))
 {
   Lisp_Object valcontents;
   struct symbol_value_lisp_magic *bfwd;

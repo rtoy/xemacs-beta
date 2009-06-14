@@ -1,3 +1,27 @@
+2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (For): 
+	* eval.c (Fand): 
+	* eval.c (Fif): 
+	* eval.c (Fwhen): 
+	* eval.c (Fcond):
+	* eval.c (Fprogn): 
+	* eval.c (Fprog1):
+	* eval.c (Fprog2): 
+	* eval.c (FletX): 
+	* eval.c (Flet): 
+	* eval.c (Fwhile): 
+	* eval.c (Fdefvar): 
+	* eval.c (Fdefconst): 
+	* eval.c (Frun_hooks): 
+	* eval.c (Frun_hooks_with_args): 
+	* eval.c (Frun_hooks_with_args_until_success):
+	* eval.c (Frun_hooks_with_args_until_failure):
+	Add arguments information, understood by #'function-arglist, to
+	all these special forms, functions and macros. Remove the 
+	argument information that was already there that was not
+	understood by #'function-arglist. 
+
 2009-06-02  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
 
 	* nt.c (mswindows_link): Fix off-by-one bug in mswindows_link:
