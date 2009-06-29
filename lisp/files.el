@@ -593,29 +593,33 @@ colon-separated list of directories when resolving a relative directory name."
 			      default-directory default-directory
 			      (and (member cd-path '(nil ("./")))
 				   (null (getenv "CDPATH"))))))
-  (if (file-name-absolute-p dir)
-      (cd-absolute (expand-file-name dir))
-    ;; XEmacs change. I'm not sure respecting CDPATH is the right thing to
-    ;; do under Windows.
-    (unless (and cd-path (equal (getenv "CDPATH") cdpath-previous))
-      (let ((trypath (split-path (setq cdpath-previous (getenv "CDPATH")))))
-	(setq cd-path (or (and trypath 
+
+  (let* ((cdpath-current (getenv "CDPATH"))
+	 (trypath (if cdpath-current
+		      (split-path (setq cdpath-previous cdpath-current))
+		    nil)))		; null list
+    (if (file-name-absolute-p dir)
+	(cd-absolute (expand-file-name dir))
+      ;; XEmacs change. I'm not sure respecting CDPATH is the right thing to
+      ;; do under Windows.
+      (unless (and cd-path (equal cdpath-current cdpath-previous))
+	(setq cd-path (or (and trypath
 			       (mapcar #'file-name-as-directory trypath))
-                          (file-name-as-directory "")))))
-    (or (catch 'found
-	  (mapcar #'(lambda (x)
-		        (let ((f (expand-file-name (concat x dir))))
+			  (list (file-name-as-directory "")))))
+      (or (catch 'found
+	    (mapcar #'(lambda (x)
+			(let ((f (expand-file-name (concat x dir))))
 			  (if (file-directory-p f)
 			      (progn
-			        (cd-absolute f)
-			        (throw 'found t)))))
-		  cd-path)
-	  nil)
-	;; jwz: give a better error message to those of us with the
-	;; good taste not to use a kludge like $CDPATH.
-	(if (equal cd-path '("./"))
-	    (error "No such directory: %s" (expand-file-name dir))
-	  (error "Directory not found in $CDPATH: %s" dir)))))
+				(cd-absolute f)
+				(throw 'found t)))))
+		    cd-path)
+	    nil)
+	  ;; jwz: give a better error message to those of us with the
+	  ;; good taste not to use a kludge like $CDPATH.
+	  (if (equal cd-path '("./"))
+	      (error "No such directory: %s" (expand-file-name dir))
+	    (error "Directory not found in $CDPATH: %s" dir))))))
 
 (defun load-file (file)
   "Load the Lisp file named FILE."
