@@ -1,3 +1,7 @@
+2009-06-20  It's me FKtPp ;)  <m_pupil@yahoo.com.cn>
+	* files.el (cd): Do not #'split-path on nil #'getenv result; Make
+	sure the cd-path value is a list.
+
 2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (describe-function-1): 
