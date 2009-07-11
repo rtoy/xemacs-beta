@@ -449,7 +449,17 @@ and `insert-file-contents-post-hook'."
           (unless (zerop (buffer-size))
             (warn "%s: autodetection failed: setting to default."
                   (file-name-nondirectory (buffer-file-name))))
-          (setq coding-system (default-value 'buffer-file-coding-system)))
+          (setq coding-system
+                (or
+                 ;; If this property is available, it will be a coding
+                 ;; system that we can use to write a file (as opposed to
+                 ;; the true undecided coding system, which trashes
+                 ;; non-Latin-1 on writing). It might just be the value of
+                 ;; coding-system passed to #'insert-file-contents-internal.
+                 (coding-system-property coding-system 'coding-system)
+                 ;; Otherwise, take the value normally specified by the
+                 ;; language environment:
+                 (default-value 'buffer-file-coding-system))))
 	;; call any `post-read-conversion' for the coding system that
 	;; was used ...
 	(let ((func
