@@ -141,6 +141,26 @@ This is a naive implementation in Lisp.  "
     (kill-buffer nil))
   (delete-file test-file-name))
 
+(let ((existing-file-name 
+       (make-temp-file (expand-file-name "k7lCS2Mg" (temp-directory))))
+      (nonexistent-file-name
+       (make-temp-name (temp-directory))))
+  (find-file existing-file-name)
+  (Assert (not (eq 'undecided
+                   (coding-system-type buffer-file-coding-system))))
+  (kill-buffer nil)
+  (dolist (coding-system '(utf-8 windows-1251 macintosh big5))
+    (when (find-coding-system coding-system)
+      (find-file existing-file-name coding-system)
+      (Assert (eq (find-coding-system coding-system)
+                  buffer-file-coding-system))
+      (kill-buffer nil)
+      (find-file nonexistent-file-name coding-system)
+      (Assert (eq (find-coding-system coding-system)
+                  buffer-file-coding-system))
+      (kill-buffer nil)))
+  (delete-file existing-file-name))
+  
 ;;-----------------------------------------------------------------
 ;; Test string modification functions that modify the length of a char.
 ;;-----------------------------------------------------------------

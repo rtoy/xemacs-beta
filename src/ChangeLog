@@ -1,3 +1,12 @@
+2009-07-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (undecided_canonicalize_after_coding): 
+	If no data have been seen, or if
+	coding_stream_canonicalize_after_coding gives nil, pass back
+	str->codesys, which will be of type undecided (the same as the old
+	behaviour) but will reflect any CODESYS argument passed to
+	make_coding_input_stream. See also the change in lisp/code-files.el
+
 2009-06-09  Jerry James  <james@xemacs.org>
 
 	* glyphs-eimage.c (jpeg_instantiate):
