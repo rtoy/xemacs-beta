@@ -1,3 +1,21 @@
+2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (find-file-create-switch-thunk): 
+	New macro, used to mark buffers created within #'find-file (and
+	related) modified if the associated file doesn't exist.
+	(find-alternate-file-other-window): 
+	Correct this, pass CODESYS to find-file-other-window. 
+	(find-file-read-only): 
+	Correct behaviour of this function in the presence of wildcards. 
+	(find-file): 
+	(find-file-other-window): 
+	(find-file-other-frame): 
+	(find-file-read-only-other-window): 
+	(find-file-read-only-other-frame): 
+	(find-alternate-file): 
+	Simplify these functions, use #'find-file-create-switch-thunk'
+	instead of explicit #'switch-to-buffer calls. 
+
 2009-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (insert-file-contents): 
