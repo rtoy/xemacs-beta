@@ -203,9 +203,8 @@ Z -- (and current-prefix-arg (fboundp 'read-coding-system)
                                (eq window (active-minibuffer-window)))))
               (error "Attempt to select inactive minibuffer window"))
             (select window)))))
-`_' (setq zmacs-region-stays t)
-
-*/
+`_' (setq zmacs-region-stays t) *//* FIXME: moving end of previous comment
+to a separate line causes docstring lossage! */
        (UNUSED (args)))
 {
   return Qnil;
