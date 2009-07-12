@@ -1,5 +1,12 @@
 2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* files.el (after-find-file): 
+	If the answer to "The directory containing %s does not exist.
+	Create?" is no, kill the current buffer, since the user probably
+	just misspelled the directory name. Thank you Rodney Sparapani!
+
+2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* files.el (find-file-create-switch-thunk): 
 	New macro, used to mark buffers created within #'find-file (and
 	related) modified if the associated file doesn't exist.

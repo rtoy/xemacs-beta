@@ -1561,7 +1561,8 @@ The directory containing %s does not exist.  Create? "
 			    (abbreviate-file-name buffer-file-name)))
 			  (make-directory (file-name-directory
 					   buffer-file-name)
-					  t))
+					  t)
+			(kill-buffer (current-buffer)))
 		    (quit
 		     (kill-buffer (current-buffer))
 		     (signal 'quit nil))))
