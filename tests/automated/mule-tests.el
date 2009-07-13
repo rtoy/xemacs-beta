@@ -158,6 +158,7 @@ This is a naive implementation in Lisp.  "
       (find-file nonexistent-file-name coding-system)
       (Assert (eq (find-coding-system coding-system)
                   buffer-file-coding-system))
+      (set-buffer-modified-p nil)
       (kill-buffer nil)))
   (delete-file existing-file-name))
   
