@@ -1,3 +1,12 @@
+2009-07-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (insert-file-contents): 
+	Set the buffer coding system even on error; especially important
+	when dealing with nonexistent files. 
+	If the `coding-system' property of an undecided coding system is
+	itself undecided, don't use that as a value for
+	buffer-file-coding-system. 
+
 2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (after-find-file): 
