@@ -71,6 +71,8 @@ handle SIGSEGV SIGBUS nostop noprint
 #endif
 
 set $Lisp_Type_Int = -2
+set $Lisp_Type_Record = 0
+set $Lisp_Type_Char = 2
 
 define decode_object
   set $obj = (unsigned long) $arg0
@@ -80,7 +82,7 @@ define decode_object
     set $type = $Lisp_Type_Int
   else
     set $type = $obj & dbg_typemask
-    if $type == Lisp_Type_Char
+    if $type == $Lisp_Type_Char
       set $val = ($obj & dbg_valmask) >> dbg_gctypebits
     else
       ## It's a record pointer
@@ -88,7 +90,7 @@ define decode_object
     end
   end
 
-  if $type == Lisp_Type_Record
+  if $type == $Lisp_Type_Record
     set $lheader = ((struct lrecord_header *) $val)
     set $lrecord_type = ($lheader->type)
     set $imp = ((struct lrecord_implementation *) lrecord_implementations_table[(int) $lrecord_type])
@@ -115,7 +117,7 @@ define xtype
   if $type == $Lisp_Type_Int
     echo int\n
   else
-  if $type == Lisp_Type_Char
+  if $type == $Lisp_Type_Char
     echo char\n
   else
     printf "record type: %s\n", $imp->name
@@ -264,7 +266,7 @@ define pobj
   if $type == $Lisp_Type_Int
     printf "Integer: %d\n", $val
   else
-  if $type == Lisp_Type_Char
+  if $type == $Lisp_Type_Char
     if $val > 32 && $val < 128
       printf "Char: %c\n", $val
     else

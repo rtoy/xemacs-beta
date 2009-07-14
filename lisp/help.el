@@ -1192,9 +1192,12 @@ arguments in the standard Lisp style."
 		 (let* ((doc (documentation function))
 			(args (and doc
 				   (string-match
-				    "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
+				    "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
 				    doc)
-				   (match-string 1 doc))))
+				   (match-string 1 doc)))
+                        (args (and args (replace-in-string args
+                                                           "[ ]*\\\\\n[ ]*"
+                                                           " " t))))
 		   ;; If there are no arguments documented for the
 		   ;; subr, rather don't print anything.
 		   (cond ((null args) t)
@@ -1402,7 +1405,7 @@ part of the documentation of internal subroutines."
                                      (cond
                                       ((eq 'neither macro-p)
                                        "")
-                                      (macrop " macro")
+                                      (macro-p " macro")
                                       (t " function"))))
 			   string)))))
       (cond ((or (stringp def) (vectorp def))

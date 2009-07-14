@@ -1127,7 +1127,8 @@ mswindows_link (const Ibyte *old, const Ibyte *new_)
 	  wcscpy (data.wid.cStreamName, newuni);
 	  data.wid.dwStreamId = BACKUP_LINK;
 	  data.wid.dwStreamAttributes = 0;
-	  data.wid.Size.LowPart = wlen; /* in bytes, not chars! */
+	  /* Include the trailing null.  In bytes, not chars! */
+	  data.wid.Size.LowPart = wlen + sizeof (WCHAR);
 	  data.wid.Size.HighPart = 0;
 	  data.wid.dwStreamNameSize = 0;
 

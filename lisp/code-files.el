@@ -439,10 +439,56 @@ and `insert-file-contents-post-hook'."
 						     'used-codesys))
 		))
 	  (file-error
+	   ;; If we error, which we may if the file does not exist, we still
+	   ;; want to set the buffer-file-coding-system if that is
+	   ;; appropriate:
+	   (when (eq 'undecided (coding-system-type coding-system))
+	     (setq used-codesys (coding-system-property coding-system
+							'coding-system))
+	     (if (and used-codesys
+		      (not (eq 'undecided (coding-system-type used-codesys))))
+		 ;; If this property is available, and not undecided, it should
+		 ;; be a coding system that we can use to write a file (as
+		 ;; opposed to the true undecided coding system, which trashes
+		 ;; non-Latin-1 on writing). It might just be the value of
+		 ;; coding-system passed to #'insert-file-contents-internal.
+		 (setq coding-system used-codesys)
+	       ;; Otherwise, take the value normally specified by the
+	       ;; language environment:
+	       (setq coding-system (default-value
+				     'buffer-file-coding-system))))
+	   (if (local-variable-p 'buffer-file-coding-system
+				 (current-buffer))
+	       (set-buffer-file-coding-system
+		(subsidiary-coding-system 
+		 buffer-file-coding-system
+		 (coding-system-eol-type coding-system)) t t)
+	     (set-buffer-file-coding-system coding-system t t))
+	   (setq buffer-file-coding-system-when-loaded
+		 coding-system)
 	   (run-hook-with-args 'insert-file-contents-error-hook
 			       filename visit err)
 	   (signal (car err) (cdr err))))
 	(setq coding-system used-codesys)
+        ;; If the file was zero-length, used-codesys is undecided. Set it to
+        ;; a more sane value. 
+        (when (eq 'undecided (coding-system-type coding-system))
+          (unless (zerop (buffer-size))
+            (warn "%s: autodetection failed: setting to default."
+                  (file-name-nondirectory (buffer-file-name))))
+	  (setq used-codesys (coding-system-property coding-system
+						     'coding-system))
+	  (if (and used-codesys
+		   (not (eq 'undecided (coding-system-type used-codesys))))
+	      ;; If this property is available, and not undecided, it should
+	      ;; be a coding system that we can use to write a file (as
+	      ;; opposed to the true undecided coding system, which trashes
+	      ;; non-Latin-1 on writing). It might just be the value of
+	      ;; coding-system passed to #'insert-file-contents-internal.
+	      (setq coding-system used-codesys)
+	    ;; Otherwise, take the value normally specified by the
+	    ;; language environment:
+	    (setq coding-system (default-value 'buffer-file-coding-system))))
 	;; call any `post-read-conversion' for the coding system that
 	;; was used ...
 	(let ((func

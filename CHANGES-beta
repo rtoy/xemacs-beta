@@ -1,4 +1,313 @@
-Brief summary of Changes to 21.5.28 "fuki"
+to XEmacs 21.5.29 "garbanzo"
+
+Major Features and Backward Incompatible Changes
+
+-- new: (incompatible) with-esc coding systems for 8-bit coding systems -- Aidan Kehoe
+-- improve: (incompatible) Avoid errors in substitute-in-file-name -- Aidan Kehoe
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- new: Command-line argument --script (GNU compatible) -- Aidan Kehoe
+-- new: Just-in-time Unicode charsets -- Aidan Kehoe
+-- new: Support extended mouse buttons -- Mats Lidell
+-- new: Support printing big numbers as base 2 -- Aidan Kehoe
+-- new: Windows icons -- Dan Polansky, Stephen Turnbull
+-- new: write_region_inhibit_fsync -- Aidan Kehoe
+-- fix: ?\<newline> caused assert -- Mike Sperber
+-- fix: Crash on null font instance -- Aidan Kehoe
+-- fix: Cygwin run command needs an extra ShowWindow -- Vin Shelton
+-- fix: Frame change pending flag doesn't get reset -- Ron Isaacson
+-- fix: GTK key defaults initialized incorrectly -- Aidan Kehoe
+-- fix: Little-endian UTF-16 surrogate handling is incorrect -- Aidan Kehoe
+-- fix: Off-by-one error in ccl_driver -- Julian Bradfield
+-- fix: Printed char table values confuse strings and symbols -- Aidan Kehoe
+-- fix: Setting noninteractive window-system to 'stream contradicts docs -- Aidan Kehoe
+-- fix: Stage 2 font matching doesn't work for msprinter -- Aidan Kehoe
+-- fix: Window grow and shrink weren't quite inverses -- Mike Sperber
+-- fix: at_dot in regexps fails on non-ASCII -- Julian Bradfield
+-- fix: bigfloat_to_string is very broken -- Jerry James
+-- fix: open-database ignores CODESYS -- Aidan Kehoe
+-- fix: openbox can't find frame icons -- Henry S. Thompson, Stephen Turnbull
+-- fix: set_window_pixsize ignores modeline -- Mike Sperber
+-- fix: simple_search would underrun in reverse search -- Stephen Turnbull
+-- improve: User variable (including customize) handling -- Aidan Kehoe
+-- improve: bind mousewheel by default -- Aidan Kehoe
+-- improve: custom-face-prompt suggests faces at point -- Didier Verna, Andreas Rohler
+
+Build Infrastructure
+
+-- new: Check for FcConfig{Get,Set}RescanInterval -- Aidan Kehoe
+-- new: Preliminary work to support bundled packages -- Stephen Turnbull
+-- new: Support Intel's compiler -- Vin Shelton
+-- fix: %WindowsSdkDir%, %MSSddk% weren't checked for headers -- Aidan Kehoe
+-- fix: AC_CHECK_LIB was applied to variable -- Andreas Schwab, Mike Fabian, Martin Buchholz
+-- fix: Autoload processing might miss some -- Mike Sperber
+-- fix: Bad M4 syntax leading to bogus compile failures in configure -- Vladimir Ivanovic, Aidan Kehoe, Martin Buchholz, Stephen Turnbull
+-- fix: Check for explicit installation path were bogus -- Mike Sperber
+-- fix: Configuration of write barrier failed on Mac OS X/Intel -- Marcus Crestani
+-- fix: INFOPATH was not set by configure -- Mike Sperber
+-- fix: Inadvertant diversion of 'share' to 'lib' for datadir -- Mike Sperber
+-- fix: Make used the wrong finder*.el -- Ville Skyttä
+-- fix: Move autoload operator definitions to xemacs-base to handle new operators more easily -- Mike Sperber, Stephen Turnbull
+-- fix: Multiple late package directories were allowed -- Stephen Turnbull
+-- fix: Typos (bugs) -- Mats Lidell
+-- fix: Typos (ugly) -- Stephen Turnbull, Ville Skyttä
+-- fix: URL for optional libraries in config.inc.samp -- Mike Sperber
+-- fix: dbm and Berkeley db checks -- Hans de Graaf, Aidan Kehoe
+-- fix: make-docfile.el sometimes checks wrong dependency -- Aidan Kehoe
+-- improve: G++ detection with --xemacs-compiler -- Stephen Turnbull
+-- improve: Pointers to package docs in INSTALL -- Stephen Turnbull
+-- improve: Use Mercurial tip hash to identify beta builds -- Mike Sperber
+-- improve: Use different defaults for --with-xft=yes/no -- Mats Lidell
+-- improve: Use pkg-config to find Xft -- Mike Sperber
+-- improve: gnudbm is universally called "gdbm" now -- Stephen Turnbull
+-- update: Create xe_fst to replace m4_fst (gone in autoconf 2.62) -- Ville Slyttä
+-- update: Makefiles for Windows -- Adrian aichner
+-- update: PATH defines -- Mike Sperber
+-- update: config.guess, config.sub to 2009-02-02 -- Jerry James
+-- update: datarootdir conformance -- Mike Sperber
+-- update: install.sh is now install-sh, and sync to current FSF -- Jerry James
+-- update: nt/xemacs.mak (sync to Unix) -- Adrian Aichner
+-- update: support for Visual Studio 2005 manifests in nt -- Vin Shelton
+
+Documentation
+
+-- improve: Description of image files in README -- Stephen Turnbull
+-- improve: FAQ -- Stephen Turnbull
+-- improve: HELLO uses UTF-8 for Arabic -- Aidan Kehoe
+-- improve: Internals manual -- Stephen Turnbull, Ville Skyttä, Aidan Kehoe, Adrian Aichner
+-- improve: Lisp Reference -- Aidan Kehoe
+-- improve: Misc. Texinfo manuals -- Ville Skyttä
+-- improve: User Guide -- Aidan Kehoe
+-- improve: xemacs.1 -- Shyamal Prasad
+-- update: Personal info -- Vin Shelton, Didier Verna
+
+Lisp API
+
+-- new: Support hash table lookup in CCL -- Dave Love, Aidan Kehoe
+-- new: ascii-case-table (GNU API) -- Aidan Kehoe
+-- new: bit-vector-to-integer -- Aidan Kehoe
+-- new: check-coding-systems-region (API from GNU) -- Aidan Kehoe
+-- new: debug-xemacs-searches -- Aidan Kehoe
+-- new: encode-coding-char (GNU API) -- Aidan Kehoe
+-- new: error-sequence-coding-system -- Aidan Kehoe
+-- new: fc-pattern-get-or-compute-size -- Mike Sperber
+-- new: format-time-string specs %z, %g, %G and %V (GNU sync) -- Shyamal Prasad
+-- new: frob-unicode-errors-region -- Aidan Kehoe
+-- new: improve ability to describe text (GNU sync) -- Aidan Kehoe
+-- new: integer-to-bit-vector -- Aidan Kehoe
+-- new: intern-soft DEFAULT argument -- Aidan Kehoe
+-- new: make-temp-file (GNU sync) -- Aidan Kehoe
+-- new: map-charset-chars (GNU API) -- Aidan Kehoe
+-- new: no-fallback flag for specifier instantiation -- Didier Verna
+-- new: query-coding-clear-highlights (internal) -- Aidan Kehoe
+-- new: query-coding-region -- Aidan Kehoe
+-- new: query-coding-string -- Aidan Kehoe
+-- new: replace-regexp-in-string handles SUBEXP incorrectly -- Stephen Turnbull
+-- new: resize-temp-buffer-window (GNU-compatible alias) -- Aidan Kehoe
+-- new: skip-chars-quote -- Aidan Kehoe
+-- new: subr-arity (API from GNU) -- Aidan Kehoe
+-- new: support auto-autoload of coding systems -- Aidan Kehoe
+-- new: system-type-file-name-coding -- Aidan Kehoe
+-- new: temp-buffer-resize-mode (GNU API) -- Aidan Kehoe
+-- new: unencodable-char-position (GNU API) -- Aidan Kehoe
+-- new: unicode-error-default-translation-table -- Aidan Kehoe
+-- new: unicode-error-sequence-regexp-range -- Aidan Kehoe
+-- new: unicode-error-translate-region -- Aidan Kehoe
+-- new: with-case-table (GNU sync) -- Aidan Kehoe
+-- fix: Map all Big5 characters -- Aidan Kehoe
+-- fix: ascii-case-table called put-case-table-pair incorrectly -- Aidan Kehoe
+-- fix: check-coding-systems-region returned wrong value -- Aidan Kehoe
+-- fix: coding-system-for-read defaults to undecided -- Mike Sperber
+-- fix: custom-save-all can corrupt GNU code in .emacs -- Jason Spiro, Aidan Kehoe
+-- fix: custom-theme-reset-internal called get incorrectly -- Stephen Turnbull
+-- fix: display-graphic-p could pass an invalid device -- Aidan Kehoe
+-- fix: expand-region-abbrevs is case-sensitive -- Adrian Aichner
+-- fix: insert-file-contents and load called substitute-in-file-name -- Mike Sperber
+-- fix: leim-list-file-name wasn't used -- Aidan Kehoe
+-- fix: revert-buffer, recover-file set modiff in Mule -- Aidan Kehoe
+-- fix: setenv gets confused by implicit abbrev table -- Aidan Kehoe
+-- fix: special-form-p errors on subrs -- Jerry James, Aidan Kehoe
+-- fix: split-window and delete-window can be broken by advice -- Henry S. Thompson
+-- fix: write-region can give bogus results with coding system symbols -- Aidan Kehoe
+-- fix: x-color-list-internal didn't return a list of strings -- Stephen Turnbull
+-- fix: x_init_device maybe used uninitialized variables -- Jerry James
+-- improve: CODING-SYSTEM-OR-MUSTBENEW argument to write-region (GNU compatibility) -- Aidan Kehoe
+-- improve: Distinguish can't find pixmap from don't have method -- Didier Verna
+-- improve: Maybe use bignums in file-attributes -- Aidan Kehoe
+
+Internal API and Implementation
+
+-- new: 8-bit coding systems in CCL -- Aidan Kehoe
+-- new: Bind shift-delete to kill-primary-selection -- Aidan Kehoe, Glynn Clements
+-- new: English environments with Windows-1252 and UTF-8 -- Aidan Kehoe
+-- new: Implement invalid octet sequence handling in codecs -- Aidan Kehoe
+-- new: Implement safe-charsets and safe-chars -- Aidan Kehoe
+-- new: Installation-file-coding-system -- Aidan Kehoe
+-- new: TYPE argument for symbol-file (GNU API) -- Aidan Kehoe
+-- new: UTF-32 coding systems -- Aidan Kehoe
+-- new: vars_of_console_gtk -- Aidan Kehoe
+-- new: version.el, refactored from loadup.el -- Aidan Kehoe
+-- fix: 64-bit cleanliness -- Stephen Turnbull, Aidan Kehoe
+-- fix: Argument order in query-coding-string was wrong -- Aidan Kehoe
+-- fix: Assertion in make-docfile: Visual C++ doesn't think Unix line endings are text -- Aidan Kehoe
+-- fix: Buffer overflow in doprnt -- Sebastian Freundt, Aidan Kehoe
+-- fix: Buffer overrun in pdump_load -- Nix
+-- fix: Build chokes on deprecated LDAP API -- Mats Lidell
+-- fix: Changing load-file-name-internal is bad news -- Aidan Kehoe
+-- fix: Checking Qunbound fails to catch unspecified charset -- Aidan Kehoe
+-- fix: Comments reference long-defunct mocklisp -- Aidan Kehoe
+-- fix: Config-dependent defuns wrapped in eval-when-compile -- Aidan Kehoe
+-- fix: Cygwin >=1.7 doesn't like widechar interfaces -- Vin Shelton
+-- fix: Cygwin warning on undefined __STDC_VERSION__ -- Aidan Kehoe
+-- fix: Decode Installation-string -- Aidan Kehoe
+-- fix: Document that query-coding-clear-highlights can take a string -- Aidan Kehoe
+-- fix: Dynarr_add used where Dynarr_increment is needed -- Jerry James
+-- fix: EOF handled incorrectly in ccl_driver -- Ken'ichi Handa, Aidan Kehoe
+-- fix: Fmswindows_short_file_name, Fmswindows_long_file_name should not have interactive specs -- John Paul Wallington
+-- fix: Functions can be called if not fboundp -- Aidan Kehoe
+-- fix: GCC 4.3 warning elimination -- Stephen Turnbull
+-- fix: Handle missing directory for init files -- Aidan Kehoe
+-- fix: Image init assigns to rvalues in GTK -- Ville Skyttä, Dominique Quatravax
+-- fix: Incompatibilities in image libraries on Win32 -- Aidan Kehoe
+-- fix: Initialize Cygwin X and X.org (as XFree86) -- Aidan Kehoe
+-- fix: Language environment set up -- Aidan Kehoe
+-- fix: Local hooks sometimes aren't -- Didier Verna
+-- fix: Many faces need defvars; add some -- Hans de Graaf, Vin Shelton
+-- fix: Memory leaks -- Jerry James, Aidan Kehoe
+-- fix: Migration can corrupt init files -- Mike Sperber
+-- fix: Mismatched parens in ut-log-text -- Paul Keusemann
+-- fix: Modifying build-in-face-specifiers is bad news -- Aidan Kehoe
+-- fix: Nonrepresentable character caused assert in Boyer-Moore -- Aidan Kehoe
+-- fix: Numeric overflow in recompute_need_to_garbage_collect -- Nix
+-- fix: Saved windows save buffer point, but shouldn't -- Mike Sperber
+-- fix: Stream and TTY image conversion rules don't make sense -- Didier Verna
+-- fix: Turkish is ISO-8859-9, not -5 -- Aidan Kehoe
+-- fix: Undocumented internal Xt functions were used -- Kenny Chien
+-- fix: Unused parameter warnings -- Jerry James
+-- fix: Use escape-quoted when needed, add cookie to .elcs -- Aidan Kehoe
+-- fix: Warning elimination in Canna module -- Stephen Turnbull
+-- fix: Warnings and breakage vs. POSIX/C9X functions on Windows -- Aidan Kehoe
+-- fix: We don't have jit-lock-mode, needs if-fboundp -- Aidan Kehoe
+-- fix: Window configuration handling -- Henry S. Thompson, Mike Sperber
+-- fix: XCHAR_OR_INT invoked with side effects in ccl_driver -- Mike Fabian, Aidan Kehoe
+-- fix: XftFont memory leak -- Jerry James
+-- fix: abbrev file coding is wrong -- Aidan Kehoe
+-- fix: autofilling of comments -- Didier Verna
+-- fix: build-report.el doesn't understand Mercurial id -- Mike Sperber
+-- fix: byte-compile-file encoding was vulnerable to latin-unity -- Stephen Turnbull
+-- fix: face DEFAULT_INDEX is not necessarily 0 -- Didier Verna
+-- fix: file-name-coding-system and its alias -- Aidan Kehoe, Katsumi Yamaoka
+-- fix: function-key-map was incorrect for xfree86 and sun -- Aidan Kehoe
+-- fix: gnuserv needs to quote temp-directory -- Mike Sperber
+-- fix: isearch highlights matches during keyboard macro -- Aidan Kehoe
+-- fix: iso-8859-1 on non-Mule breaks EOLs -- Aidan Kehoe, Stephen Turnbull
+-- fix: lost docs due to functions not at toplevel -- Aidan Kehoe
+-- fix: make-src-depend fails with Perl 5.10 -- Mike Sperber
+-- fix: modeline-update-tty-frame-specifier calls non-existent frame-tty-p -- Ron Isaacson
+-- fix: mouse-read-file-name-1 inconsistent with resize-minibuffer-mode -- Mike Sperber
+-- fix: msprinter specifier tag needs to be always available -- Aidan Kehoe
+-- fix: mswindows-font-regexp is too strict -- Aidan Kehoe
+-- fix: other-frame cycles through too many (all) frames -- Ron Isaacson
+-- fix: po is not Polish -- Aidan Kehoe
+-- fix: raw-text isn't TRT in detected_coding_system -- Mike Sperber
+-- fix: startup code was usurping device-specific roles -- Aidan Kehoe
+-- fix: winclient didn't try hard enough to connect -- Vin Shelton
+-- fix: xm_update_progress crash (missing values) -- Stephen Turnbull
+-- improve: Add locale information for many languages -- Aidan Kehoe
+-- improve: Add package-get-download-sites -- Adrian Aichner
+-- improve: Always provide x, tty, mswindows, msprinter, gtk and carbon as device tags -- Aidan Kehoe
+-- improve: Avoid printing spurious gensyms -- Aidan Kehoe
+-- improve: Byte compilation warning elimination -- Aidan Kehoe
+-- improve: Byte compile lambdas in default menus -- Aidan Kehoe
+-- improve: Byte compiler tweaks -- Aidan Kehoe
+-- improve: Cyrillic coding and environment support -- Aidan Kehoe
+-- improve: Description of bindings in describe-function -- Aidan Kehoe
+-- improve: Detect overlong hex escapes in Lisp reader -- Aidan Kehoe
+-- improve: Display information functions use accurate device types -- Aidan Kehoe
+-- improve: Docstrings and comments -- Stephen Turnbull, Aidan Kehoe, Dider Verna
+-- improve: Functions for querying window parameters -- Aidan Kehoe
+-- improve: Hash function for (short) lists -- Sebastian Freundt, Aidan Kehoe
+-- improve: Identification of source files from Lisp -- Aidan Kehoe
+-- improve: Info support for LZMA compression -- Aidan Kehoe
+-- improve: Init file migration -- Mike Sperber
+-- improve: Interactive spec of lm-synopsis -- Stephen Turnbull
+-- improve: Make help distinguish special forms and subrs -- Aidan Kehoe
+-- improve: Make preloaded-file-list respect new dependencies -- Aidan Kehoe
+-- improve: Maybe inline delete-duplicates -- Aidan Kehoe
+-- improve: More characters in x-compose.el -- Aidan Kehoe
+-- improve: More debug info from startup-setup-paths -- Mike Sperber
+-- improve: NEW_GC implementation (write barrier) -- Marcus Crestani
+-- improve: Optimize Feval -- Sebastian Freundt, Aidan Kehoe
+-- improve: Optimize binding in some compiled functions -- Aidan Kehoe
+-- improve: Optimize feature checks for xemacs, cl, cl-extra, cl-19, and backquote -- Aidan Kehoe
+-- improve: Optimize string-to-sequence, string-to-list, string-to-vector (GNU sync) -- Aidan Kehoe
+-- improve: Path-finding code now deals with multiple bases -- Mike Sperber
+-- improve: Printing of gensyms -- Aidan Kehoe
+-- improve: Profiler -- Aidan Kehoe
+-- improve: Refactor symbol-file to use defun* and return-from.
+-- improve: Remove baroque font initialization for GTK -- Aidan Kehoe
+-- improve: Remove commented code -- Stephen Turnbull
+-- improve: Remove no-op code -- Jerry James
+-- improve: Remove unused functions -- Aidan Kehoe
+-- improve: Remove unused {x,gtk}-iso8859-1.el -- Aidan Kehoe
+-- improve: Rework display tables as char-tables -- Aidan Kehoe
+-- improve: STRBUFFER in replace-match can be a subexpression (GNU sync) -- Stephen Turnbull
+-- improve: Suppress experimental tutorials -- Aidan Kehoe
+-- improve: Use Boyer-Moore in more cases -- Aidan Kehoe
+-- improve: Use delete-duplicates instead of local defuns -- Aidan Kehoe
+-- improve: custom-variable-p needs to be a subr -- Aidan Kehoe
+-- improve: lambda expression correctness -- Aidan Kehoe
+-- improve: load-history -- Aidan Kehoe
+-- improve: make-image-specifier -- Aidan Kehoe
+-- improve: user options interactive prompting -- Didier Verna
+-- improve: x-compose code -- Aidan Kehoe
+-- update: Add 'macintosh' as coding system name -- Aidan Kehoe
+-- update: FSF address -- Stephen Turnbull
+-- update: INLINE_HEADER for C99 semantics -- Jerry James
+-- update: Look for "share", not "lib", as data root (FHS) -- Mike Sperber
+-- update: Remove automatic-conversion coding system -- Aidan Kehoe
+-- update: Remove vscii and viqr coding systems -- Aidan Kehoe
+-- update: Rename mule-ccl.el to ccl.el (GNU sync) -- Aidan Kehoe
+-- update: Support NOMODIFY in set-buffer-file-coding-systems (GNU API) -- Aidan Kehoe
+-- update: Sync API of encode-coding-char to GNU -- Aidan Kehoe
+-- update: Sync font lock keyword handling to GNU -- Jerry James
+-- update: add-to-list supports compare-fn (GNU sync) -- Brian Palmer, Aidan Kehoe, Stephen Turnbull
+-- update: etags to Francesco Potorti's 17.33 -- Stephen Turnbull
+-- update: fontconfig has removed some misspelled names -- Aidan Kehoe
+
+Testing and Debugging
+
+-- new: #$ is not modifiable test -- Aidan Kehoe
+-- new: 8-bit coding system tests -- Aidan Kehoe
+-- new: Case test -- Aidan Kehoe
+-- new: Char table printing test -- Aidan Kehoe
+-- new: Error condition tests for replace-regexp-in-string -- Stephen Turnbull
+-- new: Language environment tests -- Aidan Kehoe
+-- new: Lists differing only in order hash differently test -- Aidan Kehoe
+-- new: Little-endian Unicode surrogate tests -- Aidan Kehoe
+-- new: Symbol documentation tests -- Stephen Turnbull
+-- new: Test that revert does not leave buffer-modified-p -- Stephen Turnbull
+-- new: Unicode coverage tests -- Aidan Kehoe
+-- new: format tests -- Aidan Kehoe
+-- new: load-file-name is modifiable -- Aidan Kehoe
+-- new: print-gensym-alist tests -- Aidan Kehoe
+-- new: query-coding-tests.el -- Aidan Kehoe
+-- new: skip-chars-* tests -- Aidan Kehoe
+-- new: subr-arity tests -- Aidan Kehoe
+-- new: substitute-in-file-name with nonexistent envvar tests -- Aidan Kehoe
+-- new: test of at_dot with non-ASCII -- Stephen Turnbull
+-- fix: Tried to test symlinks where they don't work -- Aidan Kehoe
+-- fix: tests using with-string-as-buffer-contents were doing nothing -- Stephen Turnbull
+-- improve: Checked and renamed reproduce-bugs.el as reproduce-crashes.el. -- Stephen Turnbull
+-- improve: Silence-message doesn't disable clear-message -- Aidan Kehoe
+-- improve: Use make-temp-file where appropriate -- Aidan Kehoe
+-- improve: escape-quoted tests -- Aidan Kehoe
+-- improve: remove unneeded debug code from tests -- Stephen Turnbull
+-- improve: sanity[sic] of CCL tests -- Aidan Kehoe
+-- update: Test all 2^21 characters in Mule -- Aidan Kehoe
+
+to 21.5.28 "fuki"
 
 Major Features and Backward Incompatible Changes
 
