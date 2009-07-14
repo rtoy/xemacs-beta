@@ -4078,12 +4078,12 @@ undecided_canonicalize_after_coding (struct coding_stream *str)
     return str->codesys;
 
   if (!data->c.initted)
-    return Fget_coding_system (Qundecided);
+    return str->codesys;
   
   ret = coding_stream_canonicalize_after_coding
     (XLSTREAM (data->c.lstreams[0]));
   if (NILP (ret))
-    ret = Fget_coding_system (Qundecided);
+    ret = str->codesys;
   if (XCODING_SYSTEM_EOL_TYPE (ret) != EOL_AUTODETECT)
     return ret;
   eolret = coding_stream_canonicalize_after_coding

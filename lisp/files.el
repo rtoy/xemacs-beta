@@ -593,28 +593,33 @@ colon-separated list of directories when resolving a relative directory name."
 			      default-directory default-directory
 			      (and (member cd-path '(nil ("./")))
 				   (null (getenv "CDPATH"))))))
-  (if (file-name-absolute-p dir)
-      (cd-absolute (expand-file-name dir))
-    ;; XEmacs
-    (unless (and cd-path (equal (getenv "CDPATH") cdpath-previous))
-      ;;#### Unix-specific
-      (let ((trypath (parse-colon-path
-		      (setq cdpath-previous (getenv "CDPATH")))))
-	(setq cd-path (or trypath (list "./")))))
-    (or (catch 'found
-	  (mapcar #'(lambda (x)
-		        (let ((f (expand-file-name (concat x dir))))
+
+  (let* ((cdpath-current (getenv "CDPATH"))
+	 (trypath (if cdpath-current
+		      (split-path (setq cdpath-previous cdpath-current))
+		    nil)))		; null list
+    (if (file-name-absolute-p dir)
+	(cd-absolute (expand-file-name dir))
+      ;; XEmacs change. I'm not sure respecting CDPATH is the right thing to
+      ;; do under Windows.
+      (unless (and cd-path (equal cdpath-current cdpath-previous))
+	(setq cd-path (or (and trypath
+			       (mapcar #'file-name-as-directory trypath))
+			  (list (file-name-as-directory "")))))
+      (or (catch 'found
+	    (mapcar #'(lambda (x)
+			(let ((f (expand-file-name (concat x dir))))
 			  (if (file-directory-p f)
 			      (progn
-			        (cd-absolute f)
-			        (throw 'found t)))))
-		  cd-path)
-	  nil)
-	;; jwz: give a better error message to those of us with the
-	;; good taste not to use a kludge like $CDPATH.
-	(if (equal cd-path '("./"))
-	    (error "No such directory: %s" (expand-file-name dir))
-	  (error "Directory not found in $CDPATH: %s" dir)))))
+				(cd-absolute f)
+				(throw 'found t)))))
+		    cd-path)
+	    nil)
+	  ;; jwz: give a better error message to those of us with the
+	  ;; good taste not to use a kludge like $CDPATH.
+	  (if (equal cd-path '("./"))
+	      (error "No such directory: %s" (expand-file-name dir))
+	    (error "Directory not found in $CDPATH: %s" dir))))))
 
 (defun load-file (file)
   "Load the Lisp file named FILE."
@@ -874,6 +879,30 @@ backward, and defaults to 1.  Buffers whose name begins with a space
 		  (not (funcall buffers-tab-selection-function
 			curbuf (car (buffer-list)))))))))
 
+(defmacro find-file-create-switch-thunk (switch-function)
+  "Mark buffer modified if needed, then call SWITCH-FUNCTION. 
+
+The buffer will be marked modified if the file associated with the buffer
+does not exist.  This means that \\[find-file] on a non-existent file will
+create a modified buffer, making \\[save-buffer] sufficient to create the
+file.
+
+SWITCH-FUNCTION should be `switch-to-buffer' or a related function.  This
+function (that is, `find-file-create-switch-thunk') is implemented as a macro
+because we don't have built-in lexical scope, a closure created with
+`lexical-let' will always run as interpreted code.  Though functions created
+by this macro are unlikely to be called in performance-critical contexts.
+
+This function may be called from functions related to `find-file', as well
+as `find-file' itself."
+  `(function
+    (lambda (buffer)
+      (unless (file-exists-p (buffer-file-name buffer))
+        ;; XEmacs: nonexistent file--qualifies as a modification to the
+        ;; buffer.
+        (set-buffer-modified-p t buffer))
+      (,switch-function buffer))))
+
 (defun find-file (filename &optional codesys wildcards)
   "Edit file FILENAME.
 Switch to a buffer visiting file FILENAME, creating one if none already
@@ -907,25 +936,13 @@ can be suppressed by setting `find-file-wildcards' to `nil'."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let* ((coding-system-for-read (get-coding-system codesys))
-	     (value (find-file-noselect filename nil nil wildcards))
-	     (bufname (if (listp value) (car (nreverse value)) value)))
-	;; If a user explicitly specified the coding system with a prefix
-	;; argument when opening a nonexistent file, insert-file-contents
-	;; hasn't preserved that coding system as the local
-	;; buffer-file-coding-system. Do that ourselves.
-	(unless (and bufname
-		     (file-exists-p (buffer-file-name bufname)) 
-		     (local-variable-p 'buffer-file-coding-system bufname))
-	  (save-excursion
-	    (set-buffer bufname)
-	    (setq buffer-file-coding-system coding-system-for-read)))
-	(switch-to-buffer bufname))
-    (let ((value (find-file-noselect filename nil nil wildcards)))
-      (if (listp value)
-	  (mapcar 'switch-to-buffer (nreverse value))
-	(switch-to-buffer value)))))
+  (and codesys (setq codesys (check-coding-system codesys)))
+  (let* ((coding-system-for-read (or codesys coding-system-for-read))
+         (value (find-file-noselect filename nil nil wildcards))
+         (thunk (find-file-create-switch-thunk switch-to-buffer)))
+    (if (listp value)
+        (mapcar thunk (nreverse value))
+      (funcall thunk value))))
 
 (defun find-file-other-window (filename &optional codesys wildcards)
   "Edit file FILENAME, in another window.
@@ -937,23 +954,17 @@ will be prompted for the coding system."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(let ((value (find-file-noselect filename nil nil wildcards)))
-	  (if (listp value)
-	      (progn
-		(setq value (nreverse value))
-		(switch-to-buffer-other-window (car value))
-		(mapcar 'switch-to-buffer (cdr value)))
-	    (switch-to-buffer-other-window value))))
-    (let ((value (find-file-noselect filename nil nil wildcards)))
-      (if (listp value)
-	  (progn
-	    (setq value (nreverse value))
-	    (switch-to-buffer-other-window (car value))
-	    (mapcar 'switch-to-buffer (cdr value)))
-	(switch-to-buffer-other-window value)))))
+  (and codesys (setq codesys (check-coding-system codesys)))
+  (let* ((coding-system-for-read (or codesys coding-system-for-read))
+         (value (find-file-noselect filename nil nil wildcards))
+         (list (and (listp value) (nreverse value)))
+         (other-window-thunk (find-file-create-switch-thunk
+                              switch-to-buffer-other-window)))
+    (if list
+        (cons
+         (funcall other-window-thunk (car list))
+         (mapcar (find-file-create-switch-thunk switch-to-buffer) (cdr list)))
+      (funcall other-window-thunk value))))
 
 (defun find-file-other-frame (filename &optional codesys wildcards)
   "Edit file FILENAME, in a newly-created frame.
@@ -964,23 +975,20 @@ the coding system."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(let ((value (find-file-noselect filename nil nil wildcards)))
-	  (if (listp value)
-	      (progn
-		(setq value (nreverse value))
-		(switch-to-buffer-other-frame (car value))
-		(mapcar 'switch-to-buffer (cdr value)))
-	    (switch-to-buffer-other-frame value))))
-    (let ((value (find-file-noselect filename nil nil wildcards)))
-      (if (listp value)
-	  (progn
-	    (setq value (nreverse value))
-	    (switch-to-buffer-other-frame (car value))
-	    (mapcar 'switch-to-buffer (cdr value)))
-	(switch-to-buffer-other-frame value)))))
+  (and codesys (setq codesys (check-coding-system codesys)))
+  (let* ((coding-system-for-read (or codesys coding-system-for-read))
+         (value (find-file-noselect filename nil nil wildcards))
+         (list (and (listp value) (nreverse value)))
+         (other-frame-thunk (find-file-create-switch-thunk
+                             switch-to-buffer-other-frame)))
+    (if list
+        (cons
+         (funcall other-frame-thunk (car list))
+         (mapcar (find-file-create-switch-thunk switch-to-buffer) (cdr list)))
+      (funcall other-frame-thunk value))))
+
+;; No need to keep this macro around in the dumped executable.
+(unintern 'find-file-create-switch-thunk)
 
 (defun find-file-read-only (filename &optional codesys wildcards)
   "Edit file FILENAME but don't allow changes.
@@ -993,13 +1001,11 @@ the coding system."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(find-file filename nil wildcards))
-    (find-file filename nil wildcards))
-  (setq buffer-read-only t)
-  (current-buffer))
+  (let ((value (find-file filename codesys wildcards)))
+    (mapcar #'(lambda (buffer)
+		(set-symbol-value-in-buffer 'buffer-read-only t buffer))
+	    (if (listp value) value (list value)))
+    value))
 
 (defun find-file-read-only-other-window (filename &optional codesys wildcards)
   "Edit file FILENAME in another window but don't allow changes.
@@ -1012,11 +1018,7 @@ the coding system."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(find-file-other-window filename))
-    (find-file-other-window filename))
+  (find-file-other-window filename codesys wildcards)
   (setq buffer-read-only t)
   (current-buffer))
 
@@ -1031,11 +1033,7 @@ the coding system."
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
 		     t))
-  (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(find-file-other-frame filename))
-    (find-file-other-frame filename))
+  (find-file-other-frame filename codesys wildcards)
   (setq buffer-read-only t)
   (current-buffer))
 
@@ -1057,7 +1055,7 @@ with a prefix argument, you will be prompted for the coding system."
 	      "Find alternate file: " file-dir nil nil file-name)
 	     (if current-prefix-arg (read-coding-system "Coding-system: "))))))
   (if (one-window-p)
-      (find-file-other-window filename)
+      (find-file-other-window filename codesys)
     (save-selected-window
       (other-window 1)
       (find-alternate-file filename codesys))))
@@ -1099,11 +1097,7 @@ prompted for the coding system."
     (unwind-protect
 	(progn
 	  (unlock-buffer)
-	  (if codesys
-	      (let ((coding-system-for-read
-		     (get-coding-system codesys)))
-		(find-file filename))
-	    (find-file filename)))
+          (find-file filename codesys))
       (cond ((eq obuf (current-buffer))
 	     (setq buffer-file-name ofile)
 	     (setq buffer-file-number onum)
@@ -1567,7 +1561,8 @@ The directory containing %s does not exist.  Create? "
 			    (abbreviate-file-name buffer-file-name)))
 			  (make-directory (file-name-directory
 					   buffer-file-name)
-					  t))
+					  t)
+			(kill-buffer (current-buffer)))
 		    (quit
 		     (kill-buffer (current-buffer))
 		     (signal 'quit nil))))

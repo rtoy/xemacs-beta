@@ -1,3 +1,7 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2007-08-12  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in (datarootdir): Add.

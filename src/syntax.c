@@ -2491,7 +2491,7 @@ complex_vars_of_syntax (void)
   /* The whitespace--overwriting some of the above changes.
 
      String literals are const char *s, not const unsigned char *s. */
-  define_standard_syntax((const UExtbyte *)" \t\015\014", Swhitespace);
+  define_standard_syntax((const UExtbyte *)" \t\015\014\012", Swhitespace);
 
   /* DEL plus Control 1 */
   SET_RANGE_SYNTAX(127, 159, Spunct);

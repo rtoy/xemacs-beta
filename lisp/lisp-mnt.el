@@ -577,6 +577,101 @@ Prompts for bug subject.  Leaves you in a mail buffer."
     (message
      (substitute-command-keys "Type \\[mail-send] to send bug report."))))
 
+;;; Entry point: insert boilerplate
+
+(defconst lm-standard-permission
+  "\n;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.\n"
+  "Standard permissions notice for Lisp files that are part of XEmacs.
+License version and FSF address are current as of 2009-04-01.")
+
+(defconst lm-change-log
+  "\n;;; Change Log:
+
+;; %s  %s  <%s>
+;;
+;;	* Created.\n"
+  "GNU standard change-log template.")
+
+(defconst lm-boilerplate
+  ";;; %s --- %s
+
+;; Copyright (C) %s %s
+
+;; Author: %s <%s>
+;; Created: %s
+;; Keywords: %s
+%s
+;;; Synched up with: Not in GNU.
+ 
+;;; Commentary:
+
+;; PLACE YOUR COMMENTARY (DESCRIPTION OF THE LIBRARY'S CONTENTS AND FUNCTION)
+;; IN THIS SECTION.
+%s
+;;; Code:\n\n"
+  "lisp-mnt standard boilerplate.")
+
+;; #### Need to improve the interactive declaration.
+;; #### Need to check for existing boilerplate.
+(defun lm-insert-boilerplate (file synopsis permission author email keys log)
+  "Insert lisp-mnt standard header and footer.
+FILE is the file name of the library.
+SYNOPSIS is a one line description of the file.
+  Total length of FILE and SYNOPSIS should be less than 70 characters.
+PERMISSION, if non-nil, means to use a simple \"All Rights Reserved.\"
+  Otherwise, the standard boilerplate for XEmacs sources is inserted.
+AUTHOR is the name of the author, defaulting to `user-full-name'.
+EMAIL is the contact email address, defaulting to `user-mail-address'.
+KEYS is a comma-separated list of finder keywords.
+LOG, if non-nil, means to insert a Change Log section.
+  Otherwise, it will be omitted."
+
+  (interactive "FName of file: \nsSynopsis: \nP\nsAuthor: \nsEmail: 
+sKeywords: \ncInsert a Change Log section? (y/n)")
+
+  (save-restriction
+    (widen)
+    (let ((file (file-name-nondirectory file))
+	  (year (format-time-string "%Y"))
+	  (date (format-time-string "%Y-%m-%d"))
+	  (author (if (> (length author) 0)
+		      author
+		    user-full-name))
+	  (email (if (> (length email) 0)
+		     email
+		   user-mail-address))
+	  (log (eql (upcase log) ?Y)))
+      (goto-char (point-min))
+      (insert (format lm-boilerplate
+		      file synopsis
+		      year author
+		      author email
+		      date
+		      keys
+		      (if permission
+			  "\n;;        All Rights Reserved.\n"
+			lm-standard-permission)
+		      (if log
+			  (format lm-change-log date author email)
+			"")))
+      (goto-char (point-max))
+      (insert (format "\n;;; %s ends here\n" file)))))
+
 (provide 'lisp-mnt)
 
 ;;; lisp-mnt.el ends here

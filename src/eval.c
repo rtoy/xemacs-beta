@@ -816,9 +816,11 @@ signal_call_debugger (Lisp_Object conditions,
    from interpreted code.  The byte compiler turns them into bytecodes. */
 
 DEFUN ("or", For, 0, UNEVALLED, 0, /*
-Eval args until one of them yields non-nil, then return that value.
-The remaining args are not evalled at all.
+Eval ARGS until one of them yields non-nil, then return that value.
+The remaining ARGS are not evalled at all.
 If all args return nil, return nil.
+
+arguments: (&rest ARGS)
 */
        (args))
 {
@@ -835,9 +837,11 @@ If all args return nil, return nil.
 }
 
 DEFUN ("and", Fand, 0, UNEVALLED, 0, /*
-Eval args until one of them yields nil, then return nil.
-The remaining args are not evalled at all.
+Eval ARGS until one of them yields nil, then return nil.
+The remaining ARGS are not evalled at all.
 If no arg yields nil, return the last arg's value.
+
+arguments: (&rest ARGS)
 */
        (args))
 {
@@ -854,10 +858,12 @@ If no arg yields nil, return the last arg's value.
 }
 
 DEFUN ("if", Fif, 2, UNEVALLED, 0, /*
-\(if COND THEN ELSE...): if COND yields non-nil, do THEN, else do ELSE...
+If COND yields non-nil, do THEN, else do ELSE.
 Returns the value of THEN or the value of the last of the ELSE's.
 THEN must be one expression, but ELSE... can be zero or more expressions.
 If COND yields nil, and there are no ELSE's, the value is nil.
+
+arguments: (COND THEN &rest ELSE)
 */
        (args))
 {
@@ -876,8 +882,10 @@ If COND yields nil, and there are no ELSE's, the value is nil.
    but it helps for bootstrapping to have them ALWAYS defined. */
 
 DEFUN ("when", Fwhen, 1, MANY, 0, /*
-\(when COND BODY...): if COND yields non-nil, do BODY, else return nil.
+If COND yields non-nil, do BODY, else return nil.
 BODY can be zero or more expressions.  If BODY is nil, return nil.
+
+arguments: (COND &rest BODY)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -895,8 +903,10 @@ BODY can be zero or more expressions.  If BODY is nil, return nil.
 }
 
 DEFUN ("unless", Funless, 1, MANY, 0, /*
-\(unless COND BODY...): if COND yields nil, do BODY, else return nil.
+If COND yields nil, do BODY, else return nil.
 BODY can be zero or more expressions.  If BODY is nil, return nil.
+
+arguments: (COND &rest BODY)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -906,7 +916,7 @@ BODY can be zero or more expressions.  If BODY is nil, return nil.
 }
 
 DEFUN ("cond", Fcond, 0, UNEVALLED, 0, /*
-\(cond CLAUSES...): try each clause until one succeeds.
+Try each clause until one succeeds.
 Each clause looks like (CONDITION BODY...).  CONDITION is evaluated
 and, if the value is non-nil, this clause succeeds:
 then the expressions in BODY are evaluated and the last one's
@@ -914,6 +924,8 @@ value is the value of the cond-form.
 If no clause succeeds, cond returns nil.
 If a clause has one element, as in (CONDITION),
 CONDITION's value if non-nil is returned from the cond-form.
+
+arguments: (&rest CLAUSES)
 */
        (args))
 {
@@ -938,7 +950,9 @@ CONDITION's value if non-nil is returned from the cond-form.
 }
 
 DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
-\(progn BODY...): eval BODY forms sequentially and return value of last one.
+Eval BODY forms sequentially and return value of last one.
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -963,13 +977,14 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
 
 DEFUN ("prog1", Fprog1, 1, UNEVALLED, 0, /*
 Similar to `progn', but the value of the first form is returned.
-\(prog1 FIRST BODY...): All the arguments are evaluated sequentially.
-The value of FIRST is saved during evaluation of the remaining args,
-whose values are discarded.
+
+All the arguments are evaluated sequentially.  The value of FIRST is saved
+during evaluation of the remaining args, whose values are discarded.
+
+arguments: (FIRST &rest BODY)
 */
        (args))
 {
-  /* This function can GC */
   Lisp_Object val;
   struct gcpro gcpro1;
 
@@ -988,9 +1003,11 @@ whose values are discarded.
 
 DEFUN ("prog2", Fprog2, 2, UNEVALLED, 0, /*
 Similar to `progn', but the value of the second form is returned.
-\(prog2 FIRST SECOND BODY...): All the arguments are evaluated sequentially.
-The value of SECOND is saved during evaluation of the remaining args,
-whose values are discarded.
+
+All the arguments are evaluated sequentially.  The value of SECOND is saved
+during evaluation of the remaining args, whose values are discarded.
+
+arguments: (FIRST SECOND &rest BODY)
 */
        (args))
 {
@@ -1015,11 +1032,13 @@ whose values are discarded.
 }
 
 DEFUN ("let*", FletX, 1, UNEVALLED, 0, /*
-\(let* VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 Each VALUEFORM can refer to the symbols already bound by this VARLIST.
+
+arguments: (VARLIST &rest BODY)
 */
        (args))
 {
@@ -1055,11 +1074,13 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 }
 
 DEFUN ("let", Flet, 1, UNEVALLED, 0, /*
-\(let VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 All the VALUEFORMs are evalled before any symbols are bound.
+
+arguments: (VARLIST &rest BODY)
 */
        (args))
 {
@@ -1124,9 +1145,11 @@ All the VALUEFORMs are evalled before any symbols are bound.
 }
 
 DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
-\(while TEST BODY...): if TEST yields non-nil, eval BODY... and repeat.
+If TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
+
+arguments: (TEST &rest BODY)
 */
        (args))
 {
@@ -1255,7 +1278,7 @@ and the result should be a form to be evaluated instead of the original.
 }
 
 DEFUN ("defvar", Fdefvar, 1, UNEVALLED, 0, /*
-\(defvar SYMBOL INITVALUE DOCSTRING): define SYMBOL as a variable.
+Define SYMBOL as a variable.
 You are not required to define a variable in order to use it,
  but the definition can supply documentation and an initial value
  in a way that tags can recognize.
@@ -1272,6 +1295,8 @@ If DOCSTRING starts with *, this variable is identified as a user option.
 If INITVALUE is missing, SYMBOL's value is not set.
 
 In lisp-interaction-mode defvar is treated as defconst.
+
+arguments: (SYMBOL &optional INITVALUE DOCSTRING)
 */
        (args))
 {
@@ -1310,8 +1335,7 @@ In lisp-interaction-mode defvar is treated as defconst.
 }
 
 DEFUN ("defconst", Fdefconst, 2, UNEVALLED, 0, /*
-\(defconst SYMBOL INITVALUE DOCSTRING): define SYMBOL as a constant
-variable.
+Define SYMBOL as a constant variable.
 The intent is that programs do not change this value, but users may.
 Always sets the value of SYMBOL to the result of evalling INITVALUE.
 If SYMBOL is buffer-local, its default value is what is set;
@@ -1325,6 +1349,8 @@ Note: do not use `defconst' for user options in libraries that are not
  their own values for such variables before loading the library.
 Since `defconst' unconditionally assigns the variable,
  it would override the user's choice.
+
+arguments: (SYMBOL &optional INITVALUE DOCSTRING)
 */
        (args))
 {
@@ -4285,6 +4311,8 @@ If it is a list, the elements are called, in order, with no arguments.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (&rest HOOKS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4309,6 +4337,8 @@ as that may change.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4325,6 +4355,8 @@ If all the functions return nil, we return nil.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4341,6 +4373,8 @@ If all the functions return non-nil, we return non-nil.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

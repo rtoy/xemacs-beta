@@ -2541,7 +2541,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		    ;; only if it is not the only element of the body.
 		    (if (cdr body)
 			(setq body (cdr body))))))
-	 (int (assq 'interactive body)))
+	 (int (assq 'interactive body)) compiled-int)
     (dolist (arg arglist)
       (cond ((not (symbolp arg))
 	     (byte-compile-warn "non-symbol in arglist: %S" arg))
@@ -2560,9 +2560,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		  (if (cdr (cdr int))
 		      (byte-compile-warn "malformed interactive spec: %s"
 					 (prin1-to-string int)))
-		  ;; If the interactive spec is a call to `list',
-		  ;; don't compile it, because `call-interactively'
-		  ;; looks at the args of `list'.
+		  ;; If the interactive spec is a call to `list', don't
+		  ;; store the compiled form, because `call-interactively'
+		  ;; looks at the args of `list' and treats certain
+		  ;; functions specially.  Compiling it is nonetheless
+		  ;; useful for warnings.
 		  (let ((form (nth 1 int)))
 		    (while (or (eq (car-safe form) 'let)
 			       (eq (car-safe form) 'let*)
@@ -2570,9 +2572,10 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		      (while (consp (cdr form))
 			(setq form (cdr form)))
 		      (setq form (car form)))
+		    (setq compiled-int 
+			  (byte-compile-top-level (nth 1 int)))
 		    (or (eq (car-safe form) 'list)
-			(setq int (list 'interactive
-					(byte-compile-top-level (nth 1 int)))))))
+			(setq int (list 'interactive compiled-int)))))
 		 ((cdr int)
 		  (byte-compile-warn "malformed interactive spec: %s"
 				     (prin1-to-string int))))))

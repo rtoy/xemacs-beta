@@ -2,7 +2,10 @@
 
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
-XEmacs 21.5.
+XEmacs 21.5.  Note that the issues are by now mainly historic; XEmacs
+no longer depends on bleeding edge features of operating systems, but
+rather is quite conservative.  Operational issues (common user
+misunderstandings and such) are described in the FAQ, not here.
 
 This file is rather large, but we have tried to sort the entries by
 their respective relevance for XEmacs, but may have not succeeded

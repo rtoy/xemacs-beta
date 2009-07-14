@@ -1,3 +1,15 @@
+2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gdbinit.in: 
+	Supply variables for the Lisp_Type_Record, Lisp_Type_Char
+	type information, for the sake of various versions of GDB that
+	can't take them from the enum vals in the executable. Use those
+	variables instead of the enums.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
 2008-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* HELLO: Add a coding cookie, now the UTF-8 sequences prevent the

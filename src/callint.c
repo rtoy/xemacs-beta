@@ -86,6 +86,9 @@ to make ARG be the prefix argument when `foo' is called as a command.
 The "call" to `interactive' is actually a declaration rather than a function;
  it tells `call-interactively' how to read arguments
  to pass to the function.
+The interactive form must appear at the top level of the function body.  If
+ it is wrapped in a `let' or `progn' or similar, Lisp will not even realize
+ the function is an interactive command!
 When actually called, `interactive' just returns nil.
 
 The argument of `interactive' is usually a string containing a code letter
