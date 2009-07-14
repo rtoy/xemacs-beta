@@ -1,3 +1,9 @@
+2009-07-15 Aidan Kehoe <kehoea@parhasard.net>
+
+	* syntax.c (complex_vars_of_syntax): 
+	?\012 is whitespace, as it always should have been, thank you Karl
+	Kleinpaste and the Gnus team!
+
 2009-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (undecided_canonicalize_after_coding): 
