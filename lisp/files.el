@@ -897,7 +897,8 @@ This function may be called from functions related to `find-file', as well
 as `find-file' itself."
   `(function
     (lambda (buffer)
-      (unless (file-exists-p (buffer-file-name buffer))
+      (unless (and (buffer-file-name buffer)
+		   (file-exists-p (buffer-file-name buffer)))
         ;; XEmacs: nonexistent file--qualifies as a modification to the
         ;; buffer.
         (set-buffer-modified-p t buffer))
