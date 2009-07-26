@@ -6732,6 +6732,11 @@ if one of its condition symbols appears in the list.
 This variable is overridden by `debug-ignored-errors'.
 See also variables `debug-on-quit' and `debug-on-signal'.
 
+Process filters are considered to be outside of condition-case forms
+(unless contained in the process filter itself).  To prevent the
+debugger from being called from a process filter, use a list value, or
+put the expected error\(s) in `debug-ignored-errors'.
+
 If this variable is set while XEmacs is running noninteractively (using
 `-batch'), and XEmacs was configured with `--debug' (#define XEMACS_DEBUG
 in the C code), instead of trying to invoke the Lisp debugger (which
