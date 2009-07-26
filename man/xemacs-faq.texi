@@ -322,7 +322,7 @@ library directory>/info/}. For example in
 2.5: Startup-Related Problems
 * Q2.5.1::    XEmacs cannot connect to my X Terminal!
 * Q2.5.2::    Startup problems related to paths or package locations.
-* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.3::    XEmacs won't start without network, or starts slowly.
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
@@ -3124,7 +3124,7 @@ section is devoted to Installation, Maintenance and Troubleshooting.
 2.5: Startup-Related Problems
 * Q2.5.1::    XEmacs cannot connect to my X Terminal!
 * Q2.5.2::    Startup problems related to paths or package locations.
-* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.3::    XEmacs won't start without network, or starts slowly.
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
@@ -4471,7 +4471,7 @@ parameter (@pxref{Q2.1.1}).  If this has the value of @samp{nil},
 this means that no value was compiled into XEmacs using these parameters.
 
 @node Q2.5.3, Q2.5.4, Q2.5.2, Installation
-@unnumberedsubsec Q2.5.3: XEmacs won't start without network.
+@unnumberedsubsec Q2.5.3: XEmacs won't start without network, or starts slowly.
 
 If XEmacs starts when you're on the network, but fails when you're not
 on the network, you may be missing a "localhost" entry in your
@@ -4481,7 +4481,16 @@ on the network, you may be missing a "localhost" entry in your
 127.0.0.1        localhost
 @end example
 
-Add that line, and XEmacs will be happy.
+Add that line, and XEmacs will be happy.  If your network is unreliable,
+such as a Wifi network, you may experience delays but eventually XEmacs
+starts up.  This may be due to having the lookup order give precedence
+to DNS over the hosts file (often lookup order is defined in one of the
+files @file{/etc/host.conf}, @file{/etc/nsswitch.conf}, or
+@file{/etc/resolv.conf}, depending on OS).  See your system
+documentation for this configuration.  Note that changing the lookup
+order is a workaround; there are good reasons to have DNS come earlier
+by default.  Make sure those reasons are less important to you than a
+quick XEmacs startup.
 
 @node Q2.5.4, Q2.5.5, Q2.5.3, Installation
 @unnumberedsubsec Q2.5.4: Startup warnings about deducing proper fonts?

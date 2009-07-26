@@ -7,6 +7,15 @@
 	* internals/internals.texi: s/@urlref/@uref/g.
 	(Lstreams): Add urefs to David Beasley tutorials.
 
+2009-04-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.5.3): 
+	Add information about resolver configuration to Q2.5.3.
+	Thanks to Guillaume MULLER <gm.work.lists@gmail.com>.
+
+	* xemacs-faq.texi (Top): Update menu.
+	* xemacs-faq.texi (Installation): Update menu.
+
 2009-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q3.0.12): New node for Meta key on Mac.
