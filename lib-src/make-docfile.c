@@ -533,6 +533,8 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 /* Write to file OUT the argument names of function FUNC, whose text is in BUF.
    MINARGS and MAXARGS are the minimum and maximum number of arguments.  */
 
+#define SKIPWHITE do { while (isspace ((unsigned char) (*p))) p++; } while (0)
+
 static void
 write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	      int minargs, int maxargs)
@@ -540,6 +542,7 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   register char *p;
   int in_ident = 0;
   int just_spaced = 0;
+  int need_paren = 0;
 #if 0
   int need_space = 1;
 
@@ -560,76 +563,68 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   for (p = buf; *p; p++)
     {
       char c = *p;
+#if 0
       int ident_start = 0;
+#endif
 
-      /* XEmacs addition:  add support for ANSI prototypes and the UNUSED
-	 macros.  Hop over them.  "Lisp_Object" is the only C type allowed
-	 in DEFUNs.  For the UNUSED macros we need to eat parens, too. */
+      /* XEmacs addition:  used for ANSI prototypes and UNUSED macros. */
       static char uu [] = "UNUSED";
       static char ui [] = "USED_IF_";
-      static char lo[] = "Lisp_Object";
+      static char lo [] = "Lisp_Object";
 
-      /* aren't these all vulnerable to buffer overrun?  I guess that
-	 means that the .c is busted, so we may as well just die ... */
-      /* skip over "Lisp_Object" */
-      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
-	  isspace ((unsigned char) p[sizeof (lo) - 1]))
-	{
-	  p += (sizeof (lo) - 1);
-	  while (isspace ((unsigned char) (*p)))
-	    p++;
-	  c = *p;
-	}
-
-      /* skip over "UNUSED" invocation */
-      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, uu, sizeof (uu) - 1) == 0))
-	{
-	  char *here = p;
-	  p += (sizeof (uu) - 1);
-	  while (isspace ((unsigned char) (*p)))
-	    p++;
-	  if (*p == '(')
-	    {
-	      while (isspace ((unsigned char) (*++p)))
-		;
-	      c = *p;
-	    }
-	  else
-	    p = here;
-	}
-
-      /* skip over "USED_IF_*" invocation (only if USED failed) */
-      else if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, ui, sizeof (ui) - 1) == 0))
-	{
-	  char *here = p;
-	  p += (sizeof (ui) - 1);
-	  /* There should be a law against parsing in C:
-	     this allows a broken USED_IF call, skipping to next macro's
-	     parens.  *You* can fix that, I don't see how offhand. ;-) */
-	  while (*p && *p++ != '(')
-	    ;
-	  if (*p)
-	    {
-	      while (isspace ((unsigned char) (*p)))
-		p++;
-	      c = *p;
-	    }
-	  else
-	    p = here;
-	}
-
-      /* Notice when we start printing a new identifier.  */
+      /* Notice when we enter or leave an identifier.  */
       if (C_IDENTIFIER_CHAR_P (c) != in_ident)
 	{
 	  if (!in_ident)
 	    {
+	      /* Entering identifier.  Print as we parse. */
+	      char *here;     	/* Target for backtracking. */
+
+	      /* XEmacs addition:  add support for ANSI prototypes and the
+		 UNUSED macros.  Hop over them.  "Lisp_Object" is the only
+		 C type allowed in DEFUNs.  For the UNUSED macros we need
+		 to eat parens, too. */
+	      /* Aren't these all vulnerable to buffer overrun?  I guess that
+		 means that the .c is busted, so we may as well just die ... */
+
+	      /* Skip over "Lisp_Object". */
+	      if ((strncmp (p, lo, sizeof (lo) - 1) == 0) &&
+		  isspace ((unsigned char) p[sizeof (lo) - 1]))
+		{
+		  p += (sizeof (lo) - 1);
+		  SKIPWHITE;
+		}
+	      /* Skip over "UNUSED" or "USED_IF_*" invocation. */
+	      need_paren = 1;
+	      here = p;
+	      if (strncmp (p, uu, sizeof (uu) - 1) == 0)
+		p += (sizeof (uu) - 1);
+	      else if (strncmp (p, ui, sizeof (ui) - 1) == 0)
+		p += (sizeof (ui) - 1);
+	      else
+		need_paren = 0;
+
+	      if (need_paren)
+		{
+		  /* Skip rest of macro name, open paren, whitespace. */
+		  while (*p && C_IDENTIFIER_CHAR_P (*p))
+		    p++;
+		  SKIPWHITE;
+		  if (*p++ == '(')
+		    SKIPWHITE;
+		  else
+		    {
+		      need_paren = 0;
+		      p = here;
+		    }
+		}
+	      c = *p;
+
+	      /* Do bookkeeping.  Maybe output lambda keywords. */
 	      in_ident = 1;
-	      ident_start = 1;
 #if 0
 	      /* XEmacs - This goes along with the change above. */
+	      ident_start = 1;
 	      if (need_space)
 		putc (' ', out);
 #endif
@@ -641,7 +636,18 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	      maxargs--;
 	    }
 	  else
-	    in_ident = 0;
+	    {
+	      /* Leaving identifier. */
+	      in_ident = 0;
+	      if (need_paren)
+		{
+		  SKIPWHITE;
+		  if (*p == ')')
+		    p++;
+		  c = *p;
+		  need_paren = 0;
+		}
+	    }
 	}
 
       /* Print the C argument list as it would appear in lisp:
@@ -705,6 +711,8 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   if (!ellcc)
     putc ('\n', out);
 }
+#undef SKIPWHITE
+
 
 /* Read through a c file.  If a .o or .obj file is named,
    the corresponding .c file is read instead.

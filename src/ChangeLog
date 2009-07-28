@@ -1,3 +1,10 @@
+2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
+
+	* faces.c (ensure_face_cachel_contains_charset):
+	(add_face_cachel):
+	(update_face_cachel_data):
+	Fix typos in comments and otherwise improve them.
+
 2009-07-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (debug-on-error): Document interaction with process filters.
