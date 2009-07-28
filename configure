@@ -794,6 +794,7 @@ instvardir
 srcdir
 extra_includes
 PREFIX_USER_DEFINED
+PREFIX
 EXEC_PREFIX_USER_DEFINED
 EXEC_PREFIX
 INFODIR_USER_DEFINED
@@ -40693,6 +40694,7 @@ while true; do
     *) break ;;
   esac
 done
+
 
 
 

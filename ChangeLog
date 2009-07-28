@@ -1,5 +1,9 @@
 2009-07-28  Mike Sperber  <mike@xemacs.org>
 
+	* configure.ac: Expand @PREFIX@ in paths.h.
+
+2009-07-28  Mike Sperber  <mike@xemacs.org>
+
 	* configure.ac: More accurate tests if paths have been set
 	explicitly on the configure command line.
 
