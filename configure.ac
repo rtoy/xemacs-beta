@@ -1075,24 +1075,23 @@ XE_EXPAND_VARIABLE(prefix,prefix_expanded)
 XE_EXPAND_VARIABLE(datadir,datadir_expanded)
 XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
 XE_EXPAND_VARIABLE(libdir,libdir_expanded)
-XE_EXPAND_VARIABLE(mandir,mandir_expanded)
 XE_EXPAND_VARIABLE(infodir,infodir_expanded)
 
-if test "x$datadir_expanded" != "x$prefix_expanded/share"
+if test "x$datadir" != "x\${datarootdir}"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
   AC_DEFINE(LISPDIR_USER_DEFINED)
   AC_DEFINE(ETCDIR_USER_DEFINED)
 fi
 
-if test "x$libdir_expanded" != "x$prefix_expanded/lib"
+if test "x$libdir" != "x\${exec_prefix}/lib"
 then
   AC_DEFINE(MODULEDIR_USER_DEFINED)
   AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
   AC_DEFINE(DOCDIR_USER_DEFINED)
 fi
 
-if test "x$infodir_expanded" != "x${prefix_expanded}/share/info"
+if test "x$infodir" != "x\${datarootdir}/info"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
 else
@@ -5746,25 +5745,11 @@ AC_SUBST(extra_includes)
 
 AC_SUBST(prefix)
 AC_SUBST(PREFIX_USER_DEFINED)
-dnl Yo, Stephen Bourne!  I want to marry you!
-PREFIX=$prefix
-while true; do
-  case "$PREFIX" in
-    *\$* ) eval "PREFIX=$PREFIX" ;;
-    *) break ;;
-  esac
-done
-AC_SUBST(PREFIX)
+XE_EXPAND_VARIABLE(prefix,PREFIX)
 
 AC_SUBST(exec_prefix)
 AC_SUBST(EXEC_PREFIX_USER_DEFINED)
-EXEC_PREFIX=$exec_prefix
-while true; do
-  case "$EXEC_PREFIX" in
-    *\$* ) eval "EXEC_PREFIX=$EXEC_PREFIX" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(exec_prefix,EXEC_PREFIX)
 AC_SUBST(EXEC_PREFIX)
 
 AC_SUBST(infodir)
