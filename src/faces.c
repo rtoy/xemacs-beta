@@ -1171,7 +1171,11 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
     /* Lookup the face again, this time allowing the fallback. If this
        succeeds, it'll give a font intended for the script in question,
        which is preferable to translating to ISO10646-1 and using the
-       fixed-width fallback.  */
+       fixed-width fallback.
+
+       #### This is questionable.  The problem is that unusual scripts
+       will typically fallback to the hard-coded values as the user is
+       unlikely to have specified them herself, a common complaint. */
     new_val = face_property_matching_instance (face, Qfont,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
@@ -1353,7 +1357,7 @@ add_face_cachel (struct window *w, Lisp_Object face)
   Dynarr_add (w->face_cachels, new_cachel);
 
   /* The face's background pixmap have not yet been frobbed (see comment
-     int update_face_cachel_data), so we have to do it now */
+     in update_face_cachel_data), so we have to do it now */
   if (must_finish_frobbing)
     {
       int default_face = EQ (face, Vdefault_face);
@@ -1394,7 +1398,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 	 which in turn might require that the cache we're building be up to
 	 date, hence a crash. Here's a typical scenario of this:
 
-	 - a new window is created and it's face cache elements are
+	 - a new window is created and its face cache elements are
 	 initialized through a call to reset_face_cachels[1]. At that point,
 	 the cache for the default and modeline faces (normaly taken care of
 	 by redisplay itself) are null.
