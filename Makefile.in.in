@@ -423,17 +423,6 @@ install-arch-dep: mkdir
 	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${SHEBANG_PROGNAME}
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */
-	if test "${prefix}" != "${exec_prefix}"; then \
-	  $(MAKEPATH) ${exec_prefix}/lib/${instvardir}; \
-	  for dir in \
-		lib/${inststaticdir} \
-	 	lib/${instvardir}/etc \
-		lib/${instvardir}/info \
-		lib/${instvardir}/lisp; do \
-	    if test ! -d ${exec_prefix}/$${dir}; then \
-	      $(LN_S) ${prefix}/$${dir} ${exec_prefix}/$${dir}; fi; \
-	  done; \
-	fi
 #ifdef HAVE_SHLIB
 	$(INSTALL_DATA) $(srcdir)/modules/auto-autoloads.* $(moduledir)
 #endif
