@@ -1540,7 +1540,7 @@ configure-package-path: %S
 	   'external-debugging-output)
     )
 
-  (setq lisp-directory (paths-find-lisp-directory emacs-roots))
+  (setq lisp-directory (paths-find-lisp-directory emacs-data-roots))
 
   (if debug-paths
       (princ (format "configure-lisp-directory and lisp-directory:\n%S\n%S\n"
@@ -1550,7 +1550,7 @@ configure-package-path: %S
   (if (featurep 'mule)
       (progn
 	(setq mule-lisp-directory
-	      (paths-find-mule-lisp-directory emacs-roots
+	      (paths-find-mule-lisp-directory emacs-data-roots
 					      lisp-directory))
 	(if debug-paths
 	    (princ (format "configure-mule-lisp-directory and mule-lisp-directory:\n%S\n%S\n"
@@ -1559,7 +1559,7 @@ configure-package-path: %S
     (setq mule-lisp-directory '()))
 
   (setq site-directory (and (null inhibit-site-lisp)
-			    (paths-find-site-lisp-directory emacs-roots)))
+			    (paths-find-site-lisp-directory emacs-data-roots)))
 
   (if (and debug-paths (null inhibit-site-lisp))
       (princ (format "configure-site-directory and site-directory:\n%S\n%S\n"
@@ -1603,7 +1603,7 @@ configure-package-path: %S
   (unless called-early
     (setq Info-directory-list
 	  (paths-construct-info-path
-	   emacs-roots
+	   emacs-data-roots
 	   early-package-hierarchies late-package-hierarchies last-package-hierarchies))
 
     (if debug-paths
@@ -1634,7 +1634,7 @@ configure-package-path: %S
 		       configure-doc-directory doc-directory)
 	       'external-debugging-output))
     
-    (setq data-directory (paths-find-data-directory emacs-roots))
+    (setq data-directory (paths-find-data-directory emacs-data-roots))
     
     (if debug-paths
 	(princ (format "configure-data-directory and data-directory:\n%S\n%S\n"
