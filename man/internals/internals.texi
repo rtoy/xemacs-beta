@@ -18221,21 +18221,25 @@ applicable.
 @section Redisplay Piece by Piece
 @cindex redisplay piece by piece
 
-As you can begin to see redisplay is complex and also not well
-documented. Chuck no longer works on XEmacs so this section is my take
-on the workings of redisplay.
+Redisplay is complex and not very well documented.  Chuck Thompson no
+longer works on XEmacs so this section is my [presumably Ben's] take on
+the workings of redisplay.
 
 Redisplay happens in three phases:
 
 @enumerate
 @item
 Determine desired display in area that needs redisplay.
-Implemented by @code{redisplay.c}
+
+Implemented in @code{redisplay.c}
 @item
 Compare desired display with current display
-Implemented by @code{redisplay-output.c}
+
+Implemented in @code{redisplay-output.c}
 @item
-Output changes Implemented by @code{redisplay-output.c},
+Output changes
+
+Implemented in @code{redisplay-output.c},
 @code{redisplay-x.c}, @code{redisplay-msw.c} and @code{redisplay-tty.c}
 @end enumerate
 
@@ -18255,6 +18259,8 @@ presents a problem for redisplay as this connection is bogus for the
 modeline. Hence the @code{display_line} generation routines are
 duplicated for generating the modeline. This means that the modeline
 display code has many bugs that the standard redisplay code does not.
+Perhaps the modeline redisplay could be unified with gutter redisplay
+(see below).
 
 The guts of @code{display_line} generation are in
 @code{create_text_block}, which creates a single display line for the
@@ -18267,6 +18273,46 @@ a string we cannot use @code{create_text_block}. Instead we use
 @code{create_text_block} but for strings. Many of the complexities of
 @code{create_text_block} to do with cursor handling and selective
 display have been removed.
+
+In the following, @code{create_text_block} only will be described, so
+keep in mind in the fact that modeline and gutter redisplay are somewhat
+different.
+
+@code{create_text_block} takes a @code{struct window *}, the index of a
+line in the text (a @code{Bytebpos}) and a @code{struct display_line *},
+as well as two arguments @code{prop} and @code{type} (as yet
+undocumented).  Given the window, it can derive the relevant buffer, and
+use the @code{Bytebpos} to find the line of text.  It then walks over
+the characters in the text and regenerates the display line information
+for each.
+
+@code{create_text_block} calls out to @code{extent_fragment_update} to
+get information about faces (fonts and colors), which are represented as
+a @code{face_index}, an index into a table of merged faces.  Faces must
+be merged because (1) a face may inherit properties from their parents
+and (2) faces may be only partially specified, in which case redisplay
+must fall back to faces associated with extents earlier in the extent
+order (@pxref{Extent Ordering}).  Since getting complete information
+about a face involves instantantiating many specifiers, we keep a cache
+of this information, and a @code{face_index} is an index into the cache.
+
+@code{extent_fragment_update} calls out to
+@code{get_extent_fragment_face_cache_index}, which in turn calls
+@code{merge_face_cachel_data} on each relevant face.
+@code{merge_face_cachel_data} is straightforward, except for font
+handling.  In the case of fonts, the legacy XLFD model has a different
+font for each Mule charset (in fact, both the XLFD model of I18N and
+that of Mule are derived from the same root, ISO 2022, and so mesh
+well---or as well as anything based on ISO 2022 can).  This means that
+@code{merge_face_cachel_data} has to iterate over the list of Mule
+charsets, and update the font for each one.
+
+@code{create_text_block} is not responsible for creating face cachels.
+That is done by @code{redisplay_output_layout},
+@code{redisplay_text_width_string} or
+@code{redisplay_text_width_ichar_string}, via
+@code{ensure_face_cachel_complete}, with the actual work being done by
+@code{ensure_face_cachel_contains_charset}.
 
 @node Modules for the Redisplay Mechanism, Modules for other Display-Related Lisp Objects, Redisplay Piece by Piece, The Redisplay Mechanism
 @section Modules for the Redisplay Mechanism
