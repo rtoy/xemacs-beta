@@ -1524,13 +1524,19 @@ This function is idempotent, so call this as often as you like!"
 " inhibit-packages inhibit-site-lisp called-early)
 	   'external-debugging-output)
     (princ (format
-"emacs-roots:
+"invocation-directory: %S
+invocation-name: %S
+configure-prefix-directory: %S
+configure-exec-prefix-directory: %S
+emacs-roots:
 %S
 emacs-data-roots:
 %S
 user-init-directory: %S
 configure-package-path: %S
-" emacs-roots emacs-data-roots user-init-directory configure-package-path)
+" invocation-directory invocation-name
+  configure-prefix-directory configure-exec-prefix-directory
+  emacs-roots emacs-data-roots user-init-directory configure-package-path)
 	   'external-debugging-output)
     )
 
