@@ -2566,16 +2566,19 @@ tab controls
 Here are the resources I use.  @strong{Warning:} @emph{This interface
 will change.  Pay attention to beta announcements, and complain loudly
 if changes aren't documented here!}  The tab control and menubar have
-separate Font and XftFont resources, and use the X resource manager to
-instantiate a FontStruct from the Font resource.  There is no converter
-facility for XftFont yet, and creating one that handles both FontStruct
-and XftFont depending on XEmacs's configuration and the font name seems
-error-prone at best.  Probably we will use a simple string
-representation for this resource, and convert to a face in XEmacs rather
-than a font in Xt/Xft.
+separate @code{Font} and @code{FcFontName} resources, and use the X
+resource manager to instantiate a FontStruct from the @code{Font}
+resource.  There is no converter facility for @code{FcFontName} yet, and
+creating one that handles both FontStruct and XftFont depending on
+XEmacs's configuration and the font name seems error-prone at best.
+Probably we will use a simple string representation for this resource,
+and convert to a face in XEmacs rather than a font in Xt/Xft.  (The
+older @code{XftFont} resource is deprecated.  There is code intended to
+implement backward compatibility, but there are repots that it doesn't
+work properly.)
 @example
-XEmacs*Tabs.xftFont: Bitstream Vera Sans-16
-XEmacs*menubar*xftFont: Bitstream Vera Sans-16
+XEmacs*Tabs.fcFontName: Bitstream Vera Sans-16
+XEmacs*menubar*fcFontName: Bitstream Vera Sans-16
 XEmacs.modeline.attributeFont: Bitstream Charter-16
 XEmacs.default.attributeFont: Bitstream Vera Sans Mono-16
 @end example
