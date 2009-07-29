@@ -10,6 +10,13 @@
 	* faces.el (set-face-background-pixmap-file): 
 	Remove some extra parentheses revealed by change set 7757334005ae.
 
+2009-07-29  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (set-window-pixel-width)
+	(set-window-pixel-height): Convenience functions, add.
+	(restore-saved-window-parameters): Use the above.
+	(really-set-window-configuration): Slightly restructure, reindent.
+
 2009-07-28  Mike Sperber  <mike@xemacs.org>
 
 	* startup.el (startup-setup-paths): Use `emacs-data-roots' instead

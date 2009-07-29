@@ -342,48 +342,44 @@ Return alist mapping old windows to new windows."
   (frame-reduce-to-one-window frame)
   (set-window-configuration-frame-size configuration)
 
-  ; avoid setting these if they're already up-to-date
-  ; This also avoids potential inaccuracies in these settings --Mike
+  ;; avoid setting these if they're already up-to-date
+  ;; This also avoids potential inaccuracies in these settings --Mike
   (when window-configuration-includes-position
     (let ((left (window-configuration-frame-left configuration))
-          (top (window-configuration-frame-top configuration)))
+	  (top (window-configuration-frame-top configuration)))
       (if (not (equal left (frame-property frame 'left)))
-          (set-frame-property frame 'left left))
+	  (set-frame-property frame 'left left))
       (if (not (equal top (frame-property frame 'top)))
-          (set-frame-property frame 'top top))))
+	  (set-frame-property frame 'top top))))
 
   ;; these may have changed because of the delete
-  (let ((root-window (frame-root-window frame)))
-    (enlarge-window-pixels 
-     (- (window-configuration-minibuffer-pixel-height configuration)
-	(window-pixel-height (minibuffer-window frame)))
-     nil
-     (minibuffer-window frame))
+  (set-window-pixel-height (minibuffer-window frame)
+			   (window-configuration-minibuffer-pixel-height configuration))
 
-    ;; avoid that `set-window-point' will set the buffer's point for
-    ;; the selected window
-    (select-window (minibuffer-window frame))
+  ;; avoid that `set-window-point' will set the buffer's point for
+  ;; the selected window
+  (select-window (minibuffer-window frame))
 
-    (let ((window-configuration-current-window nil)
-	  (mapping (list nil))) ; poor man's box
+  (let ((window-configuration-current-window nil)
+	(mapping (list nil)))		; poor man's box
       
-      (declare (special window-configuration-current-window))
-      (restore-saved-window configuration
-			    root-window
-			    (window-configuration-saved-root-window configuration)
-			    'vertical
-			    mapping) 
-      (if window-configuration-current-window
-	  (select-window window-configuration-current-window))
+    (declare (special window-configuration-current-window))
+    (restore-saved-window configuration
+			  (frame-root-window frame)
+			  (window-configuration-saved-root-window configuration)
+			  'vertical
+			  mapping) 
+    (if window-configuration-current-window
+	(select-window window-configuration-current-window))
     
-      (setq window-min-width (window-configuration-min-width configuration))
-      (setq window-min-height (window-configuration-min-height configuration))
+    (setq window-min-width (window-configuration-min-width configuration))
+    (setq window-min-height (window-configuration-min-height configuration))
       
-      (let ((buffer (window-configuration-current-buffer configuration)))
-	(if (buffer-live-p buffer)
-	    (set-buffer buffer)
-	  (set-buffer (car (buffer-list)))))
-      (car mapping))))
+    (let ((buffer (window-configuration-current-buffer configuration)))
+      (if (buffer-live-p buffer)
+	  (set-buffer buffer)
+	(set-buffer (car (buffer-list)))))
+    (car mapping)))
 
 (defun set-window-configuration-frame-size (configuration)
   "Restore the frame size of a window configuration."
@@ -485,14 +481,10 @@ mapping, which this function will extend."
 	;; window to what we want. --Mike
 	(if (not (eq window (frame-root-window (window-frame window))))
 	    (progn
-	      (enlarge-window-pixels (- (saved-window-pixel-width saved-window)
-					(window-pixel-width window))
-				     t
-				     window)
-	      (enlarge-window-pixels (- (saved-window-pixel-height saved-window)
-					(window-pixel-height window))
-				     nil
-				     window)))
+	      (set-window-pixel-width window 
+				      (saved-window-pixel-width saved-window))
+	      (set-window-pixel-height window
+				       (saved-window-pixel-height saved-window))))
 	(set-window-hscroll window (saved-window-hscroll saved-window))
 	(set-modeline-hscroll window
 			      (saved-window-modeline-hscroll saved-window))
@@ -512,6 +504,15 @@ mapping, which this function will extend."
   "Compute the pixel height of SAVED-WINDOW."
   (- (saved-window-pixel-bottom saved-window)
      (saved-window-pixel-top saved-window)))
+
+(defun set-window-pixel-width (window width)
+  "Set the pixel width of WINDOW."
+  (enlarge-window-pixels (- width (window-pixel-width window)) t window))
+
+(defun set-window-pixel-height (window height)
+  "Set the pixel height of WINDOW."
+  (enlarge-window-pixels (- height (window-pixel-height window)) nil window))
+
 
 ;; The window-config stack is stored as a list in frame property
 ;; 'window-config-stack, with the most recent element at the front.
