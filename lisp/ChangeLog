@@ -10,6 +10,12 @@
 	* faces.el (set-face-background-pixmap-file): 
 	Remove some extra parentheses revealed by change set 7757334005ae.
 
+2009-08-07  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (set-window-configuration): Add optional
+	`set-frame-size-p' argument that determines whether the frame size
+	should be restored along with the window configuration.
+
 2009-07-29  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (set-window-pixel-width)

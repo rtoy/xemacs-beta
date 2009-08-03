@@ -310,17 +310,20 @@ Does not restore the value of point in current buffer."
 	(setq ,mapping (set-window-configuration/mapping ,window-config)))
       ,mapping)))
 
-(defun set-window-configuration (configuration)
-  "Set the configuration of windows and buffers as specified by CONFIGURATION.
-CONFIGURATION must be a value previously returned
-by `current-window-configuration'."
-  (set-window-configuration/mapping configuration)
-  nil) ; make sure nobody relies on mapping return value
-
-(defun set-window-configuration/mapping (configuration)
+(defun set-window-configuration (configuration &optional set-frame-size-p)
   "Set the configuration of windows and buffers as specified by CONFIGURATION.
 CONFIGURATION must be a value previously returned
 by `current-window-configuration'.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
+"
+  (set-window-configuration/mapping configuration set-frame-size-p)
+  nil) ; make sure nobody relies on mapping return value
+
+(defun set-window-configuration/mapping (configuration &optional set-frame-size-p)
+  "Set the configuration of windows and buffers as specified by CONFIGURATION.
+CONFIGURATION must be a value previously returned
+by `current-window-configuration'.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
 Return alist mapping old windows to new windows.
 This alist maps the originally captured windows to the windows that correspond
 to them in the restored configuration.  It does not include entries for
@@ -329,10 +332,11 @@ windows that have not changed identity."
     (if (and (frame-live-p frame)
 	     (not (window-configuration-equal configuration
 					      (current-window-configuration))))
-	(really-set-window-configuration frame configuration))))
+	(really-set-window-configuration frame configuration set-frame-size-p))))
 
-(defun really-set-window-configuration (frame configuration)
+(defun really-set-window-configuration (frame configuration set-frame-size-p)
   "Set the window configuration CONFIGURATION on live frame FRAME.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
 Return alist mapping old windows to new windows."
   ;; avoid potential temporary problems
   (setq window-min-width 0)
@@ -340,7 +344,8 @@ Return alist mapping old windows to new windows."
   (setq minibuffer-scroll-window nil)
 
   (frame-reduce-to-one-window frame)
-  (set-window-configuration-frame-size configuration)
+  (if set-frame-size-p
+      (set-window-configuration-frame-size configuration))
 
   ;; avoid setting these if they're already up-to-date
   ;; This also avoids potential inaccuracies in these settings --Mike
@@ -379,6 +384,9 @@ Return alist mapping old windows to new windows."
       (if (buffer-live-p buffer)
 	  (set-buffer buffer)
 	(set-buffer (car (buffer-list)))))
+    ; this resets the window configuration so that the frame is filled
+    (if (not set-frame-size-p)
+	(set-frame-pixel-size frame (frame-pixel-width frame) (frame-pixel-height frame)))
     (car mapping)))
 
 (defun set-window-configuration-frame-size (configuration)
