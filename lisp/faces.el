@@ -706,8 +706,8 @@ designed for interactive use."
   (interactive
    (let* ((face (read-face-name "Set background pixmap of face: "))
 	  (default (and (face-background-pixmap-instance face)
-			((image-instance-file-name
-			  (face-background-pixmap-instance face)))))
+			(image-instance-file-name
+			 (face-background-pixmap-instance face))))
 	  (file (read-file-name
 		 (format "Set background pixmap of face %s to: "
 			 (symbol-name face))
