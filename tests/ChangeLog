@@ -1,3 +1,10 @@
+2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el: 
+	Revert to the original language environment once we've tested all
+	the others, preventing things like a Chinese terminal coding
+	system being selected when you actually have a UTF-8 tty.
+
 2009-07-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el: 
