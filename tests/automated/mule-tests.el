@@ -575,6 +575,7 @@ This is a naive implementation in Lisp.  "
     for language in (mapcar #'car language-info-alist)
     with language-input-method = nil
     with native-coding-system = nil
+    with original-language-environment = current-language-environment
     do
     ;; s-l-e can call #'require, which says "Loading ..."
     (Silence-Message (set-language-environment language))
@@ -613,7 +614,8 @@ This is a naive implementation in Lisp.  "
       ;; We don't have the appropriate POSIX locales to test with a
       ;; native-coding-system that is a function.
       (unless (functionp coding-system)
-	(Assert (coding-system-p (find-coding-system coding-system))))))
+	(Assert (coding-system-p (find-coding-system coding-system)))))
+    finally (set-language-environment original-language-environment))
 
   (with-temp-buffer
     (flet
