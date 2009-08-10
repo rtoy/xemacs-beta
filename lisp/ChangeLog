@@ -1,3 +1,10 @@
+2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (function-arglist, function-documentation): 
+	Deal more gracefully with tabs in the function arglist; in
+	function-documentation, when stripping the arglist, pay attention
+	to the fact that they may span multiple lines.
+
 2009-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* faces.el (set-face-background-pixmap-file): 

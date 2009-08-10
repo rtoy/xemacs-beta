@@ -1196,7 +1196,7 @@ arguments in the standard Lisp style."
 				    doc)
 				   (match-string 1 doc)))
                         (args (and args (replace-in-string args
-                                                           "[ ]*\\\\\n[ ]*"
+                                                           "[ ]*\\\\\n[ \t]*"
                                                            " " t))))
 		   ;; If there are no arguments documented for the
 		   ;; subr, rather don't print anything.
@@ -1225,7 +1225,7 @@ part of the documentation of internal subroutines."
 	       (void-function "(alias for undefined function)")
 	       (error "(unexpected error from `documention')"))))
     (if (and strip-arglist
-	     (string-match "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'" doc))
+	     (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
 	(setq doc (substring doc 0 (match-beginning 0))))
     doc))
 
