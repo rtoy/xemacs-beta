@@ -1,5 +1,52 @@
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* floatfns.c (ROUNDING_CONVERT, CONVERT_WITH_NUMBER_TYPES)
+	(CONVERT_WITHOUT_NUMBER_TYPES, MAYBE_TWO_ARGS_BIGNUM)
+	(MAYBE_ONE_ARG_BIGNUM, MAYBE_TWO_ARGS_RATIO)
+	(MAYBE_ONE_ARG_RATIO, MAYBE_TWO_ARGS_BIGFLOAT)
+	(MAYBE_ONE_ARG_BIGFLOAT, MAYBE_EFF, MAYBE_CHAR_OR_MARKER):
+	New macros, used in the implementation of the rounding functions.
+	(ceiling_two_fixnum, ceiling_two_bignum, ceiling_two_ratio)
+	(ceiling_two_bigfloat, ceiling_one_ratio, ceiling_one_bigfloat)
+	(ceiling_two_float, ceiling_one_float, ceiling_one_mundane_arg)
+	(floor_two_fixnum, floor_two_bignum, floor_two_ratio)
+	(floor_two_bigfloat, floor_one_ratio, floor_one_bigfloat)
+	(floor_two_float, floor_one_mundane_arg, round_two_fixnum)
+	(round_two_bignum_1, round_two_bignum, round_two_ratio)
+	(round_one_bigfloat_1, round_two_bigfloat, round_one_ratio)
+	(round_one_bigfloat, round_two_float, round_one_float)
+	(round_one_mundane_arg, truncate_two_fixnum)
+	(truncate_two_bignum, truncate_two_ratio, truncate_two_bigfloat)
+	(truncate_one_ratio, truncate_one_bigfloat, truncate_two_float)
+	(truncate_one_float, truncate_one_mundane_arg): 
+	New functions, used in the implementation of the rounding
+	functions. 
+	(Fceiling, Ffloor, Fround, Ftruncate, Ffceiling, Fffloor)
+	(Ffround, Fftruncate): 
+	Revise to fully support Common Lisp conventions. This means:
+	-- All functions have optional DIVISOR arguments
+	-- All functions return multiple values; see #'values
+	-- All functions do their arithmetic with the correct number types
+	according to the contamination rules.
+	-- #'round and #'fround always round towards the even number
+	in ambiguous cases.
+	* doprnt.c (emacs_doprnt_1): 
+	* number.c (internal_coerce_number): 
+	Call Ftruncate with two arguments, not one.
+	* floatfns.c (Ffloat): 
+	Correct this, if NUMBER is a bignum.
+	* lisp.h: 
+	Declare Ftruncate as taking two arguments. 
+	* number.c: 
+	Provide scratch_ratio2, init it appropriately. 
+	* number.h: 
+	Make scratch_ratio2 available.
+	* number.h (BIGFLOAT_ARITH_RETURN):
+	* number.h (BIGFLOAT_ARITH_RETURN1):
+	Correct these functions.
+
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecode.c (enum Opcode /* Byte codes */): 
 	Add four new bytecodes, to deal with multiple values. 
 	(POP_WITH_MULTIPLE_VALUES): New macro. 

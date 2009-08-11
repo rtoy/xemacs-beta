@@ -12,6 +12,14 @@
 
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (ceiling*, floor*, round*, truncate*): 
+	Implement these in terms of the C functions; mark them as
+	obsolete. 
+	(mod*, rem*): Use #'nth-value with the C functions, not #'nth with
+	the CL emulation functions. 
+
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el :
 	Update this file to support full C-level multiple values. This
 	involves:

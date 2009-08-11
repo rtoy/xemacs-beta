@@ -1,3 +1,11 @@
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Test the new Common Lisp-compatible rounding functions available in
+	C. 
+	(generate-rounding-output): Provide a function useful for
+	generating the data for the rounding functions tests. 
+
 2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el: 

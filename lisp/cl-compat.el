@@ -82,12 +82,11 @@
     (if test-not (not (funcall test-not item elt))
       (funcall (or test 'eql) item elt))))
 
-;;; Rounding functions with old-style multiple value returns.
-
-(defun cl-floor (a &optional b) (values-list (floor* a b)))
-(defun cl-ceiling (a &optional b) (values-list (ceiling* a b)))
-(defun cl-round (a &optional b) (values-list (round* a b)))
-(defun cl-truncate (a &optional b) (values-list (truncate* a b)))
+;; The rounding functions in C now have all the functionality this package
+;; used to:
+(loop
+  for symbol in '(floor ceiling round truncate)
+  do (defalias (intern (format "cl-%s" symbol)) symbol))
 
 (defun safe-idiv (a b)
   (let* ((q (/ (abs a) (abs b)))

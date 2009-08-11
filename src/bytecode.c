@@ -301,8 +301,8 @@ bytecode_negate (Lisp_Object obj)
 #ifdef HAVE_RATIO
   if (RATIOP (obj)) RATIO_ARITH_RETURN (obj, neg);
 #endif
-#ifdef HAVE_BIG_FLOAT
-  if (BIGFLOAT_P (obj)) BIGFLOAT_ARITH_RETURN (obj, neg);
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (obj)) BIGFLOAT_ARITH_RETURN (obj, neg);
 #endif
 
   obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);

@@ -1,5 +1,11 @@
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lispref/numbers.texi (Bigfloat Basics): 
+	Correct this documentation (ignoring for the moment that it breaks
+	off in mid-sentence).
+
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl.texi (Organization): 
 	Remove references to the obsolete multiple-value emulating code.
 

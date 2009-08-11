@@ -4705,7 +4705,7 @@ void unlock_all_files (void);
 void unlock_buffer (struct buffer *);
 
 /* Defined in floatfns.c */
-EXFUN (Ftruncate, 1);
+EXFUN (Ftruncate, 2);
 
 double extract_float (Lisp_Object);
 
