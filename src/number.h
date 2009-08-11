@@ -195,7 +195,7 @@ DECLARE_LRECORD (ratio, Lisp_Ratio);
 extern Lisp_Object make_ratio (long, unsigned long);
 extern Lisp_Object make_ratio_bg (bignum, bignum);
 extern Lisp_Object make_ratio_rt (ratio);
-extern ratio scratch_ratio;
+extern ratio scratch_ratio, scratch_ratio2;
 
 #else /* !HAVE_RATIO */
 
@@ -251,16 +251,16 @@ DECLARE_LRECORD (bigfloat, Lisp_Bigfloat);
 #define XBIGFLOAT_GET_PREC(x) bigfloat_get_prec (XBIGFLOAT_DATA (x))
 #define XBIGFLOAT_SET_PREC(x,p) bigfloat_set_prec (XBIGFLOAT_DATA (x), p)
 
-#define BIGFLOAT_ARITH_RETURN(f,op) do				\
-{								\
-  Lisp_Object retval = make_bigfloat_bf (f);			\
+#define BIGFLOAT_ARITH_RETURN(f,op) do					\
+{									\
+  Lisp_Object retval = make_bigfloat (0.0, bigfloat_get_default_prec()); \
   bigfloat_##op (XBIGFLOAT_DATA (retval), XBIGFLOAT_DATA (f));	\
   return retval;						\
 } while (0)
 
 #define BIGFLOAT_ARITH_RETURN1(f,op,arg) do				\
 {									\
-  Lisp_Object retval = make_bigfloat_bf (f);				\
+  Lisp_Object retval = make_bigfloat (0.0, bigfloat_get_default_prec()); \
   bigfloat_##op (XBIGFLOAT_DATA (retval), XBIGFLOAT_DATA (f), arg);	\
   return retval;							\
 } while (0)

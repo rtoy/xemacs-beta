@@ -638,7 +638,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      else
 		{
 		  if (FLOATP (obj))
-		    obj = Ftruncate (obj);
+		    obj = Ftruncate (obj, Qnil);
 #ifdef HAVE_BIGFLOAT
 		  else if (BIGFLOATP (obj))
 		    {

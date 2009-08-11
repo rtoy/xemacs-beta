@@ -394,55 +394,40 @@ If so, return the true (non-nil) value returned by PREDICATE."
 (or (and (fboundp 'expt) (subrp (symbol-function 'expt)))
     (defalias 'expt 'cl-expt))
 
-(defun floor* (x &optional y)
-  "Return a list of the floor of X and the fractional part of X.
-With two arguments, return floor and remainder of their quotient."
-  (let ((q (floor x y)))
-    (list q (- x (if y (* y q) q)))))
+;; We can't use macrolet in this file; whence the literal macro
+;; definition-and-call:
+((macro . (lambda (&rest symbols)
+   "Make some old CL package truncate and round functions available.
 
-(defun ceiling* (x &optional y)
-  "Return a list of the ceiling of X and the fractional part of X.
-With two arguments, return ceiling and remainder of their quotient."
-  (let ((res (floor* x y)))
-    (if (= (car (cdr res)) 0) res
-      (list (1+ (car res)) (- (car (cdr res)) (or y 1))))))
-
-(defun truncate* (x &optional y)
-  "Return a list of the integer part of X and the fractional part of X.
-With two arguments, return truncation and remainder of their quotient."
-  (if (eq (>= x 0) (or (null y) (>= y 0)))
-      (floor* x y) (ceiling* x y)))
-
-(defun round* (x &optional y)
-  "Return a list of X rounded to the nearest integer and the remainder.
-With two arguments, return rounding and remainder of their quotient."
-  (if y
-      (if (and (integerp x) (integerp y))
-	  (let* ((hy (/ y 2))
-		 (res (floor* (+ x hy) y)))
-	    (if (and (= (car (cdr res)) 0)
-		     (= (+ hy hy) y)
-		     (/= (% (car res) 2) 0))
-		(list (1- (car res)) hy)
-	      (list (car res) (- (car (cdr res)) hy))))
-	(let ((q (round (/ x y))))
-	  (list q (- x (* q y)))))
-    (if (integerp x) (list x 0)
-      (let ((q (round x)))
-	(list q (- x q))))))
+These functions are now implemented in C; their Lisp implementations in this
+XEmacs are trivial, so we provide them and mark them obsolete."
+   (let (symbol result)
+     (while symbols
+       (setq symbol (car symbols)
+	     symbols (cdr symbols))
+       (push `(make-obsolete ',(intern (format "%s*" symbol))
+	       ',symbol "21.5.29")
+	     result) 
+       (push
+	`(defun ,(intern (format "%s*" symbol)) (number &optional divisor)
+	  ,(format "See `%s'. This returns a list, not multiple values."
+		   symbol)
+	  (multiple-value-list (,symbol number divisor)))
+	result))
+     (cons 'progn result))))
+ ceiling floor round truncate)
 
 (defun mod* (x y)
   "The remainder of X divided by Y, with the same sign as Y."
-  (nth 1 (floor* x y)))
+  (nth-value 1 (floor x y)))
 
 (defun rem* (x y)
   "The remainder of X divided by Y, with the same sign as X."
-  (nth 1 (truncate* x y)))
+  (nth-value 1 (truncate x y)))
 
 (defun signum (a)
   "Return 1 if A is positive, -1 if negative, 0 if zero."
   (cond ((> a 0) 1) ((< a 0) -1) (t 0)))
-
 
 ;; Random numbers.
 

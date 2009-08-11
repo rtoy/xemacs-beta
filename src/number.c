@@ -41,7 +41,7 @@ static int number_initialized;
 bignum scratch_bignum, scratch_bignum2;
 #endif
 #ifdef HAVE_RATIO
-ratio scratch_ratio;
+ratio scratch_ratio, scratch_ratio2;
 #endif
 #ifdef HAVE_BIGFLOAT
 bigfloat scratch_bigfloat, scratch_bigfloat2;
@@ -561,7 +561,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
       switch (type)
 	{
 	case FIXNUM_T:
-	  return Ftruncate (number);
+	  return Ftruncate (number, Qnil);
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
 	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
@@ -853,6 +853,7 @@ init_number (void)
 
 #ifdef HAVE_RATIO
       ratio_init (scratch_ratio);
+      ratio_init (scratch_ratio2);
 #endif
 
 #ifdef HAVE_BIGFLOAT

@@ -769,7 +769,7 @@ Return the floating point number numerically equal to NUMBER.
     return make_float ((double) XINT (number));
 
 #ifdef HAVE_BIGNUM
-  if (BIGFLOATP (number))
+  if (BIGNUMP (number))
     {
 #ifdef HAVE_BIGFLOAT
       if (ZEROP (Vdefault_float_precision))
@@ -848,347 +848,1602 @@ This is the same as the exponent of a float.
 #endif /* ! HAVE_LOGB */
 }
 
-DEFUN ("ceiling", Fceiling, 1, 1, 0, /*
-Return the smallest integer no less than NUMBER.  (Round toward +inf.)
-*/
-       (number))
+#ifdef WITH_NUMBER_TYPES
+#define ROUNDING_CONVERT(conversion, return_float)      \
+  CONVERT_WITH_NUMBER_TYPES(conversion, return_float)
+#else
+#define ROUNDING_CONVERT(conversion, return_float)      \
+  CONVERT_WITHOUT_NUMBER_TYPES(conversion, return_float)
+#endif
+
+#define CONVERT_WITH_NUMBER_TYPES(conversion, return_float)     \
+  if (!NILP (divisor))                                          \
+    {                                                           \
+      switch (promote_args (&number, &divisor))                 \
+        {                                                       \
+        case FIXNUM_T:                                          \
+          return conversion##_two_fixnum (number, divisor,      \
+                                          return_float);        \
+          MAYBE_TWO_ARGS_WITH_NUMBER_TYPES (conversion,         \
+                                            BIGNUM,             \
+                                            return_float);      \
+          MAYBE_TWO_ARGS_WITH_NUMBER_TYPES (conversion,         \
+                                            RATIO,              \
+                                            return_float);      \
+          MAYBE_TWO_ARGS_WITH_NUMBER_TYPES (conversion,         \
+                                            BIGFLOAT,           \
+                                            return_float);      \
+          default: /* FLOAT_T */                                \
+            return conversion##_two_float (number,divisor,      \
+                                           return_float);       \
+        }                                                       \
+     }                                                          \
+                                                                \
+  /* Try this first, the arg is probably a float:  */           \
+  if (FLOATP (number))                                          \
+    return conversion##_one_float (number, return_float);       \
+                                                                \
+  MAYBE_ONE_ARG_WITH_NUMBER_TYPES (conversion,                  \
+                                   RATIO, return_float);        \
+  MAYBE_ONE_ARG_WITH_NUMBER_TYPES (conversion,                  \
+                                   BIGFLOAT, return_float);     \
+  return conversion##_one_mundane_arg (number, divisor,         \
+                                       return_float)
+      
+
+#define CONVERT_WITHOUT_NUMBER_TYPES(conversion, return_float)  \
+  if (!NILP (divisor))						\
+    {                                                           \
+      /* The promote_args call if number types are available    \
+         does these conversions, we do them too for symmetry: */\
+      if (CHARP (number))                                       \
+        {                                                       \
+          number = make_int (XCHAR (number));                   \
+        }                                                       \
+      else if (MARKERP (number))				\
+        {                                                       \
+          number = make_int (marker_position (number));         \
+        }                                                       \
+                                                                \
+      if (CHARP (divisor))                                      \
+        {                                                       \
+          divisor = make_int (XCHAR (divisor));                 \
+        }                                                       \
+      else if (MARKERP (divisor))				\
+        {                                                       \
+          divisor = make_int (marker_position (divisor));       \
+        }                                                       \
+                                                                \
+      CHECK_INT_OR_FLOAT (divisor);                             \
+      if (INTP (number) && INTP (divisor))                      \
+        {                                                       \
+          return conversion##_two_fixnum (number, divisor,      \
+                                        return_float);          \
+        }                                                       \
+      else                                                      \
+        {                                                       \
+          return conversion##_two_float (number, divisor,       \
+                                           return_float);       \
+        }                                                       \
+    }                                                           \
+                                                                \
+  /* Try this first, the arg is probably a float:  */           \
+  if (FLOATP (number))                                          \
+    return conversion##_one_float (number, return_float);       \
+                                                                \
+  return conversion##_one_mundane_arg (number, divisor,		\
+				       return_float)		\
+
+#ifdef WITH_NUMBER_TYPES
+
+#ifdef HAVE_BIGNUM
+#define MAYBE_TWO_ARGS_BIGNUM(conversion, return_float)               \
+  case BIGNUM_T:                                                      \
+  return conversion##_two_bignum (number, divisor, return_float)
+
+#define MAYBE_ONE_ARG_BIGNUM(converse, return_float)                \
+  if (BIGNUM_P (number))                                            \
+    return conversion##_one_bignum (number, divisor, return_float) 
+#else
+#define MAYBE_TWO_ARGS_BIGNUM(conversion, return_float)
+#define MAYBE_ONE_ARG_BIGNUM(converse, return_float) 
+#endif
+
+#ifdef HAVE_RATIO 
+#define MAYBE_TWO_ARGS_RATIO(conversion, return_float)          \
+  case RATIO_T:                                                 \
+  return conversion##_two_ratio (number, divisor, return_float)
+
+#define MAYBE_ONE_ARG_RATIO(conversion, return_float)               \
+  if (RATIOP (number))                                              \
+    return conversion##_one_ratio (number, divisor, return_float) 
+#else
+#define MAYBE_TWO_ARGS_RATIO(conversion, return_float)
+#define MAYBE_ONE_ARG_RATIO(converse, return_float) 
+#endif
+
+#ifdef HAVE_BIGFLOAT
+#define MAYBE_TWO_ARGS_BIGFLOAT(conversion, return_float)           \
+  case BIGFLOAT_T:                                                  \
+  return conversion##_two_bigfloat (number, divisor, return_float)
+
+#define MAYBE_ONE_ARG_BIGFLOAT(conversion, return_float)            \
+  if (BIGFLOATP (number))                                           \
+    return conversion##_one_bigfloat (number, divisor, return_float) 
+#else
+#define MAYBE_TWO_ARGS_BIGFLOAT(conversion, return_float)
+#define MAYBE_ONE_ARG_BIGFLOAT(converse, return_float) 
+#endif
+
+#define MAYBE_TWO_ARGS_WITH_NUMBER_TYPES(convers, upcase, return_float) \
+  MAYBE_TWO_ARGS_##upcase(convers, return_float)
+
+#define MAYBE_ONE_ARG_WITH_NUMBER_TYPES(convers, upcase, return_float) \
+  MAYBE_ONE_ARG_##upcase(convers, return_float)
+
+#endif /* WITH_NUMBER_TYPES */
+
+#define MAYBE_EFF(str) (return_float ? "f" str : str)
+
+/* The WITH_NUMBER_TYPES code calls promote_args, which accepts chars and
+   markers as equivalent to ints. This block does the same for
+   single-argument calls. */
+#define MAYBE_CHAR_OR_MARKER(conversion) do {                           \
+  if (CHARP (number))                                                   \
+    {                                                                   \
+      return conversion##_one_mundane_arg (make_int (XCHAR (number)),   \
+                                           divisor, return_float);      \
+    }                                                                   \
+                                                                        \
+  if (MARKERP (number))                                                 \
+    {                                                                   \
+      return conversion##_one_mundane_arg (make_int                     \
+                                           (marker_position(number)),   \
+                                           divisor, return_float);      \
+    }                                                                   \
+  } while (0)
+
+
+/* The guts of the implementations of the various rounding functions: */
+
+static Lisp_Object
+ceiling_two_fixnum (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
 {
-  if (FLOATP (number))
+  EMACS_INT i1 = XREALINT (number);
+  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i3 = 0, i4 = 0;
+
+  if (i2 == 0)
+    Fsignal (Qarith_error, Qnil);
+
+  /* With C89's integer /, the result is implementation-defined if either
+     operand is negative, so use only nonnegative operands. Here we do
+     basically the opposite of what floor_two_fixnum does, we add one in the
+     non-negative case: */
+
+  /* Make sure we use the same signs for the modulus calculation as for the
+     quotient calculation: */
+  if (i2 < 0)
     {
-      double d;
-      IN_FLOAT ((d = ceil (XFLOAT_DATA (number))), "ceiling", number);
-      return (float_to_int (d, "ceiling", number, Qunbound));
+      if (i1 <= 0)
+	{
+	  i3 = -i1 / -i2;
+	  /* Quotient is positive; add one to give the figure for
+	     ceiling. */
+	  if (0 != (-i1 % -i2))
+	    {
+	      ++i3;
+	    }
+	}
+      else
+	{
+	  /* Quotient is negative; no need to add one. */
+	  i3 = -(i1 / -i2);
+	}
+    }
+  else
+    {
+      if (i1 < 0)
+	{
+	  /* Quotient is negative; no need to add one. */
+	  i3 = -(-i1 / i2);
+	}
+      else
+	{
+	  i3 = i1 / i2;
+	  /* Quotient is positive; add one to give the figure for
+	     ceiling. */
+	  if (0 != (i1 % i2))
+	    {
+	      ++i3;
+	    }
+	}
     }
 
+  i4 = i1 - (i3 * i2);
+
+  if (!return_float)
+    {
+      return values2 (make_int (i3), make_int (i4));
+    }
+
+  return values2 (make_float ((double)i3),
+		  make_int (i4));
+}
+
+#ifdef HAVE_BIGNUM
+static Lisp_Object
+ceiling_two_bignum (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bignum_ceil (scratch_bignum, XBIGNUM_DATA (number), XBIGNUM_DATA (divisor));
+
+  res0 = return_float ? make_float (bignum_to_double (scratch_bignum)) :
+	  Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+
+  if (bignum_divisible_p (XBIGNUM_DATA (number), XBIGNUM_DATA (divisor)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      bignum_mul (scratch_bignum, scratch_bignum, XBIGNUM_DATA (divisor));
+      bignum_sub (scratch_bignum, XBIGNUM_DATA (number), scratch_bignum);
+      res1 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+ceiling_two_ratio (Lisp_Object number, Lisp_Object divisor,
+		   int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
+
+  bignum_ceil (scratch_bignum, ratio_numerator (scratch_ratio),
+	       ratio_denominator (scratch_ratio));
+
+  res0 = return_float ? make_float (bignum_to_double (scratch_bignum)) :
+	  Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+
+  if (bignum_divisible_p (ratio_numerator (scratch_ratio),
+			  ratio_denominator (scratch_ratio)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      ratio_set_bignum (scratch_ratio, scratch_bignum);
+      ratio_mul (scratch_ratio2, scratch_ratio, XRATIO_DATA (divisor));
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio2);
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+ceiling_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
+		      int return_float)
+{
+  Lisp_Object res0;
+
+  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (number),
+					    XBIGFLOAT_GET_PREC (divisor)));
+  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (number),
+		XBIGFLOAT_DATA (divisor));
+  bigfloat_ceil (scratch_bigfloat, scratch_bigfloat);
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+
+  bigfloat_mul (scratch_bigfloat, scratch_bigfloat, XBIGFLOAT_DATA (divisor));
+  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), scratch_bigfloat);
+  return values2 (res0,
+		  Fcanonicalize_number (make_bigfloat_bf (scratch_bigfloat)));
+}
+#endif /* HAVE_BIGFLOAT */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+ceiling_one_ratio (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		   int return_float)
+{
+  Lisp_Object res0, res1;
+
+  bignum_ceil (scratch_bignum, XRATIO_NUMERATOR (number),
+	       XRATIO_DENOMINATOR (number));
+
+  res0 = return_float ? make_float (bignum_to_double (scratch_bignum)) :
+	  Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+
+  if (bignum_divisible_p (XRATIO_NUMERATOR (number),
+			  XRATIO_DENOMINATOR (number)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      ratio_set_bignum (scratch_ratio2, scratch_bignum);
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio2);
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+ceiling_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		      int return_float)
+{
+  Lisp_Object res0, res1;
+
+  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+  bigfloat_ceil (scratch_bigfloat, XBIGFLOAT_DATA (number));
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+
+  bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number), scratch_bigfloat);
+
+  res1 = make_bigfloat_bf (scratch_bigfloat2);
+  return values2 (res0, res1);
+}
+#endif /* HAVE_BIGFLOAT */
+
+static Lisp_Object
+ceiling_two_float (Lisp_Object number, Lisp_Object divisor,
+		   int return_float)
+{
+  double f1 = extract_float (number);
+  double f2 = extract_float (divisor);
+  double f0, remain;
+  Lisp_Object res0;
+	    
+  if (f2 == 0.0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+	    
+  IN_FLOAT2 (f0 = ceil (f1 / f2), MAYBE_EFF("ceiling"), number, divisor);
+  IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF("ceiling"), number, divisor);
+
+  if (return_float)
+    {
+      res0 = make_float(f0);
+    }
+  else
+    {
+      res0 = float_to_int (f0, MAYBE_EFF("ceiling"), number, divisor);
+    }
+
+  return values2 (res0, make_float (remain));
+}
+
+static Lisp_Object
+ceiling_one_float (Lisp_Object number, int return_float)
+{
+  double d, remain;
+  Lisp_Object res0;
+
+  IN_FLOAT ((d = ceil (XFLOAT_DATA (number))), MAYBE_EFF("ceiling"), number);
+  IN_FLOAT ((remain = XFLOAT_DATA (number) - d), MAYBE_EFF("ceiling"), number);
+
+  if (return_float)
+    {
+      res0 = make_float (d);
+    }
+  else
+    {
+      res0 = float_to_int (d, MAYBE_EFF("ceiling"), number, Qunbound);
+    }
+  return values2 (res0, make_float (remain));
+}
+
+EXFUN (Fceiling, 2);
+EXFUN (Ffceiling, 2);
+
+static Lisp_Object
+ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
+			 int return_float)
+{
+
+  if (return_float)
+    {
+      if (INTP (number))
+	{
+	  return values2 (make_float ((double) XINT (number)), Qzero);
+	}
+#ifdef HAVE_BIGNUM
+      else if (BIGNUMP (number))
+	{
+	  return values2 (make_float 
+			  (bignum_to_double (XBIGNUM_DATA (number))),
+			  Qzero);
+	}
+#endif
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      if (INTEGERP (number))
+#else
+      if (INTP (number))
+#endif
+	{
+	  return values2 (number, Qzero);
+	}
+    }
+  
+  MAYBE_CHAR_OR_MARKER (ceiling);
+
+  return Ffceiling (wrong_type_argument (Qnumberp, number), divisor);
+}
+
+static Lisp_Object
+floor_two_fixnum (Lisp_Object number, Lisp_Object divisor,
+		  int return_float)
+{
+  EMACS_INT i1 = XREALINT (number);
+  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i3 = 0, i4 = 0;
+  Lisp_Object res0;
+
+  if (i2 == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  /* With C89's integer /, the result is implementation-defined if either
+     operand is negative, so use only nonnegative operands. Notice also that
+     we're forcing the quotient of any negative numbers towards minus
+     infinity. */
+  i3 = (i2 < 0
+	? (i1 <= 0  ?  -i1 / -i2  :  -1 - ((i1 - 1) / -i2))
+	: (i1 < 0  ?  -1 - ((-1 - i1) / i2)  :  i1 / i2));
+
+  i4 = i1 - (i3 * i2);
+
+  if (return_float)
+    {
+      res0 = make_float ((double)i3);
+    }
+  else
+    {
+      res0 = make_int (i3);
+    }
+
+  return values2 (res0, make_int (i4));
+}
+
+#ifdef HAVE_BIGNUM
+static Lisp_Object
+floor_two_bignum (Lisp_Object number, Lisp_Object divisor,
+		  int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bignum_floor (scratch_bignum, XBIGNUM_DATA (number),
+		XBIGNUM_DATA (divisor));
+
+  if (return_float)
+    {
+      res0 = make_float (bignum_to_double (scratch_bignum));
+    }
+  else
+    {
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+
+  if (bignum_divisible_p (XBIGNUM_DATA (number), XBIGNUM_DATA (divisor)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      bignum_mul (scratch_bignum, scratch_bignum, XBIGNUM_DATA (divisor));
+      bignum_sub (scratch_bignum, XBIGNUM_DATA (number), scratch_bignum);
+      res1 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+floor_two_ratio (Lisp_Object number, Lisp_Object divisor,
+		 int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
+
+  bignum_floor (scratch_bignum, ratio_numerator (scratch_ratio),
+		ratio_denominator (scratch_ratio));
+
+  res0 = return_float ? make_float (bignum_to_double (scratch_bignum)) :
+	  Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+
+  if (bignum_divisible_p (ratio_numerator (scratch_ratio),
+			  ratio_denominator (scratch_ratio)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      ratio_set_bignum (scratch_ratio, scratch_bignum);
+      ratio_mul (scratch_ratio, scratch_ratio, XRATIO_DATA (divisor));
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio);
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+floor_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
+{
+  Lisp_Object res0;
+
+  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (number),
+					    XBIGFLOAT_GET_PREC (divisor)));
+  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (number),
+		XBIGFLOAT_DATA (divisor));
+  bigfloat_floor (scratch_bigfloat, scratch_bigfloat);
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+
+  bigfloat_mul (scratch_bigfloat2, scratch_bigfloat,
+		XBIGFLOAT_DATA (divisor));
+  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), scratch_bigfloat2);
+
+  return values2 (res0, make_bigfloat_bf (scratch_bigfloat));
+}
+#endif /* HAVE_BIGFLOAT */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+floor_one_ratio (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		 int return_float)
+{
+  Lisp_Object res0, res1;
+
+  bignum_floor (scratch_bignum, XRATIO_NUMERATOR (number),
+		XRATIO_DENOMINATOR (number));
+
+  res0 = return_float ? make_float (bignum_to_double (scratch_bignum)) :
+	  Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+
+  if (bignum_divisible_p (XRATIO_NUMERATOR (number),
+			  XRATIO_DENOMINATOR (number)))
+    {
+      res1 = Qzero;
+    }
+  else
+    {
+      ratio_set_bignum (scratch_ratio2, scratch_bignum);
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio2);
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+floor_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		    int return_float)
+{
+  Lisp_Object res0;
+
+  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+  bigfloat_floor (scratch_bigfloat, XBIGFLOAT_DATA (number));
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+
+  bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number), scratch_bigfloat);
+  return values2 (res0, make_bigfloat_bf (scratch_bigfloat2));
+}
+#endif /* HAVE_BIGFLOAT */
+
+static Lisp_Object
+floor_two_float (Lisp_Object number, Lisp_Object divisor,
+		 int return_float)
+{
+  double f1 = extract_float (number);
+  double f2 = extract_float (divisor);
+  double f0, remain;
+	    
+  if (f2 == 0.0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+	    
+  IN_FLOAT2 (f0 = floor (f1 / f2), MAYBE_EFF ("floor"), number, divisor);
+  IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("floor"), number, divisor);
+
+  if (return_float)
+    {
+      return values2 (make_float (f0), make_float (remain));
+    }
+
+  return values2 (float_to_int (f0, MAYBE_EFF ("floor"), number, divisor),
+		  make_float (remain));
+}
+
+static Lisp_Object
+floor_one_float (Lisp_Object number, int return_float)
+{
+  double d, d1;
+
+  IN_FLOAT ((d = floor (XFLOAT_DATA (number))), MAYBE_EFF ("floor"), number);
+  IN_FLOAT ((d1 = XFLOAT_DATA (number) - d), MAYBE_EFF ("floor"), number);
+
+  if (return_float)
+    {
+      return values2 (make_float (d), make_float (d1));
+    }
+  else
+    {
+      return values2 (float_to_int (d, MAYBE_EFF ("floor"), number, Qunbound),
+                      make_float (d1));
+    }
+}
+
+EXFUN (Ffloor, 2);
+EXFUN (Fffloor, 2);
+
+static Lisp_Object
+floor_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
+		       int return_float)
+{
 #ifdef HAVE_BIGNUM
   if (INTEGERP (number))
 #else
   if (INTP (number))
 #endif
-    return number;
+    {
+      if (return_float)
+	{
+	  return values2 (make_float (extract_float (number)), Qzero);
+	}
+      else
+	{
+	  return values2 (number, Qzero);
+	}
+    }
+
+  MAYBE_CHAR_OR_MARKER (floor);
+
+  if (return_float)
+    {
+      return Fffloor (wrong_type_argument (Qnumberp, number), divisor);
+    }
+  else
+    {
+      return Ffloor (wrong_type_argument (Qnumberp, number), divisor);
+    }
+}
+
+/* Algorithm taken from cl-extra.el, now to be found as cl-round in
+   tests/automated/lisp-tests.el.  */
+static Lisp_Object
+round_two_fixnum (Lisp_Object number, Lisp_Object divisor, 
+		  int return_float)
+{
+  EMACS_INT i1 = XREALINT (number);
+  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i0, hi2, flooring, floored, flsecond;
+
+  if (i2 == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  hi2 = i2 < 0 ? -( -i2 / 2) : i2 / 2;
+
+  flooring = hi2 + i1;
+
+  floored = (i2 < 0
+	? (flooring <= 0  ?  -flooring / -i2  :  -1 - ((flooring - 1) / -i2))
+	: (flooring < 0  ?  -1 - ((-1 - flooring) / i2)  :  flooring / i2));
+
+  flsecond = flooring - (floored * i2);
+
+  if (0 == flsecond
+      && (i2 == (hi2 + hi2))
+      && (0 != (floored % 2)))
+    {
+      i0 = floored - 1;
+      return values2 (return_float ? make_float ((double)i0) :
+		      make_int (i0), make_int (hi2));
+    }
+  else
+    {
+      return values2 (return_float ? make_float ((double)floored) :
+		      make_int (floored),
+		      make_int (flsecond - hi2));
+    }
+}
+
+#ifdef HAVE_BIGNUM
+static void
+round_two_bignum_1 (bignum number, bignum divisor,
+		    Lisp_Object *res, Lisp_Object *remain)
+{
+  bignum flooring, floored, hi2, flsecond;
+
+  if (bignum_divisible_p (number, divisor))
+    {
+      bignum_div (scratch_bignum, number, divisor);
+      *res = make_bignum_bg (scratch_bignum);
+      *remain = Qzero;
+      return;
+    }
+
+  bignum_set_long (scratch_bignum, 2);
+
+  bignum_div (scratch_bignum2, divisor, scratch_bignum);
+
+  bignum_init (hi2);
+  bignum_set (hi2, scratch_bignum2);
+
+  bignum_add (scratch_bignum, scratch_bignum2, number);
+  bignum_init (flooring);
+  bignum_set (flooring, scratch_bignum);
+
+  bignum_floor (scratch_bignum, flooring, divisor);
+  bignum_init (floored);
+  bignum_set (floored, scratch_bignum);
+
+  bignum_mul (scratch_bignum2, scratch_bignum, divisor);
+  bignum_sub (scratch_bignum, flooring, scratch_bignum2);
+  bignum_init (flsecond);
+  bignum_set (flsecond, scratch_bignum);
+
+  bignum_set_long (scratch_bignum, 2);
+  bignum_mul (scratch_bignum2, scratch_bignum, hi2);
+
+  if (bignum_sign (flsecond) == 0
+      && bignum_eql (divisor, scratch_bignum2)
+      && (1 == bignum_testbit (floored, 0)))
+    {
+      bignum_set_long (scratch_bignum, 1);
+      bignum_sub (floored, floored, scratch_bignum);
+      *res = make_bignum_bg (floored);
+      *remain = make_bignum_bg (hi2);
+    }
+  else
+    {
+      bignum_sub (scratch_bignum, flsecond,
+		  hi2);
+      *res = make_bignum_bg (floored);
+      *remain = make_bignum_bg (scratch_bignum);
+    }
+}
+
+static Lisp_Object
+round_two_bignum (Lisp_Object number, Lisp_Object divisor, 
+		  int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  round_two_bignum_1 (XBIGNUM_DATA (number), XBIGNUM_DATA (divisor),
+		      &res0, &res1);
+
+  if (return_float)
+    {
+      res0 = make_float (bignum_to_double (XBIGNUM_DATA (res0)));
+    }
+  else
+    {
+      res0 = Fcanonicalize_number (res0);
+    }
+
+  return values2 (res0, Fcanonicalize_number (res1));
+}
+#endif /* HAVE_BIGNUM */
 
 #ifdef HAVE_RATIO
-  if (RATIOP (number))
+static Lisp_Object
+round_two_ratio (Lisp_Object number, Lisp_Object divisor,
+		 int return_float)
+{
+  Lisp_Object res0, res1;
+
+  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
     {
-      bignum_ceil (scratch_bignum, XRATIO_NUMERATOR (number),
-		   XRATIO_DENOMINATOR (number));
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+      Fsignal (Qarith_error, Qnil);
     }
+
+  ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
+  
+  round_two_bignum_1 (ratio_numerator (scratch_ratio),
+		      ratio_denominator (scratch_ratio), &res0, &res1);
+
+  if (!ZEROP (res1))
+    {
+      /* The numerator and denominator don't round exactly, calculate a
+	 ratio remainder: */
+      ratio_set_bignum (scratch_ratio2, XBIGNUM_DATA (res0));
+      ratio_mul (scratch_ratio, scratch_ratio2, XRATIO_DATA (divisor));
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio);
+      
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  res0 = return_float ?
+    make_float ((double)bignum_to_double(XBIGNUM_DATA (res0))) :
+    Fcanonicalize_number (res0);
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+/* This is the logic of emacs_rint above, no more and no less. */
+static Lisp_Object
+round_one_bigfloat_1 (bigfloat number)
+{
+  Lisp_Object res0;
+  unsigned long prec = bigfloat_get_prec (number);
+
+  assert ((bigfloat *)(&number) != (bigfloat *)&scratch_bigfloat
+	  && (bigfloat *)(&number) != (bigfloat *)(&scratch_bigfloat2));
+
+  bigfloat_set_prec (scratch_bigfloat, prec);
+  bigfloat_set_prec (scratch_bigfloat2, prec);
+
+  bigfloat_set_double (scratch_bigfloat, 0.5);
+  bigfloat_add (scratch_bigfloat2, scratch_bigfloat, number);
+  bigfloat_floor (scratch_bigfloat, scratch_bigfloat2);
+  res0 = make_bigfloat_bf (scratch_bigfloat);
+
+  bigfloat_sub (scratch_bigfloat2, scratch_bigfloat, number);
+  bigfloat_abs (scratch_bigfloat, scratch_bigfloat2);
+
+  bigfloat_set_double (scratch_bigfloat2, 0.5);
+
+  do {
+    if (!bigfloat_ge (scratch_bigfloat, scratch_bigfloat2))
+      {
+	break;
+      }
+
+    if (!bigfloat_gt (scratch_bigfloat, scratch_bigfloat2))
+      {
+	bigfloat_set_double (scratch_bigfloat2, 2.0);
+	bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (res0),
+		      scratch_bigfloat2);
+	bigfloat_floor (scratch_bigfloat2, scratch_bigfloat);
+	bigfloat_set_double (scratch_bigfloat, 2.0);
+	bigfloat_mul (scratch_bigfloat2, scratch_bigfloat2,
+		      scratch_bigfloat);
+	if (bigfloat_eql (scratch_bigfloat2, XBIGFLOAT_DATA (res0)))
+	  {
+	    break;
+	  }
+      }
+
+    if (bigfloat_lt (XBIGFLOAT_DATA (res0), number))
+      {
+	bigfloat_set_double (scratch_bigfloat2, 1.0);
+      }
+    else
+      {
+	bigfloat_set_double (scratch_bigfloat2, -1.0);
+      }
+
+    bigfloat_set (scratch_bigfloat, XBIGFLOAT_DATA (res0));
+
+    bigfloat_add (XBIGFLOAT_DATA (res0), scratch_bigfloat2,
+		  scratch_bigfloat);
+
+  } while (0);
+
+  return res0;
+}
+
+static Lisp_Object
+round_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
+{
+  Lisp_Object res0, res1;
+  bigfloat divided;
+
+  unsigned long prec = max (XBIGFLOAT_GET_PREC (number),
+			    XBIGFLOAT_GET_PREC (divisor));
+
+  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bigfloat_init (divided);
+  bigfloat_set_prec (divided, prec);
+
+  bigfloat_div (divided, XBIGFLOAT_DATA (number), XBIGFLOAT_DATA (divisor));
+
+  res0 = round_one_bigfloat_1 (divided);
+
+  bigfloat_set_prec (scratch_bigfloat, prec);
+  bigfloat_set_prec (scratch_bigfloat2, prec);
+            
+  bigfloat_mul (scratch_bigfloat, XBIGFLOAT_DATA (res0),
+		XBIGFLOAT_DATA (divisor));
+  bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number),
+		scratch_bigfloat);
+
+  res1 = make_bigfloat_bf (scratch_bigfloat2);
+
+  if (!return_float)
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (res0));
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (XBIGFLOAT_DATA (res0)));
+#endif /* HAVE_BIGNUM */
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_BIGFLOAT */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+round_one_ratio (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		 int return_float)
+{
+  Lisp_Object res0, res1;
+
+  round_two_bignum_1 (XRATIO_NUMERATOR (number), XRATIO_DENOMINATOR (number),
+		      &res0, &res1);
+
+  if (!ZEROP (res1))
+    {
+      ratio_set_bignum (scratch_ratio2, XBIGNUM_DATA (res0));
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio2);
+      res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+    }
+
+  res0 = return_float ?
+    make_float ((double)bignum_to_double(XBIGNUM_DATA (res0))) :
+    Fcanonicalize_number (res0);
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+round_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		    int return_float)
+{
+  Lisp_Object res0 = round_one_bigfloat_1 (XBIGFLOAT_DATA (number));
+  Lisp_Object res1;
+
+  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), 
+		XBIGFLOAT_DATA (res0));
+
+  res1 = make_bigfloat_bf (scratch_bigfloat);
+
+  if (!return_float)
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (res0));
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long
+		       (XBIGFLOAT_DATA (res0)));
+#endif /* HAVE_BIGNUM */
+    }
+
+  return values2 (res0, res1);
+}
+#endif /* HAVE_BIGFLOAT */
+
+static Lisp_Object
+round_two_float (Lisp_Object number, Lisp_Object divisor,
+		 int return_float)
+{
+  double f1 = extract_float (number);
+  double f2 = extract_float (divisor);
+  double f0, remain;
+	    
+  if (f2 == 0.0)
+    Fsignal (Qarith_error, Qnil);
+
+  IN_FLOAT2 ((f0 = emacs_rint (f1 / f2)), MAYBE_EFF ("round"), number,
+	     divisor); 
+  IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("round"), number, divisor);
+
+  if (return_float)
+    {
+      return values2 (make_float (f0), make_float (remain));
+    }
+  else
+    {
+      return values2 (float_to_int (f0, MAYBE_EFF("round"), number, divisor),
+		      make_float (remain));
+    }
+}
+
+static Lisp_Object
+round_one_float (Lisp_Object number, int return_float)
+{
+  double d;
+  /* Screw the prevailing rounding mode.  */
+  IN_FLOAT ((d = emacs_rint (XFLOAT_DATA (number))), MAYBE_EFF ("round"),
+    	number);
+
+  if (return_float)
+    {
+      return values2 (make_float (d), make_float (XFLOAT_DATA (number) - d));
+    }
+  else
+    {
+      return values2 ((float_to_int (d, MAYBE_EFF ("round"), number,
+				     Qunbound)), 
+		      make_float (XFLOAT_DATA (number) - d));
+    }
+}
+
+EXFUN (Fround, 2);
+EXFUN (Ffround, 2);
+
+static Lisp_Object
+round_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
+		       int return_float)
+{
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number))
+#else
+  if (INTP (number))
+#endif
+    {
+      if (return_float)
+	{
+	  return values2 (make_float (extract_float (number)), Qzero);
+	}
+      else
+	{
+	  return values2 (number, Qzero);
+	}
+    }
+
+  MAYBE_CHAR_OR_MARKER (round);
+
+  if (return_float)
+    {
+      return Ffround (wrong_type_argument (Qnumberp, number), divisor);  
+    }
+  else
+    {
+      return Fround (wrong_type_argument (Qnumberp, number), divisor);  
+    }
+}
+
+static Lisp_Object
+truncate_two_fixnum (Lisp_Object number, Lisp_Object divisor,
+		     int return_float)
+{
+  EMACS_INT i1 = XREALINT (number);
+  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i0;
+
+  if (i2 == 0)
+    Fsignal (Qarith_error, Qnil);
+
+  /* We're truncating towards zero, so apart from avoiding the C89
+     implementation-defined behaviour with truncation and negative numbers,
+     we don't need to do anything further: */
+  i0 = (i2 < 0
+	? (i1 <= 0  ?  -i1 / -i2  :  -(i1 / -i2))
+	: (i1 < 0  ?  -(-i1 / i2)  :  i1 / i2));
+
+  if (return_float)
+    {
+      return values2 (make_float ((double)i0), make_int (i1 - (i0 * i2)));
+    }
+  else
+    {
+      return values2 (make_int (i0), make_int (i1 - (i0 * i2)));
+    }
+}
+
+#ifdef HAVE_BIGNUM
+static Lisp_Object
+truncate_two_bignum (Lisp_Object number, Lisp_Object divisor,
+		     int return_float)
+{
+  Lisp_Object res0;
+
+  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bignum_div (scratch_bignum, XBIGNUM_DATA (number),
+	      XBIGNUM_DATA (divisor));
+
+  if (return_float)
+    {
+      res0 = make_float (bignum_to_double (scratch_bignum));
+    }
+  else
+    {
+      res0 = make_bignum_bg (scratch_bignum);
+    }
+
+  if (bignum_divisible_p (XBIGNUM_DATA (number),
+			  XBIGNUM_DATA (divisor)))
+    {
+      return values2 (Fcanonicalize_number (res0), Qzero);
+    }
+
+  bignum_mul (scratch_bignum2, scratch_bignum, XBIGNUM_DATA (divisor));
+  bignum_sub (scratch_bignum, XBIGNUM_DATA (number), scratch_bignum2);
+
+  return values2 (Fcanonicalize_number (res0),
+		  Fcanonicalize_number (make_bignum_bg (scratch_bignum)));
+}
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+static Lisp_Object
+truncate_two_ratio (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
+{
+  Lisp_Object res0;
+
+  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
+
+  bignum_div (scratch_bignum, ratio_numerator (scratch_ratio),
+	      ratio_denominator (scratch_ratio));
+
+  if (return_float)
+    {
+      res0 = make_float (bignum_to_double (scratch_bignum));
+    }
+  else
+    {
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+
+  if (bignum_divisible_p (ratio_numerator (scratch_ratio),
+			  ratio_denominator (scratch_ratio)))
+    {
+      return values2 (res0, Qzero);
+    }
+
+  ratio_set_bignum (scratch_ratio2, scratch_bignum);
+  ratio_mul (scratch_ratio, scratch_ratio2, XRATIO_DATA (divisor));
+  ratio_sub (scratch_ratio2, XRATIO_DATA (number), scratch_ratio);
+
+  return values2 (res0, Fcanonicalize_number (make_ratio_rt(scratch_ratio2)));
+}
 #endif
 
 #ifdef HAVE_BIGFLOAT
-  if (BIGFLOATP (number))
+static Lisp_Object
+truncate_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
+		       int return_float)
+{
+  Lisp_Object res0;
+  unsigned long prec = max (XBIGFLOAT_GET_PREC (number),
+			    XBIGFLOAT_GET_PREC (divisor));
+
+  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
     {
-      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
-      bigfloat_ceil (scratch_bigfloat, XBIGFLOAT_DATA (number));
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bigfloat_set_prec (scratch_bigfloat, prec);
+  bigfloat_set_prec (scratch_bigfloat2, prec);
+
+  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (number),
+		XBIGFLOAT_DATA (divisor));
+  bigfloat_trunc (scratch_bigfloat, scratch_bigfloat);
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
 #ifdef HAVE_BIGNUM
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
+            
+  bigfloat_mul (scratch_bigfloat2, scratch_bigfloat, XBIGFLOAT_DATA (divisor));
+  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), scratch_bigfloat2);
+
+  return values2 (res0, make_bigfloat_bf (scratch_bigfloat));
+}
 #endif /* HAVE_BIGFLOAT */
 
-  return Fceiling (wrong_type_argument (Qnumberp, number));
+#ifdef HAVE_RATIO
+static Lisp_Object
+truncate_one_ratio (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		   int return_float)
+{
+  Lisp_Object res0;
+
+  if (ratio_sign (XRATIO_DATA (number)) == 0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
+	      XRATIO_DENOMINATOR (number));
+  if (return_float)
+    {
+      res0 = make_float (bignum_to_double (scratch_bignum));
+    }
+  else
+    {
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+
+  if (bignum_divisible_p (XRATIO_NUMERATOR (number),
+			  XRATIO_DENOMINATOR (number)))
+    {
+      return values2 (res0, Qzero);
+    }
+
+  ratio_set_bignum (scratch_ratio2, scratch_bignum);
+  ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio2);
+
+  return values2 (res0, Fcanonicalize_number (make_ratio_rt (scratch_ratio)));
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static Lisp_Object
+truncate_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
+		       int return_float)
+{
+  Lisp_Object res0;
+
+  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+  bigfloat_set_prec (scratch_bigfloat2, XBIGFLOAT_GET_PREC (number));
+  bigfloat_trunc (scratch_bigfloat, XBIGFLOAT_DATA (number));
+
+  if (return_float)
+    {
+      res0 = make_bigfloat_bf (scratch_bigfloat);
+    }
+  else
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+
+  bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number), scratch_bigfloat);
+
+  return
+    values2 (res0, 
+	     Fcanonicalize_number (make_bigfloat_bf (scratch_bigfloat2)));
+}
+#endif /* HAVE_BIGFLOAT */
+
+static Lisp_Object
+truncate_two_float (Lisp_Object number, Lisp_Object divisor,
+		    int return_float)
+{
+  double f1 = extract_float (number);
+  double f2 = extract_float (divisor);
+  double f0, remain;
+  Lisp_Object res0;
+	    
+  if (f2 == 0.0)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  res0 = float_to_int (f1 / f2, MAYBE_EFF ("truncate"), number, Qunbound);
+  f0 = extract_float (res0);
+
+  IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("truncate"), number, divisor);
+
+  if (return_float)
+    {
+      res0 = make_float (f0);
+    }
+
+  return values2 (res0, make_float (remain));
 }
 
+static Lisp_Object
+truncate_one_float (Lisp_Object number, int return_float)
+{
+  Lisp_Object res0
+    = float_to_int (XFLOAT_DATA (number), MAYBE_EFF ("truncate"),
+		    number, Qunbound);
+  if (return_float)
+    {
+      res0 = make_float ((double)XINT(res0));
+      return values2 (res0, make_float ((XFLOAT_DATA (number)
+					 - XFLOAT_DATA (res0))));
+    }
+  else
+    {
+      return values2 (res0, make_float (XFLOAT_DATA (number)
+					- XREALINT (res0)));
+    }
+}
+
+EXFUN (Fftruncate, 2);
+
+static Lisp_Object
+truncate_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
+			  int return_float)
+{
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number))
+#else
+  if (INTP (number))
+#endif
+    {
+      if (return_float)
+	{
+	  return values2 (make_float (extract_float (number)), Qzero);
+	}
+      else
+	{
+	  return values2 (number, Qzero);
+	}
+    }
+
+  MAYBE_CHAR_OR_MARKER (truncate);
+
+  if (return_float)
+    {
+      return Fftruncate (wrong_type_argument (Qnumberp, number), divisor);
+    }
+  else
+    {
+      return Ftruncate (wrong_type_argument (Qnumberp, number), divisor);
+    }
+}
+
+/* Rounding functions that will not necessarily return floats: */
+
+DEFUN ("ceiling", Fceiling, 1, 2, 0, /*
+Return the smallest integer no less than NUMBER.  (Round toward +inf.)
+
+With optional argument DIVISOR, return the smallest integer no less than
+the quotient of NUMBER and DIVISOR. 
+
+This function returns multiple values; see `multiple-value-bind' and
+`multiple-value-call'.  The second returned value is the remainder in the
+calculation, which will be one minus the fractional part of NUMBER if DIVISOR
+is omitted or one.
+*/
+       (number, divisor))
+{
+  ROUNDING_CONVERT(ceiling, 0);
+}
 
 DEFUN ("floor", Ffloor, 1, 2, 0, /*
 Return the largest integer no greater than NUMBER.  (Round towards -inf.)
 With optional second argument DIVISOR, return the largest integer no
-greater than NUMBER/DIVISOR.
+greater than the quotient of NUMBER and DIVISOR.
+
+This function returns multiple values; see `multiple-value-call' and
+`multiple-value-bind'.  The second returned value is the remainder in the
+calculation, which will just be the fractional part if DIVISOR is omitted or
+one.
 */
        (number, divisor))
 {
-#ifdef WITH_NUMBER_TYPES
-  CHECK_REAL (number);
-  if (NILP (divisor))
-    {
-      if (FLOATP (number))
-	{
-	  double d;
-	  IN_FLOAT ((d = floor (XFLOAT_DATA (number))), "floor", number);
-	  return (float_to_int (d, "floor", number, Qunbound));
-	}
-#ifdef HAVE_RATIO
-      else if (RATIOP (number))
-	{
-	  bignum_floor (scratch_bignum, XRATIO_NUMERATOR (number),
-			XRATIO_DENOMINATOR (number));
-	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-	}
-#endif
-#ifdef HAVE_BIGFLOAT
-      else if (BIGFLOATP (number))
-	{
-	  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
-	  bigfloat_floor (scratch_bigfloat, XBIGFLOAT_DATA (number));
-	  return make_bigfloat_bf (scratch_bigfloat);
-	}
-#endif
-      return number;
-    }
-  else
-    {
-      CHECK_REAL (divisor);
-      switch (promote_args (&number, &divisor))
-	{
-	case FIXNUM_T:
-	  {
-	    EMACS_INT i1 = XREALINT (number);
-	    EMACS_INT i2 = XREALINT (divisor);
-
-	    if (i2 == 0)
-	      Fsignal (Qarith_error, Qnil);
-
-	    /* With C's /, the result is implementation-defined if either
-	       operand is negative, so use only nonnegative operands.  */
-	    i1 = (i2 < 0
-		  ? (i1 <= 0  ?  -i1 / -i2  :  -1 - ((i1 - 1) / -i2))
-		  : (i1 < 0  ?  -1 - ((-1 - i1) / i2)  :  i1 / i2));
-
-	    return make_int (i1);
-	  }
-#ifdef HAVE_BIGNUM
-	case BIGNUM_T:
-	  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
-	    Fsignal (Qarith_error, Qnil);
-	  bignum_floor (scratch_bignum, XBIGNUM_DATA (number),
-			XBIGNUM_DATA (divisor));
-	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#endif
-#ifdef HAVE_RATIO
-	case RATIO_T:
-	  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
-	    Fsignal (Qarith_error, Qnil);
-	  ratio_div (scratch_ratio, XRATIO_DATA (number),
-		     XRATIO_DATA (divisor));
-	  bignum_floor (scratch_bignum, ratio_numerator (scratch_ratio),
-			ratio_denominator (scratch_ratio));
-	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#endif
-#ifdef HAVE_BIGFLOAT
-	case BIGFLOAT_T:
-	  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
-	    Fsignal (Qarith_error, Qnil);
-	  bigfloat_set_prec (scratch_bigfloat,
-			     max (XBIGFLOAT_GET_PREC (number),
-				  XBIGFLOAT_GET_PREC (divisor)));
-	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (number),
-			XBIGFLOAT_DATA (divisor));
-	  bigfloat_floor (scratch_bigfloat, scratch_bigfloat);
-	  return make_bigfloat_bf (scratch_bigfloat);
-#endif
-	default: /* FLOAT_T */
-	  {
-	    double f1 = extract_float (number);
-	    double f2 = extract_float (divisor);
-	    
-	    if (f2 == 0.0)
-	      Fsignal (Qarith_error, Qnil);
-	    
-	    IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
-	    return float_to_int (f1, "floor", number, divisor);
-	  }
-	}
-    }
-#else /* !WITH_NUMBER_TYPES */
-  CHECK_INT_OR_FLOAT (number);
-
-  if (! NILP (divisor))
-    {
-      EMACS_INT i1, i2;
-
-      CHECK_INT_OR_FLOAT (divisor);
-
-      if (FLOATP (number) || FLOATP (divisor))
-	{
-	  double f1 = extract_float (number);
-	  double f2 = extract_float (divisor);
-
-	  if (f2 == 0)
-	    Fsignal (Qarith_error, Qnil);
-
-	  IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
-	  return float_to_int (f1, "floor", number, divisor);
-	}
-
-      i1 = XINT (number);
-      i2 = XINT (divisor);
-
-      if (i2 == 0)
-	Fsignal (Qarith_error, Qnil);
-
-      /* With C's /, the result is implementation-defined if either operand
-	 is negative, so use only nonnegative operands.  */
-      i1 = (i2 < 0
-	    ? (i1 <= 0  ?  -i1 / -i2  :  -1 - ((i1 - 1) / -i2))
-	    : (i1 < 0  ?  -1 - ((-1 - i1) / i2)  :  i1 / i2));
-
-      return (make_int (i1));
-    }
-
-  if (FLOATP (number))
-    {
-      double d;
-      IN_FLOAT ((d = floor (XFLOAT_DATA (number))), "floor", number);
-      return (float_to_int (d, "floor", number, Qunbound));
-    }
-
-  return number;
-#endif /* WITH_NUMBER_TYPES */
+  ROUNDING_CONVERT(floor, 0);
 }
 
-DEFUN ("round", Fround, 1, 1, 0, /*
+DEFUN ("round", Fround, 1, 2, 0, /*
 Return the nearest integer to NUMBER.
+If NUMBER is exactly halfway between two integers, return the one that
+is even.
+
+Optional argument DIVISOR means return the nearest integer to NUMBER
+divided by DIVISOR.
+
+This function returns multiple values; see `multiple-value-call' and
+`multiple-value-bind'.  The second returned value is the remainder
+in the calculation.
 */
-       (number))
+       (number, divisor))
 {
-  if (FLOATP (number))
-    {
-      double d;
-      /* Screw the prevailing rounding mode.  */
-      IN_FLOAT ((d = emacs_rint (XFLOAT_DATA (number))), "round", number);
-      return (float_to_int (d, "round", number, Qunbound));
-    }
-
-#ifdef HAVE_BIGNUM
-  if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
-    return number;
-
-#ifdef HAVE_RATIO
-  if (RATIOP (number))
-    {
-      if (bignum_divisible_p (XRATIO_NUMERATOR (number),
-			      XRATIO_DENOMINATOR (number)))
-	{
-	  bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
-		      XRATIO_DENOMINATOR (number));
-	}
-      else
-	{
-	  bignum_add (scratch_bignum2, XRATIO_NUMERATOR (number),
-		      XRATIO_DENOMINATOR (number));
-	  bignum_div (scratch_bignum, scratch_bignum2,
-		      XRATIO_DENOMINATOR (number));
-	}
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-    }
-#endif
-
-#ifdef HAVE_BIGFLOAT
-  if (BIGFLOATP (number))
-    {
-      unsigned long prec = XBIGFLOAT_GET_PREC (number);
-      bigfloat_set_prec (scratch_bigfloat, prec);
-      bigfloat_set_prec (scratch_bigfloat2, prec);
-      bigfloat_set_double (scratch_bigfloat2,
-			   bigfloat_sign (XBIGFLOAT_DATA (number)) * 0.5);
-      bigfloat_floor (scratch_bigfloat, scratch_bigfloat2);
-#ifdef HAVE_BIGNUM
-      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#else
-      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
-#endif /* HAVE_BIGNUM */
-    }
-#endif /* HAVE_BIGFLOAT */
-
-  return Fround (wrong_type_argument (Qnumberp, number));
+  ROUNDING_CONVERT(round, 0);
 }
 
-DEFUN ("truncate", Ftruncate, 1, 1, 0, /*
+DEFUN ("truncate", Ftruncate, 1, 2, 0, /*
 Truncate a floating point number to an integer.
 Rounds the value toward zero.
+
+Optional argument DIVISOR means truncate NUMBER divided by DIVISOR.
+
+This function returns multiple values; see `multiple-value-call' and
+`multiple-value-bind'.  The second returned value is the remainder.
 */
-       (number))
+       (number, divisor))
 {
-  if (FLOATP (number))
-    return float_to_int (XFLOAT_DATA (number), "truncate", number, Qunbound);
-
-#ifdef HAVE_BIGNUM
-  if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
-    return number;
-
-#ifdef HAVE_RATIO
-  if (RATIOP (number))
-    {
-      bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
-		  XRATIO_DENOMINATOR (number));
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-    }
-#endif
-
-#ifdef HAVE_BIGFLOAT
-  if (BIGFLOATP (number))
-    {
-      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
-      bigfloat_trunc (scratch_bigfloat, XBIGFLOAT_DATA (number));
-#ifdef HAVE_BIGNUM
-      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#else
-      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
-#endif /* HAVE_BIGNUM */
-    }
-#endif /* HAVE_BIGFLOAT */
-
-  return Ftruncate (wrong_type_argument (Qnumberp, number));
+  ROUNDING_CONVERT(truncate, 0);
 }
 
 /* Float-rounding functions. */
 
-DEFUN ("fceiling", Ffceiling, 1, 1, 0, /*
+DEFUN ("fceiling", Ffceiling, 1, 2, 0, /*
 Return the smallest integer no less than NUMBER, as a float.
 \(Round toward +inf.\)
+
+With optional argument DIVISOR, return the smallest integer no less than the
+quotient of NUMBER and DIVISOR, as a float.
+
+This function returns multiple values; the second value is the remainder in
+the calculation.
 */
-       (number))
+       (number, divisor))
 {
-  double d = extract_float (number);
-  IN_FLOAT (d = ceil (d), "fceiling", number);
-  return make_float (d);
+  ROUNDING_CONVERT(ceiling, 1);
 }
 
-DEFUN ("ffloor", Fffloor, 1, 1, 0, /*
+DEFUN ("ffloor", Fffloor, 1, 2, 0, /*
 Return the largest integer no greater than NUMBER, as a float.
 \(Round towards -inf.\)
+
+With optional argument DIVISOR, return the largest integer no greater than
+the quotient of NUMBER and DIVISOR, as a float.
+
+This function returns multiple values; the second value is the remainder in
+the calculation.
 */
-       (number))
+       (number, divisor))
 {
-  double d = extract_float (number);
-  IN_FLOAT (d = floor (d), "ffloor", number);
-  return make_float (d);
+  ROUNDING_CONVERT(floor, 1);
 }
 
-DEFUN ("fround", Ffround, 1, 1, 0, /*
+DEFUN ("fround", Ffround, 1, 2, 0, /*
 Return the nearest integer to NUMBER, as a float.
+If NUMBER is exactly halfway between two integers, return the one that is
+even.
+
+With optional argument DIVISOR, return the nearest integer to the quotient
+of NUMBER and DIVISOR, as a float.
+
+This function returns multiple values; the second value is the remainder in
+the calculation.
 */
-       (number))
+       (number, divisor))
 {
-  double d = extract_float (number);
-  IN_FLOAT (d = emacs_rint (d), "fround", number);
-  return make_float (d);
+  ROUNDING_CONVERT(round, 1);
 }
 
-DEFUN ("ftruncate", Fftruncate, 1, 1, 0, /*
+DEFUN ("ftruncate", Fftruncate, 1, 2, 0, /*
 Truncate a floating point number to an integral float value.
 Rounds the value toward zero.
+
+With optional argument DIVISOR, truncate the quotient of NUMBER and DIVISOR,
+to an integral float value.
+
+This function returns multiple values; the second value is the remainder in
+the calculation.
 */
-       (number))
+       (number, divisor))
 {
-  double d = extract_float (number);
-  if (d >= 0.0)
-    IN_FLOAT (d = floor (d), "ftruncate", number);
-  else
-    IN_FLOAT (d = ceil (d), "ftruncate", number);
-  return make_float (d);
+  ROUNDING_CONVERT(truncate, 1);
 }
 
 #ifdef FLOAT_CATCH_SIGILL
