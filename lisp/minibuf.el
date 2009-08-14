@@ -405,10 +405,8 @@ See also the variable `completion-highlight-first-word-only' for
          (owindow (selected-window))
 	 (oframe (selected-frame))
          (window (minibuffer-window))
-         (buffer (if (eq (minibuffer-depth) 0)
-                     (window-buffer window)
-		   (get-buffer-create (format " *Minibuf-%d"
-					      (minibuffer-depth)))))
+         (buffer (get-buffer-create (format " *Minibuf-%d*"
+					    (minibuffer-depth))))
          (frame (window-frame window))
          (mconfig (if (eq frame (selected-frame))
                       nil (current-window-configuration frame)))
