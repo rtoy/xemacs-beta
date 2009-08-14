@@ -1,3 +1,9 @@
+2009-08-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (read-from-minibuffer): 
+	Use buffer (format " *Minibuf-%d*" (minibuffer-depth)), regardless
+	of depth. 
+
 2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (function-arglist, function-documentation): 
