@@ -1,3 +1,9 @@
+2009-08-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.el (xpm-color-symbols): 
+	Call (featurep 'x) when faces.elc is dumped, not repeatedly
+	(myriad times) at image instantiation time.
+
 2009-08-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* minibuf.el (read-from-minibuffer): 

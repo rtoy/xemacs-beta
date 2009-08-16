@@ -2068,24 +2068,20 @@ in that frame; otherwise change each frame."
         (list
          '("foreground" (face-foreground 'default))
          '("background" (face-background 'default))
-         '("backgroundToolBarColor"
-           (or
-            (and
-             (featurep 'x)
-             (x-get-resource "backgroundToolBarColor"
-                             "BackgroundToolBarColor" 'string
-                             nil nil 'warn))
-
-            (face-background 'toolbar)))
-         '("foregroundToolBarColor"
-           (or
-            (and
-            (featurep 'x)
-            (x-get-resource "foregroundToolBarColor"
-                            "ForegroundToolBarColor" 'string
-                            nil nil 'warn))
-            (face-foreground 'toolbar)))
-         )))
+         `("backgroundToolBarColor"
+           ,(if (featurep 'x)
+		'(or (x-get-resource "backgroundToolBarColor"
+				     "BackgroundToolBarColor" 'string
+				     nil nil 'warn)
+		  (face-background 'toolbar))
+	      '(face-background 'toolbar)))
+         `("foregroundToolBarColor"
+           ,(if (featurep 'x)
+		'(or (x-get-resource "foregroundToolBarColor"
+				     "ForegroundToolBarColor" 'string
+				     nil nil 'warn)
+		  (face-foreground 'toolbar))
+	      '(face-foreground 'toolbar))))))
 
 (when (featurep 'tty)
   (set-face-highlight-p 'bold                    t 'global '(default tty))
