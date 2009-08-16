@@ -1939,3 +1939,140 @@
     (princ (list 'quote (multiple-value-list (ftruncate first))))
     (princ " :two-ftruncate-result ")
     (princ (list 'quote (multiple-value-list (ftruncate first second))))))
+
+;; Multiple value tests. 
+
+(flet ((foo (x y) 
+	 (floor (+ x y) y))
+       (foo-zero (x y)
+	 (values (floor (+ x y) y)))
+       (multiple-value-function-returning-t ()
+	 (values t pi e degrees-to-radians radians-to-degrees))
+       (multiple-value-function-returning-nil ()
+	 (values t pi e radians-to-degrees degrees-to-radians))
+       (function-throwing-multiple-values ()
+	 (let* ((listing '(0 3 4 nil "string" symbol))
+		(tail listing)
+		elt)
+	   (while t
+	     (setq tail (cdr listing)
+		   elt (car listing)
+		   listing tail)
+	     (when (null elt)
+	       (throw 'VoN61Lo4Y (multiple-value-function-returning-t)))))))
+  (Assert
+   (= (+ (floor 5 3) (floor 19 4)) (+ 1 4) 5)
+   "Checking that multiple values are discarded correctly as func args")
+  (Assert
+   (= 2 (length (multiple-value-list (foo 400 (1+ most-positive-fixnum)))))
+   "Checking multiple values are passed through correctly as return values")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (foo-zero 400 (1+ most-positive-fixnum)))))
+   "Checking multiple values are discarded correctly when forced")
+  (Check-Error setting-constant (setq multiple-values-limit 20))
+  (Assert
+   (equal '(-1 1)
+	  (multiple-value-list (floor -3 4)))
+   "Checking #'multiple-value-list gives a sane result")
+  (let ((ey 40000)
+	(bee "this is a string")
+	(cee #s(hash-table size 256 data (969 ?\xF9))))
+    (Assert
+     (equal
+      (multiple-value-list (values ey bee cee))
+      (multiple-value-list (values-list (list ey bee cee))))
+     "Checking that #'values and #'values-list are correctly related")
+    (Assert
+     (equal
+      (multiple-value-list (values-list (list ey bee cee)))
+      (multiple-value-list (apply #'values (list ey bee cee))))
+     "Checking #'values-list and #'apply with #values are correctly related"))
+  (Assert
+   (= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10)
+   "Checking #'multiple-value-call gives reasonable results.")
+  (Assert
+   (= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10)
+   "Checking #'multiple-value-call correct when first arg multiple.")
+  (Assert
+   (= 1 (length (multiple-value-list (prog1 (floor pi) "hi there"))))
+   "Checking #'prog1 does not pass back multiple values")
+  (Assert
+   (= 2 (length (multiple-value-list
+		 (multiple-value-prog1 (floor pi) "hi there"))))
+   "Checking #'multiple-value-prog1 passes back multiple values")
+  (multiple-value-bind (floored remainder this-is-nil)
+      (floor pi 1.0)
+    (Assert (= floored 3)
+	    "Checking floored bound correctly")
+    (Assert (eql remainder (- pi 3.0))
+	    "Checking remainder bound correctly") 
+    (Assert (null this-is-nil)
+	    "Checking trailing arg bound but nil"))
+  (let ((ey 40000)
+	(bee "this is a string")
+	(cee #s(hash-table size 256 data (969 ?\xF9))))
+    (multiple-value-setq (ey bee cee)
+      (ffloor e 1.0))
+    (Assert (eql 2.0 ey) "Checking ey set correctly")
+    (Assert (eql bee (- e 2.0)) "Checking bee set correctly")
+    (Assert (null cee) "Checking cee set to nil correctly"))
+  (Assert
+   (= 3 (length (multiple-value-list (eval '(values nil t pi)))))
+   "Checking #'eval passes back multiple values")
+  (Assert
+   (= 2 (length (multiple-value-list (apply #'floor '(5 3)))))
+   "Checking #'apply passes back multiple values")
+  (Assert 
+   (= 2 (length (multiple-value-list (funcall #'floor 5 3))))
+   "Checking #'funcall passes back multiple values")
+  (Assert 
+   (equal '(1 2) (multiple-value-list 
+		  (multiple-value-call #'floor (values 5 3))))
+   "Checking #'multiple-value-call passes back multiple values correctly")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (and (multiple-value-function-returning-nil) t))))
+   "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert
+   (= 5 (length (multiple-value-list 
+		 (and t (multiple-value-function-returning-nil)))))
+   "Checking multiple values from final forms not discarded by #'and")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (or (multiple-value-function-returning-t) t))))
+   "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert
+   (= 5 (length (multiple-value-list 
+		 (or nil (multiple-value-function-returning-t)))))
+   "Checking multiple values from final forms not discarded by #'and")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (cond ((multiple-value-function-returning-t))))))
+   "Checking cond doesn't pass back multiple values in tests.")
+  (Assert
+   (equal (list t pi e degrees-to-radians radians-to-degrees)
+	  (multiple-value-list
+	   (cond (t (multiple-value-function-returning-nil)))))
+   "Checking cond passes back multiple values in clauses.")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (prog1 (multiple-value-function-returning-nil)))))
+   "Checking prog1 discards multiple values correctly.")
+  (Assert
+   (= 5 (length (multiple-value-list
+		 (multiple-value-prog1
+		  (multiple-value-function-returning-nil)))))
+   "Checking multiple-value-prog1 passes back multiple values correctly.")
+  (Assert
+   (equal (list t pi e degrees-to-radians radians-to-degrees)
+	  (multiple-value-list
+	   (catch 'VoN61Lo4Y (function-throwing-multiple-values)))))
+  (Assert
+   (equal (list t pi e radians-to-degrees degrees-to-radians)
+	  (multiple-value-list
+	   (loop
+	     for eye in `(a b c d ,e f g ,nil ,pi)
+	     do (when (null eye)
+		  (return (multiple-value-function-returning-t))))))
+   "Checking #'loop passes back multiple values correctly."))
