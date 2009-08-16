@@ -1,3 +1,8 @@
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Organization): 
+	Remove references to the obsolete multiple-value emulating code.
+
 2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Redisplay Piece by Piece):

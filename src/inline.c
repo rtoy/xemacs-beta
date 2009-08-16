@@ -64,6 +64,7 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "rangetab.h"
 #include "specifier.h"
+#include "symeval.h"
 #include "syntax.h"
 #include "window.h"
 

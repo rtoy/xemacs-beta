@@ -386,7 +386,6 @@ static int
 gui_item_value (Lisp_Object form)
 {
   /* This function can call Lisp. */
-
 #ifndef ERROR_CHECK_DISPLAY
   /* Shortcut to avoid evaluating Qt/Qnil each time; but don't do it when
      error-checking so we catch unprotected eval within redisplay quicker */
@@ -395,7 +394,9 @@ gui_item_value (Lisp_Object form)
   if (EQ (form, Qt))
     return 1;
 #endif
-  return !NILP (in_display ? eval_within_redisplay (form) : Feval (form));
+  return !NILP (in_display ?
+                IGNORE_MULTIPLE_VALUES (eval_within_redisplay (form))
+                : IGNORE_MULTIPLE_VALUES (Feval (form)));
 }
 
 /*
@@ -511,6 +512,7 @@ gui_item_display_flush_left (Lisp_Object gui_item)
       if (!STRINGP (suffix))
 	{
 	  suffix = Feval (suffix);
+          suffix = IGNORE_MULTIPLE_VALUES (suffix);
 	  CHECK_STRING (suffix);
 	}
 

@@ -400,7 +400,7 @@ when reading the arguments.
 
       GCPRO3 (function, specs, input);
       /* Compute the arg values using the user's expression.  */
-      specs = Feval (specs);
+      specs = IGNORE_MULTIPLE_VALUES (Feval (specs));
       if (EQ (record_flag, Qlambda)) /* XEmacs addition */
 	{
 	  UNGCPRO;
@@ -916,7 +916,7 @@ when reading the arguments.
 	    {
 	      Lisp_Object tem = call1 (Qread_expression, PROMPT ());
 	      /* visargs[argnum] = Fprin1_to_string (tem, Qnil); */
-	      args[argnum] = Feval (tem);
+              args[argnum] = IGNORE_MULTIPLE_VALUES (Feval (tem));
 	      arg_from_tty = 1;
 	      break;
 	    }

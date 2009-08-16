@@ -59,52 +59,10 @@
 (defun keyword-of (sym)
   (or (keywordp sym) (keywordp (intern (format ":%s" sym)))))
 
-
-;;; Multiple values.  Note that the new package uses a different
-;;; convention for multiple values.  The following definitions
-;;; emulate the old convention; all function names have been changed
-;;; by capitalizing the first letter: Values, Multiple-value-*,
-;;; to avoid conflict with the new-style definitions in cl-macs.
-
-(put 'Multiple-value-bind  'lisp-indent-function 2)
-(put 'Multiple-value-setq  'lisp-indent-function 2)
-(put 'Multiple-value-call  'lisp-indent-function 1)
-(put 'Multiple-value-prog1 'lisp-indent-function 1)
-
-(defvar *mvalues-values* nil)
-
-(defun Values (&rest val-forms)
-  (setq *mvalues-values* val-forms)
-  (car val-forms))
-
-(defun Values-list (val-forms)
-  (apply 'values val-forms))
-
-(defmacro Multiple-value-list (form)
-  (list 'let* (list '(*mvalues-values* nil) (list '*mvalues-temp* form))
-	'(or (and (eq *mvalues-temp* (car *mvalues-values*)) *mvalues-values*)
-	     (list *mvalues-temp*))))
-
-(defmacro Multiple-value-call (function &rest args)
-  (list 'apply function
-	(cons 'append
-	      (mapcar (function (lambda (x) (list 'Multiple-value-list x)))
-		      args))))
-
-(defmacro Multiple-value-bind (vars form &rest body)
-  (list* 'multiple-value-bind vars (list 'Multiple-value-list form) body))
-
-(defmacro Multiple-value-setq (vars form)
-  (list 'multiple-value-setq vars (list 'Multiple-value-list form)))
-
-(defmacro Multiple-value-prog1 (form &rest body)
-  (list 'prog1 form (list* 'let '((*mvalues-values* nil)) body)))
-
-
 ;;; Routines for parsing keyword arguments.
 
 (defun build-klist (arglist keys &optional allow-others)
-  (let ((res (Multiple-value-call 'mapcar* 'cons (unzip-lists arglist))))
+  (let ((res (multiple-value-call 'mapcar* 'cons (unzip-lists arglist))))
     (or allow-others
 	(let ((bad (set-difference (mapcar 'car res) keys)))
 	  (if bad (error "Bad keywords: %s not in %s" bad keys))))
@@ -124,25 +82,23 @@
     (if test-not (not (funcall test-not item elt))
       (funcall (or test 'eql) item elt))))
 
-
 ;;; Rounding functions with old-style multiple value returns.
 
-(defun cl-floor (a &optional b) (Values-list (floor* a b)))
-(defun cl-ceiling (a &optional b) (Values-list (ceiling* a b)))
-(defun cl-round (a &optional b) (Values-list (round* a b)))
-(defun cl-truncate (a &optional b) (Values-list (truncate* a b)))
+(defun cl-floor (a &optional b) (values-list (floor* a b)))
+(defun cl-ceiling (a &optional b) (values-list (ceiling* a b)))
+(defun cl-round (a &optional b) (values-list (round* a b)))
+(defun cl-truncate (a &optional b) (values-list (truncate* a b)))
 
 (defun safe-idiv (a b)
   (let* ((q (/ (abs a) (abs b)))
          (s (* (signum a) (signum b))))
-    (Values q (- a (* s q b)) s)))
-
+    (values q (- a (* s q b)) s)))
 
 ;; Internal routines.
 
 (defun pair-with-newsyms (oldforms)
   (let ((newsyms (mapcar (function (lambda (x) (gensym))) oldforms)))
-    (Values (mapcar* 'list newsyms oldforms) newsyms)))
+    (values (mapcar* 'list newsyms oldforms) newsyms)))
 
 (defun zip-lists (evens odds)
   (mapcan 'list evens odds))
@@ -151,7 +107,7 @@
   (let ((e nil) (o nil))
     (while list
       (setq e (cons (car list) e) o (cons (cadr list) o) list (cddr list)))
-    (Values (nreverse e) (nreverse o))))
+    (values (nreverse e) (nreverse o))))
 
 (defun reassemble-argslists (list)
   (let ((n (apply 'min (mapcar 'length list))) (res nil))

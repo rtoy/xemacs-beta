@@ -1280,7 +1280,8 @@ x_IO_error_handler (Display *disp)
       enqueue_magic_eval_event (io_error_delete_device, dev);
       DEVICE_X_BEING_DELETED (d) = 1;
     }
-  Fthrow (Qtop_level, Qnil);
+
+  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }

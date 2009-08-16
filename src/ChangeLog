@@ -1,3 +1,118 @@
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (enum Opcode /* Byte codes */): 
+	Add four new bytecodes, to deal with multiple values. 
+	(POP_WITH_MULTIPLE_VALUES): New macro. 
+	(POP): Modify this macro to ignore multiple values. 
+	(DISCARD_PRESERVING_MULTIPLE_VALUES): New macro. 
+	(DISCARD): Modify this macro to ignore multiple values. 
+	(TOP_WITH_MULTIPLE_VALUES): New macro. 
+	(TOP_ADDRESS): New macro. 
+	(TOP): Modify this macro to ignore multiple values. 
+	(TOP_LVALUE): New macro.
+	(Bcall): Ignore multiple values where appropriate. 
+	(Breturn): Pass back multiple values.
+	(Bdup): Preserve multiple values.
+	Use TOP_LVALUE with most bytecodes that assign anything to
+	anything. 
+	(Bbind_multiple_value_limits, Bmultiple_value_call,
+	Bmultiple_value_list_internal, Bthrow): Implement the new
+	bytecodes. 
+	(Bgotoifnilelsepop, Bgotoifnonnilelsepop, BRgotoifnilelsepop,
+	BRgotoifnonnilelsepop): 
+	Discard any multiple values.
+	* callint.c (Fcall_interactively):
+	Ignore multiple values when calling #'eval, in two places.
+	* device-x.c (x_IO_error_handler): 
+	* macros.c (pop_kbd_macro_event): 
+	* eval.c (Fsignal): 
+	* eval.c (flagged_a_squirmer): 
+	Call throw_or_bomb_out, not Fthrow, now that the latter is a
+	special form. 
+	* eval.c: 
+	Make Qthrow, Qobsolete_throw available as symbols. 
+	Provide multiple_value_current_limit, multiple-values-limit (the
+	latter as specified by Common Lisp. 
+	* eval.c (For): 
+	Ignore multiple values when comparing with Qnil, but pass any
+	multiple values back for the last arg.
+	* eval.c (Fand): 
+	Ditto.
+	* eval.c (Fif):
+	Ignore multiple values when examining the result of the
+	condition. 
+	* eval.c (Fcond): 
+	Ignore multiple values when comparing what the clauses give, but
+	pass them back if a clause gave non-nil.
+	* eval.c (Fprog2): 
+	Never pass back multiple values.
+	* eval.c (FletX, Flet): 
+	Ignore multiple when evaluating what exactly symbols should be
+	bound to.
+	* eval.c (Fwhile): 
+	Ignore multiple values when evaluating the test.
+	* eval.c (Fsetq, Fdefvar, Fdefconst): 
+	Ignore multiple values.	
+	* eval.c (Fthrow): 
+	Declare this as a special form; ignore multiple values for TAG,
+	preserve them for VALUE.
+	* eval.c (throw_or_bomb_out): 
+	Make this available to other files, now Fthrow is a special form.
+	* eval.c (Feval): 
+	Ignore multiple values when calling a compiled function, a
+	non-special-form subr, or a lambda expression.
+	* eval.c (Ffuncall): 
+	If we attempt to call #'throw (now a special form) as a function,
+	don't error, call #'obsolete-throw instead. 
+	* eval.c (make_multiple_value, multiple_value_aset)
+	(multiple_value_aref, print_multiple_value, mark_multiple_value)
+	(size_multiple_value): 
+	Implement the multiple_value type. Add a long comment describing
+	our implementation.
+	* eval.c (bind_multiple_value_limits): 
+	New function, used by the bytecode and by #'multiple-value-call,
+	#'multiple-value-list-internal. 
+	* eval.c (multiple_value_call): 
+	New function, used by the bytecode and #'multiple-value-call.
+	* eval.c (Fmultiple_value_call): 
+	New special form.
+	* eval.c (multiple_value_list_internal): 
+	New function, used by the byte code and
+	#'multiple-value-list-internal.
+	* eval.c (Fmultiple_value_list_internal, Fmultiple_value_prog1): 
+	New special forms.
+	* eval.c (Fvalues, Fvalues_list): 
+	New Lisp functions.
+	* eval.c (values2): 
+	New function, for C code returning multiple values.
+	* eval.c (syms_of_eval): 
+	Make our new Lisp functions and symbols available.
+	* eval.c (multiple-values-limit): 
+	Make this available to Lisp.
+	* event-msw.c (dde_eval_string): 
+	* event-stream.c (execute_help_form): 
+	* glade.c (connector): 
+	* glyphs-widget.c (glyph_instantiator_to_glyph): 
+	* glyphs.c (evaluate_xpm_color_symbols): 
+	* gui-x.c (wv_set_evalable_slot, button_item_to_widget_value): 
+	* gui.c (gui_item_value, gui_item_display_flush_left): 
+	* lread.c (check_if_suppressed): 
+	* menubar-gtk.c (menu_convert, menu_descriptor_to_widget_1): 
+	* menubar-msw.c (populate_menu_add_item): 
+	* print.c (Fwith_output_to_temp_buffer): 
+	* symbols.c (Fsetq_default): 
+	Ignore multiple values when calling Feval.
+	* symeval.h: 
+	Add the header declarations necessary for the multiple-values
+	implementation. 
+	* inline.c: 
+	#include symeval.h, now that it has some inline functions.
+	* lisp.h: 
+	Update Fthrow's declaration. Make throw_or_bomb_out available to
+	all files. 
+	* lrecord.h (enum lrecord_type): 
+	Add the multiple_value type here. 
+
 2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
 
 	* faces.c (ensure_face_cachel_contains_charset):

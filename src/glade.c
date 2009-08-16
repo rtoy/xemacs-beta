@@ -42,7 +42,8 @@ connector (const gchar *handler_name, GtkObject *object,
 
   if (signal_data && signal_data[0])
     {
-      lisp_data = Feval (Fread (build_string (signal_data)));
+      lisp_data
+        = IGNORE_MULTIPLE_VALUES (Feval (Fread (build_string (signal_data))));
     }
 
   /* obj, name, func, cb_data, object_signal, after_p */

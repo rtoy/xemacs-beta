@@ -372,7 +372,7 @@ check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
 		  Lisp_Object val;
 
 		  GCPRO1 (reloc);
-		  val = Feval (XCDR (acons));
+		  val = IGNORE_MULTIPLE_VALUES (Feval (XCDR (acons)));
 		  UNGCPRO;
 
 		  if (!NILP (val))

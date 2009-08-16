@@ -715,24 +715,30 @@ called from BODY."
 
 (defvar cl-active-block-names nil)
 
-(put 'cl-block-wrapper 'byte-compile 'cl-byte-compile-block)
-(defun cl-byte-compile-block (cl-form)
-  (if (fboundp 'byte-compile-form-do-effect)  ; Check for optimizing compiler
-      (progn
-	(let* ((cl-entry (cons (nth 1 (nth 1 (nth 1 cl-form))) nil))
-	       (cl-active-block-names (cons cl-entry cl-active-block-names))
-	       (cl-body (byte-compile-top-level
-			 (cons 'progn (cddr (nth 1 cl-form))))))
-	  (if (cdr cl-entry)
-	      (byte-compile-form (list 'catch (nth 1 (nth 1 cl-form)) cl-body))
-	    (byte-compile-form cl-body))))
-    (byte-compile-form (nth 1 cl-form))))
+(put 'cl-block-wrapper 'byte-compile
+     #'(lambda (cl-form)
+         (if (/= (length cl-form) 2)
+             (byte-compile-warn-wrong-args cl-form 1))
 
-(put 'cl-block-throw 'byte-compile 'cl-byte-compile-throw)
-(defun cl-byte-compile-throw (cl-form)
-  (let ((cl-found (assq (nth 1 (nth 1 cl-form)) cl-active-block-names)))
-    (if cl-found (setcdr cl-found t)))
-  (byte-compile-normal-call (cons 'throw (cdr cl-form))))
+         (if (fboundp 'byte-compile-form-do-effect)  ; Check for optimizing
+						     ; compiler
+             (progn
+               (let* ((cl-entry (cons (nth 1 (nth 1 (nth 1 cl-form))) nil))
+                      (cl-active-block-names (cons cl-entry
+                                                   cl-active-block-names))
+                      (cl-body (byte-compile-top-level
+                                (cons 'progn (cddr (nth 1 cl-form))))))
+                 (if (cdr cl-entry)
+                     (byte-compile-form (list 'catch (nth 1 (nth 1 cl-form))
+                                              cl-body))
+                   (byte-compile-form cl-body))))
+           (byte-compile-form (nth 1 cl-form)))))
+
+(put 'cl-block-throw 'byte-compile
+     #'(lambda (cl-form)
+         (let ((cl-found (assq (nth 1 (nth 1 cl-form)) cl-active-block-names)))
+           (if cl-found (setcdr cl-found t)))
+         (byte-compile-throw (cons 'throw (cdr cl-form)))))
 
 ;;;###autoload
 (defmacro return (&optional result)
@@ -1841,47 +1847,70 @@ lexical closures as in Common Lisp."
 	      (list 'function (cons 'lambda rest)))
 	(list 'quote func)))
 
-
-;;; Multiple values.
-
-;;;###autoload
-(defmacro multiple-value-bind (vars form &rest body)
-  "(multiple-value-bind (SYM SYM...) FORM BODY): collect multiple return values.
-FORM must return a list; the BODY is then executed with the first N elements
-of this list bound (`let'-style) to each of the symbols SYM in turn.  This
-is analogous to the Common Lisp `multiple-value-bind' macro, using lists to
-simulate true multiple return values.  For compatibility, (values A B C) is
-a synonym for (list A B C)."
-  (let ((temp (gensym)) (n -1))
-    (list* 'let* (cons (list temp form)
-		       (mapcar #'(lambda (v)
-				   (list v (list 'nth (setq n (1+ n)) temp)))
-			       vars))
-	   body)))
+;;; Multiple values. We support full Common Lisp conventions here.
 
 ;;;###autoload
-(defmacro multiple-value-setq (vars form)
-  "(multiple-value-setq (SYM SYM...) FORM): collect multiple return values.
-FORM must return a list; the first N elements of this list are stored in
-each of the symbols SYM in turn.  This is analogous to the Common Lisp
-`multiple-value-setq' macro, using lists to simulate true multiple return
-values.  For compatibility, (values A B C) is a synonym for (list A B C)."
-  (cond ((null vars) (list 'progn form nil))
-	((null (cdr vars)) (list 'setq (car vars) (list 'car form)))
-	(t
-	 (let* ((temp (gensym)) (n 0))
-	   (list 'let (list (list temp form))
-		 (list 'prog1 (list 'setq (pop vars) (list 'car temp))
-		       (cons 'setq
-			     (apply 'nconc
-				    (mapcar
-				     #'(lambda (v)
-					 (list v (list
-						  'nth
-						  (setq n (1+ n))
-						  temp)))
-					    vars)))))))))
+(defmacro multiple-value-bind (syms form &rest body)
+  "Collect and bind multiple return values.
 
+If FORM returns multiple values, each symbol in SYMS is bound to one of
+them, in order, and BODY is executed.  If FORM returns fewer multiple values
+than there are SYMS, remaining SYMS are bound to nil.  If FORM does
+not return multiple values, it is treated as returning one multiple value.
+
+Returns the value given by the last element of BODY."
+  (if (null syms)
+      `(progn ,form ,@body)
+    (if (= 1 (length syms))
+        ;; Code written to deal with other "implementations" of multiple
+        ;; values may have a one-element SYMS.
+        `(let ((,(car syms) ,form))
+          ,@body)
+      (let ((temp (gensym)))
+        `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form))
+                ,@(loop 
+                    for var in syms
+                    collect `(,var (prog1 (car ,temp)
+                                     (setq ,temp (cdr ,temp))))))
+          ,@body)))))
+
+;;;###autoload
+(defmacro multiple-value-setq (syms form)
+  "Collect and set multiple values.
+
+FORM should normally return multiple values; the first N values are stored
+in the symbols in SYMS in turn.  If FORM returns fewer than N values, the
+remaining symbols have their values set to nil.  FORM not returning multiple
+values is treated as FORM returning one multiple value, with other elements
+of SYMS initialized to nil.
+
+Returns the first of the multiple values given by FORM."
+  (if (null syms)
+      ;; Never return multiple values from multiple-value-setq:
+      (and form `(values ,form))
+    (if (= 1 (length syms))
+        `(setq ,(car syms) ,form)
+      (let ((temp (gensym)))
+        `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form)))
+           (setq ,@(loop
+                     for sym in syms
+                     nconc `(,sym (car-safe ,temp)
+                             ,temp (cdr-safe ,temp))))
+           ,(car syms))))))
+
+;;;###autoload
+(defmacro multiple-value-list (form)
+  "Evaluate FORM and return a list of the multiple values it returned."
+  `(multiple-value-list-internal 0 multiple-values-limit ,form))
+
+;;;###autoload
+(defmacro nth-value (n form)
+  "Evaluate FORM and return the Nth multiple value it returned."
+  (if (integerp n)
+      `(car (multiple-value-list-internal ,n ,(1+ n) ,form))
+    (let ((temp (gensym)))
+      `(let ((,temp ,n))
+        (car (multiple-value-list-internal ,temp (1+ ,temp) ,form))))))
 
 ;;; Declarations.
 
@@ -2346,8 +2375,9 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	(store-temp (gensym "--values-store--")))
     (list (apply 'append (mapcar 'first methods))
 	  (apply 'append (mapcar 'second methods))
-	  (list store-temp)
-	  (cons 'list
+	  `((,store-temp
+	     (multiple-value-list-internal 0 ,(if args (length args) 1))))
+	  (cons 'values
 		(mapcar #'(lambda (m)
 			    (cl-setf-do-store (cons (car (third m)) (fourth m))
 					      (list 'pop store-temp)))
@@ -2410,11 +2440,25 @@ a macro like `setf' or `incf'."
 (defun cl-setf-do-store (spec val)
   (let ((sym (car spec))
 	(form (cdr spec)))
-    (if (or (cl-const-expr-p val)
-	    (and (cl-simple-expr-p val) (eq (cl-expr-contains form sym) 1))
-	    (cl-setf-simple-store-p sym form))
-	(subst val sym form)
-      (list 'let (list (list sym val)) form))))
+    (if (consp sym)
+	;; XEmacs change, only used for implementing #'values at the moment.
+	(let* ((orig (copy-list sym))
+	       (intermediate (last orig))
+	       (circular-limit 32))
+	  (while (consp (car intermediate))
+	    (when (zerop circular-limit)
+	      (error 'circular-list "Form seems to contain loops"))
+	    (setq intermediate (last (car intermediate))
+		  circular-limit (1- circular-limit)))
+	  (setcdr intermediate (list val))
+	  `(let (,orig)
+	    ,form))
+      (if (or (cl-const-expr-p val)
+	      (and (cl-simple-expr-p val)
+		   (eq (cl-expr-contains form sym) 1))
+	      (cl-setf-simple-store-p sym form))
+	  (subst val sym form)
+	(list 'let (list (list sym val)) form)))))
 
 (defun cl-setf-simple-store-p (sym form)
   (and (consp form) (eq (cl-expr-contains form sym) 1)
