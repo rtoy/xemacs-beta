@@ -1093,7 +1093,7 @@
 (put 'nlistp 'byte-optimizer 'byte-compile-negation-optimizer)
 
 (defun byte-optimize-funcall (form)
-  ;; (funcall '(lambda ...) ...) ==> ((lambda ...) ...)
+  ;; (funcall #'(lambda ...) ...) ==> ((lambda ...) ...)
   ;; (funcall 'foo ...) ==> (foo ...)
   (let ((fn (nth 1 form)))
     (if (memq (car-safe fn) '(quote function))

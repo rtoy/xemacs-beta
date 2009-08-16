@@ -488,6 +488,83 @@ do									    \
 
 void flush_all_buffer_local_cache (void);
 
+struct multiple_value {
+  struct LCRECORD_HEADER header;
+  Elemcount count;
+  Elemcount allocated_count; 
+  Elemcount first_desired;
+  Lisp_Object contents[1];
+};
+typedef struct multiple_value multiple_value;
+
+DECLARE_LRECORD (multiple_value, multiple_value);
+#define MULTIPLE_VALUEP(x) RECORDP (x, multiple_value)
+
+#define XMULTIPLE_VALUE(x) XRECORD (x, multiple_value, multiple_value)
+#define wrap_multiple_value(p) wrap_record (p, multiple_value)
+
+#define CHECK_MULTIPLE_VALUE(x) CHECK_RECORD (x, multiple_value)
+#define CONCHECK_MULTIPLE_VALUE(x) CONCHECK_RECORD (x, multiple_value)
+
+#define multiple_value_count(x) ((x)->count)
+#define multiple_value_allocated_count(x) ((x)->allocated_count)
+#define multiple_value_first_desired(x) ((x)->first_desired)
+#define multiple_value_contents(x) ((x)->contents)
+
+#define XMULTIPLE_VALUE_COUNT(x) multiple_value_count (XMULTIPLE_VALUE (x))
+#define XMULTIPLE_VALUE_ALLOCATED_COUNT(x) \
+  multiple_value_allocated_count (XMULTIPLE_VALUE (x))
+#define XMULTIPLE_VALUE_FIRST_DESIRED(x) \
+  multiple_value_first_desired (XMULTIPLE_VALUE(x))
+#define XMULTIPLE_VALUE_CONTENTS(x) multiple_value_contents (XMULTIPLE_VALUE(x))
+
+Lisp_Object multiple_value_call (int nargs, Lisp_Object *args);
+Lisp_Object multiple_value_list_internal (int nargs, Lisp_Object *args);
+
+/* It's slightly ugly to expose this here, but it does cut down the amount
+   of work the bytecode interpreter has to do substantially. */
+extern int multiple_value_current_limit;
+
+/* Bind the multiple value limits that #'values and #'values-list pay
+   attention to. Used by bytecode and interpreted code. */
+int bind_multiple_value_limits (int first, int upper);
+
+Lisp_Object multiple_value_aref (Lisp_Object, Elemcount);
+void multiple_value_aset (Lisp_Object, Elemcount, Lisp_Object);
+
+Lisp_Object values2 (Lisp_Object first, Lisp_Object second);
+
+DECLARE_INLINE_HEADER (
+Lisp_Object 
+ignore_multiple_values (Lisp_Object obj)
+)
+{
+  return MULTIPLE_VALUEP (obj) ? multiple_value_aref (obj, 0) : obj;
+}
+
+#ifdef ERROR_CHECK_MULTIPLE_VALUES
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+ignore_multiple_values_1 (Lisp_Object obj)
+)
+{
+  if (1 == multiple_value_current_limit)
+    {
+      assert (!MULTIPLE_VALUEP (obj));
+      return obj;
+    }
+
+  return ignore_multiple_values (obj);
+}
+
+#define IGNORE_MULTIPLE_VALUES(X) ignore_multiple_values_1 (X)
+
+#else 
+#define IGNORE_MULTIPLE_VALUES(X) (multiple_value_current_limit == 1 ? (X) \
+                                   : ignore_multiple_values (X))
+#endif
+
 END_C_DECLS
 
 #endif /* INCLUDED_symeval_h_ */

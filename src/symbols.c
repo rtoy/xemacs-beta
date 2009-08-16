@@ -2146,7 +2146,7 @@ of previous SYMBOLs.
 
   GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
-      val = Feval (val);
+      val = IGNORE_MULTIPLE_VALUES (Feval (val));
       Fset_default (symbol, val);
       retval = val;
     }

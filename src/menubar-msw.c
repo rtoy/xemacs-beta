@@ -326,7 +326,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	}
 
       if (!STRINGP (pgui_item->name))
-	pgui_item->name = Feval (pgui_item->name);
+        pgui_item->name = IGNORE_MULTIPLE_VALUES (Feval (pgui_item->name));
 
       if (!gui_item_active_p (gui_item))
 	item_info.fState = MFS_GRAYED;

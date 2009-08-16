@@ -10,6 +10,83 @@
 	Use buffer (format " *Minibuf-%d*" (minibuffer-depth)), regardless
 	of depth. 
 
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el :
+	Update this file to support full C-level multiple values. This
+	involves:
+	-- Four new bytecodes, and special compiler functions to compile
+	multiple-value-call, multiple-value-list-internal, values,
+	values-list, and, since it now needs to pass back multiple values
+	and is a special form, throw. 
+	-- There's a new compiler variable, byte-compile-checks-on-load,
+	which is a list of forms that are evaluated at the very start of a
+	file, with an error thrown if any of them give nil. 
+	-- The header is now inserted *after* compilation, giving a chance
+	for the compilation process to influence what those checks
+	are. There is still a check done before compilation for non-ASCII
+	characters, to try to turn off dynamic docstrings if appopriate,
+	in `byte-compile-maybe-reset-coding'.
+	Space is reserved for checks; comments describing the version of
+	the byte compiler generating the file are inserted if space
+	remains for them.
+	* bytecomp.el (byte-compile-version): 
+	Update this, we're a newer version of the byte compiler.
+	* byte-optimize.el (byte-optimize-funcall): 
+	Correct a comment.
+	* bytecomp.el (byte-compile-lapcode): 
+	Discard the arg with byte-multiple-value-call.
+	* bytecomp.el (byte-compile-checks-and-comments-space): 
+	New variable, describe how many octets to reserve for checks at
+	the start of byte-compiled files. 
+	* cl-compat.el: 
+	Remove the fake multiple-value implementation. Have the functions
+	that use it use the real multiple-value implementation instead. 
+	* cl-macs.el (cl-block-wrapper, cl-block-throw): 
+	Revise the byte-compile properties of these symbols to work now
+	we've made throw into a special form; keep the byte-compile
+	properties as anonymous lambdas, since we don't have docstrings
+	for them. 
+	* cl-macs.el (multiple-value-bind, multiple-value-setq)
+	(multiple-value-list, nth-value): 
+	Update these functions to work with the C support for multiple
+	values.
+	* cl-macs.el (values): 
+	Modify the setf handler for this to call
+	#'multiple-value-list-internal appropriately.
+	* cl-macs.el (cl-setf-do-store): 
+	If the store form is a cons, treat it specially as wrapping the
+	store value.
+	* cl.el (cl-block-wrapper): 
+	Make this an alias of #'and, not #'identity, since it needs to
+	pass back multiple values.
+	* cl.el (multiple-value-apply): 
+	We no longer support this, mark it obsolete. 
+	* lisp-mode.el (eval-interactive-verbose): 
+	Remove a useless space in the docstring. 
+	* lisp-mode.el (eval-interactive): 
+	Update this function and its docstring. It now passes back a list,
+	basically wrapping any eval calls with multiple-value-list. This
+	allows multiple values to be printed by default in *scratch*. 
+	* lisp-mode.el (prin1-list-as-multiple-values): 
+	New function, printing a list as multiple values in the manner of
+	Bruno Haible's clisp, separating each entry with " ;\n".
+	* lisp-mode.el (eval-last-sexp):
+	Call #'prin1-list-as-multiple-values on the return value of
+	#'eval-interactive. 
+	* lisp-mode.el (eval-defun): 
+	Call #'prin1-list-as-multiple-values on the return value of
+	#'eval-interactive. 
+	* mouse.el (mouse-eval-sexp): 
+	Deal with lists corresponding to multiple values from
+	#'eval-interactive. Call #'cl-prettyprint, which is always
+	available, instead of sometimes calling #'pprint and sometimes
+	falling back to prin1. 
+	* obsolete.el (obsolete-throw): 
+	New function, called from eval.c when #'funcall encounters an
+	attempt to call #'throw (now a special form) as a function. Only
+	needed for compatibility with 21.4 byte-code. 
+
 2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (function-arglist, function-documentation): 

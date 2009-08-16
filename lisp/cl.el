@@ -209,48 +209,24 @@ Keywords supported:  :test :test-not :key"
 
 ;;; Blocks and exits.
 
-(defalias 'cl-block-wrapper 'identity)
+;; This used to be #'identity, but that didn't preserve multiple values in
+;; interpreted code. #'and isn't great either, there's no error on too many
+;; arguments passed to it when interpreted. Fortunately most of the places
+;; where cl-block-wrapper is called are generated from old, established
+;; macros, so too many arguments resulting from human error is unlikely; and
+;; the byte compile handler in cl-macs.el warns if more than one arg is
+;; passed to it.
+(defalias 'cl-block-wrapper 'and)
+
 (defalias 'cl-block-throw 'throw)
 
+;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
-;;; Multiple values.  True multiple values are not supported, or even
-;;; simulated.  Instead, multiple-value-bind and friends simply expect
-;;; the target form to return the values as a list.
+;;; We no longer support `multiple-value-apply', which was ill-conceived to
+;;; start with, is not specified by Common Lisp, and which nothing uses,
+;;; according to Google Code Search, as of Sat Mar 14 23:31:35 GMT 2009. 
 
-(defsubst values (&rest values)
-  "Return multiple values, Common Lisp style.
-The arguments of `values' are the values
-that the containing function should return."
-  values)
-
-(defsubst values-list (list)
-  "Return multiple values, Common Lisp style, taken from a list.
-LIST specifies the list of values
-that the containing function should return."
-  list)
-
-(defsubst multiple-value-list (expression)
-  "Return a list of the multiple values produced by EXPRESSION.
-This handles multiple values in Common Lisp style, but it does not
-work right when EXPRESSION calls an ordinary Emacs Lisp function
-that returns just one value."
-  expression)
-
-(defsubst multiple-value-apply (function expression)
-  "Evaluate EXPRESSION to get multiple values and apply FUNCTION to them.
-This handles multiple values in Common Lisp style, but it does not work
-right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
-one value."
-  (apply function expression))
-
-(defalias 'multiple-value-call 'apply)  ; only works for one arg
-
-(defsubst nth-value (n expression)
-  "Evaluate EXPRESSION to get multiple values and return the Nth one.
-This handles multiple values in Common Lisp style, but it does not work
-right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
-one value."
-  (nth n expression))
+(make-obsolete 'multiple-value-apply 'multiple-value-call)
 
 ;;; Macros.
 

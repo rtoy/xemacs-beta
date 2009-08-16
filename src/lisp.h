@@ -4269,10 +4269,14 @@ EXFUN (Ffunctionp, 1);
 EXFUN (Finteractive_p, 0);
 EXFUN (Fprogn, UNEVALLED);
 MODULE_API EXFUN (Fsignal, 2);
-MODULE_API EXFUN_NORETURN (Fthrow, 2);
+MODULE_API EXFUN_NORETURN (Fthrow, UNEVALLED);
 MODULE_API EXFUN (Fcall_with_condition_handler, MANY);
 EXFUN (Ffunction_max_args, 1);
 EXFUN (Ffunction_min_args, 1);
+
+MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object,
+                                                     Lisp_Object, int,
+                                                     Lisp_Object, Lisp_Object));
 
 MODULE_API DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,

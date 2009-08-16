@@ -821,7 +821,7 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
 #endif
 
   GCPRO2 (name, val);
-  name = Feval (XCAR (args));
+  name = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
 
   CHECK_STRING (name);
 

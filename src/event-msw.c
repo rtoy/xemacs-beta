@@ -1769,7 +1769,7 @@ dde_eval_string (Lisp_Object str)
     return Qnil;
 
   GCPRO1 (obj);
-  obj = Feval (XCAR (obj));
+  obj = IGNORE_MULTIPLE_VALUES (Feval (XCAR (obj)));
 
   RETURN_UNGCPRO (obj);
 }

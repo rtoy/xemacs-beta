@@ -222,7 +222,7 @@ glyph_instantiator_to_glyph (Lisp_Object sym)
     glyph = XSYMBOL (glyph)->value;
 
   if (CONSP (glyph))
-    glyph = Feval (glyph);
+    glyph = IGNORE_MULTIPLE_VALUES (Feval (glyph));
 
   /* Be really helpful to the user. */
   if (VECTORP (glyph))

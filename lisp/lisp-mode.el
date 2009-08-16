@@ -424,36 +424,55 @@ using `\\[eval-last-sexp]' and `\\[eval-defun]' than it would have
 been treated noninteractively.
 
 The printed messages are \"defvar treated as defconst\" and \"defcustom
- evaluation forced\".  See `eval-interactive' for more details."
+evaluation forced\".  See `eval-interactive' for more details."
   :type 'boolean
   :group 'lisp)
 
 (defun eval-interactive (expr)
-  "Like `eval' except that it transforms defvars to defconsts.
-The evaluation of defcustom forms is forced."
+  "Evaluate EXPR; pass back multiple values, transform defvars to defconsts. 
+
+Always returns a list.  The length of this list will be something other than
+one if the form returned multiple values.  It will be zero if the form
+returned a single zero-length multiple value."
   (cond ((and (eq (car-safe expr) 'defvar)
 	      (> (length expr) 2))
-	 (eval (cons 'defconst (cdr expr)))
+	 (setq expr (multiple-value-list (eval (cons 'defconst (cdr expr)))))
 	 (when eval-interactive-verbose
 	   (message "defvar treated as defconst")
 	   (sit-for 1)
 	   (message ""))
-	 (nth 1 expr))
+         expr)
 	((and (eq (car-safe expr) 'defcustom)
 	      (> (length expr) 2)
 	      (default-boundp (nth 1 expr)))
 	 ;; Force variable to be bound
-	 ;; #### defcustom might specify a different :set method.
-	 (set-default (nth 1 expr) (eval (nth 2 expr)))
+         (funcall 
+          (or (plist-get expr :set) #'custom-set-default)
+          (nth 1 expr) (eval (nth 2 expr)))
 	 ;; And evaluate the defcustom
-	 (eval expr)
+	 (setq expr (multiple-value-list (eval expr)))
 	 (when eval-interactive-verbose
 	   (message "defcustom evaluation forced")
 	   (sit-for 1)
 	   (message ""))
-	 (nth 1 expr))
+         expr)
 	(t
-	 (eval expr))))
+	 (multiple-value-list (eval expr)))))
+
+(defun prin1-list-as-multiple-values (multiple-value-list &optional stream)
+  "Call `prin1' on each element of MULTIPLE-VALUE-LIST, separated by \" ;\\n\"
+
+If MULTIPLE-VALUE-LIST is zero-length, print the text
+\"#<zero length multiple value> ;\\n\".  Always returns nil."
+  (loop for value in multiple-value-list
+    with seen-first = nil
+    do
+    (if seen-first
+        (princ " ;\n" stream)
+      (setq seen-first t))
+    (prin1 value stream)
+    finally (unless seen-first
+	      (princ "#<zero length multiple value> ;" stream))))
 
 ;; XEmacs change, based on Bob Weiner suggestion
 (defun eval-last-sexp (eval-last-sexp-arg-internal) ;dynamic scoping wonderment
@@ -463,31 +482,32 @@ With argument, print output into current buffer."
   (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t))
 	(opoint (point))
 	ignore-quotes)
-    (prin1 (eval-interactive
-	    (letf (((syntax-table) emacs-lisp-mode-syntax-table))
-	      (save-excursion
-		;; If this sexp appears to be enclosed in `...' then
-		;; ignore the surrounding quotes.
-		(setq ignore-quotes (or (eq (char-after) ?\')
-					(eq (char-before) ?\')))
-		(forward-sexp -1)
-		;; vladimir@cs.ualberta.ca 30-Jul-1997: skip ` in
-		;; `variable' so that the value is returned, not the
-		;; name.
-		(if (and ignore-quotes
-			 (eq (char-after) ?\`))
-		    (forward-char))
-		(save-restriction
-		  (narrow-to-region (point-min) opoint)
-		  (let ((expr (read (current-buffer))))
-		    (if (eq (car-safe expr) 'interactive)
-			;; If it's an (interactive ...) form, it's
-			;; more useful to show how an interactive call
-			;; would use it.
-			`(call-interactively
-			  (lambda (&rest args)
-			    ,expr args))
-		      expr)))))))))
+    (prin1-list-as-multiple-values
+     (eval-interactive
+      (letf (((syntax-table) emacs-lisp-mode-syntax-table))
+        (save-excursion
+          ;; If this sexp appears to be enclosed in `...' then
+          ;; ignore the surrounding quotes.
+          (setq ignore-quotes (or (eq (char-after) ?\')
+                                  (eq (char-before) ?\')))
+          (forward-sexp -1)
+          ;; vladimir@cs.ualberta.ca 30-Jul-1997: skip ` in
+          ;; `variable' so that the value is returned, not the
+          ;; name.
+          (if (and ignore-quotes
+                   (eq (char-after) ?\`))
+              (forward-char))
+          (save-restriction
+            (narrow-to-region (point-min) opoint)
+            (let ((expr (read (current-buffer))))
+              (if (eq (car-safe expr) 'interactive)
+                  ;; If it's an (interactive ...) form, it's
+                  ;; more useful to show how an interactive call
+                  ;; would use it.
+                  `(call-interactively
+                    (lambda (&rest args)
+                      ,expr args))
+                expr)))))))))
 
 (defun eval-defun (eval-defun-arg-internal)
   "Evaluate defun that point is in or before.
@@ -495,11 +515,12 @@ Print value in minibuffer.
 With argument, insert value in current buffer after the defun."
   (interactive "P")
   (let ((standard-output (if eval-defun-arg-internal (current-buffer) t)))
-    (prin1 (eval-interactive (save-excursion
-			       (end-of-defun)
-			       (beginning-of-defun)
-			       (read (current-buffer)))))))
-
+    (prin1-list-as-multiple-values
+     (eval-interactive
+      (save-excursion
+        (end-of-defun)
+        (beginning-of-defun)
+        (read (current-buffer)))))))
 
 (defun lisp-comment-indent ()
   (if (looking-at "\\s<\\s<\\s<")

@@ -325,8 +325,9 @@ popup_selection_callback (Widget widget, LWLIB_ID UNUSED (id),
   Lisp_Object wses_form = (form);					\
   (slot) = (NILP (wses_form) ? 0 :					\
 	    EQ (wses_form, Qt) ? 1 :					\
-	    !NILP (in_display ? eval_within_redisplay (wses_form)	\
-		   : Feval (wses_form)));				\
+	    !NILP (in_display ?                                         \
+                   IGNORE_MULTIPLE_VALUES (eval_within_redisplay (wses_form)) \
+		   : IGNORE_MULTIPLE_VALUES (Feval (wses_form))));      \
 } while (0)
 #else
   /* Treat the activep slot of the menu item as a boolean */
@@ -436,7 +437,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
 #endif /* HAVE_MENUBARS */
 
   if (!STRINGP (pgui->name))
-    pgui->name = Feval (pgui->name);
+    pgui->name = IGNORE_MULTIPLE_VALUES (Feval (pgui->name));
 
   CHECK_STRING (pgui->name);
   if (accel_p)
@@ -459,7 +460,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
 	suffix2 = pgui->suffix;
       else
 	{
-	  suffix2 = Feval (pgui->suffix);
+	  suffix2 = IGNORE_MULTIPLE_VALUES (Feval (pgui->suffix));
 	  CHECK_STRING (suffix2);
 	}
 

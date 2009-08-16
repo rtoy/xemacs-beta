@@ -224,6 +224,7 @@ enum lrecord_type
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
   lrecord_type_symbol,
   lrecord_type_subr,
+  lrecord_type_multiple_value,
   lrecord_type_cons,
   lrecord_type_vector,
   lrecord_type_string,

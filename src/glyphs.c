@@ -3079,7 +3079,7 @@ evaluate_xpm_color_symbols (void)
       value = XCDR (cons);
       CHECK_CONS (value);
       value = XCAR (value);
-      value = Feval (value);
+      value = IGNORE_MULTIPLE_VALUES (Feval (value));
       if (NILP (value))
 	continue;
       if (!STRINGP (value) && !COLOR_SPECIFIERP (value))

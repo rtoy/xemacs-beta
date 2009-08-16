@@ -395,5 +395,18 @@ If FRAME is omitted or nil, use the selected frame."
 
 (make-obsolete 'function-called-at-point 'function-at-point)
 
+;; As of 21.5, #'throw is a special form. This makes bytecode using it
+;; compiled for 21.4 fail; making this function available works around that.
+(defun obsolete-throw (tag value)
+  "Ugly compatibility hack.
+
+See the implementation of #'funcall in eval.c.  This should be removed once
+we no longer encounter bytecode from 21.4."
+  (throw tag value))
+
+(make-obsolete
+ 'obsolete-throw
+ "it says `obsolete' in the name, you know you shouldn't be using this.")
+
 (provide 'obsolete)
 ;;; obsolete.el ends here

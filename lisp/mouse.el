@@ -278,18 +278,23 @@ It's also fantastic for debugging regular expressions."
 	     (message "Regex \"%s\" not found" exp)
 	     (ding nil 'quiet)))
 	  (t (setq val (if (fboundp 'eval-interactive)
-			   (eval-interactive exp)
-			 (eval exp)))))
-    (setq result-str (prin1-to-string val))
+                           (eval-interactive exp)
+			 (list (eval exp))))))
+    (setq result-str (mapconcat #'prin1-to-string val " ;\n"))
     ;; #### -- need better test
     (if (and (not force-window)
-	     (<= (length result-str) (window-width (selected-window))))
+	     (<= (length result-str) (window-width (selected-window)))
+             (not (string-match "\n" result-str)))
 	(message "%s" result-str)
       (with-output-to-temp-buffer "*Mouse-Eval*"
-	(if-fboundp 'pprint
-	    (pprint val)
-	  (prin1 val)))
-      )))
+        (loop
+          for value in val 
+          with seen-first = nil
+          do
+          (if seen-first 
+              (princ " ;\n")
+            (setq seen-first t))
+          (cl-prettyprint value))))))
 
 (defun mouse-line-length (event)
   "Print the length of the line indicated by the pointer."
