@@ -1,3 +1,9 @@
+2009-08-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	Replace mapc + #'(lambda ...) with dolist, eliminating 781
+	funcalls at XEmacs startup and decreasing GC a little.
+
 2009-08-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* faces.el (xpm-color-symbols): 
