@@ -2096,15 +2096,13 @@ either a character or a symbol, uppercase or lowercase."
 		    (if (characterp b)
 			(setq b (intern (char-to-string (downcase b)))))
 		    (eq a b)))
-	     (mapc #'(lambda (keysym)
-		       (when (if (listp keysym)
-				 (and (equal mods (butlast keysym))
-				      (keysyms-equal key (car (last keysym))))
-			       (keysyms-equal key keysym))
-			 (throw
-			  'handle-pre-motion-command-current-command-is-motion
-			  t)))
-		   motion-keys-for-shifted-motion)
+	     (dolist (keysym motion-keys-for-shifted-motion)
+	       (when (if (listp keysym)
+		         (and (equal mods (butlast keysym))
+			      (keysyms-equal key (car (last keysym))))
+	                (keysyms-equal key keysym))
+		 (throw 'handle-pre-motion-command-current-command-is-motion
+			t)))
 	     nil)))))
 
 (defun handle-pre-motion-command ()
