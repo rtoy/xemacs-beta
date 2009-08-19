@@ -1,3 +1,8 @@
+2009-08-19  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* simple.el:
+	* simple.el (turn-off-auto-fill): Sync from FSF 21.4.
+
 2009-08-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (handle-pre-motion-command-current-command-is-motion):

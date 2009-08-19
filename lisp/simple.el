@@ -3060,6 +3060,11 @@ for `auto-fill-function' when turning Auto Fill mode on."
   (interactive)
   (auto-fill-mode 1))
 
+(defun turn-off-auto-fill ()
+  "Unconditionally turn off Auto Fill mode."
+  (interactive)
+  (auto-fill-mode -1))
+
 (defun set-fill-column (arg)
   "Set `fill-column' to specified argument.
 Just \\[universal-argument] as argument means to use the current column
