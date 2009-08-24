@@ -1337,7 +1337,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     pixels_sq = (UINT_64_BIT) width * (UINT_64_BIT) height;
     if (pixels_sq >= 1 << 29)
       signal_image_error ("TIFF image too large to instantiate", instantiator);
-    unwind.eimage = xnew_binbytes (pixels_sq * 3);
+    unwind.eimage = xnew_binbytes ((size_t) pixels_sq * 3);
 
     /* #### This is little more than proof-of-concept/function testing.
        It needs to be reimplemented via scanline reads for both memory

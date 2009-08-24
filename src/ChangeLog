@@ -1,3 +1,10 @@
+2009-08-24  Jerry James  <james@xemacs.org>
+
+	* lisp.h (INT_64_BIT): define as __int64 on WIN32.
+	* glyphs-eimage.c (tiff_instantiate): cast argument of
+	xnew_binbytes to size_t (guaranteed to fit because of immediately
+	preceding check).
+
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* floatfns.c (ROUNDING_CONVERT, CONVERT_WITH_NUMBER_TYPES)
