@@ -210,6 +210,10 @@ Boston, MA 02111-1307, USA.  */
 #define INT_64_BIT long long
 #define UINT_64_BIT unsigned long long
 #define MAKE_64_BIT_UNSIGNED_CONSTANT(num) num##ULL
+#elif defined(WIN32_ANY)
+#define INT_64_BIT __int64
+#define UINT_64_BIT unsigned __int64
+#define MAKE_64_BIT_UNSIGNED_CONSTANT(num) num##UI64
 /* No error otherwise; just leave undefined */
 #endif
 
