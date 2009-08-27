@@ -4526,4 +4526,6 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
 		 byte-compile-variable-ref))))
  nil)
 
+(run-hooks 'bytecomp-load-hook)
+
 ;;; bytecomp.el ends here

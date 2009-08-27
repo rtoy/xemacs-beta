@@ -1,3 +1,11 @@
+2009-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (bytecomp-load-hook): New.
+	* bytecomp.el (bytecomp-load-hook): Use id. 
+	Merge Dave Love's 2000-02-02 GNU (GPLv2) change, forcing the
+	byte-compiler to be more consistent about loading cl-macs at
+	compile time. 
+
 2009-08-19  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* simple.el:
