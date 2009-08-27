@@ -705,15 +705,8 @@ Keywords supported:  :test :test-not :key"
 ;;; Try it now in case the compiler has already been loaded.
 (cl-hack-byte-compiler)
 
-;;; Also make a hook in case compiler is loaded after this file.
-;;; The compiler doesn't call any hooks when it loads or runs, but
-;;; we can take advantage of the fact that emacs-lisp-mode will be
-;;; called when the compiler reads in the file to be compiled.
-;;; BUG: If the first compilation is `byte-compile' rather than
-;;; `byte-compile-file', we lose.  Emacs has fixed this by hanging it
-;;; on `bytecomp-load-hook' instead, which we do not have.
-(add-hook 'emacs-lisp-mode-hook 'cl-hack-byte-compiler)
-
+;;; Also make a hook in case compiler is loaded after this file. 
+(add-hook 'bytecomp-load-hook 'cl-hack-byte-compiler)
 
 ;;; The following ensures that packages which expect the old-style cl.el
 ;;; will be happy with this one.
