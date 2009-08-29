@@ -1,3 +1,8 @@
+2009-08-15  It's me FKtPp ;)  <m_pupil@yahoo.com.cn>
+
+	* gnuclient.c (main): Do not set start point position if user
+	didn't requested to do so
+
 2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
 
 	* make-docfile.c (write_c_args): Parse UNUSED and USED_IF right.

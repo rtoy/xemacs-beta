@@ -299,7 +299,7 @@ my_strdup (const char *s)
 int
 main (int argc, char *argv[])
 {
-  int starting_line = 1;	/* line to start editing at */
+  int starting_line = 0;	/* line to start editing at */
   char command[QXE_PATH_MAX+50];/* emacs command buffer */
   char fullpath[QXE_PATH_MAX+1];/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
@@ -661,14 +661,10 @@ main (int argc, char *argv[])
 	{
 	  if (i < argc - 1 && *argv[i] == '+')
 	    starting_line = atoi (argv[i++]);
-	  else
-	    starting_line = 1;
+
 	  /* If the last argument is +something, treat it as a file. */
-	  if (i == argc)
-	    {
-	      starting_line = 1;
-	      --i;
-	    }
+	  if (i == argc) --i;
+
 	  filename_expand (fullpath, argv[i]);
 #ifdef INTERNET_DOMAIN_SOCKETS
 	  path = (char *) malloc (strlen (remotepath) + strlen (fullpath) + 1);
@@ -676,7 +672,12 @@ main (int argc, char *argv[])
 #else
 	  path = my_strdup (fullpath);
 #endif
-	  sprintf (command, "(%d . %s)", starting_line, clean_string (path));
+	  if ( starting_line ) {
+	    sprintf (command, "(%d . %s)", starting_line, clean_string (path));
+	  } else {
+	    sprintf (command, "(nil . %s)", clean_string (path));
+	  }
+
 	  send_string (s, command);
 	  free (path);
 	} /* for */

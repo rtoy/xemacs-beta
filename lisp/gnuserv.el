@@ -481,7 +481,7 @@ If a flag is `view', view the files read-only."
 		       gnuserv-view-file-function
 		     gnuserv-find-file-function)
 		   path)
-	  (goto-line line)
+	  (when line (goto-line line))
 	  ;; Don't memorize the quick and view buffers.
 	  (unless (or quick view)
 	    (pushnew (current-buffer) (gnuclient-buffers client))
