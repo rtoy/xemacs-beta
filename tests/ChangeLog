@@ -1,3 +1,7 @@
+2009-09-02  Jerry James  <james@xemacs.org>
+
+	* reproduce-crashes.el (12): New bug.
+
 2009-08-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (foo): 

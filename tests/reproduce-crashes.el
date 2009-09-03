@@ -133,6 +133,16 @@ BODY is a sequence of expressions to execute to reproduce the bug."
 ;;; ------------------------------------------------------------------
 ;;;; Bugs follow:
 
+(defbug 12 current
+  "Crash when clicking on the menubar, triggered by a Lisp error due to a
+version of truncate-string-to-width that does not take 5 parameters.
+Fatal error: assertion failed, file menubar-x.c, line 579, ABORT()
+Reported: https://bugzilla.redhat.com/show_bug.cgi?id=480845
+          <1251569781.4318.2.camel@mslap>"
+  (fset 'truncate-string-to-width
+	#'(lambda (str end-column &optional start-column padding) str))
+  (accelerate-menu))
+
 (defbug 11 fixed
   "Crash in search due to backward movement.
 Need Mule build with error checking in 21.5.28.
