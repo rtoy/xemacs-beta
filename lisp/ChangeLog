@@ -1,3 +1,13 @@
+2009-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	If KEY is a character, ascertain that once, not every iteration of
+	the loop.
+	* mule/mule-cmds.el (finish-set-language-environment): 
+	Don't call #'string-match on a one-character string, use functions
+	that have bytecodes instead, since this is called so often on
+	startup. 
+
 2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-form-code-walker): 
