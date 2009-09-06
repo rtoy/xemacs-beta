@@ -771,7 +771,7 @@ the language environment for the major languages of Western Europe."
   (let ((invalid-sequence-coding-system
          (get-language-info language-name 'invalid-sequence-coding-system))
         (disp-table (specifier-instance current-display-table))
-        glyph string unicode-error-lookup)
+        glyph string unicode-error-lookup first-char)
     (when (consp invalid-sequence-coding-system)
       (setq invalid-sequence-coding-system
             (car invalid-sequence-coding-system)))
@@ -788,7 +788,9 @@ the language environment for the major languages of Western Europe."
 	   (when unicode-error-lookup
 	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
-	   (when (string-match "^[\x00-\x1f\x80-\x9f]$" string)
+           (setq first-char (aref string 0))
+           (when (or (and (>= #x00 first-char) (<= first-char #x1f))
+                     (and (>= #x80 first-char) (<= first-char #x9f)))
 	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
