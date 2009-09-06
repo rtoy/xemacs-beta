@@ -1816,7 +1816,7 @@ docstrings code.")
 (defun byte-compile-insert-header (filename byte-compile-inbuffer
 				   byte-compile-outbuffer)
   (set-buffer byte-compile-inbuffer)
-  (let (checks-string comments)
+  (let (comments)
     (set-buffer byte-compile-outbuffer)
     (delete-region 1 (1+ byte-compile-checks-and-comments-space))
     (goto-char 1)
@@ -1840,17 +1840,34 @@ docstrings code.")
       (insert (format ";;;###coding system: %s\n"
 		      (coding-system-name buffer-file-coding-system))))
     (insert (format
-	     "\n(or %s\n    (error \"Loading this file requires: %s\"))\n"
-	     (setq checks-string
-		   (let ((print-readably t))
-		     (prin1-to-string (if (> (length 
-					      byte-compile-checks-on-load)
-					     1)
-					  (cons 'and
-						(reverse
-						 byte-compile-checks-on-load))
-					(car byte-compile-checks-on-load)))))
-	     checks-string))
+	     "\n(or %s\n    (error \"Loading this file requires %s\"))\n"
+             (let ((print-readably t))
+               (prin1-to-string (if (> (length 
+                                        byte-compile-checks-on-load)
+                                       1)
+                                    (cons 'and
+                                          (setq byte-compile-checks-on-load
+                                                (reverse
+                                                 byte-compile-checks-on-load)))
+                                  (car byte-compile-checks-on-load))))
+             (loop
+               for check in byte-compile-checks-on-load
+               with seen-first = nil
+               with res = ""
+               do
+               (if seen-first
+                   (setq res (concat res ", "))
+                 (setq seen-first t))
+               ;; Print featurep calls differently: 
+               (if (and (eq (car check) 'featurep)
+                        (eq (car (second check)) 'quote)
+                        (symbolp (second (second check))))
+                   (setq res (concat res 
+                                     (symbol-name (second (second check)))))
+                 (setq res (concat res
+                                   (let ((print-readably t)) 
+                                     (prin1-to-string check)))))
+               finally return res)))
     (setq comments 
 	  (with-string-as-buffer-contents ""
 	    (insert "\n;;; compiled by "
@@ -2176,13 +2193,29 @@ list that represents a doc string reference.
   (eval form)
   (byte-compile-keep-pending form 'byte-compile-normal-call))
 
-(put 'progn 'byte-hunk-handler 'byte-compile-file-form-progn)
-(put 'prog1 'byte-hunk-handler 'byte-compile-file-form-progn)
-(put 'prog2 'byte-hunk-handler 'byte-compile-file-form-progn)
-(defun byte-compile-file-form-progn (form)
-  (mapcar 'byte-compile-file-form (cdr form))
-  ;; Return nil so the forms are not output twice.
-  nil)
+;; XEmacs change: be careful about multiple values with these three forms.
+(put 'progn 'byte-hunk-handler
+     #'(lambda (form)
+         (mapc 'byte-compile-file-form (cdr form))
+         ;; Return nil so the forms are not output twice.
+         nil))
+
+(put 'prog1 'byte-hunk-handler
+     #'(lambda (form)
+         (when (first form)
+           (byte-compile-file-form `(or ,(first form) nil))
+           (mapc 'byte-compile-file-form (cdr form))
+           nil)))
+
+(put 'prog2 'byte-hunk-handler
+     #'(lambda (form)
+         (when (first form)
+           (byte-compile-file-form (first form))
+           (when (second form)
+             (setq form (cdr form))
+             (byte-compile-file-form `(or ,(first form) nil))
+             (mapc 'byte-compile-file-form (cdr form))
+             nil))))
 
 ;; This handler is not necessary, but it makes the output from dont-compile
 ;; and similar macros cleaner.
@@ -3677,7 +3710,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (defun byte-compile-prog1 (form)
   (setq form (cdr form))
   ;; #'prog1 never returns multiple values:
-  (byte-compile-form-do-effect (list 'values (pop form)))
+  (byte-compile-form-do-effect `(or ,(pop form) nil))
   (byte-compile-body form t))
 
 (defun byte-compile-multiple-value-prog1 (form)
@@ -3686,9 +3719,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (byte-compile-body form t))
 
 (defun byte-compile-values (form)
-  (if (and (= 2 (length form))
-           (byte-compile-constp (second form)))
-      (byte-compile-form-do-effect (second form))
+  (if (= 2 (length form))
+      (if (byte-compile-constp (second form))
+	  (byte-compile-form-do-effect (second form))
+	;; #'or compiles to bytecode, #'values doesn't:
+	(byte-compile-form-do-effect `(or ,(second form) nil)))
     (byte-compile-normal-call form)))
 
 (defun byte-compile-values-list (form)
@@ -3705,7 +3740,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (setq form (cdr form))
   (byte-compile-form (pop form) t)
   ;; #'prog2 never returns multiple values:
-  (byte-compile-form-do-effect (list 'values (pop form)))
+  (byte-compile-form-do-effect `(or ,(pop form) nil))
   (byte-compile-body form t))
 
 (defmacro byte-compile-goto-if (cond discard tag)

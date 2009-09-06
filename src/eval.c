@@ -243,6 +243,7 @@ Lisp_Object Qif;
 
 Lisp_Object Qthrow;
 Lisp_Object Qobsolete_throw;
+Lisp_Object Qmultiple_value_list_internal;
 
 static int first_desired_multiple_value;
 /* Used outside this file, somewhat uncleanly, in the IGNORE_MULTIPLE_VALUES
@@ -838,7 +839,7 @@ arguments: (&rest ARGS)
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
+  Lisp_Object val = Qnil;
 
   LIST_LOOP_3 (arg, args, tail)
     {
@@ -870,7 +871,7 @@ arguments: (&rest ARGS)
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val = Qt;
+  Lisp_Object val = Qt;
 
   LIST_LOOP_3 (arg, args, tail)
     {
@@ -4795,8 +4796,15 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
        (args))
 {
   Lisp_Object argv[4];
-  int first, upper;
+  int first, upper, nargs;
   struct gcpro gcpro1;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 3)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qmultiple_value_list_internal, make_int (nargs)));
+    }
 
   argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
   CHECK_NATNUM (argv[0]);
@@ -7226,6 +7234,7 @@ syms_of_eval (void)
   DEFSYMBOL (Qif);
   DEFSYMBOL (Qthrow);
   DEFSYMBOL (Qobsolete_throw);  
+  DEFSYMBOL (Qmultiple_value_list_internal);
 
   DEFSUBR (For);
   DEFSUBR (Fand);

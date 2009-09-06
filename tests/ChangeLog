@@ -2,6 +2,16 @@
 
 	* reproduce-crashes.el (12): New bug.
 
+2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (Assert-rounding): 
+	Remove an overly-verbose failure message here. 
+	Correct a couple of tests which were buggy in themselves. Add
+	three new tests, checking the behaviour of #'or and #'and when
+	passed zero arguments, and a Known-Bug-Expect-Failure call
+	involving letf and values. (The bug predates the C-level
+	multiple-value implementation.) 
+
 2009-08-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (foo): 
