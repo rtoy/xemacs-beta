@@ -436,7 +436,7 @@
 	       (cons 'prog1
 		     (cons (byte-optimize-form (nth 1 form) for-effect)
 			   (byte-optimize-body (cdr (cdr form)) t)))
-	     (byte-optimize-form (nth 1 form) for-effect)))
+	     (byte-optimize-form `(or ,(nth 1 form) nil) for-effect)))
 	  ((eq fn 'prog2)
 	   (cons 'prog2
 	     (cons (byte-optimize-form (nth 1 form) t)
@@ -950,12 +950,22 @@
 	((byte-optimize-predicate form))))
 
 (defun byte-optimize-or (form)
-  ;; Throw away nil's, and simplify if less than 2 args.
-  ;; If there is a literal non-nil constant in the args to `or', throw away all
-  ;; following forms.
-  (if (memq nil form)
-      (setq form (delq nil (copy-sequence form))))
-  (let ((rest form))
+  ;; Throw away unneeded nils, and simplify if less than 2 args.
+  ;; XEmacs; change to be more careful about discarding multiple values. 
+  (let* ((memqueued (memq nil form))
+         (trailing-nil (and (cdr memqueued)
+                            (equal '(nil) (last form))))
+         rest)
+    ;; A trailing nil indicates to discard multiple values, and we need to
+    ;; respect that:
+    (when (and memqueued (cdr memqueued))
+      (setq form (delq nil (copy-sequence form)))
+      (when trailing-nil
+        (setcdr (last form) '(nil))))
+    (setq rest form)
+    ;; If there is a literal non-nil constant in the args to `or', throw
+    ;; away all following forms. We can do this because a literal non-nil
+    ;; constant cannot be multiple.
     (while (cdr (setq rest (cdr rest)))
       (if (byte-compile-trueconstp (car rest))
 	  (setq form (copy-sequence form)
@@ -978,7 +988,10 @@
    ((consp (car clauses))
     (nconc
      (case (length (car clauses))
-       (1 `(or ,(nth 0 (car clauses))))
+       (1 (if (cdr clauses)
+              `(or ,(nth 0 (car clauses)))
+            ;; XEmacs: don't pass any multiple values back:
+            `(or ,(nth 0 (car clauses)) nil)))
        (2 `(if ,(nth 0 (car clauses)) ,(nth 1 (car clauses))))
        (t `(if ,(nth 0 (car clauses)) (progn ,@(cdr (car clauses))))))
      (when (cdr clauses) (list (byte-optimize-cond-1 (cdr clauses))))))

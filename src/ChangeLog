@@ -1,3 +1,13 @@
+2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (For, Fand): 
+	Don't declare val as REGISTER in these functions, for some reason
+	it breaks the non-DEBUG union build. These functions are only
+	called from interpreted code, the performance implication doesn't
+	matter. Thank you Robert Delius Royar!
+	* eval.c (Fmultiple_value_list_internal):
+	Error on too many arguments. 
+
 2009-08-24  Jerry James  <james@xemacs.org>
 
 	* lisp.h (INT_64_BIT): define as __int64 on WIN32.

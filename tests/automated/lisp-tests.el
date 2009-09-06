@@ -1475,11 +1475,8 @@
 			 first one-round-result))
 	 (Assert (equal one-round-result (multiple-value-list
 					  (round first 1)))
-		 (format "checking (round %S 1) gives %S, types %S, actual %S, types %S"
-			 first one-round-result (mapcar #'type-of one-round-result)
-			 (multiple-value-list (round first 1))
-			 (mapcar #'type-of (multiple-value-list (round first 1)))))
-
+		 (format "checking (round %S 1) gives %S"
+			 first one-round-result))
 	 (Check-Error arith-error (round first 0))
 	 (Check-Error arith-error (round first 0.0))
 	 (Assert (equal two-round-result (multiple-value-list
@@ -1949,7 +1946,7 @@
        (multiple-value-function-returning-t ()
 	 (values t pi e degrees-to-radians radians-to-degrees))
        (multiple-value-function-returning-nil ()
-	 (values t pi e radians-to-degrees degrees-to-radians))
+	 (values nil pi e radians-to-degrees degrees-to-radians))
        (function-throwing-multiple-values ()
 	 (let* ((listing '(0 3 4 nil "string" symbol))
 		(tail listing)
@@ -2051,7 +2048,7 @@
 		 (cond ((multiple-value-function-returning-t))))))
    "Checking cond doesn't pass back multiple values in tests.")
   (Assert
-   (equal (list t pi e degrees-to-radians radians-to-degrees)
+   (equal (list nil pi e radians-to-degrees degrees-to-radians)
 	  (multiple-value-list
 	   (cond (t (multiple-value-function-returning-nil)))))
    "Checking cond passes back multiple values in clauses.")
@@ -2069,10 +2066,28 @@
 	  (multiple-value-list
 	   (catch 'VoN61Lo4Y (function-throwing-multiple-values)))))
   (Assert
-   (equal (list t pi e radians-to-degrees degrees-to-radians)
+   (equal (list t pi e degrees-to-radians radians-to-degrees)
 	  (multiple-value-list
 	   (loop
 	     for eye in `(a b c d ,e f g ,nil ,pi)
 	     do (when (null eye)
 		  (return (multiple-value-function-returning-t))))))
-   "Checking #'loop passes back multiple values correctly."))
+   "Checking #'loop passes back multiple values correctly.")
+  (Assert
+   (null (or))
+   "Checking #'or behaves correctly with zero arguments.")
+  (Assert
+   (eq t (and))
+   "Checking #'and behaves correctly with zero arguments.")
+  ;; This bug was here before the full multiple-value functionality
+  ;; was introduced (check it with (floor* pi) if you're
+  ;; curious). #'setf works, though, which is what most people are
+  ;; interested in. If you know the setf-method code better than I do,
+  ;; please post a patch; otherwise this is going to the back of the
+  ;; queue of things to do. I didn't break it :-) Aidan Kehoe, Mon Aug
+  ;; 31 10:45:50 GMTDT 2009. 
+  (Known-Bug-Expect-Error
+   void-variable
+   (letf (((values three one-four-one-five-nine) (floor pi)))
+     (* three one-four-one-five-nine))))
+

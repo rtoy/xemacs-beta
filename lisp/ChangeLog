@@ -1,3 +1,29 @@
+2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-form-code-walker): 
+	Be careful about discarding multiple values when optimising
+	#'prog1 calls. 
+	(byte-optimize-or): 
+	Preserve any trailing nil, as this is a supported way to
+	explicitly discard multiple values.
+	(byte-optimize-cond-1):
+	Discard multiple values with a singleton followed by no more
+	clauses.
+	* bytecomp.el (progn): 
+	(prog1):
+	(prog2):
+	Be careful about discarding multiple values in the byte-hunk
+	handler of these three forms. 
+	* bytecomp.el (byte-compile-prog1, byte-compile-prog2):
+	Don't call #'values explicitly, use `(or ,(pop form) nil) instead,
+	since that compiles to bytecode, not a funcall.
+	* bytecomp.el (byte-compile-values): 
+	With one non-const argument, byte-compile to `(or ,(second form)
+	nil), not an explicit #'values call.
+	* bytecomp.el (byte-compile-insert-header): 
+	Be nicer in the error message to emacs versions that don't
+	understand our bytecode.
+
 2009-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (bytecomp-load-hook): New.
