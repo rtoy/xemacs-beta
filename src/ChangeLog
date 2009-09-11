@@ -1,3 +1,8 @@
+2009-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (unicode_convert): 
+	Fix a bug with error sequences and very short input strings.
+
 2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (For, Fand): 

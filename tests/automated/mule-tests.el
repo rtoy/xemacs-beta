@@ -757,4 +757,11 @@ This is a naive implementation in Lisp.  "
      do (unless (get-range-table i exceptions)
           (read (format (if (> i #xFFFF) #r"?\U%08X" #r"?\u%04X") i)))
      finally return t))
+  (loop
+    for i from #x00 to #xff
+    do (Assert
+        (= 1 (length (decode-coding-string (format "%c" i) 'utf-8-unix)))
+        (format 
+         "checking Unicode coding systems behave well with short input, %02X"
+         i)))
   )
