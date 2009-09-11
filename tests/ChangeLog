@@ -1,3 +1,8 @@
+2009-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep): 
+	Check that a Unicode bug with very short inputs has been fixed.
+
 2009-09-02  Jerry James  <james@xemacs.org>
 
 	* reproduce-crashes.el (12): New bug.

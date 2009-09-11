@@ -2221,7 +2221,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 
 	}
 
-      if (str->eof && ch)
+      if (str->eof && counter)
         {
           switch (type)
             {
@@ -2277,6 +2277,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
               break;
             }
           ch = 0;
+          counter = 0;
         }
 
       data->counter = counter;
