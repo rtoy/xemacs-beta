@@ -1889,7 +1889,6 @@ is normally set to `get-frame-for-buffer' (which see)."
       (set-window-point window 1)
       nil)))
 
-(setq pre-display-buffer-function 'get-frame-for-buffer)
 (setq temp-buffer-show-function 'show-temp-buffer-in-current-frame)
 
 
