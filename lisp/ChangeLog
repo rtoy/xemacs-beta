@@ -1,3 +1,9 @@
+2009-09-14  Michael Sperber  <mike@xemacs.org>
+
+	* frame.el (pre-display-buffer-function): Don't set to
+	`get-frame-for-buffer' - this broke the documented behavior of
+	`display-buffer' of always displaying in the current frame.
+
 2009-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (handle-pre-motion-command-current-command-is-motion):
