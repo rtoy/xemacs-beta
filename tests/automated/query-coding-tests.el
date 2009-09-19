@@ -61,7 +61,10 @@
                                      (not 
                                       (memq (coding-system-type
                                              unix-coding-system)
-                                            '(undecided chain))))
+                                            '(undecided chain
+					      ;; #### We should be
+					      ;; testing these too.
+					      mswindows-multibyte))))
                                 unix-coding-system)))
                         (coding-system-list nil))
                 :test #'eq))

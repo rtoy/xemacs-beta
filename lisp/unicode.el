@@ -164,6 +164,68 @@ Setting this at run-time does nothing.")
 	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
 	chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7)))))
 
+(defconst ccl-encode-to-ucs-2
+  (eval-when-compile
+    (let ((pre-existing 
+           ;; This is the compiled CCL program from the assert
+           ;; below. Since this file is dumped and ccl.el isn't (and
+           ;; even when it was, it was dumped much later than this
+           ;; one), we can't compile the program at dump time. We can
+           ;; check at byte compile time that the program is as
+           ;; expected, though.
+           [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028
+              147513 8 82009 255 22]))
+      (when (featurep 'mule)
+        ;; Check that the pre-existing constant reflects the intended
+        ;; CCL program.
+        (assert
+         (equal pre-existing
+                (ccl-compile
+                 `(1 
+                   ( ;; mule-to-unicode's first argument is the
+                    ;; charset ID, the second its first byte
+                    ;; left shifted by 7 bits masked with its
+                    ;; second byte.
+                    (r1 = (r1 << 7)) 
+                    (r1 = (r1 | r2)) 
+                    (mule-to-unicode r0 r1) 
+                    (if (r0 & ,(lognot #xFFFF))
+                        ;; Redisplay looks in r1 and r2 for the first
+                        ;; and second bytes of the X11 font,
+                        ;; respectively. For non-BMP characters we
+                        ;; display U+FFFD.
+                        ((r1 = #xFF)
+                         (r2 = #xFD))
+                      ((r1 = (r0 >> 8)) 
+                       (r2 = (r0 & #xFF))))))))
+         nil 
+         "The pre-compiled CCL program appears broken. "))
+      pre-existing))
+  "CCL program to transform Mule characters to UCS-2.")
+
+(when (featurep 'mule)
+  (put 'ccl-encode-to-ucs-2 'ccl-program-idx
+       (declare-fboundp
+	(register-ccl-program 'ccl-encode-to-ucs-2 ccl-encode-to-ucs-2))))
+
+(defun decode-char (quote-ucs code &optional restriction) 
+  "FSF compatibility--return Mule character with Unicode codepoint CODE.
+The second argument must be 'ucs, the third argument is ignored.  "
+  ;; We're prepared to accept invalid Unicode in unicode-to-char, but not in
+  ;; this function, which is the API that should actually be used, since
+  ;; it's available in GNU and in Mule-UCS.
+  (check-argument-range code #x0 #x10FFFF)
+  (assert (eq quote-ucs 'ucs) t
+	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
+  (unicode-to-char code))
+
+(defun encode-char (char quote-ucs &optional restriction)
+  "FSF compatibility--return the Unicode code point of CHAR.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs) t
+	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
+  (char-to-unicode char))
+
 (make-coding-system
  'utf-16 'unicode
  "UTF-16"
@@ -308,68 +370,6 @@ Standard encoding for representing UTF-8 under MS Windows."
    unicode-type utf-8
    little-endian t
    need-bom t))
-
-(defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint CODE.
-The second argument must be 'ucs, the third argument is ignored.  "
-  ;; We're prepared to accept invalid Unicode in unicode-to-char, but not in
-  ;; this function, which is the API that should actually be used, since
-  ;; it's available in GNU and in Mule-UCS.
-  (check-argument-range code #x0 #x10FFFF)
-  (assert (eq quote-ucs 'ucs) t
-	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  (unicode-to-char code))
-
-(defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of CHAR.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) t
-	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
-  (char-to-unicode char))
-
-(defconst ccl-encode-to-ucs-2
-  (eval-when-compile
-    (let ((pre-existing 
-           ;; This is the compiled CCL program from the assert
-           ;; below. Since this file is dumped and ccl.el isn't (and
-           ;; even when it was, it was dumped much later than this
-           ;; one), we can't compile the program at dump time. We can
-           ;; check at byte compile time that the program is as
-           ;; expected, though.
-           [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028
-              147513 8 82009 255 22]))
-      (when (featurep 'mule)
-        ;; Check that the pre-existing constant reflects the intended
-        ;; CCL program.
-        (assert
-         (equal pre-existing
-                (ccl-compile
-                 `(1 
-                   ( ;; mule-to-unicode's first argument is the
-                    ;; charset ID, the second its first byte
-                    ;; left shifted by 7 bits masked with its
-                    ;; second byte.
-                    (r1 = (r1 << 7)) 
-                    (r1 = (r1 | r2)) 
-                    (mule-to-unicode r0 r1) 
-                    (if (r0 & ,(lognot #xFFFF))
-                        ;; Redisplay looks in r1 and r2 for the first
-                        ;; and second bytes of the X11 font,
-                        ;; respectively. For non-BMP characters we
-                        ;; display U+FFFD.
-                        ((r1 = #xFF)
-                         (r2 = #xFD))
-                      ((r1 = (r0 >> 8)) 
-                       (r2 = (r0 & #xFF))))))))
-         nil 
-         "The pre-compiled CCL program appears broken. "))
-      pre-existing))
-  "CCL program to transform Mule characters to UCS-2.")
-
-(when (featurep 'mule)
-  (put 'ccl-encode-to-ucs-2 'ccl-program-idx
-       (declare-fboundp
-	(register-ccl-program 'ccl-encode-to-ucs-2 ccl-encode-to-ucs-2))))
 
 ;; Now, create jit-ucs-charset-0 entries for those characters in Windows
 ;; Glyph List 4 that would otherwise end up in East Asian character sets.
@@ -612,112 +612,6 @@ mapping from the error sequences to the desired characters.  "
 
 ;; Sure would be nice to be able to use defface here. 
 (copy-face 'highlight 'unicode-invalid-sequence-warning-face)
-
-(defvar unicode-query-coding-skip-chars-arg nil ;; Set in general-late.el
-  "Used by `unicode-query-coding-region' to skip chars with known mappings.")
-
-(defun unicode-query-coding-region (begin end coding-system
-				    &optional buffer ignore-invalid-sequencesp
-                                    errorp highlightp)
-  "The `query-coding-region' implementation for Unicode coding systems.
-
-Supports IGNORE-INVALID-SEQUENCESP, that is, XEmacs characters that reflect
-invalid octets on disk will be treated as encodable if this argument is
-specified, and as not encodable if it is not specified."
-
-  ;; Potential problem here; the octets that correspond to octets from #x00
-  ;; to #x7f on disk will be treated by utf-8 and utf-7 as invalid
-  ;; sequences, and thus, in theory, encodable.
-
-  (check-argument-type #'coding-system-p
-                       (setq coding-system (find-coding-system coding-system)))
-  (check-argument-type #'integer-or-marker-p begin)
-  (check-argument-type #'integer-or-marker-p end)
-  (let* ((skip-chars-arg (concat unicode-query-coding-skip-chars-arg
-				 (if ignore-invalid-sequencesp
-				     unicode-invalid-sequence-regexp-range
-				   "")))
-         (ranges (make-range-table))
-         (looking-at-arg (concat "[" skip-chars-arg "]"))
-         (case-fold-search nil)
-	 (invalid-sequence-lower-unicode-bound
-	  (char-to-unicode
-	   (aref (decode-coding-string "\xd8\x00\x00\x00"
-				       'utf-16-be) 3)))
-	  (invalid-sequence-upper-unicode-bound
-	   (char-to-unicode
-	    (aref (decode-coding-string "\xd8\x00\x00\xFF"
-					'utf-16-be) 3)))
-         fail-range-start fail-range-end char-after failed
-	 extent char-unicode failed-reason previous-failed-reason)
-    (save-excursion
-      (when highlightp
-        (query-coding-clear-highlights begin end buffer))
-      (goto-char begin buffer)
-      (skip-chars-forward skip-chars-arg end buffer)
-      (while (< (point buffer) end)
-        (setq char-after (char-after (point buffer) buffer)
-              fail-range-start (point buffer))
-        (while (and
-                (< (point buffer) end)
-                (not (looking-at looking-at-arg))
-                (or (and
-                     (= -1 (setq char-unicode (char-to-unicode char-after)))
-                     (setq failed-reason 'unencodable))
-                    (and (not ignore-invalid-sequencesp)
-                         ;; The default case, with ignore-invalid-sequencesp
-                         ;; not specified:
-                         ;; If the character is in the Unicode range that
-                         ;; corresponds to an invalid octet, we want to
-                         ;; treat it as unencodable.
-                         (<= invalid-sequence-lower-unicode-bound
-                             char-unicode)
-                         (<= char-unicode
-			     invalid-sequence-upper-unicode-bound)
-                         (setq failed-reason 'invalid-sequence)))
-                (or (null previous-failed-reason)
-                    (eq previous-failed-reason failed-reason)))
-          (forward-char 1 buffer)
-          (setq char-after (char-after (point buffer) buffer)
-                failed t
-                previous-failed-reason failed-reason))
-        (if (= fail-range-start (point buffer))
-            ;; The character can actually be encoded by the coding
-            ;; system; check the characters past it.
-	    (forward-char 1 buffer)
-          ;; Can't be encoded; note this.
-          (when errorp 
-            (error 'text-conversion-error
-                   (format "Cannot encode %s using coding system"
-                           (buffer-substring fail-range-start (point buffer)
-                                             buffer))
-                   (coding-system-name coding-system)))
-          (assert
-           (not (null previous-failed-reason)) t
-           "If we've got here, previous-failed-reason should be non-nil.")
-          (put-range-table fail-range-start
-                           ;; If char-after is non-nil, we're not at
-                           ;; the end of the buffer.
-                           (setq fail-range-end (if char-after
-                                                    (point buffer)
-                                                  (point-max buffer)))
-                           previous-failed-reason ranges)
-          (setq previous-failed-reason nil)
-          (when highlightp
-            (setq extent (make-extent fail-range-start fail-range-end buffer))
-            (set-extent-priority extent (+ mouse-highlight-priority 2))
-            (set-extent-face extent 'query-coding-warning-face)))
-        (skip-chars-forward skip-chars-arg end buffer))
-      (if failed
-          (values nil ranges)
-        (values t nil)))))
-
-(loop
-  for coding-system in (coding-system-list)
-  initially (unless (featurep 'mule) (return))
-  do (when (eq 'unicode (coding-system-type coding-system))
-       (coding-system-put coding-system 'query-coding-function
-			  #'unicode-query-coding-region)))
 
 (unless (featurep 'mule)
   ;; We do this in such a roundabout way--instead of having the above defun

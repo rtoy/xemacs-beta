@@ -1,3 +1,59 @@
+2009-09-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the #'query-coding-region implementation to C.
+
+	This is necessary because there is no reasonable way to access the
+	corresponding mswindows-multibyte functionality from Lisp, and we
+	need such functionality if we're going to have a reliable and
+	portable #'query-coding-region implementation. However, this
+	change doesn't yet provide #'query-coding-region for the
+	mswindow-multibyte coding systems, there should be no functional
+	differences between an XEmacs with this change and one without it.
+
+	* mule-coding.c (struct fixed_width_coding_system): 
+	Add a new coding system type, fixed_width, and implement it. It
+	uses the CCL infrastructure but has a much simpler creation API,
+	and its own query_method, formerly in lisp/mule/mule-coding.el.
+	* unicode.c:
+	Move the Unicode query method implementation here from
+	unicode.el. 
+	* lisp.h: Declare Fmake_coding_system_internal, Fcopy_range_table
+	here. 
+	* intl-win32.c (complex_vars_of_intl_win32): 
+	Use Fmake_coding_system_internal, not Fmake_coding_system.
+	* general-slots.h: Add Qsucceeded, Qunencodable, Qinvalid_sequence
+	here. 
+	* file-coding.h (enum coding_system_variant):
+	Add fixed_width_coding_system here. 
+	(struct coding_system_methods): 
+	Add query_method and query_lstream_method to the coding system
+	methods. 
+	Provide flags for the query methods.
+	Declare the default query method; initialise it correctly in
+	INITIALIZE_CODING_SYSTEM_TYPE.
+	* file-coding.c (default_query_method): 
+	New function, the default query method for coding systems that do
+	not set it. Moved from coding.el.
+	(make_coding_system_1): 
+	Accept new elements in PROPS in #'make-coding-system; aliases, a
+	list of aliases; safe-chars and safe-charsets (these were
+	previously accepted but not saved); and category.
+	(Fmake_coding_system_internal): 
+	New function, what used to be #'make-coding-system--on Mule
+	builds, we've now moved some of the functionality of this to
+	Lisp. 
+	(Fcoding_system_canonical_name_p):
+	Move this earlier in the file, since it's now called from within
+	make_coding_system_1. 
+	(Fquery_coding_region): 
+	Move the implementation of this here, from coding.el. 
+	(complex_vars_of_file_coding): 
+	Call Fmake_coding_system_internal, not Fmake_coding_system;
+	specify safe-charsets properties when we're a mule build. 
+	* extents.h (mouse_highlight_priority, Fset_extent_priority,
+	Fset_extent_face, Fmap_extents):
+	Make these available to other C files.
+
 2009-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (unicode_convert): 

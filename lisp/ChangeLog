@@ -1,3 +1,78 @@
+2009-09-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the #'query-coding-region implementation to C.
+	* coding.el: 
+	Consolidate code that depends on the presence or absence of Mule
+	at the end of this file. 
+	(default-query-coding-region, query-coding-region):
+	Move these functions to C. 
+	(default-query-coding-region-safe-charset-skip-chars-map):
+	Remove this variable, the corresponding C variable is
+	Vdefault_query_coding_region_chartab_cache in file-coding.c. 
+	(query-coding-string): Update docstring to reflect actual multiple
+	values, be more careful about not modifying a range table that
+	we're currently mapping over.
+	(encode-coding-char): Make the implementation of this simpler.
+	(featurep 'mule): Autoload #'make-coding-system from
+	mule/make-coding-system.el if we're a mule build; provide an
+	appropriate compiler macro. 
+	Do various non-mule compatibility things if we're not a mule
+	build. 
+	* update-elc.el (additional-dump-dependencies): 
+	Add mule/make-coding-system as a dump time dependency if we're a
+	mule build. 
+	* unicode.el (ccl-encode-to-ucs-2): 
+	(decode-char): 
+	(encode-char): 
+	Move these earlier in the file, for the sake of some byte compile
+	warnings. 
+	(unicode-query-coding-region): 	
+	Move this to unicode.c
+	* mule/make-coding-system.el:
+	New file, not dumped. Contains the functionality to rework the
+	arguments necessary for fixed-width coding systems, and contains
+	the implementation of #'make-coding-system, which now calls
+	#'make-coding-system-internal.
+	* mule/vietnamese.el (viscii): 
+	* mule/latin.el (iso-8859-2): 
+	(windows-1250): 
+	(iso-8859-3): 
+	(iso-8859-4): 
+	(iso-8859-14): 
+	(iso-8859-15): 
+	(iso-8859-16): 
+	(iso-8859-9): 
+	(macintosh): 
+	(windows-1252): 
+	* mule/hebrew.el (iso-8859-8): 
+	* mule/greek.el (iso-8859-7): 
+	(windows-1253): 
+	* mule/cyrillic.el (iso-8859-5): 
+	(koi8-r): 
+	(koi8-u): 
+	(windows-1251): 
+	(alternativnyj): 
+	(koi8-ru): 
+	(koi8-t): 
+	(koi8-c): 
+	(koi8-o): 
+	* mule/arabic.el (iso-8859-6): 	
+	(windows-1256): 
+	Move all these coding systems to being of type fixed-width, not of
+	type CCL. This allows the distinct query-coding-region for them to
+	be in C, something which will eventually allow us to implement
+	query-coding-region for the mswindows-multibyte coding systems.
+	* mule/general-late.el (posix-charset-to-coding-system-hash): 
+	Document why we're pre-emptively persuading the byte compiler that
+	the ELC for this file needs to be written using escape-quoted.
+	Call #'set-unicode-query-skip-chars-args, now the Unicode
+	query-coding-region implementation is in C. 
+	* mule/thai-xtis.el (tis-620): 
+	Don't bother checking whether we're XEmacs or not here.
+	* mule/mule-coding.el: 
+	Move the eight bit fixed-width functionality from this file to
+	make-coding-system.el.
+
 2009-09-14  Michael Sperber  <mike@xemacs.org>
 
 	* frame.el (pre-display-buffer-function): Don't set to

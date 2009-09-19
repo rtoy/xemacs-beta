@@ -347,23 +347,15 @@
 	      (repeat))))
 	(write-read-repeat r0))))))
 
-(if (featurep 'xemacs)
-    (progn
-      (make-coding-system
-       'tis-620 'ccl
-       "TIS620 (Thai)"
-       `(mnemonic "TIS620"
-	 decode ccl-decode-thai-xtis
-	 encode ccl-encode-thai-xtis
-         safe-charsets (ascii thai-xtis)
-	 documentation "external=tis620, internal=thai-xtis"))
-      (coding-system-put 'tis-620 'category 'iso-8-1))
-  (make-coding-system
-   'tis-620 4 ?T "external=tis620, internal=thai-xtis"
-   '(ccl-decode-thai-xtis . ccl-encode-thai-xtis)
-   '((safe-charsets . t)))
-  )
-
+(make-coding-system
+ 'tis-620 'ccl
+ "TIS620 (Thai)"
+ `(mnemonic "TIS620"
+   decode ccl-decode-thai-xtis
+   encode ccl-encode-thai-xtis
+   safe-charsets (ascii thai-xtis)
+   documentation "external=tis620, internal=thai-xtis"))
+(coding-system-put 'tis-620 'category 'iso-8-1)
 
 (set-language-info-alist
  "Thai-XTIS"

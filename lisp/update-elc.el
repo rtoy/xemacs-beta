@@ -122,9 +122,11 @@
 Files in `additional-dump-dependencies' do not need to be listed here.")
 
 (defvar additional-dump-dependencies
-  '("loadup.el"
-    "loadup-el.el"
-    "update-elc.el")
+  (nconc '("loadup.el"
+           "loadup-el.el"
+           "update-elc.el")
+         (if (featurep 'mule)
+             '("mule/make-coding-system")))
   "Lisp files that are not dumped but which the dump depends on.
 If any of these files are changed, we need to redump.")
 

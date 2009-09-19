@@ -41,6 +41,10 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h"
 #include "opaque.h"
 
+#include "buffer.h"
+#include "rangetab.h"
+#include "extents.h"
+
 #include "sysfile.h"
 
 /* For more info about how Unicode works under Windows, see intl-win32.c. */
@@ -192,6 +196,16 @@ Lisp_Object Qutf_16_little_endian, Qutf_16_bom;
 Lisp_Object Qutf_16_little_endian_bom;
 
 Lisp_Object Qutf_8_bom;
+
+#ifdef MULE
+/* These range tables are not directly accessible from Lisp: */
+static Lisp_Object Vunicode_invalid_and_query_skip_chars;
+static Lisp_Object Vutf_8_invalid_and_query_skip_chars;
+static Lisp_Object Vunicode_query_skip_chars;
+
+static Lisp_Object Vunicode_query_string, Vunicode_invalid_string,
+  Vutf_8_invalid_string;
+#endif /* MULE */
 
 /* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
    algorithm. 
@@ -2818,6 +2832,275 @@ unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
   write_c_string (printcharfun, ")");
 }
 
+#ifdef MULE
+DEFUN ("set-unicode-query-skip-chars-args", Fset_unicode_query_skip_chars_args,
+       3, 3, 0, /*
+Specify strings as matching characters known to Unicode coding systems.
+
+QUERY-STRING is a string matching characters that can unequivocally be
+encoded by the Unicode coding systems.
+
+INVALID-STRING is a string to match XEmacs characters that represent known
+octets on disk, but that are invalid sequences according to Unicode. 
+
+UTF-8-INVALID-STRING is a more restrictive string to match XEmacs characters
+that are invalid UTF-8 octets.
+
+All three strings are in the format accepted by `skip-chars-forward'. 
+*/
+       (query_string, invalid_string, utf_8_invalid_string))
+{
+  CHECK_STRING (query_string);
+  CHECK_STRING (invalid_string);
+  CHECK_STRING (utf_8_invalid_string);
+
+  Vunicode_query_string = query_string;
+  Vunicode_invalid_string = invalid_string;
+  Vutf_8_invalid_string = utf_8_invalid_string;
+
+  return Qnil;
+}
+
+static void
+add_lisp_string_to_skip_chars_range (Lisp_Object string, Lisp_Object rtab,
+                                     Lisp_Object value)
+{
+  Ibyte *p, *pend;
+  Ichar c;
+
+  p = XSTRING_DATA (string);
+  pend = p + XSTRING_LENGTH (string);
+
+  while (p != pend)
+    {
+      c = itext_ichar (p);
+
+      INC_IBYTEPTR (p);
+
+      if (c == '\\')
+        {
+          if (p == pend) break;
+          c = itext_ichar (p);
+          INC_IBYTEPTR (p);
+        }
+
+      if (p != pend && *p == '-')
+        {
+          Ichar cend;
+
+          /* Skip over the dash.  */
+          p++;
+          if (p == pend) break;
+          cend = itext_ichar (p);
+
+          Fput_range_table (make_int (c), make_int (cend), value,
+                            rtab);
+
+          INC_IBYTEPTR (p);
+        }
+      else
+        {
+          Fput_range_table (make_int (c), make_int (c), value, rtab);
+        }
+    }
+}
+
+/* This function wouldn't be necessary if initialised range tables were
+   dumped properly; see
+   http://mid.gmane.org/18179.49815.622843.336527@parhasard.net . */
+static void
+initialize_unicode_query_range_tables_from_strings (void)
+{
+  CHECK_STRING (Vunicode_query_string);
+  CHECK_STRING (Vunicode_invalid_string);
+  CHECK_STRING (Vutf_8_invalid_string);
+
+  Vunicode_query_skip_chars = Fmake_range_table (Qstart_closed_end_closed);
+
+  add_lisp_string_to_skip_chars_range (Vunicode_query_string,
+                                       Vunicode_query_skip_chars,
+                                       Qsucceeded);
+
+  Vunicode_invalid_and_query_skip_chars
+    = Fcopy_range_table (Vunicode_query_skip_chars);
+
+  add_lisp_string_to_skip_chars_range (Vunicode_invalid_string,
+                                       Vunicode_invalid_and_query_skip_chars,
+                                       Qinvalid_sequence);
+
+  Vutf_8_invalid_and_query_skip_chars
+    = Fcopy_range_table (Vunicode_query_skip_chars);
+
+  add_lisp_string_to_skip_chars_range (Vutf_8_invalid_string,
+                                       Vutf_8_invalid_and_query_skip_chars, 
+                                       Qinvalid_sequence);
+}
+
+static Lisp_Object
+unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
+               int flags)
+{
+  Charbpos pos = BUF_PT (buf), fail_range_start, fail_range_end;
+  Charbpos pos_byte = BYTE_BUF_PT (buf);
+  Lisp_Object skip_chars_range_table, result = Qnil;
+  enum query_coding_failure_reasons failed_reason,
+    previous_failed_reason = query_coding_succeeded;
+  int checked_unicode, invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START,
+    invalid_upper_limit, unicode_type = XCODING_SYSTEM_UNICODE_TYPE (codesys);
+
+  if (flags & QUERY_METHOD_HIGHLIGHT && 
+      /* If we're being called really early, live without highlights getting
+         cleared properly: */
+      !(UNBOUNDP (XSYMBOL (Qquery_coding_clear_highlights)->function)))
+    {
+      /* It's okay to call Lisp here, the only non-stack object we may have
+         allocated up to this point is skip_chars_range_table, and that's
+         reachable from its entry in Vfixed_width_query_ranges_cache. */
+      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
+             wrap_buffer (buf));
+    }
+
+  if (NILP (Vunicode_query_skip_chars))
+    {
+      initialize_unicode_query_range_tables_from_strings();
+    }
+
+  if (flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES)
+    {
+      switch (unicode_type)
+        {
+        case UNICODE_UTF_8:
+          skip_chars_range_table = Vutf_8_invalid_and_query_skip_chars;
+          break;
+        case UNICODE_UTF_7:
+          /* #### See above. */
+          return Qunbound;
+          break;
+        default:
+          skip_chars_range_table = Vunicode_invalid_and_query_skip_chars;
+          break;
+        }
+    }
+  else
+    {
+      switch (unicode_type)
+        {
+        case UNICODE_UTF_8:
+          invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START + 0x80;
+          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_START + 0xFF;
+          break;
+        case UNICODE_UTF_7:
+          /* #### Work out what to do here in reality, read the spec and decide
+             which octets are invalid. */
+          return Qunbound;
+          break;
+        default:
+          invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START;
+          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_START + 0xFF;
+          break;
+        }
+
+      skip_chars_range_table = Vunicode_query_skip_chars;
+    }
+
+  while (pos < end)
+    {
+      Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
+      if ((ch < 0x100 ? 1 : 
+           (!EQ (Qnil, Fget_range_table (make_int (ch), skip_chars_range_table,
+                                         Qnil)))))
+        {
+          pos++;
+          INC_BYTEBPOS (buf, pos_byte);
+        }
+      else
+        {
+          fail_range_start = pos;
+          while ((pos < end) &&  
+                 ((checked_unicode = ichar_to_unicode (ch),
+                   -1 == checked_unicode
+                   && (failed_reason = query_coding_unencodable))
+                  || (!(flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES) &&
+                      (invalid_lower_limit <= checked_unicode) &&
+                      (checked_unicode <= invalid_upper_limit)
+                      && (failed_reason = query_coding_invalid_sequence)))
+                 && (previous_failed_reason == query_coding_succeeded
+                     || previous_failed_reason == failed_reason))
+            {
+              pos++;
+              INC_BYTEBPOS (buf, pos_byte);
+              ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
+              previous_failed_reason = failed_reason;
+            }
+
+          if (fail_range_start == pos)
+            {
+              /* The character can actually be encoded; move on. */
+              pos++;
+              INC_BYTEBPOS (buf, pos_byte);
+            }
+          else
+            {
+              assert (previous_failed_reason == query_coding_invalid_sequence
+                      || previous_failed_reason == query_coding_unencodable);
+
+              if (flags & QUERY_METHOD_ERRORP)
+                {
+                  DECLARE_EISTRING (error_details);
+
+                  eicpy_ascii (error_details, "Cannot encode ");
+                  eicat_lstr (error_details,
+                              make_string_from_buffer (buf, fail_range_start, 
+                                                       pos -
+                                                       fail_range_start));
+                  eicat_ascii (error_details, " using coding system");
+
+                  signal_error (Qtext_conversion_error, 
+                                (const CIbyte *)(eidata (error_details)),
+                                XCODING_SYSTEM_NAME (codesys));
+                }
+
+              if (NILP (result))
+                {
+                  result = Fmake_range_table (Qstart_closed_end_open);
+                }
+
+              fail_range_end = pos;
+
+              Fput_range_table (make_int (fail_range_start), 
+                                make_int (fail_range_end),
+                                (previous_failed_reason
+                                 == query_coding_unencodable ?
+                                 Qunencodable : Qinvalid_sequence), 
+                                result);
+              previous_failed_reason = query_coding_succeeded;
+
+              if (flags & QUERY_METHOD_HIGHLIGHT) 
+                {
+                  Lisp_Object extent
+                    = Fmake_extent (make_int (fail_range_start),
+                                    make_int (fail_range_end), 
+                                    wrap_buffer (buf));
+                  
+                  Fset_extent_priority
+                    (extent, make_int (2 + mouse_highlight_priority));
+                  Fset_extent_face (extent, Qquery_coding_warning_face);
+                }
+            }
+        }
+    }
+
+  return result;
+}
+#else /* !MULE */
+unicode_query (Lisp_Object UNUSED (codesys),
+               struct buffer * UNUSED (buf),
+               Charbpos UNUSED (end), int UNUSED (flags))
+{
+  return Qnil;
+}
+#endif
+
 int
 dfc_coding_system_is_unicode (
 #ifdef WIN32_ANY
@@ -2856,6 +3139,8 @@ syms_of_unicode (void)
 
   DEFSUBR (Fload_unicode_mapping_table);
 
+  DEFSUBR (Fset_unicode_query_skip_chars_args);
+
   DEFSYMBOL (Qccl_encode_to_ucs_2);
   DEFSYMBOL (Qlast_allocated_character);
   DEFSYMBOL (Qignore_first_column);
@@ -2890,6 +3175,7 @@ coding_system_type_create_unicode (void)
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (unicode, "unicode-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (unicode, print);
   CODING_SYSTEM_HAS_METHOD (unicode, convert);
+  CODING_SYSTEM_HAS_METHOD (unicode, query);
   CODING_SYSTEM_HAS_METHOD (unicode, init_coding_stream);
   CODING_SYSTEM_HAS_METHOD (unicode, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (unicode, putprop);
@@ -2980,5 +3266,24 @@ found (that is, they're probably Mule-specific charsets like Ethiopic or
 IPA.)
 */ );
   Qunicode_registries = vector1(build_string("iso10646-1"));
+
+  /* Initialised in lisp/mule/general-late.el, by a call to
+     #'set-unicode-query-skip-chars-args. Or at least they would be, but we
+     can't do this at dump time right now, initialised range tables aren't
+     dumped properly. */
+  staticpro (&Vunicode_invalid_and_query_skip_chars);
+  Vunicode_invalid_and_query_skip_chars = Qnil;
+  staticpro (&Vutf_8_invalid_and_query_skip_chars);
+  Vutf_8_invalid_and_query_skip_chars = Qnil;
+  staticpro (&Vunicode_query_skip_chars);
+  Vunicode_query_skip_chars = Qnil;
+
+  /* If we could dump the range table above these wouldn't be necessary: */
+  staticpro (&Vunicode_query_string);
+  Vunicode_query_string = Qnil;
+  staticpro (&Vunicode_invalid_string);
+  Vunicode_invalid_string = Qnil;
+  staticpro (&Vutf_8_invalid_string);
+  Vutf_8_invalid_string = Qnil;
 #endif /* MULE */
 }

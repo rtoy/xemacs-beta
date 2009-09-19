@@ -65,31 +65,41 @@
 			       Installation-file-coding-system)
 			    Installation-string)
 
-      ;; Convince the byte compiler that, really, this file can't be encoded
-      ;; as binary. Ugh.
-      system-type (symbol-value (intern "\u0073ystem-type"))
+      ;; This used to be here to convince the byte-compiler to encode the
+      ;; output file using escape-quoted. This is no longer necessary, but
+      ;; keeping it here avoids doing the eval-when-compile clause below
+      ;; twice, which is a significant improvement.
+      system-type (symbol-value (intern "\u0073ystem-type")))
 
-      unicode-query-coding-skip-chars-arg
-      (eval-when-compile 
-        (when-fboundp 'map-charset-chars 
-          (loop
-            for charset in (charset-list)
-            with skip-chars-string = ""
-            do
-            (block no-ucs-mapping
-              (map-charset-chars
-               #'(lambda (begin end)
-                   (loop
-                     while (and begin (>= end begin))
-                     do
-                     (when (= -1 (char-to-unicode begin))
-                       (return-from no-ucs-mapping))
-                     (setq begin (int-to-char (1+ begin)))))
-               charset)
-              (setq skip-chars-string
-                    (concat skip-chars-string
-                            (charset-skip-chars-string charset))))
-            finally return skip-chars-string))))
+;; When this file is being compiled, all the charsets have been loaded, so
+;; we can construct the query-skip-chars-arg string correctly. 
+(set-unicode-query-skip-chars-args
+ (eval-when-compile 
+   (when-fboundp 'map-charset-chars 
+     (loop
+       for charset in (charset-list)
+       with skip-chars-string = ""
+       do
+       (block no-ucs-mapping
+         (map-charset-chars
+          #'(lambda (begin end)
+              (loop
+                while (and begin (>= end begin))
+                do
+                (when (= -1 (char-to-unicode begin))
+                  (return-from no-ucs-mapping))
+                (setq begin (int-to-char (1+ begin)))))
+          charset)
+         (setq skip-chars-string
+               (concat skip-chars-string
+                       (charset-skip-chars-string charset))))
+       finally return skip-chars-string)))
+ unicode-invalid-sequence-regexp-range
+ (eval-when-compile
+   (concat (loop
+             for i from #x80 to #xFF
+             collect (aref (decode-coding-string (int-char i)
+                                                 'utf-8) 0)))))
 
 ;; At this point in the dump, all the charsets have been loaded. Now, load
 ;; their Unicode mappings.

@@ -92,6 +92,7 @@ mark_range_table (Lisp_Object obj)
 
   for (i = 0; i < Dynarr_length (rt->entries); i++)
     mark_object (Dynarr_at (rt->entries, i).val);
+  
   return Qnil;
 }
 
