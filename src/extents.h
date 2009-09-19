@@ -147,6 +147,8 @@ void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 extern int inside_undo;
 extern int in_modeline_generation;
 
+extern Fixnum mouse_highlight_priority;
+
 EXFUN (Fextent_at, 5);
 EXFUN (Fextent_property, 3);
 EXFUN (Fput_text_property, 5);
@@ -164,6 +166,9 @@ EXFUN (Fprevious_single_char_property_change, 4);
 EXFUN (Fset_extent_endpoints, 4);
 EXFUN (Fset_extent_parent, 2);
 EXFUN (Fset_extent_property, 3);
+EXFUN (Fset_extent_priority, 2);
+EXFUN (Fset_extent_face, 2);
+EXFUN (Fmap_extents, 8);
 
 enum extent_at_flag
 {

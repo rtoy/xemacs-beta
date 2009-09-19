@@ -1,3 +1,13 @@
+2009-09-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el: 
+	Check a coding system's type, not an 8-bit-fixed property, for
+	whether that coding system should be treated as a fixed-width
+	coding system.
+	* automated/query-coding-tests.el:
+	Don't test the query coding functionality for mswindows-multibyte
+	coding systems, it's not yet implemented.
+
 2009-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep): 

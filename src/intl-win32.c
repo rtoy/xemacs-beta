@@ -2349,7 +2349,7 @@ determine_if_using_unicode (void)
 void
 complex_vars_of_intl_win32 (void)
 {
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qmswindows_unicode, Qunicode,
      build_msg_string ("MS Windows Unicode"),
      nconc2 (list4 (Qdocumentation,

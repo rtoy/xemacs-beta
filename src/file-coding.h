@@ -230,7 +230,8 @@ enum coding_system_variant
   ccl_coding_system,
   shift_jis_coding_system,
   big5_coding_system,
-  unicode_coding_system
+  unicode_coding_system,
+  fixed_width_coding_system
 };
 
 struct coding_system_methods
@@ -318,6 +319,28 @@ struct coding_system_methods
 				  const unsigned char *src,
 				  unsigned_char_dynarr *dst, Bytecount n);
 
+  /* Query method: Check whether the buffer text between point and END
+     can be encoded by this coding system. Returns
+     either nil (meaning the text can be encoded by the coding system) or a
+     range table object describing the stretches that the coding system
+     cannot encode.
+     
+     Possible values for flags are below, search for
+     QUERY_METHOD_IGNORE_INVALID_SEQUENCES.
+
+     Coding systems are expected to be able to behave sensibly with all
+     possible octets on decoding, which is why this method is only available
+     for encoding. */
+  Lisp_Object (*query_method) (Lisp_Object coding_system, struct buffer *buf,
+                               Charbpos end, int flags);
+
+  /* Same as the previous method, but this works in the context of
+     lstreams. (Where the data do need to be copied, unfortunately.)  The
+     intention is to implement the query method for the mswindows-multibyte
+     coding systems in terms of a query_lstream method. */
+  Lisp_Object (*query_lstream_method) (struct coding_stream *str,
+                                       const Ibyte *start, Bytecount n);
+
   /* Coding mark method: Mark any Lisp objects in the type-specific data
      attached to `struct coding_stream'.  Optional. */
   void (*mark_coding_stream_method) (struct coding_stream *str);
@@ -387,6 +410,24 @@ struct coding_system_methods
   int coding_data_size;
 };
 
+/* Values for flags, as passed to query_method. */
+
+#define QUERY_METHOD_IGNORE_INVALID_SEQUENCES 0x0001
+#define QUERY_METHOD_ERRORP                   0x0002
+#define QUERY_METHOD_HIGHLIGHT                0x0004
+
+enum query_coding_failure_reasons
+  {
+    query_coding_succeeded = 0,
+    query_coding_unencodable = 1, 
+    query_coding_invalid_sequence = 2
+  }; 
+
+extern Lisp_Object Qquery_coding_warning_face;
+
+Lisp_Object default_query_method (Lisp_Object, struct buffer *, Charbpos,
+                                  int);
+
 /***** Calling a coding-system method *****/
 
 #define RAW_CODESYSMETH(cs, m) ((cs)->methods->m##_method)
@@ -412,7 +453,6 @@ struct coding_system_methods
   MAYBE_CODESYSMETH (XCODING_SYSTEM (cs), m, args)
 #define XCODESYSMETH_OR_GIVEN(cs, m, args, given) \
   CODESYSMETH_OR_GIVEN (XCODING_SYSTEM (cs), m, args, given)
-
 
 /***** Defining new coding-system types *****/
 
@@ -477,6 +517,7 @@ static const struct sized_memory_description			\
   ty##_coding_system_methods->extra_description =			\
     &coding_system_empty_extra_description;				\
   ty##_coding_system_methods->enumtype = ty##_coding_system;		\
+  ty##_coding_system_methods->query_method = default_query_method;      \
   defsymbol_nodump (&ty##_coding_system_methods->predicate_symbol,	\
                     pred_sym);						\
   add_entry_to_coding_system_type_list (ty##_coding_system_methods);	\
@@ -1029,6 +1070,7 @@ DECLARE_CODING_SYSTEM_TYPE (internal);
 #ifdef MULE
 DECLARE_CODING_SYSTEM_TYPE (iso2022);
 DECLARE_CODING_SYSTEM_TYPE (ccl);
+DECLARE_CODING_SYSTEM_TYPE (fixed_width);
 DECLARE_CODING_SYSTEM_TYPE (shift_jis);
 DECLARE_CODING_SYSTEM_TYPE (big5);
 #endif

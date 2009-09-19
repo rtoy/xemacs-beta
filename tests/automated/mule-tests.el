@@ -530,7 +530,7 @@ This is a naive implementation in Lisp.  "
 				      (loop for i from ?\x00 to ?\xFF
 					collect i))
     do
-    (when (and (coding-system-get coding-system '8-bit-fixed)
+    (when (and (eq 'fixed-width (coding-system-type coding-system))
 	       ;; Don't check the coding systems with autodetect, they are
 	       ;; not round-trip compatible for the possible line-ending
 	       ;; characters.

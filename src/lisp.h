@@ -4633,7 +4633,7 @@ EXFUN (Fencode_coding_region, 4);
 EXFUN (Fencode_shift_jis_char, 1);
 EXFUN (Ffind_coding_system, 1);
 EXFUN (Fget_coding_system, 1);
-EXFUN (Fmake_coding_system, 4);
+EXFUN (Fmake_coding_system_internal, 4);
 EXFUN (Fset_coding_category_system, 2);
 EXFUN (Fset_coding_priority_list, 1);
 EXFUN (Fsubsidiary_coding_system, 2);
@@ -5009,6 +5009,7 @@ EXFUN (Fclear_range_table, 1);
 EXFUN (Fget_range_table, 3);
 EXFUN (Fmake_range_table, 1);
 EXFUN (Fput_range_table, 4);
+EXFUN (Fcopy_range_table, 1);
 
 extern Lisp_Object Qstart_closed_end_open;
 extern Lisp_Object Qstart_open_end_open;
