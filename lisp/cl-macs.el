@@ -610,7 +610,7 @@ The result of the body appears to the compiler as a quoted constant."
 
 ;;;###autoload
 (defmacro case (expr &rest clauses)
-  "(case EXPR CLAUSES...): evals EXPR, chooses from CLAUSES on that value.
+  "Evals EXPR, chooses from CLAUSES on that value.
 Each clause looks like (KEYLIST BODY...).  EXPR is evaluated and compared
 against each key in each KEYLIST; the corresponding BODY is evaluated.
 If no clause succeeds, case returns nil.  A single atom may be used in
@@ -655,7 +655,7 @@ Key values are compared by `eql'."
 
 ;;;###autoload
 (defmacro ecase (expr &rest clauses)
-  "(ecase EXPR CLAUSES...): like `case', but error if no case fits.
+  "Like `case', but error if no case fits.
 `otherwise'-clauses are not allowed."
   ;; XEmacs addition: disallow t and otherwise
   (let ((disallowed (or (assq t clauses)
@@ -666,7 +666,7 @@ Key values are compared by `eql'."
 
 ;;;###autoload
 (defmacro typecase (expr &rest clauses)
-  "(typecase EXPR CLAUSES...): evals EXPR, chooses from CLAUSES on that value.
+  "Evals EXPR, chooses from CLAUSES on that value.
 Each clause looks like (TYPE BODY...).  EXPR is evaluated and, if it
 satisfies TYPE, the corresponding BODY is evaluated.  If no clause succeeds,
 typecase returns nil.  A TYPE of `t' or `otherwise' is allowed only in the
@@ -691,7 +691,7 @@ final clause, and matches if no other keys match."
 
 ;;;###autoload
 (defmacro etypecase (expr &rest clauses)
-  "(etypecase EXPR CLAUSES...): like `typecase', but error if no case fits.
+  "Like `typecase', but error if no case fits.
 `otherwise'-clauses are not allowed."
   (list* 'typecase expr (append clauses '((ecase-error-flag)))))
 
@@ -700,7 +700,7 @@ final clause, and matches if no other keys match."
 
 ;;;###autoload
 (defmacro block (name &rest body)
-  "(block NAME BODY...): define a lexically-scoped block named NAME.
+  "Define a lexically-scoped block named NAME.
 NAME may be any symbol.  Code inside the BODY forms can call `return-from'
 to jump prematurely out of the block.  This differs from `catch' and `throw'
 in two respects:  First, the NAME is an unevaluated symbol rather than a
@@ -742,13 +742,13 @@ called from BODY."
 
 ;;;###autoload
 (defmacro return (&optional result)
-  "(return [RESULT]): return from the block named nil.
+  "Return from the block named nil.
 This is equivalent to `(return-from nil RESULT)'."
   (list 'return-from nil result))
 
 ;;;###autoload
 (defmacro return-from (name &optional result)
-  "(return-from NAME [RESULT]): return from the block named NAME.
+  "Return from the block named NAME.
 This jumps out to the innermost enclosing `(block NAME ...)' form,
 returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
@@ -1703,7 +1703,7 @@ before assigning any symbols SYM to the corresponding values."
 
 ;;;###autoload
 (defmacro progv (symbols values &rest body)
-  "(progv SYMBOLS VALUES BODY...): bind SYMBOLS to VALUES dynamically in BODY.
+  "Bind SYMBOLS to VALUES dynamically in BODY.
 The forms SYMBOLS and VALUES are evaluated, and must evaluate to lists.
 Each SYMBOL in the first list is bound to the corresponding VALUE in the
 second list (or made unbound if VALUES is shorter than SYMBOLS); then the
@@ -1792,7 +1792,7 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
 (defvar cl-closure-vars nil)
 ;;;###autoload
 (defmacro lexical-let (bindings &rest body)
-  "(lexical-let BINDINGS BODY...): like `let', but lexically scoped.
+  "Like `let', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
   (let* ((cl-closure-vars cl-closure-vars)
@@ -1832,7 +1832,7 @@ lexical closures as in Common Lisp."
 
 ;;;###autoload
 (defmacro lexical-let* (bindings &rest body)
-  "(lexical-let* BINDINGS BODY...): like `let*', but lexically scoped.
+  "Like `let*', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
   (if (null bindings) (cons 'progn body)
@@ -2521,7 +2521,7 @@ before assigning any PLACEs to the corresponding values."
 
 ;;;###autoload
 (defmacro remf (place tag)
-  "(remf PLACE TAG): remove TAG from property list PLACE.
+  "Remove TAG from property list PLACE.
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The form returns true if TAG was found and removed, nil otherwise."
   (let* ((method (cl-setf-do-modify place t))
@@ -2660,7 +2660,7 @@ the PLACE is not modified before executing BODY."
 
 ;;;###autoload
 (defmacro callf (func place &rest args)
-  "(callf FUNC PLACE ARGS...): set PLACE to (FUNC PLACE ARGS...).
+  "Set PLACE to (FUNC PLACE ARGS...).
 FUNC should be an unquoted function name.  PLACE may be a symbol,
 or any generalized variable allowed by `setf'."
   (let* ((method (cl-setf-do-modify place (cons 'list args)))
@@ -2673,7 +2673,7 @@ or any generalized variable allowed by `setf'."
 
 ;;;###autoload
 (defmacro callf2 (func arg1 place &rest args)
-  "(callf2 FUNC ARG1 PLACE ARGS...): set PLACE to (FUNC ARG1 PLACE ARGS...).
+  "Set PLACE to (FUNC ARG1 PLACE ARGS...).
 Like `callf', but PLACE is the second argument of FUNC, not the first."
   (if (and (cl-safe-expr-p arg1) (cl-simple-expr-p place) (symbolp func))
       (list 'setf place (list* func arg1 place args))
@@ -2688,7 +2688,7 @@ Like `callf', but PLACE is the second argument of FUNC, not the first."
 
 ;;;###autoload
 (defmacro define-modify-macro (name arglist func &optional doc)
-  "(define-modify-macro NAME ARGLIST FUNC): define a `setf'-like modify macro.
+  "Define a `setf'-like modify macro.
 If NAME is called, it combines its PLACE argument with the other arguments
 from ARGLIST using FUNC: (define-modify-macro incf (&optional (n 1)) +)"
   (if (memq '&key arglist) (error "&key not allowed in define-modify-macro"))
@@ -2942,7 +2942,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 
 ;;;###autoload
 (defmacro deftype (name arglist &rest body)
-  "(deftype NAME ARGLIST BODY...): define NAME as a new data type.
+  "Define NAME as a new data type.
 The type name can then be used in `typecase', `check-type', etc."
   (list 'eval-when '(compile load eval)
 	(cl-transform-function-property
@@ -3050,7 +3050,7 @@ Otherwise, return result of last FORM."
 
 ;;;###autoload
 (defmacro define-compiler-macro (func args &rest body)
-  "(define-compiler-macro FUNC ARGLIST BODY...): Define a compiler-only macro.
+  "Define a compiler-only macro.
 This is like `defmacro', but macro expansion occurs only if the call to
 FUNC is compiled (i.e., not interpreted).  Compiler macros should be used
 for optimizing the way calls to FUNC are compiled; the form returned by

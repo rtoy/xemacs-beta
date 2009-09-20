@@ -1087,8 +1087,7 @@ there is no function around that point, nil is returned."
 ;; Default to nil for the non-hackers?  Not until we find a way to
 ;; distinguish hackers from non-hackers automatically!
 (defcustom describe-function-show-arglist t
-  "*If non-nil, describe-function will show its arglist,
-unless the function is autoloaded."
+  "*If non-nil, describe-function will show the function's arglist."
   :type 'boolean
   :group 'help-appearance)
 
@@ -1188,7 +1187,7 @@ arguments in the standard Lisp style."
 		 (compiled-function-arglist fndef))
 		((eq (car-safe fndef) 'lambda)
 		 (nth 1 fndef))
-		((subrp fndef)
+		((or (subrp fndef) (eq 'autoload (car-safe fndef)))
 		 (let* ((doc (documentation function))
 			(args (and doc
 				   (string-match
@@ -1227,9 +1226,10 @@ part of the documentation of internal subroutines."
 		     (gettext "not documented"))
 	       (void-function "(alias for undefined function)")
 	       (error "(unexpected error from `documention')"))))
-    (if (and strip-arglist
-	     (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
-	(setq doc (substring doc 0 (match-beginning 0))))
+    (when (and strip-arglist
+               (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
+      (setq doc (substring doc 0 (match-beginning 0)))
+      (and (zerop (length doc)) (setq doc (gettext "not documented"))))
     doc))
 
 ;; replacement for `princ' that puts the text in the specified face,
