@@ -84,7 +84,7 @@ Lisp_Object Qdirection;
 Lisp_Object Qreverse_direction_charset;
 Lisp_Object Qshort_name, Qlong_name;
 
-Lisp_Object Qfrom_unicode, Qto_unicode;
+Lisp_Object Qto_unicode;
 
 Lisp_Object
   Qlatin_iso8859_1,
@@ -1096,7 +1096,6 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qshort_name);
   DEFSYMBOL (Qlong_name);
 
-  DEFSYMBOL (Qfrom_unicode);
   DEFSYMBOL (Qto_unicode);
 
   DEFSYMBOL (Ql2r);

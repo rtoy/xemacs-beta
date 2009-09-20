@@ -1,3 +1,11 @@
+2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* general-slots.h: 
+	* mule-coding.c (syms_of_mule_coding): 
+	* mule-charset.c (syms_of_mule_charset): 
+	Move Qfrom_unicode to general-slots.h, now it's used in more than
+	one file. Fixes the native Win32 build; thank you Vin!
+
 2009-09-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move the #'query-coding-region implementation to C.
