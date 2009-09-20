@@ -1,5 +1,43 @@
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Add arglist information to docstrings for autoloaded functions and
+	macros.
+	* hyper-apropos.el (hyper-apropos-get-doc): 
+	Treat autoload docstrings like subr docstrings; correct the regexp
+	used.
+	* help.el (describe-function-show-arglist): 
+	This no longer treats autoloads specially. 
+	(function-arglist): Treat autoload docstrings like subr docstrings. 
+	(function-documentation): Treat documentation strings that are
+	zero-length after the arglist has been removed as indicating a
+	lack of documentation.
+	* cl-macs.el (case): 
+	(ecase): 
+	(typecase): 
+	(etypecase): 
+	(block): 
+	(return): 
+	(return-from): 
+	(progv): 
+	(lexical-let): 
+	(lexical-let*): 
+	(remf): 
+	(callf): 
+	(callf2): 
+	(define-modify-macro): 
+	(deftype): 
+	(define-compiler-macro): 
+	Rely on the autoload code to always show an arglist for these
+	functions, don't supply an ad-hoc one in the docstring.
+	These changes are for the most obvious functions; there are some
+	missed that would require changing argument names in the docstring
+	or in the function bodies.
+	* autoload.el (make-autoload): 
+	Add arg list information to the doc string, using the same
+	approach as for subrs.
+
+2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* help.el (function-arglist): 
 	Show the double-quotes in the sample output, correctly. 
 	Bind print-gensym to nil, now we're using uninterned symbols. 

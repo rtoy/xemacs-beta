@@ -283,8 +283,17 @@ or macro definition or a defcustom)."
      ((memq car autoload-make-autoload-operators)
       (let* ((macrop (memq car '(defmacro defmacro*)))
 	     (name (nth 1 form))
+             (arglist (nth 2 form))
 	     (body (nthcdr (get car 'doc-string-elt) form))
-	     (doc (if (stringp (car body)) (pop body))))
+             (placeholder (eval-when-compile (gensym)))
+             (doc (concat (if (stringp (car body))
+                              (pop body)
+                            "")
+                          "\n\narguments: "
+                          (replace-in-string
+                           (cl-function-arglist placeholder arglist)
+                           (format "^(%s ?" placeholder)
+                           "(") "\n")))
 	;; `define-generic-mode' quotes the name, so take care of that
 	(list 'autoload (if (listp name) name (list 'quote name)) file doc
 	      (or (and (memq car '(define-skeleton define-derived-mode
