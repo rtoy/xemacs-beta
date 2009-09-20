@@ -956,6 +956,8 @@ that a key-value pair will be removed only if the value and the key remain
 unmarked outside of weak hash tables.  The pair will remain in the
 hash table if the value or key are pointed to by something other than a weak
 hash table, even if the other is not.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

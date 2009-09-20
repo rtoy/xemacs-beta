@@ -999,6 +999,8 @@ integer_char_or_marker_to_int (Lisp_Object obj)
 DEFUN ("=", Feqlsign, 1, MANY, 0, /*
 Return t if all the arguments are numerically equal.
 The arguments may be numbers, characters or markers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1013,6 +1015,8 @@ the first.  If there is a third, it must be numerically greater than the
 second, and so on.)  At least one argument is required.
 
 The arguments may be numbers, characters or markers.  
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1027,6 +1031,8 @@ the first.  If there is a third, it must be numerically less than the
 second, and so forth.)  At least one argument is required.
 
 The arguments may be numbers, characters or markers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1036,6 +1042,8 @@ The arguments may be numbers, characters or markers.
 DEFUN ("<=", Fleq, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically nondecreasing.
 The arguments may be numbers, characters or markers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1045,6 +1053,8 @@ The arguments may be numbers, characters or markers.
 DEFUN (">=", Fgeq, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically nonincreasing.
 The arguments may be numbers, characters or markers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1060,6 +1070,8 @@ The arguments may be numbers, characters or markers.
 DEFUN ("/=", Fneq, 1, MANY, 0, /*
 Return t if no two arguments are numerically equal.
 The arguments may be numbers, characters or markers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1440,6 +1452,8 @@ Floating point numbers always use base 10.
 DEFUN ("+", Fplus, 0, MANY, 0, /*
 Return sum of any number of arguments.
 The arguments should all be numbers, characters or markers.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1512,6 +1526,8 @@ DEFUN ("-", Fminus, 1, MANY, 0, /*
 Negate number or subtract numbers, characters or markers.
 With one arg, negates it.  With more than one arg,
 subtracts all but the first from the first.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1634,6 +1650,8 @@ subtracts all but the first from the first.
 DEFUN ("*", Ftimes, 0, MANY, 0, /*
 Return product of any number of arguments.
 The arguments should all be numbers, characters or markers.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1706,6 +1724,8 @@ Same as `/', but dividing integers creates a ratio instead of truncating.
 Note that this is a departure from Common Lisp, where / creates ratios when
 dividing integers.  Having a separate function lets us avoid breaking existing
 Emacs Lisp code that expects / to do integer division.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1770,9 +1790,11 @@ Emacs Lisp code that expects / to do integer division.
 #endif /* HAVE_RATIO */
 
 DEFUN ("/", Fquo, 1, MANY, 0, /*
-Return first argument divided by all the remaining arguments.
+Return FIRST divided by all the remaining arguments.
 The arguments must be numbers, characters or markers.
 With one argument, reciprocates the argument.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1892,6 +1914,8 @@ Return largest of all the arguments.
 All arguments must be real numbers, characters or markers.
 The value is always a number; markers and characters are converted
 to numbers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1987,6 +2011,8 @@ Return smallest of all the arguments.
 All arguments must be numbers, characters or markers.
 The value is always a number; markers and characters are converted
 to numbers.
+
+arguments: (FIRST &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2080,6 +2106,8 @@ to numbers.
 DEFUN ("logand", Flogand, 0, MANY, 0, /*
 Return bitwise-and of all the arguments.
 Arguments may be integers, or markers or characters converted to integers.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2130,6 +2158,8 @@ Arguments may be integers, or markers or characters converted to integers.
 DEFUN ("logior", Flogior, 0, MANY, 0, /*
 Return bitwise-or of all the arguments.
 Arguments may be integers, or markers or characters converted to integers.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2180,6 +2210,8 @@ Arguments may be integers, or markers or characters converted to integers.
 DEFUN ("logxor", Flogxor, 0, MANY, 0, /*
 Return bitwise-exclusive-or of all the arguments.
 Arguments may be integers, or markers or characters converted to integers.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

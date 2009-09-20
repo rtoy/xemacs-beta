@@ -663,6 +663,8 @@ change the coding systems later on using `set-process-coding-system',
 `set-process-input-coding-system', or `set-process-output-coding-system'.
 
 See also `set-process-filter' and `set-process-stderr-filter'.
+
+arguments: (NAME BUFFER PROGRAM &rest PROGRAM-ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
