@@ -1175,7 +1175,7 @@ When run interactively, it defaults to any function found by
 For example:
 
 	(function-arglist 'function-arglist)
-	=> (function-arglist FUNCTION)
+	=> \"(function-arglist FUNCTION)\"
 
 This function is used by `describe-function-1' to list function
 arguments in the standard Lisp style."
@@ -1203,14 +1203,17 @@ arguments in the standard Lisp style."
 		   (cond ((null args) t)
 			 ((equal args "") nil)
 			 (args))))
-		(t t))))
+		(t t)))
+         (print-gensym nil))
     (cond ((listp arglist)
 	   (prin1-to-string
-	    (cons function (mapcar (lambda (arg)
-				     (if (memq arg '(&optional &rest))
-					 arg
-				       (intern (upcase (symbol-name arg)))))
-				   arglist))
+	    (cons function (loop
+                             for arg in arglist
+                             collect (if (memq arg '(&optional &rest))
+                                         arg
+                                       (make-symbol (upcase (symbol-name
+                                                             arg))))))
+
 	    t))
 	  ((stringp arglist)
 	   (format "(%s %s)" function arglist)))))

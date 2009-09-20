@@ -1,5 +1,23 @@
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* help.el (function-arglist): 
+	Show the double-quotes in the sample output, correctly. 
+	Bind print-gensym to nil, now we're using uninterned symbols. 
+	Don't #'mapcar + #'intern to create uppercase symbols, use #'loop
+	and #'make-symbol instead.
+	* cl-macs.el (cl-upcase-arg): 
+	Don't intern the upcased symbols we're using for cosmetic reasons.
+	Trust #'true-list-p in #'cl-function-arglist to detect
+	circularity.
+	(cl-function-arglist): Bind print-gensym to nil, now we're
+	printing uninterned symbols and would prefer to avoid the gensym
+	syntax.
+	(cl-transform-lambda): Only add the Common Lisp lambda list:
+	argument information when that differs frmo the normal argument
+	information.
+
+2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/make-coding-system.el (make-coding-system): 
 	Require a minimum of two, not four, arguments; thank you for the
 	problem report, Adam Sjøgren!

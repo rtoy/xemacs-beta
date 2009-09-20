@@ -275,7 +275,6 @@ ARGLIST allows full Common Lisp conventions."
 (defvar cl-macro-environment nil)
 (defvar bind-block) (defvar bind-defs) (defvar bind-enquote)
 (defvar bind-inits) (defvar bind-lets) (defvar bind-forms)
-(defvar arglist-visited)
 
 ;; npak@ispras.ru
 (defun cl-upcase-arg (arg)
@@ -284,11 +283,10 @@ ARGLIST allows full Common Lisp conventions."
   ;; ARG is either symbol or list of symbols or lists
   (cond ((symbolp arg)
 	 ;; Do not upcase &optional, &key etc.
-	 (if (memq arg lambda-list-keywords) arg
-	   (intern (upcase (symbol-name arg)))))
+	 (if (memq arg lambda-list-keywords)
+             arg
+	   (make-symbol (upcase (symbol-name arg)))))
 	((listp arg)
-	 (if (memq arg arglist-visited) (error 'circular-list '(arg)))
-	 (push arg arglist-visited)
 	 (let ((arg (copy-list arg)) junk)
 	   ;; Clean the list
 	   (let ((p (last arg))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
@@ -305,34 +303,25 @@ ARGLIST allows full Common Lisp conventions."
 Supports Common Lisp lambda lists."
   (if (not (or (listp arglist) (symbolp arglist)))
       "Not available"
-    (setq arglist-visited nil)
-    (condition-case nil
-	(prin1-to-string
-	 (cons (if (eq name 'cl-none) 'lambda name)
-	       (cond ((null arglist) nil)
-		     ((listp arglist) (cl-upcase-arg arglist))
-		     ((symbolp arglist)
-		      (cl-upcase-arg (list '&rest arglist)))
-		     (t (wrong-type-argument 'listp arglist)))))
-      (t "Not available"))))
-
+    (check-argument-type #'true-list-p arglist)
+    (let ((print-gensym nil))
+      (condition-case nil
+          (prin1-to-string
+           (cons (if (eq name 'cl-none) 'lambda name)
+                 (cond ((null arglist) nil)
+                       ((listp arglist) (cl-upcase-arg arglist))
+                       ((symbolp arglist)
+                        (cl-upcase-arg (list '&rest arglist)))
+                       (t (wrong-type-argument 'listp arglist)))))
+      (t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
   (let* ((args (car form)) (body (cdr form))
 	 (bind-defs nil) (bind-enquote nil)
 	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
+         (complex-arglist (cl-function-arglist bind-block args))
          (doc ""))
-    ;; Add CL lambda list to documentation. npak@ispras.ru
-    (if (and (stringp (car body))
-	     (cdr body))
-        (setq doc (pop body)))
-    (push (concat doc
-		  "\nCommon Lisp lambda list:\n" 
-		  "  " (cl-function-arglist bind-block args) 
-		  "\n\n")
-	  header)
-
     (while (or (stringp (car body)) (eq (car-safe (car body)) 'interactive))
       (push (pop body) header))
     (setq args (if (listp args) (copy-list args) (list '&rest args)))
@@ -353,19 +342,30 @@ Supports Common Lisp lambda lists."
       (push (pop args) simple-args))
     (or (eq bind-block 'cl-none)
 	(setq body (list (list* 'block bind-block body))))
+    (setq simple-args (nreverse simple-args)
+          header (nreverse header))
+    ;; Add CL lambda list to documentation, if the CL lambda list differs
+    ;; from the non-CL lambda list. npak@ispras.ru
+    (unless (equal complex-arglist
+                   (cl-function-arglist bind-block simple-args))
+      (and (stringp (car header)) (setq doc (pop header)))
+      (push (concat doc
+                    "\n\nCommon Lisp lambda list:\n" 
+                    "  " complex-arglist "\n\n")
+	  header))
     (if (null args)
-	(list* nil (nreverse simple-args) (nconc (nreverse header) body))
+	(list* nil simple-args (nconc header body))
       (if (memq '&optional simple-args) (push '&optional args))
       (cl-do-arglist args nil (- (length simple-args)
 				 (if (memq '&optional simple-args) 1 0)))
       (setq bind-lets (nreverse bind-lets))
       (list* (and bind-inits (list* 'eval-when '(compile load eval)
 				    (nreverse bind-inits)))
-	     (nconc (nreverse simple-args)
+	     (nconc simple-args
 		    (list '&rest (car (pop bind-lets))))
 	     ;; XEmacs change: we add usage information using Nickolay's
 	     ;; approach above
-	     (nconc (nreverse header)
+	     (nconc header
 		    (list (nconc (list 'let* bind-lets)
 				 (nreverse bind-forms) body)))))))
 
