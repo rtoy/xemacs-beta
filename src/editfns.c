@@ -370,6 +370,8 @@ Save point, mark, and current buffer; execute BODY; restore those things.
 Executes BODY just like `progn'.
 The values of point, mark and the current buffer are restored
 even in case of abnormal exit (throw or error).
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -395,6 +397,8 @@ save_current_buffer_restore (Lisp_Object buffer)
 DEFUN ("save-current-buffer", Fsave_current_buffer, 0, UNEVALLED, 0, /*
 Save the current buffer; execute BODY; restore the current buffer.
 Executes BODY just like `progn'.
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -1139,7 +1143,7 @@ make_time (time_t tiempo)
 }
 
 DEFUN ("encode-time", Fencode_time, 6, MANY, 0, /*
-  Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
+Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
 This is the reverse operation of `decode-time', which see.
 ZONE defaults to the current time zone rule.  This can
 be a string (as from `set-time-zone-rule'), or it can be a list
@@ -1155,6 +1159,8 @@ Out-of-range values for SEC, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
 Year numbers less than 100 are treated just like other year numbers.
 If you want them to stand for years in this century, you must do that yourself.
+
+arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1473,10 +1479,12 @@ buffer_insert1 (struct buffer *buf, Lisp_Object arg)
    so we don't care if it gets trashed.  */
 
 DEFUN ("insert", Finsert, 0, MANY, 0, /*
-Insert the arguments, either strings or characters, at point.
+Insert ARGS, either strings or characters, at point.
 Point moves forward so that it ends up after the inserted text.
 Any other markers at the point of insertion remain before the text.
 If a string has non-null string-extent-data, new extents will be created.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1495,6 +1503,8 @@ DEFUN ("insert-before-markers", Finsert_before_markers, 0, MANY, 0, /*
 Insert strings or characters at point, relocating markers after the text.
 Point moves forward so that it ends up after the inserted text.
 Any other markers at the point of insertion also end up after the text.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2139,6 +2149,8 @@ widened and then made changes outside the old restricted area.)
 Note: if you are using both `save-excursion' and `save-restriction',
 use `save-excursion' outermost:
     (save-excursion (save-restriction ...))
+
+arguments: (&rest BODY)
 */
        (body))
 {
@@ -2219,6 +2231,8 @@ The `#' flag means print numbers in an alternate, more verbose format:
    %g and %G conversions.
 
 Use %% to put a single % into the output.
+
+arguments: (CONTROL-STRING &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

@@ -3006,6 +3006,8 @@ Currently defined values:
 
 DEFUN_NORETURN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
+
+arguments: (&rest ARGS)
 */
 /* If this function is called from startup.el, it will be possible to run
    temacs as an editor using `temacs -batch -l ../lisp/loadup.el

@@ -5275,10 +5275,12 @@ save_window_excursion_unwind (Lisp_Object window_config)
 }
 
 DEFUN ("save-window-excursion", Fsave_window_excursion, 0, UNEVALLED, 0, /*
-Execute body, preserving window sizes and contents.
+Execute BODY, preserving window sizes and contents.
 Restores which buffer appears in which window, where display starts,
 as well as the current buffer.
 Does not restore the value of point in current buffer.
+
+arguments: (&rest BODY)
 */
        (args))
 {

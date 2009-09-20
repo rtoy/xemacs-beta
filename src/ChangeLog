@@ -1,5 +1,58 @@
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* alloc.c (Flist): 
+	(Fvector): 
+	(Fbit_vector): 
+	(Fmake_byte_code): 
+	(Fstring): 
+	* data.c (Feqlsign): 
+	(Flss):
+	(Fgtr):
+	(Fleq):
+	(Fgeq):
+	(Fneq):
+	(Fgtr):	
+	(Fplus): 
+	(Fminus): 
+	(Ftimes): 
+	(Fdiv): 
+	(Fquo): 
+	(Fmax): 
+	(Fmin): 
+	(Flogand): 
+	(Flogior): 
+	(Flogxor): 
+	* editfns.c (Fsave_excursion): 
+	(Fsave_current_buffer): 
+	(Fencode_time): 
+	(Finsert): 
+	(Finsert_before_markers): 
+	(Fsave_restriction): 
+	(Fformat): 
+	* elhash.c (Fmake_hash_table): 
+	* eval.c (Fdefun): 
+	(Fdefmacro): 
+	(Fcatch): 
+	(Funwind_protect): 
+	(Fcall_with_condition_handler): 
+	(Ffuncall): 
+	(Fapply): 
+	(Frun_hooks): 
+	* fns.c (Fappend): 
+	(Fconcat): 
+	(Fvconcat): 
+	(Fbvconcat): 
+	(Fnconc): 
+	* print.c (Fwith_output_to_temp_buffer): 
+	* process.c (Fstart_process_internal): 
+	* window.c (Fsave_window_excursion): 
+	* widget.c (Fwidget_apply): 
+	Add argument information, in a form understood by
+	#'function-arglist, to all these MANY or UNEVALLED (that is to
+	say, special-operator) built-in functions.
+
+2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* general-slots.h: 
 	* mule-coding.c (syms_of_mule_coding): 
 	* mule-charset.c (syms_of_mule_charset): 

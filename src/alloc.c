@@ -1294,8 +1294,10 @@ noseeum_cons (Lisp_Object car, Lisp_Object cdr)
 }
 
 DEFUN ("list", Flist, 0, MANY, 0, /*
-Return a newly created list with specified arguments as elements.
+Return a newly created list with specified ARGS as elements.
 Any number of arguments, even zero arguments, are allowed.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1617,8 +1619,10 @@ See also the function `vector'.
 }
 
 DEFUN ("vector", Fvector, 0, MANY, 0, /*
-Return a newly created vector with specified arguments as elements.
+Return a newly created vector with specified ARGS as elements.
 Any number of arguments, even zero arguments, are allowed.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1798,9 +1802,11 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 }
 
 DEFUN ("bit-vector", Fbit_vector, 0, MANY, 0, /*
-Return a newly created bit vector with specified arguments as elements.
+Return a newly created bit vector with specified ARGS as elements.
 Any number of arguments, even zero arguments, are allowed.
 Each argument must be one of the integers 0 or 1.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1855,8 +1861,6 @@ make_compiled_function (void)
 
 DEFUN ("make-byte-code", Fmake_byte_code, 4, MANY, 0, /*
 Return a new compiled-function object.
-Usage: (arglist instructions constants stack-depth
-	&optional doc-string interactive)
 Note that, unlike all other emacs-lisp functions, calling this with five
 arguments is NOT the same as calling it with six arguments, the last of
 which is nil.  If the INTERACTIVE arg is specified as nil, then that means
@@ -1864,6 +1868,8 @@ that this function was defined with `(interactive)'.  If the arg is not
 specified, then that means the function is not interactive.
 This is terrible behavior which is retained for compatibility with old
 `.elc' files which expect these semantics.
+
+arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTERACTIVE)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2802,6 +2808,8 @@ LENGTH must be a non-negative integer.
 
 DEFUN ("string", Fstring, 0, MANY, 0, /*
 Concatenate all the argument characters and make the result a string.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

@@ -91,6 +91,8 @@ later with `widget-put'.
 DEFUN ("widget-apply", Fwidget_apply, 2, MANY, 0, /*
 Apply the value of WIDGET's PROPERTY to the widget itself.
 ARGS are passed as extra arguments to the function.
+
+arguments: (WIDGET PROPERTY &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {

@@ -807,6 +807,8 @@ If BODY does not finish normally, the buffer BUFNAME is not displayed.
 
 If variable `temp-buffer-show-function' is non-nil, call it at the end
 to get the buffer displayed.  It gets one argument, the buffer to display.
+
+arguments: (BUFNAME &rest BODY)
 */
        (args))
 {

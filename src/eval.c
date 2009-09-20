@@ -1288,9 +1288,11 @@ define_function (Lisp_Object name, Lisp_Object defn)
 }
 
 DEFUN ("defun", Fdefun, 2, UNEVALLED, 0, /*
-\(defun NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
+Define NAME as a function.
 The definition is (lambda ARGLIST [DOCSTRING] BODY...).
 See also the function `interactive'.
+
+arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 */
        (args))
 {
@@ -1300,12 +1302,14 @@ See also the function `interactive'.
 }
 
 DEFUN ("defmacro", Fdefmacro, 2, UNEVALLED, 0, /*
-\(defmacro NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
+Define NAME as a macro.
 The definition is (macro lambda ARGLIST [DOCSTRING] BODY...).
 When the macro is called, as in (NAME ARGS...),
 the function (lambda ARGLIST BODY...) is applied to
 the list ARGS... as it appears in the expression,
 and the result should be a form to be evaluated instead of the original.
+
+arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 */
        (args))
 {
@@ -1536,11 +1540,13 @@ check_proper_critical_section_lisp_protection (void)
 #endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
-\(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
+Eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
 Within BODY, (throw TAG VAL) with same (`eq') tag exits BODY and this `catch'.
 If no throw happens, `catch' returns the value of the last BODY form.
 If a throw happens, it specifies the value to return from `catch'.
+
+arguments: (TAG &rest BODY)
 */
        (args))
 {
@@ -1807,10 +1813,11 @@ arguments: (TAG VALUE)
 
 DEFUN ("unwind-protect", Funwind_protect, 1, UNEVALLED, 0, /*
 Do BODYFORM, protecting with UNWINDFORMS.
-Usage looks like (unwind-protect BODYFORM UNWINDFORMS...).
 If BODYFORM completes normally, its value is returned
 after executing the UNWINDFORMS.
 If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+
+arguments: (BODYFORM &rest UNWINDFORMS)
 */
        (args))
 {
@@ -2149,9 +2156,9 @@ rather than when the handler was set, use `call-with-condition-handler'.
 }
 
 DEFUN ("call-with-condition-handler", Fcall_with_condition_handler, 2, MANY, 0, /*
-Regain control when an error is signalled, without popping the stack.
-Usage looks like (call-with-condition-handler HANDLER FUNCTION &rest ARGS).
-This function is similar to `condition-case', but the handler is invoked
+Call FUNCTION with arguments ARGS, regaining control on error.
+
+This function is similar to `condition-case', but HANDLER is invoked
 with the same environment (Lisp stack, bindings, catches, condition-cases)
 that was current when `signal' was called, rather than when the handler
 was established.
@@ -2163,6 +2170,8 @@ you to specify which errors are trapped).  If the handler function
 returns, `signal' continues as if the handler were never invoked.
 \(It continues to look for handlers established earlier than this one,
 and invokes the standard error-handler if none is found.)
+
+arguments: (HANDLER FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args)) /* Note!  Args side-effected! */
 {
@@ -3895,8 +3904,10 @@ run_post_gc_hook (void)
 }
 
 DEFUN ("funcall", Ffuncall, 1, MANY, 0, /*
-Call first argument as a function, passing the remaining arguments to it.
+Call FUNCTION as a function, passing the remaining arguments to it.
 Thus, (funcall 'cons 'x 'y) returns (x . y).
+
+arguments: (FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4222,6 +4233,8 @@ arguments, use `function-allows-args'.
 DEFUN ("apply", Fapply, 2, MANY, 0, /*
 Call FUNCTION with the remaining args, using the last arg as a list of args.
 Thus, (apply '+ 1 2 '(3 4)) returns 10.
+
+arguments: (FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4965,7 +4978,7 @@ If it is a list, the elements are called, in order, with no arguments.
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
 
-arguments: (&rest HOOKS)
+arguments: (FIRST &rest REST)
 */
        (int nargs, Lisp_Object *args))
 {

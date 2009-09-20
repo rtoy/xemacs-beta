@@ -503,6 +503,8 @@ The result is a list whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
 The last argument is not copied, just used as the tail of the new list.
 Also see: `nconc'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -518,6 +520,8 @@ As of XEmacs 21.0, this function does NOT accept individual integers
 as arguments.  Old code that relies on, for example, (concat "foo" 50)
 returning "foo50" will fail.  To fix such code, either apply
 `int-to-string' to the integer argument, or use `format'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -528,6 +532,8 @@ DEFUN ("vconcat", Fvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a vector.
 The result is a vector whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -538,6 +544,8 @@ DEFUN ("bvconcat", Fbvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a bit vector.
 The result is a bit vector whose elements are the elements of all the
 arguments.  Each argument may be a list, vector, bit vector, or string.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -3064,6 +3072,8 @@ Also see: `append'.
 If the first argument is nil, there is no way to modify it by side
 effect; therefore, write `(setq foo (nconc foo list))' to be sure of
 changing the value of `foo'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
