@@ -137,6 +137,7 @@ SYMBOL (Qfont);
 SYMBOL (Qframe);
 SYMBOL (Qframes);
 SYMBOL (Qfrom_page);
+SYMBOL (Qfrom_unicode);
 SYMBOL (Qfull_assoc);
 SYMBOL (Qfuncall);
 SYMBOL (Qfunction);

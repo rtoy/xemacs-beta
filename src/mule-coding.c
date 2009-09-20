@@ -52,7 +52,7 @@ Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qseven, Qlock_shift;
 
 Lisp_Object Qiso_7, Qiso_8_designate, Qiso_8_1, Qiso_8_2, Qiso_lock_shift;
 
-Lisp_Object Qfrom_unicode, Qquery_skip_chars, Qinvalid_sequences_skip_chars;
+Lisp_Object Qquery_skip_chars, Qinvalid_sequences_skip_chars;
 Lisp_Object Qfixed_width;
 
 
@@ -3935,7 +3935,6 @@ syms_of_mule_coding (void)
   DEFSYMBOL (Qiso_8_2);
   DEFSYMBOL (Qiso_lock_shift);
 
-  DEFSYMBOL (Qfrom_unicode);
   DEFSYMBOL (Qinvalid_sequences_skip_chars);
   DEFSYMBOL (Qquery_skip_chars);
   DEFSYMBOL (Qfixed_width);
