@@ -519,7 +519,7 @@ If you are calling this function from anywhere but
     props))
 
 ;;;###autoload
-(defun make-coding-system (name type description props)
+(defun make-coding-system (name type &optional description props)
   "Register symbol NAME as a coding system.
 
 TYPE describes the conversion method used and should be one of
