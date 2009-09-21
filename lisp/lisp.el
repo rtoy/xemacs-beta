@@ -155,6 +155,21 @@ Negative arg -N means kill N sexps after the cursor."
   (interactive "p")
   (kill-sexp (- (or arg 1))))
 
+
+;; derived stuff from GNU Emacs
+(defvar beginning-of-defun-function nil
+  "If non-nil, function for `beginning-of-defun-raw' to call.
+This is used to find the beginning of the defun instead of using the
+normal recipe (see `beginning-of-defun').  Modes can define this
+if defining `defun-prompt-regexp' is not sufficient to handle the mode's
+needs.")
+
+(defvar end-of-defun-function nil
+  "If non-nil, function for `end-of-defun' to call.
+This is used to find the end of the defun instead of using the normal
+recipe (see `end-of-defun').  Modes can define this if the
+normal method is not appropriate.")
+
 (defun beginning-of-defun (&optional arg)
   "Move backward to the beginning of a defun.
 With argument, do it that many times.  Negative arg -N
@@ -175,13 +190,17 @@ open-parenthesis, and point ends up at the beginning of the line."
 This is identical to beginning-of-defun, except that point does not move
 to the beginning of the line when `defun-prompt-regexp' is non-nil."
   (interactive "p")
-  (and arg (< arg 0) (not (eobp)) (forward-char 1))
-  (and (re-search-backward (if defun-prompt-regexp
-			       (concat "^\\s(\\|"
-				       "\\(" defun-prompt-regexp "\\)\\s(")
-			     "^\\s(")
-			   nil 'move (or arg 1))
-       (progn (goto-char (1- (match-end 0)))) t))
+   ;; (and arg (< arg 0) (not (eobp)) (forward-char 1))
+  (unless arg (setq arg 1))
+  (cond
+   (beginning-of-defun-function
+    (funcall beginning-of-defun-function arg))
+   (t (re-search-backward (if defun-prompt-regexp
+                              (concat "^\\s(\\|"
+                                      "\\(" defun-prompt-regexp "\\)\\s(")
+                            "^\\s(")
+			    nil 'move (or arg 1))
+	(progn (goto-char (1- (match-end 0)))) t)))
 
 ;; XEmacs change (optional buffer parameter)
 (defun buffer-end (arg &optional buffer)
@@ -198,6 +217,10 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (if (or (null arg) (= arg 0)) (setq arg 1))
+  (if end-of-defun-function
+      (if (> arg 0) 
+	  (dotimes (i arg)
+	    (funcall end-of-defun-function)))
   (let ((first t))
     (while (and (> arg 0) (< (point) (point-max)))
       (let ((pos (point))) ; XEmacs -- remove unused npos.
@@ -229,7 +252,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 		  (if (looking-at "\\s<\\|\n")
 		      (forward-line 1)))
 	      (goto-char (point-min)))))
-      (setq arg (1+ arg)))))
+      (setq arg (1+ arg))))))
 
 (defun mark-defun ()
   "Put mark at end of this defun, point at beginning.
