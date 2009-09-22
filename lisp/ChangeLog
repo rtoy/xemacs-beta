@@ -1,3 +1,12 @@
+2009-09-22  Andreas Roehler  <andreas.roehler@online.de>
+
+	* lisp.el (beginning-of-defun-raw):
+	new variable: beginning-of-defun-function, 
+	beginning-of-defun may call FUNCTION determining start position
+	* lisp.el (end-of-defun):
+	new variable: end-of-defun-function,	
+	end-of-defun may call FUNCTION determining the end position
+
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Add arglist information to docstrings for autoloaded functions and
