@@ -954,7 +954,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   png_read_info (png_ptr, info_ptr);
 
   {
-    int y;
+    int y, padding;
     Binbyte **row_pointers;
     UINT_64_BIT pixels_sq;
     height = info_ptr->height;
@@ -963,14 +963,22 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     if (pixels_sq > ((size_t) -1) / 3)
       signal_image_error ("PNG image too large to instantiate", instantiator);
 
-    /* Wow, allocate all the memory.  Truly, exciting. */
-    unwind.eimage = xnew_array_and_zero (Binbyte, (size_t) (pixels_sq * 3));
+    /* Wow, allocate all the memory.  Truly, exciting.
+       Well, yes, there's excitement to be had.  It turns out that libpng
+       strips in place, so the last row overruns the buffer if depth is 16
+       or there's an alpha channel.  This is a crash on Linux.  So we need
+       to add padding.
+       The worst case is reducing 8 bytes (16-bit RGBA) to 3 (8-bit RGB). */
+
+    padding = 5 * width;
+    unwind.eimage = xnew_array_and_zero (Binbyte,
+					 (size_t) (pixels_sq * 3 + padding));
+
     /* libpng expects that the image buffer passed in contains a
        picture to draw on top of if the png has any transparencies.
        This could be a good place to pass that in... */
 
     row_pointers  = xnew_array (png_byte *, height);
-
     for (y = 0; y < height; y++)
       row_pointers[y] = unwind.eimage + (width * 3 * y);
 
@@ -990,16 +998,15 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	}
       else
 	{
-	  Lisp_Color_Instance *c;
-	  Lisp_Object rgblist;
-
-	  c = XCOLOR_INSTANCE (bkgd);
-	  rgblist = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
-					color_instance_rgb_components,
-					(c));
-	  my_background.red = (unsigned short) XINT (XCAR (rgblist));
-	  my_background.green = (unsigned short) XINT (XCAR (XCDR (rgblist)));
-	  my_background.blue = (unsigned short) XINT (XCAR (XCDR (XCDR (rgblist))));
+	  Lisp_Color_Instance *c = XCOLOR_INSTANCE (bkgd);
+	  Lisp_Object rgb = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
+						color_instance_rgb_components,
+						(c));
+#define GETCOLOR(col) my_background.col = (unsigned short) XINT (XCAR (rgb))
+	  GETCOLOR(red); rgb = XCDR (rgb);
+	  GETCOLOR(green); rgb = XCDR (rgb);
+	  GETCOLOR(blue);
+#undef GETCOLOR
 	}
 
       if (png_get_bKGD (png_ptr, info_ptr, &image_background))
@@ -1012,41 +1019,38 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Now that we're using EImage, ask for 8bit RGB triples for any type
        of image*/
-    /* convert palette images to full RGB */
+    /* convert palette images to RGB */
     if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
-      png_set_expand (png_ptr);
-    /* send grayscale images to RGB too */
-    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY ||
+      png_set_palette_to_rgb (png_ptr);
+    /* convert grayscale images to RGB */
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY ||
         info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
       png_set_gray_to_rgb (png_ptr);
-    /* we can't handle alpha values */
-    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
-      png_set_strip_alpha (png_ptr);
-    /* tell libpng to strip 16 bit depth files down to 8 bits */
-    if (info_ptr->bit_depth == 16)
-      png_set_strip_16 (png_ptr);
-    /* if the image is < 8 bits, pad it out */
-    if (info_ptr->bit_depth < 8)
+    /* pad images with depth < 8 bits */
+    else if (info_ptr->bit_depth < 8)
       {
 	if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY)
 	  png_set_expand (png_ptr);
 	else
 	  png_set_packing (png_ptr);
       }
+    /* strip 16-bit depth files down to 8 bits */
+    if (info_ptr->bit_depth == 16)
+      png_set_strip_16 (png_ptr);
+    /* strip alpha channel
+       #### shouldn't we handle this?
+       first call png_read_update_info in case above transformations
+       have generated an alpha channel */
+    png_read_update_info(png_ptr, info_ptr);
+    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
+      png_set_strip_alpha (png_ptr);
 
     png_read_image (png_ptr, row_pointers);
     png_read_end (png_ptr, info_ptr);
 
-#if 1 /* def PNG_SHOW_COMMENTS */
-    /* ####
-     * I turn this off by default now, because the !%^@#!% comments
-     * show up every time the image is instantiated, which can get
-     * really really annoying.  There should be some way to pass this
-     * type of data down into the glyph code, where you can get to it
-     * from lisp anyway. - WMP
-     */
-    /* #### I've turned this on, since these warnings are now
-       unobtrusive. */
+    /* #### There should be some way to pass this type of data down
+     * into the glyph code, where you can get to it from lisp
+     * anyway. - WMP */
     {
       int i;
       DECLARE_EISTRING (key);
@@ -1066,7 +1070,6 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			  eidata(key), eidata(text));
 	}
     }
-#endif
 
     xfree (row_pointers, Binbyte **);
   }
