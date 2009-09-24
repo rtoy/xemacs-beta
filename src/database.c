@@ -85,7 +85,7 @@ Lisp_Object Qqueue;
 #endif /* HAVE_BERKELEY_DB */
 
 #ifdef HAVE_DBM
-#include <ndbm.h>
+#include NDBM_H_FILE
 Lisp_Object Qdbm;
 #endif /* HAVE_DBM */
 

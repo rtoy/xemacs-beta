@@ -5410,12 +5410,16 @@ test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
   AC_MSG_RESULT()
 
 dnl Check for ndbm.h, required for either kind of DBM support.
+dnl #### Should we check for gdbm.h, too?  (Seen on MacPorts.)
 if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
-  AC_CHECK_HEADER(ndbm.h, [:], [
+  ndbm_h_file=""
+  AC_CHECK_HEADERS([ndbm.h gdbm/ndbm.h],[ndbm_h_file=$ac_header; break;],[],[])
+  if test "$ndbm_h_found" != "yes"; then
     test "$enable_database_gdbm" = "yes" -o \
          "$enable_database_dbm"  = "yes" && \
       XE_DIE("Required DBM support cannot be provided.")
-    enable_database_gdbm=no enable_database_dbm=no])
+    enable_database_gdbm=no enable_database_dbm=no]
+  fi
 fi
 
 dnl Check for DBM support in libgdbm.
@@ -5442,9 +5446,12 @@ fi
 
 dnl Tell make about the DBM support we detected.
 test -n "$libdbm" && XE_PREPEND("$libdbm", LIBS)
-test "$enable_database_gdbm" = "yes" -o \
-     "$enable_database_dbm"  = "yes" && \
+if test "$enable_database_gdbm" = "yes" -o \
+        "$enable_database_dbm"  = "yes"; then
+  AC_DEFINE_UNQUOTED(NDBM_H_FILE,"$ndbm_h_file")
   AC_DEFINE(HAVE_DBM)
+  $as_unset ndbm_h_file
+fi
 
 dnl Check for u_int*_t typedefs.
 AC_CHECK_TYPES([u_int8_t, u_int16_t, u_int32_t])

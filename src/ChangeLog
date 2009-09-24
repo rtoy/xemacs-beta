@@ -311,6 +311,13 @@
 	* lrecord.h (enum lrecord_type): 
 	Add the multiple_value type here. 
 
+2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
+
+	* config.h.in (HAVE_DBM):
+	* database.c (HAVE_DBM): 
+	Use gdbm/ndbm.h if needed (via NDBM_H_FILE).
+	Thanks to Karl Kleinpaste for the report.
+
 2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
 
 	* faces.c (ensure_face_cachel_contains_charset):
