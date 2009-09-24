@@ -1329,10 +1329,10 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     case IMAGE_POINTER:
-	/* #### Gtk does not give us access to the hotspots of a pixmap */
+      /* #### Gtk does not give us access to the hotspots of a pixmap */
 
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = 1;
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = 1;
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int(1);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int(1);
 
 
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,

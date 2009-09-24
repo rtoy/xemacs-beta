@@ -313,6 +313,12 @@
 
 2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
 
+	* glyphs-gtk.c (gtk_xpm_instantiate): Image instance pixmap
+	hotspot coordinates are Lisp integers; make it so.
+	Thanks to Karl Kleinpaste for reporting.
+
+2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
+
 	* config.h.in (HAVE_DBM):
 	* database.c (HAVE_DBM): 
 	Use gdbm/ndbm.h if needed (via NDBM_H_FILE).
