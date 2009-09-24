@@ -533,6 +533,8 @@ things are arranged in config.h.in.  In particular:
 
 /* Compile in support for DBM databases?  May require libgdbm or libdbm. */
 #undef HAVE_DBM
+/* Full #include file path for GDBM's or platforms ndbm.h */
+#undef NDBM_H_FILE
 
 /* Define to 1 if the system has the type `u_int8_t'. */
 #undef HAVE_U_INT8_T
