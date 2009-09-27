@@ -300,7 +300,7 @@ Return a list suitable for use in `interactive'."
 	 (enable-recursive-minibuffers t)
 	 val)
      (setq val (completing-read
-		(if (symbolp v)
+		(if (and v (symbolp v))
 		    (format "Customize variable: (default %s) " v)
 		  "Customize variable: ")
 		obarray (lambda (symbol)
