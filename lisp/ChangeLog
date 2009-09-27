@@ -1,3 +1,10 @@
+2009-09-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-edit.el (custom-variable-prompt): 
+	nil is a symbol, check that variable-at-point is non-nil before
+	checking if it's a symbol when deciding on the prompt used in this
+	function. 
+
 2009-09-22  Andreas Roehler  <andreas.roehler@online.de>
 
 	* lisp.el (beginning-of-defun-raw):
