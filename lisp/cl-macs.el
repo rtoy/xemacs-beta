@@ -298,6 +298,7 @@ ARGLIST allows full Common Lisp conventions."
 	(t arg)))                         ; Maybe we are in initializer
 
 ;; npak@ispras.ru
+;;;###autoload
 (defun cl-function-arglist (name arglist)
   "Returns string with printed representation of arguments list.
 Supports Common Lisp lambda lists."

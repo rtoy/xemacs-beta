@@ -1,3 +1,10 @@
+2009-09-28  Mike Sperber  <mike@xemacs.org>
+
+	* autoload.el (make-autoload): Only try to add arguments to
+	documentation when the form actually allows it.
+
+	* cl-macs.el (cl-function-arglist): Add autoload; used in autoload.el.
+
 2009-09-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cus-edit.el (custom-variable-prompt): 
