@@ -190,17 +190,17 @@ open-parenthesis, and point ends up at the beginning of the line."
 This is identical to beginning-of-defun, except that point does not move
 to the beginning of the line when `defun-prompt-regexp' is non-nil."
   (interactive "p")
-   ;; (and arg (< arg 0) (not (eobp)) (forward-char 1))
   (unless arg (setq arg 1))
-  (cond
-   (beginning-of-defun-function
-    (funcall beginning-of-defun-function arg))
-   (t (re-search-backward (if defun-prompt-regexp
-                              (concat "^\\s(\\|"
-                                      "\\(" defun-prompt-regexp "\\)\\s(")
-                            "^\\s(")
-			    nil 'move (or arg 1))
-	(progn (goto-char (1- (match-end 0)))) t)))
+  (if beginning-of-defun-function
+      (funcall beginning-of-defun-function arg)
+    (and (< arg 0) (not (eobp)) (forward-char 1))
+    (and
+     (re-search-backward (if defun-prompt-regexp
+			     (concat "^\\s(\\|"
+				     "\\(" defun-prompt-regexp "\\)\\s(")
+			   "^\\s(")
+			 nil 'move arg)
+     (progn (goto-char (1- (match-end 0)))) t)))
 
 ;; XEmacs change (optional buffer parameter)
 (defun buffer-end (arg &optional buffer)
