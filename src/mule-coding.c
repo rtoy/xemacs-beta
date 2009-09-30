@@ -3538,6 +3538,17 @@ fixed_width_putprop (Lisp_Object codesys, Lisp_Object key,
 
   if (EQ (key, Qdecode) || EQ (key, Qencode))
     {
+      Lisp_Object sym;
+
+      CHECK_VECTOR (value);
+
+      sym = Fintern (concat3 (XSYMBOL_NAME (XCODING_SYSTEM_NAME (codesys)),
+                              build_string ("-"),
+                              XSYMBOL_NAME (key)), Qnil);
+
+      Fregister_ccl_program (sym, value);
+
+      
       /* Check if the CCL infrastructure thinks this is a sane CCL
          program: */
       if (setup_ccl_program (&test_ccl, value) < 0)
@@ -3547,11 +3558,11 @@ fixed_width_putprop (Lisp_Object codesys, Lisp_Object key,
 
       if (EQ (key, Qdecode))
         {
-          XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = value;
+          XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = sym;
         }
       else 
         {
-          XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = value;
+          XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = sym;
         }
     }
   else if (EQ (key, Qfrom_unicode))

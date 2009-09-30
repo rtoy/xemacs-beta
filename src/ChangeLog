@@ -1,3 +1,10 @@
+2009-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-coding.c (fixed_width_putprop): 
+	Register any CCL programs, avoiding crashes described by Robert
+	Delius Royar. Though it's unclear why, I'll try to investigate
+	once I'm on a 32-bit Unix machine regularly again.
+
 2009-09-23  Stephen Turnbull  <stephen@xemacs.org>
 
 	* glyphs-eimage.c (png_instantiate):
