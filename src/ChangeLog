@@ -5,6 +5,11 @@
 	Delius Royar. Though it's unclear why, I'll try to investigate
 	once I'm on a 32-bit Unix machine regularly again.
 
+2009-09-29  Mike Sperber  <mike@xemacs.org>
+
+	* minibuf.c (Ftry_completion): If the collection is a list, allow
+	plain elements instead of cons cells.  (As in GNU Emacs.)
+
 2009-09-23  Stephen Turnbull  <stephen@xemacs.org>
 
 	* glyphs-eimage.c (png_instantiate):

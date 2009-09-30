@@ -310,8 +310,9 @@ All that match are compared together; the longest initial sequence
 common to all matches is returned as a string.  If there is no match
 at all, nil is returned.  For an exact match, t is returned.
 
-If COLLECTION is an alist, the cars of the elements of the alist
-\(which must be strings) form the set of possible completions.
+If COLLECTION is list, the elements of the list that are not cons
+cells and the cars of the elements of the list that are cons cells
+(which must be strings) form the set of possible completions.
 
 If COLLECTION is an obarray, the names of all symbols in the obarray
 are the possible completions.
@@ -385,7 +386,10 @@ or the symbol from the obarray.
 	  if (NILP (tail))
 	    break;
 	  elt = Fcar (tail);
-	  eltstring = Fcar (elt);
+	  if (CONSP (elt))
+	    eltstring = Fcar (elt);
+	  else
+	    eltstring = elt;
 	  tail = Fcdr (tail);
 	}
       else
