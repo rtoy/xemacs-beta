@@ -2629,8 +2629,7 @@ x_focus_on_frame (struct frame *f)
 	  XSetInputFocus (XtDisplay (shell_widget),
 			  XtWindow (shell_widget),
 			  RevertToParent,
-			  DEVICE_X_MOUSE_TIMESTAMP
-			  (XDEVICE (FRAME_DEVICE (f))));
+			  CurrentTime);
 	  XFlush (XtDisplay (shell_widget));
 	}
     }
