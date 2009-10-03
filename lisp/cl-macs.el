@@ -3218,26 +3218,46 @@ surrounded by (block NAME ...)."
 ;; #'equal or #'eq and no other keywords, we want the speed in
 ;; font-lock.el.
 (define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
-  (cond ((and (= 4 (length form))
-              (eq :test (third form))
-              (or (equal '(quote eq) (fourth form))
-                  (equal '(function eq) (fourth form))))
-         `(let* ((begin ,cl-seq)
-                 (cl-seq begin))
-           (while cl-seq
-             (setq cl-seq (setcdr cl-seq (delq (car cl-seq) (cdr cl-seq)))))
-           begin))
-        ((and (= 4 (length form))
-              (eq :test (third form))
-              (or (equal '(quote equal) (fourth form))
-                  (equal '(function equal) (fourth form))))
-         `(let* ((begin ,cl-seq)
-                 (cl-seq begin))
-           (while cl-seq
-             (setq cl-seq (setcdr cl-seq (delete (car cl-seq) (cdr cl-seq)))))
-           begin))
-        (t
-         form)))
+  (let ((listp-check 
+         (if (memq (car-safe cl-seq)
+                   ;; No need to check for a list at runtime with these. We
+                   ;; could expand the list, but these are all the functions
+                   ;; in the relevant context at the moment.
+                   '(nreverse append nconc mapcan mapcar))
+             t
+           '(listp begin))))
+    (cond ((and (= 4 (length form))
+                (eq :test (third form))
+                (or (equal '(quote eq) (fourth form))
+                    (equal '(function eq) (fourth form))))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq (delq (car cl-seq)
+                                                       (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ,(third form) ,(fourth form) nil))))
+          ((and (= 4 (length form))
+                (eq :test (third form))
+                (or (equal '(quote equal) (fourth form))
+                    (equal '(function equal) (fourth form))))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
+                                                         (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ,(third form) ,(fourth form) nil))))
+          (t
+           form))))
 
 (mapc
  #'(lambda (y)

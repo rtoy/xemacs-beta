@@ -1,3 +1,9 @@
+2009-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-duplicates): 
+	Make this compiler macro aware that CL-SEQ is a sequence, which
+	may not necessarily be a list.
+
 2009-09-30  Mike Sperber  <mike@xemacs.org>
 
 	* lisp.el (beginning-of-defun-raw): Unbreak; clean up sloppy
