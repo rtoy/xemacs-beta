@@ -1,5 +1,16 @@
 2009-10-05  Jerry James  <james@xemacs.org>
 
+	* emacs.c (main_1): Check the return value of dup() to quiet gcc.
+	* input-method-xlib.c (describe_Window): Check the return value of
+	system() to quiet gcc.
+	* objects-tty.c (UNUSED_IF_NEW_GC): New macro.
+	(tty_finalize_color_instance): Use it to quiet gcc.
+	(tty_finalize_font_instance): Ditto.
+	* syntax.c (UNUSED_IF_NEW_GC): New macro.
+	(uninit_buffer_syntax_cache): Use it to quiet gcc.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
 	* glade.c: Add GPL v2 or later notice with explicit permission of
 	Bill Perry (private email).
 	* gtk-glue.c: Ditto.

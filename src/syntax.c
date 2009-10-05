@@ -31,6 +31,12 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "extents.h"
 
+#ifdef NEW_GC
+# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
+#else
+# define UNUSED_IF_NEW_GC(decl) decl
+#endif
+
 #define ST_COMMENT_STYLE 0x101
 #define ST_STRING_STYLE  0x102
 
@@ -540,7 +546,7 @@ init_buffer_syntax_cache (struct buffer *buf)
 /* finalize the syntax cache for BUF */
 
 void
-uninit_buffer_syntax_cache (struct buffer *buf)
+uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 {
 #ifndef NEW_GC
   xfree (buf->syntax_cache, struct syntax_cache *);

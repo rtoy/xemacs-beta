@@ -30,6 +30,12 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "charset.h"
 
+#ifdef NEW_GC
+# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
+#else
+# define UNUSED_IF_NEW_GC(decl) decl
+#endif
+
 /* An alist mapping from color names to a cons of (FG-STRING, BG-STRING). */
 Lisp_Object Vtty_color_alist;
 #if 0 /* This stuff doesn't quite work yet */
@@ -219,7 +225,7 @@ tty_print_color_instance (Lisp_Color_Instance *UNUSED (c),
 }
 
 static void
-tty_finalize_color_instance (Lisp_Color_Instance *c)
+tty_finalize_color_instance (Lisp_Color_Instance *UNUSED_IF_NEW_GC (c))
 {
 #ifndef NEW_GC
   if (c->data)
@@ -314,7 +320,7 @@ tty_print_font_instance (Lisp_Font_Instance *UNUSED (f),
 }
 
 static void
-tty_finalize_font_instance (Lisp_Font_Instance *f)
+tty_finalize_font_instance (Lisp_Font_Instance *UNUSED_IF_NEW_GC (f))
 {
 #ifndef NEW_GC
   if (f->data)
