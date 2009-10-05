@@ -1,5 +1,15 @@
 2009-10-05  Jerry James  <james@xemacs.org>
 
+	* gnome.el: Add GPL v2 or later notice with explicit permission of
+	Bill Perry (private email).
+	* gtk-compose.el: Ditto.
+	* gtk-marshal.el: Ditto.
+	* gtk-package.el: Ditto.
+	* gtk-widget-accessors.el: Ditto.
+	* gtk.el: Ditto.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
 	* glyphs.el (make-image-specifier): Remove ancient comment about
 	lack of support for animated GIFs.
 

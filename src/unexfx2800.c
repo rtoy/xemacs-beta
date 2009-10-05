@@ -1,4 +1,4 @@
-/* Unexec for the Alliant FX/2800.  */
+/* Unexec for the Alliant FX/2800.
 
 This file is part of XEmacs.
 
