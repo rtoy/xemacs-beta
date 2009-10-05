@@ -1,3 +1,9 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c (Fldap_search_basic): quiet gcc warnings due to
+	NEW_LISP_STRING_TO_EXTERNAL modifying a variable while computing a
+	result to be passed as a parameter.
+
 2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.29 "garbanzo" is released.

@@ -1240,9 +1240,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	fd = wext_retry_open (term, O_RDWR | OPEN_BINARY, 2);
 	/* Conversions are not possible yet, and printing will be in
 	   external format, so strerror() and ttyname() are OK. */
-	if (fd < 0)
+	if (fd < 0 || dup (0) < 0)
 	  fatal ("%s: %s", WEXTTEXT_TO_8_BIT (term), strerror (errno));
-	dup (0);
 	if (! isatty (0))
 	  fatal ("%s: not a tty", WEXTTEXT_TO_8_BIT (term));
 

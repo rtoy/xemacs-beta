@@ -425,7 +425,7 @@ entry according to the value of WITHDN.
   LDAP *ld;
   LDAPMessage *e;
   BerElement *ptr;
-  Extbyte *a, *dn;
+  Extbyte *a, *dn, *bs, *filt;
   int i, rc;
   int  matches;
   struct ldap_unwind_struct unwind;
@@ -497,14 +497,10 @@ entry according to the value of WITHDN.
   CHECK_SYMBOL (attrsonly);
 
   /* Perform the search */
-  if (ldap_search (ld,
-                   NILP (base) ? "" :
-		   NEW_LISP_STRING_TO_EXTERNAL (base, Qnative),
-                   ldap_scope,
-                   NILP (filter) ? "" :
-		   NEW_LISP_STRING_TO_EXTERNAL (filter, Qnative),
-                   ldap_attributes,
-                   NILP (attrsonly) ? 0 : 1)
+  bs = NILP (base) ? "" : NEW_LISP_STRING_TO_EXTERNAL (base, Qnative);
+  filt = NILP (filter) ? "" : NEW_LISP_STRING_TO_EXTERNAL (filter, Qnative);
+  if (ldap_search (ld, bs, ldap_scope, filt, ldap_attributes,
+		   NILP (attrsonly) ? 0 : 1)
       == -1)
     {
       signal_ldap_error (ld, NULL, 0);

@@ -895,7 +895,8 @@ describe_Window (Window win)
   char xwincmd[128];
   sprintf (xwincmd, "xwininfo -id 0x%x >&2; xwininfo -events -id 0x%x >&2",
            (int) win, (int) win);
-  system (xwincmd);
+  if (system (xwincmd) == -1)
+    stderr_out ("Unable to execute xwininfo\n");
 }
 
 void
