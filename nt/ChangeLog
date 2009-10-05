@@ -1,3 +1,10 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* config.inc.samp: Add GIF_DIR for external GIF support.
+	* xemacs.mak: Convert from internal to external GIF support.
+	* xemacs.dsp: Drop internal GIF source files.
+	* README: Remove remark about internal GIF support.
+
 2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.29 "garbanzo" is released.

@@ -802,7 +802,7 @@ XE_MERGED_ARG([xface],
                         Requires the compface package.]),
 	[], [])
 XE_MERGED_ARG([gif],
-	AS_HELP_STRING([--with-gif],[Compile without the (builtin) support for GIF images.]),
+	AS_HELP_STRING([--with-gif],[Compile with support for GIF images.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Sound options])
@@ -4124,11 +4124,19 @@ if test "$window_system" != "none"; then
     XE_PREPEND(-lcompface, libs_x)
   fi
 
-  dnl For a brief period we had the GIF code split out into a separate library,
-  dnl but patent problems, etc. sort of squashed that idea.
-  dnl We default to building with builtin GIF decoding
+  dnl autodetect GIF
+  test -z "$with_gif" && { AC_CHECK_HEADER(gif_lib.h, , with_gif=no) }
   if test "$with_gif" != "no"; then
     with_gif="yes"
+    dnl Versions of libgif and libungif prior to the introduction of
+    dnl EGifPutExtensionLast caused Emacs crashes.  We'll require that
+    dnl function, too, in hopes that we can avoid similar crashes.
+    AC_CHECK_LIB(gif, EGifPutExtensionLast,
+      [XE_PREPEND(-lgif, libs_x)],
+      [AC_CHECK_LIB(ungif, EGifPutExtensionLast,
+        [XE_PREPEND(-lungif, libs_x)], with_gif=no)])
+  fi
+  if test "$with_gif" != "no"; then
     AC_DEFINE(HAVE_GIF)
   fi
 
@@ -6103,7 +6111,7 @@ test "$with_gpm" = yes && echo "  Compiling in support for GPM (General Purpose 
 
 echo "
 Images:"
-test "$with_gif" = yes && echo "  Compiling in support for GIF  images (builtin)."
+test "$with_gif" = yes && echo "  Compiling in support for GIF images."
 if test "$with_xpm" = yes; then
   echo "  Compiling in support for XPM  images."
 elif test "$with_x11" = yes; then

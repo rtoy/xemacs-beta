@@ -1,3 +1,21 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove internal GIF object files from link.
+	* dgif_lib.c: Removed.
+	* gif_io.c: Removed.
+	* gifrlib.h: Removed.
+	* glyphs-eimage.c: Use external giflib instead of internal GIF
+	support.
+	(gif_instantiate_unwind): Use giflib's FreeSavedImages call
+	instead of the defunct GifFree.
+	(gif_read_from_memory): Adapt signature to giflib.
+	(gif_error_func): Removed.
+	(gif_memory_close): Removed.
+	(gif_decode_error_string): New function.
+	(gif_instantiate): Adapt to giflib API.
+	* libinterface.h: Include external giflib header instead of
+	internal GIF header.
+
 2009-10-01  Mike Sperber  <mike@xemacs.org>
 
 	* frame-x.c (x_focus_on_frame): Use correct timestamp with

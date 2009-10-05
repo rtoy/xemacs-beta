@@ -1,3 +1,8 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* glyphs.el (make-image-specifier): Remove ancient comment about
+	lack of support for animated GIFs.
+
 2009-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-duplicates): 

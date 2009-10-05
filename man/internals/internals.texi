@@ -2920,7 +2920,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{device.c} @tab @ref{Modules for the Basic Displayable Lisp Objects}.
 @item @file{device.h} @tab @ref{Modules for the Basic Displayable Lisp Objects}.
 @item @file{devslots.h} @tab
-@item @file{dgif_lib.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{dialog-gtk.c} @tab
 @item @file{dialog-msw.c} @tab
 @item @file{dialog-x.c} @tab
@@ -2994,11 +2993,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{general.c} @tab @ref{Basic Lisp Modules}.
 @item @file{getloadavg.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{getpagesize.h} @tab @ref{Low-Level Modules}.
-@item @file{gif_err.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{gif_io.c} @tab
-@item @file{gif_lib.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{gifalloc.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{gifrlib.h} @tab
 @item @file{glade.c} @tab
 @item @file{glyphs-eimage.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{glyphs-gtk.c} @tab
@@ -18468,17 +18462,6 @@ highlighting different syntactic constructs of a source file in
 different colors, for easy reading.  The C support is provided so that
 this is fast.
 
-
-
-@example
-@file{dgif_lib.c}
-@file{gif_err.c}
-@file{gif_lib.h}
-@file{gifalloc.c}
-@end example
-
-These modules decode GIF-format image files, for use with glyphs.
-These files were removed due to Unisys patent infringement concerns.
 
 
 @node Extents, Faces, The Redisplay Mechanism, Top

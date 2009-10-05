@@ -81,8 +81,7 @@ this format. (Image instance types will be discussed below.)
    Not currently implemented -- it's treated like `string'.
    [:data] (text)
 `gif'
-   A GIF87 or GIF89 image; only if GIF support was compiled into this
-   XEmacs.  NOTE: Only the first frame of animated gifs will be displayed.
+   A GIF87 or GIF89 image; only if GIF support was compiled into this XEmacs.
    [:data, :file] (color-pixmap, pointer)
 `jpeg'
    A JPEG image; only if JPEG support was compiled into this XEmacs.
