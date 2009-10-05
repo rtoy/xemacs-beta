@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
    Many changes for color work and optimizations by Jareth Hein for 21.0
    Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
    TIFF code by Jareth Hein for 21.0
+   GIF support changed to external giflib by Jerry James for 21.5
    TODO:
    Convert images.el to C and stick it in here?
    This file is really repetitious; can we refactor?
@@ -527,7 +528,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                               GIF                                  *
  **********************************************************************/
 
-#include "gifrlib.h"
+#include <gif_lib.h>
 
 static void
 gif_validate (Lisp_Object instantiator)
@@ -569,7 +570,7 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->giffile)
     {
       DGifCloseFile (data->giffile);
-      GifFree(data->giffile);
+      FreeSavedImages(data->giffile);
     }
   if (data->eimage)
     xfree (data->eimage, Binbyte *);
@@ -584,10 +585,10 @@ typedef struct gif_memory_storage
   Bytecount index;		/* Where are we?  */
 } gif_memory_storage;
 
-static Bytecount
-gif_read_from_memory (GifByteType *buf, Bytecount size, VoidPtr data)
+static int
+gif_read_from_memory (GifFileType *gif, GifByteType *buf, int size)
 {
-  gif_memory_storage *mem = (gif_memory_storage *) data;
+  gif_memory_storage *mem = (gif_memory_storage *) gif->UserData;
 
   if (size > (mem->len - mem->index))
     return -1;
@@ -596,26 +597,40 @@ gif_read_from_memory (GifByteType *buf, Bytecount size, VoidPtr data)
   return size;
 }
 
-static int
-gif_memory_close (VoidPtr UNUSED (data))
+static const char *
+gif_decode_error_string ()
 {
-  return 0;
-}
-
-struct gif_error_struct
-{
-  const Extbyte *err_str;	/* return the error string */
-  jmp_buf setjmp_buffer;	/* for return to caller */
-};
-
-static void
-gif_error_func (const Extbyte *err_str, VoidPtr error_ptr)
-{
-  struct gif_error_struct *error_data = (struct gif_error_struct *) error_ptr;
-
-  /* return to setjmp point */
-  error_data->err_str = err_str;
-  longjmp (error_data->setjmp_buffer, 1);
+  switch (GifLastError ())
+    {
+    case D_GIF_ERR_OPEN_FAILED:
+      return "GIF error: unable to open";
+    case D_GIF_ERR_READ_FAILED:
+      return "GIF error: read failed";
+    case D_GIF_ERR_NOT_GIF_FILE:
+      return "GIF error: not a GIF file";
+    case D_GIF_ERR_NO_SCRN_DSCR:
+      return "GIF error: no Screen Descriptor detected";
+    case D_GIF_ERR_NO_IMAG_DSCR:
+      return "GIF error: no Image Descriptor detected";
+    case D_GIF_ERR_NO_COLOR_MAP:
+      return "GIF error: no global or local color map";
+    case D_GIF_ERR_WRONG_RECORD:
+      return "GIF error: wrong record type";
+    case D_GIF_ERR_DATA_TOO_BIG:
+      return "GIF error: image is larger than indicated by header";
+    case D_GIF_ERR_NOT_ENOUGH_MEM:
+      return "GIF error: out of memory";
+    case D_GIF_ERR_CLOSE_FAILED:
+      return "GIF error: failed to close file";
+    case D_GIF_ERR_NOT_READABLE:
+      return "GIF error: file is not readable";
+    case D_GIF_ERR_IMAGE_DEFECT:
+      return "GIF error: image is defective";
+    case D_GIF_ERR_EOF_TOO_SOON:
+      return "GIF error: image EOF detected before image complete";
+    default:
+      return "GIF error: unknown error";
+    }
 }
 
 static void
@@ -630,7 +645,6 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   struct gif_unwind_data unwind;
   int speccount = specpdl_depth ();
   gif_memory_storage mem_struct;
-  struct gif_error_struct gif_err;
   Binbyte *bytes;
   Bytecount len;
   int height = 0;
@@ -646,35 +660,19 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     assert (!NILP (data));
 
-    if (!(unwind.giffile = GifSetup()))
-      signal_image_error ("Insufficient memory to instantiate GIF image", instantiator);
-
-    /* set up error facilities */
-    if (setjmp(gif_err.setjmp_buffer))
-      {
-	/* An error was signaled. No clean up is needed, as unwind handles that
-	   for us.  Just pass the error along. */
-	Ibyte *interr;
-	Lisp_Object errstring;
-	EXTERNAL_TO_C_STRING (gif_err.err_str, interr, Qnative);
-	errstring = build_msg_intstring (interr);
-	signal_image_error_2 ("GIF decoding error", errstring, instantiator);
-      }
-    GifSetErrorFunc(unwind.giffile, (Gif_error_func)gif_error_func, (VoidPtr)&gif_err);
-
     TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;
-    GifSetReadFunc(unwind.giffile, gif_read_from_memory, (VoidPtr)&mem_struct);
-    GifSetCloseFunc(unwind.giffile, gif_memory_close, (VoidPtr)&mem_struct);
-    DGifInitRead(unwind.giffile);
+    unwind.giffile = DGifOpen (&mem_struct, gif_read_from_memory);
+    if (unwind.giffile == NULL)
+      signal_image_error (gif_decode_error_string (), instantiator);
 
     /* Then slurp the image into memory, decoding along the way.
        The result is the image in a simple one-byte-per-pixel
-       format (#### the GIF routines only support 8-bit GIFs,
-       it appears). */
-    DGifSlurp (unwind.giffile);
+       format. */
+    if (DGifSlurp (unwind.giffile) == GIF_ERROR)
+      signal_image_error (gif_decode_error_string (), instantiator);
   }
 
   /* 3. Now create the EImage(s) */
@@ -748,7 +746,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (unwind.giffile->ImageCount > 1)
     {
     /* See if there is a timeout value. In theory there could be one
-       for every image - but that makes the implementation way to
+       for every image - but that makes the implementation way too
        complicated for now so we just take the first. */
       unsigned short timeout = 0;
       Lisp_Object tid;

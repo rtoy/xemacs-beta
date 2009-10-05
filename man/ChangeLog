@@ -1,3 +1,14 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* beta.texi (Building XEmacs from a full distribution): Remove
+	"(builtin)" from GIF line in example Installation.
+	(Reporting Problems): Recommend taking screenshots as a PNG
+	instead of a GIF.
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove GIF-related files.
+	* lispref/glyphs.texi (Image Instantiator Formats): Remove remark
+	about builtin GIF support.
+
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/numbers.texi (Bigfloat Basics): 

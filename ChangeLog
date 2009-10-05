@@ -1,3 +1,8 @@
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Check for external giflib instead of using builtin
+	gif support.  Remove "(builtin)" from relevant strings.
+
 2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (HAVE_DBM): Use gdbm/ndbm.h if needed.

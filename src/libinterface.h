@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_libinterface_h_
 
 #ifdef HAVE_GIF
-#include "gifrlib.h"
+#include <gif_lib.h>
 #endif /* HAVE_GIF */
 
 #ifdef HAVE_PNG

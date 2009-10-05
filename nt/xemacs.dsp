@@ -271,10 +271,6 @@ SOURCE=..\src\device.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\dgif_lib.c
-# End Source File
-# Begin Source File
-
 SOURCE="..\src\dialog-msw.c"
 # End Source File
 # Begin Source File
@@ -572,14 +568,6 @@ SOURCE=..\src\getloadavg.c
 # Begin Source File
 
 SOURCE=..\src\getpagesize.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\gif_io.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\gifrlib.h
 # End Source File
 # Begin Source File
 

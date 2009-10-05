@@ -45,8 +45,10 @@ OPTIONAL_LIBRARY_DIR=c:\src
 HAVE_XPM=1
 XPM_DIR=$(OPTIONAL_LIBRARY_DIR)\xpm-3.4k
 
-# Set this to enable GIF support (built-in).
+# Set this to enable GIF support, and specify the directory containing giflib.
+# Get the latest version from http://sourceforge.net/projects/giflib/.
 HAVE_GIF=1
+GIF_DIR=$(OPTIONAL_LIBRARY_DIR)\giflib-4.1.6
 
 # Set this to enable PNG support (virtually mandatory), and specify the
 # directories containing png and zlib.  Get the latest version of PNG from

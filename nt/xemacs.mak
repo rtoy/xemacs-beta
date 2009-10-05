@@ -142,7 +142,7 @@ HAVE_JPEG=0
 HAVE_XFACE=0
 !endif
 !if !defined(HAVE_GIF)
-HAVE_GIF=1
+HAVE_GIF=0
 !endif
 !if !defined(HAVE_GTK)
 HAVE_GTK=0
@@ -548,7 +548,8 @@ OPT_LIBS=$(OPT_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
 !if $(HAVE_GIF)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_GIF
-OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(GIF_DIR)\lib"
+OPT_LIBS=$(OPT_LIBS) "$(GIF_DIR)\lib\libgif.lib"
 !endif
 !if $(HAVE_PNG)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_PNG

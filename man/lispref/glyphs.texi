@@ -515,13 +515,11 @@ XBM file.
 @itemx tiff
 These are GIF87- or GIF89-format, JPEG-format, PNG/GIF24-format, and
 TIFF-format images, respectively.  They are available only if
-appropriate decoding support was built into XEmacs.  XEmacs includes GIF
-decoding functions as a standard part of it, so if you have X support,
-you will normally have GIF support, unless you explicitly disable it at
-configure time.  If you have development support (both the libraries and
-the relevant C header files) available when XEmacs is built, the JPEG,
-PNG, and TIFF libraries will automatically be detected (in the ``usual
-places'') and linked into the build.
+appropriate decoding support was built into XEmacs.  If you have
+development support (both the libraries and the relevant C header files)
+available when XEmacs is built, the JPEG, PNG, GIF, and TIFF libraries
+will automatically be detected (in the ``usual places'') and linked into
+the build.
 
 Note that PNG is the standard format for images distributed with XEmacs,
 so it is highly recommended that PNG support be built in.

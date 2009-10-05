@@ -479,7 +479,7 @@ TTY:
   Compiling in support for ncurses.
 
 Images:
-  Compiling in support for GIF  images (builtin).
+  Compiling in support for GIF  images.
   Compiling in support for XPM  images.
   Compiling in support for PNG  images.
   Compiling in support for JPEG images.
@@ -733,7 +733,7 @@ A picture can be worth a thousand words.  When reporting an
 unusual display, it is generally best to capture the problem in a
 screen dump and include that with the problem report.  The easiest
 way to get a screen dump is to use the xv program and its grab
-function.  Save the image as a GIF to keep bandwidth requirements
+function.  Save the image as a PNG to keep bandwidth requirements
 down without loss of information.  MIME is the preferred method
 for making the image attachments.
 @end enumerate
