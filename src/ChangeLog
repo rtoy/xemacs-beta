@@ -1,5 +1,17 @@
 2009-10-05  Jerry James  <james@xemacs.org>
 
+	* glade.c: Add GPL v2 or later notice with explicit permission of
+	Bill Perry (private email).
+	* gtk-glue.c: Ditto.
+	* gtk-xemacs.c: Ditto.
+	* gtk-xemacs.h: Ditto.
+	* ui-byhand.c: Ditto.
+	* ui-gtk.c: Ditto.
+	* ui-gtk.h: Ditto.
+	* unexfx2800.c: Fix malformed comment.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
 	* Makefile.in.in: Remove internal GIF object files from link.
 	* dgif_lib.c: Removed.
 	* gif_io.c: Removed.
