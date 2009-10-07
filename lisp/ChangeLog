@@ -1,3 +1,10 @@
+2009-10-07  Andreas Roehler  <andreas.roehler@online.de>
+
+	* lisp.el (beginning-of-defun-function):
+	make variable buffer local
+	* lisp.el (end-of-defun-function):
+	make variable buffer local
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* gnome.el: Add GPL v2 or later notice with explicit permission of
