@@ -548,8 +548,8 @@ OPT_LIBS=$(OPT_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
 !if $(HAVE_GIF)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_GIF
-OPT_INCLUDES=$(OPT_INCLUDES) -I"$(GIF_DIR)\lib"
-OPT_LIBS=$(OPT_LIBS) "$(GIF_DIR)\lib\libgif.lib"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(GIF_DIR)\include"
+OPT_LIBS=$(OPT_LIBS) "$(GIF_DIR)\lib\giflib.lib"
 !endif
 !if $(HAVE_PNG)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_PNG
