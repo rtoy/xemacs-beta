@@ -1,3 +1,9 @@
+2009-10-06  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: For giflib, the include files are found in
+		      $(GIF_DIR)\include and the library is named
+		      giflib.lib.
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* config.inc.samp: Add GIF_DIR for external GIF support.
