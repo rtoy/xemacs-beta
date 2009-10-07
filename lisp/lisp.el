@@ -163,12 +163,14 @@ This is used to find the beginning of the defun instead of using the
 normal recipe (see `beginning-of-defun').  Modes can define this
 if defining `defun-prompt-regexp' is not sufficient to handle the mode's
 needs.")
+(make-variable-buffer-local 'beginning-of-defun-function)
 
 (defvar end-of-defun-function nil
   "If non-nil, function for `end-of-defun' to call.
 This is used to find the end of the defun instead of using the normal
 recipe (see `end-of-defun').  Modes can define this if the
 normal method is not appropriate.")
+(make-variable-buffer-local 'end-of-defun-function)
 
 (defun beginning-of-defun (&optional arg)
   "Move backward to the beginning of a defun.
