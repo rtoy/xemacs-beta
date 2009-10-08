@@ -1,3 +1,11 @@
+2009-10-09  Stephen Turnbull  <stephen@xemacs.org>
+
+	* lisp.el (beginning-of-defun-function):
+	(end-of-defun-function):
+	(beginning-of-defun):
+	(end-of-defun):
+	Make docstrings stop lying.
+
 2009-10-07  Andreas Roehler  <andreas.roehler@online.de>
 
 	* lisp.el (beginning-of-defun-function):

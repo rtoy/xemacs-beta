@@ -158,30 +158,38 @@ Negative arg -N means kill N sexps after the cursor."
 
 ;; derived stuff from GNU Emacs
 (defvar beginning-of-defun-function nil
-  "If non-nil, function for `beginning-of-defun-raw' to call.
-This is used to find the beginning of the defun instead of using the
-normal recipe (see `beginning-of-defun').  Modes can define this
-if defining `defun-prompt-regexp' is not sufficient to handle the mode's
-needs.")
+  "If non-nil, this function will be called by `beginning-of-defun-raw'.
+It will be called with one argument, which is a repetition count.
+It provides an alternative algorithm to find the beginning of the current
+defun instead of using the standard one implemented by `beginning-of-defun'.
+See also `defun-prompt-regexp' for minor tweaks.")
 (make-variable-buffer-local 'beginning-of-defun-function)
 
 (defvar end-of-defun-function nil
-  "If non-nil, function for `end-of-defun' to call.
-This is used to find the end of the defun instead of using the normal
-recipe (see `end-of-defun').  Modes can define this if the
-normal method is not appropriate.")
+  "If non-nil, this function will be called by `end-of-defun'.
+It will be called with no arguments.  \(Repetition is implemented in
+`end-of-defun' by calling this function that many times.)
+This function provides an alternative algorithm to find the end
+of the current defun instead of using the standard one implemented by
+`end-of-defun'.
+")
 (make-variable-buffer-local 'end-of-defun-function)
 
 (defun beginning-of-defun (&optional arg)
-  "Move backward to the beginning of a defun.
+  "Move backward to the beginning of the current defun.
 With argument, do it that many times.  Negative arg -N
 means move forward to Nth following beginning of defun.
 Returns t unless search stops due to beginning or end of buffer.
 
-Normally a defun starts when there is an char with open-parenthesis
-syntax at the beginning of a line.  If `defun-prompt-regexp' is
-non-nil, then a string which matches that regexp may precede the
-open-parenthesis, and point ends up at the beginning of the line."
+In the default implementation provided by `beginning-of-defun-raw',
+a defun starts at a char with open-parenthesis syntax at the beginning
+of a line.  If `defun-prompt-regexp' is non-nil, then a string which
+matches that regexp may precede the open-parenthesis.  Alternatively,
+if `beginning-of-defun-function' is non-nil, that function is called,
+and none of the default processing is done.
+
+If the beginning of defun function returns t, point moves to the
+beginning of the line containing the beginning of defun."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (and (beginning-of-defun-raw arg)
@@ -214,8 +222,13 @@ BUFFER defaults to the current buffer if omitted."
   "Move forward to next end of defun.  With argument, do it that many times.
 Negative argument -N means move back to Nth preceding end of defun.
 
-An end of a defun occurs right after the close-parenthesis that matches
-the open-parenthesis that starts a defun; see `beginning-of-defun'."
+In the default implementation, the end of a defun is the end of the
+s-expression started at the character identified by `beginning-of-defun'.
+
+If `end-of-defun-function' is non-nil, none of the default processing is
+done.  For a repetition count greater than 1, `end-of-defun-function' is
+called that many times.  If the repetition count is less than 1, nothing
+is done.  \(This is a bug.)"
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
   (if (or (null arg) (= arg 0)) (setq arg 1))
