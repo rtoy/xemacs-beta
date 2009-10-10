@@ -1,3 +1,9 @@
+2009-10-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* rangetab.c (Frange_table_type): 
+	Correct the docstring for this function, don't reuse that of
+	Frange_table_p.
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* emacs.c (main_1): Check the return value of dup() to quiet gcc.
