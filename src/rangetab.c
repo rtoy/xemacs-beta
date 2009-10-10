@@ -290,7 +290,10 @@ Return non-nil if OBJECT is a range table.
 }
 
 DEFUN ("range-table-type", Frange_table_type, 1, 1, 0, /*
-Return non-nil if OBJECT is a range table.
+Return the type of RANGE-TABLE.
+
+This will be a symbol describing how ranges in RANGE-TABLE function at their
+ends; see `make-range-table'.
 */
        (range_table))
 {
