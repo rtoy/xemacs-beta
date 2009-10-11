@@ -4383,7 +4383,7 @@ post_command_hook (void)
 
   safe_run_hook_trapping_problems
     (Qcommand, Qpost_command_hook,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+     0);
 
 #if 0 /* FSF Emacs */
   if (!NILP (current_buffer->mark_active))

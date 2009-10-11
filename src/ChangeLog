@@ -1,3 +1,9 @@
+2009-10-11  Michael Sperber  <mike@xemacs.org>
+
+	* event-stream.c (post_command_hook): Run `post-command-hook'
+	without INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION -
+	deleting other windows off that hook is legitimate.
+
 2009-10-08  Jerry James  <james@xemacs.org>
 
 	* bytecode.c (bytecode_arithop): Make divide-by-zero errors
