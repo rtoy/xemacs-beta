@@ -3259,6 +3259,13 @@ surrounded by (block NAME ...)."
           (t
            form))))
 
+;; XEmacs change, the GNU mapc doesn't accept the Common Lisp args, so this
+;; change isn't helpful.
+(define-compiler-macro mapc (&whole form cl-func cl-seq &rest cl-rest)
+  (if cl-rest
+      form
+    (cons 'mapc-internal (cdr form))))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)

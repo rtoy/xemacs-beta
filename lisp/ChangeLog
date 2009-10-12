@@ -1,5 +1,17 @@
 2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (mapc):
+	New compiler macro, use mapc-internal at
+	compile time if we're not using the Common Lisp functionality.
+	* bytecomp.el (byte-compile-mapcar, byte-compile-maplist): New.
+	If the return value of mapcar is being discarded, compile it to a
+	mapc-internal call instead, and warn, because the programmer
+	probably can't rely on always being compiled by an XEmacs that
+	does this. Similarly for maplist and mapl; and use
+	byte-compile-funarg for map, mapl, mapcan, mapcon. 
+
+2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (delete-duplicates): 
 	Fix another bug in the delete-duplicates compiler macro, thank you
 	the byte compiler. 
