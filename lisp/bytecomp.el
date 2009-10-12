@@ -3521,6 +3521,20 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		     (cdr (cdr form))))
        form))))
 
+;; XEmacs change; don't cons up the list if it's going to be immediately
+;; discarded.
+(defun byte-compile-mapcar (form)
+  (and for-effect (setq form (cons 'mapc-internal (cdr form)))
+       (byte-compile-warn
+	"Discarding the result of #'mapcar; maybe you meant #'mapc?"))
+  (byte-compile-funarg form))
+
+(defun byte-compile-maplist (form)
+  (and for-effect (setq form (cons 'mapl (cdr form)))
+       (byte-compile-warn
+	"Discarding the result of #'maplist; maybe you meant #'mapl?"))
+  (byte-compile-funarg form))
+
 ;; (function foo) must compile like 'foo, not like (symbol-function 'foo).
 ;; Otherwise it will be incompatible with the interpreter,
 ;; and (funcall (function foo)) will lose with autoloads.
@@ -3698,9 +3712,14 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 while)
 (byte-defop-compiler-1 funcall)
 (byte-defop-compiler-1 apply byte-compile-funarg)
-(byte-defop-compiler-1 mapcar byte-compile-funarg)
+(byte-defop-compiler-1 mapcar byte-compile-mapcar)
 (byte-defop-compiler-1 mapatoms byte-compile-funarg)
 (byte-defop-compiler-1 mapconcat byte-compile-funarg)
+(byte-defop-compiler-1 map byte-compile-funarg)
+(byte-defop-compiler-1 maplist byte-compile-maplist)
+(byte-defop-compiler-1 mapl byte-compile-funarg)
+(byte-defop-compiler-1 mapcan byte-compile-funarg)
+(byte-defop-compiler-1 mapcon byte-compile-funarg)
 (byte-defop-compiler-1 let)
 (byte-defop-compiler-1 let*)
 
