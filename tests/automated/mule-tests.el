@@ -427,12 +427,15 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   (let* ((scaron (make-char 'latin-iso8859-2 57)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
-    (loop for code in '(#x0100 #x2222 #x4444 #xffff) do
+    (loop
+      for code in '(#x0100 #x2222 #x4444 #xffff)
+      with initial-unicode = (char-to-unicode scaron)
+      do
       (progn
 	(set-unicode-conversion scaron code)
 	(Assert (eq code (char-to-unicode scaron)))
-	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2))))))
-  
+	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
+      finally (set-unicode-conversion scaron initial-unicode))
     (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
 
   (dolist (utf-8-char 
@@ -531,17 +534,16 @@ This is a naive implementation in Lisp.  "
 					collect i))
     do
     (when (and (eq 'fixed-width (coding-system-type coding-system))
-	       ;; Don't check the coding systems with autodetect, they are
-	       ;; not round-trip compatible for the possible line-ending
-	       ;; characters.
-	       (string-match #r"-\(unix\|dos\|mac\)$"
-			     (symbol-name coding-system)))
+	       ;; Don't check the coding systems with odd line endings
+	       ;; (maybe we should):
+	       (eq 'lf (coding-system-eol-type coding-system)))
       ;; These coding systems are round-trip compatible with themselves.
       (Assert (equal (encode-coding-string 
 		      (decode-coding-string all-possible-octets
 					    coding-system)
 		      coding-system)
-		     all-possible-octets))))
+		     all-possible-octets)
+              (format "checking %s is transparent" coding-system))))
 
   ;;---------------------------------------------------------------
   ;; Test charset-in-* functions
