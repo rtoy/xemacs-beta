@@ -432,7 +432,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	    ival1 *= ival2; break;
 #endif
 	  case Bquo:
-	    if (ival2 == 0) Fsignal (Qarith_error, Qnil);
+	    if (ival2 == 0)
+	      signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	    ival1 /= ival2;
 	    break;
 	  case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
@@ -458,7 +459,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (bignum_sign (XBIGNUM_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  bignum_div (scratch_bignum, XBIGNUM_DATA (obj1),
 		      XBIGNUM_DATA (obj2));
 	  break;
@@ -486,7 +487,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (ratio_sign (XRATIO_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  ratio_div (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 	  break;
 	case Bmax:
@@ -518,7 +519,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (bigfloat_sign (XBIGFLOAT_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
 			XBIGFLOAT_DATA (obj2));
 	  break;
@@ -540,7 +541,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  case Bdiff: dval1 -= dval2; break;
 	  case Bmult: dval1 *= dval2; break;
 	  case Bquo:
-	    if (dval2 == 0.0) Fsignal (Qarith_error, Qnil);
+	    if (dval2 == 0.0)
+	      signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	    dval1 /= dval2;
 	    break;
 	  case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
@@ -585,7 +587,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	case Bdiff: ival1 -= ival2; break;
 	case Bmult: ival1 *= ival2; break;
 	case Bquo:
-	  if (ival2 == 0) Fsignal (Qarith_error, Qnil);
+	  if (ival2 == 0)
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  ival1 /= ival2;
 	  break;
 	case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
@@ -603,7 +606,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	case Bdiff: dval1 -= dval2; break;
 	case Bmult: dval1 *= dval2; break;
 	case Bquo:
-	  if (dval2 == 0) Fsignal (Qarith_error, Qnil);
+	  if (dval2 == 0)
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  dval1 /= dval2;
 	  break;
 	case Bmax:  if (dval1 < dval2) dval1 = dval2; break;

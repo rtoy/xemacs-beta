@@ -1,3 +1,30 @@
+2009-10-08  Jerry James  <james@xemacs.org>
+
+	* bytecode.c (bytecode_arithop): Make divide-by-zero errors
+	noncontinuable.
+	* floatfns.c (arith_error2): New macro for signaling divide-by-zero.
+	(ceiling_two_fixnum): Handle a value returned from a continuable error.
+	(ceiling_two_bignum): Ditto.
+	(ceiling_two_ratio): Ditto.
+	(ceiling_two_bigfloat): Ditto.
+	(ceiling_two_float): Ditto.
+	(floor_two_fixnum): Ditto.
+	(floor_two_bignum): Ditto.
+	(floor_two_ratio): Ditto.
+	(floor_two_bigfloat): Ditto.
+	(floor_two_float): Ditto.
+	(round_two_fixnum): Ditto.
+	(round_two_bignum): Ditto.
+	(round_two_ratio): Ditto.
+	(round_two_bigfloat): Ditto.
+	(round_two_float): Ditto.
+	(truncate_two_fixnum): Ditto.
+	(truncate_two_bignum): Ditto.
+	(truncate_two_ratio): Ditto.
+	(truncate_two_bigfloat): Ditto.
+	(truncate_two_float): Ditto.
+	(truncate_one_ratio): Truncating zero should result in zero.
+
 2009-10-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* rangetab.c (Frange_table_type): 

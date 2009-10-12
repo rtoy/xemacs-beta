@@ -108,6 +108,8 @@ static const char *float_error_fn_name;
 
 #define arith_error(op,arg) \
   Fsignal (Qarith_error, list2 (build_msg_string (op), arg))
+#define arith_error2(op,a1,a2) \
+  Fsignal (Qarith_error, list3 (build_msg_string (op), a1, a2))
 #define range_error(op,arg) \
   Fsignal (Qrange_error, list2 (build_msg_string (op), arg))
 #define range_error2(op,a1,a2) \
@@ -889,7 +891,6 @@ This is the same as the exponent of a float.
                                    BIGFLOAT, return_float);     \
   return conversion##_one_mundane_arg (number, divisor,         \
                                        return_float)
-      
 
 #define CONVERT_WITHOUT_NUMBER_TYPES(conversion, return_float)  \
   if (!NILP (divisor))						\
@@ -943,23 +944,23 @@ This is the same as the exponent of a float.
 
 #define MAYBE_ONE_ARG_BIGNUM(converse, return_float)                \
   if (BIGNUM_P (number))                                            \
-    return conversion##_one_bignum (number, divisor, return_float) 
+    return conversion##_one_bignum (number, divisor, return_float)
 #else
 #define MAYBE_TWO_ARGS_BIGNUM(conversion, return_float)
-#define MAYBE_ONE_ARG_BIGNUM(converse, return_float) 
+#define MAYBE_ONE_ARG_BIGNUM(converse, return_float)
 #endif
 
-#ifdef HAVE_RATIO 
+#ifdef HAVE_RATIO
 #define MAYBE_TWO_ARGS_RATIO(conversion, return_float)          \
   case RATIO_T:                                                 \
   return conversion##_two_ratio (number, divisor, return_float)
 
 #define MAYBE_ONE_ARG_RATIO(conversion, return_float)               \
   if (RATIOP (number))                                              \
-    return conversion##_one_ratio (number, divisor, return_float) 
+    return conversion##_one_ratio (number, divisor, return_float)
 #else
 #define MAYBE_TWO_ARGS_RATIO(conversion, return_float)
-#define MAYBE_ONE_ARG_RATIO(converse, return_float) 
+#define MAYBE_ONE_ARG_RATIO(converse, return_float)
 #endif
 
 #ifdef HAVE_BIGFLOAT
@@ -969,10 +970,10 @@ This is the same as the exponent of a float.
 
 #define MAYBE_ONE_ARG_BIGFLOAT(conversion, return_float)            \
   if (BIGFLOATP (number))                                           \
-    return conversion##_one_bigfloat (number, divisor, return_float) 
+    return conversion##_one_bigfloat (number, divisor, return_float)
 #else
 #define MAYBE_TWO_ARGS_BIGFLOAT(conversion, return_float)
-#define MAYBE_ONE_ARG_BIGFLOAT(converse, return_float) 
+#define MAYBE_ONE_ARG_BIGFLOAT(converse, return_float)
 #endif
 
 #define MAYBE_TWO_ARGS_WITH_NUMBER_TYPES(convers, upcase, return_float) \
@@ -1015,7 +1016,7 @@ ceiling_two_fixnum (Lisp_Object number, Lisp_Object divisor,
   EMACS_INT i3 = 0, i4 = 0;
 
   if (i2 == 0)
-    Fsignal (Qarith_error, Qnil);
+    return arith_error2 ("ceiling", number, divisor);
 
   /* With C89's integer /, the result is implementation-defined if either
      operand is negative, so use only nonnegative operands. Here we do
@@ -1080,9 +1081,7 @@ ceiling_two_bignum (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0, res1;
 
   if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("ceiling", number, divisor);
 
   bignum_ceil (scratch_bignum, XBIGNUM_DATA (number), XBIGNUM_DATA (divisor));
 
@@ -1112,9 +1111,7 @@ ceiling_two_ratio (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0, res1;
 
   if (ratio_sign (XRATIO_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("ceiling", number, divisor);
 
   ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
 
@@ -1149,9 +1146,7 @@ ceiling_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0;
 
   if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("ceiling", number, divisor);
 
   bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (number),
 					    XBIGFLOAT_GET_PREC (divisor)));
@@ -1248,12 +1243,10 @@ ceiling_two_float (Lisp_Object number, Lisp_Object divisor,
   double f2 = extract_float (divisor);
   double f0, remain;
   Lisp_Object res0;
-	    
+
   if (f2 == 0.0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
-	    
+    return arith_error2 ("ceiling", number, divisor);
+
   IN_FLOAT2 (f0 = ceil (f1 / f2), MAYBE_EFF("ceiling"), number, divisor);
   IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF("ceiling"), number, divisor);
 
@@ -1306,7 +1299,7 @@ ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 #ifdef HAVE_BIGNUM
       else if (BIGNUMP (number))
 	{
-	  return values2 (make_float 
+	  return values2 (make_float
 			  (bignum_to_double (XBIGNUM_DATA (number))),
 			  Qzero);
 	}
@@ -1323,7 +1316,7 @@ ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 	  return values2 (number, Qzero);
 	}
     }
-  
+
   MAYBE_CHAR_OR_MARKER (ceiling);
 
   return Ffceiling (wrong_type_argument (Qnumberp, number), divisor);
@@ -1339,9 +1332,7 @@ floor_two_fixnum (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0;
 
   if (i2 == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("floor", number, divisor);
 
   /* With C89's integer /, the result is implementation-defined if either
      operand is negative, so use only nonnegative operands. Notice also that
@@ -1373,9 +1364,7 @@ floor_two_bignum (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0, res1;
 
   if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("floor", number, divisor);
 
   bignum_floor (scratch_bignum, XBIGNUM_DATA (number),
 		XBIGNUM_DATA (divisor));
@@ -1412,9 +1401,7 @@ floor_two_ratio (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0, res1;
 
   if (ratio_sign (XRATIO_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("floor", number, divisor);
 
   ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
 
@@ -1449,9 +1436,7 @@ floor_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0;
 
   if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("floor", number, divisor);
 
   bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (number),
 					    XBIGFLOAT_GET_PREC (divisor)));
@@ -1546,12 +1531,10 @@ floor_two_float (Lisp_Object number, Lisp_Object divisor,
   double f1 = extract_float (number);
   double f2 = extract_float (divisor);
   double f0, remain;
-	    
+
   if (f2 == 0.0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
-	    
+    return arith_error2 ("floor", number, divisor);
+
   IN_FLOAT2 (f0 = floor (f1 / f2), MAYBE_EFF ("floor"), number, divisor);
   IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("floor"), number, divisor);
 
@@ -1621,17 +1604,14 @@ floor_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 /* Algorithm taken from cl-extra.el, now to be found as cl-round in
    tests/automated/lisp-tests.el.  */
 static Lisp_Object
-round_two_fixnum (Lisp_Object number, Lisp_Object divisor, 
-		  int return_float)
+round_two_fixnum (Lisp_Object number, Lisp_Object divisor, int return_float)
 {
   EMACS_INT i1 = XREALINT (number);
   EMACS_INT i2 = XREALINT (divisor);
   EMACS_INT i0, hi2, flooring, floored, flsecond;
 
   if (i2 == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("round", number, divisor);
 
   hi2 = i2 < 0 ? -( -i2 / 2) : i2 / 2;
 
@@ -1716,15 +1696,12 @@ round_two_bignum_1 (bignum number, bignum divisor,
 }
 
 static Lisp_Object
-round_two_bignum (Lisp_Object number, Lisp_Object divisor, 
-		  int return_float)
+round_two_bignum (Lisp_Object number, Lisp_Object divisor, int return_float)
 {
   Lisp_Object res0, res1;
 
   if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("round", number, divisor);
 
   round_two_bignum_1 (XBIGNUM_DATA (number), XBIGNUM_DATA (divisor),
 		      &res0, &res1);
@@ -1750,12 +1727,10 @@ round_two_ratio (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0, res1;
 
   if (ratio_sign (XRATIO_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("round", number, divisor);
 
   ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
-  
+
   round_two_bignum_1 (ratio_numerator (scratch_ratio),
 		      ratio_denominator (scratch_ratio), &res0, &res1);
 
@@ -1766,7 +1741,7 @@ round_two_ratio (Lisp_Object number, Lisp_Object divisor,
       ratio_set_bignum (scratch_ratio2, XBIGNUM_DATA (res0));
       ratio_mul (scratch_ratio, scratch_ratio2, XRATIO_DATA (divisor));
       ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio);
-      
+
       res1 = Fcanonicalize_number (make_ratio_rt (scratch_ratio));
     }
 
@@ -1853,9 +1828,7 @@ round_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
 			    XBIGFLOAT_GET_PREC (divisor));
 
   if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("round", number, divisor);
 
   bigfloat_init (divided);
   bigfloat_set_prec (divided, prec);
@@ -1866,7 +1839,7 @@ round_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
 
   bigfloat_set_prec (scratch_bigfloat, prec);
   bigfloat_set_prec (scratch_bigfloat2, prec);
-            
+
   bigfloat_mul (scratch_bigfloat, XBIGFLOAT_DATA (res0),
 		XBIGFLOAT_DATA (divisor));
   bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number),
@@ -1921,7 +1894,7 @@ round_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
   Lisp_Object res0 = round_one_bigfloat_1 (XBIGFLOAT_DATA (number));
   Lisp_Object res1;
 
-  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), 
+  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number),
 		XBIGFLOAT_DATA (res0));
 
   res1 = make_bigfloat_bf (scratch_bigfloat);
@@ -1948,12 +1921,12 @@ round_two_float (Lisp_Object number, Lisp_Object divisor,
   double f1 = extract_float (number);
   double f2 = extract_float (divisor);
   double f0, remain;
-	    
+
   if (f2 == 0.0)
-    Fsignal (Qarith_error, Qnil);
+    return arith_error2 ("round", number, divisor);
 
   IN_FLOAT2 ((f0 = emacs_rint (f1 / f2)), MAYBE_EFF ("round"), number,
-	     divisor); 
+	     divisor);
   IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("round"), number, divisor);
 
   if (return_float)
@@ -1973,7 +1946,7 @@ round_one_float (Lisp_Object number, int return_float)
   double d;
   /* Screw the prevailing rounding mode.  */
   IN_FLOAT ((d = emacs_rint (XFLOAT_DATA (number))), MAYBE_EFF ("round"),
-    	number);
+	    number);
 
   if (return_float)
     {
@@ -1982,7 +1955,7 @@ round_one_float (Lisp_Object number, int return_float)
   else
     {
       return values2 ((float_to_int (d, MAYBE_EFF ("round"), number,
-				     Qunbound)), 
+				     Qunbound)),
 		      make_float (XFLOAT_DATA (number) - d));
     }
 }
@@ -2014,11 +1987,11 @@ round_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 
   if (return_float)
     {
-      return Ffround (wrong_type_argument (Qnumberp, number), divisor);  
+      return Ffround (wrong_type_argument (Qnumberp, number), divisor);
     }
   else
     {
-      return Fround (wrong_type_argument (Qnumberp, number), divisor);  
+      return Fround (wrong_type_argument (Qnumberp, number), divisor);
     }
 }
 
@@ -2031,7 +2004,7 @@ truncate_two_fixnum (Lisp_Object number, Lisp_Object divisor,
   EMACS_INT i0;
 
   if (i2 == 0)
-    Fsignal (Qarith_error, Qnil);
+    return arith_error2 ("truncate", number, divisor);
 
   /* We're truncating towards zero, so apart from avoiding the C89
      implementation-defined behaviour with truncation and negative numbers,
@@ -2058,9 +2031,7 @@ truncate_two_bignum (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0;
 
   if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("truncate", number, divisor);
 
   bignum_div (scratch_bignum, XBIGNUM_DATA (number),
 	      XBIGNUM_DATA (divisor));
@@ -2096,9 +2067,7 @@ truncate_two_ratio (Lisp_Object number, Lisp_Object divisor,
   Lisp_Object res0;
 
   if (ratio_sign (XRATIO_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("truncate", number, divisor);
 
   ratio_div (scratch_ratio, XRATIO_DATA (number), XRATIO_DATA (divisor));
 
@@ -2138,9 +2107,7 @@ truncate_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
 			    XBIGFLOAT_GET_PREC (divisor));
 
   if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("truncate", number, divisor);
 
   bigfloat_set_prec (scratch_bigfloat, prec);
   bigfloat_set_prec (scratch_bigfloat2, prec);
@@ -2162,7 +2129,7 @@ truncate_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
       res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
-            
+
   bigfloat_mul (scratch_bigfloat2, scratch_bigfloat, XBIGFLOAT_DATA (divisor));
   bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number), scratch_bigfloat2);
 
@@ -2178,9 +2145,7 @@ truncate_one_ratio (Lisp_Object number, Lisp_Object UNUSED (divisor),
   Lisp_Object res0;
 
   if (ratio_sign (XRATIO_DATA (number)) == 0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return Qzero;
 
   bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
 	      XRATIO_DENOMINATOR (number));
@@ -2234,7 +2199,7 @@ truncate_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
   bigfloat_sub (scratch_bigfloat2, XBIGFLOAT_DATA (number), scratch_bigfloat);
 
   return
-    values2 (res0, 
+    values2 (res0,
 	     Fcanonicalize_number (make_bigfloat_bf (scratch_bigfloat2)));
 }
 #endif /* HAVE_BIGFLOAT */
@@ -2247,11 +2212,9 @@ truncate_two_float (Lisp_Object number, Lisp_Object divisor,
   double f2 = extract_float (divisor);
   double f0, remain;
   Lisp_Object res0;
-	    
+
   if (f2 == 0.0)
-    {
-      Fsignal (Qarith_error, Qnil);
-    }
+    return arith_error2 ("truncate", number, divisor);
 
   res0 = float_to_int (f1 / f2, MAYBE_EFF ("truncate"), number, Qunbound);
   f0 = extract_float (res0);
@@ -2325,7 +2288,7 @@ DEFUN ("ceiling", Fceiling, 1, 2, 0, /*
 Return the smallest integer no less than NUMBER.  (Round toward +inf.)
 
 With optional argument DIVISOR, return the smallest integer no less than
-the quotient of NUMBER and DIVISOR. 
+the quotient of NUMBER and DIVISOR.
 
 This function returns multiple values; see `multiple-value-bind' and
 `multiple-value-call'.  The second returned value is the remainder in the
