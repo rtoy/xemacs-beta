@@ -3240,7 +3240,7 @@ surrounded by (block NAME ...)."
                    begin)
                ;; Call cl-delete-duplicates explicitly, to avoid the form
                ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ,(third form) ,(fourth form) nil))))
+               (cl-delete-duplicates begin ',cl-keys nil))))
           ((and (= 4 (length form))
                 (eq :test (third form))
                 (or (equal '(quote equal) (fourth form))
@@ -3255,7 +3255,7 @@ surrounded by (block NAME ...)."
                    begin)
                ;; Call cl-delete-duplicates explicitly, to avoid the form
                ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ,(third form) ,(fourth form) nil))))
+               (cl-delete-duplicates begin ',cl-keys nil))))
           (t
            form))))
 

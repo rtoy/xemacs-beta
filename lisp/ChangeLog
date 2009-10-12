@@ -1,3 +1,9 @@
+2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-duplicates): 
+	Fix another bug in the delete-duplicates compiler macro, thank you
+	the byte compiler. 
+
 2009-10-07  Andreas Roehler  <andreas.roehler@online.de>
 
 	* lisp.el (beginning-of-defun-function):
