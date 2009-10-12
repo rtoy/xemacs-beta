@@ -132,7 +132,7 @@
        "CCL TEST temporary coding-system."
        '(mnemonic "CCL-TEST"
 		  eol-type lf
-                  safe-chars t
+                  safe-charsets t
 		  decode ccl-test-decoder
 		  encode ccl-test-encoder))))
 
