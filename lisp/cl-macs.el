@@ -3266,6 +3266,11 @@ surrounded by (block NAME ...)."
       form
     (cons 'mapc-internal (cdr form))))
 
+(define-compiler-macro mapcar* (&whole form cl-func cl-x &rest cl-rest)
+  (if cl-rest
+      form
+    (cons 'mapcar (cdr form))))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)

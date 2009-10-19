@@ -1,3 +1,23 @@
+2009-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-default-warnings): 
+	Add two new warning types, discarded-consing (basically use of
+	mapcar instead of mapc where its result is discarded) and
+	quoted-lambda (use of a lambda expression quoted as data in a
+	function context).
+	(byte-compile-warnings): Document the new warnings. 
+	(byte-compile-fset, byte-compile-funarg): Implement the
+	quoted-lambda warning option. 
+	(byte-compile-mapcar): Renamed to byte-compile-maybe-mapc.
+	(byte-compile-maybe-mapc, byte-compile-maplist): 
+	Implement the discarded-consing warning option. 
+	Add more functions that should be compiled using
+	byte-compile-funarg, notably mapvector, mapc-internal,
+	map-char-table. 
+	* cl-macs.el (mapcar*): 
+	If we know at compile time that there are no CL options being
+	used, use the mapcar subr, not the byte-coded function. 
+
 2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (mapc):
