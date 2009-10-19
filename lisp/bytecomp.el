@@ -117,6 +117,12 @@
 ;;;				'obsolete  (obsolete variables and functions)
 ;;;				'pedantic  (references to Emacs-compatible
 ;;;					    symbols)
+;;;                             'discarded-consing (use of mapcar instead of
+;;;                                                 mapc, and similar)
+;;;                             'quoted-lambda (quoting a lambda expression
+;;;                                             as data, not as a function,
+;;;                                             and using it in a function
+;;;                                             context )
 ;;; byte-compile-emacs19-compatibility	Whether the compiler should
 ;;;				generate .elc files which can be loaded into
 ;;;				generic emacs 19.
@@ -361,7 +367,8 @@ If it is 'byte, then only byte-level optimizations will be logged.")
 
 ;; byte-compile-warning-types in FSF.
 (defvar byte-compile-default-warnings
-  '(redefine callargs subr-callargs free-vars unresolved unused-vars obsolete)
+  '(redefine callargs subr-callargs free-vars unresolved unused-vars obsolete
+    discarded-consing quoted-lambda)
   "*The warnings used when byte-compile-warnings is t.")
 
 (defvar byte-compile-warnings t
@@ -377,6 +384,12 @@ Elements of the list may be:
 		versa, or redefined to take a different number of arguments.
   obsolete	use of an obsolete function or variable.
   pedantic	warn of use of compatible symbols.
+  discarded-consing 
+                calls to (some) functions that allocate memory, where that
+                memory is immediately discarded; canonically, the use of 
+                mapcar instead of mapc
+  quoted-lambda passing a lambda expression not quoted as a function, as a
+                function argument
 
 The default set is specified by `byte-compile-default-warnings' and
 normally encompasses all possible warnings.
@@ -1073,7 +1086,8 @@ otherwise pop it")
     (verbose byte-compile-verbose (t nil) val)
     (new-bytecodes byte-compile-new-bytecodes (t nil) val)
     (warnings byte-compile-warnings
-	      ((callargs subr-callargs redefine free-vars unused-vars unresolved))
+	      ((callargs subr-callargs redefine free-vars unused-vars
+			 unresolved discarded-consing quoted-lambda))
 	      val)))
 
 ;; XEmacs addition
@@ -3502,7 +3516,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
       (if (stringp (car body)) (setq body (cdr body)))
       (if (eq 'interactive (car-safe (car body))) (setq body (cdr body)))
       (if (and (consp (car body))
-	       (not (eq 'byte-code (car (car body)))))
+	       (not (eq 'byte-code (car (car body))))
+	       (memq 'quoted-lambda byte-compile-warnings))
 	  (byte-compile-warn
     "A quoted lambda form is the second argument of fset.  This is probably
      not what you want, as that lambda cannot be compiled.  Consider using
@@ -3515,7 +3530,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (byte-compile-normal-call
    (let ((fn (nth 1 form)))
      (if (and (eq (car-safe fn) 'quote)
-	      (eq (car-safe (nth 1 fn)) 'lambda))
+	      (eq (car-safe (nth 1 fn)) 'lambda)
+	      (or 
+	       (null (memq 'quoted-lambda byte-compile-warnings))
+	       (byte-compile-warn
+		"Passing a quoted lambda to #'%s, forcing function quoting"
+		(car form))))
 	 (cons (car form)
 	       (cons (cons 'function (cdr fn))
 		     (cdr (cdr form))))
@@ -3523,16 +3543,21 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 
 ;; XEmacs change; don't cons up the list if it's going to be immediately
 ;; discarded.
-(defun byte-compile-mapcar (form)
-  (and for-effect (setq form (cons 'mapc-internal (cdr form)))
-       (byte-compile-warn
-	"Discarding the result of #'mapcar; maybe you meant #'mapc?"))
+(defun byte-compile-maybe-mapc (form)
+  (and for-effect
+       (or (null (memq 'discarded-consing byte-compile-warnings))
+	   (byte-compile-warn
+	    "Discarding the result of #'%s; maybe you meant #'mapc?"
+	    (car form)))
+       (setq form (cons 'mapc-internal (cdr form))))
   (byte-compile-funarg form))
 
 (defun byte-compile-maplist (form)
-  (and for-effect (setq form (cons 'mapl (cdr form)))
-       (byte-compile-warn
-	"Discarding the result of #'maplist; maybe you meant #'mapl?"))
+  (and for-effect
+       (or (null (memq 'discarded-consing byte-compile-warnings))
+	   (byte-compile-warn
+	    "Discarding the result of #'maplist; maybe you meant #'mapl?"))
+       (setq form (cons 'mapl (cdr form))))
   (byte-compile-funarg form))
 
 ;; (function foo) must compile like 'foo, not like (symbol-function 'foo).
@@ -3712,7 +3737,10 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 while)
 (byte-defop-compiler-1 funcall)
 (byte-defop-compiler-1 apply byte-compile-funarg)
-(byte-defop-compiler-1 mapcar byte-compile-mapcar)
+(byte-defop-compiler-1 mapcar byte-compile-maybe-mapc)
+(byte-defop-compiler-1 mapvector byte-compile-maybe-mapc)
+(byte-defop-compiler-1 mapc byte-compile-funarg)
+(byte-defop-compiler-1 mapc-internal byte-compile-funarg)
 (byte-defop-compiler-1 mapatoms byte-compile-funarg)
 (byte-defop-compiler-1 mapconcat byte-compile-funarg)
 (byte-defop-compiler-1 map byte-compile-funarg)
@@ -3720,6 +3748,16 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 mapl byte-compile-funarg)
 (byte-defop-compiler-1 mapcan byte-compile-funarg)
 (byte-defop-compiler-1 mapcon byte-compile-funarg)
+(byte-defop-compiler-1 map-char-table byte-compile-funarg)
+(byte-defop-compiler-1 map-database byte-compile-funarg)
+(byte-defop-compiler-1 map-extent-children byte-compile-funarg)
+(byte-defop-compiler-1 map-extents byte-compile-funarg)
+(byte-defop-compiler-1 map-plist byte-compile-funarg)
+(byte-defop-compiler-1 map-range-table byte-compile-funarg)
+(byte-defop-compiler-1 map-syntax-table byte-compile-funarg)
+(byte-defop-compiler-1 mapcar-extents byte-compile-funarg)
+(byte-defop-compiler-1 mapcar* byte-compile-funarg)
+(byte-defop-compiler-1 maphash byte-compile-funarg)
 (byte-defop-compiler-1 let)
 (byte-defop-compiler-1 let*)
 
