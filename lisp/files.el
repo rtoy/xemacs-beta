@@ -4514,4 +4514,39 @@ absolute one."
 
 ;; END SYNC WITH FSF 21.2.
 
+;; XEmacs:
+(defvar default-file-system-ignore-case (and
+                                         (memq system-type '(windows-nt
+                                                             cygwin32
+							     darwin))
+                                         t)
+  "What `file-system-ignore-case-p' returns by default.
+This is in the case that nothing in `file-system-case-alist' matches.")
+
+;; Question; do any of the Linuxes mount Windows partitions in a fixed
+;; place?
+(defvar file-system-case-alist nil
+  "Alist to decide where file name case is significant. 
+
+The format is ((PATTERN . VAL) ...), where PATTERN is a regular expression
+matching a file name, and VAL is t if corresponding file names are
+case-insensitive, nil if corresponding file names are case sensitive. Only
+the first match will be used.
+
+This list is used by `file-system-ignore-case-p', itself used in tab
+completion; see also `default-file-system-ignore-case'.")
+
+(defun file-system-ignore-case-p (path)
+  "Return t if PATH resides on a file system with case-insensitive names.
+Otherwise, return nil.  See `file-system-case-alist' and
+`default-file-system-ignore-case'."
+  (check-argument-type #'stringp path)
+  (if file-system-case-alist
+      (loop
+        for (pattern . val)
+        in file-system-case-alist
+        do (and (string-match pattern path) (return val))
+        finally (return default-file-system-ignore-case))
+    default-file-system-ignore-case))
+
 ;;; files.el ends here
