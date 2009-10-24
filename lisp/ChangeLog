@@ -1,3 +1,18 @@
+2009-10-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (default-file-system-ignore-case): New variable.
+	(file-system-case-alist): New variable.
+	(file-system-ignore-case-p):
+	New function; return t if file names under PATH should be treated
+	case-insensitively.
+	* minibuf.el (read-file-name-1, read-file-name-internal-1)
+	(read-file-name-internal-1): 
+	* package-admin.el (package-admin-check-manifest): 
+	Use file-system-ignore-case-p instead of checking system-type
+	directly in these functions. (Even though minibuf.el is dumped
+	before files.el, the function is only called in interactive usage,
+	there's no dump time order dependency here.) 
+
 2009-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-default-warnings): 

@@ -1698,9 +1698,7 @@ If DEFAULT-VALUE is non-nil, return that if user enters an empty
     (add-one-shot-hook
      'minibuffer-setup-hook
      (lambda ()
-       ;; #### SCREAM!  Create a `file-system-ignore-case'
-       ;; function, so this kind of stuff is generalized!
-       (and (eq system-type 'windows-nt)
+       (and (file-system-ignore-case-p (or dir default-directory))
 	    (set (make-local-variable 'completion-ignore-case) t))
        (set
 	(make-local-variable
@@ -1777,6 +1775,8 @@ DIR defaults to current buffer's directory default."
 	    string))
       ;; Not doing environment-variable completion hack
       (let* ((orig (if (equal string "") nil string))
+	     (completion-ignore-case (file-system-ignore-case-p
+				      (or dir default-directory)))
              (sstring (if orig (substitute-in-file-name string) string))
              (specdir (if orig (file-name-directory sstring) nil))
              (name    (if orig (file-name-nondirectory sstring) string))
@@ -1814,6 +1814,8 @@ DIR defaults to current buffer's directory default."
                    name)))
       ;; An odd number of trailing $'s
       (let* ((start (match-beginning 3))
+	     (completion-ignore-case (file-system-ignore-case-p
+				      (or dir default-directory)))
              (env (substring string
                              (cond ((= start (length string))
                                     ;; "...$"
