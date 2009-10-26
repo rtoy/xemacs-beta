@@ -340,6 +340,11 @@ things are arranged in config.h.in.  In particular:
 #undef DLSYM_NEEDS_UNDERSCORE
 #undef HAVE_SHLIB
 
+/* Darwin; realpath corrects for case: */
+#ifdef HAVE_DYLD
+#define REALPATH_CORRECTS_CASE 1
+#endif
+
 #undef HAVE_LIBINTL
 #undef HAVE_LIBDNET
 #undef HAVE_LIBRESOLV

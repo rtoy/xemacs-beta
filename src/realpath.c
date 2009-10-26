@@ -78,6 +78,11 @@ abs_start (const Ibyte *name)
    DOES NOT ZERO TERMINATE!!!!!
 */
 
+#ifdef REALPATH_CORRECTS_CASE /* Darwin */
+#include <sys/param.h>
+#include <stdlib.h>
+#endif
+
 static int
 readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 #ifndef WIN32_ANY
@@ -88,8 +93,52 @@ readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 			  )
 {
 #ifndef WIN32_ANY
+#ifdef REALPATH_CORRECTS_CASE
+  /* Darwin's realpath corrects file name case, so we want to use that
+     here, as well as our own, non-case-correcting, implementation
+     further down in this file.
+
+     It might be reasonable to incorporate case correction in our own
+     realpath implementation, which would help things with
+     case-insensitive file systems on Linux; one way to do this would
+     be to make sure that init_initial_directory and
+     get_initial_directory always give the correct case.  */
+  int n = qxe_readlink (name, buf, (size_t) size);
+  Extbyte realpath_buf[PATH_MAX], *tmp;
+  DECLARE_EISTRING (realpathing);
+
+  if (n >= 0 || errno != EINVAL)
+    return n;
+
+  eicpy_rawz (realpathing, name);
+  eito_external (realpathing, Qfile_name);
+  tmp = realpath (eiextdata (realpathing), realpath_buf);
+
+  if (!tmp)
+    return -1;
+
+  if (0 == memcmp (eiextdata (realpathing), realpath_buf,
+                   eiextlen (realpathing)))
+    {
+      /* No case change needed; tell the caller that. */
+      errno = EINVAL;
+      return -1;
+    }
+
+  eireset (realpathing);
+  eicpy_ext (realpathing, realpath_buf, Qfile_name);
+  if (eilen (realpathing) > size)
+    {
+      errno = ERANGE;
+      return -1;
+    }
+
+  memcpy (buf, eidata (realpathing), eilen (realpathing));
+  return eilen (realpathing);
+#else /* !REALPATH_CORRECTS_CASE */
   return qxe_readlink (name, buf, (size_t) size);
-#else
+#endif /* REALPATH_CORRECTS_CASE */
+#else /* defined (WIN32_ANY) */
 # ifdef CYGWIN
   Ibyte *tmp;
   int n = qxe_readlink (name, buf, (size_t) size);
