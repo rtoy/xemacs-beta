@@ -1,3 +1,11 @@
+2009-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in (REALPATH_CORRECTS_CASE): 
+	New #define, available on Darwin. 
+	* realpath.c (readlink_or_correct_case): 
+	On Darwin, use realpath(3)'s case correction to get the canonical
+	case for a file; thank you Robert Delius Royar!
+
 2009-10-11  Michael Sperber  <mike@xemacs.org>
 
 	* event-stream.c (post_command_hook): Run `post-command-hook'
