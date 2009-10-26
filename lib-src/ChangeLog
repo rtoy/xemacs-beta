@@ -1,3 +1,9 @@
+2009-10-26  Jerry James  <james@xemacs.org>
+
+	* insert-data-in-exec.c: Add BSD header, with permission of
+	Olivier Galibert.  See xemacs-beta message with ID
+	<20091013224104.GA2573@dspnet.fr.eu.org>.
+
 2009-08-15  It's me FKtPp ;)  <m_pupil@yahoo.com.cn>
 
 	* gnuclient.c (main): Do not set start point position if user
