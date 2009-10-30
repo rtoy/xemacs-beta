@@ -1,3 +1,8 @@
+2009-10-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (regexp-quote): 
+	If STRING is constant, call regexp-quote at compile time.
+
 2009-10-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (default-file-system-ignore-case): New variable.
