@@ -3271,6 +3271,14 @@ surrounded by (block NAME ...)."
       form
     (cons 'mapcar (cdr form))))
 
+;; XEmacs; it's perfectly reasonable, and often much clearer to those
+;; reading the code, to call regexp-quote on a constant string, which is
+;; something we can optimise here easily.
+(define-compiler-macro regexp-quote (&whole form string)
+  (if (stringp string)
+      (regexp-quote string)
+    form))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
