@@ -2091,3 +2091,6 @@
    (letf (((values three one-four-one-five-nine) (floor pi)))
      (* three one-four-one-five-nine))))
 
+;; This used to error: 
+(Assert (nil (equalp "hi there" [hi there]))
+	"checking equalp doesn't error with string and non-string")
