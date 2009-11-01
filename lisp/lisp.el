@@ -52,18 +52,18 @@ See `beginning-of-defun'."
   :group 'editing-basics
   :group 'lisp)
 
-(defun forward-sexp (&optional arg)
+(defun forward-sexp (&optional count)
   "Move forward across one balanced expression (sexp).
-With argument, do it that many times.  Negative arg -N means
-move backward across N balanced expressions."
+With non-nil COUNT, do it that many times.  Negative COUNT means
+move backward across -COUNT balanced expressions."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (or arg (setq arg 1))
+  (or count (setq count 1))
   ;; XEmacs: evil hack! The other half of the evil hack below.
-  (if (and (> arg 0) (looking-at "#s(\\|#r[uU]\\{0,1\\}\""))
+  (if (and (> count 0) (looking-at "#s(\\|#r[uU]\\{0,1\\}\""))
     (goto-char (1+ (- (point) (- (match-end 0) (match-beginning 0))))))
-  (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
-  (when (< arg 0) 
+  (goto-char (or (scan-sexps (point) count) (buffer-end count)))
+  (when (< count 0) 
     (backward-prefix-chars)
     ;; XEmacs: evil hack! Skip back over #[sr] so that structures and raw
     ;; strings are read properly.  the current cheesified syntax tables just
@@ -75,85 +75,86 @@ move backward across N balanced expressions."
       (if matched
 	(goto-char (1+ (- (point) (- (length subject) matched))))))))
 
-(defun backward-sexp (&optional arg)
+(defun backward-sexp (&optional count)
   "Move backward across one balanced expression (sexp).
-With argument, do it that many times.  Negative arg -N means
-move forward across N balanced expressions."
+With non-nil COUNT, do it that many times.  Negative COUNT means
+move forward across -COUNT balanced expressions."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (forward-sexp (- (or arg 1))))
+  (forward-sexp (- (or count 1))))
 
-(defun mark-sexp (&optional arg)
-  "Set mark ARG sexps from point.
+(defun mark-sexp (&optional count)
+  "Set mark COUNT sexps from point.
 The place mark goes is the same place \\[forward-sexp] would
 move to with the same argument.
 Repeat this command to mark more sexps in the same direction."
   (interactive "p")
-  (mark-something 'mark-sexp 'forward-sexp (or arg 1)))
+  (mark-something 'mark-sexp 'forward-sexp (or count 1)))
 
-(defun forward-list (&optional arg)
+(defun forward-list (&optional count)
   "Move forward across one balanced group of parentheses.
-With argument, do it that many times.
-Negative arg -N means move backward across N groups of parentheses."
+With non-nil COUNT, do it that many times.
+Negative COUNT means move backward across -COUNT groups of parentheses."
   ;; XEmacs change
   (interactive "_p")
-  (goto-char (or (scan-lists (point) (or arg 1) 0) (buffer-end (or arg 1)))))
+  (goto-char (or (scan-lists (point) (or count 1) 0)
+		 (buffer-end (or count 1)))))
 
-(defun backward-list (&optional arg)
+(defun backward-list (&optional count)
   "Move backward across one balanced group of parentheses.
-With argument, do it that many times.
-Negative arg -N means move forward across N groups of parentheses."
+With non-nil COUNT, do it that many times.
+Negative COUNT means move forward across -COUNT groups of parentheses."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (forward-list (- (or arg 1))))
+  (forward-list (- (or count 1))))
 
-(defun down-list (&optional arg)
+(defun down-list (&optional count)
   "Move forward down one level of parentheses.
-With argument, do this that many times.
-A negative argument means move backward but still go down a level."
+With non-nil COUNT, do this that many times.
+A negative COUNT means move backward but still go down a level."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (or arg (setq arg 1))
-  (let ((inc (if (> arg 0) 1 -1)))
-    (while (/= arg 0)
-      (goto-char (or (scan-lists (point) inc -1) (buffer-end arg)))
-      (setq arg (- arg inc)))))
+  (or count (setq count 1))
+  (let ((inc (if (> count 0) 1 -1)))
+    (while (/= count 0)
+      (goto-char (or (scan-lists (point) inc -1) (buffer-end count)))
+      (setq count (- count inc)))))
 
-(defun backward-up-list (&optional arg)
+(defun backward-up-list (&optional count)
   "Move backward out of one level of parentheses.
-With argument, do this that many times.
-A negative argument means move forward but still to a less deep spot."
+With COUNT, do this that many times.
+A negative COUNT means move forward but still to a less deep spot."
   (interactive "_p")
-  (up-list (- (or arg 1))))
+  (up-list (- (or count 1))))
 
-(defun up-list (&optional arg)
+(defun up-list (&optional count)
   "Move forward out of one level of parentheses.
-With argument, do this that many times.
-A negative argument means move backward but still to a less deep spot.
+With non-nil COUNT, do this that many times.
+A negative COUNT means move backward but still to a less deep spot.
 In Lisp programs, an argument is required."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (or arg (setq arg 1))
-  (let ((inc (if (> arg 0) 1 -1)))
-    (while (/= arg 0)
-      (goto-char (or (scan-lists (point) inc 1) (buffer-end arg)))
-      (setq arg (- arg inc)))))
+  (or count (setq count 1))
+  (let ((inc (if (> count 0) 1 -1)))
+    (while (/= count 0)
+      (goto-char (or (scan-lists (point) inc 1) (buffer-end count)))
+      (setq count (- count inc)))))
 
-(defun kill-sexp (&optional arg)
+(defun kill-sexp (&optional count)
   "Kill the sexp (balanced expression) following the cursor.
-With argument, kill that many sexps after the cursor.
-Negative arg -N means kill N sexps before the cursor."
+With non-nil COUNT, kill that many sexps after the cursor.
+Negative COUNT means kill -COUNT sexps before the cursor."
   (interactive "p")
   (let ((opoint (point)))
-    (forward-sexp (or arg 1))
+    (forward-sexp (or count 1))
     (kill-region opoint (point))))
 
-(defun backward-kill-sexp (&optional arg)
+(defun backward-kill-sexp (&optional count)
   "Kill the sexp (balanced expression) preceding the cursor.
-With argument, kill that many sexps before the cursor.
-Negative arg -N means kill N sexps after the cursor."
+With non-nil COUNT, kill that many sexps before the cursor.
+Negative COUNT means kill -COUNT sexps after the cursor."
   (interactive "p")
-  (kill-sexp (- (or arg 1))))
+  (kill-sexp (- (or count 1))))
 
 
 ;; derived stuff from GNU Emacs
@@ -175,10 +176,10 @@ of the current defun instead of using the standard one implemented by
 ")
 (make-variable-buffer-local 'end-of-defun-function)
 
-(defun beginning-of-defun (&optional arg)
+(defun beginning-of-defun (&optional count)
   "Move backward to the beginning of the current defun.
-With argument, do it that many times.  Negative arg -N
-means move forward to Nth following beginning of defun.
+With COUNT, do it that many times.  Negative COUNT
+means move forward to -COUNTth following beginning of defun.
 Returns t unless search stops due to beginning or end of buffer.
 
 In the default implementation provided by `beginning-of-defun-raw',
@@ -192,35 +193,36 @@ If the beginning of defun function returns t, point moves to the
 beginning of the line containing the beginning of defun."
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (and (beginning-of-defun-raw arg)
+  (and (beginning-of-defun-raw count)
        (progn (beginning-of-line) t)))
 
-(defun beginning-of-defun-raw (&optional arg)
+(defun beginning-of-defun-raw (&optional count)
   "Move point to the character that starts a defun.
 This is identical to beginning-of-defun, except that point does not move
 to the beginning of the line when `defun-prompt-regexp' is non-nil."
   (interactive "p")
-  (unless arg (setq arg 1))
+  (unless count (setq count 1))
   (if beginning-of-defun-function
-      (funcall beginning-of-defun-function arg)
-    (and (< arg 0) (not (eobp)) (forward-char 1))
+      (funcall beginning-of-defun-function count)
+    (and (< count 0) (not (eobp)) (forward-char 1))
     (and
      (re-search-backward (if defun-prompt-regexp
 			     (concat "^\\s(\\|"
 				     "\\(" defun-prompt-regexp "\\)\\s(")
 			   "^\\s(")
-			 nil 'move arg)
+			 nil 'move count)
      (progn (goto-char (1- (match-end 0)))) t)))
 
 ;; XEmacs change (optional buffer parameter)
-(defun buffer-end (arg &optional buffer)
-  "Return `point-max' of BUFFER if ARG is > 0; return `point-min' otherwise.
+(defun buffer-end (direction &optional buffer)
+  "Return `point-max' of BUFFER if DIRECTION > 0, else return `point-min'.
 BUFFER defaults to the current buffer if omitted."
-  (if (> arg 0) (point-max buffer) (point-min buffer)))
+  (if (> direction 0) (point-max buffer) (point-min buffer)))
 
-(defun end-of-defun (&optional arg)
-  "Move forward to next end of defun.  With argument, do it that many times.
-Negative argument -N means move back to Nth preceding end of defun.
+(defun end-of-defun (&optional count)
+  "Move forward to next end of defun.
+Non-nil COUNT means do it that many times (default is 1).
+Negative COUNT means move back to -COUNTth preceding end of defun.
 
 In the default implementation, the end of a defun is the end of the
 s-expression started at the character identified by `beginning-of-defun'.
@@ -231,13 +233,13 @@ called that many times.  If the repetition count is less than 1, nothing
 is done.  \(This is a bug.)"
   ;; XEmacs change (for zmacs regions)
   (interactive "_p")
-  (if (or (null arg) (= arg 0)) (setq arg 1))
+  (if (or (null count) (= count 0)) (setq count 1))
   (if end-of-defun-function
-      (if (> arg 0) 
-	  (dotimes (i arg)
+      (if (> count 0) 
+	  (dotimes (i count)
 	    (funcall end-of-defun-function)))
   (let ((first t))
-    (while (and (> arg 0) (< (point) (point-max)))
+    (while (and (> count 0) (< (point) (point-max)))
       (let ((pos (point))) ; XEmacs -- remove unused npos.
 	(while (progn
 		(if (and first
@@ -253,8 +255,8 @@ is done.  \(This is a bug.)"
 		(if (looking-at "\\s<\\|\n")
 		    (forward-line 1))
 		(<= (point) pos))))
-      (setq arg (1- arg)))
-    (while (< arg 0)
+      (setq count (1- count)))
+    (while (< count 0)
       (let ((pos (point)))
 	(beginning-of-defun-raw 1)
 	(forward-sexp 1)
@@ -267,7 +269,7 @@ is done.  \(This is a bug.)"
 		  (if (looking-at "\\s<\\|\n")
 		      (forward-line 1)))
 	      (goto-char (point-min)))))
-      (setq arg (1+ arg))))))
+      (setq count (1+ count))))))
 
 (defun mark-defun ()
   "Put mark at end of this defun, point at beginning.
@@ -281,7 +283,8 @@ The defun marked is the one that contains point or follows point."
 
 (defun narrow-to-defun (&optional arg)
   "Make text outside current defun invisible.
-The defun visible is the one that contains point or follows point."
+The defun visible is the one that contains point or follows point.
+Optional ARG is currently ignored."
   (interactive)
   (save-excursion
     (widen)
@@ -290,24 +293,24 @@ The defun visible is the one that contains point or follows point."
       (beginning-of-defun)
       (narrow-to-region (point) end))))
 
-(defun insert-parentheses (arg)
-  "Enclose following ARG sexps in parentheses.  Leave point after open-paren.
-A negative ARG encloses the preceding ARG sexps instead.
-No argument is equivalent to zero: just insert `()' and leave point between.
+(defun insert-parentheses (count)
+  "Enclose following COUNT sexps in parentheses.  Leave point after open-paren.
+A negative COUNT encloses the preceding -COUNT sexps instead.
+COUNT defaults to zero: just insert `()' and leave point between.
 If `parens-require-spaces' is non-nil, this command also inserts a space
 before and after, depending on the surrounding characters."
   (interactive "P")
-  (if arg (setq arg (prefix-numeric-value arg))
-    (setq arg 0))
-  (cond ((> arg 0) (skip-chars-forward " \t"))
-	((< arg 0) (forward-sexp arg) (setq arg (- arg))))
+  (if count (setq count (prefix-numeric-value count))
+    (setq count 0))
+  (cond ((> count 0) (skip-chars-forward " \t"))
+	((< count 0) (forward-sexp count) (setq count (- count))))
   (and parens-require-spaces
        (not (bobp))
        (memq (char-syntax (char-before (point))) '(?w ?_ ?\) ))
        (insert " "))
   (insert ?\()
   (save-excursion
-    (or (eq arg 0) (forward-sexp arg))
+    (or (eq count 0) (forward-sexp count))
     (insert ?\))
     (and parens-require-spaces
 	 (not (eobp))
