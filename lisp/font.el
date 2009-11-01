@@ -414,8 +414,8 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
 						(font-weight fontobj-2)))
     (set-font-family retval
                      (delete-duplicates (append (font-family fontobj-1)
-                                                (font-family fontobj-2)))
-                     :test #'equal)
+                                                (font-family fontobj-2))
+					:test #'equal))
     (set-font-style retval (logior (font-style fontobj-1)
 				   (font-style fontobj-2)))
     (set-font-registry retval (or (font-registry fontobj-1)

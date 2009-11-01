@@ -1,5 +1,10 @@
 2009-11-01  Stephen Turnbull  <stephen@xemacs.org>
 
+	* font.el (font-combine-fonts-internal):
+	Fix syntax error in call of delete-duplicates.
+
+2009-11-01  Stephen Turnbull  <stephen@xemacs.org>
+
 	* lisp.el (forward-sexp):
 	(backward-sexp):
 	(mark-sexp):
