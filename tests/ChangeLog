@@ -1,3 +1,9 @@
+2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Check that (equal "hi there" [hi there]) gives nil, instead of
+	erroring; fixes a bug Ben introduced in 2002. 
+
 2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el : 

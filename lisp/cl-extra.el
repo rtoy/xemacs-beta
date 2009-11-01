@@ -97,7 +97,8 @@ strings case-insensitively."
   (cond ((eq x y) t)
 	((stringp x)
 	 ;; XEmacs change: avoid downcase
-	 (eq t (compare-strings x nil nil y nil nil t)))
+	 (and (stringp y)
+	      (eq t (compare-strings x nil nil y nil nil t))))
 	;; XEmacs addition: compare characters
 	((characterp x)
 	 (and (characterp y)
