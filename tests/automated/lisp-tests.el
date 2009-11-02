@@ -2091,6 +2091,14 @@
    (letf (((values three one-four-one-five-nine) (floor pi)))
      (* three one-four-one-five-nine))))
 
-;; This used to error: 
-(Assert (nil (equalp "hi there" [hi there]))
+(Assert (equalp "hi there" "Hi There")
+	"checking equalp isn't case-sensitive")
+(Assert (equalp 99 99.0)
+	"checking equalp compares numerical values of different types")
+(Assert (null (equalp 99 ?c))
+	"checking equalp does not convert characters to numbers")
+;; Fixed in Hg d0ea57eb3de4.
+(Assert (null (equalp "hi there" [hi there]))
 	"checking equalp doesn't error with string and non-string")
+
+;;; end of lisp-tests.el
