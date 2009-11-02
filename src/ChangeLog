@@ -1,3 +1,15 @@
+2009-11-02  Stephen Turnbull  <stephen@xemacs.org>
+
+	Fix issue145.
+
+	* process.c: Remove abbreviated comments on exported Lisp
+	variables, and point to docstrings.
+	(init_process_io_handles): Allow Vdefault_network_coding_system
+	and Vdefault_process_coding_system to be nil.
+	(Vdefault_network_coding_system):
+	(Vdefault_process_coding_system):
+	Document that these variables may be nil.
+
 2009-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in (REALPATH_CORRECTS_CASE): 
