@@ -112,32 +112,23 @@ int delete_exited_processes;
    process objects. Processes are not GC-protected through this! */
 struct hash_table *usid_to_process;
 
-/* List of process objects. */
+/* Read-only to Lisp.  See DEFUN Fprocess_list. */
 Lisp_Object Vprocess_list;
 
+/* Lisp variables; see docstrings below. */
 Lisp_Object Vnull_device;
-
-/* Cons of coding systems used to initialize process I/O on a newly-
-   created process. */
 Lisp_Object Vdefault_process_coding_system;
-/* Same for a network connection. */
 Lisp_Object Vdefault_network_coding_system;
-
 Lisp_Object Qprocess_error;
 Lisp_Object Qnetwork_error;
-
 Fixnum debug_process_io;
-
 Lisp_Object Vshell_file_name;
-
-/* The environment to pass to all subprocesses when they are started.
-   This is in the semi-bogus format of ("VAR=VAL" "VAR2=VAL2" ... )
- */
 Lisp_Object Vprocess_environment;
 
 /* Make sure egetenv() not called too soon */
 int env_initted;
 
+/* Internal Lisp variable. */
 Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
@@ -523,7 +514,7 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, void* err,
 
   if (flags & STREAM_NETWORK_CONNECTION)
     {
-      if (!CONSP (Vdefault_network_coding_system) ||
+      if (!LISTP (Vdefault_network_coding_system) ||
 	  NILP (incode = (find_coding_system_for_text_file
 			  (Fcar (Vdefault_network_coding_system), 1))) ||
 	  NILP (outcode = (find_coding_system_for_text_file
@@ -534,7 +525,7 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, void* err,
     }
   else
     {
-      if (!CONSP (Vdefault_process_coding_system) ||
+      if (!LISTP (Vdefault_process_coding_system) ||
 	  NILP (incode = (find_coding_system_for_text_file
 			  (Fcar (Vdefault_process_coding_system), 1))) ||
 	  NILP (outcode = (find_coding_system_for_text_file
@@ -2656,15 +2647,17 @@ If non-zero, display data sent to or received from a process.
   DEFVAR_LISP ("default-process-coding-system",
 	       &Vdefault_process_coding_system /*
 Cons of coding systems used for process I/O by default.
+May also be nil, interpreted as (nil . nil).
 The car part is used for reading (decoding) data from a process, and
 the cdr part is used for writing (encoding) data to a process.
 */ );
-  /* This below will get its default set correctly in code-init.el. */
+  /* Better, system-dependent defaults are set in code-init.el. */
     Vdefault_process_coding_system = Fcons (Qundecided, Qnil);
 
   DEFVAR_LISP ("default-network-coding-system",
 	       &Vdefault_network_coding_system /*
 Cons of coding systems used for network I/O by default.
+May also be nil, interpreted as (nil . nil).
 The car part is used for reading (decoding) data from a process, and
 the cdr part is used for writing (encoding) data to a process.
 */ );
@@ -2685,6 +2678,9 @@ The value takes effect when `open-network-stream-internal' is called.
 Initialized from the SHELL environment variable.
 */ );
 
+  /* ben? thinks the format of this variable is "semi-bogus".
+     sjt doesn't agree, since it captures a restriction that is
+     present in POSIX shells, after all. */
   DEFVAR_LISP ("process-environment", &Vprocess_environment /*
 List of environment variables for subprocesses to inherit.
 Each element should be a string of the form ENVVARNAME=VALUE.
