@@ -766,4 +766,21 @@ This is a naive implementation in Lisp.  "
         (format 
          "checking Unicode coding systems behave well with short input, %02X"
          i)))
-  )
+
+  ;;---------------------------------------------------------------
+  ;; Process tests
+  ;; #### Should do network too.
+  ;;---------------------------------------------------------------
+  (Skip-Test-Unless (and (file-exists-p "/dev/null")
+			 (fboundp 'executable-find)
+			 (executable-find "cat"))
+      "cat(1) or /dev/null missing"
+      "Test that default-process-coding-system can be nil."
+    (with-temp-buffer
+      (Assert (let (default-process-coding-system)
+		(shell-command "cat </dev/null >/dev/null")
+		t))))
+
+  ) ; end of tests that require MULE built in.
+
+;;; end of mule-tests.el
