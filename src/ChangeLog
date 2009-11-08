@@ -1,3 +1,17 @@
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
+	New #define, "/" on Unix and "C:\\" on Win32 native, a directory
+	that should "always" be available.
+	* fileio.c (Fexpand_file_name): Use DEFAULT_DIRECTORY_FALLBACK
+	here, instead of conditionalising on WIN32_NATIVE.
+	* editfns.c (get_home_directory):
+	Use DEFAULT_DIRECTORY_FALLBACK if looking up the home directory
+	fails, on both Windows and Unix.
+	* buffer.c (init_initial_directory):
+	Don't give a fatal error if the current directory doesn't exist,
+	chdir to DEFAULT_DIRECTORY_FALLBACK instead.
+
 2009-11-02  Stephen Turnbull  <stephen@xemacs.org>
 
 	Fix issue145.

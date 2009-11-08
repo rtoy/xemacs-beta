@@ -862,20 +862,15 @@ get_home_directory (void)
 			  homepath);
 	    }
 	  else
+#endif	/* !WIN32_NATIVE */
 	    {
-	      cached_home_directory = qxestrdup ((Ibyte *) "C:\\");
+              /* Unix, typically.
+                 Using "/" isn't quite right, but what should we do?
+                 We probably should try to extract pw_dir from /etc/passwd,
+                 before falling back to this. */
+	      cached_home_directory = qxestrdup (DEFAULT_DIRECTORY_FALLBACK);
 	      output_home_warning = 1;
 	    }
-#else	/* !WIN32_NATIVE */
-	  /*
-	   * Unix, typically.
-	   * Using "/" isn't quite right, but what should we do?
-	   * We probably should try to extract pw_dir from /etc/passwd,
-	   * before falling back to this.
-	   */
-	  cached_home_directory = qxestrdup ((Ibyte *) "/");
-	  output_home_warning = 1;
-#endif	/* !WIN32_NATIVE */
 	}
       if (initialized && output_home_warning)
 	{
