@@ -2926,7 +2926,19 @@ init_initial_directory (void)
       {
 	Ibyte *errmess;
 	GET_STRERROR (errmess, errno);
-	fatal ("`getcwd' failed: %s\n", errmess);
+	stderr_out ("`getcwd' failed: %s: changing default directory to %s\n",
+                    errmess, DEFAULT_DIRECTORY_FALLBACK);
+
+        if (qxe_chdir (DEFAULT_DIRECTORY_FALLBACK) < 0)
+          {
+            GET_STRERROR (errmess, errno);
+
+            fatal ("could not `chdir' to `%s': %s\n",
+                   DEFAULT_DIRECTORY_FALLBACK, errmess);
+          }
+
+        initial_directory = qxe_allocating_getcwd();
+        assert (initial_directory != NULL);
       }
 
   /* Make sure pwd is DIRECTORY_SEP-terminated.

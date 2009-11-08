@@ -790,11 +790,7 @@ See also the function `substitute-in-file-name'.
   if (NILP (default_directory))
     default_directory = current_buffer->directory;
   if (! STRINGP (default_directory))
-#ifdef WIN32_NATIVE
-    default_directory = build_string ("C:\\");
-#else
-    default_directory = build_string ("/");
-#endif
+    default_directory = build_string (DEFAULT_DIRECTORY_FALLBACK);
 
   if (!NILP (default_directory))
     {
