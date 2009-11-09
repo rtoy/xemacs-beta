@@ -1,5 +1,10 @@
 ##   Makefile for the sample module in XEmacs.
 ##   Copyright (C) 2002 Jerry James.
+##
+##   This sample Makefile is free; you can redistribute it and/or modify it
+##   under the terms of the GNU General Public License as published by the
+##   Free Software Foundation; either version 2, or (at your option) any
+##   later version.
 
 ## This file is not part of XEmacs.
 
