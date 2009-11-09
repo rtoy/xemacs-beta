@@ -868,7 +868,8 @@ get_home_directory (void)
                  Using "/" isn't quite right, but what should we do?
                  We probably should try to extract pw_dir from /etc/passwd,
                  before falling back to this. */
-	      cached_home_directory = qxestrdup (DEFAULT_DIRECTORY_FALLBACK);
+	      cached_home_directory
+                = qxestrdup ((const Ibyte *)DEFAULT_DIRECTORY_FALLBACK);
 	      output_home_warning = 1;
 	    }
 	}

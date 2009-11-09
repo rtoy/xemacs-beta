@@ -485,12 +485,12 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 }
 #define DIRECTORY_SEP sysfile_get_directory_sep()
 
-#else /* emacs */
+#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"C:\\")
+
+#else /* not emacs */
 
 /* The above Lisp variables are not available to make-docfile, etc. */
 #define DIRECTORY_SEP DEFAULT_DIRECTORY_SEP
-
-#define DEFAULT_DIRECTORY_FALLBACK ((Ibyte *)"C:\\")
 
 #endif /* emacs */
 
@@ -499,7 +499,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 #define SEPCHAR ':'
 #define DEFAULT_DIRECTORY_SEP '/'
 #define DIRECTORY_SEP '/'
-#define DEFAULT_DIRECTORY_FALLBACK ((Ibyte *)"/")
+#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"/")
 
 #endif /* WIN32_NATIVE */
 
