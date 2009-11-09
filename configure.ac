@@ -5907,8 +5907,7 @@ dnl at the point where the autodetection occurs or would occur,
 dnl so that the user gets immediate feedback on the results of the
 dnl autodetection.
 
-if   test "$GNU_MALLOC"         = "yes"; then AC_DEFINE(GNU_MALLOC)
-elif test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
+if   test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi

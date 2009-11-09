@@ -4760,7 +4760,7 @@ malloced_storage_size (void *UNUSED (ptr), Bytecount claimed_size,
 {
   Bytecount orig_claimed_size = claimed_size;
 
-#ifdef GNU_MALLOC
+#ifndef SYSTEM_MALLOC
   if (claimed_size < (Bytecount) (2 * sizeof (void *)))
     claimed_size = 2 * sizeof (void *);
 # ifdef SUNOS_LOCALTIME_BUG
@@ -4797,39 +4797,13 @@ malloced_storage_size (void *UNUSED (ptr), Bytecount claimed_size,
       claimed_size += (claimed_size / 4096) * 3 * sizeof (size_t);
     }
 
-#elif defined (SYSTEM_MALLOC)
+#else
 
   if (claimed_size < 16)
     claimed_size = 16;
   claimed_size += 2 * sizeof (void *);
 
-#else /* old GNU allocator */
-
-# ifdef rcheck /* #### may not be defined here */
-  claimed_size += 20;
-# else
-  claimed_size += 8;
-# endif
-  {
-    /* fxg: rename log->log2 to supress gcc3 shadow warning */
-    int log2 = 1;
-
-    /* compute the log base two, more or less, then use it to compute
-       the block size needed. */
-    claimed_size--;
-    /* It's big, it's heavy, it's wood! */
-    while ((claimed_size /= 2) != 0)
-      ++log2;
-    claimed_size = 1;
-    /* It's better than bad, it's good! */
-    while (log2 > 0)
-      {
-	claimed_size *= 2;
-        log2--;
-      }
-  }
-
-#endif /* old GNU allocator */
+#endif /* system allocator */
 
   if (stats)
     {

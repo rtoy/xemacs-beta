@@ -1,3 +1,8 @@
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Don't defined GNU_MALLOC, as there is no longer an
+	"old" GNU malloc.
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Check for external giflib instead of using builtin

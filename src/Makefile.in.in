@@ -305,32 +305,27 @@ rallocobjs = ralloc.o
 
 malloclib = $(libmcheck)
 #ifndef SYSTEM_MALLOC
-# ifdef GNU_MALLOC  /* GNU malloc */
-#  ifdef ERROR_CHECK_MALLOC
-#ifdef DOUG_LEA_MALLOC
+# ifdef ERROR_CHECK_MALLOC
+#  ifdef DOUG_LEA_MALLOC
 mallocobjs = free-hook.o vm-limit.o
-#else
+#  else
 mallocobjs = gmalloc.o free-hook.o vm-limit.o
-#endif
+#  endif
 mallocdocsrc = free-hook.c
-#  else /* New GNU malloc, sans error checking */
-#ifdef DOUG_LEA_MALLOC
+# else /* GNU malloc, sans error checking */
+#   ifdef DOUG_LEA_MALLOC
 mallocobjs = vm-limit.o
-#else
+#  else
 mallocobjs = gmalloc.o vm-limit.o
-#endif
+#  endif
 mallocdocsrc =
-#  endif /* ERROR_CHECK_MALLOC */
-# else /* Older GNU malloc */
-mallocobjs = malloc.o
-mallocdocsrc =
-# endif /* Older GNU malloc */
+# endif /* ERROR_CHECK_MALLOC */
 #else /* SYSTEM_MALLOC */
 mallocobjs =
 mallocdocsrc =
-#ifdef USE_DEBUG_MALLOC
+# ifdef USE_DEBUG_MALLOC
 malloclib = -ldmalloc
-#endif /* USE_DEBUG_MALLOC */
+# endif /* USE_DEBUG_MALLOC */
 #endif /* SYSTEM_MALLOC */
 
 #ifdef HAVE_X_WINDOWS

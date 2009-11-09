@@ -1,3 +1,8 @@
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* xemacs.mak: Don't define GNU_MALLOC, as there is no longer an "old"
+	GNU malloc.
+
 2009-10-06  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak: For giflib, the include files are found in

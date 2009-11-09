@@ -41,9 +41,6 @@
 #undef LD_SWITCH_SYSTEM
 
 #undef	SYSTEM_MALLOC
-#ifndef GNU_MALLOC
-#define	GNU_MALLOC
-#endif
 #ifndef REL_ALLOC
 #define	REL_ALLOC
 #endif

@@ -155,9 +155,6 @@ things are arranged in config.h.in.  In particular:
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
-/* Define GNU_MALLOC if you want to use the GNU memory allocator. */
-#undef GNU_MALLOC
-
 /* Define if you are using the GNU C Library. -- experimental. */
 #undef DOUG_LEA_MALLOC
 
