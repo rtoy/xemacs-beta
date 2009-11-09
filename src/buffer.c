@@ -2929,7 +2929,7 @@ init_initial_directory (void)
 	stderr_out ("`getcwd' failed: %s: changing default directory to %s\n",
                     errmess, DEFAULT_DIRECTORY_FALLBACK);
 
-        if (qxe_chdir (DEFAULT_DIRECTORY_FALLBACK) < 0)
+        if (qxe_chdir ((Ibyte *)DEFAULT_DIRECTORY_FALLBACK) < 0)
           {
             GET_STRERROR (errmess, errno);
 

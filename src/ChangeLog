@@ -1,3 +1,16 @@
+2009-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK): 
+	Move the WIN32_NATIVE definition inside the #ifdef emacs
+	conditional, clear up the comment after #else; thanks for the
+	build failure report, Vin!
+	Cast DEFAULT_DIRECTORY_FALLBACK to (const CIbyte *) by default,
+	which better reflects its contents.
+	* editfns.c (get_home_directory): 
+	* buffer.c (init_initial_directory): 
+	Cast DEFAULT_DIRECTORY_FALLBACK to (Ibyte *) with functions that
+	take that type, now that is necessary. 
+
 2009-11-09  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove support for malloc.c ("old" GNU malloc).  Do
