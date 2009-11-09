@@ -40,6 +40,8 @@
 
 ;;; Code:
 
+(require 'cl)
+
 (defgroup minibuffer nil
   "Controling the behavior of the minibuffer."
   :group 'environment)
@@ -1467,20 +1469,24 @@ A user variable is one whose documentation starts with a `*' character."
 			       (symbol-name default-value)
 			     default-value))))
 
-(defun read-buffer (prompt &optional default require-match)
+(defun read-buffer (prompt &optional default require-match exclude)
   "Read the name of a buffer and return as a string.
 Prompts with PROMPT.  Optional second arg DEFAULT is value to return if user
 enters an empty line.  If optional third arg REQUIRE-MATCH is non-nil,
-only existing buffer names are allowed."
+only existing buffer names are allowed.  Optional fourth argument EXCLUDE is
+a buffer or a list of buffers to exclude from the completion list."
+  (when (bufferp exclude)
+    (setq exclude (list exclude)))
   (let ((prompt (if default
                     (format "%s(default %s) "
                             (gettext prompt) (if (bufferp default)
 						 (buffer-name default)
 					       default))
-                    prompt))
-        (alist (mapcar #'(lambda (b) (cons (buffer-name b) b))
-                       (buffer-list)))
-        result)
+		    prompt))
+	(alist (mapcar #'(lambda (b) (cons (buffer-name b) b))
+		       (remove-if (lambda (elt) (member elt exclude))
+				  (buffer-list))))
+	result)
     (while (progn
              (setq result (completing-read prompt alist nil require-match
 					   nil 'buffer-history 

@@ -41,7 +41,11 @@ front of the list of recently selected ones.
 WARNING: This is NOT the way to work on another buffer temporarily
 within a Lisp program!  Use `set-buffer' instead.  That avoids messing with
 the window-buffer correspondences."
-  (interactive "BSwitch to buffer: ")
+  (interactive
+   (list (read-buffer "Switch to buffer: "
+		      (other-buffer (current-buffer))
+		      nil
+		      (current-buffer))))
   ;; #ifdef I18N3
   ;; #### Doc string should indicate that the buffer name will get
   ;; translated.
