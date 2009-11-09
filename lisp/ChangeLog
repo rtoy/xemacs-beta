@@ -1,3 +1,10 @@
+2009-11-09  Didier Verna  <didier@xemacs.org>
+
+	* minibuf.el (read-buffer): New optional argument 'exclude' for
+	excluding buffers from the completion list.
+	* buffer.el (switch-to-buffer): Don't offer the current buffer in
+	the completion list.
+
 2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (equalp): 
