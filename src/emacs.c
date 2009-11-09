@@ -942,11 +942,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     stderr_out ("malloc jumpstart failed!\n");
 #endif /* NeXT */
 
-  /*
-#if defined (GNU_MALLOC) && \
-    defined (ERROR_CHECK_MALLOC) && \
-    !defined (HAVE_LIBMCHECK)
-  */
 #if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
   /* Prior to XEmacs 21, this was `#if 0'ed out.  */
   /* I'm enabling this because it is the only reliable way I've found to */
@@ -1729,11 +1724,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       SYMS_MACHINE;
 #endif
 
-      /*
-#if defined (GNU_MALLOC) && \
-    defined (ERROR_CHECK_MALLOC) && \
-    !defined (HAVE_LIBMCHECK)
-      */
       /* Prior to XEmacs 21, this was `#if 0'ed out. -slb */
 #if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
       syms_of_free_hook ();
@@ -3656,7 +3646,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 /* The following needs conditionalization on whether either XEmacs or */
 /* various system shared libraries have been built and linked with */
 /* GCC >= 2.8.  -slb */
-#if defined (GNU_MALLOC)
+#ifndef SYSTEM_MALLOC
 static void
 voodoo_free_hook (void *UNUSED (mem))
 {
@@ -3669,7 +3659,7 @@ voodoo_free_hook (void *UNUSED (mem))
 #endif
     voodoo_free_hook;
 }
-#endif /* GNU_MALLOC */
+#endif /* SYSTEM_MALLOC */
 
 DEFUN_NORETURN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
@@ -3727,7 +3717,7 @@ all of which are called before XEmacs is actually killed.
 
   shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
 
-#if defined (GNU_MALLOC)
+#ifndef SYSTEM_MALLOC
   __free_hook =
 #if defined (TYPEOF) && !defined (UNO)
     /* prototype of __free_hook varies with glibc version */

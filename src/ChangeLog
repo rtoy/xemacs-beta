@@ -1,3 +1,22 @@
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove support for malloc.c ("old" GNU malloc).  Do
+	not define GNU_MALLOC, which was only used to distinguish between
+	"old" and "new" GNU malloc.
+	* alloc.c (malloced_storage_size): Drop support for old GNU malloc,
+	and recast the remaining test in terms of SYSTEM_MALLOC.
+	* config.h.in (GNU_MALLOC): Remove.
+	* depend: Regenerate.
+	* emacs.c (main_1): Clean up old, now irrelevant, commented-out
+	preprocessor checks.  Convert GNU_MALLOC test into an equivalent
+	SYSTEM_MALLOC test.
+	(voodoo_free_hook): Convert GNU_MALLOC test into an equivalent
+	SYSTEM_MALLOC test.
+	(Fkill_emacs): Ditto.
+	* gc.h: Ditto.
+	* malloc.c: Remove.
+	* s/sunos4-0-shr.h: Defining GNU_MALLOC is no longer necessary.
+
 2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
