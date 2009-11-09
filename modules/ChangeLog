@@ -1,3 +1,10 @@
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* sample/external/Makefile.in.in: Clarify GPL status.
+	* sample/external/configure.ac: Ditto.
+	* sample/external/sample.c: Ditto.
+	* sample/internal/sample.c: Ditto.
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* ldap/eldap.c (Fldap_search_basic): quiet gcc warnings due to
