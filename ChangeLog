@@ -1,3 +1,8 @@
+2009-11-11  Stephen Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (SYSTEM_MALLOC): Use system malloc on darwin.
+	(USE_PARAM_H): #include <sys/param.h> to do needed #defines.
+
 2009-11-09  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Don't defined GNU_MALLOC, as there is no longer an
