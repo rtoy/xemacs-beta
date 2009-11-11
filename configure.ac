@@ -1431,6 +1431,8 @@ case "$ac_cv_build" in
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
     opsys=darwin
+    dnl Use this to set BSD correctly.
+    AC_DEFINE(USE_PARAM_H)
     ;;
 
   dnl Data General AViiON Machines
@@ -2834,6 +2836,17 @@ XE_COMPUTE_RUNPATH()
 dnl -----------------------------------
 dnl Do some misc autoconf-special tests
 dnl -----------------------------------
+
+dnl Can we use GNU malloc on this system?
+dnl First, configure based-checks.
+case "$opsys" in
+  darwin )
+    if test "$with_system_malloc" = "default"; then
+      system_malloc=yes
+      with_system_malloc=yes
+      AC_MSG_WARN([Forcing system malloc on Darwin.])
+    fi ;;
+esac
 
 dnl Do the opsystem or machine files prohibit the use of the GNU malloc?
 dnl Assume not, until told otherwise.
