@@ -1,3 +1,13 @@
+2009-11-11  Stephen Turnbull  <stephen@xemacs.org>
+
+	* sigpipe.c: Add standard permission notice, after email
+	confirmation from Mly.
+
+	* autoconf/regressiontest.pl: Add Malcolm's copyright and standard
+	permission notice, after email confirmation from Malcolm.
+
+2009-11-02  Stephen Turnbull  <stephen@xemacs.org>
+
 	* automated/lisp-tests.el: Fix typo in equalp test.
 	Add more tests of equalp.
 
