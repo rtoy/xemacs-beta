@@ -1,3 +1,9 @@
+2009-11-11  Stephen Turnbull  <stephen@xemacs.org>
+
+	* darwin.h: Remove.  Functionality implemented in configure.ac.
+
+	* config.h.in (USE_PARAM_H): New.  Used by Darwin to #define BSD.
+
 2009-11-09  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove support for malloc.c ("old" GNU malloc).  Do

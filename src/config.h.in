@@ -932,6 +932,14 @@ extern "C" {
 #include config_opsysfile
 #endif
 
+/* Darwin uses this to set BSD appropriately. */
+#undef USE_PARAM_H
+#ifdef USE_PARAM_H
+# ifndef NOT_C_CODE
+#  include <sys/param.h>
+# endif
+#endif
+
 /* The configuration script may define `machfile' to be the name of
    the m/...h file that describes the machine you are using.
    The file name is chosen based on the configuration name. */
