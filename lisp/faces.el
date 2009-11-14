@@ -1920,7 +1920,27 @@ you want to add code to do stuff like this, use the create-device-hook."
 	     (face-property-equal 'text-cursor 'default 'foreground device))
     (set-face-foreground 'text-cursor [default background] 'global
 			 nil 'append))
-  )
+
+  ;; The faces buffers-tab, modeline-mousable and modeline-buffer-id all
+  ;; inherit directly from modeline; they require that modeline's details be
+  ;; specified, that it not use fallbacks, otherwise *they* use the general
+  ;; fallback of the default face instead, which clashes with the gui
+  ;; element faces. So take the modeline face information from its
+  ;; fallbacks, themselves ultimately set up in faces.c:
+  (loop
+    for face-property in '(foreground background background-pixmap)
+    do (when (and (setq face-property (face-property 'modeline face-property))
+                  (null (specifier-instance face-property device nil t))
+                  (specifier-instance face-property device))
+         (set-specifier face-property
+                        (or (specifier-specs (specifier-fallback
+                                              face-property))
+                            ;; This will error at startup if the
+                            ;; corresponding C fallback doesn't exist,
+                            ;; which is well and good.
+                            (specifier-fallback (specifier-fallback
+                                                 face-property))))))
+  nil)
 
 ;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle
 ;; Jones and Hrvoje Niksic.
