@@ -2079,17 +2079,11 @@
   (Assert
    (eq t (and))
    "Checking #'and behaves correctly with zero arguments.")
-  ;; This bug was here before the full multiple-value functionality
-  ;; was introduced (check it with (floor* pi) if you're
-  ;; curious). #'setf works, though, which is what most people are
-  ;; interested in. If you know the setf-method code better than I do,
-  ;; please post a patch; otherwise this is going to the back of the
-  ;; queue of things to do. I didn't break it :-) Aidan Kehoe, Mon Aug
-  ;; 31 10:45:50 GMTDT 2009. 
-  (Known-Bug-Expect-Error
-   void-variable
-   (letf (((values three one-four-one-five-nine) (floor pi)))
-     (* three one-four-one-five-nine))))
+  (Assert
+   (= (* 3.0 (- pi 3.0))
+      (letf (((values three one-four-one-five-nine) (floor pi)))
+        (* three one-four-one-five-nine)))
+   "checking letf handles #'values in a basic sense"))
 
 (Assert (equalp "hi there" "Hi There")
 	"checking equalp isn't case-sensitive")

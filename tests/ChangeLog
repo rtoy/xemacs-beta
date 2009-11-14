@@ -1,3 +1,9 @@
+2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Don't call Known-Bug-Expect-Failure now that the particular letf
+	bug it tickled is fixed.
+
 2009-11-11  Stephen Turnbull  <stephen@xemacs.org>
 
 	* sigpipe.c: Add standard permission notice, after email

@@ -2587,6 +2587,28 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
 	(list 'let* (append (car method) (list (list temp (nth 2 method))))
 	      (cl-setf-do-store (nth 1 method) form) nil)))))
 
+;; This function is not in Common Lisp, and there are gaps in its structure and
+;; implementation that reflect that it was never well-specified. E.g. with
+;; setf, the question of whether a PLACE is bound or not and how to make it
+;; unbound doesn't arise, but we need some way of specifying that for letf to
+;; be sensible for gethash, symbol-value and so on; currently we just hard-code
+;; symbol-value, symbol-function and values (the latter is XEmacs work that
+;; I've just done) in the body of this function, and the following gives the
+;; wrong behaviour for gethash:
+;; 
+;; (setq my-hash-table #s(hash-table test equal data ())
+;;       print-gensym t)
+;; => t
+;; (gethash "my-key" my-hash-table (gensym))
+;; => #:G68010
+;; (letf (((gethash "my-key" my-hash-table) 4000))
+;;   (message "key value is %S" (gethash "my-key" my-hash-table)))
+;; => "key value is 4000"
+;; (gethash "my-key" my-hash-table (gensym))
+;; => nil ;; should be an uninterned symbol.
+;;
+;; Aidan Kehoe, Fr Nov 13 16:12:21 GMT 2009
+
 ;;;###autoload
 (defmacro letf (bindings &rest body)
   "(letf ((PLACE VALUE) ...) BODY...): temporarily bind to PLACEs.
@@ -2608,20 +2630,56 @@ the PLACE is not modified before executing BODY."
 	       (value (cadar rev))
 	       (method (cl-setf-do-modify place 'no-opt))
 	       (save (gensym "--letf-save--"))
-	       (bound (and (memq (car place) '(symbol-value symbol-function))
+	       (bound (and (memq (car place)
+                                 '(symbol-value symbol-function values))
 			   (gensym "--letf-bound--")))
 	       (temp (and (not (cl-const-expr-p value)) (cdr bindings)
-			  (gensym "--letf-val--"))))
+			  (gensym "--letf-val--")))
+               (syms (and (eq 'values (car place))
+                          (gensym "--letf-syms--")))
+               (cursor (and syms (gensym "--letf-cursor--")))
+               (sym (and syms (gensym "--letf-sym--"))))
 	  (setq lets (nconc (car method)
-			    (if bound
-				(list (list bound
-					    (list (if (eq (car place)
-							  'symbol-value)
-						      'boundp 'fboundp)
-						  (nth 1 (nth 2 method))))
-				      (list save (list 'and bound
-						       (nth 2 method))))
-			      (list (list save (nth 2 method))))
+                            (cond
+                             (syms
+                              `((,syms ',(loop
+                                           for sym in (cdr place)
+                                           nconc (if (symbolp sym) (list sym))))
+                                (,cursor ,syms)
+                                (,bound nil)
+                                (,save
+                                 (prog2
+                                     (while (consp ,cursor)
+                                       (setq ,bound
+                                             (cons (and (boundp (car ,cursor))
+                                                        (symbol-value
+                                                         (car ,cursor)))
+                                                   ,bound)
+                                             ,cursor (cdr ,cursor)))
+                                     ;; Just using ,bound as a temporary
+                                     ;; variable here, to initialise ,save:
+                                     (nreverse ,bound) 
+                                   ;; Now, really initialise ,bound:
+                                   (setq ,cursor ,syms
+                                         ,bound nil
+                                         ,bound 
+                                         (progn (while (consp ,cursor)
+                                                  (setq ,bound
+                                                        (cons
+                                                         (boundp (car ,cursor))
+                                                         ,bound)
+                                                        ,cursor (cdr ,cursor)))
+                                                (nreverse ,bound)))))))
+                              (bound
+                               (list (list bound
+                                           (list (if (eq (car place)
+                                                         'symbol-value)
+                                                     'boundp 'fboundp)
+                                                 (nth 1 (nth 2 method))))
+                                     (list save (list 'and bound
+                                                      (nth 2 method)))))
+                               (t
+                                (list (list save (nth 2 method)))))
 			    (and temp (list (list temp value)))
 			    lets)
 		body (list
@@ -2632,13 +2690,25 @@ the PLACE is not modified before executing BODY."
 							      (or temp value))
 					    body)
 				    body))
-			    (if bound
-				(list 'if bound
-				      (cl-setf-do-store (nth 1 method) save)
-				      (list (if (eq (car place) 'symbol-value)
-						'makunbound 'fmakunbound)
-					    (nth 1 (nth 2 method))))
-			      (cl-setf-do-store (nth 1 method) save))))
+                            (cond 
+                             (syms
+                              `(while (consp ,syms)
+                                (if (car ,bound)
+                                    (set (car ,syms) (car ,save))
+                                  (makunbound (car ,syms)))
+                                (setq ,syms (cdr ,syms)
+                                      ,bound (cdr ,bound)
+                                      ,save (cdr ,save))))
+                             (bound
+                              (list 'if bound
+                                    (cl-setf-do-store (nth 1 method) save)
+                                    (list (if (eq (car place)
+                                                  'symbol-function)
+                                              'fmakunbound
+                                            'makunbound)
+                                          (nth 1 (nth 2 method)))))
+                             (t
+			      (cl-setf-do-store (nth 1 method) save)))))
 		rev (cdr rev))))
       (list* 'let* lets body))))
 
