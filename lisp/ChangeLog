@@ -1,3 +1,10 @@
+2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.el (init-other-random-faces): 
+	If the modeline face is using its fallbacks, avoid that, specify
+	the corresponding problems instead. Fixes problems described in
+	http://mid.gmane.org/3ggprc2diyt.wl_Ron.Isaacson@morganstanley.com 
+
 2009-11-09  Didier Verna  <didier@xemacs.org>
 
 	* minibuf.el (read-buffer): New optional argument 'exclude' for
