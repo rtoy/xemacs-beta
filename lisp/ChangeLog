@@ -1,5 +1,12 @@
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (letf): 
+	Check whether arguments to #'values are bound, and make them
+	unbound after evaluating BODY; document the limitations of this
+	macro.
+
+2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* faces.el (init-other-random-faces): 
 	If the modeline face is using its fallbacks, avoid that, specify
 	the corresponding problems instead. Fixes problems described in
