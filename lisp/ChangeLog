@@ -1,5 +1,19 @@
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-funarg-n): 
+	New macro, used to create the various byte-compile-funarg
+	functions, which check for quoted lambdas in given positions.
+	(byte-compile-funarg, byte-compile-funarg-2)
+	(byte-compile-funarg-4, byte-compile-funarg-1-2): Use
+	byte-compile-funarg-n in implementing these functions.
+	(byte-compile-maybe-mapc): Add some commentary on GNU's approach
+	to this problem.
+	Be much more comprehensive in the functions that we use
+	byte-compile-funarg and related function to compile, especially
+	including functions from cl-seq.el. 
+
+2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (letf): 
 	Check whether arguments to #'values are bound, and make them
 	unbound after evaluating BODY; document the limitations of this
