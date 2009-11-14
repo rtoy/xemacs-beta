@@ -3524,25 +3524,39 @@ If FORM is a lambda or a macro, byte-compile it as a function."
      the syntax (function (lambda (...) ...)) instead."))))
   (byte-compile-two-args form))
 
-(defun byte-compile-funarg (form)
-  ;; (mapcar '(lambda (x) ..) ..) ==> (mapcar (function (lambda (x) ..)) ..)
-  ;; for cases where it's guaranteed that first arg will be used as a lambda.
-  (byte-compile-normal-call
-   (let ((fn (nth 1 form)))
-     (if (and (eq (car-safe fn) 'quote)
-	      (eq (car-safe (nth 1 fn)) 'lambda)
-	      (or 
-	       (null (memq 'quoted-lambda byte-compile-warnings))
-	       (byte-compile-warn
-		"Passing a quoted lambda to #'%s, forcing function quoting"
-		(car form))))
-	 (cons (car form)
-	       (cons (cons 'function (cdr fn))
-		     (cdr (cdr form))))
-       form))))
+(defmacro byte-compile-funarg-n (&rest n)
+  `#'(lambda (form)
+       ,@(loop
+          for en in n
+          collect `(let ((fn (nth ,en form)))
+                    (when (and (eq (car-safe fn) 'quote)
+                               (eq (car-safe (nth 1 fn)) 'lambda)
+                               (or
+                                (null (memq 'quoted-lambda
+                                            byte-compile-warnings))
+                                (byte-compile-warn
+                                 "Passing a quoted lambda to #'%s, forcing \
+function quoting" (car form))))
+                      (setcar fn 'function))))
+          (byte-compile-normal-call form)))
+
+;; (mapcar '(lambda (x) ..) ..) ==> (mapcar (function (lambda (x) ..)) ..)
+;; for cases where it's guaranteed that first arg will be used as a lambda.
+(defalias 'byte-compile-funarg (byte-compile-funarg-n 1))
+
+;; (sort ... '(lambda (x) ..)) ==> (sort ... (function (lambda (x) ..)))
+;; for cases where it's guaranteed that second arg will be used as a lambda.
+(defalias 'byte-compile-funarg-2 (byte-compile-funarg-n 2))
+
+;; For #'merge, basically.
+(defalias 'byte-compile-funarg-4 (byte-compile-funarg-n 4))
+
+;; For #'call-with-condition-handler, basically.
+(defalias 'byte-compile-funarg-1-2 (byte-compile-funarg-n 1 2))
 
 ;; XEmacs change; don't cons up the list if it's going to be immediately
-;; discarded.
+;; discarded. GNU give a warning in `byte-compile-normal-call' instead, and
+;; only for #'mapcar.
 (defun byte-compile-maybe-mapc (form)
   (and for-effect
        (or (null (memq 'discarded-consing byte-compile-warnings))
@@ -3667,7 +3681,6 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	 (if args t for-effect)))))
   (setq for-effect nil))
 
-
 (defun byte-compile-set-default (form)
   (let* ((args (cdr form))
 	 (nargs (length args))
@@ -3738,26 +3751,69 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 funcall)
 (byte-defop-compiler-1 apply byte-compile-funarg)
 (byte-defop-compiler-1 mapcar byte-compile-maybe-mapc)
-(byte-defop-compiler-1 mapvector byte-compile-maybe-mapc)
-(byte-defop-compiler-1 mapc byte-compile-funarg)
-(byte-defop-compiler-1 mapc-internal byte-compile-funarg)
 (byte-defop-compiler-1 mapatoms byte-compile-funarg)
 (byte-defop-compiler-1 mapconcat byte-compile-funarg)
-(byte-defop-compiler-1 map byte-compile-funarg)
+(byte-defop-compiler-1 mapc byte-compile-funarg)
+(byte-defop-compiler-1 maphash byte-compile-funarg)
+(byte-defop-compiler-1 map-char-table byte-compile-funarg)
+(byte-defop-compiler-1 mapvector byte-compile-maybe-mapc)
+(byte-defop-compiler-1 mapc-internal byte-compile-funarg)
 (byte-defop-compiler-1 maplist byte-compile-maplist)
 (byte-defop-compiler-1 mapl byte-compile-funarg)
 (byte-defop-compiler-1 mapcan byte-compile-funarg)
 (byte-defop-compiler-1 mapcon byte-compile-funarg)
-(byte-defop-compiler-1 map-char-table byte-compile-funarg)
 (byte-defop-compiler-1 map-database byte-compile-funarg)
 (byte-defop-compiler-1 map-extent-children byte-compile-funarg)
 (byte-defop-compiler-1 map-extents byte-compile-funarg)
 (byte-defop-compiler-1 map-plist byte-compile-funarg)
 (byte-defop-compiler-1 map-range-table byte-compile-funarg)
 (byte-defop-compiler-1 map-syntax-table byte-compile-funarg)
-(byte-defop-compiler-1 mapcar-extents byte-compile-funarg)
 (byte-defop-compiler-1 mapcar* byte-compile-funarg)
-(byte-defop-compiler-1 maphash byte-compile-funarg)
+
+(byte-defop-compiler-1 remove-if byte-compile-funarg)
+(byte-defop-compiler-1 remove-if-not byte-compile-funarg)
+(byte-defop-compiler-1 delete-if byte-compile-funarg)
+(byte-defop-compiler-1 delete-if-not byte-compile-funarg)
+(byte-defop-compiler-1 find-if byte-compile-funarg)
+(byte-defop-compiler-1 find-if-not byte-compile-funarg)
+(byte-defop-compiler-1 position-if byte-compile-funarg)
+(byte-defop-compiler-1 position-if-not byte-compile-funarg)
+(byte-defop-compiler-1 count-if byte-compile-funarg)
+(byte-defop-compiler-1 count-if-not byte-compile-funarg)
+(byte-defop-compiler-1 member-if byte-compile-funarg)
+(byte-defop-compiler-1 member-if-not byte-compile-funarg)
+(byte-defop-compiler-1 assoc-if byte-compile-funarg)
+(byte-defop-compiler-1 assoc-if-not byte-compile-funarg)
+(byte-defop-compiler-1 rassoc-if byte-compile-funarg)
+(byte-defop-compiler-1 rassoc-if-not byte-compile-funarg)
+(byte-defop-compiler-1 reduce byte-compile-funarg)
+(byte-defop-compiler-1 some byte-compile-funarg)
+(byte-defop-compiler-1 every byte-compile-funarg)
+(byte-defop-compiler-1 notany byte-compile-funarg)
+(byte-defop-compiler-1 notevery byte-compile-funarg)
+
+(byte-defop-compiler-1 walk-windows byte-compile-funarg)
+(byte-defop-compiler-1 get-window-with-predicate byte-compile-funarg)
+
+(byte-defop-compiler-1 map byte-compile-funarg-2)
+(byte-defop-compiler-1 apropos-internal byte-compile-funarg-2)
+(byte-defop-compiler-1 sort byte-compile-funarg-2)
+(byte-defop-compiler-1 sort* byte-compile-funarg-2)
+(byte-defop-compiler-1 stable-sort byte-compile-funarg-2)
+(byte-defop-compiler-1 substitute-if byte-compile-funarg-2)
+(byte-defop-compiler-1 substitute-if-not byte-compile-funarg-2)
+(byte-defop-compiler-1 nsubstitute-if byte-compile-funarg-2)
+(byte-defop-compiler-1 nsubstitute-if-not byte-compile-funarg-2)
+(byte-defop-compiler-1 subst-if byte-compile-funarg-2)
+(byte-defop-compiler-1 subst-if-not byte-compile-funarg-2)
+(byte-defop-compiler-1 nsubst-if byte-compile-funarg-2)
+(byte-defop-compiler-1 nsubst-if-not byte-compile-funarg-2)
+
+(byte-defop-compiler-1 merge byte-compile-funarg-4)
+
+(byte-defop-compiler-1 call-with-condition-handler byte-compile-funarg-1-2)
+(byte-defop-compiler-1 mapcar-extents byte-compile-funarg-1-2)
+
 (byte-defop-compiler-1 let)
 (byte-defop-compiler-1 let*)
 
