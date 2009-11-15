@@ -1,5 +1,10 @@
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule-ccl.c (setup_ccl_program): 
+	Fix the union build, thank you Robert Delius Royar.
+
+2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION): Assert that we always
 	have a symbol in this macro.
 	(setup_ccl_program): Ensure we're not allocating unreachable
