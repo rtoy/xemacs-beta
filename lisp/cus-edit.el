@@ -269,19 +269,6 @@
 
 ;;; Utilities.
 
-(defun custom-quote (sexp)
-  "Quote SEXP iff it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (keywordp sexp)
-	  (eq (car-safe sexp) 'lambda)
-	  (stringp sexp)
-	  (numberp sexp)
-	  (characterp sexp)
-	  (vectorp sexp)
-	  (bit-vector-p sexp))
-      sexp
-    (list 'quote sexp)))
-
 (defun custom-split-regexp-maybe (regexp)
   "If REGEXP is a string, split it to a list at `\\|'.
 You can get the original back with from the result with:
@@ -732,7 +719,7 @@ If given a prefix (or a COMMENT argument), also prompt for a comment."
 				       "Set customized value of %s"
 				       current-prefix-arg))
   (funcall (or (get variable 'custom-set) 'set-default) variable value)
-  (put variable 'customized-value (list (custom-quote value)))
+  (put variable 'customized-value (list (quote-maybe value)))
   (cond ((string= comment "")
 	 (put variable 'variable-comment nil)
 	 (put variable 'customized-variable-comment nil))
@@ -761,8 +748,8 @@ If given a prefix (or a COMMENT argument), also prompt for a comment."
 				       "Set and save value of %s"
 				       current-prefix-arg))
   (funcall (or (get variable 'custom-set) 'set-default) variable value)
-  (put variable 'saved-value (list (custom-quote value)))
-  (custom-push-theme 'theme-value variable 'user 'set (list (custom-quote value)))
+  (put variable 'saved-value (list (quote-maybe value)))
+  (custom-push-theme 'theme-value variable 'user 'set (list (quote-maybe value)))
   (cond ((string= comment "")
 	 (put variable 'variable-comment nil)
 	 (put variable 'saved-variable-comment nil))
@@ -2112,9 +2099,9 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 			       ((get symbol 'standard-value)
 				(car (get symbol 'standard-value)))
 			       ((default-boundp symbol)
-				(custom-quote (funcall get symbol)))
+				(quote-maybe (funcall get symbol)))
 			       (t
-				(custom-quote (widget-get conv :value))))))
+				(quote-maybe (widget-get conv :value))))))
 	     (insert (symbol-name symbol) ": ")
 	     (push (widget-create-child-and-convert
 		    widget 'visibility
@@ -2353,7 +2340,7 @@ Optional EVENT is the location for the menu."
 	     (set-extent-property (widget-get comment-widget :comment-extent)
 				  'invisible t))
 	   (funcall set symbol (setq val (widget-value child)))
-	   (put symbol 'customized-value (list (custom-quote val)))
+	   (put symbol 'customized-value (list (quote-maybe val)))
 	   (put symbol 'variable-comment comment)
 	   (put symbol 'customized-variable-comment comment)))
     (custom-variable-state-set widget)
@@ -2393,11 +2380,11 @@ Optional EVENT is the location for the menu."
 	     (set-extent-property (widget-get comment-widget :comment-extent)
 				  'invisible t))
 	   (put symbol
-		'saved-value (list (custom-quote (widget-value
-						  child))))
+		'saved-value (list (quote-maybe (widget-value
+                                                 child))))
 	   (custom-push-theme 'theme-value symbol 'user
-			      'set (list (custom-quote (widget-value
-							child))))
+			      'set (list (quote-maybe (widget-value
+                                                       child))))
 	   (funcall set symbol (widget-value child))
 	   (put symbol 'variable-comment comment)
 	   (put symbol 'saved-variable-comment comment)))

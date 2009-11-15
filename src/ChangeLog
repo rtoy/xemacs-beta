@@ -1,3 +1,12 @@
+2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fquote_maybe): 
+	Move this function here from callint.c; make it more comprehensive
+	about which types are self-quoting.
+	* lisp.h: Declare Fquote_maybe here, since it's now used in
+	callint.c and defined in eval.c
+	* callint.c (Fquote_maybe): Remove this function from this file.
+
 2009-11-11  Stephen Turnbull  <stephen@xemacs.org>
 
 	* darwin.h: Remove.  Functionality implemented in configure.ac.

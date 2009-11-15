@@ -213,27 +213,6 @@ to a separate line causes docstring lossage! */
   return Qnil;
 }
 
-/* Originally, this was just a function -- but `custom' used a
-   garden-variety version, so why not make it a subr?  */
-/* #### Move it to another file! */
-DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
-Quote EXPR if it is not self quoting.
-*/
-       (expr))
-{
-  return ((NILP (expr)
-	   || EQ (expr, Qt)
-	   || INTP (expr)
-	   || FLOATP (expr)
-	   || CHARP (expr)
-	   || STRINGP (expr)
-	   || VECTORP (expr)
-	   || KEYWORDP (expr)
-	   || BIT_VECTORP (expr)
-	   || (CONSP (expr) && EQ (XCAR (expr), Qlambda)))
-	  ? expr : list2 (Qquote, expr));
-}
-
 /* Modify EXPR by quotifying each element (except the first).  */
 static Lisp_Object
 quotify_args (Lisp_Object expr)
@@ -1048,7 +1027,6 @@ syms_of_callint (void)
 #endif
 
   DEFSUBR (Finteractive);
-  DEFSUBR (Fquote_maybe);
   DEFSUBR (Fcall_interactively);
   DEFSUBR (Fprefix_numeric_value);
 }

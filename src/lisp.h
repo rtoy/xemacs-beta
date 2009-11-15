@@ -4267,6 +4267,7 @@ MODULE_API EXFUN (Fapply, MANY);
 EXFUN (Fbacktrace, 2);
 EXFUN (Fcommand_execute, 3);
 EXFUN (Fcommandp, 1);
+EXFUN (Fquote_maybe, 1);
 MODULE_API EXFUN (Feval, 1);
 MODULE_API EXFUN (Ffuncall, MANY);
 EXFUN (Ffunctionp, 1);

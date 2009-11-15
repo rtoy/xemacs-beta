@@ -1254,6 +1254,56 @@ represented as `(quote x)').
   return XCAR (args);
 }
 
+/* Originally, this was just a function -- but `custom' used a garden-
+   variety version, so why not make it a subr?  */
+DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
+Quote EXPR if it is not self quoting.
+
+In contrast with `quote', this is a function, not a special form; its
+argument is evaluated before `quote-maybe' is called.  It returns either
+EXPR (if it is self-quoting) or a list `(quote EXPR)' if it is not
+self-quoting.  Lists starting with the symbol `lambda' are regarded as
+self-quoting.
+*/
+       (expr))
+{
+  if ((XTYPE (expr)) == Lisp_Type_Record)
+    {
+      switch (XRECORD_LHEADER (expr)->type)
+        {
+        case lrecord_type_symbol:
+          if (NILP (expr) || (EQ (expr, Qt)) || SYMBOL_IS_KEYWORD (expr))
+            {
+              return expr;
+            }
+          break;
+        case lrecord_type_cons: 
+          if (EQ (XCAR (expr), Qlambda))
+            {
+              return expr;
+            }
+          break;
+
+        case lrecord_type_vector:
+        case lrecord_type_string:
+        case lrecord_type_compiled_function:
+        case lrecord_type_bit_vector:
+        case lrecord_type_float:
+        case lrecord_type_hash_table:
+        case lrecord_type_char_table:
+        case lrecord_type_range_table:
+        case lrecord_type_bignum:
+        case lrecord_type_ratio:
+        case lrecord_type_bigfloat:
+          return expr;
+        }
+      return list2 (Qquote, expr);
+    }
+
+  /* Fixnums and characters are self-quoting: */
+  return expr;
+}
+
 DEFUN ("function", Ffunction, 1, UNEVALLED, 0, /*
 Return the argument, without evaluating it.  `(function x)' yields `x'.
 
@@ -7260,6 +7310,7 @@ syms_of_eval (void)
   DEFSUBR (Fprog2);
   DEFSUBR (Fsetq);
   DEFSUBR (Fquote);
+  DEFSUBR (Fquote_maybe);
   DEFSUBR (Ffunction);
   DEFSUBR (Fdefun);
   DEFSUBR (Fdefmacro);

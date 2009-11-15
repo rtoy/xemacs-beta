@@ -820,20 +820,8 @@ this sets the local binding in that buffer instead."
 	(set variable value))
     (set-default variable value)))
 
-(defun custom-quote (sexp)
-  "Quote SEXP iff it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (keywordp sexp)
-	  (and (listp sexp)
-	       (memq (car sexp) '(lambda)))
-	  (stringp sexp)
-	  (numberp sexp)
-	  (vectorp sexp)
-;;;  	  (and (fboundp 'characterp)
-;;;  	       (characterp sexp))
-	  )
-      sexp
-    (list 'quote sexp)))
+;; Now in C, but the old name is still used by some packages:
+(defalias 'custom-quote 'quote-maybe)
 
 (defun customize-mark-to-save (symbol)
   "Mark SYMBOL for later saving.
@@ -855,7 +843,7 @@ Return non-nil iff the `saved-value' property actually changed."
 	    (not (equal value (condition-case nil
 				  (eval (car standard))
 				(error nil)))))
-	(put symbol 'saved-value (list (custom-quote value)))
+	(put symbol 'saved-value (list (quote-maybe value)))
       (put symbol 'saved-value nil))
     ;; Clear customized information (set, but not saved).
     (put symbol 'customized-value nil)
@@ -882,7 +870,7 @@ Return non-nil iff the `customized-value' property actually changed."
 	    (not (equal value (condition-case nil
 				  (eval (car old))
 				(error nil)))))
-	(put symbol 'customized-value (list (custom-quote value)))
+	(put symbol 'customized-value (list (quote-maybe value)))
       (put symbol 'customized-value nil))
     ;; Changed?
     (not (equal customized (get symbol 'customized-value)))))

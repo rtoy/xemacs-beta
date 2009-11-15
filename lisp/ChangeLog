@@ -1,3 +1,16 @@
+2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el (custom-quote): 
+	Define this as an alias for `quote-maybe', which is in C and more
+	comprehensive; packages still use this name in places.
+	(customize-mark-to-save, customize-mark-as-set): Use
+	`quote-maybe', not `custom-quote'.
+	* cus-edit.el (customize-set-variable, customize-save-variable)
+	(custom-variable-value-create, custom-variable-set)
+	(custom-variable-pre-save): 
+	Remove a version of `custom-quote' specific to this file; use
+	`quote-maybe' universally instead.
+
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-funarg-n): 
