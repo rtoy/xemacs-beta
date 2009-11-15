@@ -587,11 +587,8 @@ character set.  Recognized properties are:
 	  }
 	else if (EQ (keyword, Qccl_program))
 	  {
-	    struct ccl_program test_ccl;
-
-	    if (setup_ccl_program (&test_ccl, value) < 0)
-	      invalid_argument ("Invalid value for `ccl-program'", value);
-	    ccl_program = value;
+            /* This errors if VALUE is not a valid CCL program. */
+	    ccl_program = get_ccl_program (value);
 	  }
 	else
 	  invalid_constant ("Unrecognized property", keyword);
@@ -874,9 +871,8 @@ Set the `ccl-program' property of CHARSET to CCL-PROGRAM.
   struct ccl_program test_ccl;
 
   charset = Fget_charset (charset);
-  if (setup_ccl_program (&test_ccl, ccl_program) < 0)
-    invalid_argument ("Invalid ccl-program", ccl_program);
-  XCHARSET_CCL_PROGRAM (charset) = ccl_program;
+  XCHARSET_CCL_PROGRAM (charset) = get_ccl_program (ccl_program);
+
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
 }

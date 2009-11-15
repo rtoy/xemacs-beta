@@ -627,6 +627,9 @@ static int stack_idx_of_map_multiple;
 #define CCL_CALL_FOR_MAP_INSTRUCTION(symbol, ret_ic)		\
   do {								\
     struct ccl_program called_ccl;				\
+    /* We shouldn't ever call setup_ccl_program on a vector in  \
+       this context: */                                         \
+    text_checking_assert (SYMBOLP (symbol));                    \
     if (stack_idx >= 256					\
 	|| (setup_ccl_program (&called_ccl, (symbol)) != 0))	\
       {								\
@@ -2150,9 +2153,20 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
   xzero (*ccl); /* XEmacs change */
   if (! NILP (ccl_prog))
     {
-      ccl_prog = ccl_get_compiled_code (ccl_prog);
+      Lisp_Object new_prog = ccl_get_compiled_code (ccl_prog);
+
+      if (VECTORP (ccl_prog))
+        {
+          /* Make sure we're not allocating unreachable memory in this
+             function: */
+          assert (ccl_prog == new_prog);
+        }
+
+      ccl_prog = new_prog;
+
       if (! VECTORP (ccl_prog))
 	return -1;
+
       ccl->size = XVECTOR_LENGTH (ccl_prog);
       ccl->prog = XVECTOR_DATA (ccl_prog);
       ccl->eof_ic = XINT (XVECTOR_DATA (ccl_prog)[CCL_HEADER_EOF]);
@@ -2163,6 +2177,59 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
   return 0;
 }
 
+static Lisp_Object
+find_ccl_program (Lisp_Object object, int *unresolved_symbols)
+{
+  struct ccl_program test_ccl;
+
+  if (NULL != unresolved_symbols)
+    {
+      *unresolved_symbols = 0;
+    }
+
+  if (VECTORP (object))
+    {
+      object = resolve_symbol_ccl_program (object);
+      if (EQ (Qt, object))
+        {
+          if (NULL != unresolved_symbols)
+            {
+              *unresolved_symbols = 1;
+            }
+          return Qnil;
+        }
+    }
+  else if (!SYMBOLP (object))
+    {
+      return Qnil;
+    }
+
+  if (setup_ccl_program (&test_ccl, object) < 0)
+    {
+      return Qnil;
+    }
+
+  return object;
+}
+
+Lisp_Object
+get_ccl_program (Lisp_Object object)
+{
+  int unresolved_symbols = 0;
+  Lisp_Object val = find_ccl_program (object, &unresolved_symbols);
+
+  if (unresolved_symbols)
+    {
+      invalid_argument ("Unresolved symbol(s) in CCL program", object);
+    }
+  else if (NILP (val))
+    {
+      invalid_argument ("Invalid CCL program", object);
+    }
+
+  return val;
+}
+
 #ifdef emacs
 
 DEFUN ("ccl-program-p", Fccl_program_p, 1, 1, 0, /*
@@ -2171,20 +2238,7 @@ See the documentation of  `define-ccl-program' for the detail of CCL program.
 */
        (object))
 {
-  Lisp_Object val;
-
-  if (VECTORP (object))
-    {
-      val = resolve_symbol_ccl_program (object);
-      return (VECTORP (val) ? Qt : Qnil);
-    }
-  if (!SYMBOLP (object))
-    return Qnil;
-
-  val = Fget (object, Qccl_program_idx, Qnil);
-  return ((! NATNUMP (val)
-	   || XINT (val) >= XVECTOR_LENGTH (Vccl_program_table))
-	  ? Qnil : Qt);
+  return NILP (find_ccl_program (object, NULL)) ? Qnil : Qt;
 }
 
 DEFUN ("ccl-execute", Fccl_execute, 2, 2, 0, /*
@@ -2206,10 +2260,17 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
        (ccl_prog, reg))
 {
   struct ccl_program ccl;
+  struct gcpro gcpro1;
   int i;
 
-  if (setup_ccl_program (&ccl, ccl_prog) < 0)
-    syntax_error ("Invalid CCL program", Qunbound);
+  ccl_prog = get_ccl_program (ccl_prog);
+  /* get_ccl_program may have consed. GCPROing shouldn't be necessary at the
+     moment, but maybe someday CCL will call Lisp:  */
+  GCPRO1 (ccl_prog);
+
+  i = setup_ccl_program (&ccl, ccl_prog);
+
+  text_checking_assert (i >= 0);
 
   CHECK_VECTOR (reg);
   if (XVECTOR_LENGTH (reg) != 8)
@@ -2229,7 +2290,8 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 
   for (i = 0; i < 8; i++)
     XVECTOR (reg)->contents[i] = make_int (ccl.reg[i]);
-  return Qnil;
+
+  RETURN_UNGCPRO (Qnil);
 }
 
 DEFUN ("ccl-execute-on-string", Fccl_execute_on_string,
@@ -2263,17 +2325,19 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   struct ccl_program ccl;
   int i, produced;
   unsigned_char_dynarr *outbuf;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
-  if (setup_ccl_program (&ccl, ccl_prog) < 0)
-    syntax_error ("Invalid CCL program", Qunbound);
+  ccl_prog = get_ccl_program (ccl_prog);
+  i = setup_ccl_program (&ccl, ccl_prog);
+
+  text_checking_assert (i >= 0);
 
   CHECK_VECTOR (status);
   if (XVECTOR (status)->size != 9)
     syntax_error ("Length of vector STATUS is not 9", Qunbound);
   CHECK_STRING (string);
 
-  GCPRO2 (status, string);
+  GCPRO3 (status, string, ccl_prog);
 
   for (i = 0; i < 8; i++)
     {

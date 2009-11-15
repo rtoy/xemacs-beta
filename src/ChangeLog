@@ -1,5 +1,32 @@
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION): Assert that we always
+	have a symbol in this macro.
+	(setup_ccl_program): Ensure we're not allocating unreachable
+	memory in this function; all symbols must have been resolved in a
+	given CCL program before this function is called.
+	(find_ccl_program): New function, return a CCL program with all
+	its symbols resolved if it is valid (possibly allocating memory),
+	Qnil otherwise. 
+	(get_ccl_program): New function, exported to other files; call
+	find_ccl_program, and error if it gives nil.
+	(Fccl_program_p): Call find_ccl_program from this function instead
+	of implementing the bulk of it here.
+	(Fccl_execute): Call get_ccl_program instead of implementing the
+	bulk of it here.
+	(Fccl_execute_on_string): Ditto.
+	* mule-ccl.h (Vfont_ccl_encoder_alist): Remove this declaration,
+	it hasn't been used in years.
+	(get_ccl_program): Declare this function. 
+	* mule-coding.c (ccl_putprop): Use get_ccl_program on any
+	specified encode or decode CCL program property.
+	(fixed_width_putprop): Ditto.
+	* mule-charset.c (Fmake_charset): Use get_ccl_program on any
+	specified ccl-program.
+	(Fset_charset_ccl_program): Ditto.
+
+2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* eval.c (Fquote_maybe): 
 	Move this function here from callint.c; make it more comprehensive
 	about which types are self-quoting.
