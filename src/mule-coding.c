@@ -3344,44 +3344,10 @@ ccl_init (Lisp_Object codesys)
 static int
 ccl_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
-  Lisp_Object sym;
-  struct ccl_program test_ccl;
-  const Ascbyte *suffix;
-
-  /* Check key first.  */
   if (EQ (key, Qdecode))
-    suffix = "-ccl-decode";
+    XCODING_SYSTEM_CCL_DECODE (codesys) = get_ccl_program (value);
   else if (EQ (key, Qencode))
-    suffix = "-ccl-encode";
-  else
-    return 0;
-
-  /* If value is vector, register it as a ccl program
-     associated with a newly created symbol for
-     backward compatibility.
-
-     #### Bogosity alert!  Do we really have to do this crap???? --ben */
-  if (VECTORP (value))
-    {
-      sym = Fintern (concat2 (Fsymbol_name (XCODING_SYSTEM_NAME (codesys)),
-			      build_string (suffix)),
-		     Qnil);
-      Fregister_ccl_program (sym, value);
-    }
-  else
-    {
-      CHECK_SYMBOL (value);
-      sym = value;
-    }
-  /* check if the given ccl programs are valid.  */
-  if (setup_ccl_program (&test_ccl, sym) < 0)
-    invalid_argument ("Invalid CCL program", value);
-
-  if (EQ (key, Qdecode))
-    XCODING_SYSTEM_CCL_DECODE (codesys) = sym;
-  else if (EQ (key, Qencode))
-    XCODING_SYSTEM_CCL_ENCODE (codesys) = sym;
-
+    XCODING_SYSTEM_CCL_ENCODE (codesys) = get_ccl_program (value);
   return 1;
 }
 
@@ -3534,36 +3500,13 @@ static int
 fixed_width_putprop (Lisp_Object codesys, Lisp_Object key,
                      Lisp_Object value)
 {
-  struct ccl_program test_ccl;
-
-  if (EQ (key, Qdecode) || EQ (key, Qencode))
+  if (EQ (key, Qdecode))
     {
-      Lisp_Object sym;
-
-      CHECK_VECTOR (value);
-
-      sym = Fintern (concat3 (XSYMBOL_NAME (XCODING_SYSTEM_NAME (codesys)),
-                              build_string ("-"),
-                              XSYMBOL_NAME (key)), Qnil);
-
-      Fregister_ccl_program (sym, value);
-
-      
-      /* Check if the CCL infrastructure thinks this is a sane CCL
-         program: */
-      if (setup_ccl_program (&test_ccl, value) < 0)
-        {
-          invalid_argument ("Invalid CCL program", value);
-        }
-
-      if (EQ (key, Qdecode))
-        {
-          XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = sym;
-        }
-      else 
-        {
-          XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = sym;
-        }
+      XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = get_ccl_program (value);
+    }
+  else if (EQ (key, Qencode))
+    {
+      XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = get_ccl_program (value);
     }
   else if (EQ (key, Qfrom_unicode))
     {
