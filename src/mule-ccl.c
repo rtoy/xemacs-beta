@@ -2159,7 +2159,7 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
         {
           /* Make sure we're not allocating unreachable memory in this
              function: */
-          assert (ccl_prog == new_prog);
+          assert (EQ (ccl_prog, new_prog));
         }
 
       ccl_prog = new_prog;
