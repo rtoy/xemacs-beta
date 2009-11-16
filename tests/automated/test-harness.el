@@ -267,22 +267,27 @@ BODY is a sequence of expressions and may contain several tests."
 	       (Print-Skip ,description ,reason))
 	   ,@body))
 
-      (defmacro Assert (assertion &optional failing-case)
+      (defmacro Assert (assertion &optional failing-case description)
+	"Test passes if ASSERTION is true.
+Optional FAILING-CASE describes the particular failure.
+Optional DESCRIPTION describes the assertion.
+FAILING-CASE and DESCRIPTION are useful when Assert is used in a loop."
 	`(condition-case error-info
 	  (progn
 	    (assert ,assertion)
-	    (Print-Pass "%S" (quote ,assertion))
+	    (Print-Pass "%S" (quote ,(or description assertion)))
 	    (incf passes))
 	  (cl-assertion-failed
 	   (Print-Failure (if ,failing-case
 			      "Assertion failed: %S; failing case = %S"
 			    "Assertion failed: %S")
-			  (quote ,assertion) ,failing-case)
+			  (quote ,(or description assertion)) ,failing-case)
 	   (incf assertion-failures))
 	  (t (Print-Failure (if ,failing-case
 				"%S ==> error: %S; failing case =  %S"
 			      "%S ==> error: %S")
-			    (quote ,assertion) error-info ,failing-case)
+			    (quote ,(or description assertion))
+			    error-info ,failing-case)
 	     (incf other-failures)
 	     )))
 

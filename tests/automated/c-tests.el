@@ -40,4 +40,6 @@
 
 (when (boundp 'test-function-list)	; Only if configure --debug
   (loop for fun in test-function-list do
-    (Assert (eq 'PASS (funcall fun)))))
+    ;; #### I hope there's no way we can signal ...
+    (loop for result in (funcall fun) do
+      (Assert (nth 1 result) (nth 2 result) (nth 0 result)))))
