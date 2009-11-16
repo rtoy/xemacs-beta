@@ -133,6 +133,27 @@ BODY is a sequence of expressions to execute to reproduce the bug."
 ;;; ------------------------------------------------------------------
 ;;;; Bugs follow:
 
+(defbug 13 current
+  "Crash when reading a message in Gnus, in sys_re_search_2 in regex.c.
+Reported by Adam Sjogren on xemacs-beta <87ocn5xt5a.fsf@topper.koldfront.dk>.
+issue630 on the tracker.
+Reproduced on Mac OS X 10.4.11 iBook G4 (PPC).
+Reproduced on Gentoo Linux 2.6.30 AMD (Opteron)."
+  (string-match (base64-decode-string "\
+WyAJXSo804DFgPOApHWAtXuApliArID5gLZVgLSA2oChRUwvQ4DDQoCrgNeAwoDggLJ7gL6A
+94CogOOAtlWAtIDagKFFgLCA6oC7gNqApFSAqICkgLZUgKmA9oC5gOqAsIDIgL6A3oCnQICh
+RUwvQ4C2fYCqgKyAw0KAq4DXgKWA04C9gNCAoUWAxXeAqoDvgLF6gKiA04C5cYChR4CigK+A
+ooC4gKKAtICigLctgKKAtICigLWAooC4LYCigK+AooCygKKAtIChRUwvQ4CrSIClgM6AqoCs
+gMNCgKuA14DFgNyApoDbgKWA0YC5QoClgM6AuIDqgKqA94ChRYCrSIClgM6AqoCsgLZ9gKqA
+rIDDQoCrgNeApYDTgL2A0IChRT4=")
+		(base64-decode-string "\
+XCKAqYDTgMWA84CkdYC1e4CmWICsgPmAtlWAtIDagKFFTC9DgMNCgKuA14DCgOCAsnuAvoD3
+gKiA44C2VYC0gNqAoUWAsIDqgLuA2oCkVICogKSAtlSAqYD2gLmA6oCwgMiAvoDegKdAgKFF
+TC9DgLZ9gKqArIDDQoCrgNeApYDTgL2A0IChRYDFd4CqgO+AsXqAqIDTgLlxgKFHgKKAr4Ci
+gLiAooC0gKKAty2AooC0gKKAtYCigLgtgKKAr4CigLKAooC0gKFFTC9DgKtIgKWAzoCqgKyA
+w0KAq4DXgMWA3ICmgNuApYDRgLlCgKWAzoC4gOqAqoD3gKFFgKtIgKWAzoCqgKyAtn2AqoCs
+gMNCgKuA14ClgNOAvYDQgKFFXCIgPHRzZW5nLWNoaXVAdW1haWwu")))
+
 (defbug 12 current
   "Crash when clicking on the menubar, triggered by a Lisp error due to a
 version of truncate-string-to-width that does not take 5 parameters.

@@ -1,3 +1,7 @@
+2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-crashes.el (13): New bug reported by Adam Sjogren.
+
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el: 
