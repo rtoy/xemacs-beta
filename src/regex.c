@@ -112,6 +112,7 @@ typedef int Ichar;
 #define INC_IBYTEPTR_FMT(p, fmt) ((p)++)
 #define DEC_IBYTEPTR(p) ((p)--)
 #define DEC_IBYTEPTR_FMT(p, fmt) ((p)--)
+#define MAX_ICHAR_LEN 1
 #define itext_ichar_len(ptr) 1
 #define itext_ichar_len_fmt(ptr, fmt) 1
 
@@ -813,12 +814,11 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	case exactn:
 	  mcnt = *p++;
           printf ("/exactn/%d", mcnt);
-          do
+          while (mcnt--)
 	    {
-              putchar ('/');
+	      putchar ('/');
 	      putchar (*p++);
             }
-          while (--mcnt);
           break;
 
 	case start_memory:
@@ -3339,10 +3339,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 	/* `p' points to the location after where `c' came from. */
 	normal_char:
 	  {
-	    /* XEmacs: modifications here for Mule. */
-	    /* `q' points to the beginning of the next char. */
-	    re_char *q = p;
-
+	    /* The following conditional synced to GNU Emacs 22.1.  */
 	    /* If no exactn currently being built.  */
 	    if (!pending_exact
 
@@ -3350,18 +3347,19 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 		|| pending_exact + *pending_exact + 1 != buf_end
 
 		/* We have only one byte following the exactn for the count. */
-		|| ((unsigned int) (*pending_exact + (q - p)) >=
-		    ((unsigned int) (1 << BYTEWIDTH) - 1))
+		|| *pending_exact >= (1 << BYTEWIDTH) - MAX_ICHAR_LEN
 
-		/* If followed by a repetition operator.  */
-		|| *q == '*' || *q == '^'
+		/* If followed by a repetition operator.
+		   If the lookahead fails because of end of pattern, any
+		   trailing backslash will get caught later.  */
+		|| (p != pend && (*p == '*' || *p == '^'))
 		|| ((syntax & RE_BK_PLUS_QM)
-		    ? *q == '\\' && (q[1] == '+' || q[1] == '?')
-		    : (*q == '+' || *q == '?'))
+		    ? p + 1 < pend && *p == '\\' && (p[1] == '+' || p[1] == '?')
+		    : p != pend && (*p == '+' || *p == '?'))
 		|| ((syntax & RE_INTERVALS)
 		    && ((syntax & RE_NO_BK_BRACES)
-			? *q == '{'
-			: (q[0] == '\\' && q[1] == '{'))))
+			? p != pend && *p == '{'
+			: p + 1 < pend && (p[0] == '\\' && p[1] == '{'))))
 	      {
 		/* Start building a new exactn.  */
 

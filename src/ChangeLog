@@ -1,3 +1,13 @@
+2009-11-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix issue630.
+
+	* regex.c (regex_compile):
+	Sync treatment of normal_char to GNU Emacs 22.1.
+	Thanks to Aidan Kehoe for the diagnosis and suggestion.
+	(print_partial_compiled_pattern):
+	Avoid buffer overrun in case of /exactn/0.
+
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION): Assert that we always
