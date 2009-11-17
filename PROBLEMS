@@ -1413,6 +1413,15 @@ though the system itself is capable of it.  Try using a different
 shell.
 
 ** MacOS/X, Darwin
+*** The linker warns about duplicate symbols.
+
+This occurs in the function alarm(), which we deliberately override,
+and in vendorShellRec when using Xaw3d for the widgets.
+
+For alarm(), the linker chooses our version, as desired.
+Unfortunately, for vendorShellRec, the Xt version is used instead of
+Xaw3d's.  This does not seem to cause problems.
+
 *** XEmacs crashes on MacOS within font-lock, or when dealing
 with large compilation buffers, or in other regex applications.
 
