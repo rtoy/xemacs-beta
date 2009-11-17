@@ -1,3 +1,28 @@
+2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Remove C asserts from test-format-data-conversion.
+	See also changes in test-harness.el and c-tests.el in tests/automated.
+
+	* tests.c
+	(Ftest_hash_tables):
+	(Ftest_data_format_conversion):
+	Each now collects a list of test results and returns it.
+	Update docstrings.
+	(DFC_INITIALIZE):
+	(DFC_CHECK_LENGTH):
+	(DFC_CHECK_CONTENT):
+	(DFC_RESULT_PASS):
+	New macros.
+	(DFC_CHECK_DATA_NUL):
+	(DFC_CHECK_DATA):
+	Use the new macros.
+	Add an argument for the test description.
+	(DFC_CHECK_DATA_COND_EOL_NUL)
+	(DFC_CHECK_DATA_COND_EOL)
+	(DFC_CHECK_DATA_COND_MULE_NUL): 
+	(DFC_CHECK_DATA_COND_MULE):
+	Add an argument for the test description.
+
 2009-11-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix issue630.

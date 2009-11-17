@@ -585,7 +585,13 @@ test_hash_tables_predicate (Lisp_Object key,
 
 
 DEFUN ("test-hash-tables", Ftest_hash_tables, 0, 0, "", /*
-Test C interface to hash tables.
+  Return list of results of testing C interface to hash tables.
+For use by the automated test suite.  See tests/automated/c-tests.
+
+Each element is a list (DESCRIPTION, STATUS, REASON).
+DESCRIPTION is a string describing the test.
+STATUS is a symbol, either t (pass) or nil (fail).
+REASON is nil or a string describing the failure (not required).
 */
        ())
 {

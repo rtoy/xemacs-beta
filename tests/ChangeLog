@@ -1,5 +1,17 @@
 2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	Remove C asserts from test-format-data-conversion.
+	See also changes in src/tests.c.
+
+	* automated/c-tests.el (main loop):
+	Process a list of results passed out of the C-level test function.
+
+	* automated/test-harness.el (Assert):
+	Allow an optional description for use in loops and other cases
+	where the assertion itself is not informative (eg, c-test.el).
+
+2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* reproduce-crashes.el (13): New bug reported by Adam Sjogren.
 
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
