@@ -1442,7 +1442,7 @@ buffer modifications are performed or a buffer is reverted.")
 (defvar font-lock-range-table (make-range-table))
 
 (defun font-lock-pre-idle-hook ()
-  (with-trapping-errors 'font-lock-pre-idle-hook
+  (with-trapping-errors :operation 'font-lock-pre-idle-hook
     (if (> (hash-table-count font-lock-pending-buffer-table) 0)
 	(font-lock-fontify-pending-extents))))
 
