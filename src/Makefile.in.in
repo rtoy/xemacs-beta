@@ -1013,10 +1013,10 @@ covmacs: $(temacs_deps)
 mostlyclean:
 	-$(RM) *.o *.i *.rtl *.ln core \
 	temacs puremacs quantmacs covmacs rtcmacs temacs.exe \
-	sheap-adjust.h dump-id.c $(BLDSRC)/NEEDTODUMP SATISFIED \
+	sheap-adjust.h dump-id.c dump-size $(BLDSRC)/NEEDTODUMP SATISFIED \
 	$(LIB_SRC)/*.po $(LIB_SRC)/*.mo
 versionclean:
-	-$(RM) $(RAW_EXE) $(DUMP_TARGET) $(LIB_SRC)/DOC
+	-$(RM) $(RAW_EXE) $(DUMP_TARGET) $(DUMP_TARGET).dmp $(LIB_SRC)/DOC
 ##      Remove the generated load files here; they cause lots of problems
 ##      when they don't work right.
 clean: mostlyclean versionclean
@@ -1035,9 +1035,9 @@ distclean: distclean-noconfig
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig
-	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
+	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#* *.s gdb.txt
 extraclean: realclean
-	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
+	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#* *.s gdb.txt
 
 ###################### Lock, unlock
 
