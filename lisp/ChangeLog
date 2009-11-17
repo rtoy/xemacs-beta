@@ -168,6 +168,17 @@
 	* glyphs.el (make-image-specifier): Remove ancient comment about
 	lack of support for animated GIFs.
 
+2009-08-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gutter-items.el (progress-feedback-dispatch-non-command-events):
+	Correct syntax of `condition-case'.
+
+2009-06-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-lock.el (font-lock-pre-idle-hook):
+	* etags.el (find-tag-default):
+	Correct :operation arguments in `with-trapping-errors'.
+
 2009-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-duplicates): 

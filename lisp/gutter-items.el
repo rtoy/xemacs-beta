@@ -540,11 +540,10 @@ you should just use (progress nil)."
 
 (defun progress-feedback-dispatch-non-command-events ()
   ;; don't allow errors to hose things
-  (condition-case t 
-      ;; (sit-for 0) is too agressive and cause more display than we
-      ;; want.
+  (condition-case nil 
+      ;; (sit-for 0) causes more redisplay than we want.
       (dispatch-non-command-events)
-    nil))
+    (t nil)))
 
 (defun append-progress-feedback (label message &optional value frame)
   (or frame (setq frame (selected-frame)))
