@@ -447,8 +447,18 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	PRINT_XFT_PATTERN (3, "FcDefaultSubstitute'ed name is %s\n", p);
 	/* #### check fcresult of following match? */
 	fontxft = FcFontMatch (fcc, p, &fcresult);
-	/* this prints the long fontconfig name */
-	PRINT_XFT_PATTERN (1, "FcFontMatch'ed name is %s\n", fontxft);
+	switch (fcresult)
+	  {
+	  /* case FcResultOutOfMemory: */
+	  case FcResultNoMatch:
+	  case FcResultTypeMismatch:
+	  case FcResultNoId:
+	    break;
+	  case FcResultMatch:
+	    /* this prints the long fontconfig name */
+	    PRINT_XFT_PATTERN (1, "FcFontMatch'ed name is %s\n", fontxft);
+	    break;
+	  }
 	FcPatternDestroy (p);
       }
 
@@ -464,7 +474,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
 	/* full name, including language coverage and repertoire */
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_fullname, (Extbyte *) name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_fullname,
+		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   Qfc_font_name_encoding);
 	free (name);
 
 	/* long name, omitting coverage and repertoire, plus a number
@@ -483,7 +495,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALE);
 	FcPatternDel (p, FC_FONTVERSION);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_longname, (Extbyte *) name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_longname,
+		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   Qfc_font_name_encoding);
 	free (name);
 
 	/* nickname, just family and size, but
@@ -497,7 +511,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALABLE);
 	FcPatternDel (p, FC_DPI);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_shortname, (Extbyte *) name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_shortname,
+		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   Qfc_font_name_encoding);
 	free (name);
 
 	FcPatternDestroy (p);

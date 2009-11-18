@@ -758,6 +758,12 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
     {
       /* The font is already open, we just unparse. */
       FcChar8 *res = FcNameUnparse (FONT_INSTANCE_X_XFTFONT (f)->pattern);
+      if (! FONT_INSTANCE_X_XFTFONT (f)->pattern)
+	{
+	  maybe_signal_error (Qgui_error,
+			      "Xft font present but lacks pattern",
+			      wrap_font_instance(f), Qfont, errb);
+	}
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
@@ -769,7 +775,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 	{
 	  maybe_signal_error (Qgui_error,
 			      "Couldn't unparse Xft font to truename",
-			      Qnil, Qfont, errb);
+			      wrap_font_instance(f), Qfont, errb);
 	  /* used to return Qnil here */
 	}
     }

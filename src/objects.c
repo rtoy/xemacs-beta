@@ -497,8 +497,10 @@ font_instance_truename_internal (Lisp_Object font_instance,
 
   if (NILP (f->device))
     {
-      maybe_signal_error (Qgui_error, "Couldn't determine font truename",
-			       font_instance, Qfont, errb);
+      maybe_signal_error (Qgui_error,
+			  "can't determine truename: "
+			  "no device for font instance",
+			  font_instance, Qfont, errb);
       return Qnil;
     }
 

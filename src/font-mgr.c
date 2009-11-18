@@ -1264,7 +1264,7 @@ A nonnegative integer.  Set to 0 to suppress all warnings.
 Default is 1 to ensure a minimum of debugging output at initialization.
 Higher levels give even more information.
 */ );
-  debug_xft = 1;
+  debug_xft = 0;
 
   DEFVAR_CONST_INT("xft-version", &xft_version /*
 The major version number of the Xft library being used.
