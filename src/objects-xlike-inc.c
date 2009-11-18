@@ -347,22 +347,29 @@ static struct charset_reporter charset_table[] =
     { &Vcharset_greek_iso8859_7, "Greek", "el" },
     /* #### all the Chinese need checking
        Damn the blood-sucking ISO anyway. */
-    { &Vcharset_chinese_gb2312, "simplified Chinese", "zh-CN" },
+    { &Vcharset_chinese_gb2312, "simplified Chinese", "zh-cn" },
     { &Vcharset_korean_ksc5601, "Korean", "ko" },
-    { &Vcharset_chinese_cns11643_1, "traditional Chinese", "zh-TW" },
-    { &Vcharset_chinese_cns11643_2, "traditional Chinese", "zh-TW" },
+    { &Vcharset_chinese_cns11643_1, "traditional Chinese", "zh-tw" },
+    { &Vcharset_chinese_cns11643_2, "traditional Chinese", "zh-tw" },
+    /* #### not obvious how to handle these
+       We could (for experimental purposes) make the last element into
+       an array of ISO 639 codes, and check for all of them.  If a font
+       provides some but not others, warn. */
     { &Vcharset_latin_iso8859_1, NULL, NULL },
     { &Vcharset_latin_iso8859_2, NULL, NULL },
     { &Vcharset_latin_iso8859_3, NULL, NULL },
     { &Vcharset_latin_iso8859_4, NULL, NULL },
     { &Vcharset_latin_iso8859_9, NULL, NULL },
     { &Vcharset_latin_iso8859_15, NULL, NULL },
-    { &Vcharset_thai_tis620, NULL, NULL },
+    { &Vcharset_thai_tis620, "Thai", "th" },
+    /* We don't have an arabic charset.  bidi issues, I guess? */
+    /* { &Vcharset_arabic_iso8859_6, "Arabic", "ar" }, */
     { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
-    { &Vcharset_cyrillic_iso8859_5, NULL, NULL },
+    /* #### probably close enough for Ukraine? */
+    { &Vcharset_cyrillic_iso8859_5, "Russian", "ru" },
     /* #### these probably are not quite right */
-    { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-TW" },
-    { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-TW" },
+    { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-tw" },
+    { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-tw" },
     { NULL, NULL, NULL }
   };
 
