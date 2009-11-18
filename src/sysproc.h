@@ -30,8 +30,6 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/resource.h>
 #endif
 
-#if !defined (NO_SUBPROCESSES)
-
 #ifdef MINGW
 #include <../mingw/process.h>
 #elif defined (CYGWIN)
@@ -53,11 +51,6 @@ Boston, MA 02111-1307, USA.  */
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 # endif
-# ifdef NEED_NET_ERRNO_H
-#  include <net/errno.h>
-# endif /* NEED_NET_ERRNO_H */
-#elif defined (SKTPAIR)
-# include <sys/socket.h>
 #endif /* HAVE_SOCKETS */
 
 #ifdef WIN32_NATIVE
@@ -117,12 +110,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define first descriptor number available for subprocesses.  */
 #define FIRST_PROC_DESC 3
-
-#ifdef IRIS
-# include <sys/sysmacros.h>	/* for "minor" */
-#endif /* not IRIS */
-
-#endif /* !NO_SUBPROCESSES */
 
 #ifdef AIX
 #include <sys/select.h>
@@ -203,7 +190,7 @@ pid_t qxe_getpid (void);
 
 #include "syssignal.h" /* needed for SIGTSTP */
 
-#if !defined (WIN32_NATIVE) && ((!defined (SIGTSTP) && !defined (USG_JOBCTRL)) || !defined (HAVE_MKDIR) || !defined (HAVE_RMDIR))
+#if !defined (WIN32_NATIVE) && (!defined (SIGTSTP) || !defined (HAVE_MKDIR) || !defined (HAVE_RMDIR))
 
 #define NEED_SYNC_PROCESS_CODE
 

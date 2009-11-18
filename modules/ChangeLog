@@ -1,3 +1,7 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* canna/canna_api.c (Fcanna_initialize): Drop support for the NEC EWS.
+
 2009-11-09  Jerry James  <james@xemacs.org>
 
 	* sample/external/Makefile.in.in: Clarify GPL status.

@@ -561,47 +561,38 @@ The value of this variable is a symbol indicating the type of operating
 system XEmacs is operating on.  Here is a table of the possible values:
 
 @table @code
-@item aix-v3
-AIX.
+@item aix
+AIX 4.2 or later.
 
 @item berkeley-unix
 Berkeley BSD.
 
-@item dgux
-Data General DGUX operating system.
+@item cygwin32
+Cygwin.
+
+@item darwin
+Mac OS X.
 
 @item gnu
 A GNU system using the GNU HURD and Mach.
 
 @item hpux
-Hewlett-Packard HPUX operating system.
+Hewlett-Packard HPUX operating system, version 11.0 or later.
 
 @item irix
-Silicon Graphics Irix system.
+Silicon Graphics Irix system, version 6.0 or later.
 
 @item linux
 A GNU system using the Linux kernel.
 
-@item ms-dos
-Microsoft MS-DOS ``operating system.''
-
-@item next-mach
-NeXT Mach-based system.
-
-@item rtu
-Masscomp RTU, UCB universe.
-
-@item unisoft-unix
-UniSoft UniPlus.
+@item mach
+The Mach kernel with a BSD 4.3 layer.
 
 @item usg-unix-v
 AT&T System V.
 
 @item windows-nt
-Microsoft windows NT.
-
-@item xenix
-SCO Xenix 386.
+Microsoft windows NT or one of its descendants.
 @end table
 
 We do not wish to add new symbols to make finer distinctions unless it

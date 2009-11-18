@@ -107,9 +107,7 @@ Boston, MA 02111-1307, USA.  */
    Possibly we should use the new "qxe" convention.
 */
 
-#ifndef NeXT
 typedef RETSIGTYPE (XCDECL * signal_handler_t) (int);
-#endif
 
 #if defined (HAVE_SIGPROCMASK)
 

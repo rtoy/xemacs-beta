@@ -596,7 +596,7 @@ main (int argc, char *argv[])
 		strncpy (remotepath, ptr, QXE_PATH_MAX);
 	    }
 #if 0  /* This is really bogus... re-enable it if you must have it! */
-#if defined (hp9000s300) || defined (hp9000s800)
+#if defined (hp9000s800)
 	  else if (strcmp (thishost,hostarg))
 	    {	/* try /net/thishost */
 	      strcpy (remotepath, "/net/");		/* (this fails using internet

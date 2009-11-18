@@ -32,8 +32,6 @@ Boston, MA 02111-1307, USA.  */
 /* #define USG */
 /* #define HPUX */
 /* #define UMAX */
-/* #define BSD4_1 */
-/* #define BSD4_2 */
 /* #define BSD4_3 */
 /* #define BSD */
 

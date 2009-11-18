@@ -35,10 +35,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 
-#if defined (NO_SUBPROCESSES)
-#error "We don't support this anymore."
-#endif
-
 #include "lisp.h"
 
 #include "buffer.h"

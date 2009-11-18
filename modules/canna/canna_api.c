@@ -406,13 +406,7 @@ If nil is specified for each arg, the default value will be used.
 
   {
     char **warning = (char **) 0;
-#ifdef nec_ews_svr4
-    stop_polling ();
-#endif /* nec_ews_svr4 */
     res = jrKanjiControl (0, KC_INITIALIZE, (char *) &warning);
-#ifdef nec_ews_svr4
-    start_polling ();
-#endif /* nec_ews_svr4 */
     val = Qnil;
     if (warning)
       {

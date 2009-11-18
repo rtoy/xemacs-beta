@@ -588,13 +588,7 @@ unrelocate_symbols (int new_, int a_out, char *a_name, char *new_name)
   LDHDR ldhdr;
   LDREL ldrel;
   ulong t_reloc = (ulong) &_text - f_ohdr.text_start;
-#ifndef ALIGN_DATA_RELOC
   ulong d_reloc = (ulong) &_data - f_ohdr.data_start;
-#else
-  /* This worked (and was needed) before AIX 4.2. 
-     I have no idea why. -- Mike */
-  ulong d_reloc = (ulong) &_data - ALIGN(f_ohdr.data_start, 2);
-#endif
   int * p;
 
   if (load_scnptr == 0)

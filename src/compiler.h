@@ -162,7 +162,7 @@ Boston, MA 02111-1307, USA.  */
    where there's an infinite loop in a function returning a Lisp object.
 */
 #if (defined (_MSC_VER) && MSC_VERSION < 1300) || defined (__SUNPRO_C) || \
-  defined (__SUNPRO_CC) || (defined (DEC_ALPHA) && defined (OSF1))
+  defined (__SUNPRO_CC)
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
 #else
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING

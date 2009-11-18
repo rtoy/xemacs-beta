@@ -60,9 +60,6 @@ Boston, MA 02111-1307, USA.  */
 
 /*****    (2) The TERMIO way (system V style)    *****/
 
-# ifdef __DGUX
-#  include <sys/ioctl.h>
-# endif
 # ifndef NO_TERMIO
 #  include <termio.h>
 # endif /* not NO_TERMIO */
@@ -100,26 +97,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Generally useful to include this file: */
 
-/* But Sun OS has broken include files and doesn't want it included */
-#if !defined (WIN32_NATIVE) && !defined (SUNOS4)
+#if !defined (WIN32_NATIVE)
 # include <sys/ioctl.h>
-#endif
-/* UNIPLUS systems may have FIONREAD.  */
-#ifdef UNIPLUS
-#include <sys.ioctl.h>
 #endif
 
 
 /* ----------------------------------------------------- */
 /*                 miscellaneous includes                */
 /* ----------------------------------------------------- */
-
-#ifdef AIXHFT /* obsolete - only found in AIX version 3. */
-/* Get files for keyboard remapping */
-#define HFNKEYS 2
-#include <sys/hft.h>
-#include <sys/devinfo.h>
-#endif
 
 /* Include files for PTY's */
 
@@ -142,17 +127,12 @@ Boston, MA 02111-1307, USA.  */
 /* ----------------------------------------------------- */
 
 
-#if defined (XENIX) || defined (BROKEN_TIOCGETC)
+#if defined (BROKEN_TIOCGETC)
 #undef TIOCGETC  /* Avoid confusing some conditionals that test this.  */
 #endif
 
 /* XEmacs: SIGIO is cleaned up so we remove the crap here that messes
    with it (and FIONREAD and FASYNC, which are related). */
-
-#ifdef BROKEN_TIOCGWINSZ /* XEmacs addition */
-#undef TIOCGWINSZ
-#undef TIOCSWINSZ
-#endif
 
 /* On TERMIOS systems, the tcmumbleattr calls take care of these
    parameters, and it's a bad idea to use them (on AIX, it makes the

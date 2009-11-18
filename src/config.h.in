@@ -187,8 +187,7 @@ things are arranged in config.h.in.  In particular:
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
+/* Define to 1 if you have <alloca.h> and it should be used. */
 #undef HAVE_ALLOCA_H
 
 /* Define to 1 if using `alloca.c'. */
@@ -811,10 +810,6 @@ things are arranged in config.h.in.  In particular:
    file. */
 #undef DUMP_IN_EXEC
 
-/* Define DYNODUMP if it is necessary to properly dump on this system.
-   Currently this is only Solaris 2.x, for x < 6. */
-#undef DYNODUMP
-
 /* Compile in support for Sun Sparcworks/WorkShop? */
 #undef SUNPRO
 
@@ -1009,7 +1004,7 @@ extern "C" {
 #endif
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS)
 #define HAVE_WINDOW_SYSTEM
 #endif
 
@@ -1054,23 +1049,6 @@ extern "C" {
 /* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MSG_SELECT)
 #define HAVE_UNIXOID_EVENT_LOOP
-#endif
-
-/* If you are using SunOS 4.1.1 and X11r5, then you need this patch.
-   There is a stupid bug in the SunOS libc.a: two functions which X11r5
-   uses, mbstowcs() and wcstombs(), are unusable when programs are
-   statically linked (as XEmacs must be) because the static version of
-   libc.a contains the *dynamic* versions of these functions.  These
-   functions don't seem to be called when XEmacs is running, so it's
-   enough to define stubs for them.
-
-   This appears to be fixed in SunOS 4.1.2.
-
-   Also, SunOS 4.1.1 contains buggy versions of strcmp and strcpy that
-   sometimes reference memory past the end of the string, which can segv.
-   I don't know whether this has been fixed as of 4.1.2 or 4.1.3. */
-#if defined (sparc) && !defined (USG)
-#define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
 #endif
 
 #ifdef HAVE_CANNA

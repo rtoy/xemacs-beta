@@ -156,7 +156,7 @@ frame.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h
 free-hook.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h hash.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 gc.o: $(CONFIG_H) $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h compiler.h conslots.h console-impl.h console-stream.h console.h device.h dumper.h elhash.h events.h extents-impl.h extents.h file-coding.h frame-impl.h frame.h frameslots.h gc.h general-slots.h glyphs.h lisp-disunion.h lisp-union.h lisp.h lrecord.h lstream.h mc-alloc.h number-gmp.h number-mp.h number.h opaque.h process.h profile.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h sysfile.h systime.h text.h vdb.h window-impl.h window.h winslots.h
 general.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
-getloadavg.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h syssignal.h text.h vdb.h
+getloadavg.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h text.h vdb.h
 glyphs-eimage.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h compiler.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h dumper.h faces.h file-coding.h frame.h gc.h general-slots.h glyphs.h lisp-disunion.h lisp-union.h lisp.h lrecord.h lstream.h mc-alloc.h number-gmp.h number-mp.h number.h objects-impl.h objects.h opaque.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysfile.h text.h vdb.h window-impl.h window.h winslots.h
 glyphs-shared.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h console.h dumper.h elhash.h faces.h frame.h gc.h general-slots.h glyphs.h imgproc.h insdel.h lisp-disunion.h lisp-union.h lisp.h lrecord.h lstream.h mc-alloc.h number-gmp.h number-mp.h number.h opaque.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h sysfile.h text.h vdb.h window-impl.h window.h winslots.h
 glyphs-widget.o: $(CONFIG_H) $(LISP_H) bytecode.h charset.h compiler.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h dumper.h faces.h frame.h gc.h general-slots.h glyphs.h gui.h insdel.h lisp-disunion.h lisp-union.h lisp.h lrecord.h lstream.h mc-alloc.h number-gmp.h number-mp.h number.h objects.h opaque.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h text.h vdb.h window-impl.h window.h winslots.h
@@ -166,7 +166,6 @@ gpmevent.o: $(CONFIG_H) $(LISP_H) commands.h compiler.h conslots.h console-impl.
 gui.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h compiler.h dumper.h elhash.h gc.h general-slots.h gui.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h menubar.h number-gmp.h number-mp.h number.h redisplay.h symeval.h symsinit.h text.h vdb.h
 gutter.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h dumper.h faces.h frame-impl.h frame.h frameslots.h gc.h general-slots.h glyphs.h gutter.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h text.h vdb.h window-impl.h window.h winslots.h
 hash.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h hash.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
-hftctl.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h text.h vdb.h
 hpplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h sound.h symeval.h symsinit.h text.h vdb.h
 imgproc.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h imgproc.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 indent.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h console.h device.h dumper.h extents.h faces.h frame.h gc.h general-slots.h glyphs.h insdel.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h text.h vdb.h window-impl.h window.h winslots.h
@@ -223,8 +222,6 @@ signal.o: $(CONFIG_H) $(LISP_H) compiler.h conslots.h console-impl.h console.h d
 sound.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h dumper.h gc.h general-slots.h intl-auto-encap-win32.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h redisplay.h sound.h specifier.h symeval.h symsinit.h sysdep.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h text.h vdb.h xintrinsic.h
 specifier.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h dumper.h frame.h gc.h general-slots.h glyphs.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h opaque.h rangetab.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h text.h vdb.h window-impl.h window.h winslots.h
 strcat.o: $(CONFIG_H)
-strcmp.o: $(CONFIG_H)
-strcpy.o: $(CONFIG_H)
 strftime.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 sunplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h sound.h symeval.h symsinit.h sysdep.h sysfile.h syssignal.h text.h vdb.h
 sunpro.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
@@ -243,24 +240,12 @@ tparam.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-di
 undo.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h dumper.h extents.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexaix.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h getpagesize.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexalpha.o: $(CONFIG_H) compiler.h
-unexapollo.o: $(CONFIG_H)
-unexconvex.o: $(CONFIG_H) compiler.h getpagesize.h
 unexcw.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h text.h vdb.h
 unexec.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h getpagesize.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexelf.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
-unexelfsgi.o: $(CONFIG_H) compiler.h
-unexencap.o: compiler.h
-unexenix.o: $(CONFIG_H) compiler.h
-unexfreebsd.o: $(CONFIG_H) compiler.h
-unexfx2800.o: compiler.h
-unexhp9k3.o: $(CONFIG_H) compiler.h sysdep.h syssignal.h
 unexhp9k800.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
-unexmips.o: $(CONFIG_H) compiler.h getpagesize.h
 unexnt.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h intl-auto-encap-win32.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h syswindows.h text.h vdb.h
-unexsni.o: compiler.h
 unexsol2-6.o: compiler.h
-unexsol2.o: compiler.h
-unexsunos4.o: $(CONFIG_H) compiler.h
 unicode.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h compiler.h dumper.h extents.h file-coding.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h opaque.h rangetab.h symeval.h symsinit.h sysfile.h text.h vdb.h
 vdb-fake.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 vdb-mach.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h

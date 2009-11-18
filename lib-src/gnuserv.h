@@ -169,9 +169,7 @@
  */
 #ifndef DONT_USE_LITOUT
 #if !defined(HAVE_TERMIO) && !defined(HAVE_TERMIOS) && !defined(VMS)
-#if !defined(BSD4_1)
 #define USE_LITOUT
-#endif
 #endif
 #endif
 

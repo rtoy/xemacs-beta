@@ -1,3 +1,18 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* device.el (device-type): Remove (mostly imaginary) support for
+	NeXTstep.
+	* font.el (font-window-system-mappings): Ditto.
+	(ns-font-weight-mappings): Remove, unused.
+	(ns-font-families-for-device): Ditto.
+	(ns-font-create-name): Ditto.
+	* frame.el (make-frame-on-device): Ditto.
+	(frame-type): Ditto.
+	(display-mouse-p): Remove reference to NeXTstep in a comment.
+	* paths.el (initialize-xemacs-paths): Remove support for old Ultrix,
+	but still look in standard paths for mh.  Also remove support for old
+	SCO Unix, Bull DPX/2, Data General Unix, RTU, and Unisoft Unix.
+
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* custom.el (custom-quote): 

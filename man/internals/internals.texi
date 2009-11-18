@@ -2635,9 +2635,6 @@ documentation as @dfn{info files}, for on-line use.  These files are
 used when you enter the Info system using @kbd{C-h i} or through the
 Help menu.
 
-The @file{dynodump/} directory contains auxiliary code used to build
-XEmacs on Solaris platforms.
-
 The other directories contain various miscellaneous code and information
 that is not normally used or needed.
 
@@ -2860,7 +2857,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{bitmaps.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{blocktype.c} @tab @ref{Low-Level Modules}.
 @item @file{blocktype.h} @tab @ref{Low-Level Modules}.
-@item @file{broken-sun.h} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{buffer.c} @tab @ref{Modules for Standard Editing Operations}.
 @item @file{buffer.h} @tab @ref{Modules for Standard Editing Operations}.
 @item @file{bufslots.h} @tab @ref{Modules for Standard Editing Operations}.
@@ -3021,7 +3017,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{hash-table-tests.el} @tab @ref{Modules for Regression Testing}.
 @item @file{hash.c} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{hash.h} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
-@item @file{hftctl.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{hpplay.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{imgproc.c} @tab
 @item @file{imgproc.h} @tab
@@ -3088,7 +3083,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{nas.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{native-gtk-toolbar.c} @tab
 @item @file{ndir.h} @tab @ref{Modules for Interfacing with the File System}.
-@item @file{nsselect.m} @tab
 @item @file{nt.c} @tab
 @item @file{ntheap.c} @tab
 @item @file{ntplay.c} @tab
@@ -3173,10 +3167,7 @@ The following table contains cross-references from each module in XEmacs
 @item @file{specifier.h} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{src-headers} @tab
 @item @file{strcat.c} @tab
-@item @file{strcmp.c} @tab @ref{Modules for Interfacing with the Operating System}.
-@item @file{strcpy.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{strftime.c} @tab
-@item @file{sunOS-fix.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{sunplay.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{sunpro.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{symbol-tests.el} @tab @ref{Modules for Regression Testing}.
@@ -3223,25 +3214,12 @@ The following table contains cross-references from each module in XEmacs
 @item @file{undo.c} @tab @ref{Modules for Standard Editing Operations}.
 @item @file{unexaix.c} @tab @ref{Low-Level Modules}.
 @item @file{unexalpha.c} @tab @ref{Low-Level Modules}.
-@item @file{unexapollo.c} @tab @ref{Low-Level Modules}.
-@item @file{unexconvex.c} @tab @ref{Low-Level Modules}.
 @item @file{unexcw.c} @tab
 @item @file{unexec.c} @tab @ref{Low-Level Modules}.
 @item @file{unexelf.c} @tab @ref{Low-Level Modules}.
-@item @file{unexelfsgi.c} @tab @ref{Low-Level Modules}.
-@item @file{unexencap.c} @tab @ref{Low-Level Modules}.
-@item @file{unexenix.c} @tab @ref{Low-Level Modules}.
-@item @file{unexfreebsd.c} @tab @ref{Low-Level Modules}.
-@item @file{unexfx2800.c} @tab @ref{Low-Level Modules}.
-@item @file{unexhp9k3.c} @tab @ref{Low-Level Modules}.
 @item @file{unexhp9k800.c} @tab @ref{Low-Level Modules}.
-@item @file{unexmips.c} @tab @ref{Low-Level Modules}.
-@item @file{unexnext.c} @tab @ref{Low-Level Modules}.
 @item @file{unexnt.c} @tab
-@item @file{unexsni.c} @tab
 @item @file{unexsol2-6.c} @tab
-@item @file{unexsol2.c} @tab @ref{Low-Level Modules}.
-@item @file{unexsunos4.c} @tab @ref{Low-Level Modules}.
 @item @file{unicode.c} @tab
 @item @file{universe.h} @tab @ref{Low-Level Modules}.
 @item @file{vm-limit.c} @tab @ref{Low-Level Modules}.
@@ -3385,21 +3363,9 @@ dependencies in interfacing to signals; that is handled using the
 @example
 @file{unexaix.c}
 @file{unexalpha.c}
-@file{unexapollo.c}
-@file{unexconvex.c}
 @file{unexec.c}
 @file{unexelf.c}
-@file{unexelfsgi.c}
-@file{unexencap.c}
-@file{unexenix.c}
-@file{unexfreebsd.c}
-@file{unexfx2800.c}
-@file{unexhp9k3.c}
 @file{unexhp9k800.c}
-@file{unexmips.c}
-@file{unexnext.c}
-@file{unexsol2.c}
-@file{unexsunos4.c}
 @end example
 
 These modules contain code dumping out the XEmacs executable on various
@@ -4347,27 +4313,6 @@ and requires a lot of special-case code.)
 
 This module provides a small amount of code used internally at Sun to
 keep statistics on the usage of XEmacs.
-
-
-
-@example
-@file{broken-sun.h}
-@file{strcmp.c}
-@file{strcpy.c}
-@file{sunOS-fix.c}
-@end example
-
-These files provide replacement functions and prototypes to fix numerous
-bugs in early releases of SunOS 4.1.
-
-
-
-@example
-@file{hftctl.c}
-@end example
-
-This module provides some terminal-control code necessary on versions of
-AIX prior to 4.1.
 
 
 
@@ -17674,7 +17619,7 @@ The device subsystem defines all the methods and provides method
 services for not only device operations but also for the frame, window,
 menubar, scrollbar, toolbar, and other displayable-object subsystems.
 The reason for this is that all of these subsystems have the same
-subtypes (X, TTY, NeXTstep, Microsoft Windows, etc.) as devices do.
+subtypes (X, TTY, Microsoft Windows, etc.) as devices do.
 
 @strong{This abstraction is probably broken} (as of late 2004), at least
 for X consoles, with the advent of the @strong{Xft} library.  Xft is a

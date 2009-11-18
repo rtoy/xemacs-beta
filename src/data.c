@@ -160,23 +160,6 @@ check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
     args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
 }
 
-/* On some machines, XINT needs a temporary location.
-   Here it is, in case it is needed.  */
-
-EMACS_INT sign_extend_temp;
-
-/* On a few machines, XINT can only be done by calling this.  */
-/* XEmacs:  only used by m/convex.h */
-EMACS_INT sign_extend_lisp_int (EMACS_INT num);
-EMACS_INT
-sign_extend_lisp_int (EMACS_INT num)
-{
-  if (num & (1L << (INT_VALBITS - 1)))
-    return num | ((-1L) << INT_VALBITS);
-  else
-    return num & (EMACS_INT) ((1UL << INT_VALBITS) - 1);
-}
-
 
 /* Data type predicates */
 

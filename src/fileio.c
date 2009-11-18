@@ -53,9 +53,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HPUX
 #include <netio.h>
-#ifdef HPUX_PRE_8_0
-#include <errnet.h>
-#endif /* HPUX_PRE_8_0 */
 #endif /* HPUX */
 
 #ifdef WIN32_ANY
