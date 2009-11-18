@@ -1,3 +1,8 @@
+2008-07-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-xlike-inc.c (charset_table): Add names and ISO 639 codes
+	for Arabic, Russian, and Thai.  Regional variants are lower-cased.
+
 2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Remove C asserts from test-format-data-conversion.
