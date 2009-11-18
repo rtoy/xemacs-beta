@@ -1,3 +1,17 @@
+2009-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.h (PRINT_XFT_PATTERN):
+	Cast away some warnings.
+
+	* font-mgr.h (PRINT_XFT_PATTERN):
+	* objects-x.c (x_font_instance_truename):
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* objects.c (font_instance_truename_internal):
+	Improve error checking and reporting for Xft fonts.
+
+	* font-mgr.c (vars_of_font_mgr):
+	Set xft-debug-level to 0.
+
 2008-07-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* objects-xlike-inc.c (charset_table): Add names and ISO 639 codes

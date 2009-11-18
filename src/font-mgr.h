@@ -146,9 +146,11 @@ DECLARE_LRECORD(fc_config, struct fc_config);
 #define PRINT_XFT_PATTERN(level,format,pattern)			\
   do {								\
     DECLARE_EISTRING (eistrpxft_name);				\
-    FcChar8 *name = FcNameUnparse (pattern);			\
+    Extbyte *name = (Extbyte *) FcNameUnparse (pattern);	\
 								\
-    eicpy_ext(eistrpxft_name, name, Qfc_font_name_encoding);	\
+    eicpy_ext(eistrpxft_name,					\
+              name ? name : "FONT WITH NULL NAME",		\
+              Qfc_font_name_encoding);				\
     DEBUG_XFT1 (level, format, eidata(eistrpxft_name));		\
     free (name);						\
   } while (0)
