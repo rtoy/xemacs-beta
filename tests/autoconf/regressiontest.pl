@@ -44,8 +44,6 @@ my @output_files =
    "Makefile.in",
    "./Makefile",
    "./GNUmakefile",
-   "dynodump/Makefile.in",
-   "dynodump/Makefile",
    "lib-src/Makefile.in",
    "lib-src/Makefile",
    "lib-src/GNUmakefile",

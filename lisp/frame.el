@@ -642,8 +642,6 @@ tty	    A standard TTY connection or terminal.  CONNECTION should be
 	    and output (usually the TTY in which XEmacs started).  Only
 	    if support for TTY's was compiled into XEmacs.
 gtk	    A GTK device.
-ns	    A connection to a machine running the NeXTstep windowing
-	    system.  Not currently implemented.
 mswindows   A connection to a machine running Microsoft Windows NT or
 	    Windows 95/97.
 pc	    A direct-write MS-DOS frame.  Not currently implemented.
@@ -869,7 +867,6 @@ The value returned is the value of the last form in BODY."
 This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
-`ns' for a frame that is a NeXTstep window (not yet implemented),
 `mswindows' for a frame that is a MS Windows desktop window,
 `msprinter' for a frame that is a MS Windows print job,
 `stream' for a stream frame (which acts like a stdio stream), and
@@ -1186,8 +1183,7 @@ selected frame)."
      ((eq 'mswindows type)
       (> (declare-boundp mswindows-num-mouse-buttons) 0))
      ((device-on-window-system-p display)
-      ;; We assume X, NeXTstep, and GTK and the rest always have a pointing
-      ;; device. 
+      ;; We assume X, GTK and the rest always have a pointing device. 
       t)
     ((eq 'tty type)
      (and-fboundp 'gpm-is-supported-p

@@ -1,3 +1,7 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Drop references to removed source files.
+
 2009-11-09  Jerry James  <james@xemacs.org>
 
 	* xemacs.mak: Don't define GNU_MALLOC, as there is no longer an "old"

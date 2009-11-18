@@ -22,20 +22,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_process_h_
 #define INCLUDED_process_h_
 
-#if defined (NO_SUBPROCESSES)
-#undef XPROCESS
-#undef CHECK_PROCESS
-#define PROCESSP(x) 0
-#define PROCESS_LIVE_P(x) 0
-#define Fprocess_status(x) Qnil
-#define Fget_process(x) Qnil
-#define Fget_buffer_process(x) Qnil
-#define kill_buffer_processes(x) 0
-#define close_process_descs() 0
-#define init_xemacs_process() 0
-
-#else /* not NO_SUBPROCESSES */
-
 BEGIN_C_DECLS
 
 /* struct Lisp_Process is defined in procimpl.h; only process-*.c need
@@ -121,8 +107,6 @@ const char *signal_name (int signum);
 Lisp_Object canonicalize_host_name (Lisp_Object host);
 
 END_C_DECLS
-
-#endif /* not NO_SUBPROCESSES */
 
 /* The name of the file open to get a null file, or a data sink.
    MS-DOS, and OS/2 redefine this.  */

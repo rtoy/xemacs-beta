@@ -54,13 +54,9 @@ static size_t getpagesize() { return( 4096 ); }
 #if (defined (sparc) && defined (USG)) || defined (SOLARIS2)
 #define getpagesize() PAGESIZE
 #else /* not Solaris 2 */
-#ifdef NBPC
-#define getpagesize() NBPC
-#else /* no NBPC */
 #ifdef PAGESIZE
 #define getpagesize() PAGESIZE
 #endif
-#endif /* NBPC */
 #endif /* not Solaris 2 */
 #endif /* no NBPG */
 #endif /* no EXEC_PAGESIZE */

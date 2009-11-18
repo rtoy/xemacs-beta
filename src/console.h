@@ -44,8 +44,8 @@ Boston, MA 02111-1307, USA.  */
    the same physical display.
 
    This is an implementation detail specific to X consoles (e.g. under
-   NeXTstep or Windows, this could be different, and input would come
-   directly from the console).
+   Windows, this could be different, and input would come directly from
+   the console).
 */
 
 /* GCC does not like forward enum declaration. This needs to be

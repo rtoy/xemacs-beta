@@ -1,3 +1,14 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove dynodump support.  Delete out-of-date comment
+	about Xenix.
+	* aclocal.m4: Remove support for old operating systems.
+	* configure.ac: Remove support for old machines and operating systems.
+	Remove support for dynodump.
+	(COFF_ENCAPSULATE) Remove, unused.
+	* configure: Regenerate.
+	* dynodump: Remove.
+
 2009-11-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: Describe duplicate symbol warnings on Mac OS X.
@@ -9,7 +20,7 @@
 
 2009-11-09  Jerry James  <james@xemacs.org>
 
-	* configure.ac: Don't defined GNU_MALLOC, as there is no longer an
+	* configure.ac: Don't define GNU_MALLOC, as there is no longer an
 	"old" GNU malloc.
 
 2009-10-05  Jerry James  <james@xemacs.org>

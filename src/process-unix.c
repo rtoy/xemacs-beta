@@ -32,10 +32,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 
-#if !defined (NO_SUBPROCESSES)
-
-/* The entire file is within this conditional */
-
 #include "lisp.h"
 
 #include "buffer.h"
@@ -429,22 +425,12 @@ create_bidirectional_pipe (EMACS_INT *inchannel, EMACS_INT *outchannel,
 {
   int sv[2];
 
-#ifdef SKTPAIR
-  if (socketpair (AF_UNIX, SOCK_STREAM, 0, sv) < 0)
-    return -1;
-  *outchannel = *inchannel = sv[0];
-  *forkout = *forkin = sv[1];
-#else /* not SKTPAIR */
-  int temp;
-  temp = pipe (sv);
-  if (temp < 0) return -1;
+  if (pipe (sv) < 0) return -1;
   *inchannel = sv[0];
   *forkout = sv[1];
-  temp = pipe (sv);
-  if (temp < 0) return -1;
+  if (pipe (sv) < 0) return -1;
   *outchannel = sv[1];
   *forkin = sv[0];
-#endif /* not SKTPAIR */
   return 0;
 }
 
@@ -902,10 +888,8 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
     nice (- emacs_priority);
 #endif
 
-#if !defined (NO_SUBPROCESSES)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
-#endif /* not NO_SUBPROCESSES */
   close_load_descs ();
 
   /* [[Note that use of alloca is always safe here.  It's obvious for systems
@@ -1171,10 +1155,6 @@ unix_create_process (Lisp_Process *p,
 	       It's harder to convey an error from the child
 	       process, and I don't feel like messing with
 	       this now. */
-
-	    /* There was some weirdo, probably wrong,
-	       conditionalization on RTU and UNIPLUS here.
-	       I deleted it.  So sue me. */
 
 	    /* SunOS has TIOCSCTTY but the close/open method
 	       also works. */
@@ -1998,18 +1978,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	    continue;
 	  }
 
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	/* Slow down polling.  Some kernels have a bug which causes retrying
-	   connect to fail after a connect. (Note that the entire purpose
-	   for this code is a very old comment concerning an Ultrix bug that
-	   requires this code.  We used to do this ALWAYS despite this!
-	   This messes up C-g out of connect() in a big way.  So instead we
-	   just assume that anyone who sees such a kernel bug will define
-	   this constant, which for now is only defined under Ultrix.) --ben
-	*/
-	slow_down_interrupts ();
-#endif
-
       loop:
 
 	/* A system call interrupted with a SIGALRM or SIGIO comes back
@@ -2017,14 +1985,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	SETJMP (break_system_call_jump);
 	if (QUITP)
 	  {
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    speed_up_interrupts ();
-#endif
 	    QUIT;
 	    /* In case something really weird happens ... */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    slow_down_interrupts ();
-#endif
 	  }
 
 	/* Break out of connect with a signal (it isn't otherwise possible).
@@ -2066,11 +2028,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	    failed_connect = 1;
 	    retry_close (s);
             s = -1;
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    speed_up_interrupts ();
-#endif
-
 	    continue;
 	  }
 
@@ -2096,10 +2053,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	break;
 #endif /* USE_GETADDRINFO */
       } /* address loop */
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-    speed_up_interrupts ();
-#endif
 
 #ifdef USE_GETADDRINFO
     freeaddrinfo (res);
@@ -2239,10 +2192,6 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
      instead of 'sendto'. Consequently, we 'connect' this socket. */
 
   /* See open-network-stream-internal for comments on this part of the code */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-  slow_down_interrupts ();
-#endif
-
  loop:
 
   /* A system call interrupted with a SIGALRM or SIGIO comes back
@@ -2250,14 +2199,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   SETJMP (break_system_call_jump);
   if (QUITP)
     {
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      speed_up_interrupts ();
-#endif
       QUIT;
       /* In case something really weird happens ... */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      slow_down_interrupts ();
-#endif
     }
 
   /* Break out of connect with a signal (it isn't otherwise possible).
@@ -2288,18 +2231,11 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 
       retry_close (rs);
       retry_close (ws);
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      speed_up_interrupts ();
-#endif
 
       errno = xerrno;
       report_network_error ("error connecting socket", list3 (Qunbound, name,
 							      port));
     }
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-  speed_up_interrupts ();
-#endif
 
   /* scope */
   if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,
@@ -2361,5 +2297,3 @@ vars_of_process_unix (void)
 {
   Fprovide (intern ("unix-processes"));
 }
-
-#endif /* !defined (NO_SUBPROCESSES) */

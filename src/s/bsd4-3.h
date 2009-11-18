@@ -1,5 +1,5 @@
 /* Definitions file for XEmacs running on bsd 4.3
-   Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+   Copyright (C) 1985, 1986, 1994 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -20,9 +20,23 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-#include "bsd4-2.h"
+#ifndef BSD
+#define BSD 43
+#endif /* BSD */
 
-#undef BSD4_2
+/* SYSTEM_TYPE should indicate the kind of system you are using.
+ *  It sets the Lisp variable system-type.  */
+
+#define SYSTEM_TYPE "berkeley-unix"
+
+/* The file containing the kernel's symbol table is called /vmunix.  */
+
+#define KERNEL_FILE "/vmunix"
+
+/* The symbol in the kernel where the load average is found
+ *    is named _avenrun.  */
+
+#define LDAV_SYMBOL "_avenrun"
 
 /* We give these symbols the numeric values found in <sys/param.h> to
    avoid warnings about redefined macros.  */
@@ -30,21 +44,9 @@ Boston, MA 02111-1307, USA.  */
 #define BSD4_3 1
 #endif /* BSD4_3 */
 
-#ifdef BSD_WAS_DEFINED
-#undef BSD
-#endif
-
-#ifndef BSD
-#define BSD 43
-#endif /* BSD */
-
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named
    /usr/spool/mail/$USER.lock.  */
 
 #define MAIL_USE_FLOCK
-
-/* Apparently not needed any more? */
-
-#undef SIGIO_REQUIRES_SEPARATE_PROCESS_GROUP

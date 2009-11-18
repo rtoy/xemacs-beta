@@ -895,9 +895,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   Rawbyte stack_bottom_variable;
   int skip_args = 0;
   Lisp_Object load_me;
-#ifdef NeXT
-  extern int malloc_cookie;
-#endif
 
 #if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
      && !defined (DOUG_LEA_MALLOC))
@@ -928,19 +925,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	}
     }
 #endif /* NEW_GC */
-
-#ifdef NeXT
-  /* 19-Jun-1995 -baw
-   * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
-   * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
-   * does; it was provided by NeXT, and it presumably makes NS's mallocator
-   * work with dumping.  But malloc_jumpstart() and malloc_freezedry() in
-   * unexnext.c are both completely undocumented, even in NS header files!
-   * But hey, it solves all NS related memory problems, so who's
-   * complaining? */
-  if (initialized && malloc_jumpstart (malloc_cookie) != 0)
-    stderr_out ("malloc jumpstart failed!\n");
-#endif /* NeXT */
 
 #if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
   /* Prior to XEmacs 21, this was `#if 0'ed out.  */
@@ -1028,10 +1012,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     nice (-emacs_priority);
   setuid (getuid ());
 #endif /* SET_EMACS_PRIORITY */
-
-#ifdef EXTRA_INITIALIZE
-  EXTRA_INITIALIZE;
-#endif
 
   /* NOTE NOTE NOTE: Keep the following args in sync with the big list of
      arguments below in standard_args[], with the help text in startup.el,
@@ -1581,11 +1561,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_objects ();
       syms_of_print ();
-#if !defined (NO_SUBPROCESSES)
       syms_of_process ();
 #ifdef HAVE_WIN32_PROCESSES
       syms_of_process_nt ();
-#endif
 #endif
       syms_of_profile ();
 #if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
@@ -2158,14 +2136,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_objects ();
       vars_of_print ();
 
-#ifndef NO_SUBPROCESSES
       vars_of_process ();
 #ifdef HAVE_UNIX_PROCESSES
       vars_of_process_unix ();
 #endif
 #ifdef HAVE_WIN32_PROCESSES
       vars_of_process_nt ();
-#endif
 #endif
 
       vars_of_profile ();

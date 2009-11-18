@@ -172,13 +172,6 @@ init_syntax_once (void)
 # define gettext(msgid) (msgid)
 #endif
 
-/* Under XEmacs, this is needed because we don't define it elsewhere. */
-#ifdef SWITCH_ENUM_BUG
-#define SWITCH_ENUM_CAST(x) ((int)(x))
-#else
-#define SWITCH_ENUM_CAST(x) (x)
-#endif
-
 
 /* Get the interface, including the syntax bits.  */
 #include "regex.h"
@@ -3764,7 +3757,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
       /* We should never be about to go beyond the end of the pattern.  */
       assert (p < pend);
 
-      switch (SWITCH_ENUM_CAST ((re_opcode_t) *p++))
+      switch ((re_opcode_t) *p++)
 	{
 
         /* I guess the idea here is to simply not bother with a fastmap
@@ -5232,7 +5225,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
         }
 
       /* Otherwise match next pattern command.  */
-      switch (SWITCH_ENUM_CAST ((re_opcode_t) *p++))
+      switch ((re_opcode_t) *p++)
 	{
         /* Ignore these.  Used to ignore the n of succeed_n's which
            currently have n == 0.  */

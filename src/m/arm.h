@@ -30,8 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* crt0.c, if it is used, should use the i386-bsd style of entry.
-   with no extra dummy args.  On USG and XENIX,
-   NO_REMAP says this isn't used. */
+   with no extra dummy args.  On USG, NO_REMAP says this isn't used. */
 
 /* Mly 16-Jan-96 16:38:32: this is part of a prototype -- same bug present in 
    other m*.h files */
