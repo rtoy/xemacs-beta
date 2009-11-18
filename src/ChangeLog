@@ -1,3 +1,39 @@
+2009-11-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Assorted cleanups.
+
+	* font-mgr.h (CHECKING_LANG): Remove redundant conversion.
+
+	* font-mgr.c: Update copyright notice and author headers.
+	Reorder some functions.
+
+	* objects-xlike-inc.c (xft_find_charset_font): Check for freeing NULL.
+
+	Implement more of fontconfig API.
+
+	* font-mgr.c: (Ffc_default_substitute):
+	(Ffc_config_substitute):
+	(Ffc_font_render_prepare):
+	New functions.
+	(Ffc_font_match):
+	Gets optional argument CONFIG.
+	(Ffc_config_destroy):
+	Fix a typo.
+
+	Reimplement FCSTRLIST_TO_LISP_USING as a function.
+
+	(FCSTRLIST_TO_LISP_USING): Removed.
+	(fcstrlist_to_lisp_using): New function.
+	(Ffc_config_get_config_dirs):
+	(Ffc_config_get_font_dirs):
+	(Ffc_config_get_config_files):
+	Replace FCSTRLIST_TO_LISP_USING with fcstrlist_to_lisp_using.
+
+	Comment cleanups.
+
+	* objects-xlike-inc.c (charset_reporter): Document RFC 3066.
+	(xft_find_charset_font): Remove obsolete comment.
+
 2009-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.h (PRINT_XFT_PATTERN):

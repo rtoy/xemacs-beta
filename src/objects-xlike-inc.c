@@ -328,7 +328,8 @@ struct charset_reporter {
   Lisp_Object *charset;
   /* This is a debug facility, require ASCII. */
   Extbyte *language;		/* ASCII, please */
-  /* Technically this is FcChar8, but fsckin' GCC 4 bitches. */
+  /* Technically this is FcChar8, but fsckin' GCC 4 bitches.
+     RFC 3066 is a combination of ISO 639 and ISO 3166. */
   Extbyte *rfc3066;		/* ASCII, please */
 };
 
@@ -416,9 +417,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 				   failure, but that looks like a bug.  We
 				   check for it with FcGetCurrentConfig(),
 				   which *can* fail. */
-  if (!FcConfigGetCurrent())	/* #### We should expose FcInit* interfaces
-				   to LISP and decide when to reinitialize
-				   intelligently. */
+  if (!FcConfigGetCurrent())
     stderr_out ("Failed fontconfig initialization\n");
   else
     {
@@ -470,14 +469,14 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
       */
       {
 	FcPattern *p = FcFontRenderPrepare (fcc, fontxft, fontxft);
-	FcChar8 *name;
+	Extbyte *name;
 
 	/* full name, including language coverage and repertoire */
-	name = FcNameUnparse (p);
+	name = (Extbyte *) FcNameUnparse (p);
 	eicpy_ext (eistr_fullname,
-		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   (name ? name : "NOT FOUND"),
 		   Qfc_font_name_encoding);
-	free (name);
+	if (name) free (name);
 
 	/* long name, omitting coverage and repertoire, plus a number
 	   of rarely useful properties */
@@ -494,11 +493,11 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_INDEX);
 	FcPatternDel (p, FC_SCALE);
 	FcPatternDel (p, FC_FONTVERSION);
-	name = FcNameUnparse (p);
+	name = (Extbyte *) FcNameUnparse (p);
 	eicpy_ext (eistr_longname,
-		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   (name ? name : "NOT FOUND"),
 		   Qfc_font_name_encoding);
-	free (name);
+	if (name) free (name);
 
 	/* nickname, just family and size, but
 	   "family" names usually have style, slant, and weight */
@@ -510,11 +509,11 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_OUTLINE);
 	FcPatternDel (p, FC_SCALABLE);
 	FcPatternDel (p, FC_DPI);
-	name = FcNameUnparse (p);
+	name = (Extbyte *) FcNameUnparse (p);
 	eicpy_ext (eistr_shortname,
-		   (Extbyte *) (name ? name : "NOT FOUND"),
+		   (name ? name : "NOT FOUND"),
 		   Qfc_font_name_encoding);
-	free (name);
+	if (name) free (name);
 
 	FcPatternDestroy (p);
       }

@@ -157,14 +157,11 @@ DECLARE_LRECORD(fc_config, struct fc_config);
 
 /* print a progress message
    LEVEL is the debug level (to compare to debug_xft)
-   FONT is the Xft font name in UTF-8 (the native encoding of Xft)
+   FONT is the Xft font name in Mule internal encoding (from an eistring).
    LANG is the language being checked for support (must be ASCII). */
 #define CHECKING_LANG(level,font,lang)					\
   do {									\
-    DECLARE_EISTRING (eistrcl_name);					\
-    eicpy_ext(eistrcl_name, font, Qfc_font_name_encoding);		\
-    DEBUG_XFT2 (level, "checking if %s handles %s\n",			\
-			eidata(eistrcl_name), lang);			\
+    DEBUG_XFT2 (level, "checking if %s handles %s\n", font, lang);	\
   } while (0)
 
 #else /* USE_XFT */
