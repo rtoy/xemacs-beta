@@ -1,3 +1,8 @@
+2009-11-19  Vin Shelton  <acs@xemacs.org>
+
+	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
+	on Windows native builds.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Drop support for dynodump and OSF1.

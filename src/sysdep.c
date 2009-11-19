@@ -553,6 +553,110 @@ restore_signal_handlers (struct save_signal *saved_handlers)
     }
 }
 
+/* Fork a subshell.  */
+static void
+sys_subshell (void)
+{
+  Lisp_Object dir;
+  Ibyte *str = 0;
+  Bytecount len;
+  struct gcpro gcpro1;
+  Ibyte *sh = 0;
+  Extbyte *shext;
+
+  /* Use our buffer's default directory for the subshell.  */
+
+  /* Note: These calls are spread out to insure that the return values
+     of the calls (which may be newly-created strings) are properly
+     GC-protected. */
+
+  GCPRO1 (dir);
+
+  dir = current_buffer->directory;
+  /* If the current dir has no terminating slash, we'll get undesirable
+     results, so put the slash back. */
+  dir = Ffile_name_as_directory (dir);
+  dir = Funhandled_file_name_directory (dir);
+  dir = expand_and_dir_to_file (dir, Qnil);
+
+  str = alloca_ibytes (XSTRING_LENGTH (dir) + 2);
+  len = XSTRING_LENGTH (dir);
+  memcpy (str, XSTRING_DATA (dir), len);
+  if (!IS_ANY_SEP (str[len - 1]))
+    str[len++] = DIRECTORY_SEP;
+  str[len] = 0;
+
+  if (sh == 0)
+    sh = egetenv ("SHELL");
+  if (sh == 0)
+    sh = (Ibyte *) "sh";
+
+  PATHNAME_CONVERT_OUT (sh, shext);
+
+  UNGCPRO;
+
+#ifdef WIN32_NATIVE
+
+  if (str)
+    qxe_chdir (str);
+
+  /* Waits for process completion */
+  if (XEUNICODE_P ?
+      _wspawnlp (_P_WAIT, (const wchar_t *) shext,
+		 (const wchar_t *) shext, NULL) != 0 :
+      _spawnlp (_P_WAIT, shext, shext, NULL) != 0)
+    report_process_error ("Can't spawn subshell", Qunbound);
+  else
+    return; /* we're done, no need to wait for termination */
+
+#else /* not WIN32_NATIVE */
+
+  {
+    int pid;
+    struct save_signal saved_handlers[5];
+
+    saved_handlers[0].code = SIGINT;
+    saved_handlers[1].code = SIGQUIT;
+    saved_handlers[2].code = SIGTERM;
+#ifdef SIGIO
+    saved_handlers[3].code = SIGIO;
+    saved_handlers[4].code = 0;
+#else
+    saved_handlers[3].code = 0;
+#endif
+
+    pid = fork ();
+
+    if (pid == -1)
+      report_process_error ("Can't spawn subshell", Qunbound);
+    if (pid == 0)
+      {
+	if (str)
+	  qxe_chdir (str);
+
+#if !defined (NO_SUBPROCESSES)
+	close_process_descs (); /* Close Emacs's pipes/ptys */
+#endif
+
+#ifdef SET_EMACS_PRIORITY
+	if (emacs_priority != 0)
+	  nice (-emacs_priority); /* Give the new shell the default priority */
+#endif
+
+	execlp (shext, shext, 0);
+	retry_write (1, "Can't execute subshell", 22);
+	_exit (1);
+      }
+
+    save_signal_handlers (saved_handlers);
+    synch_process_alive = 1;
+    wait_for_termination (pid);
+    restore_signal_handlers (saved_handlers);
+  }
+
+#endif /* not WIN32_NATIVE */
+}
+
 #endif /* !defined (SIGTSTP) */
 
 
@@ -568,9 +672,12 @@ sys_suspend (void)
   }
 
 #else /* No SIGTSTP */
-  /* If you don't know what this is don't mess with it */
-  ptrace (0, 0, 0, 0);		/* set for ptrace - caught by csh */
-  kill (getpid (), SIGQUIT);
+
+  /* On a system where suspending is not implemented,
+     instead fork a subshell and let it talk directly to the terminal
+     while we wait.  */
+  sys_subshell ();
+
 #endif
 }
 
