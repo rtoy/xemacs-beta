@@ -1,3 +1,10 @@
+2009-11-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* nt.c (mswindows_getdcwd): Check first whether drive is valid
+	with _getdrives() to avoid crash in _wgetdcwd(...) when linking
+	against msvcrt8.  This fix was taken from the Mozilla project
+	which experienced the same problem.
+
 2009-11-19  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
