@@ -1,3 +1,9 @@
+2009-12-01  Mike Alexander  <mta@umich.edu>
+
+	* configure.ac: Make --with-database={dbm|gdbm} work again, it's
+	testing $ndbm_h_found which is never set.
+	* configure: ditto
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove dynodump support.  Delete out-of-date comment

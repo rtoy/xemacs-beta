@@ -38578,7 +38578,7 @@ fi
 
 done
 
-  if test "$ndbm_h_found" != "yes"; then
+  if test "x$ndbm_h_file" = "x"; then
     test "$enable_database_gdbm" = "yes" -o \
          "$enable_database_dbm"  = "yes" && \
       { echo "Error:" "Required DBM support cannot be provided." >&2; exit 1; }
@@ -42039,7 +42039,8 @@ $debug ||
 if test -n "$CONFIG_FILES"; then
 
 
-ac_cr=''
+ac_cr='
+'
 ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
 if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
   ac_cs_awk_cr='\\r'

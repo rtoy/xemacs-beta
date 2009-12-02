@@ -5035,7 +5035,7 @@ dnl #### Should we check for gdbm.h, too?  (Seen on MacPorts.)
 if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
   ndbm_h_file=""
   AC_CHECK_HEADERS([ndbm.h gdbm/ndbm.h],[ndbm_h_file=$ac_header; break;],[],[])
-  if test "$ndbm_h_found" != "yes"; then
+  if test "x$ndbm_h_file" = "x"; then
     test "$enable_database_gdbm" = "yes" -o \
          "$enable_database_dbm"  = "yes" && \
       XE_DIE("Required DBM support cannot be provided.")
