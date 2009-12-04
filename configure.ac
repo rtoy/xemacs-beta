@@ -1294,63 +1294,26 @@ dnl Straightforward machine determination
 case "$ac_cv_build" in
   sparc-*-*        ) machine=sparc ;;
   alpha*-*-*       ) machine=alpha ;;
-  vax-*-*          ) machine=vax ;;
-  mips-dec-*       ) machine=pmax ;;
-  mips-sgi-irix6*  ) machine=iris6d ;;
-  mips-sgi-*       ) machine=iris4d ;;
   mips*-linux      ) machine=mips ;;
-  romp-ibm-*       ) machine=ibmrt ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
   powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
-  m88k-dg-*        ) machine=aviion ;;
-  m68*-sony-*      ) machine=news ;;
-  mips-sony-*      ) machine=news-risc ;;
-  clipper-*        ) machine=clipper ;;
   arm*             ) machine=arm ;;
-  ns32k-*          ) machine=ns32000 ;;
 esac
 
 dnl Straightforward OS determination
 case "$ac_cv_build" in
-  *-*-linux*    ) opsys=linux ;;
   *-*-netbsd*   ) opsys=netbsd ;;
   *-*-openbsd*	) opsys=openbsd ;;
-  *-*-nextstep* ) opsys=nextstep ;;
-  *-*-vms       ) opsys=vms ;;
-
-  dnl DEC OSF
-  *-dec-osf1.3 | *-dec-osf2* ) opsys=decosf1-3 ;;
-  *-dec-osf1.2 | *-dec-osf1* ) opsys=decosf1-2 ;;
-  *-dec-osf3.[[2-9]]         ) opsys=decosf3-2 ;;
-  *-dec-osf3*                ) opsys=decosf3-1 ;;
-  *-dec-osf[[4-9]]*          ) opsys=decosf4-0 ;;
-
-  dnl DEC Ultrix
-  *-*-ultrix[[0-3]].* | *-*-ultrix4.0* ) opsys=bsd4-2 ;;
-  *-*-ultrix4.[[12]]* ) opsys=bsd4-3 ;;
-  *-*-ultrix* )         opsys=ultrix4-3 ;;
 
   dnl AIX
-  *-*-aix3.1*     ) opsys=aix3-1   ;;
-  *-*-aix3.2.5    ) opsys=aix3-2-5 ;;
-  *-*-aix3*       ) opsys=aix3-2   ;;
-  *-*-aix4.0*     ) opsys=aix4	   ;;
-  *-*-aix4.1*     ) opsys=aix4-1   ;;
   *-*-aix[[4-9]]* ) opsys=aix4-2   ;;
 
   dnl Other generic OSes
   *-gnu* )			opsys=gnu    ;;
-  *-*-bsd4.[[01]] )		opsys=bsd4-1 ;;
-  *-*-bsd4.2 )			opsys=bsd4-2 ;;
   *-*-bsd4.3 )			opsys=bsd4-3 ;;
-  *-*-aos4.2 )			opsys=bsd4-2 ;;
   *-*-aos*   )			opsys=bsd4-3 ;;
-  *-*-sysv0    | *-*-sysvr0 )	opsys=usg5-0 ;;
-  *-*-sysv2    | *-*-sysvr2 )	opsys=usg5-2 ;;
-  *-*-sysv2.2  | *-*-sysvr2.2 )	opsys=usg5-2-2 ;;
-  *-*-sysv3*   | *-*-sysvr3* )	opsys=usg5-3 ;;
   *-*-sysv4.1* | *-*-sysvr4.1* )opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
   *-*-sysv4.[[2-9]]* | *-sysvr4.[[2-9]]* )
 	if test -z "$NON_GNU_CPP" ; then
@@ -1369,11 +1332,6 @@ case "$ac_cv_build" in
   *-*-netbsd* )
     case "${ac_cv_build}" in
       i[[3-9]]86-*-netbsd*) machine=intel386 ;;
-      hp300-*-netbsd* | amiga-*-netbsd* | sun3-*-netbsd* | mac68k-*-netbsd* | da30-*-netbsd* | m68k-*-netbsd* )
-                      dnl Yes, this is somewhat bogus.
-                      machine=hp9000s300 ;;
-      pc532-*-netbsd* | ns32k-*-netbsd* )  machine=ns32000 ;;
-      pmax-*-netbsd*  | mips-*-netbsd*  )  machine=pmax ;;
     esac
   ;;
 
@@ -1381,52 +1339,8 @@ case "$ac_cv_build" in
   *-*-openbsd* )
     case "${ac_cv_build}" in
       i386-*-openbsd*)		machine=intel386 ;;
-      m68k-*-openbsd*)		machine=hp9000s300 ;;
-      mipsel-*-openbsd*)	machine=pmax ;;
      esac
    ;;
-
-  dnl Acorn RISCiX:
-  arm-acorn-riscix1.1* ) machine=acorn opsys=riscix1-1 ;;
-  arm-acorn-riscix1.2* | arm-acorn-riscix ) machine=acorn opsys=riscix1-2 ;;
-
-  dnl Alliant machines
-  fx80-alliant-* ) machine=alliant4     opsys=bsd4-2 ;;
-  i860-alliant-* ) machine=alliant-2800 opsys=bsd4-3 ;;
-
-  dnl Altos 3068
-  m68*-altos-sysv* ) machine=altos opsys=usg5-2 ;;
-
-  dnl Amdahl UTS
-  580-amdahl-sysv* ) machine=amdahl opsys=usg5-2-2 ;;
-
-  dnl Apollo, Domain/OS
-  m68*-apollo-* ) machine=apollo opsys=bsd4-3 ;;
-
-  dnl AT&T 3b2, 3b5, 3b15, 3b20
-  we32k-att-sysv* ) machine=att3b opsys=usg5-2-2 ;;
-
-  dnl AT&T 3b1 - The Mighty Unix PC!
-  m68*-att-sysv* ) machine=7300 opsys=usg5-2-2 ;;
-
-  dnl Bull machines
-  rs6000-bull-bosx* ) machine=ibmrs6000 opsys=aix3-2 ;; # dpx20
-  m68*-bull-sysv3*  ) machine=dpx2      opsys=usg5-3 ;; # dpx2
-  m68*-bull-sysv2*  ) machine=sps7      opsys=usg5-2 ;; # sps7
-
-  dnl CCI 5/32, 6/32 -- see "Tahoe".
-
-  dnl Celerity
-  celerity-celerity-bsd* ) machine=celerity opsys=bsd4-2 ;;
-
-  dnl Convex
-  *-convex-bsd* | *-convex-convexos* )
-    machine=convex opsys=bsd4-3
-    NON_GNU_CPP="cc -E -P"
-  ;;
-
-  dnl Cubix QBx/386
-  i[[3-9]]86-cubix-sysv* ) machine=intel386 opsys=usg5-3 ;;
 
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
@@ -1435,213 +1349,28 @@ case "$ac_cv_build" in
     AC_DEFINE(USE_PARAM_H)
     ;;
 
-  dnl Data General AViiON Machines
-  i586-dg-dgux*R4*   | i586-dg-dgux5.4.4* ) machine=aviion opsys=dgux5-4r4 ;;
-  m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) opsys=dgux5-4r3 ;;
-  m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* ) opsys=dgux5-4r2 ;;
-  m88k-dg-dgux* 			  ) opsys=dgux	   ;;
-
-  dnl Motorola Delta machines
-  m68k-motorola-sysv* | m68000-motorola-sysv* ) machine=delta opsys=usg5-3 ;;
-  m88k-motorola-sysv4* )
-    dnl jbotte@bnr.ca says that UNIX_System_V <hostName> 4.0 R40V4.3 m88k mc88110
-    dnl needs POSIX_SIGNALS and therefore needs usg5-4-2.
-    dnl I hope there are not other 4.0 versions for this machine
-    dnl which really need usg5-4 instead.
-    machine=delta88k opsys=usg5-4-2
-  ;;
-  m88k-motorola-sysv* | m88k-motorola-m88kbcs* ) machine=delta88k opsys=usg5-3 ;;
-
-  dnl Dual machines
-  m68*-dual-sysv*    ) machine=dual opsys=usg5-2   ;;
-  m68*-dual-uniplus* ) machine=dual opsys=unipl5-2 ;;
-
-  dnl Encore machines
-  ns16k-encore-bsd* ) machine=ns16000 opsys=umax ;;
-
-  dnl Gould Power Node and NP1
-  pn-gould-bsd4.2* ) machine=gould     opsys=bsd4-2 ;;
-  pn-gould-bsd4.3* ) machine=gould     opsys=bsd4-3 ;;
-  np1-gould-bsd* )   machine=gould-np1 opsys=bsd4-3 ;;
-
-  dnl Harris Night Hawk machines running CX/UX (a 5000 looks just like a 4000
-  dnl as far as XEmacs is concerned).
-  m88k-harris-cxux* )
-    dnl Build needs to be different on 7.0 and later releases
-    case "`uname -r`" in
-       [[56]].[[0-9]] ) machine=nh4000 opsys=cxux  ;;
-       [[7]].[[0-9]]  ) machine=nh4000 opsys=cxux7 ;;
-    esac
-    NON_GNU_CPP="/lib/cpp"
-  ;;
-  dnl Harris ecx or gcx running CX/UX (Series 1200, Series 3000)
-  m68k-harris-cxux* ) machine=nh3000 opsys=cxux ;;
-  dnl Harris power pc NightHawk running Power UNIX (Series 6000)
-  powerpc-harris-powerunix ) machine=nh6000 opsys=powerunix NON_GNU_CPP="cc -Xo -E -P" ;;
-
-  dnl Honeywell XPS100
-  xps*-honeywell-sysv* ) machine=xps100 opsys=usg5-2 ;;
-
-  dnl HP 9000 series 200 or 300
-  m68*-hp-bsd* ) machine=hp9000s300 opsys=bsd4-3 ;;
-
   dnl HP-UX
-  *-hp-hpux* )
-    dnl Figure out machine and opsys orthogonally
-    case "$ac_cv_build" in
-      m68*  ) machine=hp9000s300 ;;
-      hppa* ) machine=hp800      ;;
-    esac
-
-    case "$ac_cv_build" in
-      *-hp-hpux7*  )  opsys=hpux   ;;
-      *-hp-hpux8*  )  opsys=hpux8  ;;
-      *-hp-hpux9*  )  opsys=hpux9  ;;
-      *-hp-hpux10* )  opsys=hpux10 ;;
-      *-hp-hpux11* )  opsys=hpux11 ;;
-      *            )  opsys=hpux   ;;
-    esac
-
-    dnl HP has a broken "strcat"
-    case "$opsys" in hpux9 | hpux10 ) XE_ADD_OBJS(strcat.o) ;; esac
-
-    if test "$opsys" = "hpux10" -o "$opsys" = "hpux11"; then \
-	ansi_flag="-Ae"; else ansi_flag="-Aa"; fi
-    NON_GNU_CC="cc $ansi_flag" NON_GNU_CPP="cc $ansi_flag -E"
+  *-hp-hpux* ) machine=hp800 opsys=hpux11
+    NON_GNU_CC="cc -Ae" NON_GNU_CPP="cc -Ae -E"
 
     case "$ac_cv_build" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
-  dnl Orion machines
-  orion-orion-bsd*   ) machine=orion    opsys=bsd4-2 ;;
-  clipper-orion-bsd* ) machine=orion105 opsys=bsd4-2 ;;
-
-  dnl IBM machines
-  i[[3-9]]86-ibm-aix1.1* ) machine=ibmps2-aix opsys=usg5-2-2 ;;
-  i[[3-9]]86-ibm-aix1.[[23]]* | i[[3-9]]86-ibm-aix* ) machine=ibmps2-aix opsys=usg5-3 ;;
-  i370-ibm-aix*) machine=ibm370aix opsys=usg5-3 ;;
-  romp-ibm-aos*    ) opsys=bsd4-3 ;;
-  romp-ibm-bsd*    ) opsys=bsd4-3 ;;
-  romp-ibm-mach*   ) opsys=mach-bsd4-3 ;;
-
-  dnl Integrated Solutions "Optimum V"
-  m68*-isi-bsd4.2* ) machine=isi-ov opsys=bsd4-2 ;;
-  m68*-isi-bsd4.3* ) machine=isi-ov opsys=bsd4-3 ;;
-
-  dnl Intel 386 machines where we do care about the manufacturer
-  i[[3-9]]86-intsys-sysv* ) machine=is386 opsys=usg5-2-2 ;;
-
-  dnl Prime EXL
-  i[[3-9]]86-prime-sysv* ) machine=i386 opsys=usg5-3 ;;
-
-  dnl Sequent Symmetry running Dynix
-  i[[3-9]]86-sequent-bsd* ) machine=symmetry opsys=bsd4-3 ;;
-
-  dnl Sequent Symmetry running DYNIX/ptx
-  i[[3-9]]86-sequent-ptx* ) machine=sequent-ptx opsys=ptx NON_GNU_CPP="/lib/cpp" ;;
-
-  dnl Unspecified sysv on an ncr machine defaults to svr4.2.
-  dnl (Plain usg5-4 does not turn on POSIX signals, which we need.)
-  i[[3-9]]86-ncr-sysv* ) machine=ncr386 opsys=usg5-4-2 ;;
-
-  dnl Intel Paragon OSF/1
-  i860-intel-osf1* ) machine=paragon opsys=osf1 NON_GNU_CPP=/usr/mach/lib/cpp ;;
-
-  dnl Intel 860
-  i860-*-sysv4* ) machine=i860 opsys=usg5-4 NON_GNU_CC="/bin/cc" NON_GNU_CPP="/usr/ccs/lib/cpp" ;;
-
-  dnl Masscomp machines
-  m68*-masscomp-rtu* ) machine=masscomp opsys=rtu ;;
-
-  dnl Megatest machines
-  m68*-megatest-bsd* ) machine=mega68 opsys=bsd4-2 ;;
-
   dnl Workstations sold by MIPS
   dnl This is not necessarily all workstations using the MIPS processor -
   dnl Irises are produced by SGI, and DECstations by DEC.
-  mips-mips-usg* ) machine=mips4 ;;
-  mips-mips-riscos4 )
-    machine=mips4
-    NON_GNU_CC="cc -systype bsd43"
-    NON_GNU_CPP="cc -systype bsd43 -E"
-    case "$ac_cv_build" in
-      mips-mips-riscos4* ) opsys=bsd4-3  ;;
-      mips-mips-riscos5* ) opsys=riscos5 ;;
-    esac
-  ;;
   mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
-  mips-mips-*    ) machine=mips opsys=usg5-2-2 ;;
-
-  dnl NeXT
-  m68*-next-* | m68k-*-nextstep* ) machine=m68k opsys=nextstep ;;
-
-  dnl The complete machine from National Semiconductor
-  ns32k-ns-genix* ) machine=ns32000 opsys=usg5-2 ;;
-
-  dnl NCR machines
-  m68*-ncr-sysv2* | m68*-ncr-sysvr2* ) machine=tower32   opsys=usg5-2-2 ;;
-  m68*-ncr-sysv3* | m68*-ncr-sysvr3* ) machine=tower32v3 opsys=usg5-3 ;;
-
-  dnl Nixdorf Targon 31
-  m68*-nixdorf-sysv* ) machine=targon31 opsys=usg5-2-2 ;;
-
-  dnl Nu (TI or LMI)
-  m68*-nu-sysv* ) machine=nu opsys=usg5-2 ;;
-
-  dnl Plexus
-  m68*-plexus-sysv* ) machine=plexus opsys=usg5-2 ;;
-
-  dnl Pyramid machines
-  pyramid-pyramid-bsd* ) machine=pyramid opsys=bsd4-2 ;;
-
-  dnl Sequent Balance
-  ns32k-sequent-bsd4.2* ) machine=sequent opsys=bsd4-2 ;;
-  ns32k-sequent-bsd4.3* ) machine=sequent opsys=bsd4-3 ;;
-
-  dnl Siemens Nixdorf
-  mips-siemens-sysv* | mips-sni-sysv*)
-    machine=mips-siemens opsys=usg5-4
-    NON_GNU_CC=/usr/ccs/bin/cc
-    NON_GNU_CPP=/usr/ccs/lib/cpp
-  ;;
-
-  dnl NEC
-  mips-nec-sysv*)
-    machine=mips-nec
-    NON_GNU_CC=/usr/ccs/bin/cc
-    NON_GNU_CPP=/usr/ccs/lib/cpp
-  ;;
+  mips-mips-*    ) machine=mips opsys=usg5-4-2 ;;
 
   dnl Silicon Graphics machines
-  dnl Iris 2500 and Iris 2500 Turbo (aka the Iris 3030)
-  m68*-sgi-iris3.5* ) machine=irist opsys=iris3-5 ;;
-  m68*-sgi-iris3.6* | m68*-sgi-iris*) machine=irist opsys=iris3-6 ;;
   dnl Iris 4D
-  mips-sgi-irix3.*    ) opsys=irix3-3 ;;
-  mips-sgi-irix4.*    ) opsys=irix4-0 ;;
   mips-sgi-irix6*     ) opsys=irix6-0 ;;
-  mips-sgi-irix5.1*   ) opsys=irix5-1 ;;
-  mips-sgi-irix5.2*   ) opsys=irix5-2 ;;
-  mips-sgi-irix5.*    ) opsys=irix5-3 ;;
-  mips-sgi-irix*      ) opsys=irix5-0 ;;
-
-  dnl SONY machines
-  *-sony-newsos[[34]]* | *-sony-news[[34]]* ) opsys=bsd4-3 ;;
-  *-sony-news* ) opsys=newsos5 ;;
-
-  dnl Stride
-  m68*-stride-sysv* ) machine=stride opsys=usg5-2 ;;
 
   dnl Suns
-  *-*-solaris* | *-*-sunos* | *-sun-mach* | *-sun-bsd* )
+  *-*-solaris* | *-sun-mach* | *-sun-bsd* )
     dnl Hardware type
     case "$ac_cv_build" in
-      m68*-sunos1* )	         machine=sun1     ;;
-      m68*-sunos2* )	         machine=sun2     ;;
-      m68* )		         machine=sun3     ;;
-      i*86*-sun-sunos[[34]]* )   machine=sun386   ;;
       i*86-*-* )	         machine=intel386 ;;
-      rs6000* )                  machine=rs6000   ;;
     esac
 
     dnl Make $canonical even more so.
@@ -1649,14 +1378,7 @@ case "$ac_cv_build" in
       ac_cv_build=`echo $ac_cv_build | sed -e s/sunos5/solaris2/`;;
     esac
 
-    dnl On SunOS 4, use /usr/lib/cpp, sans dynodump, /bin/ranlib
-    dnl On SunOS 5, use cc -E,        need dynodump, RANLIB not needed
-    dnl But, SunOS 5.6 no longer needs dynodump because it has a similar
-    dnl function integrated.
     case "$ac_cv_build" in
-      *-sunos4* )
-	#test -f /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
-	: ;;
       *-solaris2* )
 	#test -f /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
 	RANLIB=':' ;;
@@ -1673,99 +1395,27 @@ case "$ac_cv_build" in
 	os_release="${os_release_major}${os_release_minor}"
 	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
 
-      dnl The last Sun386 ran 4.0.
-      i*86-*-sunos4*      ) opsys=sunos4-0	;;
-      *-sunos4.0*	  ) opsys=sunos4-0	;;
-      *-sunos4.1.2*	  ) opsys=sunos4-1-2	;;
-      *-sunos4.1.3*	  ) opsys=sunos4-1-3	;;
-      *-sunos4.1.[[4-9]]* ) opsys=sunos4-1-4	;;
-      *-sunos4* | *-sunos ) opsys=sunos4-1	;;
       *-mach*		  ) opsys=mach-bsd4-3	;;
-      *			  ) opsys=bsd4-2	;;
+      *			  ) opsys=bsd4-3	;;
     esac
-
-    case "$ac_cv_build" in *-sunos4*shr* ) opsys="${opsys}-shr" ;; esac
 
     dnl Watch out for a compiler guaranteed not to work.
     test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
 
-  dnl Tadpole 68k
-  m68*-tadpole-sysv* ) machine=tad68k opsys=usg5-3 ;;
-
-  dnl Tahoe machines
-  tahoe-tahoe-bsd4.2* ) machine=tahoe opsys=bsd4-2 ;;
-  tahoe-tahoe-bsd4.3* ) machine=tahoe opsys=bsd4-3 ;;
-
-  dnl Tandem Integrity S2
-  mips-tandem-sysv* ) machine=tandem-s2 opsys=usg5-3 ;;
-
-  dnl Tektronix XD88
-  m88k-tektronix-sysv3* ) machine=tekxd88 opsys=usg5-3 ;;
-
-  dnl Tektronix 16000 box (6130?)
-  ns16k-tektronix-bsd* ) machine=ns16000 opsys=bsd4-2 ;;
-  dnl Tektronix 4300
-  dnl src/m/tek4300.h hints that this is a m68k machine.
-  m68*-tektronix-bsd* ) machine=tek4300 opsys=bsd4-3 ;;
-
-  dnl Titan P2 or P3
-  titan-titan-sysv* ) machine=titan opsys=usg5-3 ;;
-
-  dnl Ustation E30 (SS5E)
-  m68*-unisys-uniplus* ) machine=ustation opsystem=unipl5-2 ;;
-
-  dnl Vaxen.
-  vax-dec-* )
-    case "$ac_cv_build" in
-      *-sysv[[01]]* | *-sysvr[[01]]* ) 	opsys=usg5-0 ;;
-      *-sysv2* | *-sysvr2* )		opsys=usg5-2 ;;
-      *-mach* )				opsys=mach-bsd4-3 ;;
-    esac
-  ;;
-
-  dnl Whitechapel MG1
-  ns16k-whitechapel-* ) machine=mg1 ;;
-
-  dnl Wicat
-  m68*-wicat-sysv* ) machine=wicat opsys=usg5-2 ;;
-
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
     machine=intel386
     case "$ac_cv_build" in
-      *-isc1.* | *-isc2.[[01]]* ) opsys=386-ix ;;
-      *-isc2.2* )		opsys=isc2-2 ;;
-      *-isc4.0* )		opsys=isc4-0 ;;
-      *-isc4.* )		opsys=isc4-1
-				GCC_TEST_OPTIONS=-posix
-				NON_GCC_TEST_OPTIONS=-Xp
-				;;
-      *-isc* )			opsys=isc3-0 ;;
-      *-esix5* )		opsys=esix5r4 NON_GNU_CPP=/usr/lib/cpp ;;
-      *-esix* )			opsys=esix ;;
       *-mach* )			opsys=mach-bsd4-3 ;;
-      *-xenix* )		opsys=xenix ;;
-      *-sco3.2v4* )		opsys=sco4 NON_GNU_CPP=/lib/cpp  ;;
-      *-bsd386* | *-bsdi1* )	opsys=bsd386 ;;
-      *-bsdi4* )		opsys=bsdos4 ;;
-      *-bsdi3* )		opsys=bsdos3 ;;
-      *-bsdi2.1* )		opsys=bsdos2-1 ;;
-      *-bsdi2* )		opsys=bsdos2 ;;
-      *-sco3.2v5* )		opsys=sco5 ;;
       *-sysv5* )		opsys=sco7 ;;
-      *-386bsd* )	        opsys=386bsd ;;
       *-freebsd* )		opsys=freebsd ;;
-      *-nextstep* )		opsys=nextstep ;;
       *-pc-cygwin* )		opsys=cygwin32 ;;
       *-pc-mingw* )		opsys=mingw32 ;
 				test -z "$with_tty" && with_tty="no";;
       dnl Otherwise, we fall through to the generic opsys code at the bottom.
     esac
   ;;
-
-  dnl Linux/68k
-  m68k-*-linux* ) machine=m68k opsys=linux ;;
 
 esac
 
@@ -1832,14 +1482,13 @@ fi
 
 if test -z "$with_dynamic"; then
   case "$opsys" in
-    hpux* | sunos4* ) with_dynamic=no ;;
+    hpux* ) with_dynamic=no ;;
     *) with_dynamic=yes ;;
   esac
 fi
 if test "$with_dynamic" = "yes"; then
   case "$opsys" in
-    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
-    decosf* ) ld_call_shared="-call_shared" ;;
+    hpux* ) opsys="${opsys}-shr" ;;
     darwin ) AC_DEFINE(DLSYM_NEEDS_UNDERSCORE) ;;
   esac
 else dnl "$with_dynamic" = "no"
@@ -1849,7 +1498,6 @@ else dnl "$with_dynamic" = "no"
       echo "Rerun configure without specifying --without-dynamic."
       exit 1 ;;
     linux   ) ld_call_shared="-Bstatic" ;;
-    decosf* ) ld_call_shared="-non_shared" ;;
   esac
 fi
 
@@ -2104,15 +1752,11 @@ configure___ ordinary_ld=ORDINARY_LD
 #ifdef ORDINARY_LINK
 #define LD ORDINARY_LD
 #else /* no ORDINARY LINK */
-#ifdef COFF_ENCAPSULATE
-#define LD "\$(CC) -nostdlib"
-#else /* not COFF_ENCAPSULATE */
 #ifdef LINKER
 #define LD LINKER
 #else /* ! defined (LINKER) */
 #define LD "ld"
 #endif /* ! defined (LINKER) */
-#endif /* ! defined (COFF_ENCAPSULATE) */
 #endif /* not ORDINARY_LINK */
 configure___ ld=LD
 
@@ -2121,11 +1765,7 @@ CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
 
 #if ! defined (ORDINARY_LINK) && !defined (START_FILES)
 #ifdef NO_REMAP
-#ifdef COFF_ENCAPSULATE
-#define START_FILES "pre-crt0.o /usr/local/lib/gcc-crt0.o"
-#else /* ! defined (COFF_ENCAPSULATE) */
 #define START_FILES "pre-crt0.o /lib/crt0.o"
-#endif /* ! defined (COFF_ENCAPSULATE) */
 #else /* ! defined (NO_REMAP) */
 #define START_FILES "ecrt0.o"
 #endif /* ! defined (NO_REMAP) */
@@ -2287,9 +1927,6 @@ if test -z "$with_optimization"; then
   fi
 fi
 
-
-dnl #### We should be checking C_OPTIMIZE_SWITCH in m/*, s/*.
-
 AC_MSG_CHECKING([for preferred optimization flags])
 if test "$with_optimization" = "yes" ; then
   if test "$cflags_optimization_specified" = "no"; then
@@ -2300,7 +1937,6 @@ if test "$with_optimization" = "yes" ; then
     elif test "$__SUNPRO_C" = "yes"; then
       case "$opsys" in
         sol2    ) with_cflags_optimization="-xO4" ;;
-        sunos4* ) with_cflags_optimization="-xO2" ;;
       esac
     elif test "$__DECC" = "yes"; then
       with_cflags_optimization="-O3"
@@ -2319,8 +1955,6 @@ else
 fi
 
 AC_MSG_RESULT([${with_cflags_optimization}])
-
-dnl #### We should be checking C_DEBUG_SWITCH in m/*, s/*.
 
 AC_MSG_CHECKING([for preferred debugging flags])
 if test "$cflags_debugging_specified" = "no"; then
@@ -2521,22 +2155,6 @@ test -n "$objects_machine" && XE_ADD_OBJS($objects_machine)
 test -n "$objects_system"  && XE_ADD_OBJS($objects_system)
 test -n "$unexec"          && test ! "$enable_pdump" = "yes" && XE_ADD_OBJS($unexec)
 test "$enable_pdump" = "yes" && XE_ADD_OBJS(dumper.o)
-
-dnl Dynodump (Solaris 2.x, x<6)
-AC_MSG_CHECKING(for dynodump)
-if test "$unexec" != "unexsol2.o"; then
-  AC_MSG_RESULT(no)
-else
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(DYNODUMP)
-  XE_APPEND(dynodump, MAKE_SUBDIR)
-  XE_APPEND(dynodump, SRC_SUBDIR_DEPS)
-  case "$machine" in
-    sparc   ) dynodump_arch=sparc ;;
-    *86*    ) dynodump_arch=i386  ;;
-    powerpc ) dynodump_arch=ppc   ;;
-  esac
-fi
 
 dnl Feed s&m crud to src/Makefile
 
@@ -2792,7 +2410,7 @@ if test -n "$add_runtime_path"; then :;
 elif test "$with_dynamic" = "no"; then add_runtime_path=no
 elif test -n "$LD_RUN_PATH"; then add_runtime_path=yes
 else case "$opsys" in
-       sol2 | irix* | *bsd* | decosf* ) add_runtime_path=yes ;;
+       sol2 | irix* | *bsd* ) add_runtime_path=yes ;;
        * ) add_runtime_path=no ;;
      esac
 fi
@@ -2803,7 +2421,7 @@ if test "$add_runtime_path" = "yes"; then
   AC_MSG_CHECKING([for runtime libraries flag])
   case "$opsys" in
     sol2 ) dash_r="-R" ;;
-    decosf* | linux* | irix*) dash_r="-rpath " ;;
+    linux* | irix*) dash_r="-rpath " ;;
     *)
       dash_r=""
       for try_dash_r in "-R" "-R " "-rpath "; do
@@ -3097,12 +2715,6 @@ test "$with_mail_locking" = "flock" -a "$ac_cv_func_flock" != "yes" && \
 test "$with_mail_locking" = "locking" -a "$ac_cv_func_locking" != "yes" && \
   XE_DIE("locking mail locking requested but not available.")
 
-case "$opsys" in decosf*)
-  AC_CHECK_LIB(pthreads, cma_open)
-  test "$ac_cv_lib_pthreads_cma_open" = "yes" && \
-    c_switch_site="$c_switch_site -threads" ;;
-esac
-
 dnl ----------------------------------------------------------------
 dnl Miscellaneous flags
 dnl ----------------------------------------------------------------
@@ -3357,11 +2969,6 @@ if test "$with_x11" = "yes"; then
       break; dnl Only need ONE X11 implementation !
     fi
   done
-
-  dnl Avoid version mismatch for shared library libXm.so on osf4
-  case "$opsys" in
-  decosf*) if test "$GCC" = yes -a -d /usr/shlib; then XE_APPEND(-L/usr/shlib, X_LIBS); fi ;;
-  esac
 
   ld_switch_x_site="$X_LIBS"
 
@@ -3681,11 +3288,6 @@ case "$window_system" in
        test "$with_gnome" = "no" && echo "  Using GTK."
        ;;
   none ) HAVE_X_WINDOWS=no ; echo "  Using no window system." ;;
-esac
-
-case "$x_libraries" in *X11R4* )
-  test "$opsys" = "hpux9"     && opsysfile="s/hpux9-x11r4.h"
-  test "$opsys" = "hpux9-shr" && opsysfile="s/hpux9shxr4.h"
 esac
 
 dnl Enable or disable proper handling of WM_COMMAND
@@ -5046,7 +4648,6 @@ AC_FUNC_GETPGRP
 dnl We used to call AC_FUNC_MMAP here
 dnl Instead we now use following, suggested by Neal Becker
 AC_MSG_CHECKING(for working mmap)
-case "$opsys" in ultrix* ) have_mmap=no ;; *)
 AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -5076,8 +4677,7 @@ int main (int argc, char **argv)
     return 0;
   perror ("conftest: mmap failed");
   return 1;
-}])], have_mmap=yes, have_mmap=no) ;;
-esac
+}])], have_mmap=yes, have_mmap=no)
 AC_MSG_RESULT($have_mmap)
 test "$have_mmap" = "yes" && AC_DEFINE(HAVE_MMAP)
 
@@ -5435,7 +5035,7 @@ dnl #### Should we check for gdbm.h, too?  (Seen on MacPorts.)
 if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
   ndbm_h_file=""
   AC_CHECK_HEADERS([ndbm.h gdbm/ndbm.h],[ndbm_h_file=$ac_header; break;],[],[])
-  if test "$ndbm_h_found" != "yes"; then
+  if test "x$ndbm_h_file" = "x"; then
     test "$enable_database_gdbm" = "yes" -o \
          "$enable_database_dbm"  = "yes" && \
       XE_DIE("Required DBM support cannot be provided.")
@@ -5879,7 +5479,6 @@ AC_SUBST(RECURSIVE_MAKE_ARGS)
 AC_SUBST(native_sound_lib,$with_native_sound_lib)
 AC_SUBST(sound_cflags)
 AC_SUBST(RANLIB)
-AC_SUBST(dynodump_arch)
 
 AC_SUBST(XEMACS_CC)
 AC_SUBST(XE_CFLAGS)

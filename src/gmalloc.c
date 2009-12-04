@@ -1219,16 +1219,11 @@ Boston, MA 02111-1307, USA.  */
 #define	__sbrk	sbrk
 /* #endif */
 
-#ifdef GMALLOC_NEEDS_SBRK_DECL
-/* some versions of OSF1 need this */
-extern __ptr_t __sbrk __P ((ssize_t increment));
-#else
 #ifdef __GNU_LIBRARY__
 /* It is best not to declare this and cast its result on foreign operating
    systems with potentially hostile include files.  */
 #if !(defined(linux) && defined(sparc))
 extern __ptr_t __sbrk __P ((int increment));
-#endif
 #endif
 #endif
 

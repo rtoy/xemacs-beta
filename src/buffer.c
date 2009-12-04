@@ -1512,6 +1512,12 @@ set_buffer_internal (struct buffer *b)
 
   if (old_buf)
     {
+      /* synchronize window point */
+      Lisp_Object current_window = Fselected_window (Qnil);
+      if (!NILP (current_window)
+	  && EQ(Fwindow_buffer (current_window), wrap_buffer (old_buf)))
+	Fset_window_point (current_window, make_int (BUF_PT (old_buf)));
+
       /* Put the undo list back in the base buffer, so that it appears
 	 that an indirect buffer shares the undo list of its base.  */
       if (old_buf->base_buffer)

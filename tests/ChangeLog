@@ -1,3 +1,7 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* autoconf/regressiontest.pl: Remove reference to dynodump.
+
 2009-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Remove C asserts from test-format-data-conversion.

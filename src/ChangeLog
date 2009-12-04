@@ -1,3 +1,279 @@
+2009-11-19  Vin Shelton  <acs@xemacs.org>
+
+	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
+	on Windows native builds.
+
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Drop support for dynodump and OSF1.
+	* alloca.s: Drop support for old systems, namely hp9000s300, wicat,
+	ns16000, ns32000, sequent, pyramid, att3b5, and Xenix.
+	* broken-sun.h: Remove, unused.
+	* compiler.h: Drop support for OSF1.
+	* config.h.in: Modify comments about obsolete systems.  Drop NeXTstep
+	and SunOS4 support.
+	(DYNODUMP): Removed.
+	* console.h: Remove reference to NeXTstep in a comment.
+	* data.c (sign_extend_temp): Removed, unused.
+	(sign_extend_lisp_int): Ditto.
+	* depend: Regenerate.
+	* ecrt0.c: Remove reference to DONT_NEED_ENVIRON, which is not defined
+	by any supported system.  Remove support for obsolete systems.  Remove
+	comments that refer to obsolete systems.
+	* emacs.c (main_1): Remove NeXT support.  Remove references to
+	EXTRA_INITIALIZE and NO_SUBPROCESSES, which are not defined by any
+	supported system.
+	* faces.c (complex_vars_of_faces): Remove comment that refers to
+	NeXTstep.
+	* fileio.c: Drop support for ancient versions of HP/UX.
+	* getloadavg.c: Remove symbols defined only by obsolete systems from
+	comment at the top listing symbols of interest.  Remove support for
+	obsolete systems.
+	(getloadavg): Drop code blocks specific to obsolete systems.
+	* getpagesize.h: Remove reference to NBPC, which is not used by any
+	supported system.
+	* gmalloc.c: Remove reference to GMALLOC_NEEDS_SBRK_DECL, which is not
+	used by any supported system.
+	* hftctl.c: Remove, used only by ancient versions of AIX.
+	* hpplay.c: Remove includes for HP/UX versions less than 11.
+	* libsst.h: Remove support for SunOS 4.
+	* m/arm.h: Remove comment about Xenix.
+	* m/ibmrs6000.h: Remove hftctl support, which is only for very old
+	versions of AIX.
+	* m/intel386.h: Remove references to obsolete systems.
+	* m/mips.h: Ditto.
+	* nsselect.m: Remove (devoid of content) NeXT support file.
+	* process-unix.c: Remove references to NO_SUBPROCESSES, SKTPAIR, and
+	CONNECT_NEEDS_SLOWED_INTERRUPTS, which are not defined by any
+	supported system.
+	* process.c: Remove reference to NO_SUBPROCESSES.
+	* process.h: Ditto.
+	* regex.c: Remove reference to SWITCH_ENUM_BUG, which is not defined
+	by an supported system, and hence SWITCH_ENUM_CAST as well.
+	* s/aix4-2.h: Merge older include files in, and drop #define/#undef
+	pairs.
+	* s/bsd4-3.h: Ditto.
+	* s/hpux11.h: Ditto.
+	* s/irix6-0.h: Ditto.
+	* s/usg5-4.h: Ditto.
+	* s/hpux11-shr.h: Remove references to deleted version of HP/UX.
+	* s/template.h: Remove references to ancient BSD versions.
+	* strcmp.c: Removed, unused.
+	* strcpy.c: Ditto.
+	* sunOS-fix.c: Ditto.
+	* sunplay.c (init_device): Remove SunOS4.0.3 code.
+	* syntax.c (scan_sexps_forward): Remove comment about Apollo, but
+	leave the code the way it is, because I prefer it this way.
+	* sysdep.c: Remove code guarded by preprocessor symbols that are not
+	defined on any supported system, namely ISC4_0, AIXHFT, IBMRTAIX,
+	NO_SUBPROCESSES, RTU, USG_JOBCTRL, USE_GETOBAUD, _CX_UX, DGUX, ultrix,
+	F_SETOWN_SOCK_NEG, SET_LINE_DISCIPLINE, BROKEN_CLOSEDIR, HPUX9, and
+	NeXT.
+	(sys_subshell): Remove, unused.
+	* sysfile.h: Remove reference to hftctl.c.
+	* sysproc.h: Remove code guarded by preprocessor symbols that are not
+	defined on any supported system, namely NO_SUBPROCESSES, IRIS,
+	NEED_NET_ERRNO_H, and USG_JOBCTRL.
+	* syssignal.h: Remove reference to NeXT.
+	* systty.h: Remove support for obsolete systems.  Remove support for
+	BROKEN_TIOCGWINSZ, which is no longer needed.
+	* unexaix.c (unrelocate_symbols): Remove code only needed on ancient
+	versions of AIX.
+	* unexec.c: Remove references to COFF_ENCAPSULATE and
+	SECTION_ALIGNMENT, which are not needed on any supported system.
+	Remove references to obsolete systems.
+
+	* m/7300.h:
+	* m/acorn.h:
+	* m/alliant-2800.h:
+	* m/alliant.h:
+	* m/alliant1.h:
+	* m/alliant4.h:
+	* m/alpha.h:
+	* m/altos.h:
+	* m/amdahl.h:
+	* m/apollo.h:
+	* m/att3b.h:
+	* m/aviion.h:
+	* m/celerity.h:
+	* m/clipper.h:
+	* m/cnvrgnt.h:
+	* m/convex.h:
+	* m/cydra5.h:
+	* m/delta.h:
+	* m/delta88k.h:
+	* m/dpx2.h:
+	* m/dual.h:
+	* m/elxsi.h:
+	* m/ews4800r.h:
+	* m/gould-np1.h:
+	* m/gould.h:
+	* m/hp300bsd.h:
+	* m/hp9000s300.h:
+	* m/i860.h:
+	* m/ibm370aix.h:
+	* m/ibmps2-aix.h:
+	* m/ibmrt-aix.h:
+	* m/ibmrt.h:
+	* m/iris4d.h:
+	* m/iris5d.h:
+	* m/iris6d.h:
+	* m/irist.h:
+	* m/is386.h:
+	* m/isi-ov.h:
+	* m/luna88k.h:
+	* m/masscomp.h:
+	* m/mega68.h:
+	* m/mg1.h:
+	* m/mips-nec.h:
+	* m/mips-siemens.h:
+	* m/mips4.h:
+	* m/ncr386.h:
+	* m/news-risc.h:
+	* m/news.h:
+	* m/next.h:
+	* m/nh3000.h:
+	* m/nh4000.h:
+	* m/ns16000.h:
+	* m/ns32000.h:
+	* m/nu.h:
+	* m/orion.h:
+	* m/orion105.h:
+	* m/paragon.h:
+	* m/pfa50.h:
+	* m/plexus.h:
+	* m/pmax.h:
+	* m/pyramid.h:
+	* m/pyrmips.h:
+	* m/sequent-ptx.h:
+	* m/sequent.h:
+	* m/sgi-challenge.h:
+	* m/sgi3000.h:
+	* m/sps7.h:
+	* m/stride.h:
+	* m/sun1.h:
+	* m/sun2.h:
+	* m/sun3-68881.h:
+	* m/sun3-fpa.h:
+	* m/sun3-soft.h:
+	* m/sun3.h:
+	* m/sun386.h:
+	* m/symmetry.h:
+	* m/tad68k.h:
+	* m/tahoe.h:
+	* m/tandem-s2.h:
+	* m/targon31.h:
+	* m/tek4300.h:
+	* m/tekxd88.h:
+	* m/tower32.h:
+	* m/tower32v3.h:
+	* m/ustation.h:
+	* m/vax.h:
+	* m/wicat.h:
+	* m/xps100.h:
+	* s/3700.h:
+	* s/386-ix.h:
+	* s/386bsd.h:
+	* s/aix3-1.h:
+	* s/aix3-2-5.h:
+	* s/aix3-2.h:
+	* s/aix4-1.h:
+	* s/aix4.h:
+	* s/alliant-2800.h:
+	* s/alliant.h:
+	* s/altos.h:
+	* s/amdahl.h:
+	* s/bsd386.h:
+	* s/bsd4-1.h:
+	* s/bsd4-2.h:
+	* s/bsdos2-1.h:
+	* s/bsdos2.h:
+	* s/bsdos3.h:
+	* s/bsdos4.h:
+	* s/cxux.h:
+	* s/cxux7.h:
+	* s/decosf1-2.h:
+	* s/decosf1-3.h:
+	* s/decosf3-1.h:
+	* s/decosf3-2.h:
+	* s/decosf4-0.h:
+	* s/dgux.h:
+	* s/dgux5-4r2.h:
+	* s/dgux5-4r3.h:
+	* s/dgux5-4r4.h:
+	* s/domain.h:
+	* s/esix.h:
+	* s/esix5r4.h:
+	* s/ewsux5r4.h:
+	* s/hpux.h:
+	* s/hpux10-shr.h:
+	* s/hpux10.h:
+	* s/hpux8-shr.h:
+	* s/hpux8.h:
+	* s/hpux9-shr.h:
+	* s/hpux9-x11r4.h:
+	* s/hpux9.h:
+	* s/hpux9shxr4.h:
+	* s/iris3-5.h:
+	* s/iris3-6.h:
+	* s/irix3-3.h:
+	* s/irix4-0.h:
+	* s/irix5-0.h:
+	* s/irix5-1.h:
+	* s/irix5-2.h:
+	* s/irix5-3.h:
+	* s/isc2-2.h:
+	* s/isc3-0.h:
+	* s/isc4-0.h:
+	* s/isc4-1.h:
+	* s/linux.h:
+	* s/newsos5.h:
+	* s/nextstep.h:
+	* s/osf1.h:
+	* s/ptx.h:
+	* s/riscix1-1.h:
+	* s/riscix1-2.h:
+	* s/riscos5.h:
+	* s/rtu.h:
+	* s/sco4.h:
+	* s/sco5-shr.h:
+	* s/sco5.h:
+	* s/sunos4-0-shr.h:
+	* s/sunos4-0.h:
+	* s/sunos4-1-1.h:
+	* s/sunos4-1-2-shr.h:
+	* s/sunos4-1-2.h:
+	* s/sunos4-1-3-shr.h:
+	* s/sunos4-1-3.h:
+	* s/sunos4-1-4-shr.h:
+	* s/sunos4-1-4.h:
+	* s/sunos4-1-shr.h:
+	* s/sunos4-1.h:
+	* s/ultrix.h:
+	* s/ultrix4-3.h:
+	* s/umax.h:
+	* s/umips.h:
+	* s/unipl5-0.h:
+	* s/unipl5-2.h:
+	* s/usg5-0.h:
+	* s/usg5-2-2.h:
+	* s/usg5-2.h:
+	* s/usg5-3.h:
+	* s/xenix.h:
+	* unexapollo.c:
+	* unexconvex.c:
+	* unexelfsgi.c:
+	* unexencap.c:
+	* unexenix.c:
+	* unexfreebsd.c:
+	* unexfx2800.c:
+	* unexhp9k3.c:
+	* unexmips.c:
+	* unexnext.c:
+	* unexsni.c:
+	* unexsol2.c:
+	* unexsunos4.c: Removed.
+
 2009-11-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Assorted cleanups.
@@ -199,6 +475,11 @@
 	* realpath.c (readlink_or_correct_case): 
 	On Darwin, use realpath(3)'s case correction to get the canonical
 	case for a file; thank you Robert Delius Royar!
+
+2009-10-16  Michael Sperber  <mike@xemacs.org>
+
+	* buffer.c (set_buffer_internal): Synchronize the window point
+	with the current point when switching to another buffer.
 
 2009-10-11  Michael Sperber  <mike@xemacs.org>
 

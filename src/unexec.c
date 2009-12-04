@@ -79,14 +79,6 @@ Boston, MA 02111-1307, USA.  */
 
 Define this if your system uses COFF for executables.
 
-* COFF_ENCAPSULATE
-
-Define this if you are using the GNU coff encapsulated a.out format.
-This is closer to a.out than COFF. You should *not* define COFF if
-you define COFF_ENCAPSULATE
-
-Otherwise we assume you use Berkeley format.
-
 * NO_REMAP
 
 Define this if you do not want to try to save Emacs's pure data areas
@@ -103,18 +95,6 @@ Also, remapping can cause trouble with the built-in startup routine
 Dumping `environ' as pure does not work!  So, to use remapping,
 you must write a startup routine for your machine in Emacs's crt0.c.
 If NO_REMAP is defined, Emacs uses the system's crt0.o.
-
-* SECTION_ALIGNMENT
-
-Some machines that use COFF executables require that each section
-start on a certain boundary *in the COFF file*.  Such machines should
-define SECTION_ALIGNMENT to a mask of the low-order bits that must be
-zero on such a boundary.  This mask is used to control padding between
-segments in the COFF file.
-
-If SECTION_ALIGNMENT is not defined, the segments are written
-consecutively with no attempt at alignment.  This is right for
-unmodified system V.
 
 * SEGMENT_MASK
 
@@ -196,12 +176,7 @@ pointer looks like an int) but not on all machines.
 # define sun 1
 #endif
 
-#ifdef COFF_ENCAPSULATE
-int need_coff_header = 1;
-#include <coff-encap/a.out.encap.h> /* The location might be a poor assumption */
-#else
 #include <a.out.h>
-#endif /* not COFF_ENCAPSULATE */
 
 /* Define getpagesize if the system does not.
    Note that this may depend on symbols defined in a.out.h.  */
@@ -214,7 +189,7 @@ int need_coff_header = 1;
 #include <sys/stat.h>
 #include <errno.h>
 
-#include <sys/file.h>	/* Must be after sys/types.h for USG and BSD4_1*/
+#include <sys/file.h>	/* Must be after sys/types.h for USG */
 
 #ifdef USG5
 #include <fcntl.h>
@@ -267,27 +242,18 @@ extern void *sbrk ();
 
 #define SYMS_START ((long) N_SYMOFF (ohdr))
 
-/* Some machines override the structure name for an a.out header.  */
-#ifndef EXEC_HDR_TYPE
-#define EXEC_HDR_TYPE struct exec
-#endif
-
 #ifdef HPUX
-#ifdef HP9000S200_ID
-#define MY_ID HP9000S200_ID
-#else
 #include <model.h>
 #define MY_ID MYSYS
-#endif /* no HP9000S200_ID */
 static MAGIC OLDMAGIC = {MY_ID, SHARE_MAGIC};
 static MAGIC NEWMAGIC = {MY_ID, DEMAND_MAGIC};
 #define N_TXTOFF(x) TEXT_OFFSET(x)
 #define N_SYMOFF(x) LESYM_OFFSET(x)
-static EXEC_HDR_TYPE hdr, ohdr;
+static struct exec hdr, ohdr;
 
 #else /* not HPUX */
 
-#if defined (USG) && !defined (IBMAIX) && !defined (IRIS) && !defined (COFF_ENCAPSULATE) && !defined (LINUX)
+#if defined (USG) && !defined (LINUX)
 static struct bhdr hdr, ohdr;
 #define a_magic fmagic
 #define a_text tsize
@@ -301,19 +267,14 @@ static struct bhdr hdr, ohdr;
     (((x).fmagic)!=OMAGIC && ((x).fmagic)!=NMAGIC &&\
      ((x).fmagic)!=FMAGIC && ((x).fmagic)!=IMAGIC)
 #define NEWMAGIC FMAGIC
-#else /* IRIS or IBMAIX or not USG */
-static EXEC_HDR_TYPE hdr, ohdr;
+#else /* !USG or LINUX */
+static struct exec hdr, ohdr;
 #define NEWMAGIC ZMAGIC
-#endif /* IRIS or IBMAIX not USG */
+#endif /* !USG or LINUX */
 #endif /* not HPUX */
 
 static int unexec_text_start;
 static int unexec_data_start;
-
-#ifdef COFF_ENCAPSULATE
-/* coffheader is defined in the GNU a.out.encap.h file.  */
-struct coffheader coffheader;
-#endif
 
 #endif /* not COFF */
 
@@ -392,9 +353,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
       || copy_text_and_data (new_, a_out) < 0
       || copy_sym (new_, a_out, a_name, new_name) < 0
 #ifdef COFF
-#ifndef COFF_BSD_SYMBOLS
       || adjust_lnnoptrs (new_, a_out, new_name) < 0
-#endif
 #endif
       )
     {
@@ -537,9 +496,6 @@ make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
 #endif
 
   f_hdr.f_flags |= (F_RELFLG | F_EXEC);
-#ifdef TPIX
-  f_hdr.f_nscns = 3;
-#endif
 #ifdef EXEC_MAGIC
   f_ohdr.magic = EXEC_MAGIC;
 #endif
@@ -550,53 +506,19 @@ make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
 #endif /* NO_REMAP */
   f_ohdr.dsize = bss_start - f_ohdr.data_start;
   f_ohdr.bsize = bss_end - bss_start;
-#ifndef KEEP_OLD_TEXT_SCNPTR
   /* On some machines, the old values are right.
      ??? Maybe on all machines with NO_REMAP.  */
   f_thdr.s_size = f_ohdr.tsize;
   f_thdr.s_scnptr = sizeof (f_hdr) + sizeof (f_ohdr);
   f_thdr.s_scnptr += (f_hdr.f_nscns) * (sizeof (f_thdr));
-#endif /* KEEP_OLD_TEXT_SCNPTR */
-#ifdef ADJUST_TEXT_SCNHDR_SIZE
-  /* On some machines, `text size' includes all headers.  */
-  f_thdr.s_size -= f_thdr.s_scnptr;
-#endif /* ADJUST_TEST_SCNHDR_SIZE */
   lnnoptr = f_thdr.s_lnnoptr;
-#ifdef SECTION_ALIGNMENT
-  /* Some systems require special alignment
-     of the sections in the file itself.  */
-  f_thdr.s_scnptr
-    = (f_thdr.s_scnptr + SECTION_ALIGNMENT) & ~SECTION_ALIGNMENT;
-#endif /* SECTION_ALIGNMENT */
-#ifdef TPIX
-  f_thdr.s_scnptr = 0xd0;
-#endif
   text_scnptr = f_thdr.s_scnptr;
-#ifdef ADJUST_TEXTBASE
-  text_scnptr = sizeof (f_hdr) + sizeof (f_ohdr) + (f_hdr.f_nscns) * (sizeof (f_thdr));
-#endif
-#ifndef KEEP_OLD_PADDR
   f_dhdr.s_paddr = f_ohdr.data_start;
-#endif /* KEEP_OLD_PADDR */
   f_dhdr.s_vaddr = f_ohdr.data_start;
   f_dhdr.s_size = f_ohdr.dsize;
   f_dhdr.s_scnptr = f_thdr.s_scnptr + f_thdr.s_size;
-#ifdef SECTION_ALIGNMENT
-  /* Some systems require special alignment
-     of the sections in the file itself.  */
-  f_dhdr.s_scnptr
-    = (f_dhdr.s_scnptr + SECTION_ALIGNMENT) & ~SECTION_ALIGNMENT;
-#endif /* SECTION_ALIGNMENT */
-#ifdef DATA_SECTION_ALIGNMENT
-  /* Some systems require special alignment
-     of the data section only.  */
-  f_dhdr.s_scnptr
-    = (f_dhdr.s_scnptr + DATA_SECTION_ALIGNMENT) & ~DATA_SECTION_ALIGNMENT;
-#endif /* DATA_SECTION_ALIGNMENT */
   data_scnptr = f_dhdr.s_scnptr;
-#ifndef KEEP_OLD_PADDR
   f_bhdr.s_paddr = f_ohdr.data_start + f_ohdr.dsize;
-#endif /* KEEP_OLD_PADDR */
   f_bhdr.s_vaddr = f_ohdr.data_start + f_ohdr.dsize;
   f_bhdr.s_size = f_ohdr.bsize;
   f_bhdr.s_scnptr = 0L;
@@ -701,16 +623,6 @@ make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
   /* Get symbol table info from header of a.out file if given one. */
   if (a_out >= 0)
     {
-#ifdef COFF_ENCAPSULATE
-      if (read (a_out, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
-	{
-	  PERROR(a_name);
-	}
-      if (coffheader.f_magic != COFF_MAGIC)
-	{
-	  ERROR1("%s doesn't have legal coff magic number\n", a_name);
-	}
-#endif
       if (read (a_out, (char *) &ohdr, sizeof (hdr)) != sizeof (hdr))
 	{
 	  PERROR (a_name);
@@ -724,14 +636,7 @@ make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
     }
   else
     {
-#ifdef COFF_ENCAPSULATE
-      /* We probably could without too much trouble. The code is in gld
-       * but I don't have that much time or incentive.
-       */
-      ERROR0 ("can't build a COFF file from scratch yet");
-#else
       memset ((void *)&hdr, 0, sizeof (hdr));
-#endif
     }
 
   unexec_text_start = (long) start_of_text ();
@@ -759,32 +664,6 @@ make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
 #endif
 
 #endif /* not NO_REMAP */
-
-#ifdef COFF_ENCAPSULATE
-  /* We are encapsulating BSD format within COFF format.  */
-  {
-    struct coffscn *tp, *dp, *bp;
-    tp = &coffheader.scns[0];
-    dp = &coffheader.scns[1];
-    bp = &coffheader.scns[2];
-    tp->s_size = hdr.a_text + sizeof(struct exec);
-    dp->s_paddr = data_start;
-    dp->s_vaddr = data_start;
-    dp->s_size = hdr.a_data;
-    bp->s_paddr = dp->s_vaddr + dp->s_size;
-    bp->s_vaddr = bp->s_paddr;
-    bp->s_size = hdr.a_bss;
-    coffheader.tsize = tp->s_size;
-    coffheader.dsize = dp->s_size;
-    coffheader.bsize = bp->s_size;
-    coffheader.text_start = tp->s_vaddr;
-    coffheader.data_start = dp->s_vaddr;
-  }
-  if (write (new_, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
-    {
-      PERROR(new_name);
-    }
-#endif /* COFF_ENCAPSULATE */
 
   if (write (new_, (char *) &hdr, sizeof (hdr)) != sizeof (hdr))
     {
@@ -885,10 +764,6 @@ copy_text_and_data (int new_,
 
   lseek (new_, (long) text_scnptr, 0);
   ptr = (char *) f_ohdr.text_start;
-#ifdef HEADER_INCL_IN_TEXT
-  /* For Gould UTX/32, text starts after headers */
-  ptr = (char *) (ptr + text_scnptr);
-#endif /* HEADER_INCL_IN_TEXT */
   end = ptr + f_ohdr.tsize;
   write_segment (new_, ptr, end);
 
@@ -915,92 +790,9 @@ copy_text_and_data (int new_,
   lseek (new_, (long) N_TXTOFF (hdr), 0);
 #endif /* no A_TEXT_SEEK */
 
-#ifdef RISCiX
-
-  /* Acorn's RISC-iX has a wacky way of initializing the position of the heap.
-   * There is a little table in crt0.o that is filled at link time with
-   * the min and current brk positions, among other things.  When start
-   * runs, it copies the table to where these parameters live during
-   * execution.  This data is in text space, so it cannot be modified here
-   * before saving the executable, so the data is written manually.  In
-   * addition, the table does not have a label, and the nearest accessible
-   * label (mcount) is not prefixed with a '_', thus making it inaccessible
-   * from within C programs.  To overcome this, emacs's executable is passed
-   * through the command 'nm %s | fgrep mcount' into a pipe, and the
-   * resultant output is then used to find the address of 'mcount'.  As far as
-   * is possible to determine, in RISC-iX releases prior to 1.2, the negative
-   * offset of the table from mcount is 0x2c, whereas from 1.2 onwards it is
-   * 0x30.  bss_end has been rounded up to page boundary.  This solution is
-   * based on suggestions made by Kevin Welton and Steve Hunt of Acorn, and
-   * avoids the need for a custom version of crt0.o for emacs which has its
-   * table in data space.
-   */
-
-  {
-    char command[1024];
-    char errbuf[1024];
-    char address_text[32];
-    int  proforma[4];
-    FILE *pfile;
-    char *temp_ptr;
-    char c;
-    int mcount_address, mcount_offset, count;
-    extern char *_execname;
-
-
-    /* The use of _execname is incompatible with RISCiX 1.1 */
-    sprintf (command, "nm %s | fgrep mcount", _execname);
-
-    if ( (pfile = popen(command, "r")) == NULL)
-    {
-      sprintf (errbuf, "Could not open pipe");
-      PERROR (errbuf);
-    }
-
-    count=0;
-    while ( ((c=getc(pfile)) != EOF) && (c != ' ') && (count < 31))
-      address_text[count++]=c;
-    address_text[count]=0;
-
-    if ((count == 0) || pclose(pfile) != NULL)
-    {
-      sprintf (errbuf, "Failed to execute the command '%s'\n", command);
-      PERROR (errbuf);
-    }
-
-    sscanf(address_text, "%x", &mcount_address);
-    ptr = (char *) unexec_text_start;
-    mcount_offset = (char *)mcount_address - ptr;
-
-#ifdef RISCiX_1_1
-#define EDATA_OFFSET 0x2c
-#else
-#define EDATA_OFFSET 0x30
-#endif
-
-    end = ptr + mcount_offset - EDATA_OFFSET;
-
-    write_segment (new_, ptr, end);
-
-    proforma[0] = bss_end;	/* becomes _edata */
-    proforma[1] = bss_end;	/* becomes _end */
-    proforma[2] = bss_end;	/* becomes _minbrk */
-    proforma[3] = bss_end;	/* becomes _curbrk */
-
-    write (new_, proforma, 16);
-
-    temp_ptr = ptr;
-    ptr = end + 16;
-    end = temp_ptr + hdr.a_text;
-
-    write_segment (new_, ptr, end);
-  }
-
-#else /* !RISCiX */
   ptr = (char *) unexec_text_start;
   end = ptr + hdr.a_text;
   write_segment (new_, ptr, end);
-#endif /* RISCiX */
 
   ptr = (char *) unexec_data_start;
   end = ptr + hdr.a_data;
@@ -1135,8 +927,6 @@ mark_x (char *name)
 }
 
 #ifdef COFF
-#ifndef COFF_BSD_SYMBOLS
-
 /*
  *	If the COFF file contains a symbol table and a line number section,
  *	then any auxiliary entries that have values for x_lnnoptr must
@@ -1167,7 +957,7 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
 {
   int nsyms;
   int new_;
-#if defined (amdahl_uts) || defined (pfa)
+#if defined defined (pfa)
   SYMENT symentry;
   AUXENT auxentry;
 #else
@@ -1203,7 +993,5 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
   close (new_);
   return 0;
 }
-
-#endif /* COFF_BSD_SYMBOLS */
 
 #endif /* COFF */
