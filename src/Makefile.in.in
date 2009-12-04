@@ -537,13 +537,7 @@ $(lwlib_lib):
 	cd ../lwlib && $(MAKE) $(RECURSIVE_MAKE_ARGS)
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef DYNODUMP
-dynodump_deps = ../dynodump/dynodump.so
-../dynodump/dynodump.so:
-	cd ../dynodump && $(MAKE) $(RECURSIVE_MAKE_ARGS)
-#endif /* DYNODUMP */
-
-link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
+link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps)
 
 $(LIB_SRC)/make-dump-id:
 	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-dump-id
@@ -825,17 +819,10 @@ extw_link_mid = -z text -o
 extw_link_end =
 #  endif /* not IRIX */
 # else /* not USG5 */
-#  if defined (DEC_ALPHA) && defined (OSF1)
-#   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
-extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
-extw_link_mid = -o
-extw_link_end = $(LIBES)
-#  else /* !(DEC_ALPHA && OSF1) */
-#   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
+#  define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc
 extw_link_mid = -assert pure-text -o
 extw_link_end =
-#  endif /* !(DEC_ALPHA && OSF1) */
 # endif /* not USG5 */
 
 #ifdef EXTW_LINK
@@ -885,7 +872,6 @@ allocax.o : $(SRC)/alloca.s config.h
 	sed -e 's///' -e 's/^#.*//' | \
 	sed -n -e '/^..*$$/p' > allocax.s
 	@$(RM) alloca.o
-## Xenix, in particular, needs to run assembler via cc.
 	$(CC) -c allocax.s
 	$(RM) allocax.s allocatem.c
 #endif /* HAVE_ALLOCA */

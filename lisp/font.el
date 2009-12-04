@@ -112,7 +112,6 @@
     (gtk       . (x-font-create-name x-font-create-object))
     ;; #### FIXME should this handle fontconfig font objects?
     (fc        . (fc-font-create-name fc-font-create-object))
-    (ns        . (ns-font-create-name ns-font-create-object))
     (mswindows . (mswindows-font-create-name mswindows-font-create-object))
     (pm        . (x-font-create-name x-font-create-object)) ; Change? FIXME
     ;; #### what is this bogosity?
@@ -121,18 +120,6 @@
 
 The first function creates a font name from a font descriptor object.
 The second performs the reverse translation.")
-
-(defconst ns-font-weight-mappings
-  '((:extra-light . "extralight")
-    (:light       . "light")
-    (:demi-light  . "demilight")
-    (:medium      . "medium")
-    (:normal      . "medium")
-    (:demi-bold   . "demibold")
-    (:bold        . "bold")
-    (:extra-bold  . "extrabold"))
-  "An assoc list mapping keywords to actual NeXTstep specific
-information to use")
 
 (defconst x-font-weight-mappings
   '((:extra-light . "extralight")
@@ -845,66 +832,6 @@ Optional DEVICE defaults to `default-x-device'."
     (if (font-size fontobj)
 	(fc-pattern-add-size pattern (font-size fontobj)))
     (fc-name-unparse pattern)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; The window-system dependent code (NS-style)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun ns-font-families-for-device (&optional device no-resetp)
-  ;; For right now, assume we are going to have the same storage for
-  ;; device fonts for NS as we do for X.  Is this a valid assumption?
-  (or device (setq device (selected-device)))
-  (if (boundp 'device-fonts-cache)
-      (let ((menu (or (cdr-safe (assq device device-fonts-cache)))))
-	(if (and (not menu) (not no-resetp))
-	    (progn
-	      (reset-device-font-menus device)
-	      (ns-font-families-for-device device t))
-	  (let ((scaled (mapcar #'(lambda (x) (if x (aref x 0)))
-				(aref menu 0)))
-		(normal (mapcar #'(lambda (x) (if x (aref x 0)))
-				(aref menu 1))))
-	    (sort (delete-duplicates (nconc scaled normal) :test #'equal)
-                  'string-lessp))))))
-
-(defun ns-font-create-name (fontobj &optional device)
-  "Return a font name constructed from FONTOBJ, appropriate for NextSTEP devices."
-  (let ((family (or (font-family fontobj)
-		    (ns-font-families-for-device device)))
-	(weight (or (font-weight fontobj) :medium))
-	(style (or (font-style fontobj) (list :normal)))
-	(size (font-size fontobj)))
-    ;; Create a font, wow!
-    (if (stringp family)
-	(setq family (list family)))
-    (if (or (symbolp style) (numberp style))
-	(setq style (list style)))
-    (setq weight (font-higher-weight weight (car-safe (memq :bold style))))
-    (if (stringp size)
-	(setq size (font-spatial-to-canonical size device)))
-    (setq weight (or (cdr-safe (assq weight ns-font-weight-mappings))
-		     "medium"))
-    (let ((done nil)			; Did we find a good font yet?
-	  (font-name nil)		; font name we are currently checking
-	  (cur-family nil)		; current family we are checking
-	  )
-      (while (and family (not done))
-	(setq cur-family (car family)
-	      family (cdr family))
-	(if (assoc cur-family font-x-family-mappings)
-	    ;; If the family name is an alias as defined by
-	    ;; font-x-family-mappings, then append those families
-	    ;; to the front of 'family' and continue in the loop.
-	    ;; #### jhar: I don't know about ns font names, so using X mappings
-	    (setq family (append
-			  (cdr-safe (assoc cur-family
-					   font-x-family-mappings))
-			  family))
-	  ;; CARL: Need help here - I am not familiar with the NS font
-	  ;; model
-	  (setq font-name "UNKNOWN FORMULA GOES HERE"
-		done (try-font-name font-name device))))
-      (if done font-name))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

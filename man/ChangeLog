@@ -1,3 +1,19 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (XEmacs from the Perspective of Building):
+	Remove reference to dynodump.
+	(A Summary of the Various XEmacs Modules): Remove references to
+	deleted files.
+	(Low-Level Modules): Ditto.
+	(Modules for the Basic Displayable Lisp Objects): Remove reference to
+	NeXTstep.
+	* lispref/os.texi (Operating System Environment): Remove references to
+	old unsupported systems.
+	* make-stds.texi (Variables for Installation Directories): Likely
+	insufficient update to list of current operating systems.
+	* xemacs-faq.texi (Q1.2.2: What versions of Unix does XEmacs run on?):
+	Ditto.
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* beta.texi (Building XEmacs from a full distribution): Remove

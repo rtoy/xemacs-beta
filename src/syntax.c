@@ -2069,7 +2069,6 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	case Sopen:
 	  if (stopbefore) goto stop;  /* this arg means stop at sexp start */
 	  depth++;
-	  /* curlevel++->last ran into compiler bug on Apollo */
 	  curlevel->last = from - 1;
 	  if (++curlevel == endlevel)
 	    stack_overflow ("Nesting too deep for parser",

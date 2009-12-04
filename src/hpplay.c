@@ -55,13 +55,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sound.h"
 
-#ifdef HPUX10
 #include <Alib.h>
 #include <CUlib.h>
-#else /* !HPUX 10 */
-#include <audio/Alib.h>
-#include <audio/CUlib.h>
-#endif /* !HPUX 10 */
 
 
 Lisp_Object Vhp_play_server;

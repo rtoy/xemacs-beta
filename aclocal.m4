@@ -54,18 +54,6 @@ xehost_cpu=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\1/'`
 xehost_vendor=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\2/'`
 xehost_os=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\3/'`
 
-case "$xehost_os" in
-aix3*)
-  # AIX sometimes has problems with the GCC collect2 program.  For some
-  # reason, if we set the COLLECT_NAMES environment variable, the problems
-  # vanish in a puff of smoke.
-  if test "${COLLECT_NAMES+set}" != set; then
-    COLLECT_NAMES=
-    export COLLECT_NAMES
-  fi
-  ;;
-esac
-
 # Now see if the compiler is really GCC.
 if test "$GCC" = "yes"; then
   XEGCC=yes
@@ -87,7 +75,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
   wl='-Wl,'
 
   case "$xehost_os" in
-  aix[[3-9]]* | irix[[5-9]]* | osf[[3-9]])
+  aix[[4-9]]* | irix[[5-9]]* | osf[[3-9]])
     # PIC is the default for these OSes.
     ;;
 
@@ -113,7 +101,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
 else
   # PORTME Check for PIC flags for the system compiler.
   case "$xehost_os" in
-  hpux9* | hpux1[[0-9]]*)
+  hpux1[[0-9]]*)
     # Is there a better link_static_flag that works with the bundled CC?
     wl='-Wl,'
     dll_cflags='+Z'
@@ -133,7 +121,7 @@ else
     wl='-Wl,'
     ;;
 
-  aix[[3-9]]*)
+  aix[[4-9]]*)
     # All AIX code is PIC.
     wl='-Wl,'
     ;;
@@ -161,11 +149,6 @@ else
   solaris2*)
     dll_cflags='-KPIC'
     wl='-Wl,'
-    ;;
-
-  sunos4*)
-    dll_cflags='-PIC'
-    wl='-Qoption ld '
     ;;
 
   uts4*)
@@ -258,7 +241,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
   esac
 else # Not using GCC
   case "$xehost_os" in
-    aix[[3-9]]*)
+    aix[[4-9]]*)
       xldf="-bE:ELLSONAME.exp -H512 -T512 -bhalt:4 -bM:SRE -bnoentry -lc"
       xcldf="${wl}-bE:ELLSONAME.exp ${wl}-H512 ${wl}-T512 ${wl}-bhalt:4 ${wl}-bM:SRE ${wl}-bnoentry ${wl}-lc"
       ;;
@@ -285,11 +268,6 @@ else # Not using GCC
     sco3.2v5* | unixware* | sysv5* | sysv4* | solaris2* | solaris7* | uts4*)
       xcldf="-G"
       xldf="-G"
-      ;;
-
-    sunos4*)
-      xcldf="${wl}-assert ${wl}pure-text ${wl}-Bstatic"
-      xldf="-assert pure-text -Bstatic"
       ;;
   esac
 fi # End if if we are using gcc
@@ -393,8 +371,8 @@ fi
 AC_MSG_RESULT([${xe_gnu_ld}])
 
 case "$xehost_os" in
-  amigaos* | sunos4*)
-    # On these operating systems, we should treat GNU ld like the system ld.
+  amigaos*)
+    # On this operating system, we should treat GNU ld like the system ld.
     gnu_ld_acts_native=yes
     ;;
   *)
@@ -435,11 +413,6 @@ else
   else
     # PORTME fill in a description of your system's linker (not GNU ld)
     case "$xehost_os" in
-    aix3*)
-      dll_ld=$LTLD
-      dll_ldflags=$xldf
-      ;;
-
     aix[[4-9]]*)
       dll_ldflags=$xcldf
       ;;
@@ -501,15 +474,6 @@ else
         *)     dll_ldflags="-G"
                ;;
       esac
-      ;;
-
-    sunos4*)
-      if test "$XEGCC" = yes; then
-        dll_ld=$CC
-      else
-        dll_ld=$LTLD
-      fi
-      dll_ldflags=$xldf
       ;;
 
     uts4*)
@@ -601,19 +565,11 @@ if test -z "$ld_dynamic_link_flags"; then
     ld_dynamic_link_flags=
     ;;
 
-  sco3.2v5* | unixware* | sysv5* | sysv4*)
+  unixware* | sysv5* | sysv4*)
     ld_dynamic_link_flags="${wl}-Bexport"
     ;;
 
-  sunos4*)
-    ld_dynamic_link_flags=
-    ;;
-
   uts4*)
-    ld_dynamic_link_flags=
-    ;;
-
-  bsdi*)
     ld_dynamic_link_flags=
     ;;
 

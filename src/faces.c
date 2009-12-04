@@ -2261,8 +2261,6 @@ complex_vars_of_faces (void)
     set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
   }
 
-  /* #### We may want to have different fallback values if NeXTstep
-     support is compiled in. */
   {
     Lisp_Object inst_list = Qnil;
 

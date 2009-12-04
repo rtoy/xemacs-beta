@@ -27,30 +27,19 @@ Boston, MA 02111-1307, USA.  */
 				Returns a double.
    LDAV_SYMBOL			Name of kernel symbol giving load average.
    LOAD_AVE_TYPE		Type of the load average array in the kernel.
-				Must be defined unless one of
-				apollo, DGUX, NeXT, or UMAX is defined;
-				otherwise, no load average is available.
+				Must be defined; otherwise, no load average
+				is available.
    NLIST_STRUCT			Include nlist.h, not a.out.h, and
 				the nlist n_name element is a pointer,
 				not an array.
-   NLIST_NAME_UNION		struct nlist has an n_un member, not n_name.
    LINUX_LDAV_FILE		[__linux__]: File containing load averages.
 
    Specific system predefines this file uses, aside from setting
    default values if not emacs:
 
-   apollo
    BSD				Real BSD, not just BSD-like.
-   convex
-   DGUX
    hpux
-   NeXT
    sgi
-   sequent			Sequent Dynix 3.x.x (BSD)
-   _SEQUENT_			Sequent DYNIX/ptx 1.x.x (SYSV)
-   sony_news                    NEWS-OS (works at least for 4.1C)
-   UMAX
-   UMAX4_3
    WIN32_NATIVE			No-op for Windows9x/NT.
    CYGWIN			No-op for Cygwin.
    __linux__			Linux: assumes /proc filesystem mounted.
@@ -92,22 +81,6 @@ Boston, MA 02111-1307, USA.  */
 #include <kstat.h>
 #endif /* HAVE_KSTAT_H */
 
-#if !defined (BSD) && defined (ultrix)
-/* Ultrix behaves like BSD on Vaxen.  */
-#define BSD
-#endif
-
-#ifdef NeXT
-/* NeXT in the 2.{0,1,2} releases defines BSD in <sys/param.h>, which
-   conflicts with the definition understood in this file, that this
-   really is BSD. */
-#undef BSD
-
-/* NeXT defines FSCALE in <sys/param.h>.  However, we take FSCALE being
-   defined to mean that the nlist method should be used, which is not true.  */
-#undef FSCALE
-#endif
-
 /* Set values that are different from the defaults, which are
    set a little farther down with #ifndef.  */
 
@@ -116,14 +89,6 @@ Boston, MA 02111-1307, USA.  */
 
 #if defined (HPUX) && !defined (hpux)
 #define hpux
-#endif
-
-#if defined(hp300) && !defined(hpux)
-#define MORE_BSD
-#endif
-
-#if defined(ultrix) && defined(mips)
-#define decstation
 #endif
 
 #if (defined(sun) && defined(SVR4)) || defined (SOLARIS2)
@@ -143,30 +108,15 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/table.h>
 #endif
 
-/* UTek's /bin/cc on the 4300 has no architecture specific cpp define by
-   default, but _MACH_IND_SYS_TYPES is defined in <sys/types.h>.  Combine
-   that with a couple of other things and we'll have a unique match.  */
-#if !defined (tek4300) && defined (unix) && defined (m68k) && defined (mc68000) && defined (mc68020) && defined (_MACH_IND_SYS_TYPES)
-#define tek4300			/* Define by emacs, but not by other users.  */
-#endif
-
 
 /* VAX C can't handle multi-line #ifs, or lines longer than 256 chars.  */
 #ifndef LOAD_AVE_TYPE
-
-#ifdef MORE_BSD
-#define LOAD_AVE_TYPE long
-#endif
 
 #ifdef sun
 #define LOAD_AVE_TYPE long
 #endif
 
 #ifdef decstation
-#define LOAD_AVE_TYPE long
-#endif
-
-#ifdef _SEQUENT_
 #define LOAD_AVE_TYPE long
 #endif
 
@@ -182,10 +132,6 @@ Boston, MA 02111-1307, USA.  */
 #define LOAD_AVE_TYPE long
 #endif
 
-#ifdef sequent
-#define LOAD_AVE_TYPE long
-#endif
-
 #ifdef OSF_ALPHA
 #define LOAD_AVE_TYPE long
 #endif
@@ -194,23 +140,8 @@ Boston, MA 02111-1307, USA.  */
 #define LOAD_AVE_TYPE long
 #endif
 
-#ifdef tek4300
-#define LOAD_AVE_TYPE long
-#endif
-
-#if defined(alliant) && defined(i860) /* Alliant FX/2800 */
-#define LOAD_AVE_TYPE long
-#endif
-
 #ifdef _AIX
 #define LOAD_AVE_TYPE long
-#endif
-
-#ifdef convex
-#define LOAD_AVE_TYPE double
-#ifndef LDAV_CVT
-#define LDAV_CVT(n) (n)
-#endif
 #endif
 
 #endif /* No LOAD_AVE_TYPE.  */
@@ -222,27 +153,15 @@ Boston, MA 02111-1307, USA.  */
 #define FSCALE 1024.0
 #endif
 
-#if defined(alliant) && defined(i860) /* Alliant FX/2800 */
-/* <sys/param.h> defines an incorrect value for FSCALE on an
-   Alliant FX/2800 Concentrix 2.2, according to ghazi@noc.rutgers.edu.  */
-#undef FSCALE
-#define FSCALE 100.0
-#endif
-
-
 #ifndef	FSCALE
 
 /* SunOS and some others define FSCALE in sys/param.h.  */
-
-#ifdef MORE_BSD
-#define FSCALE 2048.0
-#endif
 
 #if defined(MIPS) || defined(SVR4) || defined(decstation)
 #define FSCALE 256
 #endif
 
-#if defined (sgi) || defined (sequent)
+#if defined (sgi)
 /* Sometimes both MIPS and sgi are defined, so FSCALE was just defined
    above under #ifdef MIPS.  But we want the sgi value.  */
 #undef FSCALE
@@ -251,10 +170,6 @@ Boston, MA 02111-1307, USA.  */
 
 #if defined (ardent) && defined (titan)
 #define FSCALE 65536.0
-#endif
-
-#ifdef tek4300
-#define FSCALE 100.0
 #endif
 
 #ifdef _AIX
@@ -270,10 +185,6 @@ Boston, MA 02111-1307, USA.  */
 /* VAX C can't handle multi-line #ifs, or lines longer that 256 characters.  */
 #ifndef NLIST_STRUCT
 
-#ifdef MORE_BSD
-#define NLIST_STRUCT
-#endif
-
 #ifdef sun
 #define NLIST_STRUCT
 #endif
@@ -283,10 +194,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef hpux
-#define NLIST_STRUCT
-#endif
-
-#if defined (_SEQUENT_) || defined (sequent)
 #define NLIST_STRUCT
 #endif
 
@@ -310,15 +217,7 @@ Boston, MA 02111-1307, USA.  */
 #define NLIST_STRUCT
 #endif
 
-#ifdef tek4300
-#define NLIST_STRUCT
-#endif
-
 #ifdef butterfly
-#define NLIST_STRUCT
-#endif
-
-#if defined(alliant) && defined(i860) /* Alliant FX/2800 */
 #define NLIST_STRUCT
 #endif
 
@@ -333,25 +232,15 @@ Boston, MA 02111-1307, USA.  */
 #define FIXUP_KERNEL_SYMBOL_ADDR(nl) ((nl)[0].n_value &= ~(1 << 31))
 #endif
 
-
-#if !defined (KERNEL_FILE) && defined (sequent)
-#define KERNEL_FILE "/dynix"
-#endif
-
 #if !defined (KERNEL_FILE) && defined (hpux)
 #define KERNEL_FILE "/hp-ux"
 #endif
 
-#if !defined(KERNEL_FILE) && (defined(_SEQUENT_) || defined(MIPS) || defined(SVR4) || defined(ISC) || defined (sgi) || defined(SVR4) || (defined (ardent) && defined (titan)))
+#if !defined(KERNEL_FILE) && (defined(MIPS) || defined(SVR4) || defined(ISC) || defined (sgi) || defined(SVR4) || (defined (ardent) && defined (titan)))
 #define KERNEL_FILE "/unix"
 #endif
 
-
-#if !defined (LDAV_SYMBOL) && defined (alliant)
-#define LDAV_SYMBOL "_Loadavg"
-#endif
-
-#if !defined(LDAV_SYMBOL) && ((defined(hpux) && !defined(hp9000s300)) || defined(_SEQUENT_) || defined(SVR4) || defined(ISC) || defined(sgi) || (defined (ardent) && defined (titan)) || defined (_AIX))
+#if !defined(LDAV_SYMBOL) && (defined(hpux) || defined(SVR4) || defined(ISC) || defined(sgi) || (defined (ardent) && defined (titan)) || defined (_AIX))
 #define LDAV_SYMBOL "avenrun"
 #endif
 
@@ -394,44 +283,9 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* LOAD_AVE_TYPE */
 
-#ifdef NeXT
-#ifdef HAVE_MACH_MACH_H
-#include <mach/mach.h>
-#else
-#include <mach.h>
-#endif
-#endif /* NeXT */
-
 #ifdef sgi
 #include <sys/sysmp.h>
 #endif /* sgi */
-
-#ifdef UMAX
-#include <stdio.h>
-#include "syssignal.h"
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <sys/syscall.h>
-
-#ifdef UMAX_43
-#include <machine/cpu.h>
-#include <inq_stats/statistics.h>
-#include <inq_stats/sysstats.h>
-#include <inq_stats/cpustats.h>
-#include <inq_stats/procstats.h>
-#else /* Not UMAX_43.  */
-#include <sys/sysdefs.h>
-#include <sys/statistics.h>
-#include <sys/sysstats.h>
-#include <sys/cpudefs.h>
-#include <sys/cpustats.h>
-#include <sys/procstats.h>
-#endif /* Not UMAX_43.  */
-#endif /* UMAX */
-
-#ifdef DGUX
-#include <sys/dg_sys_info.h>
-#endif
 
 #if defined (HAVE_SYS_PSTAT_H)
 #include <sys/pstat.h>
@@ -439,20 +293,6 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* Avoid static vars inside a function since in HPUX they dump as pure.  */
-
-#ifdef NeXT
-static processor_set_t default_set;
-static int getloadavg_initialized;
-#endif /* NeXT */
-
-#ifdef UMAX
-static unsigned int cpus = 0;
-static unsigned int samples;
-#endif /* UMAX */
-
-#ifdef DGUX
-static struct dg_sys_info_load_info load_info;	/* what-a-mouthful! */
-#endif /* DGUX */
 
 #ifdef LOAD_AVE_TYPE
 /* File descriptor open to /dev/kmem */
@@ -617,139 +457,6 @@ getloadavg (double loadavg[], int nelem)
     loadavg[elem] = (double) load_ave[elem] / (double) scale;
 #endif /* __NetBSD__ or __OpenBSD__ */
 
-#if !defined (LDAV_DONE) && defined (NeXT)
-#define LDAV_DONE
-  /* The NeXT code was adapted from iscreen 3.2.  */
-
-  host_t host;
-  struct processor_set_basic_info info;
-  unsigned info_count;
-
-  /* We only know how to get the 1-minute average for this system,
-     so even if the caller asks for more than 1, we only return 1.  */
-
-  if (!getloadavg_initialized)
-    {
-      if (processor_set_default (host_self (), &default_set) == KERN_SUCCESS)
-	getloadavg_initialized = 1;
-    }
-
-  if (getloadavg_initialized)
-    {
-      info_count = PROCESSOR_SET_BASIC_INFO_COUNT;
-      if (processor_set_info (default_set, PROCESSOR_SET_BASIC_INFO, &host,
-			     (processor_set_info_t) &info, &info_count)
-	  != KERN_SUCCESS)
-	getloadavg_initialized = 0;
-      else
-	{
-	  if (nelem > 0)
-	    loadavg[elem++] = (double) info.load_average / LOAD_SCALE;
-	}
-    }
-
-  if (!getloadavg_initialized)
-    return -1;
-#endif /* NeXT */
-
-#if !defined (LDAV_DONE) && defined (UMAX)
-#define LDAV_DONE
-/* UMAX 4.2, which runs on the Encore Multimax multiprocessor, does not
-   have a /dev/kmem.  Information about the workings of the running kernel
-   can be gathered with inq_stats system calls.
-   We only know how to get the 1-minute average for this system.  */
-
-  struct proc_summary proc_sum_data;
-  struct stat_descr proc_info;
-  double load;
-  REGISTER unsigned int i, j;
-
-  if (cpus == 0)
-    {
-      REGISTER unsigned int c, i;
-      struct cpu_config conf;
-      struct stat_descr desc;
-
-      desc.sd_next = 0;
-      desc.sd_subsys = SUBSYS_CPU;
-      desc.sd_type = CPUTYPE_CONFIG;
-      desc.sd_addr = (char *) &conf;
-      desc.sd_size = sizeof (conf);
-
-      if (inq_stats (1, &desc))
-	return -1;
-
-      c = 0;
-      for (i = 0; i < conf.config_maxclass; ++i)
-	{
-	  struct class_stats stats;
-	  memset ((char *) &stats, 0, sizeof (stats));
-
-	  desc.sd_type = CPUTYPE_CLASS;
-	  desc.sd_objid = i;
-	  desc.sd_addr = (char *) &stats;
-	  desc.sd_size = sizeof (stats);
-
-	  if (inq_stats (1, &desc))
-	    return -1;
-
-	  c += stats.class_numcpus;
-	}
-      cpus = c;
-      samples = cpus < 2 ? 3 : (2 * cpus / 3);
-    }
-
-  proc_info.sd_next = 0;
-  proc_info.sd_subsys = SUBSYS_PROC;
-  proc_info.sd_type = PROCTYPE_SUMMARY;
-  proc_info.sd_addr = (char *) &proc_sum_data;
-  proc_info.sd_size = sizeof (struct proc_summary);
-  proc_info.sd_sizeused = 0;
-
-  if (inq_stats (1, &proc_info) != 0)
-    return -1;
-
-  load = proc_sum_data.ps_nrunnable;
-  j = 0;
-  for (i = samples - 1; i > 0; --i)
-    {
-      load += proc_sum_data.ps_nrun[j];
-      if (j++ == PS_NRUNSIZE)
-	j = 0;
-    }
-
-  if (nelem > 0)
-    loadavg[elem++] = load / samples / cpus;
-#endif /* UMAX */
-
-#if !defined (LDAV_DONE) && defined (DGUX)
-#define LDAV_DONE
-  /* This call can return -1 for an error, but with good args
-     it's not supposed to fail.  The first argument is for no
-     apparent reason of type `long int *'.  */
-  dg_sys_info ((long int *) &load_info,
-	       DG_SYS_INFO_LOAD_INFO_TYPE,
-	       DG_SYS_INFO_LOAD_VERSION_0);
-
-  if (nelem > 0)
-    loadavg[elem++] = load_info.one_minute;
-  if (nelem > 1)
-    loadavg[elem++] = load_info.five_minute;
-  if (nelem > 2)
-    loadavg[elem++] = load_info.fifteen_minute;
-#endif /* DGUX */
-
-#if !defined (LDAV_DONE) && defined (OSF_MIPS)
-#define LDAV_DONE
-
-  struct tbl_loadavg load_ave;
-  table (TBL_LOADAVG, 0, &load_ave, 1, sizeof (load_ave));
-  loadavg[elem++]
-    = (load_ave.tl_lscale == 0
-       ? load_ave.tl_avenrun.d[0]
-       : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
-#endif	/* OSF_MIPS */
-
 #if !defined (LDAV_DONE) && defined (WIN32_ANY)
 #define LDAV_DONE
 
@@ -759,18 +466,6 @@ getloadavg (double loadavg[], int nelem)
       loadavg[elem] = 0.0;
     }
 #endif  /* WIN32_NATIVE or CYGWIN */
-
-#if !defined (LDAV_DONE) && defined (OSF_ALPHA)
-#define LDAV_DONE
-
-  struct tbl_loadavg load_ave;
-  table (TBL_LOADAVG, 0, &load_ave, 1, sizeof (load_ave));
-  for (elem = 0; elem < nelem; elem++)
-    loadavg[elem]
-      = (load_ave.tl_lscale == 0
-       ? load_ave.tl_avenrun.d[elem]
-       : (load_ave.tl_avenrun.l[elem] / (double) load_ave.tl_lscale));
-#endif /* OSF_ALPHA */
 
 #if !defined (LDAV_DONE) && defined(LOAD_AVE_TYPE)
 
@@ -788,13 +483,8 @@ getloadavg (double loadavg[], int nelem)
       strcpy (nl[0].n_name, LDAV_SYMBOL);
       strcpy (nl[1].n_name, "");
 #else /* NLIST_STRUCT */
-#ifdef NLIST_NAME_UNION
-      nl[0].n_un.n_name = LDAV_SYMBOL;
-      nl[1].n_un.n_name = 0;
-#else /* not NLIST_NAME_UNION */
       nl[0].n_name = (char *) LDAV_SYMBOL;
       nl[1].n_name = 0;
-#endif /* not NLIST_NAME_UNION */
 #endif /* NLIST_STRUCT */
 
 #ifndef SUNOS_5

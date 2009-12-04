@@ -1069,15 +1069,14 @@ full color support on a color-capable character terminal.
 @node Q1.2.2, Q1.2.3, Q1.2.1, Introduction
 @unnumberedsubsec Q1.2.2: What versions of Unix does XEmacs run on?
 
-XEmacs is regularly tested on Linux, Solaris, SunOS, HP/UX, FreeBSD,
-OpenBSD, BSD/OS aka BSDI, Tru64 aka DEC/OSF, SCO5, and probably
-others.  It should work on all versions of Unix created in the last 10
-years or so, perhaps with a bit of work on more obscure platforms to
-correct bit-rot.  It uses a sophisticated configuration system to
-auto-detect zillions of features that are implemented differently in
-different versions of Unix, so it will probably work on your vendor's
-version, possibly with a bit of tweaking, even if we've never heard of
-it.
+XEmacs is regularly tested on Linux, Solaris and OpenSolaris, HP/UX,
+FreeBSD, OpenBSD, Cygwin, Mac OS X, and probably others.  It should work
+on all versions of Unix created in the last 10 years or so, perhaps with
+a bit of work on more obscure platforms to correct bit-rot.  It uses a
+sophisticated configuration system to auto-detect zillions of features
+that are implemented differently in different versions of Unix, so it
+will probably work on your vendor's version, possibly with a bit of
+tweaking, even if we've never heard of it.
 
 For problems with particular machines and versions of Unix, see the
 @file{PROBLEMS} file.

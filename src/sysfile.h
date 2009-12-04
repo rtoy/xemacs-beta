@@ -353,7 +353,6 @@ Boston, MA 02111-1307, USA.  */
                                        linuxplay.c sgiplay.c sunplay.c
 				       hpplay.c nas.c)
    -- all unex* files
-   -- hftctl.c
    -- lib-src files
    */
 
