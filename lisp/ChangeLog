@@ -80,6 +80,20 @@
 	(narrow-to-defun):
 	Document that optional ARG is ignored.
 
+2009-11-01  Stephen Turnbull  <stephen@xemacs.org>
+
+	* faces.el (Face-frob-property):
+	Give mapper for TTYs 2 args.
+	(make-face-family):
+	(make-face-size):
+	Generic mapper ignores TTYs and null devices.
+	(make-face-bold):
+	(make-face-italic):
+	(make-face-bold-italic):
+	(make-face-unbold):
+	(make-face-unitalic):
+	TTY mapper takes 2 args.
+
 2009-10-09  Stephen Turnbull  <stephen@xemacs.org>
 
 	* lisp.el (beginning-of-defun-function):
