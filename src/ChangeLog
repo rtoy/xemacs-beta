@@ -1,3 +1,8 @@
+2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Explain why "*" isn't rewritten
+	as a full XLFD.
+
 2009-11-19  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
