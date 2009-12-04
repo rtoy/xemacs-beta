@@ -1,6 +1,7 @@
 2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font.el (x-font-create-object): Check for Xft before using it.
+	This fixes the symptom in openSUSE bug #558764.
 
 2009-11-10  Jerry James  <james@xemacs.org>
 
