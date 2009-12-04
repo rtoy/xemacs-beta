@@ -569,6 +569,7 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
     (if (or (not (stringp fontname))
 	    (not (string-match font-x-font-regexp fontname)))
 	(if (and (stringp fontname)
+		 (featurep 'xft-fonts)
 		 (string-match font-xft-font-regexp fontname))
 	    ;; Return an XFT font. 
 	    (xft-font-create-object fontname)

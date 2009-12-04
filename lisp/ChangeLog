@@ -1,3 +1,7 @@
+2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font.el (x-font-create-object): Check for Xft before using it.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* device.el (device-type): Remove (mostly imaginary) support for
