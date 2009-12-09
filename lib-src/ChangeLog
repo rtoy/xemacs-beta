@@ -1,3 +1,8 @@
+2009-12-08  Sjoerd Mullender  <sjoerd@acm.org>
+
+	* etags.c (absolute_filename): Use memmove instead of strcpy to move
+	characters within a string.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* fakemail.c (MAIL_PROGRAM_NAME): No s&m files define this now, so
