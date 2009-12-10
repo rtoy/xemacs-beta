@@ -757,9 +757,6 @@ XE_MERGED_ARG([offix],
                                    different vendors, the results may be
                                    unpredictable.]),
 	[], [])
-XE_MERGED_ARG([xmu],
-	AS_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
-	[], [])
 XE_MERGED_ARG([external-widget],
 	AS_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
 	[], [])
@@ -3090,13 +3087,13 @@ extern Bool XRegisterIMInstantiateCallback(
    AC_DEFINE(XREGISTERIMINSTANTIATECALLBACK_NONSTANDARD_PROTOTYPE)])
 
   dnl autodetect -lXmu
-  test -z "$with_xmu" && { AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile,
-                           with_xmu=yes, with_xmu=no) }
+  AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile, with_xmu=yes, with_xmu=no)
   if test "$with_xmu" = "no"; then
-    XE_ADD_OBJS(xmu.o)
+    AC_MSG_ERROR([We're sorry, but we thought there were no systems without Xmu by now.
+You cannot build this version of XEmacs for X11 without Xmu.  Please report
+this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
   else
     XE_PREPEND(-lXmu, libs_x)
-    AC_DEFINE(HAVE_XMU)
   fi
 
   dnl Autodetect -lXbsd
@@ -3255,7 +3252,7 @@ if test "$with_x11" != "yes"; then
   dnl if test "$with_tty" = "no" ; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
-  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu enable_sound_nas
+  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim enable_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        AC_MSG_WARN([--$feature ignored:  Not valid without X support])
@@ -3492,17 +3489,10 @@ if test "$with_cde" = "yes" ; then
 fi
 
 dnl Always compile OffiX unless --without-offix is given, no
-dnl X11 support is compiled in, no standard Xmu is available,
-dnl or dragndrop support is disabled
+dnl X11 support is compiled in, or dragndrop support is disabled
 dnl Because OffiX support currently loses when more than one display
 dnl is in use, we now disable it by default -slb 07/10/1998.
 test "$window_system" != "x11" && with_offix=no
-if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; no real Xmu support])
-  fi
-  with_offix=no
-fi
 if test "$with_dragndrop" = no; then
   if test "$with_offix" = "yes" ; then
     AC_MSG_WARN([--with-offix forced to `no'; no generic Drag'n'Drop support])
@@ -5634,9 +5624,6 @@ if test "$with_x11" = "yes"; then
   echo "    - X Windows libraries location:               $x_libraries"
   if test "$with_xauth" != yes; then
     echo "    - Xau (X authority) not available."
-  fi
-  if test "$with_xmu" != yes; then
-    echo "    - Xmu library not available; substituting equivalent routines."
   fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."

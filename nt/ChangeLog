@@ -1,3 +1,7 @@
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Drop references to xmu.c and xmu.h.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* xemacs.dsp: Drop references to removed source files.

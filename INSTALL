@@ -291,9 +291,6 @@ If you don't want X Window System support, specify `--without-x'.  If
 you omit this option, `configure' will try to autodetect whether your
 system has X Window System support, and arrange to use it if present.
 
-The `--without-xmu' option can be used if your vendor doesn't ship
-the Xmu library.
-
 The `--with-menubars=TYPE' option allows you to specify which X
 toolkit you wish to use for the menubar.  The valid options are
 `lucid', `motif' and `no'.  The default is `lucid' which is a
