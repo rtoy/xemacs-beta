@@ -1,3 +1,15 @@
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Remove HAVE_XMU.
+	* s/windowsnt.h: Ditto.
+	* device-x.c: Include needed Xmu headers instead of obsolete xmu.h.
+	* EmacsFrame.c: Ditto.
+	* glyphs-x.c: Ditto.
+	* frame-x.c: Ditto.  Always include editres code.
+	* xmu.c: Removed, obsolete.
+	* xmu.h: Ditto.
+	* depend: Regenerate.
+
 2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* faces.c (complex_vars_of_faces): Explain why "*" isn't rewritten

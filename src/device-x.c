@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include "xgccache.h"
 #include <X11/Shell.h>
-#include "xmu.h"
+#include <X11/Xmu/Error.h>
 
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
 #include "sysdll.h"

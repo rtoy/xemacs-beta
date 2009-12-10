@@ -956,8 +956,6 @@ enable_cde
 with_cde
 enable_offix
 with_offix
-enable_xmu
-with_xmu
 enable_external_widget
 with_external_widget
 enable_tty
@@ -1862,7 +1860,6 @@ Window-system options
                           able to use multiple X displays success- fully. If
                           the two servers are from different vendors, the
                           results may be unpredictable.
-  --with-xmu              Use Xmu utilities. Default: yes.
   --with-external-widget
                           Support XEmacs server for text widgets in other
                           applications.
@@ -3556,22 +3553,6 @@ fi;
 if test "${with_offix+set}" = set; then
   enableval="$with_offix"
   withval="$with_offix"
-
-fi;
-# If --with-xmu or --without-xmu were given then copy the value to the
-# equivalent enable_xmu variable.
-if test "${with_xmu+set}" = set; then
-  enable_xmu="$with_xmu"
-fi;
-# If -enable-xmu or --disable-xmu were given then copy the value to the
-# equivalent with_xmu variable.
-if test "${enable_xmu+set}" = set; then
-  with_xmu="$enable_xmu"
-fi;
-# Check whether --with-xmu or --without-xmu was given.
-if test "${with_xmu+set}" = set; then
-  enableval="$with_xmu"
-  withval="$with_xmu"
 
 fi;
 # If --with-external-widget or --without-external-widget were given then copy the value to the
@@ -19962,7 +19943,7 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-    test -z "$with_xmu" && { { $as_echo "$as_me:$LINENO: checking for XmuReadBitmapDataFromFile in -lXmu" >&5
+    { $as_echo "$as_me:$LINENO: checking for XmuReadBitmapDataFromFile in -lXmu" >&5
 $as_echo_n "checking for XmuReadBitmapDataFromFile in -lXmu... " >&6; }
 if test "${ac_cv_lib_Xmu_XmuReadBitmapDataFromFile+set}" = set; then
   $as_echo_n "(cached) " >&6
@@ -20032,17 +20013,17 @@ if test "x$ac_cv_lib_Xmu_XmuReadBitmapDataFromFile" = x""yes; then
 else
   with_xmu=no
 fi
- }
+
   if test "$with_xmu" = "no"; then
-    extra_objs="$extra_objs xmu.o" &&  if test "$verbose" = "yes"; then
-   echo "    xemacs will be linked with \"xmu.o\""
- fi
+    { { $as_echo "$as_me:$LINENO: error: We're sorry, but we thought there were no systems without Xmu by now.
+You cannot build this version of XEmacs for X11 without Xmu.  Please report
+this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29." >&5
+$as_echo "$as_me: error: We're sorry, but we thought there were no systems without Xmu by now.
+You cannot build this version of XEmacs for X11 without Xmu.  Please report
+this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29." >&2;}
+   { (exit 1); exit 1; }; }
   else
     libs_x="-lXmu $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXmu\" to \$libs_x"; fi
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_XMU 1
-_ACEOF
-
   fi
 
       { $as_echo "$as_me:$LINENO: checking for main in -lXbsd" >&5
@@ -21072,7 +21053,7 @@ else
 fi
 
 if test "$with_x11" != "yes"; then
-            for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu enable_sound_nas
+            for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim enable_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        { $as_echo "$as_me:$LINENO: WARNING: --$feature ignored:  Not valid without X support" >&5
@@ -23404,13 +23385,6 @@ _ACEOF
 fi
 
 test "$window_system" != "x11" && with_offix=no
-if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  if test "$with_offix" = "yes" ; then
-    { $as_echo "$as_me:$LINENO: WARNING: --with-offix forced to \`no'; no real Xmu support" >&5
-$as_echo "$as_me: WARNING: --with-offix forced to \`no'; no real Xmu support" >&2;}
-  fi
-  with_offix=no
-fi
 if test "$with_dragndrop" = no; then
   if test "$with_offix" = "yes" ; then
     { $as_echo "$as_me:$LINENO: WARNING: --with-offix forced to \`no'; no generic Drag'n'Drop support" >&5
@@ -41115,9 +41089,6 @@ if test "$with_x11" = "yes"; then
   if test "$with_xauth" != yes; then
     echo "    - Xau (X authority) not available."
   fi
-  if test "$with_xmu" != yes; then
-    echo "    - Xmu library not available; substituting equivalent routines."
-  fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
@@ -42039,8 +42010,7 @@ $debug ||
 if test -n "$CONFIG_FILES"; then
 
 
-ac_cr='
-'
+ac_cr=''
 ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
 if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
   ac_cs_awk_cr='\\r'

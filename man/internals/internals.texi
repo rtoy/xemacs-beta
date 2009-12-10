@@ -3238,8 +3238,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{xmmanagerp.h} @tab @ref{Modules for Interfacing with X Windows}.
 @item @file{xmotif.h} @tab
 @item @file{xmprimitivep.h} @tab @ref{Modules for Interfacing with X Windows}.
-@item @file{xmu.c} @tab @ref{Modules for Interfacing with X Windows}.
-@item @file{xmu.h} @tab @ref{Modules for Interfacing with X Windows}.
 @end multitable
 
 
@@ -21572,16 +21570,6 @@ against different implementations of Xt and Motif.
 @item
 @file{xmprimitivep.h} should be included in place of @file{<XmPrimitiveP.h>}.
 @end itemize
-
-
-
-@example
-xmu.c
-xmu.h
-@end example
-
-These files provide an emulation of the Xmu library for those systems
-(i.e. HPUX) that don't provide it as a standard part of X.
 
 
 

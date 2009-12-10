@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/ObjectP.h>
 #include <X11/CompositeP.h>
 #include <X11/Shell.h>
+#include <X11/Xmu/Converters.h>
 #ifdef HAVE_X_WIDGETS
 #include "../src/EmacsManager.h"
 #endif
@@ -46,7 +47,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef NEED_ATHENA
 #include "lwlib-Xaw.h"
 #endif
-#include "../src/xmu.h"
 #include "xlwtabs.h"
 #endif
 

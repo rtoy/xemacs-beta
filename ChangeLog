@@ -1,3 +1,11 @@
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* INSTALL: Remove description of --without-xmu option.
+	* configure.ac: Remove --with[out]-xmu option.  Issue informative
+	error message if libXmu cannot be found.  Change all Xmu-related
+	tests to assume Xmu is present.
+	* configure: Regenerate.
+
 2009-12-01  Mike Alexander  <mta@umich.edu>
 
 	* configure.ac: Make --with-database={dbm|gdbm} work again, it's

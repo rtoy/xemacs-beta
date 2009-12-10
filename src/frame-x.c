@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
-#include "xmu.h"
+#include <X11/Xmu/Editres.h>
 #include "EmacsManager.h"
 #include "EmacsFrameP.h"
 #include "EmacsShell.h"
@@ -2044,7 +2044,6 @@ x_popup_frame (struct frame *f)
   XIM_init_frame (f);
 #endif /* HAVE_XIM */
 
-#ifdef HACK_EDITRES
   /* Allow XEmacs to respond to EditRes requests.  See the O'Reilly Xt */
   /* Intrinsics Programming Manual, Motif Edition, Aug 1993, Sect 14.14, */
   /* pp. 483-493. */
@@ -2053,7 +2052,6 @@ x_popup_frame (struct frame *f)
 		     True,                   /* called on non-maskable events? */
 		     (XtEventHandler) _XEditResCheckMessages, /* the handler */
 		     NULL);
-#endif /* HACK_EDITRES */
 
 #ifdef HAVE_CDE
   {

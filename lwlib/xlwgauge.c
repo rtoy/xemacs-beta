@@ -55,12 +55,10 @@ Boston, MA 02111-1307, USA.  */
 #include ATHENA_XawInit_h_
 #include "xt-wrappers.h"
 #include "xlwgaugeP.h"
-#include "../src/xmu.h"
-#ifdef HAVE_XMU
 #include <X11/Xmu/Atoms.h>
 #include <X11/Xmu/Drawing.h>
+#include <X11/Xmu/Misc.h>
 #include <X11/Xmu/StdSel.h>
-#endif
 
 
 /****************************************************************
@@ -226,10 +224,8 @@ static void
 GaugeClassInit (void)
 {
     XawInitializeWidgetSet();
-#ifdef HAVE_XMU
     XtAddConverter(XtRString, XtROrientation, XmuCvtStringToOrientation,
-    		NULL, 0) ;
-#endif
+		   NULL, 0) ;
 }
 
 
@@ -640,7 +636,6 @@ GaugeConvert (Widget	w,
 	    XGetAtomName(XtDisplay(w),*selection),
 	    XGetAtomName(XtDisplay(w),*target));
 
-#ifdef HAVE_XMU
 	if( *target == XA_TARGETS(XtDisplay(w)) )
 	{
 	  XPointer stdTargets;
@@ -669,9 +664,7 @@ GaugeConvert (Widget	w,
 	  return True ;
 	}
 
-	else
-#endif
-	  if( *target == XA_INTEGER )
+	else if( *target == XA_INTEGER )
 	{
 	  *type = XA_INTEGER ;
 	  *length = 1 ;
@@ -680,12 +673,7 @@ GaugeConvert (Widget	w,
 	  return True ;
 	}
 
-	else if( *target == XA_STRING
-#ifdef HAVE_XMU
-		 ||
-		 *target == XA_TEXT(XtDisplay(w))
-#endif
-		 )
+	else if( *target == XA_STRING || *target == XA_TEXT(XtDisplay(w)) )
 	{
 	  *type = *target ;
 	  *length = strlen(gw->gauge.selstr)*sizeof(char) ;
@@ -697,17 +685,14 @@ GaugeConvert (Widget	w,
 	else
 	{
 	  /* anything else, we just give it to XmuConvertStandardSelection() */
-#ifdef HAVE_XMU
 	  req = XtGetSelectionRequest(w, *selection, NULL) ;
 	  if( XmuConvertStandardSelection(w, req->time, selection, target,
-	  	type, (XPointer *) value, length, format) )
+		type, (XPointer *) value, length, format) )
 	    return True ;
-	  else
-#endif
-	    {
+	  else {
 	    printf(
 		"Gauge: requestor is requesting unsupported selection %s:%s\n",
-	    	XGetAtomName(XtDisplay(w),*selection),
+		XGetAtomName(XtDisplay(w),*selection),
 		XGetAtomName(XtDisplay(w),*target));
 	    return False ;
 	  }
@@ -782,13 +767,7 @@ GaugeGetSelCB (Widget    w,
 	  XawGaugeSetValue(w, *iptr) ;
 	}
 
-	else if( *type == XA_STRING
-#ifdef HAVE_XMU
-		 ||
-		 *type == XA_TEXT(dpy)
-#endif
-		 )
-	  {
+	else if( *type == XA_STRING || *type == XA_TEXT(dpy) ) {
 	  cptr = (char *)value ;
 	  XawGaugeSetValue(w, atoi(cptr)) ;
 	}

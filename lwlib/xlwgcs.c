@@ -113,7 +113,8 @@
 #include	<X11/Xlib.h>
 #include	<X11/IntrinsicP.h>
 #include	<X11/StringDefs.h>
-#include	"../src/xmu.h"
+#include	<X11/Xmu/Drawing.h>
+#include	<X11/Xmu/Misc.h>
 #include	"xlwgcs.h"
 
 	/* Color & GC allocation.
@@ -165,14 +166,6 @@
 	 * to be compatible with ThreeD interface.)
 	 */
 
-
-
-#if	XtSpecificationRelease	< 5
-
-static	GC	XtAllocateGC(Widget, int, unsigned long, XGCValues *,
-			     unsigned long, unsigned long) ;
-
-#endif
 
 
 #if	NeedFunctionPrototypes
@@ -231,13 +224,7 @@ AllocGreyGC(Widget w, Pixel fg, Font font, int contrast, Bool be_nice_to_cmap)
 
 GC
 AllocShadeGC(Widget w, Pixel fg, Pixel bg, Font font,
-	     int contrast,
-#ifdef HAVE_XMU
-	     Bool be_nice_to_cmap
-#else
-	     Bool UNUSED (be_nice_to_cmap)
-#endif
-	     )
+	     int contrast, Bool be_nice_to_cmap)
 {
 	XGCValues	values ;
 	unsigned long	vmask, dcmask ;
@@ -255,7 +242,6 @@ AllocShadeGC(Widget w, Pixel fg, Pixel bg, Font font,
 	  dcmask = GCFont|GCSubwindowMode|GCDashOffset|
 		GCDashList|GCArcMode|GCGraphicsExposures ;
 	}
-#ifdef HAVE_XMU
 	if( be_nice_to_cmap || w->core.depth == 1)
 	{
 	  if( contrast <= 5 )
@@ -269,10 +255,7 @@ AllocShadeGC(Widget w, Pixel fg, Pixel bg, Font font,
 	  }
 
 	  return XtAllocateGC(w, w->core.depth, vmask, &values, 0L, dcmask) ;
-	}
-	else
-#endif
-	{
+	} else {
 	  dcmask |= GCBackground ;
 	  values.foreground = AllocGreyPixel(w, fg, bg, contrast) ;
 	  return XtAllocateGC(w, w->core.depth, vmask, &values, 0L, dcmask) ;
@@ -324,13 +307,7 @@ AllocBotShadowGC(Widget w, int contrast, Bool be_nice_to_cmap)
 	/* return arm-shadow gc. */
 
 GC
-AllocArmGC(Widget w, int contrast,
-#ifdef HAVE_XMU
-	   Bool be_nice_to_cmap
-#else
-	   Bool UNUSED (be_nice_to_cmap)
-#endif
-	   )
+AllocArmGC(Widget w, int contrast, Bool be_nice_to_cmap)
 {
 	Screen		*scr = XtScreen (w);
 	XGCValues	values ;
@@ -338,7 +315,6 @@ AllocArmGC(Widget w, int contrast,
 	/* Not clear exactly what we should do here.  Take a look at
 	 * Xaw3d to see what they do.
 	 */
-#ifdef HAVE_XMU
 	if( w->core.depth == 1 || be_nice_to_cmap )
 	{
 	  values.background = w->core.background_pixel ;
@@ -354,10 +330,7 @@ AllocArmGC(Widget w, int contrast,
 	      &values, 0L,
 	      GCFont|GCSubwindowMode|GCGraphicsExposures|
 		  GCDashOffset|GCDashList|GCArcMode) ;
-	}
-	else
-#endif
-	  {
+	} else {
 	  values.foreground = AllocShadowPixel(w, 100-contrast) ;
 	  return XtAllocateGC(w, w->core.depth,
 	      GCForeground, &values,
@@ -522,18 +495,6 @@ Draw3dBox(Widget w, int x, int y, int wid, int hgt, int s, GC topgc, GC botgc)
 	  XFillPolygon(dpy,win,topgc, pts,6, Nonconvex,CoordModePrevious) ;
 	}
 }
-
-#if XtSpecificationRelease < 5
-
-static	GC
-XtAllocateGC(Widget w, int UNUSED (depth), unsigned long mask,
-	     XGCValues *values, unsigned long UNUSED (dynamic),
-	     unsigned long UNUSED (dontcare))
-{
-	return XtGetGC(w, mask, values) ;
-}
-#endif
-
 
 static	unsigned char screen0[2] = {0,0} ;
 static	unsigned char screen25[2] = {0,0xaa} ;
