@@ -3093,6 +3093,7 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
   return result;
 }
 #else /* !MULE */
+static Lisp_Object
 unicode_query (Lisp_Object UNUSED (codesys),
                struct buffer * UNUSED (buf),
                Charbpos UNUSED (end), int UNUSED (flags))
