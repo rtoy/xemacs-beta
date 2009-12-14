@@ -1,3 +1,9 @@
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* gnudepend.pl: Remove obsolete file.
+	* leditcfns.c: Ditto.
+	* wakeup.c: Ditto.
+
 2009-12-08  Sjoerd Mullender  <sjoerd@acm.org>
 
 	* etags.c (absolute_filename): Use memmove instead of strcpy to move

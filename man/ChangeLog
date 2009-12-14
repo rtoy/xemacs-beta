@@ -1,3 +1,8 @@
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* lispref/processes.texi (Functions that Create Subprocesses): Refer
+	to etags instead of the obsolete wakeup program.
+
 2009-12-09  Jerry James  <james@xemacs.org>
 
 	* internals/internals.texi (A Summary of the Various XEmacs Modules):

@@ -1,3 +1,7 @@
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* auc-tex-test: Remove obsolete file.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* autoconf/regressiontest.pl: Remove reference to dynodump.
