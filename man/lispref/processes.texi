@@ -111,12 +111,10 @@ specify overrides for it with @code{process-environment}.  @xref{System
 Environment}.
 
 @defvar exec-directory
-@pindex wakeup
+@pindex etags
 The value of this variable is the name of a directory (a string) that
 contains programs that come with XEmacs, that are intended for XEmacs
-to invoke.  The program @code{wakeup} is an example of such a program;
-the @code{display-time} command uses it to get a reminder once per
-minute.
+to invoke.  The program @code{etags} is an example of such a program.
 @end defvar
 
 @defopt exec-path
