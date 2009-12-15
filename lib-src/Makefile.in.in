@@ -117,7 +117,7 @@ PRIVATE_INSTALLABLE_EXES=\
 #else
  fakemail\
 #endif
- wakeup profile make-docfile digest-doc\
+ profile make-docfile digest-doc\
  sorted-doc movemail cvtmail yow hexl mmencode
 
 GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh
@@ -336,9 +336,6 @@ ootags: ${ootags_deps}
 ## two etags.o files on top of each other.
 ctags: ${etags_deps} etags
 	$(CC) -DCTAGS ${etags_args} -o $@
-
-wakeup: ${srcdir}/wakeup.c
-	$(CC) $(cflags) ${srcdir}/wakeup.c $(ldflags) -o $@
 
 profile: ${srcdir}/profile.c
 	$(CC) $(cflags) ${srcdir}/profile.c $(ldflags) -o $@

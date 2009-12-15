@@ -1,3 +1,8 @@
+2009-12-15  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove build dependency and rule for wakeup.  Thanks
+	to Mats Lidell for the patch.
+
 2009-12-10  Jerry James  <james@xemacs.org>
 
 	* gnudepend.pl: Remove obsolete file.
