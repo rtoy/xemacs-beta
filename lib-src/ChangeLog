@@ -1,5 +1,11 @@
 2009-12-15  Jerry James  <james@xemacs.org>
 
+	* ad2c: Add GPL v2 or later notice with permission of George Ferguson.
+	See the xemacs-beta thread beginning with message
+	<870180fe0912090940mac19378ydab5b5a04bf06cf8@mail.gmail.com>.
+
+2009-12-15  Jerry James  <james@xemacs.org>
+
 	* Makefile.in.in: Remove build dependency and rule for wakeup.  Thanks
 	to Mats Lidell for the patch.
 
