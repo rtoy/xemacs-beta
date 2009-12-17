@@ -1,3 +1,13 @@
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/make-coding-system.el
+	(fixed-width-create-decode-encode-tables):
+	Use a rehash threshold of 0.999 for this hash table, now that hash
+	table rehash thresholds are serialised correctly; these hash
+	tables will never be resized, and it's not even that important
+	that they are *that* fast, for most of the coding systems they're
+	used a minority of the time.
+
 2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font.el (x-font-create-object): Check for Xft before using it.
