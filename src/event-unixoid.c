@@ -118,9 +118,7 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
     }
   else
     {
-      /* Here we really do want to set the use_console_meta_flag because
-         the char is from the TTY. */
-      character_to_event (ch, event, con, 1, 1);
+      character_to_event (ch, event, con, use_console_meta_flag, 1);
       event->channel = console;
       return 1;
     }
