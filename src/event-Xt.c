@@ -967,10 +967,12 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
             Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	    Lisp_Event *ev          = XEVENT (emacs_event);
             ev->channel	            = DEVICE_CONSOLE (d);
-            ev->timestamp	    = event->time;
 	    XSET_EVENT_TYPE (emacs_event, key_press_event);
-	    XSET_EVENT_KEY_MODIFIERS (emacs_event, 0);
-	    XSET_EVENT_KEY_KEYSYM (emacs_event, make_char (ch));
+	    /* Make sure space and linefeed and so on get the proper
+	       keysyms. */
+	    character_to_event (ch, ev, XCONSOLE (ev->channel),
+				latin_1_maps_to_itself, 0);
+            ev->timestamp	    = event->time;
             enqueue_dispatch_event (emacs_event);
           }
 	Lstream_close (istr);

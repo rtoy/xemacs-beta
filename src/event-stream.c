@@ -3189,7 +3189,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event, XEVENT_KEY_MODIFIERS (ev2));
 	  Fdeallocate_event (ev2);
@@ -3214,7 +3215,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event,
                                XEVENT_KEY_MODIFIERS (event) |
