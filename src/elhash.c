@@ -118,6 +118,8 @@ struct Lisp_Hash_Table
 #define HASH_TABLE_DEFAULT_SIZE 16
 #define HASH_TABLE_DEFAULT_REHASH_SIZE 1.3
 #define HASH_TABLE_MIN_SIZE 10
+#define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test_function) \
+  ((size) > 4096 && (test_function) == HASH_TABLE_EQ ? 0.7 : 0.6)
 
 #define HASHCODE(key, ht)						\
   ((((ht)->hash_function ? (ht)->hash_function (key) : LISP_HASH (key))	\
@@ -353,6 +355,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 		  int UNUSED (escapeflag))
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
+  Ascbyte pigbuf[350];
 
   write_c_string (printcharfun,
 		  print_readably ? "#s(hash-table" : "#<hash-table");
@@ -387,6 +390,20 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 	  ht->weakness == HASH_TABLE_VALUE_WEAK	    ? "value" :
 	  ht->weakness == HASH_TABLE_KEY_VALUE_WEAK ? "key-or-value" :
 	  "you-d-better-not-see-this"));
+    }
+
+  if (ht->rehash_size != HASH_TABLE_DEFAULT_REHASH_SIZE)
+    {
+      float_to_string (pigbuf, ht->rehash_size);
+      write_fmt_string (printcharfun, " rehash-size %s", pigbuf);
+    }
+
+  if (ht->rehash_threshold
+      != HASH_TABLE_DEFAULT_REHASH_THRESHOLD (ht->size,
+					      ht->test_function))
+    {
+      float_to_string (pigbuf, ht->rehash_threshold);
+      write_fmt_string (printcharfun, " rehash-threshold %s", pigbuf);
     }
 
   if (ht->count)
@@ -591,7 +608,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 
   ht->rehash_threshold =
     rehash_threshold > 0.0 ? rehash_threshold :
-    size > 4096 && !ht->test_function ? 0.7 : 0.6;
+    HASH_TABLE_DEFAULT_REHASH_THRESHOLD (size, ht->test_function);
 
   if (size < HASH_TABLE_MIN_SIZE)
     size = HASH_TABLE_MIN_SIZE;
@@ -912,7 +929,6 @@ Return t if OBJECT is a hash table, else nil.
 DEFUN ("make-hash-table", Fmake_hash_table, 0, MANY, 0, /*
 Return a new empty hash table object.
 Use Common Lisp style keywords to specify hash table properties.
- (make-hash-table &key test size rehash-size rehash-threshold weakness)
 
 Keyword :test can be `eq', `eql' (default) or `equal'.
 Comparison between keys is done using this function.
@@ -957,7 +973,7 @@ unmarked outside of weak hash tables.  The pair will remain in the
 hash table if the value or key are pointed to by something other than a weak
 hash table, even if the other is not.
 
-arguments: (&rest ARGS)
+arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
