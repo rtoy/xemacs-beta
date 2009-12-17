@@ -839,8 +839,9 @@ execute_help_form (struct command_builder *command_builder,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (echo, help);
 
-  record_unwind_protect (save_window_excursion_unwind,
-			 call1 (Qcurrent_window_configuration, Qnil));
+  record_unwind_protect (Feval,
+                         list2 (Qset_window_configuration,
+                                call0 (Qcurrent_window_configuration)));
   reset_key_echo (command_builder, 1);
 
   help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));

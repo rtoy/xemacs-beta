@@ -66,6 +66,13 @@
 	* buffer.el (switch-to-buffer): Don't offer the current buffer in
 	the completion list.
 
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (save-window-excursion): 
+	Remove the compiler form for this bytecode, we no longer generate
+	calls to it. Keep the information about the bytecode's numeric
+	value, we want that for disassembling code.
+
 2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (equalp): 
