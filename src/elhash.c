@@ -118,8 +118,12 @@ struct Lisp_Hash_Table
 #define HASH_TABLE_DEFAULT_SIZE 16
 #define HASH_TABLE_DEFAULT_REHASH_SIZE 1.3
 #define HASH_TABLE_MIN_SIZE 10
-#define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test_function) \
-  ((size) > 4096 && (test_function) == HASH_TABLE_EQ ? 0.7 : 0.6)
+/* Casts are necessary here for VC++, though they shouldn't be. See
+   20a807210912170619nf13bbo8bee77a787961667@mail.gmail.com and the related
+   thread.  */
+#define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test_function)   \
+  ((size) > 4096 && ((int)(test_function)) == (int)(HASH_TABLE_EQ) \
+   ? 0.7 : 0.6)
 
 #define HASHCODE(key, ht)						\
   ((((ht)->hash_function ? (ht)->hash_function (key) : LISP_HASH (key))	\

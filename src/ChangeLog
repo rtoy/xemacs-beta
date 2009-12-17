@@ -1,6 +1,12 @@
 2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
+	Cast the enumeration values here to integers before comparing
+	them, fixing the build on VC++. Thank you Vin!
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
 	New macro, giving a default value for a hash table's rehash
 	threshold given its size and test function. 
 	(print_hash_table): Print the hash table's rehash threshold if it
