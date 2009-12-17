@@ -1,3 +1,9 @@
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (resize_string): 
+	Don't attempt to free dumped data in this function, avoiding an
+	assertion failure.
+
 2009-12-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* unicode.c (unicode_query): Add missing return type.
