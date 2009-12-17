@@ -684,7 +684,7 @@ otherwise pop it")
 
 (byte-defop 138  0 byte-save-excursion
   "to make a binding to record the buffer, point and mark")
-(byte-defop 139  0 byte-save-window-excursion
+(byte-defop 139  0 byte-save-window-excursion ; almost obsolete
   "to make a binding to record entire window configuration")
 (byte-defop 140  0 byte-save-restriction
   "to make a binding to record the current buffer clipping restrictions")
@@ -4029,7 +4029,6 @@ function quoting" (car form))))
 (byte-defop-compiler-1 save-excursion)
 (byte-defop-compiler-1 save-current-buffer)
 (byte-defop-compiler-1 save-restriction)
-(byte-defop-compiler-1 save-window-excursion)
 (byte-defop-compiler-1 with-output-to-temp-buffer)
 ;; no track-mouse.
 
@@ -4127,11 +4126,6 @@ function quoting" (car form))))
     (byte-compile-out 'byte-save-current-buffer 0)
     (byte-compile-body-do-effect (cdr form))
     (byte-compile-out 'byte-unbind 1)))
-
-(defun byte-compile-save-window-excursion (form)
-  (byte-compile-push-constant
-   (byte-compile-top-level-body (cdr form) for-effect))
-  (byte-compile-out 'byte-save-window-excursion 0))
 
 (defun byte-compile-with-output-to-temp-buffer (form)
   (byte-compile-form (car (cdr form)))

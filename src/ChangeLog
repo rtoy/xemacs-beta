@@ -466,6 +466,18 @@
 
 2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* window.c (Fsave_window_excursion, save_window_excursion_unwind): 
+	Remove these functions, the first was masked by
+	#'save-window-excursion in window.el, and the second can be easily
+	replaced with Lisp primitives.
+	* bytecode.c (Bsave_window_excursion) : Don't pass
+	save_window_excursion_unwind to record_unwind_protect, now the
+	former is gone.
+	* event-stream.c (execute_help_form): 
+	Ditto.
+
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
 	New #define, "/" on Unix and "C:\\" on Win32 native, a directory
 	that should "always" be available.
