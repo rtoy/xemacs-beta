@@ -407,11 +407,11 @@ The arguments LOCALE, TAG-SET and EXACT-P are the same as for
   "Set the parent of FACE to PARENT, for all properties.
 This makes all properties of FACE inherit from PARENT."
   (setq parent (get-face parent))
-  (mapcar (lambda (x)
-	    (set-face-property face x (vector parent) locale tag-set
-			       how-to-add))
-	  (set-difference built-in-face-specifiers
-			  '(display-table background-pixmap inherit)))
+  (mapc (lambda (x)
+          (set-face-property face x (vector parent) locale tag-set
+                             how-to-add))
+        (set-difference built-in-face-specifiers
+                        '(display-table background-pixmap inherit)))
   (set-face-background-pixmap face (vector 'inherit ':face parent)
 			      locale tag-set how-to-add)
   nil)

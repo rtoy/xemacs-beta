@@ -1003,7 +1003,7 @@ also works, because the behavior is emulated."
       (let ((tmp start)) (setq start end end tmp)))
   (cond
    ((= start end)		; never delete the last remaining extent
-    (mapcar 'delete-extent (cdr extents))
+    (mapc 'delete-extent (cdr extents))
     (setcdr extents nil)
     (set-extent-endpoints (car extents) start start))
    (t
@@ -1049,7 +1049,7 @@ also works, because the behavior is emulated."
 	    (setq last rest
 		  rest (cdr rest)))
 	  (cond (rest
-		 (mapcar 'delete-extent rest)
+		 (mapc 'delete-extent rest)
 		 (setcdr last nil))
 		((not (eobp))
 		 (while (not (eobp))
@@ -1320,7 +1320,7 @@ also works, because the behavior is emulated."
 			 (set-extent-face e 'primary-selection)))))
       (add-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
       (if (consp extent)		; rectangle-p
-	  (mapcar func extent)
+	  (mapc func extent)
 	(if extent
 	    (funcall func extent)))))
   t)
@@ -1334,10 +1334,10 @@ also works, because the behavior is emulated."
     (if (consp extent)
 	(if (funcall dead-func extent)
 	    (let (newval)
-	      (mapcar (function (lambda (x)
-				  (if (not (funcall dead-func x))
-				      (setq newval (cons x newval)))))
-		      extent)
+	      (mapc (function (lambda (x)
+                                (if (not (funcall dead-func x))
+                                    (setq newval (cons x newval)))))
+                    extent)
 	      (setq default-mouse-track-extent (nreverse newval))))
       (if (funcall dead-func extent)
 	  (setq default-mouse-track-extent nil)))))

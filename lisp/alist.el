@@ -89,11 +89,11 @@ return new alist whose car is the new pair and cdr is ALIST.
 ;;;###autoload
 (defun modify-alist (modifier default)
   "Modify alist DEFAULT into alist MODIFIER."
-  (mapcar (function
-	   (lambda (as)
-	     (setq default (put-alist (car as)(cdr as) default))
-	     ))
-	  modifier)
+  (mapc
+   (function
+    (lambda (as)
+      (setq default (put-alist (car as)(cdr as) default))))
+   modifier)
   default)
 
 ;;;###autoload

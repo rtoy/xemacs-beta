@@ -2637,8 +2637,7 @@ the PLACE is not modified before executing BODY."
 			  (gensym "--letf-val--")))
                (syms (and (eq 'values (car place))
                           (gensym "--letf-syms--")))
-               (cursor (and syms (gensym "--letf-cursor--")))
-               (sym (and syms (gensym "--letf-sym--"))))
+               (cursor (and syms (gensym "--letf-cursor--"))))
 	  (setq lets (nconc (car method)
                             (cond
                              (syms

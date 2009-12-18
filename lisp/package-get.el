@@ -667,10 +667,10 @@ This is just an interactive wrapper for `package-admin-delete-binary-package'."
   (package-get-require-base t)
   ;; Load a fresh copy
   (catch 'exit
-    (mapcar (lambda (pkg)
-	      (if (not (package-get (car pkg) nil 'never))
-		  (throw 'exit nil)))		;; Bail out if error detected
-	    packages-package-list))
+    (mapc (lambda (pkg)
+            (if (not (package-get (car pkg) nil 'never))
+                (throw 'exit nil)))		;; Bail out if error detected
+          packages-package-list))
   (package-net-update-installed-db))
 
 ;;;###autoload
