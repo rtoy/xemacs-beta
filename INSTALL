@@ -570,7 +570,7 @@ are installed in the following directories:
 
 `/usr/local/bin' holds the executable programs users normally run -
 		`xemacs', `etags', `ctags', `b2m', `emacsclient', `ellcc',
-		`gnuclient', `gnudoit', `gnuattach', and `rcs-checkin'.
+		`gnuclient', `gnudoit', and `gnuattach'.
 
 `/usr/local/lib/xemacs-VERSION/lisp' holds the Emacs Lisp libraries;
 		`VERSION' stands for the number of the XEmacs version

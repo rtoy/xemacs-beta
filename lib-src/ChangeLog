@@ -1,5 +1,10 @@
 2009-12-18  Jerry James  <james@xemacs.org>
 
+	* Makefile.in.in: Don't install rcs-checkin.
+	* rcs-checkin: Remove obsolete file.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
 	* installexe.sh: Add copyright and GPL v2 or later header with
 	permission of Andy Piper.
 

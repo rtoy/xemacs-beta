@@ -1,3 +1,8 @@
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* idd/drop: Remove.
+	* idd/dropmsk: Remove.
+
 2009-12-10  Jerry James  <james@xemacs.org>
 
 	* sparcworks/SW.Editor.xpm: Remove obsolete file.
