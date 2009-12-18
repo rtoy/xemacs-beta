@@ -1,5 +1,9 @@
 2009-12-18  Jerry James  <james@xemacs.org>
 
+	* INSTALL: Remove reference to rcs-checkin.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
 	* build-msw-release.sh: Add copyright and GPL v2 or later header
 	with permission of Andy Piper.
 

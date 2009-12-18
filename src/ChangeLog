@@ -1,3 +1,7 @@
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* ppc.ldscript: Remove, obsolete.
+
 2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* events.h (character_to_event_meta_behavior): New enumeration,
