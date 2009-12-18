@@ -525,7 +525,7 @@ ARGS is a list of additional keyword arguments."
       (let ((char (car cs))
 	    (syntax (cdr cs)))
 	(if (sequencep char)
-	    (mapcar (lambda (c) (modify-syntax-entry c syntax st)) char)
+	    (mapc (lambda (c) (modify-syntax-entry c syntax st)) char)
 	  (modify-syntax-entry char syntax st))))
     ;; XEmacs change: we do not have set-char-table-parent
     (if parent (derived-mode-merge-syntax-tables

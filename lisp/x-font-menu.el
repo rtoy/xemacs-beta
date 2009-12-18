@@ -119,14 +119,14 @@ It must be set at run-time.")
     (vector
      family
      (mapcar 
-      '(lambda (weight-symbol) 
-	 (let ((pair (assoc weight-symbol
-			    '((:light "Light")
-			      (:medium "Medium")
-			      (:demibold "Demibold")
-			      (:bold "Bold")
-			      (:black "Black")))))
-	   (if pair (cadr pair))))
+      (lambda (weight-symbol) 
+        (let ((pair (assoc weight-symbol
+                           '((:light "Light")
+                             (:medium "Medium")
+                             (:demibold "Demibold")
+                             (:bold "Bold")
+                             (:black "Black")))))
+          (if pair (cadr pair))))
       weights)
      '(0)
      nil)))
@@ -140,24 +140,24 @@ It must be set at run-time.")
 	  (vector
 	   (mapcar 'fc-make-font-menu-entry families)
 	   (mapcar 
-	    '(lambda (family)
-	       (vector family `(font-menu-set-font ,family nil nil)
-		       :style 'radio :active nil :selected nil))
+            (lambda (family)
+              (vector family `(font-menu-set-font ,family nil nil)
+                      :style 'radio :active nil :selected nil))
 	    families)
 	   (mapcar
-	    '(lambda (size)
-	       (vector
-		(number-to-string size)
-		`(font-menu-set-font nil nil ,size)
-		:style 'radio :active nil :selected nil))
+	    (lambda (size)
+              (vector
+               (number-to-string size)
+               `(font-menu-set-font nil nil ,size)
+               :style 'radio :active nil :selected nil))
 	    ;; common size list in decipoints, fontconfig wants points
 	    (mapcar (lambda (x) (/ x 10)) font-menu-common-sizes))
 	   (mapcar
-	    '(lambda (weight)
-	       (vector
-		weight
-		`(font-menu-set-font nil ,weight nil)
-		:style 'radio :active nil :selected nil))
+	    (lambda (weight)
+              (vector
+               weight
+               `(font-menu-set-font nil ,weight nil)
+               :style 'radio :active nil :selected nil))
 	    '("Light" "Medium" "Demibold" "Bold" "Black"))))
 	 ;; get or initialize the entry for device
 	 (dev-cache (or (assq device device-fonts-cache)

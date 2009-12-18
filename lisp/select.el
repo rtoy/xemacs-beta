@@ -231,7 +231,7 @@ Interactively, the text of the region is used as the selection value."
 	 (if primary-selection-extent
 	     (let ((inhibit-quit t))
 	       (if (consp primary-selection-extent)
-		   (mapcar 'delete-extent primary-selection-extent)
+		   (mapc 'delete-extent primary-selection-extent)
 		 (delete-extent primary-selection-extent))
 	       (setq primary-selection-extent nil)))
 	 (if zmacs-regions (zmacs-deactivate-region)))
@@ -239,7 +239,7 @@ Interactively, the text of the region is used as the selection value."
 	 (if secondary-selection-extent
 	     (let ((inhibit-quit t))
 	       (if (consp secondary-selection-extent)
-		   (mapcar 'delete-extent secondary-selection-extent)
+		   (mapc 'delete-extent secondary-selection-extent)
 		 (delete-extent secondary-selection-extent))
 	       (setq secondary-selection-extent nil)))))
   nil)
@@ -324,7 +324,7 @@ primary selection."
 	nil
       (condition-case ()
 	  (if (listp previous-extent)
-	      (mapcar 'delete-extent previous-extent)
+	      (mapc 'delete-extent previous-extent)
 	    (delete-extent previous-extent))
 	(error nil)))
 

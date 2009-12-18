@@ -1,3 +1,54 @@
+2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alist.el (modify-alist): 
+	* autoload.el (update-autoload-files, autoload-print-form): 
+	* bytecomp.el (batch-byte-compile-1)
+	(byte-compile-multiple-value-call, byte-compile-funcall)
+	(byte-compile-insert, byte-compile-concat, byte-compile-list)
+	(byte-compile-normal-call, byte-compile-flush-pending): 
+	* cl-macs.el (letf): 
+	* cl.el:
+	* disass.el (disassemble-1): 
+	* easy-mmode.el (easy-mmode-define-syntax): 
+	* faces.el (set-face-parent): 
+	* files.el (cd): 
+	* finder.el (finder-list-matches, finder-list-keywords)
+	(finder-compile-keywords): 
+	* frame.el (frame-notice-user-settings)
+	(frame-remove-geometry-props): 
+	* ldap.el (ldap-delete-entries, ldap-modify-entries)
+	(ldap-add-entries): 
+	* loadhist.el (unload-feature): 
+	* map-ynp.el (map-y-or-n-p): 
+	* menubar-items.el (default-menubar): 
+	* mouse.el (default-mouse-track-next-move-rect)
+	(default-mouse-track-next-move-rect)
+	(default-mouse-track-cleanup-hook)
+	(default-mouse-track-cleanup-extent): 
+	* mule/ethio-util.el (ethio-fidel-to-sera-buffer)
+	(ethio-modify-vowel): 
+	* obsolete.el: 
+	* package-get.el (package-get-update-all): 
+	* package-ui.el (pui-list-packages)
+	(pui-install-selected-packages, pui-install-selected-packages): 
+	* select.el (select-make-extent-for-selection)
+	(dehilight-selection): 
+	* simple.el (clone-buffer): 
+	* term/tvi970.el: 
+	* term/wyse50.el: 
+	* unicode.el: 
+	(load-unicode-tables): 
+	* x-font-menu.el (fc-make-font-menu-entry)
+	(x-reset-device-font-menus-xft): 
+	* x-misc.el (x-init-specifier-from-resources): 
+	Eliminate byte-compile warnings, with the exception of Stephen's
+	various non-defined fontconfig functions, as I don't know if he
+	plans to add them and is keeping the warnings around as a
+	reminder. The warnings actually eliminated involve i) using mapcar
+	instead of mapc where the result is discarded and ii) using a
+	lambda quoted as data in a context where it is unequivocally used
+	as a function. 
+
 2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/make-coding-system.el

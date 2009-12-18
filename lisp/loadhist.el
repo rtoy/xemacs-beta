@@ -177,7 +177,7 @@ is nil, raise an error."
     (flet ((reset-aload (x)
 	     (let ((aload (get x 'autoload)))
 	       (if aload (fset x (cons 'autoload aload))))))
-    (mapcar
+    (mapc
      #'(lambda (x)
 	 (cond ((stringp x) nil)
 	       ((consp x)
