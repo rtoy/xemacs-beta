@@ -1,3 +1,8 @@
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* build-msw-release.sh: Add copyright and GPL v2 or later header
+	with permission of Andy Piper.
+
 2009-12-09  Jerry James  <james@xemacs.org>
 
 	* INSTALL: Remove description of --without-xmu option.
