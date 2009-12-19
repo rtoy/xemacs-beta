@@ -440,12 +440,19 @@ Supports Common Lisp lambda lists."
 	(while (and args (not (memq (car args) lambda-list-keywords)))
 	  (let ((arg (pop args)))
 	    (or (consp arg) (setq arg (list arg)))
-	    (let* ((karg (if (consp (car arg)) (caar arg)
-			   (intern (format ":%s" (car arg)))))
+	    (let* ((karg (if (consp (car arg))
+			     ;; It's possible to use non-keywords here, as
+			     ;; in the KEYWORD-ARGUMENT-NAME-PACKAGE Common
+			     ;; Lisp issue:
+			     (caar arg)
+			   ;; Use read instead of intern in case we ever
+			   ;; actually get packages and keywords are no
+			   ;; longer in obarray:
+			   (read (concat ":" (symbol-name (car arg))))))
 		   (varg (if (consp (car arg)) (cadar arg) (car arg)))
 		   (def (if (cdr arg) (cadr arg)
 			  (or (car bind-defs) (cadr (assq varg bind-defs)))))
-		   (look (list 'memq (list 'quote karg) restarg)))
+		   (look (list 'memq (quote-maybe karg) restarg)))
 	      (and def bind-enquote (setq def (list 'quote def)))
 	      (if (cddr arg)
 		  (let* ((temp (or (nth 2 arg) (gensym)))
@@ -467,12 +474,7 @@ Supports Common Lisp lambda lists."
 					  'quote
 					  (list nil (cl-const-expr-val def)))
 				       (list 'list nil def))))))))
-	      (push karg keys)
-	      ;; XEmacs addition
-	      (if (= (aref (symbol-name karg) 0) ?:)
-		  (progn (set karg karg)
-			 (push (list 'setq karg (list 'quote karg))
-			       bind-inits)))))))
+	      (push karg keys)))))
       (setq keys (nreverse keys))
       (or (and (eq (car args) '&allow-other-keys) (pop args))
 	  (null keys) (= safety 0)
@@ -487,7 +489,7 @@ Supports Common Lisp lambda lists."
 				(list 'setq var (list 'cdr (list 'cdr var))))
 			  (list (list 'car
 				      (list 'cdr
-					    (list 'memq (cons 'quote allow)
+					    (list 'memq (car allow)
 						  restarg)))
 				(list 'setq var nil))
 			  (list t

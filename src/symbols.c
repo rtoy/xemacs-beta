@@ -600,7 +600,10 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 !(unloading_module && UNBOUNDP(newval)) &&
 #endif
       (symbol_is_constant (sym, val)
-       || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))))
+#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+       || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))
+#endif
+      ))
     signal_error_1 (Qsetting_constant,
 		    UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
