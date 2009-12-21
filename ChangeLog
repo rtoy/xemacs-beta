@@ -1,3 +1,7 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* INSTALL: Replace reference to yow.
+
 2009-12-18  Jerry James  <james@xemacs.org>
 
 	* INSTALL: Remove reference to rcs-checkin.

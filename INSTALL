@@ -586,7 +586,7 @@ are installed in the following directories:
 		`/usr/local/lib/xemacs/site-lisp/*'.
 
 `/usr/local/lib/xemacs-VERSION/etc' holds the XEmacs tutorial, the
-		`yow' database, and other architecture-independent
+		Unicode database, and other architecture-independent
 		files XEmacs might need while running.  VERSION is as
 		specified for `.../lisp'.
 

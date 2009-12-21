@@ -118,7 +118,7 @@ PRIVATE_INSTALLABLE_EXES=\
  fakemail\
 #endif
  profile make-docfile digest-doc\
- sorted-doc movemail cvtmail yow hexl mmencode
+ sorted-doc movemail cvtmail hexl mmencode
 
 GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh
 PKG_SCRIPTS = add-big-package.sh
@@ -362,9 +362,6 @@ cvtmail: ${srcdir}/cvtmail.c
 
 fakemail: ${srcdir}/fakemail.c ../src/config.h
 	$(CC) $(cflags) ${srcdir}/fakemail.c $(ldflags) -o $@
-
-yow: ${srcdir}/yow.c ../src/paths.h
-	$(CC) $(cflags) ${srcdir}/yow.c $(ldflags) -o $@
 
 i: ${srcdir}/i.c
 	$(CC) $(cflags) ${srcdir}/i.c $(ldflags) -o $@
