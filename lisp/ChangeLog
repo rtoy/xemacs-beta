@@ -1,3 +1,13 @@
+2009-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/arabic.el (arabic-iso8859-6): 
+	Move the creation of this character set to this (dumped) file,
+	since it's needed for input on X11. 
+	* mule/iso-with-esc.el: 
+	Remove arabic-iso8859-6 and its Unicode map from this file.
+	* unicode.el (load-unicode-tables): 
+	Load arabic-iso8859-6 on startup again.
+
 2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alist.el (modify-alist): 
