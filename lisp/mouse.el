@@ -231,15 +231,7 @@ EVENT should be the button event that initiated the drag.
 Returns whether a drag was begun."
   ;; #### barely implemented.
   (when (click-inside-selection-p event)
-    (cond ((featurep 'offix)
-	   (declare-fboundp
-	    (offix-start-drag-region
-	     event
-	     (extent-start-position zmacs-region-extent)
-	     (extent-end-position zmacs-region-extent)))
-	   t)
-	  ((featurep 'cde)
-	   ;; should also work with CDE
+    (cond ((featurep 'cde)
 	   (declare-fboundp
 	    (cde-start-drag-region event
 				   (extent-start-position zmacs-region-extent)

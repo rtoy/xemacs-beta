@@ -62,10 +62,6 @@ Boston, MA 02111-1307, USA.  */
 # include "menubar.h"
 #endif
 
-#if defined (HAVE_OFFIX_DND)
-#include "offix.h"
-#endif
-
 #include <gdk/gdkx.h>
 
 #include "event-gtk.h"

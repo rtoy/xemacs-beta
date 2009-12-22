@@ -3107,10 +3107,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{objects-x.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{objects.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{objects.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{offix-cursors.h} @tab
-@item @file{offix-types.h} @tab
-@item @file{offix.c} @tab
-@item @file{offix.h} @tab
 @item @file{opaque.c} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{opaque.h} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{paths.h.in} @tab

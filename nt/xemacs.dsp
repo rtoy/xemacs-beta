@@ -919,22 +919,6 @@ SOURCE=..\src\objects.h
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\offix-cursors.h"
-# End Source File
-# Begin Source File
-
-SOURCE="..\src\offix-types.h"
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\offix.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\offix.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\opaque.c
 # End Source File
 # Begin Source File
