@@ -407,11 +407,11 @@ The arguments LOCALE, TAG-SET and EXACT-P are the same as for
   "Set the parent of FACE to PARENT, for all properties.
 This makes all properties of FACE inherit from PARENT."
   (setq parent (get-face parent))
-  (mapcar (lambda (x)
-	    (set-face-property face x (vector parent) locale tag-set
-			       how-to-add))
-	  (set-difference built-in-face-specifiers
-			  '(display-table background-pixmap inherit)))
+  (mapc (lambda (x)
+          (set-face-property face x (vector parent) locale tag-set
+                             how-to-add))
+        (set-difference built-in-face-specifiers
+                        '(display-table background-pixmap inherit)))
   (set-face-background-pixmap face (vector 'inherit ':face parent)
 			      locale tag-set how-to-add)
   nil)
@@ -933,10 +933,11 @@ multi-charset environments."
   ;; and EXACT-P are as in that call.  UNFROBBED-FACE and FROBBED-FACE are
   ;; what we expect the original face and the result to look like,
   ;; respectively.  TTY-PROPS is a list of face properties to frob in place
-  ;; of `font' for TTY's.  FROB-MAPPING is either a plist mapping device
+  ;; of `font' for TTYs.  FROB-MAPPING is either a plist mapping device
   ;; types to functions of two args (NAME DEVICE) that will frob the
-  ;; instantiator as appropriate for the device type (this includes TTY's),
-  ;; or a function to handle the mapping for all device types.
+  ;; instantiator to NAME as appropriate for DEVICE's type (this includes
+  ;; TTYs #### TTYs are not passed the device, just the symbol 'tty), or a
+  ;; function to handle the mapping for all device types.
   ;; STANDARD-FACE-MAPPING is an alist of mappings of inheritance
   ;; instantiators to be replaced with other inheritance instantiators, meant
   ;; for e.g. converting [bold] into [bold-italic].
@@ -1038,7 +1039,11 @@ multi-charset environments."
 			       (t
 				(let ((value
 				       (if (eq devtype-spec 'tty)
-					   (funcall mapper x)
+					   ;; #### not quite right but need
+					   ;; two args to match documentation
+					   ;; mostly we just ignore TTYs so
+					   ;; for now just pass the devtype
+					   (funcall mapper x 'tty)
 					 (funcall mapper x
 						  (derive-domain-from-locale
 						   locale devtype-spec
@@ -1193,11 +1198,16 @@ multi-charset environments."
 
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
+		      ;; #### this code is duplicated in make-face-size
 		      `(lambda (f d)
-			  ;; keep the dependency on font.el for now
-			  (let ((fo (font-create-object f d)))
-			    (set-font-family fo ,family)
-			    (font-create-name fo d)))
+			 ;; keep the dependency on font.el for now
+			 ;; #### The filter on null d is a band-aid.
+			 ;; Frob-face-property should not be passing in
+			 ;; null devices.
+			 (unless (or (null d) (eq d 'tty))
+			   (let ((fo (font-create-object f d)))
+			     (set-font-family fo ,family)
+			     (font-create-name fo d))))
 		      nil))
 
 ;; Style (ie, typographical face) frobbing
@@ -1311,7 +1321,7 @@ make-face-unitalic      italic    default       underline            nil
   (interactive (list (read-face-name "Make which face bold: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'bold 'font '(highlight)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-bold
 			gtk		gtk-make-font-bold
 			mswindows	mswindows-make-font-bold
@@ -1330,7 +1340,7 @@ how this function works."
   (interactive (list (read-face-name "Make which face italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'italic 'font '(underline)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-italic
 			gtk		gtk-make-font-italic
 			mswindows	mswindows-make-font-italic
@@ -1349,7 +1359,7 @@ argument and for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face bold-italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'bold-italic 'font '(underline highlight)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-bold-italic
 			gtk		gtk-make-font-bold-italic
 			mswindows	mswindows-make-font-bold-italic
@@ -1369,7 +1379,7 @@ specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-bold: ")))
   (Face-frob-property face locale tags exact-p
 		      'bold 'default 'font '(highlight)
-		      '(tty		(lambda (x) nil)
+		      '(tty		(lambda (f d) nil)
 			x		x-make-font-unbold
 			gtk		gtk-make-font-unbold
 			mswindows	mswindows-make-font-unbold
@@ -1388,7 +1398,7 @@ specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'italic 'default 'font '(underline)
-		      '(tty		(lambda (x) nil)
+		      '(tty		(lambda (f d) nil)
 			x		x-make-font-unitalic
 			gtk		gtk-make-font-unitalic
 			mswindows	mswindows-make-font-unitalic
@@ -1408,11 +1418,16 @@ specifics on exactly how this function works."
 		     (read-number "Size to set: " t 10)))
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
+		      ;; #### this code is duplicated in make-face-family
 		      `(lambda (f d)
 			 ;; keep the dependency on font.el for now
-			 (let ((fo (font-create-object f d)))
-			   (set-font-size fo ,size)
-			   (font-create-name fo d)))
+			 ;; #### The filter on null d is a band-aid.
+			 ;; Frob-face-property should not be passing in
+			 ;; null devices.
+			 (unless (or (null d) (eq d 'tty))
+			   (let ((fo (font-create-object f d)))
+			     (set-font-size fo ,size)
+			     (font-create-name fo d))))
 		      nil))
 
 ;; Why do the following two functions lose so badly in so many

@@ -1195,7 +1195,12 @@ command_event_p (Lisp_Object event)
     }
 }
 
-/* USE_CONSOLE_META_FLAG is as in `character-to-event'.
+/* META_BEHAVIOR can be one of the following values, defined in events.h:
+
+    high_bit_is_meta
+    use_console_meta_flag
+    latin_1_maps_to_itself
+
    DO_BACKSPACE_MAPPING means that if CON is a TTY, and C is a the TTY's
    backspace character, the event will have keysym `backspace' instead of
    '(control h).  It is clearly correct to do this conversion is the
@@ -1245,7 +1250,7 @@ command_event_p (Lisp_Object event)
 
 void
 character_to_event (Ichar c, Lisp_Event *event, struct console *con,
-		    int use_console_meta_flag,
+		    character_to_event_meta_behavior meta_behavior,
 		    int USED_IF_TTY (do_backspace_mapping))
 {
   Lisp_Object k = Qnil;
@@ -1256,13 +1261,10 @@ character_to_event (Ichar c, Lisp_Event *event, struct console *con,
 #ifndef MULE
   c &= 255;
 #endif
-  if (c > 127 && c <= 255)
+  if (meta_behavior != latin_1_maps_to_itself && c > 127 && c <= 255)
     {
-      /* #### What if the user wanted a Latin-1 char?  Perhaps the answer
-	 is what was suggested above.
-      */
       int meta_flag = 1;
-      if (use_console_meta_flag && CONSOLE_TTY_P (con))
+      if (meta_behavior == use_console_meta_flag && CONSOLE_TTY_P (con))
 	meta_flag = TTY_FLAGS (con).meta_key;
       switch (meta_flag)
 	{
@@ -1451,7 +1453,7 @@ Beware that character-to-event and event-to-character are not strictly
 inverse functions, since events contain much more information than the
 Lisp character object type can encode.
 */
-       (keystroke, event, console, use_console_meta_flag))
+       (keystroke, event, console, use_console_meta_flag_))
 {
   struct console *con = decode_console (console);
   if (NILP (event))
@@ -1464,7 +1466,8 @@ Lisp character object type can encode.
     {
       CHECK_CHAR_COERCE_INT (keystroke);
       character_to_event (XCHAR (keystroke), XEVENT (event), con,
-			  !NILP (use_console_meta_flag), 1);
+			  (NILP (use_console_meta_flag_) ?
+			   high_bit_is_meta : use_console_meta_flag), 1); 
     }
   return event;
 }

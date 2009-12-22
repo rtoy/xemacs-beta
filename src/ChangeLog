@@ -5,6 +5,76 @@
 	against msvcrt8.  This fix was taken from the Mozilla project
 	which experienced the same problem.
 
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* ppc.ldscript: Remove, obsolete.
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* events.h (character_to_event_meta_behavior): New enumeration,
+	describing what character_to_event should do with characters in
+	the range ?\x80-?\xFF, and passed as the third argument to
+	character_to_event instead of the binary use_console_meta_flag.
+	* events.c (character_to_event, Fcharacter_to_event):
+	* event-unixoid.c (read_event_from_tty_or_stream_desc): 
+	* event-stream.c (maybe_kbd_translate, maybe_kbd_translate): 
+	* event-msw.c (mswindows_need_event):
+	Use the new enumeration.
+	* event-Xt.c (x_to_emacs_keysym): 
+	Call character_to_event when we receive XLookupChars events,
+	passing latin_1_maps_to_itself as the meta_behavior flag,
+	addressing the problem FKtPp sees in 87bpi9mwpu.fsf@yahoo.com.cn
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD): 
+	That last change was wrong in theory though not in practice; we're
+	comparing function pointers, not enumeration values.
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
+	Cast the enumeration values here to integers before comparing
+	them, fixing the build on VC++. Thank you Vin!
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
+	New macro, giving a default value for a hash table's rehash
+	threshold given its size and test function. 
+	(print_hash_table): Print the hash table's rehash threshold if it
+	has a non-default value. Ditto for its rehash size. 
+	(Fmake_hash_table): Supply the keyword arguments in a format
+	understood by #'function-arglist. 
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (resize_string): 
+	Don't attempt to free dumped data in this function, avoiding an
+	assertion failure.
+
+2009-12-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* unicode.c (unicode_query): Add missing return type.
+	Thanks to 'mnewsam' on the tracker.
+
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Remove HAVE_XMU.
+	* s/windowsnt.h: Ditto.
+	* device-x.c: Include needed Xmu headers instead of obsolete xmu.h.
+	* EmacsFrame.c: Ditto.
+	* glyphs-x.c: Ditto.
+	* frame-x.c: Ditto.  Always include editres code.
+	* xmu.c: Removed, obsolete.
+	* xmu.h: Ditto.
+	* depend: Regenerate.
+
+2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Explain why "*" isn't rewritten
+	as a full XLFD.
+
 2009-11-19  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
@@ -451,6 +521,18 @@
 
 2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* window.c (Fsave_window_excursion, save_window_excursion_unwind): 
+	Remove these functions, the first was masked by
+	#'save-window-excursion in window.el, and the second can be easily
+	replaced with Lisp primitives.
+	* bytecode.c (Bsave_window_excursion) : Don't pass
+	save_window_excursion_unwind to record_unwind_protect, now the
+	former is gone.
+	* event-stream.c (execute_help_form): 
+	Ditto.
+
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
 	New #define, "/" on Unix and "C:\\" on Win32 native, a directory
 	that should "always" be available.
@@ -482,6 +564,11 @@
 	* realpath.c (readlink_or_correct_case): 
 	On Darwin, use realpath(3)'s case correction to get the canonical
 	case for a file; thank you Robert Delius Royar!
+
+2009-10-16  Michael Sperber  <mike@xemacs.org>
+
+	* buffer.c (set_buffer_internal): Synchronize the window point
+	with the current point when switching to another buffer.
 
 2009-10-11  Michael Sperber  <mike@xemacs.org>
 

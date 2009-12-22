@@ -34,7 +34,7 @@
 ;;    (define-key function-key-map "\eO" (make-keymap)))
 
 ;; Miscellaneous keys
-(mapcar (function (lambda (key-binding)
+(mapc   (function (lambda (key-binding)
 		    (define-key function-key-map
 		      (car key-binding) (nth 1 key-binding))))
 	'(

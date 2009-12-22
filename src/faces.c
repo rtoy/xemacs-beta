@@ -2342,6 +2342,8 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list1 (device_symbol),
+	/* grrr.  This really does need to be "*", not an XLFD.
+	   An unspecified XLFD won't pick up stuff like 10x20. */
 	build_string ("*")),
        inst_list);
 #ifdef MULE

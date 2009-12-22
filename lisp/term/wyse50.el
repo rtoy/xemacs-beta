@@ -37,7 +37,7 @@
 ;;; Code:
 
 (define-key function-key-map "\C-a" (make-keymap))
-(mapcar (function (lambda (key-definition)
+(mapc   (function (lambda (key-definition)
 		    (define-key function-key-map
 		      (car key-definition) (nth 1 key-definition))))
 	'(
@@ -116,7 +116,7 @@ C-l	Scrn CLR
 M-r	M-x move-to-window-line, Funct up-arrow or down-arrow are similar
 "
   (interactive)
-  (mapcar (function (lambda (key-definition)
+  (mapc   (function (lambda (key-definition)
 		      (global-set-key (car key-definition)
 				      (nth 1 key-definition))))
 	  ;; By unsetting C-a and then binding it to a prefix, we

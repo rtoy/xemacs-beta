@@ -1,3 +1,85 @@
+2009-12-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Remove
+	dk.xemacs.org from list of package download sites.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
+2009-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/arabic.el (arabic-iso8859-6): 
+	Move the creation of this character set to this (dumped) file,
+	since it's needed for input on X11. 
+	* mule/iso-with-esc.el: 
+	Remove arabic-iso8859-6 and its Unicode map from this file.
+	* unicode.el (load-unicode-tables): 
+	Load arabic-iso8859-6 on startup again.
+
+2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alist.el (modify-alist): 
+	* autoload.el (update-autoload-files, autoload-print-form): 
+	* bytecomp.el (batch-byte-compile-1)
+	(byte-compile-multiple-value-call, byte-compile-funcall)
+	(byte-compile-insert, byte-compile-concat, byte-compile-list)
+	(byte-compile-normal-call, byte-compile-flush-pending): 
+	* cl-macs.el (letf): 
+	* cl.el:
+	* disass.el (disassemble-1): 
+	* easy-mmode.el (easy-mmode-define-syntax): 
+	* faces.el (set-face-parent): 
+	* files.el (cd): 
+	* finder.el (finder-list-matches, finder-list-keywords)
+	(finder-compile-keywords): 
+	* frame.el (frame-notice-user-settings)
+	(frame-remove-geometry-props): 
+	* ldap.el (ldap-delete-entries, ldap-modify-entries)
+	(ldap-add-entries): 
+	* loadhist.el (unload-feature): 
+	* map-ynp.el (map-y-or-n-p): 
+	* menubar-items.el (default-menubar): 
+	* mouse.el (default-mouse-track-next-move-rect)
+	(default-mouse-track-next-move-rect)
+	(default-mouse-track-cleanup-hook)
+	(default-mouse-track-cleanup-extent): 
+	* mule/ethio-util.el (ethio-fidel-to-sera-buffer)
+	(ethio-modify-vowel): 
+	* obsolete.el: 
+	* package-get.el (package-get-update-all): 
+	* package-ui.el (pui-list-packages)
+	(pui-install-selected-packages, pui-install-selected-packages): 
+	* select.el (select-make-extent-for-selection)
+	(dehilight-selection): 
+	* simple.el (clone-buffer): 
+	* term/tvi970.el: 
+	* term/wyse50.el: 
+	* unicode.el: 
+	(load-unicode-tables): 
+	* x-font-menu.el (fc-make-font-menu-entry)
+	(x-reset-device-font-menus-xft): 
+	* x-misc.el (x-init-specifier-from-resources): 
+	Eliminate byte-compile warnings, with the exception of Stephen's
+	various non-defined fontconfig functions, as I don't know if he
+	plans to add them and is keeping the warnings around as a
+	reminder. The warnings actually eliminated involve i) using mapcar
+	instead of mapc where the result is discarded and ii) using a
+	lambda quoted as data in a context where it is unequivocally used
+	as a function. 
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/make-coding-system.el
+	(fixed-width-create-decode-encode-tables):
+	Use a rehash threshold of 0.999 for this hash table, now that hash
+	table rehash thresholds are serialised correctly; these hash
+	tables will never be resized, and it's not even that important
+	that they are *that* fast, for most of the coding systems they're
+	used a minority of the time.
+
+2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font.el (x-font-create-object): Check for Xft before using it.
+	This fixes the symptom in openSUSE bug #558764.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* device.el (device-type): Remove (mostly imaginary) support for
@@ -61,6 +143,13 @@
 	* buffer.el (switch-to-buffer): Don't offer the current buffer in
 	the completion list.
 
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (save-window-excursion): 
+	Remove the compiler form for this bytecode, we no longer generate
+	calls to it. Keep the information about the bytecode's numeric
+	value, we want that for disassembling code.
+
 2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (equalp): 
@@ -94,6 +183,20 @@
 	Update docstring.
 	(narrow-to-defun):
 	Document that optional ARG is ignored.
+
+2009-11-01  Stephen Turnbull  <stephen@xemacs.org>
+
+	* faces.el (Face-frob-property):
+	Give mapper for TTYs 2 args.
+	(make-face-family):
+	(make-face-size):
+	Generic mapper ignores TTYs and null devices.
+	(make-face-bold):
+	(make-face-italic):
+	(make-face-bold-italic):
+	(make-face-unbold):
+	(make-face-unitalic):
+	TTY mapper takes 2 args.
 
 2009-10-09  Stephen Turnbull  <stephen@xemacs.org>
 

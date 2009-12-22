@@ -839,8 +839,9 @@ execute_help_form (struct command_builder *command_builder,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (echo, help);
 
-  record_unwind_protect (save_window_excursion_unwind,
-			 call1 (Qcurrent_window_configuration, Qnil));
+  record_unwind_protect (Feval,
+                         list2 (Qset_window_configuration,
+                                call0 (Qcurrent_window_configuration)));
   reset_key_echo (command_builder, 1);
 
   help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));
@@ -3188,7 +3189,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event, XEVENT_KEY_MODIFIERS (ev2));
 	  Fdeallocate_event (ev2);
@@ -3213,7 +3215,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event,
                                XEVENT_KEY_MODIFIERS (event) |

@@ -105,7 +105,6 @@ EXFUN (Fwindow_highest_p, 1);
 EXFUN (Fwindow_point, 1);
 EXFUN (Fwindow_start, 1);
 
-Lisp_Object save_window_excursion_unwind (Lisp_Object);
 extern Lisp_Object Qcurrent_window_configuration, Qset_window_configuration;
 Lisp_Object display_buffer (Lisp_Object, Lisp_Object, Lisp_Object);
 

@@ -684,7 +684,7 @@ otherwise pop it")
 
 (byte-defop 138  0 byte-save-excursion
   "to make a binding to record the buffer, point and mark")
-(byte-defop 139  0 byte-save-window-excursion
+(byte-defop 139  0 byte-save-window-excursion ; almost obsolete
   "to make a binding to record entire window configuration")
 (byte-defop 140  0 byte-save-restriction
   "to make a binding to record the current buffer clipping restrictions")
@@ -2071,7 +2071,7 @@ list that represents a doc string reference.
   (if byte-compile-output
       (let ((form (byte-compile-out-toplevel t 'file)))
 	(cond ((eq (car-safe form) 'progn)
-	       (mapcar 'byte-compile-output-file-form (cdr form)))
+	       (mapc 'byte-compile-output-file-form (cdr form)))
 	      (form
 	       (byte-compile-output-file-form form)))
 	(setq byte-compile-constants nil
@@ -2862,7 +2862,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (if byte-compile-generate-call-tree
       (byte-compile-annotate-call-tree form))
   (byte-compile-push-constant (car form))
-  (mapcar 'byte-compile-form (cdr form)) ; wasteful, but faster.
+  (mapc 'byte-compile-form (cdr form)) ; wasteful, but faster.
   (byte-compile-out 'byte-call (length (cdr form))))
 
 ;; kludge added to XEmacs to work around the bogosities of a nonlexical lisp.
@@ -3392,12 +3392,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
      ((= nargs 0)
       (byte-compile-constant nil))
      ((< nargs 5)
-      (mapcar 'byte-compile-form args)
+      (mapc 'byte-compile-form args)
       (byte-compile-out
        (aref [byte-list1 byte-list2 byte-list3 byte-list4] (1- nargs))
        0))
      ((< nargs 256)
-      (mapcar 'byte-compile-form args)
+      (mapc 'byte-compile-form args)
       (byte-compile-out 'byte-listN nargs))
      (t (byte-compile-normal-call form)))))
 
@@ -3407,14 +3407,14 @@ If FORM is a lambda or a macro, byte-compile it as a function."
     ;; Concat of one arg is not a no-op if arg is not a string.
     (cond
      ((memq nargs '(2 3 4))
-      (mapcar 'byte-compile-form args)
+      (mapc 'byte-compile-form args)
       (byte-compile-out
        (aref [byte-concat2 byte-concat3 byte-concat4] (- nargs 2))
        0))
      ((eq nargs 0)
       (byte-compile-form ""))
      ((< nargs 256)
-      (mapcar 'byte-compile-form args)
+      (mapc 'byte-compile-form args)
       (byte-compile-out 'byte-concatN nargs))
      ((byte-compile-normal-call form)))))
 
@@ -3588,7 +3588,7 @@ function quoting" (car form))))
   (cond ((null (cdr form))
 	 (byte-compile-constant nil))
 	((<= (length form) 256)
-	 (mapcar 'byte-compile-form (cdr form))
+	 (mapc 'byte-compile-form (cdr form))
 	 (if (cdr (cdr form))
 	     (byte-compile-out 'byte-insertN (length (cdr form)))
 	   (byte-compile-out 'byte-insert 0)))
@@ -3945,7 +3945,7 @@ function quoting" (car form))))
     (setq for-effect nil)))
 
 (defun byte-compile-funcall (form)
-  (mapcar 'byte-compile-form (cdr form))
+  (mapc 'byte-compile-form (cdr form))
   (byte-compile-out 'byte-call (length (cdr (cdr form)))))
 
 
@@ -4029,7 +4029,6 @@ function quoting" (car form))))
 (byte-defop-compiler-1 save-excursion)
 (byte-defop-compiler-1 save-current-buffer)
 (byte-defop-compiler-1 save-restriction)
-(byte-defop-compiler-1 save-window-excursion)
 (byte-defop-compiler-1 with-output-to-temp-buffer)
 ;; no track-mouse.
 
@@ -4128,11 +4127,6 @@ function quoting" (car form))))
     (byte-compile-body-do-effect (cdr form))
     (byte-compile-out 'byte-unbind 1)))
 
-(defun byte-compile-save-window-excursion (form)
-  (byte-compile-push-constant
-   (byte-compile-top-level-body (cdr form) for-effect))
-  (byte-compile-out 'byte-save-window-excursion 0))
-
 (defun byte-compile-with-output-to-temp-buffer (form)
   (byte-compile-form (car (cdr form)))
   (byte-compile-out 'byte-temp-output-buffer-setup 0)
@@ -4154,7 +4148,7 @@ function quoting" (car form))))
     ;; and pushes a new value, the specpdl_depth() at the time it was
     ;; called.
     (byte-compile-out 'byte-bind-multiple-value-limits 0)
-    (mapcar 'byte-compile-form (cdr form))
+    (mapc 'byte-compile-form (cdr form))
     ;; Most of the other code puts this sort of value in the program stream,
     ;; not pushing it on the stack.
     (byte-compile-push-constant (+ 3 (length form)))
@@ -4586,7 +4580,7 @@ it won't work in an interactive Emacs."
      (if (fboundp 'display-error) ; XEmacs 19.8+
 	 (display-error err nil)
        (princ (or (get (car err) 'error-message) (car err)))
-       (mapcar #'(lambda (x) (princ " ") (prin1 x)) (cdr err)))
+       (mapc #'(lambda (x) (princ " ") (prin1 x)) (cdr err)))
      (princ "\n")
      nil)))
 

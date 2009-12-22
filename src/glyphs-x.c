@@ -70,7 +70,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-x-impl.h"
 #include "glyphs-x.h"
 #include "objects-x-impl.h"
-#include "xmu.h"
 
 #include "sysfile.h"
 #include "sysproc.h" /* for qxe_getpid() */
@@ -82,6 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #include <Xm/Scale.h>
 #endif
 #include <X11/IntrinsicP.h>
+#include <X11/Xmu/CurUtil.h>
 
 #define LISP_DEVICE_TO_X_SCREEN(dev) XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
 

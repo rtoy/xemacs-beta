@@ -2690,19 +2690,20 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	    }
 	  XSET_STRING_DATA (s, new_data);
 
-	  {
-	    /* We need to mark this chunk of the string_chars_block
-	       as unused so that compact_string_chars() doesn't
-	       freak. */
-	    struct string_chars *old_s_chars = (struct string_chars *)
-	      ((char *) old_data - offsetof (struct string_chars, chars));
-	    /* Sanity check to make sure we aren't hosed by strange
-	       alignment/padding. */
-	    assert (old_s_chars->string == XSTRING (s));
-	    MARK_STRING_CHARS_AS_FREE (old_s_chars);
-	    ((struct unused_string_chars *) old_s_chars)->fullsize =
-	      oldfullsize;
-	  }
+	  if (!DUMPEDP (old_data)) /* Can't free dumped data. */
+	    {
+	      /* We need to mark this chunk of the string_chars_block
+		 as unused so that compact_string_chars() doesn't
+		 freak. */
+	      struct string_chars *old_s_chars = (struct string_chars *)
+		((char *) old_data - offsetof (struct string_chars, chars));
+	      /* Sanity check to make sure we aren't hosed by strange
+		 alignment/padding. */
+	      assert (old_s_chars->string == XSTRING (s));
+	      MARK_STRING_CHARS_AS_FREE (old_s_chars);
+	      ((struct unused_string_chars *) old_s_chars)->fullsize =
+                  oldfullsize;
+	    }
 	}
     }
 #endif /* not NEW_GC */
