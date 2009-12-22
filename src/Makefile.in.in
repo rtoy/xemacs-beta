@@ -353,9 +353,9 @@ other_files=\
 
 # endif /* EXTERNAL_WIDGET */
 
-# if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
+# if defined (HAVE_CDE)
 dnd_objs = @dnd_objs@
-# endif /* HAVE_OFFIX_DND || HAVE_CDE */
+# endif /* HAVE_CDE */
 
 X11_objs =  EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs) $(dnd_objs)
 #endif /* HAVE_X_WINDOWS */

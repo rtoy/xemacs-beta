@@ -379,11 +379,6 @@ The `--with-cde' option allows you to enable or disable CDE drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-cde' for you.
 
-The `--with-offix' option allows you to enable or disable OffiX drag
-and drop support.  This requires no external library support, so if
-X11 support is available, then this option defaults to `yes'.  OffiX
-support can be explicitly disabled via the `--with-offix=no' option.
-
 Internationalization Options
 ----------------------------
 
@@ -895,7 +890,6 @@ Window-system options:
 --with-widgets            Unchanged
 --with-dragndrop          Unchanged
 --with-cde                Unchanged
---with-offix              Unchanged
 --with-xmu                Unchanged
 --external-widget         --with-external-widget
 

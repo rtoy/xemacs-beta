@@ -1,3 +1,9 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* Dnd/README: Remove references to OffiX drag-and-drop.
+	* Dnd/droptest.el (start-drag): Remove OffiX support.
+	(start-region-drag): Ditto.
+
 2009-12-18  Jerry James  <james@xemacs.org>
 
 	* glyph-test.el: Add copyright and GPL v2 or later header with

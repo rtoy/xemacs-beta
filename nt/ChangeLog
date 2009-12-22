@@ -1,3 +1,7 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Remove references to OffiX files.
+
 2009-12-15  Jerry James  <james@xemacs.org>
 
 	* xemacs.mak: Remove build dependency for lib-src/wakeup.  Thanks to

@@ -13,11 +13,7 @@
 
 (defun start-drag (event what &optional typ)
   ;; short drag interface, until the real one is implemented
-  (cond ((featurep 'offix)
-	 (if (numberp typ)
-	     (offix-start-drag event what typ)
-	   (offix-start-drag event what)))
-	((featurep 'cde)
+  (cond ((featurep 'cde)
 	 (if (not typ)
 	     (funcall (intern "cde-start-drag-internal") event nil (list what))
 	   (funcall (intern "cde-start-drag-internal") event t what)))
@@ -27,16 +23,11 @@
   (interactive "_e")
   (if (click-inside-extent-p event zmacs-region-extent)
       ;; okay, this is a drag
-      (cond ((featurep 'offix)
-	     (offix-start-drag-region event
-				      (extent-start-position zmacs-region-extent)
-				      (extent-end-position zmacs-region-extent)))
-	    ((featurep 'cde)
-	     ;; should also work with CDE
+      (cond ((featurep 'cde)
 	     (cde-start-drag-region event
 				    (extent-start-position zmacs-region-extent)
 				    (extent-end-position zmacs-region-extent)))
-	    (t (error "No offix or CDE support compiled in")))))
+	    (t (error "No CDE support compiled in")))))
 
 (defun make-drop-targets ()
   (let ((buf (get-buffer-create "*DND misc-user extent test buffer*"))

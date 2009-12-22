@@ -1,3 +1,11 @@
+2009-12-21  Jerry James  <james@xemacs.rg>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove references to OffiX support files.
+	* lispref/dragndrop.texi (Drag and Drop): Remove reference to OffiX.
+	(Supported Protocols): Ditto.
+	(OffiX DND): Remove.
+
 2009-12-10  Jerry James  <james@xemacs.org>
 
 	* lispref/processes.texi (Functions that Create Subprocesses): Refer

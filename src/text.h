@@ -3111,16 +3111,12 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 /* !!#### Verify these! */
 #define Qxt_widget_arg_encoding Qnative
 #define Qdt_dnd_encoding Qnative
-#define Qoffix_dnd_encoding Qnative
 
 /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
    encoded in ISO2022! */
 #define Qlocale_name_encoding Qctext
 
 #define Qstrerror_encoding Qnative
-
-/* Encoding for strings coming from Offix drag-n-drop */
-#define Qoffix_dnd_encoding Qnative
 
 /* !!#### This exists to remind us that our hexify routine is totally
    un-Muleized. */

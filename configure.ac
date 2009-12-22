@@ -741,21 +741,12 @@ XE_KEYWORD_ARG([widgets],
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_MERGED_ARG([dragndrop],
 	AS_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
-                        protocols is found (currently CDE, OffiX, MSWindows,
-                        and GTK).
+                        protocols is found (currently CDE, MSWindows, and GTK).
                         *WARNING*  The Drag'n'drop support is under development
                                    and is considered experimental.]),
 	[], [])
 XE_MERGED_ARG([cde],
 	AS_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
-	[], [])
-XE_MERGED_ARG([offix],
-	AS_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
-                        *WARNING*  If you compile in OffiX, you may not be
-                                   able to use multiple X displays success-
-                                   fully.  If the two servers are from
-                                   different vendors, the results may be
-                                   unpredictable.]),
 	[], [])
 XE_MERGED_ARG([external-widget],
 	AS_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
@@ -3252,7 +3243,7 @@ if test "$with_x11" != "yes"; then
   dnl if test "$with_tty" = "no" ; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
-  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim enable_sound_nas
+  for feature in with_tooltalk with_cde with_wmcommand with_xim enable_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        AC_MSG_WARN([--$feature ignored:  Not valid without X support])
@@ -3488,35 +3479,12 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
-dnl Always compile OffiX unless --without-offix is given, no
-dnl X11 support is compiled in, or dragndrop support is disabled
-dnl Because OffiX support currently loses when more than one display
-dnl is in use, we now disable it by default -slb 07/10/1998.
-test "$window_system" != "x11" && with_offix=no
-if test "$with_dragndrop" = no; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; no generic Drag'n'Drop support])
-  fi
-  with_offix=no
-fi
-if test "$with_cde" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; CDE already found])
-  fi
-  with_offix=no
-fi
-test -z "$with_offix" && with_offix=no
-if test "$with_offix" = "yes"; then
-  AC_DEFINE(HAVE_OFFIX_DND)
-  XE_APPEND(offix.o, dnd_objs)
-  XE_APPEND(OffiX, dragndrop_proto)
-fi
 if test "$with_gtk" = "yes"; then
    XE_APPEND(GTK, dragndrop_proto)
 fi
 
 dnl Autodetect Drag'n'Drop support
-dnl always included if CDE, Offix, or MSWindows are defined
+dnl always included if CDE or MSWindows is defined
 if test "$with_dragndrop" != "no" ; then
   AC_MSG_CHECKING(if drag and drop API is needed)
   if test -n "$dragndrop_proto" ; then

@@ -26,8 +26,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* A short introduction to the new Drag'n'Drop Model:
 
-   Currently only drops from OffiX are implemented.
-
    A drop generates a extended misc-user-event, as defined in events.[ch].
    This event contains the same as a eval and a button event.
    The function of a drop is set to 'dragdrop-drop-dispatch' which will be
@@ -136,9 +134,6 @@ Each element is the feature symbol of the protocol.
 #endif
 #ifdef HAVE_CDE
   Vdragdrop_protocols = Fcons (intern ("cde"), Vdragdrop_protocols);
-#endif
-#ifdef HAVE_OFFIX_DND
-  Vdragdrop_protocols = Fcons (intern ("offix"), Vdragdrop_protocols);
 #endif
 #ifdef HAVE_GTK
   Vdragdrop_protocols = Fcons (Qgtk, Vdragdrop_protocols);
