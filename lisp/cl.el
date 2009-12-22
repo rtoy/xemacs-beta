@@ -644,9 +644,9 @@ Keywords supported:  :test :test-not :key"
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 
 ;;; Define data for indentation and edebug.
-(mapcar
+(mapc-internal
  #'(lambda (entry)
-     (mapcar
+     (mapc-internal
       #'(lambda (func)
 	  (put func 'lisp-indent-function (nth 1 entry))
 	  (put func 'lisp-indent-hook (nth 1 entry))

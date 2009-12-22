@@ -1317,13 +1317,5 @@ SOURCE=..\src\xmmanagerp.h
 
 SOURCE=..\src\xmprimitivep.h
 # End Source File
-# Begin Source File
-
-SOURCE=..\src\xmu.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\xmu.h
-# End Source File
 # End Target
 # End Project

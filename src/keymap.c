@@ -1103,7 +1103,8 @@ get_keyelt (Lisp_Object object, int accept_default)
           struct gcpro gcpro1;
           GCPRO1 (event);
 	  character_to_event (XCHAR (idx), XEVENT (event),
-			      XCONSOLE (Vselected_console), 0, 0);
+			      XCONSOLE (Vselected_console),
+			      high_bit_is_meta, 0);
 	  indirection.keysym = XEVENT_KEY_KEYSYM (event);
 	  indirection.modifiers = XEVENT_KEY_MODIFIERS (event);
 	  UNGCPRO;
@@ -1529,7 +1530,7 @@ define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
       struct gcpro gcpro1;
       GCPRO1 (event);
       character_to_event (XCHAR_OR_CHAR_INT (spec), XEVENT (event),
-			  XCONSOLE (Vselected_console), 0, 0);
+			  XCONSOLE (Vselected_console), high_bit_is_meta, 0);
       SET_KEY_DATA_KEYSYM (returned_value, XEVENT_KEY_KEYSYM (event));
       SET_KEY_DATA_MODIFIERS (returned_value, 
                               XEVENT_KEY_MODIFIERS (event));
@@ -3526,7 +3527,8 @@ of a key read from the user rather than a character from a buffer.
 	  Lisp_Object event = Fmake_event (Qnil, Qnil);
 	  CHECK_CHAR_COERCE_INT (key);
 	  character_to_event (XCHAR (key), XEVENT (event),
-			      XCONSOLE (Vselected_console), 0, 1);
+			      XCONSOLE (Vselected_console),
+			      high_bit_is_meta, 1);
 	  format_event_object (buf, event, 1);
 	  Fdeallocate_event (event);
 	}

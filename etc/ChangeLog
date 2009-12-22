@@ -1,3 +1,20 @@
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* idd/drop: Remove.
+	* idd/dropmsk: Remove.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* sparcworks/SW.Editor.xpm: Remove obsolete file.
+	* sparcworks/sunpro-mailcap: Ditto.
+	* sparcworks: Remove empty directory.
+
+2009-12-03  Jerry James  <james@xemacs.org>
+
+	* custom/example-themes/europe-theme.el:
+	* custom/example-themes/example-theme.el: Add copyright and GPL
+	notices as authorized by Jan Vroonhof.
+
 2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gdbinit.in: 

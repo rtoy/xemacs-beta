@@ -767,10 +767,10 @@ at the beginning of lines and ^L characters."
 		  ;;#### FSF 21.2 (print-escape-nonascii t)
 		  (p (point outbuf))
 		  p2)
-	      (mapcar #'(lambda (elt)
-			  (prin1 elt outbuf)
-			  (princ " " outbuf))
-		      form)
+	      (mapc #'(lambda (elt)
+                        (prin1 elt outbuf)
+                        (princ " " outbuf))
+                    form)
 	      (with-current-buffer outbuf
 		(setq p2 (point-marker))
 		(goto-char p)
@@ -1021,8 +1021,8 @@ If FORCE is non-nil, always save out the autoload files even if unchanged."
 		  (search-forward generate-autoload-section-trailer)
 		  (delete-region begin (point)))))
 	    ;; Update or create autoload sections for existing files.
-	    (mapcar 'update-file-autoloads
-		    (directory-files arg t "^[^=].*\\.\\(el\\|c\\)$")))))
+	    (mapc 'update-file-autoloads
+                  (directory-files arg t "^[^=].*\\.\\(el\\|c\\)$")))))
        ((file-exists-p arg)
 	(setq generated-autoload-file
 	      (or into-file (expand-file-name autoload-file-name

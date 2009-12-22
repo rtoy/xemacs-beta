@@ -322,7 +322,7 @@ vector, and ENCODE-TABLE will be a hash table mapping from 256 numbers
 to 256 distinct characters."
   (check-argument-type #'listp unicode-map)
   (let ((decode-table (make-vector 256 nil))
-        (encode-table (make-hash-table :size 256))
+        (encode-table (make-hash-table :size 256 :rehash-threshold 0.999))
 	(private-use-start (encode-char fixed-width-private-use-start 'ucs))
         (invalid-sequence-code-point-start
          (eval-when-compile

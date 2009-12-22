@@ -40,9 +40,9 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-x.h"
 
 #include <X11/Shell.h>
+#include <X11/Xmu/CharSet.h>
 #include "EmacsFrameP.h"
 #include "EmacsManager.h"	/* for EmacsManagerChangeSize */
-#include "xmu.h"
 #include "../lwlib/xt-wrappers.h"
 
 static void EmacsFrameClassInitialize (void);

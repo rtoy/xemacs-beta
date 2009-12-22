@@ -73,6 +73,7 @@ Setting this at run-time does nothing.")
 	    ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
 	    ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)
 	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0 #xFF #x-80)
+	    ("8859-6.TXT" arabic-iso8859-6 #xA0 #xFF #x-80)
 	    ("8859-7.TXT" greek-iso8859-7 #xA0 #xFF #x-80)
 	    ("8859-8.TXT" hebrew-iso8859-8 #xA0 #xFF #x-80)
 	    ("8859-9.TXT" latin-iso8859-9 #xA0 #xFF #x-80)
@@ -135,14 +136,14 @@ Setting this at run-time does nothing.")
 	    ("lao.txt" lao)
 	    )
 	   )))
-    (mapcar #'(lambda (tables)
-		(let ((undir
-		       (expand-file-name (car tables) data-directory)))
-		  (mapcar #'(lambda (args)
-			      (apply 'load-unicode-mapping-table
-				     (expand-file-name (car args) undir)
-				     (cdr args)))
-			  (cdr tables))))
+    (mapc #'(lambda (tables)
+              (let ((undir
+                     (expand-file-name (car tables) data-directory)))
+                (mapc #'(lambda (args)
+                          (apply 'load-unicode-mapping-table
+                                 (expand-file-name (car args) undir)
+                                 (cdr args)))
+                      (cdr tables))))
 	    parse-args)
     ;; The default-unicode-precedence-list. We set this here to default to
     ;; *not* mapping various European characters to East Asian characters;
@@ -619,11 +620,11 @@ mapping from the error sequences to the desired characters.  "
   ;; make-docfile.c pick up symbol and function documentation correctly. An
   ;; alternative approach would be to fix make-docfile.c to be able to read
   ;; Lisp.
-  (mapcar #'unintern
-          '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
-            unicode-invalid-regexp-range frob-unicode-errors-region
-            unicode-error-translate-region unicode-query-coding-region
-            unicode-query-coding-skip-chars-arg)))
+  (mapc #'unintern
+        '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
+          unicode-invalid-regexp-range frob-unicode-errors-region
+          unicode-error-translate-region unicode-query-coding-region
+          unicode-query-coding-skip-chars-arg)))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version

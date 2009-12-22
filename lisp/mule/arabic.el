@@ -28,8 +28,34 @@
 
 ;;; Code:
 
-;; See iso-with-esc.el for commentary on the ISO standard Arabic character
-;; set.
+;; ISO 8859-6 is such a useless character set that it seems a waste of
+;; codespace to dump it. Let me count the ways: 
+;; 
+;; 1. It doesn't support Persian or Urdu, let alone Sinhalese, despite
+;;    plenty of unallocated code points.
+;;
+;; 2. It doesn't encode all the vowel diacritics (the Harakaat) despite that
+;;    they are necessary, even for the Arabs, for basic things like
+;;    dictionary entries, children's books, and occasional disambiguation.
+;;
+;; 3. The Arabs don't use it, they use Windows-1256, which also supports
+;;    Persian, at least, as well as the French characters necessary in
+;;    Lebanon and North Africa.
+
+;; But; it's necessary for input on X11.
+
+(make-charset
+ 'arabic-iso8859-6 
+ "Right-Hand Part of Latin/Arabic Alphabet (ISO/IEC 8859-6): ISO-IR-127"
+ '(dimension 1
+   registry "ISO8859-6"
+   chars 96
+   columns 1
+   direction r2l
+   final ?G
+   graphic 1
+   short-name "RHP of ISO8859/6"
+   long-name "RHP of Arabic (ISO 8859-6): ISO-IR-127"))
 
 (make-coding-system
  'iso-8859-6 'fixed-width "ISO 8859-6 (Arabic)"

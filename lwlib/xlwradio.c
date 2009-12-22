@@ -53,8 +53,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
+#include <X11/Xmu/Misc.h>
 #include ATHENA_XawInit_h_
-#include "../src/xmu.h"
 #include "xt-wrappers.h"
 #include "xlwradioP.h"
 

@@ -533,13 +533,13 @@ PASSWD is the corresponding password."
     (setq ldap (ldap-open host host-plist))
     (if ldap-verbose
 	(message "Adding LDAP entries..."))
-    (mapcar (function
-	     (lambda (thisentry)
-	       (ldap-add ldap (car thisentry) (cdr thisentry))
-	       (if ldap-verbose
-		   (message "%d added" i))
-	       (setq i (1+ i))))
-	    entries)
+    (mapc (function
+           (lambda (thisentry)
+             (ldap-add ldap (car thisentry) (cdr thisentry))
+             (if ldap-verbose
+                 (message "%d added" i))
+             (setq i (1+ i))))
+          entries)
     (ldap-close ldap)))
 
 
@@ -549,7 +549,7 @@ ENTRY_MODS is a list of entry modifications of the form
   (DN MOD-SPEC1 MOD-SPEC2 ...) where DN is the distinguished name of
 the entry to modify, the following are modification specifications.
 A modification specification is itself a list of the form
-(MOD-OP ATTR VALUE1 VALUE2 ...) MOD-OP and ATTR are mandatory,
+\(MOD-OP ATTR VALUE1 VALUE2 ...) MOD-OP and ATTR are mandatory,
 VALUEs are optional depending on MOD-OP.
 MOD-OP is the type of modification, one of the symbols `add', `delete'
 or `replace'. ATTR is the LDAP attribute type to modify.
@@ -573,13 +573,13 @@ PASSWD is the corresponding password."
     (setq ldap (ldap-open host host-plist))
     (if ldap-verbose
 	(message "Modifying LDAP entries..."))
-    (mapcar (function
-	     (lambda (thisentry)
-	       (ldap-modify ldap (car thisentry) (cdr thisentry))
-	       (if ldap-verbose
-		   (message "%d modified" i))
-	       (setq i (1+ i))))
-	    entry-mods)
+    (mapc (function
+           (lambda (thisentry)
+             (ldap-modify ldap (car thisentry) (cdr thisentry))
+             (if ldap-verbose
+                 (message "%d modified" i))
+             (setq i (1+ i))))
+          entry-mods)
     (ldap-close ldap)))
 
 
@@ -608,13 +608,13 @@ PASSWD is the corresponding password."
 	(let ((i 1))
 	  (if ldap-verbose
 	      (message "Deleting LDAP entries..."))
-	  (mapcar (function
-		   (lambda (thisdn)
-		     (ldap-delete ldap thisdn)
-		     (if ldap-verbose
-			 (message "%d deleted" i))
-		     (setq i (1+ i))))
-		  dn))
+	  (mapc (function
+                 (lambda (thisdn)
+                   (ldap-delete ldap thisdn)
+                   (if ldap-verbose
+                       (message "%d deleted" i))
+                   (setq i (1+ i))))
+                dn))
       (if ldap-verbose
 	  (message "Deleting LDAP entry..."))
       (ldap-delete ldap dn))
