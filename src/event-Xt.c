@@ -63,10 +63,6 @@ Boston, MA 02111-1307, USA.  */
 #include "dragdrop.h"
 #endif
 
-#if defined (HAVE_OFFIX_DND)
-#include "offix.h"
-#endif
-
 #ifdef WIN32_ANY
 extern int mswindows_is_blocking;
 #endif
@@ -1317,135 +1313,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
            passed as the timestamp of the TAKE_FOCUS, which the ICCCM
            explicitly prohibits. */
         XClientMessageEvent *ev = &x_event->xclient;
-#ifdef HAVE_OFFIX_DND
-	if (DndIsDropMessage (x_event))
-	  {
-	    unsigned int state;
-	    int modifiers = 0;
-	    int button = 0;
-	    struct frame *frame = x_any_window_to_frame (d, ev->window);
-	    Extbyte *data;
-	    unsigned long size, dtype;
-	    Lisp_Object l_type = Qnil, l_data = Qnil;
-	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
-	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-	    if (! frame)
-	      return 0;	/* not for us */
-
-	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
-	    set_event_type (emacs_event, misc_user_event);
-	    SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
-	    SET_EVENT_TIMESTAMP (emacs_event,
-				 DEVICE_X_LAST_SERVER_TIMESTAMP (d));
-	    state=DndDragButtons (x_event);
-
-	    if (state & ShiftMask)	modifiers |= XEMACS_MOD_SHIFT;
-	    if (state & ControlMask)	modifiers |= XEMACS_MOD_CONTROL;
-	    if (state & xd->MetaMask)	modifiers |= XEMACS_MOD_META;
-	    if (state & xd->SuperMask)	modifiers |= XEMACS_MOD_SUPER;
-	    if (state & xd->HyperMask)	modifiers |= XEMACS_MOD_HYPER;
-	    if (state & xd->AltMask)	modifiers |= XEMACS_MOD_ALT;
-	    if (state & Button1Mask)	modifiers |= XEMACS_MOD_BUTTON1;
-	    if (state & Button2Mask)	modifiers |= XEMACS_MOD_BUTTON2;
-	    if (state & Button3Mask)	modifiers |= XEMACS_MOD_BUTTON3;
-	    if (state & Button4Mask)	modifiers |= XEMACS_MOD_BUTTON4;
-	    if (state & Button5Mask)	modifiers |= XEMACS_MOD_BUTTON5;
-
-	    if (state & Button5Mask)    button = Button5;
-	    if (state & Button4Mask)    button = Button4;
-	    if (state & Button3Mask)    button = Button3;
-	    if (state & Button2Mask)    button = Button2;
-	    if (state & Button1Mask)    button = Button1;
-
-	    SET_EVENT_MISC_USER_MODIFIERS (emacs_event, modifiers);
-	    SET_EVENT_MISC_USER_BUTTON (emacs_event, button);
-
-	    DndDropCoordinates (FRAME_X_TEXT_WIDGET (frame), x_event,
-				&(EVENT_MISC_USER_X (emacs_event)),
-				&(EVENT_MISC_USER_Y (emacs_event)));
-	    DndGetData (x_event, &data, &size);
-
-	    dtype = DndDataType (x_event);
-	    switch (dtype)
-	      {
-	      case DndFiles: /* null terminated strings, end null */
-		{
-		  int len;
-		  Ibyte *hurl = NULL;
-
-		  while (*data)
-		    {
-		      Ibyte *dataint;
-		      len = strlen (data);
-		      EXTERNAL_TO_C_STRING (data, dataint, Qfile_name);
-		      hurl = dnd_url_hexify_string (dataint,
-						    (const Ibyte *) "file:");
-		      l_item = build_intstring (hurl);
-		      l_dndlist = Fcons (l_item, l_dndlist);
-		      data += len + 1;
-		      xfree (hurl, Ibyte *);
-		    }
-		  l_type = Qdragdrop_URL;
-		}
-		break;
-	      case DndText:
-		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 (list3 (list1 (build_string ("text/plain")),
-					  build_string ("8bit"),
-					  build_ext_string (data,
-							    Qctext)));
-		break;
-	      case DndMIME:
-		/* we have to parse this in some way to extract
-		   content-type and params (in the tm way) and
-		   content encoding.
-		   OR: if data is string, let tm do the job
-		       if data is list[2], give the first two
-		       to tm...
-		*/
-		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 (build_ext_string (data, Qbinary));
-		break;
-	      case DndFile:
-	      case DndDir:
-	      case DndLink:
-	      case DndExe:
-		{
-		  Ibyte *dataint, *hurl;
-		  EXTERNAL_TO_C_STRING (data, dataint, Qfile_name);
-		  hurl = dnd_url_hexify_string (dataint, "file:");
-		  l_dndlist = list1 (build_intstring (hurl));
-		  xfree (hurl, Ibyte *);
-		}
-		break;
-	      case DndURL:
-		/* as it is a real URL it should already be escaped
-		   and escaping again will break them (cause % is unsave) */
-		l_dndlist = list1 (build_ext_string (data,
-						     Qfile_name));
-		l_type = Qdragdrop_URL;
-		break;
-	      default: /* Unknown, RawData and any other type */
-		l_dndlist = list1 (list3 (list1 (build_string
-						 ("application/octet-stream")),
-					  build_string ("8bit"),
-					  make_ext_string (data, size,
-							   Qbinary)));
-		l_type = Qdragdrop_MIME;
-		break;
-	      }
-
-	    SET_EVENT_MISC_USER_FUNCTION (emacs_event,
-					  Qdragdrop_drop_dispatch);
-	    SET_EVENT_MISC_USER_OBJECT (emacs_event,
-					Fcons (l_type, l_dndlist));
-
-	    UNGCPRO;
-
-	    break;
-	  }
-#endif /* HAVE_OFFIX_DND */
         if (ev->message_type == DEVICE_XATOM_WM_PROTOCOLS (d)
             && (Atom) (ev->data.l[0]) == DEVICE_XATOM_WM_TAKE_FOCUS (d)
             && (Atom) (ev->data.l[1]) == 0)

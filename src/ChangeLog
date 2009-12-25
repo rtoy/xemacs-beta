@@ -1,3 +1,31 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Remove OffiX support.
+	* device-x.c: Ditto.
+	* dragdrop.c: Ditto.
+	(vars_of_dragrop): Ditto
+	* event-Xt.c: Ditto.
+	(x_event_to_emacs_event): Ditto.
+	* frame.c (vars_of_frame): Ditto
+	* frame-x.c: Ditto.
+	(Foffix_start_drag_internal): Remove.
+	(syms_of_frame_x): Remove OffiX support..
+	* Makefile.in.in: Ditto.
+	* event-gtk.c: Don't include OffiX headers.
+	* offix.c: Remove.
+	* offic.h: Remove.
+	* offix-cursors.h: Remove.
+	* offix-types.h: Remove.
+	* text.h (Qoffix_dnd_encoding): Remove, twice.
+	* depend: Regenerate.
+
+2009-11-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* nt.c (mswindows_getdcwd): Check first whether drive is valid
+	with _getdrives() to avoid crash in _wgetdcwd(...) when linking
+	against msvcrt8.  This fix was taken from the Mozilla project
+	which experienced the same problem.
+
 2009-12-18  Jerry James  <james@xemacs.org>
 
 	* ppc.ldscript: Remove, obsolete.

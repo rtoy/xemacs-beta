@@ -400,29 +400,6 @@ This always does buffer transfers."
 	       event nil (list (buffer-substring-no-properties begin end)))
     (error "CDE functionality not compiled in.")))
 
-;; the OffiX drag stuff will soon move also (perhaps mouse.el)
-;; if the drag event is done
-(defun offix-start-drag (event data &optional type)
-  "Implement the OffiX drag operation.
-Calls the internal function offix-start-drag-internal to do the actual work.
-If type is not given, DndText is assumed."
-  ;; Oliver Graf <ograf@fga.de>
-  (interactive "esi")
-  (if (featurep 'offix)
-      (funcall (intern "offix-start-drag-internal") event data type)
-    (error "OffiX functionality not compiled in.")))
-
-(defun offix-start-drag-region (event begin end)
-  "Implement the OffiX drag operation for a region.
-Calls the internal function offix-start-drag-internal to do the actual work.
-This always assumes DndText as type."
-  ;; Oliver Graf <ograf@fga.de>
-  (interactive "_er")
-  (if (featurep 'offix)
-      (funcall (intern "offix-start-drag-internal")
-	       event (buffer-substring-no-properties begin end))
-    (error "OffiX functionality not compiled in.")))
-
 (defun gtk-start-drag (event data &optional type)
   (interactive "esi")
   (if (featurep 'gtk)

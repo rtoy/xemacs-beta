@@ -659,9 +659,6 @@ things are arranged in config.h.in.  In particular:
    Requires libDtSvc, which typically must be present at runtime.  */
 #undef HAVE_CDE
 
-/* Compile in support for OffiX Drag and Drop? */
-#undef HAVE_OFFIX_DND
-
 /* Compile in generic Drag'n'Drop API */
 #undef HAVE_DRAGNDROP
 

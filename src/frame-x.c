@@ -60,10 +60,6 @@ Boston, MA 02111-1307, USA.  */
 #include "dragdrop.h"
 #endif
 
-#ifdef HAVE_OFFIX_DND
-#include "offix.h"
-#endif
-
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_x_frame_plist;
 
@@ -1002,7 +998,7 @@ maybe_set_frame_title_format (Widget shell)
   frame_title_format_already_set = 1;
 }
 
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+#if defined (HAVE_CDE)
 
 static Extbyte *
 start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
@@ -1095,7 +1091,7 @@ start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
   return dnd_data;
 }
 
-#endif /* defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) */
+#endif /* defined (HAVE_CDE) */
 
 #ifdef HAVE_CDE
 #include <Dt/Dt.h>
@@ -1332,46 +1328,6 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
   return;
 }
 #endif /* HAVE_CDE */
-
-#ifdef HAVE_OFFIX_DND
-
-DEFUN ("offix-start-drag-internal", Foffix_start_drag_internal, 2, 3, 0, /*
-Start a OffiX drag from a buffer.
-First arg is the event that started the drag,
-second arg should be some string, and the third
-is the type of the data (this should be an int).
-The type defaults to DndText (4).
-*/
-       (event, data, dtyp))
-{
-  Extbyte *dnd_data;
-  XEvent x_event;
-  Bytecount dnd_len;
-  Widget wid;
-  int num_items;
-  int dnd_type = DndText;
-
-  if (!NILP (dtyp))
-    {
-      CHECK_INT (dtyp);
-      dnd_type = XINT (dtyp);
-    }
-
-  dnd_data = start_drag_internal_1 (event, data, Qoffix_dnd_encoding,
-				    &x_event, dnd_type == DndFiles,
-				    &wid, &dnd_len, &num_items);
-
-  DndSetData (dnd_type, (UExtbyte *) dnd_data, dnd_len);
-  xfree (dnd_data, Extbyte *);
-
-  /* the next thing blocks everything... */
-  if (DndHandleDragging (wid, &x_event))
-    return Qt;
-
-  return Qnil;
-}
-
-#endif /* HAVE_OFFIX_DND */
 
 
 /************************************************************************/
@@ -2810,9 +2766,6 @@ syms_of_frame_x (void)
   DEFSUBR (Fx_window_id);
 #ifdef HAVE_CDE
   DEFSUBR (Fcde_start_drag_internal);
-#endif
-#ifdef HAVE_OFFIX_DND
-  DEFSUBR (Foffix_start_drag_internal);
 #endif
 }
 
