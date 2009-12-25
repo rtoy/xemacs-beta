@@ -1,5 +1,11 @@
 2009-12-21  Jerry James  <james@xemacs.org>
 
+	* INSTALL: Remove references to OffiX.
+	* configure.ac: Remove support for OffiX drag-and-drop.
+	* configure: Regenerate.
+
+2009-12-21  Jerry James  <james@xemacs.org>
+
 	* INSTALL: Replace reference to yow.
 
 2009-12-18  Jerry James  <james@xemacs.org>

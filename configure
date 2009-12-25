@@ -954,8 +954,6 @@ enable_dragndrop
 with_dragndrop
 enable_cde
 with_cde
-enable_offix
-with_offix
 enable_external_widget
 with_external_widget
 enable_tty
@@ -1851,15 +1849,10 @@ Window-system options
                           can be found, else Athena is used.
   --with-dragndrop        Compile in the generic drag and drop API. This is
                           automatically added if one of the drag and drop
-                          protocols is found (currently CDE, OffiX, MSWindows,
-                          and GTK). *WARNING* The Drag'n'drop support is under
+                          protocols is found (currently CDE, MSWindows, and
+                          GTK). *WARNING* The Drag'n'drop support is under
                           development and is considered experimental.
   --with-cde              Compile in support for CDE drag and drop.
-  --with-offix            Compile in support for OffiX drag and drop.
-                          *WARNING* If you compile in OffiX, you may not be
-                          able to use multiple X displays success- fully. If
-                          the two servers are from different vendors, the
-                          results may be unpredictable.
   --with-external-widget
                           Support XEmacs server for text widgets in other
                           applications.
@@ -3537,22 +3530,6 @@ fi;
 if test "${with_cde+set}" = set; then
   enableval="$with_cde"
   withval="$with_cde"
-
-fi;
-# If --with-offix or --without-offix were given then copy the value to the
-# equivalent enable_offix variable.
-if test "${with_offix+set}" = set; then
-  enable_offix="$with_offix"
-fi;
-# If -enable-offix or --disable-offix were given then copy the value to the
-# equivalent with_offix variable.
-if test "${enable_offix+set}" = set; then
-  with_offix="$enable_offix"
-fi;
-# Check whether --with-offix or --without-offix was given.
-if test "${with_offix+set}" = set; then
-  enableval="$with_offix"
-  withval="$with_offix"
 
 fi;
 # If --with-external-widget or --without-external-widget were given then copy the value to the
@@ -21053,7 +21030,7 @@ else
 fi
 
 if test "$with_x11" != "yes"; then
-            for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim enable_sound_nas
+            for feature in with_tooltalk with_cde with_wmcommand with_xim enable_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        { $as_echo "$as_me:$LINENO: WARNING: --$feature ignored:  Not valid without X support" >&5
@@ -23384,30 +23361,6 @@ _ACEOF
   need_motif=yes    # CDE requires Motif
 fi
 
-test "$window_system" != "x11" && with_offix=no
-if test "$with_dragndrop" = no; then
-  if test "$with_offix" = "yes" ; then
-    { $as_echo "$as_me:$LINENO: WARNING: --with-offix forced to \`no'; no generic Drag'n'Drop support" >&5
-$as_echo "$as_me: WARNING: --with-offix forced to \`no'; no generic Drag'n'Drop support" >&2;}
-  fi
-  with_offix=no
-fi
-if test "$with_cde" = yes; then
-  if test "$with_offix" = "yes" ; then
-    { $as_echo "$as_me:$LINENO: WARNING: --with-offix forced to \`no'; CDE already found" >&5
-$as_echo "$as_me: WARNING: --with-offix forced to \`no'; CDE already found" >&2;}
-  fi
-  with_offix=no
-fi
-test -z "$with_offix" && with_offix=no
-if test "$with_offix" = "yes"; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_OFFIX_DND 1
-_ACEOF
-
-  dnd_objs="$dnd_objs offix.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"offix.o\" to \$dnd_objs"; fi
-  dragndrop_proto="$dragndrop_proto OffiX" &&  if test "$verbose" = "yes"; then echo "    Appending \"OffiX\" to \$dragndrop_proto"; fi
-fi
 if test "$with_gtk" = "yes"; then
    dragndrop_proto="$dragndrop_proto GTK" &&  if test "$verbose" = "yes"; then echo "    Appending \"GTK\" to \$dragndrop_proto"; fi
 fi
