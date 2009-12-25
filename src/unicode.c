@@ -2945,8 +2945,10 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
   Lisp_Object skip_chars_range_table, result = Qnil;
   enum query_coding_failure_reasons failed_reason,
     previous_failed_reason = query_coding_succeeded;
-  int checked_unicode, invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START,
-    invalid_upper_limit, unicode_type = XCODING_SYSTEM_UNICODE_TYPE (codesys);
+  int checked_unicode,
+    invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START,
+    invalid_upper_limit = -1,
+    unicode_type = XCODING_SYSTEM_UNICODE_TYPE (codesys);
 
   if (flags & QUERY_METHOD_HIGHLIGHT && 
       /* If we're being called really early, live without highlights getting
