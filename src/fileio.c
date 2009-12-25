@@ -2325,7 +2325,7 @@ check_writable (const Ibyte *filename)
 {
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
 #ifdef CYGWIN
-    char filename_buffer[PATH_MAX];
+    Extbyte filename_buffer[PATH_MAX];
 #endif
 	// Since this has to work for a directory, we can't just call 'CreateFile'
 	PSECURITY_DESCRIPTOR pDesc; /* Must be freed with LocalFree */
@@ -2346,12 +2346,12 @@ check_writable (const Ibyte *filename)
     DWORD dwAccessAllowed;
     Extbyte *fnameext;
 
-#ifdef CYGWIN
-    cygwin_conv_to_full_win32_path(filename, filename_buffer);
-    filename = (Ibyte*)filename_buffer;
-#endif
-
     C_STRING_TO_TSTR(filename, fnameext);
+
+#ifdef CYGWIN
+    cygwin_conv_to_full_win32_path(fnameext, filename_buffer);
+    fnameext = filename_buffer;
+#endif
 
     // First check for a normal file with the old-style readonly bit
     attributes = qxeGetFileAttributes(fnameext);
