@@ -1,0 +1,13 @@
+This directory contains Unicode translation tables for most of the
+charsets in XEmacs.
+
+The tables in unicode-consortium/ come from:
+
+http://www.unicode.org/Public/MAPPINGS/
+
+The tables in ibm/ come from:
+
+http://oss.software.ibm.com/icu/charset/
+
+The tables in unicode-consortium/ should be used as source data; the ones
+in ibm/ can be used to supplement or check the accuracy of the others.
