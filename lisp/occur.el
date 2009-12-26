@@ -319,12 +319,12 @@ the matching is case-sensitive."
   (interactive (occur-read-primary-args))
   (occur-1 regexp nlines (list (current-buffer))))
 
+(defvar ido-ignore-item-temp-list)
 ;;;###autoload
 (defun multi-occur (bufs regexp &optional nlines)
   "Show all lines in buffers BUFS containing a match for REGEXP.
 This function acts on multiple buffers; otherwise, it is exactly like
 `occur'."
-  (defvar ido-ignore-item-temp-list)
   (interactive
    (cons
     (let* ((bufs (list (read-buffer "First buffer to search: "
@@ -465,9 +465,9 @@ See also `multi-occur'."
 		    (setq marker (make-marker))
 		    (set-marker marker matchbeg)
 		    (if (and keep-props
-			     (if (boundp 'jit-lock-mode) jit-lock-mode)
+			     (if-boundp 'jit-lock-mode jit-lock-mode)
 			     (text-property-not-all begpt endpt 'fontified t))
-			(if (fboundp 'jit-lock-fontify-now)
+			(if-fboundp 'jit-lock-fontify-now
 			    (jit-lock-fontify-now begpt endpt)))
 		    (setq curstring (buffer-substring begpt endpt))
 		    ;; Depropertize the string, and maybe

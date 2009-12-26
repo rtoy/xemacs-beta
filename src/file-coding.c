@@ -285,8 +285,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
-    printing_unreadable_object
-      ("printing unreadable object #<coding-system 0x%x>", c->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
   print_coding_system_properties (obj, printcharfun);
@@ -1059,6 +1058,9 @@ nil or `undecided'
      Convert CRLF sequences or CR to LF.
 `shift-jis'
      Shift-JIS (a Japanese encoding commonly used in PC operating systems).
+`mbcs'
+     An encoding that directly encodes the indices of one or more charsets
+     with one or two bytes.
 `unicode'
      Any Unicode encoding (UCS-4, UTF-8, UTF-16, etc.).
 `mswindows-unicode-to-multibyte'
@@ -1079,7 +1081,7 @@ nil or `undecided'
 `ccl'
      The conversion is performed using a user-written pseudo-code
      program.  CCL (Code Conversion Language) is the name of this
-     pseudo-code.
+     pseudo-code.  Not available when (featurep 'unicode-internal).
 `gzip'
      GZIP compression format.
 `internal'
@@ -1261,6 +1263,12 @@ The following additional properties are recognized if TYPE is `iso2022':
      or Control-1 character sets; this is explicitly disallowed by the
      ISO2022 standard.
 
+`iso2022-preserve'
+     If non-nil, preserve round-trip conversion even when Unicode is used
+     as an internal representation, by using private characters from the
+     Unicode space.  WARNING: This will make such characters unusable for
+     normal editing purposes.
+
 `input-charset-conversion'
      A list of conversion specifications, specifying conversion of
      characters in one charset to another when decoding is performed.
@@ -1321,6 +1329,12 @@ The following additional properties are recognized if TYPE is `unicode':
      be used with UTF-8.  That is the term used in the standard. ]]
 
 
+The following additional property is recognized if TYPE is `mbcs':
+
+`charsets'
+     List of charsets encoded using this coding system.
+
+
 The following additional properties are recognized if TYPE is
 `mswindows-multibyte':
 
@@ -1345,7 +1359,7 @@ The following additional properties are recognized if TYPE is
 
 
 The following additional properties are recognized if TYPE is `undecided':
-[[ Doesn't GNU use \"detect-*\" for the following two? ]]
+\[[ Doesn't GNU use \"detect-*\" for the following two? ]]
 
 `do-eol'
      Do EOL detection.
@@ -1949,7 +1963,8 @@ coding_rewinder (Lstream *stream)
   struct coding_stream *str = CODING_STREAM_DATA (stream);
   MAYBE_XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
 
-  str->ch = 0;
+  str->ch = -1;
+  str->pind_remaining = 0;
   Dynarr_reset (str->convert_to);
   Dynarr_reset (str->convert_from);
   return Lstream_rewind (str->other_end);
@@ -2064,6 +2079,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
     }
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
+  str->ch = -1;
   
   if (str->data)
     {
@@ -2102,6 +2118,7 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   xzero (*str);
   str->codesys = Qnil;
   str->orig_codesys = Qnil;
+  str->ch = -1;
   str->us = lstr;
   str->other_end = stream;
   str->convert_to = Dynarr_new (unsigned_char);
@@ -2333,7 +2350,7 @@ struct chain_coding_stream
 static const struct memory_description chain_coding_system_description[] = {
   { XD_INT, offsetof (struct chain_coding_system, count) },
   { XD_BLOCK_PTR, offsetof (struct chain_coding_system, chain),
-    XD_INDIRECT (0, 0), { &lisp_object_description } },
+    XD_INDIRECT (0, 0), { &Lisp_Object_description } },
   { XD_LISP_OBJECT, offsetof (struct chain_coding_system,
 			      canonicalize_after_coding) },
   { XD_END }
@@ -2342,7 +2359,7 @@ static const struct memory_description chain_coding_system_description[] = {
 static const struct memory_description chain_coding_stream_description_1 [] = {
   { XD_INT, offsetof (struct chain_coding_stream, lstream_count) },
   { XD_BLOCK_PTR, offsetof (struct chain_coding_stream, lstreams),
-    XD_INDIRECT (0, 0), { &lisp_object_description } },
+    XD_INDIRECT (0, 0), { &Lisp_Object_description } },
   { XD_END }
 };
 
@@ -2709,7 +2726,6 @@ no_conversion_convert (struct coding_stream *str,
 		       unsigned_char_dynarr *dst, Bytecount n)
 {
   UExtbyte c;
-  unsigned int ch     = str->ch;
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -2720,9 +2736,6 @@ no_conversion_convert (struct coding_stream *str,
 
 	  DECODE_ADD_BINARY_CHAR (c, dst);
 	}
-
-      if (str->eof)
-	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
     }
   else
     {
@@ -2731,40 +2744,26 @@ no_conversion_convert (struct coding_stream *str,
 	{
 	  c = *src++;
 	  if (byte_ascii_p (c))
-	    {
-	      assert (ch == 0);
-	      Dynarr_add (dst, c);
-	    }
+	    Dynarr_add (dst, c);
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c))
-	    {
-	      assert (ch == 0);
-	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
-		  c == LEADING_BYTE_CONTROL_1)
-		ch = c;
-	      else
-		/* #### This is just plain unacceptable. */
-		Dynarr_add (dst, '~'); /* untranslatable character */
-	    }
 	  else
 	    {
-	      if (ch == LEADING_BYTE_LATIN_ISO8859_1)
-		Dynarr_add (dst, c);
-	      else if (ch == LEADING_BYTE_CONTROL_1)
+	      COPY_PARTIAL_CHAR_BYTE (c, str);
+	      if (!str->pind_remaining)
 		{
-		  assert (c < 0xC0);
-		  Dynarr_add (dst, c - 0x20);
+		  Ichar ch = non_ascii_itext_ichar (str->partial);
+		  if (ch < 256)
+		    Dynarr_add (dst, (unsigned char) ch);
+		  else
+		    /* #### This is just plain unacceptable. */
+		    /* untranslatable character */
+		    Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
 		}
-	      /* else it should be the second or third byte of an
-		 untranslatable character, so ignore it */
-	      ch = 0;
 	    }
 #endif /* MULE */
-
 	}
     }
 
-  str->ch    = ch;
   return orign;
 }
 

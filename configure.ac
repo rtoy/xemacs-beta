@@ -509,18 +509,18 @@ dnl string to fit the --help display; there's no need to preformat.
 dnl
 dnl I think these will be caught by autoconf internal checks,
 dnl only --with-* are unchecked
-dnl --external-widget         --enable-external-widget
+dnl --external-widget         --with-external-widget
 dnl --native-sound-lib=LIB    --with-native-sound-lib
 dnl --mail-locking=TYPE       --with-mail-locking
 dnl --rel-alloc               --with-rel-alloc
-dnl --use-number-lib          --enable-bignum
-dnl --debug                   --enable-debug
-dnl --error-checking          --enable-error-checking
-dnl --memory-usage-stats      --enable-memory-usage-stats
-dnl --quick-build             --enable-quick-build
-dnl --use-union-type          --enable-union-type
-dnl --pdump                   --enable-pdump
-dnl --use-kkcc                --enable-kkcc
+dnl --use-number-lib          --with-bignum
+dnl --debug                   --with-debug
+dnl --error-checking          --with-error-checking
+dnl --memory-usage-stats      --with-memory-usage-stats
+dnl --quick-build             --with-quick-build
+dnl --use-union-type          --with-union-type
+dnl --pdump                   --with-pdump
+dnl --use-kkcc                --with-kkcc
 dnl
 dnl parse flags
 XE_HELP_SUBSECTION([Compilation options])
@@ -757,9 +757,13 @@ XE_MERGED_ARG([native-sound-lib],
 dnl
 XE_HELP_SUBSECTION([Internationalization options])
 XE_MERGED_ARG([mule],
-	AC_HELP_STRING([--enable-mule],[Compile with Mule (Multi-Lingual Emacs) support,
+	AC_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs), i.e. internationalization support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
+XE_MERGED_ARG([unicode-internal],
+	AC_HELP_STRING([--with-unicode-internal],[Use Unicode and UTF-8 internally for text.  Automatically selects `--with-mule'.  Without this,
+Mule uses an old internal encoding that explicitly encodes the national
+character set associated with a char and cannot represent all of Unicode.]),
 	[], [])
 XE_KEYWORD_ARG([xim],
 	AC_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
@@ -901,7 +905,7 @@ XE_MERGED_ARG([infodock],
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
-	AC_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
+	AC_HELP_STRING([--with-debug],[Enable additional debugging information.  No time cost.]),
 	[], [])
 XE_COMPLEX_ARG([error-checking],
 	AC_HELP_STRING([--enable-error-checking=TESTS],[Compile with internal error-checking added.
@@ -921,10 +925,10 @@ XE_MERGED_ARG([assertions],
 	AC_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
 	[], [])
 XE_MERGED_ARG([memory-usage-stats],
-	AC_HELP_STRING([--enable-memory-usage-stats],[Enable LISP memory usage API.]),
+	AC_HELP_STRING([--with-memory-usage-stats],[Enable LISP memory usage API.]),
 	[], [])
 XE_MERGED_ARG([quick-build],
-	AC_HELP_STRING([--enable-quick-build],[Speed up the build cycle by leaving out steps where
+	AC_HELP_STRING([--with-quick-build],[Speed up the build cycle by leaving out steps where
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
                         doing. This (1) doesn't garbage-collect after loading
@@ -1111,27 +1115,27 @@ dnl ----------------------------------
 dnl Error checking and debugging flags
 dnl ----------------------------------
 dnl Error checking default to "yes" in beta versions, to "no" in releases.
-dnl Same goes for --enable-debug and --extra-verbosity.
+dnl Same goes for --with-debug and --extra-verbosity.
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
-test "${enable_error_checking_extents:=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_EXTENTS)
-test "${enable_error_checking_types:=$beta}"      = yes && AC_DEFINE(ERROR_CHECK_TYPES)
-test "${enable_error_checking_text:=$beta}"       = yes && AC_DEFINE(ERROR_CHECK_TEXT)
-test "${enable_error_checking_gc:=$beta}"         = yes && AC_DEFINE(ERROR_CHECK_GC)
-test "${enable_error_checking_malloc:=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
-test "${enable_error_checking_byte_code:=$beta}"  = yes && AC_DEFINE(ERROR_CHECK_BYTE_CODE)
-test "${enable_error_checking_glyphs:=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_GLYPHS)
-test "${enable_error_checking_display:=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_DISPLAY)
-test "${enable_error_checking_structures:=$beta}" = yes && AC_DEFINE(ERROR_CHECK_STRUCTURES)
-dnl enable_debug=yes must be set when error checking is present.  This should be
+test "${with_error_checking_extents:=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_EXTENTS)
+test "${with_error_checking_types:=$beta}"      = yes && AC_DEFINE(ERROR_CHECK_TYPES)
+test "${with_error_checking_text:=$beta}"       = yes && AC_DEFINE(ERROR_CHECK_TEXT)
+test "${with_error_checking_gc:=$beta}"         = yes && AC_DEFINE(ERROR_CHECK_GC)
+test "${with_error_checking_malloc:=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
+test "${with_error_checking_byte_code:=$beta}"  = yes && AC_DEFINE(ERROR_CHECK_BYTE_CODE)
+test "${with_error_checking_glyphs:=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_GLYPHS)
+test "${with_error_checking_display:=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_DISPLAY)
+test "${with_error_checking_structures:=$beta}" = yes && AC_DEFINE(ERROR_CHECK_STRUCTURES)
+dnl with_debug=yes must be set when error checking is present.  This should be
 dnl fixed up.
-dnl enable_debug implies other options
-if test "${enable_debug:=$beta}" = "yes"; then
-  enable_assertions=yes
-  enable_memory_usage_stats=yes
+dnl with_debug implies other options
+if test "${with_debug:=$beta}" = "yes"; then
+  with_assertions=yes
+  with_memory_usage_stats=yes
   AC_DEFINE(DEBUG_XEMACS)
 fi
-test "$enable_assertions"         = "yes" && AC_DEFINE(USE_ASSERTIONS)
-test "$enable_memory_usage_stats" = "yes" && AC_DEFINE(MEMORY_USAGE_STATS)
+test "$with_assertions"         = "yes" && AC_DEFINE(USE_ASSERTIONS)
+test "$with_memory_usage_stats" = "yes" && AC_DEFINE(MEMORY_USAGE_STATS)
 
 dnl ------------------------------
 dnl Determine the s&m files to use
@@ -1674,12 +1678,12 @@ dnl --------------------------------------------------------------
 dnl $opsys detection complete; defaults depending on $opsys follow
 dnl --------------------------------------------------------------
 
-if test -z "$enable_pdump"; then
+if test -z "$with_pdump"; then
   case "$opsys" in
-    linux* )  enable_pdump=yes ;;          dnl glibc 2.3.1 seems to hose unexec
-    darwin )  enable_pdump=yes ;;          dnl No "native" working dumper available
-    cygwin* ) enable_pdump=yes ;;          dnl unexec is broken
-    * )       enable_pdump=no ;;
+    linux* )  with_pdump=yes ;;          dnl glibc 2.3.1 seems to hose unexec
+    darwin )  with_pdump=yes ;;          dnl No "native" working dumper available
+    cygwin* ) with_pdump=yes ;;          dnl unexec is broken
+    * )       with_pdump=no ;;
   esac
 fi
 
@@ -1726,7 +1730,7 @@ if test "$with_workshop" = "yes"; then
   AC_DEFINE(SUNPRO)
 fi
 
-if test "$enable_clash_detection" != "no"; then
+if test "$with_clash_detection" != "no"; then
   AC_DEFINE(CLASH_DETECTION)
 fi
 
@@ -2018,9 +2022,9 @@ test -z "$system_type" && \
 dnl If the s&m files don't define a system-specific dumper, simply use pdump.
 dnl Sometime in the future, we'll remove all definitions of UNEXEC
 dnl from all the s&m files.
-test -z "$unexec" && enable_pdump=yes
+test -z "$unexec" && with_pdump=yes
 
-if test "$enable_pdump" = "yes"; then
+if test "$with_pdump" = "yes"; then
   ordinary_link="yes"
   ld="${ordinary_ld}"
   start_files=
@@ -2030,16 +2034,16 @@ if test "$enable_pdump" = "yes"; then
 fi
 
 dnl Enable KKCC and MC-ALLOC by default
-test -z "$enable_kkcc" && enable_kkcc=yes
-test -z "$enable_mc_alloc" && enable_mc_alloc=yes
+test -z "$with_kkcc" && with_kkcc=yes
+test -z "$with_mc_alloc" && with_mc_alloc=yes
 
 dnl Dump into executable
-if test -z "$enable_dump_in_exec"; then
-  if test "$enable_pdump" = "yes"; then
-    if test "$enable_mc_alloc" = "yes"; then
-      enable_dump_in_exec=no
+if test -z "$with_dump_in_exec"; then
+  if test "$with_pdump" = "yes"; then
+    if test "$with_mc_alloc" = "yes"; then
+      with_dump_in_exec=no
     else
-      enable_dump_in_exec=yes
+      with_dump_in_exec=yes
     fi
   fi
 fi
@@ -2335,7 +2339,7 @@ dnl Note that it's OK if the GNU style long option causes non-GNU ld to barf
 dnl a usage message, that's often good enough.  Please report it, though.
 dnl #### Should make this Solaris-friendly.
 dnl Link with -z nocombreloc for now.
-if test "$enable_pdump" != "yes"; then
+if test "$with_pdump" != "yes"; then
   AC_MSG_CHECKING(for \"-z nocombreloc\" linker flag)
   case "`ld --help 2>&1`" in
     *-z\ nocombreloc* ) AC_MSG_RESULT(yes)
@@ -2354,8 +2358,8 @@ XE_PROTECT_LINKER_FLAGS(ld_call_shared)
 dnl Add s&m-determined objects (including unexec) to link line
 test -n "$objects_machine" && XE_ADD_OBJS($objects_machine)
 test -n "$objects_system"  && XE_ADD_OBJS($objects_system)
-test -n "$unexec"          && test ! "$enable_pdump" = "yes" && XE_ADD_OBJS($unexec)
-test "$enable_pdump" = "yes" && XE_ADD_OBJS(dumper.o)
+test -n "$unexec"          && test ! "$with_pdump" = "yes" && XE_ADD_OBJS($unexec)
+test "$with_pdump" = "yes" && XE_ADD_OBJS(dumper.o)
 
 dnl Dynodump (Solaris 2.x, x<6)
 AC_MSG_CHECKING(for dynodump)
@@ -2716,7 +2720,7 @@ dnl #### mcheck is broken in all versions of Linux libc and glibc.
 dnl Try this again when 2.1 hits the streets.
 dnl Avoid using free-hook.c if support exists for malloc debugging in libc
 dnl have_libmcheck=no
-dnl if test "$enable_error_checking_malloc" = "yes" -a \
+dnl if test "$with_error_checking_malloc" = "yes" -a \
 dnl    "$have_glibc" = "yes" -a \
 dnl    "$doug_lea_malloc" = "yes"; then
 dnl   AC_CHECK_HEADERS(mcheck.h)
@@ -3034,24 +3038,24 @@ if test "${GTK_CONFIG}" != "no"; then
 
       for feature in scrollbars toolbars menubars dialogs widgets
       do
-        eval "feature_value=\${enable_${feature}}"
+        eval "feature_value=\${with_${feature}}"
 	case "${feature_value}" in
 	yes|no|gtk|"" )
 	    ;;
 	* )
 	  feature_conflict_with_gtk=yes
-	  AC_MSG_WARN([--enable-${feature}=${feature_value} is incompatible with --with-gtk]) ;;
+	  AC_MSG_WARN([--with-${feature}=${feature_value} is incompatible with --with-gtk]) ;;
 	esac
       done
       if test "${feature_conflict_with_gtk}" = "yes"; then
 	XE_DIE(["One or more GUI toolkit features conflict with GTK"])
       fi
 
-      test "${enable_scrollbars}" != "no" && enable_scrollbars=gtk
-      test "${enable_toolbars}" != "no" && enable_toolbars=gtk
-      test "${enable_menubars}" != "no" && enable_menubars=gtk
-      test "${enable_dialogs}" != "no" && enable_dialogs=gtk
-      test "${enable_widgets}" != "no" && enable_widgets=gtk
+      test "${with_scrollbars}" != "no" && with_scrollbars=gtk
+      test "${with_toolbars}" != "no" && with_toolbars=gtk
+      test "${with_menubars}" != "no" && with_menubars=gtk
+      test "${with_dialogs}" != "no" && with_dialogs=gtk
+      test "${with_widgets}" != "no" && with_widgets=gtk
 
       dnl Check for libglade support (it rocks)
       OLD_CFLAGS="${CFLAGS}"
@@ -3269,8 +3273,8 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
   AC_DEFINE_UNQUOTED(THIS_IS_X11R${x11_release})
 
   if test "${x11_release}" = "4"; then
-    case "$enable_widgets" in
-      "" | "no") enable_widgets=no ;;
+    case "$with_widgets" in
+      "" | "no") with_widgets=no ;;
       *) XE_DIE("Widget support requires X11R5 or greater") ;;
     esac
   fi
@@ -3344,11 +3348,11 @@ if test "$with_msw" != "no"; then
     fi
     if test "$window_system" != x11; then
       window_system=msw
-      test "$enable_scrollbars" != "no" && enable_scrollbars=msw
-      test "$enable_menubars"   != "no" && enable_menubars=msw
-      test "$enable_toolbars"   != "no" && enable_toolbars=msw
-      test "$enable_dialogs"    != "no" && enable_dialogs=msw
-      test "$enable_widgets"    != "no" && enable_widgets=msw
+      test "$with_scrollbars" != "no" && with_scrollbars=msw
+      test "$with_menubars"   != "no" && with_menubars=msw
+      test "$with_toolbars"   != "no" && with_toolbars=msw
+      test "$with_dialogs"    != "no" && with_dialogs=msw
+      test "$with_widgets"    != "no" && with_widgets=msw
     fi
     dnl check for our special version of select
     AC_RUN_IFELSE([AC_LANG_SOURCE([#include <fcntl.h>
@@ -3366,13 +3370,13 @@ dnl Test for features that require a window system - ANY window system
 if test "$window_system" = "none"; then
   for feature in menubars scrollbars toolbars dialogs dragndrop xface
   do
-    if eval "test -n \"\$enable_${feature}\" -a \"\$enable_${feature}\" != no" ; then
-       AC_MSG_WARN([--enable-$feature ignored:  Not valid without window system support])
+    if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
+       AC_MSG_WARN([--with-$feature ignored:  Not valid without window system support])
     fi
-    eval "enable_${feature}=no"
+    eval "with_${feature}=no"
   done
 else
-  test -z "$enable_toolbars" && enable_toolbars=yes
+  test -z "$with_toolbars" && with_toolbars=yes
 fi
 
 dnl ### Test for features that require mswindows support - currently none
@@ -3396,7 +3400,7 @@ if test "$with_x11" != "yes"; then
   dnl if test "$with_tty" = "no" ; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
-  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu enable_sound_nas
+  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu with_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        AC_MSG_WARN([--$feature ignored:  Not valid without X support])
@@ -3472,7 +3476,7 @@ fi
 AC_SUBST(LIBSTDCPP)
 
 dnl This must come before the detection code for anything that is in a module
-if test "$enable_modules" != "no"; then
+if test "$with_modules" != "no"; then
   AC_CHECKING([for module support])
 
   case "$opsys" in
@@ -3549,22 +3553,22 @@ if test "$enable_modules" != "no"; then
     XE_APPEND(src, INSTALL_ARCH_DEP_SUBDIR)
     test -n "$libdl" && XE_PREPEND(-l${libdl}, LIBS)
     AC_CHECK_FUNCS(dlerror _dlerror)
-    enable_modules=yes
+    with_modules=yes
     MOD_CC="../../lib-src/ellcc"
     MODCFLAGS="\$(CFLAGS) --mode=compile --mod-output=\$@ -I../../src -I\$(srcdir)/../../src"
     INSTALLPATH="\$(moduledir)"
     MOD_INSTALL_PROGRAM=${INSTALL_PROGRAM}
     OBJECT_TO_BUILD="\$(MODNAME).ell"
   else
-    if test "$enable_modules" = "yes"; then
+    if test "$with_modules" = "yes"; then
       XE_DIE("Required module support cannot be provided.")
     else
       echo "    No module support."
     fi
-    enable_modules=no
+    with_modules=no
   fi
 fi
-if test "$enable_modules" != "yes"; then
+if test "$with_modules" != "yes"; then
   MOD_CC="$XEMACS_CC"
   MODCFLAGS="\$(XE_CFLAGS) -I../../src -I\$(srcdir)/../../src"
   INSTALLPATH=""
@@ -3573,7 +3577,7 @@ if test "$enable_modules" != "yes"; then
 fi
 MODARCHDIR=
 MAKE_DOCFILE="../../lib-src/make-docfile"
-AC_SUBST(with_modules, $enable_modules)
+AC_SUBST(with_modules, $with_modules)
 AC_SUBST(MOD_CC)
 AC_SUBST(MODARCHDIR)
 AC_SUBST(MAKE_DOCFILE)
@@ -3718,7 +3722,7 @@ if test "$with_ldap" = "yes"; then
   LIBS="$save_LIBS"
   XE_APPEND(modules/ldap, MAKE_SUBDIR)
   need_modules_common=yes
-  if test "$enable_modules" = "yes"; then
+  if test "$with_modules" = "yes"; then
     XE_APPEND(modules/ldap, INSTALL_ARCH_DEP_SUBDIR)
   fi
 fi
@@ -3768,7 +3772,7 @@ dnl Look for these standard header file locations, known to be used on Linux
     XE_PREPEND([$pq_libs], postgresql_libs)
     XE_APPEND(modules/postgresql, MAKE_SUBDIR)
     need_modules_common=yes
-    if test "$enable_modules" = "yes"; then
+    if test "$with_modules" = "yes"; then
       XE_APPEND(modules/postgresql, INSTALL_ARCH_DEP_SUBDIR)
     fi
   elif test "$with_postgresql" = "yes"; then
@@ -3974,12 +3978,12 @@ if test "$with_x11" = "yes"; then
   AC_CHECKING([for X11 graphics libraries])
 fi
 
-case "$enable_widgets" in
+case "$with_widgets" in
   "" | "yes" | "athena")	detect_athena=yes ;;
    *)				detect_athena=no ;;
 esac
 
-case "$enable_dialogs" in
+case "$with_dialogs" in
   "" | "yes" | "athena")	detect_athena=yes ;;
 esac
 
@@ -4142,44 +4146,44 @@ case "$opsys" in
   * )        lucid_prefers_motif="yes" ;;
 esac
 
-case "$enable_menubars" in "" | "yes" | "athena" )
-  enable_menubars="lucid" ;;
+case "$with_menubars" in "" | "yes" | "athena" )
+  with_menubars="lucid" ;;
 esac
-case "$enable_dialogs" in "" | "yes" | "lucid" )
+case "$with_dialogs" in "" | "yes" | "lucid" )
   if test "$lucid_prefers_motif" = "yes"; then
-    if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
-    elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-    else enable_dialogs=no
+    if   test "$have_motif"     = "yes"; then with_dialogs="motif"
+    elif test "$have_xaw"       = "yes"; then with_dialogs="athena"
+    elif test "$with_msw"       = "yes"; then with_dialogs="msw"
+    else with_dialogs=no
     fi
   else
-    if   test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-    elif test "$have_motif"     = "yes"; then enable_dialogs="motif"
-    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-    else enable_dialogs=no
+    if   test "$have_xaw"       = "yes"; then with_dialogs="athena"
+    elif test "$have_motif"     = "yes"; then with_dialogs="motif"
+    elif test "$with_msw"       = "yes"; then with_dialogs="msw"
+    else with_dialogs=no
     fi
   fi ;;
 esac
-case "$enable_scrollbars" in "" | "yes" )
-  enable_scrollbars="lucid" ;;
+case "$with_scrollbars" in "" | "yes" )
+  with_scrollbars="lucid" ;;
 esac
-case "$enable_widgets" in "" | "yes" | "lucid")
+case "$with_widgets" in "" | "yes" | "lucid")
   if test "$lucid_prefers_motif" = "yes"; then
-    if   test "$have_motif" = "yes"; then enable_widgets="motif"
-    elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
-    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-    else enable_widgets=no
+    if   test "$have_motif" = "yes"; then with_widgets="motif"
+    elif test "$have_xaw"   = "yes"; then with_widgets="athena"
+    elif test "$with_msw"   = "yes"; then with_widgets="msw"
+    else with_widgets=no
     fi
   else
-    if   test "$have_xaw"   = "yes"; then enable_widgets="athena"
-    elif test "$have_motif" = "yes"; then enable_widgets="motif"
-    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-    else enable_widgets=no
+    if   test "$have_xaw"   = "yes"; then with_widgets="athena"
+    elif test "$have_motif" = "yes"; then with_widgets="motif"
+    elif test "$with_msw"   = "yes"; then with_widgets="msw"
+    else with_widgets=no
     fi
   fi ;;
 esac
 
-all_widgets="$enable_menubars $enable_scrollbars $enable_dialogs $enable_toolbars $enable_widgets"
+all_widgets="$with_menubars $with_scrollbars $with_dialogs $with_toolbars $with_widgets"
 
 case "$all_widgets" in
   *athena* )
@@ -4225,12 +4229,12 @@ case "$all_widgets" in *motif* )
   need_motif=yes ;;
 esac
 
-test "$enable_menubars"   = "lucid" && XE_APPEND(xlwmenu.o, lwlib_objs)
-test "$enable_menubars"   = "motif" && XE_APPEND(xlwmenu.o, lwlib_objs)
-test "$enable_scrollbars" = "lucid" && XE_APPEND(xlwscrollbar.o, lwlib_objs)
-test "$enable_widgets"   != "no" && test "$enable_widgets" != "msw" && \
+test "$with_menubars"   = "lucid" && XE_APPEND(xlwmenu.o, lwlib_objs)
+test "$with_menubars"   = "motif" && XE_APPEND(xlwmenu.o, lwlib_objs)
+test "$with_scrollbars" = "lucid" && XE_APPEND(xlwscrollbar.o, lwlib_objs)
+test "$with_widgets"   != "no" && test "$with_widgets" != "msw" && \
 	XE_APPEND(xlwtabs.o xlwgcs.o, lwlib_objs)
-case "$enable_widgets" in athena* )
+case "$with_widgets" in athena* )
 	XE_APPEND(xlwradio.o xlwcheckbox.o xlwgauge.o, lwlib_objs);;
 esac
 case "$all_widgets" in *lucid* )
@@ -4240,46 +4244,56 @@ esac
 
 AC_SUBST(lwlib_objs)
 
-test "$enable_scrollbars" = "athena" && AC_DEFINE(LWLIB_SCROLLBARS_ATHENA)
-test "$enable_dialogs"    = "athena" && AC_DEFINE(LWLIB_DIALOGS_ATHENA)
+test "$with_scrollbars" = "athena" && AC_DEFINE(LWLIB_SCROLLBARS_ATHENA)
+test "$with_dialogs"    = "athena" && AC_DEFINE(LWLIB_DIALOGS_ATHENA)
 
 if test "$athena_3d" = "yes"; then
-  test "$enable_scrollbars" = "athena" && AC_DEFINE(LWLIB_SCROLLBARS_ATHENA3D)
-  test "$enable_dialogs"    = "athena" && AC_DEFINE(LWLIB_DIALOGS_ATHENA3D)
+  test "$with_scrollbars" = "athena" && AC_DEFINE(LWLIB_SCROLLBARS_ATHENA3D)
+  test "$with_dialogs"    = "athena" && AC_DEFINE(LWLIB_DIALOGS_ATHENA3D)
 fi
 
-case "$enable_widgets" in athena* ) AC_DEFINE(LWLIB_WIDGETS_ATHENA);; esac
-test "$enable_widgets" != "no" && test "$enable_widgets" != "msw" && \
+case "$with_widgets" in athena* ) AC_DEFINE(LWLIB_WIDGETS_ATHENA);; esac
+test "$with_widgets" != "no" && test "$with_widgets" != "msw" && \
 	AC_DEFINE(LWLIB_TABS_LUCID)
 
-test "$enable_menubars"   != "no"    && AC_DEFINE(HAVE_MENUBARS)
-test "$enable_scrollbars" != "no"    && AC_DEFINE(HAVE_SCROLLBARS)
-test "$enable_dialogs"    != "no"    && AC_DEFINE(HAVE_DIALOGS)
-test "$enable_toolbars"   != "no"    && AC_DEFINE(HAVE_TOOLBARS)
-test "$enable_widgets"    != "no"    && AC_DEFINE(HAVE_WIDGETS)
+test "$with_menubars"   != "no"    && AC_DEFINE(HAVE_MENUBARS)
+test "$with_scrollbars" != "no"    && AC_DEFINE(HAVE_SCROLLBARS)
+test "$with_dialogs"    != "no"    && AC_DEFINE(HAVE_DIALOGS)
+test "$with_toolbars"   != "no"    && AC_DEFINE(HAVE_TOOLBARS)
+test "$with_widgets"    != "no"    && AC_DEFINE(HAVE_WIDGETS)
 
-test "$enable_menubars"   = "lucid"  && AC_DEFINE(LWLIB_MENUBARS_LUCID)
-test "$enable_scrollbars" = "lucid"  && AC_DEFINE(LWLIB_SCROLLBARS_LUCID)
+test "$with_menubars"   = "lucid"  && AC_DEFINE(LWLIB_MENUBARS_LUCID)
+test "$with_scrollbars" = "lucid"  && AC_DEFINE(LWLIB_SCROLLBARS_LUCID)
 
-test "$enable_menubars"   = "motif"  && AC_DEFINE(LWLIB_MENUBARS_MOTIF)
-test "$enable_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
-test "$enable_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
-test "$enable_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
+test "$with_menubars"   = "motif"  && AC_DEFINE(LWLIB_MENUBARS_MOTIF)
+test "$with_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
+test "$with_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
+test "$with_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
 dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
 
-test -z "$enable_mule" && enable_mule=no
+if test "$with_unicode_internal" = "yes"; then
+  test "$with_mule" = "no" && \
+	USAGE_ERROR("Cannot give \`--with-mule=no' and `--with-unicode-internal=yes'.
+Unicode-internal requires Mule.")
+  test "$with_mule" != "yes" && \
+	AC_MSG_WARN([\`--with-mule' forced to \`yes': Unicode-internal requires Mule.])
+  with_mule=yes
+  AC_DEFINE(UNICODE_INTERNAL)
+fi
 
-dnl if test "$enable_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
+test -z "$with_mule" && with_mule=no
+
+dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
 dnl	echo "Attempt to Build with Mule without Mule/Lisp"
 dnl	echo "Please install the XEmacs/Mule tarball or"
 dnl	echo "rerun configure with --with-mule=no"
 dnl	exit 1
 dnl fi
 
-if test "$enable_default_eol_detection" = "yes"; then
+if test "$with_default_eol_detection" = "yes"; then
   AC_DEFINE(HAVE_DEFAULT_EOL_DETECTION)
 fi
 
@@ -4287,7 +4301,7 @@ dnl initialize _libs variables for possible modules at top level
 canna_libs=
 wnn_libs=
 
-if test "$enable_mule" = "yes" ; then
+if test "$with_mule" = "yes" ; then
   AC_CHECKING([for Mule-related features])
   AC_DEFINE(MULE)
 
@@ -4330,7 +4344,7 @@ if test "$enable_mule" = "yes" ; then
   if test "$with_xfs" = "yes" ; then
     AC_CHECKING([for XFontSet])
     AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
-    if test "$with_xfs" = "yes" && test "$enable_menubars" = "lucid"; then
+    if test "$with_xfs" = "yes" && test "$with_menubars" = "lucid"; then
       AC_DEFINE(USE_XFONTSET)
       if test "$with_xim" = "no" ; then
         XE_ADD_OBJS(input-method-xlib.o)
@@ -4397,7 +4411,7 @@ if test "$enable_mule" = "yes" ; then
   fi
 AC_SUBST(canna_libs)
 
-else dnl "$enable_mule" = "no"
+else dnl "$with_mule" = "no"
   for feature in xim canna wnn; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
       AC_MSG_WARN([--with-${feature} ignored:  Not valid without Mule support])
@@ -4419,7 +4433,7 @@ dnl ----------------------------------------------------------------
 dnl Check for POSIX functions.
 dnl ----------------------------------------------------------------
 
-AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen)
+AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen wcwidth)
 
 dnl getaddrinfo() is borked under hpux11
 if test "$ac_cv_func_getaddrinfo" != "no" ; then
@@ -4794,9 +4808,9 @@ dnl Check for sound of various sorts.
 
 dnl Autodetect native sound
 AC_CHECKING([for sound support])
-test -n "$with_native_sound_lib" && enable_sound_native=yes
+test -n "$with_native_sound_lib" && with_sound_native=yes
 
-if test "$enable_sound_native" != "no"; then
+if test "$with_sound_native" != "no"; then
   dnl Maybe sound is already on include path...
   if test -n "$with_native_sound_lib"; then
     AC_CHECK_HEADER(multimedia/audio_device.h,
@@ -4898,26 +4912,26 @@ if test "$enable_sound_native" != "no"; then
   fi
 
   if test "$sound_found" = "yes"; then
-    enable_sound_native=yes
+    with_sound_native=yes
   else
-    if test "$enable_sound_native" = "yes" ; then
+    if test "$with_sound_native" = "yes" ; then
       AC_MSG_WARN([No native libraries found.  Disabling native sound support.])
     fi
-    enable_sound_native=no     
+    with_sound_native=no     
   fi
 fi
 
-if test "$enable_sound_native" = "yes"; then
+if test "$with_sound_native" = "yes"; then
   AC_DEFINE(HAVE_NATIVE_SOUND)
   test -n "$with_native_sound_lib" && XE_PREPEND($with_native_sound_lib, LIBS)
 fi
 
 dnl NAS Sound support
-if test "$enable_sound_nas" != "no"; then
+if test "$with_sound_nas" != "no"; then
   AC_CHECK_HEADER(audio/audiolib.h, [
     AC_CHECK_LIB(audio, AuOpenServer, have_nas_sound=yes)])
   if test "$have_nas_sound" = "yes"; then
-    enable_sound_nas=yes
+    with_sound_nas=yes
     AC_DEFINE(HAVE_NAS_SOUND)
     XE_ADD_OBJS(nas.o)
     XE_PREPEND(-laudio, libs_x)
@@ -4925,14 +4939,14 @@ if test "$enable_sound_nas" != "no"; then
     dnl then we force safer behavior.
     AC_EGREP_HEADER(AuXtErrorJump,audio/Xtutil.h,,[old_nas=yes; AC_DEFINE(NAS_NO_ERROR_JUMP)])
   else
-    test "$enable_sound_nas" = "yes" && \
+    test "$with_sound_nas" = "yes" && \
       XE_DIE("Required NAS sound support cannot be provided.")
-    enable_sound_nas=no
+    with_sound_nas=no
   fi
 fi
 
 dnl ESD Sound support
-if test "$enable_sound_esd" != "no"; then
+if test "$with_sound_esd" != "no"; then
   AC_CHECK_PROG(have_esd_config, esd-config, yes, no)
   if test "$have_esd_config" = "yes"; then
     save_c_switch_site="$c_switch_site" save_LIBS="$LIBS"
@@ -4944,14 +4958,14 @@ if test "$enable_sound_esd" != "no"; then
   fi
 
   if test "$have_esd_sound" = "yes"; then
-    enable_sound_esd=yes
+    with_sound_esd=yes
     need_miscplay=yes
     XE_ADD_OBJS(esd.o)
     AC_DEFINE(HAVE_ESD_SOUND)
   else
-    test "$enable_sound_esd" = "yes" && \
+    test "$with_sound_esd" = "yes" && \
       XE_DIE("Required ESD sound support cannot be provided.")
-    enable_sound_esd=no
+    with_sound_esd=no
   fi
 fi
 
@@ -5048,45 +5062,45 @@ dnl We do not necessarily have to have libdb/lib(g)dbm for DB/(G)DBM support.
 dnl On FreeBSD, both DB and DBM are part of libc.
 dnl By default, we check for DBM support in libgdbm, then libc, then libdbm.
 
-test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
+test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
   != "no no no" && AC_CHECKING([for database support])
 
 dnl Check for ndbm.h, required for either kind of DBM support.
-if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
+if test "$with_database_gdbm $with_database_dbm" != "no no"; then
   AC_CHECK_HEADER(ndbm.h, [:], [
-    test "$enable_database_gdbm" = "yes" -o \
-         "$enable_database_dbm"  = "yes" && \
+    test "$with_database_gdbm" = "yes" -o \
+         "$with_database_dbm"  = "yes" && \
       XE_DIE("Required DBM support cannot be provided.")
-    enable_database_gdbm=no enable_database_dbm=no])
+    with_database_gdbm=no with_database_dbm=no])
 fi
 
 dnl Check for DBM support in libgdbm.
-if test "$enable_database_gdbm" != "no"; then
+if test "$with_database_gdbm" != "no"; then
   AC_CHECK_LIB(gdbm, dbm_open, [
-   enable_database_gdbm=yes enable_database_dbm=no libdbm=-lgdbm], [
-   if test "$enable_database_gdbm" = "yes"; then
+   with_database_gdbm=yes with_database_dbm=no libdbm=-lgdbm], [
+   if test "$with_database_gdbm" = "yes"; then
      XE_DIE("Required GNU DBM support cannot be provided.")
    fi
-   enable_database_gdbm=no])
+   with_database_gdbm=no])
 fi
 
 dnl Check for DBM support in libc and libdbm.
-if test "$enable_database_dbm" != "no"; then
-  AC_CHECK_FUNC(dbm_open, [enable_database_dbm=yes libdbm=], [
-    AC_CHECK_LIB(dbm, dbm_open, [enable_database_dbm=yes libdbm=-ldbm], [
-      test "$enable_database_dbm" = "yes" && \
+if test "$with_database_dbm" != "no"; then
+  AC_CHECK_FUNC(dbm_open, [with_database_dbm=yes libdbm=], [
+    AC_CHECK_LIB(dbm, dbm_open, [with_database_dbm=yes libdbm=-ldbm], [
+      test "$with_database_dbm" = "yes" && \
         XE_DIE("Required DBM support cannot be provided.")
-      enable_database_dbm=no])])
+      with_database_dbm=no])])
 fi
 
 dnl Tell make about the DBM support we detected.
 test -n "$libdbm" && XE_PREPEND("$libdbm", LIBS)
-test "$enable_database_gdbm" = "yes" -o \
-     "$enable_database_dbm"  = "yes" && \
+test "$with_database_gdbm" = "yes" -o \
+     "$with_database_dbm"  = "yes" && \
   AC_DEFINE(HAVE_DBM)
 
 dnl Check for Berkeley DB.
-if test "$enable_database_berkdb" != "no"; then
+if test "$with_database_berkdb" != "no"; then
   AC_MSG_CHECKING(for Berkeley db.h)
   for header in "db/db.h" "db.h"; do
     AC_TRY_COMPILE([
@@ -5107,11 +5121,11 @@ typedef uint64_t u_int64_t;
 ],[], db_h_file="$header"; break)
   done
   if test -z "$db_h_file"
-  then AC_MSG_RESULT(no); enable_database_berkdb=no
+  then AC_MSG_RESULT(no); with_database_berkdb=no
   else AC_MSG_RESULT($db_h_file)
   fi
 
-  if test "$enable_database_berkdb" != "no"; then
+  if test "$with_database_berkdb" != "no"; then
     AC_MSG_CHECKING(for Berkeley DB version)
     AC_EGREP_CPP(yes,
 [#include <$db_h_file>
@@ -5132,12 +5146,12 @@ yes
     AC_MSG_RESULT(3); dbfunc=db_create; dbver=3])],[
     AC_MSG_RESULT(2); dbfunc=db_open; dbver=2])],[
     AC_MSG_RESULT(1); dbfunc=dbopen; dbver=1])
-    AC_CHECK_FUNC($dbfunc,     enable_database_berkdb=yes need_libdb=no, [
-    AC_CHECK_LIB(db, $dbfunc,  enable_database_berkdb=yes need_libdb=yes)])
+    AC_CHECK_FUNC($dbfunc,     with_database_berkdb=yes need_libdb=no, [
+    AC_CHECK_LIB(db, $dbfunc,  with_database_berkdb=yes need_libdb=yes)])
   fi
 
   dnl Berk db 4.1 decorates public functions with version information
-  if test "$enable_database_berkdb" != "yes" -a "$dbver" = "4"; then
+  if test "$with_database_berkdb" != "yes" -a "$dbver" = "4"; then
     rm -f $tempcname
     echo "#include <$db_h_file>" > $tempcname
     echo "configure___ dbfunc=db_create" >> $tempcname
@@ -5146,18 +5160,18 @@ yes
 	| sed -n -e "s/[[ TAB]]*=[[ TAB\"]]*/='/" -e "s/[[ TAB\"]]*\$/'/" -e "s/^configure___//p"`
     rm -f $tempcname
     AC_MSG_WARN("db_create is really $dbfunc")
-    AC_CHECK_LIB(db, $dbfunc,  enable_database_berkdb=yes need_libdb=yes)
+    AC_CHECK_LIB(db, $dbfunc,  with_database_berkdb=yes need_libdb=yes)
   fi
 
-  if test "$enable_database_berkdb" = "yes"; then
+  if test "$with_database_berkdb" = "yes"; then
     AC_DEFINE_UNQUOTED(DB_H_FILE, "$db_h_file")
     AC_DEFINE(HAVE_BERKELEY_DB)
     test "$need_libdb" = "yes" && XE_PREPEND(-ldb, LIBS)
-  else enable_database_berkdb=no
+  else with_database_berkdb=no
   fi
 fi
 
-if test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
+if test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
      != "no no no"; then
   AC_DEFINE(HAVE_DATABASE)
 fi
@@ -5175,7 +5189,7 @@ if test "$usage_tracking" = "yes"; then
 fi
 
 dnl Enhanced number support
-if test "$enable_bignum" = "gmp"; then
+if test "$with_bignum" = "gmp"; then
   AC_CHECK_HEADER(gmp.h, [
     AC_CHECK_LIB(gmp, __gmpz_init, have_mpz_init=yes)])
   if test "$have_mpz_init" = "yes"; then
@@ -5185,7 +5199,7 @@ if test "$enable_bignum" = "gmp"; then
   else
     XE_DIE("Required GMP numeric support cannot be provided.")
   fi
-elif test "$enable_bignum" = "mp"; then
+elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     AC_CHECK_HEADER(mp.h, [
       AC_CHECK_LIB(mp, mp_mfree, have_mp_mfree=yes; break, [
@@ -5244,7 +5258,7 @@ dnl --------------------------------
 
 dnl We ignore (C|LD)_SWITCH_X_(MACHINE|SYSTEM)
 dnl Use XE_SPACE instead of plain assignment statements to remove extraneous blanks
-if test "$enable_modules" = "yes"; then
+if test "$with_modules" = "yes"; then
   ld_libs_module=
 else
   XE_SPACE(ld_libs_module, $ldap_libs $postgresql_libs $canna_libs)
@@ -5263,7 +5277,7 @@ XE_SPACE(ld_libs_window_system, $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS)
 XE_SPACE(ld_libs_all, $ld_libs_window_system $ld_libs_general $ld_libs_module)
 
 dnl For no-module builds, make the src dir last
-if test "$enable_modules" = "no"; then
+if test "$with_modules" = "no"; then
   XE_APPEND(src, MAKE_SUBDIR)
 fi
 
@@ -5413,7 +5427,7 @@ done
 AC_SUBST(INFOPATH)
 
 if test -z "$with_package_path" && test -n "$with_package_prefix" ; then
-  if test "$enable_mule" = "yes" ; then
+  if test "$with_mule" = "yes" ; then
     with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages:${with_package_prefix}/mule-packages"
   else
     with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages"
@@ -5581,18 +5595,18 @@ elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
-test "$enable_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
-test "$enable_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
-test "$enable_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
-test "$enable_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
+test "$with_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
+test "$with_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
+test "$with_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
+test "$with_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-test "$enable_union_type"  = "yes" && AC_DEFINE(USE_UNION_TYPE)
-test "$enable_pdump"       = "yes" && AC_DEFINE(PDUMP)
-test "$enable_dump_in_exec" = "yes" && AC_DEFINE(DUMP_IN_EXEC)
+test "$with_union_type"  = "yes" && AC_DEFINE(USE_UNION_TYPE)
+test "$with_pdump"       = "yes" && AC_DEFINE(PDUMP)
+test "$with_dump_in_exec" = "yes" && AC_DEFINE(DUMP_IN_EXEC)
 test "$with_ipv6_cname"    = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
 
 
@@ -5675,7 +5689,7 @@ echo "  Relocating allocator for buffers:  $with_rel_alloc"
 echo "  GNU version of malloc:             ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
-    - Consider configuring with --enable-pdump." ;;
+    - Consider configuring with --with-pdump." ;;
 esac
 
 echo "
@@ -5712,35 +5726,35 @@ if test "$need_athena" = "yes"; then
   echo "    - Athena headers location:                    $athena_h_path"
   echo "    - Athena library to link:                     $athena_lib"
 fi
-case "$enable_menubars" in
+case "$with_menubars" in
   gtk   ) echo "  Using GTK menubars."   ;;
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."
           echo "  *WARNING*  The Motif menubar implementation is currently buggy."
           echo "             We recommend using the Lucid menubar instead."
-          echo "             Re-run configure with --enable-menubars='lucid'." ;;
+          echo "             Re-run configure with --with-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
-case "$enable_scrollbars" in
+case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
   lucid  ) echo "  Using Lucid scrollbars."      ;;
   motif  ) echo "  Using Motif scrollbars."      ;;
   athena ) echo "  Using Athena scrollbars."     ;;
      msw ) echo "  Using MS-Windows scrollbars." ;;
 esac
-case "$enable_dialogs" in
+case "$with_dialogs" in
   gtk    ) echo "  Using GTK dialog boxes." ;;
   motif  ) echo "  Using Motif dialog boxes."
            if test "$unexec" = "unexaix.o"; then if test "`uname -v`" = 4 -a "`uname -r`" -ge 3; then
              echo "  *WARNING*  The Motif dialog boxes cause problems on AIX 4.3 and higher."
              echo "             We recommend using the Athena dialog boxes instead."
-             echo "             Install libXaw and re-run configure with --enable-dialogs='athena'."
+             echo "             Install libXaw and re-run configure with --with-dialogs='athena'."
              echo "             Read the PROBLEMS file for more information."
            fi; fi ;;
   athena ) echo "  Using Athena dialog boxes."     ;;
      msw ) echo "  Using MS-Windows dialog boxes." ;;
 esac
-case "$enable_widgets" in
+case "$with_widgets" in
   gtk    ) echo "  Using GTK native widgets."        ;;
   motif  ) echo "  Using Motif native widgets."      ;;
   athena ) echo "  Using Athena native widgets."     ;;
@@ -5791,16 +5805,16 @@ test "$with_xface" = yes && echo "  Compiling in support for X-Face message head
 
 echo "
 Sound:"
-test "$enable_sound_native" = yes && echo "  Compiling in support for sound (native)."
-test "$enable_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
+test "$with_sound_native" = yes && echo "  Compiling in support for sound (native)."
+test "$with_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
 test "$old_nas" = yes && echo "    - NAS library lacks error trapping; will play synchronously."
-test "$enable_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
+test "$with_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
 
 echo "
 Databases:"
-test "$enable_database_berkdb" = yes && echo "  Compiling in support for Berkeley database."
-test "$enable_database_dbm"    = yes && echo "  Compiling in support for DBM."
-test "$enable_database_gdbm"   = yes && echo "  Compiling in support for GNU DBM."
+test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley database."
+test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
+test "$with_database_gdbm"   = yes && echo "  Compiling in support for GNU DBM."
 test "$with_ldap" = yes && echo "  Compiling in support for LDAP."
 if test "$with_postgresql" = yes; then
   echo "  Compiling in support for PostgreSQL."
@@ -5810,7 +5824,11 @@ fi
 
 echo "
 Internationalization:"
-test "$enable_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
+if test "$with_mule" = yes; then
+  echo "  Compiling in support for Mule (multi-lingual Emacs)."
+  test "$with_unicode_internal" = yes && echo "    -  Unicode and UTF-8 will be used internally for text."
+  test "$with_unicode_internal" != yes && echo "    -  The old-Mule format will be used internally for text."
+fi
 test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N input method)."
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."
@@ -5835,10 +5853,10 @@ test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
-test "$enable_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
-test "$enable_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
-test "$enable_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
-if test "$enable_union_type" = yes ; then
+test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
+test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
+if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: This tends to trigger compiler bugs, especially when"
@@ -5848,7 +5866,7 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: More recent versions may be safer, or not."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-if test "$enable_kkcc" = yes ; then
+if test "$with_kkcc" = yes ; then
   echo "  Using the new GC algorithms."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: The new algorithms are experimental. They are enabled by"
@@ -5856,7 +5874,7 @@ if test "$enable_kkcc" = yes ; then
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-if test "$enable_mc_alloc" = yes ; then
+if test "$with_mc_alloc" = yes ; then
   echo "  Using the new allocator."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: The new allocator is experimental. It is enabled by"
@@ -5864,11 +5882,11 @@ if test "$enable_mc_alloc" = yes ; then
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-test "$enable_pdump" = yes && echo "  Using the new portable dumper."
-test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
-test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."
+test "$with_pdump" = yes && echo "  Using the new portable dumper."
+test "$with_dump_in_exec" = yes && echo "  Dumping into executable."
+test "$with_debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
-if test "$enable_error_checking_extents $enable_error_checking_types $enable_error_checking_text $enable_error_checking_gc $enable_error_checking_malloc $enable_error_checking_glyphs $enable_error_checking_byte_code $enable_error_checking_display $enable_error_checking_structures" \
+if test "$with_error_checking_extents $with_error_checking_types $with_error_checking_text $with_error_checking_gc $with_error_checking_malloc $with_error_checking_glyphs $with_error_checking_byte_code $with_error_checking_display $with_error_checking_structures" \
   != "no no no no no no no no no"; then
   echo "  Compiling in support for runtime error checking."
   echo "  WARNING: ---------------------------------------------------------"
@@ -5908,7 +5926,7 @@ for file in $internal_makefile_list; do
   AC_CONFIG_FILES($file)
 done
 AC_CONFIG_FILES(src/paths.h src/xemacs.def.in lib-src/config.values)
-test "$enable_modules" = "yes" && AC_CONFIG_FILES(lib-src/ellcc.h)
+test "$with_modules" = "yes" && AC_CONFIG_FILES(lib-src/ellcc.h)
 
 
 dnl Normally []'s are used for quoting but this will cause problems

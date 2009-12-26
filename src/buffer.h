@@ -33,9 +33,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_buffer_h_
 #define INCLUDED_buffer_h_
 
-#include "casetab.h"
-#include "chartab.h"
-
 /************************************************************************/
 /*                                                                      */
 /*                    definition of Lisp buffer object                  */
@@ -429,7 +426,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     case FORMAT_DEFAULT:						\
       {									\
 	Ibyte *VBB_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!ibyte_first_byte_p (*VBB_ptr))			\
+	while (!ibyte_first_byte_p (*VBB_ptr))				\
 	  VBB_ptr--, (x)--;						\
       }									\
       break;								\
@@ -461,7 +458,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     case FORMAT_DEFAULT:						\
       {									\
 	Ibyte *VBF_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!ibyte_first_byte_p (*VBF_ptr))			\
+	while (!ibyte_first_byte_p (*VBF_ptr))				\
 	  VBF_ptr++, (x)++;						\
       }									\
       break;								\
@@ -839,7 +836,7 @@ BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
 
 /* The character at position POS in buffer. */
 
-#define BYTE_BUF_FETCH_CHAR(buf, pos)					   \
+#define BYTE_BUF_FETCH_CHAR(buf, pos)					\
    itext_ichar_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf), \
 		       wrap_buffer (buf))
 #define BUF_FETCH_CHAR(buf, pos) \
@@ -928,8 +925,8 @@ do									   \
 #define BUF_SIZE(buf) (BUF_Z (buf) - BUF_BEG (buf))
 
 /* Is this buffer narrowed? */
-#define BUF_NARROWED(buf) \
-   ((BYTE_BUF_BEGV (buf) != BYTE_BUF_BEG (buf)) || \
+#define BUF_NARROWED(buf)				\
+   ((BYTE_BUF_BEGV (buf) != BYTE_BUF_BEG (buf)) ||	\
     (BYTE_BUF_ZV   (buf) != BYTE_BUF_Z   (buf)))
 
 /* Modification count */
@@ -951,35 +948,6 @@ POINT_MARKER_P (Lisp_Object marker)
 }
 
 #define BUF_MARKERS(buf) ((buf)->markers)
-
-#ifdef MULE
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_CATEGORY_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->category_table : Vstandard_category_table;
-}
-
-#endif /* MULE */
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_SYNTAX_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->syntax_table : Vstandard_syntax_table;
-}
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->mirror_syntax_table :
-    XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
-}
 
 /* WARNING:
 
@@ -1138,97 +1106,5 @@ void r_alloc_free (unsigned char **);
 #define R_ALLOC_DECLARE(var,data)
 
 #endif /* !REL_ALLOC */
-
-
-/************************************************************************/
-/*                         Case conversion                              */
-/************************************************************************/
-
-/* A "trt" table is a mapping from characters to other characters,
-   typically used to convert between uppercase and lowercase.
-   */
-
-/* The _1 macros are named as such because they assume that you have
-   already guaranteed that the character values are all in the range
-   0 - 255.  Bad lossage will happen otherwise. */
-
-#define MAKE_TRT_TABLE() Fmake_char_table (Qgeneric)
-DECLARE_INLINE_HEADER (
-Ichar
-TRT_TABLE_OF (Lisp_Object table, Ichar ch)
-)
-{
-  Lisp_Object TRT_char;
-  TRT_char = get_char_table (ch, table);
-  if (NILP (TRT_char))
-    return ch;
-  else
-    return XCHAR (TRT_char);
-}
-#define SET_TRT_TABLE_OF(table, ch1, ch2)	\
-  Fput_char_table (make_char (ch1), make_char (ch2), table)
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_CASE_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->case_table : Vstandard_case_table;
-}
-
-/* Macros used below. */
-#define DOWNCASE_TABLE_OF(buf, c)	\
-  TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (BUFFER_CASE_TABLE (buf)), c)
-#define UPCASE_TABLE_OF(buf, c)		\
-  TRT_TABLE_OF (XCASE_TABLE_UPCASE (BUFFER_CASE_TABLE (buf)), c)
-
-/* 1 if CH is upper case.  */
-
-DECLARE_INLINE_HEADER (
-int
-UPPERCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return DOWNCASE_TABLE_OF (buf, ch) != ch;
-}
-
-/* 1 if CH is lower case.  */
-
-DECLARE_INLINE_HEADER (
-int
-LOWERCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return (UPCASE_TABLE_OF   (buf, ch) != ch &&
-	  DOWNCASE_TABLE_OF (buf, ch) == ch);
-}
-
-/* 1 if CH is neither upper nor lower case.  */
-
-DECLARE_INLINE_HEADER (
-int
-NOCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return UPCASE_TABLE_OF (buf, ch) == ch;
-}
-
-/* Upcase a character, or make no change if that cannot be done.  */
-
-DECLARE_INLINE_HEADER (
-Ichar
-UPCASE (struct buffer *buf, Ichar ch)
-)
-{
-  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ? UPCASE_TABLE_OF (buf, ch) : ch;
-}
-
-/* Upcase a character known to be not upper case.  Unused. */
-
-#define UPCASE1(buf, ch) UPCASE_TABLE_OF (buf, ch)
-
-/* Downcase a character, or make no change if that cannot be done. */
-
-#define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
 
 #endif /* INCLUDED_buffer_h_ */

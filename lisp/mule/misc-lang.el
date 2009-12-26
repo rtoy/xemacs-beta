@@ -30,20 +30,6 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registry "MuleIPA"
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		short-name "IPA"
-		long-name "IPA"
-		))
-
 (set-language-info-alist
  "IPA" '((charset . (ipa))
 	 (coding-priority iso-2022-7bit)

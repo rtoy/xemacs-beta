@@ -1,7 +1,7 @@
 ;;; cyril-util.el ---  utilities for Cyrillic scripts -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997  Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2005 Ben Wing.
 
 ;; Keywords: mule, multilingual, Cyrillic
 
@@ -27,16 +27,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-;;;###autoload
-(defun cyrillic-encode-koi8-r-char (char)
-  "Return KOI8-R external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-koi8-r-to-external-code-table))
-
-;;;###autoload
-(defun cyrillic-encode-alternativnyj-char (char)
-  "Return ALTERNATIVNYJ external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-alternativnyj-to-external-code-table))
 
 
 ;; Display 
@@ -76,118 +66,118 @@ If the argument is nil, we return the display table to its standard state."
 
   (if (null cyrillic-language)
       (setq standard-display-table (make-display-table))
-    (aset standard-display-table ?,LP(B  [?a])
-    (aset standard-display-table ?,LQ(B  [?b])
-    (aset standard-display-table ?,LR(B  [?v])
-    (aset standard-display-table ?,LS(B  [?g])
-    (aset standard-display-table ?,LT(B  [?d])
-    (aset standard-display-table ?,LU(B  [?e])
-    (aset standard-display-table ?,Lq(B  [?y?o])
-    (aset standard-display-table ?,LV(B  [?z?h])
-    (aset standard-display-table ?,LW(B  [?z])
-    (aset standard-display-table ?,LX(B  [?i])
-    (aset standard-display-table ?,LY(B  [?j])
-    (aset standard-display-table ?,LZ(B  [?k])
-    (aset standard-display-table ?,L[(B  [?l])
-    (aset standard-display-table ?,L\(B  [?m])
-    (aset standard-display-table ?,L](B  [?n])
-    (aset standard-display-table ?,L^(B  [?o])
-    (aset standard-display-table ?,L_(B  [?p])
-    (aset standard-display-table ?,L`(B  [?r])
-    (aset standard-display-table ?,La(B  [?s])
-    (aset standard-display-table ?,Lb(B  [?t])
-    (aset standard-display-table ?,Lc(B  [?u])
-    (aset standard-display-table ?,Ld(B  [?f])
-    (aset standard-display-table ?,Le(B  [?k?h])
-    (aset standard-display-table ?,Lf(B  [?t?s])
-    (aset standard-display-table ?,Lg(B  [?c?h])
-    (aset standard-display-table ?,Lh(B  [?s?h])
-    (aset standard-display-table ?,Li(B  [?s?c?h])
-    (aset standard-display-table ?,Lj(B  [?~])
-    (aset standard-display-table ?,Lk(B  [?y])
-    (aset standard-display-table ?,Ll(B  [?'])
-    (aset standard-display-table ?,Lm(B  [?e?'])
-    (aset standard-display-table ?,Ln(B  [?y?u])
-    (aset standard-display-table ?,Lo(B  [?y?a])
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd0)  [?a]) ;?,LP(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd1)  [?b]) ;?,LQ(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd2)  [?v]) ;?,LR(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd3)  [?g]) ;?,LS(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd4)  [?d]) ;?,LT(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd5)  [?e]) ;?,LU(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf1)  [?y?o]) ;?,Lq(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd6)  [?z?h]) ;?,LV(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd7)  [?z]) ;?,LW(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd8)  [?i]) ;?,LX(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd9)  [?j]) ;?,LY(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xda)  [?k]) ;?,LZ(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xdb)  [?l]) ;?,L[(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xdc)  [?m]) ;?,L\(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xdd)  [?n]) ;?,L](B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xde)  [?o]) ;?,L^(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xdf)  [?p]) ;?,L_(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe0)  [?r]) ;?,L`(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe1)  [?s]) ;?,La(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe2)  [?t]) ;?,Lb(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe3)  [?u]) ;?,Lc(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe4)  [?f]) ;?,Ld(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe5)  [?k?h]) ;?,Le(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe6)  [?t?s]) ;?,Lf(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe7)  [?c?h]) ;?,Lg(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe8)  [?s?h]) ;?,Lh(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe9)  [?s?c?h]) ;?,Li(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xea)  [?~]) ;?,Lj(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xeb)  [?y]) ;?,Lk(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xec)  [?']) ;?,Ll(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xed)  [?e?']) ;?,Lm(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xee)  [?y?u]) ;?,Ln(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xef)  [?y?a]) ;?,Lo(B
     
-    (aset standard-display-table ?,L0(B  [?A])
-    (aset standard-display-table ?,L1(B  [?B])
-    (aset standard-display-table ?,L2(B  [?V])
-    (aset standard-display-table ?,L3(B  [?G])
-    (aset standard-display-table ?,L4(B  [?D])
-    (aset standard-display-table ?,L5(B  [?E])
-    (aset standard-display-table ?,L!(B  [?Y?o])
-    (aset standard-display-table ?,L6(B  [?Z?h])
-    (aset standard-display-table ?,L7(B  [?Z])
-    (aset standard-display-table ?,L8(B  [?I])
-    (aset standard-display-table ?,L9(B  [?J])
-    (aset standard-display-table ?,L:(B  [?K])
-    (aset standard-display-table ?,L;(B  [?L])
-    (aset standard-display-table ?,L<(B  [?M])
-    (aset standard-display-table ?,L=(B  [?N])
-    (aset standard-display-table ?,L>(B  [?O])
-    (aset standard-display-table ?,L?(B  [?P])
-    (aset standard-display-table ?,L@(B  [?R])
-    (aset standard-display-table ?,LA(B  [?S])
-    (aset standard-display-table ?,LB(B  [?T])
-    (aset standard-display-table ?,LC(B  [?U])
-    (aset standard-display-table ?,LD(B  [?F])
-    (aset standard-display-table ?,LE(B  [?K?h])
-    (aset standard-display-table ?,LF(B  [?T?s])
-    (aset standard-display-table ?,LG(B  [?C?h])
-    (aset standard-display-table ?,LH(B  [?S?h])
-    (aset standard-display-table ?,LI(B  [?S?c?h])
-    (aset standard-display-table ?,LJ(B  [?~])
-    (aset standard-display-table ?,LK(B  [?Y])
-    (aset standard-display-table ?,LL(B  [?'])
-    (aset standard-display-table ?,LM(B  [?E?'])
-    (aset standard-display-table ?,LN(B  [?Y?u])
-    (aset standard-display-table ?,LO(B  [?Y?a])
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb0)  [?A]) ;?,L0(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb1)  [?B]) ;?,L1(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb2)  [?V]) ;?,L2(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb3)  [?G]) ;?,L3(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb4)  [?D]) ;?,L4(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb5)  [?E]) ;?,L5(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa1)  [?Y?o]) ;?,L!(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb6)  [?Z?h]) ;?,L6(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb7)  [?Z]) ;?,L7(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb8)  [?I]) ;?,L8(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb9)  [?J]) ;?,L9(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xba)  [?K]) ;?,L:(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xbb)  [?L]) ;?,L;(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xbc)  [?M]) ;?,L<(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xbd)  [?N]) ;?,L=(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xbe)  [?O]) ;?,L>(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xbf)  [?P]) ;?,L?(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc0)  [?R]) ;?,L@(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc1)  [?S]) ;?,LA(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc2)  [?T]) ;?,LB(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc3)  [?U]) ;?,LC(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc4)  [?F]) ;?,LD(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc5)  [?K?h]) ;?,LE(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc6)  [?T?s]) ;?,LF(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc7)  [?C?h]) ;?,LG(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc8)  [?S?h]) ;?,LH(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc9)  [?S?c?h]) ;?,LI(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xca)  [?~]) ;?,LJ(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xcb)  [?Y]) ;?,LK(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xcc)  [?']) ;?,LL(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xcd)  [?E?']) ;?,LM(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xce)  [?Y?u]) ;?,LN(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xcf)  [?Y?a]) ;?,LO(B
     
-    (aset standard-display-table ?,Lt(B  [?i?e])
-    (aset standard-display-table ?,Lw(B  [?i])
-    (aset standard-display-table ?,L~(B  [?u])
-    (aset standard-display-table ?,Lr(B  [?d?j])
-    (aset standard-display-table ?,L{(B  [?c?h?j])
-    (aset standard-display-table ?,Ls(B  [?g?j])
-    (aset standard-display-table ?,Lu(B  [?s])
-    (aset standard-display-table ?,L|(B  [?k])
-    (aset standard-display-table ?,Lv(B  [?i])
-    (aset standard-display-table ?,Lx(B  [?j])
-    (aset standard-display-table ?,Ly(B  [?l?j])
-    (aset standard-display-table ?,Lz(B  [?n?j])
-    (aset standard-display-table ?,L(B  [?d?z])
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf4)  [?i?e]) ;?,Lt(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf7)  [?i]) ;?,Lw(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xfe)  [?u]) ;?,L~(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf2)  [?d?j]) ;?,Lr(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xfb)  [?c?h?j]) ;?,L{(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf3)  [?g?j]) ;?,Ls(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf5)  [?s]) ;?,Lu(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xfc)  [?k]) ;?,L|(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf6)  [?i]) ;?,Lv(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf8)  [?j]) ;?,Lx(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xf9)  [?l?j]) ;?,Ly(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xfa)  [?n?j]) ;?,Lz(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xff)  [?d?z]) ;?,L(B
     
-    (aset standard-display-table ?,L$(B  [?Y?e])
-    (aset standard-display-table ?,L'(B  [?Y?i])
-    (aset standard-display-table ?,L.(B  [?U])
-    (aset standard-display-table ?,L"(B  [?D?j])
-    (aset standard-display-table ?,L+(B  [?C?h?j])
-    (aset standard-display-table ?,L#(B  [?G?j])
-    (aset standard-display-table ?,L%(B  [?S])
-    (aset standard-display-table ?,L,(B  [?K])
-    (aset standard-display-table ?,L&(B  [?I])
-    (aset standard-display-table ?,L((B  [?J])
-    (aset standard-display-table ?,L)(B  [?L?j])
-    (aset standard-display-table ?,L*(B  [?N?j])
-    (aset standard-display-table ?,L/(B  [?D?j])
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa4)  [?Y?e]) ;?,L$(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa7)  [?Y?i]) ;?,L'(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xae)  [?U]) ;?,L.(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa2)  [?D?j]) ;?,L"(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xab)  [?C?h?j]) ;?,L+(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa3)  [?G?j]) ;?,L#(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa5)  [?S]) ;?,L%(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xac)  [?K]) ;?,L,(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa6)  [?I]) ;?,L&(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa8)  [?J]) ;?,L((B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xa9)  [?L?j]) ;?,L)(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xaa)  [?N?j]) ;?,L*(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xaf)  [?D?j]) ;?,L/(B
     
     (when (equal cyrillic-language "Bulgarian")
-      (aset standard-display-table ?,Li(B [?s?h?t])
-      (aset standard-display-table ?,LI(B [?S?h?t])
-      (aset standard-display-table ?,Ln(B [?i?u])
-      (aset standard-display-table ?,LN(B [?I?u])
-      (aset standard-display-table ?,Lo(B [?i?a])
-      (aset standard-display-table ?,LO(B [?I?a]))
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xe9) [?s?h?t]) ;?,Li(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xc9) [?S?h?t]) ;?,LI(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xee) [?i?u]) ;?,Ln(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xce) [?I?u]) ;?,LN(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xef) [?i?a]) ;?,Lo(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xcf) [?I?a])) ;?,LO(B
     
     (when (equal cyrillic-language "Ukrainian") ; based on the official 
 					; transliteration table
-      (aset standard-display-table ?,LX(B [?y])
-      (aset standard-display-table ?,L8(B [?Y])
-      (aset standard-display-table ?,LY(B [?i])
-      (aset standard-display-table ?,L9(B [?Y])
-    (aset standard-display-table ?,Ln(B [?i?u])
-    (aset standard-display-table ?,Lo(B [?i?a]))))
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd8) [?y]) ;?,LX(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb8) [?Y]) ;?,L8(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xd9) [?i]) ;?,LY(B
+      (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xb9) [?Y]) ;?,L9(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xee) [?i?u]) ;?,Ln(B
+    (aset standard-display-table (make-char 'cyrillic-iso8859-5 #xef) [?i?a])))) ;?,Lo(B
 
 
 ;;

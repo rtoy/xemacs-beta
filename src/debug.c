@@ -207,4 +207,5 @@ reinit_vars_of_debug (void)
 void
 vars_of_debug (void)
 {
+  Fprovide (intern ("debug-xemacs"));
 }

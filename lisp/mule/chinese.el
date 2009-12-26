@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -34,75 +34,18 @@
 (eval-when-compile
   (require 'china-util))
 
-; (make-charset 'chinese-gb2312 
-; 	      "GB2312 Chinese simplified: ISO-IR-58"
-; 	      '(dimension
-; 		2
-; 		registry "GB2312.1980"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?A
-; 		graphic 0
-; 		short-name "GB2312"
-; 		long-name "GB2312: ISO-IR-58"
-; 		))
-
-; (make-charset 'chinese-cns11643-1 
-; 	      "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-1"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?G
-; 		graphic 0
-; 		short-name "CNS11643-1"
-; 		long-name "CNS11643-1 (Chinese traditional): ISO-IR-171"
-; 		))
-
-; (make-charset 'chinese-cns11643-2 
-; 	      "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-2"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?H
-; 		graphic 0
-; 		short-name "CNS11643-2"
-; 		long-name "CNS11643-2 (Chinese traditional): ISO-IR-172"
-; 		))
-
-; (make-charset 'chinese-big5-1 
-; 	      "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
-; 	      '(dimension
-; 		2
-; 		registry "Big5"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?0
-; 		graphic 0
-; 		short-name "Big5 (Level-1)"
-; 		long-name "Big5 (Level-1) A141-C67F"
-; 		))
-
-; (make-charset 'chinese-big5-2 
-; 	      "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
-; 	      '(dimension
-; 		2
-; 		registry "Big5"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Big5 (Level-2)"
-; 		long-name "Big5 (Level-2) C940-FEFE"
-; 		))
+(flet
+    ((frob-chinese-cns11643-charset
+      (name)
+      (modify-syntax-entry   name "w")
+      (modify-category-entry name ?t)
+      ))
+  (frob-chinese-cns11643-charset 'chinese-cns11643-3)
+  (frob-chinese-cns11643-charset 'chinese-cns11643-4)
+  (frob-chinese-cns11643-charset 'chinese-cns11643-5)
+  (frob-chinese-cns11643-charset 'chinese-cns11643-6)
+  (frob-chinese-cns11643-charset 'chinese-cns11643-7)
+)
 
 ;; Syntax of Chinese characters.
 (modify-syntax-entry 'chinese-gb2312 "w")
@@ -115,85 +58,12 @@
 
 (modify-syntax-entry 'chinese-cns11643-1  "w")
 (modify-syntax-entry 'chinese-cns11643-2  "w")
-(modify-syntax-entry 'chinese-big5-1 "w")
-(modify-syntax-entry 'chinese-big5-2 "w")
-
-; ;; Chinese CNS11643 Plane3 thru Plane7.  Although these are official
-; ;; character sets, the use is rare and don't have to be treated
-; ;; space-efficiently in the buffer.
-; (make-charset 'chinese-cns11643-3 
-; 	      "CNS11643 Plane 3 Chinese Traditional: ISO-IR-183"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-3"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?I
-; 		graphic 0
-; 		short-name "CNS11643-3"
-; 		long-name "CNS11643-3 (Chinese traditional): ISO-IR-183"
-; 		))
-
-;; CNS11643 Plane3 thru Plane7
-;; These represent more and more obscure Chinese characters.
-;; By the time you get to Plane 7, we're talking about characters
-;; that appear once in some ancient manuscript and whose meaning
-;; is unknown.
-
-(flet
-    ((make-chinese-cns11643-charset
-      (name plane final)
-      (make-charset
-       name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
-       `(registry 
-         ,(concat "CNS11643[.-]\\(.*[.-]\\)?" plane "$")
-         dimension 2
-         chars 94
-         final ,final
-         graphic 0
-	 short-name ,(concat "CNS11643-" plane)
-	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
-			    plane)))
-      (modify-syntax-entry   name "w")
-      (modify-category-entry name ?t)
-      ))
-  (make-chinese-cns11643-charset 'chinese-cns11643-3 "3" ?I)
-  (make-chinese-cns11643-charset 'chinese-cns11643-4 "4" ?J)
-  (make-chinese-cns11643-charset 'chinese-cns11643-5 "5" ?K)
-  (make-chinese-cns11643-charset 'chinese-cns11643-6 "6" ?L)
-  (make-chinese-cns11643-charset 'chinese-cns11643-7 "7" ?M)
-  )
-
-;; ISO-IR-165 (CCITT Extended GB)
-;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
-;;    GB 8565-88 table A4 + 293 characters.
-(make-charset ;; not in FSF 21.1
- 'chinese-isoir165
- "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
- `(registry "isoir165"
-   dimension 2
-   chars 94
-   final ?E
-   graphic 0
-   short-name "ISO-IR-165"
-   long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
-
-;; PinYin-ZhuYin
-(make-charset 'chinese-sisheng 
-	      "SiSheng characters for PinYin/ZhuYin"
-	      '(dimension
-		1
-		;; XEmacs addition: second half of registry spec
-		registry "sisheng_cwnn\\|OMRON_UDC_ZH"
-		chars 94
-		columns 1
-		direction l2r
-		final ?0
-		graphic 0
-		short-name "SiSheng"
-		long-name "SiSheng (PinYin/ZhuYin)"
-		))
+(if (find-charset 'chinese-big5-1)
+    (progn
+      (modify-syntax-entry 'chinese-big5-1 "w")
+      (modify-syntax-entry 'chinese-big5-2 "w")
+      )
+  (modify-syntax-entry 'chinese-big5 "w"))
 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
@@ -328,7 +198,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 			"chinese-s" "zh"
 			 (lambda (arg)
 			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*.GB.*" arg)))))
+					 (string-match "^zh_.*\\.GB.*" arg)))))
 		(mswindows-locale ("CHINESE" . "CHINESE_SIMPLIFIED"))
 		(native-coding-system cn-gb-2312)
 		(input-method . "chinese-py-punct")
@@ -371,29 +241,33 @@ of a Chinese character\"."))
 
 (define-coding-system-alias 'cn-big5 'big5)
 
-;; Big5 font requires special encoding.
-(define-ccl-program ccl-encode-big5-font
-  `(0
-    ;; In:  R0:chinese-big5-1 or chinese-big5-2
-    ;;      R1:position code 1
-    ;;      R2:position code 2
-    ;; Out: R1:font code point 1
-    ;;      R2:font code point 2
-    ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
-     (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-     (r1 = ((r2 / 157) + ?\xA1))
-     (r2 %= 157)
-     (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
-  "CCL program to encode a Big5 code to code point of Big5 font.")
+(when (featurep 'ccl)
+  ;; Big5 font requires special encoding.
+  (define-ccl-program ccl-encode-big5-font
+    `(0
+      ;; In:  R0:chinese-big5-1 or chinese-big5-2
+      ;;      R1:position code 1
+      ;;      R2:position code 2
+      ;; Out: R1:font code point 1
+      ;;      R2:font code point 2
+      ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
+       (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
+       (r1 = ((r2 / 157) + ?\xA1))
+       (r2 %= 157)
+       (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
+    "CCL program to encode a Big5 code to code point of Big5 font.")
 
-;; (setq font-ccl-encoder-alist
-;;       (cons (cons "big5" ccl-encode-big5-font) font-ccl-encoder-alist))
+  ;; (setq font-ccl-encoder-alist
+  ;;       (cons (cons "big5" ccl-encode-big5-font) font-ccl-encoder-alist))
 
-(set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
-(set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
+  )
 
 (set-language-info-alist
- "Chinese-BIG5" '((charset chinese-big5-1 chinese-big5-2)
+ "Chinese-BIG5" `(,(if (find-charset 'chinese-big5-1)
+		       '(charset chinese-big5-1 chinese-big5-2)
+		     '(charset chinese-big5))
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
 		  (cygwin-locale "zh_TW")

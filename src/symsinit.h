@@ -1,6 +1,6 @@
 /* Various initialization function prototypes.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -140,9 +140,7 @@ void syms_of_keymap (void);
 void syms_of_lread (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
-#ifdef MC_ALLOC
 void syms_of_mc_alloc (void);
-#endif /* MC_ALLOC */
 void syms_of_md5 (void);
 void syms_of_menubar (void);
 void syms_of_menubar_mswindows (void);
@@ -462,6 +460,7 @@ void specifier_vars_of_window (void);
 void complex_vars_of_faces (void);
 void complex_vars_of_mule_charset (void);
 void complex_vars_of_file_coding (void);
+void complex_vars_of_mule_coding (void);
 void complex_vars_of_intl_win32 (void);
 void complex_vars_of_glyphs (void);
 void complex_vars_of_glyphs_x (void);

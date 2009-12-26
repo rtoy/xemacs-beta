@@ -28,63 +28,6 @@
 
 ;;; Code:
 
-; (make-charset 'arabic-iso8859-6 
-; 	      "Right-Hand Part of Latin/Arabic Alphabet (ISO/IEC 8859-6): ISO-IR-127"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-6"
-; 		chars 96
-; 		columns 1
-; 		direction r2l
-; 		final ?G
-; 		graphic 1
-; 		short-name "RHP of ISO8859/6"
-; 		long-name "RHP of Arabic (ISO 8859-6): ISO-IR-127"
-; 		))
-
-;; For Arabic, we need three different types of character sets.
-;; Digits are of direction left-to-right and of width 1-column.
-;; Others are of direction right-to-left and of width 1-column or
-;; 2-column.
-(make-charset 'arabic-digit "Arabic digit"
-	      '(dimension
-		1
-		registry "MuleArabic-0"
-		chars 94
-		columns 1
-		direction l2r
-		final ?2
-		graphic 0
-		short-name "Arabic digit"
-		long-name "Arabic digit"
-		))
-
-(make-charset 'arabic-1-column "Arabic 1-column"
-	      '(dimension
-		1
-		registry "MuleArabic-1"
-		chars 94
-		columns 1
-		direction r2l
-		final ?3
-		graphic 0
-		short-name "Arabic 1-col"
-		long-name "Arabic 1-column"
-		))
-
-(make-charset 'arabic-2-column "Arabic 2-column"
-	      '(dimension
-		1
-		registry "MuleArabic-2"
-		chars 94
-		columns 2
-		direction r2l
-		final ?4
-		graphic 0
-		short-name "Arabic 2-col"
-		long-name "Arabic 2-column"
-		))
-
 (make-coding-system 'iso-8859-6 'iso2022
 		    "ISO-8859-6 (Arabic)"
 		    '(charset-g0 ascii

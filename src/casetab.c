@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 1987, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -60,10 +60,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
 #include "buffer.h"
-#include "opaque.h"
-#include "chartab.h"
 #include "casetab.h"
+#include "opaque.h"
 
 Lisp_Object Qcase_tablep, Qdowncase, Qupcase;
 Lisp_Object Vstandard_case_table;
@@ -90,7 +90,7 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
-    printing_unreadable_object ("#<case-table 0x%x>", ct->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),
@@ -286,44 +286,40 @@ Return a new case table which is a copy of CASE-TABLE
 }
 
 static int
-compute_canon_mapper (struct chartab_range *range,
-		      Lisp_Object UNUSED (table), Lisp_Object val, void *arg)
+compute_canon_mapper (Lisp_Object UNUSED (table), Ichar code, Lisp_Object val,
+		      void * arg)
 {
   Lisp_Object casetab = VOID_TO_LISP (arg);
-  if (range->type == CHARTAB_RANGE_CHAR)
-    SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), range->ch,
-		      TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
-				    TRT_TABLE_OF (XCASE_TABLE_UPCASE (casetab),
-						  XCHAR (val))));
+  SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), code,
+		    TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
+				  TRT_TABLE_OF (XCASE_TABLE_UPCASE (casetab),
+						XCHAR (val))));
 
   return 0;
 }
 
 static int
-initialize_identity_mapper (struct chartab_range *range,
-			    Lisp_Object UNUSED (table),
-			    Lisp_Object UNUSED (val), void *arg)
+initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar code,
+			    Lisp_Object UNUSED (val), void * arg)
 {
   Lisp_Object trt = VOID_TO_LISP (arg);
-  if (range->type == CHARTAB_RANGE_CHAR)
-    SET_TRT_TABLE_OF (trt, range->ch, range->ch);
+  SET_TRT_TABLE_OF (trt, code, code);
   
   return 0;
 }
 
 static int
-compute_up_or_eqv_mapper (struct chartab_range *range,
-			  Lisp_Object UNUSED (table),
-			  Lisp_Object val, void *arg)
+compute_up_or_eqv_mapper (Lisp_Object UNUSED (table), Ichar code,
+			  Lisp_Object val, void * arg)
 {
   Lisp_Object inverse = VOID_TO_LISP (arg);
   Ichar toch = XCHAR (val);
 
-  if (range->type == CHARTAB_RANGE_CHAR && range->ch != toch)
+  if (code != toch)
     {
       Ichar c = TRT_TABLE_OF (inverse, toch);
-      SET_TRT_TABLE_OF (inverse, toch, range->ch);
-      SET_TRT_TABLE_OF (inverse, range->ch, c);
+      SET_TRT_TABLE_OF (inverse, toch, code);
+      SET_TRT_TABLE_OF (inverse, code, c);
     }
   
   return 0;

@@ -818,142 +818,130 @@ dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
 /*			  Fixed-size type macros			*/
 /************************************************************************/
 
-/* For fixed-size types that are commonly used, we malloc() large blocks
-   of memory at a time and subdivide them into chunks of the correct
-   size for an object of that type.  This is more efficient than
-   malloc()ing each object separately because we save on malloc() time
-   and overhead due to the fewer number of malloc()ed blocks, and
-   also because we don't need any extra pointers within each object
-   to keep them threaded together for GC purposes.  For less common
-   (and frequently large-size) types, we use lcrecords, which are
-   malloc()ed individually and chained together through a pointer
-   in the lcrecord header.  lcrecords do not need to be fixed-size
-   (i.e. two objects of the same type need not have the same size;
-   however, the size of a particular object cannot vary dynamically).
+/* For fixed-size types that are commonly used, we malloc() large blocks of
+   memory at a time and subdivide them into chunks of the correct size for
+   an object of that type.  This is more efficient than malloc()ing each
+   object separately because we save on malloc() time and overhead due to
+   the fewer number of malloc()ed blocks, and also because we don't need
+   any extra pointers within each object to keep them threaded together for
+   GC purposes.  For less common (and frequently large-size) types, we use
+   lcrecords, which are malloc()ed individually and chained together
+   through a pointer in the lcrecord header.  lcrecords do not need to be
+   fixed-size (i.e. two objects of the same type need not have the same
+   size; however, the size of a particular object cannot vary dynamically).
    It is also much easier to create a new lcrecord type because no
-   additional code needs to be added to alloc.c.  Finally, lcrecords
-   may be more efficient when there are only a small number of them.
+   additional code needs to be added to alloc.c.  Finally, lcrecords may be
+   more efficient when there are only a small number of them.
 
-   The types that are stored in these large blocks (or "frob blocks")
-   are cons, all number types except fixnum, compiled-function, symbol,
-   marker, extent, event, and string.
+   The types that are stored in these large blocks (or "frob blocks") are
+   cons, all number types except fixnum, compiled-function, symbol, marker,
+   extent, event, sometimes char-subtable, and string.
 
-   Note that strings are special in that they are actually stored in
-   two parts: a structure containing information about the string, and
-   the actual data associated with the string.  The former structure
-   (a struct Lisp_String) is a fixed-size structure and is managed the
-   same way as all the other such types.  This structure contains a
-   pointer to the actual string data, which is stored in structures of
-   type struct string_chars_block.  Each string_chars_block consists
-   of a pointer to a struct Lisp_String, followed by the data for that
-   string, followed by another pointer to a Lisp_String, followed by
-   the data for that string, etc.  At GC time, the data in these
-   blocks is compacted by searching sequentially through all the
-   blocks and compressing out any holes created by unmarked strings.
-   Strings that are more than a certain size (bigger than the size of
-   a string_chars_block, although something like half as big might
-   make more sense) are malloc()ed separately and not stored in
-   string_chars_blocks.  Furthermore, no one string stretches across
-   two string_chars_blocks.
+   Note that strings are special in that they are actually stored in two
+   parts: a structure containing information about the string, and the
+   actual data associated with the string.  The former structure (a struct
+   Lisp_String) is a fixed-size structure and is managed the same way as
+   all the other such types.  This structure contains a pointer to the
+   actual string data, which is stored in structures of type struct
+   string_chars_block.  Each string_chars_block consists of a pointer to a
+   struct Lisp_String, followed by the data for that string, followed by
+   another pointer to a Lisp_String, followed by the data for that string,
+   etc.  At GC time, the data in these blocks is compacted by searching
+   sequentially through all the blocks and compressing out any holes
+   created by unmarked strings.  Strings that are more than a certain size
+   (bigger than the size of a string_chars_block, although something like
+   half as big might make more sense) are malloc()ed separately and not
+   stored in string_chars_blocks.  Furthermore, no one string stretches
+   across two string_chars_blocks.
 
    Vectors are each malloc()ed separately as lcrecords.
 
-   In the following discussion, we use conses, but it applies equally
-   well to the other fixed-size types.
+   In the following discussion, we use conses, but it applies equally well
+   to the other fixed-size types.
 
-   We store cons cells inside of cons_blocks, allocating a new
-   cons_block with malloc() whenever necessary.  Cons cells reclaimed
-   by GC are put on a free list to be reallocated before allocating
-   any new cons cells from the latest cons_block.  Each cons_block is
-   just under 2^n - MALLOC_OVERHEAD bytes long, since malloc (at least
-   the versions in malloc.c and gmalloc.c) really allocates in units
-   of powers of two and uses 4 bytes for its own overhead.
+   We store cons cells inside of cons_blocks, allocating a new cons_block
+   with malloc() whenever necessary.  Cons cells reclaimed by GC are put on
+   a free list to be reallocated before allocating any new cons cells from
+   the latest cons_block.  Each cons_block is just under 2^n -
+   MALLOC_OVERHEAD bytes long, since malloc (at least the versions in
+   malloc.c and gmalloc.c) really allocates in units of powers of two and
+   uses 4 bytes for its own overhead.
 
-   What GC actually does is to search through all the cons_blocks,
-   from the most recently allocated to the oldest, and put all
-   cons cells that are not marked (whether or not they're already
-   free) on a cons_free_list.  The cons_free_list is a stack, and
-   so the cons cells in the oldest-allocated cons_block end up
-   at the head of the stack and are the first to be reallocated.
-   If any cons_block is entirely free, it is freed with free()
-   and its cons cells removed from the cons_free_list.  Because
-   the cons_free_list ends up basically in memory order, we have
-   a high locality of reference (assuming a reasonable turnover
-   of allocating and freeing) and have a reasonable probability
-   of entirely freeing up cons_blocks that have been more recently
-   allocated.  This stage is called the "sweep stage" of GC, and
-   is executed after the "mark stage", which involves starting
-   from all places that are known to point to in-use Lisp objects
-   (e.g. the obarray, where are all symbols are stored; the
-   current catches and condition-cases; the backtrace list of
-   currently executing functions; the gcpro list; etc.) and
-   recursively marking all objects that are accessible.
+   What GC actually does is to search through all the cons_blocks, from the
+   most recently allocated to the oldest, and put all cons cells that are
+   not marked (whether or not they're already free) on a cons_free_list.
+   The cons_free_list is a stack, and so the cons cells in the
+   oldest-allocated cons_block end up at the head of the stack and are the
+   first to be reallocated.  If any cons_block is entirely free, it is
+   freed with free() and its cons cells removed from the cons_free_list.
+   Because the cons_free_list ends up basically in memory order, we have a
+   high locality of reference (assuming a reasonable turnover of allocating
+   and freeing) and have a reasonable probability of entirely freeing up
+   cons_blocks that have been more recently allocated.  This stage is
+   called the "sweep stage" of GC, and is executed after the "mark stage",
+   which involves starting from all places that are known to point to
+   in-use Lisp objects (e.g. the obarray, where are all symbols are stored;
+   the current catches and condition-cases; the backtrace list of currently
+   executing functions; the gcpro list; etc.) and recursively marking all
+   objects that are accessible.
 
-   At the beginning of the sweep stage, the conses in the cons blocks
-   are in one of three states: in use and marked, in use but not
-   marked, and not in use (already freed).  Any conses that are marked
-   have been marked in the mark stage just executed, because as part
-   of the sweep stage we unmark any marked objects.  The way we tell
-   whether or not a cons cell is in use is through the LRECORD_FREE_P
-   macro.  This uses a special lrecord type `lrecord_type_free',
-   which is never associated with any valid object.
+   At the beginning of the sweep stage, the conses in the cons blocks are
+   in one of three states: in use and marked, in use but not marked, and
+   not in use (already freed).  Any conses that are marked have been marked
+   in the mark stage just executed, because as part of the sweep stage we
+   unmark any marked objects.  The way we tell whether or not a cons cell
+   is in use is through the LRECORD_FREE_P macro.  This uses a special
+   lrecord type `lrecord_type_free', which is never associated with any
+   valid object.
 
-   Conses on the free_cons_list are threaded through a pointer stored
-   in the conses themselves.  Because the cons is still in a
-   cons_block and needs to remain marked as not in use for the next
-   time that GC happens, we need room to store both the "free"
-   indicator and the chaining pointer.  So this pointer is stored
-   after the lrecord header (actually where C places a pointer after
-   the lrecord header; they are not necessarily contiguous).  This
-   implies that all fixed-size types must be big enough to contain at
-   least one pointer.  This is true for all current fixed-size types,
-   with the possible exception of Lisp_Floats, for which we define the
-   meat of the struct using a union of a pointer and a double to
-   ensure adequate space for the free list chain pointer.
+   Conses on the free_cons_list are threaded through a pointer stored in
+   the conses themselves.  Because the cons is still in a cons_block and
+   needs to remain marked as not in use for the next time that GC happens,
+   we need room to store both the "free" indicator and the chaining
+   pointer.  So this pointer is stored after the lrecord header (actually
+   where C places a pointer after the lrecord header; they are not
+   necessarily contiguous).  This implies that all fixed-size types must be
+   big enough to contain at least one pointer.  This is true for all
+   current fixed-size types, with the possible exception of Lisp_Floats,
+   for which we define the meat of the struct using a union of a pointer
+   and a double to ensure adequate space for the free list chain pointer.
 
-   Some types of objects need additional "finalization" done
-   when an object is converted from in use to not in use;
-   this is the purpose of the ADDITIONAL_FREE_type macro.
-   For example, markers need to be removed from the chain
-   of markers that is kept in each buffer.  This is because
-   markers in a buffer automatically disappear if the marker
-   is no longer referenced anywhere (the same does not
-   apply to extents, however).
+   Some types of objects need additional "finalization" done when an object
+   is converted from in use to not in use; this is the purpose of the
+   ADDITIONAL_FREE_type macro.  For example, markers need to be removed
+   from the chain of markers that is kept in each buffer.  This is because
+   markers in a buffer automatically disappear if the marker is no longer
+   referenced anywhere (the same does not apply to extents, however).
 
-   WARNING: Things are in an extremely bizarre state when
-   the ADDITIONAL_FREE_type macros are called, so beware!
+   WARNING: Things are in an extremely bizarre state when the
+   ADDITIONAL_FREE_type macros are called, so beware!
 
    When ERROR_CHECK_GC is defined, we do things differently so as to
    maximize our chances of catching places where there is insufficient
-   GCPROing.  The thing we want to avoid is having an object that
-   we're using but didn't GCPRO get freed by GC and then reallocated
-   while we're in the process of using it -- this will result in
-   something seemingly unrelated getting trashed, and is extremely
-   difficult to track down.  If the object gets freed but not
-   reallocated, we can usually catch this because we set most of the
-   bytes of a freed object to 0xDEADBEEF. (The lisp object type is set
-   to the invalid type `lrecord_type_free', however, and a pointer
-   used to chain freed objects together is stored after the lrecord
-   header; we play some tricks with this pointer to make it more
-   bogus, so crashes are more likely to occur right away.)
+   GCPROing.  The thing we want to avoid is having an object that we're
+   using but didn't GCPRO get freed by GC and then reallocated while we're
+   in the process of using it -- this will result in something seemingly
+   unrelated getting trashed, and is extremely difficult to track down.  If
+   the object gets freed but not reallocated, we can usually catch this
+   because we set most of the bytes of a freed object to 0xDEADBEEF. (The
+   lisp object type is set to the invalid type `lrecord_type_free',
+   however, and a pointer used to chain freed objects together is stored
+   after the lrecord header; we play some tricks with this pointer to make
+   it more bogus, so crashes are more likely to occur right away.)
 
-   We want freed objects to stay free as long as possible,
-   so instead of doing what we do above, we maintain the
-   free objects in a first-in first-out queue.  We also
-   don't recompute the free list each GC, unlike above;
-   this ensures that the queue ordering is preserved.
-   [This means that we are likely to have worse locality
-   of reference, and that we can never free a frob block
-   once it's allocated. (Even if we know that all cells
-   in it are free, there's no easy way to remove all those
-   cells from the free list because the objects on the
-   free list are unlikely to be in memory order.)]
-   Furthermore, we never take objects off the free list
-   unless there's a large number (usually 1000, but
-   varies depending on type) of them already on the list.
-   This way, we ensure that an object that gets freed will
-   remain free for the next 1000 (or whatever) times that
-   an object of that type is allocated.  */
+   We want freed objects to stay free as long as possible, so instead of
+   doing what we do above, we maintain the free objects in a first-in
+   first-out queue.  We also don't recompute the free list each GC, unlike
+   above; this ensures that the queue ordering is preserved.  [This means
+   that we are likely to have worse locality of reference, and that we can
+   never free a frob block once it's allocated. (Even if we know that all
+   cells in it are free, there's no easy way to remove all those cells from
+   the free list because the objects on the free list are unlikely to be in
+   memory order.)]  Furthermore, we never take objects off the free list
+   unless there's a large number (usually 1000, but varies depending on
+   type) of them already on the list.  This way, we ensure that an object
+   that gets freed will remain free for the next 1000 (or whatever) times
+   that an object of that type is allocated. --ben */
 
 #ifndef MALLOC_OVERHEAD
 #ifdef GNU_MALLOC
@@ -1245,11 +1233,13 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     mark_cons, print_cons, 0,
 				     cons_equal,
 				     /*
-				      * No `hash' method needed.
-				      * internal_hash knows how to
-				      * handle conses.
+				      * No `hash' method needed since
+				      * internal_hash_1 knows how to
+				      * handle conses, but there's an
+				      * early shortcut in internal_hash
+				      * so we need to put something here.
 				      */
-				     0,
+				     internal_hash_1,
 				     cons_description,
 				     Lisp_Cons);
 
@@ -2302,6 +2292,15 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						1, /*dumpable-flag*/
 						mark_string, print_string,
 						0, string_equal, 0,
+						/*
+						 * No `hash' method needed
+						 * since internal_hash_1
+						 * knows how to handle
+						 * strings, but there's an
+						 * early shortcut in
+						 * internal_hash so we need
+						 * to put something here.
+						 */
 						string_description,
 						string_getprop,
 						string_putprop,
@@ -3357,17 +3356,6 @@ mcpro (Lisp_Object varaddress)
 #else
 #define GC_CHECK_LHEADER_INVARIANTS(lheader)
 #endif
-
-
-static const struct memory_description lisp_object_description_1[] = {
-  { XD_LISP_OBJECT, 0 },
-  { XD_END }
-};
-
-const struct sized_memory_description lisp_object_description = {
-  sizeof (Lisp_Object),
-  lisp_object_description_1
-};
 
 #if defined (USE_KKCC) || defined (PDUMP)
 
@@ -4525,6 +4513,7 @@ sweep_events (void)
 
   SWEEP_FIXED_TYPE_BLOCK (event, Lisp_Event);
 }
+
 #endif /* not MC_ALLOC */
 
 #ifdef EVENT_DATA_AS_OBJECTS
@@ -5221,6 +5210,7 @@ garbage_collect_1 (void)
       || preparing_for_armageddon)
     return;
 
+  stderr_out ("Entering GC\n");
   PROFILE_RECORD_ENTERING_SECTION (QSin_garbage_collection);
 
   /* We used to call selected_frame() here.
@@ -5339,26 +5329,21 @@ garbage_collect_1 (void)
 #endif /* USE_KKCC */
 
   { /* staticpro() */
-    Lisp_Object **p = Dynarr_begin (staticpros);
+    Lisp_Object **p = Dynarr_firstp (staticpros);
     Elemcount count;
     for (count = Dynarr_length (staticpros); count; count--)
       mark_object (**p++);
   }
 
   { /* staticpro_nodump() */
-    Lisp_Object **p = Dynarr_begin (staticpros_nodump);
+    Lisp_Object **p = Dynarr_firstp (staticpros_nodump);
     Elemcount count;
     for (count = Dynarr_length (staticpros_nodump); count; count--)
       mark_object (**p++);
   }
 
 #ifdef MC_ALLOC
-  { /* mcpro () */
-    Lisp_Object *p = Dynarr_begin (mcpros);
-    Elemcount count;
-    for (count = Dynarr_length (mcpros); count; count--)
-      mark_object (*p++);
-  }
+  mark_Lisp_Object_dynarr (mcpros);
 #endif /* MC_ALLOC */
 
   { /* GCPRO() */
@@ -5517,6 +5502,7 @@ garbage_collect_1 (void)
   funcall_allocation_flag = 1;
 
   PROFILE_RECORD_EXITING_SECTION (QSin_garbage_collection);
+  stderr_out ("Exiting GC\n");
 
   return;
 }
@@ -5587,7 +5573,7 @@ object_memory_usage_stats (int set_total_gc_usage)
   EMACS_INT s = 0;							\
   struct type##_block *x = current_##type##_block;			\
   while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
-  tgu_val += s;							\
+  tgu_val += s;								\
   (pl) = gc_plist_hack ((name), s, (pl));				\
 } while (0)
 
@@ -5626,32 +5612,34 @@ object_memory_usage_stats (int set_total_gc_usage)
         }
     }
 
-  HACK_O_MATIC (extent, "extent-storage", pl);
-  pl = gc_plist_hack ("extents-free", gc_count_num_extent_freelist, pl);
-  pl = gc_plist_hack ("extents-used", gc_count_num_extent_in_use, pl);
-  HACK_O_MATIC (event, "event-storage", pl);
-  pl = gc_plist_hack ("events-free", gc_count_num_event_freelist, pl);
-  pl = gc_plist_hack ("events-used", gc_count_num_event_in_use, pl);
-  HACK_O_MATIC (marker, "marker-storage", pl);
-  pl = gc_plist_hack ("markers-free", gc_count_num_marker_freelist, pl);
-  pl = gc_plist_hack ("markers-used", gc_count_num_marker_in_use, pl);
-  HACK_O_MATIC (float, "float-storage", pl);
-  pl = gc_plist_hack ("floats-free", gc_count_num_float_freelist, pl);
-  pl = gc_plist_hack ("floats-used", gc_count_num_float_in_use, pl);
+#define FROB(ty, strty)							\
+  HACK_O_MATIC (ty, strty "-storage", pl);				\
+  pl = gc_plist_hack (strty "s-free", gc_count_num_##ty##_freelist, pl); \
+  pl = gc_plist_hack (strty "s-used", gc_count_num_##ty##_in_use, pl)
+
+  FROB (extent, "extent");
+  FROB (event, "event");
+#ifdef EVENT_DATA_AS_OBJECTS
+  FROB (key_data, "key-data");
+  FROB (button_data, "button-data");
+  FROB (motion_data, "motion-data");
+  FROB (process_data, "process-data");
+  FROB (timeout_data, "timeout-data");
+  FROB (magic_data, "magic-data");
+  FROB (magic_eval_data, "magic-eval-data");
+  FROB (eval_data, "eval-data");
+  FROB (misc_user_data, "misc-user-data");
+#endif /* EVENT_DATA_AS_OBJECTS */
+  FROB (marker, "marker");
+  FROB (float, "float");
 #ifdef HAVE_BIGNUM
-  HACK_O_MATIC (bignum, "bignum-storage", pl);
-  pl = gc_plist_hack ("bignums-free", gc_count_num_bignum_freelist, pl);
-  pl = gc_plist_hack ("bignums-used", gc_count_num_bignum_in_use, pl);
+  FROB (bignum, "bignum");
 #endif /* HAVE_BIGNUM */
 #ifdef HAVE_RATIO
-  HACK_O_MATIC (ratio, "ratio-storage", pl);
-  pl = gc_plist_hack ("ratios-free", gc_count_num_ratio_freelist, pl);
-  pl = gc_plist_hack ("ratios-used", gc_count_num_ratio_in_use, pl);
+  FROB (ratio, "ratio");
 #endif /* HAVE_RATIO */
 #ifdef HAVE_BIGFLOAT
-  HACK_O_MATIC (bigfloat, "bigfloat-storage", pl);
-  pl = gc_plist_hack ("bigfloats-free", gc_count_num_bigfloat_freelist, pl);
-  pl = gc_plist_hack ("bigfloats-used", gc_count_num_bigfloat_in_use, pl);
+  FROB (bigfloat, "bigfloat");
 #endif /* HAVE_BIGFLOAT */
   HACK_O_MATIC (string, "string-header-storage", pl);
   pl = gc_plist_hack ("long-strings-total-length",
@@ -5667,20 +5655,13 @@ object_memory_usage_stats (int set_total_gc_usage)
   pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
 
-  HACK_O_MATIC (compiled_function, "compiled-function-storage", pl);
-  pl = gc_plist_hack ("compiled-functions-free",
-		      gc_count_num_compiled_function_freelist, pl);
-  pl = gc_plist_hack ("compiled-functions-used",
-		      gc_count_num_compiled_function_in_use, pl);
-
-  HACK_O_MATIC (symbol, "symbol-storage", pl);
-  pl = gc_plist_hack ("symbols-free", gc_count_num_symbol_freelist, pl);
-  pl = gc_plist_hack ("symbols-used", gc_count_num_symbol_in_use, pl);
-
+  FROB (compiled_function, "compiled-function");
+  FROB (symbol, "symbol");
   HACK_O_MATIC (cons, "cons-storage", pl);
   pl = gc_plist_hack ("conses-free", gc_count_num_cons_freelist, pl);
   pl = gc_plist_hack ("conses-used", gc_count_num_cons_in_use, pl);
 
+#undef FROB
 #undef HACK_O_MATIC
 
 #endif /* MC_ALLOC */

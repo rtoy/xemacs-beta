@@ -97,11 +97,13 @@ separate_textual_runs (textual_run **run_storage_ptr,
   if (len == 0)
     return 0;
 
-  prev_charset = ichar_charset (str[0]);
+  /* @@#### fix me */
+  prev_charset = ichar_charset_obsolete_me_baby_please (str[0]);
 
   for (i = 1; i <= len; i++)
     {
-      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
+      if (i == len || !EQ (ichar_charset_obsolete_me_baby_please (str[i]),
+			   prev_charset))
 	{
 	  int j;
 	  Ibyte *int_storage =
@@ -132,7 +134,7 @@ separate_textual_runs (textual_run **run_storage_ptr,
 	  runs_so_far++;
 	  runbegin = i;
 	  if (i < len)
-	    prev_charset = ichar_charset (str[i]);
+	    prev_charset = ichar_charset_obsolete_me_baby_please (str[i]);
 	}
     }
 
@@ -930,7 +932,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
   xpos = rb->xpos;
   width = 0;
   if (rb->type == RUNE_CHAR)
-    charset = ichar_charset (rb->object.chr.ch);
+    /* @@#### fix me */
+    charset = ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -942,7 +945,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  /* @@#### fix me */
+	  && EQ (charset,
+		 ichar_charset_obsolete_me_baby_please (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -964,7 +969,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      /* @@#### fix me */
+	      charset =
+		ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

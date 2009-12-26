@@ -470,15 +470,6 @@ Lisp_Object Qpaste_function;
 static Lisp_Object canonicalize_extent_property (Lisp_Object prop,
 						 Lisp_Object value);
 
-typedef struct
-{
-  Lisp_Object key, value;
-} Lisp_Object_pair;
-typedef struct
-{
-  Dynarr_declare (Lisp_Object_pair);
-} Lisp_Object_pair_dynarr;
-
 static void extent_properties (EXTENT e, Lisp_Object_pair_dynarr *props);
 
 Lisp_Object Vextent_face_memoize_hash_table;
@@ -1044,9 +1035,9 @@ static const struct memory_description lispobj_gap_array_description_1[] = {
   { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
     { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
   { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
-    { &lisp_object_description } },
+    { &Lisp_Object_description } },
   { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
-    XD_INDIRECT (2, 0), { &lisp_object_description } },
+    XD_INDIRECT (2, 0), { &Lisp_Object_description } },
   { XD_END }
 };
 

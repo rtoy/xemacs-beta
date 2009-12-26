@@ -1,4 +1,4 @@
-;;; mule-ccl.el --- CCL (Code Conversion Language) compiler -*- coding: iso-2022-7bit; -*-
+;;; mule-ccl.el --- CCL (Code Conversion Language) compiler
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -268,7 +268,6 @@
 ;; the current loop.
 (defvar ccl-breaks nil)
 
-;;;###autoload
 (defun ccl-compile (ccl-program)
   "Return a compiled code of CCL-PROGRAM as a vector of integer."
   (if (or (null (consp ccl-program))
@@ -906,7 +905,6 @@
 ;; To avoid byte-compiler warning.
 (defvar ccl-code)
 
-;;;###autoload
 (defun ccl-dump (ccl-code)
   "Disassemble compiled CCL-CODE."
   (let ((len (length ccl-code))
@@ -1223,7 +1221,6 @@
 
 ;; Auto-loaded functions.
 
-;;;###autoload
 (defmacro declare-ccl-program (name &optional vector)
   "Declare NAME as a name of CCL program.
 
@@ -1236,7 +1233,6 @@ execution.
 Optional arg VECTOR is a compiled CCL code of the CCL program."
   `(put ',name 'ccl-program-idx (register-ccl-program ',name ,vector)))
 
-;;;###autoload
 (defmacro define-ccl-program (name ccl-program &optional doc)
   "Set NAME to be the compiled CCL code of CCL-PROGRAM.
 
@@ -1452,7 +1448,6 @@ INT-OR-CHAR := integer | character
      (put ',name 'ccl-program-idx (register-ccl-program ',name prog))
      nil))
 
-;;;###autoload
 (defmacro check-ccl-program (ccl-program &optional name)
   "Check validity of CCL-PROGRAM.
 If CCL-PROGRAM is a symbol denoting a CCL program, return
@@ -1466,7 +1461,6 @@ register CCL-PROGRAM by name NAME, and return NAME."
 	     ,name)
 	 ,ccl-program)))
 
-;;;###autoload
 (defun ccl-execute-with-args (ccl-prog &rest args)
   "Execute CCL-PROGRAM with registers initialized by the remaining args.
 The return value is a vector of resulting CCL registers.
@@ -1481,7 +1475,5 @@ See the documentation of `define-ccl-program' for the detail of CCL program."
       (setq args (cdr args) i (1+ i)))
     (ccl-execute ccl-prog reg)
     reg))
-
-(provide 'ccl)
 
 ;; ccl.el ends here

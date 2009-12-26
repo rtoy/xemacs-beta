@@ -378,7 +378,7 @@ internal_self_insert (Ichar c1, int noautofill)
   int tab_width;
 
   overwrite = buf->overwrite_mode;
-  syntax_table = buf->mirror_syntax_table;
+  syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
 
 #if 0
   /* No, this is very bad, it makes undo *always* undo a character at a time
@@ -552,6 +552,6 @@ A char-table for characters which invoke auto-filling.
 Such characters have value t in this table.
 */);
   Vauto_fill_chars = Fmake_char_table (Qgeneric);
-  XCHAR_TABLE (Vauto_fill_chars)->ascii[' '] = Qt;
-  XCHAR_TABLE (Vauto_fill_chars)->ascii['\n'] = Qt;
+  put_char_table_1 (Vauto_fill_chars, ' ', Qt);
+  put_char_table_1 (Vauto_fill_chars, '\n', Qt);
 }

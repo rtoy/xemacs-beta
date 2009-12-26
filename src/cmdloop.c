@@ -1,6 +1,6 @@
 /* Editor command loop.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -137,6 +137,13 @@ You should almost certainly not be using this.
   stderr_out ("*** Backtrace\n");
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("*** Killing XEmacs\n");
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_on_error))
+    {
+      stderr_out ("XEmacs exiting to debugger.\n");
+      Fforce_debugging_signal (Qt);
+    }
+#endif
 #ifdef HAVE_MS_WINDOWS
   Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);

@@ -1,7 +1,7 @@
 /* String search routines for XEmacs.
    Copyright (C) 1985, 1986, 1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,17 +30,14 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "insdel.h"
 #include "opaque.h"
+#include "regex.h"
 #ifdef REGION_CACHE_NEEDS_WORK
 #include "region-cache.h"
 #endif
 #include "syntax.h"
-
-#include <sys/types.h>
-#include "regex.h"
-#include "casetab.h"
-#include "chartab.h"
 
 #define TRANSLATE(table, pos)	\
  (!NILP (table) ? TRT_TABLE_OF (table, (Ichar) pos) : pos)
@@ -54,7 +51,7 @@ struct regexp_cache
   struct regexp_cache *next;
   Lisp_Object regexp;
   struct re_pattern_buffer buf;
-  char fastmap[0400];
+  char fastmap[256];
   /* Nonzero means regexp was compiled to do full POSIX backtracking.  */
   char posix;
 };
@@ -131,7 +128,8 @@ static Charbpos simple_search (struct buffer *buf, Ibyte *base_pat,
 static Charbpos boyer_moore (struct buffer *buf, Ibyte *base_pat,
 			     Bytecount len, Bytebpos pos, Bytebpos lim,
 			     EMACS_INT n, Lisp_Object trt,
-			     Lisp_Object inverse_trt, int charset_base);
+			     Lisp_Object inverse_trt, Ibyte *char_base,
+                             int char_base_len);
 static Charbpos search_buffer (struct buffer *buf, Lisp_Object str,
 			       Charbpos charbpos, Charbpos buflim, EMACS_INT n,
 			       int RE, Lisp_Object trt,
@@ -818,7 +816,7 @@ byte_find_next_ichar_in_string (Lisp_Object str, Ichar target, Bytecount st,
      directly.  For other characters, we do it the "hard" way.
      Note that this way works for all characters but the other
      way is faster. */
-  if (target >= 0200)
+  if (target >= 128)
     {
       while (st < lim && count > 0)
 	{
@@ -871,7 +869,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   REGISTER Ichar c;
   /* We store the first 256 chars in an array here and the rest in
      a range table. */
-  unsigned char fastmap[0400];
+  unsigned char fastmap[256];
   int negate = 0;
   REGISTER int i;
   Charbpos limit;
@@ -912,7 +910,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       INC_IBYTEPTR (p);
       if (syntaxp)
 	{
-	  if (c < 0400 && syntax_spec_code[c] < (unsigned char) Smax)
+	  if (c < 256 && syntax_spec_code[c] < (unsigned char) Smax)
 	    fastmap[c] = 1;
 	  else
 	    invalid_argument ("Invalid syntax designator", make_char (c));
@@ -933,7 +931,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      p++;
 	      if (p == pend) break;
 	      cend = itext_ichar (p);
-	      while (c <= cend && c < 0400)
+	      while (c <= cend && c < 256)
 		{
 		  fastmap[c] = 1;
 		  c++;
@@ -945,7 +943,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    }
 	  else
 	    {
-	      if (c < 0400)
+	      if (c < 256)
 		fastmap[c] = 1;
 	      else
 		Fput_range_table (make_int (c), make_int (c), Qt,
@@ -1018,7 +1016,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    while (pos < limit)
 	      {
 		Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
-		if ((ch < 0400) ? fastmap[ch] :
+		if ((ch < 256) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
@@ -1040,7 +1038,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
 		DEC_BYTEBPOS (buf, prev_pos_byte);
 		ch = BYTE_BUF_FETCH_CHAR (buf, prev_pos_byte);
-		if ((ch < 0400) ? fastmap[ch] :
+		if ((ch < 256) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
@@ -1338,7 +1336,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
     }
   else				/* non-RE case */
     {
-      int charset_base = -1;
+      int char_base_len = -1;
+      Ibyte char_base[MAX_ICHAR_LEN];
       int boyer_moore_ok = 1;
       Ibyte *pat = 0;
       Ibyte *patbuf = alloca_ibytes (len * MAX_ICHAR_LEN);
@@ -1364,21 +1363,35 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  inverse = TRANSLATE (inverse_trt, c);
 
 	  orig_bytelen = itext_ichar_len (base_pat);
-	  inv_bytelen = set_itext_ichar (tmp_str, inverse);
+	  inv_bytelen = ichar_len (inverse);
 	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
 	  if (new_bytelen != orig_bytelen || inv_bytelen != orig_bytelen)
 	    boyer_moore_ok = 0;
 	  if (translated != c || inverse != c)
 	    {
-	      /* Keep track of which character set row
-		 contains the characters that need translation.  */
-	      int charset_base_code = c & ~ICHAR_FIELD3_MASK;
-	      if (charset_base == -1)
-		charset_base = charset_base_code;
-	      else if (charset_base != charset_base_code)
-		/* If two different rows appear, needing translation,
-		   then we cannot use boyer_moore search.  */
+	      /* Track the original character in string char representation
+		 (minus final byte); we will compare it against each other
+		 character (again minus final byte), to see if they're the
+		 same. */
+	      if (char_base_len == -1)
+		{
+		  char_base_len = orig_bytelen;
+		  if (char_base_len > 1)
+		    memcpy (char_base, base_pat, char_base_len - 1);
+		}
+	      else if (char_base_len != orig_bytelen ||
+		       /* Are two strings different? When we have only a
+			  single byte to compare, don't try calling memcmp()
+			  with zero size, to just the zero-size strings are
+			  the same */
+		       (char_base_len > 1 ?
+			memcmp (char_base, base_pat, char_base_len - 1) : 0))
+		/* If two different characters appear, needing translation
+		   but differing in one of the non-final bytes, then we
+		   cannot use boyer_moore search. #### Either explain why
+		   it's not possible or not worth it to extend Boyer-moore to
+		   eliminate this restriction, or go ahead and eliminate it. */
 		boyer_moore_ok = 0;
 	    }
 	  memcpy (pat, tmp_str, new_bytelen);
@@ -1404,7 +1417,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
       pat = base_pat = patbuf;
       if (boyer_moore_ok)
 	return boyer_moore (buf, base_pat, len, pos, lim, n,
-			    trt, inverse_trt, charset_base);
+			    trt, inverse_trt, char_base, char_base_len);
       else
 	return simple_search (buf, base_pat, len, pos, lim, n, trt);
     }
@@ -1545,7 +1558,8 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 static Charbpos
 boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	     Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt,
-	     Lisp_Object inverse_trt, int USED_IF_MULE (charset_base))
+	     Lisp_Object inverse_trt, Ibyte *USED_IF_MULE (char_base),
+	     int USED_IF_MULE (char_base_len))
 {
   /* &&#### needs some 8-bit work here */
   /* #### Someone really really really needs to comment the workings
@@ -1586,14 +1600,14 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   REGISTER EMACS_INT i, j;
   Ibyte *pat, *pat_end;
   REGISTER Ibyte *cursor, *p_limit, *ptr2;
-  Ibyte simple_translate[0400];
+  Ibyte simple_translate[256];
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
-  Ibyte translate_prev_byte = 0;
-  Ibyte translate_anteprev_byte = 0;
+  Ibyte translate_prev[MAX_ICHAR_LEN];
+  Ibyte translate_prev_num = 0;
 #endif
 #ifdef C_ALLOCA
-  EMACS_INT BM_tab_space[0400];
+  EMACS_INT BM_tab_space[256];
   BM_tab = &BM_tab_space[0];
 #else
   BM_tab = alloca_array (EMACS_INT, 256);
@@ -1635,7 +1649,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   if (direction < 0)
     base_pat = pat_end - 1;
   BM_tab_base = BM_tab;
-  BM_tab += 0400;
+  BM_tab += 256;
   j = dirlen;		/* to get it in a register */
   /* A character that does not appear in the pattern induces a
      stride equal to the pattern length. */
@@ -1647,10 +1661,10 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
       *--BM_tab = j;
     }
   /* We use this for translation, instead of TRT itself.  We
-     fill this in to handle the characters that actually occur
+     fill this in to handle the bytes that actually occur
      in the pattern.  Others don't matter anyway!  */
   xzero (simple_translate);
-  for (i = 0; i < 0400; i++)
+  for (i = 0; i < 256; i++)
     simple_translate[i] = (Ibyte) i;
   i = 0;
 
@@ -1663,7 +1677,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
       if (!NILP (trt))
 	{
 #ifdef MULE
-	  Ichar ch, untranslated;
+	  Ichar ch;
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
@@ -1672,16 +1686,24 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      Ibyte *charstart = ptr;
 	      while (!ibyte_first_byte_p (*charstart))
 		charstart--;
-	      untranslated = itext_ichar (charstart);
-	      if (charset_base == (untranslated & ~ICHAR_FIELD3_MASK))
+
+	      if (char_base_len != itext_ichar_len (charstart) ||
+		  /* Are two strings different? When we have only a
+		     single byte to compare, don't try calling memcmp()
+		     with zero size, to just the zero-size strings are
+		     the same */
+		  (char_base_len > 1 ?
+		   memcmp (char_base, charstart, char_base_len - 1) : 0))
 		{
+		  Ibyte *ptr2 = ptr;
+		  Ichar untranslated = itext_ichar (charstart);
 		  ch = TRANSLATE (trt, untranslated);
-		  if (!ibyte_first_byte_p (*ptr))
-		    {
-		      translate_prev_byte = ptr[-1];
-		      if (!ibyte_first_byte_p (translate_prev_byte))
-			translate_anteprev_byte = ptr[-2];
-		    }
+		  /* We set everything to zero.  Since we use translate_prev
+		     only for storing parts of multi-byte characters, there
+		     won't be any zero's in them. */
+		  xzero (translate_prev);
+		  while (!ibyte_first_byte_p (*ptr2))
+		    translate_prev[translate_prev_num++] = *--ptr2;
 		}
 	      else
 		{
@@ -1694,8 +1716,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      ch = *ptr;
 	      this_translated = 0;
 	    }
-	  if (ch > 0400)
-	    j = ((unsigned char) ch | 0200);
+	  if (ch > 256)
+	    j = ((unsigned char) ch | 128);
 	  else
 	    j = (unsigned char) ch;
 	      
@@ -1711,8 +1733,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      while (1)
 		{
 		  ch = TRANSLATE (inverse_trt, ch);
-		  if (ch > 0400)
-		    j = ((unsigned char) ch | 0200);
+		  if (ch > 256)
+		    j = ((unsigned char) ch | 128);
 		  else
 		    j = (unsigned char) ch;
 
@@ -1845,15 +1867,29 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		  while ((i -= direction) + direction != 0)
 		    {
 #ifdef MULE
+		      int dotrans;
 		      Ichar ch;
 		      cursor -= direction;
 		      /* Translate only the last byte of a character.  */
-		      if ((cursor == tail_end_ptr
-			   || ibyte_first_byte_p (cursor[1]))
-			  && (ibyte_first_byte_p (cursor[0])
-			      || (translate_prev_byte == cursor[-1]
-				  && (ibyte_first_byte_p (translate_prev_byte)
-				      || translate_anteprev_byte == cursor[-2]))))
+		      dotrans = (cursor == tail_end_ptr
+				 || ibyte_first_byte_p (cursor[1]));
+		      if (dotrans)
+			{
+			  int i = 0;
+			  Ibyte *curs2 = cursor;
+			  while (1)
+			    {
+			      if (ibyte_first_byte_p (*curs2))
+				break;
+			      if (translate_prev[i++] != *--curs2)
+				{
+				  dotrans = 0;
+				  break;
+				}
+			    }
+			}
+
+		      if (dotrans)
 			ch = simple_translate[*cursor];
 		      else
 			ch = *cursor;
@@ -1934,16 +1970,28 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 #ifdef MULE
 		  Ichar ch;
 		  Ibyte *ptr;
-#endif
+		  int dotrans;
+
 		  pos -= direction;
-#ifdef MULE
 		  ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos);
-		  if ((ptr == tail_end_ptr
-		       || ibyte_first_byte_p (ptr[1]))
-		      && (ibyte_first_byte_p (ptr[0])
-			  || (translate_prev_byte == ptr[-1]
-			      && (ibyte_first_byte_p (translate_prev_byte)
-				  || translate_anteprev_byte == ptr[-2]))))
+		  dotrans = (ptr == tail_end_ptr
+			     || ibyte_first_byte_p (ptr[1]));
+		  if (dotrans)
+		    {
+		      int i = 0;
+		      Ibyte *ptr2 = ptr;
+		      while (1)
+			{
+			  if (ibyte_first_byte_p (*ptr2))
+			    break;
+			  if (translate_prev[i++] != *--ptr2)
+			    {
+			      dotrans = 0;
+			      break;
+			    }
+			}
+		    }
+		  if (dotrans)
 		    ch = simple_translate[*ptr];
 		  else
 		    ch = *ptr;
@@ -1951,6 +1999,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		    break;
 		      
 #else
+		  pos -= direction;
 		  if (pat[i] !=
 		      TRANSLATE (trt,
 				 *BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos)))
@@ -2037,7 +2086,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   Charcount i, len;
   EMACS_INT punct_count = 0, word_count = 0;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Object syntax_table = buf->mirror_syntax_table;
+  Lisp_Object syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
 
   CHECK_STRING (string);
   len = string_char_length (string);
@@ -2459,7 +2508,7 @@ rare.)
       buf = XBUFFER (buffer);
     }
 
-  syntax_table = buf->mirror_syntax_table;
+  syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
 
   case_action = nochange;	/* We tried an initialization */
 				/* but some C compilers blew it */

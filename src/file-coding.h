@@ -2,7 +2,7 @@
    #### rename me to coding-system.h
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -230,7 +230,8 @@ enum coding_system_variant
   ccl_coding_system,
   shift_jis_coding_system,
   big5_coding_system,
-  unicode_coding_system
+  unicode_coding_system,
+  mbcs_coding_system
 };
 
 struct coding_system_methods
@@ -640,6 +641,11 @@ do {								\
 
 #define MAX_BYTES_PROCESSED_FOR_DETECTION 65536
 
+/* ~~#### Must be a Lisp object because some detection states need a pointer
+   back to the stream in which this detection is operating. (Maybe just move
+   the stream up and make it a general property?  That way we could avoid,
+   for the moment, at least, any need to have mark methods for the various
+   detector parts). */
 struct detection_state
 {
   int seen_non_ascii;
@@ -892,14 +898,19 @@ struct coding_stream
      data. */
   unsigned_char_dynarr *convert_from;
 
-  /* If set, this is the last chunk of data being processed.  When this is
-     finished, output any necessary terminating control characters, escape
-     sequences, etc. */
-  unsigned int eof:1;
-  
-  /* CH holds a partially built-up character.  This is really part of the
-     state-dependent data and should be moved there. */
-  unsigned int ch;
+  /* Hold a partially built-up character.  This is in some respects part
+     of the state-dependent data, but it is used in all coding methods. */
+  Ibyte partial[MAX_ICHAR_LEN];
+
+  /* Index into partially built-up character. */
+  int pind;
+
+  /* Number of bytes remaining to be built up in partially built-up char. */
+  int pind_remaining;
+
+  /* CH holds a partially built-up character, or -1 for none.  This is
+     really part of the state-dependent data and should be moved there. */
+  int ch;
 
   /* Coding-system-specific data holding extra state about the
      conversion.  Logically a struct TYPE_coding_stream; a pointer
@@ -913,6 +924,11 @@ struct coding_stream
   void *data;
 
   enum encode_decode direction;
+
+  /* If set, this is the last chunk of data being processed.  When this is
+     finished, output any necessary terminating control characters, escape
+     sequences, etc. */
+  unsigned int eof:1;
 
   /* If set, don't close the stream at the other end when being closed. */
   unsigned int no_close_other:1;
@@ -938,49 +954,17 @@ struct coding_stream
   ((struct type##_coding_stream *) (s)->data)
 #endif
 
-/* C should be a binary character in the range 0 - 255; convert
-   to internal format and add to Dynarr DST. */
-
-#ifdef MULE
-
-#define DECODE_ADD_BINARY_CHAR(c, dst)			\
-do {							\
-  if (byte_ascii_p (c))					\
-    Dynarr_add (dst, c);				\
-  else if (byte_c1_p (c))				\
-    {							\
-      Dynarr_add (dst, LEADING_BYTE_CONTROL_1);		\
-      Dynarr_add (dst, c + 0x20);			\
-    }							\
-  else							\
-    {							\
-      Dynarr_add (dst, LEADING_BYTE_LATIN_ISO8859_1);	\
-      Dynarr_add (dst, c);				\
-    }							\
-} while (0)
-
-#else /* not MULE */
-
-#define DECODE_ADD_BINARY_CHAR(c, dst)		\
+#define DECODE_OUTPUT_PARTIAL_CHAR(str, dst)	\
 do {						\
-  Dynarr_add (dst, c);				\
-} while (0)
-
-#endif /* MULE */
-
-#define DECODE_OUTPUT_PARTIAL_CHAR(ch, dst)	\
-do {						\
-  if (ch)					\
+  if (str->eof && str->ch >= 0)			\
     {						\
-      DECODE_ADD_BINARY_CHAR (ch, dst);		\
-      ch = 0;					\
+      DECODE_ADD_BINARY_CHAR (str->ch, dst);	\
+      str->ch = -1;				\
     }						\
 } while (0)
 
 #ifdef MULE
-/* Convert shift-JIS code (sj1, sj2) into internal string
-   representation (c1, c2). (The leading byte is assumed.) */
-
+/* Convert shift-JIS code (sj1, sj2) into JISX0208 position codes (c1, c2). */
 #define DECODE_SHIFT_JIS(sj1, sj2, c1, c2)		\
 do {							\
   int I1 = sj1, I2 = sj2;				\
@@ -990,15 +974,15 @@ do {							\
   else							\
     c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe1 : 0x61),	\
     c2 = I2 + ((I2 >= 0x7f) ? 0x60 : 0x61);		\
+  c1 -= 0x80; c2 -= 0x80;				\
 } while (0)
 
-/* Convert the internal string representation of a Shift-JIS character
-   (c1, c2) into Shift-JIS code (sj1, sj2).  The leading byte is
-   assumed. */
+/* Convert the JISX0208 position codes (c1, c2) into Shift-JIS code
+   (sj1, sj2). */
 
 #define ENCODE_SHIFT_JIS(c1, c2, sj1, sj2)		\
 do {							\
-  int I1 = c1, I2 = c2;					\
+  int I1 = c1 + 0x80, I2 = c2 + 0x80;			\
   if (I1 & 1)						\
     sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x31 : 0x71),	\
     sj2 = I2 - ((I2 >= 0xe0) ? 0x60 : 0x61);		\
@@ -1007,6 +991,24 @@ do {							\
     sj2 = I2 - 2;					\
 } while (0)
 #endif /* MULE */
+
+/* Copy the byte C in string representation into the accumulated partial
+   character in coding_stream STR. */
+#define COPY_PARTIAL_CHAR_BYTE(c, str)				\
+do {								\
+  if (ibyte_first_byte_p (c))					\
+    {								\
+      str->partial[0] = c;					\
+      str->pind = 1;						\
+      str->pind_remaining = rep_bytes_by_first_byte (c) - 1;	\
+    }								\
+  else								\
+    {								\
+      str->partial[str->pind++] = c;				\
+      str->pind_remaining--;					\
+    }								\
+ }                                                              \
+while (0)
 
 DECLARE_CODING_SYSTEM_TYPE (no_conversion);
 DECLARE_CODING_SYSTEM_TYPE (convert_eol);
@@ -1021,8 +1023,11 @@ DECLARE_CODING_SYSTEM_TYPE (internal);
 #endif
 
 #ifdef MULE
+DECLARE_CODING_SYSTEM_TYPE (mbcs);
 DECLARE_CODING_SYSTEM_TYPE (iso2022);
+#ifdef HAVE_CCL
 DECLARE_CODING_SYSTEM_TYPE (ccl);
+#endif /* HAVE_CCL */
 DECLARE_CODING_SYSTEM_TYPE (shift_jis);
 DECLARE_CODING_SYSTEM_TYPE (big5);
 #endif
@@ -1043,7 +1048,8 @@ Lisp_Object coding_stream_coding_system (Lstream *stream);
 void set_coding_stream_coding_system (Lstream *stream,
 				      Lisp_Object codesys);
 Lisp_Object detect_coding_stream (Lisp_Object stream);
-Ichar decode_big5_char (int o1, int o2);
+void big5_char_to_fake_codepoint (int b1, int b2, Lisp_Object *charset,
+				  int *c1, int *c2);
 void add_entry_to_coding_system_type_list (struct coding_system_methods *m);
 Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Ascbyte *prefix,

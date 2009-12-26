@@ -229,7 +229,7 @@ The descriptions are inserted in a buffer, which is then displayed."
     (terpri)))
 
 (defconst predefined-category-list
-  '((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
+  `((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
     (latin-iso8859-2	?l)
     (latin-iso8859-3	?l)
     (latin-iso8859-4	?l)
@@ -246,8 +246,10 @@ The descriptions are inserted in a buffer, which is then displayed."
     (chinese-gb2312	?c "Chinese GB (China, PRC) 2-byte character set")
     (chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
     (chinese-cns11643-2	?t)
-    (chinese-big5-1	?t)
-    (chinese-big5-2	?t)
+    ,@(if (find-charset 'chinese-big5-1)
+	  '((chinese-big5-1	?t)
+	    (chinese-big5-2	?t))
+	'((chinese-big5	?t)))
     (korean-ksc5601	?h "Hangul (Korean) 2-byte character set")
     )
   "List of predefined categories.

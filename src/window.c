@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -150,32 +150,23 @@ do {						\
 
 
 
-static const struct memory_description int_description_1[] = {
-  { XD_END }
-};
-
-static const struct sized_memory_description int_description = {
-  sizeof (int),
-  int_description_1
-};
-
-static const struct memory_description int_dynarr_description_1[] = {
-  XD_DYNARR_DESC (int_dynarr, &int_description),
-  { XD_END }
-};
-
-static const struct sized_memory_description int_dynarr_description = {
-  sizeof (int_dynarr),
-  int_dynarr_description_1
-};
-
 static const struct memory_description face_cachel_description_1[] = {
-  { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces),
+  /* #### Hack; look inside of the Stynarr structs */
+  { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces.els),
     1, { &int_dynarr_description } },
+  { XD_BLOCK_PTR, offsetof (face_cachel, font_specified.els),
+    1, { &unsigned_char_dynarr_description } },
+  { XD_BLOCK_PTR, offsetof (face_cachel, font_updated.els),
+    1, { &unsigned_char_dynarr_description } },
+  /* Even if the whole static part isn't filled, this is OK, because those
+     values will be set to Qzero */
+  { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font),
+    countof (((struct face_cachel *) 0)->font.els_static) },
+  { XD_BLOCK_PTR, offsetof (face_cachel, font.els),
+    1, { &Lisp_Object_pair_dynarr_description } },
   { XD_LISP_OBJECT, offsetof (face_cachel, face) },
   { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background) },
-  { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font), NUM_LEADING_BYTES },
   { XD_LISP_OBJECT, offsetof (face_cachel, display_table) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background_pixmap) },
   { XD_END }
@@ -269,7 +260,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_c_string (printcharfun, "#<window");
   if (!NILP (XWINDOW (obj)->buffer))
@@ -298,11 +289,10 @@ finalize_window (void *header, int UNUSED (for_disksave))
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
 	  struct face_cachel *cachel = Dynarr_atp (w->face_cachels, i);
-	  if (cachel->merged_faces)
-	    {
-	      Dynarr_free (cachel->merged_faces);
-	      cachel->merged_faces = 0;
-	    }
+	  Stynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->font);
+	  Stynarr_free (cachel->font_specified);
+	  Stynarr_free (cachel->font_updated);
 	}
       Dynarr_free (w->face_cachels);
       w->face_cachels = 0;
@@ -4145,7 +4135,7 @@ window_displayed_height (struct window *w)
 	    ypos1 = WINDOW_TEXT_TOP (w);
 	  else
 	    {
-	      dl = Dynarr_atp (dla, Dynarr_length (dla) - 1);
+	      dl = Dynarr_lastp (dla);
 	      /* If this line is clipped then we know that there is no
                  blank room between eob and the modeline.  If we are
                  scrolling on clipped lines just know off the clipped
@@ -4167,7 +4157,7 @@ window_displayed_height (struct window *w)
 	num_lines--;
 
       if (scroll_on_clipped_lines
-	  && Dynarr_atp (dla, Dynarr_length (dla) - 1)->clip)
+	  && Dynarr_lastp (dla)->clip)
 	num_lines--;
     }
 

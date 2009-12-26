@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1683,8 +1683,8 @@ read_escape (Lisp_Object readcharfun)
     {
     case 'a': return '\007';
     case 'b': return '\b';
-    case 'd': return 0177;
-    case 'e': return 033;
+    case 'd': return 0x7F;
+    case 'e': return 0x1B;
     case 'f': return '\f';
     case 'n': return '\n';
     case 'r': return '\r';
@@ -1703,7 +1703,7 @@ read_escape (Lisp_Object readcharfun)
 	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c == '\\')
 	c = read_escape (readcharfun);
-      return c | 0200;
+      return c | 0x80;
 
       /* Originally, FSF_KEYS provided a degree of FSF Emacs
 	 compatibility by defining character "modifiers" alt, super,
@@ -1736,9 +1736,9 @@ read_escape (Lisp_Object readcharfun)
       /* FSFmacs junk for non-ASCII controls.
 	 Not used here. */
       if (c == '?')
-	return 0177;
+	return 0x7F;
       else
-        return c & (0200 | 037);
+        return c & (0x80 | 0x1F);
 
     case '0':
     case '1':
@@ -1762,21 +1762,22 @@ read_escape (Lisp_Object readcharfun)
 		break;
 	      }
 	  }
-	if (i >= 0400)
+	if (i >= 256)
 	  syntax_error ("Attempt to create non-ASCII/ISO-8859-1 character",
 			make_int (i));
 	return i;
       }
 
     case 'x':
-      /* A hex escape, as in ANSI C, except that we only allow latin-1
+      /* [[ A hex escape, as in ANSI C, except that we only allow latin-1
 	 characters to be read this way.  What is "\x4e03" supposed to
 	 mean, anyways, if the internal representation is hidden?
-         This is also consistent with the treatment of octal escapes. */
+         This is also consistent with the treatment of octal escapes.]]
+
+         If someone really wants to, let them. --ben */
       {
 	REGISTER Ichar i = 0;
-	REGISTER int count = 0;
-	while (++count <= 2)
+	while (1)
 	  {
 	    c = readchar (readcharfun);
 	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
@@ -1789,12 +1790,51 @@ read_escape (Lisp_Object readcharfun)
 		break;
 	      }
 	  }
+	if (!valid_ichar_p (i))
+	  {
+	    syntax_error ("Attempt to read invalid hex character",
+			  emacs_sprintf_string ("#x%X", i));
+	  }
+
 	return i;
       }
 
 #ifdef MULE
-      /* #### need some way of reading an extended character with
-	 an escape sequence. */
+    case 'U':
+    case 'u':
+      /* A four-digit Unicode character. */
+      {
+	REGISTER EMACS_INT i = 0;
+	REGISTER int count;
+	int capu = c == 'U';
+	for (count = 0; count < (capu ? 8 : 4); count++)
+	  {
+	    c = readchar (readcharfun);
+	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
+	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
+	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
+            else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
+	    else
+	      {
+		syntax_error (capu ? "Invalid character in \\U... spec" :
+			      "Invalid character in \\u... spec",
+			      make_char (c));
+	      }
+	  }
+	{
+	  Ichar ch;
+
+	  if (!valid_unicode_codepoint_p (i))
+	    syntax_error ("Invalid Unicode codepoint",
+			  emacs_sprintf_string ("#x%lX", i));
+
+	  ch = unicode_to_ichar (i, get_unicode_precedence (), CONVERR_FAIL);
+	  if (ch < 0)
+	    syntax_error ("Unicode character can't be converted to a charset",
+			  emacs_sprintf_string ("#x%lX", i));
+	  return ch;
+	}
+      }
 #endif
 
     default:
@@ -1814,7 +1854,7 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
 
   *saw_a_backslash = 0;
 
-  while (c > 040	/* #### - comma should be here as should backquote */
+  while (c > ' '	/* #### - comma should be here as should backquote */
          && !(c == '\"' || c == '\'' || c == ';'
               || c == '(' || c == ')'
               || c == '[' || c == ']' || c == '#'
@@ -2062,8 +2102,7 @@ define_structure_type (Lisp_Object type,
   st.instantiate = instantiate;
   Dynarr_add (the_structure_type_dynarr, st);
 
-  return Dynarr_atp (the_structure_type_dynarr,
-		     Dynarr_length (the_structure_type_dynarr) - 1);
+  return Dynarr_lastp (the_structure_type_dynarr);
 }
 
 void
@@ -2203,7 +2242,7 @@ reader_nextchar (Lisp_Object readcharfun)
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return c;
       }
@@ -2656,7 +2695,7 @@ retry:
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return read_atom (readcharfun, c, 0);
       }

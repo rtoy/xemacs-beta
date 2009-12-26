@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2005 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "device-impl.h"
 #include "elhash.h"
 #include "extents-impl.h" /* for extent_face */
@@ -567,6 +568,13 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				       domain, errb, no_fallback, depth);
   if (UNBOUNDP (retval))
     {
+      /* Do the "second stage"; used under Windows.  This call to
+	 specifier_instance_no_quit(), and the previous one, will end up
+	 calling font_instantiate() if the property in a question is a font
+	 (currently, this means EQ (property, Qfont), because only the
+	 face property named `font' contains a font object).  See the
+	 comments there. */
+
       if (CONSP (matchspec))
 	  Fsetcdr (matchspec, Qt);
       retval = specifier_instance_no_quit (Fget (face, property, Qnil),
@@ -1044,13 +1052,6 @@ mark_face_cachels (face_cachel_dynarr *elements)
     {
       struct face_cachel *cachel = Dynarr_atp (elements, elt);
 
-      {
-	int i;
-
-	for (i = 0; i < NUM_LEADING_BYTES; i++)
-	  if (!NILP (cachel->font[i]) && !UNBOUNDP (cachel->font[i]))
-	    mark_object (cachel->font[i]);
-      }
       mark_object (cachel->face);
       mark_object (cachel->foreground);
       mark_object (cachel->background);
@@ -1069,11 +1070,12 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
   Lisp_Object new_val;
   Lisp_Object face = cachel->face;
   int bound = 1;
-  int offs = XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE;
+  int offs = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
 
-  if (!UNBOUNDP (cachel->font[offs])
-      && cachel->font_updated[offs])
-    return cachel->font[offs];
+
+  if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value)
+      && Stynarr_at (cachel->font_updated, offs))
+    return Stynarr_at (cachel->font, offs).value;
 
   if (UNBOUNDP (face))
     {
@@ -1082,38 +1084,44 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
       struct window *w = XWINDOW (domain);
 
       new_val = Qunbound;
-      cachel->font_specified[offs] = 0;
-      for (i = 0; i < cachel->nfaces; i++)
+      Stynarr_at (cachel->font_specified, offs) = 0;
+      for (i = 0; i < Stynarr_length (cachel->merged_faces); i++)
 	{
-	  struct face_cachel *oth;
+	  struct face_cachel *oth =
+	    Dynarr_atp (w->face_cachels,
+			FACE_CACHEL_FINDEX_UNSAFE (cachel, i));
+	  int off2;
 
-	  oth = Dynarr_atp (w->face_cachels,
-			    FACE_CACHEL_FINDEX_UNSAFE (cachel, i));
 	  /* Tout le monde aime la recursion */
 	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  off2 = FACE_CACHEL_OFFSET_ENSURE (oth, charset);
 
-	  if (oth->font_specified[offs])
+	  if (Stynarr_at (oth->font_specified, off2))
 	    {
-	      new_val = oth->font[offs];
-	      cachel->font_specified[offs] = 1;
+	      new_val = Stynarr_at (oth->font, off2).value;
+	      Stynarr_at (cachel->font_specified, offs) = 1;
 	      break;
 	    }
 	}
 
-      if (!cachel->font_specified[offs])
+      if (!Stynarr_at (cachel->font_specified, offs))
 	/* need to do the default face. */
 	{
 	  struct face_cachel *oth =
 	    Dynarr_atp (w->face_cachels, DEFAULT_INDEX);
-	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  int off2;
 
-	  new_val = oth->font[offs];
+	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  off2 = FACE_CACHEL_OFFSET_ENSURE (oth, charset);
+
+	  new_val = Stynarr_at (oth->font, off2).value;
 	}
 
-      if (!UNBOUNDP (cachel->font[offs]) && !EQ (cachel->font[offs], new_val))
+      if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value) &&
+	  !EQ (Stynarr_at (cachel->font, offs).value, new_val))
 	cachel->dirty = 1;
-      cachel->font_updated[offs] = 1;
-      cachel->font[offs] = new_val;
+      Stynarr_at (cachel->font_updated, offs) = 1;
+      Stynarr_at (cachel->font, offs).value = new_val;
       return new_val;
     }
 
@@ -1130,63 +1138,71 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 						 ERROR_ME_DEBUG_WARN, 0,
 						 Qzero);
     }
-  if (!UNBOUNDP (cachel->font[offs]) && !EQ (new_val, cachel->font[offs]))
+  if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value) &&
+      !EQ (new_val, Stynarr_at (cachel->font, offs).value))
     cachel->dirty = 1;
-  cachel->font_updated[offs] = 1;
-  cachel->font[offs] = new_val;
-  cachel->font_specified[offs] = (bound || EQ (face, Vdefault_face));
+  Stynarr_at (cachel->font_updated, offs) = 1;
+  Stynarr_at (cachel->font, offs).value = new_val;
+  Stynarr_at (cachel->font_specified, offs) =
+    (bound || EQ (face, Vdefault_face));
   return new_val;
 }
 
+static Lisp_Object_dynarr *face_charset_dynarr;
+
 /* Ensure that the given cachel contains updated fonts for all
-   the charsets specified. */
+   the given characters. */
 
 void
 ensure_face_cachel_complete (struct face_cachel *cachel,
-			     Lisp_Object domain, unsigned char *charsets)
+			     Lisp_Object domain, Ichar *ptr,
+			     Charcount len)
 {
   int i;
 
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (charsets[i])
-      {
-	Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
-	assert (CHARSETP (charset));
-	ensure_face_cachel_contains_charset (cachel, domain, charset);
-      }
+  if (!face_charset_dynarr)
+    face_charset_dynarr = Dynarr_new (Lisp_Object);
+  Dynarr_reset (face_charset_dynarr);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
+    ensure_face_cachel_contains_charset (cachel, domain,
+					 Dynarr_at (face_charset_dynarr, i));
 }
 
 void
-face_cachel_charset_font_metric_info (struct face_cachel *cachel,
-				      unsigned char *charsets,
-				      struct font_metric_info *fm)
+face_cachel_char_font_metric_info (struct face_cachel *cachel,
+				   Lisp_Object domain,
+				   Ichar *ptr, Charcount len,
+				   struct font_metric_info *fm)
 {
   int i;
+
+  ensure_face_cachel_complete (cachel, domain, ptr, len);
 
   fm->width = 1;
   fm->height = fm->ascent = 1;
   fm->descent = 0;
   fm->proportional_p = 0;
 
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
+  if (!face_charset_dynarr)
+    face_charset_dynarr = Dynarr_new (Lisp_Object);
+  Dynarr_reset (face_charset_dynarr);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {
-      if (charsets[i])
-	{
-	  Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
-	  Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
-	  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
+      Lisp_Object charset = Dynarr_at (face_charset_dynarr, i);
+      Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
+      Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
 
-	  assert (CHARSETP (charset));
-	  assert (FONT_INSTANCEP (font_instance));
+      assert (FONT_INSTANCEP (font_instance));
 
-	  if (fm->ascent  < (int) fi->ascent)  fm->ascent  = (int) fi->ascent;
-	  if (fm->descent < (int) fi->descent) fm->descent = (int) fi->descent;
-	  fm->height = fm->ascent + fm->descent;
-	  if (fi->proportional_p)
-	    fm->proportional_p = 1;
-	  if (EQ (charset, Vcharset_ascii))
-	    fm->width = fi->width;
-	}
+      if (fm->ascent  < (int) fi->ascent)  fm->ascent  = (int) fi->ascent;
+      if (fm->descent < (int) fi->descent) fm->descent = (int) fi->descent;
+      fm->height = fm->ascent + fm->descent;
+      if (fi->proportional_p)
+	fm->proportional_p = 1;
+      if (EQ (charset, Vcharset_ascii))
+	fm->width = fi->width;
     }
 }
 
@@ -1251,8 +1267,7 @@ add_face_cachel (struct window *w, Lisp_Object face)
   if (must_finish_frobbing)
     {
       int default_face = EQ (face, Vdefault_face);
-      struct face_cachel *cachel
-	= Dynarr_atp (w->face_cachels, Dynarr_length (w->face_cachels) - 1);
+      struct face_cachel *cachel = Dynarr_lastp (w->face_cachels);
 
       FROB (background_pixmap);
       MAYBE_UNFROB_BACKGROUND_PIXMAP;
@@ -1394,12 +1409,17 @@ merge_face_cachel_data (struct window *w, face_index findex,
   FROB (blinking);
   /* And do ASCII, of course. */
   {
-    int offs = LEADING_BYTE_ASCII - MIN_LEADING_BYTE;
-
-    if (!cachel->font_specified[offs] && FINDEX_FIELD (font_specified[offs]))
+    int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, Vcharset_ascii);
+    int off2 = FACE_CACHEL_OFFSET (Dynarr_atp (w->face_cachels, findex),
+				   Vcharset_ascii);
+    int spec1 = Stynarr_at (cachel->font_specified, off1);
+    int spec2 = off2 >= 0 && Stynarr_at (Dynarr_atp (w->face_cachels, findex)
+					 ->font_specified, off2);
+    if (!spec1 && spec2)
       {
-	cachel->font[offs] = FINDEX_FIELD (font[offs]);
-	cachel->font_specified[offs] = 1;
+	Stynarr_at (cachel->font, off1).value =
+	  Stynarr_at (Dynarr_atp (w->face_cachels, findex)->font, off2).value;
+	Stynarr_at (cachel->font_specified, off1) = 1;
 	cachel->dirty = 1;
       }
   }
@@ -1417,16 +1437,12 @@ reset_face_cachel (struct face_cachel *cachel)
 {
   xzero (*cachel);
   cachel->face = Qunbound;
-  cachel->nfaces = 0;
-  cachel->merged_faces = 0;
+  Stynarr_init (cachel->merged_faces);
+  Stynarr_init (cachel->font);
+  Stynarr_init (cachel->font_specified);
+  Stynarr_init (cachel->font_updated);
   cachel->foreground = Qunbound;
   cachel->background = Qunbound;
-  {
-    int i;
-
-    for (i = 0; i < NUM_LEADING_BYTES; i++)
-      cachel->font[i] = Qunbound;
-  }
   cachel->display_table = Qunbound;
   cachel->background_pixmap = Qunbound;
 }
@@ -1473,8 +1489,10 @@ reset_face_cachels (struct window *w)
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
 	  struct face_cachel *cachel = Dynarr_atp (w->face_cachels, i);
-	  if (cachel->merged_faces)
-	    Dynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->font);
+	  Stynarr_free (cachel->font_specified);
+	  Stynarr_free (cachel->font_updated);
 	}
       Dynarr_reset (w->face_cachels);
       get_builtin_face_cache_index (w, Vdefault_face);
@@ -1503,8 +1521,8 @@ mark_face_cachels_as_not_updated (struct window *w)
       int i;
 
       cachel->updated = 0;
-      for (i = 0; i < NUM_LEADING_BYTES; i++)
-	cachel->font_updated[i] = 0;
+      for (i = 0; i < Stynarr_length (cachel->font_updated); i++)
+	Stynarr_at (cachel->font_updated, i) = 0;
     }
 }
 
@@ -1523,9 +1541,10 @@ compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
       total += Dynarr_memory_usage (face_cachels, ovstats);
       for (i = 0; i < Dynarr_length (face_cachels); i++)
 	{
-	  int_dynarr *merged = Dynarr_at (face_cachels, i).merged_faces;
-	  if (merged)
-	    total += Dynarr_memory_usage (merged, ovstats);
+	  struct face_cachel *cachel = Dynarr_atp (face_cachels, i);
+	  /* #### Hack; look inside of the Stynarr struct */
+	  if (cachel->merged_faces.els)
+	    total += Dynarr_memory_usage (cachel->merged_faces.els, ovstats);
 	}
     }
 
@@ -1555,10 +1574,10 @@ compare_merged_face_cachels (struct face_cachel *cachel1,
   int i;
 
   if (!EQ (cachel1->face, cachel2->face)
-      || cachel1->nfaces != cachel2->nfaces)
+      || FACE_CACHEL_NFACES (cachel1) != FACE_CACHEL_NFACES (cachel2))
     return 0;
 
-  for (i = 0; i < cachel1->nfaces; i++)
+  for (i = 0; i < FACE_CACHEL_NFACES (cachel1); i++)
     if (FACE_CACHEL_FINDEX_UNSAFE (cachel1, i)
 	!= FACE_CACHEL_FINDEX_UNSAFE (cachel2, i))
       return 0;
@@ -1621,14 +1640,13 @@ get_extent_fragment_face_cache_index (struct window *w,
       for (i = len - 1; i >= 0; i--)
 	{
 	  EXTENT current = Dynarr_at (ef->extents, i);
-	  int has_findex = 0;
 	  Lisp_Object face = extent_face (current);
 
 	  if (FACEP (face))
 	    {
 	      findex = get_builtin_face_cache_index (w, face);
-	      has_findex = 1;
 	      merge_face_cachel_data (w, findex, &cachel);
+	      Stynarr_add (cachel.merged_faces, findex);
 	    }
 	  /* remember, we're called from within redisplay
 	     so we can't error. */
@@ -1639,33 +1657,9 @@ get_extent_fragment_face_cache_index (struct window *w,
 		{
 		  findex = get_builtin_face_cache_index (w, one_face);
 		  merge_face_cachel_data (w, findex, &cachel);
-
-		  /* code duplication here but there's no clean
-		     way to avoid it. */
-		  if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
-		    {
-		      if (!cachel.merged_faces)
-			cachel.merged_faces = Dynarr_new (int);
-		      Dynarr_add (cachel.merged_faces, findex);
-		    }
-		  else
-		    cachel.merged_faces_static[cachel.nfaces] = findex;
-		  cachel.nfaces++;
+		  Stynarr_add (cachel.merged_faces, findex);
 		}
 	      face = XCDR (face);
-	    }
-
-	  if (has_findex)
-	    {
-	      if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
-		{
-		  if (!cachel.merged_faces)
-		    cachel.merged_faces = Dynarr_new (int);
-		  Dynarr_add (cachel.merged_faces, findex);
-		}
-	      else
-		cachel.merged_faces_static[cachel.nfaces] = findex;
-	      cachel.nfaces++;
 	    }
 	}
 
@@ -1674,13 +1668,16 @@ get_extent_fragment_face_cache_index (struct window *w,
       merge_face_cachel_data (w, findex, &cachel);
 
       findex = get_merged_face_cache_index (w, &cachel);
-      if (cachel.merged_faces &&
+      /* #### Hack; look inside of the Stynarr struct */
+      if (cachel.merged_faces.els &&
 	  /* merged_faces did not get stored and available via return value */
-	  Dynarr_at (w->face_cachels, findex).merged_faces !=
-	  cachel.merged_faces)
+	  Dynarr_at (w->face_cachels, findex).merged_faces.els !=
+	  cachel.merged_faces.els)
 	{
-	  Dynarr_free (cachel.merged_faces);
-	  cachel.merged_faces = 0;
+	  Stynarr_free (cachel.merged_faces);
+	  Stynarr_free (cachel.font);
+	  Stynarr_free (cachel.font_specified);
+	  Stynarr_free (cachel.font_updated);
 	}
       return findex;
     }

@@ -359,9 +359,12 @@ Dynarr_add_validified_lisp_string (Extbyte_dynarr *cda, Lisp_Object str)
   Extbyte *data;
 
   TO_EXTERNAL_FORMAT (LISP_STRING, str, ALLOCA, (data, len), Qbinary);
-  Dynarr_add_many (cda, data, len);
-  validify_resource_component (Dynarr_atp (cda, Dynarr_length (cda) - len),
-			       len);
+  if (len)
+    {
+      Dynarr_add_many (cda, data, len);
+      validify_resource_component (Dynarr_atp (cda, Dynarr_length (cda) - len),
+				   len);
+    }
 }
 
 #if 0

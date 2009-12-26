@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2005 Ben Wing
 ;; Copyright (C) 2002, 2005 Free Software Foundation
 
 ;; Keywords: multilingual, European
@@ -28,124 +28,15 @@
 ;;; Commentary:
 
 ;; For Roman-alphabet-using Europeans, eight coded character sets,
-;; ISO8859-1,2,3,4,9,14,15,16 are supported.
+;; ISO8859-1,2,3,4,9,10,13,14,15,16 are supported.
 
 ;; #### latin.el would be a better name for this file.
 
 ;;; Code:
-; (make-charset 'latin-iso8859-1 
-; 	      "Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?A
-; 		graphic 1
-; 		short-name "RHP of Latin-1"
-; 		long-name "RHP of Latin-1 (ISO 8859-1): ISO-IR-100"
-; 		))
-
-; (make-charset 'latin-iso8859-2 
-; 	      "Right-Hand Part of Latin Alphabet 2 (ISO/IEC 8859-2): ISO-IR-101"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-2"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?B
-; 		graphic 1
-; 		short-name "RHP of Latin-2"
-; 		long-name "RHP of Latin-2 (ISO 8859-2): ISO-IR-101"
-; 		))
-
-; (make-charset 'latin-iso8859-3 
-; 	      "Right-Hand Part of Latin Alphabet 3 (ISO/IEC 8859-3): ISO-IR-109"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-3"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?C
-; 		graphic 1
-; 		short-name "RHP of Latin-3"
-; 		long-name "RHP of Latin-3 (ISO 8859-3): ISO-IR-109"
-; 		))
-
-; (make-charset 'latin-iso8859-4 
-; 	      "Right-Hand Part of Latin Alphabet 4 (ISO/IEC 8859-4): ISO-IR-110"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-4"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?D
-; 		graphic 1
-; 		short-name "RHP of Latin-4"
-; 		long-name "RHP of Latin-4 (ISO 8859-4): ISO-IR-110"
-; 		))
-
-; (make-charset 'latin-iso8859-9 
-; 	      "Right-Hand Part of Latin Alphabet 5 (ISO/IEC 8859-9): ISO-IR-148"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-9"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?M
-; 		graphic 1
-; 		short-name "RHP of Latin-5"
-; 		long-name "RHP of Latin-5 (ISO 8859-9): ISO-IR-148"
-; 		))
-
-; (make-charset 'latin-iso8859-15 
-; 	      "Right-Hand Part of Latin Alphabet 9 (ISO/IEC 8859-15): ISO-IR-203"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-15"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?b
-; 		graphic 1
-; 		short-name "RHP of Latin-9"
-; 		long-name "RHP of Latin-9 (ISO 8859-15): ISO-IR-203"
-; 		))
-
-(make-charset 'latin-iso8859-14 
-	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
-	      '(dimension
-		1
-		registry "ISO8859-14"
-		chars 96
-		columns 1
-		direction l2r
-		final ?_
-		graphic 1
-		short-name "RHP of Latin-8"
-		long-name "RHP of Latin-8 (ISO 8859-14)"
-		))
-
-(make-charset 'latin-iso8859-16
-	      "Right-Hand Part of Latin Alphabet 10 (ISO/IEC 8859-16)"
-	      '(dimension
-		1
-		registry "ISO8859-16"
-		chars 96
-		columns 1
-		direction l2r
-		final ?f			; octet 06/06; cf ISO-IR 226
-		graphic 1
-		short-name "RHP of Latin-10"
-		long-name "RHP of Latin-10 (ISO 8859-16)"
-		))
 
 ;; Latin-1 is dealt with in iso8859-1.el, which see. 
+
+;; @@#### Support ISO 8859-10, 13.
 
 ;; ISO 8859-14. 
 ;; 
@@ -209,8 +100,9 @@
 	  (make-char 'latin-iso8859-15 c)
 	  (string (char-syntax (make-char 'latin-iso8859-1 c)))))
 ;; Now, the exceptions
-(loop for c in '(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
-      do (modify-syntax-entry c "w"))
+(loop for c in '(#xa6 #xa8 #xb4 #xb8 #xbc #xbd #xbe)
+  ;;(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
+  do (modify-syntax-entry (make-char 'latin-iso8859-15 c) "w"))
 
 ;; Again, perpetuating insanity with the guillemets.
 (modify-syntax-entry (make-char 'latin-iso8859-16 #xab) 
@@ -220,37 +112,46 @@
 ;; end of ISO 8859-15. 
 
 ;; For syntax of Latin-2
-(loop for c in '(?,B!(B ?,B#(B ?,B%(B ?,B&(B ?,B)(B ?,B*(B ?,B+(B ?,B,(B ?,B.(B ?,B/(B ?,B1(B ?,B3(B ?,B5(B ?,B6(B ?,B9(B ?,B:(B ?,B;(B ?,B<(B)
-      do (modify-syntax-entry c "w"))
+(loop for c in '(#xa1 #xa3 #xa5 #xa6 #xa9 #xaa #xab #xac #xae #xaf #xb1 #xb3
+		 #xb5 #xb6 #xb9 #xba #xbb #xbc)
+  ;;(?,B!(B ?,B#(B ?,B%(B ?,B&(B ?,B)(B ?,B*(B ?,B+(B ?,B,(B ?,B.(B ?,B/(B ?,B1(B ?,B3(B ?,B5(B ?,B6(B ?,B9(B ?,B:(B ?,B;(B ?,B<(B)
+  do (modify-syntax-entry (make-char 'latin-iso8859-2 c) "w"))
 
 (loop for c from 62 to 126
       do (modify-syntax-entry (make-char 'latin-iso8859-2 c) "w"))
 
 (modify-syntax-entry (make-char 'latin-iso8859-2 32) "w") ; no-break space
-(modify-syntax-entry ?,BW(B ".")
-(modify-syntax-entry ?,Bw(B ".")
+(modify-syntax-entry (make-char 'latin-iso8859-2 #xd7) ".") ;?,BW(B
+(modify-syntax-entry (make-char 'latin-iso8859-2 #xf7) ".") ;?,Bw(B
 
 ;; For syntax of Latin-3
-(loop for c in '(?,C!(B ?,C&(B ?,C)(B ?,C*(B ?,C+(B ?,C,(B ?,C/(B ?,C1(B ?,C5(B ?,C6(B ?,C:(B ?,C;(B ?,C<(B ?,C?(B)
-  do (modify-syntax-entry c "w"))
-
-(loop for c from 64 to 126
+(loop for c in '(#xa1 #xa6 #xa9 #xaa #xab #xac #xaf #xb1 #xb5 #xb6 #xba #xbb
+		 #xbc #xbf)
+  ;;(?,C!(B ?,C&(B ?,C)(B ?,C*(B ?,C+(B ?,C,(B ?,C/(B ?,C1(B ?,C5(B ?,C6(B ?,C:(B ?,C;(B ?,C<(B ?,C?(B)
   do (modify-syntax-entry (make-char 'latin-iso8859-3 c) "w"))
 
+(loop for c from 64 to 126
+  do (let ((ch (make-char 'latin-iso8859-3 c)))
+       ;; There are gaps in the ISO8859-3 encoding.
+       (when ch
+	 (modify-syntax-entry ch "w"))))
+       
 (modify-syntax-entry (make-char 'latin-iso8859-3 32) "w") ; no-break space
-(modify-syntax-entry ?,CW(B ".")
-(modify-syntax-entry ?,Cw(B ".")
+(modify-syntax-entry (make-char 'latin-iso8859-3 #xd7) ".") ;?,CW(B
+(modify-syntax-entry (make-char 'latin-iso8859-3 #xf7) ".") ;?,Cw(B
 
 ;; For syntax of Latin-4
-(loop for c in '(?,D!(B ?,D"(B ?,D#(B ?,D%(B ?,D&(B ?,D)(B ?,D*(B ?,D+(B ?,D,(B ?,D.(B ?,D1(B ?,D3(B ?,D5(B ?,D6(B ?,D9(B ?,D:(B ?,D;(B ?,D<(B ?,D=(B ?,D>(B ?,D?(B)
-  do (modify-syntax-entry c "w"))
+(loop for c in '(#xa1 #xa2 #xa3 #xa5 #xa6 #xa9 #xaa #xab #xac #xae #xb1 #xb3
+		 #xb5 #xb6 #xb9 #xba #xbb #xbc #xbd #xbe #xbf)
+  ;;(?,D!(B ?,D"(B ?,D#(B ?,D%(B ?,D&(B ?,D)(B ?,D*(B ?,D+(B ?,D,(B ?,D.(B ?,D1(B ?,D3(B ?,D5(B ?,D6(B ?,D9(B ?,D:(B ?,D;(B ?,D<(B ?,D=(B ?,D>(B ?,D?(B)
+  do (modify-syntax-entry (make-char 'latin-iso8859-4 c) "w"))
 
 (loop for c from 64 to 126
   do (modify-syntax-entry (make-char 'latin-iso8859-4 c) "w"))
 
 (modify-syntax-entry (make-char 'latin-iso8859-4 32) "w") ; no-break space
-(modify-syntax-entry ?,DW(B ".")
-(modify-syntax-entry ?,Dw(B ".")
+(modify-syntax-entry (make-char 'latin-iso8859-4 #xd7) ".") ;?,DW(B
+(modify-syntax-entry (make-char 'latin-iso8859-4 #xf7) ".") ;?,Dw(B
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -456,7 +357,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
 		       ("\
 This language environment is a generic one for Latin-9 (ISO-8859-15)
 character set which supports the Euro sign and the following languages
-(they use the Latin-1 character set by default):
+\(they use the Latin-1 character set by default):
  Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
  Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
 Each also has its own specific language environment."))

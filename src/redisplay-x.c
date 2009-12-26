@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "debug.h"
 #include "device-impl.h"
 #include "faces.h"
@@ -41,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
-#ifdef MULE
+#ifdef HAVE_CCL
 #include "mule-ccl.h"
 #endif
 
@@ -88,7 +89,9 @@ static void x_clear_frame_windows (Lisp_Object window);
 	    Solaris only support the Japanese locale if you get the
 	    special Asian-language version of the OS.  Yuck yuck
 	    yuck.  Linux doesn't support the Japanese locale at
-	    all.
+	    all (or didn't, at the time this was written, sometime
+	    in the 90's.  As of 2005, there is much better CJK
+	    support in Linux, as well as Unicode support).
 	 3) The locale support in X only exists in R5, not in R4.
 	    (Not sure how big of a problem this is: how many
 	    people are using R4?)
@@ -97,7 +100,7 @@ static void x_clear_frame_windows (Lisp_Object window);
 	    different OS's?  It's not even documented anywhere that
 	    I can find what the multi-byte text format for the
 	    Japanese locale under SunOS and Solaris is, but I assume
-	    it's EUC.
+	    it's EUC-JP.
       */
 
 struct textual_run
@@ -108,32 +111,46 @@ struct textual_run
   int dimension;
 };
 
-/* Separate out the text in DYN into a series of textual runs of a
-   particular charset.  Also convert the characters as necessary into
-   the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly
-   tweaking the high bits, and possibly running a CCL program.) You
-   must pre-allocate the space used and pass it in. (This is done so
-   you can ALLOCA () the space.)  You need to allocate (2 * len) bytes
-   of TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUN_STORAGE, where LEN is the length of the dynarr.
+/* Separate out the text in STR (an array of Ichars, not a string
+   representation) of length LEN into a series of runs, stored in RUNS.
+   RUNS is guaranteed to hold enough space for all runs that could be
+   generated from this text.  Each run points to the a stretch of text
+   given simply by the position codes TEXT_STORAGE into a series of textual
+   runs of a particular charset.  Also convert the characters as necessary
+   into the format needed by XDrawImageString(), XDrawImageString16(), et
+   al.  (This means converting to one or two byte format, possibly tweaking
+   the high bits, and possibly running a CCL program.) You must
+   pre-allocate the space used and pass it in. (This is done so you can
+   ALLOCA () the space.)  You need to allocate (2 * len) bytes of
+   TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
+   RUNS, where LEN is the length of the dynarr.
 
    Returns the number of runs actually used. */
 
 static int
 separate_textual_runs (unsigned char *text_storage,
-		       struct textual_run *run_storage,
+		       struct textual_run *runs,
 		       const Ichar *str, Charcount len)
 {
+#ifndef MULE
+  int i;
+  for (i = 0; i < len; i++)
+    text_storage[i++] = (unsigned char) (*str);
+  runs[0].ptr       = text_storage;
+  runs[0].charset   = Vcharset_ascii;
+  runs[0].dimension = 1;
+  runs[0].len       = len;
+  return 1;
+#else /* MULE */
   Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
 					  possible valid charset when
 					  MULE is not defined */
   int runs_so_far = 0;
   int i;
-#ifdef MULE
+#ifdef HAVE_CCL
   struct ccl_program char_converter;
   int need_ccl_conversion = 0;
-#endif
+#endif /* HAVE_CCL */
 
   for (i = 0; i < len; i++)
     {
@@ -141,28 +158,31 @@ separate_textual_runs (unsigned char *text_storage,
       Lisp_Object charset;
       int byte1, byte2;
       int dimension;
-      int graphic;
 
-      BREAKUP_ICHAR (ch, charset, byte1, byte2);
+      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
+				  &byte1, &byte2);
       dimension = XCHARSET_DIMENSION (charset);
-      graphic   = XCHARSET_GRAPHIC   (charset);
+      /* We swap here rather than handling below because we also take CCL
+	 input, whigh does it the other way */
+      if (dimension == 1)
+	byte1 = byte2;
 
       if (!EQ (charset, prev_charset))
 	{
-	  run_storage[runs_so_far].ptr       = text_storage;
-	  run_storage[runs_so_far].charset   = charset;
-	  run_storage[runs_so_far].dimension = dimension;
+	  runs[runs_so_far].ptr       = text_storage;
+	  runs[runs_so_far].charset   = charset;
+	  runs[runs_so_far].dimension = dimension;
 
 	  if (runs_so_far)
 	    {
-	      run_storage[runs_so_far - 1].len =
-		text_storage - run_storage[runs_so_far - 1].ptr;
-	      if (run_storage[runs_so_far - 1].dimension == 2)
-		run_storage[runs_so_far - 1].len >>= 1;
+	      runs[runs_so_far - 1].len =
+		text_storage - runs[runs_so_far - 1].ptr;
+	      if (runs[runs_so_far - 1].dimension == 2)
+		runs[runs_so_far - 1].len >>= 1;
 	    }
 	  runs_so_far++;
 	  prev_charset = charset;
-#ifdef MULE
+#ifdef HAVE_CCL
 	  {
 	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
 	    if ((!NILP (ccl_prog))
@@ -172,17 +192,7 @@ separate_textual_runs (unsigned char *text_storage,
 #endif
 	}
 
-      if (graphic == 0)
-	{
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else if (graphic == 1)
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
-	}
-#ifdef MULE
+#ifdef HAVE_CCL
       if (need_ccl_conversion)
 	{
 	  char_converter.reg[0] = XCHARSET_ID (charset);
@@ -200,13 +210,14 @@ separate_textual_runs (unsigned char *text_storage,
 
   if (runs_so_far)
     {
-      run_storage[runs_so_far - 1].len =
-	text_storage - run_storage[runs_so_far - 1].ptr;
-      if (run_storage[runs_so_far - 1].dimension == 2)
-	run_storage[runs_so_far - 1].len >>= 1;
+      runs[runs_so_far - 1].len =
+	text_storage - runs[runs_so_far - 1].ptr;
+      if (runs[runs_so_far - 1].dimension == 2)
+	runs[runs_so_far - 1].len >>= 1;
     }
 
   return runs_so_far;
+#endif /* not MULE */
 }
 
 /****************************************************************************/
@@ -343,7 +354,8 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
   findex = rb->findex;
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
-    charset = ichar_charset (rb->object.chr.ch);
+    /* @@#### fix me */
+    charset = ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -355,7 +367,9 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  /* @@#### fix me */
+	  && EQ (charset,
+		 ichar_charset_obsolete_me_baby_please (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -378,7 +392,9 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      /* @@#### fix me */
+	      charset =
+		ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

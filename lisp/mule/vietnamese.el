@@ -30,36 +30,6 @@
 
 ;;; Code:
 
-;; Vietnamese VISCII.  VISCII is 1-byte character set which contains
-;; more than 96 characters.  Since Emacs can't handle it as one
-;; character set, it is divided into two: lower case letters and upper
-;; case letters.
-(make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case"
-	      '(dimension
-		1
-		registry "VISCII1.1"
-		chars 96
-		columns 1
-		direction l2r
-		final ?1
-		graphic 1
-		short-name "VISCII lower"
-		long-name "VISCII lower-case"
-		))
-
-(make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case"
-	      '(dimension
-		1
-		registry "VISCII1.1"
-		chars 96
-		columns 1
-		direction l2r
-		final ?2
-		graphic 1
-		short-name "VISCII upper"
-		long-name "VISCII upper-case"
-		))
-
 (modify-syntax-entry 'vietnamese-viscii-lower "w")
 (modify-syntax-entry 'vietnamese-viscii-upper "w")
 
@@ -96,11 +66,11 @@
 	char-component)
     (while (< i 256)
       (setq char-component
-	    (split-char (aref viet-viscii-decode-table i)))
+	    (char-to-charset-codepoint (aref viet-viscii-decode-table i)))
       (cond ((eq (car char-component) 'vietnamese-viscii-lower)
-	     (aset table-lower (nth 1 char-component) i))
+	     (aset table-lower (- (nth 1 char-component) 128) i))
 	    ((eq (car char-component) 'vietnamese-viscii-upper)
-	     (aset table-upper (nth 1 char-component) i)))
+	     (aset table-upper (- (nth 1 char-component) 128) i)))
       (setq i (1+ i)))
     (cons table-lower table-upper))
   "Vietnamese VISCII encoding table.
@@ -134,11 +104,11 @@ Both tables are indexed by the position code of Vietnamese characters.")
 	char-component)
     (while (< i 256)
       (setq char-component
-	    (split-char (aref viet-vscii-decode-table i)))
+	    (char-to-charset-codepoint (aref viet-vscii-decode-table i)))
       (cond ((eq (car char-component) 'vietnamese-viscii-lower)
-	     (aset table-lower (nth 1 char-component) i))
+	     (aset table-lower (- (nth 1 char-component) 128) i))
 	    ((eq (car char-component) 'vietnamese-viscii-upper)
-	     (aset table-upper (nth 1 char-component) i)))
+	     (aset table-upper (- (nth 1 char-component) 128) i)))
       (setq i (1+ i)))
     (cons table-lower table-upper))
   "Vietnamese VSCII encoding table.
@@ -146,6 +116,8 @@ Cons of tables for encoding lower-case chars and upper-case characters.
 Both tables are indexed by the position code of Vietnamese characters.")
 
 )
+
+(when (featurep 'ccl)
 
 (define-ccl-program ccl-decode-viscii
   `(3
@@ -279,6 +251,8 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 ;; (define-coding-system-alias 'vscii 'vietnamese-vscii)
 
+) ; (featurep 'ccl)
+
 (make-coding-system
  'viqr 'no-conversion
  "VIQR (Vietnamese)"
@@ -300,6 +274,8 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 ;; (define-coding-system-alias 'viqr 'vietnamese-viqr)
 
+(when (featurep 'ccl)
+
 ;; For VISCII users
 (set-charset-ccl-program 'vietnamese-viscii-lower
 			 'ccl-encode-viscii-font)
@@ -314,6 +290,8 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 ;; (setq font-ccl-encoder-alist
 ;;       (cons (cons "vscii" ccl-encode-vscii-font) font-ccl-encoder-alist))
+
+) ; (featurep 'ccl)
 
 (defvar viet-viscii-to-external-code-table
   (let ((table (make-char-table 'generic))

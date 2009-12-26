@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985, 1986, 1992, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Richard Mlynarik.
-;; Copyright (C) 1995, 1996, 2003 Ben Wing.
+;; Copyright (C) 1995, 1996, 2003, 2005 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -38,6 +38,12 @@
 ;; Help debug problems.
 (setq stack-trace-on-error t
       load-always-display-messages t)
+(when (featurep 'debug-xemacs)
+  ;; Immediately dump core upon an unhandled error, rather than just quitting
+  ;; the program.  This can also be achieved by setting an environment variable
+  ;; XEMACSDEBUG to contain '(setq debug-on-error t)', e.g.
+  ;; export XEMACSDEBUG='(setq debug-on-error t)'
+  (setq debug-on-error t))
 
 ;(princ (format "command-line-args: %s\n" command-line-args))
 ;(princ (format "configure-lisp-directory: %S\n" configure-lisp-directory))
@@ -158,13 +164,6 @@
 	    (defun toolbar-button-p    (obj) "No toolbar support." nil)
 	    (defun toolbar-specifier-p (obj) "No toolbar support." nil))
 	  (fmakunbound 'pureload))
-
-	;; We cannot do this in mule-cmds.el because not all the
-	;; appropriate charsets are loaded yet.
-	(when (and (featurep 'mule)
-		   load-unicode-tables-at-dump-time)
-	  (let ((data-directory (expand-file-name "etc" source-root)))
-	    (load-unicode-tables)))
 
 	(packages-load-package-dumped-lisps late-package-load-path)
 

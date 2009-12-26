@@ -114,58 +114,281 @@ Boston, MA 02111-1307, USA.  */
    control this using configure, but you can manually stick in a define as
    necessary. */
 
+/* How these work:
+
+   The most common classes will be `text' and `type', followed by `structure'.
+   `text' is for problems related to bad textual format.  `type' is for
+   problems related to wrongly typed arguments, structure fields, etc.
+   `structure' is for bad data inside of a structure.  Sometimes these are
+   used "incorrectly", e.g. `type' is often used for structure-checking.
+   Consider `text':
+
+   `text_checking_assert() will assert() only when ERROR_CHECK_TEXT is defined;
+   otherwise it's a no-op.  text_checking_assert_at_line() is similar, but
+   allows you to override the file name and line number normally supplied in
+   the message.  This is especially useful in inline header functions, and
+   so there's a special inline_text_checking_assert() for this; this works
+   like text_checking_assert() but supplies the file and line of the calling
+   function.  In order for this to work, you need to declare your inline
+   function with INLINE_TEXT_CHECK_ARGS at the end of its argument list,
+   and give its function name a _1 extension or similar.  Then create a
+   macro that calls your inline function and includes INLINE_TEXT_CHECK_CALL
+   at the end of the parameter list.  This will arrange to pass in and receive
+   the file and line (__FILE__, __LINE__) at place where the call occurs in
+   the calling function; but nothing will get passed in when ERROR_CHECK_TEXT
+   is not defined.
+
+#ifdef ERROR_CHECK_TEXT
+#define text_checking_assert(assertion) assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else // not ERROR_CHECK_TEXT
+#define text_checking_assert(assertion) disabled_assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif // ERROR_CHECK_TEXT
+*/
+
+
 #ifdef ERROR_CHECK_STRUCTURES
 /* Check for problems with the catch list and specbind stack */
 #define ERROR_CHECK_CATCH
 /* Check for insufficient use of call_trapping_problems(), particularly
    due to glyph-related changes causing eval or QUIT within redisplay */
 #define ERROR_CHECK_TRAPPING_PROBLEMS
-#endif
+#endif /* ERROR_CHECK_STRUCTURES */
+
+#define INLINE_ERROR_CHECK_ARGS , const char *__file__, int __line__
+#define INLINE_ERROR_CHECK_CALL , __FILE__, __LINE__
+#define DISABLED_INLINE_ERROR_CHECK_ARGS
+#define DISABLED_INLINE_ERROR_CHECK_CALL
+
+/* For assertions in inline header functions which will report the file and
+   line of the calling function */
+#define inline_assert(assertion) assert_at_line (assertion, __file__, __line__)
+#define disabled_inline_assert(assertion) \
+  disabled_assert_at_line (assertion, __file__, __line__)
+
+#ifdef ERROR_CHECK_TEXT
+#define text_checking_assert(assertion) assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_TEXT */
+#define text_checking_assert(assertion) disabled_assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TEXT */
 
 #ifdef ERROR_CHECK_TYPES
 #define type_checking_assert(assertion) assert (assertion)
 #define type_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_type_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TYPE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TYPE_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define type_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define type_checking_assert(assertion)
-#define type_checking_assert_at_line(assertion, file, line)
-#define type_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_TYPES */
+#define type_checking_assert(assertion) disabled_assert (assertion)
+#define type_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_type_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TYPE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TYPE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define type_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TYPES */
+
+#ifdef ERROR_CHECK_STRUCTURES
+#define structure_checking_assert(assertion) assert (assertion)
+#define structure_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_structure_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_STRUCTURE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_STRUCTURE_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define structure_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_STRUCTURES */
+#define structure_checking_assert(assertion) disabled_assert (assertion)
+#define structure_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_structure_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_STRUCTURE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_STRUCTURE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define structure_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_STRUCTURES */
+
 #ifdef ERROR_CHECK_GC
 #define gc_checking_assert(assertion) assert (assertion)
 #define gc_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_gc_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_GC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_GC_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define gc_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define gc_checking_assert(assertion)
-#define gc_checking_assert_at_line(assertion, file, line)
-#define gc_checking_assert_with_message(assertion, msg)
-#endif
-#ifdef ERROR_CHECK_TEXT
-#define text_checking_assert(assertion) assert (assertion)
-#define text_checking_assert_at_line(assertion, file, line) \
+#else /* not ERROR_CHECK_GC */
+#define gc_checking_assert(assertion) disabled_assert (assertion)
+#define gc_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_gc_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_GC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_GC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define gc_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_GC */
+
+#ifdef ERROR_CHECK_DISPLAY
+#define display_checking_assert(assertion) assert (assertion)
+#define display_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
-#define text_checking_assert_with_message(assertion, msg) \
+#define inline_display_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_DISPLAY_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_DISPLAY_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define display_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define text_checking_assert(assertion)
-#define text_checking_assert_at_line(assertion, file, line)
-#define text_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_DISPLAY */
+#define display_checking_assert(assertion) disabled_assert (assertion)
+#define display_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_display_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_DISPLAY_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_DISPLAY_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define display_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_DISPLAY */
+
+#ifdef ERROR_CHECK_GLYPHS
+#define glyph_checking_assert(assertion) assert (assertion)
+#define glyph_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_glyph_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_GLYPH_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_GLYPH_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define glyph_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_GLYPHS */
+#define glyph_checking_assert(assertion) disabled_assert (assertion)
+#define glyph_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_glyph_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_GLYPH_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_GLYPH_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define glyph_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_GLYPHS */
+
+#ifdef ERROR_CHECK_EXTENTS
+#define extent_checking_assert(assertion) assert (assertion)
+#define extent_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_extent_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_EXTENT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_EXTENT_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define extent_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_EXTENTS */
+#define extent_checking_assert(assertion) disabled_assert (assertion)
+#define extent_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_extent_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_EXTENT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_EXTENT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define extent_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_EXTENTS */
+
+#ifdef ERROR_CHECK_MALLOC
+#define malloc_checking_assert(assertion) assert (assertion)
+#define malloc_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_malloc_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_MALLOC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_MALLOC_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define malloc_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_MALLOC */
+#define malloc_checking_assert(assertion) disabled_assert (assertion)
+#define malloc_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_malloc_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_MALLOC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_MALLOC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define malloc_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_MALLOC */
+
+#ifdef ERROR_CHECK_BYTE_CODE
+#define byte_code_checking_assert(assertion) assert (assertion)
+#define byte_code_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_byte_code_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_BYTE_CODE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_BYTE_CODE_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define byte_code_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_BYTE_CODE */
+#define byte_code_checking_assert(assertion) disabled_assert (assertion)
+#define byte_code_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_byte_code_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_BYTE_CODE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_BYTE_CODE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define byte_code_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_BYTE_CODE */
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 #define trapping_problems_checking_assert(assertion) assert (assertion)
 #define trapping_problems_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_trapping_problems_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define trapping_problems_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define trapping_problems_checking_assert(assertion)
-#define trapping_problems_checking_assert_at_line(assertion, file, line)
-#define trapping_problems_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_TRAPPING_PROBLEMS */
+#define trapping_problems_checking_assert(assertion) disabled_assert (assertion)
+#define trapping_problems_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_trapping_problems_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define trapping_problems_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 /************************************************************************/
 /**                     Definitions of basic types                     **/
@@ -230,6 +453,30 @@ Boston, MA 02111-1307, USA.  */
 #define EFFICIENT_INT_128_BIT INT_128_BIT
 #define EFFICIENT_UINT_128_BIT UINT_128_BIT
 #endif
+
+/* These are easily computable using `dc'.
+   (Just in case you cared, the maximum 256-bit unsigned int is
+   115792089237316195423570985008687907853269984665640564039457584007913 \
+   129639935.  You can get this with
+
+   echo '2 256^ 1-p' | dc
+   )
+*/
+
+#define INT_16_BIT_MAX 32767
+#define INT_32_BIT_MAX 2147483647
+#define INT_64_BIT_MAX 9223372036854775807
+#define INT_128_BIT_MAX 170141183460469231731687303715884105727
+
+#define UINT_16_BIT_MAX 65535
+#define UINT_32_BIT_MAX 4294967295
+#define UINT_64_BIT_MAX 18446744073709551615
+#define UINT_128_BIT_MAX 340282366920938463463374607431768211455
+
+#define INT_16_BIT_MIN -32768
+#define INT_32_BIT_MIN -2147483648
+#define INT_64_BIT_MIN -9223372036854775808
+#define INT_128_BIT_MIN -170141183460469231731687303715884105728
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -1041,6 +1288,15 @@ BEGIN_C_DECLS
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 #define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
 
+/* This used to be ((void) (0)) but that triggers lots of unused variable
+   warnings.  It's pointless to force all that code to be rewritten, with
+   added ifdefs.  Any reasonable compiler will eliminate an expression with
+   no effects.  We keep this abstracted out like this in case we want to
+   change it in the future. */
+#define disabled_assert(x) ((void) (x))
+#define disabled_assert_with_message(x, msg) disabled_assert (x)
+#define disabled_assert_at_line(x, file, line) disabled_assert (x)
+
 #ifdef USE_ASSERTIONS
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 # define assert_with_message(x, msg) \
@@ -1052,13 +1308,9 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 # define assert_with_message(x, msg) assert (x)
 # define assert_at_line(x, file, line) assert (x)
 #else
-/* This used to be ((void) (0)) but that triggers lots of unused variable
-   warnings.  It's pointless to force all that code to be rewritten, with
-   added ifdefs.  Any reasonable compiler will eliminate an expression with
-   no effects. */
-# define assert(x) ((void) (x))
-# define assert_with_message(x, msg) assert (x)
-# define assert_at_line(x, file, line) assert (x)
+# define assert(x) disabled_assert (x)
+# define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
+# define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
 #endif
 
 /************************************************************************/
@@ -1206,6 +1458,7 @@ xmalloc_and_record_unwind (Bytecount size)
 #define alloca_itexts(num) alloca_array (Itext, num)
 #define alloca_ibytes(num) alloca_array (Ibyte, num)
 #define alloca_extbytes(num) alloca_array (Extbyte, num)
+#define alloca_chbytes(num) alloca_array (Chbyte, num)
 #define alloca_rawbytes(num) alloca_array (Rawbyte, num)
 #define alloca_binbytes(num) alloca_array (Binbyte, num)
 #define alloca_ascbytes(num) alloca_array (Ascbyte, num)
@@ -1224,6 +1477,26 @@ do {						\
   Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
   *_bsta_ = alloca_ibytes (1 + _bsta_3);	\
   memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
+} while (0)
+
+/* Make an alloca'd copy of a Extbyte * */
+#define EXTBYTE_STRING_TO_ALLOCA(p, lval)	\
+do {						\
+  Extbyte **_esta_ = (Extbyte **) &(lval);	\
+  const Extbyte *_esta_2 = (p);			\
+  Bytecount _esta_3 = strlen (_esta_2);		\
+  *_esta_ = alloca_ibytes (1 + _esta_3);	\
+  memcpy (*_esta_, _esta_2, 1 + _esta_3);	\
+} while (0)
+
+/* Make an alloca'd copy of a char * */
+#define C_STRING_TO_ALLOCA(p, lval)		\
+do {						\
+  Chbyte **_csta_ = (Chbyte **) &(lval);	\
+  const Chbyte *_csta_2 = (p);			\
+  Bytecount _csta_3 = strlen (_csta_2);		\
+  *_csta_ = alloca_ibytes (1 + _csta_3);	\
+  memcpy (*_csta_, _csta_2, 1 + _csta_3);	\
 } while (0)
 
 /* ----------------- convenience functions for reallocation --------------- */
@@ -1258,14 +1531,14 @@ do {						\
   type *base;			\
   int locked;			\
   int elsize;			\
-  int cur;			\
+  int len;			\
   int largest;			\
   int max
 #else
 #define Dynarr_declare(type)	\
   type *base;			\
   int elsize;			\
-  int cur;			\
+  int len;			\
   int largest;			\
   int max
 #endif /* ERROR_CHECK_STRUCTURES */
@@ -1277,18 +1550,101 @@ typedef struct dynarr
 
 MODULE_API void *Dynarr_newf (int elsize);
 MODULE_API void Dynarr_resize (void *dy, Elemcount size);
-MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start);
+MODULE_API void Dynarr_insert_many (void *d, const void *el, int len,
+				    int start);
 MODULE_API void Dynarr_delete_many (void *d, int start, int len);
 MODULE_API void Dynarr_free (void *d);
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+int
+Dynarr_verify_pos_at (void *d, int pos, const Ascbyte *file, int line)
+)
+{
+  Dynarr *dy = (Dynarr *) d;
+  /* We use `largest', not `len', because the redisplay code often
+     accesses stuff between len and largest. */
+  assert_at_line (pos >= 0 && pos < dy->largest, file, line);
+  return pos;
+}
+#else
+#define Dynarr_verify_pos(d, pos, file, line) (pos)
+#endif /* ERROR_CHECK_TYPES */
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+int
+Dynarr_verify_pos_atp (void *d, int pos, const Ascbyte *file, int line)
+)
+{
+  Dynarr *dy = (Dynarr *) d;
+  /* We use `largest', not `len', because the redisplay code often
+     accesses stuff between len and largest. */
+  /* Code will often do something like ...
+
+     val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+	                                     Dynarr_length (dyn));
+
+     which works fine when the Dynarr_length is non-zero, but when zero,
+     the result of Dynarr_atp() not only points past the end of the
+     allocated array, but the array may not have ever been allocated and
+     hence the return value is NULL.  But the length of 0 causes the
+     pointer to never get checked.  These can occur throughout the code
+     so we put in a special check. */
+  if (pos == 0 && dy->len == 0)
+    return pos;
+  /* #### It's vaguely possible that some code could legitimately want to
+     retrieve a pointer to the position just past the end of dynarr memory.
+     This could happen with Dynarr_atp() but not Dynarr_at().  If so, it
+     will trigger this assert().  In such cases, it should be obvious that
+     the code wants to do this; rather than relaxing the assert, we should
+     probably create a new macro Dynarr_atp_allow_end() which is like
+     Dynarr_atp() but which allows for pointing at invalid addresses -- we
+     really want to check for cases of accessing just past the end of
+     memory, which is a likely off-by-one problem to occur and will usually
+     not trigger a protection fault (instead, you'll just get random
+     behavior, possibly overwriting other memory, which is bad). */
+  assert_at_line (pos >= 0 && pos < dy->largest, file, line);
+  return pos;
+}
+
+DECLARE_INLINE_HEADER (
+int
+Dynarr_verify_pos_atp_allow_end (void *d, int pos, const Ascbyte *file,
+				 int line)
+)
+{
+  Dynarr *dy = (Dynarr *) d;
+  /* We use `largest', not `len', because the redisplay code often
+     accesses stuff between len and largest.
+     We also allow referencing the very end, past the end of allocated
+     legitimately space.  See comments in Dynarr_verify_pos_atp.()*/
+  assert_at_line (pos >= 0 && pos <= dy->largest, file, line);
+  return pos;
+}
+
+#else
+#define Dynarr_verify_pos_at(d, pos, file, line) (pos)
+#define Dynarr_verify_pos_atp(d, pos, file, line) (pos)
+#define Dynarr_verify_pos_atp_allow_end(d, pos, file, line) (pos)
+#endif /* ERROR_CHECK_TYPES */
 
 #define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
 #define Dynarr_new2(dynarr_type, type) \
   ((dynarr_type *) Dynarr_newf (sizeof (type)))
-#define Dynarr_at(d, pos) ((d)->base[pos])
-#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
-#define Dynarr_begin(d) Dynarr_atp (d, 0)
-#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d) - 1)
-#define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
+
+#define Dynarr_at(d, pos) \
+  ((d)->base[Dynarr_verify_pos_at (d, pos, __FILE__, __LINE__)])
+#define Dynarr_atp_allow_end(d, pos) \
+  (&((d)->base[Dynarr_verify_pos_atp_allow_end (d, pos, __FILE__, __LINE__)]))
+#define Dynarr_atp(d, pos) \
+  (&((d)->base[Dynarr_verify_pos_atp (d, pos, __FILE__, __LINE__)]))
+
+/* Old #define Dynarr_atp(d, pos) (&Dynarr_at (d, pos)) */
+#define Dynarr_firstp(d) Dynarr_atp (d, 0)
+#define Dynarr_lastp(d) Dynarr_atp (d, Dynarr_length (d) - 1)
+#define Dynarr_past_lastp(d) Dynarr_atp_allow_end (d, Dynarr_length (d))
+#define Dynarr_sizeof(d) ((d)->len * (d)->elsize)
 
 #ifdef ERROR_CHECK_STRUCTURES
 DECLARE_INLINE_HEADER (
@@ -1297,7 +1653,7 @@ Dynarr_verify_1 (void *d, const Ascbyte *file, int line)
 )
 {
   Dynarr *dy = (Dynarr *) d;
-  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
+  assert_at_line (dy->len >= 0 && dy->len <= dy->largest &&
 		  dy->largest <= dy->max, file, line);
   return dy;
 }
@@ -1309,7 +1665,7 @@ Dynarr_verify_mod_1 (void *d, const Ascbyte *file, int line)
 {
   Dynarr *dy = (Dynarr *) d;
   assert_at_line (!dy->locked, file, line);
-  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
+  assert_at_line (dy->len >= 0 && dy->len <= dy->largest &&
 		  dy->largest <= dy->max, file, line);
   return dy;
 }
@@ -1325,10 +1681,9 @@ Dynarr_verify_mod_1 (void *d, const Ascbyte *file, int line)
 #define Dynarr_unlock(d)
 #endif /* ERROR_CHECK_STRUCTURES */
 
-#define Dynarr_length(d) (Dynarr_verify (d)->cur)
+#define Dynarr_length(d) (Dynarr_verify (d)->len)
 #define Dynarr_largest(d) (Dynarr_verify (d)->largest)
-#define Dynarr_reset(d) (Dynarr_verify_mod (d)->cur = 0)
-#define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
+#define Dynarr_reset(d) (Dynarr_verify_mod (d)->len = 0)
 #define Dynarr_insert_many_at_start(d, el, len)	\
   Dynarr_insert_many (d, el, len, 0)
 #define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
@@ -1345,19 +1700,48 @@ do {								\
 } while (0)
 
 #define Dynarr_add(d, el) (						     \
-  Dynarr_verify_mod (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
+  Dynarr_verify_mod (d)->len >= (d)->max ? Dynarr_resize ((d), (d)->len+1) : \
       (void) 0,								     \
-  ((d)->base)[(d)->cur++] = (el),					     \
-  (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
+  ((d)->base)[(d)->len++] = (el),					     \
+  (d)->len > (d)->largest ? (d)->largest = (d)->len : (int) 0)
+
+/* Add LEN contiguous elements to a Dynarr */
+
+DECLARE_INLINE_HEADER (
+void
+Dynarr_add_many (void *d, const void *el, int len)
+)
+{
+  /* This duplicates Dynarr_insert_many to some extent; but since it is
+     called so often, it seemed useful to remove the unnecessary stuff
+     from that function and to make it inline */
+  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
+
+  if (dy->len + len > dy->max)
+    Dynarr_resize (dy, dy->len + len);
+  /* Some functions call us with a value of 0 to mean "reserve space but
+     don't write into it" */
+  if (el)
+    memcpy ((char *) dy->base + dy->len*dy->elsize, el, len*dy->elsize);
+  dy->len += len;
+
+  if (dy->len > dy->largest)
+    dy->largest = dy->len;
+}
 
 /* The following defines will get you into real trouble if you aren't
    careful.  But they can save a lot of execution time when used wisely. */
-#define Dynarr_increment(d) (Dynarr_verify_mod (d)->cur++)
-#define Dynarr_set_size(d, n) (Dynarr_verify_mod (d)->cur = n)
+#define Dynarr_increment(d) (Dynarr_verify_mod (d)->len++)
+#define Dynarr_set_size(d, n)						\
+do {									\
+  Bytecount _dss_n = (n);						\
+  structure_checking_assert (_dss_n >= 0 && _dss_n <= (d)->largest);	\
+  Dynarr_verify_mod (d)->len = _dss_n;					\
+} while (0)
 
 #define Dynarr_pop(d)					\
-  (assert ((d)->cur > 0), Dynarr_verify_mod (d)->cur--,	\
-   Dynarr_at (d, (d)->cur))
+  (assert ((d)->len > 0), Dynarr_verify_mod (d)->len--,	\
+   Dynarr_at (d, (d)->len))
 #define Dynarr_delete(d, i) Dynarr_delete_many (d, i, 1)
 #define Dynarr_delete_by_pointer(d, p) \
   Dynarr_delete_many (d, (p) - ((d)->base), 1)
@@ -1377,6 +1761,102 @@ do						\
 struct overhead_stats;
 Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 #endif
+
+/* --------------------------- static dynarrs ------------------------- */
+
+/* A static Dynarr is, besides being an oxymoron, a combination of a
+   small static array with a Dynarr.  Typical size of the small array is
+   4 or 6.  This is used when you rarely expect your array to grow beyond
+   a certain size, but you would like to allow for this.  Stretchy arrays
+   are sometimes used for this, but they require that your whole data object
+   be resized, and handling them with pdump is difficult.  Typically a static
+   Dynarr is declared as one field of a struct, or it can be a local array.
+
+   #### It might be simpler to use *either* the static array *or* the
+   Dynarr, but not both at the same time, as we do currently.  We'd have
+   to either modify the pdump handling to involve a union, or zero out
+   the elements in the static array when we switch to the Dynarr. */
+
+/* Declare a static Dynarr variable declaration NAME, containing elements of
+   type TYPE, with NUM_STATIC static elements.  If you never use more than
+   these, no allocation will occur.  Before using, initialize with
+   Stynarr_init(d). */
+#define Stynarr_declare(name, type, num_static)	\
+struct						\
+{						\
+  type##_dynarr *els;				\
+  int nels;					\
+  type els_static[num_static];			\
+} name
+
+typedef struct
+{
+  void *els;
+  int nels;
+} Stynarr;
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+int
+Stynarr_verify_pos (void *st, int pos, const Ascbyte *file, int line)
+)
+{
+  Stynarr *sty = (Stynarr *) st;
+  /* #### See comment above in Dynarr_verify_pos() about accessing just
+     past end of the real used memory block using Stynarr_atp(). */
+  assert_at_line (pos >= 0 && pos < sty->nels, file, line);
+  return pos;
+}
+#else
+#define Stynarr_verify_pos(st, pos, file, line) (pos)
+#endif /* ERROR_CHECK_TYPES */
+
+#define Stynarr_init(d) (xzero (d))
+#define Stynarr_reset(d) ((d).nels = 0)
+#define Stynarr_free(d)				\
+do {						\
+  if ((d).els)					\
+    {						\
+      Dynarr_free ((d).els);			\
+      (d).els = 0;				\
+    }						\
+  (d).nels = 0;					\
+} while (0)
+#define Stynarr_num_static(d) countof ((d).els_static)
+#define Stynarr_elsize(d) sizeof ((d).els_static[0])
+/* WARNING! The following two macros evaluate POS multiply.
+   We write them this way so that Stynarr_at() is an lvalue. */
+#define Stynarr_atp(d, pos)						\
+  (Stynarr_verify_pos (&d, pos, __FILE__, __LINE__) < Stynarr_num_static (d) \
+   ? &((d).els_static[pos]) :						\
+   Dynarr_atp ((d).els, pos - Stynarr_num_static (d)))
+#define Stynarr_at(d, pos) (*(Stynarr_atp (d, pos)))
+#define Stynarr_add(d, el)						\
+do {									\
+  if ((d).nels < Stynarr_num_static (d))				\
+    (d).els_static[(d).nels++] = (el);					\
+  else									\
+    {									\
+      if (!(d).els)							\
+	VOIDP_CAST ((d).els) = Dynarr_newf (Stynarr_elsize (d));	\
+      Dynarr_add ((d).els, el);						\
+      (d).nels++;							\
+    }									\
+} while (0)
+
+#define Stynarr_length(d) ((d).nels)
+
+MODULE_API void Stynarr_insert_many_1 (void *d, const void *els, int len,
+				       int start, int num_static,
+				       int elsize, int staticoff);
+
+#define Stynarr_insert_many(d, els, len, start)		\
+  Stynarr_insert_many_1 (&d, els, len, start,		\
+			 Stynarr_num_static (d),	\
+			 Stynarr_elsize (d),		\
+			 offsetof (d, (d).els_static))
+
+/* ---------------------- stack-like malloc ----------------------- */
 
 void *stack_like_malloc (Bytecount size);
 void stack_like_free (void *val);
@@ -1677,6 +2157,16 @@ typedef struct
 {
   Dynarr_declare (Lisp_Object *);
 } Lisp_Object_ptr_dynarr;
+
+typedef struct
+{
+  Lisp_Object key, value;
+} Lisp_Object_pair;
+
+typedef struct
+{
+  Dynarr_declare (Lisp_Object_pair);
+} Lisp_Object_pair_dynarr;
 
 /* Close your eyes now lest you vomit or spontaneously combust ... */
 
@@ -3295,8 +3785,24 @@ int begin_do_check_for_quit (void);
 
 #define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
 Hashcode memory_hash (const void *xv, Bytecount size);
-Hashcode internal_hash (Lisp_Object obj, int depth);
+Hashcode internal_hash_1 (Lisp_Object obj, int depth);
 Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);
+
+DECLARE_INLINE_HEADER (
+Hashcode
+internal_hash (Lisp_Object obj, int depth)
+)
+{
+  /* This catches all non-lrecords (integers, chars) and all lrecords
+     with no hash function.  The latter macro requires three memory reads,
+     but I assume that for extremely common objects such as Qunbound, Qnil
+     and Qt, the appropriate memory will be in the L1 cache and such access
+     will be quite fast.  Putting various conditional checks here would
+     probably slow it down due to the branch-prediction problems. */
+  if (!LRECORDP (obj) || !XRECORD_LHEADER_IMPLEMENTATION (obj)->hash)
+    return LISP_HASH (obj);
+  return internal_hash_1 (obj, depth);
+}
 
 
 /************************************************************************/
@@ -3991,6 +4497,17 @@ Bytecount emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 
+/* Defined in dynarr.c */
+extern const struct sized_memory_description int_description;
+extern const struct sized_memory_description int_dynarr_description;
+extern const struct sized_memory_description unsigned_char_description;
+extern const struct sized_memory_description unsigned_char_dynarr_description;
+extern const struct sized_memory_description Lisp_Object_description;
+extern const struct sized_memory_description Lisp_Object_dynarr_description;
+extern const struct sized_memory_description Lisp_Object_pair_description;
+extern const struct sized_memory_description Lisp_Object_pair_dynarr_description;
+void mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn);
+
 /* Defined in editfns.c */
 EXFUN (Fbobp, 1);
 EXFUN (Fbolp, 1);
@@ -4053,7 +4570,7 @@ extern int preparing_for_armageddon;
 extern Fixnum emacs_priority;
 extern int suppress_early_error_handler_backtrace;
 void debug_break (void);
-int debug_can_access_memory (void *ptr, Bytecount len);
+int debug_can_access_memory (const void *ptr, Bytecount len);
 DECLARE_DOESNT_RETURN (really_abort (void));
 void zero_out_command_line_status_vars (void);
 
@@ -4192,9 +4709,6 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
-MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
-							      ...))
-       PRINTF_ARGS (1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -4371,6 +4885,7 @@ MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
+extern Lisp_Object Vdebug_on_error;
 extern Lisp_Object Vstack_trace_on_error;
 
 /* Defined in event-stream.c */
@@ -4420,13 +4935,11 @@ EXFUN (Fcoding_system_p, 1);
 EXFUN (Fcoding_system_property, 2);
 EXFUN (Fcoding_system_type, 1);
 EXFUN (Fcopy_coding_system, 2);
-EXFUN (Fdecode_big5_char, 1);
 EXFUN (Fdecode_coding_region, 4);
 EXFUN (Fdecode_shift_jis_char, 1);
 EXFUN (Fdefine_coding_system_alias, 2);
 EXFUN (Fdetect_coding_region, 3);
 EXFUN (Fdefault_encoding_detection_enabled_p, 0);
-EXFUN (Fencode_big5_char, 1);
 EXFUN (Fencode_coding_region, 4);
 EXFUN (Fencode_shift_jis_char, 1);
 EXFUN (Ffind_coding_system, 1);
@@ -4799,6 +5312,11 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
 void internal_object_printer (Lisp_Object, Lisp_Object, int);
+MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
+							      ...))
+       PRINTF_ARGS (1, 2);
+DECLARE_DOESNT_RETURN (printing_unreadable_lcrecord (Lisp_Object obj,
+						     const Ibyte *name));
 
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);
@@ -4919,12 +5437,12 @@ long get_random (void);
 void seed_random (long arg);
 
 /* Defined in text.c */
-void find_charsets_in_ibyte_string (unsigned char *charsets,
-				      const Ibyte *str,
-				      Bytecount len);
-void find_charsets_in_ichar_string (unsigned char *charsets,
-				     const Ichar *str,
-				     Charcount len);
+void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
+				    const Ibyte *USED_IF_MULE (str),
+				    Bytecount USED_IF_MULE (len));
+void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
+				    const Ichar *USED_IF_MULE (str),
+				    Charcount USED_IF_MULE (len));
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
 int ichar_string_displayed_columns (const Ichar *str, Charcount len);
 Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
@@ -5018,9 +5536,11 @@ Charxpos buffer_or_string_clip_to_absolute_char (Lisp_Object object,
 Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
 						 Bytexpos pos);
 
+Lisp_Object get_charset_octets (Lisp_Object charset, Lisp_Object arg1,
+				Lisp_Object arg2, int *a1, int *a2);
+enum converr decode_handle_error (Lisp_Object err);
 
 #ifdef ENABLE_COMPOSITE_CHARS
-
 Ichar lookup_composite_char (Ibyte *str, int len);
 Lisp_Object composite_char_string (Ichar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
@@ -5029,6 +5549,7 @@ EXFUN (Ffind_charset, 1);
 EXFUN (Fget_charset, 1);
 EXFUN (Fcharset_list, 0);
 
+#ifdef MULE
 extern Lisp_Object Vcharset_ascii;
 extern Lisp_Object Vcharset_control_1;
 extern Lisp_Object Vcharset_latin_iso8859_1;
@@ -5043,6 +5564,8 @@ extern Lisp_Object Vcharset_katakana_jisx0201;
 extern Lisp_Object Vcharset_latin_jisx0201;
 extern Lisp_Object Vcharset_cyrillic_iso8859_5;
 extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_latin_iso8859_15;
+extern Lisp_Object Vcharset_chinese_sisheng;
 extern Lisp_Object Vcharset_japanese_jisx0208_1978;
 extern Lisp_Object Vcharset_chinese_gb2312;
 extern Lisp_Object Vcharset_japanese_jisx0208;
@@ -5050,9 +5573,15 @@ extern Lisp_Object Vcharset_korean_ksc5601;
 extern Lisp_Object Vcharset_japanese_jisx0212;
 extern Lisp_Object Vcharset_chinese_cns11643_1;
 extern Lisp_Object Vcharset_chinese_cns11643_2;
+#ifdef UNICODE_INTERNAL
+extern Lisp_Object Vcharset_chinese_big5;
+extern Lisp_Object Vcharset_japanese_shift_jis;
+#else
 extern Lisp_Object Vcharset_chinese_big5_1;
 extern Lisp_Object Vcharset_chinese_big5_2;
+#endif /* UNICODE_INTERNAL */
 extern Lisp_Object Vcharset_composite;
+#endif /* MULE */
 
 Ichar Lstream_get_ichar_1 (Lstream *stream, int first_char);
 int Lstream_fput_ichar (Lstream *stream, Ichar ch);
@@ -5298,12 +5827,20 @@ extern alloca_convert_vals_dynarr *active_alloca_convert;
 MODULE_API int find_pos_of_existing_active_alloca_convert (const char *
 							   srctext);
 
+#ifdef UNICODE_INTERNAL
+extern int firstbyte_mask[];
+extern unsigned int utf8_offsets_by_rep_bytes[];
+#endif /* UNICODE_INTERNAL */
+
 /* Defined in unicode.c */
 extern const struct sized_memory_description to_unicode_description;
 extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
+Lisp_Object_dynarr *get_unicode_precedence (void);
 void recalculate_unicode_precedence (void);
+Lisp_Object_dynarr *
+convert_charset_list_to_precedence_dynarr (Lisp_Object charsets);
 extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7;
 #ifdef MEMORY_USAGE_STATS
@@ -5312,6 +5849,9 @@ Bytecount compute_from_unicode_table_size (Lisp_Object charset,
 Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 					    struct overhead_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
+void initialize_ascii_control_1_latin_1_unicode_translation (void);
+int decode_unicode (Lisp_Object unicode);
+void free_precedence_dynarr (Lisp_Object_dynarr *dynarr);
 
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);

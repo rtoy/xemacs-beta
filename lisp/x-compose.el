@@ -104,6 +104,9 @@
 ;; 20050324103919.8D22E4901@boffi95.stru.polimi.it is caused by Xlib doing
 ;; the compose processing. To turn that off, I'm not certain what's 
 
+;; @@#### This should probably be integrated into general Usenet handling
+;; of composition sequences.
+
 ;;; Code:
 
 (macrolet

@@ -34,44 +34,26 @@
 
 ;;; Code:
 
-(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(registry "xtis-0"
-			 dimension 2
-			 columns 1
-			 chars 94
-			 final ??
-			 graphic 0))
-
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)
 
 (when (featurep 'xemacs)
   (let ((deflist	'(;; chars	syntax
-			  ("$(?!0(B-$(?NxP0R0S0`0(B-$(?e0(B"	"w")
-			  ("$(?p0(B-$(?y0(B"	"w")
-			  ("$(?O0f0_0o0z0{0(B"	"_")
-			  ))
-	elm chars len syntax to ch i)
-    (while deflist
-      (setq elm (car deflist))
-      (setq chars (car elm)
-	    len (length chars)
-	    syntax (nth 1 elm)
-	    i 0)
-      (while (< i len)
-	(if (= (aref chars i) ?-)
-	    (setq i (1+ i)
-		  to (nth 1 (split-char (aref chars i))))
-	  (setq ch (nth 1 (split-char (aref chars i)))
-		to ch))
-	(while (<= ch to)
-	  (modify-syntax-entry (vector 'thai-xtis ch) syntax)
-	  (setq ch (1+ ch)))
-	(setq i (1+ i)))
-      (setq deflist (cdr deflist))))
-
+			  (((33 . 78) 80 82 83 (96 . 101) (112 . 121)) "w")
+			  ((79 102 95 111 122 123) "_"))))
+    (loop for (chars syntax) in deflist do
+      (loop for ch in chars do
+	(let (from to)
+	  (if (consp ch)
+	      (setq from (car ch) to (cdr ch))
+	    (setq from ch to ch))
+	  (loop for i from from to to do
+	    (modify-syntax-entry (vector 'thai-xtis i) syntax))))))
   (put-charset-property 'thai-xtis 'preferred-coding-system 'tis-620)
   )
+
+;; @@#### This entire file is bogus.  Do Thai the normal way.
+(when (featurep 'ccl)
 
 ;; This is the ccl-decode-thai-xtis automaton.
 ;;
@@ -373,5 +355,6 @@
    (coding-priority tis-620 iso-2022-7bit)
    (sample-text . "$(?!:(B")
    (documentation . t)))
+) ; (featurep 'ccl)
 
 ;; thai-xtis.el ends here.

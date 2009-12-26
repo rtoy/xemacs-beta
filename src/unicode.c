@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "charset.h"
+#include "elhash.h"
 #include "file-coding.h"
 #include "opaque.h"
 
@@ -52,24 +53,25 @@ Boston, MA 02111-1307, USA.  */
 
    We currently use the following format for tables:
 
-   If dimension == 1, to_unicode_table is a 96-element array of ints
-   (Unicode code points); else, it's a 96-element array of int * pointers,
-   each of which points to a 96-element array of ints.  If no elements in a
-   row have been filled in, the pointer will point to a default empty
-   table; that way, memory usage is more reasonable but lookup still fast.
+   If dimension == 1, to_unicode_table is a CHARSET_MAX_SIZE-element array
+   of ints (Unicode code points); else, it's a CHARSET_MAX_SIZE-element
+   array of int * pointers, each of which points to a
+   CHARSET_MAX_SIZE-element array of ints.  If no elements in a row have
+   been filled in, the pointer will point to a default empty table; that
+   way, memory usage is more reasonable but lookup still fast.
 
    -- If from_unicode_levels == 1, from_unicode_table is a 256-element
-   array of shorts (octet 1 in high byte, octet 2 in low byte; we don't
+   array of UINT_16_BITs (octet 1 in high byte, octet 2 in low byte; we don't
    store Ichars directly to save space).
 
    -- If from_unicode_levels == 2, from_unicode_table is a 256-element
-   array of short * pointers, each of which points to a 256-element array
-   of shorts.
+   array of UINT_16_BIT * pointers, each of which points to a 256-element array
+   of UINT_16_BITs.
 
    -- If from_unicode_levels == 3, from_unicode_table is a 256-element
-   array of short ** pointers, each of which points to a 256-element array
-   of short * pointers, each of which points to a 256-element array of
-   shorts.
+   array of UINT_16_BIT ** pointers, each of which points to a 256-element
+   array of UINT_16_BIT * pointers, each of which points to a 256-element
+   array of UINT_16_BITs.
 
    -- If from_unicode_levels == 4, same thing but one level deeper.
 
@@ -200,20 +202,41 @@ Lisp_Object Qutf_16_little_endian_bom;
 
 Lisp_Object Qutf_8_bom;
 
+extern int firstbyte_mask[];
+
 #ifdef MULE 
 
-/* #### Using ints for to_unicode is OK (as long as they are >= 32 bits).
-   However, shouldn't the shorts below be unsigned?
+/* There is no single badval that will work for all cases with the from tables,
+   because we allow arbitrary 256x256 charsets. #### This is a real problem;
+   need a better fix.  One possibility is to compute a bad value that is
+   outside the range of a particular charset, and have separate blank tables
+   for each charset.  This still chokes on 256x256, but not anywhere else.
+   The value of 0x0001 will not be valid in any dimension-1 charset (they
+   always are of the form 0xXX00), not valid in a ku-ten style charset, and
+   not valid in any ISO-2022-like charset, or Shift-JIS, Big5, JOHAB, etc.;
+   or any related charset, all of which try to avoid using the control
+   character ranges.  Of course it *is* valid in Unicode, if someone tried
+   to create a national unicode charset; but if we chose a value that is
+   invalid in Unicode, it's likely to be valid for many other charsets; no
+   win. */
+#define BADVAL_FROM_TABLE ((UINT_16_BIT) 1)
+/* For the to tables we are safe, because -1 is never a valid Unicode
+   codepoint. */
+#define BADVAL_TO_TABLE (-1)
 
-   Answer: Doesn't matter because the values being converted to are only
-   96x96. */
+/* We use int for to_unicode; Unicode codepoints always fit into a signed
+   32-bit value.
+
+   We use UINT_16_BIT to store a charset codepoint, up to 256x256,
+   unsigned to avoid problems.
+*/
 static int *to_unicode_blank_1;
 static int **to_unicode_blank_2;
 
-static short *from_unicode_blank_1;
-static short **from_unicode_blank_2;
-static short ***from_unicode_blank_3;
-static short ****from_unicode_blank_4;
+/* The lowest table is always null.  We do it this way so that the table index
+   corresponds to the number of levels of the table, i.e. how many indices
+   before you get an actual value rather than a pointer. */
+static void *from_unicode_blank[5];
 
 static const struct memory_description to_unicode_level_0_desc_1[] = {
   { XD_END }
@@ -224,7 +247,7 @@ static const struct sized_memory_description to_unicode_level_0_desc = {
 };
 
 static const struct memory_description to_unicode_level_1_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 96, { &to_unicode_level_0_desc } },
+  { XD_BLOCK_PTR, 0, CHARSET_MAX_SIZE, { &to_unicode_level_0_desc } },
   { XD_END }
 };
 
@@ -233,8 +256,8 @@ static const struct sized_memory_description to_unicode_level_1_desc = {
 };
 
 static const struct memory_description to_unicode_description_1[] = {
-  { XD_BLOCK_PTR, 1, 96, { &to_unicode_level_0_desc } },
-  { XD_BLOCK_PTR, 2, 96, { &to_unicode_level_1_desc } },
+  { XD_BLOCK_PTR, 1, CHARSET_MAX_SIZE, { &to_unicode_level_0_desc } },
+  { XD_BLOCK_PTR, 2, CHARSET_MAX_SIZE, { &to_unicode_level_1_desc } },
   { XD_END }
 };
 
@@ -246,7 +269,7 @@ const struct sized_memory_description to_unicode_description = {
 
 /* Used only for to_unicode_blank_2 */
 static const struct memory_description to_unicode_level_2_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 96, { &to_unicode_level_1_desc } },
+  { XD_BLOCK_PTR, 0, CHARSET_MAX_SIZE, { &to_unicode_level_1_desc } },
   { XD_END }
 };
 
@@ -255,7 +278,7 @@ static const struct memory_description from_unicode_level_0_desc_1[] = {
 };
 
 static const struct sized_memory_description from_unicode_level_0_desc = {
-   sizeof (short), from_unicode_level_0_desc_1
+   sizeof (UINT_16_BIT), from_unicode_level_0_desc_1
 };
 
 static const struct memory_description from_unicode_level_1_desc_1[] = {
@@ -299,7 +322,7 @@ const struct sized_memory_description from_unicode_description = {
   sizeof (void *), from_unicode_description_1
 };
 
-/* Used only for from_unicode_blank_4 */
+/* Used only for from_unicode_blank[4] */
 static const struct memory_description from_unicode_level_4_desc_1[] = {
   { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_3_desc } },
   { XD_END }
@@ -307,27 +330,29 @@ static const struct memory_description from_unicode_level_4_desc_1[] = {
 
 static Lisp_Object_dynarr *unicode_precedence_dynarr;
 
-static const struct memory_description lod_description_1[] = {
-  XD_DYNARR_DESC (Lisp_Object_dynarr, &lisp_object_description),
-  { XD_END }
-};
-
-static const struct sized_memory_description lisp_object_dynarr_description = {
-  sizeof (Lisp_Object_dynarr),
-  lod_description_1
-};
-
 Lisp_Object Vlanguage_unicode_precedence_list;
 Lisp_Object Vdefault_unicode_precedence_list;
+/* Used internally in the conversion of a precedence list into a dynarr */
+Lisp_Object Vprecedence_calculation_hash;
 
 Lisp_Object Qignore_first_column;
 
-
-/************************************************************************/
-/*                        Unicode implementation                        */
-/************************************************************************/
+/* Break up a 32-bit character code into 8-bit parts. */
 
-#define BREAKUP_UNICODE_CODE(val, u1, u2, u3, u4, levels)	\
+#ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
+#define TO_TABLE_SIZE_FROM_CHARSET(charset) 2
+#define UNICODE_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
+do {								\
+  int buc_val = (val);						\
+								\
+  (u1) = buc_val >> 24;						\
+  (u2) = (buc_val >> 16) & 255;					\
+  (u3) = (buc_val >> 8) & 255;					\
+  (u4) = buc_val & 255;						\
+} while (0)
+#else /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
+#define TO_TABLE_SIZE_FROM_CHARSET(charset) XCHARSET_DIMENSION (charset)
+#define UNICODE_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
 do {								\
   int buc_val = (val);						\
 								\
@@ -340,36 +365,56 @@ do {								\
 	      buc_val <= 0xFFFFFF ? 3 :				\
 	      4);						\
 } while (0)
+#endif /* (not) MAXIMIZE_UNICODE_TABLE_DEPTH */
+#endif /* MULE */
+
+
+/************************************************************************/
+/*                        Unicode implementation                        */
+/************************************************************************/
+
+/* Given a Lisp_Object that is supposed to represent a Unicode codepoint,
+   make sure it does, and return it. */
+
+int
+decode_unicode (Lisp_Object unicode)
+{
+  EMACS_INT val;
+  CHECK_INT (unicode);
+  val = XINT (unicode);
+  if (!valid_unicode_codepoint_p (val))
+    invalid_argument ("Invalid unicode codepoint (range 0 .. 2^31 - 1)",
+		      unicode);
+  return (int) val;
+}
+
+#ifdef MULE
 
 static void
 init_blank_unicode_tables (void)
 {
   int i;
 
-  from_unicode_blank_1 = xnew_array (short, 256);
-  from_unicode_blank_2 = xnew_array (short *, 256);
-  from_unicode_blank_3 = xnew_array (short **, 256);
-  from_unicode_blank_4 = xnew_array (short ***, 256);
+  from_unicode_blank[0] = NULL;
+  from_unicode_blank[1] = xnew_array (UINT_16_BIT, 256);
+  from_unicode_blank[2] = xnew_array (UINT_16_BIT *, 256);
+  from_unicode_blank[3] = xnew_array (UINT_16_BIT **, 256);
+  from_unicode_blank[4] = xnew_array (UINT_16_BIT ***, 256);
   for (i = 0; i < 256; i++)
     {
-      /* #### IMWTK: Why does using -1 here work? Simply because there are
-         no existing 96x96 charsets?
-
-         Answer: I don't understand the concern.  -1 indicates there is no
-         entry for this particular codepoint, which is always the case for
-	 blank tables. */
-      from_unicode_blank_1[i] = (short) -1;
-      from_unicode_blank_2[i] = from_unicode_blank_1;
-      from_unicode_blank_3[i] = from_unicode_blank_2;
-      from_unicode_blank_4[i] = from_unicode_blank_3;
+      /* See comment above on BADVAL_FROM_TABLE */
+      ((UINT_16_BIT *) from_unicode_blank[1])[i] = BADVAL_FROM_TABLE;
+      ((void **) from_unicode_blank[2])[i] = from_unicode_blank[1];
+      ((void **) from_unicode_blank[3])[i] = from_unicode_blank[2];
+      ((void **) from_unicode_blank[4])[i] = from_unicode_blank[3];
     }
 
-  to_unicode_blank_1 = xnew_array (int, 96);
-  to_unicode_blank_2 = xnew_array (int *, 96);
-  for (i = 0; i < 96; i++)
+  to_unicode_blank_1 = xnew_array (int, CHARSET_MAX_SIZE);
+  to_unicode_blank_2 = xnew_array (int *, CHARSET_MAX_SIZE);
+  for (i = 0; i < CHARSET_MAX_SIZE; i++)
     {
-      /* Here -1 is guaranteed OK. */
-      to_unicode_blank_1[i] = -1;
+      /* Likewise for BADVAL_TO_TABLE */
+      to_unicode_blank_1[i] = BADVAL_TO_TABLE;
       to_unicode_blank_2[i] = to_unicode_blank_1;
     }
 }
@@ -377,38 +422,14 @@ init_blank_unicode_tables (void)
 static void *
 create_new_from_unicode_table (int level)
 {
-  switch (level)
-    {
-      /* WARNING: If you are thinking of compressing these, keep in
-	 mind that sizeof (short) does not equal sizeof (short *). */
-    case 1:
-      {
-	short *newtab = xnew_array (short, 256);
-	memcpy (newtab, from_unicode_blank_1, 256 * sizeof (short));
-	return newtab;
-      }
-    case 2:
-      {
-	short **newtab = xnew_array (short *, 256);
-	memcpy (newtab, from_unicode_blank_2, 256 * sizeof (short *));
-	return newtab;
-      }
-    case 3:
-      {
-	short ***newtab = xnew_array (short **, 256);
-	memcpy (newtab, from_unicode_blank_3, 256 * sizeof (short **));
-	return newtab;
-      }
-    case 4:
-      {
-	short ****newtab = xnew_array (short ***, 256);
-	memcpy (newtab, from_unicode_blank_4, 256 * sizeof (short ***));
-	return newtab;
-      }
-    default:
-      ABORT ();
-      return 0;
-    }
+  /* WARNING: sizeof (UINT_16_BIT) != sizeof (UINT_16_BIT *). */
+  Bytecount size = level == 1 ? sizeof (UINT_16_BIT) : sizeof (void *);
+  void *newtab;
+
+  text_checking_assert (level >= 1 && level <= 4);
+  newtab = xmalloc (256 * size);
+  memcpy (newtab, from_unicode_blank[level], 256 * size);
+  return newtab;
 }
 
 /* Allocate and blank the tables.
@@ -416,63 +437,41 @@ create_new_from_unicode_table (int level)
 void
 init_charset_unicode_tables (Lisp_Object charset)
 {
-  if (XCHARSET_DIMENSION (charset) == 1)
+  if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
     {
-      int *to_table = xnew_array (int, 96);
-      memcpy (to_table, to_unicode_blank_1, 96 * sizeof (int));
+      int *to_table = xnew_array (int, CHARSET_MAX_SIZE);
+      memcpy (to_table, to_unicode_blank_1, CHARSET_MAX_SIZE * sizeof (int));
       XCHARSET_TO_UNICODE_TABLE (charset) = to_table;
     }
   else
     {
-      int **to_table = xnew_array (int *, 96);
-      memcpy (to_table, to_unicode_blank_2, 96 * sizeof (int *));
+      int **to_table = xnew_array (int *, CHARSET_MAX_SIZE);
+      memcpy (to_table, to_unicode_blank_2, CHARSET_MAX_SIZE * sizeof (int *));
       XCHARSET_TO_UNICODE_TABLE (charset) = to_table;
     }
 
-  {
-    XCHARSET_FROM_UNICODE_TABLE (charset) =
-      create_new_from_unicode_table (1);
-    XCHARSET_FROM_UNICODE_LEVELS (charset) = 1;
-  }
+#ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
+  XCHARSET_FROM_UNICODE_TABLE (charset) = create_new_from_unicode_table (4);
+  XCHARSET_FROM_UNICODE_LEVELS (charset) = 4;
+#else
+  XCHARSET_FROM_UNICODE_TABLE (charset) = create_new_from_unicode_table (1);
+  XCHARSET_FROM_UNICODE_LEVELS (charset) = 1;
+#endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
 }
 
 static void
 free_from_unicode_table (void *table, int level)
 {
-  int i;
-
-  switch (level)
+  if (level >= 2)
     {
-    case 2:
-      {
-	short **tab = (short **) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_1)
-	      free_from_unicode_table (tab[i], 1);
-	  }
-	break;
-      }
-    case 3:
-      {
-	short ***tab = (short ***) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_2)
-	      free_from_unicode_table (tab[i], 2);
-	  }
-	break;
-      }
-    case 4:
-      {
-	short ****tab = (short ****) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_3)
-	      free_from_unicode_table (tab[i], 3);
-	  }
-	break;
-      }
+      void **tab = (void **) table;
+      int i;
+
+      for (i = 0; i < 256; i++)
+	{
+	  if (tab[i] != from_unicode_blank[level - 1])
+	    free_from_unicode_table (tab[i], level - 1);
+	}
     }
 
   xfree (table, void *);
@@ -486,7 +485,7 @@ free_to_unicode_table (void *table, int level)
       int i;
       int **tab = (int **) table;
 
-      for (i = 0; i < 96; i++)
+      for (i = 0; i < CHARSET_MAX_SIZE; i++)
 	{
 	  if (tab[i] != to_unicode_blank_1)
 	    free_to_unicode_table (tab[i], 1);
@@ -500,7 +499,7 @@ void
 free_charset_unicode_tables (Lisp_Object charset)
 {
   free_to_unicode_table (XCHARSET_TO_UNICODE_TABLE (charset),
-			 XCHARSET_DIMENSION (charset));
+			 TO_TABLE_SIZE_FROM_CHARSET (charset));
   free_from_unicode_table (XCHARSET_FROM_UNICODE_TABLE (charset),
 			   XCHARSET_FROM_UNICODE_LEVELS (charset));
 }
@@ -511,45 +510,22 @@ static Bytecount
 compute_from_unicode_table_size_1 (void *table, int level,
 				   struct overhead_stats *stats)
 {
-  int i;
   Bytecount size = 0;
 
-  switch (level)
+  if (level >= 2)
     {
-    case 2:
-      {
-	short **tab = (short **) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_1)
-	      size += compute_from_unicode_table_size_1 (tab[i], 1, stats);
-	  }
-	break;
-      }
-    case 3:
-      {
-	short ***tab = (short ***) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_2)
-	      size += compute_from_unicode_table_size_1 (tab[i], 2, stats);
-	  }
-	break;
-      }
-    case 4:
-      {
-	short ****tab = (short ****) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_3)
-	      size += compute_from_unicode_table_size_1 (tab[i], 3, stats);
-	  }
-	break;
-      }
+      int i;
+      void **tab = (void **) table;
+      for (i = 0; i < 256; i++)
+	{
+	  if (tab[i] != from_unicode_blank[level - 1])
+	    size += compute_from_unicode_table_size_1 (tab[i], level - 1,
+						       stats);
+	}
     }
 
   size += malloced_storage_size (table,
-				 256 * (level == 1 ? sizeof (short) :
+				 256 * (level == 1 ? sizeof (UINT_16_BIT) :
 					sizeof (void *)),
 				 stats);
   return size;
@@ -566,7 +542,7 @@ compute_to_unicode_table_size_1 (void *table, int level,
       int i;
       int **tab = (int **) table;
 
-      for (i = 0; i < 96; i++)
+      for (i = 0; i < CHARSET_MAX_SIZE; i++)
 	{
 	  if (tab[i] != to_unicode_blank_1)
 	    size += compute_to_unicode_table_size_1 (tab[i], 1, stats);
@@ -574,8 +550,9 @@ compute_to_unicode_table_size_1 (void *table, int level,
     }
 
   size += malloced_storage_size (table,
-				 96 * (level == 1 ? sizeof (int) :
-				       sizeof (void *)),
+				 CHARSET_MAX_SIZE *
+				 (level == 1 ? sizeof (int) :
+				  sizeof (void *)),
 				 stats);
   return size;
 }
@@ -596,7 +573,7 @@ compute_to_unicode_table_size (Lisp_Object charset,
 {
   return (compute_to_unicode_table_size_1
 	  (XCHARSET_TO_UNICODE_TABLE (charset),
-	   XCHARSET_DIMENSION (charset),
+	   TO_TABLE_SIZE_FROM_CHARSET (charset),
 	   stats));
 }
 
@@ -619,10 +596,10 @@ compute_to_unicode_table_size (Lisp_Object charset,
 static void
 assert_not_any_blank_table (void *tab)
 {
-  assert (tab != from_unicode_blank_1);
-  assert (tab != from_unicode_blank_2);
-  assert (tab != from_unicode_blank_3);
-  assert (tab != from_unicode_blank_4);
+  assert (tab != from_unicode_blank[1]);
+  assert (tab != from_unicode_blank[2]);
+  assert (tab != from_unicode_blank[3]);
+  assert (tab != from_unicode_blank[4]);
   assert (tab != to_unicode_blank_1);
   assert (tab != to_unicode_blank_2);
   assert (tab);
@@ -638,65 +615,47 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
     {
     case 1:
       {
-	short *tab = (short *) table;
+	UINT_16_BIT *tab = (UINT_16_BIT *) table;
 	for (i = 0; i < 256; i++)
 	  {
-	    if (tab[i] != -1)
+	    if (tab[i] != BADVAL_FROM_TABLE)
 	      {
-		Lisp_Object char_charset;
 		int c1, c2;
 
-		assert (valid_ichar_p (tab[i]));
-		BREAKUP_ICHAR (tab[i], char_charset, c1, c2);
-		assert (EQ (charset, char_charset));
-		if (XCHARSET_DIMENSION (charset) == 1)
+		c1 = tab[i] >> 8;
+		c2 = tab[i] & 0xFF;
+		assert_codepoint_in_range (charset, c1, c2);
+		if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
 		  {
 		    int *to_table =
 		      (int *) XCHARSET_TO_UNICODE_TABLE (charset);
 		    assert_not_any_blank_table (to_table);
-		    assert (to_table[c1 - 32] == (codetop << 8) + i);
+		    assert (to_table[c2 - CHARSET_MIN_OFFSET] ==
+			    (codetop << 8) + i);
 		  }
 		else
 		  {
 		    int **to_table =
 		      (int **) XCHARSET_TO_UNICODE_TABLE (charset);
 		    assert_not_any_blank_table (to_table);
-		    assert_not_any_blank_table (to_table[c1 - 32]);
-		    assert (to_table[c1 - 32][c2 - 32] == (codetop << 8) + i);
+		    assert_not_any_blank_table
+		      (to_table[c1 - CHARSET_MIN_OFFSET]);
+		    assert (to_table[c1 - CHARSET_MIN_OFFSET]
+			    [c2 - CHARSET_MIN_OFFSET] == (codetop << 8) + i);
 		  }
 	      }
 	  }
 	break;
       }
     case 2:
-      {
-	short **tab = (short **) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_1)
-	      sledgehammer_check_from_table (charset, tab[i], 1,
-					     (codetop << 8) + i);
-	  }
-	break;
-      }
     case 3:
-      {
-	short ***tab = (short ***) table;
-	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank_2)
-	      sledgehammer_check_from_table (charset, tab[i], 2,
-					     (codetop << 8) + i);
-	  }
-	break;
-      }
     case 4:
       {
-	short ****tab = (short ****) table;
+	void **tab = (void **) table;
 	for (i = 0; i < 256; i++)
 	  {
-	    if (tab[i] != from_unicode_blank_3)
-	      sledgehammer_check_from_table (charset, tab[i], 3,
+	    if (tab[i] != from_unicode_blank[level - 1])
+	      sledgehammer_check_from_table (charset, tab[i], level - 1,
 					     (codetop << 8) + i);
 	  }
 	break;
@@ -711,6 +670,9 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 			     int codetop)
 {
   int i;
+  int low1, high1, low2, high2;
+
+  get_charset_limits (charset, &low1, &high1, &low2, &high2);
 
   switch (level)
     {
@@ -718,56 +680,62 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
       {
 	int *tab = (int *) table;
 
-	if (XCHARSET_CHARS (charset) == 94)
+	if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 2)
+	  /* This means we're traversing a nested table */
+	  low1 = low2, high1 = high2;
+	for (i = 0; i < CHARSET_MAX_SIZE; i++)
 	  {
-	    assert (tab[0] == -1);
-	    assert (tab[95] == -1);
-	  }
-
-	for (i = 0; i < 96; i++)
-	  {
-	    if (tab[i] != -1)
+	    /* Make sure no out-of-bounds characters were set */
+	    if (i + CHARSET_MIN_OFFSET < low1 ||
+		i + CHARSET_MIN_OFFSET > high1)
+	      assert (tab[i] == BADVAL_TO_TABLE);
+	    if (tab[i] != BADVAL_TO_TABLE)
 	      {
 		int u4, u3, u2, u1, levels;
-		Ichar ch;
-		Ichar this_ch;
-		short val;
+		UINT_16_BIT val;
 		void *frtab = XCHARSET_FROM_UNICODE_TABLE (charset);
 
-		if (XCHARSET_DIMENSION (charset) == 1)
-		  this_ch = make_ichar (charset, i + 32, 0);
-		else
-		  this_ch = make_ichar (charset, codetop + 32, i + 32);
-
 		assert (tab[i] >= 0);
-		BREAKUP_UNICODE_CODE (tab[i], u4, u3, u2, u1, levels);
+		UNICODE_BREAKUP_CHAR_CODE (tab[i], u4, u3, u2, u1, levels);
+#ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
+		levels = 4;
+#endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
 		assert (levels <= XCHARSET_FROM_UNICODE_LEVELS (charset));
 
 		switch (XCHARSET_FROM_UNICODE_LEVELS (charset))
 		  {
-		  case 1: val = ((short *) frtab)[u1]; break;
-		  case 2: val = ((short **) frtab)[u2][u1]; break;
-		  case 3: val = ((short ***) frtab)[u3][u2][u1]; break;
-		  case 4: val = ((short ****) frtab)[u4][u3][u2][u1]; break;
+		  case 1: val = ((UINT_16_BIT *) frtab)[u1]; break;
+		  case 2: val = ((UINT_16_BIT **) frtab)[u2][u1]; break;
+		  case 3: val = ((UINT_16_BIT ***) frtab)[u3][u2][u1]; break;
+		  case 4: val = ((UINT_16_BIT ****) frtab)[u4][u3][u2][u1];
+		    break;
 		  default: ABORT ();
 		  }
 
-		ch = make_ichar (charset, val >> 8, val & 0xFF);
-		assert (ch == this_ch);
+		if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
+		  {
+		    assert (i + CHARSET_MIN_OFFSET == (val >> 8));
+		    assert (0 == (val & 0xFF));
+		  }
+		else
+		  {
+		    assert (codetop + CHARSET_MIN_OFFSET == (val >> 8));
+		    assert (i + CHARSET_MIN_OFFSET == (val & 0xFF));
+		  }
 
 		switch (XCHARSET_FROM_UNICODE_LEVELS (charset))
 		  {
 		  case 4:
 		    assert_not_any_blank_table (frtab);
-		    frtab = ((short ****) frtab)[u4];
+		    frtab = ((UINT_16_BIT ****) frtab)[u4];
 		    /* fall through */
 		  case 3:
 		    assert_not_any_blank_table (frtab);
-		    frtab = ((short ***) frtab)[u3];
+		    frtab = ((UINT_16_BIT ***) frtab)[u3];
 		    /* fall through */
 		  case 2:
 		    assert_not_any_blank_table (frtab);
-		    frtab = ((short **) frtab)[u2];
+		    frtab = ((UINT_16_BIT **) frtab)[u2];
 		    /* fall through */
 		  case 1:
 		    assert_not_any_blank_table (frtab);
@@ -782,14 +750,12 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
       {
 	int **tab = (int **) table;
 
-	if (XCHARSET_CHARS (charset) == 94)
+	for (i = 0; i < CHARSET_MAX_SIZE; i++)
 	  {
-	    assert (tab[0] == to_unicode_blank_1);
-	    assert (tab[95] == to_unicode_blank_1);
-	  }
-
-	for (i = 0; i < 96; i++)
-	  {
+	    /* Make sure no out-of-bounds characters were set */
+	    if (i + CHARSET_MIN_OFFSET < low1 ||
+		i + CHARSET_MIN_OFFSET > high1)
+	      assert (tab[i] == to_unicode_blank_1);
 	    if (tab[i] != to_unicode_blank_1)
 	      sledgehammer_check_to_table (charset, tab[i], 1, i);
 	  }
@@ -810,15 +776,16 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 
   for (i = 0; i < 256; i++)
     {
-      assert (from_unicode_blank_1[i] == (short) -1);
-      assert (from_unicode_blank_2[i] == from_unicode_blank_1);
-      assert (from_unicode_blank_3[i] == from_unicode_blank_2);
-      assert (from_unicode_blank_4[i] == from_unicode_blank_3);
+      assert (((UINT_16_BIT *) from_unicode_blank[1])[i] ==
+	      BADVAL_FROM_TABLE);
+      assert (((void **) from_unicode_blank[2])[i] == from_unicode_blank[1]);
+      assert (((void **) from_unicode_blank[3])[i] == from_unicode_blank[2]);
+      assert (((void **) from_unicode_blank[4])[i] == from_unicode_blank[3]);
     }
 
-  for (i = 0; i < 96; i++)
+  for (i = 0; i < CHARSET_MAX_SIZE; i++)
     {
-      assert (to_unicode_blank_1[i] == -1);
+      assert (to_unicode_blank_1[i] == BADVAL_TO_TABLE);
       assert (to_unicode_blank_2[i] == to_unicode_blank_1);
     }
 
@@ -830,134 +797,114 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 
   sledgehammer_check_to_table (charset,
 			       XCHARSET_TO_UNICODE_TABLE (charset),
-			       XCHARSET_DIMENSION (charset), 0);
+			       TO_TABLE_SIZE_FROM_CHARSET (charset), 0);
 }
 
 #endif /* SLEDGEHAMMER_CHECK_UNICODE */
 
 static void
-set_unicode_conversion (Ichar chr, int code)
+set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 {
-  Lisp_Object charset;
-  int c1, c2;
-
-  BREAKUP_ICHAR (chr, charset, c1, c2);
+  text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));
+  text_checking_assert (valid_unicode_codepoint_p (code));
 
   /* I tried an assert on code > 255 || chr == code, but that fails because
      Mule gives many Latin characters separate code points for different
      ISO 8859 coded character sets.  Obvious in hindsight.... */
-  assert (!EQ (charset, Vcharset_ascii) || chr == code);
-  assert (!EQ (charset, Vcharset_latin_iso8859_1) || chr == code);
-  assert (!EQ (charset, Vcharset_control_1) || chr == code);
+  text_checking_assert (!EQ (charset, Vcharset_ascii) || code == c2);
+  text_checking_assert (!EQ (charset, Vcharset_control_1) || code == c2);
+  text_checking_assert (!EQ (charset, Vcharset_latin_iso8859_1) ||
+			code == c2);
 
   /* This assert is needed because it is simply unimplemented. */
-  assert (!EQ (charset, Vcharset_composite));
+  text_checking_assert (!EQ (charset, Vcharset_composite));
 
 #ifdef SLEDGEHAMMER_CHECK_UNICODE
   sledgehammer_check_unicode_tables (charset);
 #endif
 
-  if (EQ(charset, Vcharset_ascii) || EQ(charset, Vcharset_control_1))
-    return;
-
   /* First, the char -> unicode translation */
 
-  if (XCHARSET_DIMENSION (charset) == 1)
+  if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
     {
       int *to_table = (int *) XCHARSET_TO_UNICODE_TABLE (charset);
-      to_table[c1 - 32] = code;
+      to_table[c2 - CHARSET_MIN_OFFSET] = code;
     }
   else
     {
       int **to_table_2 = (int **) XCHARSET_TO_UNICODE_TABLE (charset);
       int *to_table_1;
 
-      assert (XCHARSET_DIMENSION (charset) == 2);
-      to_table_1 = to_table_2[c1 - 32];
+      to_table_1 = to_table_2[c1 - CHARSET_MIN_OFFSET];
       if (to_table_1 == to_unicode_blank_1)
 	{
-	  to_table_1 = xnew_array (int, 96);
-	  memcpy (to_table_1, to_unicode_blank_1, 96 * sizeof (int));
-	  to_table_2[c1 - 32] = to_table_1;
+	  to_table_1 = xnew_array (int, CHARSET_MAX_SIZE);
+	  memcpy (to_table_1, to_unicode_blank_1,
+		  CHARSET_MAX_SIZE * sizeof (int));
+	  to_table_2[c1 - CHARSET_MIN_OFFSET] = to_table_1;
 	}
-      to_table_1[c2 - 32] = code;
+      to_table_1[c2 - CHARSET_MIN_OFFSET] = code;
     }
 
   /* Then, unicode -> char: much harder */
 
   {
-    int charset_levels;
+    int levels;
     int u4, u3, u2, u1;
+#ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
     int code_levels;
-    BREAKUP_UNICODE_CODE (code, u4, u3, u2, u1, code_levels);
+#endif /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
+    UNICODE_BREAKUP_CHAR_CODE (code, u4, u3, u2, u1, code_levels);
 
-    charset_levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
+    levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
+    text_checking_assert (levels >= 1 && levels <= 4);
 
+#ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
+    text_checking_assert (code_levels <= 4);
     /* Make sure the charset's tables have at least as many levels as
        the code point has: Note that the charset is guaranteed to have
        at least one level, because it was created that way */
-    if (charset_levels < code_levels)
+    if (levels < code_levels)
       {
 	int i;
 
-	assert (charset_levels > 0);
 	for (i = 2; i <= code_levels; i++)
 	  {
-	    if (charset_levels < i)
+	    if (levels < i)
 	      {
 		void *old_table = XCHARSET_FROM_UNICODE_TABLE (charset);
 		void *table = create_new_from_unicode_table (i);
 		XCHARSET_FROM_UNICODE_TABLE (charset) = table;
-		  
-		switch (i)
-		  {
-		  case 2:
-		    ((short **) table)[0] = (short *) old_table;
-		    break;
-		  case 3:
-		    ((short ***) table)[0] = (short **) old_table;
-		    break;
-		  case 4:
-		    ((short ****) table)[0] = (short ***) old_table;
-		    break;
-		  default: ABORT ();
-		  }
+		((void **) table)[0] = old_table;
 	      }
 	  }
 
-	charset_levels = code_levels;
+	levels = code_levels;
 	XCHARSET_FROM_UNICODE_LEVELS (charset) = code_levels;
       }
+#endif /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
 
     /* Now, make sure there is a non-default table at each level */
     {
       int i;
       void *table = XCHARSET_FROM_UNICODE_TABLE (charset);
 
-      for (i = charset_levels; i >= 2; i--)
+      for (i = levels; i >= 2; i--)
 	{
+	  int ind;
+
 	  switch (i)
 	    {
-	    case 4:
-	      if (((short ****) table)[u4] == from_unicode_blank_3)
-		((short ****) table)[u4] =
-		  ((short ***) create_new_from_unicode_table (3));
-	      table = ((short ****) table)[u4];
-	      break;
-	    case 3:
-	      if (((short ***) table)[u3] == from_unicode_blank_2)
-		((short ***) table)[u3] =
-		  ((short **) create_new_from_unicode_table (2));
-	      table = ((short ***) table)[u3];
-	      break;
-	    case 2:
-	      if (((short **) table)[u2] == from_unicode_blank_1)
-		((short **) table)[u2] =
-		  ((short *) create_new_from_unicode_table (1));
-	      table = ((short **) table)[u2];
-	      break;
-	    default: ABORT ();
+	    case 4: ind = u4; break;
+	    case 3: ind = u3; break;
+	    case 2: ind = u2; break;
+	    default: ind = 0; ABORT ();
 	    }
+
+	  if (((void **) table)[ind] == from_unicode_blank[i - 1])
+	    ((void **) table)[ind] =
+	      ((void *) create_new_from_unicode_table (i - 1));
+	  table = ((void **) table)[ind];
 	}
     }
 
@@ -965,14 +912,18 @@ set_unicode_conversion (Ichar chr, int code)
 	  
     {
       void *table = XCHARSET_FROM_UNICODE_TABLE (charset);
-      switch (charset_levels)
+#ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
+      switch (levels)
 	{
-	case 1: ((short *) table)[u1] = (c1 << 8) + c2; break;
-	case 2: ((short **) table)[u2][u1] = (c1 << 8) + c2; break;
-	case 3: ((short ***) table)[u3][u2][u1] = (c1 << 8) + c2; break;
-	case 4: ((short ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2; break;
+	case 4: ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2; break;
+	case 3: ((UINT_16_BIT ***) table)[u3][u2][u1] = (c1 << 8) + c2; break;
+	case 2: ((UINT_16_BIT **) table)[u2][u1] = (c1 << 8) + c2; break;
+	case 1: ((UINT_16_BIT *) table)[u1] = (c1 << 8) + c2; break;
 	default:  ABORT ();
 	}
+#else /* MAXIMIZE_UNICODE_TABLE_DEPTH */
+      ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2;
+#endif /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
     }
   }
 
@@ -981,90 +932,252 @@ set_unicode_conversion (Ichar chr, int code)
 #endif
 }
 
-int
-ichar_to_unicode (Ichar chr)
-{
-  Lisp_Object charset;
-  int c1, c2;
+/* Convert a Unicode codepoint to a charset codepoint. */
 
-  type_checking_assert (valid_ichar_p (chr));
-  /* This shortcut depends on the representation of an Ichar, see text.c. */
-  if (chr < 256)
-    return (int) chr;
-
-  BREAKUP_ICHAR (chr, charset, c1, c2);
-  if (EQ (charset, Vcharset_composite))
-    return -1; /* #### don't know how to handle */
-  else if (XCHARSET_DIMENSION (charset) == 1)
-    return ((int *) XCHARSET_TO_UNICODE_TABLE (charset))[c1 - 32];
-  else
-    return ((int **) XCHARSET_TO_UNICODE_TABLE (charset))[c1 - 32][c2 - 32];
-}
-
-static Ichar
-unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
+void
+non_ascii_unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *charsets,
+					Lisp_Object *charset, int *c1, int *c2)
 {
   int u1, u2, u3, u4;
+#ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
   int code_levels;
+#endif
   int i;
   int n = Dynarr_length (charsets);
 
-  type_checking_assert (code >= 0);
-  /* This shortcut depends on the representation of an Ichar, see text.c.
-     Note that it may _not_ be extended to U+00A0 to U+00FF (many ISO 8859
-     coded character sets have points that map into that region, so this
-     function is many-valued). */
-  if (code < 0xA0)
-    return (Ichar) code;
+  text_checking_assert (valid_unicode_codepoint_p (code));
+  text_checking_assert (code >= 128);
 
-  BREAKUP_UNICODE_CODE (code, u4, u3, u2, u1, code_levels);
+  /* @@#### This optimization is not necessarily correct.  See comment in
+     unicode_to_charset_codepoint(). */
+  if (code <= 0x9F)
+    {
+      *charset = Vcharset_control_1;
+      *c1 = 0;
+      *c2 = code;
+      goto done;
+    }
+
+  UNICODE_BREAKUP_CHAR_CODE (code, u4, u3, u2, u1, code_levels);
 
   for (i = 0; i < n; i++)
     {
-      Lisp_Object charset = Dynarr_at (charsets, i);
-      int charset_levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
-      if (charset_levels >= code_levels)
+      *charset = Dynarr_at (charsets, i);
+      void *table = XCHARSET_FROM_UNICODE_TABLE (*charset);
+#ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
+      if (!table)
 	{
-	  void *table = XCHARSET_FROM_UNICODE_TABLE (charset);
-	  short retval;
-
-	  switch (charset_levels)
+	  int algo_low = XCHARSET_ALGO_LOW (*charset);
+	  text_checking_assert (algo_low >= 0);
+	  if (code >= algo_low &&
+	      code < algo_low +
+	      XCHARSET_CHARS (*charset, 0) * XCHARSET_CHARS (*charset, 1))
 	    {
-	    case 1: retval = ((short *) table)[u1]; break;
-	    case 2: retval = ((short **) table)[u2][u1]; break;
-	    case 3: retval = ((short ***) table)[u3][u2][u1]; break;
-	    case 4: retval = ((short ****) table)[u4][u3][u2][u1]; break;
+	      code -= algo_low;
+	      *c1 = code / XCHARSET_CHARS (*charset, 1);
+	      *c2 = code % XCHARSET_CHARS (*charset, 1);
+	      *c1 += XCHARSET_OFFSET (*charset, 0);
+	      *c2 += XCHARSET_OFFSET (*charset, 1);
+	      goto done;
+	    }
+	  continue;
+	}
+#endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
+#ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
+      UINT_16_BIT retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1];
+      if (retval != BADVAL_FROM_TABLE)
+	{
+	  *c1 = retval >> 8;
+	  *c2 = retval & 0xFF;
+	  goto done;
+	}
+#else
+      int levels = XCHARSET_FROM_UNICODE_LEVELS (*charset);
+      if (levels >= code_levels)
+	{
+	  UINT_16_BIT retval;
+
+	  switch (levels)
+	    {
+	    case 1: retval = ((UINT_16_BIT *) table)[u1]; break;
+	    case 2: retval = ((UINT_16_BIT **) table)[u2][u1]; break;
+	    case 3: retval = ((UINT_16_BIT ***) table)[u3][u2][u1]; break;
+	    case 4: retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1]; break;
 	    default: ABORT (); retval = 0;
 	    }
 
-	  if (retval != -1)
-	    return make_ichar (charset, retval >> 8, retval & 0xFF);
+	  if (retval != BADVAL_FROM_TABLE)
+	    {
+	      c1 = retval >> 8;
+	      c2 = retval & 0xFF;
+	      goto done;
+	    }
 	}
+#endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
     }
 
-  return (Ichar) -1;
+  /* Unable to convert; try the private codepoint range */
+  private_unicode_to_charset_codepoint (code, charset, c1, c2);
+  return;
+
+done:
+  text_checking_assert (valid_charset_codepoint_p (*charset, *c1, *c2));
+  return;
 }
+
+/* @@####
+ there has to be a way for Lisp callers to *always* request the private
+ codepoint if they want it.
+
+ Possibly, we want always-private characters to behave somewhat like
+ their normal equivalents, when such exists; e.g. when retrieving
+ a property from a char table using such a char, try to retrieve a
+ normal Unicode value and use its properties instead.  When setting,
+ do a similar switcheroo.  Maybe at redisplay time also, and anywhere
+ else we access properties of a char, do similar switching.
+ This might be necessary to get recompilation to really work right,
+ I'm not sure.  Hold off on this until necessary.
+*/
+
+int
+charset_codepoint_to_private_unicode (Lisp_Object charset, int c1, int c2)
+{
+  /* If the charset is ISO2022-compatible, try to use a representation
+     that is portable, in case we are writing out to an external
+     Unicode representation.  Otherwise, just do something.
+
+     What we use is this:
+
+     If ISO2022-compatible:
+
+       23 22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
+        1 <---> <------------------> <------------------> <------------------>
+            1            2                    3                    4
+
+     Field 1 is the type (94, 96, 94x94, 96x96).
+     Field 2 is the final byte.
+     Field 3 is the first octet.
+     Field 4 is the second octet.
+     Bit 23 is set so that we are above all possible UTF-16 chars.
+
+ <-... 23 22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
+ <-..------------------------> <---------------------> <--------------------->
+              1                           2                       3
+
+     If non-ISO2022-compatible:
+
+     Field 1 (extends up to 31 bits) is the charset ID + 256, to place it
+     above all the others. (NOTE: It's true that non-encodable charset ID's
+     are always >= 256; but the correspondence between encodable charsets
+     and ISO2022-compatible charsets is not one-to-one in either direction;
+     see get_charset_iso2022_type().)  Fields 2 and 3 are the octet values.
+  */
+  int type = get_charset_iso2022_type (charset);
+
+  if (type >= 0)
+    {
+      /* The types are defined between 0 and 3 in charset.h; make sure
+	 someone doesn't change them */
+      text_checking_assert (type <= 3);
+      c1 &= 127;
+      c2 &= 127;
+      return 0x800000 + (type << 21) + (XCHARSET_FINAL (charset) << 14)
+	+ (c1 << 7) + c2;
+    }
+  else
+    {
+      int retval = ((256 + XCHARSET_ID (charset)) << 16) + (c1 << 8) + c2;
+      /* Check for overflow */
+      if (!valid_unicode_codepoint_p (retval))
+	retval = CANT_CONVERT_CHAR_WHEN_ENCODING_UNICODE;
+      return retval;
+    }
+}
+
+void
+private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
+				      int *c1, int *c2)
+{
+  if (priv >= 0x1000000)
+    {
+      *charset = charset_by_id ((priv >> 16) - 256);
+      *c1 = (priv >> 8) & 0xFF;
+      *c2 = priv & 0xFF;
+    }
+  else if (priv >= 0x800000)
+    {
+      int type;
+      int final;
+      
+      priv -= 0x800000;
+      type = (priv >> 21) & 3;
+      final = (priv >> 14) & 0x7F;
+      *c1 = (priv >> 7) & 0x7F;
+      *c2 = priv & 0x7F;
+      *charset = charset_by_attributes (type, final, CHARSET_LEFT_TO_RIGHT);
+      if (NILP (*charset))
+	*charset = charset_by_attributes (type, final, CHARSET_RIGHT_TO_LEFT);
+      if (!NILP (*charset))
+	{
+	  if (XCHARSET_OFFSET (*charset, 0) >= 128)
+	    *c1 += 128;
+	  if (XCHARSET_OFFSET (*charset, 1) >= 128)
+	    *c2 += 128;
+	}
+    }
+  else
+    {
+      /* @@#### Better error recovery? */
+      *charset = Qnil;
+      *c1 = 0;
+      *c2 = 0;
+    }
+  if (!NILP (*charset) && !valid_charset_codepoint_p (*charset, *c1, *c2))
+    /* @@#### Better error recovery? */
+    {
+      /* @@#### Better error recovery? */
+      *charset = Qnil;
+      *c1 = 0;
+      *c2 = 0;
+    }
+}
+
+/****************** code to handle Unicode precedence lists ******************/
 
 /* Add charsets to precedence list.
    LIST must be a list of charsets.  Charsets which are in the list more
    than once are given the precedence implied by their earliest appearance.
-   Later appearances are ignored. */
+   Later appearances are ignored.  This makes use of the hash table in
+   Vprecedence_calculation_hash, which is not cleared at the beginning;
+   you must do that. */
 static void
-add_charsets_to_precedence_list (Lisp_Object list, int *lbs,
-				 Lisp_Object_dynarr *dynarr)
+add_charsets_to_precedence_list (Lisp_Object list, Lisp_Object_dynarr *dynarr)
 {
   {
     EXTERNAL_LIST_LOOP_2 (elt, list)
       {
 	Lisp_Object charset = Fget_charset (elt);
-	int lb = XCHARSET_LEADING_BYTE (charset);
-	if (lbs[lb - MIN_LEADING_BYTE] == 0)
+	if (NILP (Fgethash (charset, Vprecedence_calculation_hash, Qnil)))
 	  {
 	    Dynarr_add (dynarr, charset);
-	    lbs[lb - MIN_LEADING_BYTE] = 1;
+	    Fputhash (charset, Qt, Vprecedence_calculation_hash);
 	  }
       }
   }
+}
+
+/* Called for each pair of (symbol, charset) in the hash table tracking
+   charsets. */
+static int
+rup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
+	    void * UNUSED (closure))
+{
+  if (NILP (Fgethash (value, Vprecedence_calculation_hash, Qnil)))
+    {
+      Dynarr_add (unicode_precedence_dynarr, value);
+      Fputhash (value, Qt, Vprecedence_calculation_hash);
+    }
+  return 0;
 }
 
 /* Rebuild the charset precedence array.
@@ -1075,28 +1188,63 @@ add_charsets_to_precedence_list (Lisp_Object list, int *lbs,
 void
 recalculate_unicode_precedence (void)
 {
-  int lbs[NUM_LEADING_BYTES];
-  int i;
-
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    lbs[i] = 0;
-
   Dynarr_reset (unicode_precedence_dynarr);
 
+  /* Assume precedence-calculation-hash was cleared at the end of any
+     previous operation */
   add_charsets_to_precedence_list (Vlanguage_unicode_precedence_list,
-				   lbs, unicode_precedence_dynarr);
+				   unicode_precedence_dynarr);
   add_charsets_to_precedence_list (Vdefault_unicode_precedence_list,
-				   lbs, unicode_precedence_dynarr);
+				   unicode_precedence_dynarr);
 
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    {
-      if (lbs[i] == 0)
-	{
-	  Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
-	  if (!NILP (charset))
-	    Dynarr_add (unicode_precedence_dynarr, charset);
-	}
-    }
+
+  /* Now add all remaining charsets to unicode_precedence_dynarr */
+  elisp_maphash (rup_mapper, Vcharset_hash_table, NULL);
+
+  /* Maintain invariant assumption as described above */
+  Fclrhash (Vprecedence_calculation_hash);
+}
+
+Lisp_Object_dynarr *
+get_unicode_precedence (void)
+{
+  return unicode_precedence_dynarr;
+}
+
+void
+free_precedence_dynarr (Lisp_Object_dynarr *dynarr)
+{
+  if (dynarr != unicode_precedence_dynarr)
+    Dynarr_free (dynarr);
+}
+
+/* Convert the given list of charsets (not previously validated) into a
+   precedence dynarr for use with unicode_to_charset_codepoint().  When
+   done, free the dynarr with free_precedence_dynarr(). */
+
+Lisp_Object_dynarr *
+convert_charset_list_to_precedence_dynarr (Lisp_Object charsets)
+{
+  Lisp_Object_dynarr *dyn;
+
+  if (NILP (charsets))
+    return get_unicode_precedence ();
+
+  /* Must validate before allocating (or use unwind-protect) */
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, charsets)
+      Fget_charset (elt);
+  }
+
+  dyn = Dynarr_new (Lisp_Object);
+
+  /* Assume precedence-calculation-hash was cleared at the end of any
+     previous operation */
+  add_charsets_to_precedence_list (charsets, dyn);
+  /* Maintain invariant assumption as described above */
+  Fclrhash (Vprecedence_calculation_hash);
+
+  return dyn;
 }
 
 DEFUN ("unicode-precedence-list", 
@@ -1124,9 +1272,10 @@ to be set by the user.
 {
   int i;
   Lisp_Object list = Qnil;
+  Lisp_Object_dynarr *preclist = get_unicode_precedence();
 
-  for (i = Dynarr_length (unicode_precedence_dynarr) - 1; i >= 0; i--)
-    list = Fcons (Dynarr_at (unicode_precedence_dynarr, i), list);
+  for (i = Dynarr_length (preclist) - 1; i >= 0; i--)
+    list = Fcons (Dynarr_at (preclist, i), list);
   return list;
 }
 
@@ -1209,154 +1358,66 @@ See `unicode-precedence-list' for more information.
 }
 
 DEFUN ("set-unicode-conversion", Fset_unicode_conversion,
-       2, 2, 0, /*
-Add conversion information between Unicode codepoints and characters.
-Conversions for U+0000 to U+00FF are hardwired to ASCII, Control-1, and
-Latin-1.  Attempts to set these values will raise an error.
+       3, 4, 0, /*
+Add conversion information between Unicode and charset codepoints.
+A single Unicode codepoint may have multiple corresponding charset
+codepoints, but each codepoint in a charset corresponds to only one
+Unicode codepoint.  Further calls to this function with the same
+values for (CHARSET, C1 [, C2]) and a different value for UNICODE
+will overwrite the previous value.
 
-CHARACTER is one of the following:
+Note that the Unicode codepoints corresponding to the ASCII, Control-1,
+and Latin-1 charsets are hard-wired.  Attempts to set these values
+will raise an error.
 
--- A character (in which case CODE must be a non-negative integer; values
-   above 2^20 - 1 are allowed for the purpose of specifying private
-   characters, but are illegal in standard Unicode---they will cause errors
-   when converted to utf-16)
--- A vector of characters (in which case CODE must be a vector of integers
-   of the same length)
+C2 either must or may not be specified, depending on the dimension of
+CHARSET (see `make-char').
 */
-       (character, code))
+       (unicode, charset, c1, c2))
 {
-  Lisp_Object charset;
-  int ichar, unicode;
-
-  CHECK_CHAR (character);
-  CHECK_NATNUM (code);
-
-  unicode = XINT (code);
-  ichar = XCHAR (character);
-  charset = ichar_charset (ichar);
-
+  int a1, a2;
+  int ucp = decode_unicode (unicode);
+  charset = get_charset_octets (charset, c1, c2, &a1, &a2);
+  
   /* The translations of ASCII, Control-1, and Latin-1 code points are
      hard-coded in ichar_to_unicode and unicode_to_ichar.
 
-     Checking unicode < 256 && ichar != unicode is wrong because Mule gives
-     many Latin characters code points in a few different character sets. */
-  if ((EQ (charset, Vcharset_ascii) ||
-       EQ (charset, Vcharset_control_1) ||
-       EQ (charset, Vcharset_latin_iso8859_1))
-      && unicode != ichar)
-    signal_error (Qinvalid_argument, "Can't change Unicode translation for ASCII, Control-1 or Latin-1 character",
-		  character);
+     #### But they shouldn't be; see comments elsewhere.
 
+     Checking for all unicode < 256 && c1 | 0x80 != unicode is wrong
+     because Mule gives many Latin characters code points in a few
+     different character sets. */
+  if ((EQ (charset, Vcharset_ascii) ||
+       EQ (charset, Vcharset_latin_iso8859_1) ||
+       EQ (charset, Vcharset_control_1)))
+    {
+      if (ucp != (a2 | 0x80))
+	invalid_argument
+	  ("Can't change Unicode translation for ASCII, Control-1 or Latin-1 character",
+           unicode);
+      return Qnil;
+    }
+  
   /* #### Composite characters are not properly implemented yet. */
   if (EQ (charset, Vcharset_composite))
-    signal_error (Qinvalid_argument, "Can't set Unicode translation for Composite char",
-		  character);
+    invalid_argument ("Can't set Unicode translation for Composite char",
+		      unicode);
 
-  set_unicode_conversion (ichar, unicode);
+#ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
+  if (!XCHARSET_FROM_UNICODE_TABLE (charset))
+    {
+      text_checking_assert (XCHARSET_ALGO_LOW (charset) >= 0);
+      invalid_argument
+	("Can't set Unicode translation of charset with automatic translation",
+	 charset);
+    }
+#endif
+
+  set_unicode_conversion (ucp, charset, a1, a2);
   return Qnil;
 }
 
-#endif /* MULE */
-
-DEFUN ("char-to-unicode", Fchar_to_unicode, 1, 1, 0, /*
-Convert character to Unicode codepoint.
-When there is no international support (i.e. the `mule' feature is not
-present), this function simply does `char-to-int'.
-*/
-       (character))
-{
-  CHECK_CHAR (character);
-#ifdef MULE
-  return make_int (ichar_to_unicode (XCHAR (character)));
-#else
-  return Fchar_to_int (character);
-#endif /* MULE */
-}
-
-DEFUN ("unicode-to-char", Funicode_to_char, 1, 2, 0, /*
-Convert Unicode codepoint to character.
-CODE should be a non-negative integer.
-If CHARSETS is given, it should be a list of charsets, and only those
-charsets will be consulted, in the given order, for a translation.
-Otherwise, the default ordering of all charsets will be given (see
-`set-unicode-charset-precedence').
-
-When there is no international support (i.e. the `mule' feature is not
-present), this function simply does `int-to-char' and ignores the CHARSETS
-argument.
-
-Note that the current XEmacs internal encoding has no mapping for many
-Unicode code points, and if you use characters that are vaguely obscure with
-XEmacs' Unicode coding systems, you will lose data.
-
-To add support for some desired code point in the short term--note that our
-intention is to move to a Unicode-compatible internal encoding soon, for
-some value of soon--if you are a distributor, add something like the
-following to `site-start.el.'
-
-(make-charset 'distro-name-private 
-	      "Private character set for DISTRO"
-	      '(dimension 1
-		chars 96
-		columns 1
-		final ?5 ;; Change this--see docs for make-charset
-		long-name "Private charset for some Unicode char support."
-		short-name "Distro-Private"))
-
-(set-unicode-conversion 
- (make-char 'distro-name-private #x20) #x263A) ;; WHITE SMILING FACE
-
-(set-unicode-conversion 
- (make-char 'distro-name-private #x21) #x3030) ;; WAVY DASH
-
-;; ... 
-;;; Repeat as necessary. 
-
-Redisplay will work on the sjt-xft branch, but not with server-side X11
-fonts as is the default.  However, data read in will be preserved when they
-are written out again.
-
-*/
-       (code, USED_IF_MULE (charsets)))
-{
-#ifdef MULE
-  Lisp_Object_dynarr *dyn;
-  int lbs[NUM_LEADING_BYTES];
-  int c;
-
-  CHECK_NATNUM (code);
-  c = XINT (code);
-  {
-    EXTERNAL_LIST_LOOP_2 (elt, charsets)
-      Fget_charset (elt);
-  }
-
-  if (NILP (charsets))
-    {
-      Ichar ret = unicode_to_ichar (c, unicode_precedence_dynarr);
-      if (ret == -1)
-	return Qnil;
-      return make_char (ret);
-    }
-
-  dyn = Dynarr_new (Lisp_Object);
-  memset (lbs, 0, NUM_LEADING_BYTES * sizeof (int));
-  add_charsets_to_precedence_list (charsets, lbs, dyn);
-  {
-    Ichar ret = unicode_to_ichar (c, dyn);
-    Dynarr_free (dyn);
-    if (ret == -1)
-      return Qnil;
-    return make_char (ret);
-  }
-#else
-  CHECK_NATNUM (code);
-  return Fint_to_char (code);
-#endif /* MULE */
-}
-
-#ifdef MULE
-
+/* "cerrar el fulano" = close the so-and-so */
 static Lisp_Object
 cerrar_el_fulano (Lisp_Object fulano)
 {
@@ -1394,6 +1455,7 @@ Unicode tables or in the charset:
 `big5'
   The charset codepoints are Big Five codepoints; convert it to the
   hacked-up Mule codepoint in `chinese-big5-1' or `chinese-big5-2'.
+  Not when (featurep 'unicode-internal).
 */
      (filename, charset, start, end, offset, flags))
 {
@@ -1401,9 +1463,11 @@ Unicode tables or in the charset:
   FILE *file;
   struct gcpro gcpro1;
   char line[1025];
-  int fondo = specpdl_depth ();
+  int fondo = specpdl_depth (); /* "fondo" = depth */
   int ignore_first_column = 0;
+#ifndef UNICODE_INTERNAL
   int big5 = 0;
+#endif /* not UNICODE_INTERNAL */
 
   CHECK_STRING (filename);
   charset = Fget_charset (charset);
@@ -1431,8 +1495,10 @@ Unicode tables or in the charset:
       {
 	if (EQ (elt, Qignore_first_column))
 	  ignore_first_column = 1;
+#ifndef UNICODE_INTERNAL
 	else if (EQ (elt, Qbig5))
 	  big5 = 1;
+#endif /* not UNICODE_INTERNAL */
 	else
 	  invalid_constant
 	    ("Unrecognized `load-unicode-mapping-table' flag", elt);
@@ -1451,6 +1517,7 @@ Unicode tables or in the charset:
       int cp1, cp2, endcount;
       int cp1high, cp1low;
       int dummy;
+      int scanf_count, garbage_after_scanf;
 
       while (*p) /* erase all comments out of the line */
 	{
@@ -1471,19 +1538,31 @@ Unicode tables or in the charset:
 	 interpretation.
 
 	 Also, the return value does NOT include %n storage. */
-      if ((!ignore_first_column ?
-	   sscanf (p, "%i %i%n", &cp1, &cp2, &endcount) < 2 :
-	   sscanf (p, "%i %i %i%n", &dummy, &cp1, &cp2, &endcount) < 3)
-	  /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
-	     of numbers beginning 0x0... starting in 04/2004, in an attempt
-	     to fix another bug.  A partial fix for this was put in in
-	     06/2004, but as of 10/2004 the value of ENDCOUNT returned in
-	     such case is still wrong.  If this gets fixed soon, remove
-	     this code. --ben */
+      scanf_count =
+	(!ignore_first_column ?
+	 sscanf (p, "%i %i%n", &cp1, &cp2, &endcount) :
+	 sscanf (p, "%i %i %i%n", &dummy, &cp1, &cp2, &endcount) - 1);
+      /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
+	 of numbers beginning 0x0... starting in 04/2004, in an attempt
+	 to fix another bug.  A partial fix for this was put in in
+	 06/2004, but as of 10/2004 the value of ENDCOUNT returned in
+	 such case is still wrong.  If this gets fixed soon, remove
+	 this code. --ben */
 #ifndef CYGWIN_SCANF_BUG
-	  || *(p + endcount + strspn (p + endcount, " \t\n\r\f"))
+      garbage_after_scanf =
+	*(p + endcount + strspn (p + endcount, " \t\n\r\f"));
+#else
+      garbage_after_scanf = 0;
 #endif
-	  )
+
+      /* #### Hack.  A number of the CP###.TXT files from Microsoft contain
+	 lines with a charset codepoint and no corresponding Unicode
+	 codepoint, representing undefined values in the code page.
+
+	 Skip them so we don't get a raft of warnings. */
+      if (scanf_count == 1 && !garbage_after_scanf)
+	continue;
+      if (scanf_count < 2 || garbage_after_scanf)
 	{
 	  warn_when_safe (Qunicode, Qwarning,
 			  "Unrecognized line in translation file %s:\n%s",
@@ -1506,40 +1585,33 @@ Unicode tables or in the charset:
 	  cp1high = cp1 >> 8;
 	  cp1low = cp1 & 255;
 
+#ifndef UNICODE_INTERNAL
 	  if (big5)
 	    {
-	      Ichar ch = decode_big5_char (cp1high, cp1low);
-	      if (ch == -1)
-
+	      Lisp_Object fake_charset;
+	      int c1, c2;
+	      big5_char_to_fake_codepoint (cp1high, cp1low, &fake_charset,
+					   &c1, &c2);
+	      if (NILP (fake_charset))
 		warn_when_safe (Qunicode, Qwarning,
 				"Out of range Big5 codepoint 0x%x in "
 				"translation file %s:\n%s",
 				cp1, XSTRING_DATA (filename), line);
 	      else
-		set_unicode_conversion (ch, cp2);
+		set_unicode_conversion (cp2, fake_charset, c1, c2);
 	    }
 	  else
+#endif /* not UNICODE_INTERNAL */
 	    {
 	      int l1, h1, l2, h2;
-	      Ichar emch;
+	      int c1 = cp1high, c2 = cp1low;
 
-	      switch (XCHARSET_TYPE (charset))
-		{
-		case CHARSET_TYPE_94: l1 = 33; h1 = 126; l2 = 0; h2 = 0; break;
-		case CHARSET_TYPE_96: l1 = 32; h1 = 127; l2 = 0; h2 = 0; break;
-		case CHARSET_TYPE_94X94: l1 = 33; h1 = 126; l2 = 33; h2 = 126;
-		  break;
-		case CHARSET_TYPE_96X96: l1 = 32; h1 = 127; l2 = 32; h2 = 127;
-		  break;
-		default: ABORT (); l1 = 0; h1 = 0; l2 = 0; h2 = 0;
-		}
+	      get_charset_limits (charset, &l1, &h1, &l2, &h2);
 
-	      if (cp1high < l2 || cp1high > h2 || cp1low < l1 || cp1low > h1)
+	      if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
 		goto out_of_range;
 
-	      emch = (cp1high == 0 ? make_ichar (charset, cp1low, 0) :
-		      make_ichar (charset, cp1high, cp1low));
-	      set_unicode_conversion (emch, cp2);
+	      set_unicode_conversion (cp2, charset, c1, c2);
 	    }
 	}
     }
@@ -1553,6 +1625,47 @@ Unicode tables or in the charset:
 }
 
 #endif /* MULE */
+
+
+/************************************************************************/
+/*                      Properties of Unicode chars                     */
+/************************************************************************/
+
+
+int
+unicode_char_columns (int code)
+{
+#if defined (HAVE_WCWIDTH) && defined (__STDC_ISO_10646__)
+  return wcwidth ((wchar_t) code);
+#else
+  /* #### We need to do a much better job here.  Although maybe wcwidth()
+     is available everywhere we care.  @@#### Copy the source for wcwidth().
+     Also check under Windows for an equivalent. */
+  /* #### Use a range table for this! */
+  if (
+      /* Tibetan */
+      (code >= 0x0F00 && code <= 0x0FFF) ||
+      /* Ethiopic, Ethiopic Supplement */
+      (code >= 0x1200 && code <= 0x139F) ||
+      /* Unified Canadian Aboriginal Syllabic */
+      (code >= 0x1400 && code <= 0x167F) ||
+      /* Ethiopic Extended */
+      (code >= 0x2D80 && code <= 0x2DDF) ||
+      /* Do not combine the previous range with this one, as
+	 0x2E00 .. 0x2E7F is Supplemental Punctuation (Ancient Greek, etc.) */
+      /* CJK Radicals Supplement ... Hangul Syllables */
+      (code >= 0x2E80 && code <= 0xD7AF) ||
+      /* CJK Compatibility Ideographs */
+      (code >= 0xF900 && code <= 0xFAFF) ||
+      /* CJK Compatibility Forms */
+      (code >= 0xFE30 && code <= 0xFE4F) ||
+      /* CJK Unified Ideographs Extension B, CJK Compatibility Ideographs
+	 Supplement, any other crap in this region */
+      (code >= 0x20000 && code <= 0x2FFFF))
+    return 2;
+  return 1;
+#endif /* defined (HAVE_WCWIDTH) && defined (__STDC_ISO_10646__) */
+}
 
 
 /************************************************************************/
@@ -1594,9 +1707,9 @@ struct unicode_coding_stream
   /* decode */
   unsigned char counter;
   int seen_char;
+  int first_surrogate;
+  unsigned int slop;
   /* encode */
-  Lisp_Object current_charset;
-  int current_char_boundary;
   int wrote_bom;
 };
 
@@ -1606,62 +1719,67 @@ static const struct memory_description unicode_coding_system_description[] = {
 
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (unicode);
 
-/* Decode a UCS-2 or UCS-4 character into a buffer.  If the lookup fails, use
-   <GETA MARK> (U+3013) of JIS X 0208, which means correct character
-   is not found, instead.
-   #### do something more appropriate (use blob?)
-        Danger, Will Robinson!  Data loss.  Should we signal user? */
+/* Decode a UCS-2 or UCS-4 character (or -1 for error) into a buffer. */
 static void
 decode_unicode_char (int ch, unsigned_char_dynarr *dst,
 		     struct unicode_coding_stream *data,
 		     unsigned int ignore_bom)
 {
+  text_checking_assert (ch >= 0);
   if (ch == 0xFEFF && !data->seen_char && ignore_bom)
     ;
   else
     {
 #ifdef MULE
-      Ichar chr = unicode_to_ichar (ch, unicode_precedence_dynarr);
-
-      if (chr != -1)
-	{
-	  Ibyte work[MAX_ICHAR_LEN];
-	  int len;
-
-	  len = set_itext_ichar (work, chr);
-	  Dynarr_add_many (dst, work, len);
-	}
-      else
-	{
-	  Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0208);
-	  Dynarr_add (dst, 34 + 128);
-	  Dynarr_add (dst, 46 + 128);
-	}
+      /* @@#### If the lookup fails, we will currently use a replacement char
+	 (e.g. <GETA MARK> (U+3013) of JIS X 0208).
+	 #### Danger, Will Robinson!  Data loss. Should we signal user? */
+      Ichar chr = unicode_to_ichar (ch, get_unicode_precedence (),
+				    CONVERR_SUCCEED);
+      Dynarr_add_ichar (dst, chr);
 #else
-      Dynarr_add (dst, (Ibyte) ch);
+      if (ch < 256)
+	Dynarr_add (dst, (Ibyte) ch);
+      else
+	/* This is OK since we are non-Mule and this becomes a single byte */
+	Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_DECODING);
 #endif /* MULE */
     }
 
   data->seen_char = 1;
 }
 
-static void
-encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
-		       enum unicode_type type, unsigned int little_endian)
+inline static void
+add_16_bit_char (int code, unsigned_char_dynarr *dst, int little_endian)
 {
+  if (little_endian)
+    {
+      Dynarr_add (dst, (unsigned char) (code & 255));
+      Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+    }
+  else
+    {
+      Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+      Dynarr_add (dst, (unsigned char) (code & 255));
+    }
+}
+
+static void
+encode_unicode_char (int code, unsigned_char_dynarr *dst,
+		     enum unicode_type type, unsigned int little_endian)
+{
+  text_checking_assert (code >= 0);
   switch (type)
     {
     case UNICODE_UTF_16:
-      if (little_endian)
+      /* Handle surrogates */
+      if (code > 0xFFFF)
 	{
-	  Dynarr_add (dst, (unsigned char) (code & 255));
-	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	  add_16_bit_char (0xD7C0 + (code >> 10), dst, little_endian);
+	  add_16_bit_char (0xDC00 | (code & 0x3FF), dst, little_endian);
 	}
       else
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
-	  Dynarr_add (dst, (unsigned char) (code & 255));
-	}
+	add_16_bit_char (code, dst, little_endian);
       break;
 
     case UNICODE_UCS_4:
@@ -1682,46 +1800,37 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
       break;
 
     case UNICODE_UTF_8:
-      if (code <= 0x7f)
-	{
+      {
+	/* #### This code is duplicated in non_ascii_set_itext_ichar() in
+	   text.c.  There should be a better way. */
+	if (code <= 0x7f)
 	  Dynarr_add (dst, (unsigned char) code);
-	}
-      else if (code <= 0x7ff)
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 6) | 0xc0));
-	  Dynarr_add (dst, (unsigned char) ((code & 0x3f) | 0x80));
-	}
-      else if (code <= 0xffff)
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 12) | 0xe0));
-	  Dynarr_add (dst, (unsigned char) (((code >>  6) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) ((code        & 0x3f) | 0x80));
-	}
-      else if (code <= 0x1fffff)
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 18) | 0xf0));
-	  Dynarr_add (dst, (unsigned char) (((code >> 12) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >>  6) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) ((code        & 0x3f) | 0x80));
-	}
-      else if (code <= 0x3ffffff)
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 24) | 0xf8));
-	  Dynarr_add (dst, (unsigned char) (((code >> 18) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >> 12) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >>  6) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) ((code        & 0x3f) | 0x80));
-	}
-      else
-	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 30) | 0xfc));
-	  Dynarr_add (dst, (unsigned char) (((code >> 24) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >> 18) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >> 12) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) (((code >>  6) & 0x3f) | 0x80));
-	  Dynarr_add (dst, (unsigned char) ((code        & 0x3f) | 0x80));
-	}
-      break;
+	else
+	  {
+	    register int bytes;
+	    register unsigned char *str;
+
+	    if (code <= 0x7ff) bytes = 2;
+	    else if (code <= 0xffff) bytes = 3;
+	    else if (code <= 0x1fffff) bytes = 4;
+	    else if (code <= 0x3ffffff) bytes = 5;
+	    else bytes = 6;
+
+	    Dynarr_add_many (dst, 0, bytes);
+	    str = Dynarr_past_lastp (dst);
+	    switch (bytes)
+	      {
+	      case 6:*--str = (code | 0x80) & 0xBF; code >>= 6;
+	      case 5:*--str = (code | 0x80) & 0xBF; code >>= 6;
+	      case 4:*--str = (code | 0x80) & 0xBF; code >>= 6;
+	      case 3:*--str = (code | 0x80) & 0xBF; code >>= 6;
+	      case 2:*--str = (code | 0x80) & 0xBF; code >>= 6;
+	      case 1:*--str = code | firstbyte_mask[bytes];
+	      }
+	  }
+  
+	break;
+      }
 
     case UNICODE_UTF_7: ABORT ();
 
@@ -1729,43 +1838,10 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
     }
 }
 
-static void
-encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
-		     int USED_IF_MULE (l), unsigned_char_dynarr *dst,
-		     enum unicode_type type, unsigned int little_endian)
-{
-#ifdef MULE
-  int code = ichar_to_unicode (make_ichar (charset, h & 127, l & 127));
-
-  if (code == -1)
-    {
-      if (type != UNICODE_UTF_16 &&
-	  XCHARSET_DIMENSION (charset) == 2 &&
-	  XCHARSET_CHARS (charset) == 94)
-	{
-	  unsigned char final = XCHARSET_FINAL (charset);
-
-	  if (('@' <= final) && (final < 0x7f))
-	    code = (0xe00000 + (final - '@') * 94 * 94
-		    + ((h & 127) - 33) * 94 + (l & 127) - 33);
-	  else
-	    code = '?';
-	}
-      else
-	code = '?';
-    }
-#else
-  int code = h;
-#endif /* MULE */
-
-  encode_unicode_char_1 (code, dst, type, little_endian);
-}
-
 static Bytecount
 unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		 unsigned_char_dynarr *dst, Bytecount n)
 {
-  unsigned int ch    = str->ch;
   struct unicode_coding_stream *data = CODING_STREAM_TYPE_DATA (str, unicode);
   enum unicode_type type =
     XCODING_SYSTEM_UNICODE_TYPE (str->codesys);
@@ -1777,11 +1853,14 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
   if (str->direction == CODING_DECODE)
     {
       unsigned char counter = data->counter;
+      int slop    = data->slop;
 
       while (n--)
 	{
 	  UExtbyte c = *src++;
 
+	  /* #### This duplicates code elsewhere.  Maybe it is possible
+	     to combine them efficiently. */
 	  switch (type)
 	    {
 	    case UNICODE_UTF_8:
@@ -1790,76 +1869,97 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		case 0:
 		  if (c >= 0xfc)
 		    {
-		      ch = c & 0x01;
+		      slop = c & 0x01;
 		      counter = 5;
 		    }
 		  else if (c >= 0xf8)
 		    {
-		      ch = c & 0x03;
+		      slop = c & 0x03;
 		      counter = 4;
 		    }
 		  else if (c >= 0xf0)
 		    {
-		      ch = c & 0x07;
+		      slop = c & 0x07;
 		      counter = 3;
 		    }
 		  else if (c >= 0xe0)
 		    {
-		      ch = c & 0x0f;
+		      slop = c & 0x0f;
 		      counter = 2;
 		    }
 		  else if (c >= 0xc0)
 		    {
-		      ch = c & 0x1f;
+		      slop = c & 0x1f;
 		      counter = 1;
 		    }
 		  else
 		    decode_unicode_char (c, dst, data, ignore_bom);
 		  break;
 		case 1:
-		  ch = (ch << 6) | (c & 0x3f);
-		  decode_unicode_char (ch, dst, data, ignore_bom);
-		  ch = 0;
+		  slop = (slop << 6) | (c & 0x3f);
+		  decode_unicode_char (slop, dst, data, ignore_bom);
+		  slop = 0;
 		  counter = 0;
 		  break;
 		default:
-		  ch = (ch << 6) | (c & 0x3f);
+		  slop = (slop << 6) | (c & 0x3f);
 		  counter--;
 		}
 	      break;
 
 	    case UNICODE_UTF_16:
 	      if (little_endian)
-		ch = (c << counter) | ch;
+		slop = (c << counter) | slop;
 	      else
-		ch = (ch << 8) | c;
+		slop = (slop << 8) | c;
 	      counter += 8;
-	      if (counter == 16)
+	      if (counter == 32)
 		{
-		  int tempch = ch;
-		  ch = 0;
+		  /* Surrogate processing */
 		  counter = 0;
-		  decode_unicode_char (tempch, dst, data, ignore_bom);
+		  if ((slop & 0xFC00) == 0xDC00)
+		    decode_unicode_char
+		      (((data->first_surrogate - 0xD800) << 10) +
+		       slop - 0xDC00 + 0x10000, dst, data, ignore_bom);
+		  else
+		    /* Houston, we have a problem. */
+		    /* !!#### error handling? */
+		    {
+		      DECODE_ADD_BINARY_CHAR
+			((data->first_surrogate >> 8) & 255, dst);
+		      DECODE_ADD_BINARY_CHAR
+			(data->first_surrogate & 255, dst);
+		      DECODE_ADD_BINARY_CHAR
+			((slop >> 8) & 255, dst);
+		      DECODE_ADD_BINARY_CHAR
+			(slop & 255, dst);
+		    }
+		}
+	      else if (counter == 16)
+		{
+		  if ((slop & 0xFC00) == 0xD800)
+		    data->first_surrogate = slop;
+		  else
+		    {
+		      counter = 0;
+		      decode_unicode_char (slop, dst, data, ignore_bom);
+		    }
+		  slop = 0;
 		}
 	      break;
 
 	    case UNICODE_UCS_4:
 	      if (little_endian)
-		ch = (c << counter) | ch;
+		slop = (c << counter) | slop;
 	      else
-		ch = (ch << 8) | c;
+		slop = (slop << 8) | c;
 	      counter += 8;
 	      if (counter == 32)
 		{
-		  int tempch = ch;
-		  ch = 0;
 		  counter = 0;
-		  if (tempch < 0)
-		    {
-		      /* !!#### indicate an error */
-		      tempch = '~';
-		    }
-		  decode_unicode_char (tempch, dst, data, ignore_bom);
+		  /* !!#### indicate an error if slop < 0 */
+		  decode_unicode_char (slop, dst, data, ignore_bom);
+		  slop = 0;
 		}
 	      break;
 
@@ -1871,16 +1971,24 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	    }
 
 	}
-      if (str->eof)
-	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
+      if (str->eof && counter > 0)
+	{
+	  if (type == UNICODE_UTF_16 && counter > 16)
+	    slop = (data->first_surrogate << 8) + slop;
+	  switch (counter)
+	    {
+	      /* fall through */
+	    case 24: DECODE_ADD_BINARY_CHAR ((slop >> 16) & 255, dst);
+	    case 16: DECODE_ADD_BINARY_CHAR ((slop >> 8) & 255, dst);
+	    case 8: DECODE_ADD_BINARY_CHAR (slop & 255, dst);
+	    }
+	}
 
+      data->slop = slop;
       data->counter = counter;
     }
   else
     {
-      unsigned char char_boundary = data->current_char_boundary;
-      Lisp_Object charset = data->current_charset;
-
 #ifdef ENABLE_COMPOSITE_CHARS
       /* flags for handling composite chars.  We do a little switcheroo
 	 on the source while we're outputting the composite char. */
@@ -1893,7 +2001,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 
       if (XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys) && !data->wrote_bom)
 	{
-	  encode_unicode_char_1 (0xFEFF, dst, type, little_endian);
+	  encode_unicode_char (0xFEFF, dst, type, little_endian);
 	  data->wrote_bom = 1;
 	}
 
@@ -1904,104 +2012,56 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 #ifdef MULE
 	  if (byte_ascii_p (c))
 #endif /* MULE */
-	    {			/* Processing ASCII character */
-	      ch = 0;
-	      encode_unicode_char (Vcharset_ascii, c, 0, dst, type,
-				   little_endian);
-
-	      char_boundary = 1;
-	    }
+	    encode_unicode_char (c, dst, type, little_endian);
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c) || ibyte_leading_byte_p (ch))
-	    {			/* Processing Leading Byte */
-	      ch = 0;
-	      charset = charset_by_leading_byte (c);
-	      if (leading_byte_prefix_p(c))
-		ch = c;
-	      char_boundary = 0;
-	    }
 	  else
-	    {			/* Processing Non-ASCII character */
-	      char_boundary = 1;
-	      if (EQ (charset, Vcharset_control_1))
-		/* See:
-
-		   (Info-goto-node "(internals)Internal String Encoding")
-
-		   for the rationale behind subtracting #xa0 from the
-		   character's code. */
-		encode_unicode_char (Vcharset_control_1, c - 0xa0, 0, dst,
-				     type, little_endian);
-	      else
+	    {
+	      COPY_PARTIAL_CHAR_BYTE (c, str);
+	      if (!str->pind_remaining)
 		{
-		  switch (XCHARSET_REP_BYTES (charset))
-		    {
-		    case 2:
-		      encode_unicode_char (charset, c, 0, dst, type,
-					   little_endian);
-		      break;
-		    case 3:
-		      if (XCHARSET_PRIVATE_P (charset))
-			{
-			  encode_unicode_char (charset, c, 0, dst, type,
-					       little_endian);
-			  ch = 0;
-			}
-		      else if (ch)
-			{
+#ifdef UNICODE_INTERNAL
+		  encode_unicode_char (non_ascii_itext_ichar (str->partial),
+				       dst, type, little_endian);
+#else
+		  Lisp_Object charset;
+		  int c1, c2;
+		  non_ascii_itext_to_charset_codepoint_raw (str->partial, 0,
+							    &charset, &c1,
+							    &c2);
 #ifdef ENABLE_COMPOSITE_CHARS
-			  if (EQ (charset, Vcharset_composite))
-			    {
-			      if (in_composite)
-				{
-				  /* #### Bother! We don't know how to
-				     handle this yet. */
-				  encode_unicode_char (Vcharset_ascii, '~', 0,
-						       dst, type,
-						       little_endian);
-				}
-			      else
-				{
-				  Ichar emch = make_ichar (Vcharset_composite,
-							   ch & 0x7F,
-							   c & 0x7F);
-				  Lisp_Object lstr =
-				    composite_char_string (emch);
-				  saved_n = n;
-				  saved_src = src;
-				  in_composite = 1;
-				  src = XSTRING_DATA   (lstr);
-				  n   = XSTRING_LENGTH (lstr);
-				}
-			    }
-			  else
-#endif /* ENABLE_COMPOSITE_CHARS */
-			    encode_unicode_char (charset, ch, c, dst, type,
-						 little_endian);
-			  ch = 0;
+		  if (EQ (charset, Vcharset_composite))
+		    {
+		      if (in_composite)
+			{
+			  /* #### Bother! We don't know how to
+			     handle this yet. */
+			  encode_unicode_char
+			    (CANT_CONVERT_CHAR_WHEN_ENCODING_UNICODE,
+			     dst, type, little_endian);
 			}
 		      else
 			{
-			  ch = c;
-			  char_boundary = 0;
+			  Ichar emch =
+			    charset_codepoint_to_unicode
+			    (Vcharset_composite, c1, c2,
+			     CONVERR_SUCCEED);
+			  Lisp_Object lstr = composite_char_string (emch);
+			  saved_n = n;
+			  saved_src = src;
+			  in_composite = 1;
+			  src = XSTRING_DATA   (lstr);
+			  n   = XSTRING_LENGTH (lstr);
 			}
-		      break;
-		    case 4:
-		      if (ch)
-			{
-			  encode_unicode_char (charset, ch, c, dst, type,
-					       little_endian);
-			  ch = 0;
-			}
-		      else
-			{
-			  ch = c;
-			  char_boundary = 0;
-			}
-		      break;
-		    default:
-		      ABORT ();
 		    }
+		  else
+#endif /* ENABLE_COMPOSITE_CHARS */
+		    {
+		      int code =
+			charset_codepoint_to_unicode
+			(charset, c1, c2, CONVERR_SUCCEED);
+		      encode_unicode_char (code, dst, type, little_endian);
+		    }
+#endif /* UNICODE_INTERNAL */
 		}
 	    }
 #endif /* MULE */
@@ -2017,15 +2077,11 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	}
 #endif /* ENABLE_COMPOSITE_CHARS */
 
-      data->current_char_boundary = char_boundary;
-      data->current_charset = charset;
-
       /* La palabra se hizo carne! */
       /* A palavra fez-se carne! */
       /* Whatever. */
     }
 
-  str->ch    = ch;
   return orign;
 }
 
@@ -2336,7 +2392,6 @@ unicode_init_coding_stream (struct coding_stream *str)
   struct unicode_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, unicode);
   xzero (*data);
-  data->current_charset = Qnil;
 }
 
 static void
@@ -2432,6 +2487,23 @@ dfc_coding_system_is_unicode (
 /*                             Initialization                           */
 /************************************************************************/
 
+#ifdef MULE
+
+void
+initialize_ascii_control_1_latin_1_unicode_translation (void)
+{
+  int i;
+
+  for (i = 0; i < 128; i++)
+    set_unicode_conversion (i, Vcharset_ascii, 0, i);
+  for (i = 128; i < 160; i++)
+    set_unicode_conversion (i, Vcharset_control_1, 0, i);
+  for (i = 160; i < 256; i++)
+    set_unicode_conversion (i, Vcharset_latin_iso8859_1, 0, i);
+}
+
+#endif
+
 void
 syms_of_unicode (void)
 {
@@ -2447,9 +2519,6 @@ syms_of_unicode (void)
 
   DEFSYMBOL (Qignore_first_column);
 #endif /* MULE */
-
-  DEFSUBR (Fchar_to_unicode);
-  DEFSUBR (Funicode_to_char);
 
   DEFSYMBOL (Qunicode);
   DEFSYMBOL (Qucs_4);
@@ -2514,9 +2583,13 @@ vars_of_unicode (void)
   staticpro (&Vdefault_unicode_precedence_list);
   Vdefault_unicode_precedence_list = Qnil;
 
+  staticpro (&Vprecedence_calculation_hash);
+  Vprecedence_calculation_hash =
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+
   unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
   dump_add_root_block_ptr (&unicode_precedence_dynarr,
-			    &lisp_object_dynarr_description);
+			    &Lisp_Object_dynarr_description);
 
   init_blank_unicode_tables ();
 
@@ -2532,13 +2605,13 @@ vars_of_unicode (void)
   dump_add_root_block (&to_unicode_blank_2, sizeof (void *),
 		       to_unicode_level_2_desc_1);
 
-  dump_add_root_block (&from_unicode_blank_1, sizeof (void *),
+  dump_add_root_block (&from_unicode_blank[1], sizeof (void *),
 		       from_unicode_level_1_desc_1);
-  dump_add_root_block (&from_unicode_blank_2, sizeof (void *),
+  dump_add_root_block (&from_unicode_blank[2], sizeof (void *),
 		       from_unicode_level_2_desc_1);
-  dump_add_root_block (&from_unicode_blank_3, sizeof (void *),
+  dump_add_root_block (&from_unicode_blank[3], sizeof (void *),
 		       from_unicode_level_3_desc_1);
-  dump_add_root_block (&from_unicode_blank_4, sizeof (void *),
+  dump_add_root_block (&from_unicode_blank[4], sizeof (void *),
 		       from_unicode_level_4_desc_1);
 #endif /* MULE */
 }

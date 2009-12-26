@@ -1,6 +1,6 @@
 /* Synchronize redisplay structures and output changes.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1999, 2002 Andy Piper.
 
@@ -510,8 +510,8 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
   block_end =
     (!Dynarr_length (ddb->runes)
      ? 0
-     : (Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->xpos +
-	Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->width));
+     : (Dynarr_lastp (ddb->runes)->xpos +
+	Dynarr_lastp (ddb->runes)->width));
 #endif
 
   /* If the new block type is not text and the cursor status is
@@ -687,7 +687,8 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
       cdba = NULL;
     }
 
-  ddl = Dynarr_atp (ddla, line);      /* assert line < Dynarr_length (ddla) */
+  /* The following will assert line < Dynarr_length (ddla) */
+  ddl = Dynarr_atp (ddla, line);
   ddba = ddl->display_blocks;
 
   if (force_start >= 0 && force_start >= ddl->bounds.left_out)
@@ -1547,16 +1548,15 @@ redisplay_output_layout (Lisp_Object domain,
 			struct display_line dl;	/* this is fake */
 			Lisp_Object string =
 			  IMAGE_INSTANCE_TEXT_STRING (childii);
-			unsigned char charsets[NUM_LEADING_BYTES];
-			struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
-
-			find_charsets_in_ibyte_string (charsets,
-							 XSTRING_DATA (string),
-							 XSTRING_LENGTH (string));
-			ensure_face_cachel_complete (cachel, window, charsets);
+			struct face_cachel *cachel =
+			  WINDOW_FACE_CACHEL (w, findex);
 
 			convert_ibyte_string_into_ichar_dynarr
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
+			   buf);
+			ensure_face_cachel_complete (cachel, window,
+						     Dynarr_atp (buf, 0),
+						     Dynarr_length (buf));
 
 			redisplay_normalize_display_box (&cdb, &cdga);
 			/* Offsets are now +ve again so be careful
@@ -1568,15 +1568,17 @@ redisplay_output_layout (Lisp_Object domain,
 			dl.ascent = glyph_ascent (child, image_instance);
 			dl.descent = glyph_descent (child, image_instance);
 			dl.top_clip = cdga.yoffset;
-			dl.clip = (dl.ypos + dl.descent) - (cdb.ypos + cdb.height);
+			dl.clip = (dl.ypos + dl.descent) -
+			  (cdb.ypos + cdb.height);
 			/* output_string doesn't understand offsets in
 			   the same way as other routines - we have to
 			   add the offset to the width so that we
 			   output the full string. */
-			MAYBE_DEVMETH (d, output_string, (w, &dl, buf, cdb.xpos,
-							  cdga.xoffset, cdb.xpos,
-							  cdga.width + cdga.xoffset,
-							  findex, 0, 0, 0, 0));
+			MAYBE_DEVMETH (d, output_string,
+				       (w, &dl, buf, cdb.xpos,
+					cdga.xoffset, cdb.xpos,
+					cdga.width + cdga.xoffset,
+					findex, 0, 0, 0, 0));
 			Dynarr_reset (buf);
 		      }
 		  }

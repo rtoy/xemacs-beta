@@ -1,6 +1,6 @@
 /* Implementation of the hash table lisp object type.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2005 Ben Wing.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -1657,10 +1657,11 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
    hash, but practically this won't ever happen. */
 
 Hashcode
-internal_hash (Lisp_Object obj, int depth)
+internal_hash_1 (Lisp_Object obj, int depth)
 {
   if (depth > 5)
     return 0;
+
   if (CONSP (obj))
     {
       /* no point in worrying about tail recursion, since we're not
@@ -1672,15 +1673,15 @@ internal_hash (Lisp_Object obj, int depth)
     {
       return hash_string (XSTRING_DATA (obj), XSTRING_LENGTH (obj));
     }
-  if (LRECORDP (obj))
-    {
-      const struct lrecord_implementation
-	*imp = XRECORD_LHEADER_IMPLEMENTATION (obj);
-      if (imp->hash)
-	return imp->hash (obj, depth);
-    }
-
-  return LISP_HASH (obj);
+  /* We should have already caught all non-lrecords and all lrecords without
+     a hash method, in internal_hash(). */
+  structure_checking_assert (LRECORDP (obj));
+  {
+    const struct lrecord_implementation
+      *imp = XRECORD_LHEADER_IMPLEMENTATION (obj);
+    structure_checking_assert (imp->hash);
+    return imp->hash (obj, depth);
+  }
 }
 
 DEFUN ("sxhash", Fsxhash, 1, 1, 0, /*

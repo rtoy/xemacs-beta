@@ -1,4 +1,4 @@
-;;; mule-cmds.el --- Commands for multilingual environment -*- coding: iso-2022-7bit; -*-
+;;; mule-cmds.el --- Commands for multilingual environment
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -1345,8 +1345,8 @@ of buffer-file-coding-system set by this function."
 (defun init-mule-at-startup ()
   "Initialize MULE environment at startup.  Don't call this."
 
-  (when (not load-unicode-tables-at-dump-time)
-    (load-unicode-tables))
+;   (when (not load-unicode-tables-at-dump-time)
+;     (load-unicode-tables))
 
   ;; This is called (currently; might be moved earlier) from startup.el,
   ;; after the basic GUI systems have been initialized, and just before the

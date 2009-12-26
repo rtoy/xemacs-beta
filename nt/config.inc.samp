@@ -15,6 +15,9 @@ PACKAGE_PREFIX=c:\Program Files\XEmacs
 # Multilingual support.
 MULE=0
 
+# Use Unicode internally rather than the old flawed Mule encoding.
+UNICODE_INTERNAL=1
+
 # Native MS Windows support.
 HAVE_MS_WINDOWS=1
 

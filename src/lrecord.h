@@ -226,9 +226,6 @@ enum lrecord_type
   lrecord_type_cons,                      /*  6 */
   lrecord_type_vector,                    /*  7 */
   lrecord_type_string,                    /*  8 */
-#ifndef MC_ALLOC
-  lrecord_type_lcrecord_list,
-#endif /* not MC_ALLOC */
   lrecord_type_compiled_function,         /*  9 */
   lrecord_type_weak_list,                 /* 10 */
   lrecord_type_bit_vector,                /* 11 */
@@ -239,16 +236,54 @@ enum lrecord_type
   lrecord_type_charset,                   /* 16 */
   lrecord_type_coding_system,             /* 17 */
   lrecord_type_char_table,                /* 18 */
-  lrecord_type_char_table_entry,          /* 19 */
-  lrecord_type_range_table,               /* 20 */
-  lrecord_type_opaque,                    /* 21 */
-  lrecord_type_opaque_ptr,                /* 22 */
-  lrecord_type_buffer,                    /* 23 */
-  lrecord_type_extent,                    /* 24 */
-  lrecord_type_extent_info,               /* 25 */
-  lrecord_type_extent_auxiliary,          /* 26 */
-  lrecord_type_marker,                    /* 27 */
-  lrecord_type_event,                     /* 28 */
+#ifndef USE_PLAIN_ARRAYS_FOR_SUB_TABLES
+  lrecord_type_char_subtable,
+#endif
+  lrecord_type_range_table,               /* 19 */
+  lrecord_type_opaque,                    /* 20 */
+  lrecord_type_opaque_ptr,                /* 21 */
+  lrecord_type_buffer,                    /* 22 */
+  lrecord_type_extent,                    /* 23 */
+  lrecord_type_extent_info,               /* 24 */
+  lrecord_type_extent_auxiliary,          /* 25 */
+  lrecord_type_marker,                    /* 26 */
+  lrecord_type_event,                     /* 27 */
+  lrecord_type_keymap,                    /* 28 */
+  lrecord_type_command_builder,           /* 29 */
+  lrecord_type_timeout,                   /* 30 */
+  lrecord_type_specifier,                 /* 31 */
+  lrecord_type_console,                   /* 32 */
+  lrecord_type_device,                    /* 33 */
+  lrecord_type_frame,                     /* 34 */
+  lrecord_type_window,                    /* 35 */
+  lrecord_type_window_mirror,             /* 36 */
+  lrecord_type_window_configuration,      /* 37 */
+  lrecord_type_gui_item,                  /* 38 */
+  lrecord_type_popup_data,                /* 39 */
+  lrecord_type_toolbar_button,            /* 40 */
+  lrecord_type_scrollbar_instance,        /* 41 */
+  lrecord_type_color_instance,            /* 42 */
+  lrecord_type_font_instance,             /* 43 */
+  lrecord_type_image_instance,            /* 44 */
+  lrecord_type_glyph,                     /* 45 */
+  lrecord_type_face,                      /* 46 */
+  lrecord_type_database,                  /* 47 */
+  lrecord_type_tooltalk_message,          /* 48 */
+  lrecord_type_tooltalk_pattern,          /* 49 */
+  lrecord_type_ldap,                      /* 50 */
+  lrecord_type_pgconn,                    /* 51 */
+  lrecord_type_pgresult,                  /* 52 */
+  lrecord_type_devmode,                   /* 53 */
+  lrecord_type_mswindows_dialog_id,       /* 54 */
+  lrecord_type_case_table,                /* 55 */
+  lrecord_type_emacs_ffi,                 /* 56 */
+  lrecord_type_emacs_gtk_object,          /* 57 */
+  lrecord_type_emacs_gtk_boxed,           /* 58 */
+  lrecord_type_weak_box,                  /* 59 */
+  lrecord_type_ephemeron,                 /* 60 */
+  lrecord_type_bignum,                    /* 61 */
+  lrecord_type_ratio,                     /* 62 */
+  lrecord_type_bigfloat,                  /* 63 */
 #ifdef EVENT_DATA_AS_OBJECTS /* not defined */
   lrecord_type_key_data,
   lrecord_type_button_data,
@@ -260,47 +295,12 @@ enum lrecord_type
   lrecord_type_magic_eval_data,
   lrecord_type_magic_data,
 #endif /* EVENT_DATA_AS_OBJECTS */
-  lrecord_type_keymap,                    /* 29 */
-  lrecord_type_command_builder,           /* 30 */
-  lrecord_type_timeout,                   /* 31 */
-  lrecord_type_specifier,                 /* 32 */
-  lrecord_type_console,                   /* 33 */
-  lrecord_type_device,                    /* 34 */
-  lrecord_type_frame,                     /* 35 */
-  lrecord_type_window,                    /* 36 */
-  lrecord_type_window_mirror,             /* 37 */
-  lrecord_type_window_configuration,      /* 38 */
-  lrecord_type_gui_item,                  /* 39 */
-  lrecord_type_popup_data,                /* 40 */
-  lrecord_type_toolbar_button,            /* 41 */
-  lrecord_type_scrollbar_instance,        /* 42 */
-  lrecord_type_color_instance,            /* 43 */
-  lrecord_type_font_instance,             /* 44 */
-  lrecord_type_image_instance,            /* 45 */
-  lrecord_type_glyph,                     /* 46 */
-  lrecord_type_face,                      /* 47 */
-  lrecord_type_database,                  /* 48 */
-  lrecord_type_tooltalk_message,          /* 49 */
-  lrecord_type_tooltalk_pattern,          /* 50 */
-  lrecord_type_ldap,                      /* 51 */
-  lrecord_type_pgconn,                    /* 52 */
-  lrecord_type_pgresult,                  /* 53 */
-  lrecord_type_devmode,                   /* 54 */
-  lrecord_type_mswindows_dialog_id,       /* 55 */
-  lrecord_type_case_table,                /* 56 */
-  lrecord_type_emacs_ffi,                 /* 57 */
-  lrecord_type_emacs_gtk_object,          /* 58 */
-  lrecord_type_emacs_gtk_boxed,           /* 59 */
-  lrecord_type_weak_box,                  /* 60 */
-  lrecord_type_ephemeron,                 /* 61 */
-  lrecord_type_bignum,                    /* 62 */
-  lrecord_type_ratio,                     /* 63 */
-  lrecord_type_bigfloat,                  /* 64 */
 #ifndef MC_ALLOC
+  lrecord_type_lcrecord_list,
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
 #endif /* not MC_ALLOC */
-  lrecord_type_last_built_in_type         /* 65 */ /* must be last */
+  lrecord_type_last_built_in_type         /* 64 */ /* must be last */
 };
 
 extern MODULE_API int lrecord_type_count;
@@ -661,20 +661,20 @@ void dec_lrecord_stats (Bytecount size_including_overhead,
      ...
      { XD_INT,		offsetof (Lisp_Foo, count) },
      { XD_BLOCK_PTR,	offsetof (Lisp_Foo, objects),
-       XD_INDIRECT (0, 0), { &lisp_object_description } },
+       XD_INDIRECT (0, 0), { &Lisp_Object_description } },
      ...
    };
 
-   lisp_object_description is declared in alloc.c, like this:
+   Lisp_Object_description is declared in dynarr.c, like this:
 
-   static const struct memory_description lisp_object_description_1[] = {
+   static const struct memory_description Lisp_Object_description_1[] = {
      { XD_LISP_OBJECT, 0 },
      { XD_END }
    };
 
-   const struct sized_memory_description lisp_object_description = {
+   const struct sized_memory_description Lisp_Object_description = {
      sizeof (Lisp_Object),
-     lisp_object_description_1
+     Lisp_Object_description_1
    };
 
    Another example of XD_BLOCK_PTR:
@@ -1075,8 +1075,6 @@ struct opaque_convert_functions
 
 };
 
-extern const struct sized_memory_description lisp_object_description;
-
 #define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
 
 #define XD_IS_INDIRECT(code) ((code) < 0)
@@ -1085,7 +1083,7 @@ extern const struct sized_memory_description lisp_object_description;
 
 #define XD_DYNARR_DESC(base_type, sub_desc)				      \
   { XD_BLOCK_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), {sub_desc} },\
-  { XD_INT,        offsetof (base_type, cur) },				      \
+  { XD_INT,        offsetof (base_type, len) },				      \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
 
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
