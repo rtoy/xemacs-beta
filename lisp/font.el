@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002, 2004 Ben Wing.
+;; Copyright (C) 2002, 2004, 2005 Ben Wing.
 
 ;; Author: wmperry
 ;; Maintainer: XEmacs Development Team
@@ -245,16 +245,16 @@ for use in the 'weight' field of an X font string.")
 	(i 0))
     ;; Standard ASCII characters
     (while (< i 26)
-      (aset table (+ i ?a) (+ i ?A))
+      (put-display-table (+ i ?a) (+ i ?A) table)
       (setq i (1+ i)))
     ;; Now ISO translations
     (setq i 224)
     (while (< i 247)			;; Agrave - Ouml
-      (aset table i (- i 32))
+      (put-display-table i (- i 32) table)
       (setq i (1+ i)))
     (setq i 248)
     (while (< i 255)			;; Oslash - Thorn
-      (aset table i (- i 32))
+      (put-display-table i (- i 32) table)
       (setq i (1+ i)))
     table))
 

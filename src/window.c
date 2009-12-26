@@ -324,10 +324,9 @@ make_saved_buffer_point_cache (void)
   return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window", window,
-			       0, /*dumpable-flag*/
-                               mark_window, print_window, finalize_window,
-			       0, 0, window_description, struct window);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("window", window,
+					   mark_window, print_window, finalize_window,
+					   0, 0, window_description, struct window);
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -346,8 +345,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 Lisp_Object
 allocate_window (void)
 {
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
-  Lisp_Object val = wrap_window (p);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
 #include "winslots.h"
@@ -372,7 +371,7 @@ allocate_window (void)
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
 
-  return val;
+  return obj;
 }
 #undef INIT_DISP_VARIABLE
 
@@ -471,19 +470,18 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
-			       0, /*dumpable-flag*/
-                               mark_window_mirror, internal_object_printer,
-			       0, 0, 0, window_mirror_description,
-			       struct window_mirror);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("window-mirror", window_mirror,
+				mark_window_mirror, 0,
+				0, 0, 0, window_mirror_description,
+				struct window_mirror);
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  struct window_mirror *t =
-    ALLOC_LCRECORD_TYPE (struct window_mirror, &lrecord_window_mirror);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (window_mirror);
+  struct window_mirror *t = XWINDOW_MIRROR (obj);
 
   t->frame = f;
   t->current_display_lines = Dynarr_new (display_line);
@@ -3800,11 +3798,10 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 static void
 make_dummy_parent (Lisp_Object window)
 {
-  Lisp_Object new_;
   struct window *o = XWINDOW (window);
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
-  new_ = wrap_window (p);
   COPY_LCRECORD (p, o);
 
   /* Don't copy the pointers to the line start cache or the face
@@ -3816,13 +3813,13 @@ make_dummy_parent (Lisp_Object window)
     make_image_instance_cache_hash_table ();
 
   /* Put new into window structure in place of window */
-  replace_window (window, new_);
+  replace_window (window, obj);
 
   o->next = Qnil;
   o->prev = Qnil;
   o->vchild = Qnil;
   o->hchild = Qnil;
-  o->parent = new_;
+  o->parent = obj;
 
   p->start[CURRENT_DISP] = Qnil;
   p->start[DESIRED_DISP] = Qnil;
@@ -5382,8 +5379,8 @@ debug_print_windows (struct frame *f)
 void
 syms_of_window (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (window);
-  INIT_LRECORD_IMPLEMENTATION (window_mirror);
+  INIT_LISP_OBJECT (window);
+  INIT_LISP_OBJECT (window_mirror);
 
   DEFSYMBOL (Qwindowp);
   DEFSYMBOL (Qwindow_live_p);

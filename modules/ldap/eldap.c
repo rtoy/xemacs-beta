@@ -1,6 +1,6 @@
 /* LDAP client interface for XEmacs.
    Copyright (C) 1998 Free Software Foundation, Inc.
-   Copyright (C) 2004 Ben Wing.
+   Copyright (C) 2004, 2005 Ben Wing.
    
 
 This file is part of XEmacs.
@@ -162,10 +162,16 @@ finalize_ldap (void *header, int for_disksave)
   ldap->ld = NULL;
 }
 
+#f 0
 DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap, 0,
                                mark_ldap, print_ldap, finalize_ldap,
                                NULL, NULL, ldap_description, Lisp_LDAP);
-
+#else
+DEFINE_NONDUMPABLE_LRECORD_IMPLEMENTATION ("ldap", ldap, mark_ldap,
+					   print_ldap, finalize_ldap,
+					   NULL, NULL, ldap_description,
+					   Lisp_LDAP);
+#endif
 
 /************************************************************************/
 /*                        Basic ldap accessors                          */
@@ -618,7 +624,6 @@ containing attribute/value string pairs.
   int rc;
   int i, j;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -717,7 +722,6 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   int i, j, rc;
   Lisp_Object mod_op;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 

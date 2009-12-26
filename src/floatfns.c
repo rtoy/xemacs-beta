@@ -196,8 +196,7 @@ static const struct memory_description float_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
-				     1, /*dumpable-flag*/
+DEFINE_BASIC_LISP_OBJECT ("float", float,
 				     mark_float, print_float, 0, float_equal,
 				     float_hash, float_description,
 				     Lisp_Float);
@@ -1258,7 +1257,7 @@ init_floatfns_very_early (void)
 void
 syms_of_floatfns (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (float);
+  INIT_LISP_OBJECT (float);
 
   /* Trig functions.  */
 

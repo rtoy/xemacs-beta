@@ -433,8 +433,7 @@ static const struct memory_description subr_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
-				     1, /*dumpable-flag*/
+DEFINE_BASIC_LISP_OBJECT ("subr", subr,
 				     0, print_subr, 0, 0, 0,
 				     subr_description,
 				     Lisp_Subr);
@@ -6439,7 +6438,7 @@ warn_when_safe (Lisp_Object class_, Lisp_Object level, const CIbyte *fmt, ...)
 void
 syms_of_eval (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (subr);
+  INIT_LISP_OBJECT (subr);
 
   DEFSYMBOL (Qinhibit_quit);
   DEFSYMBOL (Qautoload);

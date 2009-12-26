@@ -1,3 +1,28 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* disp-table.el:
+	* disp-table.el (describe-display-table):
+	* disp-table.el (make-display-table):
+	* disp-table.el (display-table-p): New.
+	* disp-table.el (frob-display-table):
+	* disp-table.el (put-display-table-range): New.
+	* disp-table.el (put-display-table): New.
+	* disp-table.el (get-display-table): New.
+	* disp-table.el (standard-display-default-1):
+	* disp-table.el (standard-display-ascii):
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	* disp-table.el (standard-display-underline):
+	* disp-table.el (standard-display-european):
+	* font.el:
+	* font.el (font-caps-display-table):
+	Make display tables be char tables, not vectors of 256.  Create new
+	functions `put-display-table', `get-display-table', `put-display-table-range'
+	for accessing/modifying a display table in an abstract fashion.
+	Rewrite font.el to use them.
+
+	NOTE: This will break code that assumes it can `aset' display tables.
+
 2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* help.el:

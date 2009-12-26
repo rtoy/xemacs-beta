@@ -1313,21 +1313,19 @@ image_instance_hash (Lisp_Object obj, int depth)
 		 0));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
-			       0, /*dumpable-flag*/
-			       mark_image_instance, print_image_instance,
-			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash,
-			       image_instance_description,
-			       Lisp_Image_Instance);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("image-instance", image_instance,
+					   mark_image_instance, print_image_instance,
+					   finalize_image_instance, image_instance_equal,
+					   image_instance_hash,
+					   image_instance_description,
+					   Lisp_Image_Instance);
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 			 Lisp_Object instantiator)
 {
-  Lisp_Image_Instance *lp =
-    ALLOC_LCRECORD_TYPE (Lisp_Image_Instance, &lrecord_image_instance);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_LISP_OBJECT (image_instance);
+  Lisp_Image_Instance *lp = XIMAGE_INSTANCE (obj);
 
   /* It's not possible to simply keep a record of the domain in which
      the instance was instantiated. This is because caching may mean
@@ -1350,10 +1348,9 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
   /* So that layouts get done. */
   lp->layout_changed = 1;
 
-  val = wrap_image_instance (lp);
   MARK_GLYPHS_CHANGED;
 
-  return val;
+  return obj;
 }
 
 static enum image_instance_type
@@ -3790,8 +3787,7 @@ static const struct memory_description glyph_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
-					  1, /*dumpable-flag*/
+DEFINE_LISP_OBJECT_WITH_PROPS ("glyph", glyph,
 					  mark_glyph, print_glyph, 0,
 					  glyph_equal, glyph_hash,
 					  glyph_description,
@@ -3805,8 +3801,8 @@ allocate_glyph (enum glyph_type type,
 				      Lisp_Object locale))
 {
   /* This function can GC */
-  Lisp_Object obj = Qnil;
-  Lisp_Glyph *g = ALLOC_LCRECORD_TYPE (Lisp_Glyph, &lrecord_glyph);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (glyph);
+  Lisp_Glyph *g = XGLYPH (obj);
 
   g->type = type;
   g->image = Fmake_specifier (Qimage); /* This function can GC */
@@ -3852,7 +3848,6 @@ allocate_glyph (enum glyph_type type,
     g->face = Qnil;
     g->plist = Qnil;
     g->after_change = after_change;
-    obj = wrap_glyph (g);
 
     set_image_attached_to (g->image, obj, Qimage);
     UNGCPRO;
@@ -5123,8 +5118,8 @@ disable_glyph_animated_timeout (int i)
 void
 syms_of_glyphs (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (glyph);
-  INIT_LRECORD_IMPLEMENTATION (image_instance);
+  INIT_LISP_OBJECT (glyph);
+  INIT_LISP_OBJECT (image_instance);
 
   /* image instantiators */
 

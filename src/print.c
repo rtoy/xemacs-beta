@@ -1449,9 +1449,9 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   UNGCPRO;
 }
 
-static void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+void
+external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
   struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
@@ -1474,10 +1474,16 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 		    header->uid);
 }
 
-void
+static void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
+  if (print_readably)
+    printing_unreadable_object
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
+       (unsigned long) XPNTR (obj))
+
   write_fmt_string (printcharfun,
 		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
@@ -1749,7 +1755,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
 	   (obj, printcharfun, escapeflag));
 	else
-	  default_object_printer (obj, printcharfun, escapeflag);
+	  internal_object_printer (obj, printcharfun, escapeflag);
 	break;
       }
 

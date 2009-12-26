@@ -977,20 +977,19 @@ mark_extent_auxiliary (Lisp_Object obj)
   return data->parent;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
-			       0, /*dumpable-flag*/
-                               mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, extent_auxiliary_description,
-			       struct extent_auxiliary);
+DEFINE_NONDUMPABLE_INTERNAL_LISP_OBJECT ("extent-auxiliary",
+					 extent_auxiliary,
+					 struct extent_auxiliary,
+					 extent_auxiliary_description,
+					 mark_extent_auxiliary);
 void
 allocate_extent_auxiliary (EXTENT ext)
 {
-  Lisp_Object extent_aux;
-  struct extent_auxiliary *data =
-    ALLOC_LCRECORD_TYPE (struct extent_auxiliary, &lrecord_extent_auxiliary);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (extent_auxiliary);
+  struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
+
   COPY_LCRECORD (data, &extent_auxiliary_defaults);
-  extent_aux = wrap_extent_auxiliary (data);
-  ext->plist = Fcons (extent_aux, ext->plist);
+  ext->plist = Fcons (obj, ext->plist);
   ext->flags.has_aux = 1;
 }
 
@@ -1154,24 +1153,21 @@ finalize_extent_info (void *header, int for_disksave)
     }
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
-			       0, /*dumpable-flag*/
-                               mark_extent_info, internal_object_printer,
-			       finalize_extent_info, 0, 0, 
-			       extent_info_description,
-			       struct extent_info);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("extent-info", extent_info,
+					   mark_extent_info, 0,
+					   finalize_extent_info, 0, 0, 
+					   extent_info_description,
+					   struct extent_info);
 
 static Lisp_Object
 allocate_extent_info (void)
 {
-  Lisp_Object extent_info;
-  struct extent_info *data =
-    ALLOC_LCRECORD_TYPE (struct extent_info, &lrecord_extent_info);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (extent_info);
+  struct extent_info *data = XEXTENT_INFO (obj);
 
-  extent_info = wrap_extent_info (data);
   data->extents = allocate_extent_list ();
   data->soe = 0;
-  return extent_info;
+  return obj;
 }
 
 void
@@ -3317,8 +3313,7 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
-						1, /*dumpable-flag*/
+DEFINE_BASIC_LISP_OBJECT_WITH_PROPS ("extent", extent,
 						mark_extent,
 						print_extent,
 						/* NOTE: If you declare a
@@ -3897,12 +3892,11 @@ copy_extent (EXTENT original, Bytexpos from, Bytexpos to, Lisp_Object object)
       /* also need to copy the aux struct.  It won't work for
 	 this extent to share the same aux struct as the original
 	 one. */
-      struct extent_auxiliary *data =
-	ALLOC_LCRECORD_TYPE (struct extent_auxiliary,
-			     &lrecord_extent_auxiliary);
+      Lisp_Object ea = ALLOC_LISP_OBJECT (extent_auxiliary);
+      struct extent_auxiliary *data = XEXTENT_AUXILIARY (ea);
 
       COPY_LCRECORD (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
-      XCAR (e->plist) = wrap_extent_auxiliary (data);
+      XCAR (e->plist) = ea;
     }
 
   {
@@ -7296,9 +7290,9 @@ compute_buffer_extent_usage (struct buffer *UNUSED (b),
 void
 syms_of_extents (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (extent);
-  INIT_LRECORD_IMPLEMENTATION (extent_info);
-  INIT_LRECORD_IMPLEMENTATION (extent_auxiliary);
+  INIT_LISP_OBJECT (extent);
+  INIT_LISP_OBJECT (extent_info);
+  INIT_LISP_OBJECT (extent_auxiliary);
 
   DEFSYMBOL (Qextentp);
   DEFSYMBOL (Qextent_live_p);

@@ -82,6 +82,9 @@ Boston, MA 02111-1307, USA.  */
 #endif /* not MC_ALLOC */
 
 #ifdef MC_ALLOC
+#define ALLOC_LISP_OBJECT(type) alloc_lrecord (&lrecord_##type)
+#define ALLOC_SIZED_LISP_OBJECT(size, type) \
+  alloc_sized_lrecord (size, &lrecord_##type)
 #define ALLOC_LCRECORD_TYPE alloc_lrecord_type
 #define COPY_SIZED_LCRECORD copy_sized_lrecord
 #define COPY_LCRECORD copy_lrecord
@@ -89,16 +92,17 @@ Boston, MA 02111-1307, USA.  */
   mc_alloced_storage_size (size, stats)
 #define ZERO_LCRECORD zero_lrecord
 #define LCRECORD_HEADER lrecord_header
-#define BASIC_ALLOC_LCRECORD alloc_lrecord
 #define FREE_LCRECORD free_lrecord
 #else
+#define ALLOC_LISP_OBJECT(type) alloc_lcrecord (&lrecord_##type)
+#define ALLOC_SIZED_LISP_OBJECT(size, type) \
+  old_alloc_sized_lcrecord (size, &lrecord_##type)
 #define ALLOC_LCRECORD_TYPE old_alloc_lcrecord_type
 #define COPY_SIZED_LCRECORD old_copy_sized_lcrecord
 #define COPY_LCRECORD old_copy_lcrecord
 #define LISPOBJ_STORAGE_SIZE malloced_storage_size
 #define ZERO_LCRECORD old_zero_lcrecord
 #define LCRECORD_HEADER old_lcrecord_header
-#define BASIC_ALLOC_LCRECORD old_basic_alloc_lcrecord
 #define FREE_LCRECORD old_free_lcrecord
 #endif
 
@@ -178,7 +182,7 @@ struct old_lcrecord_header
 
   /* The `next' field is normally used to chain all lcrecords together
      so that the GC can find (and free) all of them.
-     `old_basic_alloc_lcrecord' threads lcrecords together.
+     `old_alloc_sized_lcrecord' threads lcrecords together.
 
      The `next' field may be used for other purposes as long as some
      other mechanism is provided for letting the GC do its work.
@@ -330,7 +334,7 @@ struct lrecord_implementation
   Lisp_Object (*marker) (Lisp_Object);
 
   /* `printer' converts the object to a printed representation.
-     This can be NULL; in this case default_object_printer() will be
+     This can be NULL; in this case internal_object_printer() will be
      used instead. */
   void (*printer) (Lisp_Object, Lisp_Object printcharfun, int escapeflag);
 
@@ -367,13 +371,10 @@ struct lrecord_implementation
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
 
-#ifdef MC_ALLOC
-  /* Only one of `static_size' and `size_in_bytes_method' is non-0. */
-#else /* not MC_ALLOC */
-  /* Only one of `static_size' and `size_in_bytes_method' is non-0.
-     If both are 0, this type is not instantiable by
-     old_basic_alloc_lcrecord(). */
-#endif /* not MC_ALLOC */
+  /* Only one of `static_size' and `size_in_bytes_method' is non-0.  If
+     `static_size' is 0, this type is not instantiable by
+     ALLOC_LISP_OBJECT().  If both are 0 (this should never happen), this
+     object cannot be instantiated; you will get an abort() if you try.*/
   Bytecount static_size;
   Bytecount (*size_in_bytes_method) (const void *header);
 
@@ -1088,8 +1089,22 @@ extern const struct sized_memory_description lisp_object_description;
   { XD_INT,        offsetof (base_type, cur) },				      \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
 
-/* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
-   DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
+/* DEFINE_LISP_OBJECT is for objects with constant size.
+
+   DEFINE_SIZABLE_LISP_OBJECT is for objects whose size varies.
+
+   DEFINE_FROB_BLOCK_LISP_OBJECT is for objects that are allocated in
+   large blocks ("frob blocks"), which are parceled up individually.  Such
+   objects need special handling in alloc.c.  This does not apply to
+   MC_ALLOC, because it does this automatically.
+
+   DEFINE_*_WITH_PROPS is for objects which support the unified property
+   interface using `get', `put', `remprop' and `object-plist'.
+
+   DEFINE_EXTERNAL_* is for objects defined in an external module.
+
+   MAKE_LISP_OBJECT is what underlies all of these; it defines
+
  */
 
 #if defined (ERROR_CHECK_TYPES)
@@ -1098,58 +1113,66 @@ extern const struct sized_memory_description lisp_object_description;
 # define DECLARE_ERROR_CHECK_TYPES(c_name, structtype)
 #endif
 
-
-#define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
-
-#define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+#error MUST STILL SUPPORT THIS:::
 
 #define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
-#define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#error and variations
 
-#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+#define DEFINE_INTERNAL_LISP_OBJECT(name,c_name,dumpable,structtype,desc,marker) ...
 
-#define DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
+#define DEFINE_FROB_BLOCK_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
-#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+
+#define DEFINE_INTERNAL_LISP_OBJECT(name,c_name,structtype,desc,dumpable,marker) \
+DEFINE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,)
+
+#define DEFINE_LISP_OBJECT(name,c_name,structtype,desc,dumpable,marker,printer,equal,hash,nuker) \
+DEFINE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,)
+
+#define DEFINE_LISP_OBJECT_WITH_PROPS(name,c_name,structtype,dumpable,desc,marker,printer,equal,hash,nuker,getprop,putprop,remprop,plist) \
+MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+
+#define DEFINE_SIZABLE_LISP_OBJECT(name,c_name,structtype,sizer,desc,dumpable,marker,printer,equal,hash,nuker) \
+DEFINE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+
+#define DEFINE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,structtype,sizer,desc,dumpable,marker,printer,equal,hash,nuker,getprop,putprop,remprop,plist) \
+MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #ifdef MC_ALLOC
-#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_LISP_OBJECT(name,c_name,structtype,sizer,desc,dumpable,marker,printer,equal,hash,nuker,getprop,putprop,remprop,plist,frob_block) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_##c_name }
 #else /* not MC_ALLOC */
-#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_LISP_OBJECT(name,c_name,structtype,sizer,desc,dumpable,marker,printer,equal,hash,nuker,getprop,putprop,remprop,plist,frob_block) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
-    lrecord_type_##c_name, basic_p }
+    lrecord_type_##c_name, frob_block }
 #endif /* not MC_ALLOC */
 
-#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+#define DEFINE_EXTERNAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_EXTERNAL_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
-#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#define DEFINE_EXTERNAL_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_EXTERNAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
 
-#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+#define DEFINE_EXTERNAL_SIZABLE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+DEFINE_EXTERNAL_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
 
-#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_EXTERNAL_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
+MAKE_EXTERNAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #ifdef MC_ALLOC
-#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_EXTERNAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
@@ -1157,7 +1180,7 @@ struct lrecord_implementation lrecord_##c_name =			\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type }
 #else /* not MC_ALLOC */
-#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_EXTERNAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
@@ -1169,7 +1192,7 @@ struct lrecord_implementation lrecord_##c_name =			\
 #ifdef USE_KKCC
 extern MODULE_API const struct memory_description *lrecord_memory_descriptions[];
 
-#define INIT_LRECORD_IMPLEMENTATION(type) do {				\
+#define INIT_LISP_OBJECT(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = &lrecord_##type;	\
   lrecord_memory_descriptions[lrecord_type_##type] =			\
     lrecord_implementations_table[lrecord_type_##type]->description;	\
@@ -1177,40 +1200,40 @@ extern MODULE_API const struct memory_description *lrecord_memory_descriptions[]
 #else /* not USE_KKCC */
 extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
-#define INIT_LRECORD_IMPLEMENTATION(type) do {				\
+#define INIT_LISP_OBJECT(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = &lrecord_##type;	\
   lrecord_markers[lrecord_type_##type] =				\
     lrecord_implementations_table[lrecord_type_##type]->marker;		\
 } while (0)
 #endif /* not USE_KKCC */
 
-#define INIT_EXTERNAL_LRECORD_IMPLEMENTATION(type) do {			\
+#define INIT_EXTERNAL_LISP_OBJECT(type) do {			\
   lrecord_type_##type = lrecord_type_count++;				\
   lrecord_##type.lrecord_type_index = lrecord_type_##type;		\
-  INIT_LRECORD_IMPLEMENTATION(type);					\
+  INIT_LISP_OBJECT(type);					\
 } while (0)
 
 #ifdef HAVE_SHLIB
 /* Allow undefining types in order to support module unloading. */
 
 #ifdef USE_KKCC
-#define UNDEF_LRECORD_IMPLEMENTATION(type) do {				\
+#define UNDEF_LISP_OBJECT(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = NULL;		\
   lrecord_memory_descriptions[lrecord_type_##type] = NULL;		\
 } while (0)
 #else /* not USE_KKCC */
-#define UNDEF_LRECORD_IMPLEMENTATION(type) do {				\
+#define UNDEF_LISP_OBJECT(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = NULL;		\
   lrecord_markers[lrecord_type_##type] = NULL;				\
 } while (0)
 #endif /* not USE_KKCC */
 
-#define UNDEF_EXTERNAL_LRECORD_IMPLEMENTATION(type) do {		\
+#define UNDEF_EXTERNAL_LISP_OBJECT(type) do {		\
   if (lrecord_##type.lrecord_type_index == lrecord_type_count - 1) {	\
     /* This is the most recently defined type.  Clean up nicely. */	\
     lrecord_type_##type = lrecord_type_count--;				\
   } /* Else we can't help leaving a hole with this implementation. */	\
-  UNDEF_LRECORD_IMPLEMENTATION(type);					\
+  UNDEF_LISP_OBJECT(type);					\
 } while (0)
 
 #endif /* HAVE_SHLIB */
@@ -1241,12 +1264,12 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    describing the purpose of the descriptions; and comments elsewhere in
    this file describing the exact syntax of the description structures.
 
-   6. Define your object with DEFINE_LRECORD_IMPLEMENTATION() or some
+   6. Define your object with DEFINE_LISP_OBJECT() or some
    variant.
 
    7. Include the header file in the .c file where you defined the object.
 
-   8. Put a call to INIT_LRECORD_IMPLEMENTATION() for the object in the
+   8. Put a call to INIT_LISP_OBJECT() for the object in the
    .c file's syms_of_foo() function.
 
    9. Add a type enum for the object to enum lrecord_type, earlier in this
@@ -1336,20 +1359,18 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-[[ If your object should never escape to Lisp, declare its print method
-   as internal_object_printer instead of 0. ]]
-
-DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
- 			       0, mark_toolbar_button, 0, 0, 0, 0,
-                               toolbar_button_description,
- 			       struct toolbar_button);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("toolbar-button", toolbar_button,
+					     mark_toolbar_button,
+					     external_object_printer, 0, 0, 0,
+					     toolbar_button_description,
+					     struct toolbar_button);
 
 ...
 
 void
 syms_of_toolbar (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (toolbar_button);
+  INIT_LISP_OBJECT (toolbar_button);
 
   ...;
 }
@@ -1378,8 +1399,8 @@ enum lrecord_type
 
 Note: Object types defined in external dynamically-loaded modules (not
 part of the XEmacs main source code) should use DECLARE_EXTERNAL_LRECORD
-and DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION rather than DECLARE_LRECORD
-and DEFINE_LRECORD_IMPLEMENTATION.  The EXTERNAL versions declare and
+and DEFINE_EXTERNAL_LISP_OBJECT rather than DECLARE_LRECORD
+and DEFINE_LISP_OBJECT.  The EXTERNAL versions declare and
 allocate an enumerator for the type being defined.
 
 */
@@ -1520,6 +1541,26 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
+/* How to allocate a Lisp object:
+
+   - For most objects, simply call ALLOC_LISP_OBJECT (type), where TYPE is
+     the name of the type (e.g. toolbar_button).  Such objects can be freed
+     manually using FREE_LCRECORD.
+
+   - For objects whose size can vary (and hence which have a
+     size_in_bytes_method rather than a static_size), call
+     ALLOC_SIZED_LISP_OBJECT (size, type), where TYPE is the
+     name of the type. NOTE: You cannot call FREE_LCRECORD() on such
+     on object! (At least when not MC_ALLOC)
+
+   - Basic lrecords (of which there are a limited number, which exist only
+     when not MC_ALLOC, and which have special handling in alloc.c) need
+     special handling; if you don't understand this, just ignore it.
+
+   - Some lrecords, which are used totally internally, use the
+     noseeum-* functions for the reason of debugging. 
+ */
+
 #ifndef MC_ALLOC
 /*-------------------------- lcrecord-list -----------------------------*/
 
@@ -1560,7 +1601,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    in particular dictate the various types of management:
 
    -- "Auto-managed" means that you just go ahead and allocate the lcrecord
-   whenever you want, using old_alloc_lcrecord_type(), and the appropriate
+   whenever you want, using ALLOC_LISP_OBJECT(), and the appropriate
    lcrecord-list manager is automatically created.  To free, you just call
    "FREE_LCRECORD()" and the appropriate lcrecord-list manager is
    automatically located and called.  The limitation here of course is that
@@ -1583,7 +1624,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    to hand-manage them, or (b) the objects you create are always or almost
    always Lisp-visible, and thus there's no point in freeing them (and it
    wouldn't be safe to do so).  You just create them with
-   BASIC_ALLOC_LCRECORD(), and that's it.
+   ALLOC_SIZED_LISP_OBJECT(), and that's it.
 
    --ben
 
@@ -1596,10 +1637,10 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    1) Create an lcrecord-list object using make_lcrecord_list().  This is
       often done at initialization.  Remember to staticpro_nodump() this
       object!  The arguments to make_lcrecord_list() are the same as would be
-      passed to BASIC_ALLOC_LCRECORD().
+      passed to ALLOC_SIZED_LISP_OBJECT().
 
-   2) Instead of calling BASIC_ALLOC_LCRECORD(), call alloc_managed_lcrecord()
-      and pass the lcrecord-list earlier created.
+   2) Instead of calling ALLOC_SIZED_LISP_OBJECT(), call
+      alloc_managed_lcrecord() and pass the lcrecord-list earlier created.
 
    3) When done with the lcrecord, call free_managed_lcrecord().  The
       standard freeing caveats apply: ** make sure there are no pointers to
@@ -1609,7 +1650,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
       lcrecord goodbye as if it were garbage-collected.  This means:
       -- the contents of the freed lcrecord are undefined, and the
          contents of something produced by alloc_managed_lcrecord()
-	 are undefined, just like for BASIC_ALLOC_LCRECORD().
+	 are undefined, just like for ALLOC_SIZED_LISP_OBJECT().
       -- the mark method for the lcrecord's type will *NEVER* be called
          on freed lcrecords.
       -- the finalize method for the lcrecord's type will be called
@@ -1617,8 +1658,9 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
  */
 
 /* UNMANAGED MODEL: */
-void *old_basic_alloc_lcrecord (Bytecount size,
-				const struct lrecord_implementation *);
+Lisp_Object old_alloc_lcrecord (const struct lrecord_implementation *);
+Lisp_Object old_alloc_sized_lcrecord (Bytecount size,
+				      const struct lrecord_implementation *);
 
 /* HAND-MANAGED MODEL: */
 Lisp_Object make_lcrecord_list (Elemcount size,
@@ -1628,12 +1670,12 @@ Lisp_Object alloc_managed_lcrecord (Lisp_Object lcrecord_list);
 void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 
 /* AUTO-MANAGED MODEL: */
-MODULE_API void *
+MODULE_API Lisp_Object
 alloc_automanaged_lcrecord (Bytecount size,
 			    const struct lrecord_implementation *);
 
-#define old_alloc_lcrecord_type(type, lrecord_implementation) \
-  ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
+#define old_alloc_lcrecord_type(type, imp) \
+  ((type *) XPNTR (alloc_automanaged_lcrecord (sizeof (type), imp)))
 
 void old_free_lcrecord (Lisp_Object rec);
 
@@ -1657,31 +1699,20 @@ void old_free_lcrecord (Lisp_Object rec);
 
 #else /* MC_ALLOC */
 
-/* How to allocate a lrecord:
-   
-   - If the size of the lrecord is fix, say it equals its size of its
-   struct, then use alloc_lrecord_type.
+Lisp_Object alloc_sized_lrecord (Bytecount size,
+				 const struct lrecord_implementation *imp);
+Lisp_Object noseeum_alloc_sized_lrecord (Bytecount size,
+					 const struct lrecord_implementation *);
+Lisp_Object alloc_lrecord (const struct lrecord_implementation *imp);
 
-   - If the size varies, i.e. it is not equal to the size of its
-   struct, use alloc_lrecord and specify the amount of storage you
-   need for the object.
-
-   - Some lrecords, which are used totally internally, use the
-   noseeum-* functions for the reason of debugging. 
-
-   - To free a Lisp_Object manually, use free_lrecord. */
-
-void *alloc_lrecord (Bytecount size,
-		     const struct lrecord_implementation *);
-
-#define alloc_lrecord_type(type, lrecord_implementation) \
-  ((type *) alloc_lrecord (sizeof (type), lrecord_implementation))
+#define alloc_lrecord_type(type, imp) \
+  ((type *) XPNTR (alloc_sized_lrecord (sizeof (type), imp)))
 
 void *noseeum_alloc_lrecord (Bytecount size,
 			     const struct lrecord_implementation *);
 
-#define noseeum_alloc_lrecord_type(type, lrecord_implementation) \
-  ((type *) noseeum_alloc_lrecord (sizeof (type), lrecord_implementation))
+#define noseeum_alloc_lrecord_type(type, imp) \
+  ((type *) XPNTR (noseeum_alloc_sized_lrecord (sizeof (type), imp)))
 
 void free_lrecord (Lisp_Object rec);
 

@@ -145,13 +145,12 @@ color_instance_hash (Lisp_Object obj, int depth)
 				    LISP_HASH (obj)));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
-			       0, /*dumpable-flag*/
-			       mark_color_instance, print_color_instance,
-			       finalize_color_instance, color_instance_equal,
-			       color_instance_hash, 
-			       color_instance_description,
-			       Lisp_Color_Instance);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("color-instance", color_instance,
+					   mark_color_instance, print_color_instance,
+					   finalize_color_instance, color_instance_equal,
+					   color_instance_hash, 
+					   color_instance_description,
+					   Lisp_Color_Instance);
 
 DEFUN ("make-color-instance", Fmake_color_instance, 1, 3, 0, /*
 Return a new `color-instance' object named NAME (a string).
@@ -172,13 +171,15 @@ is deallocated as well.
 */
        (name, device, noerror))
 {
+  Lisp_Object obj;
   Lisp_Color_Instance *c;
   int retval;
 
   CHECK_STRING (name);
   device = wrap_device (decode_device (device));
 
-  c = ALLOC_LCRECORD_TYPE (Lisp_Color_Instance, &lrecord_color_instance);
+  obj = ALLOC_LISP_OBJECT (color_instance);
+  c = XCOLOR_INSTANCE (obj);
   c->name = name;
   c->device = device;
   c->data = 0;
@@ -190,7 +191,7 @@ is deallocated as well.
   if (!retval)
     return Qnil;
 
-  return wrap_color_instance (c);
+  return obj;
 }
 
 DEFUN ("color-instance-p", Fcolor_instance_p, 1, 1, 0, /*
@@ -354,12 +355,11 @@ font_instance_hash (Lisp_Object obj, int depth)
 			depth + 1);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
-			       0, /*dumpable-flag*/
-			       mark_font_instance, print_font_instance,
-			       finalize_font_instance, font_instance_equal,
-			       font_instance_hash, font_instance_description,
-			       Lisp_Font_Instance);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("font-instance", font_instance,
+					   mark_font_instance, print_font_instance,
+					   finalize_font_instance, font_instance_equal,
+					   font_instance_hash, font_instance_description,
+					   Lisp_Font_Instance);
 
 
 DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
@@ -376,6 +376,7 @@ these objects are GCed, the underlying X data is deallocated as well.
 */
        (name, device, noerror))
 {
+  Lisp_Object obj;
   Lisp_Font_Instance *f;
   int retval = 0;
   Error_Behavior errb = decode_error_behavior_flag (noerror);
@@ -387,7 +388,8 @@ these objects are GCed, the underlying X data is deallocated as well.
 
   device = wrap_device (decode_device (device));
 
-  f = ALLOC_LCRECORD_TYPE (Lisp_Font_Instance, &lrecord_font_instance);
+  obj = ALLOC_LISP_OBJECT (font_instance);
+  f = XFONT_INSTANCE (obj);
   f->name = name;
   f->truename = Qnil;
   f->device = device;
@@ -407,7 +409,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   if (!retval)
     return Qnil;
 
-  return wrap_font_instance (f);
+  return obj;
 }
 
 DEFUN ("font-instance-p", Ffont_instance_p, 1, 1, 0, /*
@@ -1120,8 +1122,8 @@ face-boolean instantiators.
 void
 syms_of_objects (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (color_instance);
-  INIT_LRECORD_IMPLEMENTATION (font_instance);
+  INIT_LISP_OBJECT (color_instance);
+  INIT_LISP_OBJECT (font_instance);
 
   DEFSUBR (Fcolor_specifier_p);
   DEFSUBR (Ffont_specifier_p);
@@ -1195,21 +1197,20 @@ reinit_specifier_type_create_objects (void)
 void
 reinit_vars_of_objects (void)
 {
-  staticpro_nodump (&Vthe_null_color_instance);
   {
-    Lisp_Color_Instance *c =
-      ALLOC_LCRECORD_TYPE (Lisp_Color_Instance, &lrecord_color_instance);
+    Lisp_Object obj = ALLOC_LISP_OBJECT (color_instance);
+    Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
     c->name = Qnil;
     c->device = Qnil;
     c->data = 0;
 
-    Vthe_null_color_instance = wrap_color_instance (c);
+    Vthe_null_color_instance = obj;
+    staticpro_nodump (&Vthe_null_color_instance);
   }
 
-  staticpro_nodump (&Vthe_null_font_instance);
   {
-    Lisp_Font_Instance *f =
-      ALLOC_LCRECORD_TYPE (Lisp_Font_Instance, &lrecord_font_instance);
+    Lisp_Object obj = ALLOC_LISP_OBJECT (font_instance);
+    Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
     f->name = Qnil;
     f->truename = Qnil;
     f->device = Qnil;
@@ -1220,7 +1221,8 @@ reinit_vars_of_objects (void)
     f->width = 0;
     f->proportional_p = 0;
 
-    Vthe_null_font_instance = wrap_font_instance (f);
+    Vthe_null_font_instance = obj;
+    staticpro_nodump (&Vthe_null_font_instance);
   }
 }
 

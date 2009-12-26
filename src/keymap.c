@@ -282,9 +282,8 @@ static const struct memory_description keymap_description[] = {
 };
 
 /* No need for keymap_equal #### Why not? */
-DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
-			       1, /*dumpable-flag*/
-                               mark_keymap, print_keymap, 0, 0, 0,
+DEFINE_LISP_OBJECT ("keymap", keymap,
+			       mark_keymap, print_keymap, 0, 0, 0,
 			       keymap_description,
 			       Lisp_Keymap);
 
@@ -755,10 +754,8 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (Elemcount size)
 {
-  Lisp_Object result;
-  Lisp_Keymap *keymap = ALLOC_LCRECORD_TYPE (Lisp_Keymap, &lrecord_keymap);
-
-  result = wrap_keymap (keymap);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (keymap);
+  Lisp_Keymap *keymap = XKEYMAP (obj);
 
   keymap->parents         = Qnil;
   keymap->prompt          = Qnil;
@@ -778,7 +775,7 @@ make_keymap (Elemcount size)
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
 			      HASH_TABLE_EQ);
     }
-  return result;
+  return obj;
 }
 
 DEFUN ("make-keymap", Fmake_keymap, 0, 1, 0, /*
@@ -4306,7 +4303,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 void
 syms_of_keymap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (keymap);
+  INIT_LISP_OBJECT (keymap);
 
   DEFSYMBOL (Qminor_mode_map_alist);
 

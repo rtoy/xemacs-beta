@@ -2204,8 +2204,7 @@ finalize_compiled_function (void *header, int for_disksave)
     }
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
+DEFINE_BASIC_LISP_OBJECT ("compiled-function", compiled_function,
 				     mark_compiled_function,
 				     print_compiled_function,
 				     finalize_compiled_function,
@@ -2214,8 +2213,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
 #else /* not MC_ALLOC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
+DEFINE_BASIC_LISP_OBJECT ("compiled-function", compiled_function,
 				     mark_compiled_function,
 				     print_compiled_function, 0,
 				     compiled_function_equal,
@@ -2593,7 +2591,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 void
 syms_of_bytecode (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (compiled_function);
+  INIT_LISP_OBJECT (compiled_function);
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
   DEFSYMBOL (Qbyte_code);

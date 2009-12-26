@@ -472,9 +472,8 @@ const struct memory_description hash_table_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
-			       1, /*dumpable-flag*/
-                               mark_hash_table, print_hash_table,
+DEFINE_LISP_OBJECT ("hash-table", hash_table,
+			       mark_hash_table, print_hash_table,
 			       finalize_hash_table,
 			       hash_table_equal, hash_table_hash,
 			       hash_table_description,
@@ -549,8 +548,8 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 			      double rehash_threshold,
 			      enum hash_table_weakness weakness)
 {
-  Lisp_Object hash_table;
-  Lisp_Hash_Table *ht = ALLOC_LCRECORD_TYPE (Lisp_Hash_Table, &lrecord_hash_table);
+  Lisp_Object hash_table = ALLOC_LISP_OBJECT (hash_table);
+  Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
 
   ht->test_function = test_function;
   ht->hash_function = hash_function;
@@ -573,8 +572,6 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   ht->hentries = xnew_array_and_zero (htentry, ht->size + 1);
-
-  hash_table = wrap_hash_table (ht);
 
   if (weakness == HASH_TABLE_NON_WEAK)
     ht->next_weak = Qunbound;
@@ -967,21 +964,20 @@ The keys and values will not themselves be copied.
        (hash_table))
 {
   const Lisp_Hash_Table *ht_old = xhash_table (hash_table);
-  Lisp_Hash_Table *ht = ALLOC_LCRECORD_TYPE (Lisp_Hash_Table, &lrecord_hash_table);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (hash_table);
+  Lisp_Hash_Table *ht = XHASH_TABLE (obj);
   COPY_LCRECORD (ht, ht_old);
 
   ht->hentries = xnew_array (htentry, ht_old->size + 1);
   memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (htentry));
 
-  hash_table = wrap_hash_table (ht);
-
   if (! EQ (ht->next_weak, Qunbound))
     {
       ht->next_weak = Vall_weak_hash_tables;
-      Vall_weak_hash_tables = hash_table;
+      Vall_weak_hash_tables = obj;
     }
 
-  return hash_table;
+  return obj;
 }
 
 static void
@@ -1760,7 +1756,7 @@ syms_of_elhash (void)
 void
 init_elhash_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (hash_table);
+  INIT_LISP_OBJECT (hash_table);
 
   /* This must NOT be staticpro'd */
   Vall_weak_hash_tables = Qnil;

@@ -421,14 +421,13 @@ const struct sized_memory_description specifier_empty_extra_description = {
   0, specifier_empty_extra_description_1
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
-					1, /*dumpable-flag*/
-					mark_specifier, print_specifier,
-					finalize_specifier,
-					specifier_equal, specifier_hash,
-					specifier_description,
-					sizeof_specifier,
-					Lisp_Specifier);
+DEFINE_SIZABLE_LISP_OBJECT ("specifier", specifier,
+				       mark_specifier, print_specifier,
+				       finalize_specifier,
+				       specifier_equal, specifier_hash,
+				       specifier_description,
+				       sizeof_specifier,
+				       Lisp_Specifier);
 
 /************************************************************************/
 /*                       Creating specifiers                            */
@@ -491,10 +490,9 @@ static Lisp_Object
 make_specifier_internal (struct specifier_methods *spec_meths,
 			 Bytecount data_size, int call_create_meth)
 {
-  Lisp_Object specifier;
-  Lisp_Specifier *sp = (Lisp_Specifier *)
-    BASIC_ALLOC_LCRECORD (aligned_sizeof_specifier (data_size),
-			  &lrecord_specifier);
+  Lisp_Object specifier =
+    ALLOC_SIZED_LISP_OBJECT (aligned_sizeof_specifier (data_size), specifier);
+  Lisp_Specifier *sp = XSPECIFIER (specifier);
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;
@@ -507,7 +505,6 @@ make_specifier_internal (struct specifier_methods *spec_meths,
   sp->caching = 0;
   sp->next_specifier = Vall_specifiers;
 
-  specifier = wrap_specifier (sp);
   Vall_specifiers = specifier;
 
   if (call_create_meth)
@@ -3348,7 +3345,7 @@ instantiators.
 void
 syms_of_specifier (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (specifier);
+  INIT_LISP_OBJECT (specifier);
 
   DEFSYMBOL (Qspecifierp);
 

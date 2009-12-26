@@ -150,12 +150,11 @@ const struct sized_memory_description lstream_empty_extra_description = {
   0, lstream_empty_extra_description_1
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
-					0, /*dumpable-flag*/
-					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0,
-					lstream_description,
-					sizeof_lstream, Lstream);
+DEFINE_NONDUMPABLE_SIZABLE_LISP_OBJECT ("stream", lstream,
+						   mark_lstream, print_lstream,
+						   finalize_lstream, 0, 0,
+						   lstream_description,
+						   sizeof_lstream, Lstream);
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the
@@ -197,9 +196,8 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 {
   Lstream *p;
 #ifdef MC_ALLOC
-  p = XLSTREAM (wrap_pointer_1 
-		(alloc_lrecord (aligned_sizeof_lstream (imp->size),
-				&lrecord_lstream)));
+  p = XLSTREAM (alloc_sized_lrecord (aligned_sizeof_lstream (imp->size),
+			             &lrecord_lstream));
 #else /* not MC_ALLOC */
   int i;
 
@@ -1882,5 +1880,5 @@ reinit_vars_of_lstream (void)
 void
 vars_of_lstream (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (lstream);
+  INIT_LISP_OBJECT (lstream);
 }

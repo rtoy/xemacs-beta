@@ -278,8 +278,7 @@ static const struct memory_description face_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
-					  1, /*dumpable-flag*/
+DEFINE_LISP_OBJECT_WITH_PROPS ("face", face,
 					  mark_face, print_face, 0, face_equal,
 					  face_hash, face_description,
 					  face_getprop,
@@ -373,7 +372,8 @@ reset_face (Lisp_Face *f)
 static Lisp_Face *
 allocate_face (void)
 {
-  Lisp_Face *result = ALLOC_LCRECORD_TYPE (Lisp_Face, &lrecord_face);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (face);
+  Lisp_Face *result = XFACE (obj);
 
   reset_face (result);
   return result;
@@ -1858,7 +1858,7 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
 void
 syms_of_faces (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (face);
+  INIT_LISP_OBJECT (face);
 
   /* Qdefault, Qwidget, Qleft_margin, Qright_margin defined in general.c */
   DEFSYMBOL (Qmodeline);

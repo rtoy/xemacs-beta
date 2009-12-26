@@ -1175,20 +1175,19 @@ hash_devmode (Lisp_Object obj, int depth)
 		internal_hash (dm->printer_name, depth + 1));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("msprinter-settings", devmode,
-			       0, /*dumpable-flag*/
-			       mark_devmode, print_devmode, finalize_devmode,
-			       equal_devmode, hash_devmode, 
-			       devmode_description,
-			       Lisp_Devmode);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("msprinter-settings", devmode,
+					   mark_devmode, print_devmode,
+					   finalize_devmode,
+					   equal_devmode, hash_devmode, 
+					   devmode_description,
+					   Lisp_Devmode);
 
 static Lisp_Object
 allocate_devmode (DEVMODEW* src_devmode, int do_copy,
 		  Lisp_Object src_name, struct device *d)
 {
-  Lisp_Devmode *dm;
-
-  dm = ALLOC_LCRECORD_TYPE (Lisp_Devmode, &lrecord_devmode);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (devmode);
+  Lisp_Devmode *dm = XDEVMODE (obj);
 
   if (d)
     dm->device = wrap_device (d);
@@ -1207,7 +1206,7 @@ allocate_devmode (DEVMODEW* src_devmode, int do_copy,
       dm->devmode = src_devmode;
     }
 
-  return wrap_devmode (dm);
+  return obj;
 }
 
 DEFUN ("msprinter-settings-copy", Fmsprinter_settings_copy, 1, 1, 0, /*
@@ -1343,7 +1342,7 @@ values.  Return value is nil if there are no printers installed.
 void
 syms_of_device_mswindows (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (devmode);
+  INIT_LISP_OBJECT (devmode);
 
   DEFSUBR (Fmsprinter_get_settings);
   DEFSUBR (Fmsprinter_select_settings);

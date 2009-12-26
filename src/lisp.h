@@ -4797,7 +4797,8 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
-void internal_object_printer (Lisp_Object, Lisp_Object, int);
+void external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			      int UNUSED (escapeflag));
 
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);

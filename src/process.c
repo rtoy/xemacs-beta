@@ -209,10 +209,9 @@ finalize_process (void *header, int for_disksave)
     }
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("process", process,
-			       0, /*dumpable-flag*/
-                               mark_process, print_process, finalize_process,
-                               0, 0, process_description, Lisp_Process);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("process", process,
+					   mark_process, print_process, finalize_process,
+					   0, 0, process_description, Lisp_Process);
 
 /************************************************************************/
 /*                       basic process accessors                        */
@@ -481,9 +480,10 @@ report_network_error (const char *string, Lisp_Object data)
 Lisp_Object
 make_process_internal (Lisp_Object name)
 {
-  Lisp_Object val, name1;
+  Lisp_Object name1;
   int i;
-  Lisp_Process *p = ALLOC_LCRECORD_TYPE (Lisp_Process, &lrecord_process);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (process);
+  Lisp_Process *p = XPROCESS (obj);
 
 #define MARKED_SLOT(x)	p->x = Qnil;
 #include "process-slots.h"
@@ -508,10 +508,8 @@ make_process_internal (Lisp_Object name)
 
   MAYBE_PROCMETH (alloc_process_data, (p));
 
-  val = wrap_process (p);
-
-  Vprocess_list = Fcons (val, Vprocess_list);
-  return val;
+  Vprocess_list = Fcons (obj, Vprocess_list);
+  return obj;
 }
 
 void
@@ -2501,7 +2499,7 @@ init_xemacs_process (void)
 void
 syms_of_process (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (process);
+  INIT_LISP_OBJECT (process);
 
   DEFSYMBOL (Qprocessp);
   DEFSYMBOL (Qprocess_live_p);

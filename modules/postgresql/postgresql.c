@@ -266,16 +266,23 @@ finalize_pgconn (void *header, int for_disksave)
 
 #ifdef RUNNING_XEMACS_21_1
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
-			       mark_pgconn, print_pgconn, finalize_pgconn,
+			       2mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       Lisp_PGconn);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       0, /*dumpable-flag*/
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       pgconn_description,
 			       Lisp_PGconn);
+#else
+DEFINE_NONDUMPABLE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
+					   mark_pgconn, print_pgconn,
+					   finalize_pgconn,
+					   NULL, NULL,
+					   pgconn_description,
+					   Lisp_PGconn);
 #endif
 /****/
 

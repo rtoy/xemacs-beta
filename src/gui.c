@@ -197,14 +197,10 @@ gui_item_init (Lisp_Object gui_item)
 Lisp_Object
 allocate_gui_item (void)
 {
-  Lisp_Gui_Item *lp = ALLOC_LCRECORD_TYPE (Lisp_Gui_Item, &lrecord_gui_item);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_LISP_OBJECT (gui_item);
 
-  val = wrap_gui_item (lp);
-
-  gui_item_init (val);
-
-  return val;
+  gui_item_init (obj);
+  return obj;
 }
 
 /*
@@ -809,13 +805,12 @@ finalize_gui_item (void *UNUSED (header), int UNUSED (for_disksave))
 {
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
-			       0, /*dumpable-flag*/
-			       mark_gui_item, print_gui_item,
-			       finalize_gui_item, gui_item_equal,
-			       gui_item_hash,
-			       gui_item_description,
-			       Lisp_Gui_Item);
+DEFINE_NONDUMPABLE_LISP_OBJECT ("gui-item", gui_item,
+					   mark_gui_item, print_gui_item,
+					   finalize_gui_item, gui_item_equal,
+					   gui_item_hash,
+					   gui_item_description,
+					   Lisp_Gui_Item);
 
 DOESNT_RETURN
 gui_error (const Ascbyte *reason, Lisp_Object frob)
@@ -832,7 +827,7 @@ gui_error_2 (const Ascbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 void
 syms_of_gui (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (gui_item);
+  INIT_LISP_OBJECT (gui_item);
 
   DEFSYMBOL (Qmenu_no_selection_hook);
 

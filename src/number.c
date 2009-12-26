@@ -106,7 +106,7 @@ static const struct memory_description bignum_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 1, 0, bignum_print,
+DEFINE_BASIC_LISP_OBJECT ("bignum", bignum, 0, bignum_print,
 				     0, bignum_equal, bignum_hash,
 				     bignum_description, Lisp_Bignum);
 
@@ -183,9 +183,9 @@ static const struct memory_description ratio_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
-				     0, ratio_equal, ratio_hash,
-				     ratio_description, Lisp_Ratio);
+DEFINE_NONDUMPABLE_BASIC_LISP_OBJECT ("ratio", ratio, 0, ratio_print,
+						 0, ratio_equal, ratio_hash,
+						 ratio_description, Lisp_Ratio);
 
 #endif /* HAVE_RATIO */
 
@@ -270,7 +270,7 @@ static const struct memory_description bigfloat_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
+DEFINE_BASIC_LISP_OBJECT ("bigfloat", bigfloat, 0,
 				     bigfloat_print, 0,
 				     bigfloat_equal, bigfloat_hash,
 				     bigfloat_description, Lisp_Bigfloat);
@@ -743,13 +743,13 @@ void
 syms_of_number (void)
 {
 #ifdef HAVE_BIGNUM
-  INIT_LRECORD_IMPLEMENTATION (bignum);
+  INIT_LISP_OBJECT (bignum);
 #endif
 #ifdef HAVE_RATIO
-  INIT_LRECORD_IMPLEMENTATION (ratio);
+  INIT_LISP_OBJECT (ratio);
 #endif
 #ifdef HAVE_BIGFLOAT
-  INIT_LRECORD_IMPLEMENTATION (bigfloat);
+  INIT_LISP_OBJECT (bigfloat);
 #endif
 
   /* Type predicates */
