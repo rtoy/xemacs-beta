@@ -497,8 +497,10 @@ entry according to the value of WITHDN.
   CHECK_SYMBOL (attrsonly);
 
   /* Perform the search */
-  bs = NILP (base) ? "" : NEW_LISP_STRING_TO_EXTERNAL (base, Qnative);
-  filt = NILP (filter) ? "" : NEW_LISP_STRING_TO_EXTERNAL (filter, Qnative);
+  bs = NILP (base) ? (Extbyte *) "" :
+    NEW_LISP_STRING_TO_EXTERNAL (base, Qnative);
+  filt = NILP (filter) ? (Extbyte *) "" :
+    NEW_LISP_STRING_TO_EXTERNAL (filter, Qnative);
   if (ldap_search (ld, bs, ldap_scope, filt, ldap_attributes,
 		   NILP (attrsonly) ? 0 : 1)
       == -1)
