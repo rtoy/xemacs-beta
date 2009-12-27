@@ -867,8 +867,6 @@ Set the `ccl-program' property of CHARSET to CCL-PROGRAM.
 */
        (charset, ccl_program))
 {
-  struct ccl_program test_ccl;
-
   charset = Fget_charset (charset);
   XCHARSET_CCL_PROGRAM (charset) = get_ccl_program (ccl_program);
 

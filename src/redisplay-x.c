@@ -136,7 +136,6 @@ separate_textual_runs_nomule (unsigned char *text_storage,
 			      const Ichar *str, Charcount len,
 			      struct face_cachel *UNUSED(cachel))
 {
-  int i;
   if (!len)
     return 0;
 

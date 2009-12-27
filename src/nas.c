@@ -237,6 +237,8 @@ nas_init_play (
   return NULL;
 }
 
+# if 0 /* not currently used */
+
 static void
 nas_close_down_play (void)
 
@@ -244,6 +246,8 @@ nas_close_down_play (void)
   AuCloseServer (aud);
   sound_warn ("disconnected from audio server");
 }
+
+#endif
 
  /********************************************************************\
  *                                                                    *
