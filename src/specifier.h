@@ -259,7 +259,7 @@ struct Lisp_Specifier
 };
 typedef struct Lisp_Specifier Lisp_Specifier;
 
-DECLARE_LRECORD (specifier, Lisp_Specifier);
+DECLARE_LISP_OBJECT (specifier, Lisp_Specifier);
 #define XSPECIFIER(x) XRECORD (x, specifier, Lisp_Specifier)
 #define wrap_specifier(p) wrap_record (p, specifier)
 #define SPECIFIERP(x) RECORDP (x, specifier)
@@ -440,7 +440,7 @@ struct specifier_caching
 };
 
 #ifdef NEW_GC
-DECLARE_LRECORD (specifier_caching, struct specifier_caching);
+DECLARE_LISP_OBJECT (specifier_caching, struct specifier_caching);
 #define XSPECIFIER_CACHING(x) \
   XRECORD (x, specifier_caching, struct specifier_caching)
 #define wrap_specifier_caching(p) \

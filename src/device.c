@@ -170,11 +170,10 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " 0x%x>", d->header.uid);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("device", device,
-			       0, /*dumpable-flag*/
-			       mark_device, print_device, 0, 0, 0, 
-			       device_description,
-			       struct device);
+DEFINE_NODUMP_LISP_OBJECT ("device", device,
+					   mark_device, print_device, 0, 0, 0, 
+					   device_description,
+					   struct device);
 
 int
 valid_device_class_p (Lisp_Object class_)
@@ -211,12 +210,11 @@ nuke_all_device_slots (struct device *d, Lisp_Object zap)
 static struct device *
 allocate_device (Lisp_Object console)
 {
-  Lisp_Object device;
-  struct device *d = ALLOC_LCRECORD_TYPE (struct device, &lrecord_device);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (device);
+  struct device *d = XDEVICE (obj);
   struct gcpro gcpro1;
 
-  device = wrap_device (d);
-  GCPRO1 (device);
+  GCPRO1 (obj);
 
   nuke_all_device_slots (d, Qnil);
 
@@ -1399,7 +1397,7 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
 void
 syms_of_device (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (device);
+  INIT_LISP_OBJECT (device);
 
   DEFSUBR (Fvalid_device_class_p);
   DEFSUBR (Fdevice_class_list);

@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct Lisp_Keymap Lisp_Keymap;
 
-DECLARE_LRECORD (keymap, Lisp_Keymap);
+DECLARE_LISP_OBJECT (keymap, Lisp_Keymap);
 #define XKEYMAP(x) XRECORD (x, keymap, Lisp_Keymap)
 #define wrap_keymap(p) wrap_record (p, keymap)
 #define KEYMAPP(x) RECORDP (x, keymap)

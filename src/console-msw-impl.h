@@ -94,7 +94,7 @@ struct mswindows_device
 #ifdef NEW_GC
 typedef struct mswindows_device Lisp_Mswindows_Device;
 
-DECLARE_LRECORD (mswindows_device, Lisp_Mswindows_Device);
+DECLARE_LISP_OBJECT (mswindows_device, Lisp_Mswindows_Device);
 
 #define XMSWINDOWS_DEVICE(x) \
   XRECORD (x, mswindows_device, Lisp_Mswindows_Device)
@@ -122,7 +122,7 @@ struct msprinter_device
 #ifdef NEW_GC
 typedef struct msprinter_device Lisp_Msprinter_Device;
 
-DECLARE_LRECORD (msprinter_device, Lisp_Msprinter_Device);
+DECLARE_LISP_OBJECT (msprinter_device, Lisp_Msprinter_Device);
 
 #define XMSPRINTER_DEVICE(x) \
   XRECORD (x, msprinter_device, Lisp_Msprinter_Device)
@@ -234,7 +234,7 @@ struct mswindows_frame
 #ifdef NEW_GC
 typedef struct mswindows_frame Lisp_Mswindows_Frame;
 
-DECLARE_LRECORD (mswindows_frame, Lisp_Mswindows_Frame);
+DECLARE_LISP_OBJECT (mswindows_frame, Lisp_Mswindows_Frame);
 
 #define XMSWINDOWS_FRAME(x) \
   XRECORD (x, mswindows_frame, Lisp_Mswindows_Frame)

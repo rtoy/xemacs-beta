@@ -234,11 +234,9 @@ static const struct memory_description buffer_text_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("buffer-text", buffer_text,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       buffer_text_description_1,
-			       Lisp_Buffer_Text);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("buffer-text", buffer_text,
+				      0, buffer_text_description_1,
+				      Lisp_Buffer_Text);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description buffer_text_description = {
@@ -333,11 +331,10 @@ cleanup_buffer_undo_lists (void)
 /* We do not need a finalize method to handle a buffer's children list
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
-DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
-			       0, /*dumpable-flag*/
-                               mark_buffer, print_buffer, 0, 0, 0,
-			       buffer_description,
-			       struct buffer);
+DEFINE_NODUMP_LISP_OBJECT ("buffer", buffer, mark_buffer,
+					   print_buffer, 0, 0, 0,
+					   buffer_description,
+					   struct buffer);
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 Return t if OBJECT is an editor buffer.
@@ -601,7 +598,8 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
-  struct buffer *b = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (buffer);
+  struct buffer *b = XBUFFER (obj);
 
   COPY_LCRECORD (b, XBUFFER (Vbuffer_defaults));
 
@@ -1908,9 +1906,9 @@ The values returned are in the form of a plist of properties and values.
 void
 syms_of_buffer (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (buffer);
+  INIT_LISP_OBJECT (buffer);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (buffer_text);
+  INIT_LISP_OBJECT (buffer_text);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qbuffer_live_p);
@@ -2143,7 +2141,7 @@ do									  \
   struct symbol_value_forward *I_hate_C =				  \
     alloc_lrecord_type (struct symbol_value_forward,			  \
 			&lrecord_symbol_value_forward);			  \
-  /*mcpro ((Lisp_Object) I_hate_C);*/					\
+  /*mcpro ((Lisp_Object) I_hate_C);*/					  \
 									  \
   I_hate_C->magic.value = &(buffer_local_flags.field_name);		  \
   I_hate_C->magic.type = forward_type;					  \
@@ -2232,13 +2230,15 @@ common_init_complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
-  struct buffer *defs = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
-  struct buffer *syms = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
+  Lisp_Object defobj = ALLOC_LISP_OBJECT (buffer);
+  struct buffer *defs = XBUFFER (defobj);
+  Lisp_Object symobj = ALLOC_LISP_OBJECT (buffer);
+  struct buffer *syms = XBUFFER (symobj);
 
   staticpro_nodump (&Vbuffer_defaults);
   staticpro_nodump (&Vbuffer_local_symbols);
-  Vbuffer_defaults = wrap_buffer (defs);
-  Vbuffer_local_symbols = wrap_buffer (syms);
+  Vbuffer_defaults = defobj;
+  Vbuffer_local_symbols = symobj;
 
   nuke_all_buffer_slots (syms, Qnil);
   nuke_all_buffer_slots (defs, Qnil);

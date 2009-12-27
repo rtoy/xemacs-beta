@@ -60,11 +60,9 @@ static const struct memory_description tty_console_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("tty-console", tty_console,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       tty_console_data_description_1,
-			       Lisp_Tty_Console);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("tty-console", tty_console,
+				      0, tty_console_data_description_1,
+				      Lisp_Tty_Console);
 #else /* not NEW_GC */
 const struct sized_memory_description tty_console_data_description = {
   sizeof (struct tty_console), tty_console_data_description_1

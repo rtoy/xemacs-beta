@@ -144,7 +144,7 @@ struct buffer_text
 #ifdef NEW_GC
 typedef struct buffer_text Lisp_Buffer_Text;
 
-DECLARE_LRECORD (buffer_text, Lisp_Buffer_Text);
+DECLARE_LISP_OBJECT (buffer_text, Lisp_Buffer_Text);
 
 #define XBUFFER_TEXT(x) \
   XRECORD (x, buffer_text, Lisp_Buffer_Text)
@@ -268,7 +268,7 @@ struct buffer
 #undef MARKED_SLOT
 };
 
-DECLARE_LRECORD (buffer, struct buffer);
+DECLARE_LISP_OBJECT (buffer, struct buffer);
 #define XBUFFER(x) XRECORD (x, buffer, struct buffer)
 #define wrap_buffer(p) wrap_record (p, buffer)
 #define BUFFERP(x) RECORDP (x, buffer)

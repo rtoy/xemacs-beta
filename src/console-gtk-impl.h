@@ -115,7 +115,7 @@ struct gtk_device
 #ifdef NEW_GC
 typedef struct gtk_device Lisp_Gtk_Device;
 
-DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
+DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 
 #define XGTK_DEVICE(x) \
   XRECORD (x, gtk_device, Lisp_Gtk_Device)
@@ -203,7 +203,7 @@ struct gtk_frame
 #ifdef NEW_GC
 typedef struct gtk_frame Lisp_Gtk_Frame;
 
-DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
+DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 
 #define XGTK_FRAME(x) \
   XRECORD (x, gtk_frame, Lisp_Gtk_Frame)

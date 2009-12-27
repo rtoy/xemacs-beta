@@ -141,7 +141,7 @@ struct symbol_value_forward
   int (*magicfun) (Lisp_Object sym, Lisp_Object *val, Lisp_Object in_object,
 		   int flags);
 };
-DECLARE_LRECORD (symbol_value_forward, struct symbol_value_forward);
+DECLARE_LISP_OBJECT (symbol_value_forward, struct symbol_value_forward);
 #define XSYMBOL_VALUE_FORWARD(x) \
 	XRECORD (x, symbol_value_forward, struct symbol_value_forward)
 #define symbol_value_forward_forward(m) ((void *)((m)->magic.value))
@@ -228,7 +228,7 @@ struct symbol_value_buffer_local
   Lisp_Object current_buffer;
   Lisp_Object current_alist_element;
 };
-DECLARE_LRECORD (symbol_value_buffer_local, struct symbol_value_buffer_local);
+DECLARE_LISP_OBJECT (symbol_value_buffer_local, struct symbol_value_buffer_local);
 #define XSYMBOL_VALUE_BUFFER_LOCAL(x) \
 	XRECORD (x, symbol_value_buffer_local, struct symbol_value_buffer_local)
 #define SYMBOL_VALUE_BUFFER_LOCAL_P(x) RECORDP (x, symbol_value_buffer_local)
@@ -253,7 +253,7 @@ struct symbol_value_lisp_magic
   Lisp_Object harg[MAGIC_HANDLER_MAX];
   Lisp_Object shadowed;
 };
-DECLARE_LRECORD (symbol_value_lisp_magic, struct symbol_value_lisp_magic);
+DECLARE_LISP_OBJECT (symbol_value_lisp_magic, struct symbol_value_lisp_magic);
 #define XSYMBOL_VALUE_LISP_MAGIC(x) \
 	XRECORD (x, symbol_value_lisp_magic, struct symbol_value_lisp_magic)
 #define SYMBOL_VALUE_LISP_MAGIC_P(x) RECORDP (x, symbol_value_lisp_magic)
@@ -266,7 +266,7 @@ struct symbol_value_varalias
   Lisp_Object aliasee;
   Lisp_Object shadowed;
 };
-DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
+DECLARE_LISP_OBJECT (symbol_value_varalias,	struct symbol_value_varalias);
 #define XSYMBOL_VALUE_VARALIAS(x) \
 	XRECORD (x, symbol_value_varalias, struct symbol_value_varalias)
 #define SYMBOL_VALUE_VARALIAS_P(x) RECORDP (x, symbol_value_varalias)
@@ -497,7 +497,7 @@ struct multiple_value {
 };
 typedef struct multiple_value multiple_value;
 
-DECLARE_LRECORD (multiple_value, multiple_value);
+DECLARE_LISP_OBJECT (multiple_value, multiple_value);
 #define MULTIPLE_VALUEP(x) RECORDP (x, multiple_value)
 
 #define XMULTIPLE_VALUE(x) XRECORD (x, multiple_value, multiple_value)

@@ -51,7 +51,7 @@ struct Lisp_Char_Table_Entry
 };
 typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
 
-DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
+DECLARE_LISP_OBJECT (char_table_entry, Lisp_Char_Table_Entry);
 #define XCHAR_TABLE_ENTRY(x) \
   XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
 #define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
@@ -128,7 +128,7 @@ struct Lisp_Char_Table
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
-DECLARE_LRECORD (char_table, Lisp_Char_Table);
+DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
 #define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)

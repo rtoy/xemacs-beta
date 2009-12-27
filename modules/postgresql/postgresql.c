@@ -240,9 +240,11 @@ allocate_pgconn (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     lrecord_pgconn);
-#else
+#elif RUNNING_XEMACS_21_4
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     &lrecord_pgconn);
+#else
+  Lisp_PGconn *pgconn = XPGCONN (ALLOC_LISP_OBJECT (pgconn));
 #endif
   pgconn->pgconn = (PGconn *)NULL;
   return pgconn;
@@ -269,13 +271,20 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       Lisp_PGconn);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       0, /*dumpable-flag*/
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       pgconn_description,
 			       Lisp_PGconn);
+#else
+DEFINE_NODUMP_LISP_OBJECT ("pgconn", pgconn,
+			   mark_pgconn, print_pgconn,
+			   finalize_pgconn,
+			   NULL, NULL,
+			   pgconn_description,
+			   Lisp_PGconn);
 #endif
 /****/
 
@@ -365,9 +374,11 @@ allocate_pgresult (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 lrecord_pgresult);
-#else
+#elif RUNNING_XEMACS_21_4
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 &lrecord_pgresult);
+#else
+  Lisp_PGresult *pgresult = XPGRESULT (ALLOC_LISP_OBJECT (pgresult));
 #endif
   pgresult->pgresult = (PGresult *)NULL;
   return pgresult;
@@ -394,13 +405,19 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       Lisp_PGresult);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       0, /*dumpable-flag*/
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       pgresult_description,
 			       Lisp_PGresult);
+#else
+DEFINE_NODUMP_LISP_OBJECT ("pgresult", pgresult,
+			   mark_pgresult, print_pgresult, finalize_pgresult,
+			   NULL, NULL,
+			   pgresult_description,
+			   Lisp_PGresult);
 #endif
 
 /***********************/
@@ -1599,8 +1616,8 @@ void
 syms_of_postgresql(void)
 {
 #ifndef RUNNING_XEMACS_21_1
-  INIT_LRECORD_IMPLEMENTATION (pgconn);
-  INIT_LRECORD_IMPLEMENTATION (pgresult);
+  INIT_LISP_OBJECT (pgconn);
+  INIT_LISP_OBJECT (pgresult);
 #endif
   DEFSYMBOL (Qpostgresql);
 

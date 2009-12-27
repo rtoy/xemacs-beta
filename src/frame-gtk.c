@@ -103,11 +103,9 @@ static const struct memory_description gtk_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gtk-frame", gtk_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       gtk_frame_data_description_1,
-			       Lisp_Gtk_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("gtk-frame", gtk_frame,
+				      0, gtk_frame_data_description_1,
+				      Lisp_Gtk_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description gtk_frame_data_description;
 
@@ -1473,7 +1471,7 @@ void
 syms_of_frame_gtk (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gtk_frame);
+  INIT_LISP_OBJECT (gtk_frame);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qtext_widget);

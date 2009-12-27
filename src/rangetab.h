@@ -55,7 +55,7 @@ struct Lisp_Range_Table
 };
 typedef struct Lisp_Range_Table Lisp_Range_Table;
 
-DECLARE_LRECORD (range_table, Lisp_Range_Table);
+DECLARE_LISP_OBJECT (range_table, Lisp_Range_Table);
 #define XRANGE_TABLE(x) XRECORD (x, range_table, Lisp_Range_Table)
 #define wrap_range_table(p) wrap_record (p, range_table)
 #define RANGE_TABLEP(x) RECORDP (x, range_table)

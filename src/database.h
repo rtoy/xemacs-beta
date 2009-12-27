@@ -25,6 +25,6 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_database_h_
 
 typedef struct Lisp_Database Lisp_Database;
-DECLARE_LRECORD (database, Lisp_Database);
+DECLARE_LISP_OBJECT (database, Lisp_Database);
 
 #endif /* INCLUDED_database_h_ */

@@ -47,7 +47,7 @@ struct stream_console
 #ifdef NEW_GC
 typedef struct stream_console Lisp_Stream_Console;
 
-DECLARE_LRECORD (stream_console, Lisp_Stream_Console);
+DECLARE_LISP_OBJECT (stream_console, Lisp_Stream_Console);
 
 #define XSTREAM_CONSOLE(x) \
   XRECORD (x, stream_console, Lisp_Stream_Console)

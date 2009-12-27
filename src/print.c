@@ -1486,8 +1486,8 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
   struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
@@ -1514,6 +1514,12 @@ void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
+  if (print_readably)
+    printing_unreadable_object
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
+       (unsigned long) XPNTR (obj));
+
   write_fmt_string (printcharfun,
 		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
@@ -1793,11 +1799,13 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-	if (LHEADER_IMPLEMENTATION (lheader)->printer)
-	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
-	   (obj, printcharfun, escapeflag));
-	else
-	  internal_object_printer (obj, printcharfun, escapeflag);
+	/* Either use a custom-written printer, or use
+	   internal_object_printer or external_object_printer, depending on
+	   whether the object is internal (not visible at Lisp level) or
+	   external. */
+	assert (LHEADER_IMPLEMENTATION (lheader)->printer);
+	((LHEADER_IMPLEMENTATION (lheader)->printer)
+	 (obj, printcharfun, escapeflag));
 	break;
       }
 

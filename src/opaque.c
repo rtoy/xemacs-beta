@@ -74,8 +74,9 @@ sizeof_opaque (const void *header)
 Lisp_Object
 make_opaque (const void *data, Bytecount size)
 {
-  Lisp_Opaque *p = (Lisp_Opaque *)
-    BASIC_ALLOC_LCRECORD (aligned_sizeof_opaque (size), &lrecord_opaque);
+  Lisp_Object obj =
+    ALLOC_SIZED_LISP_OBJECT (aligned_sizeof_opaque (size), opaque);
+  Lisp_Opaque *p = XOPAQUE (obj);
   p->size = size;
 
   if (data == OPAQUE_CLEAR)
@@ -85,9 +86,7 @@ make_opaque (const void *data, Bytecount size)
   else
     memcpy (p->data, data, size);
 
-  {
-    return wrap_opaque (p);
-  }
+  return obj;
 }
 
 /* This will not work correctly for opaques with subobjects! */
@@ -115,12 +114,11 @@ static const struct memory_description opaque_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
-					1, /*dumpable-flag*/
-					0, print_opaque, 0,
-					equal_opaque, hash_opaque,
-					opaque_description,
-					sizeof_opaque, Lisp_Opaque);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("opaque", opaque,
+				     0, print_opaque, 0,
+				     equal_opaque, hash_opaque,
+				     opaque_description,
+				     sizeof_opaque, Lisp_Opaque);
 
 /* stuff to handle opaque pointers */
 
@@ -153,19 +151,16 @@ static const struct memory_description opaque_ptr_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
-			       0, /*dumpable-flag*/
-			       0, print_opaque_ptr, 0,
-			       equal_opaque_ptr, hash_opaque_ptr,
-			       opaque_ptr_description, Lisp_Opaque_Ptr);
+DEFINE_NODUMP_LISP_OBJECT ("opaque-ptr", opaque_ptr,
+					   0, print_opaque_ptr, 0,
+					   equal_opaque_ptr, hash_opaque_ptr,
+					   opaque_ptr_description, Lisp_Opaque_Ptr);
 
 Lisp_Object
 make_opaque_ptr (void *val)
 {
 #ifdef NEW_GC
-  Lisp_Object res = 
-    wrap_pointer_1 (alloc_lrecord_type (Lisp_Opaque_Ptr,
-					 &lrecord_opaque_ptr));
+  Lisp_Object res = ALLOC_LISP_OBJECT (opaque_ptr);
 #else /* not NEW_GC */
   Lisp_Object res = alloc_managed_lcrecord (Vopaque_ptr_free_list);
 #endif /* not NEW_GC */
@@ -199,8 +194,8 @@ reinit_opaque_early (void)
 void
 init_opaque_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (opaque);
-  INIT_LRECORD_IMPLEMENTATION (opaque_ptr);
+  INIT_LISP_OBJECT (opaque);
+  INIT_LISP_OBJECT (opaque_ptr);
 
 #ifndef NEW_GC
   reinit_opaque_early ();

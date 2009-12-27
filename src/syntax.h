@@ -339,7 +339,7 @@ struct syntax_cache
 #ifdef NEW_GC
 typedef struct syntax_cache Lisp_Syntax_Cache;
 
-DECLARE_LRECORD (syntax_cache, Lisp_Syntax_Cache);
+DECLARE_LISP_OBJECT (syntax_cache, Lisp_Syntax_Cache);
 
 #define XSYNTAX_CACHE(x) \
   XRECORD (x, syntax_cache, Lisp_Syntax_Cache)

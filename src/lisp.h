@@ -1541,14 +1541,14 @@ typedef struct dynarr
   Dynarr_declare (void);
 } Dynarr;
 
-MODULE_API void *Dynarr_newf (int elsize);
+MODULE_API void *Dynarr_newf (Bytecount elsize);
 MODULE_API void Dynarr_resize (void *dy, Elemcount size);
 MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start);
 MODULE_API void Dynarr_delete_many (void *d, int start, int len);
 MODULE_API void Dynarr_free (void *d);
 
 #ifdef NEW_GC
-MODULE_API void *Dynarr_lisp_newf (int elsize,
+MODULE_API void *Dynarr_lisp_newf (Bytecount elsize,
 				   const struct lrecord_implementation 
 				   *dynarr_imp,
 				   const struct lrecord_implementation *imp);
@@ -1753,7 +1753,7 @@ typedef struct
 } face_cachel_dynarr;
 
 #ifdef NEW_GC
-DECLARE_LRECORD (face_cachel_dynarr, face_cachel_dynarr);
+DECLARE_LISP_OBJECT (face_cachel_dynarr, face_cachel_dynarr);
 #define XFACE_CACHEL_DYNARR(x) \
   XRECORD (x, face_cachel_dynarr, face_cachel_dynarr)
 #define wrap_face_cachel_dynarr(p) wrap_record (p, face_cachel_dynarr)
@@ -1768,7 +1768,7 @@ typedef struct
 } glyph_cachel_dynarr;
 
 #ifdef NEW_GC
-DECLARE_LRECORD (glyph_cachel_dynarr, glyph_cachel_dynarr);
+DECLARE_LISP_OBJECT (glyph_cachel_dynarr, glyph_cachel_dynarr);
 #define XGLYPH_CACHEL_DYNARR(x) \
   XRECORD (x, glyph_cachel_dynarr, glyph_cachel_dynarr)
 #define wrap_glyph_cachel_dynarr(p) wrap_record (p, glyph_cachel_dynarr)
@@ -2553,7 +2553,7 @@ struct Lisp_Vector
 };
 typedef struct Lisp_Vector Lisp_Vector;
 
-DECLARE_LRECORD (vector, Lisp_Vector);
+DECLARE_LISP_OBJECT (vector, Lisp_Vector);
 #define XVECTOR(x) XRECORD (x, vector, Lisp_Vector)
 #define wrap_vector(p) wrap_record (p, vector)
 #define VECTORP(x) RECORDP (x, vector)
@@ -2590,7 +2590,7 @@ struct Lisp_Bit_Vector
 };
 typedef struct Lisp_Bit_Vector Lisp_Bit_Vector;
 
-DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
+DECLARE_LISP_OBJECT (bit_vector, Lisp_Bit_Vector);
 #define XBIT_VECTOR(x) XRECORD (x, bit_vector, Lisp_Bit_Vector)
 #define wrap_bit_vector(p) wrap_record (p, bit_vector)
 #define BIT_VECTORP(x) RECORDP (x, bit_vector)
@@ -2704,7 +2704,7 @@ struct Lisp_Subr
 };
 typedef struct Lisp_Subr Lisp_Subr;
 
-DECLARE_LRECORD (subr, Lisp_Subr);
+DECLARE_LISP_OBJECT (subr, Lisp_Subr);
 #define XSUBR(x) XRECORD (x, subr, Lisp_Subr)
 #define wrap_subr(p) wrap_record (p, subr)
 #define SUBRP(x) RECORDP (x, subr)
@@ -2981,7 +2981,7 @@ struct Lisp_Float
 };
 typedef struct Lisp_Float Lisp_Float;
 
-DECLARE_LRECORD (float, Lisp_Float);
+DECLARE_LISP_OBJECT (float, Lisp_Float);
 #define XFLOAT(x) XRECORD (x, float, Lisp_Float)
 #define wrap_float(p) wrap_record (p, float)
 #define FLOATP(x) RECORDP (x, float)
@@ -3074,7 +3074,7 @@ void prune_weak_boxes (void);
 Lisp_Object make_weak_box (Lisp_Object value);
 Lisp_Object weak_box_ref (Lisp_Object value);
 
-DECLARE_LRECORD (weak_box, struct weak_box);
+DECLARE_LISP_OBJECT (weak_box, struct weak_box);
 #define XWEAK_BOX(x) XRECORD (x, weak_box, struct weak_box)
 #define XSET_WEAK_BOX(x, v) (XWEAK_BOX (x)->value = (v))
 #define wrap_weak_box(p) wrap_record (p, weak_box)
@@ -3111,7 +3111,7 @@ int finish_marking_ephemerons(void);
 Lisp_Object zap_finalize_list(void);
 Lisp_Object make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer);
 
-DECLARE_LRECORD(ephemeron, struct ephemeron);
+DECLARE_LISP_OBJECT(ephemeron, struct ephemeron);
 #define XEPHEMERON(x) XRECORD (x, ephemeron, struct ephemeron)
 #define XEPHEMERON_REF(x) (XEPHEMERON (x)->value)
 #define XEPHEMERON_NEXT(x) (XCDR (XEPHEMERON(x)->cons_chain))
@@ -3151,7 +3151,7 @@ struct weak_list
   Lisp_Object next_weak; /* don't mark through this! */
 };
 
-DECLARE_LRECORD (weak_list, struct weak_list);
+DECLARE_LISP_OBJECT (weak_list, struct weak_list);
 #define XWEAK_LIST(x) XRECORD (x, weak_list, struct weak_list)
 #define wrap_weak_list(p) wrap_record (p, weak_list)
 #define WEAK_LISTP(x) RECORDP (x, weak_list)
@@ -5003,7 +5003,10 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
-void internal_object_printer (Lisp_Object, Lisp_Object, int);
+void internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			      int UNUSED (escapeflag));
+void external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			      int UNUSED (escapeflag));
 
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);

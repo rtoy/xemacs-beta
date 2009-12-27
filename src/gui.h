@@ -60,7 +60,7 @@ struct Lisp_Gui_Item
   Lisp_Object value;		/* Anything you like */
 };
 
-DECLARE_LRECORD (gui_item, Lisp_Gui_Item);
+DECLARE_LISP_OBJECT (gui_item, Lisp_Gui_Item);
 #define XGUI_ITEM(x) XRECORD (x, gui_item, Lisp_Gui_Item)
 #define wrap_gui_item(p) wrap_record (p, gui_item)
 #define GUI_ITEMP(x) RECORDP (x, gui_item)

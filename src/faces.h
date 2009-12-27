@@ -236,7 +236,7 @@ struct face_cachel
 #ifdef NEW_GC
 typedef struct face_cachel Lisp_Face_Cachel;
 
-DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
+DECLARE_LISP_OBJECT (face_cachel, Lisp_Face_Cachel);
 
 #define XFACE_CACHEL(x) \
   XRECORD (x, face_cachel, Lisp_Face_Cachel)
@@ -246,7 +246,7 @@ DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
 #define CONCHECK_FACE_CACHEL(x) CONCHECK_RECORD (x, face_cachel)
 #endif /* NEW_GC */
 
-DECLARE_LRECORD (face, Lisp_Face);
+DECLARE_LISP_OBJECT (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
 #define wrap_face(p) wrap_record (p, face)
 #define FACEP(x) RECORDP (x, face)
