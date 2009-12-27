@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 #include "syswindows.h"
 
 
-DWORD WINAPI 
+LONG WINAPI 
 win32_fault_handler (LPEXCEPTION_POINTERS e)
 {
 #define GET_FAULT_ADDRESS (void *) e->ExceptionRecord->ExceptionInformation[1]
@@ -46,7 +46,7 @@ win32_fault_handler (LPEXCEPTION_POINTERS e)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-typedef DWORD (WINAPI *gcPVECTORED_EXCEPTION_HANDLER) (LPEXCEPTION_POINTERS e);
+typedef LONG (WINAPI *gcPVECTORED_EXCEPTION_HANDLER) (LPEXCEPTION_POINTERS e);
 
 
 void
