@@ -430,7 +430,7 @@ struct image_specifier
 /*			Image Instance Object				*/
 /************************************************************************/
 
-DECLARE_LRECORD (image_instance, Lisp_Image_Instance);
+DECLARE_LISP_OBJECT (image_instance, Lisp_Image_Instance);
 #define XIMAGE_INSTANCE(x) XRECORD (x, image_instance, Lisp_Image_Instance)
 #define wrap_image_instance(p) wrap_record (p, image_instance)
 #define IMAGE_INSTANCEP(x) RECORDP (x, image_instance)
@@ -966,7 +966,7 @@ struct Lisp_Glyph
 };
 typedef struct Lisp_Glyph Lisp_Glyph;
 
-DECLARE_LRECORD (glyph, Lisp_Glyph);
+DECLARE_LISP_OBJECT (glyph, Lisp_Glyph);
 #define XGLYPH(x) XRECORD (x, glyph, Lisp_Glyph)
 #define wrap_glyph(p) wrap_record (p, glyph)
 #define GLYPHP(x) RECORDP (x, glyph)
@@ -1088,7 +1088,7 @@ struct glyph_cachel
 #ifdef NEW_GC
 typedef struct glyph_cachel Lisp_Glyph_Cachel;
 
-DECLARE_LRECORD (glyph_cachel, Lisp_Glyph_Cachel);
+DECLARE_LISP_OBJECT (glyph_cachel, Lisp_Glyph_Cachel);
 
 #define XGLYPH_CACHEL(x) \
   XRECORD (x, glyph_cachel, Lisp_Glyph_Cachel)
@@ -1204,7 +1204,7 @@ struct expose_ignore
 };
 
 #ifdef NEW_GC
-DECLARE_LRECORD (expose_ignore, struct expose_ignore);
+DECLARE_LISP_OBJECT (expose_ignore, struct expose_ignore);
 #define XEXPOSE_IGNORE(x) XRECORD (x, expose_ignore, struct expose_ignore)
 #define wrap_expose_ignore(p) wrap_record (p, expose_ignore)
 #define EXPOSE_IGNOREP(x) RECORDP (x, expose_ignore)

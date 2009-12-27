@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 /*                     definition of Lstream object                     */
 /************************************************************************/
 
-DECLARE_LRECORD (lstream, struct lstream);
+DECLARE_LISP_OBJECT (lstream, struct lstream);
 #define XLSTREAM(x) XRECORD (x, lstream, struct lstream)
 #define wrap_lstream(p) wrap_record (p, lstream)
 #define LSTREAMP(x) RECORDP (x, lstream)

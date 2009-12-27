@@ -33,7 +33,7 @@ struct Lisp_PGconn
 };
 typedef struct Lisp_PGconn Lisp_PGconn;
 
-DECLARE_LRECORD (pgconn, Lisp_PGconn);
+DECLARE_LISP_OBJECT (pgconn, Lisp_PGconn);
 
 #define XPGCONN(x) XRECORD (x, pgconn, Lisp_PGconn)
 #define wrap_pgconn(p) wrap_record (p, pgconn)
@@ -53,7 +53,7 @@ struct Lisp_PGresult
 };
 typedef struct Lisp_PGresult Lisp_PGresult;
 
-DECLARE_LRECORD (pgresult, Lisp_PGresult);
+DECLARE_LISP_OBJECT (pgresult, Lisp_PGresult);
 
 #define XPGRESULT(x) XRECORD (x, pgresult, Lisp_PGresult)
 #define wrap_pgresult(p) wrap_record (p, pgresult)

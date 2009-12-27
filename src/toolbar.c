@@ -88,13 +88,10 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
-			       0, /*dumpable-flag*/
-			       mark_toolbar_button,
-			       default_object_printer,
-			       0, 0, 0,
-			       toolbar_button_description,
-			       struct toolbar_button);
+DEFINE_NODUMP_LISP_OBJECT ("toolbar-button", toolbar_button,
+				mark_toolbar_button, 0, 0, 0, 0, 
+				toolbar_button_description,
+				struct toolbar_button);
 
 DEFUN ("toolbar-button-p", Ftoolbar_button_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar button.
@@ -305,7 +302,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 
   if (!tb)
     {
-      tb = ALLOC_LCRECORD_TYPE (struct toolbar_button, &lrecord_toolbar_button);
+      tb = XTOOLBAR_BUTTON (ALLOC_LISP_OBJECT (toolbar_button));
       tb->next = Qnil;
       tb->frame = wrap_frame (f);
       tb->up_glyph = Qnil;
@@ -1338,7 +1335,7 @@ toolbar_shadows_changed (Lisp_Object UNUSED (specifier),
 void
 syms_of_toolbar (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (toolbar_button);
+  INIT_LISP_OBJECT (toolbar_button);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qtoolbar_buttonp);
   DEFSYMBOL (Q2D);

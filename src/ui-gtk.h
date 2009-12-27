@@ -46,7 +46,7 @@ typedef struct {
   ffi_marshalling_function marshal;
 } emacs_ffi_data;
 
-DECLARE_LRECORD (emacs_ffi, emacs_ffi_data);
+DECLARE_LISP_OBJECT (emacs_ffi, emacs_ffi_data);
 
 #define XFFI(x) XRECORD (x, emacs_ffi, emacs_ffi_data)
 #define wrap_emacs_ffi(p) wrap_record (p, emacs_ffi)
@@ -61,7 +61,7 @@ typedef struct {
   Lisp_Object plist;
 } emacs_gtk_object_data;
 
-DECLARE_LRECORD (emacs_gtk_object, emacs_gtk_object_data);
+DECLARE_LISP_OBJECT (emacs_gtk_object, emacs_gtk_object_data);
 
 #define XGTK_OBJECT(x) XRECORD (x, emacs_gtk_object, emacs_gtk_object_data)
 #define wrap_emacs_gtk_object(p) wrap_record (p, emacs_gtk_object)
@@ -77,7 +77,7 @@ typedef struct {
   void *object;
 } emacs_gtk_boxed_data;
 
-DECLARE_LRECORD (emacs_gtk_boxed, emacs_gtk_boxed_data);
+DECLARE_LISP_OBJECT (emacs_gtk_boxed, emacs_gtk_boxed_data);
 
 #define XGTK_BOXED(x) XRECORD (x, emacs_gtk_boxed, emacs_gtk_boxed_data)
 #define wrap_emacs_gtk_boxed(p) wrap_record (p, emacs_gtk_boxed)

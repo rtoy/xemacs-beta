@@ -381,16 +381,14 @@ const struct sized_memory_description coding_system_empty_extra_description = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
 					mark_coding_system,
 					print_coding_system,
 					0, 0, 0, coding_system_description,
 					sizeof_coding_system,
 					Lisp_Coding_System);
 #else /* not NEW_GC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
 					mark_coding_system,
 					print_coding_system,
 					finalize_coding_system,
@@ -1012,9 +1010,8 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 			Lisp_Object name)
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
-  Lisp_Coding_System *codesys =
-    (Lisp_Coding_System *) BASIC_ALLOC_LCRECORD (total_size,
-						 &lrecord_coding_system);
+  Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (total_size, coding_system);
+  Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;
@@ -4515,7 +4512,7 @@ gzip_convert (struct coding_stream *str,
 void
 syms_of_file_coding (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (coding_system);
+  INIT_LISP_OBJECT (coding_system);
 
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);

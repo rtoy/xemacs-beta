@@ -36,7 +36,7 @@ struct tty_color_instance_data
 };
 
 #ifdef NEW_GC
-DECLARE_LRECORD (tty_color_instance_data, struct tty_color_instance_data);
+DECLARE_LISP_OBJECT (tty_color_instance_data, struct tty_color_instance_data);
 #define XTTY_COLOR_INSTANCE_DATA(x) \
   XRECORD (x, tty_color_instance_data, struct tty_color_instance_data)
 #define wrap_tty_color_instance_data(p) \
@@ -62,7 +62,7 @@ struct tty_font_instance_data
 };
 
 #ifdef NEW_GC
-DECLARE_LRECORD (tty_font_instance_data, struct tty_font_instance_data);
+DECLARE_LISP_OBJECT (tty_font_instance_data, struct tty_font_instance_data);
 #define XTTY_FONT_INSTANCE_DATA(x) \
   XRECORD (x, tty_font_instance_data, struct tty_font_instance_data)
 #define wrap_tty_font_instance_data(p) \

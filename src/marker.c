@@ -115,15 +115,13 @@ finalize_marker (void *header, int for_disksave)
     }
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     1, /*dumpable-flag*/
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
 				     mark_marker, print_marker,
 				     finalize_marker,
 				     marker_equal, marker_hash,
 				     marker_description, Lisp_Marker);
 #else /* not NEW_GC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     1, /*dumpable-flag*/
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
 				     mark_marker, print_marker, 0,
 				     marker_equal, marker_hash,
 				     marker_description, Lisp_Marker);
@@ -529,7 +527,7 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
 void
 syms_of_marker (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (marker);
+  INIT_LISP_OBJECT (marker);
 
   DEFSUBR (Fmarker_position);
   DEFSUBR (Fmarker_buffer);

@@ -49,12 +49,10 @@ static const struct memory_description tty_color_instance_data_description_1 [] 
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("tty-color-instance-data", 
-			       tty_color_instance_data,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       tty_color_instance_data_description_1,
-			       struct tty_color_instance_data);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("tty-color-instance-data",
+				      tty_color_instance_data,
+				      0, tty_color_instance_data_description_1,
+				      struct tty_color_instance_data);
 #else /* not NEW_GC */
 const struct sized_memory_description tty_color_instance_data_description = {
   sizeof (struct tty_color_instance_data), tty_color_instance_data_description_1
@@ -67,12 +65,10 @@ static const struct memory_description tty_font_instance_data_description_1 [] =
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("tty-font-instance-data", 
-			       tty_font_instance_data,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       tty_font_instance_data_description_1,
-			       struct tty_font_instance_data);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("tty-font-instance-data",
+				      tty_font_instance_data, 0,
+				      tty_font_instance_data_description_1,
+				      struct tty_font_instance_data);
 #else /* not NEW_GC */
 const struct sized_memory_description tty_font_instance_data_description = {
   sizeof (struct tty_font_instance_data), tty_font_instance_data_description_1
@@ -403,8 +399,8 @@ void
 syms_of_objects_tty (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (tty_color_instance_data);
-  INIT_LRECORD_IMPLEMENTATION (tty_font_instance_data);
+  INIT_LISP_OBJECT (tty_color_instance_data);
+  INIT_LISP_OBJECT (tty_font_instance_data);
 #endif /* NEW_GC */
 
   DEFSUBR (Fregister_tty_color);

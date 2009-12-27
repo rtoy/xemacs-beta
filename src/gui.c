@@ -197,14 +197,10 @@ gui_item_init (Lisp_Object gui_item)
 Lisp_Object
 allocate_gui_item (void)
 {
-  Lisp_Gui_Item *lp = ALLOC_LCRECORD_TYPE (Lisp_Gui_Item, &lrecord_gui_item);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_LISP_OBJECT (gui_item);
 
-  val = wrap_gui_item (lp);
-
-  gui_item_init (val);
-
-  return val;
+  gui_item_init (obj);
+  return obj;
 }
 
 /*
@@ -806,8 +802,7 @@ parse_gui_item_tree_list (Lisp_Object list)
   RETURN_UNGCPRO (ret);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
-			       0, /*dumpable-flag*/
+DEFINE_NODUMP_LISP_OBJECT ("gui-item", gui_item,
 			       mark_gui_item, print_gui_item,
 			       0, gui_item_equal,
 			       gui_item_hash,
@@ -829,7 +824,7 @@ gui_error_2 (const Ascbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 void
 syms_of_gui (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (gui_item);
+  INIT_LISP_OBJECT (gui_item);
 
   DEFSYMBOL (Qmenu_no_selection_hook);
 

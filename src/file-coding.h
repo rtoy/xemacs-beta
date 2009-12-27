@@ -208,7 +208,7 @@ struct Lisp_Coding_System
 };
 typedef struct Lisp_Coding_System Lisp_Coding_System;
 
-DECLARE_LRECORD (coding_system, Lisp_Coding_System);
+DECLARE_LISP_OBJECT (coding_system, Lisp_Coding_System);
 #define XCODING_SYSTEM(x) XRECORD (x, coding_system, Lisp_Coding_System)
 #define wrap_coding_system(p) wrap_record (p, coding_system)
 #define CODING_SYSTEMP(x) RECORDP (x, coding_system)
