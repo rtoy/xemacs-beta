@@ -794,8 +794,9 @@ See also the function `substitute-in-file-name'.
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
 	RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-				       call3 (handler, Qexpand_file_name,
-					      name, default_directory));
+				       call3_check_string
+                                       (handler, Qexpand_file_name,
+				        name, default_directory));
     }
 
   o = XSTRING_DATA (default_directory);
