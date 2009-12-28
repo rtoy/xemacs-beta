@@ -3857,7 +3857,7 @@ make_dummy_parent (Lisp_Object window)
   Lisp_Object obj = ALLOC_LISP_OBJECT (window);
   struct window *p = XWINDOW (obj);
 
-  COPY_LCRECORD (p, o);
+  COPY_LISP_OBJECT (p, o);
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
@@ -5165,7 +5165,7 @@ compute_window_mirror_usage (struct window_mirror *mir,
 {
   if (!mir)
     return;
-  stats->other += LISPOBJ_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
+  stats->other += LISP_OBJECT_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
@@ -5189,7 +5189,7 @@ compute_window_usage (struct window *w, struct window_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other += LISPOBJ_STORAGE_SIZE (w, sizeof (*w), ovstats);
+  stats->other += LISP_OBJECT_STORAGE_SIZE (w, sizeof (*w), ovstats);
   stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
   stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
   stats->line_start +=

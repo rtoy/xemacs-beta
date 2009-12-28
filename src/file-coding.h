@@ -188,7 +188,7 @@ enum eol_type
 
 struct Lisp_Coding_System
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   struct coding_system_methods *methods;
 
 #define CODING_SYSTEM_SLOT_DECLARATION

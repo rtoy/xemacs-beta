@@ -148,7 +148,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object parents;		/* Keymaps to be searched after this one.
 				   An ordered list */
   Lisp_Object prompt;           /* Qnil or a string to print in the minibuffer

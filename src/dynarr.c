@@ -172,7 +172,8 @@ Dynarr_lisp_newf (Bytecount elsize,
 		  const struct lrecord_implementation *dynarr_imp, 
 		  const struct lrecord_implementation *imp)
 {
-  Dynarr *d = (Dynarr *) XPNTR (ALLOC_LISP_OBJECT (dynarr));
+  Dynarr *d = (Dynarr *) XPNTR (alloc_sized_lrecord (sizeof (Dynarr),
+                                                     dynarr_imp));
   d->elsize = elsize;
   d->lisp_imp = imp;
 

@@ -197,8 +197,8 @@ tty_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
 
   /* Don't allocate the data until we're sure that we will succeed. */
 #ifdef NEW_GC
-  c->data = alloc_lrecord_type (struct tty_color_instance_data,
-				&lrecord_tty_color_instance_data);
+  c->data =
+    XTTY_COLOR_INSTANCE_DATA (ALLOC_LISP_OBJECT (tty_color_instance_data));
 #else /* not NEW_GC */
   c->data = xnew (struct tty_color_instance_data);
 #endif /* not NEW_GC */
@@ -282,8 +282,8 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   /* Don't allocate the data until we're sure that we will succeed. */
 #ifdef NEW_GC
-  f->data = alloc_lrecord_type (struct tty_font_instance_data,
-				&lrecord_tty_font_instance_data);
+  f->data =
+    XTTY_FONT_INSTANCE_DATA (ALLOC_LISP_OBJECT (tty_font_instance_data));
 #else /* not NEW_GC */
   f->data = xnew (struct tty_font_instance_data);
 #endif /* not NEW_GC */

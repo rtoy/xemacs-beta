@@ -71,7 +71,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Bignum
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bignum data;
 };
 typedef struct Lisp_Bignum Lisp_Bignum;
@@ -160,7 +160,7 @@ EXFUN (Foddp, 1);
 
 struct Lisp_Ratio
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   ratio data;
 };
 typedef struct Lisp_Ratio Lisp_Ratio;
@@ -234,7 +234,7 @@ EXFUN (Fdenominator, 1);
 #ifdef HAVE_BIGFLOAT
 struct Lisp_Bigfloat
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bigfloat bf;
 };
 typedef struct Lisp_Bigfloat Lisp_Bigfloat;

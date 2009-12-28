@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 struct tty_color_instance_data
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Lisp_Object symbol; /* so we don't have to constantly call Fintern() */
 };
@@ -56,7 +56,7 @@ DECLARE_LISP_OBJECT (tty_color_instance_data, struct tty_color_instance_data);
 struct tty_font_instance_data
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Lisp_Object charset;
 };

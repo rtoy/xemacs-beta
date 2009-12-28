@@ -172,8 +172,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
     CHECK_INT (height);
 
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct mswindows_frame,
-				      &lrecord_mswindows_frame);
+  f->frame_data = XMSWINDOWS_FRAME (ALLOC_LISP_OBJECT (mswindows_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct mswindows_frame);
 #endif /* not NEW_GC */

@@ -1459,7 +1459,7 @@ Use `define-coding-system-alias' instead.
   {
     Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
     Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-    COPY_SIZED_LCRECORD (to, from, sizeof_coding_system (from));
+    COPY_SIZED_LISP_OBJECT (to, from, sizeof_coding_system (from));
     to->name = new_name;
   }
   return new_coding_system;

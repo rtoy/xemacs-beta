@@ -296,7 +296,7 @@ extern int lookup_syntax_properties;
 struct syntax_cache
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int use_code;				/* Whether to use syntax_code or
 					   syntax_table.  This is set

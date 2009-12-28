@@ -35,7 +35,7 @@ DECLARE_CONSOLE_TYPE (stream);
 struct stream_console
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   FILE *in;
   FILE *out;

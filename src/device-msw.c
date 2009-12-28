@@ -162,8 +162,7 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_one_device (d);
 
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct mswindows_device,
-				       &lrecord_mswindows_device);
+  d->device_data = XMSWINDOWS_DEVICE (ALLOC_LISP_OBJECT (mswindows_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct mswindows_device);
 #endif /* not NEW_GC */
@@ -519,8 +518,7 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   Extbyte *printer_name;
 
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct msprinter_device,
-				       &lrecord_msprinter_device);
+  d->device_data = XMSPRINTER_DEVICE (ALLOC_LISP_OBJECT (msprinter_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct msprinter_device);
 #endif /* not NEW_GC */

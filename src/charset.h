@@ -183,7 +183,7 @@ leading_byte_prefix_p (Ibyte lb)
 
 struct Lisp_Charset
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   int id;
   Lisp_Object name;

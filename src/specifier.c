@@ -3427,8 +3427,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
 
   if (!sp->caching)
 #ifdef NEW_GC
-    sp->caching = alloc_lrecord_type (struct specifier_caching,
-				      &lrecord_specifier_caching);
+    sp->caching = XSPECIFIER_CACHING (ALLOC_LISP_OBJECT (specifier_caching));
 #else /* not NEW_GC */
   sp->caching = xnew_and_zero (struct specifier_caching);
 #endif /* not NEW_GC */

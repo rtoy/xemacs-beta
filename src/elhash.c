@@ -96,7 +96,7 @@ static Lisp_Object Qnon_weak, Q_type;
 
 struct Lisp_Hash_Table
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Elemcount size;
   Elemcount count;
   Elemcount rehash_count;
@@ -1026,7 +1026,7 @@ The keys and values will not themselves be copied.
   const Lisp_Hash_Table *ht_old = xhash_table (hash_table);
   Lisp_Object obj = ALLOC_LISP_OBJECT (hash_table);
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
-  COPY_LCRECORD (ht, ht_old);
+  COPY_LISP_OBJECT (ht, ht_old);
 
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   ht->hentries = allocate_hash_table_entries (ht_old->size + 1);

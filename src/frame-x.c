@@ -2042,7 +2042,7 @@ allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct x_frame, &lrecord_x_frame);
+  f->frame_data = XX_FRAME (ALLOC_LISP_OBJECT (x_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct x_frame);
 #endif /* not NEW_GC */

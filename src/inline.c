@@ -99,19 +99,26 @@ Boston, MA 02111-1307, USA.  */
 #include "database.h"
 #endif
 
+#include "console-stream-impl.h"
+
 #ifdef HAVE_X_WINDOWS
-#include "glyphs-x.h"
+#include "console-x-impl.h"
 #ifdef USE_XFT
 #include "font-mgr.h"
 #endif
 #endif
 
 #ifdef HAVE_MS_WINDOWS
-#include "console-msw.h"
+#include "console-msw-impl.h"
+#endif
+
+#ifdef HAVE_TTY
+#include "console-tty-impl.h"
+#include "objects-tty-impl.h"
 #endif
 
 #ifdef HAVE_GTK
-#include "console-gtk.h"
+#include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
 

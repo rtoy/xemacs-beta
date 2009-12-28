@@ -1489,7 +1489,7 @@ void
 external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
+  LISP_OBJECT_HEADER *header = (LISP_OBJECT_HEADER *) XPNTR (obj);
 
   if (print_readably)
     printing_unreadable_object

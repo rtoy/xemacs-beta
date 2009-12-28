@@ -75,8 +75,7 @@ allocate_tty_console_struct (struct console *con)
 {
   /* zero out all slots except the lisp ones ... */
 #ifdef NEW_GC
-  CONSOLE_TTY_DATA (con) = alloc_lrecord_type (struct tty_console,
-					       &lrecord_tty_console);
+  CONSOLE_TTY_DATA (con) = XTTY_CONSOLE (ALLOC_LISP_OBJECT (tty_console));
 #else /* not NEW_GC */
   CONSOLE_TTY_DATA (con) = xnew_and_zero (struct tty_console);
 #endif /* not NEW_GC */

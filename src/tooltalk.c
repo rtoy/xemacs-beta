@@ -147,7 +147,7 @@ Lisp_Object Qtooltalk_messagep;
 
 struct Lisp_Tooltalk_Message
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_message m;
 };
@@ -223,7 +223,7 @@ Lisp_Object Qtooltalk_patternp;
 
 struct Lisp_Tooltalk_Pattern
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_pattern p;
 };

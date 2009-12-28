@@ -49,7 +49,7 @@ enum range_table_type
 
 struct Lisp_Range_Table
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   range_table_entry_dynarr *entries;
   enum range_table_type type;
 };

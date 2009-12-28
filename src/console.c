@@ -204,7 +204,7 @@ allocate_console (Lisp_Object type)
   struct console *con = XCONSOLE (console);
   struct gcpro gcpro1;
 
-  COPY_LCRECORD (con, XCONSOLE (Vconsole_defaults));
+  COPY_LISP_OBJECT (con, XCONSOLE (Vconsole_defaults));
 
   GCPRO1 (console);
 
@@ -668,7 +668,7 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 static void
 nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
-  ZERO_LCRECORD (con);
+  ZERO_LISP_OBJECT (con);
 
 #define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
@@ -1327,8 +1327,7 @@ One argument, the to-be-deleted console.
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do {									   \
   struct symbol_value_forward *I_hate_C =				   \
-    alloc_lrecord_type (struct symbol_value_forward,			   \
-			&lrecord_symbol_value_forward);			   \
+    XSYMBOL_VALUE_FORWARD (ALLOC_LISP_OBJECT (symbol_value_forward));	   \
   /*mcpro ((Lisp_Object) I_hate_C);*/					   \
 									   \
   I_hate_C->magic.value = &(console_local_flags.field_name);		   \
