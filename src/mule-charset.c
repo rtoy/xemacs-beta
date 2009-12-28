@@ -1001,7 +1001,7 @@ compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 {
   struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (c, sizeof (*c), ovstats);
+  stats->other   += LISP_OBJECT_STORAGE_SIZE (c, sizeof (*c), ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }

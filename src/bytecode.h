@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef NEW_GC
 struct compiled_function_args
 {
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
   long size;
   Lisp_Object args[1];
 };
@@ -72,7 +72,7 @@ DECLARE_LISP_OBJECT (compiled_function_args, Lisp_Compiled_Function_Args);
 
 struct Lisp_Compiled_Function
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   unsigned short stack_depth;
   unsigned short specpdl_depth;
   struct

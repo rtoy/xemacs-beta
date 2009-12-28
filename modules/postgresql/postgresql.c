@@ -90,8 +90,10 @@ TODO (in rough order of priority):
    interface to lcrecord handling has changed with 21.2, so unfortunately
    we will need a few snippets of backwards compatibility code.
 */
-#if (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION < 2)
+#if (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION <= 1)
 #define RUNNING_XEMACS_21_1 1
+#elif (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION <= 4)
+#define RUNNING_XEMACS_21_4 1
 #endif
 
 /* #define POSTGRES_LO_IMPORT_IS_VOID 1 */
@@ -240,7 +242,7 @@ allocate_pgconn (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     lrecord_pgconn);
-#elif RUNNING_XEMACS_21_4
+#elif defined (RUNNING_XEMACS_21_4)
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     &lrecord_pgconn);
 #else
@@ -374,7 +376,7 @@ allocate_pgresult (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 lrecord_pgresult);
-#elif RUNNING_XEMACS_21_4
+#elif defined (RUNNING_XEMACS_21_4)
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 &lrecord_pgresult);
 #else
@@ -1889,8 +1891,8 @@ unload_postgresql (void)
 {
 #ifndef RUNNING_XEMACS_21_1
   /* Remove defined types */
-  UNDEF_LRECORD_IMPLEMENTATION (pgconn);
-  UNDEF_LRECORD_IMPLEMENTATION (pgresult);
+  UNDEF_LISP_OBJECT (pgconn);
+  UNDEF_LISP_OBJECT (pgresult);
 #endif
 
   /* Remove staticpro'ing of symbols */

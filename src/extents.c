@@ -243,7 +243,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct gap_array_marker
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int pos;
   struct gap_array_marker *next;
@@ -273,7 +273,7 @@ typedef struct gap_array_marker
 typedef struct gap_array
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Elemcount gap;
   Elemcount gapsize;
@@ -319,7 +319,7 @@ static Gap_Array_Marker *gap_array_marker_freelist;
 typedef struct extent_list_marker
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array_Marker *m;
   int endp;
@@ -329,7 +329,7 @@ typedef struct extent_list_marker
 typedef struct extent_list
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array *start;
   Gap_Array *end;
@@ -394,7 +394,7 @@ struct extent_auxiliary extent_auxiliary_defaults;
 typedef struct stack_of_extents
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Extent_List *extents;
   Memxpos pos; /* Position of stack of extents.  EXTENTS is the list of
@@ -691,7 +691,7 @@ gap_array_make_marker (Gap_Array *ga, Elemcount pos)
 
   assert (pos >= 0 && pos <= ga->numels);
 #ifdef NEW_GC
-    m = alloc_lrecord_type (Gap_Array_Marker, &lrecord_gap_array_marker);
+    m = XGAP_ARRAY_MARKER (ALLOC_LISP_OBJECT (gap_array_marker));
 #else /* not NEW_GC */
   if (gap_array_marker_freelist)
     {
@@ -757,7 +757,8 @@ static Gap_Array *
 make_gap_array (Elemcount elsize)
 {
 #ifdef NEW_GC
-  Gap_Array *ga = alloc_lrecord_type (Gap_Array, &lrecord_gap_array);
+  Gap_Array *ga = XGAP_ARRAY (ALLOC_SIZED_LISP_OBJECT (sizeof (Gap_Array),
+						       gap_array));
 #else /* not NEW_GC */
   Gap_Array *ga = xnew_and_zero (Gap_Array);
 #endif /* not NEW_GC */
@@ -928,7 +929,7 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
   Extent_List_Marker *m;
 
 #ifdef NEW_GC
-  m = alloc_lrecord_type (Extent_List_Marker, &lrecord_extent_list_marker);
+  m = XEXTENT_LIST_MARKER (ALLOC_LISP_OBJECT (extent_list_marker));
 #else /* not NEW_GC */
   if (extent_list_marker_freelist)
     {
@@ -977,7 +978,7 @@ static Extent_List *
 allocate_extent_list (void)
 {
 #ifdef NEW_GC
-  Extent_List *el = alloc_lrecord_type (Extent_List, &lrecord_extent_list);
+  Extent_List *el = XEXTENT_LIST (ALLOC_LISP_OBJECT (extent_list));
 #else /* not NEW_GC */
   Extent_List *el = xnew (Extent_List);
 #endif /* not NEW_GC */
@@ -1042,7 +1043,7 @@ allocate_extent_auxiliary (EXTENT ext)
   Lisp_Object obj = ALLOC_LISP_OBJECT (extent_auxiliary);
   struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
 
-  COPY_LCRECORD (data, &extent_auxiliary_defaults);
+  COPY_LISP_OBJECT (data, &extent_auxiliary_defaults);
   ext->plist = Fcons (obj, ext->plist);
   ext->flags.has_aux = 1;
 }
@@ -1786,8 +1787,8 @@ static struct stack_of_extents *
 allocate_soe (void)
 {
 #ifdef NEW_GC
-  struct stack_of_extents *soe = 
-    alloc_lrecord_type (struct stack_of_extents, &lrecord_stack_of_extents);
+  struct stack_of_extents *soe =
+    XSTACK_OF_EXTENTS (ALLOC_LISP_OBJECT (stack_of_extents));
 #else /* not NEW_GC */
   struct stack_of_extents *soe = xnew_and_zero (struct stack_of_extents);
 #endif /* not NEW_GC */
@@ -4042,7 +4043,7 @@ copy_extent (EXTENT original, Bytexpos from, Bytexpos to, Lisp_Object object)
       Lisp_Object ea = ALLOC_LISP_OBJECT (extent_auxiliary);
       struct extent_auxiliary *data = XEXTENT_AUXILIARY (ea);
 
-      COPY_LCRECORD (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
+      COPY_LISP_OBJECT (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
       XCAR (e->plist) = ea;
     }
 

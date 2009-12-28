@@ -1200,14 +1200,14 @@ do { FREE_FIXED_TYPE (type, structtype, ptr);			\
 #endif /* NEW_GC */
 
 #ifdef NEW_GC
-#define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
+#define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr)\
 do {									\
-  (var) = alloc_lrecord_type (lisp_type, lrec_ptr);			\
+  (var) = (lisp_type *) XPNTR (ALLOC_LISP_OBJECT (type));               \
 } while (0)
 #define NOSEEUM_ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var,	\
                                                  lrec_ptr)		\
 do {									\
-  (var) = noseeum_alloc_lrecord_type (lisp_type, lrec_ptr);		\
+  (var) = (lisp_type *) XPNTR (noseeum_alloc_lrecord (lrec_ptr));	\
 } while (0)
 #else /* not NEW_GC */
 #define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
@@ -2538,7 +2538,7 @@ make_uninit_string (Bytecount length)
   assert (length >= 0 && fullsize > 0);
 
 #ifdef NEW_GC
-  s = alloc_lrecord_type (Lisp_String, &lrecord_string);
+  s = XSTRING (ALLOC_LISP_OBJECT (string));
 #else /* not NEW_GC */
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
@@ -2946,7 +2946,7 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 #endif
 
 #ifdef NEW_GC
-  s = alloc_lrecord_type (Lisp_String, &lrecord_string);
+  s = XSTRING (ALLOC_LISP_OBJECT (string));
   mcpro (wrap_pointer_1 (s)); /* otherwise nocopy_strings get
 				 collected and static data is tried to
 				 be freed. */
@@ -2961,10 +2961,7 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
   s->plist = Qnil;
 #ifdef NEW_GC
   set_lispstringp_indirect (s);
-  STRING_DATA_OBJECT (s) = 
-    wrap_string_indirect_data 
-    (alloc_lrecord_type (Lisp_String_Indirect_Data,
-			 &lrecord_string_indirect_data));
+  STRING_DATA_OBJECT (s) = ALLOC_LISP_OBJECT (string_indirect_data);
   XSTRING_INDIRECT_DATA_DATA (STRING_DATA_OBJECT (s)) = (Ibyte *) contents;
   XSTRING_INDIRECT_DATA_SIZE (STRING_DATA_OBJECT (s)) = length;
 #else /* not NEW_GC */

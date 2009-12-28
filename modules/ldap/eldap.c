@@ -876,7 +876,7 @@ void
 unload_eldap (void)
 {
   /* Remove defined types */
-  UNDEF_LRECORD_IMPLEMENTATION (ldap);
+  UNDEF_LISP_OBJECT (ldap);
 
   /* Remove staticpro'ing of symbols */
   unstaticpro_nodump (&Qeldap);

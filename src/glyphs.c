@@ -1991,7 +1991,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
      device-specific method to copy the window-system subobject. */
   new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
-  COPY_LCRECORD (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
+  COPY_LISP_OBJECT (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
@@ -4612,7 +4612,7 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
       struct expose_ignore *ei;
 
 #ifdef NEW_GC
-      ei = alloc_lrecord_type (struct expose_ignore, &lrecord_expose_ignore);
+      ei = XEXPOSE_IGNORE (ALLOC_LISP_OBJECT (expose_ignore));
 #else /* not NEW_GC */
       ei = Blocktype_alloc (the_expose_ignore_blocktype);
 #endif /* not NEW_GC */

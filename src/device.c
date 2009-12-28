@@ -201,7 +201,7 @@ Return a list of valid device classes.
 static void
 nuke_all_device_slots (struct device *d, Lisp_Object zap)
 {
-  ZERO_LCRECORD (d);
+  ZERO_LISP_OBJECT (d);
 
 #define MARKED_SLOT(x)	d->x = zap;
 #include "devslots.h"

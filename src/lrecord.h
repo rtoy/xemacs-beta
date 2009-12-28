@@ -26,36 +26,16 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
 
-#ifdef NEW_GC
-/* The "lrecord" type of Lisp object is used for all object types
-   other than a few simple ones (like char and int). This allows many
-   types to be implemented but only a few bits required in a Lisp
-   object for type information. (The tradeoff is that each object has
-   its type marked in it, thereby increasing its size.) All lrecords
-   begin with a `struct lrecord_header', which identifies the lisp
-   object type, by providing an index into a table of `struct
-   lrecord_implementation', which describes the behavior of the lisp
-   object.  It also contains some other data bits.
-
-   Creating a new lrecord type is fairly easy; just follow the
-   lead of some existing type (e.g. hash tables).  Note that you
-   do not need to supply all the methods (see below); reasonable
-   defaults are provided for many of them.  Alternatively, if you're
-   just looking for a way of encapsulating data (which possibly
-   could contain Lisp_Objects in it), you may well be able to use
-   the opaque type.
-*/
-#else /* not NEW_GC */
-/* The "lrecord" type of Lisp object is used for all object types
-   other than a few simple ones.  This allows many types to be
+/* The "lrecord" type of Lisp object is used for all object types other
+   than a few simple ones (like char and int). This allows many types to be
    implemented but only a few bits required in a Lisp object for type
-   information. (The tradeoff is that each object has its type marked
-   in it, thereby increasing its size.) All lrecords begin with a
-   `struct lrecord_header', which identifies the lisp object type, by
-   providing an index into a table of `struct lrecord_implementation',
-   which describes the behavior of the lisp object.  It also contains
-   some other data bits.
+   information. (The tradeoff is that each object has its type marked in
+   it, thereby increasing its size.) All lrecords begin with a `struct
+   lrecord_header', which identifies the lisp object type, by providing an
+   index into a table of `struct lrecord_implementation', which describes
+   the behavior of the lisp object.  It also contains some other data bits.
 
+#ifndef NEW_GC
    Lrecords are of two types: straight lrecords, and lcrecords.
    Straight lrecords are used for those types of objects that have
    their own allocation routines (typically allocated out of 2K chunks
@@ -70,38 +50,45 @@ Boston, MA 02111-1307, USA.  */
    Lcrecords have a `struct old_lcrecord_header' at the top, which
    contains a `struct lrecord_header' and a `next' pointer, and are
    allocated using old_alloc_lcrecord_type() or its variants.
+#endif
 
-   Creating a new lcrecord type is fairly easy; just follow the
+   Creating a new Lisp object type is fairly easy; just follow the
    lead of some existing type (e.g. hash tables).  Note that you
    do not need to supply all the methods (see below); reasonable
    defaults are provided for many of them.  Alternatively, if you're
    just looking for a way of encapsulating data (which possibly
    could contain Lisp_Objects in it), you may well be able to use
-   the opaque type. --ben
+   the opaque type.
+
+   The "public API's" meant for use by regular Lisp objects are macros
+   in capital letters, involving the word "LISP_OBJECT".  Underlyingly,
+   the functions and structures use "lrecord" or "lcrecord", but most
+   code shouldn't have to worry about this.
 */
-#endif /* not NEW_GC */
 
 #ifdef NEW_GC
 #define ALLOC_LISP_OBJECT(type) alloc_lrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
   alloc_sized_lrecord (size, &lrecord_##type)
-#define COPY_SIZED_LCRECORD copy_sized_lrecord
-#define COPY_LCRECORD copy_lrecord
-#define LISPOBJ_STORAGE_SIZE(ptr, size, stats) \
+#define COPY_SIZED_LISP_OBJECT copy_sized_lrecord
+#define COPY_LISP_OBJECT copy_lrecord
+#define LISP_OBJECT_STORAGE_SIZE(ptr, size, stats) \
   mc_alloced_storage_size (size, stats)
-#define ZERO_LCRECORD zero_lrecord
-#define LCRECORD_HEADER lrecord_header
-#define FREE_LCRECORD free_lrecord
+#define ZERO_LISP_OBJECT zero_lrecord
+#define LISP_OBJECT_HEADER struct lrecord_header
+#define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
+#define FREE_LISP_OBJECT free_lrecord
 #else /* not NEW_GC */
 #define ALLOC_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
   old_alloc_sized_lcrecord (size, &lrecord_##type)
-#define COPY_SIZED_LCRECORD old_copy_sized_lcrecord
-#define COPY_LCRECORD old_copy_lcrecord
-#define LISPOBJ_STORAGE_SIZE malloced_storage_size
-#define ZERO_LCRECORD old_zero_lcrecord
-#define LCRECORD_HEADER old_lcrecord_header
-#define FREE_LCRECORD old_free_lcrecord
+#define COPY_SIZED_LISP_OBJECT old_copy_sized_lcrecord
+#define COPY_LISP_OBJECT old_copy_lcrecord
+#define LISP_OBJECT_STORAGE_SIZE malloced_storage_size
+#define ZERO_LISP_OBJECT old_zero_lcrecord
+#define LISP_OBJECT_HEADER struct old_lcrecord_header
+#define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
+#define FREE_LISP_OBJECT old_free_lcrecord
 #endif /* not NEW_GC */
 
 BEGIN_C_DECLS
@@ -730,7 +717,7 @@ int lrecord_stats_heap_size (void);
    
    struct Lisp_Hash_Table
    {
-     struct LCRECORD_HEADER header;
+     LISP_OBJECT_HEADER header;
      Elemcount size;
      Elemcount count;
      Elemcount rehash_count;
@@ -795,7 +782,7 @@ int lrecord_stats_heap_size (void);
 
    struct Lisp_Specifier
    {
-     struct LCRECORD_HEADER header;
+     LISP_OBJECT_HEADER header;
      struct specifier_methods *methods;
    
      ...
@@ -1155,6 +1142,16 @@ extern const struct sized_memory_description lisp_object_description;
    objects need special handling in alloc.c.  This does not apply to
    NEW_GC, because it does this automatically.
 
+   DEFINE_*_INTERNAL_LISP_OBJECT is for "internal" objects that should
+   never be visible on the Lisp level.  This is a shorthand for the
+   most common type of internal objects, which have no equal or hash
+   method (since they generally won't appear in hash tables), no
+   finalizer and internal_object_printer() as their print method
+   (which prints that the object is internal and shouldn't be visible
+   externally).  For internal objects needing a finalizer, equal or
+   hash method, use the normal DEFINE_*_LISP_OBJECT mechanism for
+   defining these objects.
+
    DEFINE_*_WITH_PROPS is for objects which support the unified property
    interface using `get', `put', `remprop' and `object-plist'.
 
@@ -1357,9 +1354,9 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    1. Declare the struct for your object in a header file somewhere.
    Remember that it must begin with
 
-   struct LCRECORD_HEADER header;
+   LISP_OBJECT_HEADER header;
 
-   2. Put the "standard junk" (DECLARE_RECORD()/XFOO/etc.) below the
+   2. Put the "standard junk" (DECLARE_LISP_OBJECT()/XFOO/etc.) below the
       struct definition -- see below.
 
    3. Add this header file to inline.c.
@@ -1372,8 +1369,13 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    describing the purpose of the descriptions; and comments elsewhere in
    this file describing the exact syntax of the description structures.
 
-   6. Define your object with DEFINE_LISP_OBJECT() or some
-   variant.
+   6. Define your object with DEFINE_*_LISP_OBJECT() or some
+   variant.  At the minimum, you need to decide whether your object can
+   be dumped.  Objects that are created as part of the loadup process and
+   need to be persistent across dumping should be created dumpable.
+   Nondumpable objects are generally those associated with display,
+   particularly those containing a pointer to an external library object
+   (e.g. a window-system window).
 
    7. Include the header file in the .c file where you defined the object.
 
@@ -1391,7 +1393,7 @@ An example:
 
 struct toolbar_button
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   Lisp_Object next;
   Lisp_Object frame;
@@ -1506,9 +1508,9 @@ enum lrecord_type
 /*
 
 Note: Object types defined in external dynamically-loaded modules (not
-part of the XEmacs main source code) should use DECLARE_MODULE_LRECORD
-and DEFINE_MODULE_LISP_OBJECT rather than DECLARE_LISP_OBJECT
-and DEFINE_LISP_OBJECT.  The MODULE versions declare and
+part of the XEmacs main source code) should use DECLARE_*_MODULE_LISP_OBJECT
+and DEFINE_*_MODULE_LISP_OBJECT rather than DECLARE_*_LISP_OBJECT
+and DEFINE_*_LISP_OBJECT.  The MODULE versions declare and
 allocate an enumerator for the type being defined.
 
 */
@@ -1516,7 +1518,7 @@ allocate an enumerator for the type being defined.
 
 #ifdef ERROR_CHECK_TYPES
 
-# define DECLARE_LISP_OBJECT(c_name, structtype)				  \
+# define DECLARE_LISP_OBJECT(c_name, structtype)			  \
 extern const struct lrecord_implementation lrecord_##c_name;		  \
 DECLARE_INLINE_HEADER (							  \
 structtype *								  \
@@ -1528,7 +1530,7 @@ error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 }									  \
 extern Lisp_Object Q##c_name##p
 
-# define DECLARE_MODULE_API_LRECORD(c_name, structtype)			  \
+# define DECLARE_MODULE_API_LISP_OBJECT(c_name, structtype)		  \
 extern MODULE_API const struct lrecord_implementation lrecord_##c_name;	  \
 DECLARE_INLINE_HEADER (							  \
 structtype *								  \
@@ -1540,7 +1542,7 @@ error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 }									  \
 extern MODULE_API Lisp_Object Q##c_name##p
 
-# define DECLARE_MODULE_LRECORD(c_name, structtype)			  \
+# define DECLARE_MODULE_LISP_OBJECT(c_name, structtype)			  \
 extern int lrecord_type_##c_name;					  \
 extern struct lrecord_implementation lrecord_##c_name;			  \
 DECLARE_INLINE_HEADER (							  \
@@ -1553,20 +1555,7 @@ error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 }									  \
 extern Lisp_Object Q##c_name##p
 
-# define DECLARE_NONRECORD(c_name, type_enum, structtype)		\
-DECLARE_INLINE_HEADER (							\
-structtype *								\
-error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	\
-)									\
-{									\
-  assert_at_line (XTYPE (obj) == type_enum, file, line);		\
-  return (structtype *) XPNTR (obj);					\
-}									\
-extern Lisp_Object Q##c_name##p
-
 # define XRECORD(x, c_name, structtype) \
-  error_check_##c_name (x, __FILE__, __LINE__)
-# define XNONRECORD(x, c_name, type_enum, structtype) \
   error_check_##c_name (x, __FILE__, __LINE__)
 
 DECLARE_INLINE_HEADER (
@@ -1586,21 +1575,17 @@ wrap_record_1 (const void *ptr, enum lrecord_type ty, const Ascbyte *file,
 
 #else /* not ERROR_CHECK_TYPES */
 
-# define DECLARE_LISP_OBJECT(c_name, structtype)			\
+# define DECLARE_LISP_OBJECT(c_name, structtype)		\
 extern Lisp_Object Q##c_name##p;				\
 extern const struct lrecord_implementation lrecord_##c_name
-# define DECLARE_MODULE_API_LRECORD(c_name, structtype)			\
-extern MODULE_API Lisp_Object Q##c_name##p;				\
+# define DECLARE_MODULE_API_LISP_OBJECT(c_name, structtype)	\
+extern MODULE_API Lisp_Object Q##c_name##p;			\
 extern MODULE_API const struct lrecord_implementation lrecord_##c_name
-# define DECLARE_MODULE_LRECORD(c_name, structtype)		\
+# define DECLARE_MODULE_LISP_OBJECT(c_name, structtype)		\
 extern Lisp_Object Q##c_name##p;				\
 extern int lrecord_type_##c_name;				\
 extern struct lrecord_implementation lrecord_##c_name
-# define DECLARE_NONRECORD(c_name, type_enum, structtype)	\
-extern Lisp_Object Q##c_name##p
 # define XRECORD(x, c_name, structtype) ((structtype *) XPNTR (x))
-# define XNONRECORD(x, c_name, type_enum, structtype)		\
-  ((structtype *) XPNTR (x))
 /* wrap_pointer_1 is so named as a suggestion not to use it unless you
    know what you're doing. */
 #define wrap_record(ptr, ty) wrap_pointer_1 (ptr)
@@ -1653,12 +1638,12 @@ extern Lisp_Object Q##c_name##p
 
    - For most objects, simply call ALLOC_LISP_OBJECT (type), where TYPE is
      the name of the type (e.g. toolbar_button).  Such objects can be freed
-     manually using FREE_LCRECORD.
+     manually using FREE_LISP_OBJECT.
 
    - For objects whose size can vary (and hence which have a
      size_in_bytes_method rather than a static_size), call
      ALLOC_SIZED_LISP_OBJECT (size, type), where TYPE is the
-     name of the type. NOTE: You cannot call FREE_LCRECORD() on such
+     name of the type. NOTE: You cannot call FREE_LISP_OBJECT() on such
      on object! (At least when not NEW_GC)
 
    - Basic lrecords (of which there are a limited number, which exist only
@@ -1674,7 +1659,7 @@ extern Lisp_Object Q##c_name##p
 
 struct lcrecord_list
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object free;
   Elemcount size;
   const struct lrecord_implementation *implementation;
@@ -1695,7 +1680,7 @@ DECLARE_LISP_OBJECT (lcrecord_list, struct lcrecord_list);
    lrecords.  lcrecords themselves are divided into three types: (1)
    auto-managed, (2) hand-managed, and (3) unmanaged.  "Managed" refers to
    using a special object called an lcrecord-list to keep track of freed
-   lcrecords, which can freed with FREE_LCRECORD() or the like and later be
+   lcrecords, which can freed with FREE_LISP_OBJECT() or the like and later be
    recycled when a new lcrecord is required, rather than requiring new
    malloc().  Thus, allocation of lcrecords can be very
    cheap. (Technically, the lcrecord-list manager could divide up large
@@ -1711,7 +1696,7 @@ DECLARE_LISP_OBJECT (lcrecord_list, struct lcrecord_list);
    -- "Auto-managed" means that you just go ahead and allocate the lcrecord
    whenever you want, using ALLOC_LISP_OBJECT(), and the appropriate
    lcrecord-list manager is automatically created.  To free, you just call
-   "FREE_LCRECORD()" and the appropriate lcrecord-list manager is
+   "FREE_LISP_OBJECT()" and the appropriate lcrecord-list manager is
    automatically located and called.  The limitation here of course is that
    all your objects are of the same size. (#### Eventually we should have a
    more sophisticated system that tracks the sizes seen and creates one
@@ -1809,23 +1794,18 @@ void old_free_lcrecord (Lisp_Object rec);
 
 #else /* NEW_GC */
 
-Lisp_Object alloc_sized_lrecord (Bytecount size,
-				 const struct lrecord_implementation *imp);
+MODULE_API Lisp_Object alloc_sized_lrecord (Bytecount size,
+					    const struct lrecord_implementation *imp);
 Lisp_Object noseeum_alloc_sized_lrecord (Bytecount size,
-					 const struct lrecord_implementation *);
-Lisp_Object alloc_lrecord (const struct lrecord_implementation *imp);
+					 const struct lrecord_implementation *imp);
+MODULE_API Lisp_Object alloc_lrecord (const struct lrecord_implementation *imp);
 Lisp_Object noseeum_alloc_lrecord (const struct lrecord_implementation *imp);
 
-Lisp_Object alloc_lrecord_array (int elemcount,
+MODULE_API Lisp_Object alloc_lrecord_array (int elemcount,
 				 const struct lrecord_implementation *imp);
-Lisp_Object alloc_sized_lrecord_array (Bytecount size, int elemcount,
-				       const struct lrecord_implementation *imp);
-
-#define alloc_lrecord_type(type, imp) \
-  ((type *) XPNTR (alloc_sized_lrecord (sizeof (type), imp)))
-
-#define noseeum_alloc_lrecord_type(type, imp) \
-  ((type *) XPNTR (noseeum_alloc_sized_lrecord (sizeof (type), imp)))
+MODULE_API Lisp_Object alloc_sized_lrecord_array (Bytecount size,
+						  int elemcount,
+						  const struct lrecord_implementation *imp);
 
 void free_lrecord (Lisp_Object rec);
 

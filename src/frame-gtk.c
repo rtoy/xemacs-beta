@@ -973,7 +973,7 @@ allocate_gtk_frame_struct (struct frame *f)
 
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct gtk_frame, &lrecord_gtk_frame);
+  f->frame_data = XGTK_FRAME (ALLOC_LISP_OBJECT (gtk_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct gtk_frame);
 #endif /* not NEW_GC */

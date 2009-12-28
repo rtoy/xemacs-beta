@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Case_Table
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object downcase_table;
   Lisp_Object upcase_table;
   Lisp_Object case_canon_table;

@@ -44,7 +44,7 @@ extern int popup_up_p;
    menu item or submenu properties */
 struct Lisp_Gui_Item
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object name;		/* String */
   Lisp_Object callback;		/* Symbol or form */
   Lisp_Object callback_ex;	/* Form taking context arguments */

@@ -57,7 +57,7 @@ DECLARE_CONSOLE_TYPE (msprinter);
 
 struct Lisp_Devmode
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   /* Pointer to the DEVMODE structure */
   DEVMODEW *devmode;
@@ -82,7 +82,7 @@ struct Lisp_Devmode
 struct mswindows_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Lisp_Object fontlist;		/* List of (STRING . FIXED-P), device fonts */
   HDC hcdc;			/* Compatible DC */
@@ -110,7 +110,7 @@ DECLARE_LISP_OBJECT (mswindows_device, Lisp_Mswindows_Device);
 struct msprinter_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   HDC hdc, hcdc;		/* Printer and the comp. DCs */
   HANDLE hprinter;
@@ -168,7 +168,7 @@ DECLARE_LISP_OBJECT (msprinter_device, Lisp_Msprinter_Device);
 struct mswindows_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* win32 window handle */
@@ -318,7 +318,7 @@ struct msprinter_frame
 
 struct mswindows_dialog_id
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   Lisp_Object frame;
   Lisp_Object callbacks;

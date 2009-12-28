@@ -455,7 +455,7 @@ free_command_builder (struct command_builder *builder)
       xfree (builder->echo_buf, Ibyte *);
       builder->echo_buf = NULL;
     }
-  FREE_LCRECORD (wrap_command_builder (builder));
+  FREE_LISP_OBJECT (wrap_command_builder (builder));
 }
 
 static void
@@ -1163,7 +1163,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
       *timeout_list = noseeum_cons (op, *timeout_list);
     }
   else
-    FREE_LCRECORD (op);
+    FREE_LISP_OBJECT (op);
 
   UNGCPRO;
   return id;
@@ -1200,7 +1200,7 @@ event_stream_disable_wakeup (int id, int async_p)
 	signal_remove_async_interval_timeout (timeout->interval_id);
       else
 	event_stream_remove_timeout (timeout->interval_id);
-      FREE_LCRECORD (op);
+      FREE_LISP_OBJECT (op);
     }
 }
 

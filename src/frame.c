@@ -288,7 +288,7 @@ DEFINE_NODUMP_LISP_OBJECT ("frame", frame,
 static void
 nuke_all_frame_slots (struct frame *f)
 {
-  ZERO_LCRECORD (f);
+  ZERO_LISP_OBJECT (f);
 
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"

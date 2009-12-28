@@ -270,7 +270,7 @@ compute_scrollbar_instance_usage (struct device *d,
 
   while (inst)
     {
-      total += LISPOBJ_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
+      total += LISP_OBJECT_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
       inst = inst->next;
     }
 

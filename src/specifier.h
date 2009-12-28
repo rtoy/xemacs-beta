@@ -220,7 +220,7 @@ struct specifier_methods
 
 struct Lisp_Specifier
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   struct specifier_methods *methods;
 
   /* we keep a chained list of all current specifiers, for GC cleanup
@@ -428,7 +428,7 @@ enum spec_add_meth
 struct specifier_caching
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int offset_into_struct_window;
   void (*value_changed_in_window) (Lisp_Object specifier, struct window *w,

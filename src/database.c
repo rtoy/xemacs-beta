@@ -147,7 +147,7 @@ typedef struct
 
 struct Lisp_Database
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object fname;
   int mode;
   int access_;

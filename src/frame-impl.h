@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct frame
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   /* Methods for this frame's console.  This can also be retrieved
      through frame->device->console, but it's faster this way. */

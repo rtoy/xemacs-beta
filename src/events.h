@@ -123,7 +123,7 @@ enum alternative_key_chars
 struct Lisp_Key_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* What keysym this is; a character or a symbol. */
   Lisp_Object keysym;
@@ -219,7 +219,7 @@ DECLARE_LISP_OBJECT (key_data, Lisp_Key_Data);
 struct Lisp_Button_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* What button went down or up. */
   int button;
@@ -271,7 +271,7 @@ DECLARE_LISP_OBJECT (button_data, Lisp_Button_Data);
 struct Lisp_Motion_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* Where it was after it moved (in pixels). */
   int x, y;
@@ -313,7 +313,7 @@ DECLARE_LISP_OBJECT (motion_data, Lisp_Motion_Data);
 struct Lisp_Process_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* the XEmacs "process" object in question */
   Lisp_Object process;
@@ -352,7 +352,7 @@ struct Lisp_Timeout_Data
     object		The object passed to that function.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   int interval_id;
   int id_number;
@@ -411,7 +411,7 @@ struct Lisp_Eval_Data
     object		Argument of function.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
@@ -464,7 +464,7 @@ struct Lisp_Misc_User_Data
 			values for other types of misc_user_events.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
@@ -541,7 +541,7 @@ struct Lisp_Magic_Eval_Data
 
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   void (*internal_function) (Lisp_Object);
   Lisp_Object object;
@@ -597,7 +597,7 @@ struct Lisp_Magic_Data
 */
 
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
 
   union {
@@ -660,7 +660,7 @@ DECLARE_LISP_OBJECT (magic_data, Lisp_Magic_Data);
 
 struct Lisp_Timeout
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   int id; /* Id we use to identify the timeout over its lifetime */
   int interval_id; /* Id for this particular interval; this may
                       be different each time the timeout is
@@ -690,7 +690,7 @@ struct Lisp_Event
      - Likewise for events chained in the command builder.
      - Otherwise it's Qnil.
    */
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   Lisp_Object           next;
   emacs_event_type      event_type;
 
@@ -1137,7 +1137,7 @@ void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
  */
 struct command_builder
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   Lisp_Object console; /* back pointer to the console this command
                           builder is for */
 #if 0
