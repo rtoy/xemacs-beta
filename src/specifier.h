@@ -131,8 +131,9 @@ struct specifier_methods
      If this function is not present, then Fcopy_tree is used. */
   Lisp_Object (*copy_instantiator_method) (Lisp_Object instantiator);
 
-  /* Validate-matchspec method: Given a matchspec, verify that it's
-     valid for this specifier type.  If not, signal an error.
+  /* Validate-matchspec method: Given a matchspec (see
+     Fspecifier_matching_instance), verify that it's valid for this
+     specifier type.  If not, signal an error.
 
      If this function is not present, *no* matchspecs are considered
      valid.  Note that this differs from validate_method(). */

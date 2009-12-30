@@ -95,6 +95,53 @@
 ;; not assigned.  They are automatically converted to each Indian
 ;; script which IS-13194 supports.
 
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/indian.el
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/indian.el~base.qpNnTY
+(make-charset 'indian-is13194 
+	      "Generic Indian charset for data exchange with IS 13194"
+	      '(dimension
+		1
+		registry "IS13194-Devanagari"
+		chars 94
+		columns 2
+		direction l2r
+		final ?5
+		graphic 1
+		short-name "IS 13194"
+		long-name "Indian IS 13194"
+		))
+
+;; Actual Glyph for 1-column width.
+(make-charset 'indian-1-column 
+	      "Indian charset for 2-column width glyphs"
+	      '(dimension
+		2
+		registry "MuleIndian-1"
+		chars 94
+		columns 1
+		direction l2r
+		final ?6
+		graphic 0
+		short-name "Indian 1-col"
+		long-name "Indian 1 Column"
+		))
+
+;; Actual Glyph for 2-column width.
+(make-charset 'indian-2-column 
+	      "Indian charset for 2-column width glyphs"
+	      '(dimension
+		2
+		registry "MuleIndian-2"
+		chars 94
+		columns 2
+		direction l2r
+		final ?5
+		graphic 0
+		short-name "Indian 2-col"
+		long-name "Indian 2 Column"
+		))
+
+=======
 (make-charset 'indian-is13194 
 	      "Generic Indian charset for data exchange with IS 13194"
 	      '(dimension
@@ -139,6 +186,7 @@
 		long-name "Indian 2 Column"
 		))
 
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/indian.el~other.Hr9zIz
 (defvar indian-itrans-consonant-alist
   '(
     ("k" . "(53(B")

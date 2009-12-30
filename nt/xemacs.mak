@@ -620,12 +620,23 @@ TEMACS_MODULE_SRCS=$(TEMACS_MODULE_SRCS) $(SRCROOT)\modules\ldap\eldap.c
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_NATIVE_SOUND
 !endif
 
+!if $(UNICODE_INTERNAL)
+!if !$(MULE)
+!message Unicode-internal requires Mule.  Mule forced on.
+MULE=1
+!endif
+!endif
+
 !if $(MULE)
 OPT_DEFINES=$(OPT_DEFINES) -DMULE
 OPT_OBJS=$(OPT_OBJS) \
-	$(OUTDIR)\mule-ccl.obj \
 	$(OUTDIR)\mule-charset.obj \
 	$(OUTDIR)\mule-coding.obj
+!if $(UNICODE_INTERNAL)
+OPT_DEFINES=$(OPT_DEFINES) -DUNICODE_INTERNAL
+!else
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\mule-ccl.obj
+!endif
 !endif
 
 !if $(DEBUG_XEMACS)
@@ -1191,6 +1202,11 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(MULE)
   Compiling in international (MULE) support.
+!if $(UNICODE_INTERNAL)
+  Unicode is used internally.
+!else
+  The old-Mule format is used internally.
+!endif
 !endif
 !if $(HAVE_GTK)
   --------------------------------------------------------------------

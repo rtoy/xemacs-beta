@@ -992,8 +992,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<image-instance 0x%x>",
-	   ii->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
@@ -2375,10 +2374,10 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    helper that is used elsewhere for calculating text geometry. */
 void
 query_string_geometry (Lisp_Object string, Lisp_Object face,
-		       int* width, int* height, int* descent, Lisp_Object domain)
+		       int *width, int *height, int *descent,
+		       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  unsigned char charsets[NUM_LEADING_BYTES];
   struct face_cachel frame_cachel;
   struct face_cachel *cachel;
   Lisp_Object frame = DOMAIN_FRAME (domain);
@@ -2388,10 +2387,11 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
   /* Compute height */
   if (height)
     {
+      Ichar_dynarr *buf = Dynarr_new (Ichar);
+      convert_ibyte_string_into_ichar_dynarr
+	(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+
       /* Compute string metric info */
-      find_charsets_in_ibyte_string (charsets,
-				       XSTRING_DATA   (string),
-				       XSTRING_LENGTH (string));
 
       /* Fallback to the default face if none was provided. */
       if (!NILP (face))
@@ -2406,61 +2406,24 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 				       DEFAULT_INDEX);
 	}
 
-      ensure_face_cachel_complete (cachel, domain, charsets);
-      face_cachel_charset_font_metric_info (cachel, charsets, &fm);
+      face_cachel_char_font_metric_info (cachel, domain, Dynarr_atp (buf, 0),
+					 Dynarr_length (buf), &fm);
 
       *height = fm.ascent + fm.descent;
       /* #### descent only gets set if we query the height as well. */
       if (descent)
 	*descent = fm.descent;
+      Dynarr_free (buf);
     }
 
   /* Compute width */
   if (width)
     {
-      if (!NILP (face))
-	*width = redisplay_frame_text_width_string (XFRAME (frame),
-						    face,
-						    0, string, 0, -1);
-      else
-	*width = redisplay_frame_text_width_string (XFRAME (frame),
-						    Vdefault_face,
-						    0, string, 0, -1);
+      *width = redisplay_frame_text_width_string (XFRAME (frame),
+						  !NILP (face) ? face:
+						  Vdefault_face,
+						  0, string, 0, -1);
     }
-}
-
-Lisp_Object
-query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
-{
-  unsigned char charsets[NUM_LEADING_BYTES];
-  struct face_cachel frame_cachel;
-  struct face_cachel *cachel;
-  int i;
-  Lisp_Object frame = DOMAIN_FRAME (domain);
-
-  /* Compute string font info */
-  find_charsets_in_ibyte_string (charsets,
-				   XSTRING_DATA   (string),
-				   XSTRING_LENGTH (string));
-
-  reset_face_cachel (&frame_cachel);
-  update_face_cachel_data (&frame_cachel, frame, face);
-  cachel = &frame_cachel;
-
-  ensure_face_cachel_complete (cachel, domain, charsets);
-
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    {
-      if (charsets[i])
-	{
-	  return FACE_CACHEL_FONT (cachel,
-				   charset_by_leading_byte (i +
-							    MIN_LEADING_BYTE));
-
-	}
-    }
-
-  return Qnil;			/* NOT REACHED */
 }
 
 static void
@@ -3703,7 +3666,7 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Glyph *glyph = XGLYPH (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<glyph 0x%x>", glyph->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
   write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);

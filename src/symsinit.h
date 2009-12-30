@@ -1,6 +1,6 @@
 /* Various initialization function prototypes.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -140,9 +140,19 @@ void syms_of_keymap (void);
 void syms_of_lread (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/symsinit.h
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~base.xiva6I
+#ifdef MC_ALLOC
+=======
 #ifdef NEW_GC
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~other.YRccIA
 void syms_of_mc_alloc (void);
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/symsinit.h
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~base.xiva6I
+#endif /* MC_ALLOC */
+=======
 #endif /* NEW_GC */
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~other.YRccIA
 void syms_of_md5 (void);
 void syms_of_menubar (void);
 void syms_of_menubar_mswindows (void);
@@ -466,6 +476,7 @@ void specifier_vars_of_window (void);
 void complex_vars_of_faces (void);
 void complex_vars_of_mule_charset (void);
 void complex_vars_of_file_coding (void);
+void complex_vars_of_mule_coding (void);
 void complex_vars_of_intl_win32 (void);
 void complex_vars_of_glyphs (void);
 void complex_vars_of_glyphs_x (void);

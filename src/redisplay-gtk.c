@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2009 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "debug.h"
 #include "device-impl.h"
 #include "faces.h"
@@ -49,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysproc.h" /* for select() */
 
-#ifdef MULE
+#ifdef HAVE_CCL
 #include "mule-ccl.h"
 #endif
 
@@ -87,114 +88,7 @@ static void gtk_bevel_modeline (struct window *w, struct display_line *dl);
 static void __describe_gc (GdkGC *);
 #endif
 
-struct textual_run
-{
-  Lisp_Object charset;
-  unsigned char *ptr;
-  int len;
-  int dimension;
-};
-
-/* Separate out the text in DYN into a series of textual runs of a
-   particular charset.  Also convert the characters as necessary into
-   the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly
-   tweaking the high bits, and possibly running a CCL program.) You
-   must pre-allocate the space used and pass it in. (This is done so
-   you can ALLOCA () the space.)  You need to allocate (2 * len) bytes
-   of TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUN_STORAGE, where LEN is the length of the dynarr.
-
-   Returns the number of runs actually used. */
-
-static int
-separate_textual_runs (unsigned char *text_storage,
-		       struct textual_run *run_storage,
-		       CONST Ichar *str, Charcount len)
-{
-  Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
-					  possible valid charset when
-					  MULE is not defined */
-  int runs_so_far = 0;
-  int i;
-#ifdef MULE
-  struct ccl_program char_converter;
-  int need_ccl_conversion = 0;
-#endif
-
-  for (i = 0; i < len; i++)
-    {
-      Ichar ch = str[i];
-      Lisp_Object charset;
-      int byte1, byte2;
-      int dimension;
-      int graphic;
-
-      BREAKUP_ICHAR (ch, charset, byte1, byte2);
-      dimension = XCHARSET_DIMENSION (charset);
-      graphic   = XCHARSET_GRAPHIC   (charset);
-
-      if (!EQ (charset, prev_charset))
-	{
-	  run_storage[runs_so_far].ptr       = text_storage;
-	  run_storage[runs_so_far].charset   = charset;
-	  run_storage[runs_so_far].dimension = dimension;
-
-	  if (runs_so_far)
-	    {
-	      run_storage[runs_so_far - 1].len =
-		text_storage - run_storage[runs_so_far - 1].ptr;
-	      if (run_storage[runs_so_far - 1].dimension == 2)
-		run_storage[runs_so_far - 1].len >>= 1;
-	    }
-	  runs_so_far++;
-	  prev_charset = charset;
-#ifdef MULE
-	  {
-	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
-	    need_ccl_conversion = !NILP (ccl_prog);
-	    if (need_ccl_conversion)
-	      setup_ccl_program (&char_converter, ccl_prog);
-	  }
-#endif
-	}
-
-      if (graphic == 0)
-	{
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else if (graphic == 1)
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
-	}
-#ifdef MULE
-      if (need_ccl_conversion)
-	{
-	  char_converter.reg[0] = XCHARSET_ID (charset);
-	  char_converter.reg[1] = byte1;
-	  char_converter.reg[2] = byte2;
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
-	  byte1 = char_converter.reg[1];
-	  byte2 = char_converter.reg[2];
-	}
-#endif
-      *text_storage++ = (unsigned char) byte1;
-      if (dimension == 2)
-	*text_storage++ = (unsigned char) byte2;
-    }
-
-  if (runs_so_far)
-    {
-      run_storage[runs_so_far - 1].len =
-	text_storage - run_storage[runs_so_far - 1].ptr;
-      if (run_storage[runs_so_far - 1].dimension == 2)
-	run_storage[runs_so_far - 1].len >>= 1;
-    }
-
-  return runs_so_far;
-}
+#include "redisplay-xlike-inc.c"
 
 /****************************************************************************/
 /*                                                                          */
@@ -320,7 +214,8 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
       xpos = rb->xpos;
       width = 0;
       if (rb->type == RUNE_CHAR)
-	charset = ichar_charset (rb->object.chr.ch);
+	/* @@#### fix me */
+	charset = ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
     }
 
   if (end < 0)
@@ -333,7 +228,9 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  /* @@#### fix me */
+	  && EQ (charset,
+		 ichar_charset_obsolete_me_baby_please (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -356,7 +253,9 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      /* @@#### fix me */
+	      charset =
+		ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

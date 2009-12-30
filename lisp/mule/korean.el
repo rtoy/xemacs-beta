@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2005 Ben Wing.
 
 ;; Keywords: multilingual, Korean
 
@@ -28,20 +29,6 @@
 ;; For Korean, the character set KSC5601 is supported.
 
 ;;; Code:
-
-; (make-charset 'korean-ksc5601 
-; 	      "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
-; 	      '(dimension
-; 		2
-; 		registry "KSC5601.1989"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?C
-; 		graphic 0
-; 		short-name "KSC5601"
-; 		long-name "KSC5601 (Korean): ISO-IR-149"
-; 		))
 
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do

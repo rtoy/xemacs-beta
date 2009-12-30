@@ -29,6 +29,72 @@
 
 ;;; Code:
 
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/greek.el
+;; For syntax of Greek
+(loop for c from 54 to 126
+  do (let ((ch (make-char 'greek-iso8859-7 c)))
+       ;; There are gaps in the ISO8859-7 encoding.
+       (when ch
+	 (modify-syntax-entry ch "w"))))
+(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
+(modify-syntax-entry (make-char 'greek-iso8859-7 #xb7) ".") ;?,F7(B
+(modify-syntax-entry (make-char 'greek-iso8859-7 #xbb) ".") ;?,F;(B
+(modify-syntax-entry (make-char 'greek-iso8859-7 #xbd) ".") ;?,F=(B
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; GREEK
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; (make-coding-system
+;;  'greek-iso-8bit 2 ?7
+;;  "ISO 2022 based 8-bit encoding for Greek (MIME:ISO-8859-7)"
+;;  '(ascii greek-iso8859-7 nil nil
+;;    nil nil nil nil nil nil nil)
+;;  '((safe-charsets ascii greek-iso8859-7)
+;;    (mime-charset . iso-8859-7)))
+
+;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/greek.el~base.b_ErU8
+; (make-charset 'greek-iso8859-7 
+; 	      "Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-7"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?F
+; 		graphic 1
+; 		short-name "RHP of ISO8859/7"
+; 		long-name "RHP of Greek (ISO 8859-7): ISO-IR-126"
+; 		))
+
+;; For syntax of Greek
+(loop for c from 54 to 126
+      do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
+(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
+(modify-syntax-entry ?,F7(B ".")
+(modify-syntax-entry ?,F;(B ".")
+(modify-syntax-entry ?,F=(B ".")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; GREEK
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; (make-coding-system
+;;  'greek-iso-8bit 2 ?7
+;;  "ISO 2022 based 8-bit encoding for Greek (MIME:ISO-8859-7)"
+;;  '(ascii greek-iso8859-7 nil nil
+;;    nil nil nil nil nil nil nil)
+;;  '((safe-charsets ascii greek-iso8859-7)
+;;    (mime-charset . iso-8859-7)))
+
+;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
+=======
 ;; Case table:
 (loop
   for (upper lower)
@@ -117,6 +183,7 @@
       (make-char 'greek-iso8859-7 greek)
       (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
       syntax-table))
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/greek.el~other.YiIFun
 
 (make-coding-system
  'iso-8859-7 'fixed-width "ISO-8859-7 (Greek)"

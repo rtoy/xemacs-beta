@@ -1,6 +1,6 @@
 /* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -98,7 +98,8 @@ Use the following functions/macros:
 
    int Dynarr_largest(d)
       [MACRO] Return the maximum value that Dynarr_length(d) would
-      ever have returned.
+      ever have returned.  This is used esp. in the redisplay code,
+      which reuses dynarrs for performance reasons.
 
    type Dynarr_at(d, i)
       [MACRO] Return the element at the specified index (no bounds checking
@@ -125,6 +126,49 @@ Use the following global variable:
 
 #include <config.h>
 #include "lisp.h"
+
+/* ------------------------ dynamic arrays ------------------- */
+
+static const struct memory_description int_dynarr_description_1[] = {
+  XD_DYNARR_DESC (int_dynarr, &int_description),
+  { XD_END }
+};
+
+const struct sized_memory_description int_dynarr_description = {
+  sizeof (int_dynarr),
+  int_dynarr_description_1
+};
+
+static const struct memory_description unsigned_char_dynarr_description_1[] = {
+  XD_DYNARR_DESC (unsigned_char_dynarr, &unsigned_char_description),
+  { XD_END }
+};
+
+const struct sized_memory_description unsigned_char_dynarr_description = {
+  sizeof (unsigned_char_dynarr),
+  unsigned_char_dynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_dynarr_description_1[] = {
+  XD_DYNARR_DESC (Lisp_Object_dynarr, &lisp_object_description),
+  { XD_END }
+};
+
+/* Not static; used in mule-coding.c */
+const struct sized_memory_description Lisp_Object_dynarr_description = {
+  sizeof (Lisp_Object_dynarr),
+  Lisp_Object_dynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_dynarr_description_1[] = {
+  XD_DYNARR_DESC (Lisp_Object_pair_dynarr, &Lisp_Object_pair_description),
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_dynarr_description = {
+  sizeof (Lisp_Object_pair_dynarr),
+  Lisp_Object_pair_dynarr_description_1
+};
 
 static int Dynarr_min_size = 8;
 
@@ -217,30 +261,33 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
 {
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
   
-  Dynarr_resize (dy, dy->cur+len);
+  if (dy->len + len > dy->max)
+    Dynarr_resize (dy, dy->len + len);
 #if 0
   /* WTF? We should be catching these problems. */
   /* Silently adjust start to be valid. */
-  if (start > dy->cur)
-    start = dy->cur;
+  if (start > dy->len)
+    start = dy->len;
   else if (start < 0)
     start = 0;
 #else
-  assert (start >= 0 && start <= dy->cur);
+  /* #### This could conceivably be wrong, if code wants to access stuff
+     between len and largest. */
+  type_checking_assert (start >= 0 && start <= dy->len);
 #endif
 
-  if (start != dy->cur)
+  if (start != dy->len)
     {
       memmove ((char *) dy->base + (start + len)*dy->elsize,
 	       (char *) dy->base + start*dy->elsize,
-	       (dy->cur - start)*dy->elsize);
+	       (dy->len - start)*dy->elsize);
     }
   if (el)
     memcpy ((char *) dy->base + start*dy->elsize, el, len*dy->elsize);
-  dy->cur += len;
+  dy->len += len;
 
-  if (dy->cur > dy->largest)
-    dy->largest = dy->cur;
+  if (dy->len > dy->largest)
+    dy->largest = dy->len;
 }
 
 void
@@ -248,11 +295,11 @@ Dynarr_delete_many (void *d, int start, int len)
 {
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
 
-  assert (start >= 0 && len >= 0 && start + len <= dy->cur);
+  type_checking_assert (start >= 0 && len >= 0 && start + len <= dy->len);
   memmove ((char *) dy->base + start*dy->elsize,
 	   (char *) dy->base + (start + len)*dy->elsize,
-	   (dy->cur - start - len)*dy->elsize);
-  dy->cur -= len;
+	   (dy->len - start - len)*dy->elsize);
+  dy->len -= len;
 }
 
 void
@@ -304,7 +351,7 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
       Bytecount malloc_used = malloced_storage_size (dy->base,
 						     dy->elsize * dy->max, 0);
       /* #### This may or may not be correct.  Some Dynarrs would
-	 prefer that we use dy->cur instead of dy->largest here. */
+	 prefer that we use dy->len instead of dy->largest here. */
       Bytecount was_requested = dy->elsize * dy->largest;
       Bytecount dynarr_overhead = dy->elsize * (dy->max - dy->largest);
 
@@ -322,6 +369,51 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+void
+mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn)
+{
+  int i;
+  for (i = 0; i < Dynarr_length (dyn); i++)
+    mark_object (Dynarr_at (dyn, i));
+}
+
+/* --------------------------- static dynarrs ------------------------- */
+
+/* Add a number of contiguous elements to the array starting at START. */
+void
+Stynarr_insert_many_1 (void *d, const void *els, int len, int start,
+		       int num_static, int elsize, int staticoff)
+{
+  Stynarr *dy = (Stynarr *) d;
+  type_checking_assert (start >= 0 && start <= dy->nels);
+  /* If we'll need Dynarr space, make sure the Dynarr is there */
+  if (len + dy->nels > num_static && !dy->els)
+    VOIDP_CAST (dy->els) = Dynarr_newf (elsize);
+  /* Entirely within Dynarr? */
+  if (start >= num_static)
+    Dynarr_insert_many (dy->els, els, len, start - num_static);
+  /* Entirely within static part? */
+  else if (len + dy->nels <= num_static)
+    {
+      if (start != dy->nels)
+	{
+	  memmove ((char *) dy + staticoff + (start + len)*elsize,
+		   (char *) dy + staticoff + start*elsize,
+		   (dy->nels - start)*elsize);
+	}
+      if (els)
+	memcpy ((char *) dy + staticoff + start*elsize, els, len*elsize);
+    }
+  /* Else, partly within static, partly within Dynarr */
+  else
+    {
+      /* #### Finish me */
+      ABORT ();
+    }
+}
+
+/* ---------------------- stack-like malloc ----------------------- */
 
 /* Version of malloc() that will be extremely efficient when allocation
    nearly always occurs in LIFO (stack) order.
@@ -353,7 +445,8 @@ stack_like_malloc (Bytecount size)
   else
     this_one = Dynarr_new (char);
   Dynarr_add (stack_like_in_use_list, this_one);
-  Dynarr_resize (this_one, size);
+  Dynarr_reset (this_one);
+  Dynarr_add_many (this_one, 0, size);
   return Dynarr_atp (this_one, 0);
 }
 
