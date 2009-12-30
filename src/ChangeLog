@@ -1,6 +1,85 @@
-<<<<<<< local
 2005-11-22  Ben Wing  <ben@xemacs.org>
-=======
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (alloc_sized_lrecord_1):
+	* alloc.c (alloc_sized_lrecord):
+	* alloc.c (noseeum_alloc_sized_lrecord):
+	* alloc.c (alloc_lrecord):
+	* alloc.c (old_alloc_sized_lcrecord):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (alloc_automanaged_sized_lcrecord):
+	* buffer.c (allocate_buffer):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* casetab.c (allocate_case_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (make_char_table_entry):
+	* chartab.c (copy_char_table_entry):
+	* chartab.c (Fcopy_char_table):
+	* console.c (allocate_console):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (make_weak_list):
+	* data.c (make_weak_box):
+	* data.c (make_ephemeron):
+	* database.c (allocate_database):
+	* device-msw.c (allocate_devmode):
+	* device.c (allocate_device):
+	* dialog-msw.c (handle_question_dialog_box):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (Fcopy_hash_table):
+	* emacs.c (main_1):
+	* event-stream.c:
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (free_command_builder):
+	* event-stream.c (mark_timeout):
+	* event-stream.c (event_stream_generate_wakeup):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* event-stream.c (event_stream_disable_wakeup):
+	* event-stream.c (reinit_vars_of_event_stream):
+	* extents.c (allocate_extent_auxiliary):
+	* extents.c (allocate_extent_info):
+	* extents.c (copy_extent):
+	* faces.c (allocate_face):
+	* file-coding.c (allocate_coding_system):
+	* frame.c (allocate_frame_core):
+	* glyphs.c (allocate_image_instance):
+	* glyphs.c (allocate_glyph):
+	* gui.c (allocate_gui_item):
+	* keymap.c (make_keymap):
+	* lrecord.h:
+	* lrecord.h (ALLOC_LCRECORD):
+	* lrecord.h (ALLOC_SIZED_LCRECORD):
+	* lrecord.h (struct old_lcrecord_header):
+	* lrecord.h (old_alloc_lcrecord_type):
+	* lrecord.h (alloc_lrecord_type):
+	* lrecord.h (noseeum_alloc_lrecord_type):
+	* lstream.c (Lstream_new):
+	* mule-charset.c (make_charset):
+	* objects.c (Fmake_color_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (reinit_vars_of_objects):
+	* opaque.c (make_opaque):
+	* opaque.c (make_opaque_ptr):
+	* process.c (make_process_internal):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* scrollbar.c (create_scrollbar_instance):
+	* specifier.c (make_specifier_internal):
+	* symbols.c (Fdefvaralias):
+	* toolbar.c (update_toolbar_button):
+	* tooltalk.c (make_tooltalk_message):
+	* tooltalk.c (make_tooltalk_pattern):
+	* ui-gtk.c (allocate_ffi_data):
+	* ui-gtk.c (allocate_emacs_gtk_object_data):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* window.c (allocate_window):
+	* window.c (new_window_mirror):
+	* window.c (make_dummy_parent):
+	Create a simpler interface (ALLOC_LCRECORD) for allocating 
+
 2009-12-21  Jerry James  <james@xemacs.org>
 
 	* config.h.in: Remove OffiX support.
@@ -3506,24 +3585,8 @@
 	* event-stream.c (copy_command_builder): Also copy the console.
 
 2006-04-23  Aidan Kehoe  <kehoea@parhasard.net>
->>>>>>> other
 
 	* alloc.c:
-<<<<<<< local
-	* alloc.c (assert_proper_sizing):
-	* alloc.c (alloc_sized_lrecord_1):
-	* alloc.c (alloc_sized_lrecord):
-	* alloc.c (noseeum_alloc_sized_lrecord):
-	* alloc.c (alloc_lrecord):
-	* alloc.c (old_alloc_sized_lcrecord):
-	* alloc.c (make_vector_internal):
-	* alloc.c (make_bit_vector_internal):
-	* alloc.c (alloc_automanaged_sized_lcrecord):
-	* buffer.c (allocate_buffer):
-	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
-	* buffer.c (common_init_complex_vars_of_buffer):
-	* casetab.c (allocate_case_table):
-=======
 	* data.c:
 	* data.c (Fconsp):
 	* data.c (Flistp):
@@ -3943,23 +4006,7 @@
 
 2005-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
->>>>>>> other
 	* chartab.c (Fmake_char_table):
-<<<<<<< local
-	* chartab.c (make_char_table_entry):
-	* chartab.c (copy_char_table_entry):
-	* chartab.c (Fcopy_char_table):
-	* console.c (allocate_console):
-	* console.c (DEFVAR_CONSOLE_LOCAL_1):
-	* console.c (common_init_complex_vars_of_console):
-	* data.c (make_weak_list):
-	* data.c (make_weak_box):
-	* data.c (make_ephemeron):
-	* database.c (allocate_database):
-	* device-msw.c (allocate_devmode):
-	* device.c (allocate_device):
-	* dialog-msw.c (handle_question_dialog_box):
-=======
 	Set the default character class to word, not whitespace.
 
 2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
@@ -4687,56 +4734,8 @@
 
 	* elhash.c:
 	* elhash.c (htentry):
->>>>>>> other
 	* elhash.c (make_general_lisp_hash_table):
 	* elhash.c (Fcopy_hash_table):
-<<<<<<< local
-	* emacs.c (main_1):
-	* event-stream.c:
-	* event-stream.c (allocate_command_builder):
-	* event-stream.c (free_command_builder):
-	* event-stream.c (mark_timeout):
-	* event-stream.c (event_stream_generate_wakeup):
-	* event-stream.c (event_stream_resignal_wakeup):
-	* event-stream.c (event_stream_disable_wakeup):
-	* event-stream.c (reinit_vars_of_event_stream):
-	* extents.c (allocate_extent_auxiliary):
-	* extents.c (allocate_extent_info):
-	* extents.c (copy_extent):
-	* faces.c (allocate_face):
-	* file-coding.c (allocate_coding_system):
-	* frame.c (allocate_frame_core):
-	* glyphs.c (allocate_image_instance):
-	* glyphs.c (allocate_glyph):
-	* gui.c (allocate_gui_item):
-	* keymap.c (make_keymap):
-	* lrecord.h:
-	* lrecord.h (ALLOC_LCRECORD):
-	* lrecord.h (ALLOC_SIZED_LCRECORD):
-	* lrecord.h (struct old_lcrecord_header):
-	* lrecord.h (old_alloc_lcrecord_type):
-	* lrecord.h (alloc_lrecord_type):
-	* lrecord.h (noseeum_alloc_lrecord_type):
-	* lstream.c (Lstream_new):
-	* mule-charset.c (make_charset):
-	* objects.c (Fmake_color_instance):
-	* objects.c (Fmake_font_instance):
-	* objects.c (reinit_vars_of_objects):
-	* opaque.c (make_opaque):
-	* opaque.c (make_opaque_ptr):
-	* process.c (make_process_internal):
-	* rangetab.c (Fmake_range_table):
-	* rangetab.c (Fcopy_range_table):
-	* scrollbar.c (create_scrollbar_instance):
-	* specifier.c (make_specifier_internal):
-	* symbols.c (Fdefvaralias):
-	* toolbar.c (update_toolbar_button):
-	* tooltalk.c (make_tooltalk_message):
-	* tooltalk.c (make_tooltalk_pattern):
-	* ui-gtk.c (allocate_ffi_data):
-	* ui-gtk.c (allocate_emacs_gtk_object_data):
-	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
-=======
 	* elhash.c (resize_hash_table):
 	* elhash.c (pdump_reorganize_hash_table):
 	* elhash.c (init_elhash_once_early):
@@ -4907,17 +4906,8 @@
 	* syntax.h (struct syntax_cache): New Lisp object: syntax_cache.
 
 	* window.c:
->>>>>>> other
 	* window.c (allocate_window):
-<<<<<<< local
-	* window.c (new_window_mirror):
-=======
->>>>>>> other
 	* window.c (make_dummy_parent):
-<<<<<<< local
-	Create a simpler interface (ALLOC_LCRECORD) for allocating 
-
-=======
 	* window.c (syms_of_window): New Lisp objects: face_cachel,
 	fache_cachel_dynarr, glyph_cachel, and glyph_cachel_dynarr.
 
@@ -4963,7 +4953,6 @@
 	object has no print method.
 	* toolbar.c: Use default_object_printer for toolbar-button.
 
->>>>>>> other
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* mule-coding.c (FROB):
