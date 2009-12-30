@@ -28,6 +28,24 @@
 
 ;;; Code:
 
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/lao.el
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/lao.el~base.SzLkOR
+;; Lao script.
+;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
+(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
+	      '(dimension
+		1
+		registry "MuleLao-1"
+		chars 94
+		columns 1
+		direction l2r
+		final ?1
+		graphic 0
+		short-name "Lao"
+		long-name "Lao"
+		))
+
+=======
 ;; Lao script.
 ;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
 (make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
@@ -43,6 +61,7 @@
 		long-name "Lao"
 		))
 
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/lao.el~other.7K_OjI
 ; (make-coding-system
 ;  'lao 2 ?L
 ;  "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"
@@ -68,11 +87,11 @@
 	 (features lao-util)
 	 (documentation . t)))
 
-(put-char-table ?(1;(B t use-default-ascent)
-(put-char-table ?(1=(B t use-default-ascent)
-(put-char-table ?(1?(B t use-default-ascent)
-(put-char-table ?(1B(B t use-default-ascent)
-(put-char-table ?(1\(B t ignore-relative-composition)
+(put-char-table (make-char 'lao #x3b) t use-default-ascent) ;?(1;(B
+(put-char-table (make-char 'lao #x3d) t use-default-ascent) ;?(1=(B
+(put-char-table (make-char 'lao #x3f) t use-default-ascent) ;?(1?(B
+(put-char-table (make-char 'lao #x42) t use-default-ascent) ;?(1B(B
+(put-char-table (make-char 'lao #x5c) t ignore-relative-composition) ;?(1\(B
 
 ;; Register a function to compose Lao characters.
 (put-char-table 'lao

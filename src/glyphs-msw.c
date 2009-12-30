@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "charset.h"
 #include "device-impl.h"
 #include "elhash.h"
 #include "faces.h"
@@ -1818,8 +1819,10 @@ charset_of_text (Lisp_Object USED_IF_MULE (text))
   for (p = XSTRING_DATA (text); *p;)
     {
       Ichar c = itext_ichar (p);
-      if (!EQ (ichar_charset (c), Vcharset_ascii))
-	return ichar_charset (c);
+      /* @@#### fix me */
+      Lisp_Object charset = ichar_charset_obsolete_me_baby_please (c);
+      if (!EQ (charset, Vcharset_ascii))
+	return charset;
       INC_IBYTEPTR (p);
     }
 #endif /* MULE */

@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "charset.h"
 #include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"

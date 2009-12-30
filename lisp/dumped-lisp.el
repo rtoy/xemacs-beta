@@ -160,7 +160,6 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
-       "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
 	 '("mule/mule-charset"
@@ -169,17 +168,25 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
 	   ))
+       ;; Initialize Unicode and load the translation tables.  This requires
+       ;; that all charsets be created (happens in mule/mule-charset).
+       "unicode"
        ;; may initialize coding systems
        (when (featurep '(and mule x)) "mule/mule-x-init")
        (when (featurep '(and mule tty)) "mule/mule-tty-init")
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
 	 "mule/mule-win32-init")
        "code-init" ; set up defaults
-       ;; All files after this can have extended characters in them.
+
+;;; ***************************************************************************
+;;;           All files after this can have extended characters in them.
+;;; ***************************************************************************
+
        (when (featurep 'mule)
 	 '("mule/mule-category"
 	   "mule/kinsoku"
 	   ))
+       (when (featurep 'ccl) "mule/mule-ccl")
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site
@@ -220,6 +227,7 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/thai-xtis"
 	   "mule/tibetan"
 	   "mule/vietnamese"
+	   "mule/windows"
 	   ))
 	    
 	;; Specialized language support

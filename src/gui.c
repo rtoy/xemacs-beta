@@ -28,8 +28,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "elhash.h"
 #include "gui.h"
 #include "menubar.h"
@@ -696,7 +696,7 @@ print_gui_item (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Gui_Item *g = XGUI_ITEM (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<gui-item 0x%x>", g->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string (printcharfun, "#<gui-item 0x%x>", g->header.uid);
 }

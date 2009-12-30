@@ -3140,20 +3140,6 @@ out_of_memory (const CIbyte *reason, Lisp_Object frob)
   signal_error (Qout_of_memory, reason, frob);
 }
 
-DOESNT_RETURN
-printing_unreadable_object (const CIbyte *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  va_start (args, fmt);
-  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  signal_error (Qprinting_unreadable_object, 0, obj);
-}
-
 
 /************************************************************************/
 /*			      User commands				*/

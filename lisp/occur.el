@@ -320,11 +320,16 @@ the matching is case-sensitive."
   (interactive (occur-read-primary-args))
   (occur-1 regexp nlines (list (current-buffer))))
 
+(defvar ido-ignore-item-temp-list)
 ;;;###autoload
 (defun multi-occur (bufs regexp &optional nlines)
   "Show all lines in buffers BUFS containing a match for REGEXP.
 This function acts on multiple buffers; otherwise, it is exactly like
 `occur'."
+<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
+  (defvar ido-ignore-item-temp-list)
+=======
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
   (interactive
    (cons
     (let* ((bufs (list (read-buffer "First buffer to search: "
@@ -467,9 +472,19 @@ See also `multi-occur'."
 		    (setq marker (make-marker))
 		    (set-marker marker matchbeg)
 		    (if (and keep-props
+<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
+			     (if (boundp 'jit-lock-mode) jit-lock-mode)
+=======
 			     (if-boundp 'jit-lock-mode jit-lock-mode)
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
 			     (text-property-not-all begpt endpt 'fontified t))
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/occur.el
+			(if-fboundp 'jit-lock-fontify-now
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
+			(if (fboundp 'jit-lock-fontify-now)
+=======
 			(if-fboundp #'jit-lock-fontify-now
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
 			    (jit-lock-fontify-now begpt endpt)))
 		    (setq curstring (buffer-substring begpt endpt))
 		    ;; Depropertize the string, and maybe

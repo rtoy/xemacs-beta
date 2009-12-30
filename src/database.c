@@ -216,7 +216,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Database *db = XDATABASE (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<database 0x%x>", db->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<database \"%s\" (%s/%s/",
 			 3, db->fname, db->funcs->get_type (db),

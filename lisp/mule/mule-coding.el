@@ -1,11 +1,11 @@
-;;; mule-coding.el --- Coding-system functions for Mule. -*- coding: iso-2022-7bit; -*-
+;;; mule-coding.el --- Coding-system functions for Mule.
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2005 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -74,13 +74,15 @@
   "Return the 'no-iso6429 property of CODING-SYSTEM."
   (coding-system-property coding-system 'no-iso6429))
 
-(defun coding-system-ccl-encode (coding-system)
-  "Return the CCL 'encode property of CODING-SYSTEM."
-  (coding-system-property coding-system 'encode))
+(when (featurep 'ccl)
+  (defun coding-system-ccl-encode (coding-system)
+    "Return the CCL 'encode property of CODING-SYSTEM."
+    (coding-system-property coding-system 'encode))
 
-(defun coding-system-ccl-decode (coding-system)
-  "Return the CCL 'decode property of CODING-SYSTEM."
-  (coding-system-property coding-system 'decode))
+  (defun coding-system-ccl-decode (coding-system)
+    "Return the CCL 'decode property of CODING-SYSTEM."
+    (coding-system-property coding-system 'decode))
+  )
 
 (defun coding-system-iso2022-charset (coding-system register)
 "Return the charset initially designated to REGISTER in CODING-SYSTEM.
@@ -155,6 +157,20 @@ The allowable range of REGISTER is 0 through 3."
 
 ;; compatibility for old XEmacsen
 (define-coding-system-alias 'iso-2022-7 'iso-2022-7bit)
+
+(make-coding-system
+ 'iso-2022-8bit-preserve 'iso2022
+ "ISO 2022 8-bit, ISO-2022-preserving"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-1
+   short t
+   iso2022-preserve t
+   mnemonic "ISO8-Preserve"
+   documentation "ISO-2022-based 8-bit encoding with I/O preservation.
+This uses private Unicode characters, as necessary, to preserve the particular
+ISO-2022 charset upon output.  This will make such characters unusable
+in normal editing."
+   ))
 
 (make-coding-system
  'iso-2022-8 'iso2022

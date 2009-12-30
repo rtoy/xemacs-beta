@@ -169,8 +169,7 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun,
   struct console *con = XCONSOLE (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<console %s 0x%x>",
-				XSTRING_DATA (con->name), con->header.uid);
+    printing_unreadable_lcrecord (obj, XSTRING_DATA (con->name));
 
   write_fmt_string (printcharfun, "#<%s-console",
 		    !CONSOLE_LIVE_P (con) ? "dead" : CONSOLE_TYPE_NAME (con));

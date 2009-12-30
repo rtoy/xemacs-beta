@@ -1,6 +1,6 @@
-;;; unicode.el --- Unicode support -*- coding: iso-2022-7bit; -*-
+;;; unicode.el --- Unicode support
 
-;; Copyright (C) 2001, 2002 Ben Wing.
+;; Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 ;; Keywords: multilingual, Unicode
 
@@ -29,6 +29,62 @@
 
 ;;; Code:
 
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/unicode.el
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~base.48NOg4
+; ;; Subsets of Unicode.
+
+; #### what is this bogosity ... "chars 96, final ?2" !!?!
+; (make-charset 'mule-unicode-2500-33ff 
+; 	      "Unicode characters of the range U+2500..U+33FF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?2
+; 		graphic 0
+; 		short-name "Unicode subset 2"
+; 		long-name "Unicode subset (U+2500..U+33FF)"
+; 		))
+
+
+; (make-charset 'mule-unicode-e000-ffff 
+; 	      "Unicode characters of the range U+E000..U+FFFF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?3
+; 		graphic 0
+; 		short-name "Unicode subset 3"
+; 		long-name "Unicode subset (U+E000+FFFF)"
+; 		))
+
+
+; (make-charset 'mule-unicode-0100-24ff 
+; 	      "Unicode characters of the range U+0100..U+24FF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?1
+; 		graphic 0
+; 		short-name "Unicode subset"
+; 		long-name "Unicode subset (U+0100..U+24FF)"
+; 		))
+
+
+;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
+(defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
+  "[INTERNAL] Whether to load the Unicode tables at dump time.
+Setting this at run-time does nothing.")
+
+=======
 ;; GNU Emacs has the charsets: 
 
 ;;     mule-unicode-2500-33ff
@@ -49,12 +105,13 @@
   "[INTERNAL] Whether to load the Unicode tables at dump time.
 Setting this at run-time does nothing.")
 
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~other.63evG-
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
 (defun load-unicode-tables ()
   "Initialize the Unicode translation tables for all standard charsets."
   (let ((parse-args
-	 '(("unicode/unicode-consortium"
+	 `(("unicode/unicode-consortium"
 	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
 	    ;; charsets' types, trying to load them results in out-of-range
 	    ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
@@ -63,74 +120,83 @@ Setting this at run-time does nothing.")
 	    ;; ("8859-1.TXT" control-1 #x80 #x9F #x-80)
             ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
 	    ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
-	    ("8859-1.TXT" latin-iso8859-1 #xA0 #xFF #x-80)
-	    ;; "8859-10.TXT"
-	    ;; "8859-13.TXT"
-	    ("8859-14.TXT" latin-iso8859-14 #xA0 #xFF #x-80)
-	    ("8859-15.TXT" latin-iso8859-15 #xA0 #xFF #x-80)
-	    ("8859-16.TXT" latin-iso8859-16 #xA0 #xFF #x-80)
-	    ("8859-2.TXT" latin-iso8859-2 #xA0 #xFF #x-80)
-	    ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
-	    ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)
-	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0 #xFF #x-80)
-	    ("8859-6.TXT" arabic-iso8859-6 #xA0 #xFF #x-80)
-	    ("8859-7.TXT" greek-iso8859-7 #xA0 #xFF #x-80)
-	    ("8859-8.TXT" hebrew-iso8859-8 #xA0 #xFF #x-80)
-	    ("8859-9.TXT" latin-iso8859-9 #xA0 #xFF #x-80)
-	    ;; charset for Big5 does not matter; specifying `big5' will
-	    ;; automatically make the right thing happen
-	    ("BIG5.TXT" chinese-big5-1 nil nil nil big5)
-	    ("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
-	    ("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
-	    ;; "CP1250.TXT" 
-	    ;; "CP1251.TXT" 
-	    ;; "CP1252.TXT" 
-	    ;; "CP1253.TXT" 
-	    ;; "CP1254.TXT" 
-	    ;; "CP1255.TXT" 
-	    ;; "CP1256.TXT" 
-	    ;; "CP1257.TXT" 
-	    ;; "CP1258.TXT" 
-	    ;; "CP874.TXT" 
-	    ;; "CP932.TXT" 
-	    ;; "CP936.TXT" 
-	    ;; "CP949.TXT" 
-	    ;; "CP950.TXT" 
+	    ;; @@#### Add more charsets, esp. things like KOI8-R; take them
+	    ;; from emacs-unicode-2, among other things.
+	    ("8859-1.TXT" latin-iso8859-1 #xA0)
+	    ("8859-10.TXT" latin-iso8859-10 #xA0)
+	    ("8859-13.TXT" latin-iso8859-13 #xA0)
+	    ("8859-14.TXT" latin-iso8859-14 #xA0)
+	    ("8859-15.TXT" latin-iso8859-15 #xA0)
+	    ("8859-16.TXT" latin-iso8859-16 #xA0)
+	    ("8859-2.TXT" latin-iso8859-2 #xA0)
+	    ("8859-3.TXT" latin-iso8859-3 #xA0)
+	    ("8859-4.TXT" latin-iso8859-4 #xA0)
+	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0)
+	    ("8859-6.TXT" arabic-iso8859-6 #xA0)
+	    ("8859-7.TXT" greek-iso8859-7 #xA0)
+	    ("8859-8.TXT" hebrew-iso8859-8 #xA0)
+	    ("8859-9.TXT" latin-iso8859-9 #xA0)
+	    ,@(if (find-charset 'chinese-big5-1)
+		  ;; Under old-Mule, charset for Big5 does not matter;
+		  ;; specifying `big5' will automatically make the right
+		  ;; thing happen.
+		  '(("BIG5.TXT" chinese-big5-1 nil nil nil big5))
+		'(("BIG5.TXT" chinese-big5)))
+	    ;; Currently, these files are based on CNS 11643-1986
+	    ;; (with planes 1, 2, and 14), rather than CNS 11643-1992,
+	    ;; with planes 1-7.  See below.
+	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
+	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
+	    ("CP1250.TXT" latin-windows-1250 #x80)
+	    ("CP1251.TXT" cyrillic-windows-1251 #x80)
+	    ("CP1252.TXT" latin-windows-1252 #x80)
+	    ("CP1253.TXT" greek-windows-1253 #x80)
+	    ("CP1254.TXT" latin-windows-1254 #x80)
+	    ("CP1255.TXT" hebrew-windows-1255 #x80)
+	    ("CP1256.TXT" arabic-windows-1256 #x80)
+	    ("CP1257.TXT" latin-windows-1257 #x80)
+	    ("CP1258.TXT" latin-windows-1258 #x80)
+	    ("CP874.TXT" thai-windows-874 #x80)
+	    ("CP932.TXT" japanese-windows-932 #x8000)
+	    ("CP936.TXT" chinese-windows-936 #x8000)
+	    ("CP949.TXT" korean-windows-949 #x8000)
+	    ("CP950.TXT" chinese-windows-950 #x8000)
 	    ;; "GB12345.TXT" 
 	    ("GB2312.TXT" chinese-gb2312)
 	    ;; "HANGUL.TXT"
-	    ;; #### shouldn't JIS X 0201's upper limit be 7f?
-	    ("JIS0201.TXT" latin-jisx0201 #x21 #x80)
-	    ("JIS0201.TXT" katakana-jisx0201 #xA0 #xFF #x-80)
+	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
+	    ("JIS0201.TXT" katakana-jisx0201 #xA0)
 	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
 	    ("JIS0212.TXT" japanese-jisx0212)
-	    ;; "JOHAB.TXT" 
-	    ;; "KOI8-R.TXT" 
+	    ("JOHAB.TXT" korean-johab #x8000)
+	    ("KOI8-R.TXT" cyrillic-koi8-r #x80)
 	    ;; "KSC5601.TXT" 
 	    ;; note that KSC5601.TXT as currently distributed is NOT what
 	    ;; it claims to be!  see comments in KSX1001.TXT.
 	    ("KSX1001.TXT" korean-ksc5601)
 	    ;; "OLD5601.TXT" 
-	    ;; "SHIFTJIS.TXT"
+	    ,@(when (find-charset 'japanese-shift-jis)
+		'(("SHIFTJIS.TXT" japanese-shift-jis #x8000)))
 	    )
+
 	   ("unicode/mule-ucs"
-	    ;; #### we don't support surrogates?!??
-	    ;; use these instead of the above ones once we support surrogates
-	    ;;("chinese-cns11643-1.txt" chinese-cns11643-1)
-	    ;;("chinese-cns11643-2.txt" chinese-cns11643-2)
-	    ;;("chinese-cns11643-3.txt" chinese-cns11643-3)
-	    ;;("chinese-cns11643-4.txt" chinese-cns11643-4)
-	    ;;("chinese-cns11643-5.txt" chinese-cns11643-5)
-	    ;;("chinese-cns11643-6.txt" chinese-cns11643-6)
-	    ;;("chinese-cns11643-7.txt" chinese-cns11643-7)
+	    ("chinese-cns11643-1.txt" chinese-cns11643-1)
+	    ("chinese-cns11643-2.txt" chinese-cns11643-2)
+	    ("chinese-cns11643-3.txt" chinese-cns11643-3)
+	    ("chinese-cns11643-4.txt" chinese-cns11643-4)
+	    ("chinese-cns11643-5.txt" chinese-cns11643-5)
+	    ("chinese-cns11643-6.txt" chinese-cns11643-6)
+	    ("chinese-cns11643-7.txt" chinese-cns11643-7)
 	    ("chinese-sisheng.txt" chinese-sisheng)
 	    ("ethiopic.txt" ethiopic)
-	    ("indian-is13194.txt" indian-is13194)
-	    ("ipa.txt" ipa)
-	    ("thai-tis620.txt" thai-tis620)
+	    ("indian-is13194.txt" indian-is13194 nil nil #x80)
+	    ("ipa.txt" ipa nil nil #x80)
+	    ("thai-tis620.txt" thai-tis620 nil nil #x80)
 	    ("tibetan.txt" tibetan)
-	    ("vietnamese-viscii-lower.txt" vietnamese-viscii-lower)
-	    ("vietnamese-viscii-upper.txt" vietnamese-viscii-upper)
+	    ("vietnamese-viscii-lower.txt" vietnamese-viscii-lower
+	     nil nil #x80)
+	    ("vietnamese-viscii-upper.txt" vietnamese-viscii-upper
+	     nil nil #x80)
 	    )
 	   ("unicode/other"
 	    ("lao.txt" lao)
@@ -226,6 +292,20 @@ The second argument must be 'ucs, the third argument is ignored.  "
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
+
+;; Now we always load them at dump time; necessary for Unicode-internal.
+
+; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
+; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
+;   "[INTERNAL] Whether to load the Unicode tables at dump time.
+; Setting this at run-time does nothing.")
+
+;; Load the Unicode tables now!!!
+(when (and (featurep 'mule)
+	   ;load-unicode-tables-at-dump-time
+	   )
+  (let ((data-directory (expand-file-name "etc" source-root)))
+    (load-unicode-tables)))
 
 (make-coding-system
  'utf-16 'unicode
@@ -372,6 +452,36 @@ Standard encoding for representing UTF-8 under MS Windows."
    little-endian t
    need-bom t))
 
+<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/unicode.el
+(defun decode-char (quote-ucs code &optional restriction) 
+  "FSF compatibility--return Mule character with Unicode codepoint `code'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs) 
+	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
+  ;(unicode-to-char code)
+  (make-char code))
+
+(defun encode-char (char quote-ucs &optional restriction)
+  "FSF compatibility--return the Unicode code point of `char'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs)
+	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
+  (char-to-unicode char))
+||||||| /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~base.48NOg4
+(defun decode-char (quote-ucs code &optional restriction) 
+  "FSF compatibility--return Mule character with Unicode codepoint `code'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs) 
+	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
+  (unicode-to-char code))
+
+(defun encode-char (char quote-ucs &optional restriction)
+  "FSF compatibility--return the Unicode code point of `char'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs)
+	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
+  (char-to-unicode char))
+=======
 ;; Now, create jit-ucs-charset-0 entries for those characters in Windows
 ;; Glyph List 4 that would otherwise end up in East Asian character sets.
 ;; 
@@ -625,6 +735,11 @@ mapping from the error sequences to the desired characters.  "
           unicode-invalid-regexp-range frob-unicode-errors-region
           unicode-error-translate-region unicode-query-coding-region
           unicode-query-coding-skip-chars-arg)))
+>>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~other.63evG-
+
+(make-obsolete 'char-octets 'char-to-charset-codepoint)
+(make-obsolete 'char-charset 'char-to-charset-codepoint)
+(make-obsolete 'split-char 'char-to-charset-codepoint)
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version

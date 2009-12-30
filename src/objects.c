@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,7 +43,8 @@ Boston, MA 02111-1307, USA.  */
    If we leave in the Qunbound value, we will probably get crashes. */
 Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
 
-/* Authors: Ben Wing, Chuck Thompson */
+/* Author: Ben Wing; some earlier code from Chuck Thompson, Jamie
+   Zawinski. */
 
 DOESNT_RETURN
 finalose (void *ptr)
@@ -102,8 +103,7 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   if (print_readably)
-    printing_unreadable_object ("#<color-instance 0x%x>",
-	   c->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<color-instance %s", 1, c->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, c->device);
   if (!NILP (c->device)) /* Vthe_null_color_instance */
@@ -319,7 +319,7 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
   if (print_readably)
-    printing_unreadable_object ("#<font-instance 0x%x>", f->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<font-instance %S", 1, f->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, f->device);
   if (!NILP (f->device))
@@ -844,6 +844,32 @@ invalidate_charset_font_caches (Lisp_Object charset)
 
 #endif /* MULE */
 
+/* It's a little non-obvious what's going on here.  Specifically:
+
+   MATCHSPEC is a somewhat bogus way in the specifier mechanism of passing
+   in additional information needed to instantiate some object.  For fonts,
+   it's a cons of (CHARSET . SECOND-STAGE-P).  SECOND-STAGE-P, if set,
+   means "try harder to find an appropriate font" and is a very bogus way
+   of dealing with the fact that it may not be possible to may a charset
+   directly onto a font; it's used esp. under Windows.  @@#### We need to
+   change this so that MATCHSPEC is just a character.
+
+   When redisplay is building up its structure, and needs font info, it
+   calls functions in faces.c such as ensure_face_cachel_complete() (map
+   fonts needed for a string of text) or
+   ensure_face_cachel_contains_charset() (map fonts needed for a charset
+   derived from a single character).  The former function calls the latter;
+   the latter calls face_property_matching_instance(); this constructs the
+   MATCHSPEC and calls specifier_instance_no_quit() twice (first stage and
+   second stage, updating MATCHSPEC appropriately).  That function, in
+   turn, looks up the appropriate specifier method to do the instantiation,
+   which, lo and behold, is this function here (because we set it in
+   initialization using `SPECIFIER_HAS_METHOD (font, instantiate);').  We
+   in turn call the device method `find_charset_font', which maps to
+   mswindows_find_charset_font(), x_find_charset_font(), or similar, in
+   objects-msw.c or the like.
+
+   --ben */
 
 static Lisp_Object
 font_instantiate (Lisp_Object UNUSED (specifier),
