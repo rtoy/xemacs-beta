@@ -1,3 +1,12 @@
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Test much of the functionality of equalp; add a pointer to Paul
+	Dietz' ANSI test suite for this function, converted to Emacs
+	Lisp. Not including the tests themselves in XEmacs because who
+	owns the copyright on the files is unclear and the GCL people
+	didn't respond to my queries. 
+
 2009-12-21  Jerry James  <james@xemacs.org>
 
 	* Dnd/README: Remove references to OffiX drag-and-drop.

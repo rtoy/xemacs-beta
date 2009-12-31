@@ -33,6 +33,11 @@
 	* xemacs-faq.texi (Q1.2.2: What versions of Unix does XEmacs run on?):
 	Ditto.
 
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Equality Predicates): 
+	Document #'equalp here, as well as #'equal and #'eq. 
+
 2009-10-05  Jerry James  <james@xemacs.org>
 
 	* beta.texi (Building XEmacs from a full distribution): Remove

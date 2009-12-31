@@ -2085,14 +2085,81 @@
         (* three one-four-one-five-nine)))
    "checking letf handles #'values in a basic sense"))
 
-(Assert (equalp "hi there" "Hi There")
-	"checking equalp isn't case-sensitive")
-(Assert (equalp 99 99.0)
-	"checking equalp compares numerical values of different types")
-(Assert (null (equalp 99 ?c))
-	"checking equalp does not convert characters to numbers")
-;; Fixed in Hg d0ea57eb3de4.
-(Assert (null (equalp "hi there" [hi there]))
-	"checking equalp doesn't error with string and non-string")
+;; #'equalp tests.
+(let ((string-variable "aBcDeeFgH\u00Edj")
+      (eacute-character ?\u00E9)
+      (Eacute-character ?\u00c9)
+      (+base-chars+ (loop
+		       with res = (make-string 96 ?\x20)
+		       for int-char from #x20 to #x7f
+		       for char being each element in-ref res
+		       do (setf char (int-to-char int-char))
+		       finally return res)))
+  (Assert (equalp "hi there" "Hi There")
+	  "checking equalp isn't case-sensitive")
+  (Assert (equalp 99 99.0)
+	  "checking equalp compares numerical values of different types")
+  (Assert (null (equalp 99 ?c))
+	  "checking equalp does not convert characters to numbers")
+  ;; Fixed in Hg d0ea57eb3de4.
+  (Assert (null (equalp "hi there" [hi there]))
+	  "checking equalp doesn't error with string and non-string")
+  (Assert (eq t (equalp "ABCDEEFGH\u00CDJ" string-variable))
+	  "checking #'equalp is case-insensitive with an upcased constant") 
+  (Assert (eq t (equalp "abcdeefgh\xedj" string-variable))
+	  "checking #'equalp is case-insensitive with a downcased constant")
+  (Assert (eq t (equalp string-variable string-variable))
+	  "checking #'equalp works when handed the same string twice")
+  (Assert (eq t (equalp string-variable "aBcDeeFgH\u00Edj"))
+	  "check #'equalp is case-insensitive with a variable-cased constant")
+  (Assert (eq t (equalp "" (bit-vector))) 
+	  "check empty string and empty bit-vector are #'equalp.")
+  (Assert (eq t (equalp (string) (bit-vector))) 
+	  "check empty string and empty bit-vector are #'equalp, no constants")
+  (Assert (eq t (equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e)))
+	  "check string and vector with same contents #'equalp")
+  (Assert (eq t (equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+			(vector ?h ?i ?\  ?t ?h ?e ?r ?e)))
+	  "check string and vector with same contents #'equalp, no constants")
+  (Assert (eq t (equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
+			(string ?h ?i ?\  ?t ?h ?e ?r ?e)))
+	  "check string and vector with same contents #'equalp, vector constant")
+  (Assert (eq t (equalp [0 1.0 0.0 0 1]
+			(bit-vector 0 1 0 0 1)))
+	  "check vector and bit-vector with same contents #'equalp,\
+ vector constant")
+  (Assert (eq t (equalp #*01001
+			(vector 0 1.0 0.0 0 1)))
+	  "check vector and bit-vector with same contents #'equalp,\
+ bit-vector constant")
+  (Assert (eq t (equalp ?\u00E9 Eacute-character))
+	  "checking characters are case-insensitive, one constant")
+  (Assert (eq nil (equalp ?\u00E9 (aref (format "%c" ?a) 0)))
+	  "checking distinct characters are not equalp, one constant")
+  (Assert (eq t (equalp t (and)))
+	  "checking symbols are correctly #'equalp")
+  (Assert (eq nil (equalp t (or nil '#:t)))
+	  "checking distinct symbols with the same name are not #'equalp")
+  (Assert (eq t (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+			(let ((aragh (make-char-table 'generic)))
+			  (put-char-table ?\u0080 "hi-there" aragh)
+			  aragh)))
+	  "checking #'equalp succeeds correctly, char-tables")
+  (Assert (eq nil (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+			  (let ((aragh (make-char-table 'generic)))
+			    (put-char-table ?\u0080 "HI-THERE" aragh)
+			    aragh)))
+	  "checking #'equalp fails correctly, char-tables"))
+
+;; There are more tests available for equalp here: 
+;;
+;; http://www.parhasard.net/xemacs/equalp-tests.el
+;;
+;; They are taken from Paul Dietz' GCL ANSI test suite, licensed under the
+;; LGPL and part of GNU Common Lisp; the GCL people didn't respond to
+;; several requests for information on who owned the copyright for the
+;; files, so I haven't included the tests with XEmacs. Anyone doing XEmacs
+;; development on equalp should still run them, though. Aidan Kehoe, Thu Dec
+;; 31 14:53:52 GMT 2009. 
 
 ;;; end of lisp-tests.el
