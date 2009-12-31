@@ -174,8 +174,9 @@ With prefix argument N, move N items (negative N means move backward)."
       (if extent (goto-char (extent-end-position extent)))
       ;; Move to start of next one.
       (or (extent-at (point) (current-buffer) 'list-mode-item)
-	  (goto-char (next-single-property-change (point) 'list-mode-item
-						  nil end))))
+	  (goto-char (next-single-char-property-change (point)
+						       'list-mode-item
+						       nil end))))
     (setq n (1- n)))
   (while (and (< n 0) (not (bobp)))
     (let ((extent (extent-at (point) (current-buffer) 'list-mode-item))
@@ -186,7 +187,7 @@ With prefix argument N, move N items (negative N means move backward)."
       (if (setq extent (extent-at (point) (current-buffer) 'list-mode-item
 				  nil 'before))
 	  (goto-char (extent-start-position extent))
-	(goto-char (previous-single-property-change
+	(goto-char (previous-single-char-property-change
 		    (point) 'list-mode-item nil end))
 	(if (setq extent (extent-at (point) (current-buffer) 'list-mode-item
 				    nil 'before))
@@ -648,7 +649,7 @@ Go to the window from which completion was requested."
   (if (not (get-buffer-window "*Completions*"))
       nil
     (select-window (get-buffer-window "*Completions*"))
-    (goto-char (next-single-property-change (point-min) 'list-mode-item nil
-					    (point-max)))))
+    (goto-char (next-single-char-property-change (point-min) 'list-mode-item
+						 nil (point-max)))))
 
 ;;; list-mode.el ends here
