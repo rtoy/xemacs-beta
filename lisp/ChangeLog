@@ -1,3 +1,12 @@
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* list-mode.el (next-list-mode-item, switch-to-completions): Use
+	next-single-char-property-change,
+	previous-single-char-property-change now
+	next-single-property-change no longer pays attention to extents
+	not created using the text property functions. Fix for issue 546,
+	bug dates from changeset 8c96bdabcaf9.
+
 2009-12-21  Jerry James  <james@xemacs.org>
 
 	* dragdrop.el (offix-start-drag): Remove.
