@@ -165,6 +165,19 @@
 	calls to it. Keep the information about the bytecode's numeric
 	value, we want that for disassembling code.
 
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-string-vector-equalp)
+	(cl-bit-vector-vector-equalp, cl-vector-array-equalp)
+	(cl-hash-table-contents-equalp): New functions, to implement
+	equalp treating arrays with identical contents as equivalent, as
+	specified by Common Lisp. 
+	(equalp): Revise this function to implement array equivalence,
+	and the hash-table equalp behaviour specified by CL.
+	* cl-macs.el (equalp): Add a compiler macro for this function,
+	used when one of the arguments is constant, and as such, its type
+	is known at compile time. 
+
 2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (equalp): 

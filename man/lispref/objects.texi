@@ -2424,3 +2424,56 @@ are the same.
 
   The test for equality is implemented recursively, and circular lists may
 therefore cause infinite recursion (leading to an error).
+
+@defun equalp object1 object2
+This function is like @code{equal}, but compares characters and strings
+case-insensitively; numbers are compared using @code{=}; arrays (that
+is, strings, bit-vectors and vectors) are regarded as being
+@code{equalp} if their contents are @code{equalp}; and
+@code{hash-tables} are @code{equalp} if their values are @code{equalp}
+and they would otherwise be @code{equal}.
+
+@code{equalp} is recursive with vectors, lists and hash-tables, but not
+with other complex types.  For types without a defined @code{equalp}
+behavior, @code{equalp} behaves as @code{equal} does. 
+
+@example
+@group
+(equalp "asdf" "ASDF")
+     @result{} t
+@end group
+@group
+(equalp "asdf" [?a ?s ?D ?F])
+     @result{} t
+@end group
+@group
+(equalp "asdf" [?a ?s ?D ?F ?g])
+     @result{} nil
+@end group
+@group
+(equalp "" (bit-vector))
+     @result{} t
+@end group
+@group
+(equalp #s(hash-table) (make-hash-table))
+     @result{} t
+@end group
+@group
+(equalp #s(hash-table data (t "hi there"))
+	(let ((ht (make-hash-table)))
+	  (puthash t "HI THERE" ht)
+	  ht))
+     @result{} t
+@group
+@end group
+(equalp #s(hash-table test eq data (1.0 "hi there"))
+	(let ((ht (make-hash-table :test 'eql)))
+	  (puthash 1.0 "HI THERE" ht)
+	  ht))
+     @result{} nil
+@end group
+@end example
+@end defun
+
+@code{equalp} can also provoke an error if handed a circular structure,
+as with @code{equal}. 
