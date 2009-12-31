@@ -29,6 +29,13 @@
 	* unicode.el (load-unicode-tables): 
 	Load arabic-iso8859-6 on startup again.
 
+2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-do-arglist):
+	* cl-compat.el (keyword-of):
+	Remove support in our generated code for emacs versions where
+	keywords are not self-quoting.
+
 2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alist.el (modify-alist): 

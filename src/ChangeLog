@@ -26,6 +26,12 @@
 	against msvcrt8.  This fix was taken from the Mozilla project
 	which experienced the same problem.
 
+2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (reject_constant_symbols): 
+	Indicate that accepting attempted modification of keywords is a
+	temporary thing.
+
 2009-12-18  Jerry James  <james@xemacs.org>
 
 	* ppc.ldscript: Remove, obsolete.
