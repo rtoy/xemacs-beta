@@ -205,21 +205,35 @@ Defined flags are the characters 1, 2, 3, 4, 5, 6, 7, 8, p, a, and b.
 	  (wrong-type-argument 'syntax-table-p syntax-table))))
   nil)
 
-(defun map-syntax-table (__function __syntax_table &optional __range)
-  "Map FUNCTION over entries in SYNTAX-TABLE, collapsing inheritance.
+((macro
+  . (lambda (map-syntax-definition)
+      "Replace the variable names in MAP-SYNTAX-DEFINITION with uninterned
+symbols, at byte-compile time.  This avoids the risk of variable names
+within the functions called from MAP-SYNTAX-DEFINITION being shared with
+MAP-SYNTAX-DEFINITION, and as such subject to modification, one of the
+common downsides of dynamic scope."
+      (nsublis
+       '((syntax-table . #:syntax-table)
+	 (m-s-function . #:function)
+	 (range . #:range)
+	 (key . #:key)
+	 (value . #:value))
+       map-syntax-definition)))
+ (defun map-syntax-table (m-s-function syntax-table &optional range)
+   "Map FUNCTION over entries in SYNTAX-TABLE, collapsing inheritance.
 This is similar to `map-char-table', but works only on syntax tables, and
  collapses any entries that call for inheritance by invisibly substituting
  the inherited values from the standard syntax table."
-  (check-argument-type 'syntax-table-p __syntax_table)
-  (map-char-table #'(lambda (__key __value)
-		      (if (eq ?@ (char-syntax-from-code __value))
-			  (map-char-table #'(lambda (__key __value)
-					      (funcall __function
-						       __key __value))
-					  (standard-syntax-table)
-					  __key)
-			(funcall __function __key __value)))
-		  __syntax_table __range))
+   (check-argument-type 'syntax-table-p syntax-table)
+   (map-char-table #'(lambda (key value)
+		       (if (eq ?@ (char-syntax-from-code value))
+			   (map-char-table
+			    #'(lambda (key value)
+				(funcall m-s-function key value))
+			    (standard-syntax-table)
+			    key)
+			 (funcall m-s-function key value)))
+		   syntax-table range)))
 
 ;(defun test-xm ()
 ;  (let ((o (copy-syntax-table))

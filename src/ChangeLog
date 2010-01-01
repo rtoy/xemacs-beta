@@ -1,3 +1,9 @@
+2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (Fmake_charset): 
+	Don't intern the symbols used to refer to temporary character
+	sets, that doesn't bring us anything.
+
 2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* faces.c (complex_vars_of_faces): Explain why "*" isn't rewritten
