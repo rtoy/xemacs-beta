@@ -344,35 +344,36 @@ when called from Lisp."
   (if (and teach-extended-commands-p
 	   (interactive-p))
       ;; Remember the keys, run the command, and show the keys (if
-      ;; any).  The funny variable names are a poor man's guarantee
-      ;; that we don't get tripped by this-command doing something
-      ;; funny.  Quoth our forefathers: "We want lexical scope!"
-      (let ((_execute_command_keys_ (where-is-internal this-command))
-	    (_execute_command_name_ this-command)) ; the name can change
-	(command-execute this-command t)
-	(when _execute_command_keys_
-	  ;; Normally the region is adjusted in post_command_hook;
-	  ;; however, it is not called until after we finish.  It
-	  ;; looks ugly for the region to get updated after the
-	  ;; delays, so we do it now.  The code below is a Lispified
-	  ;; copy of code in event-stream.c:post_command_hook().
-	  (if (and (not zmacs-region-stays)
-		   (or (not (eq (selected-window) (minibuffer-window)))
-		       (eq (zmacs-region-buffer) (current-buffer))))
-	      (zmacs-deactivate-region)
-	    (zmacs-update-region))
-	  ;; Wait for a while, so the user can see a message printed,
-	  ;; if any.
-	  (when (sit-for 1)
-	    (display-message
-		'no-log
-	      (format (if (cdr _execute_command_keys_)
-			  "Command `%s' is bound to keys: %s"
-			"Command `%s' is bound to key: %s")
-		      _execute_command_name_
-		      (sorted-key-descriptions _execute_command_keys_)))
-	    (sit-for teach-extended-commands-timeout)
-	    (clear-message 'no-log))))
+      ;; any).  The symbol-macrolet avoids some lexical-scope lossage.
+      (symbol-macrolet
+	  ((execute-command-keys #:execute-command-keys)
+	   (execute-command-name #:execute-command-name))
+	(let ((execute-command-keys (where-is-internal this-command))
+	      (execute-command-name this-command)) ; the name can change
+	  (command-execute this-command t)
+	  (when execute-command-keys
+	    ;; Normally the region is adjusted in post_command_hook;
+	    ;; however, it is not called until after we finish.  It
+	    ;; looks ugly for the region to get updated after the
+	    ;; delays, so we do it now.  The code below is a Lispified
+	    ;; copy of code in event-stream.c:post_command_hook().
+	    (if (and (not zmacs-region-stays)
+		     (or (not (eq (selected-window) (minibuffer-window)))
+			 (eq (zmacs-region-buffer) (current-buffer))))
+		(zmacs-deactivate-region)
+	      (zmacs-update-region))
+	    ;; Wait for a while, so the user can see a message printed,
+	    ;; if any.
+	    (when (sit-for 1)
+	      (display-message
+		  'no-log
+		(format (if (cdr execute-command-keys)
+			    "Command `%s' is bound to keys: %s"
+			  "Command `%s' is bound to key: %s")
+			execute-command-name
+			(sorted-key-descriptions execute-command-keys)))
+	      (sit-for teach-extended-commands-timeout)
+	      (clear-message 'no-log)))))
     ;; Else, just run the command.
     (command-execute this-command t)))
 

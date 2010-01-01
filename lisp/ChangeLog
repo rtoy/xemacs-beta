@@ -1,3 +1,15 @@
+2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* syntax.el (map-syntax-table): 
+	* subr.el (map-plist): 
+	* startup.el (load-init-file): 
+	* minibuf.el (read-from-minbuffer): 
+	* cus-edit.el (custom-load-custom-defines-1): 
+	* cmdloop.el (execute-extended-command): 
+	Replace symbol names using underscore, whether to avoid dynamic
+	scope problems or to ensure helpful arguments to
+	#'call-with-condition-handler, with uninterned symbols.
+
 2009-12-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font.el (x-font-create-object): Check for Xft before using it.

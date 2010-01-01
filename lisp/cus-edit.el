@@ -1779,31 +1779,39 @@ issued (with backtrace), to aid in tracking down the problems.")
 	   ;; Use call-with-condition-handler so the error can be seen
 	   ;; with the stack intact.
 	   (call-with-condition-handler
-	       #'(lambda (__custom_load_cd1__)
-		   (when (and
-			  custom-define-current-source-file
-			  (progn
-			    (setq source (expand-file-name
-					  custom-define-current-source-file
-					  dir))
-			    (let ((nondir (file-name-nondirectory source)))
-			      (and (file-exists-p source)
-				   (not (assoc source load-history))
-				   (not (assoc nondir load-history))
-				   (not (and (boundp 'preloaded-file-list)
-					     (member nondir
-						     preloaded-file-list)))))))
-		     (if custom-warn-when-reloading-necessary
-			 (lwarn 'custom-defines 'warning
-			   "Error while loading custom-defines, fetching source and reloading ...\n
+	       ((macro
+		 . (lambda (lambda-expression)
+		     ;; Be more serious about information hiding here:
+		     (nsublis
+		      '((custom-load-handler-arg . #:custom-load-g9JBHiZHD))
+		      lambda-expression)))
+		#'(lambda (custom-load-handler-arg)
+		    (when (and
+			   custom-define-current-source-file
+			   (progn
+			     (setq source (expand-file-name
+					   custom-define-current-source-file
+					   dir))
+			     (let ((nondir (file-name-nondirectory source)))
+			       (and (file-exists-p source)
+				    (not (assoc source load-history))
+				    (not (assoc nondir load-history))
+				    (not (and (boundp 'preloaded-file-list)
+					      (member nondir
+						      preloaded-file-list)))))))
+		      (if custom-warn-when-reloading-necessary
+			  (lwarn 'custom-defines 'warning
+			    "Error while loading custom-defines, fetching \
+source and reloading ...\n
 Error: %s\n
 Source file: %s\n\n
 Backtrace follows:\n\n%s"
-			   (error-message-string __custom_load_cd1__)
-			   source
-			   (backtrace-in-condition-handler-eliminating-handler
-			    '__custom_load_cd1__)))
-		     (return-from custom-load nil)))
+			    (error-message-string custom-load-handler-arg)
+			    source
+			    (backtrace-in-condition-handler-eliminating-handler
+			     'custom-load-handler-arg
+)))
+		      (return-from custom-load nil))))
 	       #'(lambda ()
 		   (load (expand-file-name "custom-defines" dir))))))
       ;; we get here only from the `return-from'; see above

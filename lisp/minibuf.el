@@ -344,13 +344,16 @@ minibuffer history if its length is less than that value."
 
 (define-error 'input-error "Keyboard input error" 'io-error)
 
-(defun read-from-minibuffer (prompt &optional initial-contents
-                                    keymap
-                                    readp
-                                    history
-				    abbrev-table
-				    default)
-  "Read a string from the minibuffer, prompting with string PROMPT.
+((macro
+  . (lambda (read-from-minibuffer-definition)
+      (nsublis
+       ;; `M-x doctor' makes (the interned) history a local variable, use an
+       ;; uninterned symbol here so we don't interact with it.
+       '((history . #:history))
+       read-from-minibuffer-definition)))
+ (defun read-from-minibuffer (prompt &optional initial-contents keymap
+			      readp history abbrev-table default)
+   "Read a string from the minibuffer, prompting with string PROMPT.
 If optional second arg INITIAL-CONTENTS is non-nil, it is a string
   to be inserted into the minibuffer before reading input.
   If INITIAL-CONTENTS is (STRING . POSITION), the initial input
@@ -376,50 +379,45 @@ Seventh arg DEFAULT, if non-nil, will be returned when user enters
 
 See also the variable `completion-highlight-first-word-only' for
   control over completion display."
-  (if (and (not enable-recursive-minibuffers)
-           (> (minibuffer-depth) 0)
-           (eq (selected-window) (minibuffer-window)))
-      (error "Command attempted to use minibuffer while in minibuffer"))
+   (if (and (not enable-recursive-minibuffers)
+	    (> (minibuffer-depth) 0)
+	    (eq (selected-window) (minibuffer-window)))
+       (error "Command attempted to use minibuffer while in minibuffer"))
 
-  (if (and minibuffer-max-depth
-	   (> minibuffer-max-depth 0)
-           (>= (minibuffer-depth) minibuffer-max-depth))
-      (minibuffer-max-depth-exceeded))
+   (if (and minibuffer-max-depth
+	    (> minibuffer-max-depth 0)
+	    (>= (minibuffer-depth) minibuffer-max-depth))
+       (minibuffer-max-depth-exceeded))
 
-  ;; catch this error before the poor user has typed something...
-  (if history
-      (if (symbolp history)
-	  (or (boundp history)
-	      (error "History list %S is unbound" history))
-	(or (boundp (car history))
-	    (error "History list %S is unbound" (car history)))))
+   ;; catch this error before the poor user has typed something...
+   (if history
+       (if (symbolp history)
+	   (or (boundp history)
+	       (error "History list %S is unbound" history))
+	 (or (boundp (car history))
+	     (error "History list %S is unbound" (car history)))))
 
-  (if (noninteractive)
-      (progn
-        ;; XEmacs in -batch mode calls minibuffer: print the prompt.
-        (message "%s" (gettext prompt))
-        ;;#### force-output
+   (if (noninteractive)
+       (progn
+	 ;; XEmacs in -batch mode calls minibuffer: print the prompt.
+	 (message "%s" (gettext prompt))
+	 ;;#### force-output
 
-        ;;#### Should this even be falling though to the code below?
-        ;;#### How does this stuff work now, anyway?
-        ))
-  (let* ((dir default-directory)
-         (owindow (selected-window))
-	 (oframe (selected-frame))
-         (window (minibuffer-window))
-         (buffer (get-buffer-create (format " *Minibuf-%d*"
-					    (minibuffer-depth))))
-         (frame (window-frame window))
-         (mconfig (if (eq frame (selected-frame))
-                      nil (current-window-configuration frame)))
-         (oconfig (current-window-configuration))
-	 ;; dynamic scope sucks sucks sucks sucks sucks sucks.
-	 ;; `M-x doctor' makes history a local variable, and thus
-	 ;; our binding above is buffer-local and doesn't apply
-	 ;; once we switch buffers!!!!  We demand better scope!
-	 (_history_ history)
-	 (minibuffer-default default))
-    (unwind-protect
+	 ;;#### Should this even be falling though to the code below?
+	 ;;#### How does this stuff work now, anyway?
+	 ))
+   (let* ((dir default-directory)
+	  (owindow (selected-window))
+	  (oframe (selected-frame))
+	  (window (minibuffer-window))
+	  (buffer (get-buffer-create (format " *Minibuf-%d*"
+					     (minibuffer-depth))))
+	  (frame (window-frame window))
+	  (mconfig (if (eq frame (selected-frame))
+		       nil (current-window-configuration frame)))
+	  (oconfig (current-window-configuration))
+	  (minibuffer-default default))
+     (unwind-protect
          (progn
            (set-buffer (reset-buffer buffer))
            (setq default-directory dir)
@@ -462,14 +460,14 @@ See also the variable `completion-highlight-first-word-only' for
 		       (current-buffer)))
                  (current-prefix-arg current-prefix-arg)
 ;;                 (help-form minibuffer-help-form)
-                 (minibuffer-history-variable (cond ((not _history_)
+                 (minibuffer-history-variable (cond ((not history)
                                                      'minibuffer-history)
-                                                    ((consp _history_)
-                                                     (car _history_))
+                                                    ((consp history)
+                                                     (car history))
                                                     (t
-                                                     _history_)))
-                 (minibuffer-history-position (cond ((consp _history_)
-                                                     (cdr _history_))
+                                                     history)))
+                 (minibuffer-history-position (cond ((consp history)
+                                                     (cdr history))
                                                     (t
                                                      0)))
                  (minibuffer-scroll-window owindow))
@@ -479,16 +477,16 @@ See also the variable `completion-highlight-first-word-only' for
 		 (setq local-abbrev-table abbrev-table
 		       abbrev-mode t))
 	     ;; This is now run from read-minibuffer-internal
-             ;(if minibuffer-setup-hook
-             ;    (run-hooks 'minibuffer-setup-hook))
-             ;(message nil)
+					;(if minibuffer-setup-hook
+					;    (run-hooks 'minibuffer-setup-hook))
+					;(message nil)
              (if (eq 't
                      (catch 'exit
                        (if (> (recursion-depth) (minibuffer-depth))
                            (let ((standard-output t)
                                  (standard-input t))
                              (read-minibuffer-internal prompt))
-                           (read-minibuffer-internal prompt))))
+			 (read-minibuffer-internal prompt))))
                  ;; Translate an "abort" (throw 'exit 't)
                  ;;  into a real quit
                  (signal 'quit '())
@@ -538,21 +536,20 @@ See also the variable `completion-highlight-first-word-only' for
 				  (cons histval list))))))
                  (if err (signal (car err) (cdr err)))
                  val))))
-      ;; stupid display code requires this for some reason
-      (set-buffer buffer)
-      (buffer-disable-undo buffer)
-      (setq buffer-read-only nil)
-      (erase-buffer)
+       ;; stupid display code requires this for some reason
+       (set-buffer buffer)
+       (buffer-disable-undo buffer)
+       (setq buffer-read-only nil)
+       (erase-buffer)
 
-      ;; restore frame configurations
-      (if (and mconfig (frame-live-p oframe)
-	       (eq frame (selected-frame)))
-	  ;; if we changed frames (due to surrogate minibuffer),
-	  ;; and we're still on the new frame, go back to the old one.
-	  (select-frame oframe))
-      (if mconfig (set-window-configuration mconfig))
-      (set-window-configuration oconfig))))
-
+       ;; restore frame configurations
+       (if (and mconfig (frame-live-p oframe)
+		(eq frame (selected-frame)))
+	   ;; if we changed frames (due to surrogate minibuffer),
+	   ;; and we're still on the new frame, go back to the old one.
+	   (select-frame oframe))
+       (if mconfig (set-window-configuration mconfig))
+       (set-window-configuration oconfig)))))
 
 (defun minibuffer-max-depth-exceeded ()
   ;;
