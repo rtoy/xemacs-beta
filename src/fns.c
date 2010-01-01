@@ -316,7 +316,7 @@ Compare the contents of two strings, maybe ignoring case.
 In string STR1, skip the first START1 characters and stop at END1.
 In string STR2, skip the first START2 characters and stop at END2.
 END1 and END2 default to the full lengths of the respective strings,
-and arguments that are outside the string (negative start or ENDi
+and arguments that are outside the string (negative STARTi or ENDi
 greater than length) are coerced to 0 or string length as appropriate.
 
 Optional IGNORE-CASE non-nil means use case-insensitive comparison.
