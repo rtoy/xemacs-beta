@@ -1,3 +1,9 @@
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Ffunctionp): 
+	Special forms no longer give t in this function, in accordance
+	with recent GNU Emacs and with Common Lisp.
+
 2009-12-21  Jerry James  <james@xemacs.org>
 
 	* config.h.in: Remove OffiX support.

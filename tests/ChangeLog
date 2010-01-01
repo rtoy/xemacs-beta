@@ -1,3 +1,8 @@
+2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Test #'functionp, making sure it gives nil for special forms.
+
 2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el: 
