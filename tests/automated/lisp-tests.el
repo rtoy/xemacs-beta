@@ -2162,4 +2162,23 @@
 ;; development on equalp should still run them, though. Aidan Kehoe, Thu Dec
 ;; 31 14:53:52 GMT 2009. 
 
+(loop
+  for special-form in '(multiple-value-call setq-default quote throw
+			save-current-buffer and or)
+  with not-special-form = nil
+  do
+  (Assert (special-form-p special-form)
+	  (format "checking %S is a special operator" special-form))
+  (setq not-special-form 
+	(intern (format "%s-gMAu" (symbol-name special-form))))
+  (Assert (not (special-form-p not-special-form))
+	  (format "checking %S is a special operator" special-form))
+  (Assert (not (functionp special-form))
+	  (format "checking %S is not a function" special-form)))
+
+(loop
+  for real-function in '(find-file quote-maybe + - find-file-read-only)
+  do (Assert (functionp real-function)
+	     (format "checking %S is a function" real-function)))
+
 ;;; end of lisp-tests.el
