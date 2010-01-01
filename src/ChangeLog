@@ -38,6 +38,10 @@
 	Indicate that accepting attempted modification of keywords is a
 	temporary thing.
 
+2009-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fns.c (Fcompare_strings): Coerce bounds to be within strings.
+
 2009-12-18  Jerry James  <james@xemacs.org>
 
 	* ppc.ldscript: Remove, obsolete.

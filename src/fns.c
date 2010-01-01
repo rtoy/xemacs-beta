@@ -315,9 +315,12 @@ DEFUN ("compare-strings", Fcompare_strings, 6, 7, 0, /*
 Compare the contents of two strings, maybe ignoring case.
 In string STR1, skip the first START1 characters and stop at END1.
 In string STR2, skip the first START2 characters and stop at END2.
-END1 and END2 default to the full lengths of the respective strings.
+END1 and END2 default to the full lengths of the respective strings,
+and arguments that are outside the string (negative start or ENDi
+greater than length) are coerced to 0 or string length as appropriate.
 
-Case is significant in this comparison if IGNORE-CASE is nil.
+Optional IGNORE-CASE non-nil means use case-insensitive comparison.
+Case is significant by default.
 
 The value is t if the strings (or specified portions) match.
 If string STR1 is less, the value is a negative number N;
@@ -335,9 +338,9 @@ If string STR1 is greater, the value is a positive number N;
   CHECK_STRING (str1);
   CHECK_STRING (str2);
   get_string_range_char (str1, start1, end1, &ccstart1, &ccend1,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
+			 GB_HISTORICAL_STRING_BEHAVIOR|GB_COERCE_RANGE);
   get_string_range_char (str2, start2, end2, &ccstart2, &ccend2,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
+			 GB_HISTORICAL_STRING_BEHAVIOR|GB_COERCE_RANGE);
 
   bstart1 = string_index_char_to_byte (str1, ccstart1);
   blen1 = string_offset_char_to_byte_len (str1, bstart1, ccend1 - ccstart1);
