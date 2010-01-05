@@ -260,8 +260,13 @@ Unparse an fc pattern object to a string.
 */
       (pattern))
 {
+  FcChar8 *name;
+  Lisp_Object result;
   CHECK_FCPATTERN(pattern);
-  return build_fcapi_string (FcNameUnparse (XFCPATTERN_PTR (pattern)));
+  name = FcNameUnparse (XFCPATTERN_PTR (pattern));
+  result = build_fcapi_string (name);
+  xfree (name, FcChar8 *);
+  return result;
 }
 
 DEFUN("fc-pattern-duplicate", Ffc_pattern_duplicate, 1, 1, 0, /* 
