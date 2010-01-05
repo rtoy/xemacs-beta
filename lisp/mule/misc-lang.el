@@ -30,51 +30,5 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/misc-lang.el
-(set-language-info-alist
- "IPA" '((charset . (ipa))
-	 (coding-priority iso-2022-7bit)
-	 (coding-system iso-2022-7bit)
-	 (input-method . "ipa")
-	 (documentation . "\
-IPA is International Phonetic Alphabet for English, French, German
-and Italian.")))
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/misc-lang.el~base.2oL6wA
-;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registry "MuleIPA"
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		short-name "IPA"
-		long-name "IPA"
-		))
-
-(set-language-info-alist
- "IPA" '((charset . (ipa))
-	 (coding-priority iso-2022-7bit)
-	 (coding-system iso-2022-7bit)
-	 (input-method . "ipa")
-	 (documentation . "\
-IPA is International Phonetic Alphabet for English, French, German
-and Italian.")))
-=======
-;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registries ["MuleIPA"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		short-name "IPA"
-		long-name "IPA"))
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/misc-lang.el~other.OPF5pB
 
 ;;; misc-lang.el ends here

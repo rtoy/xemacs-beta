@@ -28,40 +28,6 @@
 
 ;;; Code:
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/lao.el
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/lao.el~base.SzLkOR
-;; Lao script.
-;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
-	      '(dimension
-		1
-		registry "MuleLao-1"
-		chars 94
-		columns 1
-		direction l2r
-		final ?1
-		graphic 0
-		short-name "Lao"
-		long-name "Lao"
-		))
-
-=======
-;; Lao script.
-;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
-	      '(dimension
-		1
-		registries ["MuleLao-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?1
-		graphic 0
-		short-name "Lao"
-		long-name "Lao"
-		))
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/lao.el~other.7K_OjI
 ; (make-coding-system
 ;  'lao 2 ?L
 ;  "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"

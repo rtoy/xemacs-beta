@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2010 Ben Wing.
 ;; Copyright (C) 2002, 2005, 2006 Free Software Foundation
 
 ;; Keywords: multilingual, latin, dumped
@@ -804,18 +804,6 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
 ;; Never widely used. Current-orthography Gaelic, both Irish and Scots, is
 ;; easily written with Latin-1. Wikipedia says the same about Welsh.
 
-(make-charset 'latin-iso8859-14 
-	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
-	      '(dimension 1
-		registries ["ISO8859-14"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?_
-		graphic 1
-		short-name "RHP of Latin-8"
-		long-name "RHP of Latin-8 (ISO 8859-14)"))
-
 ;; 
 ;; Character syntax defaults to word. The exceptions here shared with Latin-1.
 (dolist (code '(#xa0	;; NO BREAK SPACE
@@ -1224,18 +1212,6 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
 ;; Latin-10 (ISO 8859-16).
 ;;
 ;; "South-Eastern European." Not, to my knowledge, ever widely used. 
-
-(make-charset 'latin-iso8859-16
-	      "Right-Hand Part of Latin Alphabet 10 (ISO/IEC 8859-16)"
-	      '(dimension 1
-		registries ["ISO8859-16"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?f			; octet 06/06; cf ISO-IR 226
-		graphic 1
-		short-name "RHP of Latin-10"
-		long-name "RHP of Latin-10 (ISO 8859-16)"))
 
 ;; Copy over the non-word syntax this charset has in common with Latin 1.
 (dolist (code '(#xa0	;; NO BREAK SPACE

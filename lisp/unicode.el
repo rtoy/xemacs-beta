@@ -29,83 +29,8 @@
 
 ;;; Code:
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/unicode.el
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~base.48NOg4
-; ;; Subsets of Unicode.
-
-; #### what is this bogosity ... "chars 96, final ?2" !!?!
-; (make-charset 'mule-unicode-2500-33ff 
-; 	      "Unicode characters of the range U+2500..U+33FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?2
-; 		graphic 0
-; 		short-name "Unicode subset 2"
-; 		long-name "Unicode subset (U+2500..U+33FF)"
-; 		))
-
-
-; (make-charset 'mule-unicode-e000-ffff 
-; 	      "Unicode characters of the range U+E000..U+FFFF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?3
-; 		graphic 0
-; 		short-name "Unicode subset 3"
-; 		long-name "Unicode subset (U+E000+FFFF)"
-; 		))
-
-
-; (make-charset 'mule-unicode-0100-24ff 
-; 	      "Unicode characters of the range U+0100..U+24FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Unicode subset"
-; 		long-name "Unicode subset (U+0100..U+24FF)"
-; 		))
-
-
-;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
-(defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
-  "[INTERNAL] Whether to load the Unicode tables at dump time.
-Setting this at run-time does nothing.")
-
-=======
-;; GNU Emacs has the charsets: 
-
-;;     mule-unicode-2500-33ff
-;;     mule-unicode-e000-ffff
-;;     mule-unicode-0100-24ff
-
-;; built-in.  This is hack--and an incomplete hack at that--against the
-;; spirit and the letter of standard ISO 2022 character sets.  Instead of
-;; this, we have the jit-ucs-charset-N Mule character sets, created in
-;; unicode.c on encountering a Unicode code point that we don't recognise,
-;; and saved in ISO 2022 coding systems using the UTF-8 escape described in
-;; ISO-IR 196.
-
 (eval-when-compile (when (featurep 'mule) (require 'ccl)))
 
-;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
-(defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
-  "[INTERNAL] Whether to load the Unicode tables at dump time.
-Setting this at run-time does nothing.")
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~other.63evG-
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
 (defun load-unicode-tables ()
@@ -452,36 +377,6 @@ Standard encoding for representing UTF-8 under MS Windows."
    little-endian t
    need-bom t))
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/unicode.el
-(defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint `code'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) 
-	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  ;(unicode-to-char code)
-  (make-char code))
-
-(defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of `char'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs)
-	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
-  (char-to-unicode char))
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~base.48NOg4
-(defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint `code'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) 
-	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  (unicode-to-char code))
-
-(defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of `char'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs)
-	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
-  (char-to-unicode char))
-=======
 ;; Now, create jit-ucs-charset-0 entries for those characters in Windows
 ;; Glyph List 4 that would otherwise end up in East Asian character sets.
 ;; 
@@ -735,7 +630,6 @@ mapping from the error sequences to the desired characters.  "
           unicode-invalid-regexp-range frob-unicode-errors-region
           unicode-error-translate-region unicode-query-coding-region
           unicode-query-coding-skip-chars-arg)))
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/unicode.el~other.63evG-
 
 (make-obsolete 'char-octets 'char-to-charset-codepoint)
 (make-obsolete 'char-charset 'char-to-charset-codepoint)
