@@ -606,33 +606,6 @@ things are arranged in config.h.in.  In particular:
    change is done, and do other extent-related checks. */
 #undef ERROR_CHECK_EXTENTS
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/config.h.in
-/* Make sure that arguments are valid to functions and such.  Turns on
-   checks related to types -- makes sure that all X... macros are
-   dereferencing the correct type, and that all XSET... macros (as much as
-   possible) are setting the correct type of structure.  Some code may
-   use a more specific error-checking flag. */
-#undef ERROR_CHECK_TYPES
-
-/* Turn on checks related to text -- check that text in strings and buffers
-   is in a valid format before we use it, check that buffer positions are
-   valid, etc. */
-#undef ERROR_CHECK_TEXT
-
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~base.mCTZhh
-/* Turn on checks related to types -- make sure that all X... macros are
-   dereferencing the correct type, and that all XSET... macros (as much as
-   possible) are setting the correct type of structure; check any other
-   places that a specific type is expected. */
-#undef ERROR_CHECK_TYPES
-
-/* Turn on checks related to text -- check that text in strings and buffers
-   is in a valid format before we use it, check that buffer positions are
-   valid, etc. */
-#undef ERROR_CHECK_TEXT
-
-=======
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~other.FNyXbH
 /* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
 #undef ERROR_CHECK_GC
 
@@ -652,10 +625,11 @@ things are arranged in config.h.in.  In particular:
    valid, etc. */
 #undef ERROR_CHECK_TEXT
 
-/* Turn on checks related to types -- make sure that all X... macros are
+/* Make sure that arguments are valid to functions and such.  Turns on
+   checks related to types -- makes sure that all X... macros are
    dereferencing the correct type, and that all XSET... macros (as much as
-   possible) are setting the correct type of structure; check any other
-   places that a specific type is expected. */
+   possible) are setting the correct type of structure.  Some code may
+   use a more specific error-checking flag. */
 #undef ERROR_CHECK_TYPES
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
@@ -1079,24 +1053,6 @@ extern "C" {
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/config.h.in
-/* If you are using SunOS 4.1.1 and X11r5, then you need this patch.
-   There is a stupid bug in the SunOS libc.a: two functions which X11r5
-   uses, mbstowcs() and wcstombs(), are unusable when programs are
-   statically linked (as XEmacs must be) because the static version of
-   libc.a contains the *dynamic* versions of these functions.  These
-   functions don't seem to be called when XEmacs is running, so it's
-   enough to define stubs for them.
-
-   This appears to be fixed in SunOS 4.1.2.
-
-   Also, SunOS 4.1.1 contains buggy versions of strcmp and strcpy that
-   sometimes reference memory past the end of the string, which can segv.
-   I don't know whether this has been fixed as of 4.1.2 or 4.1.3. */
-#if defined (sparc) && !defined (USG)
-#define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
-#endif
-
 /* CCL is unworkable under UNICODE_INTERNAL currently.  See comments in
    mule-ccl.c.  Algorithmic conversion tables are currently used only for
    the Unicode-slop charsets for characters having no other representation
@@ -1106,26 +1062,6 @@ extern "C" {
 #define ALLOW_ALGORITHMIC_CONVERSION_TABLES
 #endif
 
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~base.mCTZhh
-/* If you are using SunOS 4.1.1 and X11r5, then you need this patch.
-   There is a stupid bug in the SunOS libc.a: two functions which X11r5
-   uses, mbstowcs() and wcstombs(), are unusable when programs are
-   statically linked (as XEmacs must be) because the static version of
-   libc.a contains the *dynamic* versions of these functions.  These
-   functions don't seem to be called when XEmacs is running, so it's
-   enough to define stubs for them.
-
-   This appears to be fixed in SunOS 4.1.2.
-
-   Also, SunOS 4.1.1 contains buggy versions of strcmp and strcpy that
-   sometimes reference memory past the end of the string, which can segv.
-   I don't know whether this has been fixed as of 4.1.2 or 4.1.3. */
-#if defined (sparc) && !defined (USG)
-#define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
-#endif
-
-=======
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~other.FNyXbH
 #ifdef HAVE_CANNA
 #  define CANNA_MULE
 #  define CANNA_PURESIZE 0
@@ -1214,17 +1150,9 @@ extern "C" {
    merge the two. */
 #define USE_C_FONT_LOCK
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/config.h.in
-#if defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_TYPES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_STRUCTURES)
-#define ERROR_CHECK_ANY
-#endif
-
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~base.mCTZhh
-=======
 /* Keep the #defines sorted.
    #### Can this code ever be executed?  I guess if a developer #defines
    ERROR_CHECK_ALL above the #include it could be useful. */
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/config.h.in~other.FNyXbH
 #ifdef ERROR_CHECK_ALL
 #define ERROR_CHECK_BYTE_CODE
 #define ERROR_CHECK_DISPLAY
@@ -1236,6 +1164,10 @@ extern "C" {
 #define ERROR_CHECK_TEXT
 #define ERROR_CHECK_TYPES
 #endif /* ERROR_CHECK_ALL */
+
+#if defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_STRUCTURES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_TYPES)
+#define ERROR_CHECK_ANY
+#endif
 
 /* It's very tricky.  In some circumstances, if we don't include the
    ERROR_CHECK_TYPES functions in xemacs.def.in.in, we get lots of

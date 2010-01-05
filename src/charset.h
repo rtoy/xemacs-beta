@@ -1,7 +1,7 @@
 /* Header for charsets.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2005, 2009 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -82,9 +82,12 @@ extern Lisp_Object Vcharset_hash_table;
 /* used when MULE is not defined, so that Charset-type stuff can still
    be done */
 
-#define Vcharset_ascii Qnil
-#define ichar_charset_obsolete_me_baby_please(c) Qnil
+#define Vcharset_ascii Qascii
+#define Vcharset_control_1 Qcontrol_1
+#define ichar_charset_obsolete_me_baby_please(c) Vcharset_ascii
 #define XCHARSET_CCL_PROGRAM(cs) Qnil
+#define XCHARSET_DIMENSION(cs) 1
+#define XCHARSET_NAME(cs) (cs)
 
 #else /* MULE */
 

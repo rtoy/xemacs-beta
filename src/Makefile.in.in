@@ -287,22 +287,10 @@ objs=\
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/Makefile.in.in
- $(mc_alloc_objs) macros.o marker.o md5.o minibuf.o \
+ $(new_gc_objs) $(vdb_objs) macros.o marker.o md5.o minibuf.o \
  $(mswindows_objs) $(mswindows_gui_objs) $(mule_objs) \
  $(number_objs) objects.o opaque.o\
  $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/Makefile.in.in~base.Iahl6n
- $(mc_alloc_objs) \
- macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
- $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
- opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
-=======
- $(new_gc_objs) $(vdb_objs) \
- macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
- $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
- opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/Makefile.in.in~other.BjQ5cE
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\

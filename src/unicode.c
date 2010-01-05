@@ -988,7 +988,8 @@ get_free_codepoint (Lisp_Object charset)
     {
       int c1, c2;
 
-      BREAKUP_ICHAR (XCHAR (zeichen), charset, c1, c2);
+      ichar_to_charset_codepoint (XCHAR (zeichen), get_unicode_precedence(),
+				  &charset, &c1, &c2);
 
       if (127 == c1 && 127 == c2)
 	{
@@ -1007,12 +1008,14 @@ get_free_codepoint (Lisp_Object charset)
 	  ++c2;
 	}
 
-      res = make_ichar (charset, c1, c2);
+      res = charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
+      text_checking_assert (res >= 0);
       Fput (name, Qlast_allocated_character, make_char (res));
     }
   else
     {
-      res = make_ichar (charset, 32, 32);
+      res = charset_codepoint_to_ichar (charset, 32, 32, CONVERR_FAIL);
+      text_checking_assert (res >= 0);
       Fput (name, Qlast_allocated_character, make_char (res));
     }
   return res;
@@ -1897,6 +1900,8 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
       Ichar chr = unicode_to_ichar (ch, get_unicode_precedence (),
 				    CONVERR_SUCCEED);
       Dynarr_add_ichar (dst, chr);
+#error We need to review all uses of CONVERR_SUCCEED and see whether it is
+#error the right thing to do
 #else
       if (ch < 256)
 	Dynarr_add (dst, (Ibyte) ch);

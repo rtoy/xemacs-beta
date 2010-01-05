@@ -1,7 +1,7 @@
 /* String search routines for XEmacs.
    Copyright (C) 1985, 1986, 1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1232,6 +1232,28 @@ trivial_regexp_p (Lisp_Object regexp)
   return 1;
 }
 
+/* Return non-zero if two characters -- the first represented in
+ * Itext format, and the second given as a character -- differ in the
+ * non-final bytes of their respective Itext representations. */
+
+inline static int
+chars_differ_in_non_final_bytes (Ibyte *astr, Bytecount alen, Ichar b)
+{
+  Ibyte bstr[MAX_ICHAR_LEN];
+  Bytecount blen = set_itext_ichar (bstr, b);
+
+  /* Are two characters in Itext representation same except
+     for the last byte of the representation?  They're the same if the
+     lengths are the same and the text up till the final byte (if any)
+     of each is the same.  Correspondingly, they're different if either
+     the lengths are different or the non-final-byte text is non-zero
+     in length and different. (If both strings have the same length and
+     the length is 1, then both are the same up till the final byte,
+     since they are only a final byte.  We check for this to avoid
+     calling memcmp() with zero size. */
+  return (alen != blen || (alen > 1 && memcmp (astr, bstr, blen - 1)));
+}
+
 /* Search for the n'th occurrence of STRING in BUF,
    starting at position CHARBPOS and stopping at position BUFLIM,
    treating PAT as a literal string if RE is false or as
@@ -1378,58 +1400,13 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  inv_bytelen = ichar_len (inverse);
 	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/search.c
-	  if (new_bytelen != orig_bytelen || inv_bytelen != orig_bytelen)
-	    boyer_moore_ok = 0;
-	  if (translated != c || inverse != c)
-	    {
-	      /* Track the original character in string char representation
-		 (minus final byte); we will compare it against each other
-		 character (again minus final byte), to see if they're the
-		 same. */
-	      if (char_base_len == -1)
-		{
-		  char_base_len = orig_bytelen;
-		  if (char_base_len > 1)
-		    memcpy (char_base, base_pat, char_base_len - 1);
-		}
-	      else if (char_base_len != orig_bytelen ||
-		       /* Are two strings different? When we have only a
-			  single byte to compare, don't try calling memcmp()
-			  with zero size, to just the zero-size strings are
-			  the same */
-		       (char_base_len > 1 ?
-			memcmp (char_base, base_pat, char_base_len - 1) : 0))
-		/* If two different characters appear, needing translation
-		   but differing in one of the non-final bytes, then we
-		   cannot use boyer_moore search. #### Either explain why
-		   it's not possible or not worth it to extend Boyer-moore to
-		   eliminate this restriction, or go ahead and eliminate it. */
-		boyer_moore_ok = 0;
-	    }
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/search.c~base.KhTdfT
-	  if (new_bytelen != orig_bytelen || inv_bytelen != orig_bytelen)
-	    boyer_moore_ok = 0;
-	  if (translated != c || inverse != c)
-	    {
-	      /* Keep track of which character set row
-		 contains the characters that need translation.  */
-	      int charset_base_code = c & ~ICHAR_FIELD3_MASK;
-	      if (charset_base == -1)
-		charset_base = charset_base_code;
-	      else if (charset_base != charset_base_code)
-		/* If two different rows appear, needing translation,
-		   then we cannot use boyer_moore search.  */
-		boyer_moore_ok = 0;
-	    }
-=======
           if (boyer_moore_ok
               /* Only do the Boyer-Moore check for characters needing
                  translation. */
               && (translated != c || inverse != c))
             {
 	      Ichar starting_c = c;
-	      int charset_base_code, checked = 0;
+	      int checked = 0;
 
 	      do 
 		{
@@ -1445,29 +1422,21 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 
                   checked = 1;
 
-                  if (-1 == charset_base) /* No charset yet specified. */
-                    {
-                      /* Keep track of which charset and character set row
-                         contains the characters that need translation.
-
-                         Zero out the bits corresponding to the last
-                         byte. */
-                      charset_base = c & ~ICHAR_FIELD3_MASK;
-                    }
-                  else
-                    {
-                      charset_base_code = c & ~ICHAR_FIELD3_MASK;
-
-                      if (charset_base_code != charset_base)
-                        {
-                          /* If two different rows, or two different
-                             charsets, appear, needing non-ASCII
-                             translation, then we cannot use boyer_moore
-                             search.  See the comment at the head of
-                             boyer_moore(). */
-                          boyer_moore_ok = 0;
-                          break;
-                        }
+		  /* Track the original character in string char
+		     representation (minus final byte); we will compare it
+		     against each other character (again minus final byte),
+		     to see if they're the same. */
+		  if (char_base_len == -1)
+		    char_base_len = set_itext_ichar (char_base, c);
+		  else if (chars_differ_in_non_final_bytes
+			   (char_base, char_base_len, c))
+		    {
+		      /* If two different rows, or two different charsets,
+			 appear, needing non-ASCII translation, then we
+			 cannot use boyer_moore search.  See the comment at
+			 the head of boyer_moore(). */
+		      boyer_moore_ok = 0;
+		      break;
                     }
                 } while (c != starting_c);
 
@@ -1488,30 +1457,32 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
                   return n > 0 ? -n : n;
                 }
 
-              if (boyer_moore_ok && charset_base != -1 && 
-                  charset_base != (translated & ~ICHAR_FIELD3_MASK))
-                {
-                  /* In the rare event that the CANON entry for this
-                     character is not in the desired set, choose one
-                     that is, from the equivalence set. It doesn't much
-                     matter which. */
-                  Ichar starting_ch = translated;
-                  do
-                    {
-                      translated = TRANSLATE (inverse_trt, translated);
 
-                      if (charset_base == (translated & ~ICHAR_FIELD3_MASK))
-                        break;
+              if (boyer_moore_ok && char_base_len != -1)
+		{
+		  if (chars_differ_in_non_final_bytes
+		      (char_base, char_base_len, translated))
+		    {
+		      /* In the rare event that the CANON entry for this
+			 character is not in the desired set, choose one
+			 that is, from the equivalence set. It doesn't much
+			 matter which. */
+		      Ichar starting_ch = translated;
+		      do
+			{
+			  translated = TRANSLATE (inverse_trt, translated);
+			  if (!chars_differ_in_non_final_bytes
+			      (char_base, char_base_len, translated))
+			    break;
 
-                    } while (starting_ch != translated);
+			} while (starting_ch != translated);
 
-                  assert (starting_ch != translated);
+		      assert (starting_ch != translated);
 
-                  new_bytelen = set_itext_ichar (tmp_str, translated);
-                }
-            }
+		      new_bytelen = set_itext_ichar (tmp_str, translated);
+		    }
+		}
 
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/search.c~other.cwQ9Lz
 	  memcpy (pat, tmp_str, new_bytelen);
 	  pat += new_bytelen;
 	  base_pat += orig_bytelen;
@@ -1744,13 +1715,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   Ibyte simple_translate[256];
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/search.c
   Ibyte translate_prev[MAX_ICHAR_LEN];
   Ibyte translate_prev_num = 0;
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/search.c~base.KhTdfT
-  Ibyte translate_prev_byte = 0;
-  Ibyte translate_anteprev_byte = 0;
-=======
   Ibyte translate_prev_byte = 0;
   Ibyte translate_anteprev_byte = 0;
   /* These need to be rethought in the event that the internal format
@@ -1760,7 +1726,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   int buffer_entirely_one_byte_p = buf->text->entirely_one_byte_p;
   int buffer_nothing_greater_than_0xff =
     buf->text->num_8_bit_fixed_chars == BUF_Z(buf) - BUF_BEG (buf);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/search.c~other.cwQ9Lz
 #endif
 #ifdef C_ALLOCA
   EMACS_INT BM_tab_space[256];
@@ -1842,88 +1807,50 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      Ibyte *charstart = ptr;
 	      while (!ibyte_first_byte_p (*charstart))
 		charstart--;
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/search.c
-
-	      if (char_base_len != itext_ichar_len (charstart) ||
-		  /* Are two strings different? When we have only a
-		     single byte to compare, don't try calling memcmp()
-		     with zero size, to just the zero-size strings are
-		     the same */
-		  (char_base_len > 1 ?
-		   memcmp (char_base, charstart, char_base_len - 1) : 0))
-		{
-		  Ibyte *ptr2 = ptr;
-		  Ichar untranslated = itext_ichar (charstart);
-		  ch = TRANSLATE (trt, untranslated);
-		  /* We set everything to zero.  Since we use translate_prev
-		     only for storing parts of multi-byte characters, there
-		     won't be any zero's in them. */
-		  xzero (translate_prev);
-		  while (!ibyte_first_byte_p (*ptr2))
-		    translate_prev[translate_prev_num++] = *--ptr2;
-		}
-	      else
-		{
-		  this_translated = 0;
-		  ch = *ptr;
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/search.c~base.KhTdfT
-	      untranslated = itext_ichar (charstart);
-	      if (charset_base == (untranslated & ~ICHAR_FIELD3_MASK))
-		{
-		  ch = TRANSLATE (trt, untranslated);
-		  if (!ibyte_first_byte_p (*ptr))
-		    {
-		      translate_prev_byte = ptr[-1];
-		      if (!ibyte_first_byte_p (translate_prev_byte))
-			translate_anteprev_byte = ptr[-2];
-		    }
-		}
-	      else
-		{
-		  this_translated = 0;
-		  ch = *ptr;
-=======
 	      untranslated = itext_ichar (charstart);
 
               ch = TRANSLATE (trt, untranslated);
-              if (!ibyte_first_byte_p (*ptr))
-                {
-                  translate_prev_byte = ptr[-1];
-                  if (!ibyte_first_byte_p (translate_prev_byte))
-                    translate_anteprev_byte = ptr[-2];
-                }
+	      /* We set everything to zero.  Since we use translate_prev
+		 only for storing parts of multi-byte characters, there
+		 won't be any zero's in them. */
+	      xzero (translate_prev);
+	      while (!ibyte_first_byte_p (*ptr2))
+		translate_prev[translate_prev_num++] = *--ptr2;
 
-              if (ch != untranslated && /* Was translation done? */
-                  charset_base != (ch & ~ICHAR_FIELD3_MASK))
-                {
-                  /* In the very rare event that the CANON entry for this
-                     character is not in the desired set, choose one that
-                     is, from the equivalence set. It doesn't much matter
-                     which, since we're building our own cheesy equivalence
-                     table instead of using that belonging to the case
-                     table directly.
+              if (ch != untranslated) /* Was translation done? */
+		{
+		  if (chars_differ_in_non_final_bytes
+		      (char_base, char_base_len, ch))
+		    {
+		      /* In the very rare event that the CANON entry for this
+			 character is not in the desired set, choose one that
+			 is, from the equivalence set. It doesn't much matter
+			 which, since we're building our own cheesy equivalence
+			 table instead of using that belonging to the case
+			 table directly.
 
-                     We can get here if search_buffer has worked out that
-                     the buffer is entirely single width. */
-                  Ichar starting_ch = ch;
-                  int count = 0;
-                  do
-                    {
-                      ch = TRANSLATE (inverse_trt, ch);
-                      if (charset_base == (ch & ~ICHAR_FIELD3_MASK))
-                        break;
-                      ++count;
-                    } while (starting_ch != ch);
+			 We can get here if search_buffer has worked out that
+			 the buffer is entirely single width. */
+		      Ichar starting_ch = ch;
+		      int count = 0;
+		      do
+			{
+			  ch = TRANSLATE (inverse_trt, ch);
+			  if (chars_differ_in_non_final_bytes
+			      (char_base, char_base_len, ch))
+			    break;
+			  ++count;
+			} while (starting_ch != ch);
 
-                  /* If starting_ch is equal to ch (and count is not one,
-                     which means no translation is necessary), the case
-                     table is corrupt. (Any mapping in the canon table
-                     should be reflected in the equivalence table, and we
-                     know from the canon table that untranslated maps to
-                     starting_ch and that untranslated has the correct value
-                     for charset_base.) */
-                  assert (1 == count || starting_ch != ch);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/search.c~other.cwQ9Lz
+		      /* If starting_ch is equal to ch (and count is not one,
+			 which means no translation is necessary), the case
+			 table is corrupt. (Any mapping in the canon table
+			 should be reflected in the equivalence table, and we
+			 know from the canon table that untranslated maps to
+			 starting_ch and that untranslated has the correct value
+			 for charset_base.) */
+		      assert (1 == count || starting_ch != ch);
+		    }
 		}
 	    }
 	  else
@@ -1931,8 +1858,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      ch = *ptr;
 	      this_translated = 0;
 	    }
-	  if (ch > 256)
-	    j = ((unsigned char) ch | 128);
+	  if (ch >= 256)
+	    j = ((unsigned char) ch | 0x80);
 	  else
 	    j = (unsigned char) ch;
 	      
@@ -1948,18 +1875,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      do
 		{
 		  ch = TRANSLATE (inverse_trt, ch);
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/search.c
-		  if (ch > 256)
-		    j = ((unsigned char) ch | 128);
-		  else
-		    j = (unsigned char) ch;
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/search.c~base.KhTdfT
-		  if (ch > 0400)
-		    j = ((unsigned char) ch | 0200);
-		  else
-		    j = (unsigned char) ch;
-=======
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/search.c~other.cwQ9Lz
 
                   if (ch > 0x7F && buffer_entirely_one_byte_p)
                     continue;
@@ -1967,8 +1882,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
                   if (ch > 0xFF && buffer_nothing_greater_than_0xff)
                     continue;
 
-                  if (ch > 0400)
-                    j = ((unsigned char) ch | 0200);
+                  if (ch >= 256)
+                    j = ((unsigned char) ch | 0x80);
                   else
                     j = (unsigned char) ch;
 

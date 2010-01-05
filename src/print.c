@@ -1576,16 +1576,8 @@ enum printing_badness
 
 static void
 printing_major_badness (Lisp_Object printcharfun,
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/print.c
-			Ascbyte *badness_string, int type, void *val,
-			void *val2, enum printing_badness badness)
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/print.c~base.QpImpj
-			Ascbyte *badness_string, int type, void *val,
-			enum printing_badness badness)
-=======
 			const Ascbyte *badness_string, int type, void *val,
-			enum printing_badness badness)
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/print.c~other.x_GIzT
+			void *val2, enum printing_badness badness)
 {
   Ibyte buf[666];
 
@@ -1784,14 +1776,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      break;
 	  }
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/print.c
 	/* Check to see if the lrecord type is garbage. */
-#ifndef MC_ALLOC
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/print.c~base.QpImpj
-#ifndef MC_ALLOC
-=======
 #ifndef NEW_GC
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/print.c~other.x_GIzT
 	if (lheader->type == lrecord_type_free)
 	  {
 	    printing_major_badness (printcharfun, "FREED LRECORD", 0,
@@ -1804,16 +1790,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 				    lheader, 0, BADNESS_NO_TYPE);
 	    break;
 	  }
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/print.c
-#endif /* not MC_ALLOC */
-	if ((int) (lheader->type) >= lrecord_type_count)
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/print.c~base.QpImpj
-#endif /* not MC_ALLOC */
-	else if ((int) (lheader->type) >= lrecord_type_count)
-=======
 #endif /* not NEW_GC */
-	else if ((int) (lheader->type) >= lrecord_type_count)
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/print.c~other.x_GIzT
+	if ((int) (lheader->type) >= lrecord_type_count)
 	  {
 	    printing_major_badness (printcharfun, "ILLEGAL LRECORD TYPE",
 				    (int) (lheader->type),

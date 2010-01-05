@@ -1554,43 +1554,17 @@ redisplay_output_layout (Lisp_Object domain,
 			struct display_line dl;	/* this is fake */
 			Lisp_Object string =
 			  IMAGE_INSTANCE_TEXT_STRING (childii);
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/redisplay-output.c
 			struct face_cachel *cachel =
 			  WINDOW_FACE_CACHEL (w, findex);
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~base.i2OfQc
-			unsigned char charsets[NUM_LEADING_BYTES];
-			struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
-
-			find_charsets_in_ibyte_string (charsets,
-							 XSTRING_DATA (string),
-							 XSTRING_LENGTH (string));
-			ensure_face_cachel_complete (cachel, window, charsets);
-=======
-			unsigned char charsets[NUM_LEADING_BYTES];
-			struct face_cachel *cachel
-			  = WINDOW_FACE_CACHEL (w, findex);
 
 			DISPLAY_LINE_INIT (dl);
 
-			find_charsets_in_ibyte_string (charsets,
-						       XSTRING_DATA (string),
-						       XSTRING_LENGTH (string));
-			ensure_face_cachel_complete (cachel, window, charsets);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~other.gloewW
-
 			convert_ibyte_string_into_ichar_dynarr
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/redisplay-output.c
 			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
 			   buf);
 			ensure_face_cachel_complete (cachel, window,
 						     Dynarr_atp (buf, 0),
 						     Dynarr_length (buf));
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~base.i2OfQc
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
-=======
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
-			   buf);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~other.gloewW
 
 			redisplay_normalize_display_box (&cdb, &cdga);
 			/* Offsets are now +ve again so be careful
@@ -1601,31 +1575,17 @@ redisplay_output_layout (Lisp_Object domain,
 			dl.ascent = glyph_ascent (child, image_instance);
 			dl.descent = glyph_descent (child, image_instance);
 			dl.top_clip = cdga.yoffset;
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/redisplay-output.c
-			dl.clip = (dl.ypos + dl.descent) -
-			  (cdb.ypos + cdb.height);
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~base.i2OfQc
-			dl.clip = (dl.ypos + dl.descent) - (cdb.ypos + cdb.height);
-=======
 			dl.clip = (dl.ypos + dl.descent)
 			  - (cdb.ypos + cdb.height);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~other.gloewW
 			/* output_string doesn't understand offsets in
 			   the same way as other routines - we have to
 			   add the offset to the width so that we
 			   output the full string. */
-<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~base.i2OfQc
-			MAYBE_DEVMETH (d, output_string, (w, &dl, buf, cdb.xpos,
-							  cdga.xoffset, cdb.xpos,
-							  cdga.width + cdga.xoffset,
-							  findex, 0, 0, 0, 0));
-=======
 			MAYBE_DEVMETH (d, output_string,
 				       (w, &dl, buf, cdb.xpos,
 					cdga.xoffset, cdb.xpos,
 					cdga.width + cdga.xoffset,
 					findex, 0, 0, 0, 0));
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-output.c~other.gloewW
 			Dynarr_reset (buf);
 		      }
 		  }

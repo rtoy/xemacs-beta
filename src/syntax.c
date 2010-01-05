@@ -396,248 +396,6 @@ setup_buffer_syntax_cache (struct buffer *buffer, Charxpos from, int count)
   return setup_syntax_cache (NULL, wrap_buffer (buffer), buffer, from, count);
 }
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/syntax.c
-static const struct memory_description syntax_cache_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
-#ifdef MIRROR_TABLE
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
-#endif /* MIRROR_TABLE */
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
-  { XD_END }
-};
-
-const struct sized_memory_description syntax_cache_description = {
-  sizeof (struct syntax_cache),
-  syntax_cache_description_1
-};
-
-void
-mark_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (!cache) /* Vbuffer_defaults and such don't have caches */
-    return;
-  mark_object (cache->object);
-  if (cache->buffer)
-    mark_object (wrap_buffer (cache->buffer));
-  mark_object (cache->syntax_table);
-#ifdef MIRROR_TABLE
-  mark_object (cache->mirror_table);
-#endif /* MIRROR_TABLE */
-  mark_object (cache->start);
-  mark_object (cache->end);
-}
-
-static void
-reset_buffer_cache_range (struct syntax_cache *cache, Lisp_Object buffer)
-{
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  cache->prev_change = -1;
-  cache->next_change = -1;
-}
-
-void
-init_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache;
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-#ifdef MIRROR_TABLE
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-#endif /* MIRROR_TABLE */
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_cache_range (cache, cache->object);
-}
-
-void
-uninit_buffer_syntax_cache (struct buffer *buf)
-{
-  xfree (buf->syntax_cache, struct syntax_cache *);
-  buf->syntax_cache = 0;
-}
-
-
-static void
-syntax_cache_table_was_changed (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
-    {
-      cache->syntax_table =
-	BUFFER_SYNTAX_TABLE (buf);
-#ifdef MIRROR_TABLE
-      cache->mirror_table =
-	BUFFER_MIRROR_SYNTAX_TABLE (buf);
-#endif /* MIRROR_TABLE */
-    }
-}
-
-/* The syntax-table property on the range covered by EXTENT may be changing,
-   either because EXTENT has a syntax-table property and is being attached
-   or detached (this includes having its endpoints changed), or because
-   the value of EXTENT's syntax-table property is changing. */
-
-void
-signal_syntax_table_extent_changed (EXTENT extent)
-{
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
-    {
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
-      /* If the extent is entirely before or entirely after the cache range,
-	 it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_buffer_cache_range (cache, buffer);
-    }
-}
-
-/* Extents have been adjusted for insertion or deletion, so we need to
-   refetch the start and end position of the extent */
-void
-signal_syntax_table_extent_adjust (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  /* If the cache was invalid before, leave it that way.  We only want
-     to update the limits of validity when they were actually valid. */
-  if (cache->prev_change < 0)
-    return;
-  cache->prev_change = marker_position (cache->start);
-  cache->next_change = marker_position (cache->end);
-}
-
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/syntax.c~base.lKb6l0
-static const struct memory_description syntax_cache_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
-  { XD_END }
-};
-
-const struct sized_memory_description syntax_cache_description = {
-  sizeof (struct syntax_cache),
-  syntax_cache_description_1
-};
-
-void
-mark_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (!cache) /* Vbuffer_defaults and such don't have caches */
-    return;
-  mark_object (cache->object);
-  if (cache->buffer)
-    mark_object (wrap_buffer (cache->buffer));
-  mark_object (cache->syntax_table);
-  mark_object (cache->mirror_table);
-  mark_object (cache->start);
-  mark_object (cache->end);
-}
-
-static void
-reset_buffer_cache_range (struct syntax_cache *cache, Lisp_Object buffer)
-{
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  cache->prev_change = -1;
-  cache->next_change = -1;
-}
-
-void
-init_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache;
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_cache_range (cache, cache->object);
-}
-
-void
-uninit_buffer_syntax_cache (struct buffer *buf)
-{
-  xfree (buf->syntax_cache, struct syntax_cache *);
-  buf->syntax_cache = 0;
-}
-
-
-static void
-syntax_cache_table_was_changed (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
-    {
-      cache->syntax_table =
-	BUFFER_SYNTAX_TABLE (buf);
-      cache->mirror_table =
-	BUFFER_MIRROR_SYNTAX_TABLE (buf);
-    }
-}
-
-/* The syntax-table property on the range covered by EXTENT may be changing,
-   either because EXTENT has a syntax-table property and is being attached
-   or detached (this includes having its endpoints changed), or because
-   the value of EXTENT's syntax-table property is changing. */
-
-void
-signal_syntax_table_extent_changed (EXTENT extent)
-{
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
-    {
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
-      /* If the extent is entirely before or entirely after the cache range,
-	 it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_buffer_cache_range (cache, buffer);
-    }
-}
-
-/* Extents have been adjusted for insertion or deletion, so we need to
-   refetch the start and end position of the extent */
-void
-signal_syntax_table_extent_adjust (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  /* If the cache was invalid before, leave it that way.  We only want
-     to update the limits of validity when they were actually valid. */
-  if (cache->prev_change < 0)
-    return;
-  cache->prev_change = marker_position (cache->start);
-  cache->next_change = marker_position (cache->end);
-}
-
-=======
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/syntax.c~other.rYTWwF
 /* 
    Update syntax_cache to an appropriate setting for position POS
 
@@ -766,7 +524,9 @@ mark_buffer_syntax_cache (struct buffer *buf)
   if (cache->buffer)
     mark_object (wrap_buffer (cache->buffer));
   mark_object (cache->syntax_table);
+#ifdef MIRROR_TABLE
   mark_object (cache->mirror_table);
+#endif /* MIRROR_TABLE */
   mark_object (cache->start);
   mark_object (cache->end);
 }
@@ -786,7 +546,9 @@ init_buffer_syntax_cache (struct buffer *buf)
   cache->buffer = buf;
   cache->no_syntax_table_prop = 1;
   cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
+#ifdef MIRROR_TABLE
   cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+#endif /* MIRROR_TABLE */
   cache->start = Fmake_marker ();
   cache->end = Fmake_marker ();
   reset_buffer_syntax_cache_range (cache, cache->object, 0);
@@ -917,36 +679,6 @@ syntax table.
 #endif /* MIRROR_TABLE */
 }
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/syntax.c
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/syntax.c~base.lKb6l0
-#ifdef MULE
-
-enum syntaxcode
-charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
-		int *multi_p_out)
-{
-  *multi_p_out = 1;
-  /* !!#### get this right */
-  return Spunct;
-}
-
-#endif
-
-=======
-#ifdef MULE
-
-enum syntaxcode
-charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
-		int *multi_p_out)
-{
-  *multi_p_out = 1;
-  /* !!#### get this right */
-  return Sword;
-}
-
-#endif
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/syntax.c~other.rYTWwF
 Lisp_Object
 syntax_match (Lisp_Object syntax_table, Ichar ch)
 {

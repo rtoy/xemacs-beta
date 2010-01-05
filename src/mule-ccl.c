@@ -1,6 +1,6 @@
 /* CCL (Code Conversion Language) interpreter.
    Copyright (C) 1995, 1997 Electrotechnical Laboratory, JAPAN.
-   Copyright (C) 2002, 2005 Ben Wing.
+   Copyright (C) 2002, 2005, 2010 Ben Wing.
    Licensed to the Free Software Foundation.
 
 This file is part of XEmacs.
@@ -917,8 +917,10 @@ do									\
 	c1 += 128;							\
       if (XCHARSET_OFFSET (charset, 1) >= 128)				\
 	c2 += 128;							\
-      if (valid_charset_codepoint_p (charset, c1, c2))			\
-	c = charset_codepoint_to_ichar (charset, c1, c2, CONVERR_SUCCEED); \
+      if (valid_charset_codepoint_p (charset, c1, c2) &&		\
+	(c = charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL)) \
+	  >= 0)								\
+	;								\
       else								\
 	CCL_INVALID_CMD;						\
     }									\
@@ -1366,121 +1368,50 @@ ccl_driver (struct ccl_program *ccl,
 		if (src >= src_end ||
 		    src + (len = itext_ichar_len (src)) > src_end)
 		  {
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/mule-ccl.c
 		    if (ccl->last_block)
 		      {
-			ic = ccl->eof_ic;
+			if (src < src_end)
+			  {
+			    /* @@#### This is extremely bogus and should
+			       probably be removed or just turned into
+			       an abort.  If we somehow or other ended
+			       partway into a character, take the first
+			       byte and output it literally as a binary
+			       character.
+
+			       @@#### Think about the values stored here
+			       carefully.  We are being compatible with
+			       the old way of doing things, where
+			       perhaps we want to instead store `i' as-is
+			       without subtracting or masking off any
+			       values.  In general, think about doing
+			       this elsewhere, since elsewhere we
+			       are masking off high bits, which won't
+			       work with arbitrary-sized charsets. */
+			    i = *src;
+			    if (i < 0x80)
+			      {
+				reg[RRR] = XCHARSET_ID (Vcharset_ascii);
+				reg[rrr] = i;
+			      }
+			    else if (i < 0xA0)
+			      {
+				reg[RRR] = XCHARSET_ID (Vcharset_control_1);
+				reg[rrr] = i - 0xA0;
+			      }
+			    else
+			      {
+				reg[RRR] =
+				  XCHARSET_ID (Vcharset_latin_iso8859_1);
+				reg[rrr] = i & 0x7F;
+			      }
+			  }
+			ic = eof_ic;
+			eof_hit = 1;
 			goto ccl_repeat;
 		      }
 		    else
 		      CCL_SUSPEND (CCL_STAT_SUSPEND_BY_SRC);
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~base.fArc-e
-		    src++;
-		    goto ccl_read_multibyte_character_suspend;
-		  }
-
-		i = *src++;
-		if (i < 0x80)
-		  {
-		    /* ASCII */
-		    reg[rrr] = i;
-		    reg[RRR] = LEADING_BYTE_ASCII;
-		  }
-		/* Previously, these next two elses were reversed in order,
-		   which should have worked fine, but is more fragile than
-		   this order. */
-		else if (LEADING_BYTE_CONTROL_1 == i)
-		  {
-		    if (src >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    reg[rrr] = (*src++ - 0xA0);
-		  }
-		else if (i <= MAX_LEADING_BYTE_OFFICIAL_1)
-		  {
-		    if (src >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    reg[rrr] = (*src++ & 0x7F);
-		  }
-		else if (i <= MAX_LEADING_BYTE_OFFICIAL_2)
-		  {
-		    if ((src + 1) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    i = (*src++ & 0x7F);
-		    reg[rrr] = ((i << 7) | (*src & 0x7F));
-		    src++;
-		  }
-		else if (i == PRE_LEADING_BYTE_PRIVATE_1)
-		  {
-		    if ((src + 1) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = *src++;
-		    reg[rrr] = (*src++ & 0x7F);
-		  }
-		else if (i == PRE_LEADING_BYTE_PRIVATE_2)
-		  {
-		    if ((src + 2) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = *src++;
-		    i = (*src++ & 0x7F);
-		    reg[rrr] = ((i << 7) | (*src & 0x7F));
-		    src++;
-=======
-		    src++;
-		    goto ccl_read_multibyte_character_suspend;
-		  }
-
-		i = *src++;
-		if (i < 0x80)
-		  {
-		    /* ASCII */
-		    reg[rrr] = i;
-		    reg[RRR] = LEADING_BYTE_ASCII;
-		  }
-		/* Previously, these next two elses were reversed in order,
-		   which should have worked fine, but is more fragile than
-		   this order. */
-		else if (LEADING_BYTE_CONTROL_1 == i)
-		  {
-		    if (src >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    reg[rrr] = (*src++ - 0xA0);
-		  }
-		else if (i <= MAX_LEADING_BYTE_OFFICIAL_1)
-		  {
-		    if (src >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    reg[rrr] = (*src++ & 0x7F);
-		  }
-		else if (i <= MAX_LEADING_BYTE_OFFICIAL_2)
-		  {
-		    if ((src + 1) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = i;
-		    i = (*src++ & 0x7F);
-		    reg[rrr] = ((i << 7) | (*src & 0x7F));
-		    src++;
-		  }
-		else if (i == PRE_LEADING_BYTE_PRIVATE_1)
-		  {
-		    if ((src + 1) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = *src++;
-		    reg[rrr] = (*src++ & 0xFF);
-		  }
-		else if (i == PRE_LEADING_BYTE_PRIVATE_2)
-		  {
-		    if ((src + 2) >= src_end)
-		      goto ccl_read_multibyte_character_suspend;
-		    reg[RRR] = *src++;
-		    i = (*src++ & 0x7F);
-		    reg[rrr] = ((i << 7) | (*src & 0x7F));
-		    src++;
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~other.Yw1nUA
 		  }
 		else
 		  {
@@ -1497,142 +1428,30 @@ ccl_driver (struct ccl_program *ccl,
 		    reg[RRR] = XCHARSET_ID (charset);
 		    reg[rrr] = (c1 << 7) + c2;
 		  }
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/mule-ccl.c
 	      }
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~base.fArc-e
-	      break;
-
-	    ccl_read_multibyte_character_suspend:
-	      src--;
-	      if (ccl->last_block)
-		{
-		  ic = ccl->eof_ic;
-		  goto ccl_repeat;
-		}
-	      else
-		CCL_SUSPEND (CCL_STAT_SUSPEND_BY_SRC);
-
-=======
-	      break;
-
-	    ccl_read_multibyte_character_suspend:
-	      if (src <= src_end && ccl->last_block)
-		{
-                  /* #### Unclear when this happens. GNU use
-                    CHARSET_8_BIT_CONTROL here, which we can't. */
-                  if (i < 0x80)
-                    {
-                      reg[RRR] = LEADING_BYTE_ASCII;
-                      reg[rrr] = i;
-                    }
-                  else if (i < 0xA0)
-                    {
-                      reg[RRR] = LEADING_BYTE_CONTROL_1;
-                      reg[rrr] = i - 0xA0;
-                    }
-                  else
-                    {
-                      reg[RRR] = LEADING_BYTE_LATIN_ISO8859_1;
-                      reg[rrr] = i & 0x7F;
-                    }
-		  break;
-		}
-	      src--;
-	      if (ccl->last_block)
-		{
-		  ic = eof_ic;
-		  eof_hit = 1;
-		  goto ccl_repeat;
-		}
-	      else
-		CCL_SUSPEND (CCL_STAT_SUSPEND_BY_SRC);
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~other.Yw1nUA
 	      break;
 
 	    case CCL_WriteMultibyteChar2:
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/mule-ccl.c
 	      {
 		Ichar ich = ccl_make_char (reg[RRR], reg[rrr]);
 		CCL_WRITE_CHAR (ich);
 	      }
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~base.fArc-e
-	      i = reg[RRR]; /* charset */
-	      if (i == LEADING_BYTE_ASCII) 
-		i = reg[rrr] & 0xFF;
-	      else if (LEADING_BYTE_CONTROL_1 == i)
-		i = ((reg[rrr] & 0xFF) - 0xA0);
-	      else if (POSSIBLE_LEADING_BYTE_P(i) &&
-		       !NILP(charset_by_leading_byte(i)))
-		{
-		  if (XCHARSET_DIMENSION (charset_by_leading_byte (i)) == 1)
-		    i = (((i - FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7)
-			 | (reg[rrr] & 0x7F));
-		  else if (i < MAX_LEADING_BYTE_OFFICIAL_2)
-		    i = ((i - FIELD1_TO_OFFICIAL_LEADING_BYTE) << 14) 
-		      | reg[rrr];
-		  else
-		    i = ((i - FIELD1_TO_PRIVATE_LEADING_BYTE) << 14) | reg[rrr];
-		}
-	      else 
-		{
-		  /* No charset we know about; use U+3012 GETA MARK */
-		  i = make_ichar
-		    (charset_by_leading_byte(LEADING_BYTE_JAPANESE_JISX0208),
-		     34, 46);
-		}
-
-	      CCL_WRITE_CHAR (i);
-
-=======
-	      i = reg[RRR]; /* charset */
-	      if (i == LEADING_BYTE_ASCII) 
-		i = reg[rrr] & 0xFF;
-	      else if (LEADING_BYTE_CONTROL_1 == i)
-		i = ((reg[rrr] & 0x1F) + 0x80);
-	      else if (POSSIBLE_LEADING_BYTE_P(i) &&
-		       !NILP(charset_by_leading_byte(i)))
-		{
-		  if (XCHARSET_DIMENSION (charset_by_leading_byte (i)) == 1)
-		    i = (((i - FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7)
-			 | (reg[rrr] & 0x7F));
-		  else if (i <= MAX_LEADING_BYTE_OFFICIAL_2)
-		    i = ((i - FIELD1_TO_OFFICIAL_LEADING_BYTE) << 14) 
-		      | reg[rrr];
-		  else
-		    i = ((i - FIELD1_TO_PRIVATE_LEADING_BYTE) << 14) | reg[rrr];
-		}
-	      else 
-		{
-		  /* No charset we know about; use U+3012 GETA MARK */
-		  i = make_ichar
-		    (charset_by_leading_byte(LEADING_BYTE_JAPANESE_JISX0208),
-		     34, 46);
-		}
-
-	      CCL_WRITE_CHAR (i);
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~other.Yw1nUA
 	      break;
 
 	    case CCL_TranslateCharacter:
 #if 0
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/mule-ccl.c
-	      /* XEmacs does not have translate_char, and its
-		 equivalent nor.  We do nothing on this operation. */
-	      i = ccl_make_char (reg[RRR], reg[rrr]);
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~base.fArc-e
-	      /* XEmacs does not have translate_char, and its
-		 equivalent nor.  We do nothing on this operation. */
-	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
-=======
 	      /* XEmacs does not have translate_char, nor an
 		 equivalent.  We do nothing on this operation. */
-	      CCL_MAKE_CHAR(reg[RRR], reg[rrr], op);
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~other.Yw1nUA
+	      op = ccl_make_char (reg[RRR], reg[rrr]);
 	      op = translate_char (GET_TRANSLATION_TABLE (reg[Rrr]),
-				   i, -1, 0, 0);
-	      SPLIT_CHAR (op, reg[RRR], i, j);
+				   op, -1, 0, 0);
+	      {
+		Lisp_Object charset;
+	
+		ichar_to_charset_codepoint (op, get_unicode_precedence(),
+					    &charset, &i, &j);
+		reg[RRR] = XCHARSET_ID (charset);
+	      }
 	      if (j != -1)
 		i = (i << 7) | j;
 	      
@@ -1648,7 +1467,13 @@ ccl_driver (struct ccl_program *ccl,
 	      ic++;
 	      i = ccl_make_char (reg[RRR], reg[rrr]);
 	      op = translate_char (GET_TRANSLATION_TABLE (op), i, -1, 0, 0);
-	      SPLIT_CHAR (op, reg[RRR], i, j);
+	      {
+		Lisp_Object charset;
+	
+		ichar_to_charset_codepoint (op, get_unicode_precedence(),
+					    &charset, &i, &j);
+		reg[RRR] = XCHARSET_ID (charset);
+	      }
 	      if (j != -1)
 		i = (i << 7) | j;
 
@@ -1660,11 +1485,13 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object ucs;
 
-                CCL_MAKE_CHAR (reg[rrr], reg[RRR], op);
+		/* @@#### Is it correct that we have the arguments reversed
+		   from other calls to ccl_make_char? */
+                op = ccl_make_char (reg[rrr], reg[RRR]);
 
-		ucs = Fchar_to_unicode(make_char(op));
+		ucs = Fchar_to_unicode (make_char (op));
 
-		if (NILP(ucs))
+		if (NILP (ucs))
 		  {
 		    /* Uhh, char-to-unicode doesn't return nil at the
 		       moment, only ever -1. */
@@ -1672,7 +1499,7 @@ ccl_driver (struct ccl_program *ccl,
 		  }
 		else
 		  {
-		    reg[rrr] = XCHAR_OR_INT(ucs);
+		    reg[rrr] = XCHAR_OR_INT (ucs);
 		    if (-1 == reg[rrr])
 		      {
 			reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
@@ -1685,13 +1512,14 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object scratch;
 
-		scratch = Funicode_to_char(make_int(reg[rrr]), Qnil);
+		scratch = Funicode_to_char (make_int (reg[rrr]), Qnil);
 
-		if (!NILP(scratch))
+		if (!NILP (scratch))
 		  {
-		    op = XCHAR(scratch);
-		    BREAKUP_ICHAR (op, scratch, i, j);
-		    reg[RRR] = XCHARSET_ID(scratch);
+		    op = XCHAR (scratch);
+		    ichar_to_charset_codepoint (op, get_unicode_precedence(),
+						&scratch, &i, &j);
+		    reg[RRR] = XCHARSET_ID (scratch);
 
 		    if (j != 0)
 		      {
@@ -1723,9 +1551,9 @@ ccl_driver (struct ccl_program *ccl,
                         CCL_INVALID_CMD;
                       }
 
-		    BREAKUP_ICHAR (op, scratch, i, j);
-                    reg[RRR] = XCHARSET_ID(scratch);
-
+		    ichar_to_charset_codepoint (op, get_unicode_precedence(),
+						&scratch, &i, &j);
+		    reg[RRR] = XCHARSET_ID (scratch);
 		    if (j != 0)
                       {
                         i = (i << 7) | j;
@@ -2673,7 +2501,6 @@ syms_of_mule_ccl (void)
 void
 vars_of_mule_ccl (void)
 {
-
   staticpro (&Vccl_program_table);
   Vccl_program_table = Fmake_vector (make_int (32), Qnil);
 
@@ -2700,16 +2527,9 @@ Comprises pairs (SYMBOL . TABLE) where SYMBOL and TABLE were set up by calls
 to `define-translation-hash-table'.  The vector is indexed by the table id
 used by CCL.
 */ );
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/mule-ccl.c
-  Vfont_ccl_encoder_alist = Qnil;
+  Vtranslation_hash_table_vector = Qnil;
 
   Fprovide (intern ("ccl"));
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~base.fArc-e
-  Vfont_ccl_encoder_alist = Qnil;
-=======
-    Vtranslation_hash_table_vector = Qnil;
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-ccl.c~other.Yw1nUA
 }
 
 #endif  /* emacs */

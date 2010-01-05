@@ -5150,33 +5150,6 @@ Lstream_funget_ichar (Lstream *stream, Ichar ch)
 /*              Lisp primitives for working with characters             */
 /************************************************************************/
 
-#error @@#### FIXME Finish the non-Mule versions of the below functions.
-#error Generally, they should support one charset, Qascii, in the range
-#error 0 - 255.
-
-#error It would seem to make sense now for Control-1 to be in the range
-#error 128 - 159 instead of 32 - 63, and for Latin-* to be in the range
-#error 160 - 255 instead of 32 - 127.  What to do?
-
-static int
-check_coerce_octet (Lisp_Object arg, int low, int high)
-{
-  int retval;
-  CHECK_INT (arg);
-  /* It is useful (and safe, according to Olivier Galibert) to strip
-     the 8th bit off ARG1 and ARG2 because it allows programmers to
-     write (make-char 'latin-iso8859-2 CODE) where code is the actual
-     Latin 2 code of the character.  */
-  retval = XINT (arg);
-  if (high < 128 && retval - 128 >= low && retval - 128 <= high)
-    retval -= 128;
-  if (low >= 128 && retval + 128 >= low && retval + 128 <= high)
-    retval += 128;
-  if (retval < low || retval > high)
-    args_out_of_range_3 (arg, make_int (low), make_int (high));
-  return retval;
-}
-
 #ifdef MULE
 
 /* Internally, dimension-1 charset codepoints are "little-endian", stored
@@ -5217,7 +5190,152 @@ external_to_internal_charset_codepoint (Lisp_Object charset,
   ASSERT_VALID_CHARSET_CODEPOINT (charset, *int_c1, *int_c2);
 }
 
+static int
+check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
+		    int munge_codepoints)
+{
+  int retval;
+  CHECK_INT (arg);
+  if (munge_codepoints)
+    {
+      retval = XINT (arg);
+      if (EQ (charset, Vcharset_control_1) && retval >= 32 & retval < 64)
+	retval += 96;
+      else if (get_charset_iso2022_type (charset) >= 0)
+	{
+	  /* It is useful (and safe, according to Olivier Galibert) to strip
+	     the 8th bit off ARG1 and ARG2 because it allows programmers to
+	     write (make-char 'latin-iso8859-2 CODE) where code is the actual
+	     Latin 2 code of the character.  */
+
+	  if (high < 128 && retval - 128 >= low && retval - 128 <= high)
+	    retval -= 128;
+	  if (low >= 128 && retval + 128 >= low && retval + 128 <= high)
+	    retval += 128;
+	}
+    }
+  if (retval < low || retval > high)
+    args_out_of_range_3 (arg, make_int (low), make_int (high));
+  return retval;
+}
+
 #endif /* MULE */
+
+/******************** Helper functions for basic conversions ***************/
+
+/* These handle the non-Mule case and free any precedence dynarr passed in. */
+
+static Ichar
+charset_codepoint_to_ichar_helper (Lisp_Object charset, int a1, int a2,
+				   enum converr USED_IF_MULE (fail))
+{
+#ifdef MULE
+  return charset_codepoint_to_ichar (charset, a1, a2, fail);
+#else
+  text_checking_assert (EQ (charset, Vcharset_ascii));
+  text_checking_assert (a1 == 0);
+  text_checking_assert (a2 >= 0 && a2 <= 255);
+  return (Ichar) a2;
+#endif /* (not) MULE */
+}
+
+static int
+charset_codepoint_to_unicode_helper (Lisp_Object charset, int a1, int a2,
+				     enum converr USED_IF_MULE (fail))
+{
+#ifdef MULE
+  return charset_codepoint_to_unicode (charset, a1, a2, fail);
+#else
+  text_checking_assert (EQ (charset, Vcharset_ascii));
+  text_checking_assert (a1 == 0);
+  text_checking_assert (a2 >= 0 && a2 <= 255);
+  return (int) a2;
+#endif /* (not) MULE */
+}
+
+#ifndef MULE
+
+static void
+non_mule_code_maybe_out_of_range_to_charset_codepoint (EMACS_INT code,
+						       Lisp_Object *charset,
+						       int *c1, int *c2)
+{
+  text_checking_assert (code >= 0);
+  if (code > 255)
+    *charset = Qnil, *c1 = -1, *c2 = -1;
+  else
+    {
+      *charset = Vcharset_ascii;
+      *c1 = 0;
+      *c2 = (int) code;
+    }
+}
+
+#endif /* not MULE */
+
+static void
+ichar_to_charset_codepoint_helper (Ichar ch, Lisp_Object_dynarr *
+				   USED_IF_MULE (dyn),
+				   Lisp_Object *charset, int *c1, int *c2)
+{
+#ifdef MULE
+  ichar_to_charset_codepoint (ch, dyn, charset, c1, c2);
+  if (dyn)
+    free_precedence_dynarr (dyn);
+#else
+  non_mule_code_maybe_out_of_range_to_charset_codepoint (ch, charset, c1, c2);
+#endif
+}
+
+static void
+unicode_to_charset_codepoint_helper (int c, Lisp_Object_dynarr *
+				     USED_IF_MULE (dyn),
+				     Lisp_Object *charset, int *c1, int *c2)
+{
+#ifdef MULE
+  unicode_to_charset_codepoint (c, dyn, charset, c1, c2);
+  if (dyn)
+    free_precedence_dynarr (dyn);
+#else
+  non_mule_code_maybe_out_of_range_to_charset_codepoint (c, charset, c1, c2);
+#endif
+}
+
+static Ichar
+unicode_to_ichar_helper (int code, Lisp_Object_dynarr *dyn, enum converr fail)
+{
+  Ichar ret;
+
+#if defined (MULE)
+  ret = unicode_to_ichar (c, dyn, fail);
+  if (dyn)
+    free_precedence_dynarr (dyn);
+#else
+  text_checking_assert (code >= 0);
+  if (code > 255)
+    ret = (Ichar) -1;
+  else
+    ret = (Ichar) code;
+#endif
+  return ret;
+}
+
+static int
+ichar_to_unicode_helper (Ichar ch, enum converr fail)
+{
+  Ichar ret;
+
+#if defined (MULE)
+  ret = ichar_to_unicode (ch, fail);
+#else
+  text_checking_assert (ch >= 0);
+  if (ch > 255)
+    ret = -1;
+  else
+    ret = (int) ch;
+#endif
+  return ret;
+}
 
 /* Validate an external charset codepoint and convert to internal form.
    This involves reversing the octets for dimension-1 charsets.
@@ -5226,7 +5344,7 @@ external_to_internal_charset_codepoint (Lisp_Object charset,
 Lisp_Object
 get_external_charset_codepoint (Lisp_Object charset,
 				Lisp_Object arg1, Lisp_Object arg2,
-				int *a1, int *a2)
+				int *a1, int *a2, int munge_codepoints)
 {
 #ifdef MULE
   int low1, high1, low2, high2;
@@ -5242,52 +5360,99 @@ get_external_charset_codepoint (Lisp_Object charset,
       /* Dimension-1 internal and external codepoints are handled
 	 differently, see above. */
       *a1 = 0;
-      *a2 = check_coerce_octet (arg1, low2, high2);
+      *a2 = check_coerce_octet (charset, arg1, low2, high2, munge_codepoints);
     }
   else
     {
-      *a1 = check_coerce_octet (arg1, low1, high1);
-      *a2 = check_coerce_octet (arg2, low2, high2);
+      *a1 = check_coerce_octet (charset, arg1, low1, high1, munge_codepoints);
+      *a2 = check_coerce_octet (charset, arg2, low2, high2, munge_codepoints);
     }
   return charset;
-#else
-  int a1;
-  int lowlim, highlim;
-
+#else /* not MULE */
   CHECK_SYMBOL (charset);
-  if (EQ (charset, Qascii))
-    lowlim =  0, highlim = 127;
-  else if (EQ (charset, Qcontrol_1))
-    lowlim =  0, highlim =  31;
+  CHECK_INT (arg1);
+  CHECK_NIL (arg2);
+  *a1 = 0;
+  *a2 = XINT (arg1);
+  if (EQ (charset, Vcharset_ascii))
+    check_int_range (*a2, 0, 255);
+  else if (munge_codepoints)
+    {
+      /* If munge checkpoints, we are very free with what we allow, just
+	 to make sure we're backward-compatible with various versions of
+	 XEmacs and GNU Emacs, and coerce to the proper range. */
+      check_int_range (*a2, 0, 255);
+      if (EQ (charset, Vcharset_control_1))
+	*a2 = (*a2 & 0x1F) + 128;
+      else
+	*a2 = (*a2 & 0x7F) + 128;
+    }
   else
-    lowlim =  0, highlim = 127;
-
-  a1 = check_coerce_octet (octet1, lowlim, highlim);
+    {
+      if (EQ (charset, Vcharset_control_1))
+	check_int_range (*a2, 128, 159);
+      else
+	check_int_range (*a2, 160, 255);
+    }
+  return Vcharset_ascii;
 #endif /* (not) MULE */
 }
 
-static Ichar
-maybe_fake_charset_codepoint_to_ichar (Lisp_Object charset, int a1, int a2,
-				       enum converr fail)
-{
-#ifdef MULE
-  return charset_codepoint_to_ichar (charset, a1, a2, fail);
-#else
-  return (Ichar) a1;
-#endif /* (not) MULE */
-}
-
+/* Like ichar_to_charset_codepoint() but takes a CHARSETS list and converts
+   it into an internal dynarr. */
 static void
-maybe_fake_ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *charsets,
-				       Lisp_Object *charset, int *c1, int *c2)
+external_char_to_charset_codepoint (Lisp_Object lispch, Lisp_Object
+				   USED_IF_UNICODE_INTERNAL (charsets),
+				   Lisp_Object *charset, int *c1, int *c2,
+				   int munge_codepoints)
 {
+  Ichar ch;
+  CHECK_CHAR_COERCE_INT (lispch);
+  ch = XCHAR (lispch);
+
+  {
+    Lisp_Object_dynarr *dyn =
+      convert_charset_list_to_precedence_dynarr (charsets);
+    ichar_to_charset_codepoint_helper (ch, dyn, charset, c1, c2);
+  }
+  if (munge_codepoints)
+    {
+      /* Bogus bogus bogus.  Munge the codepoints to match the old way of
+	 doing things, where all charset codepoints were coerced to be in
+	 the range of 32-127 and ascii and control-1 were handled specially.
+      */
+      if (EQ (*charset), Vcharset_control_1)
+	{
+	  text_checking_assert (*c1 == 0);
+	  text_checking_assert (*c2 >= 128 && *c2 <= 159);
+	  *c2 -= 96;
+	}
+      else if (get_charset_iso2022_type (*charset) >= 0)
+	{
+	  *c1 &= 127;
+	  *c2 &= 127;
+	}
+    }
+}
+
+/* Like ichar_to_charset_codepoint() but takes a CHARSETS list and converts
+   it into an internal dynarr. */
+static int
+get_external_unicode_codepoint (Lisp_Object unicode, Lisp_Object
+				USED_IF_UNICODE_INTERNAL (charsets),
+				Lisp_Object_dynarr **dyn_out)
+{
+  int code = decode_unicode (unicode);
 #ifdef MULE
-  return ichar_to_charset_codepoint (ch, charsets, charset, c1, c2);
+  Lisp_Object_dynarr *dyn =
+    convert_charset_list_to_precedence_dynarr (charsets);
 #else
-  *charset = Qascii;
-  *c1 = 0;
-  *c2 = (int) ch;
+  Lisp_Object_dynarr *dyn = NULL;
 #endif
+
+  if (dyn_out)
+    *dyn_out = dyn;
+  return code;
 }
 
 enum converr
@@ -5473,8 +5638,8 @@ nil or `fail'	Return nil
   Ichar ch;
 
   charset = get_external_charset_codepoint (charset, octet1, octet2,
-					    &a1, &a2);
-  ch = maybe_fake_charset_codepoint_to_ichar (charset, a1, a2, fail);
+					    &a1, &a2, 1);
+  ch = charset_codepoint_to_ichar_helper (charset, a1, a2, fail);
   if (ch < 0)
     return Qnil;
   return make_char (ch);
@@ -5496,13 +5661,9 @@ nil or `fail'	Return nil
        (character, handle_error))
 {
   enum converr fail = decode_handle_error (handle_error);
-  CHECK_CHAR (character);
-  
-#ifdef MULE
-  return make_int (ichar_to_unicode (XCHAR (character), fail));
-#else
-  return Fchar_to_int (character);
-#endif /* MULE */
+
+  CHECK_CHAR_COERCE_INT (character);
+  return make_int (ichar_to_unicode_helper (XCHAR (character), fail));
 }
 
 DEFUN ("unicode-to-char", Funicode_to_char, 1, 3, 0, /*
@@ -5548,38 +5709,13 @@ nil or `fail'	Return nil
 */
        (unicode, precedence_list, handle_error))
 {
-#if defined (MULE) && !defined (UNICODE_INTERNAL)
-  int c = decode_unicode (unicode);
-  Lisp_Object_dynarr *dyn =
-    convert_charset_list_to_precedence_dynarr (precedence_list);
+  int c = get_external_unicode_codepoint (unicode, precedence_list);
   enum converr fail = decode_handle_error (handle_error);
-  Ichar ret = unicode_to_ichar (c, dyn, fail);
+  Ichar ret = unicode_to_ichar_helper (c, dyn, fail);
 
-  free_precedence_dynarr (dyn);
   if (ret == -1)
     return Qnil;
   return make_char (ret);
-#else
-  decode_unicode (unicode);
-  return Fint_to_char (unicode);
-#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
-}
-
-/* Like ichar_to_charset_codepoint() but takes a CHARSETS list and converts
-   it into an internal dynarr. */
-static void
-ichar_to_charset_codepoint_helper (Ichar ch, Lisp_Object
-				   USED_IF_UNICODE_INTERNAL (charsets),
-				   Lisp_Object *charset, int *c1, int *c2)
-{
-#ifdef UNICODE_INTERNAL
-  Lisp_Object_dynarr *dyn =
-    convert_charset_list_to_precedence_dynarr (charsets);
-  maybe_fake_ichar_to_charset_codepoint (ch, dyn, charset, c1, c2);
-  free_precedence_dynarr (dyn);
-#else
-  maybe_fake_ichar_to_charset_codepoint (ch, 0, charset, c1, c2);
-#endif /* UNICODE_INTERNAL */
 }
 
 DEFUN ("char-to-charset-codepoint", Fchar_to_charset_codepoint, 1, 2, 0, /*
@@ -5594,14 +5730,12 @@ the corresponding position codes (octets) in the representation in this
 charset.  The return value will be nil if no equivalent national charset
 representation can be found.
 */
-       (ch, USED_IF_MULE (charsets)))
+       (ch, charsets))
 {
   Lisp_Object charset;
   int c1, c2;
 
-  CHECK_CHAR_COERCE_INT (ch);
-  ichar_to_charset_codepoint_helper (XCHAR (ch), charsets, &charset,
-				     &c1, &c2);
+  external_char_to_charset_codepoint (ch, charsets, &charset, &c1, &c2, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5634,7 +5768,7 @@ nil or `fail'	Return nil
   int code;
 
   charset = get_external_charset_codepoint (charset, arg1, arg2, &a1, &a2);
-  code = charset_codepoint_to_unicode (charset, a1, a2, err);
+  code = charset_codepoint_to_unicode_helper (charset, a1, a2, err);
   if (code == -1)
     return Qnil;
   return make_int (code);
@@ -5648,18 +5782,17 @@ Return nil if no conversion available.
 */
        (code, charsets))
 {
-  Lisp_Object_dynarr *dyn =
-    convert_charset_list_to_precedence_dynarr (charsets);
-  int c = decode_unicode (code);
+  Lisp_Object_dynarr *dyn;
+  int c = get_external_unicode_codepoint (code, charsets, &dyn);
   Lisp_Object charset;
   int a1, a2;
 
-  unicode_to_charset_codepoint (c, dyn, &charset, &a1, &a2);
-  free_precedence_dynarr (dyn);
+  unicode_to_charset_codepoint_helper (c, dyn, &charset, &a1, &a2);
+  
   if (NILP (charset))
     return Qnil;
 
-  if (XCHARSET_DIMENSION (Fget_charset (charset)) == 2)
+  if (XCHARSET_DIMENSION (charset) == 2)
     return list3 (XCHARSET_NAME (charset), make_int (a1), make_int (a2));
   else
     /* See comment at internal_to_external_charset_codepoint(). */
@@ -5679,9 +5812,7 @@ if no equivalent national charset representation can be found.
   Lisp_Object charset;
   int c1, c2;
 
-  CHECK_CHAR_COERCE_INT (ch);
-  ichar_to_charset_codepoint_helper (XCHAR (ch), charsets, &charset,
-				     &c1, &c2);
+  external_char_to_charset_codepoint (ch, charsets, &charset, &c1, &c2, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5704,21 +5835,12 @@ returns 0 instead of nil.)
   Lisp_Object charset;
   int c1, c2;
 
-  CHECK_CHAR_COERCE_INT (ch);
-  ichar_to_charset_codepoint_helper (XCHAR (ch), charsets, &charset,
-				     &c1, &c2);
+  external_char_to_charset_codepoint (ch, charsets, &charset, &c1, &c2, 1);
 
   if (NILP (charset))
     return Qnil;
 
   internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2);
-
-  /* Bogus bogus bogus. */
-  if (get_charset_iso2022_type (charset) >= 0)
-    {
-      c1 &= 127;
-      c2 &= 127;
-    }
 
   if (NILP (n) || EQ (n, Qzero))
     return make_int (c1);
@@ -5744,24 +5866,16 @@ the corresponding position codes (octets) in the representation in this
 charset.  The return value will be nil if no equivalent national charset
 representation can be found.
 */
-       (ch, USED_IF_MULE (charsets)))
+       (ch, charsets)
 {
   Lisp_Object charset;
   int c1, c2;
 
-  CHECK_CHAR_COERCE_INT (ch);
-  ichar_to_charset_codepoint_helper (XCHAR (ch), charsets, &charset,
-				     &c1, &c2);
+  external_char_to_charset_codepoint (ch, charsets, &charset,
+				     &c1, &c2, 1);
 
   if (NILP (charset))
     return Qnil;
-
-  /* Bogus bogus bogus. */
-  if (get_charset_iso2022_type (charset) >= 0)
-    {
-      c1 &= 127;
-      c2 &= 127;
-    }
 
   if (XCHARSET_DIMENSION (charset) == 2)
     return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
@@ -5869,24 +5983,23 @@ void
 syms_of_text (void)
 {
   DEFSUBR (Fmake_char);
-  DEFSUBR (Fsplit_char);
-  DEFSUBR (Fchar_to_charset_codepoint);
   DEFSUBR (Fchar_to_unicode);
+  DEFSUBR (Funicode_to_char);
+  DEFSUBR (Fchar_to_charset_codepoint);
   DEFSUBR (Fcharset_codepoint_to_unicode);
   DEFSUBR (Funicode_to_charset_codepoint);
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
+  DEFSUBR (Fsplit_char);
 
   /* Qfail, Qsubstitute in general.c */
   DEFSYMBOL (Qsubstitute_negated);
   DEFSYMBOL (Quse_private);
 
-#ifdef MULE
 #ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);
   DEFSUBR (Fcomposite_char_string);
 #endif
-#endif /* MULE */
 }
 
 void
@@ -5916,7 +6029,6 @@ vars_of_text (void)
     build_msg_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
 
-#ifdef MULE
 #ifdef ENABLE_COMPOSITE_CHARS
   /* #### not dumped properly */
   composite_char_row_next = 32;
@@ -5929,5 +6041,4 @@ vars_of_text (void)
   staticpro (&Vcomposite_char_string2char_hash_table);
   staticpro (&Vcomposite_char_char2string_hash_table);
 #endif /* ENABLE_COMPOSITE_CHARS */
-#endif /* MULE */
 }

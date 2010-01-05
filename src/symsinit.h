@@ -140,19 +140,7 @@ void syms_of_keymap (void);
 void syms_of_lread (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/symsinit.h
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~base.xiva6I
-#ifdef MC_ALLOC
-=======
-#ifdef NEW_GC
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~other.YRccIA
 void syms_of_mc_alloc (void);
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/src/symsinit.h
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~base.xiva6I
-#endif /* MC_ALLOC */
-=======
-#endif /* NEW_GC */
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/symsinit.h~other.YRccIA
 void syms_of_md5 (void);
 void syms_of_menubar (void);
 void syms_of_menubar_mswindows (void);
