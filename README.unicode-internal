@@ -1,12 +1,43 @@
-1-4-10
+1-5-10
 
 Todo while merging:
 
-1. Finish handling lisp stuff.
+1. Finish handling lisp stuff.  It's all merged, but still to do:
+   a. For all charsets moved into mule-charset.el, follow the lead of
+      Ethiopic and VISCII in putting notes in mule-charset.el indicating
+      the file it was moved from and why (usually because the file in
+      question contains ISO-2022-embedded text using the same charsets
+      being defined in the file, so you have a bootstrapping problem)l
+      Also in the file it was moved from, put the first line of the
+      call to `make-charset' behind a comment, and put a comment above
+      telling where it was moved to.  Again, use ethiopic.el and
+      vietnamese.el.
+   b. For charsets not needing to be in mule-charset.el, move them
+      back into where they came from.
+   c. Fix up the `fixed-width' coding systems.  Instead, make a charset
+      containing the unicode map, and a coding system of type `mbcs'.
+   d. Review all windows-# charsets and coding systems and make sure
+      everything is set for them.
+   e. The order for the charsets in `make-charset' should always list
+      `ascii' and `control-1' last, in case the charset provides its
+      own Unicode mapping for ASCII chars (e.g. VISCII does).
+   f. Check to make sure that `mbcs' will handle gaps in the charsets,
+      as indicated by the attached unicode maps, e.g. VISCII has this.
+      Internal ASCII character should get mapped out to ASCII whenever
+      there's not a shadowing entry in the VISCII map, e.g. internal
+      0x02 should *NOT* get mapped to external 0x02 because that is
+      already used by some other character.
+   g. Go through and move the info about Unicode mapping tables in
+      unicode.el into the place where the charsets are defined.  Only
+      include stuff in the list in unicode.el for charsets defined in
+      C.
+   h. Implement and document `unicode-map' property of charsets:
+      Either a long list of mapping pairs of a short list of a string
+      and possibly some offset info, same format as the args to
+      `load-unicode-mapping-table' (#### perhaps rethink this format).  
 2. european.el got deleted.  Using hthis, see what I changed to it and
    port it to the new latin.el. (Possibly try using `patch')
-3. At some point, expand hg-merge-diff so it takes all the arguments to
-   `hg diff' and passes them on.  See `hg-diff' for code.
+
 
 More todo:
 
