@@ -35,6 +35,13 @@ Todo while merging:
       Either a long list of mapping pairs of a short list of a string
       and possibly some offset info, same format as the args to
       `load-unicode-mapping-table' (#### perhaps rethink this format).  
+   i. The directory MAPPINGS under etc/unicode/unicode-consortium has
+      a recently downloaded copy of the full set of mappings supplied.
+      (Except the OBSOLETE subdir, which is disallowed by robots.txt.)
+      Add this and delete/move the existing files to the proper
+      subdirs, and fix unicode.el and friends to reference the new
+      locations.
+
 2. european.el got deleted.  Using hthis, see what I changed to it and
    port it to the new latin.el. (Possibly try using `patch')
 
