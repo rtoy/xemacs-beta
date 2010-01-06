@@ -86,7 +86,6 @@
 	    ("CP936.TXT" chinese-windows-936 #x8000)
 	    ("CP949.TXT" korean-windows-949 #x8000)
 	    ("CP950.TXT" chinese-windows-950 #x8000)
-	    ;; "GB12345.TXT" 
 	    ("GB2312.TXT" chinese-gb2312)
 	    ;; "HANGUL.TXT"
 	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
@@ -102,6 +101,10 @@
 	    ;; "OLD5601.TXT" 
 	    ,@(when (find-charset 'japanese-shift-jis)
 		'(("SHIFTJIS.TXT" japanese-shift-jis #x8000)))
+	    )
+
+	   ("unicode/oreilly"
+	    ;; "GB12345.TXT" 
 	    )
 
 	   ("unicode/mule-ucs"
