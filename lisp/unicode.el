@@ -1,6 +1,6 @@
 ;;; unicode.el --- Unicode support
 
-;; Copyright (C) 2001, 2002, 2005 Ben Wing.
+;; Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Unicode
 
@@ -36,7 +36,7 @@
 (defun load-unicode-tables ()
   "Initialize the Unicode translation tables for all standard charsets."
   (let ((parse-args
-	 `(("unicode/unicode-consortium"
+	 `(("unicode/unicode-consortium/ISO8859"
 	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
 	    ;; charsets' types, trying to load them results in out-of-range
 	    ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
@@ -48,7 +48,8 @@
 	    ;; @@#### Add more charsets, esp. things like KOI8-R; take them
 	    ;; from emacs-unicode-2, among other things.
 	    ("8859-1.TXT" latin-iso8859-1 #xA0)
-	    ("8859-10.TXT" latin-iso8859-10 #xA0)
+	    ("8859-10.TXT" latin-iso885910 #xA0)
+	    ;; 8859-11.TXT
 	    ("8859-13.TXT" latin-iso8859-13 #xA0)
 	    ("8859-14.TXT" latin-iso8859-14 #xA0)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0)
@@ -61,17 +62,9 @@
 	    ("8859-7.TXT" greek-iso8859-7 #xA0)
 	    ("8859-8.TXT" hebrew-iso8859-8 #xA0)
 	    ("8859-9.TXT" latin-iso8859-9 #xA0)
-	    ,@(if (find-charset 'chinese-big5-1)
-		  ;; Under old-Mule, charset for Big5 does not matter;
-		  ;; specifying `big5' will automatically make the right
-		  ;; thing happen.
-		  '(("BIG5.TXT" chinese-big5-1 nil nil nil big5))
-		'(("BIG5.TXT" chinese-big5)))
-	    ;; Currently, these files are based on CNS 11643-1986
-	    ;; (with planes 1, 2, and 14), rather than CNS 11643-1992,
-	    ;; with planes 1-7.  See below.
-	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
-	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
+	    )
+
+	   ("unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS"
 	    ("CP1250.TXT" latin-windows-1250 #x80)
 	    ("CP1251.TXT" cyrillic-windows-1251 #x80)
 	    ("CP1252.TXT" latin-windows-1252 #x80)
@@ -86,6 +79,20 @@
 	    ("CP936.TXT" chinese-windows-936 #x8000)
 	    ("CP949.TXT" korean-windows-949 #x8000)
 	    ("CP950.TXT" chinese-windows-950 #x8000)
+	    )
+
+	   ("unicode/unicode-consortium/EASTASIA/OBSOLETE"
+	    ,@(if (find-charset 'chinese-big5-1)
+		  ;; Under old-Mule, charset for Big5 does not matter;
+		  ;; specifying `big5' will automatically make the right
+		  ;; thing happen.
+		  '(("BIG5.TXT" chinese-big5-1 nil nil nil big5))
+		'(("BIG5.TXT" chinese-big5)))
+	    ;; Currently, these files are based on CNS 11643-1986
+	    ;; (with planes 1, 2, and 14), rather than CNS 11643-1992,
+	    ;; with planes 1-7.  See below.
+	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
+	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
 	    ("GB2312.TXT" chinese-gb2312)
 	    ;; "HANGUL.TXT"
 	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
