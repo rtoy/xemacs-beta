@@ -180,15 +180,10 @@ character code range.  Thus FUNC should iterate over [START, END]."
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/mule-charset.el
 (when (featurep 'ccl)
   (defsetf charset-ccl-program set-charset-ccl-program))
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/mule-charset.el~base.iQ2YHE
-(defsetf charset-ccl-program set-charset-ccl-program)
-=======
 (defsetf charset-ccl-program set-charset-ccl-program)
 (defsetf charset-registries  set-charset-registries)
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/mule-charset.el~other.kh3W3H
 
 ;;; FSF compatibility functions
 (defun charset-after (&optional pos)
@@ -654,74 +649,17 @@ Romanian language\""
 		long-name "VISCII upper-case"
 		))
 
-(make-charset 'cyrillic-koi8-r
-	      "Cyrillic KOI8-R"
-	      '(dimension
-		1
-		chars 256
-		short-name "Cyrillic KOI8-R"
-		long-name "Cyrillic KOI8-R"
-		))
-
-(make-charset 'cyrillic-alternativnyj
-	      "Cyrillic Alternativnyj"
-	      '(dimension
-		1
-		chars 256
-		short-name "Cyrillic Alternativnyj"
-		long-name "Cyrillic Alternativnyj"
-		))
-
-;; For Arabic, we need three different types of character sets.
-;; Digits are of direction left-to-right and of width 1-column.
-;; Others are of direction right-to-left and of width 1-column or
-;; 2-column.
-(make-charset 'arabic-digit "Arabic digit"
-	      '(dimension
-		1
-		registries ["MuleArabic-0"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?2
-		graphic 0
-		short-name "Arabic digit"
-		long-name "Arabic digit"
-		))
-
-(make-charset 'arabic-1-column "Arabic 1-column"
-	      '(dimension
-		1
-		registries ["MuleArabic-1"]
-		chars 94
-		columns 1
-		direction r2l
-		final ?3
-		graphic 0
-		short-name "Arabic 1-col"
-		long-name "Arabic 1-column"
-		))
-
-(make-charset 'arabic-2-column "Arabic 2-column"
-	      '(dimension
-		1
-		registries ["MuleArabic-2"]
-		chars 94
-		columns 2
-		direction r2l
-		final ?4
-		graphic 0
-		short-name "Arabic 2-col"
-		long-name "Arabic 2-column"
-		))
+;; APPROPRIATE FILE: thai-xtis.el
+;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
 
 (make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(registry "xtis-0"
-			 dimension 2
-			 columns 1
-			 chars 94
-			 final ??
-			 graphic 0))
+	      '(dimension
+	        2
+		registries ["xtis-0"]
+		columns 1
+		chars 94
+		final ??
+		graphic 0))
 
 ; ;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
 ; ;; not assigned.  They are automatically converted to each Indian
@@ -786,7 +724,10 @@ Romanian language\""
 		long-name "Lao"
 		))
 
-;; Ethiopic characters (Amahric and Tigrigna).
+;; APPROPRIATE FILE: ethiopic.el
+;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
+
+;; Ethiopic characters (Amharic and Tigrinya).
 (make-charset 'ethiopic "Ethiopic characters"
 	      '(dimension
 		2
@@ -851,42 +792,6 @@ Romanian language\""
 ;; unicode.c on encountering a Unicode code point that we don't recognise,
 ;; and saved in ISO 2022 coding systems using the UTF-8 escape described in
 ;; ISO-IR 196.
-
-(let ((charsets '((874 thai "Thai")
-		  (1250 latin "Eastern Europe")
-		  (1251 cyrillic "Cyrillic")
-		  (1252 latin "ANSI")
-		  (1253 greek "Greek")
-		  (1254 latin "Turkish")
-		  (1255 hebrew "Hebrew")
-		  (1256 arabic "Arabic")
-		  (1257 latin "Baltic Rim")
-		  (1258 latin "Vietnamese"))))
-  (loop for (num script name) in charsets do
-    (make-charset (intern (format "%s-windows-%s" script num))
-		  (format "Windows code page %s (%s)" num name)
-		  `(dimension
-		    1
-		    chars 256
-		    short-name ,(format "Windows %s (%s)" num name)
-		    long-name ,(format "Windows code page %s (%s)" num name)
-		    ))))
-
-(let ((charsets '((932 japanese "Japanese" #x81 #x40 #xfe #xfe)
-		  (936 chinese "Simplified Chinese" #x81 #x40 #xfe #xfe)
-		  (949 korean "Korean" #x81 #x41 #xfe #xfe)
-		  (950 chinese "Traditional Chinese" #xa1 #x40 #xfe #xfe)
-		  )))
-  (loop for (num script name l1 l2 h1 h2) in charsets do
-    (make-charset (intern (format "%s-windows-%s" script num))
-		  (format "Windows code page %s (%s)" num name)
-		  `(dimension
-		    2
-		    chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
-		    offset (,l1 ,l2)
-		    short-name ,(format "Windows %s (%s)" num name)
-		    long-name ,(format "Windows code page %s (%s)" num name)
-		    ))))
 
 ;;; mule-charset.el ends here
 

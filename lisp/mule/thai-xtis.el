@@ -34,26 +34,9 @@
 
 ;;; Code:
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/thai-xtis.el
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/thai-xtis.el~base.8Bsst2
-(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(registry "xtis-0"
-			 dimension 2
-			 columns 1
-			 chars 94
-			 final ??
-			 graphic 0))
+;moved to mule-charset.el.
+;(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)." ...
 
-=======
-(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(registries ["xtis-0"]
-		dimension 2
-		columns 1
-		chars 94
-		final ??
-		graphic 0))
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/thai-xtis.el~other.UZCIEn
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)
 

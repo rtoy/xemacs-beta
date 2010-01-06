@@ -29,72 +29,6 @@
 
 ;;; Code:
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/mule/greek.el
-;; For syntax of Greek
-(loop for c from 54 to 126
-  do (let ((ch (make-char 'greek-iso8859-7 c)))
-       ;; There are gaps in the ISO8859-7 encoding.
-       (when ch
-	 (modify-syntax-entry ch "w"))))
-(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
-(modify-syntax-entry (make-char 'greek-iso8859-7 #xb7) ".") ;?,F7(B
-(modify-syntax-entry (make-char 'greek-iso8859-7 #xbb) ".") ;?,F;(B
-(modify-syntax-entry (make-char 'greek-iso8859-7 #xbd) ".") ;?,F=(B
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; GREEK
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;; (make-coding-system
-;;  'greek-iso-8bit 2 ?7
-;;  "ISO 2022 based 8-bit encoding for Greek (MIME:ISO-8859-7)"
-;;  '(ascii greek-iso8859-7 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii greek-iso8859-7)
-;;    (mime-charset . iso-8859-7)))
-
-;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/greek.el~base.b_ErU8
-; (make-charset 'greek-iso8859-7 
-; 	      "Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-7"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?F
-; 		graphic 1
-; 		short-name "RHP of ISO8859/7"
-; 		long-name "RHP of Greek (ISO 8859-7): ISO-IR-126"
-; 		))
-
-;; For syntax of Greek
-(loop for c from 54 to 126
-      do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
-(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
-(modify-syntax-entry ?,F7(B ".")
-(modify-syntax-entry ?,F;(B ".")
-(modify-syntax-entry ?,F=(B ".")
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; GREEK
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;; (make-coding-system
-;;  'greek-iso-8bit 2 ?7
-;;  "ISO 2022 based 8-bit encoding for Greek (MIME:ISO-8859-7)"
-;;  '(ascii greek-iso8859-7 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii greek-iso8859-7)
-;;    (mime-charset . iso-8859-7)))
-
-;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
-=======
 ;; Case table:
 (loop
   for (upper lower)
@@ -183,253 +117,252 @@
       (make-char 'greek-iso8859-7 greek)
       (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
       syntax-table))
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/greek.el~other.YiIFun
 
 (make-coding-system
  'iso-8859-7 'fixed-width "ISO-8859-7 (Greek)"
  '(unicode-map
-   ((#x80 ?\u0080) ;; <control>
-    (#x81 ?\u0081) ;; <control>
-    (#x82 ?\u0082) ;; <control>
-    (#x83 ?\u0083) ;; <control>
-    (#x84 ?\u0084) ;; <control>
-    (#x85 ?\u0085) ;; <control>
-    (#x86 ?\u0086) ;; <control>
-    (#x87 ?\u0087) ;; <control>
-    (#x88 ?\u0088) ;; <control>
-    (#x89 ?\u0089) ;; <control>
-    (#x8A ?\u008A) ;; <control>
-    (#x8B ?\u008B) ;; <control>
-    (#x8C ?\u008C) ;; <control>
-    (#x8D ?\u008D) ;; <control>
-    (#x8E ?\u008E) ;; <control>
-    (#x8F ?\u008F) ;; <control>
-    (#x90 ?\u0090) ;; <control>
-    (#x91 ?\u0091) ;; <control>
-    (#x92 ?\u0092) ;; <control>
-    (#x93 ?\u0093) ;; <control>
-    (#x94 ?\u0094) ;; <control>
-    (#x95 ?\u0095) ;; <control>
-    (#x96 ?\u0096) ;; <control>
-    (#x97 ?\u0097) ;; <control>
-    (#x98 ?\u0098) ;; <control>
-    (#x99 ?\u0099) ;; <control>
-    (#x9A ?\u009A) ;; <control>
-    (#x9B ?\u009B) ;; <control>
-    (#x9C ?\u009C) ;; <control>
-    (#x9D ?\u009D) ;; <control>
-    (#x9E ?\u009E) ;; <control>
-    (#x9F ?\u009F) ;; <control>
-    (#xA0 ?\u00A0) ;; NO-BREAK SPACE
-    (#xA1 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
-    (#xA2 ?\u2019) ;; RIGHT SINGLE QUOTATION MARK
-    (#xA3 ?\u00A3) ;; POUND SIGN
-    (#xA4 ?\u20AC) ;; EURO SIGN
-    (#xA5 ?\u20AF) ;; DRACHMA SIGN
-    (#xA6 ?\u00A6) ;; BROKEN BAR
-    (#xA7 ?\u00A7) ;; SECTION SIGN
-    (#xA8 ?\u00A8) ;; DIAERESIS
-    (#xA9 ?\u00A9) ;; COPYRIGHT SIGN
-    (#xAA ?\u037A) ;; GREEK YPOGEGRAMMENI
-    (#xAB ?\u00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC ?\u00AC) ;; NOT SIGN
-    (#xAD ?\u00AD) ;; SOFT HYPHEN
-    (#xAF ?\u2015) ;; HORIZONTAL BAR
-    (#xB0 ?\u00B0) ;; DEGREE SIGN
-    (#xB1 ?\u00B1) ;; PLUS-MINUS SIGN
-    (#xB2 ?\u00B2) ;; SUPERSCRIPT TWO
-    (#xB3 ?\u00B3) ;; SUPERSCRIPT THREE
-    (#xB4 ?\u0384) ;; GREEK TONOS
-    (#xB5 ?\u0385) ;; GREEK DIALYTIKA TONOS
-    (#xB6 ?\u0386) ;; GREEK CAPITAL LETTER ALPHA WITH TONOS
-    (#xB7 ?\u00B7) ;; MIDDLE DOT
-    (#xB8 ?\u0388) ;; GREEK CAPITAL LETTER EPSILON WITH TONOS
-    (#xB9 ?\u0389) ;; GREEK CAPITAL LETTER ETA WITH TONOS
-    (#xBA ?\u038A) ;; GREEK CAPITAL LETTER IOTA WITH TONOS
-    (#xBB ?\u00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC ?\u038C) ;; GREEK CAPITAL LETTER OMICRON WITH TONOS
-    (#xBD ?\u00BD) ;; VULGAR FRACTION ONE HALF
-    (#xBE ?\u038E) ;; GREEK CAPITAL LETTER UPSILON WITH TONOS
-    (#xBF ?\u038F) ;; GREEK CAPITAL LETTER OMEGA WITH TONOS
-    (#xC0 ?\u0390) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
-    (#xC1 ?\u0391) ;; GREEK CAPITAL LETTER ALPHA
-    (#xC2 ?\u0392) ;; GREEK CAPITAL LETTER BETA
-    (#xC3 ?\u0393) ;; GREEK CAPITAL LETTER GAMMA
-    (#xC4 ?\u0394) ;; GREEK CAPITAL LETTER DELTA
-    (#xC5 ?\u0395) ;; GREEK CAPITAL LETTER EPSILON
-    (#xC6 ?\u0396) ;; GREEK CAPITAL LETTER ZETA
-    (#xC7 ?\u0397) ;; GREEK CAPITAL LETTER ETA
-    (#xC8 ?\u0398) ;; GREEK CAPITAL LETTER THETA
-    (#xC9 ?\u0399) ;; GREEK CAPITAL LETTER IOTA
-    (#xCA ?\u039A) ;; GREEK CAPITAL LETTER KAPPA
-    (#xCB ?\u039B) ;; GREEK CAPITAL LETTER LAMDA
-    (#xCC ?\u039C) ;; GREEK CAPITAL LETTER MU
-    (#xCD ?\u039D) ;; GREEK CAPITAL LETTER NU
-    (#xCE ?\u039E) ;; GREEK CAPITAL LETTER XI
-    (#xCF ?\u039F) ;; GREEK CAPITAL LETTER OMICRON
-    (#xD0 ?\u03A0) ;; GREEK CAPITAL LETTER PI
-    (#xD1 ?\u03A1) ;; GREEK CAPITAL LETTER RHO
-    (#xD3 ?\u03A3) ;; GREEK CAPITAL LETTER SIGMA
-    (#xD4 ?\u03A4) ;; GREEK CAPITAL LETTER TAU
-    (#xD5 ?\u03A5) ;; GREEK CAPITAL LETTER UPSILON
-    (#xD6 ?\u03A6) ;; GREEK CAPITAL LETTER PHI
-    (#xD7 ?\u03A7) ;; GREEK CAPITAL LETTER CHI
-    (#xD8 ?\u03A8) ;; GREEK CAPITAL LETTER PSI
-    (#xD9 ?\u03A9) ;; GREEK CAPITAL LETTER OMEGA
-    (#xDA ?\u03AA) ;; GREEK CAPITAL LETTER IOTA WITH DIALYTIKA
-    (#xDB ?\u03AB) ;; GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA
-    (#xDC ?\u03AC) ;; GREEK SMALL LETTER ALPHA WITH TONOS
-    (#xDD ?\u03AD) ;; GREEK SMALL LETTER EPSILON WITH TONOS
-    (#xDE ?\u03AE) ;; GREEK SMALL LETTER ETA WITH TONOS
-    (#xDF ?\u03AF) ;; GREEK SMALL LETTER IOTA WITH TONOS
-    (#xE0 ?\u03B0) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS
-    (#xE1 ?\u03B1) ;; GREEK SMALL LETTER ALPHA
-    (#xE2 ?\u03B2) ;; GREEK SMALL LETTER BETA
-    (#xE3 ?\u03B3) ;; GREEK SMALL LETTER GAMMA
-    (#xE4 ?\u03B4) ;; GREEK SMALL LETTER DELTA
-    (#xE5 ?\u03B5) ;; GREEK SMALL LETTER EPSILON
-    (#xE6 ?\u03B6) ;; GREEK SMALL LETTER ZETA
-    (#xE7 ?\u03B7) ;; GREEK SMALL LETTER ETA
-    (#xE8 ?\u03B8) ;; GREEK SMALL LETTER THETA
-    (#xE9 ?\u03B9) ;; GREEK SMALL LETTER IOTA
-    (#xEA ?\u03BA) ;; GREEK SMALL LETTER KAPPA
-    (#xEB ?\u03BB) ;; GREEK SMALL LETTER LAMDA
-    (#xEC ?\u03BC) ;; GREEK SMALL LETTER MU
-    (#xED ?\u03BD) ;; GREEK SMALL LETTER NU
-    (#xEE ?\u03BE) ;; GREEK SMALL LETTER XI
-    (#xEF ?\u03BF) ;; GREEK SMALL LETTER OMICRON
-    (#xF0 ?\u03C0) ;; GREEK SMALL LETTER PI
-    (#xF1 ?\u03C1) ;; GREEK SMALL LETTER RHO
-    (#xF2 ?\u03C2) ;; GREEK SMALL LETTER FINAL SIGMA
-    (#xF3 ?\u03C3) ;; GREEK SMALL LETTER SIGMA
-    (#xF4 ?\u03C4) ;; GREEK SMALL LETTER TAU
-    (#xF5 ?\u03C5) ;; GREEK SMALL LETTER UPSILON
-    (#xF6 ?\u03C6) ;; GREEK SMALL LETTER PHI
-    (#xF7 ?\u03C7) ;; GREEK SMALL LETTER CHI
-    (#xF8 ?\u03C8) ;; GREEK SMALL LETTER PSI
-    (#xF9 ?\u03C9) ;; GREEK SMALL LETTER OMEGA
-    (#xFA ?\u03CA) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA
-    (#xFB ?\u03CB) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA
-    (#xFC ?\u03CC) ;; GREEK SMALL LETTER OMICRON WITH TONOS
-    (#xFD ?\u03CD) ;; GREEK SMALL LETTER UPSILON WITH TONOS
-    (#xFE ?\u03CE)) ;; GREEK SMALL LETTER OMEGA WITH TONOS
+   ((#x80 #x0080) ;; <control>
+    (#x81 #x0081) ;; <control>
+    (#x82 #x0082) ;; <control>
+    (#x83 #x0083) ;; <control>
+    (#x84 #x0084) ;; <control>
+    (#x85 #x0085) ;; <control>
+    (#x86 #x0086) ;; <control>
+    (#x87 #x0087) ;; <control>
+    (#x88 #x0088) ;; <control>
+    (#x89 #x0089) ;; <control>
+    (#x8A #x008A) ;; <control>
+    (#x8B #x008B) ;; <control>
+    (#x8C #x008C) ;; <control>
+    (#x8D #x008D) ;; <control>
+    (#x8E #x008E) ;; <control>
+    (#x8F #x008F) ;; <control>
+    (#x90 #x0090) ;; <control>
+    (#x91 #x0091) ;; <control>
+    (#x92 #x0092) ;; <control>
+    (#x93 #x0093) ;; <control>
+    (#x94 #x0094) ;; <control>
+    (#x95 #x0095) ;; <control>
+    (#x96 #x0096) ;; <control>
+    (#x97 #x0097) ;; <control>
+    (#x98 #x0098) ;; <control>
+    (#x99 #x0099) ;; <control>
+    (#x9A #x009A) ;; <control>
+    (#x9B #x009B) ;; <control>
+    (#x9C #x009C) ;; <control>
+    (#x9D #x009D) ;; <control>
+    (#x9E #x009E) ;; <control>
+    (#x9F #x009F) ;; <control>
+    (#xA0 #x00A0) ;; NO-BREAK SPACE
+    (#xA1 #x2018) ;; LEFT SINGLE QUOTATION MARK
+    (#xA2 #x2019) ;; RIGHT SINGLE QUOTATION MARK
+    (#xA3 #x00A3) ;; POUND SIGN
+    (#xA4 #x20AC) ;; EURO SIGN
+    (#xA5 #x20AF) ;; DRACHMA SIGN
+    (#xA6 #x00A6) ;; BROKEN BAR
+    (#xA7 #x00A7) ;; SECTION SIGN
+    (#xA8 #x00A8) ;; DIAERESIS
+    (#xA9 #x00A9) ;; COPYRIGHT SIGN
+    (#xAA #x037A) ;; GREEK YPOGEGRAMMENI
+    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    (#xAC #x00AC) ;; NOT SIGN
+    (#xAD #x00AD) ;; SOFT HYPHEN
+    (#xAF #x2015) ;; HORIZONTAL BAR
+    (#xB0 #x00B0) ;; DEGREE SIGN
+    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
+    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
+    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
+    (#xB4 #x0384) ;; GREEK TONOS
+    (#xB5 #x0385) ;; GREEK DIALYTIKA TONOS
+    (#xB6 #x0386) ;; GREEK CAPITAL LETTER ALPHA WITH TONOS
+    (#xB7 #x00B7) ;; MIDDLE DOT
+    (#xB8 #x0388) ;; GREEK CAPITAL LETTER EPSILON WITH TONOS
+    (#xB9 #x0389) ;; GREEK CAPITAL LETTER ETA WITH TONOS
+    (#xBA #x038A) ;; GREEK CAPITAL LETTER IOTA WITH TONOS
+    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    (#xBC #x038C) ;; GREEK CAPITAL LETTER OMICRON WITH TONOS
+    (#xBD #x00BD) ;; VULGAR FRACTION ONE HALF
+    (#xBE #x038E) ;; GREEK CAPITAL LETTER UPSILON WITH TONOS
+    (#xBF #x038F) ;; GREEK CAPITAL LETTER OMEGA WITH TONOS
+    (#xC0 #x0390) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
+    (#xC1 #x0391) ;; GREEK CAPITAL LETTER ALPHA
+    (#xC2 #x0392) ;; GREEK CAPITAL LETTER BETA
+    (#xC3 #x0393) ;; GREEK CAPITAL LETTER GAMMA
+    (#xC4 #x0394) ;; GREEK CAPITAL LETTER DELTA
+    (#xC5 #x0395) ;; GREEK CAPITAL LETTER EPSILON
+    (#xC6 #x0396) ;; GREEK CAPITAL LETTER ZETA
+    (#xC7 #x0397) ;; GREEK CAPITAL LETTER ETA
+    (#xC8 #x0398) ;; GREEK CAPITAL LETTER THETA
+    (#xC9 #x0399) ;; GREEK CAPITAL LETTER IOTA
+    (#xCA #x039A) ;; GREEK CAPITAL LETTER KAPPA
+    (#xCB #x039B) ;; GREEK CAPITAL LETTER LAMDA
+    (#xCC #x039C) ;; GREEK CAPITAL LETTER MU
+    (#xCD #x039D) ;; GREEK CAPITAL LETTER NU
+    (#xCE #x039E) ;; GREEK CAPITAL LETTER XI
+    (#xCF #x039F) ;; GREEK CAPITAL LETTER OMICRON
+    (#xD0 #x03A0) ;; GREEK CAPITAL LETTER PI
+    (#xD1 #x03A1) ;; GREEK CAPITAL LETTER RHO
+    (#xD3 #x03A3) ;; GREEK CAPITAL LETTER SIGMA
+    (#xD4 #x03A4) ;; GREEK CAPITAL LETTER TAU
+    (#xD5 #x03A5) ;; GREEK CAPITAL LETTER UPSILON
+    (#xD6 #x03A6) ;; GREEK CAPITAL LETTER PHI
+    (#xD7 #x03A7) ;; GREEK CAPITAL LETTER CHI
+    (#xD8 #x03A8) ;; GREEK CAPITAL LETTER PSI
+    (#xD9 #x03A9) ;; GREEK CAPITAL LETTER OMEGA
+    (#xDA #x03AA) ;; GREEK CAPITAL LETTER IOTA WITH DIALYTIKA
+    (#xDB #x03AB) ;; GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA
+    (#xDC #x03AC) ;; GREEK SMALL LETTER ALPHA WITH TONOS
+    (#xDD #x03AD) ;; GREEK SMALL LETTER EPSILON WITH TONOS
+    (#xDE #x03AE) ;; GREEK SMALL LETTER ETA WITH TONOS
+    (#xDF #x03AF) ;; GREEK SMALL LETTER IOTA WITH TONOS
+    (#xE0 #x03B0) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS
+    (#xE1 #x03B1) ;; GREEK SMALL LETTER ALPHA
+    (#xE2 #x03B2) ;; GREEK SMALL LETTER BETA
+    (#xE3 #x03B3) ;; GREEK SMALL LETTER GAMMA
+    (#xE4 #x03B4) ;; GREEK SMALL LETTER DELTA
+    (#xE5 #x03B5) ;; GREEK SMALL LETTER EPSILON
+    (#xE6 #x03B6) ;; GREEK SMALL LETTER ZETA
+    (#xE7 #x03B7) ;; GREEK SMALL LETTER ETA
+    (#xE8 #x03B8) ;; GREEK SMALL LETTER THETA
+    (#xE9 #x03B9) ;; GREEK SMALL LETTER IOTA
+    (#xEA #x03BA) ;; GREEK SMALL LETTER KAPPA
+    (#xEB #x03BB) ;; GREEK SMALL LETTER LAMDA
+    (#xEC #x03BC) ;; GREEK SMALL LETTER MU
+    (#xED #x03BD) ;; GREEK SMALL LETTER NU
+    (#xEE #x03BE) ;; GREEK SMALL LETTER XI
+    (#xEF #x03BF) ;; GREEK SMALL LETTER OMICRON
+    (#xF0 #x03C0) ;; GREEK SMALL LETTER PI
+    (#xF1 #x03C1) ;; GREEK SMALL LETTER RHO
+    (#xF2 #x03C2) ;; GREEK SMALL LETTER FINAL SIGMA
+    (#xF3 #x03C3) ;; GREEK SMALL LETTER SIGMA
+    (#xF4 #x03C4) ;; GREEK SMALL LETTER TAU
+    (#xF5 #x03C5) ;; GREEK SMALL LETTER UPSILON
+    (#xF6 #x03C6) ;; GREEK SMALL LETTER PHI
+    (#xF7 #x03C7) ;; GREEK SMALL LETTER CHI
+    (#xF8 #x03C8) ;; GREEK SMALL LETTER PSI
+    (#xF9 #x03C9) ;; GREEK SMALL LETTER OMEGA
+    (#xFA #x03CA) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA
+    (#xFB #x03CB) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA
+    (#xFC #x03CC) ;; GREEK SMALL LETTER OMICRON WITH TONOS
+    (#xFD #x03CD) ;; GREEK SMALL LETTER UPSILON WITH TONOS
+    (#xFE #x03CE)) ;; GREEK SMALL LETTER OMEGA WITH TONOS
    mnemonic "Grk"
    aliases (greek-iso-8bit)))
 
 (make-coding-system 
  'windows-1253 'fixed-width "Microsoft's CP1253"
  '(unicode-map
-   ((#x80 ?\u20AC) ;; EURO SIGN
-    (#x82 ?\u201A) ;; SINGLE LOW-9 QUOTATION MARK
-    (#x83 ?\u0192) ;; LATIN SMALL LETTER F WITH HOOK
-    (#x84 ?\u201E) ;; DOUBLE LOW-9 QUOTATION MARK
-    (#x85 ?\u2026) ;; HORIZONTAL ELLIPSIS
-    (#x86 ?\u2020) ;; DAGGER
-    (#x87 ?\u2021) ;; DOUBLE DAGGER
-    (#x89 ?\u2030) ;; PER MILLE SIGN
-    (#x8B ?\u2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-    (#x91 ?\u2018) ;; LEFT SINGLE QUOTATION MARK
-    (#x92 ?\u2019) ;; RIGHT SINGLE QUOTATION MARK
-    (#x93 ?\u201C) ;; LEFT DOUBLE QUOTATION MARK
-    (#x94 ?\u201D) ;; RIGHT DOUBLE QUOTATION MARK
-    (#x95 ?\u2022) ;; BULLET
-    (#x96 ?\u2013) ;; EN DASH
-    (#x97 ?\u2014) ;; EM DASH
-    (#x99 ?\u2122) ;; TRADE MARK SIGN
-    (#x9B ?\u203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-    (#xA0 ?\u00A0) ;; NO-BREAK SPACE
-    (#xA1 ?\u0385) ;; GREEK DIALYTIKA TONOS
-    (#xA2 ?\u0386) ;; GREEK CAPITAL LETTER ALPHA WITH TONOS
-    (#xA3 ?\u00A3) ;; POUND SIGN
-    (#xA4 ?\u00A4) ;; CURRENCY SIGN
-    (#xA5 ?\u00A5) ;; YEN SIGN
-    (#xA6 ?\u00A6) ;; BROKEN BAR
-    (#xA7 ?\u00A7) ;; SECTION SIGN
-    (#xA8 ?\u00A8) ;; DIAERESIS
-    (#xA9 ?\u00A9) ;; COPYRIGHT SIGN
-    (#xAB ?\u00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC ?\u00AC) ;; NOT SIGN
-    (#xAD ?\u00AD) ;; SOFT HYPHEN
-    (#xAE ?\u00AE) ;; REGISTERED SIGN
-    (#xAF ?\u2015) ;; HORIZONTAL BAR
-    (#xB0 ?\u00B0) ;; DEGREE SIGN
-    (#xB1 ?\u00B1) ;; PLUS-MINUS SIGN
-    (#xB2 ?\u00B2) ;; SUPERSCRIPT TWO
-    (#xB3 ?\u00B3) ;; SUPERSCRIPT THREE
-    (#xB4 ?\u0384) ;; GREEK TONOS
-    (#xB5 ?\u00B5) ;; MICRO SIGN
-    (#xB6 ?\u00B6) ;; PILCROW SIGN
-    (#xB7 ?\u00B7) ;; MIDDLE DOT
-    (#xB8 ?\u0388) ;; GREEK CAPITAL LETTER EPSILON WITH TONOS
-    (#xB9 ?\u0389) ;; GREEK CAPITAL LETTER ETA WITH TONOS
-    (#xBA ?\u038A) ;; GREEK CAPITAL LETTER IOTA WITH TONOS
-    (#xBB ?\u00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC ?\u038C) ;; GREEK CAPITAL LETTER OMICRON WITH TONOS
-    (#xBD ?\u00BD) ;; VULGAR FRACTION ONE HALF
-    (#xBE ?\u038E) ;; GREEK CAPITAL LETTER UPSILON WITH TONOS
-    (#xBF ?\u038F) ;; GREEK CAPITAL LETTER OMEGA WITH TONOS
-    (#xC0 ?\u0390) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
-    (#xC1 ?\u0391) ;; GREEK CAPITAL LETTER ALPHA
-    (#xC2 ?\u0392) ;; GREEK CAPITAL LETTER BETA
-    (#xC3 ?\u0393) ;; GREEK CAPITAL LETTER GAMMA
-    (#xC4 ?\u0394) ;; GREEK CAPITAL LETTER DELTA
-    (#xC5 ?\u0395) ;; GREEK CAPITAL LETTER EPSILON
-    (#xC6 ?\u0396) ;; GREEK CAPITAL LETTER ZETA
-    (#xC7 ?\u0397) ;; GREEK CAPITAL LETTER ETA
-    (#xC8 ?\u0398) ;; GREEK CAPITAL LETTER THETA
-    (#xC9 ?\u0399) ;; GREEK CAPITAL LETTER IOTA
-    (#xCA ?\u039A) ;; GREEK CAPITAL LETTER KAPPA
-    (#xCB ?\u039B) ;; GREEK CAPITAL LETTER LAMDA
-    (#xCC ?\u039C) ;; GREEK CAPITAL LETTER MU
-    (#xCD ?\u039D) ;; GREEK CAPITAL LETTER NU
-    (#xCE ?\u039E) ;; GREEK CAPITAL LETTER XI
-    (#xCF ?\u039F) ;; GREEK CAPITAL LETTER OMICRON
-    (#xD0 ?\u03A0) ;; GREEK CAPITAL LETTER PI
-    (#xD1 ?\u03A1) ;; GREEK CAPITAL LETTER RHO
-    (#xD3 ?\u03A3) ;; GREEK CAPITAL LETTER SIGMA
-    (#xD4 ?\u03A4) ;; GREEK CAPITAL LETTER TAU
-    (#xD5 ?\u03A5) ;; GREEK CAPITAL LETTER UPSILON
-    (#xD6 ?\u03A6) ;; GREEK CAPITAL LETTER PHI
-    (#xD7 ?\u03A7) ;; GREEK CAPITAL LETTER CHI
-    (#xD8 ?\u03A8) ;; GREEK CAPITAL LETTER PSI
-    (#xD9 ?\u03A9) ;; GREEK CAPITAL LETTER OMEGA
-    (#xDA ?\u03AA) ;; GREEK CAPITAL LETTER IOTA WITH DIALYTIKA
-    (#xDB ?\u03AB) ;; GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA
-    (#xDC ?\u03AC) ;; GREEK SMALL LETTER ALPHA WITH TONOS
-    (#xDD ?\u03AD) ;; GREEK SMALL LETTER EPSILON WITH TONOS
-    (#xDE ?\u03AE) ;; GREEK SMALL LETTER ETA WITH TONOS
-    (#xDF ?\u03AF) ;; GREEK SMALL LETTER IOTA WITH TONOS
-    (#xE0 ?\u03B0) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS
-    (#xE1 ?\u03B1) ;; GREEK SMALL LETTER ALPHA
-    (#xE2 ?\u03B2) ;; GREEK SMALL LETTER BETA
-    (#xE3 ?\u03B3) ;; GREEK SMALL LETTER GAMMA
-    (#xE4 ?\u03B4) ;; GREEK SMALL LETTER DELTA
-    (#xE5 ?\u03B5) ;; GREEK SMALL LETTER EPSILON
-    (#xE6 ?\u03B6) ;; GREEK SMALL LETTER ZETA
-    (#xE7 ?\u03B7) ;; GREEK SMALL LETTER ETA
-    (#xE8 ?\u03B8) ;; GREEK SMALL LETTER THETA
-    (#xE9 ?\u03B9) ;; GREEK SMALL LETTER IOTA
-    (#xEA ?\u03BA) ;; GREEK SMALL LETTER KAPPA
-    (#xEB ?\u03BB) ;; GREEK SMALL LETTER LAMDA
-    (#xEC ?\u03BC) ;; GREEK SMALL LETTER MU
-    (#xED ?\u03BD) ;; GREEK SMALL LETTER NU
-    (#xEE ?\u03BE) ;; GREEK SMALL LETTER XI
-    (#xEF ?\u03BF) ;; GREEK SMALL LETTER OMICRON
-    (#xF0 ?\u03C0) ;; GREEK SMALL LETTER PI
-    (#xF1 ?\u03C1) ;; GREEK SMALL LETTER RHO
-    (#xF2 ?\u03C2) ;; GREEK SMALL LETTER FINAL SIGMA
-    (#xF3 ?\u03C3) ;; GREEK SMALL LETTER SIGMA
-    (#xF4 ?\u03C4) ;; GREEK SMALL LETTER TAU
-    (#xF5 ?\u03C5) ;; GREEK SMALL LETTER UPSILON
-    (#xF6 ?\u03C6) ;; GREEK SMALL LETTER PHI
-    (#xF7 ?\u03C7) ;; GREEK SMALL LETTER CHI
-    (#xF8 ?\u03C8) ;; GREEK SMALL LETTER PSI
-    (#xF9 ?\u03C9) ;; GREEK SMALL LETTER OMEGA
-    (#xFA ?\u03CA) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA
-    (#xFB ?\u03CB) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA
-    (#xFC ?\u03CC) ;; GREEK SMALL LETTER OMICRON WITH TONOS
-    (#xFD ?\u03CD) ;; GREEK SMALL LETTER UPSILON WITH TONOS
-    (#xFE ?\u03CE)) ;; GREEK SMALL LETTER OMEGA WITH TONOS
+   ((#x80 #x20AC) ;; EURO SIGN
+    (#x82 #x201A) ;; SINGLE LOW-9 QUOTATION MARK
+    (#x83 #x0192) ;; LATIN SMALL LETTER F WITH HOOK
+    (#x84 #x201E) ;; DOUBLE LOW-9 QUOTATION MARK
+    (#x85 #x2026) ;; HORIZONTAL ELLIPSIS
+    (#x86 #x2020) ;; DAGGER
+    (#x87 #x2021) ;; DOUBLE DAGGER
+    (#x89 #x2030) ;; PER MILLE SIGN
+    (#x8B #x2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+    (#x91 #x2018) ;; LEFT SINGLE QUOTATION MARK
+    (#x92 #x2019) ;; RIGHT SINGLE QUOTATION MARK
+    (#x93 #x201C) ;; LEFT DOUBLE QUOTATION MARK
+    (#x94 #x201D) ;; RIGHT DOUBLE QUOTATION MARK
+    (#x95 #x2022) ;; BULLET
+    (#x96 #x2013) ;; EN DASH
+    (#x97 #x2014) ;; EM DASH
+    (#x99 #x2122) ;; TRADE MARK SIGN
+    (#x9B #x203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+    (#xA0 #x00A0) ;; NO-BREAK SPACE
+    (#xA1 #x0385) ;; GREEK DIALYTIKA TONOS
+    (#xA2 #x0386) ;; GREEK CAPITAL LETTER ALPHA WITH TONOS
+    (#xA3 #x00A3) ;; POUND SIGN
+    (#xA4 #x00A4) ;; CURRENCY SIGN
+    (#xA5 #x00A5) ;; YEN SIGN
+    (#xA6 #x00A6) ;; BROKEN BAR
+    (#xA7 #x00A7) ;; SECTION SIGN
+    (#xA8 #x00A8) ;; DIAERESIS
+    (#xA9 #x00A9) ;; COPYRIGHT SIGN
+    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    (#xAC #x00AC) ;; NOT SIGN
+    (#xAD #x00AD) ;; SOFT HYPHEN
+    (#xAE #x00AE) ;; REGISTERED SIGN
+    (#xAF #x2015) ;; HORIZONTAL BAR
+    (#xB0 #x00B0) ;; DEGREE SIGN
+    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
+    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
+    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
+    (#xB4 #x0384) ;; GREEK TONOS
+    (#xB5 #x00B5) ;; MICRO SIGN
+    (#xB6 #x00B6) ;; PILCROW SIGN
+    (#xB7 #x00B7) ;; MIDDLE DOT
+    (#xB8 #x0388) ;; GREEK CAPITAL LETTER EPSILON WITH TONOS
+    (#xB9 #x0389) ;; GREEK CAPITAL LETTER ETA WITH TONOS
+    (#xBA #x038A) ;; GREEK CAPITAL LETTER IOTA WITH TONOS
+    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    (#xBC #x038C) ;; GREEK CAPITAL LETTER OMICRON WITH TONOS
+    (#xBD #x00BD) ;; VULGAR FRACTION ONE HALF
+    (#xBE #x038E) ;; GREEK CAPITAL LETTER UPSILON WITH TONOS
+    (#xBF #x038F) ;; GREEK CAPITAL LETTER OMEGA WITH TONOS
+    (#xC0 #x0390) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
+    (#xC1 #x0391) ;; GREEK CAPITAL LETTER ALPHA
+    (#xC2 #x0392) ;; GREEK CAPITAL LETTER BETA
+    (#xC3 #x0393) ;; GREEK CAPITAL LETTER GAMMA
+    (#xC4 #x0394) ;; GREEK CAPITAL LETTER DELTA
+    (#xC5 #x0395) ;; GREEK CAPITAL LETTER EPSILON
+    (#xC6 #x0396) ;; GREEK CAPITAL LETTER ZETA
+    (#xC7 #x0397) ;; GREEK CAPITAL LETTER ETA
+    (#xC8 #x0398) ;; GREEK CAPITAL LETTER THETA
+    (#xC9 #x0399) ;; GREEK CAPITAL LETTER IOTA
+    (#xCA #x039A) ;; GREEK CAPITAL LETTER KAPPA
+    (#xCB #x039B) ;; GREEK CAPITAL LETTER LAMDA
+    (#xCC #x039C) ;; GREEK CAPITAL LETTER MU
+    (#xCD #x039D) ;; GREEK CAPITAL LETTER NU
+    (#xCE #x039E) ;; GREEK CAPITAL LETTER XI
+    (#xCF #x039F) ;; GREEK CAPITAL LETTER OMICRON
+    (#xD0 #x03A0) ;; GREEK CAPITAL LETTER PI
+    (#xD1 #x03A1) ;; GREEK CAPITAL LETTER RHO
+    (#xD3 #x03A3) ;; GREEK CAPITAL LETTER SIGMA
+    (#xD4 #x03A4) ;; GREEK CAPITAL LETTER TAU
+    (#xD5 #x03A5) ;; GREEK CAPITAL LETTER UPSILON
+    (#xD6 #x03A6) ;; GREEK CAPITAL LETTER PHI
+    (#xD7 #x03A7) ;; GREEK CAPITAL LETTER CHI
+    (#xD8 #x03A8) ;; GREEK CAPITAL LETTER PSI
+    (#xD9 #x03A9) ;; GREEK CAPITAL LETTER OMEGA
+    (#xDA #x03AA) ;; GREEK CAPITAL LETTER IOTA WITH DIALYTIKA
+    (#xDB #x03AB) ;; GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA
+    (#xDC #x03AC) ;; GREEK SMALL LETTER ALPHA WITH TONOS
+    (#xDD #x03AD) ;; GREEK SMALL LETTER EPSILON WITH TONOS
+    (#xDE #x03AE) ;; GREEK SMALL LETTER ETA WITH TONOS
+    (#xDF #x03AF) ;; GREEK SMALL LETTER IOTA WITH TONOS
+    (#xE0 #x03B0) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS
+    (#xE1 #x03B1) ;; GREEK SMALL LETTER ALPHA
+    (#xE2 #x03B2) ;; GREEK SMALL LETTER BETA
+    (#xE3 #x03B3) ;; GREEK SMALL LETTER GAMMA
+    (#xE4 #x03B4) ;; GREEK SMALL LETTER DELTA
+    (#xE5 #x03B5) ;; GREEK SMALL LETTER EPSILON
+    (#xE6 #x03B6) ;; GREEK SMALL LETTER ZETA
+    (#xE7 #x03B7) ;; GREEK SMALL LETTER ETA
+    (#xE8 #x03B8) ;; GREEK SMALL LETTER THETA
+    (#xE9 #x03B9) ;; GREEK SMALL LETTER IOTA
+    (#xEA #x03BA) ;; GREEK SMALL LETTER KAPPA
+    (#xEB #x03BB) ;; GREEK SMALL LETTER LAMDA
+    (#xEC #x03BC) ;; GREEK SMALL LETTER MU
+    (#xED #x03BD) ;; GREEK SMALL LETTER NU
+    (#xEE #x03BE) ;; GREEK SMALL LETTER XI
+    (#xEF #x03BF) ;; GREEK SMALL LETTER OMICRON
+    (#xF0 #x03C0) ;; GREEK SMALL LETTER PI
+    (#xF1 #x03C1) ;; GREEK SMALL LETTER RHO
+    (#xF2 #x03C2) ;; GREEK SMALL LETTER FINAL SIGMA
+    (#xF3 #x03C3) ;; GREEK SMALL LETTER SIGMA
+    (#xF4 #x03C4) ;; GREEK SMALL LETTER TAU
+    (#xF5 #x03C5) ;; GREEK SMALL LETTER UPSILON
+    (#xF6 #x03C6) ;; GREEK SMALL LETTER PHI
+    (#xF7 #x03C7) ;; GREEK SMALL LETTER CHI
+    (#xF8 #x03C8) ;; GREEK SMALL LETTER PSI
+    (#xF9 #x03C9) ;; GREEK SMALL LETTER OMEGA
+    (#xFA #x03CA) ;; GREEK SMALL LETTER IOTA WITH DIALYTIKA
+    (#xFB #x03CB) ;; GREEK SMALL LETTER UPSILON WITH DIALYTIKA
+    (#xFC #x03CC) ;; GREEK SMALL LETTER OMICRON WITH TONOS
+    (#xFD #x03CD) ;; GREEK SMALL LETTER UPSILON WITH TONOS
+    (#xFE #x03CE)) ;; GREEK SMALL LETTER OMEGA WITH TONOS
    mnemonic "GrkW"
    documentation
    "Microsoft's Code Page 1253, for monotonic Greek.
