@@ -647,6 +647,10 @@ things are arranged in config.h.in.  In particular:
    It is only intended for use by the developers. */
 #undef PURIFY
 
+/* Define USE_VALGRIND to compile valgrind hints into the code.
+   It is only intended for use by the developers. */
+#undef USE_VALGRIND
+
 /* Define EXTERNAL_WIDGET to compile support for using the editor as a
    widget within another program. */
 #undef EXTERNAL_WIDGET
