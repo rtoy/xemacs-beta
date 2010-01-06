@@ -1,5 +1,10 @@
 2010-01-06  Jerry James  <james@xemacs.org>
 
+	* emacs.c (main_1): Only call reinit_vars_of_number if
+	WITH_NUMBER_TYPES.
+
+2010-01-06  Jerry James  <james@xemacs.org>
+
 	* alloc.c: Include valgrind header if USE_VALGRIND.
 	(Fvalgrind_leak_check): New function.
 	(Fvalgrind_quick_leak_check): New function.

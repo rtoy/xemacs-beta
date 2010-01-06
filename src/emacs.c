@@ -1895,7 +1895,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_opaque_early ();
 #endif /* not NEW_GC */
       reinit_eistring_early ();
+#ifdef WITH_NUMBER_TYPES
       reinit_vars_of_number ();
+#endif
 
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
