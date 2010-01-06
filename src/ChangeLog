@@ -1,3 +1,21 @@
+2010-01-06  Jerry James  <james@xemacs.org>
+
+	* emacs.c: Fix FSF address.
+	(main_1): Call reinit_vars_of_number.
+	* number-gmp.c: Fix FSF address.
+	* number-gmp.h: Ditto.
+	* number-mp.c: Ditto.
+	* number-mp.h: Ditto.
+	* number.h: Ditto.
+	* number.c: Ditto.
+	(bignum_finalize): New function.
+	(ratio_finalize): New function.
+	(bigfloat_finalize): New function.
+	(vars_of_number): Don't create a bignum here.
+	(reinit_vars_of_number): New function; create a bignum here.
+	(init_number): Call reinit_vars_of_number if !PDUMP.
+	* symsinit.h: Fix FSF address.  Declare reinit_vars_of_number.
+
 2010-01-05  Jerry James  <james@xemacs.org>
 
 	* font-mgr.c (Ffc_name_unparse): Return value of FcNameUnparse
