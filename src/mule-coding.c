@@ -960,37 +960,37 @@ enum iso_esc_flag
 			   the next character as G.]] @@#### FIXME, I (ben)
                            previously implemented a different extension
                            as can be seen below.  Combine the two. */
-  ISO_ESC_2_5_2F,	/* We've seen ESC % 0x2F. */
-  ISO_ESC_2_5_2F_30,	/* We've seen ESC % 0x2F 0x3[01234]. */
-  ISO_ESC_2_5_2F_30_M,	/* We've seen ESC % 0x2F 0x3[01234] size1. */
-  ISO_ESC_2_5_2F_30_M_L,/* We've seen ESC % 0x2F 0x3[01234] size1 size2. */
-  ISO_ESC_2_8,		/* We've seen ESC 0x28, i.e. ESC (.
+  ISO_ESC_2_5_2F,	/* We've seen ESC % /. */
+  ISO_ESC_2_5_2F_30,	/* We've seen ESC % / [01234]. */
+  ISO_ESC_2_5_2F_30_M,	/* We've seen ESC % / [01234] size1. */
+  ISO_ESC_2_5_2F_30_M_L,/* We've seen ESC % / [01234] size1 size2. */
+  ISO_ESC_2_8,		/* We've seen ESC 0x28, i.e. 'ESC ('.
 			   This means designate a 94-character
 			   character set into G0. */
-  ISO_ESC_2_9,		/* We've seen ESC 0x29 -- designate a
+  ISO_ESC_2_9,		/* We've seen ESC 0x29, i.e. 'ESC )' -- designate a
 			   94-character character set into G1. */
-  ISO_ESC_2_10,		/* We've seen ESC 0x2A. */
-  ISO_ESC_2_11,		/* We've seen ESC 0x2B. */
-  ISO_ESC_2_12,		/* We've seen ESC 0x2C -- designate a
+  ISO_ESC_2_10,		/* We've seen ESC 0x2A, i.e. 'ESC *'. */
+  ISO_ESC_2_11,		/* We've seen ESC 0x2B, i.e. 'ESC +'. */
+  ISO_ESC_2_12,		/* We've seen ESC 0x2C, i.e. 'ESC ,' -- designate a
 			   96-character character set into G0.
 			   (This is not ISO2022-standard.
 			   The following 96-character
 			   control sequences are standard,
 			   though.) */
-  ISO_ESC_2_13,		/* We've seen ESC 0x2D -- designate a
+  ISO_ESC_2_13,		/* We've seen ESC 0x2D, i.e. 'ESC -' -- designate a
 			   96-character character set into G1.
 			   */
-  ISO_ESC_2_14,		/* We've seen ESC 0x2E. */
-  ISO_ESC_2_15,		/* We've seen ESC 0x2F. */
+  ISO_ESC_2_14,		/* We've seen ESC 0x2E, i.e. 'ESC .'. */
+  ISO_ESC_2_15,		/* We've seen ESC 0x2F, i.e. 'ESC /'. */
   ISO_ESC_2_4_8,	/* We've seen ESC $ 0x28 -- designate
 			   a 94^N character set into G0. */
-  ISO_ESC_2_4_9,	/* We've seen ESC $ 0x29. */
-  ISO_ESC_2_4_10,	/* We've seen ESC $ 0x2A. */
-  ISO_ESC_2_4_11,	/* We've seen ESC $ 0x2B. */
-  ISO_ESC_2_4_12,	/* We've seen ESC $ 0x2C. */
-  ISO_ESC_2_4_13,	/* We've seen ESC $ 0x2D. */
-  ISO_ESC_2_4_14,	/* We've seen ESC $ 0x2E. */
-  ISO_ESC_2_4_15,	/* We've seen ESC $ 0x2F. */
+  ISO_ESC_2_4_9,	/* We've seen ESC $ 0x29, i.e. 'ESC $ )'. */
+  ISO_ESC_2_4_10,	/* We've seen ESC $ 0x2A, i.e. 'ESC $ *'. */
+  ISO_ESC_2_4_11,	/* We've seen ESC $ 0x2B, i.e. 'ESC $ +'. */
+  ISO_ESC_2_4_12,	/* We've seen ESC $ 0x2C, i.e. 'ESC $ ,'. */
+  ISO_ESC_2_4_13,	/* We've seen ESC $ 0x2D, i.e. 'ESC $ -'. */
+  ISO_ESC_2_4_14,	/* We've seen ESC $ 0x2E, i.e. 'ESC $ .'. */
+  ISO_ESC_2_4_15,	/* We've seen ESC $ 0x2F, i.e. 'ESC $ /'. */
   ISO_ESC_5_11,		/* We've seen ESC [ or 0x9B.  This
 			   starts a directionality-control
 			   sequence.  The next character
@@ -1440,15 +1440,15 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (iso2022);
 
 /* @@#### NOTE: We should implement extended segments in compound text.
 
-   XFree86 uses ESC 0x25 0x47 to switch into UTF8 mode, and ESC 0x25 0x40 to
-   switch out.  X also defines a more general mechanism for switching to
-   extended segments:
+   XFree86 uses ESC % G (ESC 0x25 0x47) to switch into UTF8 mode, and
+   ESC % @ (ESC 0x25 0x40) to switch out.  X also defines a more general
+   mechanism for switching to extended segments:
 
-   ESC 0x25 0x2F 0x30 M L name-of-encoding 0x02 ... [variable-length]
-   ESC 0x25 0x2F 0x31 M L name-of-encoding 0x02 ... [1 byte per char]
-   ESC 0x25 0x2F 0x32 M L name-of-encoding 0x02 ... [2 bytes per char]
-   ESC 0x25 0x2F 0x33 M L name-of-encoding 0x02 ... [3 bytes per char]
-   ESC 0x25 0x2F 0x34 M L name-of-encoding 0x02 ... [4 bytes per char]
+   ESC '%' '/' '0' M L name-of-encoding 0x02 ... [variable-length]
+   ESC '%' '/' '1' M L name-of-encoding 0x02 ... [1 byte per char]
+   ESC '%' '/' '2' M L name-of-encoding 0x02 ... [2 bytes per char]
+   ESC '%' '/' '3' M L name-of-encoding 0x02 ... [3 bytes per char]
+   ESC '%' '/' '4' M L name-of-encoding 0x02 ... [4 bytes per char]
 
    where the name is encoded in ISO 8859-1 and M and L indicate the length
    in bytes of the extended segment, including the name and terminating

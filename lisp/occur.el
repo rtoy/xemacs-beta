@@ -320,16 +320,11 @@ the matching is case-sensitive."
   (interactive (occur-read-primary-args))
   (occur-1 regexp nlines (list (current-buffer))))
 
-(defvar ido-ignore-item-temp-list)
 ;;;###autoload
 (defun multi-occur (bufs regexp &optional nlines)
   "Show all lines in buffers BUFS containing a match for REGEXP.
 This function acts on multiple buffers; otherwise, it is exactly like
 `occur'."
-<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
-  (defvar ido-ignore-item-temp-list)
-=======
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
   (interactive
    (cons
     (let* ((bufs (list (read-buffer "First buffer to search: "

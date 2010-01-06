@@ -28,4 +28,41 @@
 ;; point soon most of the info in those language files won't be necessary
 ;; because it will be derived from Unicode tables.
   
+(let ((charsets '((874 thai "Thai")
+		  (1250 latin "Eastern Europe")
+		  (1251 cyrillic "Cyrillic")
+		  (1252 latin "ANSI")
+		  (1253 greek "Greek")
+		  (1254 latin "Turkish")
+		  (1255 hebrew "Hebrew")
+		  (1256 arabic "Arabic")
+		  (1257 latin "Baltic Rim")
+		  (1258 latin "Vietnamese"))))
+  (loop for (num script name) in charsets do
+    (make-charset (intern (format "%s-windows-%s" script num))
+		  (format "Windows code page %s (%s)" num name)
+		  `(dimension
+		    1
+		    chars 128
+	            unicode-map (,(format "unicode/unicode-consortium/CP%d.TXT" num) #x80)
+		    short-name ,(format "Windows %s (%s)" num name)
+		    long-name ,(format "Windows code page %s (%s)" num name)
+		    ))))
+
+(let ((charsets '((932 japanese "Japanese" #x81 #x40 #xfe #xfe)
+		  (936 chinese "Simplified Chinese" #x81 #x40 #xfe #xfe)
+		  (949 korean "Korean" #x81 #x41 #xfe #xfe)
+		  (950 chinese "Traditional Chinese" #xa1 #x40 #xfe #xfe)
+		  )))
+  (loop for (num script name l1 l2 h1 h2) in charsets do
+    (make-charset (intern (format "%s-windows-%s" script num))
+		  (format "Windows code page %s (%s)" num name)
+		  `(dimension
+		    2
+		    chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
+		    offset (,l1 ,l2)
+		    short-name ,(format "Windows %s (%s)" num name)
+		    long-name ,(format "Windows code page %s (%s)" num name)
+		    ))))
+
 
