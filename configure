@@ -1062,6 +1062,8 @@ enable_quantify
 with_quantify
 enable_purify
 with_purify
+enable_valgrind
+with_valgrind
 with_x
 '
       ac_precious_vars='build_alias
@@ -2030,6 +2032,7 @@ Debugging options
                           trigger bugs in some compilers.
   --with-quantify         Support performance debugging using Quantify.
   --with-purify           Support memory debugging using Purify.
+  --with-valgrind         Support memory debugging using Valgrind.
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4751,6 +4754,22 @@ fi;
 if test "${with_purify+set}" = set; then
   enableval="$with_purify"
   withval="$with_purify"
+
+fi;
+# If --with-valgrind or --without-valgrind were given then copy the value to the
+# equivalent enable_valgrind variable.
+if test "${with_valgrind+set}" = set; then
+  enable_valgrind="$with_valgrind"
+fi;
+# If -enable-valgrind or --disable-valgrind were given then copy the value to the
+# equivalent with_valgrind variable.
+if test "${enable_valgrind+set}" = set; then
+  with_valgrind="$enable_valgrind"
+fi;
+# Check whether --with-valgrind or --without-valgrind was given.
+if test "${with_valgrind+set}" = set; then
+  enableval="$with_valgrind"
+  withval="$with_valgrind"
 
 fi;
 
@@ -40927,6 +40946,10 @@ test "$with_quantify"      = "yes" && cat >>confdefs.h <<\_ACEOF
 #define QUANTIFY 1
 _ACEOF
 
+test "$with_valgrind"      = "yes" && cat >>confdefs.h <<\_ACEOF
+#define USE_VALGRIND 1
+_ACEOF
+
 test "$with_pop"           = "yes" && cat >>confdefs.h <<\_ACEOF
 #define MAIL_USE_POP 1
 _ACEOF
@@ -41254,6 +41277,7 @@ if test "$enable_error_checking_extents $enable_error_checking_types $enable_err
   echo "  WARNING: Error checking is on by default for XEmacs beta releases."
   echo "  WARNING: ---------------------------------------------------------"
 fi
+test "$with_valgrind" = yes && echo "  Compiling in support for memory debugging with Valgrind."
 echo ""
 ) | tee -a Installation
 echo ""

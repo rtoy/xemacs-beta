@@ -1,3 +1,8 @@
+2010-01-06  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Debugging and Testing): Document
+	valgrind configuration and use.
+
 2009-12-21  Jerry James  <james@xemacs.rg>
 
 	* internals/internals.texi (A Summary of the Various XEmacs Modules):

@@ -71,6 +71,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
 #endif
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
 
 EXFUN (Fgarbage_collect, 0);
 
@@ -4699,6 +4702,29 @@ See also `consing-since-gc' and `object-memory-usage-stats'.
 }
 #endif /* ALLOC_TYPE_STATS */
 
+#ifdef USE_VALGRIND
+DEFUN ("valgrind-leak-check", Fvalgrind_leak_check, 0, 0, "", /*
+Ask valgrind to perform a memory leak check.
+The results of the leak check are sent to stderr.
+*/
+       ())
+{
+  VALGRIND_DO_LEAK_CHECK;
+  return Qnil;
+}
+
+DEFUN ("valgrind-quick-leak-check", Fvalgrind_quick_leak_check, 0, 0, "", /*
+Ask valgrind to perform a quick memory leak check.
+This just prints a summary of leaked memory, rather than all the details.
+The results of the leak check are sent to stderr.
+*/
+       ())
+{
+  VALGRIND_DO_QUICK_LEAK_CHECK;
+  return Qnil;
+}
+#endif /* USE_VALGRIND */
+
 void
 recompute_funcall_allocation_flag (void)
 {
@@ -5053,6 +5079,10 @@ syms_of_alloc (void)
 #endif
   DEFSUBR (Ftotal_memory_usage);
   DEFSUBR (Fconsing_since_gc);
+#ifdef USE_VALGRIND
+  DEFSUBR (Fvalgrind_leak_check);
+  DEFSUBR (Fvalgrind_quick_leak_check);
+#endif
 }
 
 void

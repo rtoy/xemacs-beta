@@ -1014,6 +1014,9 @@ XE_MERGED_ARG([quantify],
 XE_MERGED_ARG([purify],
 	AS_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
 	[], [])
+XE_MERGED_ARG([valgrind],
+	AS_HELP_STRING([--with-valgrind],[Support memory debugging using Valgrind.]),
+	[], [])
 dnl -------------------------------------------------------------------------
 dnl Final command line argument checks.
 
@@ -5490,6 +5493,7 @@ test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
 test "$enable_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
+test "$with_valgrind"      = "yes" && AC_DEFINE(USE_VALGRIND)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
@@ -5805,6 +5809,7 @@ if test "$enable_error_checking_extents $enable_error_checking_types $enable_err
   echo "  WARNING: Error checking is on by default for XEmacs beta releases."
   echo "  WARNING: ---------------------------------------------------------"
 fi
+test "$with_valgrind" = yes && echo "  Compiling in support for memory debugging with Valgrind."
 echo ""
 ) | tee -a Installation
 dnl echo "The above configure report is appended to \"Installation\" file."
