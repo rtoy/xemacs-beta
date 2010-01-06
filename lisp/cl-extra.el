@@ -103,8 +103,8 @@ TYPE is a Common Lisp type specifier."
 		  (or (eq (setq cl-char (aref cl-string cl-i))
 			  (setq cl-other (aref cl-vector cl-i)))
 		      (and (characterp cl-other) ; Note we want to call this
-					         ; as rarely as possible, it
-					         ; doesn't have a bytecode.
+						 ; as rarely as possible, it
+						 ; doesn't have a bytecode.
 			   (eq (downcase cl-char) (downcase cl-other))))))
       (< cl-i 0))))
 
@@ -118,7 +118,7 @@ TYPE is a Common Lisp type specifier."
     (when (= cl-i (length cl-vector))
       (while (and (>= (setq cl-i (1- cl-i)) 0)
 		  (numberp (setq cl-other (aref cl-vector cl-i)))
-		  ;; Differs from clisp here. 
+		  ;; Differs from clisp here.
 		  (= (aref cl-bit-vector cl-i) cl-other)))
       (< cl-i 0))))
 
@@ -182,7 +182,7 @@ hash table's value for that key."
 	   (setq x (cdr x) y (cdr y)))
 	 (and (not (consp x)) (equalp x y)))
 	(t
-	 ;; From here on, the type tests don't (yet) have bytecodes. 
+	 ;; From here on, the type tests don't (yet) have bytecodes.
 	 (let ((x-type (type-of x)))
 	   (cond ((eq 'vector x-type)
 		  (if (stringp y)
@@ -501,7 +501,7 @@ XEmacs are trivial, so we provide them and mark them obsolete."
 	     symbols (cdr symbols))
        (push `(make-obsolete ',(intern (format "%s*" symbol))
 	       ',symbol "21.5.29")
-	     result) 
+	     result)
        (push
 	`(defun ,(intern (format "%s*" symbol)) (number &optional divisor)
 	  ,(format "See `%s'. This returns a list, not multiple values."
@@ -698,6 +698,18 @@ If STATE is t, return a new state object seeded from the time of day."
 ;; XEmacs change: we have a builtin remprop
 (defalias 'cl-remprop 'remprop)
 
+(defun get-properties (plist indicator-list)
+  "Find a property from INDICATOR-LIST in PLIST.
+Return 3 values:
+- the first property found,
+- its value,
+- the tail of PLIST beginning with the found entry."
+  (do ((plst plist (cddr plst)))
+      ((null plst) (values nil nil nil))
+    (cond ((atom (cdr plst))
+	   (error "Malformed property list: %S." plist))
+	  ((memq (car plst) indicator-list)
+	   (return (values (car plst) (cadr plst) plst))))))
 
 
 ;;; Hash tables.
@@ -764,7 +776,7 @@ If STATE is t, return a new state object seeded from the time of day."
 (defun cl-do-prettyprint ()
   (skip-chars-forward " ")
   (if (looking-at "(")
-      (let ((skip (or (looking-at "((") 
+      (let ((skip (or (looking-at "((")
 		      ;; XEmacs: be selective about trailing stuff after prog
 		      (looking-at "(prog[nv12\\(ress-feedback\\|n-with-message\\)]")
 		      (looking-at "(unwind-protect ")
