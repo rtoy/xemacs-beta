@@ -1,3 +1,8 @@
+2010-01-07  Henrique Martins  <xemacs@martins.cc>
+
+	* dired.c (file_name_completion): If a file is too big to stat(),
+	ignore the error, since we don't use the size.
+
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c:
