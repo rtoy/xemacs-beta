@@ -1,3 +1,11 @@
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c:
+	(syms_of_mule_charset, complex_vars_of_mule_charset):
+	* lisp.h:
+	Restore the creation of arabic-iso8859-6 in C, having it in Lisp
+	isn't sufficient for X11 input to work.
+
 2010-01-06  Jerry James  <james@xemacs.org>
 
 	* emacs.c (main_1): Only call reinit_vars_of_number if

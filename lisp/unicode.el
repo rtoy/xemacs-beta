@@ -154,7 +154,7 @@ Setting this at run-time does nothing.")
       '(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
 	greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
 	latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
-	vietnamese-viscii-lower vietnamese-viscii-upper 
+	vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
 	jit-ucs-charset-0 japanese-jisx0208 japanese-jisx0208-1978
 	japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
 	chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
