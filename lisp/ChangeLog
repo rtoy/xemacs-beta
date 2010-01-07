@@ -1,3 +1,12 @@
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	* mule/mule-msw-init-late.el:
+	* mule/mule-category.el (predefined-category-list):
+	* mule/arabic.el:
+	Move arabic-iso8859-6 back to C, it needs to be there, otherwise
+	X11 character input lookup fails.
+
 2010-01-06  Didier Verna  <didier@xemacs.org>
 
 	* cl-extra.el (get-properties): New.
