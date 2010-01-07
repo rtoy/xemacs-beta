@@ -1,11 +1,123 @@
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	* mule/mule-msw-init-late.el:
+	* mule/mule-category.el (predefined-category-list):
+	* mule/arabic.el:
+	Move arabic-iso8859-6 back to C, it needs to be there, otherwise
+	X11 character input lookup fails.
+
+2010-01-06  Didier Verna  <didier@xemacs.org>
+
+	* cl-extra.el (get-properties): New.
+
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* list-mode.el (next-list-mode-item, switch-to-completions): Use
+	next-single-char-property-change,
+	previous-single-char-property-change now
+	next-single-property-change no longer pays attention to extents
+	not created using the text property functions. Fix for issue 546,
+	bug dates from changeset 8c96bdabcaf9.
+
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* dragdrop.el (offix-start-drag): Remove.
+	(offix-start-drag-region): Remove.
+	* mouse.el (mouse-begin-drag-n-drop): Remove OffiX support.
+
+2009-12-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Remove
+	dk.xemacs.org from list of package download sites.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
+2009-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/arabic.el (arabic-iso8859-6):
+	Move the creation of this character set to this (dumped) file,
+	since it's needed for input on X11.
+	* mule/iso-with-esc.el:
+	Remove arabic-iso8859-6 and its Unicode map from this file.
+	* unicode.el (load-unicode-tables):
+	Load arabic-iso8859-6 on startup again.
+
+2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-do-arglist):
+	* cl-compat.el (keyword-of):
+	Remove support in our generated code for emacs versions where
+	keywords are not self-quoting.
+
+2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alist.el (modify-alist):
+	* autoload.el (update-autoload-files, autoload-print-form):
+	* bytecomp.el (batch-byte-compile-1)
+	(byte-compile-multiple-value-call, byte-compile-funcall)
+	(byte-compile-insert, byte-compile-concat, byte-compile-list)
+	(byte-compile-normal-call, byte-compile-flush-pending):
+	* cl-macs.el (letf):
+	* cl.el:
+	* disass.el (disassemble-1):
+	* easy-mmode.el (easy-mmode-define-syntax):
+	* faces.el (set-face-parent):
+	* files.el (cd):
+	* finder.el (finder-list-matches, finder-list-keywords)
+	(finder-compile-keywords):
+	* frame.el (frame-notice-user-settings)
+	(frame-remove-geometry-props):
+	* ldap.el (ldap-delete-entries, ldap-modify-entries)
+	(ldap-add-entries):
+	* loadhist.el (unload-feature):
+	* map-ynp.el (map-y-or-n-p):
+	* menubar-items.el (default-menubar):
+	* mouse.el (default-mouse-track-next-move-rect)
+	(default-mouse-track-next-move-rect)
+	(default-mouse-track-cleanup-hook)
+	(default-mouse-track-cleanup-extent):
+	* mule/ethio-util.el (ethio-fidel-to-sera-buffer)
+	(ethio-modify-vowel):
+	* obsolete.el:
+	* package-get.el (package-get-update-all):
+	* package-ui.el (pui-list-packages)
+	(pui-install-selected-packages, pui-install-selected-packages):
+	* select.el (select-make-extent-for-selection)
+	(dehilight-selection):
+	* simple.el (clone-buffer):
+	* term/tvi970.el:
+	* term/wyse50.el:
+	* unicode.el:
+	(load-unicode-tables):
+	* x-font-menu.el (fc-make-font-menu-entry)
+	(x-reset-device-font-menus-xft):
+	* x-misc.el (x-init-specifier-from-resources):
+	Eliminate byte-compile warnings, with the exception of Stephen's
+	various non-defined fontconfig functions, as I don't know if he
+	plans to add them and is keeping the warnings around as a
+	reminder. The warnings actually eliminated involve i) using mapcar
+	instead of mapc where the result is discarded and ii) using a
+	lambda quoted as data in a context where it is unequivocally used
+	as a function.
+
+2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/make-coding-system.el
+	(fixed-width-create-decode-encode-tables):
+	Use a rehash threshold of 0.999 for this hash table, now that hash
+	table rehash thresholds are serialised correctly; these hash
+	tables will never be resized, and it's not even that important
+	that they are *that* fast, for most of the coding systems they're
+	used a minority of the time.
+
 2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* syntax.el (map-syntax-table): 
-	* subr.el (map-plist): 
-	* startup.el (load-init-file): 
-	* minibuf.el (read-from-minbuffer): 
-	* cus-edit.el (custom-load-custom-defines-1): 
-	* cmdloop.el (execute-extended-command): 
+	* syntax.el (map-syntax-table):
+	* subr.el (map-plist):
+	* startup.el (load-init-file):
+	* minibuf.el (read-from-minbuffer):
+	* cus-edit.el (custom-load-custom-defines-1):
+	* cmdloop.el (execute-extended-command):
 	Replace symbol names using underscore, whether to avoid dynamic
 	scope problems or to ensure helpful arguments to
 	#'call-with-condition-handler, with uninterned symbols.
@@ -32,20 +144,20 @@
 
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* custom.el (custom-quote): 
+	* custom.el (custom-quote):
 	Define this as an alias for `quote-maybe', which is in C and more
 	comprehensive; packages still use this name in places.
 	(customize-mark-to-save, customize-mark-as-set): Use
 	`quote-maybe', not `custom-quote'.
 	* cus-edit.el (customize-set-variable, customize-save-variable)
 	(custom-variable-value-create, custom-variable-set)
-	(custom-variable-pre-save): 
+	(custom-variable-pre-save):
 	Remove a version of `custom-quote' specific to this file; use
 	`quote-maybe' universally instead.
 
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* bytecomp.el (byte-compile-funarg-n): 
+	* bytecomp.el (byte-compile-funarg-n):
 	New macro, used to create the various byte-compile-funarg
 	functions, which check for quoted lambdas in given positions.
 	(byte-compile-funarg, byte-compile-funarg-2)
@@ -55,21 +167,21 @@
 	to this problem.
 	Be much more comprehensive in the functions that we use
 	byte-compile-funarg and related function to compile, especially
-	including functions from cl-seq.el. 
+	including functions from cl-seq.el.
 
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-macs.el (letf): 
+	* cl-macs.el (letf):
 	Check whether arguments to #'values are bound, and make them
 	unbound after evaluating BODY; document the limitations of this
 	macro.
 
 2009-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* faces.el (init-other-random-faces): 
+	* faces.el (init-other-random-faces):
 	If the modeline face is using its fallbacks, avoid that, specify
 	the corresponding problems instead. Fixes problems described in
-	http://mid.gmane.org/3ggprc2diyt.wl_Ron.Isaacson@morganstanley.com 
+	http://mid.gmane.org/3ggprc2diyt.wl_Ron.Isaacson@morganstanley.com
 
 2009-11-09  Didier Verna  <didier@xemacs.org>
 
@@ -78,9 +190,29 @@
 	* buffer.el (switch-to-buffer): Don't offer the current buffer in
 	the completion list.
 
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (save-window-excursion):
+	Remove the compiler form for this bytecode, we no longer generate
+	calls to it. Keep the information about the bytecode's numeric
+	value, we want that for disassembling code.
+
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-string-vector-equalp)
+	(cl-bit-vector-vector-equalp, cl-vector-array-equalp)
+	(cl-hash-table-contents-equalp): New functions, to implement
+	equalp treating arrays with identical contents as equivalent, as
+	specified by Common Lisp.
+	(equalp): Revise this function to implement array equivalence,
+	and the hash-table equalp behaviour specified by CL.
+	* cl-macs.el (equalp): Add a compiler macro for this function,
+	used when one of the arguments is constant, and as such, its type
+	is known at compile time.
+
 2009-11-01  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-extra.el (equalp): 
+	* cl-extra.el (equalp):
 	Don't error if handed a string and a non-string.
 
 2009-11-01  Stephen Turnbull  <stephen@xemacs.org>
@@ -136,7 +268,7 @@
 
 2009-10-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-macs.el (regexp-quote): 
+	* cl-macs.el (regexp-quote):
 	If STRING is constant, call regexp-quote at compile time.
 
 2009-10-24  Aidan Kehoe  <kehoea@parhasard.net>
@@ -147,32 +279,32 @@
 	New function; return t if file names under PATH should be treated
 	case-insensitively.
 	* minibuf.el (read-file-name-1, read-file-name-internal-1)
-	(read-file-name-internal-1): 
-	* package-admin.el (package-admin-check-manifest): 
+	(read-file-name-internal-1):
+	* package-admin.el (package-admin-check-manifest):
 	Use file-system-ignore-case-p instead of checking system-type
 	directly in these functions. (Even though minibuf.el is dumped
 	before files.el, the function is only called in interactive usage,
-	there's no dump time order dependency here.) 
+	there's no dump time order dependency here.)
 
 2009-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* bytecomp.el (byte-compile-default-warnings): 
+	* bytecomp.el (byte-compile-default-warnings):
 	Add two new warning types, discarded-consing (basically use of
 	mapcar instead of mapc where its result is discarded) and
 	quoted-lambda (use of a lambda expression quoted as data in a
 	function context).
-	(byte-compile-warnings): Document the new warnings. 
+	(byte-compile-warnings): Document the new warnings.
 	(byte-compile-fset, byte-compile-funarg): Implement the
-	quoted-lambda warning option. 
+	quoted-lambda warning option.
 	(byte-compile-mapcar): Renamed to byte-compile-maybe-mapc.
-	(byte-compile-maybe-mapc, byte-compile-maplist): 
-	Implement the discarded-consing warning option. 
+	(byte-compile-maybe-mapc, byte-compile-maplist):
+	Implement the discarded-consing warning option.
 	Add more functions that should be compiled using
 	byte-compile-funarg, notably mapvector, mapc-internal,
-	map-char-table. 
-	* cl-macs.el (mapcar*): 
+	map-char-table.
+	* cl-macs.el (mapcar*):
 	If we know at compile time that there are no CL options being
-	used, use the mapcar subr, not the byte-coded function. 
+	used, use the mapcar subr, not the byte-coded function.
 
 2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -184,13 +316,13 @@
 	mapc-internal call instead, and warn, because the programmer
 	probably can't rely on always being compiled by an XEmacs that
 	does this. Similarly for maplist and mapl; and use
-	byte-compile-funarg for map, mapl, mapcan, mapcon. 
+	byte-compile-funarg for map, mapl, mapcan, mapcon.
 
 2009-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-macs.el (delete-duplicates): 
+	* cl-macs.el (delete-duplicates):
 	Fix another bug in the delete-duplicates compiler macro, thank you
-	the byte compiler. 
+	the byte compiler.
 
 2009-10-07  Andreas Roehler  <andreas.roehler@online.de>
 
@@ -227,7 +359,7 @@
 
 2009-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-macs.el (delete-duplicates): 
+	* cl-macs.el (delete-duplicates):
 	Make this compiler macro aware that CL-SEQ is a sequence, which
 	may not necessarily be a list.
 
@@ -245,66 +377,66 @@
 
 2009-09-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cus-edit.el (custom-variable-prompt): 
+	* cus-edit.el (custom-variable-prompt):
 	nil is a symbol, check that variable-at-point is non-nil before
 	checking if it's a symbol when deciding on the prompt used in this
-	function. 
+	function.
 
 2009-09-22  Andreas Roehler  <andreas.roehler@online.de>
 
 	* lisp.el (beginning-of-defun-raw):
-	new variable: beginning-of-defun-function, 
+	new variable: beginning-of-defun-function,
 	beginning-of-defun may call FUNCTION determining start position
 	* lisp.el (end-of-defun):
-	new variable: end-of-defun-function,	
+	new variable: end-of-defun-function,
 	end-of-defun may call FUNCTION determining the end position
 
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Add arglist information to docstrings for autoloaded functions and
 	macros.
-	* hyper-apropos.el (hyper-apropos-get-doc): 
+	* hyper-apropos.el (hyper-apropos-get-doc):
 	Treat autoload docstrings like subr docstrings; correct the regexp
 	used.
-	* help.el (describe-function-show-arglist): 
-	This no longer treats autoloads specially. 
-	(function-arglist): Treat autoload docstrings like subr docstrings. 
+	* help.el (describe-function-show-arglist):
+	This no longer treats autoloads specially.
+	(function-arglist): Treat autoload docstrings like subr docstrings.
 	(function-documentation): Treat documentation strings that are
 	zero-length after the arglist has been removed as indicating a
 	lack of documentation.
-	* cl-macs.el (case): 
-	(ecase): 
-	(typecase): 
-	(etypecase): 
-	(block): 
-	(return): 
-	(return-from): 
-	(progv): 
-	(lexical-let): 
-	(lexical-let*): 
-	(remf): 
-	(callf): 
-	(callf2): 
-	(define-modify-macro): 
-	(deftype): 
-	(define-compiler-macro): 
+	* cl-macs.el (case):
+	(ecase):
+	(typecase):
+	(etypecase):
+	(block):
+	(return):
+	(return-from):
+	(progv):
+	(lexical-let):
+	(lexical-let*):
+	(remf):
+	(callf):
+	(callf2):
+	(define-modify-macro):
+	(deftype):
+	(define-compiler-macro):
 	Rely on the autoload code to always show an arglist for these
 	functions, don't supply an ad-hoc one in the docstring.
 	These changes are for the most obvious functions; there are some
 	missed that would require changing argument names in the docstring
 	or in the function bodies.
-	* autoload.el (make-autoload): 
+	* autoload.el (make-autoload):
 	Add arg list information to the doc string, using the same
 	approach as for subrs.
 
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el (function-arglist): 
-	Show the double-quotes in the sample output, correctly. 
-	Bind print-gensym to nil, now we're using uninterned symbols. 
+	* help.el (function-arglist):
+	Show the double-quotes in the sample output, correctly.
+	Bind print-gensym to nil, now we're using uninterned symbols.
 	Don't #'mapcar + #'intern to create uppercase symbols, use #'loop
 	and #'make-symbol instead.
-	* cl-macs.el (cl-upcase-arg): 
+	* cl-macs.el (cl-upcase-arg):
 	Don't intern the upcased symbols we're using for cosmetic reasons.
 	Trust #'true-list-p in #'cl-function-arglist to detect
 	circularity.
@@ -317,82 +449,82 @@
 
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/make-coding-system.el (make-coding-system): 
+	* mule/make-coding-system.el (make-coding-system):
 	Require a minimum of two, not four, arguments; thank you for the
 	problem report, Adam Sjøgren!
 
 2009-09-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move the #'query-coding-region implementation to C.
-	* coding.el: 
+	* coding.el:
 	Consolidate code that depends on the presence or absence of Mule
-	at the end of this file. 
+	at the end of this file.
 	(default-query-coding-region, query-coding-region):
-	Move these functions to C. 
+	Move these functions to C.
 	(default-query-coding-region-safe-charset-skip-chars-map):
 	Remove this variable, the corresponding C variable is
-	Vdefault_query_coding_region_chartab_cache in file-coding.c. 
+	Vdefault_query_coding_region_chartab_cache in file-coding.c.
 	(query-coding-string): Update docstring to reflect actual multiple
 	values, be more careful about not modifying a range table that
 	we're currently mapping over.
 	(encode-coding-char): Make the implementation of this simpler.
 	(featurep 'mule): Autoload #'make-coding-system from
 	mule/make-coding-system.el if we're a mule build; provide an
-	appropriate compiler macro. 
+	appropriate compiler macro.
 	Do various non-mule compatibility things if we're not a mule
-	build. 
-	* update-elc.el (additional-dump-dependencies): 
+	build.
+	* update-elc.el (additional-dump-dependencies):
 	Add mule/make-coding-system as a dump time dependency if we're a
-	mule build. 
-	* unicode.el (ccl-encode-to-ucs-2): 
-	(decode-char): 
-	(encode-char): 
+	mule build.
+	* unicode.el (ccl-encode-to-ucs-2):
+	(decode-char):
+	(encode-char):
 	Move these earlier in the file, for the sake of some byte compile
-	warnings. 
-	(unicode-query-coding-region): 	
+	warnings.
+	(unicode-query-coding-region):
 	Move this to unicode.c
 	* mule/make-coding-system.el:
 	New file, not dumped. Contains the functionality to rework the
 	arguments necessary for fixed-width coding systems, and contains
 	the implementation of #'make-coding-system, which now calls
 	#'make-coding-system-internal.
-	* mule/vietnamese.el (viscii): 
-	* mule/latin.el (iso-8859-2): 
-	(windows-1250): 
-	(iso-8859-3): 
-	(iso-8859-4): 
-	(iso-8859-14): 
-	(iso-8859-15): 
-	(iso-8859-16): 
-	(iso-8859-9): 
-	(macintosh): 
-	(windows-1252): 
-	* mule/hebrew.el (iso-8859-8): 
-	* mule/greek.el (iso-8859-7): 
-	(windows-1253): 
-	* mule/cyrillic.el (iso-8859-5): 
-	(koi8-r): 
-	(koi8-u): 
-	(windows-1251): 
-	(alternativnyj): 
-	(koi8-ru): 
-	(koi8-t): 
-	(koi8-c): 
-	(koi8-o): 
-	* mule/arabic.el (iso-8859-6): 	
-	(windows-1256): 
+	* mule/vietnamese.el (viscii):
+	* mule/latin.el (iso-8859-2):
+	(windows-1250):
+	(iso-8859-3):
+	(iso-8859-4):
+	(iso-8859-14):
+	(iso-8859-15):
+	(iso-8859-16):
+	(iso-8859-9):
+	(macintosh):
+	(windows-1252):
+	* mule/hebrew.el (iso-8859-8):
+	* mule/greek.el (iso-8859-7):
+	(windows-1253):
+	* mule/cyrillic.el (iso-8859-5):
+	(koi8-r):
+	(koi8-u):
+	(windows-1251):
+	(alternativnyj):
+	(koi8-ru):
+	(koi8-t):
+	(koi8-c):
+	(koi8-o):
+	* mule/arabic.el (iso-8859-6):
+	(windows-1256):
 	Move all these coding systems to being of type fixed-width, not of
 	type CCL. This allows the distinct query-coding-region for them to
 	be in C, something which will eventually allow us to implement
 	query-coding-region for the mswindows-multibyte coding systems.
-	* mule/general-late.el (posix-charset-to-coding-system-hash): 
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
 	Document why we're pre-emptively persuading the byte compiler that
 	the ELC for this file needs to be written using escape-quoted.
 	Call #'set-unicode-query-skip-chars-args, now the Unicode
-	query-coding-region implementation is in C. 
-	* mule/thai-xtis.el (tis-620): 
+	query-coding-region implementation is in C.
+	* mule/thai-xtis.el (tis-620):
 	Don't bother checking whether we're XEmacs or not here.
-	* mule/mule-coding.el: 
+	* mule/mule-coding.el:
 	Move the eight bit fixed-width functionality from this file to
 	make-coding-system.el.
 
@@ -407,44 +539,44 @@
 	* simple.el (handle-pre-motion-command-current-command-is-motion):
 	If KEY is a character, ascertain that once, not every iteration of
 	the loop.
-	* mule/mule-cmds.el (finish-set-language-environment): 
+	* mule/mule-cmds.el (finish-set-language-environment):
 	Don't call #'string-match on a one-character string, use functions
 	that have bytecodes instead, since this is called so often on
-	startup. 
+	startup.
 
 2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* byte-optimize.el (byte-optimize-form-code-walker): 
+	* byte-optimize.el (byte-optimize-form-code-walker):
 	Be careful about discarding multiple values when optimising
-	#'prog1 calls. 
-	(byte-optimize-or): 
+	#'prog1 calls.
+	(byte-optimize-or):
 	Preserve any trailing nil, as this is a supported way to
 	explicitly discard multiple values.
 	(byte-optimize-cond-1):
 	Discard multiple values with a singleton followed by no more
 	clauses.
-	* bytecomp.el (progn): 
+	* bytecomp.el (progn):
 	(prog1):
 	(prog2):
 	Be careful about discarding multiple values in the byte-hunk
-	handler of these three forms. 
+	handler of these three forms.
 	* bytecomp.el (byte-compile-prog1, byte-compile-prog2):
 	Don't call #'values explicitly, use `(or ,(pop form) nil) instead,
 	since that compiles to bytecode, not a funcall.
-	* bytecomp.el (byte-compile-values): 
+	* bytecomp.el (byte-compile-values):
 	With one non-const argument, byte-compile to `(or ,(second form)
 	nil), not an explicit #'values call.
-	* bytecomp.el (byte-compile-insert-header): 
+	* bytecomp.el (byte-compile-insert-header):
 	Be nicer in the error message to emacs versions that don't
 	understand our bytecode.
 
 2009-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (bytecomp-load-hook): New.
-	* bytecomp.el (bytecomp-load-hook): Use id. 
+	* bytecomp.el (bytecomp-load-hook): Use id.
 	Merge Dave Love's 2000-02-02 GNU (GPLv2) change, forcing the
 	byte-compiler to be more consistent about loading cl-macs at
-	compile time. 
+	compile time.
 
 2009-08-19  Malcolm Purvis  <malcolmp@xemacs.org>
 
@@ -459,7 +591,7 @@
 
 2009-08-16  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* faces.el (xpm-color-symbols): 
+	* faces.el (xpm-color-symbols):
 	Call (featurep 'x) when faces.elc is dumped, not repeatedly
 	(myriad times) at image instantiation time.
 
@@ -470,17 +602,17 @@
 
 2009-08-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* minibuf.el (read-from-minibuffer): 
+	* minibuf.el (read-from-minibuffer):
 	Use buffer (format " *Minibuf-%d*" (minibuffer-depth)), regardless
-	of depth. 
+	of depth.
 
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-extra.el (ceiling*, floor*, round*, truncate*): 
+	* cl-extra.el (ceiling*, floor*, round*, truncate*):
 	Implement these in terms of the C functions; mark them as
-	obsolete. 
+	obsolete.
 	(mod*, rem*): Use #'nth-value with the C functions, not #'nth with
-	the CL emulation functions. 
+	the CL emulation functions.
 
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -490,10 +622,10 @@
 	-- Four new bytecodes, and special compiler functions to compile
 	multiple-value-call, multiple-value-list-internal, values,
 	values-list, and, since it now needs to pass back multiple values
-	and is a special form, throw. 
+	and is a special form, throw.
 	-- There's a new compiler variable, byte-compile-checks-on-load,
 	which is a list of forms that are evaluated at the very start of a
-	file, with an error thrown if any of them give nil. 
+	file, with an error thrown if any of them give nil.
 	-- The header is now inserted *after* compilation, giving a chance
 	for the compilation process to influence what those checks
 	are. There is still a check done before compilation for non-ASCII
@@ -502,73 +634,73 @@
 	Space is reserved for checks; comments describing the version of
 	the byte compiler generating the file are inserted if space
 	remains for them.
-	* bytecomp.el (byte-compile-version): 
+	* bytecomp.el (byte-compile-version):
 	Update this, we're a newer version of the byte compiler.
-	* byte-optimize.el (byte-optimize-funcall): 
+	* byte-optimize.el (byte-optimize-funcall):
 	Correct a comment.
-	* bytecomp.el (byte-compile-lapcode): 
+	* bytecomp.el (byte-compile-lapcode):
 	Discard the arg with byte-multiple-value-call.
-	* bytecomp.el (byte-compile-checks-and-comments-space): 
+	* bytecomp.el (byte-compile-checks-and-comments-space):
 	New variable, describe how many octets to reserve for checks at
-	the start of byte-compiled files. 
-	* cl-compat.el: 
+	the start of byte-compiled files.
+	* cl-compat.el:
 	Remove the fake multiple-value implementation. Have the functions
-	that use it use the real multiple-value implementation instead. 
-	* cl-macs.el (cl-block-wrapper, cl-block-throw): 
+	that use it use the real multiple-value implementation instead.
+	* cl-macs.el (cl-block-wrapper, cl-block-throw):
 	Revise the byte-compile properties of these symbols to work now
 	we've made throw into a special form; keep the byte-compile
 	properties as anonymous lambdas, since we don't have docstrings
-	for them. 
+	for them.
 	* cl-macs.el (multiple-value-bind, multiple-value-setq)
-	(multiple-value-list, nth-value): 
+	(multiple-value-list, nth-value):
 	Update these functions to work with the C support for multiple
 	values.
-	* cl-macs.el (values): 
+	* cl-macs.el (values):
 	Modify the setf handler for this to call
 	#'multiple-value-list-internal appropriately.
-	* cl-macs.el (cl-setf-do-store): 
+	* cl-macs.el (cl-setf-do-store):
 	If the store form is a cons, treat it specially as wrapping the
 	store value.
-	* cl.el (cl-block-wrapper): 
+	* cl.el (cl-block-wrapper):
 	Make this an alias of #'and, not #'identity, since it needs to
 	pass back multiple values.
-	* cl.el (multiple-value-apply): 
-	We no longer support this, mark it obsolete. 
-	* lisp-mode.el (eval-interactive-verbose): 
-	Remove a useless space in the docstring. 
-	* lisp-mode.el (eval-interactive): 
+	* cl.el (multiple-value-apply):
+	We no longer support this, mark it obsolete.
+	* lisp-mode.el (eval-interactive-verbose):
+	Remove a useless space in the docstring.
+	* lisp-mode.el (eval-interactive):
 	Update this function and its docstring. It now passes back a list,
 	basically wrapping any eval calls with multiple-value-list. This
-	allows multiple values to be printed by default in *scratch*. 
-	* lisp-mode.el (prin1-list-as-multiple-values): 
+	allows multiple values to be printed by default in *scratch*.
+	* lisp-mode.el (prin1-list-as-multiple-values):
 	New function, printing a list as multiple values in the manner of
 	Bruno Haible's clisp, separating each entry with " ;\n".
 	* lisp-mode.el (eval-last-sexp):
 	Call #'prin1-list-as-multiple-values on the return value of
-	#'eval-interactive. 
-	* lisp-mode.el (eval-defun): 
+	#'eval-interactive.
+	* lisp-mode.el (eval-defun):
 	Call #'prin1-list-as-multiple-values on the return value of
-	#'eval-interactive. 
-	* mouse.el (mouse-eval-sexp): 
+	#'eval-interactive.
+	* mouse.el (mouse-eval-sexp):
 	Deal with lists corresponding to multiple values from
 	#'eval-interactive. Call #'cl-prettyprint, which is always
 	available, instead of sometimes calling #'pprint and sometimes
-	falling back to prin1. 
-	* obsolete.el (obsolete-throw): 
+	falling back to prin1.
+	* obsolete.el (obsolete-throw):
 	New function, called from eval.c when #'funcall encounters an
 	attempt to call #'throw (now a special form) as a function. Only
-	needed for compatibility with 21.4 byte-code. 
+	needed for compatibility with 21.4 byte-code.
 
 2009-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el (function-arglist, function-documentation): 
+	* help.el (function-arglist, function-documentation):
 	Deal more gracefully with tabs in the function arglist; in
 	function-documentation, when stripping the arglist, pay attention
 	to the fact that they may span multiple lines.
 
 2009-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* faces.el (set-face-background-pixmap-file): 
+	* faces.el (set-face-background-pixmap-file):
 	Remove some extra parentheses revealed by change set 7757334005ae.
 
 2009-08-07  Mike Sperber  <mike@xemacs.org>
@@ -596,48 +728,48 @@
 
 2009-07-18  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* files.el (find-file-create-switch-thunk): 
+	* files.el (find-file-create-switch-thunk):
 	Check that #'buffer-file-name gives non-nil before trying to
 	determine whether that file exists; avoids problems in
 	dired. Thank you Mats Lidell!
 
 2009-07-13  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* code-files.el (insert-file-contents): 
+	* code-files.el (insert-file-contents):
 	Set the buffer coding system even on error; especially important
-	when dealing with nonexistent files. 
+	when dealing with nonexistent files.
 	If the `coding-system' property of an undecided coding system is
 	itself undecided, don't use that as a value for
-	buffer-file-coding-system. 
+	buffer-file-coding-system.
 
 2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* files.el (after-find-file): 
+	* files.el (after-find-file):
 	If the answer to "The directory containing %s does not exist.
 	Create?" is no, kill the current buffer, since the user probably
 	just misspelled the directory name. Thank you Rodney Sparapani!
 
 2009-07-12  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* files.el (find-file-create-switch-thunk): 
+	* files.el (find-file-create-switch-thunk):
 	New macro, used to mark buffers created within #'find-file (and
 	related) modified if the associated file doesn't exist.
-	(find-alternate-file-other-window): 
-	Correct this, pass CODESYS to find-file-other-window. 
-	(find-file-read-only): 
-	Correct behaviour of this function in the presence of wildcards. 
-	(find-file): 
-	(find-file-other-window): 
-	(find-file-other-frame): 
-	(find-file-read-only-other-window): 
-	(find-file-read-only-other-frame): 
-	(find-alternate-file): 
+	(find-alternate-file-other-window):
+	Correct this, pass CODESYS to find-file-other-window.
+	(find-file-read-only):
+	Correct behaviour of this function in the presence of wildcards.
+	(find-file):
+	(find-file-other-window):
+	(find-file-other-frame):
+	(find-file-read-only-other-window):
+	(find-file-read-only-other-frame):
+	(find-alternate-file):
 	Simplify these functions, use #'find-file-create-switch-thunk'
-	instead of explicit #'switch-to-buffer calls. 
+	instead of explicit #'switch-to-buffer calls.
 
 2009-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* code-files.el (insert-file-contents): 
+	* code-files.el (insert-file-contents):
 	Take advantage of more sensible behaviour from
 	#'insert-file-contents-internal, allowing us to actually follow
 	the documented coding system behaviour for nonexistent files (that
@@ -651,19 +783,19 @@
 
 2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el (describe-function-1): 
+	* help.el (describe-function-1):
 	Check macro-p, not macrop, when describing whether a symbol has an
 	associated macro or an associated function. Relevant with
-	autoloaded macros. 
-	(function-arglist): 
+	autoloaded macros.
+	(function-arglist):
 	Accept multi-line arglists in built-in functions, as found in
 	#'write-region-internal. #'dontusethis-set-symbol-value-handler
-	is still broken for other reasons. 
+	is still broken for other reasons.
 
 2009-06-07  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* code-files.el (insert-file-contents): 
-        Autodetection may return undecided as a coding system. If the file
+	* code-files.el (insert-file-contents):
+	Autodetection may return undecided as a coding system. If the file
 	was zero-length, this is kosher, and we should set
 	buffer-file-coding-system to its default; if it is not
 	zero-length, we still need to set b-f-c-s, but we warn that the
@@ -671,21 +803,21 @@
 	failing is something very distinct from what we use it to mean
 	here.) See
 	http://mid.gmane.org/18986.53111.800393.660612@parhasard.net and
-	the related thread. 
+	the related thread.
 
 2009-06-06  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* files.el (cd): 
+	* files.el (cd):
 	Make CDPATH handling portable, accept entries without trailing
 	slashes within it. Some style corrections from Stephen Turnbull,
-	thank you Stephen. 
+	thank you Stephen.
 
 2009-05-29  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* bytecomp.el (byte-compile-lambda): 
+	* bytecomp.el (byte-compile-lambda):
 	Even if we are going to store uncompiled interactive forms in the
 	compiled-function object, byte compile (and discard) the code, for
-	the sake of the warnings generated. 
+	the sake of the warnings generated.
 
 2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -709,65 +841,65 @@
 
 2009-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* x-compose.el: 
-	Document an XIM bug, and how one might work around it. 
-	(define-compose-map): 
+	* x-compose.el:
+	Document an XIM bug, and how one might work around it.
+	(define-compose-map):
 	Revise this macro, call it with compose-caron-map,
 	compose-macron-map, compose-breve-map, compose-dot-map,
 	compose-doubleacute-map, compose-ogonek-map, compose-hook-map,
-	compose-horn-map as well as the previous existing maps. 
-	(compose-map): 
+	compose-horn-map as well as the previous existing maps.
+	(compose-map):
 	Add entries for caron, macron, doubleacute, ogonek, breve and
-	abovedot to this map. 
+	abovedot to this map.
 	Add an assert, this code assumes that a non-Mule build has no
-	character codes above U+00FF. 
+	character codes above U+00FF.
 	Incorporate all the precomposed Latin characters in
 	UnicodeData.txt that we can into the maps, deciding at runtime on
 	which exactly depending on whether this is a non-Mule or a Mule
 	build.
-	Remove a commented-out old X11 bug workaround. 
+	Remove a commented-out old X11 bug workaround.
 	Use #'flet instead of defun + unintern for
 	#'alias-colon-to-doublequote.
 	Correct #'electric-diacritic to work with the keyboard macro
-	versions of the maps. 
-	(compose-help): 
+	versions of the maps.
+	(compose-help):
 	This has been turned off since 1994; no-one appears to have
 	noticed, since the normal help mechanism offers similar
-	functionality and is actually maintained. Removed entirely. 
-	Remove a superflous setting of a default value for ctl-arrow. 
-	* x-init.el (x-initialize-compose): 
+	functionality and is actually maintained. Removed entirely.
+	Remove a superflous setting of a default value for ctl-arrow.
+	* x-init.el (x-initialize-compose):
 	Support the new dead key maps we just added to x-compose.el with
-	autoloads here. 
+	autoloads here.
 
 2009-02-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-force-escape-quoted): New variable,
 	used to force `byte-compile-insert-header' to treat the output as
-	having characters above ?\xFF. 
-	(byte-compile-from-buffer): 
+	having characters above ?\xFF.
+	(byte-compile-from-buffer):
 	If the compiled output contains characters above ?\xFF, and
 	byte-compile-dynamic-docstrings or byte-compile-dynamic is non-nil
 	(or we're using an inappropriate coding system) recompile the
 	file, turning off the dynamic features and using a more
-	appropriate header. 
+	appropriate header.
 	(byte-compile-insert-header): Pay attention to
-	byte-compile-force-escape-quoted. 
+	byte-compile-force-escape-quoted.
 
 2009-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (check-coding-systems-region): 
+	* coding.el (check-coding-systems-region):
 	Return null on success, not t. See
 	http://emacsbugs.donarmstrong.com/cgi-bin/bugreport.cgi?bug=1723
 
 2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/mule-cmds.el (finish-set-language-environment): 
+	* mule/mule-cmds.el (finish-set-language-environment):
 	Correct this function, don't try to format non-control characters
 	with ^ followed by their value plus (char-int ?@).
 
 2009-02-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* unicode.el (unicode-query-coding-region): 
+	* unicode.el (unicode-query-coding-region):
 	Avoid eval-when-compile where that gives incorrect results when
 	compiled on a non-Mule XEmacs but run on a Mule XEmacs.  Fixes
 	problems seen by
@@ -776,7 +908,7 @@
 	(An equivalent way to get the efficiency of the eval-when-compile
 	would be to provide two defvars, evaluated at dump time, but this
 	code will be in C soon enough, and we can use the relevant
-	preprocessor constants there.)	
+	preprocessor constants there.)
 
 2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -787,144 +919,144 @@
 
 2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/latin.el (macintosh): 
-	Add GNU Emacs' name for this coding system as an alias. 
+	* mule/latin.el (macintosh):
+	Add GNU Emacs' name for this coding system as an alias.
 
 2009-02-13  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/mule-cmds.el (init-mule-at-startup): 
+	* mule/mule-cmds.el (init-mule-at-startup):
 	Actually use leim-list-file-name, don't load a hardcoded
-	leim-list.el in this function. 
+	leim-list.el in this function.
 
 2009-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (query-coding-string): 
-	Correct the order of arguments passed to #'query-coding-region. 
-	(unencodable-char-position): 
+	* coding.el (query-coding-string):
+	Correct the order of arguments passed to #'query-coding-region.
+	(unencodable-char-position):
 	Handle string offsets correctly, they're one less than buffer
-	offsets. Handle START and END correctly if passed a string. 
+	offsets. Handle START and END correctly if passed a string.
 
 2009-02-08  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* cl-macs.el (delete-duplicates): 
+	* cl-macs.el (delete-duplicates):
 	Add a new compiler macro, inlining this function if it's called
 	with a literal #'eq or #'equal test arguments and no other
 	keywords.
-	* font-lock.el (font-lock-unique): 
-	Remove this function. 
-	* font-lock.el (font-lock-prepend-text-property): 
-	(font-lock-append-text-property): 
+	* font-lock.el (font-lock-unique):
+	Remove this function.
+	* font-lock.el (font-lock-prepend-text-property):
+	(font-lock-append-text-property):
 	Use #'delete-duplicates instead of #'font-lock-unique.
 	* font.el (font-unique):
 	Remove this function.
-	* font.el (font-combine-fonts-internal): 
-	(x-font-families-for-device): 
-	(xft-font-families-for-device): 
-	(ns-font-families-for-device): 
+	* font.el (font-combine-fonts-internal):
+	(x-font-families-for-device):
+	(xft-font-families-for-device):
+	(ns-font-families-for-device):
 	Use #'delete-duplicates instead of #'font-unique.
-	* fontconfig.el (fc-delete-duplicates): 
-	* fontconfig.el (fc-filter): 
-	Remove these functions. 	
-	* fontconfig.el (fc-find-available-font-families): 
+	* fontconfig.el (fc-delete-duplicates):
+	* fontconfig.el (fc-filter):
+	Remove these functions.
+	* fontconfig.el (fc-find-available-font-families):
 	Replace #'fc-delete-duplicates with #'delete-duplicates,
 	#'fc-filter with #'delete-if-not.
-	* format.el (format-make-relatively-unique): 
+	* format.el (format-make-relatively-unique):
 	Document that this is equivalent to #'nset-exclusive-or with a
 	test of #'equal.
 
 2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-text-sexp):
-	pp is in packages, use cl-prettyprint instead. 
-	* mule/mule-coding.el (make-8-bit-generate-helper): 
+	pp is in packages, use cl-prettyprint instead.
+	* mule/mule-coding.el (make-8-bit-generate-helper):
 	Don't uselessly bind args-out-of-range, thank you the byte
-	compiler. 	
-	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
+	compiler.
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region):
 	Don't uselessly bind previous-fail, thank you the byte compiler.
-	* tty-init.el (make-device-early-tty-entry-point): 
-	Set make-device-early-tty-entry-point-called-p, not 
-	pre-tty-win-initted, thank you the byte compiler. 
-	* unicode.el (unicode-query-coding-region): 
+	* tty-init.el (make-device-early-tty-entry-point):
+	Set make-device-early-tty-entry-point-called-p, not
+	pre-tty-win-initted, thank you the byte compiler.
+	* unicode.el (unicode-query-coding-region):
 	Don't uselessly bind invalid-sequence-p, thank you the
-	byte-compiler. 
+	byte-compiler.
 
 2009-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (query-coding-clear-highlights): 
+	* coding.el (query-coding-clear-highlights):
 	Rename the BUFFER argument to BUFFER-OR-STRING, describe it as
-	possibly being a string in its documentation. 
-	(default-query-coding-region): 
+	possibly being a string in its documentation.
+	(default-query-coding-region):
 	Add a new IGNORE-INVALID-SEQUENCESP argument, document that this
-	function does not support it. 
+	function does not support it.
 	Bind case-fold-search to nil, we don't want this to influence what the
 	function thinks is encodable or not.
 	(query-coding-region):
 	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
-	does; reflect this new argument in the associated compiler macro. 
-	(query-coding-string): 
+	does; reflect this new argument in the associated compiler macro.
+	(query-coding-string):
 	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
 	does. Support the HIGHLIGHT argument correctly.
-	* unicode.el (unicode-query-coding-region): 
+	* unicode.el (unicode-query-coding-region):
 	Add a new IGNORE-INVALID-SEQUENCESP argument, document what it
-	does, implement this. Document a potential problem. 
+	does, implement this. Document a potential problem.
 	Use #'query-coding-clear-highlights instead of reimplementing it
-	ourselves. 
-	Remove some debugging messages. 
-	* mule/arabic.el (iso-8859-6): 
-	* mule/cyrillic.el (iso-8859-5): 
-	* mule/greek.el (iso-8859-7): 
-	* mule/hebrew.el (iso-8859-8): 
-	* mule/latin.el (iso-8859-2): 
-	* mule/latin.el (iso-8859-3): 
-	* mule/latin.el (iso-8859-4): 
-	* mule/latin.el (iso-8859-14): 
-	* mule/latin.el (iso-8859-15): 
-	* mule/latin.el (iso-8859-16): 
-	* mule/latin.el (iso-8859-9): 
-	* mule/latin.el (windows-1252): 
-	* mule/mule-coding.el (iso-8859-1): 
-	Avoid the assumption that characters not given an explicit mapping 
-	in these coding systems map to the ISO 8859-1 characters 
-	corresponding to the octets on disk; this makes it much more 
-	reasonable to implement the IGNORE-INVALID-SEQUENCESP argument to 
-	query-coding-region. 
-	* mule/mule-cmds.el (set-language-info): 
-	Correct the docstring. 
-	* mule/mule-cmds.el (finish-set-language-environment): 
-	Treat invalid Unicode sequences produced from 
-	invalid-sequence-coding-system and corresponding to control 
-	characters the same as control characters in redisplay. 
-	* mule/mule-cmds.el: 
-	Document that encode-coding-char is available in coding.el 
-	* mule/mule-coding.el (make-8-bit-generate-helper): 
-	Change to return the both the encode-program generated and the 
-	relevant non-ASCII charset; update the docstring to reflect this. 
-	* mule/mule-coding.el 
-	(make-8-bit-generate-encode-program-and-skip-chars-strings): 
-	Rename this function; have it return skip-chars-strings as well as 
-	the encode program. Have these skip-chars-strings use ranges for 
-	charsets, where possible. 
-	* mule/mule-coding.el (make-8-bit-create-decode-encode-tables): 
-	Revise this to allow people to specify explicitly characters that 
-	should be undefined (= corresponding to keys in 
-	unicode-error-default-translation-table), and treating unspecified 
-	octets above #x7f as undefined by default. 
-	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
-	Add a new IGNORE-INVALID-SEQUENCESP argument, implement support 
-	for it using the 8-bit-fixed-invalid-sequences-skip-chars coding 
-	system property; remove some debugging messages. 
-	* mule/mule-coding.el (make-8-bit-coding-system): 
-	This function is dumped, autoloading it makes no sense. 
+	ourselves.
+	Remove some debugging messages.
+	* mule/arabic.el (iso-8859-6):
+	* mule/cyrillic.el (iso-8859-5):
+	* mule/greek.el (iso-8859-7):
+	* mule/hebrew.el (iso-8859-8):
+	* mule/latin.el (iso-8859-2):
+	* mule/latin.el (iso-8859-3):
+	* mule/latin.el (iso-8859-4):
+	* mule/latin.el (iso-8859-14):
+	* mule/latin.el (iso-8859-15):
+	* mule/latin.el (iso-8859-16):
+	* mule/latin.el (iso-8859-9):
+	* mule/latin.el (windows-1252):
+	* mule/mule-coding.el (iso-8859-1):
+	Avoid the assumption that characters not given an explicit mapping
+	in these coding systems map to the ISO 8859-1 characters
+	corresponding to the octets on disk; this makes it much more
+	reasonable to implement the IGNORE-INVALID-SEQUENCESP argument to
+	query-coding-region.
+	* mule/mule-cmds.el (set-language-info):
+	Correct the docstring.
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Treat invalid Unicode sequences produced from
+	invalid-sequence-coding-system and corresponding to control
+	characters the same as control characters in redisplay.
+	* mule/mule-cmds.el:
+	Document that encode-coding-char is available in coding.el
+	* mule/mule-coding.el (make-8-bit-generate-helper):
+	Change to return the both the encode-program generated and the
+	relevant non-ASCII charset; update the docstring to reflect this.
+	* mule/mule-coding.el
+	(make-8-bit-generate-encode-program-and-skip-chars-strings):
+	Rename this function; have it return skip-chars-strings as well as
+	the encode program. Have these skip-chars-strings use ranges for
+	charsets, where possible.
+	* mule/mule-coding.el (make-8-bit-create-decode-encode-tables):
+	Revise this to allow people to specify explicitly characters that
+	should be undefined (= corresponding to keys in
+	unicode-error-default-translation-table), and treating unspecified
+	octets above #x7f as undefined by default.
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region):
+	Add a new IGNORE-INVALID-SEQUENCESP argument, implement support
+	for it using the 8-bit-fixed-invalid-sequences-skip-chars coding
+	system property; remove some debugging messages.
+	* mule/mule-coding.el (make-8-bit-coding-system):
+	This function is dumped, autoloading it makes no sense.
 	Document what happens when characters above #x7f are not
-	specified, implement this. 
-	* mule/vietnamese.el: 
-	Correct spelling. 
+	specified, implement this.
+	* mule/vietnamese.el:
+	Correct spelling.
 
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el: 
-	(describe-function-1): 
-	* byte-optimize.el: 
+	* help.el:
+	(describe-function-1):
+	* byte-optimize.el:
 	Remove any reference to mocklisp as an active technology.
 
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
@@ -937,8 +1069,8 @@
 
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (force-coding-system-equivalency): 
-	Document this macro and the motivation for it. 
+	* coding.el (force-coding-system-equivalency):
+	Document this macro and the motivation for it.
 
 2009-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -956,31 +1088,31 @@
 
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (query-coding-region): 
+	* coding.el (query-coding-region):
 	Revert this to being a defun, add a compiler macro without
-	needless binding. 
-	(query-coding-string): 
-	Correct a bug here, string indices are zero- not one-based. 
+	needless binding.
+	(query-coding-string):
+	Correct a bug here, string indices are zero- not one-based.
 	* mule/general-late.el (unicode-query-coding-skip-chars-arg):
-	Correct the algorithm used to initialise this variable. 
+	Correct the algorithm used to initialise this variable.
 
 2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el (describe-function-1): 
+	* help.el (describe-function-1):
 	Distinguish between special forms and subrs; don't bind
 	autoload-file, #'symbol-file returns it like any other function
 	file name.
 
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/mule-cmds.el (finish-set-language-environment): 
+	* mule/mule-cmds.el (finish-set-language-environment):
 	Treat control characters specially in the
 	invalid-sequence-coding-system handling, display them using the
-	caret notation. 
+	caret notation.
 
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* frame.el (display-graphic-p): 
+	* frame.el (display-graphic-p):
 	Call #'display-device on the DISPLAY argument, ensuring that the
 	argument to #'device-on-window-system-p is correct.
 
@@ -993,7 +1125,7 @@
 
 2009-01-13  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/mule-cmds.el (set-language-environment-coding-systems): 
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
 	Fix a cosmetic bug; the relationship between
 	file-name-coding-system and the file-name coding system alias
 	established in coding.el wasn't being maintained. See Katsumi
@@ -1014,118 +1146,118 @@
 
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* make-docfile.el: 
+	* make-docfile.el:
 	Use absolute source file names when checking if DOC is out of
 	date, don't use relative paths that may not be related to the
-	current directory.	
+	current directory.
 
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (query-coding-region): 
-	(query-coding-string): 
+	* coding.el (query-coding-region):
+	(query-coding-string):
 	Make these defsubsts, they're short enough and they're called
 	explicitly rarely enough that it make some sense. The alternative
-	would be compiler macros that avoid the binding of the arguments. 
-	(unencodable-char-position): 
-	Document where the docstring and API are from. 
+	would be compiler macros that avoid the binding of the arguments.
+	(unencodable-char-position):
+	Document where the docstring and API are from.
 	Correct a special case for zero--check-argument-type returns nil
 	when it succeeds, we can't usefully chain its result in an and
-	here. 
+	here.
 	(check-coding-systems-region): New. API taken from GNU; docstring
-	and implementation are independent. 
-	(encode-coding-char): 
+	and implementation are independent.
+	(encode-coding-char):
 	Add an optional third argument, as used by recent GNU. Document
-	the origen of the docstring. 
+	the origen of the docstring.
 	(default-query-coding-region): Add a short docstring to the
-	non-Mule implementation of this function. 
-	* unicode.el: 
+	non-Mule implementation of this function.
+	* unicode.el:
 	Don't set the query-coding-function property for unicode coding
 	systems if we're on non-mule. Unintern
 	unicode-query-coding-region, unicode-query-coding-skip-chars-arg
-	in the same context. 
+	in the same context.
 
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* frame.el (display-mouse-p): 
-	(display-popup-menus-p): 
-	(display-images-p): 
-	(display-selections-p): 
-	(display-visual-class): 
+	* frame.el (display-mouse-p):
+	(display-popup-menus-p):
+	(display-images-p):
+	(display-selections-p):
+	(display-visual-class):
 	Make all these functions more general, do not hard code device
-	type symbols where that is inappropriate. 
+	type symbols where that is inappropriate.
 
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (default-query-coding-region): 
+	* coding.el (default-query-coding-region):
 	Declare using defun*, so we can #'return-from to it on
 	encountering a safe-charsets value of t. Comment out a few
-	debug messages. 
-	(query-coding-region): 
+	debug messages.
+	(query-coding-region):
 	Correct the docstring, it deals with a region, not a string.
-	(unencodable-char-position): 
+	(unencodable-char-position):
 	Correct the implementation for non-nil COUNT, special-case a zero
 	value for count, treat it as one. Don't rely on dynamic scope when
 	calling the main lambda.
-	* unicode.el (unicode-query-coding-region): 
-	Comment out some debug messages here. 
-	* mule/mule-coding.el (8-bit-fixed-query-coding-region): 
-	Comment out some debug messages here. 
+	* unicode.el (unicode-query-coding-region):
+	Comment out some debug messages here.
+	* mule/mule-coding.el (8-bit-fixed-query-coding-region):
+	Comment out some debug messages here.
 
-	* code-init.el (raw-text): 
-	Add a safe-charsets property to this coding system. 
-	* mule/korean.el (iso-2022-int-1): 
-	* mule/korean.el (euc-kr): 
-	* mule/korean.el (iso-2022-kr): 
-	Add safe-charsets properties for these coding systems. 
-	* mule/japanese.el (iso-2022-jp): 
-	* mule/japanese.el (jis7): 
-	* mule/japanese.el (jis8): 
-	* mule/japanese.el (shift-jis): 
-	* mule/japanese.el (iso-2022-jp-1978-irv): 
-	* mule/japanese.el (euc-jp): 
-	Add safe-charsets properties for all these coding systems. 
-	* mule/iso-with-esc.el: 
+	* code-init.el (raw-text):
+	Add a safe-charsets property to this coding system.
+	* mule/korean.el (iso-2022-int-1):
+	* mule/korean.el (euc-kr):
+	* mule/korean.el (iso-2022-kr):
+	Add safe-charsets properties for these coding systems.
+	* mule/japanese.el (iso-2022-jp):
+	* mule/japanese.el (jis7):
+	* mule/japanese.el (jis8):
+	* mule/japanese.el (shift-jis):
+	* mule/japanese.el (iso-2022-jp-1978-irv):
+	* mule/japanese.el (euc-jp):
+	Add safe-charsets properties for all these coding systems.
+	* mule/iso-with-esc.el:
 	Add safe-charsets properties to all the coding systems in
 	here. Comment on the downside of a safe-charsets value of t for
 	iso-latin-1-with-esc.
-	* mule/hebrew.el (ctext-hebrew): 
-	Add a safe-charsets property for this coding system. 
-	* mule/devanagari.el (in-is13194-devanagari): 
-	Add a safe-charsets property for this coding system. 
-	* mule/chinese.el (cn-gb-2312): 
-	* mule/chinese.el (hz-gb-2312): 
-	* mule/chinese.el (big5): 
-	Add safe-charsets properties for these coding systems. 
-	* mule/latin.el (iso-8859-14): 
+	* mule/hebrew.el (ctext-hebrew):
+	Add a safe-charsets property for this coding system.
+	* mule/devanagari.el (in-is13194-devanagari):
+	Add a safe-charsets property for this coding system.
+	* mule/chinese.el (cn-gb-2312):
+	* mule/chinese.el (hz-gb-2312):
+	* mule/chinese.el (big5):
+	Add safe-charsets properties for these coding systems.
+	* mule/latin.el (iso-8859-14):
 	Add an implementation for this, using #'make-8-bit-coding-system.
-	* mule/mule-coding.el (ctext): 
-	* mule/mule-coding.el (iso-2022-8bit-ss2): 
-	* mule/mule-coding.el (iso-2022-7bit-ss2): 
-	* mule/mule-coding.el (iso-2022-jp-2): 
-	* mule/mule-coding.el (iso-2022-7bit): 
-	* mule/mule-coding.el (iso-2022-8): 
-	* mule/mule-coding.el (escape-quoted): 
-	* mule/mule-coding.el (iso-2022-lock): 
-	Add safe-charsets properties for all these coding systems. 
+	* mule/mule-coding.el (ctext):
+	* mule/mule-coding.el (iso-2022-8bit-ss2):
+	* mule/mule-coding.el (iso-2022-7bit-ss2):
+	* mule/mule-coding.el (iso-2022-jp-2):
+	* mule/mule-coding.el (iso-2022-7bit):
+	* mule/mule-coding.el (iso-2022-8):
+	* mule/mule-coding.el (escape-quoted):
+	* mule/mule-coding.el (iso-2022-lock):
+	Add safe-charsets properties for all these coding systems.
 
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* loadhist.el (symbol-file): 
+	* loadhist.el (symbol-file):
 	Use #'defun*, not #'defun, to allow the checks for autoloaded
 	functions and variables to call #'return-from correctly. Use
-	#'return-from instead of #'return throughout the function. 
+	#'return-from instead of #'return throughout the function.
 
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* loadup.el (load-history): 
+	* loadup.el (load-history):
 	Add the contents of current-load-list to load-history before
 	clearing it. Move the variable declarations earlier in the file to
-	a format understood by make-docfile.c. 
+	a format understood by make-docfile.c.
 	* custom.el (custom-declare-variable): Add the variable's symbol
 	to the current file's load history entry correctly, don't use a
 	cons. Eliminate a comment that we don't need to worry about, we
 	don't need to check the `initialized' C variable in Lisp.
-	* bytecomp.el (byte-compile-output-file-form): 
+	* bytecomp.el (byte-compile-output-file-form):
 	Merge Andreas Schwab's pre-GPLv3 GNU change of 19970831 here;
 	treat #'custom-declare-variable correctly, generating the
 	docstrings in a format understood by make-docfile.c.
@@ -1136,25 +1268,25 @@
 	it relative to lisp-directory if the filename corresponds to a
 	Lisp file, and relative to (concat source-directory "/src/")
 	otherwise.
-	* make-docfile.el (preloaded-file-list): 
+	* make-docfile.el (preloaded-file-list):
 	Rationalise some let bindings a little. Use the "-d" argument to
 	make-docfile.c to supply Lisp paths relative to lisp-directory,
 	not absolutely. Add in loadup.el explicitly to the list of files
 	to be processed by make-docfile.c--it doesn't make sense to add it
 	to preloaded-file-list, since that is used for purposes of
-	byte-compilation too. 
+	byte-compilation too.
 
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* loadhist.el (symbol-file): 
+	* loadhist.el (symbol-file):
 	Add support for differentiating between variables and functions to
-	#'symbol-file. 
-	* help.el (describe-function-1): 
-	(describe-variable): 
+	#'symbol-file.
+	* help.el (describe-function-1):
+	(describe-variable):
 	Call #'symbol-function explicitly with a 'defun or 'defvar
 	argument, depending on whether we're looking for a variable or a
-	function. 
-	* cus-face.el (custom-declare-face): 
+	function.
+	* cus-face.el (custom-declare-face):
 	Record information about the face in the load history; code taken
 	from GNU, pre-GPLv3 revision 1.45.
 
@@ -1181,13 +1313,13 @@
 	* window.el (only-window-p): New.
 	Check if WINDOW is the only window in some context, normally its
 	frame.
-	(one-window-p): 
+	(one-window-p):
 	Implemented this in terms of #'only-window-p, calling it on the
-	selected window. 
-	(window-buffer-height): Uncomment this, make it work. 
-	(count-screen-lines): Support a BUFFER argument. 
+	selected window.
+	(window-buffer-height): Uncomment this, make it work.
+	(count-screen-lines): Support a BUFFER argument.
 	(fit-window-to-buffer): Uncomment this, correct its implementation
-	to work with XEmacs. 
+	to work with XEmacs.
 	* help.el (temp-buffer-resize-mode): New. Name taken from GNU,
 	implementation our own.
 	* (resize-temp-buffer-window): New. GNU-compatible alias for
@@ -1197,32 +1329,32 @@
 	* frame.el: Point to #'temp-buffer-resize-mode in a comment.
 	Some of this code is from GNU; help.el CVS version 1.327 of
 	2007-03-21, window.el CVS version 1.122, of 2007-06-24. Both these
-	are GPLV2 or later. 
+	are GPLV2 or later.
 
 2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* subr.el (skip-chars-quote): 
+	* subr.el (skip-chars-quote):
 	Correct the implementation, following the docstring of
 	#'skip-char-forward more closely rather than the documentation of
-	character classes in the Lispref. 
+	character classes in the Lispref.
 
 2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* custom.el: Move #'custom-variable-p to C, since it's now called
-	from #'user-variable-p. 
+	from #'user-variable-p.
 
 2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
-	
-	* mule/mule-coding.el (make-8-bit-coding-system): 
-	* mule/general-late.el (posix-charset-to-coding-system-hash): 
-	Use #'skip-chars-quote as appropriate. 
+
+	* mule/mule-coding.el (make-8-bit-coding-system):
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
+	Use #'skip-chars-quote as appropriate.
 
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (skip-chars-quote): New.
 	Given STRING, return a string that means that all characters in
 	STRING will be skipped when passed to #'skip-chars-forward,
-	#'skip-chars-backward. 
+	#'skip-chars-backward.
 
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1230,10 +1362,10 @@
 
 2008-08-08  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* unicode.el: 
-	* mule/mule-cmds.el: 
-	* mule/latin.el: 
-	* mule/cyrillic.el: 
+	* unicode.el:
+	* mule/mule-cmds.el:
+	* mule/latin.el:
+	* mule/cyrillic.el:
 	Rework the various identifiers using error-sequence to use
 	invalid-sequence instead.
 
@@ -1243,58 +1375,58 @@
 	in x-init.el, since we want it even on non-X builds to use the
 	support for displaying Unicode error sequences according to the
 	current locale.
-	* mule/mule-cmds.el (set-language-info): 
+	* mule/mule-cmds.el (set-language-info):
 	Document error-sequence-coding-system, used to describe how to
-	display characters that are not valid Unicode on disk. 
-	* mule/mule-cmds.el (finish-set-language-environment): 
-	Implement error-sequence-coding-system. 
-	* unicode.el (unicode-error-sequence-warning-face): 
+	display characters that are not valid Unicode on disk.
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Implement error-sequence-coding-system.
+	* unicode.el (unicode-error-sequence-warning-face):
 	New face, to make it possible to distinguish invalid Unicode
 	sequences from the characters given by the valid Unicode
-	sequences. 
-	* mule/cyrillic.el ("Russian"): 
-	("Ukrainian"): 
-	("Bulgarian"): 
-	("Belarusian"): 
+	sequences.
+	* mule/cyrillic.el ("Russian"):
+	("Ukrainian"):
+	("Bulgarian"):
+	("Belarusian"):
 	("Cyrillic-ALT"): Add support for error-sequence-coding-system for
 	all these languages.
-	* mule/latin.el: 
+	* mule/latin.el:
 	Add support for error-sequence-coding-system for the
 	Latin-alphabet language environments.
 
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/iso-with-esc.el (greek-iso-8bit-with-esc): 
-	(arabic-iso-8bit-with-esc): 
+	* mule/iso-with-esc.el (greek-iso-8bit-with-esc):
+	(arabic-iso-8bit-with-esc):
 	Add these two here. Move the implementation of the
 	'arabic-iso8859-6  character set here, with commentary on why that
-	is reasonable. 
-	* mule/arabic.el (iso-8859-6): 
+	is reasonable.
+	* mule/arabic.el (iso-8859-6):
 	Add iso-8859-6, windows-1256 implementations using
 	make-8-bit-coding-system. Remove our non-standard Mule character
-	sets. 
+	sets.
 	* unicode.el (load-unicode-tables): Remove Arabic since it's no
 	longer dumped.
 	* mule/mule-msw-init-late.el: Remove Arabic.
 	* mule/mule-category.el (predefined-category-list): Remove
-	Arabic. 
+	Arabic.
 
 2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* x-init.el (x-initialize-compose): 
+	* x-init.el (x-initialize-compose):
 	Rewrite to use #'loop, as does similar code in x-win-sun.el,
 	x-win-xfree86.el. Locally bind function-key-map to the correct
 	value for the device's console.
-	* x-win-xfree86.el (x-win-init-xfree86): 
+	* x-win-xfree86.el (x-win-init-xfree86):
 	Locally bind function-key-map to the correct value for the
 	device's console.
-	* x-win-sun.el (x-win-init-sun): 
+	* x-win-sun.el (x-win-init-sun):
 	Locally bind function-key-map to the correct value for the
 	device's console.
 
 2008-07-20  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* descr-text.el (describe-char-unicode-data): 
+	* descr-text.el (describe-char-unicode-data):
 	Correct three calls to #'error; it doesn't take #'message style
 	format strings and arguments.
 
@@ -1302,11 +1434,11 @@
 
 	* descr-text.el (describe-property-list): Move the (require
 	'hyper-apropos) call to top level, this isn't the only function
-	that uses the relevant face. 
+	that uses the relevant face.
 	(describe-char): Wrap the Unihan field descriptions if they are
 	longer than the windows width minus 50.
 	Rename the created buffer to reflect the character's position as
-	well as its value. 
+	well as its value.
 
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1314,7 +1446,7 @@
 	various Lisp functions should be called during device creation,
 	not relying on the startup code to decide this. Also, rename
 	initial-window-system to initial-device-type (which makes more
-	sense in this scheme), always set it. 
+	sense in this scheme), always set it.
 
 	* startup.el (command-line):
 	Use initial-device-type, not initial-window-system; just call
@@ -1341,49 +1473,49 @@
 	what device-specific things need doing. Don't use
 	create-console-hook in core code.
 	* x-win-xfree86.el (x-win-init-xfree86): Take a DEVICE argument;
-	use it. 
-	* x-win-sun.el (x-win-init-sun): Take a DEVICE argument; use it. 
+	use it.
+	* x-win-sun.el (x-win-init-sun): Take a DEVICE argument; use it.
 	* mule/mule-x-init.el: Remove #'init-mule-x-win, an empty
-	function. 
+	function.
 
 	* tty-init.el (make-device-early-tty-entry-point-called-p): New.
 	Rename pre-tty-win-initted.
 	(make-device-early-tty-entry-point): New.
 	Rename init-pre-tty-win.
 	(make-frame-after-init-entry-point): New.
-	Rename init-post-tty-win to better reflect when it's called. 
+	Rename init-post-tty-win to better reflect when it's called.
 
 	* gtk-init.el (gtk-early-lisp-options-file): New.
-	Move this path to a documented variable. 
+	Move this path to a documented variable.
 	(gtk-command-switch-alist): Wrap the docstring to fewer than 79
-	columns. 
+	columns.
 	(make-device-early-gtk-entry-point-called-p): New.
 	(make-device-late-gtk-entry-point-called-p): New.
 	Renamed gtk-pre-win-initted, gtk-post-win-initted to these.
-	(make-device-early-gtk-entry-point): New. 
+	(make-device-early-gtk-entry-point): New.
 	(make-device-late-gtk-entry-point): New.
 	Renamed init-pre-gtk-win, init-post-gtk-win to these.
 	Have make-device-late-gtk-entry-point take a device argument, and use
 	it; have make-device-early-gtk-entry-point load the GTK-specific
-	startup code, instead of doing that in C. 
+	startup code, instead of doing that in C.
 	(init-gtk-win): Deleted, functionality moved to the GTK device
-	creation code. 	
+	creation code.
 	(gtk-define-dead-key): Have it take a DEVICE argument; use this
-	argument. 
-	(gtk-initialize-compose): Ditto. 
+	argument.
+	(gtk-initialize-compose): Ditto.
 
-	* coding.el (set-terminal-coding-system): 
-	Correct the docstring; the function isn't broken. 
+	* coding.el (set-terminal-coding-system):
+	Correct the docstring; the function isn't broken.
 
 2008-06-29  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* descr-text.el (describe-char-unicode-data): 
+	* descr-text.el (describe-char-unicode-data):
 	Don't leak the Unihan database handle when looking up non-Han
-	characters. 
+	characters.
 
 2008-06-04  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* descr-text.el (describe-property-list): 
+	* descr-text.el (describe-property-list):
 	#'require hyper-apropos, since we use hyper-apropos-face
 
 2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
@@ -1392,27 +1524,27 @@
 	Taken from GNU's GPLV2 version of 2007-02-14, with modifications
 	for XEmacs support and extensions for Unihan.txt support and
 	db/dbm caches.
-	* simple.el (what-cursor-position): 
+	* simple.el (what-cursor-position):
 	Support an optional prefix argument, as does GNU, calling
 	#'describe-char to giving more detail on the character at point,
 	notably from UnicodeData and (in our case, optionally) Unihan.txt.
-	* syntax.el (syntax-after): 
-	Make this available for the sake of #'describe-char. 
+	* syntax.el (syntax-after):
+	Make this available for the sake of #'describe-char.
 	* mule/mule-cmds.el (iso-2022-control-alist):
 	Make this available, for the sake of #'encoded-string-description
-	and #'describe-char. 
+	and #'describe-char.
 	* mule/mule-cmds.el (encoded-string-description):
 	Make this available, for the sake of #'describe-char.
-	* unicode.el (unicode-error-default-translation-table): 
+	* unicode.el (unicode-error-default-translation-table):
 	Make this a char table of type generic, not of type char. Makes it
 	possible to have the relevant logic in #'describe-char reasonably
 	clear; also, and this is undocumented, makes it much easier to
 	implement #'frob-unicode-errors-region. I should document this,
-	and revise #'frob-unicode-errors-region. 
+	and revise #'frob-unicode-errors-region.
 
 2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule/mule-coding.el (make-8-bit-choose-category): 
+	* mule/mule-coding.el (make-8-bit-choose-category):
 	Merge my change of 2008-05-14 to the query-coding-region code.
 
 2008-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
@@ -1422,7 +1554,7 @@
 2008-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (add-to-list): Implement the same logic with a more
-	concise syntax; thank you Stephen, in 
+	concise syntax; thank you Stephen, in
 	http://mid.gmane.org/87ablomdwx.fsf@uwakimon.sk.tsukuba.ac.jp .
 
 2008-02-25  bpalmer  <bpalmer@gmail.com>
@@ -1438,22 +1570,22 @@
 
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* printer.el (generic-print-region): 
-	(generic-print-buffer): 
+	* printer.el (generic-print-region):
+	(generic-print-buffer):
 	Use #'valid-device-type-p instead of #'valid-specifier-tag-p to
 	check if the msprinter device is available, now that msprinter is
-	always available as a specifier tag. 
+	always available as a specifier tag.
 
 2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* disp-table.el (make-display-table): 
+	* disp-table.el (make-display-table):
 	Update the example code to make it more general, and more
 	compatible with GNU. Also, I previously said #xFF when I meant
 	?\xFF; correct this.
-	* mule/cyril-util.el (standard-display-cyrillic-translit): 
+	* mule/cyril-util.el (standard-display-cyrillic-translit):
 	Make the selection of the default language more sensible; change
 	the API a little to make a sensible default Cyrillic language
-	available, checking current-language-environment. 
+	available, checking current-language-environment.
 
 2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1462,11 +1594,11 @@
 	* mule/cyril-util.el (cyrillic-encode-alternativnyj-char):
 	Removed.  No-one uses these functions in google.com/codesearch,
 	GNU have a comment doubting their utility, and their
-	implementation is trivial. 
+	implementation is trivial.
 	* mule/cyril-util.el (cyrillic-language-alist):
 	Reformatted.
 	* mule/cyril-util.el (standard-display-table)): Removed. It wasn't
-	used anyway. 
+	used anyway.
 	* mule/cyril-util.el (standard-display-cyrillic-translit):
 	Rewrite it to work with character tables as display tables, and
 	not to abort with an error.
@@ -1475,11 +1607,11 @@
 
 	* disp-table.el:
 	* disp-table.el (make-display-table): Moved earlier in the file in
-	a weak attempt at making syncing with GNU easier. 
+	a weak attempt at making syncing with GNU easier.
 	* disp-table.el (frob-display-table):
 	Autoload it, accept TAG-SET, for editing specifiers.
 	* disp-table.el (describe-display-table):
-	Have it handle character sets. 	
+	Have it handle character sets.
 	* disp-table.el (standard-display-8bit-1):
 	* disp-table.el (standard-display-8bit):
 	* disp-table.el (standard-display-default-1):
@@ -1490,13 +1622,13 @@
 	* disp-table.el (standard-display-european):
 	Rework them all to use put-char-table, remove-char-table instead
 	of aset. Limit standard-display-g1, standard-display-graphic to
-	TTYs; have standard-display-underline work on X11 too. 
-	
+	TTYs; have standard-display-underline work on X11 too.
+
 	* font.el (font-caps-display-table):
 	Use put-char-table instead of aset when editing a display table.
 	* x-init.el:
 	* x-init.el (tab):
-	Create the initial display table as a char-table, not a vector. 
+	Create the initial display table as a char-table, not a vector.
 
 2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1508,15 +1640,15 @@
 2008-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/latin.el (windows-1250): Add the Central European Windows
-	coding system. 
+	coding system.
 	* mule/mule-win32-init.el: Don't use the Windows-specific CP1250
-	implementation, rely on that in latin.el instead. 
+	implementation, rely on that in latin.el instead.
 
 2008-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* coding.el (query-coding-clear-highlights): 
+	* coding.el (query-coding-clear-highlights):
 	New function--clear any face information added by
-	`query-coding-region'. 
+	`query-coding-region'.
 	(default-query-coding-region): Use it.
 
 2008-04-13  Henry S. Thompson <ht@inf.ed.ac.uk>, Mike Sperber  <mike@xemacs.org>
@@ -1526,10 +1658,10 @@
 	alist mapping the window objects from the original window
 	configuration to the window objects corresponding to them in the
 	restored configuration.
-	(set-window-configuration): 
-	(saved-window): 
-	(root-window->saved-window): 
-	(really-set-window-configuration): 
+	(set-window-configuration):
+	(saved-window):
+	(root-window->saved-window):
+	(really-set-window-configuration):
 	(restore-saved-window): Record the mapping for above functions.
 
 2008-04-12  Henry S. Thompson <ht@inf.ed.ac.uk>
@@ -1538,10 +1670,10 @@
 	these to the original definitions of `split-window' and
 	`delete-window', and use them in the window-configuration code to
 	make sure it doesn't get affected by advice to these functions.
-	
+
 2008-04-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* help.el (describe-function-1): 
+	* help.el (describe-function-1):
 	Rely on #'symbol-file to tell which file an autoloaded function
 	belongs to, don't special-case them.
 
@@ -1604,55 +1736,55 @@
 
 	* info.el (Info-suffix-list):
 	Support LZMA compression, as used--oddly--by Mandriva Linux.
-	* coding.el (decode-coding-string): 
+	* coding.el (decode-coding-string):
 	(encode-coding-string): Accept GNU's NOCOPY argument for
-	these. Todo; write compiler macros to use it. 
+	these. Todo; write compiler macros to use it.
 	(query-coding-warning-face): New face, to show unencodable
-	characters. 
-	(default-query-coding-region-safe-charset-skip-chars-map): 
-	New variable, a cache used by #'default-query-coding-region. 
+	characters.
+	(default-query-coding-region-safe-charset-skip-chars-map):
+	New variable, a cache used by #'default-query-coding-region.
 	(default-query-coding-region): Default implementation of
 	#'query-coding-region, using the safe-charsets and safe-chars
-	coding systemproperties. 
+	coding systemproperties.
 	(query-coding-region): New function; can a given coding system
-	encode a given region? 
+	encode a given region?
 	(query-coding-string): New function; can a given coding system
-	encode a given string? 
+	encode a given string?
 	(unencodable-char-position): Function API taken from GNU; return
-	the first unencodable position given a string and coding system. 
+	the first unencodable position given a string and coding system.
 	(encode-coding-char): Function API taken from GNU; return CHAR
 	encoded using CODING-SYSTEM, or nil if CODING-SYSTEM would trash
-	CHAR. 
+	CHAR.
 	((unless (featurep 'mule)): Override the default
-	query-coding-region implementation on non-Mule. 
+	query-coding-region implementation on non-Mule.
 	* mule/mule-coding.el (make-8-bit-generate-helper): Eliminate a
-	duplicate comment. 
-	(make-8-bit-choose-category): Simplify implementation. 
+	duplicate comment.
+	(make-8-bit-choose-category): Simplify implementation.
 	(8-bit-fixed-query-coding-region): Implementation of
 	#'query-coding-region for coding systems created with
-	#'make-8-bit-coding-system. 
+	#'make-8-bit-coding-system.
 	(make-8-bit-coding-system): Initialise the #'query-coding-region
-	implementation for these character sets. 
+	implementation for these character sets.
 	(make-8-bit-coding-system): Ditto for the compiler macro version
-	of this function. 
+	of this function.
 	* unicode.el (unicode-query-coding-skip-chars-arg): New variable,
 	used by unicode-query-coding-region, initialised in
-	mule/general-late.el. 
+	mule/general-late.el.
 	(unicode-query-coding-region): New function, the
-	#'query-coding-region implementation for Unicode coding systems. 
+	#'query-coding-region implementation for Unicode coding systems.
 	Initialise the query-coding-function property for the Unicode
 	coding systems to #'unicode-query-coding-region.
 	* mule/mule-charset.el (charset-skip-chars-string): New
 	function. Return a #'skip-chars-forward argument that skips all
-	characters in CHARSET. 
+	characters in CHARSET.
 	(map-charset-chars): Function synced from GNU, modified to work
 	with XEmacs. Map FUNC across the int value charset ranges of
-	CHARSET. 
+	CHARSET.
 
 2008-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* info.el (Info-suffix-list): 
-	Support LZMA compression, as used--oddly--by Mandriva Linux. 
+	* info.el (Info-suffix-list):
+	Support LZMA compression, as used--oddly--by Mandriva Linux.
 
 2008-01-17  Mike Sperber  <mike@xemacs.org>
 

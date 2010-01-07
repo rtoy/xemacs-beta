@@ -243,7 +243,7 @@ set Info-directory-list.")
   ;; Don't provide the last three functions unless the menubar feature is
   ;; available. This approach (with #'unintern) avoids warnings about lost
   ;; docstrings since make-docfile doesn't parse bytecode.
-  (mapcar #'unintern '(add-menu-item add-menu package-get-download-menu)))
+  (mapc #'unintern '(add-menu-item add-menu package-get-download-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 

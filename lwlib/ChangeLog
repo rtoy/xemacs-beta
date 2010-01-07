@@ -1,3 +1,13 @@
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xlw.c: Include needed Xmu headers instead of obsolete xmu.h.
+	* xlwcheckbox.c: Ditto.
+	* xlwradio.c: Ditto.
+	* xlwgauge.c: Ditto.  Unconditionally include HAVE_XMU code.
+	* xlwtabs.c: Ditto.
+	* xlwgcs.c: Ditto.  Remove pre-X11R5 code.
+	* xlwgcs.h: Remove pre-X11R5 declarations.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* lwlib.c: Drop workaround for old NeXT systems.

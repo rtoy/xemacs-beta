@@ -1,3 +1,27 @@
+2010-01-06  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Debugging and Testing): Document
+	valgrind configuration and use.
+
+2009-12-21  Jerry James  <james@xemacs.rg>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove references to OffiX support files.
+	* lispref/dragndrop.texi (Drag and Drop): Remove reference to OffiX.
+	(Supported Protocols): Ditto.
+	(OffiX DND): Remove.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* lispref/processes.texi (Functions that Create Subprocesses): Refer
+	to etags instead of the obsolete wakeup program.
+
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove references to xmu.c and xmu.h.
+	(Modules for Interfacing with X Windows): Ditto.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* internals/internals.texi (XEmacs from the Perspective of Building):
@@ -13,6 +37,11 @@
 	insufficient update to list of current operating systems.
 	* xemacs-faq.texi (Q1.2.2: What versions of Unix does XEmacs run on?):
 	Ditto.
+
+2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Equality Predicates): 
+	Document #'equalp here, as well as #'equal and #'eq. 
 
 2009-10-05  Jerry James  <james@xemacs.org>
 

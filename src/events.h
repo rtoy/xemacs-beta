@@ -951,13 +951,20 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 /* Maybe this should be trickier */
 #define KEYSYM(x) (intern (x))
 
+typedef enum character_to_event_meta_behavior
+{
+  high_bit_is_meta,
+  use_console_meta_flag,
+  latin_1_maps_to_itself
+} character_to_event_meta_behavior;
+
 /* from events.c */
 void format_event_object (Eistring *buf, Lisp_Object event, int brief);
 /*void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);*/
-void character_to_event (Ichar c, Lisp_Event *event,
-                         struct console *con,
-                         int use_console_meta_flag,
+void character_to_event (Ichar, Lisp_Event *, struct console *,
+                         character_to_event_meta_behavior meta_flag,
                          int do_backspace_mapping);
+
 void zero_event (Lisp_Event *e);
 
 #define MECR_DEALLOCATE_EVENT 1

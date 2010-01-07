@@ -12,9 +12,9 @@
 interface may change! The current implementation is considered experimental.
 
   Drag'n'drop is a way to transfer information between multiple applications.
-To do this several GUIs define their own protocols. Examples are OffiX, CDE,
-Motif, KDE, MSWindows, GNOME, and many more. To catch all these protocols,
-XEmacs provides a generic API.
+To do this several GUIs define their own protocols. Examples are CDE, Motif,
+KDE, MSWindows, GNOME, and many more. To catch all these protocols, XEmacs
+provides a generic API.
 
 One prime idea behind the API is to use a data interface that is
 transparent for all systems. The author thinks that this is best
@@ -35,35 +35,10 @@ The current release of XEmacs only support a small set of Drag'n'drop
 protocols. Some of these only support limited options available in the API.
 
 @menu
-* OffiX DND::           A generic X based protocol.
 * CDE dt::              Common Desktop Environment used on suns.
 * MSWindows OLE::       Mr. Gates way of live.
 * Loose ends::          The other protocols.
 @end menu
-
-@node OffiX DND
-@subsection OffiX DND
-@cindex OffiX DND
-
-@emph{WARNING}: If you compile in OffiX, you may not be able to use
-multiple X displays successfully.  If the two servers are from
-different vendors, the results may be unpredictable.
-
-The OffiX Drag'n'Drop protocol is part of a X API/Widget library created by
-Cesar Crusius. It is based on X-Atoms and ClientMessage events, and works with
-any X platform supporting them.
-
-OffiX is supported if 'offix is member of the variable dragdrop-protocols, or
-the feature 'offix is defined.
-
-Unfortunately it uses it's own data types. Examples are: File, Files,
-Exe, Link, URL, MIME. The API tries to choose the right type for the data that
-is dragged from XEmacs (well, not yet...).
-
-XEmacs supports both MIME and URL drags and drops using this API. No application
-interaction is possible while dragging is in progress.
-
-For information about the OffiX project have a look at http://leb.net/~offix/
 
 @node CDE dt
 @subsection CDE dt
@@ -90,7 +65,7 @@ Only allows file drags and drops.
 @subsection Loose ends
 
 The following protocols will be supported soon: Xdnd, Motif, Xde (if I
-get some specs), KDE OffiX (if KDE can find XEmacs windows).
+get some specs).
 
 In particular Xdnd will be one of the protocols that can benefit from
 the XEmacs API, cause it also uses MIME types to encode dragged data.

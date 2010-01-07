@@ -499,7 +499,7 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 
 		      ;; Wean the frames using frame-initial-frame as
 		      ;; their minibuffer frame.
-		      (mapcar
+		      (mapc
 		       #'(lambda (frame)
 			   (set-frame-property frame 'minibuffer
 					       new-minibuffer))
@@ -750,15 +750,15 @@ This deletes all bindings in PLIST for `top', `left', `width',
 Emacs uses this to avoid overriding explicit moves and resizings from
 the user during startup."
   (setq plist (canonicalize-lax-plist (copy-sequence plist)))
-  (mapcar #'(lambda (property)
-	      (if (lax-plist-member plist property)
-		  (progn
-		    (setq frame-initial-geometry-arguments
-			  (cons property
-				(cons (lax-plist-get plist property)
-				      frame-initial-geometry-arguments)))
-		    (setq plist (lax-plist-remprop plist property)))))
-	  '(height width top left user-size user-position))
+  (mapc #'(lambda (property)
+            (if (lax-plist-member plist property)
+                (progn
+                  (setq frame-initial-geometry-arguments
+                        (cons property
+                              (cons (lax-plist-get plist property)
+                                    frame-initial-geometry-arguments)))
+                  (setq plist (lax-plist-remprop plist property)))))
+        '(height width top left user-size user-position))
   plist)
 
 ;; XEmacs change: Emacs has focus-follows-mouse here, which lets them

@@ -15,8 +15,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
+Boston, MA 02111-1301, USA.  */
 
 /* Synched up with: Not in FSF. */
 
@@ -57,6 +57,21 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
   write_c_string (printcharfun, bstr);
   xfree (bstr, CIbyte *);
 }
+
+#ifdef NEW_GC
+static void
+bignum_finalize (void *header, int for_disksave)
+{
+  if (!for_disksave)
+    {
+      struct Lisp_Bignum *num = (struct Lisp_Bignum *) header;
+      bignum_fini (num->data);
+    }
+}
+#define BIGNUM_FINALIZE bignum_finalize
+#else
+#define BIGNUM_FINALIZE 0
+#endif
 
 static int
 bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
@@ -107,8 +122,9 @@ static const struct memory_description bignum_description[] = {
 };
 
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 1, 0, bignum_print,
-				     0, bignum_equal, bignum_hash,
-				     bignum_description, Lisp_Bignum);
+				     BIGNUM_FINALIZE, bignum_equal,
+				     bignum_hash, bignum_description,
+				     Lisp_Bignum);
 
 #endif /* HAVE_BIGNUM */
 
@@ -166,6 +182,21 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
   xfree (rstr, CIbyte *);
 }
 
+#ifdef NEW_GC
+static void
+ratio_finalize (void *header, int for_disksave)
+{
+  if (!for_disksave)
+    {
+      struct Lisp_Ratio *num = (struct Lisp_Ratio *) header;
+      ratio_fini (num->data);
+    }
+}
+#define RATIO_FINALIZE ratio_finalize
+#else
+#define RATIO_FINALIZE 0
+#endif
+
 static int
 ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
@@ -184,7 +215,7 @@ static const struct memory_description ratio_description[] = {
 };
 
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
-				     0, ratio_equal, ratio_hash,
+				     RATIO_FINALIZE, ratio_equal, ratio_hash,
 				     ratio_description, Lisp_Ratio);
 
 #endif /* HAVE_RATIO */
@@ -253,6 +284,21 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
   xfree (fstr, CIbyte *);
 }
 
+#ifdef NEW_GC
+static void
+bigfloat_finalize (void *header, int for_disksave)
+{
+  if (!for_disksave)
+    {
+      struct Lisp_Bigfloat *num = (struct Lisp_Bigfloat *) header;
+      bigfloat_fini (num->bf);
+    }
+}
+#define BIGFLOAT_FINALIZE bigfloat_finalize
+#else
+#define BIGFLOAT_FINALIZE 0
+#endif
+
 static int
 bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
@@ -271,7 +317,7 @@ static const struct memory_description bigfloat_description[] = {
 };
 
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
-				     bigfloat_print, 0,
+				     bigfloat_print, BIGFLOAT_FINALIZE,
 				     bigfloat_equal, bigfloat_hash,
 				     bigfloat_description, Lisp_Bigfloat);
 
@@ -345,7 +391,7 @@ default_float_precision_changed (Lisp_Object UNUSED (sym), Lisp_Object *val,
 #ifdef HAVE_BIGFLOAT
   if (INTP (*val))
     prec = XINT (*val);
-  else 
+  else
     {
       if (!bignum_fits_ulong_p (XBIGNUM_DATA (*val)))
 	args_out_of_range_3 (*val, Qzero, Vbigfloat_max_prec);
@@ -655,7 +701,7 @@ promote_args (Lisp_Object *arg1, Lisp_Object *arg2)
 				      0UL);
       return type2;
     }
-  
+
   if (type2 < type1)
     {
       *arg2 = internal_coerce_number (*arg2, type1,
@@ -800,12 +846,9 @@ This is determined by the underlying library used to implement bigfloats.
 */);
 
 #ifdef HAVE_BIGFLOAT
-#ifdef HAVE_BIGNUM
-  Vbigfloat_max_prec = make_bignum (0L);
-  bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
-#else
+  /* Don't create a bignum here.  Otherwise, we lose with NEW_GC + pdump.
+     See reinit_vars_of_number(). */
   Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
-#endif
 #else
   Vbigfloat_max_prec = make_int (0);
 #endif /* HAVE_BIGFLOAT */
@@ -829,6 +872,15 @@ The fixnum closest in value to positive infinity.
 #endif
 #ifdef HAVE_BIGFLOAT
   Fprovide (intern ("bigfloat"));
+#endif
+}
+
+void
+reinit_vars_of_number (void)
+{
+#if defined(HAVE_BIGFLOAT) && defined(HAVE_BIGNUM)
+  Vbigfloat_max_prec = make_bignum (0L);
+  bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
 #endif
 }
 
@@ -859,6 +911,10 @@ init_number (void)
 #ifdef HAVE_BIGFLOAT
       bigfloat_init (scratch_bigfloat);
       bigfloat_init (scratch_bigfloat2);
+#endif
+
+#ifndef PDUMP
+      reinit_vars_of_number ();
 #endif
     }
 }

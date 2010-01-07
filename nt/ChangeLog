@@ -1,3 +1,20 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Remove references to OffiX files.
+
+2009-12-15  Jerry James  <james@xemacs.org>
+
+	* xemacs.mak: Remove build dependency for lib-src/wakeup.  Thanks to
+	Vin Shelton for the patch.
+
+2009-12-14  Jerry James  <james@xemacs.org>
+
+	* installer: Remove unused Wise installer sources.
+
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Drop references to xmu.c and xmu.h.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* xemacs.dsp: Drop references to removed source files.

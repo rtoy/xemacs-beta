@@ -96,11 +96,11 @@ PUBLIC_INSTALLABLE_EXES=\
 #endif
  etags ctags b2m ootags
 
-PUBLIC_INSTALLABLE_SCRIPTS=\
 #ifdef INSTALL_GNUSERV
- gnudoit gnuattach\
+PUBLIC_INSTALLABLE_SCRIPTS=gnudoit gnuattach
+#else
+PUBLIC_INSTALLABLE_SCRIPTS=
 #endif
- rcs-checkin
 
 PUBLIC_INSTALLABLES = ${PUBLIC_INSTALLABLE_EXES} ${PUBLIC_INSTALLABLE_SCRIPTS}
 
@@ -117,8 +117,8 @@ PRIVATE_INSTALLABLE_EXES=\
 #else
  fakemail\
 #endif
- wakeup profile make-docfile digest-doc\
- sorted-doc movemail cvtmail yow hexl mmencode
+ profile make-docfile digest-doc\
+ sorted-doc movemail cvtmail hexl mmencode
 
 GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh
 PKG_SCRIPTS = add-big-package.sh
@@ -337,9 +337,6 @@ ootags: ${ootags_deps}
 ctags: ${etags_deps} etags
 	$(CC) -DCTAGS ${etags_args} -o $@
 
-wakeup: ${srcdir}/wakeup.c
-	$(CC) $(cflags) ${srcdir}/wakeup.c $(ldflags) -o $@
-
 profile: ${srcdir}/profile.c
 	$(CC) $(cflags) ${srcdir}/profile.c $(ldflags) -o $@
 
@@ -365,9 +362,6 @@ cvtmail: ${srcdir}/cvtmail.c
 
 fakemail: ${srcdir}/fakemail.c ../src/config.h
 	$(CC) $(cflags) ${srcdir}/fakemail.c $(ldflags) -o $@
-
-yow: ${srcdir}/yow.c ../src/paths.h
-	$(CC) $(cflags) ${srcdir}/yow.c $(ldflags) -o $@
 
 i: ${srcdir}/i.c
 	$(CC) $(cflags) ${srcdir}/i.c $(ldflags) -o $@

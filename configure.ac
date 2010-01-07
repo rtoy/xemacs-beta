@@ -741,24 +741,12 @@ XE_KEYWORD_ARG([widgets],
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_MERGED_ARG([dragndrop],
 	AS_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
-                        protocols is found (currently CDE, OffiX, MSWindows,
-                        and GTK).
+                        protocols is found (currently CDE, MSWindows, and GTK).
                         *WARNING*  The Drag'n'drop support is under development
                                    and is considered experimental.]),
 	[], [])
 XE_MERGED_ARG([cde],
 	AS_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
-	[], [])
-XE_MERGED_ARG([offix],
-	AS_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
-                        *WARNING*  If you compile in OffiX, you may not be
-                                   able to use multiple X displays success-
-                                   fully.  If the two servers are from
-                                   different vendors, the results may be
-                                   unpredictable.]),
-	[], [])
-XE_MERGED_ARG([xmu],
-	AS_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([external-widget],
 	AS_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
@@ -1025,6 +1013,9 @@ XE_MERGED_ARG([quantify],
 	[], [])
 XE_MERGED_ARG([purify],
 	AS_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
+	[], [])
+XE_MERGED_ARG([valgrind],
+	AS_HELP_STRING([--with-valgrind],[Support memory debugging using Valgrind.]),
 	[], [])
 dnl -------------------------------------------------------------------------
 dnl Final command line argument checks.
@@ -3090,13 +3081,13 @@ extern Bool XRegisterIMInstantiateCallback(
    AC_DEFINE(XREGISTERIMINSTANTIATECALLBACK_NONSTANDARD_PROTOTYPE)])
 
   dnl autodetect -lXmu
-  test -z "$with_xmu" && { AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile,
-                           with_xmu=yes, with_xmu=no) }
+  AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile, with_xmu=yes, with_xmu=no)
   if test "$with_xmu" = "no"; then
-    XE_ADD_OBJS(xmu.o)
+    AC_MSG_ERROR([We're sorry, but we thought there were no systems without Xmu by now.
+You cannot build this version of XEmacs for X11 without Xmu.  Please report
+this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
   else
     XE_PREPEND(-lXmu, libs_x)
-    AC_DEFINE(HAVE_XMU)
   fi
 
   dnl Autodetect -lXbsd
@@ -3255,7 +3246,7 @@ if test "$with_x11" != "yes"; then
   dnl if test "$with_tty" = "no" ; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
-  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu enable_sound_nas
+  for feature in with_tooltalk with_cde with_wmcommand with_xim enable_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        AC_MSG_WARN([--$feature ignored:  Not valid without X support])
@@ -3491,42 +3482,12 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
-dnl Always compile OffiX unless --without-offix is given, no
-dnl X11 support is compiled in, no standard Xmu is available,
-dnl or dragndrop support is disabled
-dnl Because OffiX support currently loses when more than one display
-dnl is in use, we now disable it by default -slb 07/10/1998.
-test "$window_system" != "x11" && with_offix=no
-if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; no real Xmu support])
-  fi
-  with_offix=no
-fi
-if test "$with_dragndrop" = no; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; no generic Drag'n'Drop support])
-  fi
-  with_offix=no
-fi
-if test "$with_cde" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to `no'; CDE already found])
-  fi
-  with_offix=no
-fi
-test -z "$with_offix" && with_offix=no
-if test "$with_offix" = "yes"; then
-  AC_DEFINE(HAVE_OFFIX_DND)
-  XE_APPEND(offix.o, dnd_objs)
-  XE_APPEND(OffiX, dragndrop_proto)
-fi
 if test "$with_gtk" = "yes"; then
    XE_APPEND(GTK, dragndrop_proto)
 fi
 
 dnl Autodetect Drag'n'Drop support
-dnl always included if CDE, Offix, or MSWindows are defined
+dnl always included if CDE or MSWindows is defined
 if test "$with_dragndrop" != "no" ; then
   AC_MSG_CHECKING(if drag and drop API is needed)
   if test -n "$dragndrop_proto" ; then
@@ -5532,6 +5493,7 @@ test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
 test "$enable_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
+test "$with_valgrind"      = "yes" && AC_DEFINE(USE_VALGRIND)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
@@ -5634,9 +5596,6 @@ if test "$with_x11" = "yes"; then
   echo "    - X Windows libraries location:               $x_libraries"
   if test "$with_xauth" != yes; then
     echo "    - Xau (X authority) not available."
-  fi
-  if test "$with_xmu" != yes; then
-    echo "    - Xmu library not available; substituting equivalent routines."
   fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
@@ -5850,6 +5809,7 @@ if test "$enable_error_checking_extents $enable_error_checking_types $enable_err
   echo "  WARNING: Error checking is on by default for XEmacs beta releases."
   echo "  WARNING: ---------------------------------------------------------"
 fi
+test "$with_valgrind" = yes && echo "  Compiling in support for memory debugging with Valgrind."
 echo ""
 ) | tee -a Installation
 dnl echo "The above configure report is appended to \"Installation\" file."

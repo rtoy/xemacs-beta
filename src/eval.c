@@ -4144,7 +4144,9 @@ using for example `funcall' or `apply'.
   if (SYMBOLP (object))
     object = indirect_function (object, 0);
 
-  if (COMPILED_FUNCTIONP (object) || SUBRP (object))
+  if (COMPILED_FUNCTIONP (object)
+      || (SUBRP (object)
+	  && (XSUBR (object)->max_args != UNEVALLED)))
     return Qt;
   if (CONSP (object))
     {
@@ -4152,7 +4154,8 @@ using for example `funcall' or `apply'.
       if (EQ (car, Qlambda))
 	return Qt;
       if (EQ (car, Qautoload)
-	  && NILP (Fcar_safe (Fcdr_safe (Fcdr_safe (Fcdr_safe (XCDR (object)))))))
+	  && NILP (Fcar_safe (Fcdr_safe(Fcdr_safe
+					(Fcdr_safe (XCDR (object)))))))
 	return Qt;
     }
   return Qnil;

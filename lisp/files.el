@@ -607,13 +607,13 @@ colon-separated list of directories when resolving a relative directory name."
 			       (mapcar #'file-name-as-directory trypath))
 			  (list (file-name-as-directory "")))))
       (or (catch 'found
-	    (mapcar #'(lambda (x)
-			(let ((f (expand-file-name (concat x dir))))
-			  (if (file-directory-p f)
-			      (progn
-				(cd-absolute f)
-				(throw 'found t)))))
-		    cd-path)
+	    (mapc #'(lambda (x)
+                      (let ((f (expand-file-name (concat x dir))))
+                        (if (file-directory-p f)
+                            (progn
+                              (cd-absolute f)
+                              (throw 'found t)))))
+                  cd-path)
 	    nil)
 	  ;; jwz: give a better error message to those of us with the
 	  ;; good taste not to use a kludge like $CDPATH.

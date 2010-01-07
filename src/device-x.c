@@ -55,15 +55,11 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include "xgccache.h"
 #include <X11/Shell.h>
-#include "xmu.h"
+#include <X11/Xmu/Error.h>
 
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
 #include "sysdll.h"
 #endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
-
-#ifdef HAVE_OFFIX_DND
-#include "offix.h"
-#endif
 
 Lisp_Object Vx_app_defaults_directory;
 #ifdef MULE
@@ -909,11 +905,6 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     free_argc_argv (new_argv);
   }
 #endif /* HAVE_WMCOMMAND */
-
-
-#ifdef HAVE_OFFIX_DND
-  DndInitialize (app_shell);
-#endif
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);

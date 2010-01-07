@@ -71,12 +71,13 @@
 #include	<X11/Xlib.h>
 #include	<X11/IntrinsicP.h>
 #include	<X11/StringDefs.h>
+#include	<X11/Xmu/Drawing.h>
+#include	<X11/Xmu/Misc.h>
 
 /* #### This may be risky, lwlib-internal.h redefines abort() */
 #include	"lwlib-fonts.h"
 #include	"lwlib-colors.h"
 #include	"lwlib-internal.h"
-#include	"../src/xmu.h"
 #include	"xlwtabsP.h"
 #include	"xlwgcs.h"
 
@@ -1570,9 +1571,7 @@ TabsFreeGCs(TabsWidget tw)
 	XtReleaseGC(w, tw->tabs.backgroundGC) ;
 	XtReleaseGC(w, tw->tabs.topGC) ;
 	XtReleaseGC(w, tw->tabs.botGC) ;
-#ifdef HAVE_XMU
 	XmuReleaseStippledPixmap(XtScreen(w), tw->tabs.grey50) ;
-#endif
 }
 
 
@@ -2481,7 +2480,6 @@ TabsAllocGreyGC(TabsWidget tw)
 #else
 	  tw->tabs.font->fid;
 #endif
-#ifdef HAVE_XMU
 	if (tw->tabs.be_nice_to_cmap || w->core.depth == 1)
 	{
 	  values.fill_style = FillStippled;
@@ -2502,7 +2500,6 @@ TabsAllocGreyGC(TabsWidget tw)
 		  GCDashList|GCArcMode);
 	}
 	else
-#endif
 	{
 	  tw->tabs.greyGC =
 	    XtAllocateGC(w, w->core.depth,

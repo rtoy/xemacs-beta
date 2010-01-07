@@ -1139,8 +1139,7 @@ LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/make-docfile.exe	\
 	$(BLDLIB_SRC)/mmencode.exe	\
 	$(BLDLIB_SRC)/movemail.exe	\
-	$(BLDLIB_SRC)/sorted-doc.exe	\
-	$(BLDLIB_SRC)/wakeup.exe
+	$(BLDLIB_SRC)/sorted-doc.exe
 !if $(USE_MINITAR)
 LIB_SRC_TOOLS = \
 	$(LIB_SRC_TOOLS) \
