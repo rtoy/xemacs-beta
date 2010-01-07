@@ -1,5 +1,11 @@
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (map):
+	Add a compiler macro for this function, for cases where CL-TYPE is
+	constant and understood.
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* unicode.el (load-unicode-tables):
 	* mule/mule-msw-init-late.el:
 	* mule/mule-category.el (predefined-category-list):

@@ -3461,6 +3461,29 @@ the byte optimizer in those cases."
 	  ;; byte-optimize.el).
 	  (t form)))))
 
+(define-compiler-macro map (&whole form cl-type cl-func cl-seq
+                            &rest cl-rest)
+  "If CL-TYPE is a constant expression that we know how to handle, transform
+the call to `map' to a more efficient expression."
+  (cond
+   ;; The first two here rely on the compiler macros for mapc and mapcar*,
+   ;; to convert to mapc-internal and mapcar, where appropriate (that is, in
+   ;; the absence of cl-rest.)
+   ((null cl-type)
+    `(prog1 nil (mapc ,@(nthcdr 2 form))))
+   ((equal '(quote list) cl-type)
+    (cons 'mapcar* (nthcdr 2 form)))
+   ((or (equal '(quote vector) cl-type)
+        (equal '(quote array) cl-type))
+    (if cl-rest
+        `(vconcat (mapcar* ,@(nthcdr 2 form)))
+      (cons 'mapvector (nthcdr 2 form))))
+   ((equal '(quote string) cl-type)
+    `(concat (mapcar* ,@(nthcdr 2 form))))
+   ((equal '(quote bit-vector) cl-type)
+    `(bvconcat (mapcar* ,@(nthcdr 2 form))))
+   (t form)))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
