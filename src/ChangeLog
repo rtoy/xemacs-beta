@@ -1,3 +1,9 @@
+2010-01-07  Jerry James  <james@xemacs.org>
+
+	* font-mgr.c (Ffc_font_match): Initialize result to FcResultMatch
+	before calling FcFontMatch.
+	* objects-xlike-inc.c (xft_find_charset_font): Ditto.
+
 2010-01-07  Henrique Martins  <xemacs@martins.cc>
 
 	* dired.c (file_name_completion): If a file is too big to stat(),

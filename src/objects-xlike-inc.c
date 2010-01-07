@@ -445,6 +445,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcDefaultSubstitute (p);
 	PRINT_XFT_PATTERN (3, "FcDefaultSubstitute'ed name is %s\n", p);
 	/* #### check fcresult of following match? */
+	fcresult = FcResultMatch;
 	fontxft = FcFontMatch (fcc, p, &fcresult);
 	switch (fcresult)
 	  {
