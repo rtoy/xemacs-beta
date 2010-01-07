@@ -350,10 +350,10 @@ and whether or not it is up-to-date."
 	(kill-buffer tmpbuf))	    
       (when do-delete
 	(message "Deleting selected packages ...") (sit-for 0)
-	(mapcar (lambda (pkg)
-		  (package-admin-delete-binary-package
-		   pkg (package-admin-get-install-dir pkg)))
-		(nreverse pui-deleted-packages))
+	(mapc (lambda (pkg)
+                (package-admin-delete-binary-package
+                 pkg (package-admin-get-install-dir pkg)))
+              (nreverse pui-deleted-packages))
 	(message "Packages deleted"))))
 	 
   (let ((tmpbuf "*Packages-To-Install*") 
@@ -385,11 +385,11 @@ and whether or not it is up-to-date."
 		  (erase-buffer package-admin-temp-buffer))
 		(message "Installing selected packages ...") (sit-for 0)
 		(if (catch 'done
-		      (mapcar (lambda (pkg)
-				(if (not (package-get pkg nil nil
-                                                      pui-package-install-dest-dir))
-				    (throw 'done nil)))
-			      (nreverse pui-selected-packages))
+		      (mapc (lambda (pkg)
+                              (if (not (package-get pkg nil nil
+                                                    pui-package-install-dest-dir))
+                                  (throw 'done nil)))
+                            (nreverse pui-selected-packages))
 		      t)
 		    (progn
 		      (pui-list-packages)
@@ -615,7 +615,7 @@ Warning: No download sites specified.  Package index may be out of date.
 "))
     (insert sep-string)
     (setq start (point))
-    (mapcar
+    (mapc
      #'(lambda (pkg)
 	 (let (pkg-sym info version desc
 		       b e extent current-vers disp)

@@ -18,8 +18,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
+Boston, MA 02111-1301, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
 
@@ -1895,6 +1895,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_opaque_early ();
 #endif /* not NEW_GC */
       reinit_eistring_early ();
+#ifdef WITH_NUMBER_TYPES
+      reinit_vars_of_number ();
+#endif
 
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY

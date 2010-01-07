@@ -440,12 +440,19 @@ Supports Common Lisp lambda lists."
 	(while (and args (not (memq (car args) lambda-list-keywords)))
 	  (let ((arg (pop args)))
 	    (or (consp arg) (setq arg (list arg)))
-	    (let* ((karg (if (consp (car arg)) (caar arg)
-			   (intern (format ":%s" (car arg)))))
+	    (let* ((karg (if (consp (car arg))
+			     ;; It's possible to use non-keywords here, as
+			     ;; in the KEYWORD-ARGUMENT-NAME-PACKAGE Common
+			     ;; Lisp issue:
+			     (caar arg)
+			   ;; Use read instead of intern in case we ever
+			   ;; actually get packages and keywords are no
+			   ;; longer in obarray:
+			   (read (concat ":" (symbol-name (car arg))))))
 		   (varg (if (consp (car arg)) (cadar arg) (car arg)))
 		   (def (if (cdr arg) (cadr arg)
 			  (or (car bind-defs) (cadr (assq varg bind-defs)))))
-		   (look (list 'memq (list 'quote karg) restarg)))
+		   (look (list 'memq (quote-maybe karg) restarg)))
 	      (and def bind-enquote (setq def (list 'quote def)))
 	      (if (cddr arg)
 		  (let* ((temp (or (nth 2 arg) (gensym)))
@@ -467,12 +474,7 @@ Supports Common Lisp lambda lists."
 					  'quote
 					  (list nil (cl-const-expr-val def)))
 				       (list 'list nil def))))))))
-	      (push karg keys)
-	      ;; XEmacs addition
-	      (if (= (aref (symbol-name karg) 0) ?:)
-		  (progn (set karg karg)
-			 (push (list 'setq karg (list 'quote karg))
-			       bind-inits)))))))
+	      (push karg keys)))))
       (setq keys (nreverse keys))
       (or (and (eq (car args) '&allow-other-keys) (pop args))
 	  (null keys) (= safety 0)
@@ -487,7 +489,7 @@ Supports Common Lisp lambda lists."
 				(list 'setq var (list 'cdr (list 'cdr var))))
 			  (list (list 'car
 				      (list 'cdr
-					    (list 'memq (cons 'quote allow)
+					    (list 'memq (car allow)
 						  restarg)))
 				(list 'setq var nil))
 			  (list t
@@ -2637,8 +2639,7 @@ the PLACE is not modified before executing BODY."
 			  (gensym "--letf-val--")))
                (syms (and (eq 'values (car place))
                           (gensym "--letf-syms--")))
-               (cursor (and syms (gensym "--letf-cursor--")))
-               (sym (and syms (gensym "--letf-sym--"))))
+               (cursor (and syms (gensym "--letf-cursor--"))))
 	  (setq lets (nconc (car method)
                             (cond
                              (syms
@@ -3348,6 +3349,117 @@ surrounded by (block NAME ...)."
   (if (stringp string)
       (regexp-quote string)
     form))
+
+(define-compiler-macro equalp (&whole form x y) 
+  "Expand calls to `equalp' where X or Y is a constant expression.
+
+Much of the processing that `equalp' does is dependent on the types of both
+of its arguments, and with type information for one of them, we can
+eliminate much of the body of the function at compile time.
+
+Where both X and Y are constant expressions, `equalp' is evaluated at
+compile time by byte-optimize.el--this compiler macro passes FORM through to
+the byte optimizer in those cases."
+  ;; Cases where both arguments are constant are handled in
+  ;; byte-optimize.el, we only need to handle those cases where one is
+  ;; constant here.
+  (let* ((equalp-sym (eval-when-compile (gensym)))
+	(let-form '(progn))
+	(check-bit-vector t)
+	(check-string t)
+	(original-y y)
+	equalp-temp checked)
+  (macrolet
+      ((unordered-check (check)
+	 `(prog1
+	     (setq checked
+		   (or ,check
+		       (prog1 ,(sublis '((x . y) (y . x)) check :test #'eq)
+			 (setq equalp-temp x x y y equalp-temp))))
+	   (when checked
+	     (unless (symbolp y)
+	       (setq let-form `(let ((,equalp-sym ,y))) y equalp-sym))))))
+    ;; In the bodies of the below clauses, x is always a constant expression
+    ;; of the type we're interested in, and y is always a symbol that refers
+    ;; to the result non-constant side of the comparison. 
+    (cond ((unordered-check (and (arrayp x) (not (cl-const-expr-p y))))
+	   ;; Strings and other arrays. A vector containing the same
+	   ;; character elements as a given string is equalp to that string;
+	   ;; a bit-vector can only be equalp to a string if both are
+	   ;; zero-length.
+	   (cond
+	    ((member x '("" #* []))
+	     ;; No need to protect against multiple evaluation here:
+	     `(and (member ,original-y '("" #* [])) t))
+	    ((stringp x)
+	     `(,@let-form
+	       (if (stringp ,y)
+		   (eq t (compare-strings ,x nil nil
+					  ,y nil nil t))
+		 (if (vectorp ,y) 
+		     (cl-string-vector-equalp ,x ,y)))))
+	    ((bit-vector-p x)
+	     `(,@let-form
+	       (if (bit-vector-p ,y)
+		   ;; No need to call equalp on each element here:
+		   (equal ,x ,y)
+		 (if (vectorp ,y) 
+		     (cl-bit-vector-vector-equalp ,x ,y)))))
+	    (t
+	     (loop
+	       for elt across x
+	       ;; We may not need to check the other argument if it's a
+	       ;; string or bit vector, depending on the contents of x:
+	       always (progn
+			(unless (characterp elt) (setq check-string nil))
+			(unless (and (numberp elt) (or (= elt 0) (= elt 1)))
+			  (setq check-bit-vector nil))
+			(or check-string check-bit-vector)))
+	     `(,@let-form
+	       (cond
+		,@(if check-string
+		      `(((stringp ,y) 
+			 (cl-string-vector-equalp ,y ,x))))
+		,@(if check-bit-vector 
+		      `(((bit-vector-p ,y)
+			 (cl-bit-vector-vector-equalp ,y ,x))))
+		((vectorp ,y)
+		 (cl-vector-array-equalp ,x ,y)))))))
+	  ((unordered-check (and (characterp x) (not (cl-const-expr-p y))))
+	   `(,@let-form
+	     (or (eq ,x ,y)
+		  ;; eq has a bytecode, char-equal doesn't.
+		 (and (characterp ,y)
+		      (eq (downcase ,x) (downcase ,y))))))
+	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
+	   `(,@let-form
+	     (and (numberp ,y)
+		  (= ,x ,y))))
+	  ((unordered-check (and (hash-table-p x) (not (cl-const-expr-p y))))
+	   ;; Hash tables; follow the CL spec.
+	   `(,@let-form
+	     (and (hash-table-p ,y)
+		  (eq ',(hash-table-test x) (hash-table-test ,y))
+		  (= ,(hash-table-count x) (hash-table-count ,y))
+		  (cl-hash-table-contents-equalp ,x ,y))))
+	  ((unordered-check
+	    ;; Symbols; eq. 
+	    (and (not (cl-const-expr-p y))
+		 (or (memq x '(nil t))
+		     (and (eq (car-safe x) 'quote) (symbolp (second x))))))
+	   (cons 'eq (cdr form)))
+	  ((unordered-check
+	    ;; Compare conses at runtime, there's no real upside to
+	    ;; unrolling the function -> they fall through to the next
+	    ;; clause in this function.
+	    (and (cl-const-expr-p x) (not (consp x))
+		 (not (cl-const-expr-p y))))
+	   ;; All other types; use equal.
+	   (cons 'equal (cdr form)))
+	  ;; Neither side is a constant expression, do all our evaluation at
+	  ;; runtime (or both are, and equalp will be called from
+	  ;; byte-optimize.el).
+	  (t form)))))
 
 (mapc
  #'(lambda (y)

@@ -28,9 +28,6 @@
 
 ;;; Code:
 
-;; See iso-with-esc.el for commentary on the ISO standard Arabic character
-;; set.
-
 (make-coding-system
  'iso-8859-6 'fixed-width "ISO 8859-6 (Arabic)"
  '(unicode-map

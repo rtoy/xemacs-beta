@@ -1455,11 +1455,15 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 			     save_excursion_save ());
       break;
 
+      /* This bytecode will eventually go away, once we no longer encounter
+         byte code from 21.4. In 21.5.10 and newer, save-window-excursion is
+         a macro. */
     case Bsave_window_excursion:
       {
 	int count = specpdl_depth ();
-	record_unwind_protect (save_window_excursion_unwind,
-			       call1 (Qcurrent_window_configuration, Qnil));
+	record_unwind_protect (Feval,
+                               list2 (Qset_window_configuration,
+                                      call0 (Qcurrent_window_configuration)));
 	TOP_LVALUE = Fprogn (TOP);
 	unbind_to (count);
 	break;

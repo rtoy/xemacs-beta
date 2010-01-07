@@ -1,3 +1,19 @@
+2010-01-04  Jerry James  <james@xemacs.org>
+
+	* Emacs.ad: Change /usr/lib/X11 to /usr/share/X11.
+	* xemacs.1: Ditto.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* idd/drop: Remove.
+	* idd/dropmsk: Remove.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* sparcworks/SW.Editor.xpm: Remove obsolete file.
+	* sparcworks/sunpro-mailcap: Ditto.
+	* sparcworks: Remove empty directory.
+
 2009-12-03  Jerry James  <james@xemacs.org>
 
 	* custom/example-themes/europe-theme.el:

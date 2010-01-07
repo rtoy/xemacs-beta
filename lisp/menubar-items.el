@@ -247,7 +247,7 @@ Write your filter like this:
 		      (submenu-generate-accelerator-spec
 		       (mapcar #'(lambda (bmk)
 				   `[,bmk (bookmark-jump ',bmk)])
-			       (bookmark-all-names)))))
+			       (declare-fboundp (bookmark-all-names))))))
 		 (append menu '("---") items)))))
       "---"
       ["Insert %_Contents" bookmark-menu-insert

@@ -1,3 +1,33 @@
+2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Test #'functionp, making sure it gives nil for special forms.
+
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el: 
+	Test much of the functionality of equalp; add a pointer to Paul
+	Dietz' ANSI test suite for this function, converted to Emacs
+	Lisp. Not including the tests themselves in XEmacs because who
+	owns the copyright on the files is unclear and the GCL people
+	didn't respond to my queries. 
+
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* Dnd/README: Remove references to OffiX drag-and-drop.
+	* Dnd/droptest.el (start-drag): Remove OffiX support.
+	(start-region-drag): Ditto.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* glyph-test.el: Add copyright and GPL v2 or later header with
+	permission of Andy Piper.
+	* gutter-test.el: Ditto.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* auc-tex-test: Remove obsolete file.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* autoconf/regressiontest.pl: Remove reference to dynodump.

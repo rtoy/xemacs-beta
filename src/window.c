@@ -5267,30 +5267,6 @@ delete_all_subwindows (struct window *w)
   mark_window_as_deleted (w);
 }
 
-Lisp_Object
-save_window_excursion_unwind (Lisp_Object window_config)
-{
-  Lisp_Object val = call1 (Qset_window_configuration, window_config);
-  return val;
-}
-
-DEFUN ("save-window-excursion", Fsave_window_excursion, 0, UNEVALLED, 0, /*
-Execute BODY, preserving window sizes and contents.
-Restores which buffer appears in which window, where display starts,
-as well as the current buffer.
-Does not restore the value of point in current buffer.
-
-arguments: (&rest BODY)
-*/
-       (args))
-{
-  /* This function can GC */
-  int speccount = specpdl_depth ();
-
-  record_unwind_protect (save_window_excursion_unwind,
-			 call1 (Qcurrent_window_configuration, Qnil));
-  return unbind_to_1 (speccount, Fprogn (args));
-}
 
 static int
 get_current_pixel_pos (Lisp_Object window, Lisp_Object pos,
@@ -5558,7 +5534,6 @@ syms_of_window (void)
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fwindow_memory_usage);
 #endif
-  DEFSUBR (Fsave_window_excursion);
   DEFSUBR (Fcurrent_pixel_column);
   DEFSUBR (Fcurrent_pixel_row);
 }

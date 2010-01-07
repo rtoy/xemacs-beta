@@ -15,8 +15,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
+Boston, MA 02111-1301, USA.  */
 
 /* Synched up with: Not in FSF. */
 
@@ -221,7 +221,7 @@ bignum_set_string (bignum b, const char *s, int base)
 
   mbase = MP_ITOM ((short) base);
   MP_MOVE (bignum_zero, b);
-  
+
   for (digit = char_to_number (*s); digit >= 0 && digit < base;
        digit = char_to_number (*++s))
     {

@@ -71,6 +71,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
 #endif
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
 
 EXFUN (Fgarbage_collect, 0);
 
@@ -2690,19 +2693,20 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	    }
 	  XSET_STRING_DATA (s, new_data);
 
-	  {
-	    /* We need to mark this chunk of the string_chars_block
-	       as unused so that compact_string_chars() doesn't
-	       freak. */
-	    struct string_chars *old_s_chars = (struct string_chars *)
-	      ((char *) old_data - offsetof (struct string_chars, chars));
-	    /* Sanity check to make sure we aren't hosed by strange
-	       alignment/padding. */
-	    assert (old_s_chars->string == XSTRING (s));
-	    MARK_STRING_CHARS_AS_FREE (old_s_chars);
-	    ((struct unused_string_chars *) old_s_chars)->fullsize =
-	      oldfullsize;
-	  }
+	  if (!DUMPEDP (old_data)) /* Can't free dumped data. */
+	    {
+	      /* We need to mark this chunk of the string_chars_block
+		 as unused so that compact_string_chars() doesn't
+		 freak. */
+	      struct string_chars *old_s_chars = (struct string_chars *)
+		((char *) old_data - offsetof (struct string_chars, chars));
+	      /* Sanity check to make sure we aren't hosed by strange
+		 alignment/padding. */
+	      assert (old_s_chars->string == XSTRING (s));
+	      MARK_STRING_CHARS_AS_FREE (old_s_chars);
+	      ((struct unused_string_chars *) old_s_chars)->fullsize =
+                  oldfullsize;
+	    }
 	}
     }
 #endif /* not NEW_GC */
@@ -4698,6 +4702,29 @@ See also `consing-since-gc' and `object-memory-usage-stats'.
 }
 #endif /* ALLOC_TYPE_STATS */
 
+#ifdef USE_VALGRIND
+DEFUN ("valgrind-leak-check", Fvalgrind_leak_check, 0, 0, "", /*
+Ask valgrind to perform a memory leak check.
+The results of the leak check are sent to stderr.
+*/
+       ())
+{
+  VALGRIND_DO_LEAK_CHECK;
+  return Qnil;
+}
+
+DEFUN ("valgrind-quick-leak-check", Fvalgrind_quick_leak_check, 0, 0, "", /*
+Ask valgrind to perform a quick memory leak check.
+This just prints a summary of leaked memory, rather than all the details.
+The results of the leak check are sent to stderr.
+*/
+       ())
+{
+  VALGRIND_DO_QUICK_LEAK_CHECK;
+  return Qnil;
+}
+#endif /* USE_VALGRIND */
+
 void
 recompute_funcall_allocation_flag (void)
 {
@@ -5052,6 +5079,10 @@ syms_of_alloc (void)
 #endif
   DEFSUBR (Ftotal_memory_usage);
   DEFSUBR (Fconsing_since_gc);
+#ifdef USE_VALGRIND
+  DEFSUBR (Fvalgrind_leak_check);
+  DEFSUBR (Fvalgrind_quick_leak_check);
+#endif
 }
 
 void

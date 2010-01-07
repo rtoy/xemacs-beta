@@ -227,7 +227,6 @@ directory."
 ;     ("Chile (cl.xemacs.org)" "ftp.cl.xemacs.org" "packages")
     ("China (ftp.cn.xemacs.org)" "ftp.cn.xemacs.org" "pub/xemacs/packages")
     ("Czech Republic (cz.xemacs.org)" "ftp.cz.xemacs.org" "MIRRORS/ftp.xemacs.org/pub/xemacs/packages")
-    ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "xemacs/packages")
     ("Finland (fi.xemacs.org)" "ftp.fi.xemacs.org" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
     ("France (fr.xemacs.org)" "ftp.fr.xemacs.org" "pub/xemacs/packages")
     ("France (mirror.cict.fr)" "mirror.cict.fr" "xemacs/packages")
@@ -302,8 +301,6 @@ variable actually used to specify package download sites."
      "pub/xemacs/beta/experimental/packages")
     ("Czech Republic Pre-Releases (cz.xemacs.org)" "ftp.cz.xemacs.org"
      "MIRRORS/ftp.xemacs.org/pub/xemacs/xemacs-21.5/experimental/packages")
-    ("Denmark Pre-Releases (dk.xemacs.org)" "ftp.dk.xemacs.org"
-     "xemacs/beta/experimental/packages")
     ("Finland Pre-Releases (fi.xemacs.org)" "ftp.fi.xemacs.org"
      "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/beta/experimental/packages")
     ("France Pre-Releases (fr.xemacs.org)" "ftp.fr.xemacs.org"
@@ -667,10 +664,10 @@ This is just an interactive wrapper for `package-admin-delete-binary-package'."
   (package-get-require-base t)
   ;; Load a fresh copy
   (catch 'exit
-    (mapcar (lambda (pkg)
-	      (if (not (package-get (car pkg) nil 'never))
-		  (throw 'exit nil)))		;; Bail out if error detected
-	    packages-package-list))
+    (mapc (lambda (pkg)
+            (if (not (package-get (car pkg) nil 'never))
+                (throw 'exit nil)))		;; Bail out if error detected
+          packages-package-list))
   (package-net-update-installed-db))
 
 ;;;###autoload

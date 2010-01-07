@@ -291,9 +291,6 @@ If you don't want X Window System support, specify `--without-x'.  If
 you omit this option, `configure' will try to autodetect whether your
 system has X Window System support, and arrange to use it if present.
 
-The `--without-xmu' option can be used if your vendor doesn't ship
-the Xmu library.
-
 The `--with-menubars=TYPE' option allows you to specify which X
 toolkit you wish to use for the menubar.  The valid options are
 `lucid', `motif' and `no'.  The default is `lucid' which is a
@@ -381,11 +378,6 @@ etc/PACKAGES) installed prior to building XEmacs.
 The `--with-cde' option allows you to enable or disable CDE drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-cde' for you.
-
-The `--with-offix' option allows you to enable or disable OffiX drag
-and drop support.  This requires no external library support, so if
-X11 support is available, then this option defaults to `yes'.  OffiX
-support can be explicitly disabled via the `--with-offix=no' option.
 
 Internationalization Options
 ----------------------------
@@ -573,7 +565,7 @@ are installed in the following directories:
 
 `/usr/local/bin' holds the executable programs users normally run -
 		`xemacs', `etags', `ctags', `b2m', `emacsclient', `ellcc',
-		`gnuclient', `gnudoit', `gnuattach', and `rcs-checkin'.
+		`gnuclient', `gnudoit', and `gnuattach'.
 
 `/usr/local/lib/xemacs-VERSION/lisp' holds the Emacs Lisp libraries;
 		`VERSION' stands for the number of the XEmacs version
@@ -589,7 +581,7 @@ are installed in the following directories:
 		`/usr/local/lib/xemacs/site-lisp/*'.
 
 `/usr/local/lib/xemacs-VERSION/etc' holds the XEmacs tutorial, the
-		`yow' database, and other architecture-independent
+		Unicode database, and other architecture-independent
 		files XEmacs might need while running.  VERSION is as
 		specified for `.../lisp'.
 
@@ -898,7 +890,6 @@ Window-system options:
 --with-widgets            Unchanged
 --with-dragndrop          Unchanged
 --with-cde                Unchanged
---with-offix              Unchanged
 --with-xmu                Unchanged
 --external-widget         --with-external-widget
 

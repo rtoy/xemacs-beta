@@ -57,7 +57,7 @@
   (list* 'defconst x (list 'quote x) (and doc (list doc))))
 
 (defun keyword-of (sym)
-  (or (keywordp sym) (keywordp (intern (format ":%s" sym)))))
+  (or (keywordp sym) (keywordp (read (format ":%s" sym)))))
 
 ;;; Routines for parsing keyword arguments.
 
