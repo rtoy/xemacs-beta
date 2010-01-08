@@ -1,3 +1,9 @@
+2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (Fmake_charset): 
+	Change build_string with an Ibyte argument to build_intstring,
+	fixing the build on Visual C++. Thank you for the report, Vin.
+
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c:
