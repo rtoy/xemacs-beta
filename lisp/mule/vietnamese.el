@@ -1,9 +1,9 @@
-;;; vietnamese.el --- Support for Vietnamese -*- coding: iso-2022-7bit; -*-
+;;; vietnamese.el --- Support for Vietnamese -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Vietnamese
 
@@ -42,14 +42,15 @@
 (modify-category-entry 'vietnamese-viscii-lower ?v)
 (modify-category-entry 'vietnamese-viscii-upper ?v)
 
-(make-charset 'vietnamese-viscii "Vietnamese VISCII1.1"
-	      '(dimension
-		1
-		registries ["VISCII1.1"]
-		chars 256
-		short-name "Vietnamese (VISCII)"
-		long-name "Vietnamese (VISCII)"
-		unicode-map
+(make-charset
+ 'vietnamese-viscii "Vietnamese VISCII1.1"
+ '(dimension
+   1
+   registries ["VISCII1.1"]
+   chars 256
+   short-name "Vietnamese (VISCII)"
+   long-name "Vietnamese (VISCII)"
+   unicode-map
    ((#x02 #x1EB2) ;; CAPITAL LETTER A WITH BREVE AND HOOK ABOVE
     (#x05 #x1EB4) ;; CAPITAL LETTER A WITH BREVE AND TILDE
     (#x06 #x1EAA) ;; CAPITAL LETTER A WITH CIRCUMFLEX AND TILDE
@@ -184,7 +185,7 @@
     (#xFD #x00FD) ;; SMALL LETTER Y WITH ACUTE
     (#xFE #x1EE3) ;; SMALL LETTER O WITH HORN AND DOT BELOW
     (#xFF #x1EEE)) ;; CAPITAL LETTER U WITH HORN AND TILDE
-		))
+   ))
 
 (make-coding-system 
  'viscii 'mbcs "VISCII 1.1 (Vietnamese)"
@@ -199,12 +200,14 @@
                 ;; Not available in packages. 
 		;; (input-method . "vietnamese-viqr")
 		(features viet-util)
-		(sample-text . "Vietnamese (Ti,1*(Bng Vi,1.(Bt)	Ch,1`(Bo b,1U(Bn")
+		(sample-text . "Vietnamese (Tiếng Việt)	Chào bạn")
 		(documentation . "\
 For Vietnamese, Emacs uses special charsets internally.
 They can be decoded from and encoded to VISCC, VSCII, and VIQR.
 Current setting put higher priority to the coding system VISCII than VSCII.
 If you prefer VSCII, please do: (prefer-coding-system 'vietnamese-vscii)")
 		))
+
+(make-one-dimension-windows-charset 1258 'latin "Vietnamese")
 
 ;;; vietnamese.el ends here

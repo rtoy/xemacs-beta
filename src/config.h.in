@@ -1,6 +1,6 @@
 /* XEmacs site configuration template file.  -*- C -*-
    Copyright (C) 1986, 1991-1994, 1998, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1005,6 +1005,8 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
+/********************* Window-system defines ******************/
+
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
 #if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS)
 #define HAVE_WINDOW_SYSTEM
@@ -1053,11 +1055,17 @@ extern "C" {
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
+/********************* Mule defines ******************/
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+#define OLD_MULE
+#endif
+
 /* CCL is unworkable under UNICODE_INTERNAL currently.  See comments in
    mule-ccl.c.  Algorithmic conversion tables are currently used only for
    the Unicode-slop charsets for characters having no other representation
    in a charset. */
-#if defined (MULE) && !defined (UNICODE_INTERNAL)
+#ifdef OLD_MULE
 #define HAVE_CCL
 #define ALLOW_ALGORITHMIC_CONVERSION_TABLES
 #endif
@@ -1069,6 +1077,8 @@ extern "C" {
 #  define CANNA_PURESIZE 0
 #endif /* not CANNA */
 
+/********************* Networking defines ******************/
+
 #if defined (HAVE_SOCKS) && !defined (DO_NOT_SOCKSIFY)
 #define accept Raccept
 #define bind Rbind
@@ -1076,6 +1086,8 @@ extern "C" {
 #define getsockname Rgetsockname
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
+
+/********************* Basic types defines ******************/
 
 #ifndef BITS_PER_CHAR
 #define BITS_PER_CHAR 8
@@ -1086,6 +1098,8 @@ extern "C" {
 #define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 #define DOUBLE_BITS (SIZEOF_DOUBLE * BITS_PER_CHAR)
+
+/********************* Inlining defines ******************/
 
 /* Use `INLINE_HEADER' to define inline functions in .h files.
    Use `inline static' to define inline functions in .c files.
@@ -1114,6 +1128,8 @@ extern "C" {
 
 #define DECLARE_INLINE_HEADER(header) \
   INLINE_HEADER header ; INLINE_HEADER header
+
+/************************* Misc defines ************************/
 
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
@@ -1149,6 +1165,8 @@ extern "C" {
    #### font-lock does its own version using parse-partial-sexp.  We should
    merge the two. */
 #define USE_C_FONT_LOCK
+
+/********************* Error-checking defines ******************/
 
 /* Keep the #defines sorted.
    #### Can this code ever be executed?  I guess if a developer #defines

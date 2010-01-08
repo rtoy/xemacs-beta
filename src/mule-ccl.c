@@ -891,7 +891,7 @@ charset_7bit_p (Lisp_Object charset)
    invalid byte. ]]
    */
 
-FIXME: When code < 256, do we have to reverse the arguments?
+#error FIXME: When code < 256, do we have to reverse the arguments?
 
 /* On XEmacs, TranslateCharacter is not supported.  Thus, this		\
    macro is only used in the MuleToUnicode transformation.  */		\
@@ -1433,7 +1433,9 @@ ccl_driver (struct ccl_program *ccl,
 
 	    case CCL_WriteMultibyteChar2:
 	      {
-		Ichar ich = ccl_make_char (reg[RRR], reg[rrr]);
+		Ichar ich;
+
+		CCL_MAKE_CHAR (reg[RRR], reg[rrr], ich);
 		CCL_WRITE_CHAR (ich);
 	      }
 	      break;
@@ -1442,7 +1444,7 @@ ccl_driver (struct ccl_program *ccl,
 #if 0
 	      /* XEmacs does not have translate_char, nor an
 		 equivalent.  We do nothing on this operation. */
-	      op = ccl_make_char (reg[RRR], reg[rrr]);
+	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], op);
 	      op = translate_char (GET_TRANSLATION_TABLE (reg[Rrr]),
 				   op, -1, 0, 0);
 	      {
@@ -1465,7 +1467,7 @@ ccl_driver (struct ccl_program *ccl,
                  do nothing on this operation. */
 	      op = XCHAR_OR_INT (ccl_prog[ic]); /* table */
 	      ic++;
-	      i = ccl_make_char (reg[RRR], reg[rrr]);
+	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
 	      op = translate_char (GET_TRANSLATION_TABLE (op), i, -1, 0, 0);
 	      {
 		Lisp_Object charset;
@@ -1483,52 +1485,44 @@ ccl_driver (struct ccl_program *ccl,
 
 	    case CCL_MuleToUnicode:
 	      {
-		Lisp_Object ucs;
-
 		/* @@#### Is it correct that we have the arguments reversed
-		   from other calls to ccl_make_char? */
-                op = ccl_make_char (reg[rrr], reg[RRR]);
+		   from other calls to CCL_MAKE_CHAR? */
+		Ichar ich;
+		int ucs;
 
-		ucs = Fchar_to_unicode (make_char (op));
-
-		if (NILP (ucs))
-		  {
-		    /* Uhh, char-to-unicode doesn't return nil at the
-		       moment, only ever -1. */
-		    reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
-		  }
-		else
-		  {
-		    reg[rrr] = XCHAR_OR_INT (ucs);
-		    if (-1 == reg[rrr])
-		      {
-			reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
-		      }
-		  }
+		CCL_MAKE_CHAR (reg[rrr], reg[RRR], ich);
+		/* @@#### Better error handling? */
+		ucs = ichar_to_unicode (ich, CONVERR_SUCCEED);
+		reg[rrr] = ucs;
 		break;
 	      }
 
 	    case CCL_UnicodeToMule:
 	      {
-		Lisp_Object scratch;
+		int error = 0;
 
-		scratch = Funicode_to_char (make_int (reg[rrr]), Qnil);
-
-		if (!NILP (scratch))
+		if (!valid_unicode_codepoint_p (reg[rrr]))
+		  error = 1;
+		else
 		  {
-		    op = XCHAR (scratch);
-		    ichar_to_charset_codepoint (op, get_unicode_precedence(),
-						&scratch, &i, &j);
-		    reg[RRR] = XCHARSET_ID (scratch);
+		    Lisp_Object charset;
 
-		    if (j != 0)
+		    unicode_to_charset_codepoint (reg[rrr],
+						  get_unicode_precedence (),
+						  &charset, &i, &j);
+		    if (NILP (charset))
+		      error = 1;
+		    else
 		      {
-			i = (i << 7) | j;
+			reg[RRR] = XCHARSET_ID (charset);
+			/* @@#### */
+			i &= 0x7f;
+			j &= 0x7f;
+			reg[rrr] = (i << 7) | j;
 		      }
-
-		    reg[rrr] = i;
 		  }
-		else 
+
+		if (error)
 		  {
 		    reg[rrr] = reg[RRR] = 0;
 		  }

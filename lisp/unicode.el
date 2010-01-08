@@ -48,12 +48,7 @@
 	    ;; @@#### Add more charsets, esp. things like KOI8-R; take them
 	    ;; from emacs-unicode-2, among other things.
 	    ("8859-1.TXT" latin-iso8859-1 #xA0)
-	    ("8859-10.TXT" latin-iso885910 #xA0)
-	    ;; 8859-11.TXT
-	    ("8859-13.TXT" latin-iso8859-13 #xA0)
-	    ("8859-14.TXT" latin-iso8859-14 #xA0)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0)
-	    ("8859-16.TXT" latin-iso8859-16 #xA0)
 	    ("8859-2.TXT" latin-iso8859-2 #xA0)
 	    ("8859-3.TXT" latin-iso8859-3 #xA0)
 	    ("8859-4.TXT" latin-iso8859-4 #xA0)
@@ -62,23 +57,6 @@
 	    ("8859-7.TXT" greek-iso8859-7 #xA0)
 	    ("8859-8.TXT" hebrew-iso8859-8 #xA0)
 	    ("8859-9.TXT" latin-iso8859-9 #xA0)
-	    )
-
-	   ("unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS"
-	    ("CP1250.TXT" latin-windows-1250 #x80)
-	    ("CP1251.TXT" cyrillic-windows-1251 #x80)
-	    ("CP1252.TXT" latin-windows-1252 #x80)
-	    ("CP1253.TXT" greek-windows-1253 #x80)
-	    ("CP1254.TXT" latin-windows-1254 #x80)
-	    ("CP1255.TXT" hebrew-windows-1255 #x80)
-	    ("CP1256.TXT" arabic-windows-1256 #x80)
-	    ("CP1257.TXT" latin-windows-1257 #x80)
-	    ("CP1258.TXT" latin-windows-1258 #x80)
-	    ("CP874.TXT" thai-windows-874 #x80)
-	    ("CP932.TXT" japanese-windows-932 #x8000)
-	    ("CP936.TXT" chinese-windows-936 #x8000)
-	    ("CP949.TXT" korean-windows-949 #x8000)
-	    ("CP950.TXT" chinese-windows-950 #x8000)
 	    )
 
 	   ("unicode/unicode-consortium/EASTASIA/OBSOLETE"
@@ -99,8 +77,6 @@
 	    ("JIS0201.TXT" katakana-jisx0201 #xA0)
 	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
 	    ("JIS0212.TXT" japanese-jisx0212)
-	    ("JOHAB.TXT" korean-johab #x8000)
-	    ("KOI8-R.TXT" cyrillic-koi8-r #x80)
 	    ;; "KSC5601.TXT" 
 	    ;; note that KSC5601.TXT as currently distributed is NOT what
 	    ;; it claims to be!  see comments in KSX1001.TXT.
@@ -115,27 +91,10 @@
 	    )
 
 	   ("unicode/mule-ucs"
-	    ("chinese-cns11643-1.txt" chinese-cns11643-1)
-	    ("chinese-cns11643-2.txt" chinese-cns11643-2)
-	    ("chinese-cns11643-3.txt" chinese-cns11643-3)
-	    ("chinese-cns11643-4.txt" chinese-cns11643-4)
-	    ("chinese-cns11643-5.txt" chinese-cns11643-5)
-	    ("chinese-cns11643-6.txt" chinese-cns11643-6)
-	    ("chinese-cns11643-7.txt" chinese-cns11643-7)
-	    ("chinese-sisheng.txt" chinese-sisheng)
-	    ("ethiopic.txt" ethiopic)
-	    ("indian-is13194.txt" indian-is13194 nil nil #x80)
-	    ("ipa.txt" ipa nil nil #x80)
-	    ("thai-tis620.txt" thai-tis620 nil nil #x80)
-	    ("tibetan.txt" tibetan)
-	    ("vietnamese-viscii-lower.txt" vietnamese-viscii-lower
-	     nil nil #x80)
-	    ("vietnamese-viscii-upper.txt" vietnamese-viscii-upper
-	     nil nil #x80)
-	    )
-	   ("unicode/other"
-	    ("lao.txt" lao)
-	    )
+	    ("unicode/mule-ucs/chinese-cns11643-1.txt" chinese-cns11643-1)
+	    ("unicode/mule-ucs/chinese-cns11643-2.txt" chinese-cns11643-2)
+	    ("unicode/mule-ucs/chinese-sisheng.txt" chinese-sisheng)
+	    ("unicode/mule-ucs/thai-tis620.txt" thai-tis620 nil nil #x80)
 	   )))
     (mapc #'(lambda (tables)
               (let ((undir

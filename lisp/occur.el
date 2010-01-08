@@ -467,19 +467,9 @@ See also `multi-occur'."
 		    (setq marker (make-marker))
 		    (set-marker marker matchbeg)
 		    (if (and keep-props
-<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
-			     (if (boundp 'jit-lock-mode) jit-lock-mode)
-=======
 			     (if-boundp 'jit-lock-mode jit-lock-mode)
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
 			     (text-property-not-all begpt endpt 'fontified t))
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/lisp/occur.el
-			(if-fboundp 'jit-lock-fontify-now
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~base.1-7ooo
-			(if (fboundp 'jit-lock-fontify-now)
-=======
 			(if-fboundp #'jit-lock-fontify-now
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/occur.el~other.rU63D8
 			    (jit-lock-fontify-now begpt endpt)))
 		    (setq curstring (buffer-substring begpt endpt))
 		    ;; Depropertize the string, and maybe

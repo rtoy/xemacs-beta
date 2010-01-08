@@ -46,6 +46,13 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "syntax.h"
 
+
+#ifdef MIRROR_TABLE
+#define USED_IF_MIRROR_TABLE(x) x
+#else
+#define USED_IF_MIRROR_TABLE(x) UNUSED (x)
+#endif
+
 Lisp_Object Qchar_tablep, Qchar_table;
 
 Lisp_Object Vall_syntax_tables;
@@ -659,15 +666,15 @@ char_table_hash (Lisp_Object obj, int depth)
 	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
 						 depth + 1));
 #elif defined (MULE)
-/* 0xA1 aka 0x21 is usually the first alphabetic character and differs
-   across charsets, whereas 0xA0 is no-break-space across many of them.
+/* 0xA1 is usually the first alphabetic character and differs across
+   charsets, whereas 0xA0 is no-break-space across many of them.
    charset_codepoint_to_ichar_raw() can't fail because we are in non-
    Unicode-internal. */
 #define FROB1(cs)							\
   hashval = HASH2 (hashval,						\
 		   internal_hash (get_char_table_raw			\
 				  (charset_codepoint_to_ichar_raw	\
-				   (cs, 0, 0x21),			\
+				   (cs, 0, 0xA1),			\
 				   obj), depth + 1))
 /* 0x3021 is the first CJK character in a number of different CJK charsets
    and differs across them. */
@@ -682,7 +689,6 @@ char_table_hash (Lisp_Object obj, int depth)
       FROB1 (Vcharset_latin_iso8859_4);
       FROB1 (Vcharset_thai_tis620);
       FROB1 (Vcharset_greek_iso8859_7);
-      FROB1 (Vcharset_arabic_iso8859_6);
       FROB1 (Vcharset_hebrew_iso8859_8);
       FROB1 (Vcharset_katakana_jisx0201);
       FROB1 (Vcharset_latin_jisx0201);
@@ -958,7 +964,7 @@ See `make-char-table'.
 }
 
 static void
-set_char_table_dirty (Lisp_Object table)
+set_char_table_dirty (Lisp_Object USED_IF_MIRROR_TABLE (table))
 {
 #ifdef MIRROR_TABLE
   assert (!XCHAR_TABLE (table)->mirror_table_p);
@@ -1131,7 +1137,9 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
-  assert(!ct->mirror_table_p);
+#ifdef MIRROR_TABLE
+  assert (!ct->mirror_table_p);
+#endif
   ctnew = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;

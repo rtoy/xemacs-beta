@@ -89,6 +89,67 @@ extern Lisp_Object Vcharset_hash_table;
 #define XCHARSET_DIMENSION(cs) 1
 #define XCHARSET_NAME(cs) (cs)
 
+#define ASSERT_VALID_CHARSET_CODEPOINT(charset, a1, a2)		\
+do								\
+  {								\
+    text_checking_assert (EQ (charset, Vcharset_ascii));	\
+    text_checking_assert (a1 == 0);				\
+    text_checking_assert (a2 >= 0 && a2 <= 255);		\
+  }								\
+while (0)
+    
+DECLARE_INLINE_HEADER (
+Ichar
+charset_codepoint_to_ichar (Lisp_Object charset, int a1, int a2,
+			    enum converr USED_IF_MULE (fail))
+)
+{
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
+  return (Ichar) a2;
+}
+
+DECLARE_INLINE_HEADER (
+int
+charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
+			      enum converr USED_IF_MULE (fail))
+)
+{
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
+  return (int) a2;
+}
+
+DECLARE_INLINE_HEADER (
+static void
+ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
+			    USED_IF_MULE (dyn),
+			    Lisp_Object *charset, int *c1, int *c2)
+)
+{
+  ASSERT_VALID_ICHAR (ch);
+  *charset = Vcharset_ascii;
+  *c1 = 0;
+  *c2 = (int) ch;
+}
+
+DECLARE_INLINE_HEADER (
+static void
+unicode_to_charset_codepoint (int c, Lisp_Object_dynarr *
+			      USED_IF_MULE (dyn),
+			      Lisp_Object *charset, int *c1, int *c2)
+)
+{
+  ASSERT_VALID_UNICODE_CODEPOINT (c);
+  if (c > 255)
+    *charset = Qnil, *c1 = -1, *c2 = -1;
+  else
+    {
+      *charset = Vcharset_ascii;
+      *c1 = 0;
+      *c2 = c;
+    }
+}
+
+
 #else /* MULE */
 
 
@@ -301,12 +362,6 @@ charset_by_attributes (int type, int final, int dir)
 /*                     General character manipulation                   */
 /************************************************************************/
 
-FIXME: Decide whether we want it to be the case that C1 or C2 is
-0 with dimension-1 charsets.  Check all callers to see how they handle
-things and whether they do it right.
-
-
-
 DECLARE_INLINE_HEADER (
 int
 valid_charset_codepoint_p (Lisp_Object charset, int c1, int c2)
@@ -322,6 +377,23 @@ do {									\
   text_checking_assert (CHARSETP (charset));				\
   text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));	\
 } while (0)
+#define ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)	\
+do									\
+{									\
+  if (!NILP (charset))							\
+    ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);			\
+} while (0)
+#define INLINE_ASSERT_VALID_CHARSET_CODEPOINT(charset, c1, c2)		\
+do {									\
+  inline_text_checking_assert (CHARSETP (charset));			\
+  inline_text_checking_assert (valid_charset_codepoint_p (charset, c1, c2)); \
+} while (0)
+#define INLINE_ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)	\
+do									\
+{									\
+  if (!NILP (charset))							\
+    INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);		\
+} while (0)
 
 /* Convert a charset codepoint (CHARSET, one or two octets) to Unicode.
    Return -1 if can't convert. */
@@ -334,7 +406,7 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
 {
   int retval;
 
-  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
   {
     /* Conceivably a good idea not to have this in Unicode-internal, since
@@ -488,7 +560,7 @@ charset_codepoint_to_ichar_raw (Lisp_Object charset, int c1, int c2)
 DECLARE_INLINE_HEADER (
 Ichar
 charset_codepoint_to_ichar (Lisp_Object charset, int c1, int c2,
-			    enum converr fail)
+			    enum converr USED_IF_UNICODE_INTERNAL (fail))
 )
 {
 #ifdef UNICODE_INTERNAL
@@ -593,7 +665,7 @@ itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object_dynarr *charsets,
 )
 {
   itext_to_charset_codepoint_raw (ptr, charsets, charset, c1, c2);
-  if (NILP (charset))
+  if (NILP (*charset))
     {
       switch (fail)
 	{
@@ -702,8 +774,6 @@ ichar_charset_obsolete_me_baby_please (Ichar ch)
 #define ichar_charset_obsolete_me_baby_please(c) old_mule_ichar_charset (c)
 #endif /* (not) UNICODE_INTERNAL */
 
-EXFUN (Fcharset_name, 1);
-
 #endif /* MULE */
 
 /* ISO 10646 UTF-16, UCS-4, UTF-8, UTF-7, etc. */
@@ -716,8 +786,5 @@ EXFUN (Fcharset_name, 1);
 #define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
 
 void set_charset_registries (Lisp_Object charset, Lisp_Object registries);
-
-EXFUN (Funicode_to_char, 2);
-EXFUN (Fchar_to_unicode, 1); 
 
 #endif /* not INCLUDED_charset_h_ */

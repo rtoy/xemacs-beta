@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2005, 2009 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -150,13 +150,17 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   for (i = 0; i < len; i++)
     {
       Ichar ch = str[i];
-      Lisp_Object charset = ichar_charset(ch);
-      int ucs = ichar_to_unicode(ch);
+      Lisp_Object charset;
+      int byte1, byte2;
+      int ucs = ichar_to_unicode (ch, CONVERR_SUCCEED);
 
-      /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
-	 REPLACMENT CHARACTER. */
+      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
+				  &byte1, &byte2);
+
+      /* If UCS is greater than 0xFFFF, set ucs2 to REPLACMENT
+	 CHARACTER. */
       /* That means we can't handle characters outside of the BMP for now */
-      ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+      ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;
 
       if (!EQ (charset, prev_charset))
 	{
@@ -210,7 +214,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
     {
       Ichar ch = str[i];
       Lisp_Object charset;
-      int byte1, byte2; /* ichar_to_charset_codepoint() wants ints */
+      int byte1, byte2;
 
       ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
 				  &byte1, &byte2);
@@ -295,7 +299,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	  int ucs = ichar_to_unicode (ch);
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
-	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+	  ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;
 
 	  byte1 = ucs >> 8;
 	  byte2 = ucs & 0xFF;

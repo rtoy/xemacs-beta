@@ -819,6 +819,7 @@ XE_MERGED_ARG([mule],
 	AS_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs), i.e. internationalization support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
+	[], [])
 XE_MERGED_ARG([unicode-internal],
 	AS_HELP_STRING([--with-unicode-internal],[Use Unicode and UTF-8 internally for text.  Automatically selects `--with-mule'.  Without this,
 Mule uses an old internal encoding that explicitly encodes the national
@@ -4133,7 +4134,7 @@ dnl ----------------------
 
 if test "$with_unicode_internal" = "yes"; then
   test "$with_mule" = "no" && \
-	USAGE_ERROR("Cannot give \`--with-mule=no' and `--with-unicode-internal=yes'.
+	USAGE_ERROR("Cannot give \`--with-mule=no' and \`--with-unicode-internal=yes'.
 Unicode-internal requires Mule.")
   test "$with_mule" != "yes" && \
 	AC_MSG_WARN([\`--with-mule' forced to \`yes': Unicode-internal requires Mule.])

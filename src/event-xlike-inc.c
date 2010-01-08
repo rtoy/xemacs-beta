@@ -1,7 +1,7 @@
 /* Shared event code between X and GTK -- include file.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1252,15 +1252,23 @@ if necessary). DOCUMENT the existing system that does this.
   /* #### Is this check on !NILP (charset) needed?  Maybe should be assert? */
   if (!NILP (charset))
     {
-      Ichar ich = charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
-
-      if (ich >= 0)
+      /* First try to generate a unified character by converting through
+	 Unicode, then try converting directly to an Ichar (only matters
+	 when non-Unicode-internal, else we get same results both ways). */
+      int ucs = charset_codepoint_to_unicode (charset, 0, code, CONVERR_FAIL);
+      if (ucs >= 0)
 	{
-	  Lisp_Object unified =
-	    Funicode_to_char (Fchar_to_unicode (make_char (ich), Qnil));
-	  if (!NILP (unified))
-	    return unified;
-	  return make_char (ich);
+	  Ichar ich = unicode_to_ichar (ucs, get_unicode_precedence (),
+					CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
+	}
+      else
+	{
+	  Ichar ich =
+	    charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
 	}
     }
   return Qnil;

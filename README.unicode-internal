@@ -11,13 +11,11 @@ Todo while merging:
       Also in the file it was moved from, put the first line of the
       call to `make-charset' behind a comment, and put a comment above
       telling where it was moved to.  Again, use ethiopic.el and
-      vietnamese.el.
+      vietnamese.el. (MOSTLY DONE)
    b. For charsets not needing to be in mule-charset.el, move them
-      back into where they came from.
-   c. Fix up the `fixed-width' coding systems.  Instead, make a charset
-      containing the unicode map, and a coding system of type `mbcs'.
+      back into where they came from. (MOSTLY DONE)
    d. Review all windows-# charsets and coding systems and make sure
-      everything is set for them.
+      everything is set for them. (MOSTLY DONE)
    e. The order for the charsets in `make-charset' should always list
       `ascii' and `control-1' last, in case the charset provides its
       own Unicode mapping for ASCII chars (e.g. VISCII does).
@@ -27,19 +25,18 @@ Todo while merging:
       there's not a shadowing entry in the VISCII map, e.g. internal
       0x02 should *NOT* get mapped to external 0x02 because that is
       already used by some other character.
-   g. Go through and move the info about Unicode mapping tables in
-      unicode.el into the place where the charsets are defined.  Only
-      include stuff in the list in unicode.el for charsets defined in
-      C.
    h. Implement and document `unicode-map' property of charsets:
       Either a long list of mapping pairs of a short list of a string
       and possibly some offset info, same format as the args to
       `load-unicode-mapping-table' (#### perhaps rethink this format).  
    i. Fix up the COPYING and README files in etc/unicode/unicode-consortium.
-
-2. european.el got deleted.  Using hthis, see what I changed to it and
-   port it to the new latin.el. (Possibly try using `patch')
-
+2. Implement a buffer-local unicode-precedence list and then review all
+   uses of get_unicode_precedence() to see how to fix them up.  Sometimes you
+   may need the caller to pass in a buffer or domain.
+3. We need to review all uses of CONVERR_SUCCEED and see whether it is
+   the right thing to do.
+4. Check #error in mule-ccl.c about maybe needing to reverse order of args
+   with one-dimensional charset.
 
 More todo:
 

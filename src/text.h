@@ -211,82 +211,8 @@ enum converr
    --ben
 */
 
-/* NOTE: There are other functions/macros for working with Ichars in
-   charset.h, for retrieving the charset of an Ichar, the length of an
-   Ichar when converted to text, etc.
-*/
-
-enum unicode_class
-  {
-    /* Allow only official characters in the range 0 - 0x10FFFF, i.e.
-       those that will ever be allocated by the Unicode consortium */
-    UNICODE_OFFICIAL_ONLY,
-    /* Allow "private" Unicode characters, which should not escape out
-       into UTF-8 or other external encoding.  */
-    UNICODE_ALLOW_PRIVATE,
-  };
-
-DECLARE_INLINE_HEADER (
-int
-valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_class uclass)
-)
-{
-  if (uclass == UNICODE_ALLOW_PRIVATE)
-    {
-#if SIZEOF_EMACS_INT > 4
-      /* On 64-bit machines, we could have a value too large */
-      return ch >= 0 && ch <= 0x7FFFFFFF;
-#else
-      return ch >= 0;
-#endif
-    }
-  else
-    {
-      text_checking_assert (uclass == UNICODE_OFFICIAL_ONLY);
-      return ch <= 0x10FFFF && ch >= 0;
-    }  if (i >= 0x110000 || i < 0)
-}
-
-#define ASSERT_VALID_UNICODE_CODEPOINT(code)				\
-  text_checking_assert (valid_unicode_codepoint_p (code,		\
-						   UNICODE_ALLOW_PRIVATE))
-#define ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)			\
-  if (code != -1)							\
-    text_checking_assert (valid_unicode_codepoint_p (code,		\
-						     UNICODE_ALLOW_PRIVATE))
-
-
-#ifdef MULE
-
-#ifndef UNICODE_INTERNAL
-MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
-#endif
-
-/* Return whether the given Ichar is valid.
- */
-
-DECLARE_INLINE_HEADER (
-int
-valid_ichar_p (Ichar ch)
-)
-{
-#ifdef UNICODE_INTERNAL
-  return valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
-#else
-  return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
-#endif /* UNICODE_INTERNAL */
-}
-
-#else /* not MULE */
-
-/* This appears to work both for values > 255 and < 0. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
-
-#endif /* (not) MULE */
-
-#define ASSERT_VALID_ICHAR(ich)			\
-  text_checking_assert (valid_ichar_p (ich))
-
+/* NOTE: Some basic character functions are defined in lisp.h, because
+   they are used earlier than this file is included. */
 
 #ifndef MULE
 
@@ -664,12 +590,14 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 
 #endif /* UNICODE_INTERNAL */
 
+#endif /* MULE */
+
 /************************************************************************/
 /*                         Unicode conversion                           */
 /************************************************************************/
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
-Ichar old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *charsets,
+Ichar old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
 				 enum converr fail);
 Ichar old_mule_handle_bad_ichar (enum converr fail);
 
@@ -681,11 +609,13 @@ ichar_to_unicode (Ichar chr, enum converr fail)
 )
 {
   ASSERT_VALID_ICHAR (chr);
-#ifdef UNICODE_INTERNAL
-  return (int) chr;
-#else
+
+#ifdef OLD_MULE
   return old_mule_ichar_to_unicode (chr, fail);
-#endif /* UNICODE_INTERNAL */
+#else
+  /* Unicode-internal or non-Mule */
+  return (int) chr;
+#endif /* (not) OLD_MULE */
 }
 
 /* Convert a Unicode codepoint to an Ichar.  Return value will be (Ichar) -1
@@ -694,19 +624,23 @@ ichar_to_unicode (Ichar chr, enum converr fail)
 DECLARE_INLINE_HEADER (
 Ichar
 unicode_to_ichar (int code, Lisp_Object_dynarr *
-		  USED_IF_MULE_NOT_UNICODE_INTERNAL (charsets),
-		  enum converr fail)
+		  USED_IF_OLD_MULE (precedence_list),
+		  enum converr USED_IF_OLD_MULE (fail))
 )
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
+
 #ifdef UNICODE_INTERNAL
   return (Ichar) code;
+#elif defined (OLD_MULE)
+  return old_mule_unicode_to_ichar (code, precedence_list, fail);
 #else
-  return old_mule_unicode_to_ichar (code, charsets, fail);
-#endif /* UNICODE_INTERNAL */
+  if (code > 255)
+    return (Ichar) -1;
+  else
+    return (Ichar) code;
+#endif /* (not) defined (OLD_MULE) */
 }
-
-#endif /* MULE */
 
 /****************************************************************************/
 /*--------------------------------------------------------------------------*/
@@ -867,45 +801,6 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
   else
     return strlen ((char *) ptr);
 }
-
-/* ---------------------------------------------------------------------- */
-/*                     The Lisp_Object character type                     */
-/* ---------------------------------------------------------------------- */
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-make_char (Ichar val)
-)
-{
-  ASSERT_VALID_ICHAR (val);
-  return make_char_1 (val);
-}
-
-#define CHAR_INTP(x) (INTP (x) && valid_ichar_p (XINT (x)))
-
-#define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
-
-DECLARE_INLINE_HEADER (
-Ichar
-XCHAR_OR_CHAR_INT (Lisp_Object obj)
-)
-{
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
-}
-
-/* Signal an error if CH is not a valid character or integer Lisp_Object.
-   If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
-   but merely by repackaging, without performing tests for char validity.
-   */
-
-#define CHECK_CHAR_COERCE_INT(x) do {		\
-  if (CHARP (x))				\
-     ;						\
-  else if (CHAR_INTP (x))			\
-    x = make_char (XINT (x));			\
-  else						\
-    x = wrong_type_argument (Qcharacterp, x);	\
-} while (0)
 
 
 /************************************************************************/

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -33,23 +33,75 @@
 
 (eval-when-compile (progn (require 'ccl) (require 'china-util)))
 
-(flet
-    ((frob-chinese-cns11643-charset
-      (name)
-      (modify-category-entry name ?t)
-      ))
-  (frob-chinese-cns11643-charset 'chinese-cns11643-3)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-4)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-5)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-6)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-7)
-)
-
 ;; Syntax of Chinese characters.
 (loop for row in '(33 34 41)
       do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
 
+;; CNS11643 Plane3 thru Plane7
+;; These represent more and more obscure Chinese characters.
+;; By the time you get to Plane 7, we're talking about characters
+;; that appear once in some ancient manuscript and whose meaning
+;; is unknown.
 
+(flet
+    ((make-chinese-cns11643-charset
+      (name plane final)
+      (make-charset
+       name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
+       `(registries 
+         ,(vector (concat "cns11643.1992-" plane ))
+         dimension 2
+         chars 94
+         final ,final
+         graphic 0
+	 unicode-map (,(format "unicode/mule-ucs/chinese-cns11643-%s.txt"
+			       plane))
+	 short-name ,(concat "CNS11643-" plane)
+	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
+			    plane)))
+      (modify-syntax-entry   name "w")
+      (modify-category-entry name ?t)
+      ))
+  (make-chinese-cns11643-charset 'chinese-cns11643-3 "3" ?I)
+  (make-chinese-cns11643-charset 'chinese-cns11643-4 "4" ?J)
+  (make-chinese-cns11643-charset 'chinese-cns11643-5 "5" ?K)
+  (make-chinese-cns11643-charset 'chinese-cns11643-6 "6" ?L)
+  (make-chinese-cns11643-charset 'chinese-cns11643-7 "7" ?M)
+  )
+
+;; ISO-IR-165 (CCITT Extended GB)
+;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
+;;    GB 8565-88 table A4 + 293 characters.
+(make-charset ;; not in FSF 21.1
+ 'chinese-isoir165
+ "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
+ `(registries ["isoir165-0"]
+   dimension 2
+   chars 94
+   final ?E
+   graphic 0
+   short-name "ISO-IR-165"
+   long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
+
+; ;; PinYin-ZhuYin
+; (make-charset 'chinese-sisheng 
+; 	      "SiSheng characters for PinYin/ZhuYin"
+; 	      '(dimension
+; 		1
+; 		;; XEmacs addition: second half of registry spec
+; 		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+; 		chars 94
+; 		columns 1
+; 		direction l2r
+; 		final ?0
+; 		graphic 0
+; 		short-name "SiSheng"
+; 		long-name "SiSheng (PinYin/ZhuYin)"
+; 		))
+
+(make-two-dimension-windows-charset 936 'chinese "Simplified Chinese" #x81 #x40 #xfe #xfe)
+(make-two-dimension-windows-charset 950 'chinese "Traditional Chinese" #xa1 #x40 #xfe #xfe)
+ 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
 ;;  (setq wnn-server-type 'cserver)

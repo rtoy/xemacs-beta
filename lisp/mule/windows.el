@@ -1,6 +1,6 @@
 ;;; windows.el --- Support Windows code pages
 
-;; Copyright (C) 2005 Ben Wing.
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Windows
 
@@ -27,42 +27,39 @@
 ;; various code pages in individual language-specific files, and at some
 ;; point soon most of the info in those language files won't be necessary
 ;; because it will be derived from Unicode tables.
-  
-(let ((charsets '((874 thai "Thai")
-		  (1250 latin "Eastern Europe")
-		  (1251 cyrillic "Cyrillic")
-		  (1252 latin "ANSI")
-		  (1253 greek "Greek")
-		  (1254 latin "Turkish")
-		  (1255 hebrew "Hebrew")
-		  (1256 arabic "Arabic")
-		  (1257 latin "Baltic Rim")
-		  (1258 latin "Vietnamese"))))
-  (loop for (num script name) in charsets do
-    (make-charset (intern (format "%s-windows-%s" script num))
-		  (format "Windows code page %s (%s)" num name)
-		  `(dimension
-		    1
-		    chars 128
-	            unicode-map (,(format "unicode/unicode-consortium/CP%d.TXT" num) #x80)
-		    short-name ,(format "Windows %s (%s)" num name)
-		    long-name ,(format "Windows code page %s (%s)" num name)
-		    ))))
 
-(let ((charsets '((932 japanese "Japanese" #x81 #x40 #xfe #xfe)
-		  (936 chinese "Simplified Chinese" #x81 #x40 #xfe #xfe)
-		  (949 korean "Korean" #x81 #x41 #xfe #xfe)
-		  (950 chinese "Traditional Chinese" #xa1 #x40 #xfe #xfe)
+;Make a one-dimension Windows charset corresponding to a specified code page.
+;CODEPAGE is the number of the code page.  SCRIPT is a symbol indicating the
+;writing system of the code page, e.g. `latin' or `cyrillic'.  NAME is a
+;string describing the code page, e.g. \"Eastern Europe\" (code page 1250).
+;There should be a CP###.TXT file in the directory
+;etc/unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS.
+(defun make-one-dimension-windows-charset (codepage script name)
+  (make-charset (intern (format "%s-windows-%s" script num))
+		(format "Windows code page %s (%s)" num name)
+		`(dimension
+		  1
+		  chars 128
+		  unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x80)
+		  short-name ,(format "Windows %s (%s)" num name)
+		  long-name ,(format "Windows code page %s (%s)" num name)
 		  )))
-  (loop for (num script name l1 l2 h1 h2) in charsets do
-    (make-charset (intern (format "%s-windows-%s" script num))
-		  (format "Windows code page %s (%s)" num name)
-		  `(dimension
-		    2
-		    chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
-		    offset (,l1 ,l2)
-		    short-name ,(format "Windows %s (%s)" num name)
-		    long-name ,(format "Windows code page %s (%s)" num name)
-		    ))))
 
-
+;Make a two-dimension Windows charset corresponding to a specified code
+;page.  CODEPAGE is the number of the code page.  SCRIPT is a symbol
+;indicating the writing system of the code page, e.g. `chinese'.  NAME is a
+;string describing the code page, e.g. \"Simplified Chinese\" (code page
+;936).  The charset has characters in the range (L1, L2) - (H1, H2),
+;inclusive.  There should be a CP###.TXT file in the directory
+;etc/unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS.
+(defun make-two-dimension-windows-charset (codepage script name l1 l2 h1 h2)
+  (make-charset (intern (format "%s-windows-%s" script num))
+		(format "Windows code page %s (%s)" num name)
+		`(dimension
+		  2
+		  chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
+		  offset (,l1 ,l2)
+		  unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x8000)
+		  short-name ,(format "Windows %s (%s)" num name)
+		  long-name ,(format "Windows code page %s (%s)" num name)
+		  )))

@@ -933,6 +933,8 @@ enable_sound
 with_sound
 enable_native_sound_lib
 with_native_sound_lib
+enable_mule
+with_mule
 enable_unicode_internal
 with_unicode_internal
 enable_xim
@@ -953,8 +955,6 @@ enable_zlib
 with_zlib
 enable_database
 with_database
-enable_mule
-with_mule
 enable_ldap
 with_ldap
 enable_postgresql
@@ -1849,6 +1849,42 @@ Internationalization options
   --with-mule             Compile with Mule (Multi-Lingual Emacs), i.e.
                           internationalization support, needed to support
                           non-Latin-1 (including Asian) languages.
+  --with-unicode-internal Use Unicode and UTF-8 internally for text.
+                          Automatically selects `--with-mule'. Without this,
+                          Mule uses an old internal encoding that explicitly
+                          encodes the national character set associated with a
+                          char and cannot represent all of Unicode.
+  --with-xim==TYPE        Enable XIM support. TYPE is `yes', `no', `xlib', or
+                          `motif'
+  --with-canna            Support the Canna Japanese input method. Requires
+                          Mule.
+  --with-wnn              Support the Wnn Asian language input method.
+                          Requires Mule.
+  --with-wnn6             Support the Wnn6 Asian language input method
+                          (proprietary). Requires Mule.
+  --with-xfs              Enable XFontSet support for internationalized
+                          menubar. Incompatible with `--with-xim=motif' and
+                          `--with-xft'. `--with-menubars=lucid' (the default)
+                          is desirable.
+
+File-related options
+--------------------
+
+  --with-default-eol-detection
+                          Turns on by default auto-detection of end-of-line
+                          type when reading a file. Applies to those platforms
+                          where auto-detection is off by default (non-Mule
+                          Unix). Has no effect otherwise.
+  --with-clash-detection  Disable use of lock files to detect multiple edits
+                          of the same file.
+  --with-zlib             Support inflate (de)compression internally.
+
+Database options
+----------------
+
+  --with-database=TYPE    Compile with database support. Valid types are `no'
+                          or a comma-separated list of one or more of `berkdb'
+                          and either `dbm' or `gdbm'.
   --with-ldap             Support the LDAP protocol.
   --with-postgresql       Support the PostgreSQL RDBMS.
 
@@ -4361,12 +4397,8 @@ fi;
 if test "${with_mule+set}" = set; then
   enableval="$with_mule"
   withval="$with_mule"
-    --with-unicode-internal Use Unicode and UTF-8 internally for text.
-                          Automatically selects `--with-mule'. Without this
-else
-  Mule uses an old internal encoding that explicitly
-                          encodes the national character set associated with a
-                          char and cannot represent all of Unicode.
+
+fi;
 # If --with-unicode-internal or --without-unicode-internal were given then copy the value to the
 # equivalent enable_unicode-internal variable.
 if test "${with_unicode_internal+set}" = set; then
@@ -4384,8 +4416,174 @@ if test "${with_unicode_internal+set}" = set; then
 
 fi;
 
-  --with-xim==TYPE        Enable XIM support. TYPE is `yes'
-fi;          _database_all_default=no ;;
+# If --with-xim or --without-xim were given then copy the value to the
+# equivalent enable_xim variable.
+if test "${with_xim+set}" = set; then
+  enable_xim="$with_xim"
+fi;
+# If -enable-xim or --disable-xim were given then copy the value to the
+# equivalent with_xim variable.
+if test "${enable_xim+set}" = set; then
+  with_xim="$enable_xim"
+fi;
+# Check whether --with-xim or --without-xim was given.
+if test "${with_xim+set}" = set; then
+  enableval="$with_xim"
+  withval="$with_xim"
+  _xim_bogus=yes
+ for x in yes no xlib motif ; do
+   if test $x = $with_xim ; then
+	_xim_bogus=no
+   fi
+ done
+ if test "$_xim_bogus" = "yes" ; then
+	(echo "$progname: Usage error:"
+echo " " "The --with-xim option must have one of these values: \`yes',\`no',\`xlib',\`motif'."
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
+ fi
+unset _xim_bogus
+
+
+
+fi; # If --with-canna or --without-canna were given then copy the value to the
+# equivalent enable_canna variable.
+if test "${with_canna+set}" = set; then
+  enable_canna="$with_canna"
+fi;
+# If -enable-canna or --disable-canna were given then copy the value to the
+# equivalent with_canna variable.
+if test "${enable_canna+set}" = set; then
+  with_canna="$enable_canna"
+fi;
+# Check whether --with-canna or --without-canna was given.
+if test "${with_canna+set}" = set; then
+  enableval="$with_canna"
+  withval="$with_canna"
+
+fi;
+# If --with-wnn or --without-wnn were given then copy the value to the
+# equivalent enable_wnn variable.
+if test "${with_wnn+set}" = set; then
+  enable_wnn="$with_wnn"
+fi;
+# If -enable-wnn or --disable-wnn were given then copy the value to the
+# equivalent with_wnn variable.
+if test "${enable_wnn+set}" = set; then
+  with_wnn="$enable_wnn"
+fi;
+# Check whether --with-wnn or --without-wnn was given.
+if test "${with_wnn+set}" = set; then
+  enableval="$with_wnn"
+  withval="$with_wnn"
+
+fi;
+# If --with-wnn6 or --without-wnn6 were given then copy the value to the
+# equivalent enable_wnn6 variable.
+if test "${with_wnn6+set}" = set; then
+  enable_wnn6="$with_wnn6"
+fi;
+# If -enable-wnn6 or --disable-wnn6 were given then copy the value to the
+# equivalent with_wnn6 variable.
+if test "${enable_wnn6+set}" = set; then
+  with_wnn6="$enable_wnn6"
+fi;
+# Check whether --with-wnn6 or --without-wnn6 was given.
+if test "${with_wnn6+set}" = set; then
+  enableval="$with_wnn6"
+  withval="$with_wnn6"
+
+fi;
+# If --with-xfs or --without-xfs were given then copy the value to the
+# equivalent enable_xfs variable.
+if test "${with_xfs+set}" = set; then
+  enable_xfs="$with_xfs"
+fi;
+# If -enable-xfs or --disable-xfs were given then copy the value to the
+# equivalent with_xfs variable.
+if test "${enable_xfs+set}" = set; then
+  with_xfs="$enable_xfs"
+fi;
+# Check whether --with-xfs or --without-xfs was given.
+if test "${with_xfs+set}" = set; then
+  enableval="$with_xfs"
+  withval="$with_xfs"
+
+fi;
+
+# If --with-default-eol-detection or --without-default-eol-detection were given then copy the value to the
+# equivalent enable_default-eol-detection variable.
+if test "${with_default_eol_detection+set}" = set; then
+  enable_default_eol_detection="$with_default_eol_detection"
+fi;
+# If -enable-default-eol-detection or --disable-default-eol-detection were given then copy the value to the
+# equivalent with_default-eol-detection variable.
+if test "${enable_default_eol_detection+set}" = set; then
+  with_default_eol_detection="$enable_default_eol_detection"
+fi;
+# Check whether --with-default-eol-detection or --without-default-eol-detection was given.
+if test "${with_default_eol_detection+set}" = set; then
+  enableval="$with_default_eol_detection"
+  withval="$with_default_eol_detection"
+
+fi;
+# If --with-clash-detection or --without-clash-detection were given then copy the value to the
+# equivalent enable_clash-detection variable.
+if test "${with_clash_detection+set}" = set; then
+  enable_clash_detection="$with_clash_detection"
+fi;
+# If -enable-clash-detection or --disable-clash-detection were given then copy the value to the
+# equivalent with_clash-detection variable.
+if test "${enable_clash_detection+set}" = set; then
+  with_clash_detection="$enable_clash_detection"
+fi;
+# Check whether --with-clash-detection or --without-clash-detection was given.
+if test "${with_clash_detection+set}" = set; then
+  enableval="$with_clash_detection"
+  withval="$with_clash_detection"
+
+fi;
+# If --with-zlib or --without-zlib were given then copy the value to the
+# equivalent enable_zlib variable.
+if test "${with_zlib+set}" = set; then
+  enable_zlib="$with_zlib"
+fi;
+# If -enable-zlib or --disable-zlib were given then copy the value to the
+# equivalent with_zlib variable.
+if test "${enable_zlib+set}" = set; then
+  with_zlib="$enable_zlib"
+fi;
+# Check whether --with-zlib or --without-zlib was given.
+if test "${with_zlib+set}" = set; then
+  enableval="$with_zlib"
+  withval="$with_zlib"
+
+fi;
+
+_database_notfirst=""
+_database_berkdb_default=""
+_database_dbm_default=""
+_database_gdbm_default=""
+_database_types="berkdb dbm gdbm"
+_database_default="berkdb,dbm,gdbm"
+
+# If --with-database or --without-database were given then copy the value to the
+# equivalent enable_database variable.
+if test "${with_database+set}" = set; then
+  enable_database="$with_database"
+fi;
+# If -enable-database or --disable-database were given then copy the value to the
+# equivalent with_database variable.
+if test "${enable_database+set}" = set; then
+  with_database="$enable_database"
+fi;
+# Check whether --with-database or --without-database was given.
+if test "${with_database+set}" = set; then
+  enableval="$with_database"
+  withval="$with_database"
+  _database_all_default=""
+_require_database=""
+case "$with_database" in
+    n | no | non | none )         _database_all_default=no ;;
     n,* | no,* | non,* | none,* ) _database_all_default=no ;;
     a | al | all | both )         _database_all_default=yes ;;
     a,* | al,* | all,* | both,* ) _database_all_default=yes ;;
@@ -16425,7 +16623,7 @@ test "$with_xft_gauges" = "yes"  && $as_echo "#define USE_XFT_GAUGES 1" >>confde
 if test "$with_unicode_internal" = "yes"; then
   test "$with_mule" = "no" && \
 	(echo "$progname: Usage error:"
-echo " " "Cannot give \`--with-mule=no' and `--with-unicode-internal=yes'.
+echo " " "Cannot give \`--with-mule=no' and \`--with-unicode-internal=yes'.
 Unicode-internal requires Mule."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
   test "$with_mule" != "yes" && \

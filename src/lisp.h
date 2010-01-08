@@ -2,6 +2,7 @@
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
    Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010
+   Copyright (C) 2010 Ben Wing.
   
    Ben Wing.
 
@@ -139,27 +140,6 @@ Boston, MA 02111-1307, USA.  */
    the file and line (__FILE__, __LINE__) at place where the call occurs in
    the calling function; but nothing will get passed in when ERROR_CHECK_TEXT
    is not defined.
-
-#ifdef ERROR_CHECK_TEXT
-#define text_checking_assert(assertion) assert (assertion)
-#define text_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_text_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_TEXT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_TEXT_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define text_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else // not ERROR_CHECK_TEXT
-#define text_checking_assert(assertion) disabled_assert (assertion)
-#define text_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_text_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_TEXT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_TEXT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define text_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif // ERROR_CHECK_TEXT
 */
 
 
@@ -1656,6 +1636,17 @@ enum munge_me_out_the_door
 {
   MUNGE_ME_FUNCTION_KEY,
   MUNGE_ME_KEY_TRANSLATION
+};
+
+/* The various stages of font instantiation; initial means "find a font for
+   CHARSET that matches the charset's registries" and final means "find a
+   font for CHARSET that matches iso10646-1, since we haven't found a font
+   that matches its registry."  */
+enum font_specifier_matchspec_stages
+{
+  initial,
+  final,
+  impossible,
 };
 
 /* ------------------------------- */
@@ -3293,9 +3284,67 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
    Ichar, the length of an Ichar when converted to text, etc.
 */
 
+/* NOTE: There are other functions/macros for working with Ichars in
+   charset.h, for retrieving the charset of an Ichar, the length of an
+   Ichar when converted to text, etc.
+*/
+
+enum unicode_class
+  {
+    /* Allow only official characters in the range 0 - 0x10FFFF, i.e.
+       those that will ever be allocated by the Unicode consortium */
+    UNICODE_OFFICIAL_ONLY,
+    /* Allow "private" Unicode characters, which should not escape out
+       into UTF-8 or other external encoding.  */
+    UNICODE_ALLOW_PRIVATE,
+  };
+
+DECLARE_INLINE_HEADER (
+int
+valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_class uclass)
+)
+{
+  if (uclass == UNICODE_ALLOW_PRIVATE)
+    {
+#if SIZEOF_EMACS_INT > 4
+      /* On 64-bit machines, we could have a value too large */
+      return ch >= 0 && ch <= 0x7FFFFFFF;
+#else
+      return ch >= 0;
+#endif
+    }
+  else
+    {
+      text_checking_assert (uclass == UNICODE_OFFICIAL_ONLY);
+      return ch <= 0x10FFFF && ch >= 0;
+    }
+}
+
+#define ASSERT_VALID_UNICODE_CODEPOINT(code)				\
+  text_checking_assert (valid_unicode_codepoint_p (code,		\
+						   UNICODE_ALLOW_PRIVATE))
+#define ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
+do							\
+{							\
+  if (code != -1)					\
+    ASSERT_VALID_UNICODE_CODEPOINT (code);		\
+} while (0)
+#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT(code)			\
+  inline_text_checking_assert (valid_unicode_codepoint_p (code,		\
+						   UNICODE_ALLOW_PRIVATE))
+#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
+do								\
+{								\
+  if (code != -1)						\
+    INLINE_ASSERT_VALID_UNICODE_CODEPOINT (code);		\
+} while (0)
+
+
 #ifdef MULE
 
-MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
+#ifndef UNICODE_INTERNAL
+MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
+#endif
 
 /* Return whether the given Ichar is valid.
  */
@@ -3305,16 +3354,36 @@ int
 valid_ichar_p (Ichar ch)
 )
 {
-  return (! (ch & ~0xFF)) || non_ascii_valid_ichar_p (ch);
+#ifdef UNICODE_INTERNAL
+  return valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
+#else
+  return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
+#endif /* UNICODE_INTERNAL */
 }
 
 #else /* not MULE */
 
-/* This works when CH is negative, and correctly returns non-zero only when CH
-   is in the range [0, 255], inclusive. */
+/* This appears to work both for values > 255 and < 0. */
 #define valid_ichar_p(ch) (! (ch & ~0xFF))
 
-#endif /* not MULE */
+#endif /* (not) MULE */
+
+#define ASSERT_VALID_ICHAR(ich)			\
+  text_checking_assert (valid_ichar_p (ich))
+#define ASSERT_VALID_ICHAR_OR_ERROR(ich)	\
+do						\
+{						\
+  if (ich != -1)				\
+    ASSERT_VALID_ICHAR (ich);			\
+} while (0)
+#define INLINE_ASSERT_VALID_ICHAR(ich)			\
+  inline_text_checking_assert (valid_ichar_p (ich))
+#define INLINE_ASSERT_VALID_ICHAR_OR_ERROR(ich)		\
+do							\
+{							\
+  if (ich != -1)					\
+    INLINE_ASSERT_VALID_ICHAR (ich);			\
+} while (0)
 
 #ifdef ERROR_CHECK_TYPES
 
@@ -3368,7 +3437,7 @@ Lisp_Object
 make_char (Ichar val)
 )
 {
-  type_checking_assert (valid_ichar_p (val));
+  ASSERT_VALID_ICHAR (val);
   /* This is defined in lisp-union.h or lisp-disunion.h */
   return make_char_1 (val);
 }
@@ -5461,6 +5530,44 @@ EXFUN (Fmake_charset, 3);
 
 extern Lisp_Object Ql2r, Qr2l;
 
+EXFUN (Ffind_charset, 1);
+EXFUN (Fget_charset, 1);
+EXFUN (Fcharset_list, 0);
+EXFUN (Fcharset_name, 1);
+
+#ifdef MULE
+extern Lisp_Object Vcharset_ascii;
+extern Lisp_Object Vcharset_control_1;
+extern Lisp_Object Vcharset_latin_iso8859_1;
+extern Lisp_Object Vcharset_latin_iso8859_2;
+extern Lisp_Object Vcharset_latin_iso8859_3;
+extern Lisp_Object Vcharset_latin_iso8859_4;
+extern Lisp_Object Vcharset_thai_tis620;
+extern Lisp_Object Vcharset_greek_iso8859_7;
+extern Lisp_Object Vcharset_hebrew_iso8859_8;
+extern Lisp_Object Vcharset_katakana_jisx0201;
+extern Lisp_Object Vcharset_latin_jisx0201;
+extern Lisp_Object Vcharset_cyrillic_iso8859_5;
+extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_latin_iso8859_15;
+extern Lisp_Object Vcharset_chinese_sisheng;
+extern Lisp_Object Vcharset_japanese_jisx0208_1978;
+extern Lisp_Object Vcharset_chinese_gb2312;
+extern Lisp_Object Vcharset_japanese_jisx0208;
+extern Lisp_Object Vcharset_korean_ksc5601;
+extern Lisp_Object Vcharset_japanese_jisx0212;
+extern Lisp_Object Vcharset_chinese_cns11643_1;
+extern Lisp_Object Vcharset_chinese_cns11643_2;
+#ifdef UNICODE_INTERNAL
+extern Lisp_Object Vcharset_chinese_big5;
+extern Lisp_Object Vcharset_japanese_shift_jis;
+#else
+extern Lisp_Object Vcharset_chinese_big5_1;
+extern Lisp_Object Vcharset_chinese_big5_2;
+#endif /* UNICODE_INTERNAL */
+extern Lisp_Object Vcharset_composite;
+#endif /* MULE */
+
 /* Defined in print.c */
 EXFUN (Fdisplay_error, 2);
 EXFUN (Ferror_message_string, 1);
@@ -5656,10 +5763,17 @@ void seed_random (long arg);
 /* Defined in text.c */
 void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 				    const Ibyte *USED_IF_MULE (str),
-				    Bytecount USED_IF_MULE (len));
+				    Bytecount USED_IF_MULE (len),
+				    Lisp_Object_dynarr *unicode_precedence);
 void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 				    const Ichar *USED_IF_MULE (str),
-				    Charcount USED_IF_MULE (len));
+				    Charcount USED_IF_MULE (len),
+				    Lisp_Object_dynarr *unicode_precedence);
+void find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
+			      struct buffer *USED_IF_MULE (b),
+			      Charbpos USED_IF_MULE (pos),
+			      Charcount USED_IF_MULE (len),
+			      Lisp_Object_dynarr *unicode_precedence);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
 int ichar_string_displayed_columns (const Ichar *str, Charcount len);
 Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
@@ -5759,52 +5873,15 @@ void external_to_internal_charset_codepoint (Lisp_Object charset,
 					     int ext_c1, int ext_c2,
 					     int *int_c1, int *int_c2);
 Lisp_Object get_external_charset_codepoint (Lisp_Object charset,
-					    Lisp_Object arg1,
-					    Lisp_Object arg2,
-					    int *a1, int *a2);
+					    Lisp_Object arg1, Lisp_Object arg2,
+					    int *a1, int *a2,
+					    int munge_codepoints);
 enum converr decode_handle_error (Lisp_Object err);
 
 #ifdef ENABLE_COMPOSITE_CHARS
 Ichar lookup_composite_char (Ibyte *str, int len);
 Lisp_Object composite_char_string (Ichar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
-
-EXFUN (Ffind_charset, 1);
-EXFUN (Fget_charset, 1);
-EXFUN (Fcharset_list, 0);
-
-#ifdef MULE
-extern Lisp_Object Vcharset_ascii;
-extern Lisp_Object Vcharset_control_1;
-extern Lisp_Object Vcharset_latin_iso8859_1;
-extern Lisp_Object Vcharset_latin_iso8859_2;
-extern Lisp_Object Vcharset_latin_iso8859_3;
-extern Lisp_Object Vcharset_latin_iso8859_4;
-extern Lisp_Object Vcharset_thai_tis620;
-extern Lisp_Object Vcharset_greek_iso8859_7;
-extern Lisp_Object Vcharset_hebrew_iso8859_8;
-extern Lisp_Object Vcharset_katakana_jisx0201;
-extern Lisp_Object Vcharset_latin_jisx0201;
-extern Lisp_Object Vcharset_cyrillic_iso8859_5;
-extern Lisp_Object Vcharset_latin_iso8859_9;
-extern Lisp_Object Vcharset_latin_iso8859_15;
-extern Lisp_Object Vcharset_chinese_sisheng;
-extern Lisp_Object Vcharset_japanese_jisx0208_1978;
-extern Lisp_Object Vcharset_chinese_gb2312;
-extern Lisp_Object Vcharset_japanese_jisx0208;
-extern Lisp_Object Vcharset_korean_ksc5601;
-extern Lisp_Object Vcharset_japanese_jisx0212;
-extern Lisp_Object Vcharset_chinese_cns11643_1;
-extern Lisp_Object Vcharset_chinese_cns11643_2;
-#ifdef UNICODE_INTERNAL
-extern Lisp_Object Vcharset_chinese_big5;
-extern Lisp_Object Vcharset_japanese_shift_jis;
-#else
-extern Lisp_Object Vcharset_chinese_big5_1;
-extern Lisp_Object Vcharset_chinese_big5_2;
-#endif /* UNICODE_INTERNAL */
-extern Lisp_Object Vcharset_composite;
-#endif /* MULE */
 
 Ichar Lstream_get_ichar_1 (Lstream *stream, int first_char);
 int Lstream_fput_ichar (Lstream *stream, Ichar ch);
@@ -6061,6 +6138,7 @@ extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
 Lisp_Object_dynarr *get_unicode_precedence (void);
+Lisp_Object_dynarr *get_buffer_unicode_precedence (struct buffer *buf);
 void recalculate_unicode_precedence (void);
 Lisp_Object_dynarr *
 convert_charset_list_to_precedence_dynarr (Lisp_Object charsets);
@@ -6085,10 +6163,10 @@ enum unicode_type
   UNICODE_UTF_32
 };
 
-void encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
-			  int USED_IF_MULE (l), unsigned_char_dynarr *dst,
-			  enum unicode_type type, unsigned int little_endian,
-                          int write_error_characters_as_such);
+void
+encode_unicode_char (int code, unsigned_char_dynarr *dst,
+		     enum unicode_type type, unsigned int little_endian,
+                     int write_error_characters_as_such);
 
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);

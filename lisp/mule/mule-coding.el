@@ -238,13 +238,9 @@ Analogous to `define-translation-table', but updates
 ;; Ideally this would be in latin.el, but code-init.el uses it.
 (make-coding-system
  'iso-8859-1 
- 'fixed-width
+ 'mbcs
  "ISO-8859-1 (Latin-1)"
- (eval-when-compile
-   `(unicode-map 
-     ,(loop
-        for i from #x80 to #xff
-        collect (list i (int-char i))) ;; Identical to Latin-1.
-     mnemonic "Latin 1"
-     documentation "The most used encoding of Western Europe and the Americas."
-     aliases (iso-latin-1 latin-1))))
+ '(charsets (ascii control-1 latin-iso8859-1)
+   mnemonic "Latin 1"
+   documentation "The most used encoding of Western Europe and the Americas."
+   aliases (iso-latin-1 latin-1)))

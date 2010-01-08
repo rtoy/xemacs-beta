@@ -1,6 +1,6 @@
 /* Specifier implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -815,6 +815,33 @@ decode_domain (Lisp_Object domain)
   check_valid_domain (domain);
   return domain;
 }
+
+/* Return the buffer of the domain if uniquely determinable; else, return
+   Qnil. */
+Lisp_Object
+MAYBE_DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (win);
+  else
+    return Qnil;
+}
+
+/* Try hard to get a buffer from a domain.  If not uniquely determinable,
+   return current buffer. @@#### Maybe we should use the buffer of the
+   selected window. */
+Lisp_Object
+DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (win);
+  else
+    /* @@#### See comments above */
+    return Vcurrent_buffer;
+}
+
 
 
 /************************************************************************/

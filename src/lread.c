@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "opaque.h"
 #include "profile.h"
-#include "charset.h"	/* For Funicode_to_char. */
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -1701,7 +1700,7 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
   REGISTER Ichar c;
   REGISTER int i = 0; /* built-up codepoint */
   REGISTER int count = 0;
-  Lisp_Object lisp_char;
+
   while (++count <= unicode_hex_count)
     {
       c = readchar (readcharfun);
@@ -1719,7 +1718,7 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 
   if (!valid_unicode_codepoint_p (i, UNICODE_OFFICIAL_ONLY))
     syntax_error ("Invalid Unicode codepoint",
-		  emacs_sprintf_string ("#x%lX", i));
+		  emacs_sprintf_string ("#x%X", i));
 
   c = unicode_to_ichar (i, get_unicode_precedence (), CONVERR_FAIL);
   /* Will happen on non-Mule. (On Mule, now, we have just-in-time creation
@@ -1729,7 +1728,7 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
      given a choice I prefer that behaviour. */
   if (c < 0)
     syntax_error ("Unicode character can't be converted to a charset",
-		  emacs_sprintf_string ("#x%lX", i));
+		  emacs_sprintf_string ("#x%X", i));
   return c;
 }
 
