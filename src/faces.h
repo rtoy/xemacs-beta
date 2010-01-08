@@ -354,6 +354,7 @@ FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
       Stynarr_add (cachel->font, lop);
       Stynarr_add (cachel->font_specified, 0);
       Stynarr_add (cachel->font_updated, 0);
+      Stynarr_add (cachel->font_final_stage, 0);
     }
   return i;
 }

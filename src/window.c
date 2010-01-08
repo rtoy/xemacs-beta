@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -157,6 +157,8 @@ static const struct memory_description face_cachel_description_1[] = {
   { XD_BLOCK_PTR, offsetof (face_cachel, font_specified.els),
     1, { &unsigned_char_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (face_cachel, font_updated.els),
+    1, { &unsigned_char_dynarr_description } },
+  { XD_BLOCK_PTR, offsetof (face_cachel, font_final_stage.els),
     1, { &unsigned_char_dynarr_description } },
   /* Even if the whole static part isn't filled, this is OK, because those
      values will be set to Qzero */
@@ -338,6 +340,7 @@ finalize_window (void *header, int UNUSED (for_disksave))
 	  Stynarr_free (cachel->font);
 	  Stynarr_free (cachel->font_specified);
 	  Stynarr_free (cachel->font_updated);
+	  Stynarr_free (cachel->font_final_stage);
 	}
       Dynarr_free (w->face_cachels);
       w->face_cachels = 0;

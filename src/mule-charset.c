@@ -130,7 +130,7 @@ enum CHARSET_ID_OFFICIAL
   CHARSET_ID_LATIN_ISO8859_3,        /* 0x83 Right half of ISO 8859-3 */
   CHARSET_ID_LATIN_ISO8859_4,        /* 0x84 Right half of ISO 8859-4 */
   CHARSET_ID_CYRILLIC_ISO8859_5,     /* 0x85 Right half of ISO 8859-5 */
-  CHARSET_ID_THAI_TIS620,            /* 0x86 Right half of ISO 8859-6 */
+  CHARSET_ID_THAI_TIS620,            /* 0x86 Right half of Thai TIS-620 */
   CHARSET_ID_GREEK_ISO8859_7,        /* 0x87 Right half of ISO 8859-7 */
   CHARSET_ID_HEBREW_ISO8859_8,       /* 0x88 Right half of ISO 8859-8 */
   CHARSET_ID_LATIN_ISO8859_9,        /* 0x89 Right half of ISO 8859-9 */
@@ -672,7 +672,7 @@ make_charset (int id, int no_init_unicode_tables,
   if (NILP (short_name))
     short_name = XSYMBOL (name)->name;
   if (NILP (long_name))
-    long_name = doc_string;
+    long_name = short_name;
   if (columns == -1)
     columns = dimension;
 
@@ -743,11 +743,11 @@ make_charset (int id, int no_init_unicode_tables,
      don't correspond. */
   if (algo_low_or_internal_p == CSET_INTERNAL)
     {
-      assert (graphic == 0 && offset0 < 128 ||
-	      graphic == 1 && offset0 >= 128);
+      assert ((graphic == 0 && offset0 < 128) ||
+	      (graphic == 1 && offset0 >= 128));
       if (dimension == 2)
-	assert (graphic == 0 && offset1 < 128 ||
-		graphic == 1 && offset1 >= 128);
+	assert ((graphic == 0 && offset1 < 128) ||
+		(graphic == 1 && offset1 >= 128));
     }
   if (algo_low_or_internal_p < 0)
     algo_low_or_internal_p = -1;
@@ -844,6 +844,8 @@ character set.  Recognized properties are:
 		`offset' property.
 `direction'	`l2r' (left-to-right) or `r2l' (right-to-left).
 		Defaults to `l2r'.
+`unicode-map'   Information describing how to map this charset to/from
+                Unicode.
 `ccl-program'	A compiled CCL program used to convert a character in
 		this charset into an index into the font.  The CCL program
 		is passed the octets of the character, which will be within
@@ -1261,6 +1263,7 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qregistries))    return CHARSET_REGISTRIES (cs);
   if (EQ (prop, Qencode_as_utf_8))
     return CHARSET_ENCODE_AS_UTF_8 (cs) ? Qt : Qnil;
+#ifdef HAVE_CCL
   if (EQ (prop, Qccl_program)) return CHARSET_CCL_PROGRAM (cs);
 #endif /* HAVE_CCL */
   if (EQ (prop, Qdirection))
@@ -1382,38 +1385,51 @@ and use the text that appears at the top of the window.
   return Qnil;
 }
 
-DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 3, 0, /*
+DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 4, 0, /*
 Return a list of the charsets in the region between START and END.
 BUFFER defaults to the current buffer if omitted.
+Charsets will be determined for characters in the buffer according to
+PRECEDENCE-LIST, a charset precedence list (see `make-char').  If
+PRECEDENCE-LIST is not given, the buffer-local value of the default
+Unicode precedence list will be used.
 */
-       (start, end, buffer))
+       (start, end, buffer, precedence_list))
 {
-  /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 1);
   Charbpos pos, stop;	/* Limits of the region. */
-  Lisp_Object res = Qnil;
-  int charsets[NUM_LEADING_BYTES];
-  Ibyte lb;
-  struct gcpro gcpro1;
+  Lisp_Object_dynarr *charset_dyn;
+  Lisp_Object_dynarr *precdyn;
+  Lisp_Object charset_list = Qnil;
+  int i;
 
-  memset(charsets, 0, sizeof(charsets));
+  /* Get and coerce the buffer region */
   get_buffer_range_char (buf, start, end, &pos, &stop, 0);
 
-  GCPRO1 (res);
-  while (pos < stop)
-    {
-      lb = ichar_leading_byte(BUF_FETCH_CHAR (buf, pos));
-      if (0 == charsets[lb - MIN_LEADING_BYTE])
-	{
-	  charsets[lb - MIN_LEADING_BYTE] = 1;
-	  res = Fcons (XCHARSET_NAME(charset_by_leading_byte(lb)), res);
-	}
-      ++pos;
-    }
-  UNGCPRO;
+  charset_dyn = Dynarr_new (Lisp_Object);
 
-  return res;
-} 
+  /* Get the proper Unicode precedence list */
+  if (NILP (precedence_list))
+    precdyn = get_buffer_unicode_precedence (buf);
+  else
+    precdyn = convert_charset_list_to_precedence_dynarr (precedence_list);
+
+  /* Find the actual charsets */
+  find_charsets_in_buffer (charset_dyn, buf, pos, stop - pos, precdyn);
+
+  /* Free it if and only if we created it */
+  if (!NILP (precedence_list))
+    free_precedence_dynarr (precdyn);
+
+  /* Convert dynarr to list */
+  for (i = 0; i < Dynarr_length (charset_dyn); i++)
+    {
+      Lisp_Object charset = Dynarr_at (charset_dyn, i);
+      charset_list = Fcons (charset, charset_list);
+    }
+
+  Dynarr_free (charset_dyn);
+  return Fnreverse (charset_list);
+}
 
 
 /************************************************************************/
@@ -1677,7 +1693,7 @@ complex_vars_of_mule_charset (void)
 		  1, 96, 0, 160, 1, 1, 'B',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-2"),
-		  build_msg_string (RHP of Latin-2 (ISO 8859-2): ISO-IR-101"),
+		  build_msg_string ("RHP of Latin-2 (ISO 8859-2): ISO-IR-101"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 2 (ISO/IEC 8859-2): ISO-IR-101"),
 		  vector1 (build_string ("iso8859-2")), 0, 0,
 		  CSET_INTERNAL);
@@ -1804,7 +1820,7 @@ complex_vars_of_mule_charset (void)
 		  94, 94, 33, 33, 2, 0, 'A',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Chinese simplified (GB2312)"),
-		  build_msg_string (long-name "Chinese simplified (GB2312): ISO-IR-58"),
+		  build_msg_string ("Chinese simplified (GB2312): ISO-IR-58"),
 		  build_msg_string ("GB2312 Chinese simplified: ISO-IR-58"),
 		  vector2 (build_string ("gb2312.1980-0"), 
 			   build_string ("gb2312.80&gb8565.88-0")), 0, 0,
@@ -1847,6 +1863,8 @@ complex_vars_of_mule_charset (void)
     make_charset (MAKE_CSID (CHINESE_CNS11643_1), 0, Qchinese_cns11643_1, 2,
 		  94, 94, 33, 33, 2, 0, 'G',
 		  CHARSET_LEFT_TO_RIGHT,
+		  build_string ("Chinese traditional (CNS11643-1)"),
+		  build_msg_string ("Chinese traditional (CNS11643-1): ISO-IR-171"),
 		  build_msg_string
 		  ("CNS11643 Plane 1 Chinese traditional: ISO-IR-171"),
 		  vector1 (build_string (CHINESE_CNS_PLANE("1"))), 0, 0,

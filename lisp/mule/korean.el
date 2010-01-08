@@ -30,6 +30,26 @@
 
 ;;; Code:
 
+;; See comments in mule-coding.c.
+;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
+;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
+;; So for our purposes, this is [84 - F9], [31 - FE]
+(make-charset
+ 'korean-johab
+ "Johab (Korean)"
+ '(dimension
+   2
+   registries ["johab"] ;; @@#### FIXME
+   chars (118 206)
+   offset (#x84 #x31)
+   unicode-map
+   ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JOHAB.TXT" #x8000)
+   short-name "Johab"
+   long-name "Johab (Korean)"
+   ))
+
+(make-two-dimension-windows-charset 949 'korean "Korean" #x81 #x41 #xfe #xfe)
+
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))

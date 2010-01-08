@@ -1,4 +1,4 @@
-;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: iso-2022-7bit; -*-
+;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -30,5 +30,19 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; IPA characters for phonetic symbols.
+(make-charset 'ipa "IPA (International Phonetic Association)"
+	      '(dimension
+		1
+		registries ["MuleIPA"]
+		chars 96
+		columns 1
+		direction l2r
+		final ?0
+		graphic 1
+		unicode-map ("unicode/mule-ucs/ipa.txt")
+		short-name "IPA"
+		long-name "IPA"
+		))
 
 ;;; misc-lang.el ends here

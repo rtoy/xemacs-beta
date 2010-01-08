@@ -1,7 +1,7 @@
 /* Conversion functions for I18N encodings, but not Unicode (in separate file).
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1981,7 +1981,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	  iso->esc = ISO_ESC_5_11;
 	  goto not_done;
 
-	  /**** extended segments ****/
+	  /**** extended segments (escape to/from Unicode) ****/
 	case '%':
 	  iso->esc = ISO_ESC_2_5;
 	  goto not_done;
@@ -1991,10 +1991,6 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	case '$':	/* multibyte charset prefix */
 	  iso->esc = ISO_ESC_2_4;
 	  goto not_done;
-
-	case '%':	/* Prefix to an escape to or from Unicode. */
-	  iso->esc = ISO_ESC_2_5;
-	  goto not_done; 
 
 	default:
 	  if (0x28 <= c && c <= 0x2F)
@@ -2018,7 +2014,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	  goto error;
 	}
 
-      /* ISO-IR 196 UTF-8 support. */
+      /* extended segments: ISO-IR 196 UTF-8 support. */
     case ISO_ESC_2_5:
       if ('G' == c)
 	{
@@ -2082,16 +2078,6 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 
     directionality:
       iso->esc = ISO_ESC_DIRECTIONALITY;
-      return 1;
-
-
-      /**** extended segments ****/
-
-    case ISO_ESC_2_5:
-      /* if (c == 0x47) */
-      /* @@#### implement me */
-      iso->esc = ISO_ESC_NOTHING;
-      *flags &= ISO_STATE_LOCK;
       return 1;
 
 
@@ -2279,22 +2265,22 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
     }
 }
 
-/* Note that this name conflicts with a function in unicode.c. */
+/* Convert Unicode codepoint UCS into an Ichar and add to the dynarr DST */
 static void
-decode_unicode_char (int ucs, unsigned_char_dynarr *dst)
+add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
 {
   Ibyte work[MAX_ICHAR_LEN];
-  int len;
-  Lisp_Object chr;
+  Ichar ch;
+  Bytecount len;
 
-  chr = Funicode_to_char(make_int(ucs), Qnil);
-  assert (!NILP(chr));
-  len = set_itext_ichar (work, XCHAR(chr));
+  /* @@#### What about errors? */
+  ch = unicode_to_ichar (ucs, get_unicode_precedence (), CONVERR_SUCCEED);
+  len = set_itext_ichar (work, ch);
   Dynarr_add_many (dst, work, len);
 }
 
 #define DECODE_ERROR_OCTET(octet, dst) \
-  decode_unicode_char ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
+  add_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
 
 static inline void
 indicate_invalid_utf_8 (unsigned char indicated_length,
@@ -2411,7 +2397,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
               if (0 == (c & 0x80))
                 {
                   /* ASCII. */
-                  decode_unicode_char (c, dst);
+                  add_unicode_to_dynarr (c, dst);
                 }
               else if (0 == (c & 0x40))
                 {
@@ -2483,7 +2469,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                     {
                       /* The character just read is ASCII. Treat it as
                          such.  */
-                      decode_unicode_char (c, dst);
+                      add_unicode_to_dynarr (c, dst);
                     }
                   ch = 0;
                   counter = 0;
@@ -2503,15 +2489,15 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                           /* We accept values above #x110000 in
                              escape-quoted, though not in UTF-8. */
                           /* (ch > 0x110000) || */
-                          valid_utf_16_surrogate(ch))
+                          valid_utf_16_surrogate (ch))
                         {
-                          indicate_invalid_utf_8(indicated_length, 
-                                                 counter, 
-                                                 ch, dst);
+                          indicate_invalid_utf_8 (indicated_length, 
+						  counter, 
+						  ch, dst);
                         }
                       else
                         {
-                          decode_unicode_char (ch, dst);
+                          add_unicode_to_dynarr (ch, dst);
                         }
                       ch = 0;
                     }
@@ -4222,7 +4208,13 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
                        (make_int (ch), skip_chars_range_table, Qnil))
                    && (failed_reason = query_coding_invalid_sequence))
                   || ((NILP ((checked_unicode = 
-                              Fgethash (Fchar_to_unicode (make_char (ch)),
+                              Fgethash (make_int
+					/* @@#### What happens with
+					   ichar_to_unicode returns -1,
+					   which can happen with
+					   CONVERR_FAIL set? */
+					(ichar_to_unicode
+					 (ch, CONVERR_FAIL)),
                                         from_unicode, Qnil))))
                       && (failed_reason = query_coding_unencodable)))
                  && (previous_failed_reason == query_coding_succeeded

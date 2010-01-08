@@ -459,169 +459,30 @@ no such translation table instead of returning nil."
 ; 		))
 
 
+(defun* make-128-byte-charset (name short-name &key long-name doc-string unicode-map)
+  "Make a one-dimension size-128 charset.
+NAME is a symbol, the charset's name.  SHORT-NAME is a string describing the charset briefly, and will be used as the `short-name' property.
+The keys :long-name, :doc-string and :unicode-map will be used to set the associated charset properties.  If unspecified, :long-name defaults to `short-name', and :doc-string defaults to :long-name."
+  (setq long-name (or long-name short-name))
+  (setq doc-string (or doc-string long-name))
+  (make-charset name doc-string
+		`(dimension
+		  1
+		  chars 128
+		  ,@(and unicode-map `((unicode-map ,unicode-map)))
+		  short-name ,short-name
+		  long-name ,long-name
+		  )))
+
 ; ;; ISO-2022 allows a use of character sets not registered in ISO with
 ; ;; final characters `0' (0x30) through `?' (0x3F).  Among them, Emacs
 ; ;; reserves `0' through `9' to support several private character sets.
 ; ;; The remaining final characters `:' through `?' are for users.
 
-(make-charset 'latin-iso8859-10
-	      "Supplementary Set for Latin Alphabet No. 6 (ISO/IEC 8859-10): ISO-IR-157
-\"This set is intended for a version of ISO 4873 using the coding method of
-ISO 8859 and requiring the character repertoires of the languages used in
-Northern Europe.\""
-	      '(dimension
-		1
-		registries ["ISO8859-10"]
-		chars 96
-		final ?V ;; 0x56 aka octet 5/6
-		graphic 1
-		short-name "Latin-6 (Northern Europe)"
-		long-name "RHP of Latin-6 (Northern Europe) (ISO 8859-10): ISO-IR-157"
-		))
-
-(make-charset 'latin-iso8859-13
-	      "Baltic Rim Supplementary Set (Latin-7) (ISO/IEC 8859-13): ISO-IR-179"
-	      '(dimension
-		1
-		registries ["ISO8859-13"]
-		chars 96
-		final ?Y ;; 0x59 aka octet 5/9
-		graphic 1
-		short-name "Latin-7 (Baltic Rim)"
-		long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
-		))
-
-(make-charset 'latin-iso8859-14 
-	      "Celtic Supplementary Latin Set (Latin-8) (ISO/IEC 8859-14): ISO-IR-199
-FIELD OF UTILIZATION: \"Communication and processing of text in the Celtic
-languages, especially Welsh and Irish Gaelic. The set also provides for the
-languages enumerated in ISO/IEC 8859-1 (though French is not fully
-covered).\""
-	      '(dimension
-		1
-		registries ["ISO8859-14"]
-		chars 96
-		final ?_
-		graphic 1
-		short-name "Latin-8 (Celtic)"
-		long-name "RHP of Latin-8 (Celtic) (ISO 8859-14): ISO-IR-199"
-		))
-
-(make-charset 'latin-iso8859-16
-	      "Romanian Character Set for Information Interchange (Latin-10) (ISO/IEC 8859-16): ISO-IR-226
-FIELD OF UTILIZATION: \"Communication, processing, transfer of text in the
-Romanian language\""
-	      '(dimension
-		1
-		registries ["ISO8859-16"]
-		chars 96
-		final ?f			; octet 06/06; cf ISO-IR 226
-		graphic 1
-		short-name "Latin-10 (Romanian)"
-		long-name "RHP of Latin-10 (Romanian) (ISO 8859-16): ISO-IR-226"
-		))
-
-;; CNS11643 Plane3 thru Plane7
-;; These represent more and more obscure Chinese characters.
-;; By the time you get to Plane 7, we're talking about characters
-;; that appear once in some ancient manuscript and whose meaning
-;; is unknown.
-
-(flet
-    ((make-chinese-cns11643-charset
-      (name plane final)
-      (make-charset
-       name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
-       `(registries 
-         ,(vector (concat "cns11643.1992-" plane ))
-         dimension 2
-         chars 94
-         final ,final
-         graphic 0
-	 short-name ,(concat "CNS11643-" plane)
-	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
-			    plane)))
-      (modify-syntax-entry   name "w")
-      (modify-category-entry name ?t)
-      ))
-  (make-chinese-cns11643-charset 'chinese-cns11643-3 "3" ?I)
-  (make-chinese-cns11643-charset 'chinese-cns11643-4 "4" ?J)
-  (make-chinese-cns11643-charset 'chinese-cns11643-5 "5" ?K)
-  (make-chinese-cns11643-charset 'chinese-cns11643-6 "6" ?L)
-  (make-chinese-cns11643-charset 'chinese-cns11643-7 "7" ?M)
-  )
-
-;; ISO-IR-165 (CCITT Extended GB)
-;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
-;;    GB 8565-88 table A4 + 293 characters.
-(make-charset ;; not in FSF 21.1
- 'chinese-isoir165
- "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
- `(registries ["isoir165-0"]
-   dimension 2
-   chars 94
-   final ?E
-   graphic 0
-   short-name "ISO-IR-165"
-   long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
-
-; ;; PinYin-ZhuYin
-; (make-charset 'chinese-sisheng 
-; 	      "SiSheng characters for PinYin/ZhuYin"
-; 	      '(dimension
-; 		1
-; 		;; XEmacs addition: second half of registry spec
-; 		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?0
-; 		graphic 0
-; 		short-name "SiSheng"
-; 		long-name "SiSheng (PinYin/ZhuYin)"
-; 		))
- 
-(make-charset 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-1"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?O
-		graphic 0
-		short-name "JISX0213-1"
-		long-name "JISX0213-1"
-		))
-
-;; JISX0213 Plane 2
-(make-charset 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?P
-		graphic 0
-		short-name "JISX0213-2"
-		long-name "JISX0213-2"
-		))
-
-;; See comments in mule-coding.c.
-;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
-;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
-;; So for our purposes, this is [84 - F9], [31 - FE] */
-(make-charset 'korean-johab
-	      "Johab (Korean)"
-	      '(dimension
-		2
-		registries ["johab"] ;; @@#### FIXME
-		chars (118 206)
-		offset (#x84 #x31)
-		short-name "Johab"
-		long-name "Johab (Korean)"
-		))
+;; APPROPRIATE FILE: vietnamese.el
+;; CAN'T BE DEFINED THERE BECAUSE: The sample text in the file has
+;; Vietnamese chars.  In old-Mule, they will end up in a JIT charset unless
+;; the charset is already defined.
 
 ;; Vietnamese VISCII.  VISCII is 1-byte character set which contains
 ;; more than 96 characters.  Since Emacs can't handle it as one
@@ -634,6 +495,8 @@ Romanian language\""
 		chars 96
 		final ?1
 		graphic 1
+		unicode-map ("unicode/mule-ucs/vietnamese-viscii-lower.txt"
+			     nil nil #x80)
 		short-name "VISCII lower"
 		long-name "VISCII lower-case"
 		))
@@ -645,6 +508,8 @@ Romanian language\""
 		chars 96
 		final ?2
 		graphic 1
+		unicode-map ("unicode/mule-ucs/vietnamese-viscii-upper.txt"
+			     nil nil #x80)
 		short-name "VISCII upper"
 		long-name "VISCII upper-case"
 		))
@@ -675,6 +540,8 @@ Romanian language\""
 		direction l2r
 		final ?5
 		graphic 1
+		unicode-map ("unicode/mule-ucs/indian-is13194.txt"
+			     nil nil #x80)
 		short-name "IS 13194"
 		long-name "Indian IS 13194"
 		))
@@ -720,6 +587,7 @@ Romanian language\""
 		direction l2r
 		final ?1
 		graphic 0
+		unicode-map ("unicode/other/lao.txt")
 		short-name "Lao"
 		long-name "Lao"
 		))
@@ -735,6 +603,7 @@ Romanian language\""
 		chars 94
 		final ?3
 		graphic 0
+		unicode-map ("unicode/mule-ucs/ethiopic.txt")
 		short-name "Ethiopic"
 		long-name "Ethiopic characters"
 		))
@@ -762,22 +631,9 @@ Romanian language\""
 		direction l2r
 		final ?7
 		graphic 0
+		unicode-map ("unicode/mule-ucs/tibetan.txt")
 		short-name "Tibetan 2-col"
 		long-name "Tibetan 2 column"
-		))
-
-;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registries ["MuleIPA"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		short-name "IPA"
-		long-name "IPA"
 		))
 
 ;; GNU Emacs has the charsets: 

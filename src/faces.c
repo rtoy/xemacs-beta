@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -1122,8 +1122,8 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 	    {
 	      new_val = Stynarr_at (oth->font, off2).value;
 	      Stynarr_at (cachel->font_specified, off1) = 1;
-	      Stynarr_at (cache->final_stage, off1) =
-		Stynarr_at (oth->final_stage, off2);
+	      Stynarr_at (cachel->font_final_stage, off1) =
+		Stynarr_at (oth->font_final_stage, off2);
 	      break;
 	    }
 	}
@@ -1264,7 +1264,9 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 get_buffer_unicode_precedence
+				 (DOMAIN_XBUFFER (domain)));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     ensure_face_cachel_contains_charset (cachel, domain,
 					 Dynarr_at (face_charset_dynarr, i));
@@ -1288,7 +1290,9 @@ face_cachel_char_font_metric_info (struct face_cachel *cachel,
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 get_buffer_unicode_precedence
+				 (DOMAIN_XBUFFER (domain)));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {
       Lisp_Object charset = Dynarr_at (face_charset_dynarr, i);
@@ -1485,8 +1489,6 @@ static void
 merge_face_cachel_data (struct window *w, face_index findex,
 			struct face_cachel *cachel)
 {
-  int offs;
-
 #define FINDEX_FIELD(field)						\
   Dynarr_atp (w->face_cachels, findex)->field
 
@@ -1539,11 +1541,14 @@ merge_face_cachel_data (struct window *w, face_index findex,
      FINDEX font info.  But also do ASCII, just to be on the safe side --
      the previous-previous code, before the loop was set up, just did ASCII. */
   FROB_CHARSET (Vcharset_ascii);
-  for (i = 0; i < Stynarr_length (FINDEX_FIELD (font)); i++)
-    {
-      Lisp_Object_pair *el = Stynarr_atp (FINDEX_FIELD (font), i);
-      FROB_CHARSET (el->key);
-    }
+  {
+    int i;
+    for (i = 0; i < Stynarr_length (FINDEX_FIELD (font)); i++)
+      {
+	Lisp_Object_pair *el = Stynarr_atp (FINDEX_FIELD (font), i);
+	FROB_CHARSET (el->key);
+      }
+  }
 
 #undef FROB
 #undef FINDEX_FIELD
@@ -1652,6 +1657,7 @@ mark_face_cachels_as_not_updated (struct window *w)
   for (elt = 0; elt < Dynarr_length (w->face_cachels); elt++)
     {
       struct face_cachel *cachel = Dynarr_atp (w->face_cachels, elt);
+      int i;
 
       cachel->updated = 0;
       for (i = 0; i < Stynarr_length (cachel->font_updated); i++)

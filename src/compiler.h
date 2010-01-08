@@ -237,15 +237,15 @@ Boston, MA 02111-1307, USA.  */
 #  define USED_IF_MULE(decl) decl
 #  ifdef UNICODE_INTERNAL
 #   define USED_IF_UNICODE_INTERNAL(decl) decl
-#   define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) UNUSED (decl)
+#   define USED_IF_OLD_MULE(decl) UNUSED (decl)
 #  else
 #   define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
-#   define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) decl
+#   define USED_IF_OLD_MULE(decl) decl
 #  endif
 # else
 #  define USED_IF_MULE(decl) UNUSED (decl)
 #  define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
-#  define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) UNUSED (decl)
+#  define USED_IF_OLD_MULE(decl) UNUSED (decl)
 # endif
 # if defined (MULE) || defined (ERROR_CHECK_TEXT)
 #  define USED_IF_MULE_OR_CHECK_TEXT(decl) decl

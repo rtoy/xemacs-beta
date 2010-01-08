@@ -125,271 +125,22 @@
    (#xDE #xFE))) ;; T WITH CEDILLA
 
 (make-coding-system
- 'iso-8859-2 'fixed-width "ISO-8859-2 (Latin-2)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x0104) ;; LATIN CAPITAL LETTER A WITH OGONEK
-    (#xA2 #x02D8) ;; BREVE
-    (#xA3 #x0141) ;; LATIN CAPITAL LETTER L WITH STROKE
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA5 #x013D) ;; LATIN CAPITAL LETTER L WITH CARON
-    (#xA6 #x015A) ;; LATIN CAPITAL LETTER S WITH ACUTE
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#xAA #x015E) ;; LATIN CAPITAL LETTER S WITH CEDILLA
-    (#xAB #x0164) ;; LATIN CAPITAL LETTER T WITH CARON
-    (#xAC #x0179) ;; LATIN CAPITAL LETTER Z WITH ACUTE
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#xAF #x017B) ;; LATIN CAPITAL LETTER Z WITH DOT ABOVE
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x0105) ;; LATIN SMALL LETTER A WITH OGONEK
-    (#xB2 #x02DB) ;; OGONEK
-    (#xB3 #x0142) ;; LATIN SMALL LETTER L WITH STROKE
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x013E) ;; LATIN SMALL LETTER L WITH CARON
-    (#xB6 #x015B) ;; LATIN SMALL LETTER S WITH ACUTE
-    (#xB7 #x02C7) ;; CARON
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#xBA #x015F) ;; LATIN SMALL LETTER S WITH CEDILLA
-    (#xBB #x0165) ;; LATIN SMALL LETTER T WITH CARON
-    (#xBC #x017A) ;; LATIN SMALL LETTER Z WITH ACUTE
-    (#xBD #x02DD) ;; DOUBLE ACUTE ACCENT
-    (#xBE #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#xBF #x017C) ;; LATIN SMALL LETTER Z WITH DOT ABOVE
-    (#xC0 #x0154) ;; LATIN CAPITAL LETTER R WITH ACUTE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x0102) ;; LATIN CAPITAL LETTER A WITH BREVE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x0139) ;; LATIN CAPITAL LETTER L WITH ACUTE
-    (#xC6 #x0106) ;; LATIN CAPITAL LETTER C WITH ACUTE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x010C) ;; LATIN CAPITAL LETTER C WITH CARON
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x0118) ;; LATIN CAPITAL LETTER E WITH OGONEK
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x011A) ;; LATIN CAPITAL LETTER E WITH CARON
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x010E) ;; LATIN CAPITAL LETTER D WITH CARON
-    (#xD0 #x0110) ;; LATIN CAPITAL LETTER D WITH STROKE
-    (#xD1 #x0143) ;; LATIN CAPITAL LETTER N WITH ACUTE
-    (#xD2 #x0147) ;; LATIN CAPITAL LETTER N WITH CARON
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x0150) ;; LATIN CAPITAL LETTER O WITH DOUBLE ACUTE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x0158) ;; LATIN CAPITAL LETTER R WITH CARON
-    (#xD9 #x016E) ;; LATIN CAPITAL LETTER U WITH RING ABOVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x0170) ;; LATIN CAPITAL LETTER U WITH DOUBLE ACUTE
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x00DD) ;; LATIN CAPITAL LETTER Y WITH ACUTE
-    (#xDE #x0162) ;; LATIN CAPITAL LETTER T WITH CEDILLA
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x0155) ;; LATIN SMALL LETTER R WITH ACUTE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x0103) ;; LATIN SMALL LETTER A WITH BREVE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x013A) ;; LATIN SMALL LETTER L WITH ACUTE
-    (#xE6 #x0107) ;; LATIN SMALL LETTER C WITH ACUTE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x010D) ;; LATIN SMALL LETTER C WITH CARON
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x0119) ;; LATIN SMALL LETTER E WITH OGONEK
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x011B) ;; LATIN SMALL LETTER E WITH CARON
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x010F) ;; LATIN SMALL LETTER D WITH CARON
-    (#xF0 #x0111) ;; LATIN SMALL LETTER D WITH STROKE
-    (#xF1 #x0144) ;; LATIN SMALL LETTER N WITH ACUTE
-    (#xF2 #x0148) ;; LATIN SMALL LETTER N WITH CARON
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x0151) ;; LATIN SMALL LETTER O WITH DOUBLE ACUTE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x0159) ;; LATIN SMALL LETTER R WITH CARON
-    (#xF9 #x016F) ;; LATIN SMALL LETTER U WITH RING ABOVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x0171) ;; LATIN SMALL LETTER U WITH DOUBLE ACUTE
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x00FD) ;; LATIN SMALL LETTER Y WITH ACUTE
-    (#xFE #x0163) ;; LATIN SMALL LETTER T WITH CEDILLA
-    (#xFF #x02D9)) ;; DOT ABOVE
+ 'iso-8859-2 'mbcs "ISO-8859-2 (Latin-2)"
+ '(charsets (ascii control-1 latin-iso8859-2)
    documentation "ISO-8859-2 (Latin-2) for Central Europe.
 See also `windows-1250', and `iso-8859-1', which is compatible with Latin 2
 when used to write German (or English, of course).  "
    mnemonic "Latin 2"
    aliases (iso-latin-2 latin-2)))
 
+(make-one-dimension-windows-charset 1250 'latin "Eastern Europe")
+
 (make-coding-system
- 'windows-1250 'fixed-width "Microsoft's CP1250"
- '(unicode-map
-   ((#x80 #x20AC) ;; EURO SIGN
-    (#x82 #x201A) ;; SINGLE LOW-9 QUOTATION MARK
-    (#x84 #x201E) ;; DOUBLE LOW-9 QUOTATION MARK
-    (#x85 #x2026) ;; HORIZONTAL ELLIPSIS
-    (#x86 #x2020) ;; DAGGER
-    (#x87 #x2021) ;; DOUBLE DAGGER
-    (#x89 #x2030) ;; PER MILLE SIGN
-    (#x8A #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#x8B #x2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-    (#x8C #x015A) ;; LATIN CAPITAL LETTER S WITH ACUTE
-    (#x8D #x0164) ;; LATIN CAPITAL LETTER T WITH CARON
-    (#x8E #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#x8F #x0179) ;; LATIN CAPITAL LETTER Z WITH ACUTE
-    (#x91 #x2018) ;; LEFT SINGLE QUOTATION MARK
-    (#x92 #x2019) ;; RIGHT SINGLE QUOTATION MARK
-    (#x93 #x201C) ;; LEFT DOUBLE QUOTATION MARK
-    (#x94 #x201D) ;; RIGHT DOUBLE QUOTATION MARK
-    (#x95 #x2022) ;; BULLET
-    (#x96 #x2013) ;; EN DASH
-    (#x97 #x2014) ;; EM DASH
-    (#x99 #x2122) ;; TRADE MARK SIGN
-    (#x9A #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#x9B #x203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-    (#x9C #x015B) ;; LATIN SMALL LETTER S WITH ACUTE
-    (#x9D #x0165) ;; LATIN SMALL LETTER T WITH CARON
-    (#x9E #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#x9F #x017A) ;; LATIN SMALL LETTER Z WITH ACUTE
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x02C7) ;; CARON
-    (#xA2 #x02D8) ;; BREVE
-    (#xA3 #x0141) ;; LATIN CAPITAL LETTER L WITH STROKE
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA5 #x0104) ;; LATIN CAPITAL LETTER A WITH OGONEK
-    (#xA6 #x00A6) ;; BROKEN BAR
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x015E) ;; LATIN CAPITAL LETTER S WITH CEDILLA
-    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC #x00AC) ;; NOT SIGN
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x00AE) ;; REGISTERED SIGN
-    (#xAF #x017B) ;; LATIN CAPITAL LETTER Z WITH DOT ABOVE
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x02DB) ;; OGONEK
-    (#xB3 #x0142) ;; LATIN SMALL LETTER L WITH STROKE
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x0105) ;; LATIN SMALL LETTER A WITH OGONEK
-    (#xBA #x015F) ;; LATIN SMALL LETTER S WITH CEDILLA
-    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC #x013D) ;; LATIN CAPITAL LETTER L WITH CARON
-    (#xBD #x02DD) ;; DOUBLE ACUTE ACCENT
-    (#xBE #x013E) ;; LATIN SMALL LETTER L WITH CARON
-    (#xBF #x017C) ;; LATIN SMALL LETTER Z WITH DOT ABOVE
-    (#xC0 #x0154) ;; LATIN CAPITAL LETTER R WITH ACUTE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x0102) ;; LATIN CAPITAL LETTER A WITH BREVE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x0139) ;; LATIN CAPITAL LETTER L WITH ACUTE
-    (#xC6 #x0106) ;; LATIN CAPITAL LETTER C WITH ACUTE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x010C) ;; LATIN CAPITAL LETTER C WITH CARON
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x0118) ;; LATIN CAPITAL LETTER E WITH OGONEK
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x011A) ;; LATIN CAPITAL LETTER E WITH CARON
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x010E) ;; LATIN CAPITAL LETTER D WITH CARON
-    (#xD0 #x0110) ;; LATIN CAPITAL LETTER D WITH STROKE
-    (#xD1 #x0143) ;; LATIN CAPITAL LETTER N WITH ACUTE
-    (#xD2 #x0147) ;; LATIN CAPITAL LETTER N WITH CARON
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x0150) ;; LATIN CAPITAL LETTER O WITH DOUBLE ACUTE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x0158) ;; LATIN CAPITAL LETTER R WITH CARON
-    (#xD9 #x016E) ;; LATIN CAPITAL LETTER U WITH RING ABOVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x0170) ;; LATIN CAPITAL LETTER U WITH DOUBLE ACUTE
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x00DD) ;; LATIN CAPITAL LETTER Y WITH ACUTE
-    (#xDE #x0162) ;; LATIN CAPITAL LETTER T WITH CEDILLA
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x0155) ;; LATIN SMALL LETTER R WITH ACUTE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x0103) ;; LATIN SMALL LETTER A WITH BREVE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x013A) ;; LATIN SMALL LETTER L WITH ACUTE
-    (#xE6 #x0107) ;; LATIN SMALL LETTER C WITH ACUTE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x010D) ;; LATIN SMALL LETTER C WITH CARON
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x0119) ;; LATIN SMALL LETTER E WITH OGONEK
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x011B) ;; LATIN SMALL LETTER E WITH CARON
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x010F) ;; LATIN SMALL LETTER D WITH CARON
-    (#xF0 #x0111) ;; LATIN SMALL LETTER D WITH STROKE
-    (#xF1 #x0144) ;; LATIN SMALL LETTER N WITH ACUTE
-    (#xF2 #x0148) ;; LATIN SMALL LETTER N WITH CARON
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x0151) ;; LATIN SMALL LETTER O WITH DOUBLE ACUTE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x0159) ;; LATIN SMALL LETTER R WITH CARON
-    (#xF9 #x016F) ;; LATIN SMALL LETTER U WITH RING ABOVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x0171) ;; LATIN SMALL LETTER U WITH DOUBLE ACUTE
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x00FD) ;; LATIN SMALL LETTER Y WITH ACUTE
-    (#xFE #x0163) ;; LATIN SMALL LETTER T WITH CEDILLA
-    (#xFF #x02D9)) ;; DOT ABOVE
+ 'windows-1250 'mbcs "Microsoft's CP1250"
+ '(charsets (ascii latin-windows-1250)
    documentation
    "CP 1250, Microsoft's encoding for Central Europe. 
-See also `iso-8859-2' and `window-1252' for Western Europe.  "
+See also `iso-8859-2' and `windows-1252' for Western Europe.  "
    mnemonic "CP1250"
    aliases (cp1250)))
 
@@ -464,132 +215,13 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
    (#xDE #xFE))) ;; S WITH CIRCUMFLEX
 
 (make-coding-system
- 'iso-8859-3 'fixed-width "ISO-8859-3 (Latin-3)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x0126) ;; LATIN CAPITAL LETTER H WITH STROKE
-    (#xA2 #x02D8) ;; BREVE
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA6 #x0124) ;; LATIN CAPITAL LETTER H WITH CIRCUMFLEX
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x0130) ;; LATIN CAPITAL LETTER I WITH DOT ABOVE
-    (#xAA #x015E) ;; LATIN CAPITAL LETTER S WITH CEDILLA
-    (#xAB #x011E) ;; LATIN CAPITAL LETTER G WITH BREVE
-    (#xAC #x0134) ;; LATIN CAPITAL LETTER J WITH CIRCUMFLEX
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAF #x017B) ;; LATIN CAPITAL LETTER Z WITH DOT ABOVE
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x0127) ;; LATIN SMALL LETTER H WITH STROKE
-    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
-    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x0125) ;; LATIN SMALL LETTER H WITH CIRCUMFLEX
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x0131) ;; LATIN SMALL LETTER DOTLESS I
-    (#xBA #x015F) ;; LATIN SMALL LETTER S WITH CEDILLA
-    (#xBB #x011F) ;; LATIN SMALL LETTER G WITH BREVE
-    (#xBC #x0135) ;; LATIN SMALL LETTER J WITH CIRCUMFLEX
-    (#xBD #x00BD) ;; VULGAR FRACTION ONE HALF
-    (#xBF #x017C) ;; LATIN SMALL LETTER Z WITH DOT ABOVE
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x010A) ;; LATIN CAPITAL LETTER C WITH DOT ABOVE
-    (#xC6 #x0108) ;; LATIN CAPITAL LETTER C WITH CIRCUMFLEX
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD1 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x0120) ;; LATIN CAPITAL LETTER G WITH DOT ABOVE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x011C) ;; LATIN CAPITAL LETTER G WITH CIRCUMFLEX
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x016C) ;; LATIN CAPITAL LETTER U WITH BREVE
-    (#xDE #x015C) ;; LATIN CAPITAL LETTER S WITH CIRCUMFLEX
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x010B) ;; LATIN SMALL LETTER C WITH DOT ABOVE
-    (#xE6 #x0109) ;; LATIN SMALL LETTER C WITH CIRCUMFLEX
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF1 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x0121) ;; LATIN SMALL LETTER G WITH DOT ABOVE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x011D) ;; LATIN SMALL LETTER G WITH CIRCUMFLEX
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x016D) ;; LATIN SMALL LETTER U WITH BREVE
-    (#xFE #x015D) ;; LATIN SMALL LETTER S WITH CIRCUMFLEX
-    (#xFF #x02D9)) ;; DOT ABOVE
+ 'iso-8859-3 'mbcs "ISO-8859-3 (Latin-3)"
+ '(charsets (ascii control-1 latin-iso8859-3)
    mnemonic "Latin 3"
    documentation "Aimed at Turkish, Maltese and Esperanto.  "
    aliases (iso-latin-3 latin-3)))
+
+(make-one-dimension-windows-charset 1254 'latin "Turkish")
 
 
 ;; Latin-4 (ISO-8859-4)
@@ -664,145 +296,83 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
    (#xDE #xFE))) ;; U WITH MACRON
 
 (make-coding-system
- 'iso-8859-4 'fixed-width "ISO-8859-4 (Latin-4)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x0104) ;; LATIN CAPITAL LETTER A WITH OGONEK
-    (#xA2 #x0138) ;; LATIN SMALL LETTER KRA
-    (#xA3 #x0156) ;; LATIN CAPITAL LETTER R WITH CEDILLA
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA5 #x0128) ;; LATIN CAPITAL LETTER I WITH TILDE
-    (#xA6 #x013B) ;; LATIN CAPITAL LETTER L WITH CEDILLA
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#xAA #x0112) ;; LATIN CAPITAL LETTER E WITH MACRON
-    (#xAB #x0122) ;; LATIN CAPITAL LETTER G WITH CEDILLA
-    (#xAC #x0166) ;; LATIN CAPITAL LETTER T WITH STROKE
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#xAF #x00AF) ;; MACRON
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x0105) ;; LATIN SMALL LETTER A WITH OGONEK
-    (#xB2 #x02DB) ;; OGONEK
-    (#xB3 #x0157) ;; LATIN SMALL LETTER R WITH CEDILLA
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x0129) ;; LATIN SMALL LETTER I WITH TILDE
-    (#xB6 #x013C) ;; LATIN SMALL LETTER L WITH CEDILLA
-    (#xB7 #x02C7) ;; CARON
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#xBA #x0113) ;; LATIN SMALL LETTER E WITH MACRON
-    (#xBB #x0123) ;; LATIN SMALL LETTER G WITH CEDILLA
-    (#xBC #x0167) ;; LATIN SMALL LETTER T WITH STROKE
-    (#xBD #x014A) ;; LATIN CAPITAL LETTER ENG
-    (#xBE #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#xBF #x014B) ;; LATIN SMALL LETTER ENG
-    (#xC0 #x0100) ;; LATIN CAPITAL LETTER A WITH MACRON
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x012E) ;; LATIN CAPITAL LETTER I WITH OGONEK
-    (#xC8 #x010C) ;; LATIN CAPITAL LETTER C WITH CARON
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x0118) ;; LATIN CAPITAL LETTER E WITH OGONEK
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x0116) ;; LATIN CAPITAL LETTER E WITH DOT ABOVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x012A) ;; LATIN CAPITAL LETTER I WITH MACRON
-    (#xD0 #x0110) ;; LATIN CAPITAL LETTER D WITH STROKE
-    (#xD1 #x0145) ;; LATIN CAPITAL LETTER N WITH CEDILLA
-    (#xD2 #x014C) ;; LATIN CAPITAL LETTER O WITH MACRON
-    (#xD3 #x0136) ;; LATIN CAPITAL LETTER K WITH CEDILLA
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xD9 #x0172) ;; LATIN CAPITAL LETTER U WITH OGONEK
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x0168) ;; LATIN CAPITAL LETTER U WITH TILDE
-    (#xDE #x016A) ;; LATIN CAPITAL LETTER U WITH MACRON
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x0101) ;; LATIN SMALL LETTER A WITH MACRON
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x012F) ;; LATIN SMALL LETTER I WITH OGONEK
-    (#xE8 #x010D) ;; LATIN SMALL LETTER C WITH CARON
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x0119) ;; LATIN SMALL LETTER E WITH OGONEK
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x0117) ;; LATIN SMALL LETTER E WITH DOT ABOVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x012B) ;; LATIN SMALL LETTER I WITH MACRON
-    (#xF0 #x0111) ;; LATIN SMALL LETTER D WITH STROKE
-    (#xF1 #x0146) ;; LATIN SMALL LETTER N WITH CEDILLA
-    (#xF2 #x014D) ;; LATIN SMALL LETTER O WITH MACRON
-    (#xF3 #x0137) ;; LATIN SMALL LETTER K WITH CEDILLA
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xF9 #x0173) ;; LATIN SMALL LETTER U WITH OGONEK
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x0169) ;; LATIN SMALL LETTER U WITH TILDE
-    (#xFE #x016B) ;; LATIN SMALL LETTER U WITH MACRON
-    (#xFF #x02D9)) ;; DOT ABOVE
+ 'iso-8859-4 'mbcs "ISO-8859-4 (Latin-4)"
+ '(charsets (ascii control-1 latin-iso8859-4)
    mnemonic "Latin 4"
    aliases (iso-latin-4 latin-4)
    documentation "Obsolete coding system for the Baltic rim.  "))
+
+
+;; Latin-6 (ISO 8859-10) Northern Europe.
+
+(make-charset 'latin-iso8859-10
+	      "Supplementary Set for Latin Alphabet No. 6 (ISO/IEC 8859-10): ISO-IR-157
+\"This set is intended for a version of ISO 4873 using the coding method of
+ISO 8859 and requiring the character repertoires of the languages used in
+Northern Europe.\""
+	      '(dimension
+		1
+		registries ["ISO8859-10"]
+		chars 96
+		final ?V ;; 0x56 aka octet 5/6
+		graphic 1
+		unicode-map ("unicode/unicode-consortium/ISO8859/8859-10.TXT" #xA0)
+		short-name "Latin-6 (Northern Europe)"
+		long-name "RHP of Latin-6 (Northern Europe) (ISO 8859-10): ISO-IR-157"
+		))
+
+(make-coding-system
+ 'iso-8859-10 'mbcs "ISO-8859-10 (Latin-6)"
+ '(charsets (ascii control-1 latin-iso8859-10)
+   mnemonic "Latin 6"
+   aliases (iso-latin-6 latin-6)))
+
+
+;; Latin-7 (ISO 8859-13) Baltic Rim.
+
+(make-charset 'latin-iso8859-13
+	      "Baltic Rim Supplementary Set (Latin-7) (ISO/IEC 8859-13): ISO-IR-179"
+	      '(dimension
+		1
+		registries ["ISO8859-13"]
+		chars 96
+		final ?Y ;; 0x59 aka octet 5/9
+		graphic 1
+		unicode-map ("unicode/unicode-consortium/ISO8859/8859-13.TXT" #xA0)
+		short-name "Latin-7 (Baltic Rim)"
+		long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
+		))
+
+(make-one-dimension-windows-charset 1257 'latin "Baltic Rim")
+
+(make-coding-system
+ 'iso-8859-13 'mbcs "ISO-8859-13 (Latin-7)"
+ '(charsets (ascii control-1 latin-iso8859-13)
+   mnemonic "Latin 7"
+   aliases (iso-latin-7 latin-7)))
 
 
 ;; Latin-8 (ISO 8859-14) Celtic.
 
 ;; Never widely used. Current-orthography Gaelic, both Irish and Scots, is
 ;; easily written with Latin-1. Wikipedia says the same about Welsh.
+
+(make-charset 'latin-iso8859-14 
+	      "Celtic Supplementary Latin Set (Latin-8) (ISO/IEC 8859-14): ISO-IR-199
+FIELD OF UTILIZATION: \"Communication and processing of text in the Celtic
+languages, especially Welsh and Irish Gaelic. The set also provides for the
+languages enumerated in ISO/IEC 8859-1 (though French is not fully
+covered).\""
+	      '(dimension
+		1
+		registries ["ISO8859-14"]
+		chars 96
+		final ?_
+		graphic 1
+		unicode-map ("unicode/unicode-consortium/ISO8859/8859-14.TXT" #xA0)
+		short-name "Latin-8 (Celtic)"
+		long-name "RHP of Latin-8 (Celtic) (ISO 8859-14): ISO-IR-199"
+		))
 
 ;; 
 ;; Character syntax defaults to word. The exceptions here shared with Latin-1.
@@ -865,136 +435,8 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
    (#xDE #xFE))) ;; Y WITH CIRCUMFLEX
 
 (make-coding-system
- 'iso-8859-14 'fixed-width "ISO-8859-14 (Latin-8)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x1E02) ;; LATIN CAPITAL LETTER B WITH DOT ABOVE
-    (#xA2 #x1E03) ;; LATIN SMALL LETTER B WITH DOT ABOVE
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x010A) ;; LATIN CAPITAL LETTER C WITH DOT ABOVE
-    (#xA5 #x010B) ;; LATIN SMALL LETTER C WITH DOT ABOVE
-    (#xA6 #x1E0A) ;; LATIN CAPITAL LETTER D WITH DOT ABOVE
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x1E80) ;; LATIN CAPITAL LETTER W WITH GRAVE
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x1E82) ;; LATIN CAPITAL LETTER W WITH ACUTE
-    (#xAB #x1E0B) ;; LATIN SMALL LETTER D WITH DOT ABOVE
-    (#xAC #x1EF2) ;; LATIN CAPITAL LETTER Y WITH GRAVE
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x00AE) ;; REGISTERED SIGN
-    (#xAF #x0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
-    (#xB0 #x1E1E) ;; LATIN CAPITAL LETTER F WITH DOT ABOVE
-    (#xB1 #x1E1F) ;; LATIN SMALL LETTER F WITH DOT ABOVE
-    (#xB2 #x0120) ;; LATIN CAPITAL LETTER G WITH DOT ABOVE
-    (#xB3 #x0121) ;; LATIN SMALL LETTER G WITH DOT ABOVE
-    (#xB4 #x1E40) ;; LATIN CAPITAL LETTER M WITH DOT ABOVE
-    (#xB5 #x1E41) ;; LATIN SMALL LETTER M WITH DOT ABOVE
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x1E56) ;; LATIN CAPITAL LETTER P WITH DOT ABOVE
-    (#xB8 #x1E81) ;; LATIN SMALL LETTER W WITH GRAVE
-    (#xB9 #x1E57) ;; LATIN SMALL LETTER P WITH DOT ABOVE
-    (#xBA #x1E83) ;; LATIN SMALL LETTER W WITH ACUTE
-    (#xBB #x1E60) ;; LATIN CAPITAL LETTER S WITH DOT ABOVE
-    (#xBC #x1EF3) ;; LATIN SMALL LETTER Y WITH GRAVE
-    (#xBD #x1E84) ;; LATIN CAPITAL LETTER W WITH DIAERESIS
-    (#xBE #x1E85) ;; LATIN SMALL LETTER W WITH DIAERESIS
-    (#xBF #x1E61) ;; LATIN SMALL LETTER S WITH DOT ABOVE
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD0 #x0174) ;; LATIN CAPITAL LETTER W WITH CIRCUMFLEX
-    (#xD1 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x1E6A) ;; LATIN CAPITAL LETTER T WITH DOT ABOVE
-    (#xD8 #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x00DD) ;; LATIN CAPITAL LETTER Y WITH ACUTE
-    (#xDE #x0176) ;; LATIN CAPITAL LETTER Y WITH CIRCUMFLEX
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF0 #x0175) ;; LATIN SMALL LETTER W WITH CIRCUMFLEX
-    (#xF1 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x1E6B) ;; LATIN SMALL LETTER T WITH DOT ABOVE
-    (#xF8 #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x00FD) ;; LATIN SMALL LETTER Y WITH ACUTE
-    (#xFE #x0177) ;; LATIN SMALL LETTER Y WITH CIRCUMFLEX
-    (#xFF #x00FF)) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+ 'iso-8859-14 'mbcs "ISO-8859-14 (Latin-8)"
+ '(charsets (ascii control-1 latin-iso8859-14)
    mnemonic "Latin 8"
    aliases (iso-latin-8 latin-8)))
 
@@ -1071,136 +513,8 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
    (#xDE #xFE))) ;; THORN
 
 (make-coding-system
- 'iso-8859-15 'fixed-width "ISO-8859-15 (Latin-9"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x00A1) ;; INVERTED EXCLAMATION MARK
-    (#xA2 #x00A2) ;; CENT SIGN
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x20AC) ;; EURO SIGN
-    (#xA5 #x00A5) ;; YEN SIGN
-    (#xA6 #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x00AA) ;; FEMININE ORDINAL INDICATOR
-    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC #x00AC) ;; NOT SIGN
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x00AE) ;; REGISTERED SIGN
-    (#xAF #x00AF) ;; MACRON
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
-    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
-    (#xB4 #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#xB9 #x00B9) ;; SUPERSCRIPT ONE
-    (#xBA #x00BA) ;; MASCULINE ORDINAL INDICATOR
-    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC #x0152) ;; LATIN CAPITAL LIGATURE OE
-    (#xBD #x0153) ;; LATIN SMALL LIGATURE OE
-    (#xBE #x0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
-    (#xBF #x00BF) ;; INVERTED QUESTION MARK
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD0 #x00D0) ;; LATIN CAPITAL LETTER ETH
-    (#xD1 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x00DD) ;; LATIN CAPITAL LETTER Y WITH ACUTE
-    (#xDE #x00DE) ;; LATIN CAPITAL LETTER THORN
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF0 #x00F0) ;; LATIN SMALL LETTER ETH
-    (#xF1 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x00FD) ;; LATIN SMALL LETTER Y WITH ACUTE
-    (#xFE #x00FE) ;; LATIN SMALL LETTER THORN
-    (#xFF #x00FF)) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+ 'iso-8859-15 'mbcs "ISO-8859-15 (Latin-9)"
+ '(charsets (ascii control-1 latin-iso8859-15)
    documentation "ISO 4873 conforming 8-bit code.
 (ASCII + Latin 9; aka Latin-1 with Euro)"
     mnemonic "Latin 9"
@@ -1212,6 +526,21 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
 ;; Latin-10 (ISO 8859-16).
 ;;
 ;; "South-Eastern European." Not, to my knowledge, ever widely used. 
+
+(make-charset 'latin-iso8859-16
+	      "Romanian Character Set for Information Interchange (Latin-10) (ISO/IEC 8859-16): ISO-IR-226
+FIELD OF UTILIZATION: \"Communication, processing, transfer of text in the
+Romanian language\""
+	      '(dimension
+		1
+		registries ["ISO8859-16"]
+		chars 96
+		final ?f			; octet 06/06; cf ISO-IR 226
+		graphic 1
+		unicode-map ("unicode/unicode-consortium/ISO8859/8859-16.TXT" #xA0)
+		short-name "Latin-10 (Romanian)"
+		long-name "RHP of Latin-10 (Romanian) (ISO 8859-16): ISO-IR-226"
+		))
 
 ;; Copy over the non-word syntax this charset has in common with Latin 1.
 (dolist (code '(#xa0	;; NO BREAK SPACE
@@ -1291,136 +620,8 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
 
 ;; Add a coding system for ISO 8859-16.
 (make-coding-system
- 'iso-8859-16 'fixed-width "ISO-8859-16 (Latin-10)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x0104) ;; LATIN CAPITAL LETTER A WITH OGONEK
-    (#xA2 #x0105) ;; LATIN SMALL LETTER A WITH OGONEK
-    (#xA3 #x0141) ;; LATIN CAPITAL LETTER L WITH STROKE
-    (#xA4 #x20AC) ;; EURO SIGN
-    (#xA5 #x201E) ;; DOUBLE LOW-9 QUOTATION MARK
-    (#xA6 #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x0218) ;; LATIN CAPITAL LETTER S WITH COMMA BELOW
-    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC #x0179) ;; LATIN CAPITAL LETTER Z WITH ACUTE
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x017A) ;; LATIN SMALL LETTER Z WITH ACUTE
-    (#xAF #x017B) ;; LATIN CAPITAL LETTER Z WITH DOT ABOVE
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x010C) ;; LATIN CAPITAL LETTER C WITH CARON
-    (#xB3 #x0142) ;; LATIN SMALL LETTER L WITH STROKE
-    (#xB4 #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#xB5 #x201D) ;; RIGHT DOUBLE QUOTATION MARK
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#xB9 #x010D) ;; LATIN SMALL LETTER C WITH CARON
-    (#xBA #x0219) ;; LATIN SMALL LETTER S WITH COMMA BELOW
-    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC #x0152) ;; LATIN CAPITAL LIGATURE OE
-    (#xBD #x0153) ;; LATIN SMALL LIGATURE OE
-    (#xBE #x0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
-    (#xBF #x017C) ;; LATIN SMALL LETTER Z WITH DOT ABOVE
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x0102) ;; LATIN CAPITAL LETTER A WITH BREVE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x0106) ;; LATIN CAPITAL LETTER C WITH ACUTE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD0 #x0110) ;; LATIN CAPITAL LETTER D WITH STROKE
-    (#xD1 #x0143) ;; LATIN CAPITAL LETTER N WITH ACUTE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x0150) ;; LATIN CAPITAL LETTER O WITH DOUBLE ACUTE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x015A) ;; LATIN CAPITAL LETTER S WITH ACUTE
-    (#xD8 #x0170) ;; LATIN CAPITAL LETTER U WITH DOUBLE ACUTE
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x0118) ;; LATIN CAPITAL LETTER E WITH OGONEK
-    (#xDE #x021A) ;; LATIN CAPITAL LETTER T WITH COMMA BELOW
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x0103) ;; LATIN SMALL LETTER A WITH BREVE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x0107) ;; LATIN SMALL LETTER C WITH ACUTE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF0 #x0111) ;; LATIN SMALL LETTER D WITH STROKE
-    (#xF1 #x0144) ;; LATIN SMALL LETTER N WITH ACUTE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x0151) ;; LATIN SMALL LETTER O WITH DOUBLE ACUTE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x015B) ;; LATIN SMALL LETTER S WITH ACUTE
-    (#xF8 #x0171) ;; LATIN SMALL LETTER U WITH DOUBLE ACUTE
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x0119) ;; LATIN SMALL LETTER E WITH OGONEK
-    (#xFE #x021B) ;; LATIN SMALL LETTER T WITH COMMA BELOW
-    (#xFF #x00FF)) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+ 'iso-8859-16 'mbcs "ISO-8859-16 (Latin-10)"
+ '(charsets (ascii control-1 latin-iso8859-16)
    mnemonic "Latin 10"
    aliases (iso-latin-10)))
 
@@ -1499,136 +700,8 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
                 ?I (standard-case-table))
 
 (make-coding-system
- 'iso-8859-9 'fixed-width "ISO-8859-9 (Latin-5)"
- '(unicode-map
-   ((#x80 #x0080) ;; <control>
-    (#x81 #x0081) ;; <control>
-    (#x82 #x0082) ;; <control>
-    (#x83 #x0083) ;; <control>
-    (#x84 #x0084) ;; <control>
-    (#x85 #x0085) ;; <control>
-    (#x86 #x0086) ;; <control>
-    (#x87 #x0087) ;; <control>
-    (#x88 #x0088) ;; <control>
-    (#x89 #x0089) ;; <control>
-    (#x8A #x008A) ;; <control>
-    (#x8B #x008B) ;; <control>
-    (#x8C #x008C) ;; <control>
-    (#x8D #x008D) ;; <control>
-    (#x8E #x008E) ;; <control>
-    (#x8F #x008F) ;; <control>
-    (#x90 #x0090) ;; <control>
-    (#x91 #x0091) ;; <control>
-    (#x92 #x0092) ;; <control>
-    (#x93 #x0093) ;; <control>
-    (#x94 #x0094) ;; <control>
-    (#x95 #x0095) ;; <control>
-    (#x96 #x0096) ;; <control>
-    (#x97 #x0097) ;; <control>
-    (#x98 #x0098) ;; <control>
-    (#x99 #x0099) ;; <control>
-    (#x9A #x009A) ;; <control>
-    (#x9B #x009B) ;; <control>
-    (#x9C #x009C) ;; <control>
-    (#x9D #x009D) ;; <control>
-    (#x9E #x009E) ;; <control>
-    (#x9F #x009F) ;; <control>
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x00A1) ;; INVERTED EXCLAMATION MARK
-    (#xA2 #x00A2) ;; CENT SIGN
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA5 #x00A5) ;; YEN SIGN
-    (#xA6 #x00A6) ;; BROKEN BAR
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x00AA) ;; FEMININE ORDINAL INDICATOR
-    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC #x00AC) ;; NOT SIGN
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x00AE) ;; REGISTERED SIGN
-    (#xAF #x00AF) ;; MACRON
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
-    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x00B9) ;; SUPERSCRIPT ONE
-    (#xBA #x00BA) ;; MASCULINE ORDINAL INDICATOR
-    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC #x00BC) ;; VULGAR FRACTION ONE QUARTER
-    (#xBD #x00BD) ;; VULGAR FRACTION ONE HALF
-    (#xBE #x00BE) ;; VULGAR FRACTION THREE QUARTERS
-    (#xBF #x00BF) ;; INVERTED QUESTION MARK
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD0 #x011E) ;; LATIN CAPITAL LETTER G WITH BREVE
-    (#xD1 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x0130) ;; LATIN CAPITAL LETTER I WITH DOT ABOVE
-    (#xDE #x015E) ;; LATIN CAPITAL LETTER S WITH CEDILLA
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF0 #x011F) ;; LATIN SMALL LETTER G WITH BREVE
-    (#xF1 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x0131) ;; LATIN SMALL LETTER DOTLESS I
-    (#xFE #x015F) ;; LATIN SMALL LETTER S WITH CEDILLA
-    (#xFF #x00FF)) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+ 'iso-8859-9 'mbcs "ISO-8859-9 (Latin-5)"
+ '(charsets (ascii control-1 latin-iso8859-9)
    mnemonic "Latin 5"
    aliases (iso-latin-5 latin-5)))
 
@@ -1757,267 +830,22 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
                      ;; Restore the normal case mappings for the characters.
                      (put-case-table-pair ?I ?i (standard-case-table))))
 
+(make-128-byte-charset
+ 'latin-macintosh-roman "MacRoman"
+ :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80))
+
 (make-coding-system
- 'macintosh 'fixed-width "MacRoman"
- '(unicode-map
-   ((#x80 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#x81 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#x82 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#x83 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#x84 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#x85 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#x86 #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#x87 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#x88 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#x89 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#x8A #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#x8B #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#x8C #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#x8D #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#x8E #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#x8F #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#x90 #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#x91 #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#x92 #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#x93 #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#x94 #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#x95 #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#x96 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#x97 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#x98 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#x99 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#x9A #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#x9B #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#x9C #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#x9D #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#x9E #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#x9F #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xA0 #x2020) ;; DAGGER
-    (#xA1 #x00B0) ;; DEGREE SIGN
-    (#xA2 #x00A2) ;; CENT SIGN
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x00A7) ;; SECTION SIGN
-    (#xA5 #x2022) ;; BULLET
-    (#xA6 #x00B6) ;; PILCROW SIGN
-    (#xA7 #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xA8 #x00AE) ;; REGISTERED SIGN
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x2122) ;; TRADE MARK SIGN
-    (#xAB #x00B4) ;; ACUTE ACCENT
-    (#xAC #x00A8) ;; DIAERESIS
-    (#xAD #x2260) ;; NOT EQUAL TO
-    (#xAE #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xAF #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xB0 #x221E) ;; INFINITY
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x2264) ;; LESS-THAN OR EQUAL TO
-    (#xB3 #x2265) ;; GREATER-THAN OR EQUAL TO
-    (#xB4 #x00A5) ;; YEN SIGN
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x2202) ;; PARTIAL DIFFERENTIAL
-    (#xB7 #x2211) ;; N-ARY SUMMATION
-    (#xB8 #x220F) ;; N-ARY PRODUCT
-    (#xB9 #x03C0) ;; GREEK SMALL LETTER PI
-    (#xBA #x222B) ;; INTEGRAL
-    (#xBB #x00AA) ;; FEMININE ORDINAL INDICATOR
-    (#xBC #x00BA) ;; MASCULINE ORDINAL INDICATOR
-    (#xBD #x03A9) ;; GREEK CAPITAL LETTER OMEGA
-    (#xBE #x00E6) ;; LATIN SMALL LETTER AE
-    (#xBF #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xC0 #x00BF) ;; INVERTED QUESTION MARK
-    (#xC1 #x00A1) ;; INVERTED EXCLAMATION MARK
-    (#xC2 #x00AC) ;; NOT SIGN
-    (#xC3 #x221A) ;; SQUARE ROOT
-    (#xC4 #x0192) ;; LATIN SMALL LETTER F WITH HOOK
-    (#xC5 #x2248) ;; ALMOST EQUAL TO
-    (#xC6 #x2206) ;; INCREMENT
-    (#xC7 #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xC8 #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xC9 #x2026) ;; HORIZONTAL ELLIPSIS
-    (#xCA #x00A0) ;; NO-BREAK SPACE
-    (#xCB #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xCC #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xCD #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xCE #x0152) ;; LATIN CAPITAL LIGATURE OE
-    (#xCF #x0153) ;; LATIN SMALL LIGATURE OE
-    (#xD0 #x2013) ;; EN DASH
-    (#xD1 #x2014) ;; EM DASH
-    (#xD2 #x201C) ;; LEFT DOUBLE QUOTATION MARK
-    (#xD3 #x201D) ;; RIGHT DOUBLE QUOTATION MARK
-    (#xD4 #x2018) ;; LEFT SINGLE QUOTATION MARK
-    (#xD5 #x2019) ;; RIGHT SINGLE QUOTATION MARK
-    (#xD6 #x00F7) ;; DIVISION SIGN
-    (#xD7 #x25CA) ;; LOZENGE
-    (#xD8 #x00FF) ;; LATIN SMALL LETTER Y WITH DIAERESIS
-    (#xD9 #x0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
-    (#xDA #x2044) ;; FRACTION SLASH
-    (#xDB #x20AC) ;; EURO SIGN
-    (#xDC #x2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-    (#xDD #x203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-    (#xDE #xFB01) ;; LATIN SMALL LIGATURE FI
-    (#xDF #xFB02) ;; LATIN SMALL LIGATURE FL
-    (#xE0 #x2021) ;; DOUBLE DAGGER
-    (#xE1 #x00B7) ;; MIDDLE DOT
-    (#xE2 #x201A) ;; SINGLE LOW-9 QUOTATION MARK
-    (#xE3 #x201E) ;; DOUBLE LOW-9 QUOTATION MARK
-    (#xE4 #x2030) ;; PER MILLE SIGN
-    (#xE5 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xE6 #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xE7 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xE8 #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xE9 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xEA #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xEB #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xEC #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xED #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xEE #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xEF #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xF0 #xF8FF) ;; Apple logo
-    (#xF1 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xF2 #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xF3 #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xF4 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xF5 #x0131) ;; LATIN SMALL LETTER DOTLESS I
-    (#xF6 #x02C6) ;; MODIFIER LETTER CIRCUMFLEX ACCENT
-    (#xF7 #x02DC) ;; SMALL TILDE
-    (#xF8 #x00AF) ;; MACRON
-    (#xF9 #x02D8) ;; BREVE
-    (#xFA #x02D9) ;; DOT ABOVE
-    (#xFB #x02DA) ;; RING ABOVE
-    (#xFC #x00B8) ;; CEDILLA
-    (#xFD #x02DD) ;; DOUBLE ACUTE ACCENT
-    (#xFE #x02DB) ;; OGONEK
-    (#xFF #x02C7)) ;; CARON
+ 'macintosh "MacRoman"
+ '(charsets (ascii latin-macintosh-roman)
    mnemonic "MR"
    documentation "The Macintosh encoding for Western Europe and the Americas"
    aliases (cp10000 MacRoman)))
- 
-(make-coding-system
- 'windows-1252 'fixed-width "Microsoft's CP1252"
- '(unicode-map
-   ((#x80 #x20AC) ;; EURO SIGN
-    (#x82 #x201A) ;; SINGLE LOW-9 QUOTATION MARK
-    (#x83 #x0192) ;; LATIN SMALL LETTER F WITH HOOK
-    (#x84 #x201E) ;; DOUBLE LOW-9 QUOTATION MARK
-    (#x85 #x2026) ;; HORIZONTAL ELLIPSIS
-    (#x86 #x2020) ;; DAGGER
-    (#x87 #x2021) ;; DOUBLE DAGGER
-    (#x88 #x02C6) ;; MODIFIER LETTER CIRCUMFLEX ACCENT
-    (#x89 #x2030) ;; PER MILLE SIGN
-    (#x8A #x0160) ;; LATIN CAPITAL LETTER S WITH CARON
-    (#x8B #x2039) ;; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-    (#x8C #x0152) ;; LATIN CAPITAL LIGATURE OE
-    (#x8E #x017D) ;; LATIN CAPITAL LETTER Z WITH CARON
-    (#x91 #x2018) ;; LEFT SINGLE QUOTATION MARK
-    (#x92 #x2019) ;; RIGHT SINGLE QUOTATION MARK
-    (#x93 #x201C) ;; LEFT DOUBLE QUOTATION MARK
-    (#x94 #x201D) ;; RIGHT DOUBLE QUOTATION MARK
-    (#x95 #x2022) ;; BULLET
-    (#x96 #x2013) ;; EN DASH
-    (#x97 #x2014) ;; EM DASH
-    (#x98 #x02DC) ;; SMALL TILDE
-    (#x99 #x2122) ;; TRADE MARK SIGN
-    (#x9A #x0161) ;; LATIN SMALL LETTER S WITH CARON
-    (#x9B #x203A) ;; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-    (#x9C #x0153) ;; LATIN SMALL LIGATURE OE
-    (#x9E #x017E) ;; LATIN SMALL LETTER Z WITH CARON
-    (#x9F #x0178) ;; LATIN CAPITAL LETTER Y WITH DIAERESIS
-    (#xA0 #x00A0) ;; NO-BREAK SPACE
-    (#xA1 #x00A1) ;; INVERTED EXCLAMATION MARK
-    (#xA2 #x00A2) ;; CENT SIGN
-    (#xA3 #x00A3) ;; POUND SIGN
-    (#xA4 #x00A4) ;; CURRENCY SIGN
-    (#xA5 #x00A5) ;; YEN SIGN
-    (#xA6 #x00A6) ;; BROKEN BAR
-    (#xA7 #x00A7) ;; SECTION SIGN
-    (#xA8 #x00A8) ;; DIAERESIS
-    (#xA9 #x00A9) ;; COPYRIGHT SIGN
-    (#xAA #x00AA) ;; FEMININE ORDINAL INDICATOR
-    (#xAB #x00AB) ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xAC #x00AC) ;; NOT SIGN
-    (#xAD #x00AD) ;; SOFT HYPHEN
-    (#xAE #x00AE) ;; REGISTERED SIGN
-    (#xAF #x00AF) ;; MACRON
-    (#xB0 #x00B0) ;; DEGREE SIGN
-    (#xB1 #x00B1) ;; PLUS-MINUS SIGN
-    (#xB2 #x00B2) ;; SUPERSCRIPT TWO
-    (#xB3 #x00B3) ;; SUPERSCRIPT THREE
-    (#xB4 #x00B4) ;; ACUTE ACCENT
-    (#xB5 #x00B5) ;; MICRO SIGN
-    (#xB6 #x00B6) ;; PILCROW SIGN
-    (#xB7 #x00B7) ;; MIDDLE DOT
-    (#xB8 #x00B8) ;; CEDILLA
-    (#xB9 #x00B9) ;; SUPERSCRIPT ONE
-    (#xBA #x00BA) ;; MASCULINE ORDINAL INDICATOR
-    (#xBB #x00BB) ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    (#xBC #x00BC) ;; VULGAR FRACTION ONE QUARTER
-    (#xBD #x00BD) ;; VULGAR FRACTION ONE HALF
-    (#xBE #x00BE) ;; VULGAR FRACTION THREE QUARTERS
-    (#xBF #x00BF) ;; INVERTED QUESTION MARK
-    (#xC0 #x00C0) ;; LATIN CAPITAL LETTER A WITH GRAVE
-    (#xC1 #x00C1) ;; LATIN CAPITAL LETTER A WITH ACUTE
-    (#xC2 #x00C2) ;; LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    (#xC3 #x00C3) ;; LATIN CAPITAL LETTER A WITH TILDE
-    (#xC4 #x00C4) ;; LATIN CAPITAL LETTER A WITH DIAERESIS
-    (#xC5 #x00C5) ;; LATIN CAPITAL LETTER A WITH RING ABOVE
-    (#xC6 #x00C6) ;; LATIN CAPITAL LETTER AE
-    (#xC7 #x00C7) ;; LATIN CAPITAL LETTER C WITH CEDILLA
-    (#xC8 #x00C8) ;; LATIN CAPITAL LETTER E WITH GRAVE
-    (#xC9 #x00C9) ;; LATIN CAPITAL LETTER E WITH ACUTE
-    (#xCA #x00CA) ;; LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    (#xCB #x00CB) ;; LATIN CAPITAL LETTER E WITH DIAERESIS
-    (#xCC #x00CC) ;; LATIN CAPITAL LETTER I WITH GRAVE
-    (#xCD #x00CD) ;; LATIN CAPITAL LETTER I WITH ACUTE
-    (#xCE #x00CE) ;; LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    (#xCF #x00CF) ;; LATIN CAPITAL LETTER I WITH DIAERESIS
-    (#xD0 #x00D0) ;; LATIN CAPITAL LETTER ETH
-    (#xD1 #x00D1) ;; LATIN CAPITAL LETTER N WITH TILDE
-    (#xD2 #x00D2) ;; LATIN CAPITAL LETTER O WITH GRAVE
-    (#xD3 #x00D3) ;; LATIN CAPITAL LETTER O WITH ACUTE
-    (#xD4 #x00D4) ;; LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    (#xD5 #x00D5) ;; LATIN CAPITAL LETTER O WITH TILDE
-    (#xD6 #x00D6) ;; LATIN CAPITAL LETTER O WITH DIAERESIS
-    (#xD7 #x00D7) ;; MULTIPLICATION SIGN
-    (#xD8 #x00D8) ;; LATIN CAPITAL LETTER O WITH STROKE
-    (#xD9 #x00D9) ;; LATIN CAPITAL LETTER U WITH GRAVE
-    (#xDA #x00DA) ;; LATIN CAPITAL LETTER U WITH ACUTE
-    (#xDB #x00DB) ;; LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    (#xDC #x00DC) ;; LATIN CAPITAL LETTER U WITH DIAERESIS
-    (#xDD #x00DD) ;; LATIN CAPITAL LETTER Y WITH ACUTE
-    (#xDE #x00DE) ;; LATIN CAPITAL LETTER THORN
-    (#xDF #x00DF) ;; LATIN SMALL LETTER SHARP S
-    (#xE0 #x00E0) ;; LATIN SMALL LETTER A WITH GRAVE
-    (#xE1 #x00E1) ;; LATIN SMALL LETTER A WITH ACUTE
-    (#xE2 #x00E2) ;; LATIN SMALL LETTER A WITH CIRCUMFLEX
-    (#xE3 #x00E3) ;; LATIN SMALL LETTER A WITH TILDE
-    (#xE4 #x00E4) ;; LATIN SMALL LETTER A WITH DIAERESIS
-    (#xE5 #x00E5) ;; LATIN SMALL LETTER A WITH RING ABOVE
-    (#xE6 #x00E6) ;; LATIN SMALL LETTER AE
-    (#xE7 #x00E7) ;; LATIN SMALL LETTER C WITH CEDILLA
-    (#xE8 #x00E8) ;; LATIN SMALL LETTER E WITH GRAVE
-    (#xE9 #x00E9) ;; LATIN SMALL LETTER E WITH ACUTE
-    (#xEA #x00EA) ;; LATIN SMALL LETTER E WITH CIRCUMFLEX
-    (#xEB #x00EB) ;; LATIN SMALL LETTER E WITH DIAERESIS
-    (#xEC #x00EC) ;; LATIN SMALL LETTER I WITH GRAVE
-    (#xED #x00ED) ;; LATIN SMALL LETTER I WITH ACUTE
-    (#xEE #x00EE) ;; LATIN SMALL LETTER I WITH CIRCUMFLEX
-    (#xEF #x00EF) ;; LATIN SMALL LETTER I WITH DIAERESIS
-    (#xF0 #x00F0) ;; LATIN SMALL LETTER ETH
-    (#xF1 #x00F1) ;; LATIN SMALL LETTER N WITH TILDE
-    (#xF2 #x00F2) ;; LATIN SMALL LETTER O WITH GRAVE
-    (#xF3 #x00F3) ;; LATIN SMALL LETTER O WITH ACUTE
-    (#xF4 #x00F4) ;; LATIN SMALL LETTER O WITH CIRCUMFLEX
-    (#xF5 #x00F5) ;; LATIN SMALL LETTER O WITH TILDE
-    (#xF6 #x00F6) ;; LATIN SMALL LETTER O WITH DIAERESIS
-    (#xF7 #x00F7) ;; DIVISION SIGN
-    (#xF8 #x00F8) ;; LATIN SMALL LETTER O WITH STROKE
-    (#xF9 #x00F9) ;; LATIN SMALL LETTER U WITH GRAVE
-    (#xFA #x00FA) ;; LATIN SMALL LETTER U WITH ACUTE
-    (#xFB #x00FB) ;; LATIN SMALL LETTER U WITH CIRCUMFLEX
-    (#xFC #x00FC) ;; LATIN SMALL LETTER U WITH DIAERESIS
-    (#xFD #x00FD) ;; LATIN SMALL LETTER Y WITH ACUTE
-    (#xFE #x00FE) ;; LATIN SMALL LETTER THORN
-    (#xFF #x00FF)) ;; LATIN SMALL LETTER Y WITH DIAERESIS
+
+(make-one-dimension-windows-charset 1252 'latin "ANSI")
+
+(make-coding-system 
+ 'windows-1252 'mbcs "Microsoft's CP1252"
+ '(charsets (ascii latin-windows-1252)
    documentation "Microsoft's extension of iso-8859-1 for Western Europe \
 and the Americas.  "
    mnemonic "cp1252"

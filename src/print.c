@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
    Copyright (C) 1985, 1986, 1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1504,7 +1504,7 @@ printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
 {
   struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   /* This must be a real lcrecord */
   assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
 #endif
@@ -1512,11 +1512,11 @@ printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
   if (name)
     printing_unreadable_object
       ("#<%s %s 0x%x>",
-#ifdef MC_ALLOC
+#ifdef NEW_GC
        LHEADER_IMPLEMENTATION (header)->name,
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
        LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
        name,
        header->uid);
   else
@@ -1536,7 +1536,7 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 {
   struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   /* This must be a real lcrecord */
   assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
 #endif

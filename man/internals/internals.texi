@@ -11201,11 +11201,7 @@ Dimension-1 Private Marker and Dimension-2 Private Marker, respectively.
 There are two internal encodings for characters in XEmacs/Mule.  One is
 called @dfn{string encoding} and is an 8-bit encoding that is used for
 representing characters in a buffer or string.  It uses 1 to 4 bytes per
-<<<<<<< /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-character.  The other is called @dfn{character encoding} and is a 19-bit
-=======
 character.  The other is called @dfn{character encoding} and is a 21-bit
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 encoding that is used for representing characters individually in a
 variable.
 
@@ -11301,7 +11297,6 @@ alphabets are grouped together.
 @cindex character encoding, internal
 @cindex encoding, internal character
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/man/internals/internals.texi
 In the new old-Mule encoding, one 21-bit word represents a single
 character.  The word is again separated into three fields:
 
@@ -11359,13 +11354,6 @@ and Latin 1.
 
 In the original old-Mule encoding, one 19-bit word represented a single
 character.  The word was separated into three fields:
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-  One 19-bit word represents a single character.  The word is
-separated into three fields:
-=======
-  One 21-bit word represents a single character.  The word is
-separated into three fields:
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 
 @example
 Bit number:     20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
@@ -11393,36 +11381,6 @@ Dimension-2 private     LB - 0x80         PC1             PC2
 Composite                 0x1F             ?               ?
 @end example
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/man/internals/internals.texi
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-Note that character codes 0 - 255 are the same as the ``binary
-encoding'' described above.
-
-Most of the code in XEmacs knows nothing of the representation of a
-character other than that values 0 - 255 represent ASCII, Control 1,
-and Latin 1.
-
-@strong{WARNING WARNING WARNING}: The Boyer-Moore code in
-@file{search.c}, and the code in @code{search_buffer()} that determines
-whether that code can be used, knows that ``field 3'' in a character
-always corresponds to the last byte in the textual representation of the
-character. (This is important because the Boyer-Moore algorithm works by
-looking at the last byte of the search string and &&#### finish this.
-=======
-Note also that character codes 0 - 255 are the same as the ``binary
-encoding'' described above.
-
-Most of the code in XEmacs knows nothing of the representation of a
-character other than that values 0 - 255 represent ASCII, Control 1,
-and Latin 1.
-
-@strong{WARNING WARNING WARNING}: The Boyer-Moore code in
-@file{search.c}, and the code in @code{search_buffer()} that determines
-whether that code can be used, knows that ``field 3'' in a character
-always corresponds to the last byte in the textual representation of the
-character. (This is important because the Boyer-Moore algorithm works by
-looking at the last byte of the search string and &&#### finish this.
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 
 @node Byte/Character Types; Buffer Positions; Other Typedefs, Internal Text APIs, Internal Mule Encodings, Multilingual Support
 @section Byte/Character Types; Buffer Positions; Other Typedefs
@@ -11642,22 +11600,10 @@ the same as the representation of that same character in a string; thus,
 you cannot do the standard C trick of passing a pointer to a character
 to a function that expects a string.
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/man/internals/internals.texi
 An Ichar takes up 21 bits of representation in old-Mule and up to 30
 bits in Unicode-internal and (for code compatibility and such) is
 compatible with an int.  This representation is visible on the Lisp
 level.  The important characteristics of the Ichar representation are
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-An Ichar takes up 19 bits of representation and (for code compatibility
-and such) is compatible with an int.  This representation is visible on
-the Lisp level.  The important characteristics of the Ichar
-representation are
-=======
-An Ichar takes up 21 bits of representation and (for code compatibility
-and such) is compatible with an int.  This representation is visible on
-the Lisp level.  The important characteristics of the Ichar
-representation are
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 
 @itemize @minus
 @item
@@ -17164,19 +17110,6 @@ work done to get mule working under ms windows, but in the process
 i've [of course] fixed a whole lot of other things as well, mostly
 mule issues.  the specifics:
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/man/internals/internals.texi
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-@file{mule-mcpath.c} provides some functions to allow for pathnames
-containing extended characters.  This code is fragmentary, obsolete, and
-completely non-working.  Instead, @code{pathname-coding-system} is used
-to specify conversions of names of files and directories.  The standard
-C I/O functions like @samp{open()} are wrapped so that conversion occurs
-automatically.
-
-@file{mule.c} contains a few miscellaneous things.  It currently seems
-to be unused and probably should be removed.
-
-=======
 @itemize
 @item
 it compiles and runs under windows and should basically work.  the
@@ -17222,7 +17155,6 @@ up.
 @item
 there is a preliminary implementation of windows ime support courtesy
 of ikeyama.
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 
 @item
 if you want to get cyrillic working under windows (it appears to "work"
@@ -17256,20 +17188,8 @@ kludge, of course.)
 present in the fsf version, for compatibility.
 @end itemize
 
-<<<<<<< /xemacs/hg-unicode-premerge-merge-2009/man/internals/internals.texi
-||||||| /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~base.k8oVDM
-@example
-@file{iso-wide.h}
-@end example
-
-This contains leftover code from an earlier implementation of
-Asian-language support, and is not currently used.
 
 
-=======
-
-
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/internals.texi~other.-gvfUV
 @node Consoles; Devices; Frames; Windows, The Redisplay Mechanism, Multilingual Support, Top
 @chapter Consoles; Devices; Frames; Windows
 @cindex consoles; devices; frames; windows

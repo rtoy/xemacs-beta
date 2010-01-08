@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1138,7 +1138,7 @@ struct opaque_convert_functions
 #define XD_LISP_DYNARR_DESC(base_type, sub_desc)			\
   { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
     XD_INDIRECT(1, 0), {sub_desc} },					\
-  { XD_INT,        offsetof (base_type, cur) },				\
+  { XD_INT,        offsetof (base_type, len) },				\
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
 #endif /* not NEW_GC */
 

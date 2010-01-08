@@ -1,5 +1,5 @@
 /* Code to handle Unicode conversion.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -353,7 +353,7 @@ static const struct memory_description from_unicode_level_4_desc_1[] = {
   { XD_END }
 };
 
-static Lisp_Object_dynarr *unicode_precedence_dynarr;
+static Lisp_Object_dynarr *global_unicode_precedence_dynarr;
 
 Lisp_Object Vlanguage_unicode_precedence_list;
 Lisp_Object Vdefault_unicode_precedence_list;
@@ -423,7 +423,25 @@ decode_unicode (Lisp_Object unicode)
   return (int) val;
 }
 
-#ifdef MULE
+#ifndef MULE
+
+void
+free_precedence_dynarr (Lisp_Object_dynarr *precdyn)
+{
+  text_checking_assert (!precdyn);
+}
+
+/* Convert the given list of charsets (not previously validated) into a
+   precedence dynarr for use with unicode_to_charset_codepoint().  When
+   done, free the dynarr with free_precedence_dynarr(). */
+
+Lisp_Object_dynarr *
+convert_charset_list_to_precedence_dynarr (Lisp_Object UNUSED (precedence_list))
+{
+  return NULL;
+}
+
+#else /* MULE */
 
 static void
 init_blank_unicode_tables (void)
@@ -1027,10 +1045,10 @@ get_free_codepoint (Lisp_Object charset)
 
    1. The lookup would otherwise fail. 
 
-   2. The charsets array is the nil or the default. 
+   2. The precedence_list array is the nil or the default. 
 
    If there are no free code points in the just-in-time Unicode character
-   set, and the charsets array is the default unicode precedence list,
+   set, and the precedence_list array is the default unicode precedence list,
    create a new just-in-time Unicode character set, add it at the end of the
    unicode precedence list, create the XEmacs character in that character
    set, and return it. */
@@ -1038,7 +1056,8 @@ get_free_codepoint (Lisp_Object charset)
 /* Convert a Unicode codepoint to a charset codepoint. */
 
 void
-non_ascii_unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *charsets,
+non_ascii_unicode_to_charset_codepoint (int code,
+					Lisp_Object_dynarr *precedence_list,
 					Lisp_Object *charset, int *c1, int *c2)
 {
   int u1, u2, u3, u4;
@@ -1046,10 +1065,9 @@ non_ascii_unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *charsets,
   int code_levels;
 #endif
   int i;
-  int n = Dynarr_length (charsets);
+  int n = Dynarr_length (precedence_list);
 
-  text_checking_assert (valid_unicode_codepoint_p (code),
-			UNICODE_ALLOW_PRIVATE);
+  text_checking_assert (valid_unicode_codepoint_p (code, UNICODE_ALLOW_PRIVATE));
   text_checking_assert (code >= 128);
 
   /* @@#### This optimization is not necessarily correct.  See comment in
@@ -1066,7 +1084,7 @@ non_ascii_unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *charsets,
 
   for (i = 0; i < n; i++)
     {
-      *charset = Dynarr_at (charsets, i);
+      *charset = Dynarr_at (precedence_list, i);
       void *table = XCHARSET_FROM_UNICODE_TABLE (*charset);
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
       if (!table)
@@ -1127,7 +1145,7 @@ non_ascii_unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *charsets,
 
   /* Only do the magic just-in-time assignment if we're using the default
      list. */ 
-  if (unicode_precedence_dynarr == charsets) 
+  if (global_unicode_precedence_dynarr == precedence_list) 
     {
       if (NILP (Vcurrent_jit_charset) || 
 	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
@@ -1317,7 +1335,7 @@ private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
    Vprecedence_calculation_hash, which is not cleared at the beginning;
    you must do that. */
 static void
-add_charsets_to_precedence_list (Lisp_Object list, Lisp_Object_dynarr *dynarr)
+add_charsets_to_precedence_list (Lisp_Object list, Lisp_Object_dynarr *preclist)
 {
   {
     EXTERNAL_LIST_LOOP_2 (elt, list)
@@ -1325,7 +1343,7 @@ add_charsets_to_precedence_list (Lisp_Object list, Lisp_Object_dynarr *dynarr)
 	Lisp_Object charset = Fget_charset (elt);
 	if (NILP (Fgethash (charset, Vprecedence_calculation_hash, Qnil)))
 	  {
-	    Dynarr_add (dynarr, charset);
+	    Dynarr_add (preclist, charset);
 	    Fputhash (charset, Qt, Vprecedence_calculation_hash);
 	  }
       }
@@ -1340,7 +1358,7 @@ rup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 {
   if (NILP (Fgethash (value, Vprecedence_calculation_hash, Qnil)))
     {
-      Dynarr_add (unicode_precedence_dynarr, value);
+      Dynarr_add (global_unicode_precedence_dynarr, value);
       Fputhash (value, Qt, Vprecedence_calculation_hash);
     }
   return 0;
@@ -1354,17 +1372,17 @@ rup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 void
 recalculate_unicode_precedence (void)
 {
-  Dynarr_reset (unicode_precedence_dynarr);
+  Dynarr_reset (global_unicode_precedence_dynarr);
 
   /* Assume precedence-calculation-hash was cleared at the end of any
      previous operation */
   add_charsets_to_precedence_list (Vlanguage_unicode_precedence_list,
-				   unicode_precedence_dynarr);
+				   global_unicode_precedence_dynarr);
   add_charsets_to_precedence_list (Vdefault_unicode_precedence_list,
-				   unicode_precedence_dynarr);
+				   global_unicode_precedence_dynarr);
 
 
-  /* Now add all remaining charsets to unicode_precedence_dynarr */
+  /* Now add all remaining charsets to global_unicode_precedence_dynarr */
   elisp_maphash (rup_mapper, Vcharset_hash_table, NULL);
 
   /* Maintain invariant assumption as described above */
@@ -1374,13 +1392,20 @@ recalculate_unicode_precedence (void)
 Lisp_Object_dynarr *
 get_unicode_precedence (void)
 {
-  return unicode_precedence_dynarr;
+  return global_unicode_precedence_dynarr;
+}
+
+Lisp_Object_dynarr *
+get_buffer_unicode_precedence (struct buffer *UNUSED (buf))
+{
+  /* @@####  Implement me */
+  return global_unicode_precedence_dynarr;
 }
 
 void
 free_precedence_dynarr (Lisp_Object_dynarr *dynarr)
 {
-  if (dynarr != unicode_precedence_dynarr)
+  if (dynarr != global_unicode_precedence_dynarr)
     Dynarr_free (dynarr);
 }
 
@@ -1389,16 +1414,16 @@ free_precedence_dynarr (Lisp_Object_dynarr *dynarr)
    done, free the dynarr with free_precedence_dynarr(). */
 
 Lisp_Object_dynarr *
-convert_charset_list_to_precedence_dynarr (Lisp_Object charsets)
+convert_charset_list_to_precedence_dynarr (Lisp_Object precedence_list)
 {
   Lisp_Object_dynarr *dyn;
 
-  if (NILP (charsets))
+  if (NILP (precedence_list))
     return get_unicode_precedence ();
 
   /* Must validate before allocating (or use unwind-protect) */
   {
-    EXTERNAL_LIST_LOOP_2 (elt, charsets)
+    EXTERNAL_LIST_LOOP_2 (elt, precedence_list)
       Fget_charset (elt);
   }
 
@@ -1406,7 +1431,7 @@ convert_charset_list_to_precedence_dynarr (Lisp_Object charsets)
 
   /* Assume precedence-calculation-hash was cleared at the end of any
      previous operation */
-  add_charsets_to_precedence_list (charsets, dyn);
+  add_charsets_to_precedence_list (precedence_list, dyn);
   /* Maintain invariant assumption as described above */
   Fclrhash (Vprecedence_calculation_hash);
 
@@ -1900,8 +1925,6 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
       Ichar chr = unicode_to_ichar (ch, get_unicode_precedence (),
 				    CONVERR_SUCCEED);
       Dynarr_add_ichar (dst, chr);
-#error We need to review all uses of CONVERR_SUCCEED and see whether it is
-#error the right thing to do
 #else
       if (ch < 256)
 	Dynarr_add (dst, (Ibyte) ch);
@@ -1975,15 +1998,15 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	{
 	  int first, second;
 	  
-	  CODE_TO_UTF_16_SURROGATES(code, first, second);
+	  CODE_TO_UTF_16_SURROGATES (code, first, second);
 
 	  add_16_bit_char (first, dst, little_endian);
 	  add_16_bit_char (second, dst, little_endian);
 	}
       else
 	{
-	  /* Not valid Unicode. Pass U+FFFD. */
-	  add_16_bit_char (0xFFFD, dst, little_endian);
+	  /* Not valid Unicode. Pass the replacement char (U+FFFD). */
+	  add_16_bit_char (UNICODE_REPLACEMENT_CHAR, dst, little_endian);
 	}
       break;
 
@@ -2219,7 +2242,6 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		  ch = 0;
 		  counter = 0;
 		  decode_unicode_char (tempch, dst, data, ignore_bom);
-		}
 		}
 	      else if (32 == counter)
 		{
@@ -3289,8 +3311,8 @@ vars_of_unicode (void)
   Vprecedence_calculation_hash =
     make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 
-  unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
-  dump_add_root_block_ptr (&unicode_precedence_dynarr,
+  global_unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
+  dump_add_root_block_ptr (&global_unicode_precedence_dynarr,
 			    &Lisp_Object_dynarr_description);
 
   

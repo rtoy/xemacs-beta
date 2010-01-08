@@ -37,6 +37,20 @@
 ;moved to mule-charset.el.
 ;(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)." ...
 
+(make-charset
+ 'thai-iso8859-11
+ "Right-Hand Part of Latin/Thai Alphabet (ISO/IEC 8859-11)"
+ '(dimension 1
+   registries ["ISO8859-11"]
+   chars 96
+   ;final ?T @@#### What is the final byte for this?
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-11.TXT" #xA0)
+   short-name "Thai (ISO8859-11)"
+   long-name "RHP of Thai (ISO 8859-11)"))
+
+(make-one-dimension-windows-charset 874 'thai "Thai")
+
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)
 
