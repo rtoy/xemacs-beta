@@ -1004,6 +1004,7 @@ being processed by FcFontMatch. */
 
   FcConfigSubstitute (fcc, p, FcMatchPattern);
   FcDefaultSubstitute (p);
+  res = FcResultMatch;
   res_fcpat->fcpatPtr = FcFontMatch (fcc, p, &res);
 
   if (res_fcpat->fcpatPtr == NULL)

@@ -1,3 +1,16 @@
+2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* indent.el (indent-region):
+	Make COLUMN optional as in GNU, merging Andreas Roehler's change
+	of http://mid.gmane.org/4B46F5FC.2070506@online.de ; thank you
+	Andreas!
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (map):
+	Add a compiler macro for this function, for cases where CL-TYPE is
+	constant and understood.
+
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (load-unicode-tables):
