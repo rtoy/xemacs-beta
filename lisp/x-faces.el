@@ -910,10 +910,14 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; specified.
 ;;;
 (defun x-init-global-faces ()
-  (or (face-foreground 'default 'global)
-      (set-face-foreground 'default "black" 'global '(x default)))
-  (or (face-background 'default 'global)
-      (set-face-background 'default "gray80" 'global '(x default))))
+  ;; #### NOTE: this code is probably an oldy: faces.c ensures that we have
+  ;; working fallback values so there is no need to initialize anything here. 
+  ;; -- dvl
+  ;;   (or (face-foreground 'default 'global)
+  ;;       (set-face-foreground 'default "black" 'global '(x default)))
+  ;;   (or (face-background 'default 'global)
+  ;;       (set-face-background 'default "gray80" 'global '(x default))
+  )
 
 ;;; x-init-device-faces is responsible for initializing default
 ;;; values for faces on a newly created device.
@@ -959,21 +963,21 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;; likely to know what to do about it. ]]
 
 
-  ;;
-  ;; If the "default" face didn't have both colors specified, then pick
-  ;; some, taking into account whether one of the colors was specified.
-  ;;
-  (let ((fg (face-foreground-instance 'default device))
-	(bg (face-background-instance 'default device)))
-    (if (not (and fg bg))
-	(if (or (and fg (equalp (color-instance-name fg) "white"))
-		(and bg (equalp (color-instance-name bg) "black")))
-	    (progn
-	      (or fg (set-face-foreground 'default "white" device))
-	      (or bg (set-face-background 'default "black" device)))
-	  (or fg (set-face-foreground 'default "white" device))
-	  (or bg (set-face-background 'default "black" device)))))
+  ;; #### NOTE: this code is probably an oldy as well (as per Ben's comment
+  ;; above): faces.c ensures that we have working fallback values so there is
+  ;; no need to initialize anything here. -- dvl
 
+  ;;  (let ((fg (face-foreground-instance 'default device))
+  ;;	(bg (face-background-instance 'default device)))
+  ;;    (if (not (and fg bg))
+  ;;	(if (or (and fg (equalp (color-instance-name fg) "white"))
+  ;;		(and bg (equalp (color-instance-name bg) "black")))
+  ;;	    (progn
+  ;;	      (or fg (set-face-foreground 'default "white" device))
+  ;;	      (or bg (set-face-background 'default "black" device)))
+  ;;	  (or fg (set-face-foreground 'default "white" device))
+  ;;	  (or bg (set-face-background 'default "black" device)))))
+  
   ;; Don't look at reverseVideo now or initialize the modeline.  This
   ;; is done on a per-frame basis at the appropriate time.
 
@@ -1005,17 +1009,20 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;;
   (cond ((car (x-get-resource "reverseVideo" "ReverseVideo" 'boolean frame
 			      nil 'warn))
-	 ;; First make sure the modeline has fg and bg, inherited from the
-	 ;; current default face - for the case where only one is specified,
-	 ;; so that invert-face doesn't do something weird.
-	 (or (face-foreground 'modeline frame)
-	     (set-face-foreground 'modeline
-				  (face-foreground-instance 'default frame)
-				  frame))
-	 (or (face-background 'modeline frame)
-	     (set-face-background 'modeline
-				  (face-background-instance 'default frame)
-				  frame))
+	 ;; #### NOTE: again, this is probably yet another oldy: faces.c
+	 ;; ensures sane fallbacks for the modeline face. Besides, this face
+	 ;; does not inherit from the default face, but from the gui-element
+	 ;; one.-- dvl
+
+	 ;;	 (or (face-foreground 'modeline frame)
+	 ;;	     (set-face-foreground 'modeline
+	 ;;				  (face-foreground-instance 'default frame)
+	 ;;				  frame))
+	 ;;	 (or (face-background 'modeline frame)
+	 ;;	     (set-face-background 'modeline
+	 ;;				  (face-background-instance 'default frame)
+	 ;;				  frame))
+
 	 ;; Now invert both of them.  If they end up looking the same,
 	 ;; make-frame-initial-faces will invert the modeline again later.
 	 (invert-face 'default frame)
