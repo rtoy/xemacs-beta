@@ -1320,7 +1320,7 @@ of space for elements.)
 @example
 @group
 (make-hash-table :size 50)
-     @result{} #<hash-table 0/107 0x313a>
+     @result{} #<hash-table :size 0/107 0x3babb0e4>
 @end group
 @end example
 

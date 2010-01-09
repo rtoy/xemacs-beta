@@ -65,12 +65,15 @@ specify a large rehash threshold, for example 0.8.
 Hash tables can also be created by the lisp reader using structure
 syntax, for example:
 @example
-#s(hash-table size 20 data (foo 1 bar 2))
+#s(hash-table :size 20 :data (foo 1 bar 2))
 @end example
 
-The structure syntax accepts the same keywords as @code{make-hash-table}
-(without the @code{:} character), as well as the additional keyword
-@code{data}, which specifies the initial hash table contents.
+The structure syntax accepts the same keywords as
+@code{make-hash-table}, as well as the additional keyword @code{data},
+which specifies the initial hash table contents.  Older versions of
+XEmacs required that the keywords not have the initial ``:'' in the
+structure syntax, and this version of XEmacs still supports that syntax,
+but you cannot mix the two styles within one structure.
 
 @defun make-hash-table &key @code{test} @code{size} @code{rehash-size} @code{rehash-threshold} @code{weakness}
 This function returns a new empty hash table object.

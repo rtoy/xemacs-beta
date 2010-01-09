@@ -22,6 +22,14 @@
 	Remove references to xmu.c and xmu.h.
 	(Modules for Interfacing with X Windows): Ditto.
 
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Hash Table Type):
+	* lispref/hash-tables.texi (Introduction to Hash Tables):
+	Use keywords, not ordinary symbols, in the hash table read syntax;
+	document that we do accept the ordinary symbols for the sake of
+	backward-compatiblity.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* internals/internals.texi (XEmacs from the Perspective of Building):

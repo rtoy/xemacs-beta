@@ -151,6 +151,13 @@
 	* font.el (x-font-create-object): Check for Xft before using it.
 	This fixes the symptom in openSUSE bug #558764.
 
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unihan-field-descriptions):
+	* cl-macs.el:
+	Use keywords, not ordinary symbols, in the hash table read syntax,
+	for compatibility with Common Lisp and recent GNU Emacs.
+
 2009-11-10  Jerry James  <james@xemacs.org>
 
 	* device.el (device-type): Remove (mostly imaginary) support for

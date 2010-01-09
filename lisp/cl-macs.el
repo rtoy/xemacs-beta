@@ -2598,7 +2598,7 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
 ;; I've just done) in the body of this function, and the following gives the
 ;; wrong behaviour for gethash:
 ;; 
-;; (setq my-hash-table #s(hash-table test equal data ())
+;; (setq my-hash-table #s(hash-table :test equal :data ())
 ;;       print-gensym t)
 ;; => t
 ;; (gethash "my-key" my-hash-table (gensym))
