@@ -357,18 +357,18 @@ static Lisp_Object_dynarr *global_unicode_precedence_dynarr;
 
 Lisp_Object Vlanguage_unicode_precedence_list;
 Lisp_Object Vdefault_unicode_precedence_list;
-/* Used internally in the conversion of a precedence list into a dynarr */
-Lisp_Object Vprecedence_calculation_hash;
+/* Used internally in the generation of precedence-list dynarrs, to keep
+   track of charsets already seen */
+Lisp_Object Vprecedence_list_charsets_seen_hash;
 
 Lisp_Object Qignore_first_column;
 
 #ifndef UNICODE_INTERNAL
 Lisp_Object Vcurrent_jit_charset;
-Lisp_Object Qlast_allocated_character;
+int last_allocated_jit_c1, last_allocated_jit_c2;
 Lisp_Object Qccl_encode_to_ucs_2;
 
-Lisp_Object Vnumber_of_jit_charsets;
-Lisp_Object Vlast_jit_charset_final;
+int number_of_jit_charsets;
 Lisp_Object Vcharset_descr;
 #endif
 
@@ -989,54 +989,46 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 
 #ifndef UNICODE_INTERNAL
 
-static Ichar
-get_free_codepoint (Lisp_Object charset)
+static int
+get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 {
-  Lisp_Object name = Fcharset_name (charset);
-  Lisp_Object zeichen = Fget(name, Qlast_allocated_character, Qnil);
-  Ichar res;
-
-  /* Only allow this with the 96x96 character sets we are using for
-     temporary Unicode support. */
-  assert (2 == XCHARSET_DIMENSION (charset) &&
-	  96 == XCHARSET_CHARS (charset, 0) &&
-	  96 == XCHARSET_CHARS (charset, 1));
-
-  if (!NILP (zeichen))
+  if (!NILP (Vcurrent_jit_charset) &&
+      !(last_allocated_jit_c1 == 127 && last_allocated_jit_c2 == 127))
     {
-      int c1, c2;
-
-      ichar_to_charset_codepoint (XCHAR (zeichen), get_unicode_precedence(),
-				  &charset, &c1, &c2);
-
-      if (127 == c1 && 127 == c2)
+      if (127 == last_allocated_jit_c2)
 	{
-	  /* We've already used the hightest-numbered character in this
-	     set--tell our caller to create another. */
-	  return -1;
-	}
-
-      if (127 == c2)
-	{
-	  ++c1;
-	  c2 = 0x20;
+	  ++last_allocated_jit_c1;
+	  last_allocated_jit_c2 = 0x20;
 	}
       else
 	{
-	  ++c2;
+	  ++last_allocated_jit_c2;
 	}
-
-      res = charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
-      text_checking_assert (res >= 0);
-      Fput (name, Qlast_allocated_character, make_char (res));
     }
   else
     {
-      res = charset_codepoint_to_ichar (charset, 32, 32, CONVERR_FAIL);
-      text_checking_assert (res >= 0);
-      Fput (name, Qlast_allocated_character, make_char (res));
+      Ibyte setname[100];
+      qxesprintf (setname, "jit-ucs-charset-%d", number_of_jit_charsets);
+
+      Vcurrent_jit_charset = Fmake_charset 
+	(intern ((const CIbyte *) setname), Vcharset_descr, 
+	 nconc2 (list6 (Qcolumns, make_int (1), Qchars,
+			make_int (96),
+			Qdimension, make_int (2)),
+		 list4 (Qregistries, Qunicode_registries,
+			/* This CCL program is initialised in
+			   unicode.el. */
+			Qccl_program, Qccl_encode_to_ucs_2)));
+      XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
+      last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
+
+      number_of_jit_charsets++;
     }
-  return res;
+
+  *charset = Vcurrent_jit_charset;
+  *c1 = last_allocated_jit_c1;
+  *c2 = last_allocated_jit_c2;
+  return 1;
 }
 #endif /* not UNICODE_INTERNAL */
 
@@ -1053,12 +1045,17 @@ get_free_codepoint (Lisp_Object charset)
    unicode precedence list, create the XEmacs character in that character
    set, and return it. */
 
-/* Convert a Unicode codepoint to a charset codepoint. */
+/* Convert a Unicode codepoint to a charset codepoint.  PRECEDENCE_LIST is
+   a list of charsets.  The charsets will be consulted in order for
+   characters that match the Unicode codepoint.  If PREDICATE is non-NULL,
+   only charsets that pass the predicate will be considered. */
 
 void
 non_ascii_unicode_to_charset_codepoint (int code,
 					Lisp_Object_dynarr *precedence_list,
-					Lisp_Object *charset, int *c1, int *c2)
+					int (*predicate) (Lisp_Object),
+					Lisp_Object *charset,
+					int *c1, int *c2)
 {
   int u1, u2, u3, u4;
 #ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
@@ -1067,7 +1064,7 @@ non_ascii_unicode_to_charset_codepoint (int code,
   int i;
   int n = Dynarr_length (precedence_list);
 
-  text_checking_assert (valid_unicode_codepoint_p (code, UNICODE_ALLOW_PRIVATE));
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
   text_checking_assert (code >= 128);
 
   /* @@#### This optimization is not necessarily correct.  See comment in
@@ -1084,8 +1081,12 @@ non_ascii_unicode_to_charset_codepoint (int code,
 
   for (i = 0; i < n; i++)
     {
+      void *table;
+
       *charset = Dynarr_at (precedence_list, i);
-      void *table = XCHARSET_FROM_UNICODE_TABLE (*charset);
+      if (predicate && !(*predicate) (*charset))
+	continue;
+      table = XCHARSET_FROM_UNICODE_TABLE (*charset);
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
       if (!table)
 	{
@@ -1144,59 +1145,24 @@ non_ascii_unicode_to_charset_codepoint (int code,
   /* Non-Unicode-internal: Maybe do just-in-time assignment */
 
   /* Only do the magic just-in-time assignment if we're using the default
-     list. */ 
+     list.  This check is done because we don't want to do this assignment
+     if we're using a partial list of charsets and if we're not using the
+     default list, we don't know whether the list is full.
+
+     @@#### We might want to rethink this, and will have to if/when we
+     have buffer-local precedence lists.
+     */ 
   if (global_unicode_precedence_dynarr == precedence_list) 
     {
-      if (NILP (Vcurrent_jit_charset) || 
-	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
-	{
-	  Ibyte setname[32]; 
-	  int number_of_jit_charsets = XINT (Vnumber_of_jit_charsets);
-	  Ascbyte last_jit_charset_final = XCHAR (Vlast_jit_charset_final);
+      Lisp_Object jit_charset;
+      int jit_c1, jit_c2;
 
-	  /* This final byte shit is, umm, not that cool. */
-	  assert (last_jit_charset_final >= 0x30);
-
-	  /* Assertion added partly because our Win32 layer doesn't
-	     support snprintf; with this, we're sure it won't overflow
-	     the buffer.  */
-	  assert(100 > number_of_jit_charsets);
-
-	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets);
-
-	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern((const CIbyte *)setname), Vcharset_descr, 
-	     /* Set encode-as-utf-8 to t, to have this character set written
-		using UTF-8 escapes in escape-quoted and ctext. This
-		sidesteps the fact that our internal character -> Unicode
-		mapping is not stable from one invocation to the next.  */
-	     nconc2 (list2(Qencode_as_utf_8, Qt),
-		     nconc2 (list6(Qcolumns, make_int(1), Qchars, make_int(96),
-				   Qdimension, make_int(2)),
-			     list6(Qregistries, Qunicode_registries,
-				   Qfinal, make_char(last_jit_charset_final),
-				   /* This CCL program is initialised in
-				      unicode.el. */
-				   Qccl_program, Qccl_encode_to_ucs_2))));
-
-	  /* Record for the Unicode infrastructure that we've created
-	     this character set.  */
-	  Vnumber_of_jit_charsets = make_int (number_of_jit_charsets + 1);
-	  Vlast_jit_charset_final = make_char (last_jit_charset_final + 1);
-
-	  i = get_free_codepoint(Vcurrent_jit_charset);
-	} 
-
-      if (-1 != i)
-	{
-	  set_unicode_conversion((Ichar)i, code);
-	  /* No need to add the charset to the end of the list; it's done
-	     automatically. */
-	}
+      if (get_free_jit_codepoint (&jit_charset, &jit_c1, &jit_c2))
+	set_unicode_conversion (code, jit_charset, jit_c1, jit_c2);
     }
   if (i != -1)
     {
-      ichar_to_charset_codepoint((Ichar) i, NULL, charset, c1, c2);
+      ichar_to_charset_codepoint ((Ichar) i, NULL, charset, c1, c2);
       goto done;
     }
 #endif /* not UNICODE_INTERNAL */
@@ -1205,7 +1171,7 @@ non_ascii_unicode_to_charset_codepoint (int code,
   return;
 
 done:
-  text_checking_assert (valid_charset_codepoint_p (*charset, *c1, *c2));
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
   return;
 }
 
@@ -1326,28 +1292,81 @@ private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
     }
 }
 
-/****************** code to handle Unicode precedence lists ******************/
+/***************************************************************************/
+/*                                                                         */
+/*                code to handle Unicode precedence lists                  */
+/*                                                                         */
+/***************************************************************************/
 
-/* Add charsets to precedence list.
-   LIST must be a list of charsets.  Charsets which are in the list more
-   than once are given the precedence implied by their earliest appearance.
-   Later appearances are ignored.  This makes use of the hash table in
-   Vprecedence_calculation_hash, which is not cleared at the beginning;
-   you must do that. */
+/************
+
+  NOTE: Unicode precedence lists are used when converting Unicode
+  codepoints to charset codepoints.  There may be more than one charset
+  containing a character matching a given Unicode codepoint; to determine
+  which charset to use, we use a precedence list.  Externally, precedence
+  lists are just lists, but internally we use a Lisp_Object_dynarr.
+
+************/
+
+void
+begin_precedence_list_generation (void)
+{
+  Fclrhash (Vprecedence_list_charsets_seen_hash);
+}
+
+/* Add a single charset to a precedence list.  Charsets already present
+   are not added.  To keep track of charsets already seen, this makes use
+   of a hash table.  At the beginning of generating the list, you must
+   call begin_precedence_list_generation(). */
+
+void
+add_charset_to_precedence_list (Lisp_Object charset,
+				Lisp_Object_dynarr *preclist)
+{
+  if (NILP (Fgethash (charset, Vprecedence_list_charsets_seen_hash, Qnil)))
+    {
+      Dynarr_add (preclist, charset);
+      Fputhash (charset, Qt, Vprecedence_list_charsets_seen_hash);
+    }
+}
+
+/* Add a list of charsets to a precedence list.  LIST must be a list of
+   charsets or charset names.  Charsets already present are not added.  To
+   keep track of charsets already seen, this makes use of a hash table.  At
+   the beginning of generating the list, you must call
+   begin_precedence_list_generation(). */
+
 static void
-add_charsets_to_precedence_list (Lisp_Object list, Lisp_Object_dynarr *preclist)
+add_charsets_to_precedence_list (Lisp_Object list,
+				 Lisp_Object_dynarr *preclist)
 {
   {
     EXTERNAL_LIST_LOOP_2 (elt, list)
       {
 	Lisp_Object charset = Fget_charset (elt);
-	if (NILP (Fgethash (charset, Vprecedence_calculation_hash, Qnil)))
-	  {
-	    Dynarr_add (preclist, charset);
-	    Fputhash (charset, Qt, Vprecedence_calculation_hash);
-	  }
+	add_charset_to_precedence_list (charset, preclist);
       }
   }
+}
+
+/* Go through ORIG_PRECLIST and add all charsets to NEW_PRECLIST that pass
+   the predicate, if not already added.  To keep track of charsets already
+   seen, this makes use of a hash table.  At the beginning of generating
+   the list, you must call begin_precedence_list_generation().  PREDICATE
+   is passed a charset and should return non-zero if the charset is to be
+   added.  If PREDICATE is NULL, always add the charset. */
+void
+filter_precedence_list (Lisp_Object_dynarr *orig_preclist,
+			Lisp_Object_dynarr *new_preclist,
+			int (*predicate) (Lisp_Object))
+{
+  int i;
+  for (i = 0; i < Dynarr_length (orig_preclist); i++)
+    {
+      Lisp_Object charset = Dynarr_at (orig_preclist, i);
+      if (!predicate || (*predicate) (charset))
+	add_charset_to_precedence_list (charset, new_preclist);
+    }
 }
 
 /* Called for each pair of (symbol, charset) in the hash table tracking
@@ -1356,10 +1375,10 @@ static int
 rup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 	    void * UNUSED (closure))
 {
-  if (NILP (Fgethash (value, Vprecedence_calculation_hash, Qnil)))
+  if (NILP (Fgethash (value, Vprecedence_list_charsets_seen_hash, Qnil)))
     {
       Dynarr_add (global_unicode_precedence_dynarr, value);
-      Fputhash (value, Qt, Vprecedence_calculation_hash);
+      Fputhash (value, Qt, Vprecedence_list_charsets_seen_hash);
     }
   return 0;
 }
@@ -1374,8 +1393,7 @@ recalculate_unicode_precedence (void)
 {
   Dynarr_reset (global_unicode_precedence_dynarr);
 
-  /* Assume precedence-calculation-hash was cleared at the end of any
-     previous operation */
+  begin_precedence_list_generation ();
   add_charsets_to_precedence_list (Vlanguage_unicode_precedence_list,
 				   global_unicode_precedence_dynarr);
   add_charsets_to_precedence_list (Vdefault_unicode_precedence_list,
@@ -1384,9 +1402,6 @@ recalculate_unicode_precedence (void)
 
   /* Now add all remaining charsets to global_unicode_precedence_dynarr */
   elisp_maphash (rup_mapper, Vcharset_hash_table, NULL);
-
-  /* Maintain invariant assumption as described above */
-  Fclrhash (Vprecedence_calculation_hash);
 }
 
 Lisp_Object_dynarr *
@@ -1429,11 +1444,8 @@ convert_charset_list_to_precedence_dynarr (Lisp_Object precedence_list)
 
   dyn = Dynarr_new (Lisp_Object);
 
-  /* Assume precedence-calculation-hash was cleared at the end of any
-     previous operation */
+  begin_precedence_list_generation ();
   add_charsets_to_precedence_list (precedence_list, dyn);
-  /* Maintain invariant assumption as described above */
-  Fclrhash (Vprecedence_calculation_hash);
 
   return dyn;
 }
@@ -1548,6 +1560,10 @@ See `unicode-precedence-list' for more information.
   return Vdefault_unicode_precedence_list;
 }
 
+/***************************************************************************/
+/*                set up Unicode <-> charset codepoint conversion          */
+/***************************************************************************/
+
 DEFUN ("set-unicode-conversion", Fset_unicode_conversion,
        3, 4, 0, /*
 Add conversion information between Unicode and charset codepoints.
@@ -1568,7 +1584,7 @@ CHARSET (see `make-char').
 {
   int a1, a2;
   int ucp = decode_unicode (unicode);
-  charset = get_external_charset_codepoint (charset, c1, c2, &a1, &a2);
+  charset = get_external_charset_codepoint (charset, c1, c2, &a1, &a2, 0);
   
   /* The translations of ASCII, Control-1, and Latin-1 code points are
      hard-coded in ichar_to_unicode and unicode_to_ichar.
@@ -2308,7 +2324,8 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		    {
                       /* ch is not a legal Unicode character. We're fine
                          with that in UCS-4, though not in UTF-32. */
-                      if (UNICODE_UCS_4 == type && ch < 0x80000000)
+                      if (UNICODE_UCS_4 == type &&
+			  (unsigned long) ch < 0x80000000L)
                         {
                           decode_unicode_char (ch, dst, data, ignore_bom);
                         }
@@ -3081,8 +3098,9 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
       else
         {
           fail_range_start = pos;
-          while ((pos < end) &&  
-                 ((checked_unicode = ichar_to_unicode (ch),
+          while ((pos < end) &&
+		 /* @@#### Is CONVERR_FAIL correct? */
+                 ((checked_unicode = ichar_to_unicode (ch, CONVERR_FAIL),
                    -1 == checked_unicode
                    && (failed_reason = query_coding_unencodable))
                   || (!(flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES) &&
@@ -3226,7 +3244,6 @@ syms_of_unicode (void)
 
 #ifndef UNICODE_INTERNAL
   DEFSYMBOL (Qccl_encode_to_ucs_2);
-  DEFSYMBOL (Qlast_allocated_character);
   DEFSYMBOL (Qignore_first_column);
 #endif /* not UNICODE_INTERNAL */
 
@@ -3293,13 +3310,10 @@ vars_of_unicode (void)
 
 #ifdef MULE
 #ifndef UNICODE_INTERNAL
-  staticpro (&Vnumber_of_jit_charsets);
-  Vnumber_of_jit_charsets = make_int (0);
-  staticpro (&Vlast_jit_charset_final);
-  Vlast_jit_charset_final = make_char (0x30);
+  number_of_jit_charsets = 0;
   staticpro (&Vcharset_descr);
   Vcharset_descr
-    = build_string ("Mule charset for otherwise unknown Unicode code points.");
+    = build_msg_string ("Mule charset for otherwise unknown Unicode code points.");
 #endif
   staticpro (&Vlanguage_unicode_precedence_list);
   Vlanguage_unicode_precedence_list = Qnil;
@@ -3307,9 +3321,9 @@ vars_of_unicode (void)
   staticpro (&Vdefault_unicode_precedence_list);
   Vdefault_unicode_precedence_list = Qnil;
 
-  staticpro (&Vprecedence_calculation_hash);
-  Vprecedence_calculation_hash =
-    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+  staticpro (&Vprecedence_list_charsets_seen_hash);
+  Vprecedence_list_charsets_seen_hash =
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
 
   global_unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
   dump_add_root_block_ptr (&global_unicode_precedence_dynarr,
@@ -3348,11 +3362,11 @@ vars_of_unicode (void)
   DEFVAR_LISP ("unicode-registries", &Qunicode_registries /*
 Vector describing the X11 registries searched when using fallback fonts.
 
-"Fallback fonts" here includes by default those fonts used by redisplay when
-displaying charsets for which the `encode-as-utf-8' property is true, and
-those used when no font matching the charset's registries property has been
-found (that is, they're probably Mule-specific charsets like Ethiopic or
-IPA.)
+"Fallback fonts" here includes by default those fonts used by redisplay
+when displaying JIT charsets (used in non-Unicode-internal for holding
+Unicode codepoints that can't be otherwise represented), and those used
+when no font matching the charset's registries property has been found
+(that is, they're probably Mule-specific charsets like Ethiopic or IPA).
 */ );
   Qunicode_registries = vector1(build_string("iso10646-1"));
 

@@ -589,7 +589,7 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 
   if (!NILP (charset))
     matchspec = noseeum_cons (charset,
-			      stage == initial ? Qinitial : Qfinal);
+			      stage == STAGE_INITIAL ? Qinitial : Qfinal);
 
   GCPRO1 (matchspec);
   /* This call to specifier_instance_no_quit(), will end up calling
@@ -602,7 +602,7 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
   if (CONSP (matchspec))
     free_cons (matchspec);
 
-  if (UNBOUNDP (retval) && !no_fallback && final == stage)
+  if (UNBOUNDP (retval) && !no_fallback && STAGE_FINAL == stage)
     {
       if (EQ (property, Qfont))
 	{
@@ -1160,7 +1160,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       /* ERROR_ME_DEBUG_WARN is
 						  fine here.  */
 					       ERROR_ME_DEBUG_WARN, 1, Qzero,
-					       initial);
+					       STAGE_INITIAL);
     DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
 		"result was something %s\n",
 		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
@@ -1182,15 +1182,15 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
 					       Qzero,
-					       initial);
+					       STAGE_INITIAL);
 
-    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
-		"allow fallback, result was something %s\n",
-		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
-		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
-		UNBOUNDP(new_val) ? "not bound" : "bound");
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
 
-    if (!UNBOUNDP(new_val))
+    if (!UNBOUNDP (new_val))
       {
 	break;
       }
@@ -1201,7 +1201,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 1,
 					       Qzero,
-					       final);
+					       STAGE_FINAL);
 
     DEBUG_FACES("just called f_p_m_i on face %s, charset %s, final, "
 		"result was something %s\n",
@@ -1209,7 +1209,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
 		UNBOUNDP(new_val) ? "not bound" : "bound");
     /* Tell X11 redisplay that it should translate to iso10646-1. */
-    if (!UNBOUNDP(new_val))
+    if (!UNBOUNDP (new_val))
       {
 	final_stage = 1;
 	break;
@@ -1223,13 +1223,13 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
 					       Qzero,
-					       final);
+					       STAGE_FINAL);
 
-    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
-		"allow fallback, result was something %s\n",
-		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
-		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
-		UNBOUNDP(new_val) ? "not bound" : "bound");
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
     if (!UNBOUNDP(new_val))
       {
 	/* Tell X11 redisplay that it should translate to iso10646-1. */
@@ -2037,13 +2037,13 @@ Lisp_Object Qone_dimensional, Qtwo_dimensional, Qx_coverage_instantiator;
 
 DEFUN ("specifier-tag-one-dimensional-p",
        Fspecifier_tag_one_dimensional_p,
-       2, 2, 0, /*
+       1, 1, 0, /*
 Return non-nil if (charset-dimension CHARSET) is 1.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this yourself.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
   CHECK_CHARSET (charset);
   return (1 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
@@ -2051,13 +2051,13 @@ shouldn't ever need to call this yourself.
 
 DEFUN ("specifier-tag-two-dimensional-p",
        Fspecifier_tag_two_dimensional_p,
-       2, 2, 0, /*
+       1, 1, 0, /*
 Return non-nil if (charset-dimension CHARSET) is 2.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this yourself.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
   CHECK_CHARSET (charset);
   return (2 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
@@ -2071,9 +2071,9 @@ Return non-nil if STAGE is 'final.
 Used by the X11 platform font code for giving fallbacks; see
 `define-specifier-tag'.  You shouldn't ever need to call this.
 */
-       (UNUSED(charset), stage))
+       (UNUSED (charset), stage))
 {
-  return EQ(stage, Qfinal) ? Qt : Qnil;
+  return EQ (stage, Qfinal) ? Qt : Qnil;
 }
 
 DEFUN ("specifier-tag-initial-stage-p",
@@ -2084,25 +2084,33 @@ Return non-nil if STAGE is 'initial.
 Used by the X11 platform font code for giving fallbacks; see
 `define-specifier-tag'.  You shouldn't ever need to call this.
 */
-       (UNUSED(charset), stage))
+       (UNUSED (charset), stage))
 {
-  return EQ(stage, Qinitial) ? Qt : Qnil;
+  return EQ (stage, Qinitial) ? Qt : Qnil;
 }
 
-DEFUN ("specifier-tag-encode-as-utf-8-p",
-       Fspecifier_tag_encode_as_utf_8_p,
-       2, 2, 0, /*
-Return t if and only if (charset-property CHARSET 'encode-as-utf-8)).
+#ifndef UNICODE_INTERNAL
+
+Lisp_Object Qjit_charset;
+
+DEFUN ("specifier-tag-jit-charset-p",
+       Fspecifier_tag_jit_charset_p,
+       1, 1, 0, /*
+Return t if and only if charset is an internal JIT charset.
+These are used for holding Unicode codepoints that don't have any
+equivalent as an encodable charset codepoint.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
-  /* Used to check that the stage was initial too. */
-  CHECK_CHARSET(charset);
-  return XCHARSET_ENCODE_AS_UTF_8(charset) ? Qt : Qnil;
+  /* Used to take a stage and check that the stage was initial too. */
+  CHECK_CHARSET (charset);
+  return XCHARSET (charset)->jit_charset_p ? Qt : Qnil;
 }
+
+#endif /* not UNICODE_INTERNAL */
 
 #endif /* MULE */
 
@@ -2137,7 +2145,10 @@ syms_of_faces (void)
   DEFSUBR (Fspecifier_tag_two_dimensional_p);
   DEFSUBR (Fspecifier_tag_initial_stage_p);
   DEFSUBR (Fspecifier_tag_final_stage_p);
-  DEFSUBR (Fspecifier_tag_encode_as_utf_8_p);
+#ifndef UNICODE_INTERNAL
+  DEFSYMBOL (Qjit_charset);
+  DEFSUBR (Fspecifier_tag_jit_charset_p);
+#endif /* not UNICODE_INTERNAL */
 #endif /* MULE */
 
   DEFSYMBOL (Qfacep);
@@ -2318,20 +2329,22 @@ complex_vars_of_faces (void)
        these allows for distinct fallback fonts for distinct dimensions of
        character sets and stages.  */
 
-    define_specifier_tag(Qtwo_dimensional, Qnil,
+    define_specifier_tag (Qtwo_dimensional, Qnil,
 			 intern ("specifier-tag-two-dimensional-p"));
 
-    define_specifier_tag(Qone_dimensional, Qnil,
+    define_specifier_tag (Qone_dimensional, Qnil,
 			 intern ("specifier-tag-one-dimensional-p"));
 
-    define_specifier_tag(Qinitial, Qnil,
+    define_specifier_tag (Qinitial, Qnil,
 			 intern ("specifier-tag-initial-stage-p"));
 
-    define_specifier_tag(Qfinal, Qnil,
+    define_specifier_tag (Qfinal, Qnil,
 			 intern ("specifier-tag-final-stage-p"));
 
-    define_specifier_tag (Qencode_as_utf_8, Qnil,
-			  intern("specifier-tag-encode-as-utf-8-p"));
+#ifndef UNICODE_INTERNAL
+    define_specifier_tag (Qjit_charset, Qnil,
+			  intern ("specifier-tag-jit-charset-p"));
+#endif /* not UNICODE_INTERNAL */
 
     /* This tag is used to group those instantiators made available in the
        fallback for the sake of coverage of obscure characters, notably
@@ -2390,6 +2403,7 @@ complex_vars_of_faces (void)
 				build_string (*fontptr)),
 			 inst_list);
 
+#ifndef UNICODE_INTERNAL
     /* We need to set the font for the JIT-ucs-charsets separately from the
        final stage, since otherwise it picks up the two-dimensional
        specification (see specifier-tag-two-dimensional-initial-stage-p
@@ -2399,10 +2413,12 @@ complex_vars_of_faces (void)
     inst_list =
       Fcons
       (Fcons
-       (list4(device_symbol, Qencode_as_utf_8, Qinitial, Qx_coverage_instantiator),
+       (list4 (device_symbol, Qjit_charset, Qinitial,
+	       Qx_coverage_instantiator),
 	build_string
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
+#endif /* not UNICODE_INTERNAL */
 
 #endif /* MULE */
 

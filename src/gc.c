@@ -1677,7 +1677,10 @@ gc_mark_root_set (
 
 #ifdef NEW_GC
   { /* mcpro () */
-    mark_Lisp_Object_dynarr (mcpros);
+    Lisp_Object *p = Dynarr_begin (mcpros);
+    Elemcount count;
+    for (count = Dynarr_length (mcpros); count; count--)
+      mark_object (*p++);
   }
 #endif /* NEW_GC */
 

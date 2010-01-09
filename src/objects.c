@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -884,19 +884,20 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   Lisp_Object instance;
   Lisp_Object charset = Qnil;
 #ifdef MULE
-  enum font_specifier_matchspec_stages stage = initial;
+  enum font_specifier_matchspec_stages stage = STAGE_INITIAL;
 
   if (!UNBOUNDP (matchspec))
     {
       charset = Fget_charset (XCAR (matchspec));
 
-#define FROB(new_stage) if (EQ(Q##new_stage, XCDR(matchspec)))	\
-	    {							\
-	      stage = new_stage;				\
+#define FROB(new_stage, enumstage)			\
+          if (EQ(Q##new_stage, XCDR(matchspec)))	\
+	    {						\
+	      stage = enumstage;			\
 	    }
 
-	  FROB(initial)
-	  else FROB(final)
+	  FROB (initial, STAGE_INITIAL)
+	  else FROB (final, STAGE_FINAL)
 	  else assert(0);
 
 #undef FROB
@@ -924,7 +925,8 @@ font_instantiate (Lisp_Object UNUSED (specifier),
     {
 #ifdef MULE
       /* #### rename these caches. */
-      Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
+      Lisp_Object cache = stage == STAGE_FINAL ?
+	d->charset_font_cache_stage_2 :
 	d->charset_font_cache_stage_1;
 #else
       Lisp_Object cache = d->font_instance_cache;
@@ -986,13 +988,13 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 
       match_inst = face_property_matching_instance
 	(Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	 charset, domain, ERROR_ME, no_fallback, depth, initial);
+	 charset, domain, ERROR_ME, no_fallback, depth, STAGE_INITIAL);
 
       if (UNBOUNDP(match_inst))
 	{
 	  match_inst = face_property_matching_instance
 	    (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	     charset, domain, ERROR_ME, no_fallback, depth, final);
+	     charset, domain, ERROR_ME, no_fallback, depth, STAGE_FINAL);
 	}
 
       return match_inst;

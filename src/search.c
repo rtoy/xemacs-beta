@@ -1482,6 +1482,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		      new_bytelen = set_itext_ichar (tmp_str, translated);
 		    }
 		}
+	    }
 
 	  memcpy (pat, tmp_str, new_bytelen);
 	  pat += new_bytelen;
@@ -1489,9 +1490,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  len -= orig_bytelen;
 	}
 
-      if (-1 == charset_base)
+      if (char_base_len == -1)
         {
-          charset_base = 'a' & ~ICHAR_FIELD3_MASK; /* Default to ASCII. */
+          char_base_len = 1; /* Default to ASCII. */
         }
 
 #else /* not MULE */
@@ -1716,9 +1717,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
   Ibyte translate_prev[MAX_ICHAR_LEN];
-  Ibyte translate_prev_num = 0;
-  Ibyte translate_prev_byte = 0;
-  Ibyte translate_anteprev_byte = 0;
+  Bytecount translate_prev_len = 0;
   /* These need to be rethought in the event that the internal format
      changes, or in the event that num_8_bit_fixed_chars disappears
      (entirely_one_byte_p can be trivially worked out by checking is the
@@ -1805,6 +1804,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	  if (pat_end - ptr == 1 || ibyte_first_byte_p (ptr[1]))
 	    {
 	      Ibyte *charstart = ptr;
+	      Ichar untranslated;
+
 	      while (!ibyte_first_byte_p (*charstart))
 		charstart--;
 	      untranslated = itext_ichar (charstart);
@@ -1815,7 +1816,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		 won't be any zero's in them. */
 	      xzero (translate_prev);
 	      while (!ibyte_first_byte_p (*ptr2))
-		translate_prev[translate_prev_num++] = *--ptr2;
+		translate_prev[translate_prev_len++] = *--ptr2;
 
               if (ch != untranslated) /* Was translation done? */
 		{
@@ -1842,13 +1843,14 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 			  ++count;
 			} while (starting_ch != ch);
 
-		      /* If starting_ch is equal to ch (and count is not one,
-			 which means no translation is necessary), the case
-			 table is corrupt. (Any mapping in the canon table
-			 should be reflected in the equivalence table, and we
-			 know from the canon table that untranslated maps to
-			 starting_ch and that untranslated has the correct value
-			 for charset_base.) */
+		      /* If starting_ch is equal to ch (and count is not
+			 one, which means no translation is necessary), the
+			 case table is corrupt. (Any mapping in the canon
+			 table should be reflected in the equivalence
+			 table, and we know from the canon table that
+			 untranslated maps to starting_ch and that
+			 untranslated when converted to Itext has the
+			 correct value for all but the final byte.) */
 		      assert (1 == count || starting_ch != ch);
 		    }
 		}

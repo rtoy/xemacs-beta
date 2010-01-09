@@ -48,6 +48,7 @@ Lisp_Object Vcharset_latin_iso8859_2;
 Lisp_Object Vcharset_latin_iso8859_3;
 Lisp_Object Vcharset_latin_iso8859_4;
 Lisp_Object Vcharset_thai_tis620;
+Lisp_Object Vcharset_arabic_iso8859_6;
 Lisp_Object Vcharset_greek_iso8859_7;
 Lisp_Object Vcharset_hebrew_iso8859_8;
 Lisp_Object Vcharset_katakana_jisx0201;
@@ -206,6 +207,7 @@ Lisp_Object
   Qlatin_iso8859_3,
   Qlatin_iso8859_4,
   Qthai_tis620,
+  Qarabic_iso8859_6,
   Qgreek_iso8859_7,
   Qhebrew_iso8859_8,
   Qkatakana_jisx0201,
@@ -438,8 +440,8 @@ get_charset_iso2022_type (Lisp_Object cs)
    so encoded; we should relax this restriction. */
 
 static int
-old_mule_charset_encodable (int dimension, int size0, int size1, int offset0,
-			    int offset1)
+old_mule_charset_encodable_by_properties (int dimension, int size0, int size1,
+					  int offset0, int offset1)
 {
   int size0_ok, size1_ok;
 
@@ -457,6 +459,12 @@ old_mule_charset_encodable (int dimension, int size0, int size1, int offset0,
       text_checking_assert (dimension == 2);
       return size0_ok && size1_ok;
     }
+}
+
+int
+old_mule_charset_encodable (Lisp_Object charset)
+{
+  return XCHARSET_ID (charset) <= MAX_ENCODABLE_CHARSET_ID;
 }
 
 #endif /* defined (MULE) && !defined (UNICODE_INTERNAL) */
@@ -620,7 +628,6 @@ make_charset (int id, int no_init_unicode_tables,
 	      int graphic, Ibyte final, int direction,  Lisp_Object short_name,
 	      Lisp_Object long_name, Lisp_Object doc_string,
 	      Lisp_Object registries, int overwrite,
-	      int encode_as_utf_8,
 	      int algo_low_or_internal_p
 	      )
 {
@@ -639,8 +646,8 @@ make_charset (int id, int no_init_unicode_tables,
 #ifdef UNICODE_INTERNAL
       id = next_charset_id++;
 #else
-      if (!old_mule_charset_encodable (dimension, size0, size1,
-				       offset0, offset1))
+      if (!old_mule_charset_encodable_by_properties (dimension, size0, size1,
+						     offset0, offset1))
 	/* Make sure the ID's are above all encodable ID's */
 	id = 1 + MAX_ENCODABLE_CHARSET_ID + next_charset_id++;
       else
@@ -736,18 +743,18 @@ make_charset (int id, int no_init_unicode_tables,
   XCHARSET_FINAL	(obj) = final;
   XCHARSET_DOC_STRING	(obj) = doc_string;
   XCHARSET_REGISTRIES	(obj) = registries;
-  XCHARSET_ENCODE_AS_UTF_8 (obj) = encode_as_utf_8;
+
   /* Sanity checking -- for internal charsets, make sure that the offset
      range agrees with the graphic range.  We don't do this for external
      charsets because the user might choose to set the values so they
      don't correspond. */
   if (algo_low_or_internal_p == CSET_INTERNAL)
     {
-      assert ((graphic == 0 && offset0 < 128) ||
-	      (graphic == 1 && offset0 >= 128));
       if (dimension == 2)
-	assert ((graphic == 0 && offset1 < 128) ||
-		(graphic == 1 && offset1 >= 128));
+	assert ((graphic == 0 && offset0 < 128) ||
+		(graphic == 1 && offset0 >= 128));
+      assert ((graphic == 0 && offset1 < 128) ||
+	      (graphic == 1 && offset1 >= 128));
     }
   if (algo_low_or_internal_p < 0)
     algo_low_or_internal_p = -1;
@@ -851,12 +858,6 @@ character set.  Recognized properties are:
 		is passed the octets of the character, which will be within
                 the limits established by `offset' and `chars'.  CCL is not
                 available when (featurep 'unicode-internal).
-`encode-as-utf-8'
-		If non-nil, the charset will be written out using the UTF-8
-		escape syntax in ISO 2022-oriented coding systems.  Used for
-		supporting characters we know are part of Unicode but not of
-		any other known character set in escape-quoted and compound
-		text.
 */
        (name, doc_string, props))
 {
@@ -871,7 +872,6 @@ character set.  Recognized properties are:
   Lisp_Object ccl_program = Qnil;
 #endif /* HAVE_CCL */
   Lisp_Object short_name = Qnil, long_name = Qnil;
-  int encode_as_utf_8 = 0;
   Lisp_Object existing_charset = Qnil;
   int temporary = UNBOUNDP (name);
 
@@ -970,11 +970,6 @@ character set.  Recognized properties are:
 	      invalid_constant ("Invalid value for `direction'", value);
 	  }
 
-	else if (EQ (keyword, Qencode_as_utf_8))
-	  {
-	    encode_as_utf_8 = NILP (value) ? 0 : 1;
-	  }
-
 	else if (EQ (keyword, Qfinal))
 	  {
 	    CHECK_CHAR_COERCE_INT (value);
@@ -1044,7 +1039,7 @@ character set.  Recognized properties are:
 			  offset1, columns, graphic,
 			  final, direction, short_name, long_name,
 			  doc_string, registries, !NILP (existing_charset),
-			  encode_as_utf_8, CSET_EXTERNAL);
+			  CSET_EXTERNAL);
 
   XCHARSET (charset)->temporary = temporary;
 #ifdef HAVE_CCL
@@ -1076,7 +1071,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
        (charset, new_name))
 {
   Lisp_Object new_charset = Qnil;
-  int dimension, columns, graphic, encode_as_utf_8;
+  int dimension, columns, graphic;
   Ibyte final;
   int direction;
   Lisp_Object registries, doc_string, short_name, long_name;
@@ -1105,14 +1100,13 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   short_name = CHARSET_SHORT_NAME (cs);
   long_name = CHARSET_LONG_NAME (cs);
   registries = CHARSET_REGISTRIES (cs);
-  encode_as_utf_8 = CHARSET_ENCODE_AS_UTF_8 (cs);
 
   new_charset = make_charset (-1, 0, new_name, dimension,
 			      CHARSET_CHARS (cs, 0), CHARSET_CHARS (cs, 1),
 			      CHARSET_OFFSET (cs, 0), CHARSET_OFFSET (cs, 1),
 			      columns, graphic, final, direction, short_name,
 			      long_name, doc_string, registries, 0,
-			      encode_as_utf_8, CSET_EXTERNAL);
+			      CSET_EXTERNAL);
 
   CHARSET_REVERSE_DIRECTION_CHARSET (cs) = new_charset;
   XCHARSET_REVERSE_DIRECTION_CHARSET (new_charset) = charset;
@@ -1261,8 +1255,6 @@ Recognized properties are those listed in `make-charset', as well as
 		      make_int (CHARSET_OFFSET (cs, 1)));
     }
   if (EQ (prop, Qregistries))    return CHARSET_REGISTRIES (cs);
-  if (EQ (prop, Qencode_as_utf_8))
-    return CHARSET_ENCODE_AS_UTF_8 (cs) ? Qt : Qnil;
 #ifdef HAVE_CCL
   if (EQ (prop, Qccl_program)) return CHARSET_CCL_PROGRAM (cs);
 #endif /* HAVE_CCL */
@@ -1553,6 +1545,7 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qlatin_iso8859_3);
   DEFSYMBOL (Qlatin_iso8859_4);
   DEFSYMBOL (Qthai_tis620);
+  DEFSYMBOL (Qarabic_iso8859_6);
   DEFSYMBOL (Qgreek_iso8859_7);
   DEFSYMBOL (Qhebrew_iso8859_8);
   DEFSYMBOL (Qkatakana_jisx0201);
@@ -1665,7 +1658,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ASCII"),
 		  build_msg_string ("ASCII"),
 		  build_msg_string ("ASCII (left half of ISO 8859-1)"),
-		  vector1 (build_string ("iso8859-1")), 0, 0,
+		  vector1 (build_string ("iso8859-1")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_control_1);
   Vcharset_control_1 =
@@ -1675,7 +1668,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("C1"),
 		  build_msg_string ("Control characters"),
 		  build_msg_string ("Control characters 128-159"),
-		  vector1 (build_string ("iso8859-1")), 0, 0,
+		  vector1 (build_string ("iso8859-1")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_1);
   Vcharset_latin_iso8859_1 =
@@ -1685,7 +1678,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-1"),
 		  build_msg_string ("RHP of Latin-1 (ISO 8859-1): ISO-IR-100"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"),
-		  vector1 (build_string ("iso8859-1")), 0, 0,
+		  vector1 (build_string ("iso8859-1")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_2);
   Vcharset_latin_iso8859_2 =
@@ -1695,7 +1688,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-2"),
 		  build_msg_string ("RHP of Latin-2 (ISO 8859-2): ISO-IR-101"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 2 (ISO/IEC 8859-2): ISO-IR-101"),
-		  vector1 (build_string ("iso8859-2")), 0, 0,
+		  vector1 (build_string ("iso8859-2")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_3);
   Vcharset_latin_iso8859_3 =
@@ -1705,7 +1698,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-3"),
 		  build_msg_string ("RHP of Latin-3 (ISO 8859-3): ISO-IR-109"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 3 (ISO/IEC 8859-3): ISO-IR-109"),
-		  vector1 (build_string ("iso8859-3")), 0, 0,
+		  vector1 (build_string ("iso8859-3")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_4);
   Vcharset_latin_iso8859_4 =
@@ -1715,7 +1708,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-4"),
 		  build_msg_string ("RHP of Latin-4 (ISO 8859-4): ISO-IR-110"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 4 (ISO/IEC 8859-4): ISO-IR-110"),
-		  vector1 (build_string ("iso8859-4")), 0, 0,
+		  vector1 (build_string ("iso8859-4")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_thai_tis620);
   Vcharset_thai_tis620 =
@@ -1725,7 +1718,18 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Thai (TIS620)"),
 		  build_msg_string ("RHP of Thai (TIS620): ISO-IR-166"),
 		  build_msg_string ("Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"),
-		  vector1 (build_string ("tis620.2529-1")), 0, 0,
+		  vector1 (build_string ("tis620.2529-1")), 0,
+		  CSET_INTERNAL);
+  staticpro (&Vcharset_arabic_iso8859_6);
+  Vcharset_arabic_iso8859_6 =
+    /* This one is in the private charset ID space. */
+    make_charset (-1, 0, Qarabic_iso8859_6, 1,
+		  1, 96, 0, 160, 1, 1, 'G',
+		  CHARSET_LEFT_TO_RIGHT,
+		  build_string ("Arabic (ISO8859-6)"),
+		  build_msg_string ("RHP of Arabic (ISO 8859-6): ISO-IR-127"),
+		  build_msg_string ("Right-Hand Part of Latin/Arabic Alphabet (ISO/IEC 8859-6): ISO-IR-127"),
+		  vector1 (build_string ("iso8859-6")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_greek_iso8859_7);
   Vcharset_greek_iso8859_7 =
@@ -1735,7 +1739,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Greek (ISO8859-7)"),
 		  build_msg_string ("RHP of Greek (ISO 8859-7): ISO-IR-126"),
 		  build_msg_string ("Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"),
-		  vector1 (build_string ("iso8859-7")), 0, 0,
+		  vector1 (build_string ("iso8859-7")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_hebrew_iso8859_8);
   Vcharset_hebrew_iso8859_8 =
@@ -1745,7 +1749,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Hebrew (ISO8859-8)"),
 		  build_msg_string ("RHP of Hebrew (ISO 8859-8): ISO-IR-138"),
 		  build_msg_string ("Right-Hand Part of Latin/Hebrew Alphabet (ISO/IEC 8859-8): ISO-IR-138"),
-		  vector1 (build_string ("iso8859-8")), 0, 0,
+		  vector1 (build_string ("iso8859-8")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_katakana_jisx0201);
   Vcharset_katakana_jisx0201 =
@@ -1755,7 +1759,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Japanese (JISX0201 Kana)"),
 		  build_msg_string ("Japanese Katakana (JISX0201.1976)"),
 		  build_msg_string ("Katakana Part of JISX0201.1976"),
-		  vector1 (build_string ("jisx0201.1976-0")), 0, 0,
+		  vector1 (build_string ("jisx0201.1976-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_jisx0201);
   Vcharset_latin_jisx0201 =
@@ -1765,7 +1769,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Japanese (JISX0201 Roman)"),
 		  build_msg_string ("Japanese Roman (JISX0201.1976)"),
 		  build_msg_string ("Roman Part of JISX0201.1976"),
-		  vector1 (build_string ("jisx0201.1976-0")), 0, 0,
+		  vector1 (build_string ("jisx0201.1976-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_cyrillic_iso8859_5);
   Vcharset_cyrillic_iso8859_5 =
@@ -1775,7 +1779,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Cyrillic (ISO8859-5)"),
 		  build_msg_string ("RHP of Cyrillic (ISO 8859-5): ISO-IR-144"),
 		  build_msg_string ("Right-Hand Part of Latin/Cyrillic Alphabet (ISO/IEC 8859-5): ISO-IR-144"),
-		  vector1 (build_string ("iso8859-5")), 0, 0,
+		  vector1 (build_string ("iso8859-5")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_9);
   Vcharset_latin_iso8859_9 =
@@ -1785,7 +1789,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-5"),
 		  build_msg_string ("RHP of Latin-5 (ISO 8859-9): ISO-IR-148"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 5 (ISO/IEC 8859-9): ISO-IR-148"),
-		  vector1 (build_string ("iso8859-9")), 0, 0,
+		  vector1 (build_string ("iso8859-9")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_15);
   Vcharset_latin_iso8859_15 =
@@ -1799,7 +1803,7 @@ complex_vars_of_mule_charset (void)
 "languages. The set provides for the languages enumerated in ISO/IEC\n"
 "8859-1. In addition, it contains the EURO SIGN and provides support for the\n"
 "French, and Finnish languages in addition.\""),
-		  vector1 (build_string ("iso8859-15")), 0, 0,
+		  vector1 (build_string ("iso8859-15")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_japanese_jisx0208_1978);
   Vcharset_japanese_jisx0208_1978 =
@@ -1812,7 +1816,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string
 		  ("JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"),
 		  vector2 (build_string ("jisx0208.1978-0"),
-			   build_string ("jisc6226.1978-0")), 0, 0,
+			   build_string ("jisc6226.1978-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_chinese_gb2312);
   Vcharset_chinese_gb2312 =
@@ -1823,7 +1827,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Chinese simplified (GB2312): ISO-IR-58"),
 		  build_msg_string ("GB2312 Chinese simplified: ISO-IR-58"),
 		  vector2 (build_string ("gb2312.1980-0"), 
-			   build_string ("gb2312.80&gb8565.88-0")), 0, 0,
+			   build_string ("gb2312.80&gb8565.88-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_japanese_jisx0208);
   Vcharset_japanese_jisx0208 =
@@ -1834,7 +1838,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("JISX0208.1983/1990 (Japanese): ISO-IR-87"),
 		  build_msg_string ("JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"),
 		  vector2 (build_string ("jisx0208.1983-0"),
-			   build_string ("jisx0208.1990-0")), 0, 0,
+			   build_string ("jisx0208.1990-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_korean_ksc5601);
   Vcharset_korean_ksc5601 =
@@ -1844,7 +1848,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Korean (KSC5601)"),
 		  build_msg_string ("Korean (KSC5601): ISO-IR-149"),
 		  build_msg_string ("KSC5601 Korean Hangul and Hanja: ISO-IR-149"),
-		  vector1 (build_string ("ksc5601.1987-0")), 0, 0,
+		  vector1 (build_string ("ksc5601.1987-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_japanese_jisx0212);
   Vcharset_japanese_jisx0212 =
@@ -1854,7 +1858,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Japanese (JISX0212)"),
 		  build_msg_string ("JISX0212 (Japanese): ISO-IR-159"),
 		  build_msg_string ("JISX0212 Japanese supplement: ISO-IR-159"),
-		  vector1 (build_string ("jisx0212.1990-0")), 0, 0,
+		  vector1 (build_string ("jisx0212.1990-0")), 0,
 		  CSET_INTERNAL);
 
 #define CHINESE_CNS_PLANE(n) "cns11643.1992-" n
@@ -1867,7 +1871,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Chinese traditional (CNS11643-1): ISO-IR-171"),
 		  build_msg_string
 		  ("CNS11643 Plane 1 Chinese traditional: ISO-IR-171"),
-		  vector1 (build_string (CHINESE_CNS_PLANE("1"))), 0, 0,
+		  vector1 (build_string (CHINESE_CNS_PLANE("1"))), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_chinese_cns11643_2);
   Vcharset_chinese_cns11643_2 =
@@ -1878,7 +1882,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Chinese traditional (CNS11643-2): ISO-IR-172"),
 		  build_msg_string
 		  ("CNS11643 Plane 2 Chinese traditional: ISO-IR-172"),
-		  vector1 (build_string (CHINESE_CNS_PLANE("2"))), 0, 0,
+		  vector1 (build_string (CHINESE_CNS_PLANE("2"))), 0,
 		  CSET_INTERNAL);
 #ifdef UNICODE_INTERNAL
   /* We can support Big5 directly. */
@@ -1902,7 +1906,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Chinese traditional (Big5)"),
 		  build_msg_string
 		  ("Big5 (Chinese traditional)"),
-		  vector1 (build_string ("big5.eten-0")), 0, 0,
+		  vector1 (build_string ("big5.eten-0")), 0,
 		  CSET_INTERNAL);
 #else /* not UNICODE_INTERNAL */
   /* Old Mule situation; we can only handle up to 96x96 charsets.
@@ -1920,7 +1924,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Chinese traditional (Big5) (Level-1) A141-C67F"),
 		  build_msg_string
 		  ("Frequently used part (A141-C67F) of Big5 (Chinese traditional)"),
-		  vector1 (build_string ("big5.eten-0")), 0, 0,
+		  vector1 (build_string ("big5.eten-0")), 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_chinese_big5_2);
   Vcharset_chinese_big5_2 =
@@ -1930,7 +1934,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Chinese traditional (Big5), L2"),
 		  build_msg_string ("Chinese traditional (Big5) (Level-2) C940-FEFE"),
 		  build_msg_string ("Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"),
-		  vector1 (build_string ("big5.eten-0")), 0, 0,
+		  vector1 (build_string ("big5.eten-0")), 0,
 		  CSET_INTERNAL);
 #endif /* UNICODE_INTERNAL */
 #ifdef UNICODE_INTERNAL
@@ -1948,7 +1952,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string
 		  ("Shift-JIS Japanese encoding of JIS X 0208:1997"),
 		  /* @@#### FIXME This is the X registry; is it right? */
-		  vector1 (build_string ("sjis")), 0, 0,
+		  vector1 (build_string ("sjis")), 0,
 		  CSET_INTERNAL);
 #endif /* UNICODE_INTERNAL */
 
@@ -1966,7 +1970,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Composite"),
 		  build_msg_string ("Composite characters"),
 		  build_msg_string ("Composite characters"),
-		  vector1 (build_string ("")), 0, 0, CSET_INTERNAL);
+		  vector1 (build_string ("")), 0, CSET_INTERNAL);
 #else
   /* We create a hack so that we have a way of storing ESC 0 and ESC 1
      sequences as "characters", so that they will be output correctly. */
@@ -1978,7 +1982,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Composite hack"),
 		  build_msg_string ("Composite characters hack"),
 		  build_msg_string ("Composite characters hack"),
-		  vector1 (build_string ("")), 0, 0, CSET_INTERNAL);
+		  vector1 (build_string ("")), 0, CSET_INTERNAL);
 #endif /* ENABLE_COMPOSITE_CHARS */
 
   /* This one is in the private charset ID space. */
@@ -1991,7 +1995,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("SiSheng (PinYin/ZhuYin)"),
 		  build_msg_string ("SiSheng characters for PinYin/ZhuYin"),
 		  vector2 (build_string ("omron_udc_zh-0"),
-			   build_string ("sisheng_cwnn-0")), 0, 0,
+			   build_string ("sisheng_cwnn-0")), 0,
 		  CSET_INTERNAL);
 
 #ifndef UNICODE_INTERNAL
@@ -2008,7 +2012,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Unicode subset (U+" #uclow "..U+" #uchigh "used for maintaining round-trip\n" \
 "compatibility for Unicode characters that have no representation in any\n" \
 "other charset."),							\
-		  build_string ("ISO10646-1"), 0, 0, 0x##lclow)
+		  build_string ("ISO10646-1"), 0, 0x##lclow)
 
 #define FROB_OFFICIAL(lclow, lchigh, uclow, uchigh) \
   FROB_1 (MAKE_CSID (UNICODE_##uclow##_##uchigh), lclow, lchigh, uclow, uchigh)
