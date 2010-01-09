@@ -44,19 +44,6 @@
 
 ;; But; it's necessary for input on X11.
 
-(make-charset
- 'arabic-iso8859-6 
- "Right-Hand Part of Latin/Arabic Alphabet (ISO/IEC 8859-6): ISO-IR-127"
- '(dimension 1
-   registries ["ISO8859-6"]
-   chars 96
-   direction r2l
-   final ?G
-   graphic 1
-   unicode-map ("unicode/unicode-consortium/ISO8859/8859-6.TXT" #xA0)
-   short-name "Arabic (ISO8859-5)"
-   long-name "RHP of Arabic (ISO 8859-6): ISO-IR-127"))
-
 (make-one-dimension-windows-charset 1256 'arabic "Arabic")
 
 (make-coding-system

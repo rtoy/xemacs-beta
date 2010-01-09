@@ -1,8 +1,6 @@
-1-5-10
+STILL TO DO:
 
-Todo while merging:
-
-1. Finish handling lisp stuff.  It's all merged, but still to do:
+-- Finish handling lisp stuff.  It's all merged, but still to do:
    a. For all charsets moved into mule-charset.el, follow the lead of
       Ethiopic and VISCII in putting notes in mule-charset.el indicating
       the file it was moved from and why (usually because the file in
@@ -30,13 +28,28 @@ Todo while merging:
       and possibly some offset info, same format as the args to
       `load-unicode-mapping-table' (#### perhaps rethink this format).  
    i. Fix up the COPYING and README files in etc/unicode/unicode-consortium.
-2. Implement a buffer-local unicode-precedence list and then review all
+
+-- Unicode precedence lists:
+
+   1. Implement a buffer-local unicode-precedence list and then review all
    uses of get_unicode_precedence() to see how to fix them up.  Sometimes you
    may need the caller to pass in a buffer or domain.
-3. We need to review all uses of CONVERR_SUCCEED and see whether it is
-   the right thing to do.
-4. Check #error in mule-ccl.c about maybe needing to reverse order of args
-   with one-dimensional charset.
+
+-- Error-handling:
+
+   1. We need to review all uses of CONVERR_SUCCEED, CONVERR_USE_PRIVATE
+      and CONVERR_SUBSTITUTE and see whether it is the right thing to do.
+   2. Review and document the use of private Unicode codepoints.  The point
+   here seems to be that in some circumstances, we want to be able to
+   represent charset codepoints as Unicode codepoints even when no official
+   conversion exists, e.g. when using the Unicode-internal representation
+   and reading in and/or recompiling a .el file containing weird charset
+   codepoints without Unicode equivalents.  Currently we create such
+   codepoints when CONVERR_SUCCEED is given, but we need to review this.
+   We also need to review calls to valid_unicode_codepoint_p() and check
+   the second argument, which determines whether private Unicode codepoints
+   are allowed.
+
 
 More todo:
 

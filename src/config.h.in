@@ -1057,15 +1057,11 @@ extern "C" {
 
 /********************* Mule defines ******************/
 
-#if defined (MULE) && !defined (UNICODE_INTERNAL)
-#define OLD_MULE
-#endif
-
 /* CCL is unworkable under UNICODE_INTERNAL currently.  See comments in
    mule-ccl.c.  Algorithmic conversion tables are currently used only for
    the Unicode-slop charsets for characters having no other representation
    in a charset. */
-#ifdef OLD_MULE
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
 #define HAVE_CCL
 #define ALLOW_ALGORITHMIC_CONVERSION_TABLES
 #endif

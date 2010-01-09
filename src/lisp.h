@@ -1641,12 +1641,13 @@ enum munge_me_out_the_door
 /* The various stages of font instantiation; initial means "find a font for
    CHARSET that matches the charset's registries" and final means "find a
    font for CHARSET that matches iso10646-1, since we haven't found a font
-   that matches its registry."  */
+   that matches its registry."
+*/
 enum font_specifier_matchspec_stages
 {
-  initial,
-  final,
-  impossible,
+  STAGE_INITIAL,
+  STAGE_FINAL,
+  NUM_MATCHSPEC_STAGES,
 };
 
 /* ------------------------------- */
@@ -5543,6 +5544,7 @@ extern Lisp_Object Vcharset_latin_iso8859_2;
 extern Lisp_Object Vcharset_latin_iso8859_3;
 extern Lisp_Object Vcharset_latin_iso8859_4;
 extern Lisp_Object Vcharset_thai_tis620;
+extern Lisp_Object Vcharset_arabic_iso8859_6;
 extern Lisp_Object Vcharset_greek_iso8859_7;
 extern Lisp_Object Vcharset_hebrew_iso8859_8;
 extern Lisp_Object Vcharset_katakana_jisx0201;
@@ -6139,6 +6141,12 @@ void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
 Lisp_Object_dynarr *get_unicode_precedence (void);
 Lisp_Object_dynarr *get_buffer_unicode_precedence (struct buffer *buf);
+void begin_precedence_list_generation (void);
+void add_charset_to_precedence_list (Lisp_Object charset,
+				     Lisp_Object_dynarr *preclist);
+void filter_precedence_list (Lisp_Object_dynarr *orig_preclist,
+			     Lisp_Object_dynarr *new_preclist,
+			     int (*predicate) (Lisp_Object));
 void recalculate_unicode_precedence (void);
 Lisp_Object_dynarr *
 convert_charset_list_to_precedence_dynarr (Lisp_Object charsets);

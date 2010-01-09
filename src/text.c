@@ -1417,7 +1417,7 @@ non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
     case 1:*--str = c | firstbyte_mask[bytes];
     }
 
-  assert_valid_ibyteptr (str);
+  ASSERT_VALID_ITEXT (str);
   return bytes;
 #else
   Lisp_Object charset;
@@ -1453,7 +1453,7 @@ non_ascii_itext_ichar (const Ibyte *str)
 
   /* The ASCII case should already have been filtered out. */
   text_checking_assert (!byte_ascii_p (*str));
-  assert_valid_ibyteptr (str);
+  ASSERT_VALID_ITEXT (str);
 
   switch (bytes)
     {
@@ -1583,7 +1583,7 @@ old_mule_non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
   int id;
 
   text_checking_assert (!byte_ascii_p (*ptr));
-  assert_valid_ibyteptr (ptr);
+  ASSERT_VALID_ITEXT (ptr);
 
   if (*ptr == LEAD_BYTE_PRIVATE_1)
     id = byte_id_to_private_charset_id (*++ptr, 1);
@@ -1644,8 +1644,8 @@ old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
    of bytes written out. */
 
 Bytecount
-old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset, int c1,
-						   int c2, Ibyte *ptr)
+old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset,
+						   int c1, int c2, Ibyte *ptr)
 {
   Ibyte *p = ptr;
   int id = XCHARSET_ID (charset);
@@ -1673,7 +1673,7 @@ old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset, int c1,
     *p++ = c1 | 0x80;
   *p++ = c2 | 0x80;
 
-  assert_valid_ibyteptr (ptr);
+  ASSERT_VALID_ITEXT (ptr);
   return (p - ptr);
 }
 
@@ -1703,9 +1703,9 @@ old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
   }
 }
 
-/* Convert a Unicode codepoint to an Ichar.  Return value will
-   correspond to FAIL-  possibly (Ichar) -1, a substituted character, or
-   something else. */
+/* Convert a Unicode codepoint to an Ichar.  Return value will correspond
+   to FAIL -- possibly (Ichar) -1, a substituted character, or something
+   else. */
 
 Ichar
 old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
@@ -1725,8 +1725,11 @@ old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
   if (code < 0xA0)
     return (Ichar) code;
 
-  non_ascii_unicode_to_charset_codepoint (code, precedence_list, &charset, &c1,
-					  &c2);
+  /* Convert to a charset codepoint, but ignore charsets that can't be
+     encoded into text */
+  non_ascii_unicode_to_charset_codepoint (code, precedence_list,
+					  old_mule_charset_encodable,
+					  &charset, &c1, &c2);
   if (NILP (charset))
     return old_mule_handle_bad_ichar (fail);
   return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
@@ -2479,9 +2482,7 @@ find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 
 void
 find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
-			 struct buffer *USED_IF_MULE (b),
-			 Charbpos USED_IF_MULE (pos),
-			 Charcount USED_IF_MULE (len),
+			 struct buffer *buf, Charbpos pos, Charcount len,
 			 Lisp_Object_dynarr *unicode_precedence)
 {
   Lisp_Object prev_charset = Qunbound;
@@ -2493,8 +2494,8 @@ find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
       Lisp_Object charset;
       int c1, c2;
       
-      ichar_to_charset_codepoint (ich, unicode_precedence, &charset, &c1, &c2,
-				  CONVERR_FAIL);
+      ichar_to_charset_codepoint (ich, unicode_precedence, &charset,
+				  &c1, &c2);
       if (!NILP (charset) && !EQ (charset, prev_charset))
 	{
 	  prev_charset = charset;
@@ -5227,7 +5228,7 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
   if (munge_codepoints)
     {
       retval = XINT (arg);
-      if (EQ (charset, Vcharset_control_1) && retval >= 32 & retval < 64)
+      if (EQ (charset, Vcharset_control_1) && retval >= 32 && retval < 64)
 	retval += 96;
       else if (get_charset_iso2022_type (charset) >= 0)
 	{
@@ -5354,8 +5355,8 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 /* Convert an Lisp integer into a Unicode codepoint, and convert a
    PRECEDENCE_LIST list into an internal dynarr. */
 static int
-get_external_unicode_codepoint (Lisp_Object unicode, Lisp_Object
-				USED_IF_UNICODE_INTERNAL (precedence_list),
+get_external_unicode_codepoint (Lisp_Object unicode,
+				Lisp_Object precedence_list,
 				Lisp_Object_dynarr **prec_list_out)
 {
   int code = decode_unicode (unicode);

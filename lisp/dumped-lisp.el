@@ -186,7 +186,6 @@ in dumped-lisp.el and is not itself listed.")
 	 '("mule/mule-category"
 	   "mule/kinsoku"
 	   ))
-       (when (featurep 'ccl) "mule/mule-ccl")
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site

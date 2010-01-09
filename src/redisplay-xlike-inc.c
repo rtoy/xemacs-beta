@@ -152,7 +152,7 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
       Ichar ch = str[i];
       Lisp_Object charset;
       int byte1, byte2;
-      int ucs = ichar_to_unicode (ch, CONVERR_SUCCEED);
+      int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 
       ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
 				  &byte1, &byte2);
@@ -256,8 +256,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
 
 	  offs = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
 
-	  translate_to_ucs_2 =
-	    bit_vector_bit (FACE_CACHEL_FONT_FINAL_STAGE (cachel), offs);
+	  translate_to_ucs_2 = Stynarr_at (cachel->font_final_stage, offs);
 	  if (translate_to_ucs_2)
 	    {
 	      dimension = 2;
@@ -296,7 +295,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
       /* Must check flags in this order.  See comment above. */
       if (translate_to_ucs_2)
 	{
-	  int ucs = ichar_to_unicode (ch);
+	  int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
 	  ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;

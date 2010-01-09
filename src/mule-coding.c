@@ -448,7 +448,7 @@ Return the corresponding character.
     {
       DECODE_SHIFT_JIS (s1, s2, c1, c2);
       return make_char (charset_codepoint_to_ichar
-			(Vcharset_japanese_jisx0208, c1, c2, CONVERR_SUCCEED));
+			(Vcharset_japanese_jisx0208, c1, c2, CONVERR_FAIL));
     }
   else
     return Qnil;
@@ -1193,7 +1193,7 @@ struct iso2022_coding_stream
   /* Unicode precedence used for this conversion.  We put in this list only
      charsets that can be encoded using ISO2022 and preferring currently
      designated charsets.  @@#### We should be still smarter, making use of
-     the language of the buffer we're coming from. */
+     the precedence list of the buffer we're coming from. */
   Lisp_Object_dynarr *unicode_precedence;
 
   /* Used for handling UTF-8. */
@@ -1672,57 +1672,46 @@ reset_iso2022_decode (Lisp_Object coding_system,
   data->warned_chars = Qnil;
 }
 
-/* @@#### This is inefficient as it is O(N^2).  Perhaps doesn't matter
-   as number of charsets will not be that big. */
-
-static void
-add_to_dynarr_if_necessary (Lisp_Object_dynarr *dyn, Lisp_Object charset)
-{
-  int i;
-  for (i = 0; i < Dynarr_length (dyn); i++)
-    if (EQ (charset, Dynarr_at (dyn, i)))
-      return;
-  Dynarr_add (dyn, charset);
-}
-
-/* Called for each pair of (symbol, charset) in the hash table tracking
-   charsets.  Handle ISO2022-compatible charsets.  We don't add
-   non-ISO2022-compatible charsets because there's no point. */
 static int
-riup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
-	     void *closure)
+charset_iso2022_compatible (Lisp_Object charset)
 {
-  if (get_charset_iso2022_type (value) != -1)
-    add_to_dynarr_if_necessary ((Lisp_Object_dynarr *) closure, value);
-  return 0;
+  return get_charset_iso2022_type (charset) != -1;
 }
 
 /* Recreate the Unicode precedence array.  We want the following:
 
    (1) Charsets currently designated should be at the top of the list.
    (2) Then ASCII and Control-1, if not already there. (Hack)
-   (3) Then any remaining ISO2022-compatible charsets */
+   (3) Then any remaining ISO2022-compatible charsets.
+   (4) Then any others. */
 
 static void
 reset_iso2022_unicode_precedence (struct iso2022_coding_stream *data)
 {
   int i;
+  /* @@#### Make buffer-local */
+  Lisp_Object_dynarr *parent_preclist = get_unicode_precedence ();
 
   if (data->unicode_precedence)
     Dynarr_reset (data->unicode_precedence);
   else
     data->unicode_precedence = Dynarr_new (Lisp_Object);
+  begin_precedence_list_generation ();
   for (i = 0; i < 4; i++)
     {
       if (CHARSETP (data->charset[i]))
-	add_to_dynarr_if_necessary (data->unicode_precedence,
-				    data->charset[i]);
+	add_charset_to_precedence_list (data->charset[i],
+					data->unicode_precedence);
     }
   /* Also ASCII and Control-1 */
-  add_to_dynarr_if_necessary (data->unicode_precedence, Vcharset_ascii);
-  add_to_dynarr_if_necessary (data->unicode_precedence, Vcharset_control_1);
+  add_charset_to_precedence_list (Vcharset_ascii, data->unicode_precedence);
+  add_charset_to_precedence_list (Vcharset_control_1,
+				  data->unicode_precedence);
   /* Add ISO2022-compatible charsets to unicode_precedence */
-  elisp_maphash (riup_mapper, Vcharset_hash_table, data->unicode_precedence);
+  filter_precedence_list (parent_preclist, data->unicode_precedence,
+			  charset_iso2022_compatible);
+  /* Add all other charsets */
+  filter_precedence_list (parent_preclist, data->unicode_precedence, NULL);
 }
 
 static void
@@ -2274,6 +2263,9 @@ add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
   Bytecount len;
 
   /* @@#### What about errors? */
+  /* This conversion is used during decoding, so we want to use the
+     standard precedence lists, not the special list we generate and store
+     in data->unicode_precedence (used for encoding only). */
   ch = unicode_to_ichar (ucs, get_unicode_precedence (), CONVERR_SUCCEED);
   len = set_itext_ichar (work, ch);
   Dynarr_add_many (dst, work, len);
@@ -2349,7 +2341,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 #else
 		case ISO_ESC_START_COMPOSITE:
 		  {
-		    /* !!#### Handle error? */
+		    /* @@#### Handle error? */
 		    charset_codepoint_to_dynarr
 		      (Vcharset_composite, 0, c - '0' + ' ',
 		       dst, CONVERR_SUCCEED);
@@ -2619,9 +2611,10 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		  else
 #endif /* UNICODE_INTERNAL */
 		    {
-		      /* !!#### Handle error differenly? Especially here! This
-			 is the main place where we convert an ISO-2022-encoded
-			 char in a national charset to Unicode. */
+		      /* @@#### Handle error differenly? Especially here! 
+			 This is the main place where we convert an
+			 ISO-2022-encoded char in a national charset to
+			 Unicode. */
 		      charset_codepoint_to_dynarr
 			(charset, c1, c2, dst, CONVERR_SUCCEED);
 		    }
@@ -2841,13 +2834,14 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      non_ascii_itext_to_charset_codepoint_raw
 		(str->partial, data->unicode_precedence, &charset, &c1, &c2);
 
-	      if (XCHARSET_ENCODE_AS_UTF_8 (charset))
+	      /* If no final byte, we must encode as UTF-8 */
+	      if (!NILP (charset) && !XCHARSET_FINAL (charset))
 		{
 		  assert (!EQ (charset, Vcharset_control_1)
 			  && !EQ (charset, Vcharset_composite));
 
-		  /* If the character set is to be encoded as UTF-8, the escape
-		     is always the same. */
+		  /* If the character set is to be encoded as UTF-8, the
+		     escape is always the same. */
 		  if (!(flags & ISO_STATE_UTF_8)) 
 		    {
 		      Dynarr_add (dst, ISO_CODE_ESC);
@@ -2866,14 +2860,10 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 
 		  int reg;
 
-		  /* We should have only ISO2022-compatible charsets in
-		     str->unicode_precedence, except control-1. */
-		  text_checking_assert
-		    (NILP (charset) ||
-		     get_charset_iso2022_type (charset) != -1);
 		  if (NILP (charset))
 		    {
-		      Lisp_Object chr = make_char (itext_ichar (str->partial));
+		      Lisp_Object chr =
+			make_char (itext_ichar (str->partial));
 		      if (NILP (memq_no_quit (chr, data->warned_chars)))
 			{
 			  warn_when_safe_lispobj
@@ -2882,7 +2872,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 			     emacs_sprintf_string_lisp
 			     ("Unable to encode character #x`%x'",
 			      Qnil, 1, chr));
-			  data->warned_chars = Fcons (chr, data->warned_chars);
+			  data->warned_chars =
+			    Fcons (chr, data->warned_chars);
 			}
 		      charset = Vcharset_ascii;
 		      c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;
@@ -2994,22 +2985,10 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		  /* you asked for it ... */
 		  Dynarr_add (dst, c2);
 		}
-#ifndef ENABLE_COMPOSITE_CHARS
-	      else if (EQ (charset, Vcharset_composite))
-		{
-		  c2 &= 127;
-		  if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
-					       something else */
-		    {
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, c2 - 32 + '0');
-		    }
-		}
-#endif
 	      /* Else, we're processing Non-ASCII character */
-#ifdef ENABLE_COMPOSITE_CHARS
 	      else if (EQ (charset, Vcharset_composite))
 		{
+#ifdef ENABLE_COMPOSITE_CHARS
 		  if (in_composite)
 		    {
 		      /* #### Bother! We don't know how to
@@ -3029,11 +3008,20 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		      src = XSTRING_DATA   (lstr);
 		      n   = XSTRING_LENGTH (lstr);
 		      Dynarr_add (dst, ISO_CODE_ESC);
-			  Dynarr_add (dst, '0'); /* start composing */
+		      Dynarr_add (dst, '0'); /* start composing */
 		    }
+#else /* not ENABLE_COMPOSITE_CHARS */
+		  c2 &= 127;
+		  if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
+					       something else */
+		    {
+		      Dynarr_add (dst, ISO_CODE_ESC);
+		      Dynarr_add (dst, c2 - 32 + '0');
+		    }
+#endif /* (not) ENABLE_COMPOSITE_CHARS */
 		}
-#endif /* ENABLE_COMPOSITE_CHARS */
-	      else if (XCHARSET_ENCODE_AS_UTF_8 (charset))
+	      /* If no final byte, we must encode as UTF-8 */
+	      else if (!XCHARSET_FINAL (charset))
 		{
 		  Ichar ich = itext_ichar (str->partial);
 		  /* @@#### Is CONVERR_SUCCEED correct? Only matters when not

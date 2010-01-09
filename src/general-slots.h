@@ -116,7 +116,6 @@ SYMBOL (Qduplex);
 SYMBOL (Qdynarr_overhead);
 SYMBOL (Qemergency);
 SYMBOL (Qempty);
-SYMBOL (Qencode_as_utf_8);
 SYMBOL (Qeq);
 SYMBOL (Qeql);
 SYMBOL (Qequal);

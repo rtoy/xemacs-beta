@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -257,7 +257,9 @@ static const struct memory_description syntax_cache_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
+#ifdef MIRROR_TABLE
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
+#endif
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
   { XD_END }
@@ -287,8 +289,10 @@ syntax_cache_table_was_changed (struct buffer *buf)
     {
       cache->syntax_table =
 	BUFFER_SYNTAX_TABLE (buf);
+#ifdef MIRROR_TABLE
       cache->mirror_table =
 	BUFFER_MIRROR_SYNTAX_TABLE (buf);
+#endif /* MIRROR_TABLE */
     }
 }
 

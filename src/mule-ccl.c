@@ -891,8 +891,6 @@ charset_7bit_p (Lisp_Object charset)
    invalid byte. ]]
    */
 
-#error FIXME: When code < 256, do we have to reverse the arguments?
-
 /* On XEmacs, TranslateCharacter is not supported.  Thus, this		\
    macro is only used in the MuleToUnicode transformation.  */		\
 #define CCL_MAKE_CHAR(csid, code, c)					\
@@ -1491,8 +1489,8 @@ ccl_driver (struct ccl_program *ccl,
 		int ucs;
 
 		CCL_MAKE_CHAR (reg[rrr], reg[RRR], ich);
-		/* @@#### Better error handling? */
-		ucs = ichar_to_unicode (ich, CONVERR_SUCCEED);
+		/* @@#### Is this correct? */
+		ucs = ichar_to_unicode (ich, CONVERR_USE_PRIVATE);
 		reg[rrr] = ucs;
 		break;
 	      }
@@ -1501,7 +1499,9 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		int error = 0;
 
-		if (!valid_unicode_codepoint_p (reg[rrr]))
+		/* @@#### Is UNICODE_OFFICIAL_ONLY correct? */
+		if (!valid_unicode_codepoint_p (reg[rrr],
+						UNICODE_OFFICIAL_ONLY))
 		  error = 1;
 		else
 		  {

@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1997 Jonathan Harris.
 
@@ -2179,7 +2179,7 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 				     Bytecount offset, Bytecount length,
 				     enum font_specifier_matchspec_stages stage)
 {
-  return stage ?
+  return stage == STAGE_FINAL ?
      mswindows_font_spec_matches_charset_stage_2 (d, charset, nonreloc,
 						  reloc, offset, length)
     : mswindows_font_spec_matches_charset_stage_1 (d, charset, nonreloc,
@@ -2201,7 +2201,7 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
      that charset; otherwise, it will list fonts with all charsets. */
   fontlist = mswindows_font_list (font, device, Qnil);
 
-  if (!stage)
+  if (stage == STAGE_INITIAL)
     {
       LIST_LOOP (fonttail, fontlist)
 	{

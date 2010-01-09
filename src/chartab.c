@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with char tables.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
    Licensed to the Free Software Foundation.
 
@@ -688,6 +688,7 @@ char_table_hash (Lisp_Object obj, int depth)
       FROB1 (Vcharset_latin_iso8859_3);
       FROB1 (Vcharset_latin_iso8859_4);
       FROB1 (Vcharset_thai_tis620);
+      FROB1 (Vcharset_arabic_iso8859_6);
       FROB1 (Vcharset_greek_iso8859_7);
       FROB1 (Vcharset_hebrew_iso8859_8);
       FROB1 (Vcharset_katakana_jisx0201);

@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -597,8 +597,10 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 /************************************************************************/
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
-Ichar old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
+Ichar old_mule_unicode_to_ichar (int code,
+				 Lisp_Object_dynarr *precedence_list,
 				 enum converr fail);
+int old_mule_charset_encodable (Lisp_Object charset);
 Ichar old_mule_handle_bad_ichar (enum converr fail);
 
 /* Convert an Ichar to a Unicode codepoint.
@@ -610,12 +612,12 @@ ichar_to_unicode (Ichar chr, enum converr fail)
 {
   ASSERT_VALID_ICHAR (chr);
 
-#ifdef OLD_MULE
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
   return old_mule_ichar_to_unicode (chr, fail);
 #else
   /* Unicode-internal or non-Mule */
   return (int) chr;
-#endif /* (not) OLD_MULE */
+#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
 }
 
 /* Convert a Unicode codepoint to an Ichar.  Return value will be (Ichar) -1
@@ -632,14 +634,14 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *
 
 #ifdef UNICODE_INTERNAL
   return (Ichar) code;
-#elif defined (OLD_MULE)
+#elif defined (MULE)
   return old_mule_unicode_to_ichar (code, precedence_list, fail);
 #else
   if (code > 255)
     return (Ichar) -1;
   else
     return (Ichar) code;
-#endif /* (not) defined (OLD_MULE) */
+#endif /* (not) defined (MULE) */
 }
 
 /****************************************************************************/
