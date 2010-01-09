@@ -1,3 +1,20 @@
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	Fix query_string_geometry lookup domain.
+	* redisplay.c (redisplay_window_text_width_ichar_string): Formerly
+	named redisplay_text_width_ichar_string.
+	* redisplay.c (redisplay_window_text_width_string): Formerly named
+	redisplay_text_width_string. Make static.
+	* redisplay.c (redisplay_text_width_string): Formerly named
+	redisplay_frame_text_width_string. Generalize to accept any
+	Lisp_Object domain argument (instead of only frames).
+	* redisplay.c (add_ichar_rune_1): Update funcalls for the above
+	renaming.
+	* redisplay.c (generate_fstring_runes): Ditto.
+	* redisplay.h: Ditto.
+	* glyphs.c (query_string_geometry): Use proper domain for cachel
+	updating and in generalized version of redisplay_text_width_string.
+
 2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (Fmake_charset): 
