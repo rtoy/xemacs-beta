@@ -1509,7 +1509,7 @@ is displayed and the ERROR-FORM is executed."
 		 (progn ,@keys-body)))
        (error
 	,error-form
-	,@(if resignal '((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
+	,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
        )))
 
 ;;;; Miscellanea.
