@@ -1,3 +1,9 @@
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-trapping-errors): 
+	Fix a bug here, where I used a normal quote instead of a
+	backquote. Thank you the byte-compiler.
+
 2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* indent.el (indent-region):
