@@ -201,6 +201,17 @@
 	* faces.c (complex_vars_of_faces): Explain why "*" isn't rewritten
 	as a full XLFD.
 
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c:
+	(print_hash_table, print_hash_table_data)
+	(hash_table_instantiate)
+	(structure_type_create_hash_table_structure_name): 
+	(syms_of_elhash): 
+	Use keywords, not ordinary symbols, in the hash table read syntax,
+	for compatibility with Common Lisp and recent GNU Emacs. Accept
+	the non-keyword syntax, but don't allow mixing of the two styles.
+
 2009-11-19  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (sys_subshell): Restore sys_subshell(); it's necessary
