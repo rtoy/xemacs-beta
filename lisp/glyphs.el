@@ -1142,7 +1142,8 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   (if (featurep 'x)
     (set-console-type-image-conversion-list 'x
      `(,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
-	 ("\\.xbm\\'" [xbm :file nil] 2)
+       ("\\.xbm\\'" [xbm :file nil] 2)
+       ("/bitmaps/" [xbm :file nil] 2)
        ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
        ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
        ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
@@ -1164,6 +1165,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 	 'tty
          '(("\\.xpm\\'" [string :data nil] 2)
            ("\\.xbm\\'" [string :data nil] 2)
+	   ("/bitmaps/" [string :data nil] 2)
            ;; #define could also mean a bitmap as well as a version 1 XPM. Who
            ;; cares.
            ("^#define" [string :data "[xpm]"])

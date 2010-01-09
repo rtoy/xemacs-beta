@@ -1,3 +1,8 @@
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.el (init-glyphs): Recognize bitmaps/ directory as
+	containing bitmap files.
+
 2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (with-trapping-errors): 
