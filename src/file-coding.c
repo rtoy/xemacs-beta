@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -530,9 +530,9 @@ default_query_method (Lisp_Object codesys, struct buffer *buf,
                                                        fail_range_start));
                   eicat_ascii (error_details, " using coding system");
 
-                  signal_error (Qtext_conversion_error, 
-                                (const CIbyte *)(eidata (error_details)),
-                                XCODING_SYSTEM_NAME (codesys));
+                  text_conversion_error
+		    ((const CIbyte *)(eidata (error_details)),
+		     XCODING_SYSTEM_NAME (codesys));
                 }
 
               if (NILP (result))
@@ -2441,9 +2441,8 @@ is non-nil, all ranges will map to the symbol `unencodable'.  See
 
   if (UNBOUNDP (result))
     {
-      signal_error (Qtext_conversion_error,
-                    "Coding system doesn't say what it can encode", 
-                    XCODING_SYSTEM_NAME (coding_system));
+      text_conversion_error ("Coding system doesn't say what it can encode", 
+			     XCODING_SYSTEM_NAME (coding_system));
     }
 
   result = (NILP (result)) ? Qt : values2 (Qnil, result); 

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2010 Ben Wing.
 
 ;; Keywords: multilingual, character set, coding system
 
@@ -31,18 +31,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registries ["MuleIPA"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		unicode-map ("unicode/mule-ucs/ipa.txt")
-		short-name "IPA"
-		long-name "IPA"
-		))
+(make-internal-charset
+ 'ipa "IPA (International Phonetic Association)"
+ '(dimension
+   1
+   registries ["MuleIPA"]
+   chars 96
+   final ?0
+   graphic 1
+   unicode-map ("unicode/mule-ucs/ipa.txt")
+   short-name "IPA"
+   long-name "IPA"
+   ))
 
 ;;; misc-lang.el ends here

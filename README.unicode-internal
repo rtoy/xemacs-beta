@@ -50,6 +50,18 @@ STILL TO DO:
    the second argument, which determines whether private Unicode codepoints
    are allowed.
 
+-- Redisplay:
+
+   1. In descr-text.el, the junky function describe-char-display wants to
+      figure out the font code that will be displayed.  It used
+      ccl-encode-to-ucs-2, which I removed; now, X does Unicode in a
+      more general way.  But try to fix this.
+
+-- "Windows Glyph List 4":
+   -- Hacky code in unicode.el forces certain glyphs to go into
+      a JIT charset for display purposes.  This seems awful and won't work
+      for Unicode-internal.  Instead, create a one-column charset holding
+      these codepoints and put it above the East-Asian charsets.
 
 More todo:
 

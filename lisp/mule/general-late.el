@@ -101,10 +101,8 @@
              collect (aref (decode-coding-string (int-char i)
                                                  'utf-8) 0)))))
 
-;; At this point in the dump, all the charsets have been loaded. Now, load
-;; their Unicode mappings.
-(if load-unicode-tables-at-dump-time
-    (let ((data-directory (expand-file-name "etc" source-directory)))
-      (load-unicode-tables)))
+;; At this point in the dump, all the charsets have been loaded.
+;; Now, set the precedence list. @@#### There should be a better way.
+(initialize-default-unicode-precedence-list)
 
 ;;; general-late.el ends here

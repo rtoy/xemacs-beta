@@ -101,8 +101,10 @@ enum converr
     /* Do nothing upon failure and return a failure indication.
        Same as what happens when the *_raw() version is called. */
     CONVERR_FAIL,
-    /* Signal a Lisp error. @@#### Not implemented. */
+    /* abort() on failure, i.e. crash. */
     CONVERR_ABORT,
+    /* Signal a Lisp error. */
+    CONVERR_ERROR,
     /* Try to "recover" and continue processing.  What exactly happens
        depends on the type of conversion.  When converting from a charset
        representation to Unicode, this is like CONVERR_USE_PRIVATE,
@@ -601,7 +603,6 @@ Ichar old_mule_unicode_to_ichar (int code,
 				 Lisp_Object_dynarr *precedence_list,
 				 enum converr fail);
 int old_mule_charset_encodable (Lisp_Object charset);
-Ichar old_mule_handle_bad_ichar (enum converr fail);
 
 /* Convert an Ichar to a Unicode codepoint.
    Return value will be -1 if cannot convert. */

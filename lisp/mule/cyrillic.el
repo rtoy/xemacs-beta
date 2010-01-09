@@ -128,7 +128,7 @@ See `koi8-r' and `windows-1251'.  "
                   (documentation . "Support for Cyrillic ISO-8859-5."))
  '("Cyrillic"))
 
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-r "Cyrillic KOI8-R"
  :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-R.TXT" #x80))
 
@@ -171,7 +171,7 @@ characters of the opposite case). "
  (remassq 'locale (copy-list (cdr (assoc "Russian" language-info-alist))))
  '("Cyrillic"))
 
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-u "Cyrillic KOI8-u"
  :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-u.TXT" #x80))
 
@@ -246,7 +246,7 @@ Cyrillic script.  "
 Byelorussian in the early 1990s.)"))
  '("Cyrillic"))
 
-(make-128-byte-charset 'cyrillic-alternativnyj "Cyrillic Alternativnyj"
+(make-internal-128-byte-charset 'cyrillic-alternativnyj "Cyrillic Alternativnyj"
 		       :unicode-map '("unicode/unicode-consortium/VENDORS/MICSFT/PC/CP866.TXT" #x80))
 
 ;;; Alternativnyj
@@ -269,7 +269,7 @@ Byelorussian in the early 1990s.)"))
                   (documentation . "Support for Cyrillic ALTERNATIVNYJ."))
  '("Cyrillic"))
 
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-ru "Cyrillic КОИ-8 (Russian, Ukrainian)"
  :unicode-map
  '((#x80 #x2500) ;; BOX DRAWINGS LIGHT HORIZONTAL
@@ -413,7 +413,7 @@ Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
 ;; We should provide an input method and the corresponding language
 ;; environments for the next three coding systems. 
 
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-t "Cyrillic КОИ-8 for Tajik."
  :unicode-map
  '((#x80 #x049B) ;; CYRILLIC SMALL LETTER KA WITH DESCENDER
@@ -551,7 +551,7 @@ language of Tajikistan and a close relative of Persian.  "))
   (put-case-table-pair upper lower case-table))
 
 ;; Support fot the languages of the Caucasus.
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-c "Cyrillic KOI-8, Caucasus."
  :unicode-map
  '((#x80 #x0493) ;; CYRILLIC SMALL LETTER GHE WITH STROKE
@@ -708,7 +708,7 @@ for that, see koi8-o. "))
   (put-case-table-pair upper lower case-table))
 
 ;; Archaic Russian support.
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'cyrillic-koi8-o "Cyrillic Old-orthography Russian"
  :unicode-map
  '((#x80 #x0402) ;; CYRILLIC CAPITAL LETTER DJE

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Keywords: multilingual, Ethiopic
 
@@ -29,7 +30,7 @@
 ;;; Code:
 
 ;;; Ethiopic characters (Amharic and Tigrinya).
-;(make-charset 'ethiopic "Ethiopic characters" ...
+;(make-internal-charset 'ethiopic "Ethiopic characters" ...
 ;moved to mule-charset.el.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -169,6 +169,7 @@ struct Lisp_Charset
   Lisp_Object registries; /* list of regexps matching XLFD registry portion */
   Lisp_Object short_name;
   Lisp_Object long_name;
+  Lisp_Object unicode_map;
 
   Lisp_Object reverse_direction_charset;
 
@@ -275,6 +276,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_REVERSE_DIRECTION_CHARSET(cs) ((cs)->reverse_direction_charset)
 #define CHARSET_SHORT_NAME(cs)	 ((cs)->short_name)
 #define CHARSET_TO_UNICODE_TABLE(cs) ((cs)->to_unicode_table)
+#define CHARSET_UNICODE_MAP(cs)	 ((cs)->unicode_map)
 
 #define XCHARSET_CHARS(cs, dim)	  CHARSET_CHARS        (XCHARSET (cs), dim)
 #define XCHARSET_COLUMNS(cs)	  CHARSET_COLUMNS      (XCHARSET (cs))
@@ -293,6 +295,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_REVERSE_DIRECTION_CHARSET(cs)   CHARSET_REVERSE_DIRECTION_CHARSET (XCHARSET (cs))
 #define XCHARSET_SHORT_NAME(cs)	  CHARSET_SHORT_NAME   (XCHARSET (cs))
 #define XCHARSET_TO_UNICODE_TABLE(cs) CHARSET_TO_UNICODE_TABLE (XCHARSET (cs))
+#define XCHARSET_UNICODE_MAP(cs)  CHARSET_UNICODE_MAP         (XCHARSET (cs))
 
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
 #define CHARSET_ALGO_LOW(cs)	 ((cs)->algo_low)
@@ -465,6 +468,17 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 	case CONVERR_FAIL:
 	  break;
 
+	case CONVERR_ABORT:
+	default:
+	  ABORT (); break;
+
+	case CONVERR_ERROR:
+	  text_conversion_error ("Can't convert charset codepoint to Unicode",
+				 XCHARSET_DIMENSION (charset) == 2 ?
+				 list3 (charset, make_int (c1),
+					make_int (c2)) :
+				 list2 (charset, make_int (c2)));
+
 	case CONVERR_SUBSTITUTE:
 	  code = UNICODE_REPLACEMENT_CHAR;
 	  break;
@@ -473,10 +487,6 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 	case CONVERR_USE_PRIVATE:
 	  code = charset_codepoint_to_private_unicode (charset, c1, c2);
 	  break;
-
-	case CONVERR_ABORT: /* @@#### implement me */
-	default:
-	  ABORT ();
 	}
     }
 
@@ -671,12 +681,24 @@ itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object_dynarr *preclist,
     {
       switch (fail)
 	{
-	case CONVERR_FAIL: break;
-	case CONVERR_ABORT: ABORT(); /* @@#### implement me */
+	case CONVERR_FAIL:
+	  break;
+
+	case CONVERR_ABORT:
 	default:
+	  ABORT (); break;
+
+	case CONVERR_ERROR:
+	  text_conversion_error
+	    ("Can't convert character to charset codepoint",
+	     make_char (itext_ichar (ptr)));
+
+	case CONVERR_SUCCEED:
+	case CONVERR_SUBSTITUTE:
 	  *charset = Vcharset_ascii;
 	  *c1 = 0;
 	  *c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;
+	  break;
 	}
     }
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
@@ -724,20 +746,6 @@ charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
     }
 
   return non_ascii_charset_codepoint_to_dynarr (charset, c1, c2, dst, fail);
-}
-
-DECLARE_INLINE_HEADER (
-Ichar
-old_mule_handle_bad_ichar (enum converr fail)
-)
-{
-  switch (fail)
-    {
-    case CONVERR_FAIL: return -1;
-    case CONVERR_ABORT: ABORT (); /* @@#### implement me */
-    default:
-      return CANT_CONVERT_CHAR_WHEN_DECODING;
-    }
 }
 
 #ifdef UNICODE_INTERNAL

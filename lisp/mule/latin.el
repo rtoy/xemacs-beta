@@ -305,21 +305,22 @@ See also `iso-8859-2' and `windows-1252' for Western Europe.  "
 
 ;; Latin-6 (ISO 8859-10) Northern Europe.
 
-(make-charset 'latin-iso8859-10
-	      "Supplementary Set for Latin Alphabet No. 6 (ISO/IEC 8859-10): ISO-IR-157
+(make-internal-charset
+ 'latin-iso8859-10
+ "Supplementary Set for Latin Alphabet No. 6 (ISO/IEC 8859-10): ISO-IR-157
 \"This set is intended for a version of ISO 4873 using the coding method of
 ISO 8859 and requiring the character repertoires of the languages used in
 Northern Europe.\""
-	      '(dimension
-		1
-		registries ["ISO8859-10"]
-		chars 96
-		final ?V ;; 0x56 aka octet 5/6
-		graphic 1
-		unicode-map ("unicode/unicode-consortium/ISO8859/8859-10.TXT" #xA0)
-		short-name "Latin-6 (Northern Europe)"
-		long-name "RHP of Latin-6 (Northern Europe) (ISO 8859-10): ISO-IR-157"
-		))
+ '(dimension
+   1
+   registries ["ISO8859-10"]
+   chars 96
+   final ?V ;; 0x56 aka octet 5/6
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-10.TXT" #xA0)
+   short-name "Latin-6 (Northern Europe)"
+   long-name "RHP of Latin-6 (Northern Europe) (ISO 8859-10): ISO-IR-157"
+   ))
 
 (make-coding-system
  'iso-8859-10 'mbcs "ISO-8859-10 (Latin-6)"
@@ -330,18 +331,19 @@ Northern Europe.\""
 
 ;; Latin-7 (ISO 8859-13) Baltic Rim.
 
-(make-charset 'latin-iso8859-13
-	      "Baltic Rim Supplementary Set (Latin-7) (ISO/IEC 8859-13): ISO-IR-179"
-	      '(dimension
-		1
-		registries ["ISO8859-13"]
-		chars 96
-		final ?Y ;; 0x59 aka octet 5/9
-		graphic 1
-		unicode-map ("unicode/unicode-consortium/ISO8859/8859-13.TXT" #xA0)
-		short-name "Latin-7 (Baltic Rim)"
-		long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
-		))
+(make-internal-charset
+ 'latin-iso8859-13
+ "Baltic Rim Supplementary Set (Latin-7) (ISO/IEC 8859-13): ISO-IR-179"
+ '(dimension
+   1
+   registries ["ISO8859-13"]
+   chars 96
+   final ?Y ;; 0x59 aka octet 5/9
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-13.TXT" #xA0)
+   short-name "Latin-7 (Baltic Rim)"
+   long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
+   ))
 
 (make-one-dimension-windows-charset 1257 'latin "Baltic Rim")
 
@@ -357,22 +359,23 @@ Northern Europe.\""
 ;; Never widely used. Current-orthography Gaelic, both Irish and Scots, is
 ;; easily written with Latin-1. Wikipedia says the same about Welsh.
 
-(make-charset 'latin-iso8859-14 
-	      "Celtic Supplementary Latin Set (Latin-8) (ISO/IEC 8859-14): ISO-IR-199
+(make-internal-charset
+ 'latin-iso8859-14 
+ "Celtic Supplementary Latin Set (Latin-8) (ISO/IEC 8859-14): ISO-IR-199
 FIELD OF UTILIZATION: \"Communication and processing of text in the Celtic
 languages, especially Welsh and Irish Gaelic. The set also provides for the
 languages enumerated in ISO/IEC 8859-1 (though French is not fully
 covered).\""
-	      '(dimension
-		1
-		registries ["ISO8859-14"]
-		chars 96
-		final ?_
-		graphic 1
-		unicode-map ("unicode/unicode-consortium/ISO8859/8859-14.TXT" #xA0)
-		short-name "Latin-8 (Celtic)"
-		long-name "RHP of Latin-8 (Celtic) (ISO 8859-14): ISO-IR-199"
-		))
+ '(dimension
+   1
+   registries ["ISO8859-14"]
+   chars 96
+   final ?_
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-14.TXT" #xA0)
+   short-name "Latin-8 (Celtic)"
+   long-name "RHP of Latin-8 (Celtic) (ISO 8859-14): ISO-IR-199"
+   ))
 
 ;; 
 ;; Character syntax defaults to word. The exceptions here shared with Latin-1.
@@ -527,20 +530,21 @@ covered).\""
 ;;
 ;; "South-Eastern European." Not, to my knowledge, ever widely used. 
 
-(make-charset 'latin-iso8859-16
-	      "Romanian Character Set for Information Interchange (Latin-10) (ISO/IEC 8859-16): ISO-IR-226
+(make-internal-charset
+ 'latin-iso8859-16
+ "Romanian Character Set for Information Interchange (Latin-10) (ISO/IEC 8859-16): ISO-IR-226
 FIELD OF UTILIZATION: \"Communication, processing, transfer of text in the
 Romanian language\""
-	      '(dimension
-		1
-		registries ["ISO8859-16"]
-		chars 96
-		final ?f			; octet 06/06; cf ISO-IR 226
-		graphic 1
-		unicode-map ("unicode/unicode-consortium/ISO8859/8859-16.TXT" #xA0)
-		short-name "Latin-10 (Romanian)"
-		long-name "RHP of Latin-10 (Romanian) (ISO 8859-16): ISO-IR-226"
-		))
+ '(dimension
+   1
+   registries ["ISO8859-16"]
+   chars 96
+   final ?f			; octet 06/06; cf ISO-IR 226
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-16.TXT" #xA0)
+   short-name "Latin-10 (Romanian)"
+   long-name "RHP of Latin-10 (Romanian) (ISO 8859-16): ISO-IR-226"
+   ))
 
 ;; Copy over the non-word syntax this charset has in common with Latin 1.
 (dolist (code '(#xa0	;; NO BREAK SPACE
@@ -830,7 +834,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
                      ;; Restore the normal case mappings for the characters.
                      (put-case-table-pair ?I ?i (standard-case-table))))
 
-(make-128-byte-charset
+(make-internal-128-byte-charset
  'latin-macintosh-roman "MacRoman"
  :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80))
 

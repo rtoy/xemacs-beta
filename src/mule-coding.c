@@ -770,11 +770,10 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 }
 
 static Ichar
-decode_big5_char (int b1, int b2, enum converr handling)
+decode_big5_char (int b1, int b2, enum converr fail)
 {
 #ifdef UNICODE_INTERNAL
-  return charset_codepoint_to_ichar (Vcharset_chinese_big5, b1, b2,
-				     handling);
+  return charset_codepoint_to_ichar (Vcharset_chinese_big5, b1, b2, fail);
 #else /* not UNICODE_INTERNAL */
   if (byte_big5_two_byte_1_p (b1) &&
       byte_big5_two_byte_2_p (b2))
@@ -783,10 +782,29 @@ decode_big5_char (int b1, int b2, enum converr handling)
       int c1, c2;
 
       DECODE_BIG5 (b1, b2, charset, c1, c2);
-      return charset_codepoint_to_ichar (charset, c1, c2, handling);
+      return charset_codepoint_to_ichar (charset, c1, c2, fail);
     }
   else
-    return old_mule_handle_bad_ichar (handling);
+    {
+      switch (fail)
+	{
+	case CONVERR_FAIL:
+	  return -1;
+
+	case CONVERR_ABORT:
+	default:
+	  ABORT (); return -1;
+
+	case CONVERR_ERROR:
+	  text_conversion_error
+	    ("Can't convert Big5 codepoint to character",
+	     list2 (make_int (b1), make_int (b2)));
+
+	case CONVERR_SUCCEED:
+	case CONVERR_SUBSTITUTE:
+	  return CANT_CONVERT_CHAR_WHEN_DECODING;
+	}
+    }
 #endif /* UNICODE_INTERNAL */
 }
 
@@ -4235,9 +4253,9 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
                                                        pos - fail_range_start));
                   eicat_ascii (error_details, " using coding system");
 
-                  signal_error (Qtext_conversion_error, 
-                                (const CIbyte *)(eidata (error_details)),
-                                XCODING_SYSTEM_NAME (codesys));
+                  text_conversion_error
+		    ((const CIbyte *)(eidata (error_details)),
+		     XCODING_SYSTEM_NAME (codesys));
                 }
 
               if (NILP (result))

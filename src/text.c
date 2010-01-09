@@ -1731,7 +1731,26 @@ old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
 					  old_mule_charset_encodable,
 					  &charset, &c1, &c2);
   if (NILP (charset))
-    return old_mule_handle_bad_ichar (fail);
+    {
+      switch (fail)
+	{
+	case CONVERR_FAIL:
+	  return -1;
+
+	case CONVERR_ABORT:
+	default:
+	  ABORT (); break;
+
+	case CONVERR_ERROR:
+	  text_conversion_error
+	    ("Can't convert Unicode codepoint to character", make_int (code));
+
+	case CONVERR_SUCCEED:
+	case CONVERR_SUBSTITUTE:
+	  return CANT_CONVERT_CHAR_WHEN_DECODING;
+	}
+    }
+      
   return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
 }
 
@@ -4733,12 +4752,12 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	    if (size_in_bytes == 0)
 	      break;
 	    else if (size_in_bytes < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to external format", Qunbound);
+	      text_conversion_error ("Error converting to external format",
+				     Qunbound);
 
 	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to external format", Qunbound);
+	      text_conversion_error ("Error converting to external format",
+				     Qunbound);
 	  }
 
 	/* Closing writer will close any stream at the other end of writer. */
@@ -4938,12 +4957,12 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	    if (size_in_bytes == 0)
 	      break;
 	    else if (size_in_bytes < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to internal format", Qunbound);
+	      text_conversion_error ("Error converting to internal format",
+				     Qunbound);
 
 	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to internal format", Qunbound);
+	      text_conversion_error ("Error converting to internal format",
+				     Qunbound);
 	  }
 
 	/* Closing writer will close any stream at the other end of writer. */
@@ -5374,8 +5393,8 @@ decode_handle_error (Lisp_Object err)
   CHECK_SYMBOL (err);
   if (NILP (err) || EQ (err, Qfail))
     return CONVERR_FAIL;
-  if (EQ (err, Qabort))
-    return CONVERR_ABORT;
+  if (EQ (err, Qerror))
+    return CONVERR_ERROR;
   if (EQ (err, Qsucceed))
     return CONVERR_SUCCEED;
   if (EQ (err, Qsubstitute))
@@ -5383,7 +5402,7 @@ decode_handle_error (Lisp_Object err)
   if (EQ (err, Quse_private))
     return CONVERR_USE_PRIVATE;
   invalid_constant
-    ("Must be nil, `fail', `succeed', `substitute', or `use-private'", err);
+    ("Must be nil, `fail', `error', `succeed', `substitute', or `use-private'", err);
   /* Not reached */
 }
 
