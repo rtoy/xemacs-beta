@@ -1,5 +1,10 @@
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
+	* glyphs.c (query_string_font): Use proper domain for cachel
+	updating.
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
 	Fix query_string_geometry lookup domain.
 	* redisplay.c (redisplay_window_text_width_ichar_string): Formerly
 	named redisplay_text_width_ichar_string.
