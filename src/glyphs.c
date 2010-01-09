@@ -2431,32 +2431,24 @@ Lisp_Object
 query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
-  struct face_cachel frame_cachel;
-  struct face_cachel *cachel;
+  struct face_cachel cachel;
   int i;
-  Lisp_Object frame = DOMAIN_FRAME (domain);
+  Lisp_Object window = DOMAIN_WINDOW (domain);
+  Lisp_Object frame  = DOMAIN_FRAME  (domain);
 
   /* Compute string font info */
   find_charsets_in_ibyte_string (charsets,
-				   XSTRING_DATA   (string),
-				   XSTRING_LENGTH (string));
+				 XSTRING_DATA   (string),
+				 XSTRING_LENGTH (string));
 
-  reset_face_cachel (&frame_cachel);
-  update_face_cachel_data (&frame_cachel, frame, face);
-  cachel = &frame_cachel;
-
-  ensure_face_cachel_complete (cachel, domain, charsets);
+  reset_face_cachel (&cachel);
+  update_face_cachel_data (&cachel, NILP (window) ? frame : window, face);
+  ensure_face_cachel_complete (&cachel, domain, charsets);
 
   for (i = 0; i < NUM_LEADING_BYTES; i++)
-    {
-      if (charsets[i])
-	{
-	  return FACE_CACHEL_FONT (cachel,
-				   charset_by_leading_byte (i +
-							    MIN_LEADING_BYTE));
-
-	}
-    }
+    if (charsets[i])
+      return FACE_CACHEL_FONT
+	((&cachel), charset_by_leading_byte (i + MIN_LEADING_BYTE));
 
   return Qnil;			/* NOT REACHED */
 }
