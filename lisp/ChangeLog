@@ -1,5 +1,11 @@
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
+	* x-faces.el (x-init-global-faces): Deactivate obsolete code.
+	* x-faces.el (x-init-device-faces): Ditto.
+	* x-faces.el (x-init-frame-faces): Ditto.
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
 	* glyphs.el (init-glyphs): Recognize bitmaps/ directory as
 	containing bitmap files.
 
