@@ -458,26 +458,312 @@ no such translation table instead of returning nil."
 ; 		long-name "ASCII with right-to-left direction"
 ; 		))
 
-
-(defun* make-128-byte-charset (name short-name &key long-name doc-string unicode-map)
-  "Make a one-dimension size-128 charset.
-NAME is a symbol, the charset's name.  SHORT-NAME is a string describing the charset briefly, and will be used as the `short-name' property.
-The keys :long-name, :doc-string and :unicode-map will be used to set the associated charset properties.  If unspecified, :long-name defaults to `short-name', and :doc-string defaults to :long-name."
-  (setq long-name (or long-name short-name))
-  (setq doc-string (or doc-string long-name))
-  (make-charset name doc-string
-		`(dimension
-		  1
-		  chars 128
-		  ,@(and unicode-map `((unicode-map ,unicode-map)))
-		  short-name ,short-name
-		  long-name ,long-name
-		  )))
-
 ; ;; ISO-2022 allows a use of character sets not registered in ISO with
 ; ;; final characters `0' (0x30) through `?' (0x3F).  Among them, Emacs
 ; ;; reserves `0' through `9' to support several private character sets.
 ; ;; The remaining final characters `:' through `?' are for users.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;; DEFINITION OF INTERNAL CHARSETS ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; In case we decide to move the definition of the internal charsets into
+;; Lisp (not a bad idea), here is one written but not used attempt at
+;; doing so:
+
+;(defun* make-charset* (name short-name &key long-name doc-string
+;			    dimension offset chars direction registries
+;			    columns graphic final ccl-program unicode-map)
+;  "Make a charset.  This is an alternative interface to `make-charset'.
+;This interface uses keyword properties instead of a list of properties,
+;and takes a mandatory short-name parameter rather than a doc string.
+;NAME is a symbol, the charset's name.  SHORT-NAME is a string describing the charset briefly, and will be used as the `short-name' property.
+;The keys :long-name, :doc-string and :unicode-map will be used to set the associated charset properties.  If unspecified, :long-name defaults to `short-name', and :doc-string defaults to :long-name."
+;  (setq long-name (or long-name short-name))
+;  (setq doc-string (or doc-string long-name))
+;  (make-charset name doc-string
+;		`(short-name ,short-name
+;		  long-name ,long-name
+;		  ,@(and dimension `((dimension ,dimension)))
+;		  ,@(and offset `((offset ,offset)))
+;		  ,@(and chars `((chars ,chars)))
+;		  ,@(and direction `((direction ,direction)))
+;		  ,@(and registries `((registries ,registries)))
+;		  ,@(and columns `((columns ,columns)))
+;		  ,@(and graphic `((graphic ,graphic)))
+;		  ,@(and final `((final ,final)))
+;		  ,@(and ccl-program `((ccl-program ,ccl-program)))
+;		  ,@(and unicode-map `((unicode-map ,unicode-map)))
+;		  )))
+;
+;(defun* make-internal-charset (name short-name &rest keys &key unicode-map
+;				    &allow-other-keys)
+;  "Make an internal charset.
+;This is the same as `make-charset*' except that if a :unicode-map
+;specifies a file name, the name is assumed relative to `data-directory', and
+;will be made so."
+;  (if (and unicode-map (stringp (car unicode-map)))
+;      (setq keys (plist-put keys :unicode-map
+;			    (cons (expand-file-name (car unicode-map)
+;						   data-directory)
+;				  (cdr unicode-map)))))
+;  (apply 'make-charset* name short-name keys))
+;
+;(defun* make-internal-128-byte-charset (name short-name &rest keys)
+;  "Make an internal one-dimension size-128 charset.
+;This is the same as `make-internal-charset' except that the dimension is set
+;to 1, the offset to 128 and the chars to 128."
+;  (setq long-name (or long-name short-name))
+;  (setq doc-string (or doc-string long-name))
+;  (apply 'make-internal-charset name short-name
+;	 :dimension 1 :offset 128 :chars 128
+;	 keys))
+;
+;(defun make-iso8859-charset (symbol str8859 short-name alphabet-name
+;				    iso-ir-name final
+;				    &key doc-string direction)
+;  (make-internal-charset symbol short-name
+;			 :dimension 1
+;			 :registries (vector (format "ISO%s" str8859))
+;			 :offset 160
+;			 :chars 96
+;			 :final final
+;			 :long-name (format "RHP of %s (ISO %s): %s"
+;					    short-name str8859 iso-ir-name)
+;			 :direction direction
+;			 :doc-string (or doc-string
+;					 (format "Right-Hand Part of %s (ISO/IEC %s): %s" alphabet-name str8859 iso-ir-name))
+;			 :unicode-map ,((format "unicode/unicode-consortium/ISO8859/%s.TXT" str8859) #xA0)))
+;
+;(make-iso8859-charset 'latin-iso8859-1 "8859-1" "Latin-1" "Latin Alphabet 1"
+;		      "ISO-IR-100" ?A)
+;(make-iso8859-charset 'latin-iso8859-2 "8859-2" "Latin-2" "Latin Alphabet 2"
+;		      "ISO-IR-101" ?B)
+;(make-iso8859-charset 'latin-iso8859-3 "8859-3" "Latin-3" "Latin Alphabet 3"
+;		      "ISO-IR-109" ?C)
+;(make-iso8859-charset 'latin-iso8859-4 "8859-4" "Latin-4" "Latin Alphabet 4"
+;		      "ISO-IR-110" ?D)
+;(make-iso8859-charset 'latin-iso8859-9 "8859-9" "Latin-5" "Latin Alphabet 5"
+;		      "ISO-IR-148" ?M)
+;(make-iso8859-charset 'latin-iso8859-15 "8859-15" "Latin-9 (Euro Sign)"
+;		      "Latin Alphabet 9" "ISO-IR-203" ?b
+;		      :doc-string
+;		      "European Supplementary Latin Set (\"Latin 9\") (Euro Sign) (ISO/IEC 8859-15): ISO-IR-203
+;FIELD OF UTILIZATION: \"Communication and processing of text in European
+;languages. The set provides for the languages enumerated in ISO/IEC
+;8859-1. In addition, it contains the EURO SIGN and provides support for the
+;French, and Finnish languages in addition.\"")
+;
+;(make-iso8859-charset 'greek-iso8859-7 "8859-7" "Greek" "Latin/Greek Alphabet"
+;		      "ISO-IR-126" ?F)
+;(make-iso8859-charset 'cyrillic-iso8859-5 "8859-5" "Cyrillic"
+;		      "Latin/Cyrillic Alphabet" "ISO-IR-144" ?L)
+;(make-iso8859-charset 'hebrew-iso8859-8 "8859-8" "Hebrew"
+;		      "Latin/Hebrew Alphabet" "ISO-IR-138" ?H
+;		      :direction 'r2l)
+;(make-iso8859-charset 'arabic-iso8859-6 "8859-6" "Arabic"
+;		      "Latin/Arabic Alphabet" "ISO-IR-127" ?G
+;		      :direction 'r2l)
+;
+;(make-charset 'chinese-gb2312 
+; 	      "GB2312 Chinese simplified: ISO-IR-58"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?A
+; 		graphic 0
+;		short-name "Chinese simplified (GB2312)"
+;		long-name "Chinese simplified (GB2312): ISO-IR-58"
+;		registries ["gb2312.1980-0" "gb2312.80&gb8565.88-0"]
+; 		))
+;
+;(make-charset 'chinese-cns11643-1 
+; 	      "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?G
+; 		graphic 0
+;		short-name "Chinese traditional (CNS11643-1)"
+;		long-name "Chinese traditional (CNS11643-1): ISO-IR-171"
+; 		registries ["CNS11643.1992-1"]
+; 		))
+;
+;(make-charset 'chinese-cns11643-2 
+; 	      "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?H
+; 		graphic 0
+;		short-name "Chinese traditional (CNS11643-2)"
+;		long-name "Chinese traditional (CNS11643-2): ISO-IR-172"
+; 		registries ["CNS11643.1992-2"]
+; 		))
+;
+;(make-charset 'chinese-big5-1 
+; 	      "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?0
+; 		graphic 0
+;		short-name "Chinese traditional (Big5), L1"
+;		long-name "Chinese traditional (Big5) (Level-1) A141-C67F"
+;		registries ["big5.eten-0"]
+; 		))
+;
+;(make-charset 'chinese-big5-2 
+; 	      "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?1
+; 		graphic 0
+;		short-name "Chinese traditional (Big5), L2"
+;		long-name "Chinese traditional (Big5) (Level-2) C940-FEFE"
+;		registries ["big5.eten-0"]
+; 		))
+;
+; ;; PinYin-ZhuYin
+;(make-charset 'chinese-sisheng 
+; 	      "SiSheng characters for PinYin/ZhuYin"
+; 	      '(dimension
+; 		1
+; 		chars 94
+; 		final ?0
+; 		graphic 0
+;		short-name "SiSheng"
+;		long-name "SiSheng (PinYin/ZhuYin)"
+;		;; XEmacs addition: first of the two registries
+;		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+; 		))
+;
+;(make-charset 'katakana-jisx0201 
+;	      "Katakana Part of JISX0201.1976"
+; 	      '(dimension
+; 		1
+; 		chars 94
+; 		final ?I
+; 		graphic 1
+;		short-name "Japanese (JISX0201 Kana)"
+;		long-name "Japanese Katakana (JISX0201.1976)"
+;		registries ["jisx0201.1976-0"]
+; 		))
+;
+;(make-charset 'latin-jisx0201 
+; 	      "Roman Part of JISX0201.1976"
+; 	      '(dimension
+; 		1
+; 		chars 94
+; 		final ?J
+; 		graphic 0
+;		short-name "Japanese (JISX0201 Roman)"
+;		long-name "Japanese Roman (JISX0201.1976)"
+;		doc-string "Roman Part of JISX0201.1976"
+;		registries ["jisx0201.1976-0"]
+; 		))
+;
+;
+;(make-charset 'japanese-jisx0208-1978 
+; 	      "JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?@
+; 		graphic 0
+;		short-name "Japanese (JISX0208.1978)"
+;		long-name "Japanese (JISX0208.1978): ISO-IR-42"
+;		registries ["jisx0208.1978-0" "jisc6226.1978-0"]
+; 		))
+;
+;(make-charset 'japanese-jisx0208 
+; 	      "JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?B
+; 		graphic 0
+;		short-name "Japanese (JISX0208)"
+;		long-name "JISX0208.1983/1990 (Japanese): ISO-IR-87"
+;		registries ["jisx0208.1983-0" "jisx0208.1990-0"]
+; 		))
+;
+;(make-charset 'japanese-jisx0212 
+; 	      "JISX0212 Japanese supplement: ISO-IR-159"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?D
+; 		graphic 0
+;		short-name "Japanese (JISX0212)"
+;		long-name "JISX0212 (Japanese): ISO-IR-159"
+;		registries ["jisx0212.1990-0"]
+; 		))
+;
+;(make-charset 'korean-ksc5601 
+; 	      "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		final ?C
+; 		graphic 0
+;		short-name "Korean (KSC5601)"
+;		long-name "Korean (KSC5601): ISO-IR-149"
+; 		;registries ["KSC5601.1989"]
+;		registries ["ksc5601.1987-0"]
+; 		))
+;
+;(make-charset 'thai-tis620 
+; 	      "Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"
+; 	      '(dimension
+; 		1
+; 		chars 96
+; 		final ?T
+; 		graphic 1
+;		short-name "Thai (TIS620)"
+;		long-name "RHP of Thai (TIS620): ISO-IR-166"
+;		registries ["tis620.2529-1"]
+; 		))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;; DEFINITION OF OTHER CHARSETS ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-internal-charset (name doc-string props)
+  "Make an internal charset.
+This is the same as `make-charset' except that if a `unicode-map'
+specifies a file name, the name is assumed relative to `data-directory', and
+will be made so."
+  (let ((unicode-map (plist-get props 'unicode-map)))
+    (when (and unicode-map (stringp (car unicode-map)))
+      ;; During loadup, data-directory is nil, but source-directory is
+      ;; defined
+      (let ((data-dir
+	     (or data-directory (expand-file-name "etc" source-directory))))
+	(setq props
+	      (plist-put props 'unicode-map
+			 (cons (expand-file-name (car unicode-map) data-dir)
+			       (cdr unicode-map)))))))
+  (make-charset name doc-string props))
+
+(defun* make-internal-128-byte-charset (name short-name &key long-name doc-string unicode-map)
+  "Make an internal one-dimension size-128 charset.
+NAME is a symbol, the charset's name.  SHORT-NAME is a string describing the charset briefly, and will be used as the `short-name' property.
+The keys :long-name, :doc-string and :unicode-map will be used to set the associated charset properties.  If unspecified, :long-name defaults to `short-name', and :doc-string defaults to :long-name.  If :unicode-map specifies a
+file name, the name is assumed relative to `data-directory', and
+will be made so."
+  (setq long-name (or long-name short-name))
+  (setq doc-string (or doc-string long-name))
+  (make-internal-charset name doc-string
+			 `(dimension
+			   1
+			   chars 128
+			   ,@(and unicode-map `((unicode-map ,unicode-map)))
+			   short-name ,short-name
+			   long-name ,long-name
+			   )))
 
 ;; APPROPRIATE FILE: vietnamese.el
 ;; CAN'T BE DEFINED THERE BECAUSE: The sample text in the file has
@@ -488,153 +774,156 @@ The keys :long-name, :doc-string and :unicode-map will be used to set the associ
 ;; more than 96 characters.  Since Emacs can't handle it as one
 ;; character set, it is divided into two: lower case letters and upper
 ;; case letters.
-(make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case"
-	      '(dimension
-		1
-		registries ["VISCII1.1"]
-		chars 96
-		final ?1
-		graphic 1
-		unicode-map ("unicode/mule-ucs/vietnamese-viscii-lower.txt"
-			     nil nil #x80)
-		short-name "VISCII lower"
-		long-name "VISCII lower-case"
-		))
+(make-internal-charset
+ 'vietnamese-viscii-lower "VISCII1.1 lower-case"
+ '(dimension
+   1
+   registries ["VISCII1.1"]
+   chars 96
+   final ?1
+   graphic 1
+   unicode-map ("unicode/mule-ucs/vietnamese-viscii-lower.txt"
+		nil nil #x80)
+   short-name "VISCII lower"
+   long-name "VISCII lower-case"
+   ))
 
-(make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case"
-	      '(dimension
-		1
-		registries ["VISCII1.1"]
-		chars 96
-		final ?2
-		graphic 1
-		unicode-map ("unicode/mule-ucs/vietnamese-viscii-upper.txt"
-			     nil nil #x80)
-		short-name "VISCII upper"
-		long-name "VISCII upper-case"
-		))
+(make-internal-charset
+ 'vietnamese-viscii-upper "VISCII1.1 upper-case"
+ '(dimension
+   1
+   registries ["VISCII1.1"]
+   chars 96
+   final ?2
+   graphic 1
+   unicode-map ("unicode/mule-ucs/vietnamese-viscii-upper.txt"
+		nil nil #x80)
+   short-name "VISCII upper"
+   long-name "VISCII upper-case"
+   ))
 
 ;; APPROPRIATE FILE: thai-xtis.el
 ;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
 
-(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(dimension
-	        2
-		registries ["xtis-0"]
-		columns 1
-		chars 94
-		final ??
-		graphic 0))
+(make-internal-charset
+ 'thai-xtis "Precomposed Thai (XTIS by Virach)."
+ '(dimension
+   2
+   registries ["xtis-0"]
+   columns 1
+   chars 94
+   final ??
+   graphic 0))
 
 ; ;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
 ; ;; not assigned.  They are automatically converted to each Indian
 ; ;; script which IS-13194 supports.
 
-(make-charset 'indian-is13194 
-	      "Generic Indian charset for data exchange with IS 13194"
-	      '(dimension
-		1
-		registries ["IS13194-Devanagari"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?5
-		graphic 1
-		unicode-map ("unicode/mule-ucs/indian-is13194.txt"
-			     nil nil #x80)
-		short-name "IS 13194"
-		long-name "Indian IS 13194"
-		))
+(make-internal-charset
+ 'indian-is13194 
+ "Generic Indian charset for data exchange with IS 13194"
+ '(dimension
+   1
+   registries ["IS13194-Devanagari"]
+   chars 94
+   columns 2
+   final ?5
+   graphic 1
+   unicode-map ("unicode/mule-ucs/indian-is13194.txt"
+		nil nil #x80)
+   short-name "IS 13194"
+   long-name "Indian IS 13194"
+   ))
 
 ;; Actual Glyph for 1-column width.
-(make-charset 'indian-1-column 
-	      "Indian charset for 2-column width glyphs"
-	      '(dimension
-		2
-		registries ["MuleIndian-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?6
-		graphic 0
-		short-name "Indian 1-col"
-		long-name "Indian 1 Column"
-		))
+(make-internal-charset
+ 'indian-1-column 
+ "Indian charset for 2-column width glyphs"
+ '(dimension
+   2
+   registries ["MuleIndian-1"]
+   chars 94
+   columns 1
+   final ?6
+   graphic 0
+   short-name "Indian 1-col"
+   long-name "Indian 1 Column"
+   ))
 
 ;; Actual Glyph for 2-column width.
-(make-charset 'indian-2-column 
-	      "Indian charset for 2-column width glyphs"
-	      '(dimension
-		2
-		registries ["MuleIndian-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?5
-		graphic 0
-		short-name "Indian 2-col"
-		long-name "Indian 2 Column"
-		))
+(make-internal-charset
+ 'indian-2-column 
+ "Indian charset for 2-column width glyphs"
+ '(dimension
+   2
+   registries ["MuleIndian-2"]
+   chars 94
+   columns 2
+   final ?5
+   graphic 0
+   short-name "Indian 2-col"
+   long-name "Indian 2 Column"
+   ))
 
 ;; Lao script.
 ;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
-	      '(dimension
-		1
-		registries ["MuleLao-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?1
-		graphic 0
-		unicode-map ("unicode/other/lao.txt")
-		short-name "Lao"
-		long-name "Lao"
-		))
+(make-internal-charset
+ 'lao "Lao characters (ISO10646 0E80..0EDF)"
+ '(dimension
+   1
+   registries ["MuleLao-1"]
+   chars 94
+   final ?1
+   graphic 0
+   unicode-map ("unicode/other/lao.txt")
+   short-name "Lao"
+   long-name "Lao"
+   ))
 
 ;; APPROPRIATE FILE: ethiopic.el
 ;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
 
 ;; Ethiopic characters (Amharic and Tigrinya).
-(make-charset 'ethiopic "Ethiopic characters"
-	      '(dimension
-		2
-		registries ["Ethiopic-Unicode"]
-		chars 94
-		final ?3
-		graphic 0
-		unicode-map ("unicode/mule-ucs/ethiopic.txt")
-		short-name "Ethiopic"
-		long-name "Ethiopic characters"
-		))
+(make-internal-charset
+ 'ethiopic "Ethiopic characters"
+ '(dimension
+   2
+   registries ["Ethiopic-Unicode"]
+   chars 94
+   final ?3
+   graphic 0
+   unicode-map ("unicode/mule-ucs/ethiopic.txt")
+   short-name "Ethiopic"
+   long-name "Ethiopic characters"
+   ))
 
-(make-charset 'tibetan-1-column "Tibetan 1 column glyph"
-	      '(dimension
-		2
-		registries ["MuleTibetan-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?8
-		graphic 0
-		short-name "Tibetan 1-col"
-		long-name "Tibetan 1 column"
-		))
+(make-internal-charset
+ 'tibetan-1-column "Tibetan 1 column glyph"
+ '(dimension
+   2
+   registries ["MuleTibetan-1"]
+   chars 94
+   columns 1
+   final ?8
+   graphic 0
+   short-name "Tibetan 1-col"
+   long-name "Tibetan 1 column"
+   ))
 
 ;; Tibetan script.
-(make-charset 'tibetan "Tibetan characters"
-	      '(dimension
-		2
-		registries ["MuleTibetan-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?7
-		graphic 0
-		unicode-map ("unicode/mule-ucs/tibetan.txt")
-		short-name "Tibetan 2-col"
-		long-name "Tibetan 2 column"
-		))
+(make-internal-charset
+ 'tibetan "Tibetan characters"
+ '(dimension
+   2
+   registries ["MuleTibetan-2"]
+   chars 94
+   columns 2
+   final ?7
+   graphic 0
+   unicode-map ("unicode/mule-ucs/tibetan.txt")
+   short-name "Tibetan 2-col"
+   long-name "Tibetan 2 column"
+   ))
 
 ;; GNU Emacs has the charsets: 
 

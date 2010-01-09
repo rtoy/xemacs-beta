@@ -35,14 +35,14 @@
 ;; character set, it is divided into two: lower case letters and upper
 ;; case letters.
 ;Moved to mule-charset.el.
-;(make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case" ...
-;(make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case" ...
+;(make-internal-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case" ...
+;(make-internal-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case" ...
 
 (define-category ?v "Vietnamese character.")
 (modify-category-entry 'vietnamese-viscii-lower ?v)
 (modify-category-entry 'vietnamese-viscii-upper ?v)
 
-(make-charset
+(make-internal-charset
  'vietnamese-viscii "Vietnamese VISCII1.1"
  '(dimension
    1

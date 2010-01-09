@@ -1,6 +1,6 @@
 /* Declarations having to do with XEmacs syntax tables.
    Copyright (C) 1985, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -59,6 +59,12 @@ the need. --ben
 */
 
 #endif /* MIRROR_TABLE */
+
+#ifdef MIRROR_TABLE
+#define USED_IF_MIRROR_TABLE(x) x
+#else
+#define USED_IF_MIRROR_TABLE(x) UNUSED (x)
+#endif
 
 enum syntaxcode
 {

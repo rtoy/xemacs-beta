@@ -47,12 +47,6 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 
 
-#ifdef MIRROR_TABLE
-#define USED_IF_MIRROR_TABLE(x) x
-#else
-#define USED_IF_MIRROR_TABLE(x) UNUSED (x)
-#endif
-
 Lisp_Object Qchar_tablep, Qchar_table;
 
 Lisp_Object Vall_syntax_tables;

@@ -4011,7 +4011,7 @@ syms_of_fns (void)
   DEFSYMBOL (Qidentity);
   DEFSYMBOL (Qyes_or_no_p);
 
-  DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
+  DEFERROR_STANDARD (Qbase64_conversion_error, Qtext_conversion_error);
 
   DEFSUBR (Fidentity);
   DEFSUBR (Frandom);

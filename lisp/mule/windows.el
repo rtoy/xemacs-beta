@@ -35,15 +35,16 @@
 ;There should be a CP###.TXT file in the directory
 ;etc/unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS.
 (defun make-one-dimension-windows-charset (codepage script name)
-  (make-charset (intern (format "%s-windows-%s" script num))
-		(format "Windows code page %s (%s)" num name)
-		`(dimension
-		  1
-		  chars 128
-		  unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x80)
-		  short-name ,(format "Windows %s (%s)" num name)
-		  long-name ,(format "Windows code page %s (%s)" num name)
-		  )))
+  (make-internal-charset
+   (intern (format "%s-windows-%s" script num))
+   (format "Windows code page %s (%s)" num name)
+   `(dimension
+     1
+     chars 128
+     unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x80)
+     short-name ,(format "Windows %s (%s)" num name)
+     long-name ,(format "Windows code page %s (%s)" num name)
+     )))
 
 ;Make a two-dimension Windows charset corresponding to a specified code
 ;page.  CODEPAGE is the number of the code page.  SCRIPT is a symbol
@@ -53,13 +54,14 @@
 ;inclusive.  There should be a CP###.TXT file in the directory
 ;etc/unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS.
 (defun make-two-dimension-windows-charset (codepage script name l1 l2 h1 h2)
-  (make-charset (intern (format "%s-windows-%s" script num))
-		(format "Windows code page %s (%s)" num name)
-		`(dimension
-		  2
-		  chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
-		  offset (,l1 ,l2)
-		  unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x8000)
-		  short-name ,(format "Windows %s (%s)" num name)
-		  long-name ,(format "Windows code page %s (%s)" num name)
-		  )))
+  (make-internal-charset
+   (intern (format "%s-windows-%s" script num))
+   (format "Windows code page %s (%s)" num name)
+   `(dimension
+     2
+     chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
+     offset (,l1 ,l2)
+     unicode-map (,(format "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP%d.TXT" num) #x8000)
+     short-name ,(format "Windows %s (%s)" num name)
+     long-name ,(format "Windows code page %s (%s)" num name)
+     )))

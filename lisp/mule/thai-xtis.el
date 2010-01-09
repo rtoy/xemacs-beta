@@ -35,9 +35,9 @@
 ;;; Code:
 
 ;moved to mule-charset.el.
-;(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)." ...
+;(make-internal-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)." ...
 
-(make-charset
+(make-internal-charset
  'thai-iso8859-11
  "Right-Hand Part of Latin/Thai Alphabet (ISO/IEC 8859-11)"
  '(dimension 1

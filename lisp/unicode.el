@@ -33,8 +33,10 @@
 
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
+;; @@#### Eventually, move this into the C code or move the creation
+;; of internal charsets to mule-charset.el.
 (defun load-unicode-tables ()
-  "Initialize the Unicode translation tables for all standard charsets."
+  "Initialize the Unicode translation tables for all built-in charsets."
   (let ((parse-args
 	 `(("unicode/unicode-consortium/ISO8859"
 	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
@@ -45,8 +47,6 @@
 	    ;; ("8859-1.TXT" control-1 #x80 #x9F #x-80)
             ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
 	    ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
-	    ;; @@#### Add more charsets, esp. things like KOI8-R; take them
-	    ;; from emacs-unicode-2, among other things.
 	    ("8859-1.TXT" latin-iso8859-1 #xA0)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0)
 	    ("8859-2.TXT" latin-iso8859-2 #xA0)
@@ -72,30 +72,26 @@
 	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
 	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
 	    ("GB2312.TXT" chinese-gb2312)
-	    ;; "HANGUL.TXT"
 	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
 	    ("JIS0201.TXT" katakana-jisx0201 #xA0)
 	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
 	    ("JIS0212.TXT" japanese-jisx0212)
-	    ;; "KSC5601.TXT" 
 	    ;; note that KSC5601.TXT as currently distributed is NOT what
 	    ;; it claims to be!  see comments in KSX1001.TXT.
 	    ("KSX1001.TXT" korean-ksc5601)
-	    ;; "OLD5601.TXT" 
 	    ,@(when (find-charset 'japanese-shift-jis)
 		'(("SHIFTJIS.TXT" japanese-shift-jis #x8000)))
 	    )
 
 	   ("unicode/oreilly"
-	    ;; "GB12345.TXT" 
 	    )
 
 	   ("unicode/mule-ucs"
-	    ("unicode/mule-ucs/chinese-cns11643-1.txt" chinese-cns11643-1)
-	    ("unicode/mule-ucs/chinese-cns11643-2.txt" chinese-cns11643-2)
-	    ("unicode/mule-ucs/chinese-sisheng.txt" chinese-sisheng)
-	    ("unicode/mule-ucs/thai-tis620.txt" thai-tis620 nil nil #x80)
-	   )))
+	    ("chinese-cns11643-1.txt" chinese-cns11643-1)
+	    ("chinese-cns11643-2.txt" chinese-cns11643-2)
+	    ("chinese-sisheng.txt" chinese-sisheng)
+	    ("thai-tis620.txt" thai-tis620 nil nil #x80)
+	   ))))
     (mapc #'(lambda (tables)
               (let ((undir
                      (expand-file-name (car tables) data-directory)))
@@ -104,70 +100,34 @@
                                  (expand-file-name (car args) undir)
                                  (cdr args)))
                       (cdr tables))))
-	    parse-args)
-    ;; The default-unicode-precedence-list. We set this here to default to
-    ;; *not* mapping various European characters to East Asian characters;
-    ;; otherwise the default-unicode-precedence-list is numerically ordered
-    ;; by charset ID.
-    (declare-fboundp
-     (set-default-unicode-precedence-list
-      '(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
-	greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
-	latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
-	vietnamese-viscii-lower vietnamese-viscii-upper 
-	jit-ucs-charset-0 japanese-jisx0208 japanese-jisx0208-1978
-	japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
-	chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
-	indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
-	chinese-isoir165 
-	composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
-	katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
-	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
-	chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7)))))
+	  parse-args)
+    ))
 
-(defconst ccl-encode-to-ucs-2
-  (eval-when-compile
-    (let ((pre-existing 
-           ;; This is the compiled CCL program from the assert
-           ;; below. Since this file is dumped and ccl.el isn't (and
-           ;; even when it was, it was dumped much later than this
-           ;; one), we can't compile the program at dump time. We can
-           ;; check at byte compile time that the program is as
-           ;; expected, though.
-           [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028
-              147513 8 82009 255 22]))
-      (when (featurep 'mule)
-        ;; Check that the pre-existing constant reflects the intended
-        ;; CCL program.
-        (assert
-         (equal pre-existing
-                (ccl-compile
-                 `(1 
-                   ( ;; mule-to-unicode's first argument is the
-                    ;; charset ID, the second its first byte
-                    ;; left shifted by 7 bits masked with its
-                    ;; second byte.
-                    (r1 = (r1 << 7)) 
-                    (r1 = (r1 | r2)) 
-                    (mule-to-unicode r0 r1) 
-                    (if (r0 & ,(lognot #xFFFF))
-                        ;; Redisplay looks in r1 and r2 for the first
-                        ;; and second bytes of the X11 font,
-                        ;; respectively. For non-BMP characters we
-                        ;; display U+FFFD.
-                        ((r1 = #xFF)
-                         (r2 = #xFD))
-                      ((r1 = (r0 >> 8)) 
-                       (r2 = (r0 & #xFF))))))))
-         nil 
-         "The pre-compiled CCL program appears broken. "))
-      pre-existing))
-  "CCL program to transform Mule characters to UCS-2.")
-
-(when (featurep 'mule)
-  (put 'ccl-encode-to-ucs-2 'ccl-program-idx
-       (declare-fboundp
-	(register-ccl-program 'ccl-encode-to-ucs-2 ccl-encode-to-ucs-2))))
+(defun initialize-default-unicode-precedence-list
+  ;; The default-unicode-precedence-list. We set this here to default to
+  ;; *not* mapping various European characters to East Asian characters;
+  ;; [[ otherwise the default-unicode-precedence-list is numerically ordered
+  ;; by charset ID. ]] -- not true any more, order will be random since
+  ;; we get it by mapping over a hash table.
+  ;;
+  ;; This must be run late, when all charsets have already been created.
+  (declare-fboundp
+   (set-default-unicode-precedence-list
+    `(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
+	    greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
+	    latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
+	    vietnamese-viscii-lower vietnamese-viscii-upper 
+	    ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
+	    japanese-jisx0208 japanese-jisx0208-1978
+	    japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
+	    chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
+	    indian-is13194 korean-ksc5601 chinese-cns11643-1
+	    chinese-cns11643-2 chinese-isoir165 
+	    composite ethiopic indian-1-column indian-2-column
+	    katakana-jisx0201 lao thai-tis620 thai-xtis
+	    tibetan tibetan-1-column latin-jisx0201 chinese-cns11643-3
+	    chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
+	    chinese-cns11643-7))))
 
 (defun decode-char (quote-ucs code &optional restriction) 
   "FSF compatibility--return Mule character with Unicode codepoint CODE.
@@ -186,20 +146,6 @@ The second argument must be 'ucs, the third argument is ignored.  "
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
-
-;; Now we always load them at dump time; necessary for Unicode-internal.
-
-; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
-; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
-;   "[INTERNAL] Whether to load the Unicode tables at dump time.
-; Setting this at run-time does nothing.")
-
-;; Load the Unicode tables now!!!
-(when (and (featurep 'mule)
-	   ;load-unicode-tables-at-dump-time
-	   )
-  (let ((data-directory (expand-file-name "etc" source-root)))
-    (load-unicode-tables)))
 
 (make-coding-system
  'utf-16 'unicode
@@ -472,8 +418,7 @@ Standard encoding for representing UTF-8 under MS Windows."
                        syntax-table))
 
 ;; *Sigh*, declarations needs to be at the start of the line to be picked up
-;; by make-docfile. Not so much an issue with ccl-encode-to-ucs-2, which we
-;; don't necessarily want to advertise, but the following are important.
+;; by make-docfile.
 
 ;; Create all the Unicode error sequences, normally as jit-ucs-charset-0
 ;; characters starting at U+200000 (which isn't a valid Unicode code
@@ -595,7 +540,7 @@ mapping from the error sequences to the desired characters.  "
   ;; alternative approach would be to fix make-docfile.c to be able to read
   ;; Lisp.
   (mapc #'unintern
-        '(ccl-encode-to-ucs-2 unicode-error-default-translation-table
+        '(unicode-error-default-translation-table
           unicode-invalid-regexp-range frob-unicode-errors-region
           unicode-error-translate-region unicode-query-coding-region
           unicode-query-coding-skip-chars-arg)))
@@ -640,3 +585,17 @@ mapping from the error sequences to the desired characters.  "
 ; For more information, see Appendix A.1 of The Unicode Standard 2.0, or
 ; wherever it is in v3.0."
 ;    unicode-type utf-7))
+
+;; Now we always load them at dump time; necessary for Unicode-internal.
+
+; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
+; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
+;   "[INTERNAL] Whether to load the Unicode tables at dump time.
+; Setting this at run-time does nothing.")
+
+;; Load the Unicode tables now!!!
+(when (and (featurep 'mule)
+	   ;load-unicode-tables-at-dump-time
+	   )
+  (let ((data-directory (expand-file-name "etc" source-directory)))
+    (load-unicode-tables)))

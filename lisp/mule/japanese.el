@@ -33,32 +33,34 @@
 
 ;;; Code:
 
-(make-charset 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-1"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?O
-		graphic 0
-		short-name "JISX0213-1"
-		long-name "JISX0213-1"
-		))
+(make-internal-charset
+ 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
+ '(dimension
+   2
+   registries ["JISX0213.2000-1"]
+   chars 94
+   columns 2
+   direction l2r
+   final ?O
+   graphic 0
+   short-name "JISX0213-1"
+   long-name "JISX0213-1"
+   ))
 
 ;; JISX0213 Plane 2
-(make-charset 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?P
-		graphic 0
-		short-name "JISX0213-2"
-		long-name "JISX0213-2"
-		))
+(make-internal-charset
+ 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
+ '(dimension
+   2
+   registries ["JISX0213.2000-2"]
+   chars 94
+   columns 2
+   direction l2r
+   final ?P
+   graphic 0
+   short-name "JISX0213-2"
+   long-name "JISX0213-2"
+   ))
 
 
 (make-two-dimension-windows-charset 932 'japanese "Japanese" #x81 #x40 #xfe #xfe)

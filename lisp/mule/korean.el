@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2005 Ben Wing.
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Korean
 
@@ -34,7 +34,7 @@
 ;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
 ;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
 ;; So for our purposes, this is [84 - F9], [31 - FE]
-(make-charset
+(make-internal-charset
  'korean-johab
  "Johab (Korean)"
  '(dimension

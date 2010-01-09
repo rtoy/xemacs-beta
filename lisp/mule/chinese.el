@@ -46,7 +46,7 @@
 (flet
     ((make-chinese-cns11643-charset
       (name plane final)
-      (make-charset
+      (make-internal-charset
        name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
        `(registries 
          ,(vector (concat "cns11643.1992-" plane ))
@@ -72,7 +72,7 @@
 ;; ISO-IR-165 (CCITT Extended GB)
 ;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
 ;;    GB 8565-88 table A4 + 293 characters.
-(make-charset ;; not in FSF 21.1
+(make-internal-charset ;; not in FSF 21.1
  'chinese-isoir165
  "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
  `(registries ["isoir165-0"]
@@ -84,7 +84,7 @@
    long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
 ; ;; PinYin-ZhuYin
-; (make-charset 'chinese-sisheng 
+; (make-internal-charset 'chinese-sisheng 
 ; 	      "SiSheng characters for PinYin/ZhuYin"
 ; 	      '(dimension
 ; 		1

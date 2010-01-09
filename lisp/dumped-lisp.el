@@ -160,6 +160,9 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
+       ;; Initialize Unicode and load the translation tables for
+       ;; the built-in charsets.
+       "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
 	 '("mule/mule-charset"
@@ -168,9 +171,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
 	   ))
-       ;; Initialize Unicode and load the translation tables.  This requires
-       ;; that all charsets be created (happens in mule/mule-charset).
-       "unicode"
        ;; may initialize coding systems
        (when (featurep '(and mule x)) "mule/mule-x-init")
        (when (featurep '(and mule tty)) "mule/mule-tty-init")

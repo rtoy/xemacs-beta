@@ -4987,6 +4987,13 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error (const CIbyte *reason,
+					      Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error_2 (const CIbyte *reason,
+						Lisp_Object frob1,
+						Lisp_Object frob2));
+void maybe_text_conversion_error (const CIbyte *, Lisp_Object, Lisp_Object,
+				  Error_Behavior);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -6161,6 +6168,7 @@ Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 void initialize_ascii_control_1_latin_1_unicode_translation (void);
 int decode_unicode (Lisp_Object unicode);
 void free_precedence_dynarr (Lisp_Object_dynarr *dynarr);
+void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
 
 enum unicode_type
 {

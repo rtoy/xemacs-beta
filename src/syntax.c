@@ -2350,7 +2350,7 @@ update_just_this_syntax_table (Lisp_Object table)
    one. */
 
 void
-update_syntax_table (Lisp_Object table)
+update_syntax_table (Lisp_Object USED_IF_MIRROR_TABLE (table))
 {
 #ifdef MIRROR_TABLE
   Lisp_Object nonmirror = XCHAR_TABLE (table)->mirror_table;

@@ -366,8 +366,6 @@ Lisp_Object Qignore_first_column;
 #ifndef UNICODE_INTERNAL
 Lisp_Object Vcurrent_jit_charset;
 int last_allocated_jit_c1, last_allocated_jit_c2;
-Lisp_Object Qccl_encode_to_ucs_2;
-
 int number_of_jit_charsets;
 Lisp_Object Vcharset_descr;
 #endif
@@ -1015,10 +1013,7 @@ get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 	 nconc2 (list6 (Qcolumns, make_int (1), Qchars,
 			make_int (96),
 			Qdimension, make_int (2)),
-		 list4 (Qregistries, Qunicode_registries,
-			/* This CCL program is initialised in
-			   unicode.el. */
-			Qccl_program, Qccl_encode_to_ucs_2)));
+		 list2 (Qregistries, Qunicode_registries)));
       XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
       last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
 
@@ -1829,6 +1824,72 @@ Unicode tables or in the charset:
   unbind_to (fondo); /* close file */
   UNGCPRO;
   return Qnil;
+}
+
+void
+init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
+{
+  Lisp_Object savemap = map;
+
+  CHECK_TRUE_LIST (map);
+  if (STRINGP (XCAR (map)))
+    {
+      Lisp_Object filename = XCAR (map);
+      Lisp_Object start = Qnil, end = Qnil, offset = Qnil, flags = Qnil;
+      map = XCDR (map);
+      if (!NILP (map))
+	{
+	  start = XCAR (map);
+	  map = XCDR (map);
+	}
+      if (!NILP (map))
+	{
+	  end = XCAR (map);
+	  map = XCDR (map);
+	}
+      if (!NILP (map))
+	{
+	  offset = XCAR (map);
+	  map = XCDR (map);
+	}
+      if (!NILP (map))
+	{
+	  flags = XCAR (map);
+	  map = XCDR (map);
+	}
+      if (!NILP (map))
+	invalid_argument ("Unicode map can have at most 5 arguments",
+			  savemap);
+      Fload_unicode_mapping_table (filename, charset, start, end,
+				   offset, flags);
+    }
+  else
+    {
+      EXTERNAL_LIST_LOOP_2 (entry, map)
+	{
+	  int len;
+	  CHECK_TRUE_LIST (entry);
+	  len = Flength (entry);
+	  if (XCHARSET_DIMENSION (charset) == 1)
+	    {
+	      if (len != 2)
+		invalid_argument ("Unicode map entry must have length 2 for dimension-1 charset", entry);
+	      Fset_unicode_conversion (XCADR (entry), charset, XCAR (entry),
+				       Qnil);
+	    }
+	  else
+	    {
+	      if (len != 3)
+		invalid_argument ("Unicode map entry must have length 3 for dimension-1 charset", entry);
+	      Fset_unicode_conversion (XCADDR (entry), charset, XCAR (entry),
+				       XCADR (entry));
+	    }
+	}
+    }
+
+  /* Only set map after we have gone through everything and gotten
+     no errors */
+  XCHARSET_UNICODE_MAP (charset) = savemap;
 }
 
 #endif /* MULE */
@@ -3138,9 +3199,9 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
                                                        fail_range_start));
                   eicat_ascii (error_details, " using coding system");
 
-                  signal_error (Qtext_conversion_error, 
-                                (const CIbyte *)(eidata (error_details)),
-                                XCODING_SYSTEM_NAME (codesys));
+                  text_conversion_error
+		    ((const CIbyte *)(eidata (error_details)),
+		     XCODING_SYSTEM_NAME (codesys));
                 }
 
               if (NILP (result))
@@ -3242,11 +3303,7 @@ syms_of_unicode (void)
 
   DEFSUBR (Fset_unicode_query_skip_chars_args);
 
-#ifndef UNICODE_INTERNAL
-  DEFSYMBOL (Qccl_encode_to_ucs_2);
   DEFSYMBOL (Qignore_first_column);
-#endif /* not UNICODE_INTERNAL */
-
   DEFSYMBOL (Qunicode_registries);
 #endif /* MULE */
 
@@ -3368,7 +3425,7 @@ Unicode codepoints that can't be otherwise represented), and those used
 when no font matching the charset's registries property has been found
 (that is, they're probably Mule-specific charsets like Ethiopic or IPA).
 */ );
-  Qunicode_registries = vector1(build_string("iso10646-1"));
+  Qunicode_registries = vector1 (build_string ("iso10646-1"));
 
   /* Initialised in lisp/mule/general-late.el, by a call to
      #'set-unicode-query-skip-chars-args. Or at least they would be, but we
