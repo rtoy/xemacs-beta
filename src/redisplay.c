@@ -630,8 +630,8 @@ const struct sized_memory_description display_line_dynarr_description = {
 /***************************************************************************/
 
 static int
-redisplay_text_width_ichar_string (struct window *w, int findex,
-				    Ichar *str, Charcount len)
+redisplay_window_text_width_ichar_string (struct window *w, int findex,
+					  Ichar *str, Charcount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
   Lisp_Object window;
@@ -647,10 +647,10 @@ redisplay_text_width_ichar_string (struct window *w, int findex,
 
 static Ichar_dynarr *rtw_ichar_dynarr;
 
-int
-redisplay_text_width_string (struct window *w, int findex,
-			     Ibyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount len)
+static int
+redisplay_window_text_width_string (struct window *w, int findex,
+				    Ibyte *nonreloc, Lisp_Object reloc,
+				    Bytecount offset, Bytecount len)
 {
   if (!rtw_ichar_dynarr)
     rtw_ichar_dynarr = Dynarr_new (Ichar);
@@ -660,18 +660,19 @@ redisplay_text_width_string (struct window *w, int findex,
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
   convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
-  return redisplay_text_width_ichar_string
+  return redisplay_window_text_width_ichar_string
     (w, findex, Dynarr_atp (rtw_ichar_dynarr, 0),
      Dynarr_length (rtw_ichar_dynarr));
 }
 
 int
-redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
-				   Ibyte *nonreloc, Lisp_Object reloc,
-				   Bytecount offset, Bytecount len)
+redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
+			     Ibyte *nonreloc, Lisp_Object reloc,
+			     Bytecount offset, Bytecount len)
 {
+  Lisp_Object window = DOMAIN_WINDOW (domain);
+  Lisp_Object frame  = DOMAIN_FRAME  (domain);
   unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object frame;
   struct face_cachel cachel;
 
   if (!rtw_ichar_dynarr)
@@ -685,10 +686,13 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
   find_charsets_in_ibyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
-  frame = wrap_frame (f);
-  ensure_face_cachel_complete (&cachel, frame, charsets);
-  return DEVMETH (XDEVICE (FRAME_DEVICE (f)),
-		  text_width, (f, &cachel, Dynarr_atp (rtw_ichar_dynarr, 0),
+  ensure_face_cachel_complete (&cachel,
+			       NILP (window) ? frame : window,
+			       charsets);
+  return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
+		  text_width, (XFRAME (frame),
+			       &cachel,
+			       Dynarr_atp (rtw_ichar_dynarr, 0),
 			       Dynarr_length (rtw_ichar_dynarr)));
 }
 
@@ -1127,8 +1131,8 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 	      Ichar ch = data->font_is_bogus ? '~' : data->ch;
 
 	      data->last_char_width =
-		redisplay_text_width_ichar_string (XWINDOW (data->window),
-						    data->findex, &ch, 1);
+		redisplay_window_text_width_ichar_string
+		(XWINDOW (data->window), data->findex, &ch, 1);
 	    }
 	  else
 	    data->last_char_width = -1;
@@ -1145,9 +1149,8 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 
       width = data->last_char_width;
       if (width < 0) /* proportional fonts */
-	width = redisplay_text_width_ichar_string (XWINDOW (data->window),
-						    data->findex,
-						    &data->ch, 1);
+	width = redisplay_window_text_width_ichar_string
+	  (XWINDOW (data->window), data->findex, &data->ch, 1);
     }
 
   if (data->max_pixpos != -1 && (data->pixpos + width > data->max_pixpos))
@@ -4178,8 +4181,8 @@ tail_recurse:
 		      SET_CURRENT_MODE_CHARS_PIXSIZE;
 
 		      dash_pixsize =
-			redisplay_text_width_string (w, findex, &ch, Qnil, 0,
-						     1);
+			redisplay_window_text_width_string
+			(w, findex, &ch, Qnil, 0, 1);
 
 		      if (dash_pixsize == 0)
 			num_to_add = 0;
