@@ -646,55 +646,46 @@ Otherwise, it returns the next larger version of this font that is defined."
 
 ;;; internal routines
 
-;;; x-init-face-from-resources is responsible for initializing a
-;;; newly-created face from the resource database.
+;;; x-init-face-from-resources is responsible for initializing a newly-created
+;;; face from the resource database.
 ;;;
-;;; When a new frame is created, it is called from `x-init-frame-faces'
-;;; called from `init-frame-faces' called from init_frame_faces()
-;;; from Fmake_frame().  In this case it is called once for each existing
-;;; face, with the newly-created frame as the argument.  It then initializes
-;;; the newly-created faces on that frame.
+;;; When a new frame is created, it is called from `x-init-frame-faces' called
+;;; from `init-frame-faces' called from init_frame_faces() from Fmake_frame(). 
+;;; In this case it is called once for each existing face, with the
+;;; newly-created frame as the argument. It then initializes the newly-created
+;;; faces on that frame.
 ;;;
-;;; It's also called from `init-device-faces' and
-;;; `init-global-faces'.
+;;; It's also called from `init-device-faces' and `init-global-faces'.
 ;;;
-;;; This had better not signal an error.  The frame is in an intermediate
-;;; state where signalling an error or entering the debugger would likely
-;;; result in a crash.
+;;; This had better not signal an error. The frame is in an intermediate state
+;;; where signalling an error or entering the debugger would likely result in
+;;; a crash.
 
-;; When we initialise a face from an X resource, note that we did so. 
-;;
-;; Now in specifier.el so run-time checks for it on non-X builds don't
-;; error.
-
-; (define-specifier-tag 'x-resource)
+;; When we initialise a face from an X resource, note that we did so. Now in
+;; specifier.el so run-time checks for it on non-X builds don't error.
+;; (define-specifier-tag 'x-resource)
 
 (defun x-init-face-from-resources (face &optional locale set-anyway)
-
-  ;;
   ;; These are things like "attributeForeground" instead of simply
-  ;; "foreground" because people tend to do things like "*foreground",
-  ;; which would cause all faces to be fully qualified, making faces
-  ;; inherit attributes in a non-useful way.  So we've made them slightly
-  ;; less obvious to specify in order to make them work correctly in
-  ;; more random environments.
-  ;;
-  ;; I think these should be called "face.faceForeground" instead of
-  ;; "face.attributeForeground", but they're the way they are for
-  ;; hysterical reasons. (jwz)
+  ;; "foreground" because people tend to do things like "*foreground", which
+  ;; would cause all faces to be fully qualified, making faces inherit
+  ;; attributes in a non-useful way. So we've made them slightly less obvious
+  ;; to specify in order to make them work correctly in more random
+  ;; environments.
 
+  ;; I think these should be called "face.faceForeground" instead of
+  ;; "face.attributeForeground", but they're the way they are for hysterical
+  ;; reasons. (jwz)
   (let* ((append (if set-anyway nil 'append))
-	 ;; Some faces are initialized before XEmacs is dumped.
-	 ;; In order for the X resources to be able to override
-	 ;; those settings, such initialization always uses the
-	 ;; `default' tag.  We remove all specifier specs
-	 ;; containing the `default' tag in the locale before
+	 ;; Some faces are initialized before XEmacs is dumped. In order for
+	 ;; the X resources to be able to override those settings, such
+	 ;; initialization always uses the `default' tag. We remove all
+	 ;; specifier specs containing the `default' tag in the locale before
 	 ;; adding new specs.
 	 (tag-set '(default))
-	 ;; The tag order matters here.  The spec removal
-	 ;; function uses the list cdrs.  We want to remove (x
-	 ;; default) and (default) specs, not (default x) and (x)
-	 ;; specs.
+	 ;; The tag order matters here. The spec removal function uses the
+	 ;; list cdrs. We want to remove (x default) and (default) specs, not
+	 ;; (default x) and (x) specs.
 	 (x-tag-set '(x default))
 	 (tty-tag-set '(tty default))
          (our-tag-set '(x x-resource))
@@ -725,10 +716,10 @@ Otherwise, it returns the next larger version of this font that is defined."
 	       (concat name ".attributeStrikethru")
 	       "Face.AttributeStrikethru"
 	       'boolean locale))
-	 ;; we still resource for these TTY-only resources so that
-	 ;; you can specify resources for TTY frames/devices.  This is
-	 ;; useful when you start up your XEmacs on an X display and later
-	 ;; open some TTY frames.
+	 ;; we still resource for these TTY-only resources so that you can
+	 ;; specify resources for TTY frames/devices. This is useful when you
+	 ;; start up your XEmacs on an X display and later open some TTY
+	 ;; frames.
 	 (hp (x-get-resource-and-maybe-bogosity-check
 	      (concat name ".attributeHighlight")
 	      "Face.AttributeHighlight"
@@ -758,12 +749,10 @@ Otherwise, it returns the next larger version of this font that is defined."
 	      tty-tag-set (cons device-class tty-tag-set)
               our-tag-set (cons device-class our-tag-set)))
 
-    ;;
-    ;; If this is the default face, then any unspecified properties should
-    ;; be defaulted from the global properties.  Can't do this for
+    ;; For the default and gui-element faces, some unspecified properties
+    ;; should be defaulted from the global properties. Can't do this for
     ;; frames or devices because then, common resource specs like
     ;; "*Foreground: black" will have unwanted effects.
-    ;;
     (if (and (or (eq (face-name face) 'default)
 		 (eq (face-name face) 'gui-element))
 	     (or (null locale) (eq locale 'global)))
@@ -776,35 +765,32 @@ Otherwise, it returns the next larger version of this font that is defined."
 	  (or bg (setq bg (x-get-resource
 			   "background" "Background" 'string locale nil
 			   'warn)))))
-    ;;
+
     ;; "*cursorColor: foo" is equivalent to setting the background of the
     ;; text-cursor face.
-    ;;
     (if (and (eq (face-name face) 'text-cursor)
 	     (or (null locale) (eq locale 'global)))
 	(setq bg (or (x-get-resource
 		      "cursorColor" "CursorColor" 'string locale nil 'warn)
 		     bg)))
-    ;; #### should issue warnings?  I think this should be
-    ;; done when the instancing actually happens, but I'm not
-    ;; sure how it should actually be dealt with.
+    ;; #### NOTE: should issue warnings? I think this should be done when the
+    ;; instancing actually happens, but I'm not sure how it should actually be
+    ;; dealt with.
     (when fn
       (if device-class
-	  ;; Always use the x-tag-set to remove specs, since we don't
-	  ;; know whether the predumped face was initialized with an
-	  ;; 'x tag or not.
+	  ;; Always use the x-tag-set to remove specs, since we don't know
+	  ;; whether the predumped face was initialized with an 'x tag or not.
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-font face)
 							locale
 							x-tag-set)
-	;; If there's no device class then we're initializing
-	;; globally.  This means we should override global
-	;; defaults for all X device classes.
+	;; If there's no device class then we're initializing globally. This
+	;; means we should override global defaults for all X device classes.
 	(remove-specifier (face-font face) locale x-tag-set nil))
       (set-face-font face fn locale our-tag-set append)
 
-      ;; And retain some of the fallbacks in the generated default face,
-      ;; since we don't want to try andale-mono's ISO-10646-1 encoding for
-      ;; Amharic or Thai.
+      ;; And retain some of the fallbacks in the generated default face, since
+      ;; we don't want to try andale-mono's ISO-10646-1 encoding for Amharic
+      ;; or Thai.
       (when (and (specifierp (face-font face))
                  (consp (specifier-fallback (face-font face))))
         (loop
@@ -817,9 +803,9 @@ Otherwise, it returns the next larger version of this font that is defined."
                           (list (cons tag-set instantiator))))
               append))))
 		     
-    ;; Kludge-o-rooni.  Set the foreground and background resources for
-    ;; X devices only -- otherwise things tend to get all messed up
-    ;; if you start up an X frame and then later create a TTY frame.
+    ;; Kludge-o-rooni. Set the foreground and background resources for X
+    ;; devices only -- otherwise things tend to get all messed up if you start
+    ;; up an X frame and then later create a TTY frame.
     (when fg
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-foreground face)
@@ -905,10 +891,8 @@ Otherwise, it returns the next larger version of this font that is defined."
     (remove-specifier specifier locale tag-set t)
     (setq tag-set (cdr tag-set))))
 
-;;; x-init-global-faces is responsible for ensuring that the
-;;; default face has some reasonable fallbacks if nothing else is
-;;; specified.
-;;;
+;;; x-init-global-faces is responsible for ensuring that the default face has
+;;; some reasonable fallbacks if nothing else is specified.
 (defun x-init-global-faces ()
   ;; #### NOTE: this code is probably an oldy: faces.c ensures that we have
   ;; working fallback values so there is no need to initialize anything here. 
@@ -919,49 +903,46 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;;       (set-face-background 'default "gray80" 'global '(x default))
   )
 
-;;; x-init-device-faces is responsible for initializing default
-;;; values for faces on a newly created device.
-;;;
+;;; x-init-device-faces is responsible for initializing default values for
+;;; faces on a newly created device.
 (defun x-init-device-faces (device)
-  ;;
   ;; If the "default" face didn't have a font specified, try to pick one.
-  ;;
+
   ;; (or
   ;; (face-font-instance 'default device)
-  ;;
+
   ;; [[ No font specified in the resource database; try to cope. ]]
-  ;;
-  ;; NOTE: In reality, this will never happen.  The fallbacks will always
-  ;; be tried, and the last fallback is "*", which should get any font.  No
-  ;; need to put the same checks here as in the fallbacks.  These comments
+
+  ;; #### NOTE: In reality, this will never happen. The fallbacks will always
+  ;; be tried, and the last fallback is "*", which should get any font. No
+  ;; need to put the same checks here as in the fallbacks. These comments
   ;; appear to be pre-19.12. --ben
 
   ;; [[ At first I wanted to do this by just putting a font-spec in the
-  ;; fallback resources passed to XtAppInitialize(), but that fails
-  ;; if there is an Emacs app-defaults file which doesn't specify a
-  ;; font: apparently the fallback resources are not consulted when
-  ;; there is an app-defaults file, which seems pretty bogus to me.
-  ;;
-  ;; We should also probably try "*xtDefaultFont", but I think that it
-  ;; might be legal to specify that as "xtDefaultFont:", that is, at
-  ;; top level, instead of "*xtDefaultFont:", that is, applicable to
-  ;; every application.  `x-get-resource' can't handle that right now.
-  ;; Anyway, xtDefaultFont is probably variable-width.
-  ;;
-  ;; Some who have LucidaTypewriter think it's a better font than Courier,
-  ;; but it has the bug that there are no italic and bold italic versions.
-  ;; We could hair this code up to try and mix-and-match fonts to get a
-  ;; full complement, but really, why bother.  It's just a default. ]]
-  ;;
-  ;; [[ We default to looking for iso8859 fonts.  Using a wildcard for the
-  ;; encoding would be bad, because that can cause English speakers to get
-  ;; Kanji fonts by default.  It is safe to assume that people using a
-  ;; language other than English have both set $LANG, and have specified
-  ;; their `font' and `fontList' resources.  In any event, it's better to
-  ;; err on the side of the English speaker in this case because they are
-  ;; much less likely to have encountered this problem, and are thus less
-  ;; likely to know what to do about it. ]]
+  ;; fallback resources passed to XtAppInitialize(), but that fails if there
+  ;; is an Emacs app-defaults file which doesn't specify a font: apparently
+  ;; the fallback resources are not consulted when there is an app-defaults
+  ;; file, which seems pretty bogus to me.
 
+  ;; We should also probably try "*xtDefaultFont", but I think that it might
+  ;; be legal to specify that as "xtDefaultFont:", that is, at top level,
+  ;; instead of "*xtDefaultFont:", that is, applicable to every application. 
+  ;; `x-get-resource' can't handle that right now. Anyway, xtDefaultFont is
+  ;; probably variable-width.
+
+  ;; Some who have LucidaTypewriter think it's a better font than Courier, but
+  ;; it has the bug that there are no italic and bold italic versions. We
+  ;; could hair this code up to try and mix-and-match fonts to get a full
+  ;; complement, but really, why bother. It's just a default. ]]
+
+  ;; [[ We default to looking for iso8859 fonts. Using a wildcard for the
+  ;; encoding would be bad, because that can cause English speakers to get
+  ;; Kanji fonts by default. It is safe to assume that people using a language
+  ;; other than English have both set $LANG, and have specified their `font'
+  ;; and `fontList' resources. In any event, it's better to err on the side of
+  ;; the English speaker in this case because they are much less likely to
+  ;; have encountered this problem, and are thus less likely to know what to
+  ;; do about it. ]]
 
   ;; #### NOTE: this code is probably an oldy as well (as per Ben's comment
   ;; above): faces.c ensures that we have working fallback values so there is
@@ -978,35 +959,27 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;;	  (or fg (set-face-foreground 'default "white" device))
   ;;	  (or bg (set-face-background 'default "black" device)))))
   
-  ;; Don't look at reverseVideo now or initialize the modeline.  This
-  ;; is done on a per-frame basis at the appropriate time.
+  ;; Don't look at reverseVideo now or initialize the modeline. This is done
+  ;; on a per-frame basis at the appropriate time.
 
-  ;;
-  ;; Now let's try to pick some reasonable defaults for a few other faces.
-  ;; This kind of stuff should normally go on the create-frame-hook, but
-  ;; this way we won't be in danger of the user screwing things up by not
-  ;; adding hooks in a safe way.
-  ;;
+  ;; Now let's try to pick some reasonable defaults for a few other faces. 
+  ;; This kind of stuff should normally go on the create-frame-hook, but this
+  ;; way we won't be in danger of the user screwing things up by not adding
+  ;; hooks in a safe way.
   (x-init-pointer-shape device)  ; from x-mouse.el
     )
 
 ;;; This is called from `init-frame-faces', which is called from
-;;; init_frame_faces() which is called from Fmake_frame(), to perform
-;;; any device-specific initialization.
-;;;
+;;; init_frame_faces() which is called from Fmake_frame(), to perform any
+;;; device-specific initialization.
 (defun x-init-frame-faces (frame)
-  ;;
-  ;; The faces already got initialized (by init-frame-faces) from
-  ;; the resource database or global, non-frame faces.  The default,
-  ;; bold, bold-italic, and italic faces (plus various other random faces)
-  ;; got set up then.  But modeline didn't so that reverseVideo can be
-  ;; frame-specific.
-  ;;
+  ;; The faces already got initialized (by init-frame-faces) from the resource
+  ;; database or global, non-frame faces. The default, bold, bold-italic, and
+  ;; italic faces (plus various other random faces) got set up then. But
+  ;; modeline didn't so that reverseVideo can be frame-specific.
 
-  ;;
-  ;; If reverseVideo was specified, swap the foreground and background
-  ;; of the default and modeline faces.
-  ;;
+  ;; If reverseVideo was specified, swap the foreground and background of the
+  ;; default and modeline faces.
   (cond ((car (x-get-resource "reverseVideo" "ReverseVideo" 'boolean frame
 			      nil 'warn))
 	 ;; #### NOTE: again, this is probably yet another oldy: faces.c
@@ -1023,7 +996,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 	 ;;				  (face-background-instance 'default frame)
 	 ;;				  frame))
 
-	 ;; Now invert both of them.  If they end up looking the same,
+	 ;; Now invert both of them. If they end up looking the same,
 	 ;; make-frame-initial-faces will invert the modeline again later.
 	 (invert-face 'default frame)
 	 (invert-face 'modeline frame)
