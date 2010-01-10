@@ -510,6 +510,21 @@ with the legitimate @sc{iso}-8859-1 interpretation of the character code.
 For example, character code 193 is a lowercase @samp{a} with an acute
 accent, in @sc{iso}-8859-1.)
 
+@cindex unicode character escape
+   From version 21.5.25 onwards, XEmacs provides a syntax for specifying
+characters by their Unicode code points.  @samp{?\uABCD} will give you
+an XEmacs character that maps to the code point @samp{U+ABCD} in
+Unicode-based representations (UTF-8 text files, Unicode-oriented fonts,
+etc.)  Just as in the C# language, there is a slightly different syntax
+for specifying characters with code points above @samp{#xFFFF};
+@samp{\U00ABCDEF} will give you an XEmacs character that maps to the
+code point @samp{U+ABCDEF} in Unicode-based representations, if such an
+XEmacs character exists. 
+
+  Unlike in C#, while this syntax is available for character literals,
+and (see later) in strings, it is not available elsewhere in your Lisp
+source code.
+
 @ignore @c None of this crap applies to XEmacs.
   For use in strings and buffers, you are limited to the control
 characters that exist in @sc{ascii}, but for keyboard input purposes,
@@ -614,6 +629,7 @@ bit values are 2**22 for alt, 2**23 for super and 2**24 for hyper.
 @cindex backslash in character constant
 @cindex octal character code
 @cindex hexadecimal character code
+
   Finally, there are two read syntaxes involving character codes.
 It is not possible to represent multibyte or wide characters in this
 way; the permissible range of codes is from 0 to 255 (@emph{i.e.},
@@ -631,17 +647,16 @@ representation.
 followed by a backslash and the character code in octal (up to three
 octal digits); thus, @samp{?\101} for the character @kbd{A},
 @samp{?\001} for the character @kbd{C-a}, and @code{?\002} for the
-character @kbd{C-b}.
+character @kbd{C-b}.  The reader will finalize the character and start
+reading the next token when a non-octal-digit is encountered or three
+octal digits are read. 
 
   The second consists of a question mark followed by a backslash, the
 character @samp{x}, and the character code in hexadecimal (up to two
 hexadecimal digits); thus, @samp{?\x41} for the character @kbd{A},
 @samp{?\x1} for the character @kbd{C-a}, and @code{?\x2} for the
-character @kbd{C-b}.
-
-In both cases, the reader will finalize the character when a non-digit
-is encountered or the maximum length of a character code is reached.  It
-then starts reading the next token.
+character @kbd{C-b}.  If more than two hexadecimal codes are given, the
+reader signals an error.
 
 @example
 @group
@@ -1062,6 +1077,19 @@ They do not distinguish case in @sc{ASCII} control characters.
 characters it contains, and another double-quote.  However, you must
 escape any backslash or double-quote characters in the string with a
 backslash, like this: @code{"this \" is an embedded quote"}.
+
+ An alternative syntax allows insertion of raw backslashes into a
+string, like this: @code{#r"this \ is an embedded backslash"}.  In  such
+a string, each character following a backslash is included literally in
+the string, and all backslashes are left in the string.  This means that
+@code{#r"\""} is a valid string literal with two characters, a backslash and a
+double-quote.  It also means that a string  with this syntax cannot end
+in a single backslash.  As with Python, from where this syntax was
+taken, you can specify @code{u} or @code{U} after the @code{#r} to
+specify that interpretation of Unicode escapes should be
+done---@pxref{Character Type}---and if you use @code{#ru} for your raw
+strings, the restriction on the trailing backslash can be worked around
+like so: @code{#ru"Backslash: \u005C"}.
 
   The newline character is not special in the read syntax for strings;
 if you write a new line between the double-quotes, it becomes a
@@ -2217,12 +2245,19 @@ the same object, @code{nil} otherwise.  The ``same object'' means that a
 change in one will be reflected by the same change in the other.
 
 @code{eq} returns @code{t} if @var{object1} and @var{object2} are
-integers with the same value.  Also, since symbol names are normally
-unique, if the arguments are symbols with the same name, they are
-@code{eq}.  For other types (e.g., lists, vectors, strings), two
-arguments with the same contents or elements are not necessarily
-@code{eq} to each other: they are @code{eq} only if they are the same
-object.
+integers with the same value.  It is preferable to use @code{=} or
+@code{eql} in many contexts for numeric comparison, especially since
+bignums (integers with values that would have otherwise overflowed, only
+available on some builds) with the same value are not @code{eq};
+@pxref{Comparison of Numbers}. @code{eq} also returns @code{t} if
+@var{object1} and @var{object2} are identical characters, though in this
+case you may prefer to use @code{char=}.
+
+Also, since symbol names are normally unique, if the arguments are
+symbols with the same name, they are @code{eq}.  For other types (e.g.,
+lists, vectors, strings), two arguments with the same contents or
+elements are not necessarily @code{eq} to each other: they are @code{eq}
+only if they are the same object.
 
 (The @code{make-symbol} function returns an uninterned symbol that is
 not interned in the standard @code{obarray}.  When uninterned symbols
@@ -2230,11 +2265,11 @@ are in use, symbol names are no longer unique.  Distinct symbols with
 the same name are not @code{eq}.  @xref{Creating Symbols}.)
 
 NOTE: Under XEmacs 19, characters are really just integers, and thus
-characters and integers are @code{eq}.  Under XEmacs 20, it was
-necessary to preserve remnants of this in function such as @code{old-eq}
-in order to maintain byte-code compatibility.  Byte code compiled
-under any Emacs 19 will automatically have calls to @code{eq} mapped
-to @code{old-eq} when executed under XEmacs 20.
+characters and integers with the same numeric code are @code{eq}.  Under
+XEmacs 20, it was necessary to preserve remnants of this in function
+such as @code{old-eq} in order to maintain byte-code compatibility.
+Byte code compiled under any Emacs 19 will automatically have calls to
+@code{eq} mapped to @code{old-eq} when executed under XEmacs 20.
 
 @example
 @group

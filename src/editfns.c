@@ -370,6 +370,8 @@ Save point, mark, and current buffer; execute BODY; restore those things.
 Executes BODY just like `progn'.
 The values of point, mark and the current buffer are restored
 even in case of abnormal exit (throw or error).
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -395,6 +397,8 @@ save_current_buffer_restore (Lisp_Object buffer)
 DEFUN ("save-current-buffer", Fsave_current_buffer, 0, UNEVALLED, 0, /*
 Save the current buffer; execute BODY; restore the current buffer.
 Executes BODY just like `progn'.
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -858,20 +862,16 @@ get_home_directory (void)
 			  homepath);
 	    }
 	  else
+#endif	/* !WIN32_NATIVE */
 	    {
-	      cached_home_directory = qxestrdup ((Ibyte *) "C:\\");
+              /* Unix, typically.
+                 Using "/" isn't quite right, but what should we do?
+                 We probably should try to extract pw_dir from /etc/passwd,
+                 before falling back to this. */
+	      cached_home_directory
+                = qxestrdup ((const Ibyte *)DEFAULT_DIRECTORY_FALLBACK);
 	      output_home_warning = 1;
 	    }
-#else	/* !WIN32_NATIVE */
-	  /*
-	   * Unix, typically.
-	   * Using "/" isn't quite right, but what should we do?
-	   * We probably should try to extract pw_dir from /etc/passwd,
-	   * before falling back to this.
-	   */
-	  cached_home_directory = qxestrdup ((Ibyte *) "/");
-	  output_home_warning = 1;
-#endif	/* !WIN32_NATIVE */
 	}
       if (initialized && output_home_warning)
 	{
@@ -1015,6 +1015,8 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %d is replaced by the day of month, zero-padded.
 %D is a synonym for "%m/%d/%y".
 %e is replaced by the day of month, blank-padded.
+%G is replaced by the year containing the ISO 8601 week
+%g is replaced by the year of the ISO 8601 week within the century (00-99)
 %h is a synonym for "%b".
 %H is replaced by the hour (00-23).
 %I is replaced by the hour (00-12).
@@ -1033,12 +1035,14 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %t is a synonym for "\\t".
 %T is a synonym for "%H:%M:%S".
 %U is replaced by the week of the year (00-53), first day of week is Sunday.
+%V is replaced by the ISO 8601 week number
 %w is replaced by the day of week (0-6), Sunday is day 0.
 %W is replaced by the week of the year (00-53), first day of week is Monday.
 %x is a locale-specific synonym, which defaults to "%D" in the C locale.
 %X is a locale-specific synonym, which defaults to "%T" in the C locale.
 %y is replaced by the year without century (00-99).
 %Y is replaced by the year with century.
+%z is replaced by the time zone as a numeric offset (e.g +0530, -0800 etc.)
 %Z is replaced by the time zone abbreviation.
 
 The number of options reflects the `strftime' function.
@@ -1063,13 +1067,15 @@ characters appearing in the day and month names may be incorrect.
     {
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
+      /* make a copy of the static buffer returned by localtime() */
+      struct tm tm = * localtime(&value); 
+      
       *buf = 1;
 
       /* !!#### this use of external here is not totally safe, and
 	 potentially data lossy. */
       LISP_STRING_TO_EXTERNAL (format_string, formext, Qnative);
-      if (emacs_strftime (buf, size, formext,
-			  localtime (&value))
+      if (emacs_strftime (buf, size, formext, &tm)
 	  || !*buf)
 	return build_ext_string (buf, Qnative);
       /* If buffer was too small, make it bigger.  */
@@ -1133,7 +1139,7 @@ make_time (time_t tiempo)
 }
 
 DEFUN ("encode-time", Fencode_time, 6, MANY, 0, /*
-  Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
+Convert SECOND, MINUTE, HOUR, DAY, MONTH, YEAR and ZONE to internal time.
 This is the reverse operation of `decode-time', which see.
 ZONE defaults to the current time zone rule.  This can
 be a string (as from `set-time-zone-rule'), or it can be a list
@@ -1149,6 +1155,8 @@ Out-of-range values for SEC, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
 Year numbers less than 100 are treated just like other year numbers.
 If you want them to stand for years in this century, you must do that yourself.
+
+arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1467,10 +1475,12 @@ buffer_insert1 (struct buffer *buf, Lisp_Object arg)
    so we don't care if it gets trashed.  */
 
 DEFUN ("insert", Finsert, 0, MANY, 0, /*
-Insert the arguments, either strings or characters, at point.
+Insert ARGS, either strings or characters, at point.
 Point moves forward so that it ends up after the inserted text.
 Any other markers at the point of insertion remain before the text.
 If a string has non-null string-extent-data, new extents will be created.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1489,6 +1499,8 @@ DEFUN ("insert-before-markers", Finsert_before_markers, 0, MANY, 0, /*
 Insert strings or characters at point, relocating markers after the text.
 Point moves forward so that it ends up after the inserted text.
 Any other markers at the point of insertion also end up after the text.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1818,8 +1830,12 @@ with code N.  The values of elements may be characters, strings, or
 nil (nil meaning don't replace.)
 
 If TABLE is a char-table, its elements describe the mapping between
-characters and their replacements.  The char-table should be of type
-`char' or `generic'.
+characters and their replacements.  The char-table should be of type `char'
+or `generic'.  If the value given by `get-char-table' for a given character
+is nil, that character will not be translated by `translate-region'.  Since
+`get-char-table' can never return nil with a char table of type `char', and
+since most translation involves a subset of the possible XEmacs characters,
+not all of them, the most generally useful table type here is `generic'.
 
 Returns the number of substitutions performed.
 */
@@ -2129,6 +2145,8 @@ widened and then made changes outside the old restricted area.)
 Note: if you are using both `save-excursion' and `save-restriction',
 use `save-excursion' outermost:
     (save-excursion (save-restriction ...))
+
+arguments: (&rest BODY)
 */
        (body))
 {
@@ -2149,7 +2167,7 @@ It may contain %-sequences meaning to substitute the next argument.
 %s means print all objects as-is, using `princ'.
 %S means print all objects as s-expressions, using `prin1'.
 %d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
-  %X uppercase hex).
+  %X uppercase hex, %b binary).
 %c means print as a single character.
 %f means print as a floating-point number in fixed notation (e.g. 785.200).
 %e or %E means print as a floating-point number in scientific notation
@@ -2209,6 +2227,8 @@ The `#' flag means print numbers in an alternate, more verbose format:
    %g and %G conversions.
 
 Use %% to put a single % into the output.
+
+arguments: (CONTROL-STRING &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -2535,8 +2555,8 @@ is not available by any other means.
 
   DEFVAR_LISP ("user-full-name", &Vuser_full_name /*
 *The name of the user.
-The function `user-full-name', which will return the value of this
- variable, when called without arguments.
+The function `user-full-name' will return the value of this variable, when
+called without arguments.
 This is initialized to the value of the NAME environment variable.
 */ );
   /* Initialized at run-time. */

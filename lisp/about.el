@@ -113,7 +113,7 @@
     (devin    "Matthieu Devin"    "devin@xemacs.org")
     (dkindred "Darrell Kindred"   "dkindred@xemacs.org")
     (dmoore   "David Moore"       "dmoore@xemacs.org")
-    (dv       "Didier Verna"      "didier@xemacs.org")
+    (didier   "Didier Verna"      "didier@xemacs.org")
     (eb       "Eric Benson"       "eb@xemacs.org")
     (fabrice  "Fabrice Popineau"  "fabrice@xemacs.org")
     (golubev  "Ilya Golubev"      "golubev@xemacs.org")
@@ -178,9 +178,9 @@
 (defvar about-other-current-hackers
   ;; to sort this list or the one below, use:
   ;; M-x sort-regexp-fields RET [a-z]+ RET \(.*\) RET
-  '(ben daiki darrylo dv fabrice golubev hniksic jan jason jmiller jonathan
-    kazz kirill larsi martin morioka mta ograf olivier oscar rossini pittman
-    scop tomonori tuck wmperry yoshiki))
+  '(ben daiki darrylo didier fabrice golubev hniksic jan jason jmiller
+    jonathan kazz kirill larsi martin morioka mta ograf olivier oscar rossini
+    pittman scop tomonori tuck wmperry yoshiki))
 
 (defvar about-once-and-future-hackers
   '(aj ajc alastair baw bw cgw chr craig cthomp dan devin dkindred dmoore eb
@@ -204,10 +204,11 @@
     (daiki      . "http://deisui.bug.org/diary/servlet/view")
     (dkindred   . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore     . "http://oj.egbt.org/dmoore/")
-    (dv         . "http://www.lrde.epita.fr/~didier/")
+    (didier     . "http://didier.lrde.org/")
+    (dvljazz    . "http://www.didierverna.com/")
     (fabrice    . "http://www.ese-metz.fr/~popineau/")
     (fptex      . "http://www.fptex.org/")
-    (james      . "http://www.ittc.ku.edu/~james/")
+    (james      . "http://www.cs.usu.edu/~jerry/")
     (jas	. "http://josefsson.org/")
     (jason      . "http://www.mastaler.com/")
     (juhp       . "http://www.01.246.ne.jp/~juhp/")
@@ -831,8 +832,8 @@ England.  He'd quite like to have his own company one day, but has yet
 to think of that killer product...
 
 See also ")
-        (about-url-link 'alastair nil "Visit Alastair's home page")
-        (widget-insert ".\n"))
+	(about-url-link 'alastair nil "Visit Alastair's home page")
+	(widget-insert ".\n"))
     (baw
      (widget-insert "\
 As of November 2000, I am a software engineer with the Pythonlabs at
@@ -855,39 +856,39 @@ to fend off the legions of groupies that seem to follow me everywhere.
     Milk Me Daddy
     (C) 1990 Warsaw
     ===============
-    Oh daddy with your fingers pink 
-    From whose udders do you drink? 
-    Thy milk offends with putrid stink 
-    I'll vomit now, lactose I think 
+    Oh daddy with your fingers pink
+    From whose udders do you drink?
+    Thy milk offends with putrid stink
+    I'll vomit now, lactose I think
 
-    If I could dream, I'd be a cow 
-    Not horse, or mule, or barnyard sow 
-    The cud I'd chew would drip and how! 
-    So milk me daddy, milk me now! 
+    If I could dream, I'd be a cow
+    Not horse, or mule, or barnyard sow
+    The cud I'd chew would drip and how!
+    So milk me daddy, milk me now!
 
-    My bovine nature knows no bounds 
-    I'd naught awake at midnight sounds 
-    Of teens approaching o'er the grounds 
-    To tip with glee, then screech like clowns 
+    My bovine nature knows no bounds
+    I'd naught awake at midnight sounds
+    Of teens approaching o'er the grounds
+    To tip with glee, then screech like clowns
 
-    And so I stare into this glass 
-    Of sweaty juice, I gulp so fast 
-    Each drop I lick, down to the last 
-    The vertigo I know will pass 
+    And so I stare into this glass
+    Of sweaty juice, I gulp so fast
+    Each drop I lick, down to the last
+    The vertigo I know will pass
 
-    My mother smiles and pats my head 
-    She's proud of me, so she has said 
-    My pop just now gets out of bed 
-    His eyes quite comatose and red 
+    My mother smiles and pats my head
+    She's proud of me, so she has said
+    My pop just now gets out of bed
+    His eyes quite comatose and red
 
-    He'll empathize my milky fate 
-    Whilest sopping gravy from his plate 
-    And as the hour is getting late 
-    His belly taut with all he ate 
+    He'll empathize my milky fate
+    Whilest sopping gravy from his plate
+    And as the hour is getting late
+    His belly taut with all he ate
 
-    He isn't often quite so chatty 
-    His arteries clogged with meat so fatty 
-    With burps that launch soup, thick and splatty 
+    He isn't often quite so chatty
+    His arteries clogged with meat so fatty
+    With burps that launch soup, thick and splatty
     Oh how I wish you'd milk me daddy\n\n\t")
      (about-url-link 'baw nil "Visit Barry's home page")
      (widget-insert "\n"))
@@ -979,24 +980,30 @@ hours of the day.
 He has a page at ")
      (about-url-link 'dmoore nil "Visit David's home page")
      (widget-insert ".\n"))
-    (dv
+    (didier
      (widget-insert "\
-I graduated at ENST (an engineering school in Paris) and have a Ph.D.
-in computer science. I'm currently a teacher at EPITA (another
-engineering school, still in Paris) and a researcher at LRDE (EPITA's
-research and development laboratory). Our research topics include
-generic programming and distributed virtual reality.
+Didier has a Ph.D. in Computer Science and is currently working as an
+assistant professor for an engineering school in Paris).  He gives
+lectures on Operating Systems, Computer Graphics, Functional Programming
+and Typesetting.  His research interests include Genericity, Object
+Orientation and Functional Programming, all in one language:
 
-Apart from XEmacs, I'm also involved in other free software projects,
-including Gnus, BBDB, and the GNU \"autotools\". I also wrote some
-LaTeX packages (ugh :-).
+... Common Lisp.
 
-All of this, actually, is only 60% true. Two days per week, I'm also a
-semi-professional Jazz guitar player (and singer), which means that it
-is not the way I earn my crust, but things may very well reverse in
-the future ...\n\n")
-     (widget-insert "Visit Didier's home page: ")
-     (about-url-link 'dv nil "Visit Didier's home page")
+
+Apart from the world of XEmacs and Emacs Lisp, Didier is also the author
+of several LaTeX packages (FiNK, FiXme, QCM and CurVe) and an occasional
+contributor to other Free Software projects (the GNU Autotools most
+notably; he was one of the technical reviewers for the \"Goat Book\").
+
+But all of this is only 60% true... Two days per week, Didier is indeed
+a semi-professional Jazz guitar player (and singer), which means that he
+doesn't quite earn his crust with it, but things may very well reverse in
+the future...\n")
+     (widget-insert "\nVisit Didier's scientific website: ")
+     (about-url-link 'didier nil "Visit Didier's scientific website")
+     (widget-insert "\nVisit Didier's musical website: ")
+     (about-url-link 'dvljazz nil "Visit Didier's musical website")
      (widget-insert "\n"))
     (eb
      (widget-insert
@@ -1102,11 +1109,15 @@ from FSF Emacs to XEmacs.  He thought that Gnus looked a lot cooler in
 XEmacs, and soon had a web page containing small patches to XEmacs
 20.3, which were picked up by the Debian Linux distribution.
 
-He has since given up his native California to join the faculty at the
+He has since given up his native California, to join the faculty at the
 University of Kansas.  He is learning to like the weather in Lawrence,
-Kansas, where he lives with his wife and 3 children.  His work on XEmacs
-mostly consists of extensions to the loadable module support in XEmacs,
-which was introduced by J. Kean Johnston and others.  He has a ")
+Kansas, where he lives with his wife and 3 children.  (Ed. note: I guess
+he didn't like the weather enough; he is now teaching at Utah State
+University.)
+
+His work on XEmacs mostly consists of extensions to the loadable module
+support in XEmacs, which was introduced by J. Kean Johnston and others.
+He has a ")
      (about-url-link 'james "home page" "Visit Jerry's home page")
      (widget-insert " (doesn't everybody?)\n"))
     (jan
@@ -1341,7 +1352,7 @@ I did my PhD at UCB and a postdoc at CSL/PARC.  I joined Sun in 1990,
 spent some time in DevPro (that is when I made my contribution to
 XEmacs) and joined JavaSoft in fall '95, where I've been the lead for
 several JSP-related specifications and JAX-RPC.  I'm currently the Web
-Layer architect for J2EE. 
+Layer architect for J2EE.
 
 I was born in Barcelona and I grew up mostly in Caracas; I have two kids
 and I speak only catalan to them; I can juggle some (career, family, and
@@ -1368,11 +1379,11 @@ Sorry, no personal information available about me yet.\n"))
      (widget-insert
       "\
 Graduate of the University of New South Wales and resident of Sydney,
-Australia.  My day job involves developing and maintaining software
-development tools for a telco manufacturer.  I've yet to get XEmacs hacking
-added to my job description.
+Australia.  By day I'm a senior Unix/Linux application and tools
+developer, and wielder of the Dinosaur of Cluefulness, at a small ISV.
+I've yet to get XEmacs hacking added to my job description.
 
-When not hacking, I relax by chasing after my young son, reading SciFi,
+When not hacking, I relax by chasing after my young sons, reading SF,
 listening to Hip Hop and serving on various boards and committees of the
 Anglican Church in Sydney.\n"))
     (rickc
@@ -1443,11 +1454,11 @@ development and design of a CAD framework for analog integrated
 circuits with special emphasis on distributed software concepts. He
 has now joined HP as technical consultant.
 
-                      All of the buildings,
-                      all of the cars
-                      were once just a dream
-                      in somebody's head.\n
-                                     P. Gabriel\n"))
+		      All of the buildings,
+		      all of the cars
+		      were once just a dream
+		      in somebody's head.\n
+				     P. Gabriel\n"))
     (tomonori
      (widget-insert
       "\
@@ -1465,19 +1476,16 @@ surely would have gotten addicted to computers early enough to have
 learned to actually code.
 
 Well, they also serve who rail 'n' rant.
-                  ")
+		  ")
      (about-url-link 'turnbull nil "Visit Steve's personal page")
      (widget-insert "\n"))
     (vin
      (widget-insert "\
-I own and operate my own consulting firm, EtherSoft.  Shhh, don't
-tell anyone, but it's named after an Ultimate team I used to play
-with in Austin, Texas - the Ether Bunnies.  I'm getting too old
-to play competitive Ultimate any more, so now I've gotten roped
-into serving on the board of directors of the Ultimate Players
-Association.  See ")
-     (about-url-link 'vin nil "Visit the UPA homepage")
-     (widget-insert ".\n"))
+I'm a software engineer and manager for Adaptive Optics Associates in
+Cambridge, Massachusetts.  I used to play a lot of Ultimate (see\n")
+     (about-url-link 'vin nil "Visit the Ultimate Players Association homepage")
+     (widget-insert " for more details), but nowadays I'm a family man,
+so I spend a lot of time with my wife, Becky, and our son, Noah.\n"))
     (viteno
      (widget-insert
       "\
@@ -1611,23 +1619,22 @@ using Epoch.\n"))
     (dkindred
      (widget-insert "\
 Darrell tends to come out of the woodwork a couple of weeks
-before a new release with a flurry of fixes for bugs that 
+before a new release with a flurry of fixes for bugs that
 annoy him.  He hopes he's spared you from a core dump or two.\n"))
     (dmoore
      (widget-insert "\
 David has contributed greatly to the quest to speed up XEmacs.\n"))
-    (dv
+    (didier
      (widget-insert "\
-I joined the development of XEmacs in 1996, and have been one of the
-core maintainers since 1998. Although I'm mostly interested in the
-GUI, ergonomics, redisplay and autoconf issues, it's probably simpler
-to describe what I'm *not* involved in: I've never touched the Lisp
-implementation, and I probably never will...
+Didier joined the development of XEmacs in 1996, and has been one of
+the core maintainers since 1998.  His very first contribution was the
+translation of the tutorial to French. Since then, he has contributed
+various bug fixes and enhancements in fields as diverse as the GUI,
+redisplay engine and autoconf support.
 
-I'm the author of the multicast support, I wrote and maintain some
-external Emacs Lisp packages (including mchat) and I'm also
-responsible for some of the core Lisp code (including the rectangle
-library which I rewrote for both XEmacs and GNU Emacs).\n"))
+Didier is the official maintainer of some core libraries (rect, cus-edit,
+wid-edit) and the author of the multicast support.  He is also the author
+of several packages, including mchat and Patcher.\n"))
     (eb
      (widget-insert "\
 Also part of the original Lucid Emacs development team.  Eric played a
@@ -1653,7 +1660,7 @@ consider a bug.\n"))
     (gunnar
      (widget-insert
       "\
-Sorry, no information about my XEmacs contributions yet.\n"))	
+Sorry, no information about my XEmacs contributions yet.\n"))
     (hbs
      (widget-insert "\
 Part of the original (pre-19.0) Lucid Emacs development team.  Harlan
@@ -1836,7 +1843,8 @@ Sorry, no information about my XEmacs contributions yet.\n"))
     (purvis
      (widget-insert
       "\
-Currently filing off some of the splinters in the GTK port.\n"))
+Filing off some of the splinters in the GTK port.  Ported configure to
+autoconf 2.5. Miscellaneous fixes, mainly to the C code.\n"))
     (rickc
      (widget-insert "\
 Maintainer of ILISP.\n"))
@@ -1901,12 +1909,11 @@ Steve is maintainer of the edict, mule-ucs, and latin-unity packages,
 and has contributed quite a bit of documentation, especially for Mule.\n"))
     (vin
      (widget-insert "\
-Vin helps maintain the older, more mature (read: moldy) versions of
-XEmacs.  Vin maintains the XEmacs patch pages in order to bring a more
-stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
-using emacs for a long, long time.)  Vin also contributed the detached
-minibuffer code as well as a few minor enhancements to the menubar
-options.\n"))
+Vin maintains the stable version of XEmacs.  This involves reviewing
+a lot of other peoples' patches and testing and applying them.
+He also gets to generate his own patches from time to time.  Being
+release manager is a fun way to contribute to the XEmacs project.
+Write me at acs@xemacs.org if you're interested in learning more.\n"))
     (viteno
      (widget-insert
       "\

@@ -40,6 +40,11 @@ EXFUN (Fwhere_is_internal, 5);
 
 extern Lisp_Object Qalt, Qcontrol, Qhyper, Qmeta, Qshift, Qsuper;
 extern Lisp_Object Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5;
+extern Lisp_Object Qbutton6, Qbutton7, Qbutton8, Qbutton9, Qbutton10;
+extern Lisp_Object Qbutton11, Qbutton12, Qbutton13, Qbutton14, Qbutton15;
+extern Lisp_Object Qbutton16, Qbutton17, Qbutton18, Qbutton19, Qbutton20;
+extern Lisp_Object Qbutton21, Qbutton22, Qbutton23, Qbutton24, Qbutton25;
+extern Lisp_Object Qbutton26;
 extern Lisp_Object Vmeta_prefix_char;
 
 Lisp_Object get_keymap (Lisp_Object object, int errorp, int autoload);

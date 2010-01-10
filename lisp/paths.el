@@ -150,34 +150,25 @@ Will not override settings in site-init.el or site-run.el."
 
     (funcall
      l 'mh-progs
-     (cond ((file-directory-p "/usr/bin/mh") "/usr/bin/mh/") ;Ultrix 4.2
-	   ((file-directory-p "/usr/new/mh") "/usr/new/mh/") ;Ultrix <4.2
+     (cond ((file-directory-p "/usr/bin/mh") "/usr/bin/mh/")
 	   ((file-directory-p "/usr/local/bin/mh") "/usr/local/bin/mh/")
 	   ((file-directory-p "/usr/local/mh") "/usr/local/mh/")
 	   (t "/usr/local/bin/")))
 
     (funcall
      l 'mh-libs
-     (cond ((file-directory-p "/usr/lib/mh") "/usr/lib/mh/") ;Ultrix 4.2
-	   ((file-directory-p "/usr/new/lib/mh")
-	    "/usr/new/lib/mh/") ;Ultrix <4.2
+     (cond ((file-directory-p "/usr/lib/mh") "/usr/lib/mh/")
 	   ((file-directory-p "/usr/local/lib/mh") "/usr/local/lib/mh/")
 	   (t "/usr/local/bin/mh/")))
 
     (funcall
      l 'rmail-spool-directory
-     (cond ((string-match "^[^-]+-[^-]+-sco3.2v4" system-configuration)
-	    "/usr/spool/mail/")
-	   ;; On The Bull DPX/2 /usr/spool/mail is used although
-	   ;; it is usg-unix-v.
-	   ((string-match "^m68k-bull-sysv3" system-configuration)
-	    "/usr/spool/mail/")
-	   ;; SVR4 and recent BSD are said to use this.
+     (cond ;; SVR4 and recent BSD are said to use this.
 	   ;; Rather than trying to know precisely which systems use it,
 	   ;; let's assume this dir is never used for anything else.
 	   ((file-exists-p "/var/mail")
 	    "/var/mail/")
-	   ((memq system-type '(dgux hpux usg-unix-v unisoft-unix rtu irix))
+	   ((memq system-type '(hpux usg-unix-v irix))
 	    "/usr/mail/")
 	   ((memq system-type '(linux))
 	    "/var/spool/mail/")

@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1997 Jonathan Harris.
 
@@ -1977,7 +1977,7 @@ mswindows_font_spec_matches_charset_stage_1 (struct device *UNUSED (d),
   const Ibyte *c;
   Bytecount the_length = length;
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return 1;
 
   if (!the_nonreloc)
@@ -2041,7 +2041,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
   Bytecount the_length = length;
   int i;
 
-  if (UNBOUNDP (charset))
+  if (NILP (charset))
     return 1;
 
   if (!the_nonreloc)
@@ -2067,8 +2067,21 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
   else
     {
       HDC hdc = CreateCompatibleDC (NULL);
-      Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
-      Lisp_Object truename;
+      Lisp_Object font_list = Qnil, truename; 
+
+      if (DEVICE_TYPE_P (d, mswindows))
+	{
+	  font_list = DEVICE_MSWINDOWS_FONTLIST (d);
+	}
+      else if (DEVICE_TYPE_P (d, msprinter))
+	{
+	  font_list = DEVICE_MSPRINTER_FONTLIST (d);
+	}
+      else
+	{
+	  assert(0);
+	}
+
       HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
 						 font_list,
 						 ERROR_ME_DEBUG_WARN,
@@ -2164,9 +2177,9 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 				     const Ibyte *nonreloc,
 				     Lisp_Object reloc,
 				     Bytecount offset, Bytecount length,
-				     int stage)
+				     enum font_specifier_matchspec_stages stage)
 {
-  return stage ?
+  return stage == STAGE_FINAL ?
      mswindows_font_spec_matches_charset_stage_2 (d, charset, nonreloc,
 						  reloc, offset, length)
     : mswindows_font_spec_matches_charset_stage_1 (d, charset, nonreloc,
@@ -2179,7 +2192,8 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 
 static Lisp_Object
 mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
-			     Lisp_Object charset, int stage)
+			     Lisp_Object charset,
+			     enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object fontlist, fonttail;
 
@@ -2187,7 +2201,7 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
      that charset; otherwise, it will list fonts with all charsets. */
   fontlist = mswindows_font_list (font, device, Qnil);
 
-  if (!stage)
+  if (stage == STAGE_INITIAL)
     {
       LIST_LOOP (fonttail, fontlist)
 	{

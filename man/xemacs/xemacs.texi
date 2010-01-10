@@ -522,7 +522,6 @@ Lisp Libraries
 
 * Loading::		Loading libraries of Lisp code into XEmacs for use.
 * Compiling Libraries:: Compiling a library makes it load and run faster.
-* Mocklisp::		Converting Mocklisp to Lisp so XEmacs can run it.
 
 Abbrevs
 
@@ -604,6 +603,10 @@ The Init File
 * Init Syntax::     Syntax of constants in Emacs Lisp.
 * Init Examples::   How to do some things with an init file.
 * Terminal Init::   Each terminal type can have an init file.
+
+Faces
+
+* Xft Font Customization::  Configuring the next generation of fonts.
 
 Dealing with XEmacs Trouble
 

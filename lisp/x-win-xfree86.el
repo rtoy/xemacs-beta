@@ -45,7 +45,38 @@
  '(x-keysym-on-keyboard-p x-keysym-on-keyboard-sans-modifiers-p))
 
 ;;;###autoload
-(defun x-win-init-xfree86 ()
+(defun x-win-init-xfree86 (device)
+
+  ;; We know this keyboard is an XFree86 keyboard. As such, we can predict
+  ;; what key scan codes will correspond to the keys on US keyboard layout,
+  ;; and we can use that information to fall back to the US layout when
+  ;; looking up commands that would otherwise fail. (Cf. the hard-coding of
+  ;; this information in /usr/X11R6/lib/X11/xkb/keycodes/xfree86 )
+  ;;
+  ;; These settings for x-us-keymap-first-keycode and
+  ;; x-us-keymap-description were determined with 
+  ;; 
+  ;; setxkbmap us
+  ;; xmodmap -pke > keyboard-description.txt
+  ;;
+  ;; "8" is the key code of the first line, x-us-keymap-description is
+  ;; taken from the column describing the bindings. 
+
+  (setq x-us-keymap-first-keycode 8
+	x-us-keymap-description
+	[nil nil [?1 ?!] [?2 ?@] [?3 ?\#] [?4 ?$] [?5 ?%] [?6 ?^] [?7 ?&]
+	     [?8 ?*] [?9 ?\(] [?0 ?\)] [?- ?_] [?= ?+] nil ?\t [?q ?Q] 
+	     [?w ?W] [?e ?E] [?r ?R] [?t ?T] [?y ?Y] [?u ?U] [?i ?I] [?o ?O]
+	     [?p ?P] [?\[ ?{] [?\] ?}] nil nil [?a ?A] [?s ?S] [?d ?D]
+	     [?f ?F] [?g ?G] [?h ?H] [?j ?J] [?k ?K] [?l ?L] [?\; ?:]
+	     [?\' ?\"] [?\` ?~] nil [?\\ ?|] [?z ?Z] [?x ?X] [?c ?C]
+	     [?v ?V] [?b ?B] [?n ?N] [?m ?M] [?\, ?<] [?\. ?>] [?/ ?\?]
+	     nil ?* nil ?\  nil nil nil nil nil nil nil nil nil nil nil
+	     nil nil ?7 ?8 ?9 ?- ?4 ?5 ?6 ?+ ?1 ?2 ?3 ?0 ?\. nil nil 
+	     [?< ?>] nil nil nil nil nil nil nil nil nil nil nil nil 
+	     nil nil nil nil nil ?/ nil nil nil nil nil nil nil nil 
+	     nil nil nil nil nil ?=])
+
   (loop for (key sane-key) in
     '((f13 f1)
       (f14 f2)
@@ -59,9 +90,14 @@
       (f22 f10)
       (f23 f11)
       (f24 f12))
+    ;; Get the correct value for function-key-map
+    with function-key-map = (symbol-value-in-console 'function-key-map
+                                                     (device-console device)
+                                                     function-key-map)
+
     do
-    (when (and (x-keysym-on-keyboard-p key)
-	       (not (x-keysym-on-keyboard-sans-modifiers-p key)))
+    (when (and (x-keysym-on-keyboard-p key device)
+	       (not (x-keysym-on-keyboard-sans-modifiers-p key device)))
       ;; define also the control, meta, and meta-control versions.
       (loop for mods in '(() (control) (meta) (meta control)) do
 	(define-key function-key-map `[(,@mods ,key)] `[(shift ,@mods ,sane-key)])

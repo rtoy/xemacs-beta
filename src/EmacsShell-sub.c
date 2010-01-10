@@ -89,6 +89,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Vendor.h>
 #include <X11/VendorP.h>
 #include "EmacsShellP.h"
+#include "../lwlib/xt-wrappers.h"
 
 #define ABORT abort
 
@@ -134,30 +135,28 @@ static void ChangeManaged (Widget w);
 static XtResource resources[] = {
 #define offset(field) XtOffset(EMACS_SHELL_WIDGET, emacs_shell.field)
 #define coreoffset(field) XtOffset(EMACS_SHELL_WIDGET, core.field)
+#define res(name,_class,member,size)				\
+  { (String) name, (String) _class, XtRInt, sizeof (int),	\
+    offset (member), XtRImmediate, (XtPointer)0 }
+#define motifres(name,member)					\
+  { (String) name, XtCPosition, XtRPosition, sizeof (Position),	\
+    coreoffset (member), XtRImmediate, (XtPointer)BIGSIZE }
 #ifdef LWLIB_USES_MOTIF
   /* *** BOGOSITY^10! *** The Motif VendorShell fucks around with
      the default values for X and Y, for no obvious reason.  This
      causes Shell to indicate that the defaults of (0,0) were
      program-specified, instead of letting the WM do what it wants. */
-  { XtNx, XtCPosition,
-    XtRPosition, sizeof (Position),
-    coreoffset (x), XtRImmediate, (XtPointer)BIGSIZE },
-  { XtNy, XtCPosition,
-    XtRPosition, sizeof (Position),
-    coreoffset (y), XtRImmediate, (XtPointer)BIGSIZE },
+  motifres (XtNx, x),
+  motifres (XtNy, y),
 #endif
-  { XtNwidthCells, XtCWidthCells,
-    XtRInt, sizeof (int),
-    offset (width_cells), XtRImmediate, (XtPointer)0 },
-  { XtNheightCells, XtCHeightCells,
-    XtRInt, sizeof (int),
-    offset (height_cells), XtRImmediate, (XtPointer)0 },
-  { XtNminWidthCells, XtCMinWidthCells,
-    XtRInt, sizeof (int),
-    offset (min_width_cells), XtRImmediate, (XtPointer)0 },
-  { XtNminHeightCells, XtCMinHeightCells,
-    XtRInt, sizeof (int),
-    offset (min_height_cells), XtRImmediate, (XtPointer)0 },
+  res (XtNwidthCells, XtCWidthCells, width_cells, 0),
+  res (XtNheightCells, XtCHeightCells, height_cells, 0),
+  res (XtNminWidthCells, XtCMinWidthCells, min_width_cells, 0),
+  res (XtNminHeightCells, XtCMinHeightCells, min_height_cells, 0),
+#undef offset
+#undef coreoffset
+#undef res
+#undef motifres
 };
 
 static CompositeClassExtensionRec compositeClassExtRec = {
@@ -259,12 +258,12 @@ update_size_hints_internal (EMACS_SHELL_WIDGET w,
   printf ("  base size set to: %d %d\n", base_width, base_height);
   fflush (stdout);
 #endif
-  XtSetArg(al [0], XtNbaseWidth, base_width);
-  XtSetArg(al [1], XtNbaseHeight, base_height);
-  XtSetArg(al [2], XtNminWidth, base_width +
-	   cell_width * w->emacs_shell.min_width_cells);
-  XtSetArg(al [3], XtNminHeight, base_height +
-	   cell_height * w->emacs_shell.min_height_cells);
+  Xt_SET_ARG(al [0], XtNbaseWidth, base_width);
+  Xt_SET_ARG(al [1], XtNbaseHeight, base_height);
+  Xt_SET_ARG(al [2], XtNminWidth, base_width +
+	     cell_width * w->emacs_shell.min_width_cells);
+  Xt_SET_ARG(al [3], XtNminHeight, base_height +
+	     cell_height * w->emacs_shell.min_height_cells);
   XtSetValues ((Widget) w, al, 4);
 }
 
@@ -278,7 +277,8 @@ SuperClassRootGeometryManager (Widget gw,
   GenericClassExtRec *gcer;
 
   /* find the shell extension record that specifies the
-     root geometry manager method */
+     root geometry manager method
+     #### We could use XtGetClassExtension here. */
   for (gcer = (GenericClassExtRec *) swc->shell_class.extension;
        gcer;
        gcer = (GenericClassExtRec *) gcer->next_extension)
@@ -287,6 +287,9 @@ SuperClassRootGeometryManager (Widget gw,
 	break;
     }
 
+  /* #### The R11.6.4 Xt specification says if we don't find NULLQUARK here,
+     we should assume root_geometry_manager = XtInheritRootGeometryManager.
+     Is that actually callable? */
   if (!gcer)
     ABORT ();
 
@@ -335,11 +338,16 @@ RootGeometryManager (Widget gw,
 	  result == XtGeometryAlmost ? "XtGeometryAlmost" :
 	  "XtGeometryDone");
   if (reply->request_mode & CWWidth)
-    printf ("width returned;");
+    printf ("width returned was %d%s",
+	    reply->width,
+	    reply->request_mode & CWHeight ? "; " : ".\n");
   if (reply->request_mode & CWHeight)
-    printf ("height returned;");
-  printf ("\n");
-  printf ("  resulting shell size: %d %d\n", reply->width, reply->height);
+    printf ("height returned was %d.\n", reply->height);
+  /* #### does this also need to depend on the result?
+     With XtGeometryYes there doesn't seem to be a useful reply object. */
+  printf ("  resulting shell size: %d %d\n",
+	  reply->request_mode & CWWidth ? reply->width : w->core.width,
+	  reply->request_mode & CWHeight ? reply->height : w->core.height);
   printf ("----------\n");
   fflush (stdout);
 #endif

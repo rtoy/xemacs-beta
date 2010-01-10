@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 
 static const char * const valid_flags = "-+ #0";
-static const char * const valid_converters = "dic" "ouxX" "feEgG" "sS"
+static const char * const valid_converters = "dic" "ouxX" "feEgG" "sS" "b"
 #if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
   "npyY"
 #endif
@@ -43,11 +43,11 @@ static const char * const valid_converters = "dic" "ouxX" "feEgG" "sS"
 #endif
   ;
 static const char * const int_converters = "dic";
-static const char * const unsigned_int_converters = "ouxX";
+static const char * const unsigned_int_converters = "ouxXb";
 static const char * const double_converters = "feEgG";
 static const char * const string_converters = "sS";
 #if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
-static const char * const bignum_converters = "npyY";
+static const char * const bignum_converters = "npyY\337";
 #endif
 #ifdef HAVE_BIGFLOAT
 static const char * const bigfloat_converters = "FhHkK";
@@ -558,7 +558,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		{
 		  /* For `S', prin1 the argument and then treat like
 		     a string.  */
-		  ls = Fprin1_to_string (obj, Qnil);
+		  ls = prin1_to_string (obj, 0);
 		}
 	      else if (STRINGP (obj))
 		ls = obj;
@@ -567,7 +567,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      else
 		{
 		  /* convert to string using princ. */
-		  ls = Fprin1_to_string (obj, Qt);
+		  ls = prin1_to_string (obj, 1);
 		}
 	      string = XSTRING_DATA (ls);
 	      string_len = XSTRING_LENGTH (ls);
@@ -638,7 +638,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      else
 		{
 		  if (FLOATP (obj))
-		    obj = Ftruncate (obj);
+		    obj = Ftruncate (obj, Qnil);
 #ifdef HAVE_BIGFLOAT
 		  else if (BIGFLOATP (obj))
 		    {
@@ -665,6 +665,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			case 'o': ch = 'p'; break;
 			case 'x': ch = 'y'; break;
 			case 'X': ch = 'Y'; break;
+                        case 'b': ch = '\337'; break;
 			default: /* ch == 'u' */
 			  if (strchr (unsigned_int_converters, ch) &&
 			      ratio_sign (XRATIO_DATA (obj)) < 0)
@@ -684,6 +685,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			case 'o': ch = 'p'; break;
 			case 'x': ch = 'y'; break;
 			case 'X': ch = 'Y'; break;
+                        case 'b': ch = '\337'; break;
 			default: /* ch == 'u' */
 			  if (strchr (unsigned_int_converters, ch) &&
 			      bignum_sign (XBIGNUM_DATA (obj)) < 0)
@@ -733,13 +735,21 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
 	  else if (strchr (bignum_converters, ch))
 	    {
+              int base = 16;
+              
+              if (ch == 'n')
+                base = 10;
+              else if (ch == 'p')
+                base = 8;
+              else if (ch == '\337')
+                base = 2;
+
 #ifdef HAVE_BIGNUM
 	      if (BIGNUMP (arg.obj))
 		{
 		  Ibyte *text_to_print =
 		    (Ibyte *) bignum_to_string (XBIGNUM_DATA (arg.obj),
-						ch == 'n' ? 10 :
-						(ch == 'p' ? 8 : 16));
+						base);
 		  doprnt_2 (stream, text_to_print,
 			    strlen ((const char *) text_to_print),
 			    spec->minwidth, -1, spec->minus_flag,
@@ -751,9 +761,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      if (RATIOP (arg.obj))
 		{
 		  Ibyte *text_to_print =
-		    (Ibyte *) ratio_to_string (XRATIO_DATA (arg.obj),
-					       ch == 'n' ? 10 :
-					       (ch == 'p' ? 8 : 16));
+		    (Ibyte *) ratio_to_string (XRATIO_DATA (arg.obj), base);
 		  doprnt_2 (stream, text_to_print,
 			    strlen ((const char *) text_to_print),
 			    spec->minwidth, -1, spec->minus_flag,
@@ -774,18 +782,32 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      xfree (text_to_print, Ibyte *);
 	    }
 #endif /* HAVE_BIGFLOAT */
+          else if (ch == 'b')
+            {
+              Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
+              
+              ulong_to_bit_string (text_to_print, arg.ul);
+              doprnt_2 (stream, (Ibyte *)text_to_print,
+                        qxestrlen ((Ibyte *)text_to_print), 
+                        spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+            }
 	  else
 	    {
-	      /* ASCII Decimal representation uses 2.4 times as many
-		 bits as machine binary.  */
-	      char *text_to_print =
-		alloca_array (char, 32 +
-			      max (spec->minwidth,
-				   (int) max (sizeof (double),
-				              sizeof (long)) * 3 +
-				   max (spec->precision, 0)));
-	      char constructed_spec[100];
-	      char *p = constructed_spec;
+	      Ascbyte *text_to_print;
+	      Ascbyte constructed_spec[100];
+	      Ascbyte *p = constructed_spec;
+              int alloca_sz = 350;
+              int min = spec->minwidth, prec = spec->precision;
+
+              if (prec < 0)
+                prec = 0;
+              if (min < 0)
+                min = 0;
+
+              if (32+min+prec > alloca_sz)
+                alloca_sz = 32 + min + prec;
+
+              text_to_print = alloca_array(char, alloca_sz);
 
 	      /* Mostly reconstruct the spec and use sprintf() to
 		 format the string. */

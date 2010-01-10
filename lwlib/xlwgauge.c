@@ -53,13 +53,12 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Xatom.h>
 #include <X11/StringDefs.h>
 #include ATHENA_XawInit_h_
+#include "xt-wrappers.h"
 #include "xlwgaugeP.h"
-#include "../src/xmu.h"
-#ifdef HAVE_XMU
 #include <X11/Xmu/Atoms.h>
 #include <X11/Xmu/Drawing.h>
+#include <X11/Xmu/Misc.h>
 #include <X11/Xmu/StdSel.h>
-#endif
 
 
 /****************************************************************
@@ -77,33 +76,29 @@ static	char	defaultTranslations[] =
 
 
 
-#define offset(field) XtOffsetOf(GaugeRec, field)
+#define offset(field) XtOffsetOf(GaugeRec, gauge.field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
 static XtResource resources[] = {
-    {XtNvalue, XtCValue, XtRInt, sizeof(int),
-	offset(gauge.value), XtRImmediate, (XtPointer)0},
-    {XtNminValue, XtCMinValue, XtRInt, sizeof(int),
-	offset(gauge.v0), XtRImmediate, (XtPointer)0},
-    {XtNmaxValue, XtCMaxValue, XtRInt, sizeof(int),
-	offset(gauge.v1), XtRImmediate, (XtPointer)100},
-    {XtNntics, XtCNTics, XtRInt, sizeof(int),
-	offset(gauge.ntics), XtRImmediate, (XtPointer) 0},
-    {XtNnlabels, XtCNLabels, XtRInt, sizeof(int),
-	offset(gauge.nlabels), XtRImmediate, (XtPointer) 0},
-    {XtNlabels, XtCLabels, XtRStringArray, sizeof(String *),
-	offset(gauge.labels), XtRStringArray, NULL},
-    {XtNautoScaleUp, XtCAutoScaleUp, XtRBoolean, sizeof(Boolean),
-	offset(gauge.autoScaleUp), XtRImmediate, FALSE},
-    {XtNautoScaleDown, XtCAutoScaleDown, XtRBoolean, sizeof(Boolean),
-	offset(gauge.autoScaleDown), XtRImmediate, FALSE},
-    {XtNorientation, XtCOrientation, XtROrientation, sizeof(XtOrientation),
-	offset(gauge.orientation), XtRImmediate, (XtPointer)XtorientHorizontal},
-    {XtNupdate, XtCInterval, XtRInt, sizeof(int),
-	offset(gauge.update), XtRImmediate, (XtPointer)0},
-    {XtNgetValue, XtCCallback, XtRCallback, sizeof(XtPointer),
-	offset(gauge.getValue), XtRImmediate, (XtPointer)NULL},
+    res (XtNvalue, XtCValue, XtRInt, int, value, XtRImmediate, 0),
+    res (XtNminValue, XtCMinValue, XtRInt, int, v0, XtRImmediate, 0),
+    res (XtNmaxValue, XtCMaxValue, XtRInt, int, v1, XtRImmediate, 100),
+    res (XtNntics, XtCNTics, XtRInt, int, ntics, XtRImmediate,  0),
+    res (XtNnlabels, XtCNLabels, XtRInt, int, nlabels, XtRImmediate,  0),
+    res (XtNlabels, XtCLabels, XtRStringArray, String *, labels,
+	 XtRStringArray, NULL),
+    res (XtNautoScaleUp, XtCAutoScaleUp, XtRBoolean, Boolean, autoScaleUp,
+	 XtRImmediate, FALSE),
+    res (XtNautoScaleDown, XtCAutoScaleDown, XtRBoolean, Boolean,
+	 autoScaleDown, XtRImmediate, FALSE),
+    res (XtNorientation, XtCOrientation, XtROrientation, XtOrientation,
+	 orientation, XtRImmediate, XtorientHorizontal),
+    res (XtNupdate, XtCInterval, XtRInt, int, update, XtRImmediate, 0),
+    res (XtNgetValue, XtCCallback, XtRCallback, XtPointer, getValue,
+	 XtRImmediate, NULL),
 };
 #undef offset
-
+#undef res
 
 
 	/* member functions */
@@ -132,7 +127,7 @@ static void EnableUpdate  (GaugeWidget);
 static void DisableUpdate (GaugeWidget);
 
 static void GaugeGetValue (XtPointer, XtIntervalId *);
-static void GaugeMercury (Display *, Window, GC, GaugeWidget, Cardinal, Cardinal);
+static void GaugeMercury (Display *, Window, GC, GaugeWidget, int, int);
 
 static Boolean GaugeConvert (Widget, Atom *, Atom *, Atom *,
 			     XtPointer *, unsigned long *, int *);
@@ -146,8 +141,8 @@ static GC Get_GC (GaugeWidget, Pixel);
 
 static	XtActionsRec	actionsList[] =
 {
-  {"select",	GaugeSelect},
-  {"paste",	GaugePaste},
+  { (String) "select",	GaugeSelect },
+  { (String) "paste",	GaugePaste },
 } ;
 
 
@@ -162,7 +157,7 @@ GaugeClassRec gaugeClassRec = {
   {
 /* core_class fields */
     /* superclass	  	*/	(WidgetClass) &labelClassRec,
-    /* class_name	  	*/	"Gauge",
+    /* class_name	  	*/	(String) "Gauge",
     /* widget_size	  	*/	sizeof(GaugeRec),
     /* class_initialize   	*/	GaugeClassInit,
     /* class_part_initialize	*/	NULL,
@@ -229,10 +224,8 @@ static void
 GaugeClassInit (void)
 {
     XawInitializeWidgetSet();
-#ifdef HAVE_XMU
     XtAddConverter(XtRString, XtROrientation, XmuCvtStringToOrientation,
-    		NULL, 0) ;
-#endif
+		   NULL, 0) ;
 }
 
 
@@ -643,7 +636,6 @@ GaugeConvert (Widget	w,
 	    XGetAtomName(XtDisplay(w),*selection),
 	    XGetAtomName(XtDisplay(w),*target));
 
-#ifdef HAVE_XMU
 	if( *target == XA_TARGETS(XtDisplay(w)) )
 	{
 	  XPointer stdTargets;
@@ -672,9 +664,7 @@ GaugeConvert (Widget	w,
 	  return True ;
 	}
 
-	else
-#endif
-	  if( *target == XA_INTEGER )
+	else if( *target == XA_INTEGER )
 	{
 	  *type = XA_INTEGER ;
 	  *length = 1 ;
@@ -683,12 +673,7 @@ GaugeConvert (Widget	w,
 	  return True ;
 	}
 
-	else if( *target == XA_STRING
-#ifdef HAVE_XMU
-		 ||
-		 *target == XA_TEXT(XtDisplay(w))
-#endif
-		 )
+	else if( *target == XA_STRING || *target == XA_TEXT(XtDisplay(w)) )
 	{
 	  *type = *target ;
 	  *length = strlen(gw->gauge.selstr)*sizeof(char) ;
@@ -700,17 +685,14 @@ GaugeConvert (Widget	w,
 	else
 	{
 	  /* anything else, we just give it to XmuConvertStandardSelection() */
-#ifdef HAVE_XMU
 	  req = XtGetSelectionRequest(w, *selection, NULL) ;
 	  if( XmuConvertStandardSelection(w, req->time, selection, target,
-	  	type, (XPointer *) value, length, format) )
+		type, (XPointer *) value, length, format) )
 	    return True ;
-	  else
-#endif
-	    {
+	  else {
 	    printf(
 		"Gauge: requestor is requesting unsupported selection %s:%s\n",
-	    	XGetAtomName(XtDisplay(w),*selection),
+		XGetAtomName(XtDisplay(w),*selection),
 		XGetAtomName(XtDisplay(w),*target));
 	    return False ;
 	  }
@@ -785,13 +767,7 @@ GaugeGetSelCB (Widget    w,
 	  XawGaugeSetValue(w, *iptr) ;
 	}
 
-	else if( *type == XA_STRING
-#ifdef HAVE_XMU
-		 ||
-		 *type == XA_TEXT(dpy)
-#endif
-		 )
-	  {
+	else if( *type == XA_STRING || *type == XA_TEXT(dpy) ) {
 	  cptr = (char *)value ;
 	  XawGaugeSetValue(w, atoi(cptr)) ;
 	}
@@ -817,8 +793,7 @@ GaugeGetSelCB (Widget    w,
 	 */
 
 void
-XawGaugeSetValue (Widget   w,
-		  Cardinal value)
+XawGaugeSetValue (Widget w, int value)
 {
 	GaugeWidget gw = (GaugeWidget)w ;
 	int	oldvalue ;
@@ -838,7 +813,7 @@ XawGaugeSetValue (Widget   w,
 	if(( gw->gauge.autoScaleUp && (int) value > gw->gauge.v1) ||
 	   (gw->gauge.autoScaleDown && (int) value < gw->gauge.v1/3 ))
 	{
-	  XtVaSetValues(w, XtNvalue, value, 0) ;
+	  XtVaSetValues(w, XtNvalue, value, NULL) ;
 	  return ;
 	}
 
@@ -850,7 +825,7 @@ XawGaugeSetValue (Widget   w,
 }
 
 
-Cardinal
+int
 XawGaugeGetValue (Widget w)
 {
 	GaugeWidget gw = (GaugeWidget)w ;
@@ -873,8 +848,8 @@ GaugeMercury (Display     *dpy,
 	      Window      win,
 	      GC          gc,
 	      GaugeWidget gw,
-	      Cardinal    val0,
-	      Cardinal    val1)
+	      int    val0,
+	      int    val1)
 {
 	int	v0 = gw->gauge.v0 ;
 	int	v1 = gw->gauge.v1 ;
@@ -893,10 +868,10 @@ GaugeMercury (Display     *dpy,
 
 	if( vd <= 0 ) vd = 1 ;
 
-	if( (int) val0 < v0 ) val0 = v0 ;
-	else if( (int) val0 > v1 ) val0 = v1 ;
-	if( (int) val1 < v0 ) val1 = v0 ;
-	else if( (int) val1 > v1 ) val1 = v1 ;
+	if( val0 < v0 ) val0 = v0 ;
+	else if( val0 > v1 ) val0 = v1 ;
+	if( val1 < v0 ) val1 = v0 ;
+	else if( val1 > v1 ) val1 = v1 ;
 
 	p0 = (val0-v0)*(e1-e0-1)/vd ;
 	p1 = (val1-v0)*(e1-e0-1)/vd ;
@@ -1108,7 +1083,7 @@ GaugeGetValue (XtPointer    clientData,
 	       XtIntervalId *UNUSED (intervalId))
 {
 	GaugeWidget	gw = (GaugeWidget)clientData ;
-	Cardinal	value ;
+	int	value ;
 
 	if( gw->gauge.update > 0 )
 	  EnableUpdate(gw) ;

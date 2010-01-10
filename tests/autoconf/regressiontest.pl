@@ -1,5 +1,26 @@
 #!/usr/bin/perl -w
 #
+# Copyright 2005 Malcolm Purvis
+#
+# This file is part of XEmacs.
+#
+# XEmacs is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301, USA.
+#
+# Commentary
+#
 # Try the new and old versions of configure with various command lines to see
 # if they produce identical output.
 #
@@ -23,8 +44,6 @@ my @output_files =
    "Makefile.in",
    "./Makefile",
    "./GNUmakefile",
-   "dynodump/Makefile.in",
-   "dynodump/Makefile",
    "lib-src/Makefile.in",
    "lib-src/Makefile",
    "lib-src/GNUmakefile",
@@ -83,6 +102,7 @@ my %config_args =
    "--libdir=/tmp/foo" => undef,
    "--exec-prefix=/tmp/foo" => undef,
    "--with-athena=3d" => undef,
+   "--with-mule --with-xft=emacs --debug --error-checking=all --with-xim=xlib --with-widgets=athena --with-athena=3d --with-dialogs=athena --memory-usage-stats --use-number-lib=gmp --site-prefixes=/opt/local:/sw --with-ldap=no --use-union-type" => "--enable-mule --with-xft=emacs --enable-debug --enable-error-checking=all --with-xim=xlib --enable-widgets=athena --with-athena=3d --enable-dialogs=athena --enable-memory-usage-stats --enable-bignum=gmp --with-site-prefixes=/opt/local:/sw --with-ldap=no --enable-union-type"
   );
 
 die "Usage: $0 /path/to/configure-2.13 /path/to/configure-2.59\n" if scalar(@ARGV) != 2;

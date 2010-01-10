@@ -459,3 +459,107 @@ baaaa
   (Assert (null (match-string 2 text2)))
 )
 
+;; replace-regexp-in-string (regexp rep source
+;;                           fixedcase literal buf-or-subexp start)
+
+;; Currently we test the following cases:
+;; where `cbuf' and `bar-or-empty' are bound below.
+
+;; #### Tests for the various functional features (fixedcase, literal, start)
+;; should be added.
+
+(with-temp-buffer
+  (flet ((bar-or-empty (subexp) (if (string= subexp "foo") "bar" "")))
+    (let ((cbuf (current-buffer)))
+      (dolist (test-case
+               ;; REP           BUF-OR-SUBEXP   EXPECTED RESULT
+               `(("bar"         nil             " bar")
+                 ("bar"         ,cbuf           " bar")
+                 ("bar"         0               " bar")
+                 ("bar"         1               " bar foo")
+                 (bar-or-empty  nil             " ")
+                 (bar-or-empty  ,cbuf           " ")
+                 (bar-or-empty  0               " ")
+                 (bar-or-empty  1               " bar foo")))
+        (Assert
+         (string=
+          (nth 2 test-case)
+          (replace-regexp-in-string "\\(foo\\).*\\'" (nth 0 test-case)
+                                    " foo foo" nil nil (nth 1 test-case)))))
+      ;; #### Why doesn't this loop work right?
+;       (dolist (test-case
+;                ;; REP   BUF-OR-SUBEXP   EXPECTED ERROR		EXPECTED MESSAGE
+;                `(;; expected message was "bufferp, symbol" up to 21.5.28
+; 		 ("bar"     'symbol     wrong-type-argument	"integerp, symbol")
+;                  ("bar"     -1          invalid-argument
+; 						 "match data register invalid, -1")
+;                  ("bar"     2           invalid-argument
+; 						  "match data register not set, 2")
+; 		 ))
+;         (eval
+; 	 `(Check-Error-Message ,(nth 2 test-case) ,(nth 3 test-case)
+; 	    (replace-regexp-in-string "\\(foo\\).*\\'" ,(nth 0 test-case)
+; 				      " foo foo" nil nil ,(nth 1 test-case)))))
+      ;; #### Can't test the message with w-t-a, see test-harness.el.
+      (Check-Error wrong-type-argument
+		   (replace-regexp-in-string "\\(foo\\).*\\'"
+					     "bar"
+					     " foo foo" nil nil
+					     'symbol))
+      ;; #### Can't test the FROB (-1), see test-harness.el.
+      (Check-Error-Message invalid-argument
+			   "match data register invalid"
+			   (replace-regexp-in-string "\\(foo\\).*\\'"
+						     "bar"
+						     " foo foo" nil nil
+						     -1))
+      ;; #### Can't test the FROB (-1), see test-harness.el.
+      (Check-Error-Message invalid-argument
+			   "match data register not set"
+			   (replace-regexp-in-string "\\(foo\\).*\\'"
+						     "bar"
+						     " foo foo" nil nil
+						     2))
+      )))
+
+;; Not very comprehensive tests of skip-chars-forward, skip-chars-background: 
+
+(with-string-as-buffer-contents 
+    "-]-----------------------------][]]------------------------"
+  (goto-char (point-min))
+  (skip-chars-forward (skip-chars-quote "-[]"))
+  (Assert (= (point) (point-max)))
+  (skip-chars-backward (skip-chars-quote "-[]"))
+  (Assert (= (point) (point-min)))
+  ;; Testing in passing for an old bug in #'skip-chars-forward where I
+  ;; thought it was impossible to call it with a string containing only ?-
+  ;; and ?]: 
+  (Assert (= (skip-chars-forward (skip-chars-quote "-]"))
+             (position ?[ (buffer-string) :test #'=)))
+  ;; This used to error, incorrectly: 
+  (Assert (skip-chars-quote "[-")))
+
+;; replace-match (REPLACEMENT &optional FIXEDCASE LITERAL STRING STRBUFFER)
+
+;; #### Write some tests!  Much functionality is implicitly tested above
+;; via `replace-regexp-in-string', but we should specifically test bogus
+;; combinations of STRING and STRBUFFER.
+
+;; empty string at point
+;; Thanks Julian Bradford on XEmacs Beta
+;; <18652.54975.894512.880956@krk.inf.ed.ac.uk>
+(with-string-as-buffer-contents "aáa"
+  (goto-char (point-min))
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 1))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 2))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 3))
+  (forward-char 1)
+  (Assert (looking-at "\\="))
+  (Assert (= (re-search-forward "\\=") 4)))
+
+

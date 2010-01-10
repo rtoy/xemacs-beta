@@ -226,6 +226,41 @@ the section of autoloads for a file.")
 ;; Parsing the source file text.
 ;; Autoloads in C source differ from those in Lisp source.
 
+; Add operator definitions to autoload-operators.el in the xemacs-base
+; package.
+(ignore-errors (require 'autoload-operators))
+
+; As autoload-operators is new, provide stopgap measure for a while.
+(if (not (boundp 'autoload-make-autoload-operators))
+    (progn
+      (defvar autoload-make-autoload-operators
+	'(defun define-skeleton defmacro define-derived-mode define-generic-mode
+	  easy-mmode-define-minor-mode easy-mmode-define-global-mode
+	  define-minor-mode defun* defmacro*)
+	"`defun'-like operators that use `autoload' to load the library.")
+      
+      (defvar autoload-make-autoload-complex-operators
+	'(easy-mmode-define-minor-mode easy-mmode-define-global-mode
+	  define-minor-mode)
+	"`defun'-like operators to macroexpand before using `autoload'.")
+      
+      (put 'autoload 'doc-string-elt 3)
+      (put 'defun    'doc-string-elt 3)
+      (put 'defun*   'doc-string-elt 3)
+      (put 'defvar   'doc-string-elt 3)
+      (put 'defcustom 'doc-string-elt 3)
+      (put 'defconst 'doc-string-elt 3)
+      (put 'defmacro 'doc-string-elt 3)
+      (put 'defmacro* 'doc-string-elt 3)
+      (put 'defsubst 'doc-string-elt 3)
+      (put 'define-skeleton 'doc-string-elt 2)
+      (put 'define-derived-mode 'doc-string-elt 4)
+      (put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
+      (put 'define-minor-mode 'doc-string-elt 2)
+      (put 'define-generic-mode 'doc-string-elt 7)
+      ;; defin-global-mode has no explicit docstring.
+      (put 'easy-mmode-define-global-mode 'doc-string-elt 1000)))
+
 (defun make-autoload (form file)
   "Turn FORM into an autoload or defvar for source file FILE.
 Returns nil if FORM is not a special autoload form (i.e. a function definition
@@ -233,8 +268,7 @@ or macro definition or a defcustom)."
   (let ((car (car-safe form)) expand)
     (cond
      ;; For complex cases, try again on the macro-expansion.
-     ((and (memq car '(easy-mmode-define-global-mode
-		       easy-mmode-define-minor-mode define-minor-mode))
+     ((and (memq car autoload-make-autoload-complex-operators)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (eq (car expand) 'progn)
 	   (memq :autoload-end expand))
@@ -246,14 +280,20 @@ or macro definition or a defcustom)."
 		      (cdr expand)))))
 
      ;; For special function-like operators, use the `autoload' function.
-     ((memq car '(defun define-skeleton defmacro define-derived-mode
-		   define-generic-mode easy-mmode-define-minor-mode
-		   easy-mmode-define-global-mode
-		   define-minor-mode defun* defmacro*))
+     ((memq car autoload-make-autoload-operators)
       (let* ((macrop (memq car '(defmacro defmacro*)))
 	     (name (nth 1 form))
 	     (body (nthcdr (get car 'doc-string-elt) form))
 	     (doc (if (stringp (car body)) (pop body))))
+	(if (memq car '(defmacro defmacro* defun defun*))
+	    (let ((arglist (nth 2 form))
+		  (placeholder (eval-when-compile (gensym))))
+	      (setq doc (concat (or doc "")
+				"\n\narguments: "
+				(replace-in-string
+				 (cl-function-arglist placeholder arglist)
+				 (format "^(%s ?" placeholder)
+				 "(") "\n"))))
 	;; `define-generic-mode' quotes the name, so take care of that
 	(list 'autoload (if (listp name) name (list 'quote name)) file doc
 	      (or (and (memq car '(define-skeleton define-derived-mode
@@ -279,7 +319,9 @@ or macro definition or a defcustom)."
 				  ',varname 'custom-variable)
 	     (custom-add-load ',varname
 			      ,(plist-get rest :require))))))
-
+     ;; Coding systems. #### Would be nice to handle the docstring here too.
+     ((memq car '(make-coding-system make-8-bit-coding-system))
+      `(autoload-coding-system ,(nth 1 form) '(load ,file)))
      ;; nil here indicates that this is not a special autoload form.
      (t nil))))
 
@@ -513,7 +555,8 @@ Updates AUTOLOADS-DONE and returns the new value."
 	   (let ((begin (point)))
 	     (forward-sexp)
 	     (forward-line 1)
-	     (princ (buffer-substring begin (point)) outbuf)))
+	     (princ (buffer-substring begin (point)) outbuf))
+	   (setq autoloads-done (cons '<immediate> autoloads-done)))
 	  (t
 	   (princ (buffer-substring
 		   (progn
@@ -724,10 +767,10 @@ at the beginning of lines and ^L characters."
 		  ;;#### FSF 21.2 (print-escape-nonascii t)
 		  (p (point outbuf))
 		  p2)
-	      (mapcar #'(lambda (elt)
-			  (prin1 elt outbuf)
-			  (princ " " outbuf))
-		      form)
+	      (mapc #'(lambda (elt)
+                        (prin1 elt outbuf)
+                        (princ " " outbuf))
+                    form)
 	      (with-current-buffer outbuf
 		(setq p2 (point-marker))
 		(goto-char p)
@@ -766,41 +809,6 @@ at the beginning of lines and ^L characters."
 		(delete-char -1)
 		(insert "\\^L")))
 	    (goto-char p2))))))))
-
-;;; Forms which have doc-strings which should be printed specially.
-;;; A doc-string-elt property of ELT says that (nth ELT FORM) is
-;;; the doc-string in FORM.
-;;;
-;;; There used to be the following note here:
-;;; ;;; Note: defconst and defvar should NOT be marked in this way.
-;;; ;;; We don't want to produce defconsts and defvars that
-;;; ;;; make-docfile can grok, because then it would grok them twice,
-;;; ;;; once in foo.el (where they are given with ;;;###autoload) and
-;;; ;;; once in loaddefs.el.
-;;;
-;;; Counter-note: Yes, they should be marked in this way.
-;;; make-docfile only processes those files that are loaded into the
-;;; dumped Emacs, and those files should never have anything
-;;; autoloaded here.  The above-feared problem only occurs with files
-;;; which have autoloaded entries *and* are processed by make-docfile;
-;;; there should be no such files.
-
-(put 'autoload 'doc-string-elt 3)
-(put 'defun    'doc-string-elt 3)
-(put 'defun*   'doc-string-elt 3)
-(put 'defvar   'doc-string-elt 3)
-(put 'defcustom 'doc-string-elt 3)
-(put 'defconst 'doc-string-elt 3)
-(put 'defmacro 'doc-string-elt 3)
-(put 'defmacro* 'doc-string-elt 3)
-(put 'defsubst 'doc-string-elt 3)
-(put 'define-skeleton 'doc-string-elt 2)
-(put 'define-derived-mode 'doc-string-elt 4)
-(put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
-(put 'define-minor-mode 'doc-string-elt 2)
-(put 'define-generic-mode 'doc-string-elt 7)
-;; defin-global-mode has no explicit docstring.
-(put 'easy-mmode-define-global-mode 'doc-string-elt 1000)
 
 (defun autoload-trim-file-name (file)
   "Returns relative pathname of FILE including the last directory.
@@ -1013,8 +1021,8 @@ If FORCE is non-nil, always save out the autoload files even if unchanged."
 		  (search-forward generate-autoload-section-trailer)
 		  (delete-region begin (point)))))
 	    ;; Update or create autoload sections for existing files.
-	    (mapcar 'update-file-autoloads
-		    (directory-files arg t "^[^=].*\\.\\(el\\|c\\)$")))))
+	    (mapc 'update-file-autoloads
+                  (directory-files arg t "^[^=].*\\.\\(el\\|c\\)$")))))
        ((file-exists-p arg)
 	(setq generated-autoload-file
 	      (or into-file (expand-file-name autoload-file-name
@@ -1154,7 +1162,8 @@ The directory to which the auto-autoloads.el file must be the first parameter
 on the command line."
   (unless noninteractive
     (error "batch-update-autoloads is to be used only with -batch"))
-  (update-autoload-files command-line-args-left autoload-feature-prefix nil t)
+  (update-autoload-files command-line-args-left autoload-feature-prefix
+			 generated-autoload-file t)
   (kill-emacs 0))
 
 ;; Declare obsolescence

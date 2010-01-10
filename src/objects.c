@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -64,7 +64,11 @@ Lisp_Object Qcolor_instancep;
 
 static const struct memory_description color_instance_data_description_1 []= {
 #ifdef HAVE_TTY
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, tty_console },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, tty_console, 1, { &tty_color_instance_data_description } },
+#endif /* not NEW_GC */
 #endif
   { XD_END }
 };
@@ -149,7 +153,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
 			       0, /*dumpable-flag*/
 			       mark_color_instance, print_color_instance,
 			       finalize_color_instance, color_instance_equal,
-			       color_instance_hash, 
+			       color_instance_hash,
 			       color_instance_description,
 			       Lisp_Color_Instance);
 
@@ -272,7 +276,11 @@ static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
 
 static const struct memory_description font_instance_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_BLOCK_PTR, tty_console, 1, { &tty_font_instance_data_description} },
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, tty_console },
+#else /* not NEW_GC */
+  { XD_BLOCK_PTR, tty_console, 1, { &tty_font_instance_data_description } },
+#endif /* not NEW_GC */
 #endif
   { XD_END }
 };
@@ -286,7 +294,8 @@ static const struct memory_description font_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, name)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, truename)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, device)},
-  { XD_UNION, offsetof (Lisp_Font_Instance, data), 
+  { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, charset)},
+  { XD_UNION, offsetof (Lisp_Font_Instance, data),
     XD_INDIRECT (0, 0), { &font_instance_data_description } },
   { XD_END }
 };
@@ -314,8 +323,11 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string_lisp (printcharfun, "#<font-instance %S", 1, f->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, f->device);
   if (!NILP (f->device))
-    MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
-		   (f, printcharfun, escapeflag));
+    {
+      MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
+		     (f, printcharfun, escapeflag));
+
+    }
   write_fmt_string (printcharfun, " 0x%x>", f->header.uid);
 }
 
@@ -362,19 +374,23 @@ DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
 			       Lisp_Font_Instance);
 
 
-DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
+/* #### Why is this exposed to Lisp?  Used in:
+x-frob-font-size, gtk-font-menu-load-font, x-font-menu-load-font-xft,
+x-font-menu-load-font-core, mswindows-font-menu-load-font,
+mswindows-frob-font-style-and-sizify, mswindows-frob-font-size. */
+DEFUN ("make-font-instance", Fmake_font_instance, 1, 4, 0, /*
 Return a new `font-instance' object named NAME.
 DEVICE specifies the device this object applies to and defaults to the
 selected device.  An error is signalled if the font is unknown or cannot
 be allocated; however, if NOERROR is non-nil, nil is simply returned in
-this case.
+this case.  CHARSET is used internally.  #### make helper function?
 
 The returned object is a normal, first-class lisp object.  The way you
 `deallocate' the font is the way you deallocate any other lisp object:
 you drop all pointers to it and allow it to be garbage collected.  When
-these objects are GCed, the underlying X data is deallocated as well.
+these objects are GCed, the underlying GUI data is deallocated as well.
 */
-       (name, device, noerror))
+       (name, device, noerror, charset))
 {
   Lisp_Font_Instance *f;
   int retval = 0;
@@ -399,6 +415,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   f->ascent = f->height = 1;
   f->descent = 0;
   f->width = 1;
+  f->charset = charset;
   f->proportional_p = 0;
 
   retval = MAYBE_INT_DEVMETH (XDEVICE (device), initialize_font_instance,
@@ -480,8 +497,10 @@ font_instance_truename_internal (Lisp_Object font_instance,
 
   if (NILP (f->device))
     {
-      maybe_signal_error (Qgui_error, "Couldn't determine font truename",
-			       font_instance, Qfont, errb);
+      maybe_signal_error (Qgui_error,
+			  "can't determine truename: "
+			  "no device for font instance",
+			  font_instance, Qfont, errb);
       return Qnil;
     }
 
@@ -499,6 +518,15 @@ the first found is used.  This returns an unambiguous name for that font
 {
   CHECK_FONT_INSTANCE (font_instance);
   return font_instance_truename_internal (font_instance, ERROR_ME);
+}
+
+DEFUN ("font-instance-charset", Ffont_instance_charset, 1, 1, 0, /*
+Return the Mule charset that FONT-INSTANCE was allocated to handle.
+*/
+       (font_instance))
+{
+  CHECK_FONT_INSTANCE (font_instance);
+  return XFONT_INSTANCE (font_instance)->charset;
 }
 
 DEFUN ("font-instance-properties", Ffont_instance_properties, 1, 1, 0, /*
@@ -570,7 +598,7 @@ color_mark (Lisp_Object obj)
 static Lisp_Object
 color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		   Lisp_Object domain, Lisp_Object instantiator,
-		   Lisp_Object depth)
+		   Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -580,10 +608,10 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
   if (COLOR_INSTANCEP (instantiator))
     {
       /* If we are on the same device then we're done.  Otherwise change
-         the instantiator to the name used to generate the pixel and let the
-         STRINGP case deal with it. */
+	 the instantiator to the name used to generate the pixel and let the
+	 STRINGP case deal with it. */
       if (NILP (device) /* Vthe_null_color_instance */
-          || EQ (device, XCOLOR_INSTANCE (instantiator)->device))
+	  || EQ (device, XCOLOR_INSTANCE (instantiator)->device))
 	return instantiator;
       else
 	instantiator = Fcolor_instance_name (instantiator);
@@ -621,13 +649,15 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 				 instantiator);
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
-		   COLOR_SPECIFIER_FACE_PROPERTY (XCOLOR_SPECIFIER (specifier)),
-		   domain, ERROR_ME, 0, depth));
+		   COLOR_SPECIFIER_FACE_PROPERTY
+		   (XCOLOR_SPECIFIER (specifier)),
+		   domain, ERROR_ME, no_fallback, depth));
 
 	case 2:
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
-		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME, 0, depth));
+		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME,
+		   no_fallback, depth));
 
 	default:
 	  ABORT ();
@@ -753,7 +783,7 @@ static int
 font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			   const Ibyte *nonreloc, Lisp_Object reloc,
 			   Bytecount offset, Bytecount length,
-			   int stage)
+			   enum font_specifier_matchspec_stages stage)
 {
   return DEVMETH_OR_GIVEN (d, font_spec_matches_charset,
 			   (d, charset, nonreloc, reloc, offset, length,
@@ -766,6 +796,21 @@ font_validate_matchspec (Lisp_Object matchspec)
 {
   CHECK_CONS (matchspec);
   Fget_charset (XCAR (matchspec));
+
+  do
+    {
+      if (EQ(XCDR(matchspec), Qinitial))
+	{
+	  break;
+	}
+      if (EQ(XCDR(matchspec), Qfinal))
+	{
+	  break;
+	}
+
+      invalid_argument("Invalid font matchspec stage",
+		       XCDR(matchspec));
+    } while (0);
 }
 
 void
@@ -789,11 +834,11 @@ invalidate_charset_font_caches (Lisp_Object charset)
       hash_table = Fgethash (charset, d->charset_font_cache_stage_1,
 			     Qunbound);
       if (!UNBOUNDP (hash_table))
-        Fclrhash (hash_table);
+	Fclrhash (hash_table);
       hash_table = Fgethash (charset, d->charset_font_cache_stage_2,
 			     Qunbound);
       if (!UNBOUNDP (hash_table))
-        Fclrhash (hash_table);
+	Fclrhash (hash_table);
     }
 }
 
@@ -830,7 +875,7 @@ static Lisp_Object
 font_instantiate (Lisp_Object UNUSED (specifier),
 		  Lisp_Object USED_IF_MULE (matchspec),
 		  Lisp_Object domain, Lisp_Object instantiator,
-		  Lisp_Object depth)
+		  Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -839,19 +884,31 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   Lisp_Object instance;
   Lisp_Object charset = Qnil;
 #ifdef MULE
-  int stage = 0;
+  enum font_specifier_matchspec_stages stage = STAGE_INITIAL;
 
   if (!UNBOUNDP (matchspec))
     {
       charset = Fget_charset (XCAR (matchspec));
-      stage = NILP (XCDR (matchspec)) ? 0 : 1;
+
+#define FROB(new_stage, enumstage)			\
+          if (EQ(Q##new_stage, XCDR(matchspec)))	\
+	    {						\
+	      stage = enumstage;			\
+	    }
+
+	  FROB (initial, STAGE_INITIAL)
+	  else FROB (final, STAGE_FINAL)
+	  else assert(0);
+
+#undef FROB
+
     }
 #endif
 
   if (FONT_INSTANCEP (instantiator))
     {
       if (NILP (device)
-          || EQ (device, XFONT_INSTANCE (instantiator)->device))
+	  || EQ (device, XFONT_INSTANCE (instantiator)->device))
 	{
 #ifdef MULE
 	  if (font_spec_matches_charset (d, charset, 0,
@@ -867,8 +924,10 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   if (STRINGP (instantiator))
     {
 #ifdef MULE
-      Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
-        d->charset_font_cache_stage_1;
+      /* #### rename these caches. */
+      Lisp_Object cache = stage == STAGE_FINAL ?
+	d->charset_font_cache_stage_2 :
+	d->charset_font_cache_stage_1;
 #else
       Lisp_Object cache = d->font_instance_cache;
 #endif
@@ -899,9 +958,9 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 	    {
 	      /* make sure we cache the failures, too. */
 	      matching_font =
-                DEVMETH_OR_GIVEN (d, find_charset_font,
-                                  (device, instantiator, charset, stage),
-                                  instantiator);
+		DEVMETH_OR_GIVEN (d, find_charset_font,
+				  (device, instantiator, charset, stage),
+				  instantiator);
 	      Fputhash (instantiator, matching_font, hash_table);
 	    }
 	  if (NILP (matching_font))
@@ -916,7 +975,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
       if (UNBOUNDP (instance))
 	{
 	  /* make sure we cache the failures, too. */
-	  instance = Fmake_font_instance (instantiator, device, Qt);
+	  instance = Fmake_font_instance (instantiator, device, Qt, charset);
 	  Fputhash (instantiator, instance, cache);
 	}
 
@@ -924,10 +983,22 @@ font_instantiate (Lisp_Object UNUSED (specifier),
     }
   else if (VECTORP (instantiator))
     {
+      Lisp_Object match_inst = Qunbound;
       assert (XVECTOR_LENGTH (instantiator) == 1);
-      return (face_property_matching_instance
-	      (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	       charset, domain, ERROR_ME, 0, depth));
+
+      match_inst = face_property_matching_instance
+	(Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
+	 charset, domain, ERROR_ME, no_fallback, depth, STAGE_INITIAL);
+
+      if (UNBOUNDP(match_inst))
+	{
+	  match_inst = face_property_matching_instance
+	    (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
+	     charset, domain, ERROR_ME, no_fallback, depth, STAGE_FINAL);
+	}
+
+      return match_inst;
+
     }
   else if (NILP (instantiator))
     return Qunbound;
@@ -1028,7 +1099,7 @@ static Lisp_Object
 face_boolean_instantiate (Lisp_Object specifier,
 			  Lisp_Object UNUSED (matchspec),
 			  Lisp_Object domain, Lisp_Object instantiator,
-			  Lisp_Object depth)
+			  Lisp_Object depth, int no_fallback)
 {
   /* When called, we're inside of call_with_suspended_errors(),
      so we can freely error. */
@@ -1055,7 +1126,7 @@ face_boolean_instantiate (Lisp_Object specifier,
 
       retval = (FACE_PROPERTY_INSTANCE_1
 		(Fget_face (XVECTOR_DATA (instantiator)[0]),
-		 prop, domain, ERROR_ME, 0, depth));
+		 prop, domain, ERROR_ME, no_fallback, depth));
 
       if (instantiator_len == 3 && !NILP (XVECTOR_DATA (instantiator)[2]))
 	retval = NILP (retval) ? Qt : Qnil;
@@ -1168,6 +1239,7 @@ syms_of_objects (void)
   DEFSUBR (Ffont_instance_ascent);
   DEFSUBR (Ffont_instance_descent);
   DEFSUBR (Ffont_instance_width);
+  DEFSUBR (Ffont_instance_charset);
   DEFSUBR (Ffont_instance_proportional_p);
   DEFSUBR (Ffont_instance_truename);
   DEFSUBR (Ffont_instance_properties);

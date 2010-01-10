@@ -60,7 +60,8 @@ HSZ mswindows_dde_item_result;
 HSZ mswindows_dde_item_open;
 #endif
 
-Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
+Lisp_Object Qmake_device_early_mswindows_entry_point, 
+  Qmake_device_late_mswindows_entry_point;
 Lisp_Object Qdevmodep;
 
 static Lisp_Object Q_allow_selection;
@@ -73,11 +74,19 @@ static const struct memory_description mswindows_device_data_description_1 [] = 
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("mswindows-device", mswindows_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       mswindows_device_data_description_1,
+			       Lisp_Mswindows_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_device_data_description;
 
 const struct sized_memory_description mswindows_device_data_description = {
   sizeof (struct mswindows_device), mswindows_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description msprinter_device_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct msprinter_device, name) },
@@ -86,11 +95,19 @@ static const struct memory_description msprinter_device_data_description_1 [] = 
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("msprinter-device", msprinter_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       msprinter_device_data_description_1,
+			       Lisp_Msprinter_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description msprinter_device_data_description;
 
 const struct sized_memory_description msprinter_device_data_description = {
   sizeof (struct msprinter_device), msprinter_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 static Lisp_Object allocate_devmode (DEVMODEW *src_devmode, int do_copy,
 				     Lisp_Object src_name, struct device *d);
@@ -141,12 +158,19 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
   HDC hdc;
   WNDCLASSEXW wc;
 
+  call0 (Qmake_device_early_mswindows_entry_point);
+
   DEVICE_CLASS (d) = Qcolor;
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   init_baud_rate (d);
   init_one_device (d);
 
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct mswindows_device,
+				       &lrecord_mswindows_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct mswindows_device);
+#endif /* not NEW_GC */
   hdc = CreateCompatibleDC (NULL);
   assert (hdc != NULL);
   DEVICE_MSWINDOWS_HCDC (d) = hdc;
@@ -252,13 +276,14 @@ init_mswindows_dde_very_early (void)
 }
 
 static void
-mswindows_finish_init_device (struct device *UNUSED (d),
+mswindows_finish_init_device (struct device *d,
 			      Lisp_Object UNUSED (props))
 {
 #ifdef HAVE_DRAGNDROP
   /* Tell pending clients we are ready. */
   mswindows_dde_enable = 1;
 #endif
+  call1 (Qmake_device_late_mswindows_entry_point, wrap_device(d));
 }
 
 static void
@@ -279,7 +304,9 @@ mswindows_delete_device (struct device *d)
 #endif
 
   DeleteDC (DEVICE_MSWINDOWS_HCDC (d));
+#ifndef NEW_GC
   xfree (d->device_data, void *);
+#endif /* not NEW_GC */
 }
 
 void
@@ -495,7 +522,12 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   LONG dm_size;
   Extbyte *printer_name;
 
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct msprinter_device,
+				       &lrecord_msprinter_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct msprinter_device);
+#endif /* not NEW_GC */
 
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
@@ -546,7 +578,9 @@ msprinter_delete_device (struct device *d)
 	  DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
 	}
 
+#ifndef NEW_GC
       xfree (d->device_data, void *);
+#endif /* not NEW_GC */
     }
 }
 
@@ -1344,6 +1378,11 @@ syms_of_device_mswindows (void)
 {
   INIT_LRECORD_IMPLEMENTATION (devmode);
 
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (mswindows_device);
+  INIT_LRECORD_IMPLEMENTATION (msprinter_device);
+#endif /* NEW_GC */
+
   DEFSUBR (Fmsprinter_get_settings);
   DEFSUBR (Fmsprinter_select_settings);
   DEFSUBR (Fmsprinter_apply_settings);
@@ -1357,8 +1396,8 @@ syms_of_device_mswindows (void)
   DEFKEYWORD (Q_selected_page_button);
   DEFSYMBOL (Qselected_page_button);
 
-  DEFSYMBOL (Qinit_pre_mswindows_win);
-  DEFSYMBOL (Qinit_post_mswindows_win);
+  DEFSYMBOL (Qmake_device_early_mswindows_entry_point);
+  DEFSYMBOL (  Qmake_device_late_mswindows_entry_point);
 }
 
 void

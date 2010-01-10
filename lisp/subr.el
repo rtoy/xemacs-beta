@@ -79,12 +79,24 @@ function, i.e., stored as the function value of a symbol, passed to
 funcall or mapcar, etc.
 
 ARGS should take the same form as an argument list for a `defun'.
-DOCSTRING is an optional documentation string.
- If present, it should describe how to call the function.
- But documentation strings are usually not useful in nameless functions.
-INTERACTIVE should be a call to the function `interactive', which see.
-It may also be omitted.
-BODY should be a list of lisp expressions."
+Optional DOCSTRING is a documentation string.
+If present, it should describe how to call the function.  Docstrings are
+rarely useful unless the lambda will be named, eg, using `fset'.
+Optional INTERACTIVE should be a call to the function `interactive'.
+BODY should be a list of lisp expressions.
+
+The byte-compiler treats lambda expressions specially.  If the lambda
+expression is syntactically a function to be called, it will be compiled
+unless protected by `quote'.  Conversely, quoting a lambda expression with
+`function' hints to the byte-compiler that it should compile the expression.
+\(The byte-compiler may or may not actually compile it; for example it will
+never compile lambdas nested in a data structure: `'(#'(lambda (x) x))').
+
+The byte-compiler will warn about common problems such as the form
+`(fset 'f '(lambda (x) x))' (the lambda cannot be byte-compiled; probably
+the programmer intended `#'', although leaving the lambda unquoted will
+normally suffice), but in general is it the programmer's responsibility to
+quote lambda expressions appropriately."
   `(function (lambda ,@cdr)))
 
 ;; FSF 21.2 has various basic macros here.  We don't because they're either
@@ -378,19 +390,19 @@ You don't need this any more.  It's equivalent to specifying the LOCAL
 argument to `add-one-shot-hook'."
   (add-one-shot-hook hook function append t))
 
-(defun add-to-list (list-var element &optional append)
+(defun add-to-list (list-var element &optional append compare-fn)
   "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
-The test for presence of ELEMENT is done with `equal'.
-If ELEMENT is added, it is added at the beginning of the list,
-unless the optional argument APPEND is non-nil, in which case
-ELEMENT is added at the end.
+The test for presence of ELEMENT is done with COMPARE-FN; if
+COMPARE-FN is nil, then it defaults to `equal'. If ELEMENT is added,
+it is added at the beginning of the list, unless the optional argument
+APPEND is non-nil, in which case ELEMENT is added at the end.
 
 If you want to use `add-to-list' on a variable that is not defined
 until a certain package is loaded, you should put the call to `add-to-list'
 into a hook function that will be run only after loading the package.
 `eval-after-load' provides one way to do this.  In some cases
 other hooks, such as major mode hooks, can do the job."
-  (if (member element (symbol-value list-var))
+  (if (member* element (symbol-value list-var) :test (or compare-fn #'equal))
       (symbol-value list-var)
     (set list-var
          (if append
@@ -567,6 +579,19 @@ See also `with-temp-file' and `with-output-to-string'."
 ; 	 . ,body)
 ;      (combine-after-change-execute)))
 
+(defmacro with-case-table (table &rest body)
+  "Execute the forms in BODY with TABLE as the current case table.
+The value returned is the value of the last form in BODY."
+  (declare (indent 1) (debug t))
+  (let ((old-case-table (make-symbol "table"))
+	(old-buffer (make-symbol "buffer")))
+    `(let ((,old-case-table (current-case-table))
+	   (,old-buffer (current-buffer)))
+       (unwind-protect
+	   (progn (set-case-table ,table)
+		  ,@body)
+	 (with-current-buffer ,old-buffer
+	   (set-case-table ,old-case-table))))))
 
 (defvar delay-mode-hooks nil
   "If non-nil, `run-mode-hooks' should delay running the hooks.")
@@ -620,6 +645,7 @@ Value is what BODY returns."
 ;; Moved from mule-coding.el.
 (defmacro with-string-as-buffer-contents (str &rest body)
   "With the contents of the current buffer being STR, run BODY.
+Point starts positioned to end of buffer.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
   `(with-temp-buffer
@@ -779,20 +805,33 @@ Otherwise treat `\\' in NEWTEXT as special:
 
 Return a new string containing the replacements.
 
-Optional arguments FIXEDCASE, LITERAL and SUBEXP are like the
-arguments with the same names of function `replace-match'.  If START
-is non-nil, start replacements at that index in STRING.
+Optional arguments FIXEDCASE and LITERAL are like the arguments with
+the same names of function `replace-match'.  If START is non-nil,
+start replacements at that index in STRING.
+
+For compatibility with old XEmacs code and with recent GNU Emacs, the
+interpretation of SUBEXP is somewhat complicated.  If SUBEXP is a
+buffer, it is interpreted as the buffer which provides syntax tables
+and case tables for the match and replacement.  If it is not a buffer,
+the current buffer is used.  If SUBEXP is an integer, it is the index
+of the subexpression of REGEXP which is to be replaced.
 
 REP is either a string used as the NEWTEXT arg of `replace-match' or a
 function.  If it is a function it is applied to each match to generate
 the replacement passed to `replace-match'; the match-data at this
-point are such that match 0 is the function's argument.
+point are such that `(match-string SUBEXP STRING)' is the function's
+argument if SUBEXP is an integer \(otherwise the whole match is passed
+and replaced).
 
 To replace only the first match (if any), make REGEXP match up to \\'
 and replace a sub-expression, e.g.
   (replace-regexp-in-string \"\\(foo\\).*\\'\" \"bar\" \" foo foo\" nil nil 1)
     => \" bar foo\"
-"
+
+Signals `invalid-argument' if SUBEXP is not an integer, buffer, or nil;
+or is an integer, but the indicated subexpression was not matched.
+Signals `invalid-argument' if STRING is nil but the last text matched was a string,
+or if STRING is a string but the last text matched was a buffer."
 
   ;; To avoid excessive consing from multiple matches in long strings,
   ;; don't just call `replace-match' continually.  Walk down the
@@ -805,6 +844,7 @@ and replace a sub-expression, e.g.
   ;; might be reasonable to do so for long enough STRING.]
   (let ((l (length string))
 	(start (or start 0))
+	(expndx (if (integerp subexp) subexp 0))
 	matches str mb me)
     (save-match-data
       (while (and (< start l) (string-match regexp string start))
@@ -821,7 +861,8 @@ and replace a sub-expression, e.g.
 	(setq matches
 	      (cons (replace-match (if (stringp rep)
 				       rep
-				     (funcall rep (match-string 0 str)))
+				     (funcall rep (match-string expndx str)))
+				   ;; no, this subexp shouldn't be expndx
 				   fixedcase literal str subexp)
 		    (cons (substring string start mb) ; unmatched prefix
 			  matches)))
@@ -886,6 +927,26 @@ See also `equalp'."
 (define-function 'char-int 'char-to-int)
 (define-function 'int-char 'int-to-char)
 
+;; XEmacs addition.
+(defun integer-to-bit-vector (integer &optional minlength)
+  "Return INTEGER converted to a bit vector.
+Optional argument MINLENGTH gives a minimum length for the returned vector.
+If MINLENGTH is not given, zero high-order bits will be ignored."
+  (check-argument-type #'integerp integer)
+  (setq minlength (or minlength 0))
+  (check-nonnegative-number minlength)
+  (read (format (format "#*%%0%db" minlength) integer)))
+
+;; XEmacs addition.
+(defun bit-vector-to-integer (bit-vector)
+  "Return BIT-VECTOR converted to an integer.
+If bignum support is available, BIT-VECTOR's length is unlimited.
+Otherwise the limit is the number of value bits in an Lisp integer. "
+  (check-argument-type #'bit-vector-p bit-vector)
+  (setq bit-vector (prin1-to-string bit-vector))
+  (aset bit-vector 1 ?b)
+  (read bit-vector))
+
 (defun string-width (string)
   "Return number of columns STRING occupies when displayed.
 With international (Mule) support, uses the charset-columns attribute of
@@ -920,17 +981,17 @@ simply returns the length of the string."
 TYPE should be `list' or `vector'."
   (ecase type
     (list
-     (mapcar #'identity string))
+     (append string nil))
     (vector
-     (mapvector #'identity string))))
+     (vconcat string))))
 
 (defun string-to-list (string)
   "Return a list of characters in STRING."
-  (mapcar #'identity string))
+  (append string nil))
 
 (defun string-to-vector (string)
   "Return a vector of characters in STRING."
-  (mapvector #'identity string))
+  (vconcat string))
 
 (defun store-substring (string idx obj)
   "Embed OBJ (string or character) at index IDX of STRING."
@@ -1314,7 +1375,7 @@ to ARGUMENT.  Otherwise, this function signals a non-continuable
     (let ((newsym (gensym)))
       `(let ((,newsym ,argument))
 	 (if (not (argument-in-range-p ,newsym ,min ,max))
-	     (signal-error 'args-out-of-range ,newsym ,min ,max))))))
+	     (signal-error 'args-out-of-range (list ,newsym ,min ,max)))))))
 
 (defun signal-error (error-symbol data)
   "Signal a non-continuable error.  Args are ERROR-SYMBOL, and associated DATA.
@@ -1638,7 +1699,7 @@ one is kept."
 
 ;; (defun make-syntax-table (&optional oldtable) in syntax.el.
 
-;; (defun syntax-after (pos) #### doesn't exist.
+;; (defun syntax-after (pos) in syntax.el.
 
 ;; global-set-key, local-set-key, global-unset-key, local-unset-key in
 ;; keymap.el.
@@ -1651,7 +1712,7 @@ one is kept."
 
 ;; assq-del-all in obsolete.el.
 
-;; (defun make-temp-file (prefix &optional dir-flag suffix) #### doesn't exist.
+;; make-temp-file in files.el.
 
 ;; add-minor-mode in modeline.el.
 
@@ -1661,5 +1722,44 @@ one is kept."
 ;; play-sound is built-in.
 
 ;; define-mail-user-agent is in simple.el.
+
+;; XEmacs; added. 
+(defun skip-chars-quote (string)
+  "Return a string that means all characters in STRING will be skipped,
+if passed to `skip-chars-forward' or `skip-chars-backward'.
+
+Ranges and carets are not treated specially.  This implementation is
+in Lisp; do not use it in performance-critical code."
+  (let ((list (delete-duplicates (string-to-list string) :test #'=)))
+    (when (/= 1 (length list)) ;; No quoting needed in a string of length 1.
+      (when (eq ?^ (car list))
+        (setq list (nconc (cdr list) '(?^))))
+      (when (memq ?\\ list)
+        (setq list (delq ?\\ list)
+              list (nconc (list ?\\ ?\\) list)))
+      (when (memq ?- list)
+        (setq list (delq ?- list)
+              list (nconc list '(?\\ ?-)))))
+    (apply #'string list)))
+
+;; XEmacs addition to subr.el; docstring and API taken initially from GNU's
+;; data.c, revision 1.275, GPLv2.
+(defun subr-arity (subr)
+  "Return minimum and maximum number of args allowed for SUBR.
+SUBR must be a built-in function (not just a symbol that refers to one).
+The returned value is a pair (MIN . MAX).  MIN is the minimum number
+of args.  MAX is the maximum number or the symbol `many', for a
+function with `&rest' args, or `unevalled' for a special form.
+
+See also `special-form-p', `subr-min-args', `subr-max-args',
+`function-allows-args'. "
+  (check-argument-type #'subrp subr)
+  (cons (subr-min-args subr)
+        (cond
+         ((special-form-p subr)
+          'unevalled)
+         ((null (subr-max-args subr))
+          'many)
+         (t (subr-max-args subr)))))
 
 ;;; subr.el ends here

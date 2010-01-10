@@ -50,9 +50,11 @@ specifiers.
 
 Valid instantiators for font specifiers are:
 
--- a string naming a font (e.g. under X this might be
-   \"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*\" for a 14-point
-   upright medium-weight Courier font)
+-- a string naming a font; syntax is platform dependent.  Some examples for
+   a 14-point upright medium-weight Courier font:
+   X11 (and GTK1): \"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*\"
+   Xft (and GTK2): \"Courier-14\"
+   MS-Windows:     \"Courier:14:Western\"
 -- a font instance (use that instance directly if the device matches,
    or use the string that generated it)
 -- a vector of no elements (only on TTY's; this means to set no font
@@ -184,12 +186,12 @@ how specifiers work.
 Valid instantiators for face-boolean specifiers are
 
 -- t or nil
--- a vector of two or three elements: a face to inherit from,
+-- a vector of one, two or three elements: a face to inherit from,
    optionally a symbol naming the property of that face to inherit from
    (if omitted, defaults to the same property that this face-boolean
    specifier is used for; if this specifier is not part of a face,
    the instantiator would not be valid), and optionally a value which,
    if non-nil, means to invert the sense of the inherited property."
-  (make-specifier-and-init 'color spec-list))
+  (make-specifier-and-init 'face-boolean spec-list))
 
 ;;; objects.el ends here.

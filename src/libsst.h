@@ -18,16 +18,12 @@
 #define INCLUDED_libsst_h_
 
 #include <sys/ioctl.h>
-#ifndef SUNOS4_0_3
 #define AUDIO_4_0_3_COMPAT
 #define AUDIO_CHIP
 #define AMD_CHIP               /* SparcStation 1, 2, IPC, and IPX */
 #include <sbusdev/audio_79C30.h>
 #include <multimedia/libaudio.h>
 #include <multimedia/audio_device.h>
-#else
-#include <sbusdev/audioreg.h>
-#endif
 #include <sun/audioio.h>
 
 #define SAMPLES_PER_SECOND 8192

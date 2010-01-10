@@ -25,32 +25,75 @@ Boston, MA 02111-1307, USA.  */
  * S. Raymond <esr@snark.thyrsus.com>.
  */
 
-/* Use the SysVr3 file for at least base configuration. */
-
-#define DONT_DEFINE_NO_REMAP /* `static' hack not needed */
-#include "usg5-3.h"
-
+#define USG				/* System III, System V, etc */
+#define USG5
 #define USG5_4
+
+/* SYSTEM_TYPE should indicate the kind of system you are using.
+ * It sets the Lisp variable system-type.  */
+
+#define SYSTEM_TYPE "usg-unix-v"
+
+/* Letter to use in finding device name of first pty,
+ * if system supports pty's.  'p' means it is /dev/ptyp0  */
+
+#define FIRST_PTY_LETTER 'z'
+
+/* define MAIL_USE_FLOCK if the mailer uses flock
+ * to interlock access to /usr/spool/mail/$USER.
+ * The alternative is that a lock file named
+ * /usr/spool/mail/$USER.lock.  */
+
+/* #define MAIL_USE_FLOCK */
+
+/* The file containing the kernel's symbol table is called /unix.  */
+
+#define KERNEL_FILE "/unix"
+
+/* The symbol in the kernel where the load average is found
+ * is named avenrun.  */
+
+#define LDAV_SYMBOL "avenrun"
+
+/* Special hacks needed to make Emacs run on this system.  */
+
+/* On USG systems the system calls are interruptible by signals
+ * that the user program has elected to catch.  Thus the system call
+ * must be retried in these cases.  To handle this without massive
+ * changes in the source code, we remap the standard system call names
+ * to names for our own functions in sysdep.c that do the system call
+ * with retries. */
+
+#define INTERRUPTIBLE_OPEN
+#define INTERRUPTIBLE_IO
+
+/* Compiler bug bites on many systems when default ADDR_CORRECT is used.  */
+
+#define ADDR_CORRECT(x) (x)
+
+/* Prevent -lg from being used for debugging.  Not implemented?  */
+
+#define LIBS_DEBUG
+
+/* Use terminfo instead of termcap.  */
+
+#define TERMINFO
+
+/* 5.3 apparently makes close() interruptible */
+
+#define INTERRUPTIBLE_CLOSE
+
+/* Apparently -lg is provided in 5.3 */
+
+#undef LIBS_DEBUG
+
+/* Enable support for shared libraries in unexec.  */
+
+#define USG_SHARED_LIBRARIES
 
 #define LIBS_SYSTEM "-lsocket -lnsl -lelf"
 #define ORDINARY_LINK
-
-#if 0
-#ifdef ORDINARY_LINK
-#define LIB_STANDARD "-lc /usr/ucblib/libucb.a"
-#else
-#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
-#define LIB_STANDARD "-lc /usr/ucblib/libucb.a /usr/ccs/lib/crtn.o"
-#endif
-#else
-
-#ifdef ORDINARY_LINK
 #define LIB_STANDARD
-#else
-#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
-#define LIB_STANDARD "-lc /usr/ccs/lib/crtn.o"
-#endif
-#endif
 
 /* there are no -lg libraries on this system, and no libPW */
 
@@ -59,10 +102,6 @@ Boston, MA 02111-1307, USA.  */
 /* No <sioctl.h> */
 
 #define NO_SIOCTL_H
-
-/* Undump with ELF */
-
-#undef COFF
 
 #define UNEXEC "unexelf.o"
 
@@ -82,23 +121,6 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/stream.h>
 #include <sys/termios.h>
 #endif
-
-#undef BROKEN_SIGIO
-
-/* We need bss_end from emacs.c for undumping */
-
-#ifndef USG_SHARED_LIBRARIES
-#define USG_SHARED_LIBRARIES
-#endif
-
-#undef BROKEN_TIOCGWINSZ
-#undef BROKEN_TIOCGETC
-
-/* This change means that we don't loop through allocate_pty too many
-   times in the (rare) event of a failure. */
-
-#undef FIRST_PTY_LETTER
-#define FIRST_PTY_LETTER 'z'
 
 /* This sets the name of the master side of the PTY. */
 

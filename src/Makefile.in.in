@@ -133,6 +133,9 @@ gui_objs += toolbar.o
 #ifdef HAVE_X_WINDOWS
 x_objs=console-x.o device-x.o event-Xt.o frame-x.o \
  glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o intl-x.o
+#ifdef USE_XFT
+x_objs += font-mgr.o
+#endif
 x_gui_objs=$(gui_objs:.o=-x.o)
 #ifdef HAVE_TOOLBARS
 x_gui_objs += toolbar-common.o
@@ -178,10 +181,6 @@ debug_objs=debug.o tests.o
 
 #ifdef HAVE_UNIXOID_EVENT_LOOP
 event_unixoid_objs=event-unixoid.o
-#endif
-
-#ifdef HAVE_GIF
-gif_objs=dgif_lib.o gif_io.o
 #endif
 
 #ifdef HAVE_GPM
@@ -252,9 +251,18 @@ win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
  xemacs_res.o
 #endif
 
-#ifdef MC_ALLOC
-mc_alloc_objs=mc-alloc.o
-#endif
+#ifdef NEW_GC
+new_gc_objs=mc-alloc.o vdb.o
+# if defined (WIN32_ANY) || defined (VDB_WIN32)
+vdb_objs=vdb-win32.o
+# elif defined (VDB_MACH)
+vdb_objs=vdb-mach.o
+# elif defined (VDB_POSIX)
+vdb_objs=vdb-posix.o
+# else /* VDB_FAKE */
+vdb_objs=vdb-fake.o
+# endif
+#endif /* NEW_GC */
 
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
@@ -274,12 +282,12 @@ objs=\
  event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
  font-lock.o frame.o\
- general.o $(gif_objs) glyphs.o glyphs-eimage.o glyphs-shared.o\
+ gc.o general.o glyphs.o glyphs-eimage.o glyphs-shared.o\
  glyphs-widget.o $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) \
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
- $(mc_alloc_objs) macros.o marker.o md5.o minibuf.o \
+ $(new_gc_objs) $(vdb_objs) macros.o marker.o md5.o minibuf.o \
  $(mswindows_objs) $(mswindows_gui_objs) $(mule_objs) \
  $(number_objs) objects.o opaque.o\
  $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
@@ -298,32 +306,27 @@ rallocobjs = ralloc.o
 
 malloclib = $(libmcheck)
 #ifndef SYSTEM_MALLOC
-# ifdef GNU_MALLOC  /* GNU malloc */
-#  ifdef ERROR_CHECK_MALLOC
-#ifdef DOUG_LEA_MALLOC
+# ifdef ERROR_CHECK_MALLOC
+#  ifdef DOUG_LEA_MALLOC
 mallocobjs = free-hook.o vm-limit.o
-#else
+#  else
 mallocobjs = gmalloc.o free-hook.o vm-limit.o
-#endif
+#  endif
 mallocdocsrc = free-hook.c
-#  else /* New GNU malloc, sans error checking */
-#ifdef DOUG_LEA_MALLOC
+# else /* GNU malloc, sans error checking */
+#   ifdef DOUG_LEA_MALLOC
 mallocobjs = vm-limit.o
-#else
+#  else
 mallocobjs = gmalloc.o vm-limit.o
-#endif
+#  endif
 mallocdocsrc =
-#  endif /* ERROR_CHECK_MALLOC */
-# else /* Older GNU malloc */
-mallocobjs = malloc.o
-mallocdocsrc =
-# endif /* Older GNU malloc */
+# endif /* ERROR_CHECK_MALLOC */
 #else /* SYSTEM_MALLOC */
 mallocobjs =
 mallocdocsrc =
-#ifdef USE_DEBUG_MALLOC
+# ifdef USE_DEBUG_MALLOC
 malloclib = -ldmalloc
-#endif /* USE_DEBUG_MALLOC */
+# endif /* USE_DEBUG_MALLOC */
 #endif /* SYSTEM_MALLOC */
 
 #ifdef HAVE_X_WINDOWS
@@ -351,9 +354,9 @@ other_files=\
 
 # endif /* EXTERNAL_WIDGET */
 
-# if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
+# if defined (HAVE_CDE)
 dnd_objs = @dnd_objs@
-# endif /* HAVE_OFFIX_DND || HAVE_CDE */
+# endif /* HAVE_CDE */
 
 X11_objs =  EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs) $(dnd_objs)
 #endif /* HAVE_X_WINDOWS */
@@ -535,13 +538,7 @@ $(lwlib_lib):
 	cd ../lwlib && $(MAKE) $(RECURSIVE_MAKE_ARGS)
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef DYNODUMP
-dynodump_deps = ../dynodump/dynodump.so
-../dynodump/dynodump.so:
-	cd ../dynodump && $(MAKE) $(RECURSIVE_MAKE_ARGS)
-#endif /* DYNODUMP */
-
-link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
+link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps)
 
 $(LIB_SRC)/make-dump-id:
 	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-dump-id
@@ -638,6 +635,7 @@ $(LISP)/finder-inf.el: update-elc-2
 	@echo "Building finder database ..."
 	$(RM) $(LISP)/finder-inf.el
 	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
+		-eval "(setq lisp-directory \"$(LISP)\")" \
 		-l finder -f finder-compile-keywords
 	@echo "Building finder database ...(done)"
 
@@ -822,17 +820,10 @@ extw_link_mid = -z text -o
 extw_link_end =
 #  endif /* not IRIX */
 # else /* not USG5 */
-#  if defined (DEC_ALPHA) && defined (OSF1)
-#   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
-extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
-extw_link_mid = -o
-extw_link_end = $(LIBES)
-#  else /* !(DEC_ALPHA && OSF1) */
-#   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
+#  define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc
 extw_link_mid = -assert pure-text -o
 extw_link_end =
-#  endif /* !(DEC_ALPHA && OSF1) */
 # endif /* not USG5 */
 
 #ifdef EXTW_LINK
@@ -882,7 +873,6 @@ allocax.o : $(SRC)/alloca.s config.h
 	sed -e 's///' -e 's/^#.*//' | \
 	sed -n -e '/^..*$$/p' > allocax.s
 	@$(RM) alloca.o
-## Xenix, in particular, needs to run assembler via cc.
 	$(CC) -c allocax.s
 	$(RM) allocax.s allocatem.c
 #endif /* HAVE_ALLOCA */
@@ -1010,10 +1000,10 @@ covmacs: $(temacs_deps)
 mostlyclean:
 	-$(RM) *.o *.i *.rtl *.ln core \
 	temacs puremacs quantmacs covmacs rtcmacs temacs.exe \
-	sheap-adjust.h dump-id.c $(BLDSRC)/NEEDTODUMP SATISFIED \
+	sheap-adjust.h dump-id.c dump-size $(BLDSRC)/NEEDTODUMP SATISFIED \
 	$(LIB_SRC)/*.po $(LIB_SRC)/*.mo
 versionclean:
-	-$(RM) $(RAW_EXE) $(DUMP_TARGET) $(LIB_SRC)/DOC
+	-$(RM) $(RAW_EXE) $(DUMP_TARGET) $(DUMP_TARGET).dmp $(LIB_SRC)/DOC
 ##      Remove the generated load files here; they cause lots of problems
 ##      when they don't work right.
 clean: mostlyclean versionclean
@@ -1032,9 +1022,9 @@ distclean: distclean-noconfig
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig
-	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
+	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#* *.s gdb.txt
 extraclean: realclean
-	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
+	-$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#* *.s gdb.txt
 
 ###################### Lock, unlock
 

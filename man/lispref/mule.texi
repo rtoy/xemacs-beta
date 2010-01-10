@@ -1825,6 +1825,15 @@ WRITE :=
         | (write INT-OR-CHAR) | (write string) | (write REG ARRAY)
         | string
 CALL := (call ccl-program-name)
+
+
+TRANSLATE := ;; Not implemented under XEmacs, except mule-to-unicode and
+	     ;; unicode-to-mule.
+	     (translate-character REG(table) REG(charset) REG(codepoint)) 
+	     | (translate-character SYMBOL REG(charset) REG(codepoint)) 
+	     | (mule-to-unicode REG(charset) REG(codepoint))
+	     | (unicode-to-mule REG(unicode,code) REG(CHARSET))
+
 END := (end)
 
 REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
@@ -1845,7 +1854,8 @@ INT-OR-CHAR := integer | character
 
   The Emacs Code Conversion Language provides the following statement
 types: @dfn{set}, @dfn{if}, @dfn{branch}, @dfn{loop}, @dfn{repeat},
-@dfn{break}, @dfn{read}, @dfn{write}, @dfn{call}, and @dfn{end}.
+@dfn{break}, @dfn{read}, @dfn{write}, @dfn{call}, @dfn{translate} and
+@dfn{end}.
 
 @heading Set statement:
 
@@ -1933,11 +1943,31 @@ reads from the input into the register, and finally jumps.  See the
 @code{write} and @code{read} statements for the semantics of the I/O
 operations for each type of argument.
 
-@heading Other control statements:
+@heading Other statements:
 
   The @dfn{call} statement, written @samp{(call @var{ccl-program-name})},
 executes a CCL program as a subroutine.  It does not return a value to
 the caller, but can modify the register status.
+
+  The @dfn{mule-to-unicode} statement translates an XEmacs character into a
+UCS code point, using U+FFFD REPLACEMENT CHARACTER if the given XEmacs
+character has no known corresponding code point.  It takes two
+arguments; the first is a register in which is stored the character set
+ID of the character to be translated, and into which the UCS code is
+stored.  The second is a register which stores the XEmacs code of the
+character in question; if it is from a multidimensional character set,
+like most of the East Asian national sets, it's stored as @samp{((c1 <<
+8) & c2)}, where @samp{c1} is the first code, and @samp{c2} the second.
+(That is, as a single integer, the high-order eight bits of which encode
+the first position code, and the low order bits of which encode the
+second.)
+
+  The @dfn{unicode-to-mule} statement translates a Unicode code point
+(an integer) into an XEmacs character.  Its first argument is a register
+containing the UCS code point; the code for the correspond character
+will be written into this register, in the same format as for
+@samp{mule-to-unicode} The second argument is a register into which will
+be written the character set ID of the converted character. 
 
   The @dfn{end} statement, written @samp{(end)}, terminates the CCL
 program successfully, and returns to caller (which may be a CCL

@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 
 DEFINE_CONSOLE_TYPE (x);
 
+int wedge_metacity;	/* nonzero means update WM_HINTS always */
+
 extern void x_has_keysym (KeySym, Lisp_Object, int);
 
 static int
@@ -349,6 +351,26 @@ x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
   xkeysym = XStringToKeysym(keysym_ext);
   if (NoSymbol == xkeysym) 
     {
+      /* Keysym is NoSymbol; this may mean the key event passed to us came
+	 from an input method, which stored the actual character intended to
+	 be inserted in the key name, and didn't trouble itself to set the
+	 keycode to anything useful. Thus, if the key name is a single
+	 character, and the keysym is NoSymbol, give it a default binding,
+	 if that is possible. */
+      Lisp_Object keychar;
+
+      if (1 != string_char_length(key_name))
+	{
+	  /* Don't let them pass us more than one character. */
+	  return Qnil;
+	}
+      keychar = make_char(itext_ichar(XSTRING_DATA(key_name)));
+      if (NILP (Flookup_key (Vcurrent_global_map, keychar, Qnil))) 
+        {
+	  Fdefine_key (Vcurrent_global_map, keychar, Qself_insert_command); 
+	  Fputhash (keychar, Qt, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d));
+	  return Qt; 
+        }
       return Qnil;
     }
 
@@ -379,6 +401,22 @@ console_type_create_x (void)
   CONSOLE_HAS_METHOD (x, perhaps_init_unseen_key_defaults);
 }
 
+
+void
+vars_of_console_x (void)
+{
+  DEFVAR_BOOL ("wedge-metacity", &wedge_metacity /*
+When non-nil, frame geometry management is backward-compatible.
+This is known to create inflooping window jitter in metacity, et al.
+It also does not conform to Xt conventions for geometry management.
+Specifically, all frame resizes, XEmacs-initiated or not, update WM_HINTS.
+Furthermore, geometry changes occur in the widget resize method.
+
+The default is nil.  This probably gives correct behavior regardless of the
+window manager used.
+This variable is deprecated and will be removed.
+*/ );
+}
 
 void
 reinit_console_type_create_x (void)

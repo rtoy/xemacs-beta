@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
-#include "xmu.h"
+#include <X11/Xmu/Editres.h>
 #include "EmacsManager.h"
 #include "EmacsFrameP.h"
 #include "EmacsShell.h"
@@ -59,10 +59,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
-#endif
-
-#ifdef HAVE_OFFIX_DND
-#include "offix.h"
 #endif
 
 /* Default properties to use when creating frames.  */
@@ -78,11 +74,19 @@ static const struct memory_description x_frame_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("x-frame", x_frame,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       x_frame_data_description_1,
+			       Lisp_X_Frame);
+#else /* not NEW_GC */
 extern const struct sized_memory_description x_frame_data_description;
 
 const struct sized_memory_description x_frame_data_description = {
   sizeof (struct x_frame), x_frame_data_description_1
 };
+#endif /* not NEW_GC */
 
 EXFUN (Fx_window_id, 1);
 
@@ -273,8 +277,8 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
   if (cw <= 0 || ch <= 0)
     ABORT ();
 
-  XtSetArg (al[0], XtNwidthInc,  cw);
-  XtSetArg (al[1], XtNheightInc, ch);
+  Xt_SET_ARG (al[0], XtNwidthInc,  cw);
+  Xt_SET_ARG (al[1], XtNheightInc, ch);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -291,8 +295,8 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
   fflush (stdout);
 #endif
 
-  XtSetArg (al[0], XtNwidthCells,  width);
-  XtSetArg (al[1], XtNheightCells, height);
+  Xt_SET_ARG (al[0], XtNwidthCells,  width);
+  Xt_SET_ARG (al[1], XtNheightCells, height);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -500,6 +504,7 @@ init_x_prop_symbols (void)
   defi(Qtop, XtNy);
 
 #undef def
+#undef defi
 }
 
 static Lisp_Object
@@ -660,8 +665,8 @@ x_set_frame_text_value (struct frame *f, Ibyte *value,
   if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
       Arg al[2];
-      XtSetArg (al[0], Xt_resource_name, new_XtValue);
-      XtSetArg (al[1], Xt_resource_encoding_name, encoding);
+      Xt_SET_ARG (al[0], Xt_resource_name, new_XtValue);
+      Xt_SET_ARG (al[1], Xt_resource_encoding_name, encoding);
       XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
     }
 }
@@ -737,7 +742,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
   Bool y_position_specified_p = False;
   Bool internal_border_width_specified = False;
   Lisp_Object tail;
-  Widget w = FRAME_X_TEXT_WIDGET (f);
+  Widget w;
+
+  /* We can be called after the X IO error handler has seen a broken pipe on
+     the relevant display. Don't do anything in that case.  */
+  if (!FRAME_LIVE_P (f) || DEVICE_X_BEING_DELETED (XDEVICE (FRAME_DEVICE (f))))
+    return;
+
+  w = FRAME_X_TEXT_WIDGET (f);
 
   for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {
@@ -768,12 +780,12 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     /* !!#### Verify this + 1 and document
 				as zero-termination */
 			     XtRString, extval, extvallen + 1,
-			     (XtArgVal) NULL);
+			     NULL);
 	    }
 	  else
 	    XtVaSetValues (w, XtVaTypedArg, extprop, XtRInt,
 			   XINT (val), sizeof (int),
-			   (XtArgVal) NULL);
+			   NULL);
 	}
       else if (SYMBOLP (prop))
 	{
@@ -872,7 +884,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     /* !!#### Verify this + 1 and document
 				as zero-termination */
 			     XtRString, extval, extvallen + 1,
-			     (XtArgVal) NULL);
+			     NULL);
 	    }
 
 #ifdef HAVE_SCROLLBARS
@@ -987,7 +999,7 @@ maybe_set_frame_title_format (Widget shell)
   frame_title_format_already_set = 1;
 }
 
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+#if defined (HAVE_CDE)
 
 static Extbyte *
 start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
@@ -1080,7 +1092,7 @@ start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
   return dnd_data;
 }
 
-#endif /* defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) */
+#endif /* defined (HAVE_CDE) */
 
 #ifdef HAVE_CDE
 #include <Dt/Dt.h>
@@ -1318,46 +1330,6 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 }
 #endif /* HAVE_CDE */
 
-#ifdef HAVE_OFFIX_DND
-
-DEFUN ("offix-start-drag-internal", Foffix_start_drag_internal, 2, 3, 0, /*
-Start a OffiX drag from a buffer.
-First arg is the event that started the drag,
-second arg should be some string, and the third
-is the type of the data (this should be an int).
-The type defaults to DndText (4).
-*/
-       (event, data, dtyp))
-{
-  Extbyte *dnd_data;
-  XEvent x_event;
-  Bytecount dnd_len;
-  Widget wid;
-  int num_items;
-  int dnd_type = DndText;
-
-  if (!NILP (dtyp))
-    {
-      CHECK_INT (dtyp);
-      dnd_type = XINT (dtyp);
-    }
-
-  dnd_data = start_drag_internal_1 (event, data, Qoffix_dnd_encoding,
-				    &x_event, dnd_type == DndFiles,
-				    &wid, &dnd_len, &num_items);
-
-  DndSetData (dnd_type, (UExtbyte *) dnd_data, dnd_len);
-  xfree (dnd_data, Extbyte *);
-
-  /* the next thing blocks everything... */
-  if (DndHandleDragging (wid, &x_event))
-    return Qt;
-
-  return Qnil;
-}
-
-#endif /* HAVE_OFFIX_DND */
-
 
 /************************************************************************/
 /*				widget creation				*/
@@ -1524,8 +1496,8 @@ x_initialize_frame_size (struct frame *f)
       if (! (frame_flags & (WidthValue | HeightValue)))
 	{
           Arg al[2];
-	  XtSetArg (al [0], XtNwidth,  &frame_w);
-	  XtSetArg (al [1], XtNheight, &frame_h);
+	  Xt_SET_ARG (al [0], XtNwidth,  &frame_w);
+	  Xt_SET_ARG (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
 	  if (!frame_w && !frame_h)
 	    {
@@ -1539,8 +1511,8 @@ x_initialize_frame_size (struct frame *f)
       if (frame_flags & (XValue | YValue))
 	{
           Arg al[2];
-	  XtSetArg (al [0], XtNwidth,  &frame_w);
-	  XtSetArg (al [1], XtNheight, &frame_h);
+	  Xt_SET_ARG (al [0], XtNwidth,  &frame_w);
+	  Xt_SET_ARG (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
 
 	  if (frame_flags & XNegative)
@@ -1548,8 +1520,8 @@ x_initialize_frame_size (struct frame *f)
 	  if (frame_flags & YNegative)
 	    frame_y += frame_h;
 
-	  XtSetArg (al [0], XtNx, frame_x);
-	  XtSetArg (al [1], XtNy, frame_y);
+	  Xt_SET_ARG (al [0], XtNx, frame_x);
+	  Xt_SET_ARG (al [1], XtNy, frame_y);
 	  XtSetValues (ew, al, 2);
 	}
       return;
@@ -1854,40 +1826,40 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       FRAME_X_TOP_LEVEL_FRAME_P (f) = 1;
 
   ac = 0;
-  XtSetArg (al[ac], XtNallowShellResize, True); ac++;
+  Xt_SET_ARG (al[ac], XtNallowShellResize, True); ac++;
 #ifdef LWLIB_USES_MOTIF
   /* Motif sucks beans.  Without this in here, it will delete the window
      out from under us when it receives a WM_DESTROY_WINDOW message
      from the WM. */
-  XtSetArg (al[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
+  Xt_SET_ARG (al[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
 #endif
 
 #ifdef EXTERNAL_WIDGET
   if (window_id)
     {
-      XtSetArg (al[ac], XtNwindow, window_id); ac++;
+      Xt_SET_ARG (al[ac], XtNwindow, window_id); ac++;
     }
   else
 #endif /* EXTERNAL_WIDGET */
     {
-      XtSetArg (al[ac], XtNinput, True);       ac++;
-      XtSetArg (al[ac], XtNminWidthCells, 10); ac++;
-      XtSetArg (al[ac], XtNminHeightCells, 1); ac++;
-      XtSetArg (al[ac], XtNvisual, visual);    ac++;
-      XtSetArg (al[ac], XtNdepth, depth);      ac++;
-      XtSetArg (al[ac], XtNcolormap, cmap);    ac++;
+      Xt_SET_ARG (al[ac], XtNinput, True);       ac++;
+      Xt_SET_ARG (al[ac], XtNminWidthCells, 10); ac++;
+      Xt_SET_ARG (al[ac], XtNminHeightCells, 1); ac++;
+      Xt_SET_ARG (al[ac], XtNvisual, visual);    ac++;
+      Xt_SET_ARG (al[ac], XtNdepth, depth);      ac++;
+      Xt_SET_ARG (al[ac], XtNcolormap, cmap);    ac++;
     }
 
   if (!NILP (overridep))
     {
-      XtSetArg (al[ac], XtNoverrideRedirect, True);    ac++;
+      Xt_SET_ARG (al[ac], XtNoverrideRedirect, True);    ac++;
     }
 
   /* #### maybe we should check for FRAMEP instead? */
   if (!NILP (parent))
     {
       parentwid = FRAME_X_SHELL_WIDGET (XFRAME (parent));
-      XtSetArg (al[ac], XtNtransientFor, parentwid); ac++;
+      Xt_SET_ARG (al[ac], XtNtransientFor, parentwid); ac++;
     }
 
   shell = XtCreatePopupShell ("shell",
@@ -1906,9 +1878,9 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
   /* Create the manager widget */
   ac = 0;
-  XtSetArg (al[ac], XtNvisual, visual); ac++;
-  XtSetArg (al[ac], XtNdepth, depth); ac++;
-  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
+  Xt_SET_ARG (al[ac], XtNvisual, visual); ac++;
+  Xt_SET_ARG (al[ac], XtNdepth, depth); ac++;
+  Xt_SET_ARG (al[ac], XtNcolormap, cmap); ac++;
 
   container = XtCreateWidget ("container",
 			      emacsManagerWidgetClass, shell, al, ac);
@@ -1920,11 +1892,11 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
   /* Create the text area */
   ac = 0;
-  XtSetArg (al[ac], XtNvisual, visual); ac++;
-  XtSetArg (al[ac], XtNdepth, depth); ac++;
-  XtSetArg (al[ac], XtNcolormap, cmap); ac++;
-  XtSetArg (al[ac], XtNborderWidth, 0); ac++; /* should this be settable? */
-  XtSetArg (al[ac], XtNemacsFrame,  f); ac++;
+  Xt_SET_ARG (al[ac], XtNvisual, visual); ac++;
+  Xt_SET_ARG (al[ac], XtNdepth, depth); ac++;
+  Xt_SET_ARG (al[ac], XtNcolormap, cmap); ac++;
+  Xt_SET_ARG (al[ac], XtNborderWidth, 0); ac++; /* should this be settable? */
+  Xt_SET_ARG (al[ac], XtNemacsFrame,  f); ac++;
   text = XtCreateWidget (name, emacsFrameClass, container, al, ac);
   FRAME_X_TEXT_WIDGET (f) = text;
 
@@ -2029,7 +2001,6 @@ x_popup_frame (struct frame *f)
   XIM_init_frame (f);
 #endif /* HAVE_XIM */
 
-#ifdef HACK_EDITRES
   /* Allow XEmacs to respond to EditRes requests.  See the O'Reilly Xt */
   /* Intrinsics Programming Manual, Motif Edition, Aug 1993, Sect 14.14, */
   /* pp. 483-493. */
@@ -2038,7 +2009,6 @@ x_popup_frame (struct frame *f)
 		     True,                   /* called on non-maskable events? */
 		     (XtEventHandler) _XEditResCheckMessages, /* the handler */
 		     NULL);
-#endif /* HACK_EDITRES */
 
 #ifdef HAVE_CDE
   {
@@ -2074,7 +2044,11 @@ static void
 allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
+#ifdef NEW_GC
+  f->frame_data = alloc_lrecord_type (struct x_frame, &lrecord_x_frame);
+#else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct x_frame);
+#endif /* not NEW_GC */
 
   /* yeah, except the lisp ones */
   FRAME_X_LAST_MENUBAR_BUFFER (f) = Qnil;
@@ -2141,6 +2115,15 @@ x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
    *   We'll just  need to be careful in the modeline specs.
    */
   update_frame_title (f);
+  /* Henry S. Thompson:
+   * Must set icon resource before mapping frame, or some WMs may
+   * lose the icon (openbox).  See <f5bhc3efb17@hildegard.inf.ed.ac.uk>.
+   * SJT:
+   * This probably means that the frame-icon library won't work with
+   * that WM.  Late breaking news: it *does* work, so possibly the
+   * problem at initialization is due to a race condition.
+   */
+  update_frame_icon (f);
 }
 
 static void
@@ -2179,8 +2162,8 @@ x_set_frame_icon (struct frame *f)
   /* Store the X data into the widget. */
   {
     Arg al[2];
-    XtSetArg (al[0], XtNiconPixmap, x_pixmap);
-    XtSetArg (al[1], XtNiconMask,   x_mask);
+    Xt_SET_ARG (al[0], XtNiconPixmap, x_pixmap);
+    Xt_SET_ARG (al[1], XtNiconMask,   x_mask);
     XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
   }
 }
@@ -2245,9 +2228,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
   int win_gravity;
   Arg al[3];
 
-  XtSetArg (al[0], XtNwidth,       &shell_w);
-  XtSetArg (al[1], XtNheight,      &shell_h);
-  XtSetArg (al[2], XtNborderWidth, &shell_bord);
+  Xt_SET_ARG (al[0], XtNwidth,       &shell_w);
+  Xt_SET_ARG (al[1], XtNheight,      &shell_h);
+  Xt_SET_ARG (al[2], XtNborderWidth, &shell_bord);
   XtGetValues (w, al, 3);
 
   win_gravity =
@@ -2264,9 +2247,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
      come back at the right place.  We can't look at s->visible to determine
      whether it is iconified because it might not be up-to-date yet (the queue
      might not be processed). */
-  XtSetArg (al[0], XtNwinGravity, win_gravity);
-  XtSetArg (al[1], XtNx, xoff);
-  XtSetArg (al[2], XtNy, yoff);
+  Xt_SET_ARG (al[0], XtNwinGravity, win_gravity);
+  Xt_SET_ARG (al[1], XtNx, xoff);
+  Xt_SET_ARG (al[2], XtNy, yoff);
   XtSetValues (w, al, 3);
 
   /* Sometimes you will find that
@@ -2296,6 +2279,17 @@ static void
 x_set_frame_size (struct frame *f, int cols, int rows)
 {
   EmacsFrameSetCharSize (FRAME_X_TEXT_WIDGET (f), cols, rows);
+
+  if (!wedge_metacity)		/* cf. EmacsFrameResize */
+    {
+      /* Kick the manager so that it knows we've changed size. */
+      XtWidgetGeometry req, repl;
+      req.request_mode = 0;
+      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
+      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f),
+			      repl.width, repl.height);
+    }
+
 #if 0
     /* this is not correct.  x_set_frame_size() is called from
        Fset_frame_size(), which may or may not have been called
@@ -2590,8 +2584,7 @@ x_focus_on_frame (struct frame *f)
 	  XSetInputFocus (XtDisplay (shell_widget),
 			  XtWindow (shell_widget),
 			  RevertToParent,
-			  DEVICE_X_MOUSE_TIMESTAMP
-			  (XDEVICE (FRAME_DEVICE (f))));
+			  CurrentTime);
 	  XFlush (XtDisplay (shell_widget));
 	}
     }
@@ -2613,6 +2606,19 @@ x_delete_frame (struct frame *f)
 #ifdef HAVE_CDE
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
 #endif /* HAVE_CDE */
+
+#ifdef USE_XFT
+  /* If we have an XftDraw structure, we need to free it here.
+     We can't ever have an XftDraw without a Display, so we are safe
+     to free it in here, and we avoid too much playing around with the 
+     malloc checking hooks this way. */
+  if (FRAME_X_XFTDRAW (f)) 
+    {
+      XftDrawDestroy (FRAME_X_XFTDRAW (f));
+      FRAME_X_XFTDRAW (f) = NULL;
+    }
+#endif
+
 
   assert (FRAME_X_SHELL_WIDGET (f) != 0);
   dpy = XtDisplay (FRAME_X_SHELL_WIDGET (f));
@@ -2643,7 +2649,9 @@ x_delete_frame (struct frame *f)
 
   if (f->frame_data)
     {
+#ifndef NEW_GC
       xfree (f->frame_data, void *);
+#endif /* not NEW_GC */
       f->frame_data = 0;
     }
 }
@@ -2664,7 +2672,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 fgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	 XtSetArg (al[ac], XtNforeground, (void *) fgc.pixel); ac++;
+	 Xt_SET_ARG (al[ac], XtNforeground, (void *) fgc.pixel); ac++;
        }
    }
   else if (EQ (name, Qbackground))
@@ -2675,7 +2683,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 bgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	 XtSetArg (al[ac], XtNbackground, (void *) bgc.pixel); ac++;
+	 Xt_SET_ARG (al[ac], XtNbackground, (void *) bgc.pixel); ac++;
        }
 
      /* Really crappy way to force the modeline shadows to be
@@ -2687,11 +2695,39 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
    {
      Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
 
+     /* It may be that instantiating the font has deleted the frame (will
+	happen if the user has specified a charset registry for ASCII that
+	isn't available on the server, and our fallback of iso8859-1 isn't
+	available; something vanishingly rare.) In that case, return from
+	this function without further manipulation of the dead frame. */
+
+     if (!FRAME_LIVE_P(frm))
+       {
+	 return;
+       }
+
+     /* #### what to do about Xft?  I don't think the font is actually used
+	to compute cell size for computing frame pixel dimensions (see call
+	to EmacsFrameRecomputeCellSize() below); where is it used? -- sjt
+        What does XtSetValues() do if that resource isn't present? */
      if (!EQ (font, Vthe_null_font_instance))
        {
-	 XtSetArg (al[ac], XtNfont,
-		   (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
-	 ac++;
+	 if (0)
+	   ;
+#ifdef USE_XFT
+	 else if (FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)))
+	   {
+	     Xt_SET_ARG (al[ac], XtNxftFont,
+		       (void *) FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)));
+	     ac++;
+	   }
+#endif
+	 else if (FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)))
+	   {
+	     Xt_SET_ARG (al[ac], XtNfont,
+			 (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
+	     ac++;
+	   }
        }
    }
   else
@@ -2721,15 +2757,16 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 void
 syms_of_frame_x (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (x_frame);
+#endif /* NEW_GC */
+
   DEFSYMBOL (Qoverride_redirect);
   DEFSYMBOL (Qx_resource_name);
 
   DEFSUBR (Fx_window_id);
 #ifdef HAVE_CDE
   DEFSUBR (Fcde_start_drag_internal);
-#endif
-#ifdef HAVE_OFFIX_DND
-  DEFSUBR (Foffix_start_drag_internal);
 #endif
 }
 

@@ -1,9 +1,9 @@
-;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: iso-2022-7bit; -*-
+;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2010 Ben Wing.
 
 ;; Keywords: multilingual, character set, coding system
 
@@ -30,13 +30,18 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(set-language-info-alist
- "IPA" '((charset . (ipa))
-	 (coding-priority iso-2022-7bit)
-	 (coding-system iso-2022-7bit)
-	 (input-method . "ipa")
-	 (documentation . "\
-IPA is International Phonetic Alphabet for English, French, German
-and Italian.")))
+;; IPA characters for phonetic symbols.
+(make-internal-charset
+ 'ipa "IPA (International Phonetic Association)"
+ '(dimension
+   1
+   registries ["MuleIPA"]
+   chars 96
+   final ?0
+   graphic 1
+   unicode-map ("unicode/mule-ucs/ipa.txt")
+   short-name "IPA"
+   long-name "IPA"
+   ))
 
 ;;; misc-lang.el ends here

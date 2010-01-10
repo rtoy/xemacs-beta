@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 2000, 2005 Ben Wing.
+;; Copyright (C) 2007 Didier Verna
 
 ;; Author: Chuck Thompson <cthomp@cs.uiuc.edu>, Ben Wing <ben@xemacs.org>
 ;; Maintainer: XEmacs Development Team
@@ -80,8 +81,7 @@ this format. (Image instance types will be discussed below.)
    Not currently implemented -- it's treated like `string'.
    [:data] (text)
 `gif'
-   A GIF87 or GIF89 image; only if GIF support was compiled into this
-   XEmacs.  NOTE: Only the first frame of animated gifs will be displayed.
+   A GIF87 or GIF89 image; only if GIF support was compiled into this XEmacs.
    [:data, :file] (color-pixmap, pointer)
 `jpeg'
    A JPEG image; only if JPEG support was compiled into this XEmacs.
@@ -1083,83 +1083,53 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 (set-glyph-face gc-pointer-glyph 'pointer)
 
 ;; Now add the magic access/set behavior.
-
-(defun dontusethis-set-value-glyph-handler (sym args fun harg handler)
-  (error "Use `set-glyph-image' to set `%s'" sym))
-(defun dontusethis-make-unbound-glyph-handler (sym args fun harg handler)
-  (error "Can't `makunbound' `%s'" sym))
-(defun dontusethis-make-local-glyph-handler (sym args fun harg handler)
-  (error "Use `set-glyph-image' to make local values for `%s'" sym))
-
-(defun define-constant-glyph (sym)
-  (dontusethis-set-symbol-value-handler
-   sym 'set-value
-   'dontusethis-set-value-glyph-handler)
-  (dontusethis-set-symbol-value-handler
-   sym 'make-unbound
-   'dontusethis-make-unbound-glyph-handler)
-  (dontusethis-set-symbol-value-handler
-   sym 'make-local
-   'dontusethis-make-local-glyph-handler)
-  ;; Make frame properties magically work with glyph variables.
+(loop
+  for sym in '(define-constant-glyphs text-pointer-glyph nontext-pointer-glyph
+               modeline-pointer-glyph selection-pointer-glyph
+               busy-pointer-glyph gc-pointer-glyph divider-pointer-glyph
+               toolbar-pointer-glyph menubar-pointer-glyph
+               scrollbar-pointer-glyph octal-escape-glyph
+               control-arrow-glyph invisible-text-glyph hscroll-glyph
+               truncation-glyph continuation-glyph frame-icon-glyph)
+  with set-value-handler = #'(lambda (sym args fun harg handler)
+                               (error 'invalid-change
+                                      (format
+                                       "Use `set-glyph-image' to set `%s'"
+                                       sym)))
+  with make-unbound-handler = #'(lambda (sym args fun harg handler)
+                                  (error 'invalid-change
+                                         (format
+                                          "Can't `makunbound' `%s'" sym)))
+  with make-local-handler =
+       #'(lambda (sym args fun harg handler)
+           (error 'invalid-change
+            (format "Use `set-glyph-image' to make local values for `%s'" sym)))
+  do
+  (dontusethis-set-symbol-value-handler sym 'set-value set-value-handler)
+  (dontusethis-set-symbol-value-handler sym 'make-unbound make-unbound-handler)
+  (dontusethis-set-symbol-value-handler sym 'make-local make-local-handler)
   (put sym 'const-glyph-variable t))
-
-(define-constant-glyph 'text-pointer-glyph)
-(define-constant-glyph 'nontext-pointer-glyph)
-(define-constant-glyph 'modeline-pointer-glyph)
-(define-constant-glyph 'selection-pointer-glyph)
-(define-constant-glyph 'busy-pointer-glyph)
-(define-constant-glyph 'gc-pointer-glyph)
-(define-constant-glyph 'divider-pointer-glyph)
-(define-constant-glyph 'toolbar-pointer-glyph)
-(define-constant-glyph 'menubar-pointer-glyph)
-(define-constant-glyph 'scrollbar-pointer-glyph)
-
-(define-constant-glyph 'octal-escape-glyph)
-(define-constant-glyph 'control-arrow-glyph)
-(define-constant-glyph 'invisible-text-glyph)
-(define-constant-glyph 'hscroll-glyph)
-(define-constant-glyph 'truncation-glyph)
-(define-constant-glyph 'continuation-glyph)
-
-(define-constant-glyph 'frame-icon-glyph)
 
 ;; backwards compatibility garbage
 
-(defun dontusethis-old-pointer-shape-handler (sym args fun harg handler)
-  (let ((value (car args)))
-    (if (null value)
-	(remove-specifier harg 'global)
-      (set-glyph-image (symbol-value harg) value))))
-
 ;; It might or might not be garbage, but it's rude.  Make these
 ;; `compatible' instead of `obsolete'.  -slb
-(defun define-obsolete-pointer-glyph (old new)
+(loop
+  for (old new) in '((x-pointer-shape text-pointer-glyph)
+                     (x-nontext-pointer-shape nontext-pointer-glyph)
+                     (x-mode-pointer-shape modeline-pointer-glyph)
+                     (x-selection-pointer-shape selection-pointer-glyph)
+                     (x-busy-pointer-shape busy-pointer-glyph)
+                     (x-gc-pointer-shape gc-pointer-glyph)
+                     (x-toolbar-pointer-shape toolbar-pointer-glyph))
+  with set-handler = #'(lambda (sym args fun harg handler)
+                         (let ((value (car args)))
+                           (if (null value)
+                               (remove-specifier harg 'global)
+                             (set-glyph-image (symbol-value harg) value))))
+  do
   (define-compatible-variable-alias old new)
-  (dontusethis-set-symbol-value-handler
-   old 'set-value 'dontusethis-old-pointer-shape-handler new))
-
-;;; (defvar x-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-pointer-shape 'text-pointer-glyph)
-
-;;; (defvar x-nontext-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-nontext-pointer-shape 'nontext-pointer-glyph)
-
-;;; (defvar x-mode-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-mode-pointer-shape 'modeline-pointer-glyph)
-
-;;; (defvar x-selection-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-selection-pointer-shape
-  'selection-pointer-glyph)
-
-;;; (defvar x-busy-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-busy-pointer-shape 'busy-pointer-glyph)
-
-;;; (defvar x-gc-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-gc-pointer-shape 'gc-pointer-glyph)
-
-;;; (defvar x-toolbar-pointer-shape nil)
-(define-obsolete-pointer-glyph 'x-toolbar-pointer-shape 'toolbar-pointer-glyph)
+  (dontusethis-set-symbol-value-handler old 'set-value set-handler))
 
 ;; for subwindows
 (defalias 'subwindow-xid 'image-instance-subwindow-id)
@@ -1188,20 +1158,27 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
        ("" [nothing]))))
   ;; #### this should really be formatted-string, not string but we
   ;; don't have it implemented yet
-  ;;
-  ;; #define could also mean a bitmap as well as a version 1 XPM.  Who
-  ;; cares.  We don't want the file contents getting converted to a
-  ;; string in either case which is why the entry is there.
   (if (featurep 'tty)
       (progn
 	(set-console-type-image-conversion-list
 	 'tty
-	 '(("^#define" [string :data "[xpm]"])
-	   ("\\`X-Face:" [string :data "[xface]"])
+         '(("\\.xpm\\'" [string :data nil] 2)
+           ("\\.xbm\\'" [string :data nil] 2)
+           ;; #define could also mean a bitmap as well as a version 1 XPM. Who
+           ;; cares.
+           ("^#define" [string :data "[xpm]"])
 	   ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
-	   ("\\`GIF87" [string :data "[gif]"])
+           ("\\`X-Face:" [string :data "[xface]"])
+           ("\\.gif\\'" [string :data nil] 2)
+           ("\\`GIF8[79]" [string :data "[gif]"])
+           ("\\.jpe?g\\'" [string :data nil] 2)
 	   ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
-	   ("" [string :data nil] 2)
+           ;; all of the JFIF-format JPEG's that I've seen begin with
+           ;; the following.  I have no idea if this is standard.
+           ("\\`\377\330\377\340\000\020JFIF" [string :data "[jpeg]"])
+           ("\\.png\\'" [string :data nil] 2)
+           ("\\`\211PNG" [string :data "[png]"])
+           ("" [string :data nil] 2)
 	   ;; this last one is here for pointers and icons and such --
 	   ;; strings are not allowed so they will be ignored.
 	   ("" [nothing])))
@@ -1217,6 +1194,10 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 	;; finish initializing hscroll glyph -- created internally
 	;; because it has a built-in bitmap
 	(set-glyph-image hscroll-glyph "$" 'global 'tty)))
+
+  ;; For streams, we don't want images at all -- dvl
+  (set-console-type-image-conversion-list 'stream '(("" [nothing])))
+
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")
@@ -1254,5 +1235,8 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 )
 
 (init-glyphs)
+
+(unintern 'init-glyphs) ;; This was dump time thing, no need to keep the
+			;; function around.
 
 ;;; glyphs.el ends here.

@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include <sysfile.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +59,7 @@ Boston, MA 02111-1307, USA.  */
   ('0' <= c && c <= '9') ||			\
   (c == '_'))
 
+static void put_filename (const char *filename);
 static int scan_file (const char *filename);
 static int read_c_string (FILE *, int, int);
 static void write_c_args (FILE *out, const char *func, char *buf, int minargs,
@@ -231,6 +233,15 @@ main (int argc, char **argv)
 	      err_count += scan_file (arg);
 	    }
 	}
+      else if (argc > i + 1 && !strcmp (argv[i], "-d"))
+        {
+          /* XEmacs change; allow more than one chdir. 
+             The idea is that the second chdir is to source-lisp, and that
+             any Lisp files not under there have the full path specified.  */
+          i += 1;
+          chdir (argv[i]);
+          continue;
+        }
       else
 	{
 	  int j;
@@ -263,6 +274,32 @@ main (int argc, char **argv)
   return err_count > 0;
 }
 
+/* Add a source file name boundary in the output file.  */
+static void
+put_filename (const char *filename)
+{
+  /* XEmacs change; don't strip directory information. */
+#if 0
+  const char *tmp;
+
+  for (tmp = filename; *tmp; tmp++)
+    {
+      if (IS_DIRECTORY_SEP(*tmp))
+	filename = tmp + 1;
+    }
+#endif 
+
+  /* <= because sizeof includes the nul byte at the end. Not quite right,
+     because it should include the length of the symbol + "\037[VF]" instead
+     of simply 10. */
+  assert(sizeof("\037S\n") + strlen(filename) + 10 
+	 <= DOC_MAX_FILENAME_LENGTH);
+
+  putc (037, outfile);
+  putc ('S', outfile);
+  fprintf (outfile, "%s\n", filename);
+}
+
 /* Read file FILENAME and output its doc strings to outfile.  */
 /* Return 1 if file is not found, 0 if it is found.  */
 
@@ -280,12 +317,12 @@ scan_file (const char *filename)
   else if (ellcc == 0 && len > 3 && !strcmp (filename + len - 3, ".el"))
     {
       Current_file_type = el_file;
-      return scan_lisp_file (filename, READ_TEXT);
+      return scan_lisp_file (filename, READ_BINARY);
     }
   else
     {
       Current_file_type = c_file;
-      return scan_c_file (filename, READ_TEXT);
+      return scan_c_file (filename, READ_BINARY);
     }
 }
 
@@ -496,6 +533,8 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 /* Write to file OUT the argument names of function FUNC, whose text is in BUF.
    MINARGS and MAXARGS are the minimum and maximum number of arguments.  */
 
+#define SKIPWHITE do { while (isspace ((unsigned char) (*p))) p++; } while (0)
+
 static void
 write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	      int minargs, int maxargs)
@@ -503,6 +542,7 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   register char *p;
   int in_ident = 0;
   int just_spaced = 0;
+  int need_paren = 0;
 #if 0
   int need_space = 1;
 
@@ -523,76 +563,68 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   for (p = buf; *p; p++)
     {
       char c = *p;
+#if 0
       int ident_start = 0;
+#endif
 
-      /* XEmacs addition:  add support for ANSI prototypes and the UNUSED
-	 macros.  Hop over them.  "Lisp_Object" is the only C type allowed
-	 in DEFUNs.  For the UNUSED macros we need to eat parens, too. */
+      /* XEmacs addition:  used for ANSI prototypes and UNUSED macros. */
       static char uu [] = "UNUSED";
       static char ui [] = "USED_IF_";
-      static char lo[] = "Lisp_Object";
+      static char lo [] = "Lisp_Object";
 
-      /* aren't these all vulnerable to buffer overrun?  I guess that
-	 means that the .c is busted, so we may as well just die ... */
-      /* skip over "Lisp_Object" */
-      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
-	  isspace ((unsigned char) p[sizeof (lo) - 1]))
-	{
-	  p += (sizeof (lo) - 1);
-	  while (isspace ((unsigned char) (*p)))
-	    p++;
-	  c = *p;
-	}
-
-      /* skip over "UNUSED" invocation */
-      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, uu, sizeof (uu) - 1) == 0))
-	{
-	  char *here = p;
-	  p += (sizeof (uu) - 1);
-	  while (isspace ((unsigned char) (*p)))
-	    p++;
-	  if (*p == '(')
-	    {
-	      while (isspace ((unsigned char) (*++p)))
-		;
-	      c = *p;
-	    }
-	  else
-	    p = here;
-	}
-
-      /* skip over "USED_IF_*" invocation (only if USED failed) */
-      else if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
-	  (strncmp (p, ui, sizeof (ui) - 1) == 0))
-	{
-	  char *here = p;
-	  p += (sizeof (ui) - 1);
-	  /* There should be a law against parsing in C:
-	     this allows a broken USED_IF call, skipping to next macro's
-	     parens.  *You* can fix that, I don't see how offhand. ;-) */
-	  while (*p && *p++ != '(')
-	    ;
-	  if (*p)
-	    {
-	      while (isspace ((unsigned char) (*p)))
-		p++;
-	      c = *p;
-	    }
-	  else
-	    p = here;
-	}
-
-      /* Notice when we start printing a new identifier.  */
+      /* Notice when we enter or leave an identifier.  */
       if (C_IDENTIFIER_CHAR_P (c) != in_ident)
 	{
 	  if (!in_ident)
 	    {
+	      /* Entering identifier.  Print as we parse. */
+	      char *here;     	/* Target for backtracking. */
+
+	      /* XEmacs addition:  add support for ANSI prototypes and the
+		 UNUSED macros.  Hop over them.  "Lisp_Object" is the only
+		 C type allowed in DEFUNs.  For the UNUSED macros we need
+		 to eat parens, too. */
+	      /* Aren't these all vulnerable to buffer overrun?  I guess that
+		 means that the .c is busted, so we may as well just die ... */
+
+	      /* Skip over "Lisp_Object". */
+	      if ((strncmp (p, lo, sizeof (lo) - 1) == 0) &&
+		  isspace ((unsigned char) p[sizeof (lo) - 1]))
+		{
+		  p += (sizeof (lo) - 1);
+		  SKIPWHITE;
+		}
+	      /* Skip over "UNUSED" or "USED_IF_*" invocation. */
+	      need_paren = 1;
+	      here = p;
+	      if (strncmp (p, uu, sizeof (uu) - 1) == 0)
+		p += (sizeof (uu) - 1);
+	      else if (strncmp (p, ui, sizeof (ui) - 1) == 0)
+		p += (sizeof (ui) - 1);
+	      else
+		need_paren = 0;
+
+	      if (need_paren)
+		{
+		  /* Skip rest of macro name, open paren, whitespace. */
+		  while (*p && C_IDENTIFIER_CHAR_P (*p))
+		    p++;
+		  SKIPWHITE;
+		  if (*p++ == '(')
+		    SKIPWHITE;
+		  else
+		    {
+		      need_paren = 0;
+		      p = here;
+		    }
+		}
+	      c = *p;
+
+	      /* Do bookkeeping.  Maybe output lambda keywords. */
 	      in_ident = 1;
-	      ident_start = 1;
 #if 0
 	      /* XEmacs - This goes along with the change above. */
+	      ident_start = 1;
 	      if (need_space)
 		putc (' ', out);
 #endif
@@ -604,7 +636,18 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	      maxargs--;
 	    }
 	  else
-	    in_ident = 0;
+	    {
+	      /* Leaving identifier. */
+	      in_ident = 0;
+	      if (need_paren)
+		{
+		  SKIPWHITE;
+		  if (*p == ')')
+		    p++;
+		  c = *p;
+		  need_paren = 0;
+		}
+	    }
 	}
 
       /* Print the C argument list as it would appear in lisp:
@@ -668,6 +711,8 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
   if (!ellcc)
     putc ('\n', out);
 }
+#undef SKIPWHITE
+
 
 /* Read through a c file.  If a .o or .obj file is named,
    the corresponding .c file is read instead.
@@ -864,11 +909,14 @@ scan_c_file (const char *filename, const char *mode)
       if (defunflag || defvarflag || c == '"')
 	{
 	  /* XEmacs change: the original code is in the "else" clause */
+	  /* XXX Must modify the documentation file name code to handle
+	     ELLCCs */
 	  if (ellcc)
 	    fprintf (outfile, "  CDOC%s(\"%s\", \"\\\n",
 		     defvarflag ? "SYM" : "SUBR", globalbuf);
 	  else
 	    {
+	      put_filename (filename);	/* XEmacs addition */
 	      putc (037, outfile);
 	      putc (defvarflag ? 'V' : 'F', outfile);
 	      fprintf (outfile, "%s\n", globalbuf);
@@ -963,6 +1011,10 @@ scan_c_file (const char *filename, const char *mode)
  The NAME and DOCSTRING are output.
  NAME is preceded by `F' for a function or `V' for a variable.
  An entry is output only if DOCSTRING has \ newline just after the opening "
+
+ Adds the filename a symbol or function was found in before its docstring;
+ there's no need for this with the load-history available, but we do it for
+ consistency with the C parsing code. 
  */
 
 static void
@@ -1356,7 +1408,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	 In the latter case, the opening quote (and leading
 	 backslash-newline) have already been read.  */
 
-      putc ('\n', outfile);	/* XEmacs addition */
+      put_filename (filename);	/* XEmacs addition */
       putc (037, outfile);
       putc (type, outfile);
       fprintf (outfile, "%s\n", buffer);

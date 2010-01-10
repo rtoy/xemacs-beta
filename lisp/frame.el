@@ -499,7 +499,7 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 
 		      ;; Wean the frames using frame-initial-frame as
 		      ;; their minibuffer frame.
-		      (mapcar
+		      (mapc
 		       #'(lambda (frame)
 			   (set-frame-property frame 'minibuffer
 					       new-minibuffer))
@@ -642,8 +642,6 @@ tty	    A standard TTY connection or terminal.  CONNECTION should be
 	    and output (usually the TTY in which XEmacs started).  Only
 	    if support for TTY's was compiled into XEmacs.
 gtk	    A GTK device.
-ns	    A connection to a machine running the NeXTstep windowing
-	    system.  Not currently implemented.
 mswindows   A connection to a machine running Microsoft Windows NT or
 	    Windows 95/97.
 pc	    A direct-write MS-DOS frame.  Not currently implemented.
@@ -752,15 +750,15 @@ This deletes all bindings in PLIST for `top', `left', `width',
 Emacs uses this to avoid overriding explicit moves and resizings from
 the user during startup."
   (setq plist (canonicalize-lax-plist (copy-sequence plist)))
-  (mapcar #'(lambda (property)
-	      (if (lax-plist-member plist property)
-		  (progn
-		    (setq frame-initial-geometry-arguments
-			  (cons property
-				(cons (lax-plist-get plist property)
-				      frame-initial-geometry-arguments)))
-		    (setq plist (lax-plist-remprop plist property)))))
-	  '(height width top left user-size user-position))
+  (mapc #'(lambda (property)
+            (if (lax-plist-member plist property)
+                (progn
+                  (setq frame-initial-geometry-arguments
+                        (cons property
+                              (cons (lax-plist-get plist property)
+                                    frame-initial-geometry-arguments)))
+                  (setq plist (lax-plist-remprop plist property)))))
+        '(height width top left user-size user-position))
   plist)
 
 ;; XEmacs change: Emacs has focus-follows-mouse here, which lets them
@@ -793,13 +791,9 @@ Otherwise, that variable should be nil."
   (let ((frame (selected-frame)))
     (while (> arg 0)
       (setq frame (next-frame frame 'visible-nomini))
-      (while (not (eq (frame-visible-p frame) t))
-	(setq frame (next-frame frame 'visible-nomini)))
       (setq arg (1- arg)))
     (while (< arg 0)
       (setq frame (previous-frame frame 'visible-nomini))
-      (while (not (eq (frame-visible-p frame) t))
-	(setq frame (previous-frame frame 'visible-nomini)))
       (setq arg (1+ arg)))
     (select-frame-set-input-focus frame)))
 
@@ -873,7 +867,6 @@ The value returned is the value of the last form in BODY."
 This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
-`ns' for a frame that is a NeXTstep window (not yet implemented),
 `mswindows' for a frame that is a MS Windows desktop window,
 `msprinter' for a frame that is a MS Windows print job,
 `stream' for a stream frame (which acts like a stdio stream), and
@@ -1183,21 +1176,28 @@ that is beyond the control of Emacs and this command has no effect on it."
   "Return non-nil if DISPLAY has a mouse available.
 DISPLAY can be a frame, a device, a console, or nil (meaning the
 selected frame)."
-  (case (framep-on-display display)
-    ;; We assume X, NeXTstep, and GTK *always* have a pointing device
-    ((x ns gtk) t)
-    (mswindows (> (declare-boundp mswindows-num-mouse-buttons) 0))
-    (tty
+  (let (type)
+    (setq display (display-device display)
+          type (device-type display))
+    (cond
+     ((eq 'mswindows type)
+      (> (declare-boundp mswindows-num-mouse-buttons) 0))
+     ((device-on-window-system-p display)
+      ;; We assume X, GTK and the rest always have a pointing device. 
+      t)
+    ((eq 'tty type)
      (and-fboundp 'gpm-is-supported-p
-       (gpm-is-supported-p (display-device display))))
-    (t nil)))
+       (gpm-is-supported-p display)))
+    (t nil))))
 
 (defun display-popup-menus-p (&optional display)
   "Return non-nil if popup menus are supported on DISPLAY.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame).  Support for popup menus requires that the mouse be available."
+  (setq display (display-device display))
   (and
-   (memq (framep-on-display display) '(x ns gtk mswindows))
+   (featurep 'menubar)
+   (device-on-window-system-p display)
    (display-mouse-p display)))
 
 (defun display-graphic-p (&optional display)
@@ -1207,13 +1207,17 @@ frames and several different fonts at once.  This is true for displays
 that use a window system such as X, and false for text-only terminals.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (memq (framep-on-display display) '(x ns gtk mswindows)))
+  (device-on-window-system-p (display-device display)))
 
 (defun display-images-p (&optional display)
   "Return non-nil if DISPLAY can display images.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (display-graphic-p display))
+  (and (memq (image-instance-type (specifier-instance
+                                   (glyph-image xemacs-logo)
+                                   display))
+             '(color-pixmap mono-pixmap))
+       t))
 
 (defalias 'display-multi-frame-p 'display-graphic-p)
 (defalias 'display-multi-font-p 'display-graphic-p)
@@ -1225,7 +1229,11 @@ via special system buffers called `selection' or `cut buffer' or
 `clipboard'.
 DISPLAY can be a frame, a device, a console, or nil (meaning the selected
 frame)."
-  (memq (framep-on-display display) '(x ns gtk mswindows)))
+  (or 
+   (device-on-window-system-p display)
+   ;; GPM supports #'get-selection-foreign, but not #'own-selection.
+   (and-fboundp 'gpm-is-supported-p
+     (gpm-is-supported-p display))))   
 
 (defun display-screens (&optional display)
   "Return the number of screens associated with DISPLAY."
@@ -1273,15 +1281,21 @@ the question is inapplicable to a certain kind of display."
   "Returns the visual class of DISPLAY.
 The value is one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'."
-  (case (framep-on-display display)
-    (x (declare-fboundp (x-display-visual-class (display-device display))))
-    (gtk (declare-fboundp (gtk-display-visual-class (display-device display))))
-    (mswindows (let ((planes (display-planes display)))
-		 (cond ((eq planes 1) 'static-gray)
-		       ((eq planes 4) 'static-color)
-		       ((> planes 8) 'true-color)
-		       (t 'pseudo-color))))
-    (t 'static-gray)))
+  (let (type planes)
+    (setq display (display-device display)
+          type (device-type display))
+    (cond
+     ((eq 'x type)
+      (declare-fboundp (x-display-visual-class display)))
+     ((eq 'gtk type)
+      (declare-fboundp (gtk-display-visual-class display)))
+     ((device-on-window-system-p display)
+      (setq planes (display-planes display))
+      (cond ((eq planes 1) 'static-gray)
+            ((eq planes 4) 'static-color)
+            ((> planes 8) 'true-color)
+            (t 'pseudo-color)))
+     (t 'static-gray))))
 
 
 ;; XEmacs change: omit the Emacs 18 compatibility functions:
@@ -1548,7 +1562,12 @@ all frames that were visible, and iconify all frames that were not."
     (setq iconification-data (cdr iconification-data))))
 
 (defun suspend-or-iconify-emacs ()
-  "Call iconify-emacs if using a window system, otherwise suspend Emacs."
+  "Call iconify-emacs if using a window system, otherwise suspend.
+
+`suspend' here can mean different things; if the current TTY console was
+created by gnuclient, that console is suspended, and the related devices and
+frames are removed from the display.  Otherwise the Emacs process as a whole
+is suspended--that is, the traditional Unix suspend takes place.  "
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-emacs))
@@ -1564,7 +1583,12 @@ all frames that were visible, and iconify all frames that were not."
 ;; different things depending on window-system.  We can't do the same,
 ;; because we allow simultaneous X and TTY consoles.
 (defun suspend-emacs-or-iconify-frame ()
-  "Iconify the selected frame if using a window system, otherwise suspend Emacs."
+  "Iconify the selected frame if using a window system, otherwise suspend.
+
+`suspend' here can mean different things; if the current TTY console was
+created by gnuclient, the console is suspended, and the related devices and
+frames are removed from the display.  Otherwise the Emacs process as a whole
+is suspended--that is, the traditional Unix suspend takes place.  "
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-frame))
@@ -1844,6 +1868,8 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
   :type 'number
   :group 'frames)
 
+;; See also #'temp-buffer-resize-mode in help.el. 
+
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of `temp-buffer-show-function':
 always displays the buffer in the selected frame, regardless of the behavior
@@ -1859,7 +1885,6 @@ is normally set to `get-frame-for-buffer' (which see)."
       (set-window-point window 1)
       nil)))
 
-(setq pre-display-buffer-function 'get-frame-for-buffer)
 (setq temp-buffer-show-function 'show-temp-buffer-in-current-frame)
 
 

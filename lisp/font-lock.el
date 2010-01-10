@@ -449,6 +449,32 @@ edit the buffer does not, since it considers text one line at a time.
 Be very careful composing regexps for this list; the wrong pattern can
 dramatically slow things down!
 ")
+
+(defvar font-lock-keywords-alist nil
+  "Alist of additional `font-lock-keywords' elements for major modes.
+
+Each element has the form (MODE KEYWORDS . HOW).
+`font-lock-set-defaults' adds the elements in the list KEYWORDS to
+`font-lock-keywords' when Font Lock is turned on in major mode MODE.
+
+If HOW is nil, KEYWORDS are added at the beginning of
+`font-lock-keywords'.  If it is `set', they are used to replace the
+value of `font-lock-keywords'.  If HOW is any other non-nil value,
+they are added at the end.
+
+This is normally set via `font-lock-add-keywords' and
+`font-lock-remove-keywords'.")
+
+(defvar font-lock-removed-keywords-alist nil
+  "Alist of `font-lock-keywords' elements to be removed for major modes.
+
+Each element has the form (MODE . KEYWORDS).  `font-lock-set-defaults'
+removes the elements in the list KEYWORDS from `font-lock-keywords'
+when Font Lock is turned on in major mode MODE.
+
+This is normally set via `font-lock-add-keywords' and
+`font-lock-remove-keywords'.")
+
 ;;;###autoload
 (make-variable-buffer-local 'font-lock-keywords)
 
@@ -695,6 +721,11 @@ The corresponding face should be set using `edit-faces' or the
 It is present only for horrid FSF compatibility reasons.
 The corresponding face should be set using `edit-faces' or the
 `set-face-*' functions.")
+(defvar font-lock-warning-face 'font-lock-warning-face
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 
 (defconst font-lock-face-list
   '(font-lock-comment-face
@@ -868,6 +899,188 @@ on the major mode's symbol."
        (setq font-lock-maximum-decoration t)
        (font-lock-recompute-variables)))
 
+(defun font-lock-add-keywords (mode keywords &optional how)
+  "Add highlighting KEYWORDS for MODE.
+
+MODE should be a symbol, the major mode command name, such as `c-mode'
+or nil.  If nil, highlighting keywords are added for the current buffer.
+KEYWORDS should be a list; see the variable `font-lock-keywords'.
+By default they are added at the beginning of the current highlighting list.
+If optional argument HOW is `set', they are used to replace the current
+highlighting list.  If HOW is any other non-nil value, they are added at the
+end of the current highlighting list.
+
+For example:
+
+ (font-lock-add-keywords 'c-mode
+  '((\"\\\\\\=<\\\\(FIXME\\\\):\" 1 font-lock-warning-face prepend)
+    (\"\\\\\\=<\\\\(and\\\\|or\\\\|not\\\\)\\\\\\=>\" . font-lock-keyword-face)))
+
+adds two fontification patterns for C mode, to fontify `FIXME:' words, even in
+comments, and to fontify `and', `or' and `not' words as keywords.
+
+The above procedure will only add the keywords for C mode, not
+for modes derived from C mode.  To add them for derived modes too,
+pass nil for MODE and add the call to c-mode-hook.
+
+For example:
+
+ (add-hook 'c-mode-hook
+  (lambda ()
+   (font-lock-add-keywords nil
+    '((\"\\\\\\=<\\\\(FIXME\\\\):\" 1 font-lock-warning-face prepend)
+      (\"\\\\\\=<\\\\(and\\\\|or\\\\|not\\\\)\\\\\\=>\" .
+       font-lock-keyword-face)))))
+
+The above procedure may fail to add keywords to derived modes if
+some involved major mode does not follow the standard conventions.
+File a bug report if this happens, so the major mode can be corrected.
+
+Note that some modes have specialized support for additional patterns, e.g.,
+see the variables `c-font-lock-extra-types', `c++-font-lock-extra-types',
+`objc-font-lock-extra-types' and `java-font-lock-extra-types'."
+  (cond (mode
+	 ;; If MODE is non-nil, add the KEYWORDS and HOW spec to
+	 ;; `font-lock-keywords-alist' so `font-lock-set-defaults' uses them.
+	 (let ((spec (cons keywords how)) cell)
+	   (if (setq cell (assq mode font-lock-keywords-alist))
+	       (if (eq how 'set)
+		   (setcdr cell (list spec))
+		 (setcdr cell (append (cdr cell) (list spec))))
+	     (push (list mode spec) font-lock-keywords-alist)))
+	 ;; Make sure that `font-lock-removed-keywords-alist' does not
+	 ;; contain the new keywords.
+	 (font-lock-update-removed-keyword-alist mode keywords how))
+	(t
+	 ;; Otherwise set or add the keywords now.
+	 ;; This is a no-op if it has been done already in this buffer
+	 ;; for the correct major mode.
+	 (font-lock-set-defaults)
+	 (let ((was-compiled (eq (car font-lock-keywords) t)))
+	   ;; Bring back the user-level (uncompiled) keywords.
+	   (if was-compiled
+	       (setq font-lock-keywords (cdr font-lock-keywords)))
+	   ;; Now modify or replace them.
+	   (if (eq how 'set)
+	       (setq font-lock-keywords keywords)
+	     (font-lock-remove-keywords nil keywords) ;to avoid duplicates
+	     (let ((old (if (eq (car-safe font-lock-keywords) t)
+			    (cdr font-lock-keywords)
+			  font-lock-keywords)))
+	       (setq font-lock-keywords (if how
+					    (append old keywords)
+					  (append keywords old)))))
+	   ;; If the keywords were compiled before, compile them again.
+	   (if was-compiled
+	       (setq font-lock-keywords
+                     (font-lock-compile-keywords font-lock-keywords)))))))
+
+(defun font-lock-update-removed-keyword-alist (mode keywords how)
+  "Update `font-lock-removed-keywords-alist' when adding new KEYWORDS to MODE."
+  ;; When font-lock is enabled first all keywords in the list
+  ;; `font-lock-keywords-alist' are added, then all keywords in the
+  ;; list `font-lock-removed-keywords-alist' are removed.  If a
+  ;; keyword was once added, removed, and then added again it must be
+  ;; removed from the removed-keywords list.  Otherwise the second add
+  ;; will not take effect.
+  (let ((cell (assq mode font-lock-removed-keywords-alist)))
+    (if cell
+	(if (eq how 'set)
+	    ;; A new set of keywords is defined.  Forget all about
+	    ;; our old keywords that should be removed.
+	    (setq font-lock-removed-keywords-alist
+		  (delq cell font-lock-removed-keywords-alist))
+	  ;; Delete all previously removed keywords.
+	  (dolist (kword keywords)
+	    (setcdr cell (delete kword (cdr cell))))
+	  ;; Delete the mode cell if empty.
+	  (if (null (cdr cell))
+	      (setq font-lock-removed-keywords-alist
+		    (delq cell font-lock-removed-keywords-alist)))))))
+
+;; Written by Anders Lindgren <andersl@andersl.com>.
+;;
+;; Case study:
+;; (I)  The keywords are removed from a major mode.
+;;      In this case the keyword could be local (i.e. added earlier by
+;;      `font-lock-add-keywords'), global, or both.
+;;
+;;      (a) In the local case we remove the keywords from the variable
+;;          `font-lock-keywords-alist'.
+;;
+;;      (b) The actual global keywords are not known at this time.
+;;          All keywords are added to `font-lock-removed-keywords-alist',
+;;          when font-lock is enabled those keywords are removed.
+;;
+;;      Note that added keywords are taken out of the list of removed
+;;      keywords.  This ensure correct operation when the same keyword
+;;      is added and removed several times.
+;;
+;; (II) The keywords are removed from the current buffer.
+(defun font-lock-remove-keywords (mode keywords)
+  "Remove highlighting KEYWORDS for MODE.
+
+MODE should be a symbol, the major mode command name, such as `c-mode'
+or nil.  If nil, highlighting keywords are removed for the current buffer.
+
+To make the removal apply to modes derived from MODE as well,
+pass nil for MODE and add the call to MODE-hook.  This may fail
+for some derived modes if some involved major mode does not
+follow the standard conventions.  File a bug report if this
+happens, so the major mode can be corrected."
+  (cond (mode
+	 ;; Remove one keyword at the time.
+	 (dolist (keyword keywords)
+	   (let ((top-cell (assq mode font-lock-keywords-alist)))
+	     ;; If MODE is non-nil, remove the KEYWORD from
+	     ;; `font-lock-keywords-alist'.
+	     (when top-cell
+	       (dolist (keyword-list-how-pair (cdr top-cell))
+		 ;; `keywords-list-how-pair' is a cons with a list of
+		 ;; keywords in the car top-cell and the original how
+		 ;; argument in the cdr top-cell.
+		 (setcar keyword-list-how-pair
+			 (delete keyword (car keyword-list-how-pair))))
+	       ;; Remove keyword list/how pair when the keyword list
+	       ;; is empty and how doesn't specify `set'.  (If it
+	       ;; should be deleted then previously deleted keywords
+	       ;; would appear again.)
+	       (let ((cell top-cell))
+		 (while (cdr cell)
+		   (if (and (null (car (car (cdr cell))))
+			    (not (eq (cdr (car (cdr cell))) 'set)))
+		       (setcdr cell (cdr (cdr cell)))
+		     (setq cell (cdr cell)))))
+	       ;; Final cleanup, remove major mode cell if last keyword
+	       ;; was deleted.
+	       (if (null (cdr top-cell))
+		   (setq font-lock-keywords-alist
+			 (delq top-cell font-lock-keywords-alist))))
+	     ;; Remember the keyword in case it is not local.
+	     (let ((cell (assq mode font-lock-removed-keywords-alist)))
+	       (if cell
+		   (unless (member keyword (cdr cell))
+		     (nconc cell (list keyword)))
+		 (push (cons mode (list keyword))
+		       font-lock-removed-keywords-alist))))))
+	(t
+	 ;; Otherwise remove it immediately.
+	 (font-lock-set-defaults)
+	 (let ((was-compiled (eq (car font-lock-keywords) t)))
+	   ;; Bring back the user-level (uncompiled) keywords.
+	   (if was-compiled
+	       (setq font-lock-keywords (cdr font-lock-keywords)))
+
+	   ;; Edit them.
+	   (setq font-lock-keywords (copy-sequence font-lock-keywords))
+	   (dolist (keyword keywords)
+	     (setq font-lock-keywords
+		   (delete keyword font-lock-keywords)))
+
+	   ;; If the keywords were compiled before, compile them again.
+	   (if was-compiled
+	       (setq font-lock-keywords
+                     (font-lock-compile-keywords font-lock-keywords)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;        actual code        ;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1229,7 +1442,7 @@ buffer modifications are performed or a buffer is reverted.")
 (defvar font-lock-range-table (make-range-table))
 
 (defun font-lock-pre-idle-hook ()
-  (with-trapping-errors 'font-lock-pre-idle-hook
+  (with-trapping-errors :operation 'font-lock-pre-idle-hook
     (if (> (hash-table-count font-lock-pending-buffer-table) 0)
 	(font-lock-fontify-pending-extents))))
 
@@ -1423,27 +1636,6 @@ Optional argument OBJECT is the string or buffer containing the text."
       (put-nonduplicable-text-property start next markprop value object)
       (setq start (text-property-any next end markprop nil object)))))
 
-;; This function (from simon's unique.el) is rewritten and inlined for speed.
-;(defun unique (list function)
-;  "Uniquify LIST, deleting elements using FUNCTION.
-;Return the list with subsequent duplicate items removed by side effects.
-;FUNCTION is called with an element of LIST and a list of elements from LIST,
-;and should return the list of elements with occurrences of the element removed,
-;i.e., a function such as `delete' or `delq'.
-;This function will work even if LIST is unsorted.  See also `uniq'."
-;  (let ((list list))
-;    (while list
-;      (setq list (setcdr list (funcall function (car list) (cdr list))))))
-;  list)
-
-(defsubst font-lock-unique (list)
-  "Uniquify LIST, deleting elements using `delq'.
-Return the list with subsequent duplicate items removed by side effects."
-  (let ((list list))
-    (while list
-      (setq list (setcdr list (delq (car list) (cdr list))))))
-  list)
-
 ;; A generalisation of `facemenu-add-face' for any property, but without the
 ;; removal of inactive faces via `facemenu-discard-redundant-faces' and special
 ;; treatment of `default'.  Uses `unique' to remove duplicate property values.
@@ -1458,7 +1650,8 @@ Optional argument OBJECT is the string or buffer containing the text."
 	    prev (get-text-property start prop object))
       (put-text-property
        start next prop
-       (font-lock-unique (append val (if (listp prev) prev (list prev))))
+       (delete-duplicates (append val (if (listp prev) prev (list prev)))
+                          :test #'eq)
        object)
       (setq start next))))
 
@@ -1473,7 +1666,8 @@ Optional argument OBJECT is the string or buffer containing the text."
 	    prev (get-text-property start prop object))
       (put-text-property
        start next prop
-       (font-lock-unique (append (if (listp prev) prev (list prev)) val))
+       (delete-duplicates (append (if (listp prev) prev (list prev)) val)
+                          :test #'eq)
        object)
       (setq start next))))
 
@@ -1818,7 +2012,10 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 			     font-lock-defaults
 			     (font-lock-find-font-lock-defaults major-mode)))
 	       (keywords (font-lock-choose-keywords
-			  (nth 0 defaults) font-lock-maximum-decoration)))
+			  (nth 0 defaults) font-lock-maximum-decoration))
+	       (local (cdr (assq major-mode font-lock-keywords-alist)))
+	       (removed-keywords
+		(cdr-safe (assq major-mode font-lock-removed-keywords-alist))))
 
 	  ;; Keywords?
 	  (setq font-lock-keywords (if (fboundp keywords)
@@ -1883,7 +2080,14 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 		 ;; older way:
 		 ;; defaults not specified at all, so use `beginning-of-defun'.
 		 (setq font-lock-beginning-of-syntax-function
-		       'beginning-of-defun)))))
+		       'beginning-of-defun)))
+
+	  ;; Local fontification?
+	  (while local
+	    (font-lock-add-keywords nil (car (car local)) (cdr (car local)))
+	    (setq local (cdr local)))
+	  (when removed-keywords
+	    (font-lock-remove-keywords nil removed-keywords))))
 
     (setq font-lock-cache-position (make-marker))
     (setq font-lock-defaults-computed t)))
@@ -2587,9 +2791,10 @@ The name is assumed to begin with a capital letter.")
 	 (list        
 	  (concat
 	   "\\<\\("
+	   "assert\\|"
 	   "break\\|byvalue\\|"
 	   "case\\|cast\\|catch\\|class\\|continue\\|"
-	   "do\\|else\\|extends\\|"
+	   "do\\|else\\|enum\\|extends\\|"
 	   "finally\\|for\\|future\\|"
 	   "generic\\|goto\\|"
 	   "if\\|implements\\|import\\|"
@@ -2775,10 +2980,10 @@ The name is assumed to begin with a capital letter.")
 	  '("\\(@beaninfo\\)"
 	    0 font-lock-keyword-face t)
 	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\([^}]+\\)}"
+	  '("{ *@link\\(?:plain\\)?\\s +\\([^}]+\\)}"
 	    0 font-lock-keyword-face t)
 	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
+	  '("{ *@link\\(?:plain\\)?\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
 	    1 font-lock-function-name-face t)
     
 	  )))

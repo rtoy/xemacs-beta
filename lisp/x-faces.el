@@ -1,6 +1,6 @@
 ;;; x-faces.el --- X-specific face frobnication, aka black magic.
 
-;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1994, 1997, 2006 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
@@ -66,6 +66,20 @@
  '(x-get-resource-and-maybe-bogosity-check
    x-get-resource x-init-pointer-shape))
 
+(if (featurep 'xft-fonts)
+    (require 'fontconfig)
+  (globally-declare-boundp
+   '(fc-font-name-weight-bold     fc-font-name-weight-black
+     fc-font-name-weight-demibold fc-font-name-weight-medium
+     fc-font-name-slant-oblique   fc-font-name-slant-italic
+     fc-font-name-slant-roman))
+  (globally-declare-fboundp
+    '(fc-font-match fc-pattern-del-size fc-pattern-get-size
+      fc-pattern-add-size fc-pattern-del-style fc-pattern-duplicate
+      fc-copy-pattern-partial fc-pattern-add-weight fc-pattern-del-weight
+      fc-try-font fc-pattern-del-slant fc-pattern-add-slant fc-name-parse
+      fc-name-unparse fc-pattern-get-pixelsize)))
+
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
 (defconst x-font-regexp-head-2 nil)
@@ -78,6 +92,7 @@
 (defconst x-font-regexp-spacing nil)
 
 ;;; Regexps matching font names in "Host Portable Character Representation."
+;;; #### But more recently Latin-1 is permitted, and Xft needs it in C (?).
 ;;;
 (let ((- 		"[-?]")
       (foundry		"[^-]*")
@@ -134,6 +149,11 @@
 			  - registry - encoding "\\'"))
   )
 
+(defun x-font-xlfd-font-name-p (font)
+  "Check if FONT is an XLFD font name"
+  (and (stringp font)
+       (string-match x-font-regexp font)))
+
 ;; A "loser font" is something like "8x13" -> "8x13bold".
 ;; These are supported only through extreme generosity.
 (defconst x-loser-font-regexp "\\`[0-9]+x[0-9]+\\'")
@@ -167,6 +187,42 @@
 (defun x-make-font-bold (font &optional device)
   "Given an X font specification, this attempts to make a `bold' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-bold-core font device)
+	(x-make-font-bold-xft font device))
+    (x-make-font-bold-core font device)))
+
+(defun x-make-font-bold-xft (font &optional device)
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
+    (if pattern
+	(let ((size (fc-pattern-get-size pattern 0))
+	      (copy (fc-copy-pattern-partial pattern (list "family"))))
+	  (fc-pattern-del-weight copy)
+	  (fc-pattern-del-style copy)
+	  (when copy
+	    (or 
+	     ;; try bold font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-bold)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add-size copy-2 size)
+		 (fc-name-unparse copy-2)))
+	     ;; try black font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-black)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add-size copy-2 size)
+		 (fc-name-unparse copy-2)))
+	     ;; try demibold font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-demibold)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add-size copy-2 size)
+		 (fc-name-unparse copy-2)))))))))
+  
+(defun x-make-font-bold-core (font &optional device)
   ;; Certain Type1 fonts know "bold" as "black"...
   (or (try-font-name (x-frob-font-weight font "bold") device)
       (try-font-name (x-frob-font-weight font "black") device)
@@ -175,6 +231,22 @@ If it fails, it returns nil."
 (defun x-make-font-unbold (font &optional device)
   "Given an X font specification, this attempts to make a non-bold font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-unbold-core font device)
+	(x-make-font-unbold-xft font device))
+    (x-make-font-unbold-core font device)))
+  
+(defun x-make-font-unbold-xft (font &optional device)
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
+    (when pattern
+      (fc-pattern-del-weight pattern)
+      (fc-pattern-add-weight pattern fc-font-name-weight-medium)
+      (if (fc-try-font pattern device)
+	  (fc-name-unparse pattern)))))
+
+(defun x-make-font-unbold-core (font &optional device)
   (try-font-name (x-frob-font-weight font "medium") device))
 
 (defcustom try-oblique-before-italic-fonts nil
@@ -189,6 +261,51 @@ applicable to adobe-courier fonts"
 (defun x-make-font-italic (font &optional device)
   "Given an X font specification, this attempts to make an `italic' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-italic-core font device)
+	(x-make-font-italic-xft font device))
+    (x-make-font-italic-core font device)))
+
+(defun x-make-font-italic-xft (font &optional device)
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
+    (if pattern
+      (let ((size (fc-pattern-get-size pattern 0))
+	    (copy (fc-copy-pattern-partial pattern (list "family"))))
+	(when copy
+	  (fc-pattern-del-slant copy)
+	  (fc-pattern-del-style copy)
+	  ;; #### can't we do this with one ambiguous pattern?
+	  (let ((pattern-oblique (fc-pattern-duplicate copy))
+		(pattern-italic (fc-pattern-duplicate copy)))
+	    (fc-pattern-add-slant pattern-oblique fc-font-name-slant-oblique)
+	    (fc-pattern-add-slant pattern-italic fc-font-name-slant-italic)
+	    (let ((have-oblique (fc-try-font pattern-oblique device))
+		  (have-italic (fc-try-font pattern-italic device)))
+	      (if try-oblique-before-italic-fonts
+		  (if have-oblique
+		      (progn 
+			(if size
+			    (fc-pattern-add-size pattern-oblique size))
+			(fc-name-unparse pattern-oblique))
+		    (if have-italic
+			(progn
+			  (if size
+			      (fc-pattern-add-size pattern-italic size))
+			  (fc-name-unparse pattern-italic))))
+		(if have-italic
+		    (progn
+		      (if size
+			  (fc-pattern-add-size pattern-italic size))
+		      (fc-name-unparse pattern-italic))
+		  (if have-oblique
+		      (progn
+			(if size
+			    (fc-pattern-add-size pattern-oblique size))
+			(fc-name-unparse pattern-oblique))))))))))))
+  
+(defun x-make-font-italic-core (font &optional device)
   (if try-oblique-before-italic-fonts
       (or (try-font-name (x-frob-font-slant font "o") device)
 	  (try-font-name (x-frob-font-slant font "i") device))
@@ -198,11 +315,39 @@ If it fails, it returns nil."
 (defun x-make-font-unitalic (font &optional device)
   "Given an X font specification, this attempts to make a non-italic font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-unitalic-core font device)
+	(x-make-font-unitalic-xft font device))
+    (x-make-font-unitalic-core font device)))
+  
+(defun x-make-font-unitalic-xft (font &optional device)
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
+    (when pattern
+      (fc-pattern-del-slant pattern)
+      (fc-pattern-add-slant pattern fc-font-name-slant-roman)
+      (if (fc-try-font pattern device)
+	  (fc-name-unparse pattern)))))
+
+(defun x-make-font-unitalic-core (font &optional device)
   (try-font-name (x-frob-font-slant font "r") device))
 
 (defun x-make-font-bold-italic (font &optional device)
   "Given an X font specification, this attempts to make a `bold-italic' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts) 
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-bold-italic-core font device)
+	(x-make-font-bold-italic-xft font device))
+    (x-make-font-bold-italic-core font device)))
+
+(defun x-make-font-bold-italic-xft (font &optional device)
+  (let ((italic (x-make-font-italic-xft font device)))
+    (if italic
+	(x-make-font-bold-xft italic device))))
+
+(defun x-make-font-bold-italic-core (font &optional device)
   ;; This is haired up to avoid loading the "intermediate" fonts.
   (if try-oblique-before-italic-fonts
       (or (try-font-name
@@ -236,6 +381,21 @@ This is done by parsing its name, so it's likely to lose.
 X fonts can be specified (by the user) in either pixels or 10ths of points,
  and this returns the first one it finds, so you have to decide which units
  the returned value is measured in yourself..."
+  (if (featurep 'xft-fonts) 
+      (if (x-font-xlfd-font-name-p font)
+	  (x-font-size-core font)
+	(x-font-size-xft font))
+    (x-font-size-core font)))
+
+;; this is unbelievable &*@#
+(defun x-font-size-xft (font)
+  (let ((pattern (fc-font-match (default-x-device)
+				(fc-name-parse font))))
+    (when pattern
+      (let ((pixelsize (fc-pattern-get-pixelsize pattern 0)))
+	(if (floatp pixelsize) (round pixelsize) pixelsize)))))
+
+(defun x-font-size-core (font)
   (if (font-instance-p font) (setq font (font-instance-name font)))
   (cond ((or (string-match x-font-regexp font)
 	     (string-match x-font-regexp-head-2 font))
@@ -354,6 +514,28 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point smaller.
 Otherwise, it returns the next smaller version of this font that is defined."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-find-smaller-font-core font device)
+	(x-find-smaller-font-xft font device))
+    (x-find-smaller-font-core font device)))
+
+(defun x-find-xft-font-of-size (font new-size-proc &optional device)
+  (let* ((pattern (fc-font-match (or device (default-x-device))
+				 (fc-name-parse font))))
+    (when pattern
+      (let ((size (fc-pattern-get-size pattern 0)))
+	(if (floatp size)
+	    (let ((copy (fc-pattern-duplicate pattern)))
+	      (fc-pattern-del-size copy)
+	      (fc-pattern-add-size copy (funcall new-size-proc size))
+	      (if (fc-try-font font device)
+		  (fc-name-unparse copy))))))))
+
+(defun x-find-smaller-font-xft (font &optional device)
+  (x-find-xft-font-of-size font #'(lambda (old-size) (- old-size 1.0)) device))
+
+(defun x-find-smaller-font-core (font &optional device)
   (x-frob-font-size font nil device))
 
 (defun x-find-larger-font (font &optional device)
@@ -361,6 +543,16 @@ Otherwise, it returns the next smaller version of this font that is defined."
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point larger.
 Otherwise, it returns the next larger version of this font that is defined."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-find-larger-font-core font device)
+	(x-find-larger-font-xft font device))
+    (x-find-larger-font-core font device)))
+
+(defun x-find-larger-font-xft (font &optional device)
+  (x-find-xft-font-of-size font #'(lambda (old-size) (+ old-size 1.0)) device))
+
+(defun x-find-larger-font-core (font &optional device)
   (x-frob-font-size font t device))
 
 (defalias 'x-make-face-bold 'make-face-bold)
@@ -395,7 +587,9 @@ Otherwise, it returns the next larger version of this font that is defined."
 				"/usr/local/lib/X11R5/X11/"
 				"/usr/X11/lib/X11/"
 				"/usr/lib/X11/"
+				"/usr/share/X11/"
 				"/usr/local/lib/X11/"
+				"/usr/local/share/X11/"
 				"/usr/X386/lib/X11/"
 				"/usr/x386/lib/X11/"
 				"/usr/XFree86/lib/X11/"
@@ -409,6 +603,15 @@ Otherwise, it returns the next larger version of this font that is defined."
 
 (defvar x-color-list-internal-cache)
 
+;; Ben originally coded this in 2005/01 to return a list of lists each
+;; containing a single string.  This is apparently derived from use of
+;; this list in completion, but in fact `read-color-completion-table'
+;; already does this wrapping.  So I'm changing this to return a list of
+;; strings as the TTY code does, and as expected by r-c-c-t.
+;; -- sjt 2007-10-06
+
+;; This function is probably also used by the GTK platform.  Cf.
+;; gtk_color_list in src/objects-gtk.c.
 (defun x-color-list-internal ()
   (if (boundp 'x-color-list-internal-cache)
       x-color-list-internal-cache
@@ -429,12 +632,12 @@ Otherwise, it returns the next larger version of this font that is defined."
 	    (setq p (point))
 	    (end-of-line)
 	    (setq color (buffer-substring p (point))
-		  clist (cons (list color) clist))
+		  clist (cons color clist))
 	    ;; Ugh.  If we want to be able to complete the lowercase form
 	    ;; of the color name, we need to add it twice!  Yuck.
 	    (let ((dcase (downcase color)))
 	      (or (string= dcase color)
-		  (push (list dcase) clist)))
+		  (push dcase clist)))
 	    (forward-char 1))
 	  (kill-buffer (current-buffer))))
       (setq x-color-list-internal-cache clist)
@@ -458,6 +661,13 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; This had better not signal an error.  The frame is in an intermediate
 ;;; state where signalling an error or entering the debugger would likely
 ;;; result in a crash.
+
+;; When we initialise a face from an X resource, note that we did so. 
+;;
+;; Now in specifier.el so run-time checks for it on non-X builds don't
+;; error.
+
+; (define-specifier-tag 'x-resource)
 
 (defun x-init-face-from-resources (face &optional locale set-anyway)
 
@@ -487,6 +697,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 	 ;; specs.
 	 (x-tag-set '(x default))
 	 (tty-tag-set '(tty default))
+         (our-tag-set '(x x-resource))
 	 (device-class nil)
 	 (face-sym (face-name face))
 	 (name (symbol-name face-sym))
@@ -544,7 +755,8 @@ Otherwise, it returns the next larger version of this font that is defined."
     (if device-class
 	(setq tag-set (cons device-class tag-set)
 	      x-tag-set (cons device-class x-tag-set)
-	      tty-tag-set (cons device-class tty-tag-set)))
+	      tty-tag-set (cons device-class tty-tag-set)
+              our-tag-set (cons device-class our-tag-set)))
 
     ;;
     ;; If this is the default face, then any unspecified properties should
@@ -588,7 +800,23 @@ Otherwise, it returns the next larger version of this font that is defined."
 	;; globally.  This means we should override global
 	;; defaults for all X device classes.
 	(remove-specifier (face-font face) locale x-tag-set nil))
-      (set-face-font face fn locale 'x append))
+      (set-face-font face fn locale our-tag-set append)
+
+      ;; And retain some of the fallbacks in the generated default face,
+      ;; since we don't want to try andale-mono's ISO-10646-1 encoding for
+      ;; Amharic or Thai.
+      (when (and (specifierp (face-font face))
+                 (consp (specifier-fallback (face-font face))))
+        (loop
+          for (tag-set . instantiator)
+          in (specifier-fallback (face-font face))
+          if (memq 'x-coverage-instantiator tag-set)
+          do (add-spec-list-to-specifier
+              (face-font face)
+              (list (cons (or locale 'global)
+                          (list (cons tag-set instantiator))))
+              append))))
+		     
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
@@ -598,14 +826,14 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							x-tag-set)
 	(remove-specifier (face-foreground face) locale x-tag-set nil))
-      (set-face-foreground face fg locale 'x append))
+      (set-face-foreground face fg locale our-tag-set append))
     (when bg
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-background face)
 							locale
 							x-tag-set)
 	(remove-specifier (face-background face) locale x-tag-set nil))
-      (set-face-background face bg locale 'x append))
+      (set-face-background face bg locale our-tag-set append))
     (when bgp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-background-pixmap
@@ -613,7 +841,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							x-tag-set)
 	(remove-specifier (face-background-pixmap face) locale x-tag-set nil))
-      (set-face-background-pixmap face bgp locale nil append))
+      (set-face-background-pixmap face bgp locale our-tag-set append))
     (when ulp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -622,7 +850,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'underline) locale
 			  tty-tag-set nil))
-      (set-face-underline-p face ulp locale nil append))
+      (set-face-underline-p face ulp locale our-tag-set append))
     (when stp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -631,7 +859,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'strikethru)
 			  locale tty-tag-set nil))
-      (set-face-strikethru-p face stp locale nil append))
+      (set-face-strikethru-p face stp locale our-tag-set append))
     (when hp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -640,7 +868,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'highlight)
 			  locale tty-tag-set nil))
-      (set-face-highlight-p face hp locale nil append))
+      (set-face-highlight-p face hp locale our-tag-set append))
     (when dp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -648,7 +876,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							tty-tag-set)
 	(remove-specifier (face-property face 'dim) locale tty-tag-set nil))
-      (set-face-dim-p face dp locale nil append))
+      (set-face-dim-p face dp locale our-tag-set append))
     (when bp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -657,7 +885,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'blinking) locale
 			  tty-tag-set nil))
-      (set-face-blinking-p face bp locale nil append))
+      (set-face-blinking-p face bp locale our-tag-set append))
     (when rp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -666,7 +894,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'reverse) locale
 			  tty-tag-set nil))
-      (set-face-reverse-p face rp locale nil append))
+      (set-face-reverse-p face rp locale our-tag-set append))
     ))
 
 ;; GNU Emacs compatibility. (move to obsolete.el?)

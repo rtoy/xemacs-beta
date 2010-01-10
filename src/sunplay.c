@@ -45,10 +45,6 @@ static int
 init_device (int volume, Binbyte *data, int fd,
 	     unsigned int *header_length)
 {
-#ifdef SUNOS4_0_3
-  if (header_length) *header_length = 0;
-  return 0;
-#else
   Audio_hdr file_hdr;
 
   reset_volume_p = 0;
@@ -108,7 +104,6 @@ init_device (int volume, Binbyte *data, int fd,
   }
 
   return 0;
-#endif
 }
 
 

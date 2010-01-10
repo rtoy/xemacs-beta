@@ -22,8 +22,6 @@ dnl
 dnl Due to a dependence on the implementation of certain internal autoconf
 dnl macros, die if any version other than 2.59 is used.
 AC_PREREQ(2.59)dnl
-m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59]), 1,
-	[m4_fatal([This script can only be generated with autoconf 2.59])], [])dnl
 AC_INIT([XEmacs],[21.5],[xemacs-beta@xemacs.org])dnl
 AC_CONFIG_SRCDIR(src/lisp.h)dnl
 dnl
@@ -34,9 +32,7 @@ AC_COPYRIGHT(
 [Configuration script for XEmacs.  Largely divergent from FSF.
 Guess values for system-dependent variables and create Makefiles.
 
-Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
-Copyright (C) 1997, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
-Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+Copyright (C) 1992-1999, 2001-2006 Free Software Foundation, Inc.
 Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
 Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
@@ -193,7 +189,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   elif test "$GCC" = "yes"; then
     dnl Compute runpath from gcc's -v output
     ld_switch_run_save="$ld_switch_run"; ld_switch_run=""
-    echo "int main(int argc, char *argv[[]]) {return 0;}" > conftest.c
+    echo "int main(int argc, char **argv) {return 0;}" > conftest.c
     xe_runpath_link='${CC-cc} -o conftest -v $CFLAGS '"$xe_ldflags"' conftest.$ac_ext 2>&1 1>/dev/null'
     for arg in `eval "$xe_runpath_link" | grep ' -L'`; do
       case "$arg" in P,* | -L* | -R* )
@@ -233,6 +229,13 @@ T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
 ])dnl XE_SPACE
+dnl Autoconf 2.59 and 2.60 have slightly different versions of m4_cdr that
+dnl return different values for an empty list.  XE_CDR is a copy of the 2.60
+dnl version which will be used with both versions.
+define([XE_CDR],
+[m4_if([$#], 0, [m4_fatal([$0: cannot be called without arguments])],
+       [$#], 1, [],
+       [m4_dquote(m4_shift($@))])])dnl
 dnl
 dnl XE_MERGED_ARG(FEATURE, HELP-STRING, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
 dnl ------------------------------------------------------------------------
@@ -249,6 +252,12 @@ Optional Features:
   --without-FEATURE       do not use FEATURE (same as --with-FEATURE=no)
   --disable-FEATURE       alias for --without-FEATURE]])dnl
 m4_divert_once([HELP_ENABLE], m4_bpatsubst([[$2]],[--enable\([^ ]+\) ],[--with\1   ]))dnl
+dnl Register both forms with the option checking list.
+dnl Options are only checked with autoconf > 2.61.
+m4_append_uniq([_AC_USER_OPTS], [enable_]m4_bpatsubst([$1], -, _), [
+])dnl
+m4_append_uniq([_AC_USER_OPTS], [with_]m4_bpatsubst([$1], -, _), [
+])dnl
 # If --with-$1 or --without-$1 were given then copy the value to the
 # equivalent enable_$1 variable.
 if test "[${with_]m4_bpatsubst([$1], -, _)+set}" = set; then
@@ -284,7 +293,7 @@ Optional Features:
 dnl NOTE: The next eol adds a blank line before the heading.
 m4_divert_once([HELP_ENABLE], [[
 $1]])dnl
-dnl Add an underscpne
+dnl Add an underscore
 dnl NOTE: The next eol adds a blank line after the underscore.
 m4_divert_text([HELP_ENABLE], patsubst([$1], [.], [-])
 )])dnl
@@ -329,7 +338,7 @@ dnl
 define([XE_KEYWORD],
 [m4_append([XE_KEYWORD_LIST],[$1],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see the parsing code above) to avoid
-dnl confusion with marco parameter lists.
+dnl confusion with macro parameter lists.
 m4_append([XE_KEYWORD_VALUES],[\`$1'],[:])dnl
 ])dnl
 dnl
@@ -368,11 +377,10 @@ dnl Internal macro create the option's shell variable containing the default
 dnl value and to note the values in an option list.
 dnl
 define([XE_EXPAND_COMPLEX_OPTION],
-[with_[$1]_[$2]=[$3]
-enable_[$1]_[$2]=[$3]
+[_[$1]_[$2]_default=[$3]
 m4_append([XE_COMPONENT_LIST],[$2],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see <prefix>_default below) to avoid
-dnl confusion with marco parameter lists.
+dnl confusion with macro parameter lists.
 m4_append([XE_COMPONENT_DEFAULT],[m4_if([$3],no,no)[$2]],[:])dnl
 ])dnl
 dnl
@@ -381,10 +389,12 @@ dnl ----------------------------------------------
 dnl
 dnl Internal macro to recursively expand all the options in the option list.
 dnl
+dnl m4_fst disappeared without a trace in autoconf 2.62
+m4_define([xe_fst], [$1])dnl
 define([XE_EXPAND_COMPLEX_OPTIONS],
-[m4_if([$2], [[]], [],
-       [XE_EXPAND_COMPLEX_OPTION([$1], m4_fst($2))[]dnl
-XE_EXPAND_COMPLEX_OPTIONS([$1], m4_cdr($2))])])dnl
+[m4_if([$2], [], [],
+       [XE_EXPAND_COMPLEX_OPTION([$1], xe_fst($2))[]dnl
+XE_EXPAND_COMPLEX_OPTIONS([$1], XE_CDR($2))])])dnl
 dnl
 dnl XE_INIT_COMPLEX_OPTION(prefix, option_list)
 dnl -------------------------------------------
@@ -398,13 +408,13 @@ dnl
 define([XE_INIT_COMPLEX_OPTION],
 [_[$1]_notfirst=""
 dnl
-XE_EXPAND_COMPLEX_OPTIONS($@)
+XE_EXPAND_COMPLEX_OPTIONS($@)dnl
 _[$1]_types="XE_COMPONENT_LIST"
 _[$1]_default="m4_translit(XE_COMPONENT_DEFAULT,[:],[,])"
 dnl Undefine these macros so that they can be reused by later complex
 dnl options.
-undefine([XE_COMPONENT_LIST])
-undefine([XE_COMPONENT_DEFAULT])
+undefine([XE_COMPONENT_LIST])dnl
+undefine([XE_COMPONENT_DEFAULT])dnl
 ])dnl
 dnl
 dnl XE_PARSE_COMPLEX_OPTION(prefix, cmdline-flag)
@@ -413,57 +423,75 @@ dnl
 dnl Internal macro to parse the option values.  If an undeclared option is
 dnl found then an error is generated.  Because something has been supplied on
 dnl the command line initialise all the complex options to 'no' rather than
-dnl the default.  In thius way --enable-complex=foo will give the expected
+dnl the default.  In this way --enable-complex=foo will give the expected
 dnl value (no) for bar.
 dnl
+dnl #### I think we should add a couple more features.
+dnl First, at the end of XE_PARSE_COMPLEX_OPTION check for contradictory args,
+dnl specifically if `all' is specified but the options are all individually
+dnl disabled, or if `none' is specified but the options are all individually
+dnl enabled, we should _warn_ about this situation.  
+dnl Second, we should provide an XE_VALIDATE_COMPLEX_OPTION macro to be used
+dnl at the end of detection.  If any feature is `yes' but we don't have it,
+dnl then we should XE_DIE.
+dnl
 define([XE_PARSE_COMPLEX_OPTION],
-[for y in $_[$1]_types; do
-  eval "with_[$1]_$y=no"
-  eval "enable_[$1]_$y=no"
+[dnl Initialize variables for COMPLEX_OPTION [$1].  Leading underscore or
+dnl  single letter variables are internal to the XE_PARSE_COMPLEX_OPTION macro.
+_[$1]_all_default=""
+_require_[$1]=""
+dnl check first arg for default spec
+case "$with_[$1]" in
+    n | no | non | none )         _[$1]_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _[$1]_all_default=no ;;
+    a | al | all | both )         _[$1]_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _[$1]_all_default=yes ;;
+    y | yes )                     _require_[$1]=yes ;;
+esac
+dnl if first arg was a default spec, trim it
+if test -n "$_[$1]_all_default$_require_[$1]"; then
+    _with_[$1]_args=`echo $with_[$1] | sed -e 's/^[[a-z]]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_[$1]_args=$with_[$1]
+fi
+dnl set default for each type
+for y in $_[$1]_types; do
+    if test -n "$_[$1]_all_default" ; then
+        eval "with_[$1]_${y}=$_[$1]_all_default"
+    else
+	eval "with_[$1]_$y=\$_[$1]_${y}_default"
+    fi
 done
-for x in `echo "$with_[$1]" | sed -e 's/,/ /g'` ; do
-    _[$1]_all_default=""
+dnl parse the command line arg and set types found appropriately
+for x in `echo "$_with_[$1]_args" | sed -e 's/,/ /g'` ; do
     _[$1]_found=""
-    case "$x" in
-        n | no | non | none ) _[$1]_all_default=no ;;
-        a | al | all | both ) _[$1]_all_default=yes ;;
-    esac
-
-    if test -z "$_[$1]_all_default"; then
-        for y in $_[$1]_types; do
-            dnl echo "testing x='$x' against y='$y'"
-            if test "$x" = "$y"; then
-		dnl echo "$x" = "$y"
-                _[$1]_found=yes
-                dnl echo eval `echo "[$1]_$y=yes"`
-                eval "with_[$1]_$y=yes"
-                eval "enable_[$1]_$y=yes"
-            elif test "$x" = "no$y"; then
-                dnl echo "$x" = "no$y"
-                _[$1]_found=yes
-                dnl echo eval `echo "[$1]_$y=no"`
-                eval "with_[$1]_$y=no"
-                eval "enable_[$1]_$y=no"
-            fi
-        done
-        test -z "$_[$1]_found" && _[$1]_bogus=yes
-    fi
-    if test "$_[$1]_bogus" = "yes" -o \
-         \( -n "$_[$1]_all_default" -a -n "$_[$1]_notfirst" \) ; then
-	USAGE_ERROR(["Valid values for the [$2] option are:
-$_[$1]_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_[$1]_default."])
-    elif test -n "$_[$1]_all_default" ; then
-        for y in $_[$1]_types; do
-	    eval "with_[$1]_$y=$_[$1]_all_default"
-	    eval "enable_[$1]_$y=$_[$1]_all_default"
-        done
-    fi
-    _[$1]_notfirst=yes
+    for y in $_[$1]_types; do
+        if test "$x" = "$y"; then
+            _[$1]_found=yes
+            eval "with_[$1]_$y=yes"
+        elif test "$x" = "no$y"; then
+            _[$1]_found=yes
+            eval "with_[$1]_$y=no"
+        fi
+    done
+    test -z "$_[$1]_found" && \
+	USAGE_ERROR(["\
+Invalid type list supplied.  Valid types for the [$2] option are:
+	$_[$1]_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_[$1]_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."])
 done
-unset _[$1]_bogus _[$1]_found _[$1]_notfirst _[$1]_types
-unset _[$1]_default _[$1]_all_default x y
+dnl copy values to enable_FEATURE_TYPE.  Cleanup default vars.
+for y in $_[$1]_types; do
+  eval "enable_[$1]_$y=\$with_[$1]_$y"
+  unset _[$1]_${y}_default
+done
+dnl clean up
+unset _[$1]_types _[$1]_default _[$1]_all_default _[$1]_use_defaults
+unset _with_[$1]_args _[$1]_found x y _require_[$1]
 ])dnl
 dnl
 dnl XE_COMPLEX_OPTION(option, yesno)
@@ -480,7 +508,7 @@ dnl Boilerplate help string for complex options.
 dnl #### This doesn't read so well for alternative libraries like sound.
 dnl
 define([XE_COMPLEX_OPTION_HELP_STRING],
-[AC_HELP_STRING([$1],[Compile with support for $2. Components that can use
+[AS_HELP_STRING([$1],[Compile with support for $2. Components that can use
 $3 are $4. Prefix component with `no' to disable its use of $3. Requires
 $5 support. Default is $6.])])dnl
 dnl
@@ -496,7 +524,14 @@ define([XE_COMPLEX_ARG],
 XE_MERGED_ARG([$1],[$2],
 [XE_PARSE_COMPLEX_OPTION(patsubst([$1], -, _), [--with-$1])
 $3
-],[$4])])dnl
+],[
+# set default for each type
+for y in [$_]patsubst([$1], -, _)[_types]; do
+    eval "[with_]patsubst([$1], -, _)[_$y]=[\$_]patsubst([$1], -, _)[_${y}_default]"
+    eval "[enable_]patsubst([$1], -, _)[_$y]=[\$_]patsubst([$1], -, _)[_${y}_default]"
+    unset [_]patsubst([$1], -, _)[_${y}_default]
+done
+$4])])dnl
 dnl
 dnl -------------------------------------------------------------------------
 XE_APPEND(lib-src, MAKE_SUBDIR)
@@ -504,7 +539,7 @@ XE_APPEND(lib-src, INSTALL_ARCH_DEP_SUBDIR)
 with_dragndrop_default="no"
 dnl -------------------------------------------------------------------------
 dnl Command line argument processing.
-dnl Note that AC_HELP_STRING compresses whitespace, wraps, and indents the
+dnl Note that AS_HELP_STRING compresses whitespace, wraps, and indents the
 dnl string to fit the --help display; there's no need to preformat.
 dnl
 dnl I think these will be caught by autoconf internal checks,
@@ -525,289 +560,314 @@ dnl
 dnl parse flags
 XE_HELP_SUBSECTION([Compilation options])
 XE_MERGED_ARG([compiler],
-	AC_HELP_STRING([--with-compiler],[C compiler to use]),
+	AS_HELP_STRING([--with-compiler],[C compiler to use]),
 	[], [])
 XE_MERGED_ARG([xemacs-compiler],
-	AC_HELP_STRING([--with-xemacs-compiler],
+	AS_HELP_STRING([--with-xemacs-compiler],
 	[compiler to use to compile just the xemacs executable and C modules.
 			If you want to compile XEmacs as C++, use e.g.
 			`--with-xemacs-compiler=g++'.  This turns on a lot of
 			additional error-checking.]),
 	[], [])
 XE_MERGED_ARG([gcc],
-	AC_HELP_STRING([--with-gcc],[Use GCC to compile XEmacs.]),
+	AS_HELP_STRING([--with-gcc],[Use GCC to compile XEmacs.]),
 	[], [])
 XE_MERGED_ARG([cflags],
-	AC_HELP_STRING([--with-cflags=FLAGS],
-	[Compiler flags.  These flags will be placed after any flags inserted for warnings, debugging or optimization; setting this does not disable the insertion of those flags.  Use configure settings such as `--with-optimization=no' or `enable-debug=no' to turn them off, or override them with `--with-cflags-optimization', `--with-cflags-debugging', or `with-cflags-warning'.]),
+	AS_HELP_STRING([--with-cflags=FLAGS],
+	[Compiler flags.  These flags will be placed after any flags inserted for warnings, debugging or optimization; setting this does not disable the insertion of those flags.  Use configure settings such as `--with-optimization=no' or `with-debug=no' to turn them off, or override them with `--with-cflags-optimization', `--with-cflags-debugging', or `with-cflags-warning'.]),
 	[], [])
 XE_MERGED_ARG([cflags-warning],
-	AC_HELP_STRING([--with-cflags-warning=FLAGS],[Override compiler flags used to control warnings.
+	AS_HELP_STRING([--with-cflags-warning=FLAGS],[Override compiler flags used to control warnings.
                         Normally, don't set this, as XEmacs already turns on
                         the maximum safe warning level.]),
 	[], [])
 XE_MERGED_ARG([optimization],
-	AC_HELP_STRING([--with-optimization],[Control whether compilation is optimized.  By default, optimization is on in release versions and off in beta versions, since it can interfere with proper stack backtraces.]),
+	AS_HELP_STRING([--with-optimization],[Control whether compilation is optimized.  By default, optimization is on in release versions and off in beta versions, since it can interfere with proper stack backtraces.]),
 	[], [])
 XE_MERGED_ARG([cflags-optimization],
-	AC_HELP_STRING([--with-cflags-optimization=FLAGS],
+	AS_HELP_STRING([--with-cflags-optimization=FLAGS],
 	[Override compiler flags used to control optimization.  If blank, forces no optimization; if non-blank, forces optimization.  Normally, don't set this; XEmacs automatically sets the maximum safe optimization flags appropriate for the compiler being invoked.  If you just want to turn optimization on or off, use `with-optimization' instead.]),
 	[], [])
 XE_MERGED_ARG([cflags-debugging],
-	AC_HELP_STRING([--with-cflags-debugging=FLAGS],
+	AS_HELP_STRING([--with-cflags-debugging=FLAGS],
 	[Override compiler flags used to add debugging information to the executable.  Normally, debugging information is added whenever possible (i.e. unless optimization is turned on and the compiler does not permit debugging and optimization simultaneously).]),
 	[], [])
 XE_MERGED_ARG([cpp],
-	AC_HELP_STRING([--with-cpp],[C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)]),
+	AS_HELP_STRING([--with-cpp],[C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)]),
 	[CPP="$with_cpp"], [])
 XE_MERGED_ARG([cppflags],
-	AC_HELP_STRING([--with-cppflags],[C preprocessor flags (e.g. -I/foo or -Dfoo=bar)]),
+	AS_HELP_STRING([--with-cppflags],[C preprocessor flags (e.g. -I/foo or -Dfoo=bar)]),
 	[CPPFLAGS="$with_cppflags"], [])
 XE_MERGED_ARG([libs=LIBS],
-	AC_HELP_STRING([--with-libs],[Additional libraries (e.g. -lfoo)]),
+	AS_HELP_STRING([--with-libs],[Additional libraries (e.g. -lfoo)]),
 	[LIBS="$with_libs"], [])
 XE_MERGED_ARG([ldflags=FLAGS],
-	AC_HELP_STRING([--with-ldflags],[Additional linker flags (e.g. -L/foo)]),
+	AS_HELP_STRING([--with-ldflags],[Additional linker flags (e.g. -L/foo)]),
 	[LDFLAGS="$with_ldflags"], [])
 XE_MERGED_ARG([site-includes],
-	AC_HELP_STRING([--with-site-includes=PATHS],[Prepend to include search path.]),
+	AS_HELP_STRING([--with-site-includes=PATHS],[Prepend to include search path.]),
 	[], [])
 XE_MERGED_ARG([site-libraries],
-	AC_HELP_STRING([--with-site-libraries=PATHS],[Prepend to library search path.]),
+	AS_HELP_STRING([--with-site-libraries=PATHS],[Prepend to library search path.]),
 	[], [])
 XE_MERGED_ARG([site-prefixes],
-	AC_HELP_STRING([--with-site-prefixes=PATHS],[Prepend to include and library search paths, with /include and /lib added.  Comes after site-includes and site-libraries, if any.]),
+	AS_HELP_STRING([--with-site-prefixes=PATHS],[Prepend to include and library search paths, with /include and /lib added.  Comes after site-includes and site-libraries, if any.]),
 	[], [])
 XE_MERGED_ARG([site-runtime-libraries],
-	AC_HELP_STRING([--with-site-runtime-libraries=PATHS],[Prepend to the runtime library search path]),
+	AS_HELP_STRING([--with-site-runtime-libraries=PATHS],[Prepend to the runtime library search path]),
 	[], [])
 XE_MERGED_ARG([dynamic],
-	AC_HELP_STRING([--with-dynamic],[Link dynamically if supported by system.  'No' forces static linking.]),
+	AS_HELP_STRING([--with-dynamic],[Link dynamically if supported by system.  'No' forces static linking.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Installation options])
 XE_MERGED_ARG([prefix],
-	AC_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
+	AS_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
 	[true], [with_prefix=yes])
 XE_MERGED_ARG([netinstall],
-	AC_HELP_STRING([--with-netinstall],[Support for installation over the internet.
+	AS_HELP_STRING([--with-netinstall],[Support for installation over the internet.
                         Only functional on the MS Windows platforms.]),
 	[], [with_netinstall="no"])
 XE_MERGED_ARG([statedir],
-	AC_HELP_STRING([--with-statedir=DIR],[]),
+	AS_HELP_STRING([--with-statedir=DIR],[]),
 	[], [with_statedir='${prefix}/lib'])
 XE_MERGED_ARG([lispdir],
-	AC_HELP_STRING([--with-lispdir=DIR],[]),
+	AS_HELP_STRING([--with-lispdir=DIR],[]),
 	[AC_DEFINE(LISPDIR_USER_DEFINED)], [with_lispdir='${datadir}/${instvardir}/lisp'])
 XE_MERGED_ARG([archlibdir],
-	AC_HELP_STRING([--with-archlibdir=DIR],[]),
+	AS_HELP_STRING([--with-archlibdir=DIR],[]),
 	[AC_DEFINE(ARCHLIBDIR_USER_DEFINED)], [with_archlibdir='${libdir}/${instvardir}/${configuration}'])
 XE_MERGED_ARG([moduledir],
-	AC_HELP_STRING([--with-moduledir=DIR],[]),
+	AS_HELP_STRING([--with-moduledir=DIR],[]),
 	[AC_DEFINE(MODULEDIR_USER_DEFINED)], [with_moduledir='${libdir}/${instvardir}/${configuration}/modules'])
 XE_MERGED_ARG([etcdir],
-	AC_HELP_STRING([--with-etcdir=DIR],[]),
+	AS_HELP_STRING([--with-etcdir=DIR],[]),
 	[AC_DEFINE(ETCDIR_USER_DEFINED)], [with_etcdir='${datadir}/${instvardir}/etc'])
 XE_MERGED_ARG([docdir],
-	AC_HELP_STRING([--with-docdir=DIR],[]),
+	AS_HELP_STRING([--with-docdir=DIR],[]),
 	[AC_DEFINE(DOCDIR_USER_DEFINED)], [with_docdir='${archlibdir}'])
 dnl
 XE_HELP_SUBSECTION([Run-time path-searching options])
 XE_MERGED_ARG([site-lisp],
-	AC_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
+	AS_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
 	[true], [with_site_lisp=no])
 XE_MERGED_ARG([site-modules],
-	AC_HELP_STRING([--with-site-modules=no],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
+	AS_HELP_STRING([--with-site-modules=no],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
 	[], [])
-XE_MERGED_ARG([package-prefix],
-	AC_HELP_STRING([--with-package-prefix=DIR],[Specify packages root.]),
-	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
+XE_MERGED_ARG([early-packages],
+	AS_HELP_STRING([--with-early-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-user-packages).]),
+	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([user-packages],
+	AS_HELP_STRING([--with-user-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-early-packages).]),
+	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([late-packages],
+	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-system-packages).]),
+	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([system-packages],
+	AS_HELP_STRING([--with-system-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
+	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([last-packages],
+	AS_HELP_STRING([--with-last-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-legacy-packages).]),
+	[AC_DEFINE(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([legacy-packages],
+	AS_HELP_STRING([--with-legacy-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-last-packages).]),
+	[AC_DEFINE(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([package-path],
-	AC_HELP_STRING([--with-package-path=PATH],[Search path for package hierarchies.]),
+	AS_HELP_STRING([--with-package-path=PATH],[Search path for package directories.]),
 	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
 XE_MERGED_ARG([infopath],
-	AC_HELP_STRING([--with-infopath=PATH],[Location of info directories]),
+	AS_HELP_STRING([--with-infopath=PATH],[Location of info directories]),
 	[AC_DEFINE(INFOPATH_USER_DEFINED)], [])
 dnl
 XE_HELP_SUBSECTION([Window-system options])
+dnl Enable when fontconfig support is factored out of Xft.
+dnl XE_MERGED_ARG([fontconfig],
+dnl	AS_HELP_STRING([--with-fontconfig],
+dnl		       [Use fontconfig library to configure fonts.],
+dnl		       [],[])
+dnl if you change defaults, make sure to fix arg 6 of the OPTION_HELP macro.
+XE_COMPLEX_ARG([xft],
+	[XE_COMPLEX_OPTION_HELP_STRING([--with-xft],
+		[Xft client-side font rendering and anti-aliasing],
+		[Xft],
+		[`emacs' (buffers), `menubars', `tabs', and `gauges'],
+		[X11, Xft, Xrender, freetype, and fontconfig],
+		[`noemacs, nomenubars, notabs, nogauges'.
+                 The default when selected is `emacs, nomenubars, notabs, nogauges'])],
+	[],[with_xft_emacs=no],
+	[XE_COMPLEX_OPTION([emacs],[yes]),
+	XE_COMPLEX_OPTION([menubars],[no]),
+	XE_COMPLEX_OPTION([tabs],[no]),
+	XE_COMPLEX_OPTION([gauges],[no])])
 XE_MERGED_ARG([gtk],
-	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
 XE_MERGED_ARG([gnome],
-	AC_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gnome=no])
 XE_MERGED_ARG([msw],
-	AC_HELP_STRING([--with-msw],[Support MS Windows as a window system (only under Cygwin and MinGW).  `--with-msw=no' may be needed on *nix systems with Wine installed.]),
+	AS_HELP_STRING([--with-msw],[Support MS Windows as a window system (only under Cygwin and MinGW).  `--with-msw=no' may be needed on *nix systems with Wine installed.]),
 	[], [])
 XE_MERGED_ARG([toolbars],
-	AC_HELP_STRING([--enable-toolbars],[Enable toolbar support. Default: yes.]),
+	AS_HELP_STRING([--with-toolbars],[Enable toolbar support. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([wmcommand],
-	AC_HELP_STRING([--with-wmcommand],[Compile without realized leader window which will
+	AS_HELP_STRING([--with-wmcommand],[Compile without realized leader window which will
                         keep the WM_COMMAND property.]),
 	[], [])
 XE_KEYWORD_ARG([athena],
-	AC_HELP_STRING([--with-athena=TYPE],[Use TYPE Athena widgets (`xaw', `3d', `next', `95', or `xpm').]),
+	AS_HELP_STRING([--with-athena=TYPE],[Use TYPE Athena widgets (`xaw', `3d', `next', `95', or `xpm').]),
 [],[],[xaw,3d,next,95,xpm])dnl
 XE_KEYWORD_ARG([menubars],
-	AC_HELP_STRING([--enable-menubars=TYPE],[Use TYPE menubars ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').  The Lucid
+	AS_HELP_STRING([--with-menubars=TYPE],[Use TYPE menubars ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').  The Lucid
                         widgets emulate Motif (mostly) but are faster.
                         *WARNING*  The Motif menubar is currently broken.
                         Lucid menubars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([scrollbars],
-	AC_HELP_STRING([--enable-scrollbars=TYPE],[Use TYPE scrollbars 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--with-scrollbars=TYPE],[Use TYPE scrollbars 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         Lucid scrollbars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([dialogs],
-	AC_HELP_STRING([--enable-dialogs=TYPE],[Use TYPE dialog boxes 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--with-dialogs=TYPE],[Use TYPE dialog boxes 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         There are no true Lucid dialogs; Motif dialogs will be
                         used if Motif can be found, else Athena is used.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([widgets],
-	AC_HELP_STRING([--enable-widgets=TYPE],[Use TYPE native widgets ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--with-widgets=TYPE],[Use TYPE native widgets ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         Other widget types are currently unsupported.
                         There are no true Lucid widgets; Motif widgets will be
                         used if Motif can be found, else Athena is used.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_MERGED_ARG([dragndrop],
-	AC_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
-                        protocols is found (currently CDE, OffiX, MSWindows,
-                        and GTK).
+	AS_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
+                        protocols is found (currently CDE, MSWindows, and GTK).
                         *WARNING*  The Drag'n'drop support is under development
                                    and is considered experimental.]),
 	[], [])
 XE_MERGED_ARG([cde],
-	AC_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
-	[], [])
-XE_MERGED_ARG([offix],
-	AC_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
-                        *WARNING*  If you compile in OffiX, you may not be
-                                   able to use multiple X displays success-
-                                   fully.  If the two servers are from
-                                   different vendors, the results may be
-                                   unpredictable.]),
-	[], [])
-XE_MERGED_ARG([xmu],
-	AC_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
+	AS_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
 	[], [])
 XE_MERGED_ARG([external-widget],
-	AC_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
+	AS_HELP_STRING([--with-external-widget],[Support XEmacs server for text widgets in other applications.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([TTY (character terminal) options])
 XE_MERGED_ARG([tty],
-	AC_HELP_STRING([--with-tty],[Enable TTY support. Default: yes.]),
+	AS_HELP_STRING([--with-tty],[Enable TTY support. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([ncurses],
-	AC_HELP_STRING([--with-ncurses],[Use the ncurses library for tty support.]),
+	AS_HELP_STRING([--with-ncurses],[Use the ncurses library for tty support.]),
 	[], [])
 XE_MERGED_ARG([gpm],
-	AC_HELP_STRING([--with-gpm],[Compile in GPM mouse support for ttys.]),
+	AS_HELP_STRING([--with-gpm],[Compile in GPM mouse support for ttys.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Image options])
 XE_MERGED_ARG([xpm],
-	AC_HELP_STRING([--with-xpm],[Compile with support for XPM images.  PRACTICALLY
+	AS_HELP_STRING([--with-xpm],[Compile with support for XPM images.  PRACTICALLY
                         REQUIRED.  Although this library is nonstandard and
                         a real hassle to build, many basic things (e.g.
                         toolbars) depend on it, and you will run into
                         many problems without it.]),
 	[], [])
 XE_MERGED_ARG([png],
-	AC_HELP_STRING([--with-png],[Compile with support for PNG images.  Recommended
+	AS_HELP_STRING([--with-png],[Compile with support for PNG images.  Recommended
                         because the images on the About page are not viewable
                         without it.]),
 	[], [])
 XE_MERGED_ARG([jpeg],
-	AC_HELP_STRING([--with-jpeg],[Compile with support for JPEG images.  Useful if
+	AS_HELP_STRING([--with-jpeg],[Compile with support for JPEG images.  Useful if
                         you are using a mail, news reader, or web browser
                         in XEmacs, so that JPEG images can be displayed.]),
 	[], [])
 XE_MERGED_ARG([tiff],
-	AC_HELP_STRING([--with-tiff],[Compile with support for TIFF images.  Possibly
+	AS_HELP_STRING([--with-tiff],[Compile with support for TIFF images.  Possibly
                         useful, for the same reason as JPEG images.]),
 	[], [])
 XE_MERGED_ARG([xface],
-	AC_HELP_STRING([--with-xface],[Compile with support for X-Face mail headers.
+	AS_HELP_STRING([--with-xface],[Compile with support for X-Face mail headers.
                         Requires the compface package.]),
 	[], [])
 XE_MERGED_ARG([gif],
-	AC_HELP_STRING([--with-gif],[Compile without the (builtin) support for GIF images.]),
+	AS_HELP_STRING([--with-gif],[Compile with support for GIF images.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Sound options])
 XE_COMPLEX_ARG([sound],
-	AC_HELP_STRING([--enable-sound=TYPE],[Compile with sound support.
-                        Valid types are `native', `nas' and `esd'.
+	AS_HELP_STRING([--with-sound=TYPE],[Compile with sound support.
+                        Valid types are `native', `alsa', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
                         The first type can be `none' or `all'.  `none' means
-                        `nonative,nonas,noesd'.  `all' means `native,nas,esd'.
-                        Later options override earlier ones for the same TYPE.
-                        The default is to autodetect all sound support except 
-                        for ESD which defaults to off.]),
+                        `nonative,noalsa,nonas,noesd'.  `all' means
+                        `native,alsa,nas,esd'.  Later options override earlier
+                        ones for the same TYPE.  The default is to autodetect
+                        all sound support except for ESD which defaults to
+                        off.]),
 	[],
-	[enable_sound_nas=""],
+	[with_sound_nas=""],
 	[XE_COMPLEX_OPTION([native],[""]),
+	 XE_COMPLEX_OPTION([alsa],[""]),
 	 XE_COMPLEX_OPTION([nas],[""]),
 	 XE_COMPLEX_OPTION([esd],[no])])
 XE_MERGED_ARG([native-sound-lib],
-	AC_HELP_STRING([--with-native-sound-lib],[Path to sound library (for systems with name conflicts).]),
+	AS_HELP_STRING([--with-native-sound-lib],[Path to sound library (for systems with name conflicts).]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Internationalization options])
 XE_MERGED_ARG([mule],
-	AC_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs), i.e. internationalization support,
+	AS_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs), i.e. internationalization support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
+	[], [])
 XE_MERGED_ARG([unicode-internal],
-	AC_HELP_STRING([--with-unicode-internal],[Use Unicode and UTF-8 internally for text.  Automatically selects `--with-mule'.  Without this,
+	AS_HELP_STRING([--with-unicode-internal],[Use Unicode and UTF-8 internally for text.  Automatically selects `--with-mule'.  Without this,
 Mule uses an old internal encoding that explicitly encodes the national
 character set associated with a char and cannot represent all of Unicode.]),
 	[], [])
 XE_KEYWORD_ARG([xim],
-	AC_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
+	AS_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
 	[],[],[yes,no,xlib,motif])dnl
 XE_MERGED_ARG([canna],
-	AC_HELP_STRING([--with-canna],[Support the Canna Japanese input method. Requires Mule.]),
+	AS_HELP_STRING([--with-canna],[Support the Canna Japanese input method. Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([wnn],
-	AC_HELP_STRING([--with-wnn],[Support the Wnn Asian language input
+	AS_HELP_STRING([--with-wnn],[Support the Wnn Asian language input
                         method. Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([wnn6],
-	AC_HELP_STRING([--with-wnn6],[Support the Wnn6 Asian language input
+	AS_HELP_STRING([--with-wnn6],[Support the Wnn6 Asian language input
                         method (proprietary). Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([xfs],
-	AC_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
-                        menubar.  Incompatible with `--with-xim=motif'.
-                        `--enable-menubars=lucid' (the default) is desirable.]),
+	AS_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
+                        menubar.  Incompatible with `--with-xim=motif' and `--with-xft'.
+                        `--with-menubars=lucid' (the default) is desirable.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([File-related options])
 XE_MERGED_ARG([default-eol-detection],
-	AC_HELP_STRING([--enable-default-eol-detection],[Turns on by default auto-detection of end-of-line type
+	AS_HELP_STRING([--with-default-eol-detection],[Turns on by default auto-detection of end-of-line type
 			when reading a file.  Applies to those platforms where
 			auto-detection is off by default (non-Mule Unix).  Has
 			no effect otherwise.]),
 	[], [])
 XE_MERGED_ARG([clash-detection],
-	AC_HELP_STRING([--enable-clash-detection],[Disable use of lock files to detect multiple edits
+	AS_HELP_STRING([--with-clash-detection],[Disable use of lock files to detect multiple edits
 			of the same file.]),
 	[], [])
 XE_MERGED_ARG([zlib],
-	AC_HELP_STRING([--with-zlib],[Support inflate (de)compression internally.]),
+	AS_HELP_STRING([--with-zlib],[Support inflate (de)compression internally.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Database options])
 XE_COMPLEX_ARG([database],
-	AC_HELP_STRING([--enable-database=TYPE],[Compile with database support.  Valid types are
+	AS_HELP_STRING([--with-database=TYPE],[Compile with database support.  Valid types are
                         `no' or a comma-separated list of one or more
-                        of `berkdb' and either `dbm' or `gnudbm'.]),
+                        of `berkdb' and either `dbm' or `gdbm'.]),
 	[
-if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
-	USAGE_ERROR("Only one of \`dbm' and \`gnudbm' may be specified
+if test "$with_database_dbm"  = "yes" -a "$with_database_gdbm" = "yes"; then
+	USAGE_ERROR("Only one of \`dbm' and \`gdbm' may be specified
 with the \`--with-database' option.")
 fi
 ],
@@ -816,119 +876,130 @@ fi
  XE_COMPLEX_OPTION([dbm],[""]),
  XE_COMPLEX_OPTION([gdbm],[""])])
 XE_MERGED_ARG([ldap],
-	AC_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
+	AS_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
 	[], [])
 XE_MERGED_ARG([postgresql],
-	AC_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
+	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Mail options])
 XE_KEYWORD_ARG([mail-locking],
-	AC_HELP_STRING([--with-mail-locking=TYPE],[Specify the locking to be used by movemail to prevent
+	AS_HELP_STRING([--with-mail-locking=TYPE],[Specify the locking to be used by movemail to prevent
                         concurrent updates of mail spool files. Valid types
                         are `lockf', `flock', `file', `locking', `mmdf' or `pop'.]),
 [],[],[lockf,flock,file,locking,mmdf,pop])dnl
 XE_MERGED_ARG([pop],
-	AC_HELP_STRING([--with-pop],[Support POP for mail retrieval.]),
+	AS_HELP_STRING([--with-pop],[Support POP for mail retrieval.]),
 	[], [])
 XE_MERGED_ARG([kerberos],
-	AC_HELP_STRING([--with-kerberos],[Support Kerberos-authenticated POP.]),
+	AS_HELP_STRING([--with-kerberos],[Support Kerberos-authenticated POP.]),
 	[], [])
 XE_MERGED_ARG([hesiod],
-	AC_HELP_STRING([--with-hesiod],[Support Hesiod to get the POP server host.]),
+	AS_HELP_STRING([--with-hesiod],[Support Hesiod to get the POP server host.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Networking options])
 XE_MERGED_ARG([tooltalk],
-	AC_HELP_STRING([--with-tooltalk],[Support the ToolTalk IPC protocol.]),
+	AS_HELP_STRING([--with-tooltalk],[Support the ToolTalk IPC protocol.]),
 	[], [])
 XE_MERGED_ARG([socks],
-	AC_HELP_STRING([--with-socks],[Compile with support for SOCKS (an Internet proxy).]),
+	AS_HELP_STRING([--with-socks],[Compile with support for SOCKS (an Internet proxy).]),
 	[], [])
 XE_MERGED_ARG([dnet],
-	AC_HELP_STRING([--with-dnet],[Compile with support for DECnet.]),
+	AS_HELP_STRING([--with-dnet],[Compile with support for DECnet.]),
 	[], [])
 XE_MERGED_ARG([ipv6-cname],
-	AC_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
+	AS_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
 	[], [with_ipv6_cname="no"])
 dnl
 XE_HELP_SUBSECTION([Memory allocation options])
 XE_MERGED_ARG([rel-alloc],
-	AC_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
+	AS_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
 	[], [with_rel_alloc='default'])
 XE_MERGED_ARG([dlmalloc],
-	AC_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
+	AS_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
 	[], [with_dlmalloc='default'])
 XE_MERGED_ARG([system-malloc],
-	AC_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
+	AS_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
 	[], [with_system_malloc='default'])
 XE_MERGED_ARG([debug-malloc],
-	AC_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
+	AS_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
 	[], [])
 XE_MERGED_ARG([pdump],
-	AC_HELP_STRING([--enable-pdump],[Enable portable LISP preloader.]),
+	AS_HELP_STRING([--with-pdump],[Enable portable LISP preloader.]),
 	[], [])
 XE_MERGED_ARG([dump-in-exec],
-	AC_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
+	AS_HELP_STRING([--with-dump-in-exec],[Enable dumping into executable (enabled by default
 			for `pdump', not enabled by default in combination 
-			with `mc-alloc').]),
+			with `newgc').]),
 	[], [])
 XE_MERGED_ARG([kkcc],
-	AC_HELP_STRING([--enable-kkcc],[Enable experimental new GC algorithms.]),
-	[], [enable_kkcc=yes])
-XE_MERGED_ARG([mc-alloc],
-	AC_HELP_STRING([--enable-mc-alloc],[Enable experimental new allocator.]),
-	[], [enable_mc_alloc=yes])
+	AS_HELP_STRING([--with-kkcc],[Enable experimental new GC mark algorithms.]),
+	[], [with_kkcc=yes])
+
+XE_MERGED_ARG([newgc],
+	AS_HELP_STRING([--with-newgc],[Enable new incremental garbage collector and new allocator.]),
+	[], [])
+XE_COMPLEX_ARG([vdb],
+	AS_HELP_STRING([--with-vdb=TYPE],[Override auto-detection of 
+			virtual-dirty-bit write-barrier implementation for the
+			new garbage collector. TYPE must be one of "auto" (for 
+			auto-detection), "posix", "win32", "mach", or "fake" 
+			(uses the new garbage collector but disables 
+			incremental collections). The default is to
+			use auto-detection.]),
+	[], [with_vdb="auto"],[auto,posix,win32,mach,fake,no])
 dnl
 XE_HELP_SUBSECTION([Emacs Lisp options])
 XE_MERGED_ARG([modules],
-	AC_HELP_STRING([--enable-modules],[Compile in experimental support for dynamically
+	AS_HELP_STRING([--with-modules],[Compile in experimental support for dynamically
                         loaded libraries (Dynamic Shared Objects).]),
 	[], [])
 XE_KEYWORD_ARG([bignum],
-	AC_HELP_STRING([--enable-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
+	AS_HELP_STRING([--with-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
                         (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
-	[], [enable_bignum="no"],[no,gmp,mp])
+	[], [with_bignum="no"],[no,gmp,mp])
 dnl
 XE_HELP_SUBSECTION([Platform Specific options])
 XE_MERGED_ARG([workshop],
-	AC_HELP_STRING([--with-workshop],[Support the Sun WorkShop (formerly Sparcworks)
+	AS_HELP_STRING([--with-workshop],[Support the Sun WorkShop (formerly Sparcworks)
                         development environment.]),
 	[], [])
 XE_MERGED_ARG([sparcworks],
-	AC_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
+	AS_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
 	[], [])
 XE_MERGED_ARG([infodock],
-	AC_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
+	AS_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
-	AC_HELP_STRING([--with-debug],[Enable additional debugging information.  No time cost.]),
+	AS_HELP_STRING([--with-debug],[Enable additional debugging information.  No time cost.]),
 	[], [])
+dnl Keep TESTS sorted to help with syncing doc to reality.
 XE_COMPLEX_ARG([error-checking],
-	AC_HELP_STRING([--enable-error-checking=TESTS],[Compile with internal error-checking added.
+	AS_HELP_STRING([--with-error-checking=TESTS],[Compile with internal error-checking added.
                         Causes noticeable loss of speed.  Valid TESTS
-                        are `extents', `bufpos', `malloc', `gc', `types', `text', `byte_code', `glyphs', `display', `structures'.]),
+                        are `byte_code', `display', `extents', `gc', `glyphs', `malloc', `structures' `text', `types'.]),
 	[], [],
-[XE_COMPLEX_OPTION([extents],[""]),
- XE_COMPLEX_OPTION([types],[""]),
- XE_COMPLEX_OPTION([text],[""]),
- XE_COMPLEX_OPTION([gc],[""]),
- XE_COMPLEX_OPTION([malloc],[""]),
- XE_COMPLEX_OPTION([byte_code],[""]),
- XE_COMPLEX_OPTION([glyphs],[""]),
+[XE_COMPLEX_OPTION([byte_code],[""]),
  XE_COMPLEX_OPTION([display],[""]),
- XE_COMPLEX_OPTION([structures],[""])])
+ XE_COMPLEX_OPTION([extents],[""]),
+ XE_COMPLEX_OPTION([gc],[""]),
+ XE_COMPLEX_OPTION([glyphs],[""]),
+ XE_COMPLEX_OPTION([malloc],[""]),
+ XE_COMPLEX_OPTION([structures],[""]),
+ XE_COMPLEX_OPTION([text],[""]),
+ XE_COMPLEX_OPTION([types],[""])])
 XE_MERGED_ARG([assertions],
-	AC_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
+	AS_HELP_STRING([--with-assertions],[Compile in runtime assertions.]),
 	[], [])
 XE_MERGED_ARG([memory-usage-stats],
-	AC_HELP_STRING([--with-memory-usage-stats],[Enable LISP memory usage API.]),
+	AS_HELP_STRING([--with-memory-usage-stats],[Enable LISP memory usage API.]),
 	[], [])
 XE_MERGED_ARG([quick-build],
-	AC_HELP_STRING([--with-quick-build],[Speed up the build cycle by leaving out steps where
+	AS_HELP_STRING([--with-quick-build],[Speed up the build cycle by leaving out steps where
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
                         doing. This (1) doesn't garbage-collect after loading
@@ -940,13 +1011,13 @@ XE_MERGED_ARG([quick-build],
                         to be rebuilt.]),
 	[], [])
 XE_MERGED_ARG([union-type],
-	AC_HELP_STRING([--enable-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
+	AS_HELP_STRING([--with-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
 	[], [])
 XE_MERGED_ARG([quantify],
-	AC_HELP_STRING([--with-quantify],[Support performance debugging using Quantify.]),
+	AS_HELP_STRING([--with-quantify],[Support performance debugging using Quantify.]),
 	[], [])
 XE_MERGED_ARG([purify],
-	AC_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
+	AS_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
 	[], [])
 dnl -------------------------------------------------------------------------
 dnl Final command line argument checks.
@@ -959,6 +1030,20 @@ fi
 dnl CDE requires tooltalk
 XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
 
+dnl Xft sanity checking
+dnl #### Maybe we should XE_DIE here instead?  Or fix the UI so that
+dnl emacs is always implicit?  (I worry that --without-xft would be weird.)
+if test \( "$with_xft_menubars" = "yes" -o "$with_xft_tabs" = "yes" \
+           -o "$with_xft_gauges" = "yes" \) -a "$with_xft_emacs" = "no"; then
+    AC_MSG_WARN([Forcing --with-xft=emacs because Xft is enabled])
+    with_xft_emacs=yes
+fi
+
+dnl XFS and Xft in menubars conflict
+if test "$with_xfs" = "yes" -a "$with_xft_menubars" = "yes"; then
+  USAGE_ERROR("XFS and Xft in the menubars are incompatible!")
+fi
+
 dnl -------------------------------------------------------------------------
 dnl Local paths
 test "x$prefix" = xNONE && prefix=$ac_default_prefix
@@ -969,30 +1054,41 @@ then
 else
   AC_DEFINE(EXEC_PREFIX_USER_DEFINED)
 fi
-if test "x$datadir" != 'x${prefix}/share'
+
+define([XE_EXPAND_VARIABLE],
+[$2=[$]$1
+while true; do
+  case "[$]$2" in
+    *\[$]* ) eval "$2=[$]$2" ;;
+    *) break ;;
+  esac
+done])dnl XE_EXPAND_VARIABLE
+
+XE_EXPAND_VARIABLE(prefix,prefix_expanded)
+XE_EXPAND_VARIABLE(datadir,datadir_expanded)
+XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
+XE_EXPAND_VARIABLE(libdir,libdir_expanded)
+XE_EXPAND_VARIABLE(infodir,infodir_expanded)
+
+if test "x$datadir" != "x\${datarootdir}"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
   AC_DEFINE(LISPDIR_USER_DEFINED)
-  AC_DEFINE(MODULEDIR_USER_DEFINED)
   AC_DEFINE(ETCDIR_USER_DEFINED)
+fi
+
+if test "x$libdir" != "x\${exec_prefix}/lib"
+then
+  AC_DEFINE(MODULEDIR_USER_DEFINED)
+  AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
   AC_DEFINE(DOCDIR_USER_DEFINED)
-  AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
-else
-  datadir='${prefix}/lib'
 fi
-if test "x$libdir" != 'x${exec_prefix}/lib'
-then
-  AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
-fi
-if test "x$mandir" = 'x${prefix}/man'
-then
-  mandir='${prefix}/man/man1'
-fi
-if test "x$infodir" != 'x${prefix}/info'
+
+if test "x$infodir" != "x\${datarootdir}/info"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
 else
-  infodir='${datadir}/${instvardir}/info'
+  infodir='${datarootdir}/${instvardir}/info'
 fi
 
 with_sitelispdir='${datadir}/${inststaticdir}/site-lisp'
@@ -1064,6 +1160,11 @@ dnl -------------------------------------------------------------------------
 dnl ----------------------------------------
 dnl Find out which version of XEmacs this is
 dnl ----------------------------------------
+dnl This should be the same code as in Makefile.in.in
+cp "$srcdir/version.sh.in" "$srcdir/version.sh"
+if test -d "$srcdir/.hg"; then
+    (cd "$srcdir"; hg identify | cut -d " " -f 1 >> version.sh)
+fi
 . "$srcdir/version.sh" || exit 1;
 dnl Must do the following first to determine verbosity for AC_DEFINE
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
@@ -1081,8 +1182,11 @@ if test -n "$emacs_beta_version" ; then
   fi
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
+dnl for etags
+verbose_version=$version
 if test "$xemacs_extra_name" != ""; then
   AC_DEFINE_UNQUOTED(XEMACS_EXTRA_NAME, "$xemacs_extra_name")
+  verbose_version="$verbose_version $xemacs_extra_name"
 fi
 if test "$xemacs_release_date" != ""; then
   AC_DEFINE_UNQUOTED(XEMACS_RELEASE_DATE, "$xemacs_release_date")
@@ -1104,12 +1208,18 @@ if test "$with_infodock" = "yes"; then
   AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
   version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
   PROGNAME=infodock
+  SHEBANG_PROGNAME=infodock-script
   CPPFLAGS="$CPPFLAGS -DINFODOCK"
 else
   PROGNAME=xemacs
+  SHEBANG_PROGNAME=xemacs-script
 fi
 
+AC_SUBST(SHEBANG_PROGNAME)
+
 AC_DEFINE_UNQUOTED(EMACS_PROGNAME, "$PROGNAME")
+
+AC_DEFINE_UNQUOTED(SHEBANG_PROGNAME, "${PROGNAME}-script")
 
 dnl ----------------------------------
 dnl Error checking and debugging flags
@@ -1177,63 +1287,26 @@ dnl Straightforward machine determination
 case "$ac_cv_build" in
   sparc-*-*        ) machine=sparc ;;
   alpha*-*-*       ) machine=alpha ;;
-  vax-*-*          ) machine=vax ;;
-  mips-dec-*       ) machine=pmax ;;
-  mips-sgi-irix6*  ) machine=iris6d ;;
-  mips-sgi-*       ) machine=iris4d ;;
   mips*-linux      ) machine=mips ;;
-  romp-ibm-*       ) machine=ibmrt ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
   powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
-  m88k-dg-*        ) machine=aviion ;;
-  m68*-sony-*      ) machine=news ;;
-  mips-sony-*      ) machine=news-risc ;;
-  clipper-*        ) machine=clipper ;;
   arm*             ) machine=arm ;;
-  ns32k-*          ) machine=ns32000 ;;
 esac
 
 dnl Straightforward OS determination
 case "$ac_cv_build" in
-  *-*-linux*    ) opsys=linux ;;
   *-*-netbsd*   ) opsys=netbsd ;;
   *-*-openbsd*	) opsys=openbsd ;;
-  *-*-nextstep* ) opsys=nextstep ;;
-  *-*-vms       ) opsys=vms ;;
-
-  dnl DEC OSF
-  *-dec-osf1.3 | *-dec-osf2* ) opsys=decosf1-3 ;;
-  *-dec-osf1.2 | *-dec-osf1* ) opsys=decosf1-2 ;;
-  *-dec-osf3.[[2-9]]         ) opsys=decosf3-2 ;;
-  *-dec-osf3*                ) opsys=decosf3-1 ;;
-  *-dec-osf[[4-9]]*          ) opsys=decosf4-0 ;;
-
-  dnl DEC Ultrix
-  *-*-ultrix[[0-3]].* | *-*-ultrix4.0* ) opsys=bsd4-2 ;;
-  *-*-ultrix4.[[12]]* ) opsys=bsd4-3 ;;
-  *-*-ultrix* )         opsys=ultrix4-3 ;;
 
   dnl AIX
-  *-*-aix3.1*     ) opsys=aix3-1   ;;
-  *-*-aix3.2.5    ) opsys=aix3-2-5 ;;
-  *-*-aix3*       ) opsys=aix3-2   ;;
-  *-*-aix4.0*     ) opsys=aix4	   ;;
-  *-*-aix4.1*     ) opsys=aix4-1   ;;
   *-*-aix[[4-9]]* ) opsys=aix4-2   ;;
 
   dnl Other generic OSes
   *-gnu* )			opsys=gnu    ;;
-  *-*-bsd4.[[01]] )		opsys=bsd4-1 ;;
-  *-*-bsd4.2 )			opsys=bsd4-2 ;;
   *-*-bsd4.3 )			opsys=bsd4-3 ;;
-  *-*-aos4.2 )			opsys=bsd4-2 ;;
   *-*-aos*   )			opsys=bsd4-3 ;;
-  *-*-sysv0    | *-*-sysvr0 )	opsys=usg5-0 ;;
-  *-*-sysv2    | *-*-sysvr2 )	opsys=usg5-2 ;;
-  *-*-sysv2.2  | *-*-sysvr2.2 )	opsys=usg5-2-2 ;;
-  *-*-sysv3*   | *-*-sysvr3* )	opsys=usg5-3 ;;
   *-*-sysv4.1* | *-*-sysvr4.1* )opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
   *-*-sysv4.[[2-9]]* | *-sysvr4.[[2-9]]* )
 	if test -z "$NON_GNU_CPP" ; then
@@ -1252,11 +1325,6 @@ case "$ac_cv_build" in
   *-*-netbsd* )
     case "${ac_cv_build}" in
       i[[3-9]]86-*-netbsd*) machine=intel386 ;;
-      hp300-*-netbsd* | amiga-*-netbsd* | sun3-*-netbsd* | mac68k-*-netbsd* | da30-*-netbsd* | m68k-*-netbsd* )
-                      dnl Yes, this is somewhat bogus.
-                      machine=hp9000s300 ;;
-      pc532-*-netbsd* | ns32k-*-netbsd* )  machine=ns32000 ;;
-      pmax-*-netbsd*  | mips-*-netbsd*  )  machine=pmax ;;
     esac
   ;;
 
@@ -1264,265 +1332,38 @@ case "$ac_cv_build" in
   *-*-openbsd* )
     case "${ac_cv_build}" in
       i386-*-openbsd*)		machine=intel386 ;;
-      m68k-*-openbsd*)		machine=hp9000s300 ;;
-      mipsel-*-openbsd*)	machine=pmax ;;
      esac
    ;;
-
-  dnl Acorn RISCiX:
-  arm-acorn-riscix1.1* ) machine=acorn opsys=riscix1-1 ;;
-  arm-acorn-riscix1.2* | arm-acorn-riscix ) machine=acorn opsys=riscix1-2 ;;
-
-  dnl Alliant machines
-  fx80-alliant-* ) machine=alliant4     opsys=bsd4-2 ;;
-  i860-alliant-* ) machine=alliant-2800 opsys=bsd4-3 ;;
-
-  dnl Altos 3068
-  m68*-altos-sysv* ) machine=altos opsys=usg5-2 ;;
-
-  dnl Amdahl UTS
-  580-amdahl-sysv* ) machine=amdahl opsys=usg5-2-2 ;;
-
-  dnl Apollo, Domain/OS
-  m68*-apollo-* ) machine=apollo opsys=bsd4-3 ;;
-
-  dnl AT&T 3b2, 3b5, 3b15, 3b20
-  we32k-att-sysv* ) machine=att3b opsys=usg5-2-2 ;;
-
-  dnl AT&T 3b1 - The Mighty Unix PC!
-  m68*-att-sysv* ) machine=7300 opsys=usg5-2-2 ;;
-
-  dnl Bull machines
-  rs6000-bull-bosx* ) machine=ibmrs6000 opsys=aix3-2 ;; # dpx20
-  m68*-bull-sysv3*  ) machine=dpx2      opsys=usg5-3 ;; # dpx2
-  m68*-bull-sysv2*  ) machine=sps7      opsys=usg5-2 ;; # sps7
-
-  dnl CCI 5/32, 6/32 -- see "Tahoe".
-
-  dnl Celerity
-  celerity-celerity-bsd* ) machine=celerity opsys=bsd4-2 ;;
-
-  dnl Convex
-  *-convex-bsd* | *-convex-convexos* )
-    machine=convex opsys=bsd4-3
-    NON_GNU_CPP="cc -E -P"
-  ;;
-
-  dnl Cubix QBx/386
-  i[[3-9]]86-cubix-sysv* ) machine=intel386 opsys=usg5-3 ;;
 
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
     opsys=darwin
+    dnl Use this to set BSD correctly.
+    AC_DEFINE(USE_PARAM_H)
     ;;
 
-  dnl Data General AViiON Machines
-  i586-dg-dgux*R4*   | i586-dg-dgux5.4.4* ) machine=aviion opsys=dgux5-4r4 ;;
-  m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) opsys=dgux5-4r3 ;;
-  m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* ) opsys=dgux5-4r2 ;;
-  m88k-dg-dgux* 			  ) opsys=dgux	   ;;
-
-  dnl Motorola Delta machines
-  m68k-motorola-sysv* | m68000-motorola-sysv* ) machine=delta opsys=usg5-3 ;;
-  m88k-motorola-sysv4* )
-    dnl jbotte@bnr.ca says that UNIX_System_V <hostName> 4.0 R40V4.3 m88k mc88110
-    dnl needs POSIX_SIGNALS and therefore needs usg5-4-2.
-    dnl I hope there are not other 4.0 versions for this machine
-    dnl which really need usg5-4 instead.
-    machine=delta88k opsys=usg5-4-2
-  ;;
-  m88k-motorola-sysv* | m88k-motorola-m88kbcs* ) machine=delta88k opsys=usg5-3 ;;
-
-  dnl Dual machines
-  m68*-dual-sysv*    ) machine=dual opsys=usg5-2   ;;
-  m68*-dual-uniplus* ) machine=dual opsys=unipl5-2 ;;
-
-  dnl Encore machines
-  ns16k-encore-bsd* ) machine=ns16000 opsys=umax ;;
-
-  dnl Gould Power Node and NP1
-  pn-gould-bsd4.2* ) machine=gould     opsys=bsd4-2 ;;
-  pn-gould-bsd4.3* ) machine=gould     opsys=bsd4-3 ;;
-  np1-gould-bsd* )   machine=gould-np1 opsys=bsd4-3 ;;
-
-  dnl Harris Night Hawk machines running CX/UX (a 5000 looks just like a 4000
-  dnl as far as XEmacs is concerned).
-  m88k-harris-cxux* )
-    dnl Build needs to be different on 7.0 and later releases
-    case "`uname -r`" in
-       [[56]].[[0-9]] ) machine=nh4000 opsys=cxux  ;;
-       [[7]].[[0-9]]  ) machine=nh4000 opsys=cxux7 ;;
-    esac
-    NON_GNU_CPP="/lib/cpp"
-  ;;
-  dnl Harris ecx or gcx running CX/UX (Series 1200, Series 3000)
-  m68k-harris-cxux* ) machine=nh3000 opsys=cxux ;;
-  dnl Harris power pc NightHawk running Power UNIX (Series 6000)
-  powerpc-harris-powerunix ) machine=nh6000 opsys=powerunix NON_GNU_CPP="cc -Xo -E -P" ;;
-
-  dnl Honeywell XPS100
-  xps*-honeywell-sysv* ) machine=xps100 opsys=usg5-2 ;;
-
-  dnl HP 9000 series 200 or 300
-  m68*-hp-bsd* ) machine=hp9000s300 opsys=bsd4-3 ;;
-
   dnl HP-UX
-  *-hp-hpux* )
-    dnl Figure out machine and opsys orthogonally
-    case "$ac_cv_build" in
-      m68*  ) machine=hp9000s300 ;;
-      hppa* ) machine=hp800      ;;
-    esac
-
-    case "$ac_cv_build" in
-      *-hp-hpux7*  )  opsys=hpux   ;;
-      *-hp-hpux8*  )  opsys=hpux8  ;;
-      *-hp-hpux9*  )  opsys=hpux9  ;;
-      *-hp-hpux10* )  opsys=hpux10 ;;
-      *-hp-hpux11* )  opsys=hpux11 ;;
-      *            )  opsys=hpux   ;;
-    esac
-
-    dnl HP has a broken "strcat"
-    case "$opsys" in hpux9 | hpux10 ) XE_ADD_OBJS(strcat.o) ;; esac
-
-    if test "$opsys" = "hpux10" -o "$opsys" = "hpux11"; then \
-	ansi_flag="-Ae"; else ansi_flag="-Aa"; fi
-    NON_GNU_CC="cc $ansi_flag" NON_GNU_CPP="cc $ansi_flag -E"
+  *-hp-hpux* ) machine=hp800 opsys=hpux11
+    NON_GNU_CC="cc -Ae" NON_GNU_CPP="cc -Ae -E"
 
     case "$ac_cv_build" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
-  dnl Orion machines
-  orion-orion-bsd*   ) machine=orion    opsys=bsd4-2 ;;
-  clipper-orion-bsd* ) machine=orion105 opsys=bsd4-2 ;;
-
-  dnl IBM machines
-  i[[3-9]]86-ibm-aix1.1* ) machine=ibmps2-aix opsys=usg5-2-2 ;;
-  i[[3-9]]86-ibm-aix1.[[23]]* | i[[3-9]]86-ibm-aix* ) machine=ibmps2-aix opsys=usg5-3 ;;
-  i370-ibm-aix*) machine=ibm370aix opsys=usg5-3 ;;
-  romp-ibm-aos*    ) opsys=bsd4-3 ;;
-  romp-ibm-bsd*    ) opsys=bsd4-3 ;;
-  romp-ibm-mach*   ) opsys=mach-bsd4-3 ;;
-
-  dnl Integrated Solutions "Optimum V"
-  m68*-isi-bsd4.2* ) machine=isi-ov opsys=bsd4-2 ;;
-  m68*-isi-bsd4.3* ) machine=isi-ov opsys=bsd4-3 ;;
-
-  dnl Intel 386 machines where we do care about the manufacturer
-  i[[3-9]]86-intsys-sysv* ) machine=is386 opsys=usg5-2-2 ;;
-
-  dnl Prime EXL
-  i[[3-9]]86-prime-sysv* ) machine=i386 opsys=usg5-3 ;;
-
-  dnl Sequent Symmetry running Dynix
-  i[[3-9]]86-sequent-bsd* ) machine=symmetry opsys=bsd4-3 ;;
-
-  dnl Sequent Symmetry running DYNIX/ptx
-  i[[3-9]]86-sequent-ptx* ) machine=sequent-ptx opsys=ptx NON_GNU_CPP="/lib/cpp" ;;
-
-  dnl Unspecified sysv on an ncr machine defaults to svr4.2.
-  dnl (Plain usg5-4 does not turn on POSIX signals, which we need.)
-  i[[3-9]]86-ncr-sysv* ) machine=ncr386 opsys=usg5-4-2 ;;
-
-  dnl Intel Paragon OSF/1
-  i860-intel-osf1* ) machine=paragon opsys=osf1 NON_GNU_CPP=/usr/mach/lib/cpp ;;
-
-  dnl Intel 860
-  i860-*-sysv4* ) machine=i860 opsys=usg5-4 NON_GNU_CC="/bin/cc" NON_GNU_CPP="/usr/ccs/lib/cpp" ;;
-
-  dnl Masscomp machines
-  m68*-masscomp-rtu* ) machine=masscomp opsys=rtu ;;
-
-  dnl Megatest machines
-  m68*-megatest-bsd* ) machine=mega68 opsys=bsd4-2 ;;
-
   dnl Workstations sold by MIPS
   dnl This is not necessarily all workstations using the MIPS processor -
   dnl Irises are produced by SGI, and DECstations by DEC.
-  mips-mips-usg* ) machine=mips4 ;;
-  mips-mips-riscos4 )
-    machine=mips4
-    NON_GNU_CC="cc -systype bsd43"
-    NON_GNU_CPP="cc -systype bsd43 -E"
-    case "$ac_cv_build" in
-      mips-mips-riscos4* ) opsys=bsd4-3  ;;
-      mips-mips-riscos5* ) opsys=riscos5 ;;
-    esac
-  ;;
   mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
-  mips-mips-*    ) machine=mips opsys=usg5-2-2 ;;
-
-  dnl NeXT
-  m68*-next-* | m68k-*-nextstep* ) machine=m68k opsys=nextstep ;;
-
-  dnl The complete machine from National Semiconductor
-  ns32k-ns-genix* ) machine=ns32000 opsys=usg5-2 ;;
-
-  dnl NCR machines
-  m68*-ncr-sysv2* | m68*-ncr-sysvr2* ) machine=tower32   opsys=usg5-2-2 ;;
-  m68*-ncr-sysv3* | m68*-ncr-sysvr3* ) machine=tower32v3 opsys=usg5-3 ;;
-
-  dnl Nixdorf Targon 31
-  m68*-nixdorf-sysv* ) machine=targon31 opsys=usg5-2-2 ;;
-
-  dnl Nu (TI or LMI)
-  m68*-nu-sysv* ) machine=nu opsys=usg5-2 ;;
-
-  dnl Plexus
-  m68*-plexus-sysv* ) machine=plexus opsys=usg5-2 ;;
-
-  dnl Pyramid machines
-  pyramid-pyramid-bsd* ) machine=pyramid opsys=bsd4-2 ;;
-
-  dnl Sequent Balance
-  ns32k-sequent-bsd4.2* ) machine=sequent opsys=bsd4-2 ;;
-  ns32k-sequent-bsd4.3* ) machine=sequent opsys=bsd4-3 ;;
-
-  dnl Siemens Nixdorf
-  mips-siemens-sysv* | mips-sni-sysv*)
-    machine=mips-siemens opsys=usg5-4
-    NON_GNU_CC=/usr/ccs/bin/cc
-    NON_GNU_CPP=/usr/ccs/lib/cpp
-  ;;
-
-  dnl NEC
-  mips-nec-sysv*)
-    machine=mips-nec
-    NON_GNU_CC=/usr/ccs/bin/cc
-    NON_GNU_CPP=/usr/ccs/lib/cpp
-  ;;
+  mips-mips-*    ) machine=mips opsys=usg5-4-2 ;;
 
   dnl Silicon Graphics machines
-  dnl Iris 2500 and Iris 2500 Turbo (aka the Iris 3030)
-  m68*-sgi-iris3.5* ) machine=irist opsys=iris3-5 ;;
-  m68*-sgi-iris3.6* | m68*-sgi-iris*) machine=irist opsys=iris3-6 ;;
   dnl Iris 4D
-  mips-sgi-irix3.*    ) opsys=irix3-3 ;;
-  mips-sgi-irix4.*    ) opsys=irix4-0 ;;
   mips-sgi-irix6*     ) opsys=irix6-0 ;;
-  mips-sgi-irix5.1*   ) opsys=irix5-1 ;;
-  mips-sgi-irix5.2*   ) opsys=irix5-2 ;;
-  mips-sgi-irix5.*    ) opsys=irix5-3 ;;
-  mips-sgi-irix*      ) opsys=irix5-0 ;;
-
-  dnl SONY machines
-  *-sony-newsos[[34]]* | *-sony-news[[34]]* ) opsys=bsd4-3 ;;
-  *-sony-news* ) opsys=newsos5 ;;
-
-  dnl Stride
-  m68*-stride-sysv* ) machine=stride opsys=usg5-2 ;;
 
   dnl Suns
-  *-*-solaris* | *-*-sunos* | *-sun-mach* | *-sun-bsd* )
+  *-*-solaris* | *-sun-mach* | *-sun-bsd* )
     dnl Hardware type
     case "$ac_cv_build" in
-      m68*-sunos1* )	         machine=sun1     ;;
-      m68*-sunos2* )	         machine=sun2     ;;
-      m68* )		         machine=sun3     ;;
-      i*86*-sun-sunos[[34]]* )   machine=sun386   ;;
       i*86-*-* )	         machine=intel386 ;;
-      rs6000* )                  machine=rs6000   ;;
     esac
 
     dnl Make $canonical even more so.
@@ -1530,14 +1371,7 @@ case "$ac_cv_build" in
       ac_cv_build=`echo $ac_cv_build | sed -e s/sunos5/solaris2/`;;
     esac
 
-    dnl On SunOS 4, use /usr/lib/cpp, sans dynodump, /bin/ranlib
-    dnl On SunOS 5, use cc -E,        need dynodump, RANLIB not needed
-    dnl But, SunOS 5.6 no longer needs dynodump because it has a similar
-    dnl function integrated.
     case "$ac_cv_build" in
-      *-sunos4* )
-	#test -f /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
-	: ;;
       *-solaris2* )
 	#test -f /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
 	RANLIB=':' ;;
@@ -1554,99 +1388,27 @@ case "$ac_cv_build" in
 	os_release="${os_release_major}${os_release_minor}"
 	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
 
-      dnl The last Sun386 ran 4.0.
-      i*86-*-sunos4*      ) opsys=sunos4-0	;;
-      *-sunos4.0*	  ) opsys=sunos4-0	;;
-      *-sunos4.1.2*	  ) opsys=sunos4-1-2	;;
-      *-sunos4.1.3*	  ) opsys=sunos4-1-3	;;
-      *-sunos4.1.[[4-9]]* ) opsys=sunos4-1-4	;;
-      *-sunos4* | *-sunos ) opsys=sunos4-1	;;
       *-mach*		  ) opsys=mach-bsd4-3	;;
-      *			  ) opsys=bsd4-2	;;
+      *			  ) opsys=bsd4-3	;;
     esac
-
-    case "$ac_cv_build" in *-sunos4*shr* ) opsys="${opsys}-shr" ;; esac
 
     dnl Watch out for a compiler guaranteed not to work.
     test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
 
-  dnl Tadpole 68k
-  m68*-tadpole-sysv* ) machine=tad68k opsys=usg5-3 ;;
-
-  dnl Tahoe machines
-  tahoe-tahoe-bsd4.2* ) machine=tahoe opsys=bsd4-2 ;;
-  tahoe-tahoe-bsd4.3* ) machine=tahoe opsys=bsd4-3 ;;
-
-  dnl Tandem Integrity S2
-  mips-tandem-sysv* ) machine=tandem-s2 opsys=usg5-3 ;;
-
-  dnl Tektronix XD88
-  m88k-tektronix-sysv3* ) machine=tekxd88 opsys=usg5-3 ;;
-
-  dnl Tektronix 16000 box (6130?)
-  ns16k-tektronix-bsd* ) machine=ns16000 opsys=bsd4-2 ;;
-  dnl Tektronix 4300
-  dnl src/m/tek4300.h hints that this is a m68k machine.
-  m68*-tektronix-bsd* ) machine=tek4300 opsys=bsd4-3 ;;
-
-  dnl Titan P2 or P3
-  titan-titan-sysv* ) machine=titan opsys=usg5-3 ;;
-
-  dnl Ustation E30 (SS5E)
-  m68*-unisys-uniplus* ) machine=ustation opsystem=unipl5-2 ;;
-
-  dnl Vaxen.
-  vax-dec-* )
-    case "$ac_cv_build" in
-      *-sysv[[01]]* | *-sysvr[[01]]* ) 	opsys=usg5-0 ;;
-      *-sysv2* | *-sysvr2* )		opsys=usg5-2 ;;
-      *-mach* )				opsys=mach-bsd4-3 ;;
-    esac
-  ;;
-
-  dnl Whitechapel MG1
-  ns16k-whitechapel-* ) machine=mg1 ;;
-
-  dnl Wicat
-  m68*-wicat-sysv* ) machine=wicat opsys=usg5-2 ;;
-
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
     machine=intel386
     case "$ac_cv_build" in
-      *-isc1.* | *-isc2.[[01]]* ) opsys=386-ix ;;
-      *-isc2.2* )		opsys=isc2-2 ;;
-      *-isc4.0* )		opsys=isc4-0 ;;
-      *-isc4.* )		opsys=isc4-1
-				GCC_TEST_OPTIONS=-posix
-				NON_GCC_TEST_OPTIONS=-Xp
-				;;
-      *-isc* )			opsys=isc3-0 ;;
-      *-esix5* )		opsys=esix5r4 NON_GNU_CPP=/usr/lib/cpp ;;
-      *-esix* )			opsys=esix ;;
       *-mach* )			opsys=mach-bsd4-3 ;;
-      *-xenix* )		opsys=xenix ;;
-      *-sco3.2v4* )		opsys=sco4 NON_GNU_CPP=/lib/cpp  ;;
-      *-bsd386* | *-bsdi1* )	opsys=bsd386 ;;
-      *-bsdi4* )		opsys=bsdos4 ;;
-      *-bsdi3* )		opsys=bsdos3 ;;
-      *-bsdi2.1* )		opsys=bsdos2-1 ;;
-      *-bsdi2* )		opsys=bsdos2 ;;
-      *-sco3.2v5* )		opsys=sco5 ;;
       *-sysv5* )		opsys=sco7 ;;
-      *-386bsd* )	        opsys=386bsd ;;
       *-freebsd* )		opsys=freebsd ;;
-      *-nextstep* )		opsys=nextstep ;;
       *-pc-cygwin* )		opsys=cygwin32 ;;
       *-pc-mingw* )		opsys=mingw32 ;
 				test -z "$with_tty" && with_tty="no";;
       dnl Otherwise, we fall through to the generic opsys code at the bottom.
     esac
   ;;
-
-  dnl Linux/68k
-  m68k-*-linux* ) machine=m68k opsys=linux ;;
 
 esac
 
@@ -1687,16 +1449,39 @@ if test -z "$with_pdump"; then
   esac
 fi
 
+if test "$with_newgc" = "yes"; then
+  if test "$with_vdb" = "auto"; then
+    case "$opsys" in
+      darwin )  case "$machine" in
+		  i[[3-9]]86 ) check_vdb_posix=yes ;;
+		  * ) AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+		esac ;;
+      cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
+      linux* )  check_vdb_posix=yes ;;
+      freebsd ) check_vdb_posix=yes ;;
+dnl if not sure, try posix first, maybe we are lucky
+      * )       check_vdb_posix=yes ;;
+    esac
+  else
+    case "$with_vdb" in
+      mach )  AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+      win32 ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
+      posix ) check_vdb_posix=yes ;;
+      fake )  have_vdb_fake=yes ;;
+      no )    have_vdb_fake=yes ;;
+    esac
+  fi
+fi
+
 if test -z "$with_dynamic"; then
   case "$opsys" in
-    hpux* | sunos4* ) with_dynamic=no ;;
+    hpux* ) with_dynamic=no ;;
     *) with_dynamic=yes ;;
   esac
 fi
 if test "$with_dynamic" = "yes"; then
   case "$opsys" in
-    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
-    decosf* ) ld_call_shared="-call_shared" ;;
+    hpux* ) opsys="${opsys}-shr" ;;
     darwin ) AC_DEFINE(DLSYM_NEEDS_UNDERSCORE) ;;
   esac
 else dnl "$with_dynamic" = "no"
@@ -1706,7 +1491,6 @@ else dnl "$with_dynamic" = "no"
       echo "Rerun configure without specifying --without-dynamic."
       exit 1 ;;
     linux   ) ld_call_shared="-Bstatic" ;;
-    decosf* ) ld_call_shared="-non_shared" ;;
   esac
 fi
 
@@ -1785,15 +1569,13 @@ CFLAGS="$xe_save_CFLAGS"
 dnl Determine GCC version.
 if test "$GCC" = "yes"; then
 AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
-#if __GNUC__ >= 3
-return 11;
-#else
-return 0;
-#endif
-}])], [:],
-[case "$?" in
-  11) echo "You appear to be using GCC version 3 or above."; __GCC3=yes ;;
-esac])
+return __GNUC__;
+}])], [:], [__GCC="$?"])
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
+return __GNUC_MINOR__;
+}])], [:], [__GCC_MINOR="$?"])
+__GCC_VERSION=$__GCC"."$__GCC_MINOR
+echo "You appear to be using GCC version" $__GCC_VERSION
 fi
 
 dnl Support for using a different compiler for xemacs itself.
@@ -1830,12 +1612,12 @@ dnl We want feature macros defined here *and* in config.h.in, so that
 dnl the compilation environment at configure time and compile time agree.
 
 AC_MSG_CHECKING(for GNU libc)
-AC_TRY_COMPILE([#include <features.h>],[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <features.h>],[
 #if ! (defined __GLIBC__ || defined __GNU_LIBRARY__)
 #error Not a GNU libc system :-(
 ******* ======= ******** &&&&&&&&
 #endif
-], have_glibc=yes, have_glibc=no)
+])], have_glibc=yes, have_glibc=no)
 AC_MSG_RESULT($have_glibc)
 dnl I'm tired of pop being broken with GLIBC -slb
 dnl Well. then why not fix fucking pop?
@@ -1963,15 +1745,11 @@ configure___ ordinary_ld=ORDINARY_LD
 #ifdef ORDINARY_LINK
 #define LD ORDINARY_LD
 #else /* no ORDINARY LINK */
-#ifdef COFF_ENCAPSULATE
-#define LD "\$(CC) -nostdlib"
-#else /* not COFF_ENCAPSULATE */
 #ifdef LINKER
 #define LD LINKER
 #else /* ! defined (LINKER) */
 #define LD "ld"
 #endif /* ! defined (LINKER) */
-#endif /* ! defined (COFF_ENCAPSULATE) */
 #endif /* not ORDINARY_LINK */
 configure___ ld=LD
 
@@ -1980,11 +1758,7 @@ CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
 
 #if ! defined (ORDINARY_LINK) && !defined (START_FILES)
 #ifdef NO_REMAP
-#ifdef COFF_ENCAPSULATE
-#define START_FILES "pre-crt0.o /usr/local/lib/gcc-crt0.o"
-#else /* ! defined (COFF_ENCAPSULATE) */
 #define START_FILES "pre-crt0.o /lib/crt0.o"
-#endif /* ! defined (COFF_ENCAPSULATE) */
 #else /* ! defined (NO_REMAP) */
 #define START_FILES "ecrt0.o"
 #endif /* ! defined (NO_REMAP) */
@@ -2033,19 +1807,23 @@ if test "$with_pdump" = "yes"; then
   lib_gcc=
 fi
 
-dnl Enable KKCC and MC-ALLOC by default
+dnl Enable KKCC by default
 test -z "$with_kkcc" && with_kkcc=yes
-test -z "$with_mc_alloc" && with_mc_alloc=yes
 
 dnl Dump into executable
 if test -z "$with_dump_in_exec"; then
   if test "$with_pdump" = "yes"; then
-    if test "$with_mc_alloc" = "yes"; then
+    if test "$with_newgc" = "yes"; then
       with_dump_in_exec=no
     else
       with_dump_in_exec=yes
     fi
   fi
+fi
+
+dnl New incremental garbage collector
+if test "$with_newgc" = "yes"; then
+  with_kkcc=yes
 fi
 
 dnl For debugging...
@@ -2061,9 +1839,9 @@ dnl We only cope with headers in mingw, not mingw32: no previous version of
 dnl XEmacs supported mingw and cygnus have made this incompatible change
 dnl so we just go with the flow.
 case "$opsys" in mingw* | cygwin*)
-  cygwin_include=`eval "gcc -print-file-name=libc.a"` ;
-  cygwin_include=`eval "dirname $cygwin_include"` ;
-  cygwin_include="-I$cygwin_include/../include" ;
+  cygwin_include=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
+  cygwin_include=`eval "cd $cygwin_include/../../../..; pwd"`
+  cygwin_include="-I$cygwin_include/include" ;
   extra_includes="$cygwin_include/mingw $cygwin_include" ;
   case "$opsys" in mingw*)
     XE_APPEND($extra_includes, c_switch_system) ;;
@@ -2085,10 +1863,11 @@ dnl Some versions of SCO native compiler need -Kalloca
 if test "$__USLC__" = yes; then
   AC_MSG_CHECKING(for whether the -Kalloca compiler flag is needed)
   need_kalloca=no
-  AC_TRY_LINK([], [void *x = alloca(4);], [:], [
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [void *x = alloca(4);])], [:], [
     xe_save_c_switch_system="$c_switch_system"
     c_switch_system="$c_switch_system -Kalloca"
-    AC_TRY_LINK([], [void *x = alloca(4);], [ need_kalloca=yes ])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [void *x = alloca(4);])],
+      [ need_kalloca=yes ])
     c_switch_system="$xe_save_c_switch_system"])
   AC_MSG_RESULT($need_kalloca)
   test "$need_kalloca" = "yes" && XE_APPEND(-Kalloca,c_switch_system)
@@ -2096,18 +1875,30 @@ fi
 
 dnl If we're specifying XEMACS_CC, it'd better be in the same family
 dnl as CC or the following flag calculations are bogus.
-dnl #### We may want to actually error and abort here, but I am not sure.
+dnl No error/abort; detection is too fragile.
+
+xemacs_cc_cc_mismatch=no
 if test "$CC" != "$XEMACS_CC"; then
-  if test "$XEMACS_CC" = "g++" -a "$GCC" != "yes"; then
-    AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
-    xemacs_cc_cc_mismatch=yes
-  elif test -n "$GCC" -a "$XEMACS_CC" != "g++"; then
-    AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
-    xemacs_cc_cc_mismatch=yes
-  dnl #### Add other detectable mismatches here.
-  else
-    xemacs_cc_cc_mismatch=no
+  case "$XEMACS_CC" in
+  *g++* )
+    if test "$GCC" != "yes"; then
+      AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
+      xemacs_cc_cc_mismatch=yes
+    fi
+    ;;
+  esac
+  if test -n "$GCC"; then
+    case $XEMACS_CC in
+    *g++* )
+      # it's as expected, do nothing
+      ;;
+    * )
+      AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
+      xemacs_cc_cc_mismatch=yes
+      ;;
+    esac
   fi
+  dnl #### Add other detectable mismatches here.
 fi
 
 dnl Calculate optimization flags.  These will be off by default in beta
@@ -2117,7 +1908,7 @@ if test -z "$with_optimization"; then
   # If user set --with-cflags-optimization, use it to unilaterally
   # determine whether optimization should be enabled.
   if test "$cflags_optimization_specified" = "yes" ; then
-    if -z "$with_cflags_optimization" ; then
+    if test -z "$with_cflags_optimization" ; then
       with_optimization=no
     else
       with_optimization=yes
@@ -2129,9 +1920,6 @@ if test -z "$with_optimization"; then
   fi
 fi
 
-
-dnl #### We should be checking C_OPTIMIZE_SWITCH in m/*, s/*.
-
 AC_MSG_CHECKING([for preferred optimization flags])
 if test "$with_optimization" = "yes" ; then
   if test "$cflags_optimization_specified" = "no"; then
@@ -2142,7 +1930,6 @@ if test "$with_optimization" = "yes" ; then
     elif test "$__SUNPRO_C" = "yes"; then
       case "$opsys" in
         sol2    ) with_cflags_optimization="-xO4" ;;
-        sunos4* ) with_cflags_optimization="-xO2" ;;
       esac
     elif test "$__DECC" = "yes"; then
       with_cflags_optimization="-O3"
@@ -2161,8 +1948,6 @@ else
 fi
 
 AC_MSG_RESULT([${with_cflags_optimization}])
-
-dnl #### We should be checking C_DEBUG_SWITCH in m/*, s/*.
 
 AC_MSG_CHECKING([for preferred debugging flags])
 if test "$cflags_debugging_specified" = "no"; then
@@ -2208,7 +1993,7 @@ if test "$cflags_warning_specified" = "no"; then
     dnl Warnings about char subscripts are pretty pointless, though,
     dnl and we use them in various places.
     with_cflags_warning="$with_cflags_warning -Wsign-compare -Wno-char-subscripts"
-    test "$__GCC3" = "yes" && with_cflags_warning="$with_cflags_warning -Wpacked"
+    test "$__GCC" -ge 3 && with_cflags_warning="$with_cflags_warning -Wpacked"
     dnl glibc is intentionally not `-Wpointer-arith'-clean.
     dnl Ulrich Drepper has rejected patches to fix the glibc header files.
     test "$have_glibc" != "yes" && \
@@ -2224,8 +2009,11 @@ if test "$cflags_warning_specified" = "no"; then
     dnl some very ugly code changes.
     if test "$with_xemacs_compiler" = "g++"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
-    elif test "$__GCC3" = "yes"; then
+    elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
+      if test "$__GCC" -gt 3 || test "$__GCC_MINOR" -ge 4; then
+        with_cflags_warning="$with_cflags_warning -Wdeclaration-after-statement"
+      fi
     fi
     with_cflags_warning="$with_cflags_warning -Wshadow -Wmissing-declarations"
     with_cflags_warning="$with_cflags_warning -Wmissing-prototypes -Wstrict-prototypes"
@@ -2340,7 +2128,7 @@ dnl a usage message, that's often good enough.  Please report it, though.
 dnl #### Should make this Solaris-friendly.
 dnl Link with -z nocombreloc for now.
 if test "$with_pdump" != "yes"; then
-  AC_MSG_CHECKING(for \"-z nocombreloc\" linker flag)
+  AC_MSG_CHECKING([for "-z nocombreloc" linker flag])
   case "`ld --help 2>&1`" in
     *-z\ nocombreloc* ) AC_MSG_RESULT(yes)
       XE_PREPEND(-z nocombreloc, ld_switch_site) ;;
@@ -2360,22 +2148,6 @@ test -n "$objects_machine" && XE_ADD_OBJS($objects_machine)
 test -n "$objects_system"  && XE_ADD_OBJS($objects_system)
 test -n "$unexec"          && test ! "$with_pdump" = "yes" && XE_ADD_OBJS($unexec)
 test "$with_pdump" = "yes" && XE_ADD_OBJS(dumper.o)
-
-dnl Dynodump (Solaris 2.x, x<6)
-AC_MSG_CHECKING(for dynodump)
-if test "$unexec" != "unexsol2.o"; then
-  AC_MSG_RESULT(no)
-else
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(DYNODUMP)
-  XE_APPEND(dynodump, MAKE_SUBDIR)
-  XE_APPEND(dynodump, SRC_SUBDIR_DEPS)
-  case "$machine" in
-    sparc   ) dynodump_arch=sparc ;;
-    *86*    ) dynodump_arch=i386  ;;
-    powerpc ) dynodump_arch=ppc   ;;
-  esac
-fi
 
 dnl Feed s&m crud to src/Makefile
 
@@ -2631,7 +2403,7 @@ if test -n "$add_runtime_path"; then :;
 elif test "$with_dynamic" = "no"; then add_runtime_path=no
 elif test -n "$LD_RUN_PATH"; then add_runtime_path=yes
 else case "$opsys" in
-       sol2 | irix* | *bsd* | decosf* ) add_runtime_path=yes ;;
+       sol2 | irix* | *bsd* ) add_runtime_path=yes ;;
        * ) add_runtime_path=no ;;
      esac
 fi
@@ -2639,22 +2411,22 @@ fi
 if test "$add_runtime_path" = "yes"; then
   dnl Try to autodetect runtime library flag (usually -R),
   dnl and whether it works (or at least does no harm)
-  AC_MSG_CHECKING("for runtime libraries flag")
+  AC_MSG_CHECKING([for runtime libraries flag])
   case "$opsys" in
     sol2 ) dash_r="-R" ;;
-    decosf* | linux* | irix*) dash_r="-rpath " ;;
+    linux* | irix*) dash_r="-rpath " ;;
     *)
       dash_r=""
       for try_dash_r in "-R" "-R " "-rpath "; do
         xe_check_libs="${try_dash_r}/no/such/file-or-directory"
         XE_PROTECT_LINKER_FLAGS(xe_check_libs)
-        AC_TRY_LINK(, , dash_r="$try_dash_r")
+        AC_LINK_IFELSE([], dash_r="$try_dash_r")
         xe_check_libs=""
         test -n "$dash_r" && break
       done ;;
   esac
   if test -n "$dash_r";
-    then AC_MSG_RESULT("\"${dash_r}\"")
+    then AC_MSG_RESULT(["${dash_r}"])
     else AC_MSG_RESULT(NONE)
   fi
 fi
@@ -2676,6 +2448,17 @@ dnl -----------------------------------
 dnl Do some misc autoconf-special tests
 dnl -----------------------------------
 
+dnl Can we use GNU malloc on this system?
+dnl First, configure based-checks.
+case "$opsys" in
+  darwin )
+    if test "$with_system_malloc" = "default"; then
+      system_malloc=yes
+      with_system_malloc=yes
+      AC_MSG_WARN([Forcing system malloc on Darwin.])
+    fi ;;
+esac
+
 dnl Do the opsystem or machine files prohibit the use of the GNU malloc?
 dnl Assume not, until told otherwise.
 GNU_MALLOC=yes
@@ -2687,7 +2470,8 @@ fi
 after_morecore_hook_exists=yes
 AC_CHECK_FUNC(malloc_set_state, ,doug_lea_malloc=no)
 AC_MSG_CHECKING(whether __after_morecore_hook exists)
-AC_TRY_LINK([extern void (* __after_morecore_hook)();],[__after_morecore_hook = 0],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
+  [__after_morecore_hook = 0])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    after_morecore_hook_exists=no])
@@ -2737,6 +2521,13 @@ dnl Some other nice autoconf tests.  If you add a test here which
 dnl should make an entry in src/config.h, do not forget to add an
 dnl #undef clause to src/config.h.in for autoconf to modify.
 
+dnl Sun likes to hide these utilities.  Steve Baur asked that we make
+dnl the failure occur at configure time, not at use time.
+AC_CHECK_PROG(AR,ar,ar,not_found)
+if test "$AR" = "not_found"; then
+  XE_DIE(["ar not found -- is PATH set correctly?"])
+fi
+dnl These tests don't necessarily check that the program exists.
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
@@ -2747,7 +2538,6 @@ AC_CHECK_HEADERS(dnl
   elf.h dnl
   cygwin/version.h dnl
   fcntl.h dnl
-  inttypes.h dnl
   libgen.h dnl
   locale.h dnl
   wchar.h dnl
@@ -2761,7 +2551,6 @@ AC_CHECK_HEADERS(dnl
   sys/un.h dnl
   sys/vlimit.h dnl
   ulimit.h dnl
-  unistd.h dnl
 )
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
@@ -2782,9 +2571,9 @@ dnl Some systems have utime.h but do not declare the struct anyplace,
 dnl so we use a more sophisticated test for utime than AC_CHECK_FUNCS.
 dnl ----------------------------------------------------------------
 AC_MSG_CHECKING(for utime)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/types.h>
 #include <utime.h>],
-[struct utimbuf x; x.actime = x.modtime = 0; utime ("/", &x);],
+[struct utimbuf x; x.actime = x.modtime = 0; utime ("/", &x);])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_UTIME)],
   [AC_MSG_RESULT(no)
@@ -2799,36 +2588,41 @@ AC_TYPE_PID_T
 AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
-dnl #### deprecated 2.13-ism
-AC_CHECK_TYPE(ssize_t, int)
+dnl #### Translated from deprecated 2.13-ism.
+dnl We probably want to DTRT with #ifdef HAVE_SSIZE_T in src/config.h.in.
+dnl Specifically, we should typedef st sizeof(ssize_t) == sizeof(size_t).
+AC_CHECK_TYPE([ssize_t],,
+              [AC_DEFINE_UNQUOTED([ssize_t], [int],
+                                  [Define to `int' if
+                                   <sys/types.h> does not define.])])
 
 dnl not AC_CHECK_TYPE; lisp.h does hairy conditional typedef
 if test "$ac_cv_header_inttypes_h" != "yes"; then
 AC_MSG_CHECKING(for intptr_t in sys/types.h)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 intptr_t x;
-],[],[AC_MSG_RESULT(yes)
+])],[AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_INTPTR_T_IN_SYS_TYPES_H,1)],
      [AC_MSG_RESULT(no)])
 fi
 
 dnl check for Unix98 socklen_t
 AC_MSG_CHECKING(for socklen_t)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 #include <sys/socket.h>
 socklen_t x;
-],[],[AC_MSG_RESULT(yes)],[
-AC_TRY_COMPILE([#include <sys/types.h>
+])],[AC_MSG_RESULT(yes)],[
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 #include <sys/socket.h>
 int accept (int, struct sockaddr *, size_t *);
-],[],[
+])],[
 AC_MSG_RESULT(size_t)
 AC_DEFINE(socklen_t,size_t)], [
 AC_MSG_RESULT(int)
 AC_DEFINE(socklen_t,int)])])
 
 AC_MSG_CHECKING(for struct timeval)
-AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
 #else
@@ -2837,7 +2631,7 @@ AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
 #else
 #include <time.h>
 #endif
-#endif], [static struct timeval x; x.tv_sec = x.tv_usec;],
+#endif], [static struct timeval x; x.tv_sec = x.tv_usec;])],
   [AC_MSG_RESULT(yes)
   HAVE_TIMEVAL=yes
   AC_DEFINE(HAVE_TIMEVAL)],
@@ -2877,15 +2671,16 @@ AC_SYS_LONG_FILE_NAMES
 dnl -lm is required for floating point support, among other things
 AC_CHECK_FUNC(sin, ,AC_CHECK_LIB(m, sin))
 
-AC_TRY_LINK([#include <math.h>],
-  [return atanh(1.0) + asinh(1.0) + acosh(1.0); ],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <math.h>],
+  [return atanh(1.0) + asinh(1.0) + acosh(1.0); ])],
   AC_DEFINE(HAVE_INVERSE_HYPERBOLIC))
 
 dnl See if mkstemp is available
 AC_CHECK_FUNCS(mkstemp)
 
 dnl Determine type of mail locking from configure args and s&m headers
-AC_CHECKING([type of mail spool file locking])
+AC_MSG_CHECKING([type of mail spool file locking])
+AC_MSG_RESULT()
 AC_CHECK_FUNCS(lockf flock)
 dnl The mail_use_xxx variables are set according to the s&m headers.
 test -z "$with_mail_locking" -a "$mail_use_flock" = "yes" && with_mail_locking=flock
@@ -2913,12 +2708,6 @@ test "$with_mail_locking" = "flock" -a "$ac_cv_func_flock" != "yes" && \
 test "$with_mail_locking" = "locking" -a "$ac_cv_func_locking" != "yes" && \
   XE_DIE("locking mail locking requested but not available.")
 
-case "$opsys" in decosf*)
-  AC_CHECK_LIB(pthreads, cma_open)
-  test "$ac_cv_lib_pthreads_cma_open" = "yes" && \
-    c_switch_site="$c_switch_site -threads" ;;
-esac
-
 dnl ----------------------------------------------------------------
 dnl Miscellaneous flags
 dnl ----------------------------------------------------------------
@@ -2935,7 +2724,7 @@ fi
 dnl Link with "-z ignore" on Solaris if supported
 if test "$opsys" = "sol2"; then
   if test "$os_release" -ge 506; then
-    AC_MSG_CHECKING(for \"-z ignore\" linker flag)
+    AC_MSG_CHECKING([for "-z ignore" linker flag])
     case "`ld -h 2>&1`" in
       *-z\ ignore\|record* ) AC_MSG_RESULT(yes)
         XE_PREPEND(-z ignore, ld_switch_site) ;;
@@ -2948,7 +2737,8 @@ dnl ----------------------
 dnl Choose a window system
 dnl ----------------------
 
-AC_CHECKING([for specified window system])
+AC_MSG_CHECKING([for specified window system])
+AC_MSG_RESULT()
 
 dnl Autodetection of Gdk libraries and includes
 dnl -------------------------------------------
@@ -3173,11 +2963,6 @@ if test "$with_x11" = "yes"; then
     fi
   done
 
-  dnl Avoid version mismatch for shared library libXm.so on osf4
-  case "$opsys" in
-  decosf*) if test "$GCC" = yes -a -d /usr/shlib; then XE_APPEND(-L/usr/shlib, X_LIBS); fi ;;
-  esac
-
   ld_switch_x_site="$X_LIBS"
 
   XE_COMPUTE_RUNPATH()
@@ -3208,7 +2993,8 @@ if test "$with_x11" = "yes"; then
   test ! -z "$bitmapdirs" && AC_DEFINE_UNQUOTED(BITMAPDIR, "$bitmapdirs")
 
   dnl Autodetect defines extracted from X config by xmkmf, e.g. NARROWPROTO
-  AC_CHECKING([for X defines extracted by xmkmf])
+  AC_MSG_CHECKING([for X defines extracted by xmkmf])
+  AC_MSG_RESULT()
   rm -fr conftestdir
   if mkdir conftestdir; then
     cd conftestdir
@@ -3267,7 +3053,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_RUN_IFELSE([AC_LANG_SOURCE([#include <X11/Intrinsic.h>
-    int main(int c, char *v[]) { return c>1 ? XlibSpecificationRelease : 0; }])],
+    int main(int c, char **v) { return c>1 ? XlibSpecificationRelease : 0; }])],
     [./conftest foobar; x11_release=$?],[x11_release=4],[x11_release=4])
   AC_MSG_RESULT(R${x11_release})
   AC_DEFINE_UNQUOTED(THIS_IS_X11R${x11_release})
@@ -3286,24 +3072,24 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
   dnl XFree86 has a non-standard prototype for this X11R6 function
   AC_CHECK_FUNCS(XRegisterIMInstantiateCallback)
   AC_MSG_CHECKING(for standard XRegisterIMInstantiateCallback prototype)
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #define NeedFunctionPrototypes 1
 #include <X11/Xlib.h>
 extern Bool XRegisterIMInstantiateCallback(
    Display*, struct _XrmHashBucketRec*, char*, char*, XIMProc, XPointer*);
-], [],
+])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    AC_DEFINE(XREGISTERIMINSTANTIATECALLBACK_NONSTANDARD_PROTOTYPE)])
 
   dnl autodetect -lXmu
-  test -z "$with_xmu" && { AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile,
-                           with_xmu=yes, with_xmu=no) }
+  AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile, with_xmu=yes, with_xmu=no)
   if test "$with_xmu" = "no"; then
-    XE_ADD_OBJS(xmu.o)
+    AC_MSG_ERROR([We're sorry, but we thought there were no systems without Xmu by now.
+You cannot build this version of XEmacs for X11 without Xmu.  Please report
+this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
   else
     XE_PREPEND(-lXmu, libs_x)
-    AC_DEFINE(HAVE_XMU)
   fi
 
   dnl Autodetect -lXbsd
@@ -3325,10 +3111,72 @@ extern Bool XRegisterIMInstantiateCallback(
     fi
   fi
 
+  dnl include xft/AA support?
+  dnl #### need to check for includes here (especially, freetype.h for v.2)
+
+  if test "$with_xft_emacs" = "yes"; then
+    AC_MSG_CHECKING([for Xrender, fontconfig, and Xft])
+    xft_includes_found=no
+    dnl try pkg-config
+    xft_config_prog="pkg-config xft"
+    xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
+    if test "$?" = 0 ; then
+	xft_cflags=`$xft_config_prog --cflags`
+	xft_libs=`$xft_config_prog --libs`
+	c_switch_site="$c_switch_site $xft_cflags"
+	ld_switch_site="$ld_switch_site $xft_libs"
+	xft_includes_found=yes
+    else
+      AC_CHECK_HEADERS([freetype/config/ftheader.h],
+		       [xft_includes_found=yes],
+		       [
+	dnl #### How about /sw/include, and /opt/local/include?
+	dnl these directories need to be the parent of the freetype directory
+	for freetype_include_top in "/usr/local/include/freetype2" \
+				    "/usr/X11R6/include/freetype2" \
+				    "/usr/include/freetype2"
+	do
+	  if test -d $freetype_include_top; then
+	    AC_MSG_CHECKING([in ${freetype_include_top}])
+	    dnl disable autoconf's fucking cache; why these fuckheads think it
+	    dnl is better to be broken than to be slow, I don't know!
+	    dnl #### there's gotta be a better-looking way to do this!!
+	    unset "$as_ac_Header"
+	    save_c_switch_site="$c_switch_site"
+	    c_switch_site="$c_switch_site -I${freetype_include_top}"
+	    AC_CHECK_HEADERS([freetype/config/ftheader.h],
+			     [xft_includes_found=yes],
+			     [c_switch_site=$save_c_switch_site])
+	  fi
+	done])
+    fi
+    if test "$xft_includes_found" != "yes"; then
+      XE_DIE(["Unable to find headers for --with-xft"])
+    else
+      AC_CHECK_LIB(Xrender, XRenderQueryExtension, XE_PREPEND(-lXrender, libs_x),
+          [XE_DIE(["Unable to find libXrender for --with-xft"])])
+      AC_CHECK_LIB(fontconfig, FcPatternCreate, XE_PREPEND(-lfontconfig, libs_x),
+          [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
+      AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
+          [XE_DIE(["Unable to find libXft for --with-xft"])])
+
+      AC_CHECK_FUNCS(FcConfigGetRescanInterval)
+      AC_CHECK_FUNCS(FcConfigSetRescanInterval)
+      dnl #### detect fontconfig properly!!!!
+      with_fontconfig=yes
+      AC_DEFINE(HAVE_FONTCONFIG)
+      AC_DEFINE(USE_XFT)
+      dnl Due to interactions with other libraries, must postpone AC_DEFINE
+      dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGES.
+      unset xft_includes_found
+    fi
+  fi
+
 fi dnl $with_x11 = yes
 
 if test "$with_msw" != "no"; then
-  AC_CHECKING([for MS-Windows])
+  AC_MSG_CHECKING([for MS-Windows])
+  AC_MSG_RESULT()
   AC_CHECK_LIB(gdi32,main,with_msw=yes)
   if test "$with_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
@@ -3400,7 +3248,7 @@ if test "$with_x11" != "yes"; then
   dnl if test "$with_tty" = "no" ; then
   dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   dnl fi
-  for feature in with_tooltalk with_cde with_offix with_wmcommand with_xim with_xmu with_sound_nas
+  for feature in with_tooltalk with_cde with_wmcommand with_xim with_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        AC_MSG_WARN([--$feature ignored:  Not valid without X support])
@@ -3435,16 +3283,14 @@ case "$window_system" in
   none ) HAVE_X_WINDOWS=no ; echo "  Using no window system." ;;
 esac
 
-case "$x_libraries" in *X11R4* )
-  test "$opsys" = "hpux9"     && opsysfile="s/hpux9-x11r4.h"
-  test "$opsys" = "hpux9-shr" && opsysfile="s/hpux9shxr4.h"
-esac
-
 dnl Enable or disable proper handling of WM_COMMAND
-AC_CHECKING([for WM_COMMAND option])
+AC_MSG_CHECKING([for WM_COMMAND option])
 dnl if test "$with_wmcommand" = "yes"; then
 if test "$with_wmcommand" != "no"; then
   AC_DEFINE(HAVE_WMCOMMAND)
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
 fi
 
 dnl Autodetect Xauth
@@ -3477,7 +3323,8 @@ AC_SUBST(LIBSTDCPP)
 
 dnl This must come before the detection code for anything that is in a module
 if test "$with_modules" != "no"; then
-  AC_CHECKING([for module support])
+  AC_MSG_CHECKING([for module support])
+  AC_MSG_RESULT()
 
   case "$opsys" in
     mingw* | cygwin* ) have_dl=yes ;;
@@ -3488,19 +3335,19 @@ if test "$with_modules" != "no"; then
       dnl Check for the ELFish dlopen()
       AC_CHECK_HEADER(dlfcn.h, [
 	AC_MSG_CHECKING([for dlopen in -lc])
-	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	 [dlopen ("", 0);], [ have_dl=yes ; AC_MSG_RESULT($have_dl)], [
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	 [dlopen ("", 0);])], [ have_dl=yes ; AC_MSG_RESULT($have_dl)], [
 	  AC_MSG_RESULT([no])
 	  AC_MSG_CHECKING([for dlopen in -ldl])
 	  ac_save_LIBS="$LIBS"
 	  LIBS="$LIBS -ldl"
-	  AC_TRY_LINK([#include <dlfcn.h>],dnl
-	   [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	   [dlopen ("", 0);])], [ have_dl=yes; AC_MSG_RESULT($have_dl)], [
 	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for dlopen in -lsvld])
 	    LIBS="$ac_save_LIBS -lsvld"
-	    AC_TRY_LINK([#include <dlfcn.h>],dnl
-	     [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl) ],
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	     [dlopen ("", 0);])], [ have_dl=yes; AC_MSG_RESULT($have_dl) ],
 	     [LIBS="$ac_save_LIBS" ; AC_MSG_RESULT([no])])])])])
       if test "$have_dl" = "yes"; then
 	AC_DEFINE(HAVE_DLOPEN)
@@ -3508,14 +3355,14 @@ if test "$with_modules" != "no"; then
 	dnl Check for HP/UX shl_load
 	AC_CHECK_HEADER(dl.h, [
 	  AC_MSG_CHECKING([for shl_load in -lc])
-	  AC_TRY_LINK([#include <dl.h>],dnl
-	   [shl_load ("", 0, 0);], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+	   [shl_load ("", 0, 0);])], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
 	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for shl_load in -ldl])
 	    ac_save_LIBS="$LIBS"
 	    LIBS="$LIBS -ldld"
-	    AC_TRY_LINK([#include <dl.h>],dnl
-	     [shl_load ("", 0, 0);], [have_dl=yes],
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+	     [shl_load ("", 0, 0);])], [have_dl=yes],
 	     [LIBS="$ac_save_LIBS"; AC_MSG_RESULT([no])])])])
 	if test "$have_dl" = "yes"; then
 	  AC_DEFINE(HAVE_SHL_LOAD) 
@@ -3525,8 +3372,8 @@ if test "$with_modules" != "no"; then
 	    AC_MSG_CHECKING([for lt_dlinit in -lltdl])
 	    ac_save_LIBS="$LIBS"
 	    LIBS="$LIBS -lltdl"
-	    AC_TRY_LINK([#include <ltdl.h>],dnl
-	     [lt_dlinit ();], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ltdl.h>],
+	     [lt_dlinit ();])], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
 	  AC_MSG_RESULT($have_dl)
 	  if test "$have_dl" = "yes"; then
 	    AC_DEFINE(HAVE_LTDL)
@@ -3624,7 +3471,7 @@ test -z "$with_cde" && { AC_CHECK_HEADER(Dt/Dt.h,               , with_cde=no) }
 test -z "$with_cde" && { AC_CHECK_LIB(DtSvc, DtDndDragStart, [:], with_cde=no) }
 if test "$with_dragndrop" = "no" ; then
   if test "$with_cde" = "yes" ; then
-    AC_MSG_WARN([--with-cde forced to \`no'; no generic Drag'n'Drop support])
+    AC_MSG_WARN([--with-cde forced to `no'; no generic Drag'n'Drop support])
   fi
   with_cde=no
 fi
@@ -3637,42 +3484,12 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
-dnl Always compile OffiX unless --without-offix is given, no
-dnl X11 support is compiled in, no standard Xmu is available,
-dnl or dragndrop support is disabled
-dnl Because OffiX support currently loses when more than one display
-dnl is in use, we now disable it by default -slb 07/10/1998.
-test "$window_system" != "x11" && with_offix=no
-if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; no real Xmu support])
-  fi
-  with_offix=no
-fi
-if test "$with_dragndrop" = no; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; no generic Drag'n'Drop support])
-  fi
-  with_offix=no
-fi
-if test "$with_cde" = yes; then
-  if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; CDE already found])
-  fi
-  with_offix=no
-fi
-test -z "$with_offix" && with_offix=no
-if test "$with_offix" = "yes"; then
-  AC_DEFINE(HAVE_OFFIX_DND)
-  XE_APPEND(offix.o, dnd_objs)
-  XE_APPEND(OffiX, dragndrop_proto)
-fi
 if test "$with_gtk" = "yes"; then
    XE_APPEND(GTK, dragndrop_proto)
 fi
 
 dnl Autodetect Drag'n'Drop support
-dnl always included if CDE, Offix, or MSWindows are defined
+dnl always included if CDE or MSWindows is defined
 if test "$with_dragndrop" != "no" ; then
   AC_MSG_CHECKING(if drag and drop API is needed)
   if test -n "$dragndrop_proto" ; then
@@ -3687,7 +3504,8 @@ if test "$with_dragndrop" != "no" ; then
 fi
 
 dnl Autodetect LDAP
-AC_CHECKING([for LDAP])
+AC_MSG_CHECKING([for LDAP])
+AC_MSG_RESULT()
 ldap_libs=
 test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
 test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
@@ -3737,7 +3555,8 @@ dnl (such as the default /usr/local/pgsql when building from source),
 dnl that prefix must be specified using the --with-site-prefixes flag.
 postgresql_libs=
 if test "$with_postgresql" != "no"; then
-  AC_CHECKING([for PostgreSQL])
+  AC_MSG_CHECKING([for PostgreSQL])
+  AC_MSG_RESULT()
 
 dnl Look for these standard header file locations, known to be used on Linux
   for header_dir in "" "pgsql/" "postgresql/"; do
@@ -3786,23 +3605,25 @@ dnl Graphics libraries
 dnl ----------------------
 
 if test "$window_system" != "none"; then
-  AC_CHECKING([for graphics libraries])
+  AC_MSG_CHECKING([for graphics libraries])
+  AC_MSG_RESULT()
 
   dnl add special code to handle xpm-nox on Cygwin (csw)
   dnl   -- should only happen if CYGWIN && WITH_XPM && WITH_MSW && !WITH_X
   libpath_xpm=
   incpath_xpm=
+  libname_xpm="-lXpm"
   case "$opsys" in 
     cygwin*)
-      cygwin_top=`eval "gcc -print-file-name=libc.a"` ;
-      cygwin_top=`eval "dirname ${cygwin_top}"`;
-      cygwin_top="${cygwin_top}/..";
+      cygwin_top=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
+      cygwin_top=`eval "cd $cygwin_top/../../../..; pwd"`
       case "$window_system" in
         dnl use "standard" search pattern
         x11)  ;;
         dnl hardcode "standard" non-X11 xpm lib/inc dirs
         msw) libpath_xpm="-L${cygwin_top}/lib/noX"
              incpath_xpm="-I${cygwin_top}/include/noX"
+             libname_xpm="-lXpm-noX"
               ;;
         dnl not supported on cygwin (yet?)
         gtk)  ;;
@@ -3822,7 +3643,7 @@ if test "$window_system" != "none"; then
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     XE_PREPEND("$libpath_xpm", LDFLAGS)
     AC_MSG_CHECKING(for Xpm - no older than 3.4f)
-    xe_check_libs=-lXpm
+    xe_check_libs="$libname_xpm"
     AC_RUN_IFELSE([AC_LANG_SOURCE([#define XPM_NUMBERS
 #include <X11/xpm.h>
     int main(int c, char **v) {
@@ -3857,12 +3678,12 @@ if test "$window_system" != "none"; then
     dnl #### but doesn't actually verify this assumption.
     AC_DEFINE(HAVE_XPM)
     XE_PREPEND("$libpath_xpm", LDFLAGS)
-    XE_PREPEND(-lXpm, libs_x)
+    XE_PREPEND("$libname_xpm", libs_x)
     XE_PREPEND("$incpath_xpm", CFLAGS)
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
-    AC_MSG_CHECKING(for \"FOR_MSW\" xpm)
-    xe_check_libs=-lXpm
-    AC_TRY_LINK(, [XpmCreatePixmapFromData()],
+    AC_MSG_CHECKING([for "FOR_MSW" xpm])
+    xe_check_libs="$libname_xpm"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([],[XpmCreatePixmapFromData();])],
     [xpm_for_msw=no],
     [xpm_for_msw=yes])
     xe_check_libs=
@@ -3881,11 +3702,19 @@ if test "$window_system" != "none"; then
     XE_PREPEND(-lcompface, libs_x)
   fi
 
-  dnl For a brief period we had the GIF code split out into a separate library,
-  dnl but patent problems, etc. sort of squashed that idea.
-  dnl We default to building with builtin GIF decoding
+  dnl autodetect GIF
+  test -z "$with_gif" && { AC_CHECK_HEADER(gif_lib.h, , with_gif=no) }
   if test "$with_gif" != "no"; then
     with_gif="yes"
+    dnl Versions of libgif and libungif prior to the introduction of
+    dnl EGifPutExtensionLast caused Emacs crashes.  We'll require that
+    dnl function, too, in hopes that we can avoid similar crashes.
+    AC_CHECK_LIB(gif, EGifPutExtensionLast,
+      [XE_PREPEND(-lgif, libs_x)],
+      [AC_CHECK_LIB(ungif, EGifPutExtensionLast,
+        [XE_PREPEND(-lungif, libs_x)], with_gif=no)])
+  fi
+  if test "$with_gif" != "no"; then
     AC_DEFINE(HAVE_GIF)
   fi
 
@@ -3969,13 +3798,13 @@ if test "$with_gtk" = "yes"; then
   fi
 fi
 
-
 dnl ----------------------
 dnl X-Specific Graphics libraries
 dnl ----------------------
 
 if test "$with_x11" = "yes"; then
-  AC_CHECKING([for X11 graphics libraries])
+  AC_MSG_CHECKING([for X11 graphics libraries])
+  AC_MSG_RESULT()
 fi
 
 case "$with_widgets" in
@@ -3988,7 +3817,8 @@ case "$with_dialogs" in
 esac
 
 if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
-  AC_CHECKING([for the Athena widgets])
+  AC_MSG_CHECKING([for the Athena widgets])
+  AC_MSG_RESULT()
 
   dnl What in heck did the user actually want?
   case "$with_athena" in
@@ -4006,17 +3836,17 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
     AC_CHECK_LIB($athena_variant, XawScrollbarSetThumb,
       [
         dnl Must not be a 3d library...
-        AC_CHECK_LIB($athena_variant, threeDClassRec,
+        AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB,
           [AC_MSG_WARN([Could not find a non-3d Athena widget library.])],
           athena_lib=$athena_variant)
       ],
       AC_MSG_WARN([Could not find an Athena widget library.]))
   else
     dnl The real configuration, need 3d library
-    AC_CHECK_LIB($athena_variant, threeDClassRec, athena_lib=$athena_variant,
+    AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB, athena_lib=$athena_variant,
       dnl OK, couldn't find it with a proper name, try the standard Athena lib
       dnl If that is 3d, presume the user asked for what they have installed.
-      AC_CHECK_LIB(Xaw, threeDClassRec,
+      AC_CHECK_LIB(Xaw, XawSme3dComputeTopShadowRGB,
         [
           athena_lib=Xaw;
           AC_MSG_WARN([Assuming that libXaw is actually $athena_variant.]);
@@ -4142,13 +3972,21 @@ dnl Not all toolkits support all widgets
 
 dnl Avoid using Motif :-(
 case "$opsys" in
-  *linux* | *darwin* | *bsd* )  lucid_prefers_motif="no"  ;;
+  *linux* | *darwin* | *bsd* | *cygwin* )  lucid_prefers_motif="no"  ;;
   * )        lucid_prefers_motif="yes" ;;
 esac
 
 case "$with_menubars" in "" | "yes" | "athena" )
   with_menubars="lucid" ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_menubars" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_menubars" != "no" ; then
+    with_xft_menubars="yes"
+  else
+    with_xft_menubars="no"
+  fi
+fi
 case "$with_dialogs" in "" | "yes" | "lucid" )
   if test "$lucid_prefers_motif" = "yes"; then
     if   test "$have_motif"     = "yes"; then with_dialogs="motif"
@@ -4182,6 +4020,22 @@ case "$with_widgets" in "" | "yes" | "lucid")
     fi
   fi ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_tabs" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_widgets" != "no" ; then
+    with_xft_tabs="yes"
+  else
+    with_xft_tabs="no"
+  fi
+fi
+dnl this is not in xft reloaded #3
+if test "$with_xft_gauges" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_widgets" != "no" ; then
+    with_xft_gauges="yes"
+  else
+    with_xft_gauges="no"
+  fi
+fi
 
 all_widgets="$with_menubars $with_scrollbars $with_dialogs $with_toolbars $with_widgets"
 
@@ -4270,13 +4124,17 @@ test "$with_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "$with_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "$with_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
+test "$with_xft_menubars" = "yes"  && AC_DEFINE(USE_XFT_MENUBARS)
+test "$with_xft_tabs" = "yes"  && AC_DEFINE(USE_XFT_TABS)
+test "$with_xft_gauges" = "yes"  && AC_DEFINE(USE_XFT_GAUGES)
+
 dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
 
 if test "$with_unicode_internal" = "yes"; then
   test "$with_mule" = "no" && \
-	USAGE_ERROR("Cannot give \`--with-mule=no' and `--with-unicode-internal=yes'.
+	USAGE_ERROR("Cannot give \`--with-mule=no' and \`--with-unicode-internal=yes'.
 Unicode-internal requires Mule.")
   test "$with_mule" != "yes" && \
 	AC_MSG_WARN([\`--with-mule' forced to \`yes': Unicode-internal requires Mule.])
@@ -4302,24 +4160,24 @@ canna_libs=
 wnn_libs=
 
 if test "$with_mule" = "yes" ; then
-  AC_CHECKING([for Mule-related features])
+  AC_MSG_CHECKING([for Mule-related features])
   AC_DEFINE(MULE)
 
   dnl Use -lintl to get internationalized strerror for Mule
   AC_CHECK_HEADERS(libintl.h)
   AC_CHECK_LIB(intl, strerror)
 
-  AC_CHECKING([for Mule input methods])
+  AC_MSG_CHECKING([for Mule input methods])
   dnl Do we have the XmIm* routines?  And if so, do we want to use them?
-  dnl XIM seems to be flaky except on Solaris...
-  dnl test -z "$with_xim" -a "$opsys" != "sol2" && with_xim=no
   case "$with_xim" in "" | "yes" )
-    AC_CHECKING([for XIM])
+    AC_MSG_CHECKING([for XIM])
     AC_CHECK_LIB(X11, XOpenIM, with_xim=xlib, with_xim=no)
     dnl XIM + Lesstif is not (yet?) usable
     dnl Only use Motif if linking Motif anyway, or don't have xlib XIM
     if test "$need_motif $have_lesstif" = "yes no"; then
       AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
+    dnl #### This is always false.
+    dnl Not clear what we want, although "yes no yes" is insufficient.
     elif test "$have_motif $have_lesstif $with_xim" = "yes no no"; then
       AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
     fi ;;
@@ -4342,7 +4200,7 @@ if test "$with_mule" = "yes" ; then
 
   dnl "with_xfs" = "yes"
   if test "$with_xfs" = "yes" ; then
-    AC_CHECKING([for XFontSet])
+    AC_MSG_CHECKING([for XFontSet])
     AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
     if test "$with_xfs" = "yes" && test "$with_menubars" = "lucid"; then
       AC_DEFINE(USE_XFONTSET)
@@ -4379,35 +4237,51 @@ if test "$with_mule" = "yes" ; then
     fi
   fi
 
-  dnl Autodetect canna
+  dnl Configure canna
   dnl canna_libs variable is initialized at toplevel
-  canna_includes_found=no
+  dnl #### the hard-coding of /usr/local/canna/include is bogus and
+  dnl      my Mac OS X 10.4 system needs /usr/local/canna/lib, too
+  dnl #### this whole mess should be in modules/canna, no? maybe not
+  have_canna=no
   if test "$with_canna" != "no"; then
-    AC_CHECK_HEADER(canna/jrkanji.h,canna_includes_found=yes)
-  fi
-  if test "$canna_includes_found" = "no" -a "$with_canna" != "no" -a \
-      -d "/usr/local/canna/include"; then
     save_c_switch_site="$c_switch_site"
-    c_switch_site="$c_switch_site -I/usr/local/canna/include"
-    AC_CHECK_HEADER(canna/jrkanji.h,canna_includes_found=yes)
-    if test "$canna_includes_found" != "yes"; then
+    for canna_include_path in "" " -I/usr/local/canna/include"; do
+      for canna_wchar_aware in "" " -DCANNA_NEW_WCHAR_AWARE=1"; do
+        c_switch_site="$save_c_switch_site$canna_include_path$canna_wchar_aware"
+        # defeat autoconf's cache mechanism
+        $as_unset ac_cv_header_canna_jrkanji_h
+        $as_unset ac_cv_header_canna_RK_h
+        # using $ac_header_compiler is a hack, but autoconf doesn't let us
+        # get at this information otherwise :-(
+        AC_CHECK_HEADER(canna/jrkanji.h,[AC_CHECK_HEADER(canna/RK.h,have_canna=$ac_header_compiler)])
+        test "$have_canna" = "yes" && break
+        AC_MSG_WARN([You may ignore any *Present but not compiled* message
+        from autoconf.  We detect that condition and recheck, but there
+        is no way to suppress autoconf's message.])
+      done
+      test "$have_canna" = "yes" && break
+    done
+    if test "$have_canna" = "yes"; then
+      c_switch_site="$save_c_switch_site$canna_include_path"
+    else
       c_switch_site="$save_c_switch_site"
-      with_canna="no"
     fi
   fi
 
-  test -z "$with_canna" && { AC_CHECK_HEADER(canna/RK.h,         , with_canna=no) }
-  test -z "$with_canna" && { AC_CHECK_LIB(RKC, RkBgnBun,       [:],with_canna=no) }
-  test -z "$with_canna" && { AC_CHECK_LIB(canna,jrKanjiControl,[:],with_canna=no) }
-  test -z "$with_canna" && with_canna=yes
-  if test "$with_canna" = "yes"; then
+  test "$have_canna" = "yes" && { AC_CHECK_LIB(RKC, RkBgnBun,       [:],have_canna=no) }
+  test "$have_canna" = "yes" && { AC_CHECK_LIB(canna,jrKanjiControl,[:],have_canna=no) }
+  if test "$have_canna" = "yes"; then
     AC_DEFINE(HAVE_CANNA)
+    test -n "$canna_wchar_aware" && AC_DEFINE(CANNA_NEW_WCHAR_AWARE)
     XE_APPEND(modules/canna, MAKE_SUBDIR)
     need_modules_common=yes
     if test "$with_modules" = "yes"; then
       XE_APPEND(modules/canna, INSTALL_ARCH_DEP_SUBDIR)
     fi
     XE_PREPEND(-lcanna -lRKC, canna_libs)
+  elif test "$with_canna" != "no"; then
+    AC_MSG_WARN([Canna configuration failed.  If you expected success,
+maybe you need --with-site-prefixes=/usr/local/canna?])
   fi
 AC_SUBST(canna_libs)
 
@@ -4443,6 +4317,50 @@ if test "$ac_cv_func_getaddrinfo" != "no" ; then
       ac_cv_func_getaddrinfo=no
       ;;
   esac
+fi
+
+dnl check for vdb-related stuff
+if test "$check_vdb_posix" = "yes" ; then
+  dnl no mprotect, no vdb
+  AC_CHECK_FUNC(mprotect,AC_DEFINE(HAVE_MPROTECT) have_vdb_mprotect=yes,)
+
+  dnl sigaction needs either struct siginfo or siginfo_t
+  AC_CHECK_FUNC(sigaction, AC_DEFINE(HAVE_SIGACTION) have_vdb_sigaction=yes, 
+	        have_vdb_sigaction=no)
+  AC_CHECK_MEMBER(struct siginfo.si_addr, 
+		  AC_DEFINE(HAVE_STRUCT_SIGINFO_SI_ADDR) have_si_addr=yes,,
+	          [#include <signal.h>])
+  AC_CHECK_MEMBER(siginfo_t.si_addr,
+		  AC_DEFINE(HAVE_SIGINFO_T_SI_ADDR) have_si_addr=yes,,
+	          [#include <signal.h>])
+  if test "$have_si_addr" != "yes" ; then
+    have_vdb_sigaction=no
+  fi
+
+  dnl signal needs struct sigcontext
+  AC_CHECK_FUNC(signal, AC_DEFINE(HAVE_SIGNAL) have_vdb_signal=yes,)
+  AC_CHECK_MEMBER(struct sigcontext.cr2, 
+	          AC_DEFINE(HAVE_STRUCT_SIGCONTEXT_CR2) have_cr2=yes,, 
+		  [#include <signal.h>])
+
+  if test "$have_cr2" != "yes" ; then
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_mprotect" != "yes" ; then 
+    have_vdb_sigaction=no
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_sigaction" != "yes" -a "$have_vdb_signal" != "yes" ; then
+    have_vdb_posix=no
+    have_vdb_fake=yes
+    XE_DIE("No working write-barrier implementation found for this system.
+       Please report this and provide information about your system.")
+  else
+    have_vdb_posix=yes
+    have_vdb_fake=no
+  fi
 fi
 
 dnl ----------------------------------------------------------------
@@ -4508,15 +4426,15 @@ fi
 
 dnl If netdb.h does not declare h_errno, we must declare it by hand.
 AC_MSG_CHECKING(whether netdb declares h_errno)
-AC_TRY_LINK([#include <netdb.h>],
-  [return h_errno;],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <netdb.h>],
+  [return h_errno;])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_H_ERRNO)],
   [AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING(for sigsetjmp)
-AC_TRY_COMPILE([#include <setjmp.h>],
-	[sigjmp_buf bar; sigsetjmp (bar, 0);],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <setjmp.h>],
+	[sigjmp_buf bar; sigsetjmp (bar, 0);])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_SIGSETJMP)],
   [AC_MSG_RESULT(no)])
@@ -4570,7 +4488,7 @@ fi
 
 if test "$HAVE_TIMEVAL" = "yes"; then
 AC_MSG_CHECKING(whether gettimeofday accepts one or two arguments)
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
@@ -4585,7 +4503,7 @@ AC_TRY_LINK([
   [
   struct timeval time;
   gettimeofday (&time, 0);
-],
+])],
   [AC_MSG_RESULT(two)],
   [AC_MSG_RESULT(one)
    AC_DEFINE(GETTIMEOFDAY_ONE_ARGUMENT)])
@@ -4597,8 +4515,10 @@ test "$ac_cv_c_inline" != "no" -a "$GCC" = "yes" && XE_ADD_OBJS(inline.o)
 
 dnl check for the typeof extension
 AC_MSG_CHECKING(for typeof)
-AC_TRY_COMPILE(, [int i; __typeof__(i) j;], typeofname="__typeof__",
-  [AC_TRY_COMPILE(, [int i; typeof(i) j;], typeofname="typeof",
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i; __typeof__(i) j;])],
+  typeofname="__typeof__",
+  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i; typeof(i) j;])],
+   typeofname="typeof",
    typeofname=no)])
 AC_MSG_RESULT($typeofname)
 if test "$typeofname" != "no"; then
@@ -4660,7 +4580,7 @@ f2 (short c, void *ptr, long e)
 }
 
 int
-main (int argc, char *argv[])
+main (int argc, char **argv)
 {
   if (f2 (665, memset (alloca (1001), 0xFB, 1001), 776776776) != 42)
     return 1;
@@ -4701,7 +4621,6 @@ AC_FUNC_GETPGRP
 dnl We used to call AC_FUNC_MMAP here
 dnl Instead we now use following, suggested by Neal Becker
 AC_MSG_CHECKING(for working mmap)
-case "$opsys" in ultrix* ) have_mmap=no ;; *)
 AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -4715,7 +4634,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 #define MAP_FAILED -1
 #endif
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
   int fd = -1;
   caddr_t p;
@@ -4731,8 +4650,7 @@ int main (int argc, char *argv[])
     return 0;
   perror ("conftest: mmap failed");
   return 1;
-}])], have_mmap=yes, have_mmap=no) ;;
-esac
+}])], have_mmap=yes, have_mmap=no)
 AC_MSG_RESULT($have_mmap)
 test "$have_mmap" = "yes" && AC_DEFINE(HAVE_MMAP)
 
@@ -4747,12 +4665,13 @@ if test "$with_rel_alloc $have_mmap" = "default yes"; then
   if test "$doug_lea_malloc" = "yes"; then
     dnl Check if malloc() calls mmap(), making rel_alloc pointless.
     AC_MSG_CHECKING(for M_MMAP_THRESHOLD)
-    AC_TRY_COMPILE([#include <malloc.h>],[
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <malloc.h>],[
 #ifndef M_MMAP_THRESHOLD
 #error No M_MMAP_THRESHOLD :-(
 !@+$%^&*_)(_ - unlikely to compile...
 #endif
-], [with_rel_alloc=no; AC_MSG_RESULT(yes);], [with_rel_alloc=yes; AC_MSG_RESULT(no);])
+])], [with_rel_alloc=no; AC_MSG_RESULT(yes);],
+     [with_rel_alloc=yes; AC_MSG_RESULT(no);])
   else
     with_rel_alloc=yes
   fi
@@ -4773,21 +4692,21 @@ AC_CHECK_FUNC(socket,
  [AC_CHECK_HEADER(netinet/in.h,
    [AC_CHECK_HEADER(arpa/inet.h, [
   AC_DEFINE(HAVE_SOCKETS)
-      AC_MSG_CHECKING("for sun_len member in struct sockaddr_un")
-      AC_TRY_LINK([
+      AC_MSG_CHECKING([for sun_len member in struct sockaddr_un])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
       ],
-      [static struct sockaddr_un x; x.sun_len = 1;],
+      [static struct sockaddr_un x; x.sun_len = 1;])],
       [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_SOCKADDR_SUN_LEN)],
       [AC_MSG_RESULT(no)])
-      AC_MSG_CHECKING("for ip_mreq struct in netinet/in.h")
-      AC_TRY_LINK([
+      AC_MSG_CHECKING([for ip_mreq struct in netinet/in.h])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <netinet/in.h>
       ],
-      [static struct ip_mreq x;],
+      [static struct ip_mreq x;])],
       [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_MULTICAST)],
       [AC_MSG_RESULT(no)])])])])
 
@@ -4805,9 +4724,10 @@ dnl Check for nlist.h
 AC_CHECK_HEADER(nlist.h, AC_DEFINE(NLIST_STRUCT), )
 
 dnl Check for sound of various sorts.
+AC_MSG_CHECKING([for sound support])
+AC_MSG_RESULT()
 
 dnl Autodetect native sound
-AC_CHECKING([for sound support])
 test -n "$with_native_sound_lib" && with_sound_native=yes
 
 if test "$with_sound_native" != "no"; then
@@ -4926,6 +4846,22 @@ if test "$with_sound_native" = "yes"; then
   test -n "$with_native_sound_lib" && XE_PREPEND($with_native_sound_lib, LIBS)
 fi
 
+dnl ALSA sound support
+if test "$with_sound_alsa" != "no"; then
+  AC_CHECK_HEADER([alsa/input.h], [
+    AC_CHECK_LIB(asound, snd_pcm_open, have_alsa_sound=yes)])
+  if test "$have_alsa_sound" = "yes"; then
+    with_sound_alsa=yes
+    AC_DEFINE(HAVE_ALSA_SOUND)
+    XE_ADD_OBJS(alsaplay.o)
+    XE_PREPEND(-lasound, LIBS)
+  else
+    test "$with_sound_alsa" = "yes" && \
+      XE_DIE("Required ALSA sound support cannot be provided.")
+    with_sound_alsa=no
+  fi
+fi
+
 dnl NAS Sound support
 if test "$with_sound_nas" != "no"; then
   AC_CHECK_HEADER(audio/audiolib.h, [
@@ -4978,7 +4914,8 @@ dnl ---------------------
 test -z "$with_tty" && with_tty=yes
 
 if test "$with_tty" = "yes"  ; then
-  AC_CHECKING([for TTY-related features])
+  AC_MSG_CHECKING([for TTY-related features])
+  AC_MSG_RESULT()
   AC_DEFINE(HAVE_TTY)
 
   dnl Autodetect ncurses.
@@ -5063,25 +5000,33 @@ dnl On FreeBSD, both DB and DBM are part of libc.
 dnl By default, we check for DBM support in libgdbm, then libc, then libdbm.
 
 test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
-  != "no no no" && AC_CHECKING([for database support])
+  != "no no no" && AC_MSG_CHECKING([for database support]) && \
+  AC_MSG_RESULT()
 
 dnl Check for ndbm.h, required for either kind of DBM support.
+dnl #### Should we check for gdbm.h, too?  (Seen on MacPorts.)
 if test "$with_database_gdbm $with_database_dbm" != "no no"; then
-  AC_CHECK_HEADER(ndbm.h, [:], [
+  ndbm_h_file=""
+  AC_CHECK_HEADERS([ndbm.h gdbm/ndbm.h],[ndbm_h_file=$ac_header; break;],[],[])
+  if test "x$ndbm_h_file" = "x"; then
     test "$with_database_gdbm" = "yes" -o \
          "$with_database_dbm"  = "yes" && \
       XE_DIE("Required DBM support cannot be provided.")
-    with_database_gdbm=no with_database_dbm=no])
+    with_database_gdbm=no with_database_dbm=no]
+  fi
 fi
 
 dnl Check for DBM support in libgdbm.
 if test "$with_database_gdbm" != "no"; then
   AC_CHECK_LIB(gdbm, dbm_open, [
    with_database_gdbm=yes with_database_dbm=no libdbm=-lgdbm], [
+       AC_CHECK_LIB(gdbm_compat, dbm_open, [
+       with_database_gdbm=yes with_database_dbm=no libdbm="-lgdbm_compat -lgdbm"], [
    if test "$with_database_gdbm" = "yes"; then
      XE_DIE("Required GNU DBM support cannot be provided.")
    fi
-   with_database_gdbm=no])
+   with_database_gdbm=no], -lgdbm)
+  ])
 fi
 
 dnl Check for DBM support in libc and libdbm.
@@ -5095,30 +5040,44 @@ fi
 
 dnl Tell make about the DBM support we detected.
 test -n "$libdbm" && XE_PREPEND("$libdbm", LIBS)
-test "$with_database_gdbm" = "yes" -o \
-     "$with_database_dbm"  = "yes" && \
+if test "$with_database_gdbm" = "yes" -o \
+        "$with_database_dbm"  = "yes"; then
+  AC_DEFINE_UNQUOTED(NDBM_H_FILE,"$ndbm_h_file")
   AC_DEFINE(HAVE_DBM)
+  $as_unset ndbm_h_file
+fi
+
+dnl Check for u_int*_t typedefs.
+AC_CHECK_TYPES([u_int8_t, u_int16_t, u_int32_t])
 
 dnl Check for Berkeley DB.
 if test "$with_database_berkdb" != "no"; then
   AC_MSG_CHECKING(for Berkeley db.h)
   for header in "db/db.h" "db.h"; do
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <stdlib.h>
 #if !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1)
 #ifdef HAVE_INTTYPES_H
 #define __BIT_TYPES_DEFINED__
 #include <inttypes.h>
+#if !HAVE_U_INT8_T
 typedef uint8_t  u_int8_t;
+#endif
+#if !HAVE_U_INT16_T
 typedef uint16_t u_int16_t;
+#endif
+#if !HAVE_U_INT32_T
 typedef uint32_t u_int32_t;
+#endif
 #ifdef WE_DONT_NEED_QUADS
+#if !HAVE_U_INT64_T
 typedef uint64_t u_int64_t;
 #endif
 #endif
 #endif
+#endif
 #include <$header>
-],[], db_h_file="$header"; break)
+])], db_h_file="$header"; break)
   done
   if test -z "$db_h_file"
   then AC_MSG_RESULT(no); with_database_berkdb=no
@@ -5151,7 +5110,7 @@ yes
   fi
 
   dnl Berk db 4.1 decorates public functions with version information
-  if test "$with_database_berkdb" != "yes" -a "$dbver" = "4"; then
+  if test "$with_database_berkdb" = "yes" -a "$dbver" = "4"; then
     rm -f $tempcname
     echo "#include <$db_h_file>" > $tempcname
     echo "configure___ dbfunc=db_create" >> $tempcname
@@ -5230,7 +5189,7 @@ dnl Unfortunately, just because we can link doesn't mean we can run.
 dnl One of the above link tests may have succeeded but caused resulting
 dnl executables to fail to run.  Also any tests using AC_RUN_IFELSE will
 dnl have reported incorrect results.
-AC_RUN_IFELSE([AC_LANG_SOURCE([int main(int c,char *v[]){return 0;}])],[:],[
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main(int c,char **v){return 0;}])],[:],[
   echo ""
   echo "*** PANIC *** The C compiler can no longer build working executables."
   echo "*** PANIC *** Please examine the tail of config.log for runtime errors."
@@ -5331,16 +5290,18 @@ dnl ----------------------------------------------
 dnl Create some auxiliary files for developers.
 dnl ----------------------------------------------
 
+dnl Unlike TAGS, debugger init files depend on config.h.
+dnl Regenerate them locally on every configure.
 dnl Create a .gdbinit useful for debugging XEmacs
-if test -f "$srcdir/src/.gdbinit" -a ! -f "src/.gdbinit"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit"
-  echo "source $srcdir/src/.gdbinit" > "src/.gdbinit"
+if test -f "$srcdir/etc/gdbinit.in"; then
+  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
+  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
 fi
 
 dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/src/.dbxrc" -a ! -f "src/.dbxrc"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc"
-  echo ". $srcdir/src/.dbxrc" > "src/.dbxrc"
+if test -f "$srcdir/etc/dbxrc.in"; then
+  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
+  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
 fi
 
 dnl Create a useful TAGS file
@@ -5371,10 +5332,12 @@ dnl configuration here uncanonicalized to avoid exceeding size limits.
 
 AC_SUBST(PROGNAME)
 AC_SUBST(version)
+AC_SUBST(verbose_version)
 AC_SUBST(inststaticdir)
 AC_SUBST(instvardir)
 AC_SUBST(srcdir)
 AC_SUBST(bindir)
+AC_SUBST(datarootdir)
 AC_SUBST(datadir)
 AC_SUBST(statedir)
 AC_SUBST(libdir)
@@ -5383,143 +5346,81 @@ AC_SUBST(extra_includes)
 
 AC_SUBST(prefix)
 AC_SUBST(PREFIX_USER_DEFINED)
-dnl Yo, Stephen Bourne!  I want to marry you!
-PREFIX=$prefix
-while true; do
-  case "$PREFIX" in
-    *\$* ) eval "PREFIX=$PREFIX" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(prefix,PREFIX)
 AC_SUBST(PREFIX)
 
 AC_SUBST(exec_prefix)
 AC_SUBST(EXEC_PREFIX_USER_DEFINED)
-EXEC_PREFIX=$exec_prefix
-while true; do
-  case "$EXEC_PREFIX" in
-    *\$* ) eval "EXEC_PREFIX=$EXEC_PREFIX" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(exec_prefix,EXEC_PREFIX)
 AC_SUBST(EXEC_PREFIX)
 
 AC_SUBST(infodir)
 AC_SUBST(INFODIR_USER_DEFINED)
-INFODIR=$infodir
-while true; do
-  case "$INFODIR" in
-    *\$* ) eval "INFODIR=$INFODIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(infodir,INFODIR)
 AC_SUBST(INFODIR)
 
 AC_SUBST(infopath,$with_infopath)
 AC_SUBST(INFOPATH_USER_DEFINED)
-INFOPATH=$with_infopath
-while true; do
-  case "$INFOPATH" in
-    *\$* ) eval "INFOPATH=$INFOPATH" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_info_path,INFOPATH)
 AC_SUBST(INFOPATH)
 
-if test -z "$with_package_path" && test -n "$with_package_prefix" ; then
-  if test "$with_mule" = "yes" ; then
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages:${with_package_prefix}/mule-packages"
-  else
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages"
-  fi
-fi
+test -n "$with_user_packages" && with_early_packages=$with_user_packages
+AC_SUBST(early_packages,$with_early_packages)
+AC_SUBST(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)
+XE_EXPAND_VARIABLE(with_early_packages,EARLY_PACKAGE_DIRECTORIES)
+AC_SUBST(EARLY_PACKAGE_DIRECTORIES)
+
+test -n "$with_system_packages" && with_late_packages=$with_system_packages
+AC_SUBST(late_packages,$with_late_packages)
+AC_SUBST(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)
+XE_EXPAND_VARIABLE(with_late_packages,LATE_PACKAGE_DIRECTORIES)
+AC_SUBST(LATE_PACKAGE_DIRECTORIES)
+
+test -n "$with_legacy_packages" && with_last_packages=$with_legacy_packages
+AC_SUBST(last_packages,$with_last_packages)
+AC_SUBST(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)
+XE_EXPAND_VARIABLE(with_last_packages,LAST_PACKAGE_DIRECTORIES)
+AC_SUBST(LAST_PACKAGE_DIRECTORIES)
 
 AC_SUBST(package_path,$with_package_path)
 AC_SUBST(PACKAGE_PATH_USER_DEFINED)
-PACKAGE_PATH=$with_package_path
-while true; do
-  case "$PACKAGE_PATH" in
-    *\$* ) eval "PACKAGE_PATH=$PACKAGE_PATH" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_package_path,PACKAGE_PATH)
 AC_SUBST(PACKAGE_PATH)
 
 AC_SUBST(lispdir, $with_lispdir)
 AC_SUBST(LISPDIR_USER_DEFINED)
-LISPDIR=$with_lispdir
-while true; do
-  case "$LISPDIR" in
-    *\$* ) eval "LISPDIR=$LISPDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_lispdir,LISPDIR)
 AC_SUBST(LISPDIR)
 
 AC_SUBST(moduledir,$with_moduledir)
 AC_SUBST(MODULEDIR_USER_DEFINED)
-MODULEDIR=$with_moduledir
-while true; do
-  case "$MODULEDIR" in
-    *\$* ) eval "MODULEDIR=$MODULEDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_moduledir,MODULEDIR)
 AC_SUBST(MODULEDIR)
 
 AC_SUBST(sitelispdir,$with_sitelispdir)
 AC_SUBST(SITELISPDIR_USER_DEFINED)
-SITELISPDIR=$sitelispdir
-while true; do
-  case "$SITELISPDIR" in
-    *\$* ) eval "SITELISPDIR=$SITELISPDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(sitelispdir,SITELISPDIR)
 AC_SUBST(SITELISPDIR)
 
 AC_SUBST(sitemoduledir)
 AC_SUBST(SITEMODULEDIR_USER_DEFINED)
-SITEMODULEDIR=$sitemoduledir
-while true; do
-  case "$SITEMODULEDIR" in
-    *\$* ) eval "SITEMODULEDIR=$SITEMODULEDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(sitemoduledir,SITEMODULEDIR)
 AC_SUBST(SITEMODULEDIR)
 
 AC_SUBST(etcdir,$with_etcdir)
 AC_SUBST(ETCDIR_USER_DEFINED)
-ETCDIR=$with_etcdir
-while true; do
-  case "$ETCDIR" in
-    *\$* ) eval "ETCDIR=$ETCDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_etcdir,ETCDIR)
 AC_SUBST(ETCDIR)
 
 AC_SUBST(archlibdir,$with_archlibdir)
 AC_SUBST(ARCHLIBDIR_USER_DEFINED)
 ARCHLIBDIR=$with_archlibdir
-while true; do
-  case "$ARCHLIBDIR" in
-    *\$* ) eval "ARCHLIBDIR=$ARCHLIBDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_archlibdir,ARCHLIBDIR)
 AC_SUBST(ARCHLIBDIR)
 
 AC_SUBST(docdir,$with_docdir)
 AC_SUBST(DOCDIR_USER_DEFINED)
-DOCDIR=$with_docdir
-while true; do
-  case "$DOCDIR" in
-    *\$* ) eval "DOCDIR=$DOCDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_docdir,DOCDIR)
 AC_SUBST(DOCDIR)
 
 AC_SUBST(docdir)
@@ -5551,7 +5452,6 @@ AC_SUBST(RECURSIVE_MAKE_ARGS)
 AC_SUBST(native_sound_lib,$with_native_sound_lib)
 AC_SUBST(sound_cflags)
 AC_SUBST(RANLIB)
-AC_SUBST(dynodump_arch)
 
 AC_SUBST(XEMACS_CC)
 AC_SUBST(XE_CFLAGS)
@@ -5571,6 +5471,9 @@ if test "$with_site_modules" = "no"; then
 fi
 
 XE_SPACE(ac_configure_args, $ac_configure_args)
+dnl Put back the leading space to work around problems with
+dnl 'config.status --recheck' under autoconf 2.60 and 2.61.
+ac_configure_args=" $ac_configure_args"
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$ac_cv_build")
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "$ac_configure_args")
 
@@ -5589,15 +5492,17 @@ dnl at the point where the autodetection occurs or would occur,
 dnl so that the user gets immediate feedback on the results of the
 dnl autodetection.
 
-if   test "$GNU_MALLOC"         = "yes"; then AC_DEFINE(GNU_MALLOC)
-elif test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
+if   test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
+test "$with_xemacs_compiler" = "g++" && AC_DEFINE(USE_GPLUSPLUS)
 test "$with_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$with_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
-test "$with_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
+test "$with_newgc"       = "yes" && AC_DEFINE(NEW_GC)
+test "$have_vdb_posix"     = "yes" && AC_DEFINE(VDB_POSIX)
+test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
 test "$with_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
@@ -5704,11 +5609,14 @@ if test "$with_x11" = "yes"; then
   if test "$with_xauth" != yes; then
     echo "    - Xau (X authority) not available."
   fi
-  if test "$with_xmu" != yes; then
-    echo "    - Xmu library not available; substituting equivalent routines."
-  fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
+  fi
+  if test "$with_fontconfig" = "yes"; then
+    echo "    - Using fontconfig to manage fonts."
+  fi
+  if test "$with_xft_emacs" = "yes"; then
+    echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
   fi
 fi
 if test "$need_motif" = "yes" ; then
@@ -5735,6 +5643,10 @@ case "$with_menubars" in
           echo "             Re-run configure with --with-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
+if test "$with_xft_menubars" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in menubars."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
 case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
   lucid  ) echo "  Using Lucid scrollbars."      ;;
@@ -5760,6 +5672,15 @@ case "$with_widgets" in
   athena ) echo "  Using Athena native widgets."     ;;
      msw ) echo "  Using MS-Windows native widgets." ;;
 esac
+if test "$with_xft_tabs" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in tab controls."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
+if test "$with_xft_gauges" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in progress bars."
+  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This feature not yet implemented; setting ignored."
+fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."
   echo "    -  Drag'n'Drop prototype:                             $dragndrop_proto."
@@ -5772,7 +5693,7 @@ test "$with_gpm" = yes && echo "  Compiling in support for GPM (General Purpose 
 
 echo "
 Images:"
-test "$with_gif" = yes && echo "  Compiling in support for GIF  images (builtin)."
+test "$with_gif" = yes && echo "  Compiling in support for GIF images."
 if test "$with_xpm" = yes; then
   echo "  Compiling in support for XPM  images."
 elif test "$with_x11" = yes; then
@@ -5806,6 +5727,7 @@ test "$with_xface" = yes && echo "  Compiling in support for X-Face message head
 echo "
 Sound:"
 test "$with_sound_native" = yes && echo "  Compiling in support for sound (native)."
+test "$with_sound_alsa" = yes && echo "  Compiling in support for ALSA (Advanced Linux Sound Architecture)."
 test "$with_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
 test "$old_nas" = yes && echo "    - NAS library lacks error trapping; will play synchronously."
 test "$with_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
@@ -5833,7 +5755,7 @@ test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N inpu
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."
 test "$with_xfs" = yes && echo "    - Using XFontSet to provide bilingual menubar."
-test "$with_canna" = yes && echo "  Compiling in support for Canna on Mule."
+test "$have_canna" = yes && echo "  Compiling in support for Canna on Mule."
 if test "$with_wnn" = yes; then
   echo "  Compiling in support for the WNN input method on Mule."
   test "$with_wnn6" = yes && echo "    - Using WNN version 6."
@@ -5867,20 +5789,29 @@ if test "$with_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
 fi
 if test "$with_kkcc" = yes ; then
-  echo "  Using the new GC algorithms."
+  echo "  Using the new GC mark algorithms (KKCC)."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: The new algorithms are experimental. They are enabled by"
   echo "  WARNING: default for this release. Use \`--disable-kkcc' to"
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-if test "$with_mc_alloc" = yes ; then
-  echo "  Using the new allocator."
-  echo "  WARNING: ---------------------------------------------------------"
-  echo "  WARNING: The new allocator is experimental. It is enabled by"
-  echo "  WARNING: default for this release. Use \`--disable-mc-alloc' to"
-  echo "  WARNING: turn it off."
-  echo "  WARNING: ---------------------------------------------------------"
+test "$with_newgc" = yes && echo "  Using the new incremental garbage collector and the new allocator."
+if test "$have_vdb_posix" = yes ; then
+  if test "$have_vdb_sigaction" = yes ; then 
+    echo "  Using POSIX sigaction() to install fault handler."
+  else
+    echo "  Using POSIX signal() to install vdb fault handler."
+  fi
+fi
+if test "$have_vdb_win32" = yes ; then
+  echo "  Using special WIN32 vdb fault handler."
+fi
+if test "$have_vdb_mach" = yes ; then
+  echo "  Using mach exception mechanism as vdb fault handler."
+fi
+if test "$have_vdb_fake" = yes && test "$with_vdb" == fake; then
+  echo "  Virtual dirty bit write barrier manually disabled."
 fi
 test "$with_pdump" = yes && echo "  Using the new portable dumper."
 test "$with_dump_in_exec" = yes && echo "  Dumping into executable."
@@ -5918,6 +5849,14 @@ dnl src/Makefile.in will have src/depend appended to it;
 dnl module Makefiles will have the common text in
 dnl modules/common/Makefile.common appended.
 
+dnl this actually should be conditional on having perl (ie, effectively
+dnl unconditional on sane systems)
+if test -r $srcdir/src/depend; then :;
+else
+  echo "creating $srcdir/src/depend"
+  perl $srcdir/src/make-src-depend > $srcdir/src/depend
+fi
+
 for file in $internal_makefile_list; do
   case $file in
     src/Makefile.in ) file="src/Makefile.in:src/Makefile.in.in:src/depend" ;;
@@ -5935,6 +5874,11 @@ dnl two brackets become one, but inside of a macro definition you need
 dnl more, or something -- I don't understand, but Martin probably does.
 dnl We put the brackets back later.
 dnl [ben]
+dnl To insert comments that will remain in the generated file, we use the
+dnl imake XCOMM convention.  Lines beginning with "XCOMM " exactly (no
+dnl leading whitespace, one trailing ASCII space, case sensitive) will be
+dnl transformed to shell/make/gdb comments in the generated file.
+dnl [sjt]
 
 dnl MAKE_JUNK_C(filename):
 dnl Copy a .in file to junk.c in preparation for passing through the
@@ -5983,7 +5927,9 @@ dnl Restore lines quoted above to original contents.
 	s/\\\([[\"]]\)/\1/g
 	s/^[[ TAB]]*\"//
 	s/\"[[ TAB]]*$//
-}' > Makefile.new
+}'				\
+dnl Convert comments -- must come after the unquoting operations
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new $2
 ])dnl CPP_MAKEFILE
@@ -5995,10 +5941,19 @@ AC_CONFIG_COMMANDS([default],
 
 dnl Create a GNUmakefile and Makefile from Makefile.in.
 dnl Create xemacs.def from xemacs.def.in in the same fashion,
-dnl if it exists (i.e. in the src/ directory).
+dnl if it exists (i.e. in the src/ directory).  Ditto for the
+dnl debugger init files (in the src/ directory).
     MAKE_JUNK_C(Makefile.in)
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    if test -r ".gdbinit.in"; then
+      MAKE_JUNK_C(.gdbinit.in)
+      CPP_MAKEFILE(,.gdbinit)
+    fi
+    if test -r ".dbxrc.in"; then
+      MAKE_JUNK_C(.dbxrc.in)
+      CPP_MAKEFILE(,.dbxrc)
+    fi
     if test -r "xemacs.def.in"; then
 dnl #### We should be using MAKE_JUNK_C instead of the next two lines.
 dnl #### But the comments in xemacs.def.in need to be converted from C-style

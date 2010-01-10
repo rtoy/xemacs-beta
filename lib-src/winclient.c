@@ -40,6 +40,7 @@ static char * getNextArg (const char **ptr, unsigned *len);
 /* -- Post-Include Defines -------------------------------------------------- */
 
 /* Timeouts & delays */
+#define CONNECT_RETRIES		10
 #define CONNECT_DELAY		500		/* ms */
 #define TRANSACTION_TIMEOUT	5000		/* ms */
 #define MAX_INPUT_IDLE_WAIT     INFINITE	/* ms */
@@ -206,7 +207,7 @@ openConversation (void)
       CloseHandle (pi.hProcess);
       
       /* Try to connect */
-      for (n = 0; n < 5; n++)
+      for (n = 0; n < CONNECT_RETRIES; n++)
 	{
 	  Sleep (CONNECT_DELAY);
 	  

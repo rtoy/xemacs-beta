@@ -171,7 +171,16 @@ one version of a package available.")
 
 ;;;###autoload
 (defcustom package-get-package-index-file-location 
-  (car (split-path (or (getenv "EMACSPACKAGEPATH") user-init-directory)))
+  (cond
+   ;; historical backage
+   ((getenv "EMACSPACKAGEPATH") 
+    (split-path (getenv "EMACSPACKAGEPATH")))
+   ((getenv "EMACSEARLYPACKAGES")
+    (split-path (getenv "EMACSEARLYPACKAGES")))
+   (configure-early-package-directories
+    (car configure-early-package-directories))
+   (t
+    user-init-directory))
   "*The directory where the package-index file can be found."
   :type 'directory
   :group 'package-get)
@@ -211,41 +220,44 @@ directory."
     ("Belgium (be.xemacs.org)" "ftp.be.xemacs.org" "xemacs/packages")
     ("Brazil (br.xemacs.org)" "ftp.br.xemacs.org" "pub/xemacs/packages")
     ("Canada (ca.xemacs.org)" "ftp.ca.xemacs.org" "pub/Mirror/xemacs/packages")
-    ("Canada (crc.ca)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages")
     ("Canada (nrc.ca)" "ftp.nrc.ca" "pub/packages/editors/xemacs/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Chile (cl.xemacs.org)" "ftp.cl.xemacs.org" "packages")
+    ("China (ftp.cn.xemacs.org)" "ftp.cn.xemacs.org" "pub/xemacs/packages")
     ("Czech Republic (cz.xemacs.org)" "ftp.cz.xemacs.org" "MIRRORS/ftp.xemacs.org/pub/xemacs/packages")
-    ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "pub/emacs/xemacs/packages")
     ("Finland (fi.xemacs.org)" "ftp.fi.xemacs.org" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
     ("France (fr.xemacs.org)" "ftp.fr.xemacs.org" "pub/xemacs/packages")
     ("France (mirror.cict.fr)" "mirror.cict.fr" "xemacs/packages")
     ("France (pasteur.fr)" "ftp.pasteur.fr" "pub/computing/xemacs/packages")
     ("Germany (de.xemacs.org)" "ftp.de.xemacs.org" "pub/ftp.xemacs.org/tux/xemacs/packages")
-    ("Iceland (is.xemacs.org)" "ftp.is.xemacs.org" "pub/xemacs/packages")
+    ("Greece (gr.xemacs.org)" "ftp.gr.xemacs.org" "mirrors/XEmacs/ftp/packages")
+    ("Hong Kong (hk.xemacs.org)" "ftp.hk.xemacs.org" "pub/xemacsftp/packages")
     ("Ireland (ie.xemacs.org)" "ftp.ie.xemacs.org" "mirrors/ftp.xemacs.org/pub/xemacs/packages")
     ("Ireland (heanet.ie)" "ftp.heanet.ie" "mirrors/ftp.xemacs.org/packages")
     ("Italy (it.xemacs.org)" "ftp.it.xemacs.org" "unix/packages/XEMACS/packages")
-    ("Japan (aist.go.jp)" "ring.aist.go.jp" "pub/text/xemacs/packages")
-    ("Japan (asahi-net.or.jp)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages")
     ("Japan (dti.ad.jp)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages")
-    ("Japan (jaist.ac.jp)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
-    ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/GNU/xemacs/packages")
+;   ("Japan (jaist.ac.jp)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
+    ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/text/xemacs/packages")
 ;   ("Japan (nucba.ac.jp)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
-    ("Japan (sut.ac.jp)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
-    ("New Zealand (nz.xemacs.org)" "ftp.nz.xemacs.org" "mirror/ftp.xemacs.org/packages")
+    ("Netherlands (nl.xemacs.org)" "ftp.nl.xemacs.org" "pub/xemacs/ftp/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Netherlands (xemacsftp.digimirror.nl)" "xemacsftp.digimirror.nl" "packages")
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
-    ("Poland (pl.xemacs.org)" "ftp.pl.xemacs.org" "pub/unix/editors/xemacs/packages")
-    ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/xemacs/packages")
-;   ("South Africa (za.xemacs.org)" "ftp.za.xemacs.org" "mirrorsites/ftp.xemacs.org/packages")
+    ("Portugal (pt.xemacs.org)" "ftp.pt.xemacs.org" "pub/MIRRORS/ftp.xemacs.org/packages")
+    ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/emacs/xemacs/packages")
+    ("Saudi Arabia (sa.xemacs.org)" "ftp.sa.xemacs.org" "pub/xemacs.org/packages")
     ("Sweden (se.xemacs.org)" "ftp.se.xemacs.org" "pub/gnu/xemacs/packages")
     ("Switzerland (ch.xemacs.org)" "ftp.ch.xemacs.org" "mirror/xemacs/packages")
     ("Taiwan (ftp.tw.xemacs.org)" "ftp.tw.xemacs.org" "Unix/Editors/XEmacs/packages")
     ("UK (uk.xemacs.org)" "ftp.uk.xemacs.org" "sites/ftp.xemacs.org/pub/xemacs/packages")
     ("US (ibiblio.org)" "mirrors.ibiblio.org" "pub/mirrors/xemacs/packages")
-    ("US (stealth.net)" "ftp.stealth.net" "pub/mirrors/ftp.xemacs.org/pub/xemacs/packages")
-    ("US (unc.edu)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages")
-    ("US (us.xemacs.org)" "ftp.us.xemacs.org" "pub/xemacs/packages")
-    ("US (utk.edu)" "ftp.sunsite.utk.edu" "pub/xemacs/packages"))
+    ("US (us.xemacs.org)" "ftp.us.xemacs.org" "pub/mirrors/xemacs/packages")
+    )
   "*List of remote sites available for downloading packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
@@ -261,7 +273,7 @@ variable actually used to specify package download sites."
 (defcustom package-get-pre-release-download-sites
   '(
     ;; Main XEmacs Site (ftp.xemacs.org)
-    ("Pre-Releases (Main XEmacs Site)" "ftp.xemacs.org"
+    ("US Pre-Releases (Main XEmacs Site)" "ftp.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
     ;; In alphabetical order of Country, our mirrors...
     ("Argentina Pre-Releases (xmundo.net)" "xemacs.xmundo.net"
@@ -272,20 +284,23 @@ variable actually used to specify package download sites."
      "pub/xemacs/beta/experimental/packages")
     ("Austria Pre-Releases (at.xemacs.org)" "ftp.at.xemacs.org"
      "editors/xemacs/beta/experimental/packages")
-    ("Belgium (be.xemacs.org)" "ftp.be.xemacs.org"
+    ("Belgium Pre-Releases (be.xemacs.org)" "ftp.be.xemacs.org"
      "xemacs/beta/experimental/packages")
     ("Brazil Pre-Releases (br.xemacs.org)" "ftp.br.xemacs.org"
      "pub/xemacs/xemacs-21.5/experimental/packages")
     ("Canada Pre-Releases (ca.xemacs.org)" "ftp.ca.xemacs.org"
      "pub/Mirror/xemacs/beta/experimental/packages")
-    ("Canada Pre-Releases (crc.ca)" "ftp.crc.ca"
-     "pub/packages/editors/xemacs/beta/experimental/packages")
     ("Canada Pre-Releases (nrc.ca)" "ftp.nrc.ca"
      "pub/packages/editors/xemacs/beta/experimental/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Chile Pre-Releases (cl.xemacs.org)" "ftp.cl.xemacs.org"
+;      "beta/experimental/packages")
+    ("China Pre-Releases (ftp.cn.xemacs.org)" "ftp.cn.xemacs.org"
+     "pub/xemacs/beta/experimental/packages")
     ("Czech Republic Pre-Releases (cz.xemacs.org)" "ftp.cz.xemacs.org"
      "MIRRORS/ftp.xemacs.org/pub/xemacs/xemacs-21.5/experimental/packages")
-    ("Denmark Pre-Releases (dk.xemacs.org)" "ftp.dk.xemacs.org"
-     "pub/emacs/xemacs/beta/experimental/packages")
     ("Finland Pre-Releases (fi.xemacs.org)" "ftp.fi.xemacs.org"
      "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/beta/experimental/packages")
     ("France Pre-Releases (fr.xemacs.org)" "ftp.fr.xemacs.org"
@@ -296,38 +311,39 @@ variable actually used to specify package download sites."
      "pub/computing/xemacs/beta/experimental/packages")
     ("Germany Pre-Releases (de.xemacs.org)" "ftp.de.xemacs.org"
      "pub/ftp.xemacs.org/tux/xemacs/beta/experimental/packages")
-    ("Iceland Pre-Releases (is.xemacs.org)" "ftp.is.xemacs.org"
-     "pub/xemacs/beta/experimental/packages")
+    ("Greece Pre-Releases (gr.xemacs.org)" "ftp.gr.xemacs.org"
+     "mirrors/XEmacs/ftp/beta/experimental/packages")
+    ("Hong Kong Pre-Releases (hk.xemacs.org)" "ftp.hk.xemacs.org"
+     "pub/xemacsftp/beta/experimental/packages")
     ("Ireland Pre-Releases (ie.xemacs.org)" "ftp.ie.xemacs.org"
      "mirrors/ftp.xemacs.org/pub/xemacs/beta/experimental/packages")
     ("Ireland Pre-Releases (heanet.ie)" "ftp.heanet.ie"
      "mirrors/ftp.xemacs.org/beta/experimental/packages")
     ("Italy Pre-Releases (it.xemacs.org)" "ftp.it.xemacs.org"
      "unix/packages/XEMACS/beta/experimental/packages")
-    ("Japan Pre-Releases (aist.go.jp)" "ring.aist.go.jp"
-     "pub/text/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (asahi-net.or.jp)" "ring.asahi-net.or.jp"
-     "pub/text/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (dti.ad.jp)" "ftp.dti.ad.jp"
      "pub/unix/editor/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (jaist.ac.jp)" "ftp.jaist.ac.jp"
-     "pub/GNU/xemacs/beta/experimental/packages")
+;   ("Japan Pre-Releases (jaist.ac.jp)" "ftp.jaist.ac.jp"
+;    "pub/GNU/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
-     "pub/GNU/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (sut.ac.jp)" "sunsite.sut.ac.jp"
-     "pub/archives/packages/xemacs/xemacs-21.5/experimental/packages")
-    ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org"
+     "pub/text/xemacs/beta/experimental/packages")
+    ("Korea Pre-Releases (kr.xemacs.org)" "ftp.kr.xemacs.org"
      "pub/tools/emacs/xemacs/beta/experimental/packages")
-    ("New Zealand Pre-Releases (nz.xemacs.org)" "ftp.nz.xemacs.org"
-     "mirror/ftp.xemacs.org/packages")
+    ("Netherlands Pre-Releases (nl.xemacs.org)" "ftp.nl.xemacs.org"
+     "pub/xemacs/ftp/beta/experimental/packages")
+    ;; no anonymous ftp available, uncomment when updating website
+    ;; with
+    ;; xemacs-builds/adrian/website/package-get-2-download-sites.el
+;     ("Netherlands Pre-Releases (xemacsftp.digimirror.nl)" "xemacsftp.digimirror.nl"
+;      "beta/experimental/packages")
     ("Norway Pre-Releases (no.xemacs.org)" "ftp.no.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
-    ("Poland Pre-Releases (pl.xemacs.org)" "ftp.pl.xemacs.org"
-     "pub/unix/editors/xemacs/beta/experimental/packages")
+    ("Portugal Pre-Releases (pt.xemacs.org)" "ftp.pt.xemacs.org"
+     "pub/MIRRORS/ftp.xemacs.org/beta/experimental/packages")
     ("Russia Pre-Releases (ru.xemacs.org)" "ftp.ru.xemacs.org"
-     "pub/xemacs/beta/experimental/packages")
-;   ("South Africa Pre-Releases (za.xemacs.org)" "ftp.za.xemacs.org"
-;    "mirrorsites/ftp.xemacs.org/beta/experimental/packages")
+     "pub/emacs/xemacs/beta/experimental/packages")
+    ("Saudi Arabia Pre-Releases (sa.xemacs.org)" "ftp.sa.xemacs.org"
+     "pub/xemacs.org/beta/experimental/packages")
     ("Sweden Pre-Releases (se.xemacs.org)" "ftp.se.xemacs.org"
      "pub/gnu/xemacs/beta/experimental/packages")
     ("Switzerland Pre-Releases (ch.xemacs.org)" "ftp.ch.xemacs.org"
@@ -338,14 +354,9 @@ variable actually used to specify package download sites."
      "sites/ftp.xemacs.org/pub/xemacs/beta/experimental/packages")
     ("US Pre-Releases (ibiblio.org)" "mirrors.ibiblio.org"
      "pub/mirrors/xemacs/beta/experimental/packages")
-    ("US Pre-Releases (stealth.net)" "ftp.stealth.net"
-     "pub/mirrors/ftp.xemacs.org/pub/xemacs/beta/experimental/packages")
-    ("US Pre-Releases (unc.edu)" "metalab.unc.edu"
-     "pub/packages/editors/xemacs/beta/experimental/packages")
     ("US Pre-Releases (us.xemacs.org)" "ftp.us.xemacs.org"
-     "pub/xemacs/beta/experimental/packages")
-    ("US Pre-Releases (utk.edu)" "ftp.sunsite.utk.edu"
-     "pub/xemacs/beta/experimental/packages"))
+     "pub/mirrors/xemacs/beta/experimental/packages")
+    )
   "*List of remote sites available for downloading \"Pre-Release\" packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
@@ -393,50 +404,6 @@ Otherwise respect the `force-current' argument of `package-get-require-base'."
   :type 'boolean
   :group 'package-get)
 
-(defun package-get-pgp-available-p ()
-  "Checks the availability of Mailcrypt and PGP executable.
-
-Returns t if both are found, nil otherwise.  As a side effect, set
-`mc-default-scheme' dependent on the PGP executable found."
-  (let (result)
-    (when (featurep 'mailcrypt-autoloads)
-      (autoload 'mc-setversion "mc-setversion"))
-    (when-fboundp 'mc-setversion
-      (cond ((locate-file "gpg" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "gpg")
-	     (setq result t))
-	    ((locate-file "pgpe" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "5.0")
-	     (setq result t))
-	    ((locate-file "pgp" exec-path
-			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
-			  'executable)
-	     (mc-setversion "2.6")
-	     (setq result t))))
-    (if result
-	result
-      nil)))
-
-(defcustom package-get-require-signed-base-updates (package-get-pgp-available-p)
-  "*If non-nil, try to verify the package index database via PGP.
-
-If nil, no PGP verification is done.  If the package index database
-entries are not PGP signed and this variable is non-nil, require user
-confirmation to continue with the package-get procedure.
-
-The default for this variable is the return value of
-`package-get-pgp-available-p', non-nil if both the \"Mailcrypt\"
-package and a suitable PGP executable are available, nil otherwise."
-  :type 'boolean
-  :group 'package-get)
-
-(defvar package-entries-are-signed nil
-  "Non-nil when the package index file has been PGP signed.")
-
 (defvar package-get-continue-update-base nil
   "Non-nil update the index even if it hasn't been signed.")
 
@@ -463,13 +430,6 @@ and remote access is likely in the near future."
       (error 'void-variable
 	     "Package-get database not loaded")
     (setq package-get-was-current force-current)))
-
-(defconst package-get-pgp-signed-begin-line "^-----BEGIN PGP SIGNED MESSAGE-----"
-  "Text for start of PGP signed messages.")
-(defconst package-get-pgp-signature-begin-line "^-----BEGIN PGP SIGNATURE-----"
-  "Text for beginning of PGP signature.")
-(defconst package-get-pgp-signature-end-line "^-----END PGP SIGNATURE-----"
-  "Text for end of PGP signature.")
 
 ;;;###autoload
 (defun package-get-update-base-entry (entry)
@@ -598,39 +558,8 @@ used interactively, for example from a mail or news buffer."
       (goto-char (point-min))
       (setq content-beg (point))
       (setq content-end (save-excursion (goto-char (point-max)) (point)))
-      (when (re-search-forward package-get-pgp-signed-begin-line nil t)
-        (setq content-beg (match-end 0)))
-      (when (re-search-forward package-get-pgp-signature-begin-line nil t)
-        (setq content-end (match-beginning 0))
-	(setq package-entries-are-signed t))
-      (re-search-forward package-get-pgp-signature-end-line nil t)
-      (setq package-get-continue-update-base t)
-      ;; This is a little overkill because the default value of
-      ;; `package-get-require-signed-base-updates' is the return of
-      ;; `package-get-pgp-available-p', but we have to allow for
-      ;; someone explicitly setting
-      ;; `package-get-require-signed-base-updates' to t. --SY
-      (when (and package-get-require-signed-base-updates
-		 (package-get-pgp-available-p))
-	(if package-entries-are-signed
-	    (let (good-sig)
-	      (setq package-get-continue-update-base nil)
-	      (autoload 'mc-verify "mc-toplev")
-	      (when (declare-fboundp (mc-verify))
-		(setq good-sig t))
-	      (if good-sig
-		  (setq package-get-continue-update-base t)
-		(error 'process-error 
-		       "GnuPG error.  Package database not updated")))
-	  (if (yes-or-no-p
-	       "Package Index is not PGP signed.  Continue anyway? ")
-	      (setq package-get-continue-update-base t)
-	    (setq package-get-continue-update-base nil)
-	    (warn "Package database not updated"))))
-      ;; ToDo: We should call package-get-maybe-save-index on the region
-      (when package-get-continue-update-base
-	(package-get-update-base-entries content-beg content-end)
-	(message "Updated package database")))))
+      (package-get-update-base-entries content-beg content-end)
+      (message "Updated package database"))))
 
 (defun package-get-update-base-entries (start end)
   "Update the package-get database with the entries found between
@@ -735,10 +664,10 @@ This is just an interactive wrapper for `package-admin-delete-binary-package'."
   (package-get-require-base t)
   ;; Load a fresh copy
   (catch 'exit
-    (mapcar (lambda (pkg)
-	      (if (not (package-get (car pkg) nil 'never))
-		  (throw 'exit nil)))		;; Bail out if error detected
-	    packages-package-list))
+    (mapc (lambda (pkg)
+            (if (not (package-get (car pkg) nil 'never))
+                (throw 'exit nil)))		;; Bail out if error detected
+          packages-package-list))
   (package-net-update-installed-db))
 
 ;;;###autoload

@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,6 +30,12 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "syntax.h"
 #include "extents.h"
+
+#ifdef NEW_GC
+# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
+#else
+# define UNUSED_IF_NEW_GC(decl) decl
+#endif
 
 #define ST_COMMENT_STYLE 0x101
 #define ST_STRING_STYLE  0x102
@@ -141,7 +147,6 @@ find_defun_start (struct buffer *buf, Charbpos pos)
 
 DEFUN ("syntax-table-p", Fsyntax_table_p, 1, 1, 0, /*
 Return t if OBJECT is a syntax table.
-Any vector of 256 elements will do.
 */
        (object))
 {
@@ -239,7 +244,79 @@ BUFFER defaults to the current buffer if omitted.
   buf->local_var_flags |= XINT (buffer_local_flags.syntax_table);
   return syntax_table;
 }
+
+
 
+/*
+ * Syntax caching
+ */
+
+/* syntax_cache object implementation */
+
+static const struct memory_description syntax_cache_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
+#ifdef MIRROR_TABLE
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
+#endif
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
+  { XD_END }
+};
+
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       syntax_cache_description_1,
+			       Lisp_Syntax_Cache);
+#else /* not NEW_GC */
+
+const struct sized_memory_description syntax_cache_description = {
+  sizeof (struct syntax_cache),
+  syntax_cache_description_1
+};
+#endif /* not NEW_GC */
+
+/* static syntax cache utilities */
+
+static void
+syntax_cache_table_was_changed (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  if (cache->no_syntax_table_prop)
+    {
+      cache->syntax_table =
+	BUFFER_SYNTAX_TABLE (buf);
+#ifdef MIRROR_TABLE
+      cache->mirror_table =
+	BUFFER_MIRROR_SYNTAX_TABLE (buf);
+#endif /* MIRROR_TABLE */
+    }
+}
+
+static void
+reset_buffer_syntax_cache_range (struct syntax_cache *cache,
+				 Lisp_Object buffer, int infinite)
+{
+  Fset_marker (cache->start, make_int (1), buffer);
+  Fset_marker (cache->end, make_int (1), buffer);
+  Fset_marker_insertion_type (cache->start, Qt);
+  Fset_marker_insertion_type (cache->end, Qnil);
+  /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
+  /* #### Cf comment on INFINITE in init_syntax_cache. -- sjt */
+  if (infinite)
+    {
+      cache->prev_change = EMACS_INT_MIN;
+      cache->next_change = EMACS_INT_MAX;
+    }
+  else
+    {
+      cache->prev_change = -1;
+      cache->next_change = -1;
+    }
+}
 
 static void
 init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
@@ -257,6 +334,11 @@ init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
 #endif /* MIRROR_TABLE */
   cache->start = Qnil;
   cache->end = Qnil;
+  /* #### I'm not sure what INFINITE is for, but it's apparently needed by
+     setup_syntax_cache().  It looks like it's supposed to guarantee that
+     the test for POS outside of cache-valid range will never succeed, so
+     that update_syntax_cache won't get called, but it's hard to be sure.
+     Cf reset_buffer_syntax_cache_range. -- sjt */
   if (infinite)
     {
       cache->prev_change = EMACS_INT_MIN;
@@ -269,15 +351,31 @@ init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
     }
 }
 
-struct syntax_cache *
-setup_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
-		    struct buffer *buffer, Charxpos from, int count)
+/* external syntax cache API */
+
+/* #### This function and associated logic still needs work, and especially
+   documentation. */
+struct syntax_cache *		/* return CACHE or the cache of OBJECT */
+setup_syntax_cache (struct syntax_cache *cache,	/* syntax cache, may be NULL
+						   if OBJECT is a buffer */
+		    Lisp_Object object,	 	/* the object (if any) cache
+						   is associated with */
+		    struct buffer *buffer,	/* the buffer to use as source
+						   of the syntax table */
+		    Charxpos from,		/* initial position of cache */
+		    int count)			/* direction? see code */
 {
+  /* If OBJECT is a buffer, use its cache.  Initialize cache.  Make it valid
+     for the whole buffer if the syntax-table property is not being respected.
+     Else if OBJECT is not a buffer, initialize the cache passed in CACHE.
+     If the syntax-table property is being respected, update the cache. */
   if (BUFFERP (object))
-    cache = XBUFFER (object)->syntax_cache;
-  if (!lookup_syntax_properties)
-    init_syntax_cache (cache, object, buffer, 1);
-  else if (!BUFFERP (object))
+    {
+      cache = XBUFFER (object)->syntax_cache;
+      if (!lookup_syntax_properties)
+	reset_buffer_syntax_cache_range (cache, object, 1);
+    }
+  else
     init_syntax_cache (cache, object, buffer, 0);
   if (lookup_syntax_properties)
     {
@@ -300,129 +398,6 @@ struct syntax_cache *
 setup_buffer_syntax_cache (struct buffer *buffer, Charxpos from, int count)
 {
   return setup_syntax_cache (NULL, wrap_buffer (buffer), buffer, from, count);
-}
-
-static const struct memory_description syntax_cache_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
-#ifdef MIRROR_TABLE
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
-#endif /* MIRROR_TABLE */
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
-  { XD_END }
-};
-
-const struct sized_memory_description syntax_cache_description = {
-  sizeof (struct syntax_cache),
-  syntax_cache_description_1
-};
-
-void
-mark_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (!cache) /* Vbuffer_defaults and such don't have caches */
-    return;
-  mark_object (cache->object);
-  if (cache->buffer)
-    mark_object (wrap_buffer (cache->buffer));
-  mark_object (cache->syntax_table);
-#ifdef MIRROR_TABLE
-  mark_object (cache->mirror_table);
-#endif /* MIRROR_TABLE */
-  mark_object (cache->start);
-  mark_object (cache->end);
-}
-
-static void
-reset_buffer_cache_range (struct syntax_cache *cache, Lisp_Object buffer)
-{
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  cache->prev_change = -1;
-  cache->next_change = -1;
-}
-
-void
-init_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache;
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-#ifdef MIRROR_TABLE
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-#endif /* MIRROR_TABLE */
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_cache_range (cache, cache->object);
-}
-
-void
-uninit_buffer_syntax_cache (struct buffer *buf)
-{
-  xfree (buf->syntax_cache, struct syntax_cache *);
-  buf->syntax_cache = 0;
-}
-
-
-static void
-syntax_cache_table_was_changed (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
-    {
-      cache->syntax_table =
-	BUFFER_SYNTAX_TABLE (buf);
-#ifdef MIRROR_TABLE
-      cache->mirror_table =
-	BUFFER_MIRROR_SYNTAX_TABLE (buf);
-#endif /* MIRROR_TABLE */
-    }
-}
-
-/* The syntax-table property on the range covered by EXTENT may be changing,
-   either because EXTENT has a syntax-table property and is being attached
-   or detached (this includes having its endpoints changed), or because
-   the value of EXTENT's syntax-table property is changing. */
-
-void
-signal_syntax_table_extent_changed (EXTENT extent)
-{
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
-    {
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
-      /* If the extent is entirely before or entirely after the cache range,
-	 it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_buffer_cache_range (cache, buffer);
-    }
-}
-
-/* Extents have been adjusted for insertion or deletion, so we need to
-   refetch the start and end position of the extent */
-void
-signal_syntax_table_extent_adjust (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  /* If the cache was invalid before, leave it that way.  We only want
-     to update the limits of validity when they were actually valid. */
-  if (cache->prev_change < 0)
-    return;
-  cache->prev_change = marker_position (cache->start);
-  cache->next_change = marker_position (cache->end);
 }
 
 /* 
@@ -492,7 +467,7 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 	 a zero-length `syntax-table' extent there (highly unlikely); if not,
 	 then we can safely make the end closed, so it will take in newly
 	 inserted text. (If such an extent is inserted, we will be informed
-	 through signal_syntax_table_extent_changed().) */
+	 through signal_syntax_cache_extent_changed().) */
       Fset_marker (cache->start, make_int (cache->prev_change), cache->object);
       Fset_marker_insertion_type
 	(cache->start,
@@ -538,6 +513,109 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 #endif /* NOT_WORTH_THE_EFFORT */
     }
 }
+
+/* buffer-specific APIs used in buffer.c
+   #### This is really unclean;
+   the syntax cache should just be a LISP object */
+
+void
+mark_buffer_syntax_cache (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  if (!cache) /* Vbuffer_defaults and such don't have caches */
+    return;
+  mark_object (cache->object);
+  if (cache->buffer)
+    mark_object (wrap_buffer (cache->buffer));
+  mark_object (cache->syntax_table);
+#ifdef MIRROR_TABLE
+  mark_object (cache->mirror_table);
+#endif /* MIRROR_TABLE */
+  mark_object (cache->start);
+  mark_object (cache->end);
+}
+
+void
+init_buffer_syntax_cache (struct buffer *buf)
+{
+  struct syntax_cache *cache;
+#ifdef NEW_GC
+  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
+					  &lrecord_syntax_cache);
+#else /* not NEW_GC */
+  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
+#endif /* not NEW_GC */
+  cache = buf->syntax_cache;
+  cache->object = wrap_buffer (buf);
+  cache->buffer = buf;
+  cache->no_syntax_table_prop = 1;
+  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
+#ifdef MIRROR_TABLE
+  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+#endif /* MIRROR_TABLE */
+  cache->start = Fmake_marker ();
+  cache->end = Fmake_marker ();
+  reset_buffer_syntax_cache_range (cache, cache->object, 0);
+}
+
+/* finalize the syntax cache for BUF */
+
+void
+uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
+{
+#ifndef NEW_GC
+  xfree (buf->syntax_cache, struct syntax_cache *);
+  buf->syntax_cache = 0;
+#endif /* not NEW_GC */
+}
+
+/* extent-specific APIs used in extents.c and insdel.c */
+
+/* The syntax-table property on the range covered by EXTENT may be changing,
+   either because EXTENT has a syntax-table property and is being attached
+   or detached (this includes having its endpoints changed), or because
+   the value of EXTENT's syntax-table property is changing. */
+
+void
+signal_syntax_cache_extent_changed (EXTENT extent)
+{
+  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
+  if (BUFFERP (buffer))
+    {
+      /* This was getting called with the buffer's start and end null, eg in
+	 cperl mode, which triggers an assert in byte_marker_position.  Cf
+	 thread rooted at <yxz7j7xzk97.fsf@gimli.holgi.priv> on xemacs-beta.
+	 <yxzfymklb6p.fsf@gimli.holgi.priv> has a recipe, but you also need
+	 to delete or type SPC to get the crash.
+	 #### Delete this comment when setup_syntax_cache is made sane. */
+      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
+      /* #### would this be slower or less accurate in character terms? */
+      Bytexpos start = extent_endpoint_byte (extent, 0);
+      Bytexpos end = extent_endpoint_byte (extent, 1);
+      Bytexpos start2 = byte_marker_position (cache->start);
+      Bytexpos end2 = byte_marker_position (cache->end);
+      /* If the extent is entirely before or entirely after the cache
+	 range, it doesn't overlap.  Otherwise, invalidate the range. */
+      if (!(end < start2 || start > end2))
+	reset_buffer_syntax_cache_range (cache, buffer, 0);
+    }
+}
+
+/* Extents have been adjusted for insertion or deletion, so we need to
+   refetch the start and end position of the extent */
+void
+signal_syntax_cache_extent_adjust (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  /* If the cache was invalid before, leave it that way.  We only want
+     to update the limits of validity when they were actually valid. */
+  if (cache->prev_change < 0)
+    return;
+  cache->prev_change = marker_position (cache->start);
+  cache->next_change = marker_position (cache->end);
+}
+
+
 
 /* Convert a letter which signifies a syntax code
    into the code it signifies.
@@ -1988,7 +2066,6 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	case Sopen:
 	  if (stopbefore) goto stop;  /* this arg means stop at sexp start */
 	  depth++;
-	  /* curlevel++->last ran into compiler bug on Apollo */
 	  curlevel->last = from - 1;
 	  if (++curlevel == endlevel)
 	    stack_overflow ("Nesting too deep for parser",
@@ -2260,8 +2337,8 @@ update_just_this_syntax_table (Lisp_Object table)
   if (!EQ (table, Vstandard_syntax_table) && !NILP (Vstandard_syntax_table))
     map_char_table (Vstandard_syntax_table, &range,
 		    copy_if_not_already_present, LISP_TO_VOID (mirrortab));
-  /* The resetting made the default be Qnil.  Put it back to Spunct. */
-  set_char_table_default (mirrortab, make_int (Spunct));
+  /* The resetting made the default be Qnil.  Put it back to Sword. */
+  set_char_table_default (mirrortab, make_int (Sword));
   XCHAR_TABLE (mirrortab)->dirty = 0;
 }
 
@@ -2273,7 +2350,7 @@ update_just_this_syntax_table (Lisp_Object table)
    one. */
 
 void
-update_syntax_table (Lisp_Object table)
+update_syntax_table (Lisp_Object USED_IF_MIRROR_TABLE (table))
 {
 #ifdef MIRROR_TABLE
   Lisp_Object nonmirror = XCHAR_TABLE (table)->mirror_table;
@@ -2299,6 +2376,9 @@ update_syntax_table (Lisp_Object table)
 void
 syms_of_syntax (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (syntax_cache);
+#endif /* NEW_GC */
   DEFSYMBOL (Qsyntax_table_p);
   DEFSYMBOL (Qsyntax_table);
 
@@ -2358,7 +2438,7 @@ Non-nil means `forward-word', etc., should treat escape chars part of words.
 }
 
 static void
-define_standard_syntax (const char *p, enum syntaxcode syn)
+define_standard_syntax (const UExtbyte *p, enum syntaxcode syn)
 {
   for (; *p; p++)
     Fput_char_table (make_char (*p), make_int (syn), Vstandard_syntax_table);
@@ -2368,10 +2448,19 @@ void
 complex_vars_of_syntax (void)
 {
   Ichar i;
-  const char *p;
-  /* Set this now, so first buffer creation can refer to it. */
-  /* Make it nil before calling copy-syntax-table
-     so that copy-syntax-table will know not to try to copy from garbage */
+  const UExtbyte *p; /* Latin-1, not internal format. */
+
+#define SET_RANGE_SYNTAX(start, end, syntax)				\
+  do {									\
+    for (i = start; i <= end; i++)					\
+      Fput_char_table(make_char(i), make_int(syntax),			\
+		      Vstandard_syntax_table);				\
+  } while (0)
+
+  /* Set this now, so first buffer creation can refer to it. 
+
+     Make it nil before calling copy-syntax-table so that copy-syntax-table
+     will know not to try to copy from garbage */
   Vstandard_syntax_table = Qnil;
   Vstandard_syntax_table = Fcopy_syntax_table (Qnil);
   staticpro (&Vstandard_syntax_table);
@@ -2380,25 +2469,26 @@ complex_vars_of_syntax (void)
 							Smax);
   staticpro (&Vsyntax_designator_chars_string);
 
-  set_char_table_default (Vstandard_syntax_table, make_int (Spunct));
+  /* Default character syntax is word. */
+  set_char_table_default (Vstandard_syntax_table, make_int (Sword));
 
-  for (i = 0; i <= 32; i++)	/* Control 0 plus SPACE */
-    Fput_char_table (make_char (i), make_int (Swhitespace),
-		     Vstandard_syntax_table);
-  for (i = 127; i <= 159; i++)	/* DEL plus Control 1 */
-    Fput_char_table (make_char (i), make_int (Swhitespace),
-		     Vstandard_syntax_table);
+  /* Control 0; treat as punctuation */
+  SET_RANGE_SYNTAX(0, 32, Spunct);
 
-  define_standard_syntax ("abcdefghijklmnopqrstuvwxyz"
-			  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			  "0123456789"
-			  "$%", Sword);
-  define_standard_syntax ("\"", Sstring);
-  define_standard_syntax ("\\", Sescape);
-  define_standard_syntax ("_-+*/&|<>=", Ssymbol);
-  define_standard_syntax (".,;:?!#@~^'`", Spunct);
+  /* The whitespace--overwriting some of the above changes.
 
-  for (p = "()[]{}"; *p; p+=2)
+     String literals are const char *s, not const unsigned char *s. */
+  define_standard_syntax((const UExtbyte *)" \t\015\014\012", Swhitespace);
+
+  /* DEL plus Control 1 */
+  SET_RANGE_SYNTAX(127, 159, Spunct);
+
+  define_standard_syntax ((const UExtbyte *)"\"", Sstring);
+  define_standard_syntax ((const UExtbyte *)"\\", Sescape);
+  define_standard_syntax ((const UExtbyte *)"_-+*/&|<>=", Ssymbol);
+  define_standard_syntax ((const UExtbyte *)".,;:?!#@~^'`", Spunct);
+
+  for (p = (const UExtbyte *)"()[]{}"; *p; p+=2)
     {
       Fput_char_table (make_char (p[0]),
 		       Fcons (make_int (Sopen), make_char (p[1])),
@@ -2407,4 +2497,18 @@ complex_vars_of_syntax (void)
 		       Fcons (make_int (Sclose), make_char (p[0])),
 		       Vstandard_syntax_table);
     }
+
+  /* Latin 1 "symbols." This contrasts with the FSF, where they're word
+     constituents. */
+  SET_RANGE_SYNTAX(0240, 0277, Ssymbol); 
+
+  /* The guillemets. These are not parentheses, in contrast to what the old
+     code did. */
+  define_standard_syntax((const UExtbyte *)"\253\273", Spunct);
+
+  /* The inverted exclamation mark, and the multiplication and division
+     signs. */
+  define_standard_syntax((const UExtbyte *)"\241\327\367", Spunct);
+
+#undef SET_RANGE_SYNTAX  
 }

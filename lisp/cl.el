@@ -132,7 +132,7 @@ Floating-point numbers of equal value are `eql', but they may not be `eq'."
 ;;; can safely be used in .emacs files.
 
 (defmacro incf (place &optional x)
-  "(incf PLACE [X]): increment PLACE by X (1 by default).
+  "Increment PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The return value is the incremented value of PLACE."
   (if (symbolp place)
@@ -142,7 +142,7 @@ The return value is the incremented value of PLACE."
     (list 'callf '+ place (or x 1))))
 
 (defmacro decf (place &optional x)
-  "(decf PLACE [X]): decrement PLACE by X (1 by default).
+  "Decrement PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The return value is the decremented value of PLACE."
   (if (symbolp place)
@@ -150,7 +150,7 @@ The return value is the decremented value of PLACE."
     (list 'callf '- place (or x 1))))
 
 (defmacro pop (place)
-  "(pop PLACE): remove and return the head of the list stored in PLACE.
+  "Remove and return the head of the list stored in PLACE.
 Analogous to (prog1 (car PLACE) (setf PLACE (cdr PLACE))), though more
 careful about evaluating each argument only once and in the right order.
 PLACE may be a symbol, or any generalized variable allowed by `setf'."
@@ -158,21 +158,24 @@ PLACE may be a symbol, or any generalized variable allowed by `setf'."
       `(car (prog1 ,place (setq ,place (cdr ,place))))
     (cl-do-pop place)))
 
-(defmacro push (x place)
-  "(push X PLACE): insert X at the head of the list stored in PLACE.
-Analogous to (setf PLACE (cons X PLACE)), though more careful about
-evaluating each argument only once and in the right order.  PLACE may
-be a symbol, or any generalized variable allowed by `setf'."
-  (if (symbolp place) `(setq ,place (cons ,x ,place))
-    (list 'callf2 'cons x place)))
+(defmacro push (newelt listname)
+  "Add NEWELT at the beginning of the list stored in LISTNAME.
+Analogous to (setf LISTNAME (cons NEWELT LISTNAME)), though more careful
+about evaluating each argument only once and in the right order.  LISTNAME
+may be a symbol, or any generalized variable allowed by `setf'; that is, it
+does not necessarily have to be a list, though `push' is most often used on
+lists.  "
+  (if (symbolp listname) `(setq ,listname (cons ,newelt ,listname))
+    (list 'callf2 'cons newelt listname)))
 
-(defmacro pushnew (x place &rest keys)
-  "(pushnew X PLACE): insert X at the head of the list if not already there.
-Like (push X PLACE), except that the list is unmodified if X is `eql' to
-an element already on the list.
+(defmacro pushnew (newelt listname &rest keys)
+  "Add NEWELT at the beginning of LISTNAME, unless it's already in LISTNAME.
+Like (push NEWELT LISTNAME), except that the list is unmodified if NEWELT is
+`eql' to an element already on the list.
 Keywords supported:  :test :test-not :key"
-  (if (symbolp place) (list 'setq place (list* 'adjoin x place keys))
-    (list* 'callf2 'adjoin x place keys)))
+  (if (symbolp listname) (list 'setq listname 
+			       (list* 'adjoin newelt listname keys))
+    (list* 'callf2 'adjoin newelt listname keys)))
 
 (defun cl-set-elt (seq n val)
   (if (listp seq) (setcar (nthcdr n seq) val) (aset seq n val)))
@@ -206,48 +209,24 @@ Keywords supported:  :test :test-not :key"
 
 ;;; Blocks and exits.
 
-(defalias 'cl-block-wrapper 'identity)
+;; This used to be #'identity, but that didn't preserve multiple values in
+;; interpreted code. #'and isn't great either, there's no error on too many
+;; arguments passed to it when interpreted. Fortunately most of the places
+;; where cl-block-wrapper is called are generated from old, established
+;; macros, so too many arguments resulting from human error is unlikely; and
+;; the byte compile handler in cl-macs.el warns if more than one arg is
+;; passed to it.
+(defalias 'cl-block-wrapper 'and)
+
 (defalias 'cl-block-throw 'throw)
 
+;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
-;;; Multiple values.  True multiple values are not supported, or even
-;;; simulated.  Instead, multiple-value-bind and friends simply expect
-;;; the target form to return the values as a list.
+;;; We no longer support `multiple-value-apply', which was ill-conceived to
+;;; start with, is not specified by Common Lisp, and which nothing uses,
+;;; according to Google Code Search, as of Sat Mar 14 23:31:35 GMT 2009. 
 
-(defsubst values (&rest values)
-  "Return multiple values, Common Lisp style.
-The arguments of `values' are the values
-that the containing function should return."
-  values)
-
-(defsubst values-list (list)
-  "Return multiple values, Common Lisp style, taken from a list.
-LIST specifies the list of values
-that the containing function should return."
-  list)
-
-(defsubst multiple-value-list (expression)
-  "Return a list of the multiple values produced by EXPRESSION.
-This handles multiple values in Common Lisp style, but it does not
-work right when EXPRESSION calls an ordinary Emacs Lisp function
-that returns just one value."
-  expression)
-
-(defsubst multiple-value-apply (function expression)
-  "Evaluate EXPRESSION to get multiple values and apply FUNCTION to them.
-This handles multiple values in Common Lisp style, but it does not work
-right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
-one value."
-  (apply function expression))
-
-(defalias 'multiple-value-call 'apply)  ; only works for one arg
-
-(defsubst nth-value (n expression)
-  "Evaluate EXPRESSION to get multiple values and return the Nth one.
-This handles multiple values in Common Lisp style, but it does not work
-right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
-one value."
-  (nth n expression))
+(make-obsolete 'multiple-value-apply 'multiple-value-call)
 
 ;;; Macros.
 
@@ -665,9 +644,9 @@ Keywords supported:  :test :test-not :key"
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 
 ;;; Define data for indentation and edebug.
-(mapcar
+(mapc-internal
  #'(lambda (entry)
-     (mapcar
+     (mapc-internal
       #'(lambda (func)
 	  (put func 'lisp-indent-function (nth 1 entry))
 	  (put func 'lisp-indent-hook (nth 1 entry))
@@ -726,15 +705,8 @@ Keywords supported:  :test :test-not :key"
 ;;; Try it now in case the compiler has already been loaded.
 (cl-hack-byte-compiler)
 
-;;; Also make a hook in case compiler is loaded after this file.
-;;; The compiler doesn't call any hooks when it loads or runs, but
-;;; we can take advantage of the fact that emacs-lisp-mode will be
-;;; called when the compiler reads in the file to be compiled.
-;;; BUG: If the first compilation is `byte-compile' rather than
-;;; `byte-compile-file', we lose.  Emacs has fixed this by hanging it
-;;; on `bytecomp-load-hook' instead, which we do not have.
-(add-hook 'emacs-lisp-mode-hook 'cl-hack-byte-compiler)
-
+;;; Also make a hook in case compiler is loaded after this file. 
+(add-hook 'bytecomp-load-hook 'cl-hack-byte-compiler)
 
 ;;; The following ensures that packages which expect the old-style cl.el
 ;;; will be happy with this one.

@@ -454,6 +454,8 @@ changing the value of `foo'."
       (setcdr p (cdr cons))
       list)))
 
+;; XEmacs: this is #'nset-exclusive-or with a :test of #'equal, though we
+;; probably don't want to replace it right now.
 (defun format-make-relatively-unique (a b)
   "Delete common elements of lists A and B, return as pair.
 Compares using `equal'."

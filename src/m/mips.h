@@ -77,7 +77,7 @@ NOTE-END  */
 
 /* Alter some of the options used when linking.  */
 
-#if !defined(NEWSOS5) && !defined(linux)
+#if !defined(linux)
 #ifdef BSD
 
 /* DECstations don't have this library. */
@@ -100,9 +100,9 @@ NOTE-END  */
 #define C_DEBUG_SWITCH "-O -g3"
 
 #endif /* not BSD */
-#endif /* !NEWSOS5 && !linux */
+#endif /* !linux */
 
-#if !defined(NEWSOS5) && !defined(linux)
+#if !defined(linux)
 #ifdef USG
 
 /* Don't try to use SIGIO even though it is defined.  */
@@ -127,4 +127,4 @@ NOTE-END  */
 #define TERMINFO
 #undef MAIL_USE_FLOCK  /* Someone should check this.  */
 #endif /* BSD */
-#endif /* !NEWSOS5 && !linux */
+#endif /* !linux */

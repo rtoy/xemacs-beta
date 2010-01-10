@@ -42,7 +42,8 @@ ld_dynamic_link_flags=
 xehost=$ac_cv_build
 xealias=$ac_cv_build_alias
 
-AC_CHECKING([how to build dynamic libraries for ${xehost}])
+AC_MSG_CHECKING([how to build dynamic libraries for ${xehost}])
+AC_MSG_RESULT()
 # Transform *-*-linux* to *-*-linux-gnu*, to support old configure scripts.
 case "$xehost" in
 *-*-linux-gnu*) ;;
@@ -52,18 +53,6 @@ esac
 xehost_cpu=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\1/'`
 xehost_vendor=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\2/'`
 xehost_os=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\3/'`
-
-case "$xehost_os" in
-aix3*)
-  # AIX sometimes has problems with the GCC collect2 program.  For some
-  # reason, if we set the COLLECT_NAMES environment variable, the problems
-  # vanish in a puff of smoke.
-  if test "${COLLECT_NAMES+set}" != set; then
-    COLLECT_NAMES=
-    export COLLECT_NAMES
-  fi
-  ;;
-esac
 
 # Now see if the compiler is really GCC.
 if test "$GCC" = "yes"; then
@@ -86,7 +75,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
   wl='-Wl,'
 
   case "$xehost_os" in
-  aix[[3-9]]* | irix[[5-9]]* | osf[[3-9]])
+  aix[[4-9]]* | irix[[5-9]]* | osf[[3-9]])
     # PIC is the default for these OSes.
     ;;
 
@@ -112,7 +101,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
 else
   # PORTME Check for PIC flags for the system compiler.
   case "$xehost_os" in
-  hpux9* | hpux1[[0-9]]*)
+  hpux1[[0-9]]*)
     # Is there a better link_static_flag that works with the bundled CC?
     wl='-Wl,'
     dll_cflags='+Z'
@@ -132,7 +121,7 @@ else
     wl='-Wl,'
     ;;
 
-  aix[[3-9]]*)
+  aix[[4-9]]*)
     # All AIX code is PIC.
     wl='-Wl,'
     ;;
@@ -162,11 +151,6 @@ else
     wl='-Wl,'
     ;;
 
-  sunos4*)
-    dll_cflags='-PIC'
-    wl='-Qoption ld '
-    ;;
-
   uts4*)
     dll_cflags='-pic'
     ;;
@@ -184,7 +168,7 @@ if test -n "$dll_cflags"; then
   AC_MSG_CHECKING([if PIC flag ${dll_cflags} really works])
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $dll_cflags -DPIC"
-  AC_TRY_COMPILE(,[int x=0;],[
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([int x=0;])],[
     # On HP-UX, the stripped-down bundled CC doesn't accept +Z, but also
     # reports no error.  So, we need to grep stderr for (Bundled).
     if grep '(Bundled)' config.log >/dev/null; then
@@ -257,7 +241,7 @@ if test "$XEGCC" = yes -o "$__ICC" = yes; then
   esac
 else # Not using GCC
   case "$xehost_os" in
-    aix[[3-9]]*)
+    aix[[4-9]]*)
       xldf="-bE:ELLSONAME.exp -H512 -T512 -bhalt:4 -bM:SRE -bnoentry -lc"
       xcldf="${wl}-bE:ELLSONAME.exp ${wl}-H512 ${wl}-T512 ${wl}-bhalt:4 ${wl}-bM:SRE ${wl}-bnoentry ${wl}-lc"
       ;;
@@ -285,11 +269,6 @@ else # Not using GCC
       xcldf="-G"
       xldf="-G"
       ;;
-
-    sunos4*)
-      xcldf="${wl}-assert ${wl}pure-text ${wl}-Bstatic"
-      xldf="-assert pure-text -Bstatic"
-      ;;
   esac
 fi # End if if we are using gcc
 
@@ -300,12 +279,13 @@ if test -n "$xcldf"; then
   LDFLAGS="$xcldf $LDFLAGS"
   LIBS=
   xe_libs=
-  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
-  AC_TRY_LINK(,[int x=0;],cc_produces_so=yes,cc_produces_so=no)
+  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AS_MESSAGE_LOG_FD'
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int x=0;])],
+    [cc_produces_so=yes],[cc_produces_so=no])
   LDFLAGS=$save_LDFLAGS
   LIBS=$save_LIBS
   xe_libs=$save_xe_libs
-  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
+  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AS_MESSAGE_LOG_FD'
 else
   cc_produces_so=no
 fi
@@ -353,7 +333,7 @@ if test -z "$LTLD"; then
         # Check to see if the program is GNU ld.  I'd rather use --version,
         # but apparently some GNU ld's only accept -v.
         # Break only if it was the GNU/non-GNU ld that we prefer.
-        if "$LTLD" -v 2>&1 < /dev/null | egrep '(GNU|with BFD)' > /dev/null; then
+        if "$LTLD" -v 2>&1 < /dev/null | $EGREP '(GNU|with BFD)' > /dev/null; then
           xe_gnu_ld=yes
         else
           xe_gnu_ld=no
@@ -383,7 +363,7 @@ ld_dynamic_link_flags=
 # Check to see if it really is or isn't GNU ld.
 AC_MSG_CHECKING([if the linker is GNU ld])
 # I'd rather use --version here, but apparently some GNU ld's only accept -v.
-if $LTLD -v 2>&1 </dev/null | egrep '(GNU|with BFD)' 1>&5; then
+if $LTLD -v 2>&1 </dev/null | $EGREP '(GNU|with BFD)' 1>&5; then
   xe_gnu_ld=yes
 else
   xe_gnu_ld=no
@@ -391,8 +371,8 @@ fi
 AC_MSG_RESULT([${xe_gnu_ld}])
 
 case "$xehost_os" in
-  amigaos* | sunos4*)
-    # On these operating systems, we should treat GNU ld like the system ld.
+  amigaos*)
+    # On this operating system, we should treat GNU ld like the system ld.
     gnu_ld_acts_native=yes
     ;;
   *)
@@ -423,7 +403,7 @@ else
   can_build_shared=yes
   if test "$xe_gnu_ld" = yes && test "$gnu_ld_acts_native" != yes; then
     # See if GNU ld supports shared libraries.
-    if $LTLD --help 2>&1 | egrep ': supported targets:.* elf' > /dev/null; then
+    if $LTLD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null; then
       dll_ld=$CC
       dll_ldflags="-shared"
       ld_shlibs=yes
@@ -433,11 +413,6 @@ else
   else
     # PORTME fill in a description of your system's linker (not GNU ld)
     case "$xehost_os" in
-    aix3*)
-      dll_ld=$LTLD
-      dll_ldflags=$xldf
-      ;;
-
     aix[[4-9]]*)
       dll_ldflags=$xcldf
       ;;
@@ -499,15 +474,6 @@ else
         *)     dll_ldflags="-G"
                ;;
       esac
-      ;;
-
-    sunos4*)
-      if test "$XEGCC" = yes; then
-        dll_ld=$CC
-      else
-        dll_ld=$LTLD
-      fi
-      dll_ldflags=$xldf
       ;;
 
     uts4*)
@@ -599,19 +565,11 @@ if test -z "$ld_dynamic_link_flags"; then
     ld_dynamic_link_flags=
     ;;
 
-  sco3.2v5* | unixware* | sysv5* | sysv4*)
+  unixware* | sysv5* | sysv4*)
     ld_dynamic_link_flags="${wl}-Bexport"
     ;;
 
-  sunos4*)
-    ld_dynamic_link_flags=
-    ;;
-
   uts4*)
-    ld_dynamic_link_flags=
-    ;;
-
-  bsdi*)
     ld_dynamic_link_flags=
     ;;
 

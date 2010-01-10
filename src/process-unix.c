@@ -32,10 +32,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 
-#if !defined (NO_SUBPROCESSES)
-
-/* The entire file is within this conditional */
-
 #include "lisp.h"
 
 #include "buffer.h"
@@ -174,7 +170,7 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
 {
   /* This function can GC */
   Lisp_Object proc;
-  int inch;
+  EMACS_INT inch;
 
   CHECK_STRING (name);
   CHECK_INT (infd);
@@ -424,27 +420,17 @@ allocate_pty_the_old_fashioned_way (void)
 }
 
 static int
-create_bidirectional_pipe (int *inchannel, int *outchannel,
-			   volatile int *forkin, volatile int *forkout)
+create_bidirectional_pipe (EMACS_INT *inchannel, EMACS_INT *outchannel,
+			   volatile EMACS_INT *forkin, volatile EMACS_INT *forkout)
 {
   int sv[2];
 
-#ifdef SKTPAIR
-  if (socketpair (AF_UNIX, SOCK_STREAM, 0, sv) < 0)
-    return -1;
-  *outchannel = *inchannel = sv[0];
-  *forkout = *forkin = sv[1];
-#else /* not SKTPAIR */
-  int temp;
-  temp = pipe (sv);
-  if (temp < 0) return -1;
+  if (pipe (sv) < 0) return -1;
   *inchannel = sv[0];
   *forkout = sv[1];
-  temp = pipe (sv);
-  if (temp < 0) return -1;
+  if (pipe (sv) < 0) return -1;
   *outchannel = sv[1];
   *forkin = sv[0];
-#endif /* not SKTPAIR */
   return 0;
 }
 
@@ -846,8 +832,9 @@ static void
 unix_init_process_io_handles (Lisp_Process *p, void *in, void *UNUSED (out),
 			      void *err, int UNUSED (flags))
 {
-  UNIX_DATA(p)->infd = (int) in;
-  UNIX_DATA(p)->errfd = (int) err;
+  /* if sizeof(EMACS_INT) > sizeof(int) this truncates the value */
+  UNIX_DATA(p)->infd = (EMACS_INT) in;
+  UNIX_DATA(p)->errfd = (EMACS_INT) err;
 }
 
 /* Move the file descriptor FD so that its number is not less than MIN. *
@@ -901,10 +888,8 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
     nice (- emacs_priority);
 #endif
 
-#if !defined (NO_SUBPROCESSES)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
-#endif /* not NO_SUBPROCESSES */
   close_load_descs ();
 
   /* [[Note that use of alloca is always safe here.  It's obvious for systems
@@ -1054,13 +1039,13 @@ unix_create_process (Lisp_Process *p,
 		     int separate_err)
 {
   int pid;
-  int inchannel  = -1;
-  int outchannel = -1;
-  int errchannel = -1;
+  EMACS_INT inchannel  = -1;
+  EMACS_INT outchannel = -1;
+  EMACS_INT errchannel = -1;
   /* Use volatile to protect variables from being clobbered by longjmp.  */
-  volatile int forkin   = -1;
-  volatile int forkout  = -1;
-  volatile int forkerr  = -1;
+  volatile EMACS_INT forkin   = -1;
+  volatile EMACS_INT forkout  = -1;
+  volatile EMACS_INT forkerr  = -1;
   volatile int pty_flag = 0;
 
   if (!NILP (Vprocess_connection_type))
@@ -1170,10 +1155,6 @@ unix_create_process (Lisp_Process *p,
 	       It's harder to convey an error from the child
 	       process, and I don't feel like messing with
 	       this now. */
-
-	    /* There was some weirdo, probably wrong,
-	       conditionalization on RTU and UNIPLUS here.
-	       I deleted it.  So sue me. */
 
 	    /* SunOS has TIOCSCTTY but the close/open method
 	       also works. */
@@ -1545,10 +1526,13 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
 	    }
 	  while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
 	    {
-	      /* Buffer is full.  Wait, accepting input;
-		 that may allow the program
-		 to finish doing output and read more.  */
-	      Faccept_process_output (Qnil, make_int (1), Qnil);
+	      /* Buffer is full.  Wait 10ms, accepting input; that may
+		 allow the program to finish doing output and read more.
+		 Used to be 1s, but that's excruciating.  nt_send_process
+		 uses geometrically increasing timeouts (up to 1s).  This
+		 might be a good idea here.
+	         N.B. timeout_secs = Qnil is faster than Qzero. */
+	      Faccept_process_output (Qnil, Qnil, make_int (10));
 	      /* It could have *really* finished, deleting the process */
 	      if (NILP(p->pipe_outstream))
 		return;
@@ -1880,8 +1864,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 			  Lisp_Object service, Lisp_Object protocol,
 			  void **vinfd, void **voutfd)
 {
-  int inch;
-  int outch;
+  EMACS_INT inch;
+  EMACS_INT outch;
   volatile int s = -1;
   volatile int port;
   volatile int retry = 0;
@@ -1994,18 +1978,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	    continue;
 	  }
 
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	/* Slow down polling.  Some kernels have a bug which causes retrying
-	   connect to fail after a connect. (Note that the entire purpose
-	   for this code is a very old comment concerning an Ultrix bug that
-	   requires this code.  We used to do this ALWAYS despite this!
-	   This messes up C-g out of connect() in a big way.  So instead we
-	   just assume that anyone who sees such a kernel bug will define
-	   this constant, which for now is only defined under Ultrix.) --ben
-	*/
-	slow_down_interrupts ();
-#endif
-
       loop:
 
 	/* A system call interrupted with a SIGALRM or SIGIO comes back
@@ -2013,14 +1985,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	SETJMP (break_system_call_jump);
 	if (QUITP)
 	  {
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    speed_up_interrupts ();
-#endif
 	    QUIT;
 	    /* In case something really weird happens ... */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    slow_down_interrupts ();
-#endif
 	  }
 
 	/* Break out of connect with a signal (it isn't otherwise possible).
@@ -2062,11 +2028,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	    failed_connect = 1;
 	    retry_close (s);
             s = -1;
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-	    speed_up_interrupts ();
-#endif
-
 	    continue;
 	  }
 
@@ -2092,10 +2053,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	break;
 #endif /* USE_GETADDRINFO */
       } /* address loop */
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-    speed_up_interrupts ();
-#endif
 
 #ifdef USE_GETADDRINFO
     freeaddrinfo (res);
@@ -2158,7 +2115,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   struct ip_mreq imr;
   struct sockaddr_in sa;
   struct protoent *udp;
-  int ws, rs;
+  EMACS_INT ws, rs;
   int theport;
   unsigned char thettl;
   int one = 1; /* For REUSEADDR */
@@ -2235,10 +2192,6 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
      instead of 'sendto'. Consequently, we 'connect' this socket. */
 
   /* See open-network-stream-internal for comments on this part of the code */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-  slow_down_interrupts ();
-#endif
-
  loop:
 
   /* A system call interrupted with a SIGALRM or SIGIO comes back
@@ -2246,14 +2199,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   SETJMP (break_system_call_jump);
   if (QUITP)
     {
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      speed_up_interrupts ();
-#endif
       QUIT;
       /* In case something really weird happens ... */
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      slow_down_interrupts ();
-#endif
     }
 
   /* Break out of connect with a signal (it isn't otherwise possible).
@@ -2284,18 +2231,11 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 
       retry_close (rs);
       retry_close (ws);
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-      speed_up_interrupts ();
-#endif
 
       errno = xerrno;
       report_network_error ("error connecting socket", list3 (Qunbound, name,
 							      port));
     }
-
-#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
-  speed_up_interrupts ();
-#endif
 
   /* scope */
   if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,
@@ -2357,5 +2297,3 @@ vars_of_process_unix (void)
 {
   Fprovide (intern ("unix-processes"));
 }
-
-#endif /* !defined (NO_SUBPROCESSES) */

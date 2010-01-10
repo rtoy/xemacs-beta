@@ -141,7 +141,7 @@ This is Edition @value{edition} of the Texinfo documentation,
 @end ifinfo
 
 @c Here is a spare copy of the chapter menu entry descriptions,
-@c in case they are accidently deleted
+@c in case they are accidentally deleted
 @ignore
 Your rights.
 Texinfo in brief.
@@ -11439,7 +11439,7 @@ You can enter plain @TeX{} completely, and use @samp{\} in the @TeX{}
 commands, by delineating a region with the @code{@@tex} and @code{@@end
 tex} commands.  (The @code{@@tex} command also causes Info to ignore the
 region, like the @code{@@iftex} command.)  The sole exception is that
-@code{@@} chracter still introduces a command, so that @code{@@end tex}
+@code{@@} character still introduces a command, so that @code{@@end tex}
 can be recognized properly.
 
 @cindex Mathematical expressions
@@ -11978,7 +11978,7 @@ tex foo.texi
 @TeX{} will produce a @dfn{DVI file} as well as several auxiliary
 files containing information for indices, cross references, etc.  The
 DVI file (for @dfn{DeVice Independent} file) can be printed on virtually
-any printe (see the following sections).
+any printer (see the following sections).
 
 @pindex texindex
 The @code{tex} formatting command itself does not sort the indices; it

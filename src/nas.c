@@ -237,6 +237,8 @@ nas_init_play (
   return NULL;
 }
 
+# if 0 /* not currently used */
+
 static void
 nas_close_down_play (void)
 
@@ -244,6 +246,8 @@ nas_close_down_play (void)
   AuCloseServer (aud);
   sound_warn ("disconnected from audio server");
 }
+
+#endif
 
  /********************************************************************\
  *                                                                    *
@@ -728,7 +732,7 @@ SndOpenDataForReading (const CBinbyte *data,
 /* Stuff taken from wave.c from NAS.  Just like snd files, NAS can't
    read wave data from memory, so these functions do that for us. */
 
-#define Err()		{ return NULL; }
+#define Err()		{ free(wi); return NULL; }
 #define readFourcc(_f)	dread(_f, sizeof(RIFF_FOURCC), 1)
 #define cmpID(_x, _y)							      \
     strncmp((CBinbyte *) (_x), (CBinbyte *) (_y), sizeof(RIFF_FOURCC))

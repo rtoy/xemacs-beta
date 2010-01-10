@@ -139,11 +139,24 @@ static Ichar_dynarr *title_string_ichar_dynarr;
 
 
 
+#ifndef NEW_GC
 extern const struct sized_memory_description gtk_frame_data_description;
 extern const struct sized_memory_description mswindows_frame_data_description;
 extern const struct sized_memory_description x_frame_data_description;
+#endif /* not NEW_GC */
 
 static const struct memory_description frame_data_description_1 []= {
+#ifdef NEW_GC
+#ifdef HAVE_GTK
+  { XD_LISP_OBJECT, gtk_console },
+#endif
+#ifdef HAVE_MS_WINDOWS
+  { XD_LISP_OBJECT, mswindows_console },
+#endif
+#ifdef HAVE_X_WINDOWS
+  { XD_LISP_OBJECT, x_console },
+#endif
+#else /* not NEW_GC */
 #ifdef HAVE_GTK
   { XD_BLOCK_PTR, gtk_console, 1, { &gtk_frame_data_description} },
 #endif
@@ -153,6 +166,7 @@ static const struct memory_description frame_data_description_1 []= {
 #ifdef HAVE_X_WINDOWS
   { XD_BLOCK_PTR, x_console, 1, { &x_frame_data_description} },
 #endif
+#endif /* not NEW_GC */
   { XD_END }
 };
 
@@ -160,6 +174,19 @@ static const struct sized_memory_description frame_data_description = {
   sizeof (void *), frame_data_description_1
 };
 
+#ifdef NEW_GC
+static const struct memory_description expose_ignore_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct expose_ignore, next) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("expose-ignore",
+			       expose_ignore,
+			       1, /*dumpable-flag*/
+			       0, 0, 0, 0, 0,
+			       expose_ignore_description_1,
+			       struct expose_ignore);
+#else /* not NEW_GC */
 extern const struct sized_memory_description expose_ignore_description;
 
 static const struct memory_description expose_ignore_description_1 [] = {
@@ -172,6 +199,7 @@ const struct sized_memory_description expose_ignore_description = {
   sizeof (struct expose_ignore),
   expose_ignore_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description display_line_dynarr_pointer_description_1 []= {
   { XD_BLOCK_PTR, 0, 1, { &display_line_dynarr_description} },
@@ -189,10 +217,15 @@ static const struct memory_description frame_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct frame, slot), size },
 #include "frameslots.h"
 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (struct frame, subwindow_exposures) },
+  { XD_LISP_OBJECT, offsetof (struct frame, subwindow_exposures_tail) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures),
     1, { &expose_ignore_description } },
   { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures_tail),
     1, { &expose_ignore_description } },
+#endif /* not NEW_GC */
 
 #ifdef HAVE_SCROLLBARS
   { XD_LISP_OBJECT, offsetof (struct frame, sb_vcache) },
@@ -206,7 +239,7 @@ static const struct memory_description frame_description [] = {
 
   { XD_BLOCK_PTR, offsetof (struct frame, framemeths), 1,
     { &console_methods_description } },
-  { XD_UNION, offsetof (struct frame, frame_data), 
+  { XD_UNION, offsetof (struct frame, frame_data),
     XD_INDIRECT (0, 0), { &frame_data_description } },
   { XD_END }
 };
@@ -251,7 +284,7 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
 
 DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
 			       0, /*dumpable-flag*/
-                               mark_frame, print_frame, 0, 0, 0,
+			       mark_frame, print_frame, 0, 0, 0,
 			       frame_description,
 			       struct frame);
 
@@ -444,7 +477,7 @@ restore_frame_list_to_its_unbesmirched_state (Lisp_Object kawnz)
   if (!EQ (lissed, Qunbound))
     DEVICE_FRAME_LIST (XDEVICE (XCAR (kawnz))) = lissed;
   return Qnil;
-}    
+}
 
 DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
 Create and return a new frame, displaying the current buffer.
@@ -498,15 +531,15 @@ See `set-frame-properties', `default-x-frame-plist', and
 	 in the dumped executable, and we can choose it at runtime. */
       name = build_string("XEmacs");
     }
-  else if (NILP (Vdefault_frame_name)) 
-    { 
+  else if (NILP (Vdefault_frame_name))
+    {
       if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
 	{
-	  Vdefault_frame_name = build_string ("emacs"); 
+	  Vdefault_frame_name = build_string ("emacs");
 	}
-      else  
+      else
 	{
-	  Vdefault_frame_name = build_string ("XEmacs"); 
+	  Vdefault_frame_name = build_string ("XEmacs");
 	}
     }
 
@@ -555,7 +588,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (initialized && !DEVICE_STREAM_P (d))
     {
       if (!NILP (f->minibuffer_window))
-        reset_face_cachels (XWINDOW (f->minibuffer_window));
+	reset_face_cachels (XWINDOW (f->minibuffer_window));
       reset_face_cachels (XWINDOW (f->root_window));
     }
 
@@ -651,10 +684,10 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (!DEVICE_STREAM_P (d))
     {
       /* Now initialise the gutters. This won't change the frame size,
-         but is needed as input to the layout that change_frame_size
-         will eventually do. Unfortunately gutter sizing code relies
-         on the frame in question being visible so we can't do this
-         earlier. */
+	 but is needed as input to the layout that change_frame_size
+	 will eventually do. Unfortunately gutter sizing code relies
+	 on the frame in question being visible so we can't do this
+	 earlier. */
       init_frame_gutters (f);
 
       change_frame_size (f, f->height, f->width, 0);
@@ -1296,7 +1329,7 @@ Possible values for WHICH-FRAMES are
 `visible'                 Consider only frames that are visible.
 `iconic'                  Consider only frames that are iconic.
 `invisible'               Consider only frames that are invisible
-                          (this is different from iconic).
+			  (this is different from iconic).
 `visible-iconic'          Consider frames that are visible or iconic.
 `invisible-iconic'        Consider frames that are invisible or iconic.
 `nomini'                  Consider all frames except minibuffer-only ones.
@@ -1304,9 +1337,9 @@ Possible values for WHICH-FRAMES are
 `iconic-nomini'           Like `iconic' but omits minibuffer-only frames.
 `invisible-nomini'        Like `invisible' but omits minibuffer-only frames.
 `visible-iconic-nomini'   Like `visible-iconic' but omits minibuffer-only
-                          frames.
+			  frames.
 `invisible-iconic-nomini' Like `invisible-iconic' but omits minibuffer-only
-                          frames.
+			  frames.
 any other value           Consider all frames.
 
 If WHICH-FRAMES is omitted, `nomini' is used.  A value for WHICH-FRAMES
@@ -1574,7 +1607,7 @@ delete_frame_internal (struct frame *f, int force,
 
       /* If this is a popup frame, select its parent if possible.
 	 Otherwise, find another visible frame; if none, just take any frame.
-         First try the same device, then the same console. */
+	 First try the same device, then the same console. */
 
       next = DEVMETH_OR_GIVEN (d, get_frame_parent, (f), Qnil);
       if (NILP (next) || EQ (next, frame) || ! FRAME_LIVE_P (XFRAME (next)))
@@ -2483,10 +2516,10 @@ recognized for particular types of frames.
 	 frame after it has been created, because the old name was used
 	 for resource lookup. */
       if (EQ (prop, Qname))
-        {
-          CHECK_STRING (val);
-          f->name = val;
-        }
+	{
+	  CHECK_STRING (val);
+	  f->name = val;
+	}
 #endif /* 0 */
       if (EQ (prop, Qminibuffer))
 	store_minibuf_frame_prop (f, val);
@@ -2703,14 +2736,14 @@ Return the height of the displayable area in pixels of FRAME.
   int height, pheight;
   frame = wrap_frame (f);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       height = FRAME_HEIGHT (f);
 
       frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
 				 0, &pheight, 0, &height, 0);
     }
-  else 
+  else
     pheight = FRAME_PIXHEIGHT (f);
 
   return make_int (pheight);
@@ -2733,14 +2766,14 @@ Return the width of the displayable area in pixels of FRAME.
   int width, pwidth;
   frame = wrap_frame (f);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       width = FRAME_WIDTH (f);
 
       frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
 				 &pwidth, 0, &width, 0, 0);
     }
-  else 
+  else
     pwidth = FRAME_PIXWIDTH (f);
 
   return make_int (pwidth);
@@ -2823,14 +2856,14 @@ but that the idea of the actual height of the frame should not be changed.
   frame = wrap_frame (f);
   CHECK_INT (height);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       int h = XINT (height);
       width = FRAME_WIDTH (f);
 
       frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
     }
-  else 
+  else
     {
       width = FRAME_PIXWIDTH (f);
       pheight = XINT (height);
@@ -2853,13 +2886,13 @@ but that the idea of the actual height of the frame should not be changed.
   frame = wrap_frame (f);
   CHECK_INT (height);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       int h = XINT (height);
       width = FRAME_WIDTH (f);
       frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
     }
-  else 
+  else
     {
       width = FRAME_PIXWIDTH (f);
       pheight = XINT (height);
@@ -2996,7 +3029,7 @@ but that the idea of the actual size of the frame should not be changed.
   CHECK_INT (width);
   CHECK_INT (height);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       int w = XINT (width);
       int h = XINT (height);
@@ -3026,7 +3059,7 @@ but that the idea of the actual size of the frame should not be changed.
   CHECK_INT (width);
   CHECK_INT (height);
 
-  if (!window_system_pixelated_geometry (frame)) 
+  if (!window_system_pixelated_geometry (frame))
     {
       int w = XINT (width);
       int h = XINT (height);
@@ -3239,6 +3272,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   default_face_height_and_width_1 (frame, &font_height, &font_width);
 
   /* This size-change overrides any pending one for this frame.  */
+  f->size_change_pending = 0;
   FRAME_NEW_HEIGHT (f) = 0;
   FRAME_NEW_WIDTH (f) = 0;
 
@@ -3303,7 +3337,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   if (new_pixheight)
     {
       /* Adjust for gutters here so that we always get set
-         properly. */
+	 properly. */
       new_pixheight -=
 	(FRAME_TOP_GUTTER_BOUNDS (f)
 	 + FRAME_BOTTOM_GUTTER_BOUNDS (f));
@@ -3354,7 +3388,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   if (new_pixwidth)
     {
       /* Adjust for gutters here so that we always get set
-         properly. */
+	 properly. */
       new_pixwidth -=
 	(FRAME_LEFT_GUTTER_BOUNDS (f)
 	 + FRAME_RIGHT_GUTTER_BOUNDS (f));
@@ -3405,14 +3439,17 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
      --andy. */
   MARK_FRAME_SIZE_CHANGED (f);
 
+#ifdef NEW_GC
+  if (delay || hold_frame_size_changes)
+#else /* not NEW_GC */
   if (delay || hold_frame_size_changes || gc_in_progress)
+#endif /* not NEW_GC */
     {
       f->new_width = newwidth;
       f->new_height = newheight;
       return;
     }
 
-  f->size_change_pending = 0;
   /* For TTY frames, it's like one, like all ...
      Can't have two TTY frames of different sizes on the same device. */
   if (FRAME_TTY_P (f))
@@ -3441,7 +3478,7 @@ generate_title_string (struct window *w, Lisp_Object format_str,
   Dynarr_reset (db->runes);
 
   generate_formatted_string_db (format_str, Qnil, w, dl, db, findex, 0,
-                                -1, type);
+				-1, type);
 
   Dynarr_reset (title_string_ichar_dynarr);
   while (elt < Dynarr_length (db->runes))
@@ -3567,7 +3604,7 @@ init_frame (void)
 #endif
     {
       title_string_ichar_dynarr = Dynarr_new (Ichar);
-      xzero (title_string_display_line);
+      DISPLAY_LINE_INIT (title_string_display_line);
     }
 }
 
@@ -3575,6 +3612,9 @@ void
 syms_of_frame (void)
 {
   INIT_LRECORD_IMPLEMENTATION (frame);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (expose_ignore);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qdelete_frame_hook);
   DEFSYMBOL (Qselect_frame_hook);
@@ -3710,10 +3750,6 @@ vars_of_frame (void)
   Fprovide (intern ("cde"));
 #endif
 
-#ifdef HAVE_OFFIX_DND
-  Fprovide (intern ("offix"));
-#endif
-
 #if 0 /* FSFmacs stupidity */
   xxDEFVAR_LISP ("emacs-iconified", &Vemacs_iconified /*
 Non-nil if all of emacs is iconified and frame updates are not needed.
@@ -3797,8 +3833,17 @@ Legal values are:
   Vadjust_frame_function = Qnil;
 
   DEFVAR_LISP ("mouse-motion-handler", &Vmouse_motion_handler /*
-Handler for motion events.  One arg, the event.
+Handler for motion events.  Must be a function taking one argument, the event.
 For most applications, you should use `mode-motion-hook' instead of this.
+The default value is `default-mouse-motion-handler'.
+
+Note that this is NOT a hook variable, so there is no standard way to remove
+actions from it.  Instead, when adding a new kind of action, a hook variable
+should be defined and initialized to the current value of this variable, then
+this variable set to a function that runs the new hook.  To disable the new
+actions, use `remove-hook' rather than setting `mouse-motion-handler'.
+
+`mouse-motion-hook' in the balloon-help library exemplifies this pattern.
 */ );
   Vmouse_motion_handler = Qnil;
 

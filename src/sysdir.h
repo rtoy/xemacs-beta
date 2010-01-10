@@ -62,7 +62,7 @@ Boston, MA 02111-1307, USA.  */
    Since applying strlen to the name always works, we'll just do that.  */
 #define NAMLEN(p) strlen (p->d_name)
 
-#define DIRENTRY_NONEMPTY(p) ((p)->d_ino)
+# define DIRENTRY_NONEMPTY(p) ((p)->d_ino)
 
 /* encapsulation: directory calls */
 

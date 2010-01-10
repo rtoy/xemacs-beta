@@ -231,15 +231,7 @@ EVENT should be the button event that initiated the drag.
 Returns whether a drag was begun."
   ;; #### barely implemented.
   (when (click-inside-selection-p event)
-    (cond ((featurep 'offix)
-	   (declare-fboundp
-	    (offix-start-drag-region
-	     event
-	     (extent-start-position zmacs-region-extent)
-	     (extent-end-position zmacs-region-extent)))
-	   t)
-	  ((featurep 'cde)
-	   ;; should also work with CDE
+    (cond ((featurep 'cde)
 	   (declare-fboundp
 	    (cde-start-drag-region event
 				   (extent-start-position zmacs-region-extent)
@@ -278,18 +270,23 @@ It's also fantastic for debugging regular expressions."
 	     (message "Regex \"%s\" not found" exp)
 	     (ding nil 'quiet)))
 	  (t (setq val (if (fboundp 'eval-interactive)
-			   (eval-interactive exp)
-			 (eval exp)))))
-    (setq result-str (prin1-to-string val))
+                           (eval-interactive exp)
+			 (list (eval exp))))))
+    (setq result-str (mapconcat #'prin1-to-string val " ;\n"))
     ;; #### -- need better test
     (if (and (not force-window)
-	     (<= (length result-str) (window-width (selected-window))))
+	     (<= (length result-str) (window-width (selected-window)))
+             (not (string-match "\n" result-str)))
 	(message "%s" result-str)
       (with-output-to-temp-buffer "*Mouse-Eval*"
-	(if-fboundp 'pprint
-	    (pprint val)
-	  (prin1 val)))
-      )))
+        (loop
+          for value in val 
+          with seen-first = nil
+          do
+          (if seen-first 
+              (princ " ;\n")
+            (setq seen-first t))
+          (cl-prettyprint value))))))
 
 (defun mouse-line-length (event)
   "Print the length of the line indicated by the pointer."
@@ -998,7 +995,7 @@ also works, because the behavior is emulated."
       (let ((tmp start)) (setq start end end tmp)))
   (cond
    ((= start end)		; never delete the last remaining extent
-    (mapcar 'delete-extent (cdr extents))
+    (mapc 'delete-extent (cdr extents))
     (setcdr extents nil)
     (set-extent-endpoints (car extents) start start))
    (t
@@ -1044,7 +1041,7 @@ also works, because the behavior is emulated."
 	    (setq last rest
 		  rest (cdr rest)))
 	  (cond (rest
-		 (mapcar 'delete-extent rest)
+		 (mapc 'delete-extent rest)
 		 (setcdr last nil))
 		((not (eobp))
 		 (while (not (eobp))
@@ -1315,7 +1312,7 @@ also works, because the behavior is emulated."
 			 (set-extent-face e 'primary-selection)))))
       (add-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
       (if (consp extent)		; rectangle-p
-	  (mapcar func extent)
+	  (mapc func extent)
 	(if extent
 	    (funcall func extent)))))
   t)
@@ -1329,10 +1326,10 @@ also works, because the behavior is emulated."
     (if (consp extent)
 	(if (funcall dead-func extent)
 	    (let (newval)
-	      (mapcar (function (lambda (x)
-				  (if (not (funcall dead-func x))
-				      (setq newval (cons x newval)))))
-		      extent)
+	      (mapc (function (lambda (x)
+                                (if (not (funcall dead-func x))
+                                    (setq newval (cons x newval)))))
+                    extent)
 	      (setq default-mouse-track-extent (nreverse newval))))
       (if (funcall dead-func extent)
 	  (setq default-mouse-track-extent nil)))))

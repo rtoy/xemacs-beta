@@ -74,6 +74,13 @@ BLDROOT=$(MAKEROOT)
 !endif
 !endif
 
+!if [copy $(SRCROOT)\version.sh.in $(SRCROOT)\version.sh]
+!endif
+!if exist($(SRCROOT)\.hg)
+!if [hg identify >> $(SRCROOT)\version.sh]
+!endif
+!endif
+
 # Program name and version
 !include "$(SRCROOT)\version.sh"
 
@@ -135,7 +142,7 @@ HAVE_JPEG=0
 HAVE_XFACE=0
 !endif
 !if !defined(HAVE_GIF)
-HAVE_GIF=1
+HAVE_GIF=0
 !endif
 !if !defined(HAVE_GTK)
 HAVE_GTK=0
@@ -195,6 +202,15 @@ DEBUG_XEMACS=0
 !if !defined(SUPPORT_EDIT_AND_CONTINUE)
 SUPPORT_EDIT_AND_CONTINUE=0
 !endif
+!if !defined(BUILD_FOR_SETUP_KIT)
+BUILD_FOR_SETUP_KIT=0
+!endif
+
+!if !$(BUILD_FOR_SETUP_KIT)
+OK_TO_USE_MSVCRTD=1
+!else
+OK_TO_USE_MSVCRTD=0
+!endif
 
 !if !defined(ERROR_CHECK_ALL)
 !if "$(emacs_is_beta)" != ""
@@ -215,8 +231,8 @@ CPLUSPLUS_COMPILE=0
 !if !defined(USE_KKCC)
 USE_KKCC=0
 !endif
-!if !defined(MC_ALLOC)
-MC_ALLOC=0
+!if !defined(NEW_GC)
+NEW_GC=0
 !endif
 !if !defined(USE_UNION_TYPE)
 USE_UNION_TYPE=0
@@ -411,6 +427,7 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DPATH_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
 	-DPATH_PROGNAME=\"infodock\" 				\
 	-DEMACS_PROGNAME=\"infodock\"				\
+	-DSHEBANG_PROGNAME=\"infodock-script\"			\
 	-DEMACS_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
 	-DINFODOCK_MAJOR_VERSION=$(infodock_major_version)	\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
@@ -428,7 +445,7 @@ PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
 	-DPATH_PROGNAME=\"xemacs\"				\
 	-DEMACS_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
-	-DEMACS_PROGNAME=\"xemacs\"
+	-DEMACS_PROGNAME=\"xemacs\" -DSHEBANG_PROGNAME=\"xemacs-script\"
 !endif
 
 ########################### Set up installation and package directories.
@@ -440,25 +457,19 @@ INSTALL_DIR=c:\Program Files\Infodock\Infodock-$(INFODOCK_VERSION_STRING)
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 ! endif
 !endif
-!if !defined(PACKAGE_PATH)
-! if !defined(PACKAGE_PREFIX)
-PACKAGE_PREFIX=c:\Program Files\XEmacs
-! endif
-! if $(MULE)
-PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\mule-packages;$(PACKAGE_PREFIX)\xemacs-packages
-! else
-PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\xemacs-packages
-! endif
+
+# If PACKAGE_PREFIX was defined, use it to generate a package path.
+!if defined(PACKAGE_PREFIX)
+PATH_LATE_PACKAGE_DIRECTORIES="$(PACKAGE_PREFIX:\=\\)"
 !endif
-PATH_PACKAGEPATH="$(PACKAGE_PATH:\=\\)"
 
 !if $(INFODOCK)
 PATH_PREFIX=../..
 !else
-PATH_PREFIX=..
+PATH_PREFIX="$(INSTALL_DIR)"
 !endif
 
-PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
+PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX:\=\\)\"
 
 !if $(SEPARATE_BUILD)
 PATH_DEFINES=$(PATH_DEFINES) -DPATH_LOADSEARCH=\"$(LISP:\=\\)\" -DPATH_DATA=\"$(ETC:\=\\)\" -DPATH_INFO=\"$(INFO:\=\\)\"
@@ -537,7 +548,8 @@ OPT_LIBS=$(OPT_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
 !if $(HAVE_GIF)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_GIF
-OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(GIF_DIR)\include"
+OPT_LIBS=$(OPT_LIBS) "$(GIF_DIR)\lib\giflib.lib"
 !endif
 !if $(HAVE_PNG)
 OPT_DEFINES=$(OPT_DEFINES) -DHAVE_PNG
@@ -650,20 +662,32 @@ OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dumper.obj
 OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\unexnt.obj
 !endif
 
+!if $(NEW_GC)
+OPT_DEFINES=$(OPT_DEFINES) -DNEW_GC
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\vdb.obj $(OUTDIR)\vdb-win32.obj \
+	$(OUTDIR)\mc-alloc.obj
+USE_KKCC=1
+!endif
+
 !if $(USE_KKCC)
 OPT_DEFINES=$(OPT_DEFINES) -DUSE_KKCC
-!endif
-!if $(MC_ALLOC)
-OPT_DEFINES=$(OPT_DEFINES) -DMC_ALLOC
-OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\mc-alloc.obj
 !endif
 
 !if $(USE_SYSTEM_MALLOC)
 OPT_DEFINES=$(OPT_DEFINES) -DSYSTEM_MALLOC
 !else
-OPT_DEFINES=$(OPT_DEFINES) -DGNU_MALLOC
 OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\free-hook.obj $(OUTDIR)\gmalloc.obj \
 	$(OUTDIR)\ntheap.obj $(OUTDIR)\vm-limit.obj
+!endif
+
+!if $(USE_INTEL_COMPILER)
+CC=icl
+# Use static library if possible
+INTEL_LIBS=libircmt.lib libmmt.lib
+# Debugging requires DLL version of libm
+!if $(DEBUG_XEMACS)
+INTEL_LIBS=libircmt.lib libmmd.lib
+!endif
 !endif
 
 ########################### Process options related to compilation.
@@ -686,8 +710,8 @@ CCV=@$(CC)
 # giving it.
 DEBUG_FLAG_LINK_DEBUG=-debug -opt:noref
 # This turns on additional run-time checking
-# For some reason it causes spawning of make-docfile to crash in VC 7
-DEBUG_FLAG_COMPILE_DEBUG=-RTC1
+# For some reason it causes spawning of make-docfile to crash in VC 7 and VC 8
+# DEBUG_FLAG_COMPILE_DEBUG=-RTC1
 ! else
 DEBUG_FLAG_LINK_DEBUG=-debug:full
 DEBUG_FLAG_COMPILE_DEBUG=
@@ -725,13 +749,13 @@ BROWSERFLAGS=
 !endif
 
 !if $(USE_CRTDLL)
-! if $(DEBUG_XEMACS)
+!  if $(DEBUG_XEMACS) && "$(OK_TO_USE_MSVCRTD)" == "1"
 C_LIBFLAG=-MDd
 LIBC_LIB=msvcrtd.lib
-! else
+!  else
 C_LIBFLAG=-MD
 LIBC_LIB=msvcrt.lib
-! endif
+!  endif
 !else
 C_LIBFLAG=-ML
 LIBC_LIB=libc.lib
@@ -811,10 +835,12 @@ TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
  $(EMACS_BETA_VERSION) $(EMACS_PATCH_LEVEL) \
  -DXEMACS_CODENAME=\"$(xemacs_codename:&=and)\" \
 !if defined(xemacs_extra_name)
- -DXEMACS_EXTRA_NAME=\"$(xemacs_extra_name:"=)\" \
+ -DXEMACS_EXTRA_NAME=\""$(xemacs_extra_name:"=)"\" \
 !endif
- -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\" \
- -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+ -DPATH_LATE_PACKAGE_DIRECTORIES=\"$(PATH_LATE_PACKAGE_DIRECTORIES)\" \
+!endif
+ -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\"
 TEMACS_CPP_FLAGS=$(CFLAGS) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
 TEMACS_CPP_CDECL_FLAGS=$(CFLAGS_CDECL) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
 
@@ -859,6 +885,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\fns.obj \
 	$(OUTDIR)\font-lock.obj \
 	$(OUTDIR)\frame.obj \
+	$(OUTDIR)\gc.obj \
 	$(OUTDIR)\general.obj \
 	$(OUTDIR)\getloadavg.obj \
 	$(OUTDIR)\glyphs.obj \
@@ -1074,8 +1101,10 @@ CONFIG_VALUES = $(BLDLIB_SRC)\config.values
 !endif
 !if [echo LISPDIR>>$(CONFIG_VALUES) && echo "\\$(LISP:\=\\)">>$(CONFIG_VALUES)]
 !endif
-# PATH_PACKAGEPATH is already a quoted string.
-!if [echo PACKAGE_PATH>>$(CONFIG_VALUES) && echo $(PATH_PACKAGEPATH)>>$(CONFIG_VALUES)]
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+# PATH_LATE_PACKAGE_DIRECTORIES is already a quoted string.
+! if [echo PATH_LATE_PACKAGE_DIRECTORIES>>$(CONFIG_VALUES) && echo $(PATH_LATE_PACKAGE_DIRECTORIES)>>$(CONFIG_VALUES)]
+! endif
 !endif
 
 LINK_DEPENDENCY_ARGS = -Fe$@ -Fd$* $** -link $(DEBUG_FLAGS_LINK)
@@ -1086,17 +1115,32 @@ LIB_SRC_CFLAGS = $(CFLAGS) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES)
 # Inferred rule
 {$(LIB_SRC)}.c{$(BLDLIB_SRC)}.exe :
 	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) $(LINK_STANDARD_LIBRARY_ARGS)
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(BLDLIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
 	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) -stack:0x800000 $(LINK_STANDARD_LIBRARY_ARGS)
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 $(BLDLIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 
 # Minitar uses zlib so just use cdecl to simplify things
 $(BLDLIB_SRC)/minitar.exe : $(NT)/minitar.c
 	$(CCV) -I$(SRC) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) -MD $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
 
 LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/etags.exe		\
@@ -1106,8 +1150,7 @@ LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/make-docfile.exe	\
 	$(BLDLIB_SRC)/mmencode.exe	\
 	$(BLDLIB_SRC)/movemail.exe	\
-	$(BLDLIB_SRC)/sorted-doc.exe	\
-	$(BLDLIB_SRC)/wakeup.exe
+	$(BLDLIB_SRC)/sorted-doc.exe
 !if $(USE_MINITAR)
 LIB_SRC_TOOLS = \
 	$(LIB_SRC_TOOLS) \
@@ -1148,7 +1191,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
   Compiling as C++.
 !endif
   Installing XEmacs in "$(INSTALL_DIR:\=\\)".
-  Package path is $(PATH_PACKAGEPATH).
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+  Package path is $(PATH_LATE_PACKAGE_DIRECTORIES).
+!endif
 !if $(INFODOCK)
   Building InfoDock.
 !endif
@@ -1270,10 +1315,10 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
   Disabling non-essential build actions.  Use with care!
 !endif
 !if $(USE_KKCC)
-  Using new experimental GC algorithms.
+  Using new experimental GC mark algorithms.
 !endif
-!if $(MC_ALLOC)
-  Using new experimental allocator.
+!if $(NEW_GC)
+  Using new experimental incremental garbage collector and new allocator.
 !endif
 <<NOKEEP
 	@echo --------------------------------------------------------------------
@@ -1296,7 +1341,7 @@ TEMACS_BROWSE=$(BLDSRC)\temacs.bsc
 TEMACS_LIBS=$(LASTFILE) $(OPT_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
- mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
+ mpr.lib uuid.lib imm32.lib $(INTEL_LIBS) $(LIBC_LIB)
 TEMACS_COMMON_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) \
  -base:0x1000000 -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows \
  -heap:0x00100000 -nodefaultlib $(PROFILE_FLAGS) setargv.obj
@@ -1359,7 +1404,8 @@ TEMACS_DUMP_DEP = $(OUTDIR)\temacs.res
 !endif
 
 $(RAW_EXE): $(TEMACS_OBJS) $(LASTFILE) $(TEMACS_DUMP_DEP)
-	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
+# Command line too long for some Windows installation:
+#	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 	link.exe @<<
   $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 <<
@@ -1421,6 +1467,12 @@ $(DUMP_TARGET): $(DOC) $(RAW_EXE) $(BLDSRC)\NEEDTODUMP
   $(XEMACS_LFLAGS) -section:.rsrc,rw -out:$(BLDSRC)\xemacs.exe $(TEMACS_OBJS) $(OUTDIR)\xemacs.res $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
 <<
 	-$(DEL) $(BLDSRC)\xemacs.dmp
+# If we're using Visual Studio 2005 or greater,
+# embed the manifest into the executable.
+!if $(MSC_VER) >= 1400
+	mt -manifest $@.manifest -outputresource:$@;1
+!endif
+
 !endif
 
 ## (6) Update the remaining .elc's, post-dumping
@@ -1453,21 +1505,22 @@ MAKEINFO=$(XEMACS_BATCH_PACKAGES) -l texinfmt -f batch-texinfo-format
 MANDIR = $(SRCROOT)\man
 INFODIR = $(SRCROOT)\info
 INFO_FILES= \
+	$(INFODIR)\beta.info \
 	$(INFODIR)\cl.info \
 	$(INFODIR)\custom.info \
 	$(INFODIR)\emodules.info \
 	$(INFODIR)\external-widget.info \
 	$(INFODIR)\info.info \
+	$(INFODIR)\internals.info \
+	$(INFODIR)\lispref.info \
+	$(INFODIR)\new-users-guide.info \
 	$(INFODIR)\standards.info \
 	$(INFODIR)\term.info \
 	$(INFODIR)\termcap.info \
 	$(INFODIR)\texinfo.info \
 	$(INFODIR)\widget.info \
 	$(INFODIR)\xemacs-faq.info \
-	$(INFODIR)\xemacs.info \
-	$(INFODIR)\lispref.info \
-	$(INFODIR)\new-users-guide.info \
-	$(INFODIR)\internals.info
+	$(INFODIR)\xemacs.info
 
 {$(MANDIR)}.texi{$(INFODIR)}.info:
 	cd $(MANDIR)
@@ -1565,6 +1618,7 @@ LISPREF_SRCS = \
 	$(MANDIR)\lispref\numbers.texi \
 	$(MANDIR)\lispref\objects.texi \
 	$(MANDIR)\lispref\os.texi \
+	$(MANDIR)\lispref\packaging.texi \
 	$(MANDIR)\lispref\positions.texi \
 	$(MANDIR)\lispref\processes.texi \
 	$(MANDIR)\lispref\range-tables.texi \
@@ -1684,6 +1738,7 @@ install:	all
 	@$(COPYDIR) $(SRCROOT)\etc  "$(INSTALL_DIR)\etc\"
 	@$(COPYDIR) $(SRCROOT)\info "$(INSTALL_DIR)\info\"
 	@$(COPYDIR) $(SRCROOT)\lisp "$(INSTALL_DIR)\lisp\"
+!if defined(PACKAGE_PREFIX)
 	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
 	-$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
@@ -1691,6 +1746,7 @@ install:	all
 	-$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
 	-$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
+!endif
 	-$(DEL) PlaceHolder
 
 ########################### clean

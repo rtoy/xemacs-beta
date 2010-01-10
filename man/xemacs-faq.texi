@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/10/24 20:39:47 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2006/05/16 15:36:16 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -293,6 +293,7 @@ library directory>/info/}. For example in
 2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
 * Q2.2.1::    Libraries in non-standard locations
 * Q2.2.2::    Why can't I strip XEmacs?
+* Q2.2.3::    X11/bitmaps/gray (or other X11-related file) not found.
 
 2.3: Windows Installation (Windows, Cygwin, MinGW)
 * Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
@@ -321,7 +322,7 @@ library directory>/info/}. For example in
 2.5: Startup-Related Problems
 * Q2.5.1::    XEmacs cannot connect to my X Terminal!
 * Q2.5.2::    Startup problems related to paths or package locations.
-* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.3::    XEmacs won't start without network, or starts slowly.
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
@@ -340,6 +341,7 @@ library directory>/info/}. For example in
 * Q3.0.9::    HP Alt key as Meta.
 * Q3.0.10::   Why does edt emulation not work?
 * Q3.0.11::   How can I emulate VI and use it as my default mode?
+* Q3.0.12::   Mac Alt/Option key as Meta.
 
 3.1: The Mouse
 * Q3.1.1::    How can I turn off Mouse pasting?
@@ -432,6 +434,7 @@ library directory>/info/}. For example in
 * Q5.0.4::    How can I have the window title area display the full path?
 * Q5.0.5::    @samp{xemacs -name junk} doesn't work?
 * Q5.0.6::    @samp{-iconic} doesn't work.
+* Q5.0.7::    How can I use antialiased fonts under X11?
 
 5.1: Microsoft Windows
 * Q5.1.1::    Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
@@ -714,7 +717,10 @@ and was also the last version without international language support.
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @unnumberedsubsec Q1.0.3: How do you pronounce XEmacs?
 
-The most common pronounciation is @samp{Eks eemax}.
+The most common pronounciation is @samp{Eks eemax}, @samp{Eks'im&ks} in
+Kirshenbaum IPA. (See
+@uref{http://www.kirshenbaum.net/IPA/ascii-ipa.pdf} if you know the IPA
+already and want to know how to map from Kirshenbaum to it.)
 
 @node Q1.0.4, Q1.0.5, Q1.0.3, Introduction
 @unnumberedsubsec Q1.0.4: What does XEmacs look like?
@@ -822,7 +828,7 @@ Gutters, tabs: andy piper
 @item Device subsystems
 @itemize @minus
 @item
-X Windows: Jamie Zawinksi, Ben Wing, others
+X Windows: Jamie Zawinski, Ben Wing, others
 @item
 GTK: William Perry, Malcolm Purvis
 @item
@@ -886,7 +892,7 @@ mailing lists.
 @item
 Steve Youngs currently produces the beta releases (???).
 @item
-Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
+Steve Youngs, Ville Skyttä, and now Norbert Koch have taken turns
 maintaining the packages.
 @item
 Vin Shelton maintains the stable releases.
@@ -1063,15 +1069,14 @@ full color support on a color-capable character terminal.
 @node Q1.2.2, Q1.2.3, Q1.2.1, Introduction
 @unnumberedsubsec Q1.2.2: What versions of Unix does XEmacs run on?
 
-XEmacs is regularly tested on Linux, Solaris, SunOS, HP/UX, FreeBSD,
-OpenBSD, BSD/OS aka BSDI, Tru64 aka DEC/OSF, SCO5, and probably
-others.  It should work on all versions of Unix created in the last 10
-years or so, perhaps with a bit of work on more obscure platforms to
-correct bit-rot.  It uses a sophisticated configuration system to
-auto-detect zillions of features that are implemented differently in
-different versions of Unix, so it will probably work on your vendor's
-version, possibly with a bit of tweaking, even if we've never heard of
-it.
+XEmacs is regularly tested on Linux, Solaris and OpenSolaris, HP/UX,
+FreeBSD, OpenBSD, Cygwin, Mac OS X, and probably others.  It should work
+on all versions of Unix created in the last 10 years or so, perhaps with
+a bit of work on more obscure platforms to correct bit-rot.  It uses a
+sophisticated configuration system to auto-detect zillions of features
+that are implemented differently in different versions of Unix, so it
+will probably work on your vendor's version, possibly with a bit of
+tweaking, even if we've never heard of it.
 
 For problems with particular machines and versions of Unix, see the
 @file{PROBLEMS} file.
@@ -3089,6 +3094,7 @@ section is devoted to Installation, Maintenance and Troubleshooting.
 2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
 * Q2.2.1::    Libraries in non-standard locations
 * Q2.2.2::    Why can't I strip XEmacs?
+* Q2.2.3::    X11/bitmaps/gray (or other X11-related file) not found.
 
 2.3: Windows Installation (Windows, Cygwin, MinGW)
 * Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
@@ -3117,7 +3123,7 @@ section is devoted to Installation, Maintenance and Troubleshooting.
 2.5: Startup-Related Problems
 * Q2.5.1::    XEmacs cannot connect to my X Terminal!
 * Q2.5.2::    Startup problems related to paths or package locations.
-* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.3::    XEmacs won't start without network, or starts slowly.
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
@@ -3268,7 +3274,7 @@ If you have the packages somewhere nonstandard and don't want to bother
 with @samp{$prefix} (for example, you're a developer and are compiling
 the packages yourself, and want your own private copy of everything),
 you can also directly specify this using @file{configure}.  To do this
-with 21.5 and above use the @samp{--with-package-prefix} parameter to
+with 21.5 and above use the @samp{--with-late-packages} parameter to
 specify the directory under which you untarred the above tarballs.
 Under 21.4 and previous you need to use @samp{--package-path}.  Using
 these options looks something like this:
@@ -3288,7 +3294,7 @@ the packages somewhere else, just change @samp{PACKAGE_PREFIX}.
 Note that XEmacs finds the packages automatically anywhere underneath
 the directory tree where it expects to find the packages.  All you
 need to do is put stuff there; you don't need to run any program to
-tell XEmacs to find the packges, or do anything of that sort.
+tell XEmacs to find the packages, or do anything of that sort.
 
 However, XEmacs will only notice newly installed packages when it
 starts up, so you will have to restart if you are already running
@@ -3439,10 +3445,10 @@ keyb: x
 
 As the exact files and their locations contained in a package may
 change it is recommended to remove a package first before installing a
-new version. In order to facilitate removal each package contains an
-pgkinfo/MANIFEST.pkgname file which list all the files belong to the
-package. M-x package-admin-delete-binary-package RET can be used to
-remove a package using this file.
+new version. In order to facilitate removal each package contains a
+pkginfo/MANIFEST.pkgname file which lists all the files belonging to
+the package. M-x package-admin-delete-binary-package RET can be used
+to remove a package using this file.
 
 Note that the interactive package tools included with XEmacs already do
 this for you.
@@ -3506,10 +3512,15 @@ XEmacs in its default installation will find packages that you put
 under @file{/usr/local/lib/xemacs}.
 
 You can specify where exactly XEmacs looks for packages by using the
-@samp{--with-package-prefix} or @samp{--with-package-path} parameters to
-@file{configure} (or the equivalent settings in @file{config.inc}, under
-Windows), or setting the @samp{EMACSPACKAGEPATH} environment variable
-(which has the same format as @samp{--with-package-path}).  @xref{Q2.1.1}.
+@samp{--with-user-packages} (an alias for @samp{--with-early-packages})
+or @samp{--with-system-packages} (an alias for
+@samp{--with-late-packages}) or @samp{--with-legacy-packages}
+(an alias for @samp{--with-last-packages})
+parameters to @file{configure} (or the equivalent settings in
+@file{config.inc}, under Windows), or setting the
+@samp{EMACSEARLYPACKAGES}, @samp{EMACSLATEPACKAGES}, and
+@samp{EMACSLASTPACKAGES} environment variables (which have the same
+format as the configure options).  @xref{Q2.1.1}.
 
 See @file{configure.usage} for more info about the format of these
 @file{configure} parameters.
@@ -3529,7 +3540,7 @@ default.  A good place to put @file{site-start.el} would be in
 
 A typical error: FTP Error: USER request failed; 500 AUTH not understood.
 
-Thanks to giacomo boffi @email{giacomo.boffi@@polimi.it} who recommends
+Thanks to Giacomo Boffi @email{giacomo.boffi@@polimi.it} who recommends
 on comp.emacs.xemacs:
 
    tell your ftp client to not attempt AUTH authentication (or do not
@@ -3579,7 +3590,7 @@ or for 21.5:
 --with-site-prefixes=WHATEVER
 @end example
 
-@node Q2.2.2, Q2.3.1, Q2.2.1, Installation
+@node Q2.2.2, Q2.2.3, Q2.2.1, Installation
 @unnumberedsubsec Q2.2.2: Why can't I strip XEmacs?
 
 @email{cognot@@fronsac.ensg.u-nancy.fr, Richard Cognot} writes:
@@ -3634,9 +3645,20 @@ cp lib-src/DOC-19.16-XEmacs
 @end enumerate
 @end quotation
 
+@node Q2.2.3, Q2.3.1, Q2.2.2, Installation
+@unnumberedsubsec Q2.2.3: X11/bitmaps/gray (or other X11-related file) not found.
+
+The X11R6 distribution was monolithic, but the X11R7 distribution is
+much more modular.  Many OS distributions omit these bitmaps (assuming
+nobody uses them, evidently).  Your OS distribution should have a
+developer's package containing these files, probably with a name
+containing the string "bitmap".  Known package names (you may need to
+add an extension such as .deb or .rpm) include x11/xbitmaps (Ubuntu)
+and xorg-x11-xbitmaps (Fedora Core 5).
+
 @unnumberedsec 2.3: Windows Installation (Windows, Cygwin, MinGW)
 
-@node Q2.3.1, Q2.3.2, Q2.2.2, Installation
+@node Q2.3.1, Q2.3.2, Q2.2.3, Installation
 @unnumberedsubsec Q2.3.1: What exactly are all the different ways to build XEmacs under Windows?
 
 XEmacs can be built in several ways in the MS Windows environment.
@@ -4448,7 +4470,7 @@ parameter (@pxref{Q2.1.1}).  If this has the value of @samp{nil},
 this means that no value was compiled into XEmacs using these parameters.
 
 @node Q2.5.3, Q2.5.4, Q2.5.2, Installation
-@unnumberedsubsec Q2.5.3: XEmacs won't start without network.
+@unnumberedsubsec Q2.5.3: XEmacs won't start without network, or starts slowly.
 
 If XEmacs starts when you're on the network, but fails when you're not
 on the network, you may be missing a "localhost" entry in your
@@ -4458,7 +4480,16 @@ on the network, you may be missing a "localhost" entry in your
 127.0.0.1        localhost
 @end example
 
-Add that line, and XEmacs will be happy.
+Add that line, and XEmacs will be happy.  If your network is unreliable,
+such as a Wifi network, you may experience delays but eventually XEmacs
+starts up.  This may be due to having the lookup order give precedence
+to DNS over the hosts file (often lookup order is defined in one of the
+files @file{/etc/host.conf}, @file{/etc/nsswitch.conf}, or
+@file{/etc/resolv.conf}, depending on OS).  See your system
+documentation for this configuration.  Note that changing the lookup
+order is a workaround; there are good reasons to have DNS come earlier
+by default.  Make sure those reasons are less important to you than a
+quick XEmacs startup.
 
 @node Q2.5.4, Q2.5.5, Q2.5.3, Installation
 @unnumberedsubsec Q2.5.4: Startup warnings about deducing proper fonts?
@@ -4585,6 +4616,7 @@ them.
 * Q3.0.9::    HP Alt key as Meta.
 * Q3.0.10::   Why does edt emulation not work?
 * Q3.0.11::   How can I emulate VI and use it as my default mode?
+* Q3.0.12::   Mac Alt/Option key as Meta.
 
 3.1: The Mouse
 * Q3.1.1::    How can I turn off Mouse pasting?
@@ -4854,7 +4886,7 @@ add this as well:
 (global-set-key [(control h)] 'help-for-help)
 @end lisp
 
-@node Q3.0.11, Q3.1.1, Q3.0.10, Editing
+@node Q3.0.11, Q3.0.12, Q3.0.10, Editing
 @unnumberedsubsec Q3.0.11: How can I emulate VI and use it as my default mode?
 
 Our recommended VI emulator is viper. To make viper-mode the default,
@@ -4871,9 +4903,32 @@ This should be added as close to the top of @file{init.el} as you can get
 it, otherwise some minor modes may not get viper-ized.
 @end quotation
 
+@node Q3.0.12, Q3.1.1, Q3.0.11, Editing
+@unnumberedsubsec Q3.0.12: Mac Alt/Option key as Meta.
+
+Due to the Apple Command key being Meta, I can't use XEmacs on OS X.
+
+Didier Verna suggests:
+
+I use an X version of XEmacs on a Mac every day.  You have to tweak the
+keyboard configuration a bit but that's all.
+
+Here's my Xmodmap file on Darwin:
+
+@example
+clear mod1
+clear mod2
+keycode 66 = Meta_L
+keycode 63 = Mode_switch
+add mod1 = Meta_L
+@end example
+
+This leaves the command key alone and uses alt/option for Meta.
+
+
 @unnumberedsec 3.1: The Mouse
 
-@node Q3.1.1, Q3.1.2, Q3.0.11, Editing
+@node Q3.1.1, Q3.1.2, Q3.0.12, Editing
 @unnumberedsubsec Q3.1.1: How can I turn off Mouse pasting?
 
 I keep hitting the middle mouse button by accident and getting stuff
@@ -6095,6 +6150,7 @@ as speakers and the printer.
 * Q5.0.4::    How can I have the window title area display the full path?
 * Q5.0.5::    @samp{xemacs -name junk} doesn't work?
 * Q5.0.6::    @samp{-iconic} doesn't work.
+* Q5.0.7::    How can I use antialiased fonts under X11?
 
 5.1: Microsoft Windows
 * Q5.1.1::    Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
@@ -6243,7 +6299,7 @@ To make a frame with a particular name use:
 (make-frame '((name . "the-name")))
 @end lisp
 
-@node Q5.0.6, Q5.1.1, Q5.0.5, External Subsystems
+@node Q5.0.6, Q5.0.7, Q5.0.5, External Subsystems
 @unnumberedsubsec Q5.0.6: @samp{-iconic} doesn't work.
 
 When I start up XEmacs using @samp{-iconic} it doesn't work right.
@@ -6258,9 +6314,60 @@ getting it to work.  The principal problem is numerous window-manager
 bugs...
 @end quotation
 
+@node Q5.0.7, Q5.1.1, Q5.0.6, External Subsystems
+@unnumberedsubsec Q5.0.7: How can I use antialiased fonts under X11?
+
+The X11 version of XEmacs can use antialiased fonts via the Xft,
+fontconfig, and freetype libraries.  To configure this you need a recent
+beta version (at least 21.5.24); the more recent, the better.  This is
+beta software, the usual caveats apply.  Rebuild xemacs using the
+following configure options, plus any others you normally use:
+
+@samp{--enable-mule --with-xft=emacs,menubars}
+
+Xft @emph{may} work without Mule but the developers working on the Xft
+code invariably build with Mule.  The tab control also supports Xft, and
+at some date the progress gauge will as well.  If they are configured in
+to XEmacs, you may add @samp{tabs} and @samp{gauges} to the value of the
+@samp{--with-xft} option (with a comma separating each value from the
+previous ones).  For further details on the XEmacs widgets that support
+XFT, see the output of @code{./configure --help}.  If you use a package
+manager from your OS distribution, you may need to install development
+packages for @file{fontconfig} and @file{Xft}, and possibly for their
+prequisites.
+
+To specify a particular antialiased font, put something like the
+following lines in your @file{~/.Xdefaults} or @file{~/.Xresources}:
+
+@example
+    XEmacs.default.attributeFont: monospace-12
+       XEmacs.bold.attributeFont: monospace-12:style=Bold
+     XEmacs.italic.attributeFont: monospace-12:style=Oblique
+XEmacs.bold-italic.attributeFont: monospace-12:style=Bold Oblique
+   XEmacs.modeline.attributeFont: sans-serif-11
+          XEmacs.menubar.xftFont: sans-serif-11
+                  XEmacs*XftFont: sans-serif-11
+@end example
+
+@strong{Warning}: These resource naming conventions are just hacks to
+get the code running; you should expect them to change.  (Sorry about
+that, but this @emph{is} beta software!)
+
+Then run @code{xrdb -merge} before starting the new, XFT-enabled
+xemacs.  You can choose the available fonts from the list given by
+@code{fc-list}; try @code{xfd -fa FONTNAME-SIZE} to preview a given
+font.  Note that ``monospace'' and ``sans-serif'' are generic aliases
+defined by fontconfig which may correspond to any of many real fonts
+based on local configuration and availability of the aliased fonts,
+and so are likely to give good results in a well-set-up system.
+
+Although Customize does not yet handle fontconfig fontspecs, you can
+pass them as strings directly to @samp{set-face-font} to set fonts from
+Lisp.
+
 @unnumberedsec 5.1: Microsoft Windows
 
-@node Q5.1.1, Q5.1.2, Q5.0.6, External Subsystems
+@node Q5.1.1, Q5.1.2, Q5.0.7, External Subsystems
 @unnumberedsubsec Q5.1.1: Does XEmacs rename all the @samp{win32-*} symbols to @samp{w32-*}?
 
 In his flavor of Emacs 20, Richard Stallman has renamed all the @samp{win32-*}
@@ -7141,7 +7248,7 @@ John.@email{Cooper@@Eng.Sun.COM, John S Cooper} writes:
 @node Q6.1.6, Q6.2.1, Q6.1.5, Internet
 @unnumberedsubsec Q6.1.6: Customization of VM not covered in the manual, or here.
 
-@email{boffi@@hp735.stru.polimi.it, giacomo boffi} writes:
+@email{boffi@@hp735.stru.polimi.it, Giacomo Boffi} writes:
 
 @quotation
 The meta-answer is to look into the file @file{vm-vars.el}, in the vm
@@ -7332,7 +7439,7 @@ front of the load-path, the other at the end:
 (setq load-path (nconc load-path '("foo" "bar")))
 @end lisp
 
-@email{keithh@@nortel.ca, keith (k.p.) hanlan} writes:
+@email{keithh@@nortel.ca, Keith (k.p.) Hanlan} writes:
 
 @quotation
 To add directories using Unix shell metacharacters use
@@ -8271,7 +8378,7 @@ scheme of Linux, where at any point there are at least two different
 development branches, one "stable" and one "experimental".  Periodic
 releases happen in both branches, but those in the experimental branch
 are not tested as well, and there's no guarantee they will work at all.
-The experiemental branch is open to any and all code that's acceptable
+The experimental branch is open to any and all code that's acceptable
 to the developers; the stable branch, however, is in general limited
 only to bug fixes, and all contributions are carefully reviewed to make
 sure they will increase and not decrease stability.

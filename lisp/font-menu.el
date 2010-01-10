@@ -264,7 +264,9 @@ or if you change your font path, you can call this to re-initialize the menus."
 		      (member 0 (aref entry 2))))
 	     (enable-menu-item item)
 	   (disable-menu-item item))
-	 (if (eq size s)
+	 ;; #### God save the Queen!
+	 ;; well, if this fails because s or size is non-numeric, fuck 'em
+	 (if (= size (if (featurep 'xft-fonts) (float s) s))
 	     (select-toggle-menu-item item)
 	   (deselect-toggle-menu-item item))
 	 item)
@@ -345,6 +347,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 				   (or weight from-weight)
 				   (or size from-size))
 	  (error
+	   (message "Error updating font of `%s'" face)
 	   (display-error c nil)
 	   (sit-for 1)))))
     ;; Set the default face's font after hacking the other faces, so that
@@ -356,17 +359,38 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(set-face-font 'default new-default-face-font
 		       (and font-menu-this-frame-only-p (selected-frame)))
       ;; OK Let Customize do it.
-      (custom-set-face-update-spec 'default
-				   (list (list 'type (device-type)))
-				   (list :family (or family from-family)
-					 :size (concat
-						(int-to-string
-						 (/ (or size from-size)
-						    (specifier-instance font-menu-size-scaling
-									(selected-device))))
-						"pt")))
-      (message "Font %s" (face-font-name 'default)))))
-
+      (let ((fsize (if (featurep 'xft-fonts)
+		       (int-to-string (or size from-size))
+		     (concat (int-to-string
+			      (/ (or size from-size)
+				 (specifier-instance font-menu-size-scaling
+						     (selected-device))))
+			     "pt")))
+            new-spec-list)
+        ;; If the font was initialised from X resources (the tag-set
+        ;; contains 'x-resource) pretend to Custom that it has
+        ;; responsibility for those settings.
+        (map-specifier (face-font 'default)
+                       (lambda (spec locale inst-list arg)
+                         (loop
+                           for (tag-set . inst)
+                           in inst-list
+                           do (setq tag-set (delq 'x-resource tag-set)
+                                    tag-set (delq 'custom tag-set)
+                                    tag-set (cons 'custom tag-set))
+                           (push (cons tag-set inst) new-spec-list)
+                           ;; Need to return nil, else map-specifier stops
+                           finally return nil))
+                       nil nil '(x-resource))
+        (remove-specifier (face-font 'default) nil '(x-resource))
+        (when new-spec-list
+          (add-spec-list-to-specifier (face-font 'default)
+                                      (list (cons 'global new-spec-list))))
+	(custom-set-face-update-spec 'default
+				     (list (list 'type (device-type)))
+				     (list :family (or family from-family)
+					   :size fsize))))
+    (message "Font %s" (face-font-name 'default))))
 
 ;; #### This should be called `font-menu-maybe-change-face'
 ;; I wonder if a better API wouldn't (face attribute from to)

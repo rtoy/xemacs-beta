@@ -65,13 +65,16 @@ typedef struct {
   Boolean	iconic;			/* whether this frame is iconic */
 
   /* The rest of this is crap and should be deleted.
+     #### Comments that start with + are fields that actually get referred 
+     to somewhere aside from the init function.
+     I guess the "crap" has mostly moved to specifiers?
    */
   Boolean	minibuffer;	/* 0: normal frames with minibuffers.
 				 * 1: frames without minibuffers
 				 * 2: minibuffer only. */
   Boolean	unsplittable;	/* frame can only have one window */
 
-  int		internal_border_width;	/* internal borders */
+  int		internal_border_width;	/* + internal borders */
   int		scrollbar_width;	/* width of frame vertical sb's */
   int		scrollbar_height;	/* height of frame horizontal sb's */
   int		top_toolbar_height;	/* height of top toolbar */
@@ -82,9 +85,9 @@ typedef struct {
   int		bottom_toolbar_border_width;	/* ... of bottom toolbar */
   int		left_toolbar_border_width;	/* ... of left toolbar */
   int		right_toolbar_border_width;	/* ... of right toolbar */
-  Dimension	toolbar_shadow_thickness;
+  Dimension	toolbar_shadow_thickness;	/* + of shadows */
   unsigned char scrollbar_placement;
-  int		interline;		/* skips between lines */
+  int		interline;		/* + skips between lines */
 
   XFontStruct*	font;			/* font */
   Pixel		foreground_pixel;	/* foreground */
@@ -97,7 +100,7 @@ typedef struct {
   int		bell_volume;		/* how loud is beep */
 
   Boolean	menubar_p;		/* initially show a menubar? */
-  Boolean	initially_unmapped;	/* inhibit initial window mapping */
+  Boolean	initially_unmapped;	/* + inhibit initial window mapping */
   Boolean	use_backing_store;	/* backing store for menubar & ew? */
 
   Dimension     preferred_width;        /* if non-zero, preferred size for */

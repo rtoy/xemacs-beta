@@ -769,16 +769,4 @@ Emacs key bindings are still available.  The EDT emulation rebindings
 are done in the global keymap, so there is no problem switching
 buffers or major modes while in EDT emulation.
 
-@item Gosling Emacs
-@findex set-gosmacs-bindings
-@findex set-gnu-bindings
-Turn on emulation of Gosling Emacs (aka Unipress Emacs) with @kbd{M-x
-set-gosmacs-bindings}.  This redefines many keys, mostly on the
-@kbd{C-x} and @kbd{ESC} prefixes, to work as they do in Gosmacs.
-@kbd{M-x set-gnu-bindings} returns to normal XEmacs by rebinding
-the same keys to the definitions they had at the time @kbd{M-x
-set-gosmacs-bindings} was done.
-
-It is also possible to run Mocklisp code written for Gosling Emacs.
-@xref{Mocklisp}.
 @end table

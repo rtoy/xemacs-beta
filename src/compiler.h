@@ -162,7 +162,7 @@ Boston, MA 02111-1307, USA.  */
    where there's an infinite loop in a function returning a Lisp object.
 */
 #if (defined (_MSC_VER) && MSC_VERSION < 1300) || defined (__SUNPRO_C) || \
-  defined (__SUNPRO_CC) || (defined (DEC_ALPHA) && defined (OSF1))
+  defined (__SUNPRO_CC)
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
 #else
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING
@@ -210,12 +210,24 @@ Boston, MA 02111-1307, USA.  */
 # endif /* GCC_VERSION >= NEED_GCC (2, 5, 0) */
 #endif /* ATTRIBUTE_CONST */
 
-/* Unused declarations; g++ and icc do not support this. */
+/*
+   NOTE:  These macros MUST be named UNUSED (exactly) or something
+   prefixed with USED_IF_, or DEFUN docstrings will be parsed incorrectly.
+   See comments in make_docfile.c (write_c_args).  You'd think that this
+   wouldn't happen, but unfortunately we do indeed have some arguments
+   of DEFUNs unused for GNU compatibility or because features are missing.
+
+   #### At one time, __attribute__ ((unused)) confused G++.  We don't know
+   which versions.  Please report problems and fix conditionals.
+   #### A similar issue arose with the Intel CC.  We know that v7 didn't
+   work and v9 does.  Let us know if v8 works or not, please.
+   See <m34plsmh88.fsf@jerrypc.cs.usu.edu>.
+*/
 #ifndef UNUSED_ARG
 # define UNUSED_ARG(decl) unused_##decl
 #endif
 #ifndef UNUSED
-# if defined(__GNUC__) && !defined(__cplusplus) && !defined(__INTEL_COMPILER)
+# if defined(__GNUC__) && (!defined(__INTEL_COMPILER) || __INTEL_COMPILER >= 800)
 #  define ATTRIBUTE_UNUSED __attribute__ ((unused))
 # else
 #  define ATTRIBUTE_UNUSED
@@ -225,20 +237,25 @@ Boston, MA 02111-1307, USA.  */
 #  define USED_IF_MULE(decl) decl
 #  ifdef UNICODE_INTERNAL
 #   define USED_IF_UNICODE_INTERNAL(decl) decl
-#   define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) UNUSED (decl)
+#   define USED_IF_OLD_MULE(decl) UNUSED (decl)
 #  else
 #   define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
-#   define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) decl
+#   define USED_IF_OLD_MULE(decl) decl
 #  endif
 # else
 #  define USED_IF_MULE(decl) UNUSED (decl)
 #  define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
-#  define USED_IF_MULE_NOT_UNICODE_INTERNAL(decl) UNUSED (decl)
+#  define USED_IF_OLD_MULE(decl) UNUSED (decl)
 # endif
 # if defined (MULE) || defined (ERROR_CHECK_TEXT)
 #  define USED_IF_MULE_OR_CHECK_TEXT(decl) decl
 # else
 #  define USED_IF_MULE_OR_CHECK_TEXT(decl) UNUSED (decl)
+# endif
+# ifdef USE_XFT
+#  define USED_IF_XFT(decl) decl
+# else
+#  define USED_IF_XFT(decl) UNUSED (decl)
 # endif
 #endif /* UNUSED */
 

@@ -58,10 +58,11 @@ DECLARE_LRECORD (font_instance, Lisp_Font_Instance);
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
-EXFUN (Fmake_font_instance, 3);
+EXFUN (Fmake_font_instance, 4);
 EXFUN (Ffont_instance_name, 1);
 EXFUN (Ffont_instance_p, 1);
 EXFUN (Ffont_instance_truename, 1);
+EXFUN (Ffont_instance_charset, 1);
 
 extern Lisp_Object Vthe_null_font_instance;
 
@@ -74,5 +75,9 @@ void set_font_attached_to (Lisp_Object obj, Lisp_Object face,
 
 void set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
 				   Lisp_Object property);
+
+/* Defined in search.c, used in mule-charset.c; slightly ugly to declare it
+   here, but oh well.  */
+EXFUN (Fregexp_quote, 1);
 
 #endif /* INCLUDED_objects_h_ */

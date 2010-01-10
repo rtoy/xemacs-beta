@@ -1,5 +1,5 @@
 ;;; mule-win32-init.el --- initialization code for MS Windows/Cygwin under MULE
-;;; Copyright (C) 2001, 2002 Ben Wing.
+;;; Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -115,69 +115,3 @@ as returned by
 "
    locale user-default
    code-page oem))
-
-(let ((cplist
-       '(("EBCDIC"      037 "EBCDIC")
-	 ("OEM"         437 "MS-DOS United States")
-	 ("EBCDIC"      500 "EBCDIC \"500V1\"")
-	 ("OEM"         708 "Arabic (ASMO 708)")
-	 ("OEM"         709 "Arabic (ASMO 449+, BCON V4)")
-	 ("OEM"         710 "Arabic (Transparent Arabic)")
-	 ("OEM"         720 "Arabic (Transparent ASMO)")
-	 ("OEM"         737 "Greek (formerly 437G)")
-	 ("OEM"         775 "Baltic")
-	 ("OEM"         850 "MS-DOS Multilingual (Latin I)")
-	 ("OEM"         852 "MS-DOS Slavic (Latin II)")
-	 ("OEM"         855 "IBM Cyrillic (primarily Russian)")
-	 ("OEM"         857 "IBM Turkish")
-	 ("OEM"         860 "MS-DOS Portuguese")
-	 ("OEM"         861 "MS-DOS Icelandic")
-	 ("OEM"         862 "Hebrew")
-	 ("OEM"         863 "MS-DOS Canadian-French")
-	 ("OEM"         864 "Arabic")
-	 ("OEM"         865 "MS-DOS Nordic")
-	 ("OEM"         866 "MS-DOS Russian")
-	 ("OEM"         869 "IBM Modern Greek")
-	 ("Ansi/OEM"    874 "Thai")
-	 ("EBCDIC"      875 "EBCDIC")
-	 ("Ansi/OEM"    932 "Japanese")
-	 ("Ansi/OEM"    936 "Chinese (PRC, Singapore)")
-	 ("Ansi/OEM"    949 "Korean")
-	 ("Ansi/OEM"    950 "Chinese (Taiwan; Hong Kong SAR, PRC)")
-	 ("EBCDIC"      1026 "EBCDIC")
-	 ("ANSI"        1200 "Unicode (BMP of ISO 10646)")
-	 ("ANSI"        1250 "Windows 3.1 Eastern European")
-	 ("ANSI"        1251 "Windows 3.1 Cyrillic")
-	 ("ANSI"        1252 "Windows 3.1 US (ANSI)")
-	 ("ANSI"        1253 "Windows 3.1 Greek")
-	 ("ANSI"        1254 "Windows 3.1 Turkish")
-	 ("ANSI"        1255 "Hebrew")
-	 ("ANSI"        1256 "Arabic")
-	 ("ANSI"        1257 "Baltic")
-	 ("ANSI"        1258 "VietNam")
-	 ("Ansi/OEM"    1361 "Korean (Johab)")
-	 ("Mac"         10000 "Macintosh Roman")
-	 ("Mac"         10001 "Macintosh Japanese")
-	 ("Mac"         10006 "Macintosh Greek I")
-	 ("Mac"         10007 "Macintosh Cyrillic")
-	 ("Mac"         10029 "Macintosh Latin 2")
-	 ("Mac"         10079 "Macintosh Icelandic")
-	 ("Mac"         10081 "Macintosh Turkish"))))
-  (dolist (cpprops cplist)
-    (let ((ansioem (first cpprops))
-	  (cp (second cpprops))
-	  (name (third cpprops)))
-      (make-coding-system
-       (intern (format "windows-%s" cp))
-       'mswindows-multibyte
-       (format "MS Windows code page %s (%s, %s)" cp ansioem name)
-       `(mnemonic
-	 ,(format "MSW-%s" cp)
-	 code-page ,cp
-	 documentation
-	 ,(format
-	  "MS Windows Multibyte -- code page %s (%s, %s).
-
-This implements the encoding specified by code page %s.
-For more information on code pages, see `mswindows-charset-code-page'."
-	  cp ansioem name cp))))))

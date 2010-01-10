@@ -73,6 +73,14 @@
   (let ((coding-system-for-read 'iso-2022-7bit))
     (find-file-read-only (expand-file-name "HELLO" data-directory))))
 
+(defvar system-type-file-name-coding
+  '((darwin . utf-8))
+  "A map from values of `system-type' to invariant file name coding systems.
+Used if a give system type does not vary in the coding system it uses for
+file names; otherwise, `language-info-alist' is consulted for this
+information.  This affects the `file-name' coding system alias, but not the
+`file-name-coding-system' variable, which in practice is mostly ignored. ")
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                       Language Support Functions                    ;;;
@@ -217,7 +225,15 @@ Meaningful values for PROP include
 
                      If there is no value for this property, the MS Windows
                      locale is assumed to have the same name as the
-                     language environment."
+                     language environment.
+
+  invalid-sequence-coding-system
+                     VALUE is a fixed-width 8-bit coding system used to
+                     display Unicode error sequences (using a face to make
+                     it clear that the data is invalid).  In Western Europe
+                     and the Americas this is normally windows-1252; in
+                     Russia and the former Soviet Union koi8-ru or
+                     windows-1251 makes more sense."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
   (let (lang-slot prop-slot)
@@ -242,7 +258,8 @@ ALIST is an alist of properties and values.  See the documentation of
   ;; appropriately.  We just use a filter.
   (while alist
     (set-language-info lang-env (car (car alist)) (cdr (car alist)))
-    (setq alist (cdr alist))))
+    (setq alist (cdr alist)))
+  lang-env)
 
 (defun read-language-name (key prompt &optional default)
   "Read a language environment name which has information for KEY.
@@ -670,7 +687,7 @@ the language environment for the major languages of Western Europe."
       (let ((func (get-language-info current-language-environment
 				     'exit-function)))
 	(run-hooks 'exit-language-environment-hook)
-	(if (fboundp func) (funcall func))))
+	(if (functionp func) (funcall func))))
   (setq current-language-environment language-name)
   (let ((default-eol-type (coding-system-eol-type
 			   default-buffer-file-coding-system)))
@@ -748,8 +765,38 @@ the language environment for the major languages of Western Europe."
       (require (car required-features))
       (setq required-features (cdr required-features))))
   (let ((func (get-language-info language-name 'setup-function)))
-    (if (fboundp func)
+    (if (functionp func)
 	(funcall func)))
+
+  (let ((invalid-sequence-coding-system
+         (get-language-info language-name 'invalid-sequence-coding-system))
+        (disp-table (specifier-instance current-display-table))
+        glyph string unicode-error-lookup first-char)
+    (when (consp invalid-sequence-coding-system)
+      (setq invalid-sequence-coding-system
+            (car invalid-sequence-coding-system)))
+    (map-char-table
+     #'(lambda (key entry)
+         (setq string (decode-coding-string (string entry)
+                                            invalid-sequence-coding-system))
+         (when (= 1 (length string))
+	   ;; Treat Unicode error sequence chars as the octets
+	   ;; corresponding to those on disk:
+	   (setq unicode-error-lookup
+		 (get-char-table (aref string 0)
+				 unicode-error-default-translation-table))
+	   (when unicode-error-lookup
+	     (setq string (format "%c" unicode-error-lookup)))
+           ;; Treat control characters specially:
+           (setq first-char (aref string 0))
+           (when (or (and (>= #x00 first-char) (<= first-char #x1f))
+                     (and (>= #x80 first-char) (<= first-char #x9f)))
+	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
+         (setq glyph (make-glyph (vector 'string :data string)))
+         (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
+         (put-char-table key glyph disp-table)
+         nil)
+     unicode-error-default-translation-table))
 
   ;; Fit the charsets preferences in unicode conversions for the
   ;; language environment.
@@ -892,65 +939,27 @@ It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
 ;; Pretty description of encoded string
 
 ;; Alist of ISO 2022 control code vs the corresponding mnemonic string.
-;; (defvar iso-2022-control-alist
-;;   '((?\x1b . "ESC")
-;;     (?\x0e . "SO")
-;;     (?\x0f . "SI")
-;;     (?\x8e . "SS2")
-;;     (?\x8f . "SS3")
-;;     (?\x9b . "CSI")))
+(defvar iso-2022-control-alist
+  '((?\x1b . "ESC")
+    (?\x0e . "SO")
+    (?\x0f . "SI")
+    (?\x8e . "SS2")
+    (?\x8f . "SS3")
+    (?\x9b . "CSI")))
 
-;; (defun encoded-string-description (str coding-system)
-;;   "Return a pretty description of STR that is encoded by CODING-SYSTEM."
-;;   (setq str (string-as-unibyte str))
-;;   (let ((char (aref str 0))
-;;         desc)
-;;     (when (< char 128)
-;;       (setq desc (or (cdr (assq char iso-2022-control-alist))
-;;                      (char-to-string char)))
-;;       (let ((i 1)
-;;             (len (length str))) 
-;;         (while (< i len)
-;;           (setq char (aref str i))
-;;           (if (>= char 128)
-;;               (setq desc nil i len)
-;;             (setq desc (concat desc " "
-;;                                (or (cdr (assq char iso-2022-control-alist))
-;;                                    (char-to-string char)))
-;;                   i (1+ i))))))
-;;     (or desc
-;;         (mapconcat (function (lambda (x) (format "0x%02x" x))) str " "))))
+(defun encoded-string-description (str coding-system)
+  "Return a pretty description of STR that is encoded by CODING-SYSTEM."
+  ;; XEmacs; no transformation to unibyte.
+  (mapconcat
+   (if (and coding-system (eq (coding-system-type coding-system) 'iso2022))
+       ;; Try to get a pretty description for ISO 2022 escape sequences.
+       (function (lambda (x) (or (cdr (assq x iso-2022-control-alist))
+				 (format "#x%02X" x))))
+     (function (lambda (x) (format "#x%02X" x))))
+   str " "))
 
-;; (defun encode-coding-char (char coding-system)
-;;   "Encode CHAR by CODING-SYSTEM and return the resulting string.
-;; If CODING-SYSTEM can't safely encode CHAR, return nil."
-;;   (if (cmpcharp char)
-;;       (setq char (car (decompose-composite-char char 'list))))
-;;   (let ((str1 (char-to-string char))
-;;         (str2 (make-string 2 char))
-;;         (safe-charsets (and coding-system
-;;                             (coding-system-get coding-system 'safe-charsets)))
-;;         enc1 enc2 i1 i2)
-;;     (when (or (eq safe-charsets t)
-;;               (memq (char-charset char) safe-charsets))
-;;       ;; We must find the encoded string of CHAR.  But, just encoding
-;;       ;; CHAR will put extra control sequences (usually to designate
-;;       ;; ASCII charset) at the tail if type of CODING is ISO 2022.
-;;       ;; To exclude such tailing bytes, we at first encode one-char
-;;       ;; string and two-char string, then check how many bytes at the
-;;       ;; tail of both encoded strings are the same.
-;; 
-;;       (setq enc1 (string-as-unibyte (encode-coding-string str1 coding-system))
-;;             i1 (length enc1)
-;;             enc2 (string-as-unibyte (encode-coding-string str2 coding-system))
-;;             i2 (length enc2))
-;;       (while (and (> i1 0) (= (aref enc1 (1- i1)) (aref enc2 (1- i2))))
-;;         (setq i1 (1- i1) i2 (1- i2)))
-;; 
-;;       ;; Now (substring enc1 i1) and (substring enc2 i2) are the same,
-;;       ;; and they are the extra control sequences at the tail to
-;;       ;; exclude.
-;;       (substring enc2 0 i2))))
+;; XEmacs; 
+;; (defun encode-coding-char (char coding-system) in coding.el.
 
 
 ;; #### The following section is utter junk from mule-misc.el.
@@ -1012,29 +1021,135 @@ when the language environment is made current."
 ;; auto-language-alist deleted.  We have a more sophisticated system,
 ;; with the locales stored in the language data.
 
-(defconst langenv-to-locale-hash (make-hash-table :test 'equal))
+;; Initialised in mule/general-late.el, which is compiled after all the
+;; language support--and, thus, minority Chinese coding systems and so
+;; on--has been loaded.
+(defvar posix-charset-to-coding-system-hash nil
+  "A map from the POSIX locale charset versions of the defined coding
+systems' names, with all alpha-numeric characters removed, to the actual
+coding system names.  Used at startup when working out which coding system
+should be the default for the locale.  ")
+
+(defun parse-posix-locale-string (locale-string)
+  "Return values \(LANGUAGE REGION CHARSET MODIFIERS\) given LOCALE-STRING.
+
+LOCALE-STRING should be a POSIX locale.  If it cannot be parsed as such, this
+function returns nil. "
+  (let (language region charset modifiers locinfo)
+    (setq locale-string (downcase locale-string))
+    (cond ((string-match
+	    #r"^\([a-z0-9]\{2,2\}\)\(_[a-z0-9]\{2,2\}\)?\(\.[^@]*\)?\(@.*\)?$"
+	    locale-string)
+	   (setq language (match-string 1 locale-string)
+		 region (match-string 2 locale-string)
+		 charset (match-string 3 locale-string)
+		 modifiers (match-string 4 locale-string)
+		 region (and region (replace-in-string region "^_" ""))
+		 charset (and charset (replace-in-string charset #r"^\." ""))
+		 modifiers (and modifiers
+				(replace-in-string modifiers "^@" "")))
+	   (when (and modifiers (equal modifiers "euro") (null charset))
+	     ;; Not ideal for Latvian, say, but I don't have any locales
+	     ;; where the @euro modifier doesn't mean ISO-8859-15 in the 956
+	     ;; I have.
+	     (setq charset "iso-8859-15"))
+	   (when (and modifiers (equal modifiers "cyrillic") (null charset))
+	     ;; Feedback wanted!
+	     (setq charset "windows-1251"))
+	   (values language region charset modifiers))
+	  ((and (string-match "^[a-z0-9]+$" locale-string)
+		(assoc-ignore-case locale-string language-info-alist))
+	   (setq language (get-language-info locale-string 'locale)
+		 language (if (listp language) (car language) language))
+	   (values language region charset modifiers))
+	  ((string-match #r"^\([a-z0-9]+\)\.\([a-z0-9]+\)$" locale-string)
+	   (when (assoc-ignore-case
+		  (setq locinfo (match-string 1 locale-string))
+		  language-info-alist)
+	     (setq language (get-language-info locinfo 'locale)
+		   language (if (listp language) (car language) language)))
+	   (setq charset (match-string 2 locale-string))
+	   (values language region charset modifiers)))))
+
+(defun create-variant-language-environment (langenv coding-system)
+  "Create a variant of LANGENV with CODING-SYSTEM as its coding systems.
+
+The coding systems in question are those described in the
+`set-language-info' docstring with the property names of
+`native-coding-system' and `coding-system'.  The name of the new language
+environment is the name of the old language environment, followed by
+CODING-SYSTEM in parentheses.  Returns the name of the new language
+environment.  
+
+This function also modifies the `coding-priority' of a language
+environment.  "
+  (check-coding-system coding-system)
+  (if (symbolp langenv) (setq langenv (symbol-name langenv)))
+  (unless (setq langenv
+		(assoc-ignore-case langenv language-info-alist))
+    (error 'wrong-type-argument "Not a known language environment"))
+  (set-language-info-alist
+   (if (string-match " ([^)]+)$" (car langenv))
+       (replace-match (format " (%s)" 
+                              (upcase (symbol-name
+                                       (coding-system-name coding-system))))
+                      nil nil (car langenv))
+     (format "%s (%s)" (car langenv)
+             (upcase (symbol-name (coding-system-name coding-system)))))
+   (destructive-plist-to-alist 
+    (plist-put
+     (plist-put
+      (plist-put
+       (plist-put (alist-to-plist (cdr langenv)) 'native-coding-system
+                  coding-system)
+       'coding-system (cons coding-system
+                            (cdr (assoc 'coding-system (cdr langenv)))))
+      'coding-priority (cons coding-system
+                             (cdr (assq 'coding-priority (cdr langenv)))))
+     ;; The tutorial coding system is important; otherwise the tutorial file
+     ;; gets loaded in the variant coding system.
+     'tutorial-coding-system
+     (or (car-safe (cdr-safe (assoc 'tutorial-coding-system (cdr langenv))))
+         (car-safe (cdr-safe (assoc 'coding-system (cdr langenv)))))))))
 
 (defun get-language-environment-from-locale (locale)
   "Convert LOCALE into a language environment.
 LOCALE is a C library locale string, as returned by `current-locale'.
 Uses the `locale' property of the language environment."
-  (or (gethash locale langenv-to-locale-hash)
-      (let ((retval
-	     (block langenv
-	       (dolist (langcons language-info-alist)
-		 (let* ((lang (car langcons))
-			(locs (get-language-info lang 'locale))
-			(case-fold-search t))
-		   (dolist (loc (if (listp locs) locs (list locs)))
-		     (if (cond ((functionp loc)
-				(funcall loc locale))
-			       ((stringp loc)
-				(string-match
-				 (concat "^" loc "\\([^A-Za-z0-9]\\|$\\)")
-				 locale)))
-			 (return-from langenv lang))))))))
-	(puthash locale retval langenv-to-locale-hash)
-	retval)))
+  (block langenv
+    (multiple-value-bind (language ignored-arg charset ignored-arg)
+	(parse-posix-locale-string locale)
+      (let ((case-fold-search t)
+	    (desired-coding-system
+	     (and charset (gethash (replace-in-string charset "[^a-z0-9]" "")
+                                   posix-charset-to-coding-system-hash)))
+	    lang locs given-coding-system)
+	(dolist (langcons language-info-alist)
+	  (setq lang (car langcons)
+		locs (get-language-info lang 'locale))
+	  (dolist (loc (if (listp locs) locs (list locs)))
+	    (cond ((functionp loc)
+		   (if (funcall loc locale)
+		       (return-from langenv lang)))
+		  ((stringp loc)
+		   (when (or (equal loc language)
+			     (string-match
+			      (format "^%s\\([^A-Za-z0-9]\\|$\\)" loc)
+			      locale))
+		     (if (or (null desired-coding-system)
+			     (and desired-coding-system
+                                  (or (eq desired-coding-system
+                                          (setq given-coding-system
+                                                (get-language-info
+                                                 lang
+                                                 'native-coding-system)))
+                                      (and (listp given-coding-system)
+                                           (memq desired-coding-system
+                                                 given-coding-system)))))
+			 (return-from langenv lang)
+		       (return-from langenv
+			 (create-variant-language-environment
+			  lang desired-coding-system))))))))))))
 
 (defun mswindows-get-language-environment-from-locale (ms-locale)
   "Convert MS-LOCALE (an MS Windows locale) into a language environment.
@@ -1214,15 +1329,16 @@ of buffer-file-coding-system set by this function."
 ;; reset-coding-categories-to-default before calling this function.  ####
 ;; Should we rethink this?
 
-; Note that `coding-priority-list' is not reset first; thus changing language
-; environment allows recognition of coding systems from previously set language
-; environments.  (This will not work if the desired coding systems are from the
-; same category.  E.g., starting with a Hebrew language environment, ISO 8859-8
-; will be recognized.  If you shift to Russian, ISO 8859-8 will be shadowed by
-; ISO 8859-5, and cannot be automatically recognized without resetting the
-; language environment to Hebrew.  However, if you shift from Japanese to
-; Russian, ISO-2022-JP will continue to be automatically recognized, since
-; ISO-8859-5 and ISO-2022-JP are different coding categories.)"
+; Note that `coding-priority-list' is not reset first; thus changing
+; language environment allows recognition of coding systems from previously
+; set language environments.  (This will not work if the desired coding
+; systems are from the same category.  E.g., starting with a Hebrew
+; language environment, ISO 8859-8 will be recognized.  If you shift to
+; Russian, ISO 8859-8 will be shadowed by ISO 8859-5, and cannot be
+; automatically recognized without resetting the language environment to
+; Hebrew.  However, if you shift from Japanese to Russian, ISO-2022-JP will
+; continue to be automatically recognized, since ISO-8859-5 and ISO-2022-JP
+; are different coding categories.)"
 
   (flet ((maybe-change-coding-system-with-eol (codesys eol-type)
 	   ;; if the EOL type specifies a specific type of ending,
@@ -1248,13 +1364,22 @@ of buffer-file-coding-system set by this function."
 	  ))
 
       ;; set the default buffer coding system from the first element of the
-      ;; list in the `coding-priority' property, under Unix.  Under Windows, it
-      ;; should stay at `mswindows-multibyte', which will reference the current
-      ;; code page. (#### Does it really make sense the set the Unix default
-      ;; that way?  NOTE also that it's not the same as the native coding
-      ;; system for the locale, which is correct -- the form we choose for text
-      ;; files should not necessarily have any relevant to whether we're in a
-      ;; Shift-JIS, EUC-JP, JIS, or other Japanese locale.)
+      ;; list in the `coding-priority' property, under Unix.  Under
+      ;; Windows, it should stay at `mswindows-multibyte', which will
+      ;; reference the current code page. ([Does it really make sense to
+      ;; set the Unix default that way?  NOTE also that it's not the same
+      ;; as the native coding system for the locale, which is correct --
+      ;; the form we choose for text files should not necessarily have any
+      ;; relevance to whether we're in a Shift-JIS, EUC-JP, JIS, or other
+      ;; Japanese locale.])
+      ;;
+      ;;     On Unix--with the exception of Mac OS X--there is no way to
+      ;;     know for certain what coding system to use for file names, and
+      ;;     the environment is the best guess. If a particular user's
+      ;;     preferences differ from this, then that particular user needs
+      ;;     to edit ~/.xemacs/init.el. Aidan Kehoe, Sun Nov 26 18:11:31 CET
+      ;;     2006. OS X uses an almost-normal-form version of UTF-8. 
+
       (unless (memq system-type '(windows-nt cygwin32))
 	(set-default-buffer-file-coding-system
 	 (maybe-change-coding-system-with-eol default-coding eol-type))))
@@ -1270,7 +1395,27 @@ of buffer-file-coding-system set by this function."
 	(error
 	 (warn "Invalid native-coding-system %s in language environment %s"
 	       native language-name)))
-      (define-coding-system-alias 'file-name 'native)
+      ;; These variables have magic handlers to make setting them equivalent
+      ;; to setting the file-name, terminal and keyboard coding system
+      ;; aliases. See coding.el. 
+      (setq file-name-coding-system 
+            (or 
+             (let ((fncs (assq system-type system-type-file-name-coding)))
+               (and fncs (cdr fncs)))
+             native)
+            ;; Set the default keyboard and terminal coding systems to the
+            ;; native coding system of the language environment.
+            keyboard-coding-system native
+	    terminal-coding-system native)
+
+      ;; And do the same for any TTYs. 
+      (dolist (con (console-list))
+	(when (eq 'tty (device-type (car (console-device-list con))))
+	  ;; Calling set-input-mode at the same time would be a sane thing
+	  ;; to do here. I would prefer to default to accepting eight bit
+	  ;; input and not using the top bit for Meta.
+	  (set-console-tty-coding-system con native)))
+
       ;; process output should not have EOL conversion.  under MS Windows
       ;; and Cygwin, this screws things up (`cmd' is fine with just LF and
       ;; `bash' chokes on CR-LF).
@@ -1327,12 +1472,19 @@ of buffer-file-coding-system set by this function."
 	;;     locale but we should still use the right code page, etc.
 	(declare-fboundp (mswindows-set-current-locale userdef)))
       ;; Unix:
-      (let ((locstring (set-current-locale "")))
-	;; assume C lib locale and LANG env var are set correctly.  use
-	;; them to find the langenv.
-	(setq langenv
-	      (and locstring (get-language-environment-from-locale
-			      locstring)))))
+      (let (locstring)
+	;; Init the POSIX locale from the environment--this calls the C
+	;; library's setlocale(3).
+	(set-current-locale "")
+	;; Can't let locstring be the result of (set-current-locale "")
+	;; because that can return a more detailed string than we know how
+	;; to handle.
+	(setq locstring (current-locale)
+	      ;; assume C lib locale and LANG env var are set correctly.
+	      ;; use them to find the langenv.
+	      langenv
+ 	      (and locstring (get-language-environment-from-locale
+ 			      locstring)))))
     ;; All systems:
     (unless langenv (setq langenv "English"))
     (setq current-language-environment langenv)
@@ -1372,8 +1524,7 @@ of buffer-file-coding-system set by this function."
     (setq Manual-use-rosetta-man nil))
   
   ;; Register available input methods by loading LEIM list file.
-  (load "leim-list.el" 'noerror 'nomessage 'nosuffix)
-  )
+  (load leim-list-file-name 'noerror 'nomessage 'nosuffix))
 
 ;; Code deleted: init-mule-tm (Enable the tm package by default)
 

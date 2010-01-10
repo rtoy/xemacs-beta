@@ -719,8 +719,13 @@ do_init_mode (void)
     {
       mdocprog = xnew (14 + strlen (ELLCC_ARCHDIR), char);
       sprintf (mdocprog, "%s/make-docfile", ELLCC_ARCHDIR);
+      exec_argv = add_to_argv (exec_argv, mdocprog);
+      free (mdocprog);
     }
-  exec_argv = add_to_argv (exec_argv, mdocprog);
+  else
+    {
+      exec_argv = add_to_argv (exec_argv, mdocprog);
+    }
   ts = xnew (4 + strlen (mod_output), char);
   sprintf (ts, "-E %s", mod_output);
   exec_argv = add_to_argv (exec_argv, ts);

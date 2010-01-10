@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
-;; Copyright (C) 2000 Free Software Foundation
+;; Copyright (C) 2000,2006 Free Software Foundation
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 ;; Copyright (C) 2001, 2002 Ben Wing.
 
@@ -27,8 +27,8 @@
 ;;
 ;; This code defines the keybindings and utility commands for the
 ;; user to manipulate coding systems.
-;; This code used to be in mule-cmds.el which now only needs the
-;; additional bindings/commands that are avaible on the real mule.
+;; This code used to be in mule-cmds.el which now contains only the
+;; additional bindings/commands that are available for full Mule.
 
 
 ;;; Code:
@@ -53,41 +53,36 @@
   (define-key coding-keymap "x" 'set-selection-coding-system)
   (define-key coding-keymap "X" 'set-next-selection-coding-system))
 
+;; XEmacs change: make code readable, and sanity-check EOL-TYPE.
 (defun coding-system-change-eol-conversion (coding-system eol-type)
-  "Return a coding system which differs from CODING-SYSTEM in eol conversion.
-The returned coding system converts end-of-line by EOL-TYPE
-but text as the same way as CODING-SYSTEM.
-EOL-TYPE should be `lf', `crlf', `cr' or nil.
-If EOL-TYPE is nil, the returned coding system detects
-how end-of-line is formatted automatically while decoding.
-
-EOL-TYPE can be specified by an symbol `unix', `dos' or `mac'.
-They means `lf', `crlf', and `cr' respectively."
-  (if (symbolp eol-type)
-      (setq eol-type (cond ((or (eq eol-type 'unix)
-				(eq eol-type 'lf))
-			    'eol-lf)
-                           ((or (eq eol-type 'dos)
-				(eq eol-type 'crlf))
-			    'eol-crlf)
-                           ((or (eq eol-type 'mac)
-				(eq eol-type 'cr))
-			    'eol-cr)
-                           (t eol-type))))
+  "Return a version of CODING-SYSTEM that provides EOL-TYPE eol conversion.
+EOL-TYPE should be `lf', `crlf', `cr' or nil.  nil means the returned coding
+system automatically detects the end-of-line convention while decoding.
+EOL-TYPE may also be one of the symbols `unix', `dos' or `mac', meaning
+`lf', `crlf', and `cr' respectively."
+  (setq eol-type (cond ((or (eq eol-type 'unix) (eq eol-type 'lf)) 'eol-lf)
+		       ((or (eq eol-type 'dos) (eq eol-type 'crlf)) 'eol-crlf)
+		       ((or (eq eol-type 'mac) (eq eol-type 'cr)) 'eol-cr)
+		       ((null eol-type) nil)
+		       (t (error 'invalid-constant eol-type))))
   (coding-system-name
-   (let ((orig-eol-type (coding-system-eol-type coding-system)))
-     (if (null orig-eol-type)
-	 (if (not eol-type)
-	     coding-system
-	   (coding-system-property coding-system eol-type))
-       (let ((base (coding-system-base coding-system)))
-	 (if (not eol-type)
-	     base
-	   (if (eq eol-type orig-eol-type)
-	       coding-system
-	     (setq orig-eol-type (coding-system-eol-type base))
-	     (if (null orig-eol-type)
-		 (coding-system-property base eol-type)))))))))
+   (let ((orig-eol-type (cdr (assq (coding-system-eol-type coding-system)
+				   '((lf . eol-lf)
+				     (cr . eol-cr)
+				     (crlf . eol-crlf)
+				     ;; #### also returns nil if not a key
+				     (nil . nil)))))
+	 (base (coding-system-base coding-system)))
+     (cond ((eq eol-type orig-eol-type) coding-system)
+	   ((null orig-eol-type)
+	    (coding-system-property coding-system eol-type))
+	   ((null eol-type) base)
+	   ((null (coding-system-eol-type base))
+	    (coding-system-property base eol-type))
+	   (t (warn "couldn't change EOL conversion of %s from %s to %s."
+		    coding-system orig-eol-type eol-type)
+	      ;; return nil for compatibility with old code
+	      nil)))))
 
 ;; (defun coding-system-change-text-conversion (coding-system coding)
 ;;   "Return a coding system which differs from CODING-SYSTEM in text conversion.

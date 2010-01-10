@@ -807,9 +807,9 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		       ((eq symtype 'bytecode)
 			(princ (or (compiled-function-arglist newsym)
 				   "()")))
-		       ((and (eq symtype 'subr)
+		       ((and (or (eq symtype 'subr) (eq symtype 'autoload))
 			     (string-match
-			      "[\n\t ]*\narguments: ?\\((.*)\\)\n?\\'"
+                              "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
 			      doc))
 			(insert (substring doc
 					   (match-beginning 1)

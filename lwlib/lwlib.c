@@ -19,10 +19,6 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifdef NeXT
-#undef __STRICT_BSD__ /* ick */
-#endif
-
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1385,7 +1381,7 @@ void lw_add_value_args_to_args (widget_value* wv, ArgList addto, int* offset)
     }
 }
 
-XtArgVal lw_get_value_arg (widget_value* wv, String name)
+XtArgVal lw_get_value_arg (widget_value* wv, const String name)
 {
   int i;
   if (wv->args)

@@ -65,8 +65,7 @@
     "^make-docfile\\.el$"
     "^site-start\\.el$"
     "^site-load\\.el$"
-    "^site-init\\.el$"
-    "^version\\.el$"))
+    "^site-init\\.el$"))
 
 (defvar dirfiles-table (make-hash-table :test 'equal))
 
@@ -190,8 +189,12 @@
     (byte-recompile-file (expand-file-name "custom-load.el" dir) 0)
     (when (featurep 'mule)
       (Custom-make-dependencies (expand-file-name "mule" dir))
-      (byte-recompile-file (expand-file-name "mule/custom-load.el" dir) 0))
-    )
+      (byte-recompile-file (expand-file-name "mule/custom-load.el" dir) 0)
+      ;; See the eval-when-compile in the definition of
+      ;; Installation-file-coding-system; if the file name sniffing or the
+      ;; available coding systems have changed, version.elc should be
+      ;; rebuilt.
+      (byte-recompile-file (expand-file-name "version.el" dir) 0)))
   (setq command-line-args-left nil))
 
 ;;; update-elc-2.el ends here

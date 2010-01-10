@@ -119,10 +119,6 @@ SOURCE=..\src\blocktype.h
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\broken-sun.h"
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\buffer.c
 # End Source File
 # Begin Source File
@@ -268,10 +264,6 @@ SOURCE=..\src\device.c
 # Begin Source File
 
 SOURCE=..\src\device.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dgif_lib.c
 # End Source File
 # Begin Source File
 
@@ -555,6 +547,14 @@ SOURCE="..\src\free-hook.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\gc.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\gc.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\general.c
 # End Source File
 # Begin Source File
@@ -564,14 +564,6 @@ SOURCE=..\src\getloadavg.c
 # Begin Source File
 
 SOURCE=..\src\getpagesize.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\gif_io.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\gifrlib.h
 # End Source File
 # Begin Source File
 
@@ -652,10 +644,6 @@ SOURCE=..\src\hash.c
 # Begin Source File
 
 SOURCE=..\src\hash.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\hftctl.c
 # End Source File
 # Begin Source File
 
@@ -776,10 +764,6 @@ SOURCE=..\src\macros.c
 # Begin Source File
 
 SOURCE=..\src\macros.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\malloc.c
 # End Source File
 # Begin Source File
 
@@ -932,22 +916,6 @@ SOURCE=..\src\objects.c
 # Begin Source File
 
 SOURCE=..\src\objects.h
-# End Source File
-# Begin Source File
-
-SOURCE="..\src\offix-cursors.h"
-# End Source File
-# Begin Source File
-
-SOURCE="..\src\offix-types.h"
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\offix.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\offix.h
 # End Source File
 # Begin Source File
 
@@ -1115,19 +1083,7 @@ SOURCE=..\src\strcat.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\strcmp.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\strcpy.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\strftime.c
-# End Source File
-# Begin Source File
-
-SOURCE="..\src\sunOS-fix.c"
 # End Source File
 # Begin Source File
 
@@ -1259,14 +1215,6 @@ SOURCE=..\src\unexalpha.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\unexapollo.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexconvex.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\unexcw.c
 # End Source File
 # Begin Source File
@@ -1279,39 +1227,7 @@ SOURCE=..\src\unexelf.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\unexelfsgi.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexencap.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexenix.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexfreebsd.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexfx2800.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexhp9k3.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\unexhp9k800.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexmips.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexnext.c
 # End Source File
 # Begin Source File
 
@@ -1319,23 +1235,23 @@ SOURCE=..\src\unexnt.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\unexsni.c
-# End Source File
-# Begin Source File
-
 SOURCE="..\src\unexsol2-6.c"
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\unexsol2.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\unexsunos4.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\universe.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb-win32.c
 # End Source File
 # Begin Source File
 
@@ -1384,14 +1300,6 @@ SOURCE=..\src\xmmanagerp.h
 # Begin Source File
 
 SOURCE=..\src\xmprimitivep.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\xmu.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\xmu.h
 # End Source File
 # End Target
 # End Project

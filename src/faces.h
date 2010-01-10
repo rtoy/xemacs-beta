@@ -115,6 +115,9 @@ struct Lisp_Face
 typedef struct face_cachel face_cachel;
 struct face_cachel
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former
      case, the FACE element specifies the face used.  In the latter
@@ -216,7 +219,25 @@ struct face_cachel
   unsigned int dirty :1;
   unsigned int updated :1;
   Stynarr_declare (font_updated, unsigned_char, NUM_STATIC_CACHEL_FACES);
+
+  /* Whether the font for the charset in question was determined in the
+     "final stage"; that is, the last stage Lisp code could specify it,
+     after the initial stage and before the fallback. */ 
+  Stynarr_declare (font_final_stage, unsigned_char, NUM_STATIC_CACHEL_FACES);
 };
+
+#ifdef NEW_GC
+typedef struct face_cachel Lisp_Face_Cachel;
+
+DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
+
+#define XFACE_CACHEL(x) \
+  XRECORD (x, face_cachel, Lisp_Face_Cachel)
+#define wrap_face_cachel(p) wrap_record (p, face_cachel)
+#define FACE_CACHEL_P(x) RECORDP (x, face_cachel)
+#define CHECK_FACE_CACHEL(x) CHECK_RECORD (x, face_cachel)
+#define CONCHECK_FACE_CACHEL(x) CONCHECK_RECORD (x, face_cachel)
+#endif /* NEW_GC */
 
 DECLARE_LRECORD (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
@@ -244,6 +265,10 @@ void reset_face_cachel (struct face_cachel *inst);
 void reset_face_cachels (struct window *w);
 face_index get_builtin_face_cache_index (struct window *w,
 					 Lisp_Object face);
+/* WARNING: this interface may change. */
+face_index merge_face_list_to_cache_index (struct window *w,
+					   Lisp_Object *face_list, int count);
+
 #ifdef MEMORY_USAGE_STATS
 int compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
 			       struct overhead_stats *ovstats);
@@ -329,6 +354,7 @@ FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
       Stynarr_add (cachel->font, lop);
       Stynarr_add (cachel->font_specified, 0);
       Stynarr_add (cachel->font_updated, 0);
+      Stynarr_add (cachel->font_final_stage, 0);
     }
   return i;
 }
@@ -383,13 +409,15 @@ FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
   FACE_PROPERTY_INSTANCE_1 (face, property, domain, ERROR_ME_DEBUG_WARN, \
 			    no_fallback, depth)
 
-Lisp_Object face_property_matching_instance (Lisp_Object face,
-					     Lisp_Object property,
-					     Lisp_Object charset,
-					     Lisp_Object domain,
-					     Error_Behavior errb,
-					     int no_fallback,
-					     Lisp_Object depth);
+Lisp_Object face_property_matching_instance
+			(Lisp_Object face,
+			 Lisp_Object property,
+			 Lisp_Object charset,
+			 Lisp_Object domain,
+			 Error_Behavior errb,
+			 int no_fallback,
+			 Lisp_Object depth,
+			 enum font_specifier_matchspec_stages stages);
 
 #define FACE_PROPERTY_SPEC_LIST(face, property, locale)			\
   Fspecifier_spec_list (FACE_PROPERTY_SPECIFIER (face, property),	\
@@ -402,9 +430,14 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
   FACE_PROPERTY_INSTANCE (face, Qforeground, domain, 0, Qzero)
 #define FACE_BACKGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
+
+/* Calling this function on the default face with the ASCII character set
+   may delete any X11 frames; see the code at the end of
+   x_find_charset_font. */
 #define FACE_FONT(face, domain, charset)				\
   face_property_matching_instance (face, Qfont, charset, domain,	\
-				   ERROR_ME_DEBUG_WARN, 0, Qzero)
+				   ERROR_ME_DEBUG_WARN, 0, Qzero,	\
+				   STAGE_INITIAL)
 #define FACE_DISPLAY_TABLE(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\

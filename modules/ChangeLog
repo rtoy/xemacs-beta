@@ -1,3 +1,75 @@
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* canna/canna_api.c (Fcanna_initialize): Drop support for the NEC EWS.
+
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* sample/external/Makefile.in.in: Clarify GPL status.
+	* sample/external/configure.ac: Ditto.
+	* sample/external/sample.c: Ditto.
+	* sample/internal/sample.c: Ditto.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c (Fldap_search_basic): quiet gcc warnings due to
+	NEW_LISP_STRING_TO_EXTERNAL modifying a variable while computing a
+	result to be passed as a parameter.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2008-02-12  Jerry James  <james@xemacs.org>
+
+	* canna/install-sh: Update to latest FSF version.
+	* ldap/install-sh: Ditto.
+	* postgresql/install-sh: Ditto.
+	* sample/external/install-sh: Ditto.
+	* sample/internal/install-sh: Ditto.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/canna_api.c (Fcanna_set_bunsetsu):
+	(Fcanna_initialize):
+	Suppress warnings about loss of precision on amd64.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ldap/eldap.h: Declare that we use deprecated API.
+	Thanks to Mats Lidell <matsl@xemacs.org> for the report & patch:
+	<871wgnqunm.fsf@spencer.lidell.homelinux.net>.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/canna_api.c: Move CANNA_NEW_WCHAR_AWARE to config.h.
+	Clean up ancient cruft for IROHA (Canna v.1) support.
+
+2007-02-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* postgresql/postgresql.c: Update Steve L. Baur's address on his
+	request.
+	* postgresql/postgresql.h: Ditto.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* common/Makefile.common (mostlyclean):
@@ -411,7 +483,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

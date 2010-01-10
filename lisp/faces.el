@@ -49,7 +49,8 @@
 ;; To elude the warnings for font functions. (Normally autoloaded when
 ;; font-create-object is called)
 (eval-when-compile
-  (require 'font))
+  (require 'font)
+  (load "cl-macs"))
 
 (defgroup faces nil
   "Support for multiple text attributes (fonts, colors, ...)
@@ -249,19 +250,9 @@ matching process."
 
   (setq face (get-face face))
   (let ((value (get face property)))
-    (if (specifierp value)
-	(setq value (if (or (charsetp matchspec)
-			    (and (symbolp matchspec)
-				 (find-charset matchspec)))
-			(or
-			 (specifier-matching-instance
-			  value (cons matchspec nil) domain default
-			  no-fallback)
-			 (specifier-matching-instance
-			  value (cons matchspec t) domain default
-			  no-fallback))
-		      (specifier-matching-instance value matchspec domain
-						   default no-fallback))))
+    (when (specifierp value)
+      (setq value (specifier-matching-instance value matchspec domain
+					       default no-fallback)))
     value))
 
 (defun set-face-property (face property value &optional locale tag-set
@@ -407,20 +398,20 @@ operation and is not undoable.
 
 The arguments LOCALE, TAG-SET and EXACT-P are the same as for
 `remove-specifier'."
-  (mapc (lambda (x)
-	  (remove-specifier (face-property face x) locale tag-set exact-p))
-	built-in-face-specifiers)
-  nil)
+  ;; Don't reset the default face. 
+  (unless (eq 'default face)
+    (dolist (x built-in-face-specifiers nil)
+      (remove-specifier (face-property face x) locale tag-set exact-p))))
 
 (defun set-face-parent (face parent &optional locale tag-set how-to-add)
   "Set the parent of FACE to PARENT, for all properties.
 This makes all properties of FACE inherit from PARENT."
   (setq parent (get-face parent))
-  (mapcar (lambda (x)
-	    (set-face-property face x (vector parent) locale tag-set
-			       how-to-add))
-	  (set-difference built-in-face-specifiers
-			  '(display-table background-pixmap inherit)))
+  (mapc (lambda (x)
+          (set-face-property face x (vector parent) locale tag-set
+                             how-to-add))
+        (set-difference built-in-face-specifiers
+                        '(display-table background-pixmap inherit)))
   (set-face-background-pixmap face (vector 'inherit ':face parent)
 			      locale tag-set how-to-add)
   nil)
@@ -472,25 +463,42 @@ Normally DOMAIN will be a window or nil (meaning the selected window),
   and an instance object describing how the font appears in that
   particular window and buffer will be returned.
 
+CHARSET is a Mule charset (meaning return the font used for that charset) or
+nil (meaning return the font used for ASCII.)
+
 See `face-property-instance' for more information."
-  (if charset
-      (face-property-matching-instance face 'font charset domain)
-    (face-property-instance face 'font domain)))
+  (if (null charset)
+      (face-property-instance face 'font domain)
+    (let (matchspec)
+      ;; get-charset signals an error if its argument doesn't have an
+      ;; associated charset.
+      (setq charset (if-fboundp #'get-charset
+                        (get-charset charset)
+                      (error 'unimplemented "Charset support not available"))
+	    matchspec (cons charset nil))
+      (or (null (setcdr matchspec 'initial))
+	  (face-property-matching-instance 
+	   face 'font matchspec domain)
+	  (null (setcdr matchspec 'final))
+	  (face-property-matching-instance
+	   face 'font matchspec domain)))))
 
 (defun set-face-font (face font &optional locale tag-set how-to-add)
   "Change the font of FACE to FONT in LOCALE.
 
 FACE may be either a face object or a symbol representing a face.
 
-FONT should be an instantiator (see `make-font-specifier'), a list of
-  instantiators, an alist of specifications (each mapping a
-  locale to an instantiator list), or a font specifier object.
+FONT should be an instantiator (see `make-font-specifier'; a common
+  instantiator is a platform-dependent string naming the font), a list
+  of instantiators, an alist of specifications (each mapping a locale
+  to an instantiator list), or a font specifier object.
 
-If FONT is an alist, LOCALE must be omitted.  If FONT is a
-  specifier object, LOCALE can be a locale, a locale type, `all',
-  or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
-  specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to `global'.
+If FONT is an alist, LOCALE must be omitted.  If FONT is a specifier
+  object, LOCALE can be a locale, a locale type, `all', or nil; see
+  `copy-specifier' for its semantics.  Common LOCALEs are buffer
+  objects, window objects, device objects and `global'.  Otherwise
+  LOCALE specifies the locale under which the specified
+  instantiator(s) will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "font"))
@@ -698,8 +706,8 @@ designed for interactive use."
   (interactive
    (let* ((face (read-face-name "Set background pixmap of face: "))
 	  (default (and (face-background-pixmap-instance face)
-			((image-instance-file-name
-			  (face-background-pixmap-instance face)))))
+			(image-instance-file-name
+			 (face-background-pixmap-instance face))))
 	  (file (read-file-name
 		 (format "Set background pixmap of face %s to: "
 			 (symbol-name face))
@@ -925,10 +933,11 @@ multi-charset environments."
   ;; and EXACT-P are as in that call.  UNFROBBED-FACE and FROBBED-FACE are
   ;; what we expect the original face and the result to look like,
   ;; respectively.  TTY-PROPS is a list of face properties to frob in place
-  ;; of `font' for TTY's.  FROB-MAPPING is either a plist mapping device
+  ;; of `font' for TTYs.  FROB-MAPPING is either a plist mapping device
   ;; types to functions of two args (NAME DEVICE) that will frob the
-  ;; instantiator as appropriate for the device type (this includes TTY's),
-  ;; or a function to handle the mapping for all device types.
+  ;; instantiator to NAME as appropriate for DEVICE's type (this includes
+  ;; TTYs #### TTYs are not passed the device, just the symbol 'tty), or a
+  ;; function to handle the mapping for all device types.
   ;; STANDARD-FACE-MAPPING is an alist of mappings of inheritance
   ;; instantiators to be replaced with other inheritance instantiators, meant
   ;; for e.g. converting [bold] into [bold-italic].
@@ -989,8 +998,10 @@ multi-charset environments."
 				  locale tag-set devtype-spec ffpdev)
 		   ;; devtype may be nil if it fails to match DEVTYPE-SPEC
 		   if devtype
-		   if (let* ((mapper (if (functionp frob-mapping) frob-mapping
-				       (plist-get frob-mapping devtype)))
+		   if (let* ((mapper
+			      (cond ((functionp frob-mapping) frob-mapping)
+				    ((plist-get frob-mapping devtype))
+				    (t (error 'unimplemented "mapper" devtype))))
 			     (result
 			      (cond
 			       ;; if a vector ...
@@ -1028,7 +1039,11 @@ multi-charset environments."
 			       (t
 				(let ((value
 				       (if (eq devtype-spec 'tty)
-					   (funcall mapper x)
+					   ;; #### not quite right but need
+					   ;; two args to match documentation
+					   ;; mostly we just ignore TTYs so
+					   ;; for now just pass the devtype
+					   (funcall mapper x 'tty)
 					 (funcall mapper x
 						  (derive-domain-from-locale
 						   locale devtype-spec
@@ -1183,11 +1198,16 @@ multi-charset environments."
 
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
+		      ;; #### this code is duplicated in make-face-size
 		      `(lambda (f d)
-			  ;; keep the dependency on font.el for now
-			  (let ((fo (font-create-object f d)))
-			    (set-font-family fo ,family)
-			    (font-create-name fo d)))
+			 ;; keep the dependency on font.el for now
+			 ;; #### The filter on null d is a band-aid.
+			 ;; Frob-face-property should not be passing in
+			 ;; null devices.
+			 (unless (or (null d) (eq d 'tty))
+			   (let ((fo (font-create-object f d)))
+			     (set-font-family fo ,family)
+			     (font-create-name fo d))))
 		      nil))
 
 ;; Style (ie, typographical face) frobbing
@@ -1301,7 +1321,7 @@ make-face-unitalic      italic    default       underline            nil
   (interactive (list (read-face-name "Make which face bold: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'bold 'font '(highlight)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-bold
 			gtk		gtk-make-font-bold
 			mswindows	mswindows-make-font-bold
@@ -1320,7 +1340,7 @@ how this function works."
   (interactive (list (read-face-name "Make which face italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'italic 'font '(underline)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-italic
 			gtk		gtk-make-font-italic
 			mswindows	mswindows-make-font-italic
@@ -1339,7 +1359,7 @@ argument and for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face bold-italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'default 'bold-italic 'font '(underline highlight)
-		      '(tty		(lambda (x) t)
+		      '(tty		(lambda (f d) t)
 			x		x-make-font-bold-italic
 			gtk		gtk-make-font-bold-italic
 			mswindows	mswindows-make-font-bold-italic
@@ -1359,7 +1379,7 @@ specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-bold: ")))
   (Face-frob-property face locale tags exact-p
 		      'bold 'default 'font '(highlight)
-		      '(tty		(lambda (x) nil)
+		      '(tty		(lambda (f d) nil)
 			x		x-make-font-unbold
 			gtk		gtk-make-font-unbold
 			mswindows	mswindows-make-font-unbold
@@ -1378,7 +1398,7 @@ specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-italic: ")))
   (Face-frob-property face locale tags exact-p
 		      'italic 'default 'font '(underline)
-		      '(tty		(lambda (x) nil)
+		      '(tty		(lambda (f d) nil)
 			x		x-make-font-unitalic
 			gtk		gtk-make-font-unitalic
 			mswindows	mswindows-make-font-unitalic
@@ -1398,11 +1418,16 @@ specifics on exactly how this function works."
 		     (read-number "Size to set: " t 10)))
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
+		      ;; #### this code is duplicated in make-face-family
 		      `(lambda (f d)
 			 ;; keep the dependency on font.el for now
-			 (let ((fo (font-create-object f d)))
-			   (set-font-size fo ,size)
-			   (font-create-name fo d)))
+			 ;; #### The filter on null d is a band-aid.
+			 ;; Frob-face-property should not be passing in
+			 ;; null devices.
+			 (unless (or (null d) (eq d 'tty))
+			   (let ((fo (font-create-object f d)))
+			     (set-font-size fo ,size)
+			     (font-create-name fo d))))
 		      nil))
 
 ;; Why do the following two functions lose so badly in so many
@@ -1910,7 +1935,27 @@ you want to add code to do stuff like this, use the create-device-hook."
 	     (face-property-equal 'text-cursor 'default 'foreground device))
     (set-face-foreground 'text-cursor [default background] 'global
 			 nil 'append))
-  )
+
+  ;; The faces buffers-tab, modeline-mousable and modeline-buffer-id all
+  ;; inherit directly from modeline; they require that modeline's details be
+  ;; specified, that it not use fallbacks, otherwise *they* use the general
+  ;; fallback of the default face instead, which clashes with the gui
+  ;; element faces. So take the modeline face information from its
+  ;; fallbacks, themselves ultimately set up in faces.c:
+  (loop
+    for face-property in '(foreground background background-pixmap)
+    do (when (and (setq face-property (face-property 'modeline face-property))
+                  (null (specifier-instance face-property device nil t))
+                  (specifier-instance face-property device))
+         (set-specifier face-property
+                        (or (specifier-specs (specifier-fallback
+                                              face-property))
+                            ;; This will error at startup if the
+                            ;; corresponding C fallback doesn't exist,
+                            ;; which is well and good.
+                            (specifier-fallback (specifier-fallback
+                                                 face-property))))))
+  nil)
 
 ;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle
 ;; Jones and Hrvoje Niksic.
@@ -2051,29 +2096,27 @@ in that frame; otherwise change each frame."
 		     'global)
 
 ;; Define some logical color names to be used when reading the pixmap files.
-(if (featurep 'xpm)
-    (setq xpm-color-symbols
-	  (list
-	   '("foreground" (face-foreground 'default))
-	   '("background" (face-background 'default))
-	   '("backgroundToolBarColor"
-	     (or
-	      (and
-	       (featurep 'x)
-	       (x-get-resource "backgroundToolBarColor"
-			       "BackgroundToolBarColor" 'string
-			       nil nil 'warn))
-
-	      (face-background 'toolbar)))
-	   '("foregroundToolBarColor"
-	     (or
-	      (and
-	       (featurep 'x)
-	       (x-get-resource "foregroundToolBarColor"
-			       "ForegroundToolBarColor" 'string
-			       nil nil 'warn))
-	      (face-foreground 'toolbar)))
-	   )))
+(and-boundp 
+    'xpm-color-symbols
+  (featurep 'xpm)
+  (setq xpm-color-symbols
+        (list
+         '("foreground" (face-foreground 'default))
+         '("background" (face-background 'default))
+         `("backgroundToolBarColor"
+           ,(if (featurep 'x)
+		'(or (x-get-resource "backgroundToolBarColor"
+				     "BackgroundToolBarColor" 'string
+				     nil nil 'warn)
+		  (face-background 'toolbar))
+	      '(face-background 'toolbar)))
+         `("foregroundToolBarColor"
+           ,(if (featurep 'x)
+		'(or (x-get-resource "foregroundToolBarColor"
+				     "ForegroundToolBarColor" 'string
+				     nil nil 'warn)
+		  (face-foreground 'toolbar))
+	      '(face-foreground 'toolbar))))))
 
 (when (featurep 'tty)
   (set-face-highlight-p 'bold                    t 'global '(default tty))

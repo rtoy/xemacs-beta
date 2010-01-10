@@ -1,5 +1,5 @@
 /* Win32 internationalization functions.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 2000 IKEYAMA Tomonori.
 
 This file is part of XEmacs.
@@ -784,7 +784,7 @@ LOCALE should a language string, or a cons (LANG . SUBLANG).
 If SUBLANG is omitted, "SUBLANG_DEFAULT" is used.
 
 Recognized language names are
-(some may not be recognized if the compiler is older than VC++ 6.0)
+\(some may not be recognized if the compiler is older than VC++ 6.0)
 
 "AFRIKAANS"
 "ALBANIAN"
@@ -859,7 +859,7 @@ Recognized language names are
 "VIETNAMESE"
 
 Recognized sub-language names are
-(some may not be recognized if the compiler is older than VC++ 6.0)
+\(some may not be recognized if the compiler is older than VC++ 6.0)
 
 "ARABIC_ALGERIA"
 "ARABIC_BAHRAIN"
@@ -1195,18 +1195,17 @@ Set the CODE-PAGE for the CHARSET.
 Lisp_Object 
 mswindows_get_code_page_charset (int code_page)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_code_page;
 
-      charset_code_page = Fmswindows_charset_code_page (XCAR (charset_tail));
+      charset_code_page = Fmswindows_charset_code_page (charset_name);
       if (INTP (charset_code_page) &&
 	  code_page == XINT (charset_code_page))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }
@@ -1247,18 +1246,17 @@ Set the REGISTRY for the CHARSET.
 static Lisp_Object 
 mswindows_get_registry_charset (Ibyte *registry)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_registry;
 
-      charset_registry = Fmswindows_charset_registry (XCAR (charset_tail));
+      charset_registry = Fmswindows_charset_registry (charset_name);
       if (STRINGP (charset_registry) &&
 	  !qxestrcasecmp (XSTRING_DATA (charset_registry), registry))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }
@@ -1570,6 +1568,7 @@ mswindows_current_locale (void)
 int
 wcscmp (const wchar_t *s1, const wchar_t *s2)
 {
+  if (s1 == NULL || s2 == NULL) return NULL;
   while (*s1 != '\0' && *s1 == *s2)
     {
       s1++;
@@ -1586,6 +1585,7 @@ wcscmp (const wchar_t *s1, const wchar_t *s2)
 size_t
 wcslen (const wchar_t *str)
 {
+  if (str == NULL) return NULL;
   const wchar_t *start = str;
 
   while (*str)
@@ -1599,6 +1599,7 @@ wcslen (const wchar_t *str)
 wchar_t *
 wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)
 {
+  if (dst0 == NULL || src0 == NULL) return NULL;
   wchar_t *dscan;
   const wchar_t *sscan;
 
@@ -1619,6 +1620,7 @@ wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)
 wchar_t *
 wcscpy (wchar_t *dst0, const wchar_t *src0)
 {
+  if (dst0 == NULL || src0 == NULL) return NULL;
   wchar_t *s = dst0;
 
   while ((*dst0++ = *src0++))
@@ -1630,6 +1632,7 @@ wcscpy (wchar_t *dst0, const wchar_t *src0)
 wchar_t *
 wcsdup (const wchar_t *str)
 {
+  if (str == NULL) return NULL;
   int len = wcslen (str) + 1;
   wchar_t *val = xnew_array (wchar_t, len);
 
@@ -2345,7 +2348,7 @@ determine_if_using_unicode (void)
 void
 complex_vars_of_intl_win32 (void)
 {
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qmswindows_unicode, Qunicode,
      build_msg_string ("MS Windows Unicode"),
      nconc2 (list4 (Qdocumentation,
@@ -2354,7 +2357,7 @@ complex_vars_of_intl_win32 (void)
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
 		    Qmnemonic, build_string ("MSW-U")),
-	     list4 (Qtype, Qutf_16,
+	     list4 (Qunicode_type, Qutf_16,
 		    Qlittle_endian, Qt)));
 
 #ifdef MULE

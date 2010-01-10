@@ -275,8 +275,9 @@ linux_play_data_or_file(int fd, Binbyte *data,
   fmtType        ffmt;
   int            fmt,speed,tracks;
   void           *pptr, *optr, *cptr, *sptr;
-  int            wrtn,rrtn,crtn,prtn;
-  Binbyte         sndbuf[SNDBUFSZ];
+  int            wrtn, crtn;
+  size_t         prtn, rrtn;
+  Binbyte        sndbuf[SNDBUFSZ];
 
   /* We need to read at least the header information before we can start
      doing anything */
@@ -323,8 +324,8 @@ linux_play_data_or_file(int fd, Binbyte *data,
                device; repeat until all data has been processed */
   rrtn = length;
   do {
-    for (pptr = data; (prtn = parsesndfile(&pptr,(size_t *)&rrtn,&optr)) > 0; )
-      for (cptr = optr; (crtn = sndcnv(&cptr,(size_t *) &prtn,&sptr)) > 0; ) {
+    for (pptr = data; (prtn = parsesndfile(&pptr,&rrtn,&optr)) > 0; )
+      for (cptr = optr; (crtn = sndcnv(&cptr,&prtn,&sptr)) > 0; ) {
 	for (;;) {
 	  if ((wrtn = write(audio_fd,sptr,crtn)) < 0) {
 	    sound_perror("write"); goto END_OF_PLAY; }

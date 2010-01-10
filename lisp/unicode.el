@@ -1,6 +1,6 @@
 ;;; unicode.el --- Unicode support
 
-;; Copyright (C) 2001, 2002, 2005 Ben Wing.
+;; Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Unicode
 
@@ -29,12 +29,16 @@
 
 ;;; Code:
 
+(eval-when-compile (when (featurep 'mule) (require 'ccl)))
+
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
+;; @@#### Eventually, move this into the C code or move the creation
+;; of internal charsets to mule-charset.el.
 (defun load-unicode-tables ()
-  "Initialize the Unicode translation tables for all standard charsets."
+  "Initialize the Unicode translation tables for all built-in charsets."
   (let ((parse-args
-	 `(("unicode/unicode-consortium"
+	 `(("unicode/unicode-consortium/ISO8859"
 	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
 	    ;; charsets' types, trying to load them results in out-of-range
 	    ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
@@ -43,14 +47,8 @@
 	    ;; ("8859-1.TXT" control-1 #x80 #x9F #x-80)
             ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
 	    ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
-	    ;; @@#### Add more charsets, esp. things like KOI8-R; take them
-	    ;; from emacs-unicode-2, among other things.
 	    ("8859-1.TXT" latin-iso8859-1 #xA0)
-	    ("8859-10.TXT" latin-iso8859-10 #xA0)
-	    ("8859-13.TXT" latin-iso8859-13 #xA0)
-	    ("8859-14.TXT" latin-iso8859-14 #xA0)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0)
-	    ("8859-16.TXT" latin-iso8859-16 #xA0)
 	    ("8859-2.TXT" latin-iso8859-2 #xA0)
 	    ("8859-3.TXT" latin-iso8859-3 #xA0)
 	    ("8859-4.TXT" latin-iso8859-4 #xA0)
@@ -59,6 +57,9 @@
 	    ("8859-7.TXT" greek-iso8859-7 #xA0)
 	    ("8859-8.TXT" hebrew-iso8859-8 #xA0)
 	    ("8859-9.TXT" latin-iso8859-9 #xA0)
+	    )
+
+	   ("unicode/unicode-consortium/EASTASIA/OBSOLETE"
 	    ,@(if (find-charset 'chinese-big5-1)
 		  ;; Under old-Mule, charset for Big5 does not matter;
 		  ;; specifying `big5' will automatically make the right
@@ -70,90 +71,88 @@
 	    ;; with planes 1-7.  See below.
 	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
 	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
-	    ("CP1250.TXT" latin-windows-1250 #x80)
-	    ("CP1251.TXT" cyrillic-windows-1251 #x80)
-	    ("CP1252.TXT" latin-windows-1252 #x80)
-	    ("CP1253.TXT" greek-windows-1253 #x80)
-	    ("CP1254.TXT" latin-windows-1254 #x80)
-	    ("CP1255.TXT" hebrew-windows-1255 #x80)
-	    ("CP1256.TXT" arabic-windows-1256 #x80)
-	    ("CP1257.TXT" latin-windows-1257 #x80)
-	    ("CP1258.TXT" latin-windows-1258 #x80)
-	    ("CP874.TXT" thai-windows-874 #x80)
-	    ("CP932.TXT" japanese-windows-932 #x8000)
-	    ("CP936.TXT" chinese-windows-936 #x8000)
-	    ("CP949.TXT" korean-windows-949 #x8000)
-	    ("CP950.TXT" chinese-windows-950 #x8000)
-	    ;; "GB12345.TXT" 
 	    ("GB2312.TXT" chinese-gb2312)
-	    ;; "HANGUL.TXT"
 	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
 	    ("JIS0201.TXT" katakana-jisx0201 #xA0)
 	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
 	    ("JIS0212.TXT" japanese-jisx0212)
-	    ("JOHAB.TXT" korean-johab #x8000)
-	    ("KOI8-R.TXT" cyrillic-koi8-r #x80)
-	    ;; "KSC5601.TXT" 
 	    ;; note that KSC5601.TXT as currently distributed is NOT what
 	    ;; it claims to be!  see comments in KSX1001.TXT.
 	    ("KSX1001.TXT" korean-ksc5601)
-	    ;; "OLD5601.TXT" 
 	    ,@(when (find-charset 'japanese-shift-jis)
 		'(("SHIFTJIS.TXT" japanese-shift-jis #x8000)))
+	    )
+
+	   ("unicode/oreilly"
 	    )
 
 	   ("unicode/mule-ucs"
 	    ("chinese-cns11643-1.txt" chinese-cns11643-1)
 	    ("chinese-cns11643-2.txt" chinese-cns11643-2)
-	    ("chinese-cns11643-3.txt" chinese-cns11643-3)
-	    ("chinese-cns11643-4.txt" chinese-cns11643-4)
-	    ("chinese-cns11643-5.txt" chinese-cns11643-5)
-	    ("chinese-cns11643-6.txt" chinese-cns11643-6)
-	    ("chinese-cns11643-7.txt" chinese-cns11643-7)
 	    ("chinese-sisheng.txt" chinese-sisheng)
-	    ("ethiopic.txt" ethiopic)
-	    ("indian-is13194.txt" indian-is13194 nil nil #x80)
-	    ("ipa.txt" ipa nil nil #x80)
 	    ("thai-tis620.txt" thai-tis620 nil nil #x80)
-	    ("tibetan.txt" tibetan)
-	    ("vietnamese-viscii-lower.txt" vietnamese-viscii-lower
-	     nil nil #x80)
-	    ("vietnamese-viscii-upper.txt" vietnamese-viscii-upper
-	     nil nil #x80)
-	    )
-	   ("unicode/other"
-	    ("lao.txt" lao)
-	    )
-	   )))
-    (mapcar #'(lambda (tables)
-		(let ((undir
-		       (expand-file-name (car tables) data-directory)))
-		  (mapcar #'(lambda (args)
-			      (apply 'load-unicode-mapping-table
-				     (expand-file-name (car args) undir)
-				     (cdr args)))
-			  (cdr tables))))
-	    parse-args)))
+	   ))))
+    (mapc #'(lambda (tables)
+              (let ((undir
+                     (expand-file-name (car tables) data-directory)))
+                (mapc #'(lambda (args)
+                          (apply 'load-unicode-mapping-table
+                                 (expand-file-name (car args) undir)
+                                 (cdr args)))
+                      (cdr tables))))
+	  parse-args)
+    ))
 
-;; Now we always load them at dump time; necessary for Unicode-internal.
+(defun initialize-default-unicode-precedence-list
+  ()
+  ;; The default-unicode-precedence-list. We set this here to default to
+  ;; *not* mapping various European characters to East Asian characters;
+  ;; [[ otherwise the default-unicode-precedence-list is numerically ordered
+  ;; by charset ID. ]] -- not true any more, order will be random since
+  ;; we get it by mapping over a hash table.
+  ;;
+  ;; This must be run late, when all charsets have already been created.
+  (declare-fboundp
+   (set-default-unicode-precedence-list
+    `(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
+	    greek-iso8859-7 hebrew-iso8859-8 ipa cyrillic-iso8859-5
+	    latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
+	    vietnamese-viscii-lower vietnamese-viscii-upper 
+	    ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
+	    japanese-jisx0208 japanese-jisx0208-1978
+	    japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
+	    chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
+	    indian-is13194 korean-ksc5601 chinese-cns11643-1
+	    chinese-cns11643-2 chinese-isoir165 
+	    composite ethiopic indian-1-column indian-2-column
+	    katakana-jisx0201 lao thai-tis620 thai-xtis
+	    tibetan tibetan-1-column latin-jisx0201 chinese-cns11643-3
+	    chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
+	    chinese-cns11643-7))))
 
-; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
-; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
-;   "[INTERNAL] Whether to load the Unicode tables at dump time.
-; Setting this at run-time does nothing.")
+(defun decode-char (quote-ucs code &optional restriction) 
+  "FSF compatibility--return Mule character with Unicode codepoint CODE.
+The second argument must be 'ucs, the third argument is ignored.  "
+  ;; We're prepared to accept invalid Unicode in unicode-to-char, but not in
+  ;; this function, which is the API that should actually be used, since
+  ;; it's available in GNU and in Mule-UCS.
+  (check-argument-range code #x0 #x10FFFF)
+  (assert (eq quote-ucs 'ucs) t
+	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
+  (unicode-to-char code))
 
-;; Load the Unicode tables now!!!
-(when (and (featurep 'mule)
-	   ;load-unicode-tables-at-dump-time
-	   )
-  (let ((data-directory (expand-file-name "etc" source-root)))
-    (load-unicode-tables)))
+(defun encode-char (char quote-ucs &optional restriction)
+  "FSF compatibility--return the Unicode code point of CHAR.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs) t
+	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
+  (char-to-unicode char))
 
 (make-coding-system
  'utf-16 'unicode
  "UTF-16"
  '(mnemonic "UTF-16"
-   documentation
+   documentation 
    "UTF-16 Unicode encoding -- the standard (almost-) fixed-width
 two-byte encoding, with surrogates.  It will be fixed-width if all
 characters are in the BMP (Basic Multilingual Plane -- first 65536
@@ -161,7 +160,7 @@ codepoints).  Cannot represent characters with codepoints above
 0x10FFFF (a little more than 1,000,000).  Unicode and ISO guarantee
 never to encode any characters outside this range -- all the rest are
 for private, corporate or internal use."
-   type utf-16))
+   unicode-type utf-16))
 
 (define-coding-system-alias 'utf-16-be 'utf-16) 
 
@@ -169,7 +168,7 @@ for private, corporate or internal use."
  'utf-16-bom 'unicode
  "UTF-16 w/BOM"
  '(mnemonic "UTF16-BOM"
-   documentation
+   documentation 
    "UTF-16 Unicode encoding with byte order mark (BOM) at the beginning.
 The BOM is Unicode character U+FEFF -- i.e. the first two bytes are
 0xFE and 0xFF, respectively, or reversed in a little-endian
@@ -189,7 +188,7 @@ and is suitable as a byte-order marker because:
 
 This coding system will insert a BOM at the beginning of a stream when
 writing and strip it off when reading."
-   type utf-16
+   unicode-type utf-16
    need-bom t))
 
 (make-coding-system
@@ -199,7 +198,7 @@ writing and strip it off when reading."
    documentation
    "Little-endian version of UTF-16 Unicode encoding.
 See `utf-16' coding system."
-   type utf-16
+   unicode-type utf-16
    little-endian t))
 
 (define-coding-system-alias 'utf-16-le 'utf-16-little-endian) 
@@ -212,7 +211,7 @@ See `utf-16' coding system."
    "Little-endian version of UTF-16 Unicode encoding, with byte order mark.
 Standard encoding for representing Unicode under MS Windows.  See
 `utf-16-bom' coding system."
-   type utf-16
+   unicode-type utf-16
    little-endian t
    need-bom t))
 
@@ -222,7 +221,7 @@ Standard encoding for representing Unicode under MS Windows.  See
  '(mnemonic "UCS4"
    documentation
    "UCS-4 Unicode encoding -- fully fixed-width four-byte encoding."
-   type ucs-4))
+   unicode-type ucs-4))
 
 (make-coding-system
  'ucs-4-little-endian 'unicode
@@ -232,15 +231,35 @@ Standard encoding for representing Unicode under MS Windows.  See
    ;; #### I don't think this is permitted by ISO 10646, only Unicode.
    ;; Call it UTF-32 instead?
    "Little-endian version of UCS-4 Unicode encoding.  See `ucs-4' coding system."
-   type ucs-4
+   unicode-type ucs-4
    little-endian t))
+
+(make-coding-system
+ 'utf-32 'unicode
+ "UTF-32"
+ '(mnemonic "UTF32"
+   documentation
+   "UTF-32 Unicode encoding -- fixed-width four-byte encoding,
+characters less than #x10FFFF are not supported.  "
+   unicode-type utf-32))
+
+(make-coding-system
+ 'utf-32-little-endian 'unicode
+ "UTF-32 Little Endian"
+ '(mnemonic "UTF32-LE"
+   documentation
+   "Little-endian version of UTF-32 Unicode encoding.
+
+A fixed-width four-byte encoding, characters less than #x10FFFF are not
+supported.  "
+   unicode-type ucs-4 little-endian t))
 
 (make-coding-system
  'utf-8 'unicode
  "UTF-8"
  '(mnemonic "UTF8"
-   documentation
-   "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
+   documentation "
+UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
 sharing the following principles with the Mule-internal encoding:
 
   -- All ASCII characters (codepoints 0 through 127) are represented
@@ -261,7 +280,7 @@ sharing the following principles with the Mule-internal encoding:
   -- Given only the leading byte, you know how many following bytes
      are present.
 "
-   type utf-8))
+   unicode-type utf-8))
 
 (make-coding-system
  'utf-8-bom 'unicode
@@ -270,24 +289,262 @@ sharing the following principles with the Mule-internal encoding:
    documentation
    "UTF-8 Unicode encoding, with byte order mark.
 Standard encoding for representing UTF-8 under MS Windows."
-   type utf-8
+   unicode-type utf-8
    little-endian t
    need-bom t))
 
-(defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint `code'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) 
-	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  ;(unicode-to-char code)
-  (make-char code))
+;; Now, create jit-ucs-charset-0 entries for those characters in Windows
+;; Glyph List 4 that would otherwise end up in East Asian character sets.
+;; 
+;; WGL4 is a character repertoire from Microsoft that gives a guideline
+;; for font implementors as to what characters are sufficient for
+;; pan-European support.  The intention of this code is to avoid the
+;; situation where these characters end up mapping to East Asian XEmacs
+;; characters, which generally clash strongly with European characters
+;; both in font choice and character width; jit-ucs-charset-0 is a
+;; single-width character set which comes before the East Asian character
+;; sets in the default-unicode-precedence-list above.
+(loop for (ucs ascii-or-latin-1)
+  in '((#x2013 ?-) ;; U+2013 EN DASH
+       (#x2014 ?-) ;; U+2014 EM DASH
+       (#x2105 ?%) ;; U+2105 CARE OF
+       (#x203e ?-) ;; U+203E OVERLINE
+       (#x221f ?|) ;; U+221F RIGHT ANGLE
+       (#x2584 ?|) ;; U+2584 LOWER HALF BLOCK
+       (#x2588 ?|) ;; U+2588 FULL BLOCK
+       (#x258c ?|) ;; U+258C LEFT HALF BLOCK
+       (#x2550 ?|) ;; U+2550 BOX DRAWINGS DOUBLE HORIZONTAL
+       (#x255e ?|) ;; U+255E BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
+       (#x256a ?|) ;; U+256A BOX DRAWINGS VERTICAL SINGLE & HORIZONTAL DOUBLE
+       (#x2561 ?|) ;; U+2561 BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
+       (#x2215 ?/) ;; U+2215 DIVISION SLASH
+       (#x02c9 ?`) ;; U+02C9 MODIFIER LETTER MACRON
+       (#x2211 ?s) ;; U+2211 N-ARY SUMMATION
+       (#x220f ?s) ;; U+220F N-ARY PRODUCT
+       (#x2248 ?=) ;; U+2248 ALMOST EQUAL TO
+       (#x2264 ?=) ;; U+2264 LESS-THAN OR EQUAL TO
+       (#x2265 ?=) ;; U+2265 GREATER-THAN OR EQUAL TO
+       (#x201c ?') ;; U+201C LEFT DOUBLE QUOTATION MARK
+       (#x2026 ?.) ;; U+2026 HORIZONTAL ELLIPSIS
+       (#x2212 ?-) ;; U+2212 MINUS SIGN
+       (#x2260 ?=) ;; U+2260 NOT EQUAL TO
+       (#x221e ?=) ;; U+221E INFINITY
+       (#x2642 ?=) ;; U+2642 MALE SIGN
+       (#x2640 ?=) ;; U+2640 FEMALE SIGN
+       (#x2032 ?=) ;; U+2032 PRIME
+       (#x2033 ?=) ;; U+2033 DOUBLE PRIME
+       (#x25cb ?=) ;; U+25CB WHITE CIRCLE
+       (#x25cf ?=) ;; U+25CF BLACK CIRCLE
+       (#x25a1 ?=) ;; U+25A1 WHITE SQUARE
+       (#x25a0 ?=) ;; U+25A0 BLACK SQUARE
+       (#x25b2 ?=) ;; U+25B2 BLACK UP-POINTING TRIANGLE
+       (#x25bc ?=) ;; U+25BC BLACK DOWN-POINTING TRIANGLE
+       (#x2192 ?=) ;; U+2192 RIGHTWARDS ARROW
+       (#x2190 ?=) ;; U+2190 LEFTWARDS ARROW
+       (#x2191 ?=) ;; U+2191 UPWARDS ARROW
+       (#x2193 ?=) ;; U+2193 DOWNWARDS ARROW
+       (#x2229 ?=) ;; U+2229 INTERSECTION
+       (#x2202 ?=) ;; U+2202 PARTIAL DIFFERENTIAL
+       (#x2261 ?=) ;; U+2261 IDENTICAL TO
+       (#x221a ?=) ;; U+221A SQUARE ROOT
+       (#x222b ?=) ;; U+222B INTEGRAL
+       (#x2030 ?=) ;; U+2030 PER MILLE SIGN
+       (#x266a ?=) ;; U+266A EIGHTH NOTE
+       (#x2020 ?*) ;; U+2020 DAGGER
+       (#x2021 ?*) ;; U+2021 DOUBLE DAGGER
+       (#x2500 ?|) ;; U+2500 BOX DRAWINGS LIGHT HORIZONTAL
+       (#x2502 ?|) ;; U+2502 BOX DRAWINGS LIGHT VERTICAL
+       (#x250c ?|) ;; U+250C BOX DRAWINGS LIGHT DOWN AND RIGHT
+       (#x2510 ?|) ;; U+2510 BOX DRAWINGS LIGHT DOWN AND LEFT
+       (#x2518 ?|) ;; U+2518 BOX DRAWINGS LIGHT UP AND LEFT
+       (#x2514 ?|) ;; U+2514 BOX DRAWINGS LIGHT UP AND RIGHT
+       (#x251c ?|) ;; U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+       (#x252c ?|) ;; U+252C BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+       (#x2524 ?|) ;; U+2524 BOX DRAWINGS LIGHT VERTICAL AND LEFT
+       (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
+       (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+       (#x02da ?^) ;; U+02DA RING ABOVE
+       (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?,A)(B
 
-(defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of `char'.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs)
-	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
-  (char-to-unicode char))
+       (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
+       (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
+
+       (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
+       (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
+       (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
+
+       (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
+       (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
+       (#x2665 ?*) ;; U+2665 BLACK HEART SUIT
+       (#x2663 ?*) ;; U+2663 BLACK CLUB SUIT
+       (#x2592 ?|) ;; U+2592 MEDIUM SHADE
+       (#x2195 ?|) ;; U+2195 UP DOWN ARROW
+
+       (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?,A9(B
+       (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
+       (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
+       (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
+       (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
+       (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
+  
+       ;; These are not in WGL 4, but are IPA characters that should not
+       ;; be double width. They are the only IPA characters that both
+       ;; occur in packages/mule-packages/leim/ipa.el and end up in East
+       ;; Asian character sets when that file is loaded in an XEmacs
+       ;; without packages.
+       (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
+       (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
+       (#x2191 ?|) ;; U+2191 UPWARDS ARROW
+       (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
+  with decoded = nil
+  with syntax-table = (standard-syntax-table)
+  initially (unless (featurep 'mule) (return))
+  ;; This creates jit-ucs-charset-0 entries because:
+  ;;
+  ;;    1. If the tables are dumped, it is run at dump time before they are
+  ;;    dumped, and as such before the relevant conversions are available
+  ;;    (they are made available in mule/general-late.el). 
+  ;;
+  ;;    2. If the tables are not dumped, it is run at dump time, long before
+  ;;    any of the other mappings are available.
+  ;;
+  do
+  (setq decoded (decode-char 'ucs ucs))
+  (assert (eq (declare-fboundp (char-charset decoded))
+              'jit-ucs-charset-0) nil 
+              "Unexpected Unicode decoding behavior.  ")
+  (modify-syntax-entry decoded
+                       (string 
+                        (char-syntax ascii-or-latin-1))
+                       syntax-table))
+
+;; *Sigh*, declarations needs to be at the start of the line to be picked up
+;; by make-docfile.
+
+;; Create all the Unicode error sequences, normally as jit-ucs-charset-0
+;; characters starting at U+200000 (which isn't a valid Unicode code
+;; point). Make them available to user code. 
+(defvar unicode-error-default-translation-table
+  (loop 
+    with char-table = (make-char-table 'generic)
+    for i from ?\x00 to ?\xFF
+    initially (unless (featurep 'mule) (return))
+    do
+    (put-char-table (aref
+                     ;; #xd800 is the first leading surrogate;
+                     ;; trailing surrogates must be in the range
+                     ;; #xdc00-#xdfff. These examples are not, so we
+                     ;; intentionally provoke an error sequence.
+                     (decode-coding-string (format "\xd8\x00\x00%c" i)
+                                           'utf-16-be)
+                     3)
+                    i
+                    char-table)
+    finally return char-table)
+  "Translation table mapping Unicode error sequences to Latin-1 chars.
+
+To transform XEmacs Unicode error sequences to the Latin-1 characters that
+correspond to the octets on disk, you can use this variable.  ")
+
+(defvar unicode-invalid-sequence-regexp-range
+  (and (featurep 'mule)
+       (format "%c%c-%c"
+               (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 0)
+               (aref (decode-coding-string "\xd8\x00\x00\x00" 'utf-16-be) 3)
+               (aref (decode-coding-string "\xd8\x00\x00\xFF" 'utf-16-be) 3)))
+  "Regular expression range to match Unicode error sequences in XEmacs.
+
+Invalid Unicode sequences on input are represented as XEmacs
+characters with values stored as the keys in
+`unicode-error-default-translation-table', one character for each
+invalid octet.  You can use this variable (with `re-search-forward' or
+`skip-chars-forward') to search for such characters; see also
+`unicode-error-translate-region'.  ")
+
+;; Check that the lookup table is correct, and that all the actual error
+;; sequences are caught by the regexp.
+(with-temp-buffer
+  (loop
+    for i from ?\x00 to ?\xFF
+    with to-check = (make-string 20 ?\x20) 
+    initially (unless (featurep 'mule) (return))
+    do 
+    (delete-region (point-min) (point-max))
+    (insert to-check)
+    (goto-char 10)
+    (insert (decode-coding-string (format "\xd8\x00\x00%c" i)
+                                  'utf-16-be))
+    (backward-char)
+    (assert (= i (get-char-table (char-after (point)) 
+                                 unicode-error-default-translation-table))
+            (format "Char ?\\x%x not the expected error sequence!"
+                    i))
+
+    (goto-char (point-min))
+    ;; Comment out until the issue in
+    ;; 18179.49815.622843.336527@parhasard.net is fixed.
+    (assert t ; (re-search-forward (concat "[" 
+              ;                        unicode-invalid-sequence-regexp-range
+              ;                        "]"))
+            nil
+            (format "Could not find char ?\\x%x in buffer" i))))
+
+(defun frob-unicode-errors-region (frob-function begin end &optional buffer)
+  "Call FROB-FUNCTION on the Unicode error sequences between BEGIN and END.
+
+Optional argument BUFFER specifies the buffer that should be examined for
+such sequences.  "
+  (check-argument-type #'functionp frob-function)
+  (check-argument-range begin (point-min buffer) (point-max buffer))
+  (check-argument-range end (point-min buffer) (point-max buffer))
+    (save-excursion
+      (save-restriction
+	(if buffer (set-buffer buffer))
+	(narrow-to-region begin end)
+	(goto-char (point-min))
+	(while end
+	  (setq begin
+		(progn
+		  (skip-chars-forward
+		   (concat "^" unicode-invalid-sequence-regexp-range))
+		  (point))
+		end (and (not (= (point) (point-max)))
+			 (progn
+			   (skip-chars-forward
+			    unicode-invalid-sequence-regexp-range)
+			   (point))))
+	  (if end
+	      (funcall frob-function begin end))))))
+
+(defun unicode-error-translate-region (begin end &optional buffer table)
+  "Translate the Unicode error sequences in BUFFER between BEGIN and END.
+
+The error sequences are transformed, by default, into the ASCII,
+control-1 and latin-iso8859-1 characters with the numeric values
+corresponding to the incorrect octets encountered.  This is achieved
+by using `unicode-error-default-translation-table' (which see) for
+TABLE; you can change this by supplying another character table,
+mapping from the error sequences to the desired characters.  "
+    (unless table (setq table unicode-error-default-translation-table))
+    (frob-unicode-errors-region
+     (lambda (start finish)
+       (translate-region start finish table))
+     begin end buffer))
+
+;; Sure would be nice to be able to use defface here. 
+(copy-face 'highlight 'unicode-invalid-sequence-warning-face)
+
+(unless (featurep 'mule)
+  ;; We do this in such a roundabout way--instead of having the above defun
+  ;; and defvar calls inside a (when (featurep 'mule) ...) form--to have
+  ;; make-docfile.c pick up symbol and function documentation correctly. An
+  ;; alternative approach would be to fix make-docfile.c to be able to read
+  ;; Lisp.
+  (mapc #'unintern
+        '(unicode-error-default-translation-table
+          unicode-invalid-regexp-range frob-unicode-errors-region
+          unicode-error-translate-region unicode-query-coding-region
+          unicode-query-coding-skip-chars-arg)))
 
 (make-obsolete 'char-octets 'char-to-charset-codepoint)
 (make-obsolete 'char-charset 'char-to-charset-codepoint)
@@ -301,8 +558,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
 ;  'utf-7 'unicode
 ;  "UTF-7"
 ;  '(mnemonic "UTF7"
-;    documentation
-;    "UTF-7 Unicode encoding -- 7-bit-ASCII modal Internet-mail-compatible
+;    documentation;    "UTF-7 Unicode encoding -- 7-bit-ASCII modal Internet-mail-compatible
 ; encoding especially designed for headers, with the following
 ; properties:
 
@@ -329,4 +585,18 @@ The second argument must be 'ucs, the third argument is ignored.  "
 
 ; For more information, see Appendix A.1 of The Unicode Standard 2.0, or
 ; wherever it is in v3.0."
-;    type utf-7))
+;    unicode-type utf-7))
+
+;; Now we always load them at dump time; necessary for Unicode-internal.
+
+; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
+; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
+;   "[INTERNAL] Whether to load the Unicode tables at dump time.
+; Setting this at run-time does nothing.")
+
+;; Load the Unicode tables now!!!
+(when (and (featurep 'mule)
+	   ;load-unicode-tables-at-dump-time
+	   )
+  (let ((data-directory (expand-file-name "etc" source-directory)))
+    (load-unicode-tables)))

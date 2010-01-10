@@ -6,7 +6,11 @@
 
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 
-PACKAGE_PREFIX=c:\Program Files\XEmacs
+# PACKAGE_PREFIX is root of the installed package hierarchies.
+# This corresponds to the configure option --with-late-packages.
+# See 'Package Hierarchies' in the info for more documentation.
+# If you don't set this, XEmacs will attempt to find the packages at runtime.
+#PACKAGE_PREFIX=c:\Program Files\XEmacs
 
 ############################################################################
 #                      Compiled-in features: basic                         #
@@ -30,7 +34,7 @@ GTK_DIR=
 ############################################################################
 
 # Directory under which the optional libraries are placed.  To make your
-# life easy, just grab http://ftp.xemacs.org/aux/optional-libs.exe
+# life easy, just grab http://www.xemacs.org/Download/win32/optional-libs.exe
 # (a self-installing .ZIP) and unzip them into an appropriate directory
 # (by default, c:\src).  This gets you precompiled versions of all of
 # the libraries below.
@@ -44,8 +48,10 @@ OPTIONAL_LIBRARY_DIR=c:\src
 HAVE_XPM=1
 XPM_DIR=$(OPTIONAL_LIBRARY_DIR)\xpm-3.4k
 
-# Set this to enable GIF support (built-in).
+# Set this to enable GIF support, and specify the directory containing giflib.
+# Get the latest version from http://sourceforge.net/projects/giflib/.
 HAVE_GIF=1
+GIF_DIR=$(OPTIONAL_LIBRARY_DIR)\giflib-4.1.6
 
 # Set this to enable PNG support (virtually mandatory), and specify the
 # directories containing png and zlib.  Get the latest version of PNG from
@@ -175,6 +181,10 @@ OPTIMIZED_BUILD=1
 # #### Change to 1 when I check in the ws with support for fastcall
 USE_FASTCALL=0
 
+# Set this in order to avoid building against MSVCRTD.dll, since we can't
+# ship that DLL and since it requires VC installed on the target computer
+BUILD_FOR_SETUP_KIT=0
+
 ############################################################################
 #                          Development options                             #
 ############################################################################
@@ -223,8 +233,9 @@ USE_PORTABLE_DUMPER=1
 # of the traditional XEmacs garbage-collection routines.
 USE_KKCC=1
 
-# Set this to use the new experimental allocator routines
-MC_ALLOC=1
+# Set this to use the new experimental incremental garbage collector
+# and the new allocator routines
+NEW_GC=0
 
 # Set this to turn on the use of the union type, which gets you improved
 # type checking of Lisp_Objects -- they're declared as unions instead of
@@ -251,3 +262,6 @@ MC_ALLOC=1
 # *AND CURRENTLY HAPPENS WITH VC++*, at least when using pdump.  Therefore,
 # be warned!
 USE_UNION_TYPE=0
+
+# Set this to build XEmacs with the Intel C Compiler.
+USE_INTEL_COMPILER=0

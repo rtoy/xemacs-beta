@@ -633,7 +633,7 @@ Make it buffer-local in a mode hook.  The function is called with no
 (defun find-tag-default ()
   (or (and (not (memq find-tag-default-hook '(nil find-tag-default)))
 	   (with-trapping-errors 
-	     :function 'find-tag-default-hook
+	     :operation 'find-tag-default-hook
 	     :error-form nil
 	     (funcall find-tag-default-hook)))
       (symbol-near-point)))

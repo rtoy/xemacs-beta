@@ -53,9 +53,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HPUX
 #include <netio.h>
-#ifdef HPUX_PRE_8_0
-#include <errnet.h>
-#endif /* HPUX_PRE_8_0 */
 #endif /* HPUX */
 
 #ifdef WIN32_ANY
@@ -111,6 +108,11 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Vdirectory_sep_char;
 
+#ifdef HAVE_FSYNC
+/* Nonzero means skip the call to fsync in Fwrite-region.  */
+int write_region_inhibit_fsync;
+#endif
+
 /* These variables describe handlers that have "already" had a chance
    to handle the current operation.
 
@@ -122,6 +124,7 @@ static Lisp_Object Vinhibit_file_name_handlers;
 static Lisp_Object Vinhibit_file_name_operation;
 
 Lisp_Object Qfile_already_exists;
+Lisp_Object Qexcl;
 
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
@@ -397,11 +400,20 @@ Given a Unix syntax file name, returns a string ending in slash.
 
       if (wd)
 	{
+	  int size;
 	  qxestrcat (res, wd);
-	  if (!IS_DIRECTORY_SEP (res[qxestrlen (res) - 1]))
-	    qxestrcat (res, (Ibyte *) "/");
+	  size = qxestrlen (res);
+	  if (!IS_DIRECTORY_SEP (res[size - 1]))
+	    {
+	      res[size] = DIRECTORY_SEP;
+	      res[size + 1] = '\0';
+	    }
 	  beg = res;
 	  p = beg + qxestrlen (beg);
+	}
+      else
+	{
+	  return Qnil;
 	}
       if (wd)
 	xfree (wd, Ibyte *);
@@ -614,11 +626,12 @@ danger of generating a name being used by another process.
 
 In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
-be an absolute file name.  A reasonable idiom is
+be an absolute file name.
 
-\(make-temp-name (expand-file-name "myprefix" (temp-directory)))
-
-which puts the file in the OS-specified temporary directory.
+This function is analagous to mktemp(3) under POSIX, and as with it, there
+exists a race condition between the test for the existence of the new file
+and its creation.  See `make-temp-file' for a function which avoids this
+race condition by specifying the appropriate flags to `write-region'. 
 */
        (prefix))
 {
@@ -774,19 +787,16 @@ See also the function `substitute-in-file-name'.
   if (NILP (default_directory))
     default_directory = current_buffer->directory;
   if (! STRINGP (default_directory))
-#ifdef WIN32_NATIVE
-    default_directory = build_string ("C:\\");
-#else
-    default_directory = build_string ("/");
-#endif
+    default_directory = build_string (DEFAULT_DIRECTORY_FALLBACK);
 
   if (!NILP (default_directory))
     {
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
 	RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-				       call3 (handler, Qexpand_file_name,
-					      name, default_directory));
+				       call3_check_string
+                                       (handler, Qexpand_file_name,
+				        name, default_directory));
     }
 
   o = XSTRING_DATA (default_directory);
@@ -1507,10 +1517,10 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   /* This function can GC.  GC checked 2000-07-28 ben. */
   Ibyte *nm;
 
-  Ibyte *s, *p, *o, *x, *endp;
+  Ibyte *s, *p, *o, *x, *endp, *got;
   Ibyte *target = 0;
   int total = 0;
-  int substituted = 0;
+  int substituted = 0, seen_braces;
   Ibyte *xnm;
   Lisp_Object handler;
 
@@ -1565,7 +1575,10 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
       {
 	p++;
 	if (p == endp)
-	  goto badsubst;
+	  {
+	    /* No substitution, no error. */
+	    break;
+	  }
 	else if (*p == '$')
 	  {
 	    /* "$$" means a single "$" */
@@ -1578,7 +1591,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  {
 	    o = ++p;
 	    while (p != endp && *p != '}') p++;
-	    if (*p != '}') goto missingclose;
+	    if (*p != '}')
+	      {
+		/* No substitution, no error. Keep looking. */
+		p = o;
+		continue;
+	      }
 	    s = p;
 	  }
 	else
@@ -1597,10 +1615,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIbyte *) target);
-	if (!o) goto badvar;
-	total += qxestrlen (o);
-	substituted = 1;
+	got = egetenv ((CIbyte *) target);
+	if (got)
+	  {
+	    total += qxestrlen (got);
+	    substituted = 1;
+	  }
       }
 
   if (!substituted)
@@ -1618,8 +1638,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
     else
       {
 	p++;
+	seen_braces = 0;
 	if (p == endp)
-	  goto badsubst;
+	  {
+	    *x++ = '$';
+	    break;
+	  }
 	else if (*p == '$')
 	  {
 	    *x++ = *p++;
@@ -1627,9 +1651,16 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 	else if (*p == '{')
 	  {
+	    seen_braces = 1;
 	    o = ++p;
 	    while (p != endp && *p != '}') p++;
-	    if (*p != '}') goto missingclose;
+	    if (*p != '}')
+	      {
+		/* Don't syntax error, don't substitute */
+		*x++ = '{';
+		p = o;
+		continue;
+	      }
 	    s = p++;
 	  }
 	else
@@ -1648,12 +1679,30 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIbyte *) target);
-	if (!o)
-	  goto badvar;
-
-	qxestrcpy (x, o);
-	x += qxestrlen (o);
+	got = egetenv ((CIbyte *) target);
+	if (got)
+	  {
+	    qxestrcpy (x, got);
+	    x += qxestrlen (got);
+	  }
+	else
+	  {
+	    *x++ = '$';
+	    if (seen_braces)
+	      {
+		*x++ = '{';
+                /* Preserve the original case. */
+		qxestrncpy (x, o, s - o);
+		x += s - o;
+		*x++ = '}';
+	      }
+	    else
+	      {
+                /* Preserve the original case. */
+		qxestrncpy (x, o, s - o);
+		x += s - o;
+	      }
+	  }
       }
 
   *x = 0;
@@ -1678,17 +1727,6 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif
 
   return make_string (xnm, x - xnm);
-
- badsubst:
-  syntax_error ("Bad format environment-variable substitution", filename);
- missingclose:
-  syntax_error ("Missing \"}\" in environment-variable substitution",
-		filename);
- badvar:
-  syntax_error_2 ("Substituting nonexistent environment variable",
-		  filename, build_intstring (target));
-
-  RETURN_NOT_REACHED (Qnil);
 }
 
 /* A slightly faster and more convenient way to get
@@ -2160,6 +2198,10 @@ Signals a `file-already-exists' error if a file LINKNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
 A number as third arg means request confirmation if LINKNAME already exists.
 This happens for interactive use with M-x.
+
+On platforms where symbolic links are not available, any file handlers will
+be run, but the check for the existence of LINKNAME will not be done, and
+the symbolic link will not be created.
 */
        (filename, linkname, ok_if_already_exists))
 {
@@ -2282,6 +2324,81 @@ check_executable (Lisp_Object filename)
 static int
 check_writable (const Ibyte *filename)
 {
+#if defined(WIN32_NATIVE) || defined(CYGWIN)
+#ifdef CYGWIN
+    Extbyte filename_buffer[PATH_MAX];
+#endif
+	// Since this has to work for a directory, we can't just call 'CreateFile'
+	PSECURITY_DESCRIPTOR pDesc; /* Must be freed with LocalFree */
+	/* these need not be freed, they point into pDesc */
+	PSID psidOwner;
+	PSID psidGroup;
+	PACL pDacl;
+	PACL pSacl;
+	/* end of insides of descriptor */
+	DWORD error;
+	DWORD attributes;
+	HANDLE tokenHandle;
+	GENERIC_MAPPING genericMapping;
+	DWORD accessMask;
+	PRIVILEGE_SET PrivilegeSet;
+    DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
+    BOOL fAccessGranted = FALSE;
+    DWORD dwAccessAllowed;
+    Extbyte *fnameext;
+
+    C_STRING_TO_TSTR(filename, fnameext);
+
+#ifdef CYGWIN
+    cygwin_conv_to_full_win32_path(fnameext, filename_buffer);
+    fnameext = filename_buffer;
+#endif
+
+    // First check for a normal file with the old-style readonly bit
+    attributes = qxeGetFileAttributes(fnameext);
+    if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+      return 0;
+
+	/* Win32 prototype lacks const. */
+	error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
+                                    DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
+                                    &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
+	if(error != ERROR_SUCCESS) { // FAT?
+		attributes = qxeGetFileAttributes(fnameext);
+		return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
+	}
+
+	genericMapping.GenericRead = FILE_GENERIC_READ;
+    genericMapping.GenericWrite = FILE_GENERIC_WRITE;
+    genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
+    genericMapping.GenericAll = FILE_ALL_ACCESS;
+
+	if(!ImpersonateSelf(SecurityDelegation)) {
+		return 0;
+	}
+	if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
+		return 0;
+	}
+
+	accessMask = GENERIC_WRITE;
+	MapGenericMask(&accessMask, &genericMapping);
+
+	if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
+					&PrivilegeSet,       // receives privileges used in check
+					&dwPrivSetSize,      // size of PrivilegeSet buffer
+					&dwAccessAllowed,    // receives mask of allowed access rights
+					&fAccessGranted)) 
+	{
+		CloseHandle(tokenHandle);
+		RevertToSelf();
+		LocalFree(pDesc);
+		return 0;
+	}
+	CloseHandle(tokenHandle);
+	RevertToSelf();
+	LocalFree(pDesc);
+	return fAccessGranted == TRUE;
+#else
 #ifdef HAVE_EACCESS
   return (qxe_eaccess (filename, W_OK) >= 0);
 #else
@@ -2291,6 +2408,7 @@ check_writable (const Ibyte *filename)
      Opening with O_WRONLY could work for an ordinary file,
      but would lose for directories.  */
   return (qxe_access (filename, W_OK) >= 0);
+#endif
 #endif
 }
 
@@ -2800,8 +2918,8 @@ under Mule, is very difficult.)
   int saverrno = 0;
   Charcount inserted = 0;
   int speccount;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  Lisp_Object handler = Qnil, val;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Lisp_Object val;
   int total;
   Ibyte read_buf[READ_BUF_SIZE];
   int mc_count;
@@ -2824,7 +2942,7 @@ under Mule, is very difficult.)
 
   curbuf = wrap_buffer (buf);
 
-  GCPRO5 (filename, val, visit, handler, curbuf);
+  GCPRO4 (filename, val, visit, curbuf);
 
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
@@ -2834,16 +2952,6 @@ under Mule, is very difficult.)
 				   an unwind_protect */
 
   filename = Fexpand_file_name (filename, Qnil);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (filename, Qinsert_file_contents);
-  if (!NILP (handler))
-    {
-      val = call6 (handler, Qinsert_file_contents, filename,
-		   visit, start, end, replace);
-      goto handled;
-    }
 
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
@@ -2855,7 +2963,6 @@ under Mule, is very difficult.)
 
   if (qxe_stat (XSTRING_DATA (filename), &st) < 0)
     {
-      if (fd >= 0) retry_close (fd);
     badopen:
       if (NILP (visit))
 	report_file_error ("Opening input file", filename);
@@ -2949,6 +3056,13 @@ under Mule, is very difficult.)
      reasonable maximum file size on the files.  Is any of this worth it?
      --ben
 
+
+       It's probably not worth it, and despite what you might take from the
+       above, we don't do it currently; that is, for non-"binary" coding
+       systems, we don't try to implement replace-mode at all. See the
+       do_speedy_insert variable above. The upside of this is that our API
+       is consistent and not buggy. -- Aidan Kehoe, Fri Oct 27 21:02:30 CEST
+       2006
      */
 
   if (!NILP (replace))
@@ -3149,31 +3263,25 @@ under Mule, is very difficult.)
     {
       if (!EQ (buf->undo_list, Qt))
 	buf->undo_list = Qnil;
-      if (NILP (handler))
-	{
-	  buf->modtime = st.st_mtime;
-	  buf->filename = filename;
-	  /* XEmacs addition: */
-	  /* This function used to be in C, ostensibly so that
-	     it could be called here.  But that's just silly.
-	     There's no reason C code can't call out to Lisp
-	     code, and it's a lot cleaner this way. */
-	  /*  Note: compute-buffer-file-truename is called for
-	      side-effect!  Its return value is intentionally
-	      ignored. */
-	  if (!NILP (Ffboundp (Qcompute_buffer_file_truename)))
-	    call1 (Qcompute_buffer_file_truename, wrap_buffer (buf));
-	}
+      buf->modtime = st.st_mtime;
+      buf->filename = filename;
+      /* XEmacs addition: */
+      /* This function used to be in C, ostensibly so that
+	 it could be called here.  But that's just silly.
+	 There's no reason C code can't call out to Lisp
+	 code, and it's a lot cleaner this way. */
+      /*  Note: compute-buffer-file-truename is called for
+	  side-effect!  Its return value is intentionally
+	  ignored. */
+      if (!NILP (Ffboundp (Qcompute_buffer_file_truename)))
+	call1 (Qcompute_buffer_file_truename, wrap_buffer (buf));
       BUF_SAVE_MODIFF (buf) = BUF_MODIFF (buf);
       buf->auto_save_modified = BUF_MODIFF (buf);
       buf->saved_size = make_int (BUF_SIZE (buf));
 #ifdef CLASH_DETECTION
-      if (NILP (handler))
-	{
-	  if (!NILP (buf->file_truename))
-	    unlock_file (buf->file_truename);
-	  unlock_file (filename);
-	}
+      if (!NILP (buf->file_truename))
+	unlock_file (buf->file_truename);
+      unlock_file (filename);
 #endif /* CLASH_DETECTION */
       if (not_regular)
 	RETURN_UNGCPRO (Fsignal (Qfile_error,
@@ -3238,21 +3346,31 @@ build_annotations_unwind (Lisp_Object buf)
   return Qnil;
 }
 
-DEFUN ("write-region-internal", Fwrite_region_internal, 3, 7,
+DEFUN ("write-region-internal", Fwrite_region_internal, 3, 8,
        "r\nFWrite region to file: ", /*
 Write current region into specified file; no coding-system frobbing.
-This function is identical to `write-region' except for the handling
-of the CODESYS argument under XEmacs/Mule. (When Mule support is not
-present, both functions are identical and ignore the CODESYS argument.)
-If support for Mule exists in this Emacs, the file is encoded according
-to the value of CODESYS.  If this is nil, no code conversion occurs.
+
+This function is almost identical to `write-region'; see that function for
+documentation of the START, END, FILENAME, APPEND, VISIT, and LOCKNAME
+arguments.  CODESYS specifies the encoding to be used for the file; if it is
+nil, no code conversion occurs. (With `write-region' the coding system is
+determined automatically if not specified.)
+
+MUSTBENEW specifies that a check for an existing file of the same name
+should be made.  If it is 'excl, XEmacs will error on detecting such a file
+and never write it.  If it is some other non-nil value, the user will be
+prompted to confirm the overwriting of an existing file.  If it is nil,
+existing files are silently overwritten when file system permissions allow
+this.
 
 As a special kludge to support auto-saving, when START is nil START and
 END are set to the beginning and end, respectively, of the buffer,
 regardless of any restrictions.  Don't use this feature.  It is documented
 here because write-region handler writers need to be aware of it.
+
 */
-       (start, end, filename, append, visit, lockname, codesys))
+       (start, end, filename, append, visit, lockname, codesys,
+        mustbenew))
 {
   /* This function can call lisp.  GC checked 2000-07-28 ben */
   int desc;
@@ -3296,6 +3414,9 @@ here because write-region handler writers need to be aware of it.
 
   {
     Lisp_Object handler;
+
+    if (!NILP (mustbenew) && !EQ (mustbenew, Qexcl))
+      barf_or_query_if_file_exists (filename, "overwrite", 1, NULL);
 
     if (visiting_other)
       visit_file = Fexpand_file_name (visit, Qnil);
@@ -3358,12 +3479,14 @@ here because write-region handler writers need to be aware of it.
   desc = -1;
   if (!NILP (append))
     {
-      desc = qxe_open (XSTRING_DATA (fn), O_WRONLY | OPEN_BINARY, 0);
+      desc = qxe_open (XSTRING_DATA (fn), O_WRONLY | OPEN_BINARY
+                       | (EQ (mustbenew, Qexcl) ? O_EXCL : 0), 0);
     }
   if (desc < 0)
     {
       desc = qxe_open (XSTRING_DATA (fn),
-		       O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+		       O_WRONLY | (EQ (mustbenew, Qexcl) ? O_EXCL : O_TRUNC)
+                       | O_CREAT | OPEN_BINARY,
 		       auto_saving ? auto_save_mode_bits : CREAT_MODE);
     }
 
@@ -3444,7 +3567,7 @@ here because write-region handler writers need to be aware of it.
        Disk full in NFS may be reported here.  */
     /* mib says that closing the file will try to write as fast as NFS can do
        it, and that means the fsync here is not crucial for autosave files.  */
-    if (!auto_saving && fsync (desc) < 0
+    if (!auto_saving && !write_region_inhibit_fsync && fsync (desc) < 0
 	/* If fsync fails with EINTR, don't treat that as serious.  */
 	&& errno != EINTR)
       {
@@ -3932,11 +4055,11 @@ auto_save_1 (Lisp_Object UNUSED (ignored))
     Fwrite_region_internal (Qnil, Qnil, a, Qnil, Qlambda, Qnil,
 #if 1 /* #### Kyle wants it changed to not use escape-quoted.  Think
 	 carefully about how this works. */
-	        	    Qescape_quoted
+	        	    Qescape_quoted,
 #else
-			    current_buffer->buffer_file_coding_system
+			    current_buffer->buffer_file_coding_system,
 #endif
-			    );
+			    Qnil);
 }
 
 static Lisp_Object
@@ -4292,6 +4415,7 @@ syms_of_fileio (void)
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
   DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
+  DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);
   DEFSYMBOL (Qauto_save_error);
@@ -4434,6 +4558,15 @@ The operation for which `inhibit-file-name-handlers' is applicable.
 File name in which we write a list of all auto save file names.
 */ );
   Vauto_save_list_file_name = Qnil;
+
+#ifdef HAVE_FSYNC
+  DEFVAR_BOOL ("write-region-inhibit-fsync", &write_region_inhibit_fsync /*
+*Non-nil means don't call fsync in `write-region'.
+This variable affects calls to `write-region' as well as save commands.
+A non-nil value may result in data loss!
+*/ );
+  write_region_inhibit_fsync = 0;
+#endif
 
   DEFVAR_LISP ("auto-save-list-file-prefix", &Vauto_save_list_file_prefix /*
 Prefix for generating auto-save-list-file-name.

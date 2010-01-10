@@ -1,4 +1,24 @@
-/* Put the usual header here */
+/* The module API: core symbols that are visible to modules.
+   Copyright (C) 2008 Jerry James
+   Copyright (C) 2010 Ben Wing.
+
+This file is part of XEmacs.
+
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+XEmacs is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to the
+Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA. */
+
 /* The symbol to import/export is on the left.  If the symbol is not
    meant to be used directly, but a macro or inline function in the
    API expands to a form containing the symbol, then the macro or
@@ -9,7 +29,7 @@ NAME xemacs.exe
 EXPORTS
 /* Exported functions */
 acons
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 alloc_lrecord			/* alloc_lrecord_type */
 lrecord_subr			/* DEFSUBR */
 lrecord_symbol_value_forward	/* DEFVAR_SYMVAL_FWD */
@@ -17,9 +37,9 @@ lrecord_symbol_value_forward	/* DEFVAR_SYMVAL_FWD */
 mcpro_1				/* mcpro */
 #endif
 mc_alloc			/* DEFSUBR */
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 alloc_automanaged_lcrecord	/* old_alloc_lcrecord_type */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 apply1
 #ifdef USE_ASSERTIONS
 assert_failed			/* abort(), assert(), etc. */
@@ -83,6 +103,22 @@ eputenv
 #ifdef DEBUG_XEMACS
 eq_with_ebola_notice		/* EQ_WITH_EBOLA_NOTICE */
 #endif
+#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+error_check_cons
+#ifdef HAVE_LDAP
+error_check_ldap
+#endif
+error_check_opaque_ptr
+#ifdef HAVE_POSTGRESQL
+error_check_pgconn
+error_check_pgresult
+#endif
+error_check_string
+#ifdef NEW_GC
+error_check_string_direct_data
+error_check_string_indirect_data
+#endif
+#endif /* NEED_ERROR_CHECK_TYPES_INLINES */
 free_opaque_ptr
 get_coding_system_for_text_file
 intern
@@ -108,10 +144,11 @@ new_dfc_convert_copy_data	/* C_STRING_TO_EXTERNAL, ... */
 new_dfc_convert_malloc		/* C_STRING_TO_EXTERNAL_MALLOC, ... */
 new_dfc_convert_size		/* C_STRING_TO_EXTERNAL, ... */
 #ifdef MULE
-non_ascii_itext_copy_ichar	/* itext_copy_ichar */
 non_ascii_itext_ichar		/* itext_ichar */
 non_ascii_set_itext_ichar	/* set_itext_ichar */
-non_ascii_valid_ichar_p		/* valid_ichar_p */
+#ifndef UNICODE_INTERNAL
+old_mule_non_ascii_valid_ichar_p /* valid_ichar_p */
+#endif
 #endif
 out_of_memory			/* The postgresql module uses this */
 printing_unreadable_object
@@ -144,6 +181,9 @@ vector1
 vector2
 vector3
 warn_when_safe
+#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+wrap_record_1
+#endif
 write_c_string
 write_fmt_string
 write_fmt_string_lisp
@@ -187,6 +227,9 @@ Fset_buffer
 Fsignal
 Fthrow
 Fvector
+#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+XINT_1
+#endif
 
 /* Exported variables */
 __temp_alloca_size__		/* ALLOCA */
@@ -207,6 +250,7 @@ lrecord_markers			/* INIT_LRECORD_IMPLEMENTATION */
 lrecord_string			/* STRINGP */
 lrecord_symbol	 		/* SYMBOLP */
 lrecord_type_count		/* INIT_EXTERNAL_LRECORD_IMPLEMENTATION */
+lrecord_uid_counter
 need_to_check_c_alloca		/* ALLOCA */
 print_readably
 quit_check_signal_happened	/* QUITP */

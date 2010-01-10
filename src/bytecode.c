@@ -58,6 +58,45 @@ by Hallvard:
 #include "syntax.h"
 #include "window.h"
 
+#ifdef NEW_GC
+static Lisp_Object
+make_compiled_function_args (int totalargs)
+{
+  Lisp_Compiled_Function_Args *args;
+  args = (Lisp_Compiled_Function_Args *) 
+    alloc_lrecord 
+    (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				   Lisp_Object, args, totalargs),
+     &lrecord_compiled_function_args);
+  args->size = totalargs;
+  return wrap_compiled_function_args (args);
+}
+
+static Bytecount
+size_compiled_function_args (const void *lheader)
+{
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				       Lisp_Object, args,
+				       ((Lisp_Compiled_Function_Args *) 
+					lheader)->size);
+}
+
+static const struct memory_description compiled_function_args_description[] = {
+  { XD_LONG,              offsetof (Lisp_Compiled_Function_Args, size) },
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Compiled_Function_Args, args), 
+    XD_INDIRECT(0, 0) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("compiled-function-args",
+					compiled_function_args,
+					1, /*dumpable-flag*/
+					0, 0, 0, 0, 0,
+					compiled_function_args_description,
+					size_compiled_function_args,
+					Lisp_Compiled_Function_Args);
+#endif /* NEW_GC */
+
 EXFUN (Ffetch_bytecode, 1);
 
 Lisp_Object Qbyte_code, Qcompiled_functionp, Qinvalid_byte_code;
@@ -204,6 +243,12 @@ enum Opcode /* Byte codes */
   BlistN 		= 0257,
   BconcatN 		= 0260,
   BinsertN 		= 0261,
+
+  Bbind_multiple_value_limits   = 0262,         /* New in 21.5. */
+  Bmultiple_value_list_internal = 0263,         /* New in 21.5. */
+  Bmultiple_value_call          = 0264,         /* New in 21.5. */
+  Bthrow                        = 0265,         /* New in 21.5. */
+
   Bmember 		= 0266, /* new in v20 */
   Bassq 		= 0267, /* new in v20 */
 
@@ -256,8 +301,8 @@ bytecode_negate (Lisp_Object obj)
 #ifdef HAVE_RATIO
   if (RATIOP (obj)) RATIO_ARITH_RETURN (obj, neg);
 #endif
-#ifdef HAVE_BIG_FLOAT
-  if (BIGFLOAT_P (obj)) BIGFLOAT_ARITH_RETURN (obj, neg);
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (obj)) BIGFLOAT_ARITH_RETURN (obj, neg);
 #endif
 
   obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);
@@ -387,7 +432,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	    ival1 *= ival2; break;
 #endif
 	  case Bquo:
-	    if (ival2 == 0) Fsignal (Qarith_error, Qnil);
+	    if (ival2 == 0)
+	      signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	    ival1 /= ival2;
 	    break;
 	  case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
@@ -413,7 +459,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (bignum_sign (XBIGNUM_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  bignum_div (scratch_bignum, XBIGNUM_DATA (obj1),
 		      XBIGNUM_DATA (obj2));
 	  break;
@@ -441,7 +487,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (ratio_sign (XRATIO_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  ratio_div (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 	  break;
 	case Bmax:
@@ -473,7 +519,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  break;
 	case Bquo:
 	  if (bigfloat_sign (XBIGFLOAT_DATA (obj2)) == 0)
-	    Fsignal (Qarith_error, Qnil);
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
 			XBIGFLOAT_DATA (obj2));
 	  break;
@@ -495,7 +541,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	  case Bdiff: dval1 -= dval2; break;
 	  case Bmult: dval1 *= dval2; break;
 	  case Bquo:
-	    if (dval2 == 0.0) Fsignal (Qarith_error, Qnil);
+	    if (dval2 == 0.0)
+	      signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	    dval1 /= dval2;
 	    break;
 	  case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
@@ -540,7 +587,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	case Bdiff: ival1 -= ival2; break;
 	case Bmult: ival1 *= ival2; break;
 	case Bquo:
-	  if (ival2 == 0) Fsignal (Qarith_error, Qnil);
+	  if (ival2 == 0)
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  ival1 /= ival2;
 	  break;
 	case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
@@ -558,7 +606,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	case Bdiff: dval1 -= dval2; break;
 	case Bmult: dval1 *= dval2; break;
 	case Bquo:
-	  if (dval2 == 0) Fsignal (Qarith_error, Qnil);
+	  if (dval2 == 0)
+	    signal_error_2 (Qarith_error, "division by zero", obj1, obj2);
 	  dval1 /= dval2;
 	  break;
 	case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
@@ -614,15 +663,44 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 /* Push x onto the execution stack. */
 #define PUSH(x) (*++stack_ptr = (x))
 
-/* Pop a value off the execution stack. */
-#define POP (*stack_ptr--)
+/* Pop a value, which may be multiple, off the execution stack. */
+#define POP_WITH_MULTIPLE_VALUES (*stack_ptr--)
+
+/* Pop a value off the execution stack, treating multiple values as single. */
+#define POP (IGNORE_MULTIPLE_VALUES (POP_WITH_MULTIPLE_VALUES))
+
+#define DISCARD_PRESERVING_MULTIPLE_VALUES(n) (stack_ptr -= (n))
 
 /* Discard n values from the execution stack.  */
-#define DISCARD(n) (stack_ptr -= (n))
+#define DISCARD(n) do {                                         \
+    if (1 != multiple_value_current_limit)                      \
+      {                                                         \
+        int i, en = n;                                          \
+        for (i = 0; i < en; i++)                                \
+          {                                                     \
+            *stack_ptr = ignore_multiple_values (*stack_ptr);   \
+            stack_ptr--;                                        \
+          }                                                     \
+      }                                                         \
+    else                                                        \
+      {                                                         \
+        stack_ptr -= (n);                                       \
+      }                                                         \
+  } while (0)
+
+/* Get the value, which may be multiple, at the top of the execution stack;
+   and leave it there. */
+#define TOP_WITH_MULTIPLE_VALUES (*stack_ptr)
+
+#define TOP_ADDRESS (stack_ptr)
 
 /* Get the value which is at the top of the execution stack,
    but don't pop it. */
-#define TOP (*stack_ptr)
+#define TOP (IGNORE_MULTIPLE_VALUES (TOP_WITH_MULTIPLE_VALUES))
+
+#define TOP_LVALUE (*stack_ptr)
+
+
 
 /* See comment before the big switch in execute_optimized_program(). */
 #define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
@@ -820,7 +898,8 @@ execute_optimized_program (const Opbyte *program,
 		Fput (TOP, Qbyte_code_meter, make_int (XINT (val) + 1));
 	    }
 #endif
-	  TOP = Ffuncall (n + 1, &TOP);
+          TOP_LVALUE = TOP; /* Ignore multiple values. */
+	  TOP_LVALUE = Ffuncall (n + 1, TOP_ADDRESS);
 	  break;
 
 	case Bunbind:
@@ -856,7 +935,8 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bgotoifnilelsepop:
-	  if (NILP (TOP))
+	  /* Discard any multiple value: */
+	  if (NILP (TOP_LVALUE = TOP))
 	    JUMP;
 	  else
 	    {
@@ -866,7 +946,8 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bgotoifnonnilelsepop:
-	  if (!NILP (TOP))
+	  /* Discard any multiple value: */
+	  if (!NILP (TOP_LVALUE = TOP))
 	    JUMP;
 	  else
 	    {
@@ -895,7 +976,7 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case BRgotoifnilelsepop:
-	  if (NILP (TOP))
+	  if (NILP (TOP_LVALUE = TOP))
 	    JUMPR;
 	  else
 	    {
@@ -905,7 +986,7 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case BRgotoifnonnilelsepop:
-	  if (!NILP (TOP))
+	  if (!NILP (TOP_LVALUE = TOP))
 	    JUMPR;
 	  else
 	    {
@@ -921,7 +1002,7 @@ execute_optimized_program (const Opbyte *program,
 	  if (specpdl_depth() != speccount)
 	    invalid_byte_code ("unbalanced specbinding stack", Qunbound);
 #endif
-	  return TOP;
+	  return TOP_WITH_MULTIPLE_VALUES;
 
 	case Bdiscard:
 	  DISCARD (1);
@@ -929,7 +1010,7 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bdup:
 	  {
-	    Lisp_Object arg = TOP;
+	    Lisp_Object arg = TOP_WITH_MULTIPLE_VALUES;
 	    PUSH (arg);
 	    break;
 	  }
@@ -939,17 +1020,22 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bcar:
-	  /* Fcar can GC via wrong_type_argument. */
-	  /* GCPRO_STACK; */
-	  TOP = CONSP (TOP) ? XCAR (TOP) : Fcar (TOP);
-	  break;
+          {
+            /* Fcar can GC via wrong_type_argument. */
+            /* GCPRO_STACK; */
+            Lisp_Object arg = TOP;
+            TOP_LVALUE = CONSP (arg) ? XCAR (arg) : Fcar (arg);
+            break;
+          }
 
 	case Bcdr:
-	  /* Fcdr can GC via wrong_type_argument. */
-	  /* GCPRO_STACK; */
-	  TOP = CONSP (TOP) ? XCDR (TOP) : Fcdr (TOP);
-	  break;
-
+          {
+            /* Fcdr can GC via wrong_type_argument. */
+            /* GCPRO_STACK; */
+            Lisp_Object arg = TOP;
+            TOP_LVALUE = CONSP (arg) ? XCDR (arg) : Fcdr (arg);
+            break;
+          }
 
 	case Bunbind_all:
 	  /* To unbind back to the beginning of this frame.  Not used yet,
@@ -962,62 +1048,62 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg = POP;
 	    /* Fcar and Fnthcdr can GC via wrong_type_argument. */
 	    /* GCPRO_STACK; */
-	    TOP = Fcar (Fnthcdr (TOP, arg));
+	    TOP_LVALUE = Fcar (Fnthcdr (TOP, arg));
 	    break;
 	  }
 
 	case Bsymbolp:
-	  TOP = SYMBOLP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = SYMBOLP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bconsp:
-	  TOP = CONSP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = CONSP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bstringp:
-	  TOP = STRINGP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = STRINGP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Blistp:
-	  TOP = LISTP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = LISTP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bnumberp:
 #ifdef WITH_NUMBER_TYPES
-	  TOP = NUMBERP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = NUMBERP (TOP) ? Qt : Qnil;
 #else
-	  TOP = INT_OR_FLOATP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = INT_OR_FLOATP (TOP) ? Qt : Qnil;
 #endif
 	  break;
 
 	case Bintegerp:
 #ifdef HAVE_BIGNUM
-	  TOP = INTEGERP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = INTEGERP (TOP) ? Qt : Qnil;
 #else
-	  TOP = INTP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = INTP (TOP) ? Qt : Qnil;
 #endif
 	  break;
 
 	case Beq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = EQ_WITH_EBOLA_NOTICE (TOP, arg) ? Qt : Qnil;
+	    TOP_LVALUE = EQ_WITH_EBOLA_NOTICE (TOP, arg) ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bnot:
-	  TOP = NILP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = NILP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bcons:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fcons (TOP, arg);
+	    TOP_LVALUE = Fcons (TOP, arg);
 	    break;
 	  }
 
 	case Blist1:
-	  TOP = Fcons (TOP, Qnil);
+	  TOP_LVALUE = Fcons (TOP, Qnil);
 	  break;
 
 
@@ -1040,7 +1126,7 @@ execute_optimized_program (const Opbyte *program,
 		DISCARD (1);
 		goto list_loop;
 	      }
-	    TOP = list;
+	    TOP_LVALUE = list;
 	    break;
 	  }
 
@@ -1058,101 +1144,107 @@ execute_optimized_program (const Opbyte *program,
 	  DISCARD (n - 1);
 	  /* Apparently `concat' can GC; Fconcat GCPROs its arguments. */
 	  /* GCPRO_STACK; */
-	  TOP = Fconcat (n, &TOP);
+          TOP_LVALUE = TOP; /* Ignore multiple values. */
+	  TOP_LVALUE = Fconcat (n, TOP_ADDRESS);
 	  break;
 
 
 	case Blength:
-	  TOP = Flength (TOP);
+	  TOP_LVALUE = Flength (TOP);
 	  break;
 
 	case Baset:
 	  {
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = POP;
-	    TOP = Faset (TOP, arg1, arg2);
+	    TOP_LVALUE = Faset (TOP, arg1, arg2);
 	    break;
 	  }
 
 	case Bsymbol_value:
 	  /* Why does this need GCPRO_STACK?  If not, remove others, too. */
 	  /* GCPRO_STACK; */
-	  TOP = Fsymbol_value (TOP);
+	  TOP_LVALUE = Fsymbol_value (TOP);
 	  break;
 
 	case Bsymbol_function:
-	  TOP = Fsymbol_function (TOP);
+	  TOP_LVALUE = Fsymbol_function (TOP);
 	  break;
 
 	case Bget:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fget (TOP, arg, Qnil);
+	    TOP_LVALUE = Fget (TOP, arg, Qnil);
 	    break;
 	  }
 
 	case Bsub1:
+          {
 #ifdef HAVE_BIGNUM
-	  TOP = Fsub1 (TOP);
+            TOP_LVALUE = Fsub1 (TOP);
 #else
-	  TOP = INTP (TOP) ? INT_MINUS1 (TOP) : Fsub1 (TOP);
+            Lisp_Object arg = TOP;
+            TOP_LVALUE = INTP (arg) ? INT_MINUS1 (arg) : Fsub1 (arg);
 #endif
 	  break;
-
+          }
 	case Badd1:
+          {
 #ifdef HAVE_BIGNUM
-	  TOP = Fadd1 (TOP);
+            TOP_LVALUE = Fadd1 (TOP);
 #else
-	  TOP = INTP (TOP) ? INT_PLUS1 (TOP) : Fadd1 (TOP);
+            Lisp_Object arg = TOP;
+            TOP_LVALUE = INTP (arg) ? INT_PLUS1 (arg) : Fadd1 (arg);
 #endif
 	  break;
-
+          }
 
 	case Beqlsign:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithcompare (TOP, arg) == 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) == 0 ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bgtr:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithcompare (TOP, arg) > 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) > 0 ? Qt : Qnil;
 	    break;
 	  }
 
 	case Blss:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithcompare (TOP, arg) < 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) < 0 ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bleq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithcompare (TOP, arg) <= 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) <= 0 ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bgeq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithcompare (TOP, arg) >= 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) >= 0 ? Qt : Qnil;
 	    break;
 	  }
 
 
 	case Bnegate:
-	  TOP = bytecode_negate (TOP);
+	  TOP_LVALUE = bytecode_negate (TOP);
 	  break;
 
 	case Bnconc:
 	  DISCARD (1);
 	  /* nconc2 GCPROs before calling this. */
 	  /* GCPRO_STACK; */
-	  TOP = bytecode_nconc2 (&TOP);
+          TOP_LVALUE = TOP; /* Ignore multiple values. */
+	  TOP_LVALUE = bytecode_nconc2 (TOP_ADDRESS);
 	  break;
 
 	case Bplus:
@@ -1160,9 +1252,9 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
 #ifdef HAVE_BIGNUM
-	    TOP = bytecode_arithop (arg1, arg2, opcode);
+	    TOP_LVALUE = bytecode_arithop (arg1, arg2, opcode);
 #else
-	    TOP = INTP (arg1) && INTP (arg2) ?
+	    TOP_LVALUE = INTP (arg1) && INTP (arg2) ?
 	      INT_PLUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 #endif
@@ -1174,9 +1266,9 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
 #ifdef HAVE_BIGNUM
-	    TOP = bytecode_arithop (arg1, arg2, opcode);
+	    TOP_LVALUE = bytecode_arithop (arg1, arg2, opcode);
 #else
-	    TOP = INTP (arg1) && INTP (arg2) ?
+	    TOP_LVALUE = INTP (arg1) && INTP (arg2) ?
 	      INT_MINUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 #endif
@@ -1189,7 +1281,7 @@ execute_optimized_program (const Opbyte *program,
 	case Bmin:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = bytecode_arithop (TOP, arg, opcode);
+	    TOP_LVALUE = bytecode_arithop (TOP, arg, opcode);
 	    break;
 	  }
 
@@ -1200,7 +1292,8 @@ execute_optimized_program (const Opbyte *program,
 	case Binsert:
 	  /* Says it can GC. */
 	  /* GCPRO_STACK; */
-	  TOP = Finsert (1, &TOP);
+          TOP_LVALUE = TOP; /* Ignore multiple values. */
+	  TOP_LVALUE = Finsert (1, TOP_ADDRESS);
 	  break;
 
 	case BinsertN:
@@ -1208,20 +1301,21 @@ execute_optimized_program (const Opbyte *program,
 	  DISCARD (n - 1);
 	  /* See Binsert. */
 	  /* GCPRO_STACK; */
-	  TOP = Finsert (n, &TOP);
+          TOP_LVALUE = TOP; /* Ignore multiple values. */
+	  TOP_LVALUE = Finsert (n, TOP_ADDRESS);
 	  break;
 
 	case Baref:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Faref (TOP, arg);
+	    TOP_LVALUE = Faref (TOP, arg);
 	    break;
 	  }
 
 	case Bmemq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fmemq (TOP, arg);
+	    TOP_LVALUE = Fmemq (TOP, arg);
 	    break;
 	  }
 
@@ -1230,7 +1324,7 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg = POP;
 	    /* Fset may call magic handlers */
 	    /* GCPRO_STACK; */
-	    TOP = Fset (TOP, arg);
+	    TOP_LVALUE = Fset (TOP, arg);
 	    break;
 	  }
 
@@ -1239,21 +1333,21 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg = POP;
 	    /* Can QUIT, so can GC, right? */
 	    /* GCPRO_STACK; */
-	    TOP = Fequal (TOP, arg);
+	    TOP_LVALUE = Fequal (TOP, arg);
 	    break;
 	  }
 
 	case Bnthcdr:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fnthcdr (TOP, arg);
+	    TOP_LVALUE = Fnthcdr (TOP, arg);
 	    break;
 	  }
 
 	case Belt:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Felt (TOP, arg);
+	    TOP_LVALUE = Felt (TOP, arg);
 	    break;
 	  }
 
@@ -1262,12 +1356,12 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg = POP;
 	    /* Can QUIT, so can GC, right? */
 	    /* GCPRO_STACK; */
-	    TOP = Fmember (TOP, arg);
+	    TOP_LVALUE = Fmember (TOP, arg);
 	    break;
 	  }
 
 	case Bgoto_char:
-	  TOP = Fgoto_char (TOP, Qnil);
+	  TOP_LVALUE = Fgoto_char (TOP, Qnil);
 	  break;
 
 	case Bcurrent_buffer:
@@ -1282,7 +1376,7 @@ execute_optimized_program (const Opbyte *program,
 	  /* #### WAG: set-buffer may cause Fset's of buffer locals
 	     Didn't prevent crash. :-( */
 	  /* GCPRO_STACK; */
-	  TOP = Fset_buffer (TOP);
+	  TOP_LVALUE = Fset_buffer (TOP);
 	  break;
 
 	case Bpoint_max:
@@ -1298,41 +1392,41 @@ execute_optimized_program (const Opbyte *program,
 	    Lisp_Object arg = POP;
 	    /* Can QUIT, so can GC, right? */
 	    /* GCPRO_STACK; */
-	    TOP = Fskip_chars_forward (TOP, arg, Qnil);
+	    TOP_LVALUE = Fskip_chars_forward (TOP, arg, Qnil);
 	    break;
 	  }
 
 	case Bassq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fassq (TOP, arg);
+	    TOP_LVALUE = Fassq (TOP, arg);
 	    break;
 	  }
 
 	case Bsetcar:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fsetcar (TOP, arg);
+	    TOP_LVALUE = Fsetcar (TOP, arg);
 	    break;
 	  }
 
 	case Bsetcdr:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP = Fsetcdr (TOP, arg);
+	    TOP_LVALUE = Fsetcdr (TOP, arg);
 	    break;
 	  }
 
 	case Bnreverse:
-	  TOP = bytecode_nreverse (TOP);
+	  TOP_LVALUE = bytecode_nreverse (TOP);
 	  break;
 
 	case Bcar_safe:
-	  TOP = CONSP (TOP) ? XCAR (TOP) : Qnil;
+	  TOP_LVALUE = CONSP (TOP) ? XCAR (TOP) : Qnil;
 	  break;
 
 	case Bcdr_safe:
-	  TOP = CONSP (TOP) ? XCDR (TOP) : Qnil;
+	  TOP_LVALUE = CONSP (TOP) ? XCDR (TOP) : Qnil;
 	  break;
 
 	}
@@ -1351,6 +1445,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 		     const Opbyte *UNUSED (program_ptr),
 		     Opcode opcode)
 {
+  REGISTER int n;
+
   switch (opcode)
     {
 
@@ -1359,12 +1455,16 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 			     save_excursion_save ());
       break;
 
+      /* This bytecode will eventually go away, once we no longer encounter
+         byte code from 21.4. In 21.5.10 and newer, save-window-excursion is
+         a macro. */
     case Bsave_window_excursion:
       {
 	int count = specpdl_depth ();
-	record_unwind_protect (save_window_excursion_unwind,
-			       call1 (Qcurrent_window_configuration, Qnil));
-	TOP = Fprogn (TOP);
+	record_unwind_protect (Feval,
+                               list2 (Qset_window_configuration,
+                                      call0 (Qcurrent_window_configuration)));
+	TOP_LVALUE = Fprogn (TOP);
 	unbind_to (count);
 	break;
       }
@@ -1377,14 +1477,14 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
     case Bcatch:
       {
 	Lisp_Object arg = POP;
-	TOP = internal_catch (TOP, Feval, arg, 0, 0, 0);
+	TOP_LVALUE = internal_catch (TOP, Feval, arg, 0, 0, 0);
 	break;
       }
 
     case Bskip_chars_backward:
       {
 	Lisp_Object arg = POP;
-	TOP = Fskip_chars_backward (TOP, arg, Qnil);
+	TOP_LVALUE = Fskip_chars_backward (TOP, arg, Qnil);
 	break;
       }
 
@@ -1396,7 +1496,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
 	Lisp_Object arg2 = POP; /* handlers */
 	Lisp_Object arg1 = POP; /* bodyform */
-	TOP = condition_case_3 (arg1, TOP, arg2);
+	TOP_LVALUE = condition_case_3 (arg1, TOP, arg2);
 	break;
       }
 
@@ -1404,51 +1504,51 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
 	Lisp_Object arg2 = POP;
 	Lisp_Object arg1 = POP;
-	TOP = Fset_marker (TOP, arg1, arg2);
+	TOP_LVALUE = Fset_marker (TOP, arg1, arg2);
 	break;
       }
 
     case Brem:
       {
 	Lisp_Object arg = POP;
-	TOP = Frem (TOP, arg);
+	TOP_LVALUE = Frem (TOP, arg);
 	break;
       }
 
     case Bmatch_beginning:
-      TOP = Fmatch_beginning (TOP);
+      TOP_LVALUE = Fmatch_beginning (TOP);
       break;
 
     case Bmatch_end:
-      TOP = Fmatch_end (TOP);
+      TOP_LVALUE = Fmatch_end (TOP);
       break;
 
     case Bupcase:
-      TOP = Fupcase (TOP, Qnil);
+      TOP_LVALUE = Fupcase (TOP, Qnil);
       break;
 
     case Bdowncase:
-      TOP = Fdowncase (TOP, Qnil);
+      TOP_LVALUE = Fdowncase (TOP, Qnil);
       break;
 
     case Bfset:
       {
 	Lisp_Object arg = POP;
-	TOP = Ffset (TOP, arg);
+	TOP_LVALUE = Ffset (TOP, arg);
 	break;
       }
 
     case Bstring_equal:
       {
 	Lisp_Object arg = POP;
-	TOP = Fstring_equal (TOP, arg);
+	TOP_LVALUE = Fstring_equal (TOP, arg);
 	break;
       }
 
     case Bstring_lessp:
       {
 	Lisp_Object arg = POP;
-	TOP = Fstring_lessp (TOP, arg);
+	TOP_LVALUE = Fstring_lessp (TOP, arg);
 	break;
       }
 
@@ -1456,7 +1556,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
 	Lisp_Object arg2 = POP;
 	Lisp_Object arg1 = POP;
-	TOP = Fsubstring (TOP, arg1, arg2);
+	TOP_LVALUE = Fsubstring (TOP, arg1, arg2);
 	break;
       }
 
@@ -1465,11 +1565,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       break;
 
     case Bchar_after:
-      TOP = Fchar_after (TOP, Qnil);
+      TOP_LVALUE = Fchar_after (TOP, Qnil);
       break;
 
     case Bindent_to:
-      TOP = Findent_to (TOP, Qnil, Qnil);
+      TOP_LVALUE = Findent_to (TOP, Qnil, Qnil);
       break;
 
     case Bwiden:
@@ -1510,56 +1610,56 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       break;
 
     case Bforward_char:
-      TOP = Fforward_char (TOP, Qnil);
+      TOP_LVALUE = Fforward_char (TOP, Qnil);
       break;
 
     case Bforward_word:
-      TOP = Fforward_word (TOP, Qnil);
+      TOP_LVALUE = Fforward_word (TOP, Qnil);
       break;
 
     case Bforward_line:
-      TOP = Fforward_line (TOP, Qnil);
+      TOP_LVALUE = Fforward_line (TOP, Qnil);
       break;
 
     case Bchar_syntax:
-      TOP = Fchar_syntax (TOP, Qnil);
+      TOP_LVALUE = Fchar_syntax (TOP, Qnil);
       break;
 
     case Bbuffer_substring:
       {
 	Lisp_Object arg = POP;
-	TOP = Fbuffer_substring (TOP, arg, Qnil);
+	TOP_LVALUE = Fbuffer_substring (TOP, arg, Qnil);
 	break;
       }
 
     case Bdelete_region:
       {
 	Lisp_Object arg = POP;
-	TOP = Fdelete_region (TOP, arg, Qnil);
+	TOP_LVALUE = Fdelete_region (TOP, arg, Qnil);
 	break;
       }
 
     case Bnarrow_to_region:
       {
 	Lisp_Object arg = POP;
-	TOP = Fnarrow_to_region (TOP, arg, Qnil);
+	TOP_LVALUE = Fnarrow_to_region (TOP, arg, Qnil);
 	break;
       }
 
     case Bend_of_line:
-      TOP = Fend_of_line (TOP, Qnil);
+      TOP_LVALUE = Fend_of_line (TOP, Qnil);
       break;
 
     case Btemp_output_buffer_setup:
       temp_output_buffer_setup (TOP);
-      TOP = Vstandard_output;
+      TOP_LVALUE = Vstandard_output;
       break;
 
     case Btemp_output_buffer_show:
       {
 	Lisp_Object arg = POP;
 	temp_output_buffer_show (TOP, Qnil);
-	TOP = arg;
+	TOP_LVALUE = arg;
 	/* GAG ME!! */
 	/* pop binding of standard-output */
 	unbind_to (specpdl_depth() - 1);
@@ -1569,36 +1669,76 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
     case Bold_eq:
       {
 	Lisp_Object arg = POP;
-	TOP = HACKEQ_UNSAFE (TOP, arg) ? Qt : Qnil;
+	TOP_LVALUE = HACKEQ_UNSAFE (TOP, arg) ? Qt : Qnil;
 	break;
       }
 
     case Bold_memq:
       {
 	Lisp_Object arg = POP;
-	TOP = Fold_memq (TOP, arg);
+	TOP_LVALUE = Fold_memq (TOP, arg);
 	break;
       }
 
     case Bold_equal:
       {
 	Lisp_Object arg = POP;
-	TOP = Fold_equal (TOP, arg);
+	TOP_LVALUE = Fold_equal (TOP, arg);
 	break;
       }
 
     case Bold_member:
       {
 	Lisp_Object arg = POP;
-	TOP = Fold_member (TOP, arg);
+	TOP_LVALUE = Fold_member (TOP, arg);
 	break;
       }
 
     case Bold_assq:
       {
 	Lisp_Object arg = POP;
-	TOP = Fold_assq (TOP, arg);
+	TOP_LVALUE = Fold_assq (TOP, arg);
 	break;
+      }
+
+    case Bbind_multiple_value_limits:
+      {
+        Lisp_Object upper = POP, first = TOP, speccount;
+
+        CHECK_NATNUM (upper);
+        CHECK_NATNUM (first);
+
+        speccount = make_int (bind_multiple_value_limits (XINT (first),
+                                                          XINT (upper)));
+        PUSH (upper);
+        PUSH (speccount);
+        break;
+      }
+
+    case Bmultiple_value_call:
+      {
+        n = XINT (POP);
+        DISCARD_PRESERVING_MULTIPLE_VALUES (n - 1);
+        /* Discard multiple values for the first (function) argument: */
+        TOP_LVALUE = TOP;
+        TOP_LVALUE = multiple_value_call (n, TOP_ADDRESS);
+        break;
+      }
+
+    case Bmultiple_value_list_internal:
+      {
+        DISCARD_PRESERVING_MULTIPLE_VALUES (3);
+        TOP_LVALUE = multiple_value_list_internal (4, TOP_ADDRESS);
+        break;
+      }
+
+    case Bthrow:
+      {
+        Lisp_Object arg = POP_WITH_MULTIPLE_VALUES;
+        
+        /* We never throw to a catch tag that is a multiple value: */
+        throw_or_bomb_out (TOP, arg, 0, Qnil, Qnil);
+        break;
       }
 
     default:
@@ -2022,13 +2162,21 @@ optimize_compiled_function (Lisp_Object compiled_function)
     }
   
     if (totalargs)
+#ifdef NEW_GC
+      f->arguments = make_compiled_function_args (totalargs); 
+#else /* not NEW_GC */
       f->args = xnew_array (Lisp_Object, totalargs);
+#endif /* not NEW_GC */
 
     {
       LIST_LOOP_2 (arg, f->arglist)
 	{
 	  if (!EQ (arg, Qand_optional) && !EQ (arg, Qand_rest))
+#ifdef NEW_GC
+	    XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i++] = arg;
+#else /* not NEW_GC */
 	    f->args[i++] = arg;
+#endif /* not NEW_GC */
 	}
     }
 
@@ -2061,6 +2209,7 @@ optimize_compiled_function (Lisp_Object compiled_function)
 /************************************************************************/
 /*		The compiled-function object type			*/
 /************************************************************************/
+
 static void
 print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
 			 int escapeflag)
@@ -2143,7 +2292,11 @@ mark_compiled_function (Lisp_Object obj)
   mark_object (f->annotated);
 #endif
   for (i = 0; i < f->args_in_array; i++)
+#ifdef NEW_GC
+    mark_object (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i]);
+#else /* not NEW_GC */
     mark_object (f->args[i]);
+#endif /* not NEW_GC */
 
   /* tail-recurse on constants */
   return f->constants;
@@ -2179,8 +2332,12 @@ compiled_function_hash (Lisp_Object obj, int depth)
 
 static const struct memory_description compiled_function_description[] = {
   { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
-  { XD_BLOCK_PTR,  offsetof (Lisp_Compiled_Function, args),
-    XD_INDIRECT (0, 0), { &Lisp_Object_description } },
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arguments) },
+#else /* not NEW_GC */
+  { XD_BLOCK_PTR,   offsetof (Lisp_Compiled_Function, args),
+    XD_INDIRECT (0, 0), { &lisp_object_description } },
+#endif /* not NEW_GC */
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },
@@ -2191,29 +2348,6 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-#ifdef MC_ALLOC
-static void
-finalize_compiled_function (void *header, int for_disksave)
-{
-  if (!for_disksave)
-    {
-      struct Lisp_Compiled_Function *cf = 
-	(struct Lisp_Compiled_Function *) header;
-      if (cf->args_in_array) 
-      	xfree (cf->args, Lisp_Object *);
-    }
-}
-
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
-				     mark_compiled_function,
-				     print_compiled_function,
-				     finalize_compiled_function,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
-#else /* not MC_ALLOC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     1, /*dumpable_flag*/
 				     mark_compiled_function,
@@ -2222,7 +2356,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
-#endif /* not MC_ALLOC */
+
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 Return t if OBJECT is a byte-compiled function object.
@@ -2594,6 +2728,9 @@ void
 syms_of_bytecode (void)
 {
   INIT_LRECORD_IMPLEMENTATION (compiled_function);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (compiled_function_args);
+#endif /* NEW_GC */
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
   DEFSYMBOL (Qbyte_code);

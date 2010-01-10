@@ -889,6 +889,20 @@
       (check-function-argcounts '(lambda ,arglist nil) ,min ,max)
       (check-function-argcounts (byte-compile '(lambda ,arglist nil)) ,min ,max))))
 
+;; Test subr-arity. 
+(loop for (function-name arity) in
+  '((let (1 . unevalled))
+    (prog1 (1 . unevalled))
+    (list (0 . many))
+    (type-of (1 . 1))
+    (garbage-collect (0 . 0)))
+  do (Assert (equal (subr-arity (symbol-function function-name)) arity)))
+  
+(Check-Error wrong-type-argument (subr-arity
+                                  (lambda () (message "Hi there!"))))
+  
+(Check-Error wrong-type-argument (subr-arity nil))
+
 ;;-----------------------------------------------------
 ;; Detection of cyclic variable indirection loops
 ;;-----------------------------------------------------
@@ -1279,6 +1293,10 @@
 (Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
 (Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
 
+;; These used to crash. 
+(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
+(Assert (eql (read (format "%.1000d" 1)) 1))
+
 ;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
 ;;; What to do if "%u" is used with a negative number?
 ;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an
@@ -1295,3 +1313,786 @@
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))
 (Assert (all-completions " " '((" hidden" . "object"))))
+
+(let* ((literal-with-uninterned
+	'(first-element
+	  [#1=#:G32976 #2=#:G32974 #3=#:G32971 #4=#:G32969 alias
+		       #s(hash-table size 256 data (969 ?\xF9 55 ?7 166 ?\xA6))
+		       #5=#:G32970 #6=#:G32972]))
+       (print-readably t)
+       (print-gensym t)
+       (printed-with-uninterned (prin1-to-string literal-with-uninterned))
+       (awkward-regexp "#1=#")
+       (first-match-start (string-match awkward-regexp
+					printed-with-uninterned)))
+  (Assert (null (string-match awkward-regexp printed-with-uninterned
+			      (1+ first-match-start)))))
+
+(let ((char-table-with-string #s(char-table data (?\x00 "text")))
+      (char-table-with-symbol #s(char-table data (?\x00 text))))
+  (Assert (not (string-equal (prin1-to-string char-table-with-string)
+                             (prin1-to-string char-table-with-symbol)))
+          "Check that char table elements are quoted correctly when printing"))
+
+
+(let ((test-file-name
+       (make-temp-file (expand-file-name "sR4KDwU" (temp-directory))
+		       nil ".el")))
+  (find-file test-file-name)
+  (erase-buffer)
+  (insert 
+       "\
+;; Lisp should not be able to modify #$, which is
+;; Vload_file_name_internal of lread.c.
+(Check-Error setting-constant (aset #$ 0 ?\\ ))
+
+;; But modifying load-file-name should work:
+(let ((new-char ?\\ )
+      old-char)
+  (setq old-char (aref load-file-name 0))
+  (if (= new-char old-char)
+      (setq new-char ?/))
+  (aset load-file-name 0 new-char)
+  (Assert (= new-char (aref load-file-name 0))
+	  \"Check that we can modify the string value of load-file-name\"))
+
+(let* ((new-load-file-name \"hi there\")
+       (load-file-name new-load-file-name))
+  (Assert (eq new-load-file-name load-file-name)
+	  \"Checking that we can bind load-file-name successfully.\"))
+
+")
+   (write-region (point-min) (point-max) test-file-name nil 'quiet)
+   (set-buffer-modified-p nil)
+   (kill-buffer nil)
+   (load test-file-name nil t nil)
+   (delete-file test-file-name))
+
+(flet ((cl-floor (x &optional y)
+	 (let ((q (floor x y)))
+	   (list q (- x (if y (* y q) q)))))
+       (cl-ceiling (x &optional y)
+	 (let ((res (cl-floor x y)))
+	   (if (= (car (cdr res)) 0) res
+	     (list (1+ (car res)) (- (car (cdr res)) (or y 1))))))
+       (cl-truncate (x &optional y)
+	 (if (eq (>= x 0) (or (null y) (>= y 0)))
+	     (cl-floor x y) (cl-ceiling x y)))
+       (cl-round (x &optional y)
+	 (if y
+	     (if (and (integerp x) (integerp y))
+		 (let* ((hy (/ y 2))
+			(res (cl-floor (+ x hy) y)))
+		   (if (and (= (car (cdr res)) 0)
+			    (= (+ hy hy) y)
+			    (/= (% (car res) 2) 0))
+		       (list (1- (car res)) hy)
+		     (list (car res) (- (car (cdr res)) hy))))
+	       (let ((q (round (/ x y))))
+		 (list q (- x (* q y)))))
+	   (if (integerp x) (list x 0)
+	     (let ((q (round x)))
+	       (list q (- x q))))))
+       (Assert-rounding (first second &key
+			 one-floor-result two-floor-result 
+			 one-ffloor-result two-ffloor-result 
+			 one-ceiling-result two-ceiling-result
+			 one-fceiling-result two-fceiling-result
+			 one-round-result two-round-result
+			 one-fround-result two-fround-result
+			 one-truncate-result two-truncate-result
+			 one-ftruncate-result two-ftruncate-result)
+	 (Assert (equal one-floor-result (multiple-value-list
+					  (floor first)))
+		 (format "checking (floor %S) gives %S"
+			 first one-floor-result))
+	 (Assert (equal one-floor-result (multiple-value-list
+					  (floor first 1)))
+		 (format "checking (floor %S 1) gives %S"
+			 first one-floor-result))
+	 (Check-Error arith-error (floor first 0))
+	 (Check-Error arith-error (floor first 0.0))
+	 (Assert (equal two-floor-result (multiple-value-list
+					  (floor first second)))
+		 (format
+		  "checking (floor %S %S) gives %S"
+		  first second two-floor-result))
+	 (Assert (equal (cl-floor first second)
+			(multiple-value-list (floor first second)))
+		 (format
+		  "checking (floor %S %S) gives the same as the old code"
+		  first second))
+	 (Assert (equal one-ffloor-result (multiple-value-list
+					   (ffloor first)))
+		 (format "checking (ffloor %S) gives %S"
+			 first one-ffloor-result))
+	 (Assert (equal one-ffloor-result (multiple-value-list
+					   (ffloor first 1)))
+		 (format "checking (ffloor %S 1) gives %S"
+			 first one-ffloor-result))
+	 (Check-Error arith-error (ffloor first 0))
+	 (Check-Error arith-error (ffloor first 0.0))
+	 (Assert (equal two-ffloor-result (multiple-value-list
+					   (ffloor first second)))
+		 (format "checking (ffloor %S %S) gives %S"
+			 first second two-ffloor-result))
+	 (Assert (equal one-ceiling-result (multiple-value-list
+					    (ceiling first)))
+		 (format "checking (ceiling %S) gives %S"
+			 first one-ceiling-result))
+	 (Assert (equal one-ceiling-result (multiple-value-list
+					    (ceiling first 1)))
+		 (format "checking (ceiling %S 1) gives %S"
+			 first one-ceiling-result))
+	 (Check-Error arith-error (ceiling first 0))
+	 (Check-Error arith-error (ceiling first 0.0))
+	 (Assert (equal two-ceiling-result (multiple-value-list
+					    (ceiling first second)))
+		 (format "checking (ceiling %S %S) gives %S"
+			 first second two-ceiling-result))
+	 (Assert (equal (cl-ceiling first second)
+			(multiple-value-list (ceiling first second)))
+		 (format
+		  "checking (ceiling %S %S) gives the same as the old code"
+		  first second))
+	 (Assert (equal one-fceiling-result (multiple-value-list
+					     (fceiling first)))
+		 (format "checking (fceiling %S) gives %S"
+			 first one-fceiling-result))
+	 (Assert (equal one-fceiling-result (multiple-value-list
+					     (fceiling first 1)))
+		 (format "checking (fceiling %S 1) gives %S"
+			 first one-fceiling-result))
+	 (Check-Error arith-error (fceiling first 0))
+	 (Check-Error arith-error (fceiling first 0.0))
+	 (Assert (equal two-fceiling-result (multiple-value-list
+					  (fceiling first second)))
+		 (format "checking (fceiling %S %S) gives %S"
+			 first second two-fceiling-result))
+	 (Assert (equal one-round-result (multiple-value-list
+					  (round first)))
+		 (format "checking (round %S) gives %S"
+			 first one-round-result))
+	 (Assert (equal one-round-result (multiple-value-list
+					  (round first 1)))
+		 (format "checking (round %S 1) gives %S"
+			 first one-round-result))
+	 (Check-Error arith-error (round first 0))
+	 (Check-Error arith-error (round first 0.0))
+	 (Assert (equal two-round-result (multiple-value-list
+					  (round first second)))
+		 (format "checking (round %S %S) gives %S"
+			 first second two-round-result))
+	 (Assert (equal one-fround-result (multiple-value-list
+					   (fround first)))
+		 (format "checking (fround %S) gives %S"
+			 first one-fround-result))
+	 (Assert (equal one-fround-result (multiple-value-list
+					   (fround first 1)))
+		 (format "checking (fround %S 1) gives %S"
+			 first one-fround-result))
+	 (Check-Error arith-error (fround first 0))
+	 (Check-Error arith-error (fround first 0.0))
+	 (Assert (equal two-fround-result (multiple-value-list
+					   (fround first second)))
+		 (format "checking (fround %S %S) gives %S"
+			 first second two-fround-result))
+	 (Assert (equal (cl-round first second)
+			(multiple-value-list (round first second)))
+		 (format
+		  "checking (round %S %S) gives the same as the old code"
+		  first second))
+	 (Assert (equal one-truncate-result (multiple-value-list
+					     (truncate first)))
+		 (format "checking (truncate %S) gives %S"
+			 first one-truncate-result))
+	 (Assert (equal one-truncate-result (multiple-value-list
+					     (truncate first 1)))
+		 (format "checking (truncate %S 1) gives %S"
+			 first one-truncate-result))
+	 (Check-Error arith-error (truncate first 0))
+	 (Check-Error arith-error (truncate first 0.0))
+	 (Assert (equal two-truncate-result (multiple-value-list
+					     (truncate first second)))
+		 (format "checking (truncate %S %S) gives %S"
+			 first second two-truncate-result))
+	 (Assert (equal (cl-truncate first second)
+			(multiple-value-list (truncate first second)))
+		 (format
+		  "checking (truncate %S %S) gives the same as the old code"
+		  first second))
+	 (Assert (equal one-ftruncate-result (multiple-value-list
+					      (ftruncate first)))
+		 (format "checking (ftruncate %S) gives %S"
+			 first one-ftruncate-result))
+	 (Assert (equal one-ftruncate-result (multiple-value-list
+					      (ftruncate first 1)))
+		 (format "checking (ftruncate %S 1) gives %S"
+			 first one-ftruncate-result))
+	 (Check-Error arith-error (ftruncate first 0))
+	 (Check-Error arith-error (ftruncate first 0.0))
+	 (Assert (equal two-ftruncate-result (multiple-value-list
+					      (ftruncate first second)))
+		 (format "checking (ftruncate %S %S) gives %S"
+			 first second two-ftruncate-result)))
+       (Assert-rounding-floating (pie ee)
+	 (let ((pie-type (type-of pie)))
+	   (assert (eq pie-type (type-of ee)) t
+		   "This code assumes the two arguments have the same type.")
+	   (Assert-rounding pie ee
+  	    :one-floor-result (list 3 (- pie 3))
+            :two-floor-result (list 1 (- pie (* 1 ee)))
+            :one-ffloor-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-ffloor-result (list (coerce 1 pie-type) (- pie (* 1.0 ee)))
+            :one-ceiling-result (list 4 (- pie 4))
+            :two-ceiling-result (list 2 (- pie (* 2 ee)))
+            :one-fceiling-result (list (coerce 4 pie-type) (- pie 4.0))
+            :two-fceiling-result (list (coerce 2 pie-type) (- pie (* 2.0 ee)))
+            :one-round-result (list 3 (- pie 3))
+            :two-round-result (list 1 (- pie (* 1 ee)))
+            :one-fround-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-fround-result (list (coerce 1 pie-type) (- pie (* 1.0 ee)))
+            :one-truncate-result (list 3 (- pie 3))
+            :two-truncate-result (list 1 (- pie (* 1 ee)))
+            :one-ftruncate-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-ftruncate-result (list (coerce 1 pie-type)
+					(- pie (* 1.0 ee))))
+  	 (Assert-rounding pie (- ee)
+            :one-floor-result (list 3 (- pie 3))
+            :two-floor-result (list -2 (- pie (* -2 (- ee))))
+            :one-ffloor-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-ffloor-result (list (coerce -2 pie-type)
+				     (- pie (* -2.0 (- ee))))
+            :one-ceiling-result (list 4 (- pie 4))
+            :two-ceiling-result (list -1 (- pie (* -1 (- ee))))
+            :one-fceiling-result (list (coerce 4 pie-type) (- pie 4.0))
+            :two-fceiling-result (list (coerce -1 pie-type)
+				       (- pie (* -1.0 (- ee))))
+            :one-round-result (list 3 (- pie 3))
+            :two-round-result (list -1 (- pie (* -1 (- ee))))
+            :one-fround-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-fround-result (list (coerce -1 pie-type)
+				     (- pie (* -1.0 (- ee))))
+            :one-truncate-result (list 3 (- pie 3))
+            :two-truncate-result (list -1 (- pie (* -1 (- ee))))
+            :one-ftruncate-result (list (coerce 3 pie-type) (- pie 3.0))
+            :two-ftruncate-result (list (coerce -1 pie-type)
+					(- pie (* -1.0 (- ee)))))
+  	 (Assert-rounding (- pie) ee
+            :one-floor-result (list -4 (- (- pie) -4))
+            :two-floor-result (list -2 (- (- pie) (* -2 ee)))
+            :one-ffloor-result (list (coerce -4 pie-type) (- (- pie) -4.0))
+            :two-ffloor-result (list (coerce -2 pie-type)
+				     (- (- pie) (* -2.0 ee)))
+            :one-ceiling-result (list -3 (- (- pie) -3))
+            :two-ceiling-result (list -1 (- (- pie) (* -1 ee)))
+            :one-fceiling-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-fceiling-result (list (coerce -1 pie-type)
+				       (- (- pie) (* -1.0 ee)))
+            :one-round-result (list -3 (- (- pie) -3))
+            :two-round-result (list -1 (- (- pie) (* -1 ee)))
+            :one-fround-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-fround-result (list (coerce -1 pie-type)
+				     (- (- pie) (* -1.0 ee)))
+            :one-truncate-result (list -3 (- (- pie) -3))
+            :two-truncate-result (list -1 (- (- pie) (* -1 ee)))
+            :one-ftruncate-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-ftruncate-result (list (coerce -1 pie-type)
+					(- (- pie) (* -1.0 ee))))
+  	 (Assert-rounding (- pie) (- ee)
+            :one-floor-result (list -4 (- (- pie) -4))
+            :two-floor-result (list 1 (- (- pie) (* 1 (- ee))))
+            :one-ffloor-result (list (coerce -4 pie-type) (- (- pie) -4.0))
+            :two-ffloor-result (list (coerce 1 pie-type)
+				     (- (- pie) (* 1.0 (- ee))))
+            :one-ceiling-result (list -3 (- (- pie) -3))
+            :two-ceiling-result (list 2 (- (- pie) (* 2 (- ee))))
+            :one-fceiling-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-fceiling-result (list (coerce 2 pie-type)
+				       (- (- pie) (* 2.0 (- ee))))
+            :one-round-result (list -3 (- (- pie) -3))
+            :two-round-result (list 1 (- (- pie) (* 1 (- ee))))
+            :one-fround-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-fround-result (list (coerce 1 pie-type)
+				     (- (- pie) (* 1.0 (- ee))))
+            :one-truncate-result (list -3 (- (- pie) -3))
+            :two-truncate-result (list 1 (- (- pie) (* 1 (- ee))))
+            :one-ftruncate-result (list (coerce -3 pie-type) (- (- pie) -3.0))
+            :two-ftruncate-result (list (coerce 1 pie-type)
+					(- (- pie) (* 1.0 (- ee)))))
+  	 (Assert-rounding ee pie
+            :one-floor-result (list 2 (- ee 2))
+            :two-floor-result (list 0 ee)
+            :one-ffloor-result (list (coerce 2 pie-type) (- ee 2.0))
+            :two-ffloor-result (list (coerce 0 pie-type) ee)
+            :one-ceiling-result (list 3 (- ee 3))
+            :two-ceiling-result (list 1 (- ee pie))
+            :one-fceiling-result (list (coerce 3 pie-type) (- ee 3.0))
+            :two-fceiling-result (list (coerce 1 pie-type) (- ee pie))
+            :one-round-result (list 3 (- ee 3))
+            :two-round-result (list 1 (- ee (* 1 pie)))
+            :one-fround-result (list (coerce 3 pie-type) (- ee 3.0))
+            :two-fround-result (list (coerce 1 pie-type) (- ee (* 1.0 pie)))
+            :one-truncate-result (list 2 (- ee 2))
+            :two-truncate-result (list 0 ee)
+            :one-ftruncate-result (list (coerce 2 pie-type) (- ee 2.0))
+            :two-ftruncate-result (list (coerce 0 pie-type) ee))
+  	 (Assert-rounding ee (- pie)
+            :one-floor-result (list 2 (- ee 2))
+            :two-floor-result (list -1 (- ee (* -1 (- pie))))
+            :one-ffloor-result (list (coerce 2 pie-type) (- ee 2.0))
+            :two-ffloor-result (list (coerce -1 pie-type)
+				     (- ee (* -1.0 (- pie))))
+            :one-ceiling-result (list 3 (- ee 3))
+            :two-ceiling-result (list 0 ee)
+            :one-fceiling-result (list (coerce 3 pie-type) (- ee 3.0))
+            :two-fceiling-result (list (coerce 0 pie-type) ee)
+            :one-round-result (list 3 (- ee 3))
+            :two-round-result (list -1 (- ee (* -1 (- pie))))
+            :one-fround-result (list (coerce 3 pie-type) (- ee 3.0))
+            :two-fround-result (list (coerce -1 pie-type)
+				     (- ee (* -1.0 (- pie))))
+            :one-truncate-result (list 2 (- ee 2))
+            :two-truncate-result (list 0 ee)
+            :one-ftruncate-result (list (coerce 2 pie-type) (- ee 2.0))
+            :two-ftruncate-result (list (coerce 0 pie-type) ee)))))
+    ;; First, two integers: 
+  (Assert-rounding 27 8 :one-floor-result '(27 0) :two-floor-result '(3 3)
+    :one-ffloor-result '(27.0 0) :two-ffloor-result '(3.0 3)
+    :one-ceiling-result '(27 0) :two-ceiling-result '(4 -5)
+    :one-fceiling-result '(27.0 0) :two-fceiling-result '(4.0 -5)
+    :one-round-result '(27 0) :two-round-result '(3 3)
+    :one-fround-result '(27.0 0) :two-fround-result '(3.0 3)
+    :one-truncate-result '(27 0) :two-truncate-result '(3 3)
+    :one-ftruncate-result '(27.0 0) :two-ftruncate-result '(3.0 3))
+  (Assert-rounding 27 -8 :one-floor-result '(27 0)  :two-floor-result '(-4 -5)
+    :one-ffloor-result '(27.0 0) :two-ffloor-result '(-4.0 -5) 
+    :one-ceiling-result '(27 0) :two-ceiling-result '(-3 3)
+    :one-fceiling-result '(27.0 0)  :two-fceiling-result '(-3.0 3)
+    :one-round-result '(27 0) :two-round-result '(-3 3)
+    :one-fround-result '(27.0 0) :two-fround-result '(-3.0 3)
+    :one-truncate-result '(27 0) :two-truncate-result '(-3 3)
+    :one-ftruncate-result '(27.0 0)  :two-ftruncate-result '(-3.0 3))
+  (Assert-rounding -27 8
+    :one-floor-result '(-27 0) :two-floor-result '(-4 5)
+    :one-ffloor-result '(-27.0 0) :two-ffloor-result '(-4.0 5)
+    :one-ceiling-result '(-27 0) :two-ceiling-result '(-3 -3)
+    :one-fceiling-result '(-27.0 0) :two-fceiling-result '(-3.0 -3)
+    :one-round-result '(-27 0) :two-round-result '(-3 -3)
+    :one-fround-result '(-27.0 0) :two-fround-result '(-3.0 -3)
+    :one-truncate-result '(-27 0) :two-truncate-result '(-3 -3)
+    :one-ftruncate-result '(-27.0 0) :two-ftruncate-result '(-3.0 -3))
+  (Assert-rounding -27 -8
+    :one-floor-result '(-27 0) :two-floor-result '(3 -3)
+    :one-ffloor-result '(-27.0 0) :two-ffloor-result '(3.0 -3)
+    :one-ceiling-result '(-27 0) :two-ceiling-result '(4 5)
+    :one-fceiling-result '(-27.0 0) :two-fceiling-result '(4.0 5)
+    :one-round-result '(-27 0) :two-round-result '(3 -3)
+    :one-fround-result '(-27.0 0) :two-fround-result '(3.0 -3)
+    :one-truncate-result '(-27 0) :two-truncate-result '(3 -3)
+    :one-ftruncate-result '(-27.0 0) :two-ftruncate-result '(3.0 -3))
+  (Assert-rounding 8 27
+    :one-floor-result '(8 0) :two-floor-result '(0 8)
+    :one-ffloor-result '(8.0 0) :two-ffloor-result '(0.0 8)
+    :one-ceiling-result '(8 0) :two-ceiling-result '(1 -19)
+    :one-fceiling-result '(8.0 0) :two-fceiling-result '(1.0 -19)
+    :one-round-result '(8 0) :two-round-result '(0 8)
+    :one-fround-result '(8.0 0) :two-fround-result '(0.0 8)
+    :one-truncate-result '(8 0) :two-truncate-result '(0 8)
+    :one-ftruncate-result '(8.0 0) :two-ftruncate-result '(0.0 8))
+  (Assert-rounding 8 -27
+    :one-floor-result '(8 0) :two-floor-result '(-1 -19)
+    :one-ffloor-result '(8.0 0) :two-ffloor-result '(-1.0 -19)
+    :one-ceiling-result '(8 0) :two-ceiling-result '(0 8)
+    :one-fceiling-result '(8.0 0) :two-fceiling-result '(0.0 8)
+    :one-round-result '(8 0) :two-round-result '(0 8)
+    :one-fround-result '(8.0 0) :two-fround-result '(0.0 8)
+    :one-truncate-result '(8 0) :two-truncate-result '(0 8)
+    :one-ftruncate-result '(8.0 0) :two-ftruncate-result '(0.0 8))
+  (Assert-rounding -8 27
+    :one-floor-result '(-8 0) :two-floor-result '(-1 19)
+    :one-ffloor-result '(-8.0 0) :two-ffloor-result '(-1.0 19)
+    :one-ceiling-result '(-8 0) :two-ceiling-result '(0 -8)
+    :one-fceiling-result '(-8.0 0) :two-fceiling-result '(0.0 -8)
+    :one-round-result '(-8 0) :two-round-result '(0 -8)
+    :one-fround-result '(-8.0 0) :two-fround-result '(0.0 -8)
+    :one-truncate-result '(-8 0) :two-truncate-result '(0 -8)
+    :one-ftruncate-result '(-8.0 0) :two-ftruncate-result '(0.0 -8))
+  (Assert-rounding -8 -27
+    :one-floor-result '(-8 0) :two-floor-result '(0 -8)
+    :one-ffloor-result '(-8.0 0) :two-ffloor-result '(0.0 -8)
+    :one-ceiling-result '(-8 0) :two-ceiling-result '(1 19)
+    :one-fceiling-result '(-8.0 0) :two-fceiling-result '(1.0 19)
+    :one-round-result '(-8 0) :two-round-result '(0 -8)
+    :one-fround-result '(-8.0 0) :two-fround-result '(0.0 -8)
+    :one-truncate-result '(-8 0) :two-truncate-result '(0 -8)
+    :one-ftruncate-result '(-8.0 0) :two-ftruncate-result '(0.0 -8))
+  (Assert-rounding 32 4
+    :one-floor-result '(32 0) :two-floor-result '(8 0)
+    :one-ffloor-result '(32.0 0) :two-ffloor-result '(8.0 0)
+    :one-ceiling-result '(32 0) :two-ceiling-result '(8 0)
+    :one-fceiling-result '(32.0 0) :two-fceiling-result '(8.0 0)
+    :one-round-result '(32 0) :two-round-result '(8 0)
+    :one-fround-result '(32.0 0) :two-fround-result '(8.0 0)
+    :one-truncate-result '(32 0) :two-truncate-result '(8 0)
+    :one-ftruncate-result '(32.0 0) :two-ftruncate-result '(8.0 0))
+  (Assert-rounding 32 -4
+    :one-floor-result '(32 0) :two-floor-result '(-8 0)
+    :one-ffloor-result '(32.0 0) :two-ffloor-result '(-8.0 0)
+    :one-ceiling-result '(32 0) :two-ceiling-result '(-8 0)
+    :one-fceiling-result '(32.0 0) :two-fceiling-result '(-8.0 0)
+    :one-round-result '(32 0) :two-round-result '(-8 0)
+    :one-fround-result '(32.0 0) :two-fround-result '(-8.0 0)
+    :one-truncate-result '(32 0) :two-truncate-result '(-8 0)
+    :one-ftruncate-result '(32.0 0) :two-ftruncate-result '(-8.0 0))
+  (Assert-rounding 12 9
+    :one-floor-result '(12 0) :two-floor-result '(1 3)
+    :one-ffloor-result '(12.0 0) :two-ffloor-result '(1.0 3)
+    :one-ceiling-result '(12 0) :two-ceiling-result '(2 -6)
+    :one-fceiling-result '(12.0 0) :two-fceiling-result '(2.0 -6)
+    :one-round-result '(12 0) :two-round-result '(1 3)
+    :one-fround-result '(12.0 0) :two-fround-result '(1.0 3)
+    :one-truncate-result '(12 0) :two-truncate-result '(1 3)
+    :one-ftruncate-result '(12.0 0) :two-ftruncate-result '(1.0 3))
+  (Assert-rounding 10 4
+    :one-floor-result '(10 0) :two-floor-result '(2 2)
+    :one-ffloor-result '(10.0 0) :two-ffloor-result '(2.0 2)
+    :one-ceiling-result '(10 0) :two-ceiling-result '(3 -2)
+    :one-fceiling-result '(10.0 0) :two-fceiling-result '(3.0 -2)
+    :one-round-result '(10 0) :two-round-result '(2 2)
+    :one-fround-result '(10.0 0) :two-fround-result '(2.0 2)
+    :one-truncate-result '(10 0) :two-truncate-result '(2 2)
+    :one-ftruncate-result '(10.0 0) :two-ftruncate-result '(2.0 2))
+  (Assert-rounding 14 4
+    :one-floor-result '(14 0) :two-floor-result '(3 2)
+    :one-ffloor-result '(14.0 0) :two-ffloor-result '(3.0 2)
+    :one-ceiling-result '(14 0) :two-ceiling-result '(4 -2)
+    :one-fceiling-result '(14.0 0) :two-fceiling-result '(4.0 -2)
+    :one-round-result '(14 0) :two-round-result '(4 -2)
+    :one-fround-result '(14.0 0) :two-fround-result '(4.0 -2)
+    :one-truncate-result '(14 0) :two-truncate-result '(3 2)
+    :one-ftruncate-result '(14.0 0) :two-ftruncate-result '(3.0 2))
+  ;; Now, two floats:
+  (Assert-rounding-floating pi e)
+  (when (featurep 'bigfloat)
+    (Assert-rounding-floating (coerce pi 'bigfloat) (coerce e 'bigfloat)))
+  (when (featurep 'bignum)
+    (assert (not (evenp most-positive-fixnum)) t
+      "In the unlikely event that most-positive-fixnum is even, rewrite this.")
+    (Assert-rounding (1+ most-positive-fixnum) (* 2 most-positive-fixnum)
+      :one-floor-result `(,(1+ most-positive-fixnum) 0)
+      :two-floor-result `(0 ,(1+ most-positive-fixnum))
+      :one-ffloor-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-ffloor-result `(0.0 ,(1+ most-positive-fixnum))
+      :one-ceiling-result `(,(1+ most-positive-fixnum) 0)
+      :two-ceiling-result `(1 ,(1+ (- most-positive-fixnum)))
+      :one-fceiling-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-fceiling-result `(1.0 ,(1+ (- most-positive-fixnum)))
+      :one-round-result `(,(1+ most-positive-fixnum) 0)
+      :two-round-result `(1 ,(1+ (- most-positive-fixnum)))
+      :one-fround-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-fround-result `(1.0 ,(1+ (- most-positive-fixnum)))
+      :one-truncate-result `(,(1+ most-positive-fixnum) 0)
+      :two-truncate-result `(0 ,(1+ most-positive-fixnum))
+      :one-ftruncate-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-ftruncate-result `(0.0 ,(1+ most-positive-fixnum)))
+    (Assert-rounding (1+ most-positive-fixnum) (- (* 2 most-positive-fixnum))
+      :one-floor-result `(,(1+ most-positive-fixnum) 0)
+      :two-floor-result `(-1 ,(1+ (- most-positive-fixnum)))
+      :one-ffloor-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-ffloor-result `(-1.0 ,(1+ (- most-positive-fixnum)))
+      :one-ceiling-result `(,(1+ most-positive-fixnum) 0)
+      :two-ceiling-result `(0 ,(1+ most-positive-fixnum))
+      :one-fceiling-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-fceiling-result `(0.0 ,(1+ most-positive-fixnum))
+      :one-round-result `(,(1+ most-positive-fixnum) 0)
+      :two-round-result `(-1 ,(1+ (- most-positive-fixnum)))
+      :one-fround-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-fround-result `(-1.0 ,(1+ (- most-positive-fixnum)))
+      :one-truncate-result `(,(1+ most-positive-fixnum) 0)
+      :two-truncate-result `(0 ,(1+ most-positive-fixnum))
+      :one-ftruncate-result `(,(float (1+ most-positive-fixnum)) 0)
+      :two-ftruncate-result `(0.0 ,(1+ most-positive-fixnum)))
+    (Assert-rounding (- (1+ most-positive-fixnum)) (* 2 most-positive-fixnum)
+      :one-floor-result `(,(- (1+ most-positive-fixnum)) 0)
+      :two-floor-result `(-1 ,(1- most-positive-fixnum))
+      :one-ffloor-result `(,(float (- (1+ most-positive-fixnum))) 0)
+      :two-ffloor-result `(-1.0 ,(1- most-positive-fixnum))
+      :one-ceiling-result `(,(- (1+ most-positive-fixnum)) 0)
+      :two-ceiling-result `(0 ,(- (1+ most-positive-fixnum)))
+      :one-fceiling-result `(,(float (- (1+ most-positive-fixnum))) 0)
+      :two-fceiling-result `(0.0 ,(- (1+ most-positive-fixnum)))
+      :one-round-result `(,(- (1+ most-positive-fixnum)) 0)
+      :two-round-result `(-1 ,(1- most-positive-fixnum))
+      :one-fround-result `(,(float (- (1+ most-positive-fixnum))) 0)
+      :two-fround-result `(-1.0 ,(1- most-positive-fixnum))
+      :one-truncate-result `(,(- (1+ most-positive-fixnum)) 0)
+      :two-truncate-result `(0 ,(- (1+ most-positive-fixnum)))
+      :one-ftruncate-result `(,(float (- (1+ most-positive-fixnum))) 0)
+      :two-ftruncate-result `(0.0 ,(- (1+ most-positive-fixnum))))
+    ;; Test the handling of values with .5: 
+    (Assert-rounding (1+ (* 2 most-positive-fixnum)) 2
+      :one-floor-result `(,(1+ (* 2 most-positive-fixnum)) 0)
+      :two-floor-result `(,most-positive-fixnum 1)
+      :one-ffloor-result `(,(float (1+ (* 2 most-positive-fixnum))) 0)
+      ;; We can't just call #'float here; we must use code that converts a
+      ;; bignum with value most-positive-fixnum (the creation of which is
+      ;; not directly possible in Lisp) to a float, not code that converts
+      ;; the fixnum with value most-positive-fixnum to a float. The eval is
+      ;; to avoid compile-time optimisation that can break this.
+      :two-ffloor-result `(,(eval '(- (1+ most-positive-fixnum) 1 0.0)) 1)
+      :one-ceiling-result `(,(1+ (* 2 most-positive-fixnum)) 0)
+      :two-ceiling-result `(,(1+ most-positive-fixnum) -1)
+      :one-fceiling-result `(,(float (1+ (* 2 most-positive-fixnum))) 0)
+      :two-fceiling-result `(,(float (1+ most-positive-fixnum)) -1)
+      :one-round-result `(,(1+ (* 2 most-positive-fixnum)) 0)
+      :two-round-result `(,(1+ most-positive-fixnum) -1)
+      :one-fround-result `(,(float (1+ (* 2 most-positive-fixnum))) 0)
+      :two-fround-result `(,(float (1+ most-positive-fixnum)) -1)
+      :one-truncate-result `(,(1+ (* 2 most-positive-fixnum)) 0)
+      :two-truncate-result `(,most-positive-fixnum 1)
+      :one-ftruncate-result `(,(float (1+ (* 2 most-positive-fixnum))) 0)
+      ;; See the comment above on :two-ffloor-result:
+      :two-ftruncate-result `(,(eval '(- (1+ most-positive-fixnum) 1 0.0)) 1))
+    (Assert-rounding (1+ (* 2 (1- most-positive-fixnum))) 2
+      :one-floor-result `(,(1+ (* 2 (1- most-positive-fixnum))) 0)
+      :two-floor-result `(,(1- most-positive-fixnum) 1)
+      :one-ffloor-result `(,(float (1+ (* 2 (1- most-positive-fixnum)))) 0)
+      ;; See commentary above on float conversions.
+      :two-ffloor-result `(,(eval '(- (1+ most-positive-fixnum) 2 0.0)) 1)
+      :one-ceiling-result `(,(1+ (* 2 (1- most-positive-fixnum))) 0)
+      :two-ceiling-result `(,most-positive-fixnum -1)
+      :one-fceiling-result `(,(float (1+ (* 2 (1- most-positive-fixnum)))) 0)
+      :two-fceiling-result `(,(eval '(- (1+ most-positive-fixnum) 1 0.0)) -1)
+      :one-round-result `(,(1+ (* 2 (1- most-positive-fixnum))) 0)
+      :two-round-result `(,(1- most-positive-fixnum) 1)
+      :one-fround-result `(,(float (1+ (* 2 (1- most-positive-fixnum)))) 0)
+      :two-fround-result `(,(eval '(- (1+ most-positive-fixnum) 2 0.0)) 1)
+      :one-truncate-result `(,(1+ (* 2 (1- most-positive-fixnum))) 0)
+      :two-truncate-result `(,(1- most-positive-fixnum) 1)
+      :one-ftruncate-result `(,(float (1+ (* 2 (1- most-positive-fixnum)))) 0)
+      ;; See commentary above
+      :two-ftruncate-result `(,(eval '(- (1+ most-positive-fixnum) 2 0.0))
+			      1)))
+  (when (featurep 'ratio)
+    (Assert-rounding (read "4/3") (read "8/7")
+     :one-floor-result '(1 1/3) :two-floor-result '(1 4/21)
+     :one-ffloor-result '(1.0 1/3) :two-ffloor-result '(1.0 4/21)
+     :one-ceiling-result '(2 -2/3) :two-ceiling-result '(2 -20/21)
+     :one-fceiling-result '(2.0 -2/3) :two-fceiling-result '(2.0 -20/21)
+     :one-round-result '(1 1/3) :two-round-result '(1 4/21)
+     :one-fround-result '(1.0 1/3) :two-fround-result '(1.0 4/21)
+     :one-truncate-result '(1 1/3) :two-truncate-result '(1 4/21)
+     :one-ftruncate-result '(1.0 1/3) :two-ftruncate-result '(1.0 4/21))
+    (Assert-rounding (read "-4/3") (read "8/7")
+     :one-floor-result '(-2 2/3) :two-floor-result '(-2 20/21)
+     :one-ffloor-result '(-2.0 2/3) :two-ffloor-result '(-2.0 20/21)
+     :one-ceiling-result '(-1 -1/3) :two-ceiling-result '(-1 -4/21)
+     :one-fceiling-result '(-1.0 -1/3) :two-fceiling-result '(-1.0 -4/21)
+     :one-round-result '(-1 -1/3) :two-round-result '(-1 -4/21)
+     :one-fround-result '(-1.0 -1/3) :two-fround-result '(-1.0 -4/21)
+     :one-truncate-result '(-1 -1/3) :two-truncate-result '(-1 -4/21)
+     :one-ftruncate-result '(-1.0 -1/3) :two-ftruncate-result '(-1.0 -4/21))))
+
+;; Run this function in a Common Lisp with two arguments to get results that
+;; we should compare against, above. Though note the dancing-around with the
+;; bigfloats and bignums above, too; you can't necessarily just use the
+;; output here.
+
+(defun generate-rounding-output (first second)
+  (let ((print-readably t))
+    (princ first)
+    (princ " ")
+    (princ second)
+    (princ " :one-floor-result ")
+    (princ (list 'quote (multiple-value-list (floor first))))
+    (princ " :two-floor-result ")
+    (princ (list 'quote (multiple-value-list (floor first second))))
+    (princ " :one-ffloor-result ")
+    (princ (list 'quote (multiple-value-list (ffloor first))))
+    (princ " :two-ffloor-result ")
+    (princ (list 'quote (multiple-value-list (ffloor first second))))
+    (princ " :one-ceiling-result ")
+    (princ (list 'quote (multiple-value-list (ceiling first))))
+    (princ " :two-ceiling-result ")
+    (princ (list 'quote (multiple-value-list (ceiling first second))))
+    (princ " :one-fceiling-result ")
+    (princ (list 'quote (multiple-value-list (fceiling first))))
+    (princ " :two-fceiling-result ")
+    (princ (list 'quote (multiple-value-list (fceiling first second))))
+    (princ " :one-round-result ")
+    (princ (list 'quote (multiple-value-list (round first))))
+    (princ " :two-round-result ")
+    (princ (list 'quote (multiple-value-list (round first second))))
+    (princ " :one-fround-result ")
+    (princ (list 'quote (multiple-value-list (fround first))))
+    (princ " :two-fround-result ")
+    (princ (list 'quote (multiple-value-list (fround first second))))
+    (princ " :one-truncate-result ")
+    (princ (list 'quote (multiple-value-list (truncate first))))
+    (princ " :two-truncate-result ")
+    (princ (list 'quote (multiple-value-list (truncate first second))))
+    (princ " :one-ftruncate-result ")
+    (princ (list 'quote (multiple-value-list (ftruncate first))))
+    (princ " :two-ftruncate-result ")
+    (princ (list 'quote (multiple-value-list (ftruncate first second))))))
+
+;; Multiple value tests. 
+
+(flet ((foo (x y) 
+	 (floor (+ x y) y))
+       (foo-zero (x y)
+	 (values (floor (+ x y) y)))
+       (multiple-value-function-returning-t ()
+	 (values t pi e degrees-to-radians radians-to-degrees))
+       (multiple-value-function-returning-nil ()
+	 (values nil pi e radians-to-degrees degrees-to-radians))
+       (function-throwing-multiple-values ()
+	 (let* ((listing '(0 3 4 nil "string" symbol))
+		(tail listing)
+		elt)
+	   (while t
+	     (setq tail (cdr listing)
+		   elt (car listing)
+		   listing tail)
+	     (when (null elt)
+	       (throw 'VoN61Lo4Y (multiple-value-function-returning-t)))))))
+  (Assert
+   (= (+ (floor 5 3) (floor 19 4)) (+ 1 4) 5)
+   "Checking that multiple values are discarded correctly as func args")
+  (Assert
+   (= 2 (length (multiple-value-list (foo 400 (1+ most-positive-fixnum)))))
+   "Checking multiple values are passed through correctly as return values")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (foo-zero 400 (1+ most-positive-fixnum)))))
+   "Checking multiple values are discarded correctly when forced")
+  (Check-Error setting-constant (setq multiple-values-limit 20))
+  (Assert
+   (equal '(-1 1)
+	  (multiple-value-list (floor -3 4)))
+   "Checking #'multiple-value-list gives a sane result")
+  (let ((ey 40000)
+	(bee "this is a string")
+	(cee #s(hash-table size 256 data (969 ?\xF9))))
+    (Assert
+     (equal
+      (multiple-value-list (values ey bee cee))
+      (multiple-value-list (values-list (list ey bee cee))))
+     "Checking that #'values and #'values-list are correctly related")
+    (Assert
+     (equal
+      (multiple-value-list (values-list (list ey bee cee)))
+      (multiple-value-list (apply #'values (list ey bee cee))))
+     "Checking #'values-list and #'apply with #values are correctly related"))
+  (Assert
+   (= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10)
+   "Checking #'multiple-value-call gives reasonable results.")
+  (Assert
+   (= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10)
+   "Checking #'multiple-value-call correct when first arg multiple.")
+  (Assert
+   (= 1 (length (multiple-value-list (prog1 (floor pi) "hi there"))))
+   "Checking #'prog1 does not pass back multiple values")
+  (Assert
+   (= 2 (length (multiple-value-list
+		 (multiple-value-prog1 (floor pi) "hi there"))))
+   "Checking #'multiple-value-prog1 passes back multiple values")
+  (multiple-value-bind (floored remainder this-is-nil)
+      (floor pi 1.0)
+    (Assert (= floored 3)
+	    "Checking floored bound correctly")
+    (Assert (eql remainder (- pi 3.0))
+	    "Checking remainder bound correctly") 
+    (Assert (null this-is-nil)
+	    "Checking trailing arg bound but nil"))
+  (let ((ey 40000)
+	(bee "this is a string")
+	(cee #s(hash-table size 256 data (969 ?\xF9))))
+    (multiple-value-setq (ey bee cee)
+      (ffloor e 1.0))
+    (Assert (eql 2.0 ey) "Checking ey set correctly")
+    (Assert (eql bee (- e 2.0)) "Checking bee set correctly")
+    (Assert (null cee) "Checking cee set to nil correctly"))
+  (Assert
+   (= 3 (length (multiple-value-list (eval '(values nil t pi)))))
+   "Checking #'eval passes back multiple values")
+  (Assert
+   (= 2 (length (multiple-value-list (apply #'floor '(5 3)))))
+   "Checking #'apply passes back multiple values")
+  (Assert 
+   (= 2 (length (multiple-value-list (funcall #'floor 5 3))))
+   "Checking #'funcall passes back multiple values")
+  (Assert 
+   (equal '(1 2) (multiple-value-list 
+		  (multiple-value-call #'floor (values 5 3))))
+   "Checking #'multiple-value-call passes back multiple values correctly")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (and (multiple-value-function-returning-nil) t))))
+   "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert
+   (= 5 (length (multiple-value-list 
+		 (and t (multiple-value-function-returning-nil)))))
+   "Checking multiple values from final forms not discarded by #'and")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (or (multiple-value-function-returning-t) t))))
+   "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert
+   (= 5 (length (multiple-value-list 
+		 (or nil (multiple-value-function-returning-t)))))
+   "Checking multiple values from final forms not discarded by #'and")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (cond ((multiple-value-function-returning-t))))))
+   "Checking cond doesn't pass back multiple values in tests.")
+  (Assert
+   (equal (list nil pi e radians-to-degrees degrees-to-radians)
+	  (multiple-value-list
+	   (cond (t (multiple-value-function-returning-nil)))))
+   "Checking cond passes back multiple values in clauses.")
+  (Assert
+   (= 1 (length (multiple-value-list
+		 (prog1 (multiple-value-function-returning-nil)))))
+   "Checking prog1 discards multiple values correctly.")
+  (Assert
+   (= 5 (length (multiple-value-list
+		 (multiple-value-prog1
+		  (multiple-value-function-returning-nil)))))
+   "Checking multiple-value-prog1 passes back multiple values correctly.")
+  (Assert
+   (equal (list t pi e degrees-to-radians radians-to-degrees)
+	  (multiple-value-list
+	   (catch 'VoN61Lo4Y (function-throwing-multiple-values)))))
+  (Assert
+   (equal (list t pi e degrees-to-radians radians-to-degrees)
+	  (multiple-value-list
+	   (loop
+	     for eye in `(a b c d ,e f g ,nil ,pi)
+	     do (when (null eye)
+		  (return (multiple-value-function-returning-t))))))
+   "Checking #'loop passes back multiple values correctly.")
+  (Assert
+   (null (or))
+   "Checking #'or behaves correctly with zero arguments.")
+  (Assert
+   (eq t (and))
+   "Checking #'and behaves correctly with zero arguments.")
+  (Assert
+   (= (* 3.0 (- pi 3.0))
+      (letf (((values three one-four-one-five-nine) (floor pi)))
+        (* three one-four-one-five-nine)))
+   "checking letf handles #'values in a basic sense"))
+
+(Assert (equalp "hi there" "Hi There")
+	"checking equalp isn't case-sensitive")
+(Assert (equalp 99 99.0)
+	"checking equalp compares numerical values of different types")
+(Assert (null (equalp 99 ?c))
+	"checking equalp does not convert characters to numbers")
+;; Fixed in Hg d0ea57eb3de4.
+(Assert (null (equalp "hi there" [hi there]))
+	"checking equalp doesn't error with string and non-string")
+
+;;; end of lisp-tests.el

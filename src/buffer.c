@@ -233,6 +233,14 @@ static const struct memory_description buffer_text_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("buffer-text", buffer_text,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       buffer_text_description_1,
+			       Lisp_Buffer_Text);
+#endif /* NEW_GC */
+
 static const struct sized_memory_description buffer_text_description = {
   sizeof (struct buffer_text),
   buffer_text_description_1
@@ -244,10 +252,16 @@ static const struct memory_description buffer_description [] = {
 
   { XD_LISP_OBJECT, offsetof (struct buffer, extent_info) },
 
+#ifdef NEW_GC
+  { XD_BLOCK_PTR, offsetof (struct buffer, text),
+    1, { &buffer_text_description } },
+  { XD_LISP_OBJECT, offsetof (struct buffer, syntax_cache) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct buffer, text),
     1, { &buffer_text_description } },
   { XD_BLOCK_PTR, offsetof (struct buffer, syntax_cache),
     1, { &syntax_cache_description } },
+#endif /* not NEW_GC */
 
   { XD_LISP_OBJECT, offsetof (struct buffer, indirect_children) },
   { XD_LISP_OBJECT, offsetof (struct buffer, base_buffer) },
@@ -1498,6 +1512,12 @@ set_buffer_internal (struct buffer *b)
 
   if (old_buf)
     {
+      /* synchronize window point */
+      Lisp_Object current_window = Fselected_window (Qnil);
+      if (!NILP (current_window)
+	  && EQ(Fwindow_buffer (current_window), wrap_buffer (old_buf)))
+	Fset_window_point (current_window, make_int (BUF_PT (old_buf)));
+
       /* Put the undo list back in the base buffer, so that it appears
 	 that an indirect buffer shares the undo list of its base.  */
       if (old_buf->base_buffer)
@@ -1696,8 +1716,8 @@ DEFUN ("kill-all-local-variables", Fkill_all_local_variables, 0, 0, 0, /*
 Switch to Fundamental mode by killing current buffer's local variables.
 Most local variable bindings are eliminated so that the default values
 become effective once more.  Also, the syntax table is set from
-`standard-syntax-table', the category table is set from
-`standard-category-table' (if support for Mule exists), local keymap is set
+the standard syntax table, the category table is set from the
+standard category table (if support for Mule exists), local keymap is set
 to nil, the abbrev table is set from `fundamental-mode-abbrev-table',
 and all specifier specifications whose locale is the current buffer
 are removed.  This function also forces redisplay of the modeline.
@@ -1889,6 +1909,9 @@ void
 syms_of_buffer (void)
 {
   INIT_LRECORD_IMPLEMENTATION (buffer);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (buffer_text);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qbuffer_live_p);
   DEFSYMBOL (Qbuffer_or_string_p);
@@ -2113,7 +2136,7 @@ List of functions called with no args to query before killing a buffer.
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do									  \
 {									  \
@@ -2138,7 +2161,7 @@ do									  \
   }									  \
 } while (0)
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
    a bogus extra arg, which confuses an otherwise identical make-docfile.c */
 #define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) \
@@ -2172,7 +2195,7 @@ do {									 \
       = intern (lname);							 \
   }									 \
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_BUFFER_LOCAL_1 (lname, field_name,			\
@@ -2620,6 +2643,8 @@ It may not be a list of functions.
   DEFVAR_BUFFER_LOCAL ("buffer-file-name", filename /*
 Name of file visited in current buffer, or nil if not visiting a file.
 Each buffer has its own value of this variable.
+Code that changes this variable must maintain the invariant
+`(equal buffer-file-truename (file-truename buffer-file-name))'.
 */ );
 
 #if 0 /* FSFmacs */
@@ -2632,12 +2657,11 @@ Each buffer has its own value of this variable.
 #endif /* FSFmacs */
 
   DEFVAR_BUFFER_LOCAL ("buffer-file-truename", file_truename /*
-The real name of the file visited in the current buffer,
-or nil if not visiting a file.  This is the result of passing
-buffer-file-name to the `file-truename' function.  Every buffer has
-its own value of this variable.  This variable is automatically
-maintained by the functions that change the file name associated
-with a buffer.
+The real name of the file visited in the current buffer, or nil if not
+visiting a file.  This is the result of passing `buffer-file-name' to the
+`file-truename' function.  Every buffer has its own value of this variable.
+Code that changes the file name associated with a buffer maintains the
+invariant `(equal buffer-file-truename (file-truename buffer-file-name))'.
 */ );
 
   DEFVAR_BUFFER_LOCAL ("buffer-auto-save-file-name", auto_save_file_name /*
@@ -2910,7 +2934,19 @@ init_initial_directory (void)
       {
 	Ibyte *errmess;
 	GET_STRERROR (errmess, errno);
-	fatal ("`getcwd' failed: %s\n", errmess);
+	stderr_out ("`getcwd' failed: %s: changing default directory to %s\n",
+                    errmess, DEFAULT_DIRECTORY_FALLBACK);
+
+        if (qxe_chdir ((Ibyte *)DEFAULT_DIRECTORY_FALLBACK) < 0)
+          {
+            GET_STRERROR (errmess, errno);
+
+            fatal ("could not `chdir' to `%s': %s\n",
+                   DEFAULT_DIRECTORY_FALLBACK, errmess);
+          }
+
+        initial_directory = qxe_allocating_getcwd();
+        assert (initial_directory != NULL);
       }
 
   /* Make sure pwd is DIRECTORY_SEP-terminated.

@@ -23,26 +23,15 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(defvar mswindows-win-initted nil)
-(defvar mswindows-pre-win-initted nil)
-(defvar mswindows-post-win-initted nil)
+(defvar make-device-early-mswindows-entry-point-called-p nil
+  "Whether `make-device-early-mswindows-entry-point' has been called")
 
-(defun init-pre-mswindows-win ()
-  "Initialize mswindows GUI at startup (pre).  Don't call this."
-  (unless mswindows-pre-win-initted
-    (setq mswindows-pre-win-initted t)))
+(defvar make-device-late-mswindows-entry-point-called-p nil
+  "Whether `make-device-late-mswindows-entry-point' has been called")
 
-(defun init-mswindows-win ()
-  "Initialize mswindows GUI at startup.  Don't call this."
-  (unless mswindows-win-initted
-    (init-pre-mswindows-win)
-    (make-mswindows-device)
-    (init-post-mswindows-win (selected-console))
-    (setq mswindows-win-initted t)))
-
-(defun init-post-mswindows-win (console)
-  "Initialize mswindows GUI at startup (post).  Don't call this."
-  (unless mswindows-post-win-initted
+(defun make-device-early-mswindows-entry-point ()
+  "Lisp code called before an `mswindows' device is created." 
+  (unless make-device-early-mswindows-entry-point-called-p
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
     (global-set-key '(shift delete)   'kill-primary-selection)
@@ -50,6 +39,10 @@
     (global-set-key '(control insert) 'copy-primary-selection)
 
     (global-set-key '(meta f4)	      'save-buffers-kill-emacs)
+    (setq make-device-early-mswindows-entry-point-called-p t)))
 
-    (setq mswindows-post-win-initted t)))
+(defun make-device-late-mswindows-entry-point (device)
+  "Lisp code called after an `mswindows' device is created."
+  (unless make-device-late-mswindows-entry-point-called-p
+    (setq make-device-late-mswindows-entry-point-called-p t)))
 

@@ -55,6 +55,9 @@
 (defvar paths-mule-load-path-depth 0
   "Depth of load-path searches in Mule Lisp paths.")
 
+(defvar paths-module-load-path-depth 1
+  "Depth of load-path searches in module paths.")
+
 (defvar paths-default-info-directories
   (mapcar (function
 	   (lambda (dirlist)
@@ -94,20 +97,27 @@ installation roots."
   (or
    ;; installed
    (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
+								"share"
 								emacs-program-name)))
    (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
+								"share"
 								(construct-emacs-version-name))))
    ;; in-place or windows-nt
    (and
     (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
-    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
+    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))
 
-(defun paths-find-emacs-root (invocation-directory invocation-name)
-  "Find the run-time root of XEmacs.
+   ;; searching for a package directory
+   (and
+    (string-match "win32" system-configuration)
+    (paths-file-readable-directory-p (paths-construct-path (list directory
+								 "xemacs-packages"))))))
+
+(defun paths-find-invocation-roots (invocation-directory invocation-name root-p)
+  "Find the list of run-time roots of XEmacs.
 INVOCATION-DIRECTORY is a directory containing the XEmacs executable.
-INVOCATION-NAME is the name of the executable itself."
+INVOCATION-NAME is the name of the executable itself
+ROOT-P is a function that tests whether a root is plausible."
   (let* ((executable-file-name (paths-chase-symlink
 				(concat invocation-directory
 					invocation-name)))
@@ -116,10 +126,9 @@ INVOCATION-NAME is the name of the executable itself."
 			(paths-construct-path '("..") executable-directory)))
 	 (maybe-root-2 (file-name-as-directory
 			(paths-construct-path '(".." "..") executable-directory))))
-    (or (and (paths-emacs-root-p maybe-root-1)
-	     maybe-root-1)
-	(and (paths-emacs-root-p maybe-root-2)
-	     maybe-root-2))))
+
+    (paths-filter root-p
+		  (list maybe-root-1 maybe-root-2))))
 
 (defun paths-find-emacs-roots (invocation-directory
 			       invocation-name
@@ -129,11 +138,10 @@ This is a list of plausible directories in which to search for the important
 directories used by XEmacs at run-time, for example `exec-directory',
 `data-directory' and `lisp-directory'.
 ROOT-P is a function that tests whether a root is plausible."
-  (let* ((potential-invocation-root
-	  (paths-find-emacs-root invocation-directory invocation-name))
-	 (invocation-roots
-	  (and potential-invocation-root
-	       (list potential-invocation-root)))
+  (let* ((invocation-roots
+	  (paths-find-invocation-roots invocation-directory
+				       invocation-name
+				       root-p))
 	 (potential-installation-roots
 	  (paths-uniq-append
 	   (and configure-exec-prefix-directory
@@ -150,22 +158,22 @@ ROOT-P is a function that tests whether a root is plausible."
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-site-directory roots "site-lisp"
-			     nil
+  (paths-find-site-directory roots (list "site-lisp")
+			     nil nil
 			     configure-site-directory))
 
 (defun paths-find-site-module-directory (roots)
   "Find the site modules directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-site-directory roots "site-modules"
-			     nil
+  (paths-find-site-directory roots (list "site-modules")
+			     t nil
 			     configure-site-module-directory))
 
 (defun paths-find-lisp-directory (roots)
   "Find the main Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-version-directory roots "lisp"
-				nil
+  (paths-find-version-directory roots (list "lisp")
+				nil nil
 				configure-lisp-directory))
 
 (defun paths-find-mule-lisp-directory (roots &optional lisp-directory)
@@ -178,14 +186,14 @@ ROOTS is a list of installation roots."
 	      (paths-construct-path (list lisp-directory "mule")))))
 	(if (paths-file-readable-directory-p guess)
 	    guess
-	  (paths-find-version-directory roots "mule-lisp"
-					nil
+	  (paths-find-version-directory roots (list "mule-lisp")
+					nil nil
 					configure-mule-lisp-directory)))))
 
 (defun paths-find-module-directory (roots)
   "Find the main modules directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-architecture-directory roots "modules"
+  (paths-find-architecture-directory roots (list "modules")
 				     nil configure-module-directory))
 
 (defun paths-construct-load-path
@@ -238,7 +246,7 @@ only in Mule installations."
 	 (module-load-path
 	  (and module-directory
 	       (paths-find-recursive-load-path (list module-directory)
-					       paths-core-load-path-depth))))
+					       paths-module-load-path-depth))))
     (append env-module-path
 	    site-module-load-path
 	    module-load-path)))
@@ -256,8 +264,8 @@ respectively."
     (paths-uniq-append
      (append
       (let ((info-directory
-	     (paths-find-version-directory roots "info"
-					   nil
+	     (paths-find-version-directory roots (list "info")
+					   nil nil
 					   configure-info-directory)))
 	(and info-directory
 	     (list info-directory)))
@@ -274,12 +282,12 @@ respectively."
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory.
 ROOTS is the list of installation roots."
-  (paths-find-architecture-directory roots "lib-src" nil configure-doc-directory))
+  (paths-find-architecture-directory roots (list "lib-src") nil configure-doc-directory))
 
 (defun paths-find-exec-directory (roots)
   "Find the binary directory.
 ROOTS is the list of installation roots."
-  (paths-find-architecture-directory roots "lib-src"
+  (paths-find-architecture-directory roots (list "lib-src")
 				     nil configure-exec-directory))
 
 (defun paths-construct-exec-path (roots exec-directory
@@ -311,7 +319,7 @@ package hierarchy roots, respectively."
 (defun paths-find-data-directory (roots)
   "Find the data directory.
 ROOTS is the list of installation roots."
-  (paths-find-version-directory roots "etc" "EMACSDATA" configure-data-directory))
+  (paths-find-version-directory roots (list "etc") nil "EMACSDATA" configure-data-directory))
 
 (defun paths-construct-data-directory-list (data-directory
 					    early-package-hierarchies

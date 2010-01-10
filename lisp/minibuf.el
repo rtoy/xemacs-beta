@@ -40,6 +40,8 @@
 
 ;;; Code:
 
+(require 'cl)
+
 (defgroup minibuffer nil
   "Controling the behavior of the minibuffer."
   :group 'environment)
@@ -405,10 +407,8 @@ See also the variable `completion-highlight-first-word-only' for
          (owindow (selected-window))
 	 (oframe (selected-frame))
          (window (minibuffer-window))
-         (buffer (if (eq (minibuffer-depth) 0)
-                     (window-buffer window)
-		   (get-buffer-create (format " *Minibuf-%d"
-					      (minibuffer-depth)))))
+         (buffer (get-buffer-create (format " *Minibuf-%d*"
+					    (minibuffer-depth))))
          (frame (window-frame window))
          (mconfig (if (eq frame (selected-frame))
                       nil (current-window-configuration frame)))
@@ -1469,20 +1469,24 @@ A user variable is one whose documentation starts with a `*' character."
 			       (symbol-name default-value)
 			     default-value))))
 
-(defun read-buffer (prompt &optional default require-match)
+(defun read-buffer (prompt &optional default require-match exclude)
   "Read the name of a buffer and return as a string.
 Prompts with PROMPT.  Optional second arg DEFAULT is value to return if user
 enters an empty line.  If optional third arg REQUIRE-MATCH is non-nil,
-only existing buffer names are allowed."
+only existing buffer names are allowed.  Optional fourth argument EXCLUDE is
+a buffer or a list of buffers to exclude from the completion list."
+  (when (bufferp exclude)
+    (setq exclude (list exclude)))
   (let ((prompt (if default
                     (format "%s(default %s) "
                             (gettext prompt) (if (bufferp default)
 						 (buffer-name default)
 					       default))
-                    prompt))
-        (alist (mapcar #'(lambda (b) (cons (buffer-name b) b))
-                       (buffer-list)))
-        result)
+		    prompt))
+	(alist (mapcar #'(lambda (b) (cons (buffer-name b) b))
+		       (remove-if (lambda (elt) (member elt exclude))
+				  (buffer-list))))
+	result)
     (while (progn
              (setq result (completing-read prompt alist nil require-match
 					   nil 'buffer-history 
@@ -1700,9 +1704,7 @@ If DEFAULT-VALUE is non-nil, return that if user enters an empty
     (add-one-shot-hook
      'minibuffer-setup-hook
      (lambda ()
-       ;; #### SCREAM!  Create a `file-system-ignore-case'
-       ;; function, so this kind of stuff is generalized!
-       (and (eq system-type 'windows-nt)
+       (and (file-system-ignore-case-p (or dir default-directory))
 	    (set (make-local-variable 'completion-ignore-case) t))
        (set
 	(make-local-variable
@@ -1779,6 +1781,8 @@ DIR defaults to current buffer's directory default."
 	    string))
       ;; Not doing environment-variable completion hack
       (let* ((orig (if (equal string "") nil string))
+	     (completion-ignore-case (file-system-ignore-case-p
+				      (or dir default-directory)))
              (sstring (if orig (substitute-in-file-name string) string))
              (specdir (if orig (file-name-directory sstring) nil))
              (name    (if orig (file-name-nondirectory sstring) string))
@@ -1816,6 +1820,8 @@ DIR defaults to current buffer's directory default."
                    name)))
       ;; An odd number of trailing $'s
       (let* ((start (match-beginning 3))
+	     (completion-ignore-case (file-system-ignore-case-p
+				      (or dir default-directory)))
              (env (substring string
                              (cond ((= start (length string))
                                     ;; "...$"
@@ -2057,22 +2063,18 @@ whether it is a file(/result) or a directory (/result/)."
   (let* ((file-p (eq 'read-file-name-internal completer))
 	 (filebuf (get-buffer-create "*Completions*"))
 	 (dirbuf (and file-p (generate-new-buffer " *mouse-read-file*")))
-	 (butbuf (generate-new-buffer " *mouse-read-file*"))
+	 (butbuf (generate-new-buffer " *mouse-read-file-buttons*"))
 	 (frame (make-dialog-frame))
 	 filewin dirwin
-	 user-data)
+	 user-data
+	 (window-min-height 1)) ; allow button window to be height 2
     (unwind-protect
 	(progn
 	  (reset-buffer filebuf)
 
 	  ;; set up the frame.
 	  (focus-frame frame)
-	  (let ((window-min-height 1))
-	    ;; #### should be 2 not 3, but that causes
-	    ;; "window too small to split" errors for some
-	    ;; people (but not for me ...) There's a more
-	    ;; fundamental bug somewhere.
-	    (split-window nil (- (frame-height frame) 3)))
+	  (split-window nil (- (window-height) 2))
 	  (if file-p
 	      (progn
 		(split-window-horizontally 16)
@@ -2095,7 +2097,7 @@ whether it is a file(/result) or a directory (/result/)."
 		 ;; any more. --ben
 		 (lambda ()
 		   (mouse-rfn-setup-vars prompt)
-		   (when (featurep 'scrollbar)
+		   (when-boundp #'scrollbar-width
 		     (set-specifier scrollbar-width 0 (current-buffer)))
 		   (setq truncate-lines t))))
 	    

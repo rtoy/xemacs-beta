@@ -39,6 +39,14 @@
 It inherits all characters from the standard syntax table."
   (make-char-table 'syntax))
 
+(defun syntax-after (pos)
+  "Return the raw syntax of the char after POS.
+If POS is outside the buffer's accessible portion, return nil."
+  (unless (or (< pos (point-min)) (>= pos (point-max)))
+    (let ((st (if lookup-syntax-properties
+		  (get-char-property pos 'syntax-table))))
+      (char-syntax (char-after pos) (or st (syntax-table))))))
+
 (defun simple-set-syntax-entry (char spec table)
   (put-char-table char spec table))
 

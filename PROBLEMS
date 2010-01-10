@@ -2,7 +2,10 @@
 
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
-XEmacs 21.5.
+XEmacs 21.5.  Note that the issues are by now mainly historic; XEmacs
+no longer depends on bleeding edge features of operating systems, but
+rather is quite conservative.  Operational issues (common user
+misunderstandings and such) are described in the FAQ, not here.
 
 This file is rather large, but we have tried to sort the entries by
 their respective relevance for XEmacs, but may have not succeeded
@@ -43,6 +46,16 @@ General advice:
 
     Much general information is in INSTALL.  If it's covered in
     INSTALL, we don't repeat it here.
+
+*** X11/bitmaps/gray (or other X11-related file) not found.
+
+The X11R6 distribution was monolithic, but the X11R7 distribution is
+much more modular.  Many OS distributions omit these bitmaps (assuming
+nobody uses them, evidently).  Your OS distribution should have a
+developer's package containing these files, probably with a name
+containing the string "bitmap".  Known package names (you may need to
+add an extension such as .deb or .rpm) include x11/xbitmaps (Ubuntu)
+and xorg-x11-xbitmaps (Fedora Core 5).
 
 *** How do I configure to get the buffer tabs/progress bars?
 
@@ -157,15 +170,25 @@ when attempting to link against libMagick.  The fix is to remove the old
 libz.a in the X11 binary directory.
 
 
-** Motif
+** X11 and Motif
 
 Motif is the X11 version of the Gnus torture test: if there's a way to
 crash, Motif will find it.  With the open source release of Motif, it
 seems like a good idea to collect all Motif-related issues in one
-place.
+place.  X11 itself is not all that safe, either.
 
-You should also look in your OS's section, as it may not be Motif's
-fault.
+You should also look in your OS's section, as it may not be the window
+system (toolkit's) fault.
+
+*** XEmacs and the X server crash when inserting or displaying a TAB character.
+
+If you are using the XFree86 distribution, you need an X server with
+this patch applied:
+
+https://bugs.freedesktop.org/attachment.cgi?id=2016
+
+Versions of XFree86 previous to that crashed when an app tried to draw a
+literal tab character using many fonts. 
 
 *** XEmacs crashes on exit (#1).
 
@@ -1005,6 +1028,12 @@ you still have the problem after doing that, perhaps your version of X is
 too old.  There is a copy of the MIT X11R6 XKeysymDB file in the emacs `etc'
 directory.  Try using that one.
 
+*** Lots of warnings generated when displaying via ssh X forwarding.
+
+If you are seeing a significant number of X11 warnings (in particular
+BadWindow errors) when using XEmacs via ssh X forwarding try using a
+trusted x11 connection instead (for openssh, use -Y instead of -X).
+
 *** My X resources used to work, and now some of them are being ignored.
 
 Check the resources in .../etc/Emacs.ad (which is the same as the file
@@ -1384,6 +1413,15 @@ though the system itself is capable of it.  Try using a different
 shell.
 
 ** MacOS/X, Darwin
+*** The linker warns about duplicate symbols.
+
+This occurs in the function alarm(), which we deliberately override,
+and in vendorShellRec when using Xaw3d for the widgets.
+
+For alarm(), the linker chooses our version, as desired.
+Unfortunately, for vendorShellRec, the Xt version is used instead of
+Xaw3d's.  This does not seem to cause problems.
+
 *** XEmacs crashes on MacOS within font-lock, or when dealing
 with large compilation buffers, or in other regex applications.
 

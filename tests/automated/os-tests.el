@@ -36,15 +36,18 @@
 ;; in <b9yoeipvwn0.fsf@jpl.org>.
 
 ;; tac works by lines, unfortunately
+;; #### The contortions around `executable-find' gag me, but I don't have time
+;; to deal today.  If we have `executable-find', we should use its value!
 (let* ((original-string "a\nb\nc\nd\n")
-       (tac-cases (if (executable-find "tac")
+       ;; `executable-find' is in a package and may be unavailable.
+       (tac-cases (if (and (fboundp 'executable-find) (executable-find "tac"))
 		      '((1 . "c\nb\na\nd\n")
 			(3 . "a\nc\nb\nd\n")
 			(5 . "a\nc\nb\nd\n")
 			(7 . "a\nc\nb\nd\n")
 			(9 . "a\nd\nc\nb\n"))
 		    nil))
-       (cat-cases (if (executable-find "cat")
+       (cat-cases (if (and (fboundp 'executable-find) (executable-find "cat"))
 		      '((1 . "b\nc\na\nd\n")
 			(3 . "a\nb\nc\nd\n")
 			(5 . "a\nb\nc\nd\n")

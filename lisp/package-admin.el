@@ -150,12 +150,7 @@ Argument TYPE is a symbol that determines the type of package we're
 trying to find a directory for.
 
 Optional Argument USER-DIR if non-nil use directories off
-`user-init-directory'.  This overrides everything except
-\"EMACSPACKAGEPATH\".
-
-This function honours the environment variable \"EMACSPACKAGEPATH\"
-and returns directories found there as a priority.  If that variable
-doesn't exist and USER-DIR is nil, check in the normal places.
+`early-package-directories'.
 
 If we still can't find a suitable directory, return nil.
 
@@ -164,55 +159,31 @@ Possible values for TYPE are:
     std  == For \"standard\" packages that go in '/xemacs-packages/'
     mule == For \"mule\" packages that go in '/mule-packages/'
     site == For \"unsupported\" packages that go in '/site-packages/'
-
-Note:  Type \"site\" is not yet fully supported."
-  (let* ((env-value (getenv "EMACSPACKAGEPATH"))
+"
+  (let* ((hierarchies late-package-hierarchies)
+	 
+	 (hierarchy-suffix
+	  (file-name-as-directory
+	   (cond
+	    ((eq type 'std) "xemacs-packages")
+	    ((eq type 'mule) "mule-packages")
+	    ((eq type 'site) "site-packages"))))
+	 (suffix-length (length hierarchy-suffix))
 	 top-dir)
-    ;; First, check the environment var.
-    (if env-value
-	(let ((path-list (paths-decode-directory-path env-value 'drop-empties)))
-	  (cond ((eq type 'std)
-		 (while path-list
-		   (if (equal (file-name-nondirectory 
-			       (directory-file-name (car path-list)))
-			      "xemacs-packages")
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list))))
-		((eq type 'mule)
-		 (while path-list
-		   (if (equal (file-name-nondirectory 
-			       (directory-file-name (car path-list)))
-			      "mule-packages")
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list)))))))
-    ;; Wasn't in the environment, try `user-init-directory' if
-    ;; USER-DIR is non-nil.
-    (if (and user-dir
-	     (not top-dir))
-	(cond ((eq type 'std)
-	       (setq top-dir (file-name-as-directory
-			      (expand-file-name "xemacs-packages" user-init-directory))))
-	      ((eq type 'mule)
-	       (setq top-dir (file-name-as-directory
-			      (expand-file-name "mule-packages" user-init-directory))))))
-    ;; Finally check the normal places
-    (if (not top-dir)
-	(let ((path-list (nth 1 (packages-find-all-package-hierarchies
-				 emacs-data-roots))))
-	  (cond ((eq type 'std)
-		 (while path-list
-		   (if (equal (substring (car path-list) -16) 
-			      (concat "xemacs-packages" (char-to-string directory-sep-char)))
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list))))
-		((eq type 'mule)
-		 (while path-list
-		   (if (equal (substring (car path-list) -14) 
-			      (concat "mule-packages" (char-to-string directory-sep-char)))
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list)))))))
-    ;; Now return either the directory or nil.
-    top-dir))
+
+    (if user-dir
+	(expand-file-name hierarchy-suffix
+			  (if configure-early-package-directories
+			      (car configure-early-package-directories)
+			    user-init-directory))
+      
+      (while hierarchies
+	(if (string-equal (substring (car hierarchies) (- suffix-length))
+			  hierarchy-suffix)
+	    (setq top-dir (car hierarchies)))
+	(setq hierarchies (cdr hierarchies)))
+      top-dir)))
+  
 
 (defun package-admin-get-install-dir (package &optional pkg-dir)
   "Find a suitable installation directory for a package.
@@ -308,106 +279,98 @@ If it doesn't exist, create and write one.
 PKG-OUTBUF is the buffer that holds the output from `tar', and PKG-TOPDIR
 is the top-level directory under which the package was installed."
   (let ((manifest-buf " *pkg-manifest*")
-	(old-case-fold-search case-fold-search)
+	(case-fold-search (file-system-ignore-case-p pkg-topdir))
 	regexp package-name pathname regexps)
-    (unwind-protect
-	(save-excursion				;; Probably redundant.
-	  (set-buffer (get-buffer pkg-outbuf))	;; Probably already the current buffer.
-	  (goto-char (point-min))
+    (save-excursion				;; Probably redundant.
+      (set-buffer (get-buffer pkg-outbuf))	;; Probably already the current buffer.
+      (goto-char (point-min))
+      (setq regexp (concat "\\bpkginfo" 
+			   (char-to-string directory-sep-char)
+			   "MANIFEST\\...*"))
 
-	  ;; Make filenames case-insensitive, if necessary
-	  (if (eq system-type 'windows-nt)
-	      (setq case-fold-search t))
+      ;; Look for the manifest.
+      (if (not (re-search-forward regexp nil t))
+	  (progn
+	    ;; We didn't find a manifest.  Make one.
 
-	  (setq regexp (concat "\\bpkginfo" 
-			       (char-to-string directory-sep-char)
-			       "MANIFEST\\...*"))
+	    ;; Yuk.  We weren't passed the package name, and so we have
+	    ;; to dig for it.  Look for it as the subdirectory name below
+	    ;; "lisp", or "man".
+	    ;; Here, we don't use a single regexp because we want to search
+	    ;; the directories for a package name in a particular order.
+	    (if (catch 'done
+		  (let ((dirs '("lisp" "man")) 
+			rexp)
+		    (while dirs
+		      (setq rexp (concat "\\b" (car dirs)
+					 "[\\/]\\([^\\/]+\\)[\//]"))
+		      (if (re-search-forward rexp nil t)
+			  (throw 'done t))
+		      (setq dirs (cdr dirs)))))
+		(progn
+		  (setq package-name (buffer-substring (match-beginning 1)
+						       (match-end 1)))
 
-	  ;; Look for the manifest.
-	  (if (not (re-search-forward regexp nil t))
-	      (progn
-		;; We didn't find a manifest.  Make one.
+		  ;; Get and erase the manifest buffer
+		  (setq manifest-buf (get-buffer-create manifest-buf))
+		  (buffer-disable-undo manifest-buf)
+		  (erase-buffer manifest-buf)
 
-		;; Yuk.  We weren't passed the package name, and so we have
-		;; to dig for it.  Look for it as the subdirectory name below
-		;; "lisp", or "man".
-		;; Here, we don't use a single regexp because we want to search
-		;; the directories for a package name in a particular order.
-		(if (catch 'done
-		      (let ((dirs '("lisp" "man")) 
-			    rexp)
-			(while dirs
-			  (setq rexp (concat "\\b" (car dirs)
-					     "[\\/]\\([^\\/]+\\)[\//]"))
-			  (if (re-search-forward rexp nil t)
-			      (throw 'done t))
-			  (setq dirs (cdr dirs)))))
-		    (progn
-		      (setq package-name (buffer-substring (match-beginning 1)
-							   (match-end 1)))
+		  ;; Now, scan through the output buffer, looking for
+		  ;; file and directory names.
+		  (goto-char (point-min))
+		  ;; for each line ...
+		  (while (< (point) (point-max))
+		    (beginning-of-line)
+		    (setq pathname nil)
 
-		      ;; Get and erase the manifest buffer
-		      (setq manifest-buf (get-buffer-create manifest-buf))
-		      (buffer-disable-undo manifest-buf)
-		      (erase-buffer manifest-buf)
+		    ;; scan through the regexps, looking for a pathname
+		    (if (catch 'found-path
+			  (setq regexps package-admin-tar-filename-regexps)
+			  (while regexps
+			    (if (looking-at (car regexps))
+				(progn
+				  (setq pathname
+					(buffer-substring
+					 (match-beginning 1)
+					 (match-end 1)))
+				  (throw 'found-path t)))
+			    (setq regexps (cdr regexps))))
+			(progn
+			  ;; found a pathname -- add it to the manifest
+			  ;; buffer
+			  (save-excursion
+			    (set-buffer manifest-buf)
+			    (goto-char (point-max))
+			    (insert pathname "\n"))))
+		    (forward-line 1))
 
-		      ;; Now, scan through the output buffer, looking for
-		      ;; file and directory names.
-		      (goto-char (point-min))
-		      ;; for each line ...
-		      (while (< (point) (point-max))
-			(beginning-of-line)
-			(setq pathname nil)
+		  ;; Processed all lines.
+		  ;; Now, create the file, pkginfo/MANIFEST.<pkgname>
 
-			;; scan through the regexps, looking for a pathname
-			(if (catch 'found-path
-			      (setq regexps package-admin-tar-filename-regexps)
-			      (while regexps
-				(if (looking-at (car regexps))
-				    (progn
-				      (setq pathname
-					    (buffer-substring
-					     (match-beginning 1)
-					     (match-end 1)))
-				      (throw 'found-path t)))
-				(setq regexps (cdr regexps))))
-			    (progn
-			      ;; found a pathname -- add it to the manifest
-			      ;; buffer
-			      (save-excursion
-				(set-buffer manifest-buf)
-				(goto-char (point-max))
-				(insert pathname "\n"))))
-			(forward-line 1))
-
-		      ;; Processed all lines.
-		      ;; Now, create the file, pkginfo/MANIFEST.<pkgname>
-
-		      ;; We use `expand-file-name' instead of `concat',
-		      ;; for portability.
-		      (setq pathname (expand-file-name "pkginfo"
-						       pkg-topdir))
-		      ;; Create pkginfo, if necessary
-		      (if (not (file-directory-p pathname))
-			  (make-directory pathname))
-		      (setq pathname (expand-file-name
-				      (concat "MANIFEST." package-name)
-				      pathname))
-		      (save-excursion
-			(set-buffer manifest-buf)
-			;; Put the files in sorted order
-			(if-fboundp 'sort-lines
-			    (sort-lines nil (point-min) (point-max))
-			  (warn "`xemacs-base' not installed, MANIFEST.%s not sorted"
-				package-name))
-			;; Write the file.
-			;; Note that using `write-region' *BYPASSES* any check
-			;; to see if XEmacs is currently editing/visiting the
-			;; file.
-			(write-region (point-min) (point-max) pathname))
-		      (kill-buffer manifest-buf))))))
-      ;; Restore old case-fold-search status
-      (setq case-fold-search old-case-fold-search))))
+		  ;; We use `expand-file-name' instead of `concat',
+		  ;; for portability.
+		  (setq pathname (expand-file-name "pkginfo"
+						   pkg-topdir))
+		  ;; Create pkginfo, if necessary
+		  (if (not (file-directory-p pathname))
+		      (make-directory pathname))
+		  (setq pathname (expand-file-name
+				  (concat "MANIFEST." package-name)
+				  pathname))
+		  (save-excursion
+		    (set-buffer manifest-buf)
+		    ;; Put the files in sorted order
+		    (if-fboundp 'sort-lines
+			(sort-lines nil (point-min) (point-max))
+		      (warn "`xemacs-base' not installed, MANIFEST.%s not sorted"
+			    package-name))
+		    ;; Write the file.
+		    ;; Note that using `write-region' *BYPASSES* any check
+		    ;; to see if XEmacs is currently editing/visiting the
+		    ;; file.
+		    (write-region (point-min) (point-max) pathname))
+		  (kill-buffer manifest-buf))))))))
 
 ;;;###autoload
 (defun package-admin-add-binary-package (file &optional pkg-dir)

@@ -1,14 +1,11 @@
 /* Synched up with: FSF 19.31. */
 
-/* For building XEmacs under HPUX 10.0 with dynamic libraries. */
+/* For building XEmacs under HPUX 11.0 with dynamic libraries. */
 
 #define ORDINARY_LINK
 
 /* XEmacs change */
-/* Only support for hp9000s300 currently */
-#if !defined(__hp9000s300)
 #define HPUX_USE_SHLIBS
-#endif /* !hp9000s300 */
 
 /* XEmacs: */
 /* Don't tell the linker to link statically */

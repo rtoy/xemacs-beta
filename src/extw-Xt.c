@@ -37,38 +37,8 @@ static void fatal (char *msg);
 #include <X11/IntrinsicP.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "compiler.h"
 #include "extw-Xt.h"
-
-/* Yeah, that's portable!
-
-   Why the hell didn't the Xt people just export this function
-   for real? */
-
-#if (XT_REVISION > 5)
-EXTERN_C int
-_XtWaitForSomething (XtAppContext app, _XtBoolean ignoreEvents,
-		     _XtBoolean ignoreTimers, _XtBoolean ignoreInputs,
-		     _XtBoolean ignoreSignals, _XtBoolean block,
-#ifdef XTHREADS
-		     _XtBoolean drop_lock,
-#endif
-		     unsigned long *howlong);
-
-# ifndef XTHREADS
-#  define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
-          _XtWaitForSomething (appCtx,events,timers,inputs,0,block,howlong)
-# else
-#  define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
-          _XtWaitForSomething (appCtx,events,timers,inputs,0,block,1,howlong)
-# endif
-#else
-EXTERN_C int
-_XtwaitForSomething (Boolean ignoreTimers, Boolean ignoreInputs,
-		     Boolean ignoreEvents, Boolean block,
-		     unsigned long *howlong, XtAppContext app);
-# define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
-         _XtwaitForSomething (timers,inputs,events,block,howlong,appCtx)
-#endif
 
 #ifdef DEBUG_WIDGET
 
@@ -181,60 +151,87 @@ extw_get_geometry_value(Display *display, Window win, Atom property,
 #endif
 }
 
-typedef struct {
-	Widget w;
-	unsigned long request_num;
-	en_extw_notify type;
+typedef struct
+{
+  Widget w;
+  unsigned long request_num;
+  en_extw_notify type;
 } QueryStruct;
 
 /* check if an event is of the sort we're looking for */
 
 static Bool
-isMine(Display *dpy, XEvent *event, char *arg)
+isMine(XEvent *event, QueryStruct *q)
 {
-	QueryStruct *q = (QueryStruct *) arg;
-	Widget w = q->w;
+  Widget w = q->w;
 
-	if ( (dpy != XtDisplay(w)) || (event->xany.window != XtWindow(w)) ) {
-	    return FALSE;
+  if ( (event->xany.display != XtDisplay(w)) || (event->xany.window != XtWindow(w)) )
+    {
+      return FALSE;
+    }
+  if (event->xany.serial >= q->request_num)
+    {
+      if (event->type == ClientMessage &&
+	  event->xclient.message_type == a_EXTW_NOTIFY &&
+	  event->xclient.data.l[0] == 1 - extw_which_side &&
+	  event->xclient.data.l[1] == (int) q->type)
+	{
+	  return TRUE;
 	}
-	if (event->xany.serial >= q->request_num) {
-	  if (event->type == ClientMessage &&
-	      event->xclient.message_type == a_EXTW_NOTIFY &&
-	      event->xclient.data.l[0] == 1 - extw_which_side &&
-	      (en_extw_notify) event->xclient.data.l[1] == q->type)
-	    return TRUE;
-	}
-	return FALSE;
+    }
+  return FALSE;
+}
+
+void responseTimeOut(XtPointer clientData, XtIntervalId  * UNUSED (id))
+{
+  Bool *expired=(Bool *)clientData;
+  *expired=TRUE;
 }
 
 /* wait for a ClientMessage of the specified type from the other widget, or
-   time-out.  isMine() determines whether an event matches.  Culled from
-   Shell.c. */
+   time-out.  isMine() determines whether an event matches.
+   Took out the call to _XtWaitForSomething and replaced it with public
+   Xt api's.
+*/
 
 Bool
 extw_wait_for_response (Widget w, XEvent *event, unsigned long request_num,
 			en_extw_notify type, unsigned long timeout)
 {
   XtAppContext app = XtWidgetToApplicationContext(w);
+  XtInputMask inputMask;
   QueryStruct q;
+  Bool expired;
+  XtIntervalId id;
 
-  XFlush(XtDisplay(w));
   q.w = w;
   q.request_num = request_num;
   q.type = type;
+  expired=FALSE;
 
-  for(;;)
+  id=XtAppAddTimeOut(app, timeout, responseTimeOut,&expired);
+  while (!expired)
     {
-      /*
-       * look for match event
-       */
-      if (XCheckIfEvent (XtDisplay(w), event, isMine, (char*)&q))
-	return TRUE;
-      if (_XT_WAIT_FOR_SOMETHING (TRUE, TRUE, FALSE, TRUE, &timeout, app)
-	  != -1)
-	continue;
-      if (timeout == 0)
-	return FALSE;
+      inputMask=XtAppPending(app);
+      if (inputMask & XtIMXEvent)
+	{
+	  XtAppNextEvent(app, event);
+	  if (isMine(event,&q))
+	    {
+	      if (!expired) XtRemoveTimeOut(id);
+	      return True;
+	    }
+	  else
+	    {
+	      /* Do Nothing and go back to waiting */
+	    }
+	}
+      if (inputMask & XtIMTimer)
+	{
+	  /* Process the expired timer */
+	  XtAppProcessEvent(app,XtIMTimer);
+	}
     }
+  /* Must have expired */
+  return False;
 }

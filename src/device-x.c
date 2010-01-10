@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "process.h"		/* for egetenv */
 #include "redisplay.h"
@@ -54,53 +55,53 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include "xgccache.h"
 #include <X11/Shell.h>
-#include "xmu.h"
+#include <X11/Xmu/Error.h>
 
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
 #include "sysdll.h"
 #endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
 
-#ifdef HAVE_OFFIX_DND
-#include "offix.h"
-#endif
-
-#ifdef MULE
 Lisp_Object Vx_app_defaults_directory;
+#ifdef MULE
 Lisp_Object Qget_coding_system_from_locale;
 #endif
 
 /* Qdisplay in general.c */
 Lisp_Object Qx_error;
-Lisp_Object Qinit_pre_x_win, Qinit_post_x_win;
+Lisp_Object Qmake_device_early_x_entry_point, Qmake_device_late_x_entry_point;
 
 /* The application class of Emacs. */
 Lisp_Object Vx_emacs_application_class;
 
 Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
+/* Shut up G++ 4.3. */
+#define Xrm_ODR(option,resource,type,default) \
+  { (String) option, (String) resource, type, default }
+
 static XrmOptionDescRec emacs_options[] =
 {
-  {"-geometry", ".geometry", XrmoptionSepArg, NULL},
-  {"-iconic", ".iconic", XrmoptionNoArg, "yes"},
+  Xrm_ODR ("-geometry", ".geometry", XrmoptionSepArg, NULL),
+  Xrm_ODR ("-iconic", ".iconic", XrmoptionNoArg, (String) "yes"),
 
-  {"-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
-  {"-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL},
-  {"-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL},
-  {"-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL},
+  Xrm_ODR ("-internal-border-width", "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL),
+  Xrm_ODR ("-ib",                    "*EmacsFrame.internalBorderWidth", XrmoptionSepArg, NULL),
+  Xrm_ODR ("-scrollbar-width",       "*EmacsFrame.scrollBarWidth",      XrmoptionSepArg, NULL),
+  Xrm_ODR ("-scrollbar-height",      "*EmacsFrame.scrollBarHeight",     XrmoptionSepArg, NULL),
 
-  {"-privatecolormap", ".privateColormap", XrmoptionNoArg,  "yes"},
-  {"-visual",   ".EmacsVisual",	    XrmoptionSepArg, NULL},
+  Xrm_ODR ("-privatecolormap", ".privateColormap", XrmoptionNoArg,  (String) "yes"),
+  Xrm_ODR ("-visual",   ".EmacsVisual",	    XrmoptionSepArg, NULL),
 
   /* #### Beware!  If the type of the shell changes, update this. */
-  {"-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
-  {"-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
-  {"-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL},
+  Xrm_ODR ("-T",        "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
+  Xrm_ODR ("-wn",       "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
+  Xrm_ODR ("-title",    "*TopLevelEmacsShell.title",    XrmoptionSepArg, NULL),
 
-  {"-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL},
-  {"-mc",       "*pointerColor",                XrmoptionSepArg, NULL},
-  {"-cr",       "*cursorColor",                 XrmoptionSepArg, NULL},
-  {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
+  Xrm_ODR ("-iconname", "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL),
+  Xrm_ODR ("-in",       "*TopLevelEmacsShell.iconName", XrmoptionSepArg, NULL),
+  Xrm_ODR ("-mc",       "*pointerColor",                XrmoptionSepArg, NULL),
+  Xrm_ODR ("-cr",       "*cursorColor",                 XrmoptionSepArg, NULL),
+  Xrm_ODR ("-fontset",  "*FontSet",                     XrmoptionSepArg, NULL),
 };
 
 static const struct memory_description x_device_data_description_1 [] = {
@@ -109,11 +110,19 @@ static const struct memory_description x_device_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("x-device", x_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       x_device_data_description_1,
+			       Lisp_X_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description x_device_data_description;
 
 const struct sized_memory_description x_device_data_description = {
   sizeof (struct x_device), x_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 /* Functions to synchronize mirroring resources and specifiers */
 int in_resource_setting;
@@ -184,9 +193,27 @@ static Lisp_Object
 coding_system_of_xrm_database (XrmDatabase USED_IF_MULE (db))
 {
 #ifdef MULE
-  const Extbyte *locale = XrmLocaleOfDatabase (db);
-  Lisp_Object localestr = build_ext_string (locale, Qbinary);
-  return call1 (Qget_coding_system_from_locale, localestr);
+  const Extbyte *locale;
+  Lisp_Object localestr;
+  static XrmDatabase last_xrm_db; 
+
+  /* This will always be zero, nil or an actual coding system object, so no
+     need to worry about GCPROing it--it'll be protected from garbage
+     collection by means of Vcoding_system_hash_table in file-coding.c. */
+  static Lisp_Object last_coding_system; 
+
+  if (db == last_xrm_db)
+    {
+      return last_coding_system; 
+    }
+
+  last_xrm_db = db;
+
+  locale = XrmLocaleOfDatabase (db);
+  localestr = build_ext_string (locale, Qbinary);
+  last_coding_system = call1 (Qget_coding_system_from_locale, localestr);
+
+  return last_coding_system;
 #else
   return Qbinary;
 #endif
@@ -202,7 +229,11 @@ static struct device *device_being_initialized = NULL;
 static void
 allocate_x_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct x_device, &lrecord_x_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct x_device);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -298,7 +329,7 @@ compute_x_app_name (int argc, Extbyte **argv)
   if (argc > 0 && argv[0] && *argv[0])
     return (ptr = strrchr (argv[0], '/')) ? ++ptr : argv[0];
 
-  return "xemacs";
+  return (Extbyte *) "xemacs";	/* shut up g++ 4.3 */
 }
 
 /*
@@ -312,7 +343,7 @@ compute_x_app_name (int argc, Extbyte **argv)
 static int
 have_xemacs_resources_in_xrdb (Display *dpy)
 {
-  char *xdefs, *key;
+  const char *xdefs, *key;
   int len;
 
 #ifdef INFODOCK
@@ -514,6 +545,10 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   /* */
   int best_visual_found = 0;
 
+  /* Run the elisp side of the X device initialization, allowing it to set
+     x-emacs-application-class and x-app-defaults-directory.  */
+  call0 (Qmake_device_early_x_entry_point);
+
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
   /*
    * In order to avoid the lossage with flat Athena widgets dynamically
@@ -656,8 +691,10 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
+    const Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = XrmLocaleOfDatabase (db);
+    const Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
@@ -665,18 +702,51 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
 				 Qfile_name);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
-	sprintf (path, "%s%s/Emacs", data_dir, locale);
-	if (!access (path, R_OK))
-	  XrmCombineFileDatabase (path, &db, False);
+	format = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
-	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
-	if (!access (path, R_OK))
-	  XrmCombineFileDatabase (path, &db, False);
+	format = "%sapp-defaults/%s/Emacs";
       }
+    else
+      {
+	goto no_data_directory;
+      }
+
+    /*
+     * The general form for $LANG is <language>_<country>.<encoding>.  Try
+     * that form, <language>_<country> and <language> and load for first
+     * app-defaults file found.
+     */
+
+    sprintf (path, format, data_dir, locale);
+    if (!access (path, R_OK))
+      XrmCombineFileDatabase (path, &db, False);
+
+    if ((locale_end = strchr(locale, '.'))) {
+      *locale_end = '\0';
+      sprintf (path, format, data_dir, locale);
+
+      if (!access (path, R_OK))
+	XrmCombineFileDatabase (path, &db, False);
+    }
+
+    if ((locale_end = strchr(locale, '_'))) {
+      *locale_end = '\0';
+      sprintf (path, format, data_dir, locale);
+
+      if (!access (path, R_OK))
+	XrmCombineFileDatabase (path, &db, False);
+    }
+
+  no_data_directory:
+    {
+      /* Cast off const for G++ 4.3. */
+      Extbyte *temp = (Extbyte *) locale;
+      xfree (temp, Extbyte*);
+    }
  }
 #endif /* MULE */
 
@@ -798,9 +868,9 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      be the place.  Make sure it doesn't conflict with GNOME. */
   {
     Arg al[3];
-    XtSetArg (al[0], XtNvisual,   visual);
-    XtSetArg (al[1], XtNdepth,    depth);
-    XtSetArg (al[2], XtNcolormap, cmap);
+    Xt_SET_ARG (al[0], XtNvisual,   visual);
+    Xt_SET_ARG (al[1], XtNdepth,    depth);
+    Xt_SET_ARG (al[2], XtNcolormap, cmap);
 
     app_shell = XtAppCreateShell (NULL, app_class,
 				  applicationShellWidgetClass,
@@ -817,11 +887,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      and set it to the size of the root window for child placement purposes */
   {
     Arg al[5];
-    XtSetArg (al[0], XtNmappedWhenManaged, False);
-    XtSetArg (al[1], XtNx, 0);
-    XtSetArg (al[2], XtNy, 0);
-    XtSetArg (al[3], XtNwidth,  WidthOfScreen  (ScreenOfDisplay (dpy, screen)));
-    XtSetArg (al[4], XtNheight, HeightOfScreen (ScreenOfDisplay (dpy, screen)));
+    Xt_SET_ARG (al[0], XtNmappedWhenManaged, False);
+    Xt_SET_ARG (al[1], XtNx, 0);
+    Xt_SET_ARG (al[2], XtNy, 0);
+    Xt_SET_ARG (al[3], XtNwidth,
+		WidthOfScreen  (ScreenOfDisplay (dpy, screen)));
+    Xt_SET_ARG (al[4], XtNheight,
+		HeightOfScreen (ScreenOfDisplay (dpy, screen)));
     XtSetValues (app_shell, al, countof (al));
     XtRealizeWidget (app_shell);
   }
@@ -836,11 +908,6 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     free_argc_argv (new_argv);
   }
 #endif /* HAVE_WMCOMMAND */
-
-
-#ifdef HAVE_OFFIX_DND
-  DndInitialize (app_shell);
-#endif
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);
@@ -862,15 +929,12 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   Xatoms_of_select_x (d);
   Xatoms_of_objects_x (d);
   x_init_device_class (d);
-
-  /* Run the elisp side of the X device initialization. */
-  call0 (Qinit_pre_x_win);
 }
 
 static void
-x_finish_init_device (struct device *UNUSED (d), Lisp_Object UNUSED (props))
+x_finish_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
-  call0 (Qinit_post_x_win);
+  call1 (Qmake_device_late_x_entry_point, wrap_device (d));
 }
 
 static void
@@ -885,11 +949,13 @@ x_mark_device (struct device *d)
 /*                       closing an X connection	                */
 /************************************************************************/
 
+#ifndef NEW_GC
 static void
 free_x_device_struct (struct device *d)
 {
   xfree (d->device_data, void *);
 }
+#endif /* not NEW_GC */
 
 static void
 x_delete_device (struct device *d)
@@ -932,7 +998,9 @@ x_delete_device (struct device *d)
 #endif
     }
 
+#ifndef NEW_GC
   free_x_device_struct (d);
+#endif /* not NEW_GC */
 }
 
 
@@ -1202,9 +1270,12 @@ x_IO_error_handler (Display *disp)
      Xlib might just decide to exit().  So we mark the offending
      console for deletion and throw to top level.  */
   if (d)
-    enqueue_magic_eval_event (io_error_delete_device, dev);
-  DEVICE_X_BEING_DELETED (d) = 1;
-  Fthrow (Qtop_level, Qnil);
+    {
+      enqueue_magic_eval_event (io_error_delete_device, dev);
+      DEVICE_X_BEING_DELETED (d) = 1;
+    }
+
+  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }
@@ -1984,6 +2055,8 @@ See also `x-set-font-path'.
                                            Qfile_name),
 			 font_path);
 
+  XFreeFontPath ((char **)directories);
+
   return font_path;
 }
 
@@ -2040,6 +2113,10 @@ See also `x-get-font-path'.
 void
 syms_of_device_x (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (x_device);
+#endif /* NEW_GC */
+
   DEFSUBR (Fx_debug_mode);
   DEFSUBR (Fx_get_resource);
   DEFSUBR (Fx_get_resource_prefix);
@@ -2064,8 +2141,8 @@ syms_of_device_x (void)
   DEFSUBR (Fx_set_font_path);
 
   DEFSYMBOL (Qx_error);
-  DEFSYMBOL (Qinit_pre_x_win);
-  DEFSYMBOL (Qinit_post_x_win);
+  DEFSYMBOL (Qmake_device_early_x_entry_point);
+  DEFSYMBOL (Qmake_device_late_x_entry_point);
 
 #ifdef MULE
   DEFSYMBOL (Qget_coding_system_from_locale);
@@ -2138,13 +2215,11 @@ just reside in C.
 */ );
   Vx_initial_argv_list = Qnil;
 
-#ifdef MULE
   DEFVAR_LISP ("x-app-defaults-directory", &Vx_app_defaults_directory /*
 Used by the Lisp code to communicate to the low level X initialization
 where the localized init files are.
 */ );
   Vx_app_defaults_directory = Qnil;
-#endif
 
   Fprovide (Qx);
 }

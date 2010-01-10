@@ -410,7 +410,8 @@ representations as fixed-precision floats.
 
 It is possible to make bigfloat the default floating point format by
 setting @code{default-float-precision} to a non-zero value.  Precision
-is given in bits, with a maximum precision of @code{bigfloat-max-prec}.
+is given in bits, with a maximum precision of
+@code{bigfloat-maximum-precision}.
 @c #### is this true?
 Bigfloats are created automatically when a number with yes
 

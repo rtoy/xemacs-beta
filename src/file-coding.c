@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -78,6 +78,9 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "opaque.h"
 #include "file-coding.h"
+#include "extents.h"
+#include "rangetab.h"
+#include "chartab.h"
 
 #ifdef HAVE_ZLIB
 #include "zlib.h"
@@ -89,8 +92,15 @@ Lisp_Object Vcoding_system_for_read;
 Lisp_Object Vcoding_system_for_write;
 Lisp_Object Vfile_name_coding_system;
 
+Lisp_Object Qaliases, Qcharset_skip_chars_string;
+
 #ifdef DEBUG_XEMACS
 Lisp_Object Vdebug_coding_detection;
+#endif
+
+#ifdef MULE
+extern Lisp_Object Vcharset_ascii, Vcharset_control_1,
+  Vcharset_latin_iso8859_1;
 #endif
 
 typedef struct coding_system_type_entry
@@ -229,6 +239,8 @@ Lisp_Object Qcanonicalize_after_coding;
 
 Lisp_Object QScoding_system_cookie;
 
+Lisp_Object Qposix_charset_to_coding_system_hash;
+
 /* This is used to convert autodetected coding systems into existing
    systems.  For example, the chain undecided->convert-eol-autodetect may
    have its separate parts detected as mswindows-multibyte and
@@ -304,6 +316,7 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
   write_c_string (printcharfun, "]");
 }
 
+#ifndef NEW_GC
 static void
 finalize_coding_system (void *header, int for_disksave)
 {
@@ -314,6 +327,7 @@ finalize_coding_system (void *header, int for_disksave)
   if (!for_disksave) /* see comment in lstream.c */
     MAYBE_XCODESYSMETH (cs, finalize, (cs));
 }
+#endif /* not NEW_GC */
 
 static Bytecount
 sizeof_coding_system (const void *header)
@@ -365,6 +379,15 @@ const struct sized_memory_description coding_system_empty_extra_description = {
   0, coding_system_empty_extra_description_1
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
+					1, /*dumpable-flag*/
+					mark_coding_system,
+					print_coding_system,
+					0, 0, 0, coding_system_description,
+					sizeof_coding_system,
+					Lisp_Coding_System);
+#else /* not NEW_GC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					1, /*dumpable-flag*/
 					mark_coding_system,
@@ -373,6 +396,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					0, 0, coding_system_description,
 					sizeof_coding_system,
 					Lisp_Coding_System);
+#endif /* not NEW_GC */
 
 /************************************************************************/
 /*                       Creating coding systems                        */
@@ -401,6 +425,155 @@ valid_coding_system_type_p (Lisp_Object type)
 {
   return decode_coding_system_type (type, ERROR_ME_NOT) != 0;
 }
+
+#ifdef MULE
+static Lisp_Object Vdefault_query_coding_region_chartab_cache;
+
+/* Non-static because it's used in INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
+Lisp_Object
+default_query_method (Lisp_Object codesys, struct buffer *buf,
+                      Charbpos end, int flags)
+{
+  Charbpos pos = BUF_PT (buf), fail_range_start, fail_range_end;
+  Charbpos pos_byte = BYTE_BUF_PT (buf);
+  Lisp_Object safe_charsets = XCODING_SYSTEM_SAFE_CHARSETS (codesys);
+  Lisp_Object safe_chars = XCODING_SYSTEM_SAFE_CHARS (codesys),
+    result = Qnil;
+  enum query_coding_failure_reasons failed_reason,
+    previous_failed_reason = query_coding_succeeded;
+
+  /* safe-charsets of t means the coding system can encode everything. */
+  if (EQ (Qnil, safe_chars))
+    {
+      if (EQ (Qt, safe_charsets))
+        {
+          return Qnil;
+        }
+
+      /* If we've no information on what characters the coding system can
+         encode, give up. */
+      if (EQ (Qnil, safe_charsets) && EQ (Qnil, safe_chars))
+        {
+          return Qunbound;
+        }
+
+      safe_chars = Fgethash (safe_charsets,
+                             Vdefault_query_coding_region_chartab_cache, 
+                             Qnil);
+      if (NILP (safe_chars))
+        {
+          safe_chars = Fmake_char_table (Qgeneric);
+          {
+            EXTERNAL_LIST_LOOP_2 (safe_charset, safe_charsets)
+              Fput_char_table (safe_charset, Qt, safe_chars);
+          }
+
+          Fputhash (safe_charsets, safe_chars,
+                    Vdefault_query_coding_region_chartab_cache);
+        }
+    }
+
+  if (flags & QUERY_METHOD_HIGHLIGHT && 
+      /* If we're being called really early, live without highlights getting
+         cleared properly: */
+      !(UNBOUNDP (XSYMBOL (Qquery_coding_clear_highlights)->function)))
+    {
+      /* It's okay to call Lisp here, the only non-stack object we may have
+         allocated up to this point is safe_chars, and that's
+         reachable from its entry in
+         Vdefault_query_coding_region_chartab_cache */
+      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
+             wrap_buffer (buf));
+    }
+
+  while (pos < end)
+    {
+      Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
+      if (!EQ (Qnil, get_char_table (ch, safe_chars)))
+        {
+          pos++;
+          INC_BYTEBPOS (buf, pos_byte);
+        }
+      else
+        {
+          fail_range_start = pos;
+          while ((pos < end) &&  
+                 (EQ (Qnil, get_char_table (ch, safe_chars))
+                  && (failed_reason = query_coding_unencodable))
+                 && (previous_failed_reason == query_coding_succeeded
+                     || previous_failed_reason == failed_reason))
+            {
+              pos++;
+              INC_BYTEBPOS (buf, pos_byte);
+              ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
+              previous_failed_reason = failed_reason;
+            }
+
+          if (fail_range_start == pos)
+            {
+              /* The character can actually be encoded; move on. */
+              pos++;
+              INC_BYTEBPOS (buf, pos_byte);
+            }
+          else
+            {
+              assert (previous_failed_reason == query_coding_unencodable);
+
+              if (flags & QUERY_METHOD_ERRORP)
+                {
+                  DECLARE_EISTRING (error_details);
+
+                  eicpy_ascii (error_details, "Cannot encode ");
+                  eicat_lstr (error_details,
+                              make_string_from_buffer (buf, fail_range_start,
+                                                       pos -
+                                                       fail_range_start));
+                  eicat_ascii (error_details, " using coding system");
+
+                  text_conversion_error
+		    ((const CIbyte *)(eidata (error_details)),
+		     XCODING_SYSTEM_NAME (codesys));
+                }
+
+              if (NILP (result))
+                {
+                  result = Fmake_range_table (Qstart_closed_end_open);
+                }
+
+              fail_range_end = pos;
+
+              Fput_range_table (make_int (fail_range_start), 
+                                make_int (fail_range_end),
+                                Qunencodable,
+                                result);
+              previous_failed_reason = query_coding_succeeded;
+
+              if (flags & QUERY_METHOD_HIGHLIGHT) 
+                {
+                  Lisp_Object extent
+                    = Fmake_extent (make_int (fail_range_start),
+                                    make_int (fail_range_end), 
+                                    wrap_buffer (buf));
+                  
+                  Fset_extent_priority
+                    (extent, make_int (2 + mouse_highlight_priority));
+                  Fset_extent_face (extent, Qquery_coding_warning_face);
+                }
+            }
+        }
+    }
+
+  return result;
+}
+#else
+Lisp_Object
+default_query_method (Lisp_Object UNUSED (codesys),
+                      struct buffer * UNUSED (buf),
+                      Charbpos UNUSED (end), int UNUSED (flags))
+{
+  return Qnil;
+}
+#endif /* defined MULE */
 
 DEFUN ("valid-coding-system-type-p", Fvalid_coding_system_type_p, 1, 1, 0, /*
 Given a CODING-SYSTEM-TYPE, return non-nil if it is valid.
@@ -456,6 +629,89 @@ a coding system is called for. (This is similar to how faces work.)
   return CODING_SYSTEMP (object) ? Qt : Qnil;
 }
 
+static Lisp_Object
+find_coding_system (Lisp_Object coding_system_or_name,
+                    int do_autoloads)
+{
+  Lisp_Object lookup;
+
+  if (NILP (coding_system_or_name))
+    coding_system_or_name = Qbinary;
+  else if (CODING_SYSTEMP (coding_system_or_name))
+    return coding_system_or_name;
+  else
+    CHECK_SYMBOL (coding_system_or_name);
+
+  while (1)
+    {
+      lookup =
+	Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
+
+      if (CONSP (lookup) && do_autoloads)
+        {
+          struct gcpro gcpro1;
+          int length;
+          DECLARE_EISTRING (desired_base);
+          DECLARE_EISTRING (warning_info);
+
+          eicpy_lstr (desired_base, XSYMBOL_NAME (coding_system_or_name));
+
+          /* Work out the name of the base coding system. */
+          length = eilen (desired_base);
+          if (length > (int)(sizeof ("-unix") - 1))
+            {
+              if (0 == qxestrcmp ((UAscbyte *)"-unix", (eidata (desired_base))
+                                  + (length - (sizeof ("-unix") - 1))))
+                {
+                  eidel (desired_base, length - (sizeof ("-unix") - 1),
+                         -1, 5, 5);
+                }
+            }
+          else if (length > (int)(sizeof ("-dos") - 1))
+            {
+              if ((0 == qxestrcmp ((UAscbyte *)"-dos", (eidata (desired_base))
+                                   + (length - (sizeof ("-dos") - 1)))) ||
+                  (0 == qxestrcmp ((UAscbyte *)"-mac", (eidata (desired_base))
+                                   + (length - (sizeof ("-mac") - 1)))))
+                {
+                  eidel (desired_base, length - (sizeof ("-dos") - 1), -1,
+                         4, 4);
+                }
+            }
+
+          coding_system_or_name = intern_int (eidata (desired_base));
+
+          /* Remove this coding system and its subsidiary coding
+             systems from the hash, to avoid calling this code recursively. */
+          Fremhash (coding_system_or_name, Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-unix"),
+                    Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-dos"),
+                    Vcoding_system_hash_table);
+          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-mac"),
+                    Vcoding_system_hash_table);
+
+          eicpy_ascii (warning_info, "Error autoloading coding system ");
+          eicat_lstr (warning_info, XSYMBOL_NAME (coding_system_or_name));
+
+          /* Keep around the form so it doesn't disappear from under
+             #'eval's feet. */
+          GCPRO1 (lookup);
+          call1_trapping_problems ((const CIbyte *)eidata (warning_info),
+                                   Qeval, lookup, 0);
+          UNGCPRO;
+
+          lookup =
+            Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
+        }
+
+      if (CODING_SYSTEMP (lookup) || NILP (lookup))
+        return lookup;
+
+      coding_system_or_name = lookup;
+    }
+}
+
 DEFUN ("find-coding-system", Ffind_coding_system, 1, 1, 0, /*
 Retrieve the coding system of the given name.
 
@@ -466,22 +722,77 @@ associated coding system object is returned.
 */
        (coding_system_or_name))
 {
-  if (NILP (coding_system_or_name))
-    coding_system_or_name = Qbinary;
-  else if (CODING_SYSTEMP (coding_system_or_name))
-    return coding_system_or_name;
-  else
-    CHECK_SYMBOL (coding_system_or_name);
+  return find_coding_system(coding_system_or_name, 1);
+}
 
-  while (1)
+DEFUN ("autoload-coding-system", Fautoload_coding_system, 2, 2, 0, /*
+Define SYMBOL as a coding-system that is loaded on demand.
+
+FORM is a form to evaluate to define the coding-system. 
+*/
+       (symbol, form))
+{
+  Lisp_Object lookup;
+
+  CHECK_SYMBOL (symbol);
+  CHECK_CONS (form);
+
+  lookup = find_coding_system (symbol, 0);
+
+  if (!NILP (lookup) &&
+      /* Allow autoloads to be redefined. */
+      !CONSP (lookup))
     {
-      coding_system_or_name =
-	Fgethash (coding_system_or_name, Vcoding_system_hash_table, Qnil);
-
-      if (CODING_SYSTEMP (coding_system_or_name)
-	  || NILP (coding_system_or_name))
-	return coding_system_or_name;
+      invalid_operation ("Cannot redefine existing coding system",
+                         symbol);
     }
+
+  Fputhash (symbol, form, Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-unix"), form,
+            Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-dos"), form,
+            Vcoding_system_hash_table);
+  Fputhash (add_suffix_to_symbol(symbol, "-mac"), form,
+            Vcoding_system_hash_table);
+
+  /* Tell the POSIX locale infrastructure about this coding system (though
+     unfortunately it'll be too late for the startup locale sniffing. */
+  if (!UNBOUNDP (Qposix_charset_to_coding_system_hash))
+    {
+      Lisp_Object val = Fsymbol_value (Qposix_charset_to_coding_system_hash);
+      DECLARE_EISTRING (minimal_name);
+      Ibyte *full_name;
+      int len = XSTRING_LENGTH (XSYMBOL_NAME (symbol)), i;
+
+      if (!NILP (val))
+        {
+          full_name = XSTRING_DATA (XSYMBOL_NAME (symbol));
+          for (i = 0; i < len; ++i)
+            {
+              if (full_name[i] >= '0' && full_name[i] <= '9')
+                {
+                  eicat_ch (minimal_name, full_name[i]);
+                }
+              else if (full_name[i] >= 'a' && full_name[i] <= 'z')
+                {
+                  eicat_ch (minimal_name, full_name[i]);
+                }
+              else if (full_name[i] >= 'A'  && full_name[i] <= 'Z')
+                {
+                  eicat_ch (minimal_name, full_name[i] + 
+                            ('a' - 'A'));
+                }
+            }
+
+          if (eilen (minimal_name))
+            {
+              CHECK_HASH_TABLE (val);
+              Fputhash (eimake_string(minimal_name), symbol, val);
+            }
+        }
+    }
+
+  return Qt;
 }
 
 DEFUN ("get-coding-system", Fget_coding_system, 1, 1, 0, /*
@@ -638,7 +949,7 @@ struct coding_system_list_closure
 };
 
 static int
-add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
+add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object value,
 				  void *coding_system_list_closure)
 {
   /* This function can GC */
@@ -647,9 +958,13 @@ add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
   Lisp_Object *coding_system_list = cscl->coding_system_list;
 
   /* We can't just use VALUE because KEY might be an alias, and we need
-     the real coding system object. */
-  if (XCODING_SYSTEM (Ffind_coding_system (key))->internal_p ?
-      cscl->internal : cscl->normal)
+     the real coding system object.
+
+     Autoloaded coding systems have conses for their values, and can't be
+     internal coding systems, or coding system aliases.  */
+  if (CONSP (value) ||
+      (XCODING_SYSTEM (Ffind_coding_system (key))->internal_p ?
+       cscl->internal : cscl->normal))
     *coding_system_list = Fcons (key, *coding_system_list);
   return 0;
 }
@@ -740,8 +1055,8 @@ eol_type_to_symbol (enum eol_type type)
 
 struct subsidiary_type
 {
-  Ascbyte *extension;
-  Ascbyte *mnemonic_ext;
+  const Ascbyte *extension;
+  const Ascbyte *mnemonic_ext;
   enum eol_type eol;
 };
 
@@ -787,8 +1102,8 @@ setup_eol_coding_systems (Lisp_Object codesys)
   
   for (i = 0; i < countof (coding_subsidiary_list); i++)
     {
-      Ascbyte *extension = coding_subsidiary_list[i].extension;
-      Ascbyte *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
+      const Ascbyte *extension = coding_subsidiary_list[i].extension;
+      const Ascbyte *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
       qxestrcpy_ascii (codesys_name + len, extension);
@@ -823,6 +1138,16 @@ setup_eol_coding_systems (Lisp_Object codesys)
       XCODING_SYSTEM_SUBSIDIARY_PARENT (sub_codesys) = codesys;
       XCODING_SYSTEM (codesys)->eol[eol] = sub_codesys;
     }
+}
+
+DEFUN ("coding-system-canonical-name-p", Fcoding_system_canonical_name_p,
+       1, 1, 0, /*
+Return t if OBJECT names a coding system, and is not a coding system alias.
+*/
+       (object))
+{
+  return CODING_SYSTEMP (Fgethash (object, Vcoding_system_hash_table, Qnil))
+    ? Qt : Qnil;
 }
 
 /* Basic function to create new coding systems.  For `make-coding-system',
@@ -864,7 +1189,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
    */
 
 static Lisp_Object
-make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
+make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 		      Lisp_Object type, Lisp_Object description,
 		      Lisp_Object props)
 {
@@ -873,7 +1198,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
   enum eol_type eol_wrapper = EOL_AUTODETECT;
   struct coding_system_methods *meths;
   Lisp_Object csobj;
-  Lisp_Object defmnem = Qnil;
+  Lisp_Object defmnem = Qnil, aliases = Qnil;
 
   if (NILP (type))
     type = Qundecided;
@@ -908,9 +1233,13 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
   else
     CHECK_SYMBOL (name_or_existing);
 
-  if (!NILP (Ffind_coding_system (name_or_existing)))
+  /* See is there an entry for name_or_existing in the defined coding system
+     hash table. */
+  csobj = find_coding_system (name_or_existing, 0);
+  /* Error if it's there and not an autoload form. */
+  if (!NILP (csobj) && !CONSP (csobj))
     invalid_operation ("Cannot redefine existing coding system",
-		       name_or_existing);
+                       name_or_existing);
 
   cs = allocate_coding_system (meths, meths->extra_data_size,
 			       name_or_existing);
@@ -958,15 +1287,55 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
 	  CODING_SYSTEM_POST_READ_CONVERSION (cs) = value;
 	else if (EQ (key, Qpre_write_conversion))
 	  CODING_SYSTEM_PRE_WRITE_CONVERSION (cs) = value;
+        else if (EQ (key, Qaliases))
+          {
+            EXTERNAL_LIST_LOOP_2 (alias, value)
+              {
+                CHECK_SYMBOL (alias);
+
+                if (!NILP (Fcoding_system_canonical_name_p (alias)))
+                  {
+                    invalid_change ("Symbol is the canonical name of a "
+                                    "coding system and cannot be redefined",
+                                    alias);
+                  }
+              }
+            aliases = value;
+          }
 	/* FSF compatibility */
 	else if (EQ (key, Qtranslation_table_for_decode))
 	  ;
 	else if (EQ (key, Qtranslation_table_for_encode))
 	  ;
 	else if (EQ (key, Qsafe_chars))
-	  ;
+          {
+            CHECK_CHAR_TABLE (value);
+            CODING_SYSTEM_SAFE_CHARS (cs) = value;
+          }
 	else if (EQ (key, Qsafe_charsets))
-	  ;
+          {
+            if (!EQ (Qt, value) 
+                /* Would be nice to actually do this check, but there are
+                   some order conflicts with japanese.el and
+                   mule-coding.el  */
+                && 0)
+              {
+#ifdef MULE
+                EXTERNAL_LIST_LOOP_2 (safe_charset, value) 
+                  CHECK_CHARSET (Ffind_charset (safe_charset));
+#endif
+              }
+
+            CODING_SYSTEM_SAFE_CHARSETS (cs) = value;
+          }
+	else if (EQ (key, Qcategory))
+          {
+            Fput (name_or_existing, intern ("coding-system-property"),
+                  Fplist_put (Fget (name_or_existing, 
+                                    intern ("coding-system-property"),
+                                    Qnil), 
+                              Qcategory, value));
+          }
 	else if (EQ (key, Qmime_charset))
 	  ;
 	else if (EQ (key, Qvalid_codes))
@@ -985,6 +1354,8 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
       CODESYSMETH_OR_GIVEN (cs, canonicalize, (csobj), Qnil);
     XCODING_SYSTEM_EOL_TYPE (csobj) = EOL_AUTODETECT; /* for copy-coding-system
 							 below */
+
+    Fputhash (name_or_existing, csobj, Vcoding_system_hash_table);
 
     if (need_to_setup_eol_systems && !cs->internal_p)
       setup_eol_coding_systems (csobj);
@@ -1023,362 +1394,34 @@ make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
 		    csobj));
       }
     XCODING_SYSTEM_EOL_TYPE (csobj) = eol_wrapper;
+
+    {
+      EXTERNAL_LIST_LOOP_2 (alias, aliases)
+        Fdefine_coding_system_alias (alias, csobj);
+    }
   }
-  
-  Fputhash (name_or_existing, csobj, Vcoding_system_hash_table);
 
   return csobj;
 }
 
 Lisp_Object
-make_internal_coding_system (Lisp_Object existing, Ascbyte *prefix,
+make_internal_coding_system (Lisp_Object existing, const Ascbyte *prefix,
 			     Lisp_Object type, Lisp_Object description,
 			     Lisp_Object props)
 {
   return make_coding_system_1 (existing, prefix, type, description, props);
 }
 
-DEFUN ("make-coding-system", Fmake_coding_system, 2, 4, 0, /*
-Register symbol NAME as a coding system.
-
-TYPE describes the conversion method used and should be one of
-
-nil or `undecided'
-     Automatic conversion.  XEmacs attempts to detect the coding system
-     used in the file.
-`chain'
-     Chain two or more coding systems together to make a combination coding
-     system.
-`no-conversion'
-     No conversion.  Use this for binary files and such.  On output,
-     graphic characters that are not in ASCII or Latin-1 will be
-     replaced by a ?. (For a no-conversion-encoded buffer, these
-     characters will only be present if you explicitly insert them.)
-`convert-eol'
-     Convert CRLF sequences or CR to LF.
-`shift-jis'
-     Shift-JIS (a Japanese encoding commonly used in PC operating systems).
-`mbcs'
-     An encoding that directly encodes the indices of one or more charsets
-     with one or two bytes.
-`unicode'
-     Any Unicode encoding (UCS-4, UTF-8, UTF-16, etc.).
-`mswindows-unicode-to-multibyte'
-     (MS Windows only) Converts from Windows Unicode to Windows Multibyte
-     (any code page encoding) upon encoding, and the other way upon decoding.
-`mswindows-multibyte'
-     Converts to or from Windows Multibyte (any code page encoding).
-     This is resolved into a chain of `mswindows-unicode' and
-     `mswindows-unicode-to-multibyte'.
-`iso2022'
-     Any ISO2022-compliant encoding.  Among other things, this includes
-     JIS (the Japanese encoding commonly used for e-mail), EUC (the
-     standard Unix encoding for Japanese and other languages), and
-     Compound Text (the encoding used in X11).  You can specify more
-     specific information about the conversion with the PROPS argument.
-`big5'
-     Big5 (the encoding commonly used for Mandarin Chinese in Taiwan).
-`ccl'
-     The conversion is performed using a user-written pseudo-code
-     program.  CCL (Code Conversion Language) is the name of this
-     pseudo-code.  Not available when (featurep 'unicode-internal).
-`gzip'
-     GZIP compression format.
-`internal'
-     Write out or read in the raw contents of the memory representing
-     the buffer's text.  This is primarily useful for debugging
-     purposes, and is only enabled when XEmacs has been compiled with
-     DEBUG_XEMACS defined (via the --debug configure option).
-     WARNING: Reading in a file using `internal' conversion can result
-     in an internal inconsistency in the memory representing a
-     buffer's text, which will produce unpredictable results and may
-     cause XEmacs to crash.  Under normal circumstances you should
-     never use `internal' conversion.
-
-DESCRIPTION is a short English phrase describing the coding system,
-suitable for use as a menu item. (See also the `documentation' property
-below.)
-
-PROPS is a property list, describing the specific nature of the
-character set.  Recognized properties are:
-
-`mnemonic'
-     String to be displayed in the modeline when this coding system is
-     active.
-
-`documentation'
-     Detailed documentation on the coding system.
-
-`eol-type'
-     End-of-line conversion to be used.  It should be one of
-
-	nil
-		Automatically detect the end-of-line type (LF, CRLF,
-		or CR).  Also generate subsidiary coding systems named
-		`NAME-unix', `NAME-dos', and `NAME-mac', that are
-		identical to this coding system but have an EOL-TYPE
-		value of `lf', `crlf', and `cr', respectively.
-	`lf'
-		The end of a line is marked externally using ASCII LF.
-		Since this is also the way that XEmacs represents an
-		end-of-line internally, specifying this option results
-		in no end-of-line conversion.  This is the standard
-		format for Unix text files.
-	`crlf'
-		The end of a line is marked externally using ASCII
-		CRLF.  This is the standard format for MS-DOS text
-		files.
-	`cr'
-		The end of a line is marked externally using ASCII CR.
-		This is the standard format for Macintosh text files.
-	t
-		Automatically detect the end-of-line type but do not
-		generate subsidiary coding systems.  (This value is
-		converted to nil when stored internally, and
-		`coding-system-property' will return nil.)
-
-`post-read-conversion'
-     The value is a function to call after some text is inserted and
-     decoded by the coding system itself and before any functions in
-     `after-change-functions' are called. (#### Not actually true in
-     XEmacs. `after-change-functions' will be called twice if
-     `post-read-conversion' changes something.) The argument of this
-     function is the same as for a function in
-     `after-insert-file-functions', i.e. LENGTH of the text inserted,
-     with point at the head of the text to be decoded.
-
-`pre-write-conversion'
-     The value is a function to call after all functions in
-     `write-region-annotate-functions' and `buffer-file-format' are
-     called, and before the text is encoded by the coding system itself.
-     The arguments to this function are the same as those of a function
-     in `write-region-annotate-functions', i.e. FROM and TO, specifying
-     a region of text.
-
-
-
-The following properties are allowed for FSF compatibility but currently
-ignored:
-
-`translation-table-for-decode'
-     The value is a translation table to be applied on decoding.  See
-     the function `make-translation-table' for the format of translation
-     table.  This is not applicable to CCL-based coding systems.
-    
-`translation-table-for-encode'
-     The value is a translation table to be applied on encoding.  This is
-     not applicable to CCL-based coding systems.
-    
-`safe-chars'
-     The value is a char table.  If a character has non-nil value in it,
-     the character is safely supported by the coding system.  This
-     overrides the specification of safe-charsets.
-   
-`safe-charsets'
-     The value is a list of charsets safely supported by the coding
-     system.  The value t means that all charsets Emacs handles are
-     supported.  Even if some charset is not in this list, it doesn't
-     mean that the charset can't be encoded in the coding system;
-     it just means that some other receiver of text encoded
-     in the coding system won't be able to handle that charset.
-    
-`mime-charset'
-     The value is a symbol of which name is `MIME-charset' parameter of
-     the coding system.
-    
-`valid-codes' (meaningful only for a coding system based on CCL)
-     The value is a list to indicate valid byte ranges of the encoded
-     file.  Each element of the list is an integer or a cons of integer.
-     In the former case, the integer value is a valid byte code.  In the
-     latter case, the integers specifies the range of valid byte codes.
-
-
-
-The following additional property is recognized if TYPE is `convert-eol':
-
-`subtype'
-     One of `lf', `crlf', `cr' or nil (for autodetection).  When decoding,
-     the corresponding sequence will be converted to LF.  When encoding,
-     the opposite happens.  This coding system converts characters to
-     characters.
-
-
-
-The following additional properties are recognized if TYPE is `iso2022':
-
-`charset-g0'
-`charset-g1'
-`charset-g2'
-`charset-g3'
-     The character set initially designated to the G0 - G3 registers.
-     The value should be one of
-
-          -- A charset object (designate that character set)
-	  -- nil (do not ever use this register)
-	  -- t (no character set is initially designated to
-		the register, but may be later on; this automatically
-		sets the corresponding `force-g*-on-output' property)
-
-`force-g0-on-output'
-`force-g1-on-output'
-`force-g2-on-output'
-`force-g2-on-output'
-     If non-nil, send an explicit designation sequence on output before
-     using the specified register.
-
-`short'
-     If non-nil, use the short forms "ESC $ @", "ESC $ A", and
-     "ESC $ B" on output in place of the full designation sequences
-     "ESC $ ( @", "ESC $ ( A", and "ESC $ ( B".
-
-`no-ascii-eol'
-     If non-nil, don't designate ASCII to G0 at each end of line on output.
-     Setting this to non-nil also suppresses other state-resetting that
-     normally happens at the end of a line.
-
-`no-ascii-cntl'
-     If non-nil, don't designate ASCII to G0 before control chars on output.
-
-`seven'
-     If non-nil, use 7-bit environment on output.  Otherwise, use 8-bit
-     environment.
-
-`lock-shift'
-     If non-nil, use locking-shift (SO/SI) instead of single-shift
-     or designation by escape sequence.
-
-`no-iso6429'
-     If non-nil, don't use ISO6429's direction specification.
-
-`escape-quoted'
-     If non-nil, literal control characters that are the same as
-     the beginning of a recognized ISO2022 or ISO6429 escape sequence
-     (in particular, ESC (0x1B), SO (0x0E), SI (0x0F), SS2 (0x8E),
-     SS3 (0x8F), and CSI (0x9B)) are "quoted" with an escape character
-     so that they can be properly distinguished from an escape sequence.
-     (Note that doing this results in a non-portable encoding.) This
-     encoding flag is used for byte-compiled files.  Note that ESC
-     is a good choice for a quoting character because there are no
-     escape sequences whose second byte is a character from the Control-0
-     or Control-1 character sets; this is explicitly disallowed by the
-     ISO2022 standard.
-
-`iso2022-preserve'
-     If non-nil, preserve round-trip conversion even when Unicode is used
-     as an internal representation, by using private characters from the
-     Unicode space.  WARNING: This will make such characters unusable for
-     normal editing purposes.
-
-`input-charset-conversion'
-     A list of conversion specifications, specifying conversion of
-     characters in one charset to another when decoding is performed.
-     Each specification is a list of two elements: the source charset,
-     and the destination charset.
-
-`output-charset-conversion'
-     A list of conversion specifications, specifying conversion of
-     characters in one charset to another when encoding is performed.
-     The form of each specification is the same as for
-     `input-charset-conversion'.
-
-
-
-The following additional properties are recognized (and required)
-if TYPE is `ccl':
-
-`decode'
-     CCL program used for decoding (converting to internal format).
-
-`encode'
-     CCL program used for encoding (converting to external format).
-
-
-The following additional properties are recognized if TYPE is `chain':
-
-`chain'
-     List of coding systems to be chained together, in decoding order.
-
-`canonicalize-after-coding'
-     Coding system to be returned by the detector routines in place of
-     this coding system.
-
-
-
-The following additional properties are recognized if TYPE is `unicode':
-
-`type'
-     One of `utf-16', `utf-8', `ucs-4', or `utf-7' (the latter is not
-     yet implemented).  `utf-16' is the basic two-byte encoding;
-     `ucs-4' is the four-byte encoding; `utf-8' is an ASCII-compatible
-     variable-width 8-bit encoding; `utf-7' is a 7-bit encoding using
-     only characters that will safely pass through all mail gateways.
-     [[ This should be \"transformation format\".  There should also be
-     `ucs-2' (or `bmp' -- no surrogates) and `utf-32' (range checked). ]]
-
-`little-endian'
-     If non-nil, `utf-16' and `ucs-4' will write out the groups of two
-     or four bytes little-endian instead of big-endian.  This is required,
-     for example, under Windows.
-
-`need-bom'
-     If non-nil, a byte order mark (BOM, or Unicode FFFE) should be
-     written out at the beginning of the data.  This serves both to
-     identify the endianness of the following data and to mark the
-     data as Unicode (at least, this is how Windows uses it).
-     [[ The correct term is \"signature\", since this technique may also
-     be used with UTF-8.  That is the term used in the standard. ]]
-
-
-The following additional property is recognized if TYPE is `mbcs':
-
-`charsets'
-     List of charsets encoded using this coding system.
-
-
-The following additional properties are recognized if TYPE is
-`mswindows-multibyte':
-
-`code-page'
-     Either a number (specifying a particular code page) or one of the
-     symbols `ansi', `oem', `mac', or `ebcdic', specifying the ANSI,
-     OEM, Macintosh, or EBCDIC code page associated with a particular
-     locale (given by the `locale' property).  NOTE: EBCDIC code pages
-     only exist in Windows 2000 and later.
-
-`locale'
-     If `code-page' is a symbol, this specifies the locale whose code
-     page of the corresponding type should be used.  This should be
-     one of the following: A cons of two strings, (LANGUAGE
-     . SUBLANGUAGE) (see `mswindows-set-current-locale'); a string (a
-     language; SUBLANG_DEFAULT, i.e. the default sublanguage, is
-     used); or one of the symbols `current', `user-default', or
-     `system-default', corresponding to the values of
-     `mswindows-current-locale', `mswindows-user-default-locale', or
-     `mswindows-system-default-locale', respectively.
-
-
-
-The following additional properties are recognized if TYPE is `undecided':
-\[[ Doesn't GNU use \"detect-*\" for the following two? ]]
-
-`do-eol'
-     Do EOL detection.
-
-`do-coding'
-     Do encoding detection.
-
-`coding-system'
-     If encoding detection is not done, use the specified coding system
-     to do decoding.  This is used internally when implementing coding
-     systems with an EOL type that specifies autodetection (the default),
-     so that the detector routines return the proper subsidiary.
-
-
-
-The following additional property is recognized if TYPE is `gzip':
-
-`level'
-     Compression level: 0 through 9, or `default' (currently 6).
+DEFUN ("make-coding-system-internal", Fmake_coding_system_internal, 2, 4, 0, /*
+See `make-coding-system'.  This does much of the work of that function.
+
+Without Mule support, it does all the work of that function, and an alias
+exists, mapping `make-coding-system' to
+`make-coding-system-internal'. You'll need a Mule XEmacs to read the
+complete docstring. Or you can just read it in make-coding-system.el;
+something like the following should work:
+
+ \\[find-function-other-window] find-file RET \\[find-file] mule/make-coding-system.el RET
 
 */
        (name, type, description, props))
@@ -1398,7 +1441,7 @@ Use `define-coding-system-alias' instead.
   Lisp_Object new_coding_system;
   old_coding_system = Fget_coding_system (old_coding_system);
   new_coding_system =
-    UNBOUNDP (new_name) ? Qnil : Ffind_coding_system (new_name);
+    UNBOUNDP (new_name) ? Qnil : find_coding_system (new_name, 0);
   if (NILP (new_coding_system))
     {
       new_coding_system =
@@ -1422,16 +1465,6 @@ Use `define-coding-system-alias' instead.
     to->name = new_name;
   }
   return new_coding_system;
-}
-
-DEFUN ("coding-system-canonical-name-p", Fcoding_system_canonical_name_p,
-       1, 1, 0, /*
-Return t if OBJECT names a coding system, and is not a coding system alias.
-*/
-       (object))
-{
-  return CODING_SYSTEMP (Fgethash (object, Vcoding_system_hash_table, Qnil))
-    ? Qt : Qnil;
 }
 
 /* #### Shouldn't this really be a find/get pair? */
@@ -1716,6 +1749,10 @@ Return the PROP property of CODING-SYSTEM.
     return XCODING_SYSTEM_POST_READ_CONVERSION (coding_system);
   else if (EQ (prop, Qpre_write_conversion))
     return XCODING_SYSTEM_PRE_WRITE_CONVERSION (coding_system);
+  else if (EQ (prop, Qsafe_charsets))
+    return XCODING_SYSTEM_SAFE_CHARSETS (coding_system);
+  else if (EQ (prop, Qsafe_chars))
+    return XCODING_SYSTEM_SAFE_CHARS (coding_system);
   else
     {
       Lisp_Object value = CODESYSMETH_OR_GIVEN (XCODING_SYSTEM (coding_system),
@@ -2293,13 +2330,14 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
   }
 }
 
-DEFUN ("decode-coding-region", Fdecode_coding_region, 3, 4, 0, /*
+DEFUN ("decode-coding-region", Fdecode_coding_region, 3, 4,
+       "*r\nzDecode from coding system: \ni", /*
 Decode the text between START and END which is encoded in CODING-SYSTEM.
 This is useful if you've read in encoded text from a file without decoding
 it (e.g. you read in a JIS-formatted file but used the `binary' or
 `no-conversion' coding system, so that it shows up as "^[$B!<!+^[(B").
 Return length of decoded text.
-BUFFER defaults to the current buffer if unspecified.
+BUFFER defaults to the current buffer if unspecified, and when interactive.
 */
        (start, end, coding_system, buffer))
 {
@@ -2307,17 +2345,111 @@ BUFFER defaults to the current buffer if unspecified.
 				      CODING_DECODE);
 }
 
-DEFUN ("encode-coding-region", Fencode_coding_region, 3, 4, 0, /*
+DEFUN ("encode-coding-region", Fencode_coding_region, 3, 4,
+       "*r\nzEncode to coding system: \ni", /*
 Encode the text between START and END using CODING-SYSTEM.
 This will, for example, convert Japanese characters into stuff such as
-"^[$B!<!+^[(B" if you use the JIS encoding.  Return length of encoded
-text.  BUFFER defaults to the current buffer if unspecified.
+"^[$B!<!+^[(B" if you use the JIS encoding.  Return length of encoded text.
+BUFFER defaults to the current buffer if unspecified, and when interactive.
 */
        (start, end, coding_system, buffer))
 {
   return encode_decode_coding_region (start, end, coding_system, buffer,
 				      CODING_ENCODE);
 }
+
+DEFUN ("query-coding-region", Fquery_coding_region, 3, 7, 0, /*
+Work out whether CODING-SYSTEM can losslessly encode a region.
+
+START and END are the beginning and end of the region to check.
+CODING-SYSTEM is the coding system to try.
+
+Optional argument BUFFER is the buffer to check, and defaults to the current
+buffer.
+
+IGNORE-INVALID-SEQUENCESP, also an optional argument, says to treat XEmacs
+characters which have an unambiguous encoded representation, despite being
+undefined in what they represent, as encodable.  These chiefly arise with
+variable-length encodings like UTF-8 and UTF-16, where an invalid sequence
+is passed through to XEmacs as a sequence of characters with a defined
+correspondence to the octets on disk, but no non-error semantics; see the
+`invalid-sequence-coding-system' argument to `set-language-info'.
+
+They can also arise with fixed-length encodings like ISO 8859-7, where
+certain octets on disk have undefined values, and treating them as
+corresponding to the ISO 8859-1 characters with the same numerical values
+may lead to data that is not understood by other applications.
+
+Optional argument ERRORP says to signal a `text-conversion-error' if some
+character in the region cannot be encoded, and defaults to nil.
+
+Optional argument HIGHLIGHT says to display unencodable characters in the
+region using `query-coding-warning-face'. It defaults to nil.
+
+This function can return multiple values; the intention is that callers use
+`multiple-value-bind' or the related CL multiple value functions to deal
+with it.  The first result is `t' if the region can be encoded using
+CODING-SYSTEM, or `nil' if not.  If the region cannot be encoded using
+CODING-SYSTEM, the second result is a range table describing the positions
+of the unencodable characters.
+
+Ranges that describe characters that would be ignored were
+IGNORE-INVALID-SEQUENCESP non-nil map to the symbol `invalid-sequence';
+other ranges map to the symbol `unencodable'.  If IGNORE-INVALID-SEQUENCESP
+is non-nil, all ranges will map to the symbol `unencodable'.  See
+`make-range-table' for more details of range tables.
+*/
+       (start, end, coding_system, buffer, ignore_invalid_sequencesp,
+        errorp, highlight))
+{
+  Charbpos b, e;
+  struct buffer *buf = decode_buffer (buffer, 1);
+  Lisp_Object result;
+  int flags = 0, speccount = specpdl_depth (); 
+
+  coding_system = Fget_coding_system (coding_system);
+
+  get_buffer_range_char (buf, start, end, &b, &e, 0);
+
+  if (buf != current_buffer)
+    {
+      record_unwind_protect (save_current_buffer_restore, Fcurrent_buffer ());
+      set_buffer_internal (buf);
+    }
+
+  record_unwind_protect (save_excursion_restore, save_excursion_save ());
+
+  BUF_SET_PT (buf, b);
+
+  if (!NILP (ignore_invalid_sequencesp))
+    {
+      flags |= QUERY_METHOD_IGNORE_INVALID_SEQUENCES;
+    }
+
+  if (!NILP (errorp))
+    {
+      flags |= QUERY_METHOD_ERRORP;
+    }
+
+  if (!NILP (highlight))
+    {
+      flags |= QUERY_METHOD_HIGHLIGHT;
+    }
+
+  result = XCODESYSMETH_OR_GIVEN (coding_system, query,
+                                  (coding_system, buf, e, flags), Qunbound);
+
+  if (UNBOUNDP (result))
+    {
+      text_conversion_error ("Coding system doesn't say what it can encode", 
+			     XCODING_SYSTEM_NAME (coding_system));
+    }
+
+  result = (NILP (result)) ? Qt : values2 (Qnil, result); 
+
+  return unbind_to_1 (speccount, result);
+}
+
 
 
 /************************************************************************/
@@ -2350,7 +2482,7 @@ struct chain_coding_stream
 static const struct memory_description chain_coding_system_description[] = {
   { XD_INT, offsetof (struct chain_coding_system, count) },
   { XD_BLOCK_PTR, offsetof (struct chain_coding_system, chain),
-    XD_INDIRECT (0, 0), { &Lisp_Object_description } },
+    XD_INDIRECT (0, 0), { &lisp_object_description } },
   { XD_LISP_OBJECT, offsetof (struct chain_coding_system,
 			      canonicalize_after_coding) },
   { XD_END }
@@ -2359,7 +2491,7 @@ static const struct memory_description chain_coding_system_description[] = {
 static const struct memory_description chain_coding_stream_description_1 [] = {
   { XD_INT, offsetof (struct chain_coding_stream, lstream_count) },
   { XD_BLOCK_PTR, offsetof (struct chain_coding_stream, lstreams),
-    XD_INDIRECT (0, 0), { &Lisp_Object_description } },
+    XD_INDIRECT (0, 0), { &lisp_object_description } },
   { XD_END }
 };
 
@@ -3352,13 +3484,15 @@ hex_digit_to_char (int digit)
 static void
 output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
 {
-  UExtbyte *ascii = alloca_array (UExtbyte, n + 1);
-  UExtbyte *hex = alloca_array (UExtbyte, 3 * n + 1);
+  Extbyte *ascii = alloca_array (Extbyte, n + 1);
+  Extbyte *hex = alloca_array (Extbyte, 3 * n + 1);
   int i;
+  DECLARE_EISTRING (eistr_ascii);
+  DECLARE_EISTRING (eistr_hex);
 
   for (i = 0; i < n; i++)
     {
-      UExtbyte c = src[i];
+      Extbyte c = src[i];
       if (c < 0x20)
 	ascii[i] = '.';
       else
@@ -3369,7 +3503,11 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
     }
   ascii[i] = '\0';
   hex[3 * i - 1] = '\0';
-  stderr_out ("%s  %s", ascii, hex);
+
+  eicpy_ext(eistr_hex, hex, Qbinary);
+  eicpy_ext(eistr_ascii, ascii, Qbinary);
+
+  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
@@ -3499,7 +3637,7 @@ detected_coding_system (struct detection_state *st)
 	    }
 	}
       if (NILP (retval))
-	retval = Fget_coding_system (Qraw_text);
+	retval = Fget_coding_system (Qbinary);
       return retval;
     }
   else
@@ -3848,6 +3986,9 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		     random result when doing subprocess detection. */
 		  detect_coding_type (data->st, src, n);
 		  data->actual = detected_coding_system (data->st);
+		  /* kludge to prevent infinite recursion */
+		  if (XCODING_SYSTEM(data->actual)->methods->enumtype == undecided_coding_system)
+		    data->actual = Fget_coding_system (Qbinary);
 		}
 	    }
 	  /* We need to set the detected coding system if we actually have
@@ -3895,12 +4036,12 @@ undecided_canonicalize_after_coding (struct coding_stream *str)
     return str->codesys;
 
   if (!data->c.initted)
-    return Fget_coding_system (Qundecided);
+    return str->codesys;
   
   ret = coding_stream_canonicalize_after_coding
     (XLSTREAM (data->c.lstreams[0]));
   if (NILP (ret))
-    ret = Fget_coding_system (Qundecided);
+    ret = str->codesys;
   if (XCODING_SYSTEM_EOL_TYPE (ret) != EOL_AUTODETECT)
     return ret;
   eolret = coding_stream_canonicalize_after_coding
@@ -4362,11 +4503,12 @@ syms_of_file_coding (void)
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);
   DEFSUBR (Fcoding_system_p);
+  DEFSUBR (Fautoload_coding_system);
   DEFSUBR (Ffind_coding_system);
   DEFSUBR (Fget_coding_system);
   DEFSUBR (Fcoding_system_list);
   DEFSUBR (Fcoding_system_name);
-  DEFSUBR (Fmake_coding_system);
+  DEFSUBR (Fmake_coding_system_internal);
   DEFSUBR (Fcopy_coding_system);
   DEFSUBR (Fcoding_system_canonical_name_p);
   DEFSUBR (Fcoding_system_alias_p);
@@ -4389,6 +4531,7 @@ syms_of_file_coding (void)
   DEFSUBR (Fdetect_coding_region);
   DEFSUBR (Fdecode_coding_region);
   DEFSUBR (Fencode_coding_region);
+  DEFSUBR (Fquery_coding_region);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcoding_systemp);
   DEFSYMBOL (Qno_conversion);
   DEFSYMBOL (Qconvert_eol);
@@ -4433,7 +4576,13 @@ syms_of_file_coding (void)
 
   DEFSYMBOL (Qcanonicalize_after_coding);
 
+  DEFSYMBOL (Qposix_charset_to_coding_system_hash);
+
   DEFSYMBOL (Qescape_quoted);
+
+  DEFSYMBOL (Qquery_coding_warning_face);
+  DEFSYMBOL (Qaliases);
+  DEFSYMBOL (Qcharset_skip_chars_string);
 
 #ifdef HAVE_ZLIB
   DEFSYMBOL (Qgzip);
@@ -4599,8 +4748,14 @@ vars_of_file_coding (void)
 #endif
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
-Coding system used for TTY keyboard input.
-Not used under a windowing system.
+Default coding system used for TTY and X11 keyboard input.
+Under X11, used only to interpet the character for a key event when that
+event has a KeySym of NoSymbol but does have an associated string keysym,
+something that's seen with input methods.
+
+If you need to set these things to different coding systems, call the
+function `set-console-tty-coding-system' for the TTY and use this variable
+for X11.
 */ );
   Vkeyboard_coding_system = Qnil;
 
@@ -4652,6 +4807,12 @@ Information is displayed on stderr.
 */ );
   Vdebug_coding_detection = Qnil;
 #endif
+
+#ifdef MULE
+  Vdefault_query_coding_region_chartab_cache
+    = make_lisp_hash_table (25, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+  staticpro (&Vdefault_query_coding_region_chartab_cache);
+#endif
 }
 
 /* #### reformat this for consistent appearance? */
@@ -4659,7 +4820,7 @@ Information is displayed on stderr.
 void
 complex_vars_of_file_coding (void)
 {
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qconvert_eol_cr, Qconvert_eol,
      build_msg_string ("Convert CR to LF"),
      nconc2 (list6 (Qdocumentation,
@@ -4671,9 +4832,10 @@ complex_vars_of_file_coding (void)
 	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list2 (Qeol_type, Qlf)));
+	     list4 (Qeol_type, Qlf,
+                    Qsafe_charsets, Qt)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qconvert_eol_lf, Qconvert_eol,
      build_msg_string ("Convert LF to LF (do nothing)"),
      nconc2 (list6 (Qdocumentation,
@@ -4684,9 +4846,10 @@ complex_vars_of_file_coding (void)
 	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list2 (Qeol_type, Qlf)));
+	     list4 (Qeol_type, Qlf,
+                    Qsafe_charsets, Qt)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qconvert_eol_crlf, Qconvert_eol,
      build_msg_string ("Convert CRLF to LF"),
      nconc2 (list6 (Qdocumentation,
@@ -4695,12 +4858,14 @@ complex_vars_of_file_coding (void)
 "(used internally and under Unix to mark the end of a line)."),
 		    Qmnemonic, build_string ("CRLF->LF"),
 		    Qsubtype, Qcrlf),
+
 	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list2 (Qeol_type, Qlf)));
+	     list4 (Qeol_type, Qlf,
+                    Qsafe_charsets, Qt)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qconvert_eol_autodetect, Qconvert_eol,
      build_msg_string ("Autodetect EOL type"),
      nconc2 (list6 (Qdocumentation,
@@ -4711,9 +4876,10 @@ complex_vars_of_file_coding (void)
 	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list2 (Qeol_type, Qlf)));
+	     list4 (Qeol_type, Qlf,
+                    Qsafe_charsets, Qt)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qundecided, Qundecided,
      build_msg_string ("Undecided (auto-detect)"),
      nconc2 (list4 (Qdocumentation,
@@ -4726,7 +4892,7 @@ complex_vars_of_file_coding (void)
 		       though, I don't think.) */
 		    Qeol_type, Qlf)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (intern ("undecided-dos"), Qundecided,
      build_msg_string ("Undecided (auto-detect) (CRLF)"),
      nconc2 (list4 (Qdocumentation,
@@ -4736,7 +4902,7 @@ complex_vars_of_file_coding (void)
 	     list4 (Qdo_coding, Qt,
 		    Qeol_type, Qcrlf)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (intern ("undecided-unix"), Qundecided,
      build_msg_string ("Undecided (auto-detect) (LF)"),
      nconc2 (list4 (Qdocumentation,
@@ -4746,7 +4912,7 @@ complex_vars_of_file_coding (void)
 	     list4 (Qdo_coding, Qt,
 		    Qeol_type, Qlf)));
 
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (intern ("undecided-mac"), Qundecided,
      build_msg_string ("Undecided (auto-detect) (CR)"),
      nconc2 (list4 (Qdocumentation,
@@ -4757,26 +4923,42 @@ complex_vars_of_file_coding (void)
 		    Qeol_type, Qcr)));
 
   /* Need to create this here or we're really screwed. */
-  Fmake_coding_system
+  Fmake_coding_system_internal
     (Qraw_text, Qno_conversion,
      build_msg_string ("Raw Text"),
-     list4 (Qdocumentation,
-	    build_msg_string ("Raw text converts only line-break codes, and acts otherwise like `binary'."),
-	    Qmnemonic, build_string ("Raw")));
+     nconc2 (list4 (Qdocumentation,
+                    build_msg_string ("Raw text converts only line-break "
+                                      "codes, and acts otherwise like "
+                                      "`binary'."),
+                    Qmnemonic, build_string ("Raw")),
+#ifdef MULE
+             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                           Vcharset_latin_iso8859_1))));
 
-  Fmake_coding_system
+#else
+             Qnil));
+#endif
+
+  Fmake_coding_system_internal
     (Qbinary, Qno_conversion,
      build_msg_string ("Binary"),
-     list6 (Qdocumentation,
-	    build_msg_string (
+     nconc2 (list6 (Qdocumentation,
+                    build_msg_string (
 "This coding system is as close as it comes to doing no conversion.\n"
 "On input, each byte is converted directly into the character\n"
 "with the corresponding code -- i.e. from the `ascii', `control-1',\n"
 "or `latin-1' character sets.  On output, these characters are\n"
 "converted back to the corresponding bytes, and other characters\n"
 "are converted to the default character, i.e. `~'."),
-	    Qeol_type, Qlf,
-	    Qmnemonic, build_string ("Binary")));
+                    Qeol_type, Qlf,
+                    Qmnemonic, build_string ("Binary")),
+#ifdef MULE
+             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                           Vcharset_latin_iso8859_1))));
+
+#else
+             Qnil));
+#endif
 
   /* Formerly aliased to raw-text!  Completely bogus and not even the same
      as FSF Emacs. */

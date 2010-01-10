@@ -605,15 +605,10 @@ detail in the doc string for `current-display-table'."
 ;;
 ;; from producing an error if no X support was compiled in.
 
-(or (valid-specifier-tag-p 'x)
-    (define-specifier-tag 'x (lambda (dev) (eq (device-type dev) 'x))))
-(or (valid-specifier-tag-p 'tty)
-    (define-specifier-tag 'tty (lambda (dev) (eq (device-type dev) 'tty))))
-(or (valid-specifier-tag-p 'mswindows)
-    (define-specifier-tag 'mswindows (lambda (dev)
-				       (eq (device-type dev) 'mswindows))))
-(or (valid-specifier-tag-p 'gtk)
-    (define-specifier-tag 'gtk (lambda (dev) (eq (device-type dev) 'gtk))))
+(loop
+  for tag in '(x tty mswindows msprinter gtk carbon)
+  do (unless (valid-specifier-tag-p tag)
+       (define-specifier-tag tag #'ignore)))
 
 ;; Add special tag for use by initialization code.  Code that
 ;; sets up default specs should use this tag.  Code that needs to
@@ -622,6 +617,11 @@ detail in the doc string for `current-display-table'."
 ;; about clobbering user settings.
 
 (define-specifier-tag 'default)
+
+;; The x-resource specifier tag is provide so the X resource initialization
+;; code can be overridden by custom without trouble. 
+
+(define-specifier-tag 'x-resource)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                    "Heuristic" specifier functions                ;;;
@@ -739,7 +739,7 @@ If we have an instance object, we fetch the instantiator that generated the obje
   ;; OK), or `window-system' -- window system device types OK.
   (cond ((not devtype-spec) devtype)
 	((eq devtype-spec 'window-system)
-	 (and (not (memq devtype '(tty stream))) devtype))
+	 (and (not (memq devtype '(msprinter tty stream))) devtype))
 	(t (and (eq devtype devtype-spec) devtype))))
 
 (defun add-tag-to-inst-list (inst-list tag-set)
@@ -815,7 +815,10 @@ DEVTYPE-SPEC."
 					devtype-spec current-device)
   "Given a tag set, try (heuristically) to get a device type from it.
 
-There are three stages that this function proceeds through, each one trying
+If CURRENT-DEVICE is supplied, then this function either returns its type,
+in the event that it matches TAG-SET, or nil.
+
+Otherwise, there are three stages that it proceeds through, each one trying
 harder than the previous to get a value.  TRY-STAGES controls how many
 stages to try.  If nil or 1, only stage 1 is done; if 2; stages 1 and 2 are
 done; if 3, stages 1-3 are done; if t, all stages are done (currently 1-3).
@@ -847,39 +850,48 @@ DEVTYPE-SPEC flag; thus, it may return nil."
   (if (eq try-stages t) (setq try-stages 3))
   (check-argument-range try-stages 1 3)
   (flet ((delete-wrong-type (x)
-	   (delete-if-not
-	    #'(lambda (y)
-		(device-type-matches-spec y devtype-spec))
-	    x)))
-    (let ((both (intersection (device-type-list)
-			      (canonicalize-tag-set tag-set))))
+           (delete-if-not
+            #'(lambda (y)
+                (device-type-matches-spec y devtype-spec))
+            x)))
+    (let ((both (intersection 
+                 (if current-device
+                     (list (device-type current-device))
+                   (device-type-list))
+                 (canonicalize-tag-set tag-set))))
       ;; shouldn't be more than one (will fail), but whatever
       (if both (first (delete-wrong-type both))
-	(and (>= try-stages 2)
-	     ;; no device types mentioned.  try the hard way,
-	     ;; i.e. check each existing device to see if it will
-	     ;; pass muster.
-	     (let ((okdevs
-		    (delete-wrong-type
-		     (delete-duplicates
-		      (mapcan
-		       #'(lambda (dev)
-			   (and (device-matches-specifier-tag-set-p
-				 dev tag-set)
-				(list (device-type dev))))
-		       (device-list)))))
-		   (devtype (cond ((or (null devtype-spec)
-				       (eq devtype-spec 'window-system))
-				   (let ((dev (derive-domain-from-locale
-					       'global devtype-spec
-					       current-device)))
-				     (and dev (device-type dev))))
-				  (t devtype-spec))))
-	       (cond ((= 1 (length okdevs)) (car okdevs))
-		     ((< try-stages 3) nil)
-		     ((null okdevs) devtype)
-		     ((memq devtype okdevs) devtype)
-		     (t (car okdevs)))))))))
+        (and (>= try-stages 2) 
+             ;; no device types mentioned.  try the hard way,
+             ;; i.e. check each existing device (or the
+             ;; supplied device) to see if it will pass muster.
+             ;; 
+             ;; Further checking is not relevant if current-device was
+             ;; supplied.
+             (not current-device)
+             (let ((okdevs
+                    (delete-wrong-type
+                     (delete-duplicates
+                      (mapcan
+                       #'(lambda (dev)
+                           (and (device-matches-specifier-tag-set-p
+                                 dev tag-set)
+                                (list (device-type dev))))
+                       (if current-device 
+                           (list current-device)
+                         (device-list))))))
+                   (devtype (cond ((or (null devtype-spec)
+                                       (eq devtype-spec 'window-system))
+                                   (let ((dev (derive-domain-from-locale
+                                               'global devtype-spec
+                                               current-device)))
+                                     (and dev (device-type dev))))
+                                  (t devtype-spec))))
+               (cond ((= 1 (length okdevs)) (car okdevs))
+                     ((< try-stages 3) nil)
+                     ((null okdevs) devtype)
+                     ((memq devtype okdevs) devtype)
+                     (t (car okdevs)))))))))
 
 ;; Sheesh, the things you do to get "intuitive" behavior.
 (defun derive-device-type-from-locale-and-tag-set (locale tag-set
@@ -895,7 +907,6 @@ device matches the tag set, use its device type, else use some valid device
 type from the tag set.
 
 DEVTYPE-SPEC and CURRENT-DEVICE as in `derive-domain-from-locale'."
-
   (cond ((valid-specifier-domain-p locale)
 	 ;; if locale is a domain, then it must match DEVTYPE-SPEC,
 	 ;; or we exit immediately with nil.
@@ -976,5 +987,19 @@ proceed as if LOCALE were a domain."
 			(instance-to-instantiator
 			 (specifier-instance specifier domain))))
 		   (list (cons nil inst))))))))))
+
+;; Character 160 (octal 0240) displays incorrectly under some X
+;; installations apparently due to a universally crocked font width
+;; specification.  Display it as a space since that's what's expected. 
+;;
+;; (make-char-table 'generic) instead of (make-display-table) because
+;; make-display-table isn't dumped, and this file is. 
+;;
+;; We also want the global display table to be actually globally
+;; initialised; that's why this is here, and not in x-init.el, these days.
+
+(set-specifier current-display-table 
+               #s(char-table type generic data (?\xA0 ?\x20))
+               'global)
 
 ;;; specifier.el ends here

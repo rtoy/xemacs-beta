@@ -236,8 +236,6 @@ Directions for building the various libraries:
        Similarly for JPEG, TIFF, etc. support.
 
        For PNG support, you also need to specify ZLIB_DIR.
-       For GIF support, no directory is necessary as the appropriate code
-       is already in XEmacs.
 
        If you want to use the DLL version of the Sleepycat DB library,
        set BUILD_DATABASE_SHARED to 1.  You will have to have the DLL

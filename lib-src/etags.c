@@ -1,29 +1,69 @@
 /* Tags file maker to go with GNU Emacs           -*- coding: latin-1 -*-
-   Copyright (C) 1984, 1987-1989, 1993-1995, 1998-2004
-   Free Software Foundation, Inc. and Ken Arnold
 
- This file is not considered part of GNU Emacs.
+Copyright (C) 1984 The Regents of the University of California
 
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the
+   distribution.
+3. Neither the name of the University nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software Foundation,
- Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+
+Copyright (C) 1984, 1987, 1988, 1989, 1993, 1994, 1995, 1998, 1999,
+  2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+  Free Software Foundation, Inc.
+
+This file is not considered part of GNU Emacs.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
+
+
+/* NB To comply with the above BSD license, copyright information is
+reproduced in etc/ETAGS.README.  That file should be updated when the
+above notices are.
+
+To the best of our knowledge, this code was originally based on the
+ctags.c distributed with BSD4.2, which was copyrighted by the
+University of California, as described above. */
+
 
 /*
  * Authors:
- *	Ctags originally by Ken Arnold.
- *	Fortran added by Jim Kleckner.
- *	Ed Pelegri-Llopart added C typedefs.
- *	Gnu Emacs TAGS format and modifications by RMS?
+ * 1983	Ctags originally by Ken Arnold.
+ * 1984	Fortran added by Jim Kleckner.
+ * 1984	Ed Pelegri-Llopart added C typedefs.
+ * 1985	Emacs TAGS format by Richard Stallman.
  * 1989	Sam Kendall added C++.
  * 1992 Joseph B. Wells improved C and C++ parsing.
  * 1993	Francesco Potortì reorganised C and C++.
@@ -40,7 +80,7 @@
  * configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.11";
+char pot_etags_version[] = "@(#) pot revision number is 17.33";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -58,8 +98,6 @@ char pot_etags_version[] = "@(#) pot revision number is 17.11";
   /* On some systems, Emacs defines static as nothing for the sake
      of unexec.  We don't want that here since we don't use unexec. */
 # undef static
-# define ETAGS_REGEXPS		/* use the regexp features */
-# define LONG_OPTIONS		/* accept long options */
 # ifndef PTR			/* for XEmacs */
 #   define PTR void *
 # endif
@@ -79,13 +117,6 @@ char pot_etags_version[] = "@(#) pot revision number is 17.11";
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE 1		/* enables some compiler checks on GNU */
-#endif
-
-#ifdef LONG_OPTIONS
-#  undef LONG_OPTIONS
-#  define LONG_OPTIONS TRUE
-#else
-#  define LONG_OPTIONS  FALSE
 #endif
 
 /* WIN32_NATIVE is for XEmacs.
@@ -128,7 +159,14 @@ char pot_etags_version[] = "@(#) pot revision number is 17.11";
 #  include <stdlib.h>
 #  include <string.h>
 # else /* no standard C headers */
-    extern char *getenv ();
+   extern char *getenv ();
+   extern char *strcpy ();
+   extern char *strncpy ();
+   extern char *strcat ();
+   extern char *strncat ();
+   extern unsigned long strlen ();
+   extern PTR malloc ();
+   extern PTR realloc ();
 #  ifdef VMS
 #   define EXIT_SUCCESS	1
 #   define EXIT_FAILURE	0
@@ -166,25 +204,25 @@ char pot_etags_version[] = "@(#) pot revision number is 17.11";
 # define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
 #endif
 
-#if LONG_OPTIONS
-# include <getopt.h>
-#else
+#ifdef NO_LONG_OPTIONS		/* define this if you don't have GNU getopt */
+# define NO_LONG_OPTIONS TRUE
 # define getopt_long(argc,argv,optstr,lopts,lind) getopt (argc, argv, optstr)
   extern char *optarg;
   extern int optind, opterr;
-#endif /* LONG_OPTIONS */
+#else
+# define NO_LONG_OPTIONS FALSE
+# include <getopt.h>
+#endif /* NO_LONG_OPTIONS */
 
-#ifdef ETAGS_REGEXPS
-# ifndef HAVE_CONFIG_H		/* this is a standalone compilation */
-#   ifdef __CYGWIN__         	/* compiling on Cygwin */
+#ifndef HAVE_CONFIG_H		/* this is a standalone compilation */
+# ifdef __CYGWIN__         	/* compiling on Cygwin */
 			     !!! NOTICE !!!
  the regex.h distributed with Cygwin is not compatible with etags, alas!
 If you want regular expression support, you should delete this notice and
 	      arrange to use the GNU regex.h and regex.c.
-#   endif
 # endif
-# include <regex.h>
-#endif /* ETAGS_REGEXPS */
+#endif
+#include <regex.h>
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
@@ -311,7 +349,6 @@ typedef struct
   char *what;			/* the argument itself */
 } argument;
 
-#ifdef ETAGS_REGEXPS
 /* Structure defining a regular expression. */
 typedef struct regexp
 {
@@ -326,7 +363,6 @@ typedef struct regexp
   bool ignore_case;		/* ignore case when matching */
   bool multi_line;		/* do a multi-line match on the whole file */
 } regexp;
-#endif /* ETAGS_REGEXPS */
 
 
 /* Many compilers barf on this:
@@ -374,11 +410,9 @@ static long readline_internal __P((linebuffer *, FILE *));
 static bool nocase_tail __P((char *));
 static void get_tag __P((char *, char **));
 
-#ifdef ETAGS_REGEXPS
 static void analyse_regex __P((char *));
 static void free_regexps __P((void));
 static void regex_tag_multiline __P((void));
-#endif /* ETAGS_REGEXPS */
 static void error __P((const char *, const char *));
 static void suggest_asking_for_help __P((void));
 void fatal __P((char *, char *));
@@ -456,7 +490,7 @@ static char
   *midtk = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz$0123456789";
 
 static bool append_to_tagfile;	/* -a: append to tags */
-/* The next four default to TRUE for etags, but to FALSE for ctags.  */
+/* The next five default to TRUE for etags, but to FALSE for ctags.  */
 static bool typedefs;		/* -t: create tags for C and Ada typedefs */
 static bool typedefs_or_cplusplus; /* -T: create tags for C typedefs, level */
 				/* 0 struct/enum/union decls, and C++ */
@@ -465,69 +499,68 @@ static bool constantypedefs;	/* -d: create tags for C #define, enum */
 				/* constants and variables. */
 				/* -D: opposite of -d.  Default under ctags. */
 static bool globals;		/* create tags for global variables */
-static bool declarations;	/* --declarations: tag them and extern in C&Co*/
 static bool members;		/* create tags for C member variables */
+static bool declarations;	/* --declarations: tag them and extern in C&Co*/
 static bool no_line_directive;	/* ignore #line directives (undocumented) */
+static bool no_duplicates;	/* no duplicate tags for ctags (undocumented) */
 static bool update;		/* -u: update tags */
 static bool vgrind_style;	/* -v: create vgrind style index output */
-static bool no_warnings;	/* -w: suppress warnings */
+static bool no_warnings;	/* -w: suppress warnings (undocumented) */
 static bool cxref_style;	/* -x: create cxref style output */
 static bool cplusplus;		/* .[hc] means C++, not C */
 static bool ignoreindent;	/* -I: ignore indentation in C */
 static bool packages_only;	/* --packages-only: in Ada, only tag packages*/
 
+/* STDIN is defined in LynxOS system headers */
+#ifdef STDIN
+# undef STDIN
+#endif
+
 #define STDIN 0x1001		/* returned by getopt_long on --parse-stdin */
 static bool parsing_stdin;	/* --parse-stdin used */
 
-#ifdef ETAGS_REGEXPS
 static regexp *p_head;		/* list of all regexps */
 static bool need_filebuf;	/* some regexes are multi-line */
-#else
-# define need_filebuf FALSE
-#endif /* ETAGS_REGEXPS */
 
-#if LONG_OPTIONS
 static struct option longopts[] =
 {
-  { "packages-only",      no_argument,	     &packages_only, 	 TRUE  },
-  { "c++",		  no_argument,	     NULL,	     	 'C'   },
-  { "declarations",	  no_argument,	     &declarations,  	 TRUE  },
-  { "no-line-directive",  no_argument,	     &no_line_directive, TRUE  },
-  { "help",		  no_argument,	     NULL,     	     	 'h'   },
-  { "help",		  no_argument,	     NULL,     	     	 'H'   },
-  { "ignore-indentation", no_argument,	     NULL,     	     	 'I'   },
-  { "language",           required_argument, NULL,     	     	 'l'   },
-  { "members",		  no_argument,	     &members, 	     	 TRUE  },
-  { "no-members",	  no_argument,	     &members, 	     	 FALSE },
-  { "output",		  required_argument, NULL,	     	 'o'   },
-#ifdef ETAGS_REGEXPS
-  { "regex",		  required_argument, NULL,	     	 'r'   },
-  { "no-regex",		  no_argument,	     NULL,	     	 'R'   },
-  { "ignore-case-regex",  required_argument, NULL,	     	 'c'   },
-#endif /* ETAGS_REGEXPS */
+  { "append",             no_argument,       NULL,               'a'   },
+  { "packages-only",      no_argument,       &packages_only,     TRUE  },
+  { "c++",                no_argument,       NULL,               'C'   },
+  { "declarations",       no_argument,       &declarations,      TRUE  },
+  { "no-line-directive",  no_argument,       &no_line_directive, TRUE  },
+  { "no-duplicates",      no_argument,       &no_duplicates,     TRUE  },
+  { "help",               no_argument,       NULL,               'h'   },
+  { "help",               no_argument,       NULL,               'H'   },
+  { "ignore-indentation", no_argument,       NULL,               'I'   },
+  { "language",           required_argument, NULL,               'l'   },
+  { "members",            no_argument,       &members,           TRUE  },
+  { "no-members",         no_argument,       &members,           FALSE },
+  { "output",             required_argument, NULL,               'o'   },
+  { "regex",              required_argument, NULL,               'r'   },
+  { "no-regex",           no_argument,       NULL,               'R'   },
+  { "ignore-case-regex",  required_argument, NULL,               'c'   },
   { "parse-stdin",        required_argument, NULL,               STDIN },
-  { "version",		  no_argument,	     NULL,     	     	 'V'   },
+  { "version",            no_argument,       NULL,               'V'   },
 
-#if CTAGS /* Etags options */
-  { "backward-search",	  no_argument,	     NULL,	     	 'B'   },
-  { "cxref",		  no_argument,	     NULL,	     	 'x'   },
-  { "defines",		  no_argument,	     NULL,	     	 'd'   },
-  { "globals",		  no_argument,	     &globals, 	     	 TRUE  },
-  { "typedefs",		  no_argument,	     NULL,	     	 't'   },
-  { "typedefs-and-c++",	  no_argument,	     NULL,     	     	 'T'   },
-  { "update",		  no_argument,	     NULL,     	     	 'u'   },
-  { "vgrind",		  no_argument,	     NULL,     	     	 'v'   },
-  { "no-warn",		  no_argument,	     NULL,	     	 'w'   },
+#if CTAGS /* Ctags options */
+  { "backward-search",    no_argument,       NULL,               'B'   },
+  { "cxref",              no_argument,       NULL,               'x'   },
+  { "defines",            no_argument,       NULL,               'd'   },
+  { "globals",            no_argument,       &globals,           TRUE  },
+  { "typedefs",           no_argument,       NULL,               't'   },
+  { "typedefs-and-c++",   no_argument,       NULL,               'T'   },
+  { "update",             no_argument,       NULL,               'u'   },
+  { "vgrind",             no_argument,       NULL,               'v'   },
+  { "no-warn",            no_argument,       NULL,               'w'   },
 
-#else /* Ctags options */
-  { "append",		  no_argument,	     NULL,	     	 'a'   },
-  { "no-defines",	  no_argument,	     NULL,	     	 'D'   },
-  { "no-globals",	  no_argument,	     &globals, 	     	 FALSE },
-  { "include",		  required_argument, NULL,     	     	 'i'   },
+#else /* Etags options */
+  { "no-defines",         no_argument,       NULL,               'D'   },
+  { "no-globals",         no_argument,       &globals,           FALSE },
+  { "include",            required_argument, NULL,               'i'   },
 #endif
   { NULL }
 };
-#endif /* LONG_OPTIONS */
 
 static compressor compressors[] =
 {
@@ -590,10 +623,11 @@ static char default_C_help [] =
 definitions of `struct', `union' and `enum'.  `#define' macro\n\
 definitions and `enum' constants are tags unless you specify\n\
 `--no-defines'.  Global variables are tags unless you specify\n\
-`--no-globals'.  Use of `--no-globals' and `--no-defines'\n\
-can make the tags table file much smaller.\n\
+`--no-globals' and so are struct members unless you specify\n\
+`--no-members'.  Use of `--no-globals', `--no-defines' and\n\
+`--no-members' can make the tags table file much smaller.\n\
 You can tag function declarations and external variables by\n\
-using `--declarations', and struct members by using `--members'.";
+using `--declarations'.";
 
 static char *Cplusplus_suffixes [] =
   { "C", "c++", "cc", "cpp", "cxx", "H", "h++", "hh", "hpp", "hxx",
@@ -603,8 +637,8 @@ static char *Cplusplus_suffixes [] =
 static char Cplusplus_help [] =
 "In C++ code, all the tag constructs of C code are tagged.  (Use\n\
 --help --lang=c --lang=c++ for full help.)\n\
-In addition to C tags, member functions are also recognized, and\n\
-optionally member variables if you use the `--members' option.\n\
+In addition to C tags, member functions are also recognized.  Member\n\
+variables are recognized unless you use the `--no-members' option.\n\
 Tags for variables and functions in classes are named `CLASS::VARIABLE'\n\
 and `CLASS::FUNCTION'.  `operator' definitions have tag names like\n\
 `operator+'.";
@@ -675,13 +709,15 @@ static char *Objc_suffixes [] =
 static char Objc_help [] =
 "In Objective C code, tags include Objective C definitions for classes,\n\
 class categories, methods and protocols.  Tags for variables and\n\
-functions in classes are named `CLASS::VARIABLE' and `CLASS::FUNCTION'.";
+functions in classes are named `CLASS::VARIABLE' and `CLASS::FUNCTION'.\n\
+(Use --help --lang=c --lang=objc --lang=java for full help.)";
 
 static char *Pascal_suffixes [] =
   { "p", "pas", NULL };
 static char Pascal_help [] =
 "In Pascal code, the tags are the functions and procedures defined\n\
 in the file.";
+/* " // this is for working around an Emacs highlighting bug... */
 
 static char *Perl_suffixes [] =
   { "pl", "pm", NULL };
@@ -697,8 +733,8 @@ defined in the default package is `main::SUB'.";
 static char *PHP_suffixes [] =
   { "php", "php3", "php4", NULL };
 static char PHP_help [] =
-"In PHP code, tags are functions, classes and defines.  When using\n\
-the `--members' option, vars are tags too.";
+"In PHP code, tags are functions, classes and defines.  Unless you use\n\
+the `--no-members' option, vars are tags too.";
 
 static char *plain_C_suffixes [] =
   { "pc",			/* Pro*C file */
@@ -846,17 +882,21 @@ etags --help --lang=ada.");
 # define EMACS_NAME "standalone"
 #endif
 #ifndef VERSION
-# define VERSION "version"
+# define VERSION "17.33"
 #endif
 static void
 print_version ()
 {
   printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
-  puts ("Copyright (C) 2002 Free Software Foundation, Inc. and Ken Arnold");
-  puts ("This program is distributed under the same terms as Emacs");
+  puts ("Copyright (C) 2007 Free Software Foundation, Inc.");
+  puts ("This program is distributed under the terms in ETAGS.README");
 
   exit (EXIT_SUCCESS);
 }
+
+#ifndef PRINT_UNDOCUMENTED_OPTIONS_HELP
+# define PRINT_UNDOCUMENTED_OPTIONS_HELP FALSE
+#endif
 
 static void
 print_help (argbuffer)
@@ -879,17 +919,16 @@ print_help (argbuffer)
   printf ("Usage: %s [options] [[regex-option ...] file-name] ...\n\
 \n\
 These are the options accepted by %s.\n", progname, progname);
-  if (LONG_OPTIONS)
-    puts ("You may use unambiguous abbreviations for the long option names.");
+  if (NO_LONG_OPTIONS)
+    puts ("WARNING: long option names do not work with this executable,\n\
+as it is not linked with GNU getopt.");
   else
-    puts ("Long option names do not work with this executable, as it is not\n\
-linked with GNU getopt.");
+    puts ("You may use unambiguous abbreviations for the long option names.");
   puts ("  A - as file name means read names from stdin (one per line).\n\
 Absolute names are stored in the output file as they are.\n\
 Relative ones are stored relative to the output file's directory.\n");
 
-  if (!CTAGS)
-    puts ("-a, --append\n\
+  puts ("-a, --append\n\
         Append tag entries to existing tags file.");
 
   puts ("--packages-only\n\
@@ -941,10 +980,19 @@ Relative ones are stored relative to the output file's directory.\n");
     puts ("--no-globals\n\
 	Do not create tag entries for global variables in some\n\
 	languages.  This makes the tags file smaller.");
-  puts ("--members\n\
-	Create tag entries for members of structures in some languages.");
 
-#ifdef ETAGS_REGEXPS
+  if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+    puts ("--no-line-directive\n\
+        Ignore #line preprocessor directives in C and derived languages.");
+
+  if (CTAGS)
+    puts ("--members\n\
+	Create tag entries for members of structures in some languages.");
+  else
+    puts ("--no-members\n\
+	Do not create tag entries for members of structures\n\
+	in some languages.");
+
   puts ("-r REGEXP, --regex=REGEXP or --regex=@regexfile\n\
         Make a tag for each line matching a regular expression pattern\n\
 	in the following files.  {LANGUAGE}REGEXP uses REGEXP for LANGUAGE\n\
@@ -957,14 +1005,17 @@ Relative ones are stored relative to the output file's directory.\n");
 	MODS are optional one-letter modifiers: `i' means to ignore case,\n\
 	`m' means to allow multi-line matches, `s' implies `m' and\n\
 	causes dot to match any character, including newline.");
+
   puts ("-R, --no-regex\n\
         Don't create tags from regexps for the following files.");
-#endif /* ETAGS_REGEXPS */
+
   puts ("-I, --ignore-indentation\n\
         In C and C++ do not assume that a closing brace in the first\n\
         column is the final brace of a function or structure definition.");
+
   puts ("-o FILE, --output=FILE\n\
         Write the tags to FILE.");
+
   puts ("--parse-stdin=NAME\n\
         Read from standard input and record tags as belonging to file NAME.");
 
@@ -989,12 +1040,19 @@ Relative ones are stored relative to the output file's directory.\n");
   if (CTAGS)
     {
       puts ("-v, --vgrind\n\
-        Generates an index of items intended for human consumption,\n\
-        similar to the output of vgrind.  The index is sorted, and\n\
-        gives the page number of each item.");
-      puts ("-w, --no-warn\n\
-        Suppress warning messages about entries defined in multiple\n\
-        files.");
+        Print on the standard output an index of items intended for\n\
+        human consumption, similar to the output of vgrind.  The index\n\
+        is sorted, and gives the page number of each item.");
+
+      if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+	puts ("-w, --no-duplicates\n\
+        Do not create duplicate tag entries, for compatibility with\n\
+	traditional ctags.");
+
+      if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+	puts ("-w, --no-warn\n\
+        Suppress warning messages about duplicate tag entries.");
+
       puts ("-x, --cxref\n\
         Like --vgrind, but in the style of cxref, rather than vgrind.\n\
         The output uses line numbers instead of page numbers, but\n\
@@ -1178,28 +1236,22 @@ main (argc, argv)
 
   /*
    * If etags, always find typedefs and structure tags.  Why not?
-   * Also default to find macro constants, enum constants and
-   * global variables.
+   * Also default to find macro constants, enum constants, struct
+   * members and global variables.
    */
   if (!CTAGS)
     {
       typedefs = typedefs_or_cplusplus = constantypedefs = TRUE;
-      globals = TRUE;
+      globals = members = TRUE;
     }
 
   /* When the optstring begins with a '-' getopt_long does not rearrange the
      non-options arguments to be at the end, but leaves them alone. */
-  optstring = "-";
-#ifdef ETAGS_REGEXPS
-  optstring = "-r:Rc:";
-#endif /* ETAGS_REGEXPS */
-  if (!LONG_OPTIONS)
-    optstring += 1;		/* remove the initial '-' */
-  optstring = concat (optstring,
-		      "Cf:Il:o:SVhH",
-		      (CTAGS) ? "BxdtTuvw" : "aDi:");
+  optstring = concat (NO_LONG_OPTIONS ? "" : "-",
+		      "ac:Cf:Il:o:r:RSVhH",
+		      (CTAGS) ? "BxdtTuvw" : "Di:");
 
-  while ((opt = getopt_long (argc, argv, optstring, longopts, 0)) != EOF)
+  while ((opt = getopt_long (argc, argv, optstring, longopts, NULL)) != EOF)
     switch (opt)
       {
       case 0:
@@ -1227,6 +1279,7 @@ main (argc, argv)
 	break;
 
 	/* Common options. */
+      case 'a': append_to_tagfile = TRUE;	break;
       case 'C': cplusplus = TRUE;		break;
       case 'f':		/* for compatibility with old makefiles */
       case 'o':
@@ -1276,7 +1329,6 @@ main (argc, argv)
 	break;
 
 	/* Etags options */
-      case 'a': append_to_tagfile = TRUE;			break;
       case 'D': constantypedefs = FALSE;			break;
       case 'i': included_files[nincluded_files++] = optarg;	break;
 
@@ -1370,11 +1422,9 @@ main (argc, argv)
 	case at_language:
 	  lang = argbuffer[i].lang;
 	  break;
-#ifdef ETAGS_REGEXPS
 	case at_regexp:
 	  analyse_regex (argbuffer[i].what);
 	  break;
-#endif
 	case at_filename:
 #ifdef VMS
 	  while ((this_file = gfnames (argbuffer[i].what, &got_err)) != NULL)
@@ -1414,16 +1464,15 @@ main (argc, argv)
 	}
     }
 
-#ifdef ETAGS_REGEXPS
   free_regexps ();
-#endif /* ETAGS_REGEXPS */
   free (lb.buffer);
   free (filebuf.buffer);
   free (token_name.buffer);
 
   if (!CTAGS || cxref_style)
     {
-      put_entries (nodehead);	/* write the remainig tags (ETAGS) */
+      /* Write the remaining tags to tagf (ETAGS) or stdout (CXREF). */
+      put_entries (nodehead);
       free_tree (nodehead);
       nodehead = NULL;
       if (!CTAGS)
@@ -1437,10 +1486,11 @@ main (argc, argv)
 
 	  while (nincluded_files-- > 0)
 	    fprintf (tagf, "\f\n%s,include\n", *included_files++);
+
+	  if (fclose (tagf) == EOF)
+	    pfatal (tagfile);
 	}
 
-      if (fclose (tagf) == EOF)
-	pfatal (tagfile);
       exit (EXIT_SUCCESS);
     }
 
@@ -1475,12 +1525,16 @@ main (argc, argv)
   if (fclose (tagf) == EOF)
     pfatal (tagfile);
 
-  if (update)
-    {
-      char cmd[2*BUFSIZ+10];
-      sprintf (cmd, "sort -o %.*s %.*s", BUFSIZ, tagfile, BUFSIZ, tagfile);
-      exit (system (cmd));
-    }
+  if (CTAGS)
+    if (append_to_tagfile || update)
+      {
+	char cmd[2*BUFSIZ+20];
+	/* Maybe these should be used:
+	   setenv ("LC_COLLATE", "C", 1);
+	   setenv ("LC_ALL", "C", 1); */
+	sprintf (cmd, "sort -u -o %.*s %.*s", BUFSIZ, tagfile, BUFSIZ, tagfile);
+	exit (system (cmd));
+      }
   return EXIT_SUCCESS;
 }
 
@@ -1971,9 +2025,7 @@ find_entries (inf)
 
   parser (inf);
 
-#ifdef ETAGS_REGEXPS
   regex_tag_multiline ();
-#endif /* ETAGS_REGEXPS */
 }
 
 
@@ -2193,7 +2245,7 @@ add_node (np, cur_node_p)
        * If this tag name matches an existing one, then
        * do not add the node, but maybe print a warning.
        */
-      if (!dif)
+      if (no_duplicates && !dif)
 	{
 	  if (np->fdp == cur_node->fdp)
 	    {
@@ -2434,12 +2486,12 @@ __attribute__,	0,			st_C_attribute
 @protocol,	0,			st_C_objprot
 @implementation,0,			st_C_objimpl
 @end,		0,			st_C_objend
-import,		(C_JAVA & !C_PLPL),	st_C_ignore
-package,	(C_JAVA & !C_PLPL),	st_C_ignore
+import,		(C_JAVA & ~C_PLPL),	st_C_ignore
+package,	(C_JAVA & ~C_PLPL),	st_C_ignore
 friend,		C_PLPL,			st_C_ignore
-extends,	(C_JAVA & !C_PLPL),	st_C_javastruct
-implements,	(C_JAVA & !C_PLPL),	st_C_javastruct
-interface,	(C_JAVA & !C_PLPL),	st_C_struct
+extends,	(C_JAVA & ~C_PLPL),	st_C_javastruct
+implements,	(C_JAVA & ~C_PLPL),	st_C_javastruct
+interface,	(C_JAVA & ~C_PLPL),	st_C_struct
 class,		0,			st_C_class
 namespace,	C_PLPL,			st_C_struct
 domain,		C_STAR,			st_C_struct
@@ -2449,6 +2501,7 @@ extern,		0,			st_C_extern
 enum,		0,			st_C_enum
 typedef,	0,			st_C_typedef
 define,		0,			st_C_define
+undef,		0,			st_C_define
 operator,	C_PLPL,			st_C_operator
 template,	0,			st_C_template
 # DEFUN used in emacs, the next three used in glibc (SYSCALL only for mach).
@@ -2467,10 +2520,10 @@ and replace lines between %< and %> with its output, then:
 /*%<*/
 /* C code produced by gperf version 3.0.1 */
 /* Command-line: gperf -m 5  */
-/* Computed positions: -k'1-2' */
+/* Computed positions: -k'2-3' */
 
 struct C_stab_entry { char *name; int c_ext; enum sym_type type; };
-/* maximum key range = 31, duplicates = 0 */
+/* maximum key range = 33, duplicates = 0 */
 
 #ifdef __GNUC__
 __inline
@@ -2486,34 +2539,45 @@ hash (str, len)
 {
   static unsigned char asso_values[] =
     {
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34,  1, 34, 34, 34, 14, 14,
-      34, 34, 34, 34, 34, 34, 34, 34, 13, 34,
-      13, 34, 34, 12, 34, 34, 34, 34, 34, 11,
-      34, 34, 34, 34, 34,  8, 34, 11, 34, 12,
-      11,  0,  1, 34,  7,  0, 34, 34, 11,  9,
-       0,  4,  0, 34,  7,  4, 14, 21, 34, 15,
-       0,  2, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 15,
+      14, 35, 35, 35, 35, 35, 35, 35, 14, 35,
+      35, 35, 35, 12, 13, 35, 35, 35, 35, 12,
+      35, 35, 35, 35, 35,  1, 35, 16, 35,  6,
+      23,  0,  0, 35, 22,  0, 35, 35,  5,  0,
+       0, 15,  1, 35,  6, 35,  8, 19, 35, 16,
+       4,  5, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35
     };
-  return len + asso_values[(unsigned char)str[1]] + asso_values[(unsigned char)str[0]];
+  register int hval = len;
+
+  switch (hval)
+    {
+      default:
+        hval += asso_values[(unsigned char)str[2]];
+      /*FALLTHROUGH*/
+      case 2:
+        hval += asso_values[(unsigned char)str[1]];
+        break;
+    }
+  return hval;
 }
 
 static struct C_stab_entry *
@@ -2523,46 +2587,48 @@ in_word_set (str, len)
 {
   enum
     {
-      TOTAL_KEYWORDS = 31,
+      TOTAL_KEYWORDS = 32,
       MIN_WORD_LENGTH = 2,
       MAX_WORD_LENGTH = 15,
-      MIN_HASH_VALUE = 3,
-      MAX_HASH_VALUE = 33
+      MIN_HASH_VALUE = 2,
+      MAX_HASH_VALUE = 34
     };
 
   static struct C_stab_entry wordlist[] =
     {
-      {""}, {""}, {""},
+      {""}, {""},
       {"if",		0,			st_C_ignore},
-      {"enum",		0,			st_C_enum},
+      {""},
       {"@end",		0,			st_C_objend},
-      {"extern",		0,			st_C_extern},
-      {"extends",	(C_JAVA & !C_PLPL),	st_C_javastruct},
-      {"for",		0,			st_C_ignore},
-      {"interface",	(C_JAVA & !C_PLPL),	st_C_struct},
-      {"@protocol",	0,			st_C_objprot},
-      {"@interface",	0,			st_C_objprot},
-      {"operator",	C_PLPL,			st_C_operator},
-      {"return",		0,			st_C_ignore},
-      {"friend",		C_PLPL,			st_C_ignore},
-      {"import",		(C_JAVA & !C_PLPL),	st_C_ignore},
-      {"@implementation",0,			st_C_objimpl},
-      {"define",		0,			st_C_define},
-      {"package",	(C_JAVA & !C_PLPL),	st_C_ignore},
-      {"implements",	(C_JAVA & !C_PLPL),	st_C_javastruct},
-      {"namespace",	C_PLPL,			st_C_struct},
-      {"domain",		C_STAR,			st_C_struct},
-      {"template",	0,			st_C_template},
-      {"typedef",	0,			st_C_typedef},
-      {"struct",		0,			st_C_struct},
-      {"switch",		0,			st_C_ignore},
       {"union",		0,			st_C_struct},
-      {"while",		0,			st_C_ignore},
+      {"define",		0,			st_C_define},
+      {"import",		(C_JAVA & ~C_PLPL),	st_C_ignore},
+      {"template",	0,			st_C_template},
+      {"operator",	C_PLPL,			st_C_operator},
+      {"@interface",	0,			st_C_objprot},
+      {"implements",	(C_JAVA & ~C_PLPL),	st_C_javastruct},
+      {"friend",		C_PLPL,			st_C_ignore},
+      {"typedef",	0,			st_C_typedef},
+      {"return",		0,			st_C_ignore},
+      {"@implementation",0,			st_C_objimpl},
+      {"@protocol",	0,			st_C_objprot},
+      {"interface",	(C_JAVA & ~C_PLPL),	st_C_struct},
+      {"extern",		0,			st_C_extern},
+      {"extends",	(C_JAVA & ~C_PLPL),	st_C_javastruct},
+      {"struct",		0,			st_C_struct},
+      {"domain",		C_STAR,			st_C_struct},
+      {"switch",		0,			st_C_ignore},
+      {"enum",		0,			st_C_enum},
+      {"for",		0,			st_C_ignore},
+      {"namespace",	C_PLPL,			st_C_struct},
       {"class",		0,			st_C_class},
+      {"while",		0,			st_C_ignore},
+      {"undef",		0,			st_C_define},
+      {"package",	(C_JAVA & ~C_PLPL),	st_C_ignore},
       {"__attribute__",	0,			st_C_attribute},
       {"SYSCALL",	0,			st_C_gnumacro},
-      {"PSEUDO",		0,			st_C_gnumacro},
       {"ENTRY",		0,			st_C_gnumacro},
+      {"PSEUDO",		0,			st_C_gnumacro},
       {"DEFUN",		0,			st_C_gnumacro}
     };
 
@@ -3174,7 +3240,7 @@ static void
 make_C_tag (isfun)
      bool isfun;
 {
-  /* This function should never be called when token.valid is FALSE, but
+  /* This function is never called when token.valid is FALSE, but
      we must protect against invalid input or internal errors. */
   if (!DEBUG && !token.valid)
     return;
@@ -3217,7 +3283,7 @@ C_entries (c_ext, inf)
   int typdefbracelev;		/* bracelev where a typedef struct body begun */
   bool incomm, inquote, inchar, quotednl, midtoken;
   bool yacc_rules;		/* in the rules part of a yacc file */
-  struct tok savetoken;	        /* token saved during preprocessor handling */
+  struct tok savetoken = {0};	/* token saved during preprocessor handling */
 
 
   linebuffer_init (&lbs[0].lb);
@@ -3358,17 +3424,15 @@ C_entries (c_ext, inf)
 	case '/':
 	  if (*lp == '*')
 	    {
-	      lp++;
 	      incomm = TRUE;
-	      continue;
+	      lp++;
+	      c = ' ';
 	    }
 	  else if (/* cplpl && */ *lp == '/')
 	    {
 	      c = '\0';
-	      break;
 	    }
-	  else
-	    break;
+	  break;
 	case '%':
 	  if ((c_ext & YACC) && *lp == '%')
 	    {
@@ -3504,7 +3568,6 @@ C_entries (c_ext, inf)
 				  off += 1;
 				  len -= 1;
 				}
-			      len = toklen;
 			      linebuffer_setlen (&token_name, len);
 			      strncpy (token_name.buffer,
 				       newlb.buffer + off, len);
@@ -4535,6 +4598,7 @@ Perl_functions (inf)
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	}
     }
+  free (package);
 }
 
 
@@ -4697,8 +4761,16 @@ Makefile_targets (inf)
       while (*bp != '\0' && *bp != '=' && *bp != ':')
 	bp++;
       if (*bp == ':' || (globals && *bp == '='))
-	make_tag (lb.buffer, bp - lb.buffer, TRUE,
-		  lb.buffer, bp - lb.buffer + 1, lineno, linecharno);
+	{
+	  /* We should detect if there is more than one tag, but we do not.
+	     We just skip initial and final spaces. */
+	  char * namestart = skip_spaces (lb.buffer);
+	  while (--bp > namestart)
+	    if (!notinname (*bp))
+	      break;
+	  make_tag (namestart, bp - namestart + 1, TRUE,
+		    lb.buffer, bp - lb.buffer + 2, lineno, linecharno);
+	}
     }
 }
 
@@ -4965,7 +5037,7 @@ Lua_functions (inf)
       if (bp[0] != 'f' && bp[0] != 'l')
 	continue;
 
-      LOOKING_AT (bp, "local");	/* skip possible "local" */
+      (void)LOOKING_AT (bp, "local"); /* skip possible "local" */
 
       if (LOOKING_AT (bp, "function"))
 	get_tag (bp, NULL);
@@ -5147,7 +5219,7 @@ TeX_commands (inf)
 		if (!opgrp || *p == TEX_clgrp)
 		  {
 		    while (*p != '\0' && *p != TEX_opgrp && *p != TEX_clgrp)
-		      *p++;
+		      p++;
 		    linelen = p - lb.buffer + 1;
 		  }
 		make_tag (cp, namelen, TRUE,
@@ -5175,7 +5247,7 @@ TEX_mode (inf)
     {
       /* Skip to next line if we hit the TeX comment char. */
       if (c == '%')
-	while (c != '\n')
+	while (c != '\n' && c != EOF)
 	  c = getc (inf);
       else if (c == TEX_LESC || c == TEX_SESC )
 	break;
@@ -5433,6 +5505,8 @@ Prolog_functions (inf)
 	  last[len] = '\0';
 	}
     }
+  if (last != NULL)
+    free (last);
 }
 
 
@@ -5589,7 +5663,11 @@ Erlang_functions (inf)
       else if (cp[0] == '-') 	/* attribute, e.g. "-define" */
 	{
 	  erlang_attribute (cp);
-	  last = NULL;
+	  if (last != NULL)
+	    {
+	      free (last);
+	      last = NULL;
+	    }
 	}
       else if ((len = erlang_func (cp, last)) > 0)
 	{
@@ -5606,6 +5684,8 @@ Erlang_functions (inf)
 	  last[len] = '\0';
 	}
     }
+  if (last != NULL)
+    free (last);
 }
 
 
@@ -5704,8 +5784,6 @@ erlang_atom (s)
 }
 
 
-#ifdef ETAGS_REGEXPS
-
 static char *scan_separators __P((char *));
 static void add_regex __P((char *, language *));
 static char *substitute __P((char *, char *, struct re_registers *));
@@ -6110,8 +6188,6 @@ regex_tag_multiline ()
     }
 }
 
-#endif /* ETAGS_REGEXPS */
-
 
 static bool
 nocase_tail (cp)
@@ -6262,14 +6338,14 @@ readline (lbp, stream)
       /* Check whether this is a #line directive. */
       if (result > 12 && strneq (lbp->buffer, "#line ", 6))
 	{
-	  int start, lno;
+	  unsigned int lno;
+	  int start = 0;
 
-	  if (DEBUG) start = 0;	/* shut up the compiler */
-	  if (sscanf (lbp->buffer, "#line %d \"%n", &lno, &start) == 1)
+	  if (sscanf (lbp->buffer, "#line %u \"%n", &lno, &start) >= 1
+	      && start > 0)	/* double quote character found */
 	    {
 	      char *endp = lbp->buffer + start;
 
-	      assert (start > 0);
 	      while ((endp = etags_strchr (endp, '"')) != NULL
 		     && endp[-1] == '\\')
 		endp++;
@@ -6284,7 +6360,7 @@ readline (lbp, stream)
 		  name = lbp->buffer + start;
 		  *endp = '\0';
 		  canonicalize_filename (name); /* for DOS */
-		  taggedabsname = absolute_filename (name, curfdp->infabsdir);
+		  taggedabsname = absolute_filename (name, tagfiledir);
 		  if (filename_is_absolute (name)
 		      || filename_is_absolute (curfdp->infname))
 		    taggedfname = savestr (taggedabsname);
@@ -6374,7 +6450,6 @@ readline (lbp, stream)
 	}
     } /* if #line directives should be considered */
 
-#ifdef ETAGS_REGEXPS
   {
     int match;
     regexp *rp;
@@ -6431,7 +6506,6 @@ readline (lbp, stream)
 	    }
 	}
   }
-#endif /* ETAGS_REGEXPS */
 }
 
 
@@ -6592,7 +6666,7 @@ static void
 suggest_asking_for_help ()
 {
   fprintf (stderr, "\tTry `%s %s' for a complete list of options.\n",
-	   progname, LONG_OPTIONS ? "--help" : "-h");
+	   progname, NO_LONG_OPTIONS ? "-h" : "--help");
   exit (EXIT_FAILURE);
 }
 
@@ -6755,13 +6829,13 @@ absolute_filename (file, dir)
 	      else if (cp[0] != '/')
 		cp = slashp;
 #endif
-	      strcpy (cp, slashp + 3);
+	      memmove (cp, slashp + 3, strlen (slashp + 3) + 1);
 	      slashp = cp;
 	      continue;
 	    }
 	  else if (slashp[2] == '/' || slashp[2] == '\0')
 	    {
-	      strcpy (slashp, slashp + 2);
+	      memmove (slashp, slashp + 2, strlen (slashp + 2) + 1);
 	      continue;
 	    }
 	}
@@ -6769,8 +6843,11 @@ absolute_filename (file, dir)
       slashp = etags_strchr (slashp + 1, '/');
     }
 
-  if (res[0] == '\0')
-    return savestr ("/");
+  if (res[0] == '\0')		/* just a safety net: should never happen */
+    {
+      free (res);
+      return savestr ("/");
+    }
   else
     return res;
 }
@@ -6879,11 +6956,11 @@ xrealloc (ptr, size)
 
 /*
  * Local Variables:
- * c-indentation-style: gnu
  * indent-tabs-mode: t
  * tab-width: 8
  * fill-column: 79
  * c-font-lock-extra-types: ("FILE" "bool" "language" "linebuffer" "fdesc" "node" "regexp")
+ * c-file-style: "gnu"
  * End:
  */
 

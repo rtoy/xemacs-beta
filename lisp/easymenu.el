@@ -1,6 +1,6 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 
-;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 1993, 1994, 1995, 2005 Free Software Foundation, Inc.
 
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: XEmacs Development Team
@@ -166,25 +166,46 @@ is a list of menu items, as above."
   (when (featurep 'menubar)
     (apply 'add-menu args)))
 
-;; This variable hold the easy-menu mode menus of all major and
-;; minor modes currently in effect in the current buffer.
-(defvar easy-menu-all-popups nil)
+(defvar easy-menu-all-popups nil 
+  "This variable holds all the popup menus easy-menu knows about. 
+This includes any menu created with `easy-menu-add' and any
+non-default value for `mode-popup-menu' that existed when
+`easy-menu-add' was first called.") 
 (make-variable-buffer-local 'easy-menu-all-popups)
 
 (defun easy-menu-add (menu &optional map)
   "Add MENU to the current menu bar."
+  ;; If you uncomment the following, do an xemacs -vanilla, type M-x
+  ;; folding-mode RET, you'll see that this code, which theoretically has
+  ;; *scratch* as its buffer context, can't see *scratch*'s value for
+  ;; mode-popup-menu--the default overrides it.  
+  ;;
+  ;; This is not specific to *scratch*--try it on ~/.xemacs/init.el--but it
+  ;; does appear to be specific to the first time mode-popup-menu is
+  ;; accessed as a buffer-local variable in non-interactive code (that is,
+  ;; M-: mode-popup-menu RET gives the correct value).
+  ;; 
+  ;; My fixing this right now isn't going to happen. Aidan Kehoe, 2006-01-03
+;    (message (concat "inside easy-menu-add, menu is %s, "
+;  		   "mode-popup-menu is %s, current buffer is %s, "
+;  		   "default-value mode-popup-menu is %s, "
+;  		   "easy-menu-all-popups is %s")
+;  	   menu mode-popup-menu (current-buffer) 
+;  	   (default-value 'mode-popup-menu) easy-menu-all-popups)
   (when (featurep 'menubar)
-    (unless (member menu easy-menu-all-popups)
-      (push menu easy-menu-all-popups))
-    (setq mode-popup-menu (if (> (length easy-menu-all-popups) 1)
-			      (cons (easy-menu-title)
-				    (reverse easy-menu-all-popups))
-			    (let ((same-as-menu
-				   (car easy-menu-all-popups)))
-			      (cons (normalize-menu-text
-				     (car same-as-menu))
-				    (cdr same-as-menu)))))
-
+    ;; Save the existing mode-popup-menu, if it's been changed.
+    (when (and (zerop (length easy-menu-all-popups))
+	       (not (equal (default-value 'mode-popup-menu) mode-popup-menu)))
+      (push mode-popup-menu easy-menu-all-popups))
+    ;; Add the menu to our list of all the popups for the buffer. 
+    (pushnew menu easy-menu-all-popups :test 'equal)
+    ;; If there are multiple popup menus available, make the popup menu
+    ;; normally shown with button-3 a menu of them. If there is just one,
+    ;; make that button show it, and no super-menu.
+    (setq mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+			      (car easy-menu-all-popups)
+			    (cons (easy-menu-title)
+				(reverse easy-menu-all-popups))))
     (cond ((null current-menubar)
 	   ;; Don't add it to a non-existing menubar.
 	   nil)
@@ -202,16 +223,20 @@ is a list of menu items, as above."
 (defun easy-menu-remove (menu)
   "Remove MENU from the current menu bar."
   (when (featurep 'menubar)
-    (setq easy-menu-all-popups (delq menu easy-menu-all-popups)
-	  mode-popup-menu (if (> (length easy-menu-all-popups) 1)
-			      (cons (easy-menu-title)
-				    (reverse easy-menu-all-popups))
-			    (let ((same-as-menu
-				   (car easy-menu-all-popups)))
-			      (cons (normalize-menu-text
-				     (car same-as-menu))
-				    (cdr same-as-menu)))))
-
+    (setq 
+     ;; Remove this menu from the list of popups we know about. 
+     easy-menu-all-popups (delq menu easy-menu-all-popups)
+     ;; If there are multiple popup menus available, make the popup menu
+     ;; normally shown with button-3 a menu of them. If there is just one,
+     ;; make that button show it, and no super-menu.
+     mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+			 (car easy-menu-all-popups)
+		       (cons (easy-menu-title)
+			     (reverse easy-menu-all-popups))))
+    ;; If we've just set mode-popup-menu to an empty menu, change that menu
+    ;; to its default value (without intervention from easy-menu).
+    (if (zerop (length easy-menu-all-popups))
+	(setq mode-popup-menu (default-value 'mode-popup-menu)))
     (and current-menubar
 	 (assoc (car menu) current-menubar)
 	 (delete-menu-item (list (car menu))))))
@@ -261,16 +286,13 @@ The return value can be used as an argument to `easy-menu-add-item'."
     (delete-menu-item (append path (list name))
 		      (easy-menu-normalize menu))))
 
-
-
-
-;; Think up a good title for the menu.  Take the major-mode of the
-;; buffer, strip the -mode part, convert hyphens to spaces, and
-;; capitalize it.
+;; Think up a good title for the menu.  Take the major-mode of the buffer,
+;; strip the -mode part, convert hyphens to spaces, and capitalize it.
 ;;
-;; If you can think of something smarter, feel free to replace it.
-;; Don't forget to mail the change to xemacs@xemacs.org where everyone
-;; can flame, er, praise your changes.
+;; In a more ideal world, we could use `mode-name' here, which see, but that
+;; turns out to be temporarily trashed by various minor modes, and this
+;; value is much more trustworthy.
+
 (defun easy-menu-title ()
   (capitalize (replace-in-string (replace-in-string
 				  (symbol-name major-mode) "-mode$" "")

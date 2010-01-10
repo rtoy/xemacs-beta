@@ -70,7 +70,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-x-impl.h"
 #include "glyphs-x.h"
 #include "objects-x-impl.h"
-#include "xmu.h"
 
 #include "sysfile.h"
 #include "sysproc.h" /* for qxe_getpid() */
@@ -82,6 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #include <Xm/Scale.h>
 #endif
 #include <X11/IntrinsicP.h>
+#include <X11/Xmu/CurUtil.h>
 
 #define LISP_DEVICE_TO_X_SCREEN(dev) XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
 
@@ -159,7 +159,7 @@ void emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame,
 
 /************************************************************************/
 /* convert from a series of RGB triples to an XImage formated for the   */
-/* proper display 							*/
+/* proper display							*/
 /************************************************************************/
 static XImage *
 convert_EImage_to_XImage (Lisp_Object device, int width, int height,
@@ -239,7 +239,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 	  color.green = qtable->gm[i] ? qtable->gm[i] << 8 : 0;
 	  color.blue = qtable->bm[i] ? qtable->bm[i] << 8 : 0;
 	  color.flags = DoRed | DoGreen | DoBlue;
-	  res = allocate_nearest_color (dpy, cmap, vis, &color);
+	  res = x_allocate_nearest_color (dpy, cmap, vis, &color);
 	  if (res > 0 && res < 3)
 	    {
 	      DO_REALLOC(*pixtbl, pixcount, n+1, unsigned long);
@@ -550,16 +550,19 @@ Lisp_Object Vx_bitmap_file_path;
    where the file might be located.  Return a full pathname if found;
    otherwise, return Qnil. */
 
+/* #### FIXME: when Qnil is returned, the caller can't make a difference
+   #### between a non existing X device, an unreadable file, or an actual
+   #### failure to locate the file, so the issued message is really not
+   #### informative. -- dvl */
 static Lisp_Object
 x_locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
   Display *display;
 
-  /* Check non-absolute pathnames with a directory component relative to
-     the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (string_byte (name, 0) == '/' ||
+  if (string_byte (name, 0) == '~' ||
+      string_byte (name, 0) == '/' ||
       (string_byte (name, 0) == '.' &&
        (string_byte (name, 1) == '/' ||
 	(string_byte (name, 1) == '.' &&
@@ -571,6 +574,8 @@ x_locate_pixmap_file (Lisp_Object name)
 	return Qnil;
     }
 
+  /* Check non-absolute pathnames with a directory component relative to
+     the search path; that's the way Xt does it. */
   {
     Lisp_Object defx = get_default_device (Qx);
     if (NILP (defx))
@@ -586,18 +591,18 @@ x_locate_pixmap_file (Lisp_Object name)
     Ibyte *path = egetenv ("XBMLANGPATH");
     if (path)
       {
-        Extbyte *pathext;
+	Extbyte *pathext;
 	SubstitutionRec subs[1];
 	subs[0].match = 'B';
 	LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
 	C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
 	/* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
-           We don't.  If you want it used, set it. */
+	   We don't.  If you want it used, set it. */
 	if (pathext &&
 	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
 					  subs, XtNumber (subs), 0)))
-          {
-            name = build_ext_string (pathext, Qfile_name);
+	  {
+	    name = build_ext_string (pathext, Qfile_name);
 	    XtFree (pathext);
 	    return (name);
 	  }
@@ -1306,12 +1311,12 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 	  Fmake_color_instance
 	    (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
-        {
-          assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, domain, Qnil, Qnil);
-        }
+	{
+	  assert (COLOR_SPECIFIERP (value));
+	  value = Fspecifier_instance (value, domain, Qnil, Qnil);
+	}
       if (NILP (value))
-        continue;
+	continue;
       results = noseeum_cons (noseeum_cons (name, value), results);
       i++;
     }
@@ -1557,7 +1562,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
       if (xpmattrs.valuemask & XpmHotspot)
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
-      
+
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 					 pointer_bg);
       break;
@@ -1713,7 +1718,7 @@ autodetect_normalize (Lisp_Object instantiator,
 	    alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
 			   alist);
 
-	  alist = xbm_mask_file_munging (alist, filename, Qnil, console_type);
+	  alist = xbm_mask_file_munging (alist, filename, Qt, console_type);
 
 	  {
 	    Lisp_Object result = alist_to_tagged_vector (Qxbm, alist);
@@ -1784,10 +1789,10 @@ autodetect_instantiate (Lisp_Object image_instance,
       const char *name_ext;
       LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
       if (XmuCursorNameToIndex (name_ext) != -1)
-        {
-          result = alist_to_tagged_vector (Qcursor_font, alist);
-          is_cursor_font = 1;
-        }
+	{
+	  result = alist_to_tagged_vector (Qcursor_font, alist);
+	  is_cursor_font = 1;
+	}
     }
 
   if (!is_cursor_font)
@@ -2073,7 +2078,7 @@ x_unmap_subwindow (Lisp_Image_Instance *p)
       /* Since we are being unmapped we want the enclosing frame to
 	 get focus. The losing with simple scrolling but is the safest
 	 thing to do. */
-      emacs_Xt_handle_widget_losing_focus 
+      emacs_Xt_handle_widget_losing_focus
 	( XFRAME (IMAGE_INSTANCE_FRAME (p)),
 	  IMAGE_INSTANCE_X_WIDGET_ID (p));
       XtUnmapWidget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
@@ -2170,7 +2175,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
 	 changes we make to the values we get back will look like they
 	 have already been applied. If we rebuild the widget tree then
 	 we may lose properties. */
-      wv = copy_widget_value_tree (lw_get_all_values 
+      wv = copy_widget_value_tree (lw_get_all_values
 				   (IMAGE_INSTANCE_X_WIDGET_LWID (p)),
 				   NO_CHANGE);
     }
@@ -2229,9 +2234,9 @@ x_redisplay_widget (Lisp_Image_Instance *p)
   if (XFRAME (IMAGE_INSTANCE_FRAME (p))->size_changed)
     {
       Arg al[2];
-      XtSetArg (al [0], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (p));
-      XtSetArg (al [1], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (p));
-      XtGetValues (FRAME_X_TEXT_WIDGET 
+      Xt_SET_ARG (al [0], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (p));
+      Xt_SET_ARG (al [1], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (p));
+      XtGetValues (FRAME_X_TEXT_WIDGET
 		   (XFRAME (IMAGE_INSTANCE_FRAME (p))), al, 2);
     }
 
@@ -2401,24 +2406,43 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
   bcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
   lw_add_widget_value_arg (wv, XtNbackground, bcolor.pixel);
 
-#ifdef LWLIB_WIDGETS_MOTIF
-  /* @@#### Fix me.  This should extract all fonts. */
-  fontList = XmFontListCreate
-    (FONT_INSTANCE_X_FONT
-     (XFONT_INSTANCE (very_bogusly_return_only_the_first_needed_font
-		      (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-		       IMAGE_INSTANCE_WIDGET_FACE (ii),
-		       domain))),  XmSTRING_DEFAULT_CHARSET);
-  lw_add_widget_value_arg (wv, XmNfontList, (XtArgVal)fontList);
+  {
+    Lisp_Object face = IMAGE_INSTANCE_WIDGET_FACE (ii);
+    /* @@#### Fix me.  This should extract all fonts.  These should somehow
+       get incorporated into the fontList below in XmFontListCreate(),
+       and there should be a way of passing multiple fonts into lwlib. */
+    Lisp_Font_Instance *fi =
+      XFONT_INSTANCE (very_bogusly_return_only_the_first_needed_font
+		      (IMAGE_INSTANCE_WIDGET_TEXT (ii), face, domain));
+    XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
+#ifdef USE_XFT
+    XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
+
+    if (rf)
+      {
+	/* #### What to do about Motif? */
+	lw_add_widget_value_arg (wv, XtNxftFont, (XtArgVal) rf);
+      }
 #endif
-  /* @@#### Fix me.  This should somehow convey all fonts needed when
-     not Motif. */
-  lw_add_widget_value_arg
-    (wv, XtNfont, (XtArgVal)FONT_INSTANCE_X_FONT
-     (XFONT_INSTANCE (very_bogusly_return_only_the_first_needed_font
-		      (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-		       IMAGE_INSTANCE_WIDGET_FACE (ii),
-		       domain))));
+
+    if (fs)
+      {
+#ifdef LWLIB_WIDGETS_MOTIF
+	fontList = XmFontListCreate (fs, XmSTRING_DEFAULT_CHARSET);
+	lw_add_widget_value_arg (wv, XmNfontList, (XtArgVal) fontList);
+#endif
+	lw_add_widget_value_arg (wv, XtNfont, (XtArgVal) fs);
+      }
+
+#ifdef USE_XFT
+    /* #### sanity check, should wrap in appropriate ERROR_CHECK macro */
+    if (!rf && !fs)
+      warn_when_safe_lispobj
+	(intern ("xft"), Qdebug,
+	 Fcons (build_string ("missing font in update_widget_face"),
+		Fface_name (face)));
+#endif
+  }
   wv->change = VISIBLE_CHANGE;
   /* #### Megahack - but its just getting too complicated to do this
      in the right place. */
@@ -2439,7 +2463,7 @@ update_tab_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 	(IMAGE_INSTANCE_WIDGET_FACE (ii),
 	 domain);
       XColor fcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
-      lw_add_widget_value_arg (val, XtNtabForeground, fcolor.pixel);
+      lw_add_widget_value_arg (val, (String) XtNtabForeground, fcolor.pixel);
       wv->change = VISIBLE_CHANGE;
       val->change = VISIBLE_CHANGE;
 
@@ -2554,8 +2578,8 @@ x_widget_instantiate (Lisp_Object image_instance,
      offset the redisplay of the widget by the amount the text
      widget is inside the manager. */
   ac = 0;
-  XtSetArg (al [ac], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (ii)); ac++;
-  XtSetArg (al [ac], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (ii)); ac++;
+  Xt_SET_ARG (al [ac], XtNx, &IMAGE_INSTANCE_X_WIDGET_XOFFSET (ii)); ac++;
+  Xt_SET_ARG (al [ac], XtNy, &IMAGE_INSTANCE_X_WIDGET_YOFFSET (ii)); ac++;
   XtGetValues (FRAME_X_TEXT_WIDGET (f), al, ac);
 
   XtSetMappedWhenManaged (wid, TRUE);
@@ -2623,11 +2647,11 @@ x_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       Arg al [2];
       int ac =0;
 #ifdef LWLIB_WIDGETS_MOTIF
-      XtSetArg (al [ac], XmNlabelType, XmPIXMAP);	ac++;
-      XtSetArg (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));
+      Xt_SET_ARG (al [ac], XmNlabelType, XmPIXMAP);	ac++;
+      Xt_SET_ARG (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));
       ac++;
 #else
-      XtSetArg (al [ac], XtNpixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));	ac++;
+      Xt_SET_ARG (al [ac], XtNpixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));	ac++;
 #endif
       XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, ac);
     }
@@ -2698,11 +2722,9 @@ x_progress_gauge_redisplay (Lisp_Object image_instance)
 
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
-      Arg al [1];
       Lisp_Object val;
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p))->value;
-      XtSetArg (al[0], XtNvalue, XINT (val));
-      XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (p), al, 1);
+      Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (p), XtNvalue, XINT (val));
     }
 }
 
@@ -2788,7 +2810,6 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		  Lisp_Object old_selected =
 		    gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
-		  Arg al [1];
 		  char* name;
 		  unsigned int num_children, i;
 		  Widget* children;
@@ -2804,8 +2825,8 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		    {
 		      if (!strcmp (XtName (children [i]), name))
 			{
-			  XtSetArg (al [0], XtNtopWidget, children [i]);
-			  XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 1);
+			  Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (ii),
+					XtNtopWidget, children [i]);
 			  break;
 			}
 		    }
@@ -2992,7 +3013,7 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_HAS_METHOD (autodetect, validate);
   IIFORMAT_HAS_METHOD (autodetect, normalize);
   IIFORMAT_HAS_METHOD (autodetect, possible_dest_types);
-  /* #### autodetect is flawed IMO: 
+  /* #### autodetect is flawed IMO:
   1. It makes the assumption that you can detect whether the user
   wanted a cursor or a string based on the data, since the data is a
   string you have to prioritise cursors. Instead we will force users

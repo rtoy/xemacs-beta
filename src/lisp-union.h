@@ -80,11 +80,11 @@ union Lisp_Object
 }
 Lisp_Object;
 
-#define XCHARVAL(x) ((x).gu.val)
+#define XCHARVAL(x) ((EMACS_INT)(x).gu.val)
 #define XPNTRVAL(x) ((x).ui)
 
-#define XREALINT(x) ((x).s.val)
-#define XUINT(x) ((x).u.val)
+#define XREALINT(x) ((EMACS_INT)(x).s.val)
+#define XUINT(x) ((EMACS_UINT)(x).u.val)
 #define XTYPE(x) ((x).gu.type)
 #define EQ(x,y) ((x).v == (y).v)
 

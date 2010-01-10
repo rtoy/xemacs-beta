@@ -40,9 +40,10 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-x.h"
 
 #include <X11/Shell.h>
+#include <X11/Xmu/CharSet.h>
 #include "EmacsFrameP.h"
 #include "EmacsManager.h"	/* for EmacsManagerChangeSize */
-#include "xmu.h"
+#include "../lwlib/xt-wrappers.h"
 
 static void EmacsFrameClassInitialize (void);
 static void EmacsFrameInitialize (Widget, Widget, ArgList, Cardinal *);
@@ -60,117 +61,83 @@ emacs_Xt_mapping_action (Widget w, XEvent* event);
 #define XtOffset(p_type,field) \
 	((Cardinal) (((char *) (&(((p_type)0)->field))) - ((char *)0)))
 #define offset(field) XtOffset (EmacsFrame, emacs_frame.field)
-
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(member), extrepr, value)
 static XtResource resources[] = {
-  { XtNgeometry, XtCGeometry,
-    XtRString, sizeof (String),
-    offset (geometry), XtRString, (XtPointer) 0 },
-  { XtNiconic, XtCIconic,
-    XtRBoolean, sizeof (Boolean),
-    offset (iconic), XtRImmediate, (XtPointer) False },
+  res (XtNgeometry, XtCGeometry, XtRString, String, geometry, XtRString, 0),
+  res (XtNiconic, XtCIconic, XtRBoolean, Boolean, iconic, XtRImmediate, False),
 
-  { XtNemacsFrame, XtCEmacsFrame,
-    XtRPointer, sizeof (XtPointer),
-    offset (frame), XtRImmediate, 0 },
-  { XtNmenubar, XtCMenubar,
-    XtRBoolean, sizeof (Boolean),
-    offset (menubar_p), XtRImmediate, (XtPointer) True },
-  { XtNinitiallyUnmapped, XtCInitiallyUnmapped,
-    XtRBoolean, sizeof (Boolean),
-    offset (initially_unmapped), XtRImmediate, (XtPointer) False },
-  { XtNminibuffer, XtCMinibuffer,
-    XtRBoolean, sizeof (Boolean),
-    offset (minibuffer), XtRImmediate, (XtPointer) True },
-  { XtNunsplittable, XtCUnsplittable,
-    XtRBoolean, sizeof (Boolean),
-    offset (unsplittable), XtRImmediate, (XtPointer) False },
-  { XtNinternalBorderWidth, XtCInternalBorderWidth,
-    XtRInt, sizeof (int),
-    offset (internal_border_width), XtRImmediate, (XtPointer)4 },
+  res (XtNemacsFrame, XtCEmacsFrame, XtRPointer, XtPointer,
+       frame, XtRImmediate, 0),
+  res (XtNmenubar, XtCMenubar, XtRBoolean, Boolean,
+       menubar_p, XtRImmediate, True),
+  res (XtNinitiallyUnmapped, XtCInitiallyUnmapped, XtRBoolean, Boolean,
+       initially_unmapped, XtRImmediate, False),
+  res (XtNminibuffer, XtCMinibuffer, XtRBoolean, Boolean,
+       minibuffer, XtRImmediate, True),
+  res (XtNunsplittable, XtCUnsplittable, XtRBoolean, Boolean,
+       unsplittable, XtRImmediate, False),
+  res (XtNinternalBorderWidth, XtCInternalBorderWidth, XtRInt, int,
+       internal_border_width, XtRImmediate, 4),
 #ifdef HAVE_SCROLLBARS
-  { XtNscrollBarWidth, XtCScrollBarWidth,
-    XtRInt, sizeof (int),
-    offset (scrollbar_width), XtRImmediate, (XtPointer)-1 },
-  { XtNscrollBarHeight, XtCScrollBarHeight,
-    XtRInt, sizeof (int),
-    offset (scrollbar_height), XtRImmediate, (XtPointer)-1 },
-  { XtNscrollBarPlacement, XtCScrollBarPlacement,
-    XtRScrollBarPlacement, sizeof (unsigned char),
-    offset (scrollbar_placement), XtRImmediate,
+  res (XtNscrollBarWidth, XtCScrollBarWidth, XtRInt, int,
+       scrollbar_width, XtRImmediate, -1),
+  res (XtNscrollBarHeight, XtCScrollBarHeight, XtRInt, int,
+       scrollbar_height, XtRImmediate, -1),
+  res (XtNscrollBarPlacement, XtCScrollBarPlacement, XtRScrollBarPlacement,
+       unsigned char, scrollbar_placement, XtRImmediate,
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
     defined (LWLIB_SCROLLBARS_ATHENA3D)
-    (XtPointer) XtBOTTOM_RIGHT
+	       XtBOTTOM_RIGHT
 #else
-    (XtPointer) XtBOTTOM_LEFT
+	       XtBOTTOM_LEFT
 #endif
-  },
+	       ),
 #endif /* HAVE_SCROLLBARS */
 
 #ifdef HAVE_TOOLBARS
-  { XtNtopToolBarHeight, XtCTopToolBarHeight,
-    XtRInt, sizeof (int),
-    offset (top_toolbar_height), XtRImmediate, (XtPointer)-1 },
-  { XtNbottomToolBarHeight, XtCBottomToolBarHeight,
-    XtRInt, sizeof (int),
-    offset (bottom_toolbar_height), XtRImmediate, (XtPointer)-1 },
-  { XtNleftToolBarWidth, XtCLeftToolBarWidth,
-    XtRInt, sizeof (int),
-    offset (left_toolbar_width), XtRImmediate, (XtPointer)-1 },
-  { XtNrightToolBarWidth, XtCRightToolBarWidth,
-    XtRInt, sizeof (int),
-    offset (right_toolbar_width), XtRImmediate, (XtPointer)-1 },
-  { XtNtopToolBarBorderWidth, XtCTopToolBarBorderWidth,
-    XtRInt, sizeof (int),
-    offset (top_toolbar_border_width), XtRImmediate, (XtPointer)-1 },
-  { XtNbottomToolBarBorderWidth, XtCBottomToolBarBorderWidth,
-    XtRInt, sizeof (int),
-    offset (bottom_toolbar_border_width), XtRImmediate, (XtPointer)-1 },
-  { XtNleftToolBarBorderWidth, XtCLeftToolBarBorderWidth,
-    XtRInt, sizeof (int),
-    offset (left_toolbar_border_width), XtRImmediate, (XtPointer)-1 },
-  { XtNrightToolBarBorderWidth, XtCRightToolBarBorderWidth,
-    XtRInt, sizeof (int),
-    offset (right_toolbar_border_width), XtRImmediate, (XtPointer)-1 },
-  { XtNtoolBarShadowThickness, XtCToolBarShadowThickness,
-    XtRDimension, sizeof (Dimension),
-    offset (toolbar_shadow_thickness), XtRImmediate, (XtPointer)2 },
+  res (XtNtopToolBarHeight, XtCTopToolBarHeight, XtRInt, int,
+       top_toolbar_height, XtRImmediate, -1),
+  res (XtNbottomToolBarHeight, XtCBottomToolBarHeight, XtRInt, int,
+       bottom_toolbar_height, XtRImmediate, -1),
+  res (XtNleftToolBarWidth, XtCLeftToolBarWidth, XtRInt, int,
+       left_toolbar_width, XtRImmediate, -1),
+  res (XtNrightToolBarWidth, XtCRightToolBarWidth, XtRInt, int,
+       right_toolbar_width, XtRImmediate, -1),
+  res (XtNtopToolBarBorderWidth, XtCTopToolBarBorderWidth, XtRInt, int,
+       top_toolbar_border_width, XtRImmediate, -1),
+  res (XtNbottomToolBarBorderWidth, XtCBottomToolBarBorderWidth, XtRInt, int,
+       bottom_toolbar_border_width, XtRImmediate, -1),
+  res (XtNleftToolBarBorderWidth, XtCLeftToolBarBorderWidth, XtRInt,
+       int, left_toolbar_border_width, XtRImmediate, -1),
+  res (XtNrightToolBarBorderWidth, XtCRightToolBarBorderWidth, XtRInt,
+       int, right_toolbar_border_width, XtRImmediate, -1),
+  res (XtNtoolBarShadowThickness, XtCToolBarShadowThickness, XtRDimension,
+       Dimension, toolbar_shadow_thickness, XtRImmediate, 2),
 #endif /* HAVE_TOOLBARS */
 
-  { XtNinterline, XtCInterline,
-    XtRInt, sizeof (int),
-    offset (interline), XtRImmediate, (XtPointer)0 },
-  {
-    XtNfont, XtCFont,
-    XtRFontStruct, sizeof (XFontStruct *),
-    offset(font), XtRImmediate, (XtPointer)0
-  },
-  { XtNforeground, XtCForeground,
-    XtRPixel, sizeof (Pixel),
-    offset(foreground_pixel), XtRString, (XtPointer) "Black" },
-  { XtNbackground, XtCBackground,
-    XtRPixel, sizeof (Pixel),
-    offset(background_pixel), XtRString, (XtPointer) "Gray80" },
-  { XtNcursorColor, XtCForeground,
-    XtRPixel, sizeof (Pixel),
-    offset(cursor_color), XtRString, (XtPointer) "XtDefaultForeground" },
-  { XtNbarCursor, XtCBarCursor,
-    XtRBoolean, sizeof (Boolean),
-    offset (bar_cursor), XtRImmediate, (XtPointer)0 },
-  { XtNvisualBell, XtCVisualBell,
-    XtRBoolean, sizeof (Boolean),
-    offset (visual_bell), XtRImmediate, (XtPointer)0 },
-  { XtNbellVolume, XtCBellVolume,
-    XtRInt, sizeof (int),
-    offset (bell_volume), XtRImmediate, (XtPointer)0 },
-  { XtNuseBackingStore, XtCUseBackingStore,
-    XtRBoolean, sizeof (Boolean),
-    offset (use_backing_store), XtRImmediate, (XtPointer)0 },
-  { XtNpreferredWidth, XtCPreferredWidth,
-    XtRDimension, sizeof (Dimension),
-    offset (preferred_width), XtRImmediate, (XtPointer)0 },
-  { XtNpreferredHeight, XtCPreferredHeight,
-    XtRDimension, sizeof (Dimension),
-    offset (preferred_height), XtRImmediate, (XtPointer)0 },
+  res (XtNinterline, XtCInterline, XtRInt, int,
+       interline, XtRImmediate, 0),
+  res (XtNfont, XtCFont, XtRFontStruct, XFontStruct *,
+       font, XtRImmediate, 0),
+  res (XtNforeground, XtCForeground, XtRPixel, Pixel,
+       foreground_pixel, XtRString, "Black"),
+  res (XtNbackground, XtCBackground, XtRPixel, Pixel,
+       background_pixel, XtRString, "Gray80"),
+  res (XtNcursorColor, XtCForeground, XtRPixel, Pixel,
+       cursor_color, XtRString, "XtDefaultForeground"),
+  res (XtNbarCursor, XtCBarCursor, XtRBoolean, Boolean,
+       bar_cursor, XtRImmediate, 0),
+  res (XtNvisualBell, XtCVisualBell, XtRBoolean, Boolean,
+       visual_bell, XtRImmediate, 0),
+  res (XtNbellVolume, XtCBellVolume, XtRInt, int,
+       bell_volume, XtRImmediate, 0),
+  res (XtNuseBackingStore, XtCUseBackingStore, XtRBoolean, Boolean,
+       use_backing_store, XtRImmediate, 0),
+  res (XtNpreferredWidth, XtCPreferredWidth, XtRDimension, Dimension,
+       preferred_width, XtRImmediate, 0),
+  res (XtNpreferredHeight, XtCPreferredHeight, XtRDimension, Dimension,
+       preferred_height, XtRImmediate, 0),
 };
 
 #undef offset
@@ -181,7 +148,7 @@ static XtResource resources[] = {
 
 static XtActionsRec
 emacsFrameActionsTable [] = {
-  {"mapping",  (XtActionProc) emacs_Xt_mapping_action},
+  { (String) "mapping",  (XtActionProc) emacs_Xt_mapping_action},
 };
 
 static char
@@ -200,7 +167,7 @@ EmacsFrameClassRec emacsFrameClassRec = {
 #else
     /* superclass		*/	&widgetClassRec,
 #endif
-    /* class_name		*/	"EmacsFrame",
+    /* class_name		*/	(String) "EmacsFrame",
     /* widget_size		*/	sizeof (EmacsFrameRec),
     /* class_initialize		*/	EmacsFrameClassInitialize,
     /* class_part_initialize	*/	0,
@@ -360,19 +327,32 @@ EmacsFrameResize (Widget widget)
   pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
   change_frame_size (f, rows, columns, 0);
 
-  /* Now we tell the EmacsShell that we've changed the size of the non-fixed
-     portion of the frame.  Note that, if we the resize occurred as a result
-     of EmacsFrameSetCharSize(), this information will be stored twice.
-     This is not a big deal, as storing this information doesn't actually
-     do anything until the next resize. */
-  if (FRAME_X_TOP_LEVEL_FRAME_P (f))
-    x_wm_set_variable_size (FRAME_X_SHELL_WIDGET (f), columns, rows);
+  /* The code below is just plain wrong.  If the EmacsShell or EmacsManager
+     needs to know, they should just ask.  If needed information is being
+     updated here, then we should set a dirty flag and have it updated on an
+     as-needed basis.
+     For now, conditionalize so people can get work done if this breaks
+     something. */
+  if (wedge_metacity)		/* cf. x_set_frame_size */
+    {
+      /* Now we tell the EmacsShell that we've changed the size of the
+	 non-fixed portion of the frame.  Note that, if the resize occurred
+	 as a result of EmacsFrameSetCharSize(), this information will be
+	 stored twice.  This is not a big deal, as storing this information
+	 doesn't actually do anything until the next resize. */
+      if (FRAME_X_TOP_LEVEL_FRAME_P (f))
+	x_wm_set_variable_size (FRAME_X_SHELL_WIDGET (f), columns, rows);
 
-  /* Kick the manager so that it knows we've changed size. */
-  req.request_mode = 0;
-  XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
-  EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
-			  repl.height);
+      /* Kick the manager so that it knows we've changed size.
+	 #### No, no, no!  If this does anything at all, it will involve
+	 changing the manager's size.  That's not something that a child
+	 widget should initialize as part of a purely informational
+	 method!! */
+      req.request_mode = 0;
+      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
+      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f),
+			      repl.width, repl.height);
+    }
 }
 
 static Boolean
@@ -640,8 +620,8 @@ EmacsFrameSetCharSize (Widget widget, int columns, int rows)
 
   {
     Arg al [2];
-    XtSetArg (al [0], XtNwidth,  pixel_width);
-    XtSetArg (al [1], XtNheight, pixel_height);
+    Xt_SET_ARG (al [0], XtNwidth,  pixel_width);
+    Xt_SET_ARG (al [1], XtNheight, pixel_height);
     XtSetValues ((Widget) ew, al, countof (al));
   }
 }

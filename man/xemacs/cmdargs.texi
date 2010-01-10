@@ -171,6 +171,27 @@ This implies @samp{-vanilla}.
 Do not process early packages.  (For more information on startup issues
 concerning the package system, @xref{Startup Paths}.)
 
+@item -script @var{file}
+@item --script @var{file}
+Load @var{file} as a (compiled or interpreted) Lisp file; do not load
+any window-system or TTY code, do not load the user init file, the site
+file, or the early packages.  This is comparable to running
+@samp{xemacs} @samp{-batch} @samp{-l} @var{file}.
+
+You can also specify this flag implicitly by calling the XEmacs binary
+with a value for @samp{argv[0]} of @samp{xemacs-script}, normally by
+means of a symbolic link.  On a POSIX system, this means that adding the
+line:
+
+@example
+#!/usr/bin/env xemacs-script
+@end example
+
+at the start of an XEmacs Lisp file, and changing that file's
+permissions to executable, creates a script that can be invoked by
+typing the path to the file.  XEmacs has logic to ignore the #! line at
+the start of the script, so that won't cause an error.
+
 @item -vanilla
 This is equivalent to @samp{-q -no-site-file -no-early-packages}.
 

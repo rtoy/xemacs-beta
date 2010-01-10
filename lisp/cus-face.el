@@ -50,6 +50,9 @@
 		frames (cdr frames))
 	  (face-display-set face value frame '(custom)))
 	(init-face-from-resources face)))
+    ;; Don't record SPEC until we see it causes no errors.
+    (put face 'face-defface-spec spec)
+    (push (cons 'defface face) current-load-list)
     (when (and doc (null (face-doc-string face)))
       (set-face-doc-string face doc))
     (custom-handle-all-keywords face args 'custom-face)
@@ -282,7 +285,7 @@ If FRAME is nil, use the default face."
 ;;;###autoload
 (defun custom-set-face-update-spec (face display plist)
   "Customize the FACE for display types matching DISPLAY, merging
-  in the new items from PLIST."
+in the new items from PLIST."
   (let ((spec (face-spec-update-all-matching (custom-face-get-spec face)
 					     display plist)))
     (put face 'customized-face spec)
@@ -359,7 +362,6 @@ FACE.  Nil otherwise."
 
 ;;;###autoload
 (defun custom-theme-reset-faces (theme &rest args)
-  (custom-check-theme theme)
   "Reset the value of the face to values previously defined.
 Associate this setting with THEME.
 
@@ -368,6 +370,7 @@ ARGS is a list of lists of the form
     (face to-theme)
 
 This means reset face to its value in to-theme."
+  (custom-check-theme theme)
   (mapc #'(lambda (arg)
 	    (apply #'custom-theme-reset-internal-face arg)
 	    (custom-push-theme (car arg) 'theme-face theme 'reset (cadr arg)))

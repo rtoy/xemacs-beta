@@ -1,3 +1,37 @@
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2007-08-12  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in (datarootdir): Add.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* reginfo.h (XEMACS_INFO_XEMACS_EARLY_PACKAGES_KEY)
+	(XEMACS_INFO_XEMACS_LATE_PACKAGES_KEY)
+	(XEMACS_INFO_XEMACS_LAST_PACKAGES_KEY): Add.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
@@ -138,7 +172,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

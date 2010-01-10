@@ -249,9 +249,8 @@ needed.
 There is another file, @file{cl-compat.el}, which defines some
 routines from the older @file{cl.el} package that are no longer
 present in the new package.  This includes internal routines
-like @code{setelt} and @code{zip-lists}, deprecated features
-like @code{defkeyword}, and an emulation of the old-style
-multiple-values feature.  @xref{Old CL Compatibility}.
+like @code{setelt} and @code{zip-lists}, and deprecated features
+like @code{defkeyword}.  @xref{Old CL Compatibility}.
 
 @node Installation, Naming Conventions, Organization, Overview
 @section Installation
@@ -5345,14 +5344,6 @@ are not a first-class package mechanism, there is no way for
 The @code{loop} macro is complete except that @code{loop-finish}
 and type specifiers are unimplemented.
 
-The multiple-value return facility treats lists as multiple
-values, since Emacs Lisp cannot support multiple return values
-directly.  The macros will be compatible with Common Lisp if
-@code{values} or @code{values-list} is always used to return to
-a @code{multiple-value-bind} or other multiple-value receiver;
-if @code{values} is used without @code{multiple-value-@dots{}}
-or vice-versa the effect will be different from Common Lisp.
-
 Many Common Lisp declarations are ignored, and others match
 the Common Lisp standard in concept but not in detail.  For
 example, local @code{special} declarations, which are purely
@@ -5376,14 +5367,6 @@ The second argument of @code{check-type} is treated differently.
 @noindent
 Following is a list of all known incompatibilities between this package
 and the older Quiroz @file{cl.el} package.
-
-This package's emulation of multiple return values in functions is
-incompatible with that of the older package.  That package attempted
-to come as close as possible to true Common Lisp multiple return
-values; unfortunately, it could not be 100% reliable and so was prone
-to occasional surprises if used freely.  This package uses a simpler
-method, namely replacing multiple values with lists of values, which
-is more predictable though more noticeably different from Common Lisp.
 
 The @code{defkeyword} form and @code{keywordp} function are not
 implemented in this package.
@@ -5448,19 +5431,6 @@ is emulated by @code{cl-compat}; the @code{with-keyword-args}
 macro is not, however, and in any case it's best to change to
 use the more natural keyword argument processing offered by
 @code{defun*}.
-
-Multiple return values are treated differently by the two
-Common Lisp packages.  The old package's method was more
-compatible with true Common Lisp, though it used heuristics
-that caused it to report spurious multiple return values in
-certain cases.  The @code{cl-compat} package defines a set
-of multiple-value macros that are compatible with the old
-CL package; again, they are heuristic in nature, but they
-are guaranteed to work in any case where the old package's
-macros worked.  To avoid name collision with the ``official''
-multiple-value facilities, the ones in @code{cl-compat} have
-capitalized names:  @code{Values}, @code{Values-list},
-@code{Multiple-value-bind}, etc.
 
 The functions @code{cl-floor}, @code{cl-ceiling}, @code{cl-truncate},
 and @code{cl-round} are defined by @code{cl-compat} to use the

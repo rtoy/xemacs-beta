@@ -183,7 +183,7 @@ Keymap for characters following C-c.")
 
 ;; FSFmacs keyboard.c
 
-(define-key global-tty-map "\C-z" 'suspend-emacs)
+(define-key global-tty-map "\C-z" 'suspend-or-iconify-emacs)
 (define-key global-window-system-map "\C-z" 'zap-up-to-char)
 (define-key global-window-system-map '(control Z) 'iconify-frame)
 (define-key global-map "\C-x\C-z" 'suspend-or-iconify-emacs)
@@ -620,11 +620,15 @@ Keymap for characters following C-c.")
 (define-key global-map '(meta delete)	'backward-or-forward-kill-word)
 (define-key global-map [(control x) (delete)]
 				        'backward-or-forward-kill-sentence)
+(define-key global-map '(shift delete) 'kill-primary-selection)
+
 (define-key global-map 'kp-delete	'backward-or-forward-delete-char)
 (define-key global-map '(control kp-delete) 'backward-or-forward-kill-word)
 (define-key global-map '(meta kp-delete) 'backward-or-forward-kill-word)
 (define-key global-map [(control x) (kp-delete)]
 					'backward-or-forward-kill-sentence)
+
+(define-key global-map '(shift kp-delete) 'kill-primary-selection)
 
 ;; don't try this one at home, kids.
 (define-key global-map '(control meta delete) 'backward-or-forward-kill-sexp)
@@ -674,4 +678,12 @@ Keymap for characters following C-c.")
 ;(define-key global-map 'insertchar	'function-key-error)
 (define-key global-map 'deletechar	'delete-char)
 
+;; Bind the mouse wheel by default. 
+(dolist (keyspec '([(mouse-4)] [(shift mouse-4)] [(control mouse-4)]
+                   [(mouse-5)] [(shift mouse-5)] [(control mouse-5)]))
+  (define-key global-map keyspec
+    #'(lambda (event)
+        (interactive "e")
+        (mwheel-install)
+        (declare-fboundp (mwheel-scroll event)))))
 ;;; keydefs.el ends here

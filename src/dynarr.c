@@ -129,15 +129,6 @@ Use the following global variable:
 
 /* ------------------------ dynamic arrays ------------------- */
 
-static const struct memory_description int_description_1[] = {
-  { XD_END }
-};
-
-const struct sized_memory_description int_description = {
-  sizeof (int),
-  int_description_1
-};
-
 static const struct memory_description int_dynarr_description_1[] = {
   XD_DYNARR_DESC (int_dynarr, &int_description),
   { XD_END }
@@ -146,15 +137,6 @@ static const struct memory_description int_dynarr_description_1[] = {
 const struct sized_memory_description int_dynarr_description = {
   sizeof (int_dynarr),
   int_dynarr_description_1
-};
-
-static const struct memory_description unsigned_char_description_1[] = {
-  { XD_END }
-};
-
-const struct sized_memory_description unsigned_char_description = {
-  sizeof (unsigned char),
-  unsigned_char_description_1
 };
 
 static const struct memory_description unsigned_char_dynarr_description_1[] = {
@@ -167,18 +149,8 @@ const struct sized_memory_description unsigned_char_dynarr_description = {
   unsigned_char_dynarr_description_1
 };
 
-static const struct memory_description Lisp_Object_description_1[] = {
-  { XD_LISP_OBJECT, 0 },
-  { XD_END }
-};
-
-const struct sized_memory_description Lisp_Object_description = {
-  sizeof (Lisp_Object),
-  Lisp_Object_description_1
-};
-
 static const struct memory_description Lisp_Object_dynarr_description_1[] = {
-  XD_DYNARR_DESC (Lisp_Object_dynarr, &Lisp_Object_description),
+  XD_DYNARR_DESC (Lisp_Object_dynarr, &lisp_object_description),
   { XD_END }
 };
 
@@ -186,17 +158,6 @@ static const struct memory_description Lisp_Object_dynarr_description_1[] = {
 const struct sized_memory_description Lisp_Object_dynarr_description = {
   sizeof (Lisp_Object_dynarr),
   Lisp_Object_dynarr_description_1
-};
-
-static const struct memory_description Lisp_Object_pair_description_1[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, key) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, value) },
-  { XD_END }
-};
-
-const struct sized_memory_description Lisp_Object_pair_description = {
-  sizeof (Lisp_Object_pair),
-  Lisp_Object_pair_description_1
 };
 
 static const struct memory_description Lisp_Object_pair_dynarr_description_1[] = {
@@ -212,16 +173,17 @@ const struct sized_memory_description Lisp_Object_pair_dynarr_description = {
 static int Dynarr_min_size = 8;
 
 static void
-Dynarr_realloc (Dynarr *dy, Bytecount new_size)
+Dynarr_realloc (Dynarr *dy, int new_size)
 {
   if (DUMPEDP (dy->base))
     {
-      void *new_base = malloc (new_size);
-      memcpy (new_base, dy->base, dy->max > new_size ? dy->max : new_size);
+      void *new_base = malloc (new_size * dy->elsize);
+      memcpy (new_base, dy->base, 
+	      (dy->max < new_size ? dy->max : new_size) * dy->elsize);
       dy->base = new_base;
     }
   else
-    dy->base = xrealloc (dy->base, new_size);
+    dy->base = xrealloc (dy->base, new_size * dy->elsize);
 }
 
 void *
@@ -232,6 +194,36 @@ Dynarr_newf (int elsize)
 
   return d;
 }
+
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("dynarr", dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       0,
+			       Dynarr);
+
+static void
+Dynarr_lisp_realloc (Dynarr *dy, int new_size)
+{
+  void *new_base = alloc_lrecord_array (dy->elsize, new_size, dy->lisp_imp);
+  if (dy->base)
+    memcpy (new_base, dy->base, 
+	    (dy->max < new_size ? dy->max : new_size) * dy->elsize);
+  dy->base = new_base;
+}
+
+void *
+Dynarr_lisp_newf (int elsize, 
+		  const struct lrecord_implementation *dynarr_imp, 
+		  const struct lrecord_implementation *imp)
+{
+  Dynarr *d = (Dynarr *) alloc_lrecord (sizeof (Dynarr), dynarr_imp);
+  d->elsize = elsize;
+  d->lisp_imp = imp;
+
+  return d;
+}
+#endif /* not NEW_GC */
 
 void
 Dynarr_resize (void *d, Elemcount size)
@@ -251,7 +243,14 @@ Dynarr_resize (void *d, Elemcount size)
   /* Don't do anything if the array is already big enough. */
   if (newsize > dy->max)
     {
-      Dynarr_realloc (dy, newsize*dy->elsize);
+#ifdef NEW_GC
+      if (dy->lisp_imp)
+	Dynarr_lisp_realloc (dy, newsize);
+      else
+	Dynarr_realloc (dy, newsize);
+#else /* not NEW_GC */
+      Dynarr_realloc (dy, newsize);
+#endif /* not NEW_GC */
       dy->max = newsize;
     }
 }
@@ -308,10 +307,23 @@ Dynarr_free (void *d)
 {
   Dynarr *dy = (Dynarr *) d;
 
+#ifdef NEW_GC
+  if (dy->base && !DUMPEDP (dy->base))
+    {
+      if (!dy->lisp_imp)
+	xfree (dy->base, void *);
+    }
+  if(!DUMPEDP (dy))
+    {
+      if (!dy->lisp_imp)
+	xfree (dy, Dynarr *);
+    }
+#else /* not NEW_GC */
   if (dy->base && !DUMPEDP (dy->base))
     xfree (dy->base, void *);
   if(!DUMPEDP (dy))
     xfree (dy, Dynarr *);
+#endif /* not NEW_GC */
 }
 
 #ifdef MEMORY_USAGE_STATS

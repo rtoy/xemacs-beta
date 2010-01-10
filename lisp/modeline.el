@@ -44,7 +44,7 @@
 	 (specifier-instance modeline-shadow-thickness)))
     (and (integerp thickness)
 	 (> thickness 0)))
-  "Whether the default toolbar is globally visible.
+  "Whether the modeline is displayed with raised, 3-d appearance.
 This option only has an effect when set using `customize-set-variable',
 or through the Options menu."
   :group 'display
@@ -827,10 +827,9 @@ percentage of the file above point."
 (defconst modeline-tty-frame-specifier (make-specifier 'boolean))
 (add-hook 'create-frame-hook 'modeline-update-tty-frame-specifier)
 (defun modeline-update-tty-frame-specifier (f)
-  (if-fboundp 'frame-tty-p
-      (if (and (frame-tty-p f)
-	       (> (frame-property f 'frame-number) 1))
-	  (set-specifier modeline-tty-frame-specifier t f))))
+  (if (and (eq (frame-type f) 'tty)
+	   (> (frame-property f 'frame-number) 1))
+      (set-specifier modeline-tty-frame-specifier t f)))
 
 (define-modeline-control tty-frame-id (list modeline-tty-frame-specifier
 					    " [%S]"

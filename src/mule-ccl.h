@@ -69,12 +69,24 @@ struct ccl_program {
 					   line-feed.  */
 #define CCL_CODING_EOL_CR	2	/* Carriage-return only.  */
 
-/* Alist of fontname patterns vs corresponding CCL program.  */
-extern Lisp_Object Vfont_ccl_encoder_alist;
+/* If OBJECT is symbol designating a registered CCL program, return it.
+   Else if OBJECT is a vector CCL program with no unresolved symbols, return
+   it.
+   Else, if OBJECT is a vector CCL program with unresolved symbols, return a
+   newly-created vector reflecting the CCL program with all symbols
+   resolved, if that is currently possible in this XEmacs.
 
-/* Setup fields of the structure pointed by CCL appropriately for the
-   execution of ccl program CCL_PROG (symbol or vector).  */
-extern int setup_ccl_program (struct ccl_program *, Lisp_Object);
+   Otherwise, signal `invalid-argument'. */
+extern Lisp_Object get_ccl_program (Lisp_Object object);
+
+/* Set up fields of the structure pointed by CCL appropriately for the
+   execution of ccl program CCL_PROG (a symbol or a vector).
+
+   If CCL_PROG is a vector and contains unresolved symbols, this function
+   will throw an assertion failure. To avoid this, call get_ccl_program at
+   the point that you receive the CCL program from Lisp, and use and store
+   its (resolved) result instead. */
+extern int setup_ccl_program (struct ccl_program *, Lisp_Object ccl_prog);
 
 extern int ccl_driver (struct ccl_program *, const unsigned char *,
 		       unsigned_char_dynarr *, int, int *, int);

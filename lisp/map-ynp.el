@@ -141,14 +141,14 @@ Returns the number of actions taken."
 	    ;; its definition.
 	    ;; XEmacs
 	    map (let ((foomap (make-sparse-keymap)))
-		  (mapcar #'(lambda (elt)
-			      (define-key
-				foomap
-				(if (characterp (car elt))
-				    (char-to-string (car elt))
-				  (car elt))
-				(vector (nth 1 elt))))
-			  action-alist)
+		  (mapc #'(lambda (elt)
+                            (define-key
+                              foomap
+                              (if (characterp (car elt))
+                                  (char-to-string (car elt))
+                                (car elt))
+                              (vector (nth 1 elt))))
+                        action-alist)
 		  (set-keymap-parents foomap (list query-replace-map))
 		  foomap)))
     (unwind-protect
@@ -162,9 +162,11 @@ Returns the number of actions taken."
 		   ;; Prompt the user about this object.
 		   (setq quit-flag nil)
 		   (if mouse-event ; XEmacs
-		       (setq def (or (get-dialog-box-response
-				      mouse-event
-				      (cons prompt map))
+		       (setq def (or (and-fboundp 
+                                         #'get-dialog-box-response
+                                         (get-dialog-box-response
+                                          mouse-event
+                                          (cons prompt map)))
 				     'quit))
 		     ;; Prompt in the echo area.
 		     (let ((cursor-in-echo-area (not no-cursor-in-echo-area)))

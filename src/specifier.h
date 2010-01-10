@@ -140,7 +140,7 @@ struct specifier_methods
   void (*validate_matchspec_method) (Lisp_Object matchspec);
 
   /* Instantiate method: Return SPECIFIER instance in DOMAIN,
-     specified by INSTANTIATOR.  MATCHSPEC specifies an additional
+     specified by INSTANTIATOR.  MATCHSPEC specifies additional
      constraints on the instance value (see the docstring for
      Fspecifier_matching_instance function). MATCHSPEC is passed
      Qunbound when no matching constraints are imposed. The method is
@@ -152,6 +152,9 @@ struct specifier_methods
      to functions which also instantiate specifiers (of which I can
      name specifier_instance) to avoid creating "external"
      specification loops.
+
+     NO_FALLBACK indicates that the method should not try the fallbacks
+     (and thus simply return Qunbound) in case of a failure to instantiate.
 
      This method must presume that both INSTANTIATOR and MATCHSPEC are
      already validated by the corresponding validate_* methods, and
@@ -167,7 +170,8 @@ struct specifier_methods
 				     Lisp_Object matchspec,
 				     Lisp_Object domain,
 				     Lisp_Object instantiator,
-				     Lisp_Object depth);
+				     Lisp_Object depth,
+				     int no_fallback);
 
   /* Going-to-add method: Called when an instantiator is about
      to be added to a specifier.  This function can specify
@@ -344,7 +348,7 @@ do {									\
   INITIALIZE_SPECIFIER_TYPE (type, obj_name, pred_sym);			\
   type##_specifier_methods->extra_data_size =				\
     sizeof (struct type##_specifier);					\
-  type##_specifier_methods->extra_description = 			\
+  type##_specifier_methods->extra_description =			\
     &type##_specifier_description_0;					\
 } while (0)
 
@@ -424,6 +428,9 @@ enum spec_add_meth
 
 struct specifier_caching
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   int offset_into_struct_window;
   void (*value_changed_in_window) (Lisp_Object specifier, struct window *w,
 				   Lisp_Object oldval);
@@ -432,6 +439,19 @@ struct specifier_caching
 				  Lisp_Object oldval);
   int always_recompute;
 };
+
+#ifdef NEW_GC
+DECLARE_LRECORD (specifier_caching, struct specifier_caching);
+#define XSPECIFIER_CACHING(x) \
+  XRECORD (x, specifier_caching, struct specifier_caching)
+#define wrap_specifier_caching(p) \
+  wrap_record (p, specifier_caching)
+#define SPECIFIER_CACHINGP(x) RECORDP (x, specifier_caching)
+#define CHECK_SPECIFIER_CACHING(x) \
+  CHECK_RECORD (x, specifier_caching)
+#define CONCHECK_SPECIFIER_CACHING(x) \
+  CONCHECK_RECORD (x, specifier_caching)
+#endif /* NEW_GC */
 
 /* #### get image instances out of domains! */
 
@@ -449,17 +469,28 @@ struct specifier_caching
   : (DEVICEP (obj) ? obj					\
   : (IMAGE_INSTANCEP (obj) ? image_instance_device (obj)	\
   : Qnil))))
+#define DOMAIN_XDEVICE(obj)			\
+  (XDEVICE (DOMAIN_DEVICE (obj)))
 
 #define DOMAIN_FRAME(obj)				\
    (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
   : (FRAMEP  (obj) ? obj				\
   : (IMAGE_INSTANCEP (obj) ? image_instance_frame (obj)	\
   : Qnil)))
+#define DOMAIN_XFRAME(obj)			\
+  (XFRAME (DOMAIN_FRAME (obj)))
 
 #define DOMAIN_WINDOW(obj)					\
    (WINDOWP (obj) ? obj						\
   : (IMAGE_INSTANCEP (obj) ? image_instance_window (obj)	\
   : Qnil))
+#define DOMAIN_XWINDOW(obj)			\
+  (XWINDOW (DOMAIN_WINDOW (obj)))
+
+Lisp_Object MAYBE_DOMAIN_BUFFER (Lisp_Object obj);
+Lisp_Object DOMAIN_BUFFER (Lisp_Object obj);
+
+#define DOMAIN_XBUFFER(obj) XBUFFER (DOMAIN_BUFFER (obj))
 
 #define DOMAIN_LIVE_P(obj)					\
    (WINDOWP (obj) ? WINDOW_LIVE_P (XWINDOW (obj))		\
@@ -467,13 +498,6 @@ struct specifier_caching
   : (DEVICEP (obj) ? DEVICE_LIVE_P (XDEVICE (obj))		\
   : (IMAGE_INSTANCEP (obj) ? image_instance_live_p (obj)	\
   : 0))))
-
-#define DOMAIN_XDEVICE(obj)			\
-  (XDEVICE (DOMAIN_DEVICE (obj)))
-#define DOMAIN_XFRAME(obj)			\
-  (XFRAME (DOMAIN_FRAME (obj)))
-#define DOMAIN_XWINDOW(obj)			\
-  (XWINDOW (DOMAIN_WINDOW (obj)))
 
 EXFUN (Fcopy_specifier, 6);
 EXFUN (Fmake_specifier, 1);
@@ -520,6 +544,7 @@ int unlock_ghost_specifiers_protected (void);
 void cleanup_specifiers (void);
 void prune_specifiers (void);
 void setup_device_initial_specifier_tags (struct device *d);
+void setup_charset_initial_specifier_tags (Lisp_Object charset);
 void kill_specifier_buffer_locals (Lisp_Object buffer);
 
 DECLARE_SPECIFIER_TYPE (generic);
@@ -551,5 +576,9 @@ DECLARE_SPECIFIER_TYPE (display_table);
 #define DISPLAYTABLE_SPECIFIERP(x) SPECIFIER_TYPEP (x, display_table)
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)
+
+Lisp_Object define_specifier_tag(Lisp_Object tag,
+				 Lisp_Object device_predicate,
+				 Lisp_Object charset_predicate);
 
 #endif /* INCLUDED_specifier_h_ */

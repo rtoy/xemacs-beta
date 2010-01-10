@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -73,6 +73,31 @@ Lisp_Object Vtemporary_faces_cache;
 Lisp_Object Vbuilt_in_face_specifiers;
 
 
+#ifdef DEBUG_XEMACS
+Fixnum debug_x_faces;
+#endif
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+
+#ifdef DEBUG_XEMACS
+# define DEBUG_FACES(FORMAT, ...)  \
+     do { if (debug_x_faces) stderr_out(FORMAT, __VA_ARGS__); } while (0)
+#else  /* DEBUG_XEMACS */
+# define DEBUG_FACES(format, ...)
+#endif /* DEBUG_XEMACS */
+
+#elif defined(__GNUC__)
+
+#ifdef DEBUG_XEMACS
+# define DEBUG_FACES(format, args...)  \
+  do { if (debug_x_faces) stderr_out(format, args ); } while (0)
+#else  /* DEBUG_XEMACS */
+# define DEBUG_FACES(format, args...)
+#endif /* DEBUG_XEMACS */
+
+#else /* defined(__STDC_VERSION__) [...] */
+# define DEBUG_FACES	(void)
+#endif
 
 static Lisp_Object
 mark_face (Lisp_Object obj)
@@ -555,44 +580,35 @@ Lisp_Object
 face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				 Lisp_Object charset, Lisp_Object domain,
 				 Error_Behavior errb, int no_fallback,
-				 Lisp_Object depth)
+				 Lisp_Object depth,
+				 enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object retval;
   Lisp_Object matchspec = Qunbound;
   struct gcpro gcpro1;
 
   if (!NILP (charset))
-    matchspec = noseeum_cons (charset, Qnil);
+    matchspec = noseeum_cons (charset,
+			      stage == STAGE_INITIAL ? Qinitial : Qfinal);
+
   GCPRO1 (matchspec);
+  /* This call to specifier_instance_no_quit(), will end up calling
+     font_instantiate() if the property in a question is a font (currently,
+     this means EQ (property, Qfont), because only the face property named
+     `font' contains a font object).  See the comments there. */
   retval = specifier_instance_no_quit (Fget (face, property, Qnil), matchspec,
 				       domain, errb, no_fallback, depth);
-  if (UNBOUNDP (retval))
-    {
-      /* Do the "second stage"; used under Windows.  This call to
-	 specifier_instance_no_quit(), and the previous one, will end up
-	 calling font_instantiate() if the property in a question is a font
-	 (currently, this means EQ (property, Qfont), because only the
-	 face property named `font' contains a font object).  See the
-	 comments there. */
-
-      if (CONSP (matchspec))
-	  Fsetcdr (matchspec, Qt);
-      retval = specifier_instance_no_quit (Fget (face, property, Qnil),
-					   matchspec, domain, errb,
-					   no_fallback, depth);
-    }
   UNGCPRO;
   if (CONSP (matchspec))
     free_cons (matchspec);
 
-  if (UNBOUNDP (retval) && !no_fallback)
+  if (UNBOUNDP (retval) && !no_fallback && STAGE_FINAL == stage)
     {
       if (EQ (property, Qfont))
 	{
 	  if (NILP (memq_no_quit (charset,
 				  XFACE (face)->charsets_warned_about)))
 	    {
-#ifdef MULE
 	      if (!UNBOUNDP (charset))
 		warn_when_safe
 		  (Qfont, Qnotice,
@@ -601,12 +617,6 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				(XSYMBOL (XCHARSET_NAME (charset)))),
 		   XSTRING_DATA (symbol_name
 				(XSYMBOL (XFACE (face)->name))));
-	      else
-#endif
-		warn_when_safe (Qfont, Qnotice,
-				"Unable to instantiate font for face %s",
-				XSTRING_DATA (symbol_name
-					     (XSYMBOL (XFACE (face)->name))));
 	      XFACE (face)->charsets_warned_about =
 		Fcons (charset, XFACE (face)->charsets_warned_about);
 	    }
@@ -698,11 +708,13 @@ Return the name of the given face.
 
 DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers, 0, 0, 0, /*
 Return a list of all built-in face specifier properties.
-Don't modify this list!
+
+This is a copy; there is no way to modify XEmacs' idea of the built-in face
+specifier properties from Lisp.
 */
        ())
 {
-  return Vbuilt_in_face_specifiers;
+  return Fcopy_list(Vbuilt_in_face_specifiers);
 }
 
 /* These values are retrieved so often that we make a special
@@ -714,40 +726,47 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
 			int *height, int *width, int *proportional_p)
 {
   Lisp_Object font_instance;
+  struct face_cachel *cachel;
+  struct window *w = NULL;
 
   if (noninteractive)
     {
       if (ascent)
-        *ascent = 1;
+	*ascent = 1;
       if (descent)
-        *descent = 0;
+	*descent = 0;
       if (height)
-        *height = 1;
+	*height = 1;
       if (width)
-        *width = 1;
+	*width = 1;
       if (proportional_p)
-        *proportional_p = 0;
+	*proportional_p = 0;
       return;
     }
 
-  /* We use ASCII here.  This is probably reasonable because the
-     people calling this function are using the resulting values to
-     come up with overall sizes for windows and frames. */
-  if (WINDOWP (domain))
-    {
-      struct face_cachel *cachel;
-      struct window *w = XWINDOW (domain);
+  /* We use ASCII here.  This is reasonable because the people calling this
+     function are using the resulting values to come up with overall sizes
+     for windows and frames.
 
-      /* #### It's possible for this function to get called when the
-	 face cachels have not been initialized.  I don't know why. */
+     It's possible for this function to get called when the face cachels
+     have not been initialized--put a call to debug-print in
+     init-locale-at-early-startup to see it happen. */
+
+  if (WINDOWP (domain) && (w = XWINDOW (domain)) && w->face_cachels)
+    {
       if (!Dynarr_length (w->face_cachels))
-        reset_face_cachels (w);
+	reset_face_cachels (w);
       cachel = WINDOW_FACE_CACHEL (w, DEFAULT_INDEX);
       font_instance = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
     }
   else
     {
       font_instance = FACE_FONT (Vdefault_face, domain, Vcharset_ascii);
+    }
+
+  if (UNBOUNDP (font_instance))
+    {
+      return;
     }
 
   if (height)
@@ -944,15 +963,15 @@ init_frame_faces (struct frame *frm)
 
 
       /* DO NOT change the selected frame here.  If the debugger goes off
-         it will try and display on the frame being created, but it is not
-         ready for that yet and a horrible death will occur.  Any random
-         code depending on the selected-frame as an implicit arg should be
-         tracked down and shot.  For the benefit of the one known,
-         xpm-color-symbols, make-frame sets the variable
-         Vframe_being_created to the frame it is making and sets it to nil
-         when done.  Internal functions that this could trigger which are
-         currently depending on selected-frame should use this instead.  It
-         is not currently visible at the lisp level. */
+	 it will try and display on the frame being created, but it is not
+	 ready for that yet and a horrible death will occur.  Any random
+	 code depending on the selected-frame as an implicit arg should be
+	 tracked down and shot.  For the benefit of the one known,
+	 xpm-color-symbols, make-frame sets the variable
+	 Vframe_being_created to the frame it is making and sets it to nil
+	 when done.  Internal functions that this could trigger which are
+	 currently depending on selected-frame should use this instead.  It
+	 is not currently visible at the lisp level. */
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (frm)),
 			       Qinit_frame_faces, tframe);
     }
@@ -1061,7 +1080,10 @@ mark_face_cachels (face_cachel_dynarr *elements)
 }
 
 /* ensure that the given cachel contains an updated font value for
-   the given charset.  Return the updated font value. */
+   the given charset.  Return the updated font value (which can be
+   Qunbound, so this value must not be passed unchecked to Lisp).
+
+   #### Xft: This function will need to be updated for new font model. */
 
 Lisp_Object
 ensure_face_cachel_contains_charset (struct face_cachel *cachel,
@@ -1069,13 +1091,13 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 {
   Lisp_Object new_val;
   Lisp_Object face = cachel->face;
-  int bound = 1;
-  int offs = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
+  int bound = 1, final_stage = 0;
+  int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
 
 
-  if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value)
-      && Stynarr_at (cachel->font_updated, offs))
-    return Stynarr_at (cachel->font, offs).value;
+  if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value)
+      && Stynarr_at (cachel->font_updated, off1))
+    return Stynarr_at (cachel->font, off1).value;
 
   if (UNBOUNDP (face))
     {
@@ -1084,7 +1106,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
       struct window *w = XWINDOW (domain);
 
       new_val = Qunbound;
-      Stynarr_at (cachel->font_specified, offs) = 0;
+      Stynarr_at (cachel->font_specified, off1) = 0;
       for (i = 0; i < Stynarr_length (cachel->merged_faces); i++)
 	{
 	  struct face_cachel *oth =
@@ -1099,12 +1121,14 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 	  if (Stynarr_at (oth->font_specified, off2))
 	    {
 	      new_val = Stynarr_at (oth->font, off2).value;
-	      Stynarr_at (cachel->font_specified, offs) = 1;
+	      Stynarr_at (cachel->font_specified, off1) = 1;
+	      Stynarr_at (cachel->font_final_stage, off1) =
+		Stynarr_at (oth->font_final_stage, off2);
 	      break;
 	    }
 	}
 
-      if (!Stynarr_at (cachel->font_specified, offs))
+      if (!Stynarr_at (cachel->font_specified, off1))
 	/* need to do the default face. */
 	{
 	  struct face_cachel *oth =
@@ -1117,33 +1141,110 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 	  new_val = Stynarr_at (oth->font, off2).value;
 	}
 
-      if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value) &&
-	  !EQ (Stynarr_at (cachel->font, offs).value, new_val))
+      if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value) &&
+	  !EQ (Stynarr_at (cachel->font, off1).value, new_val))
 	cachel->dirty = 1;
-      Stynarr_at (cachel->font_updated, offs) = 1;
-      Stynarr_at (cachel->font, offs).value = new_val;
+      Stynarr_at (cachel->font_updated, off1) = 1;
+      Stynarr_at (cachel->font, off1).value = new_val;
+      DEBUG_FACES("just recursed on the unbound face, returning "
+		  "something %s\n", UNBOUNDP(new_val) ? "not bound"
+		  : "bound");
       return new_val;
     }
 
-  new_val = face_property_matching_instance (face, Qfont, charset, domain,
-					     /* #### look into error flag */
-					     ERROR_ME_DEBUG_WARN, 1, Qzero);
-  if (UNBOUNDP (new_val))
-    {
-      bound = 0;
-      new_val = face_property_matching_instance (face, Qfont,
-						 charset, domain,
-						 /* #### look into error
-                                                    flag */
-						 ERROR_ME_DEBUG_WARN, 0,
-						 Qzero);
-    }
-  if (!UNBOUNDP (Stynarr_at (cachel->font, offs).value) &&
-      !EQ (new_val, Stynarr_at (cachel->font, offs).value))
+  do {
+
+    /* Lookup the face, specifying the initial stage and that fallbacks
+       shouldn't happen. */
+    new_val = face_property_matching_instance (face, Qfont, charset, domain,
+					       /* ERROR_ME_DEBUG_WARN is
+						  fine here.  */
+					       ERROR_ME_DEBUG_WARN, 1, Qzero,
+					       STAGE_INITIAL);
+    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
+		"result was something %s\n",
+		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
+		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
+		UNBOUNDP(new_val) ? "not bound" : "bound");
+
+    if (!UNBOUNDP (new_val)) break;
+
+    bound = 0;
+    /* Lookup the face again, this time allowing the fallback. If this
+       succeeds, it'll give a font intended for the script in question,
+       which is preferable to translating to ISO10646-1 and using the
+       fixed-width fallback.
+
+       #### This is questionable.  The problem is that unusual scripts
+       will typically fallback to the hard-coded values as the user is
+       unlikely to have specified them herself, a common complaint. */
+    new_val = face_property_matching_instance (face, Qfont,
+					       charset, domain,
+					       ERROR_ME_DEBUG_WARN, 0,
+					       Qzero,
+					       STAGE_INITIAL);
+
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
+
+    if (!UNBOUNDP (new_val))
+      {
+	break;
+      }
+
+    bound = 1;
+    /* Try the face itself with the final-stage specifiers. */
+    new_val = face_property_matching_instance (face, Qfont,
+					       charset, domain,
+					       ERROR_ME_DEBUG_WARN, 1,
+					       Qzero,
+					       STAGE_FINAL);
+
+    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, final, "
+		"result was something %s\n",
+		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
+		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
+		UNBOUNDP(new_val) ? "not bound" : "bound");
+    /* Tell X11 redisplay that it should translate to iso10646-1. */
+    if (!UNBOUNDP (new_val))
+      {
+	final_stage = 1;
+	break;
+      }
+
+    bound = 0;
+
+    /* Lookup the face again, this time both allowing the fallback and
+       allowing its final stage to be used.  */
+    new_val = face_property_matching_instance (face, Qfont,
+					       charset, domain,
+					       ERROR_ME_DEBUG_WARN, 0,
+					       Qzero,
+					       STAGE_FINAL);
+
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
+    if (!UNBOUNDP(new_val))
+      {
+	/* Tell X11 redisplay that it should translate to iso10646-1. */
+	final_stage = 1;
+	break;
+      }
+  } while (0);
+
+  if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value) &&
+      !EQ (new_val, Stynarr_at (cachel->font, off1).value))
     cachel->dirty = 1;
-  Stynarr_at (cachel->font_updated, offs) = 1;
-  Stynarr_at (cachel->font, offs).value = new_val;
-  Stynarr_at (cachel->font_specified, offs) =
+  Stynarr_at (cachel->font_updated, off1) = 1;
+  Stynarr_at (cachel->font_final_stage, off1) = final_stage;
+  Stynarr_at (cachel->font, off1).value = new_val;
+  Stynarr_at (cachel->font_specified, off1) =
     (bound || EQ (face, Vdefault_face));
   return new_val;
 }
@@ -1163,7 +1264,9 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 get_buffer_unicode_precedence
+				 (DOMAIN_XBUFFER (domain)));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     ensure_face_cachel_contains_charset (cachel, domain,
 					 Dynarr_at (face_charset_dynarr, i));
@@ -1187,7 +1290,9 @@ face_cachel_char_font_metric_info (struct face_cachel *cachel,
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 get_buffer_unicode_precedence
+				 (DOMAIN_XBUFFER (domain)));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {
       Lisp_Object charset = Dynarr_at (face_charset_dynarr, i);
@@ -1263,7 +1368,7 @@ add_face_cachel (struct window *w, Lisp_Object face)
   Dynarr_add (w->face_cachels, new_cachel);
 
   /* The face's background pixmap have not yet been frobbed (see comment
-     int update_face_cachel_data), so we have to do it now */
+     in update_face_cachel_data), so we have to do it now */
   if (must_finish_frobbing)
     {
       int default_face = EQ (face, Vdefault_face);
@@ -1290,8 +1395,8 @@ update_face_cachel_data (struct face_cachel *cachel,
       cachel->face = face;
 
       /* We normally only set the _specified flags if the value was
-         actually bound.  The exception is for the default face where
-         we always set it since it is the ultimate fallback. */
+	 actually bound.  The exception is for the default face where
+	 we always set it since it is the ultimate fallback. */
 
       FROB (foreground);
       FROB (background);
@@ -1303,7 +1408,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 	 which in turn might require that the cache we're building be up to
 	 date, hence a crash. Here's a typical scenario of this:
 
-	 - a new window is created and it's face cache elements are
+	 - a new window is created and its face cache elements are
 	 initialized through a call to reset_face_cachels[1]. At that point,
 	 the cache for the default and modeline faces (normaly taken care of
 	 by redisplay itself) are null.
@@ -1407,30 +1512,53 @@ merge_face_cachel_data (struct window *w, face_index findex,
   FROB (dim);
   FROB (reverse);
   FROB (blinking);
-  /* And do ASCII, of course. */
+
+
+#define FROB_CHARSET(charset)						\
+  {									\
+    int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);		\
+    int off2 = FACE_CACHEL_OFFSET (Dynarr_atp (w->face_cachels, findex), \
+				   charset);				\
+    int spec1 = Stynarr_at (cachel->font_specified, off1);		\
+    int spec2 = off2 >= 0 && Stynarr_at (FINDEX_FIELD (font_specified), off2); \
+    if (!spec1 && spec2)						\
+      {									\
+	Stynarr_at (cachel->font, off1).value =				\
+	  Stynarr_at (FINDEX_FIELD (font), off2).value;			\
+	Stynarr_at (cachel->font_specified, off1) = 1;			\
+	/* Also propagate whether we're translating to Unicode for the	\
+	   given face.  */						\
+	Stynarr_at (cachel->font_final_stage, off1) =			\
+	  Stynarr_at (FINDEX_FIELD (font_final_stage), off2);		\
+	cachel->dirty = 1;						\
+      }									\
+  }
+
+  /* The previous code looped over all leading bytes, i.e. all charsets.
+     Since the intention is to propagate charset-specific font information
+     from the window cachel at FINDEX into the given cachel CACHEL, it
+     should be enough to loop over all existing charsets mentioned in the
+     FINDEX font info.  But also do ASCII, just to be on the safe side --
+     the previous-previous code, before the loop was set up, just did ASCII. */
+  FROB_CHARSET (Vcharset_ascii);
   {
-    int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, Vcharset_ascii);
-    int off2 = FACE_CACHEL_OFFSET (Dynarr_atp (w->face_cachels, findex),
-				   Vcharset_ascii);
-    int spec1 = Stynarr_at (cachel->font_specified, off1);
-    int spec2 = off2 >= 0 && Stynarr_at (Dynarr_atp (w->face_cachels, findex)
-					 ->font_specified, off2);
-    if (!spec1 && spec2)
+    int i;
+    for (i = 0; i < Stynarr_length (FINDEX_FIELD (font)); i++)
       {
-	Stynarr_at (cachel->font, off1).value =
-	  Stynarr_at (Dynarr_atp (w->face_cachels, findex)->font, off2).value;
-	Stynarr_at (cachel->font_specified, off1) = 1;
-	cachel->dirty = 1;
+	Lisp_Object_pair *el = Stynarr_atp (FINDEX_FIELD (font), i);
+	FROB_CHARSET (el->key);
       }
   }
 
 #undef FROB
 #undef FINDEX_FIELD
+#undef FROB_CHARSET
 
   cachel->updated = 1;
 }
 
 /* Initialize a cachel. */
+/* #### Xft: this function will need to be changed for new font model. */
 
 void
 reset_face_cachel (struct face_cachel *cachel)
@@ -1441,6 +1569,7 @@ reset_face_cachel (struct face_cachel *cachel)
   Stynarr_init (cachel->font);
   Stynarr_init (cachel->font_specified);
   Stynarr_init (cachel->font_updated);
+  Stynarr_init (cachel->font_final_stage);
   cachel->foreground = Qunbound;
   cachel->background = Qunbound;
   cachel->display_table = Qunbound;
@@ -1485,6 +1614,7 @@ reset_face_cachels (struct window *w)
   if (w->face_cachels)
     {
       int i;
+      face_index fi;
 
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
@@ -1493,10 +1623,18 @@ reset_face_cachels (struct window *w)
 	  Stynarr_free (cachel->font);
 	  Stynarr_free (cachel->font_specified);
 	  Stynarr_free (cachel->font_updated);
+	  Stynarr_free (cachel->font_final_stage);
 	}
       Dynarr_reset (w->face_cachels);
-      get_builtin_face_cache_index (w, Vdefault_face);
-      get_builtin_face_cache_index (w, Vmodeline_face);
+      /* #### NOTE: be careful with the order !
+	 The cpp macros DEFAULT_INDEX and MODELINE_INDEX defined in
+	 redisplay.h depend on the code below. Please make sure to assert the
+	 correct values if you ever add new built-in faces here.
+	 -- dvl */
+      fi = get_builtin_face_cache_index (w, Vdefault_face);
+      assert (noninteractive || fi == DEFAULT_INDEX);
+      fi = get_builtin_face_cache_index (w, Vmodeline_face);
+      assert (noninteractive || fi == MODELINE_INDEX);
       XFRAME (w->frame)->window_face_cache_reset = 1;
     }
 }
@@ -1510,6 +1648,7 @@ mark_face_cachels_as_clean (struct window *w)
     Dynarr_atp (w->face_cachels, elt)->dirty = 0;
 }
 
+/* #### Xft: this function will need to be changed for new font model. */
 void
 mark_face_cachels_as_not_updated (struct window *w)
 {
@@ -1678,9 +1817,47 @@ get_extent_fragment_face_cache_index (struct window *w,
 	  Stynarr_free (cachel.font);
 	  Stynarr_free (cachel.font_specified);
 	  Stynarr_free (cachel.font_updated);
+	  Stynarr_free (cachel.font_final_stage);
 	}
       return findex;
     }
+}
+
+/* Return a cache index for window W from merging the faces in FACE_LIST.
+   COUNT is the number of faces in the list.
+
+   The default face should not be included in the list, as it is always
+   implicitly merged into the cachel.
+
+   WARNING: this interface may change. */
+
+face_index
+merge_face_list_to_cache_index (struct window *w,
+				Lisp_Object *face_list, int count)
+{
+  int i;
+  face_index findex = 0;
+  struct face_cachel cachel;
+
+  reset_face_cachel (&cachel);
+
+  for (i = 0; i < count; i++)
+    {
+      Lisp_Object face = face_list[i];
+
+      if (!NILP (face))
+	{
+	  CHECK_FACE(face);	/* #### presumably unnecessary */
+	  findex = get_builtin_face_cache_index (w, face);
+	  merge_face_cachel_data (w, findex, &cachel);
+	}
+    }
+
+  /* Now finally merge in the default face. */
+  findex = get_builtin_face_cache_index (w, Vdefault_face);
+  merge_face_cachel_data (w, findex, &cachel);
+
+  return get_merged_face_cache_index (w, &cachel);
 }
 
 
@@ -1692,6 +1869,9 @@ static void
 update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 {
   struct frame *frm = XFRAME (frame);
+
+  if (!FRAME_LIVE_P(frm))
+    return;
 
   if (EQ (name, Qfont))
     MARK_FRAME_SIZE_SLIPPED (frm);
@@ -1829,7 +2009,7 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
 
 #define COPY_PROPERTY(property) \
   Fcopy_specifier (fold->property, fnew->property, \
-                   locale, tag_set, exact_p, how_to_add);
+		   locale, tag_set, exact_p, how_to_add);
 
   COPY_PROPERTY (foreground);
   COPY_PROPERTY (background);
@@ -1851,6 +2031,89 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
   return new_name;
 }
 
+#ifdef MULE
+
+Lisp_Object Qone_dimensional, Qtwo_dimensional, Qx_coverage_instantiator;
+
+DEFUN ("specifier-tag-one-dimensional-p",
+       Fspecifier_tag_one_dimensional_p,
+       1, 1, 0, /*
+Return non-nil if (charset-dimension CHARSET) is 1.
+
+Used by the X11 platform font code; see `define-specifier-tag'.  You
+shouldn't ever need to call this yourself.
+*/
+       (charset))
+{
+  CHECK_CHARSET (charset);
+  return (1 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
+}
+
+DEFUN ("specifier-tag-two-dimensional-p",
+       Fspecifier_tag_two_dimensional_p,
+       1, 1, 0, /*
+Return non-nil if (charset-dimension CHARSET) is 2.
+
+Used by the X11 platform font code; see `define-specifier-tag'.  You
+shouldn't ever need to call this yourself.
+*/
+       (charset))
+{
+  CHECK_CHARSET (charset);
+  return (2 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
+}
+
+DEFUN ("specifier-tag-final-stage-p",
+       Fspecifier_tag_final_stage_p,
+       2, 2, 0, /*
+Return non-nil if STAGE is 'final.
+
+Used by the X11 platform font code for giving fallbacks; see
+`define-specifier-tag'.  You shouldn't ever need to call this.
+*/
+       (UNUSED (charset), stage))
+{
+  return EQ (stage, Qfinal) ? Qt : Qnil;
+}
+
+DEFUN ("specifier-tag-initial-stage-p",
+       Fspecifier_tag_initial_stage_p,
+       2, 2, 0, /*
+Return non-nil if STAGE is 'initial.
+
+Used by the X11 platform font code for giving fallbacks; see
+`define-specifier-tag'.  You shouldn't ever need to call this.
+*/
+       (UNUSED (charset), stage))
+{
+  return EQ (stage, Qinitial) ? Qt : Qnil;
+}
+
+#ifndef UNICODE_INTERNAL
+
+Lisp_Object Qjit_charset;
+
+DEFUN ("specifier-tag-jit-charset-p",
+       Fspecifier_tag_jit_charset_p,
+       1, 1, 0, /*
+Return t if and only if charset is an internal JIT charset.
+These are used for holding Unicode codepoints that don't have any
+equivalent as an encodable charset codepoint.
+
+Used by the X11 platform font code; see `define-specifier-tag'.  You
+shouldn't ever need to call this.
+*/
+       (charset))
+{
+  /* Used to take a stage and check that the stage was initial too. */
+  CHECK_CHARSET (charset);
+  return XCHARSET (charset)->jit_charset_p ? Qt : Qnil;
+}
+
+#endif /* not UNICODE_INTERNAL */
+
+#endif /* MULE */
+
 
 void
 syms_of_faces (void)
@@ -1871,6 +2134,22 @@ syms_of_faces (void)
   DEFSUBR (Fface_list);
   DEFSUBR (Fmake_face);
   DEFSUBR (Fcopy_face);
+
+#ifdef MULE
+  DEFSYMBOL (Qone_dimensional);
+  DEFSYMBOL (Qtwo_dimensional);
+  DEFSYMBOL (Qx_coverage_instantiator);
+
+  /* I would much prefer these were in Lisp. */
+  DEFSUBR (Fspecifier_tag_one_dimensional_p);
+  DEFSUBR (Fspecifier_tag_two_dimensional_p);
+  DEFSUBR (Fspecifier_tag_initial_stage_p);
+  DEFSUBR (Fspecifier_tag_final_stage_p);
+#ifndef UNICODE_INTERNAL
+  DEFSYMBOL (Qjit_charset);
+  DEFSUBR (Fspecifier_tag_jit_charset_p);
+#endif /* not UNICODE_INTERNAL */
+#endif /* MULE */
 
   DEFSYMBOL (Qfacep);
   DEFSYMBOL (Qforeground);
@@ -1935,6 +2214,13 @@ vars_of_faces (void)
   staticpro (&Vpointer_face);
   Vpointer_face = Qnil;
 
+#ifdef DEBUG_XEMACS
+  DEFVAR_INT ("debug-x-faces", &debug_x_faces /*
+If non-zero, display debug information about X faces
+*/ );
+  debug_x_faces = 0;
+#endif
+
   {
     Lisp_Object syms[20];
     int n = 0;
@@ -1994,156 +2280,172 @@ complex_vars_of_faces (void)
     set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
   }
 
-  /* #### We may want to have different fallback values if NeXTstep
-     support is compiled in. */
   {
     Lisp_Object inst_list = Qnil;
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
 
-    const Ascbyte *fonts[] =
-    {
-      /************** ISO-8859 fonts *************/
+#ifdef HAVE_GTK
+    Lisp_Object device_symbol = Qgtk;
+#else
+    Lisp_Object device_symbol = Qx;
+#endif
 
-      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso8859-*",
-      /* Next try for any "medium" charcell or monospaced iso8859 font. */
-      "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*",
-      "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*",
-      /* Next try for any charcell or monospaced iso8859 font. */
-      "-*-*-*-r-*-*-*-120-*-*-m-*-iso8859-*",
-      "-*-*-*-r-*-*-*-120-*-*-c-*-iso8859-*",
-
-      /* Repeat, any size */
-      "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-courier-*-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso8859-*",
-      /* Next try for any "medium" charcell or monospaced iso8859 font. */
-      "-*-*-medium-r-*-*-*-*-*-*-m-*-iso8859-*",
-      "-*-*-medium-r-*-*-*-*-*-*-c-*-iso8859-*",
-      /* Next try for any charcell or monospaced iso8859 font. */
-      "-*-*-*-r-*-*-*-*-*-*-m-*-iso8859-*",
-      "-*-*-*-r-*-*-*-*-*-*-c-*-iso8859-*",
-
-      /* Non-proportional fonts -- last resort. */
-      "-*-*-*-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-*-*-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-*-*-*-*-*-*-*-*-*-*-*-iso8859-*",
-
-      /************* Japanese fonts ************/
-
-      /* Following 3 fonts proposed by Teruhiko.Kurosaka@Japan.eng.sun */
-      "-sun-gothic-medium-r-normal--14-120-75-75-c-60-jisx0201.1976-0",
-      "-sun-gothic-medium-r-normal--14-120-75-75-c-120-jisx0208.1983-0",
-      "-wadalab-gothic-medium-r-normal--14-120-75-75-c-120-jisx0212.1990-0",
-
-      /* Other Japanese fonts */
-      "-*-fixed-medium-r-*--*-jisx0201.1976-*",
-      "-*-fixed-medium-r-*--*-jisx0208.1983-*",
-      "-*-fixed-medium-r-*--*-jisx0212*-*",
-      "-*-*-*-r-*--*-jisx0201.1976-*",
-      "-*-*-*-r-*--*-jisx0208.1983-*",
-      "-*-*-*-r-*--*-jisx0212*-*",
-
-      /************* Chinese fonts ************/
-
-      "-*-*-medium-r-*--*-gb2312.1980-*",
-      "-*-fixed-medium-r-*--*-cns11643*-*",
-
-      "-*-fixed-medium-r-*--*-big5*-*,"
-      "-*-fixed-medium-r-*--*-sisheng_cwnn-0",
-
-      /************* Korean fonts *************/
-
-      "-*-mincho-medium-r-*--*-ksc5601.1987-*",
-
-      /************* Thai fonts **************/
-
-      "-*-fixed-medium-r-*--*-tis620.2529-1",
-
-      /************* Other fonts (nonstandard) *************/
-
-      "-*-fixed-medium-r-*--*-viscii1.1-1",
-      "-*-fixed-medium-r-*--*-mulearabic-*",
-      "-*-fixed-medium-r-*--*-muleipa-*",
-      "-*-fixed-medium-r-*--*-ethio-*",
-
-      /************* Unicode fonts **************/
-
-      /* #### We don't yet support Unicode fonts, but doing so would not be
-	 hard because all the machinery has already been added for Windows
-	 support.  We need to do this:
-
-	 (1) Add "stage 2" support in find_charset_font()/etc.; this finds
-	 an appropriate Unicode font after all the charset-specific fonts
-	 have been checked.  This should look at the per-char font info and
-	 check whether we have support for some of the chars in the
-	 charset. (#### Bogus, but that's the way it currently works)
-
-	 (2) Record in the font instance a flag indicating when we're
-	 dealing with a Unicode font.
-
-	 (3) Notice this flag in separate_textual_runs() and translate the
-	 text into Unicode if so.
-      */
-
-      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-courier-*-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso10646-1",
-      /* Next try for any "medium" charcell or monospaced iso8859 font. */
-      "-*-*-medium-r-*-*-*-120-*-*-m-*-iso10646-1",
-      "-*-*-medium-r-*-*-*-120-*-*-c-*-iso10646-1",
-      /* Next try for any charcell or monospaced iso8859 font. */
-      "-*-*-*-r-*-*-*-120-*-*-m-*-iso10646-1",
-      "-*-*-*-r-*-*-*-120-*-*-c-*-iso10646-1",
-
-      /* Repeat, any size */
-      "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-courier-*-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso10646-1",
-      /* Next try for any "medium" charcell or monospaced iso8859 font. */
-      "-*-*-medium-r-*-*-*-*-*-*-m-*-iso10646-1",
-      "-*-*-medium-r-*-*-*-*-*-*-c-*-iso10646-1",
-      /* Next try for any charcell or monospaced iso8859 font. */
-      "-*-*-*-r-*-*-*-*-*-*-m-*-iso10646-1",
-      "-*-*-*-r-*-*-*-*-*-*-c-*-iso10646-1",
-
-      /* Non-proportional fonts -- last resort. */
-      "-*-*-*-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-*-*-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-*-*-*-*-*-*-*-*-*-*-*-iso10646-1",
-
-      /*********** Last resort ***********/
-
-      /* Boy, we sure are losing now.  Try the above, but in any encoding. */
-      "-*-*-medium-r-*-*-*-120-*-*-m-*-*-*",
-      "-*-*-medium-r-*-*-*-120-*-*-c-*-*-*",
-      "-*-*-*-r-*-*-*-120-*-*-m-*-*-*",
-      "-*-*-*-r-*-*-*-120-*-*-c-*-*-*",
-      /* Hello?  Please? */
-      "-*-*-*-r-*-*-*-120-*-*-*-*-*-*",
-      "-*-*-*-*-*-*-*-120-*-*-*-*-*-*",
-      "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
-      "*"
-    };
+#if defined (USE_XFT) || defined (MULE)
     const Ascbyte **fontptr;
 
-#ifdef HAVE_X_WINDOWS
-    for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
-      inst_list = Fcons (Fcons (list1 (Qx), build_string (*fontptr)),
-			 inst_list);
-#endif /* HAVE_X_WINDOWS */
+    const Ascbyte *fonts[] =
+    {
+#ifdef USE_XFT
+      /************** Xft fonts *************/
 
-#ifdef HAVE_GTK
+      /* Note that fontconfig can search for several font families in one
+	 call.  We should use this facility. */
+      "Monospace-12",
+      /* do we need to worry about non-Latin characters for monospace?
+	 No, at least in Debian's implementation of Xft.
+	 We should recommend that "gothic" and "mincho" aliases be created? */
+      "Sazanami Mincho-12",
+      /* Japanese #### add encoding info? */
+				/* Arphic for Chinese? */
+				/* Korean */
+#else
+      /* The default Japanese fonts installed with XFree86 4.0 use this
+	 point size, and the -misc-fixed fonts (which look really bad with
+	 Han characters) don't. We need to prefer the former. */
+      "-*-*-medium-r-*-*-*-150-*-*-c-*-*-*",
+      /* And the Chinese ones, maddeningly, use this one. (But on 4.0, while
+	 XListFonts returns them, XLoadQueryFont on the fully-specified XLFD
+	 corresponding to one of them fails!) */
+      "-*-*-medium-r-*-*-*-160-*-*-c-*-*-*",
+      "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
+#endif
+    };
+#endif /* defined (USE_XFT) || defined (MULE) */
+
+#ifdef MULE
+
+    /* Define some specifier tags for classes of character sets. Combining
+       these allows for distinct fallback fonts for distinct dimensions of
+       character sets and stages.  */
+
+    define_specifier_tag (Qtwo_dimensional, Qnil,
+			 intern ("specifier-tag-two-dimensional-p"));
+
+    define_specifier_tag (Qone_dimensional, Qnil,
+			 intern ("specifier-tag-one-dimensional-p"));
+
+    define_specifier_tag (Qinitial, Qnil,
+			 intern ("specifier-tag-initial-stage-p"));
+
+    define_specifier_tag (Qfinal, Qnil,
+			 intern ("specifier-tag-final-stage-p"));
+
+#ifndef UNICODE_INTERNAL
+    define_specifier_tag (Qjit_charset, Qnil,
+			  intern ("specifier-tag-jit-charset-p"));
+#endif /* not UNICODE_INTERNAL */
+
+    /* This tag is used to group those instantiators made available in the
+       fallback for the sake of coverage of obscure characters, notably
+       Markus Kuhn's misc-fixed fonts. They will be copied from the fallback
+       when the default face is determined from X resources at startup.  */
+    define_specifier_tag (Qx_coverage_instantiator, Qnil, Qnil);
+
+#endif /* MULE */
+
+#ifdef USE_XFT
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
-      inst_list = Fcons (Fcons (list1 (Qgtk), build_string (*fontptr)),
+      inst_list = Fcons (Fcons (list1 (device_symbol),
+				build_string (*fontptr)),
 			 inst_list);
-#endif /* HAVE_GTK */
+
+#else /* !USE_XFT */
+    inst_list =
+      Fcons
+      (Fcons
+       (list1 (device_symbol),
+	/* grrr.  This really does need to be "*", not an XLFD.
+	   An unspecified XLFD won't pick up stuff like 10x20. */
+	build_string ("*")),
+       inst_list);
+#ifdef MULE
+
+    /* For Han characters and Ethiopic, we want the misc-fixed font used to
+       be distinct from that for alphabetic scripts, because the font
+       specified below is distractingly ugly when used for Han characters
+       (this is slightly less so) and because its coverage isn't up to
+       handling them (well, chiefly, it's not up to handling Ethiopic--we do
+       have charset-specific fallbacks for the East Asian charsets.) */
+    inst_list =
+      Fcons
+      (Fcons
+       (list4(device_symbol, Qtwo_dimensional, Qfinal, Qx_coverage_instantiator),
+	build_string
+	("-misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1")),
+       inst_list);
+
+    /* Use Markus Kuhn's version of misc-fixed as the font for the font for
+       when a given charset's registries can't be found and redisplay for
+       that charset falls back to iso10646-1. */
+
+    inst_list =
+      Fcons
+      (Fcons
+       (list4(device_symbol, Qone_dimensional, Qfinal, Qx_coverage_instantiator),
+	build_string
+	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
+       inst_list);
+
+    for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
+      inst_list = Fcons (Fcons (list3 (device_symbol,
+				       Qtwo_dimensional, Qinitial),
+				build_string (*fontptr)),
+			 inst_list);
+
+#ifndef UNICODE_INTERNAL
+    /* We need to set the font for the JIT-ucs-charsets separately from the
+       final stage, since otherwise it picks up the two-dimensional
+       specification (see specifier-tag-two-dimensional-initial-stage-p
+       above). They also use Markus Kuhn's ISO 10646-1 fixed fonts for
+       redisplay. */
+
+    inst_list =
+      Fcons
+      (Fcons
+       (list4 (device_symbol, Qjit_charset, Qinitial,
+	       Qx_coverage_instantiator),
+	build_string
+	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
+       inst_list);
+#endif /* not UNICODE_INTERNAL */
+
+#endif /* MULE */
+
+    /* Needed to make sure that charsets with non-specified fonts don't
+       use bold and oblique first if medium and regular are available. */
+    inst_list =
+      Fcons
+      (Fcons
+       (list1 (device_symbol),
+	build_string ("-*-*-medium-r-*-*-*-120-*-*-c-*-*-*")),
+       inst_list);
+
+    /* With a Cygwin XFree86 install, this returns the best (clearest,
+       most readable) font I can find when scaling of bitmap fonts is
+       turned on, as it is by default. (WHO IN THE NAME OF CHRIST THOUGHT
+       THAT WAS A GOOD IDEA?!?!) The other fonts that used to be specified
+       here gave horrendous results. */
+
+    inst_list =
+      Fcons
+      (Fcons
+       (list1 (device_symbol),
+	build_string ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
+       inst_list);
+
+#endif /* !USE_XFT */
+
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 
 #ifdef HAVE_TTY
@@ -2154,28 +2456,28 @@ complex_vars_of_faces (void)
 #ifdef HAVE_MS_WINDOWS
     {
        const Ascbyte *mswfonts[] =
- 	    {
- 	      "Courier New:Regular:10::",
- 	      "Courier:Regular:10::",
- 	      ":Regular:10::"
- 	    };
+	    {
+	      "Courier New:Regular:10::",
+	      "Courier:Regular:10::",
+	      ":Regular:10::"
+	    };
        const Ascbyte **mswfontptr;
 
        for (mswfontptr = mswfonts + countof (mswfonts) - 1;
 	    mswfontptr >= mswfonts; mswfontptr--)
- 	{
- 	  /* display device */
- 	  inst_list = Fcons (Fcons (list1 (Qmswindows),
- 				    build_string (*mswfontptr)),
- 			     inst_list);
- 	  /* printer device */
- 	  inst_list = Fcons (Fcons (list1 (Qmsprinter),
- 				    build_string (*mswfontptr)),
- 			     inst_list);
- 	}
+	{
+	  /* display device */
+	  inst_list = Fcons (Fcons (list1 (Qmswindows),
+				    build_string (*mswfontptr)),
+			     inst_list);
+	  /* printer device */
+	  inst_list = Fcons (Fcons (list1 (Qmsprinter),
+				    build_string (*mswfontptr)),
+			     inst_list);
+	}
        /* Use Lucida Console rather than Courier New if it exists -- the
-          line spacing is much less, so many more lines fit with the same
-          size font. (And it's specifically designed for screens.) */
+	  line spacing is much less, so many more lines fit with the same
+	  size font. (And it's specifically designed for screens.) */
        inst_list = Fcons (Fcons (list1 (Qmswindows),
 				 build_string ("Lucida Console:Regular:10::")),
 			  inst_list);
@@ -2209,6 +2511,8 @@ complex_vars_of_faces (void)
   {
     Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
+    /* #### gui-element face doesn't have a font property?
+       But it gets referred to later! */
 #ifdef HAVE_GTK
     /* We need to put something in there, or error checking gets
        #%!@#ed up before the styles are set, which override the
@@ -2280,6 +2584,7 @@ complex_vars_of_faces (void)
   Vwidget_face = Fmake_face (Qwidget,
 			     build_msg_string ("widget face"),
 			     Qnil);
+  /* #### weird ... the gui-element face doesn't have its own font yet */
   set_specifier_fallback (Fget (Vwidget_face, Qfont, Qunbound),
 			  Fget (Vgui_element_face, Qfont, Qunbound));
   set_specifier_fallback (Fget (Vwidget_face, Qforeground, Qunbound),
