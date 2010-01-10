@@ -2378,9 +2378,10 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 		       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  struct face_cachel frame_cachel;
-  struct face_cachel *cachel;
-  Lisp_Object frame = DOMAIN_FRAME (domain);
+  struct face_cachel cachel;
+  struct face_cachel *the_cachel;
+  Lisp_Object window = DOMAIN_WINDOW (domain);
+  Lisp_Object frame  = DOMAIN_FRAME  (domain);
 
   CHECK_STRING (string);
 
@@ -2396,17 +2397,22 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
       /* Fallback to the default face if none was provided. */
       if (!NILP (face))
 	{
-	  reset_face_cachel (&frame_cachel);
-	  update_face_cachel_data (&frame_cachel, frame, face);
-	  cachel = &frame_cachel;
+	  reset_face_cachel (&cachel);
+	  update_face_cachel_data (&cachel,
+				   /* #### NOTE: in fact, I'm not sure if it's
+				      #### possible to *not* get a window
+				      #### here, but you never know...
+				      #### -- dvl */
+				   NILP (window) ? frame : window,
+				   face);
+	  the_cachel = &cachel;
 	}
       else
-	{
-	  cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
-				       DEFAULT_INDEX);
-	}
+	the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
+					 DEFAULT_INDEX);
 
-      face_cachel_char_font_metric_info (cachel, domain, Dynarr_atp (buf, 0),
+      face_cachel_char_font_metric_info (the_cachel, domain,
+					 Dynarr_atp (buf, 0),
 					 Dynarr_length (buf), &fm);
 
       *height = fm.ascent + fm.descent;
@@ -2418,12 +2424,9 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 
   /* Compute width */
   if (width)
-    {
-      *width = redisplay_frame_text_width_string (XFRAME (frame),
-						  !NILP (face) ? face:
-						  Vdefault_face,
-						  0, string, 0, -1);
-    }
+    *width = redisplay_text_width_string (domain,
+					  NILP (face) ? Vdefault_face : face,
+					  0, string, 0, -1);
 }
 
 static void

@@ -1118,14 +1118,26 @@ The original plist is not modified.  See also `destructive-plist-to-alist'."
       (setq plist (cddr plist)))
     (nreverse alist)))
 
-(defun map-plist (_mp_fun _mp_plist)
-  "Map _MP_FUN (a function of two args) over each key/value pair in _MP_PLIST.
+((macro
+  . (lambda (map-plist-definition)
+      "Replace the variable names in MAP-PLIST-DEFINITION with uninterned
+symbols, avoiding the risk of interference with variables in other functions
+introduced by dynamic scope."
+      (if-fboundp 'nsublis 
+	  (nsublis
+	   '((mp-function . #:function)
+	     (plist . #:plist)
+	     (result . #:result))
+	   map-plist-definition)
+	map-plist-definition)))
+ (defun map-plist (mp-function plist)
+   "Map FUNCTION (a function of two args) over each key/value pair in PLIST.
 Return a list of the results."
-  (let (_mp_result)
-    (while _mp_plist
-      (push (funcall _mp_fun (car _mp_plist) (cadr _mp_plist)) _mp_result)
-      (setq _mp_plist (cddr _mp_plist)))
-    (nreverse _mp_result)))
+   (let (result)
+     (while plist
+       (push (funcall mp-function (car plist) (cadr plist)) result)
+      (setq plist (cddr plist)))
+    (nreverse result))))
 
 (defun destructive-plist-to-alist (plist)
   "Convert property list PLIST into the equivalent association-list form.
@@ -1464,7 +1476,9 @@ is displayed and the ERROR-FORM is executed."
 	(no-backtrace nil)
 	(class ''general)
 	(level ''warning)
-	(resignal nil))
+	(resignal nil)
+	(cte-cc-var '#:cte-cc-var)
+	(call-trapping-errors-arg '#:call-trapping-errors-Ldc9FC5Hr))
     (let* ((keys '(operation error-form no-backtrace class level resignal))
 	   (keys-with-colon
 	    (mapcar #'(lambda (sym)
@@ -1473,11 +1487,11 @@ is displayed and the ERROR-FORM is executed."
 	(let* ((key-with-colon (pop keys-body))
 	       (key (intern (substring (symbol-name key-with-colon) 1))))
 	  (set key (pop keys-body)))))
-    `(condition-case ,(if resignal '__cte_cc_var__ nil)
+    `(condition-case ,(if resignal cte-cc-var nil)
 	 (call-with-condition-handler
-	     #'(lambda (__call_trapping_errors_arg__)
+	     #'(lambda (,call-trapping-errors-arg)
 		 (let ((errstr (error-message-string
-				__call_trapping_errors_arg__)))
+				,call-trapping-errors-arg)))
 		   ,(if no-backtrace
 			`(lwarn ,class ,level
 			   (if (warning-level-<
@@ -1490,12 +1504,12 @@ is displayed and the ERROR-FORM is executed."
 			 "Error in %s: %s\n\nBacktrace follows:\n\n%s"
 			 ,operation errstr
 			 (backtrace-in-condition-handler-eliminating-handler
-			  '__call_trapping_errors_arg__)))))
+			  ',call-trapping-errors-arg)))))
 	     #'(lambda ()
 		 (progn ,@keys-body)))
        (error
 	,error-form
-	,@(if resignal '((signal (car __cte_cc_var__) (cdr __cte_cc_var__)))))
+	,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
        )))
 
 ;;;; Miscellanea.

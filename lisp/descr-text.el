@@ -291,7 +291,7 @@ pre-initialized cache; see `unidata-initialize-unihan-database'.  "
   "The DB format to use for the `describe-char' cache, or nil if no cache.")
 
 (defvar describe-char-unihan-field-descriptions
-  #s(hash-table test equal data 
+  #s(hash-table :test equal :data 
                 ("kAccountingNumeric"
                      "Value as an an accounting numeral"
                  "kBigFive"

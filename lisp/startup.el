@@ -1046,9 +1046,15 @@ and replace it by (setq load-home-init-file t) if `val' is non-nil."
 	    (load-user-init-file))
 	(condition-case nil
 	    (call-with-condition-handler
-		#'(lambda (__load_init_file_arg__)
+	       ((macro
+		 . (lambda (lambda-expression)
+		     ;; Be serious about information hiding here:
+		     (nsublis
+		      '((load-init-handler-arg . #:load-init-gZK6A36gTed))
+		      lambda-expression)))
+		#'(lambda (load-init-handler-arg)
 		    (let ((errstr (error-message-string
-				   __load_init_file_arg__)))
+				   load-init-handler-arg)))
 		      (message "Error in init file: %s" errstr)
 		      (lwarn 'initialization 'error
 			"\
@@ -1066,8 +1072,8 @@ to XEmacs to enter the debugger when the error occurs and investigate the
 exact problem."
 			user-init-file errstr
 			(backtrace-in-condition-handler-eliminating-handler
-			 '__load_init_file_arg__)))
-		    (setq init-file-had-error t))
+			 'load-init-handler-arg)))
+		    (setq init-file-had-error t)))
 		#'(lambda ()
 		    (if load-user-init-file-p
 			(load-user-init-file))
