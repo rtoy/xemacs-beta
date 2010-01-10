@@ -63,8 +63,6 @@ Bytecount old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset
 void old_mule_non_ascii_ichar_to_charset_codepoint_raw (Ichar c,
 							Lisp_Object *charset,
 							int *c1, int *c2);
-Ichar charset_codepoint_to_ichar (Lisp_Object charset, int c1, int c2,
-				  enum converr fail);
 Bytecount non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1,
 						int c2, Ibyte *ptr,
 						enum converr fail);

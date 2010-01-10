@@ -48,8 +48,6 @@
    long-name "Johab (Korean)"
    ))
 
-(make-two-dimension-windows-charset 949 'korean "Korean" #x81 #x41 #xfe #xfe)
-
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))

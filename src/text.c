@@ -5244,9 +5244,9 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
 {
   int retval;
   CHECK_INT (arg);
+  retval = XINT (arg);
   if (munge_codepoints)
     {
-      retval = XINT (arg);
       if (EQ (charset, Vcharset_control_1) && retval >= 32 && retval < 64)
 	retval += 96;
       else if (get_charset_iso2022_type (charset) >= 0)

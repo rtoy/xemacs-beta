@@ -99,8 +99,6 @@
 ; 		long-name "SiSheng (PinYin/ZhuYin)"
 ; 		))
 
-(make-two-dimension-windows-charset 936 'chinese "Simplified Chinese" #x81 #x40 #xfe #xfe)
-(make-two-dimension-windows-charset 950 'chinese "Traditional Chinese" #xa1 #x40 #xfe #xfe)
  
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))

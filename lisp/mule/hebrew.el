@@ -28,8 +28,6 @@
 
 ;;; Code:
 
-(make-one-dimension-windows-charset 1255 'hebrew "Hebrew")
-
 ;; Syntax of Hebrew characters
 (loop for c from 96 to 122
       do (modify-syntax-entry (make-char 'hebrew-iso8859-8 c) "w"))

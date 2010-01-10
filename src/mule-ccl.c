@@ -2522,8 +2522,6 @@ to `define-translation-hash-table'.  The vector is indexed by the table id
 used by CCL.
 */ );
   Vtranslation_hash_table_vector = Qnil;
-
-  Fprovide (intern ("ccl"));
 }
 
 #endif  /* emacs */

@@ -44,21 +44,12 @@
 
 ;; But; it's necessary for input on X11.
 
-(make-one-dimension-windows-charset 1256 'arabic "Arabic")
-
 (make-coding-system
  'iso-8859-6 'mbcs "ISO 8859-6 (Arabic)"
  '(charsets (ascii control-1 arabic-iso8859-6)
    mnemonic "ArISO"))
 
-(make-coding-system
- 'windows-1256 'mbcs "Windows-1256 (Arabic)"
- '(charsets (ascii arabic-windows-1256)
-   mnemonic "cp1256"
-   documentation
-   "This is the much Windows encoding for Arabic, much superior to the ISO
-standard one."
-   aliases (cp1256)))
+;; windows-1256 et al. in mule/windows.el
 
 ;; The Mac Arabic coding systems don't have defined MIME names. 
 

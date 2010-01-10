@@ -1149,17 +1149,13 @@ non_ascii_unicode_to_charset_codepoint (int code,
      */ 
   if (global_unicode_precedence_dynarr == precedence_list) 
     {
-      Lisp_Object jit_charset;
-      int jit_c1, jit_c2;
-
-      if (get_free_jit_codepoint (&jit_charset, &jit_c1, &jit_c2))
-	set_unicode_conversion (code, jit_charset, jit_c1, jit_c2);
+      if (get_free_jit_codepoint (charset, c1, c2))
+	{
+	  set_unicode_conversion (code, *charset, *c1, *c2);
+	  goto done;
+	}
     }
-  if (i != -1)
-    {
-      ichar_to_charset_codepoint ((Ichar) i, NULL, charset, c1, c2);
-      goto done;
-    }
+  
 #endif /* not UNICODE_INTERNAL */
   /* Unable to convert; try the private codepoint range */
   private_unicode_to_charset_codepoint (code, charset, c1, c2);
@@ -1869,7 +1865,7 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 	{
 	  int len;
 	  CHECK_TRUE_LIST (entry);
-	  len = Flength (entry);
+	  len = XINT (Flength (entry));
 	  if (XCHARSET_DIMENSION (charset) == 1)
 	    {
 	      if (len != 2)

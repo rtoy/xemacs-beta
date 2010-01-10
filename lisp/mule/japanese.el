@@ -63,8 +63,6 @@
    ))
 
 
-(make-two-dimension-windows-charset 932 'japanese "Japanese" #x81 #x40 #xfe #xfe)
-
 ;;; Syntax of Japanese characters.
 (loop for row in '(33 34 40)
       do (modify-syntax-entry `[japanese-jisx0208 ,row] "_"))

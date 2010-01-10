@@ -1256,7 +1256,7 @@ Return unicode map of CHARSET.
 */
        (charset))
 {
-  return make_int (XCHARSET_UNICODE_MAP (Fget_charset (charset)));
+  return XCHARSET_UNICODE_MAP (Fget_charset (charset));
 }
 
 DEFUN ("charset-dimension", Fcharset_dimension, 1, 1, 0, /*
@@ -2060,6 +2060,7 @@ complex_vars_of_mule_charset (void)
 			   build_string ("sisheng_cwnn-0")), Qnil, 0,
 		  CSET_INTERNAL);
 
+#if 0
 #ifndef UNICODE_INTERNAL
 
 #define FROB_1(id, lclow, lchigh, uclow, uchigh)			\
@@ -2112,6 +2113,7 @@ complex_vars_of_mule_charset (void)
 #undef FROB_PRIVATE
 #undef FROB_1
 #endif /* not UNICODE_INTERNAL */
+#endif /* 0 */
 
   initialize_ascii_control_1_latin_1_unicode_translation ();
 }

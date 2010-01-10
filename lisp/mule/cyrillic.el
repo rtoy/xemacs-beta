@@ -190,10 +190,10 @@ Russian in KOI8-R.  "))
 ;; Case support, for the new characters.
 (loop
   for (upper lower)
-  in '((#x0404 #x0454) ; UKRAINIAN IE
-       (#x0406 #x0456) ; BYELORUSSIAN-UKRAINIAN I
-       (#x0407 #x0457) ; YI
-       (#x0490 #x0491)); GHE WITH UPTURN
+  in '((?\u0404 ?\u0454) ; UKRAINIAN IE
+       (?\u0406 ?\u0456) ; BYELORUSSIAN-UKRAINIAN I
+       (?\u0407 ?\u0457) ; YI
+       (?\u0490 ?\u0491)); GHE WITH UPTURN
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))
@@ -208,21 +208,7 @@ Russian in KOI8-R.  "))
                 . "Support for Ukrainian."))
  '("Cyrillic"))
 
-(make-one-dimension-windows-charset 1251 'cyrillic "Cyrillic")
-
-(make-coding-system 
- 'windows-1251 'mbcs "Microsoft's CP1251, Cyrillic."
- '(charsets (ascii cyrillic-windows-1251)
-   mnemonic "CyrW"
-   documentation
-   "This ASCII-compatible encoding is unfortunately not compatible at
-the code point level with the KOI8 family of encodings, but it
-provides several widely-used punctuation and quotation marks that
-KOI-8R and its relatives don't, and has become widely used. 
-
-It supports Russian, Bulgarian, Serbian and other languages written using
-Cyrillic script.  "
-   aliases (cp1251)))
+;; windows-1251 et al. in mule/windows.el
 
 (set-language-info-alist
  "Bulgarian" '((coding-system windows-1251)
@@ -540,12 +526,12 @@ language of Tajikistan and a close relative of Persian.  "))
 ;; Case support, for the new characters.
 (loop
   for (upper lower)
-  in '((#x04B6 #x04B7) ;; CHE WITH DESCENDER
-       (#x0492 #x0493) ;; GHE WITH STROKE
-       (#x04B2 #x04B3) ;; HA WITH DESCENDER
-       (#x04E2 #x04E3) ;; I WITH MACRON
-       (#x049A #x049B) ;; KA WITH DESCENDER
-       (#x04EE #x04EF)) ;; U WITH MACRON
+  in '((?\u04B6 ?\u04B7) ;; CHE WITH DESCENDER
+       (?\u0492 ?\u0493) ;; GHE WITH STROKE
+       (?\u04B2 ?\u04B3) ;; HA WITH DESCENDER
+       (?\u04E2 ?\u04E3) ;; I WITH MACRON
+       (?\u049A ?\u049B) ;; KA WITH DESCENDER
+       (?\u04EE ?\u04EF)) ;; U WITH MACRON
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))
@@ -693,16 +679,16 @@ for that, see koi8-o. "))
 
 (loop
   for (upper lower)
-  in '((#x04E9 #x04E8) ;; BARRED O
-       (#x04B9 #x04B8) ;; CHE WITH VERTICAL STROKE
-       (#x0452 #x0402) ;; DJE
-       (#x0455 #x0405) ;; DZE
-       (#x04A3 #x04A2) ;; EN WITH DESCENDER
-       (#x049D #x049C) ;; KA WITH VERTICAL STROKE
-       (#x04BB #x04BA) ;; SHHA
-       (#x04AF #x04AE) ;; STRAIGHT U
-       (#x04B1 #x04B0) ;; STRAIGHT U WITH STROKE
-       (#x0497 #x0496)) ;; ZHE WITH DESCENDER
+  in '((?\u04E9 ?\u04E8) ;; BARRED O
+       (?\u04B9 ?\u04B8) ;; CHE WITH VERTICAL STROKE
+       (?\u0452 ?\u0402) ;; DJE
+       (?\u0455 ?\u0405) ;; DZE
+       (?\u04A3 ?\u04A2) ;; EN WITH DESCENDER
+       (?\u049D ?\u049C) ;; KA WITH VERTICAL STROKE
+       (?\u04BB ?\u04BA) ;; SHHA
+       (?\u04AF ?\u04AE) ;; STRAIGHT U
+       (?\u04B1 ?\u04B0) ;; STRAIGHT U WITH STROKE
+       (?\u0497 ?\u0496)) ;; ZHE WITH DESCENDER
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))
@@ -853,10 +839,10 @@ provides Іі, Ѳѳ, Ѣѣ, and Ѵѵ instead of some of the box-drawing character
 
 (loop
   for (upper lower)
-  in '((#x0472 #x0473) ;; FITA
-       (#x0474 #x0475) ;; IZHITSA
-       (#x0408 #x0458) ;; JE
-       (#x0462 #x0463)) ;; YAT
+  in '((?\u0472 ?\u0473) ;; FITA
+       (?\u0474 ?\u0475) ;; IZHITSA
+       (?\u0408 ?\u0458) ;; JE
+       (?\u0462 ?\u0463)) ;; YAT
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))
