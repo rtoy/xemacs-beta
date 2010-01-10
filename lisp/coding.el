@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -205,6 +205,15 @@ if does not differ from the encoded string. "
       (case (coding-system-type coding-system)
 	(no-conversion 'no-conversion)
 	(shift-jis 'shift-jis)
+	;; @@#### This is a huge hack.  Fix it properly.
+	(mbcs (loop
+		named category
+		for charset in (coding-system-property coding-system
+						       'charsets)
+		do (if (or (= 2 (charset-dimension charset))
+			   (< (charset-offset charset) #xA0))
+		       (return-from category 'no-conversion))
+		finally return 'iso-8-1))
 	(unicode (case (coding-system-property coding-system 'unicode-type)
 		   (utf-8 (let ((bom (coding-system-property coding-system
 							     'need-bom)))

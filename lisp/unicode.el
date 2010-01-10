@@ -104,6 +104,7 @@
     ))
 
 (defun initialize-default-unicode-precedence-list
+  ()
   ;; The default-unicode-precedence-list. We set this here to default to
   ;; *not* mapping various European characters to East Asian characters;
   ;; [[ otherwise the default-unicode-precedence-list is numerically ordered
