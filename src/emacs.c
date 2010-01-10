@@ -1679,9 +1679,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_file_coding ();
       syms_of_unicode ();
 #ifdef MULE
-#ifdef HAVE_CCL
       syms_of_mule_ccl ();
-#endif /* HAVE_CCL */
       syms_of_mule_charset ();
       syms_of_mule_coding ();
 #ifdef HAVE_WNN
@@ -2252,9 +2250,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
-#ifdef HAVE_CCL
       vars_of_mule_ccl ();
-#endif /* HAVE_CCL */
       vars_of_mule_charset ();
 #endif
       vars_of_file_coding ();

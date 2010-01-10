@@ -74,15 +74,13 @@
   "Return the 'no-iso6429 property of CODING-SYSTEM."
   (coding-system-property coding-system 'no-iso6429))
 
-(when (featurep 'ccl)
-  (defun coding-system-ccl-encode (coding-system)
-    "Return the CCL 'encode property of CODING-SYSTEM."
-    (coding-system-property coding-system 'encode))
+(defun coding-system-ccl-encode (coding-system)
+  "Return the CCL 'encode property of CODING-SYSTEM."
+  (coding-system-property coding-system 'encode))
 
-  (defun coding-system-ccl-decode (coding-system)
-    "Return the CCL 'decode property of CODING-SYSTEM."
-    (coding-system-property coding-system 'decode))
-  )
+(defun coding-system-ccl-decode (coding-system)
+  "Return the CCL 'decode property of CODING-SYSTEM."
+  (coding-system-property coding-system 'decode))
 
 (defun coding-system-iso2022-charset (coding-system register)
 "Return the charset initially designated to REGISTER in CODING-SYSTEM.

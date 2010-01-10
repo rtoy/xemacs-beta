@@ -171,9 +171,7 @@ struct Lisp_Charset
 
   Lisp_Object reverse_direction_charset;
 
-#ifdef HAVE_CCL
   Lisp_Object ccl_program;
-#endif /* HAVE_CCL */
 
   /* Unicode translation tables.  See unicode.c for the format of these
      tables, and discussion of how they are initialized.
@@ -300,10 +298,8 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_ALGO_LOW(cs)	  CHARSET_ALGO_LOW     (XCHARSET (cs))
 #endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
 
-#ifdef HAVE_CCL
 #define CHARSET_CCL_PROGRAM(cs)  ((cs)->ccl_program)
 #define XCHARSET_CCL_PROGRAM(cs)  CHARSET_CCL_PROGRAM  (XCHARSET (cs))
-#endif /* HAVE_CCL */
 
 struct charset_lookup
 {

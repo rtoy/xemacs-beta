@@ -40,9 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h"
 #include "rangetab.h"
 
-#ifdef HAVE_CCL
 #include "mule-ccl.h"
-#endif /* HAVE_CCL */
 
 #if defined (ENABLE_COMPOSITE_CHARS) && defined (UNICODE_INTERNAL)
 #error "No prayer of getting these two working in its current shape"
@@ -3701,8 +3699,6 @@ iso2022_finalize_detection_state (struct detection_state *st)
     xfree (data->iso, struct iso2022_coding_stream *);
 }
 
-#ifdef HAVE_CCL
-
 
 /************************************************************************/
 /*                               CCL methods                            */
@@ -4306,8 +4302,6 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
   return result;
 }
 
-#endif /* HAVE_CCL */
-
 
 /************************************************************************/
 /*                             Initialization                           */
@@ -4393,7 +4387,6 @@ coding_system_type_create_mule_coding (void)
   INITIALIZE_DETECTOR_CATEGORY (iso2022, iso_8_2);
   INITIALIZE_DETECTOR_CATEGORY (iso2022, iso_lock_shift);
 
-#ifdef HAVE_CCL
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (ccl, "ccl-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (ccl, mark);
   CODING_SYSTEM_HAS_METHOD (ccl, convert);
@@ -4402,7 +4395,6 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (ccl, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (ccl, putprop);
   CODING_SYSTEM_HAS_METHOD (ccl, getprop);
-#endif /* HAVE_CCL */
 
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (fixed_width,
                                            "fixed-width-coding-system-p");
@@ -4434,9 +4426,7 @@ void
 reinit_coding_system_type_create_mule_coding (void)
 {
   REINITIALIZE_CODING_SYSTEM_TYPE (iso2022);
-#ifdef HAVE_CCL
   REINITIALIZE_CODING_SYSTEM_TYPE (ccl);
-#endif /* HAVE_CCL */
   REINITIALIZE_CODING_SYSTEM_TYPE (fixed_width);
   REINITIALIZE_CODING_SYSTEM_TYPE (shift_jis);
   REINITIALIZE_CODING_SYSTEM_TYPE (big5);

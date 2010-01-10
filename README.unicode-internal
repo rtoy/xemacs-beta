@@ -87,7 +87,6 @@ STILL TO DO:
    -- Rather than disallowing CCL under Unicode-internal, allow it and just
       make it work as well as possible.  It may never work perfectly but
       at least it can do something.
-   -- Remove all the `(if (featurep 'ccl))' checks I added and such.
 
 -- Unicode encoding:
 

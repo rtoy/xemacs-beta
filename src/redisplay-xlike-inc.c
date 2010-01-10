@@ -204,9 +204,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
   int runs_so_far = 0, i;
   int dimension = 1, need_ccl_conversion = 0;
   Lisp_Object ccl_prog;
-#ifdef HAVE_CCL
   struct ccl_program char_converter;
-#endif /* HAVE_CCL */
 
   int translate_to_ucs_2 = 0;
 
@@ -261,7 +259,6 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	    {
 	      dimension = 2;
 	    }
-#ifdef HAVE_CCL
 	  else
 	    {
 	      /* Check for CCL charset.
@@ -280,7 +277,6 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	      /* Else, the charset must have an ISO 2022-compatible font index.
 	       */
 	    }
-#endif /* HAVE_CCL */
 
 	  /* Initialize metadata for current run. */
 	  run_storage[runs_so_far].ptr       = text_storage;
@@ -303,7 +299,6 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	  byte1 = ucs >> 8;
 	  byte2 = ucs & 0xFF;
 	}
-#ifdef HAVE_CCL
       else if (need_ccl_conversion)
 	{
 	  internal_to_external_charset_codepoint (charset, byte1, byte2,
@@ -317,7 +312,6 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	  external_to_internal_charset_codepoint (charset, byte1, byte2,
 						  &byte1, &byte2);
 	}
-#endif /* HAVE_CCL */
 
       if (dimension == 2)
 	*text_storage++ = (unsigned char) byte1;

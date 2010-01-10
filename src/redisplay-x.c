@@ -42,9 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
-#ifdef HAVE_CCL
 #include "mule-ccl.h"
-#endif
 #include "charset.h"
 
 #include "console-x-impl.h"
