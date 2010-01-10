@@ -655,9 +655,10 @@ things are arranged in config.h.in.  In particular:
    widget within another program. */
 #undef EXTERNAL_WIDGET
 
-/* There are some special-case defines for gcc and lcc. */
+/* There are some special-case defines for gcc, g++ and lcc. */
 #undef USE_GCC
-#undef USE_LCC
+#undef USE_GPLUSPLUS
+#undef USE_LCC /* #### Not currently set in configure */
 
 /* Compile in support for CDE (Common Desktop Environment) drag and drop?
    Requires libDtSvc, which typically must be present at runtime.  */
@@ -1079,6 +1080,7 @@ extern "C" {
 
 #if (defined ( __STDC_VERSION__) &&  __STDC_VERSION__ >= 199901L) \
   || defined (__cplusplus) || ! defined (__GNUC__) || ! defined(emacs)
+# define INLINE_HEADERS_ARE_STATIC
 # define INLINE_HEADER inline static
 #elif defined (DONT_EXTERN_INLINE_HEADER_FUNCTIONS)
 # define INLINE_HEADER inline
@@ -1149,5 +1151,31 @@ extern "C" {
 #define ERROR_CHECK_TEXT
 #define ERROR_CHECK_TYPES
 #endif /* ERROR_CHECK_ALL */
+
+/* It's very tricky.  In some circumstances, if we don't include the
+   ERROR_CHECK_TYPES functions in xemacs.def.in.in, we get lots of
+   undefined references from eldap.o and postgresql.o; but in other
+   circumstances, if we DO include them, we get undefined references
+   in xemacs-export.o to the same functions.  We try here to grok when
+   we need to include them in xemacs.def.in.in.  I originally thought
+   it was enough to condition on !defined (INLINE_HEADERS_ARE_STATIC) --
+   if they're static, they shouldn't lead to any external references
+   in the modules, right?  Wrong, under non-optimized builds.  So now
+   let's try conditioning on !C++ -- by examining inline.o with nm,
+   it seems it's the C++ builds where inline.o doesn't get any inline
+   functions compiled into it at all, which would lead to problems if
+   we reference them in xemacs.def.in.in.
+
+   #### FIXME Should we condition on GCC and defined(emacs), like we
+   do (inverted) for INLINE_HEADERS_ARE_STATIC? --ben */
+
+/* Checking for !defined (__cplusplus) doesn't work, because we typically
+   aren't using the C++ preprocessor when processing xemacs.def.in.in
+   even if we're using a C++ compiler.  I suspect we only need this at
+   all GCC is being used. */
+#if defined (ERROR_CHECK_TYPES) && !defined (USE_GPLUSPLUS)
+/* #if !defined (INLINE_HEADERS_ARE_STATIC) */
+#define NEED_ERROR_CHECK_TYPES_INLINES
+#endif
 
 #endif /* _SRC_CONFIG_H_ */

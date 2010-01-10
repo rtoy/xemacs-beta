@@ -982,7 +982,7 @@ device_matches_specifier_tag_set_p (Lisp_Object device, Lisp_Object tag_set)
 }
 
 static int
-charset_matches_specifier_tag_set_p (Lisp_Object charset,
+charset_matches_specifier_tag_set_p (Lisp_Object USED_IF_MULE (charset),
 				     Lisp_Object tag_set,
 				     enum font_specifier_matchspec_stages
 				     stage)
@@ -2830,6 +2830,8 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
     specbind (Qinhibit_quit, Qt);
 
 #ifdef MULE
+  /* #### FIXME Does this font-specific stuff need to be here and not in
+     the font-specifier-specific code? --ben */
   if (CONSP(matchspec) && (CHARSETP(Ffind_charset(XCAR(matchspec)))))
     {
       charset = Ffind_charset(XCAR(matchspec));

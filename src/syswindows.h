@@ -55,10 +55,13 @@ Boston, MA 02111-1307, USA.  */
 
 BEGIN_C_DECLS
 
+#if 0 /* breaks the build, as of GCC 3.4.4 or earlier, since the prototype
+         is now declared static */
 /* Fucking GCC complains about "no previous prototype" for inline
    functions.  DUH!  See DECLARE_INLINE_HEADER. */
 extern __inline void *GetCurrentFiber (void);
 extern __inline void *GetFiberData (void);
+#endif
 
 END_C_DECLS
 
