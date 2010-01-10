@@ -12,8 +12,6 @@ STILL TO DO:
       vietnamese.el. (MOSTLY DONE)
    b. For charsets not needing to be in mule-charset.el, move them
       back into where they came from. (MOSTLY DONE)
-   d. Review all windows-# charsets and coding systems and make sure
-      everything is set for them. (MOSTLY DONE)
    e. The order for the charsets in `make-charset' should always list
       `ascii' and `control-1' last, in case the charset provides its
       own Unicode mapping for ASCII chars (e.g. VISCII does).
@@ -40,6 +38,11 @@ STILL TO DO:
    1. Implement a buffer-local unicode-precedence list and then review all
    uses of get_unicode_precedence() to see how to fix them up.  Sometimes you
    may need the caller to pass in a buffer or domain.
+   2. We may want to convert precedence lists into structures, where we can
+   cache info about the structure, e.g. whether we can short-circuit involving
+   ASCII (see below under "Unicode-encoding"), and also whether this is a
+   global or buffer-local list or a freshly created one, so we know how to
+   free it properly.
 
 -- Error-handling:
 
@@ -68,6 +71,35 @@ STILL TO DO:
       a JIT charset for display purposes.  This seems awful and won't work
       for Unicode-internal.  Instead, create a one-column charset holding
       these codepoints and put it above the East-Asian charsets.
+
+-- Translation tables:
+
+   -- The translation tables are getting loaded at runtime.  This seems
+      wrong -- shouldn't they be dumped?  You can see this because you get
+      errors from bad lines in the tables, e.g. code page 437.
+   -- Fix up those errors.  Probably best thing is to write a script to
+      correct the tables rather than further munging up the code to parse
+      the tables.  In fact we should remove some of that mungy code and
+      fix the tables instead.
+
+-- CCL:
+
+   -- Rather than disallowing CCL under Unicode-internal, allow it and just
+      make it work as well as possible.  It may never work perfectly but
+      at least it can do something.
+   -- Remove all the `(if (featurep 'ccl))' checks I added and such.
+
+-- Unicode encoding:
+
+   -- Think about whether we really want to be hardcoding translations
+      involving ASCII and Control-1.  Some charsets specify different values
+      for codes in the ASCII range, e.g. Vietnamese VISCII, Japanese-Roman,
+      and of course EBCDIC.  Perhaps the check for ASCII is for
+      efficiency; if so there should be a way of indicating that ASCII is
+      higher than any other charsets that have different values for those
+      bytes.  Perhaps we want to convert precedence lists into structures,
+      where we can cache info about the lists.  (See above, under "Unicode
+      precedence lists")
 
 More todo:
 
@@ -102,9 +134,6 @@ Changes still to do
    handling of characters encoded in private-Unicode space, the display of
    stuff out of the symbol font (e.g. for the continuation-glyph) (which
    doesn't currently work!).
-
-2. Extended segments for ISO-2022 need to be implemented.  These can be used for
-   outputting Unicode characters and Big5 and such in ISO-2022.
 
 3. Currently, when in old_mule_non_ascii_charset_codepoint_to_ichar_raw(),
    we get a non-encodable charset point, we just punt, and ultimately
@@ -213,8 +242,3 @@ Changes still to do
    do this dynamically.
 
 
-BUGS:
-
-It appears that the translation table gets loaded twice; we need to remove
-the run-time check.  There is also an error outputted about one line, which
-needs to be removed.
