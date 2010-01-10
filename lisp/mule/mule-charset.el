@@ -66,6 +66,10 @@ See `make-charset'."
   "Return the number of characters per dimension of CHARSET."
   (charset-property charset 'chars))
 
+(defun charset-offset (charset)
+  "Return the minimum index per dimension of CHARSET."
+  (charset-property charset 'offset))
+
 (defun charset-width (charset)
   "Return the number of display columns per character of CHARSET.
 This only applies to TTY mode (under X, the actual display width can
@@ -119,63 +123,49 @@ See `make-charset'."
    1)
 
 (defun charset-skip-chars-string (charset)
-  "Given  CHARSET, return a string suitable for for `skip-chars-forward'.
+  "Given CHARSET, return a string suitable for for `skip-chars-forward'.
 Passing the string to `skip-chars-forward' will cause it to skip all
 characters in CHARSET."
   (setq charset (get-charset charset))
-  (cond 
-   ;; Aargh, the general algorithm doesn't work for these charsets, because
-   ;; make-char strips the high bit. Hard code them.
-   ((eq (find-charset 'ascii) charset) "\x00-\x7f")
-   ((eq (find-charset 'control-1) charset) "\x80-\x9f")
-   (t 
-    (let (charset-lower charset-upper row-upper row-lower)
-      (if (= 1 (charset-dimension charset))
-          (condition-case args-out-of-range
-              (make-char charset #x100)
-            (args-out-of-range 
-             (setq charset-lower (third args-out-of-range)
-                   charset-upper (fourth args-out-of-range))
-             (format "%c-%c"
-                     (make-char charset charset-lower)
-                     (make-char charset charset-upper))))
-        (condition-case args-out-of-range
-            (make-char charset #x100 #x22)
-          (args-out-of-range
-           (setq row-lower (third args-out-of-range)
-                 row-upper (fourth args-out-of-range))))
-        (condition-case args-out-of-range
-            (make-char charset #x22 #x100)
-          (args-out-of-range
-           (setq charset-lower (third args-out-of-range)
-                 charset-upper (fourth args-out-of-range))))
-        (format "%c-%c"
-                (make-char charset row-lower charset-lower)
-                (make-char charset row-upper charset-upper)))))))
+  (let* ((dim (charset-dimension charset))
+	 (chars (charset-chars charset))
+	 (offset (charset-offset charset))
+	 (lowchar (if (= dim 1)
+		      (make-char charset offset)
+		    (make-char charset
+			       (first offset)
+			       (second offset))))
+	 (highchar (if (= dim 1)
+		       (make-char charset (+ offset chars -1))
+		     (make-char charset
+				(+ (first offset) (first chars) -1)
+				(+ (second offset) (second chars) -1)))))
+    (unless (and lowchar highchar)
+      (signal-error 'invalid-argument
+		    `("Charset not encodable in a buffer" ,charset)))
+    (format "%c-%c" lowchar highchar)))
+
 ;; From GNU. 
 (defun map-charset-chars (func charset)
   "Use FUNC to map over all characters in CHARSET for side effects.
 FUNC is a function of two args, the start and end (inclusive) of a
 character code range.  Thus FUNC should iterate over [START, END]."
   (check-argument-type #'functionp func)
-  (check-argument-type #'charsetp (setq charset (find-charset charset)))
-  (let* ((dim (charset-dimension charset))
-	 (chars (charset-chars charset))
-	 (start (if (= chars 94)
-		    33
-		  32)))
+  (setq charset (get-charset charset))
+  (let ((dim (charset-dimension charset))
+	(chars (charset-chars charset))
+	(offset (charset-offset charset)))
     (if (= dim 1)
-        (cond 
-         ((eq (find-charset 'ascii) charset) (funcall func ?\x00 ?\x7f))
-         ((eq (find-charset 'control-1) charset) (funcall func ?\x80 ?\x9f))
-         (t 
-          (funcall func
-                   (make-char charset start)
-                   (make-char charset (+ start chars -1)))))
-      (dotimes (i chars)
 	(funcall func
-		 (make-char charset (+ i start) start)
-		 (make-char charset (+ i start) (+ start chars -1)))))))
+		 (make-char charset offset)
+		 (make-char charset (+ offset chars -1)))
+      (loop with (off1 off2) = offset
+	with (chars1 chars2) = chars
+	for i from off1 to (+ off1 chars1 -1)
+	do
+	(funcall func
+		 (make-char charset i off2)
+		 (make-char charset i (+ off2 chars2 -1)))))))
 
 ;;;; Define setf methods for all settable Charset properties
 
@@ -485,16 +475,16 @@ no such translation table instead of returning nil."
 ;  (make-charset name doc-string
 ;		`(short-name ,short-name
 ;		  long-name ,long-name
-;		  ,@(and dimension `((dimension ,dimension)))
-;		  ,@(and offset `((offset ,offset)))
-;		  ,@(and chars `((chars ,chars)))
-;		  ,@(and direction `((direction ,direction)))
-;		  ,@(and registries `((registries ,registries)))
-;		  ,@(and columns `((columns ,columns)))
-;		  ,@(and graphic `((graphic ,graphic)))
-;		  ,@(and final `((final ,final)))
-;		  ,@(and ccl-program `((ccl-program ,ccl-program)))
-;		  ,@(and unicode-map `((unicode-map ,unicode-map)))
+;		  ,@(and dimension `(dimension ,dimension))
+;		  ,@(and offset `(offset ,offset))
+;		  ,@(and chars `(chars ,chars))
+;		  ,@(and direction `(direction ,direction))
+;		  ,@(and registries `(registries ,registries))
+;		  ,@(and columns `(columns ,columns))
+;		  ,@(and graphic `(graphic ,graphic))
+;		  ,@(and final `(final ,final))
+;		  ,@(and ccl-program `(ccl-program ,ccl-program))
+;		  ,@(and unicode-map `(unicode-map ,unicode-map))
 ;		  )))
 ;
 ;(defun* make-internal-charset (name short-name &rest keys &key unicode-map
@@ -757,10 +747,10 @@ will be made so."
   (setq long-name (or long-name short-name))
   (setq doc-string (or doc-string long-name))
   (make-internal-charset name doc-string
-			 `(dimension
-			   1
+			 `(dimension 1
+		           offset 128
 			   chars 128
-			   ,@(and unicode-map `((unicode-map ,unicode-map)))
+			   ,@(and unicode-map `(unicode-map ,unicode-map))
 			   short-name ,short-name
 			   long-name ,long-name
 			   )))

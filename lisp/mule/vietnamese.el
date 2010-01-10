@@ -208,6 +208,4 @@ Current setting put higher priority to the coding system VISCII than VSCII.
 If you prefer VSCII, please do: (prefer-coding-system 'vietnamese-vscii)")
 		))
 
-(make-one-dimension-windows-charset 1258 'latin "Vietnamese")
-
 ;;; vietnamese.el ends here

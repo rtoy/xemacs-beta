@@ -121,24 +121,9 @@
 
 (make-coding-system
  'iso-8859-7 'mbcs "ISO-8859-7 (Greek)"
- '(charsets (ascii control-1 hebrew-iso8859-7)
+ '(charsets (ascii control-1 greek-iso8859-7)
    mnemonic "Grk"
    aliases (greek-iso-8bit)))
-
-(make-one-dimension-windows-charset 1253 'greek "Greek")
-
-(make-coding-system 
- 'windows-1253 'mbcs "Microsoft's CP1253"
- '(charsets (ascii greek-windows-1253)
-   mnemonic "GrkW"
-   documentation
-   "Microsoft's Code Page 1253, for monotonic Greek.
-
-This ASCII-compatible encoding is slightly incompatibile with
-ISO-8859-7; it provides several widely-used punctuation marks in the C1
-ISO-2022 area, which makes it incompatbile with the latter standard, but
-that latter standard is not used in Greece,  "
-   aliases (cp1253)))
 
 (set-language-info-alist
  "Greek" '((charset greek-iso8859-7)

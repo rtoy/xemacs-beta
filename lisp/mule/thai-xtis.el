@@ -49,8 +49,6 @@
    short-name "Thai (ISO8859-11)"
    long-name "RHP of Thai (ISO 8859-11)"))
 
-(make-one-dimension-windows-charset 874 'thai "Thai")
-
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)
 

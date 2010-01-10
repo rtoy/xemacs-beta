@@ -170,6 +170,7 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-coding"
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
+	   "mule/windows" ; for creating Windows charsets/coding systems
 	   ))
        ;; may initialize coding systems
        (when (featurep '(and mule x)) "mule/mule-x-init")
@@ -226,7 +227,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/thai-xtis"
 	   "mule/tibetan"
 	   "mule/vietnamese"
-	   "mule/windows"
 	   ))
 	    
 	;; Specialized language support

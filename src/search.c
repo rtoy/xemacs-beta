@@ -1815,6 +1815,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		 only for storing parts of multi-byte characters, there
 		 won't be any zero's in them. */
 	      xzero (translate_prev);
+	      ptr2 = ptr;
 	      while (!ibyte_first_byte_p (*ptr2))
 		translate_prev[translate_prev_len++] = *--ptr2;
 

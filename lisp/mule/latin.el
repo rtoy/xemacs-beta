@@ -133,16 +133,7 @@ when used to write German (or English, of course).  "
    mnemonic "Latin 2"
    aliases (iso-latin-2 latin-2)))
 
-(make-one-dimension-windows-charset 1250 'latin "Eastern Europe")
-
-(make-coding-system
- 'windows-1250 'mbcs "Microsoft's CP1250"
- '(charsets (ascii latin-windows-1250)
-   documentation
-   "CP 1250, Microsoft's encoding for Central Europe. 
-See also `iso-8859-2' and `windows-1252' for Western Europe.  "
-   mnemonic "CP1250"
-   aliases (cp1250)))
+;; windows-1250 et al. in mule/windows.el
 
 
 ;; 
@@ -221,7 +212,7 @@ See also `iso-8859-2' and `windows-1252' for Western Europe.  "
    documentation "Aimed at Turkish, Maltese and Esperanto.  "
    aliases (iso-latin-3 latin-3)))
 
-(make-one-dimension-windows-charset 1254 'latin "Turkish")
+;; windows-1254 et al. in mule/windows.el
 
 
 ;; Latin-4 (ISO-8859-4)
@@ -345,7 +336,7 @@ Northern Europe.\""
    long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
    ))
 
-(make-one-dimension-windows-charset 1257 'latin "Baltic Rim")
+;; windows-1257 et al. in mule/windows.el
 
 (make-coding-system
  'iso-8859-13 'mbcs "ISO-8859-13 (Latin-7)"
@@ -839,21 +830,13 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
  :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80))
 
 (make-coding-system
- 'macintosh "MacRoman"
+ 'macintosh 'mbcs "MacRoman"
  '(charsets (ascii latin-macintosh-roman)
    mnemonic "MR"
    documentation "The Macintosh encoding for Western Europe and the Americas"
    aliases (cp10000 MacRoman)))
 
-(make-one-dimension-windows-charset 1252 'latin "ANSI")
-
-(make-coding-system 
- 'windows-1252 'mbcs "Microsoft's CP1252"
- '(charsets (ascii latin-windows-1252)
-   documentation "Microsoft's extension of iso-8859-1 for Western Europe \
-and the Americas.  "
-   mnemonic "cp1252"
-   aliases (cp1252)))
+;; windows-1252 et al. in mule/windows.el
 
 ;; Provide language environments that prefer specific coding systems.
 (loop
