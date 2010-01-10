@@ -3903,6 +3903,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		if (smallest_prev >= 0x80)
 		  break;
 	      }
+
+	    /* Also set lead bytes after the end */
+	    for (j = smallest_prev; j < 0x80; j++)
+	      fastmap[j] = 1;
+
 	    /* Calculating which lead bytes are actually allowed
 	       here is rather difficult, so we just punt and allow
 	       all of them.
