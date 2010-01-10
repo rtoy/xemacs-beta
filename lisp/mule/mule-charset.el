@@ -112,11 +112,10 @@ Only left-to-right is currently implemented."
 
 (make-obsolete 'set-charset-registry 'set-charset-registries)
 
-(when (featurep 'ccl)
-  (defun charset-ccl-program (charset)
-    "Return the CCL program of CHARSET.
+(defun charset-ccl-program (charset)
+  "Return the CCL program of CHARSET.
 See `make-charset'."
-    (charset-property charset 'ccl-program)))
+  (charset-property charset 'ccl-program))
 
 (defun charset-bytes (charset)
   "Useless in XEmacs, returns 1."
@@ -170,8 +169,7 @@ character code range.  Thus FUNC should iterate over [START, END]."
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)
-(when (featurep 'ccl)
-  (defsetf charset-ccl-program set-charset-ccl-program))
+(defsetf charset-ccl-program set-charset-ccl-program)
 (defsetf charset-ccl-program set-charset-ccl-program)
 (defsetf charset-registries  set-charset-registries)
 

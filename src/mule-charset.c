@@ -33,9 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "faces.h"
 #include "lstream.h"
-#ifdef HAVE_CCL
 #include "mule-ccl.h"
-#endif /* HAVE_CCL */
 #include "objects.h"
 #include "specifier.h"
 
@@ -252,9 +250,7 @@ mark_charset (Lisp_Object obj)
   mark_object (cs->unicode_map);
   mark_object (cs->doc_string);
   mark_object (cs->registries);
-#ifdef HAVE_CCL
   mark_object (cs->ccl_program);
-#endif /* HAVE_CCL */
   return cs->name;
 }
 
@@ -304,9 +300,7 @@ static const struct memory_description charset_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, long_name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, unicode_map) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, reverse_direction_charset) },
-#ifdef HAVE_CCL
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, ccl_program) },
-#endif /* HAVE_CCL */
   { XD_UNION, offsetof (Lisp_Charset, to_unicode_table),
 #ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
     2,
@@ -773,9 +767,7 @@ make_charset (int id, int no_init_unicode_tables,
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
   XCHARSET_ALGO_LOW	(obj) = algo_low_or_internal_p;
 #endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
-#ifdef HAVE_CCL
   XCHARSET_CCL_PROGRAM	(obj) = Qnil;
-#endif /* HAVE_CCL */
   XCHARSET_REVERSE_DIRECTION_CHARSET (obj) = Qnil;
 
   XCHARSET_DIMENSION (obj) = dimension;
@@ -878,8 +870,7 @@ character set.  Recognized properties are:
 `ccl-program'	A compiled CCL program used to convert a character in
 		this charset into an index into the font.  The CCL program
 		is passed the octets of the character, which will be within
-                the limits established by `offset' and `chars'.  CCL is not
-                available when (featurep 'unicode-internal).
+                the limits established by `offset' and `chars'.
 */
        (name, doc_string, props))
 {
@@ -891,9 +882,7 @@ character set.  Recognized properties are:
   Lisp_Object registries = Qnil;
   Lisp_Object unicode_map = Qnil;
   Lisp_Object charset = Qnil;
-#ifdef HAVE_CCL
   Lisp_Object ccl_program = Qnil;
-#endif /* HAVE_CCL */
   Lisp_Object short_name = Qnil, long_name = Qnil;
   Lisp_Object existing_charset = Qnil;
   int temporary = UNBOUNDP (name);
@@ -1008,13 +997,11 @@ character set.  Recognized properties are:
 	      invalid_constant ("Invalid value for `final'", value);
 	  }
 
-#ifdef HAVE_CCL
 	else if (EQ (keyword, Qccl_program))
 	  {
             /* This errors if VALUE is not a valid CCL program. */
 	    ccl_program = get_ccl_program (value);
 	  }
-#endif /* HAVE_CCL */
 	else
 	  invalid_constant ("Unrecognized property", keyword);
       }
@@ -1092,10 +1079,8 @@ character set.  Recognized properties are:
 			  CSET_EXTERNAL);
 
   XCHARSET (charset)->temporary = temporary;
-#ifdef HAVE_CCL
   if (!NILP (ccl_program))
     XCHARSET_CCL_PROGRAM (charset) = ccl_program;
-#endif /* HAVE_CCL */
 
   if (final)
     {
@@ -1331,9 +1316,7 @@ Recognized properties are those listed in `make-charset', as well as
 		      make_int (CHARSET_OFFSET (cs, 1)));
     }
   if (EQ (prop, Qregistries))    return CHARSET_REGISTRIES (cs);
-#ifdef HAVE_CCL
   if (EQ (prop, Qccl_program)) return CHARSET_CCL_PROGRAM (cs);
-#endif /* HAVE_CCL */
   if (EQ (prop, Qdirection))
     return CHARSET_DIRECTION (cs) == CHARSET_LEFT_TO_RIGHT ? Ql2r : Qr2l;
   if (EQ (prop, Qreverse_direction_charset))
@@ -1352,15 +1335,12 @@ When configured with `--with-unicode-internal' (see `make-char'), this is
 simply an arbitrary value, retained for compatibility.  With old-Mule, this
 is the internal charset ID of the charset, which is significant in how the
 internal string and character encodings are constructed.  This function is
-normally used only by CCL (which isn't available under Unicode-internal,
-anyway).
+normally used only by CCL.
 */
 	(charset))
 {
   return make_int (XCHARSET_ID (Fget_charset (charset)));
 }
-
-#ifdef HAVE_CCL
 
 /* #### We need to figure out which properties we really want to
    allow to be set. */
@@ -1376,8 +1356,6 @@ Set the `ccl-program' property of CHARSET to CCL-PROGRAM.
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
 }
-
-#endif /* HAVE_CCL */
 
 void
 set_charset_registries (Lisp_Object charset, Lisp_Object registries)
@@ -1591,9 +1569,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcharset_dimension);
   DEFSUBR (Fcharset_property);
   DEFSUBR (Fcharset_id);
-#ifdef HAVE_CCL
   DEFSUBR (Fset_charset_ccl_program);
-#endif /* HAVE_CCL */
   DEFSUBR (Fset_charset_registries);
   DEFSUBR (Fcharsets_in_region);
 

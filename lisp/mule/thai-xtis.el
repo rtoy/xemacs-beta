@@ -68,7 +68,6 @@
   )
 
 ;; @@#### This entire file is bogus.  Do Thai the normal way.
-(when (featurep 'ccl)
 
 ;; This is the ccl-decode-thai-xtis automaton.
 ;;
@@ -363,6 +362,5 @@
    (coding-priority tis-620 iso-2022-7bit)
    (sample-text . "$(?!:(B")
    (documentation . t)))
-) ; (featurep 'ccl)
 
 ;; thai-xtis.el ends here.

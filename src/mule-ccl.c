@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
    other than through CCL, we may rethink this, but no sense in creating
    general mechanisms that have no use.
 */
-#error This file not currently compilable with Unicode-internal
+/* #error This file not currently compilable with Unicode-internal */
 #endif
 
 Lisp_Object Qccl_error;
