@@ -2840,6 +2840,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	}
       else
 	{
+	  /* Processing a non-ASCII character */
 	  COPY_PARTIAL_CHAR_BYTE (c, str);
 	  if (!str->pind_remaining)
 	    {
@@ -2852,8 +2853,64 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      non_ascii_itext_to_charset_codepoint_raw
 		(str->partial, data->unicode_precedence, &charset, &c1, &c2);
 
+	      /* ---------------------------------------------------- */
+	      /* 1. Are we processing control-1?                      */
+	      /* ---------------------------------------------------- */
+
+	      if (EQ (charset, Vcharset_control_1))
+		{
+		  if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
+		      && fit_to_be_escape_quoted (c2))
+		    Dynarr_add (dst, ISO_CODE_ESC);
+		  /* you asked for it ... */
+		  Dynarr_add (dst, c2);
+		}
+
+	      /* ---------------------------------------------------- */
+	      /* 2. Are we processing a composite character?          */
+	      /* ---------------------------------------------------- */
+
+	      else if (EQ (charset, Vcharset_composite))
+		{
+#ifdef ENABLE_COMPOSITE_CHARS
+		  if (in_composite)
+		    {
+		      /* #### Bother! We don't know how to
+			 handle this yet. */
+		      Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
+		    }
+		  else
+		    {
+		      Ichar emch =
+			charset_codepoint_to_ichar
+			(Vcharset_composite, c1, c2, CONVERR_SUCCEED);
+		      Lisp_Object lstr =
+			composite_char_string (emch);
+		      saved_n = n;
+		      saved_src = src;
+		      in_composite = 1;
+		      src = XSTRING_DATA   (lstr);
+		      n   = XSTRING_LENGTH (lstr);
+		      Dynarr_add (dst, ISO_CODE_ESC);
+		      Dynarr_add (dst, '0'); /* start composing */
+		    }
+#else /* not ENABLE_COMPOSITE_CHARS */
+		  c2 &= 127;
+		  if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
+					       something else */
+		    {
+		      Dynarr_add (dst, ISO_CODE_ESC);
+		      Dynarr_add (dst, c2 - 32 + '0');
+		    }
+#endif /* (not) ENABLE_COMPOSITE_CHARS */
+		}
+
+	      /* ---------------------------------------------------- */
+	      /* 3. Do we need to represent as UTF-8?                 */
+	      /* ---------------------------------------------------- */
+
 	      /* If no final byte, we must encode as UTF-8 */
-	      if (!NILP (charset) && !XCHARSET_FINAL (charset))
+	      else if (!NILP (charset) && !XCHARSET_FINAL (charset))
 		{
 		  assert (!EQ (charset, Vcharset_control_1)
 			  && !EQ (charset, Vcharset_composite));
@@ -2867,9 +2924,21 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		      Dynarr_add (dst, 'G');
 		      flags |= ISO_STATE_UTF_8;
 		    }
+
+		  {
+		    Ichar ich = itext_ichar (str->partial);
+		    /* @@#### Is CONVERR_SUCCEED correct? Only matters when
+		       not Unicode-internal */
+		    int code = ichar_to_unicode (ich, CONVERR_SUCCEED);
+		    encode_unicode_char (code, dst, UNICODE_UTF_8, 0, 0);
+		  }
 		}
-	      else if (!EQ (charset, Vcharset_control_1)
-		       && !EQ (charset, Vcharset_composite))
+
+	      /* ---------------------------------------------------- */
+	      /* 4. Found ISO-2022 compatible charset/character.      */
+	      /* ---------------------------------------------------- */
+
+	      else
 		{
 		  /* Now, find the register containing this charset.  If
 		     none, put this charset in an appropriate register and
@@ -2993,66 +3062,12 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    default:
 		      ABORT ();
 		    }
-		}
-
-	      if (EQ (charset, Vcharset_control_1))
-		{
-		  if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
-		      && fit_to_be_escape_quoted (c2))
-		    Dynarr_add (dst, ISO_CODE_ESC);
-		  /* you asked for it ... */
-		  Dynarr_add (dst, c2);
-		}
-	      /* Else, we're processing Non-ASCII character */
-	      else if (EQ (charset, Vcharset_composite))
-		{
-#ifdef ENABLE_COMPOSITE_CHARS
-		  if (in_composite)
-		    {
-		      /* #### Bother! We don't know how to
-			 handle this yet. */
-		      Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
-		    }
-		  else
-		    {
-		      Ichar emch =
-			charset_codepoint_to_ichar
-			(Vcharset_composite, c1, c2, CONVERR_SUCCEED);
-		      Lisp_Object lstr =
-			composite_char_string (emch);
-		      saved_n = n;
-		      saved_src = src;
-		      in_composite = 1;
-		      src = XSTRING_DATA   (lstr);
-		      n   = XSTRING_LENGTH (lstr);
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, '0'); /* start composing */
-		    }
-#else /* not ENABLE_COMPOSITE_CHARS */
-		  c2 &= 127;
-		  if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
-					       something else */
-		    {
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, c2 - 32 + '0');
-		    }
-#endif /* (not) ENABLE_COMPOSITE_CHARS */
-		}
-	      /* If no final byte, we must encode as UTF-8 */
-	      else if (!XCHARSET_FINAL (charset))
-		{
-		  Ichar ich = itext_ichar (str->partial);
-		  /* @@#### Is CONVERR_SUCCEED correct? Only matters when not
-		     Unicode-internal */
-		  int code = ichar_to_unicode (ich, CONVERR_SUCCEED);
-		  encode_unicode_char (code, dst, UNICODE_UTF_8, 0, 0);
-		}
-	      else
-		{
-		  int offset = (half == 0 ? 0 : 0x80);
-		  if (XCHARSET_DIMENSION (charset) == 2)
-		    Dynarr_add (dst, (c1 & 127) + offset);
-		  Dynarr_add (dst, (c2 & 127) + offset);
+		  {
+		    int offset = (half == 0 ? 0 : 0x80);
+		    if (XCHARSET_DIMENSION (charset) == 2)
+		      Dynarr_add (dst, (c1 & 127) + offset);
+		    Dynarr_add (dst, (c2 & 127) + offset);
+		  }
 		}
 	    }
 	}

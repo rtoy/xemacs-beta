@@ -306,13 +306,19 @@ static void
 print_window (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
+  Lisp_Object buf;
+
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
 
   write_c_string (printcharfun, "#<window");
-  if (!NILP (XWINDOW (obj)->buffer))
+  buf = XWINDOW_BUFFER (obj);
+  if (EQ (buf, Qt))
+    write_c_string (printcharfun, " during creation");
+  else if (!NILP (buf))
     {
-      Lisp_Object name = XBUFFER (XWINDOW (obj)->buffer)->name;
+      
+      Lisp_Object name = XBUFFER (buf)->name;
       write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
   write_fmt_string (printcharfun, " 0x%x>", XWINDOW (obj)->header.uid);
@@ -1505,6 +1511,13 @@ decode_window (Lisp_Object window)
   return XWINDOW (window);
 }
 
+/* The following three functions exist because in window.h, we don't
+   have direct access to the `struct window' structure, so things like
+   WINDOW_BUFFER and WINDOW_LIVE_P need to call a function to get the
+   values.  In window-impl.h, WINDOW_BUFFER is redefined to be a simple
+   structure reference.
+*/
+
 int
 window_live_p (struct window *w)
 {
@@ -1528,7 +1541,7 @@ Return the buffer that WINDOW is displaying.
 */
        (window))
 {
-  return decode_window (window)->buffer;
+  return WINDOW_BUFFER (decode_window (window));
 }
 
 DEFUN ("window-frame", Fwindow_frame, 0, 1, 0, /*
@@ -4013,11 +4026,13 @@ returned.
   p->prev = window;
   o->next = new_;
   p->parent = o->parent;
-  p->buffer = Qt;
-
-  reset_face_cachels (p);
-  reset_glyph_cachels (p);
-
+  /* We used to do this: */
+  /* p->buffer = Qt; */
+  /* but it seems a bad idea in that the calls to reset_face_cachels()
+     and especially reset_glyph_cachels() can trigger all sorts of code,
+     and we don't have to have a bad value for the buffer. --ben 1-10-10 */
+  p->buffer = o->buffer;
+  
 
   /* Apportion the available frame space among the two new windows */
 
@@ -4040,8 +4055,16 @@ returned.
 
   XFRAME (p->frame)->mirror_dirty = 1;
 
+  reset_face_cachels (p);
+  reset_glyph_cachels (p);
+
   note_object_created (new_);
 
+  /* #### Do we need to do this?  We had it before (see above), and
+     I'm putting it here because maybe Fset_window_buffer() won't
+     work right if it sees that the buffer has already been set.
+     --ben 1-10-10 */
+  p->buffer = Qt;
   /* do this last (after the window is completely initialized and
      the mirror-dirty flag is set) so that specifier recomputation
      caused as a result of this will work properly and not abort. */
