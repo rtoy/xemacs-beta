@@ -500,7 +500,7 @@ default_query_method (Lisp_Object codesys, struct buffer *buf,
           fail_range_start = pos;
           while ((pos < end) &&  
                  (EQ (Qnil, get_char_table (ch, safe_chars))
-                  && (failed_reason = query_coding_unencodable))
+                  && (failed_reason == query_coding_unencodable))
                  && (previous_failed_reason == query_coding_succeeded
                      || previous_failed_reason == failed_reason))
             {

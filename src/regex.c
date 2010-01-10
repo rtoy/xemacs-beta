@@ -3841,6 +3841,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	  {
 	    int nentries;
 	    int i;
+	    int smallest_prev = 0;
 
 	    nentries = unified_range_table_nentries (p);
 	    for (i = 0; i < nentries; i++)
@@ -3848,7 +3849,6 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		EMACS_INT first, last;
 		Lisp_Object dummy_val;
 		int jj;
-		int smallest_prev = 0;
 
 		unified_range_table_get_range (p, i, &first, &last,
 					       &dummy_val);
@@ -3858,6 +3858,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		if (smallest_prev >= 0x80)
 		  break;
 	      }
+
+	    /* Also set lead bytes after the end */
+	    for (i = smallest_prev; i < 0x80; i++)
+	      fastmap[i] = 1;
+
 	    /* Calculating which leading bytes are actually allowed
 	       here is rather difficult, so we just punt and allow
 	       all of them. */

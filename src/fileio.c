@@ -794,8 +794,9 @@ See also the function `substitute-in-file-name'.
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
 	RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-				       call3 (handler, Qexpand_file_name,
-					      name, default_directory));
+				       call3_check_string
+                                       (handler, Qexpand_file_name,
+				        name, default_directory));
     }
 
   o = XSTRING_DATA (default_directory);
@@ -2325,7 +2326,7 @@ check_writable (const Ibyte *filename)
 {
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
 #ifdef CYGWIN
-    char filename_buffer[PATH_MAX];
+    Extbyte filename_buffer[PATH_MAX];
 #endif
 	// Since this has to work for a directory, we can't just call 'CreateFile'
 	PSECURITY_DESCRIPTOR pDesc; /* Must be freed with LocalFree */
@@ -2346,12 +2347,12 @@ check_writable (const Ibyte *filename)
     DWORD dwAccessAllowed;
     Extbyte *fnameext;
 
-#ifdef CYGWIN
-    cygwin_conv_to_full_win32_path(filename, filename_buffer);
-    filename = (Ibyte*)filename_buffer;
-#endif
-
     C_STRING_TO_TSTR(filename, fnameext);
+
+#ifdef CYGWIN
+    cygwin_conv_to_full_win32_path(fnameext, filename_buffer);
+    fnameext = filename_buffer;
+#endif
 
     // First check for a normal file with the old-style readonly bit
     attributes = qxeGetFileAttributes(fnameext);

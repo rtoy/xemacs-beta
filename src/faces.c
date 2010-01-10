@@ -2272,6 +2272,7 @@ complex_vars_of_faces (void)
     Lisp_Object device_symbol = Qx;
 #endif
 
+#if defined (USE_XFT) || defined (MULE)
     const Ascbyte **fontptr;
 
     const Ascbyte *fonts[] =
@@ -2301,6 +2302,7 @@ complex_vars_of_faces (void)
       "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
 #endif
     };
+#endif /* defined (USE_XFT) || defined (MULE) */
 
 #ifdef MULE
 
