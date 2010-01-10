@@ -1,3 +1,9 @@
+2010-01-10  Didier Verna  <didier@xemacs.org>
+
+	* x-faces.el (x-init-face-from-resources)
+	(x-init-device-faces)
+	(x-init-frame-faces): Cosmetic changes (comments formatting).
+
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
 	* x-faces.el (x-init-global-faces): Deactivate obsolete code.
