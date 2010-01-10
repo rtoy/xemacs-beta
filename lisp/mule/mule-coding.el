@@ -103,12 +103,8 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    eol-type nil
+   safe-charsets t ;; Reasonable
    mnemonic "CText"))
-
-(make-coding-system
- 'iso-8859-1 'no-conversion
- "ISO-8859-1 (Latin-1)"
- '(eol-type nil mnemonic "Noconv"))
 
 (make-coding-system
  'iso-2022-8bit-ss2 'iso2022
@@ -117,6 +113,9 @@ The allowable range of REGISTER is 0 through 3."
    charset-g1 latin-iso8859-1
    charset-g2 t ;; unspecified but can be used later.
    short t
+   safe-charsets (ascii katakana-jisx0201 japanese-jisx0208-1978
+                  japanese-jisx0208 japanese-jisx0212 japanese-jisx0213-1
+                  japanese-jisx0213-2)
    mnemonic "ISO8/SS"
    documentation "ISO 2022 based 8-bit encoding using SS2 for 96-charset"
    ))
@@ -128,6 +127,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7/SS"
    documentation "ISO 2022 based 7-bit encoding using SS2 for 96-charset"
    eol-type nil))
@@ -140,6 +140,7 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7/SS"
    eol-type nil))
 
@@ -149,6 +150,7 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    seven t
    short t
+   safe-charsets t
    mnemonic "ISO7"
    documentation "ISO-2022-based 7-bit encoding using only G0"
    ))
@@ -176,6 +178,7 @@ in normal editing."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    short t
+   safe-charsets t
    mnemonic "ISO8"
    documentation "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
    ))
@@ -187,6 +190,7 @@ in normal editing."
    charset-g1 latin-iso8859-1
    eol-type lf
    escape-quoted t
+   safe-charsets t
    mnemonic "ESC/Quot"
    documentation "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
    ))
@@ -198,8 +202,45 @@ in normal editing."
    charset-g1 t ;; unspecified but can be used later.
    seven t
    lock-shift t
+   safe-charsets t
    mnemonic "ISO7/Lock"
    documentation "ISO-2022 coding system using Locking-Shift for 96-charset."
    ))
+
 
-;;; mule-coding.el ends here
+;; This is used by people writing CCL programs, but is called at runtime.
+(defun define-translation-hash-table (symbol table)
+  "Define SYMBOL as the name of the hash translation TABLE for use in CCL.
+
+Analogous to `define-translation-table', but updates
+`translation-hash-table-vector' and the table is for use in the CCL
+`lookup-integer' and `lookup-character' functions."
+  (check-argument-type #'symbolp symbol)
+  (check-argument-type #'hash-table-p table)
+  (let ((len (length translation-hash-table-vector))
+	(id 0)
+	done)
+    (put symbol 'translation-hash-table table)
+    (while (not done)
+      (if (>= id len)
+	  (setq translation-hash-table-vector
+		(vconcat translation-hash-table-vector [nil])))
+      (let ((slot (aref translation-hash-table-vector id)))
+	(if (or (not slot)
+		(eq (car slot) symbol))
+	    (progn
+	      (aset translation-hash-table-vector id (cons symbol table))
+	      (setq done t))
+	  (setq id (1+ id)))))
+    (put symbol 'translation-hash-table-id id)
+    id))
+
+;; Ideally this would be in latin.el, but code-init.el uses it.
+(make-coding-system
+ 'iso-8859-1 
+ 'mbcs
+ "ISO-8859-1 (Latin-1)"
+ '(charsets (ascii control-1 latin-iso8859-1)
+   mnemonic "Latin 1"
+   documentation "The most used encoding of Western Europe and the Americas."
+   aliases (iso-latin-1 latin-1)))

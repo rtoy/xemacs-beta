@@ -1282,19 +1282,14 @@ was matched by the last search.  It replaces that text with
 @var{replacement}.
 
 If you did the last search in a buffer, you should specify @code{nil}
-for @var{string}.  Then @code{replace-match} does the replacement by
-editing the buffer; it leaves point at the end of the replacement text,
-and returns @code{t}.
+for @var{string}.  (An error will be signaled if you don't.)  Then
+@code{replace-match} does the replacement by editing the buffer; it
+leaves point at the end of the replacement text, and returns @code{t}.
 
 If you did the search in a string, pass the same string as @var{string}.
-Then @code{replace-match} does the replacement by constructing and
-returning a new string.
-
-If the fourth argument @var{string} is a string, fifth argument
-@var{strbuffer} specifies the buffer to be used for syntax-table and
-case-table lookup and defaults to the current buffer.  When @var{string}
-is not a string, the buffer that the match occurred in has automatically
-been remembered and you do not need to specify it.
+(An error will be signaled if you specify nil.)  Then
+@code{replace-match} does the replacement by constructing and returning
+a new string.
 
 If @var{fixedcase} is non-@code{nil}, then the case of the replacement
 text is not changed; otherwise, the replacement text is converted to a
@@ -1317,20 +1312,64 @@ part of one of the following sequences:
 
 @table @asis
 @item @samp{\&}
-@cindex @samp{&} in replacement
+@cindex @samp{\&} in replacement
 @samp{\&} stands for the entire text being replaced.
 
 @item @samp{\@var{n}}
 @cindex @samp{\@var{n}} in replacement
+@cindex @samp{\@var{digit}} in replacement
 @samp{\@var{n}}, where @var{n} is a digit, stands for the text that
 matched the @var{n}th subexpression in the original regexp.
 Subexpressions are those expressions grouped inside @samp{\(@dots{}\)}.
 
 @item @samp{\\}
-@cindex @samp{\} in replacement
+@cindex @samp{\\} in replacement
 @samp{\\} stands for a single @samp{\} in the replacement text.
+
+@item @samp{\u}
+@cindex @samp{\u} in replacement
+@samp{\u} means upcase the next character.
+
+@item @samp{\l}
+@cindex @samp{\l} in replacement
+@samp{\l} means downcase the next character.
+
+@item @samp{\U}
+@cindex @samp{\U} in replacement
+@samp{\U} means begin upcasing all following characters.
+
+@item @samp{\L}
+@cindex @samp{\L} in replacement
+@samp{\L} means begin downcasing all following characters.
+
+@item @samp{\E}
+@cindex @samp{\E} in replacement
+@samp{\E} means terminate the effect of any @samp{\U} or @samp{\L}.
 @end table
+
+Case changes made with @samp{\u}, @samp{\l}, @samp{\U}, and @samp{\L}
+override all other case changes that may be made in the replaced text.
+
+The fifth argument @var{strbuffer} may be a buffer to be used for
+syntax-table and case-table lookup.  If @var{strbuffer} is not a buffer,
+the current buffer is used.  When @var{string} is not a string, the
+buffer that the match occurred in has automatically been remembered and
+you do not need to specify it.  @var{string} may also be an integer,
+specifying the index of the subexpression to match.  When @var{string}
+is not an integer, the ``subexpression'' is 0, @emph{i.e.}, the whole
+match.  An @code{invalid-argument} error will be signaled if you specify
+a buffer when @var{string} is nil, or specify a subexpression which was
+not matched.
+
+It is not possible to specify both a buffer and a subexpression, but the
+idiom
+@example
+(with-current-buffer @var{buffer} (replace-match ... @var{integer}))
+@end example
+may be used.
+
 @end defun
+
 
 @node Entire Match Data
 @subsection Accessing the Entire Match Data

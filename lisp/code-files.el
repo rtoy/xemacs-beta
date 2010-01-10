@@ -105,20 +105,36 @@ This overrides the more general specification in
 `buffer-file-coding-system-for-read', but is overridden by
 `coding-system-for-read'.")
 
-(defun set-buffer-file-coding-system (coding-system &optional force)
-  "Set buffer-file-coding-system of the current buffer to CODING-SYSTEM.
-If optional argument FORCE (interactively, the prefix argument) is not
-given, attempt to match the EOL type of the new coding system to
-the current value of `buffer-file-coding-system'."
-  (interactive "zFile coding system: \nP")
-  (get-coding-system coding-system) ;; correctness check
-  (if (not force)
-      (setq coding-system
+(defun set-buffer-file-coding-system (coding-system &optional force nomodify)
+  "Set the file coding-system of the current buffer to CODING-SYSTEM.
+This means that when you save the buffer, it will be converted
+according to CODING-SYSTEM.  For a list of possible values of CODING-SYSTEM,
+use \\[list-coding-systems].
+
+If CODING-SYSTEM leaves the text conversion unspecified, or if it
+leaves the end-of-line conversion unspecified, FORCE controls what to
+do.  If FORCE is nil, get the unspecified aspect (or aspects) from the
+buffer's previous `buffer-file-coding-system' value (if it is
+specified there).  Otherwise, leave it unspecified.
+
+This marks the buffer modified so that the succeeding \\[save-buffer]
+surely saves the buffer with CODING-SYSTEM.  From a program, if you
+don't want to mark the buffer modified, specify t for NOMODIFY.
+If you know exactly what coding system you want to use,
+just set the variable `buffer-file-coding-system' directly."
+  (interactive "zCoding system for saving file (default nil): \nP")
+  (check-coding-system coding-system)
+  (if (and coding-system buffer-file-coding-system (null force))
+       (setq coding-system
 	    (subsidiary-coding-system
 	     coding-system
 	     (coding-system-eol-type buffer-file-coding-system))))
-  (setq buffer-file-coding-system coding-system)
-  (redraw-modeline t))
+   (setq buffer-file-coding-system coding-system)
+  ;; XEmacs change; remove a call to ucs-set-table-for-input, which we don't
+  ;; have. 
+  (unless nomodify
+    (set-buffer-modified-p t))
+  (force-mode-line-update))
 
 (defun toggle-buffer-file-coding-system ()
   "Set EOL type of buffer-file-coding-system of the current buffer to
@@ -219,10 +235,10 @@ object (the entry specified a coding system)."
 
 ;(defun convert-mbox-coding-system (filename visit start end) ...)
 
-(defun load (file &optional noerror nomessage nosuffix)
-  "Execute a file of Lisp code named FILE, or load a binary module.
-First tries to find a Lisp FILE with .elc appended, then with .el, then with
- FILE unmodified.  If unsuccessful, tries to find a binary module FILE with
+(defun load (filename &optional noerror nomessage nosuffix)
+  "Execute a file of Lisp code named FILENAME, or load a binary module.
+First tries to find a Lisp file FILENAME with .elc appended, then with .el, then with
+ FILENAME unmodified.  If unsuccessful, tries to find a binary module FILE with
  the elements of `module-extensions' appended, one at a time.
 Searches directories in load-path for Lisp files, and in `module-load-path'
  for binary modules.
@@ -234,9 +250,8 @@ If optional fourth arg NOSUFFIX is non-nil, don't try adding suffixes
  .elc, .el, or elements of `module-extensions' to the specified name FILE.
 Return t if file exists."
   (declare (special load-modules-quietly))
-  (let* ((filename (substitute-in-file-name file))
-	 (handler (find-file-name-handler filename 'load))
-	 (path nil))
+  (let ((handler (find-file-name-handler filename 'load))
+	(path nil))
     (if handler
 	(funcall handler 'load filename noerror nomessage nosuffix)
       ;; First try to load a Lisp file
@@ -246,10 +261,10 @@ Return t if file exists."
 					    '(".elc" ".el" "")))))
 	  ;; now use the internal load to actually load the file.
 	  (load-internal
-	   file noerror nomessage nosuffix
+	   filename noerror nomessage nosuffix
 	   (let ((elc ; use string= instead of string-match to keep match-data.
-		(equalp ".elc" (substring path -4))))
-	     (or (and (not elc) coding-system-for-read) ;prefer for source file
+		  (equalp ".elc" (substring path -4))))
+	     (or (and (not elc) coding-system-for-read)	;prefer for source file
 		 ;; find magic-cookie
 		 (let ((codesys
 			(find-coding-system-magic-cookie-in-file path)))
@@ -341,8 +356,11 @@ and last save file modtime are set, and it is marked unmodified.
 If visiting and the file does not exist, visiting is completed
 before the error is signaled.
 
-The optional third and fourth arguments START and END
-specify what portion of the file to insert.
+The optional third and fourth arguments START and END specify what portion
+of the file to insert, and start at zero, in direct and needless contrast to
+buffer offsets.  That is, values of 0 and 10 for START and END respectively
+will give the first ten octets of a file.
+
 If VISIT is non-nil, START and END must be nil.
 If optional fifth argument REPLACE is non-nil,
 it means replace the current buffer contents (in the accessible portion)
@@ -382,86 +400,136 @@ coding-system determination procedure.
 See also `insert-file-contents-access-hook',
 `insert-file-contents-pre-hook', `insert-file-contents-error-hook',
 and `insert-file-contents-post-hook'."
-  (let (return-val coding-system used-codesys)
-    ;; OK, first load the file.
-    (condition-case err
-	(progn
-	  (run-hook-with-args 'insert-file-contents-access-hook
-			      filename visit)
-	  ;; determine the coding system to use, as described above.
-	  (setq coding-system
-		(or
-		 ;; #1.
-		 coding-system-for-read
-		 ;; #2.
-		 (run-hook-with-args-until-success
-		  'insert-file-contents-pre-hook
-		  filename visit)
-		 ;; #3.
-		 (find-file-coding-system-for-read-from-filename filename)
-		 ;; #4.
-		 buffer-file-coding-system-for-read
-		 ;; #5.
-		 'raw-text))
-	  (if (consp coding-system)
-	      (setq return-val coding-system)
-	    (if (null (find-coding-system coding-system))
-		(progn
-		  (lwarn 'coding-system 'notice
-		   "Invalid coding-system (%s), using 'undecided"
-		   coding-system)
-		  (setq coding-system 'undecided)))
-	    (setq return-val
-		  (insert-file-contents-internal filename visit start end
-						 replace coding-system
-						 ;; store here!
-						 'used-codesys))
-	    ))
-      (file-error
-       (run-hook-with-args 'insert-file-contents-error-hook
-			   filename visit err)
-       (signal (car err) (cdr err))))
-    (setq coding-system used-codesys)
-    ;; call any `post-read-conversion' for the coding system that
-    ;; was used ...
-    (let ((func
-	   (coding-system-property coding-system 'post-read-conversion))
-	  (endmark (make-marker)))
-      (set-marker endmark (+ (point) (nth 1 return-val)))
-      (if func
-	  (unwind-protect
-	      (save-excursion
-		(let (buffer-read-only)
-		  (if (>= (function-max-args func) 2)
-		      ;; #### fuckme!  Someone at FSF changed the calling
-		      ;; convention of post-read-conversion.  We try to
-		      ;; support the old way.  #### Should we kill this?
-		      (funcall func (point) (marker-position endmark))
-		    (funcall func (- (marker-position endmark) (point))))))
-	    (if visit
-		(progn
-		  (set-buffer-auto-saved)
-		  (set-buffer-modified-p nil)))))
-      (setcar (cdr return-val) (- (marker-position endmark) (point))))
-    ;; now finally set the buffer's `buffer-file-coding-system' ...
-    (if (run-hook-with-args-until-success 'insert-file-contents-post-hook
-					  filename visit return-val)
-	nil
-      (if (local-variable-p 'buffer-file-coding-system (current-buffer))
-	  ;; if buffer-file-coding-system is already local, just
-	  ;; set its eol type to what was found, if it wasn't
-	  ;; set already.
-	  (set-buffer-file-coding-system
-	   (subsidiary-coding-system buffer-file-coding-system
-				     (coding-system-eol-type coding-system)) t)
-	;; otherwise actually set buffer-file-coding-system.
-	(set-buffer-file-coding-system coding-system t)))
-    ;; ... and `buffer-file-coding-system-when-loaded'.  the machinations
-    ;; of set-buffer-file-coding-system cause the actual coding system
-    ;; object to be stored, so do that here, too.
-    (setq buffer-file-coding-system-when-loaded 
-	  (get-coding-system coding-system))
-    return-val))
+  (let ((handler (find-file-name-handler filename 'insert-file-contents)))
+    (if handler
+	(funcall handler 'insert-file-contents filename visit start end replace)
+      (let (return-val coding-system used-codesys)
+	;; OK, first load the file.
+	(condition-case err
+	    (progn
+	      (run-hook-with-args 'insert-file-contents-access-hook
+				  filename visit)
+	      ;; determine the coding system to use, as described above.
+	      (setq coding-system
+		    (or
+		     ;; #1.
+		     coding-system-for-read
+		     ;; #2.
+		     (run-hook-with-args-until-success
+		      'insert-file-contents-pre-hook
+		      filename visit)
+		     ;; #3.
+		     (find-file-coding-system-for-read-from-filename filename)
+		     ;; #4.
+		     buffer-file-coding-system-for-read
+		     ;; #5.
+		     'raw-text))
+	      (if (consp coding-system)
+		  (setq return-val coding-system)
+		(if (null (find-coding-system coding-system))
+		    (progn
+		      (lwarn 'coding-system 'notice
+			"Invalid coding-system (%s), using 'undecided"
+			coding-system)
+		      (setq coding-system 'undecided)))
+		(setq return-val
+		      (insert-file-contents-internal filename visit start end
+						     replace coding-system
+						     ;; store here!
+						     'used-codesys))
+		))
+	  (file-error
+	   ;; If we error, which we may if the file does not exist, we still
+	   ;; want to set the buffer-file-coding-system if that is
+	   ;; appropriate:
+	   (when (eq 'undecided (coding-system-type coding-system))
+	     (setq used-codesys (coding-system-property coding-system
+							'coding-system))
+	     (if (and used-codesys
+		      (not (eq 'undecided (coding-system-type used-codesys))))
+		 ;; If this property is available, and not undecided, it should
+		 ;; be a coding system that we can use to write a file (as
+		 ;; opposed to the true undecided coding system, which trashes
+		 ;; non-Latin-1 on writing). It might just be the value of
+		 ;; coding-system passed to #'insert-file-contents-internal.
+		 (setq coding-system used-codesys)
+	       ;; Otherwise, take the value normally specified by the
+	       ;; language environment:
+	       (setq coding-system (default-value
+				     'buffer-file-coding-system))))
+	   (if (local-variable-p 'buffer-file-coding-system
+				 (current-buffer))
+	       (set-buffer-file-coding-system
+		(subsidiary-coding-system 
+		 buffer-file-coding-system
+		 (coding-system-eol-type coding-system)) t t)
+	     (set-buffer-file-coding-system coding-system t t))
+	   (setq buffer-file-coding-system-when-loaded
+		 coding-system)
+	   (run-hook-with-args 'insert-file-contents-error-hook
+			       filename visit err)
+	   (signal (car err) (cdr err))))
+	(setq coding-system used-codesys)
+        ;; If the file was zero-length, used-codesys is undecided. Set it to
+        ;; a more sane value. 
+        (when (eq 'undecided (coding-system-type coding-system))
+          (unless (zerop (buffer-size))
+            (warn "%s: autodetection failed: setting to default."
+                  (file-name-nondirectory (buffer-file-name))))
+	  (setq used-codesys (coding-system-property coding-system
+						     'coding-system))
+	  (if (and used-codesys
+		   (not (eq 'undecided (coding-system-type used-codesys))))
+	      ;; If this property is available, and not undecided, it should
+	      ;; be a coding system that we can use to write a file (as
+	      ;; opposed to the true undecided coding system, which trashes
+	      ;; non-Latin-1 on writing). It might just be the value of
+	      ;; coding-system passed to #'insert-file-contents-internal.
+	      (setq coding-system used-codesys)
+	    ;; Otherwise, take the value normally specified by the
+	    ;; language environment:
+	    (setq coding-system (default-value 'buffer-file-coding-system))))
+	;; call any `post-read-conversion' for the coding system that
+	;; was used ...
+	(let ((func
+	       (coding-system-property coding-system 'post-read-conversion))
+	      (endmark (make-marker)))
+	  (set-marker endmark (+ (point) (nth 1 return-val)))
+	  (if func
+	      (unwind-protect
+		  (save-excursion
+		    (let (buffer-read-only)
+		      (if (>= (function-max-args func) 2)
+			  ;; #### fuckme!  Someone at FSF changed the calling
+			  ;; convention of post-read-conversion.  We try to
+			  ;; support the old way.  #### Should we kill this?
+			  (funcall func (point) (marker-position endmark))
+			(funcall func (- (marker-position endmark) (point))))))
+		(if visit
+		    (progn
+		      (set-buffer-auto-saved)
+		      (set-buffer-modified-p nil)))))
+	  (setcar (cdr return-val) (- (marker-position endmark) (point))))
+	;; now finally set the buffer's `buffer-file-coding-system' ...
+	(if (run-hook-with-args-until-success 'insert-file-contents-post-hook
+					      filename visit return-val)
+	    nil
+	  (if (local-variable-p 'buffer-file-coding-system (current-buffer))
+	      ;; if buffer-file-coding-system is already local, just
+	      ;; set its eol type to what was found, if it wasn't
+	      ;; set already.
+	      (set-buffer-file-coding-system
+	       (subsidiary-coding-system 
+                buffer-file-coding-system
+                (coding-system-eol-type coding-system)) t t)
+	    ;; otherwise actually set buffer-file-coding-system.
+	    (set-buffer-file-coding-system coding-system t t)))
+	;; ... and `buffer-file-coding-system-when-loaded'.  the machinations
+	;; of set-buffer-file-coding-system cause the actual coding system
+	;; object to be stored, so do that here, too.
+	(setq buffer-file-coding-system-when-loaded 
+	      (get-coding-system coding-system))
+	return-val))))
 
 (defvar write-region-pre-hook nil
   "A special hook to decide the coding system used for writing out a file.
@@ -489,48 +557,61 @@ The functions on this hook are called with arguments START, END,
 FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
-(defun write-region (start end filename
-		     &optional append visit lockname coding-system)
+(defun write-region (start end filename &optional append visit lockname
+                     coding-system-or-mustbenew)
   "Write current region into specified file.
-By default the file's existing contents are replaced by the specified region.
-Called interactively, prompts for a file name.  With a prefix arg, prompts
-for a coding system as well.
+Called interactively, prompts for a file name.
+With a prefix arg, prompts for a coding system as well.
 
 When called from a program, takes three required arguments:
 START, END and FILENAME.  START and END are buffer positions.
-Optional fourth argument APPEND if non-nil means
-  append to existing file contents (if any).
-Optional fifth argument VISIT if t means
-  set last-save-file-modtime of buffer to this file's modtime
-  and mark buffer not modified.
-If VISIT is a string, it is a second file name;
-  the output goes to FILENAME, but the buffer is marked as visiting VISIT.
-  VISIT is also the file name to lock and unlock for clash detection.
-If VISIT is neither t nor nil nor a string,
-  that means do not print the \"Wrote file\" message.
-The optional sixth arg LOCKNAME, if non-nil, specifies the name to
-  use for locking and unlocking, overriding FILENAME and VISIT.
-Kludgy feature: if START is a string, then that string is written
-to the file, instead of any buffer contents, and END is ignored.
-Optional seventh argument CODING-SYSTEM specifies the coding system
-  used to encode the text when it is written out, and defaults to
-  the value of `buffer-file-coding-system' in the current buffer.
+APPEND, if non-nil, means append to existing file contents (if any), else
+  the file's existing contents are replaced by the specified region.
+VISIT, if non-nil, should be a string naming a file.  The buffer is marked
+                 as  visiting VISIT.  VISIT is also the file name to lock
+                 and unlock for clash detection.
+LOCKNAME, if non-nil, specifies the name to use for locking and unlocking,
+  overriding FILENAME and VISIT.
+CODING-SYSTEM-OR-MUSTBENEW specifies the coding system used to encode the
+  text written.  It defaults to the value of `buffer-file-coding-system'
+  in the current buffer.
+
+For compatibility with GNU Emacs, several arguments are overloaded:
+START may be a string, which is written to the file.  END is ignored.
+VISIT may take the value t, meaning to set last-save-file-modtime of buffer
+  to this file's modtime and mark buffer not modified.  With any other
+  non-nil value of VISIT, suppress printing of the \"Wrote file\" message.
+CODING-SYSTEM-OR-MUSTBENEW may be a non-nil, non-coding-system value.
+  If it is `excl' and FILENAME already exists, signal `file-already-exists'.
+  Otherwise, if FILENAME already exists, ask for confirmation before
+  writing, and signal `file-already-exists' if not confirmed.
+
 See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
-  (setq coding-system
-	(or coding-system-for-write
-	    (run-hook-with-args-until-success
-	     'write-region-pre-hook
-	     start end filename append visit lockname coding-system)
-	    coding-system
-	    buffer-file-coding-system
-	    (find-file-coding-system-for-write-from-filename filename)
-	    ))
-  (if (consp coding-system)
-      ;; One of the `write-region-pre-hook' functions wrote the file
-      coding-system
-    (let ((func
-	   (coding-system-property coding-system 'pre-write-conversion)))
+  (let (mustbenew coding-system func hook-result)
+    (setq hook-result
+          (or coding-system-for-write
+              (run-hook-with-args-until-success
+               'write-region-pre-hook
+               start end filename append visit lockname
+               coding-system-or-mustbenew)
+              (if (and coding-system-or-mustbenew
+		       (coding-system-p
+			(find-coding-system coding-system-or-mustbenew)))
+		  coding-system-or-mustbenew)
+              buffer-file-coding-system
+              (find-file-coding-system-for-write-from-filename filename)))
+    (if (consp hook-result)
+        ;; One of the `write-region-pre-hook' functions wrote the file. 
+        hook-result
+      ;; The hooks didn't do the work; do it ourselves.
+      (setq hook-result (find-coding-system hook-result)
+	    mustbenew (unless (coding-system-p
+			       (find-coding-system coding-system-or-mustbenew))
+                        coding-system-or-mustbenew)
+            coding-system (cond ((coding-system-p hook-result) hook-result)
+                                ((null mustbenew) coding-system-or-mustbenew))
+            func (coding-system-property coding-system 'pre-write-conversion))
       (if func
 	  (let ((curbuf (current-buffer))
 		(tempbuf (generate-new-buffer " *temp-write-buffer*"))
@@ -545,7 +626,8 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 					 append
 					 (if (eq visit t) nil visit)
 					 lockname
-					 coding-system))
+                                         coding-system
+                                         mustbenew))
 	      ;; leaving a buffer associated with file will cause problems
 	      ;; when next visiting.
 	      (kill-buffer tempbuf)
@@ -555,7 +637,7 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 		    (set-buffer-modified-p nil)
 		    (if (buffer-file-name) (set-visited-file-modtime))))))
 	(write-region-internal start end filename append visit lockname
-			       coding-system)))
+			       coding-system mustbenew)))
     (run-hook-with-args 'write-region-post-hook
 			start end filename append visit lockname
 			coding-system)))

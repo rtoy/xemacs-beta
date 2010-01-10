@@ -179,6 +179,8 @@ check_free (void *ptr)
 	    / sizeof (long);
 	  unsigned long i;
 
+          /* Not using the DEADBEEF_CONSTANT #define, since we don't know
+           * that allocation sizes will be multiples of eight. */
 	  for (i = 0; i < long_length; i++)
 	    ((unsigned long *) ptr)[i] = 0xdeadbeef;
 	}

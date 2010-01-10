@@ -79,11 +79,13 @@
 ;		    (nthcdr 3 command-line-args))))
 
 
-(defvar build-root (expand-file-name ".." invocation-directory))
+(defvar build-directory (expand-file-name ".." invocation-directory))
+
 (defvar source-lisp (file-name-directory (expand-file-name
-					  (nth 2 command-line-args))))
+ 					  (nth 2 command-line-args))))
+
 (defvar source-lisp-mule (expand-file-name "mule" source-lisp))
-(defvar source-root (expand-file-name ".." source-lisp))
+(defvar source-directory (expand-file-name ".." source-lisp))
 (defvar aa-lisp (expand-file-name "auto-autoloads.el" source-lisp))
 (defvar aac-lisp (expand-file-name "auto-autoloads.elc" source-lisp))
 (defvar aa-lisp-mule (expand-file-name "auto-autoloads.el" source-lisp-mule))
@@ -115,15 +117,16 @@
   '("paths.el"
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
-    "raw-process.el"
-    "version.el")
+    "raw-process.el")
   "Lisp files that should not be byte compiled.
 Files in `additional-dump-dependencies' do not need to be listed here.")
 
 (defvar additional-dump-dependencies
-  '("loadup.el"
-    "loadup-el.el"
-    "update-elc.el")
+  (nconc '("loadup.el"
+           "loadup-el.el"
+           "update-elc.el")
+         (if (featurep 'mule)
+             '("mule/make-coding-system")))
   "Lisp files that are not dumped but which the dump depends on.
 If any of these files are changed, we need to redump.")
 
@@ -165,8 +168,8 @@ If any of these files are changed, we need to redump.")
 	 (setq exe-target "src/xemacs"
 	       dump-target "src/xemacs.dmp")))
 
-  (setq exe-target (expand-file-name exe-target build-root))
-  (setq dump-target (expand-file-name dump-target build-root))
+  (setq exe-target (expand-file-name exe-target build-directory))
+  (setq dump-target (expand-file-name dump-target build-directory))
 
   ;; Not currently used.
 ;   (setq dump-target-out-of-date-wrt-exe-target
@@ -186,7 +189,7 @@ If any of these files are changed, we need to redump.")
  		  preloaded-file-list
  		  packages-hardcoded-lisp)))
 
-  (load (expand-file-name "site-packages" source-root) t t)
+  (load (expand-file-name "site-packages" source-directory) t t)
   (setq preloaded-file-list
 	(append packages-hardcoded-lisp
 		preloaded-file-list
@@ -272,7 +275,7 @@ If any of these files are changed, we need to redump.")
   (if dump-target-out-of-date-wrt-dump-files
       (condition-case nil
 	  (write-region-internal
-	   "foo" nil (expand-file-name "src/NEEDTODUMP" build-root))
+	   "foo" nil (expand-file-name "src/NEEDTODUMP" build-directory))
 	(file-error nil)))
 
   )
@@ -324,7 +327,7 @@ If any of these files are changed, we need to redump.")
 	    (list "-f" "batch-byte-compile-one-file"
 		  aa-lisp-mule)))))
   (condition-case nil
-      (delete-file (expand-file-name "src/REBUILD_AUTOLOADS" build-root))
+      (delete-file (expand-file-name "src/REBUILD_AUTOLOADS" build-directory))
     (file-error nil))
   (cond ((and (not update-elc-files-to-compile)
 	      (not need-to-rebuild-autoloads)
@@ -342,7 +345,7 @@ If any of these files are changed, we need to redump.")
 	 ;;     they may depend on the updated autoloads.)
 	 (condition-case nil
 	     (write-region-internal
-	      "foo" nil (expand-file-name "src/REBUILD_AUTOLOADS" build-root))
+	      "foo" nil (expand-file-name "src/REBUILD_AUTOLOADS" build-directory))
 	   (file-error nil))
 	 )
 	(t

@@ -35,15 +35,9 @@
 
 
 (make-coding-system
- 'iso-8859-8 'iso2022
- "ISO-8859-8 (Hebrew)"
- '(charset-g0 ascii
-   charset-g1 hebrew-iso8859-8
-   charset-g2 t
-   charset-g3 t
-   no-iso6429 t
-   mnemonic "MIME/Hbrw"
-   ))
+ 'iso-8859-8 'mbcs "ISO 8859-6 (Hebrew)"
+ '(charsets (ascii control-1 hebrew-iso8859-8)
+   mnemonic "MIME/Hbrw"))
 
 (make-coding-system
  'ctext-hebrew 'iso2022
@@ -52,6 +46,7 @@
    charset-g1 hebrew-iso8859-8
    charset-g2 t
    charset-g3 t
+   safe-charsets (ascii hebrew-iso8859-8)
    mnemonic "CText/Hbrw"
    ))
 
@@ -59,7 +54,8 @@
  "Hebrew" '((charset hebrew-iso8859-8)
 	    (coding-system iso-8859-8)
 	    (coding-priority iso-8859-8)
-	    (input-method . "hebrew")
+            ;; Not available in packages. 
+	    ;; (input-method . "hebrew")
 	    (sample-text . "Hebrew	[2],Hylem[0](B")
 	    (documentation . "Right-to-left writing is not yet supported.")
 	    ))

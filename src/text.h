@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -46,6 +46,37 @@ Boston, MA 02111-1307, USA.  */
 /*--------------------------------------------------------------------------*/
 /****************************************************************************/
 
+/* Approach for checking the validity of functions that manipulate
+   charset codepoints, unicode codepoints, Ichars, and Itext:
+
+   1. Use one of the following asserts for checking both values coming in
+      (parameters) and values going out (return values):
+
+      ASSERT_VALID_CHARSET_CODEPOINT(charset, c1, c2)
+      ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)
+      ASSERT_VALID_UNICODE_CODEPOINT(code)
+      ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)
+      ASSERT_VALID_ICHAR(ich)
+      ASSERT_VALID_ICHAR_OR_ERROR(ich)
+      ASSERT_VALID_ITEXT(itextptr)
+
+      The *_OR_ERROR varieties allow for an error return value, i.e.
+      NILP (charset) or code == -1 or ich == -1.
+
+      They are all conditioned on ERROR_CHECK_TEXT, and if this isn't
+      defined, they won't do anything at all, so they won't slow down
+      production code.
+
+   2. Take a sledgehammer approach.  When in doubt, insert checks at the
+      beginning and end of *EVERY* function.  The only allowed exception
+      to this is when a function directly passes its arguments to another
+      function on input, or directly returns the return value of another
+      function -- it can be assumed (perhaps wrongly, of course) that
+      these functions also check their input/output.
+
+   --ben
+*/
+
 BEGIN_C_DECLS
 
 #ifdef HAVE_WCHAR_H
@@ -70,8 +101,10 @@ enum converr
     /* Do nothing upon failure and return a failure indication.
        Same as what happens when the *_raw() version is called. */
     CONVERR_FAIL,
-    /* Signal a Lisp error. @@#### Not implemented. */
+    /* abort() on failure, i.e. crash. */
     CONVERR_ABORT,
+    /* Signal a Lisp error. */
+    CONVERR_ERROR,
     /* Try to "recover" and continue processing.  What exactly happens
        depends on the type of conversion.  When converting from a charset
        representation to Unicode, this is like CONVERR_USE_PRIVATE,
@@ -180,23 +213,8 @@ enum converr
    --ben
 */
 
-/* NOTE: There are other functions/macros for working with Ichars in
-   charset.h, for retrieving the charset of an Ichar, the length of an
-   Ichar when converted to text, etc.
-*/
-
-DECLARE_INLINE_HEADER (
-int
-valid_unicode_codepoint_p (EMACS_INT ch)
-)
-{
-#if SIZEOF_EMACS_INT > 4
-  /* On 64-bit machines, we could have a value too large */
-  return ch >= 0 && ch <= 0x7FFFFFFF;
-#else
-  return ch >= 0;
-#endif
-}
+/* NOTE: Some basic character functions are defined in lisp.h, because
+   they are used earlier than this file is included. */
 
 #ifndef MULE
 
@@ -204,8 +222,6 @@ valid_unicode_codepoint_p (EMACS_INT ch)
 #define byte_ascii_p(byte) 1
 #define MAX_ICHAR_LEN 1
 
-/* This appears to work both for values > 255 and < 0. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
 #define ichar_len(ch) 1
 #define ichar_columns(ch) 1
 
@@ -339,25 +355,6 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #endif
 
 #ifndef UNICODE_INTERNAL
-MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
-#endif
-
-/* Return whether the given Ichar is valid.
- */
-
-DECLARE_INLINE_HEADER (
-int
-valid_ichar_p (Ichar ch)
-)
-{
-#ifdef UNICODE_INTERNAL
-  return valid_unicode_codepoint_p ((EMACS_INT) ch);
-#else
-  return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
-#endif /* UNICODE_INTERNAL */
-}
-
-#ifndef UNICODE_INTERNAL
 
 /************************************************************************/
 /*              Definition of charset ID's and lead bytes               */
@@ -467,7 +464,7 @@ int
 old_mule_ichar_charset_id (Ichar c)
 )
 {
-  text_checking_assert (valid_ichar_p (c));
+  ASSERT_VALID_ICHAR (c);
   if (ichar_ascii_p (c))
     return CHARSET_ID_ASCII;
   else if (c < 0xA0)
@@ -496,7 +493,7 @@ Bytecount
 ichar_len (Ichar c)
 )
 {
-  text_checking_assert (valid_ichar_p (c));
+  ASSERT_VALID_ICHAR (c);
   if (ichar_ascii_p (c))
     return 1;
 #ifdef UNICODE_INTERNAL
@@ -532,7 +529,7 @@ int
 ichar_columns (Ichar c)
 )
 {
-  text_checking_assert (valid_ichar_p (c));
+  ASSERT_VALID_ICHAR (c);
 #ifdef UNICODE_INTERNAL
   return unicode_char_columns ((int) c);
 #else
@@ -595,14 +592,17 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 
 #endif /* UNICODE_INTERNAL */
 
+#endif /* MULE */
+
 /************************************************************************/
 /*                         Unicode conversion                           */
 /************************************************************************/
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
-Ichar old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *charsets,
+Ichar old_mule_unicode_to_ichar (int code,
+				 Lisp_Object_dynarr *precedence_list,
 				 enum converr fail);
-Ichar old_mule_handle_bad_ichar (enum converr fail);
+int old_mule_charset_encodable (Lisp_Object charset);
 
 /* Convert an Ichar to a Unicode codepoint.
    Return value will be -1 if cannot convert. */
@@ -611,12 +611,14 @@ int
 ichar_to_unicode (Ichar chr, enum converr fail)
 )
 {
-  text_checking_assert (valid_ichar_p (chr));
-#ifdef UNICODE_INTERNAL
-  return (int) chr;
-#else
+  ASSERT_VALID_ICHAR (chr);
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
   return old_mule_ichar_to_unicode (chr, fail);
-#endif /* UNICODE_INTERNAL */
+#else
+  /* Unicode-internal or non-Mule */
+  return (int) chr;
+#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
 }
 
 /* Convert a Unicode codepoint to an Ichar.  Return value will be (Ichar) -1
@@ -625,19 +627,23 @@ ichar_to_unicode (Ichar chr, enum converr fail)
 DECLARE_INLINE_HEADER (
 Ichar
 unicode_to_ichar (int code, Lisp_Object_dynarr *
-		  USED_IF_MULE_NOT_UNICODE_INTERNAL (charsets),
-		  enum converr fail)
+		  USED_IF_OLD_MULE (precedence_list),
+		  enum converr USED_IF_OLD_MULE (fail))
 )
 {
-  text_checking_assert (valid_unicode_codepoint_p (code));
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
+
 #ifdef UNICODE_INTERNAL
   return (Ichar) code;
+#elif defined (MULE)
+  return old_mule_unicode_to_ichar (code, precedence_list, fail);
 #else
-  return old_mule_unicode_to_ichar (code, charsets, fail);
-#endif /* UNICODE_INTERNAL */
+  if (code > 255)
+    return (Ichar) -1;
+  else
+    return (Ichar) code;
+#endif /* (not) defined (MULE) */
 }
-
-#endif /* MULE */
 
 /****************************************************************************/
 /*--------------------------------------------------------------------------*/
@@ -722,7 +728,7 @@ ichar_to_raw (Ichar ch, Internal_Format fmt,
 	      Lisp_Object UNUSED (object))
 )
 {
-  text_checking_assert (valid_ichar_p (ch));
+  ;
   switch (fmt)
     {
     case FORMAT_DEFAULT:
@@ -748,7 +754,7 @@ ichar_fits_in_format (Ichar ch, Internal_Format fmt,
 		      Lisp_Object UNUSED (object))
 )
 {
-  text_checking_assert (valid_ichar_p (ch));
+  ASSERT_VALID_ICHAR (ch);
 
   switch (fmt)
     {
@@ -798,45 +804,6 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
   else
     return strlen ((char *) ptr);
 }
-
-/* ---------------------------------------------------------------------- */
-/*                     The Lisp_Object character type                     */
-/* ---------------------------------------------------------------------- */
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-make_char (Ichar val)
-)
-{
-  type_checking_assert (valid_ichar_p (val));
-  return make_char_1 (val);
-}
-
-#define CHAR_INTP(x) (INTP (x) && valid_ichar_p (XINT (x)))
-
-#define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
-
-DECLARE_INLINE_HEADER (
-Ichar
-XCHAR_OR_CHAR_INT (Lisp_Object obj)
-)
-{
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
-}
-
-/* Signal an error if CH is not a valid character or integer Lisp_Object.
-   If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
-   but merely by repackaging, without performing tests for char validity.
-   */
-
-#define CHECK_CHAR_COERCE_INT(x) do {		\
-  if (CHARP (x))				\
-     ;						\
-  else if (CHAR_INTP (x))			\
-    x = make_char (XINT (x));			\
-  else						\
-    x = wrong_type_argument (Qcharacterp, x);	\
-} while (0)
 
 
 /************************************************************************/
@@ -936,7 +903,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
 DECLARE_INLINE_HEADER (
 void
-assert_valid_ibyteptr (const Ibyte *ptr)
+ASSERT_VALID_ITEXT (const Ibyte *ptr)
 )
 {
   Bytecount len;
@@ -949,7 +916,7 @@ assert_valid_ibyteptr (const Ibyte *ptr)
 }
 
 #else
-#define assert_valid_ibyteptr(ptr) disabled_assert (ptr)
+#define ASSERT_VALID_ITEXT(ptr) disabled_assert (ptr)
 #endif /* ERROR_CHECK_TEXT */
 
 /* Given a itext (assumed to point at the beginning of a character),
@@ -963,7 +930,7 @@ assert_valid_ibyteptr (const Ibyte *ptr)
    the character it's moving over. */
 
 #define INC_IBYTEPTR(ptr) do {			\
-  assert_valid_ibyteptr (ptr);			\
+  ASSERT_VALID_ITEXT (ptr);			\
   (ptr) += rep_bytes_by_first_byte (* (ptr));	\
 } while (0)
 
@@ -997,18 +964,18 @@ do {									   \
 
 #ifdef ERROR_CHECK_TEXT
 /* We use a separate definition to avoid warnings about unused dc_ptr1 */
-#define DEC_IBYTEPTR(ptr) do {						      \
-  const Ibyte *dc_ptr1 = (ptr);						      \
-  do {									      \
-    (ptr)--;								      \
-  } while (!valid_ibyteptr_p (ptr));					      \
+#define DEC_IBYTEPTR(ptr) do {						\
+  const Ibyte *dc_ptr1 = (ptr);						\
+  do {									\
+    (ptr)--;								\
+  } while (!valid_ibyteptr_p (ptr));					\
   text_checking_assert (dc_ptr1 - (ptr) == rep_bytes_by_first_byte (*(ptr))); \
 } while (0)
 #else
-#define DEC_IBYTEPTR(ptr) do {						      \
-  do {									      \
-    (ptr)--;								      \
-  } while (!valid_ibyteptr_p (ptr));					      \
+#define DEC_IBYTEPTR(ptr) do {			\
+  do {						\
+    (ptr)--;					\
+  } while (!valid_ibyteptr_p (ptr));		\
 } while (0)
 #endif /* ERROR_CHECK_TEXT */
 
@@ -1376,7 +1343,7 @@ itext_n_addr (const Ibyte *ptr, Charcount offset)
 */
 
 #define INC_BYTECOUNT(ptr, pos) do {			\
-  assert_valid_ibyteptr (ptr);				\
+  ASSERT_VALID_ITEXT (ptr);				\
   (pos += rep_bytes_by_first_byte (* ((ptr) + (pos))));	\
 } while (0)
 
@@ -1391,7 +1358,7 @@ simple_itext_ichar (const Ibyte *ptr)
 )
 {
   Ichar retval = ((Ichar) (ptr)[0]);
-  assert_valid_ibyteptr (ptr);
+  ASSERT_VALID_ITEXT (ptr);
   assert (byte_ascii_p (retval));
   return retval;
 }
@@ -1401,7 +1368,7 @@ Bytecount
 simple_set_itext_ichar (Ibyte *ptr, Ichar x)
 )
 {
-  assert (valid_ichar_p (x));
+  ASSERT_VALID_ICHAR (x);
   assert (byte_ascii_p (x));
   (ptr)[0] = (Ibyte) (x);
   return 1;
@@ -1427,7 +1394,7 @@ non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 )
 {
   Bytecount bytes = rep_bytes_by_first_byte (*src);
-  assert_valid_ibyteptr (src);
+  ASSERT_VALID_ITEXT (src);
   text_checking_assert (bytes > 1); /* ASCII should have been filtered out */
   memcpy (dst, src, bytes);
   return bytes;
@@ -1643,9 +1610,9 @@ Dynarr_add_ichar (unsigned_char_dynarr *dyn, Ichar ich)
   text_checking_assert ((x) >= 0 && x <= string_char_length (s));	\
 } while (0)
 
-#define ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE(s, x) do {		\
-  text_checking_assert ((x) >= 0 && x <= XSTRING_LENGTH (s));		\
-  assert_valid_ibyteptr (string_byte_addr (s, x));			\
+#define ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE(s, x) do {	\
+  text_checking_assert ((x) >= 0 && x <= XSTRING_LENGTH (s));	\
+  ASSERT_VALID_ITEXT (string_byte_addr (s, x));			\
 } while (0)
 
 /* Convert offset I in string S to a pointer to text there. */
@@ -3731,16 +3698,12 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 /* !!#### Verify these! */
 #define Qxt_widget_arg_encoding Qnative
 #define Qdt_dnd_encoding Qnative
-#define Qoffix_dnd_encoding Qnative
 
 /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
    encoded in ISO2022! */
 #define Qlocale_name_encoding Qctext
 
 #define Qstrerror_encoding Qnative
-
-/* Encoding for strings coming from Offix drag-n-drop */
-#define Qoffix_dnd_encoding Qnative
 
 /* !!#### This exists to remind us that our hexify routine is totally
    un-Muleized. */

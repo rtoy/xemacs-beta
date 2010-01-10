@@ -1,7 +1,7 @@
 /* Shared event code between X and GTK -- include file.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -357,9 +357,9 @@ static UINT_16_BIT const PUBLISHING[] =
     0x0,	/* #x0AB9 */
     0x0,	/* #x0ABA */
     0x2012,	/* #x0ABB FIGURE DASH	Publish */
-    0x0,	/* #x0ABC LEFT ANGLE BRACKET	Publish */
-    0x0,	/* #x0ABD DECIMAL POINT	Publish */
-    0x0,	/* #x0ABE RIGHT ANGLE BRACKET	Publish */
+    0x3008,	/* #x0ABC LEFT ANGLE BRACKET	Publish */
+    0x002E,	/* #x0ABD DECIMAL POINT	Publish */
+    0x3009,	/* #x0ABE RIGHT ANGLE BRACKET	Publish */
     0x0,	/* #x0ABF MARKER	Publish */
     0x0,	/* #x0AC0 */
     0x0,	/* #x0AC1 */
@@ -903,6 +903,106 @@ static UINT_16_BIT const VIETNAMESE[] =
   };
 #endif /* MULE */
 
+static UINT_16_BIT const CYRILLIC[] =
+  {
+    0x0452,	/* #x06A1 CYRILLIC SMALL LETTER DJE  */
+#define FIRST_KNOWN_CYRILLIC 0x6A1
+    0x0453,	/* #x06A2 CYRILLIC SMALL LETTER GJE  */
+    0x0451,	/* #x06A3 CYRILLIC SMALL LETTER IO */
+    0x0454,	/* #x06A4 CYRILLIC SMALL LETTER UKRAINIAN IE */
+    0x0455,	/* #x06A5 CYRILLIC SMALL LETTER DZE */
+    0x0456,	/* #x06A6 CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I */
+    0x0457,	/* #x06A7 CYRILLIC SMALL LETTER YI */
+    0x0458,	/* #x06A8 CYRILLIC SMALL LETTER JE */
+    0x0459,	/* #x06A9 CYRILLIC SMALL LETTER LJE */
+    0x045A,	/* #x06AA CYRILLIC SMALL LETTER NJE */
+    0x045B,	/* #x06AB CYRILLIC SMALL LETTER TSHE */
+    0x045C,	/* #x06AC CYRILLIC SMALL LETTER KJE */
+    0x0491,	/* #x06AD CYRILLIC SMALL LETTER GHE WITH UPTURN */
+    0x045E,	/* #x06AE CYRILLIC SMALL LETTER SHORT U */
+    0x045F,	/* #x06AF CYRILLIC SMALL LETTER DZHE */
+    0x2116,	/* #x06B0 NUMERO SIGN */
+    0x0402,	/* #x06B1 CYRILLIC CAPITAL LETTER DJE */
+    0x0403,	/* #x06B2 CYRILLIC CAPITAL LETTER GJE */
+    0x0401,	/* #x06B3 CYRILLIC CAPITAL LETTER IO */
+    0x0404,	/* #x06B4 CYRILLIC CAPITAL LETTER UKRAINIAN IE */
+    0x0405,	/* #x06B5 CYRILLIC CAPITAL LETTER DZE */
+    0x0406,	/* #x06B6 CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I */
+    0x0407,	/* #x06B7 CYRILLIC CAPITAL LETTER YI */
+    0x0408,	/* #x06B8 CYRILLIC CAPITAL LETTER JE */
+    0x0409,	/* #x06B9 CYRILLIC CAPITAL LETTER LJE */
+    0x040A,	/* #x06BA CYRILLIC CAPITAL LETTER NJE */
+    0x040B,	/* #x06BB CYRILLIC CAPITAL LETTER TSHE */
+    0x040C,	/* #x06BC CYRILLIC CAPITAL LETTER KJE */
+    0x0490,	/* #x06BD CYRILLIC CAPITAL LETTER GHE WITH UPTURN */
+    0x040E,	/* #x06BE CYRILLIC CAPITAL LETTER SHORT U */
+    0x040F,	/* #x06BF CYRILLIC CAPITAL LETTER DZHE */
+    0x044E,	/* #x06C0 CYRILLIC SMALL LETTER YU */
+    0x0430,	/* #x06C1 CYRILLIC SMALL LETTER A */
+    0x0431,	/* #x06C2 CYRILLIC SMALL LETTER BE */
+    0x0446,	/* #x06C3 CYRILLIC SMALL LETTER TSE */
+    0x0434,	/* #x06C4 CYRILLIC SMALL LETTER DE */
+    0x0435,	/* #x06C5 CYRILLIC SMALL LETTER IE */
+    0x0444,	/* #x06C6 CYRILLIC SMALL LETTER EF */
+    0x0433,	/* #x06C7 CYRILLIC SMALL LETTER GHE */
+    0x0445,	/* #x06C8 CYRILLIC SMALL LETTER HA */
+    0x0438,	/* #x06C9 CYRILLIC SMALL LETTER I */
+    0x0439,	/* #x06CA CYRILLIC SMALL LETTER SHORT I */
+    0x043A,	/* #x06CB CYRILLIC SMALL LETTER KA */
+    0x043B,	/* #x06CC CYRILLIC SMALL LETTER EL */
+    0x043C,	/* #x06CD CYRILLIC SMALL LETTER EM */
+    0x043D,	/* #x06CE CYRILLIC SMALL LETTER EN */
+    0x043E,	/* #x06CF CYRILLIC SMALL LETTER O */
+    0x043F,	/* #x06D0 CYRILLIC SMALL LETTER PE */
+    0x044F,	/* #x06D1 CYRILLIC SMALL LETTER YA */
+    0x0440,	/* #x06D2 CYRILLIC SMALL LETTER ER */
+    0x0441,	/* #x06D3 CYRILLIC SMALL LETTER ES */
+    0x0442,	/* #x06D4 CYRILLIC SMALL LETTER TE */
+    0x0443,	/* #x06D5 CYRILLIC SMALL LETTER U */
+    0x0436,	/* #x06D6 CYRILLIC SMALL LETTER ZHE */
+    0x0432,	/* #x06D7 CYRILLIC SMALL LETTER VE */
+    0x044C,	/* #x06D8 CYRILLIC SMALL LETTER SOFT SIGN */
+    0x044B,	/* #x06D9 CYRILLIC SMALL LETTER YERU */
+    0x0437,	/* #x06DA CYRILLIC SMALL LETTER ZE */
+    0x0448,	/* #x06DB CYRILLIC SMALL LETTER SHA */
+    0x044D,	/* #x06DC CYRILLIC SMALL LETTER E */
+    0x0449,	/* #x06DD CYRILLIC SMALL LETTER SHCHA */
+    0x0447,	/* #x06DE CYRILLIC SMALL LETTER CHE */
+    0x044A,	/* #x06DF CYRILLIC SMALL LETTER HARD SIGN */
+    0x042E,	/* #x06E0 CYRILLIC CAPITAL LETTER YU */
+    0x0410,	/* #x06E1 CYRILLIC CAPITAL LETTER A */
+    0x0411,	/* #x06E2 CYRILLIC CAPITAL LETTER BE */
+    0x0426,	/* #x06E3 CYRILLIC CAPITAL LETTER TSE */
+    0x0414,	/* #x06E4 CYRILLIC CAPITAL LETTER DE */
+    0x0415,	/* #x06E5 CYRILLIC CAPITAL LETTER IE */
+    0x0424,	/* #x06E6 CYRILLIC CAPITAL LETTER EF */
+    0x0413,	/* #x06E7 CYRILLIC CAPITAL LETTER GHE */
+    0x0425,	/* #x06E8 CYRILLIC CAPITAL LETTER HA */
+    0x0418,	/* #x06E9 CYRILLIC CAPITAL LETTER I */
+    0x0419,	/* #x06EA CYRILLIC CAPITAL LETTER SHORT I */
+    0x041A,	/* #x06EB CYRILLIC CAPITAL LETTER KA */
+    0x041B,	/* #x06EC CYRILLIC CAPITAL LETTER EL */
+    0x041C,	/* #x06ED CYRILLIC CAPITAL LETTER EM */
+    0x041D,	/* #x06EE CYRILLIC CAPITAL LETTER EN */
+    0x041E,	/* #x06EF CYRILLIC CAPITAL LETTER O */
+    0x041F,	/* #x06F0 CYRILLIC CAPITAL LETTER PE */
+    0x042F,	/* #x06F1 CYRILLIC CAPITAL LETTER YA */
+    0x0420,	/* #x06F2 CYRILLIC CAPITAL LETTER ER */
+    0x0421,	/* #x06F3 CYRILLIC CAPITAL LETTER ES */
+    0x0422,	/* #x06F4 CYRILLIC CAPITAL LETTER TE */
+    0x0423,	/* #x06F5 CYRILLIC CAPITAL LETTER U */
+    0x0416,	/* #x06F6 CYRILLIC CAPITAL LETTER ZHE */
+    0x0412,	/* #x06F7 CYRILLIC CAPITAL LETTER VE */
+    0x042C,	/* #x06F8 CYRILLIC CAPITAL LETTER SOFT SIGN */
+    0x042B,	/* #x06F9 CYRILLIC CAPITAL LETTER YERU */
+    0x0417,	/* #x06FA CYRILLIC CAPITAL LETTER ZE */
+    0x0428,	/* #x06FB CYRILLIC CAPITAL LETTER SHA */
+    0x042D,	/* #x06FC CYRILLIC CAPITAL LETTER E */
+    0x0429,	/* #x06FD CYRILLIC CAPITAL LETTER SHCHA */
+    0x0427,	/* #x06FE CYRILLIC CAPITAL LETTER CHE */
+    0x042A,	/* #x06FF CYRILLIC CAPITAL LETTER HARD SIGN */
+  };
+
 /* For every key on the keyboard that has a known character correspondence,
    we define the character-of-keysym property of its XEmacs keysym, and make
    the default binding for the key be self-insert-command.
@@ -953,13 +1053,13 @@ gtk_keysym_to_character (guint keysym)
      and only those should correspond directly to Unicode code points, in
      the range #x100-#x10FFFF; actual implementations can have the Latin 1
      code points do the same thing with keysyms
-     #x010000A0-#x01000100. */
+     #x01000000-#x01000100. */
 
 #ifndef MULE
-  if (keysym >= 0x010000A0 && keysym <= 0x010000FF)
+  if (keysym >= 0x01000000 && keysym <= 0x010000FF)
     return make_char (keysym & 0xFFFFFF);
 #else
-  if (keysym >= 0x010000A0 && keysym <= 0x0110FFFF)
+  if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
     return make_char (unicode_to_ichar ((int) (keysym & 0xFFFFFF),
 					/* @@####
 					 need to get some sort of buffer
@@ -1002,59 +1102,7 @@ gtk_keysym_to_character (guint keysym)
       break;
     case 6: /* Cyrillic */
       {
-
-	/* @@#### Support me:
-
-0x0680   U0492   u   # Cyrillic_GHE_bar
-0x0681   U0496   u   # Cyrillic_ZHE_descender
-0x0682   U049a   u   # Cyrillic_KA_descender
-0x0683   U049c   u   # Cyrillic_KA_vertstroke
-0x0684   U04a2   u   # Cyrillic_EN_descender
-0x0685   U04ae   u   # Cyrillic_U_straight
-0x0686   U04b0   u   # Cyrillic_U_straight_bar
-0x0687   U04b2   u   # Cyrillic_HA_descender
-0x0688   U04b6   u   # Cyrillic_CHE_descender
-0x0689   U04b8   u   # Cyrillic_CHE_vertstroke
-0x068a   U04ba   u   # Cyrillic_SHHA
-0x068c   U04d8   u   # Cyrillic_SCHWA
-0x068d   U04e2   u   # Cyrillic_I_macron
-0x068e   U04e8   u   # Cyrillic_O_bar
-0x068f   U04ee   u   # Cyrillic_U_macron
-0x0690   U0493   u   # Cyrillic_ghe_bar
-0x0691   U0497   u   # Cyrillic_zhe_descender
-0x0692   U049b   u   # Cyrillic_ka_descender
-0x0693   U049d   u   # Cyrillic_ka_vertstroke
-0x0694   U04a3   u   # Cyrillic_en_descender
-0x0695   U04af   u   # Cyrillic_u_straight
-0x0696   U04b1   u   # Cyrillic_u_straight_bar
-0x0697   U04b3   u   # Cyrillic_ha_descender
-0x0698   U04b7   u   # Cyrillic_che_descender
-0x0699   U04b9   u   # Cyrillic_che_vertstroke
-0x069a   U04bb   u   # Cyrillic_shha
-0x069c   U04d9   u   # Cyrillic_schwa
-0x069d   U04e3   u   # Cyrillic_i_macron
-0x069e   U04e9   u   # Cyrillic_o_bar
-0x069f   U04ef   u   # Cyrillic_u_macron
-
-0x06ad   U0491   .   # Ukrainian_ghe_with_upturn
-0x06bd   U0490   .   # Ukrainian_GHE_WITH_UPTURN
-*/
-
-	static UExtbyte const cyrillic[] = /* 0xa0 - 0xff */
-	{0x00, 0xf2, 0xf3, 0xf1, 0xf4, 0xf5, 0xf6, 0xf7,
-	 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0x00, 0xfe, 0xff,
-	 0xf0, 0xa2, 0xa3, 0xa1, 0xa4, 0xa5, 0xa6, 0xa7,
-	 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0x00, 0xae, 0xaf,
-	 0xee, 0xd0, 0xd1, 0xe6, 0xd4, 0xd5, 0xe4, 0xd3,
-	 0xe5, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde,
-	 0xdf, 0xef, 0xe0, 0xe1, 0xe2, 0xe3, 0xd6, 0xd2,
-	 0xec, 0xeb, 0xd7, 0xe8, 0xed, 0xe9, 0xe7, 0xea,
-	 0xce, 0xb0, 0xb1, 0xc6, 0xb4, 0xb5, 0xc4, 0xb3,
-	 0xc5, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe,
-	 0xbf, 0xcf, 0xc0, 0xc1, 0xc2, 0xc3, 0xb6, 0xb2,
-	 0xcc, 0xcb, 0xb7, 0xc8, 0xcd, 0xc9, 0xc7, 0xca};
-	charset = Vcharset_cyrillic_iso8859_5;
-	code = cyrillic[(keysym & 0x7f) - 0x20];
+	USE_UNICODE_MAP(keysym, CYRILLIC);
 	break;
       }
     case 7: /* Greek */
@@ -1201,18 +1249,34 @@ if necessary). DOCUMENT the existing system that does this.
   if (code == 0)
     return Qnil;
 
+  /* #### Is this check on !NILP (charset) needed?  Maybe should be assert? */
   if (!NILP (charset))
     {
-      Ichar ich = charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
-      if (ich >= 0)
-	return make_char (ich);
+      /* First try to generate a unified character by converting through
+	 Unicode, then try converting directly to an Ichar (only matters
+	 when non-Unicode-internal, else we get same results both ways). */
+      int ucs = charset_codepoint_to_unicode (charset, 0, code, CONVERR_FAIL);
+      if (ucs >= 0)
+	{
+	  Ichar ich = unicode_to_ichar (ucs, get_unicode_precedence (),
+					CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
+	}
+      else
+	{
+	  Ichar ich =
+	    charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
+	}
     }
   return Qnil;
-#else
+#else /* not MULE */
   if (keysym >= 0x100)
     return Qnil;
   return make_char (keysym);
-#endif
+#endif /* (not) MULE */
 }
 
 #endif /* defined(THIS_IS_X) || !defined(__GDK_KEYS_H__) */

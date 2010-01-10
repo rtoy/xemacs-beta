@@ -86,6 +86,9 @@ to make ARG be the prefix argument when `foo' is called as a command.
 The "call" to `interactive' is actually a declaration rather than a function;
  it tells `call-interactively' how to read arguments
  to pass to the function.
+The interactive form must appear at the top level of the function body.  If
+ it is wrapped in a `let' or `progn' or similar, Lisp will not even realize
+ the function is an interactive command!
 When actually called, `interactive' just returns nil.
 
 The argument of `interactive' is usually a string containing a code letter
@@ -203,33 +206,11 @@ Z -- (and current-prefix-arg (fboundp 'read-coding-system)
                                (eq window (active-minibuffer-window)))))
               (error "Attempt to select inactive minibuffer window"))
             (select window)))))
-`_' (setq zmacs-region-stays t)
-
-*/
+`_' (setq zmacs-region-stays t) *//* FIXME: moving end of previous comment
+to a separate line causes docstring lossage! */
        (UNUSED (args)))
 {
   return Qnil;
-}
-
-/* Originally, this was just a function -- but `custom' used a
-   garden-variety version, so why not make it a subr?  */
-/* #### Move it to another file! */
-DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
-Quote EXPR if it is not self quoting.
-*/
-       (expr))
-{
-  return ((NILP (expr)
-	   || EQ (expr, Qt)
-	   || INTP (expr)
-	   || FLOATP (expr)
-	   || CHARP (expr)
-	   || STRINGP (expr)
-	   || VECTORP (expr)
-	   || KEYWORDP (expr)
-	   || BIT_VECTORP (expr)
-	   || (CONSP (expr) && EQ (XCAR (expr), Qlambda)))
-	  ? expr : list2 (Qquote, expr));
 }
 
 /* Modify EXPR by quotifying each element (except the first).  */
@@ -398,7 +379,7 @@ when reading the arguments.
 
       GCPRO3 (function, specs, input);
       /* Compute the arg values using the user's expression.  */
-      specs = Feval (specs);
+      specs = IGNORE_MULTIPLE_VALUES (Feval (specs));
       if (EQ (record_flag, Qlambda)) /* XEmacs addition */
 	{
 	  UNGCPRO;
@@ -914,7 +895,7 @@ when reading the arguments.
 	    {
 	      Lisp_Object tem = call1 (Qread_expression, PROMPT ());
 	      /* visargs[argnum] = Fprin1_to_string (tem, Qnil); */
-	      args[argnum] = Feval (tem);
+              args[argnum] = IGNORE_MULTIPLE_VALUES (Feval (tem));
 	      arg_from_tty = 1;
 	      break;
 	    }
@@ -1046,7 +1027,6 @@ syms_of_callint (void)
 #endif
 
   DEFSUBR (Finteractive);
-  DEFSUBR (Fquote_maybe);
   DEFSUBR (Fcall_interactively);
   DEFSUBR (Fprefix_numeric_value);
 }

@@ -286,19 +286,19 @@ XIM_init_frame (struct frame *f)
   xic_vars_t xic_vars;
   XIC xic;
 
-#define res(name, class_, representation, field, default_value) \
-  { name, class_, representation, sizeof(xic_vars.field), \
-     XtOffsetOf(xic_vars_t, field), XtRString, default_value }
+#define res(name, class_, representation, field, default_value) 	\
+  Xt_RESOURCE (name, class_, representation, xic_vars.field,		\
+	       XtOffsetOf(xic_vars_t, field), XtRString, default_value)
 
   static XtResource resources[] =
   {
     /*  name              class          represent'n   field    default value */
-    res(XtNximStyles,     XtCXimStyles,  XtRXimStyles, styles,  (XtPointer) DefaultXIMStyles),
-    res(XtNfontSet,       XtCFontSet,    XtRFontSet,   fontset, (XtPointer) XtDefaultFontSet),
-    res(XtNximForeground, XtCForeground, XtRPixel,     fg,      (XtPointer) XtDefaultForeground),
-    res(XtNximBackground, XtCBackground, XtRPixel,     bg,      (XtPointer) XtDefaultBackground)
+    res(XtNximStyles,     XtCXimStyles,  XtRXimStyles, styles,  DefaultXIMStyles),
+    res(XtNfontSet,       XtCFontSet,    XtRFontSet,   fontset, XtDefaultFontSet),
+    res(XtNximForeground, XtCForeground, XtRPixel,     fg,      XtDefaultForeground),
+    res(XtNximBackground, XtCBackground, XtRPixel,     bg,      XtDefaultBackground)
   };
-
+#undef res
 
   xim = DEVICE_X_XIM (d);
 
@@ -384,13 +384,18 @@ XIM_init_frame (struct frame *f)
 void
 XIM_SetGeometry (struct frame *f)
 {
-  XIC      xic   = FRAME_X_XIC (f);
-  XIMStyle style = FRAME_X_XIC_STYLE (f);
+  XIC      xic;
+  XIMStyle style;
   XRectangle area;
 
-  if (!xic || !f)
+  if (!f)
     return;
 
+  xic = FRAME_X_XIC (f);
+  if (!xic)
+    return;
+
+  style = FRAME_X_XIC_STYLE (f);
   if (style & XIMStatusArea)
     {
       /* Place Status Area in bottom right corner */
@@ -708,7 +713,7 @@ EmacsFreeXIMStyles (
 
   if (converter_data)
     {
-      Boolean free_p    = (Boolean) (int) converter_data;
+      Boolean free_p    = (Boolean) (EMACS_INT) converter_data;
       XIMStyles *styles = (XIMStyles *) toVal->addr;
       if (free_p)
         XFree ( styles->supported_styles );
@@ -890,7 +895,8 @@ describe_Window (Window win)
   char xwincmd[128];
   sprintf (xwincmd, "xwininfo -id 0x%x >&2; xwininfo -events -id 0x%x >&2",
            (int) win, (int) win);
-  system (xwincmd);
+  if (system (xwincmd) == -1)
+    stderr_out ("Unable to execute xwininfo\n");
 }
 
 void
@@ -972,7 +978,7 @@ describe_XIC (XIC xic)
 }
 
 void
-describe_XRectangle (char *name, XRectangle *r)
+describe_XRectangle (const char *name, XRectangle *r)
 {
   if (r == NULL)
     stderr_out ("%s: NULL\n", name);

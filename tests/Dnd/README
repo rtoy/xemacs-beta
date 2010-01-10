@@ -9,14 +9,8 @@ To test the code do the following:
 3) Try to do some internal DnD by using the sources and targets
    in the new buffer
 4) Do some external DnD:
-   4a) OffiX: use files and editor of OffiX
-              drag something from files or editor into XEmacs
-              drag something from XEmacs to xv (only with OffiX patch,
-              editor or files -- files can only move and copy within
-              itself, cause OffiX is not quite the right thing to do)
-   4b) CDE: use dtfile and dtpad instead, but here everything should
-            work.
-   4c) MSWindows: well, explorer should do. But only file data
+   4a) CDE: use dtfile and dtpad
+   4b) MSWindows: well, explorer should do. But only file data
                   should work, and I don't know if the test
                   already handles this.
 

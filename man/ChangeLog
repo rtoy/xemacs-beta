@@ -1,3 +1,460 @@
+2009-12-21  Jerry James  <james@xemacs.rg>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove references to OffiX support files.
+	* lispref/dragndrop.texi (Drag and Drop): Remove reference to OffiX.
+	(Supported Protocols): Ditto.
+	(OffiX DND): Remove.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* lispref/processes.texi (Functions that Create Subprocesses): Refer
+	to etags instead of the obsolete wakeup program.
+
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove references to xmu.c and xmu.h.
+	(Modules for Interfacing with X Windows): Ditto.
+
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (XEmacs from the Perspective of Building):
+	Remove reference to dynodump.
+	(A Summary of the Various XEmacs Modules): Remove references to
+	deleted files.
+	(Low-Level Modules): Ditto.
+	(Modules for the Basic Displayable Lisp Objects): Remove reference to
+	NeXTstep.
+	* lispref/os.texi (Operating System Environment): Remove references to
+	old unsupported systems.
+	* make-stds.texi (Variables for Installation Directories): Likely
+	insufficient update to list of current operating systems.
+	* xemacs-faq.texi (Q1.2.2: What versions of Unix does XEmacs run on?):
+	Ditto.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* beta.texi (Building XEmacs from a full distribution): Remove
+	"(builtin)" from GIF line in example Installation.
+	(Reporting Problems): Recommend taking screenshots as a PNG
+	instead of a GIF.
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Remove GIF-related files.
+	* lispref/glyphs.texi (Image Instantiator Formats): Remove remark
+	about builtin GIF support.
+
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/numbers.texi (Bigfloat Basics): 
+	Correct this documentation (ignoring for the moment that it breaks
+	off in mid-sentence).
+
+2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Organization): 
+	Remove references to the obsolete multiple-value emulating code.
+
+2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Redisplay Piece by Piece):
+	Small improvements.
+
+2009-07-08  Stephen Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (Xft Font Customization): Change references
+	from XftFont (now deprecated) to FcFontName.
+	Thanks, Raymond Toy <raymond.toy@stericsson.com>.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2009-04-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi: s/@urlref/@uref/g.
+	(Lstreams): Add urefs to David Beasley tutorials.
+
+2009-04-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.5.3): 
+	Add information about resolver configuration to Q2.5.3.
+	Thanks to Guillaume MULLER <gm.work.lists@gmail.com>.
+
+	* xemacs-faq.texi (Top): Update menu.
+	* xemacs-faq.texi (Installation): Update menu.
+
+2009-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q3.0.12): New node for Meta key on Mac.
+	(Top):
+	(Editing):
+	(Q3.0.11):
+	(Q3.1.1):
+	Fix up Next/Prev/Menu references.
+
+2009-02-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/xemacs.texi (Top): 
+	* xemacs/misc.texi (Emulation): 
+	* xemacs/building.texi (Lisp Libraries): 
+	(Compiling Libraries): 
+	Remove any reference to mocklisp as an active technology.
+	Also remove documentation of the related #'set-gosmacs-bindings,
+	which is no longer available.
+
+2008-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q5.0.7): Fix broken instructions on use of
+	antialiased fonts.
+
+2008-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs-faq.texi (Q5.0.7): Add a section on how one can use
+	antialiased fonts under X11; thank you Giacomo Boffi. 
+	(Q1.0.3): Clarify pronunciation using a serious phonetic
+	alphabet. 
+
+2008-07-26  Ville Skyttä  <scop@xemacs.org>
+
+	* xemacs/custom.texi, xemacs/frame.texi, xemacs/mule.texi,
+	xemacs/packages.texi, xemacs/programs.texi, xemacs/trouble.texi:
+	Spelling fixes.
+
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	Document the error provoked when the reader sees an over-long
+	hexadecimal constant.
+
+2008-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Extent): 
+	Correct a misspelling of macros, add a needed space. Thank you
+	John Paul Wallington, thank you Stephen Turnbull. 
+
+2008-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Equality Predicates): 
+	Expand on bignum equality; correct an omitted word in the last
+	commit. 
+
+2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Equality Predicates): 
+	Cross reference to the section on comparison of numbers when
+	talking about using #'eq with integers; also mention that
+	#'eq gives t when passed identical integers, and that #'char= is
+	also available there.
+
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Ben's README): 
+	Add a couple of @itemize / @end itemize pairs, to prevent
+	#'batch-texinfo-format choking on the input. 
+
+2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/cmdargs.texi (Command Switches): 
+	Describe --script, -script. 
+
+2008-02-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Discussion -- KKCC):
+	(Discussion -- Incremental Collector):
+	New nodes.
+	(Top):
+	(Discussion -- Garbage Collection):
+	(Discussion -- Pure Space):
+	Adjust pointers and menus for new nodes.
+
+	(lrecords): Remark that lcrecords are obsolete.
+
+2007-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document %b for binary output.
+
+2007-12-10  Ville Skyttä  <scop@xemacs.org>
+
+	* internals/internals.texi: Spelling fixes.
+
+2007-12-07  Ville Skyttä  <scop@xemacs.org>
+
+	* beta.texi, emodules.texi, term.texi, termcap.texi, texinfo.texi,
+	widget.texi, xemacs-faq.texi: Spelling fixes.
+
+2007-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Ibytes and Ichars):
+	Cross reference to the Mule docs describing these typedefs,
+	instead of saying Not yet documented. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (String Type):
+	Describe how one can include a trailing backslash in a raw string,
+	by means of the Unicode escape syntax. 
+
+2007-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/keystrokes.texi (Character Representation):
+	Clarify the description of which characters are displayed as
+	themselves and which as octal escapes bzw. "control" characters
+	with an initial caret. 
+
+2007-10-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile (info_files): Sync nt/xemacs.mak and man/Makefile.
+	Sort enries to easy future syncs.
+
+2007-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/searching.texi (Replacing Match): Document the escapes
+	for changing case in `replace-match'.  Document the change to
+	STRBUFFER to permit subexpressions in string replacement.
+
+2007-09-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile (TEXI2HTML_NOSPLIT): New.
+	* Makefile ($(HTMLDIR)/beta.html): Use TEXI2HTML_NOSPLIT.
+	* Makefile ($(HTMLDIR)/xemacs-faq.html): Ditto.
+
+2007-09-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile (TEXI2HTML): Refactor TEXI2HTML for use by
+	xemacsweb/Documentation/Makefile.
+
+2007-08-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* internals/internals.texi (Through Version 18): Fix error in
+	Emacs Timeline URL.
+	* internals/internals.texi (Better Rendering Support -- Configuration with the Interim Patches):
+
+2007-06-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Extent):
+	Mention that lexical scope is available using lexical-let and
+	lexical-let* in cl-macs, instead of ignoring them entirely. 
+
+2007-05-21  Ville Skyttä  <scop@xemacs.org>
+
+	* internals/internals.texi: Fix corrupted/oddly encoded chars.
+	* lispref/ldap.texi: Ditto.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-05-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi:
+	Replace an inaccurate description of the read syntax of a Kanji
+	character with one using the recently-added Unicode escapes. Also
+	update the size of an Ichar; they're now 21-bit integers, not
+	19-bit integers. 
+
+2007-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Creating a New Console/Device/Frame Type):
+	Typo fix.
+
+2007-01-01  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi (Ben's README): Use 'grep -F' instead
+	of fgrep.
+
+2006-11-07  Robert Pluim  <rpluim@gmail.com>
+
+	* lispref/os.texi (User Identification): The code uses HOMEPATH,
+	not HOMEDIR.
+
+2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/custom.texi (Face Resources):
+	Mention that the user should use full XLFD forms for specifying
+	fonts, and that Mule builds reject the short forms by
+	default. Also mention the work-around to the latter design choice
+	that was implemented for Ilya. 
+
+2006-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi
+	(Better Rendering Support -- Configuration with the Interim Patches):
+	Fix examples of configuration via X resources.
+	(Better Rendering Support -- Implementation): Fix description of
+	xftFont resources, introduce fcFontName resource.
+
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/faces.texi (Face Convenience Functions):
+	Add information on how to specify a face's font for a given Mule
+	charset. 
+	
+	* lispref/specifiers.texi (Specifiers):
+	* lispref/specifiers.texi (Simple Specifier Usage):
+	* lispref/specifiers.texi (Specifiers In-Depth):
+	* lispref/specifiers.texi (Specifier Tag Functions):
+	* lispref/specifiers.texi (Specifier Instantiation Functions):
+	Update the documentation of specifiers to reflect the new support
+	for Mule character sets and associating tags with them. 
+
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (String Type):
+	Give details of the raw string syntax, taken from SXEmacs and
+	Python. 
+
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* new-users-guide/edit.texi (Insert): Document bogosity in
+	vendor labeling of DEL key.
+	(Numeric Argument): Remove spurious RETs from keystroke examples.
+	Thanks to Michael C. Wescott <wescott@sc.rr.com>.
+
+2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/custom.texi (File Variables):
+	Make it clearer that file variables are buffer-local. 
+	* xemacs/custom.texi (Faces):
+	"must be encoding" -> "must be encoded". 
+	
+2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Creating Buffer-Local):
+	Mention that buffer-local variables are created when file local
+	variables are set. 
+	
+2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Internal String Encoding):
+	Mention that UTF-8 would be a reasonable alternative encoding. 
+	* internals/internals.texi (Internal Character Encoding):
+	Re-arrange the description of characters to deal with 21-bit
+	characters. 
+
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/mule.texi (CCL Syntax):
+	* lispref/mule.texi (CCL Statements):
+	Describe the mule-to-unicode and unicode-to-mule statements;
+	rename the section they are described in.
+	
+2006-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.2.3): New node.
+	(Q2.2.2, Q2.3.1): Fix navigation references.
+	(Top, Installation): Add to menus.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* beta.texi (Building Beta XEmacs): Rename 'Compiling' -> 'Building'.
+	(Reporting Problems): Improve it, make it a top-level node, add
+	some vertical spacing to make node breaks more visible.
+	(Getting the Source): Flesh it out a bit and move it to the
+	Building Beta XEmacs node.
+
+2006-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (Xft Font Customization): New node.
+	(Faces): Create menu, add new node.
+	* xemacs/xemacs.texi (Top): add new node to detail menu.
+
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	Document the Unicode syntax for characters in characters and
+	strings. 
+
+2006-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi:  Run texinfo-master-menu.
+	(Creating a New Console/Device/Frame Type): New node.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, parts 2-4: move CHANGES-msw,
+	TODO.ben-mule-21-5, README.ben-mule-21-5, and
+	README.ben-separate-stderr to Internals Manual.
+
+	* internals/internals.texi (Ben's TODO list): 
+	(CHANGES from 21.4-windows branch):
+	(Ben's README):
+	(Ben's separate stderr notes):
+	New nodes.
+
+	(Subprocesses): Add "Ben's separate stderr notes" to menu.
+	(The Great Mule Merge of March 2002): Add "Ben's TODO list" and
+	"Ben's README" to menu.
+	(Interface to MS Windows): Add "CHANGES from 21.4-windows branch"
+	to menu.
+
+	(Top): Update detailmenu.
+
+2006-03-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, part 1: move CHANGES-ben-mule to
+	Internals Manual.
+
+	* internals/internals.texi (The Great Mule Merge of March 2002):
+	Insert CHANGES-ben-mule here, and reformat for Texinfo.
+
+2006-02-26  Mike Sperber  <mike@xemacs.org>
+
+	* xemacs/building.texi (External Lisp): Document that `run-lisp'
+	needs the os-utils package.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* lispref/packaging.texi (The User View): 
+	* xemacs/startup.texi (Startup Paths): 
+	* xemacs-faq.texi (Q2.1.6): Document new configure options and
+	environment variables for
+	package locations.
+
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/keystrokes.texi (Keystrokes): 
+	Add new node on keyboards with which one can't type Latin.  
+	* xemacs/keystrokes.texi (Non-Latin keyboards): 
+	Describe the support for falling back to a US key layout on 
+ 	keyboards where typing the Roman alphabet is difficult.  
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-12-09  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi (The configure Script):  Documented
+	more fully the behaviour of complex options.  Provided examples.
+
+2005-12-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* custom.texi (Declaring Variables): Typo fixes.
+
+2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (Faces): Describe some of the more important
+	font naming syntaxes under `set-face-font'.  Fix a typo.
+
+2005-11-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Working with Lisp Objects): Explain
+	better why DEFSYMBOL is usually preferable to intern.
+
 2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* internals/internals.texi (The configure Script):  Added the
@@ -2807,7 +3264,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

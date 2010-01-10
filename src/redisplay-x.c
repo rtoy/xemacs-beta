@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2009 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -45,6 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_CCL
 #include "mule-ccl.h"
 #endif
+#include "charset.h"
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
@@ -59,7 +60,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/bitmaps/gray>
 
 /* Number of pixels below each line. */
-int x_interline_space; /* #### implement me */
+int x_interline_space; /* #### this needs to be implemented, but per-font */
 
 #define EOL_CURSOR_WIDTH	5
 
@@ -74,151 +75,12 @@ static void x_output_eol_cursor (struct window *w, struct display_line *dl,
 static void x_clear_frame (struct frame *f);
 static void x_clear_frame_windows (Lisp_Object window);
 
+#ifdef USE_XFT
+#define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \
+		   ? ((unsigned long) (x)) : ((unsigned long) (y)))
+#endif /* USE_XFT */
 
-     /* Note: We do not use the Xmb*() functions and XFontSets.
-	Those functions are generally losing for a number of reasons:
-
-	 1) They only support one locale (e.g. you could display
-	    Japanese and ASCII text, but not mixed Japanese/Chinese
-	    text).  You could maybe call setlocale() frequently
-	    to try to deal with this, but that would generally
-	    fail because an XFontSet is tied to one locale and
-	    won't have the other character sets in it.
-	 2) Not all (or even very many) OS's support the useful
-	    locales.  For example, as far as I know SunOS and
-	    Solaris only support the Japanese locale if you get the
-	    special Asian-language version of the OS.  Yuck yuck
-	    yuck.  Linux doesn't support the Japanese locale at
-	    all (or didn't, at the time this was written, sometime
-	    in the 90's.  As of 2005, there is much better CJK
-	    support in Linux, as well as Unicode support).
-	 3) The locale support in X only exists in R5, not in R4.
-	    (Not sure how big of a problem this is: how many
-	    people are using R4?)
-	 4) Who knows if the multi-byte text format (which is locale-
-	    specific) is even the same for the same locale on
-	    different OS's?  It's not even documented anywhere that
-	    I can find what the multi-byte text format for the
-	    Japanese locale under SunOS and Solaris is, but I assume
-	    it's EUC-JP.
-      */
-
-struct textual_run
-{
-  Lisp_Object charset;
-  unsigned char *ptr;
-  int len;
-  int dimension;
-};
-
-/* Separate out the text in STR (an array of Ichars, not a string
-   representation) of length LEN into a series of runs, stored in RUNS.
-   RUNS is guaranteed to hold enough space for all runs that could be
-   generated from this text.  Each run points to the a stretch of text
-   given simply by the position codes TEXT_STORAGE into a series of textual
-   runs of a particular charset.  Also convert the characters as necessary
-   into the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly tweaking
-   the high bits, and possibly running a CCL program.) You must
-   pre-allocate the space used and pass it in. (This is done so you can
-   ALLOCA () the space.)  You need to allocate (2 * len) bytes of
-   TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUNS, where LEN is the length of the dynarr.
-
-   Returns the number of runs actually used. */
-
-static int
-separate_textual_runs (unsigned char *text_storage,
-		       struct textual_run *runs,
-		       const Ichar *str, Charcount len)
-{
-#ifndef MULE
-  int i;
-  for (i = 0; i < len; i++)
-    text_storage[i++] = (unsigned char) (*str);
-  runs[0].ptr       = text_storage;
-  runs[0].charset   = Vcharset_ascii;
-  runs[0].dimension = 1;
-  runs[0].len       = len;
-  return 1;
-#else /* MULE */
-  Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
-					  possible valid charset when
-					  MULE is not defined */
-  int runs_so_far = 0;
-  int i;
-#ifdef HAVE_CCL
-  struct ccl_program char_converter;
-  int need_ccl_conversion = 0;
-#endif /* HAVE_CCL */
-
-  for (i = 0; i < len; i++)
-    {
-      Ichar ch = str[i];
-      Lisp_Object charset;
-      int byte1, byte2;
-      int dimension;
-
-      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
-				  &byte1, &byte2);
-      dimension = XCHARSET_DIMENSION (charset);
-      /* We swap here rather than handling below because we also take CCL
-	 input, whigh does it the other way */
-      if (dimension == 1)
-	byte1 = byte2;
-
-      if (!EQ (charset, prev_charset))
-	{
-	  runs[runs_so_far].ptr       = text_storage;
-	  runs[runs_so_far].charset   = charset;
-	  runs[runs_so_far].dimension = dimension;
-
-	  if (runs_so_far)
-	    {
-	      runs[runs_so_far - 1].len =
-		text_storage - runs[runs_so_far - 1].ptr;
-	      if (runs[runs_so_far - 1].dimension == 2)
-		runs[runs_so_far - 1].len >>= 1;
-	    }
-	  runs_so_far++;
-	  prev_charset = charset;
-#ifdef HAVE_CCL
-	  {
-	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
-	    if ((!NILP (ccl_prog))
-		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
-	      need_ccl_conversion = 1;
-	  }
-#endif
-	}
-
-#ifdef HAVE_CCL
-      if (need_ccl_conversion)
-	{
-	  char_converter.reg[0] = XCHARSET_ID (charset);
-	  char_converter.reg[1] = byte1;
-	  char_converter.reg[2] = byte2;
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
-	  byte1 = char_converter.reg[1];
-	  byte2 = char_converter.reg[2];
-	}
-#endif
-      *text_storage++ = (unsigned char) byte1;
-      if (dimension == 2)
-	*text_storage++ = (unsigned char) byte2;
-    }
-
-  if (runs_so_far)
-    {
-      runs[runs_so_far - 1].len =
-	text_storage - runs[runs_so_far - 1].ptr;
-      if (runs[runs_so_far - 1].dimension == 2)
-	runs[runs_so_far - 1].len >>= 1;
-    }
-
-  return runs_so_far;
-#endif /* not MULE */
-}
+#include "redisplay-xlike-inc.c"
 
 /****************************************************************************/
 /*                                                                          */
@@ -227,13 +89,34 @@ separate_textual_runs (unsigned char *text_storage,
 /****************************************************************************/
 
 static int
-x_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
+x_text_width_single_run (struct frame * USED_IF_XFT (f),
+			 struct face_cachel *cachel, struct textual_run *run)
 {
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
   if (!fi->proportional_p)
     return fi->width * run->len;
-  else
+#ifdef USE_XFT
+  else if (FONT_INSTANCE_X_XFTFONT(fi))
+    {
+      static XGlyphInfo glyphinfo;
+      struct device *d = XDEVICE (f->device);
+      Display *dpy = DEVICE_X_DISPLAY (d);
+
+      if (run->dimension == 2) {
+	XftTextExtents16 (dpy,
+			  FONT_INSTANCE_X_XFTFONT(fi),
+			  (XftChar16 *) run->ptr, run->len, &glyphinfo);
+      } else {
+	XftTextExtents8 (dpy,
+			 FONT_INSTANCE_X_XFTFONT(fi),
+			 run->ptr, run->len, &glyphinfo);
+      }
+    
+      return glyphinfo.xOff;
+    }
+#endif
+  else if (FONT_INSTANCE_X_FONT (fi))
     {
       if (run->dimension == 2)
 	return XTextWidth16 (FONT_INSTANCE_X_FONT (fi),
@@ -242,17 +125,23 @@ x_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
 	return XTextWidth (FONT_INSTANCE_X_FONT (fi),
 			   (char *) run->ptr, run->len);
     }
+  else
+    abort();
+  return 0;			/* shut up GCC */
 }
 
 /*
    x_text_width
 
-   Given a string and a face, return the string's length in pixels when
-   displayed in the font associated with the face.
+   Given a string and a merged face, return the string's length in pixels
+   when displayed in the fonts associated with the face.
    */
 
-static int
-x_text_width (struct frame *UNUSED (f), struct face_cachel *cachel,
+/* #### Break me out into a separate header */
+int x_text_width (struct frame *f, struct face_cachel *cachel,
+		  const Ichar *str, Charcount len);
+int
+x_text_width (struct frame *f, struct face_cachel *cachel,
 	      const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
@@ -262,10 +151,11 @@ x_text_width (struct frame *UNUSED (f), struct face_cachel *cachel,
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len);
+  nruns = separate_textual_runs (text_storage, runs, str, len, 
+				 cachel);
 
   for (i = 0; i < nruns; i++)
-    width_so_far += x_text_width_single_run (cachel, runs + i);
+    width_so_far += x_text_width_single_run (f, cachel, runs + i);
 
   return width_so_far;
 }
@@ -330,8 +220,10 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 			int start, int end, int start_pixpos, int cursor_start,
 			int cursor_width, int cursor_height)
 {
+#ifndef USE_XFT
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+#endif
+  Ichar_dynarr *buf;
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -359,7 +251,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 
   if (end < 0)
     end = Dynarr_length (rba);
-  Dynarr_reset (buf);
+  buf = Dynarr_new (Ichar);
 
   while (elt < end)
     {
@@ -518,13 +410,17 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
     x_output_string (w, dl, buf, xpos, 0, start_pixpos, width, findex,
 		     0, cursor_start, cursor_width, cursor_height);
 
-  /* #### This is really conditionalized well for optimized
-     performance. */
   if (dl->modeline
       && !EQ (Qzero, w->modeline_shadow_thickness)
+#ifndef USE_XFT
+      /* This optimization doesn't work right with some Xft fonts, which
+	 leave antialiasing turds at the boundary.  I don't know if this
+	 is an Xft bug or not, but I think it is.   See x_output_string. */
       && (f->clear
 	  || f->windows_structure_changed
-	  || w->shadow_thickness_changed))
+	  || w->shadow_thickness_changed)
+#endif
+      )
     bevel_modeline (w, dl);
 
   Dynarr_free (buf);
@@ -678,7 +574,13 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
   mask = GCGraphicsExposures | GCClipMask | GCClipXOrigin | GCClipYOrigin;
   mask |= GCFillStyle;
 
-  if (!NILP (font))
+  if (!NILP (font)
+#ifdef USE_XFT
+      /* Only set the font if it's a core font */
+      /* the renderfont will be set elsewhere (not part of gc) */
+      && !FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font))
+#endif
+      )
     {
       gcv.font = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font))->fid;
       mask |= GCFont;
@@ -687,7 +589,7 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
   /* evil kludge! */
   if (!NILP (fg) && !COLOR_INSTANCEP (fg) && !INTP (fg))
     {
-      /* #### I fixed once case where this was getting it.  It was a
+      /* #### I fixed one case where this was getting hit.  It was a
          bad macro expansion (compiler bug). */
       stderr_out ("Help! x_get_gc got a bogus fg value! fg = ");
       debug_print (fg);
@@ -745,6 +647,9 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
       mask |= GCLineWidth;
     }
 
+#if 0
+  debug_out ("\nx_get_gc: calling gc_cache_lookup\n");
+#endif
   return gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
 }
 
@@ -790,7 +695,7 @@ x_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
 
@@ -806,7 +711,8 @@ x_output_string (struct window *w, struct display_line *dl,
   /* Text-related variables */
   Lisp_Object bg_pmap;
   GC bgc, gc;
-  int height;
+  int height = DISPLAY_LINE_HEIGHT (dl);
+  int ypos = DISPLAY_LINE_YPOS (dl);
   int len = Dynarr_length (buf);
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
@@ -814,11 +720,31 @@ x_output_string (struct window *w, struct display_line *dl,
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-  window = wrap_window (w);
+  int use_x_font = 1;		/* #### bogus!!
+				   The logic of this function needs review! */
+#ifdef USE_XFT
+  Colormap cmap = DEVICE_X_COLORMAP (d);
+  Visual *visual = DEVICE_X_VISUAL (d);
+  static XftColor fg, bg;
+  XftDraw *xftDraw;
+
+  /* Lazily initialize frame's xftDraw member. */
+  if (!FRAME_X_XFTDRAW (f)) {
+    FRAME_X_XFTDRAW (f) = XftDrawCreate (dpy, x_win, visual, cmap);
+  }
+  xftDraw = FRAME_X_XFTDRAW (f);
+
+  /* #### This will probably cause asserts when passed a Lisp integer for a
+     color.  See ca. line 759 this file.
+     #### Maybe xft_convert_color should take an XColor, not a pixel. */
+#define XFT_FROB_LISP_COLOR(color, dim) \
+  xft_convert_color (dpy, cmap, visual, \
+		     COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color)).pixel, \
+		     (dim))
+#endif
 
   if (width < 0)
     width = x_text_width (f, cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
-  height = DISPLAY_LINE_HEIGHT (dl);
 
   /* Regularize the variables passed in. */
 
@@ -832,11 +758,8 @@ x_output_string (struct window *w, struct display_line *dl,
   xpos -= xoffset;
 
   /* make sure the area we are about to display is subwindow free. */
-  redisplay_unmap_subwindows_maybe (f, clip_start, DISPLAY_LINE_YPOS (dl),
-				    clip_end - clip_start, DISPLAY_LINE_HEIGHT (dl));
-
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
-				 Dynarr_length (buf));
+  redisplay_unmap_subwindows_maybe (f, clip_start, ypos,
+				    clip_end - clip_start, height);
 
   cursor_clip = (cursor_start >= clip_start &&
 		 cursor_start < clip_end);
@@ -874,13 +797,20 @@ x_output_string (struct window *w, struct display_line *dl,
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
     bgc = 0;
   else
-    bgc = x_get_gc (d, Qnil, cachel->foreground, cachel->background,
-		    bg_pmap, Qnil);
+    {
+      bgc = x_get_gc (d, Qnil, cachel->foreground, cachel->background,
+		      bg_pmap, Qnil);
+    }
 
   if (bgc)
-    XFillRectangle (dpy, x_win, bgc, clip_start,
-		    DISPLAY_LINE_YPOS (dl), clip_end - clip_start,
-		    height);
+    {
+      XFillRectangle (dpy, x_win, bgc, clip_start,
+		      ypos, clip_end - clip_start,
+		      height);
+    }
+
+  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
+				 Dynarr_length (buf), cachel);
 
   for (i = 0; i < nruns; i++)
     {
@@ -892,7 +822,7 @@ x_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      this_width = x_text_width_single_run (cachel, runs + i);
+      this_width = x_text_width_single_run (f, cachel, runs + i);
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
@@ -911,8 +841,8 @@ x_output_string (struct window *w, struct display_line *dl,
 
 	      ypos1_string = dl->ypos - fi->ascent;
 	      ypos2_string = dl->ypos + fi->descent;
-	      ypos1_line = DISPLAY_LINE_YPOS (dl);
-	      ypos2_line = ypos1_line + DISPLAY_LINE_HEIGHT (dl);
+	      ypos1_line = ypos;
+	      ypos2_line = ypos1_line + height;
 
 	      /* Make sure we don't clear below the real bottom of the
 		 line. */
@@ -938,14 +868,20 @@ x_output_string (struct window *w, struct display_line *dl,
 	  else
 	    {
 	      redisplay_clear_region (window, findex, clear_start,
-			      DISPLAY_LINE_YPOS (dl), clear_end - clear_start,
+			      ypos, clear_end - clear_start,
 			      height);
 	    }
 	}
 
       if (cursor && cursor_cachel && focus && NILP (bar_cursor_value))
-	gc = x_get_gc (d, font, cursor_cachel->foreground,
-		       cursor_cachel->background, Qnil, Qnil);
+	{
+#ifdef USE_XFT
+	  fg = XFT_FROB_LISP_COLOR (cursor_cachel->foreground, 0);
+	  bg = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
+#endif
+	  gc = x_get_gc (d, font, cursor_cachel->foreground,
+			 cursor_cachel->background, Qnil, Qnil);
+	}
       else if (cachel->dim)
 	{
 	  /* Ensure the gray bitmap exists */
@@ -955,53 +891,135 @@ x_output_string (struct window *w, struct display_line *dl,
 				     gray_width, gray_height);
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
+#ifdef USE_XFT
+	  fg = XFT_FROB_LISP_COLOR (cachel->foreground, 1);
+	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
+#endif
 	  gc = x_get_gc (d, font, cachel->foreground, cachel->background,
 			 Qdim, Qnil);
 	}
       else
-	gc = x_get_gc (d, font, cachel->foreground, cachel->background,
-		       Qnil, Qnil);
-
-      if (need_clipping)
 	{
-	  XRectangle clip_box[1];
-
-	  clip_box[0].x = 0;
-	  clip_box[0].y = 0;
-	  clip_box[0].width = clip_end - clip_start;
-	  clip_box[0].height = height;
-
-	  XSetClipRectangles (dpy, gc, clip_start, DISPLAY_LINE_YPOS (dl),
-			      clip_box, 1, Unsorted);
+#ifdef USE_XFT
+	  fg = XFT_FROB_LISP_COLOR (cachel->foreground, 0);
+	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
+#endif
+	  gc = x_get_gc (d, font, cachel->foreground, cachel->background,
+			 Qnil, Qnil);
 	}
+#ifdef USE_XFT
+      {
+	XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
 
-      if (runs[i].dimension == 1)
-	(bgc ? XDrawString : XDrawImageString) (dpy, x_win, gc, xpos,
-						dl->ypos, (char *) runs[i].ptr,
-						runs[i].len);
-      else
-	(bgc ? XDrawString16 : XDrawImageString16) (dpy, x_win, gc, xpos,
-						    dl->ypos,
-						    (XChar2b *) runs[i].ptr,
-						    runs[i].len);
+	if (rf)
+	  {
+	    use_x_font = 0;
+	    if (need_clipping)
+	      {
+		Region clip_reg = XCreateRegion();
+		XRectangle clip_box = { clip_start, ypos,
+					clip_end - clip_start, height };
+
+		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
+		XftDrawSetClip(xftDraw, clip_reg);
+		XDestroyRegion(clip_reg);
+	      }
+
+	    if (!bgc)
+	      {
+		/* #### Neither rect_height nor XftTextExtents as computed
+		   below handles the vertical space taken up by antialiasing,
+		   which for some fonts (eg, Bitstream Vera Sans Mono-16 on
+		   my Mac PowerBook G4) leaves behind orphaned dots on
+		   insertion or deletion earlier in the line, especially in
+		   the case of the underscore character.
+		   Interestingly, insertion or deletion of a single character
+		   immediately after a refresh does not leave any droppings,
+		   but any further insertions or deletions do.
+		   While adding a pixel to rect_height (mostly) takes care of
+		   this, it trashes aggressively laid-out elements like the
+		   modeline (overwriting part of the bevel).
+		   OK, unconditionally redraw the bevel, and increment
+		   rect_height by 1.  See x_output_display_block. -- sjt */
+		struct textual_run *run = &runs[i];
+		int rect_width = x_text_width_single_run (f, cachel, run);
+#ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
+		int rect_height = FONT_INSTANCE_ASCENT(fi)
+				  + FONT_INSTANCE_DESCENT(fi) + 1;
+#else
+		int rect_height = FONT_INSTANCE_ASCENT(fi)
+				  + FONT_INSTANCE_DESCENT(fi);
+		XGlyphInfo gi;
+		if (run->dimension == 2) {
+		  XftTextExtents16 (dpy,
+				    FONT_INSTANCE_X_XFTFONT(fi),
+				    (XftChar16 *) run->ptr, run->len, &gi);
+		} else {
+		  XftTextExtents8 (dpy,
+				   FONT_INSTANCE_X_XFTFONT(fi),
+				   run->ptr, run->len, &gi);
+		}
+		rect_height = rect_height > gi.height
+			      ? rect_height : gi.height;
+#endif
+
+		XftDrawRect (xftDraw, &bg,
+			     xpos, ypos, rect_width, rect_height);
+	      }
+	
+	    if (runs[i].dimension == 1)
+	      XftDrawString8 (xftDraw, &fg, rf, xpos, dl->ypos,
+			      runs[i].ptr, runs[i].len);
+	    else
+	      XftDrawString16 (xftDraw, &fg, rf, xpos, dl->ypos,
+			       (XftChar16 *) runs[i].ptr, runs[i].len);
+	  }
+      }
+#endif
+      {
+	if (use_x_font)
+	  {
+	    if (need_clipping)
+	      {
+		XRectangle clip_box[1];
+
+		clip_box[0].x = 0;
+		clip_box[0].y = 0;
+		clip_box[0].width = clip_end - clip_start;
+		clip_box[0].height = height;
+
+		XSetClipRectangles (dpy, gc, clip_start, ypos,
+				    clip_box, 1, YXBanded);
+	      }
+
+	    if (runs[i].dimension == 1)
+	      (bgc ? XDrawString : XDrawImageString)
+		(dpy, x_win, gc, xpos, dl->ypos,
+		 (char *) runs[i].ptr, runs[i].len);
+	    else
+	      (bgc ? XDrawString16 : XDrawImageString16)
+		(dpy, x_win, gc, xpos, dl->ypos,
+		 (XChar2b *) runs[i].ptr, runs[i].len);
+	  }
+      }
 
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
 	  int upos, uthick;
 	  unsigned long upos_ext, uthick_ext;
-	  XFontStruct *xfont;
-
-	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
-	  if (!XGetFontProperty (xfont, XA_UNDERLINE_POSITION, &upos_ext))
-	    upos = dl->descent / 2;
-	  else
+	  XFontStruct *fs =
+	    use_x_font ? FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)) : 0;
+	  /* #### the logic of the next two may be suboptimal: we may want
+	     to use the POSITION and/or THICKNESS information with Xft */
+	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_POSITION, &upos_ext))
 	    upos = (int) upos_ext;
-	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick_ext))
-	    uthick = 1;
 	  else
+	    upos = dl->descent / 2;
+	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
 	    uthick = (int) uthick_ext;
-
+	  else
+	    uthick = 1;
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
 	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
@@ -1024,22 +1042,29 @@ x_output_string (struct window *w, struct display_line *dl,
 	{
 	  int ascent, descent, upos, uthick;
 	  unsigned long ascent_ext, descent_ext, uthick_ext;
-	  XFontStruct *xfont;
-
-	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
+	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
 	  
-	  if (!XGetFontProperty (xfont, XA_STRIKEOUT_ASCENT, &ascent_ext))
-	    ascent = xfont->ascent;
+	  if (!use_x_font)
+	    {
+	      ascent = dl->ascent;
+	      descent = dl->descent;
+	      uthick = 1;
+	    }
 	  else
-	    ascent = (int) ascent_ext;
-	  if (!XGetFontProperty (xfont, XA_STRIKEOUT_DESCENT, &descent_ext))
-	    descent = xfont->descent;
-	  else
-	    descent = (int) descent_ext;
-	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick_ext))
-	    uthick = 1;
-	  else
-	    uthick = (int) uthick_ext;
+	    {
+	      if (!XGetFontProperty (fs, XA_STRIKEOUT_ASCENT, &ascent_ext))
+		ascent = fs->ascent;
+	      else
+		ascent = (int) ascent_ext;
+	      if (!XGetFontProperty (fs, XA_STRIKEOUT_DESCENT, &descent_ext))
+		descent = fs->descent;
+	      else
+		descent = (int) descent_ext;
+	      if (!XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
+		uthick = 1;
+	      else
+		uthick = (int) uthick_ext;
+	    }
 
 	  upos = ascent - ((ascent + descent) / 2) + 1;
 
@@ -1062,37 +1087,88 @@ x_output_string (struct window *w, struct display_line *dl,
       /* Restore the GC */
       if (need_clipping)
 	{
-	  XSetClipMask (dpy, gc, None);
-	  XSetClipOrigin (dpy, gc, 0, 0);
+#ifdef USE_XFT
+	  if (!use_x_font)
+	    {
+	      XftDrawSetClip(xftDraw, 0);
+	    }
+	  else
+	    {
+#endif
+	      XSetClipMask (dpy, gc, None);
+	      XSetClipOrigin (dpy, gc, 0, 0);
+#ifdef USE_XFT
+	    }
+#endif
 	}
 
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
       if (cursor_clip && !cursor && focus && cursor_cachel)
 	{
-	  GC cgc;
-	  XRectangle clip_box[1];
+#ifdef USE_XFT
+	  if (!use_x_font)	/* Xft */
+	    {
+	      XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
+	  
+	      { /* set up clipping */
+		Region clip_reg = XCreateRegion();
+		XRectangle clip_box = { cursor_start, ypos,
+					cursor_width, height };
+	    
+		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
+		XftDrawSetClip(xftDraw, clip_reg);
+		XDestroyRegion(clip_reg);
+	      }
+	      { /* draw background rectangle & draw text */
+		int rect_height = FONT_INSTANCE_ASCENT(fi)
+				  + FONT_INSTANCE_DESCENT(fi);
+		int rect_width = x_text_width_single_run(f, cachel, &runs[i]);
+		XftColor xft_color;
 
-	  cgc = x_get_gc (d, font, cursor_cachel->foreground,
-			  cursor_cachel->background, Qnil, Qnil);
+		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
+		XftDrawRect (xftDraw, &xft_color,
+			     xpos, ypos, rect_width, rect_height);
 
-	  clip_box[0].x = 0;
-	  clip_box[0].y = 0;
-	  clip_box[0].width = cursor_width;
-	  clip_box[0].height = height;
+		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->foreground, 0);
+		if (runs[i].dimension == 1)
+		  XftDrawString8 (xftDraw, &xft_color, rf, xpos, dl->ypos,
+				  runs[i].ptr, runs[i].len);
+		else
+		  XftDrawString16 (xftDraw, &xft_color, rf, xpos, dl->ypos,
+				   (XftChar16 *) runs[i].ptr, runs[i].len);
+	      }
 
-	  XSetClipRectangles (dpy, cgc, cursor_start, DISPLAY_LINE_YPOS (dl),
-			      clip_box, 1, Unsorted);
+	      XftDrawSetClip(xftDraw, 0);
+	    }
+	  else			/* core font, not Xft */
+	    {
+#endif
+	      GC cgc;
+	      XRectangle clip_box[1];
+	
+	      cgc = x_get_gc (d, font, cursor_cachel->foreground,
+			      cursor_cachel->background, Qnil, Qnil);
 
-	  if (runs[i].dimension == 1)
-	    XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
-			      (char *) runs[i].ptr, runs[i].len);
-	  else
-	    XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
-				(XChar2b *) runs[i].ptr, runs[i].len);
-
-	  XSetClipMask (dpy, cgc, None);
-	  XSetClipOrigin (dpy, cgc, 0, 0);
+	      clip_box[0].x = 0;
+	      clip_box[0].y = 0;
+	      clip_box[0].width = cursor_width;
+	      clip_box[0].height = height;
+	
+	      XSetClipRectangles (dpy, cgc, cursor_start, ypos,
+				  clip_box, 1, YXBanded);
+	      if (runs[i].dimension == 1)
+		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
+				  (char *) runs[i].ptr, runs[i].len);
+	      else
+		XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
+				    (XChar2b *) runs[i].ptr, runs[i].len);
+	
+	      XSetClipMask (dpy, cgc, None);
+	      XSetClipOrigin (dpy, cgc, 0, 0);
+#ifdef USE_XFT
+	    }
+#endif
 	}
 
       xpos += this_width;
@@ -1118,11 +1194,11 @@ x_output_string (struct window *w, struct display_line *dl,
 
 	 This is bogus as all hell, however.  The cursor handling in
 	 this function is way bogus and desperately needs to be
-	 cleaned up. (In particular, the drawing of the cursor should
+	 cleaned up.  (In particular, the drawing of the cursor should
 	 really really be separated out of this function.  This may be
 	 a bit tricky now because this function itself does way too
 	 much stuff, a lot of which needs to be moved into
-	 redisplay.c) This is the only way to be able to easily add
+	 redisplay.c.)  This is the only way to be able to easily add
 	 new cursor types or (e.g.) make the bar cursor be able to
 	 span two characters instead of overlaying just one. */
       int bogusly_obtained_ascent_value =
@@ -1141,12 +1217,12 @@ x_output_string (struct window *w, struct display_line *dl,
 
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
       tmp_height = cursor_height;
-      if (tmp_y + tmp_height > (int) (DISPLAY_LINE_YPOS(dl) + height))
+      if (tmp_y + tmp_height > (int) (ypos + height))
 	{
-	  tmp_y = DISPLAY_LINE_YPOS (dl) + height - tmp_height;
-	  if (tmp_y < (int) DISPLAY_LINE_YPOS (dl))
-	    tmp_y = DISPLAY_LINE_YPOS (dl);
-	  tmp_height = DISPLAY_LINE_YPOS (dl) + height - tmp_y;
+	  tmp_y = ypos + height - tmp_height;
+	  if (tmp_y < (int) ypos)
+	    tmp_y = ypos;
+	  tmp_height = ypos + height - tmp_y;
 	}
 
       if (need_clipping)
@@ -1157,7 +1233,8 @@ x_output_string (struct window *w, struct display_line *dl,
 	  clip_box[0].width = clip_end - clip_start;
 	  clip_box[0].height = tmp_height;
 	  XSetClipRectangles (dpy, gc, clip_start, tmp_y,
-			      clip_box, 1, Unsorted);
+			      /* #### why not Unsorted? */
+			      clip_box, 1, YXBanded);
 	}
 
       if (!focus && NILP (bar_cursor_value))
@@ -1178,6 +1255,11 @@ x_output_string (struct window *w, struct display_line *dl,
 	  XSetClipOrigin (dpy, gc, 0, 0);
 	}
     }
+
+#ifdef USE_XFT
+#undef XFT_FROB_LISP_COLOR
+#endif
+
 }
 
 void
@@ -1641,7 +1723,7 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
       topc.red   = MINL (65535, (unsigned long) topc.red   * 6 / 5);
       topc.green = MINL (65535, (unsigned long) topc.green * 6 / 5);
       topc.blue  = MINL (65535, (unsigned long) topc.blue  * 6 / 5);
-      if (allocate_nearest_color (dpy, cmap, visual, &topc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &topc))
 	{
 	  *top_shadow = topc.pixel;
 	  top_frobbed = 1;
@@ -1657,7 +1739,7 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
       botc.red   = (unsigned short) ((unsigned long) botc.red   * 3 / 5);
       botc.green = (unsigned short) ((unsigned long) botc.green * 3 / 5);
       botc.blue  = (unsigned short) ((unsigned long) botc.blue  * 3 / 5);
-      if (allocate_nearest_color (dpy, cmap, visual, &botc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &botc))
 	{
 	  *bottom_shadow = botc.pixel;
 	  bottom_frobbed = 1;

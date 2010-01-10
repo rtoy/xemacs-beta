@@ -126,6 +126,7 @@ Precisely, if point is on line I, move to the start of line I + COUNT.
 If there isn't room, go as far as possible (no error).
 Returns the count of lines left to move.  If moving forward,
 that is COUNT - number of lines moved; if backward, COUNT + number moved.
+\(Note that if COUNT is negative, the return will be non-positive.)
 With positive COUNT, a non-empty line at the end counts as one line
   successfully moved (for the return value).
 If BUFFER is nil, the current buffer is assumed.

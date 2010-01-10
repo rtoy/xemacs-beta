@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -158,6 +158,8 @@ static const struct memory_description face_cachel_description_1[] = {
     1, { &unsigned_char_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (face_cachel, font_updated.els),
     1, { &unsigned_char_dynarr_description } },
+  { XD_BLOCK_PTR, offsetof (face_cachel, font_final_stage.els),
+    1, { &unsigned_char_dynarr_description } },
   /* Even if the whole static part isn't filled, this is OK, because those
      values will be set to Qzero */
   { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font),
@@ -172,25 +174,53 @@ static const struct memory_description face_cachel_description_1[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("face-cachel", face_cachel,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       face_cachel_description_1,
+			       Lisp_Face_Cachel);
+#endif /* NEW_GC */
+
 static const struct sized_memory_description face_cachel_description = {
   sizeof (face_cachel),
   face_cachel_description_1
 };
 
 static const struct memory_description face_cachel_dynarr_description_1[] = {
+#ifdef NEW_GC
+  XD_LISP_DYNARR_DESC (face_cachel_dynarr, &face_cachel_description),
+#else /* not NEW_GC */
   XD_DYNARR_DESC (face_cachel_dynarr, &face_cachel_description),
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("face-cachel-dynarr", face_cachel_dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       face_cachel_dynarr_description_1,
+			       face_cachel_dynarr);
+#else /* not NEW_GC */
 static const struct sized_memory_description face_cachel_dynarr_description = {
   sizeof (face_cachel_dynarr),
   face_cachel_dynarr_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description glyph_cachel_description_1[] = {
   { XD_LISP_OBJECT, offsetof (glyph_cachel, glyph) },
   { XD_END }
 };
+
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel", glyph_cachel,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       glyph_cachel_description_1,
+			       Lisp_Glyph_Cachel);
+#endif /* NEW_GC */
 
 static const struct sized_memory_description glyph_cachel_description = {
   sizeof (glyph_cachel),
@@ -198,14 +228,26 @@ static const struct sized_memory_description glyph_cachel_description = {
 };
 
 static const struct memory_description glyph_cachel_dynarr_description_1[] = {
+#ifdef NEW_GC
+  XD_LISP_DYNARR_DESC (glyph_cachel_dynarr, &glyph_cachel_description),
+#else /* not NEW_GC */
   XD_DYNARR_DESC (glyph_cachel_dynarr, &glyph_cachel_description),
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel-dynarr", glyph_cachel_dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       glyph_cachel_dynarr_description_1,
+			       glyph_cachel_dynarr);
+#else /* not NEW_GC */
 static const struct sized_memory_description glyph_cachel_dynarr_description = {
   sizeof (glyph_cachel_dynarr),
   glyph_cachel_dynarr_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description line_start_cache_description_1[] = {
   { XD_END }
@@ -232,10 +274,15 @@ static const struct memory_description window_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct window, slot), size },
 #include "winslots.h"
 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (struct window, face_cachels) },
+  { XD_LISP_OBJECT, offsetof (struct window, glyph_cachels) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct window, face_cachels),
     1, { &face_cachel_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window, glyph_cachels),
     1, { &glyph_cachel_dynarr_description } },
+#endif /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct window, line_start_cache),
     1, { &line_start_cache_dynarr_description }, XD_FLAG_NO_KKCC },
   { XD_END }
@@ -293,6 +340,7 @@ finalize_window (void *header, int UNUSED (for_disksave))
 	  Stynarr_free (cachel->font);
 	  Stynarr_free (cachel->font_specified);
 	  Stynarr_free (cachel->font_updated);
+	  Stynarr_free (cachel->font_final_stage);
 	}
       Dynarr_free (w->face_cachels);
       w->face_cachels = 0;
@@ -352,8 +400,17 @@ allocate_window (void)
   INIT_DISP_VARIABLE (last_point, Fmake_marker ());
   INIT_DISP_VARIABLE (last_start, Fmake_marker ());
   INIT_DISP_VARIABLE (last_facechange, Qzero);
+#ifdef NEW_GC
+  p->face_cachels = Dynarr_lisp_new (face_cachel,
+				     &lrecord_face_cachel_dynarr,
+				     &lrecord_face_cachel);
+  p->glyph_cachels = Dynarr_lisp_new (glyph_cachel,
+				      &lrecord_glyph_cachel_dynarr,
+				      &lrecord_glyph_cachel);
+#else /* not NEW_GC */
   p->face_cachels     = Dynarr_new (face_cachel);
   p->glyph_cachels    = Dynarr_new (glyph_cachel);
+#endif /* not NEW_GC */
   p->line_start_cache = Dynarr_new (line_start_cache);
   p->subwindow_instance_cache = make_image_instance_cache_hash_table ();
 
@@ -3456,8 +3513,6 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
   int line_size;
   int defheight, defwidth;
 
-  /* #### This is very likely incorrect and instead the char_to_pixel_
-     functions should be called. */
   default_face_height_and_width (window, &defheight, &defwidth);
   line_size = (set_height ? defheight : defwidth);
 
@@ -3468,7 +3523,7 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 
   if (!nodelete
       && !TOP_LEVEL_WINDOW_P (w)
-      && new_pixsize < minsize)
+      && (new_pixsize + window_modeline_height (w)) < minsize)
     {
       Fdelete_window (window, Qnil);
       return;
@@ -3539,7 +3594,17 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 	  /* All but the last window should have a height which is
              a multiple of the default line height. */
 	  if (!NILP (c->next))
-	    pos = (pos / line_size) * line_size;
+	    {
+	      /*
+	       * Round up when we're shrinking, down when we're growing
+	       * to make sure that pairs of grow / shrink meant to
+	       * cancel out actually do cancel out.
+	       */
+	      if (pixel_adj_left < 0)
+		pos = ((pos + line_size -1) / line_size) * line_size;
+	      else
+		pos = (pos / line_size) * line_size;
+	    }
 
 	  /* Avoid confusion: don't delete child if it becomes too small */
 	  set_window_pixsize (child, pos + first - last_pos, 1, set_height);
@@ -3800,8 +3865,17 @@ make_dummy_parent (Lisp_Object window)
   /* Don't copy the pointers to the line start cache or the face
      instances. */
   p->line_start_cache = Dynarr_new (line_start_cache);
+#ifdef NEW_GC
+  p->face_cachels = Dynarr_lisp_new (face_cachel,
+				     &lrecord_face_cachel_dynarr,
+				     &lrecord_face_cachel);
+  p->glyph_cachels = Dynarr_lisp_new (glyph_cachel,
+				      &lrecord_glyph_cachel_dynarr,
+				      &lrecord_glyph_cachel);
+#else /* not NEW_GC */
   p->face_cachels     = Dynarr_new (face_cachel);
   p->glyph_cachels    = Dynarr_new (glyph_cachel);
+#endif /* not NEW_GC */
   p->subwindow_instance_cache =
     make_image_instance_cache_hash_table ();
 
@@ -4034,7 +4108,7 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
 {
   int avail_height;
   int defheight, defwidth;
-  int char_height;
+  int char_height = 0;
   Lisp_Object window = wrap_window (w);
 
 
@@ -4045,7 +4119,8 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
-  char_height = avail_height / defheight;
+  if (defheight)
+    char_height = avail_height / defheight;
 
   /* It's the calling function's responsibility to check these values
      and make sure they're not out of range.
@@ -4149,7 +4224,8 @@ window_displayed_height (struct window *w)
       default_face_height_and_width (window, &defheight, &defwidth);
       /* #### This probably needs to know about the clipping area once a
          final definition is decided on. */
-      num_lines += ((ypos2 - ypos1) / defheight);
+      if (defheight)
+        num_lines += ((ypos2 - ypos1) / defheight);
     }
   else
     {
@@ -4177,7 +4253,7 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
 				  int include_margins_p)
 {
   int avail_width;
-  int char_width;
+  int char_width = 0;
   int defheight, defwidth;
   Lisp_Object window = wrap_window (w);
 
@@ -4190,7 +4266,8 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
-  char_width = (avail_width / defwidth);
+  if (defwidth) 
+    char_width = (avail_width / defwidth);
 
   /* It's the calling function's responsibility to check these values
      and make sure they're not out of range.
@@ -4293,8 +4370,6 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
   if (EQ (window, FRAME_ROOT_WINDOW (f)))
     invalid_operation ("Won't change only window", Qunbound);
 
-  /* #### This is very likely incorrect and instead the char_to_pixel_
-     functions should be called. */
   default_face_height_and_width (window, &defheight, &defwidth);
 
   while (1)
@@ -5185,28 +5260,6 @@ delete_all_subwindows (struct window *w)
   mark_window_as_deleted (w);
 }
 
-Lisp_Object
-save_window_excursion_unwind (Lisp_Object window_config)
-{
-  Lisp_Object val = call1 (Qset_window_configuration, window_config);
-  return val;
-}
-
-DEFUN ("save-window-excursion", Fsave_window_excursion, 0, UNEVALLED, 0, /*
-Execute body, preserving window sizes and contents.
-Restores which buffer appears in which window, where display starts,
-as well as the current buffer.
-Does not restore the value of point in current buffer.
-*/
-       (args))
-{
-  /* This function can GC */
-  int speccount = specpdl_depth ();
-
-  record_unwind_protect (save_window_excursion_unwind,
-			 call1 (Qcurrent_window_configuration, Qnil));
-  return unbind_to_1 (speccount, Fprogn (args));
-}
 
 static int
 get_current_pixel_pos (Lisp_Object window, Lisp_Object pos,
@@ -5374,6 +5427,12 @@ syms_of_window (void)
 {
   INIT_LRECORD_IMPLEMENTATION (window);
   INIT_LRECORD_IMPLEMENTATION (window_mirror);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (face_cachel);
+  INIT_LRECORD_IMPLEMENTATION (face_cachel_dynarr);
+  INIT_LRECORD_IMPLEMENTATION (glyph_cachel);
+  INIT_LRECORD_IMPLEMENTATION (glyph_cachel_dynarr);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qwindowp);
   DEFSYMBOL (Qwindow_live_p);
@@ -5468,7 +5527,6 @@ syms_of_window (void)
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fwindow_memory_usage);
 #endif
-  DEFSUBR (Fsave_window_excursion);
   DEFSUBR (Fcurrent_pixel_column);
   DEFSUBR (Fcurrent_pixel_row);
 }

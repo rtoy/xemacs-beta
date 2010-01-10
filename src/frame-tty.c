@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_tty_frame_plist;
 
-Lisp_Object Qframe_number;
+Lisp_Object Qframe_number, Qmake_frame_after_init_entry_point;
 
 static void tty_raise_frame (struct frame *);
 
@@ -83,7 +83,7 @@ tty_after_init_frame (struct frame *f, int UNUSED (first_on_device),
 		      int first_on_console)
 {
   if (first_on_console)
-    call1 (Qinit_post_tty_win, FRAME_CONSOLE (f));
+    call1 (Qmake_frame_after_init_entry_point, FRAME_CONSOLE (f));
 }
 
 /* Change from withdrawn state to mapped state. */
@@ -235,6 +235,7 @@ void
 syms_of_frame_tty (void)
 {
   DEFSYMBOL (Qframe_number);
+  DEFSYMBOL (Qmake_frame_after_init_entry_point);
 }
 
 void

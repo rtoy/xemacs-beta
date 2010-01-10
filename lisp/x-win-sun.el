@@ -68,7 +68,7 @@
  '(x-keysym-on-keyboard-sans-modifiers-p))
 
 ;;;###autoload
-(defun x-win-init-sun ()
+(defun x-win-init-sun (device)
 
   ;; help is ok
   ;; num_lock is ok
@@ -112,51 +112,55 @@
 
       ;; Map f33 and r13 to end or kp-end
       ,@(cond
-	 ((not (x-keysym-on-keyboard-sans-modifiers-p 'end))
+	 ((not (x-keysym-on-keyboard-sans-modifiers-p 'end device))
 	  '((f33 end)
 	    (r13 end)))
-	 ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-end))
+	 ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-end device))
 	  '((f33 kp-end)
 	    (r13 kp-end))))
 
-      ,@(when (x-keysym-on-keyboard-sans-modifiers-p 'f36)
+      ,@(when (x-keysym-on-keyboard-sans-modifiers-p 'f36 device)
 	  '((f36 stop)
 	    (f37 again)))
 
       ;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
       ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
-      ,@(when (x-keysym-on-keyboard-sans-modifiers-p 'f24)
-	  `((f24 ,(if (x-keysym-on-keyboard-sans-modifiers-p 'kp-subtract)
+      ,@(when (x-keysym-on-keyboard-sans-modifiers-p 'f24 device)
+	  `((f24 ,(if (x-keysym-on-keyboard-sans-modifiers-p 'kp-subtract device)
 		      'kp-equal
 		    'kp-subtract))))
 
       ;; Map f27 to home or kp-home, as appropriate
-      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'home))
+      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'home device))
 	       '((f27 home)))
-	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-home))
+	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-home device))
 	       '((f27 kp-home))))
 
       ;; Map f29 to prior or kp-prior, as appropriate
-      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'prior))
+      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'prior device))
 	       '((f29 prior)))
-	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-prior))
+	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-prior device))
 	       '((f29 kp-prior))))
 
       ;; Map f35 to next or kp-next, as appropriate
-      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'next))
+      ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p 'next device))
 	       '((f35 next)))
-	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-next))
+	      ((not (x-keysym-on-keyboard-sans-modifiers-p 'kp-next device))
 	       '((f35 kp-next))))
 
-      ,@(cond ((x-keysym-on-keyboard-sans-modifiers-p 'apRead) ; SunOS 4.1.1
+      ,@(cond ((x-keysym-on-keyboard-sans-modifiers-p 'apRead device) ; SunOS 4.1.1
 	       '((apRead f11) (apEdit f12)))
-	      ((x-keysym-on-keyboard-sans-modifiers-p 'SunF36) ; SunOS 5
+	      ((x-keysym-on-keyboard-sans-modifiers-p 'SunF36 device) ; SunOS 5
 	       '((SunF36 f11)
 		 (SunF37 f12)
 		 (f11    stop)
 		 (f12    again))))
       )
-    do (when (x-keysym-on-keyboard-sans-modifiers-p from-key)
+    ;; Get the correct value for function-key-map
+    with function-key-map = (symbol-value-in-console 'function-key-map
+                                                     (device-console device)
+                                                     function-key-map)
+    do (when (x-keysym-on-keyboard-sans-modifiers-p from-key device)
 	 (dolist (prefix '(() (shift) (control) (meta) (alt)
 			   (shift control) (shift alt) (shift meta)
 			   (control alt) (control meta) (alt meta)
@@ -242,6 +246,21 @@ to more mnemonic ones,like `kp-3'."
      'SunF37 'f12			; Used to be Stop & Again
      ))
 
+  ;; Initialise the information needed for processing of function keys on
+  ;; keyboards without Roman-alpabet characters available. This keyboard
+  ;; description was taken from gkb-new/xmodmap.sun/xmodmap.us in the
+  ;; gnome-applets 2.12.0 distribution.
+  (setq x-us-keymap-first-keycode 37
+	x-us-keymap-description
+	[[?1 ?!] [?2 ?@] [?3 ?\#] [?4 ?$] [?5 ?%] [?6 ?^] [?7 ?&] [?8 ?*] 
+	 [?9 ?\(] [?0 ?\)] [?- ?_] [?= ?+] [?\` ?~] nil nil nil ?/ ?* nil
+	 nil ?\. nil nil ?\t [?q ?Q] [?w ?W] [?e ?E] [?r ?R] [?t ?T] [?y ?Y]
+	 [?u ?U] [?i ?I] [?o ?O] [?p ?P] [?\[ ?{] [?\] ?}] nil nil ?7 ?8 ?9
+	 ?- nil nil nil nil nil [?a ?A] [?s ?S] [?d ?D] [?f ?F] [?g ?G] 
+	 [?h ?H] [?j ?J] [?k ?K] [?l ?L] [?\; ?:] [?\' ?\"] [?\\ ?|] nil nil
+	 ?4 ?5 ?6 ?0 nil nil nil nil nil [?z ?Z] [?x ?X] [?c ?C] [?v ?V]
+	 [?b ?B] [?n ?N] [?m ?M] [?\, ?<] [?\. ?>] [?/ ?\?] nil nil ?1 ?2 
+	 ?3 nil nil nil nil nil nil ?\ nil nil nil ?+])
   
 ;;; OpenWindows-like "find" processing.
 ;;; As far as I know, the `find' key is a Sunism, so we do that binding

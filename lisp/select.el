@@ -231,7 +231,7 @@ Interactively, the text of the region is used as the selection value."
 	 (if primary-selection-extent
 	     (let ((inhibit-quit t))
 	       (if (consp primary-selection-extent)
-		   (mapcar 'delete-extent primary-selection-extent)
+		   (mapc 'delete-extent primary-selection-extent)
 		 (delete-extent primary-selection-extent))
 	       (setq primary-selection-extent nil)))
 	 (if zmacs-regions (zmacs-deactivate-region)))
@@ -239,7 +239,7 @@ Interactively, the text of the region is used as the selection value."
 	 (if secondary-selection-extent
 	     (let ((inhibit-quit t))
 	       (if (consp secondary-selection-extent)
-		   (mapcar 'delete-extent secondary-selection-extent)
+		   (mapc 'delete-extent secondary-selection-extent)
 		 (delete-extent secondary-selection-extent))
 	       (setq secondary-selection-extent nil)))))
   nil)
@@ -276,7 +276,9 @@ primary selection."
 ;; application asserts the selection.  This is probably not a big deal.
 
 (defun activate-region-as-selection ()
-  (cond (mouse-track-rectangle-p (mouse-track-activate-rectangular-selection))
+  (cond ((and-fboundp #'mouse-track-rectangle-p
+           (mouse-track-rectangle-p
+            (mouse-track-activate-rectangular-selection))))
 	((marker-buffer (mark-marker t))
 	 (own-selection (cons (point-marker t) (mark-marker t))))))
 
@@ -322,7 +324,7 @@ primary selection."
 	nil
       (condition-case ()
 	  (if (listp previous-extent)
-	      (mapcar 'delete-extent previous-extent)
+	      (mapc 'delete-extent previous-extent)
 	    (delete-extent previous-extent))
 	(error nil)))
 
@@ -346,10 +348,11 @@ primary selection."
 	(set-extent-property previous-extent 'end-open nil)
 
 	(cond
-	 (mouse-track-rectangle-p
-	  (setq previous-extent (list previous-extent))
-	  (default-mouse-track-next-move-rect start end previous-extent)
-	  ))
+	 ((and-fboundp #'mouse-track-rectangle-p 
+            (mouse-track-rectangle-p
+             (setq previous-extent (list previous-extent))
+             (default-mouse-track-next-move-rect start end previous-extent)
+             ))))
 	previous-extent))))
 
 (defun valid-simple-selection-p (data)
@@ -727,17 +730,17 @@ nil if this is impossible, or a suitable representation otherwise."
 
 	((listp value)			; list
 	 (if (cdr value)
-	     (mapcar '(lambda (x)
-			(select-convert-from-integer selection type x))
+	     (mapcar #'(lambda (x)
+                         (select-convert-from-integer selection type x))
 		     value)
 	   (select-convert-from-integer selection type (car value))))
 
 	((vectorp value)		; vector
 	 (if (eq (length value) 1)
 	     (select-convert-from-integer selection type (aref value 0))
-	   (mapvector '(lambda (x)
-			(select-convert-from-integer selection type x))
-		     value)))
+	   (mapvector #'(lambda (x)
+                          (select-convert-from-integer selection type x))
+                      value)))
 
 	(t nil)
 	))

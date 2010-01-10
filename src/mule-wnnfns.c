@@ -1963,7 +1963,7 @@ w2m (w_char *wp, Ibyte *mp, Lisp_Object charset)
 		      (Vcharset_chinese_sisheng, 0, pzy[i] & 0x7f, mp,
 		       CONVERR_SUCCEED);
 		  else
-		    /* !!#### Correct? */
+		    /* @@#### Correct? */
 		    mp += charset_codepoint_to_itext
 		      (Vcharset_ascii, 0, pzy[i] & 0x7f, mp,
 		       CONVERR_SUCCEED);

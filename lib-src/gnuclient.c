@@ -187,7 +187,7 @@ filename_expand (char *fullpath, char *filename)
 #endif
 
   int len;
-  fullpath[0] = '\0';
+  fullpath[0] = fullpath[QXE_PATH_MAX] = '\0';
 
 #ifdef  CYGWIN
   /*
@@ -200,7 +200,7 @@ filename_expand (char *fullpath, char *filename)
   if (filename[0] && filename[0] == '/')
      {
        /* Absolute (unix-style) pathname.  Do nothing */
-       strcat (fullpath, filename);
+       strncat (fullpath, filename, QXE_PATH_MAX);
      }
   else
     {
@@ -208,15 +208,18 @@ filename_expand (char *fullpath, char *filename)
        and prepend it.  FIXME: need to fix the case of DOS paths like
        "\foo", where we need to get the current drive. */
 
-      strcat (fullpath, get_current_working_directory ());
+      strncat (fullpath, get_current_working_directory (), QXE_PATH_MAX);
       len = strlen (fullpath);
 
-      if (len > 0 && fullpath[len-1] == '/')	/* trailing slash already? */
-	;					/* yep */
-      else
-	strcat (fullpath, "/");		/* nope, append trailing slash */
+      /* If no trailing slash, add one */
+      if (len <= 0 || (fullpath[len - 1] != '/' && len < QXE_PATH_MAX))
+	{
+	  strcat (fullpath, "/");
+	  len++;
+	}
+
       /* Don't forget to add the filename! */
-      strcat (fullpath,filename);
+      strncat (fullpath, filename, QXE_PATH_MAX - len);
     }
 } /* filename_expand */
 
@@ -296,7 +299,7 @@ my_strdup (const char *s)
 int
 main (int argc, char *argv[])
 {
-  int starting_line = 1;	/* line to start editing at */
+  int starting_line = 0;	/* line to start editing at */
   char command[QXE_PATH_MAX+50];/* emacs command buffer */
   char fullpath[QXE_PATH_MAX+1];/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
@@ -435,7 +438,7 @@ main (int argc, char *argv[])
 		  break;
 		case 'r':
 		  GET_ARGUMENT (remotearg, "-r");
-		  strcpy (remotepath, remotearg);
+		  strncpy (remotepath, remotearg, QXE_PATH_MAX);
 		  rflg = 1;
 		  break;
 #endif /* INTERNET_DOMAIN_SOCKETS */
@@ -590,10 +593,10 @@ main (int argc, char *argv[])
 					 * to this machine */
 	      if ((ptr = getenv ("GNU_NODE")) != NULL)
 		/* user specified a path */
-		strcpy (remotepath, ptr);
+		strncpy (remotepath, ptr, QXE_PATH_MAX);
 	    }
 #if 0  /* This is really bogus... re-enable it if you must have it! */
-#if defined (hp9000s300) || defined (hp9000s800)
+#if defined (hp9000s800)
 	  else if (strcmp (thishost,hostarg))
 	    {	/* try /net/thishost */
 	      strcpy (remotepath, "/net/");		/* (this fails using internet
@@ -658,14 +661,10 @@ main (int argc, char *argv[])
 	{
 	  if (i < argc - 1 && *argv[i] == '+')
 	    starting_line = atoi (argv[i++]);
-	  else
-	    starting_line = 1;
+
 	  /* If the last argument is +something, treat it as a file. */
-	  if (i == argc)
-	    {
-	      starting_line = 1;
-	      --i;
-	    }
+	  if (i == argc) --i;
+
 	  filename_expand (fullpath, argv[i]);
 #ifdef INTERNET_DOMAIN_SOCKETS
 	  path = (char *) malloc (strlen (remotepath) + strlen (fullpath) + 1);
@@ -673,7 +672,12 @@ main (int argc, char *argv[])
 #else
 	  path = my_strdup (fullpath);
 #endif
-	  sprintf (command, "(%d . %s)", starting_line, clean_string (path));
+	  if ( starting_line ) {
+	    sprintf (command, "(%d . %s)", starting_line, clean_string (path));
+	  } else {
+	    sprintf (command, "(nil . %s)", clean_string (path));
+	  }
+
 	  send_string (s, command);
 	  free (path);
 	} /* for */

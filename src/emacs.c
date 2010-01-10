@@ -542,6 +542,9 @@ Lisp_Object Vmule_lisp_directory, Vconfigure_mule_lisp_directory;
 Lisp_Object Vmodule_directory, Vconfigure_module_directory;
 Lisp_Object Vsite_module_directory, Vconfigure_site_module_directory;
 Lisp_Object Vconfigure_package_path;
+Lisp_Object Vconfigure_early_package_directories;
+Lisp_Object Vconfigure_late_package_directories;
+Lisp_Object Vconfigure_last_package_directories;
 Lisp_Object Vdata_directory, Vconfigure_data_directory;
 Lisp_Object Vdoc_directory, Vconfigure_doc_directory;
 Lisp_Object Vconfigure_lock_directory;
@@ -803,7 +806,7 @@ Return the directory name in which the Emacs executable was located.
    enough information to do it right.  */
 
 static int
-argmatch (Wexttext **argv, int argc, Ascbyte *sstr, Ascbyte *lstr,
+argmatch (Wexttext **argv, int argc, const Ascbyte *sstr, const Ascbyte *lstr,
 	  int minlen, Wexttext **valptr, int *skipptr)
 {
   Wexttext *p = NULL;
@@ -859,7 +862,7 @@ argmatch (Wexttext **argv, int argc, Ascbyte *sstr, Ascbyte *lstr,
 }
 
 static void
-check_compatible_window_system (Ascbyte *must)
+check_compatible_window_system (const Ascbyte *must)
 {
   if (display_use && strcmp (display_use, must))
     fatal ("Incompatible window system type `%s': `%s' already specified",
@@ -892,9 +895,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   Rawbyte stack_bottom_variable;
   int skip_args = 0;
   Lisp_Object load_me;
-#ifdef NeXT
-  extern int malloc_cookie;
-#endif
 
 #if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
      && !defined (DOUG_LEA_MALLOC))
@@ -908,10 +908,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
 
   noninteractive = 0;
-  display_use = 0;
+  display_use = NULL;
   inhibit_non_essential_conversion_operations = 1;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #ifndef PDUMP
   if (!initialized)
 #endif
@@ -924,26 +924,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* ALLOC_TYPE_STATS */
 	}
     }
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
-#ifdef NeXT
-  /* 19-Jun-1995 -baw
-   * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
-   * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
-   * does; it was provided by NeXT, and it presumably makes NS's mallocator
-   * work with dumping.  But malloc_jumpstart() and malloc_freezedry() in
-   * unexnext.c are both completely undocumented, even in NS header files!
-   * But hey, it solves all NS related memory problems, so who's
-   * complaining? */
-  if (initialized && malloc_jumpstart (malloc_cookie) != 0)
-    stderr_out ("malloc jumpstart failed!\n");
-#endif /* NeXT */
-
-  /*
-#if defined (GNU_MALLOC) && \
-    defined (ERROR_CHECK_MALLOC) && \
-    !defined (HAVE_LIBMCHECK)
-  */
 #if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
   /* Prior to XEmacs 21, this was `#if 0'ed out.  */
   /* I'm enabling this because it is the only reliable way I've found to */
@@ -951,6 +933,42 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   /* memory at exit() and cause a coredump. */
   init_free_hook ();
 #endif
+
+#define SHEBANG_PROGNAME_LENGTH                                         \
+  (int)((sizeof (WEXTSTRING (SHEBANG_PROGNAME)) - sizeof (WEXTSTRING (""))))
+#define SHEBANG_EXE_PROGNAME_LENGTH                                     \
+  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME) WEXTSTRING(".exe"))       \
+        - sizeof (WEXTSTRING ("")))
+
+  {
+    int progname_len = wext_strlen (argv[0]);
+    if (progname_len >= SHEBANG_PROGNAME_LENGTH)
+      {
+	if (!wext_strcmp_ascii (argv[0] +
+				(progname_len - SHEBANG_PROGNAME_LENGTH),
+				SHEBANG_PROGNAME)
+	    /* Allow trailing .exe. Don't check it, it could also be
+	       .com.  */
+	    || (progname_len >= SHEBANG_EXE_PROGNAME_LENGTH && 
+		!wext_strncmp_ascii
+		(argv[0] + (progname_len - SHEBANG_EXE_PROGNAME_LENGTH),
+		 SHEBANG_PROGNAME,
+		 SHEBANG_PROGNAME_LENGTH)))
+	  {
+	    Wexttext **newarr = alloca_array (Wexttext *, argc + 2);
+	    int j;
+
+	    newarr[0] = argv[0];
+	    newarr[1] = WEXTSTRING ("--script");
+	    for (j = 1; j < argc; ++j)
+	      {
+		newarr[j + 1] = argv[j];
+	      }
+	    argv = newarr;
+	    argc++;
+	  }
+      }
+  }
 
   sort_args (argc, argv);
 
@@ -995,10 +1013,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   setuid (getuid ());
 #endif /* SET_EMACS_PRIORITY */
 
-#ifdef EXTRA_INITIALIZE
-  EXTRA_INITIALIZE;
-#endif
-
   /* NOTE NOTE NOTE: Keep the following args in sync with the big list of
      arguments below in standard_args[], with the help text in startup.el,
      and with the list of non-clobbered variables near where pdump_load()
@@ -1021,7 +1035,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   if (argmatch (argv, argc, "-si", "--show-inline-info", 0, NULL, &skip_args))
     {
 #if defined (PDUMP) && defined (DUMP_IN_EXEC) && !defined (WIN32_NATIVE)
-      printf ("%u %u\n", dumped_data_max_size (), dumped_data_align_offset ());
+      /* #### We really should check for sizeof (size_t) > sizeof (long) */
+      printf ("%lu %lu\n", (unsigned long) dumped_data_max_size (),
+			   (unsigned long) dumped_data_align_offset ());
+
 #else
       printf ("Portable dumper not configured for dumping into executable or windows native; -si just forces exit.\n");
 #endif
@@ -1042,6 +1059,20 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       noninteractive = 1;
     }
 
+  {
+    int count_before = skip_args;
+    /* Handle the -script switch, which implies batch and vanilla. The -l
+       part of its functionality is implemented in Lisp. */
+    if (argmatch (argv, argc, "-script", "--script", 0, NULL,
+		  &skip_args))
+      {
+	noninteractive = 1;
+	vanilla_inhibiting = 1;
+      }
+
+    /* Don't actually discard this argument. */
+    skip_args = count_before;
+  }
 #ifdef WIN32_NATIVE
   {
     /* Since we aren't a console application, we can't easily be terminated
@@ -1184,9 +1215,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	fd = wext_retry_open (term, O_RDWR | OPEN_BINARY, 2);
 	/* Conversions are not possible yet, and printing will be in
 	   external format, so strerror() and ttyname() are OK. */
-	if (fd < 0)
+	if (fd < 0 || dup (0) < 0)
 	  fatal ("%s: %s", WEXTTEXT_TO_8_BIT (term), strerror (errno));
-	dup (0);
 	if (! isatty (0))
 	  fatal ("%s: not a tty", WEXTTEXT_TO_8_BIT (term));
 
@@ -1312,6 +1342,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      the Lisp engine and need to be done both at dump time and at run time. */
 
   init_signals_very_early ();
+#ifdef NEW_GC
+  vdb_install_signal_handler ();
+#endif /* NEW_GC */
   init_data_very_early (); /* Catch math errors. */
   init_floatfns_very_early (); /* Catch floating-point math errors. */
   init_process_times_very_early (); /* Initialize our process timers.
@@ -1386,7 +1419,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       inhibit_site_modules   = inhibit_site_modules_save;
 
       if (initialized)
-	run_temacs_argc = restart ? -2 : -1;
+	run_temacs_argc = -1;
       else
 	purify_flag = 1;
     }
@@ -1397,6 +1430,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
   init_alloc_early ();
 
+  init_gc_early ();
+
   if (!initialized)
     {
       /* Initialize things so that new Lisp objects
@@ -1405,6 +1440,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 because pretty much all of the initialization
 	 routines below create new objects. */
       init_alloc_once_early ();
+
+      init_gc_once_early ();
 
       /* Initialize Qnil, Qt, Qunbound, and the
 	 obarray.  After this, symbols can be
@@ -1441,9 +1478,13 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       syms_of_abbrev ();
       syms_of_alloc ();
-#ifdef MC_ALLOC
+#ifdef NEW_GC
       syms_of_mc_alloc ();
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
+      syms_of_gc ();
+#ifdef NEW_GC
+      syms_of_vdb ();
+#endif /* NEW_GC */
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1520,11 +1561,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_objects ();
       syms_of_print ();
-#if !defined (NO_SUBPROCESSES)
       syms_of_process ();
 #ifdef HAVE_WIN32_PROCESSES
       syms_of_process_nt ();
-#endif
 #endif
       syms_of_profile ();
 #if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
@@ -1601,6 +1640,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_input_method_xlib ();
 #endif
 #endif /* HAVE_XIM */
+
+#ifdef USE_XFT
+      syms_of_font_mgr();
+#endif
+
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
@@ -1660,11 +1704,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       SYMS_MACHINE;
 #endif
 
-      /*
-#if defined (GNU_MALLOC) && \
-    defined (ERROR_CHECK_MALLOC) && \
-    !defined (HAVE_LIBMCHECK)
-      */
       /* Prior to XEmacs 21, this was `#if 0'ed out. -slb */
 #if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
       syms_of_free_hook ();
@@ -1852,10 +1891,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 				 (note, we are inside ifdef PDUMP) */
     {
       reinit_alloc_early ();
+      reinit_gc_early ();
       reinit_symbols_early ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
       reinit_opaque_early ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
       reinit_eistring_early ();
 
       reinit_console_type_create_stream ();
@@ -2056,6 +2096,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_font_lock ();
 #endif /* USE_C_FONT_LOCK */
       vars_of_frame ();
+      vars_of_gc ();
       vars_of_glyphs ();
       vars_of_glyphs_eimage ();
       vars_of_glyphs_widget ();
@@ -2097,14 +2138,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_objects ();
       vars_of_print ();
 
-#ifndef NO_SUBPROCESSES
       vars_of_process ();
 #ifdef HAVE_UNIX_PROCESSES
       vars_of_process_unix ();
 #endif
 #ifdef HAVE_WIN32_PROCESSES
       vars_of_process_nt ();
-#endif
 #endif
 
       vars_of_profile ();
@@ -2140,6 +2179,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       vars_of_device_gtk ();
+      vars_of_console_gtk ();
 #ifdef HAVE_DIALOGS
       vars_of_dialog_gtk ();
 #endif
@@ -2164,6 +2204,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_BALLOON_HELP
       vars_of_balloon_x ();
 #endif
+      vars_of_console_x ();
       vars_of_device_x ();
 #ifdef HAVE_X_DIALOGS
       vars_of_dialog_x ();
@@ -2181,6 +2222,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_x ();
 #endif
+
+#ifdef USE_XFT
+      vars_of_font_mgr ();
+#endif
+
 #endif /* HAVE_X_WINDOWS */
 
 
@@ -2271,9 +2317,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_vars_of_glyphs_widget ();
       reinit_vars_of_insdel ();
       reinit_vars_of_lread ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
       reinit_vars_of_lstream ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
       reinit_vars_of_minibuf ();
 #ifdef HAVE_SHLIB
       reinit_vars_of_module ();
@@ -2308,6 +2354,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_vars_of_select_x ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
       reinit_vars_of_gui_x ();
+#endif
+#ifdef USE_XFT
+      reinit_vars_of_font_mgr ();
 #endif
 #endif /* HAVE_X_WINDOWS */
 
@@ -2380,6 +2429,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 quite soon, e.g. in complex_vars_of_glyphs_x(). */
       inhibit_non_essential_conversion_operations = 0;
 
+#ifdef USE_XFT
+      /* This uses coding systems.  Must be done before faces are init'ed. */
+      /* not in xft reloaded #3 */
+      complex_vars_of_font_mgr ();
+#endif
+
       /* Depends on specifiers. */
       complex_vars_of_faces ();
 
@@ -2400,9 +2455,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MS_WINDOWS
       complex_vars_of_glyphs_mswindows ();
 #endif
-
-      /* This calls Fmake_glyph_internal(). */
-      complex_vars_of_alloc ();
 
       /* This calls Fmake_glyph_internal(). */
 #ifdef HAVE_MENUBARS
@@ -2447,6 +2499,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 might depend on all sorts of things; I'm not sure. */
       complex_vars_of_emacs ();
 
+      complex_vars_of_gc ();
+
       /* This creates a couple of basic keymaps and depends on Lisp
 	 hash tables and Ffset() (both of which depend on some variables
 	 initialized in the vars_of_*() section) and possibly other
@@ -2457,7 +2511,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       {
 	extern int always_gc;
 	if (always_gc)                /* purification debugging hack */
+#ifdef NEW_GC
+	  gc_full ();
+#else /* not NEW_GC */
 	  garbage_collect_1 ();
+#endif /* not NEW_GC */
       }
 #endif
     }
@@ -2655,6 +2713,7 @@ static const struct standard_args standard_args[] =
   { "-sd", "--show-dump-id", 105, 0 },
   { "-nd", "--no-dump-file", 95, 0 },
   { "-batch", "--batch", 88, 0 },
+  { "-script", "--script", 89, 1 },
 #ifdef WIN32_NATIVE
   { "-mswindows-termination-handle", 0, 84, 1 },
   { "-nuni", "--no-unicode-lib-calls", 83, 0 },
@@ -2920,15 +2979,18 @@ Currently defined values:
 
 DEFUN_NORETURN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
+
+arguments: (&rest ARGS)
 */
 /* If this function is called from startup.el, it will be possible to run
-   temacs as an editor using `temacs -batch -l loadup.el run-temacs', instead
-   of having to dump an emacs and then run that (when debugging emacs itself,
-   this can be much faster)). [Actually, the speed difference isn't that
-   much as long as your filesystem is local, and you don't end up with
-   a dumped version in case you want to rerun it.  This function is most
-   useful when used as part of the `make all-elc' command. --ben]
-   This will "restart" emacs with the specified command-line arguments.
+   temacs as an editor using `temacs -batch -l ../lisp/loadup.el
+   run-temacs', instead of having to dump an emacs and then run that (when
+   debugging emacs itself, this can be much faster)). [Actually, the speed
+   difference isn't that much as long as your filesystem is local, and you
+   don't end up with a dumped version in case you want to rerun it.  This
+   function is most useful when used as part of the `make all-elc'
+   command. --ben] This will "restart" emacs with the specified command-line
+   arguments.
 
    Martin thinks this function is most useful when using debugging
    tools like Purify or tcov that get confused by XEmacs' dumping.  */
@@ -2936,7 +2998,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 {
   int i;
 
+#ifdef NEW_GC
+  if (gc_in_progress) gc_full ();
+#else /* not NEW_GC */
   assert (!gc_in_progress);
+#endif /* not NEW_GC */
 
   if (run_temacs_argc < 0)
     invalid_operation ("I've lost my temacs-hood", Qunbound);
@@ -3202,9 +3268,9 @@ and announce itself normally when it is run.
   fflush (stdout);
 
   disksave_object_finalization ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   release_breathing_space ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
@@ -3212,7 +3278,11 @@ and announce itself normally when it is run.
   memory_warnings (my_edata, malloc_warning);
 #endif
 
+#ifdef NEW_GC
+  gc_full ();
+#else /* not NEW_GC */
   garbage_collect_1 ();
+#endif /* not NEW_GC */
 
 #ifdef PDUMP
   pdump ();
@@ -3560,7 +3630,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 /* The following needs conditionalization on whether either XEmacs or */
 /* various system shared libraries have been built and linked with */
 /* GCC >= 2.8.  -slb */
-#if defined (GNU_MALLOC)
+#ifndef SYSTEM_MALLOC
 static void
 voodoo_free_hook (void *UNUSED (mem))
 {
@@ -3573,7 +3643,7 @@ voodoo_free_hook (void *UNUSED (mem))
 #endif
     voodoo_free_hook;
 }
-#endif /* GNU_MALLOC */
+#endif /* SYSTEM_MALLOC */
 
 DEFUN_NORETURN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
@@ -3631,7 +3701,7 @@ all of which are called before XEmacs is actually killed.
 
   shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
 
-#if defined (GNU_MALLOC)
+#ifndef SYSTEM_MALLOC
   __free_hook =
 #if defined (TYPEOF) && !defined (UNO)
     /* prototype of __free_hook varies with glibc version */
@@ -3736,12 +3806,28 @@ fatal_error_signal (int sig)
 
   guts_of_fatal_error_signal (sig);
 
+#ifdef NEW_GC
+  /* This time the signal will really be fatal. To be able to debug
+     SIGSEGV and SIGBUS also during write barrier, send SIGABRT. */
+#ifdef WIN32_NATIVE
+  if (sig == SIGSEGV)
+    raise (SIGABRT);
+  else
+    raise (sig);
+#else
+  if ((sig == SIGSEGV) || (sig == SIGBUS))
+    kill (qxe_getpid (), SIGABRT);
+  else
+    kill (qxe_getpid (),  sig);
+#endif
+#else /* not NEW_GC */
   /* Signal the same code; this time it will really be fatal. */
 #ifdef WIN32_NATIVE
   raise (sig);
 #else
   kill (qxe_getpid (), sig);
 #endif
+#endif /* not NEW_GC */
   SIGRETURN;
 }
 
@@ -4187,10 +4273,9 @@ Arbitrary string to place in the version string after the codename.
 Appropriate surrounding whitespace will be added, but typically looks best
 if enclosed in parentheses.
 
-A standard use is to indicate the date version.sh was last updated from
-the CVS mainline, where it is automatically given a value similar to
-\"(+CVS-20050221)\".  Developers may also use it to indicate particular
-branches, etc.
+A standard use is to indicate the topmost hash id of the Mercurial
+changeset from which XEmacs was compiled.  Developers may also use it
+to indicate particular branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
   Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);
@@ -4452,6 +4537,36 @@ configure's idea of what `module-directory' will be.
     (build_ext_string (PATH_MODULESEARCH, Qfile_name));
 #else
   Vconfigure_module_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-early-package-directories", &Vconfigure_early_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the early package directories will be.
+*/ );
+#ifdef PATH_EARLY_PACKAGE_DIRECTORIES
+  Vconfigure_early_package_directories = split_external_path (PATH_EARLY_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_early_package_directories = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-late-package-directories", &Vconfigure_late_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the late package directories will be.
+*/ );
+#ifdef PATH_LATE_PACKAGE_DIRECTORIES
+  Vconfigure_late_package_directories = split_external_path (PATH_LATE_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_late_package_directories = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-last-package-directories", &Vconfigure_last_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the last package directories will be.
+*/ );
+#ifdef PATH_LAST_PACKAGE_DIRECTORIES
+  Vconfigure_last_package_directories = split_external_path (PATH_LAST_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_last_package_directories = Qnil;
 #endif
 
   DEFVAR_LISP ("configure-package-path", &Vconfigure_package_path /*

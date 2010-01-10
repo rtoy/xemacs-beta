@@ -231,8 +231,8 @@ The Lisp value REGISTER is a character."
 	(princ (car val))))
 
      ((stringp val)
-      (remove-list-of-text-properties 0 (length val)
-                                      yank-excluded-properties val)
+      ;; XEmacs change: we don't have remove-list-of-text-properties
+      (set-text-properties 0 (length val) nil val)
       (if verbose
 	  (progn
 	    (princ "the text:\n")

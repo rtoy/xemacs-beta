@@ -277,7 +277,7 @@ DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
 */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 MODULE_API void defsubr (Lisp_Subr *);
 #define DEFSUBR_MC_ALLOC(Fname)						\
   S##Fname= (struct Lisp_Subr *) mc_alloc (sizeof (struct Lisp_Subr));	\
@@ -309,7 +309,7 @@ do {						\
   defsubr_macro (S##Fname);			\
 } while (0)
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 /* To define a Lisp primitive function using a C function `Fname', do this:
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
@@ -323,7 +323,7 @@ MODULE_API void defsubr (Lisp_Subr *);
 */
 MODULE_API void defsubr_macro (Lisp_Subr *);
 #define DEFSUBR_MACRO(Fname) defsubr_macro (&S##Fname)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 MODULE_API void defsymbol_massage_name (Lisp_Object *location,
 					const char *name);
@@ -396,7 +396,7 @@ MODULE_API void deferror_massage_name_and_message (Lisp_Object *symbol,
 MODULE_API void defvar_magic (const char *symbol_name,
 			      const struct symbol_value_forward *magic);
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magic_fun)	\
 do									\
 {									\
@@ -413,7 +413,7 @@ do									\
 									\
   defvar_magic ((lname), I_hate_C);					\
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun)	\
 do									\
 {									\
@@ -439,7 +439,7 @@ do									\
   };									\
   defvar_magic ((lname), &I_hate_C);					\
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #define DEFVAR_SYMVAL_FWD_INT(lname, c_location, forward_type, magicfun) \
 do									 \
 {									 \
@@ -487,6 +487,83 @@ do									    \
 	DEFVAR_SYMVAL_FWD_INT (lname, c_location, SYMVAL_BOOLEAN_FORWARD, magicfun)
 
 void flush_all_buffer_local_cache (void);
+
+struct multiple_value {
+  struct LCRECORD_HEADER header;
+  Elemcount count;
+  Elemcount allocated_count; 
+  Elemcount first_desired;
+  Lisp_Object contents[1];
+};
+typedef struct multiple_value multiple_value;
+
+DECLARE_LRECORD (multiple_value, multiple_value);
+#define MULTIPLE_VALUEP(x) RECORDP (x, multiple_value)
+
+#define XMULTIPLE_VALUE(x) XRECORD (x, multiple_value, multiple_value)
+#define wrap_multiple_value(p) wrap_record (p, multiple_value)
+
+#define CHECK_MULTIPLE_VALUE(x) CHECK_RECORD (x, multiple_value)
+#define CONCHECK_MULTIPLE_VALUE(x) CONCHECK_RECORD (x, multiple_value)
+
+#define multiple_value_count(x) ((x)->count)
+#define multiple_value_allocated_count(x) ((x)->allocated_count)
+#define multiple_value_first_desired(x) ((x)->first_desired)
+#define multiple_value_contents(x) ((x)->contents)
+
+#define XMULTIPLE_VALUE_COUNT(x) multiple_value_count (XMULTIPLE_VALUE (x))
+#define XMULTIPLE_VALUE_ALLOCATED_COUNT(x) \
+  multiple_value_allocated_count (XMULTIPLE_VALUE (x))
+#define XMULTIPLE_VALUE_FIRST_DESIRED(x) \
+  multiple_value_first_desired (XMULTIPLE_VALUE(x))
+#define XMULTIPLE_VALUE_CONTENTS(x) multiple_value_contents (XMULTIPLE_VALUE(x))
+
+Lisp_Object multiple_value_call (int nargs, Lisp_Object *args);
+Lisp_Object multiple_value_list_internal (int nargs, Lisp_Object *args);
+
+/* It's slightly ugly to expose this here, but it does cut down the amount
+   of work the bytecode interpreter has to do substantially. */
+extern int multiple_value_current_limit;
+
+/* Bind the multiple value limits that #'values and #'values-list pay
+   attention to. Used by bytecode and interpreted code. */
+int bind_multiple_value_limits (int first, int upper);
+
+Lisp_Object multiple_value_aref (Lisp_Object, Elemcount);
+void multiple_value_aset (Lisp_Object, Elemcount, Lisp_Object);
+
+Lisp_Object values2 (Lisp_Object first, Lisp_Object second);
+
+DECLARE_INLINE_HEADER (
+Lisp_Object 
+ignore_multiple_values (Lisp_Object obj)
+)
+{
+  return MULTIPLE_VALUEP (obj) ? multiple_value_aref (obj, 0) : obj;
+}
+
+#ifdef ERROR_CHECK_MULTIPLE_VALUES
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+ignore_multiple_values_1 (Lisp_Object obj)
+)
+{
+  if (1 == multiple_value_current_limit)
+    {
+      assert (!MULTIPLE_VALUEP (obj));
+      return obj;
+    }
+
+  return ignore_multiple_values (obj);
+}
+
+#define IGNORE_MULTIPLE_VALUES(X) ignore_multiple_values_1 (X)
+
+#else 
+#define IGNORE_MULTIPLE_VALUES(X) (multiple_value_current_limit == 1 ? (X) \
+                                   : ignore_multiple_values (X))
+#endif
 
 END_C_DECLS
 

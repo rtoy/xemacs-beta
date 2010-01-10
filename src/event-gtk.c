@@ -62,10 +62,6 @@ Boston, MA 02111-1307, USA.  */
 # include "menubar.h"
 #endif
 
-#if defined (HAVE_OFFIX_DND)
-#include "offix.h"
-#endif
-
 #include <gdk/gdkx.h>
 
 #include "event-gtk.h"
@@ -1863,7 +1859,14 @@ gtk_reset_modifier_mapping (struct device *d)
   xd->lock_interpretation = 0;
 
   if (map)
-    XFreeModifiermap (map);
+    {
+      XFreeModifiermap (xd->x_modifier_keymap);
+      /* Set it to NULL in case we receive two MappingModifier events in a
+         row, and the second is processed during some CHECK_QUITs within
+         x_reset_key_mapping. If that happens, XFreeModifierMap will be
+         called twice on the same map, and we crash.  */
+      xd->x_modifier_keymap = NULL;
+    }
 
   gtk_reset_key_mapping (d);
 

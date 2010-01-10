@@ -225,19 +225,25 @@ set Info-directory-list.")
 (defun add-menu-item (menu-path item-name function enabled-p &optional before)
   "Obsolete.  See the function `add-menu-button'."
   (or item-name (error "must specify an item name"))
-  (add-menu-button menu-path (vector item-name function enabled-p) before))
+  (declare-fboundp (add-menu-button menu-path (vector item-name function enabled-p) before)))
 (make-obsolete 'add-menu-item 'add-menu-button)
 
 (defun add-menu (menu-path menu-name menu-items &optional before)
   "See the function `add-submenu'."
   (or menu-name (error "must specify a menu name"))
   (or menu-items (error "must specify some menu items"))
-  (add-submenu menu-path (cons menu-name menu-items) before))
+  (declare-fboundp (add-submenu menu-path (cons menu-name menu-items) before)))
 ;; Can't make this obsolete.  easymenu depends on it.
 (make-compatible 'add-menu 'add-submenu)
 
 (define-obsolete-function-alias 'package-get-download-menu 
   'package-ui-download-menu)
+
+(unless (featurep 'menubar)
+  ;; Don't provide the last three functions unless the menubar feature is
+  ;; available. This approach (with #'unintern) avoids warnings about lost
+  ;; docstrings since make-docfile doesn't parse bytecode.
+  (mapc #'unintern '(add-menu-item add-menu package-get-download-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 
@@ -345,7 +351,7 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (charsets-in-string string)))
+  (delq 'ascii (and-fboundp #'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -353,9 +359,13 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (charsets-in-region start end)))
+  (delq 'ascii (and-fboundp #'charsets-in-region
+                 (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
+
+;; < 21.5 compatibility, eg. https://bugzilla.redhat.com/201524#c2
+(define-obsolete-function-alias 'string-to-char-list 'string-to-list)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 
@@ -384,6 +394,19 @@ If FRAME is omitted or nil, use the selected frame."
 (make-compatible 'define-widget-keywords "Just use them")
 
 (make-obsolete 'function-called-at-point 'function-at-point)
+
+;; As of 21.5, #'throw is a special form. This makes bytecode using it
+;; compiled for 21.4 fail; making this function available works around that.
+(defun obsolete-throw (tag value)
+  "Ugly compatibility hack.
+
+See the implementation of #'funcall in eval.c.  This should be removed once
+we no longer encounter bytecode from 21.4."
+  (throw tag value))
+
+(make-obsolete
+ 'obsolete-throw
+ "it says `obsolete' in the name, you know you shouldn't be using this.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

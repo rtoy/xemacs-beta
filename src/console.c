@@ -115,9 +115,17 @@ console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 static const struct memory_description console_data_description_1 []= {
 #ifdef HAVE_TTY
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, tty_console },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, tty_console, 1, { &tty_console_data_description} },
+#endif /* not NEW_GC */
 #endif
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, stream_console },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, stream_console, 1, { &stream_console_data_description} },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
@@ -367,7 +375,7 @@ time this function is called.
 	  Fselect_window (FRAME_SELECTED_WINDOW (f), Qnil);
 	}
       else
- invalid_operation ("Can't select console with no frames", Qunbound);
+	invalid_operation ("Can't select console with no frames", Qunbound);
     }
   else
     invalid_operation ("Can't select a console with no devices", Qunbound);
@@ -981,7 +989,7 @@ On such systems, Emacs will start a subshell and wait for it to exit.
 
 void
 stuff_buffered_input (
-#ifdef BSD
+#if defined(BSD) && defined(HAVE_TTY)
 		      Lisp_Object stuffstring
 #else
 		      Lisp_Object UNUSED (stuffstring)
@@ -989,7 +997,7 @@ stuff_buffered_input (
 		      )
 {
 /* stuff_char works only in BSD, versions 4.2 and up.  */
-#if defined (BSD)
+#if defined(BSD) && defined(HAVE_TTY)
   if (!CONSOLEP (Vcontrolling_terminal) ||
       !CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)))
     return;
@@ -1015,7 +1023,7 @@ stuff_buffered_input (
       stuff_char (XCONSOLE (Vcontrolling_terminal), *kbd_fetch_ptr++);
     }
 # endif
-#endif /* BSD */
+#endif /* BSD && HAVE_TTY */
 }
 
 DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*
@@ -1188,6 +1196,12 @@ void
 syms_of_console (void)
 {
   INIT_LRECORD_IMPLEMENTATION (console);
+#ifdef NEW_GC
+#ifdef HAVE_TTY
+  INIT_LRECORD_IMPLEMENTATION (tty_console);
+#endif
+  INIT_LRECORD_IMPLEMENTATION (stream_console);
+#endif /* NEW_GC */
 
   DEFSUBR (Fvalid_console_type_p);
   DEFSUBR (Fconsole_type_list);
@@ -1310,7 +1324,7 @@ One argument, the to-be-deleted console.
 }
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do {									   \
   struct symbol_value_forward *I_hate_C =				   \
@@ -1334,7 +1348,7 @@ do {									   \
       = intern (lname);							   \
   }									   \
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun)   \
 do {									    \
   static const struct symbol_value_forward I_hate_C =			    \
@@ -1367,7 +1381,7 @@ do {									    \
       = intern (lname);							    \
   }									    \
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_CONSOLE_LOCAL_1 (lname, field_name,			\

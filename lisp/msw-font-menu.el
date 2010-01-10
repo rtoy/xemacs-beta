@@ -48,6 +48,10 @@
 (require 'font-menu)
 (globally-declare-boundp 'mswindows-font-regexp)
 
+(globally-declare-fboundp
+ '(mswindows-parse-font-style
+   mswindows-construct-font-style))
+
 (defvar mswindows-font-menu-junk-families
   (mapconcat
    #'identity

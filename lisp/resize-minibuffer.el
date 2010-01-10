@@ -36,8 +36,6 @@
 
 ;; This file has received maintenance by the XEmacs development team.
 
-;; $Id: resize-minibuffer.el,v 1.4 2002/03/15 07:43:21 ben Exp $
-
 ;; This package allows the entire contents (or as much as possible) of the
 ;; minibuffer to be visible at once when typing.  As the end of a line is
 ;; reached, the minibuffer will resize itself.  When the user is done
@@ -88,6 +86,15 @@ which the active minibuffer window resides."
   :type '(choice (const nil) integer)
   :group 'resize-minibuffer)
 
+;; #### Yeah, I know.  The relation between the echo area and the
+;; minibuffer needs rethinking. It's not really possible to unify them at
+;; present. -- sjt
+(defcustom resize-minibuffer-idle-height nil
+  "When minibuffer is idle, crop its window to this height.
+Must be a positive integer or nil.  nil indicates no limit.
+Effective only when `undisplay-echo-area-function' respects it.  One such
+function is `undisplay-echo-area-resize-window'.")
+
 (defcustom resize-minibuffer-window-exactly t
   "*If non-`nil', make minibuffer exactly the size needed to display all its contents.
 Otherwise, the minibuffer window can temporarily increase in size but
@@ -113,7 +120,6 @@ never get smaller while it is active."
   :group 'resize-minibuffer)
 
 
-;;;###autoload
 (defun resize-minibuffer-mode (&optional prefix)
   "Enable or disable resize-minibuffer mode.
 A negative prefix argument disables this mode.  A positive argument or

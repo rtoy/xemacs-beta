@@ -46,6 +46,7 @@
 (let ((all '(;; boolean
 	     (abbrev-all-caps abbrev boolean)
 	     (allow-deletion-of-last-visible-frame frames boolean)
+	     (allow-incremental-gc alloc boolean)
 	     (debug-on-quit debug boolean)
 	     (delete-auto-save-files auto-save boolean)
 	     (delete-exited-processes processes-basics boolean)
@@ -71,6 +72,8 @@
 	     (bell-inhibit-time sound integer)
 	     (echo-keystrokes keyboard integer)
 	     (gc-cons-threshold alloc integer)
+	     (gc-cons-incremental-threshold alloc integer)
+	     (gc-incremental-traversal-threshold alloc integer)
 	     (next-screen-context-lines display integer)
 	     (scroll-conservatively display integer)
 	     (scroll-step windows integer)

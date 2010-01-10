@@ -41,7 +41,7 @@ static int number_initialized;
 bignum scratch_bignum, scratch_bignum2;
 #endif
 #ifdef HAVE_RATIO
-ratio scratch_ratio;
+ratio scratch_ratio, scratch_ratio2;
 #endif
 #ifdef HAVE_BIGFLOAT
 bigfloat scratch_bigfloat, scratch_bigfloat2;
@@ -408,9 +408,9 @@ Return the canonical form of NUMBER.
     number = make_bignum_bg (XRATIO_NUMERATOR (number));
 #endif
 #ifdef HAVE_BIGNUM
-  if (BIGNUMP (number) && bignum_fits_int_p (XBIGNUM_DATA (number)))
+  if (BIGNUMP (number) && bignum_fits_emacs_int_p (XBIGNUM_DATA (number)))
     {
-      int n = bignum_to_int (XBIGNUM_DATA (number));
+      EMACS_INT n = bignum_to_emacs_int (XBIGNUM_DATA (number));
       if (NUMBER_FITS_IN_AN_EMACS_INT (n))
 	number = make_int (n);
     }
@@ -561,7 +561,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
       switch (type)
 	{
 	case FIXNUM_T:
-	  return Ftruncate (number);
+	  return Ftruncate (number, Qnil);
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
 	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
@@ -853,6 +853,7 @@ init_number (void)
 
 #ifdef HAVE_RATIO
       ratio_init (scratch_ratio);
+      ratio_init (scratch_ratio2);
 #endif
 
 #ifdef HAVE_BIGFLOAT

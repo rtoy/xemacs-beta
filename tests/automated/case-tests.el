@@ -30,6 +30,16 @@
 
 ;; Test case-table related functionality.
 
+(defvar pristine-case-table nil
+  "The standard case table, without manipulation from case-tests.el")
+
+(setq pristine-case-table (or
+			   ;; This is the compiled run; we've retained
+			   ;; it from the interpreted run.
+			   pristine-case-table 
+			   ;; This is the interpreted run; set it.
+			   (copy-case-table (standard-case-table))))
+
 (Assert (case-table-p (standard-case-table)))
 ;; Old case table test.
 (Assert (case-table-p (list
@@ -267,4 +277,57 @@
       (Assert (eq 1 (search-backward string nil t 5)))
       (goto-char (point-max))
       (Assert (not (search-backward string nil t 6))))))
+
+;; Bug reported in http://mid.gmane.org/y9lk5lu5orq.fsf@deinprogramm.de from
+;; Michael Sperber. Fixed 2008-01-29.
+(with-string-as-buffer-contents "\n\nDer beruhmte deutsche Flei\xdf\n\n"
+  (goto-char (point-min))
+  (Assert (search-forward "Flei\xdf")))
+
+(with-temp-buffer
+  (let ((target "M\xe9zard")
+        (debug-xemacs-searches 1))
+    (Assert (not (search-forward target nil t)))
+    (insert target)
+    (goto-char (point-min))
+    ;; #### search-algorithm-used is simple-search after the following,
+    ;; which shouldn't be necessary; it should be possible to use
+    ;; Boyer-Moore. 
+    ;;
+    ;; But searches for ASCII strings in buffers with nothing above ?\xFF
+    ;; use Boyer Moore with the current implementation, which is the
+    ;; important thing for the Gnus use case.
+    (Assert (= (1+ (length target)) (search-forward target nil t)))))
+
+(Skip-Test-Unless
+ (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
+ "not a DEBUG_XEMACS build"
+ "checks that the algorithm chosen by #'search-forward is relatively sane"
+ (let ((debug-xemacs-searches 1))
+   (with-temp-buffer
+     (set-case-table pristine-case-table)
+     (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
+     (goto-char (point-min))
+     (Assert (search-forward "Fleiss"))
+     (delete-region (point-min) (point-max))
+     (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+     (goto-char (point-min))
+     (Assert (search-forward "Flei\xdf"))
+     (Assert (eq 'boyer-moore search-algorithm-used))
+     (delete-region (point-min) (point-max))
+     (when (featurep 'mule)
+       (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+       (goto-char (point-min))
+       (Assert 
+        (search-forward (format "Fle%c\xdf"
+                                (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (eq 'boyer-moore search-algorithm-used))
+       (insert (make-char 'latin-iso8859-9 #xfd))
+       (goto-char (point-min))
+       (Assert (search-forward "Flei\xdf"))
+       (Assert (eq 'simple-search search-algorithm-used)) 
+       (goto-char (point-min))
+       (Assert (search-forward (format "Fle%c\xdf"
+                                       (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (eq 'simple-search search-algorithm-used))))))
 

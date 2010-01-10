@@ -1,3 +1,190 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove rules for building yow.
+	* yow.c: Removed.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Don't install rcs-checkin.
+	* rcs-checkin: Remove obsolete file.
+
+2009-12-18  Jerry James  <james@xemacs.org>
+
+	* installexe.sh: Add copyright and GPL v2 or later header with
+	permission of Andy Piper.
+
+2009-12-15  Jerry James  <james@xemacs.org>
+
+	* ad2c: Add GPL v2 or later notice with permission of George Ferguson.
+	See the xemacs-beta thread beginning with message
+	<870180fe0912090940mac19378ydab5b5a04bf06cf8@mail.gmail.com>.
+
+2009-12-15  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove build dependency and rule for wakeup.  Thanks
+	to Mats Lidell for the patch.
+
+2009-12-10  Jerry James  <james@xemacs.org>
+
+	* gnudepend.pl: Remove obsolete file.
+	* leditcfns.c: Ditto.
+	* wakeup.c: Ditto.
+
+2009-12-08  Sjoerd Mullender  <sjoerd@acm.org>
+
+	* etags.c (absolute_filename): Use memmove instead of strcpy to move
+	characters within a string.
+
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* fakemail.c (MAIL_PROGRAM_NAME): No s&m files define this now, so
+	make it unconditional.
+	(main): Make mail_program_name const, since it is never read, and drop
+	a bogus cast as a result.
+	* gnuclient.c (main): Remove reference to hp9000s300.
+	* gnuserv.h: BSD4_1 is not defined on any supported system.
+
+2009-10-26  Jerry James  <james@xemacs.org>
+
+	* insert-data-in-exec.c: Add BSD header, with permission of
+	Olivier Galibert.  See xemacs-beta message with ID
+	<20091013224104.GA2573@dspnet.fr.eu.org>.
+
+2009-08-15  It's me FKtPp ;)  <m_pupil@yahoo.com.cn>
+
+	* gnuclient.c (main): Do not set start point position if user
+	didn't requested to do so
+
+2009-07-28  Stephen Turnbull  <stephen@xemacs.org>
+
+	* make-docfile.c (write_c_args): Parse UNUSED and USED_IF right.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (main): Allow more than one -d argument, followed
+	by a directory to change to.
+	(put_filename): Don't strip directory information; with previous
+	change, allows retrieval of Lisp function and variable origin
+	files from #'built-in-symbol-file relative to lisp-directory. 
+	(scan_lisp_file): Don't add an extraneous newline after the file
+	name, put_filename has added the newline already. 
+
+2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-mswin-unicode.pl:
+	Check %WindowsSdkDir%, %MSSddk% for the Windows header files too. 
+
+2008-05-14  Vin Shelton  <acs@xemacs.org>
+
+	* winclient.c:  Create CONNECT_RETRIES and increase retry count
+	from 5 to 10.
+
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (scan_file):
+	Pass READ_BINARY to scan_lisp_file, scan_c_file; avoids an
+	assertion failure with Visual C++ 2005 Express Edition, and is
+	logically more coherent, given that our Lisp and C files are saved
+	with Unix line endings. 
+
+2007-08-27  Mike Sperber  <mike@xemacs.org>
+
+	* config.values.in (datarootdir):  Add.
+
+2007-08-12  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in (datarootdir): Add.
+
+2007-05-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Sync to pot_etags_version 17.33.
+	Reverts part of 2007-03-24 patch: no longer displays
+	pot_etags_version in usage message.
+
+2007-05-22  Jerry James  <james@xemacs.org>
+
+	* ellcc.c (do_init_mode): Plug memory leak.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c (print_version): More precise version info.  Suggested
+	by Steve Youngs.
+	(print_help): Use #ifdef; PRINT_UNDOCUMENTED_OPTIONS_HELP may be
+	undefined.
+
+2007-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Sync to pot_etags_version 17.26.
+
+2006-11-24  Benson Margulies  <benson@dchbk.us>
+
+	* make-mswin-unicode.pl: allow for lower case header file names in
+	the current platform SDK.
+
+2006-08-11  Jerry James  <james@xemacs.org>
+
+	* pop.h: Sync with Emacs.
+	* pop.c: Ditto.
+
+2006-08-08  Jerry James  <james@xemacs.org>
+
+	* gnuslib.c (disconnect_from_server): shutdown() has been fine on
+	Linux for a long time now; use it.  Also, don't use length to
+	access the buffer unless it is positive, not just nonzero.
+	* gnuclient.c (filename_expand): Initialize the last array element
+	to get a valid C string in case of overflow.  Use strncat to avoid
+	buffer overruns.
+	* gnuclient.c (main): Use strncpy to avoid buffer overruns.
+
+2006-07-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Xemacs -> XEmacs.
+
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Sync to pot_etags_version 17.19.
+
+2006-07-07  Jerry James  <james@xemacs.org>
+
+	* config.values.in: Regenerate.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c:
+	* make-docfile.c (put_filename):
+	* make-docfile.c (scan_c_file):
+	* make-docfile.c (scan_lisp_file):
+	Record file name information for built-in symbols. Based on the
+	FSF's implementation of same. 
+	
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-11-22  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* etags.c: Update to author version 17.15.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
@@ -402,7 +589,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

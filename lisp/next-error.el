@@ -24,6 +24,9 @@
 ;; Boston, MA 02110-1301, USA.
 
 ;;; Synched up with: FSF 22.0.50.1 (CVS)
+;;; Some functions renamed with the next-error-framework prefix to avoid
+;;; clashes with the next-error code in compile.el.  One day compile.el
+;;; will use this framework.
 
 (defgroup next-error nil
   "`next-error' support framework."
@@ -175,8 +178,8 @@ that buffer is rejected."
    (error "No next-error capable buffer found")))
 
 ;;;###autoload
-(defun next-error (&optional arg reset)
-  "Visit next `next-error' message and corresponding source code.
+(defun next-error-framework-next-error (&optional arg reset)
+  "Visit next `next-error-framework-next-error' message and corresponding source code.
 
 If all the error messages parsed so far have been processed already,
 the message buffer is checked for new ones.
@@ -188,17 +191,17 @@ and start at the first error.
 
 The RESET argument specifies that we should restart from the beginning.
 
-\\[next-error] normally uses the most recently started
+\\[next-error-framework-next-error] normally uses the most recently started
 compilation, grep, or occur buffer.  It can also operate on any
 buffer with output from the \\[compile], \\[grep] commands, or,
 more generally, on any buffer in Compilation mode or with
 Compilation Minor mode enabled, or any buffer in which
 `next-error-function' is bound to an appropriate function.
 To specify use of a particular buffer for error messages, type
-\\[next-error] in that buffer when it is the only one displayed
+\\[next-error-framework-next-error] in that buffer when it is the only one displayed
 in the current frame.
 
-Once \\[next-error] has chosen the buffer for error messages, it
+Once \\[next-error-framework-next-error] has chosen the buffer for error messages, it
 runs `next-error-hook' with `run-hooks', and stays with that buffer
 until you use it in some other buffer which uses Compilation mode
 or Compilation Minor mode.
@@ -213,26 +216,26 @@ See variables `compilation-parse-errors-function' and
       (funcall next-error-function (prefix-numeric-value arg) reset)
       (run-hooks 'next-error-hook))))
 
-(defalias 'goto-next-locus 'next-error)
-(defalias 'next-match 'next-error)
+(defalias 'goto-next-locus 'next-error-framework-next-error)
+(defalias 'next-match 'next-error-framework-next-error)
 
-(defun previous-error (&optional n)
-  "Visit previous `next-error' message and corresponding source code.
+(defun next-error-framework-previous-error (&optional n)
+  "Visit previous `next-error-framework-next-error' message and corresponding source code.
 
 Prefix arg N says how many error messages to move backwards (or
 forwards, if negative).
 
 This operates on the output from the \\[compile] and \\[grep] commands."
   (interactive "p")
-  (next-error (- (or n 1))))
+  (next-error-framework-next-error (- (or n 1))))
 
-(defun first-error (&optional n)
+(defun next-error-framework-first-error (&optional n)
   "Restart at the first error.
 Visit corresponding source code.
 With prefix arg N, visit the source code of the Nth error.
 This operates on the output from the \\[compile] command, for instance."
   (interactive "p")
-  (next-error n t))
+  (next-error-framework-next-error n t))
 
 (defun next-error-no-select (&optional n)
   "Move point to the next error in the `next-error' buffer and highlight match.
@@ -242,7 +245,7 @@ Finds and highlights the source line like \\[next-error], but does not
 select the source buffer."
   (interactive "p")
   (let ((next-error-highlight next-error-highlight-no-select))
-    (next-error n))
+    (next-error-framework-next-error n))
   (pop-to-buffer next-error-last-buffer))
 
 (defun previous-error-no-select (&optional n)

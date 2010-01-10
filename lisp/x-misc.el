@@ -60,9 +60,9 @@ the spec for SPECIFIER in LOCALE. (However, if SPECIFIER already
 has a spec in LOCALE, nothing is done.) Finally, if LOCALE is 'global,
 a check is done for bogus resource specifications."
   (if (eq locale 'global)
-      (mapcar #'(lambda (x)
-		  (x-bogosity-check-resource (car x) (cdr x) type))
-	      resource-list))
+      (mapc #'(lambda (x)
+                (x-bogosity-check-resource (car x) (cdr x) type))
+            resource-list))
   (if (not (specifier-spec-list specifier locale))
       (catch 'done
 	(while resource-list

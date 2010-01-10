@@ -1,10 +1,11 @@
 ;;; cus-edit.el --- Tools for customizating Emacs and Lisp packages.
 ;;
+;; Copyright (C) 2007, 2008 Didier Verna
+;; Copyright (C) 2003 Ben Wing
 ;; Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
-;; Copyright (C) 2003 Ben Wing.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
+;; Maintainer: Didier Verna <didier@xemacs.org>
 ;; Keywords: help, faces
 ;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
@@ -268,19 +269,6 @@
 
 ;;; Utilities.
 
-(defun custom-quote (sexp)
-  "Quote SEXP iff it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (keywordp sexp)
-	  (eq (car-safe sexp) 'lambda)
-	  (stringp sexp)
-	  (numberp sexp)
-	  (characterp sexp)
-	  (vectorp sexp)
-	  (bit-vector-p sexp))
-      sexp
-    (list 'quote sexp)))
-
 (defun custom-split-regexp-maybe (regexp)
   "If REGEXP is a string, split it to a list at `\\|'.
 You can get the original back with from the result with:
@@ -299,14 +287,14 @@ Return a list suitable for use in `interactive'."
 	 (enable-recursive-minibuffers t)
 	 val)
      (setq val (completing-read
-		(if (symbolp v)
+		(if (and v (symbolp v))
 		    (format "Customize variable: (default %s) " v)
 		  "Customize variable: ")
 		obarray (lambda (symbol)
 			  (and (boundp symbol)
 			       (or (get symbol 'custom-type)
 				   (user-variable-p symbol))))
-                t nil nil (and v (symbol-name v))))
+		t nil nil (and v (symbol-name v))))
      (list (if (equal val "")
 	       (if (symbolp v) v nil)
 	     (intern val)))))
@@ -651,8 +639,8 @@ when the action is chosen.")
 (defun custom-prompt-variable (prompt-var prompt-val &optional comment)
   "Prompt for a variable and a value and return them as a list.
 PROMPT-VAR is the prompt for the variable, and PROMPT-VAL is the
-prompt for the value.  The %s escape in PROMPT-VAL is replaced with
-the name of the variable.
+prompt for the value.  A %s escape in PROMPT-VAL is replaced with
+the name of the variable. A final colon is appended to both prompts.
 
 If the variable has a `variable-interactive' property, that is used as if
 it were the arg to `interactive' (which see) to interactively read the value.
@@ -662,7 +650,7 @@ If the variable has a `custom-type' property, it must be a widget and the
 
 If optional COMMENT argument is non nil, also prompt for a comment and return
 it as the third element in the list."
-  (let* ((var (read-variable prompt-var))
+  (let* ((var (read-variable (concat prompt-var ": ")))
 	 (minibuffer-help-form '(describe-variable var))
 	 (val
 	  (let ((prop (get var 'variable-interactive))
@@ -683,12 +671,11 @@ it as the third element in the list."
 					    (symbol-value var))
 					(not (boundp var))))
 		  (t
-		   (eval-minibuffer prompt))))))
+		   (eval-minibuffer (concat prompt ": ")))))))
     (if comment
 	(list var val
 	      (read-string "Comment: " (get var 'variable-comment)))
-      (list var val))
-    ))
+      (list var val))))
 
 ;;;###autoload
 (defun customize-set-value (var val &optional comment)
@@ -701,8 +688,8 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 `:prompt-value' property of that widget will be used for reading the value.
 
 If given a prefix (or a COMMENT argument), also prompt for a comment."
-  (interactive (custom-prompt-variable "Set variable: "
-				       "Set %s to value: "
+  (interactive (custom-prompt-variable "Set variable"
+				       "Set value of %s"
 				       current-prefix-arg))
 
   (set var val)
@@ -728,11 +715,11 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 `:prompt-value' property of that widget will be used for reading the value.
 
 If given a prefix (or a COMMENT argument), also prompt for a comment."
-  (interactive (custom-prompt-variable "Set variable: "
-				       "Set customized value for %s to: "
+  (interactive (custom-prompt-variable "Set variable"
+				       "Set customized value of %s"
 				       current-prefix-arg))
   (funcall (or (get variable 'custom-set) 'set-default) variable value)
-  (put variable 'customized-value (list (custom-quote value)))
+  (put variable 'customized-value (list (quote-maybe value)))
   (cond ((string= comment "")
 	 (put variable 'variable-comment nil)
 	 (put variable 'customized-variable-comment nil))
@@ -757,12 +744,12 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 `:prompt-value' property of that widget will be used for reading the value.
 
 If given a prefix (or a COMMENT argument), also prompt for a comment."
-  (interactive (custom-prompt-variable "Set and save variable: "
-				       "Set and save value for %s as: "
+  (interactive (custom-prompt-variable "Set and save variable"
+				       "Set and save value of %s"
 				       current-prefix-arg))
   (funcall (or (get variable 'custom-set) 'set-default) variable value)
-  (put variable 'saved-value (list (custom-quote value)))
-  (custom-push-theme 'theme-value variable 'user 'set (list (custom-quote value)))
+  (put variable 'saved-value (list (quote-maybe value)))
+  (custom-push-theme 'theme-value variable 'user 'set (list (quote-maybe value)))
   (cond ((string= comment "")
 	 (put variable 'variable-comment nil)
 	 (put variable 'saved-variable-comment nil))
@@ -825,7 +812,8 @@ The default group is `Emacs'."
 (defun customize-changed-options (since-version)
   "Customize all user option variables whose default values changed recently.
 This means, in other words, variables defined with a `:version' keyword."
-  (interactive "sCustomize options changed, since version (default all versions): ")
+  (interactive
+   "sCustomize options changed, since version (default all versions): ")
   (if (equal since-version "")
       (setq since-version nil))
   (let ((found nil))
@@ -834,7 +822,8 @@ This means, in other words, variables defined with a `:version' keyword."
 		     (let ((version (get symbol 'custom-version)))
 		       (and version
 			    (or (null since-version)
-				(customize-version-lessp since-version version))))
+				(customize-version-lessp since-version
+							 version))))
 		     (push (list symbol 'custom-variable) found))))
     (unless found
       (error "No user options have changed defaults %s"
@@ -868,39 +857,86 @@ Show the buffer in another window, but don't select it."
    (list (list symbol 'custom-variable))
    (format "*Customize Option: %s*" (custom-unlispify-tag-name symbol))))
 
-;;;###autoload
-(defun customize-face (&optional symbol)
-  "Customize SYMBOL, which should be a face name or nil.
-If SYMBOL is nil, customize all faces."
-  (interactive (list (completing-read "Customize face: (default all) "
-				      obarray 'find-face)))
-  (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
-      (custom-buffer-create (custom-sort-items
-			     (mapcar (lambda (symbol)
-				       (list symbol 'custom-face))
-				     (face-list))
-			     t nil)
-			    "*Customize Faces*")
-    (when (stringp symbol)
-      (setq symbol (intern symbol)))
-    (check-argument-type 'symbolp symbol)
-    (custom-buffer-create (list (list symbol 'custom-face))
-			  (format "*Customize Face: %s*"
-				  (custom-unlispify-tag-name symbol)))))
+
+(defun custom-face-prompt ()
+  ;; Interactive call for `customize-face' and `customize-face-other-window'.
+  ;; See their docstrings for more information. Note that this call returns
+  ;; a list of only one element. This is because the callers' second arg
+  ;; AT-POINT is only used in interactive calls.
+  (let ((faces (get-char-property (point) 'face)))
+    (if (or (null faces) (not current-prefix-arg))
+	;; The default behavior, which is to prompt for all faces, is also
+	;; used as a fall back when a prefix is given but there's no face
+	;; under point:
+	(let ((choice (completing-read "Customize face: (default all) "
+				       obarray 'find-face)))
+	  (if (zerop (length choice))
+	      nil
+	    (list (intern choice))))
+      (cond ((symbolp faces)
+	     ;; Customize only this one:
+	     (list (list faces)))
+	    ((listp faces)
+	     ;; Make a choice only amongst the faces under point:
+	     (let ((choice (completing-read
+			    "Customize face: (default all faces at point) "
+			    (mapcar (lambda (face)
+				      (list (symbol-name face) face))
+				    faces)
+			    nil t)))
+	       (if (zerop (length choice))
+		   (list faces)
+		 (list (intern choice)))))))))
+
+(defun customize-face-1 (face custom-buffer-create-fn)
+  ;; Customize FACE in a buffer created with BUFFER-CREATE-FN.
+  ;; See the docstring of `customize-face' and `customize-face-other-window'
+  ;; for more information.
+  (cond ((null face)
+	 (funcall custom-buffer-create-fn
+		  (custom-sort-items
+		   (mapcar (lambda (symbol)
+			     (list symbol 'custom-face))
+			   (face-list))
+		   t nil)
+		  "*Customize All Faces*"))
+	((listp face)
+	 (funcall custom-buffer-create-fn
+		  (custom-sort-items
+		   (mapcar (lambda (symbol)
+			     (list symbol 'custom-face))
+			   face)
+		   t nil)
+		  "*Customize Some Faces*"))
+	((symbolp face)
+	 (funcall custom-buffer-create-fn
+		  (list (list face 'custom-face))
+		  (format "*Customize Face: %s*"
+			  (custom-unlispify-tag-name face))))
+	(t
+	 (signal-error 'wrong-type-argument
+		       '((or null listp symbolp) face)))))
+
 
 ;;;###autoload
-(defun customize-face-other-window (&optional symbol)
-  "Show customization buffer for FACE in other window."
-  (interactive (list (completing-read "Customize face: "
-				      obarray 'find-face)))
-  (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
-      ()
-    (if (stringp symbol)
-	(setq symbol (intern symbol)))
-    (check-argument-type 'symbolp symbol)
-    (custom-buffer-create-other-window
-     (list (list symbol 'custom-face))
-     (format "*Customize Face: %s*" (custom-unlispify-tag-name symbol)))))
+(defun customize-face (&optional face at-point)
+  "Open a customization buffer for FACE.
+FACE should be either:
+- nil, meaning to customize all faces,
+- a list of symbols naming faces, meaning to customize only those,
+- a symbol naming a face, meaning to customize this face only.
+
+When called interactively, use a prefix (the AT-POINT argument) to
+make a choice among the faces found at current position."
+  (interactive (custom-face-prompt))
+  (customize-face-1 face #'custom-buffer-create))
+
+;;;###autoload
+(defun customize-face-other-window (&optional face at-point)
+  "Like `customize-face', but use another window."
+  (interactive (custom-face-prompt))
+  (customize-face-1 face #'custom-buffer-create-other-window))
+
 
 ;;;###autoload
 (defun customize-customized ()
@@ -1770,7 +1806,7 @@ Backtrace follows:\n\n%s"
 		     (return-from custom-load nil)))
 	       #'(lambda ()
 		   (load (expand-file-name "custom-defines" dir))))))
-      ;; we get here only from the `return-from'; see above 
+      ;; we get here only from the `return-from'; see above
       (load source))))
 
 (defun custom-load-widget (widget)
@@ -2063,9 +2099,9 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 			       ((get symbol 'standard-value)
 				(car (get symbol 'standard-value)))
 			       ((default-boundp symbol)
-				(custom-quote (funcall get symbol)))
+				(quote-maybe (funcall get symbol)))
 			       (t
-				(custom-quote (widget-get conv :value))))))
+				(quote-maybe (widget-get conv :value))))))
 	     (insert (symbol-name symbol) ": ")
 	     (push (widget-create-child-and-convert
 		    widget 'visibility
@@ -2203,36 +2239,37 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
     (widget-put widget :custom-state state)))
 
 (defvar custom-variable-menu
-  '(("Set for Current Session" custom-variable-set
-     (lambda (widget)
-       (eq (widget-get widget :custom-state) 'modified)))
+  `(("Set for Current Session" custom-variable-set
+     ,#'(lambda (widget)
+	  (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-variable-save
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set changed rogue))))
+     ,#'(lambda (widget)
+	  (memq (widget-get widget :custom-state)
+		'(modified set changed rogue))))
     ("Reset to Current" custom-redraw
-     (lambda (widget)
-       (and (default-boundp (widget-value widget))
-	    (memq (widget-get widget :custom-state) '(modified changed)))))
+     ,#'(lambda (widget)
+	  (and (default-boundp (widget-value widget))
+	       (memq (widget-get widget :custom-state) '(modified changed)))))
     ("Reset to Saved" custom-variable-reset-saved
-     (lambda (widget)
-       (and (or (get (widget-value widget) 'saved-value)
-		(get (widget-value widget) 'saved-variable-comment))
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed rogue)))))
+     ,#'(lambda (widget)
+	  (and (or (get (widget-value widget) 'saved-value)
+		   (get (widget-value widget) 'saved-variable-comment))
+	       (memq (widget-get widget :custom-state)
+		     '(modified set changed rogue)))))
     ("Reset to Standard Settings" custom-variable-reset-standard
-     (lambda (widget)
-       (and (get (widget-value widget) 'standard-value)
-	    (memq (widget-get widget :custom-state)
-		  '(modified set changed saved rogue)))))
+     ,#'(lambda (widget)
+	  (and (get (widget-value widget) 'standard-value)
+	       (memq (widget-get widget :custom-state)
+		     '(modified set changed saved rogue)))))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Don't show as Lisp expression" custom-variable-edit
-     (lambda (widget)
-       (eq (widget-get widget :custom-form) 'lisp)))
+     ,#'(lambda (widget)
+	  (eq (widget-get widget :custom-form) 'lisp)))
     ("Show as Lisp expression" custom-variable-edit-lisp
-     (lambda (widget)
-       (eq (widget-get widget :custom-form) 'edit))))
+     ,#'(lambda (widget)
+	  (eq (widget-get widget :custom-form) 'edit))))
   "Alist of actions for the `custom-variable' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -2303,7 +2340,7 @@ Optional EVENT is the location for the menu."
 	     (set-extent-property (widget-get comment-widget :comment-extent)
 				  'invisible t))
 	   (funcall set symbol (setq val (widget-value child)))
-	   (put symbol 'customized-value (list (custom-quote val)))
+	   (put symbol 'customized-value (list (quote-maybe val)))
 	   (put symbol 'variable-comment comment)
 	   (put symbol 'customized-variable-comment comment)))
     (custom-variable-state-set widget)
@@ -2343,11 +2380,11 @@ Optional EVENT is the location for the menu."
 	     (set-extent-property (widget-get comment-widget :comment-extent)
 				  'invisible t))
 	   (put symbol
-		'saved-value (list (custom-quote (widget-value
-						  child))))
+		'saved-value (list (quote-maybe (widget-value
+                                                 child))))
 	   (custom-push-theme 'theme-value symbol 'user
-			      'set (list (custom-quote (widget-value
-							child))))
+			      'set (list (quote-maybe (widget-value
+                                                       child))))
 	   (funcall set symbol (widget-value child))
 	   (put symbol 'variable-comment comment)
 	   (put symbol 'saved-variable-comment comment)))
@@ -2544,8 +2581,8 @@ Match frames with dark backgrounds")
   "Customize face."
   :sample-face 'custom-face-tag-face
   :help-echo "Set or reset this face"
-  :documentation-property '(lambda (face)
-			     (face-doc-string face))
+  :documentation-property #'(lambda (face)
+			      (face-doc-string face))
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-category 'face
@@ -2694,27 +2731,27 @@ Match frames with dark backgrounds")
 	     (message "Creating face editor...done"))))))
 
 (defvar custom-face-menu
-  '(("Set for Current Session" custom-face-set)
+  `(("Set for Current Session" custom-face-set)
     ("Save for Future Sessions" custom-face-save)
     ("Reset to Saved" custom-face-reset-saved
-     (lambda (widget)
-       (or (get (widget-value widget) 'saved-face)
-	   (get (widget-value widget) 'saved-face-comment))))
+     ,#'(lambda (widget)
+	  (or (get (widget-value widget) 'saved-face)
+	      (get (widget-value widget) 'saved-face-comment))))
     ("Reset to Standard Setting" custom-face-reset-standard
-     (lambda (widget)
-       (get (widget-value widget) 'face-defface-spec)))
+     ,#'(lambda (widget)
+	  (get (widget-value widget) 'face-defface-spec)))
     ("---" ignore ignore)
     ("Add Comment" custom-comment-show custom-comment-invisible-p)
     ("---" ignore ignore)
     ("Show all display specs" custom-face-edit-all
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'all))))
+     ,#'(lambda (widget)
+	  (not (eq (widget-get widget :custom-form) 'all))))
     ("Just current attributes" custom-face-edit-selected
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'selected))))
+     ,#'(lambda (widget)
+	  (not (eq (widget-get widget :custom-form) 'selected))))
     ("Show as Lisp expression" custom-face-edit-lisp
-     (lambda (widget)
-       (not (eq (widget-get widget :custom-form) 'lisp)))))
+     ,#'(lambda (widget)
+	  (not (eq (widget-get widget :custom-form) 'lisp)))))
   "Alist of actions for the `custom-face' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -3336,21 +3373,21 @@ Creating group members... %2d%%"
 	   (insert "/\n")))))
 
 (defvar custom-group-menu
-  '(("Set for Current Session" custom-group-set
-     (lambda (widget)
-       (eq (widget-get widget :custom-state) 'modified)))
+  `(("Set for Current Session" custom-group-set
+     ,#'(lambda (widget)
+	  (eq (widget-get widget :custom-state) 'modified)))
     ("Save for Future Sessions" custom-group-save
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set))))
+     ,#'(lambda (widget)
+	  (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to Current" custom-group-reset-current
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified))))
+     ,#'(lambda (widget)
+	  (memq (widget-get widget :custom-state) '(modified))))
     ("Reset to Saved" custom-group-reset-saved
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set))))
+     ,#'(lambda (widget)
+	  (memq (widget-get widget :custom-state) '(modified set))))
     ("Reset to standard setting" custom-group-reset-standard
-     (lambda (widget)
-       (memq (widget-get widget :custom-state) '(modified set saved)))))
+     ,#'(lambda (widget)
+	  (memq (widget-get widget :custom-state) '(modified set saved)))))
   "Alist of actions for the `custom-group' widget.
 Each entry has the form (NAME ACTION FILTER) where NAME is the name of
 the menu entry, ACTION is the function to call on the widget when the
@@ -3496,40 +3533,40 @@ Leave the point at the end of the file."
   (goto-char (point-min))
   (condition-case nil
       (while (not (eobp))
-        (let ((sexp (read (current-buffer))))
-          (when (and (listp sexp)
-                     (memq (car sexp) symbols))
-            (delete-region (save-excursion
-                             (backward-sexp)
-                             (point))
-                           (point))
-            (while (and (eolp) (not (eobp)))
-              (delete-region (point) (prog2 (forward-line 1) (point))))
-            )))
+	(let ((sexp (read (current-buffer))))
+	  (when (and (listp sexp)
+		     (memq (car sexp) symbols))
+	    (delete-region (save-excursion
+			     (backward-sexp)
+			     (point))
+			   (point))
+	    (while (and (eolp) (not (eobp)))
+	      (delete-region (point) (prog2 (forward-line 1) (point))))
+	    )))
     (end-of-file nil)))
 
 (defsubst custom-save-variable-p (symbol)
   "Return non-nil if symbol SYMBOL is a customized variable."
   (and (symbolp symbol)
        (let ((spec (car-safe (get symbol 'theme-value))))
-         (or (and spec (eq (car spec) 'user)
-                  (eq (second spec) 'set))
-             (get symbol 'saved-variable-comment)
-             ;; support non-themed vars
-             (and (null spec) (get symbol 'saved-value))))))
+	 (or (and spec (eq (car spec) 'user)
+		  (eq (second spec) 'set))
+	     (get symbol 'saved-variable-comment)
+	     ;; support non-themed vars
+	     (and (null spec) (get symbol 'saved-value))))))
 
 (defun custom-save-variable-internal (symbol)
   "Print variable SYMBOL to the standard output.
 SYMBOL must be a customized variable."
   (let ((requests (get symbol 'custom-requests))
-        (now (not (or (get symbol 'standard-value)
-                      (and (not (boundp symbol))
-                           (not (eq (get symbol 'force-value)
-                                    'rogue))))))
-        (comment (get symbol 'saved-variable-comment))
-        ;; Print everything, no placeholders `...'
-        (print-level nil)
-        (print-length nil))
+	(now (not (or (get symbol 'standard-value)
+		      (and (not (boundp symbol))
+			   (not (eq (get symbol 'force-value)
+				    'rogue))))))
+	(comment (get symbol 'saved-variable-comment))
+	;; Print everything, no placeholders `...'
+	(print-level nil)
+	(print-length nil))
     (unless (custom-save-variable-p symbol)
       (error 'wrong-type-argument "Not a customized variable" symbol))
     (princ "\n '(")
@@ -3540,10 +3577,10 @@ SYMBOL must be a customized variable."
     ;; (prin1 (third spec))
     ;; XEmacs -- pretty-print value if available
     (if (and custom-save-pretty-print
-             (fboundp 'pp))
-        ;; To suppress bytecompiler warning
-        (with-fboundp 'pp
-          (pp (car (get symbol 'saved-value))))
+	     (fboundp 'pp))
+	;; To suppress bytecompiler warning
+	(with-fboundp 'pp
+	  (pp (car (get symbol 'saved-value))))
       (prin1 (car (get symbol 'saved-value))))
     (when (or now requests comment)
       (princ (if now " t" " nil")))
@@ -3570,21 +3607,21 @@ SYMBOL must be a customized variable."
      (custom-save-loaded-themes)
      (custom-save-resets 'theme-value 'custom-reset-variables nil)
      (let ((standard-output (current-buffer))
-           (sorted-list ()))
+	   (sorted-list ()))
        ;; First create a sorted list of saved variables.
        (mapatoms
-        (lambda (symbol)
-          (when (custom-save-variable-p symbol)
-            (push symbol sorted-list))))
+	(lambda (symbol)
+	  (when (custom-save-variable-p symbol)
+	    (push symbol sorted-list))))
        (setq sorted-list (sort sorted-list 'string<))
        (unless (bolp)
-         (princ "\n"))
+	 (princ "\n"))
        (princ "(custom-set-variables")
        (mapc 'custom-save-variable-internal
-             sorted-list)
+	     sorted-list)
        (princ ")")
        (unless (looking-at "\n")
-         (princ "\n")))))
+	 (princ "\n")))))
 
 (defvar custom-save-face-ignoring nil)
 
@@ -3593,14 +3630,14 @@ SYMBOL must be a customized variable."
   (let ((theme-spec (car-safe (get symbol 'theme-face)))
 	(comment (get symbol 'saved-face-comment)))
     (or (and (not (memq symbol custom-save-face-ignoring))
-             ;; Don't print default face here.
-             (or (and theme-spec
-                      (eq (car theme-spec) 'user)
-                      (eq (second theme-spec) 'set))
-                 ;; cope with non-themed faces
-                 (and (null theme-spec)
-                      (get symbol 'saved-face))))
-        comment)))
+	     ;; Don't print default face here.
+	     (or (and theme-spec
+		      (eq (car theme-spec) 'user)
+		      (eq (second theme-spec) 'set))
+		 ;; cope with non-themed faces
+		 (and (null theme-spec)
+		      (get symbol 'saved-face))))
+	comment)))
 
 (defun custom-save-face-internal (symbol)
   "Print face SYMBOL to the standard output.
@@ -3609,24 +3646,24 @@ SYMBOL must be a customized face."
 	(now (not (or (get symbol 'face-defface-spec)
 	      (and (not (find-face symbol))
 		   (not (eq (get symbol 'force-face) 'rogue))))))
-        ;; Print everything, no placeholders `...'
-        (print-level nil)
-        (print-length nil))
+	;; Print everything, no placeholders `...'
+	(print-level nil)
+	(print-length nil))
     (if (memq symbol custom-save-face-ignoring)
-        ;; Do nothing
-        nil
+	;; Do nothing
+	nil
       ;; Print face
       (unless (custom-save-face-p symbol)
-        (error 'wrong-type-argument "Not a customized face" symbol))
+	(error 'wrong-type-argument "Not a customized face" symbol))
       (princ "\n '(")
       (prin1 symbol)
       (princ " ")
       (prin1 (get symbol 'saved-face))
       (if (or comment now)
-          (princ (if now " t" " nil")))
+	  (princ (if now " t" " nil")))
       (when comment
-        (princ " ")
-        (prin1 comment))
+	(princ " ")
+	(prin1 comment))
       (princ ")"))))
 
 (defun custom-save-faces ()
@@ -3641,22 +3678,22 @@ SYMBOL must be a customized face."
     ;;                        'custom-set-faces)
     (custom-save-resets 'theme-face 'custom-reset-faces '(default))
     (let ((standard-output (current-buffer))
-          (sorted-list ()))
+	  (sorted-list ()))
       ;; Create a sorted list of faces
       (mapatoms
        (lambda (symbol)
-         (when (custom-save-face-p symbol)
-           (push symbol sorted-list))))
+	 (when (custom-save-face-p symbol)
+	   (push symbol sorted-list))))
       (setq sorted-list (sort sorted-list 'string<))
       (unless (bolp)
 	(princ "\n"))
       (princ "(custom-set-faces")
 	;; The default face must be first, since it affects the others.
       (when (custom-save-face-p 'default)
-        (custom-save-face-internal 'default))
+	(custom-save-face-internal 'default))
       (let ((custom-save-face-ignoring '(default)))
 	(mapc 'custom-save-face-internal
-              sorted-list))
+	      sorted-list))
       (princ ")")
       (unless (looking-at "\n")
 	(princ "\n")))))
@@ -3665,35 +3702,35 @@ SYMBOL must be a customized face."
   "Create a mapper for `custom-save-resets'."
   `(lambda (object)
      (let ((spec (car-safe (get object (quote ,property))))
-           (print-level nil)
-           (print-length nil))
+	   (print-level nil)
+	   (print-length nil))
        (with-boundp '(ignored-special started-writing)
-         (when (and (not (memq object ignored-special))
-                    (eq (car spec) 'user)
-                    (eq (second spec) 'reset))
-           ;; Do not write reset statements unless necessary.
-           (unless started-writing
-             (setq started-writing t)
-             (unless (bolp)
-               (princ "\n"))
-             (princ "(")
-             (princ (quote ,setter))
-             (princ "\n '(")
-             (prin1 object)
-             (princ " ")
-             (prin1 (third spec))
-             (princ ")")))))))
+	 (when (and (not (memq object ignored-special))
+		    (eq (car spec) 'user)
+		    (eq (second spec) 'reset))
+	   ;; Do not write reset statements unless necessary.
+	   (unless started-writing
+	     (setq started-writing t)
+	     (unless (bolp)
+	       (princ "\n"))
+	     (princ "(")
+	     (princ (quote ,setter))
+	     (princ "\n '(")
+	     (prin1 object)
+	     (princ " ")
+	     (prin1 (third spec))
+	     (princ ")")))))))
 
 (defconst custom-save-resets-mapper-alist
   (eval-when-compile
     (list (list 'theme-value 'custom-reset-variables
-                (byte-compile
-                 (make-custom-save-resets-mapper
-                  'theme-value 'custom-reset-variables)))
-          (list 'theme-face 'custom-reset-faces
-                (byte-compile
-                 (make-custom-save-resets-mapper
-                  'theme-face 'custom-reset-faces)))))
+		(byte-compile
+		 (make-custom-save-resets-mapper
+		  'theme-value 'custom-reset-variables)))
+	  (list 'theme-face 'custom-reset-faces
+		(byte-compile
+		 (make-custom-save-resets-mapper
+		  'theme-face 'custom-reset-faces)))))
   "Never use it.
 Hashes several heavily used functions for `custom-save-resets'")
 
@@ -3703,9 +3740,9 @@ Hashes several heavily used functions for `custom-save-resets'")
     ;; (custom-save-delete setter) Done by caller
     (let ((standard-output (current-buffer))
 	  (mapper (let ((triple (assq property custom-save-resets-mapper-alist)))
-                    (if (and triple (eq (second triple) setter))
-                        (third triple)
-                      (make-custom-save-resets-mapper property setter)))))
+		    (if (and triple (eq (second triple) setter))
+			(third triple)
+		      (make-custom-save-resets-mapper property setter)))))
       (mapc mapper special)
       (setq ignored-special special)
       (mapatoms mapper)
@@ -3716,8 +3753,8 @@ Hashes several heavily used functions for `custom-save-resets'")
 (defun custom-save-loaded-themes ()
   (let ((themes (reverse (get 'user 'theme-loads-themes)))
 	(standard-output (current-buffer))
-        (print-level nil)
-        (print-length nil))
+	(print-level nil)
+	(print-length nil))
     (when themes
       (unless (bolp) (princ "\n"))
       (princ "(custom-load-themes")
@@ -3756,11 +3793,20 @@ Hashes several heavily used functions for `custom-save-resets'")
 ;;;###autoload
 (defun custom-save-all ()
   "Save all customizations in `custom-file'."
+  (when init-file-had-error
+    (error 'invalid-change
+	   "Cannot save customizations; init file was not fully loaded"))
   (let ((inhibit-read-only t))
     (custom-save-variables)
     (custom-save-faces)
     (let ((find-file-hooks nil)
-	  (auto-mode-alist))
+	  (auto-mode-alist)
+	  custom-file-directory)
+      (unless (file-directory-p (setq custom-file-directory
+				      (file-name-directory custom-file)))
+	(message "Creating %s... " custom-file-directory)
+	(make-directory custom-file-directory t)
+	(message "Creating %s... done." custom-file-directory))
       (with-current-buffer (find-file-noselect custom-file)
 	(save-buffer)))))
 
@@ -3910,7 +3956,7 @@ Complete content of editable text field.   \\[widget-complete]
 Invoke button under point.		   \\[widget-button-press]
 Set all modifications.			   \\[Custom-set]
 Make all modifications default.		   \\[Custom-save]
-Reset all modified options. 		   \\[Custom-reset-current]
+Reset all modified options.		   \\[Custom-reset-current]
 Reset all modified or set options.	   \\[Custom-reset-saved]
 Reset all options.			   \\[Custom-reset-standard]
 

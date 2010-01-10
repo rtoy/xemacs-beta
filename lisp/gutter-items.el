@@ -540,11 +540,10 @@ you should just use (progress nil)."
 
 (defun progress-feedback-dispatch-non-command-events ()
   ;; don't allow errors to hose things
-  (condition-case t 
-      ;; (sit-for 0) is too agressive and cause more display than we
-      ;; want.
+  (condition-case nil 
+      ;; (sit-for 0) causes more redisplay than we want.
       (dispatch-non-command-events)
-    nil))
+    (t nil)))
 
 (defun append-progress-feedback (label message &optional value frame)
   (or frame (setq frame (selected-frame)))
@@ -679,8 +678,10 @@ If the only argument is nil, clear any existing progress gauge."
 
 (defun progress-feedback-with-label (label fmt &optional value &rest args)
   "Print a progress gauge and message in the bottom gutter area of the frame.
-First argument LABEL is an identifier for this progress gauge.  The rest of the
-arguments are the same as to `format'."
+LABEL is an identifier for this progress gauge.
+FMT is a format string to be passed to `format' along with ARGS.
+Optional VALUE is the current degree of progress, an integer 0-100.
+The remaining ARGS are passed with FMT `(apply #'format FMT ARGS)'."
   ;; #### sometimes the buffer gets changed temporarily. I don't know
   ;; why this is, so protect against it.
   (save-excursion

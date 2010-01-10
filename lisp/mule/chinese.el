@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -31,40 +31,75 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'china-util))
+(eval-when-compile (progn (require 'ccl) (require 'china-util)))
+
+;; Syntax of Chinese characters.
+(loop for row in '(33 34 41)
+      do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
+
+;; CNS11643 Plane3 thru Plane7
+;; These represent more and more obscure Chinese characters.
+;; By the time you get to Plane 7, we're talking about characters
+;; that appear once in some ancient manuscript and whose meaning
+;; is unknown.
 
 (flet
-    ((frob-chinese-cns11643-charset
-      (name)
+    ((make-chinese-cns11643-charset
+      (name plane final)
+      (make-internal-charset
+       name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
+       `(registries 
+         ,(vector (concat "cns11643.1992-" plane ))
+         dimension 2
+         chars 94
+         final ,final
+         graphic 0
+	 unicode-map (,(format "unicode/mule-ucs/chinese-cns11643-%s.txt"
+			       plane))
+	 short-name ,(concat "CNS11643-" plane)
+	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
+			    plane)))
       (modify-syntax-entry   name "w")
       (modify-category-entry name ?t)
       ))
-  (frob-chinese-cns11643-charset 'chinese-cns11643-3)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-4)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-5)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-6)
-  (frob-chinese-cns11643-charset 'chinese-cns11643-7)
-)
+  (make-chinese-cns11643-charset 'chinese-cns11643-3 "3" ?I)
+  (make-chinese-cns11643-charset 'chinese-cns11643-4 "4" ?J)
+  (make-chinese-cns11643-charset 'chinese-cns11643-5 "5" ?K)
+  (make-chinese-cns11643-charset 'chinese-cns11643-6 "6" ?L)
+  (make-chinese-cns11643-charset 'chinese-cns11643-7 "7" ?M)
+  )
 
-;; Syntax of Chinese characters.
-(modify-syntax-entry 'chinese-gb2312 "w")
-(loop for row in '(33 34 41)
-      do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
-;;(loop for row from 35 to  40
-;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
-;;(loop for row from 42 to 126
-;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
+;; ISO-IR-165 (CCITT Extended GB)
+;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
+;;    GB 8565-88 table A4 + 293 characters.
+(make-internal-charset ;; not in FSF 21.1
+ 'chinese-isoir165
+ "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
+ `(registries ["isoir165-0"]
+   dimension 2
+   chars 94
+   final ?E
+   graphic 0
+   short-name "ISO-IR-165"
+   long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
-(modify-syntax-entry 'chinese-cns11643-1  "w")
-(modify-syntax-entry 'chinese-cns11643-2  "w")
-(if (find-charset 'chinese-big5-1)
-    (progn
-      (modify-syntax-entry 'chinese-big5-1 "w")
-      (modify-syntax-entry 'chinese-big5-2 "w")
-      )
-  (modify-syntax-entry 'chinese-big5 "w"))
+; ;; PinYin-ZhuYin
+; (make-internal-charset 'chinese-sisheng 
+; 	      "SiSheng characters for PinYin/ZhuYin"
+; 	      '(dimension
+; 		1
+; 		;; XEmacs addition: second half of registry spec
+; 		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+; 		chars 94
+; 		columns 1
+; 		direction l2r
+; 		final ?0
+; 		graphic 0
+; 		short-name "SiSheng"
+; 		long-name "SiSheng (PinYin/ZhuYin)"
+; 		))
 
+ 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
 ;;  (setq wnn-server-type 'cserver)
@@ -125,6 +160,7 @@
    charset-g1 chinese-gb2312
    charset-g2 chinese-sisheng
    charset-g3 t
+   safe-charsets (ascii chinese-gb2312 chinese-sisheng)
    mnemonic "Zh-GB/EUC"
    documentation
    "Chinese EUC (Extended Unix Code), the standard Chinese encoding on Unix.
@@ -136,9 +172,8 @@ G1: Chinese-GB2312
 G2: Sisheng (PinYin - ZhuYin)"
    ))
 
-;; (define-coding-system-alias 'cn-gb-2312 'chinese-iso-8bit)
-;; (define-coding-system-alias 'euc-china 'chinese-iso-8bit)
-;; (define-coding-system-alias 'euc-cn 'chinese-iso-8bit)
+;; For consistency with euc-jp, euc-ko
+(define-coding-system-alias 'euc-cn 'cn-gb-2312)
 
 (define-coding-system-alias 'gb2312 'cn-gb-2312)
 (define-coding-system-alias 'chinese-euc 'cn-gb-2312)
@@ -159,6 +194,7 @@ G2: Sisheng (PinYin - ZhuYin)"
  "Hz/ZW (Chinese)"
  '(mnemonic "Zh-GB/Hz"
    eol-type lf
+   safe-charsets (ascii chinese-gb2312)
    post-read-conversion post-read-decode-hz
    pre-write-conversion pre-write-encode-hz
    documentation "Hz/ZW 7-bit encoding for Chinese GB2312 (MIME:HZ-GB-2312)"
@@ -194,11 +230,6 @@ G2: Sisheng (PinYin - ZhuYin)"
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
 		(cygwin-locale "zh")
-		(locale "zh_CN.eucCN" "zh_CN.EUC" "zh_CN"
-			"chinese-s" "zh"
-			 (lambda (arg)
-			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*\\.GB.*" arg)))))
 		(mswindows-locale ("CHINESE" . "CHINESE_SIMPLIFIED"))
 		(native-coding-system cn-gb-2312)
 		(input-method . "chinese-py-punct")
@@ -208,6 +239,14 @@ G2: Sisheng (PinYin - ZhuYin)"
 "Supports Simplified Chinese, used in mainland China.
 Uses the GB2312 character set."))
  '("Chinese"))
+
+;; Set the locale information separately so that the lambda gets compiled.
+(set-language-info "Chinese-GB" 
+                   'locale
+                   (list "zh_CN.eucCN" "zh_CN.EUC" "zh_CN" "chinese-s" "zh"
+			 (lambda (arg)
+                           (and arg (let ((case-fold-search t))
+                                      (string-match "^zh_.*\\.GB.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
@@ -225,6 +264,7 @@ Uses the GB2312 character set."))
  'big5 'big5
  "Big5"
  '(mnemonic "Zh/Big5"
+   safe-charsets (ascii chinese-big5-1 chinese-big5-2)
    documentation
    "A non-modal encoding formed by five large Taiwanese companies
 \(hence \"Big5\") to produce a character set and encoding for
@@ -242,7 +282,7 @@ of a Chinese character\"."))
 (define-coding-system-alias 'cn-big5 'big5)
 
 (when (featurep 'ccl)
-  ;; Big5 font requires special encoding.
+;; Big5 font requires special encoding.
   (define-ccl-program ccl-encode-big5-font
     `(0
       ;; In:  R0:chinese-big5-1 or chinese-big5-2
@@ -250,15 +290,12 @@ of a Chinese character\"."))
       ;;      R2:position code 2
       ;; Out: R1:font code point 1
       ;;      R2:font code point 2
-      ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
+      ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
        (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-       (r1 = ((r2 / 157) + ?\xA1))
+       (r1 = ((r2 / 157) + #xA1))
        (r2 %= 157)
-       (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
+       (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
     "CCL program to encode a Big5 code to code point of Big5 font.")
-
-  ;; (setq font-ccl-encoder-alist
-  ;;       (cons (cons "big5" ccl-encode-big5-font) font-ccl-encoder-alist))
 
   (set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
   (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
@@ -271,11 +308,6 @@ of a Chinese character\"."))
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
 		  (cygwin-locale "zh_TW")
-		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
-			  "chinese-t"
-			  (lambda (arg)
-			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*.BIG5.*" arg)))))
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
 		  (native-coding-system big5)
 		  (input-method . "chinese-py-punct-b5")
@@ -286,6 +318,15 @@ of a Chinese character\"."))
 Uses the Chinese Big5 character set."
 ))
  '("Chinese"))
+
+;; Set the locale information separately so that the lambda gets compiled.
+(set-language-info "Chinese-BIG5" 
+                   'locale
+		  (list "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
+                        "chinese-t"
+                        (lambda (arg)
+                          (and arg (let ((case-fold-search t))
+                                     (string-match "^zh_.*.BIG5.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)

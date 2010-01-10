@@ -40,8 +40,13 @@ Boston, MA 02111-1307, USA.  */
 
 DECLARE_CONSOLE_TYPE (x);
 
+extern int wedge_metacity;
+
 struct x_device
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   /* The X connection of this device. */
   Display *display;
 
@@ -159,6 +164,17 @@ struct x_device
   Time modifier_release_time;
 };
 
+#ifdef NEW_GC
+typedef struct x_device Lisp_X_Device;
+
+DECLARE_LRECORD (x_device, Lisp_X_Device);
+
+#define XX_DEVICE(x) \
+  XRECORD (x, x_device, Lisp_X_Device)
+#define wrap_x_device(p) wrap_record (p, x_device)
+#define X_DEVICE_P(x) RECORDP (x, x_device)
+#endif /* NEW_GC */
+
 #define DEVICE_X_DATA(d) DEVICE_TYPE_DATA (d, x)
 
 #define FRAME_X_DISPLAY(f) (DEVICE_X_DISPLAY (XDEVICE (f->device)))
@@ -220,17 +236,27 @@ struct x_device
 
 /* The maximum number of widgets that can be displayed above the text
    area at one time.  Currently no more than 3 will ever actually be
-   displayed (menubar, psheet, debugger panel). */
+   displayed (menubar, psheet, debugger panel).
+   #### Are "psheet" and "debugger panel" relevant any more? */
 #define MAX_CONCURRENT_TOP_WIDGETS 8
 
 struct x_frame
 {
-  /* The widget of this frame.  This is an EmacsShell or an
-     ExternalShell. */
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
+
+  /* The widget of this frame.
+     This is an EmacsShell or an ExternalShell.
+     It negotiates with the window manager or containing app on behalf of
+     the container widget.  Should be (but isn't) invisible to Emacs. */
   Widget widget;
 
   /* The parent of the EmacsFrame, the menubar, and the scrollbars.
-     This is an EmacsManager. */
+     This is an EmacsManager.
+     It is responsible for managing the geometry of the frame.  This is what
+     Emacs mostly talks to.  Anything that affects its geometry will be
+     reflected in the Shell widget, and thus cause WM interaction. */
   Widget container;
 
   /* The widget of the menubar, of whatever widget class it happens to be. */
@@ -290,12 +316,23 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
+#ifdef USE_XFT
+  /* The Xft Drawable wrapper for this device.
+     #### Should this be per-device, or per-frame? */
+  /* This is persistent to take advantage of the ability of Xft's glyph
+     cache in the server, and avoid rendering the font again and again... 
+
+     This is created the first time through redisplay, and destroyed when our 
+     connection to the X display is destroyed. */
+  XftDraw *xftDraw;
+#endif
+
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
   unsigned int totally_visible_p :1;
 
-  /* NB: Both of the following flags are derivable from the 'shell'
+  /* NB: Both of the following flags are derivable from the 'widget'
      field above, but it's easier if we also have them separately here. */
 
   /* Are we a top-level frame?  This means that our shell is a
@@ -311,6 +348,16 @@ struct x_frame
 #endif /* EXTERNAL_WIDGET */
 };
 
+#ifdef NEW_GC
+typedef struct x_frame Lisp_X_Frame;
+
+DECLARE_LRECORD (x_frame, Lisp_X_Frame);
+
+#define XX_FRAME(x) \
+  XRECORD (x, x_frame, Lisp_X_Frame)
+#define wrap_x_frame(p) wrap_record (p, x_frame)
+#define X_FRAME_P(x) RECORDP (x, x_frame)
+#endif /* NEW_GC */
 #define FRAME_X_DATA(f) FRAME_TYPE_DATA (f, x)
 
 #define FRAME_X_SHELL_WIDGET(f)	    (FRAME_X_DATA (f)->widget)
@@ -338,6 +385,10 @@ struct x_frame
 #endif /* HAVE_TOOLBARS */
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
+
+#ifdef USE_XFT
+#define FRAME_X_XFTDRAW(f)   (FRAME_X_DATA (f)->xftDraw)
+#endif
 
 #define FRAME_X_TOTALLY_VISIBLE_P(f) (FRAME_X_DATA (f)->totally_visible_p)
 #define FRAME_X_TOP_LEVEL_FRAME_P(f) (FRAME_X_DATA (f)->top_level_frame_p)

@@ -161,17 +161,14 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "file-coding.h"
 
-#ifdef CANNA2
+/* iroha (Canna v1) support removed as of canna_api.c r1.4.
+   #### Is the IROHA_BC #define needed? */
 #define IROHA_BC
-#define CANNA_NEW_WCHAR_AWARE
 #include "canna/jrkanji.h"
 #include "canna/RK.h"
-#else /* !CANNA2 */
-#include "iroha/jrkanji.h"
-#include "iroha/RK.h"
-#endif /* !CANNA2 */
-extern char *jrKanjiError;
 
+/* #### These shouldn't be needed any more. */
+extern char *jrKanjiError;
 extern int (*jrBeepFunc) (void);
 
 /* #### is this global really necessary? */
@@ -336,11 +333,12 @@ No separator will be used otherwise.
 */
        (num))
 {
-  int kugiri; /* 文節区切りをするか？ (display clause separator?) */
+  /* This is actually a Boolean! */
+  char *kugiri; /* 文節区切りをするか？ (display clause separator?) */
 
-  kugiri = NILP (num) ? 0 : 1;
+  kugiri = NILP (num) ? (char *) 0 : (char *) 1;
 
-  jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
+  jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, kugiri);
 
   return Qnil;
 }
@@ -368,19 +366,19 @@ If nil is specified for each arg, the default value will be used.
   int res;
   char **p, **q;
 
-  int kugiri; /* 文節区切りをするか？ (display clause separator?) */
+  /* This is actually a Boolean! */
+  char *kugiri; /* 文節区切りをするか？ (display clause separator?) */
 
   IRCP_context = -1;
 
   if (NILP (num))
     {
-      kugiri = 1;
+      kugiri = (char *) 1;
     }
   else
     {
       CHECK_INT (num);
-      kugiri = XINT (num);
-      kugiri = (kugiri == 1) ? 1 : 0;
+      kugiri = (XINT (num) == 1) ? (char *) 1 : (char *) 0;
     }
 
   if (NILP (server))
@@ -408,13 +406,7 @@ If nil is specified for each arg, the default value will be used.
 
   {
     char **warning = (char **) 0;
-#ifdef nec_ews_svr4
-    stop_polling ();
-#endif /* nec_ews_svr4 */
     res = jrKanjiControl (0, KC_INITIALIZE, (char *) &warning);
-#ifdef nec_ews_svr4
-    start_polling ();
-#endif /* nec_ews_svr4 */
     val = Qnil;
     if (warning)
       {
@@ -447,7 +439,7 @@ If nil is specified for each arg, the default value will be used.
 #endif /* CANNA_MULE */
 #endif /* KC_SETAPPNAME */
 
-      jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
+      jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, kugiri);
       jrKanjiControl (0, KC_SETWIDTH, (char *) 78);
 #ifndef CANNA_MULE
       jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);

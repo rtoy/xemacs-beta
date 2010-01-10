@@ -666,13 +666,14 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 
       if ((!NILP (config_tag)
 	   && NILP (Fmemq (config_tag, Vmenubar_configuration)))
-	  || (included_spec && NILP (Feval (include_p))))
+	  || (included_spec &&
+              NILP (IGNORE_MULTIPLE_VALUES (Feval (include_p)))))
 	{
 	  return (NULL);
 	}
 
       if (active_spec)
-	active_p = Feval (active_p);
+        active_p = IGNORE_MULTIPLE_VALUES (Feval (active_p));
 
       gtk_widget_set_sensitive (GTK_WIDGET (menu_item), ! NILP (active_p));
     }
@@ -853,7 +854,8 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 #ifdef HAVE_MENUBARS
       if ((!NILP (config_tag) && NILP (Fmemq (config_tag, Vmenubar_configuration)))
-	  || (included_spec && NILP (Feval (include_p))))
+	  || (included_spec && NILP (IGNORE_MULTIPLE_VALUES (Feval (include_p)))))
+
 	{
 	  /* the include specification says to ignore this item. */
 	  return 0;
@@ -866,7 +868,8 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	accel = menu_name_to_accelerator (XSTRING_DATA (name));
 
       if (!NILP (suffix))
-	suffix = Feval (suffix);
+        suffix = IGNORE_MULTIPLE_VALUES (Feval (suffix));
+
 
       if (!separator_string_p (XSTRING_DATA (name)))
 	{
@@ -901,7 +904,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    }
 	  else
 	    {
-	      selected_p = Feval (selected_p);
+              selected_p = IGNORE_MULTIPLE_VALUES (Feval (selected_p));
 	    }
 	}
 
@@ -911,7 +914,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	}
       else
 	{
-	  active_p = Feval (active_p);
+          active_p = IGNORE_MULTIPLE_VALUES (Feval (active_p));
 	}
 
       if (0 || 

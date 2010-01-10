@@ -38,6 +38,14 @@
 ;;; Implementation-Incomplete-Expect-Failure wrapper macros to mark them.
 ;;; A lot of the tests we run push limits; suppress Ebola message with the
 ;;; Ignore-Ebola wrapper macro.
+;;; Some noisy code will call `message'.  Output from `message' can be
+;;; suppressed with the Silence-Message macro.  Functions that are known to
+;;; issue messages include `write-region', `find-tag', `tag-loop-continue',
+;;; `insert', and `mark-whole-buffer'.  N.B. The Silence-Message macro
+;;; currently does not suppress the newlines printed by `message'.
+;;; Definitely do not use Silence-Message with Check-Message.
+;;; In general it should probably only be used on code that prepares for a
+;;; test, not on tests.
 ;;; 
 ;;; You run the tests using M-x test-emacs-test-file,
 ;;; or $(EMACS) -batch -l .../test-harness.el -f batch-test-emacs file ...
@@ -45,8 +53,35 @@
 
 (require 'bytecomp)
 
+(defvar unexpected-test-suite-failures 0
+  "Cumulative number of unexpected failures since test-harness was loaded.
+
+\"Unexpected failures\" are those caught by a generic handler established
+outside of the test context.  As such they involve an abort of the test
+suite for the file being tested.
+
+They often occur during preparation of a test or recording of the results.
+For example, an executable used to generate test data might not be present
+on the system, or a system error might occur while reading a data file.")
+
+(defvar unexpected-test-suite-failure-files nil
+  "List of test files causing unexpected failures.")
+
+;; Declared for dynamic scope; _do not_ initialize here.
+(defvar unexpected-test-file-failures)
+
 (defvar test-harness-test-compiled nil
-  "Non-nil means the test code was compiled before execution.")
+  "Non-nil means the test code was compiled before execution.
+
+You probably should not make tests depend on compilation.
+However, it can be useful to conditionally change messages based on whether
+the code was compiled or not.  For example, the case that motivated the
+implementation of this variable:
+
+\(when test-harness-test-compiled
+  ;; this ha-a-ack depends on the failing compiled test coming last
+  \(setq test-harness-failure-tag
+	\"KNOWN BUG - fix reverted; after 2003-10-31 notify stephen\n\"))")
 
 (defvar test-harness-verbose
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
@@ -134,6 +169,7 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	  (setq body (cons (read buffer) body)))
       (end-of-file nil)
       (error
+       (incf unexpected-test-file-failures)
        (princ (format "Unexpected error %S reading forms from buffer\n"
 		      error-info))))
     `(lambda ()
@@ -144,7 +180,6 @@ The output file's name is made by appending `c' to the end of FILENAME."
        (defvar missing-message-failures)
        (defvar other-failures)
 
-       (defvar unexpected-test-suite-failure)
        (defvar trick-optimizer)
 
        ,@(nreverse body))))
@@ -158,6 +193,7 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	(wrong-error-failures 0)
 	(missing-message-failures 0)
 	(other-failures 0)
+	(unexpected-test-file-failures 0)
 
 	;; #### perhaps this should be a defvar, and output at the very end
 	;; OTOH, this way AC types can use a null EMACSPACKAGEPATH to find
@@ -165,7 +201,6 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	(skipped-test-reasons (make-hash-table :test 'equal))
 
 	(trick-optimizer nil)
-	(unexpected-test-suite-failure nil)
 	(debug-on-error t)
 	(pass-stream nil))
     (with-output-to-temp-buffer "*Test-Log*"
@@ -178,7 +213,29 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	`(let ((test-harness-failure-tag "KNOWN BUG")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
-    
+
+      (defmacro Known-Bug-Expect-Error (expected-error &rest body)
+	(let ((quoted-body (if (= 1 (length body))
+			       `(quote ,(car body)) `(quote (progn ,@body)))))
+          `(let ((test-harness-failure-tag "KNOWN BUG")
+                 (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+            (condition-case error-info
+                (progn
+                  (setq trick-optimizer (progn ,@body))
+                  (Print-Pass 
+                   "%S executed successfully, but expected error %S"
+                   ,quoted-body
+                   ',expected-error)
+                  (incf passes))
+              (,expected-error
+               (Print-Failure "%S ==> error %S, as expected"
+                              ,quoted-body ',expected-error)
+               (incf no-error-failures))
+              (error
+               (Print-Failure "%S ==> expected error %S, got error %S instead"
+                              ,quoted-body ',expected-error error-info)
+               (incf wrong-error-failures))))))
+
       (defmacro Implementation-Incomplete-Expect-Failure (&rest body)
 	`(let ((test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
@@ -210,22 +267,27 @@ BODY is a sequence of expressions and may contain several tests."
 	       (Print-Skip ,description ,reason))
 	   ,@body))
 
-      (defmacro Assert (assertion &optional failing-case)
+      (defmacro Assert (assertion &optional failing-case description)
+	"Test passes if ASSERTION is true.
+Optional FAILING-CASE describes the particular failure.
+Optional DESCRIPTION describes the assertion.
+FAILING-CASE and DESCRIPTION are useful when Assert is used in a loop."
 	`(condition-case error-info
 	  (progn
 	    (assert ,assertion)
-	    (Print-Pass "%S" (quote ,assertion))
+	    (Print-Pass "%S" (quote ,(or description assertion)))
 	    (incf passes))
 	  (cl-assertion-failed
 	   (Print-Failure (if ,failing-case
 			      "Assertion failed: %S; failing case = %S"
 			    "Assertion failed: %S")
-			  (quote ,assertion) ,failing-case)
+			  (quote ,(or description assertion)) ,failing-case)
 	   (incf assertion-failures))
 	  (t (Print-Failure (if ,failing-case
 				"%S ==> error: %S; failing case =  %S"
 			      "%S ==> error: %S")
-			    (quote ,assertion) error-info ,failing-case)
+			    (quote ,(or description assertion))
+			    error-info ,failing-case)
 	     (incf other-failures)
 	     )))
 
@@ -260,6 +322,10 @@ BODY is a sequence of expressions and may contain several tests."
 				,quoted-body ',expected-error)
 		 (incf no-error-failures))
 	     (,expected-error
+	      ;; #### Damn, this binding doesn't capture frobs, eg, for
+	      ;; invalid_argument() ... you only get the REASON.  And for
+	      ;; wrong_type_argument(), there's no reason only FROBs.
+	      ;; If this gets fixed, fix tests in regexp-tests.el.
 	      (let ((error-message (second error-info)))
 		(if (string-match ,expected-error-regexp error-message)
 		    (progn
@@ -274,7 +340,7 @@ BODY is a sequence of expressions and may contain several tests."
 			     ,quoted-body ',expected-error error-info)
 	      (incf wrong-error-failures)))))
 
-
+      ;; Do not use this with Silence-Message.
       (defmacro Check-Message (expected-message-regexp &rest body)
 	(Skip-Test-Unless (fboundp 'defadvice)
 			  "can't defadvice"
@@ -306,6 +372,12 @@ BODY is a sequence of expressions and may contain several tests."
 		  (incf other-failures)))
 	       (ad-unadvise 'message)))))
 
+      ;; #### Perhaps this should override `message' itself, too?
+      (defmacro Silence-Message (&rest body)
+	`(flet ((append-message (&rest args) ())
+                (clear-message (&rest args) ()))
+          ,@body))
+
       (defmacro Ignore-Ebola (&rest body)
 	`(let ((debug-issue-ebola-notices -42)) ,@body))
 
@@ -320,7 +392,7 @@ BODY is a sequence of expressions and may contain several tests."
       (condition-case error-info
 	  (funcall (test-harness-read-from-buffer inbuffer))
 	(error
-	 (setq unexpected-test-suite-failure t)
+	 (incf unexpected-test-file-failures)
 	 (princ (format "Unexpected error %S while executing interpreted code\n"
 		error-info))
 	 (message "Unexpected error %S while executing interpreted code." error-info)
@@ -341,6 +413,7 @@ BODY is a sequence of expressions and may contain several tests."
 	(condition-case error-info
 	    (if code (funcall code))
 	  (error
+	   (incf unexpected-test-file-failures)
 	   (princ (format "Unexpected error %S while executing byte-compiled code\n"
 			  error-info))
 	   (message "Unexpected error %S while executing byte-compiled code." error-info)
@@ -376,14 +449,18 @@ BODY is a sequence of expressions and may contain several tests."
 		 skipped-test-reasons)
 	(when (> (length reasons) 1)
 	  (setq summary-msg (concat summary-msg reasons "
-    Probably XEmacs cannot find your installed packages.  Set EMACSPACKAGEPATH
-    to the package hierarchy root or configure with --package-path to enable
-    the skipped tests.")))
+    It may be that XEmacs cannot find your installed packages.  Set
+    EMACSPACKAGEPATH to the package hierarchy root or configure with
+    --package-path to enable the skipped tests.")))
 	(setq test-harness-file-results-alist
 	      (cons (list filename passes total)
 		    test-harness-file-results-alist))
 	(message "%s" summary-msg))
-      (when unexpected-test-suite-failure
+      (when (> unexpected-test-file-failures 0)
+	(setq unexpected-test-suite-failure-files
+	      (cons filename unexpected-test-suite-failure-files))
+	(setq unexpected-test-suite-failures
+	      (+ unexpected-test-suite-failures unexpected-test-file-failures))
 	(message "Test suite execution failed unexpectedly."))
       (fmakunbound 'Assert)
       (fmakunbound 'Check-Error)
@@ -510,7 +587,23 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 			 (/ (* 100 nsucc) ntest))
 	      (message test-harness-null-summary-template
 		       (concat basename ":")))
-	    (setq results (cdr results))))))
+	    (setq results (cdr results)))))
+      (when (> unexpected-test-suite-failures 0)
+	(message "\n***** There %s %d unexpected test suite %s in %s:"
+		 (if (= unexpected-test-suite-failures 1) "was" "were")
+		 unexpected-test-suite-failures
+		 (if (= unexpected-test-suite-failures 1) "failure" "failures")
+		 (if (= (length unexpected-test-suite-failure-files) 1)
+		     "file"
+		   "files"))
+	(while unexpected-test-suite-failure-files
+	  (let ((line (pop unexpected-test-suite-failure-files)))
+	    (while (and (< (length line) 61)
+			unexpected-test-suite-failure-files)
+	      (setq line
+		    (concat line " "
+			    (pop unexpected-test-suite-failure-files))))
+	    (message line)))))
     (message "\nDone")
     (kill-emacs (if error 1 0))))
 

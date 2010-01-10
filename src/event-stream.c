@@ -255,7 +255,7 @@ static Lisp_Object QSexecute_internal_event;
 Fixnum debug_emacs_events;
 
 static void
-external_debugging_print_event (char *event_description, Lisp_Object event)
+external_debugging_print_event (const char *event_description, Lisp_Object event)
 {
   write_c_string (Qexternal_debugging_output, "(");
   write_c_string (Qexternal_debugging_output, event_description);
@@ -329,9 +329,9 @@ static int is_scrollbar_event (Lisp_Object event);
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
 #define CONCHECK_COMMAND_BUILDER(x) CONCHECK_RECORD (x, command_builder)
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static Lisp_Object Vcommand_builder_free_list;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 static const struct memory_description command_builder_description [] = {
   { XD_LISP_OBJECT, offsetof (struct command_builder, current_events) },
@@ -389,12 +389,12 @@ Lisp_Object
 allocate_command_builder (Lisp_Object console, int with_echo_buf)
 {
   Lisp_Object builder_obj =
-#ifdef MC_ALLOC
+#ifdef NEW_GC
     wrap_pointer_1 (alloc_lrecord_type (struct command_builder,
 					 &lrecord_command_builder));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
     alloc_managed_lcrecord (Vcommand_builder_free_list);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   struct command_builder *builder = XCOMMAND_BUILDER (builder_obj);
 
   builder->console = console;
@@ -428,6 +428,8 @@ copy_command_builder (struct command_builder *collapsing,
 {
   if (!new_buildings)
     new_buildings = XCOMMAND_BUILDER (allocate_command_builder (Qnil, 0));
+
+  new_buildings->console = collapsing->console;
 
   new_buildings->self_insert_countdown = collapsing->self_insert_countdown;
 
@@ -463,12 +465,12 @@ free_command_builder (struct command_builder *builder)
       xfree (builder->echo_buf, Ibyte *);
       builder->echo_buf = NULL;
     }
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (wrap_command_builder (builder));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   free_managed_lcrecord (Vcommand_builder_free_list,
 			 wrap_command_builder (builder));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 static void
@@ -837,11 +839,12 @@ execute_help_form (struct command_builder *command_builder,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (echo, help);
 
-  record_unwind_protect (save_window_excursion_unwind,
-			 call1 (Qcurrent_window_configuration, Qnil));
+  record_unwind_protect (Feval,
+                         list2 (Qset_window_configuration,
+                                call0 (Qcurrent_window_configuration)));
   reset_key_echo (command_builder, 1);
 
-  help = Feval (Vhelp_form);
+  help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));
   if (STRINGP (help))
     internal_with_output_to_temp_buffer (build_string ("*Help*"),
 					 print_help, help, Qnil);
@@ -1031,9 +1034,9 @@ static int timeout_id_tick;
 
 static Lisp_Object pending_timeout_list, pending_async_timeout_list;
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static Lisp_Object Vtimeout_free_list;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 static Lisp_Object
 mark_timeout (Lisp_Object obj)
@@ -1062,12 +1065,12 @@ event_stream_generate_wakeup (unsigned int milliseconds,
 			      Lisp_Object function, Lisp_Object object,
 			      int async_p)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   Lisp_Object op = 
     wrap_pointer_1 (alloc_lrecord_type (Lisp_Timeout, &lrecord_timeout));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   Lisp_Object op = alloc_managed_lcrecord (Vtimeout_free_list);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   Lisp_Timeout *timeout = XTIMEOUT (op);
   EMACS_TIME current_time;
   EMACS_TIME interval;
@@ -1185,11 +1188,11 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
       *timeout_list = noseeum_cons (op, *timeout_list);
     }
   else
-#ifdef MC_ALLOC
+#ifdef NEW_GC
     free_lrecord (op);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
     free_managed_lcrecord (Vtimeout_free_list, op);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   UNGCPRO;
   return id;
@@ -1226,11 +1229,11 @@ event_stream_disable_wakeup (int id, int async_p)
 	signal_remove_async_interval_timeout (timeout->interval_id);
       else
 	event_stream_remove_timeout (timeout->interval_id);
-#ifdef MC_ALLOC
+#ifdef NEW_GC
       free_lrecord (op);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
       free_managed_lcrecord (Vtimeout_free_list, op);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
     }
 }
 
@@ -3186,7 +3189,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event, XEVENT_KEY_MODIFIERS (ev2));
 	  Fdeallocate_event (ev2);
@@ -3211,7 +3215,8 @@ maybe_kbd_translate (Lisp_Object event)
 	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
 
 	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+			      XCONSOLE (XEVENT_CHANNEL (event)),
+			      high_bit_is_meta, 1);
 	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
 	  XSET_EVENT_KEY_MODIFIERS (event,
                                XEVENT_KEY_MODIFIERS (event) |
@@ -4381,7 +4386,7 @@ post_command_hook (void)
 
   safe_run_hook_trapping_problems
     (Qcommand, Qpost_command_hook,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+     0);
 
 #if 0 /* FSF Emacs */
   if (!NILP (current_buffer->mark_active))
@@ -4925,7 +4930,7 @@ reinit_vars_of_event_stream (void)
   recent_keys_ring_index = 0;
   recent_keys_ring_size = 100;
   num_input_chars = 0;
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   Vtimeout_free_list = make_lcrecord_list (sizeof (Lisp_Timeout),
 					   &lrecord_timeout);
   staticpro_nodump (&Vtimeout_free_list);
@@ -4933,7 +4938,7 @@ reinit_vars_of_event_stream (void)
     make_lcrecord_list (sizeof (struct command_builder),
 			&lrecord_command_builder);
   staticpro_nodump (&Vcommand_builder_free_list);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   the_low_level_timeout_blocktype =
     Blocktype_new (struct low_level_timeout_blocktype);
   something_happened = 0;

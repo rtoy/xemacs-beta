@@ -1,3 +1,331 @@
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xlw.c: Include needed Xmu headers instead of obsolete xmu.h.
+	* xlwcheckbox.c: Ditto.
+	* xlwradio.c: Ditto.
+	* xlwgauge.c: Ditto.  Unconditionally include HAVE_XMU code.
+	* xlwtabs.c: Ditto.
+	* xlwgcs.c: Ditto.  Remove pre-X11R5 code.
+	* xlwgcs.h: Remove pre-X11R5 declarations.
+
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* lwlib.c: Drop workaround for old NeXT systems.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2008-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	G++ 4.3 complains a lot about implicit conversions of string
+	literals (const char *) to char *.  Shut it up.
+
+	* xt-wrappers.h: New file.
+	Contains wrappers for Xt functions and macros for C++
+	type-correctness and/or convenience.
+
+	* lwlib.h:
+	* lwlib-Xm.c:
+	* lwlib-Xaw.c:
+	#include xt-wrappers.h.
+
+	* xlwcheckbox.c:
+	* xlwgauge.c:
+	* xlwmenu.c:
+	* xlwradio.c:
+	* xlwscrollbar.c:
+	* xlwtabs.c:
+	#include xt-wrappers.h.
+	Cast class name to String.
+	Cast action names to String.
+	Rewrite resources to use Xt_RESOURCE.
+
+	* lwlib.h (lw_get_value_arg):
+	* lwlib.c (lw_get_value_arg):
+	Declare String argument const.
+
+	* lwlib-Xaw.c (xaw_actions):
+	Cast to string.
+
+	* lwlib-Xaw.c (xaw_update_scrollbar):
+	* lwlib-Xaw.c (xaw_update_one_widget):
+	* lwlib-Xaw.c (xaw_update_one_value):
+	* lwlib-Xaw.c (make_dialog):
+	* lwlib-Xaw.c (xaw_generic_callback):
+	* lwlib-Xaw.c (wm_delete_window):
+	* lwlib-Xaw.c (xaw_create_scrollbar):
+	* lwlib-Xaw.c (xaw_create_button):
+	* lwlib-Xaw.c (xaw_create_label):
+	* lwlib-Xaw.c (xaw_create_progress):
+	* lwlib-Xaw.c (xaw_create_text_field):
+	* lwlib-Xaw.c (xaw_creation_table):
+	* lwlib-Xlw.c (xlw_create_menubar):
+	* lwlib-Xlw.c (xlw_create_popup_menu):
+	* lwlib-Xlw.c (xlw_create_scrollbar):
+	* lwlib-Xlw.c (xlw_update_scrollbar):
+	* lwlib-Xlw.c (xlw_create_tab_control):
+	* lwlib-Xlw.c (build_tabs_in_widget):
+	* lwlib-Xlw.c (xlw_create_clip_window):
+	* lwlib-Xlw.c (xlw_update_one_widget):
+	* lwlib-Xm.c (xm_update_label):
+	* lwlib-Xm.c (xm_update_pushbutton):
+	* lwlib-Xm.c (xm_update_progress):
+	* lwlib-Xm.c (xm_update_toggle):
+	* lwlib-Xm.c (xm_update_radiobox):
+	* lwlib-Xm.c (make_menu_in_widget):
+	* lwlib-Xm.c (update_one_menu_entry):
+	* lwlib-Xm.c (xm_update_scrollbar):
+	* lwlib-Xm.c (xm_update_one_value):
+	* lwlib-Xm.c (make_dialog):
+	* lwlib-Xm.c (recenter_widget):
+	* lwlib-Xm.c (recycle_instance):
+	* lwlib-Xm.c (make_menubar):
+	* lwlib-Xm.c (make_scrollbar):
+	* lwlib-Xm.c (xm_create_button):
+	* lwlib-Xm.c (xm_create_progress):
+	* lwlib-Xm.c (xm_create_text_field):
+	* lwlib-Xm.c (xm_create_label):
+	* lwlib-Xm.c (xm_create_combo_box):
+	* lwlib-Xm.c (xm_popup_menu):
+	* lwlib-Xm.c (set_min_dialog_size):
+	* lwlib-Xm.c (do_call):
+	* lwlib-Xm.c (xm_generic_callback):
+	* xlwcheckbox.c (offset):
+	* xlwgauge.c (offset):
+	* xlwgauge.c (actionsList):
+	* xlwmenu.c (xlwMenuResources):
+	* xlwmenu.c (xlwMenuActionsList):
+	* xlwmenu.c (xlwMenuClassRec):
+	* xlwmenu.c (nameResource):
+	* xlwmenu.c (parameterize_string):
+	* xlwradio.c (actionsList):
+	* xlwscrollbar.c (offset):
+	* xlwscrollbar.c (actions):
+	Use Xt_SET_ARG, Xt_SET_VALUE, and Xt_GET_VALUE instead of raw Xt
+	equivalents.
+
+2008-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xm.c (xm_update_progress): Set all values!
+
+2007-09-15  Jerry James  <james@xemacs.org>
+
+	* xlwmenu.c (XlwMenuDestroy): Release XftFont resources
+	* xlwtabs.c (TabsDestroy): Ditto
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2007-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Gauge values are signed integers (ints).
+	
+	* xlwgauge.h: Get rid of references to Cardinal in comment.
+	(XawGaugeGetValue): Declare return value as int.
+	(XawGaugeSetValue): Declare value as int.
+
+	* xlwgauge.c (GaugeGetValue): Declare value as int.
+	(GaugeMercury): Declare val0 and val1 as int.  Remove redundant casts.
+	(XawGaugeGetValue): Declare return value as int.
+	(XawGaugeSetValue): Declare value as int.
+
+2007-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (wm_delete_window): Iterate over children of shell
+	(there may be more than one) to find our widget.
+
+2006-11-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwmenu.c (xlwMenuResources):
+	* xlwmenu.c (XlwMenuInitialize):
+	* xlwmenuP.h (_XlwMenu_part):
+	* xlwtabs.c (resources):
+	* xlwtabs.c (TabsInit):
+	* xlwtabsP.h (TabsPart):
+	New xftFontName member in each widget part struct, corresponds to
+	xftFont String resource.
+	Initialize renderFont private member from fcFontName if non-NULL,
+	otherwise initialize from xftFontName.
+
+	* xlwtabs.h: Update parameter table.
+
+2006-06-16  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xlw.c (xlw_scrollbar_callback): Do not dereference
+	instance before checking whether it is NULL.
+	* xlwmenu.c (xlw_map_menu): Prevent uninitialized access to root
+	and waste.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-05-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Make fcFontName and xftFont separate resources.
+
+	* lwlib-fonts.h (XtNfcFontName, XtCFcFontName): New macros.
+	(XtNxftFont, XtCXftFont): Coalesce the conditional definitions.
+
+	* xlwmenuP.h (XlwMenuPart):
+	* xlwtabsP.h (TabsPart):
+	Rename renderFontSpec member to fcFontName.
+
+	* xlwmenu.c (XlwMenuResources):
+	* xlwtabs.c (resources):
+	Add a record for fcFontName.
+
+	* xlwtabs.c (TabsInit): Use the fcFontName resource, not xftFont.
+
+	* xlwtabs.c (DrawTab,TabLayout,TabsGeometryManager): Improve
+	diagnostics.
+
+2006-04-24  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xaw.c (lw_debug_print_class_resources): Casting from a
+	pointer to an int throws away half of the bits on an x86_64
+	platform.  Print as a pointer instead.
+	* xlwgauge.c (XawGaugeSetValue): Use NULL instead of 0 as the
+	sentinel to quiet gcc warnings.
+	* xlwmenu.c: Cast to FcChar8 * as necessary to quiet warnings.
+	* xlwtabs.c: Ditto.
+
+2006-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-fonts.c: Change #include to "font-mgr.h".  Make
+	conditional on HAVE_FONTCONFIG, not USE_XFT.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-21  Andrey Slusar  <anrays@gmail.com>
+
+	* xlwmenu.c (make_drawing_gcs): Fix build with gcc 2.95.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Merge Xft.
+
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-colors: Improve comments.
+	
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-colors: Remove or comment out dead code.
+	
+    2005-09-26 Olivier Galibert   <galibert@xemacs.org>
+
+	* xlwmenu.c:
+	* xlwmenuP.h:
+	Give USE_XFT_MENUBARS priority over USE_MOTIF.
+
+    2005-09-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-fonts.c (xft_open_font_by_name): Fix heuristic for XLFDs.
+
+	* xlwmenu.c (string_draw_range): Recommend persistent xftDraw.
+
+    2005-09-02  Daniel Pittman <daniel@rimspace.net>
+
+	* lwlib-fonts.c (xft_open_font_by_name): Eliminate code to avoid
+	use of scaled fonts (probably bogus, anyway).  Add error message
+	in case of fatal failure to find any fonts at all.
+	<87ll2fucw1.fsf@rimspace.net>
+
+	* xlwmenu.c (string_draw_range): Plug leak of XftDraw.
+
+    2005-03-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (TabsGeometryManager): Fix "fat fingers" mistake.
+
+    2005-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (debug_gauge): Fix and suppress gauge debug message.
+
+	* xlwtabs.c (TabsGeometryManager): Suppress "kludging" message, too.
+	(TabsGeometryManager): Make straight the paths of the layout, or
+	at least improve the approximation to Xt conventions by 50%.
+
+    2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c(debug_tabs): Suppress debug output for now.
+
+    2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (TabsGeometryManager,TabsQueryGeometry): Improve comments.
+	(debug_tabs): New variable, substitute for debug_xft globally.
+	(TabsGeometryManager): Substitute "request" for "req".
+
+    2005-02-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (PreferredSize3): Let TabLayout choose constraints.
+	(TabLayout): Default size to current size.  Fix header comment.
+	(TabsGeometryManager): Comment on redesigning internal API.
+	(TabsGeometryManager): Fix typo in format string.
+
+    2005-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (DrawTab):
+	Correct geometry when clearing rectangle.
+	Remove some "check me" comments.
+	Deemphasize a lot of debugging output.
+	(TabLayout): Add debugging fprintf.
+	(TabWidth): Deemphasize some debugging output.
+
+    2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (xaw_create_button):
+	(xaw_create_progress):
+	(xaw_create_text_field):
+	Changed XtCreateManagedWidget to XtCreateWidget when child is
+	managed later in the same function.
+
+	(debug_gauge): New variable.
+	(lw_debug_print_xt_arglist):
+	(lw_debug_print_class_resources):
+	New debug functions.
+
+    2004-12-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwmenu.c (xlwMenuResources): Use "redundant" XftFont resource.
+
+	* xlwtabs.c:
+	* xlwtabsP.h:
+	Use USE_XFT_TABS consistently.
+
+    2004-12-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c: Move debug_xft to ../src/xft-fonts.c.
+
+    2004-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft branch based on "Xft reloaded #3" patch by Eric Knauel and
+	Mathias Neuebaur, and other contributors.
+
+	* lwlib-fonts.h:
+	* lwlib-colors.h:
+	Declare common facilities use by Xft.
+	* lwlib-fonts.c:
+	* lwlib-colors.c:
+	Implement them.
+	* xlwtabs.c:
+	* xlwtabsP.h:
+	* xlwmenu.c:
+	* xlwmenuP.h:
+	Implement Xft text drawing.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
@@ -236,7 +564,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

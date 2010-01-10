@@ -281,3 +281,4 @@
 ;;; Test sxhash
 (Assert (= (sxhash "foo") (sxhash "foo")))
 (Assert (= (sxhash '(1 2 3)) (sxhash '(1 2 3))))
+(Assert (/= (sxhash '(1 2 3)) (sxhash '(3 2 1))))

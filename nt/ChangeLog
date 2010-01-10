@@ -1,3 +1,137 @@
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Remove references to OffiX files.
+
+2009-12-15  Jerry James  <james@xemacs.org>
+
+	* xemacs.mak: Remove build dependency for lib-src/wakeup.  Thanks to
+	Vin Shelton for the patch.
+
+2009-12-14  Jerry James  <james@xemacs.org>
+
+	* installer: Remove unused Wise installer sources.
+
+2009-12-09  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Drop references to xmu.c and xmu.h.
+
+2009-11-10  Jerry James  <james@xemacs.org>
+
+	* xemacs.dsp: Drop references to removed source files.
+
+2009-11-09  Jerry James  <james@xemacs.org>
+
+	* xemacs.mak: Don't define GNU_MALLOC, as there is no longer an "old"
+	GNU malloc.
+
+2009-10-06  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: For giflib, the include files are found in
+		      $(GIF_DIR)\include and the library is named
+		      giflib.lib.
+
+2009-10-05  Jerry James  <james@xemacs.org>
+
+	* config.inc.samp: Add GIF_DIR for external GIF support.
+	* xemacs.mak: Convert from internal to external GIF support.
+	* xemacs.dsp: Drop internal GIF source files.
+	* README: Remove remark about internal GIF support.
+
+2009-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.29 "garbanzo" is released.
+
+2009-02-06  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Add support for Visual Studio 2005 manifests.
+
+2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs.mak (PROGRAM_DEFINES): 
+	Provide SHEBANG_PROGNAME on Win32 too. 
+
+2008-01-25  Michael Sperber  <mike@xemacs.org>
+
+	* xemacs.mak (version.sh): Generate version.sh via Mercurial.
+
+2008-01-24 Mike Sperber   <mike@xemacs.org>
+
+	* config.inc.samp: Fix URL for optional libraries.
+	* xemacs.mak (PATH_PREFIX): Set PATH_PREFIX to the value of INSTALL_DIR.
+	* xemacs.mak (PATH_DEFINES): Fix setting of PATH_DEFINES.
+	* xemacs.mak (DEBUG_FLAG_COMPILE_DEBUG): Comment out -RTC1: it
+	even crashes with VC 8.
+	* xemacs.mak: Comment out echo line that leads to
+	command-line-too-long error on some Windowses.
+
+2008-01-18  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Use debug version of Intel's libm, if appropriate.
+
+2008-01-17  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Added USE_INTEL_COMPILER to support the Intel
+	compiler.
+	* xemacs.mak: Use USE_INTEL_COMPILER.
+
+2007-10-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (INFO_FILES): Sync nt/xemacs.mak and man/Makefile
+	(adding beta.info).
+	* xemacs.mak (LISPREF_SRCS): Ditto.  Adding packages.texi.
+
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
+2006-12-11  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Added BUILD_FOR_SETUP_KIT.
+	* xemacs.mak: Use BUILD_FOR_SETUP_KIT to define
+	OK_TO_USE_MSVCRTD.
+
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
+2006-04-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.dsw: Updated by MS VS 6.0.
+	* xemacs.dsp: Convert to DOS format, as suggested by
+	Robinows@aol.com.
+
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
+2006-02-27  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Comment out PACKAGE_PREFIX.
+	* xemacs.mak: Convert PACKAGE_PREFIX input from config.inc to
+	PATH_LATE_PACKAGE_DIRECTORIES.  Do not use PACKAGE_PATH.
+
+2006-02-22  Marcus Crestani  <crestani@xemacs.org>
+
+	* xemacs.mak: Remove mc-alloc, replace with newgc, adjust output.
+	* config.inc.samp: Remove MC_ALLOC option.
+
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
+2005-11-21  Marcus Crestani  <crestani@xemacs.org>
+
+	Incremental Garbage Collector
+
+	* config.inc.samp: Add NEW_GC option.
+	* xemacs.dsp: Add files gc.c, gc.h, vdb.c, vdb.h, and vdb-win32.c.
+	* xemacs.mak: Add NEW_GC option; if NEW_GC, turn on KKCC and
+	MC_ALLOC.
+
 2005-11-08  Marcus Crestani  <crestani@xemacs.org>
 
 	* xemacs.mak:
@@ -855,7 +989,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

@@ -761,7 +761,7 @@ selective-display are excluded from the line count.
 
 NOTE: The expression to return the current line number is not obvious:
 
-(1+ (count-lines 1 (point-at-bol)))
+\(1+ \(count-lines 1 \(point-at-bol)))
 
 See also `line-number'."
   (save-excursion
@@ -782,10 +782,16 @@ See also `line-number'."
 		done)))
 	(- (buffer-size) (forward-line (buffer-size)))))))
 
-(defun what-cursor-position ()
-  "Print info on cursor position (on screen and within buffer)."
-  ;; XEmacs change
-  (interactive "_")
+(defun what-cursor-position (&optional detail)
+  "Print info on cursor position (on screen and within buffer).
+Also describe the character after point, giving its UCS code point and Mule
+charset and codes; for ASCII characters, give its code in octal, decimal and
+hex.
+
+With prefix argument, show extended details about the character in a
+separate buffer.  See also the command `describe-char'."
+  ;; XEmacs change "_"
+  (interactive "_P")
   (let* ((char (char-after (point))) ; XEmacs
 	 (beg (point-min))
 	 (end (point-max))
@@ -798,21 +804,32 @@ See also `line-number'."
 	 (hscroll (if (= (window-hscroll) 0)
 		      ""
 		    (format " Hscroll=%d" (window-hscroll))))
-	 (col (+ (current-column) (if column-number-start-at-one 1 0))))
+	 (col (+ (current-column) (if column-number-start-at-one 1 0)))
+         (unicode (and char (encode-char char 'ucs)))
+         (unicode-string (and unicode (natnump unicode)
+                              (format (if (> unicode #xFFFF) "U+%06X" "U+%04X")
+                                      unicode)))
+         (narrowed-details (if (or (/= beg 1) (/= end (1+ total)))
+                               (format " <%d - %d>" beg end)
+                             "")))
+         
     (if (= pos end)
-	(if (or (/= beg 1) (/= end (1+ total)))
-	    (message "point=%d of %d(%d%%) <%d - %d>  column %d %s"
-		     pos total percent beg end col hscroll)
-	  (message "point=%d of %d(%d%%)  column %d %s"
-		   pos total percent col hscroll))
-      ;; XEmacs: don't use single-key-description
-      (if (or (/= beg 1) (/= end (1+ total)))
-	  (message "Char: %s (0%o, %d, 0x%x)  point=%d of %d(%d%%) <%d - %d>  column %d %s"
-		   (text-char-description char) char char char pos total
-		   percent beg end col hscroll)
-	(message "Char: %s (0%o, %d, 0x%x)  point=%d of %d(%d%%)  column %d %s"
-		 (text-char-description char) char char char pos total
-		 percent col hscroll)))))
+        (message "point=%d of %d(%d%%)%s column %d %s"
+                 pos total percent narrowed-details col hscroll)
+      (if detail
+          (describe-char (point)))
+      ;; XEmacs: don't use single-key-description, treat non-ASCII
+      ;; characters differently.
+      (if (< char ?\x80)
+          (message "Char: %s (0%o, %d, %x) point=%d of %d(%d%%)%s column %d %s"
+                       (text-char-description char) char char char pos total
+                       percent narrowed-details col hscroll)
+        (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
+                 (text-char-description char) unicode-string
+                 (mapconcat (lambda (arg) (format "%S" arg))
+                            (split-char char) " ")
+                 pos total
+                 percent narrowed-details col hscroll)))))
 
 (defun fundamental-mode ()
   "Major mode not specialized for anything in particular.
@@ -899,10 +916,14 @@ to get different commands to edit and resubmit."
 ;; next-complete-history-element
 ;; previous-complete-history-element
 
-(defun goto-line (line)
-  "Goto line LINE, counting from line 1 at beginning of buffer."
+(defun goto-line (line &optional buffer)
+  "Goto line LINE, counting from line 1 at beginning of BUFFER."
   (interactive "NGoto line: ")
   (setq line (prefix-numeric-value line))
+  (if buffer
+      (let ((window (get-buffer-window buffer)))
+	(if window (select-window window)
+	  (switch-to-buffer-other-window buffer))))
   (save-restriction
     (widen)
     (goto-char 1)
@@ -1964,11 +1985,10 @@ scroll-down-command"
   :type 'boolean
   :group 'editing-basics)
 
-;;; After 8 years of waiting ... -sb
-(defcustom next-line-add-newlines nil  ; XEmacs
+(defcustom next-line-add-newlines nil
   "*If non-nil, `next-line' inserts newline when the point is at end of buffer.
-This behavior used to be the default, and is still default in FSF Emacs.
-We think it is an unnecessary and unwanted side-effect."
+This behavior used to be the default, but is now considered an unnecessary and
+unwanted side-effect."
   :type 'boolean
   :group 'editing-basics)
 
@@ -2071,20 +2091,19 @@ either a character or a symbol, uppercase or lowercase."
 	 ;(princ (format "key: %s mods: %s\n" key mods) 'external-debugging-output)
 	 (catch 'handle-pre-motion-command-current-command-is-motion
 	   (flet ((keysyms-equal (a b)
-		    (if (characterp a)
-			(setq a (intern (char-to-string (downcase a)))))
 		    (if (characterp b)
 			(setq b (intern (char-to-string (downcase b)))))
 		    (eq a b)))
-	     (mapc #'(lambda (keysym)
-		       (when (if (listp keysym)
-				 (and (equal mods (butlast keysym))
-				      (keysyms-equal key (car (last keysym))))
-			       (keysyms-equal key keysym))
-			 (throw
-			  'handle-pre-motion-command-current-command-is-motion
-			  t)))
-		   motion-keys-for-shifted-motion)
+             (setq key (if (characterp key)
+                           (intern (char-to-string (downcase key)))
+                         key))
+	     (dolist (keysym motion-keys-for-shifted-motion)
+	       (when (if (listp keysym)
+		         (and (equal mods (butlast keysym))
+			      (keysyms-equal key (car (last keysym))))
+	                (keysyms-equal key keysym))
+		 (throw 'handle-pre-motion-command-current-command-is-motion
+			t)))
 	     nil)))))
 
 (defun handle-pre-motion-command ()
@@ -3042,6 +3061,11 @@ for `auto-fill-function' when turning Auto Fill mode on."
   (interactive)
   (auto-fill-mode 1))
 
+(defun turn-off-auto-fill ()
+  "Unconditionally turn off Auto Fill mode."
+  (interactive)
+  (auto-fill-mode -1))
+
 (defun set-fill-column (arg)
   "Set `fill-column' to specified argument.
 Just \\[universal-argument] as argument means to use the current column
@@ -3418,10 +3442,13 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
 ;;
 ;; and hope for the best. Not code we want to use, IMO.
 
+(defvar xemacs-default-composefunc-dont-nag nil
+  "Disable the `xemacs-default-composefunc' nagging; for bug reports.")
+
 (defun xemacs-default-composefunc (&rest args) 
   "Warn that the default mail-reading package is heinously underfeatured;
 compose a mail using it, all the same.  "
-  (unless (noninteractive)
+  (unless (or noninteractive xemacs-default-composefunc-dont-nag)
     (warn "
 
 Defaulting to the GNU Emacs-derived `sendmail.el' mail client. This facility,
@@ -3689,13 +3716,13 @@ after it has been set up properly in other respects."
       (funcall mode)
 
       ;; Set up other local variables.
-      (mapcar (lambda (v)
-		(condition-case ()	;in case var is read-only
-		    (if (symbolp v)
-			(makunbound v)
-		      (set (make-local-variable (car v)) (cdr v)))
-		  (error nil)))
-	      lvars)
+      (mapc (lambda (v)
+              (condition-case ()	;in case var is read-only
+                  (if (symbolp v)
+                      (makunbound v)
+                    (set (make-local-variable (car v)) (cdr v)))
+                (error nil)))
+            lvars)
 
       ;; Run any hooks (typically set up by the major mode
       ;; for cloning to work properly).
@@ -3954,7 +3981,8 @@ See the variable `zmacs-regions'.")
       (cond
        (zmacs-region-rectangular-p
 	(setq zmacs-region-extent (list zmacs-region-extent))
-	(default-mouse-track-next-move-rect start end zmacs-region-extent)
+        (when-fboundp #'default-mouse-track-next-move-rect
+          (default-mouse-track-next-move-rect start end zmacs-region-extent))
 	))
 
       zmacs-region-extent)))
@@ -3980,8 +4008,8 @@ Returns t if the region was activated (i.e. if `zmacs-regions' if t)."
       nil
     (setq zmacs-region-active-p t
 	  zmacs-region-stays t
-	  zmacs-region-rectangular-p (and (boundp 'mouse-track-rectangle-p)
-					  mouse-track-rectangle-p))
+	  zmacs-region-rectangular-p (and-boundp 'mouse-track-rectangle-p
+                                       mouse-track-rectangle-p))
     (if (marker-buffer (mark-marker t))
 	(zmacs-make-extent-for-region (cons (point-marker t) (mark-marker t))))
     (run-hooks 'zmacs-activate-region-hook)
@@ -4112,9 +4140,10 @@ as the second argument.")
   "List of regular expressions matching messages which shouldn't be logged.
 See `log-message'.
 
-Ideally, packages which generate messages which might need to be ignored
-should label them with 'progress, 'prompt, or 'no-log, so they can be
-filtered by the log-message-ignore-labels."
+Adding entries to this list slows down messaging significantly.  Wherever
+possible, messages which might need to be ignored should be labeled with
+'progress, 'prompt, or 'no-log, so they can be filtered by
+log-message-ignore-labels."
   :type '(repeat regexp)
   :group 'log-message)
 
@@ -4131,9 +4160,39 @@ See `display-message' for some common labels.  See also `log-message'."
 :group 'log-message)
 
 (defcustom undisplay-echo-area-function nil
-  "The function to call to undisplay echo area buffer."
-:type 'function
-:group 'log-message)
+  "The function to call to undisplay echo area buffer.
+WARNING: any problem with your function is likely to result in an
+uninterruptible infinite loop.  Use of custom functions is therefore not
+recommended."
+  :type '(choice (const nil)
+		 function)
+  :group 'log-message)
+
+(defvar undisplay-echo-area-resize-window-allowed t
+  "INTERNAL USE ONLY.
+Guards against `undisplay-echo-area-resize-window' infloops.
+Touch this at your own risk.")
+
+(defun undisplay-echo-area-resize-window ()
+  "Resize idle echo area window to `resize-minibuffer-idle-height'.
+If either `resize-minibuffer-idle-height' or `resize-minibuffer-mode' is nil,
+does nothing.  If `resize-minibuffer-window-exactly' is non-nil, always resize
+to this height exactly, otherwise if current height is no larger than this,
+leave it as is."
+  (when (default-value undisplay-echo-area-resize-window-allowed)
+    (setq-default undisplay-echo-area-resize-window-allowed nil)
+    (let* ((mbw (minibuffer-window))
+	   (height (window-height mbw)))
+      (with-boundp '(resize-minibuffer-idle-height)
+	(and resize-minibuffer-mode
+	     (numberp resize-minibuffer-idle-height)
+	     (> resize-minibuffer-idle-height 0)
+	     (unless (if resize-minibuffer-window-exactly
+			 (= resize-minibuffer-idle-height height)
+		       (<= resize-minibuffer-idle-height height))
+	       (enlarge-window (- resize-minibuffer-idle-height height)
+			       nil mbw))))
+      (setq-default undisplay-echo-area-resize-window-allowed t))))
 
 ;;Subsumed by view-lossage
 ;; Not really, I'm adding it back by popular demand. -slb
@@ -4220,6 +4279,9 @@ If a message remains at the head of the message-stack and NO-RESTORE
 is nil, it will be displayed.  The string which remains in the echo
 area will be returned, or nil if the message-stack is now empty.
 If LABEL is nil, the entire message-stack is cleared.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.  \(This is
+used only in case of restoring an earlier message from the stack.)
 
 Unless you need the return value or you need to specify a label,
 you should just use (message nil)."
@@ -4278,13 +4340,19 @@ you should just use (message nil)."
       (setq log (cdr log)))))
 
 (defun append-message (label message &optional frame stdout-p)
+  "Add MESSAGE to the message-stack, or append it to the existing text.
+LABEL is the class of the message.  If it is the same as that of the top of
+the message stack, MESSAGE is appended to the existing message, otherwise
+it is pushed on the stack.
+FRAME determines the minibuffer window to send the message to.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr."
   (or frame (setq frame (selected-frame)))
   ;; If outputting to the terminal, make sure output from anyone else clears
   ;; the left side first, but don't do it ourselves, otherwise we won't be
   ;; able to append to an existing message.
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) nil))
-  ;; Add a new entry to the message-stack, or modify an existing one
   (let ((top (car message-stack)))
     (if (eq label (car top))
 	(setcdr top (concat (cdr top) message))
@@ -4293,22 +4361,60 @@ you should just use (message nil)."
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) t)))
 
-;; Really append the message to the echo area.  no fiddling with
+;; Really append the message to the echo area.  No fiddling with
 ;; message-stack.
 (defun raw-append-message (message &optional frame stdout-p)
   (unless (equal message "")
     (let ((inhibit-read-only t))
-      (insert-string message " *Echo Area*")
-      ;; Conditionalizing on the device type in this way is not that clean,
-      ;; but neither is having a device method, as I originally implemented
-      ;; it: all non-stream devices behave in the same way.  Perhaps
-      ;; the cleanest way is to make the concept of a "redisplayable"
-      ;; device, which stream devices are not.  Look into this more if
-      ;; we ever create another non-redisplayable device type (e.g.
-      ;; processes?  printers?).
+      (with-current-buffer " *Echo Area*"
+	(insert-string message)
+	;; #### This needs to be conditional; cf discussion by Stefan Monnier
+	;; et al on emacs-devel in mid-to-late April 2007.  One problem is
+	;; there is no known good way to guess whether the user wants to have
+	;; the echo area height changed on him asynchronously, especially
+	;; after message display.
+	;; There is also a problem where Lisp backtraces get sent to the echo
+	;; area, thus maxing out the window height.  Unfortunately, it doesn't
+	;; return to a reasonable size very quickly.
+	;; It is not clear that echo area and minibuffer behavior should be
+	;; linked as we do here.  It's OK for now; at least this obeys the
+	;; minibuffer resizing conventions which seem a pretty good guess
+	;; at user preference.
+	(when resize-minibuffer-mode
+	  ;; #### interesting idea, unbearable implementation
+	  ;; (fill-region (point-min) (point-max))
+	  ;;
+	  ;; #### We'd like to be able to do something like
+	  ;;
+	  ;;   (save-window-excursion
+	  ;;     (select-window (minibuffer-window frame))
+	  ;;     (resize-minibuffer-window))))
+	  ;;
+	  ;; but that can't work, because the echo area isn't a real window!
+	  ;; We should fix that, but this is an approximation, duplicating the
+	  ;; resize-minibuffer code.
+	  (let* ((mbw (minibuffer-window frame))
+		 (height (window-height mbw))
+		 (lines (ceiling (/ (- (point-max) (point-min))
+				    (- (window-width mbw) 1.0)))))
+	    (and (numberp resize-minibuffer-window-max-height)
+		 (> resize-minibuffer-window-max-height 0)
+		 (setq lines (min lines
+				  resize-minibuffer-window-max-height)))
+	    (or (if resize-minibuffer-window-exactly
+		    (= lines height)
+		  (<= lines height))
+		(enlarge-window (- lines height) nil mbw)))))
 
       ;; Don't redisplay the echo area if we are executing a macro.
       (if (not executing-kbd-macro)
+	  ;; Conditionalizing on the device type in this way isn't clean, but
+	  ;; neither is having a device method, as I originally implemented
+	  ;; it: all non-stream devices behave in the same way.  Perhaps
+	  ;; the cleanest way is to make the concept of a "redisplayable"
+	  ;; device, which stream devices are not.  Look into this more if
+	  ;; we ever create another non-redisplayable device type (e.g.
+	  ;; processes?  printers?).
 	  (if (eq 'stream (frame-type frame))
 	      (send-string-to-terminal message stdout-p (frame-device frame))
 	    (funcall redisplay-echo-area-function))))))
@@ -4317,6 +4423,8 @@ you should just use (message nil)."
   "Print a one-line message at the bottom of the frame.  First argument
 LABEL is an identifier for this message.  MESSAGE is the string to display.
 Use `clear-message' to remove a labelled message.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.
 
 Here are some standard labels (those marked with `*' are not logged
 by default--see the `log-message-ignore-labels' variable):

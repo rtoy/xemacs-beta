@@ -1,4 +1,4 @@
-;;; help.el --- help commands for XEmacs.
+;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 2001, 2002, 2003 Ben Wing.
@@ -40,6 +40,8 @@
 ;; Get the macro make-help-screen when this is compiled,
 ;; or run interpreted, but not when the compiled code is loaded.
 (eval-when-compile (require 'help-macro))
+
+(require 'loadhist) ;; For symbol-file. 
 
 (defgroup help nil
   "Support for on-line help systems."
@@ -153,6 +155,8 @@ Commands:
 (define-key help-mode-map "c" 'customize-variable)
 (define-key help-mode-map [tab] 'help-next-symbol)
 (define-key help-mode-map [(shift tab)] 'help-prev-symbol)
+(define-key help-mode-map [return] 'help-find-source-or-scroll-up)
+(define-key help-mode-map [button2] 'help-mouse-find-source-or-track)
 (define-key help-mode-map "n" 'help-next-section)
 (define-key help-mode-map "p" 'help-prev-section)
 
@@ -825,16 +829,13 @@ of the key sequence that ran this command."
 (defun describe-installation ()
   "Display a buffer showing information about this XEmacs was compiled."
   (interactive)
-  (if (and (boundp 'Installation-string)
-	   (stringp Installation-string))
+  (if (and-boundp 'Installation-string
+	(stringp Installation-string))
       (with-displaying-help-buffer
        (lambda ()
-	 (princ
-	  (if (fboundp 'decode-coding-string)
-	      (decode-coding-string Installation-string 'automatic-conversion)
-	    Installation-string)))
+	 (princ Installation-string))
        "Installation")
-    (error "No Installation information available.")))
+    (error 'unimplemented "No Installation information available.")))
 
 (defun view-emacs-news ()
   "Display info on recent changes to XEmacs."
@@ -1086,19 +1087,18 @@ there is no function around that point, nil is returned."
 ;; Default to nil for the non-hackers?  Not until we find a way to
 ;; distinguish hackers from non-hackers automatically!
 (defcustom describe-function-show-arglist t
-  "*If non-nil, describe-function will show its arglist,
-unless the function is autoloaded."
+  "*If non-nil, describe-function will show the function's arglist."
   :type 'boolean
   :group 'help-appearance)
 
-(defun describe-symbol-find-file (symbol)
-  (loop for (file . load-data) in load-history
-    do (when (memq symbol load-data)
-	 (return file))))
+(define-obsolete-function-alias
+  ;; Moved to using the version in loadhist.el
+  'describe-function-find-symbol
+  'symbol-file)
 
 (define-obsolete-function-alias
   'describe-function-find-file
-  'describe-symbol-find-file)
+  'symbol-file)
 
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol).
@@ -1163,10 +1163,6 @@ When run interactively, it defaults to any function found by
 ;(gettext "an interactive Lisp function")
 ;(gettext "a Lisp macro")
 ;(gettext "an interactive Lisp macro")
-;(gettext "a mocklisp function")
-;(gettext "an interactive mocklisp function")
-;(gettext "a mocklisp macro")
-;(gettext "an interactive mocklisp macro")
 ;(gettext "an autoloaded Lisp function")
 ;(gettext "an interactive autoloaded Lisp function")
 ;(gettext "an autoloaded Lisp macro")
@@ -1178,7 +1174,7 @@ When run interactively, it defaults to any function found by
 For example:
 
 	(function-arglist 'function-arglist)
-	=> (function-arglist FUNCTION)
+	=> \"(function-arglist FUNCTION)\"
 
 This function is used by `describe-function-1' to list function
 arguments in the standard Lisp style."
@@ -1191,26 +1187,32 @@ arguments in the standard Lisp style."
 		 (compiled-function-arglist fndef))
 		((eq (car-safe fndef) 'lambda)
 		 (nth 1 fndef))
-		((subrp fndef)
+		((or (subrp fndef) (eq 'autoload (car-safe fndef)))
 		 (let* ((doc (documentation function))
 			(args (and doc
 				   (string-match
-				    "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
+				    "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
 				    doc)
-				   (match-string 1 doc))))
+				   (match-string 1 doc)))
+                        (args (and args (replace-in-string args
+                                                           "[ ]*\\\\\n[ \t]*"
+                                                           " " t))))
 		   ;; If there are no arguments documented for the
 		   ;; subr, rather don't print anything.
 		   (cond ((null args) t)
 			 ((equal args "") nil)
 			 (args))))
-		(t t))))
+		(t t)))
+         (print-gensym nil))
     (cond ((listp arglist)
 	   (prin1-to-string
-	    (cons function (mapcar (lambda (arg)
-				     (if (memq arg '(&optional &rest))
-					 arg
-				       (intern (upcase (symbol-name arg)))))
-				   arglist))
+	    (cons function (loop
+                             for arg in arglist
+                             collect (if (memq arg '(&optional &rest))
+                                         arg
+                                       (make-symbol (upcase (symbol-name
+                                                             arg))))))
+
 	    t))
 	  ((stringp arglist)
 	   (format "(%s %s)" function arglist)))))
@@ -1224,9 +1226,10 @@ part of the documentation of internal subroutines."
 		     (gettext "not documented"))
 	       (void-function "(alias for undefined function)")
 	       (error "(unexpected error from `documention')"))))
-    (if (and strip-arglist
-	     (string-match "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'" doc))
-	(setq doc (substring doc 0 (match-beginning 0))))
+    (when (and strip-arglist
+               (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
+      (setq doc (substring doc 0 (match-beginning 0)))
+      (and (zerop (length doc)) (setq doc (gettext "not documented"))))
     doc))
 
 ;; replacement for `princ' that puts the text in the specified face,
@@ -1289,13 +1292,15 @@ part of the documentation of internal subroutines."
 
 (defvar help-symbol-function-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-function)]
-    ["Find %_Function Source" (help-symbol-run-function 'find-function)]
+    ["Find %_Function Source" (help-symbol-run-function 'find-function)
+     (fboundp #'find-function)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
 (defvar help-symbol-variable-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-variable)]
-    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)]
+    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
+     (fboundp #'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1304,8 +1309,10 @@ part of the documentation of internal subroutines."
 				      'describe-function)]
     ["View Variable D%_ocumentation" (help-symbol-run-function
 				      'describe-variable)]
-    ["Find %_Function Source" (help-symbol-run-function 'find-function)]
-    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)]
+    ["Find %_Function Source" (help-symbol-run-function 'find-function)
+     (fboundp #'find-function)]
+    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
+     (fboundp #'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1340,6 +1347,7 @@ part of the documentation of internal subroutines."
 	  (when (or var fun)
 	    (let ((ex (make-extent b e)))
 	      (require 'hyper-apropos)
+
 	      (set-extent-property ex 'mouse-face 'highlight)
 	      (set-extent-property ex 'help-symbol sym)
 	      (set-extent-property ex 'face 'hyper-apropos-hyperlink)
@@ -1365,7 +1373,7 @@ part of the documentation of internal subroutines."
   (princ function)
   (princ "' is ")
   (let* ((def function)
-	 aliases file-name autoload-file kbd-macro-p fndef macrop)
+	 aliases file-name kbd-macro-p fndef macrop)
     (while (and (symbolp def) (fboundp def))
       (when (not (eq def function))
 	(setq aliases
@@ -1397,34 +1405,46 @@ part of the documentation of internal subroutines."
 					   (an-p "an ")
 					   (t "a "))
 				     "%s"
-				     (if macro-p " macro" " function")))
+                                     (cond
+                                      ((eq 'neither macro-p)
+                                       "")
+                                      (macro-p " macro")
+                                      (t " function"))))
 			   string)))))
       (cond ((or (stringp def) (vectorp def))
              (princ "a keyboard macro.")
 	     (setq kbd-macro-p t))
+            ((special-form-p fndef)
+             (funcall int "built-in special form" nil 'neither))
             ((subrp fndef)
              (funcall int "built-in" nil macrop))
             ((compiled-function-p fndef)
              (funcall int "compiled Lisp" nil macrop))
             ((eq (car-safe fndef) 'lambda)
              (funcall int "Lisp" nil macrop))
-            ((eq (car-safe fndef) 'mocklisp)
-             (funcall int "mocklisp" nil macrop))
             ((eq (car-safe def) 'autoload)
-	     (setq autoload-file (elt def 1))
 	     (funcall int "autoloaded Lisp" t (elt def 4)))
 	    ((and (symbolp def) (not (fboundp def)))
 	     (princ "a symbol with a void (unbound) function definition."))
             (t
              nil)))
     (princ "\n")
-    (if autoload-file
-	(princ (format "  -- autoloads from \"%s\"\n" autoload-file)))
     (or file-name
-	(setq file-name (describe-symbol-find-file function)))
-    (if file-name
-	(princ (format "  -- loaded from \"%s\"\n" file-name)))
-;;     (terpri)
+	(setq file-name (symbol-file function 'defun)))
+    (when file-name
+	(princ "  -- loaded from \"")
+	(if (not (bufferp standard-output))
+	    (princ file-name)
+	  (let ((opoint (point standard-output))
+		e)
+	    (require 'hyper-apropos)
+	    (princ file-name)
+	    (setq e (make-extent opoint (point standard-output)
+				 standard-output))
+	    (set-extent-property e 'face 'hyper-apropos-hyperlink)
+	    (set-extent-property e 'mouse-face 'highlight)
+	    (set-extent-property e 'find-function-symbol function)))
+	(princ "\"\n"))
     (if describe-function-show-arglist
 	(let ((arglist (function-arglist function)))
 	  (when arglist
@@ -1467,8 +1487,53 @@ part of the documentation of internal subroutines."
 		   (goto-char newp standard-output))
 		 (unless (or (equal doc "")
 			     (eq ?\n (aref doc (1- (length doc)))))
-		   (terpri)))))))))
-
+		   (terpri)))
+	       (when (commandp function)
+		 (princ "\nInvoked with:\n")
+		 (let ((global-binding
+			(where-is-internal function global-map))
+		       (global-tty-binding 
+			(where-is-internal function global-tty-map))
+		       (global-window-system-binding 
+			(where-is-internal function global-window-system-map)))
+                   (if (or global-binding global-tty-binding
+                           global-window-system-binding)
+                       (if (and (equal global-binding
+                                       global-tty-binding)
+                                (equal global-binding
+                                       global-window-system-binding))
+                           (princ
+                            (substitute-command-keys
+                             (format "\n\\[%s]" function)))
+                         (when (and global-window-system-binding
+                                    (not (equal global-window-system-binding
+                                                global-binding)))
+                           (princ 
+                            (format 
+                             "\n%s\n        -- under window systems\n"
+                             (mapconcat #'key-description
+                                        global-window-system-binding
+                                        ", "))))
+                         (when (and global-tty-binding
+                                    (not (equal global-tty-binding
+                                                global-binding)))
+                           (princ 
+                            (format 
+                             "\n%s\n        -- under TTYs\n"
+                             (mapconcat #'key-description
+                                        global-tty-binding
+                                        ", "))))
+                         (when global-binding
+                           (princ 
+                            (format 
+                             "\n%s\n        -- generally (that is, unless\
+ overridden by TTY- or
+           window-system-specific mappings)\n"
+                             (mapconcat #'key-description
+                                        global-binding
+                                        ", ")))))
+                     (princ (substitute-command-keys
+                             (format "\n\\[%s]" function))))))))))))
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]
@@ -1590,11 +1655,22 @@ there is no variable around that point, nil is returned."
 	     (princ (format "%s" aliases)))
 	 (princ (built-in-variable-doc variable))
 	 (princ ".\n")
-	 (let ((file-name (describe-symbol-find-file variable)))
-	   (if file-name
-	       (princ (format "  -- loaded from \"%s\"\n" file-name))))
-	 (princ "\nValue: ")
 	 (require 'hyper-apropos)
+	 (let ((file-name (symbol-file variable 'defvar))
+	       opoint e)
+	   (when file-name
+	       (princ "  -- loaded from \"")
+	       (if (not (bufferp standard-output))
+		   (princ file-name)
+		 (setq opoint (point standard-output))
+		 (princ file-name)
+		 (setq e (make-extent opoint (point standard-output)
+				      standard-output))
+		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
+		 (set-extent-property e 'mouse-face 'highlight)
+		 (set-extent-property e 'find-variable-symbol variable))
+	       (princ"\"\n")))
+	 (princ "\nValue: ")
     	 (if (not (boundp variable))
 	     (Help-princ-face "void\n" 'hyper-apropos-documentation)
 	   (Help-prin1-face (symbol-value variable)
@@ -1778,5 +1854,50 @@ after the listing is made.)"
     (if (stringp string)
 	(with-displaying-help-buffer
 	 (insert string)))))
+
+(defun help-find-source-or-scroll-up (&optional pos)
+  "Follow any cross reference to source code; if none, scroll up.  "
+  (interactive "d")
+  (let ((e (extent-at pos nil 'find-function-symbol)))
+    (if (and-fboundp #'find-function e)
+        (with-fboundp #'find-function
+          (find-function (extent-property e 'find-function-symbol)))
+      (setq e (extent-at pos nil 'find-variable-symbol))
+      (if (and-fboundp #'find-variable e)
+          (with-fboundp #'find-variable
+            (find-variable (extent-property e 'find-variable-symbol)))
+	(scroll-up 1)))))
+
+(defun help-mouse-find-source-or-track (event)
+  "Follow any cross reference to source code under the mouse; 
+if none, call mouse-track.  "
+  (interactive "e")
+  (mouse-set-point event)
+  (let ((e (extent-at (point) nil 'find-function-symbol)))
+    (if (and-fboundp #'find-function e)
+        (with-fboundp #'find-function
+          (find-function (extent-property e 'find-function-symbol)))
+      (setq e (extent-at (point) nil 'find-variable-symbol))
+      (if (and-fboundp #'find-variable e)
+          (with-fboundp #'find-variable
+            (find-variable (extent-property e 'find-variable-symbol)))
+	(mouse-track event)))))
+
+(define-minor-mode temp-buffer-resize-mode
+  "Toggle the mode which makes windows smaller for temporary buffers.
+With prefix argument ARG, turn the resizing of windows displaying temporary
+buffers on if ARG is positive or off otherwise.
+This makes the window the right height for its contents, but never
+less than `window-min-height' nor a higher proportion of its frame than
+`temp-buffer-max-height'. (Note the differing semantics of the latter
+versus GNU Emacs, where `temp-buffer-max-height' is an integer number of
+lines.)
+This applies to `help', `apropos' and `completion' buffers, and some others."
+    :global t :group 'help
+    ;; XEmacs; our implementation of this is very different. 
+    (setq temp-buffer-shrink-to-fit temp-buffer-resize-mode))
+
+;; GNU name for this function. 
+(defalias 'resize-temp-buffer-window 'shrink-window-if-larger-than-buffer)
 
 ;;; help.el ends here

@@ -1055,11 +1055,11 @@ See also the descriptions of the variables
       (aset ethio-fidel-to-sera-map 359 "`?")
       (aset ethio-fidel-to-sera-map 463 "?"))
 
-    (mapcar
-     '(lambda (x)
-	(aset (aref ethio-fidel-to-sera-map x)
-	      2
-	      (if ethio-W-sixth-always ?' ?u)))
+    (mapc
+     #'(lambda (x)
+         (aset (aref ethio-fidel-to-sera-map x)
+               2
+               (if ethio-W-sixth-always ?' ?u)))
      '(77 93 141 181 197 277 440 441 442 443 444 457))
 
     (if (ethio-prefer-amharic-p)
@@ -1300,7 +1300,10 @@ The markers \"<sera>\" and \"</sera>\" themselves are not deleted."
 
     (cond
      ;; in case of gemination
-     ((eq (char-charset ch) 'composition)
+     ;; XEmacs change; the (and nil ...) eliminates a warning about using
+     ;; decompose-composite-char. The name of the composite charset is
+     ;; composite, anyway, not composition; and it has never worked. 
+     ((and nil (eq (char-charset ch) 'composition))
       (setq ch (string-to-char (decompose-composite-char ch))
 	    composite t))
      ;; neither gemination nor fidel

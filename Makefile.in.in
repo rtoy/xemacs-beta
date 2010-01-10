@@ -1,4 +1,4 @@
-## Copyright (C) 2003, 2005 Ben Wing.
+## Copyright (C) 2003, 2005 Ben Wing. 
 
 ## DIST: This is the distribution Makefile for XEmacs.  configure can
 ## DIST: make most of the changes to this file you might want, so try
@@ -92,6 +92,7 @@ configuration=@configuration@
 ## This will be the name of the generated binary and is set automatically
 ## by configure.
 PROGNAME=@PROGNAME@
+SHEBANG_PROGNAME=@SHEBANG_PROGNAME@
 
 ## ==================== Where To Install Things ====================
 
@@ -115,6 +116,10 @@ exec_prefix=@exec_prefix@
 ## Where to install XEmacs and other binaries that people will want to
 ## run directly (like etags).
 bindir=@bindir@
+
+## Base for installing architecture-independent data files.
+## ${infodir} and ${mandir} are subdirectories of this.
+datarootdir=@datarootdir@
 
 ## Where to install architecture-independent data files.
 ## ${lispdir} and ${etcdir} are subdirectories of this.
@@ -252,7 +257,7 @@ all: Makefile ${GENERATED_HEADERS} ${MAKE_SUBDIR} info
 .PHONY: ${SUBDIR} all beta
 
 ## Convenience target for XEmacs beta testers
-beta: elcclean all
+beta: elcclean update-version all
 
 ## Convenience target for XEmacs maintainers
 ## This would run `make-xemacsdist' if I were really confident that everything
@@ -261,14 +266,14 @@ dist: all
 
 ## Convenience target for XEmacs maintainers
 ## Updates some rarely generated files:
-## - configure from configure.in
+## - configure from configure.ac
 ## - config.values.in from configure
 ## - src/depend from src/*.[ch]
 .PHONY: config configure depend
 config: configure depend
 configure: ${srcdir}/configure ${srcdir}/lib-src/config.values.in
 
-${srcdir}/configure : ${srcdir}/configure.in
+${srcdir}/configure : ${srcdir}/configure.ac
 	cd ${srcdir} && autoconf
 
 ${srcdir}/lib-src/config.values.in : ${srcdir}/configure
@@ -305,12 +310,18 @@ src: @SRC_SUBDIR_DEPS@ FRC.src
 pkg-src/tree-x: pkg-src/FRC.tree-x
 lib-src: FRC.lib-src
 lwlib:	FRC.lwlib
-dynodump: FRC.dynodump
-FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
+FRC.src FRC.lib-src FRC.lwlib pkg-src/FRC.tree-x:
 FRC.lisp.finder-inf.el:
 
 ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
 	cd ./$@ && $(MAKE) $(RECURSIVE_MAKE_ARGS) all
+
+## This should be the same code as in configure.ac.
+update-version:
+	cp ${srcdir}/version.sh.in ${srcdir}/version.sh
+	if test -d ${srcdir}/.hg; then \
+	    (cd ${srcdir}; hg identify | cut -d " " -f 1 >> version.sh); \
+	fi
 
 ## Building modules depends on ellcc, found in lib-src.
 modules/sample modules/ldap modules/zlib modules/base64: lib-src
@@ -354,7 +365,6 @@ etc/PROBLEMS: $(srcdir)/PROBLEMS
 ## this Makefile as well.
 
 ## On AIX, use tar xBf.
-## On Xenix, use tar xpf.
 
 .PHONY: install-only install install-arch-dep install-arch-indep gzip.el mkdir
 .PHONY: check check-features
@@ -403,23 +413,14 @@ install-arch-dep: mkdir
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}.exe
 	-chmod 0755 ${bindir}/${PROGNAME}-${version}.exe
 	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${PROGNAME}
+	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${SHEBANG_PROGNAME}
 # else
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
 	-chmod 0755 ${bindir}/${PROGNAME}-${version}
 	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
+	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${SHEBANG_PROGNAME}
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */
-	if test "${prefix}" != "${exec_prefix}"; then \
-	  $(MAKEPATH) ${exec_prefix}/lib/${instvardir}; \
-	  for dir in \
-		lib/${inststaticdir} \
-	 	lib/${instvardir}/etc \
-		lib/${instvardir}/info \
-		lib/${instvardir}/lisp; do \
-	    if test ! -d ${exec_prefix}/$${dir}; then \
-	      $(LN_S) ${prefix}/$${dir} ${exec_prefix}/$${dir}; fi; \
-	  done; \
-	fi
 #ifdef HAVE_SHLIB
 	$(INSTALL_DATA) $(srcdir)/modules/auto-autoloads.* $(moduledir)
 #endif
@@ -486,6 +487,58 @@ mkdir: FRC.mkdir
 	  ${moduledir} ${sitemoduledir} \
 #endif
 	  ${sitelispdir}
+
+## Install bundled packages, if present.
+
+package_path = @LATE_PACKAGE_DIRECTORIES@
+pkgsrcdir = ${srcdir}/etc/bundled-packages
+
+## #### Probably we should add a rule for lib-src/make-path here.
+
+check-available-packages:
+	@if test -r ${pkgsrcdir}/bootstrap.tar.gz; \
+	then echo "To install a set of bootstrap packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
+	     echo "  make install-bootstrap-packages"; \
+	fi; \
+	if test -r ${pkgsrcdir}/xemacs-sumo.tar.gz; \
+	then echo "To install the full set of non-mule packages in"; \
+	     echo "${package_path}/xemacs-packages, type:"; \
+	     echo "  make install-nonmule-packages"; \
+	fi; \
+	if test -r ${pkgsrcdir}/xemacs-mule-sumo.tar.gz; \
+	then echo "To install the full set of packages with mule in"; \
+	     echo "${package_path}/mule-packages, type:"; \
+	     echo "  make install-all-packages"; \
+	fi
+
+## The test for a non-trivial path simply checks for the conventional Unix
+## path separator ":".  This is reasonable because this is basically just
+## a convenience feature, anyway.
+
+mkpkgdir: FRC.mkdir ${MAKEPATH}
+	@if test -z ${package_path}; \
+	then echo "Not configured --with-late-packages; no place to install."; \
+		exit -1; \
+	elif echo ${package_path} | grep ":"; \
+	then echo "Configured with multiple late package directories; you decide where to install."; \
+		exit -1; \
+	elif test -e ${package_path}/xemacs-packages \
+		-o -e ${package_path}/mule-packages; \
+	then echo "${package_path} is installed; won't overwrite packages."; \
+		exit -1; \
+	fi
+	${MAKEPATH} ${package_path};
+
+install-bootstrap-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/bootstrap.tar.gz
+
+install-nonmule-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-sumo.tar.gz
+
+install-all-packages: mkpkgdir
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-sumo.tar.gz; \
+	cd ${package_path}; tar xvzf ${pkgsrcdir}/xemacs-mule-sumo.tar.gz
 
 ## Delete all the installed files that the `install' target would
 ## create (but not the noninstalled files such as `make all' would
@@ -564,7 +617,6 @@ clean: top-mostlyclean top-clean
 ##      Like `distclean' but don't delete files created by `configure'.
 top-distclean-noconfig: FRC.distclean-noconfig
 	-$(RM) TAGS .sbinit lock/* lisp/finder-inf.el*
-	-$(RM) -r site-packages xemacs-packages mule-packages site-lisp
 
 distclean-noconfig: top-mostlyclean top-clean top-distclean-noconfig
 	for d in $(SUBDIR); do (cd ./$$d && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@); done

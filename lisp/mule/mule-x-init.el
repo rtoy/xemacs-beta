@@ -28,6 +28,7 @@
 
 ;;; Work around what is arguably a Sun CDE bug.
 
+;; #### This is unused, apparently.
 (defun x-use-halfwidth-roman-font (fullwidth-charset roman-registry)
   "Maybe set charset registry of the 'ascii charset to ROMAN-REGISTRY.
 
@@ -50,18 +51,13 @@ achieved by using a national variant roman font to display ASCII."
 	     (and width1 width2 (eq (+ width1 width1) width2)))))
 
     (when (eq 'x (device-type))
-      (condition-case nil
-	  (unless (twice-as-wide 'ascii fullwidth-charset)
-	    (set-charset-registry 'ascii roman-registry)
-	    (unless (twice-as-wide 'ascii fullwidth-charset)
-	      ;; Restore if roman-registry didn't help
-	      (set-charset-registry 'ascii "iso8859-1")))
-	(error (set-charset-registry 'ascii "iso8859-1"))))))
+      (let ((original-registries (charset-registries 'ascii)))
+        (condition-case nil
+            (unless (twice-as-wide 'ascii fullwidth-charset)
+              (set-charset-registries 'ascii (vector roman-registry))
+              (unless (twice-as-wide 'ascii fullwidth-charset)
+                ;; Restore if roman-registry didn't help
+                (set-charset-registries 'ascii original-registries)))
+          (error (set-charset-registries 'ascii original-registries)))))))
 
 ;;;;
-
-(defvar mule-x-win-initted nil)
-
-(defun init-mule-x-win ()
-  "Initialize X Windows for MULE at startup.  Don't call this."
-  )

@@ -100,16 +100,23 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
 /*****************************************************************************
  tty_text_width
 
- Non-Mule tty's don't have fonts (that we use at least), so everything
+ Non-Mule TTYs don't have fonts (that we use at least), so everything
  is considered to be fixed width -- in other words, we return LEN.
  Under Mule, however, a character can still cover more than one
  column, so we use ichar_string_displayed_columns().
  ****************************************************************************/
 static int
-tty_text_width (struct frame *UNUSED (f), struct face_cachel *UNUSED (cachel),
+tty_text_width (struct frame *f, struct face_cachel *UNUSED (cachel),
 		const Ichar *str, Charcount len)
 {
-  return ichar_string_displayed_columns (str, len);
+  struct console *c = XCONSOLE(FRAME_CONSOLE (f));
+
+  if (CONSOLE_TTY_MULTIPLE_WIDTH (c))
+    {
+      return ichar_string_displayed_columns (str, len);
+    }
+
+  return len;
 }
 
 /*****************************************************************************
@@ -206,7 +213,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int UNUSED (cursor_height))
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+  Ichar_dynarr *buf;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
   rune_dynarr *rba = db->runes;
@@ -232,7 +239,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
   if (end < 0)
     end = Dynarr_length (rba);
 
-  Dynarr_reset (buf);
+  buf = Dynarr_new (Ichar);
 
   while (elt < end && Dynarr_atp (rba, elt)->xpos < start_pixpos)
     {
@@ -533,6 +540,9 @@ tty_output_ibyte_string (struct window *w, struct display_line *dl,
 {
   struct frame *f = XFRAME (w->frame);
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
+  int incing = CONSOLE_TTY_MULTIPLE_WIDTH (c) ? 
+    ibyte_string_displayed_columns (str, len) : 
+    bytecount_to_charcount(str, len);
 
   /* First position the cursor. */
   cmgoto (f, dl->ypos - 1, xpos);
@@ -541,7 +551,7 @@ tty_output_ibyte_string (struct window *w, struct display_line *dl,
   tty_turn_on_face (w, findex);
 
   send_string_to_tty_console (c, str, len);
-  TTY_INC_CURSOR_X (c, ibyte_string_displayed_columns (str, len));
+  TTY_INC_CURSOR_X (c, incing);
 
   /* Turn the face properties back off. */
   tty_turn_off_face (w, findex);

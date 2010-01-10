@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "sysproc.h"    /* For qxe_getpid */
 
-static mpf_t float_print_min, float_print_max;
+static mp_exp_t float_print_min, float_print_max;
 gmp_randstate_t random_state;
 
 CIbyte *
@@ -38,40 +38,56 @@ bigfloat_to_string(mpf_t f, int base)
   const int neg = (sign < 0) ? 1 : 0;
   int len = strlen (str) + 1;  /* Count the null terminator */
 
-  if (sign == 0 || (mpf_cmp (float_print_min, f) <= 0 &&
-                    mpf_cmp (f, float_print_max) <= 0))
+  if (sign == 0)
     {
-      /* Move digits down to insert a radix point */
-      if (expt <= 0)
-        {
-          /* We need room for a radix point and leading zeroes */
-          const int space = -expt + 2;
-          XREALLOC_ARRAY (str, CIbyte, len + space);
-          memmove (&str[space + neg], &str[neg], len - neg);
-          memset (&str[neg], '0', space);
-          str[neg + 1] = '.';
-          len += space;
-        }
+      XREALLOC_ARRAY (str, CIbyte, 4);
+      strncpy (str, "0.0", 4);
+    }
+  else if (float_print_min <= expt && expt <= float_print_max)
+    {
+      if (expt < 0)
+	{
+	  /* We need room for a radix point and leading zeroes */
+	  const int space = -expt + 2;
+	  XREALLOC_ARRAY (str, CIbyte, len + space);
+	  memmove (&str[space + neg], &str[neg], len - neg);
+	  memset (&str[neg], '0', space);
+	  str[neg + 1] = '.';
+	}
+      else if (len <= expt + neg + 1)
+	{
+	  /* We need room for a radix point and trailing zeroes */
+	  XREALLOC_ARRAY (str, CIbyte, expt + neg + 3);
+	  memset (&str[len - 1], '0', expt + neg + 3 - len);
+	  str[expt + neg] = '.';
+	  str[expt + neg + 2] = '\0';
+	}
       else
-        {
-          /* We just need room for a radix point */
-          XREALLOC_ARRAY (str, CIbyte, len + 1);
-          memmove (&str[expt + neg + 1], &str[expt + neg], len - (expt + neg));
-          str[expt + neg] = '.';
-          len++;
-        }
+	{
+	  /* We just need room for a radix point */
+	  XREALLOC_ARRAY (str, CIbyte, len + 1);
+	  memmove (&str[expt + neg + 1], &str[expt + neg], len - (expt + neg));
+	  str[expt + neg] = '.';
+	}
     }
   else
     {
-      /* Computerized scientific notation */
-      /* We need room for a radix point, format identifier, and exponent */
-      const int space = (expt < 0)
-        ? (int)(log ((double) (-expt)) / log ((double) base)) + 3
-        : (int)(log ((double) expt) / log ((double) base)) + 2;
+      /* Computerized scientific notation: We need room for a possible radix
+	 point, format identifier, and exponent */
+      /* GMP's idea of the exponent is 1 greater than scientific notation's */
+      expt--;
+      const int point = (len == neg + 2) ? 0 : 1;
+      const int exponent = (expt < 0)
+	? (int)(log ((double) (-expt)) / log ((double) base)) + 3
+	: (int)(log ((double) expt) / log ((double) base)) + 2;
+      const int space = point + exponent;
       XREALLOC_ARRAY (str, CIbyte, len + space);
-      memmove (&str[neg + 2], &str[neg + 1], len - neg);
-      str[len + 1] = 'l';
-      sprintf (&str[len + 2], "%ld", expt);
+      if (point > 0)
+	{
+	  memmove (&str[neg + 2], &str[neg + 1], len - neg);
+	  str[neg + 1] = '.';
+	}
+      sprintf (&str[len + point - 1], "E%ld", expt);
     }
   return str;
 }
@@ -94,11 +110,13 @@ init_number_gmp ()
   mp_set_memory_functions ((void *(*) (size_t)) xmalloc, gmp_realloc,
 			   gmp_free);
 
-  /* The smallest number that is printed without exponents */
-  mpf_init_set_d (float_print_min, 0.001);
+  /* Numbers with smaller exponents than this are printed in scientific
+     notation. */
+  float_print_min = -4;
 
-  /* The largest number that is printed without exponents */
-  mpf_init_set_ui (float_print_max, 10000000UL);
+  /* Numbers with larger exponents than this are printed in scientific
+     notation. */
+  float_print_max = 8;
 
   /* Prepare the bignum/bigfloat random number generator */
   gmp_randinit_default (random_state);

@@ -1,6 +1,6 @@
 /* XEmacs site configuration template file.  -*- C -*-
    Copyright (C) 1986, 1991-1994, 1998, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -91,6 +91,9 @@ things are arranged in config.h.in.  In particular:
 /* Program name */
 #undef EMACS_PROGNAME
 
+/* Name of the link to the program to be used with #! scripts */
+#undef SHEBANG_PROGNAME
+
 /* Allow s&m files to differentiate OS versions without having
    multiple files to maintain. */
 #undef OS_RELEASE
@@ -152,9 +155,6 @@ things are arranged in config.h.in.  In particular:
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
-/* Define GNU_MALLOC if you want to use the GNU memory allocator. */
-#undef GNU_MALLOC
-
 /* Define if you are using the GNU C Library. -- experimental. */
 #undef DOUG_LEA_MALLOC
 
@@ -187,8 +187,7 @@ things are arranged in config.h.in.  In particular:
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
+/* Define to 1 if you have <alloca.h> and it should be used. */
 #undef HAVE_ALLOCA_H
 
 /* Define to 1 if using `alloca.c'. */
@@ -205,6 +204,24 @@ things are arranged in config.h.in.  In particular:
 
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
+
+/* Compile with support for fontconfig? */
+#undef HAVE_FONTCONFIG
+
+/* Was the spelling of FcConfigGetRescanInterval corrected in this
+   fontconfig version? */
+#undef HAVE_FCCONFIGGETRESCANINTERVAL
+
+/* Was the spelling of FcConfigSetRescanInterval corrected in this
+   fontconfig version? */
+#undef HAVE_FCCONFIGSETRESCANINTERVAL
+
+/* Compile with support for Xft? */
+#undef USE_XFT
+/* Per-widget stuff will go away? */
+#undef USE_XFT_MENUBARS
+#undef USE_XFT_TABS
+#undef USE_XFT_GAUGES
 
 /* Defines for building X applications */
 #ifdef HAVE_X_WINDOWS
@@ -319,6 +336,11 @@ things are arranged in config.h.in.  In particular:
 #undef DLSYM_NEEDS_UNDERSCORE
 #undef HAVE_SHLIB
 
+/* Darwin; realpath corrects for case: */
+#ifdef HAVE_DYLD
+#define REALPATH_CORRECTS_CASE 1
+#endif
+
 #undef HAVE_LIBINTL
 #undef HAVE_LIBDNET
 #undef HAVE_LIBRESOLV
@@ -415,6 +437,14 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_WCSLEN
 #undef HAVE_WCWIDTH
 
+/* Functions and structs checked for vdb. */
+#undef HAVE_MPROTECT
+#undef HAVE_SIGACTION
+#undef HAVE_STRUCT_SIGINFO_SI_ADDR
+#undef HAVE_SIGINFO_T_SI_ADDR
+#undef HAVE_SIGNAL
+#undef HAVE_STRUCT_SIGCONTEXT_CR2
+
 #undef HAVE_UTIME
 #undef HAVE_UTIMES
 #undef HAVE_SIGSETJMP
@@ -499,12 +529,19 @@ things are arranged in config.h.in.  In particular:
 /* Compile in support for GZIP compression */
 #undef HAVE_ZLIB
 
-/* Do you have the Xmu library?
-   This should always be the case except on losing HP-UX systems. */
-#undef HAVE_XMU
-
 /* Compile in support for DBM databases?  May require libgdbm or libdbm. */
 #undef HAVE_DBM
+/* Full #include file path for GDBM's or platforms ndbm.h */
+#undef NDBM_H_FILE
+
+/* Define to 1 if the system has the type `u_int8_t'. */
+#undef HAVE_U_INT8_T
+/* Define to 1 if the system has the type `u_int16_t'. */
+#undef HAVE_U_INT16_T
+/* Define to 1 if the system has the type `u_int32_t'. */
+#undef HAVE_U_INT32_T
+/* Define to 1 if the system has the type `u_int64_t'. */
+#undef HAVE_U_INT64_T
 
 /* Compile in support for Berkeley DB style databases?  May require libdb. */
 #undef HAVE_BERKELEY_DB
@@ -553,11 +590,40 @@ things are arranged in config.h.in.  In particular:
 
 /* Define one or more of the following if you want lots of extra checks
    (e.g. structure validation) compiled in.  These should be turned
-   on during the beta-test cycle. */
+   on during the beta-test cycle.
+
+   Keep macro names sorted to help with syncing this file to configure.ac.
+   Don't forget the ERROR_CHECK_ALL stuff at the end of this file. */
+
+/* Minor sanity checking of the bytecode interpreter.  Useful for
+   debugging the byte compiler.  */
+#undef ERROR_CHECK_BYTE_CODE
+
+/* Sanity-check the redisplay structures after each modification. */
+#undef ERROR_CHECK_DISPLAY
 
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #undef ERROR_CHECK_EXTENTS
+
+/* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
+#undef ERROR_CHECK_GC
+
+/* Minor sanity checking of glyphs, especially subwindows and
+   widgets. */
+#undef ERROR_CHECK_GLYPHS
+
+/* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
+#undef ERROR_CHECK_MALLOC
+
+/* Define for any sanity checks on structures that are not handled by a
+   more specific error-checking type. */
+#undef ERROR_CHECK_STRUCTURES
+
+/* Turn on checks related to text -- check that text in strings and buffers
+   is in a valid format before we use it, check that buffer positions are
+   valid, etc. */
+#undef ERROR_CHECK_TEXT
 
 /* Make sure that arguments are valid to functions and such.  Turns on
    checks related to types -- makes sure that all X... macros are
@@ -565,32 +631,6 @@ things are arranged in config.h.in.  In particular:
    possible) are setting the correct type of structure.  Some code may
    use a more specific error-checking flag. */
 #undef ERROR_CHECK_TYPES
-
-/* Turn on checks related to text -- check that text in strings and buffers
-   is in a valid format before we use it, check that buffer positions are
-   valid, etc. */
-#undef ERROR_CHECK_TEXT
-
-/* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
-#undef ERROR_CHECK_GC
-
-/* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
-#undef ERROR_CHECK_MALLOC
-
-/* Minor sanity checking of the bytecode interpreter.  Useful for
-   debugging the byte compiler.  */
-#undef ERROR_CHECK_BYTE_CODE
-
-/* Minor sanity checking of glyphs, especially subwindows and
-   widgets. */
-#undef ERROR_CHECK_GLYPHS
-
-/* Sanity-check the redisplay structures after each modification. */
-#undef ERROR_CHECK_DISPLAY
-
-/* Define for any sanity checks on structures that are not handled by a
-   more specific error-checking type. */
-#undef ERROR_CHECK_STRUCTURES
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
    This is mainly intended for use by developers. */
@@ -613,16 +653,14 @@ things are arranged in config.h.in.  In particular:
    widget within another program. */
 #undef EXTERNAL_WIDGET
 
-/* There are some special-case defines for gcc and lcc. */
+/* There are some special-case defines for gcc, g++ and lcc. */
 #undef USE_GCC
-#undef USE_LCC
+#undef USE_GPLUSPLUS
+#undef USE_LCC /* #### Not currently set in configure */
 
 /* Compile in support for CDE (Common Desktop Environment) drag and drop?
    Requires libDtSvc, which typically must be present at runtime.  */
 #undef HAVE_CDE
-
-/* Compile in support for OffiX Drag and Drop? */
-#undef HAVE_OFFIX_DND
 
 /* Compile in generic Drag'n'Drop API */
 #undef HAVE_DRAGNDROP
@@ -658,6 +696,7 @@ things are arranged in config.h.in.  In particular:
 
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA
+#undef CANNA_NEW_WCHAR_AWARE
 #undef HAVE_WNN
 #undef WNN6
 
@@ -686,8 +725,15 @@ things are arranged in config.h.in.  In particular:
 /* If defined, use experimental pdump-based GC algorithms. */
 #undef USE_KKCC
 
-/* If defined, use experimental allocator. */
-#undef MC_ALLOC
+/* If defined, use experimental incremental garbage collector and new
+   allocator. */
+#undef NEW_GC
+
+/* Virtual dirty bit implementation for incremental gc. */
+#undef VDB_POSIX
+#undef VDB_MACH
+#undef VDB_WIN32
+#undef VDB_FAKE
 
 /* Enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
@@ -750,6 +796,9 @@ things are arranged in config.h.in.  In particular:
 #undef SITEMODULEDIR_USER_DEFINED
 #undef DOCDIR_USER_DEFINED
 #undef LISPDIR_USER_DEFINED
+#undef EARLY_PACKAGE_DIRECTORIES_USER_DEFINED
+#undef LATE_PACKAGE_DIRECTORIES_USER_DEFINED
+#undef LAST_PACKAGE_DIRECTORIES_USER_DEFINED
 #undef PACKAGE_PATH_USER_DEFINED
 #undef SITELISPDIR_USER_DEFINED
 #undef ARCHLIBDIR_USER_DEFINED
@@ -763,10 +812,6 @@ things are arranged in config.h.in.  In particular:
    file. */
 #undef DUMP_IN_EXEC
 
-/* Define DYNODUMP if it is necessary to properly dump on this system.
-   Currently this is only Solaris 2.x, for x < 6. */
-#undef DYNODUMP
-
 /* Compile in support for Sun Sparcworks/WorkShop? */
 #undef SUNPRO
 
@@ -778,6 +823,9 @@ things are arranged in config.h.in.  In particular:
 
 /* Native sound may be provided via soundcard.h, in various directories */
 #undef SOUNDCARD_H_FILE
+
+/* Compile in support for ALSA (Advanced Linux Sound Architecture) */
+#undef HAVE_ALSA_SOUND
 
 /* Compile in support for NAS (Network Audio System)?
    NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
@@ -828,6 +876,7 @@ things are arranged in config.h.in.  In particular:
    "deprecated" in favor of Microsoft-specific "secure" ones (!)
    This must go *before* the inclusion of any system files. */
 #define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_NONSTDC_NO_DEPRECATE
 #endif
 
 /* alloca twiddling.
@@ -878,6 +927,14 @@ extern "C" {
 #include "s/windowsnt.h"
 #elif defined (config_opsysfile)
 #include config_opsysfile
+#endif
+
+/* Darwin uses this to set BSD appropriately. */
+#undef USE_PARAM_H
+#ifdef USE_PARAM_H
+# ifndef NOT_C_CODE
+#  include <sys/param.h>
+# endif
 #endif
 
 /* The configuration script may define `machfile' to be the name of
@@ -948,8 +1005,10 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
+/********************* Window-system defines ******************/
+
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS)
 #define HAVE_WINDOW_SYSTEM
 #endif
 
@@ -996,22 +1055,7 @@ extern "C" {
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
-/* If you are using SunOS 4.1.1 and X11r5, then you need this patch.
-   There is a stupid bug in the SunOS libc.a: two functions which X11r5
-   uses, mbstowcs() and wcstombs(), are unusable when programs are
-   statically linked (as XEmacs must be) because the static version of
-   libc.a contains the *dynamic* versions of these functions.  These
-   functions don't seem to be called when XEmacs is running, so it's
-   enough to define stubs for them.
-
-   This appears to be fixed in SunOS 4.1.2.
-
-   Also, SunOS 4.1.1 contains buggy versions of strcmp and strcpy that
-   sometimes reference memory past the end of the string, which can segv.
-   I don't know whether this has been fixed as of 4.1.2 or 4.1.3. */
-#if defined (sparc) && !defined (USG)
-#define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
-#endif
+/********************* Mule defines ******************/
 
 /* CCL is unworkable under UNICODE_INTERNAL currently.  See comments in
    mule-ccl.c.  Algorithmic conversion tables are currently used only for
@@ -1023,12 +1067,13 @@ extern "C" {
 #endif
 
 #ifdef HAVE_CANNA
-#  define CANNA2
 #  define CANNA_MULE
 #  define CANNA_PURESIZE 0
 #else  /* not CANNA */
 #  define CANNA_PURESIZE 0
 #endif /* not CANNA */
+
+/********************* Networking defines ******************/
 
 #if defined (HAVE_SOCKS) && !defined (DO_NOT_SOCKSIFY)
 #define accept Raccept
@@ -1037,6 +1082,8 @@ extern "C" {
 #define getsockname Rgetsockname
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
+
+/********************* Basic types defines ******************/
 
 #ifndef BITS_PER_CHAR
 #define BITS_PER_CHAR 8
@@ -1048,11 +1095,15 @@ extern "C" {
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 #define DOUBLE_BITS (SIZEOF_DOUBLE * BITS_PER_CHAR)
 
+/********************* Inlining defines ******************/
+
 /* Use `INLINE_HEADER' to define inline functions in .h files.
    Use `inline static' to define inline functions in .c files.
    See the Internals manual for examples and more information. */
 
-#if defined (__cplusplus) || ! defined (__GNUC__)
+#if (defined ( __STDC_VERSION__) &&  __STDC_VERSION__ >= 199901L) \
+  || defined (__cplusplus) || ! defined (__GNUC__) || ! defined(emacs)
+# define INLINE_HEADERS_ARE_STATIC
 # define INLINE_HEADER inline static
 #elif defined (DONT_EXTERN_INLINE_HEADER_FUNCTIONS)
 # define INLINE_HEADER inline
@@ -1073,6 +1124,8 @@ extern "C" {
 
 #define DECLARE_INLINE_HEADER(header) \
   INLINE_HEADER header ; INLINE_HEADER header
+
+/************************* Misc defines ************************/
 
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
@@ -1109,20 +1162,51 @@ extern "C" {
    merge the two. */
 #define USE_C_FONT_LOCK
 
-#if defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_TYPES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_STRUCTURES)
+/********************* Error-checking defines ******************/
+
+/* Keep the #defines sorted.
+   #### Can this code ever be executed?  I guess if a developer #defines
+   ERROR_CHECK_ALL above the #include it could be useful. */
+#ifdef ERROR_CHECK_ALL
+#define ERROR_CHECK_BYTE_CODE
+#define ERROR_CHECK_DISPLAY
+#define ERROR_CHECK_EXTENTS
+#define ERROR_CHECK_GC
+#define ERROR_CHECK_GLYPHS
+#define ERROR_CHECK_MALLOC
+#define ERROR_CHECK_STRUCTURES
+#define ERROR_CHECK_TEXT
+#define ERROR_CHECK_TYPES
+#endif /* ERROR_CHECK_ALL */
+
+#if defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_STRUCTURES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_TYPES)
 #define ERROR_CHECK_ANY
 #endif
 
-#ifdef ERROR_CHECK_ALL
-#define ERROR_CHECK_EXTENTS
-#define ERROR_CHECK_TYPES
-#define ERROR_CHECK_TEXT
-#define ERROR_CHECK_GC
-#define ERROR_CHECK_MALLOC
-#define ERROR_CHECK_BYTE_CODE
-#define ERROR_CHECK_GLYPHS
-#define ERROR_CHECK_DISPLAY
-#define ERROR_CHECK_STRUCTURES
-#endif /* ERROR_CHECK_ALL */
+/* It's very tricky.  In some circumstances, if we don't include the
+   ERROR_CHECK_TYPES functions in xemacs.def.in.in, we get lots of
+   undefined references from eldap.o and postgresql.o; but in other
+   circumstances, if we DO include them, we get undefined references
+   in xemacs-export.o to the same functions.  We try here to grok when
+   we need to include them in xemacs.def.in.in.  I originally thought
+   it was enough to condition on !defined (INLINE_HEADERS_ARE_STATIC) --
+   if they're static, they shouldn't lead to any external references
+   in the modules, right?  Wrong, under non-optimized builds.  So now
+   let's try conditioning on !C++ -- by examining inline.o with nm,
+   it seems it's the C++ builds where inline.o doesn't get any inline
+   functions compiled into it at all, which would lead to problems if
+   we reference them in xemacs.def.in.in.
+
+   #### FIXME Should we condition on GCC and defined(emacs), like we
+   do (inverted) for INLINE_HEADERS_ARE_STATIC? --ben */
+
+/* Checking for !defined (__cplusplus) doesn't work, because we typically
+   aren't using the C++ preprocessor when processing xemacs.def.in.in
+   even if we're using a C++ compiler.  I suspect we only need this at
+   all GCC is being used. */
+#if defined (ERROR_CHECK_TYPES) && !defined (USE_GPLUSPLUS)
+/* #if !defined (INLINE_HEADERS_ARE_STATIC) */
+#define NEED_ERROR_CHECK_TYPES_INLINES
+#endif
 
 #endif /* _SRC_CONFIG_H_ */

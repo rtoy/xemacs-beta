@@ -36,11 +36,6 @@
      (push (file-name-directory load-file-name) load-path)
      (require 'test-harness))))
 
-(when test-harness-test-compiled
-  ;; this ha-a-ack depends on the compiled test coming last
-  (setq test-harness-failure-tag
-	"KNOWN BUG - fix reverted; after 2003-10-31 bitch at stephen\n"))
-
 (garbage-collect)
 
 ;; tests for weak-boxes
@@ -55,8 +50,8 @@
 (let* ((p (cons 3 4))
        (finalized-p nil)
        (eph1 (make-ephemeron (cons 1 2) p
-			     '(lambda (value)
-				(setq finalized-p t))))
+			     #'(lambda (value)
+                                 (setq finalized-p t))))
        (eph2 (make-ephemeron p p)))
   (Assert (eq p (ephemeron-ref (make-ephemeron (cons 1 2) p))))
   (Assert (ephemeron-p (make-ephemeron (cons 1 2) p)))
@@ -233,7 +228,7 @@
 			      (make-ephemeron inner_cons
 					      (cons 1 2)
 					      '(lambda (v) t))
-			      '(lambda (v) t))))
+			      #'(lambda (v) t))))
   (Assert (ephemeron-ref (ephemeron-ref weak1)))
   (garbage-collect)
   ;; assure the inner ephis are still there

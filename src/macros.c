@@ -197,7 +197,7 @@ pop_kbd_macro_event (Lisp_Object event)
 					  with Qt to force an early exit. */
     signal_error (Qinvalid_state, "junk in executing-macro", Qunbound);
 
-  Fthrow (Qexecute_kbd_macro, Qt);
+  throw_or_bomb_out (Qexecute_kbd_macro, Qt, 0, Qnil, Qnil);
 }
 
 

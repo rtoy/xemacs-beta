@@ -1,4 +1,5 @@
-.\" Copyright (c) 1992, 2001 Free Software Foundation
+.\" Copyright (C) 1992, 2001, 2002, 2003, 2004,
+.\"   2005, 2006, 2007  Free Software Foundation, Inc.
 .\" See section COPYING for conditions for redistribution
 .TH etags 1 "23nov2001" "GNU Tools" "GNU Tools"
 .de BP
@@ -12,7 +13,7 @@ etags, ctags \- generate tag file for Emacs, vi
 .SH SYNOPSIS
 .hy 0
 .na
-\fBetags\fP [\|\-aCDGImRVh\|] [\|\-i \fIfile\fP\|] [\|\-l \fIlanguage\fP\|]
+\fBetags\fP [\|\-aCDGIRVh\|] [\|\-i \fIfile\fP\|] [\|\-l \fIlanguage\fP\|]
 .if n .br
 [\|\-o \fItagfile\fP\|] [\|\-r \fIregexp\fP\|]
 [\|\-\-parse\-stdin=\fIfile\fP\|]
@@ -20,12 +21,12 @@ etags, ctags \- generate tag file for Emacs, vi
 [\|\-\-append\|] [\|\-\-no\-defines\|]
 [\|\-\-no\-globals\|] [\|\-\-include=\fIfile\fP\|]
 [\|\-\-ignore\-indentation\|] [\|\-\-language=\fIlanguage\fP\|]
-[\|\-\-members\|] [\|\-\-output=\fItagfile\fP\|]
+[\|\-\-no\-members\|] [\|\-\-output=\fItagfile\fP\|]
 [\|\-\-regex=\fIregexp\fP\|] [\|\-\-no\-regex\|]
 [\|\-\-help\|] [\|\-\-version\|]
 \fIfile\fP .\|.\|.
 
-\fBctags\fP [\|\-aCdgImRVh\|] [\|\-BtTuvwx\|] [\|\-l \fIlanguage\fP\|]
+\fBctags\fP [\|\-aCdgIRVh\|] [\|\-BtTuvwx\|] [\|\-l \fIlanguage\fP\|]
 .if n .br
 [\|\-o \fItagfile\fP\|] [\|\-r \fIregexp\fP\|]
 [\|\-\-parse\-stdin=\fIfile\fP\|]
@@ -36,7 +37,7 @@ etags, ctags \- generate tag file for Emacs, vi
 [\|\-\-language=\fIlanguage\fP\|] [\|\-\-members\|]
 [\|\-\-output=\fItagfile\fP\|] [\|\-\-regex=\fIregexp\fP\|]
 [\|\-\-typedefs\|] [\|\-\-typedefs\-and\-c++\|]
-[\|\-\-update\|] [\|\-\-no\-warn\|]
+[\|\-\-update\|]
 [\|\-\-help\|] [\|\-\-version\|]
 \fIfile\fP .\|.\|.
 .ad b
@@ -92,28 +93,31 @@ and create tags for extern variables unless \-\-no\-globals is used.
 .TP
 .B \-d, \-\-defines
 Create tag entries for C preprocessor constant definitions
-and enum constants, too.  This is the
-default behavior for \fBetags\fP.
+and enum constants, too.  Since this is the default behavior of
+\fBetags\fP, only \fBctags\fP accepts this option.
 .TP
 .B \-D, \-\-no\-defines
 Do not create tag entries for C preprocessor constant definitions
 and enum constants.
 This may make the tags file much smaller if many header files are tagged.
-This is the default behavior for \fBctags\fP.
+Since this is the default behavior of \fBctags\fP, only \fBetags\fP
+accepts this option.
 .TP
-.B \-g, \-\-globals
+.B \-\-globals
 Create tag entries for global variables in C, C++, Objective C, Java,
 and Perl.
-This is the default behavior for \fBetags\fP.
+Since this is the default behavior of \fBetags\fP, only \fBctags\fP
+accepts this option.
 .TP
-.B \-G, \-\-no\-globals
+.B \-\-no\-globals
 Do not tag global variables.  Typically this reduces the file size by
-one fourth.  This is the default behavior for \fBctags\fP.
+one fourth.  Since this is the default behavior of \fBctags\fP, only
+\fBetags\fP accepts this option.
 .TP
 \fB\-i\fP \fIfile\fP, \fB\-\-include=\fIfile\fP
 Include a note in the tag file indicating that, when searching for a
 tag, one should also consult the tags file \fIfile\fP after checking the
-current file.  This options is only accepted by \fBetags\fP.
+current file.  Only \fBetags\fP accepts this option.
 .TP
 .B \-I, \-\-ignore\-indentation
 Don't rely on indentation as much as we normally do.  Currently, this
@@ -129,12 +133,12 @@ detection of language based on the file name.  The `none'
 language may be used to disable language parsing altogether; only
 regexp matching is done in this case (see the \fB\-\-regex\fP option).
 .TP
-.B \-m, \-\-members
+.B \-\-members
 Create tag entries for variables that are members of structure-like
-constructs in C++, Objective C, Java.
+constructs in C++, Objective C, Java.  This is the default for etags.
 .TP
-.B \-M, \-\-no\-members
-Do not tag member variables.  This is the default behavior.
+.B \-\-no\-members
+Do not tag member variables.  This is the default for ctags.
 .TP
 .B \-\-packages\-only
 Only tag packages in Ada files.
@@ -201,7 +205,7 @@ from shell interpretation.
 
 Tag the DEFVAR macros in the emacs source files:
 .br
-\fI\-\-regex\='/[ \\t]*DEFVAR_[A-Z_ \\t(]+"\\([^"]+\\)"\/'\fP
+\fI\-\-regex\='/[ \\t]*DEFVAR_[A-Z_ \\t(]+"\\([^"]+\\)"/'\fP
 .\"" This comment is to avoid confusion to Emacs syntax highlighting
 .br
 
@@ -220,7 +224,7 @@ Tag TCL files (this last example shows the usage of a \fItagregexp\fP):
 
 .br
 A regexp can be preceded by {\fIlang\fP}, thus restricting it to match
-lines of files of the specified language.  Use \fBetags --help\fP to obtain
+lines of files of the specified language.  Use \fBetags \-\-help\fP to obtain
 a list of the recognised languages.  This feature is particularly useful inside
 \fBregex files\fP.  A regex file contains one regex per line.  Empty lines,
 and those lines beginning with space or tab are ignored.  Lines beginning
@@ -258,11 +262,6 @@ Only \fBctags\fP accepts this option.
 Instead of generating a tag file, write index (in \fBvgrind\fP format)
 to standard output.  Only \fBctags\fP accepts this option.
 .TP
-.B \-w, \-\-no\-warn
-Suppress warning messages about duplicate entries.  The \fBetags\fP
-program does not check for duplicate entries, so this option is not
-allowed with it.
-.TP
 .B \-x, \-\-cxref
 Instead of generating a tag file, write a cross reference (in
 \fBcxref\fP format) to standard output.  Only \fBctags\fP accepts this option.
@@ -288,7 +287,7 @@ Stallman.
 Copyright
 .if t \(co
 .if n (c)
-1999, 2001 Free Software Foundation, Inc.
+1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007  Free Software Foundation, Inc.
 .PP
 Permission is granted to make and distribute verbatim copies of this
 document provided the copyright notice and this permission notice are

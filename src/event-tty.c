@@ -45,6 +45,8 @@ static struct event_stream *tty_event_stream;
 extern int mswindows_is_blocking;
 #endif
 
+static int last_quit_check_signal_tick_count;
+
 
 /************************************************************************/
 /*				timeout events				*/
@@ -84,22 +86,76 @@ tty_timeout_to_emacs_event (Lisp_Event *emacs_event)
 static int
 emacs_tty_event_pending_p (int how_many)
 {
+  Lisp_Object event;
+  int tick_count_val;
+
+  /* Cf. the comments on emacs_Xt_event_pending_p in event-xlike-inc.c . */
+
   if (!how_many)
     {
       EMACS_TIME sometime;
-      /* see if there's a pending timeout. */
+
+      /* (1) Any pending events in the dispatch queue? */
+      if (!NILP(dispatch_event_queue))
+        {
+          return 1;
+        }
+
+      /* (2) Any TTY or process input available? */
+      if (poll_fds_for_input (non_fake_input_wait_mask))
+        return 1;
+
+      /* (3) Any timeout input available? */
       EMACS_GET_TIME (sometime);
       if (tty_timer_queue &&
 	  EMACS_TIME_EQUAL_OR_GREATER (sometime, tty_timer_queue->time))
 	return 1;
+    }
+  else
+    {
+      /* HOW_MANY > 0 */
+      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
+	{
+	  if (command_event_p (event))
+	    {
+	      how_many--;
+	      if (how_many <= 0)
+		return 1;
+	    }
+	}
 
-      return poll_fds_for_input (non_fake_input_wait_mask);
     }
 
-  /* #### Not right!  We need to *count* the number of pending events, which
-     means we need to have a dispatch queue and drain the pending events,
-     using drain_tty_devices(). */
-  return poll_fds_for_input (tty_only_mask);
+  tick_count_val = quit_check_signal_tick_count;
+
+  /* Checking in_modal_loop here is a bit cargo-cultish, since its use is
+     specific to builds with a window system. */
+  if (!in_modal_loop &&
+      (last_quit_check_signal_tick_count != tick_count_val))
+    {
+      last_quit_check_signal_tick_count = tick_count_val;
+
+      /* We need to drain the entire queue now -- if we only drain part of
+         it, we may later on end up with events actually pending but
+         detect_input_pending() returning false because there wasn't
+         another SIGIO. */
+      event_stream_drain_queue ();
+
+      if (!how_many)
+        return !NILP (dispatch_event_queue);
+
+      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
+        {
+          if (command_event_p (event))
+            {
+              how_many--;
+              if (how_many <= 0)
+                return 1;
+            }
+        }
+    }
+
+  return 0;
 }
 
 static void
@@ -112,6 +168,16 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
       SELECT_TYPE temp_mask = input_wait_mask;
       EMACS_TIME time_to_block;
       EMACS_SELECT_TIME select_time_to_block, *pointer_to_this;
+
+      if (!NILP (dispatch_event_queue))
+	{
+	  Lisp_Object event, event2;
+	  event2 = wrap_event (emacs_event);
+	  event = dequeue_dispatch_event ();
+	  Fcopy_event (event, event2);
+	  Fdeallocate_event (event);
+	  return;
+	}
 
       if (!get_low_level_timeout_interval (tty_timer_queue, &time_to_block))
 	/* no timer events; block indefinitely */
@@ -294,6 +360,8 @@ reinit_vars_of_event_tty (void)
   tty_event_stream->drain_queue_cb	= emacs_tty_drain_queue;
   tty_event_stream->create_io_streams_cb = emacs_tty_create_io_streams;
   tty_event_stream->delete_io_streams_cb = emacs_tty_delete_io_streams;
+
+  last_quit_check_signal_tick_count = 0;
 }
 
 void

@@ -27,9 +27,9 @@ Boston, MA 02111-1307, USA.  */
 
 BEGIN_C_DECLS
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void pdump_objects_unmark (void);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 void pdump (void);
 int pdump_load (const Wexttext *argv0);
 void pdump_backtrace (void);

@@ -51,6 +51,7 @@
    charset-g2 t
    charset-g3 t
    mnemonic "In-13194"
+   safe-charsets (ascii indian-is13194)
    documentation
    "8-bit encoding for ASCII (MSB=0) and IS13194-Devanagari (MSB=1)"
    safe-charsets (ascii indian-is13194)
@@ -63,7 +64,8 @@
  "Devanagari" '((charset indian-is13194 indian-2-column indian-1-column)
 		(coding-system in-is13194-devanagari)
 		(coding-priority in-is13194-devanagari)
-		(input-method . "devanagari-itrans")
+                ;; Not available in packages. 
+		; (input-method . "devanagari-itrans")
 		(features devan-util)
 		(documentation . "\
 Such languages using Devanagari script as Hindi and Marathi

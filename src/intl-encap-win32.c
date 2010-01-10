@@ -100,6 +100,10 @@ begin-unicode-encapsulation-script
 
 // dir c:\Program Files\Microsoft Visual Studio\VC98\Include\
 
+file ACLAPI.h
+
+yes GetNamedSecurityInfo
+
 file WINBASE.H
 
 yes GetBinaryType
@@ -1195,7 +1199,7 @@ qxeExtractIconEx (const Extbyte * lpszFile, int nIconIndex, HICON FAR * phiconLa
 BOOL
 qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
 {
-#ifdef CYGWIN_HEADERS
+#if 0 /* defined (CYGWIN_HEADERS) */ /* fixed at some point <= GCC 3.4.4 */
   /* Cygwin mistakenly declares the second argument as DWORD. */
   if (XEUNICODE_P)
     return GetICMProfileW (arg1, (DWORD) arg2, (LPWSTR) arg3);
@@ -1213,7 +1217,7 @@ qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
 BOOL
 qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4)
 {
-#ifdef CYGWIN_HEADERS
+#if defined (CYGWIN_HEADERS)
   /* Cygwin mistakenly declares the second argument as DWORD. */
   if (XEUNICODE_P)
     return UpdateICMRegKeyW (arg1, (DWORD) arg2, (LPWSTR) arg3, arg4);

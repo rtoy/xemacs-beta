@@ -183,11 +183,26 @@ or go back to just one window (by deleting all but the selected window)."
 
 
 (defun truncate-command-history-for-gc ()
-  (let ((tail (nthcdr 30 command-history)))
-    (if tail (setcdr tail nil)))
-  (let ((tail (nthcdr 30 values)))
-    (if tail (setcdr tail nil)))
-  )
+  ;; We should try to avoid accessing any bindings to speak of in this
+  ;; function; as this hook is called asynchronously, the search for
+  ;; those bindings might search local bindings from essentially
+  ;; arbitrary functions. We force the body of the function to run at
+  ;; command-loop level, where the danger of local bindings is much
+  ;; reduced; the code can still do its job because the command history
+  ;; and values list will not grow before then anyway.
+  ;;
+  ;; Nothing is done in batch mode, both because it is a waste of time
+  ;; (there is no command loop!) and because this any GCs during dumping
+  ;; will invoke this code, and if it were to enqueue an eval event,
+  ;; the portable dumper would try to dump it and fail.
+  (if (not (noninteractive))
+      (enqueue-eval-event
+       (lambda (arg)
+         (let ((tail (nthcdr 30 command-history)))
+           (if tail (setcdr tail nil)))
+         (let ((tail (nthcdr 30 values)))
+           (if tail (setcdr tail nil))))
+       nil)))
 
 (add-hook 'pre-gc-hook 'truncate-command-history-for-gc)
 
@@ -473,7 +488,10 @@ It should end in a space; `yes-or-no-p' adds `(yes or no) ' to it.
 The user must confirm the answer with RET,
 and can edit it until it as been confirmed."
   (if (should-use-dialog-box-p)
-      (yes-or-no-p-dialog-box prompt)
+      ;; and-fboundp is redundant, since yes-or-no-p-dialog-box is only
+      ;; bound if (featurep 'dialog). But it eliminates a compile-time
+      ;; warning.
+      (and-fboundp #'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
     (yes-or-no-p-minibuf prompt)))
 
 (defun y-or-n-p (prompt)
@@ -542,12 +560,15 @@ Legitimate radix values are 8, 10 and 16."
   :group 'editing-basics)
 
 (defun read-quoted-char (&optional prompt)
+  ;; XEmacs change; description of the character code input
   "Like `read-char', but do not allow quitting.
-Also, if the first character read is an octal digit,
-we read any number of octal digits and return the
-specified character code.  Any nondigit terminates the sequence.
-If the terminator is RET, it is discarded;
-any other terminator is used itself as input.
+
+Also, if the first character read is a digit of base (the value of)
+`read-quoted-char-radix', we read as many of such digits as are
+typed and return a character with the corresponding Unicode code
+point.  Any input that is not a digit (in the base used) terminates
+the sequence.  If the terminator is RET, it is discarded; any other
+terminator is used itself as input.
 
 The optional argument PROMPT specifies a string to use to prompt the user.
 The variable `read-quoted-char-radix' controls which radix to use
@@ -558,19 +579,25 @@ for numeric input."
 	)
     (while (not done)
       (let ((inhibit-quit first)
-	    ;; Don't let C-h get the help message--only help function keys.
+	    ;; Don't let C-h get the help message--only help
+	    ;; function keys. 
+	    ;; XEmacs: we don't support the help function keys as of
+	    ;; 2006-04-16. GNU have a Vhelp_event_list in addition
+	    ;; to help-char in src/keyboard.c, and it's only useful
+	    ;; to set help-form while help-char is nil when that
+	    ;; functionality is available.
 	    (help-char nil)
-	    (help-form
+	    (help-form (format 
 	     "Type the special character you want to use,
-or the octal character code.
+or the character code, base %d (the value of `read-quoted-char-radix')
 RET terminates the character code and is discarded;
-any other non-digit terminates the character code and is then used as input."))
+any other non-digit terminates the character code and is then used as input."
+	     read-quoted-char-radix)))
 	(and prompt (display-message 'prompt (format "%s-" prompt)))
 	(setq event (next-command-event)
-	      char (or (event-to-character event)
-		       (signal 'error
-			       (list "key read cannot be inserted in a buffer"
-				     event))))
+	      ;; If event-to-character fails, this is fine, we handle that
+	      ;; with the (null char) cond branch below.
+	      char (event-to-character event))
 	(if inhibit-quit (setq quit-flag nil)))
       ;; Translate TAB key into control-I ASCII character, and so on.
       (and char
@@ -579,7 +606,8 @@ any other non-digit terminates the character code and is then used as input."))
 		 (setq char (aref translated 0)))))
       (cond ((null char))
 	    ((not (characterp char))
-	     (setq unread-command-events (list char)
+	     ;; XEmacs change; event instead of char. 
+	     (setq unread-command-events (list event)
 		   done t))
 ; 	    ((/= (logand char ?\M-\^@) 0)
 ; 	     ;; Turn a meta-character into a character with the 0200 bit set.
@@ -598,12 +626,14 @@ any other non-digit terminates the character code and is then used as input."))
 	    ((and (not first) (eq char ?\C-m))
 	     (setq done t))
 	    ((not first)
-	     (setq unread-command-events (list char)
+	     ;; XEmacs change; event instead of char. 
+	     (setq unread-command-events (list event)
 		   done t))
 	    (t (setq code (char-to-int char)
 		     done t)))
       (setq first nil))
-    (int-to-char code)))
+    ;; XEmacs change; unicode-to-char instead of int-to-char
+    (unicode-to-char code)))
 
 ;; in passwd.el.
 ; (defun read-passwd (prompt &optional confirm default)

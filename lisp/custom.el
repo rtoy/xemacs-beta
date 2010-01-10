@@ -116,9 +116,11 @@ Like `custom-initialize-set', but use the function specified by
                    (t
                     (eval value)))))
 
-(defun custom-initialize-changed (symbol value)
+;; XEmacs change; move to defsubst, since this is only called in one place
+;; and usage of it clusters.
+(defsubst custom-initialize-changed (symbol value)
   "Initialize SYMBOL with VALUE.
-Like `custom-initialize-reset', but only use the `:set' function if the
+Like `custom-initialize-reset', but only use the `:set' function if
 not using the standard setting.
 For the standard setting, use `set-default'."
   (cond ((default-boundp symbol)
@@ -142,9 +144,15 @@ DEFAULT is stored as SYMBOL's value in the standard theme.  See
 `custom-known-themes' for a list of known themes.  For backwards
 compatibility, DEFAULT is also stored in SYMBOL's property
 `standard-value'.  At the same time, SYMBOL's property `force-value' is
-set to nil, as the value is no longer rogue."
+set to nil, as the value is no longer rogue.
+
+The byte compiler adds an XEmacs-specific :default keyword and value to
+`custom-declare-variable' calls when it byte-compiles the DEFAULT argument.
+These describe what the custom UI shows when editing a customizable
+variable's associated Lisp expression.  We don't encourage use of this
+keyword in your own programs.  "
   ;; Remember the standard setting.  The value should be in the standard
-  ;; theme, not in this property.  However, his would require changeing
+  ;; theme, not in this property.  However, this would require changing
   ;; the C source of defvar and others as well...
   (put symbol 'standard-value (list default))
   ;; Maybe this option was rogue in an earlier version.  It no longer is.
@@ -184,6 +192,10 @@ set to nil, as the value is no longer rogue."
 			   value)
 		   ;; Fast code for the common case.
 		   (put symbol 'custom-options (copy-sequence value))))
+                ;; In the event that the byte compile has compiled the init
+                ;; value, we want the value the UI sees to be uncompiled.
+                ((eq keyword :default)
+                 (put symbol 'standard-value (list value)))
 		(t
 		 (custom-handle-keyword symbol keyword value
 					'custom-variable))))))
@@ -191,9 +203,7 @@ set to nil, as the value is no longer rogue."
     ;; Do the actual initialization.
     (unless custom-dont-initialize
       (funcall initialize symbol default)))
-  ;; #### This is a rough equivalent of LOADHIST_ATTACH.  However,
-  ;; LOADHIST_ATTACH also checks for `initialized'.
-  (push (cons 'defvar symbol) current-load-list)
+  (push symbol current-load-list)
   (run-hooks 'custom-define-hook)
   symbol)
 
@@ -502,11 +512,9 @@ LOAD should be either a library file name, or a feature name."
   (put symbol 'custom-autoload t)
   (custom-add-load symbol load))
 
-;; This test is also in the C code of `user-variable-p'.
-(defun custom-variable-p (variable)
-  "Return non-nil if VARIABLE is a custom variable."
-  (or (get variable 'standard-value)
-      (get variable 'custom-autoload)))
+;; XEmacs; 
+;; #'custom-variable-p is in symbols.c, since it's called from
+;; #'user-variable-p.
 
 ;;; Loading files needed to customize a symbol.
 ;;; This is in custom.el because menu-bar.el needs it for toggle cmds.
@@ -812,20 +820,8 @@ this sets the local binding in that buffer instead."
 	(set variable value))
     (set-default variable value)))
 
-(defun custom-quote (sexp)
-  "Quote SEXP iff it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (keywordp sexp)
-	  (and (listp sexp)
-	       (memq (car sexp) '(lambda)))
-	  (stringp sexp)
-	  (numberp sexp)
-	  (vectorp sexp)
-;;;  	  (and (fboundp 'characterp)
-;;;  	       (characterp sexp))
-	  )
-      sexp
-    (list 'quote sexp)))
+;; Now in C, but the old name is still used by some packages:
+(defalias 'custom-quote 'quote-maybe)
 
 (defun customize-mark-to-save (symbol)
   "Mark SYMBOL for later saving.
@@ -847,7 +843,7 @@ Return non-nil iff the `saved-value' property actually changed."
 	    (not (equal value (condition-case nil
 				  (eval (car standard))
 				(error nil)))))
-	(put symbol 'saved-value (list (custom-quote value)))
+	(put symbol 'saved-value (list (quote-maybe value)))
       (put symbol 'saved-value nil))
     ;; Clear customized information (set, but not saved).
     (put symbol 'customized-value nil)
@@ -874,7 +870,7 @@ Return non-nil iff the `customized-value' property actually changed."
 	    (not (equal value (condition-case nil
 				  (eval (car old))
 				(error nil)))))
-	(put symbol 'customized-value (list (custom-quote value)))
+	(put symbol 'customized-value (list (quote-maybe value)))
       (put symbol 'customized-value nil))
     ;; Changed?
     (not (equal customized (get symbol 'customized-value)))))
@@ -1027,7 +1023,7 @@ stored in SYMBOL's property `standard-value'."
     (setq value (or value (get symbol 'standard-value)))
     (when value
       (put symbol 'saved-value was-in-theme)
-      (if (or (get 'force-value symbol) (default-boundp symbol))
+      (if (or (get symbol 'force-value) (default-boundp symbol))
           (funcall (or (get symbol 'custom-set) 'set-default) symbol
                    (eval (car value)))))
     value))
@@ -1042,9 +1038,9 @@ ARGS is a list of lists of the form
 
 This means reset VARIABLE to its value in TO-THEME."
   (custom-check-theme theme)
-  (mapcar '(lambda (arg)
-	     (apply 'custom-theme-reset-internal arg)
-	     (custom-push-theme 'theme-value (car arg) theme 'reset (cadr arg)))
+  (mapcar #'(lambda (arg)
+              (apply 'custom-theme-reset-internal arg)
+              (custom-push-theme 'theme-value (car arg) theme 'reset (cadr arg)))
 	  args))
 
 (defun custom-reset-variables (&rest args)

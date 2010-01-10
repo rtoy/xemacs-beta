@@ -174,7 +174,7 @@ Otherwise, XEmacs will offer migration to the init directory.")
 (defvar load-user-init-file-p t
   "Non-nil if XEmacs should load the user's init file.")
 
-;; #### called `site-run-file' in FSFmacs
+;; #### called `site-run-file' in GNU Emacs
 
 (defvar site-start-file "site-start"
   "File containing site-wide run-time initializations.
@@ -234,6 +234,8 @@ after, and will not be true at any time before.")
     ("-eval"	. command-line-do-eval)
     ("-load"	. command-line-do-load)
     ("-l"	. command-line-do-load)
+    ("--script"	. command-line-do-script)
+    ("-script"	. command-line-do-script)
     ("-insert"	. command-line-do-insert)
     ("-i"	. command-line-do-insert)
     ("-kill"	. command-line-do-kill)
@@ -285,6 +287,11 @@ Display options:
                         -t is given.  Otherwise, a TTY frame is created.
   -unmapped             Do not display the initial frame.  Useful to create
                         a \"server\" that can accept `gnuclient' connections.
+  -tty                  Create the initial frame on the given window system.
+  -x                    (Requesting an unsupported window system, or giving
+  -gtk                  conflicting window systems, is a fatal error.)
+  -gnome
+  -msw
 
 Noninteractive options:
 
@@ -432,6 +439,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 	(setq file (expand-file-name file)))
     (load file nil t)))
 
+(defun command-line-do-script (arg)
+  "Load the named file of Lisp code into XEmacs.
+<file>"
+  (let ((file (pop command-line-args-left)))
+    (load file nil t t)))
+
 (defun command-line-do-insert (arg)
   "Insert file into the current buffer.
 <file>"
@@ -569,7 +582,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
       ;;      ;; Modify the initial frame based on what the init file puts into
       ;;      ;; ...-frame-alist.
       (frame-notice-user-settings)
-      ;;      ;;####FSFmacs junk
+      ;;      ;;#### GNU Emacs junk
       ;;      ;; Now we know the user's default font, so add it to the menu.
       ;;      (if (fboundp 'font-menu-add-default)
       ;;	  (font-menu-add-default))
@@ -583,7 +596,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 
     (if load-user-init-file-p
 	(maybe-migrate-user-init-file))
-    ;; FSF calls precompute-menubar-bindings.  We don't mix menubars
+    ;; GNU calls precompute-menubar-bindings.  We don't mix menubars
     ;; and keymaps.
     ))
 
@@ -606,7 +619,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 	       (string= vc "simple"))
 	   (setq version-control 'never))))
 
-  ;;####FSFmacs
+  ;;#### GNU Emacs
   ;;  (if (let ((ctype
   ;;	     ;; Use the first of these three envvars that has a nonempty value.
   ;;	     (or (let ((string (getenv "LC_ALL")))
@@ -713,13 +726,9 @@ If this is nil, no message will be displayed.")
 	      (require 'id-x-toolbar)
 	    (init-toolbar)))
 
-      ;; Run the window system's init function.  tty is considered to be
-      ;; a type of window system for this purpose.  This creates the
-      ;; initial (non stdio) device.
-      (when (and initial-window-system (not noninteractive))
-	(funcall (intern (concat "init-"
-				 (symbol-name initial-window-system)
-				 "-win"))))
+      ;; Create the initial device (which may be the already-created stdio
+      ;; device, if we're noninteractive).
+      (make-device initial-device-type nil nil)
 
       ;; When not in batch mode, this creates the first visible frame,
       ;; and deletes the stdio device.
@@ -844,12 +853,16 @@ the menubar)."
     (or (find-user-init-directory-init-file init-directory)
 	(find-user-home-directory-init-file home-directory))))
 
+(defun ask-about-user-init-file-migration-p ()
+  "Check whether we want to ask the user if she wants to migrate the init file."
+  (and (not load-home-init-file)
+       (not (find-user-init-directory-init-file user-init-directory))
+       (stringp user-init-file)
+       (file-readable-p user-init-file)))
+
 (defun maybe-migrate-user-init-file ()
   "Ask user if she wants to migrate the init file(s) to new location."
-  (if (and (not load-home-init-file)
-	   (not (find-user-init-directory-init-file user-init-directory))
-	   (stringp user-init-file)
-	   (file-readable-p user-init-file))
+  (if (ask-about-user-init-file-migration-p)
       (if (with-output-to-temp-buffer (help-buffer-name nil)
 	    (progn
 	      (princ "XEmacs recommends that the initialization code in
@@ -875,24 +888,27 @@ perform the migration at any time with M-x migrate-user-init-file.")
 	      (yes-or-no-p-minibuf (concat "Migrate init file to "
 					   user-init-directory
 					   "? "))))
+
 	  (progn
 	    (migrate-user-init-file)
-	    (maybe-create-compatibility-dot-emacs))
-	(customize-save-variable 'load-home-init-file t))))
-
-(defun maybe-create-compatibility-dot-emacs ()
-  "Ask user if she wants to create a .emacs compatibility file."
-  (if (with-output-to-temp-buffer (help-buffer-name nil)
-	(progn
-	  (princ "The initialization code has now been migrated to the ")
-	  (princ user-init-directory)
-	  (princ "directory.
+	    (with-output-to-temp-buffer (help-buffer-name nil)
+	      (progn
+	      (princ "The initialization code has now been migrated to the ")
+	      (princ user-init-directory)
+	      (princ "directory.
 
 For backwards compatibility with, for example, older versions of XEmacs,
 XEmacs can create a special old-style .emacs file in your home
-directory which will load the relocated initialization code.")
-	  (show-temp-buffer-in-current-frame standard-output)
-	  (yes-or-no-p-minibuf "Create compatibility .emacs? ")))
+directory which will load the relocated initialization code.
+
+NOTE THAT THIS WILL OVERWRITE YOUR EXISTING .emacs FILE!")
+	      (show-temp-buffer-in-current-frame standard-output)
+	      (maybe-create-compatibility-dot-emacs))))
+	(set-load-home-init-file user-init-file t))))
+
+(defun maybe-create-compatibility-dot-emacs ()
+  "Ask user if she wants to create a .emacs compatibility file."
+  (if (yes-or-no-p-minibuf "Create compatibility .emacs?")
       (create-compatibility-dot-emacs)))
 
 (defun migrate-user-init-file ()
@@ -903,15 +919,43 @@ directory which will load the relocated initialization code.")
 	(message "Creating %s directory..." user-init-directory)
 	(make-directory user-init-directory)))
   (message "Migrating custom file...")
-  (customize-set-value 'load-home-init-file nil)
-  (custom-migrate-custom-file (make-custom-file-name user-init-file
-						     'force-new))
-  (message "Moving init file...")
+  (set-load-home-init-file user-init-file nil)
+  (setq custom-file (make-custom-file-name user-init-file 'force-new))
+  (custom-save-all)
+  (message "Copying init file...")
   (let ((new-user-init-file (expand-file-name user-init-file-base
 					      user-init-directory)))
-    (rename-file user-init-file new-user-init-file)
+    (copy-file user-init-file new-user-init-file)
     (setq user-init-file new-user-init-file))
   (message "Migration done."))
+
+(defun set-load-home-init-file (filename val)
+  "Put code in `filename' to set `load-home-init-file' to `val'.
+More precisely, remove the first `setq' form for `load-home-init-file',
+and replace it by (setq load-home-init-file t) if `val' is non-nil."
+  (save-excursion
+    (set-buffer (find-file-noselect filename))
+    (goto-char (point-min))
+    (condition-case nil
+	(block find-existing
+	  (while (not (eobp))
+	    (forward-sexp 1)
+	    (backward-sexp 1)
+	    (let* ((beginning (point))
+		   (sexp (read (current-buffer))))
+	      (if (and (consp sexp)
+		       (consp (cdr sexp))
+		       (eq 'setq (car sexp))
+		       (eq 'load-home-init-file (cadr sexp)))
+		  (progn
+		    (forward-line 1)
+		    (delete-region beginning (point))
+		    (return-from find-existing nil))
+		(forward-sexp 1)))))
+	(error nil)) ; ignore if there are no sexprs in the file
+    (if val
+	(insert "(setq load-home-init-file t) ; don't load init file from ~/.xemacs/init.el\n"))
+    (save-buffer)))
 
 (defun create-compatibility-dot-emacs ()
   "Create .emacs compatibility file for migrated setup."
@@ -947,8 +991,9 @@ directory which will load the relocated initialization code.")
     (rename-file user-init-file target-file-name 'ok-if-already-exists)
     (setq user-init-file target-file-name)
     (let ((old-custom-file custom-file))
-      (custom-migrate-custom-file target-file-name)
-      (customize-save-variable 'load-home-init-file t)
+      (setq custom-file target-file-name)
+      (custom-save-all)
+      (set-load-home-init-file user-init-file t)
       (delete-file old-custom-file))))
 
 (defun load-user-init-file ()
@@ -1071,7 +1116,8 @@ a new format, when variables have changed, etc."
 
       ;; Don't clobber a non-scratch buffer if init file
       ;; has selected it.
-      (when (string= (buffer-name) "*scratch*")
+      (when (and (string= (buffer-name) "*scratch*")
+		 (not (ask-about-user-init-file-migration-p)))
 	(unless (or inhibit-startup-message
 		    (input-pending-p))
 	  (let (tmout)
@@ -1360,8 +1406,6 @@ Copyright (C) 1995-2004 Ben Wing.")
     (let* ((after-change-functions nil) ; no font-lock, thank you
 	   (elements (cond (tty (splash-screen-tty-body))
 			   (t (splash-screen-window-body)))))
-      (pop-to-buffer (current-buffer))
-      (delete-other-windows)
       (splash-screen-present elements)
       (set-buffer-modified-p nil))))
 
@@ -1372,6 +1416,8 @@ Copyright (C) 1995-2004 Ben Wing.")
     (set-buffer buffer)
     (setq buffer-read-only nil)
     (erase-buffer buffer)
+    (pop-to-buffer buffer)
+    (delete-other-windows)
     (display-splash-screen)))
 
 ;;  (let ((present-file
@@ -1407,7 +1453,7 @@ returned value.  It can be `t' (omit all), one of the symbols `early',
 
 If SET-GLOBAL-PACKAGE-PATHS is non-nil, initialize the global package path
 variables referring to the particular types of packages
-(`early-package-hierarchies', `early-package-load-path',
+\(`early-package-hierarchies', `early-package-load-path',
 `late-package-hierarchies', `late-package-load-path',
 `last-package-hierarchies', `last-package-load-path')."
   (let (earlyp latep lastp earlyp-lp latep-lp lastp-lp)
@@ -1447,7 +1493,7 @@ This function is idempotent, so call this as often as you like!"
 			     t)))
 
   (setq emacs-roots (paths-find-emacs-roots invocation-directory invocation-name
-					    #'paths-emacs-data-root-p))
+					    #'paths-emacs-root-p))
 
   (setq emacs-data-roots (paths-find-emacs-roots invocation-directory invocation-name
 						 #'paths-emacs-data-root-p))
@@ -1478,51 +1524,59 @@ This function is idempotent, so call this as often as you like!"
 " inhibit-packages inhibit-site-lisp called-early)
 	   'external-debugging-output)
     (princ (format
-"emacs-roots:
+"invocation-directory: %S
+invocation-name: %S
+configure-prefix-directory: %S
+configure-exec-prefix-directory: %S
+emacs-roots:
 %S
 emacs-data-roots:
 %S
 user-init-directory: %S
 configure-package-path: %S
-" emacs-roots emacs-data-roots user-init-directory configure-package-path)
+" invocation-directory invocation-name
+  configure-prefix-directory configure-exec-prefix-directory
+  emacs-roots emacs-data-roots user-init-directory configure-package-path)
 	   'external-debugging-output)
     )
 
-  (setq lisp-directory (paths-find-lisp-directory emacs-roots))
+  (setq lisp-directory (paths-find-lisp-directory emacs-data-roots))
 
   (if debug-paths
-      (princ (format "lisp-directory:\n%S\n" lisp-directory)
+      (princ (format "configure-lisp-directory and lisp-directory:\n%S\n%S\n"
+		     configure-lisp-directory lisp-directory)
 	     'external-debugging-output))
 
   (if (featurep 'mule)
       (progn
 	(setq mule-lisp-directory
-	      (paths-find-mule-lisp-directory emacs-roots
+	      (paths-find-mule-lisp-directory emacs-data-roots
 					      lisp-directory))
 	(if debug-paths
-	    (princ (format "mule-lisp-directory:\n%S\n"
-			   mule-lisp-directory)
+	    (princ (format "configure-mule-lisp-directory and mule-lisp-directory:\n%S\n%S\n"
+			   configure-mule-lisp-directory mule-lisp-directory)
 		   'external-debugging-output)))
     (setq mule-lisp-directory '()))
 
   (setq site-directory (and (null inhibit-site-lisp)
-			    (paths-find-site-lisp-directory emacs-roots)))
+			    (paths-find-site-lisp-directory emacs-data-roots)))
 
   (if (and debug-paths (null inhibit-site-lisp))
-      (princ (format "site-directory:\n%S\n" site-directory)
+      (princ (format "configure-site-directory and site-directory:\n%S\n%S\n"
+		     configure-site-directory site-directory)
 	     'external-debugging-output))
 
   (setq load-path (startup-find-load-path inhibit-packages t))
 
   (when debug-paths
-    (princ (format "early-package-hierarchies and early-package-load-path:\n%S\n%S\n"
-		   early-package-hierarchies early-package-load-path)
+    (princ (format "configure-early-package-directories, early-package-hierarchies and early-package-load-path:\n%S\n%S\n%S\n"
+		   configure-early-package-directories early-package-hierarchies early-package-load-path)
 	   'external-debugging-output)
-    (princ (format "late-package-hierarchies and late-package-load-path:\n%S\n%S\n"
-		   late-package-hierarchies late-package-load-path)
+    (princ (format "configure-late-package-directories, late-package-hierarchies and late-package-load-path:\n%S\n%S\n"
+		   configure-late-package-directories late-package-hierarchies late-package-load-path)
 	   'external-debugging-output)
-    (princ (format "last-package-hierarchies and last-package-load-path:\n%S\n%S\n"
-		   last-package-hierarchies last-package-load-path)
+    (princ (format "configure-last-package-directories, last-package-hierarchies and last-package-load-path:\n%S\n%S\n"
+		   configure-last-package-directories last-package-hierarchies last-package-load-path)
 	   'external-debugging-output))
 
   (if debug-paths
@@ -1530,14 +1584,15 @@ configure-package-path: %S
             'external-debugging-output))
   (setq module-directory (paths-find-module-directory emacs-roots))
   (if debug-paths
-      (princ (format "module-directory:\n%S\n" module-directory)
+      (princ (format "configure-module-directory and module-directory:\n%S\n" 
+		     configure-module-directory module-directory)
 	     'external-debugging-output))
   (setq site-module-directory (and (null inhibit-site-modules)
 				   (paths-find-site-module-directory
 				    emacs-roots)))
   (if (and debug-paths (null inhibit-site-modules))
-      (princ (format "site-module-directory:\n%S\n"
-		     site-module-directory)
+      (princ (format "configure-site-module-directory and site-module-directory:\n%S\n%S\n"
+		     configure-site-module-directory site-module-directory)
 	     'external-debugging-output))
 
   (setq module-load-path (paths-construct-module-load-path
@@ -1548,17 +1603,19 @@ configure-package-path: %S
   (unless called-early
     (setq Info-directory-list
 	  (paths-construct-info-path
-	   emacs-roots
+	   emacs-data-roots
 	   early-package-hierarchies late-package-hierarchies last-package-hierarchies))
 
     (if debug-paths
-	(princ (format "Info-directory-list:\n%S\n" Info-directory-list)
+	(princ (format "configure-info-directory, configure-info-path and Info-directory-list:\n%S\n%S\n%S\n"
+		       configure-info-directory configure-info-path Info-directory-list)
 	       'external-debugging-output))
 
     (setq exec-directory (paths-find-exec-directory emacs-roots))
 
     (if debug-paths
-	(princ (format "exec-directory:\n%s\n" exec-directory)
+	(princ (format "configure-exec-directory and exec-directory:\n%S\n%S\n"
+		       configure-exec-directory exec-directory)
 	       'external-debugging-output))
 
     (setq exec-path
@@ -1573,13 +1630,15 @@ configure-package-path: %S
     (setq doc-directory (paths-find-doc-directory emacs-roots))
 
     (if debug-paths
-	(princ (format "doc-directory:\n%S\n" doc-directory)
+	(princ (format "configure-doc-directory and doc-directory:\n%S\n%S\n"
+		       configure-doc-directory doc-directory)
 	       'external-debugging-output))
     
-    (setq data-directory (paths-find-data-directory emacs-roots))
+    (setq data-directory (paths-find-data-directory emacs-data-roots))
     
     (if debug-paths
-	(princ (format "data-directory:\n%S\n" data-directory)
+	(princ (format "configure-data-directory and data-directory:\n%S\n%S\n"
+		       configure-data-directory data-directory)
 	       'external-debugging-output))
 
     (setq data-directory-list (paths-construct-data-directory-list

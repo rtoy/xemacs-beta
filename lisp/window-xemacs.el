@@ -107,6 +107,15 @@ buffer appears in it currently)."
 
 ;; Window configurations
 
+(defcustom window-configuration-includes-position nil
+  "*Whether restoring window configurations will restore positions too.
+If nil, only the size of windows will be restored.
+
+Note that setting this value to t may have counterintuitive consequences,
+if a window manager employing virtual desktops is in use."
+:type 'boolean
+:group 'windows)
+
 (defstruct saved-window
   currentp minibufferp minibuffer-scrollp
   buffer mark-marker
@@ -115,7 +124,8 @@ buffer appears in it currently)."
   pixel-left pixel-top pixel-right pixel-bottom
   hscroll modeline-hscroll
   dedicatedp
-  first-hchild first-vchild next-child)
+  first-hchild first-vchild next-child
+  window)
 
 (defstruct window-configuration
   frame
@@ -126,9 +136,17 @@ buffer appears in it currently)."
   min-width min-height
   saved-root-window)
 
+; make sure we don't get affected by harmful advice
+(fset 'real-split-window (symbol-function 'split-window))
+(fset 'real-delete-window (symbol-function 'delete-window))
+
 (defun window-configuration-equal (conf-1 conf-2)
   "Returns a boolean indicating whether the two given configurations
-are identical."
+are identical.
+
+Window configurations containing windows with different window
+positions are not identical iff `window-configuration-includes-position'
+is t."
   (or (eq conf-1 conf-2)
       (and (eq (window-configuration-frame conf-1)
 	       (window-configuration-frame conf-2))
@@ -136,10 +154,12 @@ are identical."
 	      (window-configuration-frame-pixel-width conf-2))
 	   (= (window-configuration-frame-pixel-height conf-1)
 	      (window-configuration-frame-pixel-height conf-2))
-	   (equal (window-configuration-frame-top conf-1)
-		  (window-configuration-frame-top conf-2))
-	   (equal (window-configuration-frame-left conf-1)
-		  (window-configuration-frame-left conf-2))
+	   (if window-configuration-includes-position
+               (and (equal (window-configuration-frame-top conf-1)
+                           (window-configuration-frame-top conf-2))
+                    (equal (window-configuration-frame-left conf-1)
+                           (window-configuration-frame-left conf-2)))
+             t)
 	   (eq (window-configuration-current-buffer conf-1)
 	       (window-configuration-current-buffer conf-2))
 	   (saved-window-equal (window-configuration-saved-root-window conf-1)
@@ -241,6 +261,7 @@ its value is -not- saved."
 	  (bottom (nth 3 edges)))
       (let ((saved-window
 	     (make-saved-window
+	      :window window
 	      :currentp (eq window (selected-window (window-frame window)))
 	      :minibufferp (eq window (minibuffer-window (window-frame window)))
 	      :minibuffer-scrollp (eq window minibuffer-scroll-window)
@@ -263,72 +284,110 @@ its value is -not- saved."
 	      (let ((marker (make-marker)))
 		(set-marker marker (window-start window) buffer)
 		(setf (saved-window-start-marker saved-window) marker))
-	      (let ((marker (make-marker)))
-		(if (eq window (selected-window))
-		    (set-marker marker (point buffer) buffer)
-		  (set-marker marker (window-point window) buffer))
-		(setf (saved-window-point-marker saved-window) marker))
+	      (if (not (eq buffer (current-buffer)))
+		  (let ((marker (make-marker)))
+		    (set-marker marker (window-point window) buffer)
+		    (setf (saved-window-point-marker saved-window) marker)))
 	      (setf (saved-window-mark-marker saved-window)
 		    (copy-marker (mark-marker t buffer)))))
 	saved-window))))
 
-(defun set-window-configuration (configuration)
+(defmacro save-window-excursion/mapping (&rest body)
+  "Execute body, preserving window sizes and contents.
+Restores which buffer appears in which window, where display starts,
+as well as the current buffer.
+Return alist mapping old windows to new windows.
+This alist maps the originally captured windows to the windows that correspond
+to them in the restored configuration.  It does not include entries for
+windows that have not changed identity.
+Does not restore the value of point in current buffer."
+  (let ((window-config (gensym 'window-config))
+	(mapping (gensym 'mapping)))
+    `(let ((,window-config (current-window-configuration))
+	   (,mapping))
+      (unwind-protect
+	  (progn ,@body)
+	(setq ,mapping (set-window-configuration/mapping ,window-config)))
+      ,mapping)))
+
+(defun set-window-configuration (configuration &optional set-frame-size-p)
   "Set the configuration of windows and buffers as specified by CONFIGURATION.
 CONFIGURATION must be a value previously returned
-by `current-window-configuration'."
+by `current-window-configuration'.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
+"
+  (set-window-configuration/mapping configuration set-frame-size-p)
+  nil) ; make sure nobody relies on mapping return value
+
+(defun set-window-configuration/mapping (configuration &optional set-frame-size-p)
+  "Set the configuration of windows and buffers as specified by CONFIGURATION.
+CONFIGURATION must be a value previously returned
+by `current-window-configuration'.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
+Return alist mapping old windows to new windows.
+This alist maps the originally captured windows to the windows that correspond
+to them in the restored configuration.  It does not include entries for
+windows that have not changed identity."
   (let ((frame (window-configuration-frame configuration)))
     (if (and (frame-live-p frame)
 	     (not (window-configuration-equal configuration
 					      (current-window-configuration))))
-	(really-set-window-configuration frame configuration))))
+	(really-set-window-configuration frame configuration set-frame-size-p))))
 
-(defun really-set-window-configuration (frame configuration)
-  "Set the window configuration CONFIGURATION on live frame FRAME."
+(defun really-set-window-configuration (frame configuration set-frame-size-p)
+  "Set the window configuration CONFIGURATION on live frame FRAME.
+If SET-FRAME-SIZE-P is true, the frame size is also restored.
+Return alist mapping old windows to new windows."
   ;; avoid potential temporary problems
   (setq window-min-width 0)
   (setq window-min-height 0)
   (setq minibuffer-scroll-window nil)
 
   (frame-reduce-to-one-window frame)
-  (set-window-configuration-frame-size configuration)
+  (if set-frame-size-p
+      (set-window-configuration-frame-size configuration))
 
-  ; avoid setting these if they're already up-to-date
-  ; This also avoids potential inaccuracies in these settings --Mike
-  (let ((left (window-configuration-frame-left configuration))
-	(top (window-configuration-frame-top configuration)))
-    (if (not (equal left (frame-property frame 'left)))
-	(set-frame-property frame 'left left))
-    (if (not (equal top (frame-property frame 'top)))
-	(set-frame-property frame 'top top))) 
+  ;; avoid setting these if they're already up-to-date
+  ;; This also avoids potential inaccuracies in these settings --Mike
+  (when window-configuration-includes-position
+    (let ((left (window-configuration-frame-left configuration))
+	  (top (window-configuration-frame-top configuration)))
+      (if (not (equal left (frame-property frame 'left)))
+	  (set-frame-property frame 'left left))
+      (if (not (equal top (frame-property frame 'top)))
+	  (set-frame-property frame 'top top))))
 
   ;; these may have changed because of the delete
-  (let ((root-window (frame-root-window frame)))
-    (enlarge-window-pixels 
-     (- (window-configuration-minibuffer-pixel-height configuration)
-	(window-pixel-height (minibuffer-window frame)))
-     nil
-     (minibuffer-window frame))
+  (set-window-pixel-height (minibuffer-window frame)
+			   (window-configuration-minibuffer-pixel-height configuration))
 
-    ;; avoid that `set-window-point' will set the buffer's point for
-    ;; the selected window
-    (select-window (minibuffer-window frame))
+  ;; avoid that `set-window-point' will set the buffer's point for
+  ;; the selected window
+  (select-window (minibuffer-window frame))
 
-    (let ((window-configuration-current-window nil))
-      (declare (special window-configuration-current-window))
-      (restore-saved-window configuration
-			    root-window
-			    (window-configuration-saved-root-window configuration)
-			    'vertical) 
-      (if window-configuration-current-window
-	  (select-window window-configuration-current-window))))
-
-  (setq window-min-width (window-configuration-min-width configuration))
-  (setq window-min-height (window-configuration-min-height configuration))
-
-  (let ((buffer (window-configuration-current-buffer configuration)))
-    (if (buffer-live-p buffer)
-	(set-buffer buffer)
-	(set-buffer (car (buffer-list))))))
+  (let ((window-configuration-current-window nil)
+	(mapping (list nil)))		; poor man's box
+      
+    (declare (special window-configuration-current-window))
+    (restore-saved-window configuration
+			  (frame-root-window frame)
+			  (window-configuration-saved-root-window configuration)
+			  'vertical
+			  mapping) 
+    (if window-configuration-current-window
+	(select-window window-configuration-current-window))
+    
+    (setq window-min-width (window-configuration-min-width configuration))
+    (setq window-min-height (window-configuration-min-height configuration))
+      
+    (let ((buffer (window-configuration-current-buffer configuration)))
+      (if (buffer-live-p buffer)
+	  (set-buffer buffer)
+	(set-buffer (car (buffer-list)))))
+    ; this resets the window configuration so that the frame is filled
+    (if (not set-frame-size-p)
+	(set-frame-pixel-size frame (frame-pixel-width frame) (frame-pixel-height frame)))
+    (car mapping)))
 
 (defun set-window-configuration-frame-size (configuration)
   "Restore the frame size of a window configuration."
@@ -354,7 +413,7 @@ by `current-window-configuration'."
     (while window
       (if (window-live-p window)
 	  (let ((next (window-next-child window)))
-	    (delete-window window)
+	    (real-delete-window window)
 	    (setq window next)))))
   (cond
    ((window-first-hchild window)
@@ -362,33 +421,43 @@ by `current-window-configuration'."
    ((window-first-vchild window)
     (window-reduce-to-one (window-first-vchild window)))))
 
-(defun restore-saved-window (configuration window saved-window direction)
-  "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW."
-  (and (saved-window-next-child saved-window)
-       (not (saved-window-minibufferp (saved-window-next-child saved-window)))
-       (progn
-	 (cond ((eq direction 'vertical)
-		(split-window window nil nil))
-	       ((eq direction 'horizontal)
-		(split-window window nil t)))
-	 (restore-saved-window configuration
-			       (window-next-child window)
-			       (saved-window-next-child saved-window)
-			       direction)))
+(defun restore-saved-window (configuration window saved-window direction mapping)
+  "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW.
+MAPPING is a one-element list whose element is an old-window-to-new-window
+mapping, which this function will extend."
+  (if (not (eq (saved-window-window saved-window) window))
+      (rplaca mapping
+	      (cons (cons (saved-window-window saved-window) window)
+		    (car mapping))))
+  (cond
+   ((and (saved-window-next-child saved-window)
+	 (not (saved-window-minibufferp (saved-window-next-child saved-window))))
+    (cond ((eq direction 'vertical)
+	   (real-split-window window nil nil))
+	  ((eq direction 'horizontal)
+	   (real-split-window window nil t)))
+    (if (not (saved-window-minibufferp saved-window))
+	(restore-saved-window-parameters configuration window saved-window))
+    (restore-saved-window configuration
+			  (window-next-child window)
+			  (saved-window-next-child saved-window)
+			  direction
+			  mapping))
+  ((not (saved-window-minibufferp saved-window))
+   (restore-saved-window-parameters configuration window saved-window)))
 
   (if (saved-window-first-hchild saved-window)
       (restore-saved-window configuration
 			    window
 			    (saved-window-first-hchild saved-window)
-			    'horizontal))
+			    'horizontal
+			    mapping))
   (if (saved-window-first-vchild saved-window)
       (restore-saved-window configuration
 			    window
 			    (saved-window-first-vchild saved-window)
-			    'vertical))
-
-  (if (not (saved-window-minibufferp saved-window))
-      (restore-saved-window-parameters configuration window saved-window)))
+			    'vertical
+			    mapping)))
 
 (defun restore-saved-window-parameters (configuration window saved-window)
   "Restore the window parameters stored in SAVED-WINDOW on WINDOW."
@@ -401,8 +470,9 @@ by `current-window-configuration'."
 	  (set-window-start window
 			    (marker-position (saved-window-start-marker saved-window))
 			    t)
-	  (set-window-point window
-			    (marker-position (saved-window-point-marker saved-window)))
+	  (if (markerp (saved-window-point-marker saved-window))
+	      (set-window-point window
+				(marker-position (saved-window-point-marker saved-window))))
 	  (set-marker (mark-marker t buffer)
 		      (marker-position (saved-window-mark-marker saved-window))
 		      buffer)
@@ -419,14 +489,10 @@ by `current-window-configuration'."
 	;; window to what we want. --Mike
 	(if (not (eq window (frame-root-window (window-frame window))))
 	    (progn
-	      (enlarge-window-pixels (- (saved-window-pixel-width saved-window)
-					(window-pixel-width window))
-				     t
-				     window)
-	      (enlarge-window-pixels (- (saved-window-pixel-height saved-window)
-					(window-pixel-height window))
-				     nil
-				     window)))
+	      (set-window-pixel-width window 
+				      (saved-window-pixel-width saved-window))
+	      (set-window-pixel-height window
+				       (saved-window-pixel-height saved-window))))
 	(set-window-hscroll window (saved-window-hscroll saved-window))
 	(set-modeline-hscroll window
 			      (saved-window-modeline-hscroll saved-window))
@@ -446,6 +512,15 @@ by `current-window-configuration'."
   "Compute the pixel height of SAVED-WINDOW."
   (- (saved-window-pixel-bottom saved-window)
      (saved-window-pixel-top saved-window)))
+
+(defun set-window-pixel-width (window width)
+  "Set the pixel width of WINDOW."
+  (enlarge-window-pixels (- width (window-pixel-width window)) t window))
+
+(defun set-window-pixel-height (window height)
+  "Set the pixel height of WINDOW."
+  (enlarge-window-pixels (- height (window-pixel-height window)) nil window))
+
 
 ;; The window-config stack is stored as a list in frame property
 ;; 'window-config-stack, with the most recent element at the front.

@@ -482,6 +482,8 @@ The result is a list whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
 The last argument is not copied, just used as the tail of the new list.
 Also see: `nconc'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -497,6 +499,8 @@ As of XEmacs 21.0, this function does NOT accept individual integers
 as arguments.  Old code that relies on, for example, (concat "foo" 50)
 returning "foo50" will fail.  To fix such code, either apply
 `int-to-string' to the integer argument, or use `format'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -507,6 +511,8 @@ DEFUN ("vconcat", Fvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a vector.
 The result is a vector whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -517,6 +523,8 @@ DEFUN ("bvconcat", Fbvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a bit vector.
 The result is a bit vector whose elements are the elements of all the
 arguments.  Each argument may be a list, vector, bit vector, or string.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -3043,6 +3051,8 @@ Also see: `append'.
 If the first argument is nil, there is no way to modify it by side
 effect; therefore, write `(setq foo (nconc foo list))' to be sure of
 changing the value of `foo'.
+
+arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -3555,12 +3565,26 @@ This function updates the value of the variable `features'.
 }
 
 DEFUN ("require", Frequire, 1, 3, 0, /*
-If feature FEATURE is not loaded, load it from FILENAME.
-If FEATURE is not a member of the list `features', then the feature
-is not loaded; so load the file FILENAME.
-If FILENAME is omitted, the printname of FEATURE is used as the file name.
-If optional third argument NOERROR is non-nil, then return nil if the file
-is not found instead of signaling an error.
+Ensure that FEATURE is present in the Lisp environment.
+FEATURE is a symbol naming a collection of resources (functions, etc).
+Optional FILENAME is a library from which to load resources; it defaults to
+the print name of FEATURE.
+Optional NOERROR, if non-nil, causes require to return nil rather than signal
+`file-error' if loading the library fails.
+
+If feature FEATURE is present in `features', update `load-history' to reflect
+the require and return FEATURE.  Otherwise, try to load it from a library.
+The normal messages at start and end of loading are suppressed.
+If the library is successfully loaded and it calls `(provide FEATURE)', add
+FEATURE to `features', update `load-history' and return FEATURE.
+If the load succeeds but FEATURE is not provided by the library, signal
+`invalid-state'.
+
+The byte-compiler treats top-level calls to `require' specially, by evaluating
+them at compile time (and then compiling them normally).  Thus a library may
+request that definitions that should be inlined such as macros and defsubsts
+be loaded into its compilation environment.  Achieving this in other contexts
+requires an explicit \(eval-and-compile ...\) block.
 */
        (feature, filename, noerror))
 {
@@ -3987,7 +4011,7 @@ syms_of_fns (void)
   DEFSYMBOL (Qidentity);
   DEFSYMBOL (Qyes_or_no_p);
 
-  DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
+  DEFERROR_STANDARD (Qbase64_conversion_error, Qtext_conversion_error);
 
   DEFSUBR (Fidentity);
   DEFSUBR (Frandom);

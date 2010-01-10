@@ -34,6 +34,21 @@
 
 ;;; Code:
 
+;moved to mule-charset.el.
+;(make-internal-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)." ...
+
+(make-internal-charset
+ 'thai-iso8859-11
+ "Right-Hand Part of Latin/Thai Alphabet (ISO/IEC 8859-11)"
+ '(dimension 1
+   registries ["ISO8859-11"]
+   chars 96
+   ;final ?T @@#### What is the final byte for this?
+   graphic 1
+   unicode-map ("unicode/unicode-consortium/ISO8859/8859-11.TXT" #xA0)
+   short-name "Thai (ISO8859-11)"
+   long-name "RHP of Thai (ISO 8859-11)"))
+
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)
 
@@ -329,22 +344,15 @@
 	      (repeat))))
 	(write-read-repeat r0))))))
 
-(if (featurep 'xemacs)
-    (progn
-      (make-coding-system
-       'tis-620 'ccl
-       "TIS620 (Thai)"
-       `(mnemonic "TIS620"
-	 decode ccl-decode-thai-xtis
-	 encode ccl-encode-thai-xtis
-	 documentation "external=tis620, internal=thai-xtis"))
-      (coding-system-put 'tis-620 'category 'iso-8-1))
-  (make-coding-system
-   'tis-620 4 ?T "external=tis620, internal=thai-xtis"
-   '(ccl-decode-thai-xtis . ccl-encode-thai-xtis)
-   '((safe-charsets . t)))
-  )
-
+(make-coding-system
+ 'tis-620 'ccl
+ "TIS620 (Thai)"
+ `(mnemonic "TIS620"
+   decode ccl-decode-thai-xtis
+   encode ccl-encode-thai-xtis
+   safe-charsets (ascii thai-xtis)
+   documentation "external=tis620, internal=thai-xtis"))
+(coding-system-put 'tis-620 'category 'iso-8-1)
 
 (set-language-info-alist
  "Thai-XTIS"

@@ -33,6 +33,31 @@ DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
 #define CHECK_HASH_TABLE(x) CHECK_RECORD (x, hash_table)
 #define CONCHECK_HASH_TABLE(x) CONCHECK_RECORD (x, hash_table)
 
+typedef struct htentry
+{
+#ifdef NEW_GC
+  struct lrecord_header lheader;
+#endif /* NEW_GC */  
+  Lisp_Object key;
+  Lisp_Object value;
+} htentry;
+
+#define HTENTRY_CLEAR_P(htentry) ((*(EMACS_UINT*)(&((htentry)->key))) == 0)
+
+#ifdef NEW_GC
+
+typedef struct htentry Lisp_Hash_Table_Entry;
+
+DECLARE_LRECORD (hash_table_entry, Lisp_Hash_Table_Entry);
+
+#define XHASH_TABLE_ENTRY(x) \
+  XRECORD (x, hash_table_entry, Lisp_Hash_Table_Entry)
+#define wrap_hash_table_entry(p) wrap_record (p, hash_table_entry)
+#define HASH_TABLE_ENTRYP(x) RECORDP (x, hash_table_entry)
+#define CHECK_HASH_TABLE_ENTRY(x) CHECK_RECORD (x, hash_table_entry)
+#define CONCHECK_HASH_TABLE_ENTRY(x) CONCHECK_RECORD (x, hash_table_entry)
+#endif /* NEW_GC */
+
 enum hash_table_weakness
 {
   HASH_TABLE_NON_WEAK,
@@ -98,5 +123,7 @@ void prune_weak_hash_tables (void);
 void pdump_reorganize_hash_table (Lisp_Object);
 
 void inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset);
+
+htentry *find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht);
 
 #endif /* INCLUDED_elhash_h_ */

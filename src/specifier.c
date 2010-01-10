@@ -1,6 +1,6 @@
 /* Specifier implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "chartab.h"
 #include "device-impl.h"
+#include "elhash.h"
 #include "frame.h"
 #include "glyphs.h"
 #include "opaque.h"
@@ -47,6 +48,15 @@ Lisp_Object Qremove_locale, Qremove_locale_type;
 Lisp_Object Qconsole_type, Qdevice_class;
 
 static Lisp_Object Vuser_defined_tags;
+/* This is a hash table mapping charsets to "tag lists".  A tag list here
+   is an assoc list mapping charset tags to size-two vectors (one for the
+   initial stage, one for the final stage) containing t or nil, indicating
+   whether the charset tag matches the charset for the given stage.  These
+   values are determined at the time a charset tag is defined by calling
+   the charset predicate on all the existing charsets, and at the time a
+   charset is defined by calling the predicate on all existing charset
+   tags. */
+static Lisp_Object Vcharset_tag_lists;
 
 typedef struct specifier_type_entry specifier_type_entry;
 struct specifier_type_entry
@@ -246,7 +256,7 @@ prune_specifiers (void)
 	{
 	  Lisp_Specifier* sp = XSPECIFIER (rest);
 	  /* A bit of assertion that we're removing both parts of the
-             magic one altogether */
+	     magic one altogether */
 	  assert (!MAGIC_SPECIFIER_P(sp)
 		  || (BODILY_SPECIFIER_P(sp) && marked_p (sp->fallback))
 		  || (GHOST_SPECIFIER_P(sp) && marked_p (sp->magic_parent)));
@@ -295,6 +305,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " 0x%x>", sp->header.uid);
 }
 
+#ifndef NEW_GC
 static void
 finalize_specifier (void *header, int for_disksave)
 {
@@ -306,6 +317,7 @@ finalize_specifier (void *header, int for_disksave)
       sp->caching = 0;
     }
 }
+#endif /* not NEW_GC */
 
 static int
 specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
@@ -382,10 +394,19 @@ static const struct memory_description specifier_caching_description_1[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("specifier-caching",
+			       specifier_caching,
+			       1, /*dumpable-flag*/
+			       0, 0, 0, 0, 0,
+			       specifier_caching_description_1,
+			       struct specifier_caching);
+#else /* not NEW_GC */
 static const struct sized_memory_description specifier_caching_description = {
   sizeof (struct specifier_caching),
   specifier_caching_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct sized_memory_description specifier_extra_description_map[]
 = {
@@ -403,8 +424,12 @@ const struct memory_description specifier_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
+#ifdef NEW_GC
+  { XD_LISP_OBJECT,  offsetof (Lisp_Specifier, caching) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, caching), 1,
     { &specifier_caching_description } },
+#endif /* not NEW_GC */
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
   { XD_BLOCK_ARRAY, offsetof (Lisp_Specifier, data), 1,
@@ -413,14 +438,23 @@ const struct memory_description specifier_description[] = {
 };
 
 static const struct memory_description specifier_empty_extra_description_1[] =
-{
-  { XD_END }
-};
+  {
+    { XD_END }
+  };
 
 const struct sized_memory_description specifier_empty_extra_description = {
   0, specifier_empty_extra_description_1
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
+					1, /*dumpable-flag*/
+					mark_specifier, print_specifier,
+					0, specifier_equal, specifier_hash,
+					specifier_description,
+					sizeof_specifier,
+					Lisp_Specifier);
+#else /* not NEW_GC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					1, /*dumpable-flag*/
 					mark_specifier, print_specifier,
@@ -429,6 +463,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					specifier_description,
 					sizeof_specifier,
 					Lisp_Specifier);
+#endif /* not NEW_GC */
 
 /************************************************************************/
 /*                       Creating specifiers                            */
@@ -446,7 +481,7 @@ decode_specifier_type (Lisp_Object type, Error_Behavior errb)
     }
 
   maybe_invalid_argument ("Invalid specifier type",
-			   type, Qspecifier, errb);
+			  type, Qspecifier, errb);
 
   return 0;
 }
@@ -658,7 +693,7 @@ and devices. \(nil is not valid.) image instances are pseudo-domains since
 instantiation will actually occur in the window the image instance itself is
 instantiated in.
 */
-     (domain))
+       (domain))
 {
   /* This cannot GC. */
   return ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
@@ -669,14 +704,14 @@ instantiated in.
     ? Qt : Qnil;
 }
 
-DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1, 1, 0,
-       /*
+DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1,
+       1, 0, /*
 Given a specifier LOCALE-TYPE, return non-nil if it is valid.
 Valid locale types are `global', `device', `frame', `window', and `buffer'.
 \(Note, however, that in functions that accept either a locale or a locale
 type, `global' is considered an individual locale.)
 */
-     (locale_type))
+       (locale_type))
 {
   /* This cannot GC. */
   return (EQ (locale_type, Qglobal) ||
@@ -706,7 +741,7 @@ Given a specifier LOCALE, return its type.
   /* This cannot GC. */
   if (NILP (Fvalid_specifier_locale_p (locale)))
     invalid_argument ("Invalid specifier locale",
-		       locale);
+		      locale);
   if (DEVICEP (locale)) return Qdevice;
   if (FRAMEP  (locale)) return Qframe;
   if (WINDOWP (locale)) return Qwindow;
@@ -725,7 +760,7 @@ decode_locale (Lisp_Object locale)
     return locale;
   else
     invalid_argument ("Invalid specifier locale",
-		       locale);
+		      locale);
 
   return Qnil;
 }
@@ -741,7 +776,7 @@ decode_locale_type (Lisp_Object locale_type)
   if (EQ (locale_type, Qbuffer)) return LOCALE_BUFFER;
 
   invalid_argument ("Invalid specifier locale type",
-		     locale_type);
+		    locale_type);
   RETURN_NOT_REACHED (LOCALE_GLOBAL);
 }
 
@@ -778,7 +813,7 @@ check_valid_domain (Lisp_Object domain)
 {
   if (NILP (Fvalid_specifier_domain_p (domain)))
     invalid_argument ("Invalid specifier domain",
-		       domain);
+		      domain);
 }
 
 Lisp_Object
@@ -789,6 +824,33 @@ decode_domain (Lisp_Object domain)
   check_valid_domain (domain);
   return domain;
 }
+
+/* Return the buffer of the domain if uniquely determinable; else, return
+   Qnil. */
+Lisp_Object
+MAYBE_DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (XWINDOW (win));
+  else
+    return Qnil;
+}
+
+/* Try hard to get a buffer from a domain.  If not uniquely determinable,
+   return current buffer. @@#### Maybe we should use the buffer of the
+   selected window. */
+Lisp_Object
+DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (XWINDOW (win));
+  else
+    /* @@#### See comments above */
+    return wrap_buffer (current_buffer);
+}
+
 
 
 /************************************************************************/
@@ -809,10 +871,10 @@ See also `valid-specifier-tag-set-p'.
 DEFUN ("valid-specifier-tag-set-p", Fvalid_specifier_tag_set_p, 1, 1, 0, /*
 Return non-nil if TAG-SET is a valid specifier tag set.
 
-A specifier tag set is an entity that is attached to an instantiator
-and can be used to restrict the scope of that instantiator to a
-particular device class or device type and/or to mark instantiators
-added by a particular package so that they can be later removed.
+A specifier tag set is an entity that is attached to an instantiator and can
+be used to restrict the scope of that instantiator to a particular device
+class, device type, or charset.  It can also be used to mark instantiators
+added by a particular package so that they can be later removed as a group.
 
 A specifier tag set consists of a list of zero of more specifier tags,
 each of which is a symbol that is recognized by XEmacs as a tag.
@@ -821,18 +883,25 @@ any tags defined by `define-specifier-tag'.) It is called a "tag set"
 \(as opposed to a list) because the order of the tags or the number of
 times a particular tag occurs does not matter.
 
-Each tag has a predicate associated with it, which specifies whether
-that tag applies to a particular device.  The tags which are device types
-and classes match devices of that type or class.  User-defined tags can
-have any predicate, or none (meaning that all devices match).  When
-attempting to instantiate a specifier, a particular instantiator is only
-considered if the device of the domain being instantiated over matches
-all tags in the tag set attached to that instantiator.
+Each tag has two predicates associated with it, which specify, respectively,
+whether that tag applies to a particular device and whether it applies to a
+particular character set.  The predefined tags which are device types and
+classes match devices of that type or class.  User-defined tags can have any
+device predicate, or none (meaning that all devices match).  When attempting
+to instantiate a specifier, a particular instantiator is only considered if
+the device of the domain being instantiated over matches all tags in the tag
+set attached to that instantiator.
+
+If a charset is to be considered--which is only the case for face
+instantiators--this consideration may be done twice.  The first iteration
+pays attention to the character set predicates; if no instantiator can be
+found in that case, the search is repeated ignoring the character set
+predicates.
 
 Most of the time, a tag set is not specified, and the instantiator
 gets a null tag set, which matches all devices.
 */
-     (tag_set))
+       (tag_set))
 {
   Lisp_Object rest;
 
@@ -855,7 +924,7 @@ decode_specifier_tag_set (Lisp_Object tag_set)
     return list1 (tag_set);
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
     invalid_argument ("Invalid specifier tag-set",
-		       tag_set);
+		      tag_set);
   return tag_set;
 }
 
@@ -948,6 +1017,64 @@ device_matches_specifier_tag_set_p (Lisp_Object device, Lisp_Object tag_set)
   return 1;
 }
 
+static int
+charset_matches_specifier_tag_set_p (Lisp_Object USED_IF_MULE (charset),
+				     Lisp_Object tag_set,
+				     enum font_specifier_matchspec_stages
+				     stage)
+{
+  Lisp_Object rest;
+  int res = 0;
+
+  assert(stage < NUM_MATCHSPEC_STAGES);
+
+  LIST_LOOP (rest, tag_set)
+    {
+      Lisp_Object tag = XCAR (rest);
+      Lisp_Object assoc;
+      Lisp_Object tag_list = Fgethash (charset, Vcharset_tag_lists, Qnil);
+
+      /* In the event that, during the creation of a charset, no specifier
+	 tags exist for which CHARSET-PREDICATE has been specified, then
+	 that charset's entry in Vcharset_tag_lists will be nil, and this
+	 charset shouldn't match. */
+
+      if (NILP (tag_list))
+	{
+	  return 0;
+	}
+
+      /* Now, find out what the pre-calculated value is. */
+      assoc = assq_no_quit (tag, tag_list);
+
+      if (!(NILP (assoc)))
+	{
+	  assert (VECTORP (XCDR (assoc)));
+
+	  /* In the event that a tag specifies a charset, then the specifier
+	     must match for (this stage and this charset) for all
+	     charset-specifying tags.  */
+	  if (NILP (XVECTOR_DATA (XCDR (assoc))[stage]))
+	    {
+	      /* It doesn't match for this tag, even though the tag
+		 specifies a charset. Return 0. */
+	      return 0;
+	    }
+
+	  /* This tag specifies charset limitations, and this charset and
+	     stage match those charset limitations.
+
+	     In the event that a later tag specifies charset limitations
+	     that don't match, the return 0 above prevents us giving a
+	     positive match. */
+	  res = 1;
+	}
+    }
+
+  return res;
+}
+
+
 DEFUN ("device-matches-specifier-tag-set-p",
        Fdevice_matches_specifier_tag_set_p, 2, 2, 0, /*
 Return non-nil if DEVICE matches specifier tag set TAG-SET.
@@ -965,56 +1092,106 @@ specifies which devices match it.)
   return device_matches_specifier_tag_set_p (device, tag_set) ? Qt : Qnil;
 }
 
-DEFUN ("define-specifier-tag", Fdefine_specifier_tag, 1, 2, 0, /*
-Define a new specifier tag.
-If PREDICATE is specified, it should be a function of one argument
-\(a device) that specifies whether the tag matches that particular
-device.  If PREDICATE is omitted, the tag matches all devices.
+/* Call CHARSET_PREDICATE on CHARSET, evaluating it at both stages (initial
+   and final) and returning a size-two vector of the results. */
 
-You can redefine an existing user-defined specifier tag.  However,
-you cannot redefine the built-in specifier tags (the device types
-and classes) or the symbols nil, t, `all', or `global'.
-*/
-       (tag, predicate))
+static Lisp_Object
+call_charset_predicate (Lisp_Object charset_predicate, Lisp_Object charset)
 {
-  Lisp_Object assoc, devcons, concons;
-  int recompute = 0;
+  struct gcpro gcpro1;
+  Lisp_Object charpres = make_vector (NUM_MATCHSPEC_STAGES, Qnil);
+  GCPRO1 (charpres);
+  int max_args = XINT (Ffunction_max_args (charset_predicate));
+    
 
-  CHECK_SYMBOL (tag);
-  if (valid_device_class_p (tag) ||
-      valid_console_type_p (tag))
-    invalid_change ("Cannot redefine built-in specifier tags", tag);
-  /* Try to prevent common instantiators and locales from being
-     redefined, to reduce ambiguity */
-  if (NILP (tag) || EQ (tag, Qt) || EQ (tag, Qall) || EQ (tag, Qglobal))
-    invalid_change ("Cannot define nil, t, `all', or `global'", tag);
-  assoc = assq_no_quit (tag, Vuser_defined_tags);
+#define DEFINE_SPECIFIER_TAG_FROB(stage, enumstage)		\
+  do {								\
+    if (max_args > 1)						\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] =			\
+	  call2_trapping_problems				\
+	  ("Error during specifier tag charset predicate,"	\
+	   " stage " #stage, charset_predicate,			\
+	   charset, Q##stage, 0);				\
+      }								\
+    else							\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] =			\
+	  call1_trapping_problems				\
+	  ("Error during specifier tag charset predicate,"	\
+	   " stage " #stage, charset_predicate,			\
+	   charset, 0);						\
+      }								\
+								\
+    if (UNBOUNDP (XVECTOR_DATA (charpres)[enumstage]))		\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] = Qnil;		\
+      }								\
+    else if (!NILP (XVECTOR_DATA (charpres)[enumstage]))	\
+      {								\
+	/* Don't want refs to random other objects.  */		\
+	XVECTOR_DATA (charpres)[enumstage] = Qt;		\
+      }								\
+  } while (0)
+
+  DEFINE_SPECIFIER_TAG_FROB (initial, STAGE_INITIAL);
+  DEFINE_SPECIFIER_TAG_FROB (final, STAGE_FINAL);
+
+#undef DEFINE_SPECIFIER_TAG_FROB
+
+  UNGCPRO;
+
+  return charpres;
+}
+
+Lisp_Object
+define_specifier_tag (Lisp_Object tag, Lisp_Object device_predicate,
+		      Lisp_Object charset_predicate)
+{
+  Lisp_Object assoc = assq_no_quit (tag, Vuser_defined_tags),
+    concons, devcons;
+  int recompute_devices = 0, recompute_charsets = 0;
+
   if (NILP (assoc))
     {
-      recompute = 1;
-      Vuser_defined_tags = Fcons (Fcons (tag, predicate), Vuser_defined_tags);
+      recompute_devices = recompute_charsets = 1;
+      Vuser_defined_tags = Fcons (list3 (tag, device_predicate,
+					 charset_predicate),
+				  Vuser_defined_tags);
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	{
 	  struct device *d = XDEVICE (XCAR (devcons));
 	  /* Initially set the value to t in case of error
-	     in predicate */
+	     in device_predicate */
 	  DEVICE_USER_DEFINED_TAGS (d) =
 	    Fcons (Fcons (tag, Qt), DEVICE_USER_DEFINED_TAGS (d));
 	}
     }
-  else if (!NILP (predicate) && !NILP (XCDR (assoc)))
+  else if (!NILP (device_predicate) && !NILP (XCADR (assoc)))
     {
-      recompute = 1;
-      XCDR (assoc) = predicate;
+      recompute_devices = 1;
+      XCDR (assoc) = list2 (device_predicate, charset_predicate);
+    }
+  else if (!NILP (charset_predicate) || !NILP (XCADDR (assoc)))
+    {
+      /* If there exists a charset_predicate for the tag currently (even if
+	 the new charset_predicate is nil), or if we're adding one, we need
+	 to recompute.  This contrasts with the device predicates, where we
+	 don't need to recompute if the old and new device predicates are
+	 both nil.  */
+
+      recompute_charsets = 1;
+      XCDR (assoc) = list2 (device_predicate, charset_predicate);
     }
 
-  /* recompute the tag values for all devices.  However, in the special
-     case where both the old and new predicates are nil, we know that
-     we don't have to do this. (It's probably common for people to
-     call (define-specifier-tag) more than once on the same tag,
-     and the most common case is where PREDICATE is not specified.) */
+  /* Recompute the tag values for all devices and charsets, if necessary. In
+     the special case where both the old and new device_predicates are nil,
+     we know that we don't have to do it for the device. (It's probably
+     common for people to call (define-specifier-tag) more than once on the
+     same tag, and the most common case is where DEVICE_PREDICATE is not
+     specified.) */
 
-  if (recompute)
+  if (recompute_devices)
     {
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	{
@@ -1022,14 +1199,106 @@ and classes) or the symbols nil, t, `all', or `global'.
 	  assoc = assq_no_quit (tag,
 				DEVICE_USER_DEFINED_TAGS (XDEVICE (device)));
 	  assert (CONSP (assoc));
-	  if (NILP (predicate))
+	  if (NILP (device_predicate))
 	    XCDR (assoc) = Qt;
 	  else
-	    XCDR (assoc) = !NILP (call1 (predicate, device)) ? Qt : Qnil;
+	    XCDR (assoc) = !NILP (call1 (device_predicate, device)) ? Qt
+	      : Qnil;
 	}
     }
 
-  return Qnil;
+  if (recompute_charsets)
+    {
+
+      LIST_LOOP_2 (charset_name, Fcharset_list ())
+	{
+	  Lisp_Object charset = Fget_charset (charset_name);
+	  Lisp_Object tag_list = Fgethash (charset, Vcharset_tag_lists, Qnil);
+	  Lisp_Object charpres;
+
+	  if (NILP (charset_predicate))
+	    continue;
+
+	  charpres = call_charset_predicate (charset_predicate, charset);
+
+	  assoc = assq_no_quit (tag, tag_list);
+	  if (!NILP (assoc))
+	    {
+	      assert (CONSP (assoc));
+	      XCDR (assoc) = charpres;
+	    }
+	  else
+	    {
+	      Fputhash (charset, Fcons (Fcons (tag, charpres), tag_list),
+			Vcharset_tag_lists);
+	    }
+	}
+    }
+  return Qt;
+}
+
+DEFUN ("define-specifier-tag", Fdefine_specifier_tag, 1, 3, 0, /*
+Define a new specifier tag.
+
+If DEVICE-PREDICATE is specified, it should be a function of one argument
+\(a device) that specifies whether the tag matches that particular device.
+If DEVICE-PREDICATE is omitted, the tag matches all devices.
+
+If CHARSET-PREDICATE is supplied, it should be a function taking a single
+Lisp character set argument.  A tag's charset predicate is primarily used to
+determine what font to use for a given \(set of) charset\(s) when that tag
+is used in a set-face-font call; a non-nil return value indicates that the
+tag matches the charset.
+
+The font matching process also has a concept of stages; the defined stages
+are currently `initial' and `final', and there exist specifier tags with
+those names that correspond to those stages.  On X11, 'initial is used when
+the font matching process is looking for fonts that match the desired
+registries of the charset--see the `charset-registries' function.  If that
+match process fails, then the 'final tag becomes relevant; this means that a
+more general lookup is desired, and that a font doesn't necessarily have to
+match the desired XLFD for the face, just the charset repertoire for this
+charset.  It also means that the charset registry and encoding used will be
+`iso10646-1', and the characters will be converted to display using that
+registry.
+
+If a tag set matches no character set; the two-stage match process will
+ignore the tag on its first pass, but if no match is found, it will respect
+it on the second pass, where character set information is ignored.
+
+You can redefine an existing user-defined specifier tag.  However, you
+cannot redefine most of the built-in specifier tags \(the device types and
+classes, `initial', and `final') or the symbols nil, t, `all', or `global'.
+Note that if a device type is not supported in this XEmacs, it will not be
+available as a built-in specifier tag; this is probably something we should
+change.
+*/
+       (tag, device_predicate, charset_predicate))
+{
+  CHECK_SYMBOL (tag);
+  if (valid_device_class_p (tag) ||
+      valid_console_type_p (tag) ||
+      EQ (tag, Qinitial) || EQ (tag, Qfinal))
+    invalid_change ("Cannot redefine built-in specifier tags", tag);
+  /* Try to prevent common instantiators and locales from being
+     redefined, to reduce ambiguity */
+  if (NILP (tag) || EQ (tag, Qt) || EQ (tag, Qall) || EQ (tag, Qglobal))
+    invalid_change ("Cannot define nil, t, `all', or `global'", tag);
+
+  if (!NILP (charset_predicate))
+    {
+      Lisp_Object min_args = Ffunction_min_args (charset_predicate);
+      Lisp_Object max_args = Ffunction_max_args (charset_predicate);
+      if (!(INTP (min_args) && XINT (min_args) == 1 &&
+	    INTP (max_args) && XINT (max_args) == 1))
+	{
+	  /* We only allow the stage argument to be specifed from C.  */
+	  invalid_change ("Charset predicate must take one argument",
+			  tag);
+	}
+    }
+
+  return define_specifier_tag(tag, device_predicate, charset_predicate);
 }
 
 /* Called at device-creation time to initialize the user-defined
@@ -1040,6 +1309,8 @@ setup_device_initial_specifier_tags (struct device *d)
 {
   Lisp_Object rest, rest2;
   Lisp_Object device = wrap_device (d);
+  Lisp_Object device_predicate;
+  int list_len;
 
   DEVICE_USER_DEFINED_TAGS (d) = Fcopy_alist (Vuser_defined_tags);
 
@@ -1050,14 +1321,51 @@ setup_device_initial_specifier_tags (struct device *d)
   for (rest = Vuser_defined_tags, rest2 = DEVICE_USER_DEFINED_TAGS (d);
        !NILP (rest); rest = XCDR (rest), rest2 = XCDR (rest2))
     {
-      Lisp_Object predicate = XCDR (XCAR (rest));
-      if (NILP (predicate))
-	XCDR (XCAR (rest2)) = Qt;
+      GET_LIST_LENGTH(XCAR(rest), list_len);
+
+      assert(3 == list_len);
+
+      device_predicate = XCADR(XCAR (rest));
+
+      if (NILP (device_predicate))
+	{
+	  XCDR (XCAR (rest2)) = Qt;
+	}
       else
-	XCDR (XCAR (rest2)) =
-	  !NILP (call_critical_lisp_code (d, predicate, device)) ? Qt : Qnil;
+	{
+	  device_predicate = !NILP (call_critical_lisp_code
+				    (d, device_predicate, device))
+	    ? Qt : Qnil;
+	  XCDR (XCAR (rest2)) = device_predicate;
+	}
     }
 }
+
+void
+setup_charset_initial_specifier_tags (Lisp_Object charset)
+{
+  Lisp_Object rest, charset_predicate, tag, new_value;
+  Lisp_Object charset_tag_list = Qnil;
+
+  LIST_LOOP (rest, Vuser_defined_tags)
+    {
+      tag = XCAR (XCAR (rest));
+      charset_predicate = XCADDR (XCAR (rest));
+
+      if (NILP (charset_predicate))
+	{
+	  continue;
+	}
+
+      new_value = call_charset_predicate (charset_predicate, charset);
+      charset_tag_list = Fcons (Fcons (tag, new_value), charset_tag_list);
+    }
+
+  Fputhash (charset, charset_tag_list, Vcharset_tag_lists);
+}
+
+/* VM calls this, in vm-multiple-frames-possible-p, in the event that you're
+   considering taking it out. */
 
 DEFUN ("device-matching-specifier-tag-list",
        Fdevice_matching_specifier_tag_list,
@@ -1107,8 +1415,9 @@ This includes the built-in ones (the device types and classes).
   RETURN_UNGCPRO (list);
 }
 
-DEFUN ("specifier-tag-predicate", Fspecifier_tag_predicate, 1, 1, 0, /*
-Return the predicate for the given specifier tag.
+DEFUN ("specifier-tag-device-predicate", Fspecifier_tag_device_predicate,
+       1, 1, 0, /*
+Return the device predicate for the given specifier tag.
 */
        (tag))
 {
@@ -1117,7 +1426,7 @@ Return the predicate for the given specifier tag.
 
   if (NILP (Fvalid_specifier_tag_p (tag)))
     invalid_argument ("Invalid specifier tag",
-		       tag);
+		      tag);
 
   /* Make up some predicates for the built-in types */
 
@@ -1131,11 +1440,27 @@ Return the predicate for the given specifier tag.
 		  list3 (Qeq, list2 (Qquote, tag),
 			 list2 (Qdevice_class, Qdevice)));
 
-  return XCDR (assq_no_quit (tag, Vuser_defined_tags));
+  return XCADR (assq_no_quit (tag, Vuser_defined_tags));
+}
+
+DEFUN ("specifier-tag-charset-predicate", Fspecifier_tag_charset_predicate,
+       1, 1, 0, /*
+Return the charset predicate for the given specifier tag.
+*/
+       (tag))
+{
+  /* The return value of this function must be GCPRO'd. */
+  CHECK_SYMBOL (tag);
+
+  if (NILP (Fvalid_specifier_tag_p (tag)))
+    invalid_argument ("Invalid specifier tag",
+		      tag);
+
+  return XCADDR (assq_no_quit (tag, Vuser_defined_tags));
 }
 
 /* Return true if A "matches" B.  If EXACT_P is 0, A must be a subset of B.
-  Otherwise, A must be `equal' to B.  The sets must be canonicalized. */
+   Otherwise, A must be `equal' to B.  The sets must be canonicalized. */
 static int
 tag_sets_match_p (Lisp_Object a, Lisp_Object b, int exact_p)
 {
@@ -1243,15 +1568,15 @@ check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
       if (!CONSP (inst_pair))
 	{
 	  maybe_sferror (
-				   "Invalid instantiator pair", inst_pair,
-				     Qspecifier, errb);
+			 "Invalid instantiator pair", inst_pair,
+			 Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_tag_set_p (tag_set = XCAR (inst_pair))))
 	{
 	  maybe_invalid_argument (
-				   "Invalid specifier tag", tag_set,
-				     Qspecifier, errb);
+				  "Invalid specifier tag", tag_set,
+				  Qspecifier, errb);
 	  return Qnil;
 	}
 
@@ -1292,15 +1617,15 @@ check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
       if (!CONSP (spec))
 	{
 	  maybe_sferror (
-				   "Invalid specification list", spec_list,
-				     Qspecifier, errb);
+			 "Invalid specification list", spec_list,
+			 Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_locale_p (locale = XCAR (spec))))
 	{
 	  maybe_invalid_argument (
-				   "Invalid specifier locale", locale,
-				     Qspecifier, errb);
+				  "Invalid specifier locale", locale,
+				  Qspecifier, errb);
 	  return Qnil;
 	}
 
@@ -1389,13 +1714,13 @@ unlock_ghost_specifiers_protected (void)
    out the frequency with which this is called with the various types
    and reorder the check accordingly. */
 #define SPECIFIER_GET_SPEC_LIST(specifier, type)			\
-(type == LOCALE_GLOBAL ? &(XSPECIFIER (specifier)->global_specs)   :	\
- type == LOCALE_DEVICE ? &(XSPECIFIER (specifier)->device_specs)   :	\
- type == LOCALE_FRAME  ? &(XSPECIFIER (specifier)->frame_specs)    :	\
- type == LOCALE_WINDOW ? &(XWEAK_LIST_LIST				\
-			   (XSPECIFIER (specifier)->window_specs)) :	\
- type == LOCALE_BUFFER ? &(XSPECIFIER (specifier)->buffer_specs)   :	\
- 0)
+  (type == LOCALE_GLOBAL ? &(XSPECIFIER (specifier)->global_specs)   :	\
+   type == LOCALE_DEVICE ? &(XSPECIFIER (specifier)->device_specs)   :	\
+   type == LOCALE_FRAME  ? &(XSPECIFIER (specifier)->frame_specs)    :	\
+   type == LOCALE_WINDOW ? &(XWEAK_LIST_LIST				\
+			     (XSPECIFIER (specifier)->window_specs)) :	\
+   type == LOCALE_BUFFER ? &(XSPECIFIER (specifier)->buffer_specs)   :	\
+   0)
 
 static Lisp_Object *
 specifier_get_inst_list (Lisp_Object specifier, Lisp_Object locale,
@@ -1734,8 +2059,8 @@ build_up_processed_list (Lisp_Object specifier, Lisp_Object locale,
    validating LOCALE and INST-LIST, but the tag-sets in INST-LIST
    do not need to be canonicalized. */
 
-  /* #### I really need to rethink the after-change
-     functions to make them easier to use and more efficient. */
+/* #### I really need to rethink the after-change
+   functions to make them easier to use and more efficient. */
 
 static void
 specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
@@ -1831,9 +2156,9 @@ specifier_copy_locale_type (Lisp_Object specifier, Lisp_Object dest,
 /* map MAPFUN over the locales in SPECIFIER that are given in LOCALE.
    CLOSURE is passed unchanged to MAPFUN.  LOCALE can be one of
 
-     -- nil (same as `all')
-     -- a single locale, locale type, or `all'
-     -- a list of locales, locale types, and/or `all'
+   -- nil (same as `all')
+   -- a single locale, locale type, or `all'
+   -- a list of locales, locale types, and/or `all'
 
    MAPFUN is called for each locale and locale type given; for `all',
    it is called for the locale `global' and for the four possible
@@ -1843,7 +2168,7 @@ specifier_copy_locale_type (Lisp_Object specifier, Lisp_Object dest,
    If MAPFUN ever returns non-zero, the mapping is halted and the
    value returned is returned from map_specifier().  Otherwise, the
    mapping proceeds to the end and map_specifier() returns 0.
- */
+*/
 
 static int
 map_specifier (Lisp_Object specifier, Lisp_Object locale,
@@ -1988,10 +2313,10 @@ The format of SPEC-LIST is
 where
   LOCALE := a window, a buffer, a frame, a device, or `global'
   TAG-SET := an unordered list of zero or more TAGS, each of which
-             is a symbol
+	     is a symbol
   TAG := a device class (see `valid-device-class-p'), a device type
-         (see `valid-console-type-p'), or a tag defined with
-         `define-specifier-tag'
+	 (see `valid-console-type-p'), or a tag defined with
+	 `define-specifier-tag'
   INSTANTIATOR := format determined by the type of specifier
 
 The pair (TAG-SET . INSTANTIATOR) is called an `inst-pair'.
@@ -2123,7 +2448,7 @@ no instantiators will be screened out.) If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be returned.
 */
-     (specifier, locale, tag_set, exact_p))
+       (specifier, locale, tag_set, exact_p))
 {
   struct specifier_spec_list_closure cl;
   struct gcpro gcpro1, gcpro2;
@@ -2322,7 +2647,7 @@ the same as in `add-spec-to-specifier'.
       CHECK_SPECIFIER (dest);
       check_modifiable_specifier (dest);
       if (XSPECIFIER (dest)->methods != XSPECIFIER (specifier)->methods)
- invalid_argument ("Specifiers not of same type", Qunbound);
+	invalid_argument ("Specifiers not of same type", Qunbound);
     }
 
   cl.dest = dest;
@@ -2467,14 +2792,18 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 				   Lisp_Object inst_list,
 				   Error_Behavior errb, int no_quit,
 				   Lisp_Object depth,
-				   Lisp_Object *instantiator)
+				   Lisp_Object *instantiator,
+				   int no_fallback)
 {
   /* This function can GC */
   Lisp_Specifier *sp;
-  Lisp_Object device;
-  Lisp_Object rest;
-  int count = specpdl_depth ();
+  Lisp_Object device, charset = Qnil, rest;
+  int count = specpdl_depth (), respected_charsets = 0;
   struct gcpro gcpro1, gcpro2;
+  enum font_specifier_matchspec_stages stage = STAGE_INITIAL;
+#ifdef DEBUG_XEMACS
+  int non_ascii;
+#endif
 
   GCPRO2 (specifier, inst_list);
 
@@ -2482,37 +2811,128 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
   device = DOMAIN_DEVICE (domain);
 
   if (no_quit)
-  /* The instantiate method is allowed to call eval.  Since it
-     is quite common for this function to get called from somewhere in
-     redisplay we need to make sure that quits are ignored.  Otherwise
-     Fsignal will abort. */
+    /* The instantiate method is allowed to call eval.  Since it
+       is quite common for this function to get called from somewhere in
+       redisplay we need to make sure that quits are ignored.  Otherwise
+       Fsignal will abort. */
     specbind (Qinhibit_quit, Qt);
 
+#ifdef MULE
+  /* #### FIXME Does this font-specific stuff need to be here and not in
+     the font-specifier-specific code? --ben */
+  if (CONSP (matchspec) && (CHARSETP (Ffind_charset (XCAR (matchspec)))))
+    {
+      charset = Ffind_charset (XCAR (matchspec));
+
+#ifdef DEBUG_XEMACS
+      /* This is mostly to have somewhere to set debug breakpoints. */
+      if (!EQ (charset, Vcharset_ascii))
+	{
+	  non_ascii = 1;
+	}
+#endif /* DEBUG_XEMACS */
+
+      if (!NILP (XCDR (matchspec)))
+	{
+
+#define FROB(new_stage, enumstage)			\
+          if (EQ (Q##new_stage, XCDR (matchspec)))	\
+	    {						\
+	      stage = enumstage;			\
+	    }
+
+	  FROB (initial, STAGE_INITIAL)
+	  else FROB (final, STAGE_FINAL)
+	  else assert(0);
+#undef FROB
+
+	}
+    }
+#endif /* MULE */
+
+  LIST_LOOP(rest, inst_list)
+    {
+      Lisp_Object tagged_inst = XCAR (rest);
+      Lisp_Object tag_set = XCAR (tagged_inst);
+      Lisp_Object val, the_instantiator;
+
+      if (!device_matches_specifier_tag_set_p (device, tag_set))
+	{
+	  continue;
+	}
+
+      val = XCDR (tagged_inst);
+      the_instantiator = val;
+
+      if (!NILP(charset) &&
+	  !(charset_matches_specifier_tag_set_p (charset, tag_set, stage)))
+	{
+	  ++respected_charsets;
+	  continue;
+	}
+
+      if (HAS_SPECMETH_P (sp, instantiate))
+	val = call_with_suspended_errors
+	  ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
+	   Qunbound, Qspecifier, errb, 5, specifier,
+	   matchspec, domain, val, depth, no_fallback);
+
+      if (!UNBOUNDP (val))
+	{
+	  unbind_to (count);
+	  UNGCPRO;
+	  if (instantiator)
+	    *instantiator = the_instantiator;
+	  return val;
+	}
+    }
+
+  /* We've checked all the tag sets, and checking the charset part of the
+     specifier never returned 0 (preventing the attempted instantiation), so
+     there's no need to loop for the second time to avoid checking the
+     charsets. */
+  if (!respected_charsets)
+    {
+      unbind_to (count);
+      UNGCPRO;
+      return Qunbound;
+    }
+
+  /* Right, didn't instantiate a specifier last time, perhaps because we
+     paid attention to the charset-specific aspects of the specifier.  Try
+     again without checking the charset information.
+
+     We can't emulate the approach for devices, defaulting to matching all
+     character sets for a given specifier, because $random font instantiator
+     cannot usefully show all character sets, and indeed having it try is a
+     failure on our part.  */
   LIST_LOOP (rest, inst_list)
     {
       Lisp_Object tagged_inst = XCAR (rest);
       Lisp_Object tag_set = XCAR (tagged_inst);
+      Lisp_Object val, the_instantiator;
 
-      if (device_matches_specifier_tag_set_p (device, tag_set))
+      if (!device_matches_specifier_tag_set_p (device, tag_set))
 	{
-	  Lisp_Object val = XCDR (tagged_inst);
-	  Lisp_Object the_instantiator = val;
+	  continue;
+	}
 
+      val = XCDR (tagged_inst);
+      the_instantiator = val;
 
-	  if (HAS_SPECMETH_P (sp, instantiate))
-	    val = call_with_suspended_errors
-	      ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-	       Qunbound, Qspecifier, errb, 5, specifier,
-	       matchspec, domain, val, depth);
+      if (HAS_SPECMETH_P (sp, instantiate))
+	val = call_with_suspended_errors
+	  ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
+	   Qunbound, Qspecifier, errb, 5, specifier,
+	   matchspec, domain, val, depth, no_fallback);
 
-	  if (!UNBOUNDP (val))
-	    {
-	      unbind_to (count);
-	      UNGCPRO;
-	      if (instantiator)
-		*instantiator = the_instantiator;
-	      return val;
-	    }
+      if (!UNBOUNDP (val))
+	{
+	  unbind_to (count);
+	  UNGCPRO;
+	  if (instantiator)
+	    *instantiator = the_instantiator;
+	  return val;
 	}
     }
 
@@ -2523,23 +2943,23 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 
 /* Given a SPECIFIER and a DOMAIN, return a specific instance for that
    specifier. Try to find one by checking the specifier types from most
-   specific (buffer) to most general (global).  If we find an instance,
+   specific (window) to most general (global).  If we find an instance,
    return it.  Otherwise return Qunbound. */
 
 #define CHECK_INSTANCE_ENTRY(key, matchspec, type) do {			\
-  Lisp_Object *CIE_inst_list =						\
-    specifier_get_inst_list (specifier, key, type);			\
-  if (CIE_inst_list)							\
-    {									\
-      Lisp_Object CIE_val =						\
-	specifier_instance_from_inst_list (specifier, matchspec,	\
-					   domain, *CIE_inst_list,	\
-					   errb, no_quit, depth,	\
-                                           instantiator);		\
-      if (!UNBOUNDP (CIE_val))						\
-	return CIE_val;							\
-    }									\
-} while (0)
+    Lisp_Object *CIE_inst_list =					\
+      specifier_get_inst_list (specifier, key, type);			\
+    if (CIE_inst_list)							\
+      {									\
+	Lisp_Object CIE_val =						\
+	  specifier_instance_from_inst_list (specifier, matchspec,	\
+					     domain, *CIE_inst_list,	\
+					     errb, no_quit, depth,	\
+					     instantiator, no_fallback); \
+	if (!UNBOUNDP (CIE_val))					\
+	  return CIE_val;						\
+      }									\
+  } while (0)
 
 /* We accept any window, frame or device domain and do our checking
    starting from as specific a locale type as we can determine from the
@@ -2647,7 +3067,8 @@ specifier_instance_1 (Lisp_Object specifier, Lisp_Object matchspec,
   assert (CONSP (sp->fallback));
   return specifier_instance_from_inst_list (specifier, matchspec, domain,
 					    sp->fallback, errb, no_quit,
-					    depth, instantiator);
+					    depth, instantiator,
+					    no_fallback);
 }
 #undef CHECK_INSTANCE_ENTRY
 
@@ -2817,14 +3238,21 @@ dependent on the particular type of specifier.  Here are some examples:
    display table is not there. (Chartable specifiers are not yet
    implemented.)
 
--- For font specifiers, MATCHSPEC should be a list (CHARSET . SECOND-STAGE-P),
-   and the specification (a font string) must have a registry that matches
-   the charset's registry.  (This only makes sense with Mule support.) This
-   makes it easy to choose a font that can display a particular
-   character. (This is what redisplay does, in fact.) SECOND-STAGE-P means
-   to ignore the font's registry and instead look at the characters in the
-   font to see if the font can support the charset.  This currently only makes
-   sense under MS Windows.
+-- For font specifiers, MATCHSPEC should be a cons (CHARSET . STAGE).
+   The defined stages are currently `initial' and `final'.  On X11, 'initial
+   is used when the font matching process is looking for fonts that match
+   the desired registries of the charset--see the `charset-registries'
+   function.  If that match process fails, then the 'final stage comes into
+   play; this means that a more general lookup is desired, and that a font
+   doesn't necessarily have to match the desired XLFD for the face, just the
+   charset repertoire for this charset.  It also means that the charset
+   registry and encoding used will be `iso10646-1', and the characters will
+   be converted to display using that registry.
+
+   See `define-specifier-tag' for details on how to create a tag that
+   specifies a given character set and stage combination.  You can supply
+   such a tag to `set-face-font' in order to set a face's font for that
+   character set and stage combination.
 */
        (specifier, matchspec, domain, default_, no_fallback))
 {
@@ -2873,7 +3301,7 @@ specifier_matching_foo_from_inst_list (Lisp_Object specifier,
   if (!NILP (built_up_list))
     val = specifier_instance_from_inst_list (specifier, matchspec, domain,
 					     built_up_list, ERROR_ME,
-					     0, Qzero, &instantiator);
+					     0, Qzero, &instantiator, 0);
   UNGCPRO;
   return UNBOUNDP (val) ? default_ : want_instantiator ? instantiator : val;
 
@@ -2894,8 +3322,8 @@ you should not use this function; use `specifier-instance' instead.
 						0);
 }
 
-DEFUN ("specifier-instantiator-from-inst-list", Fspecifier_instantiator_from_inst_list,
-       3, 4, 0, /*
+DEFUN ("specifier-instantiator-from-inst-list",
+       Fspecifier_instantiator_from_inst_list, 3, 4, 0, /*
 Attempt to convert an inst-list into an instance; return instantiator.
 This is identical to `specifier-instance-from-inst-list' but returns
 the instantiator used to generate the instance, rather than the instance
@@ -2963,17 +3391,17 @@ itself.
    If you create a built-in specifier, you should do the following:
 
    - Make sure the file you create the specifier in has a
-     specifier_vars_of_foo() function.  If not, create it, declare it in
-     symsinit.h, and make sure it's called in the appropriate place in
-     emacs.c.
+   specifier_vars_of_foo() function.  If not, create it, declare it in
+   symsinit.h, and make sure it's called in the appropriate place in
+   emacs.c.
    - In specifier_vars_of_foo(), do a DEFVAR_SPECIFIER(), followed by
-     initializing the specifier using Fmake_specifier(), followed by
-     set_specifier_fallback(), followed (optionally) by
-     set_specifier_caching().
+   initializing the specifier using Fmake_specifier(), followed by
+   set_specifier_fallback(), followed (optionally) by
+   set_specifier_caching().
    - If you used set_specifier_caching(), make sure to create the
-     appropriate value-changed functions.  Also make sure to add the
-     appropriate slots where the values are cached to frameslots.h and
-     winslots.h.
+   appropriate value-changed functions.  Also make sure to add the
+   appropriate slots where the values are cached to frameslots.h and
+   winslots.h.
 
    Do a grep for menubar_visible_p for an example.
 */
@@ -2996,7 +3424,12 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   assert (!GHOST_SPECIFIER_P (sp));
 
   if (!sp->caching)
-    sp->caching = xnew_and_zero (struct specifier_caching);
+#ifdef NEW_GC
+    sp->caching = alloc_lrecord_type (struct specifier_caching,
+				      &lrecord_specifier_caching);
+#else /* not NEW_GC */
+  sp->caching = xnew_and_zero (struct specifier_caching);
+#endif /* not NEW_GC */
   sp->caching->offset_into_struct_window = struct_window_offset;
   sp->caching->value_changed_in_window = value_changed_in_window;
   sp->caching->offset_into_struct_frame = struct_frame_offset;
@@ -3296,10 +3729,10 @@ instantiators.
 
 DEFINE_SPECIFIER_TYPE (display_table);
 
-#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)		   \
-  (VECTORP (instantiator)						   \
-   || (CHAR_TABLEP (instantiator)					   \
-       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR	   \
+#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)		\
+  (VECTORP (instantiator)						\
+   || (CHAR_TABLEP (instantiator)					\
+       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR	\
 	   || XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_GENERIC)) \
    || RANGE_TABLEP (instantiator))
 
@@ -3324,7 +3757,7 @@ display_table_validate (Lisp_Object instantiator)
 	lose:
 	  dead_wrong_type_argument
 	    (display_table_specifier_methods->predicate_symbol,
-				    instantiator);
+	     instantiator);
 	}
     }
 }
@@ -3349,6 +3782,9 @@ void
 syms_of_specifier (void)
 {
   INIT_LRECORD_IMPLEMENTATION (specifier);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (specifier_caching);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qspecifierp);
 
@@ -3374,8 +3810,10 @@ syms_of_specifier (void)
   DEFSUBR (Fdevice_matches_specifier_tag_set_p);
   DEFSUBR (Fdefine_specifier_tag);
   DEFSUBR (Fdevice_matching_specifier_tag_list);
+
   DEFSUBR (Fspecifier_tag_list);
-  DEFSUBR (Fspecifier_tag_predicate);
+  DEFSUBR (Fspecifier_tag_device_predicate);
+  DEFSUBR (Fspecifier_tag_charset_predicate);
 
   DEFSUBR (Fcheck_valid_instantiator);
   DEFSUBR (Fvalid_instantiator_p);
@@ -3476,4 +3914,8 @@ vars_of_specifier (void)
 
   Vunlock_ghost_specifiers = Qnil;
   staticpro (&Vunlock_ghost_specifiers);
+
+  Vcharset_tag_lists =
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  staticpro (&Vcharset_tag_lists);
 }

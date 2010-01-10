@@ -41,13 +41,29 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "syssignal.h" /* for SIGWINCH */
 
-Lisp_Object Qinit_pre_tty_win, Qinit_post_tty_win;
+Lisp_Object Qmake_device_early_tty_entry_point;
 
 
+#ifdef NEW_GC
+static const struct memory_description tty_device_data_description_1 [] = {
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("tty-device", tty_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       tty_device_data_description_1,
+			       Lisp_Tty_Device);
+#endif /* NEW_GC */
+
 static void
 allocate_tty_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct tty_device, &lrecord_tty_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct tty_device);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -55,6 +71,10 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   Lisp_Object terminal_type = CONSOLE_TTY_DATA (con)->terminal_type;
+
+  /* Run part of the elisp side of the TTY device initialization.
+     The post-init is run in the tty_finish_init_device() method. */
+  call0 (Qmake_device_early_tty_entry_point);
 
   DEVICE_INFD (d) = CONSOLE_TTY_DATA (con)->infd;
   DEVICE_OUTFD (d) = CONSOLE_TTY_DATA (con)->outfd;
@@ -91,12 +111,9 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
     }
 
   init_one_device (d);
-
-  /* Run part of the elisp side of the TTY device initialization.
-     The post-init is run in the tty_after_init_frame() method. */
-  call0 (Qinit_pre_tty_win);
 }
 
+#ifndef NEW_GC
 static void
 free_tty_device_struct (struct device *d)
 {
@@ -109,6 +126,7 @@ tty_delete_device (struct device *d)
 {
   free_tty_device_struct (d);
 }
+#endif /* not NEW_GC */
 
 #ifdef SIGWINCH
 
@@ -189,8 +207,11 @@ tty_device_system_metrics (struct device *d,
 void
 syms_of_device_tty (void)
 {
-  DEFSYMBOL (Qinit_pre_tty_win);
-  DEFSYMBOL (Qinit_post_tty_win);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (tty_device);
+#endif /* NEW_GC */
+
+  DEFSYMBOL (Qmake_device_early_tty_entry_point);
 }
 
 void
@@ -198,7 +219,9 @@ console_type_create_device_tty (void)
 {
   /* device methods */
   CONSOLE_HAS_METHOD (tty, init_device);
+#ifndef NEW_GC
   CONSOLE_HAS_METHOD (tty, delete_device);
+#endif /* not NEW_GC */
 #ifdef SIGWINCH
   CONSOLE_HAS_METHOD (tty, asynch_device_change);
 #endif /* SIGWINCH */

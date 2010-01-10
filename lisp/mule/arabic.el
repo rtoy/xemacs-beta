@@ -1,9 +1,9 @@
-;;; arabic.el --- pre-loaded support for Arabic. -*- coding: iso-2022-7bit; -*-
+;;; arabic.el --- pre-loaded support for Arabic. -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -28,23 +28,31 @@
 
 ;;; Code:
 
-(make-coding-system 'iso-8859-6 'iso2022
-		    "ISO-8859-6 (Arabic)"
-		    '(charset-g0 ascii
-				 charset-g1 arabic-iso8859-6
-				 charset-g2 t
-				 charset-g3 t
-				 no-iso6429 t
-				 mnemonic "MIME/Arbc"
-				 ))
+;; ISO 8859-6 is such a useless character set that it seems a waste of
+;; codespace to dump it. Let me count the ways: 
+;; 
+;; 1. It doesn't support Persian or Urdu, let alone Sinhalese, despite
+;;    plenty of unallocated code points.
+;;
+;; 2. It doesn't encode all the vowel diacritics (the Harakaat) despite that
+;;    they are necessary, even for the Arabs, for basic things like
+;;    dictionary entries, children's books, and occasional disambiguation.
+;;
+;; 3. The Arabs don't use it, they use Windows-1256, which also supports
+;;    Persian, at least, as well as the French characters necessary in
+;;    Lebanon and North Africa.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ARABIC
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; But; it's necessary for input on X11.
 
-;; (define-language-environment 'arabic
-;;   "Arabic"
-;;   (lambda ()
-;;     (require 'arabic)))
+(make-coding-system
+ 'iso-8859-6 'mbcs "ISO 8859-6 (Arabic)"
+ '(charsets (ascii control-1 arabic-iso8859-6)
+   mnemonic "ArISO"))
+
+;; windows-1256 et al. in mule/windows.el
+
+;; The Mac Arabic coding systems don't have defined MIME names. 
+
+;; #### Decide what to do about the syntax of the Arabic punctuation. 
 
 ;;; arabic.el ends here

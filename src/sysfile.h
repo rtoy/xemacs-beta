@@ -346,7 +346,6 @@ Boston, MA 02111-1307, USA.  */
                                        linuxplay.c sgiplay.c sunplay.c
 				       hpplay.c nas.c)
    -- all unex* files
-   -- hftctl.c
    -- lib-src files
    */
 
@@ -440,8 +439,6 @@ const char *strerror (int);
      separator.
 */
 
-#ifdef emacs
-
 /* We used to put some of this stuff in the s+m files for the various
    types of MS Windows, but that's disingenuous.  The various definitions
    above were specifically created for MS Windows, and the "if not, then
@@ -462,6 +459,7 @@ const char *strerror (int);
 #define SEPCHAR ';'
 #define DEFAULT_DIRECTORY_SEP '\\'
 
+#ifdef emacs
 DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 {
   if (!CHARP (Vdirectory_sep_char)
@@ -479,11 +477,21 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 }
 #define DIRECTORY_SEP sysfile_get_directory_sep()
 
+#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"C:\\")
+
+#else /* not emacs */
+
+/* The above Lisp variables are not available to make-docfile, etc. */
+#define DIRECTORY_SEP DEFAULT_DIRECTORY_SEP
+
+#endif /* emacs */
+
 #else /* not WIN32_NATIVE */
 
 #define SEPCHAR ':'
 #define DEFAULT_DIRECTORY_SEP '/'
 #define DIRECTORY_SEP '/'
+#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"/")
 
 #endif /* WIN32_NATIVE */
 
@@ -493,6 +501,8 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 #define DEVICE_SEP ':'
 
 #define IS_DEVICE_SEP(c) ((c) == DEVICE_SEP)
+
+#ifdef emacs
 
 DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (Ichar c))
 {
@@ -504,6 +514,22 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
   return (c == '/' || c == '\\' || c == ':');
 }
 
+#else /* emacs */
+
+/* The Ichar typedef is not available to make-docfile, etc. */
+
+DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (int c))
+{
+  return (c == '/' || c == '\\');
+}
+
+DECLARE_INLINE_HEADER (int IS_ANY_SEP (int c))
+{
+  return (c == '/' || c == '\\' || c == ':');
+}
+
+#endif
+
 #else /* not WIN32_ANY */
 
 #define IS_DEVICE_SEP(c) 0
@@ -511,6 +537,12 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 #define IS_ANY_SEP(c) IS_DIRECTORY_SEP (c)
 
 #endif /* WIN32_ANY */
+
+/* How long can a source filename be in DOC (including "\037S" at the start
+   and "\n" at the end) ? */
+#define DOC_MAX_FILENAME_LENGTH 2048
+
+#ifdef emacs
 
 #if defined (WIN32_NATIVE)
 #define PATHNAME_RESOLVE_LINKS(path, pathout)		\

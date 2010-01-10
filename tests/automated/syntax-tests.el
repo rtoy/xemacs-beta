@@ -129,6 +129,22 @@
   ;; Apply word to punctuation
   (test-syntax-table "W." 1 `(,(syntax-string-to-code "w")) 2))
 
+;; According to Ralf Angeli in
+;; http://article.gmane.org/gmane.emacs.xemacs.beta/17353:
+;; Using a fresh CVS checkout of XEmacs trunk the following snippet
+;; returns "1" when evaluated whereas it returns "5" in GNU Emacs 21.3,
+;; CVS GNU Emacs and XEmacs 21.4.15.
+;; If `set-syntax-table' is used instead of `with-syntax-table', CVS
+;; XEmacs returns "5" as well, so I suppose that there is a problem in
+;; `with-syntax-table' or a function called by it.
+
+;; Fixed 2007-03-25 Olivier Galibert <20070324221053.GA48218@dspnet.fr.eu.org>
+(with-temp-buffer
+  (with-syntax-table (make-syntax-table)
+    (insert "foo bar")
+    (backward-sexp 1)
+    (Assert (eql (point) 5))))
+
 ;; Test forward-comment at buffer boundaries
 ;; #### The second Assert fails (once interpreted, once compiled) on 21.4.9
 ;; with sjt's version of Andy's syntax-text-property-killer patch.
@@ -150,3 +166,76 @@
 
       ;; this last used to crash
       (parse-partial-sexp point (point-max)))))
+
+;; Test backward-up-list
+;; Known-Bug: report = Evgeny Zacjev ca 2005-12-01, confirm = Aidan Kehoe
+
+(with-temp-buffer
+  ;; We are now using the standard syntax table.  Thus there's no need to
+  ;; worry about a bogus syntax setting, eg, in a Gnus Article buffer the
+  ;; bug doesn't manifest.
+
+  ;; value of point to the immediate left of this character
+  ;;       0          1           2
+  ;;       1234 56789 012 34567 890 12 3456 7
+  (insert "a ( \"b (c\" (\"defg\") \")\") h\n")
+
+  ;; #### This test should check *every* position.
+  (flet ((backward-up-list-moves-point-from-to (start expected-end)
+	   (goto-char start)
+	   (backward-up-list 1)
+	   (= (point) expected-end)))
+    (Known-Bug-Expect-Failure
+     ;; Evgeny's case
+     (Assert (backward-up-list-moves-point-from-to 16 12)))
+    (Assert (backward-up-list-moves-point-from-to 19 12))
+    (Assert (backward-up-list-moves-point-from-to 20 3))
+    (Known-Bug-Expect-Failure
+     (Assert (backward-up-list-moves-point-from-to 22 3)))
+    (Known-Bug-Expect-Failure
+     (Assert (backward-up-list-moves-point-from-to 23 3)))
+    (Assert (backward-up-list-moves-point-from-to 24 3))
+    ;; This is maybe a little tricky, since we don't expect the position
+    ;; check to happen -- so use an illegal expected position
+    ;; I don't think there's any other way for this to fail that way,
+    ;; barring hardware error....
+    (Check-Error-Message syntax-error
+			 "Unbalanced parentheses"
+			 (backward-up-list-moves-point-from-to 25 nil))
+    ;; special-case check that point didn't move
+    (Assert (= (point) 25))))
+
+(loop
+  with envvar-not-existing = (symbol-name (gensym "whatever"))
+  with envvar-existing = (symbol-name (gensym "whatever"))
+  with envvar-existing-val = (make-string #x10000 ?\xe1)
+  with examples = 
+  (list (list (format "%chome%cwhatever%c%chi-there%c$%s"
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      directory-sep-char
+                      envvar-existing)
+              (format "%chi-there%c%s"
+                      directory-sep-char
+                      directory-sep-char
+                      envvar-existing-val))
+        (if (memq system-type '(windows-nt cygwin32))
+            '("//network-path/c$" "//network-path/c$")
+          '("/network-path/c$" "/network-path/c$"))
+        (list (format "/home/whoever/$%s" envvar-not-existing)
+              (format "/home/whoever/$%s" envvar-not-existing))
+        (list (format "/home/whoever/$%s" envvar-existing)
+              (format "/home/whoever/%s" envvar-existing-val))
+        (list (format "/home/whoever/${%s}" envvar-existing)
+              (format "/home/whoever/%s" envvar-existing-val))
+        (list (format "/home/whoever/${%s}" envvar-not-existing)
+              (format "/home/whoever/${%s}" envvar-not-existing)))
+  initially (progn (setenv envvar-not-existing nil t)
+                   (setenv envvar-existing envvar-existing-val))
+  for (pre post)
+  in examples
+  do 
+  (Assert (string= post (substitute-in-file-name pre))))
+

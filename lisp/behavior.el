@@ -478,23 +478,23 @@ This takes into account the override information specified."
 
 (defun behavior-menu-filter (menu)
   (append
-   '(("%_Package Utilities"
+   `(("%_Package Utilities"
        ("%_Set Download Site"
 	("%_Official Releases"
-	 :filter (lambda (&rest junk)
-		   (menu-split-long-menu
-		    (submenu-generate-accelerator-spec
-		     (package-ui-download-menu)))))
+	 :filter ,#'(lambda (&rest junk)
+                    (menu-split-long-menu
+                     (submenu-generate-accelerator-spec
+                      (package-ui-download-menu)))))
 	("%_Pre-Releases"
-	 :filter (lambda (&rest junk)
-		   (menu-split-long-menu
-		    (submenu-generate-accelerator-spec
-		     (package-ui-pre-release-download-menu)))))
+	 :filter ,#'(lambda (&rest junk)
+                      (menu-split-long-menu
+                       (submenu-generate-accelerator-spec
+                        (package-ui-pre-release-download-menu)))))
 	("%_Site Releases"
-	 :filter (lambda (&rest junk)
-		   (menu-split-long-menu
-		    (submenu-generate-accelerator-spec
-		     (package-ui-site-release-download-menu))))))
+	 :filter ,#'(lambda (&rest junk)
+                      (menu-split-long-menu
+                       (submenu-generate-accelerator-spec
+                        (package-ui-site-release-download-menu))))))
        "--:shadowEtchedIn"
       ["%_Update Package Index" package-get-update-base]
       ["%_List and Install" pui-list-packages]

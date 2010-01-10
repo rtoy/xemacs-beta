@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2005 Ben Wing.
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Korean
 
@@ -30,15 +30,29 @@
 
 ;;; Code:
 
+;; See comments in mule-coding.c.
+;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
+;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
+;; So for our purposes, this is [84 - F9], [31 - FE]
+(make-internal-charset
+ 'korean-johab
+ "Johab (Korean)"
+ '(dimension
+   2
+   registries ["johab"] ;; @@#### FIXME
+   chars (118 206)
+   offset (#x84 #x31)
+   unicode-map
+   ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JOHAB.TXT" #x8000)
+   short-name "Johab"
+   long-name "Johab (Korean)"
+   ))
+
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))
-(loop for row from 35 to  37 do
-      (modify-syntax-entry `[korean-ksc5601 ,row] "w"))
 (loop for row from 38 to  41 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))
-(loop for row from 42 to 126 do
-      (modify-syntax-entry `[korean-ksc5601 ,row] "w"))
 
 ;; Setting for coding-system and quail were moved to
 ;; language/korean.el.
@@ -48,6 +62,7 @@
  "ISO-2022-INT-1 (Korean)"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
+   safe-charsets (ascii korean-ksc5601)
    short t
    seven t
    lock-shift t
@@ -83,6 +98,7 @@
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    mnemonic "ko/EUC"
+   safe-charsets (ascii korean-ksc5601)
    documentation
    "Korean EUC (Extended Unix Code), the standard Korean encoding on Unix.
 This follows the same overall EUC principles (see the description under
@@ -113,6 +129,7 @@ G1: Korean-KSC5601"
    force-g1-on-output t
    seven t
    lock-shift t
+   safe-charsets (ascii korean-ksc5601)
    mnemonic "Ko/7bit"
    documentation "Coding-System used for communication with mail in Korea."
    eol-type lf))

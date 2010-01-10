@@ -69,10 +69,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Here override various assumptions in ymakefile */
 
-#ifdef AIXHFT
-#define OBJECTS_MACHINE "hftctl.o"
-#endif
-
 #ifndef USG5_4
 /* XEmacs change -- commented out: dkeller@vnet.ibm.com */
 /* #define C_SWITCH_MACHINE -D_BSD */

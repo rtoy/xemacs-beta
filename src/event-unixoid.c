@@ -118,9 +118,7 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
     }
   else
     {
-      /* Here we really do want to set the use_console_meta_flag because
-         the char is from the TTY. */
-      character_to_event (ch, event, con, 1, 1);
+      character_to_event (ch, event, con, use_console_meta_flag, 1);
       event->channel = console;
       return 1;
     }
@@ -360,10 +358,11 @@ event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
   int infd, outfd, errfd;
   /* Decode inhandle and outhandle. Their meaning depends on
      the process implementation being used. */
-  /* We are passed plain old file descs */
-  infd  = (int) inhandle;
-  outfd = (int) outhandle;
-  errfd = (int) errhandle;
+  /* We are passed plain old file descs, which are ints, so */
+  /* if sizeof(EMACS_INT) > sizeof(int) it's OK. */
+  infd  = (EMACS_INT) inhandle;
+  outfd = (EMACS_INT) outhandle;
+  errfd = (EMACS_INT) errhandle;
 
   *instream = (infd >= 0
 	       ? make_filedesc_input_stream (infd, 0, -1, 0)

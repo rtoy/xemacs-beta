@@ -115,7 +115,7 @@ sub PrintDeps {
   my $file = shift;
   my $ofile = $file; $ofile =~ s/c$/o/; print "$ofile: ";
   if (exists $uses{$file}{'lisp.h'}) {
-    delete @{%{$uses{$file}}}{@LISP_H};
+    delete $uses{$file}{@LISP_H};
     $uses{$file}{'$(LISP_H)'} = 1;
   }
   # Note: If both config.h and lisp.h are dependencies, config.h got deleted

@@ -52,6 +52,7 @@ Boston, MA 02111-1307, USA.  */
 
 static void xaw_generic_callback (Widget, XtPointer, XtPointer);
 
+extern int debug_xft;
 
 Boolean
 lw_xaw_widget_p (Widget widget)
@@ -87,15 +88,15 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
       Arg al [10];
 
       /* First size and position the scrollbar widget. */
-      XtSetArg (al [0], XtNx,      data->scrollbar_x);
-      XtSetArg (al [1], XtNy,      data->scrollbar_y);
-      XtSetArg (al [2], XtNwidth,  data->scrollbar_width);
-      XtSetArg (al [3], XtNheight, data->scrollbar_height);
+      Xt_SET_ARG (al [0], XtNx,      data->scrollbar_x);
+      Xt_SET_ARG (al [1], XtNy,      data->scrollbar_y);
+      Xt_SET_ARG (al [2], XtNwidth,  data->scrollbar_width);
+      Xt_SET_ARG (al [3], XtNheight, data->scrollbar_height);
       XtSetValues (widget, al, 4);
 
       /* Now size the scrollbar's slider. */
-      XtSetArg (al [0], XtNtopOfThumb, &widget_topOfThumb);
-      XtSetArg (al [1], XtNshown, &widget_shown);
+      Xt_SET_ARG (al [0], XtNtopOfThumb, &widget_topOfThumb);
+      Xt_SET_ARG (al [1], XtNshown, &widget_shown);
       XtGetValues (widget, al, 2);
 
       new_shown = (double) data->slider_size /
@@ -141,47 +142,37 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 #endif
 #ifdef LWLIB_DIALOGS_ATHENA
   else if (XtIsSubclass (widget, dialogWidgetClass))
-      {
-	Arg al [1];
-	XtSetArg (al [0], XtNlabel, val->contents->value);
-	XtSetValues (widget, al, 1);
-      }
+    Xt_SET_VALUE (widget, XtNlabel, val->contents->value);
 #endif /* LWLIB_DIALOGS_ATHENA */
 #ifdef LWLIB_WIDGETS_ATHENA
   else if (XtClass (widget) == labelWidgetClass)
-      {
-	Arg al [1];
-	XtSetArg (al [0], XtNlabel, val->value);
-	XtSetValues (widget, al, 1);
-      }
+    Xt_SET_VALUE (widget, XtNlabel, val->value);
 #endif /* LWLIB_WIDGETS_ATHENA */
 #if defined (LWLIB_DIALOGS_ATHENA) || defined (LWLIB_WIDGETS_ATHENA)
   else if (XtIsSubclass (widget, commandWidgetClass))
     {
-      Dimension bw = 0;
       Arg al [3];
-      XtSetArg (al [0], XtNborderWidth, &bw);
-      XtGetValues (widget, al, 1);
 
 #ifndef LWLIB_DIALOGS_ATHENA3D
-      if (bw == 0)
-	/* Don't let buttons end up with 0 borderwidth, that's ugly...
-	   Yeah, all this should really be done through app-defaults files
-	   or fallback resources, but that's a whole different can of worms
-	   that I don't feel like opening right now.  Making Athena widgets
-	   not look like shit is just entirely too much work.
-	 */
-	{
-	  XtSetArg (al [0], XtNborderWidth, 1);
-	  XtSetValues (widget, al, 1);
+      {
+	Dimension bw = 0;
+	Xt_GET_VALUE (widget, XtNborderWidth, &bw);
+	if (bw == 0)
+	  /* Don't let buttons end up with 0 borderwidth, that's ugly...
+	     Yeah, all this should really be done through app-defaults files
+	     or fallback resources, but that's a whole different can of worms
+	     that I don't feel like opening right now.  Making Athena widgets
+	     not look like shit is just entirely too much work.
+	  */
+	  Xt_SET_VALUE (widget, XtNborderWidth, 1);
 	}
 #endif /* ! LWLIB_DIALOGS_ATHENA3D */
 
       lw_remove_accelerator_spec (val->value);
-      XtSetArg (al [0], XtNlabel,     val->value);
-      XtSetArg (al [1], XtNsensitive, val->enabled);
+      Xt_SET_ARG (al [0], XtNlabel,     val->value);
+      Xt_SET_ARG (al [1], XtNsensitive, val->enabled);
       /* Force centered button text.  See above. */
-      XtSetArg (al [2], XtNjustify, XtJustifyCenter);
+      Xt_SET_ARG (al [2], XtNjustify, XtJustifyCenter);
       XtSetValues (widget, al, 3);
 
       XtRemoveAllCallbacks (widget, XtNcallback);
@@ -189,10 +180,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 #ifdef LWLIB_WIDGETS_ATHENA
       /* set the selected state */
       if (XtIsSubclass (widget, toggleWidgetClass))
-	{
-	  XtSetArg (al [0], XtNstate, val->selected);
-	  XtSetValues (widget, al, 1);
-	}
+	Xt_SET_VALUE (widget, XtNstate, val->selected);
 #endif /* LWLIB_WIDGETS_ATHENA */
     }
 #endif /* LWLIB_DIALOGS_ATHENA */
@@ -218,19 +206,15 @@ xaw_update_one_value (widget_instance *instance, Widget widget,
   
   if (XtIsSubclass (widget, toggleWidgetClass))
     {
-      Arg al [1];
-      XtSetArg (al [0], XtNstate, &val->selected);
-      XtGetValues (widget, al, 1);
+      Xt_GET_VALUE (widget, XtNstate, &val->selected);
       val->edited = True;
     }
 #ifndef NEED_MOTIF
   else if (XtIsSubclass (widget, asciiTextWidgetClass))
     {
-      Arg al [2];
       String buf = 0;
-      XtSetArg (al [0], XtNstring, &buf);
-      XtGetValues (widget, al, 1);
 
+      Xt_GET_VALUE (widget, XtNstring, &buf);
       if (val->value)
 	{
 	  free (val->value);
@@ -338,7 +322,7 @@ static char overrideTrans[] =
 static XtActionProc wm_delete_window (Widget shell, XtPointer closure,
 				      XtPointer call_data);
 static XtActionsRec xaw_actions [] = {
-  {"lwlib_delete_dialog", (XtActionProc) wm_delete_window}
+  { (String) "lwlib_delete_dialog", (XtActionProc) wm_delete_window}
 };
 static Boolean actions_initted = False;
 
@@ -374,9 +358,9 @@ make_dialog (const char* name, Widget parent, Boolean pop_up_p,
   override = XtParseTranslationTable (overrideTrans);
 
   ac = 0;
-  XtSetArg (av[ac], XtNtitle, shell_title);	ac++;
-  XtSetArg (av[ac], XtNallowShellResize, True); ac++;
-  XtSetArg (av[ac], XtNtransientFor, parent);	ac++;
+  Xt_SET_ARG (av[ac], XtNtitle, shell_title);		ac++;
+  Xt_SET_ARG (av[ac], XtNallowShellResize, True);	ac++;
+  Xt_SET_ARG (av[ac], XtNtransientFor, parent);		ac++;
   shell = XtCreatePopupShell ("dialog", transientShellWidgetClass,
 			      parent, av, ac);
   XtOverrideTranslations (shell, override);
@@ -389,12 +373,12 @@ make_dialog (const char* name, Widget parent, Boolean pop_up_p,
   for (i = 0; i < left_buttons; i++)
     {
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);     ac++;
-      XtSetArg (av [ac], XtNleft,   XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNright,  XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNresizable, True);       ac++;
+      Xt_SET_ARG (av [ac], XtNfromHoriz, button);	ac++;
+      Xt_SET_ARG (av [ac], XtNleft,   XtChainLeft);	ac++;
+      Xt_SET_ARG (av [ac], XtNright,  XtChainLeft);	ac++;
+      Xt_SET_ARG (av [ac], XtNtop,    XtChainBottom);	ac++;
+      Xt_SET_ARG (av [ac], XtNbottom, XtChainBottom);	ac++;
+      Xt_SET_ARG (av [ac], XtNresizable, True);		ac++;
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
@@ -409,18 +393,18 @@ make_dialog (const char* name, Widget parent, Boolean pop_up_p,
 	 window) but I can't seem to make it do it.  
        */
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);	    ac++;
-/*  XtSetArg (av [ac], XtNfromVert, XtNameToWidget (dialog, "label")); ac++; */
-      XtSetArg (av [ac], XtNleft,   XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNright,  XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNlabel, ""); ac++;
-      XtSetArg (av [ac], XtNwidth, 30); ac++;	/* #### aaack!! */
-      XtSetArg (av [ac], XtNborderWidth, 0); ac++;
-      XtSetArg (av [ac], XtNshapeStyle, XmuShapeRectangle); ac++;
-      XtSetArg (av [ac], XtNresizable, False); ac++;
-      XtSetArg (av [ac], XtNsensitive, False); ac++;
+      Xt_SET_ARG (av [ac], XtNfromHoriz, button);		ac++;
+/* Xt_SET_ARG (av [ac], XtNfromVert, XtNameToWidget (dialog, "label")); ac++; */
+      Xt_SET_ARG (av [ac], XtNleft,   XtChainLeft);		ac++;
+      Xt_SET_ARG (av [ac], XtNright,  XtChainRight);		ac++;
+      Xt_SET_ARG (av [ac], XtNtop,    XtChainBottom);		ac++;
+      Xt_SET_ARG (av [ac], XtNbottom, XtChainBottom);		ac++;
+      Xt_SET_ARG (av [ac], XtNlabel, "");			ac++;
+      Xt_SET_ARG (av [ac], XtNwidth, 30); /* #### aaack!! */	ac++;
+      Xt_SET_ARG (av [ac], XtNborderWidth, 0);			ac++;
+      Xt_SET_ARG (av [ac], XtNshapeStyle, XmuShapeRectangle);	ac++;
+      Xt_SET_ARG (av [ac], XtNresizable, False);		ac++;
+      Xt_SET_ARG (av [ac], XtNsensitive, False);		ac++;
       button = XtCreateManagedWidget ("separator",
 				      /* labelWidgetClass, */
 				      /* This has to be Command to fake out
@@ -431,12 +415,12 @@ make_dialog (const char* name, Widget parent, Boolean pop_up_p,
   for (i = 0; i < right_buttons; i++)
     {
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);	    ac++;
-      XtSetArg (av [ac], XtNleft,   XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNright,  XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNresizable, True);	    ac++;
+      Xt_SET_ARG (av [ac], XtNfromHoriz, button);		ac++;
+      Xt_SET_ARG (av [ac], XtNleft, XtChainRight);		ac++;
+      Xt_SET_ARG (av [ac], XtNright,  XtChainRight);		ac++;
+      Xt_SET_ARG (av [ac], XtNtop,    XtChainBottom);		ac++;
+      Xt_SET_ARG (av [ac], XtNbottom, XtChainBottom);		ac++;
+      Xt_SET_ARG (av [ac], XtNresizable, True);			ac++;
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
@@ -524,13 +508,10 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
   if (XtIsSubclass (widget, toggleWidgetClass))
     {
       Boolean check;
-      Arg al [1];
 
-      XtSetArg (al [0], XtNstate, &check);
-      XtGetValues (widget, al, 1);
+      Xt_GET_VALUE (widget, XtNstate, &check);
 
-      XtSetArg (al [0], XtNstate, !check);
-      XtSetValues (widget, al, 1);
+      Xt_SET_VALUE (widget, XtNstate, !check);
     }
 #endif /* LWLIB_WIDGETS_ATHENA */
   lw_internal_update_other_instances (widget, closure, call_data);
@@ -548,11 +529,7 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 #if 0
   user_data = NULL;
-  {
-    Arg al [1];
-    XtSetArg (al [0], XtNuserData, &user_data);
-    XtGetValues (widget, al, 1);
-  }
+  Xt_GET_VALUE (widget, XtNuserData, &user_data);
 #else
   /* Damn!  Athena doesn't give us a way to hang our own data on the
      buttons, so we have to go find it...  I guess this assumes that
@@ -593,16 +570,18 @@ wm_delete_window (Widget shell, XtPointer UNUSED (closure),
   LWLIB_ID id;
   Widget *kids = 0;
   Widget widget;
-  Arg al [1];
+
   if (! XtIsSubclass (shell, shellWidgetClass))
     abort ();
-  XtSetArg (al [0], XtNchildren, &kids);
-  XtGetValues (shell, al, 1);
-  if (!kids || !*kids)
-    abort ();
-  widget = kids [0];
-  if (! XtIsSubclass (widget, dialogWidgetClass))
-    abort ();
+  Xt_GET_VALUE (shell, XtNchildren, &kids);
+  if (!kids || !*kids) abort ();
+
+  for (widget = *kids;
+       widget && ! XtIsSubclass (widget, dialogWidgetClass);
+       widget = *++kids)
+    ;
+  if (!widget) abort ();
+
   id = lw_get_widget_id (widget);
   if (! id) abort ();
 
@@ -693,11 +672,11 @@ xaw_create_scrollbar (widget_instance *instance, int vertical)
      top-level aware of this so that people could have a border but so
      few people use the Athena scrollbar now that it really isn't
      worth the effort, at least not at the moment. */
-  XtSetArg (av [ac], XtNborderWidth, 0); ac++;
-  XtSetArg (av [ac], XtNorientation,
-	    vertical ? XtorientVertical : XtorientHorizontal); ac++;
-  XtSetArg (av [ac], "jumpProc",   jumpCallbacks);   ac++;
-  XtSetArg (av [ac], "scrollProc", scrollCallbacks); ac++;
+  Xt_SET_ARG (av [ac], XtNborderWidth, 0);				ac++;
+  Xt_SET_ARG (av [ac], XtNorientation,
+	      vertical ? XtorientVertical : XtorientHorizontal);	ac++;
+  Xt_SET_ARG (av [ac], "jumpProc",   jumpCallbacks);			ac++;
+  Xt_SET_ARG (av [ac], "scrollProc", scrollCallbacks);			ac++;
 
   return XtCreateWidget (instance->info->name, scrollbarWidgetClass,
 			 instance->parent, av, ac);
@@ -726,40 +705,41 @@ xaw_create_button (widget_instance *instance)
   Widget button = 0;
   widget_value* val = instance->info->val;
 
-  XtSetArg (al [ac], XtNsensitive, val->enabled);		ac++;
-  XtSetArg (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
-  XtSetArg (al [ac], XtNjustify, XtJustifyCenter);		ac++;
+  Xt_SET_ARG (al [ac], XtNsensitive, val->enabled);		ac++;
+  Xt_SET_ARG (al [ac], XtNmappedWhenManaged, FALSE);		ac++;
+  Xt_SET_ARG (al [ac], XtNjustify, XtJustifyCenter);		ac++;
   /* The highlight doesn't appear to be dynamically set which makes it
      look ugly.  I think this may be a LessTif bug but for now we just
      get rid of it. */
-  XtSetArg (al [ac], XtNhighlightThickness, (Dimension)0);ac++;
+  Xt_SET_ARG (al [ac], XtNhighlightThickness, (Dimension)0);	ac++;
 
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 
   if (!val->call_data)
-    button = XtCreateManagedWidget (val->name, labelWidgetClass, 
+    button = XtCreateWidget (val->name, labelWidgetClass, 
 				    instance->parent, al, ac);
 
   else 
     {
       if (val->type == TOGGLE_TYPE || val->type == RADIO_TYPE)
 	{
-	  XtSetArg (al [ac], XtNstate, val->selected);	ac++;
-	  button = XtCreateManagedWidget 
+	  Xt_SET_ARG (al [ac], XtNstate, val->selected);	ac++;
+	  button = XtCreateWidget 
 	    (val->name, 
 	     val->type == TOGGLE_TYPE ? checkboxWidgetClass : radioWidgetClass,
 	     instance->parent, al, ac);
 	}
       else 
 	{
-	  button = XtCreateManagedWidget (val->name, commandWidgetClass,
+	  button = XtCreateWidget (val->name, commandWidgetClass,
 					  instance->parent, al, ac);
 	}
       XtRemoveAllCallbacks (button, XtNcallback);
       XtAddCallback (button, XtNcallback, xaw_generic_callback, (XtPointer)instance);
     }
 
+  /* #### this maybe can be folded into the XtCreateWidget calls above */
   XtManageChild (button);
 
   return button;
@@ -778,9 +758,9 @@ xaw_create_label (Widget parent, widget_value* val)
   int ac = 0;
   Widget label = 0;
 
-  XtSetArg (al [ac], XtNsensitive, val->enabled);		ac++;
-  XtSetArg (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
-  XtSetArg (al [ac], XtNjustify, XtJustifyCenter);		ac++;
+  Xt_SET_ARG (al [ac], XtNsensitive, val->enabled);	ac++;
+  Xt_SET_ARG (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
+  Xt_SET_ARG (al [ac], XtNjustify, XtJustifyCenter);	ac++;
 
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
@@ -788,7 +768,8 @@ xaw_create_label (Widget parent, widget_value* val)
   label = XtCreateManagedWidget (val->name, labelWidgetClass, 
 				 parent, al, ac);
 
-  /* Do it again for arguments that have no effect until the widget is realized. */
+  /* Do it again for arguments that have no effect until the widget is realized.
+     #### Uh, but the widget isn't realized until later?  Do we mean "created"? */
   ac = 0;
   lw_add_value_args_to_args (val, al, &ac);
   if (ac > 20)
@@ -796,6 +777,60 @@ xaw_create_label (Widget parent, widget_value* val)
   XtSetValues (label, al, ac);
 
   return label;
+}
+
+static int debug_gauge = 0;
+
+static void
+lw_debug_print_xt_arglist (ArgList al, int ac)
+{
+  int i;
+  for (i = 0; i < ac; i++)
+    fprintf (stderr, "Widget has arg %s with value %lu.\n",
+	     al[i].name, (unsigned long) al[i].value);
+}
+
+static void
+lw_debug_print_class_resources (WidgetClass class_)
+{
+  Cardinal i;
+  do {
+    Cardinal m, n = class_->core_class.num_resources;
+    XtResourceList rl;
+    fprintf (stderr, "Class is %s (%p/%p) with %d resources.\n",
+	     class_->core_class.class_name, class_, &(class_->core_class), n);
+    fprintf (stderr, "  Class's resources are at %p.  Converting...\n",
+	     class_->core_class.resources);
+    /* resources may be compiled to an internal format */
+    XtGetResourceList (class_, &rl, &m);
+    for (i = 0; i < m; i++)
+      fprintf (stderr,
+	       "  Class has a %s resource of type %s initialized from %s.\n",
+	       rl[i].resource_class, rl[i].resource_type, rl[i].default_type);
+    /* special cases for commonly problematic resources */
+    for (i = 0; i < m; i++)
+      {
+	if (!strcmp (rl[i].resource_class, "Font"))
+	  {
+	    fprintf (stderr, "  Class has a Font resource.\n");
+	    fprintf (stderr, "    Font resource is %s.\n",
+		     (char *) rl[i].default_addr);
+	  }
+	if (!strcmp (rl[i].resource_class, "FontSet"))
+	  {
+	    fprintf (stderr, "  Class has a FontSet resource.\n");
+	    fprintf (stderr, "    FontSet resource is %s.\n",
+		     (char *) rl[i].default_addr);
+	  }
+	if (!strcmp (rl[i].resource_class, "International"))
+	  {
+	    fprintf (stderr, "  Class has an International resource.\n");
+	    fprintf (stderr, "    International resource is %p.\n",
+		     rl[i].default_addr);
+	  }
+      }
+    class_ = class_->core_class.superclass;
+  } while (class_ != NULL);
 }
 
 static Widget
@@ -808,30 +843,38 @@ xaw_create_progress (widget_instance *instance)
 #if 0		/* This looks too awful, although more correct. */
   if (!val->call_data)
     {
-      XtSetArg (al [ac], XtNsensitive, False);		ac++;
+      Xt_SET_ARG (al [ac], XtNsensitive, False);		ac++;
     }
   else
     {
-      XtSetArg (al [ac], XtNsensitive, val->enabled);		ac++;
+      Xt_SET_ARG (al [ac], XtNsensitive, val->enabled);		ac++;
     }
 #else
-  XtSetArg (al [ac], XtNsensitive, True);		ac++;
+  Xt_SET_ARG (al [ac], XtNsensitive, True);			ac++;
 #endif
 
-  XtSetArg (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
-  XtSetArg (al [ac], XtNorientation, XtorientHorizontal);	ac++;
-  XtSetArg (al [ac], XtNhighlightThickness, (Dimension)0);ac++;
-  XtSetArg (al [ac], XtNntics, (Cardinal)10);ac++;
+  Xt_SET_ARG (al [ac], XtNmappedWhenManaged, FALSE);		ac++;
+  Xt_SET_ARG (al [ac], XtNorientation, XtorientHorizontal);	ac++;
+  Xt_SET_ARG (al [ac], XtNhighlightThickness, (Dimension)0);	ac++;
+  Xt_SET_ARG (al [ac], XtNntics, (Cardinal)10);			ac++;
 
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 
-  scale = XtCreateManagedWidget (val->name, gaugeWidgetClass,
-				 instance->parent, al, ac);
+  if (debug_gauge > 1)
+    lw_debug_print_class_resources (gaugeWidgetClass);
+  if (debug_gauge > 0)
+    lw_debug_print_xt_arglist (al, ac);
+
+  scale = XtCreateWidget (val->name, gaugeWidgetClass,
+			  instance->parent, al, ac);
+
   /* add the callback */
   if (val->call_data)
-    XtAddCallback (scale, XtNgetValue, xaw_generic_callback, (XtPointer)instance);
+    XtAddCallback (scale, XtNgetValue, xaw_generic_callback,
+		   (XtPointer) instance);
 
+  /* #### this maybe can be folded into the XtCreateWidget call above */
   XtManageChild (scale);
 
   return scale;
@@ -847,24 +890,24 @@ xaw_create_text_field (widget_instance *instance)
   Widget text = 0;
   widget_value* val = instance->info->val;
 
-  XtSetArg (al [ac], XtNsensitive, val->enabled);		ac++;
-  XtSetArg (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
-  XtSetArg (al [ac], XtNhighlightThickness, (Dimension)0);	ac++;
-  XtSetArg (al [ac], XtNtype, XawAsciiString);		ac++;
-  XtSetArg (al [ac], XtNeditType, XawtextEdit);		ac++;
-  XtSetArg (al [ac], XtNuseStringInPlace, False);		ac++;
+  Xt_SET_ARG (al [ac], XtNsensitive, val->enabled);		ac++;
+  Xt_SET_ARG (al [ac], XtNmappedWhenManaged, FALSE);		ac++;
+  Xt_SET_ARG (al [ac], XtNhighlightThickness, (Dimension)0);	ac++;
+  Xt_SET_ARG (al [ac], XtNtype, XawAsciiString);		ac++;
+  Xt_SET_ARG (al [ac], XtNeditType, XawtextEdit);		ac++;
+  Xt_SET_ARG (al [ac], XtNuseStringInPlace, False);		ac++;
 #if 0
-  XtSetArg (al [ac], XtNlength, TEXT_BUFFER_SIZE);	ac++;
+  Xt_SET_ARG (al [ac], XtNlength, TEXT_BUFFER_SIZE);		ac++;
 #endif
   if (val->value)
     {
-      XtSetArg (al [ac], XtNstring, val->value);		ac++;
+      Xt_SET_ARG (al [ac], XtNstring, val->value);		ac++;
     }
 
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 
-  text = XtCreateManagedWidget (val->name, asciiTextWidgetClass,
+  text = XtCreateWidget (val->name, asciiTextWidgetClass,
 				      instance->parent, al, ac);
 
   /* add the callback */
@@ -888,8 +931,8 @@ xaw_creation_table [] =
 #endif
 #ifdef LWLIB_WIDGETS_ATHENA
   {"button",		xaw_create_button		},
-  { "label", 		xaw_create_label_field		},
-  {"text-field",		xaw_create_text_field		},
+  {"label", 		xaw_create_label_field		},
+  {"text-field",	xaw_create_text_field		},
   {"progress",		xaw_create_progress		},
 #endif
   {NULL, NULL}

@@ -131,10 +131,7 @@ struct linebuffer lb;
 #define MY_NAME "fakemail"
 #define NIL ((line_list) NULL)
 #define INITIAL_LINE_SIZE 200
-
-#ifndef MAIL_PROGRAM_NAME
 #define MAIL_PROGRAM_NAME "/bin/mail"
-#endif
 
 static const char *my_name;
 static char *the_date;
@@ -633,14 +630,14 @@ main (int argc, char *argv[])
   char *command_line;
   header the_header;
   long name_length;
-  char *mail_program_name;
+  const char *mail_program_name;
   char buf[BUFLEN + 1];
   register int size;
   FILE *the_pipe;
 
   mail_program_name = getenv ("FAKEMAILER");
   if (!(mail_program_name && *mail_program_name))
-    mail_program_name = (char *) MAIL_PROGRAM_NAME;
+    mail_program_name = MAIL_PROGRAM_NAME;
   name_length = strlen (mail_program_name);
 
   my_name = MY_NAME;

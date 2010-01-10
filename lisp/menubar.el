@@ -568,6 +568,7 @@ You can also call `submenu-generate-accelerator-spec' yourself to add
 accelerator specs -- this works even if the specs have already been added."
   (menu-split-long-menu (menu-sort-menu menu)))
 
+;;;###autoload
 (defun menu-split-long-menu (menu)
   "Split MENU according to `menu-max-items' and add accelerator specs.
 If MENU already has accelerator specs, they will be removed and new ones

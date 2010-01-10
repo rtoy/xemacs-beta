@@ -443,6 +443,9 @@ init_mswindows_environment (void)
       "EMACSDATA",
       "EMACSPATH",
       "EMACSPACKAGEPATH",
+      "EMACSEARLYPACKAGES",
+      "EMACSLATEPACKAGES",
+      "EMACSLASTPACKAGES",
       "EMACSLOCKMETHOD",
       "INFOPATH"
     };
@@ -1124,7 +1127,8 @@ mswindows_link (const Ibyte *old, const Ibyte *new_)
 	  wcscpy (data.wid.cStreamName, newuni);
 	  data.wid.dwStreamId = BACKUP_LINK;
 	  data.wid.dwStreamAttributes = 0;
-	  data.wid.Size.LowPart = wlen; /* in bytes, not chars! */
+	  /* Include the trailing null.  In bytes, not chars! */
+	  data.wid.Size.LowPart = wlen + sizeof (WCHAR);
 	  data.wid.Size.HighPart = 0;
 	  data.wid.dwStreamNameSize = 0;
 
@@ -1811,11 +1815,32 @@ mswindows_getdcwd (int drivelet)
 {
   Extbyte *cwdext;
   Ibyte *cwd;
-
+  /* Following comment and two-liner fix comes from
+     https://bugzilla.mozilla.org/show_bug.cgi?id=419326 which
+     apparently fell prey to this feature of msvcrt8 as well. */
+  /* We need to worry about IPH, for details read bug 419326.
+   * _getdrives - http://msdn2.microsoft.com/en-us/library/xdhk0xd2.aspx 
+   * uses a bitmask, bit 0 is 'a:'
+   * _chdrive - http://msdn2.microsoft.com/en-us/library/0d1409hb.aspx
+   * _getdcwd - http://msdn2.microsoft.com/en-us/library/7t2zk3s4.aspx
+   * take an int, 1 is 'a:'.
+   *
+   * Because of this, we need to do some math. Subtract 1 to convert from
+   * _chdrive/_getdcwd format to _getdrives drive numbering.
+   * Shift left x bits to convert from integer indexing to bitfield indexing.
+   * And of course, we need to find out if the drive is in the bitmask.
+   *
+   * If we're really unlucky, we can still lose, but only if the user
+   * manages to eject the drive between our call to _getdrives() and
+   * our *calls* to _wgetdcwd.
+   */
+  if (!((1 << (drivelet - 1)) & _getdrives()))
+    return NULL;
   if (XEUNICODE_P)
     cwdext = (Extbyte *) _wgetdcwd (drivelet, NULL, 0);
   else
     cwdext = _getdcwd (drivelet, NULL, 0);
+  if (cwdext == NULL) return NULL;
   TSTR_TO_C_STRING_MALLOC (cwdext, cwd);
   xfree (cwdext, Extbyte *);
   return cwd;
@@ -2059,7 +2084,7 @@ close_file_data (file_data *p_file)
 /* Some miscellaneous functions that are Windows specific, but not GUI
    specific (ie. are applicable in terminal or batch mode as well).  */
 
-DEFUN ("mswindows-short-file-name", Fmswindows_short_file_name, 1, 1, "", /*
+DEFUN ("mswindows-short-file-name", Fmswindows_short_file_name, 1, 1, 0, /*
   Return the short file name version (8.3) of the full path of FILENAME.
 If FILENAME does not exist, return nil.
 All path elements in FILENAME are converted to their short names.
@@ -2088,7 +2113,7 @@ All path elements in FILENAME are converted to their short names.
 }
 
 
-DEFUN ("mswindows-long-file-name", Fmswindows_long_file_name, 1, 1, "", /*
+DEFUN ("mswindows-long-file-name", Fmswindows_long_file_name, 1, 1, 0, /*
   Return the long file name version of the full path of FILENAME.
 If FILENAME does not exist, return nil.
 All path elements in FILENAME are converted to their long names.

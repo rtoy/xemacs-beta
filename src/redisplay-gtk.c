@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2009 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -88,124 +88,7 @@ static void gtk_bevel_modeline (struct window *w, struct display_line *dl);
 static void __describe_gc (GdkGC *);
 #endif
 
-struct textual_run
-{
-  Lisp_Object charset;
-  unsigned char *ptr;
-  int len;
-  int dimension;
-};
-
-/* Separate out the text in STR (an array of Ichars, not a string
-   representation) of length LEN into a series of runs, stored in RUNS.
-   RUNS is guaranteed to hold enough space for all runs that could be
-   generated from this text.  Each run points to the a stretch of text
-   given simply by the position codes TEXT_STORAGE into a series of textual
-   runs of a particular charset.  Also convert the characters as necessary
-   into the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly tweaking
-   the high bits, and possibly running a CCL program.) You must
-   pre-allocate the space used and pass it in. (This is done so you can
-   ALLOCA () the space.)  You need to allocate (2 * len) bytes of
-   TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUNS, where LEN is the length of the dynarr.
-
-   Returns the number of runs actually used. */
-
-/* #### Completely copied from redisplay-x.c. */
-
-static int
-separate_textual_runs (unsigned char *text_storage,
-		       struct textual_run *runs,
-		       const Ichar *str, Charcount len)
-{
-#ifndef MULE
-  int i;
-  for (i = 0; i < len; i++)
-    text_storage[i++] = (unsigned char) (*str);
-  runs[0].ptr       = text_storage;
-  runs[0].charset   = Vcharset_ascii;
-  runs[0].dimension = 1;
-  runs[0].len       = len;
-  return 1;
-#else /* MULE */
-  Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
-					  possible valid charset when
-					  MULE is not defined */
-  int runs_so_far = 0;
-  int i;
-#ifdef HAVE_CCL
-  struct ccl_program char_converter;
-  int need_ccl_conversion = 0;
-#endif /* HAVE_CCL */
-
-  for (i = 0; i < len; i++)
-    {
-      Ichar ch = str[i];
-      Lisp_Object charset;
-      int byte1, byte2;
-      int dimension;
-
-      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
-				  &byte1, &byte2);
-      dimension = XCHARSET_DIMENSION (charset);
-      /* We swap here rather than handling below because we also take CCL
-	 input, whigh does it the other way */
-      if (dimension == 1)
-	byte1 = byte2;
-
-      if (!EQ (charset, prev_charset))
-	{
-	  runs[runs_so_far].ptr       = text_storage;
-	  runs[runs_so_far].charset   = charset;
-	  runs[runs_so_far].dimension = dimension;
-
-	  if (runs_so_far)
-	    {
-	      runs[runs_so_far - 1].len =
-		text_storage - runs[runs_so_far - 1].ptr;
-	      if (runs[runs_so_far - 1].dimension == 2)
-		runs[runs_so_far - 1].len >>= 1;
-	    }
-	  runs_so_far++;
-	  prev_charset = charset;
-#ifdef HAVE_CCL
-	  {
-	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
-	    if ((!NILP (ccl_prog))
-		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
-	      need_ccl_conversion = 1;
-	  }
-#endif
-	}
-
-#ifdef HAVE_CCL
-      if (need_ccl_conversion)
-	{
-	  char_converter.reg[0] = XCHARSET_ID (charset);
-	  char_converter.reg[1] = byte1;
-	  char_converter.reg[2] = byte2;
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
-	  byte1 = char_converter.reg[1];
-	  byte2 = char_converter.reg[2];
-	}
-#endif
-      *text_storage++ = (unsigned char) byte1;
-      if (dimension == 2)
-	*text_storage++ = (unsigned char) byte2;
-    }
-
-  if (runs_so_far)
-    {
-      runs[runs_so_far - 1].len =
-	text_storage - runs[runs_so_far - 1].ptr;
-      if (runs[runs_so_far - 1].dimension == 2)
-	runs[runs_so_far - 1].len >>= 1;
-    }
-
-  return runs_so_far;
-#endif /* not MULE */
-}
+#include "redisplay-xlike-inc.c"
 
 /****************************************************************************/
 /*                                                                          */
@@ -304,7 +187,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+  Ichar_dynarr *buf;
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -337,7 +220,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 
   if (end < 0)
     end = Dynarr_length (rba);
-  Dynarr_reset (buf);
+  buf = Dynarr_new (Ichar);
 
   while (elt < end)
     {

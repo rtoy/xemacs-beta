@@ -275,7 +275,6 @@ ARGLIST allows full Common Lisp conventions."
 (defvar cl-macro-environment nil)
 (defvar bind-block) (defvar bind-defs) (defvar bind-enquote)
 (defvar bind-inits) (defvar bind-lets) (defvar bind-forms)
-(defvar arglist-visited)
 
 ;; npak@ispras.ru
 (defun cl-upcase-arg (arg)
@@ -284,11 +283,10 @@ ARGLIST allows full Common Lisp conventions."
   ;; ARG is either symbol or list of symbols or lists
   (cond ((symbolp arg)
 	 ;; Do not upcase &optional, &key etc.
-	 (if (memq arg lambda-list-keywords) arg
-	   (intern (upcase (symbol-name arg)))))
+	 (if (memq arg lambda-list-keywords)
+             arg
+	   (make-symbol (upcase (symbol-name arg)))))
 	((listp arg)
-	 (if (memq arg arglist-visited) (error 'circular-list '(arg)))
-	 (push arg arglist-visited)
 	 (let ((arg (copy-list arg)) junk)
 	   ;; Clean the list
 	   (let ((p (last arg))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
@@ -300,39 +298,31 @@ ARGLIST allows full Common Lisp conventions."
 	(t arg)))                         ; Maybe we are in initializer
 
 ;; npak@ispras.ru
+;;;###autoload
 (defun cl-function-arglist (name arglist)
   "Returns string with printed representation of arguments list.
 Supports Common Lisp lambda lists."
   (if (not (or (listp arglist) (symbolp arglist)))
       "Not available"
-    (setq arglist-visited nil)
-    (condition-case nil
-	(prin1-to-string
-	 (cons (if (eq name 'cl-none) 'lambda name)
-	       (cond ((null arglist) nil)
-		     ((listp arglist) (cl-upcase-arg arglist))
-		     ((symbolp arglist)
-		      (cl-upcase-arg (list '&rest arglist)))
-		     (t (wrong-type-argument 'listp arglist)))))
-      (t "Not available"))))
-
+    (check-argument-type #'true-list-p arglist)
+    (let ((print-gensym nil))
+      (condition-case nil
+          (prin1-to-string
+           (cons (if (eq name 'cl-none) 'lambda name)
+                 (cond ((null arglist) nil)
+                       ((listp arglist) (cl-upcase-arg arglist))
+                       ((symbolp arglist)
+                        (cl-upcase-arg (list '&rest arglist)))
+                       (t (wrong-type-argument 'listp arglist)))))
+      (t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
   (let* ((args (car form)) (body (cdr form))
 	 (bind-defs nil) (bind-enquote nil)
 	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
+         (complex-arglist (cl-function-arglist bind-block args))
          (doc ""))
-    ;; Add CL lambda list to documentation. npak@ispras.ru
-    (if (and (stringp (car body))
-	     (cdr body))
-        (setq doc (pop body)))
-    (push (concat doc
-		  "\nCommon Lisp lambda list:\n" 
-		  "  " (cl-function-arglist bind-block args) 
-		  "\n\n")
-	  header)
-
     (while (or (stringp (car body)) (eq (car-safe (car body)) 'interactive))
       (push (pop body) header))
     (setq args (if (listp args) (copy-list args) (list '&rest args)))
@@ -353,19 +343,30 @@ Supports Common Lisp lambda lists."
       (push (pop args) simple-args))
     (or (eq bind-block 'cl-none)
 	(setq body (list (list* 'block bind-block body))))
+    (setq simple-args (nreverse simple-args)
+          header (nreverse header))
+    ;; Add CL lambda list to documentation, if the CL lambda list differs
+    ;; from the non-CL lambda list. npak@ispras.ru
+    (unless (equal complex-arglist
+                   (cl-function-arglist bind-block simple-args))
+      (and (stringp (car header)) (setq doc (pop header)))
+      (push (concat doc
+                    "\n\nCommon Lisp lambda list:\n" 
+                    "  " complex-arglist "\n\n")
+	  header))
     (if (null args)
-	(list* nil (nreverse simple-args) (nconc (nreverse header) body))
+	(list* nil simple-args (nconc header body))
       (if (memq '&optional simple-args) (push '&optional args))
       (cl-do-arglist args nil (- (length simple-args)
 				 (if (memq '&optional simple-args) 1 0)))
       (setq bind-lets (nreverse bind-lets))
       (list* (and bind-inits (list* 'eval-when '(compile load eval)
 				    (nreverse bind-inits)))
-	     (nconc (nreverse simple-args)
+	     (nconc simple-args
 		    (list '&rest (car (pop bind-lets))))
 	     ;; XEmacs change: we add usage information using Nickolay's
 	     ;; approach above
-	     (nconc (nreverse header)
+	     (nconc header
 		    (list (nconc (list 'let* bind-lets)
 				 (nreverse bind-forms) body)))))))
 
@@ -610,7 +611,7 @@ The result of the body appears to the compiler as a quoted constant."
 
 ;;;###autoload
 (defmacro case (expr &rest clauses)
-  "(case EXPR CLAUSES...): evals EXPR, chooses from CLAUSES on that value.
+  "Evals EXPR, chooses from CLAUSES on that value.
 Each clause looks like (KEYLIST BODY...).  EXPR is evaluated and compared
 against each key in each KEYLIST; the corresponding BODY is evaluated.
 If no clause succeeds, case returns nil.  A single atom may be used in
@@ -655,7 +656,7 @@ Key values are compared by `eql'."
 
 ;;;###autoload
 (defmacro ecase (expr &rest clauses)
-  "(ecase EXPR CLAUSES...): like `case', but error if no case fits.
+  "Like `case', but error if no case fits.
 `otherwise'-clauses are not allowed."
   ;; XEmacs addition: disallow t and otherwise
   (let ((disallowed (or (assq t clauses)
@@ -666,7 +667,7 @@ Key values are compared by `eql'."
 
 ;;;###autoload
 (defmacro typecase (expr &rest clauses)
-  "(typecase EXPR CLAUSES...): evals EXPR, chooses from CLAUSES on that value.
+  "Evals EXPR, chooses from CLAUSES on that value.
 Each clause looks like (TYPE BODY...).  EXPR is evaluated and, if it
 satisfies TYPE, the corresponding BODY is evaluated.  If no clause succeeds,
 typecase returns nil.  A TYPE of `t' or `otherwise' is allowed only in the
@@ -691,7 +692,7 @@ final clause, and matches if no other keys match."
 
 ;;;###autoload
 (defmacro etypecase (expr &rest clauses)
-  "(etypecase EXPR CLAUSES...): like `typecase', but error if no case fits.
+  "Like `typecase', but error if no case fits.
 `otherwise'-clauses are not allowed."
   (list* 'typecase expr (append clauses '((ecase-error-flag)))))
 
@@ -700,7 +701,7 @@ final clause, and matches if no other keys match."
 
 ;;;###autoload
 (defmacro block (name &rest body)
-  "(block NAME BODY...): define a lexically-scoped block named NAME.
+  "Define a lexically-scoped block named NAME.
 NAME may be any symbol.  Code inside the BODY forms can call `return-from'
 to jump prematurely out of the block.  This differs from `catch' and `throw'
 in two respects:  First, the NAME is an unevaluated symbol rather than a
@@ -715,34 +716,40 @@ called from BODY."
 
 (defvar cl-active-block-names nil)
 
-(put 'cl-block-wrapper 'byte-compile 'cl-byte-compile-block)
-(defun cl-byte-compile-block (cl-form)
-  (if (fboundp 'byte-compile-form-do-effect)  ; Check for optimizing compiler
-      (progn
-	(let* ((cl-entry (cons (nth 1 (nth 1 (nth 1 cl-form))) nil))
-	       (cl-active-block-names (cons cl-entry cl-active-block-names))
-	       (cl-body (byte-compile-top-level
-			 (cons 'progn (cddr (nth 1 cl-form))))))
-	  (if (cdr cl-entry)
-	      (byte-compile-form (list 'catch (nth 1 (nth 1 cl-form)) cl-body))
-	    (byte-compile-form cl-body))))
-    (byte-compile-form (nth 1 cl-form))))
+(put 'cl-block-wrapper 'byte-compile
+     #'(lambda (cl-form)
+         (if (/= (length cl-form) 2)
+             (byte-compile-warn-wrong-args cl-form 1))
 
-(put 'cl-block-throw 'byte-compile 'cl-byte-compile-throw)
-(defun cl-byte-compile-throw (cl-form)
-  (let ((cl-found (assq (nth 1 (nth 1 cl-form)) cl-active-block-names)))
-    (if cl-found (setcdr cl-found t)))
-  (byte-compile-normal-call (cons 'throw (cdr cl-form))))
+         (if (fboundp 'byte-compile-form-do-effect)  ; Check for optimizing
+						     ; compiler
+             (progn
+               (let* ((cl-entry (cons (nth 1 (nth 1 (nth 1 cl-form))) nil))
+                      (cl-active-block-names (cons cl-entry
+                                                   cl-active-block-names))
+                      (cl-body (byte-compile-top-level
+                                (cons 'progn (cddr (nth 1 cl-form))))))
+                 (if (cdr cl-entry)
+                     (byte-compile-form (list 'catch (nth 1 (nth 1 cl-form))
+                                              cl-body))
+                   (byte-compile-form cl-body))))
+           (byte-compile-form (nth 1 cl-form)))))
+
+(put 'cl-block-throw 'byte-compile
+     #'(lambda (cl-form)
+         (let ((cl-found (assq (nth 1 (nth 1 cl-form)) cl-active-block-names)))
+           (if cl-found (setcdr cl-found t)))
+         (byte-compile-throw (cons 'throw (cdr cl-form)))))
 
 ;;;###autoload
 (defmacro return (&optional result)
-  "(return [RESULT]): return from the block named nil.
+  "Return from the block named nil.
 This is equivalent to `(return-from nil RESULT)'."
   (list 'return-from nil result))
 
 ;;;###autoload
 (defmacro return-from (name &optional result)
-  "(return-from NAME [RESULT]): return from the block named NAME.
+  "Return from the block named NAME.
 This jumps out to the innermost enclosing `(block NAME ...)' form,
 returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
@@ -1697,7 +1704,7 @@ before assigning any symbols SYM to the corresponding values."
 
 ;;;###autoload
 (defmacro progv (symbols values &rest body)
-  "(progv SYMBOLS VALUES BODY...): bind SYMBOLS to VALUES dynamically in BODY.
+  "Bind SYMBOLS to VALUES dynamically in BODY.
 The forms SYMBOLS and VALUES are evaluated, and must evaluate to lists.
 Each SYMBOL in the first list is bound to the corresponding VALUE in the
 second list (or made unbound if VALUES is shorter than SYMBOLS); then the
@@ -1786,7 +1793,7 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
 (defvar cl-closure-vars nil)
 ;;;###autoload
 (defmacro lexical-let (bindings &rest body)
-  "(lexical-let BINDINGS BODY...): like `let', but lexically scoped.
+  "Like `let', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
   (let* ((cl-closure-vars cl-closure-vars)
@@ -1826,7 +1833,7 @@ lexical closures as in Common Lisp."
 
 ;;;###autoload
 (defmacro lexical-let* (bindings &rest body)
-  "(lexical-let* BINDINGS BODY...): like `let*', but lexically scoped.
+  "Like `let*', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
   (if (null bindings) (cons 'progn body)
@@ -1841,47 +1848,70 @@ lexical closures as in Common Lisp."
 	      (list 'function (cons 'lambda rest)))
 	(list 'quote func)))
 
-
-;;; Multiple values.
-
-;;;###autoload
-(defmacro multiple-value-bind (vars form &rest body)
-  "(multiple-value-bind (SYM SYM...) FORM BODY): collect multiple return values.
-FORM must return a list; the BODY is then executed with the first N elements
-of this list bound (`let'-style) to each of the symbols SYM in turn.  This
-is analogous to the Common Lisp `multiple-value-bind' macro, using lists to
-simulate true multiple return values.  For compatibility, (values A B C) is
-a synonym for (list A B C)."
-  (let ((temp (gensym)) (n -1))
-    (list* 'let* (cons (list temp form)
-		       (mapcar #'(lambda (v)
-				   (list v (list 'nth (setq n (1+ n)) temp)))
-			       vars))
-	   body)))
+;;; Multiple values. We support full Common Lisp conventions here.
 
 ;;;###autoload
-(defmacro multiple-value-setq (vars form)
-  "(multiple-value-setq (SYM SYM...) FORM): collect multiple return values.
-FORM must return a list; the first N elements of this list are stored in
-each of the symbols SYM in turn.  This is analogous to the Common Lisp
-`multiple-value-setq' macro, using lists to simulate true multiple return
-values.  For compatibility, (values A B C) is a synonym for (list A B C)."
-  (cond ((null vars) (list 'progn form nil))
-	((null (cdr vars)) (list 'setq (car vars) (list 'car form)))
-	(t
-	 (let* ((temp (gensym)) (n 0))
-	   (list 'let (list (list temp form))
-		 (list 'prog1 (list 'setq (pop vars) (list 'car temp))
-		       (cons 'setq
-			     (apply 'nconc
-				    (mapcar
-				     #'(lambda (v)
-					 (list v (list
-						  'nth
-						  (setq n (1+ n))
-						  temp)))
-					    vars)))))))))
+(defmacro multiple-value-bind (syms form &rest body)
+  "Collect and bind multiple return values.
 
+If FORM returns multiple values, each symbol in SYMS is bound to one of
+them, in order, and BODY is executed.  If FORM returns fewer multiple values
+than there are SYMS, remaining SYMS are bound to nil.  If FORM does
+not return multiple values, it is treated as returning one multiple value.
+
+Returns the value given by the last element of BODY."
+  (if (null syms)
+      `(progn ,form ,@body)
+    (if (= 1 (length syms))
+        ;; Code written to deal with other "implementations" of multiple
+        ;; values may have a one-element SYMS.
+        `(let ((,(car syms) ,form))
+          ,@body)
+      (let ((temp (gensym)))
+        `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form))
+                ,@(loop 
+                    for var in syms
+                    collect `(,var (prog1 (car ,temp)
+                                     (setq ,temp (cdr ,temp))))))
+          ,@body)))))
+
+;;;###autoload
+(defmacro multiple-value-setq (syms form)
+  "Collect and set multiple values.
+
+FORM should normally return multiple values; the first N values are stored
+in the symbols in SYMS in turn.  If FORM returns fewer than N values, the
+remaining symbols have their values set to nil.  FORM not returning multiple
+values is treated as FORM returning one multiple value, with other elements
+of SYMS initialized to nil.
+
+Returns the first of the multiple values given by FORM."
+  (if (null syms)
+      ;; Never return multiple values from multiple-value-setq:
+      (and form `(values ,form))
+    (if (= 1 (length syms))
+        `(setq ,(car syms) ,form)
+      (let ((temp (gensym)))
+        `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form)))
+           (setq ,@(loop
+                     for sym in syms
+                     nconc `(,sym (car-safe ,temp)
+                             ,temp (cdr-safe ,temp))))
+           ,(car syms))))))
+
+;;;###autoload
+(defmacro multiple-value-list (form)
+  "Evaluate FORM and return a list of the multiple values it returned."
+  `(multiple-value-list-internal 0 multiple-values-limit ,form))
+
+;;;###autoload
+(defmacro nth-value (n form)
+  "Evaluate FORM and return the Nth multiple value it returned."
+  (if (integerp n)
+      `(car (multiple-value-list-internal ,n ,(1+ n) ,form))
+    (let ((temp (gensym)))
+      `(let ((,temp ,n))
+        (car (multiple-value-list-internal ,temp (1+ ,temp) ,form))))))
 
 ;;; Declarations.
 
@@ -2346,8 +2376,9 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	(store-temp (gensym "--values-store--")))
     (list (apply 'append (mapcar 'first methods))
 	  (apply 'append (mapcar 'second methods))
-	  (list store-temp)
-	  (cons 'list
+	  `((,store-temp
+	     (multiple-value-list-internal 0 ,(if args (length args) 1))))
+	  (cons 'values
 		(mapcar #'(lambda (m)
 			    (cl-setf-do-store (cons (car (third m)) (fourth m))
 					      (list 'pop store-temp)))
@@ -2410,11 +2441,25 @@ a macro like `setf' or `incf'."
 (defun cl-setf-do-store (spec val)
   (let ((sym (car spec))
 	(form (cdr spec)))
-    (if (or (cl-const-expr-p val)
-	    (and (cl-simple-expr-p val) (eq (cl-expr-contains form sym) 1))
-	    (cl-setf-simple-store-p sym form))
-	(subst val sym form)
-      (list 'let (list (list sym val)) form))))
+    (if (consp sym)
+	;; XEmacs change, only used for implementing #'values at the moment.
+	(let* ((orig (copy-list sym))
+	       (intermediate (last orig))
+	       (circular-limit 32))
+	  (while (consp (car intermediate))
+	    (when (zerop circular-limit)
+	      (error 'circular-list "Form seems to contain loops"))
+	    (setq intermediate (last (car intermediate))
+		  circular-limit (1- circular-limit)))
+	  (setcdr intermediate (list val))
+	  `(let (,orig)
+	    ,form))
+      (if (or (cl-const-expr-p val)
+	      (and (cl-simple-expr-p val)
+		   (eq (cl-expr-contains form sym) 1))
+	      (cl-setf-simple-store-p sym form))
+	  (subst val sym form)
+	(list 'let (list (list sym val)) form)))))
 
 (defun cl-setf-simple-store-p (sym form)
   (and (consp form) (eq (cl-expr-contains form sym) 1)
@@ -2477,7 +2522,7 @@ before assigning any PLACEs to the corresponding values."
 
 ;;;###autoload
 (defmacro remf (place tag)
-  "(remf PLACE TAG): remove TAG from property list PLACE.
+  "Remove TAG from property list PLACE.
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The form returns true if TAG was found and removed, nil otherwise."
   (let* ((method (cl-setf-do-modify place t))
@@ -2542,6 +2587,28 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
 	(list 'let* (append (car method) (list (list temp (nth 2 method))))
 	      (cl-setf-do-store (nth 1 method) form) nil)))))
 
+;; This function is not in Common Lisp, and there are gaps in its structure and
+;; implementation that reflect that it was never well-specified. E.g. with
+;; setf, the question of whether a PLACE is bound or not and how to make it
+;; unbound doesn't arise, but we need some way of specifying that for letf to
+;; be sensible for gethash, symbol-value and so on; currently we just hard-code
+;; symbol-value, symbol-function and values (the latter is XEmacs work that
+;; I've just done) in the body of this function, and the following gives the
+;; wrong behaviour for gethash:
+;; 
+;; (setq my-hash-table #s(hash-table test equal data ())
+;;       print-gensym t)
+;; => t
+;; (gethash "my-key" my-hash-table (gensym))
+;; => #:G68010
+;; (letf (((gethash "my-key" my-hash-table) 4000))
+;;   (message "key value is %S" (gethash "my-key" my-hash-table)))
+;; => "key value is 4000"
+;; (gethash "my-key" my-hash-table (gensym))
+;; => nil ;; should be an uninterned symbol.
+;;
+;; Aidan Kehoe, Fr Nov 13 16:12:21 GMT 2009
+
 ;;;###autoload
 (defmacro letf (bindings &rest body)
   "(letf ((PLACE VALUE) ...) BODY...): temporarily bind to PLACEs.
@@ -2563,20 +2630,55 @@ the PLACE is not modified before executing BODY."
 	       (value (cadar rev))
 	       (method (cl-setf-do-modify place 'no-opt))
 	       (save (gensym "--letf-save--"))
-	       (bound (and (memq (car place) '(symbol-value symbol-function))
+	       (bound (and (memq (car place)
+                                 '(symbol-value symbol-function values))
 			   (gensym "--letf-bound--")))
 	       (temp (and (not (cl-const-expr-p value)) (cdr bindings)
-			  (gensym "--letf-val--"))))
+			  (gensym "--letf-val--")))
+               (syms (and (eq 'values (car place))
+                          (gensym "--letf-syms--")))
+               (cursor (and syms (gensym "--letf-cursor--"))))
 	  (setq lets (nconc (car method)
-			    (if bound
-				(list (list bound
-					    (list (if (eq (car place)
-							  'symbol-value)
-						      'boundp 'fboundp)
-						  (nth 1 (nth 2 method))))
-				      (list save (list 'and bound
-						       (nth 2 method))))
-			      (list (list save (nth 2 method))))
+                            (cond
+                             (syms
+                              `((,syms ',(loop
+                                           for sym in (cdr place)
+                                           nconc (if (symbolp sym) (list sym))))
+                                (,cursor ,syms)
+                                (,bound nil)
+                                (,save
+                                 (prog2
+                                     (while (consp ,cursor)
+                                       (setq ,bound
+                                             (cons (and (boundp (car ,cursor))
+                                                        (symbol-value
+                                                         (car ,cursor)))
+                                                   ,bound)
+                                             ,cursor (cdr ,cursor)))
+                                     ;; Just using ,bound as a temporary
+                                     ;; variable here, to initialise ,save:
+                                     (nreverse ,bound) 
+                                   ;; Now, really initialise ,bound:
+                                   (setq ,cursor ,syms
+                                         ,bound nil
+                                         ,bound 
+                                         (progn (while (consp ,cursor)
+                                                  (setq ,bound
+                                                        (cons
+                                                         (boundp (car ,cursor))
+                                                         ,bound)
+                                                        ,cursor (cdr ,cursor)))
+                                                (nreverse ,bound)))))))
+                              (bound
+                               (list (list bound
+                                           (list (if (eq (car place)
+                                                         'symbol-value)
+                                                     'boundp 'fboundp)
+                                                 (nth 1 (nth 2 method))))
+                                     (list save (list 'and bound
+                                                      (nth 2 method)))))
+                               (t
+                                (list (list save (nth 2 method)))))
 			    (and temp (list (list temp value)))
 			    lets)
 		body (list
@@ -2587,13 +2689,25 @@ the PLACE is not modified before executing BODY."
 							      (or temp value))
 					    body)
 				    body))
-			    (if bound
-				(list 'if bound
-				      (cl-setf-do-store (nth 1 method) save)
-				      (list (if (eq (car place) 'symbol-value)
-						'makunbound 'fmakunbound)
-					    (nth 1 (nth 2 method))))
-			      (cl-setf-do-store (nth 1 method) save))))
+                            (cond 
+                             (syms
+                              `(while (consp ,syms)
+                                (if (car ,bound)
+                                    (set (car ,syms) (car ,save))
+                                  (makunbound (car ,syms)))
+                                (setq ,syms (cdr ,syms)
+                                      ,bound (cdr ,bound)
+                                      ,save (cdr ,save))))
+                             (bound
+                              (list 'if bound
+                                    (cl-setf-do-store (nth 1 method) save)
+                                    (list (if (eq (car place)
+                                                  'symbol-function)
+                                              'fmakunbound
+                                            'makunbound)
+                                          (nth 1 (nth 2 method)))))
+                             (t
+			      (cl-setf-do-store (nth 1 method) save)))))
 		rev (cdr rev))))
       (list* 'let* lets body))))
 
@@ -2616,7 +2730,7 @@ the PLACE is not modified before executing BODY."
 
 ;;;###autoload
 (defmacro callf (func place &rest args)
-  "(callf FUNC PLACE ARGS...): set PLACE to (FUNC PLACE ARGS...).
+  "Set PLACE to (FUNC PLACE ARGS...).
 FUNC should be an unquoted function name.  PLACE may be a symbol,
 or any generalized variable allowed by `setf'."
   (let* ((method (cl-setf-do-modify place (cons 'list args)))
@@ -2629,7 +2743,7 @@ or any generalized variable allowed by `setf'."
 
 ;;;###autoload
 (defmacro callf2 (func arg1 place &rest args)
-  "(callf2 FUNC ARG1 PLACE ARGS...): set PLACE to (FUNC ARG1 PLACE ARGS...).
+  "Set PLACE to (FUNC ARG1 PLACE ARGS...).
 Like `callf', but PLACE is the second argument of FUNC, not the first."
   (if (and (cl-safe-expr-p arg1) (cl-simple-expr-p place) (symbolp func))
       (list 'setf place (list* func arg1 place args))
@@ -2644,7 +2758,7 @@ Like `callf', but PLACE is the second argument of FUNC, not the first."
 
 ;;;###autoload
 (defmacro define-modify-macro (name arglist func &optional doc)
-  "(define-modify-macro NAME ARGLIST FUNC): define a `setf'-like modify macro.
+  "Define a `setf'-like modify macro.
 If NAME is called, it combines its PLACE argument with the other arguments
 from ARGLIST using FUNC: (define-modify-macro incf (&optional (n 1)) +)"
   (if (memq '&key arglist) (error "&key not allowed in define-modify-macro"))
@@ -2898,7 +3012,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 
 ;;;###autoload
 (defmacro deftype (name arglist &rest body)
-  "(deftype NAME ARGLIST BODY...): define NAME as a new data type.
+  "Define NAME as a new data type.
 The type name can then be used in `typecase', `check-type', etc."
   (list 'eval-when '(compile load eval)
 	(cl-transform-function-property
@@ -3006,7 +3120,7 @@ Otherwise, return result of last FORM."
 
 ;;;###autoload
 (defmacro define-compiler-macro (func args &rest body)
-  "(define-compiler-macro FUNC ARGLIST BODY...): Define a compiler-only macro.
+  "Define a compiler-only macro.
 This is like `defmacro', but macro expansion occurs only if the call to
 FUNC is compiled (i.e., not interpreted).  Compiler macros should be used
 for optimizing the way calls to FUNC are compiled; the form returned by
@@ -3169,6 +3283,70 @@ surrounded by (block NAME ...)."
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
 
+;; XEmacs; inline delete-duplicates if it's called with a literal
+;; #'equal or #'eq and no other keywords, we want the speed in
+;; font-lock.el.
+(define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
+  (let ((listp-check 
+         (if (memq (car-safe cl-seq)
+                   ;; No need to check for a list at runtime with these. We
+                   ;; could expand the list, but these are all the functions
+                   ;; in the relevant context at the moment.
+                   '(nreverse append nconc mapcan mapcar))
+             t
+           '(listp begin))))
+    (cond ((and (= 4 (length form))
+                (eq :test (third form))
+                (or (equal '(quote eq) (fourth form))
+                    (equal '(function eq) (fourth form))))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq (delq (car cl-seq)
+                                                       (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          ((and (= 4 (length form))
+                (eq :test (third form))
+                (or (equal '(quote equal) (fourth form))
+                    (equal '(function equal) (fourth form))))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
+                                                         (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          (t
+           form))))
+
+;; XEmacs change, the GNU mapc doesn't accept the Common Lisp args, so this
+;; change isn't helpful.
+(define-compiler-macro mapc (&whole form cl-func cl-seq &rest cl-rest)
+  (if cl-rest
+      form
+    (cons 'mapc-internal (cdr form))))
+
+(define-compiler-macro mapcar* (&whole form cl-func cl-x &rest cl-rest)
+  (if cl-rest
+      form
+    (cons 'mapcar (cdr form))))
+
+;; XEmacs; it's perfectly reasonable, and often much clearer to those
+;; reading the code, to call regexp-quote on a constant string, which is
+;; something we can optimise here easily.
+(define-compiler-macro regexp-quote (&whole form string)
+  (if (stringp string)
+      (regexp-quote string)
+    form))
 
 (mapc
  #'(lambda (y)

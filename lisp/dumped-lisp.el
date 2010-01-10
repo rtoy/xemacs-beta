@@ -33,7 +33,7 @@ in dumped-lisp.el and is not itself listed.")
        "post-gc"
        "replace" 		; match-string used in version.el.
 
-       "version.el"             ; Ignore compiled-by-mistake version.elc
+       "version"
 
        "cl"
        "cl-extra"
@@ -53,6 +53,8 @@ in dumped-lisp.el and is not itself listed.")
        "obsolete"
        "specifier"
        "frame"			; needed by faces
+       ;; #### this should be (featurep 'xft)
+       (when (featurep 'xft-fonts) "fontconfig") ; needed by x-faces
        (when (featurep 'x) "x-faces") ; needed by faces
        (when (featurep 'gtk) "gtk-faces")
        (when (valid-console-type-p 'mswindows) "msw-faces")
@@ -70,6 +72,7 @@ in dumped-lisp.el and is not itself listed.")
        "undo-stack"
        "window"		; simple needs `save-window-excursion'
        "window-xemacs"
+       "resize-minibuffer"	; simple needs `resize-minibuffer-mode'
        "simple"
        "newcomment"
        "keydefs"		; Before loaddefs so that keymap vars exist.
@@ -90,7 +93,8 @@ in dumped-lisp.el and is not itself listed.")
 				;  `emacs-user-extension-dir'
        "misc"
        ;; (pureload "profile")
-       "help"
+       "loadhist"		; Must be dumped before loaddefs is loaded
+				; Used by help. 
        ;; (pureload "hyper-apropos")  Soon...
        "files"
        "lib-complete"
@@ -99,13 +103,14 @@ in dumped-lisp.el and is not itself listed.")
        "isearch-mode"
        "buffer"
        "buff-menu"
-       "paths.el"		; don't get confused if paths compiled.
+       "paths"
        "lisp"
        "page"
        "register"
        "iso8859-1"		; This must be before any modes
 				; (sets standard syntax table.)
-       "easy-mmode"		; Added for 21.5.
+       "easy-mmode"		; Added for 21.5. Used by help.
+       "help"
        "easymenu"		; Added for 20.3.
        "lisp-mode"
        "text-mode"
@@ -155,6 +160,9 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
+       ;; Initialize Unicode and load the translation tables for
+       ;; the built-in charsets.
+       "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
 	 '("mule/mule-charset"
@@ -162,10 +170,8 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-coding"
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
+	   "mule/windows" ; for creating Windows charsets/coding systems
 	   ))
-       ;; Initialize Unicode and load the translation tables.  This requires
-       ;; that all charsets be created (happens in mule/mule-charset).
-       "unicode"
        ;; may initialize coding systems
        (when (featurep '(and mule x)) "mule/mule-x-init")
        (when (featurep '(and mule tty)) "mule/mule-tty-init")
@@ -181,7 +187,6 @@ in dumped-lisp.el and is not itself listed.")
 	 '("mule/mule-category"
 	   "mule/kinsoku"
 	   ))
-       (when (featurep 'ccl) "mule/mule-ccl")
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site
@@ -207,40 +212,32 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/cyrillic"
 	   "mule/english"
 	   "mule/ethiopic"
-	   "mule/european"
 	   "mule/greek"
 	   "mule/hebrew"
 	   "mule/indian"
 	   "mule/devanagari" ; must be loaded after indian.el
 	   "mule/japanese"
 	   "mule/korean"
-	   "mule/lao"
+	   "mule/lao" ; sucks. 
 	   "mule/latin"
 	   "mule/misc-lang"
 	   ;; "thai" #### merge thai and thai-xtis!!!
+           ;; #### Even better; take out thai-xtis! It's not even a
+           ;; standard, and no-one uses it.
 	   "mule/thai-xtis"
 	   "mule/tibetan"
 	   "mule/vietnamese"
-	   "mule/windows"
 	   ))
 	    
 	;; Specialized language support
        (when (featurep 'mule) "mule/canna-leim")
-;; Egg/Its is now a package
-;	(when (featurep '(and mule wnn))
-;         '("egg-leim" "egg-kwnn-leim" "egg-cwnn-leim"))
-;	(when (featurep 'mule) "mule/egg-sj3-leim")
-;; SKK is now a package
-;	(when (featurep 'mule) "mule/skk-leim")
-
-;; Enable Mule capability for Gnus, mail, etc...
-;; Moved to sunpro-load.el - the default only for Sun.
-;;(pureload "mime-setup")
-
 	;; needs access to the charsets created by the above
 	;; language-specific files.
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))
 	 "mule/mule-msw-init-late")
+
+       (when (featurep 'mule)
+	 "mule/general-late")
 
 ;;; mule-load.el ends here
 
@@ -289,7 +286,6 @@ in dumped-lisp.el and is not itself listed.")
        "fontl-hooks"
        "auto-show"
        "paragraphs"             ; needs easy-mmode, coding
-       "resize-minibuffer"
        (when (featurep 'ldap) "ldap")
 
 ;; (when (featurep 'energize) "energize/energize-load.el")
@@ -313,7 +309,6 @@ in dumped-lisp.el and is not itself listed.")
         ;;     "sun-eos-debugger"
         ;;     "sun-eos-debugger-extra"
         ;;     "sun-eos-menubar"))
-       "loadhist"		; Must be dumped before loaddefs is loaded
        "loaddefs"		; <=== autoloads get loaded here
 	))
 

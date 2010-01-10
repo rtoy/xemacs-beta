@@ -78,6 +78,9 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include <X11/bitmaps/gray>
 
+#include "lwlib-colors.h"
+#include "xt-wrappers.h"
+
 #include "xlwscrollbarP.h"
 #include "xlwscrollbar.h"
 
@@ -111,90 +114,79 @@ typedef enum
 } SliderStyle;
 
 /*-------------------------- Resources ----------------------------------*/
-#define offset(field) XtOffset(XlwScrollBarWidget, field)
 
 static XtResource resources[] = {
-    { XmNforeground, XmCForeground, XtRPixel, sizeof(Pixel),
-      offset(sb.foreground), XtRImmediate, (XtPointer) XtDefaultForeground },
+#define offset(field) XtOffset(XlwScrollBarWidget, field)
+#define res(name,_class,intrepr,type,member,extrepr,value) \
+  Xt_RESOURCE (name, _class, intrepr, type, offset(sb.member), extrepr, value)
 
-    { XmNtopShadowColor, XmCTopShadowColor, XtRPixel,
-      sizeof(Pixel), offset(sb.topShadowColor), XtRImmediate, (XtPointer) ~0 },
-    { XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel,
-      sizeof(Pixel), offset(sb.bottomShadowColor), XtRImmediate,
-      (XtPointer)~0 },
+  res (XmNforeground, XmCForeground, XtRPixel, Pixel, 
+       foreground,  XtRImmediate, XtDefaultForeground),
+  res (XmNtopShadowColor, XmCTopShadowColor, XtRPixel,
+       Pixel,  topShadowColor,  XtRImmediate, ~0),
+  res (XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel,
+       Pixel,  bottomShadowColor,  XtRImmediate, ~0),
 
-    { XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap,
-      sizeof (Pixmap), offset(sb.topShadowPixmap), XtRImmediate,
-      (XtPointer)None},
-    { XmNbottomShadowPixmap, XmCBottomShadowPixmap,
-      XtRPixmap, sizeof (Pixmap), offset(sb.bottomShadowPixmap),
-      XtRImmediate, (XtPointer)None},
+  res (XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap,
+       Pixmap,  topShadowPixmap,  XtRImmediate, None),
+  res (XmNbottomShadowPixmap, XmCBottomShadowPixmap,
+       XtRPixmap, Pixmap, bottomShadowPixmap, XtRImmediate, None),
 
-    { XmNtroughColor, XmCTroughColor, XtRPixel, sizeof(Pixel),
-      offset(sb.troughColor), XtRImmediate, (XtPointer)~0 },
+  res (XmNtroughColor, XmCTroughColor, XtRPixel, Pixel, troughColor,
+       XtRImmediate, ~0),
 
-    { XmNshadowThickness, XmCShadowThickness, XtRInt,
-      sizeof(int), offset(sb.shadowThickness), XtRImmediate, (XtPointer)2 },
+  res (XmNshadowThickness, XmCShadowThickness, XtRInt, int,
+       shadowThickness, XtRImmediate, 2),
 
-    { XmNborderWidth, XmCBorderWidth, XtRDimension,
-      sizeof(Dimension), offset(core.border_width), XtRImmediate,
-      (XtPointer)0 },
+  Xt_RESOURCE (XmNborderWidth, XmCBorderWidth, XtRDimension, Dimension,
+	       offset(core.border_width), XtRImmediate, 0),
 
-    { XmNshowArrows, XmCShowArrows, XtRBoolean,
-      sizeof(Boolean), offset(sb.showArrows), XtRImmediate, (XtPointer)True },
+  res (XmNshowArrows, XmCShowArrows, XtRBoolean, Boolean, showArrows,
+       XtRImmediate, True),
 
-    { XmNinitialDelay, XmCInitialDelay, XtRInt, sizeof(int),
-      offset(sb.initialDelay), XtRImmediate, (XtPointer) 250 },
-    { XmNrepeatDelay, XmCRepeatDelay, XtRInt, sizeof(int),
-      offset(sb.repeatDelay), XtRImmediate, (XtPointer) 50 },
+  res (XmNinitialDelay, XmCInitialDelay, XtRInt, int, initialDelay,
+       XtRImmediate, 250),
+  res (XmNrepeatDelay, XmCRepeatDelay, XtRInt, int, repeatDelay,
+       XtRImmediate, 50),
 
-    { XmNorientation, XmCOrientation, XtROrientation,
-      sizeof(unsigned char), offset(sb.orientation), XtRImmediate,
-      (XtPointer) XmVERTICAL },
+  res (XmNorientation, XmCOrientation, XtROrientation,
+       unsigned char,  orientation,  XtRImmediate, XmVERTICAL),
 
-    { XmNminimum, XmCMinimum, XtRInt, sizeof(int),
-      offset(sb.minimum), XtRImmediate, (XtPointer) 0},
-    { XmNmaximum, XmCMaximum, XtRInt, sizeof(int),
-      offset(sb.maximum), XtRImmediate, (XtPointer) 100},
-    { XmNvalue, XmCValue, XtRInt, sizeof(int),
-      offset(sb.value), XtRImmediate, (XtPointer) 0},
-    { XmNsliderSize, XmCSliderSize, XtRInt, sizeof(int),
-      offset(sb.sliderSize), XtRImmediate, (XtPointer) 10},
-    { XmNincrement, XmCIncrement, XtRInt, sizeof(int),
-      offset(sb.increment), XtRImmediate, (XtPointer) 1},
-    { XmNpageIncrement, XmCPageIncrement, XtRInt, sizeof(int),
-      offset(sb.pageIncrement), XtRImmediate, (XtPointer) 10},
+  res (XmNminimum, XmCMinimum, XtRInt, int, minimum,  XtRImmediate, 0),
+  res (XmNmaximum, XmCMaximum, XtRInt, int, maximum,  XtRImmediate, 100),
+  res (XmNvalue, XmCValue, XtRInt, int, value,  XtRImmediate, 0),
+  res (XmNsliderSize, XmCSliderSize, XtRInt, int, sliderSize, XtRImmediate, 10),
+  res (XmNincrement, XmCIncrement, XtRInt, int, increment,  XtRImmediate, 1),
+  res (XmNpageIncrement, XmCPageIncrement, XtRInt, int, 
+       pageIncrement,  XtRImmediate, 10),
 
-    { XmNvalueChangedCallback, XmCValueChangedCallback,
-      XtRCallback, sizeof(XtPointer), offset(sb.valueChangedCBL),
-      XtRCallback, NULL},
-    { XmNincrementCallback, XmCIncrementCallback,
-      XtRCallback, sizeof(XtPointer), offset(sb.incrementCBL),
-      XtRCallback, NULL},
-    { XmNdecrementCallback, XmCDecrementCallback,
-      XtRCallback, sizeof(XtPointer), offset(sb.decrementCBL),
-      XtRCallback, NULL},
-    { XmNpageIncrementCallback, XmCPageIncrementCallback,
-      XtRCallback, sizeof(XtPointer), offset(sb.pageIncrementCBL),
-      XtRCallback, NULL},
-    { XmNpageDecrementCallback, XmCPageDecrementCallback,
-      XtRCallback, sizeof(XtPointer), offset(sb.pageDecrementCBL),
-      XtRCallback, NULL},
-    { XmNtoTopCallback, XmCToTopCallback, XtRCallback,
-      sizeof(XtPointer), offset(sb.toTopCBL), XtRCallback, NULL},
-    { XmNtoBottomCallback, XmCToBottomCallback, XtRCallback,
-      sizeof(XtPointer), offset(sb.toBottomCBL), XtRCallback, NULL},
-    { XmNdragCallback, XmCDragCallback, XtRCallback,
-      sizeof(XtPointer), offset(sb.dragCBL), XtRCallback, NULL},
+  res (XmNvalueChangedCallback, XmCValueChangedCallback,
+       XtRCallback, XtPointer,  valueChangedCBL, XtRCallback, NULL),
+  res (XmNincrementCallback, XmCIncrementCallback,
+       XtRCallback, XtPointer,  incrementCBL, XtRCallback, NULL),
+  res (XmNdecrementCallback, XmCDecrementCallback,
+       XtRCallback, XtPointer,  decrementCBL, XtRCallback, NULL),
+  res (XmNpageIncrementCallback, XmCPageIncrementCallback,
+       XtRCallback, XtPointer,  pageIncrementCBL, XtRCallback, NULL),
+  res (XmNpageDecrementCallback, XmCPageDecrementCallback,
+       XtRCallback, XtPointer,  pageDecrementCBL, XtRCallback, NULL),
+  res (XmNtoTopCallback, XmCToTopCallback, XtRCallback,
+       XtPointer,  toTopCBL,  XtRCallback, NULL),
+  res (XmNtoBottomCallback, XmCToBottomCallback, XtRCallback,
+       XtPointer,  toBottomCBL,  XtRCallback, NULL),
+  res (XmNdragCallback, XmCDragCallback, XtRCallback,
+       XtPointer,  dragCBL,  XtRCallback, NULL),
 
       /* "knob" is obsolete; use "slider" instead. */
-    { XmNsliderStyle, XmCSliderStyle, XtRString, sizeof(char *),
-      offset(sb.sliderStyle), XtRImmediate, NULL},
-    { XmNknobStyle, XmCKnobStyle, XtRString, sizeof(char *),
-       offset(sb.knobStyle), XtRImmediate, NULL},
+  res (XmNsliderStyle, XmCSliderStyle, XtRString, char *, 
+       sliderStyle,  XtRImmediate, NULL),
+  res (XmNknobStyle, XmCKnobStyle, XtRString, char *, 
+       knobStyle,  XtRImmediate, NULL),
 
-    { XmNarrowPosition, XmCArrowPosition, XtRString, sizeof(char *),
-      offset(sb.arrowPosition), XtRImmediate, NULL},
+  res (XmNarrowPosition, XmCArrowPosition, XtRString, char *, 
+       arrowPosition,  XtRImmediate, NULL),
+#undef  offset
+#undef  res
 };
 
 /*-------------------------- Prototypes ---------------------------------*/
@@ -216,13 +208,13 @@ static void Realize(Widget widget, XtValueMask *valuemask, XSetWindowAttributes 
 /*-------------------------- Actions Table ------------------------------*/
 static XtActionsRec actions[] =
 {
-  {"Select",		Select},
-  {"PageDownOrRight",	PageDownOrRight},
-  {"PageUpOrLeft",	PageUpOrLeft},
-  {"Drag",		Drag},
-  {"Release",		Release},
-  {"Jump",		Jump},
-  {"Abort",		Abort},
+  { (String) "Select",		Select},
+  { (String) "PageDownOrRight",	PageDownOrRight},
+  { (String) "PageUpOrLeft",	PageUpOrLeft},
+  { (String) "Drag",		Drag},
+  { (String) "Release",		Release},
+  { (String) "Jump",		Jump},
+  { (String) "Abort",		Abort},
 };
 
 /*--------------------- Default Translation Table -----------------------*/
@@ -241,7 +233,7 @@ XlwScrollBarClassRec xlwScrollBarClassRec = {
     /* core_class fields */
     {
     /* superclass          */ (WidgetClass) &coreClassRec,
-    /* class_name          */ "XlwScrollBar",
+    /* class_name          */ (String) "XlwScrollBar",
     /* widget_size         */ sizeof(XlwScrollBarRec),
     /* class_initialize    */ NULL,
     /* class_part_init     */ NULL,
@@ -523,65 +515,25 @@ get_gc (XlwScrollBarWidget w, Pixel fg, Pixel bg, Pixmap pm)
   return XtGetGC((Widget) w, mask, &values);
 }
 
-/* Replacement for XAllocColor() that tries to return the nearest
-   available color if the colormap is full.  From FSF Emacs. */
-
-static int
-allocate_nearest_color (Display *display, Colormap screen_colormap,
-		        XColor *color_def)
-{
-  int status = XAllocColor (display, screen_colormap, color_def);
-  if (status)
-    return status;
-
-    {
-      /* If we got to this point, the colormap is full, so we're
-	 going to try to get the next closest color.
-	 The algorithm used is a least-squares matching, which is
-	 what X uses for closest color matching with StaticColor visuals.  */
-
-      int nearest, x;
-      unsigned long nearest_delta = ULONG_MAX;
-
-      int no_cells = XDisplayCells (display, XDefaultScreen (display));
-      /* Don't use alloca here because lwlib doesn't have the
-         necessary configuration information that src does. */
-      XColor *cells = (XColor *) malloc (sizeof (XColor) * no_cells);
-
-      for (x = 0; x < no_cells; x++)
-	cells[x].pixel = x;
-
-      XQueryColors (display, screen_colormap, cells, no_cells);
-
-      for (nearest = 0, x = 0; x < no_cells; x++)
-	{
-	  long dred   = (color_def->red   >> 8) - (cells[x].red   >> 8);
-	  long dgreen = (color_def->green >> 8) - (cells[x].green >> 8);
-	  long dblue  = (color_def->blue  >> 8) - (cells[x].blue  >> 8);
-	  unsigned long delta = dred * dred + dgreen * dgreen + dblue * dblue;
-
-	  if (delta < nearest_delta)
-	    {
-	      nearest = x;
-	      nearest_delta = delta;
-	    }
-	}
-      color_def->red   = cells[nearest].red;
-      color_def->green = cells[nearest].green;
-      color_def->blue  = cells[nearest].blue;
-      free (cells);
-      return XAllocColor (display, screen_colormap, color_def);
-    }
-}
-
 static void
 make_shadow_pixels (XlwScrollBarWidget w)
 {
-  Display *dpy = XtDisplay((Widget) w);
+  Display *dpy = XtDisplay ((Widget) w);
   Colormap cmap = w->core.colormap;
   XColor topc, botc;
   int top_frobbed, bottom_frobbed;
   Pixel bg, fg;
+  Visual *visual;
+  int ignored;
+
+  visual_info_from_widget ((Widget) w, &visual, &ignored);
+  /* #### Apparently this is called before any shell has a visual?
+     or maybe the widget doesn't have a parent yet? */
+  if (visual == CopyFromParent)
+    {
+      Screen *screen = DefaultScreenOfDisplay (dpy);
+      visual = DefaultVisualOfScreen (screen);
+    }
 
   top_frobbed = bottom_frobbed = 0;
 
@@ -595,11 +547,12 @@ make_shadow_pixels (XlwScrollBarWidget w)
     {
       topc.pixel = bg;
       XQueryColor (dpy, cmap, &topc);
+      /* #### can we use a (generalized) xft_convert_color here? */
       /* don't overflow/wrap! */
       topc.red   = MINL(65535, topc.red   * 1.2);
       topc.green = MINL(65535, topc.green * 1.2);
       topc.blue  = MINL(65535, topc.blue  * 1.2);
-      if (allocate_nearest_color (dpy, cmap, &topc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &topc))
 	{
 	  if (topc.pixel == bg)
 	    {
@@ -607,7 +560,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
 	      topc.red   = MINL(65535, topc.red   + 0x8000);
 	      topc.green = MINL(65535, topc.green + 0x8000);
 	      topc.blue  = MINL(65535, topc.blue  + 0x8000);
-	      if (allocate_nearest_color (dpy, cmap, &topc))
+	      if (x_allocate_nearest_color (dpy, cmap, visual, &topc))
 		{
 		  w->sb.topShadowColor = topc.pixel;
 		}
@@ -628,7 +581,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
       botc.red   = (botc.red   * 3) / 5;
       botc.green = (botc.green * 3) / 5;
       botc.blue  = (botc.blue  * 3) / 5;
-      if (allocate_nearest_color (dpy, cmap, &botc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &botc))
 	{
 	  if (botc.pixel == bg)
 	    {
@@ -636,7 +589,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
 	      botc.red   = MINL(65535, botc.red   + 0x4000);
 	      botc.green = MINL(65535, botc.green + 0x4000);
 	      botc.blue  = MINL(65535, botc.blue  + 0x4000);
-	      if (allocate_nearest_color (dpy, cmap, &botc))
+	      if (x_allocate_nearest_color (dpy, cmap, visual, &botc))
 		{
 		  w->sb.bottomShadowColor = botc.pixel;
 		}
@@ -703,6 +656,17 @@ make_trough_pixel (XlwScrollBarWidget w)
   Display *dpy = XtDisplay((Widget) w);
   Colormap cmap = w->core.colormap;
   XColor troughC;
+  Visual *visual;
+  int ignored;
+
+  visual_info_from_widget ((Widget) w, &visual, &ignored);
+  /* #### Apparently this is called before any shell has a visual?
+     or maybe the widget doesn't have a parent yet? */
+  if (visual == CopyFromParent)
+    {
+      Screen *screen = DefaultScreenOfDisplay (dpy);
+      visual = DefaultVisualOfScreen (screen);
+    }
 
   if (w->sb.troughColor == (Pixel)~0) w->sb.troughColor = w->core.background_pixel;
 
@@ -713,7 +677,7 @@ make_trough_pixel (XlwScrollBarWidget w)
       troughC.red   = (troughC.red   * 4) / 5;
       troughC.green = (troughC.green * 4) / 5;
       troughC.blue  = (troughC.blue  * 4) / 5;
-      if (allocate_nearest_color (dpy, cmap, &troughC))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &troughC))
 	w->sb.troughColor = troughC.pixel;
     }
 }

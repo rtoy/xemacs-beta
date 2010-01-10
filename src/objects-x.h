@@ -28,11 +28,16 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_objects_x_h_
 
 #include "objects.h"
+#include "../lwlib/lwlib-colors.h" /* for x_allocate_nearest_color */
 
 #ifdef HAVE_X_WINDOWS
 
-int allocate_nearest_color (Display *display, Colormap screen_colormap,
-			    Visual *visual, XColor *color_def);
+#ifdef USE_XFT
+EXFUN (Ffc_font_real_pattern, 2);
+#endif
+
+/* Lisp_Object Fxlfd_font_name_p; */
+
 #endif /* HAVE_X_WINDOWS */
 
 #endif /* INCLUDED_objects_x_h_ */

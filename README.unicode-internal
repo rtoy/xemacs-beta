@@ -1,0 +1,220 @@
+STILL TO DO:
+
+-- Finish handling lisp stuff.  It's all merged, but still to do:
+   a. For all charsets moved into mule-charset.el, follow the lead of
+      Ethiopic and VISCII in putting notes in mule-charset.el indicating
+      the file it was moved from and why (usually because the file in
+      question contains ISO-2022-embedded text using the same charsets
+      being defined in the file, so you have a bootstrapping problem)l
+      Also in the file it was moved from, put the first line of the
+      call to `make-charset' behind a comment, and put a comment above
+      telling where it was moved to.  Again, use ethiopic.el and
+      vietnamese.el. (MOSTLY DONE)
+   b. For charsets not needing to be in mule-charset.el, move them
+      back into where they came from. (MOSTLY DONE)
+   d. Review all windows-# charsets and coding systems and make sure
+      everything is set for them. (MOSTLY DONE)
+   e. The order for the charsets in `make-charset' should always list
+      `ascii' and `control-1' last, in case the charset provides its
+      own Unicode mapping for ASCII chars (e.g. VISCII does).
+   f. Check to make sure that `mbcs' will handle gaps in the charsets,
+      as indicated by the attached unicode maps, e.g. VISCII has this.
+      Internal ASCII character should get mapped out to ASCII whenever
+      there's not a shadowing entry in the VISCII map, e.g. internal
+      0x02 should *NOT* get mapped to external 0x02 because that is
+      already used by some other character.
+   h. Implement and document `unicode-map' property of charsets:
+      Either a long list of mapping pairs of a short list of a string
+      and possibly some offset info, same format as the args to
+      `load-unicode-mapping-table' (#### perhaps rethink this format).  
+   i. Fix up the COPYING and README files in etc/unicode/unicode-consortium.
+
+-- MBCS coding system:
+
+   1. Implement coding priorities for this coding system.  Currently in
+   coding-system-priority we either return `no-conversion' or `iso-8-1',
+   both of which are garbage.
+
+-- Unicode precedence lists:
+
+   1. Implement a buffer-local unicode-precedence list and then review all
+   uses of get_unicode_precedence() to see how to fix them up.  Sometimes you
+   may need the caller to pass in a buffer or domain.
+
+-- Error-handling:
+
+   1. We need to review all uses of CONVERR_SUCCEED, CONVERR_USE_PRIVATE
+      and CONVERR_SUBSTITUTE and see whether it is the right thing to do.
+   2. Review and document the use of private Unicode codepoints.  The point
+   here seems to be that in some circumstances, we want to be able to
+   represent charset codepoints as Unicode codepoints even when no official
+   conversion exists, e.g. when using the Unicode-internal representation
+   and reading in and/or recompiling a .el file containing weird charset
+   codepoints without Unicode equivalents.  Currently we create such
+   codepoints when CONVERR_SUCCEED is given, but we need to review this.
+   We also need to review calls to valid_unicode_codepoint_p() and check
+   the second argument, which determines whether private Unicode codepoints
+   are allowed.
+
+-- Redisplay:
+
+   1. In descr-text.el, the junky function describe-char-display wants to
+      figure out the font code that will be displayed.  It used
+      ccl-encode-to-ucs-2, which I removed; now, X does Unicode in a
+      more general way.  But try to fix this.
+
+-- "Windows Glyph List 4":
+   -- Hacky code in unicode.el forces certain glyphs to go into
+      a JIT charset for display purposes.  This seems awful and won't work
+      for Unicode-internal.  Instead, create a one-column charset holding
+      these codepoints and put it above the East-Asian charsets.
+
+More todo:
+
+1. Am in the process of merging up to the latest mainline changes.  Aidan has
+   added a whole lot of CCL-related Unicode-handling stuff.  Need to figure
+   out what this is doing and implement this in a way that will work with
+   Unicode-internal.
+
+2. Things like `modify-syntax-entry' and friends that operate on charset-
+   specific properties need to do things differently.  We really need to
+   get the big table of properties from the Unicode consortium, indicating
+   all the important properties of Unicode characters, and parse this and
+   use it to set the properties of the characters.
+
+3. Long added charset/Unicode conversion tables should be removed for
+   cases where we have the tables etc/unicode.  For the remainder, make
+   an argument to `make-charset' that takes the same sort of table as is
+   currently given to the `fixed-width' coding system and use it.  Change
+   these fixed-width coding systems to mbcs ones and see about porting the
+   extra logic in `fixed-width', esp. for error-handling, to `multibyte'.
+   Rename `mbcs' to `multibyte'.
+
+11-24-05
+Ben Wing
+
+Changes still to do
+
+1. Testing, testing, testing.  Need to test under both Unicode-internal and
+   old-Mule.  Under old-Mule, we need to test out the handling of the new
+   Unicode and non-encodable-charset features.  Under Unicode-internal, we
+   need to test out the reading and writing of iso2022-encoded files, the
+   handling of characters encoded in private-Unicode space, the display of
+   stuff out of the symbol font (e.g. for the continuation-glyph) (which
+   doesn't currently work!).
+
+2. Extended segments for ISO-2022 need to be implemented.  These can be used for
+   outputting Unicode characters and Big5 and such in ISO-2022.
+
+3. Currently, when in old_mule_non_ascii_charset_codepoint_to_ichar_raw(),
+   we get a non-encodable charset point, we just punt, and ultimately
+   either you get an error or a generic substitution character.  We should
+   instead try to find an equivalent character by way of Unicode.  In this,
+   we need a property on charsets listing the preferred charsets to map
+   this charset into.  Without such a listing of preference, it might just
+   work to use whatever preference list happens to be available; but there
+   is no guarantee.  This leads to behavior identical to the old CCL
+   behavior; that is, we can ensure that koi8-r gets converted into
+   iso8859-5 to the extent it can be.  With implementation of the mbcs
+   decoder, we could remove shift-jis and big5 as special cases except
+   under old-Mule.
+
+4. In order for someone under Unicode-internal to be able to edit a Mule
+   .el file reliably, they have to use iso2022-preservation to read it in
+   and write it out.  But currently such private characters don't function
+   like normal ones.  We have to make them function the same.  First,
+   provide a function that converts a private character to its normal
+   Unicode one by converting it to charset codepoint and from there to
+   normal Unicode.  Then, we use this conversion when processing the
+   character in various contexts.  These contexts include, among others,
+   retrieving a value from a char table (e.g. a case-table conversion, syntax-
+   table handling, etc.) and handling the character for redisplay.  Probably,
+   we want to do change the conversion routines so that most routines, when
+   they ask for a character, the automatically get the converted version if
+   it exists.  Special routines would be needed to get the original, private
+   version.  String comparisons would be tricky since you'd probably want to
+   compare the converted versions of one string with the converted versions
+   of another string; but we already have stuff in place to handle translation
+   tables and the logic is very similar.
+
+5. The same scheme of private characters could be used for the preservation
+   of other info such as language.  However, the normal scheme that is expected
+   to be used in such a case is text properties.  In order to use this for real,
+   we need (a) all operations on strings need to preserve text properties.
+   Most currently do, but many don't. (b) there needs to be a way to serialize
+   text properties into a string of data, as is passed to conversion routines.
+   A simple way would be to make the data be structured; e.g. a special value
+   indicates that a structure describing text properties follows; it indicates
+   the text properties of further data until another such structure occurs.
+   The introducing marker could either be something that could not have normal
+   meaning, or something that could but doesn't occur often in that meaning.
+   To indicate the normal meaning, you'd then double the value.  The list of
+   text properties would have to be serialized into a byte stream, something
+   like in unified range tables.
+
+6. It would be important, whether or not the scheme about serialized
+   text-property info as indicated previously is adopted, to make sure that
+   all character data passed to conversion routines occurs in groups of
+   full characters. (Note, data is conversion routines is already typed
+   according to byte or char.) This would significantly speed up the
+   operations of these routines.  This would be fairly simple to ensure,
+   and the mechansism for this is already in place.
+
+7. Font handling.  Currently, redisplay assumes one font per character set
+   and does optimizations based on this.  The face_cachel info explicitly
+   encodes a table mapping charsets to fonts.  We need to remove this
+   entirely.  You might think of mapping Unicode ranges to fonts, but this
+   suffers the same problem that fonts may cover part of various ranges.
+   So:
+
+   a. First, we need to do mapping entirely based on characters, not
+      character sets.  This means, e.g., changing the MATCHSPEC of
+      specifier-matching-instance of a font-specifier to have a character
+      not a charset in it.
+   b. Second, we will need some caching to make this process reasonable.
+      Previously there were at least two levels of caching: (1) Redisplay
+      only went investigating for a new font when the charset changed after
+      a run of characters in the same charset. (2) Font lookup was cached.
+      What we need to do is (a) We could cache for each character the font
+      found for that character; unfortunately that can easily change based
+      on the language, or simply when the user chooses to change the list of
+      font used; (b) Cache the tables for each font that specify what characters
+      exist (this is probably the biggest savings, as long as the tables we
+      cache aren't horrendously large); some tables might be imperfect, e.g.
+      indicating only the unicode ranges they support, and we might have to
+      query further; maybe this means they tend to support the entire subrange,
+      and we'll have to assume that and optimize the routine for this.
+   c. To find a matching font, we currently make use of the charset of the
+      char and the registry of the font.  In the revised scheme, we'd make
+      use of the language, if considered important, to convert to a charset
+      appropriate to the language and choose the font by its registry.  We
+      may want to do this always, but whether we do this first or after
+      seeking out an ISO-10646 (Unicode) font, is something controlled by
+      the particular language (e.g. by a global list specifying which
+      languages do language-specific lookup first).
+
+8. A decoder for mbcs.  It might have subtypes, based on identifiable
+   characteristics: single-byte with high bytes in A0-FF range, same but
+   with 80-FF range, double-byte (i.e. mixed single-double) with both bytes
+   A0-FF, double-byte with first byte A0-FF and second byte either high or
+   low, double-byte with first byte 80-FF and second byte either high or
+   low, double-byte with single-byte in A0-DF range, first double-byte in
+   80-9F and E0-FF and second in either high or low.  We determine whether
+   things are single or double by looking to see whether only even stretches
+   or presumed doubles exist.  Determining what kind of second byte occurs
+   is simple, too.
+
+   NOTE: The latter decoder described is really a shift-jis-specific decoder,
+   in disguise.  We really need to have the mbcs have a list of all the systems
+   it's tryint to classifying something into, and output probabilities for each
+   of these different possible classifications, based on the same sort of
+   things it does above.  But rather than have to hard code a set of subtypes
+   for different ranges of allowed single or double-byte characters, it can
+   do this dynamically.
+
+
+BUGS:
+
+It appears that the translation table gets loaded twice; we need to remove
+the run-time check.  There is also an error outputted about one line, which
+needs to be removed.

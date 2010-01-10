@@ -83,15 +83,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef USG
 #include <sys/utsname.h>
-#if defined (TIOCGWINSZ) || defined (ISC4_0)
-#ifdef NEED_SIOCTL
-#include <sys/sioctl.h>
-#endif
-#ifdef NEED_PTEM_H
-#include <sys/stream.h>
-#include <sys/ptem.h>
-#endif
-#endif /* TIOCGWINSZ or ISC4_0 */
 #endif /* USG */
 
 /* LPASS8 is new in 4.3, and makes cbreak mode provide all 8 bits.  */
@@ -115,12 +106,6 @@ static int baud_convert[] =
   };
 #endif
 
-#endif
-
-#ifdef AIXHFT
-static void hft_init (struct console *c);
-static void hft_reset (struct console *c);
-#include <sys/termio.h>
 #endif
 
 #ifdef HAVE_TTY
@@ -231,17 +216,7 @@ wait_for_termination (int pid)
      less danger of race conditions and some of the comments below
      don't apply.  This should be updated. */
 
-#if defined (NO_SUBPROCESSES)
-  while (1)
-    {
-      /* No need to be tricky like below; we can just call wait(). */
-      /* #### should figure out how to write a wait_allowing_quit().
-	 Since hardly any systems don't have subprocess support,
-	 however, there doesn't seem to be much point. */
-      if (wait (0) == pid)
-	return;
-    }
-#elif defined (HAVE_WAITPID)
+#if defined (HAVE_WAITPID)
   /* Note that, whenever any subprocess terminates (asynch. or synch.),
      the SIGCHLD handler will be called and it will call wait().  Thus
      we cannot just call wait() ourselves, and we can't block SIGCHLD
@@ -382,8 +357,6 @@ wait_for_termination (int pid)
 }
 
 #endif /* NEED_SYNC_PROCESS_CODE */
-
-#if !defined (NO_SUBPROCESSES)
 
 /*
  *	flush any pending output
@@ -544,20 +517,11 @@ child_setup_tty (int out)
 
 #endif /* not HAVE_TERMIO */
   emacs_set_tty (out, &s, 0);
-
-#ifdef RTU
-  {
-    int zero = 0;
-    ioctl (out, FIOASYNC, &zero);
-  }
-#endif /* RTU */
 }
 #endif /* WIN32_NATIVE */
 
-#endif /* not NO_SUBPROCESSES */
-
 
-#if !defined (SIGTSTP) && !defined (USG_JOBCTRL)
+#if !defined (SIGTSTP)
 
 #define SIG_PARAM_TYPE int
 
@@ -588,7 +552,6 @@ restore_signal_handlers (struct save_signal *saved_handlers)
       saved_handlers++;
     }
 }
-
 
 /* Fork a subshell.  */
 static void
@@ -694,7 +657,7 @@ sys_subshell (void)
 #endif /* not WIN32_NATIVE */
 }
 
-#endif /* !defined (SIGTSTP) && !defined (USG_JOBCTRL) */
+#endif /* !defined (SIGTSTP) */
 
 
 
@@ -708,12 +671,7 @@ sys_suspend (void)
     EMACS_KILLPG (pgrp, SIGTSTP);
   }
 
-#elif defined (USG_JOBCTRL)
-  /* If you don't know what this is don't mess with it */
-  ptrace (0, 0, 0, 0);		/* set for ptrace - caught by csh */
-  kill (getpid (), SIGQUIT);
-
-#else /* No SIGTSTP or USG_JOBCTRL */
+#else /* No SIGTSTP */
 
   /* On a system where suspending is not implemented,
      instead fork a subshell and let it talk directly to the terminal
@@ -734,8 +692,7 @@ sys_suspend_process (
 		     )
 {
     /* I don't doubt that it is possible to suspend processes on
-     * VMS machines or thost that use USG_JOBCTRL,
-     * but I don't know how to do it, so...
+     * VMS machines, but I don't know how to do it, so...
      */
 #if defined (SIGTSTP)
     kill(process, SIGTSTP);
@@ -885,15 +842,6 @@ setup_pty (
 #endif
 	   )
 {
-#ifdef IBMRTAIX
-  /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
-  /* ignore SIGHUP once we've started a child on a pty.  Note that this may */
-  /* cause EMACS not to die when it should, i.e., when its own controlling  */
-  /* tty goes away.  I've complained to the AIX developers, and they may    */
-  /* change this behavior, but I'm not going to hold my breath.             */
-  EMACS_SIGNAL (SIGHUP, SIG_IGN);
-#endif /* IBMRTAIX */
-
 #ifdef TIOCPKT
   /* In some systems (Linux through 2.0.0, at least), packet mode doesn't
      get cleared when a pty is closed, so we need to clear it here.
@@ -941,11 +889,6 @@ init_baud_rate (struct device *d)
     sg.c_cflag = B9600;
     tcgetattr (input_fd, &sg);
     DEVICE_TTY_DATA (d)->ospeed = cfgetospeed (&sg);
-# if defined (USE_GETOBAUD) && defined (getobaud)
-    /* m88k-motorola-sysv3 needs this (ghazi@noc.rutgers.edu) 9/1/94. */
-    if (DEVICE_TTY_DATA (d)->ospeed == 0)
-      DEVICE_TTY_DATA (d)->ospeed = getobaud (sg.c_cflag);
-# endif
 #elif defined (HAVE_TERMIO)
     struct termio sg;
 
@@ -1009,12 +952,7 @@ init_sigio_on_device (struct device *d)
   }
 #elif defined (F_SETOWN) && !defined (F_SETOWN_BUG)
   DEVICE_OLD_FCNTL_OWNER (d) = fcntl (filedesc, F_GETOWN, 0);
-# ifdef F_SETOWN_SOCK_NEG
-  /* stdin is a socket here */
-  fcntl (filedesc, F_SETOWN, -getpid ());
-# else
   fcntl (filedesc, F_SETOWN, getpid ());
-# endif
 #endif
 }
 
@@ -1069,7 +1007,7 @@ request_sigio_on_device (struct device *d)
      particular need to switch. --ben
   */
 
-#if defined (I_SETSIG) && !defined (HPUX10) && !defined (LINUX)
+#if defined (I_SETSIG) && !defined (HPUX11) && !defined (LINUX)
   {
     int events = 0;
     ioctl (filedesc, I_GETSIG, &events);
@@ -1109,10 +1047,6 @@ request_sigio_on_device (struct device *d)
     ioctl (filedesc, FIOASYNC, &on);
   }
 #endif
-
-#if defined (_CX_UX) /* #### Is this crap necessary? */
-  EMACS_UNBLOCK_SIGNAL (SIGIO);
-#endif
 }
 
 static void
@@ -1120,7 +1054,7 @@ unrequest_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined (HPUX10) && !defined (LINUX)
+#if defined (I_SETSIG) && !defined (HPUX11) && !defined (LINUX)
   {
     int events = 0;
     ioctl (filedesc, I_GETSIG, &events);
@@ -1465,6 +1399,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
 	/* We cannot use memcmp on the whole structure here because under
 	 * aix386 the termios structure has some reserved field that may
 	 * not be filled in.
+	 * FIXME: Now that aix386 is gone, can we memcmp the whole structure?
 	 */
 	if (   new_.c_iflag == settings->main.c_iflag
 	    && new_.c_oflag == settings->main.c_oflag
@@ -1511,18 +1446,6 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
 
 #ifdef HAVE_TTY
 
-/* This may also be defined in stdio,
-   but if so, this does no harm,
-   and using the same name avoids wasting the other one's space.  */
-
-#if ((defined(USG) || defined(DGUX)) && !defined(__STDC__))
-char _sobuf[BUFSIZ+8];
-#elif (defined(USG) && !defined(LINUX) && !defined(_SCO_DS)) || defined(IRIX5)
-extern unsigned char _sobuf[BUFSIZ+8];
-#else
-char _sobuf[BUFSIZ];
-#endif
-
 #if defined (TIOCGLTC) && defined (HAVE_LTCHARS) /* HAVE_LTCHARS */
 static struct ltchars new_ltchars = {-1,-1,-1,-1,-1,-1};
 #endif
@@ -1537,15 +1460,9 @@ tty_init_sys_modes_on_device (struct device *d)
 {
   struct emacs_tty tty;
   int input_fd;
-#if defined (IBMR2AIX) && defined (AIXHFT)
-  int output_fd;
-#endif
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
   input_fd = CONSOLE_TTY_DATA (con)->infd;
-#if defined (IBMR2AIX) && defined (AIXHFT)
-  output_fd = CONSOLE_TTY_DATA (con)->outfd;
-#endif
 
   emacs_get_tty (input_fd, &CONSOLE_TTY_DATA (con)->old_tty);
   tty = CONSOLE_TTY_DATA (con)->old_tty;
@@ -1555,10 +1472,6 @@ tty_init_sys_modes_on_device (struct device *d)
 #if defined (HAVE_TERMIO) || defined (HAVE_TERMIOS)
   /* after all those years... */
   con->tty_erase_char = make_char (tty.main.c_cc[VERASE]);
-#ifdef DGUX
-  /* This allows meta to be sent on 8th bit.  */
-  tty.main.c_iflag &= ~INPCK;	/* don't check input for parity */
-#endif
   tty.main.c_iflag |= (IGNBRK);	/* Ignore break condition */
   tty.main.c_iflag &= ~ICRNL;	/* Disable map of CR to NL on input */
 #ifdef ISTRIP
@@ -1653,11 +1566,6 @@ tty_init_sys_modes_on_device (struct device *d)
 #ifdef VSTOP
   tty.main.c_cc[VSTOP] = _POSIX_VDISABLE;
 #endif /* VSTOP */
-#ifdef SET_LINE_DISCIPLINE
-  /* Need to explicitly request TERMIODISC line discipline or
-     Ultrix's termios does not work correctly.  */
-  tty.main.c_line = SET_LINE_DISCIPLINE;
-#endif
 
 #ifdef AIX
 #ifndef IBMR2AIX
@@ -1705,16 +1613,6 @@ tty_init_sys_modes_on_device (struct device *d)
 
   tty.lmode = LDECCTQ | LLITOUT | LPASS8 | LNOFLSH |
     CONSOLE_TTY_DATA (con)->old_tty.lmode;
-
-#if defined (ultrix) || defined (__bsdi__)
-  /* Under Ultrix 4.2a, leaving this out doesn't seem to hurt
-     anything, and leaving it in breaks the meta key.  Go figure.  */
-  /* Turning off ONLCR is enough under BSD/386.  Leave the general
-     output post-processing flag alone since for some reason it
-     doesn't get reset after XEmacs goes away. */
-  tty.lmode &= ~LLITOUT;
-#endif
-
 #endif /* HAVE_TCHARS */
 #endif /* not HAVE_TERMIO */
 
@@ -1734,37 +1632,12 @@ tty_init_sys_modes_on_device (struct device *d)
   if (!TTY_FLAGS (con).flow_control) ioctl (input_fd, TIOCSTART, 0);
 #endif
 
-#if defined (HAVE_TERMIOS) || defined (HPUX9)
+#if defined (HAVE_TERMIOS)
 #ifdef TCOON
   if (!TTY_FLAGS (con).flow_control) tcflow (input_fd, TCOON);
 #endif
 #endif
-#ifdef AIXHFT
-  hft_init (con);
-#ifdef IBMR2AIX
-  {
-    /* IBM's HFT device usually thinks a ^J should be LF/CR.
-       We need it to be only LF.  This is the way that is
-       done. */
-    struct termio tty;
 
-    if (ioctl (output_fd, HFTGETID, &tty) != -1)
-      retry_write (output_fd, "\033[20l", 5);
-  }
-#endif
-#endif
-
-#if 0 /* We do our own buffering with lstreams. */
-#ifdef _IOFBF
-  /* This symbol is defined on recent USG systems.
-     Someone says without this call USG won't really buffer the file
-     even with a call to setbuf. */
-  setvbuf (CONSOLE_TTY_DATA (con)->outfd, (char *) _sobuf, _IOFBF,
-	   sizeof (_sobuf));
-#else
-  setbuf (CONSOLE_TTY_DATA (con)->outfd, (char *) _sobuf);
-#endif
-#endif
   set_tty_modes (con);
 }
 
@@ -1931,26 +1804,15 @@ eight_bit_tty (struct device *d)
 static void
 tty_reset_sys_modes_on_device (struct device *d)
 {
-#if defined (BSD) || (defined (IBMR2AIX) && defined (AIXHFT))
+#if defined (BSD)
   int output_fd;
 #endif
   int input_fd;
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
   input_fd = CONSOLE_TTY_DATA (con)->infd;
-#if defined (BSD) || (defined (IBMR2AIX) && defined (AIXHFT))
+#if defined (BSD)
   output_fd = CONSOLE_TTY_DATA (con)->outfd;
-#endif
-
-#if defined (IBMR2AIX) && defined (AIXHFT)
-  {
-    /* HFT consoles normally use ^J as a LF/CR.  We forced it to
-       do the LF only.  Now, we need to reset it. */
-    struct termio tty;
-
-    if (ioctl (output_fd, HFTGETID, &tty) != -1)
-      retry_write (output_fd, "\033[20h", 5);
-  }
 #endif
 
   tty_redisplay_shutdown (con);
@@ -1965,18 +1827,6 @@ tty_reset_sys_modes_on_device (struct device *d)
   while (emacs_set_tty (input_fd, &CONSOLE_TTY_DATA (con)->old_tty, 0)
 	 < 0 && errno == EINTR)
     ;
-
-#ifdef SET_LINE_DISCIPLINE
-  /* Ultrix's termios *ignores* any line discipline except TERMIODISC.
-     A different old line discipline is therefore not restored, yet.
-     Restore the old line discipline by hand.  */
-  ioctl (input_fd, TIOCSETD, &old_tty.main.c_line);
-#endif
-
-#ifdef AIXHFT
-  hft_reset (con);
-#endif
-
 }
 
 #endif /* HAVE_TTY */
@@ -2038,118 +1888,6 @@ reset_initial_console (void)
     reset_one_console (XCONSOLE (Vcontrolling_terminal));
   unmunge_process_groups ();
 }
-
-
-/* ------------------------------------------------------ */
-/*                 extra TTY stuff under AIX              */
-/* ------------------------------------------------------ */
-
-#ifdef AIXHFT
-
-/* Called from init_sys_modes.  */
-static void
-hft_init (struct console *con)
-{
-  int junk;
-  int input_fd;
-
-  assert (CONSOLE_TTY_P (con));
-  input_fd = CONSOLE_TTY_DATA (con)->infd;
-
-  /* If we're not on an HFT we shouldn't do any of this.  We determine
-     if we are on an HFT by trying to get an HFT error code.  If this
-     call fails, we're not on an HFT. */
-#ifdef IBMR2AIX
-  if (ioctl (input_fd, HFQERROR, &junk) < 0)
-    return;
-#else /* not IBMR2AIX */
-  if (ioctl (input_fd, HFQEIO, 0) < 0)
-    return;
-#endif /* not IBMR2AIX */
-
-  /* On AIX the default hft keyboard mapping uses backspace rather than delete
-     as the rubout key's ASCII code.  Here this is changed.  The bug is that
-     there's no way to determine the old mapping, so in reset_one_console
-     we need to assume that the normal map had been present.  Of course, this
-     code also doesn't help if on a terminal emulator which doesn't understand
-     HFT VTD's. */
-  {
-    struct hfbuf buf;
-    struct hfkeymap keymap;
-
-    buf.hf_bufp = (char *)&keymap;
-    buf.hf_buflen = sizeof (keymap);
-    keymap.hf_nkeys = 2;
-    keymap.hfkey[0].hf_kpos = 15;
-    keymap.hfkey[0].hf_kstate = HFMAPCHAR | HFSHFNONE;
-#ifdef IBMR2AIX
-    keymap.hfkey[0].hf_keyidh = '<';
-#else /* not IBMR2AIX */
-    keymap.hfkey[0].hf_page = '<';
-#endif /* not IBMR2AIX */
-    keymap.hfkey[0].hf_char = 127;
-    keymap.hfkey[1].hf_kpos = 15;
-    keymap.hfkey[1].hf_kstate = HFMAPCHAR | HFSHFSHFT;
-#ifdef IBMR2AIX
-    keymap.hfkey[1].hf_keyidh = '<';
-#else /* not IBMR2AIX */
-    keymap.hfkey[1].hf_page = '<';
-#endif /* not IBMR2AIX */
-    keymap.hfkey[1].hf_char = 127;
-    hftctl (input_fd, HFSKBD, &buf);
-  }
-  /* #### Should probably set a console TTY flag here. */
-#if 0
-  /* The HFT system on AIX doesn't optimize for scrolling, so it's really ugly
-     at times. */
-  line_ins_del_ok = char_ins_del_ok = 0;
-#endif /* 0 */
-}
-
-/* Reset the rubout key to backspace. */
-
-static void
-hft_reset (struct console *con)
-{
-  struct hfbuf buf;
-  struct hfkeymap keymap;
-  int junk;
-  int input_fd;
-
-  assert (CONSOLE_TTY_P (con));
-  input_fd = CONSOLE_TTY_DATA (con)->infd;
-
-#ifdef IBMR2AIX
-  if (ioctl (input_fd, HFQERROR, &junk) < 0)
-    return;
-#else /* not IBMR2AIX */
-  if (ioctl (input_fd, HFQEIO, 0) < 0)
-    return;
-#endif /* not IBMR2AIX */
-
-  buf.hf_bufp = (char *)&keymap;
-  buf.hf_buflen = sizeof (keymap);
-  keymap.hf_nkeys = 2;
-  keymap.hfkey[0].hf_kpos = 15;
-  keymap.hfkey[0].hf_kstate = HFMAPCHAR | HFSHFNONE;
-#ifdef IBMR2AIX
-  keymap.hfkey[0].hf_keyidh = '<';
-#else /* not IBMR2AIX */
-  keymap.hfkey[0].hf_page = '<';
-#endif /* not IBMR2AIX */
-  keymap.hfkey[0].hf_char = 8;
-  keymap.hfkey[1].hf_kpos = 15;
-  keymap.hfkey[1].hf_kstate = HFMAPCHAR | HFSHFSHFT;
-#ifdef IBMR2AIX
-  keymap.hfkey[1].hf_keyidh = '<';
-#else /* not IBMR2AIX */
-  keymap.hfkey[1].hf_page = '<';
-#endif /* not IBMR2AIX */
-  keymap.hfkey[1].hf_char = 8;
-  hftctl (input_fd, HFSKBD, &buf);
-}
-
-#endif /* AIXHFT */
 
 
 /************************************************************************/
@@ -2446,11 +2184,6 @@ qxe_reliable_signal (int signal_number, signal_handler_t action)
      systems.  However, I don't want to deal with the potential
      evil ramifications of this at this point. */
 
-#ifdef DGUX
-  /* This gets us restartable system calls for efficiency.
-     The "else" code will work as well. */
-  return (berk_signal (signal_number, action));
-#else
   sigemptyset (&new_action.sa_mask);
   new_action.sa_handler = action;
 #if defined (SA_RESTART)
@@ -2463,7 +2196,6 @@ qxe_reliable_signal (int signal_number, signal_handler_t action)
 #endif
   sigaction (signal_number, &new_action, &old_action);
   return (old_action.sa_handler);
-#endif /* DGUX */
 
 #else /* not 0 */
 
@@ -2511,7 +2243,7 @@ qxe_reliable_signal (int signal_number, signal_handler_t action)
 
 #ifndef HAVE_STRERROR
 
-#if !defined(NeXT) && !defined(__alpha) && !defined(MACH) && !defined(LINUX) && !defined(IRIX) && !defined(__NetBSD__)
+#if !defined(__alpha) && !defined(MACH) && !defined(LINUX) && !defined(IRIX) && !defined(__NetBSD__)
 /* Linux added here by Raymond L. Toy <toy@alydar.crd.ge.com> for XEmacs. */
 /* Irix added here by gparker@sni-usa.com for XEmacs. */
 /* NetBSD added here by James R Grinter <jrg@doc.ic.ac.uk> for XEmacs */
@@ -3492,6 +3224,7 @@ size_t
 wcslen (const wchar_t *s)
 {
   const wchar_t *p = s;
+  if (s == NULL) return NULL;
 
   while (*p++)
     ;
@@ -3509,6 +3242,7 @@ char *
 strlwr (char *s)
 {
   REGISTER char *c;
+  if (s == NULL) return NULL;
 
   for (c = s; *c; c++)
     {
@@ -3898,12 +3632,6 @@ const char *sys_siglist[NSIG + 1] =
     DEFER_GETTEXT ("LAN I/O interrupt"),		/* 25 SIGAIO */
     DEFER_GETTEXT ("PTY I/O interrupt"),		/* 26 SIGPTY */
     DEFER_GETTEXT ("I/O intervention required"),	/* 27 SIGIOINT */
-#ifdef AIXHFT
-    "HFT grant",			/* 28 SIGGRANT */
-    "HFT retract",			/* 29 SIGRETRACT */
-    "HFT sound done",			/* 30 SIGSOUND */
-    "HFT input ready",			/* 31 SIGMSG */
-#endif
     /* $$####end-snarf */
     0
   };
@@ -3957,79 +3685,6 @@ const char *sys_siglist[NSIG + 1] =
   };
 #endif /* not AIX */
 #endif /* USG */
-#ifdef DGUX
-const char *sys_siglist[NSIG + 1] =
-  {
-    /* $$####begin-snarf */
-    "null signal",			 /*  0 SIGNULL   */
-    "hangup",				 /*  1 SIGHUP    */
-    "interrupt",	       		 /*  2 SIGINT    */
-    "quit",				 /*  3 SIGQUIT   */
-    "illegal instruction",		 /*  4 SIGILL    */
-    "trace trap",			 /*  5 SIGTRAP   */
-    "abort termination",		 /*  6 SIGABRT   */
-    "SIGEMT",				 /*  7 SIGEMT    */
-    "floating point exception",		 /*  8 SIGFPE    */
-    "kill",				 /*  9 SIGKILL   */
-    "bus error",			 /* 10 SIGBUS    */
-    "segmentation violation",		 /* 11 SIGSEGV   */
-    "bad argument to system call",	 /* 12 SIGSYS    */
-    "write on a pipe with no reader",	 /* 13 SIGPIPE   */
-    "alarm clock",			 /* 14 SIGALRM   */
-    "software termination signal",	 /* 15 SIGTERM   */
-    "user defined signal 1",		 /* 16 SIGUSR1   */
-    "user defined signal 2",		 /* 17 SIGUSR2   */
-    "child stopped or terminated",	 /* 18 SIGCLD    */
-    "power-fail restart",		 /* 19 SIGPWR    */
-    "window size changed",		 /* 20 SIGWINCH  */
-    "undefined",			 /* 21           */
-    "pollable event occurred",		 /* 22 SIGPOLL   */
-    "sendable stop signal not from tty", /* 23 SIGSTOP   */
-    "stop signal from tty",		 /* 24 SIGSTP    */
-    "continue a stopped process",	 /* 25 SIGCONT   */
-    "attempted background tty read",	 /* 26 SIGTTIN   */
-    "attempted background tty write",	 /* 27 SIGTTOU   */
-    "undefined",			 /* 28           */
-    "undefined",			 /* 29           */
-    "undefined",			 /* 30           */
-    "undefined",			 /* 31           */
-    "undefined",			 /* 32           */
-    "socket (TCP/IP) urgent data arrival", /* 33 SIGURG    */
-    "I/O is possible",			 /* 34 SIGIO     */
-    "exceeded cpu time limit",		 /* 35 SIGXCPU   */
-    "exceeded file size limit",		 /* 36 SIGXFSZ   */
-    "virtual time alarm",		 /* 37 SIGVTALRM */
-    "profiling time alarm",		 /* 38 SIGPROF   */
-    "undefined",			 /* 39           */
-    "file record locks revoked",	 /* 40 SIGLOST   */
-    "undefined",			 /* 41           */
-    "undefined",			 /* 42           */
-    "undefined",			 /* 43           */
-    "undefined",			 /* 44           */
-    "undefined",			 /* 45           */
-    "undefined",			 /* 46           */
-    "undefined",			 /* 47           */
-    "undefined",			 /* 48           */
-    "undefined",			 /* 49           */
-    "undefined",			 /* 50           */
-    "undefined",			 /* 51           */
-    "undefined",			 /* 52           */
-    "undefined",			 /* 53           */
-    "undefined",			 /* 54           */
-    "undefined",			 /* 55           */
-    "undefined",			 /* 56           */
-    "undefined",			 /* 57           */
-    "undefined",			 /* 58           */
-    "undefined",			 /* 59           */
-    "undefined",			 /* 60           */
-    "undefined",			 /* 61           */
-    "undefined",			 /* 62           */
-    "undefined",			 /* 63           */
-    "notification message in mess. queue", /* 64 SIGDGNOTIFY */
-    /* $$####end-snarf */
-    0
-  };
-#endif /* DGUX */
 
 #endif /* (!defined(HAVE_DECL_SYS_SIGLIST) || !HAVE_DECL_SYS_SIGLIST ) && !defined (HAVE_SYS_SIGLIST) */
 
@@ -4042,7 +3697,7 @@ const char *sys_siglist[NSIG + 1] =
 
 #include <dirent.h>
 
-#if defined(BROKEN_CLOSEDIR) || !defined(HAVE_CLOSEDIR)
+#if !defined(HAVE_CLOSEDIR)
 int
 closedir (DIR *dirp)  /* stream from opendir */
 {
@@ -4059,7 +3714,7 @@ closedir (DIR *dirp)  /* stream from opendir */
   xfree (dirp, DIR *);
   return (rtnval);
 }
-#endif /* BROKEN_CLOSEDIR or not HAVE_CLOSEDIR */
+#endif /* not HAVE_CLOSEDIR */
 #endif /* SYSV_SYSTEM_DIR */
 
 #ifdef NONSYSTEM_DIR_LIBRARY

@@ -13,121 +13,6 @@
 
 
 /*----------------------------------------------------------------------*/
-/*                       Processing file WINCON.H                       */
-/*----------------------------------------------------------------------*/
-
-BOOL
-qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-  if (XEUNICODE_P)
-    return PeekConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-  else
-    return PeekConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-}
-
-BOOL
-qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-  else
-    return ReadConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-}
-
-BOOL
-qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
-  else
-    return WriteConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
-}
-
-BOOL
-qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-  else
-    return ReadConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-}
-
-BOOL
-qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
-  else
-    return WriteConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
-}
-
-BOOL
-qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleOutputCharacterW (hConsoleOutput, (LPWSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
-  else
-    return ReadConsoleOutputCharacterA (hConsoleOutput, (LPSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
-}
-
-BOOL
-qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleOutputCharacterW (hConsoleOutput, (LPCWSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-  else
-    return WriteConsoleOutputCharacterA (hConsoleOutput, (LPCSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-}
-
-/* Error if FillConsoleOutputCharacter used: split CHAR */
-
-BOOL
-qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill)
-{
-  if (XEUNICODE_P)
-    return ScrollConsoleScreenBufferW (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-  else
-    return ScrollConsoleScreenBufferA (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-}
-
-DWORD
-qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize)
-{
-  if (XEUNICODE_P)
-    return GetConsoleTitleW ((LPWSTR) lpConsoleTitle, nSize);
-  else
-    return GetConsoleTitleA ((LPSTR) lpConsoleTitle, nSize);
-}
-
-BOOL
-qxeSetConsoleTitle (const Extbyte * lpConsoleTitle)
-{
-  if (XEUNICODE_P)
-    return SetConsoleTitleW ((LPCWSTR) lpConsoleTitle);
-  else
-    return SetConsoleTitleA ((LPCSTR) lpConsoleTitle);
-}
-
-BOOL
-qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleW (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
-  else
-    return ReadConsoleA (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
-}
-
-BOOL
-qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleW (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-  else
-    return WriteConsoleA (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-}
-
-
-/*----------------------------------------------------------------------*/
 /*                      Processing file SHELLAPI.H                      */
 /*----------------------------------------------------------------------*/
 
@@ -653,233 +538,6 @@ qxeEnumPrinters (DWORD Flags, Extbyte * Name, DWORD Level, LPBYTE pPrinterEnum, 
 #if defined (HAVE_MS_WINDOWS)
 
 /* Error if GetPrinterHTMLView used: not used, complicated interface with split structures */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-
-/*----------------------------------------------------------------------*/
-/*                      Processing file WINNETWK.H                      */
-/*----------------------------------------------------------------------*/
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetAddConnection (const Extbyte * lpRemoteName, const Extbyte * lpPassword, const Extbyte * lpLocalName)
-{
-  if (XEUNICODE_P)
-    return WNetAddConnectionW ((LPCWSTR) lpRemoteName, (LPCWSTR) lpPassword, (LPCWSTR) lpLocalName);
-  else
-    return WNetAddConnectionA ((LPCSTR) lpRemoteName, (LPCSTR) lpPassword, (LPCSTR) lpLocalName);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetAddConnection2 (LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return WNetAddConnection2W (lpNetResource, (LPCWSTR) lpPassword, (LPCWSTR) lpUserName, dwFlags);
-  else
-    return WNetAddConnection2A ((LPNETRESOURCEA) lpNetResource, (LPCSTR) lpPassword, (LPCSTR) lpUserName, dwFlags);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetAddConnection3 (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return WNetAddConnection3W (hwndOwner, lpNetResource, (LPCWSTR) lpPassword, (LPCWSTR) lpUserName, dwFlags);
-  else
-    return WNetAddConnection3A (hwndOwner, (LPNETRESOURCEA) lpNetResource, (LPCSTR) lpPassword, (LPCSTR) lpUserName, dwFlags);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetCancelConnection (const Extbyte * lpName, BOOL fForce)
-{
-  if (XEUNICODE_P)
-    return WNetCancelConnectionW ((LPCWSTR) lpName, fForce);
-  else
-    return WNetCancelConnectionA ((LPCSTR) lpName, fForce);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetCancelConnection2 (const Extbyte * lpName, DWORD dwFlags, BOOL fForce)
-{
-  if (XEUNICODE_P)
-    return WNetCancelConnection2W ((LPCWSTR) lpName, dwFlags, fForce);
-  else
-    return WNetCancelConnection2A ((LPCSTR) lpName, dwFlags, fForce);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetConnection (const Extbyte * lpLocalName, Extbyte * lpRemoteName, LPDWORD lpnLength)
-{
-  if (XEUNICODE_P)
-    return WNetGetConnectionW ((LPCWSTR) lpLocalName, (LPWSTR) lpRemoteName, lpnLength);
-  else
-    return WNetGetConnectionA ((LPCSTR) lpLocalName, (LPSTR) lpRemoteName, lpnLength);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetUseConnection (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpUserID, const Extbyte * lpPassword, DWORD dwFlags, Extbyte * lpAccessName, LPDWORD lpBufferSize, LPDWORD lpResult)
-{
-  if (XEUNICODE_P)
-    return WNetUseConnectionW (hwndOwner, lpNetResource, (LPCWSTR) lpUserID, (LPCWSTR) lpPassword, dwFlags, (LPWSTR) lpAccessName, lpBufferSize, lpResult);
-  else
-    return WNetUseConnectionA (hwndOwner, (LPNETRESOURCEA) lpNetResource, (LPCSTR) lpUserID, (LPCSTR) lpPassword, dwFlags, (LPSTR) lpAccessName, lpBufferSize, lpResult);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* NOTE: contains split-simple LPNETRESOURCE */
-DWORD 
-qxeWNetConnectionDialog1 (LPCONNECTDLGSTRUCTW lpConnDlgStruct)
-{
-  if (XEUNICODE_P)
-    return WNetConnectionDialog1W (lpConnDlgStruct);
-  else
-    return WNetConnectionDialog1A ((LPCONNECTDLGSTRUCTA) lpConnDlgStruct);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetDisconnectDialog1 (LPDISCDLGSTRUCTW lpConnDlgStruct)
-{
-  if (XEUNICODE_P)
-    return WNetDisconnectDialog1W (lpConnDlgStruct);
-  else
-    return WNetDisconnectDialog1A ((LPDISCDLGSTRUCTA) lpConnDlgStruct);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetOpenEnum (DWORD dwScope, DWORD dwType, DWORD dwUsage, LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum)
-{
-  if (XEUNICODE_P)
-    return WNetOpenEnumW (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
-  else
-    return WNetOpenEnumA (dwScope, dwType, dwUsage, (LPNETRESOURCEA) lpNetResource, lphEnum);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetEnumResource (HANDLE hEnum, LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize)
-{
-  if (XEUNICODE_P)
-    return WNetEnumResourceW (hEnum, lpcCount, lpBuffer, lpBufferSize);
-  else
-    return WNetEnumResourceA (hEnum, lpcCount, lpBuffer, lpBufferSize);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetUniversalName (const Extbyte * lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize)
-{
-  if (XEUNICODE_P)
-    return WNetGetUniversalNameW ((LPCWSTR) lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
-  else
-    return WNetGetUniversalNameA ((LPCSTR) lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetUser (const Extbyte * lpName, Extbyte * lpUserName, LPDWORD lpnLength)
-{
-  if (XEUNICODE_P)
-    return WNetGetUserW ((LPCWSTR) lpName, (LPWSTR) lpUserName, lpnLength);
-  else
-    return WNetGetUserA ((LPCSTR) lpName, (LPSTR) lpUserName, lpnLength);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetProviderName (DWORD dwNetType, Extbyte * lpProviderName, LPDWORD lpBufferSize)
-{
-  if (XEUNICODE_P)
-    return WNetGetProviderNameW (dwNetType, (LPWSTR) lpProviderName, lpBufferSize);
-  else
-    return WNetGetProviderNameA (dwNetType, (LPSTR) lpProviderName, lpBufferSize);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetNetworkInformation (const Extbyte * lpProvider, LPNETINFOSTRUCT lpNetInfoStruct)
-{
-  if (XEUNICODE_P)
-    return WNetGetNetworkInformationW ((LPCWSTR) lpProvider, lpNetInfoStruct);
-  else
-    return WNetGetNetworkInformationA ((LPCSTR) lpProvider, lpNetInfoStruct);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeWNetGetLastError (LPDWORD lpError, Extbyte * lpErrorBuf, DWORD nErrorBufSize, Extbyte * lpNameBuf, DWORD nNameBufSize)
-{
-  if (XEUNICODE_P)
-    return WNetGetLastErrorW (lpError, (LPWSTR) lpErrorBuf, nErrorBufSize, (LPWSTR) lpNameBuf, nNameBufSize);
-  else
-    return WNetGetLastErrorA (lpError, (LPSTR) lpErrorBuf, nErrorBufSize, (LPSTR) lpNameBuf, nNameBufSize);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD 
-qxeMultinetGetConnectionPerformance (LPNETRESOURCEW lpNetResource, LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct)
-{
-  if (XEUNICODE_P)
-    return MultinetGetConnectionPerformanceW (lpNetResource, lpNetConnectInfoStruct);
-  else
-    return MultinetGetConnectionPerformanceA ((LPNETRESOURCEA) lpNetResource, lpNetConnectInfoStruct);
-}
 
 #endif /* defined (HAVE_MS_WINDOWS) */
 
@@ -1858,6 +1516,731 @@ qxeSystemParametersInfo (UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIn
 
 
 /*----------------------------------------------------------------------*/
+/*                        Processing file IME.H                         */
+/*----------------------------------------------------------------------*/
+
+/* Error if SendIMEMessageEx used: obsolete, no docs available */
+
+
+/*----------------------------------------------------------------------*/
+/*                        Processing file IMM.H                         */
+/*----------------------------------------------------------------------*/
+
+#if defined (HAVE_MS_WINDOWS)
+
+HKL
+qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText)
+{
+  if (XEUNICODE_P)
+    return ImmInstallIMEW ((LPCWSTR) lpszIMEFileName, (LPCWSTR) lpszLayoutText);
+  else
+    return ImmInstallIMEA ((LPCSTR) lpszIMEFileName, (LPCSTR) lpszLayoutText);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetDescriptionW (arg1, (LPWSTR) arg2, uBufLen);
+  else
+    return ImmGetDescriptionA (arg1, (LPSTR) arg2, uBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetIMEFileNameW (arg1, (LPWSTR) arg2, uBufLen);
+  else
+    return ImmGetIMEFileNameA (arg1, (LPSTR) arg2, uBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+LONG
+qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
+{
+  if (XEUNICODE_P)
+    return ImmGetCompositionStringW (arg1, arg2, arg3, arg4);
+  else
+    return ImmGetCompositionStringA (arg1, arg2, arg3, arg4);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Skipping ImmSetCompositionString because different prototypes in VC6 and VC7 */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount)
+{
+  if (XEUNICODE_P)
+    return ImmGetCandidateListCountW (arg1, lpdwListCount);
+  else
+    return ImmGetCandidateListCountA (arg1, lpdwListCount);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetCandidateListW (arg1, deIndex, arg3, dwBufLen);
+  else
+    return ImmGetCandidateListA (arg1, deIndex, arg3, dwBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetGuideLineW (arg1, dwIndex, (LPWSTR) arg3, dwBufLen);
+  else
+    return ImmGetGuideLineA (arg1, dwIndex, (LPSTR) arg3, dwBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* NOTE: // split-simple REGISTERWORD */
+BOOL
+qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4)
+{
+  if (XEUNICODE_P)
+    return ImmConfigureIMEW (arg1, arg2, arg3, arg4);
+  else
+    return ImmConfigureIMEA (arg1, arg2, arg3, arg4);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* NOTE: // strings of various sorts */
+LRESULT
+qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4)
+{
+  if (XEUNICODE_P)
+    return ImmEscapeW (arg1, arg2, arg3, arg4);
+  else
+    return ImmEscapeA (arg1, arg2, arg3, arg4);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag)
+{
+  if (XEUNICODE_P)
+    return ImmGetConversionListW (arg1, arg2, (LPCWSTR) arg3, arg4, dwBufLen, uFlag);
+  else
+    return ImmGetConversionListA (arg1, arg2, (LPCSTR) arg3, arg4, dwBufLen, uFlag);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+BOOL
+qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4)
+{
+  if (XEUNICODE_P)
+    return ImmIsUIMessageW (arg1, arg2, arg3, arg4);
+  else
+    return ImmIsUIMessageA (arg1, arg2, arg3, arg4);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+BOOL
+qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister)
+{
+  if (XEUNICODE_P)
+    return ImmRegisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszRegister);
+  else
+    return ImmRegisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszRegister);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+BOOL
+qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister)
+{
+  if (XEUNICODE_P)
+    return ImmUnregisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszUnregister);
+  else
+    return ImmUnregisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszUnregister);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if ImmGetRegisterWordStyle used: split-sized STYLEBUF */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6)
+{
+  if (XEUNICODE_P)
+    return ImmEnumRegisterWordW (arg1, arg2, (LPCWSTR) lpszReading, arg4, (LPCWSTR) lpszRegister, arg6);
+  else
+    return ImmEnumRegisterWordA (arg1, (REGISTERWORDENUMPROCA) arg2, (LPCSTR) lpszReading, arg4, (LPCSTR) lpszRegister, arg6);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if ImmGetImeMenuItems used: split-sized IMEMENUITEMINFO */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+
+/*----------------------------------------------------------------------*/
+/*                      Processing file MMSYSTEM.H                      */
+/*----------------------------------------------------------------------*/
+
+BOOL
+qxesndPlaySound (const Extbyte * pszSound, UINT fuSound)
+{
+  if (XEUNICODE_P)
+    return sndPlaySoundW ((LPCWSTR) pszSound, fuSound);
+  else
+    return sndPlaySoundA ((LPCSTR) pszSound, fuSound);
+}
+
+BOOL
+qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound)
+{
+  if (XEUNICODE_P)
+    return PlaySoundW ((LPCWSTR) pszSound, hmod, fdwSound);
+  else
+    return PlaySoundA ((LPCSTR) pszSound, hmod, fdwSound);
+}
+
+/* Error if waveOutGetDevCaps used: split-sized LPWAVEOUTCAPS */
+
+MMRESULT
+qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return waveOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return waveOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if waveInGetDevCaps used: split-sized LPWAVEINCAPS */
+
+MMRESULT
+qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return waveInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return waveInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if midiOutGetDevCaps used: split-sized LPMIDIOUTCAPS */
+
+MMRESULT
+qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return midiOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return midiOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if midiInGetDevCaps used: split-sized LPMIDIOUTCAPS */
+
+MMRESULT
+qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return midiInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return midiInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if auxGetDevCaps used: split-sized LPAUXCAPS */
+
+/* Error if mixerGetDevCaps used: split-sized LPMIXERCAPS */
+
+/* Error if mixerGetLineInfo used: split-sized LPMIXERLINE */
+
+/* Error if mixerGetLineControls used: split-sized LPMIXERCONTROL */
+
+/* Error if mixerGetControlDetails used: split-sized LPMIXERCONTROL in LPMIXERLINECONTROLS in LPMIXERCONTROLDETAILS */
+
+/* Error if joyGetDevCaps used: split-sized LPJOYCAPS */
+
+FOURCC
+qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags)
+{
+  if (XEUNICODE_P)
+    return mmioStringToFOURCCW ((LPCWSTR) sz, uFlags);
+  else
+    return mmioStringToFOURCCA ((LPCSTR) sz, uFlags);
+}
+
+LPMMIOPROC
+qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return mmioInstallIOProcW (fccIOProc, pIOProc, dwFlags);
+  else
+    return mmioInstallIOProcA (fccIOProc, pIOProc, dwFlags);
+}
+
+HMMIO
+qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen)
+{
+  if (XEUNICODE_P)
+    return mmioOpenW ((LPWSTR) pszFileName, pmmioinfo, fdwOpen);
+  else
+    return mmioOpenA ((LPSTR) pszFileName, pmmioinfo, fdwOpen);
+}
+
+MMRESULT
+qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename)
+{
+  if (XEUNICODE_P)
+    return mmioRenameW ((LPCWSTR) pszFileName, (LPCWSTR) pszNewFileName, pmmioinfo, fdwRename);
+  else
+    return mmioRenameA ((LPCSTR) pszFileName, (LPCSTR) pszNewFileName, pmmioinfo, fdwRename);
+}
+
+MCIERROR
+qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
+{
+  if (XEUNICODE_P)
+    return mciSendCommandW (mciId, uMsg, dwParam1, dwParam2);
+  else
+    return mciSendCommandA (mciId, uMsg, dwParam1, dwParam2);
+}
+
+MCIERROR
+qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback)
+{
+  if (XEUNICODE_P)
+    return mciSendStringW ((LPCWSTR) lpstrCommand, (LPWSTR) lpstrReturnString, uReturnLength, hwndCallback);
+  else
+    return mciSendStringA ((LPCSTR) lpstrCommand, (LPSTR) lpstrReturnString, uReturnLength, hwndCallback);
+}
+
+MCIDEVICEID
+qxemciGetDeviceID (const Extbyte * pszDevice)
+{
+  if (XEUNICODE_P)
+    return mciGetDeviceIDW ((LPCWSTR) pszDevice);
+  else
+    return mciGetDeviceIDA ((LPCSTR) pszDevice);
+}
+
+#if !defined (MINGW)
+
+/* Error if mciGetDeviceIDFromElementID used: missing from Win98se version of ADVAPI32.dll */
+
+#endif /* !defined (MINGW) */
+
+BOOL
+qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return mciGetErrorStringW (mcierr, (LPWSTR) pszText, cchText);
+  else
+    return mciGetErrorStringA (mcierr, (LPSTR) pszText, cchText);
+}
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file WINCON.H                       */
+/*----------------------------------------------------------------------*/
+
+BOOL
+qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+  if (XEUNICODE_P)
+    return PeekConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+  else
+    return PeekConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+}
+
+BOOL
+qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+  else
+    return ReadConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+}
+
+BOOL
+qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+  else
+    return WriteConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+}
+
+BOOL
+qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+  else
+    return ReadConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+}
+
+BOOL
+qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+  else
+    return WriteConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+}
+
+BOOL
+qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleOutputCharacterW (hConsoleOutput, (LPWSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
+  else
+    return ReadConsoleOutputCharacterA (hConsoleOutput, (LPSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
+}
+
+BOOL
+qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleOutputCharacterW (hConsoleOutput, (LPCWSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+  else
+    return WriteConsoleOutputCharacterA (hConsoleOutput, (LPCSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+}
+
+/* Error if FillConsoleOutputCharacter used: split CHAR */
+
+BOOL
+qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill)
+{
+  if (XEUNICODE_P)
+    return ScrollConsoleScreenBufferW (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+  else
+    return ScrollConsoleScreenBufferA (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+}
+
+DWORD
+qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize)
+{
+  if (XEUNICODE_P)
+    return GetConsoleTitleW ((LPWSTR) lpConsoleTitle, nSize);
+  else
+    return GetConsoleTitleA ((LPSTR) lpConsoleTitle, nSize);
+}
+
+BOOL
+qxeSetConsoleTitle (const Extbyte * lpConsoleTitle)
+{
+  if (XEUNICODE_P)
+    return SetConsoleTitleW ((LPCWSTR) lpConsoleTitle);
+  else
+    return SetConsoleTitleA ((LPCSTR) lpConsoleTitle);
+}
+
+BOOL
+qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleW (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+  else
+    return ReadConsoleA (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+}
+
+BOOL
+qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleW (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+  else
+    return WriteConsoleA (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+}
+
+
+/*----------------------------------------------------------------------*/
+/*                      Processing file WINNETWK.H                      */
+/*----------------------------------------------------------------------*/
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetAddConnection (const Extbyte * lpRemoteName, const Extbyte * lpPassword, const Extbyte * lpLocalName)
+{
+  if (XEUNICODE_P)
+    return WNetAddConnectionW ((LPCWSTR) lpRemoteName, (LPCWSTR) lpPassword, (LPCWSTR) lpLocalName);
+  else
+    return WNetAddConnectionA ((LPCSTR) lpRemoteName, (LPCSTR) lpPassword, (LPCSTR) lpLocalName);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetAddConnection2 (LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return WNetAddConnection2W (lpNetResource, (LPCWSTR) lpPassword, (LPCWSTR) lpUserName, dwFlags);
+  else
+    return WNetAddConnection2A ((LPNETRESOURCEA) lpNetResource, (LPCSTR) lpPassword, (LPCSTR) lpUserName, dwFlags);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetAddConnection3 (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return WNetAddConnection3W (hwndOwner, lpNetResource, (LPCWSTR) lpPassword, (LPCWSTR) lpUserName, dwFlags);
+  else
+    return WNetAddConnection3A (hwndOwner, (LPNETRESOURCEA) lpNetResource, (LPCSTR) lpPassword, (LPCSTR) lpUserName, dwFlags);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetCancelConnection (const Extbyte * lpName, BOOL fForce)
+{
+  if (XEUNICODE_P)
+    return WNetCancelConnectionW ((LPCWSTR) lpName, fForce);
+  else
+    return WNetCancelConnectionA ((LPCSTR) lpName, fForce);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetCancelConnection2 (const Extbyte * lpName, DWORD dwFlags, BOOL fForce)
+{
+  if (XEUNICODE_P)
+    return WNetCancelConnection2W ((LPCWSTR) lpName, dwFlags, fForce);
+  else
+    return WNetCancelConnection2A ((LPCSTR) lpName, dwFlags, fForce);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetConnection (const Extbyte * lpLocalName, Extbyte * lpRemoteName, LPDWORD lpnLength)
+{
+  if (XEUNICODE_P)
+    return WNetGetConnectionW ((LPCWSTR) lpLocalName, (LPWSTR) lpRemoteName, lpnLength);
+  else
+    return WNetGetConnectionA ((LPCSTR) lpLocalName, (LPSTR) lpRemoteName, lpnLength);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetUseConnection (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpUserID, const Extbyte * lpPassword, DWORD dwFlags, Extbyte * lpAccessName, LPDWORD lpBufferSize, LPDWORD lpResult)
+{
+  if (XEUNICODE_P)
+    return WNetUseConnectionW (hwndOwner, lpNetResource, (LPCWSTR) lpUserID, (LPCWSTR) lpPassword, dwFlags, (LPWSTR) lpAccessName, lpBufferSize, lpResult);
+  else
+    return WNetUseConnectionA (hwndOwner, (LPNETRESOURCEA) lpNetResource, (LPCSTR) lpUserID, (LPCSTR) lpPassword, dwFlags, (LPSTR) lpAccessName, lpBufferSize, lpResult);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* NOTE: contains split-simple LPNETRESOURCE */
+DWORD 
+qxeWNetConnectionDialog1 (LPCONNECTDLGSTRUCTW lpConnDlgStruct)
+{
+  if (XEUNICODE_P)
+    return WNetConnectionDialog1W (lpConnDlgStruct);
+  else
+    return WNetConnectionDialog1A ((LPCONNECTDLGSTRUCTA) lpConnDlgStruct);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetDisconnectDialog1 (LPDISCDLGSTRUCTW lpConnDlgStruct)
+{
+  if (XEUNICODE_P)
+    return WNetDisconnectDialog1W (lpConnDlgStruct);
+  else
+    return WNetDisconnectDialog1A ((LPDISCDLGSTRUCTA) lpConnDlgStruct);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetOpenEnum (DWORD dwScope, DWORD dwType, DWORD dwUsage, LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum)
+{
+  if (XEUNICODE_P)
+    return WNetOpenEnumW (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
+  else
+    return WNetOpenEnumA (dwScope, dwType, dwUsage, (LPNETRESOURCEA) lpNetResource, lphEnum);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetEnumResource (HANDLE hEnum, LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize)
+{
+  if (XEUNICODE_P)
+    return WNetEnumResourceW (hEnum, lpcCount, lpBuffer, lpBufferSize);
+  else
+    return WNetEnumResourceA (hEnum, lpcCount, lpBuffer, lpBufferSize);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetUniversalName (const Extbyte * lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize)
+{
+  if (XEUNICODE_P)
+    return WNetGetUniversalNameW ((LPCWSTR) lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
+  else
+    return WNetGetUniversalNameA ((LPCSTR) lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetUser (const Extbyte * lpName, Extbyte * lpUserName, LPDWORD lpnLength)
+{
+  if (XEUNICODE_P)
+    return WNetGetUserW ((LPCWSTR) lpName, (LPWSTR) lpUserName, lpnLength);
+  else
+    return WNetGetUserA ((LPCSTR) lpName, (LPSTR) lpUserName, lpnLength);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetProviderName (DWORD dwNetType, Extbyte * lpProviderName, LPDWORD lpBufferSize)
+{
+  if (XEUNICODE_P)
+    return WNetGetProviderNameW (dwNetType, (LPWSTR) lpProviderName, lpBufferSize);
+  else
+    return WNetGetProviderNameA (dwNetType, (LPSTR) lpProviderName, lpBufferSize);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetNetworkInformation (const Extbyte * lpProvider, LPNETINFOSTRUCT lpNetInfoStruct)
+{
+  if (XEUNICODE_P)
+    return WNetGetNetworkInformationW ((LPCWSTR) lpProvider, lpNetInfoStruct);
+  else
+    return WNetGetNetworkInformationA ((LPCSTR) lpProvider, lpNetInfoStruct);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeWNetGetLastError (LPDWORD lpError, Extbyte * lpErrorBuf, DWORD nErrorBufSize, Extbyte * lpNameBuf, DWORD nNameBufSize)
+{
+  if (XEUNICODE_P)
+    return WNetGetLastErrorW (lpError, (LPWSTR) lpErrorBuf, nErrorBufSize, (LPWSTR) lpNameBuf, nNameBufSize);
+  else
+    return WNetGetLastErrorA (lpError, (LPSTR) lpErrorBuf, nErrorBufSize, (LPSTR) lpNameBuf, nNameBufSize);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD 
+qxeMultinetGetConnectionPerformance (LPNETRESOURCEW lpNetResource, LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct)
+{
+  if (XEUNICODE_P)
+    return MultinetGetConnectionPerformanceW (lpNetResource, lpNetConnectInfoStruct);
+  else
+    return MultinetGetConnectionPerformanceA ((LPNETRESOURCEA) lpNetResource, lpNetConnectInfoStruct);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+
+/*----------------------------------------------------------------------*/
 /*                       Processing file DDEML.H                        */
 /*----------------------------------------------------------------------*/
 
@@ -1880,297 +2263,6 @@ qxeDdeQueryString (DWORD idInst, HSZ hsz, Extbyte * psz, DWORD cchMax, int iCode
   else
     return DdeQueryStringA (idInst, hsz, (LPSTR) psz, cchMax, iCodePage);
 }
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file WINREG.H                       */
-/*----------------------------------------------------------------------*/
-
-/* Skipping RegConnectRegistry because error in Cygwin prototype */
-
-LONG
-
-qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegCreateKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
-  else
-    return RegCreateKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
-}
-
-LONG
-
-qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition)
-{
-  if (XEUNICODE_P)
-    return RegCreateKeyExW (hKey, (LPCWSTR) lpSubKey, Reserved, (LPWSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
-  else
-    return RegCreateKeyExA (hKey, (LPCSTR) lpSubKey, Reserved, (LPSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
-}
-
-LONG
-
-qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey)
-{
-  if (XEUNICODE_P)
-    return RegDeleteKeyW (hKey, (LPCWSTR) lpSubKey);
-  else
-    return RegDeleteKeyA (hKey, (LPCSTR) lpSubKey);
-}
-
-LONG
-
-qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName)
-{
-  if (XEUNICODE_P)
-    return RegDeleteValueW (hKey, (LPCWSTR) lpValueName);
-  else
-    return RegDeleteValueA (hKey, (LPCSTR) lpValueName);
-}
-
-LONG
-
-qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName)
-{
-  if (XEUNICODE_P)
-    return RegEnumKeyW (hKey, dwIndex, (LPWSTR) lpName, cbName);
-  else
-    return RegEnumKeyA (hKey, dwIndex, (LPSTR) lpName, cbName);
-}
-
-LONG
-
-qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime)
-{
-  if (XEUNICODE_P)
-    return RegEnumKeyExW (hKey, dwIndex, (LPWSTR) lpName, lpcbName, lpReserved, (LPWSTR) lpClass, lpcbClass, lpftLastWriteTime);
-  else
-    return RegEnumKeyExA (hKey, dwIndex, (LPSTR) lpName, lpcbName, lpReserved, (LPSTR) lpClass, lpcbClass, lpftLastWriteTime);
-}
-
-LONG
-
-qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-{
-  if (XEUNICODE_P)
-    return RegEnumValueW (hKey, dwIndex, (LPWSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
-  else
-    return RegEnumValueA (hKey, dwIndex, (LPSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
-}
-
-LONG
-
-qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile)
-{
-  if (XEUNICODE_P)
-    return RegLoadKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpFile);
-  else
-    return RegLoadKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpFile);
-}
-
-LONG
-
-qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegOpenKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
-  else
-    return RegOpenKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
-}
-
-LONG
-
-qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegOpenKeyExW (hKey, (LPCWSTR) lpSubKey, ulOptions, samDesired, phkResult);
-  else
-    return RegOpenKeyExA (hKey, (LPCSTR) lpSubKey, ulOptions, samDesired, phkResult);
-}
-
-LONG
-
-qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime)
-{
-  if (XEUNICODE_P)
-    return RegQueryInfoKeyW (hKey, (LPWSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
-  else
-    return RegQueryInfoKeyA (hKey, (LPSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
-}
-
-LONG
-
-qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue)
-{
-  if (XEUNICODE_P)
-    return RegQueryValueW (hKey, (LPCWSTR) lpSubKey, (LPWSTR) lpValue, lpcbValue);
-  else
-    return RegQueryValueA (hKey, (LPCSTR) lpSubKey, (LPSTR) lpValue, lpcbValue);
-}
-
-LONG
-
-qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize)
-{
-  if (XEUNICODE_P)
-    return RegQueryMultipleValuesW (hKey, val_list, num_vals, (LPWSTR) lpValueBuf, ldwTotsize);
-  else
-    return RegQueryMultipleValuesA (hKey, (PVALENTA) val_list, num_vals, (LPSTR) lpValueBuf, ldwTotsize);
-}
-
-LONG
-
-qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-{
-  if (XEUNICODE_P)
-    return RegQueryValueExW (hKey, (LPCWSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
-  else
-    return RegQueryValueExA (hKey, (LPCSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
-}
-
-LONG
-
-qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile)
-{
-  if (XEUNICODE_P)
-    return RegReplaceKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpNewFile, (LPCWSTR) lpOldFile);
-  else
-    return RegReplaceKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpNewFile, (LPCSTR) lpOldFile);
-}
-
-LONG
-
-qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return RegRestoreKeyW (hKey, (LPCWSTR) lpFile, dwFlags);
-  else
-    return RegRestoreKeyA (hKey, (LPCSTR) lpFile, dwFlags);
-}
-
-LONG
-
-qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-  if (XEUNICODE_P)
-    return RegSaveKeyW (hKey, (LPCWSTR) lpFile, lpSecurityAttributes);
-  else
-    return RegSaveKeyA (hKey, (LPCSTR) lpFile, lpSecurityAttributes);
-}
-
-LONG
-
-qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData)
-{
-  if (XEUNICODE_P)
-    return RegSetValueW (hKey, (LPCWSTR) lpSubKey, dwType, (LPCWSTR) lpData, cbData);
-  else
-    return RegSetValueA (hKey, (LPCSTR) lpSubKey, dwType, (LPCSTR) lpData, cbData);
-}
-
-LONG
-
-qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
-{
-  if (XEUNICODE_P)
-    return RegSetValueExW (hKey, (LPCWSTR) lpValueName, Reserved, dwType, lpData, cbData);
-  else
-    return RegSetValueExA (hKey, (LPCSTR) lpValueName, Reserved, dwType, lpData, cbData);
-}
-
-LONG
-
-qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey)
-{
-  if (XEUNICODE_P)
-    return RegUnLoadKeyW (hKey, (LPCWSTR) lpSubKey);
-  else
-    return RegUnLoadKeyA (hKey, (LPCSTR) lpSubKey);
-}
-
-BOOL
-
-qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown)
-{
-  if (XEUNICODE_P)
-    return InitiateSystemShutdownW ((LPWSTR) lpMachineName, (LPWSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
-  else
-    return InitiateSystemShutdownA ((LPSTR) lpMachineName, (LPSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
-}
-
-BOOL
-
-qxeAbortSystemShutdown (Extbyte * lpMachineName)
-{
-  if (XEUNICODE_P)
-    return AbortSystemShutdownW ((LPWSTR) lpMachineName);
-  else
-    return AbortSystemShutdownA ((LPSTR) lpMachineName);
-}
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file WINNLS.H                       */
-/*----------------------------------------------------------------------*/
-
-/* Error if GetCPInfoEx used: not used, not examined yet */
-
-/* Error if CompareString used: not used, not examined yet */
-
-/* Error if LCMapString used: not used, not examined yet */
-
-int
-qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData)
-{
-  if (XEUNICODE_P)
-    return GetLocaleInfoW (Locale, LCType, (LPWSTR) lpLCData, cchData);
-  else
-    return GetLocaleInfoA (Locale, LCType, (LPSTR) lpLCData, cchData);
-}
-
-BOOL
-qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
-{
-  if (XEUNICODE_P)
-    return SetLocaleInfoW (Locale, LCType, (LPCWSTR) lpLCData);
-  else
-    return SetLocaleInfoA (Locale, LCType, (LPCSTR) lpLCData);
-}
-
-/* Error if GetTimeFormat used: not used, not examined yet */
-
-/* Error if GetDateFormat used: not used, not examined yet */
-
-/* Error if GetNumberFormat used: not used, not examined yet */
-
-/* Error if GetCurrencyFormat used: not used, not examined yet */
-
-/* Error if EnumCalendarInfo used: not used, not examined yet */
-
-/* Error if EnumCalendarInfoEx used: not used, not examined yet */
-
-/* Error if EnumTimeFormats used: not used, not examined yet */
-
-/* Error if EnumDateFormats used: not used, not examined yet */
-
-/* Error if EnumDateFormatsEx used: not used, not examined yet */
-
-/* Error if GetStringTypeEx used: not used, not examined yet */
-
-/* Error if GetStringType used: no such fun; A and W versions have different nos. of args */
-
-/* Error if FoldString used: not used, not examined yet */
-
-/* Error if EnumSystemLocales used: not used, not examined yet */
-
-/* Error if EnumSystemCodePages used: not used, not examined yet */
-
-
-/*----------------------------------------------------------------------*/
-/*                        Processing file IME.H                         */
-/*----------------------------------------------------------------------*/
-
-/* Error if SendIMEMessageEx used: obsolete, no docs available */
 
 
 /*----------------------------------------------------------------------*/
@@ -2485,23 +2577,287 @@ qxeEnumICMProfiles (HDC arg1, ICMENUMPROCW arg2, LPARAM arg3)
 
 
 /*----------------------------------------------------------------------*/
-/*                       Processing file SHLOBJ.H                       */
+/*                       Processing file WINNLS.H                       */
 /*----------------------------------------------------------------------*/
 
-BOOL
-qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath)
+/* Error if GetCPInfoEx used: not used, not examined yet */
+
+/* Error if CompareString used: not used, not examined yet */
+
+/* Error if LCMapString used: not used, not examined yet */
+
+int
+qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData)
 {
   if (XEUNICODE_P)
-    return SHGetPathFromIDListW (pidl, (LPWSTR) pszPath);
+    return GetLocaleInfoW (Locale, LCType, (LPWSTR) lpLCData, cchData);
   else
-    return SHGetPathFromIDListA (pidl, (LPSTR) pszPath);
+    return GetLocaleInfoA (Locale, LCType, (LPSTR) lpLCData, cchData);
 }
 
-/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
+BOOL
+qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
+{
+  if (XEUNICODE_P)
+    return SetLocaleInfoW (Locale, LCType, (LPCWSTR) lpLCData);
+  else
+    return SetLocaleInfoA (Locale, LCType, (LPCSTR) lpLCData);
+}
 
-/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
+/* Error if GetTimeFormat used: not used, not examined yet */
 
-/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
+/* Error if GetDateFormat used: not used, not examined yet */
+
+/* Error if GetNumberFormat used: not used, not examined yet */
+
+/* Error if GetCurrencyFormat used: not used, not examined yet */
+
+/* Error if EnumCalendarInfo used: not used, not examined yet */
+
+/* Error if EnumCalendarInfoEx used: not used, not examined yet */
+
+/* Error if EnumTimeFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormatsEx used: not used, not examined yet */
+
+/* Error if GetStringTypeEx used: not used, not examined yet */
+
+/* Error if GetStringType used: no such fun; A and W versions have different nos. of args */
+
+/* Error if FoldString used: not used, not examined yet */
+
+/* Error if EnumSystemLocales used: not used, not examined yet */
+
+/* Error if EnumSystemCodePages used: not used, not examined yet */
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file WINREG.H                       */
+/*----------------------------------------------------------------------*/
+
+/* Skipping RegConnectRegistry because error in Cygwin prototype */
+
+LONG
+
+qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegCreateKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
+  else
+    return RegCreateKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
+}
+
+LONG
+
+qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition)
+{
+  if (XEUNICODE_P)
+    return RegCreateKeyExW (hKey, (LPCWSTR) lpSubKey, Reserved, (LPWSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+  else
+    return RegCreateKeyExA (hKey, (LPCSTR) lpSubKey, Reserved, (LPSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+}
+
+LONG
+
+qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey)
+{
+  if (XEUNICODE_P)
+    return RegDeleteKeyW (hKey, (LPCWSTR) lpSubKey);
+  else
+    return RegDeleteKeyA (hKey, (LPCSTR) lpSubKey);
+}
+
+LONG
+
+qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName)
+{
+  if (XEUNICODE_P)
+    return RegDeleteValueW (hKey, (LPCWSTR) lpValueName);
+  else
+    return RegDeleteValueA (hKey, (LPCSTR) lpValueName);
+}
+
+LONG
+
+qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName)
+{
+  if (XEUNICODE_P)
+    return RegEnumKeyW (hKey, dwIndex, (LPWSTR) lpName, cbName);
+  else
+    return RegEnumKeyA (hKey, dwIndex, (LPSTR) lpName, cbName);
+}
+
+LONG
+
+qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime)
+{
+  if (XEUNICODE_P)
+    return RegEnumKeyExW (hKey, dwIndex, (LPWSTR) lpName, lpcbName, lpReserved, (LPWSTR) lpClass, lpcbClass, lpftLastWriteTime);
+  else
+    return RegEnumKeyExA (hKey, dwIndex, (LPSTR) lpName, lpcbName, lpReserved, (LPSTR) lpClass, lpcbClass, lpftLastWriteTime);
+}
+
+LONG
+
+qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+  if (XEUNICODE_P)
+    return RegEnumValueW (hKey, dwIndex, (LPWSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
+  else
+    return RegEnumValueA (hKey, dwIndex, (LPSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
+}
+
+LONG
+
+qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile)
+{
+  if (XEUNICODE_P)
+    return RegLoadKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpFile);
+  else
+    return RegLoadKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpFile);
+}
+
+LONG
+
+qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegOpenKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
+  else
+    return RegOpenKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
+}
+
+LONG
+
+qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegOpenKeyExW (hKey, (LPCWSTR) lpSubKey, ulOptions, samDesired, phkResult);
+  else
+    return RegOpenKeyExA (hKey, (LPCSTR) lpSubKey, ulOptions, samDesired, phkResult);
+}
+
+LONG
+
+qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime)
+{
+  if (XEUNICODE_P)
+    return RegQueryInfoKeyW (hKey, (LPWSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+  else
+    return RegQueryInfoKeyA (hKey, (LPSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+}
+
+LONG
+
+qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue)
+{
+  if (XEUNICODE_P)
+    return RegQueryValueW (hKey, (LPCWSTR) lpSubKey, (LPWSTR) lpValue, lpcbValue);
+  else
+    return RegQueryValueA (hKey, (LPCSTR) lpSubKey, (LPSTR) lpValue, lpcbValue);
+}
+
+LONG
+
+qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize)
+{
+  if (XEUNICODE_P)
+    return RegQueryMultipleValuesW (hKey, val_list, num_vals, (LPWSTR) lpValueBuf, ldwTotsize);
+  else
+    return RegQueryMultipleValuesA (hKey, (PVALENTA) val_list, num_vals, (LPSTR) lpValueBuf, ldwTotsize);
+}
+
+LONG
+
+qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+  if (XEUNICODE_P)
+    return RegQueryValueExW (hKey, (LPCWSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
+  else
+    return RegQueryValueExA (hKey, (LPCSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
+}
+
+LONG
+
+qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile)
+{
+  if (XEUNICODE_P)
+    return RegReplaceKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpNewFile, (LPCWSTR) lpOldFile);
+  else
+    return RegReplaceKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpNewFile, (LPCSTR) lpOldFile);
+}
+
+LONG
+
+qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return RegRestoreKeyW (hKey, (LPCWSTR) lpFile, dwFlags);
+  else
+    return RegRestoreKeyA (hKey, (LPCSTR) lpFile, dwFlags);
+}
+
+LONG
+
+qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+  if (XEUNICODE_P)
+    return RegSaveKeyW (hKey, (LPCWSTR) lpFile, lpSecurityAttributes);
+  else
+    return RegSaveKeyA (hKey, (LPCSTR) lpFile, lpSecurityAttributes);
+}
+
+LONG
+
+qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData)
+{
+  if (XEUNICODE_P)
+    return RegSetValueW (hKey, (LPCWSTR) lpSubKey, dwType, (LPCWSTR) lpData, cbData);
+  else
+    return RegSetValueA (hKey, (LPCSTR) lpSubKey, dwType, (LPCSTR) lpData, cbData);
+}
+
+LONG
+
+qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
+{
+  if (XEUNICODE_P)
+    return RegSetValueExW (hKey, (LPCWSTR) lpValueName, Reserved, dwType, lpData, cbData);
+  else
+    return RegSetValueExA (hKey, (LPCSTR) lpValueName, Reserved, dwType, lpData, cbData);
+}
+
+LONG
+
+qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey)
+{
+  if (XEUNICODE_P)
+    return RegUnLoadKeyW (hKey, (LPCWSTR) lpSubKey);
+  else
+    return RegUnLoadKeyA (hKey, (LPCSTR) lpSubKey);
+}
+
+BOOL
+
+qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown)
+{
+  if (XEUNICODE_P)
+    return InitiateSystemShutdownW ((LPWSTR) lpMachineName, (LPWSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
+  else
+    return InitiateSystemShutdownA ((LPSTR) lpMachineName, (LPSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
+}
+
+BOOL
+
+qxeAbortSystemShutdown (Extbyte * lpMachineName)
+{
+  if (XEUNICODE_P)
+    return AbortSystemShutdownW ((LPWSTR) lpMachineName);
+  else
+    return AbortSystemShutdownA ((LPSTR) lpMachineName);
+}
 
 
 /*----------------------------------------------------------------------*/
@@ -2572,216 +2928,23 @@ qxeReplaceText (LPFINDREPLACEW arg1)
 
 
 /*----------------------------------------------------------------------*/
-/*                        Processing file IMM.H                         */
+/*                       Processing file SHLOBJ.H                       */
 /*----------------------------------------------------------------------*/
 
-#if defined (HAVE_MS_WINDOWS)
-
-HKL
-qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText)
-{
-  if (XEUNICODE_P)
-    return ImmInstallIMEW ((LPCWSTR) lpszIMEFileName, (LPCWSTR) lpszLayoutText);
-  else
-    return ImmInstallIMEA ((LPCSTR) lpszIMEFileName, (LPCSTR) lpszLayoutText);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetDescriptionW (arg1, (LPWSTR) arg2, uBufLen);
-  else
-    return ImmGetDescriptionA (arg1, (LPSTR) arg2, uBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetIMEFileNameW (arg1, (LPWSTR) arg2, uBufLen);
-  else
-    return ImmGetIMEFileNameA (arg1, (LPSTR) arg2, uBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-LONG
-qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
-{
-  if (XEUNICODE_P)
-    return ImmGetCompositionStringW (arg1, arg2, arg3, arg4);
-  else
-    return ImmGetCompositionStringA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount)
-{
-  if (XEUNICODE_P)
-    return ImmGetCandidateListCountW (arg1, lpdwListCount);
-  else
-    return ImmGetCandidateListCountA (arg1, lpdwListCount);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetCandidateListW (arg1, deIndex, arg3, dwBufLen);
-  else
-    return ImmGetCandidateListA (arg1, deIndex, arg3, dwBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetGuideLineW (arg1, dwIndex, (LPWSTR) arg3, dwBufLen);
-  else
-    return ImmGetGuideLineA (arg1, dwIndex, (LPSTR) arg3, dwBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* NOTE: // split-simple REGISTERWORD */
 BOOL
-qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4)
+qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath)
 {
   if (XEUNICODE_P)
-    return ImmConfigureIMEW (arg1, arg2, arg3, arg4);
+    return SHGetPathFromIDListW (pidl, (LPWSTR) pszPath);
   else
-    return ImmConfigureIMEA (arg1, arg2, arg3, arg4);
+    return SHGetPathFromIDListA (pidl, (LPSTR) pszPath);
 }
 
-#endif /* defined (HAVE_MS_WINDOWS) */
+/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 
-#if defined (HAVE_MS_WINDOWS)
+/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
 
-/* NOTE: // strings of various sorts */
-LRESULT
-qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4)
-{
-  if (XEUNICODE_P)
-    return ImmEscapeW (arg1, arg2, arg3, arg4);
-  else
-    return ImmEscapeA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag)
-{
-  if (XEUNICODE_P)
-    return ImmGetConversionListW (arg1, arg2, (LPCWSTR) arg3, arg4, dwBufLen, uFlag);
-  else
-    return ImmGetConversionListA (arg1, arg2, (LPCSTR) arg3, arg4, dwBufLen, uFlag);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4)
-{
-  if (XEUNICODE_P)
-    return ImmIsUIMessageW (arg1, arg2, arg3, arg4);
-  else
-    return ImmIsUIMessageA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister)
-{
-  if (XEUNICODE_P)
-    return ImmRegisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszRegister);
-  else
-    return ImmRegisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszRegister);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister)
-{
-  if (XEUNICODE_P)
-    return ImmUnregisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszUnregister);
-  else
-    return ImmUnregisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszUnregister);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Error if ImmGetRegisterWordStyle used: split-sized STYLEBUF */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6)
-{
-  if (XEUNICODE_P)
-    return ImmEnumRegisterWordW (arg1, arg2, (LPCWSTR) lpszReading, arg4, (LPCWSTR) lpszRegister, arg6);
-  else
-    return ImmEnumRegisterWordA (arg1, (REGISTERWORDENUMPROCA) arg2, (LPCSTR) lpszReading, arg4, (LPCSTR) lpszRegister, arg6);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Error if ImmGetImeMenuItems used: split-sized IMEMENUITEMINFO */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
+/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
 
 
 /*----------------------------------------------------------------------*/
@@ -3131,6 +3294,12 @@ qxeFindResourceEx (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpNa
   else
     return FindResourceExA (hModule, (LPCSTR) lpType, (LPCSTR) lpName, wLanguage);
 }
+
+/* Skipping EnumResourceTypes because different prototypes in VC6 and VC7 */
+
+/* Skipping EnumResourceNames because different prototypes in VC6 and VC7 */
+
+/* Skipping EnumResourceLanguages because different prototypes in VC6 and VC7 */
 
 HANDLE
 qxeBeginUpdateResource (const Extbyte * pFileName, BOOL bDeleteExistingResources)
@@ -3933,158 +4102,15 @@ qxeCreateProcessAsUser (HANDLE hToken, const Extbyte * lpApplicationName, Extbyt
 
 
 /*----------------------------------------------------------------------*/
-/*                      Processing file MMSYSTEM.H                      */
+/*                       Processing file ACLAPI.h                       */
 /*----------------------------------------------------------------------*/
 
-BOOL
-qxesndPlaySound (const Extbyte * pszSound, UINT fuSound)
+DWORD
+qxeGetNamedSecurityInfo (IN  Extbyte * pObjectName, IN  SE_OBJECT_TYPE ObjectType, IN  SECURITY_INFORMATION SecurityInfo, OUT PSID                 * ppsidOowner, OUT PSID                 * ppsidGroup, OUT PACL                 * ppDacl, OUT PACL                 * ppSacl, OUT PSECURITY_DESCRIPTOR * ppSecurityDescriptor)
 {
   if (XEUNICODE_P)
-    return sndPlaySoundW ((LPCWSTR) pszSound, fuSound);
+    return GetNamedSecurityInfoW ((IN  LPWSTR) pObjectName, ObjectType, SecurityInfo, ppsidOowner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
   else
-    return sndPlaySoundA ((LPCSTR) pszSound, fuSound);
-}
-
-BOOL
-qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound)
-{
-  if (XEUNICODE_P)
-    return PlaySoundW ((LPCWSTR) pszSound, hmod, fdwSound);
-  else
-    return PlaySoundA ((LPCSTR) pszSound, hmod, fdwSound);
-}
-
-/* Error if waveOutGetDevCaps used: split-sized LPWAVEOUTCAPS */
-
-MMRESULT
-qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
-{
-  if (XEUNICODE_P)
-    return waveOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
-  else
-    return waveOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
-}
-
-/* Error if waveInGetDevCaps used: split-sized LPWAVEINCAPS */
-
-MMRESULT
-qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
-{
-  if (XEUNICODE_P)
-    return waveInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
-  else
-    return waveInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
-}
-
-/* Error if midiOutGetDevCaps used: split-sized LPMIDIOUTCAPS */
-
-MMRESULT
-qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
-{
-  if (XEUNICODE_P)
-    return midiOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
-  else
-    return midiOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
-}
-
-/* Error if midiInGetDevCaps used: split-sized LPMIDIOUTCAPS */
-
-MMRESULT
-qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
-{
-  if (XEUNICODE_P)
-    return midiInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
-  else
-    return midiInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
-}
-
-/* Error if auxGetDevCaps used: split-sized LPAUXCAPS */
-
-/* Error if mixerGetDevCaps used: split-sized LPMIXERCAPS */
-
-/* Error if mixerGetLineInfo used: split-sized LPMIXERLINE */
-
-/* Error if mixerGetLineControls used: split-sized LPMIXERCONTROL */
-
-/* Error if mixerGetControlDetails used: split-sized LPMIXERCONTROL in LPMIXERLINECONTROLS in LPMIXERCONTROLDETAILS */
-
-/* Error if joyGetDevCaps used: split-sized LPJOYCAPS */
-
-FOURCC
-qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags)
-{
-  if (XEUNICODE_P)
-    return mmioStringToFOURCCW ((LPCWSTR) sz, uFlags);
-  else
-    return mmioStringToFOURCCA ((LPCSTR) sz, uFlags);
-}
-
-LPMMIOPROC
-qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return mmioInstallIOProcW (fccIOProc, pIOProc, dwFlags);
-  else
-    return mmioInstallIOProcA (fccIOProc, pIOProc, dwFlags);
-}
-
-HMMIO
-qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen)
-{
-  if (XEUNICODE_P)
-    return mmioOpenW ((LPWSTR) pszFileName, pmmioinfo, fdwOpen);
-  else
-    return mmioOpenA ((LPSTR) pszFileName, pmmioinfo, fdwOpen);
-}
-
-MMRESULT
-qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename)
-{
-  if (XEUNICODE_P)
-    return mmioRenameW ((LPCWSTR) pszFileName, (LPCWSTR) pszNewFileName, pmmioinfo, fdwRename);
-  else
-    return mmioRenameA ((LPCSTR) pszFileName, (LPCSTR) pszNewFileName, pmmioinfo, fdwRename);
-}
-
-MCIERROR
-qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
-{
-  if (XEUNICODE_P)
-    return mciSendCommandW (mciId, uMsg, dwParam1, dwParam2);
-  else
-    return mciSendCommandA (mciId, uMsg, dwParam1, dwParam2);
-}
-
-MCIERROR
-qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback)
-{
-  if (XEUNICODE_P)
-    return mciSendStringW ((LPCWSTR) lpstrCommand, (LPWSTR) lpstrReturnString, uReturnLength, hwndCallback);
-  else
-    return mciSendStringA ((LPCSTR) lpstrCommand, (LPSTR) lpstrReturnString, uReturnLength, hwndCallback);
-}
-
-MCIDEVICEID
-qxemciGetDeviceID (const Extbyte * pszDevice)
-{
-  if (XEUNICODE_P)
-    return mciGetDeviceIDW ((LPCWSTR) pszDevice);
-  else
-    return mciGetDeviceIDA ((LPCSTR) pszDevice);
-}
-
-#if !defined (MINGW)
-
-/* Error if mciGetDeviceIDFromElementID used: missing from Win98se version of ADVAPI32.dll */
-
-#endif /* !defined (MINGW) */
-
-BOOL
-qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText)
-{
-  if (XEUNICODE_P)
-    return mciGetErrorStringW (mcierr, (LPWSTR) pszText, cchText);
-  else
-    return mciGetErrorStringA (mcierr, (LPSTR) pszText, cchText);
+    return GetNamedSecurityInfoA ((IN  LPSTR) pObjectName, ObjectType, SecurityInfo, ppsidOowner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
 }
 

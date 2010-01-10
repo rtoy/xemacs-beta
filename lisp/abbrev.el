@@ -87,7 +87,9 @@ of the form (ABBREVNAME EXPANSION HOOK USECOUNT)."
           ((not table)
            (setq table (make-abbrev-table))
            (set table-name table)
-           (setq abbrev-table-name-list (cons table-name abbrev-table-name-list)))
+           (setq abbrev-table-name-list
+		 (sort (cons table-name abbrev-table-name-list)
+		       #'string-lessp)))
           (t
            (setq table (wrong-type-argument 'vectorp table))
            (set table-name table)))
@@ -209,64 +211,64 @@ is not undone."
           (goto-char opoint)))))
 
 
-
-(defun insert-abbrev-table-description (name &optional human-readable)
-  "Insert before point a full description of abbrev table named NAME.
-NAME is a symbol whose value is an abbrev table.
-If optional second argument HUMAN-READABLE is non-nil, insert a
-human-readable description. Otherwise the description is an
-expression, a call to `define-abbrev-table', which would define the
-abbrev table NAME exactly as it is currently defined."
-  (let ((table (symbol-value name))
-        (stream (current-buffer)))
-    (message "Abbrev-table %s..." name)
-    (if human-readable
-        (progn
-          (prin1 (list name) stream)
-          ;; Need two terpri's or cretinous edit-abbrevs blows out
-          (terpri stream)
-          (terpri stream)
-          (mapatoms (function (lambda (sym)
-                      (if (symbol-value sym)
-                          (let* ((n (prin1-to-string (symbol-name sym)))
-                                 (pos (length n)))
-                            (princ n stream)
-                            (while (< pos 14)
-                              (write-char ?\  stream)
-                              (setq pos (1+ pos)))
-                            (princ (format " %-5S " (symbol-plist sym))
-                                   stream)
-                            (if (not (symbol-function sym))
-                                (prin1 (symbol-value sym) stream)
-                              (progn
-                                (setq n (prin1-to-string (symbol-value sym))
-                                      pos (+ pos 6 (length n)))
-                                (princ n stream)
-                                (while (< pos 45)
-                                  (write-char ?\  stream)
-                                  (setq pos (1+ pos)))
-                                (prin1 (symbol-function sym) stream)))
-                            (terpri stream)))))
-                    table)
-          (terpri stream))
-        (progn
-          (princ "\(define-abbrev-table '" stream)
-          (prin1 name stream)
-          (princ " '\(\n" stream)
-          (mapatoms (function (lambda (sym)
-                      (if (symbol-value sym)
-                          (progn
-                            (princ "    " stream)
-                            (prin1 (list (symbol-name sym)
-                                         (symbol-value sym)
-                                         (symbol-function sym)
-                                         (symbol-plist sym))
-                                   stream)
-                            (terpri stream)))))
-                    table)
-          (princ "    \)\)\n" stream)))
-    (terpri stream))
-  (message ""))
+; APA: Moved to c (ported function from GNU Emacs to src/abbrev.c)
+; (defun insert-abbrev-table-description (name &optional human-readable)
+;   "Insert before point a full description of abbrev table named NAME.
+; NAME is a symbol whose value is an abbrev table.
+; If optional second argument HUMAN-READABLE is non-nil, insert a
+; human-readable description. Otherwise the description is an
+; expression, a call to `define-abbrev-table', which would define the
+; abbrev table NAME exactly as it is currently defined."
+;   (let ((table (symbol-value name))
+;         (stream (current-buffer)))
+;     (message "Abbrev-table %s..." name)
+;     (if human-readable
+;         (progn
+;           (prin1 (list name) stream)
+;           ;; Need two terpri's or cretinous edit-abbrevs blows out
+;           (terpri stream)
+;           (terpri stream)
+;           (mapatoms (function (lambda (sym)
+;                       (if (symbol-value sym)
+;                           (let* ((n (prin1-to-string (symbol-name sym)))
+;                                  (pos (length n)))
+;                             (princ n stream)
+;                             (while (< pos 14)
+;                               (write-char ?\  stream)
+;                               (setq pos (1+ pos)))
+;                             (princ (format " %-5S " (symbol-plist sym))
+;                                    stream)
+;                             (if (not (symbol-function sym))
+;                                 (prin1 (symbol-value sym) stream)
+;                               (progn
+;                                 (setq n (prin1-to-string (symbol-value sym))
+;                                       pos (+ pos 6 (length n)))
+;                                 (princ n stream)
+;                                 (while (< pos 45)
+;                                   (write-char ?\  stream)
+;                                   (setq pos (1+ pos)))
+;                                 (prin1 (symbol-function sym) stream)))
+;                             (terpri stream)))))
+;                     table)
+;           (terpri stream))
+;         (progn
+;           (princ "\(define-abbrev-table '" stream)
+;           (prin1 name stream)
+;           (princ " '\(\n" stream)
+;           (mapatoms (function (lambda (sym)
+;                       (if (symbol-value sym)
+;                           (progn
+;                             (princ "    " stream)
+;                             (prin1 (list (symbol-name sym)
+;                                          (symbol-value sym)
+;                                          (symbol-function sym)
+;                                          (symbol-plist sym))
+;                                    stream)
+;                             (terpri stream)))))
+;                     table)
+;           (princ "    \)\)\n" stream)))
+;     (terpri stream))
+;   (message ""))
 ;;; End code not in FSF
 
 (defun abbrev-mode (arg)
@@ -419,8 +421,11 @@ Does not print anything."
 
 (defun write-abbrev-file (file)
   "Write all abbrev definitions to a file of Lisp code.
+This does not include system abbrevs; it includes only the abbrev tables
+listed in listed in `abbrev-table-name-list'.
 The file written can be loaded in another session to define the same abbrevs.
-The argument FILE is the file name to write."
+The argument FILE is the file name to write.  If omitted or nil, the file
+specified in `abbrev-file-name' is used."
   (interactive
    (list
     (read-file-name "Write abbrev file: "
@@ -428,15 +433,19 @@ The argument FILE is the file name to write."
 		    abbrev-file-name)))
   (or (and file (> (length file) 0))
       (setq file abbrev-file-name))
-  (save-excursion
-   (set-buffer (get-buffer-create " write-abbrev-file"))
-   (erase-buffer)
-   (let ((tables abbrev-table-name-list))
-     (while tables
-       (insert-abbrev-table-description (car tables) nil)
-       (setq tables (cdr tables))))
-   (write-region 1 (point-max) file)
-   (erase-buffer)))
+  (let ((coding-system-for-write 'escape-quoted))
+    (with-temp-file file
+      ;; XEmacs change; not emacs-mule, and use the coding system
+      ;; escape-quoted resolves to, which will differ depending on whether
+      ;; the build is Mule or not.
+      (insert (format ";;-*-coding: %s;-*-\n"
+                      (coding-system-name
+                       (find-coding-system coding-system-for-write))))
+      (dolist (table
+               ;; XEmacs change; we keep the table sorted at runtime, no
+               ;; need to sort it here.
+               abbrev-table-name-list)
+        (insert-abbrev-table-description table nil)))))
 
 (defun abbrev-string-to-be-defined (arg)
   "Return the string for which an abbrev will be defined.
@@ -580,9 +589,9 @@ If called from a Lisp program, arguments are START END &optional NOQUERY."
 			 (<= (setq pnt (point)) (- (point-max) lim))))
 	(if (abbrev-expansion
 	     (setq string
-		   (buffer-substring
-		    (save-excursion (backward-word) (point))
-		    pnt)))
+		   (downcase (buffer-substring
+			      (save-excursion (backward-word) (point))
+			      pnt))))
 	    (if (or noquery (y-or-n-p (format "Expand `%s'? " string)))
 		(expand-abbrev)))))))
 

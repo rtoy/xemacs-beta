@@ -55,10 +55,13 @@ Boston, MA 02111-1307, USA.  */
 
 BEGIN_C_DECLS
 
+#if 0 /* breaks the build, as of GCC 3.4.4 or earlier, since the prototype
+         is now declared static */
 /* Fucking GCC complains about "no previous prototype" for inline
    functions.  DUH!  See DECLARE_INLINE_HEADER. */
 extern __inline void *GetCurrentFiber (void);
 extern __inline void *GetFiberData (void);
+#endif
 
 END_C_DECLS
 
@@ -87,6 +90,8 @@ END_C_DECLS
 
 #define OEMRESOURCE /* Define OCR_ and friend constants */
 #include <windows.h>
+
+#include <aclapi.h>
 
 #if defined (WIN32_LEAN_AND_MEAN)
 # ifdef HAVE_X_WINDOWS
@@ -477,7 +482,7 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
 #define BIF_NEWDIALOGSTYLE 64
 #endif
 
-#ifdef CYGWIN
+#if defined (CYGWIN) && (CYGWIN_VERSION_DLL_COMBINED < 190)
 
 /* All but wcscmp and wcslen left out of Cygwin headers -- but present
    in /usr/include/mingw/string.h! */
@@ -932,6 +937,7 @@ void cygwin_win32_to_posix_path_list (const char *, char *);
 int cygwin_win32_to_posix_path_list_buf_size (const char *);
 void cygwin_posix_to_win32_path_list (const char *, char *);
 int cygwin_posix_to_win32_path_list_buf_size (const char *);
+extern int cygwin_conv_to_full_win32_path (const char *, char *);
 
 END_C_DECLS
 

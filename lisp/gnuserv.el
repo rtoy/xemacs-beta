@@ -214,7 +214,7 @@ current buffer set to the visiting buffer."
   :group 'gnuserv)
 
 (defcustom gnuserv-temp-file-regexp
-  (concat "^" (temp-directory) "/Re\\|/draft$")
+  (concat "^" (regexp-quote (temp-directory)) "/Re\\|/draft$")
   "*Regexp which should match filenames of temporary files deleted
 and reused by the programs that invoke the Emacs server."
   :type 'regexp
@@ -481,7 +481,7 @@ If a flag is `view', view the files read-only."
 		       gnuserv-view-file-function
 		     gnuserv-find-file-function)
 		   path)
-	  (goto-line line)
+	  (when line (goto-line line))
 	  ;; Don't memorize the quick and view buffers.
 	  (unless (or quick view)
 	    (pushnew (current-buffer) (gnuclient-buffers client))

@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -240,6 +240,17 @@ Lisp_Object Qsetq;
 Lisp_Object Qdisplay_warning;
 Lisp_Object Vpending_warnings, Vpending_warnings_tail;
 Lisp_Object Qif;
+
+Lisp_Object Qthrow;
+Lisp_Object Qobsolete_throw;
+Lisp_Object Qmultiple_value_list_internal;
+
+static int first_desired_multiple_value;
+/* Used outside this file, somewhat uncleanly, in the IGNORE_MULTIPLE_VALUES
+   macro: */
+int multiple_value_current_limit;
+
+Fixnum Vmultiple_values_limit;
 
 /* Flags specifying which operations are currently inhibited. */
 int inhibit_flags;
@@ -600,7 +611,7 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
 
 /* Return 1 if an error with condition-symbols CONDITIONS,
    and described by SIGNAL-DATA, should skip the debugger
-   according to debugger-ignore-errors.  */
+   according to debug-ignored-errors.  */
 
 static int
 skip_debugger (Lisp_Object conditions, Lisp_Object data)
@@ -816,48 +827,76 @@ signal_call_debugger (Lisp_Object conditions,
    from interpreted code.  The byte compiler turns them into bytecodes. */
 
 DEFUN ("or", For, 0, UNEVALLED, 0, /*
-Eval args until one of them yields non-nil, then return that value.
-The remaining args are not evalled at all.
+Eval ARGS until one of them yields non-nil, then return that value.
+The remaining ARGS are not evalled at all.
 If all args return nil, return nil.
+
+Any multiple values from the last form, and only from the last form, are
+passed back.  See `values' and `multiple-value-bind'. 
+
+arguments: (&rest ARGS)
 */
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
+  Lisp_Object val = Qnil;
 
-  LIST_LOOP_2 (arg, args)
+  LIST_LOOP_3 (arg, args, tail)
     {
-      if (!NILP (val = Feval (arg)))
-	return val;
+      if (!NILP (IGNORE_MULTIPLE_VALUES (val = Feval (arg))))
+	{
+	  if (NILP (XCDR (tail)))
+	    {
+	      /* Pass back multiple values if this is the last one: */
+	      return val;
+	    }
+
+	  return IGNORE_MULTIPLE_VALUES (val);
+	}
     }
 
-  return Qnil;
+  return val;
 }
 
 DEFUN ("and", Fand, 0, UNEVALLED, 0, /*
-Eval args until one of them yields nil, then return nil.
-The remaining args are not evalled at all.
+Eval ARGS until one of them yields nil, then return nil.
+The remaining ARGS are not evalled at all.
 If no arg yields nil, return the last arg's value.
+
+Any multiple values from the last form, and only from the last form, are
+passed back.  See `values' and `multiple-value-bind'. 
+
+arguments: (&rest ARGS)
 */
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val = Qt;
+  Lisp_Object val = Qt;
 
-  LIST_LOOP_2 (arg, args)
+  LIST_LOOP_3 (arg, args, tail)
     {
-      if (NILP (val = Feval (arg)))
-	return val;
+      if (NILP (IGNORE_MULTIPLE_VALUES (val = Feval (arg))))
+	{
+	  if (NILP (XCDR (tail)))
+	    {
+	      /* Pass back any multiple values for the last form: */
+	      return val;
+	    }
+
+	  return Qnil;
+	}
     }
 
   return val;
 }
 
 DEFUN ("if", Fif, 2, UNEVALLED, 0, /*
-\(if COND THEN ELSE...): if COND yields non-nil, do THEN, else do ELSE...
+If COND yields non-nil, do THEN, else do ELSE.
 Returns the value of THEN or the value of the last of the ELSE's.
 THEN must be one expression, but ELSE... can be zero or more expressions.
 If COND yields nil, and there are no ELSE's, the value is nil.
+
+arguments: (COND THEN &rest ELSE)
 */
        (args))
 {
@@ -866,7 +905,7 @@ If COND yields nil, and there are no ELSE's, the value is nil.
   Lisp_Object then_form  = XCAR (XCDR (args));
   Lisp_Object else_forms = XCDR (XCDR (args));
 
-  if (!NILP (Feval (condition)))
+  if (!NILP (IGNORE_MULTIPLE_VALUES (Feval (condition))))
     return Feval (then_form);
   else
     return Fprogn (else_forms);
@@ -876,8 +915,10 @@ If COND yields nil, and there are no ELSE's, the value is nil.
    but it helps for bootstrapping to have them ALWAYS defined. */
 
 DEFUN ("when", Fwhen, 1, MANY, 0, /*
-\(when COND BODY...): if COND yields non-nil, do BODY, else return nil.
+If COND yields non-nil, do BODY, else return nil.
 BODY can be zero or more expressions.  If BODY is nil, return nil.
+
+arguments: (COND &rest BODY)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -895,8 +936,10 @@ BODY can be zero or more expressions.  If BODY is nil, return nil.
 }
 
 DEFUN ("unless", Funless, 1, MANY, 0, /*
-\(unless COND BODY...): if COND yields nil, do BODY, else return nil.
+If COND yields nil, do BODY, else return nil.
 BODY can be zero or more expressions.  If BODY is nil, return nil.
+
+arguments: (COND &rest BODY)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -906,7 +949,7 @@ BODY can be zero or more expressions.  If BODY is nil, return nil.
 }
 
 DEFUN ("cond", Fcond, 0, UNEVALLED, 0, /*
-\(cond CLAUSES...): try each clause until one succeeds.
+Try each clause until one succeeds.
 Each clause looks like (CONDITION BODY...).  CONDITION is evaluated
 and, if the value is non-nil, this clause succeeds:
 then the expressions in BODY are evaluated and the last one's
@@ -914,6 +957,8 @@ value is the value of the cond-form.
 If no clause succeeds, cond returns nil.
 If a clause has one element, as in (CONDITION),
 CONDITION's value if non-nil is returned from the cond-form.
+
+arguments: (&rest CLAUSES)
 */
        (args))
 {
@@ -923,11 +968,12 @@ CONDITION's value if non-nil is returned from the cond-form.
   LIST_LOOP_2 (clause, args)
     {
       CHECK_CONS (clause);
-      if (!NILP (val = Feval (XCAR (clause))))
+      if (!NILP (val = IGNORE_MULTIPLE_VALUES (Feval (XCAR (clause)))))
 	{
 	  if (!NILP (clause = XCDR (clause)))
 	    {
 	      CHECK_TRUE_LIST (clause);
+	      /* Pass back any multiple values here: */
 	      val = Fprogn (clause);
 	    }
 	  return val;
@@ -938,7 +984,9 @@ CONDITION's value if non-nil is returned from the cond-form.
 }
 
 DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
-\(progn BODY...): eval BODY forms sequentially and return value of last one.
+Eval BODY forms sequentially and return value of last one.
+
+arguments: (&rest BODY)
 */
        (args))
 {
@@ -963,17 +1011,18 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
 
 DEFUN ("prog1", Fprog1, 1, UNEVALLED, 0, /*
 Similar to `progn', but the value of the first form is returned.
-\(prog1 FIRST BODY...): All the arguments are evaluated sequentially.
-The value of FIRST is saved during evaluation of the remaining args,
-whose values are discarded.
+
+All the arguments are evaluated sequentially.  The value of FIRST is saved
+during evaluation of the remaining args, whose values are discarded.
+
+arguments: (FIRST &rest BODY)
 */
        (args))
 {
-  /* This function can GC */
   Lisp_Object val;
   struct gcpro gcpro1;
 
-  val = Feval (XCAR (args));
+  val = IGNORE_MULTIPLE_VALUES (Feval (Fcar (args)));
 
   GCPRO1 (val);
 
@@ -988,9 +1037,11 @@ whose values are discarded.
 
 DEFUN ("prog2", Fprog2, 2, UNEVALLED, 0, /*
 Similar to `progn', but the value of the second form is returned.
-\(prog2 FIRST SECOND BODY...): All the arguments are evaluated sequentially.
-The value of SECOND is saved during evaluation of the remaining args,
-whose values are discarded.
+
+All the arguments are evaluated sequentially.  The value of SECOND is saved
+during evaluation of the remaining args, whose values are discarded.
+
+arguments: (FIRST SECOND &rest BODY)
 */
        (args))
 {
@@ -1000,7 +1051,9 @@ whose values are discarded.
 
   Feval (XCAR (args));
   args = XCDR (args);
-  val = Feval (XCAR (args));
+
+  val = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
+
   args = XCDR (args);
 
   GCPRO1 (val);
@@ -1015,11 +1068,13 @@ whose values are discarded.
 }
 
 DEFUN ("let*", FletX, 1, UNEVALLED, 0, /*
-\(let* VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 Each VALUEFORM can refer to the symbols already bound by this VARLIST.
+
+arguments: (VARLIST &rest BODY)
 */
        (args))
 {
@@ -1043,7 +1098,7 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 	  else
 	    {
 	      CHECK_CONS (tem);
-	      value = Feval (XCAR (tem));
+              value = IGNORE_MULTIPLE_VALUES (Feval (XCAR (tem)));
 	      if (!NILP (XCDR (tem)))
 		sferror
 		  ("`let' bindings can have only one value-form", var);
@@ -1055,11 +1110,13 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 }
 
 DEFUN ("let", Flet, 1, UNEVALLED, 0, /*
-\(let VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 All the VALUEFORMs are evalled before any symbols are bound.
+
+arguments: (VARLIST &rest BODY)
 */
        (args))
 {
@@ -1099,7 +1156,7 @@ All the VALUEFORMs are evalled before any symbols are bound.
 	    else
 	      {
 		CHECK_CONS (tem);
-		*value = Feval (XCAR (tem));
+                *value = IGNORE_MULTIPLE_VALUES (Feval (XCAR (tem)));
 		gcpro1.nvars = idx;
 
 		if (!NILP (XCDR (tem)))
@@ -1124,9 +1181,11 @@ All the VALUEFORMs are evalled before any symbols are bound.
 }
 
 DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
-\(while TEST BODY...): if TEST yields non-nil, eval BODY... and repeat.
+If TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
+
+arguments: (TEST &rest BODY)
 */
        (args))
 {
@@ -1134,7 +1193,7 @@ until TEST returns nil.
   Lisp_Object test = XCAR (args);
   Lisp_Object body = XCDR (args);
 
-  while (!NILP (Feval (test)))
+  while (!NILP (IGNORE_MULTIPLE_VALUES (Feval (test))))
     {
       QUIT;
       Fprogn (body);
@@ -1166,6 +1225,7 @@ The return value of the `setq' form is the value of the last VAL.
   GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
       val = Feval (val);
+      val = IGNORE_MULTIPLE_VALUES (val);
       Fset (symbol, val);
       retval = val;
     }
@@ -1177,16 +1237,88 @@ The return value of the `setq' form is the value of the last VAL.
 
 DEFUN ("quote", Fquote, 1, UNEVALLED, 0, /*
 Return the argument, without evaluating it.  `(quote x)' yields `x'.
+
+`quote' differs from `function' in that it is a hint that an expression is
+data, not a function.  In particular, under some circumstances the byte
+compiler will compile an expression quoted with `function', but it will
+never do so for an expression quoted with `quote'.  These issues are most
+important for lambda expressions (see `lambda').
+
+There is an alternative, more readable, reader syntax for `quote':  a Lisp
+object preceded by `''. Thus, `'x' is equivalent to `(quote x)', in all
+contexts.  A print function may use either.  Internally the expression is
+represented as `(quote x)').
 */
        (args))
 {
   return XCAR (args);
 }
 
+/* Originally, this was just a function -- but `custom' used a garden-
+   variety version, so why not make it a subr?  */
+DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
+Quote EXPR if it is not self quoting.
+
+In contrast with `quote', this is a function, not a special form; its
+argument is evaluated before `quote-maybe' is called.  It returns either
+EXPR (if it is self-quoting) or a list `(quote EXPR)' if it is not
+self-quoting.  Lists starting with the symbol `lambda' are regarded as
+self-quoting.
+*/
+       (expr))
+{
+  if ((XTYPE (expr)) == Lisp_Type_Record)
+    {
+      switch (XRECORD_LHEADER (expr)->type)
+        {
+        case lrecord_type_symbol:
+          if (NILP (expr) || (EQ (expr, Qt)) || SYMBOL_IS_KEYWORD (expr))
+            {
+              return expr;
+            }
+          break;
+        case lrecord_type_cons: 
+          if (EQ (XCAR (expr), Qlambda))
+            {
+              return expr;
+            }
+          break;
+
+        case lrecord_type_vector:
+        case lrecord_type_string:
+        case lrecord_type_compiled_function:
+        case lrecord_type_bit_vector:
+        case lrecord_type_float:
+        case lrecord_type_hash_table:
+        case lrecord_type_char_table:
+        case lrecord_type_range_table:
+        case lrecord_type_bignum:
+        case lrecord_type_ratio:
+        case lrecord_type_bigfloat:
+          return expr;
+        }
+      return list2 (Qquote, expr);
+    }
+
+  /* Fixnums and characters are self-quoting: */
+  return expr;
+}
+
 DEFUN ("function", Ffunction, 1, UNEVALLED, 0, /*
-Like `quote', but preferred for objects which are functions.
-In byte compilation, `function' causes its argument to be compiled.
-`quote' cannot do that.
+Return the argument, without evaluating it.  `(function x)' yields `x'.
+
+`function' differs from `quote' in that it is a hint that an expression is
+a function, not data.  In particular, under some circumstances the byte
+compiler will compile an expression quoted with `function', but it will
+never do so for an expression quoted with `quote'.  However, the byte
+compiler will not compile an expression buried in a data structure such as
+a vector or a list which is not syntactically a function.  These issues are
+most important for lambda expressions (see `lambda').
+
+There is an alternative, more readable, reader syntax for `function':  a Lisp
+object preceded by `#''. Thus, #'x is equivalent to (function x), in all
+contexts.  A print function may use either.  Internally the expression is
+represented as `(function x)').
 */
        (args))
 {
@@ -1201,14 +1333,16 @@ static Lisp_Object
 define_function (Lisp_Object name, Lisp_Object defn)
 {
   Ffset (name, defn);
-  LOADHIST_ATTACH (name);
+  LOADHIST_ATTACH (Fcons (Qdefun, name));
   return name;
 }
 
 DEFUN ("defun", Fdefun, 2, UNEVALLED, 0, /*
-\(defun NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
+Define NAME as a function.
 The definition is (lambda ARGLIST [DOCSTRING] BODY...).
 See also the function `interactive'.
+
+arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 */
        (args))
 {
@@ -1218,12 +1352,14 @@ See also the function `interactive'.
 }
 
 DEFUN ("defmacro", Fdefmacro, 2, UNEVALLED, 0, /*
-\(defmacro NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
+Define NAME as a macro.
 The definition is (macro lambda ARGLIST [DOCSTRING] BODY...).
 When the macro is called, as in (NAME ARGS...),
 the function (lambda ARGLIST BODY...) is applied to
 the list ARGS... as it appears in the expression,
 and the result should be a form to be evaluated instead of the original.
+
+arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 */
        (args))
 {
@@ -1233,7 +1369,7 @@ and the result should be a form to be evaluated instead of the original.
 }
 
 DEFUN ("defvar", Fdefvar, 1, UNEVALLED, 0, /*
-\(defvar SYMBOL INITVALUE DOCSTRING): define SYMBOL as a variable.
+Define SYMBOL as a variable.
 You are not required to define a variable in order to use it,
  but the definition can supply documentation and an initial value
  in a way that tags can recognize.
@@ -1250,6 +1386,8 @@ If DOCSTRING starts with *, this variable is identified as a user option.
 If INITVALUE is missing, SYMBOL's value is not set.
 
 In lisp-interaction-mode defvar is treated as defconst.
+
+arguments: (SYMBOL &optional INITVALUE DOCSTRING)
 */
        (args))
 {
@@ -1264,7 +1402,7 @@ In lisp-interaction-mode defvar is treated as defconst.
 	{
 	  struct gcpro gcpro1;
 	  GCPRO1 (val);
-	  val = Feval (val);
+	  val = IGNORE_MULTIPLE_VALUES (Feval (val));
 	  Fset_default (sym, val);
 	  UNGCPRO;
 	}
@@ -1288,8 +1426,7 @@ In lisp-interaction-mode defvar is treated as defconst.
 }
 
 DEFUN ("defconst", Fdefconst, 2, UNEVALLED, 0, /*
-\(defconst SYMBOL INITVALUE DOCSTRING): define SYMBOL as a constant
-variable.
+Define SYMBOL as a constant variable.
 The intent is that programs do not change this value, but users may.
 Always sets the value of SYMBOL to the result of evalling INITVALUE.
 If SYMBOL is buffer-local, its default value is what is set;
@@ -1303,6 +1440,8 @@ Note: do not use `defconst' for user options in libraries that are not
  their own values for such variables before loading the library.
 Since `defconst' unconditionally assigns the variable,
  it would override the user's choice.
+
+arguments: (SYMBOL &optional INITVALUE DOCSTRING)
 */
        (args))
 {
@@ -1312,6 +1451,8 @@ Since `defconst' unconditionally assigns the variable,
   struct gcpro gcpro1;
 
   GCPRO1 (val);
+
+  val = IGNORE_MULTIPLE_VALUES (val);
 
   Fset_default (sym, val);
 
@@ -1334,29 +1475,8 @@ Since `defconst' unconditionally assigns the variable,
   return sym;
 }
 
-DEFUN ("user-variable-p", Fuser_variable_p, 1, 1, 0, /*
-Return t if VARIABLE is intended to be set and modified by users.
-\(The alternative is a variable used internally in a Lisp program.)
-Determined by whether the first character of the documentation
-for the variable is `*'.
-*/
-       (variable))
-{
-  Lisp_Object documentation = Fget (variable, Qvariable_documentation, Qnil);
-
-  return
-    ((INTP (documentation) && XINT (documentation) < 0) ||
-
-     (STRINGP (documentation) &&
-      (string_byte (documentation, 0) == '*')) ||
-
-     /* If (STRING . INTEGER), a negative integer means a user variable. */
-     (CONSP (documentation)
-      && STRINGP (XCAR (documentation))
-      && INTP (XCDR (documentation))
-      && XINT (XCDR (documentation)) < 0)) ?
-    Qt : Qnil;
-}
+/* XEmacs: user-variable-p is in symbols.c, since it needs to mess around
+   with the symbol variable aliases. */
 
 DEFUN ("macroexpand-internal", Fmacroexpand_internal, 1, 2, 0, /*
 Return result of expanding macros at top level of FORM.
@@ -1470,11 +1590,13 @@ check_proper_critical_section_lisp_protection (void)
 #endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
-\(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
+Eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
-Within BODY, (throw TAG) with same (`eq') tag exits BODY and this `catch'.
+Within BODY, (throw TAG VAL) with same (`eq') tag exits BODY and this `catch'.
 If no throw happens, `catch' returns the value of the last BODY form.
 If a throw happens, it specifies the value to return from `catch'.
+
+arguments: (TAG &rest BODY)
 */
        (args))
 {
@@ -1636,10 +1758,10 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   LONGJMP (c->jmp, 1);
 }
 
-static DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
-						 Lisp_Object, Lisp_Object));
+DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+					  Lisp_Object, Lisp_Object));
 
-static DOESNT_RETURN
+DOESNT_RETURN
 throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 		   Lisp_Object sig, Lisp_Object data)
 {
@@ -1712,22 +1834,40 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
    condition_case_1).  See below for more info.
 */
 
-DEFUN_NORETURN ("throw", Fthrow, 2, 2, 0, /*
+DEFUN_NORETURN ("throw", Fthrow, 2, UNEVALLED, 0, /*
 Throw to the catch for TAG and return VALUE from it.
-Both TAG and VALUE are evalled.  Tags are the same iff they are `eq'.
+
+Both TAG and VALUE are evalled, and multiple values in VALUE will be passed
+back.  Tags are the same if and only if they are `eq'.
+
+arguments: (TAG VALUE)
 */
-       (tag, value))
+       (args))
 {
+  int nargs;
+  Lisp_Object tag, value;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 2)
+    {
+      Fsignal (Qwrong_number_of_arguments, list2 (Qthrow, make_int (nargs)));
+    }
+
+  tag = IGNORE_MULTIPLE_VALUES (Feval (XCAR(args)));
+
+  value = Feval (XCAR (XCDR (args)));
+
   throw_or_bomb_out (tag, value, 0, Qnil, Qnil); /* Doesn't return */
   RETURN_NOT_REACHED (Qnil);
 }
 
 DEFUN ("unwind-protect", Funwind_protect, 1, UNEVALLED, 0, /*
 Do BODYFORM, protecting with UNWINDFORMS.
-Usage looks like (unwind-protect BODYFORM UNWINDFORMS...).
 If BODYFORM completes normally, its value is returned
 after executing the UNWINDFORMS.
 If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+
+arguments: (BODYFORM &rest UNWINDFORMS)
 */
        (args))
 {
@@ -2066,9 +2206,9 @@ rather than when the handler was set, use `call-with-condition-handler'.
 }
 
 DEFUN ("call-with-condition-handler", Fcall_with_condition_handler, 2, MANY, 0, /*
-Regain control when an error is signalled, without popping the stack.
-Usage looks like (call-with-condition-handler HANDLER FUNCTION &rest ARGS).
-This function is similar to `condition-case', but the handler is invoked
+Call FUNCTION with arguments ARGS, regaining control on error.
+
+This function is similar to `condition-case', but HANDLER is invoked
 with the same environment (Lisp stack, bindings, catches, condition-cases)
 that was current when `signal' was called, rather than when the handler
 was established.
@@ -2080,6 +2220,8 @@ you to specify which errors are trapped).  If the handler function
 returns, `signal' continues as if the handler were never invoked.
 \(It continues to look for handlers established earlier than this one,
 and invokes the standard error-handler if none is found.)
+
+arguments: (HANDLER FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args)) /* Note!  Args side-effected! */
 {
@@ -2238,7 +2380,9 @@ user invokes the "return from signal" option.
       ABORT ();
     }
 
+#ifndef NEW_GC
   assert (!gc_in_progress);
+#endif /* not NEW_GC */
 
   /* We abort if in_display and we are not protected, as garbage
      collections and non-local exits will invariably be fatal, but in
@@ -2331,7 +2475,8 @@ user invokes the "return from signal" option.
       else if (EQ (handler_data, Qt))
 	{
           UNGCPRO;
-          return Fthrow (handlers, Fcons (error_symbol, data));
+          throw_or_bomb_out (handlers, Fcons (error_symbol, data),
+                             0, Qnil, Qnil);
 	}
       /* `error' is used similarly to the way `t' is used, but in
          addition it invokes the debugger if debug_on_error.
@@ -2350,7 +2495,7 @@ user invokes the "return from signal" option.
             return return_from_signal (tem);
 
           tem = Fcons (error_symbol, data);
-          return Fthrow (handlers, tem);
+          throw_or_bomb_out (handlers, tem, 0, Qnil, Qnil);
         }
       else
 	{
@@ -2374,7 +2519,7 @@ user invokes the "return from signal" option.
 
                   /* Doesn't return */
                   tem = Fcons (Fcons (error_symbol, data), Fcdr (clause));
-                  return Fthrow (handlers, tem);
+                  throw_or_bomb_out (handlers, tem, 0, Qnil, Qnil);
                 }
 	    }
 	}
@@ -2995,6 +3140,27 @@ out_of_memory (const CIbyte *reason, Lisp_Object frob)
   signal_error (Qout_of_memory, reason, frob);
 }
 
+DOESNT_RETURN
+text_conversion_error (const CIbyte *reason, Lisp_Object frob)
+{
+  signal_error (Qtext_conversion_error, reason, frob);
+}
+
+DOESNT_RETURN
+text_conversion_error_2 (const CIbyte *reason, Lisp_Object frob1,
+			 Lisp_Object frob2)
+{
+  signal_error_2 (Qtext_conversion_error, reason, frob1, frob2);
+}
+
+void
+maybe_text_conversion_error (const CIbyte *reason, Lisp_Object frob,
+			     Lisp_Object class_, Error_Behavior errb)
+{
+  maybe_signal_error (Qtext_conversion_error, reason, frob, class_, errb);
+}
+
+
 
 /************************************************************************/
 /*			      User commands				*/
@@ -3062,7 +3228,7 @@ when reading the arguments.
   /* This function can GC */
   Lisp_Object prefixarg;
   Lisp_Object final = cmd;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
   struct console *con = XCONSOLE (Vselected_console);
 
   prefixarg = con->prefix_arg;
@@ -3357,14 +3523,32 @@ handle_compiled_function_with_and_rest (Lisp_Compiled_Function *f, int nargs,
   int bindargs = min (nargs, max_non_rest_args);
 
   for (i = 0; i < bindargs; i++)
+#ifdef NEW_GC
+    SPECBIND_FAST_UNSAFE (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i],
+			  args[i]);
+#else /* not NEW_GC */
     SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+#endif /* not NEW_GC */
   for (i = bindargs; i < max_non_rest_args; i++)
+#ifdef NEW_GC
+    SPECBIND_FAST_UNSAFE (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i],
+			  Qnil);
+#else /* not NEW_GC */
     SPECBIND_FAST_UNSAFE (f->args[i], Qnil);
+#endif /* not NEW_GC */
+#ifdef NEW_GC
+  SPECBIND_FAST_UNSAFE
+    (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[max_non_rest_args],
+     nargs > max_non_rest_args ?
+     Flist (nargs - max_non_rest_args, &args[max_non_rest_args]) :
+     Qnil);
+#else /* not NEW_GC */
   SPECBIND_FAST_UNSAFE
     (f->args[max_non_rest_args],
      nargs > max_non_rest_args ?
      Flist (nargs - max_non_rest_args, &args[max_non_rest_args]) :
      Qnil);
+#endif /* not NEW_GC */
 }
 
 /* Apply compiled-function object FUN to the NARGS evaluated arguments
@@ -3391,7 +3575,12 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
     {
 #if 1
       for (i = 0; i < nargs; i++)
+#ifdef NEW_GC
+	SPECBIND_FAST_UNSAFE (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i],
+			      args[i]);
+#else /* not NEW_GC */
 	SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+#endif /* not NEW_GC */
 #else
       /* Here's an alternate way to write the loop that tries to further
          optimize funcalls for functions with few arguments by partially
@@ -3422,9 +3611,19 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
   else if (nargs < f->max_args)
     {
       for (i = 0; i < nargs; i++)
+#ifdef NEW_GC
+	SPECBIND_FAST_UNSAFE (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i],
+			      args[i]);
+#else /* not NEW_GC */
 	SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+#endif /* not NEW_GC */
       for (i = nargs; i < f->max_args; i++)
+#ifdef NEW_GC
+	SPECBIND_FAST_UNSAFE (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i],
+			      Qnil);
+#else /* not NEW_GC */
 	SPECBIND_FAST_UNSAFE (f->args[i], Qnil);
+#endif /* not NEW_GC */
     }
   else if (f->max_args == MANY)
     handle_compiled_function_with_and_rest (f, nargs, args);
@@ -3462,11 +3661,21 @@ Evaluate FORM and return its value.
   /* This function can GC */
   Lisp_Object fun, val, original_fun, original_args;
   int nargs;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   check_proper_critical_section_lisp_protection ();
 #endif
+
+  if (!CONSP (form))
+    {
+      if (SYMBOLP (form))
+        {
+          return Fsymbol_value (form);
+        }
+
+      return form;
+    }
 
   /* I think this is a pretty safe place to call Lisp code, don't you? */
   while (!in_warnings && !NILP (Vpending_warnings)
@@ -3500,20 +3709,16 @@ Evaluate FORM and return its value.
       unbind_to (speccount);
     }
 
-  if (!CONSP (form))
-    {
-      if (SYMBOLP (form))
-	return Fsymbol_value (form);
-      else
-	return form;
-    }
-
   QUIT;
   if (need_to_garbage_collect)
     {
       struct gcpro gcpro1;
       GCPRO1 (form);
+#ifdef NEW_GC
+      gc_incremental ();
+#else /* not NEW_GC */
       garbage_collect_1 ();
+#endif /* not NEW_GC */
       UNGCPRO;
     }
 
@@ -3547,7 +3752,13 @@ Evaluate FORM and return its value.
   /* At this point, only original_fun and original_args
      have values that will be used below. */
  retry:
-  fun = indirect_function (original_fun, 1);
+  /* Optimise for no indirection.  */
+  fun = original_fun;
+  if (SYMBOLP (fun) && !EQ (fun, Qunbound)
+      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
+    {
+      fun = indirect_function(original_fun, 1);
+    }
 
   if (SUBRP (fun))
     {
@@ -3577,7 +3788,7 @@ Evaluate FORM and return its value.
 	  {
 	    LIST_LOOP_2 (arg, original_args)
 	      {
-		*p++ = Feval (arg);
+                *p++ = IGNORE_MULTIPLE_VALUES (Feval (arg));
 		gcpro1.nvars++;
 	      }
 	  }
@@ -3608,7 +3819,7 @@ Evaluate FORM and return its value.
 	  {
 	    LIST_LOOP_2 (arg, original_args)
 	      {
-		*p++ = Feval (arg);
+                *p++ = IGNORE_MULTIPLE_VALUES (Feval (arg));
 		gcpro1.nvars++;
 	      }
 	  }
@@ -3641,7 +3852,7 @@ Evaluate FORM and return its value.
       {
 	LIST_LOOP_2 (arg, original_args)
 	  {
-	    *p++ = Feval (arg);
+            *p++ = IGNORE_MULTIPLE_VALUES (Feval (arg));
 	    gcpro1.nvars++;
 	  }
       }
@@ -3690,7 +3901,7 @@ Evaluate FORM and return its value.
 	  {
 	    LIST_LOOP_2 (arg, original_args)
 	      {
-		*p++ = Feval (arg);
+                *p++ = IGNORE_MULTIPLE_VALUES (Feval (arg));
 		gcpro1.nvars++;
 	      }
 	  }
@@ -3716,7 +3927,12 @@ Evaluate FORM and return its value.
 	  goto invalid_function;
 	}
     }
-  else /* ! (SUBRP (fun) || COMPILED_FUNCTIONP (fun) || CONSP (fun)) */
+  else if (UNBOUNDP (fun))
+    {
+      val = signal_void_function_error (original_fun);
+    }
+  else /* ! (SUBRP (fun) || COMPILED_FUNCTIONP (fun) || CONSP (fun)
+             UNBOUNDP (fun)) */
     {
     invalid_function:
       val = signal_invalid_function_error (fun);
@@ -3745,15 +3961,17 @@ run_post_gc_hook (void)
 }
 
 DEFUN ("funcall", Ffuncall, 1, MANY, 0, /*
-Call first argument as a function, passing the remaining arguments to it.
+Call FUNCTION as a function, passing the remaining arguments to it.
 Thus, (funcall 'cons 'x 'y) returns (x . y).
+
+arguments: (FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
   /* This function can GC */
   Lisp_Object fun;
   Lisp_Object val;
-  struct backtrace backtrace;
+  PROFILE_DECLARE();
   int fun_nargs = nargs - 1;
   Lisp_Object *fun_args = args + 1;
 
@@ -3765,7 +3983,11 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
     {
       if (need_to_garbage_collect)
 	/* Callers should gcpro lexpr args */
+#ifdef NEW_GC
+	gc_incremental ();
+#else /* not NEW_GC */
 	garbage_collect_1 ();
+#endif /* not NEW_GC */
       if (need_to_check_c_alloca)
 	{
 	  if (++funcall_alloca_count >= MAX_FUNCALLS_BETWEEN_ALLOCA_CLEANUP)
@@ -3778,6 +4000,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	{
 	  need_to_signal_post_gc = 0;
 	  recompute_funcall_allocation_flag ();
+#ifdef NEW_GC
+	  run_finalizers ();
+#endif /* NEW_GC */
 	  run_post_gc_hook ();
 	}
     }
@@ -3858,6 +4083,12 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	}
       else if (max_args == UNEVALLED) /* Can't funcall a special form */
 	{
+          /* Ugh, ugh, ugh. */
+          if (EQ (fun, XSYMBOL_FUNCTION (Qthrow)))
+            {
+              args[0] = Qobsolete_throw;
+              goto retry;
+            }
 	  goto invalid_function;
 	}
       else
@@ -4059,6 +4290,8 @@ arguments, use `function-allows-args'.
 DEFUN ("apply", Fapply, 2, MANY, 0, /*
 Call FUNCTION with the remaining args, using the last arg as a list of args.
 Thus, (apply '+ 1 2 '(3 4)) returns 10.
+
+arguments: (FUNCTION &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4138,7 +4371,6 @@ Thus, (apply '+ 1 2 '(3 4)) returns 10.
   }
 }
 
-
 /* Apply lambda list FUN to the NARGS evaluated arguments in ARGS and
    return the result of evaluation. */
 
@@ -4196,6 +4428,597 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object args[])
 }
 
 
+/* Multiple values. 
+
+   A multiple value object is returned by #'values if:
+
+   -- The number of arguments to #'values is not one, and: 
+   -- Some special form in the call stack is prepared to handle more than
+   one multiple value.
+   
+   The return value of #'values-list is analogous to that of #'values.
+
+   Henry Baker, in https://eprints.kfupm.edu.sa/31898/1/31898.pdf ("CONS
+   Should not CONS its Arguments, or, a Lazy Alloc is a Smart Alloc", ACM
+   Sigplan Notices 27,3 (March 1992),24-34.) says it should be possible to
+   allocate Common Lisp multiple-value objects on the stack, but this
+   assumes that variable-length records can be allocated on the stack,
+   something not true for us. As far as I can tell, it also ignores the
+   contexts where multiple-values need to be thrown, or maybe it thinks such
+   objects should be converted to heap allocation at that point.
+
+   The specific multiple values saved and returned depend on how many
+   multiple-values special forms in the stack are interested in; for
+   example, if #'multiple-value-call is somewhere in the call stack, all
+   values passed to #'values will be saved and returned.  If an expansion of
+   #'multiple-value-setq with 10 SYMS is the only part of the call stack
+   interested in multiple values, then a maximum of ten multiple values will
+   be saved and returned.
+
+   (#'throw passes back multiple values in its VALUE argument; this is why
+   we can't just take the details of the most immediate
+   #'multiple-value-{whatever} call to work out which values to save, we
+   need to look at the whole stack, or, equivalently, the dynamic variables
+   we set to reflect the whole stack.)
+
+   The first value passed to #'values will always be saved, since that is
+   needed to convert a multiple value object into a single value object,
+   something that is normally necessary independent of how many functions in
+   the call stack are interested in multiple values.
+
+   However many values (for values of "however many" that are not one) are
+   saved and restored, the multiple value object knows how many arguments it
+   would contain were none to have been discarded, and will indicate this
+   on being printed from within GDB.
+
+   In lisp-interaction-mode, no multiple values should be discarded (unless
+   they need to be for the sake of the correctness of the program);
+   #'eval-interactive-with-multiple-value-list in lisp-mode.el wraps its
+   #'eval calls with #'multiple-value-list calls to avoid this. This means
+   that there is a small performance and memory penalty for code evaluated
+   in *scratch*; use M-: EXPRESSION RET if you really need to avoid
+   this. Lisp code execution that is not ultimately from hitting C-j in
+   *scratch*--that is, the vast vast majority of Lisp code execution--does
+   not have this penalty.
+
+   Probably the most important aspect of multiple values is stated with
+   admirable clarity by CLTL2:
+
+     "No matter how many values a form produces, if the form is an argument
+     form in a function call, then exactly one value (the first one) is
+     used."
+   
+   This means that most contexts, most of the time, will never see multiple
+   values.  There are important exceptions; search the web for that text in
+   quotation marks and read the related chapter. This code handles all of
+   them, to my knowledge. Aidan Kehoe, Mon Mar 16 00:17:39 GMT 2009. */
+
+static Lisp_Object
+make_multiple_value (Lisp_Object first_value, Elemcount count,
+                     Elemcount first_desired, Elemcount upper_limit)
+{
+  Bytecount sizem;
+  struct multiple_value *mv;
+  Elemcount i, allocated_count;
+
+  assert (count != 1);
+
+  if (1 != upper_limit && (0 == first_desired))
+    {
+      /* We always allocate element zero, and that's taken into account when
+         working out allocated_count: */
+      first_desired = 1;
+    }
+
+  if (first_desired >= count)
+    {
+      /* We can't pass anything back that our caller is interested in. Only
+         allocate for the first argument. */
+      allocated_count = 1;
+    }
+  else
+    {
+      allocated_count = 1 + ((upper_limit > count ? count : upper_limit)
+                             - first_desired);
+    }
+
+  sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (multiple_value,
+                                        Lisp_Object,
+                                        contents, allocated_count);
+  mv = (multiple_value *) BASIC_ALLOC_LCRECORD (sizem,
+                                                &lrecord_multiple_value);
+
+  mv->count = count;
+  mv->first_desired = first_desired;
+  mv->allocated_count = allocated_count;
+  mv->contents[0] = first_value;
+
+  for (i = first_desired; i < upper_limit && i < count; ++i)
+    {
+      mv->contents[1 + (i - first_desired)] = Qunbound;
+    }
+
+  return wrap_multiple_value (mv);
+}
+
+void
+multiple_value_aset (Lisp_Object obj, Elemcount index, Lisp_Object value)
+{
+  struct multiple_value *mv = XMULTIPLE_VALUE (obj);
+  Elemcount first_desired = mv->first_desired; 
+  Elemcount allocated_count = mv->allocated_count; 
+
+  if (index != 0 &&
+      (index < first_desired || index >= (first_desired + allocated_count)))
+    {
+      args_out_of_range (make_int (first_desired),
+                         make_int (first_desired + allocated_count));
+    }
+
+  mv->contents[index == 0 ? 0 : 1 + (index - first_desired)] = value;
+}
+
+Lisp_Object
+multiple_value_aref (Lisp_Object obj, Elemcount index)
+{
+  struct multiple_value *mv = XMULTIPLE_VALUE (obj);
+  Elemcount first_desired = mv->first_desired; 
+  Elemcount allocated_count = mv->allocated_count; 
+
+  if (index != 0 &&
+      (index < first_desired || index >= (first_desired + allocated_count)))
+    {
+      args_out_of_range (make_int (first_desired),
+                         make_int (first_desired + allocated_count));
+    }
+
+  return mv->contents[index == 0 ? 0 : 1 + (index - first_desired)];
+}
+
+static void
+print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  struct multiple_value *mv = XMULTIPLE_VALUE (obj);
+  Elemcount first_desired = mv->first_desired; 
+  Elemcount allocated_count = mv->allocated_count; 
+  Elemcount count = mv->count, index;
+
+  if (print_readably)
+    {
+      printing_unreadable_object ("multiple values");
+    }
+
+  if (0 == count)
+    {
+      write_c_string (printcharfun, "#<zero-length multiple value>");
+    }
+
+  for (index = 0; index < count;)
+    {
+      if (index != 0 &&
+          (index < first_desired ||
+           index >= (first_desired + (allocated_count - 1))))
+        {
+          write_fmt_string (printcharfun, "#<discarded-multiple-value %d>",
+                            index);
+        }
+      else
+        {
+          print_internal (multiple_value_aref (obj, index),
+                          printcharfun, escapeflag);
+        }
+
+      ++index;
+
+      if (count > 1 && index < count)
+        {
+          write_c_string (printcharfun, " ;\n");
+        }
+    }
+}
+
+static Lisp_Object
+mark_multiple_value (Lisp_Object obj)
+{
+  struct multiple_value *mv = XMULTIPLE_VALUE (obj);
+  Elemcount index, allocated_count = mv->allocated_count;
+
+  for (index = 0; index < allocated_count; ++index)
+    {
+      mark_object (mv->contents[index]);
+    }
+
+  return Qnil;
+}
+
+static Bytecount
+size_multiple_value (const void *lheader)
+{
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (struct multiple_value,
+                                       Lisp_Object, contents,
+                                       ((struct multiple_value *) lheader)->
+                                       allocated_count);
+}
+
+static const struct memory_description multiple_value_description[] = {
+  { XD_LONG, offsetof (struct multiple_value, count) },
+  { XD_ELEMCOUNT, offsetof (struct multiple_value, allocated_count) },
+  { XD_LONG, offsetof (struct multiple_value, first_desired) },
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct multiple_value, contents),
+    XD_INDIRECT (1, 0) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("multiple-value", multiple_value,
+					1, /*dumpable-flag*/
+					mark_multiple_value,
+                                        print_multiple_value, 0,
+					0, /* No equal method. */
+					0, /* No hash method. */
+					multiple_value_description,
+					size_multiple_value,
+                                        struct multiple_value);
+
+/* Given that FIRST and UPPER are the inclusive lower and exclusive upper
+   bounds for the multiple values we're interested in, modify (or don't) the
+   special variables used to indicate this to #'values and #'values-list.
+   Returns the specpdl_depth() value before any modification. */
+int
+bind_multiple_value_limits (int first, int upper)
+{
+  int result = specpdl_depth();
+
+  if (!(upper > first))
+    {
+      invalid_argument ("MULTIPLE-VALUE-UPPER-LIMIT must be greater than "
+                        " FIRST-DESIRED-MULTIPLE-VALUE", Qunbound);
+    }
+
+  if (upper > Vmultiple_values_limit)
+    {
+      args_out_of_range (make_int (upper), make_int (Vmultiple_values_limit));
+    }
+
+  /* In the event that something back up the stack wants more multiple
+     values than we do, we need to keep its figures for
+     first_desired_multiple_value or multiple_value_current_limit both. It
+     may be that the form will throw past us.
+
+     If first_desired_multiple_value is zero, this means it hasn't ever been
+     bound, and any value we have for first is appropriate to use.
+
+     Zeroth element is always saved, no need to note that: */
+  if (0 == first)
+    {
+      first = 1;
+    }
+
+  if (0 == first_desired_multiple_value
+      || first < first_desired_multiple_value)
+    {
+      internal_bind_int (&first_desired_multiple_value, first);      
+    }
+
+  if (upper > multiple_value_current_limit)
+    {
+      internal_bind_int (&multiple_value_current_limit, upper);
+    }
+
+  return result;
+}
+
+Lisp_Object
+multiple_value_call (int nargs, Lisp_Object *args)
+{
+  /* The argument order here is horrible: */
+  int i, speccount = XINT (args[3]);
+  Lisp_Object result = Qnil, head = Fcons (args[0], Qnil), list_offset; 
+  struct gcpro gcpro1, gcpro2;
+  Lisp_Object apply_args[2];
+  
+  GCPRO2 (head, result);
+  list_offset = head;
+
+  assert (!(MULTIPLE_VALUEP (args[0])));
+  CHECK_FUNCTION (args[0]);
+
+  /* Start at 4, to ignore the function, the speccount, and the arguments to
+     multiple-values-limit (which we don't discard because
+     #'multiple-value-list-internal needs them): */
+  for (i = 4; i < nargs; ++i)
+    {
+      result = args[i];
+      if (MULTIPLE_VALUEP (result))
+        {
+          Lisp_Object val;
+          Elemcount i, count = XMULTIPLE_VALUE_COUNT (result);
+
+          for (i = 0; i < count; i++)
+            {
+              val = multiple_value_aref (result, i);
+              assert (!UNBOUNDP (val));
+
+              XSETCDR (list_offset, Fcons (val, Qnil));
+              list_offset = XCDR (list_offset);
+            }
+        }
+      else
+        {
+          XSETCDR (list_offset, Fcons (result, Qnil));
+          list_offset = XCDR (list_offset);
+        }
+    }
+
+  apply_args [0] = XCAR (head);
+  apply_args [1] = XCDR (head);
+
+  unbind_to (speccount);
+
+  RETURN_UNGCPRO (Fapply (countof(apply_args), apply_args));
+}
+
+DEFUN ("multiple-value-call", Fmultiple_value_call, 1, UNEVALLED, 0, /*
+Call FUNCTION with arguments FORMS, using multiple values when returned.
+
+All of the (possibly multiple) values returned by each form in FORMS are
+gathered together, and given as arguments to FUNCTION; conceptually, this
+function is a version of `apply' that by-passes the multiple values
+infrastructure, treating multiple values as intercalated lists.
+
+arguments: (FUNCTION &rest FORMS)
+*/
+       (args))
+{
+  int listcount, i = 0, speccount;
+  Lisp_Object *constructed_args;
+  struct gcpro gcpro1;
+
+  GET_EXTERNAL_LIST_LENGTH (args, listcount);
+
+  constructed_args = alloca_array (Lisp_Object, listcount + 3);
+
+  /* Fcar so we error on non-cons: */
+  constructed_args[i] = IGNORE_MULTIPLE_VALUES (Feval (Fcar (args)));
+
+  GCPRO1 (*constructed_args);
+  gcpro1.nvars = ++i; 
+
+  /* The argument order is horrible here. */
+  constructed_args[i] = make_int (0);
+  gcpro1.nvars = ++i;
+  constructed_args[i] = make_int (Vmultiple_values_limit);
+  gcpro1.nvars = ++i;
+
+  speccount = bind_multiple_value_limits (0, Vmultiple_values_limit);
+  constructed_args[i] = make_int (speccount);
+  gcpro1.nvars = ++i;
+
+  {
+    LIST_LOOP_2 (elt, XCDR (args))
+      {
+        constructed_args[i] = Feval (elt);
+        gcpro1.nvars = ++i;
+      }
+  }
+
+  RETURN_UNGCPRO (multiple_value_call (listcount + 3, constructed_args));
+}
+
+Lisp_Object
+multiple_value_list_internal (int nargs, Lisp_Object *args)
+{
+  int first = XINT (args[0]), upper = XINT (args[1]),
+    speccount = XINT(args[2]);
+  Lisp_Object result = Qnil;
+
+  assert (nargs == 4);
+
+  result = args[3];
+
+  unbind_to (speccount); 
+
+  if (MULTIPLE_VALUEP (result))
+    {
+      Lisp_Object head = Fcons (Qnil, Qnil);
+      Lisp_Object list_offset = head, val; 
+      Elemcount count = XMULTIPLE_VALUE_COUNT(result);
+      
+      for (; first < upper && first < count; ++first)
+        {
+          val = multiple_value_aref (result, first);
+          assert (!UNBOUNDP (val));
+
+          XSETCDR (list_offset, Fcons (val, Qnil));
+          list_offset = XCDR (list_offset);
+        }
+
+      return XCDR (head);
+    }
+  else
+    {
+      if (first == 0)
+	{
+          return Fcons (result, Qnil);
+        }
+      else
+        {
+          return Qnil;
+        }
+    }
+}
+
+DEFUN ("multiple-value-list-internal", Fmultiple_value_list_internal, 3,
+       UNEVALLED, 0, /*
+Evaluate FORM. Return a list of multiple vals reflecting the other two args.
+
+Don't use this.  Use `multiple-value-list', the macro specified by Common
+Lisp, instead.
+
+FIRST-DESIRED-MULTIPLE-VALUE is the first element in list of multiple values
+to pass back.  MULTIPLE-VALUE-UPPER-LIMIT is the exclusive upper limit on
+the indexes within the values that may be passed back; this function will
+never return a list longer than MULTIPLE-VALUE-UPPER-LIMIT -
+FIRST-DESIRED-MULTIPLE-VALUE.  It may return a list shorter than that, if
+`values' or `values-list' do not supply enough elements.
+
+arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
+*/
+       (args))
+{
+  Lisp_Object argv[4];
+  int first, upper, nargs;
+  struct gcpro gcpro1;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 3)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qmultiple_value_list_internal, make_int (nargs)));
+    }
+
+  argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
+  CHECK_NATNUM (argv[0]);
+  first = XINT (argv[0]);
+
+  GCPRO1 (argv[0]);
+  gcpro1.nvars = 1;
+
+  args = XCDR (args);
+
+  argv[1] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
+  CHECK_NATNUM (argv[1]);
+  upper = XINT (argv[1]);
+  gcpro1.nvars = 2;
+
+  /* The unintuitive order of things here is for the sake of the bytecode;
+     the alternative would be to encode the number of arguments in the
+     bytecode stream, which complicates things if we have more than 255
+     arguments. */
+  argv[2] = make_int (bind_multiple_value_limits (first, upper));
+  gcpro1.nvars = 3;
+  args = XCDR (args);
+
+  /* GCPROing in this function is not strictly necessary, this Feval is the
+     only point that may cons up data that is not immediately discarded, and
+     within it is the only point (in Fmultiple_value_list_internal and
+     multiple_value_list) that we can garbage collect. But I'm conservative,
+     and this function is called so rarely (only from interpreted code) that
+     it doesn't matter for performance. */
+  argv[3] = Feval (XCAR (args));
+  gcpro1.nvars = 4;
+
+  RETURN_UNGCPRO (multiple_value_list_internal (countof (argv), argv));
+}
+
+DEFUN ("multiple-value-prog1", Fmultiple_value_prog1, 1, UNEVALLED, 0, /*
+Similar to `prog1', but return any multiple values from the first form. 
+`prog1' itself will never return multiple values. 
+
+arguments: (FIRST &rest BODY)
+*/
+       (args))
+{
+  /* This function can GC */
+  Lisp_Object val;
+  struct gcpro gcpro1;
+
+  val = Feval (XCAR (args));
+
+  GCPRO1 (val);
+
+  {
+    LIST_LOOP_2 (form, XCDR (args))
+      Feval (form);
+  }
+
+  RETURN_UNGCPRO (val); 
+}  
+
+DEFUN ("values", Fvalues, 0, MANY, 0, /*
+Return all ARGS as multiple values.
+
+arguments: (&rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object result = Qnil;
+  int counting = 1;
+
+  /* Pathological cases, no need to cons up an object: */
+  if (1 == nargs || 1 == multiple_value_current_limit)
+    {
+      return nargs ? args[0] : Qnil;
+    }
+
+  /* If nargs is zero, this code is correct and desirable.  With
+     #'multiple-value-call, we want zero-length multiple values in the
+     argument list to be discarded entirely, and we can't do this if we
+     transform them to nil. */
+  result = make_multiple_value (nargs ? args[0] : Qnil, nargs, 
+                                first_desired_multiple_value,
+                                multiple_value_current_limit);
+
+  for (; counting < nargs; ++counting)
+    {
+      if (counting >= first_desired_multiple_value &&
+          counting < multiple_value_current_limit)
+        {
+          multiple_value_aset (result, counting, args[counting]);
+        }
+    }
+
+  return result;
+}
+
+DEFUN ("values-list", Fvalues_list, 1, 1, 0, /*
+Return all the elements of LIST as multiple values.
+*/
+       (list))
+{
+  Lisp_Object result = Qnil;
+  int counting = 1, listcount; 
+
+  GET_EXTERNAL_LIST_LENGTH (list, listcount);
+
+  /* Pathological cases, no need to cons up an object: */
+  if (1 == listcount || 1 == multiple_value_current_limit)
+    {
+      return Fcar_safe (list);
+    }
+
+  result = make_multiple_value (Fcar_safe (list), listcount,
+                                first_desired_multiple_value,
+                                multiple_value_current_limit);
+
+  list = Fcdr_safe (list);
+
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, list)
+      {
+        if (counting >= first_desired_multiple_value &&
+            counting < multiple_value_current_limit)
+          {
+            multiple_value_aset (result, counting, elt);
+          }
+        ++counting;
+      }
+    }
+
+  return result;
+}
+
+Lisp_Object
+values2 (Lisp_Object first, Lisp_Object second)
+{
+  Lisp_Object argv[2];
+
+  argv[0] = first;
+  argv[1] = second;
+
+  return Fvalues (countof (argv), argv);
+}
+
+
 /************************************************************************/
 /*		     Run hook variables in various ways.		*/
 /************************************************************************/
@@ -4211,6 +5034,8 @@ If it is a list, the elements are called, in order, with no arguments.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (FIRST &rest REST)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4235,6 +5060,8 @@ as that may change.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4251,6 +5078,8 @@ If all the functions return nil, we return nil.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4267,6 +5096,8 @@ If all the functions return non-nil, we return non-nil.
 
 To make a hook variable buffer-local, use `make-local-hook',
 not `make-local-variable'.
+
+arguments: (HOOK &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4291,9 +5122,11 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
     /* We need to bail out of here pronto. */
     return Qnil;
 
+#ifndef NEW_GC
   /* Whenever gc_in_progress is true, preparing_for_armageddon
      will also be true unless something is really hosed. */
   assert (!gc_in_progress);
+#endif /* not NEW_GC */
 
   sym = args[0];
   val = symbol_value_in_buffer (sym, wrap_buffer (buf));
@@ -4858,7 +5691,7 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
   p->error_conditions = error_conditions;
   p->data = data;
 
-  Fthrow (p->catchtag, Qnil);
+  throw_or_bomb_out (p->catchtag, Qnil, 0, Qnil, Qnil);
   RETURN_NOT_REACHED (Qnil);
 }
 
@@ -5917,13 +6750,23 @@ restore_int (Lisp_Object cons)
   int *addr = (int *) get_opaque_ptr (opaque);
   int val;
 
+  /* In the event that a C integer will always fit in an Emacs int, we
+     haven't ever stored a C integer as an opaque pointer. This #ifdef
+     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
+     integers have 32 value bits.  */
+#if INT_VALBITS < INTBITS
   if (INTP (lval))
-    val = XINT (lval);
+    {
+      val = XINT (lval);
+    }
   else
     {
       val = (int) get_opaque_ptr (lval);
       free_opaque_ptr (lval);
     }
+#else /* !(INT_VALBITS < INTBITS) */
+  val = XINT(lval);
+#endif /* INT_VALBITS < INTBITS */
 
   *addr = val;
   free_opaque_ptr (opaque);
@@ -5940,10 +6783,19 @@ record_unwind_protect_restoring_int (int *addr, int val)
   Lisp_Object opaque = make_opaque_ptr (addr);
   Lisp_Object lval;
 
+  /* In the event that a C integer will always fit in an Emacs int, we don't
+     ever want to store a C integer as an opaque pointer. This #ifdef
+     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
+     integers have 32 value bits.  */
+#if INT_VALBITS <= INTBITS
   if (NUMBER_FITS_IN_AN_EMACS_INT (val))
     lval = make_int (val);
   else
     lval = make_opaque_ptr ((void *) val);
+#else /* !(INT_VALBITS < INTBITS) */
+  lval = make_int (val);
+#endif /* INT_VALBITS <= INTBITS */
+
   return record_unwind_protect (restore_int, noseeum_cons (opaque, lval));
 }
 
@@ -6426,6 +7278,7 @@ void
 syms_of_eval (void)
 {
   INIT_LRECORD_IMPLEMENTATION (subr);
+  INIT_LRECORD_IMPLEMENTATION (multiple_value);
 
   DEFSYMBOL (Qinhibit_quit);
   DEFSYMBOL (Qautoload);
@@ -6449,6 +7302,9 @@ syms_of_eval (void)
   DEFSYMBOL (Qrun_hooks);
   DEFSYMBOL (Qfinalize_list);
   DEFSYMBOL (Qif);
+  DEFSYMBOL (Qthrow);
+  DEFSYMBOL (Qobsolete_throw);  
+  DEFSYMBOL (Qmultiple_value_list_internal);
 
   DEFSUBR (For);
   DEFSUBR (Fand);
@@ -6461,12 +7317,12 @@ syms_of_eval (void)
   DEFSUBR (Fprog2);
   DEFSUBR (Fsetq);
   DEFSUBR (Fquote);
+  DEFSUBR (Fquote_maybe);
   DEFSUBR (Ffunction);
   DEFSUBR (Fdefun);
   DEFSUBR (Fdefmacro);
   DEFSUBR (Fdefvar);
   DEFSUBR (Fdefconst);
-  DEFSUBR (Fuser_variable_p);
   DEFSUBR (Flet);
   DEFSUBR (FletX);
   DEFSUBR (Fwhile);
@@ -6483,6 +7339,11 @@ syms_of_eval (void)
   DEFSUBR (Fautoload);
   DEFSUBR (Feval);
   DEFSUBR (Fapply);
+  DEFSUBR (Fmultiple_value_call);
+  DEFSUBR (Fmultiple_value_list_internal);
+  DEFSUBR (Fmultiple_value_prog1);
+  DEFSUBR (Fvalues);
+  DEFSUBR (Fvalues_list);
   DEFSUBR (Ffuncall);
   DEFSUBR (Ffunctionp);
   DEFSUBR (Ffunction_min_args);
@@ -6508,6 +7369,9 @@ init_eval_semi_early (void)
   debug_on_next_call = 0;
   lisp_eval_depth = 0;
   entering_debugger = 0;
+
+  first_desired_multiple_value = 0;
+  multiple_value_current_limit = 1;
 }
 
 void
@@ -6604,6 +7468,11 @@ if one of its condition symbols appears in the list.
 This variable is overridden by `debug-ignored-errors'.
 See also variables `debug-on-quit' and `debug-on-signal'.
 
+Process filters are considered to be outside of condition-case forms
+(unless contained in the process filter itself).  To prevent the
+debugger from being called from a process filter, use a list value, or
+put the expected error\(s) in `debug-ignored-errors'.
+
 If this variable is set while XEmacs is running noninteractively (using
 `-batch'), and XEmacs was configured with `--debug' (#define XEMACS_DEBUG
 in the C code), instead of trying to invoke the Lisp debugger (which
@@ -6671,6 +7540,14 @@ If due to `apply' or `funcall' entry, one arg, `lambda'.
 If due to `eval' entry, one arg, t.
 */ );
   Vdebugger = Qnil;
+
+  DEFVAR_CONST_INT ("multiple-values-limit", &Vmultiple_values_limit /*
+The exclusive upper bound on the number of multiple values. 
+
+This applies to `values', `values-list', `multiple-value-bind' and related
+macros and special forms.
+*/);
+  Vmultiple_values_limit = EMACS_INT_MAX > INT_MAX ? INT_MAX : EMACS_INT_MAX;
 
   staticpro (&Vcatch_everything_tag);
   Vcatch_everything_tag = make_opaque (OPAQUE_CLEAR, 0);

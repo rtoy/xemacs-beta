@@ -38,9 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "opaque.h"
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 Lisp_Object Vopaque_ptr_free_list;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* Should never, ever be called. (except by an external debugger) */
 static void
@@ -162,13 +162,13 @@ DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
 Lisp_Object
 make_opaque_ptr (void *val)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   Lisp_Object res = 
     wrap_pointer_1 (alloc_lrecord_type (Lisp_Opaque_Ptr,
 					 &lrecord_opaque_ptr));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   Lisp_Object res = alloc_managed_lcrecord (Vopaque_ptr_free_list);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   set_opaque_ptr (res, val);
   return res;
 }
@@ -179,14 +179,14 @@ make_opaque_ptr (void *val)
 void
 free_opaque_ptr (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   free_managed_lcrecord (Vopaque_ptr_free_list, ptr);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void
 reinit_opaque_early (void)
 {
@@ -194,7 +194,7 @@ reinit_opaque_early (void)
 					      &lrecord_opaque_ptr);
   staticpro_nodump (&Vopaque_ptr_free_list);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 init_opaque_once_early (void)
@@ -202,7 +202,7 @@ init_opaque_once_early (void)
   INIT_LRECORD_IMPLEMENTATION (opaque);
   INIT_LRECORD_IMPLEMENTATION (opaque_ptr);
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   reinit_opaque_early ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }

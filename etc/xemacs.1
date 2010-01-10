@@ -147,12 +147,7 @@ Do not process the early packages.
 .TP
 .B \-vanilla
 Load no extra files at startup.  Equivalent to the combination of
-.B \-q
-,
-.B \-no-site-file
-, and
-.B \-no-early-packages
-\.
+.BR \-q ", " \-no-site-file ", and " \-no-early-packages .
 .TP
 .BI \-u " user, " \-user " user"
 Load
@@ -628,7 +623,8 @@ CTRL-SHIFT-left	Make a selection, delete it, and insert it at point.
 META-left	Make a rectangular selection.
 .SH FILES
 Lisp code is read at startup from the user's init file,
-\fB$HOME/.emacs\fP.
+\fB$HOME/.xemacs/init.el\fP. If this file does not exist then
+\fB$HOME/.emacs\fP will be read if it is present.
 
 /usr/local/info - files for the Info documentation browser
 (a subsystem of

@@ -42,6 +42,7 @@ LDFLAGS=@LDFLAGS@
 ALLOCA=@ALLOCA@
 LN_S=@LN_S@
 version=@version@
+etags_xemacs_version=@verbose_version@
 
 ## This will be the name of the generated binary and is set automatically
 ## by configure.
@@ -55,6 +56,7 @@ bindir=@bindir@
 libdir=@libdir@
 srcdir=@srcdir@
 datadir=@datadir@
+datarootdir=@datarootdir@
 instvardir=@instvardir@
 top_srcdir=@top_srcdir@
 archlibdir=@archlibdir@
@@ -94,11 +96,11 @@ PUBLIC_INSTALLABLE_EXES=\
 #endif
  etags ctags b2m ootags
 
-PUBLIC_INSTALLABLE_SCRIPTS=\
 #ifdef INSTALL_GNUSERV
- gnudoit gnuattach\
+PUBLIC_INSTALLABLE_SCRIPTS=gnudoit gnuattach
+#else
+PUBLIC_INSTALLABLE_SCRIPTS=
 #endif
- rcs-checkin
 
 PUBLIC_INSTALLABLES = ${PUBLIC_INSTALLABLE_EXES} ${PUBLIC_INSTALLABLE_SCRIPTS}
 
@@ -115,8 +117,8 @@ PRIVATE_INSTALLABLE_EXES=\
 #else
  fakemail\
 #endif
- wakeup profile make-docfile digest-doc\
- sorted-doc movemail cvtmail yow hexl mmencode
+ profile make-docfile digest-doc\
+ sorted-doc movemail cvtmail hexl mmencode
 
 GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh
 PKG_SCRIPTS = add-big-package.sh
@@ -309,7 +311,7 @@ regex.o: ${srcdir}/../src/regex.c ${top_srcdir}/src/regex.h
 	$(CC) -c $(cflags) \
 	-DINHIBIT_STRING_HEADER ${top_srcdir}/src/regex.c
 
-etags_args = $(cflags) -DEMACS_NAME='"XEmacs"' -DVERSION='"${version}"' \
+etags_args = $(cflags) -DEMACS_NAME='"XEmacs"' -DVERSION='"${etags_xemacs_version}"' \
 	${srcdir}/etags.c $(GETOPTOBJS) regex.o $(ldflags)
 etags_deps = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
 
@@ -322,6 +324,7 @@ ellcc_deps = ${srcdir}/ellcc.c ellcc.h ../src/config.h
 ellcc: ${ellcc_deps}
 	$(CC) ${ellcc_args} -o $@
 
+## #### we should probably do the same as for pot's etags
 ootags_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/ootags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
 ootags_deps = ${srcdir}/ootags.c $(GETOPTDEPS) regex.o ../src/config.h
@@ -333,9 +336,6 @@ ootags: ${ootags_deps}
 ## two etags.o files on top of each other.
 ctags: ${etags_deps} etags
 	$(CC) -DCTAGS ${etags_args} -o $@
-
-wakeup: ${srcdir}/wakeup.c
-	$(CC) $(cflags) ${srcdir}/wakeup.c $(ldflags) -o $@
 
 profile: ${srcdir}/profile.c
 	$(CC) $(cflags) ${srcdir}/profile.c $(ldflags) -o $@
@@ -362,9 +362,6 @@ cvtmail: ${srcdir}/cvtmail.c
 
 fakemail: ${srcdir}/fakemail.c ../src/config.h
 	$(CC) $(cflags) ${srcdir}/fakemail.c $(ldflags) -o $@
-
-yow: ${srcdir}/yow.c ../src/paths.h
-	$(CC) $(cflags) ${srcdir}/yow.c $(ldflags) -o $@
 
 i: ${srcdir}/i.c
 	$(CC) $(cflags) ${srcdir}/i.c $(ldflags) -o $@
