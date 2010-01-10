@@ -29,6 +29,12 @@ STILL TO DO:
       `load-unicode-mapping-table' (#### perhaps rethink this format).  
    i. Fix up the COPYING and README files in etc/unicode/unicode-consortium.
 
+-- MBCS coding system:
+
+   1. Implement coding priorities for this coding system.  Currently in
+   coding-system-priority we either return `no-conversion' or `iso-8-1',
+   both of which are garbage.
+
 -- Unicode precedence lists:
 
    1. Implement a buffer-local unicode-precedence list and then review all

@@ -3888,7 +3888,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	    int smallest_prev = 0;
 
 	    nentries = unified_range_table_nentries (p);
-#ifdef UNICODE_INTERNAL
+#ifndef UNICODE_INTERNAL
 	    for (j = 0; j < nentries; j++)
 	      {
 		EMACS_INT first, last;
@@ -3951,6 +3951,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		  fastmap[jj] = 1;
 		smallest_prev = last + 1;
 	      }
+
+	    /* Also set lead bytes after the end */
+	    for (j = smallest_prev; j < 0x100)
+	      fastmap[jj] = 1;
+
 	    /* If it's not a possible first byte, it can't be in the fastmap.
 	       In UTF-8, lead bytes are not contiguous with ASCII, so a
 	       range spanning the ASCII/non-ASCII boundary will put

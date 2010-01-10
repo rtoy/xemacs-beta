@@ -1,6 +1,7 @@
 ;;; general-late.el --- General Mule code that needs to be run late when
 ;;                      dumping.
 ;; Copyright (C) 2006 Free Software Foundation
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe
 
@@ -78,7 +79,9 @@
    (when-fboundp 'map-charset-chars 
      (loop
        for charset in (charset-list)
+       ;; @@#### Rethink this entire clause under Unicode-internal.
        with skip-chars-string = ""
+       if (charset-encodable-p charset)
        do
        (block no-ucs-mapping
          (map-charset-chars

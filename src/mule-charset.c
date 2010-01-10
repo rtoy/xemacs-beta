@@ -432,7 +432,7 @@ get_charset_iso2022_type (Lisp_Object cs)
 				     XCHARSET_FINAL (cs));
 }
 
-#if defined (MULE) && !defined (UNICODE_INTERNAL)
+#if !defined (UNICODE_INTERNAL)
 
 /* Return true if a charset can be encoded as a string or character in the
    old-Mule encoding, given the dimension, size and offset of the charset.
@@ -469,7 +469,7 @@ old_mule_charset_encodable (Lisp_Object charset)
   return XCHARSET_ID (charset) <= MAX_ENCODABLE_CHARSET_ID;
 }
 
-#endif /* defined (MULE) && !defined (UNICODE_INTERNAL) */
+#endif /* !defined (UNICODE_INTERNAL) */
      
 DEFUN ("charsetp", Fcharsetp, 1, 1, 0, /*
 Return non-nil if OBJECT is a charset.
@@ -1227,6 +1227,22 @@ character sets exist for both directions).
   return obj;
 }
 
+DEFUN ("charset-encodable-p", Fcharset_encodable_p, 1, 1, 0, /*
+Return non-nil if CHARSET is (potentially) encodable in a string or buffer.
+Under Unicode-internal, this is always true.  Under old-Mule, it depends on
+the size of the charset (size-94, 94x94, 96 or 96x96 charsets with the
+right offsets -- generally, ISO-2022-compatible charsets -- are encodable).
+*/
+       (charset))
+{
+  charset = Fget_charset (charset);
+#ifdef UNICODE_INTERNAL
+  return Qt;
+#else
+  return old_mule_charset_encodable (charset) ? Qt : Qnil;
+#endif /* (not) UNICODE_INTERNAL */
+}
+
 DEFUN ("charset-short-name", Fcharset_short_name, 1, 1, 0, /*
 Return short name of CHARSET.
 */
@@ -1558,6 +1574,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fmake_reverse_direction_charset);
   DEFSUBR (Fcharset_reverse_direction_charset);
   DEFSUBR (Fcharset_from_attributes);
+  DEFSUBR (Fcharset_encodable_p);
   DEFSUBR (Fcharset_short_name);
   DEFSUBR (Fcharset_long_name);
   DEFSUBR (Fcharset_unicode_map);
