@@ -1633,7 +1633,6 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
 	  (setq codesys (find-coding-system (intern codesys))))
 	(if (and codesys (eq 'iso2022 (coding-system-type codesys)))
 	    (let ((coding-system-for-read 'iso-2022-8bit-preserve))
-	      (debug-print "foo")
 	      (insert-file-contents filename))
 	  (insert-file-contents filename)))
       ;; Run hooks including the uncompression hook.

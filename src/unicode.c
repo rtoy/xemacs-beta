@@ -365,8 +365,10 @@ Lisp_Object Qignore_first_column;
 
 #ifndef UNICODE_INTERNAL
 Lisp_Object Vcurrent_jit_charset;
-int last_allocated_jit_c1, last_allocated_jit_c2;
-int number_of_jit_charsets;
+/* The following are stored as Lisp objects instead of just ints so they
+   are preserved across dumping */
+Lisp_Object Vlast_allocated_jit_c1, Vlast_allocated_jit_c2;
+Lisp_Object Vnumber_of_jit_charsets;
 Lisp_Object Vcharset_descr;
 #endif
 
@@ -856,8 +858,9 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 static void
 set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 {
-  text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));
-  /* @@#### Is UNICODE_ALLOW_PRIVATE correct here? */
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  /* @@#### Is UNICODE_ALLOW_PRIVATE correct here?  If so, replace with
+     ASSERT_VALID_UNICODE_CODEPOINT(). */
   text_checking_assert (valid_unicode_codepoint_p (code,
 						   UNICODE_ALLOW_PRIVATE));
 
@@ -987,9 +990,17 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 
 #ifndef UNICODE_INTERNAL
 
+/* Return a free JIT codepoint.  Return 1 on success, 0 on failure.
+   (Currently never returns 0.  Presumably if we ever run out of JIT charsets,
+   we will signal an error in Fmake_charset().) */
+
 static int
 get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 {
+  int last_allocated_jit_c1 = XINT (Vlast_allocated_jit_c1);
+  int last_allocated_jit_c2 = XINT (Vlast_allocated_jit_c2);
+  int number_of_jit_charsets = XINT (Vnumber_of_jit_charsets);
+
   if (!NILP (Vcurrent_jit_charset) &&
       !(last_allocated_jit_c1 == 127 && last_allocated_jit_c2 == 127))
     {
@@ -1023,8 +1034,15 @@ get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
   *charset = Vcurrent_jit_charset;
   *c1 = last_allocated_jit_c1;
   *c2 = last_allocated_jit_c2;
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
+  
+  Vlast_allocated_jit_c1 = make_int (last_allocated_jit_c1);
+  Vlast_allocated_jit_c2 = make_int (last_allocated_jit_c2);
+  Vnumber_of_jit_charsets = make_int (number_of_jit_charsets);
+
   return 1;
 }
+
 #endif /* not UNICODE_INTERNAL */
 
 /* The just-in-time creation of XEmacs characters that correspond to unknown
@@ -1980,7 +1998,7 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
 		     struct unicode_coding_stream *data,
 		     unsigned int ignore_bom)
 {
-  text_checking_assert (ch >= 0);
+  ASSERT_VALID_UNICODE_CODEPOINT (ch);
   if (ch == 0xFEFF && !data->seen_char && ignore_bom)
     ;
   else
@@ -2054,7 +2072,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 		     enum unicode_type type, unsigned int little_endian,
                      int write_error_characters_as_such)
 {
-  text_checking_assert (code >= 0);
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
   switch (type)
     {
     case UNICODE_UTF_16:
@@ -3363,7 +3381,14 @@ vars_of_unicode (void)
 
 #ifdef MULE
 #ifndef UNICODE_INTERNAL
-  number_of_jit_charsets = 0;
+  staticpro (&Vnumber_of_jit_charsets);
+  Vnumber_of_jit_charsets = Qzero;
+  staticpro (&Vcurrent_jit_charset);
+  Vcurrent_jit_charset = Qnil;
+  staticpro (&Vlast_allocated_jit_c1);
+  Vlast_allocated_jit_c1 = Qzero;
+  staticpro (&Vlast_allocated_jit_c2);
+  Vlast_allocated_jit_c2 = Qzero;
   staticpro (&Vcharset_descr);
   Vcharset_descr
     = build_msg_string ("Mule charset for otherwise unknown Unicode code points.");
@@ -3385,11 +3410,6 @@ vars_of_unicode (void)
   
   
   init_blank_unicode_tables ();
-
-#ifndef UNICODE_INTERNAL
-  staticpro (&Vcurrent_jit_charset);
-  Vcurrent_jit_charset = Qnil;
-#endif
 
   /* Note that the "block" we are describing is a single pointer, and hence
      we could potentially use dump_add_root_block_ptr().  However, given

@@ -270,10 +270,18 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
 			 XCHARSET_NAME (obj), XCHARSET_SHORT_NAME (obj),
 			 XCHARSET_LONG_NAME (obj), XCHARSET_DOC_STRING (obj));
   if (XCHARSET_DIMENSION (obj) == 1)
-    write_fmt_string (printcharfun, " %d", XCHARSET_CHARS (obj, 1));
+    write_fmt_string (printcharfun, " %d [%d-%d]",
+		      XCHARSET_CHARS (obj, 1),
+		      XCHARSET_OFFSET (obj, 1),
+		      XCHARSET_OFFSET (obj, 1) + XCHARSET_CHARS (obj, 1) -1);
   else
-    write_fmt_string (printcharfun, " %dx%d", XCHARSET_CHARS (obj, 0),
-		      XCHARSET_CHARS (obj, 1));
+    write_fmt_string (printcharfun, " %dx%d [(%d,%d)-(%d,%d)]",
+		      XCHARSET_CHARS (obj, 0),
+		      XCHARSET_CHARS (obj, 1),
+		      XCHARSET_OFFSET (obj, 0),
+		      XCHARSET_OFFSET (obj, 1),
+		      XCHARSET_OFFSET (obj, 0) + XCHARSET_CHARS (obj, 0) -1,
+		      XCHARSET_OFFSET (obj, 1) + XCHARSET_CHARS (obj, 1) -1);
   write_fmt_string (printcharfun, " %s cols=%d g%d ",
 		    XCHARSET_DIRECTION (obj) == CHARSET_LEFT_TO_RIGHT ? "l2r" :
 		    "r2l",
