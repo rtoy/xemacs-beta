@@ -289,7 +289,7 @@ line, but does not move past any whitespace that was explicitly inserted
   "Short cut function to indent region using `indent-according-to-mode'.
 A value of nil means really run `indent-according-to-mode' on each line.")
 
-(defun indent-region (start end column)
+(defun indent-region (start end &optional column)
   "Indent each nonblank line in the region.
 With no argument, indent each line using `indent-according-to-mode',
 or use `indent-region-function' to do the whole region if that's non-nil.

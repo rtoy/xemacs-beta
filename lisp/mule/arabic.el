@@ -42,7 +42,7 @@
 ;;    Persian, at least, as well as the French characters necessary in
 ;;    Lebanon and North Africa.
 
-;; But; it's necessary for input on X11.
+;; But; it's necessary for input on X11, so we continue to dump it for now.
 
 (make-coding-system
  'iso-8859-6 'mbcs "ISO 8859-6 (Arabic)"

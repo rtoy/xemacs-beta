@@ -6225,6 +6225,13 @@ machine!  Run it like so:
 temacs -batch -l loadup.el run-temacs @var{xemacs-args...}
 @end example
 
+@cindex Valgrind
+To make an XEmacs that can tell valgrind to do a memory leak check at
+runtime, configure @code{--with-valgrind}.  If XEmacs has been
+configured @code{--with-newgc}, then valgrind must be invoked with
+@code{--vex-iropt-precise-memory-exns=yes} in order to handle signals
+properly.
+
 @cindex error checking
 Before you go through the trouble, are you compiling with all
 debugging and error-checking off?  If not, try that first.  Be warned

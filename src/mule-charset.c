@@ -50,6 +50,7 @@ Lisp_Object Vcharset_latin_iso8859_4;
 Lisp_Object Vcharset_thai_tis620;
 Lisp_Object Vcharset_arabic_iso8859_6;
 Lisp_Object Vcharset_greek_iso8859_7;
+Lisp_Object Vcharset_arabic_iso8859_6;
 Lisp_Object Vcharset_hebrew_iso8859_8;
 Lisp_Object Vcharset_katakana_jisx0201;
 Lisp_Object Vcharset_latin_jisx0201;
@@ -669,7 +670,7 @@ make_charset (int id, int no_init_unicode_tables,
       Ibyte tempname[80];
 
       qxesprintf (tempname, "___temporary___%d__", id);
-      name = intern_int (tempname);
+      name = Fmake_symbol (build_intstring (tempname)); /* Uninterned. */
     }
 
   /* Set certain other default values.  SHORT_NAME cannot be computed
