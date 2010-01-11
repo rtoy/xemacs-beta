@@ -1399,7 +1399,7 @@ non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
   register Bytecount bytes;
 
   text_checking_assert (c >= 0x80);
-  text_checking_assert (valid_ichar_p (c));
+  ASSERT_VALID_ICHAR (c);
   if (c <= 0x7ff) bytes = 2;
   else if (c <= 0xffff) bytes = 3;
   else if (c <= 0x1fffff) bytes = 4;
@@ -1552,7 +1552,7 @@ old_mule_non_ascii_ichar_to_charset_codepoint_raw (Ichar c,
 						   int *c1, int *c2)
 {
   text_checking_assert (c >= 0x80);
-  text_checking_assert (valid_ichar_p (c));
+  ASSERT_VALID_ICHAR (c);
   if (c <= 0x9F)
     {
       *charset = Vcharset_control_1;
@@ -1569,7 +1569,7 @@ old_mule_non_ascii_ichar_to_charset_codepoint_raw (Ichar c,
       if (XCHARSET_OFFSET (*charset, 1) >= 128)
 	*c2 += 128;
     }
-  text_checking_assert (valid_charset_codepoint_p (*charset, *c1, *c2));
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
 }
 
 /* Convert a character in the internal string representation (guaranteed
@@ -1605,7 +1605,7 @@ old_mule_non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
   if (EQ (*charset, Vcharset_control_1))
     *c2 -= 0x20;
 
-  text_checking_assert (valid_charset_codepoint_p (*charset, *c1, *c2));
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
 }
 
 Ichar
@@ -1615,7 +1615,7 @@ old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
   Ichar retval;
 
   text_checking_assert (!EQ (charset, Vcharset_ascii));
-  text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
   if (EQ (charset, Vcharset_control_1))
     retval = c2;
   else
@@ -1635,7 +1635,7 @@ old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
 	  ((c1) << 7) | (c2);
     }
 
-  text_checking_assert (valid_ichar_p (retval));
+  ASSERT_VALID_ICHAR (retval);
   return retval;
 }
 
@@ -1651,7 +1651,7 @@ old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset,
   int id = XCHARSET_ID (charset);
 
   text_checking_assert (!EQ (charset, Vcharset_ascii));
-  text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
 
   /* We are only called as a result of breaking a character into charset
      and octets; so non-encodable charsets that cannot form a character
@@ -1687,7 +1687,7 @@ old_mule_ichar_columns (Ichar c)
 int
 old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
 {
-  text_checking_assert (valid_ichar_p (chr));
+  ASSERT_VALID_ICHAR (chr);
 
   /* This shortcut depends on the representation of an Ichar, see text.c. */
   if (chr < 256)

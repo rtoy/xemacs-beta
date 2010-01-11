@@ -61,12 +61,18 @@ struct Lisp_Char_Subtable
   LISPOBJ_STORAGE_SIZE (XCHAR_SUBTABLE (table),				\
 			sizeof (struct Lisp_Char_Subtable), stats)
 
-#define FREE_ONE_SUBTABLE(table) FREE_LCRECORD (table)
+#define FREE_ONE_SUBTABLE(table)		\
+do						\
+  {						\
+    if (!OBJECT_DUMPED_P (table))		\
+      FREE_LCRECORD (table);			\
+  }						\
+while (0)
 
-/* If we use split Lisp char subtables, we'd modify the above struct and three defines.
-   If we use "plain" non-Lisp char subtables, we'd modify the three macros above
-   and the macros below as well, and omit the definition of a Lisp subtable
-   object. */
+/* If we use split Lisp char subtables, we'd modify the above struct and
+   three defines.  If we use "plain" non-Lisp char subtables, we'd modify
+   the three macros above and the macros below as well, and omit the
+   definition of a Lisp subtable object. */
 
 #define SUBTAB_TYPE Lisp_Object
 #define SUBTAB_ARRAY_TYPE SUBTAB_TYPE *

@@ -1742,8 +1742,10 @@ Unicode tables or in the charset:
 	  else
 	    p++;
 	}
-      /* see if line is nothing but whitespace and skip if so */
-      p = line + strspn (line, " \t\n\r\f");
+      /* see if line is nothing but whitespace and skip if so;
+         count ^Z among this because it appears at the end of some
+         Microsoft translation tables. */
+      p = line + strspn (line, " \t\n\r\f\032");
       if (!*p)
 	continue;
       /* NOTE: It appears that MS Windows and Newlib sscanf() have
@@ -1764,12 +1766,18 @@ Unicode tables or in the charset:
 	 06/2004, but as of 10/2004 the value of ENDCOUNT returned in
 	 such case is still wrong.  If this gets fixed soon, remove
 	 this code. --ben */
+      if (endcount > (int) strlen (p))
+	/* We know we have a broken sscanf in this case!!! */
+	garbage_after_scanf = 0;
+      else
+	{
 #ifndef CYGWIN_SCANF_BUG
-      garbage_after_scanf =
-	*(p + endcount + strspn (p + endcount, " \t\n\r\f"));
+	  garbage_after_scanf =
+	    *(p + endcount + strspn (p + endcount, " \t\n\r\f\032"));
 #else
-      garbage_after_scanf = 0;
+	  garbage_after_scanf = 0;
 #endif
+	}
 
       /* #### Hack.  A number of the CP###.TXT files from Microsoft contain
 	 lines with a charset codepoint and no corresponding Unicode

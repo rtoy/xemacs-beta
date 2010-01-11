@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1235,13 +1235,11 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     mark_cons, print_cons, 0,
 				     cons_equal,
 				     /*
-				      * No `hash' method needed since
-				      * internal_hash_1 knows how to
-				      * handle conses, but there's an
-				      * early shortcut in internal_hash
-				      * so we need to put something here.
+				      * No `hash' method needed.
+				      * internal_hash knows how to
+				      * handle conses.
 				      */
-				     internal_hash_1,
+				     0,
 				     cons_description,
 				     Lisp_Cons);
 
@@ -2317,15 +2315,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						1, /*dumpable-flag*/
 						mark_string, print_string,
 						0, string_equal, 0,
-						/*
-						 * No `hash' method needed
-						 * since internal_hash_1
-						 * knows how to handle
-						 * strings, but there's an
-						 * early shortcut in
-						 * internal_hash so we need
-						 * to put something here.
-						 */
 						string_description,
 						string_getprop,
 						string_putprop,

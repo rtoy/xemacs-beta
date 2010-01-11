@@ -1,4 +1,5 @@
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Maintainers: Hrvoje Niksic <hniksic@xemacs.org>,
@@ -317,25 +318,26 @@ This is a naive implementation in Lisp.  "
   ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
-    (let (lo hi string n (gc-cons-threshold most-positive-fixnum))
-      (if (= (charset-chars charset) 94)
-	  (setq lo 33 hi 126)
-	(setq lo 32 hi 127))
+    (let ((gc-cons-threshold most-positive-fixnum)
+	  string n
+	  (chars (charset-chars charset))
+	  (offset (charset-offset charset)))
       (if (= (charset-dimension charset) 1)
 	  (progn
-	    (setq string (make-string (1+ (- hi lo)) ??))
+	    (setq string (make-string (charset-chars charset) ??))
 	    (setq n 0)
-	    (loop for j from lo to hi do
+	    (loop for j from offset to (+ offset chars -1) do
 	      (progn
 		(aset string n (make-char charset j))
 		(incf n)))
 	    (garbage-collect)
 	    string)
-	(progn
-	  (setq string (make-string (* (1+ (- hi lo)) (1+ (- hi lo))) ??))
+	(let ((ch1 (first chars)) (ch2 (second chars))
+	      (off1 (first offset)) (off2 (second offset)))
+	  (setq string (make-string (* ch1 ch2) ??))
 	  (setq n 0)
-	  (loop for j from lo to hi do
-	    (loop for k from lo to hi do
+	  (loop for j from off1 to (+ off1 ch1 -1) do
+	    (loop for k from off2 to (+ off2 ch2 -1) do
 	      (progn
 		(aset string n (make-char charset j k))
 		(incf n))))
