@@ -1,10 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010
-   Copyright (C) 2010 Ben Wing.
-  
-   Ben Wing.
+   Copyright (C) 1995, 1996, 2000-2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -4049,24 +4046,8 @@ int begin_do_check_for_quit (void);
 
 #define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
 Hashcode memory_hash (const void *xv, Bytecount size);
-Hashcode internal_hash_1 (Lisp_Object obj, int depth);
+Hashcode internal_hash (Lisp_Object obj, int depth);
 Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);
-
-DECLARE_INLINE_HEADER (
-Hashcode
-internal_hash (Lisp_Object obj, int depth)
-)
-{
-  /* This catches all non-lrecords (integers, chars) and all lrecords
-     with no hash function.  The latter macro requires three memory reads,
-     but I assume that for extremely common objects such as Qunbound, Qnil
-     and Qt, the appropriate memory will be in the L1 cache and such access
-     will be quite fast.  Putting various conditional checks here would
-     probably slow it down due to the branch-prediction problems. */
-  if (!LRECORDP (obj) || !XRECORD_LHEADER_IMPLEMENTATION (obj)->hash)
-    return LISP_HASH (obj);
-  return internal_hash_1 (obj, depth);
-}
 
 
 /************************************************************************/
@@ -5542,6 +5523,7 @@ EXFUN (Ffind_charset, 1);
 EXFUN (Fget_charset, 1);
 EXFUN (Fcharset_list, 0);
 EXFUN (Fcharset_name, 1);
+EXFUN (Fcharset_id, 1);
 
 #ifdef MULE
 extern Lisp_Object Vcharset_ascii;

@@ -360,17 +360,15 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 /*              Definition of charset ID's and lead bytes               */
 /************************************************************************/
 
-  /* CHARSET_ID_LATIN_ISO8859_1 *MUST* be equal to 0x81; or more correctly,
-      */
-
 /* The following three are used elsewhere in this file and are generally
    "special".  All other predefined charset ID's are defined and accessed
-   only in mule-charset.c.  CHARSET_ID_ASCII is not used to represent
-   text in a buffer.  CHARSET_ID_LATIN_ISO8859_1 - FIELD2_TO_CHARSET_ID
-   *MUST* equal 1.  Be very careful if you are considering changing the
-   value of any of these three; but the other values in mule-charset.c
-   can be changed without problem as long as they are distinct and within
-   the range 0x80 - 0x9D. */
+   only in mule-charset.c.  CHARSET_ID_ASCII is not used to represent text
+   in a buffer.  CHARSET_ID_LATIN_ISO8859_1 *MUST* be equal to 0x81; or
+   more correctly, CHARSET_ID_LATIN_ISO8859_1 - FIELD2_TO_CHARSET_ID *MUST*
+   equal 1.  Be very careful if you are considering changing the value of
+   any of these three; but the other values in mule-charset.c can be
+   changed without problem as long as they are distinct and within the
+   range 0x80 - 0x9D. */
 
 #define CHARSET_ID_ASCII           0x7F /* Not used except in arrays
 					   indexed by charset ID */
@@ -456,8 +454,7 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define private_charset_id_to_byte_id(x, dim) \
   ((Ibyte) ((dim) == 2 ? (x) - 0x60 : (x)))
 
-/* Leading byte of a character.
-   */
+/* Charset ID of a character. */
 
 DECLARE_INLINE_HEADER (
 int
