@@ -2414,8 +2414,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
 #ifdef WIN32_ANY
+      /* Define MS-Windows Unicode coding systems */
       complex_vars_of_intl_win32 ();
 #endif
+      /* Define UTF-8 coding system */
+      complex_vars_of_unicode ();
 
       /* At this point we should be able to do conversion operations.
          We have initialized things to the point that we can create Lisp

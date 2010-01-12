@@ -1,5 +1,5 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -55,10 +55,13 @@ Boston, MA 02111-1307, USA.  */
 
 BEGIN_C_DECLS
 
+#if 0 /* breaks the build, as of GCC 3.4.4 or earlier, since the prototype
+         is now declared static */
 /* Fucking GCC complains about "no previous prototype" for inline
    functions.  DUH!  See DECLARE_INLINE_HEADER. */
 extern __inline void *GetCurrentFiber (void);
 extern __inline void *GetFiberData (void);
+#endif
 
 END_C_DECLS
 
@@ -134,6 +137,7 @@ END_C_DECLS
 
 #include <cygwin/stat.h> /* for struct stat */
 #include <w32api.h> /* for version info */
+#include <sys/cygwin.h> /* path conversion functions */
 
 /* Test for a specific version of w32api */
 #define W32API_VER(major,minor) (((major) << 16) + (minor))
@@ -928,28 +932,68 @@ int mswindows_locale_to_oem_code_page (LCID lcid);
 
 #ifdef CYGWIN
 
-BEGIN_C_DECLS
+/* We should just remove the Windows 9x support */
 
-void cygwin_win32_to_posix_path_list (const char *, char *);
-int cygwin_win32_to_posix_path_list_buf_size (const char *);
-void cygwin_posix_to_win32_path_list (const char *, char *);
-int cygwin_posix_to_win32_path_list_buf_size (const char *);
-extern int cygwin_conv_to_full_win32_path (const char *, char *);
-
-END_C_DECLS
+#define CCP_POSIX_TO_WIN_T \
+  (XEUNICODE_P ? CCP_POSIX_TO_WIN_W : CCP_POSIX_TO_WIN_A)
+#define CCP_WIN_T_TO_POSIX \
+  (XEUNICODE_P ? CCP_WIN_W_TO_POSIX : CCP_WIN_A_TO_POSIX)
 
 #endif
 
-#define LOCAL_FILE_FORMAT_TO_TSTR(path, out)			\
-do {								\
-  Ibyte *lttff;							\
-								\
-  LOCAL_TO_WIN32_FILE_FORMAT (XSTRING_DATA (path), lttff);	\
-  PATHNAME_CONVERT_OUT (lttff, out);				\
+#ifdef HAVE_CYGWIN_CONV_PATH
+#define LOCAL_FILE_FORMAT_TO_TSTR(path, out)				\
+do {									\
+  const Ibyte *lfftt = (path);						\
+  if (isalpha (lfftt[0]) && (IS_DEVICE_SEP (lfftt[1])))			\
+    PATHNAME_CONVERT_OUT_TSTR (lfftt, out);				\
+  else									\
+    {									\
+      int lfftt_size;							\
+      Extbyte *lfftt_utf8_path;						\
+      Extbyte *lfftt_tstr_path;						\
+									\
+      PATHNAME_CONVERT_OUT_UTF_8 (lfftt, lfftt_utf8_path);		\
+      lfftt_size = cygwin_conv_path (CCP_POSIX_TO_WIN_T | CCP_RELATIVE,	\
+				     lfftt_utf8_path, NULL, 0);		\
+      lfftt_tstr_path = alloca_extbytes (lfftt_size);			\
+      cygwin_conv_path (CCP_POSIX_TO_WIN_T | CCP_RELATIVE,		\
+			lfftt_utf8_path, lfftt_tstr_path, lfftt_size);	\
+      * (Extbyte **) &(out) = lfftt_tstr_path;				\
+    }									\
 } while (0)
+#define TSTR_TO_LOCAL_FILE_FORMAT(path, out)				\
+do {									\
+  const Extbyte *ttlff = (path);					\
+  int ttlff_size;							\
+  Extbyte *ttlff_utf8_path;						\
+									\
+  ttlff_size = cygwin_conv_path (CCP_WIN_T_TO_POSIX | CCP_RELATIVE,	\
+				 ttlff, NULL, 0);			\
+  ttlff_utf8_path = alloca_extbytes (ttlff_size);			\
+  cygwin_conv_path (CCP_WIN_T_TO_POSIX | CCP_RELATIVE,			\
+		    ttlff, ttlff_utf8_path, ttlff_size);		\
+  EXTERNAL_TO_C_STRING (ttlff_utf8_path, out, Qutf_8);			\
+} while (0)
+#else /* not HAVE_CYGWIN_CONV_PATH */
+#define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
+do {							\
+  Ibyte *lfftt;						\
+							\
+  LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (path, lfftt);	\
+  PATHNAME_CONVERT_OUT_TSTR (lfftt, out);		\
+} while (0)
+#define TSTR_TO_LOCAL_FILE_FORMAT(path, out)		\
+do {							\
+  Ibyte *ttlff;						\
+							\
+  TSTR_TO_C_STRING (path, ttlff);			\
+  INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, out);	\
+} while (0)
+#endif /* (not) HAVE_CYGWIN_CONV_PATH */
 
-Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
-
+#define LISP_LOCAL_FILE_FORMAT_TO_TSTR(path, out) \
+  LOCAL_FILE_FORMAT_TO_TSTR (XSTRING_DATA (path), out)
 /* Convert from local file format, as used in XEmacs, to valid win32
    filenames as can be given to Windows API routines.  Under native XEmacs,
    this is a no-op, but under Cygwin, the local names look different --
@@ -959,36 +1003,50 @@ Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
    check, look for letter plus colon at beginning of name) and do nothing
    in that case. */
 
-#ifdef CYGWIN
-#define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)			   \
-do {									   \
-  /* NOTE: It is a bit evil that here and below we are passing		   \
-     internal-format data to a function that (nominally) should work	   \
-     with external-format data.  But in point of fact, the Cygwin	   \
-     conversion functions are *NOT* localized, and will fail if they	   \
-     get 7-bit ISO2022-encoded data.  We know that our internal format	   \
-     is ASCII-compatible, and so these functions will work fine with	   \
-     this data. */							   \
-  Ibyte *ltwffp = (path);						   \
-  if (isalpha (ltwffp[0]) && (IS_DEVICE_SEP (ltwffp[1])))		   \
-    pathout = ltwffp;							   \
-  else									   \
-    {									   \
-      int ltwff2 =							   \
-        cygwin_posix_to_win32_path_list_buf_size ((char *) ltwffp);	   \
-      pathout = alloca_ibytes (ltwff2);				   \
-      cygwin_posix_to_win32_path_list ((char *) ltwffp, (char *) pathout); \
-    }									   \
+#ifdef HAVE_CYGWIN_CONV_PATH
+/* When Cygwin uses UTF-8, we can't just manipulate internal-format data
+   with its routines because it will mangle the high bytes, so we need to
+   convert to UTF-8 first, then to Win32 TSTR format (i.e. UTF-16, on
+   Windows NT), then back to internal format.  Routines that want external
+   format should avoid this by using LISP_LOCAL_FILE_FORMAT_TO_TSTR().
+   Same thing applies going the other direction. */
+#define LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN(path, pathout)	\
+do								\
+  {								\
+    Extbyte *lfftiwp;						\
+								\
+    LOCAL_FILE_FORMAT_TO_TSTR (path, lfftiwp);			\
+    TSTR_TO_C_STRING (lfftiwp, pathout);			\
+  }								\
+while (0)
+#define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)	\
+do {								\
+  Extbyte *iwtlffp;						\
+  C_STRING_TO_TSTR (path, iwtlffp);				\
+  TSTR_TO_LOCAL_FILE_FORMAT (iwtlffp, pathout);			\
 } while (0)
-#else
-#define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)	\
-do {							\
-  (pathout) = (path);					\
+#elif defined (CYGWIN)
+#define LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN(path, pathout)		\
+do {									\
+  /* NOTE: It is a bit evil that here and below we are passing		\
+     internal-format data to a function that (nominally) should work	\
+     with external-format data.  But in point of fact, the Cygwin	\
+     conversion functions are *NOT* localized, and will fail if they	\
+     get 7-bit ISO2022-encoded data.  We know that our internal format	\
+     is ASCII-compatible, and so these functions will work fine with	\
+     this data. */							\
+  Ibyte *lfftiwp = (path);						\
+  if (isalpha (lfftiwp[0]) && (IS_DEVICE_SEP (lfftiwp[1])))		\
+    pathout = lfftiwp;							\
+  else									\
+    {									\
+      int lfftiw2 =							\
+        cygwin_posix_to_win32_path_list_buf_size ((char *) lfftiwp);	\
+      pathout = alloca_ibytes (lfftiw2);				\
+      cygwin_posix_to_win32_path_list ((char *) lfftiwp, (char *) pathout); \
+    }									\
 } while (0)
-#endif
-
-#ifdef CYGWIN
-#define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)			\
+#define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)		\
 do {									\
   Ibyte *wtlff1 = (path);						\
   int wtlff2 =								\
@@ -997,19 +1055,25 @@ do {									\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
   (pathout) = wtlff3;							\
 } while (0)
-#else
-#define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)	\
-do {							\
-  (pathout) = (path);					\
+#else /* not defined (CYGWIN) */
+#define LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN(path, pathout)	\
+do {								\
+  (pathout) = (path);						\
 } while (0)
-#endif
+#define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)	\
+do {								\
+  (pathout) = (path);						\
+} while (0)
+#endif /* (not) defined (CYGWIN) */
+
+Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
 
 /* Convert a local-format file name or URL in internal format into a Win32
    file name or URL in tstr format. */
 
 #ifdef CYGWIN
 
-#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)		\
+#define LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)	\
 do									\
 {									\
   Ibyte *lffmutt_fname1;						\
@@ -1024,7 +1088,8 @@ do									\
       if (qxestrncasecmp_ascii (lffmutt_pathint, "file://", 7) == 0)	\
 	{								\
 	  Ibyte *lffmutt_path1, *lffmutt_path2;				\
-	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1); \
+	  LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (lffmutt_pathint + 7,	\
+                                               lffmutt_path1);		\
 	  if (lffmutt_path1 == lffmutt_pathint + 7) /* Optimization */	\
 	    lffmutt_path2 = lffmutt_pathint;				\
 	  else								\
@@ -1042,14 +1107,14 @@ do									\
     }									\
   else									\
     /* Not URL-style, must be a straight filename. */			\
-    LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout);			\
+    LISP_LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout);			\
 } while (0)
 
 #else /* not CYGWIN */
 
   /* URL's (and everything else) are already in the right format */
-#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout) \
-   LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout)
+#define LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout) \
+   LISP_LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout)
 
 #endif /* not CYGWIN */
 
