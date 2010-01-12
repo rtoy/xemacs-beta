@@ -525,7 +525,7 @@ set_socket_nonblocking_maybe (int fd,
 
 	  CHECK_STRING (tail_port);
 	  TO_EXTERNAL_FORMAT (LISP_STRING, tail_port, C_STRING_ALLOCA,
-			      tailportext, Qnative);
+			      tailportext, Qunix_service_name_encoding);
 
 	  svc_info = getservbyname (tailportext, proto);
 	  if ((svc_info != 0) && (svc_info->s_port == port))
@@ -1816,7 +1816,7 @@ unix_canonicalize_host_name (Lisp_Object host)
 #endif
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
-  LISP_STRING_TO_EXTERNAL (host, ext_host, Qnative);
+  LISP_STRING_TO_EXTERNAL (host, ext_host, Qunix_host_name_encoding);
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
@@ -1833,7 +1833,8 @@ unix_canonicalize_host_name (Lisp_Object host)
       int gni = getnameinfo (res->ai_addr, res->ai_addrlen,
 			     addrbuf, sizeof(addrbuf),
 			     NULL, 0, NI_NUMERICHOST);
-      canonname = gni ? host : build_ext_string (addrbuf, Qnative);
+      canonname = gni ? host : build_ext_string (addrbuf,
+						 Qunix_host_name_encoding);
 
       freeaddrinfo (res);
     }

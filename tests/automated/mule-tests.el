@@ -385,7 +385,8 @@ This is a naive implementation in Lisp.  "
 	 (file-name-coding-system
 	  ;; 'iso-8859-X doesn't work on darwin (as of "Panther" 10.3), it
 	  ;; seems to know that file-name-coding-system is definitely utf-8
-	  (if (string-match "darwin" system-configuration)
+	  (if (or (string-match "darwin" system-configuration)
+		  (featurep 'cygwin-use-utf-8))
 	      'utf-8
 	    'iso-8859-2))
          ;; make-temp-name does stat(), which on OS X requires that you

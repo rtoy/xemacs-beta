@@ -70,7 +70,7 @@ urlify_filename (Ibyte *filename)
 {
   Ibyte *pseudo_url;
   
-  WIN32_TO_LOCAL_FILE_FORMAT (filename, filename);
+  INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (filename, filename);
   pseudo_url = xnew_array (Ibyte, 5 + qxestrlen (filename) + 1);
   qxestrcpy_ascii (pseudo_url, "file:");
   qxestrcat (pseudo_url, filename);
@@ -93,7 +93,7 @@ tstr_to_local_file_format (Extbyte *path)
   Ibyte *ttlff;
 
   TSTR_TO_C_STRING (path, ttlff);
-  WIN32_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
+  INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
 
   return build_intstring (ttlff);
 }
@@ -350,9 +350,9 @@ otherwise it is an integer representing a ShowWindow flag:
     if (STRINGP (parameters))
       LISP_STRING_TO_TSTR (parameters, parmext);
     if (STRINGP (current_dir))
-      LOCAL_FILE_FORMAT_TO_TSTR (current_dir, path);
+      LISP_LOCAL_FILE_FORMAT_TO_TSTR (current_dir, path);
     if (STRINGP (document))
-      LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR (document, doc);
+      LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR (document, doc);
 
     ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,
 				 (INTP (show_flag) ?
@@ -404,7 +404,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
     return path;
 
   /* Use mule and cygwin-safe APIs top get at file data. */
-  LOCAL_TO_WIN32_FILE_FORMAT (p, p);
+  LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (p, p);
   return build_intstring (p);
 }
 #endif

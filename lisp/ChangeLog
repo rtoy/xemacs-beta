@@ -1,3 +1,9 @@
+2010-01-10  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el (get-native-coding-system-from-language-environment):
+	Under Cygwin, force utf-8 if we are using Cygwin 1.7 or later
+	(making use of the magic feature 'cygwin-use-utf-8).
+
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
 	* x-faces.el (x-init-global-faces): Deactivate obsolete code.

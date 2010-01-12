@@ -579,14 +579,25 @@ do							\
    false, because they just call the native Win32 routines directly, which
    always use the system-default encoding (which is what Qmswindows_tstr
    will give us when not XEUNICODE_P). */
-#ifdef WIN32_NATIVE
-# define PATHNAME_CONVERT_OUT(path, pathout)	\
-do						\
-{						\
-  const Ibyte *_pco_path_;			\
-  PATHNAME_RESOLVE_LINKS (path, _pco_path_);	\
-  C_STRING_TO_TSTR (_pco_path_, pathout);	\
+#define PATHNAME_CONVERT_OUT_TSTR(path, pathout)	\
+do							\
+{							\
+  const Ibyte *_pco_path_;				\
+  PATHNAME_RESOLVE_LINKS (path, _pco_path_);		\
+  C_STRING_TO_TSTR (_pco_path_, pathout);		\
 } while (0)
+
+#define PATHNAME_CONVERT_OUT_UTF_8(path, pathout)	\
+do							\
+{							\
+  const Ibyte *_pco_path_;				\
+  PATHNAME_RESOLVE_LINKS (path, _pco_path_);		\
+  C_STRING_TO_EXTERNAL (_pco_path_, pathout, Qutf_8);	\
+} while (0)
+
+#ifdef WIN32_NATIVE
+#define PATHNAME_CONVERT_OUT(path, pathout) \
+  PATHNAME_CONVERT_OUT_TSTR (path, pathout)
 #else
 # define PATHNAME_CONVERT_OUT(path, pathout) \
   C_STRING_TO_EXTERNAL (path, pathout, Qfile_name)

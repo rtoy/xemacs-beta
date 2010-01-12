@@ -2201,7 +2201,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
     {
       Extbyte* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
-      LISP_STRING_TO_EXTERNAL (val, str, Qnative);
+      LISP_STRING_TO_EXTERNAL (val, str, Qlwlib_encoding);
       wv->value = str;
     }
 
@@ -2469,7 +2469,8 @@ x_widget_instantiate (Lisp_Object image_instance,
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_WIDGET;
 
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
-    LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), nm, Qnative);
+    LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), nm,
+			     Qlwlib_encoding);
 
   ii->data = xnew_and_zero (struct x_subwindow_data);
 
@@ -2560,7 +2561,7 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      return build_ext_string (wv->value, Qnative);
+      return build_ext_string (wv->value, Qlwlib_encoding);
     }
   return Qunbound;
 }
@@ -2776,7 +2777,7 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		  Widget* children;
 
 		  LISP_STRING_TO_EXTERNAL (XGUI_ITEM (XCAR (rest))->name,
-					   name, Qnative);
+					   name, Qlwlib_encoding);
 		  /* The name may contain a `.' which confuses
 		     XtNameToWidget, so we do it ourselves. */
 		  children =

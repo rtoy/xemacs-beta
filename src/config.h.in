@@ -375,6 +375,9 @@ things are arranged in config.h.in.  In particular:
 /* Is scanf() broken? (Under certain versions of Cygwin) */
 #undef CYGWIN_SCANF_BUG
 
+/* UTF-8-aware path-conversion function in Cygwin 1.7 and on */
+#undef HAVE_CYGWIN_CONV_PATH
+
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
 #undef HAVE_GETPGRP

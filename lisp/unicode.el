@@ -333,33 +333,14 @@ A fixed-width four-byte encoding, characters less than #x10FFFF are not
 supported.  "
    unicode-type ucs-4 little-endian t))
 
-(make-coding-system
- 'utf-8 'unicode
- "UTF-8"
- '(mnemonic "UTF8"
-   documentation "
-UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
-sharing the following principles with the Mule-internal encoding:
+;; Now defined in unicode.c.
 
-  -- All ASCII characters (codepoints 0 through 127) are represented
-     by themselves (i.e. using one byte, with the same value as the
-     ASCII codepoint), and these bytes are disjoint from bytes
-     representing non-ASCII characters.
-
-     This means that any 8-bit clean application can safely process
-     UTF-8-encoded text as it were ASCII, with no corruption (e.g. a
-     '/' byte is always a slash character, never the second byte of
-     some other character, as with Big5, so a pathname encoded in
-     UTF-8 can safely be split up into components and reassembled
-     again using standard ASCII processes).
-
-  -- Leading bytes and non-leading bytes in the encoding of a
-     character are disjoint, so moving backwards is easy.
-
-  -- Given only the leading byte, you know how many following bytes
-     are present.
-"
-   unicode-type utf-8))
+;;(make-coding-system
+;; 'utf-8 'unicode
+;; "UTF-8"
+;; '(mnemonic "UTF8"
+;;   documentation "..."
+;;   unicode-type utf-8))
 
 (make-coding-system
  'utf-8-bom 'unicode

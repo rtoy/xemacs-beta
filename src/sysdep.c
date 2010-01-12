@@ -3092,14 +3092,15 @@ qxe_execve (const Ibyte *filename, Ibyte * const argv[],
     ;
   new_argv = alloca_array (Extbyte *, argc + 1);
   for (i = 0; i < argc; i++)
-    C_STRING_TO_EXTERNAL (argv[i], new_argv[i], Qnative);
+    C_STRING_TO_EXTERNAL (argv[i], new_argv[i], Qcommand_argument_encoding);
   new_argv[argc] = NULL;
 
   for (envc = 0; envp[envc]; envc++)
     ;
   new_envp = alloca_array (Extbyte *, envc + 1);
   for (i = 0; i < envc; i++)
-    C_STRING_TO_EXTERNAL (envp[i], new_envp[i], Qnative);
+    C_STRING_TO_EXTERNAL (envp[i], new_envp[i],
+			  Qenvironment_variable_encoding);
   new_envp[envc] = NULL;
 
 #if defined (WIN32_NATIVE)
@@ -3146,13 +3147,16 @@ copy_in_passwd (struct passwd *pwd)
   cached_pwd = *pwd;
   if (cached_pwd.pw_name)
     TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_name,
-			C_STRING_MALLOC, cached_pwd.pw_name, Qnative);
+			C_STRING_MALLOC, cached_pwd.pw_name,
+			Quser_name_encoding);
   if (cached_pwd.pw_passwd)
     TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_passwd,
-			C_STRING_MALLOC, cached_pwd.pw_passwd, Qnative);
+			C_STRING_MALLOC, cached_pwd.pw_passwd,
+			Quser_name_encoding);
   if (cached_pwd.pw_gecos)
     TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_gecos,
-			C_STRING_MALLOC, cached_pwd.pw_gecos, Qnative);
+			C_STRING_MALLOC, cached_pwd.pw_gecos,
+			Quser_name_encoding);
   if (cached_pwd.pw_dir)
     TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_dir,
 			C_STRING_MALLOC, cached_pwd.pw_dir, Qfile_name);
@@ -3170,7 +3174,7 @@ qxe_getpwnam (const Ibyte *name)
   return getpwnam (name);
 #else
   Extbyte *nameext;
-  C_STRING_TO_EXTERNAL (name, nameext, Qnative);
+  C_STRING_TO_EXTERNAL (name, nameext, Quser_name_encoding);
 
   return copy_in_passwd (getpwnam (nameext));
 #endif /* WIN32_NATIVE */
@@ -3210,7 +3214,7 @@ qxe_ctime (const time_t *t)
     return (Ibyte *) "Sun Jan 01 00:00:00 1970";
   if (ctime_static)
     xfree (ctime_static, Ibyte *);
-  EXTERNAL_TO_C_STRING_MALLOC (str, ctime_static, Qnative);
+  EXTERNAL_TO_C_STRING_MALLOC (str, ctime_static, Qtime_function_encoding);
   return ctime_static;
 }
 
