@@ -206,7 +206,7 @@ if does not differ from the encoded string. "
 	(no-conversion 'no-conversion)
 	(shift-jis 'shift-jis)
 	;; @@#### This is a huge hack.  Fix it properly.
-	(mbcs (loop
+	(multibyte (loop
 		named category
 		for charset in (coding-system-property coding-system
 						       'charsets)

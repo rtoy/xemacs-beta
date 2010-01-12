@@ -231,7 +231,7 @@ enum coding_system_variant
   shift_jis_coding_system,
   big5_coding_system,
   unicode_coding_system,
-  mbcs_coding_system,
+  multibyte_coding_system,
   fixed_width_coding_system
 };
 
@@ -1070,7 +1070,7 @@ DECLARE_CODING_SYSTEM_TYPE (internal);
 #endif
 
 #ifdef MULE
-DECLARE_CODING_SYSTEM_TYPE (mbcs);
+DECLARE_CODING_SYSTEM_TYPE (multibyte);
 DECLARE_CODING_SYSTEM_TYPE (iso2022);
 DECLARE_CODING_SYSTEM_TYPE (ccl);
 DECLARE_CODING_SYSTEM_TYPE (fixed_width);

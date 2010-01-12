@@ -35,7 +35,7 @@
 
 
 (make-coding-system
- 'iso-8859-8 'mbcs "ISO 8859-6 (Hebrew)"
+ 'iso-8859-8 'multibyte "ISO 8859-6 (Hebrew)"
  '(charsets (ascii control-1 hebrew-iso8859-8)
    mnemonic "MIME/Hbrw"))
 

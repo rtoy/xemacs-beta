@@ -46,7 +46,7 @@ Boston, MA 02111-1307, USA.  */
 #error "No prayer of getting these two working in its current shape"
 #endif
 
-Lisp_Object Qshift_jis, Qiso2022, Qbig5, Qccl, Qmbcs;
+Lisp_Object Qshift_jis, Qiso2022, Qbig5, Qccl, Qmultibyte;
 
 Lisp_Object Qcharset_g0, Qcharset_g1, Qcharset_g2, Qcharset_g3;
 Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
@@ -66,19 +66,19 @@ static Lisp_Object_dynarr *shift_jis_precedence, *big5_precedence;
 /*                           MBCS coding system                         */
 /************************************************************************/
 
-struct mbcs_coding_system
+struct multibyte_coding_system
 {
   Lisp_Object_dynarr *charsets;
 };
 
 #define CODING_SYSTEM_MBCS_CHARSETS(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, mbcs)->charsets)
+  (CODING_SYSTEM_TYPE_DATA (codesys, multibyte)->charsets)
 #define XCODING_SYSTEM_MBCS_CHARSETS(codesys) \
   CODING_SYSTEM_MBCS_CHARSETS (XCODING_SYSTEM (codesys))
 
-/* ~~#### Must be converted to Lisp object.  struct mbcs_coding_system
+/* ~~#### Must be converted to Lisp object.  struct multibyte_coding_system
    does not need to be because it actually forms the latter part of a
-   coding system object.  The struct mbcs_coding_streams are currently
+   coding system object.  The struct multibyte_coding_streams are currently
    separate objects with a pointer to them in the struct coding_stream,
    which itself is the latter part of an Lstream object.  It cannot be
    converted into an "extended lump" on the end of the struct coding_stream
@@ -87,18 +87,18 @@ struct mbcs_coding_system
    autodetection detects a particular coding system and switches to the
    appropriate foo_coding_stream structure. */
 
-struct mbcs_coding_stream
+struct multibyte_coding_stream
 {
   int foo; /* unused */
 };
 
-static const struct memory_description mbcs_coding_system_description[] = {
-  { XD_BLOCK_PTR, offsetof (struct mbcs_coding_system, charsets),
+static const struct memory_description multibyte_coding_system_description[] = {
+  { XD_BLOCK_PTR, offsetof (struct multibyte_coding_system, charsets),
     1, { &Lisp_Object_dynarr_description} },
   { XD_END }
 };
 
-DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mbcs);
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (multibyte);
 
 /* See if we can derive a character out of the specified charsets
    that is of the right dimension, is valid according to the bounds, and
@@ -126,7 +126,7 @@ try_to_derive_character (int c1, int c2, int dimension,
 
 
 static Bytecount
-mbcs_convert (struct coding_stream *str, const UExtbyte *src,
+multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	      unsigned_char_dynarr *dst, Bytecount n)
 {
   Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
@@ -223,19 +223,19 @@ mbcs_convert (struct coding_stream *str, const UExtbyte *src,
 }
 
 static void
-mbcs_init (Lisp_Object codesys)
+multibyte_init (Lisp_Object codesys)
 {
   XCODING_SYSTEM_MBCS_CHARSETS (codesys) = Dynarr_new (Lisp_Object);
 }
 
 static void
-mbcs_mark (Lisp_Object codesys)
+multibyte_mark (Lisp_Object codesys)
 {
   mark_Lisp_Object_dynarr (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
 }
 
 static void
-mbcs_finalize (Lisp_Object cs)
+multibyte_finalize (Lisp_Object cs)
 {
   if (XCODING_SYSTEM_MBCS_CHARSETS (cs))
     {
@@ -245,7 +245,7 @@ mbcs_finalize (Lisp_Object cs)
 }
 
 static int
-mbcs_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
+multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qcharsets))
     {
@@ -263,7 +263,7 @@ mbcs_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 }
 
 static Lisp_Object
-mbcs_getprop (Lisp_Object codesys, Lisp_Object prop)
+multibyte_getprop (Lisp_Object codesys, Lisp_Object prop)
 {
   if (EQ (prop, Qcharsets))
     {
@@ -279,7 +279,7 @@ mbcs_getprop (Lisp_Object codesys, Lisp_Object prop)
 }
 
 static void
-mbcs_print (Lisp_Object codesys, Lisp_Object printcharfun,
+multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
 	    int UNUSED (escapeflag))
 {
   Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
@@ -4319,7 +4319,7 @@ syms_of_mule_coding (void)
   DEFSYMBOL (Qshift_jis);
   DEFSYMBOL (Qccl);
   DEFSYMBOL (Qiso2022);
-  DEFSYMBOL (Qmbcs);
+  DEFSYMBOL (Qmultibyte);
 
   DEFSYMBOL (Qcharset_g0);
   DEFSYMBOL (Qcharset_g1);
@@ -4356,14 +4356,14 @@ syms_of_mule_coding (void)
 void
 coding_system_type_create_mule_coding (void)
 {
-  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (mbcs, "mbcs-coding-system-p");
-  CODING_SYSTEM_HAS_METHOD (mbcs, convert);
-  CODING_SYSTEM_HAS_METHOD (mbcs, init);
-  CODING_SYSTEM_HAS_METHOD (mbcs, mark);
-  CODING_SYSTEM_HAS_METHOD (mbcs, finalize);
-  CODING_SYSTEM_HAS_METHOD (mbcs, putprop);
-  CODING_SYSTEM_HAS_METHOD (mbcs, getprop);
-  CODING_SYSTEM_HAS_METHOD (mbcs, print);
+  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (multibyte, "multibyte-coding-system-p");
+  CODING_SYSTEM_HAS_METHOD (multibyte, convert);
+  CODING_SYSTEM_HAS_METHOD (multibyte, init);
+  CODING_SYSTEM_HAS_METHOD (multibyte, mark);
+  CODING_SYSTEM_HAS_METHOD (multibyte, finalize);
+  CODING_SYSTEM_HAS_METHOD (multibyte, putprop);
+  CODING_SYSTEM_HAS_METHOD (multibyte, getprop);
+  CODING_SYSTEM_HAS_METHOD (multibyte, print);
 
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (iso2022, "iso2022-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (iso2022, mark);

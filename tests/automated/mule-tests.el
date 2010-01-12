@@ -535,7 +535,8 @@ This is a naive implementation in Lisp.  "
 				      (loop for i from ?\x00 to ?\xFF
 					collect i))
     do
-    (when (and (eq 'fixed-width (coding-system-type coding-system))
+    (when (and (eq 'multibyte (coding-system-type coding-system))
+	       (= 1 (coding-system-dimension coding-system))
 	       ;; Don't check the coding systems with odd line endings
 	       ;; (maybe we should):
 	       (eq 'lf (coding-system-eol-type coding-system)))

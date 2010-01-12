@@ -120,7 +120,7 @@
       syntax-table))
 
 (make-coding-system
- 'iso-8859-7 'mbcs "ISO-8859-7 (Greek)"
+ 'iso-8859-7 'multibyte "ISO-8859-7 (Greek)"
  '(charsets (ascii control-1 greek-iso8859-7)
    mnemonic "Grk"
    aliases (greek-iso-8bit)))

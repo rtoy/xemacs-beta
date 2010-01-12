@@ -125,7 +125,7 @@
    (#xDE #xFE))) ;; T WITH CEDILLA
 
 (make-coding-system
- 'iso-8859-2 'mbcs "ISO-8859-2 (Latin-2)"
+ 'iso-8859-2 'multibyte "ISO-8859-2 (Latin-2)"
  '(charsets (ascii control-1 latin-iso8859-2)
    documentation "ISO-8859-2 (Latin-2) for Central Europe.
 See also `windows-1250', and `iso-8859-1', which is compatible with Latin 2
@@ -206,7 +206,7 @@ when used to write German (or English, of course).  "
    (#xDE #xFE))) ;; S WITH CIRCUMFLEX
 
 (make-coding-system
- 'iso-8859-3 'mbcs "ISO-8859-3 (Latin-3)"
+ 'iso-8859-3 'multibyte "ISO-8859-3 (Latin-3)"
  '(charsets (ascii control-1 latin-iso8859-3)
    mnemonic "Latin 3"
    documentation "Aimed at Turkish, Maltese and Esperanto.  "
@@ -287,7 +287,7 @@ when used to write German (or English, of course).  "
    (#xDE #xFE))) ;; U WITH MACRON
 
 (make-coding-system
- 'iso-8859-4 'mbcs "ISO-8859-4 (Latin-4)"
+ 'iso-8859-4 'multibyte "ISO-8859-4 (Latin-4)"
  '(charsets (ascii control-1 latin-iso8859-4)
    mnemonic "Latin 4"
    aliases (iso-latin-4 latin-4)
@@ -314,7 +314,7 @@ Northern Europe.\""
    ))
 
 (make-coding-system
- 'iso-8859-10 'mbcs "ISO-8859-10 (Latin-6)"
+ 'iso-8859-10 'multibyte "ISO-8859-10 (Latin-6)"
  '(charsets (ascii control-1 latin-iso8859-10)
    mnemonic "Latin 6"
    aliases (iso-latin-6 latin-6)))
@@ -339,7 +339,7 @@ Northern Europe.\""
 ;; windows-1257 et al. in mule/windows.el
 
 (make-coding-system
- 'iso-8859-13 'mbcs "ISO-8859-13 (Latin-7)"
+ 'iso-8859-13 'multibyte "ISO-8859-13 (Latin-7)"
  '(charsets (ascii control-1 latin-iso8859-13)
    mnemonic "Latin 7"
    aliases (iso-latin-7 latin-7)))
@@ -429,7 +429,7 @@ covered).\""
    (#xDE #xFE))) ;; Y WITH CIRCUMFLEX
 
 (make-coding-system
- 'iso-8859-14 'mbcs "ISO-8859-14 (Latin-8)"
+ 'iso-8859-14 'multibyte "ISO-8859-14 (Latin-8)"
  '(charsets (ascii control-1 latin-iso8859-14)
    mnemonic "Latin 8"
    aliases (iso-latin-8 latin-8)))
@@ -507,7 +507,7 @@ covered).\""
    (#xDE #xFE))) ;; THORN
 
 (make-coding-system
- 'iso-8859-15 'mbcs "ISO-8859-15 (Latin-9)"
+ 'iso-8859-15 'multibyte "ISO-8859-15 (Latin-9)"
  '(charsets (ascii control-1 latin-iso8859-15)
    documentation "ISO 4873 conforming 8-bit code.
 (ASCII + Latin 9; aka Latin-1 with Euro)"
@@ -615,7 +615,7 @@ Romanian language\""
 
 ;; Add a coding system for ISO 8859-16.
 (make-coding-system
- 'iso-8859-16 'mbcs "ISO-8859-16 (Latin-10)"
+ 'iso-8859-16 'multibyte "ISO-8859-16 (Latin-10)"
  '(charsets (ascii control-1 latin-iso8859-16)
    mnemonic "Latin 10"
    aliases (iso-latin-10)))
@@ -695,7 +695,7 @@ Romanian language\""
                 ?I (standard-case-table))
 
 (make-coding-system
- 'iso-8859-9 'mbcs "ISO-8859-9 (Latin-5)"
+ 'iso-8859-9 'multibyte "ISO-8859-9 (Latin-5)"
  '(charsets (ascii control-1 latin-iso8859-9)
    mnemonic "Latin 5"
    aliases (iso-latin-5 latin-5)))
@@ -830,7 +830,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
  :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80))
 
 (make-coding-system
- 'macintosh 'mbcs "MacRoman"
+ 'macintosh 'multibyte "MacRoman"
  '(charsets (ascii latin-macintosh-roman)
    mnemonic "MR"
    documentation "The Macintosh encoding for Western Europe and the Americas"

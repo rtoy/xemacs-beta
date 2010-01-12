@@ -539,7 +539,7 @@ nil or `undecided'
      Convert CRLF sequences or CR to LF.
 `shift-jis'
      Shift-JIS (a Japanese encoding commonly used in PC operating systems).
-`mbcs'
+`multibyte'
      An encoding that directly encodes the indices of one or more charsets
      with one or two bytes.
 `unicode'
@@ -851,7 +851,7 @@ The following additional properties are recognized if TYPE is `unicode':
      be used with UTF-8.  That is the term used in the standard. ]]
 
 
-The following additional property is recognized if TYPE is `mbcs':
+The following additional property is recognized if TYPE is `multibyte':
 
 `charsets'
      List of charsets encoded using this coding system.
