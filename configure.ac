@@ -4291,6 +4291,12 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
+dnl Check for UTF-8 path-conversion functions in Cygwin 1.7 and on
+case "$opsys" in
+  *cygwin* ) AC_CHECK_FUNCS(cygwin_conv_path)
+	 ;;
+esac
+
 dnl ----------------------------------------------------------------
 dnl Check for POSIX functions.
 dnl ----------------------------------------------------------------

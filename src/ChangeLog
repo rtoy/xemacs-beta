@@ -1,3 +1,251 @@
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* database.c:
+	* intl-encap-win32.c (qxeUpdateICMRegKey):
+	Cosmetic fixes.
+	
+	* device-x.c (signal_if_x_error):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fencode_time):
+	* editfns.c (Fcurrent_time_zone):
+	* editfns.c (Fset_time_zone_rule):
+	* event-gtk.c (gtk_reset_key_mapping):
+	* fileio.c (Fsysnetunam):
+	* font-mgr.c:
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_filename):
+	* glyphs-eimage.c (my_jpeg_output_message):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-shared.c (read_bitmap_data_from_file):
+	* glyphs-x.c (x_redisplay_widget):
+	* glyphs-x.c (x_widget_instantiate):
+	* glyphs-x.c (x_widget_property):
+	* glyphs-x.c (x_tab_control_redisplay):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (play_sound_file):
+	* hpplay.c (play_sound_data):
+	* process-unix.c:
+	* process-unix.c (unix_canonicalize_host_name):
+	* process.c (init_xemacs_process):
+	* sound.h (sound_perror):
+	* sysdep.c:
+	* sysdep.c (qxe_execve):
+	* sysdep.c (copy_in_passwd):
+	* sysdep.c (qxe_getpwnam):
+	* sysdep.c (qxe_ctime):
+	* sysdll.c (dll_error):
+	* sysdll.c (dll_open):
+	* tooltalk.c (check_status):
+	* tooltalk.c (Fadd_tooltalk_message_arg):
+	* tooltalk.c (Fadd_tooltalk_pattern_attribute):
+	* tooltalk.c (Fadd_tooltalk_pattern_arg):
+	Change all occurrences of Qnative to some more specific encoding.
+	Create Qtime_function_encoding, Qtime_zone_encoding,
+	Quser_name_encoding, Qerror_message_encoding,
+	Qjpeg_error_message_encoding, Qtooltalk_encoding, Qgtk_encoding,
+	Qx_error_message_encoding.
+
+	* intl-win32.c (init_intl_win32):
+	Provide cygwin-use-utf-8 if this is the case.
+
+	* fileio.c (Ffile_truename):
+	* realpath.c:
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (TSTR_TO_LOCAL_FILE_FORMAT):
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN):
+	* syswindows.h (INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT):
+	* syswindows.h (LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR):
+	* win32.c (urlify_filename):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (Fmswindows_cygwin_to_win32_path):
+	Rename LOCAL_FILE_FORMAT_TO_INTERNAL_WIN32 and
+	INTERNAL_WIN32_TO_LOCAL_FILE_FORMAT to
+	LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN and
+	INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT, since "win32" is a misnomer.
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in:
+	Add def for HAVE_CYGWIN_CONV_PATH.
+	
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-msw.c (handle_file_dialog_box):
+	* fileio.c:
+	* fileio.c (Ffile_truename):
+	* syswindows.h:
+	* syswindows.h (CCP_POSIX_TO_WIN_T):
+	* syswindows.h (LISP_LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (INTERNAL_WIN32_TO_LOCAL_FILE_FORMAT):
+	* syswindows.h (LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR):
+	* win32.c (urlify_filename):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (Fmswindows_shell_execute):
+	* win32.c (Fmswindows_cygwin_to_win32_path):
+	Rename LOCAL_FILE_FORMAT_TO_TSTR to LISP_LOCAL_FILE_FORMAT_TO_TSTR.
+	Rename LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR to
+	LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR.  Both of these renames
+	reflect the fact that their 'in' argument is a Lisp object.
+
+	Create new LOCAL_FILE_FORMAT_TO_TSTR that accepts an Ibyte *.
+
+	Rename LOCAL_TO_WIN32_FILE_FORMAT to
+	LOCAL_FILE_FORMAT_TO_INTERNAL_WIN32; rename WIN32_TO_LOCAL_FILE_FORMAT
+	to INTERNAL_WIN32_TO_LOCAL_FILE_FORMAT similarly.
+	This clarifies the fact that the result is a file in MS-Windows format
+	rather than POSIX format, but still in internal-format instead of
+	UTF-16.
+
+	Fix up the *LOCAL_FILE_FORMAT* functions to use cygwin_conv_path()
+	if available.  This converts between a UTF-8 POSIX path and a
+	UTF-16 Windows path (or ANSI Windows path, in the increasingly
+	unlikely situation that we're using Windows 9x).  Previously, we
+	used an old API and operated on internal-format data, because the
+	external format was unpredictable.  This doesn't work any more,
+	even with the old API (it tries to convert to UTF-8).  So instead,
+	when the new API is available we use the new API and operate on
+	external-format data.  This necessitates that if we want to convert
+	to/from internal-format Windows-style paths, we need to first convert
+	to external format, do the conversion, and convert back to
+	internal format.  To avoid this, we change some callers of the
+	macros to use the right version (internal or external format
+	destination) and avoid doing the internal/external conversions
+	themselves.
+
+	* realpath.c:
+	* fileio.c (check_writable):
+	Cosmetic fixes to check_writable.
+
+	Avoid directly calling cygwin_conv_to_full_win32_path
+	(fileio.c:check_writable did this) or cygwin_posix_to_win32_path_list
+	(realpath.c:readlink_or_correct_case did this); use the
+	*LOCAL_FILE_FORMAT* macros instead.
+
+	* fileio.c (Ffile_exists_p):
+	* glyphs-msw.c (mswindows_resource_instantiate):
+	* sysdll.c (dll_open):
+	* sysfile.h:
+	* sysfile.h (PATHNAME_CONVERT_OUT_TSTR):
+	Add PATHNAME_CONVERT_OUT_TSTR and PATHNAME_CONVERT_OUT_UTF_8 for
+	conversion involving specified coding systems rather than `file-name'.
+	Use them in *LOCAL_FILE_FORMAT* macros.
+
+	* emacs.c (main_1):
+	* symsinit.h:
+	* unicode.c:
+	New function complex_vars_of_unicode().  In it, create the utf-8
+	coding system.  Call it appropriately in emacs.c.  Sort the
+	prototypes of complex_vars_of_*() in symsinit.h, for cosmetic
+	reasons.
+	
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* regex.c (re_compile_fastmap):
+	The code to compute the fastmap in charset_mule_not was totally
+	messed up.  I'm surprised it hasn't led to more visible bugs.
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* rangetab.c:
+	* rangetab.c (external_to_internal_adjust_ends):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (struct unified_range_table):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (unified_range_table_get_range):
+	Add an entry to unified range tables to keep track of their type.
+	Factor out code to adjust the endpoints of ranges between the
+	external format (either end can be open or closed) and internal
+	format (always closed/open).  Use code also when returning
+	ranges out of unified range tables.  Fixes an off-by-one error
+	in regex.c where it was getting ranges with an end one greater
+	than expected, since it creates closed-closed range tables and
+	was getting passed the internal-format ranges.
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (default_query_method):
+	OOOOOPS!  Had = instead of ==.
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in:
+	* config.h.in (ERROR_CHECK_GLYPHS):
+	Trying to avoid link errors referring to the ERROR_CHECK_TYPES
+	functions, either in eldap.o (if we don't include references to
+	ERROR_CHECK_TYPES in xemacs.def.in.in) or xemacs-export.o (if
+	we do include such references):
+	
+	Add line for USE_GPLUSPLUS, set by configure.
+	Define INLINE_HEADERS_ARE_STATIC when we add static to inline headers.
+	(Possibly used when setting NEED_ERROR_CHECK_TYPES_INLINES.)
+	Currently, set NEED_ERROR_CHECK_TYPES_INLINES when ERROR_CHECK_TYPES
+	and USE_GPLUSPLUS.
+	
+	* xemacs.def.in.in:
+	Use NEED_ERROR_CHECK_TYPES_INLINES here to bracket things like
+	`error_check_cons' instead of just ERROR_CHECK_TYPES.
+
+	* faces.c (complex_vars_of_faces):
+	Bracket various font variables with defined(USE_XFT or MULE) to
+	avoid warnings.
+	
+	* fileio.c:
+	Make sure the `expand-file-name' handler returns a string, to
+	avoid a potential crash.
+	
+	* floatfns.c (round_one_bigfloat_1):
+	#if-0 out an assert that can never be triggered and which
+	generates warnings "dereferencing type-punned pointer will break
+	strict-aliasing rules".
+	
+	* redisplay-x.c (separate_textual_runs_nomule):
+	Remove unused variable in non-Mule case.
+	
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	Variable CHARSET is unused when not Mule.
+	
+	* specifier.c (specifier_instance_from_inst_list):
+	Add a comment questioning why font-specific stuff is littering
+	specifier.c.
+	
+	* syswindows.h:
+	Expand on the comments on a #if 0 I added in a previous patch.
+	
+	* vdb-win32.c:
+	* vdb-win32.c (win32_fault_handler):
+	* vdb-win32.c (vdb_install_signal_handler):
+	Change return type to LONG instead of DWORD to avoid warning or
+	error.
+	
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* database.c: Cygwin prototypes in ndbm.h are incomplete and
+	cause C++ compile errors; fix them.
+	
+	* fileio.c (check_writable):
+	Fix compile errors.  Also move the call to C_STRING_TO_TSTR
+	earlier, which is probably wrong, but fixed in a later patch.
+	
+	* intl-encap-win32.c (qxeGetICMProfile):
+	Ifdef out a fix to work around a previous bogosity in Cygwin
+	header files which has now been fixed.  Keeping in the fix
+	led to compile errors. #### Proper way to do it is to figure
+	out when it got fixed, perhaps put in a configure test, but it
+	seems not worth it.
+	
+	* intl-encap-win32.c (qxeUpdateICMRegKey):
+	Cosmetic change, undone in a later patch.
+	* mule-charset.c (Fset_charset_ccl_program):
+	Remove unused variable.
+	* nas.c:
+	#if-0 out some unused static code to avoid a warning.
+	* syswindows.h:
+	Don't declare prototypes for GetCurrentFiber and GetFiberData,
+	it causes a compile error.
+	* unicode.c (unicode_query):
+	invalid_lower_limit might have been used uninitted, so initialize it.
+
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
 	* glyphs.c (query_string_font): Use proper domain for cachel

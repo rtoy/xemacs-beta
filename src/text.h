@@ -2974,8 +2974,15 @@ END_C_DECLS
 #endif
 #define Qunix_host_name_encoding Qnative
 #define Qunix_service_name_encoding Qnative
+#define Qtime_function_encoding Qnative
+#define Qtime_zone_encoding Qtime_function_encoding
 #define Qmswindows_host_name_encoding Qmswindows_multibyte
 #define Qmswindows_service_name_encoding Qmswindows_multibyte
+#define Quser_name_encoding Qnative
+#define Qerror_message_encoding Qnative
+#define Qjpeg_error_message_encoding Qerror_message_encoding
+#define Qtooltalk_encoding Qnative
+#define Qgtk_encoding Qnative
 
 /* Wexttext functions.  The type of Wexttext is selected at compile time
    and will sometimes be wchar_t, sometimes char. */
@@ -3107,6 +3114,7 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
    Qenvironment_variable_encoding */
 #define Qx_display_name_encoding Qx_hpc_encoding
 #define Qx_xpm_data_encoding Qx_hpc_encoding
+#define Qx_error_message_encoding Qx_hpc_encoding
 
 /* !!#### Verify these! */
 #define Qxt_widget_arg_encoding Qnative

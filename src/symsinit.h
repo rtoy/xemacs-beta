@@ -464,29 +464,30 @@ void specifier_vars_of_window (void);
    #### The reinit_() functions should be called from emacs.c, not the
    corresponding complex_vars_of_(). */
 
-void complex_vars_of_faces (void);
-void complex_vars_of_mule_charset (void);
-void complex_vars_of_file_coding (void);
-void complex_vars_of_intl_win32 (void);
-void complex_vars_of_glyphs (void);
-void complex_vars_of_glyphs_x (void);
-void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_alloc (void);
-void complex_vars_of_menubar (void);
-void complex_vars_of_scrollbar (void);
-void complex_vars_of_frame (void);
-void complex_vars_of_syntax (void);
+void complex_vars_of_buffer (void);
 void complex_vars_of_casetab (void);
 void complex_vars_of_chartab (void);
-void complex_vars_of_buffer (void);
-void reinit_complex_vars_of_buffer_runtime_only (void);
 void complex_vars_of_console (void);
-void reinit_complex_vars_of_console_runtime_only (void);
 void complex_vars_of_emacs (void);
-void complex_vars_of_minibuf (void);
-void reinit_complex_vars_of_minibuf (void);
-void complex_vars_of_keymap (void);
+void complex_vars_of_faces (void);
+void complex_vars_of_file_coding (void);
 void complex_vars_of_font_mgr (void);
+void complex_vars_of_frame (void);
+void complex_vars_of_glyphs (void);
+void complex_vars_of_glyphs_mswindows (void);
+void complex_vars_of_glyphs_x (void);
+void complex_vars_of_intl_win32 (void);
+void complex_vars_of_keymap (void);
+void complex_vars_of_menubar (void);
+void complex_vars_of_minibuf (void);
+void complex_vars_of_mule_charset (void);
+void complex_vars_of_scrollbar (void);
+void complex_vars_of_syntax (void);
+void complex_vars_of_unicode (void);
+void reinit_complex_vars_of_buffer_runtime_only (void);
+void reinit_complex_vars_of_console_runtime_only (void);
+void reinit_complex_vars_of_minibuf (void);
 
 /* Late initialization -- stuff pertaining only to interactive usage,
    I/O, or Lisp reading. (Dump-time and run-time, but the code itself

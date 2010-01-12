@@ -109,7 +109,7 @@ dll_error ()
 #else
   msg = (const Extbyte *) "Shared library error";
 #endif
-  return build_ext_string (msg, Qnative);
+  return build_ext_string (msg, Qerror_message_encoding);
 }
 
 #elif defined(HAVE_SHL_LOAD)
@@ -164,7 +164,8 @@ dll_error ()
 {
   /* #### WTF?!  Shouldn't this at least attempt to get strerror or
      something?  --hniksic */
-  return build_string ("Generic shared library error", Qnative);
+  return build_string ("Generic shared library error",
+		       Qerror_message_encoding);
 }
 
 #elif defined (WIN32_NATIVE) || defined (CYGWIN)
@@ -183,7 +184,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LOCAL_FILE_FORMAT_TO_TSTR (fname, soname);
+      LISP_LOCAL_FILE_FORMAT_TO_TSTR (fname, soname);
     }
   return (dll_handle) qxeLoadLibrary (soname);
 }
@@ -431,7 +432,7 @@ dll_error ()
   int errorNumber;
   const CIbyte *fileNameWithError, *errorString;
   NSLinkEditError(&c, &errorNumber, &fileNameWithError, &errorString);
-  return build_ext_string (errorString, Qnative);
+  return build_ext_string (errorString, Qerror_message_encoding);
 }
 #elif HAVE_LTDL
 /* Libtool's libltdl */
@@ -476,7 +477,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 Lisp_Object
 dll_error ()
 {
-  return build_ext_string (lt_dlerror (), Qnative);
+  return build_ext_string (lt_dlerror (), Qerror_message_encoding);
 }
 #else
 /* Catchall if we don't know about this system's method of dynamic loading */

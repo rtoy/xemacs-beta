@@ -321,7 +321,7 @@ my_jpeg_output_message (j_common_ptr cinfo)
 
   /* Create the message */
   (*cinfo->err->format_message) (cinfo, buffer);
-  EXTERNAL_TO_C_STRING (buffer, intbuf, Qnative);
+  EXTERNAL_TO_C_STRING (buffer, intbuf, Qjpeg_error_message_encoding);
   warn_when_safe (Qjpeg, Qinfo, "%s", intbuf);
 }
 
@@ -375,7 +375,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 	/* Create the message */
 	(*cinfo.err->format_message) ((j_common_ptr) &cinfo, buffer);
-	errstring = build_ext_string (buffer, Qnative);
+	errstring = build_ext_string (buffer, Qjpeg_error_message_encoding);
 
 	signal_image_error_2 ("JPEG decoding error",
 			      errstring, instantiator);

@@ -1787,8 +1787,8 @@ gtk_reset_key_mapping (struct device *d)
 	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0], 0);
 	if (name)
 	  {
-	    Fputhash (build_ext_string (name, Qnative), Qsans_modifiers,
-		      hashtable);
+	    Fputhash (build_ext_string (name, Qx_keysym_encoding),
+		      Qsans_modifiers, hashtable);
 	    Fputhash (sym, Qsans_modifiers, hashtable);
 	  }
       }
@@ -1802,7 +1802,8 @@ gtk_reset_key_mapping (struct device *d)
 	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j], 0);
 	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
 		{
-		  Fputhash (build_ext_string (name, Qnative), Qt, hashtable);
+		  Fputhash (build_ext_string (name, Qx_keysym_encoding),
+			    Qt, hashtable);
 		  Fputhash (sym, Qt, hashtable);
 		}
 	    }
