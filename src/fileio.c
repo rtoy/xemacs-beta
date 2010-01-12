@@ -1,6 +1,6 @@
 /* File IO for XEmacs.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -794,8 +794,9 @@ See also the function `substitute-in-file-name'.
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
 	RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-				       call3 (handler, Qexpand_file_name,
-					      name, default_directory));
+				       call3_check_string
+                                       (handler, Qexpand_file_name,
+				        name, default_directory));
     }
 
   o = XSTRING_DATA (default_directory);
@@ -1387,7 +1388,7 @@ No component of the resulting pathname will be a symbolic link, as
        detect that c:/windows == /windows for example. */
     if (! (IS_DIRECTORY_SEP (path[0]) && IS_DIRECTORY_SEP (path[1])))
       {
-	LOCAL_TO_WIN32_FILE_FORMAT (path, p);
+	LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (path, p);
 	path = p;
       }
 #endif
@@ -2270,7 +2271,7 @@ Open a network connection to PATH using LOGIN as the login string.
      encapsulated. */
 
   LISP_STRING_TO_EXTERNAL (path, path_ext, Qfile_name);
-  LISP_STRING_TO_EXTERNAL (login, login_ext, Qnative);
+  LISP_STRING_TO_EXTERNAL (login, login_ext, Quser_name_encoding);
 
   netresult = netunam (path_ext, login_ext);
 
@@ -2323,82 +2324,73 @@ check_executable (Lisp_Object filename)
 static int
 check_writable (const Ibyte *filename)
 {
-#if defined(WIN32_NATIVE) || defined(CYGWIN)
-#ifdef CYGWIN
-    char filename_buffer[PATH_MAX];
-#endif
-	// Since this has to work for a directory, we can't just call 'CreateFile'
-	PSECURITY_DESCRIPTOR pDesc; /* Must be freed with LocalFree */
-	/* these need not be freed, they point into pDesc */
-	PSID psidOwner;
-	PSID psidGroup;
-	PACL pDacl;
-	PACL pSacl;
-	/* end of insides of descriptor */
-	DWORD error;
-	DWORD attributes;
-	HANDLE tokenHandle;
-	GENERIC_MAPPING genericMapping;
-	DWORD accessMask;
-	PRIVILEGE_SET PrivilegeSet;
-    DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
-    BOOL fAccessGranted = FALSE;
-    DWORD dwAccessAllowed;
-    Extbyte *fnameext;
+#ifdef WIN32_ANY
+  // Since this has to work for a directory, we can't just call 'CreateFile'
+  PSECURITY_DESCRIPTOR pDesc; /* Must be freed with LocalFree */
+  /* these need not be freed, they point into pDesc */
+  PSID psidOwner;
+  PSID psidGroup;
+  PACL pDacl;
+  PACL pSacl;
+  /* end of insides of descriptor */
+  DWORD error;
+  DWORD attributes;
+  HANDLE tokenHandle;
+  GENERIC_MAPPING genericMapping;
+  DWORD accessMask;
+  PRIVILEGE_SET PrivilegeSet;
+  DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
+  BOOL fAccessGranted = FALSE;
+  DWORD dwAccessAllowed;
+  Extbyte *fnameext;
 
-#ifdef CYGWIN
-    cygwin_conv_to_full_win32_path(filename, filename_buffer);
-    filename = (Ibyte*)filename_buffer;
-#endif
+  LOCAL_FILE_FORMAT_TO_TSTR (filename, fnameext);
 
-    C_STRING_TO_TSTR(filename, fnameext);
+  // First check for a normal file with the old-style readonly bit
+  attributes = qxeGetFileAttributes(fnameext);
+  if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+    return 0;
 
-    // First check for a normal file with the old-style readonly bit
+  /* Win32 prototype lacks const. */
+  error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
+				  DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
+				  &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
+  if(error != ERROR_SUCCESS) { // FAT?
     attributes = qxeGetFileAttributes(fnameext);
-    if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+    return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
+  }
+
+  genericMapping.GenericRead = FILE_GENERIC_READ;
+  genericMapping.GenericWrite = FILE_GENERIC_WRITE;
+  genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
+  genericMapping.GenericAll = FILE_ALL_ACCESS;
+
+  if(!ImpersonateSelf(SecurityDelegation)) {
+    return 0;
+  }
+  if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
+    return 0;
+  }
+
+  accessMask = GENERIC_WRITE;
+  MapGenericMask(&accessMask, &genericMapping);
+
+  if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
+		  &PrivilegeSet,       // receives privileges used in check
+		  &dwPrivSetSize,      // size of PrivilegeSet buffer
+		  &dwAccessAllowed,    // receives mask of allowed access rights
+		  &fAccessGranted)) 
+    {
+      CloseHandle(tokenHandle);
+      RevertToSelf();
+      LocalFree(pDesc);
       return 0;
-
-	/* Win32 prototype lacks const. */
-	error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
-                                    DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-                                    &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
-	if(error != ERROR_SUCCESS) { // FAT?
-		attributes = qxeGetFileAttributes(fnameext);
-		return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
-	}
-
-	genericMapping.GenericRead = FILE_GENERIC_READ;
-    genericMapping.GenericWrite = FILE_GENERIC_WRITE;
-    genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
-    genericMapping.GenericAll = FILE_ALL_ACCESS;
-
-	if(!ImpersonateSelf(SecurityDelegation)) {
-		return 0;
-	}
-	if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
-		return 0;
-	}
-
-	accessMask = GENERIC_WRITE;
-	MapGenericMask(&accessMask, &genericMapping);
-
-	if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
-					&PrivilegeSet,       // receives privileges used in check
-					&dwPrivSetSize,      // size of PrivilegeSet buffer
-					&dwAccessAllowed,    // receives mask of allowed access rights
-					&fAccessGranted)) 
-	{
-		CloseHandle(tokenHandle);
-		RevertToSelf();
-		LocalFree(pDesc);
-		return 0;
-	}
-	CloseHandle(tokenHandle);
-	RevertToSelf();
-	LocalFree(pDesc);
-	return fAccessGranted == TRUE;
-#else
-#ifdef HAVE_EACCESS
+    }
+  CloseHandle(tokenHandle);
+  RevertToSelf();
+  LocalFree(pDesc);
+  return fAccessGranted == TRUE;
+#elif defined (HAVE_EACCESS)
   return (qxe_eaccess (filename, W_OK) >= 0);
 #else
   /* Access isn't quite right because it uses the real uid
@@ -2407,8 +2399,7 @@ check_writable (const Ibyte *filename)
      Opening with O_WRONLY could work for an ordinary file,
      but would lose for directories.  */
   return (qxe_access (filename, W_OK) >= 0);
-#endif
-#endif
+#endif /* (not) defined (HAVE_EACCESS) */
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, 1, 1, 0, /*

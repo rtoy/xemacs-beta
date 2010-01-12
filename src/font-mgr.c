@@ -782,8 +782,8 @@ DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
   CHECK_STRING (file);
   if (FcConfigAppFontAddFile
       (XFCCONFIG_PTR (config),
-       /* #### FIXME! is this really Qnative? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((file), Qnative)) == FcFalse)
+       /* #### FIXME! is Qfile_name right? */
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -801,8 +801,8 @@ DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
   CHECK_STRING (dir);
   if (FcConfigAppFontAddDir
       (XFCCONFIG_PTR (config),
-       /* #### FIXME! is this really Qnative? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((dir), Qnative)) == FcFalse)
+       /* #### FIXME! is Qfile_name right? */
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (dir), Qfile_name) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -844,8 +844,8 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
   if (!NILP (name))
     {
       CHECK_STRING (name);
-      /* #### FIXME! is this really Qnative? */
-      fcname = NEW_LISP_STRING_TO_EXTERNAL (name, Qnative);
+       /* #### FIXME! is Qfile_name right? */
+      fcname = NEW_LISP_STRING_TO_EXTERNAL (name, Qfile_name);
     }
   return (build_fcapi_string (FcConfigFilename ((FcChar8 *) fcname)));
 }

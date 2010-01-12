@@ -1203,14 +1203,14 @@ signal_if_x_error (Display *dpy, int resumable_p)
   XGetErrorDatabaseText (last_error.display, "XRequest", (char *) num, "",
 			 buf, sizeof (buf));
   if (*buf)
-    data = Fcons (build_ext_string (buf, Qnative), data);
+    data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
   else
     {
       qxesprintf (num, "Request-%d", last_error.request_code);
       data = Fcons (build_intstring (num), data);
     }
   XGetErrorText (last_error.display, last_error.error_code, buf, sizeof (buf));
-  data = Fcons (build_ext_string (buf, Qnative), data);
+  data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
  again:
   Fsignal (Qx_error, data);
   if (! resumable_p) goto again;

@@ -328,7 +328,7 @@ read_bitmap_data_from_file (Lisp_Object filename,
   int status;
   Extbyte *fileext;
 
-  LISP_STRING_TO_EXTERNAL (filename, fileext, Qnative);
+  LISP_PATHNAME_CONVERT_OUT (filename, fileext);
   if ((fstream = fopen (fileext, "r")) == NULL)
     return BitmapOpenFailed;
   status = read_bitmap_data (fstream, width, height, datap, x_hot, y_hot);

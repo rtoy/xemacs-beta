@@ -4291,6 +4291,12 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
+dnl Check for UTF-8 path-conversion functions in Cygwin 1.7 and on
+case "$opsys" in
+  *cygwin* ) AC_CHECK_FUNCS(cygwin_conv_path)
+	 ;;
+esac
+
 dnl ----------------------------------------------------------------
 dnl Check for POSIX functions.
 dnl ----------------------------------------------------------------
@@ -5485,6 +5491,7 @@ elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
+test "$with_xemacs_compiler" = "g++" && AC_DEFINE(USE_GPLUSPLUS)
 test "$enable_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$enable_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
 test "$enable_newgc"       = "yes" && AC_DEFINE(NEW_GC)

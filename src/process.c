@@ -2439,7 +2439,8 @@ init_xemacs_process (void)
 #else
     for (envp = environ; envp && *envp; envp++)
       Vprocess_environment =
-	Fcons (build_ext_string (*envp, Qnative), Vprocess_environment);
+	Fcons (build_ext_string (*envp, Qenvironment_variable_encoding),
+	       Vprocess_environment);
 #endif
     /* This gets set back to 0 in disksave_object_finalization() */
     env_initted = 1;

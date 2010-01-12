@@ -1191,21 +1191,24 @@ system locale and is not influenced by LOCALE. (In other words, a program
 can't set the text encoding used to communicate with the OS.  To get around
 this, we use Unicode whenever available, i.e. on Windows NT always and on
 Windows 9x whenever a Unicode version of a system call is available.)"
-  (if (eq system-type 'windows-nt)
-      ;; should not apply to Cygwin, I don't think
-      'mswindows-multibyte-system-default
-    (let ((ncod (get-language-info langenv 'native-coding-system)))
-      (if (or (functionp ncod) (not (listp ncod)))
-	  (setq ncod (list ncod)))
-      (let ((native
-	     (dolist (try-native ncod)
-	       (let ((result
-		      (if (functionp try-native)
-			  (funcall try-native locale)
-			try-native)))
-		 (if result (return result))))))
-	(or native (car (get-language-info langenv 'coding-system))
-	    'raw-text)))))
+  (cond ((eq system-type 'windows-nt)
+	 ;; should not apply to Cygwin, I don't think
+	 'mswindows-multibyte-system-default)
+	((featurep 'cygwin-use-utf-8)
+	 'utf-8)
+	(t
+	 (let ((ncod (get-language-info langenv 'native-coding-system)))
+	   (if (or (functionp ncod) (not (listp ncod)))
+	       (setq ncod (list ncod)))
+	   (let ((native
+		  (dolist (try-native ncod)
+		    (let ((result
+			   (if (functionp try-native)
+			       (funcall try-native locale)
+			     try-native)))
+		      (if result (return result))))))
+	     (or native (car (get-language-info langenv 'coding-system))
+		 'raw-text))))))
 
 (defun get-coding-system-from-locale (locale)
   "Return the coding system corresponding to a locale string."

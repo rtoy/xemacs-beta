@@ -394,7 +394,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
     BIF_RETURNONLYFSDIRS | BIF_STATUSTEXT | BIF_EDITBOX | BIF_NEWDIALOGSTYLE;
   bi.lpfn = handle_directory_proc;
   
-  LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
+  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
 			     pd.fname);
   
   {
@@ -406,7 +406,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
 	    LISP_STRING_TO_EXTERNAL (value, bi.lpszTitle, Qmswindows_tstr);
 	  }
 	else if (EQ (key, Q_initial_directory))
-	  LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
+	  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
 				     pd.fname);
 	else if (EQ (key, Q_initial_filename))
 	  ;			/* do nothing */
@@ -468,7 +468,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
   ofn.nMaxFile = sizeof (fnbuf) / XETCHAR_SIZE;
   qxetcscpy (fnbuf, XETEXT (""));
   
-  LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
+  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
 			     ofn.lpstrInitialDir);
   
   {
@@ -479,7 +479,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	    Extbyte *fnout;
 	    
 	    CHECK_STRING (value);
-	    LOCAL_FILE_FORMAT_TO_TSTR (value, fnout);
+	    LISP_LOCAL_FILE_FORMAT_TO_TSTR (value, fnout);
 	    qxetcscpy (fnbuf, fnout);
 	  }
 	else if (EQ (key, Q_title))
@@ -488,7 +488,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	    LISP_STRING_TO_TSTR (value, ofn.lpstrTitle);
 	  }
 	else if (EQ (key, Q_initial_directory))
-	  LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
+	  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
 				     ofn.lpstrInitialDir);
 	else if (EQ (key, Q_file_must_exist))
 	  {

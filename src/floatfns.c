@@ -1761,8 +1761,19 @@ round_one_bigfloat_1 (bigfloat number)
   Lisp_Object res0;
   unsigned long prec = bigfloat_get_prec (number);
 
+#if 0
+  /* This causes the following GCC warning:
+
+  /xemacs/latest-fix/src/floatfns.c:1764: warning: dereferencing type-punned pointer will break strict-aliasing rules
+
+     and furthermore, it's a useless assert, since `number' is stored on
+     the stack and so its address can never be the same as `scratch_bigfloat'
+     or `scratch_bigfloat2', which are stored in the data segment.
+
+  -- ben */
   assert ((bigfloat *)(&number) != (bigfloat *)&scratch_bigfloat
 	  && (bigfloat *)(&number) != (bigfloat *)(&scratch_bigfloat2));
+#endif
 
   bigfloat_set_prec (scratch_bigfloat, prec);
   bigfloat_set_prec (scratch_bigfloat2, prec);

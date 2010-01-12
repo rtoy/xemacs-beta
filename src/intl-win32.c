@@ -2393,6 +2393,10 @@ init_intl_win32 (void)
   set_current_lcid (GetUserDefaultLCID ());
 #endif /* MULE */
 
+#ifdef HAVE_CYGWIN_CONV_PATH
+  Fprovide (intern ("cygwin-use-utf-8"));
+#endif
+
   if (initialized)
     /* If not initialized, we also call this, but early -- see the
        previous function. */

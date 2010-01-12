@@ -140,17 +140,13 @@ readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 #endif /* REALPATH_CORRECTS_CASE */
 #else /* defined (WIN32_ANY) */
 # ifdef CYGWIN
-  Ibyte *tmp;
   int n = qxe_readlink (name, buf, (size_t) size);
   if (n >= 0 || errno != EINVAL)
     return n;
 
   /* The file may exist, but isn't a symlink. Try to find the
      right name. */
-  tmp =
-    alloca_ibytes (cygwin_posix_to_win32_path_list_buf_size ((char *) name));
-  cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
-  name = tmp;
+  LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (name, name);
 # else
   if (mswindows_shortcuts_are_symlinks)
     {
