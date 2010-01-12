@@ -85,7 +85,7 @@ Lisp_Object Qqueue;
 #endif /* HAVE_BERKELEY_DB */
 
 #ifdef HAVE_DBM
-#if defined (CYGWIN) || defined (MINGW)
+#ifdef CYGWIN_HEADERS
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {

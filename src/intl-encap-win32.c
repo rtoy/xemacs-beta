@@ -1217,7 +1217,7 @@ qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
 BOOL
 qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4)
 {
-#if defined (CYGWIN_HEADERS)
+#ifdef CYGWIN_HEADERS
   /* Cygwin mistakenly declares the second argument as DWORD. */
   if (XEUNICODE_P)
     return UpdateICMRegKeyW (arg1, (DWORD) arg2, (LPWSTR) arg3, arg4);
