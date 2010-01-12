@@ -355,7 +355,8 @@ yes GetWindowText
 yes GetWindowTextLength
 yes MessageBox
 yes MessageBoxEx
-split MessageBoxIndirect LPMSGBOXPARAMS NT 4.0+ only
+// split MessageBoxIndirect LPMSGBOXPARAMS NT 4.0+ only
+no MessageBoxIndirect Cygwin has split MSGBOXPARAMS* instead of LPMSGBOXPARAMS
 yes GetWindowLong
 yes SetWindowLong
 yes GetClassLong
@@ -393,6 +394,7 @@ no GetAltTabInfo NT 5.0+ only
 
 file WINGDI.H
 
+begin-bracket defined (HAVE_MS_WINDOWS)
 // split-sized LOGCOLORSPACE
 // split-sized TEXTMETRIC
 // split-sized NEWTEXTMETRIC
@@ -467,6 +469,7 @@ skip UpdateICMRegKey NT 4.0+ only, error in Cygwin prototype
 // Unicode-only EMREXTCREATEFONTINDIRECTW
 no wglUseFontBitmaps causes link error
 no wglUseFontOutlines causes link error
+end-bracket
 
 file WINSPOOL.H
 
@@ -762,6 +765,7 @@ begin-unicode-encapsulation-script
 
 file COMMDLG.H
 
+begin-bracket defined (HAVE_MS_WINDOWS)
 split GetOpenFileName LPOPENFILENAME
 split GetSaveFileName LPOPENFILENAME
 yes GetFileTitle
@@ -782,6 +786,7 @@ no ChooseFont split-sized LPLOGFONT in LPCHOOSEFONT
 // FINDMSGSTRING
 skip PrintDlg LPPRINTDLG with split-sized DEVMODE handle
 skip PageSetupDlg LPPAGESETUPDLG with split-sized DEVMODE handle
+end-bracket
 
 file DDE.H
 
@@ -873,9 +878,11 @@ yes WNetGetLastError
 split MultinetGetConnectionPerformance LPNETRESOURCE
 end-bracket
 
-file IME.H
+// Doesn't exist under Cygwin
 
-no SendIMEMessageEx obsolete, no docs available
+// file IME.H
+
+// no SendIMEMessageEx obsolete, no docs available
 
 file OBJBASE.H
 
@@ -1195,6 +1202,8 @@ qxeExtractIconEx (const Extbyte * lpszFile, int nIconIndex, HICON FAR * phiconLa
     return (UINT) ExtractIconExA ((LPCSTR) lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 
+#ifdef HAVE_MS_WINDOWS
+
 /* NOTE: NT 4.0+ only */
 BOOL
 qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
@@ -1230,6 +1239,8 @@ qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4)
     return UpdateICMRegKeyA (arg1, (LPSTR) arg2, (LPSTR) arg3, arg4);
 #endif /* CYGWIN_HEADERS */
 }
+
+#endif /* HAVE_MS_WINDOWS */
 
 #ifndef CYGWIN /* present in headers but missing in shell32.a */
 
