@@ -4,6 +4,14 @@
 	Under Cygwin, force utf-8 if we are using Cygwin 1.7 or later
 	(making use of the magic feature 'cygwin-use-utf-8).
 
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (utf-8):
+	Don't define `utf-8' coding system here, because it's too late.
+	We need it during early startup code at dump time so we create it
+	in C in unicode.c.
+
 2010-01-09  Didier Verna  <didier@xemacs.org>
 
 	* x-faces.el (x-init-global-faces): Deactivate obsolete code.
