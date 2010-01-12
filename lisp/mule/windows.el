@@ -71,7 +71,7 @@
 					     mnemonic extra-doc)
   (make-coding-system
    (intern (format "windows-%s" codepage))
-   'mbcs
+   'multibyte
    (format "Microsoft's CP%s (%s, %s)" codepage ansioem name)
    `(charsets (ascii ,(intern (format "%s-windows-%s" script codepage)))
      documentation

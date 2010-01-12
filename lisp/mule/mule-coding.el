@@ -236,7 +236,7 @@ Analogous to `define-translation-table', but updates
 ;; Ideally this would be in latin.el, but code-init.el uses it.
 (make-coding-system
  'iso-8859-1 
- 'mbcs
+ 'multibyte
  "ISO-8859-1 (Latin-1)"
  '(charsets (ascii control-1 latin-iso8859-1)
    mnemonic "Latin 1"

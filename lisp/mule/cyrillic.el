@@ -107,7 +107,7 @@
 
 ;; And create the coding system.
 (make-coding-system
- 'iso-8859-5 'mbcs "ISO-8859-5 (Cyrillic)"
+ 'iso-8859-5 'multibyte "ISO-8859-5 (Cyrillic)"
  '(charsets (ascii control-1 cyrillic-iso8859-5)
    mnemonic "ISO8/Cyr"
    documentation "The ISO standard for encoding Cyrillic. Not used in practice.
@@ -134,7 +134,7 @@ See `koi8-r' and `windows-1251'.  "
 
 ;; KOI8-R, the most common encoding for Cyrillic on Unix and Usenet.
 (make-coding-system 
- 'koi8-r 'mbcs "KOI8-R (Cyrillic)"
+ 'koi8-r 'multibyte "KOI8-R (Cyrillic)"
  '(charsets (ascii cyrillic-koi8-r)
    mnemonic "KOI8"
    documentation
@@ -177,7 +177,7 @@ characters of the opposite case). "
 
 ;; KOI8-U, for Ukrainian.
 (make-coding-system 
- 'koi8-u 'mbcs "KOI8-U, Ukrainian"
+ 'koi8-u 'multibyte "KOI8-U, Ukrainian"
  '(charsets (ascii cyrillic-koi8-u)
    mnemonic "КОИ8У"
    documentation
@@ -237,7 +237,7 @@ Byelorussian in the early 1990s.)"))
 
 ;;; Alternativnyj
 (make-coding-system
- 'alternativnyj 'mbcs "Microsoft's CP966, Cyrillic"
+ 'alternativnyj 'multibyte "Microsoft's CP966, Cyrillic"
  '(charsets (ascii cyrillic-alternativnyj)
    mnemonic "Cy.Alt"
    aliases (cp866)))
@@ -389,7 +389,7 @@ Byelorussian in the early 1990s.)"))
  )
 
 (make-coding-system
- 'koi8-ru 'mbcs "КОИ-8 (Russian, Ukrainian)"
+ 'koi8-ru 'multibyte "КОИ-8 (Russian, Ukrainian)"
  '(charsets (ascii cyrillic-koi8-ru)
    mnemonic "РУ"
    documentation "KOI8-RU, a mostly-compatible superset of KOI8-R. 
@@ -514,7 +514,7 @@ Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
  )
 
 (make-coding-system
- 'koi8-t 'mbcs "КОИ-8 for Tajik."
+ 'koi8-t 'multibyte "КОИ-8 for Tajik."
  '(charsets (ascii cyrillic-koi8-t)
    mnemonic "ТҶ"
    documentation
@@ -671,7 +671,7 @@ language of Tajikistan and a close relative of Persian.  "))
  )
 
 (make-coding-system
- 'koi8-c 'mbcs "KOI-8, Caucasus."
+ 'koi8-c 'multibyte "KOI-8, Caucasus."
  '(charsets (ascii cyrillic-koi8-c)
    documentation 
    "Note that this does not support old Russian orthography;
@@ -828,7 +828,7 @@ for that, see koi8-o. "))
  )
 
 (make-coding-system
- 'koi8-o 'mbcs "Old-orthography Russian"
+ 'koi8-o 'multibyte "Old-orthography Russian"
  '(charsets (ascii cyrillic-koi8-o)
    mnemonic "КО"
    documentation

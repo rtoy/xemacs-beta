@@ -188,7 +188,7 @@
    ))
 
 (make-coding-system 
- 'viscii 'mbcs "VISCII 1.1 (Vietnamese)"
+ 'viscii 'multibyte "VISCII 1.1 (Vietnamese)"
  '(charsets (vietnamese-viscii ascii)
    mnemonic "VISCII"))
 

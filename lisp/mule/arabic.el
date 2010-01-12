@@ -45,7 +45,7 @@
 ;; But; it's necessary for input on X11, so we continue to dump it for now.
 
 (make-coding-system
- 'iso-8859-6 'mbcs "ISO 8859-6 (Arabic)"
+ 'iso-8859-6 'multibyte "ISO 8859-6 (Arabic)"
  '(charsets (ascii control-1 arabic-iso8859-6)
    mnemonic "ArISO"))
 
