@@ -5198,8 +5198,6 @@ Lstream_funget_ichar (Lstream *stream, Ichar ch)
 /*              Lisp primitives for working with characters             */
 /************************************************************************/
 
-#ifdef MULE
-
 /* Internally, dimension-1 charset codepoints are "little-endian", stored
    as (0, C2), whereas externally they are "big-endian", stored as (C1, 0). */
 void
@@ -5237,6 +5235,8 @@ external_to_internal_charset_codepoint (Lisp_Object charset,
     }
   ASSERT_VALID_CHARSET_CODEPOINT (charset, *int_c1, *int_c2);
 }
+
+#ifdef MULE
 
 static int
 check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
@@ -5363,11 +5363,13 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 	  text_checking_assert (*c2 >= 128 && *c2 <= 159);
 	  *c2 -= 96;
 	}
+#ifdef MULE
       else if (get_charset_iso2022_type (*charset) >= 0)
 	{
 	  *c1 &= 127;
 	  *c2 &= 127;
 	}
+#endif /* MULE */
     }
 }
 

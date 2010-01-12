@@ -5,7 +5,7 @@
 
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1995, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -3958,7 +3958,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	      }
 
 	    /* Also set lead bytes after the end */
-	    for (j = smallest_prev; j < 0x100)
+	    for (j = smallest_prev; j < 0x100; j++)
 	      fastmap[jj] = 1;
 
 	    /* If it's not a possible first byte, it can't be in the fastmap.

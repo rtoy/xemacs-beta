@@ -865,9 +865,6 @@ static int stack_idx_of_map_multiple;
       }							\
   } while (0)
 
-#define ENCODABLE_ID_P(id)				\
-  ((id) >= MIN_ENCODABLE_CHARSET_ID && (id) <= MAX_ENCODABLE_CHARSET_ID)
-
 /* Return whether the charset is exclusively in the range [0-127] or
    [128-255]. */
 static int
@@ -898,8 +895,7 @@ do									\
 {									\
   Lisp_Object charset;							\
 									\
-  if (!ENCODABLE_ID_P (csid) ||						\
-      NILP (charset = charset_by_encodable_id (csid)))			\
+  if (NILP (charset = charset_by_id (csid)))				\
     CCL_INVALID_CMD;							\
   if (EQ (charset, Vcharset_ascii))					\
     c = (Ichar) (code & 0xFF);						\

@@ -540,7 +540,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
 
 DECLARE_INLINE_HEADER (
 Bytebpos
-prev_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf), Bytebpos x)
+prev_bytebpos (struct buffer *buf, Bytebpos x)
 )
 {
   DEC_BYTEBPOS (buf, x);
@@ -549,7 +549,7 @@ prev_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf), Bytebpos x)
 
 DECLARE_INLINE_HEADER (
 Bytebpos
-next_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf), Bytebpos x)
+next_bytebpos (struct buffer *buf, Bytebpos x)
 )
 {
   INC_BYTEBPOS (buf, x);
@@ -584,8 +584,7 @@ extern short three_to_one_table[];
 
 DECLARE_INLINE_HEADER (
 Bytebpos
-charbpos_to_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf),
-		      Charbpos x)
+charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
 )
 {
   Bytebpos retval;
@@ -617,8 +616,7 @@ charbpos_to_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf),
 
 DECLARE_INLINE_HEADER (
 Charbpos
-bytebpos_to_charbpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf),
-		      Bytebpos x)
+bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
 )
 {
   Charbpos retval;

@@ -87,6 +87,8 @@ extern Lisp_Object Vcharset_hash_table;
 #define XCHARSET_CCL_PROGRAM(cs) Qnil
 #define XCHARSET_DIMENSION(cs) 1
 #define XCHARSET_NAME(cs) (cs)
+#define Fget_charset(cs) (cs)
+#define Fcharset_list() list1 (Qascii)
 
 #define ASSERT_VALID_CHARSET_CODEPOINT(charset, a1, a2)		\
 do								\
@@ -118,7 +120,7 @@ charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
 }
 
 DECLARE_INLINE_HEADER (
-static void
+void
 ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
 			    USED_IF_MULE (dyn),
 			    Lisp_Object *charset, int *c1, int *c2)
@@ -131,7 +133,7 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
 }
 
 DECLARE_INLINE_HEADER (
-static void
+void
 unicode_to_charset_codepoint (int c, Lisp_Object_dynarr *
 			      USED_IF_MULE (dyn),
 			      Lisp_Object *charset, int *c1, int *c2)
@@ -303,11 +305,14 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 
 struct charset_lookup
 {
-  /* Table of charsets indexed by type/final-byte/direction. */
+  /* Table of charsets indexed by type/final-byte/direction, for
+     ISO2022-compatible charsets. */
   Lisp_Object charset_by_attributes[4][128][2];
 
 #ifndef UNICODE_INTERNAL
-  /* Table of charsets indexed by ID, for encodable ID's. */
+  /* Table of charsets indexed by ID, for encodable ID's.  This is purely
+     an optimization, as we also have a hash table mapping ID's to charsets
+     for charsets of all sorts, encodable or not. */
   Lisp_Object charset_by_encodable_id[NUM_ENCODABLE_CHARSET_IDS];
 
   int next_allocated_private_dim1_id;

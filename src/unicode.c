@@ -425,6 +425,18 @@ decode_unicode (Lisp_Object unicode)
 
 #ifndef MULE
 
+Lisp_Object_dynarr *
+get_unicode_precedence (void)
+{
+  return NULL;
+}
+
+Lisp_Object_dynarr *
+get_buffer_unicode_precedence (struct buffer *UNUSED (buf))
+{
+  return NULL;
+}
+
 void
 free_precedence_dynarr (Lisp_Object_dynarr *precdyn)
 {
