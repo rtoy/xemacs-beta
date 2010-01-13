@@ -1485,13 +1485,41 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   UNGCPRO;
 }
 
-void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+DOESNT_RETURN
+printing_unreadable_object (const CIbyte *fmt, ...)
+{
+  Lisp_Object obj;
+  va_list args;
+
+  va_start (args, fmt);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
+  va_end (args);
+
+  /* Fsignal GC-protects its args */
+  signal_error (Qprinting_unreadable_object, 0, obj);
+}
+
+DOESNT_RETURN
+printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
 {
   struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
-  if (print_readably)
+#ifndef NEW_GC
+  /* This must be a real lcrecord */
+  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
+#endif
+
+  if (name)
+    printing_unreadable_object
+      ("#<%s %s 0x%x>",
+#ifdef NEW_GC
+       LHEADER_IMPLEMENTATION (header)->name,
+#else /* not NEW_GC */
+       LHEADER_IMPLEMENTATION (&header->lheader)->name,
+#endif /* not NEW_GC */
+       name,
+       header->uid);
+  else
     printing_unreadable_object
       ("#<%s 0x%x>",
 #ifdef NEW_GC
@@ -1500,6 +1528,21 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
        LHEADER_IMPLEMENTATION (&header->lheader)->name,
 #endif /* not NEW_GC */
        header->uid);
+}
+
+void
+default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			int UNUSED (escapeflag))
+{
+  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
+
+#ifndef NEW_GC
+  /* This must be a real lcrecord */
+  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
+#endif
+
+  if (print_readably)
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string (printcharfun, "#<%s 0x%x>",
 #ifdef NEW_GC

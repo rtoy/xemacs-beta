@@ -1,5 +1,49 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* casetab.c (print_case_table):
+	* console.c (print_console):
+	* data.c (print_weak_list):
+	* data.c (print_weak_box):
+	* data.c (print_ephemeron):
+	* data.c (ephemeron_equal):
+	* database.c (print_database):
+	* device-msw.c (print_devmode):
+	* device.c (print_device):
+	* eval.c:
+	* file-coding.c (print_coding_system):
+	* frame.c (print_frame):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* gui.c:
+	* gui.c (print_gui_item):
+	* keymap.c (print_keymap):
+	* lisp.h:
+	* mule-charset.c (print_charset):
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* print.c:
+	* print.c (printing_unreadable_object):
+	* print.c (printing_unreadable_lcrecord):
+	* print.c (default_object_printer):
+	* process.c (print_process):
+	* tooltalk.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* ui-gtk.c (ffi_object_printer):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* window.c (print_window):
+	New function printing_unreadable_lcrecord().  Automatically
+	prints the type name and pointer value of the object.  Use it
+	instead of printing_unreadable_object(); make that latter
+	function local to print.c.
+
+	* window.c (print_window):
+	During creation, window may have Qt as its buffer. Don't
+	crash if trying to print such a window.
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
 	* dynarr.c:
 	Add comment explaining Dynarr_largest() use.
 

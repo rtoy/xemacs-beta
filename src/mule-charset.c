@@ -141,10 +141,8 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Charset *cs = XCHARSET (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<charset %s 0x%x>",
-				XSTRING_DATA (XSYMBOL (CHARSET_NAME (cs))->
-					     name),
-				cs->header.uid);
+    printing_unreadable_lcrecord
+      (obj, XSTRING_DATA (XSYMBOL (XCHARSET_NAME (obj))->name));
 
   write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S", 4,
 			 CHARSET_NAME (cs), CHARSET_SHORT_NAME (cs),

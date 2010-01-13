@@ -313,13 +313,19 @@ static void
 print_window (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
+  Lisp_Object buf;
+
   if (print_readably)
-    printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_c_string (printcharfun, "#<window");
-  if (!NILP (XWINDOW (obj)->buffer))
+  buf = XWINDOW_BUFFER (obj);
+  if (EQ (buf, Qt))
+    write_c_string (printcharfun, " during creation");
+  else if (!NILP (buf))
     {
-      Lisp_Object name = XBUFFER (XWINDOW (obj)->buffer)->name;
+      
+      Lisp_Object name = XBUFFER (buf)->name;
       write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
   write_fmt_string (printcharfun, " 0x%x>", XWINDOW (obj)->header.uid);

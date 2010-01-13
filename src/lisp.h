@@ -4716,9 +4716,6 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
-MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
-							      ...))
-       PRINTF_ARGS (1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -5326,6 +5323,11 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
 void internal_object_printer (Lisp_Object, Lisp_Object, int);
+MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
+							      ...))
+       PRINTF_ARGS (1, 2);
+DECLARE_DOESNT_RETURN (printing_unreadable_lcrecord (Lisp_Object obj,
+						     const Ibyte *name));
 
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);
