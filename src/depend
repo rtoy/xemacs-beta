@@ -239,7 +239,7 @@ tparam.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-di
 undo.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h compiler.h dumper.h extents.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexaix.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h getpagesize.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexalpha.o: $(CONFIG_H) compiler.h
-unexcw.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h text.h vdb.h
+unexcw.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h intl-auto-encap-win32.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h sysfile.h syswindows.h text.h vdb.h
 unexec.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h getpagesize.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexelf.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h
 unexhp9k800.o: $(CONFIG_H) $(LISP_H) compiler.h dumper.h gc.h general-slots.h lisp-disunion.h lisp-union.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h

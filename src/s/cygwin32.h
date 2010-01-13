@@ -74,7 +74,6 @@ int killpg (int pgrp, int sig);
 #define TEXT_START -1
 #define HEAP_IN_DATA
 #define NO_LIM_DATA
-#define UNEXEC "unexcw.o"
 
 #define BROKEN_SIGIO
 

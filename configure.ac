@@ -1442,7 +1442,7 @@ if test -z "$with_pdump"; then
   case "$opsys" in
     linux* )  with_pdump=yes ;;          dnl glibc 2.3.1 seems to hose unexec
     darwin )  with_pdump=yes ;;          dnl No "native" working dumper available
-    cygwin* ) with_pdump=yes ;;          dnl unexec is broken
+    cygwin* ) with_pdump=yes ;;          dnl No "native" dumper available
     * )       with_pdump=no ;;
   esac
 fi
