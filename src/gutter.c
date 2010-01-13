@@ -456,7 +456,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       /* grab coordinates of last line and blank after it. */
       if (Dynarr_length (ddla) > 0)
 	{
-	  dl = Dynarr_atp (ddla, Dynarr_length (ddla) - 1);
+	  dl = Dynarr_lastp (ddla);
 	  ypos = dl->ypos + dl->descent - dl->clip;
 	}
       else

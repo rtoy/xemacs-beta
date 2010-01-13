@@ -1,5 +1,75 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* dynarr.c:
+	Add comment explaining Dynarr_largest() use.
+
+	* dynarr.c (Dynarr_insert_many):
+	In Dynarr_insert_many(), don't call Dynarr_resize() unless we
+	actually need to resize, and note that an assert() that we are
+	inserting at or below the current end could be wrong if code
+	wants to access stuff between `len' and `largest'.
+
+	* dynarr.c (stack_like_malloc):
+	Don't just Dynarr_resize() to the right size; instead use
+	Dynarr_reset() then Dynarr_add_many(), so that the 'len' and
+	'largest' and such get set properly.
+
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* dynarr.c (Dynarr_memory_usage):
+	* dynarr.c (stack_like_free):
+	* faces.c (add_face_cachel):
+	* gutter.c (output_gutter):
+	* lisp.h:
+	* lisp.h (Dynarr_declare):
+	* lisp.h (Dynarr_length):
+	* lisp.h (Dynarr_add):
+	* lisp.h (Dynarr_increment):
+	* lisp.h (Dynarr_pop):
+	* lread.c (define_structure_type):
+	* lread.c (define_structure_type_keyword):
+	* lrecord.h:
+	* lrecord.h (XD_DYNARR_DESC):
+	* lrecord.h (XD_LISP_DYNARR_DESC):
+	* redisplay-output.c (compare_display_blocks):
+	* redisplay-output.c (output_display_line):
+	* redisplay.c (add_ichar_rune_1):
+	* redisplay.c (create_text_block):
+	* redisplay.c (generate_formatted_string_db):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (point_visible):
+	* redisplay.c (mark_glyph_block_dynarr):
+	* redisplay.c (mark_redisplay_structs):
+	* redisplay.c (line_start_cache_end):
+	* redisplay.c (update_line_start_cache):
+	* redisplay.c (glyph_to_pixel_translation):
+	* redisplay.c (pixel_to_glyph_translation):
+	Rename Dynarr member 'cur' to 'len' since it's the length of
+	the dynarr, not really a pointer to a "current insertion point".
+
+	Use type_checking_assert() instead of just assert() in some places.
+
+
+	Add additional assertions (Dynarr_verify*()) to check that we're
+	being given positions within range.  Use them in Dynarr_at,
+	Dynarr_atp, etc.  New Dynarr_atp_allow_end() for retrieving a
+	pointer to a position that might be the element past the last one.
+	New Dynarr_past_lastp() to retrieve a pointer to the position
+	past the last one, using Dynarr_atp_allow_end().  Change code
+	appropriately to use it.
+
+	Rename Dynarr_end() to Dynarr_lastp() (pointer to the last
+	element) for clarity, and change code appropriately to use it.
+
+	Change code appropriately to use Dynarr_begin().
+	
+	Rewrite Dynarr_add_many().  New version can accept a NULL pointer
+	to mean "reserve space but don't put anything in it".  Used by
+	stack_like_malloc().
+
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	* lisp.h (inline_type_checking_assert):
 	Add structure_checking_assert(), gc_checking_assert(), etc. for

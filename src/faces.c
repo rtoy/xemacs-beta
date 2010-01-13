@@ -1361,8 +1361,7 @@ add_face_cachel (struct window *w, Lisp_Object face)
   if (must_finish_frobbing)
     {
       int default_face = EQ (face, Vdefault_face);
-      struct face_cachel *cachel
-	= Dynarr_atp (w->face_cachels, Dynarr_length (w->face_cachels) - 1);
+      struct face_cachel *cachel = Dynarr_lastp (w->face_cachels);
 
       FROB (background_pixmap);
       MAYBE_UNFROB_BACKGROUND_PIXMAP;
