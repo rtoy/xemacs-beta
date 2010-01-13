@@ -1,3 +1,10 @@
+2010-01-13  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove CYGWIN && !PDUMP section.
+	* depend: Regenerated.
+	* s/cygwin.sc: Removed.
+	* s/cygwin32.h (UNEXEC): Do not define.
+
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
 	* print.c:
