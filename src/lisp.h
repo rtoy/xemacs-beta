@@ -1,7 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2000-2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -114,58 +114,260 @@ Boston, MA 02111-1307, USA.  */
    control this using configure, but you can manually stick in a define as
    necessary. */
 
+/* How these work:
+
+   The most common classes will be `text' and `type', followed by `structure'.
+   `text' is for problems related to bad textual format.  `type' is for
+   problems related to wrongly typed arguments, structure fields, etc.
+   `structure' is for bad data inside of a structure.  Sometimes these are
+   used "incorrectly", e.g. `type' is often used for structure-checking.
+   Consider `text':
+
+   `text_checking_assert() will assert() only when ERROR_CHECK_TEXT is defined;
+   otherwise it's a no-op.  text_checking_assert_at_line() is similar, but
+   allows you to override the file name and line number normally supplied in
+   the message.  This is especially useful in inline header functions, and
+   so there's a special inline_text_checking_assert() for this; this works
+   like text_checking_assert() but supplies the file and line of the calling
+   function.  In order for this to work, you need to declare your inline
+   function with INLINE_TEXT_CHECK_ARGS at the end of its argument list,
+   and give its function name a _1 extension or similar.  Then create a
+   macro that calls your inline function and includes INLINE_TEXT_CHECK_CALL
+   at the end of the parameter list.  This will arrange to pass in and receive
+   the file and line (__FILE__, __LINE__) at place where the call occurs in
+   the calling function; but nothing will get passed in when ERROR_CHECK_TEXT
+   is not defined.
+*/
+
+
 #ifdef ERROR_CHECK_STRUCTURES
 /* Check for problems with the catch list and specbind stack */
 #define ERROR_CHECK_CATCH
 /* Check for insufficient use of call_trapping_problems(), particularly
    due to glyph-related changes causing eval or QUIT within redisplay */
 #define ERROR_CHECK_TRAPPING_PROBLEMS
-#endif
+#endif /* ERROR_CHECK_STRUCTURES */
+
+#define INLINE_ERROR_CHECK_ARGS , const char *__file__, int __line__
+#define INLINE_ERROR_CHECK_CALL , __FILE__, __LINE__
+#define DISABLED_INLINE_ERROR_CHECK_ARGS
+#define DISABLED_INLINE_ERROR_CHECK_CALL
+
+/* For assertions in inline header functions which will report the file and
+   line of the calling function */
+#define inline_assert(assertion) assert_at_line (assertion, __file__, __line__)
+#define disabled_inline_assert(assertion) \
+  disabled_assert_at_line (assertion, __file__, __line__)
+
+#ifdef ERROR_CHECK_TEXT
+#define text_checking_assert(assertion) assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_TEXT */
+#define text_checking_assert(assertion) disabled_assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_text_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TEXT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TEXT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define text_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TEXT */
 
 #ifdef ERROR_CHECK_TYPES
 #define type_checking_assert(assertion) assert (assertion)
 #define type_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_type_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TYPE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TYPE_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define type_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define type_checking_assert(assertion)
-#define type_checking_assert_at_line(assertion, file, line)
-#define type_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_TYPES */
+#define type_checking_assert(assertion) disabled_assert (assertion)
+#define type_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_type_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TYPE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TYPE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define type_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TYPES */
+
+#ifdef ERROR_CHECK_STRUCTURES
+#define structure_checking_assert(assertion) assert (assertion)
+#define structure_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_structure_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_STRUCTURE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_STRUCTURE_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define structure_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_STRUCTURES */
+#define structure_checking_assert(assertion) disabled_assert (assertion)
+#define structure_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_structure_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_STRUCTURE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_STRUCTURE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define structure_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_STRUCTURES */
+
 #ifdef ERROR_CHECK_GC
 #define gc_checking_assert(assertion) assert (assertion)
 #define gc_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_gc_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_GC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_GC_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define gc_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define gc_checking_assert(assertion)
-#define gc_checking_assert_at_line(assertion, file, line)
-#define gc_checking_assert_with_message(assertion, msg)
-#endif
-#ifdef ERROR_CHECK_TEXT
-#define text_checking_assert(assertion) assert (assertion)
-#define text_checking_assert_at_line(assertion, file, line) \
+#else /* not ERROR_CHECK_GC */
+#define gc_checking_assert(assertion) disabled_assert (assertion)
+#define gc_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_gc_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_GC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_GC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define gc_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_GC */
+
+#ifdef ERROR_CHECK_DISPLAY
+#define display_checking_assert(assertion) assert (assertion)
+#define display_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
-#define text_checking_assert_with_message(assertion, msg) \
+#define inline_display_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_DISPLAY_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_DISPLAY_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define display_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define text_checking_assert(assertion)
-#define text_checking_assert_at_line(assertion, file, line)
-#define text_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_DISPLAY */
+#define display_checking_assert(assertion) disabled_assert (assertion)
+#define display_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_display_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_DISPLAY_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_DISPLAY_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define display_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_DISPLAY */
+
+#ifdef ERROR_CHECK_GLYPHS
+#define glyph_checking_assert(assertion) assert (assertion)
+#define glyph_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_glyph_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_GLYPH_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_GLYPH_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define glyph_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_GLYPHS */
+#define glyph_checking_assert(assertion) disabled_assert (assertion)
+#define glyph_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_glyph_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_GLYPH_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_GLYPH_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define glyph_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_GLYPHS */
+
+#ifdef ERROR_CHECK_EXTENTS
+#define extent_checking_assert(assertion) assert (assertion)
+#define extent_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_extent_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_EXTENT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_EXTENT_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define extent_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_EXTENTS */
+#define extent_checking_assert(assertion) disabled_assert (assertion)
+#define extent_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_extent_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_EXTENT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_EXTENT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define extent_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_EXTENTS */
+
+#ifdef ERROR_CHECK_MALLOC
+#define malloc_checking_assert(assertion) assert (assertion)
+#define malloc_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_malloc_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_MALLOC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_MALLOC_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define malloc_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_MALLOC */
+#define malloc_checking_assert(assertion) disabled_assert (assertion)
+#define malloc_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_malloc_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_MALLOC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_MALLOC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define malloc_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_MALLOC */
+
+#ifdef ERROR_CHECK_BYTE_CODE
+#define byte_code_checking_assert(assertion) assert (assertion)
+#define byte_code_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define inline_byte_code_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_BYTE_CODE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_BYTE_CODE_CHECK_CALL INLINE_ERROR_CHECK_CALL
+#define byte_code_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else /* not ERROR_CHECK_BYTE_CODE */
+#define byte_code_checking_assert(assertion) disabled_assert (assertion)
+#define byte_code_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_byte_code_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_BYTE_CODE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_BYTE_CODE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define byte_code_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_BYTE_CODE */
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 #define trapping_problems_checking_assert(assertion) assert (assertion)
 #define trapping_problems_checking_assert_at_line(assertion, file, line) \
   assert_at_line (assertion, file, line)
+#define inline_trapping_problems_checking_assert(assertion) inline_assert (assertion)
+#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
+#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL INLINE_ERROR_CHECK_CALL
 #define trapping_problems_checking_assert_with_message(assertion, msg) \
   assert_with_message (assertion, msg)
-#else
-#define trapping_problems_checking_assert(assertion)
-#define trapping_problems_checking_assert_at_line(assertion, file, line)
-#define trapping_problems_checking_assert_with_message(assertion, msg)
-#endif
+#else /* not ERROR_CHECK_TRAPPING_PROBLEMS */
+#define trapping_problems_checking_assert(assertion) disabled_assert (assertion)
+#define trapping_problems_checking_assert_at_line(assertion, file, line) \
+  disabled_assert_at_line (assertion, file, line)
+#define inline_trapping_problems_checking_assert(assertion) \
+  disabled_inline_assert (assertion)
+#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
+#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
+#define trapping_problems_checking_assert_with_message(assertion, msg) \
+  disabled_assert_with_message (assertion, msg)
+#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 /************************************************************************/
 /**                     Definitions of basic types                     **/
@@ -1052,6 +1254,15 @@ BEGIN_C_DECLS
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 #define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+
+/* This used to be ((void) (0)) but that triggers lots of unused variable
+   warnings.  It's pointless to force all that code to be rewritten, with
+   added ifdefs.  Any reasonable compiler will eliminate an expression with
+   no effects.  We keep this abstracted out like this in case we want to
+   change it in the future. */
+#define disabled_assert(x) ((void) (x))
+#define disabled_assert_with_message(x, msg) disabled_assert (x)
+#define disabled_assert_at_line(x, file, line) disabled_assert (x)
 
 #ifdef USE_ASSERTIONS
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
