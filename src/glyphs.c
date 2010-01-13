@@ -992,8 +992,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<image-instance 0x%x>",
-	   ii->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
@@ -3693,7 +3692,7 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Glyph *glyph = XGLYPH (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<glyph 0x%x>", glyph->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
   write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);

@@ -274,8 +274,7 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
   struct frame *frm = XFRAME (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<frame %s 0x%x>",
-				XSTRING_DATA (frm->name), frm->header.uid);
+    printing_unreadable_lcrecord (obj, XSTRING_DATA (frm->name));
 
   write_fmt_string (printcharfun, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 		    FRAME_TYPE_NAME (frm));

@@ -297,8 +297,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
-    printing_unreadable_object
-      ("printing unreadable object #<coding-system 0x%x>", c->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
   print_coding_system_properties (obj, printcharfun);

@@ -145,12 +145,12 @@ mark_process (Lisp_Object object)
 }
 
 static void
-print_process (Lisp_Object object, Lisp_Object printcharfun, int escapeflag)
+print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_Process *process = XPROCESS (object);
+  Lisp_Process *process = XPROCESS (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<process %s>", XSTRING_DATA (process->name));
+    printing_unreadable_lcrecord (obj, XSTRING_DATA (process->name));
 
   if (!escapeflag)
     {
@@ -158,7 +158,7 @@ print_process (Lisp_Object object, Lisp_Object printcharfun, int escapeflag)
     }
   else
     {
-      int netp = network_connection_p (object);
+      int netp = network_connection_p (obj);
       write_c_string (printcharfun,
 		      netp ? GETTEXT ("#<network connection ") :
 		      GETTEXT ("#<process "));

@@ -160,8 +160,7 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
   struct device *d = XDEVICE (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<device %s 0x%x>",
-				XSTRING_DATA (d->name), d->header.uid);
+    printing_unreadable_lcrecord (obj, XSTRING_DATA (d->name));
 
   write_fmt_string (printcharfun, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
 		    DEVICE_TYPE_NAME (d));

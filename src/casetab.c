@@ -105,7 +105,7 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
-    printing_unreadable_object ("#<case-table 0x%x>", ct->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_fmt_string_lisp
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),

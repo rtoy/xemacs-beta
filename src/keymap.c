@@ -289,7 +289,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   /* This function can GC */
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
-    printing_unreadable_object ("#<keymap 0x%x>", keymap->header.uid);
+    printing_unreadable_lcrecord (obj, 0);
   write_c_string (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
