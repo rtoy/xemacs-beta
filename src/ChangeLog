@@ -1,5 +1,22 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* lisp.h (inline_type_checking_assert):
+	Add structure_checking_assert(), gc_checking_assert(), etc. for
+	all types of error-checking.  Also FOO_checking_assert_with_message()
+	and inline_FOO_checking_assert() -- the latter for use in an inline
+	function where you want the calling function's line/file to be reported
+	(requires some conspiracy with the function itself).
+
+	Add disabled_assert(), disabled_assert_at_line(),
+	disabled_assert_with_message(), for what to do when an assert is
+	disabled.  Formerly, we used to do ((void) 0), but now we do
+	((void) x), so the variable appears used and any side effects of the
+	expression do get done.  In Unicode-internal, the standard assert()
+	uses this, but not yet in this workspace.
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
 	* cmdloop.c:
 	During really-early-error-handler, exit to the debugger and abort
 	if an error occurs and 
