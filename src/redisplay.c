@@ -1160,7 +1160,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 
   if (Dynarr_length (data->db->runes) < Dynarr_largest (data->db->runes))
     {
-      crb = Dynarr_atp (data->db->runes, Dynarr_length (data->db->runes));
+      crb = Dynarr_past_lastp (data->db->runes);
       local = 0;
     }
   else
@@ -2436,8 +2436,8 @@ create_text_block (struct window *w, struct display_line *dl,
 		 line and there are more glyphs to display then do
 		 appropriate processing to not get a continuation
 		 glyph. */
-	      if (*prop != ADD_FAILED
-		  && Dynarr_atp (*prop, 0)->type == PROP_GLYPH
+	      if (*prop != ADD_FAILED 
+		  && Dynarr_begin (*prop)->type == PROP_GLYPH
 		  && data.ch == '\n')
 		{
 		  /* If there are no more glyphs then do the normal
@@ -2448,8 +2448,8 @@ create_text_block (struct window *w, struct display_line *dl,
 		     this we would have to carry the index around
 		     which might be problematic since the fragment is
 		     recalculated for each line. */
-		  if (EQ (Dynarr_end (tmpglyphs)->glyph,
-			  Dynarr_atp (*prop, 0)->data.p_glyph.glyph))
+		  if (EQ (Dynarr_lastp (tmpglyphs)->glyph,
+			  Dynarr_begin (*prop)->data.p_glyph.glyph))
 		    {
 		      Dynarr_free (*prop);
 		      *prop = 0;
@@ -2914,7 +2914,7 @@ done:
   db->start_pos = dl->bounds.left_in;
   if (Dynarr_length (db->runes))
     {
-      struct rune *rb = Dynarr_atp (db->runes, Dynarr_length (db->runes) - 1);
+      struct rune *rb = Dynarr_lastp (db->runes);
 
       db->end_pos = rb->xpos + rb->width;
     }
@@ -3829,8 +3829,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 
   if (Dynarr_length (db->runes))
     {
-      struct rune *rb =
-	Dynarr_atp (db->runes, Dynarr_length (db->runes) - 1);
+      struct rune *rb = Dynarr_lastp (db->runes);
       c_pixpos = rb->xpos + rb->width;
     }
   else
@@ -3867,14 +3866,14 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
       strdata = XSTRING_DATA (result_str);
 
       for (elt = 0, len = 0; elt < Dynarr_length (db->runes); elt++)
-	{
-	  if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
-	    {
-	      len += (set_itext_ichar
-		      (strdata + len, Dynarr_atp (db->runes,
-						  elt)->object.chr.ch));
-	    }
-	}
+        {
+          if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
+            {
+              len += (set_itext_ichar
+                      (strdata + len, Dynarr_atp (db->runes,
+                                                  elt)->object.chr.ch));
+            }
+        }
 
       init_string_ascii_begin (result_str);
       bump_string_modiff (result_str);
@@ -5162,7 +5161,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   db->start_pos = dl->bounds.left_in;
   if (Dynarr_length (db->runes))
     {
-      struct rune *rb = Dynarr_atp (db->runes, Dynarr_length (db->runes) - 1);
+      struct rune *rb = Dynarr_lastp (db->runes);
 
       db->end_pos = rb->xpos + rb->width;
     }
@@ -6115,7 +6114,7 @@ point_visible (struct window *w, Charbpos point, int type)
 	{
 	  if (!MINI_WINDOW_P (w) && scroll_on_clipped_lines)
 	    {
-	      dl = Dynarr_atp (dla, Dynarr_length (dla) - 1);
+	      dl = Dynarr_lastp (dla);
 
 	      if (point >= (dl->charpos + dl->offset)
 		  && point <= (dl->end_charpos + dl->offset))
@@ -7594,7 +7593,7 @@ mark_glyph_block_dynarr (glyph_block_dynarr *gba)
   if (gba)
     {
       glyph_block *gb = Dynarr_atp (gba, 0);
-      glyph_block *gb_last = Dynarr_atp (gba, Dynarr_length (gba));
+      glyph_block *gb_last = Dynarr_past_lastp (gba);
 
       for (; gb < gb_last; gb++)
 	{
@@ -7611,20 +7610,20 @@ mark_glyph_block_dynarr (glyph_block_dynarr *gba)
 void
 mark_redisplay_structs (display_line_dynarr *dla)
 {
-  display_line *dl = Dynarr_atp (dla, 0);
-  display_line *dl_last = Dynarr_atp (dla, Dynarr_length (dla));
+  display_line *dl = Dynarr_begin (dla);
+  display_line *dl_last = Dynarr_past_lastp (dla);
 
   for (; dl < dl_last; dl++)
     {
       display_block_dynarr *dba = dl->display_blocks;
-      display_block *db = Dynarr_atp (dba, 0);
-      display_block *db_last = Dynarr_atp (dba, Dynarr_length (dba));
+      display_block *db = Dynarr_begin (dba);
+      display_block *db_last = Dynarr_past_lastp (dba);
 
       for (; db < db_last; db++)
 	{
 	  rune_dynarr *ra = db->runes;
-	  rune *r = Dynarr_atp (ra, 0);
-	  rune *r_last = Dynarr_atp (ra, Dynarr_length (ra));
+	  rune *r = Dynarr_begin (ra);
+	  rune *r_last = Dynarr_past_lastp (ra);
 
 	  for (; r < r_last; r++)
 	    {
@@ -7743,7 +7742,7 @@ line_start_cache_end (struct window *w)
   if (!Dynarr_length (cache))
     return -1;
   else
-    return Dynarr_atp (cache, Dynarr_length (cache) - 1)->end;
+    return Dynarr_lastp (cache)->end;
 }
 
 /* Return the index of the line POINT is contained within in window
@@ -8380,9 +8379,8 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	  return;
 	}
 
-      start = Dynarr_atp (internal_cache, 0)->start;
-      end =
-	Dynarr_atp (internal_cache, Dynarr_length (internal_cache) - 1)->end;
+      start = Dynarr_begin (internal_cache)->start;
+      end = Dynarr_lastp (internal_cache)->end;
 
       /* We aren't allowed to generate additional information to fill in
 	 gaps, so if the DESIRED structs don't overlap the cache, reset the
@@ -8544,11 +8542,11 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 
   /* Readjust the high_bound to account for any changes made while
      correcting the low_bound. */
-  high_bound = Dynarr_atp (cache, Dynarr_length (cache) - 1)->end;
+  high_bound = Dynarr_lastp (cache)->end;
 
   if (to > high_bound)
     {
-      Charbpos startp = Dynarr_atp (cache, Dynarr_length (cache) - 1)->end + 1;
+      Charbpos startp = Dynarr_lastp (cache)->end + 1;
 
       do
 	{
@@ -8560,7 +8558,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 
 	  Dynarr_add_many (cache, Dynarr_atp (internal_cache, 0),
 			   Dynarr_length (internal_cache));
-	  high_bound = Dynarr_atp (cache, Dynarr_length (cache) - 1)->end;
+	  high_bound = Dynarr_lastp (cache)->end;
 	  startp = high_bound + 1;
 	}
       while (to > high_bound);
@@ -8650,7 +8648,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
 
       if (Dynarr_length (dla))
 	{
-	  struct display_line *dl = Dynarr_atp (dla, Dynarr_length (dla) - 1);
+	  struct display_line *dl = Dynarr_lastp (dla);
 	  *pix_y = dl->ypos + dl->descent - dl->clip;
 	}
       else
@@ -9067,13 +9065,9 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		  else
 		    {
 		      if (dl->modeline)
-			*modeline_closest =
-			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->charpos;
+			*modeline_closest = Dynarr_lastp (db->runes)->charpos;
 		      else
-			*closest =
-			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->charpos;
+			*closest = Dynarr_lastp (db->runes)->charpos;
 		    }
 
 		  if (dl->modeline)

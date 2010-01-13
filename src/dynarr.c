@@ -1,6 +1,6 @@
 /* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -98,7 +98,8 @@ Use the following functions/macros:
 
    int Dynarr_largest(d)
       [MACRO] Return the maximum value that Dynarr_length(d) would
-      ever have returned.
+      ever have returned.  This is used esp. in the redisplay code,
+      which reuses dynarrs for performance reasons.
 
    type Dynarr_at(d, i)
       [MACRO] Return the element at the specified index (no bounds checking
@@ -217,30 +218,33 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
 {
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
   
-  Dynarr_resize (dy, dy->cur+len);
+  if (dy->len + len > dy->max)
+    Dynarr_resize (dy, dy->len + len);
 #if 0
   /* WTF? We should be catching these problems. */
   /* Silently adjust start to be valid. */
-  if (start > dy->cur)
-    start = dy->cur;
+  if (start > dy->len)
+    start = dy->len;
   else if (start < 0)
     start = 0;
 #else
-  assert (start >= 0 && start <= dy->cur);
+  /* #### This could conceivably be wrong, if code wants to access stuff
+     between len and largest. */
+  type_checking_assert (start >= 0 && start <= dy->len);
 #endif
 
-  if (start != dy->cur)
+  if (start != dy->len)
     {
       memmove ((char *) dy->base + (start + len)*dy->elsize,
 	       (char *) dy->base + start*dy->elsize,
-	       (dy->cur - start)*dy->elsize);
+	       (dy->len - start)*dy->elsize);
     }
   if (el)
     memcpy ((char *) dy->base + start*dy->elsize, el, len*dy->elsize);
-  dy->cur += len;
+  dy->len += len;
 
-  if (dy->cur > dy->largest)
-    dy->largest = dy->cur;
+  if (dy->len > dy->largest)
+    dy->largest = dy->len;
 }
 
 void
@@ -248,11 +252,11 @@ Dynarr_delete_many (void *d, int start, int len)
 {
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
 
-  assert (start >= 0 && len >= 0 && start + len <= dy->cur);
+  type_checking_assert (start >= 0 && len >= 0 && start + len <= dy->len);
   memmove ((char *) dy->base + start*dy->elsize,
 	   (char *) dy->base + (start + len)*dy->elsize,
-	   (dy->cur - start - len)*dy->elsize);
-  dy->cur -= len;
+	   (dy->len - start - len)*dy->elsize);
+  dy->len -= len;
 }
 
 void
@@ -304,7 +308,7 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
       Bytecount malloc_used = malloced_storage_size (dy->base,
 						     dy->elsize * dy->max, 0);
       /* #### This may or may not be correct.  Some Dynarrs would
-	 prefer that we use dy->cur instead of dy->largest here. */
+	 prefer that we use dy->len instead of dy->largest here. */
       Bytecount was_requested = dy->elsize * dy->largest;
       Bytecount dynarr_overhead = dy->elsize * (dy->max - dy->largest);
 
@@ -353,7 +357,8 @@ stack_like_malloc (Bytecount size)
   else
     this_one = Dynarr_new (char);
   Dynarr_add (stack_like_in_use_list, this_one);
-  Dynarr_resize (this_one, size);
+  Dynarr_reset (this_one);
+  Dynarr_add_many (this_one, 0, size);
   return Dynarr_atp (this_one, 0);
 }
 

@@ -513,8 +513,8 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
   block_end =
     (!Dynarr_length (ddb->runes)
      ? 0
-     : (Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->xpos +
-	Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->width));
+     : (Dynarr_lastp (ddb->runes)->xpos +
+	Dynarr_lastp (ddb->runes)->width));
 #endif
 
   /* If the new block type is not text and the cursor status is
@@ -690,7 +690,8 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
       cdba = NULL;
     }
 
-  ddl = Dynarr_atp (ddla, line);      /* assert line < Dynarr_length (ddla) */
+  /* The following will assert line < Dynarr_length (ddla) */
+  ddl = Dynarr_atp (ddla, line);
   ddba = ddl->display_blocks;
 
   if (force_start >= 0 && force_start >= ddl->bounds.left_out)

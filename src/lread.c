@@ -2154,8 +2154,7 @@ define_structure_type (Lisp_Object type,
   st.instantiate = instantiate;
   Dynarr_add (the_structure_type_dynarr, st);
 
-  return Dynarr_atp (the_structure_type_dynarr,
-		     Dynarr_length (the_structure_type_dynarr) - 1);
+  return Dynarr_lastp (the_structure_type_dynarr);
 }
 
 void
