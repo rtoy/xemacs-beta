@@ -60,7 +60,7 @@ and xorg-x11-xbitmaps (Fedora Core 5).
 *** How do I configure to get the buffer tabs/progress bars?
 
 These features depend on support for "native widgets".  Use the
---enable-widgets option to configure.  Configuration of widgets is
+--with-widgets option to configure.  Configuration of widgets is
 automatic for "modern" toolkits (MS Windows, GTK, and Motif), but if
 you are using Xt and the Athena widgets, you will probably want to
 specify a "3d" widget set.  See configure --usage, and don't forget to
@@ -301,7 +301,7 @@ Marcus Thiessel <marcus@xemacs.org>
 Larry Auton <lda@control.att.com> writes:
 Beware of not specifying
 
-	--enable-dialogs=athena
+	--with-dialogs=athena
 
 if it builds with the motif dialogs [boom!] you're a dead man.
 
@@ -324,7 +324,7 @@ Valdis Kletnieks says:
   defined in string.h - basically anything the compiler knows how to
   inline.)
 
-*** On AIX 4.3, you must specify --enable-dialogs=athena with configure
+*** On AIX 4.3, you must specify --with-dialogs=athena with configure
 
 *** The libXt shipped with AIX 4.3 up to 4.3.2 is broken.  This causes
     xemacs -nw to fail in various ways.  The official APAR is this:
@@ -392,7 +392,7 @@ Errors similar to the following:
 are caused by using GNU ld.  There are several workarounds available:
 
 In XEmacs 21.2 or later, configure using the new portable dumper
-(--enable-pdump).
+(--with-pdump).
 
 Alternatively, you can link using the Sun version of ld, which is
 normally held in /usr/ccs/bin.  This can be done by one of:
@@ -559,7 +559,7 @@ Valdis Kletnieks <Valdis.Kletnieks@vt.edu> writes:
   passes the result to something that things foo_struct is a bit bigger,
   trashing memory....
 
-Here's typical crash backtrace.  With --enable-pdump, this occurs
+Here's typical crash backtrace.  With --with-pdump, this occurs
 usually at startup under X windows and xemacs -nw at least starts, while
 without --pdump a similar crash is observed during build.
 
@@ -582,7 +582,7 @@ XEmacs 21.5-b9 "brussels sprouts"  configured for `mips-sgi-irix6.5'.
 
 The MIPSpro Compiler (at least version 7.2.1) can't seem to handle the
 union type properly, and fails to compile src/glyphs.c.  To avoid this
-problem, always build --enable-union-type=no (but that's the default, so
+problem, always build --with-union-type=no (but that's the default, so
 you should only see this problem if you're an XEmacs maintainer).
 
 *** Linking with -rpath on IRIX.
@@ -711,7 +711,7 @@ configuration for COFF with:
 	/path_to_xemacs_source/configure --with-gcc=no \
 	  --with-site-includes=/usr/local/include \
           --with-site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --enable-sound=nas
+	  --with-xpm --with-xface --with-sound=nas
 
 This version now supports ELF builds.  I highly recommend this to
 reduce the in-core footprint of XEmacs.  This is now how I compile
@@ -720,7 +720,7 @@ all my test releases.  Build it like this:
 	/path_to_XEmacs_source/configure --with-gcc=no \
 	  --with-site-includes=/usr/local/include
           --with-site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --enable-sound=nas --with-dynamic
+	  --with-xpm --with-xface --with-sound=nas --with-dynamic
 
 The compiler known as icc [ supplied with the OpenServer 5 Development
 System ] generates a working binary, but it takes forever to generate
@@ -733,7 +733,7 @@ The way I handle the build procedure is:
 	/path_to_XEmacs_source/configure --with-gcc=no \
 	  --with-site-includes=/usr/local/include \
           --with-site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --enable-sound=nas --with-dynamic \
+	  --with-xpm --with-xface --with-sound=nas --with-dynamic \
           --with-compiler="icc"
 
 NOTE I have the xpm, xface, and audio libraries and includes in
@@ -1394,7 +1394,7 @@ Use the following instead
 undefined symbols.
 
 The only known case in which this happens is if you are using gcc, you
-configured with --enable-error-checking=all and --enable-modules, and
+configured with --with-error-checking=all and --with-modules, and
 you compiled with no optimization.  If you encounter this problem in any
 other situation, please inform xemacs-beta@xemacs.org.
 
@@ -1647,14 +1647,14 @@ somewhere near the top.  The problem is due to an improvement in GNU ld
 that sorts the ELF reloc sections in the executable, giving dramatic
 speedups in startup for large executables.  It also confuses the
 traditional unexec code in XEmacs, leading to the core dump.  The
-solution is to use the --enable-pdump or --with-ldflags='-z nocombreloc'
+solution is to use the --with-pdump or --with-ldflags='-z nocombreloc'
 options to configure.  Recent 21.4 and 12.5 autodetect this in
 configure.
 
 Red Hat and SuSE (at least) distributed a prerelease version of ld
 (versions around 2.11.90.x.y) where autodetection is impossible.  The
 recommended procedure is to upgrade to binutils >= 2.12 and rerun
-configure.  Otherwise you must apply the flags by hand.  --enable-pdump
+configure.  Otherwise you must apply the flags by hand.  --with-pdump
 is recommended.
 
 *** I want XEmacs to use the Alt key, not the XXX key, for Meta commands

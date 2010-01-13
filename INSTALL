@@ -460,10 +460,10 @@ debugging version of malloc.  Debug Malloc is not included with XEmacs
 and is intended for use only by the developers. It may be obtained
 from <URL:http://www.letters.com/dmalloc/>.
 
-The `--enable-debug' and `--enable-error-checking' options are primarily
-useful to the developers.  `--enable-debug' incorporates code for
+The `--with-debug' and `--with-error-checking' options are primarily
+useful to the developers.  `--with-debug' incorporates code for
 performing various tests, but does not impose a speed penalty.
-`--enable-error-checking' adds additional tests to many of the commonly
+`--with-error-checking' adds additional tests to many of the commonly
 used macros, and imposes a speed penalty.  Using either or both of these
 options can make bug reports more useful to the developers.
 
