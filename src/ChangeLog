@@ -1,3 +1,10 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* cmdloop.c:
+	During really-early-error-handler, exit to the debugger and abort
+	if an error occurs and 
+	* lisp.h: extern Vdebug_on_error.
+
 2010-01-12  Ben Wing  <ben@xemacs.org>
 
 	* sheap.c:

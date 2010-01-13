@@ -1,6 +1,6 @@
 /* Editor command loop.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -137,6 +137,30 @@ You should almost certainly not be using this.
   stderr_out ("*** Backtrace\n");
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("*** Killing XEmacs\n");
+#ifdef DEBUG_XEMACS
+  /* When configured --with-debug, and debug-on-error is set, exit to the
+     debugger and abort.  This will happen during loadup/dumping.  There is
+     also code in signal_call_debugger() to do the same whenever running
+     noninteractively.  That's intended for use debugging e.g. batch byte
+     compilation, AFTER dumping has already happened, where the XEMACSDEBUG
+     variable can be set to '(setq debug-on-error t)' to trigger the
+     behavior.
+
+     Why do we need to duplicate the bomb-out check here?  Well,
+     signal_call_debugger() doesn't want to bomb out unless it has an
+     uncaught error, and in this case, we've installed a
+     call-with-condition-case handler, and so signal_call_debugger() can't
+     bomb out before calling us.  If we returned and let the error be
+     processed further, it *would* trigger the bomb-out-to-debugger
+     behavior, but in fact it never gets there because we do `kill-emacs'.
+     Therefore, we have to provide the bomb-to-debugger feature
+     ourselves. */
+  if (!NILP (Vdebug_on_error))
+    {
+      stderr_out ("XEmacs exiting to debugger.\n");
+      Fforce_debugging_signal (Qt);
+    }
+#endif
 #ifdef HAVE_MS_WINDOWS
   Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);
