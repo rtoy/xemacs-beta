@@ -27,7 +27,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <sheap-adjust.h>
 
 #define STATIC_HEAP_BASE	0x800000
-#define STATIC_HEAP_SLOP	0x40000
+#define STATIC_HEAP_SLOP	0x80000
 #define STATIC_HEAP_SIZE \
 (STATIC_HEAP_BASE + SHEAP_ADJUSTMENT + STATIC_HEAP_SLOP)
 #define BLOCKSIZE	(1<<12)
@@ -84,7 +84,7 @@ void *more_static_core ( ptrdiff_t increment )
 	{
 	  printf (
 "\nRequested %d bytes, static heap exhausted!  base is %p, current ptr\n"
-"is %p. You have exhausted the static heap. \n"
+"is %p, static heap size is %ld. You have exhausted the static heap. \n"
 "\n"
 "If you are simply trying to compile, remove sheap-adjust.h\n"
 "and recompile from the top level. If this doesn't\n"
@@ -93,7 +93,7 @@ void *more_static_core ( ptrdiff_t increment )
 "If you want to run temacs, change SHEAP_ADJUSTMENT in sheap-adjust.h\n"
 "to 0 or a +ve number. Generally you should *not* try to run temacs\n"
 "with a static heap, you should dump first.\n",
-          size, static_heap_base, static_heap_ptr);
+          size, static_heap_base, static_heap_ptr, static_heap_size);
 
 	  exit(-1);
 	  return 0;

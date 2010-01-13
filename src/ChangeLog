@@ -1,5 +1,13 @@
 2010-01-12  Ben Wing  <ben@xemacs.org>
 
+	* sheap.c:
+	* sheap.c (more_static_core): 
+	Increase STATIC_HEAP_SLOP.
+	Change heap-exhausted error message to mention the computed
+	static heap size.
+	
+	* unexcw.c: Include syswindows.h to avoid compile error.
+
 	* file-coding.c (default_query_method): Single = is intended.
 	Rewrite using comma operator to make this clearer and avoid
 	dependency on the value of an enum.

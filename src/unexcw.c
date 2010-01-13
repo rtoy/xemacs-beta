@@ -27,6 +27,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "lisp.h"
 
 #include "sysfile.h"
+#include "syswindows.h"
 
 #define PERROR(arg)				\
 do {						\
