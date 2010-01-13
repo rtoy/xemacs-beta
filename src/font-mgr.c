@@ -783,7 +783,7 @@ DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
   if (FcConfigAppFontAddFile
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name) == FcFalse)
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -802,7 +802,7 @@ DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
   if (FcConfigAppFontAddDir
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (dir), Qfile_name) == FcFalse)
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
