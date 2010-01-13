@@ -1,3 +1,12 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* loadup.el:
+	* loadup.el (featurep):
+	* loadup.el (member):
+	When featurep `debug-xemacs' (configure --with-debug), set
+	debug-on-error, so that we get an exit-to-debugger/assertion
+	failure upon Lisp error during loadup.  Unset before dumping.
+
 2010-01-10  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-cmds.el (get-native-coding-system-from-language-environment):

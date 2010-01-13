@@ -4574,6 +4574,7 @@ MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
+extern Lisp_Object Vdebug_on_error;
 extern Lisp_Object Vstack_trace_on_error;
 
 /* Defined in event-stream.c */
