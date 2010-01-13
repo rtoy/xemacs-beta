@@ -1,3 +1,15 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* INSTALL:
+	* PROBLEMS:
+	* configure:
+	* configure.ac (XE_COMPLEX_ARG):
+	* configure.ac (XE_EXPAND_VARIABLE):
+	* configure.ac (TAB):
+	Rename all instances of enable-FOO to with-FOO.  enable-FOO has long
+	been aliased to with-FOO and we still preserve this, but formerly
+	we randomly used enable-FOO but with-BAR.
+
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
 	* configure:

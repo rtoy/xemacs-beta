@@ -1669,9 +1669,9 @@ Compilation options
                           flags inserted for warnings, debugging or
                           optimization; setting this does not disable the
                           insertion of those flags. Use configure settings
-                          such as `--with-optimization=no' or
-                          `enable-debug=no' to turn them off, or override them
-                          with `--with-cflags-optimization',
+                          such as `--with-optimization=no' or `with-debug=no'
+                          to turn them off, or override them with
+                          `--with-cflags-optimization',
                           `--with-cflags-debugging', or `with-cflags-warning'.
   --with-cflags-warning=FLAGS
                           Override compiler flags used to control warnings.
@@ -1783,8 +1783,7 @@ Window-system options
                           emulate Motif (mostly) but are faster. *WARNING* The
                           Motif menubar is currently broken. Lucid menubars
                           are the default.
-  --with-scrollbars=TYPE
-                          Use TYPE scrollbars 'yes', '`no', `lucid', `motif',
+  --with-scrollbars=TYPE  Use TYPE scrollbars 'yes', '`no', `lucid', `motif',
                           `athena', `gtk', or `msw'). Lucid scrollbars are the
                           default.
   --with-dialogs=TYPE     Use TYPE dialog boxes 'yes', '`no', `lucid',
@@ -1802,8 +1801,7 @@ Window-system options
                           GTK). *WARNING* The Drag'n'drop support is under
                           development and is considered experimental.
   --with-cde              Compile in support for CDE drag and drop.
-  --with-external-widget
-                          Support XEmacs server for text widgets in other
+  --with-external-widget  Support XEmacs server for text widgets in other
                           applications.
 
 TTY (character terminal) options
@@ -1864,8 +1862,8 @@ Internationalization options
                           (proprietary). Requires Mule.
   --with-xfs              Enable XFontSet support for internationalized
                           menubar. Incompatible with `--with-xim=motif' and
-                          `--with-xft'. `--with-menubars=lucid'   (the
-                          default) is desirable.
+                          `--with-xft'. `--with-menubars=lucid' (the default)
+                          is desirable.
 
 File-related options
 --------------------
@@ -1875,8 +1873,7 @@ File-related options
                           type when reading a file. Applies to those platforms
                           where auto-detection is off by default (non-Mule
                           Unix). Has no effect otherwise.
-  --with-clash-detection
-                          Disable use of lock files to detect multiple edits
+  --with-clash-detection  Disable use of lock files to detect multiple edits
                           of the same file.
   --with-zlib             Support inflate (de)compression internally.
 
@@ -4366,7 +4363,7 @@ for y in $_sound_types; do
     eval "enable_sound_$y=\$_sound_${y}_default"
     unset _sound_${y}_default
 done
-enable_sound_nas=""
+with_sound_nas=""
 fi;
 # If --with-native-sound-lib or --without-native-sound-lib were given then copy the value to the
 # equivalent enable_native-sound-lib variable.
@@ -4618,7 +4615,7 @@ unset _database_types _database_default _database_all_default _database_use_defa
 unset _with_database_args _database_found x y _require_database
 
 
-if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
+if test "$with_database_dbm"  = "yes" -a "$with_database_gdbm" = "yes"; then
 	(echo "$progname: Usage error:"
 echo " " "Only one of \`dbm' and \`gdbm' may be specified
 with the \`--with-database' option."
@@ -4933,7 +4930,7 @@ if test "${with_kkcc+set}" = set; then
   withval="$with_kkcc"
 
 else
-  enable_kkcc=yes
+  with_kkcc=yes
 fi;
 
 # If --with-newgc or --without-newgc were given then copy the value to the
@@ -5037,7 +5034,7 @@ for y in $_vdb_types; do
     eval "enable_vdb_$y=\$_vdb_${y}_default"
     unset _vdb_${y}_default
 done
-enable_vdb="auto"
+with_vdb="auto"
 fi;
 
 # If --with-modules or --without-modules were given then copy the value to the
@@ -5087,7 +5084,7 @@ unset _bignum_bogus
 
 
 else
-  enable_bignum="no"
+  with_bignum="no"
 fi;
 
 # If --with-workshop or --without-workshop were given then copy the value to the
@@ -5684,33 +5681,33 @@ _ACEOF
 
 
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
-test "${enable_error_checking_extents:=$beta}"    = yes && $as_echo "#define ERROR_CHECK_EXTENTS 1" >>confdefs.h
+test "${with_error_checking_extents:=$beta}"    = yes && $as_echo "#define ERROR_CHECK_EXTENTS 1" >>confdefs.h
 
-test "${enable_error_checking_types:=$beta}"      = yes && $as_echo "#define ERROR_CHECK_TYPES 1" >>confdefs.h
+test "${with_error_checking_types:=$beta}"      = yes && $as_echo "#define ERROR_CHECK_TYPES 1" >>confdefs.h
 
-test "${enable_error_checking_text:=$beta}"       = yes && $as_echo "#define ERROR_CHECK_TEXT 1" >>confdefs.h
+test "${with_error_checking_text:=$beta}"       = yes && $as_echo "#define ERROR_CHECK_TEXT 1" >>confdefs.h
 
-test "${enable_error_checking_gc:=$beta}"         = yes && $as_echo "#define ERROR_CHECK_GC 1" >>confdefs.h
+test "${with_error_checking_gc:=$beta}"         = yes && $as_echo "#define ERROR_CHECK_GC 1" >>confdefs.h
 
-test "${enable_error_checking_malloc:=$beta}"     = yes && $as_echo "#define ERROR_CHECK_MALLOC 1" >>confdefs.h
+test "${with_error_checking_malloc:=$beta}"     = yes && $as_echo "#define ERROR_CHECK_MALLOC 1" >>confdefs.h
 
-test "${enable_error_checking_byte_code:=$beta}"  = yes && $as_echo "#define ERROR_CHECK_BYTE_CODE 1" >>confdefs.h
+test "${with_error_checking_byte_code:=$beta}"  = yes && $as_echo "#define ERROR_CHECK_BYTE_CODE 1" >>confdefs.h
 
-test "${enable_error_checking_glyphs:=$beta}"     = yes && $as_echo "#define ERROR_CHECK_GLYPHS 1" >>confdefs.h
+test "${with_error_checking_glyphs:=$beta}"     = yes && $as_echo "#define ERROR_CHECK_GLYPHS 1" >>confdefs.h
 
-test "${enable_error_checking_display:=$beta}"    = yes && $as_echo "#define ERROR_CHECK_DISPLAY 1" >>confdefs.h
+test "${with_error_checking_display:=$beta}"    = yes && $as_echo "#define ERROR_CHECK_DISPLAY 1" >>confdefs.h
 
-test "${enable_error_checking_structures:=$beta}" = yes && $as_echo "#define ERROR_CHECK_STRUCTURES 1" >>confdefs.h
+test "${with_error_checking_structures:=$beta}" = yes && $as_echo "#define ERROR_CHECK_STRUCTURES 1" >>confdefs.h
 
-if test "${enable_debug:=$beta}" = "yes"; then
-  enable_assertions=yes
-  enable_memory_usage_stats=yes
+if test "${with_debug:=$beta}" = "yes"; then
+  with_assertions=yes
+  with_memory_usage_stats=yes
   $as_echo "#define DEBUG_XEMACS 1" >>confdefs.h
 
 fi
-test "$enable_assertions"         = "yes" && $as_echo "#define USE_ASSERTIONS 1" >>confdefs.h
+test "$with_assertions"         = "yes" && $as_echo "#define USE_ASSERTIONS 1" >>confdefs.h
 
-test "$enable_memory_usage_stats" = "yes" && $as_echo "#define MEMORY_USAGE_STATS 1" >>confdefs.h
+test "$with_memory_usage_stats" = "yes" && $as_echo "#define MEMORY_USAGE_STATS 1" >>confdefs.h
 
 
 
@@ -5866,14 +5863,14 @@ fi
 
 
 
-if test -z "$enable_pdump"; then
+if test -z "$with_pdump"; then
   case "$opsys" in
-    linux* )  enable_pdump=yes ;;              darwin )  enable_pdump=yes ;;              cygwin* ) enable_pdump=yes ;;              * )       enable_pdump=no ;;
+    linux* )  with_pdump=yes ;;              darwin )  with_pdump=yes ;;              cygwin* ) with_pdump=yes ;;              * )       with_pdump=no ;;
   esac
 fi
 
-if test "$enable_newgc" = "yes"; then
-  if test "$enable_vdb" = "auto"; then
+if test "$with_newgc" = "yes"; then
+  if test "$with_vdb" = "auto"; then
     case "$opsys" in
       darwin )  case "$machine" in
 		  i[3-9]86 ) check_vdb_posix=yes ;;
@@ -5887,7 +5884,7 @@ if test "$enable_newgc" = "yes"; then
       * )       check_vdb_posix=yes ;;
     esac
   else
-    case "$enable_vdb" in
+    case "$with_vdb" in
       mach )  $as_echo "#define VDB_MACH 1" >>confdefs.h
   have_vdb_mach=yes ;;
       win32 ) $as_echo "#define VDB_WIN32 1" >>confdefs.h
@@ -5944,7 +5941,7 @@ if test "$with_workshop" = "yes"; then
 
 fi
 
-if test "$enable_clash_detection" != "no"; then
+if test "$with_clash_detection" != "no"; then
   $as_echo "#define CLASH_DETECTION 1" >>confdefs.h
 
 fi
@@ -9371,9 +9368,9 @@ test -z "$system_type" && \
 _ACEOF
 
 
-test -z "$unexec" && enable_pdump=yes
+test -z "$unexec" && with_pdump=yes
 
-if test "$enable_pdump" = "yes"; then
+if test "$with_pdump" = "yes"; then
   ordinary_link="yes"
   ld="${ordinary_ld}"
   start_files=
@@ -9382,20 +9379,20 @@ if test "$enable_pdump" = "yes"; then
   lib_gcc=
 fi
 
-test -z "$enable_kkcc" && enable_kkcc=yes
+test -z "$with_kkcc" && with_kkcc=yes
 
-if test -z "$enable_dump_in_exec"; then
-  if test "$enable_pdump" = "yes"; then
-    if test "$enable_newgc" = "yes"; then
-      enable_dump_in_exec=no
+if test -z "$with_dump_in_exec"; then
+  if test "$with_pdump" = "yes"; then
+    if test "$with_newgc" = "yes"; then
+      with_dump_in_exec=no
     else
-      enable_dump_in_exec=yes
+      with_dump_in_exec=yes
     fi
   fi
 fi
 
-if test "$enable_newgc" = "yes"; then
-  enable_kkcc=yes
+if test "$with_newgc" = "yes"; then
+  with_kkcc=yes
 fi
 
 test "$verbose" = "yes" && \
@@ -9688,7 +9685,7 @@ esac
 $as_echo "no" >&6; }
 fi
 
-if test "$enable_pdump" != "yes"; then
+if test "$with_pdump" != "yes"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"-z nocombreloc\" linker flag" >&5
 $as_echo_n "checking for \"-z nocombreloc\" linker flag... " >&6; }
   case "`ld --help 2>&1`" in
@@ -9772,10 +9769,10 @@ test -n "$objects_machine" && extra_objs="$extra_objs $objects_machine" &&  if t
 test -n "$objects_system"  && extra_objs="$extra_objs $objects_system" &&  if test "$verbose" = "yes"; then
    echo "    xemacs will be linked with \"$objects_system\""
  fi
-test -n "$unexec"          && test ! "$enable_pdump" = "yes" && extra_objs="$extra_objs $unexec" &&  if test "$verbose" = "yes"; then
+test -n "$unexec"          && test ! "$with_pdump" = "yes" && extra_objs="$extra_objs $unexec" &&  if test "$verbose" = "yes"; then
    echo "    xemacs will be linked with \"$unexec\""
  fi
-test "$enable_pdump" = "yes" && extra_objs="$extra_objs dumper.o" &&  if test "$verbose" = "yes"; then
+test "$with_pdump" = "yes" && extra_objs="$extra_objs dumper.o" &&  if test "$verbose" = "yes"; then
    echo "    xemacs will be linked with \"dumper.o\""
  fi
 
@@ -11995,25 +11992,25 @@ $as_echo "$as_me: WARNING: Configuring GTK, forcing with_x11 to no" >&2;}
 
       for feature in scrollbars toolbars menubars dialogs widgets
       do
-        eval "feature_value=\${enable_${feature}}"
+        eval "feature_value=\${with_${feature}}"
 	case "${feature_value}" in
 	yes|no|gtk|"" )
 	    ;;
 	* )
 	  feature_conflict_with_gtk=yes
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-${feature}=${feature_value} is incompatible with --with-gtk" >&5
-$as_echo "$as_me: WARNING: --enable-${feature}=${feature_value} is incompatible with --with-gtk" >&2;} ;;
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-${feature}=${feature_value} is incompatible with --with-gtk" >&5
+$as_echo "$as_me: WARNING: --with-${feature}=${feature_value} is incompatible with --with-gtk" >&2;} ;;
 	esac
       done
       if test "${feature_conflict_with_gtk}" = "yes"; then
 	{ echo "Error:" "One or more GUI toolkit features conflict with GTK" >&2; exit 1; }
       fi
 
-      test "${enable_scrollbars}" != "no" && enable_scrollbars=gtk
-      test "${enable_toolbars}" != "no" && enable_toolbars=gtk
-      test "${enable_menubars}" != "no" && enable_menubars=gtk
-      test "${enable_dialogs}" != "no" && enable_dialogs=gtk
-      test "${enable_widgets}" != "no" && enable_widgets=gtk
+      test "${with_scrollbars}" != "no" && with_scrollbars=gtk
+      test "${with_toolbars}" != "no" && with_toolbars=gtk
+      test "${with_menubars}" != "no" && with_menubars=gtk
+      test "${with_dialogs}" != "no" && with_dialogs=gtk
+      test "${with_widgets}" != "no" && with_widgets=gtk
 
             OLD_CFLAGS="${CFLAGS}"
       OLD_CPPFLAGS="${CPPFLAGS}"
@@ -13295,8 +13292,8 @@ _ACEOF
 
 
   if test "${x11_release}" = "4"; then
-    case "$enable_widgets" in
-      "" | "no") enable_widgets=no ;;
+    case "$with_widgets" in
+      "" | "no") with_widgets=no ;;
       *) { echo "Error:" "Widget support requires X11R5 or greater" >&2; exit 1; } ;;
     esac
   fi
@@ -13735,11 +13732,11 @@ fi
     fi
     if test "$window_system" != x11; then
       window_system=msw
-      test "$enable_scrollbars" != "no" && enable_scrollbars=msw
-      test "$enable_menubars"   != "no" && enable_menubars=msw
-      test "$enable_toolbars"   != "no" && enable_toolbars=msw
-      test "$enable_dialogs"    != "no" && enable_dialogs=msw
-      test "$enable_widgets"    != "no" && enable_widgets=msw
+      test "$with_scrollbars" != "no" && with_scrollbars=msw
+      test "$with_menubars"   != "no" && with_menubars=msw
+      test "$with_toolbars"   != "no" && with_toolbars=msw
+      test "$with_dialogs"    != "no" && with_dialogs=msw
+      test "$with_widgets"    != "no" && with_widgets=msw
     fi
         if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
@@ -13771,14 +13768,14 @@ test -z "$window_system" && window_system="none"
 if test "$window_system" = "none"; then
   for feature in menubars scrollbars toolbars dialogs dragndrop xface
   do
-    if eval "test -n \"\$enable_${feature}\" -a \"\$enable_${feature}\" != no" ; then
-       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-$feature ignored:  Not valid without window system support" >&5
-$as_echo "$as_me: WARNING: --enable-$feature ignored:  Not valid without window system support" >&2;}
+    if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-$feature ignored:  Not valid without window system support" >&5
+$as_echo "$as_me: WARNING: --with-$feature ignored:  Not valid without window system support" >&2;}
     fi
-    eval "enable_${feature}=no"
+    eval "with_${feature}=no"
   done
 else
-  test -z "$enable_toolbars" && enable_toolbars=yes
+  test -z "$with_toolbars" && with_toolbars=yes
 fi
 
 if test "$with_msw" != "yes"; then
@@ -13795,7 +13792,7 @@ else
 fi
 
 if test "$with_x11" != "yes"; then
-            for feature in with_tooltalk with_cde with_wmcommand with_xim enable_sound_nas
+            for feature in with_tooltalk with_cde with_wmcommand with_xim with_sound_nas
   do
     if eval "test -n \"\$${feature}\" -a \"\$${feature}\" != \"no\"" ; then
        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --$feature ignored:  Not valid without X support" >&5
@@ -13919,7 +13916,7 @@ else
 fi
 
 
-if test "$enable_modules" != "no"; then
+if test "$with_modules" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for module support" >&5
 $as_echo_n "checking for module support... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
@@ -14676,22 +14673,22 @@ _ACEOF
 fi
 done
 
-    enable_modules=yes
+    with_modules=yes
     MOD_CC="../../lib-src/ellcc"
     MODCFLAGS="\$(CFLAGS) --mode=compile --mod-output=\$@ -I../../src -I\$(srcdir)/../../src"
     INSTALLPATH="\$(moduledir)"
     MOD_INSTALL_PROGRAM=${INSTALL_PROGRAM}
     OBJECT_TO_BUILD="\$(MODNAME).ell"
   else
-    if test "$enable_modules" = "yes"; then
+    if test "$with_modules" = "yes"; then
       { echo "Error:" "Required module support cannot be provided." >&2; exit 1; }
     else
       echo "    No module support."
     fi
-    enable_modules=no
+    with_modules=no
   fi
 fi
-if test "$enable_modules" != "yes"; then
+if test "$with_modules" != "yes"; then
   MOD_CC="$XEMACS_CC"
   MODCFLAGS="\$(XE_CFLAGS) -I../../src -I\$(srcdir)/../../src"
   INSTALLPATH=""
@@ -14700,7 +14697,7 @@ if test "$enable_modules" != "yes"; then
 fi
 MODARCHDIR=
 MAKE_DOCFILE="../../lib-src/make-docfile"
-with_modules=$enable_modules
+with_modules=$with_modules
 
 
 
@@ -15136,7 +15133,7 @@ done
   LIBS="$save_LIBS"
   MAKE_SUBDIR="$MAKE_SUBDIR modules/ldap" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/ldap\" to \$MAKE_SUBDIR"; fi
   need_modules_common=yes
-  if test "$enable_modules" = "yes"; then
+  if test "$with_modules" = "yes"; then
     INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/ldap" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/ldap\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
   fi
 fi
@@ -15309,7 +15306,7 @@ _ACEOF
     postgresql_libs="$pq_libs $postgresql_libs" &&  if test "$verbose" = "yes"; then echo "    Prepending \"$pq_libs\" to \$postgresql_libs"; fi
     MAKE_SUBDIR="$MAKE_SUBDIR modules/postgresql" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/postgresql\" to \$MAKE_SUBDIR"; fi
     need_modules_common=yes
-    if test "$enable_modules" = "yes"; then
+    if test "$with_modules" = "yes"; then
       INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/postgresql" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/postgresql\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
     fi
   elif test "$with_postgresql" = "yes"; then
@@ -16011,12 +16008,12 @@ $as_echo_n "checking for X11 graphics libraries... " >&6; }
 $as_echo "" >&6; }
 fi
 
-case "$enable_widgets" in
+case "$with_widgets" in
   "" | "yes" | "athena")	detect_athena=yes ;;
    *)				detect_athena=no ;;
 esac
 
-case "$enable_dialogs" in
+case "$with_dialogs" in
   "" | "yes" | "athena")	detect_athena=yes ;;
 esac
 
@@ -16446,8 +16443,8 @@ case "$opsys" in
   * )        lucid_prefers_motif="yes" ;;
 esac
 
-case "$enable_menubars" in "" | "yes" | "athena" )
-  enable_menubars="lucid" ;;
+case "$with_menubars" in "" | "yes" | "athena" )
+  with_menubars="lucid" ;;
 esac
 if test "$with_xft_menubars" != "no" ; then
   if test "$with_xft_emacs" = "yes" -a "$with_menubars" != "no" ; then
@@ -16456,55 +16453,55 @@ if test "$with_xft_menubars" != "no" ; then
     with_xft_menubars="no"
   fi
 fi
-case "$enable_dialogs" in "" | "yes" | "lucid" )
+case "$with_dialogs" in "" | "yes" | "lucid" )
   if test "$lucid_prefers_motif" = "yes"; then
-    if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
-    elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-    else enable_dialogs=no
+    if   test "$have_motif"     = "yes"; then with_dialogs="motif"
+    elif test "$have_xaw"       = "yes"; then with_dialogs="athena"
+    elif test "$with_msw"       = "yes"; then with_dialogs="msw"
+    else with_dialogs=no
     fi
   else
-    if   test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-    elif test "$have_motif"     = "yes"; then enable_dialogs="motif"
-    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-    else enable_dialogs=no
+    if   test "$have_xaw"       = "yes"; then with_dialogs="athena"
+    elif test "$have_motif"     = "yes"; then with_dialogs="motif"
+    elif test "$with_msw"       = "yes"; then with_dialogs="msw"
+    else with_dialogs=no
     fi
   fi ;;
 esac
-case "$enable_scrollbars" in "" | "yes" )
-  enable_scrollbars="lucid" ;;
+case "$with_scrollbars" in "" | "yes" )
+  with_scrollbars="lucid" ;;
 esac
-case "$enable_widgets" in "" | "yes" | "lucid")
+case "$with_widgets" in "" | "yes" | "lucid")
   if test "$lucid_prefers_motif" = "yes"; then
-    if   test "$have_motif" = "yes"; then enable_widgets="motif"
-    elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
-    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-    else enable_widgets=no
+    if   test "$have_motif" = "yes"; then with_widgets="motif"
+    elif test "$have_xaw"   = "yes"; then with_widgets="athena"
+    elif test "$with_msw"   = "yes"; then with_widgets="msw"
+    else with_widgets=no
     fi
   else
-    if   test "$have_xaw"   = "yes"; then enable_widgets="athena"
-    elif test "$have_motif" = "yes"; then enable_widgets="motif"
-    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-    else enable_widgets=no
+    if   test "$have_xaw"   = "yes"; then with_widgets="athena"
+    elif test "$have_motif" = "yes"; then with_widgets="motif"
+    elif test "$with_msw"   = "yes"; then with_widgets="msw"
+    else with_widgets=no
     fi
   fi ;;
 esac
 if test "$with_xft_tabs" != "no" ; then
-  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_widgets" != "no" ; then
     with_xft_tabs="yes"
   else
     with_xft_tabs="no"
   fi
 fi
 if test "$with_xft_gauges" != "no" ; then
-  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_widgets" != "no" ; then
     with_xft_gauges="yes"
   else
     with_xft_gauges="no"
   fi
 fi
 
-all_widgets="$enable_menubars $enable_scrollbars $enable_dialogs $enable_toolbars $enable_widgets"
+all_widgets="$with_menubars $with_scrollbars $with_dialogs $with_toolbars $with_widgets"
 
 case "$all_widgets" in
   *athena* )
@@ -16579,12 +16576,12 @@ case "$all_widgets" in *motif* )
   need_motif=yes ;;
 esac
 
-test "$enable_menubars"   = "lucid" && lwlib_objs="$lwlib_objs xlwmenu.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwmenu.o\" to \$lwlib_objs"; fi
-test "$enable_menubars"   = "motif" && lwlib_objs="$lwlib_objs xlwmenu.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwmenu.o\" to \$lwlib_objs"; fi
-test "$enable_scrollbars" = "lucid" && lwlib_objs="$lwlib_objs xlwscrollbar.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwscrollbar.o\" to \$lwlib_objs"; fi
-test "$enable_widgets"   != "no" && test "$enable_widgets" != "msw" && \
+test "$with_menubars"   = "lucid" && lwlib_objs="$lwlib_objs xlwmenu.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwmenu.o\" to \$lwlib_objs"; fi
+test "$with_menubars"   = "motif" && lwlib_objs="$lwlib_objs xlwmenu.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwmenu.o\" to \$lwlib_objs"; fi
+test "$with_scrollbars" = "lucid" && lwlib_objs="$lwlib_objs xlwscrollbar.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwscrollbar.o\" to \$lwlib_objs"; fi
+test "$with_widgets"   != "no" && test "$with_widgets" != "msw" && \
 	lwlib_objs="$lwlib_objs xlwtabs.o xlwgcs.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwtabs.o xlwgcs.o\" to \$lwlib_objs"; fi
-case "$enable_widgets" in athena* )
+case "$with_widgets" in athena* )
 	lwlib_objs="$lwlib_objs xlwradio.o xlwcheckbox.o xlwgauge.o" &&  if test "$verbose" = "yes"; then echo "    Appending \"xlwradio.o xlwcheckbox.o xlwgauge.o\" to \$lwlib_objs"; fi;;
 esac
 case "$all_widgets" in *lucid* )
@@ -16595,47 +16592,47 @@ esac
 
 
 
-test "$enable_scrollbars" = "athena" && $as_echo "#define LWLIB_SCROLLBARS_ATHENA 1" >>confdefs.h
+test "$with_scrollbars" = "athena" && $as_echo "#define LWLIB_SCROLLBARS_ATHENA 1" >>confdefs.h
 
-test "$enable_dialogs"    = "athena" && $as_echo "#define LWLIB_DIALOGS_ATHENA 1" >>confdefs.h
+test "$with_dialogs"    = "athena" && $as_echo "#define LWLIB_DIALOGS_ATHENA 1" >>confdefs.h
 
 
 if test "$athena_3d" = "yes"; then
-  test "$enable_scrollbars" = "athena" && $as_echo "#define LWLIB_SCROLLBARS_ATHENA3D 1" >>confdefs.h
+  test "$with_scrollbars" = "athena" && $as_echo "#define LWLIB_SCROLLBARS_ATHENA3D 1" >>confdefs.h
 
-  test "$enable_dialogs"    = "athena" && $as_echo "#define LWLIB_DIALOGS_ATHENA3D 1" >>confdefs.h
+  test "$with_dialogs"    = "athena" && $as_echo "#define LWLIB_DIALOGS_ATHENA3D 1" >>confdefs.h
 
 fi
 
-case "$enable_widgets" in athena* ) $as_echo "#define LWLIB_WIDGETS_ATHENA 1" >>confdefs.h
+case "$with_widgets" in athena* ) $as_echo "#define LWLIB_WIDGETS_ATHENA 1" >>confdefs.h
 ;; esac
-test "$enable_widgets" != "no" && test "$enable_widgets" != "msw" && \
+test "$with_widgets" != "no" && test "$with_widgets" != "msw" && \
 	$as_echo "#define LWLIB_TABS_LUCID 1" >>confdefs.h
 
 
-test "$enable_menubars"   != "no"    && $as_echo "#define HAVE_MENUBARS 1" >>confdefs.h
+test "$with_menubars"   != "no"    && $as_echo "#define HAVE_MENUBARS 1" >>confdefs.h
 
-test "$enable_scrollbars" != "no"    && $as_echo "#define HAVE_SCROLLBARS 1" >>confdefs.h
+test "$with_scrollbars" != "no"    && $as_echo "#define HAVE_SCROLLBARS 1" >>confdefs.h
 
-test "$enable_dialogs"    != "no"    && $as_echo "#define HAVE_DIALOGS 1" >>confdefs.h
+test "$with_dialogs"    != "no"    && $as_echo "#define HAVE_DIALOGS 1" >>confdefs.h
 
-test "$enable_toolbars"   != "no"    && $as_echo "#define HAVE_TOOLBARS 1" >>confdefs.h
+test "$with_toolbars"   != "no"    && $as_echo "#define HAVE_TOOLBARS 1" >>confdefs.h
 
-test "$enable_widgets"    != "no"    && $as_echo "#define HAVE_WIDGETS 1" >>confdefs.h
-
-
-test "$enable_menubars"   = "lucid"  && $as_echo "#define LWLIB_MENUBARS_LUCID 1" >>confdefs.h
-
-test "$enable_scrollbars" = "lucid"  && $as_echo "#define LWLIB_SCROLLBARS_LUCID 1" >>confdefs.h
+test "$with_widgets"    != "no"    && $as_echo "#define HAVE_WIDGETS 1" >>confdefs.h
 
 
-test "$enable_menubars"   = "motif"  && $as_echo "#define LWLIB_MENUBARS_MOTIF 1" >>confdefs.h
+test "$with_menubars"   = "lucid"  && $as_echo "#define LWLIB_MENUBARS_LUCID 1" >>confdefs.h
 
-test "$enable_scrollbars" = "motif"  && $as_echo "#define LWLIB_SCROLLBARS_MOTIF 1" >>confdefs.h
+test "$with_scrollbars" = "lucid"  && $as_echo "#define LWLIB_SCROLLBARS_LUCID 1" >>confdefs.h
 
-test "$enable_dialogs"    = "motif"  && $as_echo "#define LWLIB_DIALOGS_MOTIF 1" >>confdefs.h
 
-test "$enable_widgets"    = "motif"  && $as_echo "#define LWLIB_WIDGETS_MOTIF 1" >>confdefs.h
+test "$with_menubars"   = "motif"  && $as_echo "#define LWLIB_MENUBARS_MOTIF 1" >>confdefs.h
+
+test "$with_scrollbars" = "motif"  && $as_echo "#define LWLIB_SCROLLBARS_MOTIF 1" >>confdefs.h
+
+test "$with_dialogs"    = "motif"  && $as_echo "#define LWLIB_DIALOGS_MOTIF 1" >>confdefs.h
+
+test "$with_widgets"    = "motif"  && $as_echo "#define LWLIB_WIDGETS_MOTIF 1" >>confdefs.h
 
 
 test "$with_xft_menubars" = "yes"  && $as_echo "#define USE_XFT_MENUBARS 1" >>confdefs.h
@@ -16646,10 +16643,10 @@ test "$with_xft_gauges" = "yes"  && $as_echo "#define USE_XFT_GAUGES 1" >>confde
 
 
 
-test -z "$enable_mule" && enable_mule=no
+test -z "$with_mule" && with_mule=no
 
 
-if test "$enable_default_eol_detection" = "yes"; then
+if test "$with_default_eol_detection" = "yes"; then
   $as_echo "#define HAVE_DEFAULT_EOL_DETECTION 1" >>confdefs.h
 
 fi
@@ -16657,7 +16654,7 @@ fi
 canna_libs=
 wnn_libs=
 
-if test "$enable_mule" = "yes" ; then
+if test "$with_mule" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Mule-related features" >&5
 $as_echo_n "checking for Mule-related features... " >&6; }
   $as_echo "#define MULE 1" >>confdefs.h
@@ -16920,7 +16917,7 @@ else
   with_xfs=no
 fi
 
-    if test "$with_xfs" = "yes" && test "$enable_menubars" = "lucid"; then
+    if test "$with_xfs" = "yes" && test "$with_menubars" = "lucid"; then
       $as_echo "#define USE_XFONTSET 1" >>confdefs.h
 
       if test "$with_xim" = "no" ; then
@@ -18748,9 +18745,9 @@ $as_echo_n "checking for sound support... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
 
-test -n "$with_native_sound_lib" && enable_sound_native=yes
+test -n "$with_native_sound_lib" && with_sound_native=yes
 
-if test "$enable_sound_native" != "no"; then
+if test "$with_sound_native" != "no"; then
     if test -n "$with_native_sound_lib"; then
     ac_fn_c_check_header_mongrel "$LINENO" "multimedia/audio_device.h" "ac_cv_header_multimedia_audio_device_h" "$ac_includes_default"
 if test "x$ac_cv_header_multimedia_audio_device_h" = x""yes; then :
@@ -18985,23 +18982,23 @@ _ACEOF
   fi
 
   if test "$sound_found" = "yes"; then
-    enable_sound_native=yes
+    with_sound_native=yes
   else
-    if test "$enable_sound_native" = "yes" ; then
+    if test "$with_sound_native" = "yes" ; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No native libraries found.  Disabling native sound support." >&5
 $as_echo "$as_me: WARNING: No native libraries found.  Disabling native sound support." >&2;}
     fi
-    enable_sound_native=no
+    with_sound_native=no
   fi
 fi
 
-if test "$enable_sound_native" = "yes"; then
+if test "$with_sound_native" = "yes"; then
   $as_echo "#define HAVE_NATIVE_SOUND 1" >>confdefs.h
 
   test -n "$with_native_sound_lib" && LIBS="$with_native_sound_lib $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"$with_native_sound_lib\" to \$LIBS"; fi
 fi
 
-if test "$enable_sound_alsa" != "no"; then
+if test "$with_sound_alsa" != "no"; then
   ac_fn_c_check_header_mongrel "$LINENO" "alsa/input.h" "ac_cv_header_alsa_input_h" "$ac_includes_default"
 if test "x$ac_cv_header_alsa_input_h" = x""yes; then :
 
@@ -19049,7 +19046,7 @@ fi
 
 
   if test "$have_alsa_sound" = "yes"; then
-    enable_sound_alsa=yes
+    with_sound_alsa=yes
     $as_echo "#define HAVE_ALSA_SOUND 1" >>confdefs.h
 
     extra_objs="$extra_objs alsaplay.o" &&  if test "$verbose" = "yes"; then
@@ -19057,13 +19054,13 @@ fi
  fi
     LIBS="-lasound $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lasound\" to \$LIBS"; fi
   else
-    test "$enable_sound_alsa" = "yes" && \
+    test "$with_sound_alsa" = "yes" && \
       { echo "Error:" "Required ALSA sound support cannot be provided." >&2; exit 1; }
-    enable_sound_alsa=no
+    with_sound_alsa=no
   fi
 fi
 
-if test "$enable_sound_nas" != "no"; then
+if test "$with_sound_nas" != "no"; then
   ac_fn_c_check_header_mongrel "$LINENO" "audio/audiolib.h" "ac_cv_header_audio_audiolib_h" "$ac_includes_default"
 if test "x$ac_cv_header_audio_audiolib_h" = x""yes; then :
 
@@ -19111,7 +19108,7 @@ fi
 
 
   if test "$have_nas_sound" = "yes"; then
-    enable_sound_nas=yes
+    with_sound_nas=yes
     $as_echo "#define HAVE_NAS_SOUND 1" >>confdefs.h
 
     extra_objs="$extra_objs nas.o" &&  if test "$verbose" = "yes"; then
@@ -19133,13 +19130,13 @@ fi
 rm -f conftest*
 
   else
-    test "$enable_sound_nas" = "yes" && \
+    test "$with_sound_nas" = "yes" && \
       { echo "Error:" "Required NAS sound support cannot be provided." >&2; exit 1; }
-    enable_sound_nas=no
+    with_sound_nas=no
   fi
 fi
 
-if test "$enable_sound_esd" != "no"; then
+if test "$with_sound_esd" != "no"; then
   # Extract the first word of "esd-config", so it can be a program name with args.
 set dummy esd-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -19192,7 +19189,7 @@ fi
   fi
 
   if test "$have_esd_sound" = "yes"; then
-    enable_sound_esd=yes
+    with_sound_esd=yes
     need_miscplay=yes
     extra_objs="$extra_objs esd.o" &&  if test "$verbose" = "yes"; then
    echo "    xemacs will be linked with \"esd.o\""
@@ -19200,9 +19197,9 @@ fi
     $as_echo "#define HAVE_ESD_SOUND 1" >>confdefs.h
 
   else
-    test "$enable_sound_esd" = "yes" && \
+    test "$with_sound_esd" = "yes" && \
       { echo "Error:" "Required ESD sound support cannot be provided." >&2; exit 1; }
-    enable_sound_esd=no
+    with_sound_esd=no
   fi
 fi
 
@@ -19525,13 +19522,13 @@ $as_echo "$as_me: WARNING: --with-${feature} ignored:  Not valid without TTY sup
   done
 fi
 
-test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
+test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
   != "no no no" && { $as_echo "$as_me:${as_lineno-$LINENO}: checking for database support" >&5
 $as_echo_n "checking for database support... " >&6; } && \
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
 
-if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
+if test "$with_database_gdbm $with_database_dbm" != "no no"; then
   ndbm_h_file=""
   for ac_header in ndbm.h gdbm/ndbm.h
 do :
@@ -19548,14 +19545,14 @@ fi
 done
 
   if test "x$ndbm_h_file" = "x"; then
-    test "$enable_database_gdbm" = "yes" -o \
-         "$enable_database_dbm"  = "yes" && \
+    test "$with_database_gdbm" = "yes" -o \
+         "$with_database_dbm"  = "yes" && \
       { echo "Error:" "Required DBM support cannot be provided." >&2; exit 1; }
-    enable_database_gdbm=no enable_database_dbm=no]
+    with_database_gdbm=no with_database_dbm=no]
   fi
 fi
 
-if test "$enable_database_gdbm" != "no"; then
+if test "$with_database_gdbm" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dbm_open in -lgdbm" >&5
 $as_echo_n "checking for dbm_open in -lgdbm... " >&6; }
 if test "${ac_cv_lib_gdbm_dbm_open+set}" = set; then :
@@ -19594,7 +19591,7 @@ fi
 $as_echo "$ac_cv_lib_gdbm_dbm_open" >&6; }
 if test "x$ac_cv_lib_gdbm_dbm_open" = x""yes; then :
 
-   enable_database_gdbm=yes enable_database_dbm=no libdbm=-lgdbm
+   with_database_gdbm=yes with_database_dbm=no libdbm=-lgdbm
 else
 
        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dbm_open in -lgdbm_compat" >&5
@@ -19635,13 +19632,13 @@ fi
 $as_echo "$ac_cv_lib_gdbm_compat_dbm_open" >&6; }
 if test "x$ac_cv_lib_gdbm_compat_dbm_open" = x""yes; then :
 
-       enable_database_gdbm=yes enable_database_dbm=no libdbm="-lgdbm_compat -lgdbm"
+       with_database_gdbm=yes with_database_dbm=no libdbm="-lgdbm_compat -lgdbm"
 else
 
-   if test "$enable_database_gdbm" = "yes"; then
+   if test "$with_database_gdbm" = "yes"; then
      { echo "Error:" "Required GNU DBM support cannot be provided." >&2; exit 1; }
    fi
-   enable_database_gdbm=no
+   with_database_gdbm=no
 fi
 
 
@@ -19649,10 +19646,10 @@ fi
 
 fi
 
-if test "$enable_database_dbm" != "no"; then
+if test "$with_database_dbm" != "no"; then
   ac_fn_c_check_func "$LINENO" "dbm_open" "ac_cv_func_dbm_open"
 if test "x$ac_cv_func_dbm_open" = x""yes; then :
-  enable_database_dbm=yes libdbm=
+  with_database_dbm=yes libdbm=
 else
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dbm_open in -ldbm" >&5
@@ -19692,12 +19689,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dbm_dbm_open" >&5
 $as_echo "$ac_cv_lib_dbm_dbm_open" >&6; }
 if test "x$ac_cv_lib_dbm_dbm_open" = x""yes; then :
-  enable_database_dbm=yes libdbm=-ldbm
+  with_database_dbm=yes libdbm=-ldbm
 else
 
-      test "$enable_database_dbm" = "yes" && \
+      test "$with_database_dbm" = "yes" && \
         { echo "Error:" "Required DBM support cannot be provided." >&2; exit 1; }
-      enable_database_dbm=no
+      with_database_dbm=no
 fi
 
 fi
@@ -19705,8 +19702,8 @@ fi
 fi
 
 test -n "$libdbm" && LIBS=""$libdbm" $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libdbm"\" to \$LIBS"; fi
-if test "$enable_database_gdbm" = "yes" -o \
-        "$enable_database_dbm"  = "yes"; then
+if test "$with_database_gdbm" = "yes" -o \
+        "$with_database_dbm"  = "yes"; then
   cat >>confdefs.h <<_ACEOF
 #define NDBM_H_FILE "$ndbm_h_file"
 _ACEOF
@@ -19745,7 +19742,7 @@ _ACEOF
 fi
 
 
-if test "$enable_database_berkdb" != "no"; then
+if test "$with_database_berkdb" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley db.h" >&5
 $as_echo_n "checking for Berkeley db.h... " >&6; }
   for header in "db/db.h" "db.h"; do
@@ -19783,12 +19780,12 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   done
   if test -z "$db_h_file"
   then { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }; enable_database_berkdb=no
+$as_echo "no" >&6; }; with_database_berkdb=no
   else { $as_echo "$as_me:${as_lineno-$LINENO}: result: $db_h_file" >&5
 $as_echo "$db_h_file" >&6; }
   fi
 
-  if test "$enable_database_berkdb" != "no"; then
+  if test "$with_database_berkdb" != "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley DB version" >&5
 $as_echo_n "checking for Berkeley DB version... " >&6; }
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -19848,7 +19845,7 @@ rm -f conftest*
 ac_fn_c_check_func "$LINENO" "$dbfunc" "$as_ac_var"
 eval as_val=\$$as_ac_var
    if test "x$as_val" = x""yes; then :
-  enable_database_berkdb=yes need_libdb=no
+  with_database_berkdb=yes need_libdb=no
 else
 
     as_ac_Lib=`$as_echo "ac_cv_lib_db_$dbfunc" | $as_tr_sh`
@@ -19891,14 +19888,14 @@ eval ac_res=\$$as_ac_Lib
 $as_echo "$ac_res" >&6; }
 eval as_val=\$$as_ac_Lib
    if test "x$as_val" = x""yes; then :
-  enable_database_berkdb=yes need_libdb=yes
+  with_database_berkdb=yes need_libdb=yes
 fi
 
 fi
 
   fi
 
-    if test "$enable_database_berkdb" = "yes" -a "$dbver" = "4"; then
+    if test "$with_database_berkdb" = "yes" -a "$dbver" = "4"; then
     rm -f $tempcname
     echo "#include <$db_h_file>" > $tempcname
     echo "configure___ dbfunc=db_create" >> $tempcname
@@ -19947,12 +19944,12 @@ eval ac_res=\$$as_ac_Lib
 $as_echo "$ac_res" >&6; }
 eval as_val=\$$as_ac_Lib
    if test "x$as_val" = x""yes; then :
-  enable_database_berkdb=yes need_libdb=yes
+  with_database_berkdb=yes need_libdb=yes
 fi
 
   fi
 
-  if test "$enable_database_berkdb" = "yes"; then
+  if test "$with_database_berkdb" = "yes"; then
     cat >>confdefs.h <<_ACEOF
 #define DB_H_FILE "$db_h_file"
 _ACEOF
@@ -19960,11 +19957,11 @@ _ACEOF
     $as_echo "#define HAVE_BERKELEY_DB 1" >>confdefs.h
 
     test "$need_libdb" = "yes" && LIBS="-ldb $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-ldb\" to \$LIBS"; fi
-  else enable_database_berkdb=no
+  else with_database_berkdb=no
   fi
 fi
 
-if test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
+if test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
      != "no no no"; then
   $as_echo "#define HAVE_DATABASE 1" >>confdefs.h
 
@@ -20026,7 +20023,7 @@ if test "$usage_tracking" = "yes"; then
   LIBS="-Bstatic -lut -Bdynamic $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-Bstatic -lut -Bdynamic\" to \$LIBS"; fi
 fi
 
-if test "$enable_bignum" = "gmp"; then
+if test "$with_bignum" = "gmp"; then
   ac_fn_c_check_header_mongrel "$LINENO" "gmp.h" "ac_cv_header_gmp_h" "$ac_includes_default"
 if test "x$ac_cv_header_gmp_h" = x""yes; then :
 
@@ -20082,7 +20079,7 @@ fi
   else
     { echo "Error:" "Required GMP numeric support cannot be provided." >&2; exit 1; }
   fi
-elif test "$enable_bignum" = "mp"; then
+elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     ac_fn_c_check_header_mongrel "$LINENO" "mp.h" "ac_cv_header_mp_h" "$ac_includes_default"
 if test "x$ac_cv_header_mp_h" = x""yes; then :
@@ -20247,7 +20244,7 @@ if test "$win32_processes" != "yes"; then
 fi
 
 
-if test "$enable_modules" = "yes"; then
+if test "$with_modules" = "yes"; then
   ld_libs_module=
 else
 
@@ -20313,7 +20310,7 @@ for W in $ld_libs_window_system $ld_libs_general $ld_libs_module; do if test -z 
 ld_libs_all="$T"
 
 
-if test "$enable_modules" = "no"; then
+if test "$with_modules" = "no"; then
   MAKE_SUBDIR="$MAKE_SUBDIR src" &&  if test "$verbose" = "yes"; then echo "    Appending \"src\" to \$MAKE_SUBDIR"; fi
 fi
 
@@ -20680,17 +20677,17 @@ test "$GCC"                = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
 
 test "$with_xemacs_compiler" = "g++" && $as_echo "#define USE_GPLUSPLUS 1" >>confdefs.h
 
-test "$enable_external_widget" = "yes" && $as_echo "#define EXTERNAL_WIDGET 1" >>confdefs.h
+test "$with_external_widget" = "yes" && $as_echo "#define EXTERNAL_WIDGET 1" >>confdefs.h
 
-test "$enable_kkcc"        = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
+test "$with_kkcc"        = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
 
-test "$enable_newgc"       = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
+test "$with_newgc"       = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
 
 test "$have_vdb_posix"     = "yes" && $as_echo "#define VDB_POSIX 1" >>confdefs.h
 
 test "$have_vdb_fake"      = "yes" && $as_echo "#define VDB_FAKE 1" >>confdefs.h
 
-test "$enable_quick_build" = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
+test "$with_quick_build" = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
 
 test "$with_purify"        = "yes" && $as_echo "#define PURIFY 1" >>confdefs.h
 
@@ -20704,11 +20701,11 @@ test "$with_kerberos"      = "yes" && $as_echo "#define KERBEROS 1" >>confdefs.h
 
 test "$with_hesiod"        = "yes" && $as_echo "#define HESIOD 1" >>confdefs.h
 
-test "$enable_union_type"  = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
+test "$with_union_type"  = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
 
-test "$enable_pdump"       = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
+test "$with_pdump"       = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
 
-test "$enable_dump_in_exec" = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
+test "$with_dump_in_exec" = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
 
 test "$with_ipv6_cname"    = "yes" && $as_echo "#define IPV6_CANONICALIZE 1" >>confdefs.h
 
@@ -20784,7 +20781,7 @@ echo "  Relocating allocator for buffers:  $with_rel_alloc"
 echo "  GNU version of malloc:             ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
-    - Consider configuring with --enable-pdump." ;;
+    - Consider configuring with --with-pdump." ;;
 esac
 
 echo "
@@ -20824,39 +20821,39 @@ if test "$need_athena" = "yes"; then
   echo "    - Athena headers location:                    $athena_h_path"
   echo "    - Athena library to link:                     $athena_lib"
 fi
-case "$enable_menubars" in
+case "$with_menubars" in
   gtk   ) echo "  Using GTK menubars."   ;;
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."
           echo "  *WARNING*  The Motif menubar implementation is currently buggy."
           echo "             We recommend using the Lucid menubar instead."
-          echo "             Re-run configure with --enable-menubars='lucid'." ;;
+          echo "             Re-run configure with --with-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
 if test "$with_xft_menubars" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in menubars."
   echo "      WARNING: This feature will be replaced with a face."
 fi
-case "$enable_scrollbars" in
+case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
   lucid  ) echo "  Using Lucid scrollbars."      ;;
   motif  ) echo "  Using Motif scrollbars."      ;;
   athena ) echo "  Using Athena scrollbars."     ;;
      msw ) echo "  Using MS-Windows scrollbars." ;;
 esac
-case "$enable_dialogs" in
+case "$with_dialogs" in
   gtk    ) echo "  Using GTK dialog boxes." ;;
   motif  ) echo "  Using Motif dialog boxes."
            if test "$unexec" = "unexaix.o"; then if test "`uname -v`" = 4 -a "`uname -r`" -ge 3; then
              echo "  *WARNING*  The Motif dialog boxes cause problems on AIX 4.3 and higher."
              echo "             We recommend using the Athena dialog boxes instead."
-             echo "             Install libXaw and re-run configure with --enable-dialogs='athena'."
+             echo "             Install libXaw and re-run configure with --with-dialogs='athena'."
              echo "             Read the PROBLEMS file for more information."
            fi; fi ;;
   athena ) echo "  Using Athena dialog boxes."     ;;
      msw ) echo "  Using MS-Windows dialog boxes." ;;
 esac
-case "$enable_widgets" in
+case "$with_widgets" in
   gtk    ) echo "  Using GTK native widgets."        ;;
   motif  ) echo "  Using Motif native widgets."      ;;
   athena ) echo "  Using Athena native widgets."     ;;
@@ -20916,17 +20913,17 @@ test "$with_xface" = yes && echo "  Compiling in support for X-Face message head
 
 echo "
 Sound:"
-test "$enable_sound_native" = yes && echo "  Compiling in support for sound (native)."
-test "$enable_sound_alsa" = yes && echo "  Compiling in support for ALSA (Advanced Linux Sound Architecture)."
-test "$enable_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
+test "$with_sound_native" = yes && echo "  Compiling in support for sound (native)."
+test "$with_sound_alsa" = yes && echo "  Compiling in support for ALSA (Advanced Linux Sound Architecture)."
+test "$with_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
 test "$old_nas" = yes && echo "    - NAS library lacks error trapping; will play synchronously."
-test "$enable_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
+test "$with_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
 
 echo "
 Databases:"
-test "$enable_database_berkdb" = yes && echo "  Compiling in support for Berkeley database."
-test "$enable_database_dbm"    = yes && echo "  Compiling in support for DBM."
-test "$enable_database_gdbm"   = yes && echo "  Compiling in support for GNU DBM."
+test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley database."
+test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
+test "$with_database_gdbm"   = yes && echo "  Compiling in support for GNU DBM."
 test "$with_ldap" = yes && echo "  Compiling in support for LDAP."
 if test "$with_postgresql" = yes; then
   echo "  Compiling in support for PostgreSQL."
@@ -20936,7 +20933,7 @@ fi
 
 echo "
 Internationalization:"
-test "$enable_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
+test "$with_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
 test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N input method)."
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."
@@ -20961,10 +20958,10 @@ test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
-test "$enable_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
-test "$enable_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
-test "$enable_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
-if test "$enable_union_type" = yes ; then
+test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
+test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
+if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: This tends to trigger compiler bugs, especially when"
@@ -20974,7 +20971,7 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: More recent versions may be safer, or not."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-if test "$enable_kkcc" = yes ; then
+if test "$with_kkcc" = yes ; then
   echo "  Using the new GC mark algorithms (KKCC)."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: The new algorithms are experimental. They are enabled by"
@@ -20982,7 +20979,7 @@ if test "$enable_kkcc" = yes ; then
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-test "$enable_newgc" = yes && echo "  Using the new incremental garbage collector and the new allocator."
+test "$with_newgc" = yes && echo "  Using the new incremental garbage collector and the new allocator."
 if test "$have_vdb_posix" = yes ; then
   if test "$have_vdb_sigaction" = yes ; then
     echo "  Using POSIX sigaction() to install fault handler."
@@ -20996,14 +20993,14 @@ fi
 if test "$have_vdb_mach" = yes ; then
   echo "  Using mach exception mechanism as vdb fault handler."
 fi
-if test "$have_vdb_fake" = yes && test "$enable_vdb" == fake; then
+if test "$have_vdb_fake" = yes && test "$with_vdb" == fake; then
   echo "  Virtual dirty bit write barrier manually disabled."
 fi
-test "$enable_pdump" = yes && echo "  Using the new portable dumper."
-test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
-test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."
+test "$with_pdump" = yes && echo "  Using the new portable dumper."
+test "$with_dump_in_exec" = yes && echo "  Dumping into executable."
+test "$with_debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
-if test "$enable_error_checking_extents $enable_error_checking_types $enable_error_checking_text $enable_error_checking_gc $enable_error_checking_malloc $enable_error_checking_glyphs $enable_error_checking_byte_code $enable_error_checking_display $enable_error_checking_structures" \
+if test "$with_error_checking_extents $with_error_checking_types $with_error_checking_text $with_error_checking_gc $with_error_checking_malloc $with_error_checking_glyphs $with_error_checking_byte_code $with_error_checking_display $with_error_checking_structures" \
   != "no no no no no no no no no"; then
   echo "  Compiling in support for runtime error checking."
   echo "  WARNING: ---------------------------------------------------------"
@@ -21043,7 +21040,7 @@ for file in $internal_makefile_list; do
 done
 ac_config_files="$ac_config_files src/paths.h src/xemacs.def.in lib-src/config.values"
 
-test "$enable_modules" = "yes" && ac_config_files="$ac_config_files lib-src/ellcc.h"
+test "$with_modules" = "yes" && ac_config_files="$ac_config_files lib-src/ellcc.h"
 
 
 
