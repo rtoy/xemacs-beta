@@ -1,3 +1,9 @@
+2010-01-12  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (default_query_method): Single = is intended.
+	Rewrite using comma operator to make this clearer and avoid
+	dependency on the value of an enum.
+
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
 	* database.c:
@@ -161,11 +167,6 @@
 	in regex.c where it was getting ranges with an end one greater
 	than expected, since it creates closed-closed range tables and
 	was getting passed the internal-format ranges.
-
-2010-01-11  Ben Wing  <ben@xemacs.org>
-
-	* file-coding.c (default_query_method):
-	OOOOOPS!  Had = instead of ==.
 
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
