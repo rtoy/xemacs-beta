@@ -1,3 +1,9 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer):
+	Need to quote the assertion expression, but not the description
+	expression.
+
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
 	* automated/mule-tests.el (featurep):
