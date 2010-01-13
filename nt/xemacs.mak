@@ -630,12 +630,11 @@ MULE=1
 !if $(MULE)
 OPT_DEFINES=$(OPT_DEFINES) -DMULE
 OPT_OBJS=$(OPT_OBJS) \
+	$(OUTDIR)\mule-ccl.obj \
 	$(OUTDIR)\mule-charset.obj \
 	$(OUTDIR)\mule-coding.obj
 !if $(UNICODE_INTERNAL)
 OPT_DEFINES=$(OPT_DEFINES) -DUNICODE_INTERNAL
-!else
-OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\mule-ccl.obj
 !endif
 !endif
 
