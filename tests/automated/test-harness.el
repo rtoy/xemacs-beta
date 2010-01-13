@@ -275,18 +275,18 @@ FAILING-CASE and DESCRIPTION are useful when Assert is used in a loop."
 	`(condition-case error-info
 	  (progn
 	    (assert ,assertion)
-	    (Print-Pass "%S" (quote ,(or description assertion)))
+	    (Print-Pass "%S" ,(or description `(quote ,assertion)))
 	    (incf passes))
 	  (cl-assertion-failed
 	   (Print-Failure (if ,failing-case
 			      "Assertion failed: %S; failing case = %S"
 			    "Assertion failed: %S")
-			  (quote ,(or description assertion)) ,failing-case)
+			  ,(or description `(quote ,assertion)) ,failing-case)
 	   (incf assertion-failures))
 	  (t (Print-Failure (if ,failing-case
 				"%S ==> error: %S; failing case =  %S"
 			      "%S ==> error: %S")
-			    (quote ,(or description assertion))
+			    ,(or description `(quote ,assertion))
 			    error-info ,failing-case)
 	     (incf other-failures)
 	     )))
