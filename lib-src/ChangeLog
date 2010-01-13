@@ -1,3 +1,7 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* fix-perms.sh: New file.
+
 2009-12-21  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove rules for building yow.

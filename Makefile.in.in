@@ -738,3 +738,9 @@ mcs:
 	for f in `file lib-src/* src/${PROGNAME} | grep ELF | sed -e 's/:.*//'`; do \
 	  mcs -da "$${ident} `echo $${f} | sed 's/.*\///'`" $${f}; \
 	done
+
+## Fix up permissions on source/build files
+.PHONY: fix-perms
+FRC.fix-perms:
+fix-perms: FRC.fix-perms
+	cd ${srcdir} && sh lib-src/fix-perms.sh
