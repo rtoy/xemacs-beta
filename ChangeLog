@@ -1,5 +1,8 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in (fix-perms):
+	Add target for fix-perms.  Run it to correct permissions.
+
 	* INSTALL:
 	* PROBLEMS:
 	* configure:
