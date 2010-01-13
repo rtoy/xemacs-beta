@@ -1,3 +1,9 @@
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* debug.c (vars_of_debug):
+	Provide `debug-xemacs' to signal we have a debug build;
+	must do this to get previoug `debug-on-error' change to work.
+
 2010-01-13  Jerry James  <james@xemacs.org>
 
 	* font-mgr.c (Ffc_config_app_font_add_file): Fix parentheses.
