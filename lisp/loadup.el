@@ -245,7 +245,8 @@ with the exception of `loadup.el'.")
     (really-free))
   ;; Make sure we don't dump with debugging messages turned on.
   (setq stack-trace-on-error nil
-	load-always-display-messages nil)
+	load-always-display-messages nil
+	debug-on-error nil)
   (dump-emacs
    (cond
     ((featurep 'infodock) "infodock")
