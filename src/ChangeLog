@@ -1,5 +1,24 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* print.c:
+	* print.c (internal_object_printer):
+	* print.c (enum printing_badness):
+	* print.c (printing_major_badness):
+	* print.c (print_internal):
+	Clean up the part of the code that looks for things that might
+	lead to crashing in the print code:
+	-- Make the "badness" messages more consistent.
+	-- Move the checks for circularities after the checks for bad
+	   memory, since the checks for circularities involve accessing
+	   memory (which could be bad).
+	-- Add an extra check to see if the object's implementation structure
+	   is bad memory.
+	-- Add extra check for object itself being a null pointer or
+	   implementation pointer being null.
+	-- Add some extra comments to help in maintaining the code.
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
 	* casetab.c (print_case_table):
 	* console.c (print_console):
 	* data.c (print_weak_list):
