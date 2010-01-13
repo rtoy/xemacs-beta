@@ -1,5 +1,10 @@
 2010-01-13  Jerry James  <james@xemacs.org>
 
+	* font-mgr.c (Ffc_config_app_font_add_file): Fix parentheses.
+	(Ffc_config_app_font_add_dir): Ditto.
+
+2010-01-13  Jerry James  <james@xemacs.org>
+
 	* Makefile.in.in: Remove CYGWIN && !PDUMP section.
 	* depend: Regenerated.
 	* s/cygwin.sc: Removed.
