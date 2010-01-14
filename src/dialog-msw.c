@@ -344,7 +344,7 @@ static int
 CALLBACK handle_directory_proc (HWND hwnd, UINT msg,
 				LPARAM lParam, LPARAM lpData)
 {
-  Extbyte szDir[PATH_MAX_EXTERNAL];
+  Extbyte szDir[PATH_MAX_TCHAR];
   struct param_data *pd = (struct param_data *) lpData;
   
   switch (msg)
@@ -430,7 +430,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
       pidl = qxeSHBrowseForFolder (&bi);
       if (pidl)
 	{
-	  Extbyte *szDir = alloca_extbytes (PATH_MAX_EXTERNAL);
+	  Extbyte *szDir = alloca_extbytes (PATH_MAX_TCHAR);
 	  
 	  if (qxeSHGetPathFromIDList (pidl, szDir))
 	    ret = tstr_to_local_file_format (szDir);

@@ -4572,7 +4572,7 @@ extern int preparing_for_armageddon;
 extern Fixnum emacs_priority;
 extern int suppress_early_error_handler_backtrace;
 void debug_break (void);
-int debug_can_access_memory (void *ptr, Bytecount len);
+int debug_can_access_memory (const void *ptr, Bytecount len);
 DECLARE_DOESNT_RETURN (really_abort (void));
 void zero_out_command_line_status_vars (void);
 

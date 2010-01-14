@@ -959,7 +959,7 @@ do {									\
       lfftt_tstr_path = alloca_extbytes (lfftt_size);			\
       cygwin_conv_path (CCP_POSIX_TO_WIN_T | CCP_RELATIVE,		\
 			lfftt_utf8_path, lfftt_tstr_path, lfftt_size);	\
-      * (Extbyte **) &(out) = lfftt_tstr_path;				\
+      * (const Extbyte **) &(out) = lfftt_tstr_path;			\
     }									\
 } while (0)
 #define TSTR_TO_LOCAL_FILE_FORMAT(path, out)				\

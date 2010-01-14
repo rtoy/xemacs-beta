@@ -2091,7 +2091,7 @@ All path elements in FILENAME are converted to their short names.
 */
        (filename))
 {
-  Extbyte shortname[PATH_MAX_EXTERNAL];
+  Extbyte shortname[PATH_MAX_TCHAR];
   Extbyte *fileext;
   Ibyte *shortint;
 
