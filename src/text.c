@@ -5763,12 +5763,15 @@ if no equivalent national charset representation can be found.
 DEFUN ("char-octet", Fchar_octet, 1, 3, 0, /*
 Return the octet numbered N (should be 0 or 1) of char CH.
 N defaults to 0 if omitted.
+
 This function is for compatibility; consider using `char-to-charset-codepoint'
 instead.
+
 This function is not very useful when a Unicode internal representation is
 used (--with-unicode-internal option to configure). (Specifically, this
 function is more or less equivalent to (nth (1+ N) (split-char CH)), but
-returns 0 instead of nil.)
+returns 0 instead of nil when N=1 and the discovered charset of the character
+has only one dimension.)
 */
        (ch, n, precedence_list))
 {
@@ -5793,8 +5796,11 @@ returns 0 instead of nil.)
 
 DEFUN ("split-char", Fsplit_char, 1, 2, 0, /*
 Return list of charset and one or two position-codes of char CH.
+
 This function is for compatibility; consider using `char-to-charset-codepoint'
-instead.  This function is like `char-to-charset-codepoint' but its return
+instead.
+
+This function is like `char-to-charset-codepoint' but its return
 value is hacked up for compatibility purposes: If the returned charset of
 the character is ISO-2022 compatible, the position codes will be coerced into
 the range [0, 127], even if they should be in the range [128, 255].
