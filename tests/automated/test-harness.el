@@ -1,7 +1,7 @@
 ;; test-harness.el --- Run Emacs Lisp test suites.
 
 ;;; Copyright (C) 1998, 2002, 2003 Free Software Foundation, Inc.
-;;; Copyright (C) 2002 Ben Wing.
+;;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Author: Martin Buchholz
 ;; Maintainer: Stephen J. Turnbull <stephen@xemacs.org>
@@ -269,27 +269,29 @@ BODY is a sequence of expressions and may contain several tests."
 
       (defmacro Assert (assertion &optional failing-case description)
 	"Test passes if ASSERTION is true.
-Optional FAILING-CASE describes the particular failure.
-Optional DESCRIPTION describes the assertion.
-FAILING-CASE and DESCRIPTION are useful when Assert is used in a loop."
-	`(condition-case error-info
-	  (progn
-	    (assert ,assertion)
-	    (Print-Pass "%S" ,(or description `(quote ,assertion)))
-	    (incf passes))
-	  (cl-assertion-failed
-	   (Print-Failure (if ,failing-case
-			      "Assertion failed: %S; failing case = %S"
-			    "Assertion failed: %S")
-			  ,(or description `(quote ,assertion)) ,failing-case)
-	   (incf assertion-failures))
-	  (t (Print-Failure (if ,failing-case
-				"%S ==> error: %S; failing case =  %S"
-			      "%S ==> error: %S")
-			    ,(or description `(quote ,assertion))
-			    error-info ,failing-case)
-	     (incf other-failures)
-	     )))
+Optional FAILING-CASE describes the particular failure.  Optional
+DESCRIPTION describes the assertion; by default, the unevalated assertion
+expression is given.  FAILING-CASE and DESCRIPTION are useful when Assert
+is used in a loop."
+	(let ((description
+	       (or description `(quote ,assertion))))
+	  `(condition-case error-info
+	    (progn
+	      (assert ,assertion)
+	      (Print-Pass "%S" ,description)
+	      (incf passes))
+	    (cl-assertion-failed
+	     (Print-Failure (if ,failing-case
+				"Assertion failed: %S; failing case = %S"
+			      "Assertion failed: %S")
+			    ,description ,failing-case)
+	     (incf assertion-failures))
+	    (t (Print-Failure (if ,failing-case
+				  "%S ==> error: %S; failing case =  %S"
+				"%S ==> error: %S")
+			      ,description error-info ,failing-case)
+	       (incf other-failures)
+	       ))))
 
       (defmacro Assert-test (test testval expected &optional failing-case
 			     description)
