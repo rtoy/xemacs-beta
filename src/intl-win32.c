@@ -1,5 +1,5 @@
 /* Win32 internationalization functions.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 2000 IKEYAMA Tomonori.
 
 This file is part of XEmacs.
@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "charset.h"
 #include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"
@@ -1194,18 +1195,17 @@ Set the CODE-PAGE for the CHARSET.
 Lisp_Object 
 mswindows_get_code_page_charset (int code_page)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_code_page;
 
-      charset_code_page = Fmswindows_charset_code_page (XCAR (charset_tail));
+      charset_code_page = Fmswindows_charset_code_page (charset_name);
       if (INTP (charset_code_page) &&
 	  code_page == XINT (charset_code_page))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }
@@ -1246,18 +1246,17 @@ Set the REGISTRY for the CHARSET.
 static Lisp_Object 
 mswindows_get_registry_charset (Ibyte *registry)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_registry;
 
-      charset_registry = Fmswindows_charset_registry (XCAR (charset_tail));
+      charset_registry = Fmswindows_charset_registry (charset_name);
       if (STRINGP (charset_registry) &&
 	  !qxestrcasecmp (XSTRING_DATA (charset_registry), registry))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }

@@ -49,6 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "commands.h"
 #include "debug.h"
 #include "device-impl.h"
@@ -633,13 +634,8 @@ static int
 redisplay_window_text_width_ichar_string (struct window *w, int findex,
 					  Ichar *str, Charcount len)
 {
-  unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object window;
-
-  find_charsets_in_ichar_string (charsets, str, len);
-  window = wrap_window (w);
-  ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
-			       charsets);
+  ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), wrap_window (w),
+			       str, len);
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (WINDOW_FRAME (w)))),
 		  text_width, (XFRAME (WINDOW_FRAME (w)),
 			       WINDOW_FACE_CACHEL (w, findex), str, len));
@@ -672,7 +668,6 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
 {
   Lisp_Object window = DOMAIN_WINDOW (domain);
   Lisp_Object frame  = DOMAIN_FRAME  (domain);
-  unsigned char charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
 
   if (!rtw_ichar_dynarr)
@@ -683,12 +678,11 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
   convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
-  find_charsets_in_ibyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
-  ensure_face_cachel_complete (&cachel,
-			       NILP (window) ? frame : window,
-			       charsets);
+  ensure_face_cachel_complete (&cachel, NILP (window) ? frame : window,
+			       Dynarr_atp (rtw_ichar_dynarr, 0),
+			       Dynarr_length (rtw_ichar_dynarr));
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
 		  text_width, (XFRAME (frame),
 			       &cachel,
@@ -1105,7 +1099,8 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     }
   else
     {
-      Lisp_Object charset = ichar_charset (data->ch);
+      /* @@#### fix me */
+      Lisp_Object charset = ichar_charset_obsolete_me_baby_please (data->ch);
       if (!EQ (charset, data->last_charset) ||
 	  data->findex != data->last_findex)
 	{
@@ -1128,7 +1123,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 	  fi = XFONT_INSTANCE (font_instance);
 	  if (!fi->proportional_p || data->font_is_bogus)
 	    {
-	      Ichar ch = data->font_is_bogus ? '~' : data->ch;
+	      Ichar ch = data->font_is_bogus ? CANT_DISPLAY_CHAR : data->ch;
 
 	      data->last_char_width =
 		redisplay_window_text_width_ichar_string
@@ -1189,7 +1184,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     /* Text but not in buffer */
     crb->charpos = 0;
   crb->type = RUNE_CHAR;
-  crb->object.chr.ch = data->font_is_bogus ? '~' : data->ch;
+  crb->object.chr.ch = data->font_is_bogus ? CANT_DISPLAY_CHAR : data->ch;
   crb->endpos = 0;
 
   if (data->cursor_type == CURSOR_ON)

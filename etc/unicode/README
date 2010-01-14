@@ -1,6 +1,23 @@
 This directory contains Unicode translation tables for most of the
 charsets in XEmacs.
 
+The tables in most of the directories are in a standard format that can be
+read by the function `load-unicode-mapping-table'.  References to these
+files are coded into files in the `lisp' and `lisp/mule' subdiectories of
+the source tree, such as `unicode.el' and various writing-system-specific
+files (e.g. `mule/latin.el', `mule/cyrillic.el').  The tables in `ibm/' are
+not currently in the right format, but could easily be converted by an
+appropriate perl or Elisp script.
+
+Sometimes the same character set has more than one table in different
+directories.  Sometimes one table is more complete than others, e.g. the
+tables for CNS 11643 in `mule-ucs' have mappings for non-BMP (greater than
+0xFFFF) Unicode characters, while the ones in `unicode-consortium' don't.
+It's possible to use one table to check the accuracy of another, although
+we don't currently do that.  We tend to prefer the tables in
+`unicode-consortium' over others unless there's a good reason to do
+otherwise (e.g. as previously described for CNS 11643).
+
 The tables in unicode-consortium/ come from:
 
 http://www.unicode.org/Public/MAPPINGS/
@@ -9,5 +26,14 @@ The tables in ibm/ come from:
 
 http://oss.software.ibm.com/icu/charset/
 
-The tables in unicode-consortium/ should be used as source data; the ones
-in ibm/ can be used to supplement or check the accuracy of the others.
+The tables in oreilly/ come from:
+
+http://examples.oreilly.com/cjkvinfo/unicode/
+
+The tables in mule-ucs/ come from the mule-ucs/lisp/reldata directory in
+the mule-ucs package, available from the XEmacs download repository under
+
+http://www.xemacs.org/Releases/index.html#Packages
+
+The tables in other/ were generated in various ways described in the
+README file in that directory.

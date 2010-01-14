@@ -44,7 +44,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
-# include <sys/types.h>  /* AJK */
 # ifndef WIN32_NATIVE
 #  include <sys/socket.h>
 #  include <netdb.h>

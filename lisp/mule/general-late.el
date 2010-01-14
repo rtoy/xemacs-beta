@@ -1,6 +1,7 @@
 ;;; general-late.el --- General Mule code that needs to be run late when
 ;;                      dumping.
 ;; Copyright (C) 2006 Free Software Foundation
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe
 
@@ -78,7 +79,9 @@
    (when-fboundp 'map-charset-chars 
      (loop
        for charset in (charset-list)
+       ;; @@#### Rethink this entire clause under Unicode-internal.
        with skip-chars-string = ""
+       if (charset-encodable-p charset)
        do
        (block no-ucs-mapping
          (map-charset-chars
@@ -101,10 +104,8 @@
              collect (aref (decode-coding-string (int-char i)
                                                  'utf-8) 0)))))
 
-;; At this point in the dump, all the charsets have been loaded. Now, load
-;; their Unicode mappings.
-(if load-unicode-tables-at-dump-time
-    (let ((data-directory (expand-file-name "etc" source-directory)))
-      (load-unicode-tables)))
+;; At this point in the dump, all the charsets have been loaded.
+;; Now, set the precedence list. @@#### There should be a better way.
+(initialize-default-unicode-precedence-list)
 
 ;;; general-late.el ends here

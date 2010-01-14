@@ -60,8 +60,8 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_foo = make_string (int_foo, sizeof (int_foo) - 1);
 
   Extbyte ext_latin[]  = "f\372b\343\340";
-  Ibyte int_latin1[] = "f\200\372b\200\343\200\340";
-  Ibyte int_latin2[] = "f\201\372b\201\343\201\340";
+  Ibyte int_latin1[] = "f\201\372b\201\343\201\340";
+  Ibyte int_latin2[] = "f\202\372b\202\343\202\340";
 #ifdef MULE
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
   Extbyte ext_tilde[]  = "f~b~~";
@@ -72,6 +72,12 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
   int autodetect_eol_p =
     !NILP (Fsymbol_value (intern ("eol-detection-enabled-p")));
+
+#ifdef MULE
+  /* Check to make sure no one changed the internal charset ID's on us */
+  assert (XINT (Fcharset_id (Vcharset_latin_iso8859_1)) == int_latin1[1]);
+  assert (XINT (Fcharset_id (Vcharset_latin_iso8859_2)) == int_latin2[1]);
+#endif
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
@@ -682,4 +688,3 @@ List of all test functions defined in tests.c.
 For use by the automated test suite.  See tests/automated/c-tests.
 */ );
 }
-
