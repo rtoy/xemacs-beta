@@ -1,5 +1,17 @@
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
+	* buffer.h:
+	* compiler.h:
+	Don't use USED_IF_MULE_OR_CHECK_TEXT in buffer.h.  Eliminate since
+	not used anywhere any more.
+	
+	* font-mgr.c (fontset_to_list):
+	* font-mgr.c (Ffc_config_substitute):
+	Don't use Fsignal() as it may return.  Use signal_error() instead
+	or a more specific function such as invalid_state() or wtaerror().
+
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
 	* syswindows.h: Don't define CYGWIN_HEADERS here.
 
 2010-01-14  Ben Wing  <ben@xemacs.org>
