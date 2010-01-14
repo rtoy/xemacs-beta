@@ -27,6 +27,10 @@ Boston, MA 02111-1307, USA.  */
 
 #define MINGW
 
+/* We are using Cygwin-style headers in /usr/include, also used by
+   Cygwin itself */
+#define CYGWIN_HEADERS
+
 #ifndef ORDINARY_LINK
 #define ORDINARY_LINK
 #endif
