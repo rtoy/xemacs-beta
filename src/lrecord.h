@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -241,7 +241,9 @@ enum lrecord_type
   lrecord_type_charset,
   lrecord_type_coding_system,
   lrecord_type_char_table,
-  lrecord_type_char_table_entry,
+#ifndef USE_PLAIN_ARRAYS_FOR_SUB_TABLES
+  lrecord_type_char_subtable,
+#endif
   lrecord_type_range_table,
   lrecord_type_opaque,
   lrecord_type_opaque_ptr,
@@ -303,8 +305,7 @@ enum lrecord_type
 #ifndef NEW_GC
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
-#endif /* not NEW_GC */
-#ifdef NEW_GC
+#else
   lrecord_type_string_indirect_data,
   lrecord_type_string_direct_data,
   lrecord_type_hash_table_entry,
@@ -709,7 +710,7 @@ int lrecord_stats_heap_size (void);
      ...
    };
 
-   lisp_object_description is declared in alloc.c, like this:
+   lisp_object_description is declared in gc.c, like this:
 
    static const struct memory_description lisp_object_description_1[] = {
      { XD_LISP_OBJECT, 0 },
@@ -1121,8 +1122,6 @@ struct opaque_convert_functions
   void *(*deconvert)(void *object, void *data, Bytecount size);
 
 };
-
-extern const struct sized_memory_description lisp_object_description;
 
 #define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
 

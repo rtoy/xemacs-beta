@@ -71,7 +71,7 @@
       ;; Region not active in this second temp buffer
       (Assert (not (region-active-p)))
       ;; Region still active in first temp buffer
-      (Assert (eq (zmacs-region-buffer) first-buffer))
+      (Assert-eq (zmacs-region-buffer) first-buffer)
       ;; Activate region in second temp buffer
       (Silence-Message
        (mark-whole-buffer))

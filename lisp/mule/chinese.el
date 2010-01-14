@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -46,7 +46,7 @@
 (flet
     ((make-chinese-cns11643-charset
       (name plane final)
-      (make-charset
+      (make-internal-charset
        name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
        `(registries 
          ,(vector (concat "cns11643.1992-" plane ))
@@ -54,6 +54,8 @@
          chars 94
          final ,final
          graphic 0
+	 unicode-map (,(format "unicode/mule-ucs/chinese-cns11643-%s.txt"
+			       plane))
 	 short-name ,(concat "CNS11643-" plane)
 	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
 			    plane)))
@@ -70,7 +72,7 @@
 ;; ISO-IR-165 (CCITT Extended GB)
 ;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
 ;;    GB 8565-88 table A4 + 293 characters.
-(make-charset ;; not in FSF 21.1
+(make-internal-charset ;; not in FSF 21.1
  'chinese-isoir165
  "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
  `(registries ["isoir165-0"]
@@ -81,22 +83,23 @@
    short-name "ISO-IR-165"
    long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
-;; PinYin-ZhuYin
-(make-charset 'chinese-sisheng 
-	      "SiSheng characters for PinYin/ZhuYin"
-	      '(dimension
-		1
-		;; XEmacs addition: second half of registry spec
-		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?0
-		graphic 0
-		short-name "SiSheng"
-		long-name "SiSheng (PinYin/ZhuYin)"
-		))
+; ;; PinYin-ZhuYin
+; (make-internal-charset 'chinese-sisheng 
+; 	      "SiSheng characters for PinYin/ZhuYin"
+; 	      '(dimension
+; 		1
+; 		;; XEmacs addition: second half of registry spec
+; 		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+; 		chars 94
+; 		columns 1
+; 		direction l2r
+; 		final ?0
+; 		graphic 0
+; 		short-name "SiSheng"
+; 		long-name "SiSheng (PinYin/ZhuYin)"
+; 		))
 
+ 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
 ;;  (setq wnn-server-type 'cserver)
@@ -243,7 +246,7 @@ Uses the GB2312 character set."))
                    (list "zh_CN.eucCN" "zh_CN.EUC" "zh_CN" "chinese-s" "zh"
 			 (lambda (arg)
                            (and arg (let ((case-fold-search t))
-                                      (string-match "^zh_.*.GB.*" arg))))))
+                                      (string-match "^zh_.*\\.GB.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
@@ -297,7 +300,9 @@ of a Chinese character\"."))
 (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
 
 (set-language-info-alist
- "Chinese-BIG5" '((charset chinese-big5-1 chinese-big5-2)
+ "Chinese-BIG5" `(,(if (find-charset 'chinese-big5-1)
+		       '(charset chinese-big5-1 chinese-big5-2)
+		     '(charset chinese-big5))
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
 		  (cygwin-locale "zh_TW")

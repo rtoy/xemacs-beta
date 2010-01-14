@@ -1,5 +1,6 @@
 /* Gutter implementation.
    Copyright (C) 1999, 2000 Andy Piper.
+   Copyright (C) 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -300,8 +301,8 @@ calculate_gutter_size_from_display_lines (enum gutter_pos pos,
       /* grab coordinates of last line  */
       if (Dynarr_length (ddla))
 	{
-	  dl = Dynarr_atp (ddla, Dynarr_length (ddla) - 1);
-	  size = (dl->ypos + dl->descent - dl->clip)
+	  dl = Dynarr_lastp (ddla);
+	  size = (dl->ypos + dl->descent - dl->clip) 
 	    - (Dynarr_atp (ddla, 0)->ypos - Dynarr_atp (ddla, 0)->ascent);
 	}
     }

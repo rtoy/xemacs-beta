@@ -70,7 +70,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
     ;; Search for the tag "mystruct"; this should succeed
     (Silence-Message
      (find-tag "mystruct"))
-    (Assert (eq (point) 2))
+    (Assert-eq (point) 2)
 
     ;; Search again.  The search should fail, based on the patch that
     ;; Sven Grundmann submitted for 21.4.16.
@@ -86,7 +86,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
 	(Silence-Message
 	 (find-tag "require"))
       (t t))
-    (Assert (eq (point) 52)))
+    (Assert-eq (point) 52))
 
   (kill-buffer testfile)
   (delete-file testfile)

@@ -131,8 +131,9 @@ struct specifier_methods
      If this function is not present, then Fcopy_tree is used. */
   Lisp_Object (*copy_instantiator_method) (Lisp_Object instantiator);
 
-  /* Validate-matchspec method: Given a matchspec, verify that it's
-     valid for this specifier type.  If not, signal an error.
+  /* Validate-matchspec method: Given a matchspec (see
+     Fspecifier_matching_instance), verify that it's valid for this
+     specifier type.  If not, signal an error.
 
      If this function is not present, *no* matchspecs are considered
      valid.  Note that this differs from validate_method(). */
@@ -468,17 +469,28 @@ DECLARE_LRECORD (specifier_caching, struct specifier_caching);
   : (DEVICEP (obj) ? obj					\
   : (IMAGE_INSTANCEP (obj) ? image_instance_device (obj)	\
   : Qnil))))
+#define DOMAIN_XDEVICE(obj)			\
+  (XDEVICE (DOMAIN_DEVICE (obj)))
 
 #define DOMAIN_FRAME(obj)				\
    (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
   : (FRAMEP  (obj) ? obj				\
   : (IMAGE_INSTANCEP (obj) ? image_instance_frame (obj)	\
   : Qnil)))
+#define DOMAIN_XFRAME(obj)			\
+  (XFRAME (DOMAIN_FRAME (obj)))
 
 #define DOMAIN_WINDOW(obj)					\
    (WINDOWP (obj) ? obj						\
   : (IMAGE_INSTANCEP (obj) ? image_instance_window (obj)	\
   : Qnil))
+#define DOMAIN_XWINDOW(obj)			\
+  (XWINDOW (DOMAIN_WINDOW (obj)))
+
+Lisp_Object MAYBE_DOMAIN_BUFFER (Lisp_Object obj);
+Lisp_Object DOMAIN_BUFFER (Lisp_Object obj);
+
+#define DOMAIN_XBUFFER(obj) XBUFFER (DOMAIN_BUFFER (obj))
 
 #define DOMAIN_LIVE_P(obj)					\
    (WINDOWP (obj) ? WINDOW_LIVE_P (XWINDOW (obj))		\
@@ -486,13 +498,6 @@ DECLARE_LRECORD (specifier_caching, struct specifier_caching);
   : (DEVICEP (obj) ? DEVICE_LIVE_P (XDEVICE (obj))		\
   : (IMAGE_INSTANCEP (obj) ? image_instance_live_p (obj)	\
   : 0))))
-
-#define DOMAIN_XDEVICE(obj)			\
-  (XDEVICE (DOMAIN_DEVICE (obj)))
-#define DOMAIN_XFRAME(obj)			\
-  (XFRAME (DOMAIN_FRAME (obj)))
-#define DOMAIN_XWINDOW(obj)			\
-  (XWINDOW (DOMAIN_WINDOW (obj)))
 
 EXFUN (Fcopy_specifier, 6);
 EXFUN (Fmake_specifier, 1);
@@ -571,16 +576,6 @@ DECLARE_SPECIFIER_TYPE (display_table);
 #define DISPLAYTABLE_SPECIFIERP(x) SPECIFIER_TYPEP (x, display_table)
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)
-
-/* The various stages of font instantiation; initial means "find a font for
-   CHARSET that matches the charset's registries" and final means "find a
-   font for CHARSET that matches iso10646-1, since we haven't found a font
-   that matches its registry."  */
-enum font_specifier_matchspec_stages {
-  initial,
-  final,
-  impossible,
-};
 
 Lisp_Object define_specifier_tag(Lisp_Object tag,
 				 Lisp_Object device_predicate,

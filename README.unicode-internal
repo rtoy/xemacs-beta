@@ -1,0 +1,486 @@
+SHORT-TERM TO DO:
+================
+
+-- Testing, testing, testing.  Need to test under both Unicode-internal and
+   old-Mule.  Under old-Mule, we need to test out the handling of the new
+   Unicode and non-encodable-charset features.  Under Unicode-internal, we
+   need to test out the reading and writing of iso2022-encoded files, the
+   handling of characters encoded in private-Unicode space, the display of
+   stuff out of the symbol font (e.g. for the continuation-glyph) (which
+   doesn't currently work!).
+
+-- For all charsets moved into mule-charset.el, follow the lead of
+   Ethiopic and VISCII in putting notes in mule-charset.el indicating
+   the file it was moved from and why (usually because the file in
+   question contains ISO-2022-embedded text using the same charsets
+   being defined in the file, so you have a bootstrapping problem)l
+   Also in the file it was moved from, put the first line of the
+   call to `make-charset' behind a comment, and put a comment above
+   telling where it was moved to.  Again, use ethiopic.el and
+   vietnamese.el. (MOSTLY DONE)
+
+-- For charsets not needing to be in mule-charset.el, move them
+   back into where they came from. (MOSTLY DONE)
+
+-- The order for the charsets in `make-charset' should always list
+   `ascii' and `control-1' last, in case the charset provides its
+   own Unicode mapping for ASCII chars (e.g. VISCII does).
+
+-- Check to make sure that `multibyte' will handle gaps in the charsets,
+   as indicated by the attached unicode maps, e.g. VISCII has this.
+   Internal ASCII character should get mapped out to ASCII whenever
+   there's not a shadowing entry in the VISCII map, e.g. internal
+   0x02 should *NOT* get mapped to external 0x02 because that is
+   already used by some other character.
+
+-- Fix up the COPYING and README files in etc/unicode/unicode-consortium.
+
+-- Aidan has added a whole lot of CCL-related Unicode-handling stuff.
+   Need to figure out what this is doing and implement this in a way
+   that will work with Unicode-internal.
+
+-- Error-handling:
+
+   1. We need to review all uses of CONVERR_SUCCEED, CONVERR_USE_PRIVATE
+      and CONVERR_SUBSTITUTE and see whether it is the right thing to do.
+   2. Review and document the use of private Unicode codepoints.  The point
+   here seems to be that in some circumstances, we want to be able to
+   represent charset codepoints as Unicode codepoints even when no official
+   conversion exists, e.g. when using the Unicode-internal representation
+   and reading in and/or recompiling a .el file containing weird charset
+   codepoints without Unicode equivalents.  Currently we create such
+   codepoints when CONVERR_SUCCEED is given, but we need to review this.
+   We also need to review calls to valid_unicode_codepoint_p() and check
+   the second argument, which determines whether private Unicode codepoints
+   are allowed.
+
+-- Redisplay:
+
+   1. In descr-text.el, the junky function describe-char-display wants to
+      figure out the font code that will be displayed.  It used
+      ccl-encode-to-ucs-2, which I removed; now, X does Unicode in a
+      more general way.  But try to fix this.
+
+-- "Windows Glyph List 4":
+   -- Hacky code in unicode.el forces certain glyphs to go into
+      a JIT charset for display purposes.  This seems awful and won't work
+      for Unicode-internal.  Instead, create a one-column charset holding
+      these codepoints and put it above the East-Asian charsets.
+
+CCL:
+
+   -- Rather than disallowing CCL under Unicode-internal, allow it and just
+      make it work as well as possible.  It may never work perfectly but
+      at least it can do something.
+
+LONGER-TERM TO DO:
+==================
+
+-- Multibyte coding system:
+
+   1. Implement coding priorities for this coding system.  Currently in
+   coding-system-priority we either return `no-conversion' or `iso-8-1',
+   both of which are garbage.
+
+   2. A detector for multibyte.  It might have subtypes, based on identifiable
+   characteristics: single-byte with high bytes in A0-FF range, same but
+   with 80-FF range, double-byte (i.e. mixed single-double) with both bytes
+   A0-FF, double-byte with first byte A0-FF and second byte either high or
+   low, double-byte with first byte 80-FF and second byte either high or
+   low, double-byte with single-byte in A0-DF range, first double-byte in
+   80-9F and E0-FF and second in either high or low.  We determine whether
+   things are single or double by looking to see whether only even stretches
+   or presumed doubles exist.  Determining what kind of second byte occurs
+   is simple, too.
+
+   NOTE: The latter detector described is really a shift-jis-specific
+   detector, in disguise.  We really need to have the multibyte have a list
+   of all the systems it's trying to classifying something into, and output
+   probabilities for each of these different possible classifications,
+   based on the same sort of things it does above.  But rather than have to
+   hard code a set of subtypes for different ranges of allowed single or
+   double-byte characters, it can do this dynamically.
+
+-- Unicode precedence lists:
+
+   1. Implement a buffer-local unicode-precedence list and then review all
+   uses of get_unicode_precedence() to see how to fix them up.  Sometimes you
+   may need the caller to pass in a buffer or domain.
+   2. We may want to convert precedence lists into structures, where we can
+   cache info about the structure, e.g. whether we can short-circuit involving
+   ASCII (see below under "Unicode-encoding"), and also whether this is a
+   global or buffer-local list or a freshly created one, so we know how to
+   free it properly.
+
+
+-- Unicode encoding:
+
+   -- Think about whether we really want to be hardcoding translations
+      involving ASCII and Control-1.  Some charsets specify different values
+      for codes in the ASCII range, e.g. Vietnamese VISCII, Japanese-Roman,
+      and of course EBCDIC.  Perhaps the check for ASCII is for
+      efficiency; if so there should be a way of indicating that ASCII is
+      higher than any other charsets that have different values for those
+      bytes.  Perhaps we want to convert precedence lists into structures,
+      where we can cache info about the lists.  (See above, under "Unicode
+      precedence lists")
+
+-- Things like `modify-syntax-entry' and friends that operate on charset-
+   specific properties need to do things differently.  We really need to
+   get the big table of properties from the Unicode consortium, indicating
+   all the important properties of Unicode characters, and parse this and
+   use it to set the properties of the characters.
+
+-- Currently, when in old_mule_non_ascii_charset_codepoint_to_ichar_raw(),
+   we get a non-encodable charset point, we just punt, and ultimately
+   either you get an error or a generic substitution character.  We should
+   instead try to find an equivalent character by way of Unicode.  In this,
+   we need a property on charsets listing the preferred charsets to map
+   this charset into.  Without such a listing of preference, it might just
+   work to use whatever preference list happens to be available; but there
+   is no guarantee.  This leads to behavior identical to the old CCL
+   behavior; that is, we can ensure that koi8-r gets converted into
+   iso8859-5 to the extent it can be.  With implementation of the multibyte
+   decoder, we could remove shift-jis and big5 as special cases except
+   under old-Mule.
+
+-- In order for someone under Unicode-internal to be able to edit a Mule
+   .el file reliably, they have to use iso2022-preservation to read it in
+   and write it out.  But currently such private characters don't function
+   like normal ones.  We have to make them function the same.  First,
+   provide a function that converts a private character to its normal
+   Unicode one by converting it to charset codepoint and from there to
+   normal Unicode.  Then, we use this conversion when processing the
+   character in various contexts.  These contexts include, among others,
+   retrieving a value from a char table (e.g. a case-table conversion, syntax-
+   table handling, etc.) and handling the character for redisplay.  Probably,
+   we want to do change the conversion routines so that most routines, when
+   they ask for a character, the automatically get the converted version if
+   it exists.  Special routines would be needed to get the original, private
+   version.  String comparisons would be tricky since you'd probably want to
+   compare the converted versions of one string with the converted versions
+   of another string; but we already have stuff in place to handle translation
+   tables and the logic is very similar.
+
+-- The same scheme of private characters could be used for the preservation
+   of other info such as language.  However, the normal scheme that is expected
+   to be used in such a case is text properties.  In order to use this for real,
+   we need (a) all operations on strings need to preserve text properties.
+   Most currently do, but many don't. (b) there needs to be a way to serialize
+   text properties into a string of data, as is passed to conversion routines.
+   A simple way would be to make the data be structured; e.g. a special value
+   indicates that a structure describing text properties follows; it indicates
+   the text properties of further data until another such structure occurs.
+   The introducing marker could either be something that could not have normal
+   meaning, or something that could but doesn't occur often in that meaning.
+   To indicate the normal meaning, you'd then double the value.  The list of
+   text properties would have to be serialized into a byte stream, something
+   like in unified range tables.
+
+-- It would be important, whether or not the scheme about serialized
+   text-property info as indicated previously is adopted, to make sure that
+   all character data passed to conversion routines occurs in groups of
+   full characters. (Note, data is conversion routines is already typed
+   according to byte or char.) This would significantly speed up the
+   operations of these routines.  This would be fairly simple to ensure,
+   and the mechansism for this is already in place.
+
+-- Font handling:
+
+   Currently, redisplay assumes one font per character set
+   and does optimizations based on this.  The face_cachel info explicitly
+   encodes a table mapping charsets to fonts.  We need to remove this
+   entirely.  You might think of mapping Unicode ranges to fonts, but this
+   suffers the same problem that fonts may cover part of various ranges.
+   So:
+
+   a. First, we need to do mapping entirely based on characters, not
+      character sets.  This means, e.g., changing the MATCHSPEC of
+      specifier-matching-instance of a font-specifier to have a character
+      not a charset in it.
+   b. Second, we will need some caching to make this process reasonable.
+      Previously there were at least two levels of caching: (1) Redisplay
+      only went investigating for a new font when the charset changed after
+      a run of characters in the same charset. (2) Font lookup was cached.
+      What we need to do is (a) We could cache for each character the font
+      found for that character; unfortunately that can easily change based
+      on the language, or simply when the user chooses to change the list of
+      font used; (b) Cache the tables for each font that specify what characters
+      exist (this is probably the biggest savings, as long as the tables we
+      cache aren't horrendously large); some tables might be imperfect, e.g.
+      indicating only the unicode ranges they support, and we might have to
+      query further; maybe this means they tend to support the entire subrange,
+      and we'll have to assume that and optimize the routine for this.
+   c. To find a matching font, we currently make use of the charset of the
+      char and the registry of the font.  In the revised scheme, we'd make
+      use of the language, if considered important, to convert to a charset
+      appropriate to the language and choose the font by its registry.  We
+      may want to do this always, but whether we do this first or after
+      seeking out an ISO-10646 (Unicode) font, is something controlled by
+      the particular language (e.g. by a global list specifying which
+      languages do language-specific lookup first).
+
+
+-- A better interface for implementing query-coding-system, etc.
+
+The current interface underlying query-coding-system (the query methods on
+coding systems) seems unclean -- it should work with streams, not buffers,
+and shouldn't have to muck around with highlighting extents or anything of
+that sort.  That should be handled at a higher level.  But also, you're
+duplicating a lot of logic by having separate query and convert methods.
+I'd rather see an interface like this:
+
+1. Add three more parameters to the convert methods, which are pointers
+   used to return an error code, input length and output length, see below.
+2. Currently, when a convert method encounters an error, it does the best
+   job it can at converting, writes out the result to the dynarr, and just
+   continues, without alerting the caller.  In the new scheme, when the
+   routine encounters an error, it does the following:
+-- (a) store the amount of input data processed so far (not including the
+       erroneous input) in the "input length" parameter.
+-- (b) call Dynarr_length() and store the result into the "output length"
+       parameter.
+-- (c) write out its "best attempt at converting" to the dynarr.
+-- (d) stores an error into the "error code" parameter.
+-- (e) returns immediately.  The return value, which indicates how much
+       input has been processed, should include the erroneous input.
+3. Note that the actual return value from the convert method, as mentioned,
+   indicates the total amount of input processed, and the total amount of
+   output generated can be determined by comparing the length of the dynarr
+   before and after the call.  The "input length" and "output length"
+   parameters indicate how much non-erroneous input and output was
+   processed.
+4. Note that there is no need for either the coding-stream convert method
+   or the lstream write method to process all data given -- if some data is
+   left, it will be passed in again on the next call. (Lstream_write_1()
+   takes care of this.) Hence it's safe for the conversion method to stop
+   immediately upon an error.
+5. The existing coding_reader() and coding_writer() methods will simply
+   ignore the values returned via the new parameters.
+6. Create new lstream methods, e.g. read_from_converter() and
+   write_to_converter(), that can access the additional error info returned
+   by the convert methods.  It's likely that these methods will be provided
+   only for coding lstreams.  The coding stream versions will be
+   modifications of the existing coding_reader() and coding_writer().  As a
+   first pass, you can just provide write_to_converter(), since
+   coding_writer() is very simple but coding_reader() is a bit tricky.
+7. Create a new lstream function, e.g. Lstream_write_to_converter(), that
+   wraps the write_to_converter() method.  Unlike Lstream_write(), this
+   doesn't attempt to stuff *all* the data down the stream, and doesn't
+   buffer.  Instead, it only makes one call to the write_to_converter()
+   method and returns its results directly.  It's the caller's job to loop.
+   Lstream_read_from_converter() is similar.
+8. `query-coding-*' simply sets up a coding lstream writing out to a dynarr
+   lstream sink, or maybe a null lstream sink (doesn't currently exist but
+   it's easy to implement -- just copy and modify the existing "fixed
+   buffer lstream").  It writes out its data using write_to_converter(),
+   and it will be told whenever the coding system ran into problems, along
+   with the amount of data processed without problems and the first bit of
+   data that caused problems.  If you want, you can also retrieve the
+   result of converting, both of the good and bad chunks.  By looping, you
+   can accumulate a list of all the bad sections.
+9. This same mechanism can also be used when reading a file in to determine
+   whether the file was converted correctly, and to flag sections that were
+   not correctly converted.
+
+
+
+LIST OF CHANGES MADE:
+====================
+
+
+Configure changes:
+
+  configure.ac, config.h.in, nt/config.inc.samp, nt/xemacs.mak
+    -- add with-unicode-internal as option
+
+wcwidth:
+  configure.ac, config.h.in:
+    -- add check for `wcwidth' function (AC_CHECK_FUNCS), HAVE_WCWIDTH
+  unicode.c:
+    -- unicode_char_columns(): use wcwidth() if available, else hand-code
+       for most known charsets
+
+ISO-2022-Preserving:
+  bytecode.el:
+    -- When inserting a file to be compiled, look for a coding-system
+       magic cookie; if it's an `iso2022' coding system, override the coding
+       system with iso-2022-8bit-preserve, so that ISO 2022 sequences get
+       preserved with their same charsets. (FIXME: Shouldn't this use
+       text properties on the characters?)
+  mule/mule-coding.el:
+    -- Create iso-2022-8bit-preserve coding-system.
+  mule/mule-{ccl,charset,cmds,coding,composite-stub,tty-init,x-init}.el,
+  unicode.el:
+    -- Don't mark as using iso-2022-7bit encoding.
+derived.el:
+  -- Some simplification of a call to map-char-table checking for inherited
+     syntax codes (WHY? Maybe internally we fixed map-char-table to do a
+     better job?)
+dumped-lisp.el:
+  -- Move unicode.el later in build list (WHY?)
+  -- some comment formatting
+  -- Add mule/windows.el. (WHY? What goes here?)
+
+Debugging, Error-checking:
+  debug-on-error
+    loadup.el:
+      -- when --debug enabled, immediately dump core upon an unhandled error
+         during loadup, instead of just quitting. (NOTE: You can also get this
+         efect using export XEMACSDEBUG='(setq debug-on-error t)' (STANDALONE)
+    cmdloop.c, lisp.h:
+      -- if debug-on-error set, immediately break to the debugger
+         (force-debugging-signal). (STANDALONE)
+  debug.c:
+    provide `debug-xemacs' if debugging enabled. (STANDALONE)
+  emacs.c, lisp.h:
+    use const in debug_can_access_memory (STANDALONE)
+  print.c:
+    try harder to detect when printing would cause a core dump, and
+    instead print a huge warning ("SERIOUS XEMACS BUG") (STANDALONE)
+  config.h.in:
+    define ERROR_CHECK_ANY if any error-checking turned on (WHY?)
+  casetab.c, console.c, data.c, database.c, device-msw.c, device.c,
+  eval.c, file-coding.c, frame.c, glyphs.c, gui.c, keymap.c, lisp.h,
+  mule-charset.c, objects.c, print.c, process.c, tooltalk.c, ui-gtk.c,
+  window.c, ...:
+    -- use printing_unreadable_lcrecord instead of printing_unreadable_object
+    (STANDALONE)
+  lisp.h:
+    -- define text_checking_assert() and other *_checking_assert() macros
+       for various types of error-checking
+
+
+Unicode translation tables:
+  loadup.el:
+    -- delete code to load the unicode translation tables at dump time.
+       (WHY?)
+  mule/mule-cmds.el:
+    -- comment out code to load the unicode translation tables when not
+       at dump time. (WHY?)
+ 
+mule/arabic.el, mule/chinese.el, mule/cyrillic.el, mule/ethiopic.el, mule/european.el, mule/greek.el,
+mule/hebrew.el, mule/indian.el, mule/japanese.el, mule/korean.el, mule/lao.el, mule/misc-lang.el,
+mule/mule-charset.el, mule/thai-xtis.el, mule/mule-thai.el, mule/tibetan.el, mule/vietnamese.el, ...:
+  -- move creation of charsets into mule/mule-charset.el, necessary for bootstrap
+     reasons: we need the charsets created, and their translation tables
+     loaded, BEFORE loading any files that use the charsets in their
+     ISO-2022 encoding.
+mule/chinese.el:
+  -- Frob syntax table entries for big5 charset(s) -- see below.
+     (FIXME: Where was this done before?)
+  -- Fix regexp for identifying a Chinese-simplified locale. (STANDALONE)
+mule/cyrillic.el, mule/devan-util.el, mule/devanagari.el, mule/european.el, mule/greek.el, mule/japanese.el, mule/lao.el, mule/thai-xtis.el, ...:
+  -- Replace raw ISO-2022 sequences with calls to make-char. (FIXME: Is this
+     necessary? I vaguely remember that I went through and changed some
+     files like this, then maybe figured out a way to keep ISO-2022 encoding in
+     loadup lisp files.)
+
+CCL changes:
+  mule/cyrillic.el:
+    -- Delete CCL coding system for converting Koi8 to ISO-8859-5; instead
+       define `koi8' as a `multibyte' coding system.
+    -- Alternativny encoding: Same changes as for Koi8, same caveats.
+
+src/Makefile.in.in:
+  -- minor cleanup: use mule_objs instead of mule_wnn_objs, mule_canna_objs.
+
+mule/ethio-util.el:
+  -- Avoid raw use of \u in a string (STANDALONE).
+mule/european.el:
+  -- Add comments about adding support for Latin-10, Latin-13. FIXME:
+     Support is not there yet, marked with @@####.
+mule/european.el, mule/greek.el:
+  -- There are gaps in the Latin-3 and Latin-7 unicode tables, so handle
+     this when setting up the syntax entries.
+mule/mule-charset.el:
+  -- Add charsets for code pages.
+mule/mule-composite.el:
+  -- Don't autoload fns in this file.
+mule/windows.el:
+  -- Currently empty.
+  -- FIXME: Should have Windows-1251 support (see comment in cyrillic.el)
+     and others? 
+x-compose.el:
+  -- @@#### comment about eliminating this file.
+
+mirror tables, syntax tables, case tables:
+  Maintaining mirror tables is difficult with changes to char tables, so
+  put the code inside of #ifdef MIRROR_TABLE and don't use for the moment
+    abbrev.c, casefiddle.c, cmds.c, search.c:
+      -- use BUFFER_MIRROR_SYNTAX_TABLE in place of buf->mirror_syntax_table
+    buffer.c, bufslots.h, chartab.c, chartab.h, syntax.c, syntax.h:
+      -- conditionalize mirror-table usage on MIRROR_TABLE
+  buffer.h, syntax.h:
+    -- move BUFFER_SYNTAX_TABLE, BUFFER_MIRROR_SYNTAX_TABLE,
+       BUFFER_CATEGORY_TABLE to syntax.h from buffer.h
+    -- syntax.h needs to include buffer.h
+  buffer.h, casetab.h:
+    -- move case-table-related code from buffer.h to casetab.h
+  abbrev.c, buffer.h, casefiddle.c, casetab.c, casetab.h, fns.c, gui-msw.c,
+  gui.c, menubar-msw.c, menubar.c, minibuf.c, process.c, regex.c, search.c,
+  text.c, win32.c:
+    -- don't include casetab.h/chartab.h in buffer.h; do in individual .c
+       files (instead, casetab.h includes buffer.h and chartab.h)
+  chartab.c, chartab.h:
+    -- drastic rewrite of char tables for Unicode-internal: previous
+       implementation indexed by charsets, current one by individual chars,
+       using page tables (same as for Unicode translation tables)
+  cmds.c:
+    -- use put_char_table_1() to modify a char table instead of trying to
+       hack into the actual structure
+  casetab.c, chartab.c, syntax.c:
+    -- change prototype of internal mapper for mapping over a char table to
+       take a character rather than an object that may indicate a range.
+
+Characters, charsets:
+  Characters change format, are Unicode instead of encoding a charset.
+  No way to retrieve a charset directly from a character any more.  Instead
+  of `split-char' into a charset, use `char-to-charset-codepoint' to look
+  into a translation table.  Leading bytes disappear.  Character sets
+  can be an arbitrary one or two-dimensional size -- not restricted to
+  94 or 96 or 94x94 or 96x96.  Thus, big5 is one charset now instead of
+  two.
+
+  mule/vietnamese.el:
+    -- Use char-to-charset-codepoint instead of split-char.
+
+  mule/chinese.el, mule/mule-category.el, mule/mule-charset.el, mule/mule-msw-init-late.el:
+    -- with unicode-internal, big5 is one charset instead of 2, so
+       conditionalize code that uses big5 charset(s) to work both ways, looking
+       for (find-charset 'chinese-big5-1).
+  charset.h:
+    -- additional commenting of charset struct elements
+
+alloc.c:
+  -- comment reformatting
+  -- change hash method of cons from 0 to internal_hash_1 (WHY?); a comment
+     says the same thing for string, but the change hasn't be made (WHY? FIXME?)
+  -- factor out some repeated code in object_memory_usage_stats into
+     a FROB() (STANDALONE)
+Dynarrs:
+  alloc.c, bytecode.c, dynarr.c:
+    -- move def of lisp object desc to dynarr.c
+    -- capitalize: lisp_object_description -> Lisp_Object_description
+    -- factor out code into mark_Lisp_Object_dynarr()
+  device-x.c:
+    Dynarr_add_validified_lisp_string(): do nothing if size is 0.
+chartab.c, search.c, ...:
+  -- clean up order of includes (STANDALONE)
+
+compiler.h:
+  -- add USED_IF_UNICODE_INTERNAL, USED_IF_MULE_NOT_UNICODE_INTERNAL
+console-impl.h, device-impl.h:
+  -- random ~~#### comments
+
+... unfinished ...
+
+STILL TO DO: unicode.el,
+  man/internals/internals.texi, nt/config.inc.samp, nt/xemacs.mak,
+  src/Makefile.in.in, src/charset.h - zzz.[ch]
+
+unicode:
+
+(mostly same as unicode-premerge but some code was missed and some code
+ got accidentally duplcated; FIXME was anything added?)
+

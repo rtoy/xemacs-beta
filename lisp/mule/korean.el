@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Korean
 
@@ -29,19 +30,23 @@
 
 ;;; Code:
 
-; (make-charset 'korean-ksc5601 
-; 	      "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
-; 	      '(dimension
-; 		2
-; 		registry "KSC5601.1989"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?C
-; 		graphic 0
-; 		short-name "KSC5601"
-; 		long-name "KSC5601 (Korean): ISO-IR-149"
-; 		))
+;; See comments in mule-coding.c.
+;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
+;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
+;; So for our purposes, this is [84 - F9], [31 - FE]
+(make-internal-charset
+ 'korean-johab
+ "Johab (Korean)"
+ '(dimension
+   2
+   registries ["johab"] ;; @@#### FIXME
+   chars (118 206)
+   offset (#x84 #x31)
+   unicode-map
+   ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JOHAB.TXT" #x8000)
+   short-name "Johab"
+   long-name "Johab (Korean)"
+   ))
 
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
