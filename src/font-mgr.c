@@ -557,8 +557,7 @@ fontset_to_list (FcFontSet *fontset, enum DestroyFontsetP destroyp)
 
   /* #### improve this error message */
   if (!fontset)
-    Fsignal (Qinvalid_state,
-	     list1 (build_string ("failed to create FcFontSet")));
+    invalid_state ("failed to create FcFontSet", Qunbound);
   for (idx = 0; idx < fontset->nfont; ++idx)
     {
       fcpat = 
@@ -914,17 +913,12 @@ the argument order is changed to take advantage of Lisp optional arguments. */
 
   /* There ought to be a standard idiom for this.... */
   if (NILP (kind)
-      || EQ (kind, Qfc_match_font)) {
+      || EQ (kind, Qfc_match_font))
     knd = FcMatchFont;
-  }
-  else if (EQ (kind, Qfc_match_pattern)) {
+  else if (EQ (kind, Qfc_match_pattern))
     knd = FcMatchPattern;
-  }
-  else {
-    Fsignal (Qwrong_type_argument,
-	     list2 (build_string ("need `fc-match-pattern' or `fc-match-font'"),
-		    kind));
-  }
+  else
+    wtaerror ("need `fc-match-pattern' or `fc-match-font'", kind);
 
   /* Typecheck arguments */
   CHECK_FCPATTERN (pattern);
