@@ -21,7 +21,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
+#include "casetab.h"
 #include "console-msw.h"
 #include "hash.h"
 #include "profile.h"
@@ -418,7 +418,7 @@ struct read_link_hash
 static Ibyte *
 mswindows_read_link_1 (const Ibyte *fname)
 {
-#ifdef NO_CYGWIN_COM_SUPPORT
+#if defined (NO_CYGWIN_COM_SUPPORT) || !defined (HAVE_MS_WINDOWS)
   return NULL;
 #else
   Ibyte *retval = NULL;

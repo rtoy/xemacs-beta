@@ -102,6 +102,9 @@ my $slurp;
 my ($cout, $hout, $dir) = ($options{"c-output"},
                           $options{"h-output"},
                           $options{"includedir"});
+
+$dir = '/usr/include/w32api' if !$dir && -f '/usr/include/w32api/windows.h';
+
 if (!$dir)
   {
     for my $sdkroot (("WindowsSdkDir", "MSSdk", "MSVCDIR"))
@@ -115,8 +118,9 @@ if (!$dir)
       {
         die "Can't find the Windows SDK headers; run vcvars32.bat from your MSVC installation, or setenv.cmd from the Platform SDK installation";
       }
-    $dir.='/include';
   }
+$dir.='/include' if ((-f $dir.'/include/WINDOWS.H') ||
+		     (-f $dir.'/include/windows.h'));
 die "Can't find MSVC include files in \"$dir\"" unless ((-f $dir.'/WINDOWS.H') || (-f $dir.'/windows.h'));
 
 open (COUT, ">$cout") or die "Can't open C output file $cout: $!";
@@ -244,7 +248,7 @@ foreach my $file (keys %files)
       # CreateWindowEx; the second prevents "void
       # *Argument" from being parsed as a type "void *A"
       # followed by a parameter "rgument".
-      "(?:(?!(?:X\\b|Y\\b))(?:unsigned|int|long|short|va_list|[A-Z_0-9]+)(?!${tok_ch}))";
+      "(?:(?!(?:X\\b|Y\\b))(?:unsigned|int|long|const|short|va_list|[A-Z_0-9]+)(?!${tok_ch}))";
     my $typetoken_re = "(?:$typeword_re$ws_re\\**$ws_re)";
     my $arg_re = "(?:($typetoken_re+)(${tok_ch}+)?(?: OPTIONAL)?)";
     my $fun_re = "(SHSTDAPI_\\(${tok_ch}+\\)|${tok_ch}" . "[A-Za-z_0-9 \t\n\r\f]*?${tok_ch})${ws_re}(${tok_ch}+)W${ws_re}\\(((${ws_re}${arg_re}${ws_re},)*${ws_re}${arg_re}${ws_re})\\);";
@@ -253,7 +257,15 @@ foreach my $file (keys %files)
     while ($slurp =~ /$fun_re/g)
       {
 	my ($rettype, $fun, $args) = ($1, $2, $3);
+
+	if ($processed{$fun})
+	  {
+	    print "Warning: Function $fun already seen\n";
+	    next;
+	  }
+
 	$processed{$fun} = 1;
+
 	print "Processing: $fun";
 
 	my ($command, $reason) = ($files{$file}{$fun}[0], $files{$file}{$fun}[1]);
@@ -334,8 +346,9 @@ foreach my $file (keys %files)
 		}
 		$rettype =~ s/\bSHSTDAPI_\((.*)\)/$1/;
 		$rettype =~ s/\s*WIN\w*?API\s*//g;
-		$rettype =~ s/\bAPIENTRY\b//;
+		$rettype =~ s/\bAPIENTRY\b\s*//;
 		$rettype =~ s/\bSHSTDAPI\b/HRESULT/;
+		$rettype =~ s/\bextern\b\s*//;
 		if ($rettype =~ /LPC?WSTR/)
 		  {
 		    $split_rettype = 1;

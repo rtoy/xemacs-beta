@@ -47,8 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#if defined (CYGWIN) || defined (MINGW)
-# define CYGWIN_HEADERS
+#ifdef CYGWIN_HEADERS
 # ifndef _WIN32_IE
 #  define _WIN32_IE 0x0400
 # endif

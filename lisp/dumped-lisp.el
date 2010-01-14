@@ -160,6 +160,8 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
+       ;; Initialize Unicode and load the translation tables for
+       ;; the built-in charsets.
        "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
@@ -168,6 +170,7 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-coding"
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
+	   "mule/windows" ; for creating Windows charsets/coding systems
 	   ))
        ;; may initialize coding systems
        (when (featurep '(and mule x)) "mule/mule-x-init")
@@ -175,7 +178,11 @@ in dumped-lisp.el and is not itself listed.")
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
 	 "mule/mule-win32-init")
        "code-init" ; set up defaults
-       ;; All files after this can have extended characters in them.
+
+;;; ***************************************************************************
+;;;           All files after this can have extended characters in them.
+;;; ***************************************************************************
+
        (when (featurep 'mule)
 	 '("mule/mule-category"
 	   "mule/kinsoku"

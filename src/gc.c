@@ -333,6 +333,24 @@ recompute_need_to_garbage_collect (void)
 /*			      Mark Phase       				*/
 /************************************************************************/
 
+static const struct memory_description int_description_1[] = {
+  { XD_END }
+};
+
+const struct sized_memory_description int_description = {
+  sizeof (int),
+  int_description_1
+};
+
+static const struct memory_description unsigned_char_description_1[] = {
+  { XD_END }
+};
+
+const struct sized_memory_description unsigned_char_description = {
+  sizeof (unsigned char),
+  unsigned_char_description_1
+};
+
 static const struct memory_description lisp_object_description_1[] = {
   { XD_LISP_OBJECT, 0 },
   { XD_END }
@@ -341,6 +359,17 @@ static const struct memory_description lisp_object_description_1[] = {
 const struct sized_memory_description lisp_object_description = {
   sizeof (Lisp_Object),
   lisp_object_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, key) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, value) },
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_description = {
+  sizeof (Lisp_Object_pair),
+  Lisp_Object_pair_description_1
 };
 
 #if defined (USE_KKCC) || defined (PDUMP)

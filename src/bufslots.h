@@ -102,8 +102,10 @@ Boston, MA 02111-1307, USA.  */
     MARKED_SLOT (abbrev_table)
     /* This buffer's syntax table.  */
     MARKED_SLOT (syntax_table)
+#ifdef MIRROR_TABLE
     /* Massaged values from the syntax table, for faster lookup. */
     MARKED_SLOT (mirror_syntax_table)
+#endif /* MIRROR_TABLE */
 
 #ifdef MULE
     /* This buffer's category table. */

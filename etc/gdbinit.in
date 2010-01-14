@@ -297,8 +297,8 @@ define pobj
   if $lrecord_type == lrecord_type_char_table
     pptype Lisp_Char_Table
   else
-  if $lrecord_type == lrecord_type_char_table_entry
-    pptype Lisp_Char_Table_Entry
+  if $lrecord_type == lrecord_type_char_subtable
+    pptype Lisp_Char_Subtable
   else
   if $lrecord_type == lrecord_type_charset
     pptype Lisp_Charset
