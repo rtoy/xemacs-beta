@@ -1,5 +1,13 @@
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
+	* specifier.c (specifier_instance_from_inst_list):
+	Don't declare an unused variable, (void) 0 is enough.
+	
+	* text.h:
+	Don't use USED_IF_MULE_OR_CHECK_TEXT().
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
 	* debug.c (vars_of_debug):
 	Provide `debug-xemacs' to signal we have a debug build;
 	must do this to get previoug `debug-on-error' change to work.

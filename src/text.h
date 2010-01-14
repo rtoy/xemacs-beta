@@ -770,8 +770,7 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
      
 DECLARE_INLINE_HEADER (
 Bytecount
-itext_ichar_len_fmt (const Ibyte *USED_IF_MULE_OR_CHECK_TEXT (ptr),
-		     Internal_Format fmt)
+itext_ichar_len_fmt (const Ibyte *ptr, Internal_Format fmt)
 )
 {
   switch (fmt)
@@ -1059,8 +1058,7 @@ void resize_string (Lisp_Object s, Bytecount pos, Bytecount delta);
 /* Convert a byte index into a string into a char index. */
 DECLARE_INLINE_HEADER (
 Charcount
-string_index_byte_to_char (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
-			   Bytecount idx)
+string_index_byte_to_char (Lisp_Object s, Bytecount idx)
 )
 {
   Charcount retval;
@@ -1087,8 +1085,7 @@ string_index_byte_to_char (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
 /* Convert a char index into a string into a byte index. */
 DECLARE_INLINE_HEADER (
 Bytecount
-string_index_char_to_byte (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
-			   Charcount idx)
+string_index_char_to_byte (Lisp_Object s, Charcount idx)
 )
 {
   Bytecount retval;
@@ -1115,9 +1112,7 @@ string_index_char_to_byte (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
    chars. */
 DECLARE_INLINE_HEADER (
 Charcount
-string_offset_byte_to_char_len (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
-				Bytecount USED_IF_MULE_OR_CHECK_TEXT (off),
-				Bytecount len)
+string_offset_byte_to_char_len (Lisp_Object s, Bytecount off, Bytecount len)
 )
 {
   Charcount retval;
@@ -1146,9 +1141,7 @@ string_offset_byte_to_char_len (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
    bytes. */
 DECLARE_INLINE_HEADER (
 Bytecount
-string_offset_char_to_byte_len (Lisp_Object USED_IF_MULE_OR_CHECK_TEXT (s),
-				Bytecount USED_IF_MULE_OR_CHECK_TEXT (off),
-				Charcount len)
+string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
 )
 {
   Bytecount retval;
