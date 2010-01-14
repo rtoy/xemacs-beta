@@ -405,11 +405,12 @@ Standard encoding for representing UTF-8 under MS Windows."
     ;; Under Unicode-internal, we get the same behavior by putting
     ;; windows-glyph-list-4 before the Asian charsets.
     ;;
+    (set-unicode-conversion ucs 'windows-glyph-list-4 codepoint)
     (setq decoded (decode-char 'ucs ucs))
     (assert (memq (declare-fboundp (char-charset decoded))
 		  '(jit-ucs-charset-0 windows-glyph-list-4))
-	    nil "Unexpected Unicode decoding behavior.  ")
-    (set-unicode-conversion code 'windows-glyph-list-4 codepoint)
+	    nil "Unexpected Unicode decoding behavior, actual charset=%s.  "
+	    (char-charset decoded))
     (incf codepoint)
     (modify-syntax-entry decoded
 			 (string 
