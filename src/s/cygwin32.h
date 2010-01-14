@@ -47,6 +47,9 @@ Boston, MA 02111-1307, USA.  */
 /* Identify ourselves */
 #define CYGWIN
 
+/* We are using Cygwin-style headers in /usr/include, also used by MinGW */
+#define CYGWIN_HEADERS
+
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
 # include <signal.h>

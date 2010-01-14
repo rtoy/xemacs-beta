@@ -1,5 +1,5 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -47,8 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#if defined (CYGWIN) || defined (MINGW)
-# define CYGWIN_HEADERS
+#ifdef CYGWIN_HEADERS
 # ifndef _WIN32_IE
 #  define _WIN32_IE 0x0400
 # endif
