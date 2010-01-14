@@ -281,23 +281,26 @@ of a Chinese character\"."))
 
 (define-coding-system-alias 'cn-big5 'big5)
 
-;; Big5 font requires special encoding.
-(define-ccl-program ccl-encode-big5-font
-  `(0
-    ;; In:  R0:chinese-big5-1 or chinese-big5-2
-    ;;      R1:position code 1
-    ;;      R2:position code 2
-    ;; Out: R1:font code point 1
-    ;;      R2:font code point 2
-    ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
-     (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-     (r1 = ((r2 / 157) + #xA1))
-     (r2 %= 157)
-     (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
-  "CCL program to encode a Big5 code to code point of Big5 font.")
+(when (not (featurep 'unicode-internal))
+  ;; Big5 font requires special encoding.  But under Unicode-internal we
+  ;; have one single charset `chinese-big5', with no special encoding
+  ;; needed.
+  (define-ccl-program ccl-encode-big5-font
+    `(0
+      ;; In:  R0:chinese-big5-1 or chinese-big5-2
+      ;;      R1:position code 1
+      ;;      R2:position code 2
+      ;; Out: R1:font code point 1
+      ;;      R2:font code point 2
+      ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
+       (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
+       (r1 = ((r2 / 157) + #xA1))
+       (r2 %= 157)
+       (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
+    "CCL program to encode a Big5 code to code point of Big5 font.")
 
-(set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
-(set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font))
 
 (set-language-info-alist
  "Chinese-BIG5" `(,(if (find-charset 'chinese-big5-1)
