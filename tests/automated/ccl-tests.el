@@ -141,9 +141,9 @@
 (defun ccl-test-normal-expr ()
   ;; normal-expr
   (let ((r0 0) (r1 10) (r2 20) (r3 21) (r4 7))
-    (Assert (= (ccl-test '(0 ((r0 = ((((r1 * r2) + r3) % r4) << 2))))
+    (Assert= (ccl-test '(0 ((r0 = ((((r1 * r2) + r3) % r4) << 2))))
 			 (list r0 r1 r2 r3 r4))
-	       (ash (% (+ (* r1 r2) r3) r4) 2))))
+	       (ash (% (+ (* r1 r2) r3) r4) 2)))
 
   (Assert (\= (ccl-test '(0 ((r2 = (r1 < 10))
 			     (r0 = (r2 > 10))))
@@ -151,9 +151,9 @@
 	   0))
 
   (let ((r0 0) (r1 #x10FF) (r2 #xCC) (r3 #xE0))
-    (Assert (= (ccl-test '(0 ((r0 = (((r1 & #xFF) ^ r2) | r3))))
+    (Assert= (ccl-test '(0 ((r0 = (((r1 & #xFF) ^ r2) | r3))))
 			 (list r0 r1 r2 r3))
-	       (logior (logxor (logand r1 #xFF) r2) r3))))
+	       (logior (logxor (logand r1 #xFF) r2) r3)))
 
   ;; checking range of SJIS
   ;; 81(40-7E, 80-FC), 82, 9F, E0, E1, EF
@@ -187,16 +187,16 @@
 	(setq low (1+ low)))))
 
   ;; self-expr
-  (Assert (= (ccl-test '(0 ((r0 += 20)
+  (Assert= (ccl-test '(0 ((r0 += 20)
 			    (r0 *= 40)
 			    (r0 -= 15)))
 		       '(100))
-	     (- (* (+ 100 20) 40) 15)))
+	     (- (* (+ 100 20) 40) 15))
 
   ;; ref. array
-  (Assert (= (ccl-test '(0 ((r0 = r0 [100 101 102 103 104])))
+  (Assert= (ccl-test '(0 ((r0 = r0 [100 101 102 103 104])))
 		       '(3))
-	     103)))
+	     103))
 
 ;;; Section 2.  Simple read and write
 (defun ccl-test-simple-read-and-write ()
@@ -360,7 +360,7 @@
       ((r0 = -1))))
 
   ;; 1-level normal 1 mapping
-  (Assert (equal
+  (Assert-equal
 	   (mapcar
 	    (lambda (val)
 	      (ccl-test-map-multiple
@@ -369,9 +369,9 @@
 	    '(0 99 100 101 102 103 104 105 106 107))
 	   '((0 . -1) (99 . -1)
 	     (1 . 0) (2 . 0) (3 . 0) (4 . 0) (5 . 0)
-	     (105 . -1) (106 . -1) (107 . -1))))
+	     (105 . -1) (106 . -1) (107 . -1)))
 
-  (Assert (equal
+  (Assert-equal
 	   (mapcar
 	    (lambda (val)
 	      (ccl-test-iterate-multiple-map
@@ -380,10 +380,10 @@
 	    '(0 99 100 101 102 103 104 105 106 107))
 	   '((0 . -1) (99 . -1)
 	     (1 . 0) (2 . 0) (3 . 0) (4 . 0) (5 . 0)
-	     (105 . -1) (106 . -1) (107 . -1))))
+	     (105 . -1) (106 . -1) (107 . -1)))
 
   ;; 1-level normal 2 mappings
-  (Assert (equal
+  (Assert-equal
 	   (mapcar
 	    (lambda (val)
 	      (ccl-test-map-multiple
@@ -393,9 +393,9 @@
 	    '(0 99 100 101 102 103 104 105 106 107))
 	   '((0 . -1) (99 . -1) (1 . 0) (2 . 0)
 	     (13 . 1) (4 . 0) (5 . 0) (16 . 1) (17 . 1)
-	     (107 . -1))))
+	     (107 . -1)))
 
-  (Assert (equal
+  (Assert-equal
 	   (mapcar
 	    (lambda (val)
 	      (ccl-test-iterate-multiple-map
@@ -404,11 +404,11 @@
 		 [101 12 13 14 15 16 17])))
 	    '(0 99 100 101 102 103 104 105 106 107))
 	   '((0 . -1) (99 . -1) (1 . 0) (2 . 0) (3 . 0)
-	     (4 . 0) (5 . 0) (16 . 1) (17 . 1) (107 . -1))))
+	     (4 . 0) (5 . 0) (16 . 1) (17 . 1) (107 . -1)))
 
 
   ;; 1-level normal 7 mappings
-  (Assert (equal
+  (Assert-equal
 	   (mapcar
 	    (lambda (val)
 	      (ccl-test-map-multiple
@@ -432,9 +432,9 @@
 	     (105 . 2) (106 . 2) (1007 . 3) (108 . 2) (9999 . -1)
 	     (10000 . -1) (10001 . -1) (10002 . -1) (10003 . -1)
 	     (10004 . -1) (19999 . -1) (20000 . 5) (20001 . 5)
-	     (20002 . 5) (30000 . 6) (20004 . 5) (20005 . 5) (20006 . 5))))
+	     (20002 . 5) (30000 . 6) (20004 . 5) (20005 . 5) (20006 . 5)))
 	   
-      (Assert (equal
+      (Assert-equal
 	       (mapcar
 		(lambda (val)
 		  (ccl-test-iterate-multiple-map
@@ -458,11 +458,11 @@
 		 (105 . 2) (106 . 2) (1007 . 3) (108 . 2) (9999 . -1)
 		 (10000 . -1) (10001 . -1) (10002 . -1) (10003 . -1)
 		 (10004 . -1) (19999 . -1) (20000 . 5) (20001 . 5)
-		 (20002 . 5)(30000 . 6)(20004 . 5)(20005 . 5)(20006 . 5))))
+		 (20002 . 5)(30000 . 6)(20004 . 5)(20005 . 5)(20006 . 5)))
 
       ;; 1-level 7 mappings including CCL call
 
-      (Assert (equal
+      (Assert-equal
 	       (mapcar
 		(lambda (val)
 		  (ccl-test-map-multiple
@@ -487,9 +487,9 @@
 		 (1009 . 3) (1009 . 3) (9999 . -1) (10000 . -1)
 		 (10001 . -1) (10002 . -1) (10003 . -1) (10004 . -1)
 		 (19999 . -1) (20000 . 5) (20001 . 5) (20002 . 5)
-		 (30000 . 6)(20004 . 5)(20005 . 5)(20006 . 5))))
+		 (30000 . 6)(20004 . 5)(20005 . 5)(20006 . 5)))
 
-      (Assert (equal
+      (Assert-equal
 	       (mapcar
 		(lambda (val)
 		  (ccl-test-iterate-multiple-map
@@ -514,10 +514,10 @@
 		 (1009 . 3) (-3 . 0) (9999 . -1) (10000 . -1)
 		 (10001 . -1) (10002 . -1) (10003 . -1) (10004 . -1)
 		 (19999 . -1) (20000 . 5) (20001 . 5) (20002 . 5)
-		 (30000 . 6) (20004 . 5) (20005 . 5) (20006 . 5))))
+		 (30000 . 6) (20004 . 5) (20005 . 5) (20006 . 5)))
 
       ;; 3-level mappings
-      (Assert (equal
+      (Assert-equal
 	       (mapcar
 		(lambda (val)
 		  (ccl-test-map-multiple
@@ -550,11 +550,11 @@
 		 (30040 . 10) (30050 . 10) (10008 . 11) (10009 . 11)
 		 (10010 . 11) (19999 . 11) (20000 . 11) (20001 . 11)
 		 (20002 . 11) (20003 . 11) (20004 . 11) (20005 . 11)
-		 (20006 . 11))))
+		 (20006 . 11)))
 
 
       ;; 3-level mappings including CCL call
-      (Assert (equal
+      (Assert-equal
 	       (mapcar
 		(lambda (val)
 		  (ccl-test-map-multiple
@@ -592,7 +592,7 @@
 		 (10005 . 14) (30040 . 12) (1020008 . 12) (10008 . 14)
 		 (10009 . 14) (10010 . 14) (19999 . 14) (20000 . 14)
 		 (20001 . 14) (20002 . 14) (20003 . 14) (20004 . 14)
-		 (20005 . 14) (20006 . 14))))
+		 (20005 . 14) (20006 . 14)))
       ;; All map-instruction tests ends here.
       )
 
