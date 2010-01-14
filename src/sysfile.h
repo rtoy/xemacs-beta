@@ -47,13 +47,6 @@ Boston, MA 02111-1307, USA.  */
 # include <fcntl.h>
 #endif /* INCLUDED_FCNTL */
 
-/* The anonymous voice of the past says:
-   In some systems loading it twice is suicidal.  */
-#ifndef INCLUDED_SYS_TYPES
-# define INCLUDED_SYS_TYPES
-# include <sys/types.h>		/* some typedefs are used in sys/file.h */
-#endif /* INCLUDED_SYS_TYPES */
-
 #ifndef WIN32_NATIVE
 # include <sys/file.h>
 #endif

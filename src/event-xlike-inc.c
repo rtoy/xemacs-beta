@@ -1,7 +1,7 @@
 /* Shared event code between X and GTK -- include file.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -162,6 +162,8 @@ emacs_Xt_event_pending_p (int how_many)
 
 #if defined(THIS_IS_X) || !defined(__GDK_KEYS_H__)
 
+#ifdef MULE
+
 /* Use an appropriate map to Unicode within x_keysym_to_character. Arguments
    are evaluated multiple times.
 
@@ -173,7 +175,13 @@ emacs_Xt_event_pending_p (int how_many)
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
-      return Funicode_to_char(make_int(map[keysym]), Qnil);		\
+      return make_char (unicode_to_ichar ((int) map[keysym],		\
+					  /* @@#### need to get some sort \
+					     of buffer to compute this off; \
+					     only applies in the old-Mule \
+					     world */			\
+					  get_unicode_precedence (),	\
+					  CONVERR_SUCCEED));		\
     } while (0)
 
 /* Maps to Unicode for X11 KeySyms, where we don't have a direct internal
@@ -182,10 +190,7 @@ emacs_Xt_event_pending_p (int how_many)
    sequences of KeySyms often leave out entries, so you'll have to fill them
    in. Doesn't include support for Hangul, which it should, if the X11
    Hangul keysyms have ever been used anywhere.
-
-   I'm not #ifdef'ing this based on wheter MULE is defined, because it's a
-   matter of 324 bytes in a stripped executable, and I want the
-   testing. :-P */
+*/
 
 static UINT_16_BIT const TECHNICAL[] = 
   {
@@ -459,6 +464,445 @@ static UINT_16_BIT const APL[] =
     0x22A3,	/* #x0BFC RIGHT TACK	APL */
   };
 
+static UINT_16_BIT const HANGUL[] = 
+  {
+#define FIRST_KNOWN_HANGUL 0xEA1
+    0x3131,     /* #x0EA1 Hangul_Kiyeog */
+    0x3132,     /* #x0EA2 Hangul_SsangKiyeog */
+    0x3133,     /* #x0EA3 Hangul_KiyeogSios */
+    0x3134,     /* #x0EA4 Hangul_Nieun */
+    0x3135,     /* #x0EA5 Hangul_NieunJieuj */
+    0x3136,     /* #x0EA6 Hangul_NieunHieuh */
+    0x3137,     /* #x0EA7 Hangul_Dikeud */
+    0x3138,     /* #x0EA8 Hangul_SsangDikeud */
+    0x3139,     /* #x0EA9 Hangul_Rieul */
+    0x313a,     /* #x0EAA Hangul_RieulKiyeog */
+    0x313b,     /* #x0EAB Hangul_RieulMieum */
+    0x313c,     /* #x0EAC Hangul_RieulPieub */
+    0x313d,     /* #x0EAD Hangul_RieulSios */
+    0x313e,     /* #x0EAE Hangul_RieulTieut */
+    0x313f,     /* #x0EAF Hangul_RieulPhieuf */
+    0x3140,     /* #x0EB0 Hangul_RieulHieuh */
+    0x3141,     /* #x0EB1 Hangul_Mieum */
+    0x3142,     /* #x0EB2 Hangul_Pieub */
+    0x3143,     /* #x0EB3 Hangul_SsangPieub */
+    0x3144,     /* #x0EB4 Hangul_PieubSios */
+    0x3145,     /* #x0EB5 Hangul_Sios */
+    0x3146,     /* #x0EB6 Hangul_SsangSios */
+    0x3147,     /* #x0EB7 Hangul_Ieung */
+    0x3148,     /* #x0EB8 Hangul_Jieuj */
+    0x3149,     /* #x0EB9 Hangul_SsangJieuj */
+    0x314a,     /* #x0EBA Hangul_Cieuc */
+    0x314b,     /* #x0EBB Hangul_Khieuq */
+    0x314c,     /* #x0EBC Hangul_Tieut */
+    0x314d,     /* #x0EBD Hangul_Phieuf */
+    0x314e,     /* #x0EBE Hangul_Hieuh */
+    0x314f,     /* #x0EBF Hangul_A */
+    0x3150,     /* #x0EC0 Hangul_AE */
+    0x3151,     /* #x0EC1 Hangul_YA */
+    0x3152,     /* #x0EC2 Hangul_YAE */
+    0x3153,     /* #x0EC3 Hangul_EO */
+    0x3154,     /* #x0EC4 Hangul_E */
+    0x3155,     /* #x0EC5 Hangul_YEO */
+    0x3156,     /* #x0EC6 Hangul_YE */
+    0x3157,     /* #x0EC7 Hangul_O */
+    0x3158,     /* #x0EC8 Hangul_WA */
+    0x3159,     /* #x0EC9 Hangul_WAE */
+    0x315a,     /* #x0ECA Hangul_OE */
+    0x315b,     /* #x0ECB Hangul_YO */
+    0x315c,     /* #x0ECC Hangul_U */
+    0x315d,     /* #x0ECD Hangul_WEO */
+    0x315e,     /* #x0ECE Hangul_WE */
+    0x315f,     /* #x0ECF Hangul_WI */
+    0x3160,     /* #x0ED0 Hangul_YU */
+    0x3161,     /* #x0ED1 Hangul_EU */
+    0x3162,     /* #x0ED2 Hangul_YI */
+    0x3163,     /* #x0ED3 Hangul_I */
+    0x11a8,     /* #x0ED4 Hangul_J_Kiyeog */
+    0x11a9,     /* #x0ED5 Hangul_J_SsangKiyeog */
+    0x11aa,     /* #x0ED6 Hangul_J_KiyeogSios */
+    0x11ab,     /* #x0ED7 Hangul_J_Nieun */
+    0x11ac,     /* #x0ED8 Hangul_J_NieunJieuj */
+    0x11ad,     /* #x0ED9 Hangul_J_NieunHieuh */
+    0x11ae,     /* #x0EDA Hangul_J_Dikeud */
+    0x11af,     /* #x0EDB Hangul_J_Rieul */
+    0x11b0,     /* #x0EDC Hangul_J_RieulKiyeog */
+    0x11b1,     /* #x0EDD Hangul_J_RieulMieum */
+    0x11b2,     /* #x0EDE Hangul_J_RieulPieub */
+    0x11b3,     /* #x0EDF Hangul_J_RieulSios */
+    0x11b4,     /* #x0EE0 Hangul_J_RieulTieut */
+    0x11b5,     /* #x0EE1 Hangul_J_RieulPhieuf */
+    0x11b6,     /* #x0EE2 Hangul_J_RieulHieuh */
+    0x11b7,     /* #x0EE3 Hangul_J_Mieum */
+    0x11b8,     /* #x0EE4 Hangul_J_Pieub */
+    0x11b9,     /* #x0EE5 Hangul_J_PieubSios */
+    0x11ba,     /* #x0EE6 Hangul_J_Sios */
+    0x11bb,     /* #x0EE7 Hangul_J_SsangSios */
+    0x11bc,     /* #x0EE8 Hangul_J_Ieung */
+    0x11bd,     /* #x0EE9 Hangul_J_Jieuj */
+    0x11be,     /* #x0EEA Hangul_J_Cieuc */
+    0x11bf,     /* #x0EEB Hangul_J_Khieuq */
+    0x11c0,     /* #x0EEC Hangul_J_Tieut */
+    0x11c1,     /* #x0EED Hangul_J_Phieuf */
+    0x11c2,     /* #x0EEE Hangul_J_Hieuh */
+    0x316d,     /* #x0EEF Hangul_RieulYeorinHieuh */
+    0x3171,     /* #x0EF0 Hangul_SunkyeongeumMieum */
+    0x3178,     /* #x0EF1 Hangul_SunkyeongeumPieub */
+    0x317f,     /* #x0EF2 Hangul_PanSios */
+    0x3181,     /* #x0EF3 Hangul_KkogjiDalrinIeung */
+    0x3184,     /* #x0EF4 Hangul_SunkyeongeumPhieuf */
+    0x3186,     /* #x0EF5 Hangul_YeorinHieuh */
+    0x318d,     /* #x0EF6 Hangul_AraeA */
+    0x318e,     /* #x0EF7 Hangul_AraeAE */
+    0x11eb,     /* #x0EF8 Hangul_J_PanSios */
+    0x11f0,     /* #x0EF9 Hangul_J_KkogjiDalrinIeung */
+    0x11f9,     /* #x0EFA Hangul_J_YeorinHieuh */
+    0x0000,     /* #x0EFB */
+    0x0000,     /* #x0EFC */
+    0x0000,     /* #x0EFD */
+    0x0000,     /* #x0EFE */
+    0x20a9,     /* #x0EFF Korean_Won */
+  };
+
+static UINT_16_BIT const ARMENIAN[] = 
+  {
+#define FIRST_KNOWN_ARMENIAN 0x14A1
+    0x0000,     /* #x14A1 Armenian_eternity */
+    0x0587,     /* #x14A2 Armenian_ligature_ew */
+    0x0589,     /* #x14A3 Armenian_verjaket */
+    0x0029,     /* #x14A4 Armenian_parenright */
+    0x0028,     /* #x14A5 Armenian_parenleft */
+    0x00bb,     /* #x14A6 Armenian_guillemotright */
+    0x00ab,     /* #x14A7 Armenian_guillemotleft */
+    0x2014,     /* #x14A8 Armenian_em_dash */
+    0x002e,     /* #x14A9 Armenian_mijaket */
+    0x055d,     /* #x14AA Armenian_but */
+    0x002c,     /* #x14AB Armenian_comma */
+    0x2013,     /* #x14AC Armenian_en_dash */
+    0x058a,     /* #x14AD Armenian_yentamna */
+    0x2026,     /* #x14AE Armenian_ellipsis */
+    0x055c,     /* #x14AF Armenian_amanak */
+    0x055b,     /* #x14B0 Armenian_shesht */
+    0x055e,     /* #x14B1 Armenian_paruyk */
+    0x0531,     /* #x14B2 Armenian_AYB */
+    0x0561,     /* #x14B3 Armenian_ayb */
+    0x0532,     /* #x14B4 Armenian_BEN */
+    0x0562,     /* #x14B5 Armenian_ben */
+    0x0533,     /* #x14B6 Armenian_GIM */
+    0x0563,     /* #x14B7 Armenian_gim */
+    0x0534,     /* #x14B8 Armenian_DA */
+    0x0564,     /* #x14B9 Armenian_da */
+    0x0535,     /* #x14BA Armenian_YECH */
+    0x0565,     /* #x14BB Armenian_yech */
+    0x0536,     /* #x14BC Armenian_ZA */
+    0x0566,     /* #x14BD Armenian_za */
+    0x0537,     /* #x14BE Armenian_E */
+    0x0567,     /* #x14BF Armenian_e */
+    0x0538,     /* #x14C0 Armenian_AT */
+    0x0568,     /* #x14C1 Armenian_at */
+    0x0539,     /* #x14C2 Armenian_TO */
+    0x0569,     /* #x14C3 Armenian_to */
+    0x053a,     /* #x14C4 Armenian_ZHE */
+    0x056a,     /* #x14C5 Armenian_zhe */
+    0x053b,     /* #x14C6 Armenian_INI */
+    0x056b,     /* #x14C7 Armenian_ini */
+    0x053c,     /* #x14C8 Armenian_LYUN */
+    0x056c,     /* #x14C9 Armenian_lyun */
+    0x053d,     /* #x14CA Armenian_KHE */
+    0x056d,     /* #x14CB Armenian_khe */
+    0x053e,     /* #x14CC Armenian_TSA */
+    0x056e,     /* #x14CD Armenian_tsa */
+    0x053f,     /* #x14CE Armenian_KEN */
+    0x056f,     /* #x14CF Armenian_ken */
+    0x0540,     /* #x14D0 Armenian_HO */
+    0x0570,     /* #x14D1 Armenian_ho */
+    0x0541,     /* #x14D2 Armenian_DZA */
+    0x0571,     /* #x14D3 Armenian_dza */
+    0x0542,     /* #x14D4 Armenian_GHAT */
+    0x0572,     /* #x14D5 Armenian_ghat */
+    0x0543,     /* #x14D6 Armenian_TCHE */
+    0x0573,     /* #x14D7 Armenian_tche */
+    0x0544,     /* #x14D8 Armenian_MEN */
+    0x0574,     /* #x14D9 Armenian_men */
+    0x0545,     /* #x14DA Armenian_HI */
+    0x0575,     /* #x14DB Armenian_hi */
+    0x0546,     /* #x14DC Armenian_NU */
+    0x0576,     /* #x14DD Armenian_nu */
+    0x0547,     /* #x14DE Armenian_SHA */
+    0x0577,     /* #x14DF Armenian_sha */
+    0x0548,     /* #x14E0 Armenian_VO */
+    0x0578,     /* #x14E1 Armenian_vo */
+    0x0549,     /* #x14E2 Armenian_CHA */
+    0x0579,     /* #x14E3 Armenian_cha */
+    0x054a,     /* #x14E4 Armenian_PE */
+    0x057a,     /* #x14E5 Armenian_pe */
+    0x054b,     /* #x14E6 Armenian_JE */
+    0x057b,     /* #x14E7 Armenian_je */
+    0x054c,     /* #x14E8 Armenian_RA */
+    0x057c,     /* #x14E9 Armenian_ra */
+    0x054d,     /* #x14EA Armenian_SE */
+    0x057d,     /* #x14EB Armenian_se */
+    0x054e,     /* #x14EC Armenian_VEV */
+    0x057e,     /* #x14ED Armenian_vev */
+    0x054f,     /* #x14EE Armenian_TYUN */
+    0x057f,     /* #x14EF Armenian_tyun */
+    0x0550,     /* #x14F0 Armenian_RE */
+    0x0580,     /* #x14F1 Armenian_re */
+    0x0551,     /* #x14F2 Armenian_TSO */
+    0x0581,     /* #x14F3 Armenian_tso */
+    0x0552,     /* #x14F4 Armenian_VYUN */
+    0x0582,     /* #x14F5 Armenian_vyun */
+    0x0553,     /* #x14F6 Armenian_PYUR */
+    0x0583,     /* #x14F7 Armenian_pyur */
+    0x0554,     /* #x14F8 Armenian_KE */
+    0x0584,     /* #x14F9 Armenian_ke */
+    0x0555,     /* #x14FA Armenian_O */
+    0x0585,     /* #x14FB Armenian_o */
+    0x0556,     /* #x14FC Armenian_FE */
+    0x0586,     /* #x14FD Armenian_fe */
+    0x055a,     /* #x14FE Armenian_apostrophe */
+    0x00a7,     /* #x14FF Armenian_section_sign */
+  };
+
+static UINT_16_BIT const GEORGIAN[] = 
+  {
+#define FIRST_KNOWN_GEORGIAN 0x15D0
+    0x10d0,     /* #x15D0 Georgian_an */
+    0x10d1,     /* #x15D1 Georgian_ban */
+    0x10d2,     /* #x15D2 Georgian_gan */
+    0x10d3,     /* #x15D3 Georgian_don */
+    0x10d4,     /* #x15D4 Georgian_en */
+    0x10d5,     /* #x15D5 Georgian_vin */
+    0x10d6,     /* #x15D6 Georgian_zen */
+    0x10d7,     /* #x15D7 Georgian_tan */
+    0x10d8,     /* #x15D8 Georgian_in */
+    0x10d9,     /* #x15D9 Georgian_kan */
+    0x10da,     /* #x15DA Georgian_las */
+    0x10db,     /* #x15DB Georgian_man */
+    0x10dc,     /* #x15DC Georgian_nar */
+    0x10dd,     /* #x15DD Georgian_on */
+    0x10de,     /* #x15DE Georgian_par */
+    0x10df,     /* #x15DF Georgian_zhar */
+    0x10e0,     /* #x15E0 Georgian_rae */
+    0x10e1,     /* #x15E1 Georgian_san */
+    0x10e2,     /* #x15E2 Georgian_tar */
+    0x10e3,     /* #x15E3 Georgian_un */
+    0x10e4,     /* #x15E4 Georgian_phar */
+    0x10e5,     /* #x15E5 Georgian_khar */
+    0x10e6,     /* #x15E6 Georgian_ghan */
+    0x10e7,     /* #x15E7 Georgian_qar */
+    0x10e8,     /* #x15E8 Georgian_shin */
+    0x10e9,     /* #x15E9 Georgian_chin */
+    0x10ea,     /* #x15EA Georgian_can */
+    0x10eb,     /* #x15EB Georgian_jil */
+    0x10ec,     /* #x15EC Georgian_cil */
+    0x10ed,     /* #x15ED Georgian_char */
+    0x10ee,     /* #x15EE Georgian_xan */
+    0x10ef,     /* #x15EF Georgian_jhan */
+    0x10f0,     /* #x15F0 Georgian_hae */
+    0x10f1,     /* #x15F1 Georgian_he */
+    0x10f2,     /* #x15F2 Georgian_hie */
+    0x10f3,     /* #x15F3 Georgian_we */
+    0x10f4,     /* #x15F4 Georgian_har */
+    0x10f5,     /* #x15F5 Georgian_hoe */
+    0x10f6,     /* #x15F6 Georgian_fi */
+  };
+
+static UINT_16_BIT const AZERI_ETC[] = 
+  {
+#define FIRST_KNOWN_AZERI_ETC 0x16A2
+    0x0000,     /* #x16A2 Ccedillaabovedot */
+    0x1e8a,     /* #x16A3 Xabovedot */
+    0x0000,     /* #x16A4 */
+    0x0000,     /* #x16A5 Qabovedot */
+    0x012c,     /* #x16A6 Ibreve */
+    0x0000,     /* #x16A7 IE */
+    0x0000,     /* #x16A8 UO */
+    0x01b5,     /* #x16A9 Zstroke */
+    0x01e6,     /* #x16AA Gcaron */
+    0x0000,     /* #x16AB */
+    0x0000,     /* #x16AC */
+    0x0000,     /* #x16AD */
+    0x0000,     /* #x16AE */
+    0x019f,     /* #x16AF Obarred */
+    0x0000,     /* #x16B0 */
+    0x0000,     /* #x16B1 */
+    0x0000,     /* #x16B2 ccedillaabovedot */
+    0x1e8b,     /* #x16B3 xabovedot */
+    0x0000,     /* #x16B4 Ocaron */
+    0x0000,     /* #x16B5 qabovedot */
+    0x012d,     /* #x16B6 ibreve */
+    0x0000,     /* #x16B7 ie */
+    0x0000,     /* #x16B8 uo */
+    0x01b6,     /* #x16B9 zstroke */
+    0x01e7,     /* #x16BA gcaron */
+    0x0000,     /* #x16BB */
+    0x0000,     /* #x16BC */
+    0x01d2,     /* #x16BD ocaron */
+    0x0000,     /* #x16BE */
+    0x0275,     /* #x16BF obarred */
+    0x0000,     /* #x16C0 */
+    0x0000,     /* #x16C1 */
+    0x0000,     /* #x16C2 */
+    0x0000,     /* #x16C3 */
+    0x0000,     /* #x16C4 */
+    0x0000,     /* #x16C5 */
+    0x018f,     /* #x16C6 SCHWA */
+    0x0000,     /* #x16C7 */
+    0x0000,     /* #x16C8 */
+    0x0000,     /* #x16C9 */
+    0x0000,     /* #x16CA */
+    0x0000,     /* #x16CB */
+    0x0000,     /* #x16CC */
+    0x0000,     /* #x16CD */
+    0x0000,     /* #x16CE */
+    0x0000,     /* #x16CF */
+    0x0000,     /* #x16D0 */
+    0x1e36,     /* #x16D1 Lbelowdot */
+    0x0000,     /* #x16D2 Lstrokebelowdot */
+    0x0000,     /* #x16D3 Gtilde */
+    0x0000,     /* #x16D4 */
+    0x0000,     /* #x16D5 */
+    0x0000,     /* #x16D6 */
+    0x0000,     /* #x16D7 */
+    0x0000,     /* #x16D8 */
+    0x0000,     /* #x16D9 */
+    0x0000,     /* #x16DA */
+    0x0000,     /* #x16DB */
+    0x0000,     /* #x16DC */
+    0x0000,     /* #x16DD */
+    0x0000,     /* #x16DE */
+    0x0000,     /* #x16DF */
+    0x0000,     /* #x16E0 */
+    0x1e37,     /* #x16E1 lbelowdot */
+    0x0000,     /* #x16E2 lstrokebelowdot */
+    0x0000,     /* #x16E3 gtilde */
+    0x0000,     /* #x16E4 */
+    0x0000,     /* #x16E5 */
+    0x0000,     /* #x16E6 */
+    0x0000,     /* #x16E7 */
+    0x0000,     /* #x16E8 */
+    0x0000,     /* #x16E9 */
+    0x0000,     /* #x16EA */
+    0x0000,     /* #x16EB */
+    0x0000,     /* #x16EC */
+    0x0000,     /* #x16ED */
+    0x0000,     /* #x16EE */
+    0x0000,     /* #x16EF */
+    0x0000,     /* #x16F0 */
+    0x0000,     /* #x16F1 */
+    0x0000,     /* #x16F2 */
+    0x0000,     /* #x16F3 */
+    0x0000,     /* #x16F4 */
+    0x0000,     /* #x16F5 */
+    0x0259,     /* #x16F6 schwa */
+  };
+
+static UINT_16_BIT const VIETNAMESE[] = 
+  {
+#define FIRST_KNOWN_VIETNAMESE 0x1E9F
+    0x0303,     /* #x1E9F combining_tilde */
+    0x1ea0,     /* #x1EA0 Abelowdot */
+    0x1ea1,     /* #x1EA1 abelowdot */
+    0x1ea2,     /* #x1EA2 Ahook */
+    0x1ea3,     /* #x1EA3 ahook */
+    0x1ea4,     /* #x1EA4 Acircumflexacute */
+    0x1ea5,     /* #x1EA5 acircumflexacute */
+    0x1ea6,     /* #x1EA6 Acircumflexgrave */
+    0x1ea7,     /* #x1EA7 acircumflexgrave */
+    0x1ea8,     /* #x1EA8 Acircumflexhook */
+    0x1ea9,     /* #x1EA9 acircumflexhook */
+    0x1eaa,     /* #x1EAA Acircumflextilde */
+    0x1eab,     /* #x1EAB acircumflextilde */
+    0x1eac,     /* #x1EAC Acircumflexbelowdot */
+    0x1ead,     /* #x1EAD acircumflexbelowdot */
+    0x1eae,     /* #x1EAE Abreveacute */
+    0x1eaf,     /* #x1EAF abreveacute */
+    0x1eb0,     /* #x1EB0 Abrevegrave */
+    0x1eb1,     /* #x1EB1 abrevegrave */
+    0x1eb2,     /* #x1EB2 Abrevehook */
+    0x1eb3,     /* #x1EB3 abrevehook */
+    0x1eb4,     /* #x1EB4 Abrevetilde */
+    0x1eb5,     /* #x1EB5 abrevetilde */
+    0x1eb6,     /* #x1EB6 Abrevebelowdot */
+    0x1eb7,     /* #x1EB7 abrevebelowdot */
+    0x1eb8,     /* #x1EB8 Ebelowdot */
+    0x1eb9,     /* #x1EB9 ebelowdot */
+    0x1eba,     /* #x1EBA Ehook */
+    0x1ebb,     /* #x1EBB ehook */
+    0x1ebc,     /* #x1EBC Etilde */
+    0x1ebd,     /* #x1EBD etilde */
+    0x1ebe,     /* #x1EBE Ecircumflexacute */
+    0x1ebf,     /* #x1EBF ecircumflexacute */
+    0x1ec0,     /* #x1EC0 Ecircumflexgrave */
+    0x1ec1,     /* #x1EC1 ecircumflexgrave */
+    0x1ec2,     /* #x1EC2 Ecircumflexhook */
+    0x1ec3,     /* #x1EC3 ecircumflexhook */
+    0x1ec4,     /* #x1EC4 Ecircumflextilde */
+    0x1ec5,     /* #x1EC5 ecircumflextilde */
+    0x1ec6,     /* #x1EC6 Ecircumflexbelowdot */
+    0x1ec7,     /* #x1EC7 ecircumflexbelowdot */
+    0x1ec8,     /* #x1EC8 Ihook */
+    0x1ec9,     /* #x1EC9 ihook */
+    0x1eca,     /* #x1ECA Ibelowdot */
+    0x1ecb,     /* #x1ECB ibelowdot */
+    0x1ecc,     /* #x1ECC Obelowdot */
+    0x1ecd,     /* #x1ECD obelowdot */
+    0x1ece,     /* #x1ECE Ohook */
+    0x1ecf,     /* #x1ECF ohook */
+    0x1ed0,     /* #x1ED0 Ocircumflexacute */
+    0x1ed1,     /* #x1ED1 ocircumflexacute */
+    0x1ed2,     /* #x1ED2 Ocircumflexgrave */
+    0x1ed3,     /* #x1ED3 ocircumflexgrave */
+    0x1ed4,     /* #x1ED4 Ocircumflexhook */
+    0x1ed5,     /* #x1ED5 ocircumflexhook */
+    0x1ed6,     /* #x1ED6 Ocircumflextilde */
+    0x1ed7,     /* #x1ED7 ocircumflextilde */
+    0x1ed8,     /* #x1ED8 Ocircumflexbelowdot */
+    0x1ed9,     /* #x1ED9 ocircumflexbelowdot */
+    0x1eda,     /* #x1EDA Ohornacute */
+    0x1edb,     /* #x1EDB ohornacute */
+    0x1edc,     /* #x1EDC Ohorngrave */
+    0x1edd,     /* #x1EDD ohorngrave */
+    0x1ede,     /* #x1EDE Ohornhook */
+    0x1edf,     /* #x1EDF ohornhook */
+    0x1ee0,     /* #x1EE0 Ohorntilde */
+    0x1ee1,     /* #x1EE1 ohorntilde */
+    0x1ee2,     /* #x1EE2 Ohornbelowdot */
+    0x1ee3,     /* #x1EE3 ohornbelowdot */
+    0x1ee4,     /* #x1EE4 Ubelowdot */
+    0x1ee5,     /* #x1EE5 ubelowdot */
+    0x1ee6,     /* #x1EE6 Uhook */
+    0x1ee7,     /* #x1EE7 uhook */
+    0x1ee8,     /* #x1EE8 Uhornacute */
+    0x1ee9,     /* #x1EE9 uhornacute */
+    0x1eea,     /* #x1EEA Uhorngrave */
+    0x1eeb,     /* #x1EEB uhorngrave */
+    0x1eec,     /* #x1EEC Uhornhook */
+    0x1eed,     /* #x1EED uhornhook */
+    0x1eee,     /* #x1EEE Uhorntilde */
+    0x1eef,     /* #x1EEF uhorntilde */
+    0x1ef0,     /* #x1EF0 Uhornbelowdot */
+    0x1ef1,     /* #x1EF1 uhornbelowdot */
+    0x0300,     /* #x1EF2 combining_grave */
+    0x0301,     /* #x1EF3 combining_acute */
+    0x1ef4,     /* #x1EF4 Ybelowdot */
+    0x1ef5,     /* #x1EF5 ybelowdot */
+    0x1ef6,     /* #x1EF6 Yhook */
+    0x1ef7,     /* #x1EF7 yhook */
+    0x1ef8,     /* #x1EF8 Ytilde */
+    0x1ef9,     /* #x1EF9 ytilde */
+  
+    0x01a0,     /* #x1EFA Ohorn */
+    0x01a1,     /* #x1EFB ohorn */
+    0x01af,     /* #x1EFC Uhorn */
+    0x01b0,     /* #x1EFD uhorn */
+  
+    0x0309,     /* #x1EFE combining_hook */
+    0x0323,     /* #x1EFF combining_belowdot */
+  };
+#endif /* MULE */
+
 static UINT_16_BIT const CYRILLIC[] =
   {
     0x0452,	/* #x06A1 CYRILLIC SMALL LETTER DJE  */
@@ -588,14 +1032,22 @@ static UINT_16_BIT const CYRILLIC[] =
 
 #ifndef THIS_IS_GTK
 static Lisp_Object
-x_keysym_to_character(KeySym keysym)
+x_keysym_to_character (KeySym keysym)
 #else
 Lisp_Object
-gtk_keysym_to_character(guint keysym)
+gtk_keysym_to_character (guint keysym)
 #endif
 {
+#ifdef MULE
   Lisp_Object charset = Qzero;
   int code = 0;
+#endif /* MULE */
+
+  /* @@#### Add support for 0xFE?? and 0xFF?? keysyms
+     Add support for KOI8-U extensions in the 0x06?? range
+
+     See http://www.cl.cam.ac.uk/~mgk25/ucs/keysyms.txt
+ */
 
   /* Markus Kuhn's spec says keysyms in the range #x01000100 to #x0110FFFF
      and only those should correspond directly to Unicode code points, in
@@ -603,42 +1055,50 @@ gtk_keysym_to_character(guint keysym)
      code points do the same thing with keysyms
      #x01000000-#x01000100. */
 
+#ifndef MULE
+  if (keysym >= 0x01000000 && keysym <= 0x010000FF)
+    return make_char (keysym & 0xFFFFFF);
+#else
   if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    return Funicode_to_char (make_int(keysym & 0xffffff), Qnil);
+    return make_char (unicode_to_ichar ((int) (keysym & 0xFFFFFF),
+					/* @@####
+					 need to get some sort of buffer
+					 to compute this off; only
+					 applies in the old-Mule world */
+					get_unicode_precedence (),
+					CONVERR_SUCCEED));
+#endif /* not MULE */
 
   if ((keysym & 0xff) < 0xa0)
     return Qnil;
 
+#ifdef MULE
   switch (keysym >> 8)
     {
-
-#define USE_CHARSET(var,cs) \
-  ((var) = charset_by_leading_byte (LEADING_BYTE_##cs))
-
     case 0: /* ASCII + Latin1 */
-      USE_CHARSET (charset, LATIN_ISO8859_1);
-      code = keysym & 0x7f;
+      charset = Vcharset_latin_iso8859_1;
+      code = keysym & 0xff;
       break;
     case 1: /* Latin2 */
-      USE_CHARSET (charset, LATIN_ISO8859_2);
-      code = keysym & 0x7f;
+      charset = Vcharset_latin_iso8859_2;
+      code = keysym & 0xff;
       break;
     case 2: /* Latin3 */
-      USE_CHARSET (charset, LATIN_ISO8859_3);
-      code = keysym & 0x7f;
+      charset = Vcharset_latin_iso8859_3;
+      code = keysym & 0xff;
       break;
     case 3: /* Latin4 */
-      USE_CHARSET (charset, LATIN_ISO8859_4);
-      code = keysym & 0x7f;
+      charset = Vcharset_latin_iso8859_4;
+      code = keysym & 0xff;
       break;
     case 4: /* Katakana */
-      USE_CHARSET (charset, KATAKANA_JISX0201);
+      charset = Vcharset_katakana_jisx0201;
       if ((keysym & 0xff) > 0xa0)
-	code = keysym & 0x7f;
+	code = keysym & 0xff;
       break;
     case 5: /* Arabic */
-      USE_CHARSET (charset, ARABIC_ISO8859_6);
-      code = keysym & 0x7f;
+      charset = Vcharset_arabic_iso8859_6;
+      code = keysym & 0xff;
       break;
     case 6: /* Cyrillic */
       {
@@ -647,59 +1107,141 @@ gtk_keysym_to_character(guint keysym)
       }
     case 7: /* Greek */
       {
-	static UExtbyte const greek[] = /* 0x20 - 0x7f */
-	{0x00, 0x36, 0x38, 0x39, 0x3a, 0x5a, 0x00, 0x3c,
-	 0x3e, 0x5b, 0x00, 0x3f, 0x00, 0x00, 0x35, 0x2f,
-	 0x00, 0x5c, 0x5d, 0x5e, 0x5f, 0x7a, 0x40, 0x7c,
-	 0x7d, 0x7b, 0x60, 0x7e, 0x00, 0x00, 0x00, 0x00,
-	 0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-	 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-	 0x50, 0x51, 0x53, 0x00, 0x54, 0x55, 0x56, 0x57,
-	 0x58, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	 0x00, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-	 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-	 0x70, 0x71, 0x73, 0x72, 0x74, 0x75, 0x76, 0x77,
-	 0x78, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	USE_CHARSET (charset, GREEK_ISO8859_7);
+	static UExtbyte const greek[] = /* 0xa0 - 0xff */
+	{0x00, 0xb6, 0xb8, 0xb9, 0xba, 0xda, 0x00, 0xbc,
+	 0xbe, 0xdb, 0x00, 0xbf, 0x00, 0x00, 0xb5, 0xaf,
+	 0x00, 0xdc, 0xdd, 0xde, 0xdf, 0xfa, 0xc0, 0xfc,
+	 0xfd, 0xfb, 0xe0, 0xfe, 0x00, 0x00, 0x00, 0x00,
+	 0x00, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
+	 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+	 0xd0, 0xd1, 0xd3, 0x00, 0xd4, 0xd5, 0xd6, 0xd7,
+	 0xd8, 0xd9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	 0x00, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
+	 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
+	 0xf0, 0xf1, 0xf3, 0xf2, 0xf4, 0xf5, 0xf6, 0xf7,
+	 0xf8, 0xf9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	charset = Vcharset_greek_iso8859_7;
 	code = greek[(keysym & 0x7f) - 0x20];
 	break;
       }
     case 8: 
-      USE_UNICODE_MAP(keysym, TECHNICAL);
+      USE_UNICODE_MAP (keysym, TECHNICAL);
       break;
     case 9: 
-      USE_UNICODE_MAP(keysym, SPECIAL);
+      USE_UNICODE_MAP (keysym, SPECIAL);
       break;
     case 10:
-      USE_UNICODE_MAP(keysym, PUBLISHING);
+      USE_UNICODE_MAP (keysym, PUBLISHING);
       break;
     case 11:
-      USE_UNICODE_MAP(keysym, APL);
+      USE_UNICODE_MAP (keysym, APL);
       break;
     case 12: /* Hebrew */
-      USE_CHARSET (charset, HEBREW_ISO8859_8);
-      code = keysym & 0x7f;
+      charset = Vcharset_hebrew_iso8859_8;
+      code = keysym & 0xff;
       break;
     case 13: /* Thai */
       /* #### This needs to deal with character composition.
-                  Are you sure we can't leave it to the X server? */
-      USE_CHARSET (charset, THAI_TIS620);
-      code = keysym & 0x7f;
+	 Are you sure we can't leave it to the X server? */
+      charset = Vcharset_thai_tis620;
+      code = keysym & 0xff;
       break;
-    case 14: /* Korean Hangul. Would like some information on whether this
-		is worth doing--there don't appear to be any Korean keyboard
-		layouts in the XKB data files. */
+    case 14: /* Korean Hangul. */
+      USE_UNICODE_MAP (keysym, HANGUL);
       break;
-
+    case 18: /* Latin 8 - ISO8859-14. */
+      charset = Ffind_charset (intern ("latin-iso8859-14"));
+      code = keysym & 0xff;
+      break;
     case 19: /* Latin 9 - ISO8859-15. */
-      USE_CHARSET (charset, LATIN_ISO8859_15);
-      code = keysym & 0x7f;
+      charset = Vcharset_latin_iso8859_15;
+      code = keysym & 0xff;
+      break;
+    case 20: /* Armenian. */
+      USE_UNICODE_MAP (keysym, ARMENIAN);
+      break;
+    case 21: /* Georgian. */
+      USE_UNICODE_MAP (keysym, GEORGIAN);
+      break;
+    case 22: /* Azeri (and other Turkic or Caucasian languages of ex-USSR) */
+      USE_UNICODE_MAP (keysym, AZERI_ETC);
+      break;
+    case 30: /* Vietnamese */
+      USE_UNICODE_MAP (keysym, VIETNAMESE);
       break;
     case 32: /* Currency. The lower sixteen bits of these keysyms happily
 		correspond exactly to the Unicode code points of the
 		associated characters */
-      return Funicode_to_char(make_int(keysym & 0xffff), Qnil);
-      break;
+      return make_char (unicode_to_ichar ((int) (keysym & 0xffff),
+					  /* @@####
+					     need to get some sort of buffer
+					     to compute this off; only
+					     applies in the old-Mule world */
+					  get_unicode_precedence (),
+					  CONVERR_SUCCEED));
+
+/* @@#### Support me!
+
+   Actually, these are somewhat already supported by x-init.el/x-compose.el,
+   but only acute, grave, circum(flex), cedilla, diaeresis, tilde.  We
+   should try to eliminate that code and use general Unicode support for
+   converting to precomposed sequences.
+
+0xfe50   U0300   f   # dead_grave
+0xfe51   U0301   f   # dead_acute
+0xfe52   U0302   f   # dead_circumflex
+0xfe53   U0303   f   # dead_tilde
+0xfe54   U0304   f   # dead_macron
+0xfe55   U0306   f   # dead_breve
+0xfe56   U0307   f   # dead_abovedot
+0xfe57   U0308   f   # dead_diaeresis
+0xfe58   U030a   f   # dead_abovering
+0xfe59   U030b   f   # dead_doubleacute
+0xfe5a   U030c   f   # dead_caron
+0xfe5b   U0327   f   # dead_cedilla
+0xfe5c   U0328   f   # dead_ogonek
+0xfe5d   U0345   f   # dead_iota
+0xfe5e   U3099   f   # dead_voiced_sound
+0xfe5f   U309a   f   # dead_semivoiced_sound
+0xfe60   U0323   f   # dead_belowdot
+0xfe61   U0309   f   # dead_hook
+0xfe62   U031b   f   # dead_horn
+
+What about these?  We don't have to convert these to ASCII but make sure we
+Handle all of the KP-foo things and get them to behave like plain foo when
+KP-foo isn't bound (which includes self-inserting the associated character
+if necessary). DOCUMENT the existing system that does this.
+
+0xff08   U0008   f   # BackSpace	/- back space, back char -/
+0xff09   U0009   f   # Tab
+0xff0a   U000a   f   # Linefeed	/- Linefeed, LF -/
+0xff0b   U000b   f   # Clear
+0xff0d   U000d   f   # Return	/- Return, enter -/
+0xff13   U0013   f   # Pause	/- Pause, hold -/
+0xff14   U0014   f   # Scroll_Lock
+0xff15   U0015   f   # Sys_Req
+0xff1b   U001b   f   # Escape
+0xff80   U0020   f   # KP_Space	/- space -/
+0xff89   U0009   f   # KP_Tab
+0xff8d   U000d   f   # KP_Enter	/- enter -/
+0xffaa   U002a   f   # KP_Multiply
+0xffab   U002b   f   # KP_Add
+0xffac   U002c   f   # KP_Separator	/- separator, often comma -/
+0xffad   U002d   f   # KP_Subtract
+0xffae   U002e   f   # KP_Decimal
+0xffaf   U002f   f   # KP_Divide
+0xffb0   U0030   f   # KP_0
+0xffb1   U0031   f   # KP_1
+0xffb2   U0032   f   # KP_2
+0xffb3   U0033   f   # KP_3
+0xffb4   U0034   f   # KP_4
+0xffb5   U0035   f   # KP_5
+0xffb6   U0036   f   # KP_6
+0xffb7   U0037   f   # KP_7
+0xffb8   U0038   f   # KP_8
+0xffb9   U0039   f   # KP_9
+0xffbd   U003d   f   # KP_Equal	/- equals -/
+*/
     default:
       break;
     }
@@ -707,19 +1249,34 @@ gtk_keysym_to_character(guint keysym)
   if (code == 0)
     return Qnil;
 
-#ifdef MULE
-  {
-    Lisp_Object unified = Funicode_to_char
-      (Fchar_to_unicode (make_char (make_ichar (charset, code, 0))), Qnil);
-    if (!NILP (unified))
-      {
-        return unified;
-      }
-    return make_char (make_ichar (charset, code, 0));
-  }
-#else
-  return make_char (code + 0x80);
-#endif
+  /* #### Is this check on !NILP (charset) needed?  Maybe should be assert? */
+  if (!NILP (charset))
+    {
+      /* First try to generate a unified character by converting through
+	 Unicode, then try converting directly to an Ichar (only matters
+	 when non-Unicode-internal, else we get same results both ways). */
+      int ucs = charset_codepoint_to_unicode (charset, 0, code, CONVERR_FAIL);
+      if (ucs >= 0)
+	{
+	  Ichar ich = unicode_to_ichar (ucs, get_unicode_precedence (),
+					CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
+	}
+      else
+	{
+	  Ichar ich =
+	    charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
+	  if (ich >= 0)
+	    return make_char (ich);
+	}
+    }
+  return Qnil;
+#else /* not MULE */
+  if (keysym >= 0x100)
+    return Qnil;
+  return make_char (keysym);
+#endif /* (not) MULE */
 }
 
 #endif /* defined(THIS_IS_X) || !defined(__GDK_KEYS_H__) */

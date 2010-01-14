@@ -2404,8 +2404,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 function and another. */
 
 #ifdef MULE
-      /* This depends on vars initialized in vars_of_unicode(). */
+      /* This creates charsets, which depends on vars initialized in
+	 vars_of_unicode(). */
       complex_vars_of_mule_charset ();
+      /* This depends on charsets created in complex_vars_of_mule_charset(). */
+      complex_vars_of_mule_coding ();
 #endif
       /* This one doesn't depend on anything really, and could go into
 	 vars_of_(), but lots of lots of code gets called and it's easily
@@ -2414,6 +2417,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
 #ifdef WIN32_ANY
+      /* Likewise this one. */
       /* Define MS-Windows Unicode coding systems */
       complex_vars_of_intl_win32 ();
 #endif
@@ -3354,7 +3358,7 @@ debug_break (void)
 
 /* Return whether all bytes in the specified memory block can be read. */
 int
-debug_can_access_memory (void *ptr, Bytecount len)
+debug_can_access_memory (const void *ptr, Bytecount len)
 {
   return !IsBadReadPtr (ptr, len);
 }
@@ -3375,7 +3379,7 @@ debug_memory_error (int signum)
 
 /* Return whether all bytes in the specified memory block can be read. */
 int
-debug_can_access_memory (void *ptr, Bytecount len)
+debug_can_access_memory (const void *ptr, Bytecount len)
 {
   /* Use volatile to protect variables from being clobbered by longjmp. */
   SIGTYPE (*volatile old_sigbus) (int);

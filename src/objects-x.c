@@ -24,7 +24,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Authors: Jamie Zawinski, Chuck Thompson, Ben Wing */
+/* Authors: Ben Wing, in its current form; based on earlier
+   font/color-handling code by Jamie Zawinski.  Some code by Chuck
+   Thompson. */
 
 /* This file Mule-ized by Ben Wing, 7-10-00. */
 
