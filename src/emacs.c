@@ -3354,7 +3354,7 @@ debug_break (void)
 
 /* Return whether all bytes in the specified memory block can be read. */
 int
-debug_can_access_memory (void *ptr, Bytecount len)
+debug_can_access_memory (const void *ptr, Bytecount len)
 {
   return !IsBadReadPtr (ptr, len);
 }
@@ -3375,7 +3375,7 @@ debug_memory_error (int signum)
 
 /* Return whether all bytes in the specified memory block can be read. */
 int
-debug_can_access_memory (void *ptr, Bytecount len)
+debug_can_access_memory (const void *ptr, Bytecount len)
 {
   /* Use volatile to protect variables from being clobbered by longjmp. */
   SIGTYPE (*volatile old_sigbus) (int);

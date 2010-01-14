@@ -521,7 +521,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 	    {
 	      Extbyte *fname_unicode;
 	      WIN32_FIND_DATAW wfd;
-	      LPWSTR resolved = alloca_array (WCHAR, PATH_MAX_EXTERNAL + 1);
+	      LPWSTR resolved = alloca_array (WCHAR, PATH_MAX_TCHAR + 1);
 
 	      /* Always Unicode.  Not obvious from the
 		 IPersistFile documentation, but look under
@@ -546,10 +546,10 @@ mswindows_read_link_1 (const Ibyte *fname)
 		  /* Another Cygwin prototype error,
 		     fixed in v2.2 of w32api */
 		  XECOMCALL4 (psl, GetPath, (LPSTR) resolved,
-			      PATH_MAX_EXTERNAL, &wfd, 0)
+			      PATH_MAX_TCHAR, &wfd, 0)
 #else
 		  XECOMCALL4 (psl, GetPath, resolved,
-			      PATH_MAX_EXTERNAL, &wfd, 0)
+			      PATH_MAX_TCHAR, &wfd, 0)
 #endif
 		  == S_OK)
 		TSTR_TO_C_STRING_MALLOC (resolved, retval);
@@ -579,7 +579,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 	    {
 	      Extbyte *fname_unicode;
 	      WIN32_FIND_DATAA wfd;
-	      LPSTR resolved = alloca_array (CHAR, PATH_MAX_EXTERNAL + 1);
+	      LPSTR resolved = alloca_array (CHAR, PATH_MAX_TCHAR + 1);
 
 	      /* Always Unicode.  Not obvious from the
 		 IPersistFile documentation, but look under
@@ -591,7 +591,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 			      (LPWSTR) fname_unicode,
 			      STGM_READ) == S_OK
 		  && XECOMCALL4 (psl, GetPath, resolved,
-				 PATH_MAX_EXTERNAL, &wfd, 0) == S_OK)
+				 PATH_MAX_TCHAR, &wfd, 0) == S_OK)
 		TSTR_TO_C_STRING_MALLOC (resolved, retval);
 
 	      XECOMCALL0 (ppf, Release);

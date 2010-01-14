@@ -86,6 +86,12 @@ Boston, MA 02111-1307, USA.  */
 /* # include <sys/fcntl.h> */
 #endif /* WIN32_NATIVE */
 
+/* Needed for C_STRING_TO_TSTR, MAX_XETCHAR_SIZE below; but syswindows.h
+   depends on lisp.h being previously included. */
+#if defined (WIN32_ANY) && defined (emacs)
+# include "syswindows.h"
+#endif
+
 #ifndef	STDERR_FILENO
 #define	STDIN_FILENO	0
 #define	STDOUT_FILENO	1
@@ -302,14 +308,16 @@ Boston, MA 02111-1307, USA.  */
 # define QXE_PATH_MAX 1024
 #endif
 
-/* Client .c files should use PATH_MAX_INTERNAL or PATH_MAX_EXTERNAL
+/* Client .c files should use PATH_MAX_INTERNAL or PATH_MAX_TCHAR
    if they must use either one at all. */
 
 /* Use for internally formatted text, which can potentially have up to
    four bytes per character */
 #define PATH_MAX_INTERNAL (QXE_PATH_MAX * MAX_ICHAR_LEN)
-/* Use for externally formatted text. */
-#define PATH_MAX_EXTERNAL (QXE_PATH_MAX * MAX_XETCHAR_SIZE)
+#ifdef WIN32_ANY
+/* Use for externally formatted text in TCHAR's. */
+#define PATH_MAX_TCHAR (QXE_PATH_MAX * MAX_XETCHAR_SIZE)
+#endif
 
 /* The following definitions are needed under Windows, at least */
 #ifndef X_OK

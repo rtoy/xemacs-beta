@@ -1,3 +1,33 @@
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
+	* glyphs-eimage.c:
+	Turn on fixes for conflicts between jmorecfg.h and windows.h on
+	Cygwin, too.
+	
+	* emacs.c (debug_can_access_memory):
+	* lisp.h:
+	Declare function const void * to avoid warnings.
+	
+	* sysfile.h:
+	Include syswindows.h on Windows to avoid problems using things like
+	PATHNAME_CONVERT_OUT.
+	
+	* sysfile.h (X_OK):
+	* dialog-msw.c (handle_directory_proc):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* nt.c (Fmswindows_short_file_name):
+	* sysdep.c (qxe_allocating_getcwd):
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* unexcw.c (unexec):
+	* unexnt.c (_start):
+	* win32.c (mswindows_read_link_1):
+	Rename PATH_MAX_EXTERNAL to PATH_MAX_TSTR to reflect its actual
+	semantics.
+
+	* unexcw.c:
+	Remove include of syswindows.h that had been added because
+	sysfile.h didn't include it.
+
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
 	* specifier.c (specifier_instance_from_inst_list):

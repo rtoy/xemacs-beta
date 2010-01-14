@@ -133,7 +133,7 @@ _start (void)
      won't work.)  */
   if (heap_state == HEAP_UNLOADED) 
     {
-      Extbyte executable_path[PATH_MAX_EXTERNAL];
+      Extbyte executable_path[PATH_MAX_TCHAR];
 
       /* Don't use mswindows_get_module_file_name() because it uses
 	 xmalloc() */

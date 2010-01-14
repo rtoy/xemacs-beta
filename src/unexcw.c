@@ -27,7 +27,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "lisp.h"
 
 #include "sysfile.h"
-#include "syswindows.h"
 
 #define PERROR(arg)				\
 do {						\
@@ -103,7 +102,7 @@ unexec (char *out_name, char *in_name, uintptr_t UNUSED (start_data),
 {
   /* ugly nt hack - should be in lisp */
   int a_new, a_out = -1;
-  char new_name[PATH_MAX_EXTERNAL], a_name[PATH_MAX_EXTERNAL];
+  char new_name[PATH_MAX_TCHAR], a_name[PATH_MAX_TCHAR];
   char *ptr;
   
   /* Make sure that the input and output filenames have the
