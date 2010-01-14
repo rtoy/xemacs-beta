@@ -291,6 +291,88 @@ FAILING-CASE and DESCRIPTION are useful when Assert is used in a loop."
 	     (incf other-failures)
 	     )))
 
+      (defmacro Assert-test (test testval expected &optional failing-case
+			     description)
+	"Test passes if TESTVAL is equal to EXPECTED, using TEST as comparator.
+TEST should be a function such as `eq', `equal', `equalp', `=', `<=', etc.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	(let* ((assertion `(,test ,testval ,expected))
+	       (failmsg `(format "expected %S, got %S" ,expected ,testval))
+	       (failmsg2 (if failing-case `(concat 
+					   (format "%S, " ,failing-case)
+					   ,failmsg)
+			  failmsg)))
+	  `(Assert ,assertion ,failmsg2 ,description)))
+
+      (defmacro Assert-eq (testval expected &optional failing-case description)
+	"Test passes if TESTVAL is 'eq' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test eq ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert-eql (testval expected &optional failing-case description)
+	"Test passes if TESTVAL is 'eql' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test eql ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert-equal (testval expected &optional failing-case
+			      description)
+	"Test passes if TESTVAL is 'equal' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test equal ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert-equalp (testval expected &optional failing-case
+			      description)
+	"Test passes if TESTVAL is 'equalp' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test equalp ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert-string= (testval expected &optional failing-case
+			      description)
+	"Test passes if TESTVAL is 'string=' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test string= ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert= (testval expected &optional failing-case description)
+	"Test passes if TESTVAL is '=' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test = ,testval ,expected ,failing-case ,description))
+
+      (defmacro Assert<= (testval expected &optional failing-case description)
+	"Test passes if TESTVAL is '<=' to EXPECTED.
+Optional FAILING-CASE describes the particular failure; any value given
+here will be concatenated with a phrase describing the expected and actual
+values of the comparison.  Optional DESCRIPTION describes the assertion; by
+default, the unevalated comparison expressions are given.  FAILING-CASE and
+DESCRIPTION are useful when Assert is used in a loop."
+	`(Assert-test <= ,testval ,expected ,failing-case ,description))
 
       (defmacro Check-Error (expected-error &rest body)
 	(let ((quoted-body (if (= 1 (length body))
