@@ -605,7 +605,7 @@ int old_mule_charset_encodable (Lisp_Object charset);
    Return value will be -1 if cannot convert. */
 DECLARE_INLINE_HEADER (
 int
-ichar_to_unicode (Ichar chr, enum converr fail)
+ichar_to_unicode (Ichar chr, enum converr USED_IF_OLD_MULE (fail))
 )
 {
   ASSERT_VALID_ICHAR (chr);
