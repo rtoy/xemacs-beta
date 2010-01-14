@@ -119,6 +119,7 @@
 	    latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
 	    vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
 	    ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
+	    windows-glyph-list-4
 	    japanese-jisx0208 japanese-jisx0208-1978
 	    japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
 	    chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
@@ -274,130 +275,147 @@ Standard encoding for representing UTF-8 under MS Windows."
    little-endian t
    need-bom t))
 
-;; Now, create jit-ucs-charset-0 entries for those characters in Windows
-;; Glyph List 4 that would otherwise end up in East Asian character sets.
-;; 
-;; WGL4 is a character repertoire from Microsoft that gives a guideline
-;; for font implementors as to what characters are sufficient for
-;; pan-European support.  The intention of this code is to avoid the
-;; situation where these characters end up mapping to East Asian XEmacs
-;; characters, which generally clash strongly with European characters
-;; both in font choice and character width; jit-ucs-charset-0 is a
-;; single-width character set which comes before the East Asian character
-;; sets in the default-unicode-precedence-list above.
-(loop for (ucs ascii-or-latin-1)
-  in '((#x2013 ?-) ;; U+2013 EN DASH
-       (#x2014 ?-) ;; U+2014 EM DASH
-       (#x2105 ?%) ;; U+2105 CARE OF
-       (#x203e ?-) ;; U+203E OVERLINE
-       (#x221f ?|) ;; U+221F RIGHT ANGLE
-       (#x2584 ?|) ;; U+2584 LOWER HALF BLOCK
-       (#x2588 ?|) ;; U+2588 FULL BLOCK
-       (#x258c ?|) ;; U+258C LEFT HALF BLOCK
-       (#x2550 ?|) ;; U+2550 BOX DRAWINGS DOUBLE HORIZONTAL
-       (#x255e ?|) ;; U+255E BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
-       (#x256a ?|) ;; U+256A BOX DRAWINGS VERTICAL SINGLE & HORIZONTAL DOUBLE
-       (#x2561 ?|) ;; U+2561 BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
-       (#x2215 ?/) ;; U+2215 DIVISION SLASH
-       (#x02c9 ?`) ;; U+02C9 MODIFIER LETTER MACRON
-       (#x2211 ?s) ;; U+2211 N-ARY SUMMATION
-       (#x220f ?s) ;; U+220F N-ARY PRODUCT
-       (#x2248 ?=) ;; U+2248 ALMOST EQUAL TO
-       (#x2264 ?=) ;; U+2264 LESS-THAN OR EQUAL TO
-       (#x2265 ?=) ;; U+2265 GREATER-THAN OR EQUAL TO
-       (#x201c ?') ;; U+201C LEFT DOUBLE QUOTATION MARK
-       (#x2026 ?.) ;; U+2026 HORIZONTAL ELLIPSIS
-       (#x2212 ?-) ;; U+2212 MINUS SIGN
-       (#x2260 ?=) ;; U+2260 NOT EQUAL TO
-       (#x221e ?=) ;; U+221E INFINITY
-       (#x2642 ?=) ;; U+2642 MALE SIGN
-       (#x2640 ?=) ;; U+2640 FEMALE SIGN
-       (#x2032 ?=) ;; U+2032 PRIME
-       (#x2033 ?=) ;; U+2033 DOUBLE PRIME
-       (#x25cb ?=) ;; U+25CB WHITE CIRCLE
-       (#x25cf ?=) ;; U+25CF BLACK CIRCLE
-       (#x25a1 ?=) ;; U+25A1 WHITE SQUARE
-       (#x25a0 ?=) ;; U+25A0 BLACK SQUARE
-       (#x25b2 ?=) ;; U+25B2 BLACK UP-POINTING TRIANGLE
-       (#x25bc ?=) ;; U+25BC BLACK DOWN-POINTING TRIANGLE
-       (#x2192 ?=) ;; U+2192 RIGHTWARDS ARROW
-       (#x2190 ?=) ;; U+2190 LEFTWARDS ARROW
-       (#x2191 ?=) ;; U+2191 UPWARDS ARROW
-       (#x2193 ?=) ;; U+2193 DOWNWARDS ARROW
-       (#x2229 ?=) ;; U+2229 INTERSECTION
-       (#x2202 ?=) ;; U+2202 PARTIAL DIFFERENTIAL
-       (#x2261 ?=) ;; U+2261 IDENTICAL TO
-       (#x221a ?=) ;; U+221A SQUARE ROOT
-       (#x222b ?=) ;; U+222B INTEGRAL
-       (#x2030 ?=) ;; U+2030 PER MILLE SIGN
-       (#x266a ?=) ;; U+266A EIGHTH NOTE
-       (#x2020 ?*) ;; U+2020 DAGGER
-       (#x2021 ?*) ;; U+2021 DOUBLE DAGGER
-       (#x2500 ?|) ;; U+2500 BOX DRAWINGS LIGHT HORIZONTAL
-       (#x2502 ?|) ;; U+2502 BOX DRAWINGS LIGHT VERTICAL
-       (#x250c ?|) ;; U+250C BOX DRAWINGS LIGHT DOWN AND RIGHT
-       (#x2510 ?|) ;; U+2510 BOX DRAWINGS LIGHT DOWN AND LEFT
-       (#x2518 ?|) ;; U+2518 BOX DRAWINGS LIGHT UP AND LEFT
-       (#x2514 ?|) ;; U+2514 BOX DRAWINGS LIGHT UP AND RIGHT
-       (#x251c ?|) ;; U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT
-       (#x252c ?|) ;; U+252C BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
-       (#x2524 ?|) ;; U+2524 BOX DRAWINGS LIGHT VERTICAL AND LEFT
-       (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
-       (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
-       (#x02da ?^) ;; U+02DA RING ABOVE
-       (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?,A)(B
+(when (featurep 'mule)
+  (make-charset 'windows-glyph-list-4
+		"Windows Glyph List 4 etc."
+		'(dimension 1
+		  offset 128
+		  chars 128))
 
-       (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
-       (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
+  ;; We don't want the characters in Windows Glyph List 4 (and a few
+  ;; others) to map to East Asian character sets when they are displayed.
+  ;; WGL4 is a character repertoire from Microsoft that gives a guideline
+  ;; for font implementors as to what characters are sufficient for
+  ;; pan-European support.  East Asian fonts generally clash strongly with
+  ;; European characters both in font choice and character width, and since
+  ;; the WGL 4 characters are basically European characters, we want them
+  ;; displayed with European fonts.  So create a special charset
+  ;; `windows-glyph-list-4' that we put higher in the default Unicode
+  ;; precedence list than any Asian charsets. (Under old-Mule, these
+  ;; characters will also end up in jit-ucs-charset-0, which likewise we
+  ;; put higher than the Asian charsets.)
+  ;; 
+  (loop for (ucs ascii-or-latin-1)
+    in '((#x2013 ?-) ;; U+2013 EN DASH
+	 (#x2014 ?-) ;; U+2014 EM DASH
+	 (#x2105 ?%) ;; U+2105 CARE OF
+	 (#x203e ?-) ;; U+203E OVERLINE
+	 (#x221f ?|) ;; U+221F RIGHT ANGLE
+	 (#x2584 ?|) ;; U+2584 LOWER HALF BLOCK
+	 (#x2588 ?|) ;; U+2588 FULL BLOCK
+	 (#x258c ?|) ;; U+258C LEFT HALF BLOCK
+	 (#x2550 ?|) ;; U+2550 BOX DRAWINGS DOUBLE HORIZONTAL
+	 (#x255e ?|) ;; U+255E BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE
+	 (#x256a ?|) ;; U+256A BOX DRAWINGS VERTICAL SINGLE & HORIZONTAL DOUBLE
+	 (#x2561 ?|) ;; U+2561 BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE
+	 (#x2215 ?/) ;; U+2215 DIVISION SLASH
+	 (#x02c9 ?`) ;; U+02C9 MODIFIER LETTER MACRON
+	 (#x2211 ?s) ;; U+2211 N-ARY SUMMATION
+	 (#x220f ?s) ;; U+220F N-ARY PRODUCT
+	 (#x2248 ?=) ;; U+2248 ALMOST EQUAL TO
+	 (#x2264 ?=) ;; U+2264 LESS-THAN OR EQUAL TO
+	 (#x2265 ?=) ;; U+2265 GREATER-THAN OR EQUAL TO
+	 (#x201c ?') ;; U+201C LEFT DOUBLE QUOTATION MARK
+	 (#x2026 ?.) ;; U+2026 HORIZONTAL ELLIPSIS
+	 (#x2212 ?-) ;; U+2212 MINUS SIGN
+	 (#x2260 ?=) ;; U+2260 NOT EQUAL TO
+	 (#x221e ?=) ;; U+221E INFINITY
+	 (#x2642 ?=) ;; U+2642 MALE SIGN
+	 (#x2640 ?=) ;; U+2640 FEMALE SIGN
+	 (#x2032 ?=) ;; U+2032 PRIME
+	 (#x2033 ?=) ;; U+2033 DOUBLE PRIME
+	 (#x25cb ?=) ;; U+25CB WHITE CIRCLE
+	 (#x25cf ?=) ;; U+25CF BLACK CIRCLE
+	 (#x25a1 ?=) ;; U+25A1 WHITE SQUARE
+	 (#x25a0 ?=) ;; U+25A0 BLACK SQUARE
+	 (#x25b2 ?=) ;; U+25B2 BLACK UP-POINTING TRIANGLE
+	 (#x25bc ?=) ;; U+25BC BLACK DOWN-POINTING TRIANGLE
+	 (#x2192 ?=) ;; U+2192 RIGHTWARDS ARROW
+	 (#x2190 ?=) ;; U+2190 LEFTWARDS ARROW
+	 (#x2191 ?=) ;; U+2191 UPWARDS ARROW
+	 (#x2193 ?=) ;; U+2193 DOWNWARDS ARROW
+	 (#x2229 ?=) ;; U+2229 INTERSECTION
+	 (#x2202 ?=) ;; U+2202 PARTIAL DIFFERENTIAL
+	 (#x2261 ?=) ;; U+2261 IDENTICAL TO
+	 (#x221a ?=) ;; U+221A SQUARE ROOT
+	 (#x222b ?=) ;; U+222B INTEGRAL
+	 (#x2030 ?=) ;; U+2030 PER MILLE SIGN
+	 (#x266a ?=) ;; U+266A EIGHTH NOTE
+	 (#x2020 ?*) ;; U+2020 DAGGER
+	 (#x2021 ?*) ;; U+2021 DOUBLE DAGGER
+	 (#x2500 ?|) ;; U+2500 BOX DRAWINGS LIGHT HORIZONTAL
+	 (#x2502 ?|) ;; U+2502 BOX DRAWINGS LIGHT VERTICAL
+	 (#x250c ?|) ;; U+250C BOX DRAWINGS LIGHT DOWN AND RIGHT
+	 (#x2510 ?|) ;; U+2510 BOX DRAWINGS LIGHT DOWN AND LEFT
+	 (#x2518 ?|) ;; U+2518 BOX DRAWINGS LIGHT UP AND LEFT
+	 (#x2514 ?|) ;; U+2514 BOX DRAWINGS LIGHT UP AND RIGHT
+	 (#x251c ?|) ;; U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+	 (#x252c ?|) ;; U+252C BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+	 (#x2524 ?|) ;; U+2524 BOX DRAWINGS LIGHT VERTICAL AND LEFT
+	 (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
+	 (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+	 (#x02da ?^) ;; U+02DA RING ABOVE
+	 (#x2122 ?\xa9)	;; U+2122 TRADE MARK SIGN, ?,A)(B
 
-       (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
-       (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
-       (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
+	 (#x0132 ?\xe6)	;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
+	 (#x013f ?\xe6)	;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
 
-       (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
-       (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
-       (#x2665 ?*) ;; U+2665 BLACK HEART SUIT
-       (#x2663 ?*) ;; U+2663 BLACK CLUB SUIT
-       (#x2592 ?|) ;; U+2592 MEDIUM SHADE
-       (#x2195 ?|) ;; U+2195 UP DOWN ARROW
+	 (#x0133 ?\xe6)	;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
+	 (#x0140 ?\xe6)	;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
+	 (#x0149 ?\xe6)	;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
 
-       (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?,A9(B
-       (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
-       (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
-       (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
-       (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
-       (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
+	 (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
+	 (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
+	 (#x2665 ?*) ;; U+2665 BLACK HEART SUIT
+	 (#x2663 ?*) ;; U+2663 BLACK CLUB SUIT
+	 (#x2592 ?|) ;; U+2592 MEDIUM SHADE
+	 (#x2195 ?|) ;; U+2195 UP DOWN ARROW
+
+	 (#x2113 ?\xb9)	;; U+2113 SCRIPT SMALL L, ?,A9(B
+	 (#x215b ?\xbe)	;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
+	 (#x215c ?\xbe)	;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
+	 (#x215d ?\xbe)	;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
+	 (#x215e ?\xbe)	;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
+	 (#x207f ?\xbe)	;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
   
-       ;; These are not in WGL 4, but are IPA characters that should not
-       ;; be double width. They are the only IPA characters that both
-       ;; occur in packages/mule-packages/leim/ipa.el and end up in East
-       ;; Asian character sets when that file is loaded in an XEmacs
-       ;; without packages.
-       (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
-       (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
-       (#x2191 ?|) ;; U+2191 UPWARDS ARROW
-       (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
-  with decoded = nil
-  with syntax-table = (standard-syntax-table)
-  initially (unless (featurep 'mule) (return))
-  ;; This creates jit-ucs-charset-0 entries because:
-  ;;
-  ;;    1. If the tables are dumped, it is run at dump time before they are
-  ;;    dumped, and as such before the relevant conversions are available
-  ;;    (they are made available in mule/general-late.el). 
-  ;;
-  ;;    2. If the tables are not dumped, it is run at dump time, long before
-  ;;    any of the other mappings are available.
-  ;;
-  do
-  (setq decoded (decode-char 'ucs ucs))
-  (assert (eq (declare-fboundp (char-charset decoded))
-              'jit-ucs-charset-0) nil 
-              "Unexpected Unicode decoding behavior.  ")
-  (modify-syntax-entry decoded
-                       (string 
-                        (char-syntax ascii-or-latin-1))
-                       syntax-table))
+	 ;; These are not in WGL 4, but are IPA characters that should not
+	 ;; be double width. They are the only IPA characters that both
+	 ;; occur in packages/mule-packages/leim/ipa.el and end up in East
+	 ;; Asian character sets when that file is loaded in an XEmacs
+	 ;; without packages.
+	 (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
+	 (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
+	 (#x2191 ?|) ;; U+2191 UPWARDS ARROW
+	 (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
+    with decoded = nil
+    with codepoint = #x80
+    with syntax-table = (standard-syntax-table)
+    initially (unless (featurep 'mule) (return))
+    do
+    ;; Under old-Mule, the call to `decode-char' creates jit-ucs-charset-0
+    ;; entries because it is run at dump time, before we load any of the
+    ;; Unicode tables. (That happens at the bottom of this file.) It doesn't
+    ;; matter whether we move the call to (set-unicode-conversion code
+    ;; 'windows-glyph-list-4 ...) before the call to `decode-char', because
+    ;; windows-glyph-list-4, being size 128, is a non-encodable charset.  By
+    ;; putting jit-ucs-charset-0 above the Asian charsets, we ensure that the
+    ;; properties of jit-ucs-charset-0 determine how the characters are
+    ;; represented.
+    ;;
+    ;; Under Unicode-internal, we get the same behavior by putting
+    ;; windows-glyph-list-4 before the Asian charsets.
+    ;;
+    (setq decoded (decode-char 'ucs ucs))
+    (assert (memq (declare-fboundp (char-charset decoded))
+		  '(jit-ucs-charset-0 windows-glyph-list-4))
+	    nil "Unexpected Unicode decoding behavior.  ")
+    (set-unicode-conversion code 'windows-glyph-list-4 codepoint)
+    (incf codepoint)
+    (modify-syntax-entry decoded
+			 (string 
+			  (char-syntax ascii-or-latin-1))
+			 syntax-table))
+  )
 
 ;; *Sigh*, declarations needs to be at the start of the line to be picked up
 ;; by make-docfile.
@@ -527,8 +545,7 @@ mapping from the error sequences to the desired characters.  "
           unicode-error-translate-region unicode-query-coding-region
           unicode-query-coding-skip-chars-arg)))
 
-(make-obsolete 'char-octets 'char-to-charset-codepoint)
-(make-obsolete 'char-charset 'char-to-charset-codepoint)
+(make-obsolete 'char-octet 'char-to-charset-codepoint)
 (make-obsolete 'split-char 'char-to-charset-codepoint)
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
