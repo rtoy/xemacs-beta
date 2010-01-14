@@ -426,21 +426,18 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   ;; Test Unicode-related functions
   ;;---------------------------------------------------------------
-  (let* ((scaron '(latin-iso8859-2 185)))
+  (let* ((scaron (make-char 'latin-iso8859-2 57)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
     (loop
       for code in '(#x0100 #x2222 #x4444 #xffff)
-      with initial-unicode = (unicode-to-charset-codepoint
-			      code '(latin-iso8859-2))
+      with initial-unicode = (char-to-unicode scaron)
       do
       (progn
-	(apply 'set-unicode-conversion code scaron)
-	(Assert-eq code (apply 'charset-codepoint-to-unicode scaron))
-	(Assert-equal scaron (unicode-to-charset-codepoint
-			      code '(latin-iso8859-2)))
-	(apply 'set-unicode-conversion code initial-unicode)))
-    (Check-Error 'invalid-argument (apply 'set-unicode-conversion -10000
-					  scaron)))
+	(set-unicode-conversion scaron code)
+	(Assert-eq code (char-to-unicode scaron))
+	(Assert-eq scaron (unicode-to-char code '(latin-iso8859-2))))
+      finally (set-unicode-conversion scaron initial-unicode))
+    (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK

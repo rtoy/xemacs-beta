@@ -1,5 +1,11 @@
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
+	* automated/mule-tests.el (featurep):
+	Accidentally included changes from Unicode-internal ws that
+	broke things.
+
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
 	* automated/base64-tests.el (bt-base64-encode-string):
 	* automated/base64-tests.el (bt-base64-decode-string):
 	* automated/base64-tests.el (for):
