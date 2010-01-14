@@ -3959,7 +3959,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 
 	    /* Also set lead bytes after the end */
 	    for (j = smallest_prev; j < 0x100; j++)
-	      fastmap[jj] = 1;
+	      fastmap[j] = 1;
 
 	    /* If it's not a possible first byte, it can't be in the fastmap.
 	       In UTF-8, lead bytes are not contiguous with ASCII, so a

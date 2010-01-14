@@ -749,11 +749,11 @@ make_charset (int id, int no_init_unicode_tables,
   XCHARSET_DOC_STRING	(obj) = doc_string;
   XCHARSET_REGISTRIES	(obj) = registries;
 
-  /* Sanity checking -- for internal charsets, make sure that the offset
-     range agrees with the graphic range.  We don't do this for external
-     charsets because the user might choose to set the values so they
-     don't correspond. */
-  if (algo_low_or_internal_p == CSET_INTERNAL)
+  /* Sanity checking -- for internal ISO-2022 charsets, make sure that the
+     offset range agrees with the graphic range.  We don't do this for
+     external charsets because the user might choose to set the values so
+     they don't correspond. */
+  if (final && algo_low_or_internal_p == CSET_INTERNAL)
     {
       if (dimension == 2)
 	assert ((graphic == 0 && offset0 < 128) ||
