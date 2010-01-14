@@ -1,3 +1,8 @@
+2010-01-14  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): change X11 bgcolor fallback of
+	default face to match that of gui element face.
+
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
 	* buffer.h:
