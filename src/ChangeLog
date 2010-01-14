@@ -1,5 +1,16 @@
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
+	* syswindows.h: Don't define CYGWIN_HEADERS here.
+
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
+	* s/cygwin32.h:
+	* s/mingw32.h:
+	Define here instead so it's available in all files.  Fixes
+	compile problems in database.c in some cases.
+
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
 	* glyphs-eimage.c:
 	Turn on fixes for conflicts between jmorecfg.h and windows.h on
 	Cygwin, too.
