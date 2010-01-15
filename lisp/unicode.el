@@ -122,7 +122,9 @@
 	    windows-glyph-list-4
 	    japanese-jisx0208 japanese-jisx0208-1978
 	    japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
-	    chinese-gb2312 chinese-sisheng chinese-big5-1 chinese-big5-2
+	    chinese-gb2312 chinese-sisheng
+	    ,@(if (featurep 'unicode-internal) '(chinese-big5)
+		'(chinese-big5-1 chinese-big5-2))
 	    indian-is13194 korean-ksc5601 chinese-cns11643-1
 	    chinese-cns11643-2 chinese-isoir165 
 	    composite ethiopic indian-1-column indian-2-column
