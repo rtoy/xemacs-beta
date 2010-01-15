@@ -1,5 +1,94 @@
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.c (qxeExtractAssociatedIcon):
+	* intl-auto-encap-win32.c (qxeShellExecuteEx):
+	* intl-auto-encap-win32.c (qxeSHFileOperation):
+	* intl-auto-encap-win32.c (qxeSHQueryRecycleBin):
+	* intl-auto-encap-win32.c (qxeSHEmptyRecycleBin):
+	* intl-auto-encap-win32.c (qxeWNetAddConnection):
+	* intl-auto-encap-win32.c (qxeWNetAddConnection2):
+	* intl-auto-encap-win32.c (qxeWNetAddConnection3):
+	* intl-auto-encap-win32.c (qxeWNetCancelConnection):
+	* intl-auto-encap-win32.c (qxeWNetCancelConnection2):
+	* intl-auto-encap-win32.c (qxeWNetGetConnection):
+	* intl-auto-encap-win32.c (qxeWNetUseConnection):
+	* intl-auto-encap-win32.c (qxeWNetConnectionDialog1):
+	* intl-auto-encap-win32.c (qxeWNetDisconnectDialog1):
+	* intl-auto-encap-win32.c (qxeWNetOpenEnum):
+	* intl-auto-encap-win32.c (qxeWNetEnumResource):
+	* intl-auto-encap-win32.c (qxeWNetGetUniversalName):
+	* intl-auto-encap-win32.c (qxeWNetGetUser):
+	* intl-auto-encap-win32.c (qxeWNetGetProviderName):
+	* intl-auto-encap-win32.c (qxeWNetGetNetworkInformation):
+	* intl-auto-encap-win32.c (qxeWNetGetLastError):
+	* intl-auto-encap-win32.c (qxeMultinetGetConnectionPerformance):
+	* intl-auto-encap-win32.c (qxeAppendMenu):
+	* intl-auto-encap-win32.c (qxeCopyAcceleratorTable):
+	* intl-auto-encap-win32.c (qxeDlgDirSelectComboBoxEx):
+	* intl-auto-encap-win32.c (qxeEnumDesktops):
+	* intl-auto-encap-win32.c (qxeEnumWindowStations):
+	* intl-auto-encap-win32.c (qxeGetClassInfo):
+	* intl-auto-encap-win32.c (qxeGetClassLong):
+	* intl-auto-encap-win32.c (qxeGetClassName):
+	* intl-auto-encap-win32.c (qxeGetKeyboardLayoutName):
+	* intl-auto-encap-win32.c (qxeGetWindowLong):
+	* intl-auto-encap-win32.c (qxeGetUserObjectInformation):
+	* intl-auto-encap-win32.c (qxeGetWindowTextLength):
+	* intl-auto-encap-win32.c (qxeGrayString):
+	* intl-auto-encap-win32.c (qxeInsertMenu):
+	* intl-auto-encap-win32.c (qxeSetProp):
+	* intl-auto-encap-win32.c (qxeEnumICMProfiles):
+	* intl-auto-encap-win32.c (qxeExtTextOut):
+	* intl-auto-encap-win32.c (qxeSetICMProfile):
+	* intl-auto-encap-win32.c (qxeTextOut):
+	* intl-auto-encap-win32.c (qxeSHGetPathFromIDList):
+	* intl-auto-encap-win32.c (qxeFindText):
+	* intl-auto-encap-win32.c (qxeReplaceText):
+	* intl-auto-encap-win32.c (qxeImmInstallIME):
+	* intl-auto-encap-win32.c (qxeImmGetDescription):
+	* intl-auto-encap-win32.c (qxeImmGetIMEFileName):
+	* intl-auto-encap-win32.c (qxeImmGetCompositionString):
+	* intl-auto-encap-win32.c (qxeImmGetCandidateListCount):
+	* intl-auto-encap-win32.c (qxeImmGetCandidateList):
+	* intl-auto-encap-win32.c (qxeImmGetGuideLine):
+	* intl-auto-encap-win32.c (qxeImmConfigureIME):
+	* intl-auto-encap-win32.c (qxeImmEscape):
+	* intl-auto-encap-win32.c (qxeImmGetConversionList):
+	* intl-auto-encap-win32.c (qxeImmRegisterWord):
+	* intl-auto-encap-win32.c (qxeImmUnregisterWord):
+	* intl-auto-encap-win32.c (qxeImmEnumRegisterWord):
+	* intl-auto-encap-win32.c (qxesndPlaySound):
+	* intl-auto-encap-win32.c (qxePlaySound):
+	* intl-auto-encap-win32.c (qxewaveOutGetErrorText):
+	* intl-auto-encap-win32.c (qxewaveInGetErrorText):
+	* intl-auto-encap-win32.c (qxemidiOutGetErrorText):
+	* intl-auto-encap-win32.c (qxemidiInGetErrorText):
+	* intl-auto-encap-win32.c (qxemmioStringToFOURCC):
+	* intl-auto-encap-win32.c (qxemmioInstallIOProc):
+	* intl-auto-encap-win32.c (qxemmioOpen):
+	* intl-auto-encap-win32.c (qxemmioRename):
+	* intl-auto-encap-win32.c (qxemciSendCommand):
+	* intl-auto-encap-win32.c (qxemciSendString):
+	* intl-auto-encap-win32.c (qxemciGetDeviceID):
+	* intl-auto-encap-win32.c (qxemciGetErrorString):
+	* intl-auto-encap-win32.h:
+	* intl-auto-encap-win32.h (qxemciGetErrorString):
+	Regenerate these files from Cygwin headers.
+	
+	* intl-encap-win32.c:
+	Bracket more functions in HAVE_MS_WINDOWS, to fix build problems
+	when building --with-msw=no on Cygwin.
+
+	Fixes for Cygwin headers:
+	-- Comment out IME.H, non-existent in Cygwin.
+	-- Make MessageBoxIndirect a `no' (don't encapsulate but generate
+	   error if used) because it has a structure parameter that needs
+	   to be A/W split but is declared as FOO*, and our parser can't
+	   split this.
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in:
 	Build xemacs-export.o whenever we're on any Windows OS (WIN32_ANY)
 	instead of only when we build support for the GUI portion of
