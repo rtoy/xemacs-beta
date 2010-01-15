@@ -76,27 +76,32 @@
 ;; we can construct the query-skip-chars-arg string correctly. 
 (set-unicode-query-skip-chars-args
  (eval-when-compile 
-   (when-fboundp 'map-charset-chars 
-     (loop
-       for charset in (charset-list)
-       ;; @@#### Rethink this entire clause under Unicode-internal.
-       with skip-chars-string = ""
-       if (charset-encodable-p charset)
-       do
-       (block no-ucs-mapping
-         (map-charset-chars
-          #'(lambda (begin end)
-              (loop
-                while (and begin (>= end begin))
-                do
-                (when (= -1 (char-to-unicode begin))
-                  (return-from no-ucs-mapping))
-                (setq begin (int-to-char (1+ begin)))))
-          charset)
-         (setq skip-chars-string
-               (concat skip-chars-string
-                       (charset-skip-chars-string charset))))
-       finally return skip-chars-string)))
+   (if (featurep 'unicode-internal)
+       ;; Under Unicode-internal, all non-private characters can be encoded,
+       ;; other than surrogate code points
+       (format "%c-%c%c-%c" 0 #xD7FF #xE000 #x10FFFF)
+     ;; Under old-Mule, we have to loop over all charsets to see which
+     ;; characters in them map to Unicode code points.
+     (when-fboundp 'map-charset-chars 
+       (loop
+	 for charset in (charset-list)
+	 with skip-chars-string = ""
+	 if (charset-encodable-p charset)
+	 do
+	 (block no-ucs-mapping
+	   (map-charset-chars
+	    #'(lambda (begin end)
+		(loop
+		  while (and begin (>= end begin))
+		  do
+		  (when (= -1 (char-to-unicode begin))
+		    (return-from no-ucs-mapping))
+		  (setq begin (int-to-char (1+ begin)))))
+	    charset)
+	   (setq skip-chars-string
+		 (concat skip-chars-string
+			 (charset-skip-chars-string charset))))
+	 finally return skip-chars-string))))
  unicode-invalid-sequence-regexp-range
  (eval-when-compile
    (concat (loop
