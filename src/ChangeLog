@@ -1,5 +1,16 @@
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
+	* intl-encap-win32.c:
+	Add `review' lines for all functions seen in the headers that we
+	process but not yet associated with an encapsulation command.
+	These will cause an error to be signaled if these functions are
+	used.
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h:
+	Regenerate.
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
 	* intl-auto-encap-win32.c:
 	* intl-auto-encap-win32.c (qxeExtractAssociatedIcon):
 	* intl-auto-encap-win32.c (qxeShellExecuteEx):

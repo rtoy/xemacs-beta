@@ -308,6 +308,11 @@ BOOL qxeEnumPrinters (DWORD arg1, Extbyte * arg2, DWORD arg3, PBYTE arg4, DWORD 
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 #if defined (HAVE_MS_WINDOWS)
+#undef GetDefaultPrinter
+#define GetDefaultPrinter error_Function_needs_review_to_determine_how_to_handle_it
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
 #undef GetForm
 #define GetForm error_not_used__complicated_interface_with_split_structures
 #endif /* defined (HAVE_MS_WINDOWS) */
@@ -441,6 +446,11 @@ DWORD  qxeWNetUseConnection (HWND arg1, LPNETRESOURCEW arg2, const Extbyte * arg
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 #if defined (HAVE_MS_WINDOWS)
+#undef WNetSetConnection
+#define WNetSetConnection error_Function_needs_review_to_determine_how_to_handle_it
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef WNetConnectionDialog1
 #define WNetConnectionDialog1 error_use_qxeWNetConnectionDialog1_or_WNetConnectionDialog1A_and_WNetConnectionDialog1W
@@ -505,6 +515,16 @@ DWORD  qxeWNetGetNetworkInformation (const Extbyte * arg1, LPNETINFOSTRUCT arg2)
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 #if defined (HAVE_MS_WINDOWS)
+#undef WNetGetResourceInformation
+#define WNetGetResourceInformation error_Function_needs_review_to_determine_how_to_handle_it
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#undef WNetGetResourceParent
+#define WNetGetResourceParent error_Function_needs_review_to_determine_how_to_handle_it
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef WNetGetLastError
 #define WNetGetLastError error_use_qxeWNetGetLastError_or_WNetGetLastErrorA_and_WNetGetLastErrorW
@@ -531,6 +551,9 @@ BOOL qxeAppendMenu (HMENU arg1, UINT arg2, UINT_PTR arg3, const Extbyte * arg4);
 
 #undef BroadcastSystemMessage
 #define BroadcastSystemMessage error_win95_version_not_split__NT_4_0__only
+
+#undef BroadcastSystemMessageEx
+#define BroadcastSystemMessageEx error_Function_needs_review_to_determine_how_to_handle_it
 
 #if !defined (CYGWIN_HEADERS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
@@ -731,6 +754,9 @@ BOOL qxeEnumDesktops (HWINSTA arg1, DESKTOPENUMPROCW arg2, LPARAM arg3);
 #undef EnumDisplaySettings
 #define EnumDisplaySettings error_split_sized_LPDEVMODE
 
+#undef EnumDisplaySettingsEx
+#define EnumDisplaySettingsEx error_Function_needs_review_to_determine_how_to_handle_it
+
 #undef EnumDisplayDevices
 #define EnumDisplayDevices error_split_sized_PDISPLAY_DEVICE__NT_5_0__only__no_Win98
 
@@ -781,6 +807,9 @@ BOOL qxeGetClassInfoEx (HINSTANCE arg1, const Extbyte * arg2, LPWNDCLASSEXW arg3
 #define GetClassLong error_use_qxeGetClassLong_or_GetClassLongA_and_GetClassLongW
 #endif
 DWORD qxeGetClassLong (HWND arg1, int arg2);
+
+#undef GetClassLongPtr
+#define GetClassLongPtr error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetClassName
@@ -836,6 +865,9 @@ BOOL qxeGetMessage (LPMSG arg1, HWND arg2, UINT arg3, UINT arg4);
 #endif
 HANDLE qxeGetProp (HWND arg1, const Extbyte * arg2);
 
+#undef GetRawInputDeviceInfo
+#define GetRawInputDeviceInfo error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetTabbedTextExtent
 #define GetTabbedTextExtent error_use_qxeGetTabbedTextExtent_or_GetTabbedTextExtentA_and_GetTabbedTextExtentW
@@ -847,6 +879,9 @@ DWORD qxeGetTabbedTextExtent (HDC arg1, const Extbyte * arg2, int arg3, int arg4
 #define GetWindowLong error_use_qxeGetWindowLong_or_GetWindowLongA_and_GetWindowLongW
 #endif
 LONG qxeGetWindowLong (HWND arg1, int arg2);
+
+#undef GetWindowLongPtr
+#define GetWindowLongPtr error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetUserObjectInformation
@@ -1106,6 +1141,9 @@ BOOL qxeSendNotifyMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4);
 #endif
 DWORD qxeSetClassLong (HWND arg1, int arg2, LONG arg3);
 
+#undef SetClassLongPtr
+#define SetClassLongPtr error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SetDlgItemText
 #define SetDlgItemText error_use_qxeSetDlgItemText_or_SetDlgItemTextA_and_SetDlgItemTextW
@@ -1135,6 +1173,9 @@ BOOL qxeSetUserObjectInformation (HANDLE arg1, int arg2, PVOID arg3, DWORD arg4)
 #define SetWindowLong error_use_qxeSetWindowLong_or_SetWindowLongA_and_SetWindowLongW
 #endif
 LONG qxeSetWindowLong (HWND arg1, int arg2, LONG arg3);
+
+#undef SetWindowLongPtr
+#define SetWindowLongPtr error_Function_needs_review_to_determine_how_to_handle_it
 
 #undef SetWindowsHook
 #define SetWindowsHook error_obsolete__two_versions__STRICT_and_non_STRICT
@@ -1239,6 +1280,9 @@ LONG qxeRegCreateKey (HKEY arg1, const Extbyte * arg2, PHKEY arg3);
 #define RegDeleteKey error_use_qxeRegDeleteKey_or_RegDeleteKeyA_and_RegDeleteKeyW
 #endif
 LONG qxeRegDeleteKey (HKEY arg1, const Extbyte * arg2);
+
+#undef RegDeleteKeyEx
+#define RegDeleteKeyEx error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef RegDeleteValue
@@ -1366,6 +1410,9 @@ LONG qxeRegUnLoadKey (HKEY arg1, const Extbyte * arg2);
 #undef FoldString
 #define FoldString error_not_used__not_examined_yet
 
+#undef GetCalendarInfo
+#define GetCalendarInfo error_Function_needs_review_to_determine_how_to_handle_it
+
 #undef GetCPInfoEx
 #define GetCPInfoEx error_not_used__not_examined_yet
 
@@ -1374,6 +1421,9 @@ LONG qxeRegUnLoadKey (HKEY arg1, const Extbyte * arg2);
 
 #undef GetDateFormat
 #define GetDateFormat error_not_used__not_examined_yet
+
+#undef GetGeoInfo
+#define GetGeoInfo error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetLocaleInfo
@@ -1396,6 +1446,9 @@ int qxeGetLocaleInfo (LCID arg1, LCTYPE arg2, Extbyte * arg3, int arg4);
 #undef LCMapString
 #define LCMapString error_not_used__not_examined_yet
 
+#undef SetCalendarInfo
+#define SetCalendarInfo error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SetLocaleInfo
 #define SetLocaleInfo error_use_qxeSetLocaleInfo_or_SetLocaleInfoA_and_SetLocaleInfoW
@@ -1407,6 +1460,15 @@ BOOL qxeSetLocaleInfo (LCID arg1, LCTYPE arg2, const Extbyte * arg3);
 
 #undef EnumDateFormatsEx
 #define EnumDateFormatsEx error_not_used__not_examined_yet
+
+#undef EnumSystemLanguageGroups
+#define EnumSystemLanguageGroups error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef EnumLanguageGroupLocales
+#define EnumLanguageGroupLocales error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef EnumUILanguages
+#define EnumUILanguages error_Function_needs_review_to_determine_how_to_handle_it
 
 
 /* Processing file WINGDI.H */
@@ -1748,6 +1810,18 @@ BOOL qxeSHGetPathFromIDList (LPCITEMIDLIST arg1, Extbyte * arg2);
 
 /* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 
+#undef SHGetFolderPath
+#define SHGetFolderPath error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SHGetIconOverlayIndex
+#define SHGetIconOverlayIndex error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SHCreateDirectoryEx
+#define SHCreateDirectoryEx error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SHGetFolderPathAndSubDir
+#define SHGetFolderPathAndSubDir error_Function_needs_review_to_determine_how_to_handle_it
+
 
 /* Processing file COMMDLG.H */
 
@@ -1810,6 +1884,11 @@ BOOL qxeGetSaveFileName (LPOPENFILENAMEW arg1);
 #define ReplaceText error_use_qxeReplaceText_or_ReplaceTextA_and_ReplaceTextW
 #endif
 HWND qxeReplaceText (LPFINDREPLACEW arg1);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#undef PrintDlgEx
+#define PrintDlgEx error_Function_needs_review_to_determine_how_to_handle_it
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 
@@ -1994,6 +2073,9 @@ BOOL qxeBuildCommDCBAndTimeouts (const Extbyte * arg1, LPDCB arg2, LPCOMMTIMEOUT
 #endif
 BOOL qxeCallNamedPipe (const Extbyte * arg1, PVOID arg2, DWORD arg3, PVOID arg4, DWORD arg5, PDWORD arg6, DWORD arg7);
 
+#undef CheckNameLegalDOS8Dot3
+#define CheckNameLegalDOS8Dot3 error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ClearEventLog
 #define ClearEventLog error_use_qxeClearEventLog_or_ClearEventLogA_and_ClearEventLogW
@@ -2017,6 +2099,9 @@ BOOL qxeCopyFile (const Extbyte * arg1, const Extbyte * arg2, BOOL arg3);
 #define CopyFileEx error_use_qxeCopyFileEx_or_CopyFileExA_and_CopyFileExW
 #endif
 BOOL qxeCopyFileEx (const Extbyte * arg1, const Extbyte * arg2, LPPROGRESS_ROUTINE arg3, LPVOID arg4, LPBOOL arg5, DWORD arg6);
+
+#undef CreateActCtx
+#define CreateActCtx error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef CreateDirectory
@@ -2084,6 +2169,9 @@ BOOL qxeCreateProcess (const Extbyte * arg1, Extbyte * arg2, LPSECURITY_ATTRIBUT
 #endif
 BOOL qxeCreateProcessAsUser (HANDLE arg1, const Extbyte * arg2, Extbyte * arg3, LPSECURITY_ATTRIBUTES arg4, LPSECURITY_ATTRIBUTES arg5, BOOL arg6, DWORD arg7, PVOID arg8, const Extbyte * arg9, LPSTARTUPINFOW arg10, LPPROCESS_INFORMATION arg11);
 
+#undef CreateProcessWithLogon
+#define CreateProcessWithLogon error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef CreateSemaphore
 #define CreateSemaphore error_use_qxeCreateSemaphore_or_CreateSemaphoreA_and_CreateSemaphoreW
@@ -2107,6 +2195,12 @@ BOOL qxeDefineDosDevice (DWORD arg1, const Extbyte * arg2, const Extbyte * arg3)
 #define DeleteFile error_use_qxeDeleteFile_or_DeleteFileA_and_DeleteFileW
 #endif
 BOOL qxeDeleteFile (const Extbyte * arg1);
+
+#undef DeleteVolumeMountPoint
+#define DeleteVolumeMountPoint error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef DnsHostnameToComputerName
+#define DnsHostnameToComputerName error_Function_needs_review_to_determine_how_to_handle_it
 
 #if !defined (CYGWIN_HEADERS)
 #undef EncryptFile
@@ -2137,6 +2231,12 @@ DWORD qxeExpandEnvironmentStrings (const Extbyte * arg1, Extbyte * arg2, DWORD a
 #endif
 void qxeFatalAppExit (UINT arg1, const Extbyte * arg2);
 
+#undef FileEncryptionStatus
+#define FileEncryptionStatus error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef FindActCtxSectionString
+#define FindActCtxSectionString error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FindAtom
 #define FindAtom error_use_qxeFindAtom_or_FindAtomA_and_FindAtomW
@@ -2154,7 +2254,19 @@ HANDLE qxeFindFirstChangeNotification (const Extbyte * arg1, BOOL arg2, DWORD ar
 #undef FindFirstFileEx
 #define FindFirstFileEx error_split_sized_LPWIN32_FIND_DATA__not_used__NT_4_0__only
 
+#undef FindFirstVolume
+#define FindFirstVolume error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef FindFirstVolumeMountPoint
+#define FindFirstVolumeMountPoint error_Function_needs_review_to_determine_how_to_handle_it
+
 /* Skipping FindNextFile because split-sized LPWIN32_FIND_DATA */
+
+#undef FindNextVolume
+#define FindNextVolume error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef FindNextVolumeMountPoint
+#define FindNextVolumeMountPoint error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FindResource
@@ -2167,6 +2279,9 @@ HRSRC qxeFindResource (HINSTANCE arg1, const Extbyte * arg2, const Extbyte * arg
 #define FindResourceEx error_use_qxeFindResourceEx_or_FindResourceExA_and_FindResourceExW
 #endif
 HRSRC qxeFindResourceEx (HINSTANCE arg1, const Extbyte * arg2, const Extbyte * arg3, WORD arg4);
+
+#undef GetFirmwareEnvironmentVariable
+#define GetFirmwareEnvironmentVariable error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FormatMessage
@@ -2210,6 +2325,9 @@ DWORD qxeGetCompressedFileSize (const Extbyte * arg1, PDWORD arg2);
 #endif
 BOOL qxeGetComputerName (Extbyte * arg1, PDWORD arg2);
 
+#undef GetComputerNameEx
+#define GetComputerNameEx error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetCurrentDirectory
 #define GetCurrentDirectory error_use_qxeGetCurrentDirectory_or_GetCurrentDirectoryA_and_GetCurrentDirectoryW
@@ -2236,6 +2354,9 @@ BOOL qxeGetDiskFreeSpace (const Extbyte * arg1, PDWORD arg2, PDWORD arg3, PDWORD
 #define GetDiskFreeSpaceEx error_use_qxeGetDiskFreeSpaceEx_or_GetDiskFreeSpaceExA_and_GetDiskFreeSpaceExW
 #endif
 BOOL qxeGetDiskFreeSpaceEx (const Extbyte * arg1, PULARGE_INTEGER arg2, PULARGE_INTEGER arg3, PULARGE_INTEGER arg4);
+
+#undef GetDllDirectory
+#define GetDllDirectory error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetDriveType
@@ -2293,6 +2414,9 @@ DWORD qxeGetModuleFileName (HINSTANCE arg1, Extbyte * arg2, DWORD arg3);
 #define GetModuleHandle error_use_qxeGetModuleHandle_or_GetModuleHandleA_and_GetModuleHandleW
 #endif
 HMODULE qxeGetModuleHandle (const Extbyte * arg1);
+
+#undef GetModuleHandleEx
+#define GetModuleHandleEx error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetNamedPipeHandleState
@@ -2366,6 +2490,12 @@ VOID qxeGetStartupInfo (LPSTARTUPINFOW arg1);
 #endif
 UINT qxeGetSystemDirectory (Extbyte * arg1, UINT arg2);
 
+#undef GetSystemWindowsDirectory
+#define GetSystemWindowsDirectory error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetSystemWow64Directory
+#define GetSystemWow64Directory error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetTempFileName
 #define GetTempFileName error_use_qxeGetTempFileName_or_GetTempFileNameA_and_GetTempFileNameW
@@ -2392,6 +2522,15 @@ BOOL qxeGetUserName (Extbyte * arg1, PDWORD arg2);
 #define GetVolumeInformation error_use_qxeGetVolumeInformation_or_GetVolumeInformationA_and_GetVolumeInformationW
 #endif
 BOOL qxeGetVolumeInformation (const Extbyte * arg1, Extbyte * arg2, DWORD arg3, PDWORD arg4, PDWORD arg5, PDWORD arg6, Extbyte * arg7, DWORD arg8);
+
+#undef GetVolumeNameForVolumeMountPoint
+#define GetVolumeNameForVolumeMountPoint error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetVolumePathName
+#define GetVolumePathName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetVolumePathNamesForVolumeName
+#define GetVolumePathNamesForVolumeName error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetWindowsDirectory
@@ -2597,6 +2736,9 @@ void qxeOutputDebugString (const Extbyte * arg1);
 #endif
 BOOL qxePrivilegedServiceAuditAlarm (const Extbyte * arg1, const Extbyte * arg2, HANDLE arg3, PPRIVILEGE_SET arg4, BOOL arg5);
 
+#undef QueryActCtx
+#define QueryActCtx error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef QueryDosDevice
 #define QueryDosDevice error_use_qxeQueryDosDevice_or_QueryDosDeviceA_and_QueryDosDeviceW
@@ -2624,6 +2766,9 @@ HANDLE qxeRegisterEventSource (const Extbyte * arg1, const Extbyte * arg2);
 #endif
 BOOL qxeRemoveDirectory (const Extbyte * arg1);
 
+#undef ReplaceFile
+#define ReplaceFile error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ReportEvent
 #define ReportEvent error_use_qxeReportEvent_or_ReportEventA_and_ReportEventW
@@ -2642,6 +2787,9 @@ DWORD qxeSearchPath (const Extbyte * arg1, const Extbyte * arg2, const Extbyte *
 #endif
 BOOL qxeSetComputerName (const Extbyte * arg1);
 
+#undef SetComputerNameEx
+#define SetComputerNameEx error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SetCurrentDirectory
 #define SetCurrentDirectory error_use_qxeSetCurrentDirectory_or_SetCurrentDirectoryA_and_SetCurrentDirectoryW
@@ -2653,6 +2801,9 @@ BOOL qxeSetCurrentDirectory (const Extbyte * arg1);
 #define SetDefaultCommConfig error_use_qxeSetDefaultCommConfig_or_SetDefaultCommConfigA_and_SetDefaultCommConfigW
 #endif
 BOOL qxeSetDefaultCommConfig (const Extbyte * arg1, LPCOMMCONFIG arg2, DWORD arg3);
+
+#undef SetDllDirectory
+#define SetDllDirectory error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SetEnvironmentVariable
@@ -2672,17 +2823,29 @@ BOOL qxeSetFileAttributes (const Extbyte * arg1, DWORD arg2);
 #endif
 BOOL qxeSetFileSecurity (const Extbyte * arg1, SECURITY_INFORMATION arg2, PSECURITY_DESCRIPTOR arg3);
 
+#undef SetFileShortName
+#define SetFileShortName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SetFirmwareEnvironmentVariable
+#define SetFirmwareEnvironmentVariable error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SetVolumeLabel
 #define SetVolumeLabel error_use_qxeSetVolumeLabel_or_SetVolumeLabelA_and_SetVolumeLabelW
 #endif
 BOOL qxeSetVolumeLabel (const Extbyte * arg1, const Extbyte * arg2);
 
+#undef SetVolumeMountPoint
+#define SetVolumeMountPoint error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef UpdateResource
 #define UpdateResource error_use_qxeUpdateResource_or_UpdateResourceA_and_UpdateResourceW
 #endif
 BOOL qxeUpdateResource (HANDLE arg1, const Extbyte * arg2, const Extbyte * arg3, WORD arg4, PVOID arg5, DWORD arg6);
+
+#undef VerifyVersionInfo
+#define VerifyVersionInfo error_Function_needs_review_to_determine_how_to_handle_it
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef WaitNamedPipe
@@ -2723,11 +2886,68 @@ BOOL qxeWriteProfileString (const Extbyte * arg1, const Extbyte * arg2, const Ex
 
 /* Processing file ACLAPI.h */
 
+#undef BuildExplicitAccessWithName
+#define BuildExplicitAccessWithName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildSecurityDescriptor
+#define BuildSecurityDescriptor error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildTrusteeWithName
+#define BuildTrusteeWithName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildTrusteeWithObjectsAndName
+#define BuildTrusteeWithObjectsAndName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildTrusteeWithObjectsAndSid
+#define BuildTrusteeWithObjectsAndSid error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildTrusteeWithSid
+#define BuildTrusteeWithSid error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetAuditedPermissionsFromAcl
+#define GetAuditedPermissionsFromAcl error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetEffectiveRightsFromAcl
+#define GetEffectiveRightsFromAcl error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetExplicitEntriesFromAcl
+#define GetExplicitEntriesFromAcl error_Function_needs_review_to_determine_how_to_handle_it
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetNamedSecurityInfo
 #define GetNamedSecurityInfo error_use_qxeGetNamedSecurityInfo_or_GetNamedSecurityInfoA_and_GetNamedSecurityInfoW
 #endif
 DWORD qxeGetNamedSecurityInfo (Extbyte * arg1, SE_OBJECT_TYPE arg2, SECURITY_INFORMATION arg3, PSID* arg4, PSID* arg5, PACL* arg6, PACL* arg7, PSECURITY_DESCRIPTOR* arg8);
+
+#undef GetTrusteeForm
+#define GetTrusteeForm error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetTrusteeName
+#define GetTrusteeName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetTrusteeType
+#define GetTrusteeType error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef LookupSecurityDescriptorParts
+#define LookupSecurityDescriptorParts error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SetEntriesInAcl
+#define SetEntriesInAcl error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef SetNamedSecurityInfo
+#define SetNamedSecurityInfo error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildImpersonateExplicitAccessWithName
+#define BuildImpersonateExplicitAccessWithName error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef BuildImpersonateTrustee
+#define BuildImpersonateTrustee error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetMultipleTrustee
+#define GetMultipleTrustee error_Function_needs_review_to_determine_how_to_handle_it
+
+#undef GetMultipleTrusteeOperation
+#define GetMultipleTrusteeOperation error_Function_needs_review_to_determine_how_to_handle_it
 
 
 /* Processing file MMSYSTEM.H */
