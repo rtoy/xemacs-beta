@@ -1,3 +1,11 @@
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN):
+	* syswindows.h (INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT):
+	Declare some temporary pointer variables const to avoid compile
+	errors under C++ and/or Visual Studio 6.
+
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
 	* buffer.h:
