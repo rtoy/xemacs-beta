@@ -1,5 +1,15 @@
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in:
+	Build xemacs-export.o whenever we're on any Windows OS (WIN32_ANY)
+	instead of only when we build support for the GUI portion of
+	MS-Windows (HAVE_MS_WINDOWS).
+
+	Cosmetic: Use WIN32_ANY in place of equivalent
+	(WIN32_NATIVE or CYGWIN).
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c:
 	* emacs.c (debug_can_access_memory):
 	When checking for bad memory, we need to read all bytes from memory;
