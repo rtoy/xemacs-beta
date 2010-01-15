@@ -1,3 +1,9 @@
+2010-01-14  Vin Shelton  <acs@xemacs.org>
+
+	* sysfile.h: 
+	Add conditional definition for EOVERFLOW, which isn't defined
+	under Visual Studio 6.
+
 2010-01-14  Didier Verna  <didier@xemacs.org>
 
 	* faces.c (complex_vars_of_faces): change X11 bgcolor fallback of
