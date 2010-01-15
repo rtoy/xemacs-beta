@@ -1,5 +1,5 @@
 /* Unicode-encapsulation of Win32 library functions.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -56,6 +56,9 @@ soon indicates a function that should be automatically Unicode-encapsulated,
 no indicates a function we don't support (it will be #defined to cause
    a compile error, with the text after the function included in the
    erroneous definition to indicate why we don't support it).
+review indicates a function that we still need to review to determine whether
+   or how to support it.  This has the same effect as `no', with a comment
+   indicating that the function needs review.
 skip indicates a function we support manually; only a comment about this
    will be generated.
 split indicates a function with a split structure (different versions
@@ -103,6 +106,25 @@ begin-unicode-encapsulation-script
 file ACLAPI.h
 
 yes GetNamedSecurityInfo
+review BuildExplicitAccessWithName
+review BuildSecurityDescriptor
+review BuildTrusteeWithName
+review BuildTrusteeWithObjectsAndName
+review BuildTrusteeWithObjectsAndSid
+review BuildTrusteeWithSid
+review GetAuditedPermissionsFromAcl
+review GetEffectiveRightsFromAcl
+review GetExplicitEntriesFromAcl
+review GetTrusteeForm
+review GetTrusteeName
+review GetTrusteeType
+review LookupSecurityDescriptorParts
+review SetEntriesInAcl
+review SetNamedSecurityInfo
+review BuildImpersonateExplicitAccessWithName
+review BuildImpersonateTrustee
+review GetMultipleTrustee
+review GetMultipleTrusteeOperation
 
 file WINBASE.H
 
@@ -251,6 +273,34 @@ no GetCurrentHwProfile split-sized LPHW_PROFILE_INFO; NT 4.0+ only
 no GetVersionEx split-sized LPOSVERSIONINFO
 no CreateJobObject NT 5.0+ only
 no OpenJobObject NT 5.0+ only
+review CheckNameLegalDOS8Dot3
+review CreateActCtx
+review CreateProcessWithLogon
+review DeleteVolumeMountPoint
+review DnsHostnameToComputerName
+review FileEncryptionStatus
+review FindActCtxSectionString
+review FindFirstVolume
+review FindFirstVolumeMountPoint
+review FindNextVolume
+review FindNextVolumeMountPoint
+review GetFirmwareEnvironmentVariable
+review GetComputerNameEx
+review GetDllDirectory
+review GetModuleHandleEx
+review GetSystemWindowsDirectory
+review GetSystemWow64Directory
+review GetVolumeNameForVolumeMountPoint
+review GetVolumePathName
+review GetVolumePathNamesForVolumeName
+review QueryActCtx
+review ReplaceFile
+review SetComputerNameEx
+review SetDllDirectory
+review SetFileShortName
+review SetFirmwareEnvironmentVariable
+review SetVolumeMountPoint
+review VerifyVersionInfo
 
 file WINUSER.H
 
@@ -379,7 +429,6 @@ yes DlgDirListComboBox
 yes DlgDirSelectComboBoxEx
 yes DefFrameProc
 no DefMDIChildProc return value is conditionalized on _MAC, messes up parser
-
 yes CreateMDIWindow
 yes WinHelp
 no ChangeDisplaySettings split-sized LPDEVMODE
@@ -391,6 +440,13 @@ no GetMonitorInfo NT 5.0/Win98+ only
 no GetWindowModuleFileName NT 5.0+ only
 no RealGetWindowClass NT 5.0+ only
 no GetAltTabInfo NT 5.0+ only
+review BroadcastSystemMessageEx
+review EnumDisplaySettingsEx
+review GetClassLongPtr
+review GetRawInputDeviceInfo
+review GetWindowLongPtr
+review SetClassLongPtr
+review SetWindowLongPtr
 
 file WINGDI.H
 
@@ -536,6 +592,7 @@ no AddPrintProvidor not used, complicated interface with split structures
 no DeletePrintProvidor not used, complicated interface with split structures
 no SetPrinterHTMLView not used, complicated interface with split structures
 no GetPrinterHTMLView not used, complicated interface with split structures
+review GetDefaultPrinter
 end-bracket
 
 file SHELLAPI.H
@@ -786,6 +843,7 @@ no ChooseFont split-sized LPLOGFONT in LPCHOOSEFONT
 // FINDMSGSTRING
 skip PrintDlg LPPRINTDLG with split-sized DEVMODE handle
 skip PageSetupDlg LPPAGESETUPDLG with split-sized DEVMODE handle
+review PrintDlgEx
 end-bracket
 
 file DDE.H
@@ -876,13 +934,14 @@ yes WNetGetNetworkInformation
 // split-simple function pointer PFNPROCESSPOLICIES
 yes WNetGetLastError
 split MultinetGetConnectionPerformance LPNETRESOURCE
+review WNetSetConnection
+review WNetGetResourceInformation
+review WNetGetResourceParent
 end-bracket
 
-// Doesn't exist under Cygwin
+// file IME.H -- doesn't exist under Cygwin
 
-// file IME.H
-
-// no SendIMEMessageEx obsolete, no docs available
+no SendIMEMessageEx obsolete, no docs available
 
 file OBJBASE.H
 
@@ -925,6 +984,10 @@ skip SHBrowseForFolder need to intercept callback for SendMessage
 // split flag SHCNF_PRINTER; we intercept SHChangeNotify
 // split flag SHARD_PATH; we intercept SHAddToRecentDocs
 skip SHGetDataFromIDList split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries
+review SHGetFolderPath
+review SHGetIconOverlayIndex
+review SHCreateDirectoryEx
+review SHGetFolderPathAndSubDir
 
 file WINNLS.H
 
@@ -954,6 +1017,12 @@ no GetStringType no such fun; A and W versions have different nos. of args
 no FoldString not used, not examined yet
 no EnumSystemLocales not used, not examined yet
 no EnumSystemCodePages not used, not examined yet
+review GetCalendarInfo
+review GetGeoInfo
+review SetCalendarInfo
+review EnumSystemLanguageGroups
+review EnumLanguageGroupLocales
+review EnumUILanguages
 
 end-unicode-encapsulation-script
 
@@ -1009,6 +1078,7 @@ yes RegSetValueEx
 yes RegUnLoadKey
 yes InitiateSystemShutdown
 yes AbortSystemShutdown
+review RegDeleteKeyEx
 
 file EXCPT.H
 
