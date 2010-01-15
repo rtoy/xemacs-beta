@@ -2344,7 +2344,7 @@ check_writable (const Ibyte *filename)
   DWORD dwAccessAllowed;
   Extbyte *fnameext;
 
-  LOCAL_FILE_FORMAT_TO_TSTR (filename, fnameext);
+  LOCAL_FILE_FORMAT_TO_TSTR ((Ibyte *)filename, fnameext);
 
   // First check for a normal file with the old-style readonly bit
   attributes = qxeGetFileAttributes(fnameext);

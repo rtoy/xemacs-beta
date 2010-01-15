@@ -1,5 +1,8 @@
 2010-01-14  Vin Shelton  <acs@xemacs.org>
 
+	* fileio.c (check_writable): Fix compilation error under Visual
+	Studio 6.
+
 	* sysfile.h: 
 	Add conditional definition for EOVERFLOW, which isn't defined
 	under Visual Studio 6.
