@@ -1,5 +1,13 @@
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
+	* emacs.c:
+	* emacs.c (debug_can_access_memory):
+	When checking for bad memory, we need to read all bytes from memory;
+	try even harder to avoid the possibility that a super-optimizing
+	compiler will optimize away the memory reads.
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
 	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
 	* syswindows.h (LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN):
 	* syswindows.h (INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT):
