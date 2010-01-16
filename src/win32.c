@@ -418,7 +418,7 @@ struct read_link_hash
 static Ibyte *
 mswindows_read_link_1 (const Ibyte *fname)
 {
-#ifdef NO_CYGWIN_COM_SUPPORT
+#if defined (NO_CYGWIN_COM_SUPPORT) || !defined (HAVE_MS_WINDOWS)
   return NULL;
 #else
   Ibyte *retval = NULL;
