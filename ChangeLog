@@ -1,3 +1,7 @@
+2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure: Regenerate, now we no longer look for rint().
+
 2010-01-13  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Update comment about Cygwin and pdump.
