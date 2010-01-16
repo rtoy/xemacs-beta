@@ -1,3 +1,11 @@
+2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	* floatfns.c (emacs_rint):
+	Don't look for rint in configure, always use our own
+	implementation that rounds to the even number in the case of
+	ambiguity, for consistency with the bignum code.
+
 2010-01-14  Vin Shelton  <acs@xemacs.org>
 
 	* fileio.c (check_writable): Fix compilation error under Visual
