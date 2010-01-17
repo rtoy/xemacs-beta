@@ -23,7 +23,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -42,7 +42,7 @@
   "Return a list of the charsets in STRING."
   (let (res)
     (with-string-as-buffer-contents string
-      ;; charsets-in-region now in C. 
+      ;; charsets-in-region now in C.
       (setq res (charsets-in-region (point-min) (point-max))))
     res))
 
@@ -87,7 +87,7 @@ Only left-to-right is currently implemented."
 ;; Not in GNU Emacs/Mule
 (defun charset-registry (charset)
   "Obsolete; use charset-registries instead. "
-  (lwarn 'xintl 'warning 
+  (lwarn 'xintl 'warning
     "charset-registry is obsolete--use charset-registries instead. ")
   (when (charset-property charset 'registries)
     (elt (charset-property charset 'registries) 0)))
@@ -106,8 +106,8 @@ Only left-to-right is currently implemented."
     (lwarn 'xintl 'warning
       "Regexps no longer allowed for charset-registry. Treating %s%s"
       registry " as a string."))
-  (set-charset-registries 
-   charset 
+  (set-charset-registries
+   charset
    (apply 'vector registry (append (charset-registries charset) nil))))
 
 (make-obsolete 'set-charset-registry 'set-charset-registries)
@@ -144,7 +144,7 @@ characters in CHARSET."
 		    `("Charset not encodable in a buffer" ,charset)))
     (format "%c-%c" lowchar highchar)))
 
-;; From GNU. 
+;; From GNU.
 (defun map-charset-chars (func charset)
   "Use FUNC to map over all characters in CHARSET for side effects.
 FUNC is a function of two args, the start and end (inclusive) of a
@@ -279,14 +279,14 @@ character, say TO-ALT, FROM is also translated to TO-ALT."
 ; VEC is an array of 256 elements to map unibyte codes to multibyte characters.
 ; See also the variable `nonascii-translation-table'."
 ;   (let ((table (make-char-table 'translation-table))
-; 	(rev-table (make-char-table 'translation-table))
-; 	(i 0)
-; 	ch)
+;	(rev-table (make-char-table 'translation-table))
+;	(i 0)
+;	ch)
 ;     (while (< i 256)
 ;       (setq ch (aref vec i))
 ;       (aset table i ch)
 ;       (if (>= ch 256)
-; 	  (aset rev-table ch i))
+;	  (aset rev-table ch i))
 ;       (setq i (1+ i)))
 ;     (set-char-table-extra-slot table 0 rev-table)
 ;     table))

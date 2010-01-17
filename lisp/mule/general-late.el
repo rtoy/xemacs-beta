@@ -72,6 +72,13 @@
       ;; twice, which is a significant improvement.
       system-type (symbol-value (intern "\u0073ystem-type")))
 
+;; We compute the arguments to set-unicode-query-skip-chars-args at compile
+;; time, but set them at load time, and the values depend on (featurep
+;; 'unicode-internal), so we will have problems if the value of this
+;; expression changes between compile and load time.
+
+(error-unless-tests-match (featurep 'unicode-internal) source-lisp)
+
 ;; When this file is being compiled, all the charsets have been loaded, so
 ;; we can construct the query-skip-chars-arg string correctly. 
 (set-unicode-query-skip-chars-args

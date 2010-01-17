@@ -27,6 +27,10 @@
 
 ;; Lisp support for Unicode, e.g. initialize the translation tables.
 
+;; Needs to load before mule-charset.el in old-Mule because the code below
+;; that deals with Windows Glyph List 4 characters needs Asian charsets not
+;; yet created (or more properly, their Unicode maps not yet initialized).
+
 ;;; Code:
 
 ;; Initialize the Unicode translation tables for some built-in charsets.
@@ -349,14 +353,14 @@ Standard encoding for representing UTF-8 under MS Windows."
     initially (unless (featurep 'mule) (return))
     do
     ;; Under old-Mule, the call to `decode-char' creates jit-ucs-charset-0
-    ;; entries because it is run at dump time, before we load any of the
-    ;; Unicode tables. (That happens at the bottom of this file.) It doesn't
-    ;; matter whether we move the call to (set-unicode-conversion code
-    ;; 'windows-glyph-list-4 ...) before the call to `decode-char', because
-    ;; windows-glyph-list-4, being size 128, is a non-encodable charset.  By
-    ;; putting jit-ucs-charset-0 above the Asian charsets, we ensure that the
-    ;; properties of jit-ucs-charset-0 determine how the characters are
-    ;; represented.
+    ;; entries because it is run at dump time, before we create any
+    ;; charsets containing Asian characters. (That happens in
+    ;; mule-charset.el.) It doesn't matter whether we move the call to
+    ;; (set-unicode-conversion code 'windows-glyph-list-4 ...) before the
+    ;; call to `decode-char', because windows-glyph-list-4, being size 128,
+    ;; is a non-encodable charset.  By putting jit-ucs-charset-0 above the
+    ;; Asian charsets, we ensure that the properties of jit-ucs-charset-0
+    ;; determine how the characters are represented.
     ;;
     ;; Under Unicode-internal, we get the same behavior by putting
     ;; windows-glyph-list-4 before the Asian charsets.
