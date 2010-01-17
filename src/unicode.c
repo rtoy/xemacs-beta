@@ -1725,7 +1725,14 @@ Unicode tables or in the charset:
 	  ignore_first_column = 1;
 #ifndef UNICODE_INTERNAL
 	else if (EQ (elt, Qbig5))
-	  big5 = 1;
+	  {
+	    big5 = 1;
+	    /* At this point the charsets haven't been initialzied
+	       yet, so at least set the values for big5-1 and big5-2
+	       so we can use big5_char_to_fake_codepoint(). */
+	    Vcharset_chinese_big5_1 = Fget_charset (Qchinese_big5_1);
+	    Vcharset_chinese_big5_2 = Fget_charset (Qchinese_big5_2);
+	  }
 #endif /* not UNICODE_INTERNAL */
 	else
 	  invalid_constant

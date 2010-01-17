@@ -1,3 +1,89 @@
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+
+	Fundamental changes:
+
+	1) We no longer create the "internal" charsets.  Instead that
+	happens in Lisp, and at run time we fetch pointers to the charsets
+	using their names.
+
+	2) When allocating ID's for charsets, we first allocate official
+	ID's, then private ID's, then non-encodable ID's. (Under
+	Unicode-internal, there is only one kind of ID.) Formerly under
+	old-Mule, official ID's were reserved for charsets created in C,
+	and Lisp-created charsets always went into private ID space even
+	if there was room in the official ID space.
+	
+	* charset.h:
+	* charset.h (struct charset_lookup):
+	* mule-charset.c:
+
+	Rename next_allocated_private_* to next_allocated_*.
+	
+	* emacs.c (main_1):
+	* symsinit.h:
+	* mule-charset.c (init_mule_charset):
+	* mule-coding.c (complex_vars_of_mule_coding):
+	* mule-coding.c (init_mule_coding):
+	New init_mule_* functions.  Define them in mule-*.c, declare them
+	in symsinit.h, and call them in emacs.c (but only when we have
+	previously dumped).
+
+	The charsets are no longer created during early initialization but
+	during dumping, so at run-time, init_mule_charset() fetches the
+	created charsets and stores them into variables.
+
+	Some code to set precedence tables for Big5 and Shift-JIS depends
+	on charsets being created, so move it out of
+	complex_vars_of_mule_coding() (run at init time) to
+	init_mule_coding() (run at run time, after init_mule_charset()).
+	
+	* lisp.h:
+	Add external declarations for all charset symbols, so code can
+	fetch charsets through Fget_charset() if necessary.
+	
+	* mule-charset.c (get_unallocated_encodable_charset_id):
+	Rename next_charset_id -> next_non_encodable_charset_id.
+	Fix up get_unallocated_encodable_charset_id() so that under
+	old-Mule it allocates first official ID's, then private ID's.
+	Previously it only allocated private ID's.
+	
+	* mule-charset.c (make_charset):
+	Clean up code to allocate charset ID's.
+	
+	* mule-charset.c (syms_of_mule_charset):
+	Set next_allocated_*_id to point to the beginning of allocatable
+	official ID space rather than private ID space.
+	
+	* mule-charset.c (vars_of_mule_charset):
+	Don't create charsets here, except for ascii, control-1,
+	iso-8859-1 and composite.  For remaining charsets, set their value
+	to nil.
+	
+	* mule-charset.c (complex_vars_of_mule_charset):
+	Bracket code to create special fixed-offset Unicode charsets
+	in FIXED_UNICODE_CHARSETS; not currently used.
+	
+	* mule-charset.c (enum fixed_unicode_charset_id):
+	Delete enum CHARSET_ID_OFFICIAL; we fetch these charsets through
+	symbols.  Take what's left of the enum and put it into `enum
+	fixed_unicode_charset_id', only used when FIXED_UNICODE_CHARSETS.
+
+	* text.h:
+	Move CHARSET_ID_COMPOSITE here from mule-charset.c, and create
+	constants for the boundaries of 1- and 2-dimensional official ID
+	space.
+	
+	* unicode.c:
+	When processing special `big5' flag, fetch the big5 charsets
+	through their names, since we may be called at dump time when the
+	charset variables have not been initialized. (Warning: This
+	depends on the initialization of the Unicode map specified at
+	creation time happening as the *very last* thing at creation, in
+	particular after the charset has been added to the
+	name->charset-object hash table.
+	
+
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
 	* glyphs-eimage.c:

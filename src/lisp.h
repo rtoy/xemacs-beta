@@ -5559,6 +5559,37 @@ extern Lisp_Object Vcharset_chinese_big5_2;
 extern Lisp_Object Vcharset_composite;
 #endif /* MULE */
 
+extern Lisp_Object
+  Qlatin_iso8859_1,
+  Qlatin_iso8859_2,
+  Qlatin_iso8859_3,
+  Qlatin_iso8859_4,
+  Qthai_tis620,
+  Qarabic_iso8859_6,
+  Qgreek_iso8859_7,
+  Qhebrew_iso8859_8,
+  Qkatakana_jisx0201,
+  Qlatin_jisx0201,
+  Qcyrillic_iso8859_5,
+  Qlatin_iso8859_9,
+  Qlatin_iso8859_15,
+  Qjapanese_jisx0208_1978,
+  Qchinese_gb2312,
+  Qjapanese_jisx0208,
+  Qkorean_ksc5601,
+  Qjapanese_jisx0212,
+  Qchinese_cns11643_1,
+  Qchinese_cns11643_2,
+#ifdef UNICODE_INTERNAL
+  Qchinese_big5,
+  Qjapanese_shift_jis,
+#else /* not UNICODE_INTERNAL */
+  Qchinese_big5_1,
+  Qchinese_big5_2,
+#endif /* UNICODE_INTERNAL */
+  Qchinese_sisheng,
+  Qcomposite;
+
 /* Defined in print.c */
 EXFUN (Fdisplay_error, 2);
 EXFUN (Ferror_message_string, 1);

@@ -509,6 +509,8 @@ void init_intl (void);
 void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
+void init_mule_charset (void);
+void init_mule_coding (void);
 void init_mswindows_environment (void);
 void init_nt (void);
 void init_postgresql_from_environment (void);

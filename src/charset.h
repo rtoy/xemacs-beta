@@ -315,8 +315,8 @@ struct charset_lookup
      for charsets of all sorts, encodable or not. */
   Lisp_Object charset_by_encodable_id[NUM_ENCODABLE_CHARSET_IDS];
 
-  int next_allocated_private_dim1_id;
-  int next_allocated_private_dim2_id;
+  int next_allocated_dim1_id;
+  int next_allocated_dim2_id;
 #endif /* not UNICODE_INTERNAL */
 };
 

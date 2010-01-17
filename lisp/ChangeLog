@@ -1,5 +1,51 @@
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
+	* unicode.el:
+	* unicode.el (featurep):
+	* unicode.el (load-unicode-tables): Removed.
+	Remove the setting of unicode-map info for all charsets but
+	ISO 8859-1, which is created in C.  Remove commented-out
+	code for controlling when we load the tables (run-time or
+	dump-time).  Now we always do it at dump time and it's only
+	for one charset.
+	
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-charset.el:
+	Create all the official charsets here instead of in C code,
+	to make it easier to create them and modify the creation
+	code.  Include unicode-map info in the call to make-charset
+	rather than setting it later.
+
+	* mule/chinese.el:
+	* mule/japanese.el:
+	* mule/mule-charset.el:
+	Move initialization of auto-fill-chars to mule/chinese and
+	mule/japanese.  It was making use of charsets before their
+	creation later in the file, and is really Chinese/Japanese-
+	specific.
+	
+	* mule/mule-charset.el (make-internal-128-byte-charset):
+	Correct doc string.
+	
+	* mule/mule-charset.el (make-iso8859-charset):
+	New function, for creating ISO-8859-* charsets.
+	
+	* mule/mule-charset.el (vietnamese-viscii-lower):
+	* mule/mule-charset.el (vietnamese-viscii-upper):
+	* mule/mule-charset.el (thai-xtis):
+	* mule/mule-charset.el (indian-is13194):
+	* mule/mule-charset.el (indian-1-column):
+	* mule/mule-charset.el (indian-2-column):
+	* mule/mule-charset.el (lao):
+	* mule/mule-charset.el (ethiopic):
+	* mule/mule-charset.el (tibetan-1-column):
+	* mule/mule-charset.el (tibetan):
+	Cosmetic changes.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
 	* bytecomp-runtime.el:
 	* bytecomp-runtime.el (error-unless-tests-match): New.
 	* bytecomp-runtime.el (byte-compile-file-being-compiled): New.

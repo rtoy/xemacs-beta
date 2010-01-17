@@ -37,6 +37,14 @@
 (loop for row in '(33 34 41)
       do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
 
+;; Setup auto-fill-chars for charsets that should invoke auto-filling.
+;; SPACE and NEWLINE are already set.
+(loop for l in `(chinese-gb2312
+		 ,@(if (find-charset 'chinese-big5-1)
+		       '(chinese-big5-1 chinese-big5-2)
+		     '(chinese-big5)))
+  do (put-char-table l t auto-fill-chars))
+
 ;; CNS11643 Plane3 thru Plane7
 ;; These represent more and more obscure Chinese characters.
 ;; By the time you get to Plane 7, we're talking about characters

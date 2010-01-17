@@ -29,77 +29,31 @@
 
 ;;; Code:
 
-(eval-when-compile (when (featurep 'mule) (require 'ccl)))
-
-;; NOTE: This takes only a fraction of a second on my Pentium III
-;; 700Mhz even with a totally optimization-disabled XEmacs.
-;; @@#### Eventually, move this into the C code or move the creation
-;; of internal charsets to mule-charset.el.
-(defun load-unicode-tables ()
-  "Initialize the Unicode translation tables for all built-in charsets."
+;; Initialize the Unicode translation tables for some built-in charsets.
+;; Currently this only does ISO 8859-1 (Latin-1).  Other charsets defined
+;; in C either have no translation map or are special-cased in the code,
+;; and internal charsets defined in Lisp specify their own maps.
+(when (featurep 'mule)
   (let ((parse-args
-	 `(("unicode/unicode-consortium/ISO8859"
-	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
-	    ;; charsets' types, trying to load them results in out-of-range
-	    ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
-	    ;; hardwired in unicode.c (unicode_to_ichar, ichar_to_unicode).
-	    ;; ("8859-1.TXT" ascii #x00 #x7F #x0)
-	    ;; ("8859-1.TXT" control-1 #x80 #x9F #x-80)
-            ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
-	    ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
-	    ("8859-1.TXT" latin-iso8859-1 #xA0)
-	    ("8859-15.TXT" latin-iso8859-15 #xA0)
-	    ("8859-2.TXT" latin-iso8859-2 #xA0)
-	    ("8859-3.TXT" latin-iso8859-3 #xA0)
-	    ("8859-4.TXT" latin-iso8859-4 #xA0)
-	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0)
-	    ("8859-6.TXT" arabic-iso8859-6 #xA0)
-	    ("8859-7.TXT" greek-iso8859-7 #xA0)
-	    ("8859-8.TXT" hebrew-iso8859-8 #xA0)
-	    ("8859-9.TXT" latin-iso8859-9 #xA0)
-	    )
-
-	   ("unicode/unicode-consortium/EASTASIA/OBSOLETE"
-	    ,@(if (find-charset 'chinese-big5-1)
-		  ;; Under old-Mule, charset for Big5 does not matter;
-		  ;; specifying `big5' will automatically make the right
-		  ;; thing happen.
-		  '(("BIG5.TXT" chinese-big5-1 nil nil nil big5))
-		'(("BIG5.TXT" chinese-big5)))
-	    ;; Currently, these files are based on CNS 11643-1986
-	    ;; (with planes 1, 2, and 14), rather than CNS 11643-1992,
-	    ;; with planes 1-7.  See below.
-	    ;("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
-	    ;("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
-	    ("GB2312.TXT" chinese-gb2312)
-	    ("JIS0201.TXT" latin-jisx0201 #x21 #x7F)
-	    ("JIS0201.TXT" katakana-jisx0201 #xA0)
-	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
-	    ("JIS0212.TXT" japanese-jisx0212)
-	    ;; note that KSC5601.TXT as currently distributed is NOT what
-	    ;; it claims to be!  see comments in KSX1001.TXT.
-	    ("KSX1001.TXT" korean-ksc5601)
-	    ,@(when (find-charset 'japanese-shift-jis)
-		'(("SHIFTJIS.TXT" japanese-shift-jis #x8000)))
-	    )
-
-	   ("unicode/oreilly"
-	    )
-
-	   ("unicode/mule-ucs"
-	    ("chinese-cns11643-1.txt" chinese-cns11643-1)
-	    ("chinese-cns11643-2.txt" chinese-cns11643-2)
-	    ("chinese-sisheng.txt" chinese-sisheng)
-	    ("thai-tis620.txt" thai-tis620 nil nil #x80)
-	   ))))
-    (mapc #'(lambda (tables)
-              (let ((undir
-                     (expand-file-name (car tables) data-directory)))
-                (mapc #'(lambda (args)
-                          (apply 'load-unicode-mapping-table
-                                 (expand-file-name (car args) undir)
-                                 (cdr args)))
-                      (cdr tables))))
+	 '(;; Due to the braindamaged way Mule treats the ASCII and Control-1
+	   ;; charsets' types, trying to load them results in out-of-range
+	   ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
+	   ;; hardwired in unicode.c (unicode_to_ichar, ichar_to_unicode).
+	   ;; (ascii "unicode/unicode-consortium/ISO8859/8859-1.TXT"
+	   ;;        #x00 #x7F #x0)
+	   ;; (control-1 "unicode/unicode-consortium/ISO8859/8859-1.TXT"
+	   ;;   	 #x80 #x9F #x-80)
+	   ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
+	   ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
+	   (latin-iso8859-1 "unicode/unicode-consortium/ISO8859/8859-1.TXT"
+			    #xA0)
+	   )))
+    (mapc #'(lambda (args)
+	      (apply 'load-unicode-mapping-table
+		     (expand-file-name (cadr args)
+				       (expand-file-name "etc"
+							 source-directory))
+		     (car args) (cddr args)))
 	  parse-args)
     ))
 
@@ -587,17 +541,3 @@ mapping from the error sequences to the desired characters.  "
 ; For more information, see Appendix A.1 of The Unicode Standard 2.0, or
 ; wherever it is in v3.0."
 ;    unicode-type utf-7))
-
-;; Now we always load them at dump time; necessary for Unicode-internal.
-
-; ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
-; (defvar load-unicode-tables-at-dump-time t ;(eq system-type 'windows-nt)
-;   "[INTERNAL] Whether to load the Unicode tables at dump time.
-; Setting this at run-time does nothing.")
-
-;; Load the Unicode tables now!!!
-(when (and (featurep 'mule)
-	   ;load-unicode-tables-at-dump-time
-	   )
-  (let ((data-directory (expand-file-name "etc" source-directory)))
-    (load-unicode-tables)))
