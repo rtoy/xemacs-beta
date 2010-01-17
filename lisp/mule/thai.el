@@ -70,7 +70,7 @@
 	  (documentation . t)))
 
 
- Register a function to compose Thai characters.
+;; Register a function to compose Thai characters.
 (put-char-table 'thai-tis620
 		'(("\\c0\\c4\\|\\c0\\(\\c2\\|\\c3\\)\\c4?" .
 		   thai-composition-function))
