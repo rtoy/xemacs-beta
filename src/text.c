@@ -5409,74 +5409,57 @@ decode_handle_error (Lisp_Object err)
 }
 
 DEFUN ("make-char", Fmake_char, 1, 4, 0, /*
-Make a character from charset and octets (OCTET1 and OCTET2).
+Make a character from a charset codepoint (a charset and one or two octets).
 
-Attempts to generate a character from a particular codepoint in a national
-character set.  OCTET2 is either required or disallowed, depending on
+This attempts to generate a character from a particular codepoint in a
+coded character set such as ISO 8859-1 or GB-2312.  See also
+`unicode-to-char', used for generating a character from a Unicode
+codepoint.
+
+CHARSET is a symbol naming a "charset", e.g. `latin-iso8859-1'. "Charsets"
+are coded character sets, i.e. sets of characters indexed by one or two
+octets (integers in the range 0-255, also known as "position codes").
+Charsets are typically intended to be sufficient to encode text in a
+particular nation's language.  See `make-charset' for more information on
+charsets.
+
+OCTET1 and OCTET2 are the octets (i.e. indices) specifying the particular
+character to select.  OCTET2 is either required or disallowed, depending on
 whether CHARSET is of one or two dimensions (see `make-charset').
 
-Note that there are three different internal formats for characters:
+HANDLE-ERROR is a symbol controlling error behavior stemming from inability
+to translate.  Currently, this happens only with Unicode-internal (see
+below):
 
-1. ("non-Mule", configured without `--with-mule') An integer between 0 and 255.
-
-2. ("Unicode-internal", configured with `--with-mule' and
-   `--with-unicode-internal') An integer representing a Unicode codepoint.
-
-3. ("old Mule-internal", configured with `--with-mule' and without
-   `--with-unicode-internal') An integer that internally encodes a national
-   character set (e.g. ISO-8859-1 or GB-2312) and associated codepoint.
-   This is the old Mule representation.  This is a flawed representation
-   because what is the same character from a logical standpoint can have
-   multiple representations. (This is a particular problem with accented
-   Latin characters.)
-
-Note that all three representations more or less agree in encoding ASCII in
-the range 0-127 and ISO-8859-1 in the range 128-255. ("More or less"
-because representation #1 does not really care what the actual significance
-of the characters is.  Under X Windows at least, XEmacs without Mule
-support could be made to support various character sets with appropriate
-font settings.)
-
-XEmacs tries to hide the internal representation of characters as much as
-possible, but it is not completely possible to hide the difference between
-representations #2 and #3 because of the explicit encoding of a charset or
-lack thereof in the character.  Conversion from Unicode codepoints to
-charset codepoints is a one-to-many operation, and requires a charset
-precedence list to determine which of many charsets to choose from.  This
-means:
-
--- In a Unicode-internal world, conversion from a character to a charset
-   codepoint (`char-charset', `char-octet', `split-char') uses a charset
-   precedence list.
-
--- In an old Mule-internal world, conversion from a Unicode codepoint to
-   a character (`make-char') uses a charset precedence list.
-
-In all cases, the precedence list is optional; when not specified, a
-default list, corresponding to the current language, is used. (See
-`unicode-precedence-list'.)
-
-OCTET2 is required only for characters from two-dimensional charsets.
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `use-private'
+`substitute'	Substitute the Unicode replacement char (0xFFFD)
+`use-private'	Encode using private Unicode space
 
 Each octet should be in the range corresponding to the offset and size
 for that dimension, as defined in the charset.  For a typical one-dimensional
 charset of size 96, such as ISO-8859-1 (aka Latin-1), the range will be
-\[32, 127].  For a typical two-dimensional charset of size 94x94, such as
+\[160, 255].  For a typical two-dimensional charset of size 94x94, such as
 GB-2312 (Simplified Chinese), JISX-0208 (Japanese), or KS-5601 (Korean),
 the range will be [33, 126] in each dimension.  Big5 and certain other
 large charsets have a range of [33, 126] in the first dimension and
 \[64, 253] or something similar in the second dimension.  Other charsets
-may have other dimensions; e.g. ASCII has the range [0, 127].
+may have other dimensions; e.g. ASCII has the range [0, 127] and Control-1
+\(i.e. high-bit control characters) has the range [128, 159].
 
 Note that the ranges as used for 94x94 charsets are 32 more in each dimension
 than the "ku-ten" representation often seen for these charsets, with a range
 of [1, 94] in each dimension.
 
-If the allowed values in a particular dimension are entirely in the range
-\[0, 127] or [128, 255], octet values offset by 128 are allowed and will be
-converted appropriately.  Hence, either \(make-char 'latin-iso8859-2 185)
-or (make-char 'latin-iso8859-2 57) will return the Latin 2 character s with
-caron.
+For compatibility purposes, if the allowed values in a particular dimension
+are entirely in the range [0, 127] or [128, 255], octet values offset by
+128 are allowed and will be converted appropriately.  Hence, either
+\(make-char 'latin-iso8859-2 185) or (make-char 'latin-iso8859-2 57) will
+return the Latin 2 character s with caron.  This behavior should not be
+relied upon, and is present only in functions that existed prior to XEmacs
+21.5 (e.g. `make-char' and `split-char').  It is not present in new
+functions in version 21.5 (e.g. `char-to-charset-codepoint').
 
 When two octets are required, the order is "standard" -- the same as
 appears in ISO-2022 encodings, reference tables, etc.
@@ -5516,54 +5499,115 @@ These are equivalent to:
 \(make-char 'chinese-cns11643-1 76 87)
 \(decode-big5-char '(164 . 116))
 
-\(All codes above are two decimal numbers except for Big Five and ANSI
-Z39.64, which we don't support.  We add 32 to each of the decimal
-numbers.  Big Five is split in a rather hackish fashion into two
-charsets, `big5-1' and `big5-2', due to its excessive size -- 94x157,
-with the first codepoint in the range 0xA1 to 0xFE and the second in
-the range 0x40 to 0x7E or 0xA1 to 0xFE.  `decode-big5-char' is used to
-generate the char from its codes, and `encode-big5-char' extracts the
-codes.)
+All codes above are two decimal numbers except for Big Five and ANSI
+Z39.64, which we don't support.  We add 32 to each of the decimal numbers.
+Note that in an old-Mule world (see below), Big Five is split in a rather
+hackish fashion into two charsets, `chinese-big5-1' and `chinese-big5-2',
+due to its excessive size (94x157), with the first codepoint in the range
+0xA1 to 0xFE and the second in the range 0x40 to 0x7E or 0xA1 to 0xFE.
+`decode-big5-char' is used to generate the char from its codes, and
+`encode-big5-char' extracts the codes.  This hack doesn't exist with
+Unicode-internal, and hence the expression (make-char 'chinese-big5 164 116)
+could be used.
 
-When compiled without MULE, this function does not do much, but it's
-provided for compatibility.  In this case, the following CHARSET symbols
-are allowed:
+Note that there are three different internal formats for characters:
 
-`ascii' -- ARG1 should be in the range 0 through 127.
-`control-1' -- ARG1 should be in the range 128 through 159.
- else -- ARG1 is coerced to be between 0 and 255, and then the high
-         bit is set.
+1. ("non-Mule", configured `--with-mule=no')
+   An integer between 0 and 255.  All characters are taken to be in charset
+   `ascii'.  No charset object exists corresponding to this name (see
+   `get-charset').
 
- `int-to-char of the resulting ARG1' is returned, and ARG2 is always ignored.
+2. ("Unicode-internal", configured `--with-mule' and `--with-unicode-internal')
+   An integer representing a Unicode codepoint.
 
-Note that we provide the following sets of operations to deal with the
-different possible underlying representations of a character:
+3. ("old-Mule", configured `--with-mule' and `--with-unicode-internal=no')
+   An integer that internally encodes a national character set
+   (e.g. ISO-8859-1 or GB-2312) and associated codepoint.  This is the old
+   Mule representation.  This is a flawed representation because what is
+   the same character from a logical standpoint can have multiple
+   representations. (This is a particular problem with accented Latin
+   characters.)
 
-1. `make-char', or alternatively `charset-codepoint-to-char', generates a
-    character from a charset codepoint (a national charset and one or two
-    position codes, or octets); `unicode-to-char' generates a character
-    from a Unicode codepoint.  `char-to-charset-codepoint' converts a
-    character into a charset codepoint (charset and one or two octets), and
-    `char-to-unicode' converts a character to a Unicode codepoint.
-    Depending on the particular representation used for the character, a
-    charset precedence list may be required for some of these operations.
-2. `int-to-char' and `char-to-int' convert between a character and its
-    raw representation as an integer.  With Unicode-internal, this will
-    simply be a Unicode value.  With old-Mule-internal, this will be some
-    complex number in which the charset and octets have been encoded in the
-    bit fields.
-3. `charset-codepoint-to-unicode' and `unicode-to-charset-codepoint' are
-    for converting directly between charset codepoints and Unicode codepoints,
-    regardless of the particular representation of a character.
+Note that all three representations more or less agree in encoding ASCII in
+the range 0-127 and ISO-8859-1 in the range 128-255. ("More or less"
+because representation #1 does not really care what the actual significance
+of the characters is.  Under X Windows at least, XEmacs without Mule
+support could be made to support various character sets with appropriate
+font settings.)
 
-HANDLE-ERROR controls error behavior stemming from inability to translate.
-Currently, this happens only with Unicode-internal:
+XEmacs tries to hide the internal representation of characters as much as
+possible, but it is not completely possible to hide the difference between
+representations #2 and #3 because of the explicit encoding of a charset or
+lack thereof in the character.  Conversion from Unicode codepoints to
+charset codepoints is a one-to-many operation, and requires a charset
+precedence list to determine which of many charsets to choose from.  This
+means:
 
-nil or `fail'	Return nil
-`abort'		Signal an error
-`succeed'	Same as `use-private'
-`substitute'	Substitute the Unicode replacement char (0xFFFD)
-`use-private'	Encode using private Unicode space
+-- In a Unicode-internal world, conversion from a character to a charset
+   codepoint (`char-charset', `char-octet', `split-char') uses a charset
+   precedence list.
+
+-- In an old Mule-internal world, conversion from a Unicode codepoint to
+   a character (`make-char') uses a charset precedence list.
+
+In all cases, the precedence list is optional; when not specified, a
+default list is used.  See `unicode-to-char' for more information on
+charset precedence lists.
+
+When compiled non-Mule, this function does not do much, but it's provided
+for compatibility.   CHARSET should be the symbol `ascii', OCTET1 should
+be in the range 0-255, and OCTET2 should not be present.  The resulting
+character is equivalent to what would be returned by calling `int-to-char'.
+For compatibility, if CHARSET is `control-1', OCTET1 is first coerced
+\(using logical AND and OR) to the range 128-159, and for other values of
+CHARSET, OCTET1 is coerced to the range 128-255 by setting the high bit.
+This behavior should not be relied upon.
+
+Note that there are various ways of representing a character:
+
+1. A character object, as returned by `make-char' or `unicode-to-char'.
+
+2. An integer, the raw internal representation of a character.  With
+   Unicode-internal, this will simply be a Unicode codepoint.  With old-Mule,
+   this will be a 21-bit number in which the charset and octets have been
+   encoded in different bit fields.
+
+3. A charset codepoint, consisting of a symbol naming a charset
+   (alternatively, a charset object as returned by `get-charset') and
+   one or two octets, typically specifying a character in a national
+   character set.
+
+4. A Unicode codepoint, an integer between 0 and 0x10FFFF.  Unicode is a
+   standard that attempts to encompass all the characters required to
+   encoded text in any human language, past or present, as well as certain
+   other language-like systems (e.g. mathematical symbols or musical
+   notation).
+    
+The following funtions deal with the various representations of a
+character:
+
+-- `make-char' and `charset-codepoint-to-char' generate a
+   character from a charset codepoint.
+-- `char-to-charset-codepoint' converts a character into a charset
+   codepoint.  See also the compatibility functions `split-char',
+   `char-charset' and `char-octet'.
+-- `unicode-to-char' and `char-to-unicode' convert between a character
+   and a Unicode codepoint.
+-- `int-to-char' and `char-to-int' convert between a character and its
+   internal integer representation.
+-- `charset-codepoint-to-unicode' and `unicode-to-charset-codepoint'
+   convert directly between charset codepoints and Unicode codepoints,
+   regardless of the particular representation of a character.
+
+Functions that involve converting from a Unicode codepoint to a charset
+codepoint, regardless of whether these codepoints are encapsulated as a
+character object, involve a charset precedence list, which is an optional
+argument.  The following functions make use of a charset precedence list:
+
+-- Under Unicode-internal, `char-to-charset-codepoint', along with
+   `split-char', `char-charset' and `char-octet'.
+-- Under old-Mule, `unicode-to-char'.
+-- In all circumstances, `unicode-to-charset-codepoint'.
 */
        (charset, octet1, octet2, handle_error))
 {
@@ -5615,11 +5659,11 @@ given charset precedence list, or the default precedence.  If
 PRECEDENCE-LIST is given, it should be a list of charsets, and only those
 charsets will be consulted, in the given order, for a translation.
 Otherwise, the default ordering of all charsets will be given (see
-`set-unicode-charset-precedence').  When there is no international support
-\(i.e. the `mule' feature is not present), this function simply does
-`int-to-char' and ignores the PRECEDENCE-LIST argument. (Redisplay will
-work on the sjt-xft branch, but not with server-side X11 fonts as is the
-default.)
+`set-default-unicode-charset-precedence').  When there is no international
+support \(i.e. the `mule' feature is not present, caused by configuring
+`--with-mule=no'), this function simply does `int-to-char' and ignores the
+PRECEDENCE-LIST argument. (Redisplay will work on the sjt-xft branch, but
+not with server-side X11 fonts as is the default.)
 
 If the UNICODE codepoint would not otherwise be converted to an XEmacs
 character, and the list of character sets to be consulted is nil or the
@@ -5656,16 +5700,20 @@ nil or `fail'	Return nil
 }
 
 DEFUN ("char-to-charset-codepoint", Fchar_to_charset_codepoint, 1, 2, 0, /*
-Return list of charset and one or two position-codes of char CH.
+Return a charset codepoint corresponding to character CH.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
+
 Use this function in place of `split-char'.
 
 When a Unicode internal representation is used (--with-unicode-internal
 option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `make-char').  The return value will
-be the highest-precedence charset in which the character is found, and
-the corresponding position codes (octets) in the representation in this
-charset.  The return value will be nil if no equivalent national charset
-representation can be found.
+charset precedence list (see `unicode-to-char').  The returned charset will
+be the first (i.e. highest-precedence) charset listed the charset
+precedence list in which the character is found.  The return value will be
+nil if the character is not found in any of the charsets in the precedence
+list.
 */
        (ch, precedence_list))
 {
@@ -5688,8 +5736,10 @@ representation can be found.
 
 DEFUN ("charset-codepoint-to-unicode", Fcharset_codepoint_to_unicode,
        2, 4, 0, /*
-Convert a CHARSET and one or two octets to a Unicode codepoint.
-See `make-char' for the format of the octets.
+Convert a charset codepoint to a Unicode codepoint.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
 
 HANDLE-ERROR controls error behavior:
 
@@ -5714,9 +5764,18 @@ nil or `fail'	Return nil
 
 DEFUN ("unicode-to-charset-codepoint", Funicode_to_charset_codepoint,
        1, 2, 0, /*
-Convert a Unicode codepoint and a charset precedence list (see `make-char')
-into a list of charset and one or two octets, codepoints in the charset.
-Return nil if no conversion available.
+Convert a Unicode codepoint to a charset codepoint.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
+
+When a Unicode internal representation is used (--with-unicode-internal
+option to configure), CODE will be converted according to PRECEDENCE-LIST, a
+charset precedence list (see `unicode-to-char').  The returned charset will
+be the first (i.e. highest-precedence) charset listed the charset
+precedence list in which the character is found.  The return value will be
+nil if the character is not found in any of the charsets in the precedence
+list.
 */
        (code, precedence_list))
 {
@@ -5739,12 +5798,20 @@ Return nil if no conversion available.
 }
 
 DEFUN ("char-charset", Fchar_charset, 1, 2, 0, /*
-Return the character set of char CH.
+Convert character CH to a charset codepoint and return the charset.
+The returned value is a symbol naming a charset (typically, a national
+character set); see `make-char'.
+
+This function is exactly equivalent to the expression
+\(first (char-to-charset-codepoint CH PRECEDENCE-LIST)).
+
 When a Unicode internal representation is used (--with-unicode-internal
 option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `make-char').  The return value will
-be the highest-precedence charset in which the character is found, or nil
-if no equivalent national charset representation can be found.
+charset precedence list (see `unicode-to-char').  The returned charset will
+be the first (i.e. highest-precedence) charset listed the charset
+precedence list in which the character is found.  The return value will be
+nil if the character is not found in any of the charsets in the precedence
+list.
 */
        (ch, precedence_list))
 {
@@ -5765,13 +5832,13 @@ Return the octet numbered N (should be 0 or 1) of char CH.
 N defaults to 0 if omitted.
 
 This function is for compatibility; consider using `char-to-charset-codepoint'
-instead.
+instead.  See `char-to-charset-codepoint' for the semantics of PRECEDENCE-LIST.
 
 This function is not very useful when a Unicode internal representation is
-used (--with-unicode-internal option to configure). (Specifically, this
+used (--with-unicode-internal option to configure). Specifically, this
 function is more or less equivalent to (nth (1+ N) (split-char CH)), but
 returns 0 instead of nil when N=1 and the discovered charset of the character
-has only one dimension.)
+has only one dimension.
 */
        (ch, n, precedence_list))
 {
@@ -5807,11 +5874,11 @@ the range [0, 127], even if they should be in the range [128, 255].
 
 When a Unicode internal representation is used (--with-unicode-internal
 option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `make-char').  The return value will
-be the highest-precedence charset in which the character is found, and
-the corresponding position codes (octets) in the representation in this
-charset.  The return value will be nil if no equivalent national charset
-representation can be found.
+charset precedence list (see `unicode-to-char').  The returned charset will
+be the first (i.e. highest-precedence) charset listed the charset
+precedence list in which the character is found.  The return value will be
+nil if the character is not found in any of the charsets in the precedence
+list.
 */
        (ch, precedence_list))
 {
@@ -5939,8 +6006,8 @@ syms_of_text (void)
   DEFSUBR (Fchar_octet);
   DEFSUBR (Fsplit_char);
 
-  /* Qfail, Qsubstitute in general.c */
-  DEFSYMBOL (Qsubstitute_negated);
+  /* Qfail, Qsubstitute, Qsucceed in general.c */
+  DEFSYMBOL (Qsubstitute_negated); /* #### what's this used for? */
   DEFSYMBOL (Quse_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS

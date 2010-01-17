@@ -1,5 +1,22 @@
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
+	* mule-charset.c:
+	* mule-charset.c (Fcharset_short_name):
+	* mule-charset.c (Fcharset_long_name):
+	* mule-charset.c (Fcharset_description):
+	* text.c:
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Rewrite many docstrings for additional clarity.  `make-char'
+	got an especially thorough rewrite.
+
+	* text.c (syms_of_text):
+	Add comments about where some symbols are to be found, and
+	a #### comment about Qsubstitute_negated.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
 	* mule-charset.c (make_charset):
 	Initialize Unicode-map to Qnil, for charsets such as `ascii' without
 	an explicit map.
