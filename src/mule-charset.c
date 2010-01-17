@@ -804,8 +804,23 @@ make_charset (int id, int no_init_unicode_tables,
 
 /* #### SJT Should generic properties be allowed? */
 DEFUN ("make-charset", Fmake_charset, 3, 3, 0, /*
-Define a new national character set.
+Define a new "charset", i.e. a coded character set.
 This function is for use with international support.
+
+"Charsets" are objects describing coded character sets, i.e. arbitrary sets
+of characters indexed by one or two dimensions.  Charsets typically contain
+the characters necessary to encode text in a particular script or writing
+system, and often correspond to well-known coded character sets defined by
+national standards and intended to be sufficient to encode text in a
+particular nation's language.  Hence, they are often described as "national
+character sets".  However, it's possible for them to simply consist of
+an arbitrary collection of characters grouped together for some reason.
+
+The indices of a character in a charset are integers in the range 0-255 are
+are called "octets".  The dimension of a charset (one or two) determines
+the number of octets needed to index a particular character.  For more
+information on character octets, see `make-char'.
+
 With a Unicode-based engine, these charsets are used mostly in the codecs
 that read-in and write-out text formatting according to one or another
 national character sets.
@@ -1234,7 +1249,7 @@ right offsets -- generally, ISO-2022-compatible charsets -- are encodable).
 }
 
 DEFUN ("charset-short-name", Fcharset_short_name, 1, 1, 0, /*
-Return short name of CHARSET.
+Return short name of CHARSET.  See `make-charset'.
 */
        (charset))
 {
@@ -1242,7 +1257,7 @@ Return short name of CHARSET.
 }
 
 DEFUN ("charset-long-name", Fcharset_long_name, 1, 1, 0, /*
-Return long name of CHARSET.
+Return long name of CHARSET.  See `make-charset'.
 */
        (charset))
 {
@@ -1250,7 +1265,7 @@ Return long name of CHARSET.
 }
 
 DEFUN ("charset-description", Fcharset_description, 1, 1, 0, /*
-Return description of CHARSET.
+Return description of CHARSET.  See `make-charset'.
 */
        (charset))
 {
