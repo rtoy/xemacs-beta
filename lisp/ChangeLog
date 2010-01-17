@@ -1,5 +1,23 @@
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (error-unless-tests-match): New.
+	* bytecomp-runtime.el (byte-compile-file-being-compiled): New.
+	* bytecomp-runtime.el (compiled-if): New.
+	* bytecomp-runtime.el (compiled-when): New.
+	Add functions for dealing with conditional compilation of different code
+	depending on the presence or absence of features.  Necessary for some
+	Mule code where code is run during compilation (macros or eval-when-compile)
+	but, depending on how the code is written, the code itself will crash
+	either with or without Unicode-internal.
+
+	compiled-if and compiled-when are the basic functions for conditional
+	compilation.  They automatically trigger an error message upon file
+	loading	if, at that time, the test expression that selected which code
+	to compile does	not have the same value as at compile time.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
 	* mule/thai.el:
 	Fix compile error: Comment accidentally uncommented.
 
