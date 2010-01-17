@@ -375,13 +375,26 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define CHARSET_ID_CONTROL_1       0x80
 #define CHARSET_ID_LATIN_ISO8859_1 0x81 /* 0x81 Right half of ISO 8859-1 */
 
+/* WARNING!!!  If you change any of the following official ID boundaries,
+   *you MUST* change rep_bytes_by_first_byte[] in text.c
+   *correspondingly. */
+#define MIN_OFFICIAL_DIM1_CHARSET_ID    0x82
+#define MAX_OFFICIAL_DIM1_CHARSET_ID    0x8C
+  /* With ENABLE_COMPOSITE_CHARS, this is a dimension-2 set of composite
+     characters.  Otherwise it's a dimension-1 set of "fake" characters
+     used to represent the GNU Emacs compositing sequences ESC 0 - ESC 4 in
+     a buffer. */
+#define CHARSET_ID_COMPOSITE            0x8D
+#define MIN_OFFICIAL_DIM2_CHARSET_ID    0x8E
+#define MAX_OFFICIAL_DIM2_CHARSET_ID    0x9D
+
 /** The following are for 1- and 2-byte characters in a private charset. **/
 
 #define LEAD_BYTE_PRIVATE_1	0x9E	/* 1-byte char-set */
 #define LEAD_BYTE_PRIVATE_2	0x9F	/* 2-byte char-set */
 
-/* We can have up to 96 private charsets of dimension 1 and 96 of dimension 2,
-   currently */
+/* We can have up to 96 encodable private charsets of dimension 1 and 96 of
+   dimension 2, currently */
 #define MIN_PRIVATE_DIM1_CHARSET_ID	0xA0
 #define MAX_PRIVATE_DIM1_CHARSET_ID	0xFF
 #define MIN_PRIVATE_DIM2_CHARSET_ID	0x100

@@ -180,6 +180,11 @@
     (concat " " aletter "\\|" kanji-space-insertable))
   "Regexp for finding points that can have spaces inserted into them for justification")
 
+;; Setup auto-fill-chars for charsets that should invoke auto-filling.
+;; SPACE and NEWLINE are already set.
+(loop for l in '(katakana-jisx0201 japanese-jisx0208 japanese-jisx0212)
+  do (put-char-table l t auto-fill-chars))
+
 ;; Beginning of FSF synching with international/japanese.el.
 
 ;; (make-coding-system

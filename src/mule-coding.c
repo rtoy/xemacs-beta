@@ -4450,15 +4450,23 @@ vars_of_mule_coding (void)
 void
 complex_vars_of_mule_coding (void)
 {
+}
+
+void
+init_mule_coding (void)
+{
   /* #### Hack!  These should use actual shift-jis and big5 charsets.
      There should be a general multibyte codec to handle both of these,
      and similar variants. */
+  assert (initialized);
+  /* Because we only set these up after dumping, we don't need to call
+     dump_add_root_block_ptr (&shift_jis_precedence,
+			      &Lisp_Object_dynarr_description);
+     or anything of the sort. */
   shift_jis_precedence =
     convert_charset_list_to_precedence_dynarr
     (list3 (Vcharset_japanese_jisx0208, Vcharset_japanese_jisx0208_1978,
 	    Vcharset_katakana_jisx0201));
-  dump_add_root_block_ptr (&shift_jis_precedence,
-			   &Lisp_Object_dynarr_description);
 
 #ifdef UNICODE_INTERNAL
   big5_precedence =
@@ -4469,6 +4477,4 @@ complex_vars_of_mule_coding (void)
     convert_charset_list_to_precedence_dynarr
     (list2 (Vcharset_chinese_big5_1, Vcharset_chinese_big5_2));
 #endif /* UNICODE_INTERNAL */
-  dump_add_root_block_ptr (&big5_precedence,
-			   &Lisp_Object_dynarr_description);
 }

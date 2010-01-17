@@ -2556,6 +2556,15 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      where there is typically a dependency from each to the previous.
  */
 
+  if (initialized)
+    {
+      init_mule_charset (); /* Retrieve the charset objects corresponding to
+			       certain charsets that we want to use internally,
+			       e.g. the ISO 8859 charsets.  We used to create
+			       them ourselves in the C code but it's cleaner
+			       and easier to create them in the Lisp code. */
+      init_mule_coding (); /* depends on those charsets */
+    }
 #ifdef WIN32_ANY
   init_intl_win32 (); /* Under Windows, determine whether we use Unicode
 			 or ANSI to call the system routines -- i.e.
