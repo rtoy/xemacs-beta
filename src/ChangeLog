@@ -1,5 +1,11 @@
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
+	* mule-charset.c (make_charset):
+	Initialize Unicode-map to Qnil, for charsets such as `ascii' without
+	an explicit map.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
 
 	Fundamental changes:
 

@@ -2,6 +2,49 @@
 
 	* unicode.el:
 	* unicode.el (featurep):
+	Comment fixes.
+	
+	* update-elc.el:
+	* update-elc.el (lisp-files-dependent-on-configuration): New.
+	* update-elc.el (preloaded-file-list):
+	Ensure that files with compile-time dependence on
+	(featurep 'unicode-internal) or something similar get recompiled
+	whenever the configuration changes.
+	
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule/chinese.el (big5):
+	Fix safe-charsets to take into account difference between one
+	charset chinese-big5 (Unicode-internal) or two charsets
+	chinese-big5-1/2 (old-Mule).
+	* mule/chinese.el:
+	Use `compiled-when' to introduce compile-time dependence on
+	(find-charset 'chinese-big5-1) to avoid compile-time error in
+	Unicode-internal when this charset isn't present.
+	
+	* mule/general-late.el:
+	We previously introduced compile-time dependence on Unicode-internal
+	in an eval-when-compile expression, so insert a clause that will
+	signal an error if we compile with Unicode-internal and run without,
+	or vice-versa.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charsets-in-string):
+	* mule/mule-charset.el (charset-registry):
+	* mule/mule-charset.el (set-charset-registry):
+	Unimportant whitespace changes.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Add a comment about ordering relationship between unicode.el
+	and mule-charset.el.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (featurep):
 	* unicode.el (load-unicode-tables): Removed.
 	Remove the setting of unicode-map info for all charsets but
 	ISO 8859-1, which is created in C.  Remove commented-out

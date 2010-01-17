@@ -271,8 +271,10 @@ Uses the GB2312 character set."))
 (make-coding-system
  'big5 'big5
  "Big5"
- '(mnemonic "Zh/Big5"
-   safe-charsets (ascii chinese-big5-1 chinese-big5-2)
+ `(mnemonic "Zh/Big5"
+   safe-charsets (ascii ,@(if (find-charset 'chinese-big5-1)
+			      '(chinese-big5-1 chinese-big5-2)
+			    '(chinese-big5)))
    documentation
    "A non-modal encoding formed by five large Taiwanese companies
 \(hence \"Big5\") to produce a character set and encoding for
@@ -289,7 +291,10 @@ of a Chinese character\"."))
 
 (define-coding-system-alias 'cn-big5 'big5)
 
-(when (not (featurep 'unicode-internal))
+;; Need to use `compiled-when' because otherwise we will get an error when
+;; compiling this file under Unicode-internal because (charset-id
+;; 'chinese-big5-2) gets evaluated at compile time and fails.
+(compiled-when (find-charset 'chinese-big5-1)
   ;; Big5 font requires special encoding.  But under Unicode-internal we
   ;; have one single charset `chinese-big5', with no special encoding
   ;; needed.

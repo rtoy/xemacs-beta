@@ -744,6 +744,7 @@ make_charset (int id, int no_init_unicode_tables,
   XCHARSET_FINAL	(obj) = final;
   XCHARSET_DOC_STRING	(obj) = doc_string;
   XCHARSET_REGISTRIES	(obj) = registries;
+  XCHARSET_UNICODE_MAP	(obj) = Qnil;
 
   /* Sanity checking -- for internal ISO-2022 charsets, make sure that the
      offset range agrees with the graphic range.  We don't do this for

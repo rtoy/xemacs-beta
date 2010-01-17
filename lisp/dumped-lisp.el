@@ -165,7 +165,7 @@ in dumped-lisp.el and is not itself listed.")
        "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
-	 '("mule/mule-charset"
+	 '("mule/mule-charset" ;; needs to load after unicode in old-Mule
 	   "mule/mule-cmds" ; to sync with Emacs 20.1
 	   "mule/mule-coding"
 	   "mule/mule-composite-stub"
