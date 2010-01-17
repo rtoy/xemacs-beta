@@ -108,6 +108,11 @@
 	Remove support in our generated code for emacs versions where
 	keywords are not self-quoting.
 
+2009-12-21  Michael Sperber  <mike@xemacs.org>
+
+	* gnuserv.el (gnuserv-program): Specifically look for gnuserv in
+	`exec-directory'.
+
 2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alist.el (modify-alist):
