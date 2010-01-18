@@ -1,3 +1,25 @@
+2010-01-18  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* print.c:
+	New variable `in_debug_print'.
+	
+	* alloc.c:
+	* alloc.c (free_managed_lcrecord):
+	If gc_in_progress and in_debug_print, just return instead of
+	crashing. This only happens when the programmer calls debug_print()
+	or a variation inside of a debugger, and is probably already
+	diagnosing a crash.
+	
+	* print.c (struct debug_bindings):
+	* print.c (debug_prin1_exit):
+	* print.c (debug_prin1):
+	At entrance, record the old value of in_debug_print in the
+	debug_bindings, set up an unwind-protect to restore the old value,
+	and set in_debug_print to 1.  In the unwind-protect, restore the
+	old value.
+	
+
 2010-01-16  Ben Wing  <ben@xemacs.org>
 
 	* win32.c (mswindows_read_link_1):
