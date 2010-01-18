@@ -45,6 +45,7 @@
    graphic 0
    short-name "JISX0213-1"
    long-name "JISX0213-1"
+   tags (jis kanji japanese)
    ))
 
 ;; JISX0213 Plane 2
@@ -60,6 +61,7 @@
    graphic 0
    short-name "JISX0213-2"
    long-name "JISX0213-2"
+   tags (jis kanji japanese)
    ))
 
 

@@ -1,3 +1,14 @@
+1-17-10
+
+Tags, still to do:
+
+-- test the existing code
+-- Implement global/buffer-local tags.
+-- when processing a charset precedence list, call the lisp code to get
+   a list of charsets; but first use a hash table to check if we just
+   saw the same thing and use the hash value if so
+-- add tags for the built-in charsets
+
 SHORT-TERM TO DO:
 ================
 

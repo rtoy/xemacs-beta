@@ -130,7 +130,8 @@ See `koi8-r' and `windows-1251'.  "
 
 (make-internal-128-byte-charset
  'cyrillic-koi8-r "Cyrillic KOI8-R"
- :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-R.TXT" #x80))
+ :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-R.TXT" #x80)
+ :tags '(koi8 cyrillic russian))
 
 ;; KOI8-R, the most common encoding for Cyrillic on Unix and Usenet.
 (make-coding-system 
@@ -173,7 +174,8 @@ characters of the opposite case). "
 
 (make-internal-128-byte-charset
  'cyrillic-koi8-u "Cyrillic KOI8-u"
- :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-u.TXT" #x80))
+ :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-u.TXT" #x80)
+ :tags '(koi8 cyrillic ukrainian))
 
 ;; KOI8-U, for Ukrainian.
 (make-coding-system 
@@ -232,8 +234,10 @@ Russian in KOI8-R.  "))
 Byelorussian in the early 1990s.)"))
  '("Cyrillic"))
 
-(make-internal-128-byte-charset 'cyrillic-alternativnyj "Cyrillic Alternativnyj"
-		       :unicode-map '("unicode/unicode-consortium/VENDORS/MICSFT/PC/CP866.TXT" #x80))
+(make-internal-128-byte-charset
+ 'cyrillic-alternativnyj "Cyrillic Alternativnyj"
+ :unicode-map '("unicode/unicode-consortium/VENDORS/MICSFT/PC/CP866.TXT" #x80)
+ :tags '(cyrillic))
 
 ;;; Alternativnyj
 (make-coding-system
@@ -386,7 +390,7 @@ Byelorussian in the early 1990s.)"))
    (#xFD #x0429) ;; CYRILLIC CAPITAL LETTER SHCHA
    (#xFE #x0427) ;; CYRILLIC CAPITAL LETTER CHE
    (#xFF #x042A)) ;; CYRILLIC CAPITAL LETTER HARD SIGN
- )
+ :tags '(koi8 cyrillic russian ukrainian))
 
 (make-coding-system
  'koi8-ru 'multibyte "КОИ-8 (Russian, Ukrainian)"
@@ -511,7 +515,7 @@ Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
    (#xFD #x0429) ;; CYRILLIC CAPITAL LETTER SHCHA
    (#xFE #x0427) ;; CYRILLIC CAPITAL LETTER CHE
    (#xFF #x042A)) ;; CYRILLIC CAPITAL LETTER HARD SIGN
- )
+ :tags '(koi8 cyrillic tajik))
 
 (make-coding-system
  'koi8-t 'multibyte "КОИ-8 for Tajik."
@@ -668,7 +672,7 @@ language of Tajikistan and a close relative of Persian.  "))
    (#xFD #x0429) ;; CYRILLIC CAPITAL LETTER SHCHA
    (#xFE #x0427) ;; CYRILLIC CAPITAL LETTER CHE
    (#xFF #x042A)) ;; CYRILLIC CAPITAL LETTER HARD SIGN
- )
+  :tags '(koi8 cyrillic caucasus))
 
 (make-coding-system
  'koi8-c 'multibyte "KOI-8, Caucasus."
@@ -825,7 +829,7 @@ for that, see koi8-o. "))
    (#xFD #x0429) ;; CYRILLIC CAPITAL LETTER SHCHA
    (#xFE #x0427) ;; CYRILLIC CAPITAL LETTER CHE
    (#xFF #x042A)) ;; CYRILLIC CAPITAL LETTER HARD SIGN
- )
+ :tags '(koi8 cyrillic russian))
 
 (make-coding-system
  'koi8-o 'multibyte "Old-orthography Russian"

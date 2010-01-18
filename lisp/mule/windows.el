@@ -28,43 +28,67 @@
 ;; point soon most of the info in those language files won't be necessary
 ;; because it will be derived from Unicode tables.
 
-;Make a one-dimension Windows charset corresponding to a specified code page.
-;CODEPAGE is the number of the code page.  SCRIPT is a symbol indicating the
-;writing system of the code page, e.g. `latin' or `cyrillic'.  NAME is a
-;string describing the code page, e.g. \"Eastern Europe\" (code page 1250).
-(defun make-one-dimension-windows-charset (codepage script name l1 h1
-						    &optional unicode-map)
+(defun windows-ansioem-to-family (ansioem)
+  ;; Given a string specifying a pretty version of the family (Ansi, OEM,
+  ;; etc.), return the corresponding charset tag(s) as a list.
+  (cond ((equal ansioem "ANSI") '(windows-ansi))
+	((equal ansioem "Ansi/OEM") '(windows-ansi windows-oem))
+	((equal ansioem "OEM") '(windows-oem))
+	((equal ansioem "EBCDIC") '(ebcdic))
+	((equal ansioem "Mac") '(macintosh))
+	(t (signal-error 'invalid-argument
+			 `("Bad `ansioem' value" ,ansioem)))))
+
+;; Make a Windows charset corresponding to a specified code page.  CODEPAGE
+;; is the number of the code page.  SCRIPT is a symbol indicating the
+;; writing system of the code page, e.g. `latin' or `cyrillic'.  NAME is a
+;; string describing the code page, e.g. \"Eastern Europe\" (code page
+;; 1250).  DIMENSION, CHARS, OFFSET, and UNICODE-MAP go directly to the
+;; `make-charset' properties of the same names.  TAGS has a family tag
+;; derived from ANSIOEM added to it as well as the SCRIPT tag added to it,
+;; and then goes to the `tags' property of `make-charset'.
+(defun* make-windows-charset (codepage script name
+			      dimension chars offset
+			      &key tags ansioem unicode-map)
+  (or (listp tags) (setq tags (list tags)))
   (make-internal-charset
    (intern (format "%s-windows-%s" script codepage))
    (format "Windows code page %s (%s)" codepage name)
-   `(dimension
-     1
-     chars ,(1+ (- h1 l1))
-     offset ,l1
+   `(dimension ,dimension
+     chars ,chars
+     offset ,offset
      ,@(and unicode-map `(unicode-map ,unicode-map))
+     tags ,(append (and ansioem (windows-ansioem-to-family ansioem))
+		   (list script) tags)
      short-name ,(format "Windows %s (%s)" codepage name)
      long-name ,(format "Windows code page %s (%s)" codepage name)
      )))
 
-;Make a two-dimension Windows charset corresponding to a specified code
-;page.  CODEPAGE is the number of the code page.  SCRIPT is a symbol
-;indicating the writing system of the code page, e.g. `chinese'.  NAME is a
-;string describing the code page, e.g. \"Simplified Chinese\" (code page
-;936).  The charset has characters in the range (L1, L2) - (H1, H2),
-;inclusive.
-(defun make-two-dimension-windows-charset (codepage script name l1 l2 h1 h2
-				           &optional unicode-map)
-  (make-internal-charset
-   (intern (format "%s-windows-%s" script codepage))
-   (format "Windows code page %s (%s)" codepage name)
-   `(dimension
-     2
-     chars (,(1+ (- h1 l1)) ,(1+ (- h2 l2)))
-     offset (,l1 ,l2)
-     ,@(and unicode-map `(unicode-map ,unicode-map))
-     short-name ,(format "Windows %s (%s)" codepage name)
-     long-name ,(format "Windows code page %s (%s)" codepage name)
-     )))
+;; Make a one-dimension Windows charset corresponding to a specified code
+;; page.  CODEPAGE is the number of the code page.  SCRIPT is a symbol
+;; indicating the writing system of the code page, e.g. `latin' or
+;; `cyrillic'.  NAME is a string describing the code page, e.g. \"Eastern
+;; Europe\" (code page 1250).
+(defun* make-one-dimension-windows-charset (codepage script name l1 h1
+					    &key tags ansioem unicode-map)
+  (make-windows-charset codepage script name 1 (1+ (- h1 l1)) l1
+			:tags tags
+			:ansioem ansioem
+			:unicode-map unicode-map))
+
+;; Make a two-dimension Windows charset corresponding to a specified code
+;; page.  CODEPAGE is the number of the code page.  SCRIPT is a symbol
+;; indicating the writing system of the code page, e.g. `chinese'.  NAME is
+;; a string describing the code page, e.g. \"Simplified Chinese\" (code
+;; page 936).  The charset has characters in the range (L1, L2) - (H1, H2),
+;; inclusive.
+(defun* make-two-dimension-windows-charset (codepage script name l1 l2 h1 h2
+					    &key tags ansioem unicode-map)
+  (make-windows-charset codepage script name
+			2 `(,(1+ (- h1 l1)) ,(1+ (- h2 l2))) `(,l1 ,l2)
+			:tags tags
+			:ansioem ansioem
+			:unicode-map unicode-map))
 
 (defun* make-windows-coding-system (codepage script name
 					     &key category ansioem
@@ -80,9 +104,8 @@ This implements the encoding specified by code page %s.
 %s" codepage name (or ansioem "OEM") codepage (or extra-doc ""))
      mnemonic ,(or mnemonic (format "CP%s" codepage))
      aliases (,(intern (format "cp%s" codepage)))))
-  (when category
-    (coding-system-put (intern (format "windows-%s" codepage))
-		       'category category)))
+  (coding-system-put (intern (format "windows-%s" codepage))
+		     'category (or category 'no-conversion)))
 
 (defun windows-generate-unicode-map (codepage unicode-file unicode-dir
 					      unicode-offset)
@@ -95,21 +118,23 @@ This implements the encoding specified by code page %s.
 	   ,unicode-offset))))
   
 (defun* make-1d-windows-charset-and-coding-system
-  (codepage script name &key unicode-file unicode-dir
+  (codepage script name &key tags unicode-file unicode-dir
 	    low high category ansioem mnemonic extra-doc)
   (or low (setq low 128))
   (or high (setq high 255))
   (let ((unicode-map
 	 (windows-generate-unicode-map codepage unicode-file unicode-dir
 				       low)))
-    (make-one-dimension-windows-charset codepage script name
-					low high unicode-map))
+    (make-one-dimension-windows-charset codepage script name low high
+					:ansioem ansioem
+					:tags tags
+					:unicode-map unicode-map))
   (make-windows-coding-system codepage script name :category category
 			      :ansioem ansioem :mnemonic mnemonic
 			      :extra-doc extra-doc))
 
 (defun* make-2d-windows-charset-and-coding-system
-  (codepage script name &key unicode-file unicode-dir unicode-offset
+  (codepage script name &key tags unicode-file unicode-dir unicode-offset
 	    low high category ansioem mnemonic extra-doc)
   (or low (setq low '(0 0)))
   (or high (setq high '(255 255)))
@@ -119,7 +144,9 @@ This implements the encoding specified by code page %s.
     (make-two-dimension-windows-charset codepage script name
 					(first low) (second low)
 					(first high) (second high)
-					unicode-map))
+					:ansioem ansioem
+					:tags tags
+					:unicode-map unicode-map))
   (make-windows-coding-system codepage script name :category category
 			      :ansioem ansioem :mnemonic mnemonic
 			      :extra-doc extra-doc))
@@ -132,77 +159,77 @@ This implements the encoding specified by code page %s.
 
 (make-1d-windows-charset-and-coding-system
  437 'latin "MS-DOS United States" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 ;; This is ISO-8859-6. 
 ;;(make-1d-windows-charset-and-coding-system
 ;; 708 'arabic "Arabic (ASMO 708)"
-;; :category 'no-conversion :ansioem "OEM")
+;; :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  709 'arabic "Arabic (ASMO 449+, BCON V4)"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  710 'arabic "Arabic (Transparent Arabic)"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  720 'arabic "Arabic (Transparent ASMO)"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  737 'greek "Greek (formerly 437G)" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  775 'latin "Baltic" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  850 'latin "MS-DOS Multilingual (Latin I)" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  852 'latin "MS-DOS Slavic (Latin II)" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  855 'cyrillic "IBM Cyrillic (primarily Russian)" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  857 'latin "IBM Turkish" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  860 'latin "MS-DOS Portuguese" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  861 'latin "MS-DOS Icelandic" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  862 'hebrew "Hebrew" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  863 'latin "MS-DOS Canadian-French" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  864 'arabic "Arabic" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  865 'latin "MS-DOS Nordic" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  866 'cyrillic "MS-DOS Russian" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  869 'greek "IBM Modern Greek" :unicode-dir "PC"
- :category 'no-conversion :ansioem "OEM")
+ :ansioem "OEM")
 (make-1d-windows-charset-and-coding-system
  874 'thai "Thai" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "Ansi/OEM")
+ :ansioem "Ansi/OEM")
 (make-2d-windows-charset-and-coding-system
  932 'japanese "Japanese" :unicode-dir "WINDOWS"
  :low '(#x81 #x40) :high '(#xfe #xfe)
- :category 'shift_jis :ansioem "Ansi/OEM")
+ :category 'shift-jis :ansioem "Ansi/OEM")
 (make-2d-windows-charset-and-coding-system
  936 'chinese "Simplified Chinese (PRC, Singapore)" :unicode-dir "WINDOWS"
  :low '(#x81 #x40) :high '(#xfe #xfe)
- :category 'iso_8_2 :ansioem "Ansi/OEM")
+ :category 'iso-8-2 :ansioem "Ansi/OEM")
 (make-2d-windows-charset-and-coding-system
  949 'korean "Korean" :unicode-dir "WINDOWS"
  :low '(#x81 #x41) :high '(#xfe #xfe)
- :category 'iso_8_2 :ansioem "Ansi/OEM")
+ :category 'iso-8-2 :ansioem "Ansi/OEM")
 (make-2d-windows-charset-and-coding-system
  950 'chinese "Traditional Chinese (Taiwan; Hong Kong SAR, PRC)" :unicode-dir "WINDOWS"
  :low '(#xa1 #x40) :high '(#xfe #xfe)
@@ -214,12 +241,12 @@ This implements the encoding specified by code page %s.
 ;; :category 'utf-16-little-endian :ansioem "ANSI")
 (make-1d-windows-charset-and-coding-system
  1250 'latin "Eastern Europe" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI"
+ :ansioem "ANSI"
  :extra-doc 
  "See also `iso-8859-2' and `windows-1252' for Western Europe.")
 (make-1d-windows-charset-and-coding-system
  1251 'cyrillic "Cyrillic" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI"
+ :ansioem "ANSI"
  :mnemonic "CyrW"
  :extra-doc
    "This ASCII-compatible encoding is unfortunately not compatible at
@@ -231,13 +258,13 @@ It supports Russian, Bulgarian, Serbian and other languages written using
 Cyrillic script.  ")
 (make-1d-windows-charset-and-coding-system
  1252 'latin "ANSI" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI"
+ :ansioem "ANSI"
  :extra-doc
  "This is Microsoft's extension of iso-8859-1 for Western Europe
 and the Americas.")
 (make-1d-windows-charset-and-coding-system
  1253 'greek "Greek" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI"
+ :ansioem "ANSI"
  :mnemonic "GrkW"
  :extra-doc
 "This encoding is used for monotonic Greek.
@@ -247,25 +274,25 @@ ISO-2022 area, which makes it incompatible with the latter standard, but
 that latter standard is not used in Greece.")
 (make-1d-windows-charset-and-coding-system
  1254 'latin "Turkish" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI")
+ :ansioem "ANSI")
 (make-1d-windows-charset-and-coding-system
  1255 'hebrew "Hebrew" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI")
+ :ansioem "ANSI")
 (make-1d-windows-charset-and-coding-system
  1256 'arabic "Arabic" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI"
+ :ansioem "ANSI"
  :extra-doc
    "This is the much superior to the ISO standard one.")
 (make-1d-windows-charset-and-coding-system
  1257 'latin "Baltic Rim" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI")
+ :ansioem "ANSI")
 (make-1d-windows-charset-and-coding-system
  1258 'latin "VietNam" :unicode-dir "WINDOWS"
- :category 'no-conversion :ansioem "ANSI")
+ :ansioem "ANSI")
 ;; #### Is this category right? I don't have Lunde to hand, and the
 ;; online information on Johab is scant.
 (make-2d-windows-charset-and-coding-system
- 1361 'korean "Korean (Johab)" :category 'iso_8_2 :ansioem "Ansi/OEM")
+ 1361 'korean "Korean (Johab)" :category 'iso-8-2 :ansioem "Ansi/OEM")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; The MAC code pages
@@ -275,25 +302,25 @@ that latter standard is not used in Greece.")
 ;;We provide this in latin.el
 ;;(make-1d-windows-charset-and-coding-system
 ;; 10000 'latin "Macintosh Roman" :unicode-file "MAC/ROMAN.TXT"
-;; :category 'no-conversion :ansioem "Mac")
+;; :ansioem "Mac")
 (make-2d-windows-charset-and-coding-system
  10001 'japanese "Macintosh Japanese"
- :category 'shift_jis :ansioem "Mac")
+ :category 'shift-jis :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
  10006 'greek "Macintosh Greek I" :unicode-file "MAC/GREEK.TXT" 
- :category 'no-conversion :ansioem "Mac")
+ :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
  10007 'cyrillic "Macintosh Cyrillic" :unicode-file "MAC/CYRILLIC.TXT"
- :category 'no-conversion :ansioem "Mac")
+ :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
  10029 'latin "Macintosh Latin 2" :unicode-file "MAC/LATIN2.TXT"
- :category 'no-conversion :ansioem "Mac")
+ :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
  10079 'latin "Macintosh Icelandic" :unicode-file "MAC/ICELAND.TXT"
- :category 'no-conversion :ansioem "Mac")
+ :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
  10081 'latin "Macintosh Turkish" :unicode-file "MAC/TURKISH.TXT"
- :category 'no-conversion :ansioem "Mac")
+ :ansioem "Mac")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; The EBCDIC code pages
@@ -302,13 +329,13 @@ that latter standard is not used in Greece.")
 (make-1d-windows-charset-and-coding-system
  ;; need to specify the filename otherwise we try to look for CP37.TXT
  037 'latin "EBCDIC" :unicode-file "EBCDIC/CP037.TXT" :low 0 :high 255
- :category 'no-conversion :ansioem "EBCDIC")
+ :ansioem "EBCDIC")
 (make-1d-windows-charset-and-coding-system
  500 'latin "EBCDIC \"500V1\"" :unicode-dir "EBCDIC" :low 0 :high 255
- :category 'no-conversion :ansioem "EBCDIC")
+ :ansioem "EBCDIC")
 (make-1d-windows-charset-and-coding-system
  875 'latin "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
- :category 'no-conversion :ansioem "EBCDIC")
+ :ansioem "EBCDIC")
 (make-1d-windows-charset-and-coding-system
  1026 'latin "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
- :category 'no-conversion :ansioem "EBCDIC")
+ :ansioem "EBCDIC")

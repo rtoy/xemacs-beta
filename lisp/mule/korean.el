@@ -46,6 +46,7 @@
    ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JOHAB.TXT" #x8000)
    short-name "Johab"
    long-name "Johab (Korean)"
+   tags (windows-ansi kanji korean)
    ))
 
 ;; Syntax of Korean characters.

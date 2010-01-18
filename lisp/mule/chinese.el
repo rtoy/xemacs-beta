@@ -64,6 +64,7 @@
          graphic 0
 	 unicode-map (,(format "unicode/mule-ucs/chinese-cns11643-%s.txt"
 			       plane))
+	 tags (cns kanji traditional-chinese chinese/language)
 	 short-name ,(concat "CNS11643-" plane)
 	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
 			    plane)))
@@ -88,25 +89,25 @@
    chars 94
    final ?E
    graphic 0
+   tags (gb kanji simplified-chinese chinese/language)
    short-name "ISO-IR-165"
    long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
-; ;; PinYin-ZhuYin
-; (make-internal-charset 'chinese-sisheng 
-; 	      "SiSheng characters for PinYin/ZhuYin"
-; 	      '(dimension
-; 		1
-; 		;; XEmacs addition: second half of registry spec
-; 		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?0
-; 		graphic 0
-; 		short-name "SiSheng"
-; 		long-name "SiSheng (PinYin/ZhuYin)"
-; 		))
-
+ ;; PinYin-ZhuYin
+(make-internal-charset
+ 'chinese-sisheng
+ "SiSheng characters for PinYin/ZhuYin"
+ '(dimension 1
+   chars 94
+   final ?0
+   graphic 0
+   short-name "SiSheng"
+   long-name "SiSheng (PinYin/ZhuYin)"
+   ;; XEmacs addition: first of the two registries
+   registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+   unicode-map ("unicode/mule-ucs/chinese-sisheng.txt")
+   tags (bopomofo chinese/language)
+   ))
  
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))

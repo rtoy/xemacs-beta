@@ -331,8 +331,465 @@ no such translation table instead of returning nil."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                                                           ;
+;                                                                           ;
 ;                                charsets                                   ;
+;                                                                           ;
+;                                                                           ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;       Charset tags: General functions       ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar charset-tag-to-properties-mapping (make-hash-table)
+  "Mapping from full-form charset tag to property list of tag's properties.")
+(puthash 'default/default '(parent nil) charset-tag-to-properties-mapping)
+
+(defvar charset-tag-to-charset-mapping (make-hash-table)
+  "Mapping from full-form charset tag to list of charsets matching the tag.")
+
+(defvar charset-tag-short-to-full-mapping (make-hash-table)
+  "Mapping from short-form charset tag to list of full-form tags.")
+(puthash 'default '(default/default) charset-tag-short-to-full-mapping)
+
+(defvar charset-tag-function-list nil
+  "Alist of (NAME . FUNCTION) for defined charset-tag functions.")
+
+(defsubst charset-tag-full-p (tag)
+  "Return true if charset tag TAG is in full form."
+  (not (null (string-match "/" (symbol-name tag)))))
+
+(defun charset-tag-name (tag)
+  "Return the NAME portion of TAG."
+  (if (not (charset-tag-full-p tag)) tag
+    (let* ((name (symbol-name tag))
+	   (val (string-match "\\(.*\\)/\\(.*\\)" name)))
+      (assert val)
+      (intern (match-string 1 name)))))
+
+(defun charset-tag-to-full-tags (tag)
+  "Return list of full tags matching TAG."
+  (if (charset-tag-full-p tag) (list tag)
+    (gethash tag charset-tag-short-to-full-mapping)))
+
+(defun* define-charset-tag (tag &key parent function doc-string)
+  "Define a charset tag.
+PARENT specifies the parent(s) of the tag.  PARENT can be a symbol or list
+of symbols.  If PARENT is omitted, `default' is used.
+TAG is a symbol.  TAG can either in the full form of `NAME/CATEGORY' or
+the short form of `NAME', in which case the category will be taken
+to be the first parent.  For example,
+
+\(define-charset-tag 'japanese 'language)
+
+is the same as
+
+\(define-charset-tag 'japanese/language 'language)
+
+If the tags in PARENT are not in full-form, the category `default' will
+be assumed.
+
+DOC-STRING is optional documentation for the tag.
+
+FUNCTION is a one-argument predicate that is given a charset and should
+return true or false.  If specified, this tag is automatically true for
+all charsets matching the function.
+
+Charset tags can be used in place of charsets in charset precedence lists,
+which are used for converting Unicode characters and codepoints into
+charset codepoints.  See `make-char' for more information on charsets and
+charset codepoints, and `unicode-to-char' for more information on
+charset precedence lists.
+
+In a charset precedence list, charset tags match all charsets with the tag
+specified in the charset's `tags' property (see `make-charset').  If a
+short tag name is given, all tags with the same name match.  For example,
+if charset tags `japanese/language' and `japanese/writing-system' both
+exist, then the charset tag `japanese' in a charset precedence list matches
+both of these tags."
+  ;; Coerce arguments to normal form
+  (unless parent (setq parent 'default))
+  (unless (listp parent) (setq parent (list parent)))
+  (setq parent (loop for par in parent
+		 collect (if (charset-tag-full-p par) par
+			   (intern (format "%s/default" par)))))
+  (unless (charset-tag-full-p tag)
+    (setq tag (intern (format "%s/%s" tag (charset-tag-name (first parent))))))
+
+  ;; Check for redefinition of existing tag
+  (when (gethash tag charset-tag-to-properties-mapping)
+    (signal-error 'invalid-change `("Can't redefine existing tag" ,tag)))
+
+  ;; Add to hash tables
+  (puthash tag `(parent ,parent doc-string ,doc-string function ,function)
+	   charset-tag-to-properties-mapping)
+  (let ((tag-name (charset-tag-name tag)))
+    (push tag (gethash tag-name charset-tag-short-to-full-mapping)))
+
+  ;; If a function is given, add to the list of known charset-tag functions,
+  ;; and iterate over existing charsets, making note of charsets for which
+  ;; the function is true.
+  (when function
+    (push `(,tag . ,function) charset-tag-function-list)
+    (loop for cs in (charset-list) do
+      (when (funcall function cs)
+	(register-charset-tags-1 cs tag))))
+  )
+
+(defun charset-tag-to-charset (tag)
+  "Return list of all charsets matching TAG or any of its ancestors.
+If TAG is in short form (see `define-charset-tag'), all tags with the same
+short form will match.
+This is called from the C code."
+  (remove-duplicates
+   ;; First map to list of full tags ...
+   (let ((full-tags (charset-tag-to-full-tags tag)))
+     (cond ((null full-tags) nil)
+	   ((= 1 (length full-tags))
+	    ;; If there's only one, recursively loop over all parents ...
+	    (let* ((full-tag (first full-tags))
+		   (ancestor-charsets
+		    (loop for par in
+		      (getf (gethash full-tag
+				     charset-tag-to-properties-mapping)
+			    'parent)
+		      append (charset-tag-to-charset par))))
+	      ;; ... then add charsets for the tag itself.
+	      (append (gethash full-tag charset-tag-to-charset-mapping)
+		      ancestor-charsets)))
+	   (t
+	    ;; Otherwise, loop over all full tags.
+	    (loop for full-tag in full-tags
+	      append (charset-tag-to-charset full-tag)))))))
+
+(defun register-charset-tags-1 (charset full-tag)
+  ;; Actually make a note of this CHARSET/FULL-TAG combination.
+  (pushnew (get-charset charset)
+	   (gethash full-tag charset-tag-to-charset-mapping)))
+
+(defun register-charset-tags (charset tags)
+  "Register CHARSET as having `tags' property TAGS.
+This is intended to be called from `make-charset'."
+  (setq charset (get-charset charset))
+  ;; Iterate over all tags ...
+  (loop for tag in tags do
+    ;; Iterate over all full tags matching each tag ...
+    (loop for full-tag in (charset-tag-to-full-tags tag) do
+      ;; Add to list of charsets for the full tag.
+      (register-charset-tags-1 charset full-tag)))
+  ;; Also process function tags.
+  (loop for (tag . function) in charset-tag-function-list do
+    (when (funcall function charset)
+      (register-charset-tags-1 charset tag))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;       Define the charset tags       ;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun do-define-charset-tags (category stuff)
+  ;; STUFF should be a list of (CLASS PARENTS DOC), where PARENTS or DOC
+  ;; may be omitted.  For each element, define a charset tag CLASS with
+  ;; parents PARENTS (a single element or a list), and doc-string DOC.
+  ;; If PARENTS is omitted, CATEGORY is the parent.  Both CLASS and PARENTS
+  ;; should specify short-form tags, which will have CATEGORY added to make
+  ;; them full-form.
+  (loop for (class parents doc) in stuff
+    for parents = (or parents category)
+    for parents = (if (listp parents) parents (list parents))
+    do
+    (define-charset-tag
+      (intern (format "%s/%s" class category))
+      :parent (loop for par in parents
+		collect (if (eq par category) category
+			  (intern (format "%s/%s" par category))))
+      :doc-string doc)))
+
+;; define classes of scripts
+
+(define-charset-tag 'script)
+
+(define-charset-tag 'charset
+  :doc-string "Used for functional tags describing properties of a charset.")
+
+(loop for (name fun) in
+  '((one-column (= 1 (charset-property charset 'columns)))
+    (two-column (= 2 (charset-property charset 'columns)))
+    (one-dimension (= 1 (charset-property charset 'dimension)))
+    (two-dimension (= 2 (charset-property charset 'dimension)))
+    (iso2022 (not (null (charset-property charset 'final)))))
+  do
+  (define-charset-tag name :parent 'charset
+    :function `(lambda (charset)
+		 (setq charset (get-charset charset))
+		 ,fun)))
+
+;; define scripts that are part of writing systems
+
+(do-define-charset-tags 'script
+			'((western)
+			  (eastern)
+			  (east-asian eastern)
+			  (south-asian eastern)
+			  (middle-eastern eastern)
+			  (alphabetic)
+			  (abjad)
+			  (abugida)
+			  (syllabic)
+			  (semi-syllabic)
+			  (logographic)
+			  (left-to-right)
+			  (right-to-left)))
+
+;; define classes of writing systems
+
+(define-charset-tag 'writing-system)
+
+(do-define-charset-tags 'writing-system
+			'((simple)
+			  (complex)))
+
+;; define the simple scripts that also serve as writing systems
+
+(loop for (script-and-writing-system script-parents doc) in
+  '((latin (western alphabetic left-to-right) "Latin letters, aka Roman letters")
+    (cyrillic (western alphabetic left-to-right))
+    (greek (western alphabetic left-to-right))
+    (arabic (middle-eastern abjad right-to-left))
+    (hebrew (middle-eastern abjad right-to-left))
+    (thai (south-asian abugida left-to-right))
+    (lao (south-asian abugida left-to-right))
+    (tibetan (south-asian abugida left-to-right))
+    (ethiopic (middle-eastern abugida left-to-right))
+    (devanagari (south-asian abugida left-to-right)))
+  do
+  (do-define-charset-tags 'script
+			  (list (list script-and-writing-system
+				      script-parents doc)))
+  (do-define-charset-tags 'writing-system
+			  (list (list script-and-writing-system nil doc))))
+
+;; define scripts that are part of writing systems
+
+(do-define-charset-tags
+ 'script
+ '((kanji (east-asian logographic left-to-right))
+   (kana (east-asian syllabic left-to-right))
+   (hirigana (kana))
+   (katakana (kana))
+   ;; Wikipedia claims that Hangul is actually a "featural alphabet" rather
+   ;; than a syllabary, but that's getting very obscure.
+   (hangul (east-asian syllabic left-to-right))
+   (bopomofo (east-asian semi-syllabic left-to-right))))
+
+;; define complex writing systems
+
+(do-define-charset-tags
+ 'writing-system
+ '((japanese complex)
+   (chinese complex)
+   (traditional-chinese chinese)
+   (simplified-chinese chinese)
+   (korean complex)))
+
+;; define families
+
+(define-charset-tag 'family)
+
+(do-define-charset-tags
+ 'family
+ '((national-standard)
+   (iso8859)
+   (windows)
+   (windows-ansi windows)
+   (windows-oem windows)
+   (macintosh)
+   (ebcdic)
+   (jis national-standard)
+   (gb national-standard)
+   (cns national-standard)
+   (kns national-standard)
+   (tis national-standard)
+   (is national-standard)
+   (koi8)
+   ))
+
+;; define languages
+
+(define-charset-tag 'language)
+
+(do-define-charset-tags
+ 'language
+ '(
+   ;; GEOGRAPHIC REGIONS
+   (european)
+   (asian)
+   (west-asian asian)
+   (caucasus west-asian)
+   (middle-eastern asian)
+   (central-asian asian)
+   (east-asian asian)
+   (south-asian asian)
+   (southeast-asian asian)
+   (african)
+   (north-african african)
+   (subsaharan-african african)
+
+   ;; LANGUAGE FAMILIES
+   (indo-european)
+   (romance (indo-european european))
+   (germanic (indo-european european))
+   (balto-slavic (indo-european european))
+   (slavic balto-slavic)
+   (celtic (indo-european european))
+   (baltic balto-slavic)
+   (greek (indo-european european))
+   (albanian (indo-european european))
+   (indo-iranian indo-european)
+   (iranian indo-european)
+   (indic (indo-european south-asian))
+
+   (afroasiatic)
+   (semitic afroasiatic)
+   (berber afroasiatic)
+   (chadic afroasiatic)
+   (cushitic afroasiatic)
+
+   (uralic)
+   (finno-ugric (uralic european))
+   (finno-permic finno-ugric)
+   (ugric finno-ugric)
+
+   (altaic)
+   (mongolic (altaic east-asian))
+   (tungusic (altaic east-asian))
+   (turkic altaic)
+
+   (niger-congo subsaharan-african)
+   (bantu niger-congo)
+
+   (sino-tibetan)
+   (tibeto-burman sino-tibetan)
+
+   (dravidian south-asian)
+   (austro-asiatic)
+   (austronesian)
+   (eskimo-aleut)
+   (nilo-saharan)
+   (south-caucasian central-asian)
+
+   ;; ROMANCE LANGUAGES
+
+   (french romance)
+   (spanish romance)
+   (portuguese romance)
+   (italian romance)
+   (romanian romance)
+
+   ;; GERMANIC LANGUAGES
+
+   (west-germanic germanic)
+   (english west-germanic)
+   (german west-germanic)
+   (dutch west-germanic)
+
+   (north-germanic germanic)
+   (swedish north-germanic)
+   (danish north-germanic)
+   (norwegian north-germanic)
+   (icelandic north-germanic)
+
+   ;; SLAVIC LANGUAGES
+
+   (east-slavic slavic)
+   (russian east-slavic)
+   (ukrainian east-slavic)
+   (belarusian east-slavic)
+
+   (west-slavic slavic)
+   (polish west-slavic)
+   (czech west-slavic)
+   (slovak west-slavic)
+   (sorbian west-slavic)
+
+   (south-slavic slavic)
+   (bulgarian south-slavic)
+   (serbian south-slavic)
+   (croatian south-slavic)
+   (macedonian south-slavic)
+   (slovenian south-slavic)
+
+   ;; OTHER EUROPEAN LANGUAGES
+
+   (irish celtic)
+   (welsh celtic)
+   (breton celtic)
+
+   (latvian baltic)
+   (lithuanian baltic)
+
+   (finnish (finno-permic european))
+   (estonian (finno-permic european))
+   (hungarian (ugric european))
+
+   ;; MIDDLE-EASTERN LANGUAGES
+
+   (hebrew (semitic middle-eastern))
+   (arabic (semitic middle-eastern))
+   (amharic (semitic subsaharan-african))
+
+   ;; WEST ASIAN, CENTRAL ASIAN LANGUAGES
+
+   (persian (iranian west-asian))
+   (pashto (iranian central-asian))
+   (kurdish (iranian west-asian))
+   (tajik (iranian central-asian))
+
+   (turkish (turkic west-asian))
+   (kazakh (turkic central-asian))
+   (uzbek (turkic central-asian))
+
+   ;; SOUTH-ASIAN LANGUAGES
+
+   (hindi indic)
+   (urdu indic)
+   (marathi indic)
+   (gujarati indic)
+   (bengali indic)
+   (punjabi indic)
+   (oriya indic)
+   (sindhi indic)
+   (sinhala indic)
+   ;; etc.
+
+   (tamil dravidian)
+   (telugu dravidian)
+   (malayalam dravidian)
+   (kannada dravidian)
+
+   ;; SOUTHEAST ASIAN, EAST ASIAN LANGUAGES
+
+   (thai southeast-asian)
+   (lao southeast-asian)
+   (vietnamese southeast-asian)
+
+   (chinese (sino-tibetan east-asian))
+   ;; #### or should tibetan be central-asian?
+   (tibetan (sino-tibetan east-asian))
+   (burmese (sino-tibetan southeast-asian))
+   (japanese east-asian)
+   (korean east-asian)
+   (mongolian mongolic)
+
+   ))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;       GNU EMACS CHARSETS        ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Synched up with: FSF 21.1.
 
@@ -497,14 +954,16 @@ will be made so."
 			       (cdr unicode-map)))))))
   (make-charset name doc-string props))
 
-(defun* make-internal-128-byte-charset (name short-name &key long-name doc-string unicode-map)
+(defun* make-internal-128-byte-charset (name short-name &key long-name
+					doc-string unicode-map tags)
   "Make an internal one-dimension size-128 charset.
 NAME is a symbol, the charset's name.
 SHORT-NAME is a string describing the charset briefly, and will be used as
 the `short-name' property.
-The keys :long-name, :doc-string and :unicode-map will be used to set the
-associated charset properties.  If unspecified, :long-name defaults to
-`short-name', and :doc-string defaults to :long-name.  If :unicode-map
+
+The keys :long-name, :doc-string, :unicode-map and :tags will be used to
+set the associated charset properties.  If unspecified, :long-name defaults
+to `short-name', and :doc-string defaults to :long-name.  If :unicode-map
 specifies a file name, the name is assumed relative to `data-directory',
 and will be made so."
   (setq long-name (or long-name short-name))
@@ -516,10 +975,11 @@ and will be made so."
 			   ,@(and unicode-map `(unicode-map ,unicode-map))
 			   short-name ,short-name
 			   long-name ,long-name
+			   ,@(and tags `(tags ,tags))
 			   )))
 
 (defun* make-iso8859-charset (symbol str8859 short-name alphabet-name
-			      iso-ir-name final &key doc-string direction)
+			      iso-ir-name final tags &key doc-string direction)
   (let ((doc-string
 	 (or doc-string
 	     (format "Right-Hand Part of %s (ISO/IEC %s): %s"
@@ -536,6 +996,7 @@ and will be made so."
        (,(format "unicode/unicode-consortium/ISO8859/%s.TXT" str8859) #xA0)
        registries ,(vector (format "ISO%s" str8859))
        final ,final
+       tags ,(cons 'iso8859 tags)
        direction ,(or direction 'l2r)))))
 
 ;;;;;;;;;;;;;;;;;;;;; ISO 8859 ;;;;;;;;;;;;;;;;;;;;
@@ -543,17 +1004,17 @@ and will be made so."
 ;; This is defined internally because it's (probably) needed early on,
 ;; and because it needs to have a very specific charset ID.
 ;(make-iso8859-charset 'latin-iso8859-1 "8859-1" "Latin-1" "Latin Alphabet 1"
-;		      "ISO-IR-100" ?A)
+;		      "ISO-IR-100" ?A '(latin))
 (make-iso8859-charset 'latin-iso8859-2 "8859-2" "Latin-2" "Latin Alphabet 2"
-		      "ISO-IR-101" ?B)
+		      "ISO-IR-101" ?B '(latin))
 (make-iso8859-charset 'latin-iso8859-3 "8859-3" "Latin-3" "Latin Alphabet 3"
-		      "ISO-IR-109" ?C)
+		      "ISO-IR-109" ?C '(latin))
 (make-iso8859-charset 'latin-iso8859-4 "8859-4" "Latin-4" "Latin Alphabet 4"
-		      "ISO-IR-110" ?D)
+		      "ISO-IR-110" ?D '(latin))
 (make-iso8859-charset 'latin-iso8859-9 "8859-9" "Latin-5" "Latin Alphabet 5"
-		      "ISO-IR-148" ?M)
+		      "ISO-IR-148" ?M '(latin))
 (make-iso8859-charset 'latin-iso8859-15 "8859-15" "Latin-9 (Euro Sign)"
-		      "Latin Alphabet 9" "ISO-IR-203" ?b
+		      "Latin Alphabet 9" "ISO-IR-203" ?b '(latin)
 		      :doc-string
 		      "European Supplementary Latin Set (\"Latin 9\") (Euro Sign) (ISO/IEC 8859-15): ISO-IR-203
 FIELD OF UTILIZATION: \"Communication and processing of text in European
@@ -562,14 +1023,14 @@ languages. The set provides for the languages enumerated in ISO/IEC
 French, and Finnish languages in addition.\"")
 
 (make-iso8859-charset 'greek-iso8859-7 "8859-7" "Greek" "Latin/Greek Alphabet"
-		      "ISO-IR-126" ?F)
+		      "ISO-IR-126" ?F '(greek))
 (make-iso8859-charset 'cyrillic-iso8859-5 "8859-5" "Cyrillic"
-		      "Latin/Cyrillic Alphabet" "ISO-IR-144" ?L)
+		      "Latin/Cyrillic Alphabet" "ISO-IR-144" ?L '(cyrillic))
 (make-iso8859-charset 'hebrew-iso8859-8 "8859-8" "Hebrew"
-		      "Latin/Hebrew Alphabet" "ISO-IR-138" ?H
+		      "Latin/Hebrew Alphabet" "ISO-IR-138" ?H '(hebrew)
 		      :direction 'r2l)
 (make-iso8859-charset 'arabic-iso8859-6 "8859-6" "Arabic"
-		      "Latin/Arabic Alphabet" "ISO-IR-127" ?G
+		      "Latin/Arabic Alphabet" "ISO-IR-127" ?G '(arabic)
 		      :direction 'r2l)
 
 ;;;;;;;;;;;;;;;;;;;;; Japanese ;;;;;;;;;;;;;;;;;;;;
@@ -586,6 +1047,7 @@ French, and Finnish languages in addition.\"")
    registries ["jisx0201.1976-0"]
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0201.TXT"
 		#xA0)
+   tags (jis katakana japanese)
    ))
 
 (make-internal-charset
@@ -600,6 +1062,7 @@ French, and Finnish languages in addition.\"")
    registries ["jisx0201.1976-0"]
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0201.TXT"
 		#x21 #x7F)
+   tags (jis latin/script japanese)
    ))
 
 
@@ -615,6 +1078,7 @@ French, and Finnish languages in addition.\"")
    registries ["jisx0208.1978-0" "jisc6226.1978-0"]
    ;; @@#### FIXME This is not correct!!!!!!!!!!!!
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT" nil nil nil ignore-first-column)
+   tags (jis kanji japanese)
    ))
 
 (make-internal-charset
@@ -628,6 +1092,7 @@ French, and Finnish languages in addition.\"")
    long-name "JISX0208.1983/1990 (Japanese): ISO-IR-87"
    registries ["jisx0208.1983-0" "jisx0208.1990-0"]
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT" nil nil nil ignore-first-column)
+   tags (jis kanji japanese)
    ))
 
 (make-internal-charset
@@ -641,6 +1106,7 @@ French, and Finnish languages in addition.\"")
    long-name "JISX0212 (Japanese): ISO-IR-159"
    registries ["jisx0212.1990-0"]
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0212.TXT")
+   tags (jis kanji japanese)
    ))
 
 (when (featurep 'unicode-internal)
@@ -666,6 +1132,7 @@ French, and Finnish languages in addition.\"")
      registries ["sjis"]
      unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/SHIFTJIS.TXT"
 		  #x8000)
+     tags (jis kanji japanese)
      ))
   )
 
@@ -682,6 +1149,7 @@ French, and Finnish languages in addition.\"")
    long-name "Chinese simplified (GB2312): ISO-IR-58"
    registries ["gb2312.1980-0" "gb2312.80&gb8565.88-0"]
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/GB2312.TXT")
+   tags (gb kanji simplified-chinese chinese/language)
    ))
 
 (make-internal-charset
@@ -702,6 +1170,7 @@ French, and Finnish languages in addition.\"")
    ;;unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/CNS11643.TXT"
    ;;             #x10000 #x1FFFF #x-10000)
    unicode-map ("unicode/mule-ucs/chinese-cns11643-1.txt")
+   tags (cns kanji traditional-chinese chinese/language)
    ))
 
 (make-internal-charset
@@ -718,6 +1187,7 @@ French, and Finnish languages in addition.\"")
    ;;unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/CNS11643.TXT"
    ;;             #x20000 #x2FFFF #x-20000)
    unicode-map ("unicode/mule-ucs/chinese-cns11643-2.txt")
+   tags (cns kanji traditional-chinese chinese/language)
    ))
 
 (if (featurep 'unicode-internal)
@@ -743,6 +1213,7 @@ French, and Finnish languages in addition.\"")
        long-name "Chinese traditional (Big5)"
        registries ["big5.eten-0"]
        unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT")
+       tags (kanji traditional-chinese chinese/language)
        ))
   ;; Old Mule situation; we can only handle up to 96x96 charsets.
   ;; So we split it into two charsets.  According to Ken Lunde's CJKV
@@ -761,6 +1232,7 @@ French, and Finnish languages in addition.\"")
      long-name "Chinese traditional (Big5) (Level-1) A141-C67F"
      registries ["big5.eten-0"]
      ;; no unicode map, see chinese-big5-2
+     tags (kanji traditional-chinese chinese/language)
      ))
   (make-internal-charset
    'chinese-big5-2
@@ -782,23 +1254,9 @@ French, and Finnish languages in addition.\"")
      ;; created by the time we initialize the map.
      unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT"
 		  nil nil nil big5)
+     tags (kanji traditional-chinese chinese/language)
      ))
   )
-
- ;; PinYin-ZhuYin
-(make-internal-charset
- 'chinese-sisheng
- "SiSheng characters for PinYin/ZhuYin"
- '(dimension 1
-   chars 94
-   final ?0
-   graphic 0
-   short-name "SiSheng"
-   long-name "SiSheng (PinYin/ZhuYin)"
-   ;; XEmacs addition: first of the two registries
-   registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
-   unicode-map ("unicode/mule-ucs/chinese-sisheng.txt")
-   ))
 
 ;;;;;;;;;;;;;;;;;;;;; Korean ;;;;;;;;;;;;;;;;;;;;
 
@@ -816,6 +1274,7 @@ French, and Finnish languages in addition.\"")
    ;; Note that KSC5601.TXT as currently distributed is NOT what
    ;; it claims to be!  See comments in KSX1001.TXT.
    unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/KSX1001.TXT" )
+   tags (ksc kanji hangul korean)
    ))
 
 ;;;;;;;;;;;;;;;;;;;;; Thai ;;;;;;;;;;;;;;;;;;;;
@@ -831,6 +1290,7 @@ French, and Finnish languages in addition.\"")
    long-name "RHP of Thai (TIS620): ISO-IR-166"
    registries ["tis620.2529-1"]
    unicode-map ("unicode/mule-ucs/thai-tis620.txt" nil nil #x80)
+   tags (tis thai)
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -857,6 +1317,7 @@ French, and Finnish languages in addition.\"")
 		nil nil #x80)
    short-name "VISCII lower"
    long-name "VISCII lower-case"
+   tags (latin vietnamese)
    ))
 
 (make-internal-charset
@@ -870,6 +1331,7 @@ French, and Finnish languages in addition.\"")
 		nil nil #x80)
    short-name "VISCII upper"
    long-name "VISCII upper-case"
+   tags (latin vietnamese)
    ))
 
 ; ;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
@@ -889,6 +1351,7 @@ French, and Finnish languages in addition.\"")
 		nil nil #x80)
    short-name "IS 13194"
    long-name "Indian IS 13194"
+   tags (devanagari indic)
    ))
 
 ;; Actual Glyph for 1-column width.
@@ -903,6 +1366,7 @@ French, and Finnish languages in addition.\"")
    graphic 0
    short-name "Indian 1-col"
    long-name "Indian 1 Column"
+   tags (devanagari indic)
    ))
 
 ;; Actual Glyph for 2-column width.
@@ -917,6 +1381,7 @@ French, and Finnish languages in addition.\"")
    graphic 0
    short-name "Indian 2-col"
    long-name "Indian 2 Column"
+   tags (devanagari indic)
    ))
 
 ;; Lao script.
@@ -931,6 +1396,7 @@ French, and Finnish languages in addition.\"")
    unicode-map ("unicode/other/lao.txt")
    short-name "Lao"
    long-name "Lao"
+   tags (lao)
    ))
 
 ;; APPROPRIATE FILE: ethiopic.el
@@ -947,6 +1413,7 @@ French, and Finnish languages in addition.\"")
    unicode-map ("unicode/mule-ucs/ethiopic.txt")
    short-name "Ethiopic"
    long-name "Ethiopic characters"
+   tags (ethiopic)
    ))
 
 (make-internal-charset
@@ -959,6 +1426,7 @@ French, and Finnish languages in addition.\"")
    graphic 0
    short-name "Tibetan 1-col"
    long-name "Tibetan 1 column"
+   tags (tibetan)
    ))
 
 ;; Tibetan script.
@@ -973,6 +1441,7 @@ French, and Finnish languages in addition.\"")
    unicode-map ("unicode/mule-ucs/tibetan.txt")
    short-name "Tibetan 2-col"
    long-name "Tibetan 2 column"
+   tags (tibetan)
    ))
 
 ;; GNU Emacs has the charsets:

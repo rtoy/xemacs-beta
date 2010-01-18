@@ -279,6 +279,7 @@ SYMBOL (Qsymbol);
 SYMBOL (Qsyntax);
 SYMBOL (Qsystem_default);
 SYMBOL (Qterminal);
+SYMBOL (Qtags);
 SYMBOL (Qtest);
 SYMBOL (Qtext);
 SYMBOL_KEYWORD (Q_text);

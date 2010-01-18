@@ -41,7 +41,8 @@
    graphic 1
    unicode-map ("unicode/unicode-consortium/ISO8859/8859-11.TXT" #xA0)
    short-name "Thai (ISO8859-11)"
-   long-name "RHP of Thai (ISO 8859-11)"))
+   long-name "RHP of Thai (ISO 8859-11)"
+   tags (iso8859 thai)))
 
 (make-coding-system
  'thai-tis620 'multibyte "Thai/TIS620"
