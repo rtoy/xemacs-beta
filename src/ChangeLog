@@ -1,3 +1,10 @@
+2010-01-17  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c (check_writable): Remove cast from 2010-01-14
+
+	* syswindows.h: Use consts in macros where appropriate in lieu of
+	cast in check_writable().  Patch from Ben Wing.
+
 2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
