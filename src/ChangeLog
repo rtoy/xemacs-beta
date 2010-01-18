@@ -1,5 +1,22 @@
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Break separate_textual_runs_* functions from redisplay-x.c.
+	(Code in redisplay-gtk.c should have been identical but was
+	bit-rotted.)
+	
+	* redisplay-gtk.c:
+	* redisplay-x.c:
+	Delete code, replace with include statement.
+
+	* depend: Regenerate.
+
+2010-01-18  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	* print.c:
 	New variable `in_debug_print'.
