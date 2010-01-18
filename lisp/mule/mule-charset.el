@@ -872,18 +872,6 @@ French, and Finnish languages in addition.\"")
    long-name "VISCII upper-case"
    ))
 
-;; APPROPRIATE FILE: thai-xtis.el
-;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
-
-(make-internal-charset
- 'thai-xtis "Precomposed Thai (XTIS by Virach)."
- '(dimension 2
-   registries ["xtis-0"]
-   columns 1
-   chars 94
-   final ??
-   graphic 0))
-
 ; ;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
 ; ;; not assigned.  They are automatically converted to each Indian
 ; ;; script which IS-13194 supports.
