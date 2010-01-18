@@ -1,5 +1,40 @@
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (gtk_bevel_area):
+	* redisplay-x.c:
+	* redisplay-x.c (THIS_IS_X):
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_OUTPUT_XLIKE_PIXMAP):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line):
+	* redisplay-xlike-inc.c (XLIKE_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_window):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	* redisplay-xlike-inc.c (console_type_create_redisplay_XLIKE):
+	Move lots more code into redisplay-xlike-inc.c.  Use macros to
+	isolate the code that differs among X vs. GTK, to reduce the need
+	for ifdefs in the middle of the code.  Now, redisplay-x.c and
+	redisplay-gtk.c only contain a few functions whose implementation
+	is completely different from one to the other, or which are not
+	present at all in one of them.
+
+	GTK code not currently tested, but it has bitrotted somewhat
+	any.  Doing this will help keep it less bitrotty.
+
+	* depend: Regenerate.
+
+2010-01-18  Ben Wing  <ben@xemacs.org>
+
 	* redisplay-xlike-inc.c:
 	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
 	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
