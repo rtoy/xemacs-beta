@@ -224,6 +224,7 @@ mark_charset (Lisp_Object obj)
   mark_object (cs->short_name);
   mark_object (cs->long_name);
   mark_object (cs->unicode_map);
+  mark_object (cs->tags);
   mark_object (cs->doc_string);
   mark_object (cs->registries);
   mark_object (cs->ccl_program);
@@ -275,6 +276,7 @@ static const struct memory_description charset_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, short_name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, long_name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, unicode_map) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Charset, tags) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, reverse_direction_charset) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, ccl_program) },
   { XD_UNION, offsetof (Lisp_Charset, to_unicode_table),
@@ -633,7 +635,7 @@ make_charset (int id, int no_init_unicode_tables,
 	      int graphic, Ibyte final, int direction,
 	      Lisp_Object short_name, Lisp_Object long_name,
 	      Lisp_Object doc_string, Lisp_Object registries,
-	      Lisp_Object unicode_map, int overwrite,
+	      Lisp_Object unicode_map, Lisp_Object tags, int overwrite,
 	      int algo_low_or_internal_p
 	      )
 {
@@ -745,6 +747,7 @@ make_charset (int id, int no_init_unicode_tables,
   XCHARSET_DOC_STRING	(obj) = doc_string;
   XCHARSET_REGISTRIES	(obj) = registries;
   XCHARSET_UNICODE_MAP	(obj) = Qnil;
+  XCHARSET_TAGS 	(obj) = Qnil;
 
   /* Sanity checking -- for internal ISO-2022 charsets, make sure that the
      offset range agrees with the graphic range.  We don't do this for
@@ -792,6 +795,15 @@ make_charset (int id, int no_init_unicode_tables,
 
   recalculate_unicode_precedence ();
   setup_charset_initial_specifier_tags (obj);
+
+  if (!NILP (tags))
+    {
+      struct gcpro gcpro1, gcpro2, gcpro3;
+      GCPRO3 (obj, tags, unicode_map);
+      call2 (intern ("register-charset-tags"), obj, tags);
+      XCHARSET_TAGS (obj) = tags;
+      UNGCPRO;
+    }
 
   /* Must be the very last thing we do, since it can signal an error in
      case `unicode-map' was given invalidly; then the charset will have
@@ -882,6 +894,11 @@ character set.  Recognized properties are:
 		this charset into an index into the font.  The CCL program
 		is passed the octets of the character, which will be within
                 the limits established by `offset' and `chars'.
+`tags'		A list of symbols defining logical categories which the
+		charset belongs to.  A charset tag can be used in place of
+		an actual charset in charset precedence lists used in
+                conjunction with conversion from Unicode to charset codepoints
+                (see `unicode-to-char').
 */
        (name, doc_string, props))
 {
@@ -892,6 +909,7 @@ character set.  Recognized properties are:
   int type;
   Lisp_Object registries = Qnil;
   Lisp_Object unicode_map = Qnil;
+  Lisp_Object tags = Qnil;
   Lisp_Object charset = Qnil;
   Lisp_Object ccl_program = Qnil;
   Lisp_Object short_name = Qnil, long_name = Qnil;
@@ -971,6 +989,17 @@ character set.  Recognized properties are:
 	    CHECK_TRUE_LIST (value);
 	    /* It will get validated further */
 	    unicode_map = value;
+	  }
+	
+	else if (EQ (keyword, Qtags))
+	  {
+	    CHECK_TRUE_LIST (value);
+	    {
+	      EXTERNAL_LIST_LOOP_2 (tag, value)
+		CHECK_SYMBOL (tag);
+	    }
+	    /* @@#### Validate further here */
+	    tags = value;
 	  }
 	
 	else if (EQ (keyword, Qregistry))
@@ -1085,7 +1114,7 @@ character set.  Recognized properties are:
   charset = make_charset (id, 0, name, dimension, size0, size1, offset0,
 			  offset1, columns, graphic,
 			  final, direction, short_name, long_name,
-			  doc_string, registries, unicode_map,
+			  doc_string, registries, unicode_map, tags,
 			  !NILP (existing_charset),
 			  CSET_EXTERNAL);
 
@@ -1121,6 +1150,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   Ibyte final;
   int direction;
   Lisp_Object registries, doc_string, short_name, long_name, unicode_map;
+  Lisp_Object tags;
   Lisp_Charset *cs;
 
   charset = Fget_charset (charset);
@@ -1147,13 +1177,14 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   long_name = CHARSET_LONG_NAME (cs);
   registries = CHARSET_REGISTRIES (cs);
   unicode_map = CHARSET_UNICODE_MAP (cs);
+  tags = CHARSET_TAGS (cs);
 
   new_charset = make_charset (-1, 0, new_name, dimension,
 			      CHARSET_CHARS (cs, 0), CHARSET_CHARS (cs, 1),
 			      CHARSET_OFFSET (cs, 0), CHARSET_OFFSET (cs, 1),
 			      columns, graphic, final, direction, short_name,
 			      long_name, doc_string, registries,
-			      unicode_map, 0, CSET_EXTERNAL);
+			      unicode_map, tags, 0, CSET_EXTERNAL);
 
   CHARSET_REVERSE_DIRECTION_CHARSET (cs) = new_charset;
   XCHARSET_REVERSE_DIRECTION_CHARSET (new_charset) = charset;
@@ -1273,15 +1304,23 @@ Return description of CHARSET.  See `make-charset'.
 }
 
 DEFUN ("charset-unicode-map", Fcharset_unicode_map, 1, 1, 0, /*
-Return unicode map of CHARSET.
+Return unicode map of CHARSET.  See `make-charset'.
 */
        (charset))
 {
   return XCHARSET_UNICODE_MAP (Fget_charset (charset));
 }
 
+DEFUN ("charset-tags", Fcharset_tags, 1, 1, 0, /*
+Return the tags of CHARSET.  See `make-charset'.
+*/
+       (charset))
+{
+  return XCHARSET_TAGS (Fget_charset (charset));
+}
+
 DEFUN ("charset-dimension", Fcharset_dimension, 1, 1, 0, /*
-Return dimension of CHARSET.
+Return dimension of CHARSET.  See `make-charset'.
 */
        (charset))
 {
@@ -1305,6 +1344,7 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qshort_name))  return CHARSET_SHORT_NAME (cs);
   if (EQ (prop, Qlong_name))   return CHARSET_LONG_NAME (cs);
   if (EQ (prop, Qunicode_map)) return CHARSET_UNICODE_MAP (cs);
+  if (EQ (prop, Qtags))        return CHARSET_TAGS (cs);
   if (EQ (prop, Qdoc_string))  return CHARSET_DOC_STRING (cs);
   if (EQ (prop, Qdimension))   return make_int (CHARSET_DIMENSION (cs));
   if (EQ (prop, Qcolumns))     return make_int (CHARSET_COLUMNS (cs));
@@ -1576,6 +1616,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcharset_short_name);
   DEFSUBR (Fcharset_long_name);
   DEFSUBR (Fcharset_unicode_map);
+  DEFSUBR (Fcharset_tags);
   DEFSUBR (Fcharset_description);
   DEFSUBR (Fcharset_dimension);
   DEFSUBR (Fcharset_property);
@@ -1740,7 +1781,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ASCII"),
 		  build_msg_string ("ASCII"),
 		  build_msg_string ("ASCII (left half of ISO 8859-1)"),
-		  vector1 (build_string ("iso8859-1")), Qnil, 0,
+		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_control_1);
   Vcharset_control_1 =
@@ -1750,7 +1791,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("C1"),
 		  build_msg_string ("Control characters"),
 		  build_msg_string ("Control characters 128-159"),
-		  vector1 (build_string ("iso8859-1")), Qnil, 0,
+		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_1);
   Vcharset_latin_iso8859_1 =
@@ -1760,7 +1801,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-1"),
 		  build_msg_string ("RHP of Latin-1 (ISO 8859-1): ISO-IR-100"),
 		  build_msg_string ("Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"),
-		  vector1 (build_string ("iso8859-1")), Qnil, 0,
+		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_2);
   Vcharset_latin_iso8859_2 = Qnil;
@@ -1829,7 +1870,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Composite"),
 		  build_msg_string ("Composite characters"),
 		  build_msg_string ("Composite characters"),
-		  vector1 (build_string ("")), Qnil, 0, CSET_INTERNAL);
+		  vector1 (build_string ("")), Qnil, Qnil, 0, CSET_INTERNAL);
 #else
   /* We create a hack so that we have a way of storing ESC 0 and ESC 1
      sequences as "characters", so that they will be output correctly. */
@@ -1841,7 +1882,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Composite hack"),
 		  build_msg_string ("Composite characters hack"),
 		  build_msg_string ("Composite characters hack"),
-		  vector1 (build_string ("")), Qnil, 0, CSET_INTERNAL);
+		  vector1 (build_string ("")), Qnil, Qnil, 0, CSET_INTERNAL);
 #endif /* ENABLE_COMPOSITE_CHARS */
 
 #ifdef FIXED_UNICODE_CHARSETS
@@ -1858,7 +1899,7 @@ complex_vars_of_mule_charset (void)
 		  build_msg_string ("Unicode subset (U+" #uclow "..U+" #uchigh "used for maintaining round-trip\n" \
 "compatibility for Unicode characters that have no representation in any\n" \
 "other charset."),							\
-		  build_string ("ISO10646-1"), Qnil, 0, 0x##lclow)
+		  build_string ("ISO10646-1"), Qnil, Qnil, 0, 0x##lclow)
 
 #define FROB_OFFICIAL(lclow, lchigh, uclow, uchigh) \
   FROB_1 (MAKE_CSID (UNICODE_##uclow##_##uchigh), lclow, lchigh, uclow, uchigh)

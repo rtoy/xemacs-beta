@@ -50,6 +50,7 @@
    chars 256
    short-name "Vietnamese (VISCII)"
    long-name "Vietnamese (VISCII)"
+   tags (latin vietnamese)
    unicode-map
    ((#x02 #x1EB2) ;; CAPITAL LETTER A WITH BREVE AND HOOK ABOVE
     (#x05 #x1EB4) ;; CAPITAL LETTER A WITH BREVE AND TILDE

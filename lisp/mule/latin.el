@@ -311,6 +311,7 @@ Northern Europe.\""
    unicode-map ("unicode/unicode-consortium/ISO8859/8859-10.TXT" #xA0)
    short-name "Latin-6 (Northern Europe)"
    long-name "RHP of Latin-6 (Northern Europe) (ISO 8859-10): ISO-IR-157"
+   tags (iso8859 latin)
    ))
 
 (make-coding-system
@@ -334,6 +335,7 @@ Northern Europe.\""
    unicode-map ("unicode/unicode-consortium/ISO8859/8859-13.TXT" #xA0)
    short-name "Latin-7 (Baltic Rim)"
    long-name "RHP of Latin-7 (Baltic Rim) (ISO 8859-13): ISO-IR-179"
+   tags (iso8859 latin)
    ))
 
 ;; windows-1257 et al. in mule/windows.el
@@ -366,6 +368,7 @@ covered).\""
    unicode-map ("unicode/unicode-consortium/ISO8859/8859-14.TXT" #xA0)
    short-name "Latin-8 (Celtic)"
    long-name "RHP of Latin-8 (Celtic) (ISO 8859-14): ISO-IR-199"
+   tags (iso8859 latin)
    ))
 
 ;; 
@@ -535,6 +538,7 @@ Romanian language\""
    unicode-map ("unicode/unicode-consortium/ISO8859/8859-16.TXT" #xA0)
    short-name "Latin-10 (Romanian)"
    long-name "RHP of Latin-10 (Romanian) (ISO 8859-16): ISO-IR-226"
+   tags (iso8859 latin)
    ))
 
 ;; Copy over the non-word syntax this charset has in common with Latin 1.
@@ -827,7 +831,9 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
 
 (make-internal-128-byte-charset
  'latin-macintosh-roman "MacRoman"
- :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80))
+ :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80)
+ :tags '(macintosh latin)
+)
 
 (make-coding-system
  'macintosh 'multibyte "MacRoman"
