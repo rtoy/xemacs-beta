@@ -147,7 +147,7 @@ end
 
 define run-temacs
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el run-temacs -q
+  run -nd -no-packages -batch -l ../lisp/loadup.el run-temacs -q
 end
 
 document run-temacs
@@ -168,7 +168,7 @@ end
 
 define check-temacs
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run -nd -no-packages -batch -l ../lisp/loadup.el run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
 end
 
 document check-temacs
@@ -180,7 +180,7 @@ end
 
 define update-elc
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/update-elc.el
+  run -nd -no-packages -batch -l ../lisp/update-elc.el
 end
 
 document update-elc
@@ -190,9 +190,19 @@ Use when debugging temacs, not xemacs!
 Use this when temacs builds successfully, but xemacs does not.
 end
 
+define update-elc-2
+  environment-to-run-temacs
+  run -no-packages -batch -no-autoloads -l update-elc-2.el -f batch-update-elc-2 ../lisp
+end
+
+document update-elc-2
+Usage: update-elc-2
+Run the post-dump core lisp byte compilation part of the build procedure.
+end
+
 define dmp
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el dump
+  run -nd -no-packages -batch -l ../lisp/loadup.el dump
 end
 
 document dmp
