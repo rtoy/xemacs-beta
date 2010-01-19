@@ -1,5 +1,6 @@
 /* New incremental garbage collector for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1653,8 +1654,9 @@ gc_mark_root_set (
 
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
+    Elemcount len = Dynarr_length (staticpros);
     Elemcount count;
-    for (count = Dynarr_length (staticpros); count; count--, p++)
+    for (count = 0; count < len; count++, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
@@ -1665,8 +1667,9 @@ gc_mark_root_set (
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
+    Elemcount len = Dynarr_length (staticpros_nodump);
     Elemcount count;
-    for (count = Dynarr_length (staticpros_nodump); count; count--, p++)
+    for (count = 0; count < len; count++, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
@@ -1678,9 +1681,10 @@ gc_mark_root_set (
 #ifdef NEW_GC
   { /* mcpro () */
     Lisp_Object *p = Dynarr_begin (mcpros);
+    Elemcount len = Dynarr_length (mcpros);
     Elemcount count;
-    for (count = Dynarr_length (mcpros); count; count--)
-      mark_object (*p++);
+    for (count = 0; count < len; count++, p++)
+      mark_object (*p);
   }
 #endif /* NEW_GC */
 
