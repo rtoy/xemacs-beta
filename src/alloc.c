@@ -3263,6 +3263,13 @@ staticpro_1 (Lisp_Object *varaddress, char *varname)
   dump_add_root_lisp_object (varaddress);
 }
 
+/* External debugging function: Return the name of the variable at offset
+   COUNT. */
+char *
+staticpro_name (int count)
+{
+  return Dynarr_at (staticpro_names, count);
+}
 
 Lisp_Object_ptr_dynarr *staticpros_nodump;
 char_ptr_dynarr *staticpro_nodump_names;
@@ -3274,6 +3281,14 @@ staticpro_nodump_1 (Lisp_Object *varaddress, char *varname)
 {
   Dynarr_add (staticpros_nodump, varaddress);
   Dynarr_add (staticpro_nodump_names, varname);
+}
+
+/* External debugging function: Return the name of the variable at offset
+   COUNT. */
+char *
+staticpro_nodump_name (int count)
+{
+  return Dynarr_at (staticpro_nodump_names, count);
 }
 
 #ifdef HAVE_SHLIB
@@ -3398,6 +3413,14 @@ mcpro_1 (Lisp_Object varaddress, char *varname)
 {
   Dynarr_add (mcpros, varaddress);
   Dynarr_add (mcpro_names, varname);
+}
+
+/* External debugging function: Return the name of the variable at offset
+   COUNT. */
+char *
+mcpro_name (int count)
+{
+  return Dynarr_at (mcpro_names, count);
 }
 
 #else /* not DEBUG_XEMACS */
