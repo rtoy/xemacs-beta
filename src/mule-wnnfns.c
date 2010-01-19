@@ -1961,23 +1961,23 @@ w2m (w_char *wp, Ibyte *mp, Lisp_Object charset)
 		  if (pzy[i] & 0x80)
 		    mp += charset_codepoint_to_itext
 		      (Vcharset_chinese_sisheng, 0, pzy[i] & 0x7f, mp,
-		       CONVERR_SUCCEED);
+		       CONVERR_USE_PRIVATE);
 		  else
 		    /* @@#### Correct? */
 		    mp += charset_codepoint_to_itext
 		      (Vcharset_ascii, 0, pzy[i] & 0x7f, mp,
-		       CONVERR_SUCCEED);
+		       CONVERR_USE_PRIVATE);
 		}
 	    }
 	  else
 	    mp += charset_codepoint_to_itext (Vcharset_katakana_jisx0201,
 					      0, wc & 0x7f, mp,
-					      CONVERR_SUCCEED);
+					      CONVERR_USE_PRIVATE);
 	  break;
 	case 0x8080:
 	  mp += charset_codepoint_to_itext (charset, (wc & 0x7f00) >> 8,
 					    wc & 0x007f, mp,
-					    CONVERR_SUCCEED);
+					    CONVERR_USE_PRIVATE);
 	  break;
 	case 0x8000:
 	  {
@@ -1991,7 +1991,7 @@ w2m (w_char *wp, Ibyte *mp, Lisp_Object charset)
 #endif /* not UNICODE_INTERNAL */
 	    mp += charset_codepoint_to_itext (newchar, (wc & 0x7f00) >> 8,
 					      wc & 0x007f, mp,
-					      CONVERR_SUCCEED);
+					      CONVERR_USE_PRIVATE);
 	    break;
 	  }
 	default:
@@ -2084,7 +2084,7 @@ c2m (UExtbyte *cp, Ibyte *mp, Lisp_Object charset)
 	{
 	  mp += charset_codepoint_to_itext (charset, cp[0] & 0x7f,
 					    cp[1] & 0x7f, mp,
-					    CONVERR_SUCCEED);
+					    CONVERR_USE_PRIVATE);
 	  cp += 2;
 	}
       else

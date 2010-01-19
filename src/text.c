@@ -5433,7 +5433,7 @@ below):
 
 nil or `fail'	Return nil
 `abort'		Signal an error
-`succeed'	Same as `use-private'
+`succeed'	Same as `substitute'
 `substitute'	Substitute the Unicode replacement char (0xFFFD)
 `use-private'	Encode using private Unicode space
 
@@ -5632,7 +5632,7 @@ HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
 `abort'		Signal an error
-`succeed'	Same as `use-private'
+`succeed'	Same as `substitute'
 `substitute'	Substitute the Unicode replacement char (0xFFFD)
 `use-private'	Encode using private Unicode space
 */
@@ -5745,7 +5745,7 @@ HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
 `abort'		Signal an error
-`succeed'	Same as `use-private'
+`succeed'	Same as `substitute'
 `substitute'	Substitute the Unicode replacement char (0xFFFD)
 `use-private'	Encode using private Unicode space
 */
