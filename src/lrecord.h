@@ -302,6 +302,9 @@ enum lrecord_type
   lrecord_type_bignum,
   lrecord_type_ratio,
   lrecord_type_bigfloat,
+#ifdef MULE
+  lrecord_type_precedence_array,
+#endif /* MULE */
 #ifndef NEW_GC
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */

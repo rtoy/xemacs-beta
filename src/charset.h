@@ -47,7 +47,7 @@ void get_charset_limits (Lisp_Object charset, int *low0, int *high0,
 			 int *low1, int *high1);
 int get_charset_iso2022_type (Lisp_Object charset);
 void non_ascii_unicode_to_charset_codepoint (int code,
-					     Lisp_Object_dynarr *preclist,
+					     Lisp_Object precarray,
 					     int (*predicate) (Lisp_Object),
 					     Lisp_Object *charset, int *c1,
 					     int *c2);
@@ -121,8 +121,7 @@ charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
 
 DECLARE_INLINE_HEADER (
 void
-ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
-			    USED_IF_MULE (dyn),
+ichar_to_charset_codepoint (Ichar ch, Lisp_Object UNUSED (precarray),
 			    Lisp_Object *charset, int *c1, int *c2)
 )
 {
@@ -134,8 +133,7 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
 
 DECLARE_INLINE_HEADER (
 void
-unicode_to_charset_codepoint (int c, Lisp_Object_dynarr *
-			      USED_IF_MULE (dyn),
+unicode_to_charset_codepoint (int c, Lisp_Object UNUSED (precarray),
 			      Lisp_Object *charset, int *c1, int *c2)
 )
 {
@@ -502,7 +500,7 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 
 DECLARE_INLINE_HEADER (
 void
-unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *preclist,
+unicode_to_charset_codepoint (int code, Lisp_Object precarray,
 			      Lisp_Object *charset, int *c1, int *c2)
 )
 {
@@ -520,7 +518,7 @@ unicode_to_charset_codepoint (int code, Lisp_Object_dynarr *preclist,
       *c2 = code;
     }
   else
-    non_ascii_unicode_to_charset_codepoint (code, preclist, NULL,
+    non_ascii_unicode_to_charset_codepoint (code, precarray, NULL,
 					    charset, c1, c2);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
@@ -589,14 +587,14 @@ charset_codepoint_to_ichar (Lisp_Object charset, int c1, int c2,
  
 DECLARE_INLINE_HEADER (
 void
-ichar_to_charset_codepoint (Ichar ch, Lisp_Object_dynarr *
-			    USED_IF_UNICODE_INTERNAL (preclist),
+ichar_to_charset_codepoint (Ichar ch, Lisp_Object 
+			    USED_IF_UNICODE_INTERNAL (precarray),
 			    Lisp_Object *charset, int *c1, int *c2)
 )
 {
   ASSERT_VALID_ICHAR (ch);
 #ifdef UNICODE_INTERNAL
-  unicode_to_charset_codepoint ((int) ch, preclist, charset, c1, c2);
+  unicode_to_charset_codepoint ((int) ch, precarray, charset, c1, c2);
 #else
   if (ch <= 0x7F)
     {
@@ -634,15 +632,15 @@ charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2, Ibyte *ptr,
 DECLARE_INLINE_HEADER (
 void
 non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
-					  Lisp_Object_dynarr *
-					  USED_IF_UNICODE_INTERNAL (preclist),
+					  Lisp_Object 
+					  USED_IF_UNICODE_INTERNAL (precarray),
 					  Lisp_Object *charset, int *c1,
 					  int *c2)
 )
 {
 #ifdef UNICODE_INTERNAL
   non_ascii_unicode_to_charset_codepoint
-    ((int) non_ascii_itext_ichar (ptr), preclist, NULL, charset, c1, c2);
+    ((int) non_ascii_itext_ichar (ptr), precarray, NULL, charset, c1, c2);
 #else
   old_mule_non_ascii_itext_to_charset_codepoint_raw (ptr, charset, c1, c2);
 #endif /* (not) UNICODE_INTERNAL */
@@ -654,7 +652,7 @@ non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
 DECLARE_INLINE_HEADER (
 void
 itext_to_charset_codepoint_raw (const Ibyte *ptr,
-				Lisp_Object_dynarr *preclist,
+				Lisp_Object precarray,
 				Lisp_Object *charset, int *c1, int *c2)
 )
 {
@@ -667,18 +665,18 @@ itext_to_charset_codepoint_raw (const Ibyte *ptr,
       *c2 = *ptr;
     }
   else
-    non_ascii_itext_to_charset_codepoint_raw (ptr, preclist, charset, c1, c2);
+    non_ascii_itext_to_charset_codepoint_raw (ptr, precarray, charset, c1, c2);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
 
 DECLARE_INLINE_HEADER (
 void
-itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object_dynarr *preclist,
+itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object precarray,
 			    Lisp_Object *charset, int *c1, int *c2,
 			    enum converr fail)
 )
 {
-  itext_to_charset_codepoint_raw (ptr, preclist, charset, c1, c2);
+  itext_to_charset_codepoint_raw (ptr, precarray, charset, c1, c2);
   if (NILP (*charset))
     {
       switch (fail)

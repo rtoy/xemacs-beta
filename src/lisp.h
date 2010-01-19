@@ -5786,16 +5786,16 @@ void seed_random (long arg);
 void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 				    const Ibyte *USED_IF_MULE (str),
 				    Bytecount USED_IF_MULE (len),
-				    Lisp_Object_dynarr *unicode_precedence);
+				    Lisp_Object unicode_precedence);
 void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 				    const Ichar *USED_IF_MULE (str),
 				    Charcount USED_IF_MULE (len),
-				    Lisp_Object_dynarr *unicode_precedence);
+				    Lisp_Object unicode_precedence);
 void find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
 			      struct buffer *USED_IF_MULE (b),
 			      Charbpos USED_IF_MULE (pos),
 			      Charcount USED_IF_MULE (len),
-			      Lisp_Object_dynarr *unicode_precedence);
+			      Lisp_Object unicode_precedence);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
 int ichar_string_displayed_columns (const Ichar *str, Charcount len);
 Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
@@ -6159,17 +6159,21 @@ extern const struct sized_memory_description to_unicode_description;
 extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
-Lisp_Object_dynarr *get_unicode_precedence (void);
-Lisp_Object_dynarr *get_buffer_unicode_precedence (struct buffer *buf);
-void begin_precedence_list_generation (void);
-void add_charset_to_precedence_list (Lisp_Object charset,
-				     Lisp_Object_dynarr *preclist);
-void filter_precedence_list (Lisp_Object_dynarr *orig_preclist,
-			     Lisp_Object_dynarr *new_preclist,
+Lisp_Object get_unicode_precedence (void);
+Lisp_Object get_buffer_unicode_precedence (struct buffer *buf);
+Lisp_Object allocate_precedence_array (void);
+void reset_precedence_array (Lisp_Object precarray);
+void begin_precedence_array_generation (void);
+void add_charset_to_precedence_array (Lisp_Object charset,
+				     Lisp_Object preclist);
+void add_charsets_to_precedence_array (Lisp_Object list,
+				       Lisp_Object precarray);
+void filter_precedence_array (Lisp_Object orig_preclist,
+			     Lisp_Object new_preclist,
 			     int (*predicate) (Lisp_Object));
 void recalculate_unicode_precedence (void);
-Lisp_Object_dynarr *
-convert_charset_list_to_precedence_dynarr (Lisp_Object charsets);
+Lisp_Object internal_convert_precedence_list_to_array (Lisp_Object charsets);
+Lisp_Object external_convert_precedence_list_to_array (Lisp_Object charsets);
 extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
@@ -6180,7 +6184,7 @@ Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 #endif /* MEMORY_USAGE_STATS */
 void initialize_ascii_control_1_latin_1_unicode_translation (void);
 int decode_unicode (Lisp_Object unicode);
-void free_precedence_dynarr (Lisp_Object_dynarr *dynarr);
+void free_precedence_array (Lisp_Object preclist);
 void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
 
 enum unicode_type

@@ -64,6 +64,12 @@
    tags (jis kanji japanese)
    ))
 
+(define-charset-tag 'japanese-kanji/list
+  :list '(japanese-jisx0208 japanese-jisx0208-1978
+	  japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2))
+(define-charset-tag 'japanese/list
+  ;; Careful here, can't just say `japanese' or we will get a circularity
+  :list '(japanese-kanji/list japanese/language))
 
 ;;; Syntax of Japanese characters.
 (loop for row in '(33 34 40)

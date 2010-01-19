@@ -71,6 +71,8 @@ Lisp_Object Vcharset_chinese_big5_2;
 #endif /* UNICODE_INTERNAL */
 Lisp_Object Vcharset_composite;
 
+Lisp_Object Qregister_charset_tags;
+
 #ifdef FIXED_UNICODE_CHARSETS
 
 /* GNU Emacs creates charsets called `mule-unicode-0100-24ff',
@@ -800,7 +802,7 @@ make_charset (int id, int no_init_unicode_tables,
     {
       struct gcpro gcpro1, gcpro2, gcpro3;
       GCPRO3 (obj, tags, unicode_map);
-      call2 (intern ("register-charset-tags"), obj, tags);
+      call2 (Qregister_charset_tags, obj, tags);
       XCHARSET_TAGS (obj) = tags;
       UNGCPRO;
     }
@@ -1495,7 +1497,7 @@ Unicode precedence list will be used.
   struct buffer *buf = decode_buffer (buffer, 1);
   Charbpos pos, stop;	/* Limits of the region. */
   Lisp_Object_dynarr *charset_dyn;
-  Lisp_Object_dynarr *precdyn;
+  Lisp_Object preclist;
   Lisp_Object charset_list = Qnil;
   int i;
 
@@ -1506,16 +1508,16 @@ Unicode precedence list will be used.
 
   /* Get the proper Unicode precedence list */
   if (NILP (precedence_list))
-    precdyn = get_buffer_unicode_precedence (buf);
+    preclist = get_buffer_unicode_precedence (buf);
   else
-    precdyn = convert_charset_list_to_precedence_dynarr (precedence_list);
+    preclist = external_convert_precedence_list_to_array (precedence_list);
 
   /* Find the actual charsets */
-  find_charsets_in_buffer (charset_dyn, buf, pos, stop - pos, precdyn);
+  find_charsets_in_buffer (charset_dyn, buf, pos, stop - pos, preclist);
 
   /* Free it if and only if we created it */
   if (!NILP (precedence_list))
-    free_precedence_dynarr (precdyn);
+    free_precedence_array (preclist);
 
   /* Convert dynarr to list */
   for (i = 0; i < Dynarr_length (charset_dyn); i++)
@@ -1677,6 +1679,8 @@ syms_of_mule_charset (void)
 #endif /* UNICODE_INTERNAL */
 
   DEFSYMBOL (Qcomposite);
+
+  DEFSYMBOL (Qregister_charset_tags);
 
 #ifdef FIXED_UNICODE_CHARSETS
 

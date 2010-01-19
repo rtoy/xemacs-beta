@@ -38,9 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "extents.h"
 #include "file-coding.h"
-#include "rangetab.h"
-
 #include "mule-ccl.h"
+#include "rangetab.h"
+#include "unicode.h"
 
 #if defined (ENABLE_COMPOSITE_CHARS) && defined (UNICODE_INTERNAL)
 #error "No prayer of getting these two working in its current shape"
@@ -59,7 +59,7 @@ Lisp_Object Qiso_7, Qiso_8_designate, Qiso_8_1, Qiso_8_2, Qiso_lock_shift;
 
 Lisp_Object Qcharsets;
 
-static Lisp_Object_dynarr *shift_jis_precedence, *big5_precedence;
+static Lisp_Object Vshift_jis_precedence, Vbig5_precedence;
 
 
 /************************************************************************/
@@ -68,7 +68,9 @@ static Lisp_Object_dynarr *shift_jis_precedence, *big5_precedence;
 
 struct multibyte_coding_system
 {
-  Lisp_Object_dynarr *charsets;
+  /* A precedence array containing the charsets given in the `charsets'
+     property when creating the coding system */
+  Lisp_Object charsets;
 };
 
 #define CODING_SYSTEM_MBCS_CHARSETS(codesys) \
@@ -93,8 +95,7 @@ struct multibyte_coding_stream
 };
 
 static const struct memory_description multibyte_coding_system_description[] = {
-  { XD_BLOCK_PTR, offsetof (struct multibyte_coding_system, charsets),
-    1, { &Lisp_Object_dynarr_description} },
+  { XD_LISP_OBJECT, offsetof (struct multibyte_coding_system, charsets) },
   { XD_END }
 };
 
@@ -106,15 +107,16 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (multibyte);
 
 static Ichar
 try_to_derive_character (int c1, int c2, int dimension,
-			 Lisp_Object_dynarr *charsets,
+			 Lisp_Object charsets,
 			 enum converr handling)
 {
   int i;
   Ichar ich = -1;
+  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
 
-  for (i = 0; i < Dynarr_length (charsets); i++)
+  for (i = 0; i < Dynarr_length (precdyn); i++)
     {
-      Lisp_Object charset = Dynarr_at (charsets, i);
+      Lisp_Object charset = Dynarr_at (precdyn, i);
       if (XCHARSET_DIMENSION (charset) == dimension &&
 	  valid_charset_codepoint_p (charset, c1, c2) &&
 	  (ich = charset_codepoint_to_ichar (charset, c1, c2, handling)) >= 0)
@@ -127,9 +129,9 @@ try_to_derive_character (int c1, int c2, int dimension,
 
 static Bytecount
 multibyte_convert (struct coding_stream *str, const UExtbyte *src,
-	      unsigned_char_dynarr *dst, Bytecount n)
+		   unsigned_char_dynarr *dst, Bytecount n)
 {
-  Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
+  Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -225,22 +227,22 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 static void
 multibyte_init (Lisp_Object codesys)
 {
-  XCODING_SYSTEM_MBCS_CHARSETS (codesys) = Dynarr_new (Lisp_Object);
+  XCODING_SYSTEM_MBCS_CHARSETS (codesys) = allocate_precedence_array ();
 }
 
 static void
 multibyte_mark (Lisp_Object codesys)
 {
-  mark_Lisp_Object_dynarr (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
+  mark_object (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
 }
 
 static void
 multibyte_finalize (Lisp_Object cs)
 {
-  if (XCODING_SYSTEM_MBCS_CHARSETS (cs))
+  if (!NILP (XCODING_SYSTEM_MBCS_CHARSETS (cs)))
     {
-      Dynarr_free (XCODING_SYSTEM_MBCS_CHARSETS (cs));
-      XCODING_SYSTEM_MBCS_CHARSETS (cs) = 0;
+      free_precedence_array (XCODING_SYSTEM_MBCS_CHARSETS (cs));
+      XCODING_SYSTEM_MBCS_CHARSETS (cs) = Qnil;
     }
 }
 
@@ -249,13 +251,10 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qcharsets))
     {
-      Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
-      Dynarr_reset (charsets);
-      EXTERNAL_LIST_LOOP_2 (elt, value)
-	{
-	  Lisp_Object charset = Fget_charset (elt);
-	  Dynarr_add (charsets, charset);
-	}
+      Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+      reset_precedence_array (charsets);
+      begin_precedence_array_generation ();
+      add_charsets_to_precedence_array (value, charsets);
     }
   else
     return 0;
@@ -267,12 +266,13 @@ multibyte_getprop (Lisp_Object codesys, Lisp_Object prop)
 {
   if (EQ (prop, Qcharsets))
     {
-      Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+      Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
       Lisp_Object list = Qnil;
+      Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
       int i;
 
-      for (i = 0; i < Dynarr_length (charsets); i++)
-	list = Fcons (Dynarr_at (charsets, i), list);
+      for (i = 0; i < Dynarr_length (precdyn); i++)
+	list = Fcons (Dynarr_at (precdyn, i), list);
       return Fnreverse (list);
     }
   return Qunbound;
@@ -282,12 +282,13 @@ static void
 multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
 	    int UNUSED (escapeflag))
 {
-  Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+  Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
   int i;
   
-  for (i = 0; i < Dynarr_length (charsets); i++)
+  for (i = 0; i < Dynarr_length (precdyn); i++)
     write_fmt_string_lisp (printcharfun, i == 0 ? "(%s" : " %s", 1,
-			   XCHARSET_NAME (Dynarr_at (charsets, i)));
+			   XCHARSET_NAME (Dynarr_at (precdyn, i)));
   write_c_string (printcharfun, ")");
 }
 
@@ -408,7 +409,7 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		  Lisp_Object charset;
 		  int c1, c2;
 		  non_ascii_itext_to_charset_codepoint_raw
-		    (str->partial, shift_jis_precedence, &charset, &c1, &c2);
+		    (str->partial, Vshift_jis_precedence, &charset, &c1, &c2);
 		  if (EQ (charset, Vcharset_katakana_jisx0201))
 		    Dynarr_add (dst, c2);
 		  else if (EQ (charset, Vcharset_japanese_jisx0208) ||
@@ -464,7 +465,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
   int c1, c2, s1, s2;
 
   CHECK_CHAR_COERCE_INT (character);
-  ichar_to_charset_codepoint (XCHAR (character), shift_jis_precedence,
+  ichar_to_charset_codepoint (XCHAR (character), Vshift_jis_precedence,
 			      &charset, &c1, &c2);
   if (EQ (charset, Vcharset_japanese_jisx0208) ||
       EQ (charset, Vcharset_japanese_jisx0208_1978))
@@ -742,7 +743,7 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		  Lisp_Object charset;
 		  int c1, c2;
 		  non_ascii_itext_to_charset_codepoint_raw 
-		    (str->partial, big5_precedence, &charset, &c1, &c2);
+		    (str->partial, Vbig5_precedence, &charset, &c1, &c2);
 #ifdef UNICODE_INTERNAL
 		  if (EQ (charset, Vcharset_chinese_big5))
 		    {
@@ -868,7 +869,7 @@ term `encode' is used for this operation.
   int c1, c2;
 
   CHECK_CHAR_COERCE_INT (character);
-  ichar_to_charset_codepoint (XCHAR (character), big5_precedence,
+  ichar_to_charset_codepoint (XCHAR (character), Vbig5_precedence,
 			      &charset, &c1, &c2);
 #ifdef UNICODE_INTERNAL
   if (EQ (charset, Vcharset_chinese_big5))
@@ -1212,7 +1213,7 @@ struct iso2022_coding_stream
      charsets that can be encoded using ISO2022 and preferring currently
      designated charsets.  @@#### We should be still smarter, making use of
      the precedence list of the buffer we're coming from. */
-  Lisp_Object_dynarr *unicode_precedence;
+  Lisp_Object unicode_precedence;
 
   /* Used for handling UTF-8. */
   unsigned char counter;  
@@ -1688,6 +1689,7 @@ reset_iso2022_decode (Lisp_Object coding_system,
     }
 #endif
   data->warned_chars = Qnil;
+  data->unicode_precedence = Qnil;
 }
 
 static int
@@ -1708,28 +1710,28 @@ reset_iso2022_unicode_precedence (struct iso2022_coding_stream *data)
 {
   int i;
   /* @@#### Make buffer-local */
-  Lisp_Object_dynarr *parent_preclist = get_unicode_precedence ();
+  Lisp_Object parent_precarray = get_unicode_precedence ();
 
-  if (data->unicode_precedence)
-    Dynarr_reset (data->unicode_precedence);
+  if (NILP (data->unicode_precedence))
+    data->unicode_precedence = allocate_precedence_array ();
   else
-    data->unicode_precedence = Dynarr_new (Lisp_Object);
-  begin_precedence_list_generation ();
+    reset_precedence_array (data->unicode_precedence);
+  begin_precedence_array_generation ();
   for (i = 0; i < 4; i++)
     {
       if (CHARSETP (data->charset[i]))
-	add_charset_to_precedence_list (data->charset[i],
-					data->unicode_precedence);
+	add_charset_to_precedence_array (data->charset[i],
+					 data->unicode_precedence);
     }
   /* Also ASCII and Control-1 */
-  add_charset_to_precedence_list (Vcharset_ascii, data->unicode_precedence);
-  add_charset_to_precedence_list (Vcharset_control_1,
+  add_charset_to_precedence_array (Vcharset_ascii, data->unicode_precedence);
+  add_charset_to_precedence_array (Vcharset_control_1,
 				  data->unicode_precedence);
   /* Add ISO2022-compatible charsets to unicode_precedence */
-  filter_precedence_list (parent_preclist, data->unicode_precedence,
-			  charset_iso2022_compatible);
+  filter_precedence_array (parent_precarray, data->unicode_precedence,
+			   charset_iso2022_compatible);
   /* Add all other charsets */
-  filter_precedence_list (parent_preclist, data->unicode_precedence, NULL);
+  filter_precedence_array (parent_precarray, data->unicode_precedence, NULL);
 }
 
 static void
@@ -1749,7 +1751,7 @@ reset_iso2022_encode (Lisp_Object coding_system,
     }
   data->register_right = 1;
   data->warned_chars = Qnil;
-
+  data->unicode_precedence = Qnil;
   reset_iso2022_unicode_precedence (data);
 }
 
@@ -1772,8 +1774,7 @@ iso2022_mark_coding_stream (struct coding_stream *str)
   mark_object (data->warned_chars);
   for (i = 0; i < 4; i++)
     mark_object (data->charset[i]);
-  if (data->unicode_precedence)
-    mark_Lisp_Object_dynarr (data->unicode_precedence);
+  mark_object (data->unicode_precedence);
 }
 
 static void
@@ -3281,21 +3282,23 @@ iso2022_putprop (Lisp_Object codesys,
 }
 
 static void
-iso2022_finalize_coding_stream (
-#ifdef ENABLE_COMPOSITE_CHARS
-				struct coding_stream *str
-#else
-				struct coding_stream *UNUSED (str)
-#endif
-				)
+iso2022_finalize_coding_stream (struct coding_stream *str)
 {
-#ifdef ENABLE_COMPOSITE_CHARS
   struct iso2022_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, iso2022);
 
+#ifdef ENABLE_COMPOSITE_CHARS
   if (data->composite_chars)
-    Dynarr_free (data->composite_chars);
+    {
+      Dynarr_free (data->composite_chars);
+      data->composite_chars = 0;
+    }
 #endif
+  if (!NILP (data->unicode_precedence))
+    {
+      free_precedence_array (data->unicode_precedence);
+      data->unicode_precedence = Qnil;
+    }
 }
 
 static void
@@ -4446,6 +4449,12 @@ vars_of_mule_coding (void)
   Vfixed_width_query_ranges_cache
    = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
   staticpro (&Vfixed_width_query_ranges_cache);
+
+  Vshift_jis_precedence = Qnil;
+  staticpro (&Vshift_jis_precedence);
+
+  Vbig5_precedence = Qnil;
+  staticpro (&Vshift_jis_precedence);
 }
 
 void
@@ -4456,26 +4465,21 @@ complex_vars_of_mule_coding (void)
 void
 init_mule_coding (void)
 {
-  /* #### Hack!  These should use actual shift-jis and big5 charsets.
-     There should be a general multibyte codec to handle both of these,
-     and similar variants. */
+  /* #### Hack!  There should be a general multibyte codec to handle both
+     of these, and similar variants. */
   assert (initialized);
-  /* Because we only set these up after dumping, we don't need to call
-     dump_add_root_block_ptr (&shift_jis_precedence,
-			      &Lisp_Object_dynarr_description);
-     or anything of the sort. */
-  shift_jis_precedence =
-    convert_charset_list_to_precedence_dynarr
+  Vshift_jis_precedence =
+    internal_convert_precedence_list_to_array
     (list3 (Vcharset_japanese_jisx0208, Vcharset_japanese_jisx0208_1978,
 	    Vcharset_katakana_jisx0201));
 
 #ifdef UNICODE_INTERNAL
-  big5_precedence =
-    convert_charset_list_to_precedence_dynarr
+  Vbig5_precedence =
+    internal_convert_precedence_list_to_array
     (list1 (Vcharset_chinese_big5));
 #else /* not UNICODE_INTERNAL */
-  big5_precedence =
-    convert_charset_list_to_precedence_dynarr
+  Vbig5_precedence =
+    internal_convert_precedence_list_to_array
     (list2 (Vcharset_chinese_big5_1, Vcharset_chinese_big5_2));
 #endif /* UNICODE_INTERNAL */
 }

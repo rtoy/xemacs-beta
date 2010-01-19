@@ -618,7 +618,7 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
 Ichar old_mule_unicode_to_ichar (int code,
-				 Lisp_Object_dynarr *precedence_list,
+				 Lisp_Object precedence_array,
 				 enum converr fail);
 int old_mule_charset_encodable (Lisp_Object charset);
 
@@ -644,8 +644,7 @@ ichar_to_unicode (Ichar chr, enum converr USED_IF_OLD_MULE (fail))
 
 DECLARE_INLINE_HEADER (
 Ichar
-unicode_to_ichar (int code, Lisp_Object_dynarr *
-		  USED_IF_OLD_MULE (precedence_list),
+unicode_to_ichar (int code, Lisp_Object USED_IF_OLD_MULE (precedence_array),
 		  enum converr USED_IF_OLD_MULE (fail))
 )
 {
@@ -654,7 +653,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *
 #ifdef UNICODE_INTERNAL
   return (Ichar) code;
 #elif defined (MULE)
-  return old_mule_unicode_to_ichar (code, precedence_list, fail);
+  return old_mule_unicode_to_ichar (code, precedence_array, fail);
 #else
   if (code > 255)
     return (Ichar) -1;

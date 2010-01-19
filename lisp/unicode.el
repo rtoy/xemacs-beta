@@ -72,24 +72,13 @@
   ;; This must be run late, when all charsets have already been created.
   (declare-fboundp
    (set-default-unicode-precedence-list
-    `(ascii control-1 latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
-	    greek-iso8859-7 hebrew-iso8859-8 cyrillic-iso8859-5
-	    latin-iso8859-16 latin-iso8859-3 latin-iso8859-4 latin-iso8859-9
-	    vietnamese-viscii-lower vietnamese-viscii-upper arabic-iso8859-6
-	    ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
-	    windows-glyph-list-4
-	    japanese-jisx0208 japanese-jisx0208-1978
-	    japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2
-	    chinese-gb2312 chinese-sisheng
-	    ,@(if (featurep 'unicode-internal) '(chinese-big5)
-		'(chinese-big5-1 chinese-big5-2))
-	    indian-is13194 korean-ksc5601 chinese-cns11643-1
-	    chinese-cns11643-2 chinese-isoir165 
-	    composite ethiopic indian-1-column indian-2-column
-	    katakana-jisx0201 lao thai-tis620
-	    tibetan tibetan-1-column latin-jisx0201 chinese-cns11643-3
-	    chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
-	    chinese-cns11643-7))))
+    `(ascii control-1 latin-iso8859-1
+      latin/list iso8859
+      ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
+      windows-glyph-list-4
+      japanese-kanji/list
+      chinese/list
+      ))))
 
 (defun decode-char (quote-ucs code &optional restriction) 
   "FSF compatibility--return Mule character with Unicode codepoint CODE.
