@@ -272,7 +272,7 @@ do									\
   /* Unbelievably, calling free() on 0xDEADBEEF doesn't cause an	\
      error until much later on for many system mallocs, such as		\
      the one that comes with Solaris 2.3.  FMH!! */			\
-  assert (block != (void *) 0xDEADBEEF);				\
+  assert (block != (void *) DEADBEEF_CONSTANT);				\
   MALLOC_BEGIN ();							\
 }									\
 while (0)
@@ -283,7 +283,7 @@ do									\
   /* Unbelievably, calling free() on 0xDEADBEEF doesn't cause an	\
      error until much later on for many system mallocs, such as		\
      the one that comes with Solaris 2.3.  FMH!! */			\
-  assert (block != (void *) 0xDEADBEEF);				\
+  assert (block != (void *) DEADBEEF_CONSTANT);				\
   /* You cannot free something within dumped space, because there is	\
      no longer any sort of malloc structure associated with the block.	\
      If you are tripping this, you may need to conditionalize on	\
