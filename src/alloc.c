@@ -3157,6 +3157,8 @@ old_free_lcrecord (Lisp_Object rec)
 {
   int type = XRECORD_LHEADER (rec)->type;
 
+  if (OBJECT_DUMPED_P (rec))
+    return;
   assert (!EQ (all_lcrecord_lists[type], Qzero));
 
   free_managed_lcrecord (all_lcrecord_lists[type], rec);
