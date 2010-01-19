@@ -1146,7 +1146,7 @@ extern const struct sized_memory_description lisp_object_description;
   { XD_BLOCK_PTR, offsetof (base_type, base),				\
     XD_INDIRECT(1, 0), {sub_desc} },					\
   { XD_INT,        offsetof (base_type, len) },				\
-  { XD_INT_RESET,  offsetof (base_type, largest) },			\
+  { XD_INT_RESET,  offsetof (base_type, largest), XD_INDIRECT(1, 0) },	\
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
 
 #ifdef NEW_GC
@@ -1154,7 +1154,7 @@ extern const struct sized_memory_description lisp_object_description;
   { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
     XD_INDIRECT(1, 0), {sub_desc} },					\
   { XD_INT,        offsetof (base_type, len) },				\
-  { XD_INT_RESET,  offsetof (base_type, largest) },			\
+  { XD_INT_RESET,  offsetof (base_type, largest), XD_INDIRECT(1, 0) },	\
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
 #endif /* NEW_GC */
 
