@@ -102,7 +102,7 @@ while (0)
 DECLARE_INLINE_HEADER (
 Ichar
 charset_codepoint_to_ichar (Lisp_Object charset, int a1, int a2,
-			    enum converr USED_IF_MULE (fail))
+			    enum converr UNUSED (fail))
 )
 {
   ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
@@ -112,7 +112,7 @@ charset_codepoint_to_ichar (Lisp_Object charset, int a1, int a2,
 DECLARE_INLINE_HEADER (
 int
 charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
-			      enum converr USED_IF_MULE (fail))
+			      enum converr UNUSED (fail))
 )
 {
   ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
@@ -481,11 +481,11 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 					make_int (c2)) :
 				 list2 (charset, make_int (c2)));
 
+	case CONVERR_SUCCEED:
 	case CONVERR_SUBSTITUTE:
 	  code = UNICODE_REPLACEMENT_CHAR;
 	  break;
 
-	case CONVERR_SUCCEED:
 	case CONVERR_USE_PRIVATE:
 	  code = charset_codepoint_to_private_unicode (charset, c1, c2);
 	  break;
@@ -787,15 +787,6 @@ ichar_charset_obsolete_me_baby_please (Ichar ch)
 #endif /* (not) UNICODE_INTERNAL */
 
 #endif /* MULE */
-
-/* ISO 10646 UTF-16, UCS-4, UTF-8, UTF-7, etc. */
-
-
-#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
-
-#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
-#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
-#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
 
 void set_charset_registries (Lisp_Object charset, Lisp_Object registries);
 

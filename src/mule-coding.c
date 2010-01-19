@@ -151,12 +151,12 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 		   range but happens not to have a Unicode
 		   translation. */
 		ich = try_to_derive_character (str->ch, c, 2, charsets,
-					       CONVERR_SUCCEED);
+					       CONVERR_USE_PRIVATE);
 	      if (ich < 0)
 		/* See if we can derive an "illegitimate" one-byte
 		   character from the first byte. */
 		ich = try_to_derive_character (0, str->ch, 1, charsets,
-					       CONVERR_SUCCEED);
+					       CONVERR_USE_PRIVATE);
 
 	      str->ch = -1;
 
@@ -193,7 +193,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	  /* See if we can derive an "illegitimate" one-byte
 	     character from the last, straggling byte. */
 	  Ichar ich = try_to_derive_character (0, str->ch, 1, charsets,
-					       CONVERR_SUCCEED);
+					       CONVERR_USE_PRIVATE);
 	  if (ich >= 0)
 	    Dynarr_add_ichar (dst, ich);
 	  else
@@ -211,7 +211,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	      Lisp_Object charset;
 	      int c1, c2;
 	      itext_to_charset_codepoint (str->partial, charsets, &charset,
-					  &c1, &c2, CONVERR_SUCCEED);
+					  &c1, &c2, CONVERR_SUBSTITUTE);
 	      if (XCHARSET_DIMENSION (charset) == 2)
 		Dynarr_add (dst, c1);
 	      Dynarr_add (dst, c2);
@@ -368,7 +368,8 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 
 		  DECODE_SHIFT_JIS (str->ch, c, e1, e2);
 		  non_ascii_charset_codepoint_to_dynarr
-		    (Vcharset_japanese_jisx0208, e1, e2, dst, CONVERR_SUCCEED);
+		    (Vcharset_japanese_jisx0208, e1, e2, dst,
+		     CONVERR_USE_PRIVATE);
 		}
 	      else
 		{
@@ -383,7 +384,8 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		str->ch = c;
 	      else if (byte_shift_jis_katakana_p (c))
 		  non_ascii_charset_codepoint_to_dynarr
-		    (Vcharset_katakana_jisx0201, 0, c, dst, CONVERR_SUCCEED);
+		    (Vcharset_katakana_jisx0201, 0, c, dst,
+		     CONVERR_USE_PRIVATE);
 	      else
 		DECODE_ADD_BINARY_CHAR (c, dst);
 	    }
@@ -698,13 +700,13 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 #ifdef UNICODE_INTERNAL
 		  non_ascii_charset_codepoint_to_dynarr
 		    (Vcharset_chinese_big5, str->ch, c, dst,
-		     CONVERR_SUCCEED);
+		     CONVERR_USE_PRIVATE);
 #else /* not UNICODE_INTERNAL */
 		  Lisp_Object charset;
 		  int b1, b2;
 		  DECODE_BIG5 (str->ch, c, charset, b1, b2);
 		  non_ascii_charset_codepoint_to_dynarr
-		    (charset, b1, b2, dst, CONVERR_SUCCEED);
+		    (charset, b1, b2, dst, CONVERR_USE_PRIVATE);
 #endif /* UNICODE_INTERNAL */
 		}
 	      else
@@ -2632,7 +2634,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 			 ISO-2022-encoded char in a national charset to
 			 Unicode. */
 		      charset_codepoint_to_dynarr
-			(charset, c1, c2, dst, CONVERR_SUCCEED);
+			(charset, c1, c2, dst, CONVERR_USE_PRIVATE);
 		    }
 		  ch = -1;
 		}
@@ -2925,9 +2927,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 
 		  {
 		    Ichar ich = itext_ichar (str->partial);
-		    /* @@#### Is CONVERR_SUCCEED correct? Only matters when
-		       not Unicode-internal */
-		    int code = ichar_to_unicode (ich, CONVERR_SUCCEED);
+		    /* @@#### Error handling? */
+		    int code = ichar_to_unicode (ich, CONVERR_SUBSTITUTE);
 		    encode_unicode_char (code, dst, UNICODE_UTF_8, 0, 0);
 		  }
 		}

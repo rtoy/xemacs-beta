@@ -105,13 +105,9 @@ enum converr
     CONVERR_ABORT,
     /* Signal a Lisp error. */
     CONVERR_ERROR,
-    /* Try to "recover" and continue processing.  What exactly happens
-       depends on the type of conversion.  When converting from a charset
-       representation to Unicode, this is like CONVERR_USE_PRIVATE,
-       i.e. the unknown charset value is encoded using private Unicode
-       space.  Otherwise, it's generally like CONVERR_SUBSTITUTE, where
-       one of the substitution characters defined below (CANT_CONVERT_*)
-       is used. */
+    /* Try to "recover" and continue processing.  Currently this is always
+       the same as CONVERR_SUBSTITUTE, where one of the substitution
+       characters defined below (CANT_CONVERT_*) is used. */
     CONVERR_SUCCEED,
 
     /* ---- More specific actions ---- */
@@ -607,6 +603,18 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 /************************************************************************/
 /*                         Unicode conversion                           */
 /************************************************************************/
+
+/* Where to place the 256 private Unicode codepoints used for encoding
+   erroneous octets in a UTF-8 or UTF-16 file.  Note: This MUST be below
+   the space used for encoding unknown charset codepoints, which currently
+   starts at 0x800000.  See charset_codepoint_to_private_unicode(). */
+#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
+#define UNICODE_ERROR_OCTET_RANGE_END (UNICODE_ERROR_OCTET_RANGE_START + 0xFF)
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
+
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
 Ichar old_mule_unicode_to_ichar (int code,

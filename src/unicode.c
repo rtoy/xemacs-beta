@@ -364,6 +364,7 @@ Lisp_Object Vprecedence_list_charsets_seen_hash;
 Lisp_Object Qignore_first_column;
 
 #ifndef UNICODE_INTERNAL
+Lisp_Object Vcharset_jit_ucs_charset_0;
 Lisp_Object Vcurrent_jit_charset;
 /* The following are stored as Lisp objects instead of just ints so they
    are preserved across dumping */
@@ -1002,6 +1003,25 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 
 #ifndef UNICODE_INTERNAL
 
+static void
+allocate_jit_ucs_charset (void)
+{
+  Ibyte setname[100];
+
+  qxesprintf (setname, "jit-ucs-charset-%d", number_of_jit_charsets);
+
+  Vcurrent_jit_charset = Fmake_charset 
+    (intern ((const CIbyte *) setname), Vcharset_descr, 
+     nconc2 (list6 (Qcolumns, make_int (1), Qchars,
+		    make_int (96),
+		    Qdimension, make_int (2)),
+	     list2 (Qregistries, Qunicode_registries)));
+  XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
+  last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
+
+  number_of_jit_charsets++;
+}
+
 /* Return a free JIT codepoint.  Return 1 on success, 0 on failure.
    (Currently never returns 0.  Presumably if we ever run out of JIT charsets,
    we will signal an error in Fmake_charset().) */
@@ -1027,22 +1047,7 @@ get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 	}
     }
   else
-    {
-      Ibyte setname[100];
-      qxesprintf (setname, "jit-ucs-charset-%d", number_of_jit_charsets);
-
-      Vcurrent_jit_charset = Fmake_charset 
-	(intern ((const CIbyte *) setname), Vcharset_descr, 
-	 nconc2 (list6 (Qcolumns, make_int (1), Qchars,
-			make_int (96),
-			Qdimension, make_int (2)),
-		 list2 (Qregistries, Qunicode_registries)));
-      XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
-      last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
-
-      number_of_jit_charsets++;
-    }
-
+    allocate_jit_ucs_charset ();
   *charset = Vcurrent_jit_charset;
   *c1 = last_allocated_jit_c1;
   *c2 = last_allocated_jit_c2;
@@ -1057,23 +1062,28 @@ get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 
 #endif /* not UNICODE_INTERNAL */
 
-/* The just-in-time creation of XEmacs characters that correspond to unknown
-   Unicode code points happens when: 
-
-   1. The lookup would otherwise fail. 
-
-   2. The precedence_list array is the nil or the default. 
-
-   If there are no free code points in the just-in-time Unicode character
-   set, and the precedence_list array is the default unicode precedence list,
-   create a new just-in-time Unicode character set, add it at the end of the
-   unicode precedence list, create the XEmacs character in that character
-   set, and return it. */
-
 /* Convert a Unicode codepoint to a charset codepoint.  PRECEDENCE_LIST is
    a list of charsets.  The charsets will be consulted in order for
    characters that match the Unicode codepoint.  If PREDICATE is non-NULL,
-   only charsets that pass the predicate will be considered. */
+   only charsets that pass the predicate will be considered.
+
+   Under old-Mule, if a charset codepoint cannot be found and
+   jit-ucs-charset-0 is in the precedence list, create a "just-in-time"
+   (JIT) character in one of the JIT charsets (named `jit-ucs-charset-*')
+   and return it.  If necessary, create a new JIT charset to hold the
+   character.  This is done so that unfamiliar Unicode codepoints in
+   external files can be correctly displayed in a buffer and written out
+   again to a file, rather than displaying a '~' or the like and
+   corrupting the external file by writing out a replacement character.
+
+   The JIT creation mechanism happens only when jit-ucs-charset-0 is
+   present so that conversion involving user-supplied precedence lists
+   correctly fails.  The presence of jit-ucs-charset-0 is a signal that a
+   character can be created in this or another JIT charset, and it is
+   normally only present in global or buffer-local precedence lists.  We
+   create jit-ucs-charset-0 during initialization to ensure that it is
+   always present even before the first JIT character has been created.
+ */
 
 void
 non_ascii_unicode_to_charset_codepoint (int code,
@@ -1169,25 +1179,20 @@ non_ascii_unicode_to_charset_codepoint (int code,
 #ifndef UNICODE_INTERNAL
   /* Non-Unicode-internal: Maybe do just-in-time assignment */
 
-  /* Only do the magic just-in-time assignment if we're using the default
-     list.  This check is done because we don't want to do this assignment
-     if we're using a partial list of charsets and if we're not using the
-     default list, we don't know whether the list is full.
-
-     @@#### We might want to rethink this, and will have to if/when we
-     have buffer-local precedence lists.
-     */ 
-  if (global_unicode_precedence_dynarr == precedence_list) 
+  for (i = 0; i < n; i++)
     {
-      if (get_free_jit_codepoint (charset, c1, c2))
+      if (EQ (Dynarr_at (precedence_list, i), Vcharset_jit_ucs_charset_0))
 	{
+	  get_free_jit_codepoint (charset, c1, c2);
 	  set_unicode_conversion (code, *charset, *c1, *c2);
 	  goto done;
 	}
     }
-  
 #endif /* not UNICODE_INTERNAL */
-  /* Unable to convert; try the private codepoint range */
+
+  /* Unable to convert; try the private codepoint range -- i.e. a private
+     Unicode codepoint generated to maintain round-trip conversion with
+     unknown charset codepoints. */
   private_unicode_to_charset_codepoint (code, charset, c1, c2);
   return;
 
@@ -1196,9 +1201,14 @@ done:
   return;
 }
 
-/* @@####
+/*
+  Convert a charset codepoint to a private Unicode codepoint, for round-trip
+  conversion involving charset codepoints with no Unicode mapping.  Used
+  when handling external files with charset codepoints.
+
+ @@####
  there has to be a way for Lisp callers to *always* request the private
- codepoint if they want it.
+ codepoint if they want it. (#### EXPLAIN???)
 
  Possibly, we want always-private characters to behave somewhat like
  their normal equivalents, when such exists; e.g. when retrieving
@@ -1230,6 +1240,8 @@ charset_codepoint_to_private_unicode (Lisp_Object charset, int c1, int c2)
      Field 3 is the first octet.
      Field 4 is the second octet.
      Bit 23 is set so that we are above all possible UTF-16 chars.
+     Bits 24 and up are 0 to ensure that we don't conflict with
+       non-ISO2022-compatible private characters (see below).
 
  <-... 23 22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
  <-..------------------------> <---------------------> <--------------------->
@@ -1238,12 +1250,20 @@ charset_codepoint_to_private_unicode (Lisp_Object charset, int c1, int c2)
      If non-ISO2022-compatible:
 
      Field 1 (extends up to 31 bits) is the charset ID + 256, to place it
-     above all the others. (NOTE: It's true that non-encodable charset ID's
-     are always >= 256; but the correspondence between encodable charsets
-     and ISO2022-compatible charsets is not one-to-one in either direction;
-     see get_charset_iso2022_type().)  Fields 2 and 3 are the octet values.
+     above all ISO2022-compatible private characters. (It would seem that
+     we can rely on charset ID >= 256 anyway, since non-encodable charset
+     ID's are always >= 256.  But in fact, not all ISO2022-compatible
+     charsets are encodable, or vice-versa; see
+     get_charset_iso2022_type().)
+    
+     Fields 2 and 3 are the octet values.
   */
   int type = get_charset_iso2022_type (charset);
+
+  /* NOTE NOTE NOTE: It's important that our private codepoints here not
+     conflict with the private codepoints used for encoding error octets,
+     as defined by UNICODE_ERROR_OCTET_RANGE_START. */
+  text_checking_assert (UNICODE_ERROR_OCTET_RANGE_END < 0x800000);
 
   if (type >= 0)
     {
@@ -2108,7 +2128,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	add_16_bit_char (code, dst, little_endian);
       else if (write_error_characters_as_such && 
 	       code >= UNICODE_ERROR_OCTET_RANGE_START &&
-	       code < (UNICODE_ERROR_OCTET_RANGE_START + 0x100))
+	       code <= UNICODE_ERROR_OCTET_RANGE_END))
 	{
 	  Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
 	}
@@ -2134,7 +2154,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	{
           if (write_error_characters_as_such && 
               code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code < (UNICODE_ERROR_OCTET_RANGE_START + 0x100))
+              code <= UNICODE_ERROR_OCTET_RANGE_END))
             {
               Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
             }
@@ -2153,7 +2173,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	{
           if (write_error_characters_as_such && 
               code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code < (UNICODE_ERROR_OCTET_RANGE_START + 0x100))
+              code <= UNICODE_ERROR_OCTET_RANGE_END))
             {
               Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
             }
@@ -2191,7 +2211,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 #endif
 	       if (write_error_characters_as_such && 
 		   code >= UNICODE_ERROR_OCTET_RANGE_START &&
-		   code < (UNICODE_ERROR_OCTET_RANGE_START + 0x100))
+		   code <= UNICODE_ERROR_OCTET_RANGE_END))
 		 {
 		   Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
 		   break;
@@ -3171,7 +3191,7 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
         {
         case UNICODE_UTF_8:
           invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START + 0x80;
-          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_START + 0xFF;
+          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_END;
           break;
         case UNICODE_UTF_7:
           /* #### Work out what to do here in reality, read the spec and decide
@@ -3180,7 +3200,7 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
           break;
         default:
           invalid_lower_limit = UNICODE_ERROR_OCTET_RANGE_START;
-          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_START + 0xFF;
+          invalid_upper_limit = UNICODE_ERROR_OCTET_RANGE_END;
           break;
         }
 
@@ -3524,4 +3544,14 @@ complex_vars_of_unicode (void)
 ),
 		    Qmnemonic, build_string ("UTF8")),
 	     list2 (Qunicode_type, Qutf_8)));
+
+#ifndef UNICODE_INTERNAL
+  /* Allocate the first JIT charset so that it appears in Unicode
+     precedence lists.  This is important because JIT characters will only
+     be generated in jit-ucs-charset-0 is seen in the precedence list.
+  */
+  allocate_jit_ucs_charset ();
+  Vcharset_jit_ucs_charset_0 = Vcurrent_jit_charset;
+  staticpro (&Vcharset_jit_ucs_charset_0);
+#endif /* not UNICODE_INTERNAL */
 }
