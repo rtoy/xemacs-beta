@@ -1,3 +1,18 @@
+2010-01-19  Ben Wing  <ben@xemacs.org>
+
+	* console-impl.h (struct console_methods):
+	* console-stream.c (stream_text_width):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c:
+	* redisplay.c (redisplay_window_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string):
+	Change the text_width method to take a window instead of a frame.
+	Needed for Unicode-internal.
+
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
 	* redisplay-gtk.c:
