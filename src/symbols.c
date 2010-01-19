@@ -851,8 +851,12 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
       types for ints and booleans couldn't be added).  Note that
       some of these variables are automatically local in each
       buffer, while some are only local when they become set
-      (similar to `make-variable-buffer-local').  In these latter
-      cases, of course, the default value shows through in all
+      (similar to `make-variable-buffer-local').  The function
+      common_init_complex_vars_of_buffer() determines which variables
+      behave in which way.
+
+      In the case of variables that are only local when set,
+      of course, the default value shows through in all
       buffers in which the variable doesn't have a local value.
       This is implemented by making sure the "struct buffer" field
       always contains the correct value (whether it's local or
@@ -1454,7 +1458,7 @@ flush_buffer_local_cache (Lisp_Object sym,
   bfwd->current_alist_element = Qnil;
   bfwd->current_buffer = Qnil;
 
-  /* Now store default the value into the current-value slot.
+  /* Now store the default value into the current-value slot.
      We don't simply write it there, because the current-value
      slot might be a forwarding pointer, in which case we need
      to instead write the value into the C variable.
