@@ -51,7 +51,11 @@
 (defalias 'find-charset-region 'charsets-in-region)
 
 
-;;;; Charset accessors
+;;;; Charset properties and accessors
+
+(defun charset-or-charset-name-p (obj)
+  "Return true if OBJ is a charset object or a symbol naming a charset."
+  (or (charsetp obj) (and (symbolp obj) (not (null (find-charset obj))))))
 
 (defun charset-iso-graphic-plane (charset)
   "Return the `graphic' property of CHARSET.
@@ -358,6 +362,19 @@ no such translation table instead of returning nil."
 (defvar charset-tag-function-list nil
   "Alist of (NAME . FUNCTION) for defined charset-tag functions.")
 
+(defun charset-tag-p (obj)
+  "Return t if OBJ is a charset tag."
+  ;; Check for both full-form and short-form tags.
+  (not (null (or (gethash obj charset-tag-to-properties-mapping)
+		 (gethash obj charset-tag-short-to-full-mapping)))))
+
+(defun charset-or-charset-tag-p (obj)
+  "Return t if OBJ is a charset, charset name, or charset tag."
+  (cond ((charset-or-charset-name-p obj) t)
+	((charset-tag-p obj) t)
+	((and (listp obj) (every #'charset-or-charset-tag-p obj)) t)
+	(t nil)))
+
 (defsubst charset-tag-full-p (tag)
   "Return true if charset tag TAG is in full form."
   (not (null (string-match "/" (symbol-name tag)))))
@@ -375,7 +392,7 @@ no such translation table instead of returning nil."
   (if (charset-tag-full-p tag) (list tag)
     (gethash tag charset-tag-short-to-full-mapping)))
 
-(defun* define-charset-tag (tag &key parent function doc-string)
+(defun* define-charset-tag (tag &key list parent function doc-string)
   "Define a charset tag.
 PARENT specifies the parent(s) of the tag.  PARENT can be a symbol or list
 of symbols.  If PARENT is omitted, `default' is used.
@@ -397,6 +414,11 @@ DOC-STRING is optional documentation for the tag.
 FUNCTION is a one-argument predicate that is given a charset and should
 return true or false.  If specified, this tag is automatically true for
 all charsets matching the function.
+
+LIST is a list of charsets or other tags.  If given, TAG is a list tag,
+and when specified in a precedence list, the value of LIST will be
+substituted, in order.  This is useful for ensuring that certain charsets
+end up in front of or behind certain other ones.
 
 Charset tags can be used in place of charsets in charset precedence lists,
 which are used for converting Unicode characters and codepoints into
@@ -424,7 +446,8 @@ both of these tags."
     (signal-error 'invalid-change `("Can't redefine existing tag" ,tag)))
 
   ;; Add to hash tables
-  (puthash tag `(parent ,parent doc-string ,doc-string function ,function)
+  (puthash tag `(parent ,parent doc-string ,doc-string function ,function
+		 list ,list)
 	   charset-tag-to-properties-mapping)
   (let ((tag-name (charset-tag-name tag)))
     (push tag (gethash tag-name charset-tag-short-to-full-mapping)))
@@ -437,33 +460,65 @@ both of these tags."
     (loop for cs in (charset-list) do
       (when (funcall function cs)
 	(register-charset-tags-1 cs tag))))
+
+  ;; Validate the value of `list'.
+  (when list
+    (loop for elt in list do
+      (check-argument-type 'charset-or-charset-tag-p elt)))
   )
 
-(defun charset-tag-to-charset (tag)
+(defun charset-tag-to-charset-list (tag)
   "Return list of all charsets matching TAG or any of its ancestors.
-If TAG is in short form (see `define-charset-tag'), all tags with the same
-short form will match.
+If TAG has a :list property, fetch the value of that property and recursively
+  process each element of the list.
+If TAG is in full form, return a list of all charsets directly matching TAG,
+  followed by the result of recursively processing TAG's parents.
+If TAG is in short form (see `define-charset-tag'), return the result of
+  recursively processing all tags with the same short form.
+If TAG is a charset, just return a list of that charset.
+If TAG is a list, return a list of charsets matching all tags given in the
+  list.
 This is called from the C code."
-  (remove-duplicates
-   ;; First map to list of full tags ...
-   (let ((full-tags (charset-tag-to-full-tags tag)))
-     (cond ((null full-tags) nil)
-	   ((= 1 (length full-tags))
-	    ;; If there's only one, recursively loop over all parents ...
-	    (let* ((full-tag (first full-tags))
-		   (ancestor-charsets
-		    (loop for par in
-		      (getf (gethash full-tag
-				     charset-tag-to-properties-mapping)
-			    'parent)
-		      append (charset-tag-to-charset par))))
-	      ;; ... then add charsets for the tag itself.
-	      (append (gethash full-tag charset-tag-to-charset-mapping)
-		      ancestor-charsets)))
-	   (t
-	    ;; Otherwise, loop over all full tags.
-	    (loop for full-tag in full-tags
-	      append (charset-tag-to-charset full-tag)))))))
+  (cond ((or (charsetp tag) (and (symbolp tag) (find-charset tag)))
+	 (list (find-charset tag)))
+	((listp tag)
+	 ;; We could use `intersection', but that doesn't produce a "stable"
+	 ;; intersection -- it iterates over the second list instead of the
+	 ;; first one, and returns the values in backwards order.
+	 (reduce #'(lambda (list1 list2)
+		     (loop for l in list1
+		       if (memq l list2)
+		       collect l))
+		 (mapcar #'charset-tag-to-charset-list tag)))
+	(t
+	 (check-argument-type 'charset-tag-p tag)
+	 (remove-duplicates
+	  ;; First map to list of full tags ...
+	  (let ((full-tags (charset-tag-to-full-tags tag)))
+	    (cond ((null full-tags) nil)
+		  ((= 1 (length full-tags))
+		   ;; If there's only one, then:
+		   (let* ((full-tag (first full-tags))
+			  (props (gethash full-tag
+					  charset-tag-to-properties-mapping))
+			  (list (getf props 'list)))
+		     ;; 1. If a list tag, recurse over the elements of the
+		     ;;    list.
+		     (if list
+			 (loop for l in list
+			   append (charset-tag-to-charset-list l))
+		       ;; 2. Else, recursively loop over all parents ...
+		       (let* ((ancestor-charsets
+			       (loop for par in (getf props 'parent)
+				 append (charset-tag-to-charset-list par))))
+			 ;; ... then add charsets for the tag itself.
+			 (append (gethash full-tag
+					  charset-tag-to-charset-mapping)
+				 ancestor-charsets)))))
+		  (t
+		   ;; Otherwise, loop over all full tags.
+		   (loop for full-tag in full-tags
+		     append (charset-tag-to-charset-list full-tag)))))))))
 
 (defun register-charset-tags-1 (charset full-tag)
   ;; Actually make a note of this CHARSET/FULL-TAG combination.

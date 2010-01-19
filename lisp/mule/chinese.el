@@ -108,6 +108,16 @@
    unicode-map ("unicode/mule-ucs/chinese-sisheng.txt")
    tags (bopomofo chinese/language)
    ))
+
+(define-charset-tag 'chinese-cns/list
+  :list '(chinese-cns11643-1 chinese-cns11643-2 chinese-cns11643-3
+	  chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
+	  chinese-cns11643-7))
+(define-charset-tag 'chinese/list
+  :list `(chinese-gb2312
+	  ,@(if (featurep 'unicode-internal) '(chinese-big5)
+	      '(chinese-big5-1 chinese-big5-2))
+	  chinese-cns/list chinese/language))
  
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))

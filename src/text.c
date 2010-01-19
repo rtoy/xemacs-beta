@@ -1708,7 +1708,7 @@ old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
    else. */
 
 Ichar
-old_mule_unicode_to_ichar (int code, Lisp_Object_dynarr *precedence_list,
+old_mule_unicode_to_ichar (int code, Lisp_Object precedence_list,
 			   enum converr fail)
 {
   Lisp_Object charset;
@@ -2431,7 +2431,7 @@ void
 find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 			       const Ibyte *USED_IF_MULE (str),
 			       Bytecount USED_IF_MULE (len),
-			       Lisp_Object_dynarr *unicode_precedence)
+			       Lisp_Object unicode_precedence)
 {
   Lisp_Object prev_charset = Qunbound;
   const Ibyte *strend = str + len;
@@ -2468,7 +2468,7 @@ find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 void
 find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 			       const Ichar *str, Charcount len,
-			       Lisp_Object_dynarr *unicode_precedence)
+			       Lisp_Object unicode_precedence)
 {
   Lisp_Object prev_charset = Qunbound;
   int j;
@@ -2502,7 +2502,7 @@ find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 void
 find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
 			 struct buffer *buf, Charbpos pos, Charcount len,
-			 Lisp_Object_dynarr *unicode_precedence)
+			 Lisp_Object unicode_precedence)
 {
   Lisp_Object prev_charset = Qunbound;
   Charbpos stop = pos + len;
@@ -5346,10 +5346,10 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
   ch = XCHAR (lispch);
 
   {
-    Lisp_Object_dynarr *dyn =
-      convert_charset_list_to_precedence_dynarr (precedence_list);
-    ichar_to_charset_codepoint (ch, dyn, charset, c1, c2);
-    free_precedence_dynarr (dyn);
+    Lisp_Object precarray =
+      external_convert_precedence_list_to_array (precedence_list);
+    ichar_to_charset_codepoint (ch, precarray, charset, c1, c2);
+    free_precedence_array (precarray);
   }
   if (munge_codepoints)
     {
@@ -5374,18 +5374,18 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 }
 
 /* Convert an Lisp integer into a Unicode codepoint, and convert a
-   PRECEDENCE_LIST list into an internal dynarr. */
+   PRECEDENCE_LIST into a precedence array. */
 static int
 get_external_unicode_codepoint (Lisp_Object unicode,
 				Lisp_Object precedence_list,
-				Lisp_Object_dynarr **prec_list_out)
+				Lisp_Object *precarray_out)
 {
   int code = decode_unicode (unicode);
-  Lisp_Object_dynarr *dyn =
-    convert_charset_list_to_precedence_dynarr (precedence_list);
+  Lisp_Object precarray =
+    external_convert_precedence_list_to_array (precedence_list);
 
-  if (prec_list_out)
-    *prec_list_out = dyn;
+  if (precarray_out)
+    *precarray_out = precarray;
   return code;
 }
 
@@ -5687,12 +5687,12 @@ nil or `fail'	Return nil
 */
        (unicode, precedence_list, handle_error))
 {
-  Lisp_Object_dynarr *unicode_prec;
+  Lisp_Object unicode_prec;
   int c = get_external_unicode_codepoint (unicode, precedence_list,
 					  &unicode_prec);
   enum converr fail = decode_handle_error (handle_error);
   Ichar ret = unicode_to_ichar (c, unicode_prec, fail);
-  free_precedence_dynarr (unicode_prec);
+  free_precedence_array (unicode_prec);
 
   if (ret == -1)
     return Qnil;
@@ -5779,13 +5779,13 @@ list.
 */
        (code, precedence_list))
 {
-  Lisp_Object_dynarr *prec_dyn;
-  int c = get_external_unicode_codepoint (code, precedence_list, &prec_dyn);
+  Lisp_Object precarray;
+  int c = get_external_unicode_codepoint (code, precedence_list, &precarray);
   Lisp_Object charset;
   int a1, a2;
 
-  unicode_to_charset_codepoint (c, prec_dyn, &charset, &a1, &a2);
-  free_precedence_dynarr (prec_dyn);
+  unicode_to_charset_codepoint (c, precarray, &charset, &a1, &a2);
+  free_precedence_array (precarray);
   
   if (NILP (charset))
     return Qnil;

@@ -32,6 +32,14 @@
 
 ;;; Code:
 
+(define-charset-tag 'latin/list
+  :list '(latin-iso8859-1 latin-iso8859-2 latin-iso8859-15
+	  (latin/script iso8859) latin/script)
+  :doc-string "List used to initialize global Unicode precedence list.
+We put, in order, the most useful Latin charsets (`latin-iso8859-1',
+`latin-iso8859-2', and `latin-iso8859-15'), then all other `latin-iso8859-*'
+charsets, then all other Latin charsets.")
+
 ;; Case table setup.  We set up all the case tables using
 ;; put-case-table-pair.  The data for this comes from FSF Emacs 20.7
 ;; (lisp/international/latin-*.el), written by several people and
