@@ -366,10 +366,8 @@ Lisp_Object Qignore_first_column;
 #ifndef UNICODE_INTERNAL
 Lisp_Object Vcharset_jit_ucs_charset_0;
 Lisp_Object Vcurrent_jit_charset;
-/* The following are stored as Lisp objects instead of just ints so they
-   are preserved across dumping */
-Lisp_Object Vlast_allocated_jit_c1, Vlast_allocated_jit_c2;
-Lisp_Object Vnumber_of_jit_charsets;
+int last_allocated_jit_c1, last_allocated_jit_c2;
+int number_of_jit_charsets;
 Lisp_Object Vcharset_descr;
 #endif
 
@@ -1029,10 +1027,6 @@ allocate_jit_ucs_charset (void)
 static int
 get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
 {
-  int last_allocated_jit_c1 = XINT (Vlast_allocated_jit_c1);
-  int last_allocated_jit_c2 = XINT (Vlast_allocated_jit_c2);
-  int number_of_jit_charsets = XINT (Vnumber_of_jit_charsets);
-
   if (!NILP (Vcurrent_jit_charset) &&
       !(last_allocated_jit_c1 == 127 && last_allocated_jit_c2 == 127))
     {
@@ -1053,10 +1047,6 @@ get_free_jit_codepoint (Lisp_Object *charset, int *c1, int *c2)
   *c2 = last_allocated_jit_c2;
   ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
   
-  Vlast_allocated_jit_c1 = make_int (last_allocated_jit_c1);
-  Vlast_allocated_jit_c2 = make_int (last_allocated_jit_c2);
-  Vnumber_of_jit_charsets = make_int (number_of_jit_charsets);
-
   return 1;
 }
 
@@ -2128,7 +2118,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	add_16_bit_char (code, dst, little_endian);
       else if (write_error_characters_as_such && 
 	       code >= UNICODE_ERROR_OCTET_RANGE_START &&
-	       code <= UNICODE_ERROR_OCTET_RANGE_END))
+	       code <= UNICODE_ERROR_OCTET_RANGE_END)
 	{
 	  Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
 	}
@@ -2154,7 +2144,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	{
           if (write_error_characters_as_such && 
               code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code <= UNICODE_ERROR_OCTET_RANGE_END))
+              code <= UNICODE_ERROR_OCTET_RANGE_END)
             {
               Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
             }
@@ -2173,7 +2163,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	{
           if (write_error_characters_as_such && 
               code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code <= UNICODE_ERROR_OCTET_RANGE_END))
+              code <= UNICODE_ERROR_OCTET_RANGE_END)
             {
               Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
             }
@@ -2211,7 +2201,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 #endif
 	       if (write_error_characters_as_such && 
 		   code >= UNICODE_ERROR_OCTET_RANGE_START &&
-		   code <= UNICODE_ERROR_OCTET_RANGE_END))
+		   code <= UNICODE_ERROR_OCTET_RANGE_END)
 		 {
 		   Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
 		   break;
@@ -3428,14 +3418,11 @@ vars_of_unicode (void)
 
 #ifdef MULE
 #ifndef UNICODE_INTERNAL
-  staticpro (&Vnumber_of_jit_charsets);
-  Vnumber_of_jit_charsets = Qzero;
+  dump_add_opaque_int (&number_of_jit_charsets);
+  dump_add_opaque_int (&last_allocated_jit_c1);
+  dump_add_opaque_int (&last_allocated_jit_c2);
   staticpro (&Vcurrent_jit_charset);
   Vcurrent_jit_charset = Qnil;
-  staticpro (&Vlast_allocated_jit_c1);
-  Vlast_allocated_jit_c1 = Qzero;
-  staticpro (&Vlast_allocated_jit_c2);
-  Vlast_allocated_jit_c2 = Qzero;
   staticpro (&Vcharset_descr);
   Vcharset_descr
     = build_msg_string ("Mule charset for otherwise unknown Unicode code points.");
