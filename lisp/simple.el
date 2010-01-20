@@ -2086,25 +2086,35 @@ either a character or a symbol, uppercase or lowercase."
 
 (defun handle-pre-motion-command-current-command-is-motion ()
   (and (key-press-event-p last-input-event)
-       (let ((key (event-key last-input-event))
-	     (mods (delq 'shift (event-modifiers last-input-event))))
-	 ;(princ (format "key: %s mods: %s\n" key mods) 'external-debugging-output)
-	 (catch 'handle-pre-motion-command-current-command-is-motion
-	   (flet ((keysyms-equal (a b)
-		    (if (characterp b)
-			(setq b (intern (char-to-string (downcase b)))))
-		    (eq a b)))
-             (setq key (if (characterp key)
-                           (intern (char-to-string (downcase key)))
-                         key))
-	     (dolist (keysym motion-keys-for-shifted-motion)
-	       (when (if (listp keysym)
-		         (and (equal mods (butlast keysym))
-			      (keysyms-equal key (car (last keysym))))
-	                (keysyms-equal key keysym))
-		 (throw 'handle-pre-motion-command-current-command-is-motion
-			t)))
-	     nil)))))
+       (macrolet
+	   ((keysyms-equal (&rest args)
+	      `((lambda (a b)
+		  (when (and
+			 ;; As of now, none of the elements of
+			 ;; motion-keys-for-shifted-motion are non-symbols;
+			 ;; this redundant check saves a few hundred
+			 ;; funcalls on startup.
+			 (not (symbolp b)) 
+			 (characterp b))
+		    (setf (car char-list) b
+			  b (intern (concat char-list nil))))
+		  (eq a b))
+		,@args)))
+         (loop
+           for keysym in motion-keys-for-shifted-motion
+           with key = (event-key last-input-event)
+           with mods = (delq 'shift (event-modifiers last-input-event))
+           with char-list = '(?a) ;; Some random character; the list will be
+				  ;; modified in the constants vector over
+				  ;; time.
+           initially (if (and (not (symbolp key)) (characterp key))
+			 (setf (car char-list) key
+			       key (intern (concat char-list nil))))
+           thereis (if (listp keysym)
+		       (and (equal mods (butlast keysym))
+			    (keysyms-equal
+			     key (car (last keysym))))
+		     (keysyms-equal key keysym))))))
 
 (defun handle-pre-motion-command ()
   (if (and
