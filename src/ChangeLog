@@ -1,5 +1,15 @@
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* lrecord.h (struct lrecord_implementation):
+	Clean up description of finalizer methods.  Clean up and expand
+	the long comment at the top of lrecord.h.  Add a section about why
+	New-GC requires a bunch of new internal objects to be created (not
+	completely understood).
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	Disable error-checking code in Dynarr_at and related lookup
 	functions.  It leads to a crash in the glyph-cachels code under
