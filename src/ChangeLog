@@ -1,3 +1,12 @@
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Disable error-checking code in Dynarr_at and related lookup
+	functions.  It leads to a crash in the glyph-cachels code under
+	Cygwin 1.7 and GCC 3.4.4.  I assume this is a compiler bug since
+	the code in question doesn't (or shouldn't) modify anything.
+	Changing the code from inline to non-inline didn't help.
+
 2010-01-19  Ben Wing  <ben@xemacs.org>
 
 	* console-impl.h (struct console_methods):
