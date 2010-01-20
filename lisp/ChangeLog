@@ -1,3 +1,12 @@
+2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	This function is called a *lot*, make it faster, making
+	keysyms-equal inline, calling #'characterp (which doesn't have a
+	bytecode) much more rarely, and not throwing and catching. This
+	won't make much difference in practice, but does eliminate losts
+	of noise from profiling, e.g. at startup.
+
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
 	* loadup.el:
