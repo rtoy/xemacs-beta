@@ -139,7 +139,7 @@ static const struct memory_description char_table_entry_description[] = {
 };
 
 DEFINE_DUMPABLE_LISP_OBJECT ("char-table-entry", char_table_entry,
-			     mark_char_table_entry, 0,
+			     mark_char_table_entry, internal_object_printer,
 			     0, char_table_entry_equal,
 			     char_table_entry_hash,
 			     char_table_entry_description,

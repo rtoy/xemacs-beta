@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -747,7 +747,7 @@ very_old_free_lcrecord (struct old_lcrecord_header *lcrecord)
 	}
     }
   if (lrecord->implementation->finalizer)
-    lrecord->implementation->finalizer (lrecord, 0);
+    lrecord->implementation->finalizer (lrecord);
   xfree (lrecord);
   return;
 }
@@ -765,9 +765,17 @@ disksave_object_finalization_1 (void)
 
   for (header = all_lcrecords; header; header = header->next)
     {
-      if (LHEADER_IMPLEMENTATION (&header->lheader)->finalizer &&
-	  !header->free)
-	LHEADER_IMPLEMENTATION (&header->lheader)->finalizer (header, 1);
+      struct lrecord_header *objh = &header->lheader;
+      const struct lrecord_implementation *imp = LHEADER_IMPLEMENTATION (objh);
+#if 0 /* possibly useful for debugging */
+      if (!RECORD_DUMPABLE (objh) && !header->free)
+	{
+	  stderr_out ("Disksaving a non-dumpable object: ");
+	  debug_print (wrap_pointer_1 (header));
+	}
+#endif
+      if (imp->disksaver && !header->free)
+	(imp->disksaver) (wrap_pointer_1 (header));
     }
 #endif /* not NEW_GC */
 }
@@ -2342,15 +2350,16 @@ string_plist (Lisp_Object string)
    standard way to do finalization when using
    SWEEP_FIXED_TYPE_BLOCK(). */
 
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS ("string", string,
-						   mark_string, print_string,
-						   0, string_equal, 0,
-						   string_description,
-						   string_getprop,
-						   string_putprop,
-						   string_remprop,
-						   string_plist,
-						   Lisp_String);
+DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("string", string,
+						mark_string, print_string,
+						0, string_equal, 0,
+						string_description,
+						string_getprop,
+						string_putprop,
+						string_remprop,
+						string_plist,
+						0 /* no disksaver */,
+						Lisp_String);
 #endif /* not NEW_GC */
 
 #ifdef NEW_GC
@@ -2391,16 +2400,17 @@ static struct string_chars_block *current_string_chars_block;
 #endif /* not NEW_GC */
 
 #ifdef NEW_GC
-DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS ("string", string,
-					mark_string, print_string,
-					0,
-					string_equal, 0,
-					string_description,
-					string_getprop,
-					string_putprop,
-					string_remprop,
-					string_plist,
-					Lisp_String);
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("string", string,
+				     mark_string, print_string,
+				     0,
+				     string_equal, 0,
+				     string_description,
+				     string_getprop,
+				     string_putprop,
+				     string_remprop,
+				     string_plist,
+				     0 /* no disksaver */,
+				     Lisp_String);
 
 
 static const struct memory_description string_direct_data_description[] = {
@@ -3050,11 +3060,10 @@ Lisp_Object
 make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
 {
-  /* Don't use old_alloc_lcrecord_type() avoid infinite recursion
-     allocating this, */
+  /* Don't use alloc_automanaged_lcrecord() avoid infinite recursion
+     allocating this. */
   struct lcrecord_list *p = (struct lcrecord_list *)
-    old_basic_alloc_lcrecord (sizeof (struct lcrecord_list),
-			      &lrecord_lcrecord_list);
+    old_alloc_lcrecord (&lrecord_lcrecord_list);
 
   p->implementation = implementation;
   p->size = size;
@@ -3100,7 +3109,7 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
       return val;
     }
   else
-    return wrap_pointer_1 (old_basic_alloc_lcrecord (list->size,
+    return wrap_pointer_1 (old_alloc_sized_lcrecord (list->size,
 						     list->implementation));
 }
 
@@ -3145,7 +3154,7 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   gc_checking_assert (!OBJECT_DUMPED_P (lcrecord));
   
   if (implementation->finalizer)
-    implementation->finalizer (lheader, 0);
+    implementation->finalizer (lheader);
   /* Yes, there are two ways to indicate freeness -- the type is
      lrecord_type_free or the ->free flag is set.  We used to do only the
      latter; now we do the former as well for KKCC purposes.  Probably
@@ -3517,7 +3526,7 @@ sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
       if (! MARKED_RECORD_HEADER_P (h) && ! header->free)
 	{
 	  if (LHEADER_IMPLEMENTATION (h)->finalizer)
-	    LHEADER_IMPLEMENTATION (h)->finalizer (h, 0);
+	    LHEADER_IMPLEMENTATION (h)->finalizer (h);
 	}
     }
 

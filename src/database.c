@@ -236,24 +236,18 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_database (void *header, int for_disksave)
+finalize_database (void *header)
 {
   Lisp_Database *db = (Lisp_Database *) header;
 
-  if (for_disksave)
-    {
-      invalid_operation
-	("Can't dump an emacs containing database objects",
-	 wrap_database (db));
-    }
   db->funcs->close (db);
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("database", database,
-					   mark_database, print_database,
-					   finalize_database, 0, 0, 
-					   database_description,
-					   Lisp_Database);
+			   mark_database, print_database,
+			   finalize_database, 0, 0, 
+			   database_description,
+			   Lisp_Database);
 
 DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
 Close database DATABASE.

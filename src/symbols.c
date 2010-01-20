@@ -139,13 +139,14 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS ("symbol", symbol,
+DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("symbol", symbol,
 						mark_symbol, print_symbol,
 						0, 0, 0, symbol_description,
 						symbol_getprop,
 						symbol_putprop,
 						symbol_remprop,
 						Fsymbol_plist,
+						0 /* no disksaver */,
 						Lisp_Symbol);
 
 /**********************************************************************/
@@ -1044,32 +1045,32 @@ static const struct memory_description symbol_value_forward_description[] = {
 };
 
 DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-forward",
-			       symbol_value_forward,
-			       0,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_forward_description,
-			       struct symbol_value_forward);
+			     symbol_value_forward,
+			     0,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_forward_description,
+			     struct symbol_value_forward);
 
 DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-buffer-local",
-			       symbol_value_buffer_local,
-			       mark_symbol_value_buffer_local,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_buffer_local_description,
-			       struct symbol_value_buffer_local);
+			     symbol_value_buffer_local,
+			     mark_symbol_value_buffer_local,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_buffer_local_description,
+			     struct symbol_value_buffer_local);
 
 DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-lisp-magic",
-			       symbol_value_lisp_magic,
-			       mark_symbol_value_lisp_magic,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_lisp_magic_description,
-			       struct symbol_value_lisp_magic);
+			     symbol_value_lisp_magic,
+			     mark_symbol_value_lisp_magic,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_lisp_magic_description,
+			     struct symbol_value_lisp_magic);
 
 DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-varalias",
-			       symbol_value_varalias,
-			       mark_symbol_value_varalias,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_varalias_description,
-			       struct symbol_value_varalias);
+			     symbol_value_varalias,
+			     mark_symbol_value_varalias,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_varalias_description,
+			     struct symbol_value_varalias);
 
 
 /* Getting and setting values of symbols */

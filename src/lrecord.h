@@ -354,20 +354,20 @@ struct lrecord_implementation
      mark methods will be removed. */
   Lisp_Object (*marker) (Lisp_Object);
 
-  /* `printer' converts the object to a printed representation.
-     This can be NULL; in this case internal_object_printer() will be
-     used instead. */
+  /* `printer' converts the object to a printed representation.  `printer'
+     should never be NULL (if so, you will get an assertion failure when
+     trying to print such an object).  Either supply a specific printing
+     method, or use the default methods internal_object_printer() (for
+     internal objects that should not be visible at Lisp level) or
+     external_object_printer() (for objects visible at Lisp level). */
   void (*printer) (Lisp_Object, Lisp_Object printcharfun, int escapeflag);
 
-  /* `finalizer' is called at GC time when the object is about to
-     be freed, and at dump time (FOR_DISKSAVE will be non-zero in this
-     case).  It should perform any necessary cleanup (e.g. freeing
-     malloc()ed memory).  This can be NULL, meaning no special
-     finalization is necessary.
-
-     WARNING: remember that `finalizer' is called at dump time even
-     though the object is not being freed. */
-  void (*finalizer) (void *header, int for_disksave);
+  /* `finalizer' is called at GC time when the object is about to be freed.
+     It should perform any necessary cleanup, such as freeing malloc()ed
+     memory or releasing pointers or handles to objects created in external
+     libraries, such as window-system windows or file handles.  This can be
+     NULL, meaning no special finalization is necessary. */
+  void (*finalizer) (void *header);
 
   /* This can be NULL, meaning compare objects with EQ(). */
   int (*equal) (Lisp_Object obj1, Lisp_Object obj2, int depth);
@@ -391,6 +391,21 @@ struct lrecord_implementation
   int (*putprop) (Lisp_Object obj, Lisp_Object prop, Lisp_Object val);
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
+
+  /* `disksaver' is called at dump time.  It is used for objects that
+     contain pointers or handles to objects created in external libraries,
+     such as window-system windows or file handles.  Such external objects
+     cannot be dumped, so it is necessary to release them at dump time and
+     arrange somehow or other for them to be resurrected if necessary later
+     on.
+
+     It seems that even non-dumpable objects may be around at dump time,
+     and a disksaver may be provided. (In fact, the only object currently
+     with a disksaver, lstream, is non-dumpable.)
+     
+     Objects rarely need to provide this method; most of the time it will
+     be NULL. */
+  void (*disksaver) (Lisp_Object);
 
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.  If
      `static_size' is 0, this type is not instantiable by
@@ -454,7 +469,7 @@ int lrecord_stats_heap_size (void);
       if (MCACF_implementation && MCACF_implementation->finalizer)	\
         {								\
 	  GC_STAT_FINALIZED;						\
-          MCACF_implementation->finalizer (ptr, 0);			\
+          MCACF_implementation->finalizer (ptr);			\
         }								\
     }									\
 } while (0)
@@ -469,8 +484,8 @@ int lrecord_stats_heap_size (void);
     {									\
       const struct lrecord_implementation *MCACF_implementation		\
 	= LHEADER_IMPLEMENTATION (MCACF_lheader);			\
-      if (MCACF_implementation && MCACF_implementation->finalizer)	\
-	MCACF_implementation->finalizer (ptr, 1);			\
+      if (MCACF_implementation && MCACF_implementation->disksaver)	\
+	MCACF_implementation->disksaver (ptr);				\
     }									\
 } while (0)
 
@@ -1143,17 +1158,20 @@ extern const struct sized_memory_description lisp_object_description;
    NEW_GC, because it does this automatically.
 
    DEFINE_*_INTERNAL_LISP_OBJECT is for "internal" objects that should
-   never be visible on the Lisp level.  This is a shorthand for the
-   most common type of internal objects, which have no equal or hash
-   method (since they generally won't appear in hash tables), no
-   finalizer and internal_object_printer() as their print method
-   (which prints that the object is internal and shouldn't be visible
-   externally).  For internal objects needing a finalizer, equal or
-   hash method, use the normal DEFINE_*_LISP_OBJECT mechanism for
-   defining these objects.
+   never be visible on the Lisp level.  This is a shorthand for the most
+   common type of internal objects, which have no equal or hash method
+   (since they generally won't appear in hash tables), no finalizer and
+   internal_object_printer() as their print method (which prints that the
+   object is internal and shouldn't be visible externally).  For internal
+   objects needing a finalizer, equal or hash method, or wanting to
+   customize the print method, use the normal DEFINE_*_LISP_OBJECT
+   mechanism for defining these objects.
 
-   DEFINE_*_WITH_PROPS is for objects which support the unified property
-   interface using `get', `put', `remprop' and `object-plist'.
+   DEFINE_*_GENERAL_LISP_OBJECT is for objects that need to provide one of
+   the less common methods that are omitted on most objects.  These methods
+   include the methods supporting the unified property interface using
+   `get', `put', `remprop' and `object-plist', and (for dumpable objects
+   only) the `disksaver' method.
 
    DEFINE_MODULE_* is for objects defined in an external module.
 
@@ -1172,76 +1190,76 @@ extern const struct sized_memory_description lisp_object_description;
 /********* The dumpable versions *********** */
 
 #define DEFINE_DUMPABLE_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#define DEFINE_DUMPABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+DEFINE_DUMPABLE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,structtype)
 
-#define DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_DUMPABLE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizer,structtype) \
+MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,0,sizer,0,structtype)
 
 #define DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+#define DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof(structtype),0,1,structtype)
 
 #define DEFINE_DUMPABLE_FROB_BLOCK_SIZABLE_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
+MAKE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,0,sizer,1,structtype)
 
 #define DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT(name,c_name,marker,desc,structtype) \
-DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,structtype)
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,0,structtype)
 
 #define DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT(name,c_name,marker,desc,sizer,structtype) \
-DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,sizer,structtype)
+DEFINE_DUMPABLE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,0,sizer,structtype)
 
 /********* The non-dumpable versions *********** */
 
 #define DEFINE_NODUMP_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_NODUMP_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_NODUMP_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_NODUMP_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#define DEFINE_NODUMP_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_NODUMP_SIZABLE_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_NODUMP_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,structtype)
 
-#define DEFINE_NODUMP_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizer,structtype) \
+MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,0,sizer,0,structtype)
 
 #define DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_NODUMP_FROB_BLOCK_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+#define DEFINE_NODUMP_FROB_BLOCK_GENERAL_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof(structtype),0,1,structtype)
 
 #define DEFINE_NODUMP_FROB_BLOCK_SIZABLE_LISP_OBJECT(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
+MAKE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,0,sizer,1,structtype)
 
 #define DEFINE_NODUMP_INTERNAL_LISP_OBJECT(name,c_name,marker,desc,structtype) \
-DEFINE_NODUMP_LISP_OBJECT_WITH_PROPS(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,structtype)
+DEFINE_NODUMP_GENERAL_LISP_OBJECT(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,0,structtype)
 
 #define DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT(name,c_name,marker,desc,sizer,structtype) \
-DEFINE_NODUMP_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,sizer,structtype)
+DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,marker,internal_object_printer,0,0,0,desc,0,0,0,0,0,sizer,structtype)
 
 /********* MAKE_LISP_OBJECT, the underlying macro *********** */
 
 #ifdef NEW_GC
-#define MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,frob_block_p,structtype)    \
+#define MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,size,sizer,frob_block_p,structtype)    \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
+    getprop, putprop, remprop, plist, disksaver, size, sizer,		\
     lrecord_type_##c_name }
 #else /* not NEW_GC */
-#define MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,frob_block_p,structtype)    \
+#define MAKE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,size,sizer,frob_block_p,structtype)    \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
+    getprop, putprop, remprop, plist, disksaver, size, sizer,		\
     lrecord_type_##c_name, frob_block_p }
 #endif /* not NEW_GC */
 
@@ -1249,48 +1267,48 @@ const struct lrecord_implementation lrecord_##c_name =			\
 /********* The module dumpable versions *********** */
 
 #define DEFINE_DUMPABLE_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_DUMPABLE_MODULE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_DUMPABLE_MODULE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_DUMPABLE_MODULE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_MODULE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#define DEFINE_DUMPABLE_MODULE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_MODULE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+DEFINE_DUMPABLE_MODULE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,structtype)
 
-#define DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_MODULE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_DUMPABLE_MODULE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizer,structtype) \
+MAKE_MODULE_LISP_OBJECT(name,c_name,1 /*dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,0,sizer,0,structtype)
 
 /********* The module non-dumpable versions *********** */
 
 #define DEFINE_NODUMP_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_NODUMP_MODULE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+DEFINE_NODUMP_MODULE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,structtype)
 
-#define DEFINE_NODUMP_MODULE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_MODULE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+#define DEFINE_NODUMP_MODULE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,structtype) \
+MAKE_MODULE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+DEFINE_NODUMP_MODULE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,structtype)
 
-#define DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_MODULE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+#define DEFINE_NODUMP_MODULE_SIZABLE_GENERAL_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,sizer,structtype) \
+MAKE_MODULE_LISP_OBJECT(name,c_name,0 /*non-dumpable*/,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,0,sizer,0,structtype)
 
 /********* MAKE_MODULE_LISP_OBJECT, the underlying macro *********** */
 
 #ifdef NEW_GC
-#define MAKE_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,frob_block_p,structtype) \
+#define MAKE_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,size,sizer,frob_block_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
+    getprop, putprop, remprop, plist, disksaver, size, sizer,		\
     lrecord_type_last_built_in_type }
 #else /* not NEW_GC */
-#define MAKE_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,frob_block_p,structtype) \
+#define MAKE_MODULE_LISP_OBJECT(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,disksaver,size,sizer,frob_block_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
+    getprop, putprop, remprop, plist, disksaver, size, sizer,		\
     lrecord_type_last_built_in_type, frob_block_p }
 #endif /* not NEW_GC */
 

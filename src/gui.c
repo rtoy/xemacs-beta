@@ -803,11 +803,11 @@ parse_gui_item_tree_list (Lisp_Object list)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("gui-item", gui_item,
-			       mark_gui_item, print_gui_item,
-			       0, gui_item_equal,
-			       gui_item_hash,
-			       gui_item_description,
-			       Lisp_Gui_Item);
+			   mark_gui_item, print_gui_item,
+			   0, gui_item_equal,
+			   gui_item_hash,
+			   gui_item_description,
+			   Lisp_Gui_Item);
 
 DOESNT_RETURN
 gui_error (const Ascbyte *reason, Lisp_Object frob)

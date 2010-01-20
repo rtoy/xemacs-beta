@@ -351,16 +351,13 @@ mark_command_builder (Lisp_Object obj)
 }
 
 static void
-finalize_command_builder (void *header, int for_disksave)
+finalize_command_builder (void *header)
 {
-  if (!for_disksave)
+  struct command_builder *b = (struct command_builder *) header;
+  if (b->echo_buf)
     {
-      struct command_builder *b = (struct command_builder *) header;
-      if (b->echo_buf)
-	{
-	  xfree (b->echo_buf, Ibyte *);
-	  b->echo_buf = 0;
-	}
+      xfree (b->echo_buf, Ibyte *);
+      b->echo_buf = 0;
     }
 }
 

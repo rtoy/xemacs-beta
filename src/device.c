@@ -171,9 +171,9 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("device", device,
-					   mark_device, print_device, 0, 0, 0, 
-					   device_description,
-					   struct device);
+			   mark_device, print_device, 0, 0, 0, 
+			   device_description,
+			   struct device);
 
 int
 valid_device_class_p (Lisp_Object class_)

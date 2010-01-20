@@ -107,8 +107,8 @@ static const struct memory_description bignum_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bignum", bignum, 0, bignum_print,
-				     0, bignum_equal, bignum_hash,
-				     bignum_description, Lisp_Bignum);
+					0, bignum_equal, bignum_hash,
+					bignum_description, Lisp_Bignum);
 
 #endif /* HAVE_BIGNUM */
 
@@ -271,9 +271,9 @@ static const struct memory_description bigfloat_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
-				     bigfloat_print, 0,
-				     bigfloat_equal, bigfloat_hash,
-				     bigfloat_description, Lisp_Bigfloat);
+					bigfloat_print, 0,
+					bigfloat_equal, bigfloat_hash,
+					bigfloat_description, Lisp_Bigfloat);
 
 #endif /* HAVE_BIGFLOAT */
 

@@ -130,13 +130,13 @@ static const struct memory_description bit_vector_description[] = {
 
 
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("bit-vector", bit_vector,
-				       mark_bit_vector,
-				       print_bit_vector, 0,
-				       bit_vector_equal,
-				       bit_vector_hash,
-				       bit_vector_description,
-				       size_bit_vector,
-				       Lisp_Bit_Vector);
+				     mark_bit_vector,
+				     print_bit_vector, 0,
+				     bit_vector_equal,
+				     bit_vector_hash,
+				     bit_vector_description,
+				     size_bit_vector,
+				     Lisp_Bit_Vector);
 
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*

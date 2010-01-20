@@ -281,9 +281,9 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("frame", frame,
-			       mark_frame, print_frame, 0, 0, 0,
-			       frame_description,
-			       struct frame);
+			   mark_frame, print_frame, 0, 0, 0,
+			   frame_description,
+			   struct frame);
 
 static void
 nuke_all_frame_slots (struct frame *f)

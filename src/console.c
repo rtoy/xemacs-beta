@@ -181,9 +181,9 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("console", console, mark_console,
-					   print_console, 0, 0, 0, 
-					   console_description,
-					   struct console);
+			   print_console, 0, 0, 0, 
+			   console_description,
+			   struct console);
 
 
 static void

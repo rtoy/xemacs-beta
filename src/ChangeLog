@@ -1,3 +1,155 @@
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (very_old_free_lcrecord):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (sweep_lcrecords_1):
+	* buffer.c:
+	* bytecode.c:
+	* bytecode.c (Fcompiled_function_p):
+	* chartab.c:
+	* console-impl.h:
+	* console-impl.h (CONSOLE_TYPE_P):
+	* console.c:
+	* console.c (set_quit_events):
+	* data.c:
+	* data.c (Fmake_ephemeron):
+	* database.c:
+	* database.c (finalize_database):
+	* database.c (Fclose_database):
+	* device-msw.c:
+	* device-msw.c (finalize_devmode):
+	* device-msw.c (allocate_devmode):
+	* device.c:
+	* elhash.c:
+	* elhash.c (finalize_hash_table):
+	* eval.c:
+	* eval.c (bind_multiple_value_limits):
+	* event-stream.c:
+	* event-stream.c (finalize_command_builder):
+	* events.c:
+	* events.c (mark_event):
+	* extents.c:
+	* extents.c (finalize_extent_info):
+	* extents.c (uninit_buffer_extents):
+	* faces.c:
+	* file-coding.c:
+	* file-coding.c (finalize_coding_system):
+	* file-coding.h:
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (struct detector):
+	* floatfns.c:
+	* floatfns.c (extract_float):
+	* fns.c:
+	* fns.c (Fidentity):
+	* font-mgr.c (finalize_fc_pattern):
+	* font-mgr.c (finalize_fc_config):
+	* frame.c:
+	* glyphs.c:
+	* glyphs.c (finalize_image_instance):
+	* glyphs.c (unmap_subwindow_instance_cache_mapper):
+	* gui.c:
+	* gui.c (gui_error):
+	* keymap.c:
+	* lisp.h (struct Lisp_Symbol):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE):
+	* lrecord.h (DEFINE_DUMPABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (MAKE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (MAKE_MODULE_LISP_OBJECT):
+	* lstream.c:
+	* lstream.c (finalize_lstream):
+	* lstream.c (disksave_lstream):
+	* marker.c:
+	* marker.c (finalize_marker):
+	* mule-charset.c (make_charset):
+	* number.c:
+	* objects.c:
+	* objects.c (finalize_color_instance):
+	* objects.c (finalize_font_instance):
+	* opaque.c:
+	* opaque.c (make_opaque_ptr):
+	* process-nt.c:
+	* process-nt.c (nt_finalize_process_data):
+	* process-nt.c (nt_deactivate_process):
+	* process.c:
+	* process.c (finalize_process):
+	* procimpl.h (struct process_methods):
+	* scrollbar.c:
+	* scrollbar.c (free_scrollbar_instance):
+	* specifier.c (finalize_specifier):
+	* symbols.c:
+	* toolbar.c:
+	* toolbar.c (Ftoolbar_button_p):
+	* tooltalk.c:
+	* ui-gtk.c:
+	* ui-gtk.c (emacs_gtk_object_finalizer):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* window.c:
+	* window.c (finalize_window):
+	* window.c (mark_window_as_deleted):
+
+	Separate out regular and disksave finalization.  Instead of a
+	FOR_DISKSAVE argument to the finalizer, create a separate object
+	method `disksaver'.  Make `finalizer' have only one argument.
+
+	Go through and separate out all finalize methods into finalize
+	and disksave.  Delete lots of thereby redundant disksave checking.
+	Delete places that signal an error if we attempt to disksave --
+	all of these objects are non-dumpable and we will get an error
+	from pdump anyway if we attempt to dump them.  After this is done,
+	only one object remains that has a disksave method -- lstream.
+
+	Change DEFINE_*_LISP_OBJECT_WITH_PROPS to DEFINE_*_GENERAL_LISP_OBJECT,
+	which is used for specifying either property methods or disksave
+	methods (or in the future, any other less-used methods).
+	
+	Remove the for_disksave argument to finalize_process_data.  Don't
+	provide a disksaver for processes because no one currently needs
+	it.
+
+	Clean up various places where objects didn't provide a print method.
+	It was made mandatory in previous changes, and all methods now
+	either provide their own print method or use internal_object_printer
+	or external_object_printer.
+
+	Change the definition of CONSOLE_LIVE_P to use the contype enum
+	rather than looking into the conmeths structure -- in some weird
+	situations with dead objects, the conmeths structure is NULL,
+	and printing such objects from debug_print() will crash if we try
+	to look into the conmeths structure.
+	
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

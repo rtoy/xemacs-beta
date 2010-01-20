@@ -199,9 +199,9 @@ static const struct memory_description float_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("float", float,
-				     mark_float, print_float, 0, float_equal,
-				     float_hash, float_description,
-				     Lisp_Float);
+					mark_float, print_float, 0,
+					float_equal, float_hash,
+					float_description, Lisp_Float);
 
 /* Extract a Lisp number as a `double', or signal an error.  */
 

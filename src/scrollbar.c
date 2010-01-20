@@ -96,11 +96,10 @@ mark_scrollbar_instance (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_NODUMP_LISP_OBJECT ("scrollbar-instance", scrollbar_instance,
-					   mark_scrollbar_instance,
-					   0, 0, 0, 0, 
-					   scrollbar_instance_description,
-					   struct scrollbar_instance);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("scrollbar-instance", scrollbar_instance,
+				    mark_scrollbar_instance,
+				    scrollbar_instance_description,
+				    struct scrollbar_instance);
 
 static void
 free_scrollbar_instance (struct scrollbar_instance *instance,

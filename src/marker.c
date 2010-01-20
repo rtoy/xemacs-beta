@@ -106,25 +106,22 @@ static const struct memory_description marker_description[] = {
 
 #ifdef NEW_GC
 static void
-finalize_marker (void *header, int for_disksave)
+finalize_marker (void *header)
 {
-  if (!for_disksave) 
-    {
-      Lisp_Object tem = wrap_marker (header);
-      unchain_marker (tem);
-    }
+  Lisp_Object tem = wrap_marker (header);
+  unchain_marker (tem);
 }
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
-				     mark_marker, print_marker,
-				     finalize_marker,
-				     marker_equal, marker_hash,
-				     marker_description, Lisp_Marker);
+					mark_marker, print_marker,
+					finalize_marker,
+					marker_equal, marker_hash,
+					marker_description, Lisp_Marker);
 #else /* not NEW_GC */
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
-				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash,
-				     marker_description, Lisp_Marker);
+					mark_marker, print_marker, 0,
+					marker_equal, marker_hash,
+					marker_description, Lisp_Marker);
 #endif /* not NEW_GC */
 
 /* Operations on markers. */
