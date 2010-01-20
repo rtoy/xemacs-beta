@@ -68,9 +68,9 @@ static Lisp_Object Vshift_jis_precedence, Vbig5_precedence;
 
 struct multibyte_coding_system
 {
-  /* A precedence array containing the charsets given in the `charsets'
-     property when creating the coding system */
-  Lisp_Object charsets;
+  /* A dynarr containing the charsets given in the `charsets' property when
+     creating the coding system */
+  Lisp_Object_dynarr *charsets;
 };
 
 #define CODING_SYSTEM_MBCS_CHARSETS(codesys) \
@@ -91,15 +91,44 @@ struct multibyte_coding_system
 
 struct multibyte_coding_stream
 {
-  int foo; /* unused */
+  /* Equivalent of dynarr in struct multibyte_coding_system as a
+     precedence-array object.  We can't store the object in struct
+     multibyte_coding_system because it can't currently be dumped. */
+  Lisp_Object charset_precedence;
 };
 
 static const struct memory_description multibyte_coding_system_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct multibyte_coding_system, charsets) },
+  { XD_BLOCK_PTR, offsetof (struct multibyte_coding_system, charsets),
+    1, { &Lisp_Object_dynarr_description} },
   { XD_END }
 };
 
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (multibyte);
+
+static void
+multibyte_init_coding_stream (struct coding_stream *str)
+{
+  struct multibyte_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, multibyte);
+  int i;
+  Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
+
+  begin_precedence_array_generation ();
+  data->charset_precedence = allocate_precedence_array ();
+  for (i = 0; i < Dynarr_length (charsets); i++)
+    {
+      add_charset_to_precedence_array (Dynarr_at (charsets, i),
+                                       data->charset_precedence);
+    }
+}
+
+static void
+multibyte_mark_coding_stream (struct coding_stream *str)
+{
+  struct multibyte_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, multibyte);
+  mark_object (data->charset_precedence);
+}
 
 /* See if we can derive a character out of the specified charsets
    that is of the right dimension, is valid according to the bounds, and
@@ -131,7 +160,9 @@ static Bytecount
 multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 		   unsigned_char_dynarr *dst, Bytecount n)
 {
-  Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
+  struct multibyte_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, multibyte);
+  Lisp_Object charsets = data->charset_precedence;
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -227,22 +258,22 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 static void
 multibyte_init (Lisp_Object codesys)
 {
-  XCODING_SYSTEM_MBCS_CHARSETS (codesys) = allocate_precedence_array ();
+  XCODING_SYSTEM_MBCS_CHARSETS (codesys) = Dynarr_new (Lisp_Object);
 }
 
 static void
 multibyte_mark (Lisp_Object codesys)
 {
-  mark_object (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
+  mark_Lisp_Object_dynarr (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
 }
 
 static void
 multibyte_finalize (Lisp_Object cs)
 {
-  if (!NILP (XCODING_SYSTEM_MBCS_CHARSETS (cs)))
+  if (XCODING_SYSTEM_MBCS_CHARSETS (cs))
     {
-      free_precedence_array (XCODING_SYSTEM_MBCS_CHARSETS (cs));
-      XCODING_SYSTEM_MBCS_CHARSETS (cs) = Qnil;
+      Dynarr_free (XCODING_SYSTEM_MBCS_CHARSETS (cs));
+      XCODING_SYSTEM_MBCS_CHARSETS (cs) = 0;
     }
 }
 
@@ -251,10 +282,13 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qcharsets))
     {
-      Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
-      reset_precedence_array (charsets);
-      begin_precedence_array_generation ();
-      add_charsets_to_precedence_array (value, charsets);
+      Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+      Dynarr_reset (charsets);
+      EXTERNAL_LIST_LOOP_2 (elt, value)
+        {
+          Lisp_Object charset = Fget_charset (elt);
+          Dynarr_add (charsets, charset);
+        }
     }
   else
     return 0;
@@ -266,13 +300,12 @@ multibyte_getprop (Lisp_Object codesys, Lisp_Object prop)
 {
   if (EQ (prop, Qcharsets))
     {
-      Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+      Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
       Lisp_Object list = Qnil;
-      Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
       int i;
 
-      for (i = 0; i < Dynarr_length (precdyn); i++)
-	list = Fcons (Dynarr_at (precdyn, i), list);
+      for (i = 0; i < Dynarr_length (charsets); i++)
+        list = Fcons (Dynarr_at (charsets, i), list);
       return Fnreverse (list);
     }
   return Qunbound;
@@ -280,15 +313,14 @@ multibyte_getprop (Lisp_Object codesys, Lisp_Object prop)
 
 static void
 multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
-	    int UNUSED (escapeflag))
+            int UNUSED (escapeflag))
 {
-  Lisp_Object charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
-  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
+  Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
   int i;
-  
-  for (i = 0; i < Dynarr_length (precdyn); i++)
+
+  for (i = 0; i < Dynarr_length (charsets); i++)
     write_fmt_string_lisp (printcharfun, i == 0 ? "(%s" : " %s", 1,
-			   XCHARSET_NAME (Dynarr_at (precdyn, i)));
+                           XCHARSET_NAME (Dynarr_at (charsets, i)));
   write_c_string (printcharfun, ")");
 }
 
@@ -4362,6 +4394,8 @@ coding_system_type_create_mule_coding (void)
 {
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (multibyte, "multibyte-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (multibyte, convert);
+  CODING_SYSTEM_HAS_METHOD (multibyte, init_coding_stream);
+  CODING_SYSTEM_HAS_METHOD (multibyte, mark_coding_stream);
   CODING_SYSTEM_HAS_METHOD (multibyte, init);
   CODING_SYSTEM_HAS_METHOD (multibyte, mark);
   CODING_SYSTEM_HAS_METHOD (multibyte, finalize);

@@ -4391,6 +4391,7 @@ disksave_object_finalization (void)
   uncache_home_directory ();
   zero_out_command_line_status_vars ();
   clear_default_devices ();
+  disksave_clear_unicode_precedence ();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))

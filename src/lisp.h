@@ -4707,6 +4707,10 @@ Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
 Lisp_Object word_to_lisp (unsigned int);
 unsigned int lisp_to_word (Lisp_Object);
 
+/* Defined in device.c */
+Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
+				     Lisp_Object object);
+
 /* Defined in dired.c */
 Lisp_Object make_directory_hash_table (const Ibyte *);
 Lisp_Object wasteful_word_to_lisp (unsigned int);
@@ -6172,6 +6176,7 @@ void filter_precedence_array (Lisp_Object orig_preclist,
 			     Lisp_Object new_preclist,
 			     int (*predicate) (Lisp_Object));
 void recalculate_unicode_precedence (void);
+void disksave_clear_unicode_precedence (void);
 Lisp_Object internal_convert_precedence_list_to_array (Lisp_Object charsets);
 Lisp_Object external_convert_precedence_list_to_array (Lisp_Object charsets);
 extern Lisp_Object Qunicode;

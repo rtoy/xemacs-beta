@@ -1747,6 +1747,7 @@ vars_of_mule_charset (void)
   next_non_encodable_charset_id = 1 + MAX_ENCODABLE_CHARSET_ID;
 #endif /* not UNICODE_INTERNAL */
 
+  dump_add_opaque_int (&next_non_encodable_charset_id);
   staticpro (&Vcharset_hash_table);
   Vcharset_hash_table =
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);

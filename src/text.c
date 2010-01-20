@@ -5349,7 +5349,9 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
     Lisp_Object precarray =
       external_convert_precedence_list_to_array (precedence_list);
     ichar_to_charset_codepoint (ch, precarray, charset, c1, c2);
-    free_precedence_array (precarray);
+    if (!NILP (precedence_list))
+      /* Don't free global or current-buffer list */
+      free_precedence_array (precarray);
   }
   if (munge_codepoints)
     {
@@ -5692,7 +5694,9 @@ nil or `fail'	Return nil
 					  &unicode_prec);
   enum converr fail = decode_handle_error (handle_error);
   Ichar ret = unicode_to_ichar (c, unicode_prec, fail);
-  free_precedence_array (unicode_prec);
+  if (!NILP (precedence_list))
+    /* Don't free global or current-buffer list */
+    free_precedence_array (unicode_prec);
 
   if (ret == -1)
     return Qnil;
@@ -5785,7 +5789,9 @@ list.
   int a1, a2;
 
   unicode_to_charset_codepoint (c, precarray, &charset, &a1, &a2);
-  free_precedence_array (precarray);
+  if (!NILP (precedence_list))
+    /* Don't free global or current-buffer list */
+    free_precedence_array (precarray);
   
   if (NILP (charset))
     return Qnil;

@@ -1394,8 +1394,24 @@ finalize_precedence_array (void *header, int for_disksave)
     }
 }
 
+/* NOTE: This is non-dumpable currently, even though it would be more
+   convenient if it were dumpable, due to annoying limitations in New GC.
+   Basically, dumpable objects cannot have finalizers -- any objects that
+   would be freed by finalizers, such as Dynarrs, have to be converted to
+   Lisp objects.  There's a special mechanism in New-GC for making
+   Lisp-object Dynarrs, and I tried to use it, but (a) it's painful, and
+   (b) it requires that the object contained in the Dynarr be a particular
+   Lisp object -- not a pointer to Lisp object.  So I tried creating a
+   nasty internal "lisp-object-wrapper" object but I realized it would just
+   get too gooey.  That extra object would have an lrecord header and mark
+   method and you'd have to dereference it to fetch the Lisp object inside
+   and it would make the code even messier.  It seemed less of a hassle
+   just to ensure that precedence-array objects don't get dumped, by
+   clearing out any places where they otherwise would occur and recreating
+   them when starting up again. */
+
 DEFINE_LRECORD_IMPLEMENTATION ("precedence-array", precedence_array,
-			       1, /*dumpable-flag*/
+			       0, /*dumpable-flag*/
                                mark_precedence_array, internal_object_printer,
 			       finalize_precedence_array, 0, 0, 
 			       precedence_array_description,
@@ -1486,7 +1502,9 @@ filter_precedence_array (Lisp_Object orig_precarray,
 void
 free_precedence_array (Lisp_Object precarray)
 {
-  if (!EQ (precarray, Vglobal_unicode_precedence_array))
+  text_checking_assert (!EQ (precarray, Vglobal_unicode_precedence_array));
+  if (!gc_in_progress)
+    /* Will abort if you try to free a Lisp object during GC */
     FREE_LCRECORD (precarray);
 }
 
@@ -1501,7 +1519,8 @@ free_precedence_array (Lisp_Object precarray)
 
 static void
 convert_precedence_list_to_array_2 (Lisp_Object precarray,
-				    Lisp_Object preclist, int normalize_p)
+				    Lisp_Object preclist, int normalize_p,
+				    int early_error_handling)
 {
   EXTERNAL_LIST_LOOP_2 (elt, preclist)
     {
@@ -1518,7 +1537,11 @@ convert_precedence_list_to_array_2 (Lisp_Object precarray,
 	    add_charset_to_precedence_array (charset, precarray);
 	  else
 	    {
-	      elt = call1 (Qcharset_tag_to_charset_list, elt);
+	      if (early_error_handling)
+	        elt = call_critical_lisp_code
+                        (NULL, Qcharset_tag_to_charset_list, elt);
+              else
+	        elt = call1 (Qcharset_tag_to_charset_list, elt);
 	      add_charsets_to_precedence_array (elt, precarray);
 	    }
 	}
@@ -1527,13 +1550,25 @@ convert_precedence_list_to_array_2 (Lisp_Object precarray,
     }
 }
 
+/* Called for each pair of (symbol, charset) in the hash table tracking
+   charsets. */
+static int
+cplta_mapper (Lisp_Object UNUSED (key), Lisp_Object value, void *closure)
+{
+  add_charset_to_precedence_array (value, VOID_TO_LISP (closure));
+  return 0;
+}
+
 /* Convert an external precedence list to a precedence array object.  If
    NORMALIZE_P = 1, elements can be charsets or tags.  Otherwise, elements
-   can only be charsets.  WARNING: This can call Lisp when NORMALIZE_P is
-   1. */
+   can only be charsets.  If MAKE_FULL_P = 1, also add all remaining
+   unmentioned charsets to the array.
+
+   WARNING: This can call Lisp when NORMALIZE_P is 1.   */
 
 static Lisp_Object
-convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p)
+convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p,
+				    int make_full_p, int early_error_handling)
 {
   Lisp_Object precarray;
   struct gcpro gcpro1;
@@ -1541,7 +1576,12 @@ convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p)
   precarray = allocate_precedence_array ();
   GCPRO1 (precarray);
   begin_precedence_array_generation ();
-  convert_precedence_list_to_array_2 (precarray, preclist, normalize_p);
+  convert_precedence_list_to_array_2 (precarray, preclist, normalize_p,
+                                      early_error_handling);
+  if (make_full_p)
+    /* Now add all remaining charsets to Vglobal_unicode_precedence_array */
+    elisp_maphash (cplta_mapper, Vcharset_hash_table,
+                   LISP_TO_VOID (precarray));
   UNGCPRO;
   return precarray;
 }
@@ -1553,7 +1593,7 @@ convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p)
 Lisp_Object
 internal_convert_precedence_list_to_array (Lisp_Object preclist)
 {
-  return convert_precedence_list_to_array_1 (preclist, 0);
+  return convert_precedence_list_to_array_1 (preclist, 0, 0, 0);
 }
 
 /* Validate and convert an external precedence list consisting of charsets
@@ -1574,7 +1614,7 @@ external_convert_precedence_list_to_array (Lisp_Object preclist)
   precarray = Fgethash (preclist, Vprecedence_list_to_array, Qnil);
   if (NILP (precarray))
     {
-      precarray = convert_precedence_list_to_array_1 (preclist, 1);
+      precarray = convert_precedence_list_to_array_1 (preclist, 1, 0, 0);
       Fputhash (preclist, precarray, Vprecedence_list_to_array);
     }
   return precarray;
@@ -1582,29 +1622,29 @@ external_convert_precedence_list_to_array (Lisp_Object preclist)
 
 /**************** The global and buffer-local precedence lists ***************/
 
-/* Called for each pair of (symbol, charset) in the hash table tracking
-   charsets. */
-static int
-rup_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
-	    void * UNUSED (closure))
+/* Rebuild the global and buffer-local Unicode precedence arrays. */
+static void
+recalculate_unicode_precedence_1 (int for_disksave, int early_error_handling)
 {
-  add_charset_to_precedence_array (value, Vglobal_unicode_precedence_array);
-  return 0;
+  Fclrhash (Vprecedence_list_to_array);
+  if (for_disksave)
+    Vglobal_unicode_precedence_array = Qnil;
+  else
+    Vglobal_unicode_precedence_array =
+      convert_precedence_list_to_array_1 (Vdefault_unicode_precedence_list, 1,
+					  1, early_error_handling);
 }
 
-/* Rebuild the charset precedence array.  First, add the charsets
-   specifically mentioned in Vdefault_unicode_precedence_array.  All
-   remaining charsets follow in an arbitrary order. */
 void
 recalculate_unicode_precedence (void)
 {
-  reset_precedence_array (Vglobal_unicode_precedence_array);
+  recalculate_unicode_precedence_1 (0, 0);
+}
 
-  begin_precedence_array_generation ();
-  convert_precedence_list_to_array_2 (Vglobal_unicode_precedence_array,
-				      Vdefault_unicode_precedence_list, 1);
-  /* Now add all remaining charsets to Vglobal_unicode_precedence_array */
-  elisp_maphash (rup_mapper, Vcharset_hash_table, NULL);
+void
+disksave_clear_unicode_precedence (void)
+{
+  recalculate_unicode_precedence_1 (1, 0);
 }
 
 Lisp_Object
@@ -1666,10 +1706,8 @@ This is intended to be set by the user.  See
 {
   /* Convert and validate first before changing
      Vdefault_unicode_precedence_list */
-  reset_precedence_array (Vglobal_unicode_precedence_array);
-  begin_precedence_array_generation ();
-  convert_precedence_list_to_array_2 (Vglobal_unicode_precedence_array,
-				      list, 1);
+  Vglobal_unicode_precedence_array =
+    convert_precedence_list_to_array_1 (list, 1, 1, 0);
   Vdefault_unicode_precedence_list = list;
   return Qnil;
 }
@@ -3543,7 +3581,7 @@ vars_of_unicode (void)
     make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 
   staticpro (&Vglobal_unicode_precedence_array);
-  Vglobal_unicode_precedence_array = allocate_precedence_array ();
+  Vglobal_unicode_precedence_array = Qnil;
   
   init_blank_unicode_tables ();
 
@@ -3644,3 +3682,16 @@ complex_vars_of_unicode (void)
   staticpro (&Vcharset_jit_ucs_charset_0);
 #endif /* not UNICODE_INTERNAL */
 }
+
+void
+init_unicode (void)
+{
+  /* We had to clear all references to precedence arrays before dumping,
+     because precedence arrays aren't dumpable.  So put them back now.
+     WARNING: This calls Lisp, very early in the init process!
+     So we make sure that the Lisp code is wrapped in
+     `very-early-error-handler'. */
+  if (initialized)
+    recalculate_unicode_precedence_1 (0, 1);
+}
+

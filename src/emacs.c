@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2571,10 +2571,20 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 			 determine what the coding system `mswindows-tstr'
 			 is aliased to */
 #endif
-  init_buffer_1 ();	/* Create *scratch* buffer; init_intl() is going to
-			   call Lisp code (the very first code we call),
-			   and needs a current buffer */
+  init_buffer_1 ();	/* Create *scratch* buffer; the code just below is
+			   going to call Lisp code (the very first code we
+			   call), and needs a current buffer */
 #ifdef MULE
+  /* The following two both call Lisp, and are the first Lisp code we call
+     after dumping. */
+  init_unicode (); /* recreate Unicode precedence arrays, necessary for
+                      conversion of Unicode codepoints to charset codepoints.
+		      This has to come first because the Lisp code called
+		      from init_intl() calls set-current-locale, which
+		      converts to external format in preparation for
+		      calling C library functions, which requires that the
+		      global Unicode precedence arrays are available.
+                    */
   init_intl (); /* Figure out the locale and set native and
 		   file-name coding systems, initialize the Unicode tables
 		   so that we will be able to process non-ASCII from here
