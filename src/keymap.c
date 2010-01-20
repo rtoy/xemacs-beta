@@ -312,9 +312,9 @@ static const struct memory_description keymap_description[] = {
 
 /* No need for keymap_equal #### Why not? */
 DEFINE_DUMPABLE_LISP_OBJECT ("keymap", keymap,
-			       mark_keymap, print_keymap, 0, 0, 0,
-			       keymap_description,
-			       Lisp_Keymap);
+			     mark_keymap, print_keymap, 0, 0, 0,
+			     keymap_description,
+			     Lisp_Keymap);
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */

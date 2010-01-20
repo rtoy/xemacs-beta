@@ -319,7 +319,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_window (void *header, int UNUSED (for_disksave))
+finalize_window (void *header)
 {
   struct window *w = (struct window *) header;
 
@@ -363,8 +363,8 @@ make_saved_buffer_point_cache (void)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("window", window,
-					   mark_window, print_window, finalize_window,
-					   0, 0, window_description, struct window);
+			   mark_window, print_window, finalize_window,
+			   0, 0, window_description, struct window);
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -517,10 +517,10 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_NODUMP_LISP_OBJECT ("window-mirror", window_mirror,
-				mark_window_mirror, 0,
-				0, 0, 0, window_mirror_description,
-				struct window_mirror);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("window-mirror", window_mirror,
+				    mark_window_mirror,
+				    window_mirror_description,
+				    struct window_mirror);
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
@@ -2134,7 +2134,7 @@ mark_window_as_deleted (struct window *w)
   /* Free the extra data structures attached to windows immediately so
      they don't sit around consuming excess space.  They will be
      reinitialized by the window-configuration code as necessary. */
-  finalize_window ((void *) w, 0);
+  finalize_window ((void *) w);
 
   /* Nobody should be accessing anything in this object any more,
      and making them Qnil allows for better GC'ing in case a pointer

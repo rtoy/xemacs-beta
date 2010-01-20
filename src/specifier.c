@@ -298,11 +298,10 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_specifier (void *header, int for_disksave)
+finalize_specifier (void *header)
 {
   Lisp_Specifier *sp = (Lisp_Specifier *) header;
-  /* don't be snafued by the disksave finalization. */
-  if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
+  if (!GHOST_SPECIFIER_P(sp) && sp->caching)
     {
       xfree (sp->caching, struct specifier_caching *);
       sp->caching = 0;

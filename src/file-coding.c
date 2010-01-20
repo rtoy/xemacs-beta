@@ -319,14 +319,13 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_coding_system (void *header, int for_disksave)
+finalize_coding_system (void *header)
 {
   Lisp_Object cs = wrap_coding_system ((Lisp_Coding_System *) header);
   /* Since coding systems never go away, this function is not
      necessary.  But it would be necessary if we changed things
      so that coding systems could go away. */
-  if (!for_disksave) /* see comment in lstream.c */
-    MAYBE_XCODESYSMETH (cs, finalize, (cs));
+  MAYBE_XCODESYSMETH (cs, finalize, (cs));
 }
 #endif /* not NEW_GC */
 
@@ -382,19 +381,19 @@ const struct sized_memory_description coding_system_empty_extra_description = {
 
 #ifdef NEW_GC
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
-					mark_coding_system,
-					print_coding_system,
-					0, 0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
+				     mark_coding_system,
+				     print_coding_system,
+				     0, 0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 #else /* not NEW_GC */
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
-					mark_coding_system,
-					print_coding_system,
-					finalize_coding_system,
-					0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
+				     mark_coding_system,
+				     print_coding_system,
+				     finalize_coding_system,
+				     0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 #endif /* not NEW_GC */
 
 /************************************************************************/

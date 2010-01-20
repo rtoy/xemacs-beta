@@ -180,10 +180,10 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("tooltalk-message", tooltalk_message,
-					   mark_tooltalk_message, print_tooltalk_message,
-					   0, 0, 0, 
-					   tooltalk_message_description,
-					   Lisp_Tooltalk_Message);
+			   mark_tooltalk_message, print_tooltalk_message,
+			   0, 0, 0, 
+			   tooltalk_message_description,
+			   Lisp_Tooltalk_Message);
 
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
@@ -256,10 +256,10 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("tooltalk-pattern", tooltalk_pattern,
-					   mark_tooltalk_pattern, print_tooltalk_pattern,
-					   0, 0, 0, 
-					   tooltalk_pattern_description,
-					   Lisp_Tooltalk_Pattern);
+			   mark_tooltalk_pattern, print_tooltalk_pattern,
+			   0, 0, 0, 
+			   tooltalk_pattern_description,
+			   Lisp_Tooltalk_Pattern);
 
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)

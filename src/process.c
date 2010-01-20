@@ -176,29 +176,25 @@ extern void debug_process_finalization (Lisp_Process *p);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 static void
-finalize_process (void *header, int for_disksave)
+finalize_process (void *header)
 {
   /* #### this probably needs to be tied into the tty event loop */
   /* #### when there is one */
   Lisp_Process *p = (Lisp_Process *) header;
 #ifdef HAVE_WINDOW_SYSTEM
-  if (!for_disksave)
-    {
-      debug_process_finalization (p);
-    }
+  debug_process_finalization (p);
 #endif /* HAVE_WINDOW_SYSTEM */
 
   if (p->process_data)
     {
-      MAYBE_PROCMETH (finalize_process_data, (p, for_disksave));
-      if (!for_disksave)
-	xfree (p->process_data, void *);
+      MAYBE_PROCMETH (finalize_process_data, (p));
+      xfree (p->process_data, void *);
     }
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("process", process,
-					   mark_process, print_process, finalize_process,
-					   0, 0, process_description, Lisp_Process);
+			   mark_process, print_process, finalize_process,
+			   0, 0, process_description, Lisp_Process);
 
 /************************************************************************/
 /*                       basic process accessors                        */

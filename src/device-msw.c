@@ -1159,18 +1159,9 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_devmode (void *header, int for_disksave)
+finalize_devmode (void *header)
 {
   Lisp_Devmode *dm = (Lisp_Devmode *) header;
-
-  if (for_disksave)
-    {
-      Lisp_Object devmode = wrap_devmode (dm);
-
-      invalid_operation
-	("Cannot dump XEmacs containing an msprinter-settings object",
-	 devmode);
-    }
 
   assert (NILP (dm->device));
 }
@@ -1204,11 +1195,11 @@ hash_devmode (Lisp_Object obj, int depth)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("msprinter-settings", devmode,
-					   mark_devmode, print_devmode,
-					   finalize_devmode,
-					   equal_devmode, hash_devmode, 
-					   devmode_description,
-					   Lisp_Devmode);
+			   mark_devmode, print_devmode,
+			   finalize_devmode,
+			   equal_devmode, hash_devmode, 
+			   devmode_description,
+			   Lisp_Devmode);
 
 static Lisp_Object
 allocate_devmode (DEVMODEW* src_devmode, int do_copy,

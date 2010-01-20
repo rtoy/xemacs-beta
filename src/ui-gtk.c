@@ -336,9 +336,9 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,
-					   mark_ffi_data, ffi_object_printer,
-					   0, 0, 0, 
-					   ffi_data_description, emacs_ffi_data);
+			   mark_ffi_data, ffi_object_printer,
+			   0, 0, 0, 
+			   ffi_data_description, emacs_ffi_data);
 
 #if defined (__cplusplus)
 #define MANY_ARGS ...
@@ -924,37 +924,27 @@ mark_gtk_object_data (Lisp_Object obj)
 }
 
 static void
-emacs_gtk_object_finalizer (void *header, int for_disksave)
+emacs_gtk_object_finalizer (void *header)
 {
   emacs_gtk_object_data *data = (emacs_gtk_object_data *) header;
 
-  if (for_disksave)
-    {
-      Lisp_Object obj = wrap_emacs_gtk_object (data);
-
-
-      invalid_operation
-	("Can't dump an emacs containing GtkObject objects", obj);
-    }
-
   if (data->alive_p)
-    {
-      gtk_object_unref (data->object);
-    }
+    gtk_object_unref (data->object);
 }
 
-DEFINE_NODUMP_LISP_OBJECT_WITH_PROPS ("GtkObject", emacs_gtk_object,
-						      mark_gtk_object_data,
-						      emacs_gtk_object_printer,
-						      emacs_gtk_object_finalizer,
-						      0, /* equality */
-						      0, /* hash */
-						      gtk_object_data_description,
-						      object_getprop,
-						      object_putprop,
-						      0, /* rem prop */
-						      0, /* plist */
-						      emacs_gtk_object_data);
+DEFINE_NODUMP_GENERAL_LISP_OBJECT ("GtkObject", emacs_gtk_object,
+				   mark_gtk_object_data,
+				   emacs_gtk_object_printer,
+				   emacs_gtk_object_finalizer,
+				   0, /* equality */
+				   0, /* hash */
+				   gtk_object_data_description,
+				   object_getprop,
+				   object_putprop,
+				   0, /* rem prop */
+				   0, /* plist */
+				   0, /* disksaver */
+				   emacs_gtk_object_data);
 
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)
@@ -1138,18 +1128,14 @@ emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
   return (HASH2 ((Hashcode) data->object, data->object_type));
 }
 
-DEFINE_NODUMP_LISP_OBJECT_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
-						      0, /* marker function */
-						      emacs_gtk_boxed_printer,
-						      0, /* nuker */
-						      emacs_gtk_boxed_equality,
-						      emacs_gtk_boxed_hash,
-						      emacs_gtk_boxed_description,
-						      0, /* get prop */
-						      0, /* put prop */
-						      0, /* rem prop */
-						      0, /* plist */
-						      emacs_gtk_boxed_data);
+DEFINE_NODUMP_LISP_OBJECT ("GtkBoxed", emacs_gtk_boxed,
+			   0, /* marker function */
+			   emacs_gtk_boxed_printer,
+			   0, /* nuker */
+			   emacs_gtk_boxed_equality,
+			   emacs_gtk_boxed_hash,
+			   emacs_gtk_boxed_description,
+			   emacs_gtk_boxed_data);
 /* Currently defined GTK_TYPE_BOXED structures are:
 
    GtkAccelGroup -

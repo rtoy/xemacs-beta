@@ -303,12 +303,13 @@ static const struct memory_description face_description[] = {
   { XD_END }
 };
 
-DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS ("face", face,
-					  mark_face, print_face, 0, face_equal,
-					  face_hash, face_description,
-					  face_getprop,
-					  face_putprop, face_remprop,
-					  face_plist, Lisp_Face);
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("face", face,
+				     mark_face, print_face, 0, face_equal,
+				     face_hash, face_description,
+				     face_getprop,
+				     face_putprop, face_remprop,
+				     face_plist, 0 /* no disksaver */,
+				     Lisp_Face);
 
 /************************************************************************/
 /*                             face read syntax                         */

@@ -1266,12 +1266,9 @@ DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-info", extent_info,
 				    struct extent_info);
 #else /* not NEW_GC */
 static void
-finalize_extent_info (void *header, int for_disksave)
+finalize_extent_info (void *header)
 {
   struct extent_info *data = (struct extent_info *) header;
-
-  if (for_disksave)
-    return;
 
   data->soe = 0;
   data->extents = 0;
@@ -1288,10 +1285,10 @@ finalize_extent_info (void *header, int for_disksave)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("extent-info", extent_info,
-					   mark_extent_info, 0,
-					   finalize_extent_info, 0, 0, 
-					   extent_info_description,
-					   struct extent_info);
+			   mark_extent_info, internal_object_printer,
+			   finalize_extent_info, 0, 0, 
+			   extent_info_description,
+			   struct extent_info);
 #endif /* not NEW_GC */
 
 static Lisp_Object
@@ -1467,7 +1464,7 @@ uninit_buffer_extents (struct buffer *b)
      extents pointing to the extents. */
   detach_all_extents (wrap_buffer (b));
 #ifndef NEW_GC
-  finalize_extent_info (data, 0);
+  finalize_extent_info (data);
 #endif /* not NEW_GC */
 }
 
@@ -3461,7 +3458,7 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS ("extent", extent,
+DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("extent", extent,
 						mark_extent,
 						print_extent,
 						/* NOTE: If you declare a
@@ -3473,6 +3470,7 @@ DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT_WITH_PROPS ("extent", extent,
 						extent_description,
 						extent_getprop, extent_putprop,
 						extent_remprop, extent_plist,
+						0 /* no disksaver */,
 						struct extent);
 
 /************************************************************************/

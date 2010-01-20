@@ -4643,13 +4643,13 @@ static const struct memory_description multiple_value_description[] = {
 };
 
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("multiple-value", multiple_value,
-					mark_multiple_value,
-                                        print_multiple_value, 0,
-					0, /* No equal method. */
-					0, /* No hash method. */
-					multiple_value_description,
-					size_multiple_value,
-                                        struct multiple_value);
+				     mark_multiple_value,
+				     print_multiple_value, 0,
+				     0, /* No equal method. */
+				     0, /* No hash method. */
+				     multiple_value_description,
+				     size_multiple_value,
+				     struct multiple_value);
 
 /* Given that FIRST and UPPER are the inclusive lower and exclusive upper
    bounds for the multiple values we're interested in, modify (or don't) the

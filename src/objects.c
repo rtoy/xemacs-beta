@@ -113,15 +113,12 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_color_instance (void *header, int for_disksave)
+finalize_color_instance (void *header)
 {
   Lisp_Color_Instance *c = (Lisp_Color_Instance *) header;
 
   if (!NILP (c->device))
-    {
-      if (for_disksave) finalose (c);
-      MAYBE_DEVMETH (XDEVICE (c->device), finalize_color_instance, (c));
-    }
+    MAYBE_DEVMETH (XDEVICE (c->device), finalize_color_instance, (c));
 }
 
 static int
@@ -150,11 +147,11 @@ color_instance_hash (Lisp_Object obj, int depth)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("color-instance", color_instance,
-			       mark_color_instance, print_color_instance,
-			       finalize_color_instance, color_instance_equal,
-			       color_instance_hash,
-			       color_instance_description,
-			       Lisp_Color_Instance);
+			   mark_color_instance, print_color_instance,
+			   finalize_color_instance, color_instance_equal,
+			   color_instance_hash,
+			   color_instance_description,
+			   Lisp_Color_Instance);
 
 DEFUN ("make-color-instance", Fmake_color_instance, 1, 3, 0, /*
 Return a new `color-instance' object named NAME (a string).
@@ -333,13 +330,12 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
-finalize_font_instance (void *header, int for_disksave)
+finalize_font_instance (void *header)
 {
   Lisp_Font_Instance *f = (Lisp_Font_Instance *) header;
 
   if (!NILP (f->device))
     {
-      if (for_disksave) finalose (f);
       MAYBE_DEVMETH (XDEVICE (f->device), finalize_font_instance, (f));
     }
 }
@@ -368,10 +364,10 @@ font_instance_hash (Lisp_Object obj, int depth)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("font-instance", font_instance,
-					   mark_font_instance, print_font_instance,
-					   finalize_font_instance, font_instance_equal,
-					   font_instance_hash, font_instance_description,
-					   Lisp_Font_Instance);
+			   mark_font_instance, print_font_instance,
+			   finalize_font_instance, font_instance_equal,
+			   font_instance_hash, font_instance_description,
+			   Lisp_Font_Instance);
 
 
 /* #### Why is this exposed to Lisp?  Used in:

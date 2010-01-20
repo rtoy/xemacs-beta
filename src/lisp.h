@@ -2648,7 +2648,7 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 typedef struct Lisp_Symbol Lisp_Symbol;
 struct Lisp_Symbol
 {
-  LISP_OBJECT_HEADER lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   /* next symbol in this obarray bucket */
   Lisp_Symbol *next;
   Lisp_Object name;

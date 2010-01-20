@@ -332,9 +332,9 @@ cleanup_buffer_undo_lists (void)
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
 DEFINE_NODUMP_LISP_OBJECT ("buffer", buffer, mark_buffer,
-					   print_buffer, 0, 0, 0,
-					   buffer_description,
-					   struct buffer);
+			   print_buffer, 0, 0, 0,
+			   buffer_description,
+			   struct buffer);
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 Return t if OBJECT is an editor buffer.

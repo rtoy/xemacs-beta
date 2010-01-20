@@ -1113,7 +1113,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_image_instance (void *header, int for_disksave)
+finalize_image_instance (void *header)
 {
   Lisp_Image_Instance *i = (Lisp_Image_Instance *) header;
 
@@ -1122,7 +1122,6 @@ finalize_image_instance (void *header, int for_disksave)
       ||
       NILP (IMAGE_INSTANCE_DEVICE (i)))
     return;
-  if (for_disksave) finalose (i);
 
   /* We can't use the domain here, because it might have
      disappeared. */
@@ -1315,11 +1314,11 @@ image_instance_hash (Lisp_Object obj, int depth)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("image-instance", image_instance,
-					   mark_image_instance, print_image_instance,
-					   finalize_image_instance, image_instance_equal,
-					   image_instance_hash,
-					   image_instance_description,
-					   Lisp_Image_Instance);
+			   mark_image_instance, print_image_instance,
+			   finalize_image_instance, image_instance_equal,
+			   image_instance_hash,
+			   image_instance_description,
+			   Lisp_Image_Instance);
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
@@ -3810,13 +3809,14 @@ static const struct memory_description glyph_description[] = {
   { XD_END }
 };
 
-DEFINE_DUMPABLE_LISP_OBJECT_WITH_PROPS ("glyph", glyph,
-					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash,
-					  glyph_description,
-					  glyph_getprop, glyph_putprop,
-					  glyph_remprop, glyph_plist,
-					  Lisp_Glyph);
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("glyph", glyph,
+				     mark_glyph, print_glyph, 0,
+				     glyph_equal, glyph_hash,
+				     glyph_description,
+				     glyph_getprop, glyph_putprop,
+				     glyph_remprop, glyph_plist,
+				     0 /* no disksaver */,
+				     Lisp_Glyph);
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -4509,7 +4509,7 @@ unmap_subwindow_instance_cache_mapper (Lisp_Object UNUSED (key),
 	  XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))
 	    = delq_no_quit (value,
 			    XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f)));
-	  finalize_image_instance (XIMAGE_INSTANCE (value), 0);
+	  finalize_image_instance (XIMAGE_INSTANCE (value));
 	}
     }
   return 0;

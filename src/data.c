@@ -3108,9 +3108,9 @@ static const struct memory_description weak_box_description[] = {
 };
 
 DEFINE_NODUMP_LISP_OBJECT ("weak-box", weak_box, mark_weak_box,
-					   print_weak_box, 0, weak_box_equal,
-					   weak_box_hash, weak_box_description,
-					   struct weak_box);
+			   print_weak_box, 0, weak_box_equal,
+			   weak_box_hash, weak_box_description,
+			   struct weak_box);
 
 DEFUN ("make-weak-box", Fmake_weak_box, 1, 1, 0, /*
 Return a new weak box from value CONTENTS.
@@ -3346,10 +3346,10 @@ static const struct memory_description ephemeron_description[] = {
 };
 
 DEFINE_NODUMP_LISP_OBJECT ("ephemeron", ephemeron,
-					   mark_ephemeron, print_ephemeron,
-					   0, ephemeron_equal, ephemeron_hash,
-					   ephemeron_description,
-					   struct ephemeron);
+			   mark_ephemeron, print_ephemeron,
+			   0, ephemeron_equal, ephemeron_hash,
+			   ephemeron_description,
+			   struct ephemeron);
 
 DEFUN ("make-ephemeron", Fmake_ephemeron, 2, 3, 0, /*
 Return a new ephemeron with key KEY, value VALUE, and finalizer FINALIZER.

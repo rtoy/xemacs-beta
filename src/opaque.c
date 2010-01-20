@@ -152,9 +152,9 @@ static const struct memory_description opaque_ptr_description[] = {
 };
 
 DEFINE_NODUMP_LISP_OBJECT ("opaque-ptr", opaque_ptr,
-					   0, print_opaque_ptr, 0,
-					   equal_opaque_ptr, hash_opaque_ptr,
-					   opaque_ptr_description, Lisp_Opaque_Ptr);
+			   0, print_opaque_ptr, 0,
+			   equal_opaque_ptr, hash_opaque_ptr,
+			   opaque_ptr_description, Lisp_Opaque_Ptr);
 
 Lisp_Object
 make_opaque_ptr (void *val)

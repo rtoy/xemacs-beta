@@ -2348,12 +2348,12 @@ static const struct memory_description compiled_function_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("compiled-function", compiled_function,
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
+					mark_compiled_function,
+					print_compiled_function, 0,
+					compiled_function_equal,
+					compiled_function_hash,
+					compiled_function_description,
+					Lisp_Compiled_Function);
 
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*

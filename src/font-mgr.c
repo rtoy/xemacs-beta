@@ -91,7 +91,7 @@ static Lisp_Object Vfc_config_weak_list;
 ****************************************************************/
 
 static void
-finalize_fc_pattern (void *header, int UNUSED (for_disksave))
+finalize_fc_pattern (void *header)
 {
   struct fc_pattern *p = (struct fc_pattern *) header;
   if (p->fcpatPtr)
@@ -1090,7 +1090,7 @@ match other font-listing APIs. */
 */
 
 static void
-finalize_fc_config (void *header, int UNUSED (for_disksave))
+finalize_fc_config (void *header)
 {
   struct fc_config *p = (struct fc_config *) header;
   if (p->fccfgPtr && p->fccfgPtr != FcConfigGetCurrent())

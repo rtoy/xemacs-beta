@@ -438,14 +438,11 @@ free_hentries (htentry *hentries,
 }
 
 static void
-finalize_hash_table (void *header, int for_disksave)
+finalize_hash_table (void *header)
 {
-  if (!for_disksave)
-    {
-      Lisp_Hash_Table *ht = (Lisp_Hash_Table *) header;
-      free_hentries (ht->hentries, ht->size);
-      ht->hentries = 0;
-    }
+  Lisp_Hash_Table *ht = (Lisp_Hash_Table *) header;
+  free_hentries (ht->hentries, ht->size);
+  ht->hentries = 0;
 }
 #endif /* not NEW_GC */
 

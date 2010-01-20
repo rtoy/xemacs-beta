@@ -179,8 +179,8 @@ static const struct memory_description charset_description[] = {
 };
 
 DEFINE_DUMPABLE_LISP_OBJECT ("charset", charset,
-			       mark_charset, print_charset, 0,
-			       0, 0, charset_description, Lisp_Charset);
+			     mark_charset, print_charset, 0,
+			     0, 0, charset_description, Lisp_Charset);
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object

@@ -88,10 +88,10 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-DEFINE_NODUMP_LISP_OBJECT ("toolbar-button", toolbar_button,
-				mark_toolbar_button, 0, 0, 0, 0, 
-				toolbar_button_description,
-				struct toolbar_button);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("toolbar-button", toolbar_button,
+				    mark_toolbar_button,
+				    toolbar_button_description,
+				    struct toolbar_button);
 
 DEFUN ("toolbar-button-p", Ftoolbar_button_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar button.
