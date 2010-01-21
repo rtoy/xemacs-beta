@@ -1,5 +1,11 @@
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
+	* tests.c (Ftest_data_format_conversion):
+	Put in the right internal-format data under Unicode-internal;
+	at least it doesn't crash any more.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
 	* search.c (boyer_moore):
 	Initialize translate_prev_len in the right place in the inner
 	loop; fixes `make check' failures.
