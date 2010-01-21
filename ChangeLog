@@ -1,3 +1,19 @@
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (GENERATED_HEADERS):
+	* Makefile.in.in (.PHONY):
+	* Makefile.in.in (src/.gdbinit):
+	* configure:
+	* configure.ac (TAB):
+	etc/gdbinit.in has been moved to src/.gdbinit.in.in.  Reflect
+	this -- generate src/.gdbinit.in from src/.gdbinit.in.in, and
+	use the normal mechanism for doing so instead of copying it
+	specially.
+
+	Add target for `config-changed' and pass down to `src'.
+	Move some PHONY declarations to just before the actual targets.
+
 2010-01-13  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Update comment about Cygwin and pdump.
