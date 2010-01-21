@@ -1,5 +1,11 @@
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
+	* search.c (boyer_moore):
+	Initialize translate_prev_len in the right place in the inner
+	loop; fixes `make check' failures.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c (disksave_object_finalization):
 	* lisp.h:
 	* unicode.c (disksave_clear_unicode_precedence):

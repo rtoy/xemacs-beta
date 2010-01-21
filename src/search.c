@@ -1717,7 +1717,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
   Ibyte translate_prev[MAX_ICHAR_LEN];
-  Bytecount translate_prev_len = 0;
+  Bytecount translate_prev_len;
   /* These need to be rethought in the event that the internal format
      changes, or in the event that num_8_bit_fixed_chars disappears
      (entirely_one_byte_p can be trivially worked out by checking is the
@@ -1815,6 +1815,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		 only for storing parts of multi-byte characters, there
 		 won't be any zero's in them. */
 	      xzero (translate_prev);
+	      translate_prev_len = 0;
 	      ptr2 = ptr;
 	      while (!ibyte_first_byte_p (*ptr2))
 		translate_prev[translate_prev_len++] = *--ptr2;
