@@ -5251,7 +5251,7 @@ fi
 
 dnl Compute lists of Makefiles and subdirs
 AC_SUBST(SRC_SUBDIR_DEPS)
-internal_makefile_list="Makefile.in"
+internal_makefile_list="Makefile.in src/.gdbinit.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
@@ -5301,11 +5301,8 @@ dnl ----------------------------------------------
 
 dnl Unlike TAGS, debugger init files depend on config.h.
 dnl Regenerate them locally on every configure.
-dnl Create a .gdbinit useful for debugging XEmacs
-if test -f "$srcdir/etc/gdbinit.in"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
-fi
+dnl .gdbinit is now handled like xemacs.def or other src files, and
+dnl its source is in src/.gdbinit.in.in.
 
 dnl Create a .dbxrc useful for debugging XEmacs
 if test -f "$srcdir/etc/dbxrc.in"; then

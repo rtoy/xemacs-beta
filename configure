@@ -20352,7 +20352,7 @@ if test "$with_modules" = "no"; then
 fi
 
 
-internal_makefile_list="Makefile.in"
+internal_makefile_list="Makefile.in src/.gdbinit.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
@@ -20399,9 +20399,9 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/etc/gdbinit.in"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
+if test -f "$srcdir/etc/gdbinit.in.in"; then
+  test "$verbose" = "yes" && echo "creating src/.gdbinit.in.in"
+  cp $srcdir/etc/gdbinit.in.in src/.gdbinit.in.in
 fi
 
 if test -f "$srcdir/etc/dbxrc.in"; then
