@@ -12,6 +12,7 @@ XCOMM gdb init file for XEmacs
 XCOMM AUTOMATICALLY GENERATED FROM etc/gdbinit.in BY configure -- DO NOT EDIT.
 XCOMM See etc/gdbinit.in for licensing information and usage hints.
 XCOMM Copyright (C) 1998 Free Software Foundation, Inc.
+XCOMM Copyright (C) 2010 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -141,13 +142,13 @@ end
 
 define environment-to-run-temacs
   unset env EMACSLOADPATH
-  set env EMACSBOOTSTRAPLOADPATH=../lisp/:..
+  set env EMACSBOOTSTRAPLOADPATH=@srcdir@/../lisp/:@srcdir@/..
   set env EMACSBOOTSTRAPMODULEPATH=../modules/:..
 end
 
 define run-temacs
   environment-to-run-temacs
-  run -nd -no-packages -batch -l ../lisp/loadup.el run-temacs -q
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q
 end
 
 document run-temacs
@@ -158,7 +159,7 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 define check-xemacs
-  run -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run -vanilla -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/automated
 end
 
 document check-xemacs
@@ -168,7 +169,7 @@ end
 
 define check-temacs
   environment-to-run-temacs
-  run -nd -no-packages -batch -l ../lisp/loadup.el run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/automated
 end
 
 document check-temacs
@@ -180,7 +181,7 @@ end
 
 define update-elc
   environment-to-run-temacs
-  run -nd -no-packages -batch -l ../lisp/update-elc.el
+  run -nd -no-packages -batch -l @srcdir@/../lisp/update-elc.el
 end
 
 document update-elc
@@ -192,7 +193,7 @@ end
 
 define update-elc-2
   environment-to-run-temacs
-  run -no-packages -batch -no-autoloads -l update-elc-2.el -f batch-update-elc-2 ../lisp
+  run -no-packages -batch -no-autoloads -l update-elc-2.el -f batch-update-elc-2 @srcdir@/../lisp
 end
 
 document update-elc-2
@@ -202,7 +203,7 @@ end
 
 define dmp
   environment-to-run-temacs
-  run -nd -no-packages -batch -l ../lisp/loadup.el dump
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el dump
 end
 
 document dmp

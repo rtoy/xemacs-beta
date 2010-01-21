@@ -1,4 +1,4 @@
-## Copyright (C) 2003, 2005 Ben Wing. 
+## Copyright (C) 2003, 2005, 2010 Ben Wing. 
 
 ## DIST: This is the distribution Makefile for XEmacs.  configure can
 ## DIST: make most of the changes to this file you might want, so try
@@ -243,7 +243,7 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 ## instead, we have written out explicit code in the `install' targets.
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
-GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h src/xemacs.def etc/PROBLEMS
+GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h src/xemacs.def etc/PROBLEMS src/.gdbinit
 
 ## MAKE_SUBDIR will always be of the form lib-src ... src, where
 ## `...' includes various other directories that may be inserted by
@@ -282,9 +282,15 @@ ${srcdir}/lib-src/config.values.in : ${srcdir}/configure
 depend ${srcdir}/src/depend:
 	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) depend
 
+.PHONY: config-changed
+config-changed:
+	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
+
+.PHONY: check
 check:
 	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
 
+.PHONY: check-features
 check-features: all
 	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
 
@@ -355,6 +361,9 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 src/xemacs.def: $(srcdir)/src/xemacs.def.in.in
 	./config.status && touch $@
 
+src/.gdbinit: ${srcdir}/src/.gdbinit.in.in
+	./config.status && touch $@
+
 etc/PROBLEMS: $(srcdir)/PROBLEMS
 	cp $^ $@
 
@@ -367,7 +376,6 @@ etc/PROBLEMS: $(srcdir)/PROBLEMS
 ## On AIX, use tar xBf.
 
 .PHONY: install-only install install-arch-dep install-arch-indep gzip.el mkdir
-.PHONY: check check-features
 
 ## We delete each directory in ${COPYDESTS} before we copy into it;
 ## that way, we can reinstall over directories that have been put in
