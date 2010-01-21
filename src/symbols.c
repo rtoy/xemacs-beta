@@ -1,6 +1,6 @@
 /* "intern" and friends -- moved here from lread.c and data.c
    Copyright (C) 1985-1989, 1992-1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -773,6 +773,65 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
 /**********************************************************************/
 /*                           symbol-value			      */
 /**********************************************************************/
+
+/*
+   NOTE NOTE NOTE:
+   ---------------
+
+   There are various different uses of "magic" with regard to symbols,
+   and they need to be distinguished:
+
+   1. `symbol-value-magic' class of objects (struct symbol_value_magic):
+      A set of Lisp object types used as the value of a variable with any
+      behavior other than just a plain repository of a value.  This
+      includes buffer-local variables, console-local variables, read-only
+      variables, variable aliases, variables that are linked to a C
+      variable, etc.  The more specific types are:
+
+      -- `symbol-value-forward': Variables that forward to a C variable.
+         NOTE:This includes built-in buffer-local and console-local
+         variables, since they forward to an element in a buffer or
+         console structure.
+
+      -- `symbol-value-buffer-local': Variables on which
+         `make-local-variable' or `make-variable-buffer-local' have
+         been called.
+
+      -- `symbol-value-lisp-magic': See below.
+
+      -- `symbol-value-varalias': Variable aliases.
+
+   2. `symbol-value-lisp-magic': Variables on which
+      `dontusethis-set-symbol-value-handler' have been called.  These
+      variables are extra-magic in that operations that would normally
+      change their value instead get forwarded out to Lisp handlers,
+      which can do anything they want. (NOTE: Handlers for getting a
+      variable's value aren't implemented yet.)
+
+   3. "magicfun" handlers on C-forwarding variables, declared with any
+      of the following:
+
+      -- DEFVAR_LISP_MAGIC
+      -- DEFVAR_INT_MAGIC
+      -- DEFVAR_BOOL_MAGIC,
+      -- DEFVAR_BUFFER_LOCAL_MAGIC
+      -- DEFVAR_BUFFER_DEFAULTS_MAGIC
+      -- DEFVAR_CONSOLE_LOCAL_MAGIC
+      -- DEFVAR_CONSOLE_DEFAULTS_MAGIC
+
+      Here, the "magic function" is a handler that is notified whenever the
+      value of a variable is changed, so that some other updating can take
+      place (e.g. setting redisplay-related dirty bits, updating a cache,
+      etc.).
+
+      Note that DEFVAR_LISP_MAGIC does *NOT* have anything to do with
+      `symbol-value-lisp-magic'.  The former refers to variables that can
+      hold an arbitrary Lisp object and forward to a C variable declared
+      `Lisp_Object foo', and have a "magicfun" as just described; the
+      latter are variables that have Lisp-level handlers that function
+      in *PLACE* of normal variable-setting mechanisms, and are established
+      with `dontusethis-set-symbol-value-handler', as described above.
+*/
 
 /* If the contents of the value cell of a symbol is one of the following
    three types of objects, then the symbol is "magic" in that setting
