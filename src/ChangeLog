@@ -70,6 +70,12 @@
 	
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
+	* symbols.c:
+	Add long comment about the types of magic symbols, and the various
+	declarations that go along with them.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	Moved here from etc/.gdbinit.in.
 	Put @srcdir@ in various places rather than just `..' whenever
