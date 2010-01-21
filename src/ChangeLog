@@ -68,6 +68,11 @@
 	Remove `extern Lisp_Object' decls that duplicate lisp.h,
 	since they have different C vs. C++ linkage.
 	
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	Oops.  Use two hashes for comments in Makefile.in.in.
+
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
 	* symbols.c:
