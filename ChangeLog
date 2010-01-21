@@ -1,3 +1,9 @@
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
+	* PROBLEMS:
+	Add description of crash on recent Cygwin 1.7 when using C++, NEWGC
+        and optimization.
+
 2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerate, now we no longer look for rint().

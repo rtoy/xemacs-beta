@@ -114,6 +114,9 @@ Lisp_Object Qprint_message_label;
 /* Force immediate output of all printed data.  Used for debugging. */
 int print_unbuffered;
 
+/* Non-zero if in debug-printing */
+int in_debug_print;
+
 FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
 static void write_string_to_alternate_debugging_output (const Ibyte *str,
@@ -127,6 +130,7 @@ struct debug_bindings
   int print_depth;
   int print_readably;
   int print_unbuffered;
+  int in_debug_print;
   int gc_currently_forbidden;
   Lisp_Object Vprint_length;
   Lisp_Object Vprint_level;
@@ -2243,6 +2247,7 @@ debug_prin1_exit (Lisp_Object UNUSED (ignored))
   print_depth = bindings->print_depth;
   print_readably = bindings->print_readably;
   print_unbuffered = bindings->print_unbuffered;
+  in_debug_print = bindings->in_debug_print;
   gc_currently_forbidden = bindings->gc_currently_forbidden;
   Vprint_length = bindings->Vprint_length;
   Vprint_level = bindings->Vprint_level;
@@ -2270,6 +2275,7 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   bindings->print_depth = print_depth;
   bindings->print_readably = print_readably;
   bindings->print_unbuffered = print_unbuffered;
+  bindings->in_debug_print = in_debug_print;
   bindings->gc_currently_forbidden = gc_currently_forbidden;
   bindings->Vprint_length = Vprint_length;
   bindings->Vprint_level = Vprint_level;
@@ -2280,6 +2286,8 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   print_depth = 0;
   print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
   print_unbuffered++;
+  in_debug_print = 1;
+  gc_currently_forbidden = 1;
   if (debug_print_length > 0)
     Vprint_length = make_int (debug_print_length);
   if (debug_print_level > 0)

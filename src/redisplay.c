@@ -1,7 +1,7 @@
 /* Display generation from window structure and buffer text.
    Copyright (C) 1994, 1995, 1996 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996 Chuck Thompson.
 
@@ -640,9 +640,9 @@ redisplay_window_text_width_ichar_string (struct window *w, int findex,
   window = wrap_window (w);
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
-  return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (WINDOW_FRAME (w)))),
-		  text_width, (XFRAME (WINDOW_FRAME (w)),
-			       WINDOW_FACE_CACHEL (w, findex), str, len));
+  return DEVMETH (WINDOW_XDEVICE (w),
+		  text_width, (w, WINDOW_FACE_CACHEL (w, findex), str,
+			       len));
 }
 
 static Ichar_dynarr *rtw_ichar_dynarr;
@@ -690,7 +690,12 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
 			       NILP (window) ? frame : window,
 			       charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
-		  text_width, (XFRAME (frame),
+		  /* #### Not clear if we're always passed a window, but
+		     I think so.  If not, we will get an abort here,
+		     and then we need to either fix the callers to pass in
+		     a window, or change *text_width() to take a domain
+		     argument. */
+		  text_width, (XWINDOW (window),
 			       &cachel,
 			       Dynarr_atp (rtw_ichar_dynarr, 0),
 			       Dynarr_length (rtw_ichar_dynarr)));

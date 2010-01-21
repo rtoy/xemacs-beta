@@ -1771,11 +1771,7 @@ Dynarr_verify_pos_at (void *d, int pos, const Ascbyte *file, int line)
   assert_at_line (pos >= 0 && pos < dy->largest, file, line);
   return pos;
 }
-#else
-#define Dynarr_verify_pos(d, pos, file, line) (pos)
-#endif /* ERROR_CHECK_TYPES */
 
-#ifdef ERROR_CHECK_TYPES
 DECLARE_INLINE_HEADER (
 int
 Dynarr_verify_pos_atp (void *d, int pos, const Ascbyte *file, int line)
@@ -1848,12 +1844,19 @@ MODULE_API void *Dynarr_lisp_newf (int elsize,
 #define Dynarr_new2(dynarr_type, type) \
   ((dynarr_type *) Dynarr_newf (sizeof (type)))
 
+#ifdef ERROR_CHECK_TYPES_GCC_NOT_BROKEN
+/* Enabling this leads to crashes in Cygwin 1.7, gcc 3.4.4 */
 #define Dynarr_at(d, pos) \
   ((d)->base[Dynarr_verify_pos_at (d, pos, __FILE__, __LINE__)])
 #define Dynarr_atp_allow_end(d, pos) \
   (&((d)->base[Dynarr_verify_pos_atp_allow_end (d, pos, __FILE__, __LINE__)]))
 #define Dynarr_atp(d, pos) \
   (&((d)->base[Dynarr_verify_pos_atp (d, pos, __FILE__, __LINE__)]))
+#else
+#define Dynarr_at(d, pos) ((d)->base[pos])
+#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
+#define Dynarr_atp_allow_end(d, pos) Dynarr_atp (d, pos)
+#endif
 
 /* Old #define Dynarr_atp(d, pos) (&Dynarr_at (d, pos)) */
 #define Dynarr_begin(d) Dynarr_atp (d, 0)
@@ -5318,6 +5321,7 @@ void long_to_string (char *, long);
 void ulong_to_bit_string (char *, unsigned long);
 extern int print_escape_newlines;
 extern MODULE_API int print_readably;
+extern int in_debug_print;
 Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
