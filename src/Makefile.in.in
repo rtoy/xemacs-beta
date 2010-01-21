@@ -915,12 +915,12 @@ lint: $(LINTFILES)
 testdir = $(SRC)/../tests/automated
 batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
 
-# `config-changed' is useful if you are building both Unicode-internal
-# and old-Mule workspaces using --srcdir and don't run configure before
-# switching from one to the other.  If you rerun configure, update-elc.el
-# notices this and automatically removes the two files below, but not
-# if you just switch directories and `make'.  In that case, do
-# `make config-changed' to avoid an error.
+## `config-changed' is useful if you are building both Unicode-internal
+## and old-Mule workspaces using --srcdir and don't run configure before
+## switching from one to the other.  If you rerun configure, update-elc.el
+## notices this and automatically removes the two files below, but not
+## if you just switch directories and `make'.  In that case, do
+## `make config-changed' to avoid an error.
 
 .PHONY: remove-config-dependent-elcs config-changed
 remove-config-dependent-elcs:
