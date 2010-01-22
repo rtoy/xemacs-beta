@@ -67,9 +67,11 @@
 (define-charset-tag 'japanese-kanji/list
   :list '(japanese-jisx0208 japanese-jisx0208-1978
 	  japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2))
+
 (define-charset-tag 'japanese/list
   ;; Careful here, can't just say `japanese' or we will get a circularity
-  :list '(japanese-kanji/list japanese/language))
+  :list '(japanese-kanji/list latin-jisx0201 katakana-jisx0201
+	  japanese/language))
 
 ;;; Syntax of Japanese characters.
 (loop for row in '(33 34 40)
@@ -396,8 +398,7 @@ a similar structure:
  "Japanese" '((setup-function . setup-japanese-environment-internal)
 	      (exit-function . exit-japanese-environment)
 	      (tutorial . "TUTORIAL.ja")
-	      (charset japanese-jisx0208 japanese-jisx0208-1978
-		       japanese-jisx0212 latin-jisx0201 katakana-jisx0201)
+	      (charset japanese/list)
 	      (coding-system iso-2022-jp euc-jp
 			     shift-jis iso-2022-jp-2)
 	      (coding-priority iso-2022-jp euc-jp

@@ -1,5 +1,71 @@
 2010-01-21  Ben Wing  <ben@xemacs.org>
 
+	* buffer.c (finish_init_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	Create a new buffer-local variable `unicode-precedence-list'.
+	Create a couple of extra buffer slots for caching an internal
+	normalized version of the list.
+	
+	* emacs.c (main_1):
+	Comment about new dependencies on complex_vars_of_buffer().
+	
+	* lisp.h:
+	Declare some functions in unicode.c.
+	
+	* mule-charset.c:
+	* mule-charset.c (remove_charset_from_hash_tables):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fmake_charset):
+	Put an unwind-protect around the code that handles initializing
+	tags and unicode maps -- in case of error, remove the charset
+	from the hash tables that record it.
+	
+	* mule-charset.c (Fset_charset_tags):
+	* mule-charset.c (syms_of_mule_charset):
+	New function `set-charset-tags'.
+	
+	* unicode.c:
+	* unicode.c (allocate_jit_ucs_charset):
+	Add tags `jit' and `internal' to JIT charsets.
+	
+	* unicode.c (free_precedence_array):
+	Check that any global or buffer-local precedence array isn't
+	being freed.
+	
+	* unicode.c (cplta_mapper):
+	* unicode.c (convert_precedence_list_to_array_1):
+	* unicode.c (convert_precedence_list_to_array):
+	* unicode.c (internal_convert_precedence_list_to_array):
+	* unicode.c (external_convert_precedence_list_to_array):
+	Clean up and use bit flags rather than extra parameters for
+	holding flags.
+	
+	* unicode.c (RUP_NUKE_BUFFER_SLOTS):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (charset_created_recalculate_unicode_precedence):
+	* unicode.c (disksave_clear_unicode_precedence):
+	* unicode.c (unicode_precedence_list_changed):
+	When recalculating the precedence arrays, compute both the
+	global and buffer-local values.  Create another hash table
+	to cache mappings from conses of buffer-local and default
+	precedence arrays to the precedence array representing the
+	combined value.  Create functions init_default_unicode_precedence()
+	and init_buffer_unicode_precedence() to initialize default and
+	buffer-local values of the caches when a new buffer is created.
+	
+	* unicode.c (syms_of_unicode):
+	* unicode.c (init_unicode):
+	Delete the various old functions for manipulating Unicode
+	precedence list.  Access is now through the variable
+	`unicode-precedence-list' and a single function
+	`normalized-unicode-precedence-list'.  Delete the old hash
+	table that holds the global precedence array.
+	
+
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in:
 	Oops.  Use two hashes for comments in Makefile.in.in.
 

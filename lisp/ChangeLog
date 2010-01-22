@@ -1,3 +1,73 @@
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (initialize-default-unicode-precedence-list):
+	* unicode.el (init-windows-glyph-list-4): New.
+	* mule/mule-charset.el:
+	Don't create charset `windows-glyph-list-4' in unicode.el;
+	it's too early.  Instead wrap the code in a function
+	init-windows-glyph-list-4 and call from the `Internal' section
+	of mule-charset.el, after the appropriate functions have been
+	defined to handle tags.
+
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* mule/chinese.el:
+	* mule/chinese.el (chinese-big5/list):
+	* mule/chinese.el ('chinese/list): Removed.
+	* mule/chinese.el ('chinese-big5/list): New.
+	* mule/chinese.el ('chinese-gb/list): New.
+	* mule/chinese.el ('chinese-gb-env/list): New.
+	* mule/chinese.el ('chinese-big5-env/list): New.
+	Expand the list tags to include tags for specific sets of
+	charsets (Big5, GB, CNS) and tags for the two major
+	environments.  Put the locale info back in the call to
+	set-language-info-alist and use #' to ensure that a lambda
+	expression gets compiled.
+	
+	* mule/chinese.el ("Chinese-GB"):
+	* mule/chinese.el ("Chinese-BIG5"):
+	Fix the charset property to mention the env lists just created.
+
+	* mule/hebrew.el (iso-8859-8): Fix doc bug mentioning 8859-6
+	instead of 8859-8.
+	
+	* mule/cyrillic.el ("Cyrillic-ISO"):
+	* mule/cyrillic.el ("Russian"):
+	* mule/cyrillic.el ("Cyrillic-ALT"):
+	* mule/devanagari.el ("Devanagari"):
+	* mule/greek.el ("Greek"):
+	* mule/hebrew.el ("Hebrew"):
+	* mule/japanese.el ("Japanese"):
+	* mule/korean.el ("Korean"):
+	* mule/latin.el (for):
+	* mule/thai.el ("Thai"):
+	* mule/vietnamese.el ("Vietnamese"):
+	Fix the charset property to include a general language tag
+	to catch other charsets.
+
+	* mule/japanese.el (japanese/list):
+	Mention *-jisx0201 charsets specifically.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (for):
+	* mule/mule-charset.el (script):
+	* mule/mule-charset.el ('internal): New.
+	Add function tags for left-to-right and right-to-left.
+	Remove the corresponding .../script tags.
+	Remove these tags in various places they were manually added.
+	Add a `control-chars/script' tag and `internal' and `jit' tags.
+	Expand commented-out make-charset* to include a tags key.
+	Make a section for internal charsets and add tags to these
+	charsets now, since we can't add them at initialization time.
+	Also add tags for `latin-iso8859-1' in the `ISO 8859' section.
+	
+	
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Fix up commented-out code and set variable `unicode-precedence-list'
+	with the `charset' info of languages.
+
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
 	* unicode.el:

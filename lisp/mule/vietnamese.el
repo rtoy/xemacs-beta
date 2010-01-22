@@ -194,7 +194,8 @@
    mnemonic "VISCII"))
 
 (set-language-info-alist
- "Vietnamese" '((charset vietnamese-viscii-lower vietnamese-viscii-upper)
+ "Vietnamese" '((charset vietnamese-viscii-lower vietnamese-viscii-upper
+			 vietnamese)
 		(coding-system viscii)
 		(coding-priority viscii)
 		(locale "vietnamese" "vi")

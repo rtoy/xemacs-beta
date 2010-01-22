@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Keywords: mule, multilingual
 
@@ -800,8 +800,7 @@ the language environment for the major languages of Western Europe."
 
   ;; Fit the charsets preferences in unicode conversions for the
   ;; language environment.
-  ;(set-language-unicode-precedence-list
-  ; (get-language-info language-name 'charset))
+  (setq unicode-precedence-list (get-language-info language-name 'charset))
 
   (run-hooks 'set-language-environment-hook)
   (force-mode-line-update t))

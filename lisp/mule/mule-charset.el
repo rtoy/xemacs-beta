@@ -575,7 +575,10 @@ This is intended to be called from `make-charset'."
     (two-column (= 2 (charset-property charset 'columns)))
     (one-dimension (= 1 (charset-property charset 'dimension)))
     (two-dimension (= 2 (charset-property charset 'dimension)))
-    (iso2022 (not (null (charset-property charset 'final)))))
+    (iso2022 (not (null (charset-property charset 'final))))
+    (left-to-right (eq 'l2r (charset-property charset 'direction)))
+    (right-to-left (eq 'r2l (charset-property charset 'direction)))
+    (encodable (charset-encodable-p charset)))
   do
   (define-charset-tag name :parent 'charset
     :function `(lambda (charset)
@@ -596,8 +599,7 @@ This is intended to be called from `make-charset'."
 			  (syllabic)
 			  (semi-syllabic)
 			  (logographic)
-			  (left-to-right)
-			  (right-to-left)))
+			  (control-chars)))
 
 ;; define classes of writing systems
 
@@ -610,16 +612,16 @@ This is intended to be called from `make-charset'."
 ;; define the simple scripts that also serve as writing systems
 
 (loop for (script-and-writing-system script-parents doc) in
-  '((latin (western alphabetic left-to-right) "Latin letters, aka Roman letters")
-    (cyrillic (western alphabetic left-to-right))
-    (greek (western alphabetic left-to-right))
-    (arabic (middle-eastern abjad right-to-left))
-    (hebrew (middle-eastern abjad right-to-left))
-    (thai (south-asian abugida left-to-right))
-    (lao (south-asian abugida left-to-right))
-    (tibetan (south-asian abugida left-to-right))
-    (ethiopic (middle-eastern abugida left-to-right))
-    (devanagari (south-asian abugida left-to-right)))
+  '((latin (western alphabetic) "Latin letters, aka Roman letters")
+    (cyrillic (western alphabetic))
+    (greek (western alphabetic))
+    (arabic (middle-eastern abjad))
+    (hebrew (middle-eastern abjad))
+    (thai (south-asian abugida))
+    (lao (south-asian abugida))
+    (tibetan (south-asian abugida))
+    (ethiopic (middle-eastern abugida))
+    (devanagari (south-asian abugida)))
   do
   (do-define-charset-tags 'script
 			  (list (list script-and-writing-system
@@ -631,14 +633,14 @@ This is intended to be called from `make-charset'."
 
 (do-define-charset-tags
  'script
- '((kanji (east-asian logographic left-to-right))
-   (kana (east-asian syllabic left-to-right))
+ '((kanji (east-asian logographic))
+   (kana (east-asian syllabic))
    (hirigana (kana))
    (katakana (kana))
    ;; Wikipedia claims that Hangul is actually a "featural alphabet" rather
    ;; than a syllabary, but that's getting very obscure.
-   (hangul (east-asian syllabic left-to-right))
-   (bopomofo (east-asian semi-syllabic left-to-right))))
+   (hangul (east-asian syllabic))
+   (bopomofo (east-asian semi-syllabic))))
 
 ;; define complex writing systems
 
@@ -841,6 +843,16 @@ This is intended to be called from `make-charset'."
 
    ))
 
+;; misc
+
+(unless (featurep 'unicode-internal)
+  (define-charset-tag 'jit
+    :doc-string
+"Just-in-time (JIT) charsets used for holding undefined Unicode characters."))
+(define-charset-tag 'internal
+  :doc-string
+"Charsets used for internal purposes.  Generally should be left alone.")
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;       GNU EMACS CHARSETS        ;;;;;;;;;;;;;;;;;
@@ -918,32 +930,6 @@ This is intended to be called from `make-charset'."
 
 ;;; In international/mule-conf.el in GNU Emacs.
 
-;;; Definitions of character sets.  We must put them here, rather than
-;;; in the individual files devoted to particular languages (as we did
-;;; before), because we need to load the Unicode tables for them
-;;; *before* loading any files containing characters from these
-;;; character sets. (If/when these files are converted to UTF-8, the
-;;; problem will conceivably go away, at least for Unicode-internal --
-;;; but then the opposite problem would exist for old-Mule, if this is
-;;; still being preserved.)
-
-; #### No equivalent of the following charset from FSF
-
-; ;; ASCII with right-to-left direction.
-; (make-charset 'ascii-right-to-left
-;	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
-;	      '(dimension
-;		1
-;		registries ["ISO8859-1"]
-;		chars 94
-;		columns 1
-;		direction r2l
-;		final ?B
-;		graphic 0
-;		short-name "rev ASCII"
-;		long-name "ASCII with right-to-left direction"
-;		))
-
 ; ;; ISO-2022 allows a use of character sets not registered in ISO with
 ; ;; final characters `0' (0x30) through `?' (0x3F).  Among them, Emacs
 ; ;; reserves `0' through `9' to support several private character sets.
@@ -960,12 +946,21 @@ This is intended to be called from `make-charset'."
 ;; that charsets with official ID's are stored more efficiently (with one
 ;; less byte) than charsets with private ID's.
 
+;; Old comment, may not be completely accurate: [[ We also put many
+;; charsets here, rather than in the individual files devoted to particular
+;; languages (as we did before), because we need to load the Unicode tables
+;; for them *before* loading any files containing characters from these
+;; character sets. (If/when these files are converted to UTF-8, the problem
+;; will conceivably go away, at least for Unicode-internal -- but then the
+;; opposite problem would exist for old-Mule, if this is still being
+;; preserved.) ]]
+
 ;; Here is one option for a more sensible keyword-based interface onto
 ;; charset creation:
 
-;(defun* make-charset* (name short-name &key long-name doc-string
-;			    dimension offset chars direction registries
-;			    columns graphic final ccl-program unicode-map)
+;(defun* make-charset* (name short-name &key long-name doc-string dimension
+;		       offset chars direction registries columns graphic
+;		       final ccl-program unicode-map tags)
 ;  "Make a charset.  This is an alternative interface to `make-charset'.
 ;This interface uses keyword properties instead of a list of properties,
 ;and takes a mandatory short-name parameter rather than a doc string.
@@ -990,6 +985,7 @@ This is intended to be called from `make-charset'."
 ;		  ,@(and final `(final ,final))
 ;		  ,@(and ccl-program `(ccl-program ,ccl-program))
 ;		  ,@(and unicode-map `(unicode-map ,unicode-map))
+;		  ,@(and unicode-map `(tags ,tags))
 ;		  )))
 
 (defun make-internal-charset (name doc-string props)
@@ -1033,6 +1029,36 @@ and will be made so."
 			   ,@(and tags `(tags ,tags))
 			   )))
 
+;;;;;;;;;;;;;;;;;;;;; ASCII, Control-1, Composite, etc. ;;;;;;;;;;;;;;;;;;;;
+
+; #### No equivalent of the following charset from FSF
+
+; ;; ASCII with right-to-left direction.
+; (make-charset 'ascii-right-to-left
+;	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
+;	      '(dimension
+;		1
+;		registries ["ISO8859-1"]
+;		chars 94
+;		columns 1
+;		direction r2l
+;		final ?B
+;		graphic 0
+;		short-name "rev ASCII"
+;		long-name "ASCII with right-to-left direction"
+;		))
+(set-charset-tags 'ascii '(latin))
+(set-charset-tags 'control-1 '(control-chars))
+(set-charset-tags 'composite '(internal))
+(unless (featurep 'unicode-internal)
+  (set-charset-tags 'jit-ucs-charset-0 '(jit internal)))
+
+;; Windows Glyph List 4
+(init-windows-glyph-list-4) ;; in unicode.el
+(fmakunbound 'init-windows-glyph-list-4) ;; we don't want it dumped
+
+;;;;;;;;;;;;;;;;;;;;; ISO 8859 ;;;;;;;;;;;;;;;;;;;;
+
 (defun* make-iso8859-charset (symbol str8859 short-name alphabet-name
 			      iso-ir-name final tags &key doc-string direction)
   (let ((doc-string
@@ -1054,12 +1080,11 @@ and will be made so."
        tags ,(cons 'iso8859 tags)
        direction ,(or direction 'l2r)))))
 
-;;;;;;;;;;;;;;;;;;;;; ISO 8859 ;;;;;;;;;;;;;;;;;;;;
-
 ;; This is defined internally because it's (probably) needed early on,
 ;; and because it needs to have a very specific charset ID.
 ;(make-iso8859-charset 'latin-iso8859-1 "8859-1" "Latin-1" "Latin Alphabet 1"
 ;		      "ISO-IR-100" ?A '(latin))
+(set-charset-tags 'latin-iso8859-1 '(latin))
 (make-iso8859-charset 'latin-iso8859-2 "8859-2" "Latin-2" "Latin Alphabet 2"
 		      "ISO-IR-101" ?B '(latin))
 (make-iso8859-charset 'latin-iso8859-3 "8859-3" "Latin-3" "Latin Alphabet 3"

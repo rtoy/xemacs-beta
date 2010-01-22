@@ -61,7 +61,8 @@
 (define-coding-system-alias 'devanagari 'in-is13194-devanagari)
 
 (set-language-info-alist
- "Devanagari" '((charset indian-is13194 indian-2-column indian-1-column)
+ "Devanagari" '((charset indian-is13194 indian-2-column indian-1-column
+			 devanagari)
 		(coding-system in-is13194-devanagari)
 		(coding-priority in-is13194-devanagari)
                 ;; Not available in packages. 

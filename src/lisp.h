@@ -6175,10 +6175,14 @@ void add_charsets_to_precedence_array (Lisp_Object list,
 void filter_precedence_array (Lisp_Object orig_preclist,
 			     Lisp_Object new_preclist,
 			     int (*predicate) (Lisp_Object));
-void recalculate_unicode_precedence (void);
+void charset_created_recalculate_unicode_precedence (void);
 void disksave_clear_unicode_precedence (void);
 Lisp_Object internal_convert_precedence_list_to_array (Lisp_Object charsets);
 Lisp_Object external_convert_precedence_list_to_array (Lisp_Object charsets);
+int unicode_precedence_list_changed (Lisp_Object sym, Lisp_Object *val,
+				     Lisp_Object in_object, int flags);
+void init_default_unicode_precedence (int flags);
+void init_buffer_unicode_precedence (struct buffer *buf, int flags);
 extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
@@ -6205,6 +6209,8 @@ void
 encode_unicode_char (int code, unsigned_char_dynarr *dst,
 		     enum unicode_type type, unsigned int little_endian,
                      int write_error_characters_as_such);
+
+EXFUN (Fset_charset_tags, 2);
 
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);

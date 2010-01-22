@@ -58,7 +58,7 @@
 
 (set-language-info-alist
  "Thai" '((tutorial . "TUTORIAL.th")
-	  (charset thai-tis620)
+	  (charset thai-tis620 thai)
 	  (coding-system thai-tis620)
 	  (coding-priority thai-tis620)
 	  (nonascii-translation . thai-tis620)

@@ -210,7 +210,11 @@ static Lisp_Object Vunicode_query_skip_chars;
 static Lisp_Object Vunicode_query_string, Vunicode_invalid_string,
   Vutf_8_invalid_string;
 
+/* Cache mapping raw precedence lists to precedence arrays */
 static Lisp_Object Vprecedence_list_to_array;
+/* Cache mapping conses of pairs of precedence arrays to combined
+   precedence arrays */
+static Lisp_Object Vprecedence_array_cons_to_array;
 
 static Lisp_Object Qcharset_tag_to_charset_list;
 #endif /* MULE */
@@ -356,8 +360,6 @@ static const struct memory_description from_unicode_level_4_desc_1[] = {
   { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_3_desc } },
   { XD_END }
 };
-
-static Lisp_Object Vglobal_unicode_precedence_array;
 
 Lisp_Object Vdefault_unicode_precedence_list;
 /* Used internally in the generation of precedence arrays, to keep
@@ -987,7 +989,12 @@ allocate_jit_ucs_charset (void)
      nconc2 (list6 (Qcolumns, make_int (1), Qchars,
 		    make_int (96),
 		    Qdimension, make_int (2)),
-	     list2 (Qregistries, Qunicode_registries)));
+	     list4 (Qregistries, Qunicode_registries,
+		    /* not allowed to set non-nil tags when not yet
+		       initialized, for bootstrapping reasons; these
+		       get set in mule-charset.el */
+		    Qtags, initialized ? list2 (intern ("jit"), Qinternal)
+		    : Qnil)));
   XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
   last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
 
@@ -1502,7 +1509,16 @@ filter_precedence_array (Lisp_Object orig_precarray,
 void
 free_precedence_array (Lisp_Object precarray)
 {
-  text_checking_assert (!EQ (precarray, Vglobal_unicode_precedence_array));
+#ifdef ERROR_CHECK_TEXT
+  /* We shouldn't be trying to free any precarray that's attached to a
+     buffer */
+  {
+    ALIST_LOOP_3 (name, buf, Vbuffer_alist)
+      assert (!EQ (precarray, XBUFFER (buf)->unicode_precedence_array));
+  }
+  assert (!EQ (precarray,
+	       XBUFFER (Vbuffer_defaults)->unicode_precedence_array));
+#endif /* ERROR_CHECK_TEXT */
   if (!gc_in_progress)
     /* Will abort if you try to free a Lisp object during GC */
     FREE_LCRECORD (precarray);
@@ -1510,21 +1526,31 @@ free_precedence_array (Lisp_Object precarray)
 
 /******************** External precedence-list functions *******************/
 
-/* Convert an external precedence list to a series of charsets and write
-   them into the given precedence array object.  If NORMALIZE_P = 1,
-   elements can be charsets or tags.  Otherwise, elements can only be
-   charsets.  WARNING: This can call Lisp when NORMALIZE_P is 1.  This does
-   not call begin_precedence_array_generation(); you need to call that
-   yourself after you have allocated or reset a precedence array. */
+/* Called for each pair of (symbol, charset) in the hash table tracking
+   charsets. */
+static int
+cplta_mapper (Lisp_Object UNUSED (key), Lisp_Object value, void *closure)
+{
+  add_charset_to_precedence_array (value, VOID_TO_LISP (closure));
+  return 0;
+}
+
+#define CPLTA_NORMALIZE_P (1 << 0)
+#define CPLTA_MAKE_FULL_P (1 << 1)
+#define CPLTA_EARLY_ERROR_HANDLING (1 << 2)
+
+/* Process an external precedence list and write the charsets into the
+   given precedence array object.  Same as convert_precedence_list_to_array()
+   except that the precedence array must be passed in, and you must call
+   begin_precedence_array_generation() yourself. */
 
 static void
-convert_precedence_list_to_array_2 (Lisp_Object precarray,
-				    Lisp_Object preclist, int normalize_p,
-				    int early_error_handling)
+convert_precedence_list_to_array_1 (Lisp_Object precarray,
+				    Lisp_Object preclist, int flags)
 {
   EXTERNAL_LIST_LOOP_2 (elt, preclist)
     {
-      if (normalize_p)
+      if (flags & CPLTA_NORMALIZE_P)
 	{
 	  Lisp_Object charset = Qnil;
 	  /* Optimization to avoid calling Lisp in case a charset is listed
@@ -1537,38 +1563,34 @@ convert_precedence_list_to_array_2 (Lisp_Object precarray,
 	    add_charset_to_precedence_array (charset, precarray);
 	  else
 	    {
-	      if (early_error_handling)
-	        elt = call_critical_lisp_code
-                        (NULL, Qcharset_tag_to_charset_list, elt);
-              else
-	        elt = call1 (Qcharset_tag_to_charset_list, elt);
+	      if (flags & CPLTA_EARLY_ERROR_HANDLING)
+		elt = call_critical_lisp_code
+		  (NULL, Qcharset_tag_to_charset_list, elt);
+	      else
+		elt = call1 (Qcharset_tag_to_charset_list, elt);
 	      add_charsets_to_precedence_array (elt, precarray);
 	    }
 	}
       else
 	add_charset_to_precedence_array (elt, precarray);
     }
-}
-
-/* Called for each pair of (symbol, charset) in the hash table tracking
-   charsets. */
-static int
-cplta_mapper (Lisp_Object UNUSED (key), Lisp_Object value, void *closure)
-{
-  add_charset_to_precedence_array (value, VOID_TO_LISP (closure));
-  return 0;
+  if (flags & CPLTA_MAKE_FULL_P)
+    /* Now add all remaining charsets */
+    elisp_maphash (cplta_mapper, Vcharset_hash_table,
+                   LISP_TO_VOID (precarray));
 }
 
 /* Convert an external precedence list to a precedence array object.  If
-   NORMALIZE_P = 1, elements can be charsets or tags.  Otherwise, elements
-   can only be charsets.  If MAKE_FULL_P = 1, also add all remaining
-   unmentioned charsets to the array.
+   CPLTA_NORMALIZE_P, elements can be charsets or tags.  Otherwise, elements
+   can only be charsets.  If CPLTA_MAKE_FULL_P, also add all remaining
+   unmentioned charsets to the array. If CPLTA_EARLY_ERROR_HANDLING, wrap
+   calls to Lisp in call_critical_lisp_code(), which inhibits GC and will
+   bomb out if an error occurs.
 
-   WARNING: This can call Lisp when NORMALIZE_P is 1.   */
+   WARNING: This can call Lisp when CPLTA_NORMALIZE_P.   */
 
 static Lisp_Object
-convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p,
-				    int make_full_p, int early_error_handling)
+convert_precedence_list_to_array (Lisp_Object preclist, int flags)
 {
   Lisp_Object precarray;
   struct gcpro gcpro1;
@@ -1576,12 +1598,7 @@ convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p,
   precarray = allocate_precedence_array ();
   GCPRO1 (precarray);
   begin_precedence_array_generation ();
-  convert_precedence_list_to_array_2 (precarray, preclist, normalize_p,
-                                      early_error_handling);
-  if (make_full_p)
-    /* Now add all remaining charsets to Vglobal_unicode_precedence_array */
-    elisp_maphash (cplta_mapper, Vcharset_hash_table,
-                   LISP_TO_VOID (precarray));
+  convert_precedence_list_to_array_1 (precarray, preclist, flags);
   UNGCPRO;
   return precarray;
 }
@@ -1593,7 +1610,7 @@ convert_precedence_list_to_array_1 (Lisp_Object preclist, int normalize_p,
 Lisp_Object
 internal_convert_precedence_list_to_array (Lisp_Object preclist)
 {
-  return convert_precedence_list_to_array_1 (preclist, 0, 0, 0);
+  return convert_precedence_list_to_array (preclist, 0);
 }
 
 /* Validate and convert an external precedence list consisting of charsets
@@ -1614,7 +1631,8 @@ external_convert_precedence_list_to_array (Lisp_Object preclist)
   precarray = Fgethash (preclist, Vprecedence_list_to_array, Qnil);
   if (NILP (precarray))
     {
-      precarray = convert_precedence_list_to_array_1 (preclist, 1, 0, 0);
+      precarray = convert_precedence_list_to_array (preclist,
+						    CPLTA_NORMALIZE_P);
       Fputhash (preclist, precarray, Vprecedence_list_to_array);
     }
   return precarray;
@@ -1622,107 +1640,186 @@ external_convert_precedence_list_to_array (Lisp_Object preclist)
 
 /**************** The global and buffer-local precedence lists ***************/
 
-/* Rebuild the global and buffer-local Unicode precedence arrays. */
-static void
-recalculate_unicode_precedence_1 (int for_disksave, int early_error_handling)
+#define RUP_NUKE_BUFFER_SLOTS (1 << 0)
+#define RUP_EARLY_ERROR_HANDLING (1 << 1)
+#define RUP_CLEAR_HASH_TABLE (1 << 2)
+
+/* Rebuild one buffer-local Unicode precedence array slot.  Return a
+   precedence array.  Compute the precedence array from PRECLIST1.  If
+   PRECLIST2 is non-nil, also add the charsets from it, after the ones
+   from PRECLIST1.  FLAGS is as in recalculate_unicode_precedence().
+*/
+
+static Lisp_Object
+recalculate_unicode_precedence_1 (struct buffer *buf, Lisp_Object preclist1,
+				  Lisp_Object precarr2, int flags)
 {
-  Fclrhash (Vprecedence_list_to_array);
-  if (for_disksave)
-    Vglobal_unicode_precedence_array = Qnil;
+  if (flags & RUP_NUKE_BUFFER_SLOTS)
+    return Qnil;
   else
-    Vglobal_unicode_precedence_array =
-      convert_precedence_list_to_array_1 (Vdefault_unicode_precedence_list, 1,
-					  1, early_error_handling);
+    {
+      Lisp_Object value = Fgethash (preclist1, Vprecedence_list_to_array,
+				    Qnil);
+      if (!NILP (value) && NILP (precarr2))
+	return value;
+      else
+	{
+	  Lisp_Object precarr0, precarr1, cons;
+	  int cplta_flags = CPLTA_NORMALIZE_P | CPLTA_MAKE_FULL_P |
+	    (flags & RUP_EARLY_ERROR_HANDLING
+	     ? CPLTA_EARLY_ERROR_HANDLING
+	     : 0);
+
+	  /* No GCPRO because we don't have pointers to any created objects
+	     till after the following function runs, and it's the only one
+	     that calls Lisp */
+	  precarr1 = convert_precedence_list_to_array (preclist1, cplta_flags);
+	  Fputhash (preclist1, precarr1, Vprecedence_list_to_array);
+	  if (NILP (precarr2))
+	    return precarr1;
+
+	  /* The purpose of having this extra hash table to cache the creation
+	     of a combined precedence array from two of them, plus the
+	     free_cons() below, is to avoid creating any garbage in the common
+	     case where you just switch buffers.  This triggers the magic
+	     function, and currently that function sweeps through all buffers
+	     and recalculates their precedence arrays.  With many buffers
+	     active, that amounts to a lot of garbage. */
+	  cons = Fcons (precarr1, precarr2);
+	  precarr0 = Fgethash (cons, Vprecedence_array_cons_to_array, Qnil);
+	  if (NILP (precarr0))
+	    {
+	      precarr0 = allocate_precedence_array ();
+	      begin_precedence_array_generation ();
+	      filter_precedence_array (precarr1, precarr0, NULL);
+	      filter_precedence_array (precarr2, precarr0, NULL);
+	      Fputhash (cons, precarr0, Vprecedence_array_cons_to_array);
+	      buf->unicode_precarray_cons = cons;
+	    }
+	  else
+	    free_cons (cons);
+	  return precarr0;
+	}
+    }
+}
+
+/* FLAGS in the next two functions is the same as for
+   recalculate_unicode_precedence() except that only
+   RUP_NUKE_BUFFER_SLOTS and RUP_EARLY_ERROR_HANDLING are useful. */
+
+void
+init_default_unicode_precedence (int flags)
+{
+  if (!current_buffer)
+    return;
+  XBUFFER (Vbuffer_defaults)->unicode_precedence_array =
+    recalculate_unicode_precedence_1
+    (0, XBUFFER (Vbuffer_defaults)->unicode_precedence_list, Qnil, flags);
 }
 
 void
-recalculate_unicode_precedence (void)
+init_buffer_unicode_precedence (struct buffer *buf, int flags)
 {
-  recalculate_unicode_precedence_1 (0, 0);
+  /* reinit_complex_vars_of_minibuf() is called during
+     post-dump initialization but before current-buffer is set or
+     init_unicode() has been called.  If we don't return now, we
+     will eventually get a crash from code called from Lisp that
+     expects to have a current buffer (when I hit it, the crash was
+     in compile_pattern() called from `string-match').  In any case,
+     we shouldn't be calling Lisp so early, and the call to
+     init_unicode() will recalculate all the buffer values. */
+  if (!current_buffer)
+    return;
+  buf->unicode_precedence_array =
+    recalculate_unicode_precedence_1
+    (buf, buf->unicode_precedence_list,
+     XBUFFER (Vbuffer_defaults)->unicode_precedence_array, flags);
+}
+
+/* Rebuild the default and buffer-local Unicode precedence arrays.  If
+   RUP_CLEAR_HASH_TABLE, clear the hash table first; otherwise, we get use
+   the hash table to avoid expensive calls to Lisp.  If
+   RUP_NUKE_BUFFER_SLOTS, set the array values to nil instead of
+   recalculating them.  If RUP_EARLY_ERROR_HANDLING, wrap calls to Lisp in
+   call_critical_lisp_code(), which inhibits GC and will bomb out if an
+   error occurs. */
+
+static void
+recalculate_unicode_precedence (int flags)
+{
+  if (flags & RUP_CLEAR_HASH_TABLE)
+    {
+      Fclrhash (Vprecedence_list_to_array);
+      Fclrhash (Vprecedence_array_cons_to_array);
+    }
+  init_default_unicode_precedence (flags);
+  {
+    ALIST_LOOP_3 (name, buf, Vbuffer_alist)
+      init_buffer_unicode_precedence (XBUFFER (buf), flags);
+  }
+}
+
+void
+charset_created_recalculate_unicode_precedence (void)
+{
+  recalculate_unicode_precedence (RUP_CLEAR_HASH_TABLE);
 }
 
 void
 disksave_clear_unicode_precedence (void)
 {
-  recalculate_unicode_precedence_1 (1, 0);
+  recalculate_unicode_precedence (RUP_NUKE_BUFFER_SLOTS |
+				  RUP_CLEAR_HASH_TABLE);
 }
 
+int
+unicode_precedence_list_changed (Lisp_Object UNUSED (sym),
+				 Lisp_Object *UNUSED (val),
+				 Lisp_Object UNUSED (in_object),
+				 int UNUSED (flags))
+{
+  recalculate_unicode_precedence (0);
+  return 0;
+}
+
+Lisp_Object
+get_buffer_unicode_precedence (struct buffer *buf)
+{
+  return buf->unicode_precedence_array;
+}
+
+/* @@#### Generally, callers of this function should be changed to use
+   get_buffer_unicode_precedence() and specify a buffer */
 Lisp_Object
 get_unicode_precedence (void)
 {
-  return Vglobal_unicode_precedence_array;
+  return get_buffer_unicode_precedence (current_buffer);
 }
 
-Lisp_Object
-get_buffer_unicode_precedence (struct buffer *UNUSED (buf))
-{
-  /* @@####  Implement me */
-  return Vglobal_unicode_precedence_array;
-}
-
-DEFUN ("unicode-precedence-list", 
-       Funicode_precedence_list,
-       0, 0, 0, /*
+DEFUN ("normalized-unicode-precedence-list",
+       Fnormalized_unicode_precedence_list,
+       0, 1, 0, /*
 Return the precedence order among charsets used for Unicode decoding.
 
 Value is a list of charsets, which are searched in order for a translation
-matching a given Unicode character.
+matching a given Unicode character.  This value differs from the value
+of the variable `unicode-precedence-list' in that charset tags are expanded
+to the charsets they match, and any unspecified charsets are added at the
+end in an indeterminate order.
 
-The highest precedence is given to the language-specific precedence list of
-charsets, defined by `set-language-unicode-precedence-list'.  These are
-followed by charsets in the default precedence list, defined by
-`set-default-unicode-precedence-list'.  Charsets occurring multiple times are
-given precedence according to their first occurrance in either list.  These
-are followed by the remaining charsets, in some arbitrary order.
-
-The language-specific precedence list is meant to be set as part of the
-language environment initialization; the default precedence list is meant
-to be set by the user.
-
-#### NOTE: This interface may be changed.
+Value is specific to BUFFER, which defaults to the current buffer.
 */
-       ())
+       (buffer))
 {
   int i;
   Lisp_Object list = Qnil;
-  Lisp_Object precarray = get_unicode_precedence ();
+  struct buffer *buf = decode_buffer (buffer, 0);
+  Lisp_Object precarray = get_buffer_unicode_precedence (buf);
   Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (precarray);
 
   for (i = Dynarr_length (precdyn) - 1; i >= 0; i--)
-    list = Fcons (Dynarr_at (precdyn, i), list);
+    list = Fcons (XCHARSET_NAME (Dynarr_at (precdyn, i)), list);
   return list;
-}
-
-DEFUN ("set-default-unicode-precedence-list",
-       Fset_default_unicode_precedence_list,
-       1, 1, 0, /*
-Set the default precedence list used for Unicode decoding.
-This is intended to be set by the user.  See
-`unicode-precedence-list' for more information.
-
-#### NOTE: This interface may be changed.
-*/
-       (list))
-{
-  /* Convert and validate first before changing
-     Vdefault_unicode_precedence_list */
-  Vglobal_unicode_precedence_array =
-    convert_precedence_list_to_array_1 (list, 1, 1, 0);
-  Vdefault_unicode_precedence_list = list;
-  return Qnil;
-}
-
-DEFUN ("default-unicode-precedence-list",
-       Fdefault_unicode_precedence_list,
-       0, 0, 0, /*
-Return the default precedence list used for Unicode decoding.
-See `unicode-precedence-list' for more information.
-
-#### NOTE: This interface may be changed.
-*/
-       ())
-{
-  return Vdefault_unicode_precedence_list;
 }
 
 /***************************************************************************/
@@ -3479,9 +3576,7 @@ syms_of_unicode (void)
   INIT_LRECORD_IMPLEMENTATION (precedence_array);
 
 #ifdef MULE
-  DEFSUBR (Funicode_precedence_list);
-  DEFSUBR (Fset_default_unicode_precedence_list);
-  DEFSUBR (Fdefault_unicode_precedence_list);
+  DEFSUBR (Fnormalized_unicode_precedence_list);
   DEFSUBR (Fset_unicode_conversion);
 
   DEFSUBR (Fload_unicode_mapping_table);
@@ -3563,9 +3658,6 @@ vars_of_unicode (void)
   Vcharset_descr
     = build_msg_string ("Mule charset for otherwise unknown Unicode code points.");
 #endif
-  staticpro (&Vdefault_unicode_precedence_list);
-  Vdefault_unicode_precedence_list = Qnil;
-
   staticpro (&Vprecedence_array_charsets_seen_hash);
   Vprecedence_array_charsets_seen_hash =
     make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
@@ -3579,10 +3671,13 @@ vars_of_unicode (void)
     /* The entries are lists, but for speed in lookup, we only compare
        using `eq'. */
     make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+  staticpro (&Vprecedence_array_cons_to_array);
+  Vprecedence_array_cons_to_array =
+    /* We must compare with `equal' since we have conses.  We make the table
+       key-weak but then we depend on the cons being stored somewhere when
+       it's in use.  So we store it in a slot in the buffer. */
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
 
-  staticpro (&Vglobal_unicode_precedence_array);
-  Vglobal_unicode_precedence_array = Qnil;
-  
   init_blank_unicode_tables ();
 
   /* Note that the "block" we are describing is a single pointer, and hence
@@ -3692,6 +3787,6 @@ init_unicode (void)
      So we make sure that the Lisp code is wrapped in
      `very-early-error-handler'. */
   if (initialized)
-    recalculate_unicode_precedence_1 (0, 1);
+    recalculate_unicode_precedence (RUP_CLEAR_HASH_TABLE |
+				    RUP_EARLY_ERROR_HANDLING);
 }
-

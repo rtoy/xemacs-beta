@@ -110,6 +110,23 @@ Boston, MA 02111-1307, USA.  */
 #ifdef MULE
     /* This buffer's category table. */
     MARKED_SLOT (category_table)
+
+    /* The unicode precedence list for this buffer, used when converting
+       Unicode codepoints to charset codepoints. */
+    MARKED_SLOT (unicode_precedence_list)
+
+    /* The above value converted into an internal precedence-array object.
+       This is cached because the above value may have tags referring to
+       multiple charsets, which need to be expanded into those charsets,
+       duplicates removed, and unspecified charsets added at the end. */
+    MARKED_SLOT (unicode_precedence_array)
+
+    /* Used to hold a cons that serves as the key in a hash table lookup
+       to avoid creating unnecessary precedence-array objects.  We put
+       the cons here that serves as the key in the entry whose value is
+       the value of UNICODE_PRECEDENCE_ARRAY.  We need to store this key
+       because the hash table that it is used in is key-weak. */
+    MARKED_SLOT (unicode_precarray_cons)
 #endif /* MULE */
     /* This buffer's coding system. */
     MARKED_SLOT (buffer_file_coding_system)

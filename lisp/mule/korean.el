@@ -141,7 +141,7 @@ G1: Korean-KSC5601"
  "Korean" '((setup-function . setup-korean-environment-internal)
 	    (exit-function . exit-korean-environment)
 	    (tutorial . "TUTORIAL.ko")
-	    (charset korean-ksc5601)
+	    (charset korean-ksc5601 korean)
 	    (coding-system euc-kr iso-2022-kr)
 	    (coding-priority euc-kr iso-2022-kr)
 	    (locale "ko_KR.eucKR" "ko_KR.EUC" "ko_KR.euc" "ko_KR" "ko")
