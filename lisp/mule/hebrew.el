@@ -35,7 +35,7 @@
 
 
 (make-coding-system
- 'iso-8859-8 'multibyte "ISO 8859-6 (Hebrew)"
+ 'iso-8859-8 'multibyte "ISO 8859-8 (Hebrew)"
  '(charsets (ascii control-1 hebrew-iso8859-8)
    mnemonic "MIME/Hbrw"))
 
@@ -51,7 +51,7 @@
    ))
 
 (set-language-info-alist
- "Hebrew" '((charset hebrew-iso8859-8)
+ "Hebrew" '((charset hebrew-iso8859-8 hebrew)
 	    (coding-system iso-8859-8)
 	    (coding-priority iso-8859-8)
             ;; Not available in packages. 

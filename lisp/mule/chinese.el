@@ -113,11 +113,17 @@
   :list '(chinese-cns11643-1 chinese-cns11643-2 chinese-cns11643-3
 	  chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
 	  chinese-cns11643-7))
-(define-charset-tag 'chinese/list
-  :list `(chinese-gb2312
-	  ,@(if (featurep 'unicode-internal) '(chinese-big5)
-	      '(chinese-big5-1 chinese-big5-2))
-	  chinese-cns/list chinese/language))
+(define-charset-tag 'chinese-big5/list
+  :list (if (featurep 'unicode-internal) '(chinese-big5)
+	  '(chinese-big5-1 chinese-big5-2)))
+(define-charset-tag 'chinese-gb/list
+  :list '(chinese-gb2312 chinese-sisheng))
+
+(define-charset-tag 'chinese-gb-env/list
+  :list '(chinese-gb/list chinese-big5/list chinese-cns/list chinese/language))
+
+(define-charset-tag 'chinese-big5-env/list
+  :list '(chinese-big5/list chinese-gb/list chinese-cns/list chinese/language))
  
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
@@ -245,7 +251,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 
 (set-language-info-alist
  "Chinese-GB" '((setup-function . setup-chinese-gb-environment-internal)
-		(charset chinese-gb2312 chinese-sisheng)
+		(charset chinese-gb-env/list)
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
 		(cygwin-locale "zh")
@@ -327,11 +333,14 @@ of a Chinese character\"."))
   (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font))
 
 (set-language-info-alist
- "Chinese-BIG5" `(,(if (find-charset 'chinese-big5-1)
-		       '(charset chinese-big5-1 chinese-big5-2)
-		     '(charset chinese-big5))
+ "Chinese-BIG5" `((charset chinese-big5-env/list)
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
+		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
+			  "chinese-t"
+			  #'(lambda (arg)
+			      (and arg (let ((case-fold-search t))
+					 (string-match "^zh_.*.BIG5.*" arg)))))
 		  (cygwin-locale "zh_TW")
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
 		  (native-coding-system big5)
@@ -344,24 +353,13 @@ Uses the Chinese Big5 character set."
 ))
  '("Chinese"))
 
-;; Set the locale information separately so that the lambda gets compiled.
-(set-language-info "Chinese-BIG5" 
-                   'locale
-		  (list "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
-                        "chinese-t"
-                        (lambda (arg)
-                          (and arg (let ((case-fold-search t))
-                                     (string-match "^zh_.*.BIG5.*" arg))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (set-language-info-alist
-;;  "Chinese-CNS" '((charset chinese-cns11643-1 chinese-cns11643-2
-;;                           chinese-cns11643-3 chinese-cns11643-4
-;;                           chinese-cns11643-5 chinese-cns11643-6
-;;                           chinese-cns11643-7)
+;;  "Chinese-CNS" '((charset chinese-cns/list chinese-big5/list
+;;                   chinese-gb/list chinese)
 ;;                  (coding-system iso-2022-cn)
 ;;                  (coding-priority iso-2022-cn chinese-big5 chinese-iso-8bit)
 ;;                  (features china-util)

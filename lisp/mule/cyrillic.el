@@ -117,7 +117,7 @@ See `koi8-r' and `windows-1251'.  "
 ;; Provide this locale; but don't allow it to be picked up from the Unix
 ;; locale (it has no locale entry in the alist), we leave that to Russian.
 (set-language-info-alist
- "Cyrillic-ISO" '((charset cyrillic-iso8859-5)
+ "Cyrillic-ISO" '((charset cyrillic-iso8859-5 cyrillic)
                   (tutorial . "TUTORIAL.ru")
                   (coding-system iso-8859-5)
                   (native-coding-system iso-8859-5)
@@ -149,7 +149,7 @@ characters of the opposite case). "
 
 ;; Create a corresponding language environment. 
 (set-language-info-alist
- "Russian" '((charset cyrillic-iso8859-5)
+ "Russian" '((charset koi8 cyrillic)
 	     (coding-system koi8-r)
 	     (native-coding-system koi8-r)
 	     (coding-priority koi8-r)
@@ -247,7 +247,7 @@ Byelorussian in the early 1990s.)"))
    aliases (cp866)))
 
 (set-language-info-alist
- "Cyrillic-ALT" '((charset cyrillic-iso8859-5)
+ "Cyrillic-ALT" '((charset cyrillic-alternativnyj cyrillic)
                   (coding-system alternativnyj)
                   (native-coding-system alternativnyj)
 		  (invalid-sequence-coding-system alternativnyj)

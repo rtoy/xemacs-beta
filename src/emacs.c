@@ -2482,12 +2482,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* This calls Fcopy_syntax_table(), which relies on char tables. */
       complex_vars_of_syntax ();
 
-      /* This initializes buffer-local variables, sets things up so
-	 that buffers can be created, and creates a couple of basic
-	 buffers.  This depends on Vstandard_syntax_table and
-	 Vstandard_category_table (initialized in the previous
-	 functions), as well as a whole horde of variables that may
-	 have been initialized above. */
+      /* This initializes buffer-local variables, sets things up so that
+	 buffers can be created, and creates a couple of basic buffers.
+	 This depends on Vstandard_syntax_table and
+	 Vstandard_category_table (initialized in the previous functions),
+	 and in Mule on some charsets existing, as well as a whole horde of
+	 variables that may have been initialized above. */
       complex_vars_of_buffer ();
 
       /* This initializes console-local variables. */

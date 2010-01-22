@@ -126,7 +126,7 @@
    aliases (greek-iso-8bit)))
 
 (set-language-info-alist
- "Greek" '((charset greek-iso8859-7)
+ "Greek" '((charset greek-iso8859-7 greek)
 	   (coding-system iso-8859-7)
 	   (coding-priority iso-8859-7)
 	   (native-coding-system iso-8859-7)

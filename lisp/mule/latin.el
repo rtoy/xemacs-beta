@@ -788,7 +788,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
   do
   (set-language-info-alist
    nice-charset-1
-   `((charset ascii ,charset)
+   `((charset ascii ,charset latin/list)
      (coding-system ,codesys)
      (coding-priority ,codesys)
      (native-coding-system ,codesys)
@@ -802,7 +802,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
     do
     (set-language-info-alist
      name
-     `((charset ascii ,charset)
+     `((charset ascii ,charset latin/list)
        (coding-system ,codesys)
        (coding-priority ,codesys)
        (native-coding-system ,codesys)

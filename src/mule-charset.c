@@ -627,7 +627,29 @@ charset_by_id (int id)
 {
   return Fgethash (make_int (id), Vcharset_id_table, Qnil);
 }
-		    
+
+static void
+remove_charset_from_hash_tables (Lisp_Object charset)
+{
+  Lisp_Object ret;
+
+  ret = Fremhash (XCHARSET_NAME (charset), Vcharset_hash_table);
+  assert (!NILP (ret));
+  ret = Fremhash (make_int (XCHARSET_ID (charset)), Vcharset_id_table);
+  assert (!NILP (ret));
+}
+
+static Lisp_Object
+maybe_remove_charset_from_hash_tables (Lisp_Object arg)
+{
+  Lisp_Object charset = XCAR (arg);
+  /* t is a signal to actually do it; it will get set to nil if we
+     completely successfully. */
+  if (EQ (XCDR (arg), Qt))
+    remove_charset_from_hash_tables (charset);
+  return Qnil;
+}
+
 /* Make a new charset.  ID is the charset ID, or -1 to find a new one. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object
@@ -712,7 +734,6 @@ make_charset (int id, int no_init_unicode_tables,
     }
   else
     {
-      Lisp_Object ret;
       /* We should only be called this way from the ISO-2022 code */
       text_checking_assert (final > 0);
       /* Actually overwrite the properties of the existing charset.
@@ -728,10 +749,8 @@ make_charset (int id, int no_init_unicode_tables,
 	}
 #endif /* not UNICODE_INTERNAL */
 
-      ret = Fremhash (XCHARSET_NAME (obj), Vcharset_hash_table);
-      assert (!NILP (ret));
-      ret = Fremhash (make_int (id), Vcharset_id_table);
-      assert (!NILP (ret));
+      assert (id == XCHARSET_ID (obj));
+      remove_charset_from_hash_tables (obj);
     }
 
   XCHARSET_ID		(obj) = id;
@@ -795,26 +814,44 @@ make_charset (int id, int no_init_unicode_tables,
       Fputhash (name, obj, Vcharset_hash_table);
     }
 
-  recalculate_unicode_precedence ();
-  setup_charset_initial_specifier_tags (obj);
+  
+  {
+    /* Qt signals to remove the charset from the hash tables, in case of
+       error */
+    Lisp_Object cons = Fcons (obj, Qt);
+    int depth = record_unwind_protect (maybe_remove_charset_from_hash_tables,
+				       cons);
+    struct gcpro gcpro1;
 
-  if (!NILP (tags))
-    {
-      struct gcpro gcpro1, gcpro2, gcpro3;
-      GCPRO3 (obj, tags, unicode_map);
-      call2 (Qregister_charset_tags, obj, tags);
-      XCHARSET_TAGS (obj) = tags;
-      UNGCPRO;
-    }
+    GCPRO1 (cons);
 
-  /* Must be the very last thing we do, since it can signal an error in
-     case `unicode-map' was given invalidly; then the charset will have
-     no unicode map set */
-  if (!NILP (unicode_map))
-    init_charset_unicode_map (obj, unicode_map);
+    /* No need to GCPRO other things even though some functions below call
+       Lisp, because all objects are pointed to through the charset, and
+       the charset is in a hash table. */
+    setup_charset_initial_specifier_tags (obj);
+
+    /* We're called at initialization time before there are any buffers or
+       other things necessary for calling Lisp, so don't get SNAFU'ed. */
+    if (initialized)
+      Fset_charset_tags (obj, tags);
+    else
+      /* Make sure when we're still initializing and can't handle tags,
+	 that the tags actually passed in were nil.  Otherwise we're likely
+	 to get errors or crashes elsewhere due to not-yet-defined tags,
+	 etc. */
+      assert (NILP (tags));
+
+    if (!NILP (unicode_map))
+      init_charset_unicode_map (obj, unicode_map);
+
+    XCDR (cons) = Qnil; /* Don't remove from hash */
+    UNGCPRO;
+    unbind_to (depth);
+  }
 
   return obj;
 }
+
 
 /* #### SJT Should generic properties be allowed? */
 DEFUN ("make-charset", Fmake_charset, 3, 3, 0, /*
@@ -917,6 +954,9 @@ character set.  Recognized properties are:
   Lisp_Object short_name = Qnil, long_name = Qnil;
   Lisp_Object existing_charset = Qnil;
   int temporary = UNBOUNDP (name);
+  struct gcpro gcpro1;
+
+  GCPRO1 (registries);
 
   /* NOTE: name == Qunbound is a directive from the iso2022 code to
      create a temporary charset for an unknown final.  We allow the final
@@ -996,11 +1036,7 @@ character set.  Recognized properties are:
 	else if (EQ (keyword, Qtags))
 	  {
 	    CHECK_TRUE_LIST (value);
-	    {
-	      EXTERNAL_LIST_LOOP_2 (tag, value)
-		CHECK_SYMBOL (tag);
-	    }
-	    /* @@#### Validate further here */
+	    /* It will get validated further */
 	    tags = value;
 	  }
 	
@@ -1119,7 +1155,7 @@ character set.  Recognized properties are:
 			  doc_string, registries, unicode_map, tags,
 			  !NILP (existing_charset),
 			  CSET_EXTERNAL);
-
+  
   XCHARSET (charset)->temporary = temporary;
   if (!NILP (ccl_program))
     XCHARSET_CCL_PROGRAM (charset) = ccl_program;
@@ -1137,6 +1173,7 @@ character set.  Recognized properties are:
 	}
     }
 
+  UNGCPRO;
   return charset;
 }
 
@@ -1484,6 +1521,23 @@ and use the text that appears at the top of the window.
   return Qnil;
 }
 
+DEFUN ("set-charset-tags", Fset_charset_tags, 2, 2, 0, /*
+Set the `tags' property of CHARSET to TAGS.
+See `make-charset' and `define-charset-tag' for more info about charset tags.
+Normally, you should not change the tags of a charset after it has been
+created.  This function exists primarily so that the startup Lisp code can
+set the tags on charsets created in C, which are created too early to have
+their own tags set on them.
+*/
+       (charset, tags))
+{
+  charset = Fget_charset (charset);
+  call2 (Qregister_charset_tags, charset, tags);
+  XCHARSET_TAGS (charset) = tags;
+  charset_created_recalculate_unicode_precedence ();
+  return Qnil;
+}
+
 DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 4, 0, /*
 Return a list of the charsets in the region between START and END.
 BUFFER defaults to the current buffer if omitted.
@@ -1625,6 +1679,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcharset_id);
   DEFSUBR (Fset_charset_ccl_program);
   DEFSUBR (Fset_charset_registries);
+  DEFSUBR (Fset_charset_tags);
   DEFSUBR (Fcharsets_in_region);
 
 #ifdef MEMORY_USAGE_STATS

@@ -638,6 +638,9 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
 
   init_buffer_markers (b);
   init_buffer_syntax_cache (b);
+#ifdef MULE
+  init_buffer_unicode_precedence (b, 0);
+#endif
 
   b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
@@ -2273,7 +2276,13 @@ common_init_complex_vars_of_buffer (void)
   defs->auto_save_failure_time = -1;
   defs->invisibility_spec = Qt;
   defs->buffer_local_face_property = 0;
+#ifdef MULE
+  /* Initialize defs->unicode_precedence_array */
+  init_default_unicode_precedence (0);
+#endif
 
+  /* These are not listed in the buffer slots because we don't want them
+     marked, so we need to initialize them to nil. */
   defs->indirect_children = Qnil;
   syms->indirect_children = Qnil;
 
@@ -2341,12 +2350,12 @@ common_init_complex_vars_of_buffer (void)
     buffer_local_flags.cache_long_line_scans	  = make_int (1<<13);
 #endif
     buffer_local_flags.buffer_file_coding_system  = make_int (1<<14);
+#ifdef MULE
+    buffer_local_flags.unicode_precedence_list	  = make_int (1<<15);
+#endif
 
-    /* #### Warning: 1<<31 is the largest number currently allowable
-       due to the XINT() handling of this value.  With some
-       rearrangement you can get 3 more bits.
-
-       #### 3 more?  34 bits???? -ben */
+    /* Warning: 1<<30 is the largest number currently allowable
+       due to the XINT() handling of this value. */
   }
 }
 
@@ -2815,6 +2824,31 @@ List of formats to use when saving this buffer.
 Formats are defined by `format-alist'.  This variable is
 set when a file is visited.  Automatically local in all buffers.
 */ );
+
+#ifdef MULE
+  DEFVAR_BUFFER_LOCAL_MAGIC ("unicode-precedence-list",
+			     unicode_precedence_list /*
+List of charsets used to convert Unicode codepoints to charset codepoints.
+Value is a list of charsets or charset tags, which are searched in order
+for a translation matching a given Unicode character.  Charset tags are
+tags that can match multiple charsets and generally correspond to classes
+of charsets. (See `define-charset-tag'.)
+
+See `make-char', `unicode-to-char' and `make-charset' for more information
+about characters, charsets, charset codepoints, Unicode codepoints, and
+Unicode precedence lists.
+
+NOTE: Unlike most buffer-local variables, the default value is not
+shadowed by buffer-local values, but rather is used to determine the
+ordering of any charsets not mentioned in the buffer-local value.
+
+Specifically, the actual charset ordering used for converting Unicode
+codepoints to charset codepoints is determined by concatenating the buffer-
+local value of `unicode-precedence-list', the default value, and the list
+of all charsets, converting tags to their corresponding charsets using
+`charset-tag-to-charset-list', and removing any duplicates.
+*/, unicode_precedence_list_changed);
+#endif /* MULE */
 
   DEFVAR_BUFFER_LOCAL_MAGIC ("buffer-invisibility-spec", invisibility_spec /*
 Invisibility spec of this buffer.

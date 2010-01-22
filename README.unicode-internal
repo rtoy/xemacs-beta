@@ -1,13 +1,30 @@
-1-17-10
+1-21-10
 
-Tags, still to do:
+To do:
 
--- test the existing code
--- Implement global/buffer-local tags.
--- when processing a charset precedence list, call the lisp code to get
-   a list of charsets; but first use a hash table to check if we just
-   saw the same thing and use the hash value if so
--- add tags for the built-in charsets
+-- Let charset tags be redefinable, e.g. you might want to redefine list
+   tags.  To do this, we need a subr that recomputes the hashing, after
+   we have removed the tag.
+-- We need to check to make sure that if an error occurs during
+   register-charset-tag, we undo any changes made in the process, i.e.
+   remove the charset from any tables it's in.
+-- add functions to query charset tags, e.g. get their properties.
+-- put some info about standard charset tags somewhere, e.g. in
+   `unicode-to-char' and/or `define-charset-tag'.
+-- Instead of chinese-gb-env/list, use chinese-gb/env.  Possibly: whenever
+   we set a `charset' property, have the set-language-* function automatically
+   create a FOO/env tag containing the contents of the `charset' property.
+
+Also consider:
+
+-- write a function to extract charsets from coding systems and use it
+   to generate a default value for `safe-charsets'.  but first see if
+   something like that is already present -- if so, modify it for
+   `multibyte' charsets.
+
+-- the todo's etc. in my notebook -- copy them into this file.
+-- multibyte -- look more carefully at its error behavior and whether it
+   "unifies" properly in old-Mule.
 
 SHORT-TERM TO DO:
 ================
