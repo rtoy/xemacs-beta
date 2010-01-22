@@ -1,3 +1,18 @@
+2010-01-22  Ben Wing  <ben@xemacs.org>
+
+	* lisp-mode.el:
+	* lisp-mode.el (lisp-indent-function):
+	If the function begins with `with-', assume it is a macro or
+	special form whose last argument is a body.  Call
+	`lisp-indent-specform' with a flag indicating that it should indent
+	all arguments as a body instead of with normal (full) indent.
+	* lisp-mode.el (lisp-indent-specform):
+	Add an optional flag argument indicating that all non-distinguished
+	arguments, not just the first, should be indented as a body.  This
+	is useful when the number of distinguished (i.e. pre-body) arguments
+	isn't known, and is used for this purpose by `lisp-indent-function'.
+	
+
 2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (handle-pre-motion-command-current-command-is-motion):
