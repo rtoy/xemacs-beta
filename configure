@@ -1959,13 +1959,37 @@ Platform Specific options
 Debugging options
 -----------------
 
-  --with-debug            Enable additional debugging information. No time
-                          cost.
-  --with-error-checking=TESTS
+  --with-debug            Enable additional debugging information. No
+                          noticeable time cost (unlike
+                          `--with-error-checking'). This turns adds `-g' to
+                          the compiler options so that debug information is
+                          compiled into the XEmacs executable. It also turns
+                          on assert checks in the source code (i.e. same as
+                          `--with-assertions'); enables Lisp commands for
+                          determining detailed memory usage statistics (same
+                          as `--with-memory-usage-stats'); adds various Lisp
+                          variables and functions that allow one to display
+                          internal structures, show the internal workings of
+                          certain subsystems, and exit to the debugger; causes
+                          Lisp errors during building to exit to the debugger
+                          or dump core; and adds debugging-related C functions
+                          meant to be called from a debugger.
+  --with-error-checking=CLASS|all|none
                           Compile with internal error-checking added. Causes
-                          noticeable loss of speed. Valid TESTS are
-                          `byte_code', `display', `extents', `gc', `glyphs',
-                          `malloc', `structures' `text', `types'.
+                          noticeable loss of speed. Valid classes are
+                          `byte_code', `display' (redisplay), `extents', `gc'
+                          (garbage collection), `glyphs', `malloc' (memory
+                          allocation), `structures' (C structures), `text'
+                          (text handling and conversion), `types' (correct
+                          Lisp-object type for type-specific operations).
+                          `all' or `none' can be given to set all or no
+                          classes, respectively. Any of the classes can be
+                          prefixed with `no' to turn the class off. A
+                          comma-separated list of classes can also be given.
+                          For example, `all,nogc' turns on all but
+                          garbage-collection-related checking. Omitting any
+                          argument or specifying just `yes' is the same as
+                          `all'.
   --with-assertions       Compile in runtime assertions.
   --with-memory-usage-stats
                           Enable LISP memory usage API.
@@ -5175,6 +5199,9 @@ if test "${with_debug+set}" = set; then
   withval="$with_debug"
 
 fi;
+if test "$with_error_checking" = "yes"; then
+  with_error_checking=all
+fi
 _error_checking_notfirst=""
 _error_checking_byte_code_default=""
 _error_checking_display_default=""

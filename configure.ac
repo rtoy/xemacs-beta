@@ -975,14 +975,36 @@ XE_MERGED_ARG([infodock],
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
-	AS_HELP_STRING([--with-debug],[Enable additional debugging information.  No time cost.]),
+	AS_HELP_STRING([--with-debug],[Enable additional debugging information.  No noticeable time cost (unlike
+`--with-error-checking').  This turns adds `-g' to the compiler options so that
+debug information is compiled into the XEmacs executable.  It also turns on
+assert checks in the source code (i.e. same as `--with-assertions'); enables
+Lisp commands for determining detailed memory usage statistics (same as
+`--with-memory-usage-stats'); adds various Lisp variables and functions
+that allow one to display internal structures, show the internal workings
+of certain subsystems, and exit to the debugger; causes Lisp errors during
+building to exit to the debugger or dump core; and adds debugging-related
+C functions meant to be called from a debugger.]),
 	[], [])
-dnl Keep TESTS sorted to help with syncing doc to reality.
+dnl If just --with-error-checking or --with-error-checking=yes is given,
+dnl it should be the same as --with-error-checking=all.  Currently it's
+dnl the same as saying nothing at all.
+if test "$with_error_checking" = "yes"; then
+  with_error_checking=all
+fi
 XE_COMPLEX_ARG([error-checking],
-	AS_HELP_STRING([--with-error-checking=TESTS],[Compile with internal error-checking added.
-                        Causes noticeable loss of speed.  Valid TESTS
-                        are `byte_code', `display', `extents', `gc', `glyphs', `malloc', `structures' `text', `types'.]),
-	[], [],
+	AS_HELP_STRING([--with-error-checking[=CLASS|all|none]],[Compile with internal error-checking added.
+Causes noticeable loss of speed.  Valid classes are `byte_code', `display'
+(redisplay), `extents', `gc' (garbage collection), `glyphs', `malloc'
+(memory allocation), `structures' (C structures), `text' (text handling and
+conversion), `types' (correct Lisp-object type for type-specific
+operations).  `all' or `none' can be given to set all or no classes,
+respectively.  Any of the classes can be prefixed with `no' to turn the
+class off.  A comma-separated list of classes can also be given.  For
+example, `all,nogc' turns on all but garbage-collection-related checking.
+Omitting any argument or specifying just `yes' is the same as `all'.]),
+		[], [],
+dnl Keep TESTS sorted to help with syncing doc to reality.
 [XE_COMPLEX_OPTION([byte_code],[""]),
  XE_COMPLEX_OPTION([display],[""]),
  XE_COMPLEX_OPTION([extents],[""]),

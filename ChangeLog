@@ -1,5 +1,21 @@
 2010-01-23  Ben Wing  <ben@xemacs.org>
 
+	* configure:
+	* configure.ac (XE_COMPLEX_ARG):
+	Expand the help for --with-debug to describe more specifically what
+	exactly gets turned on.  Expand the help for --with-error-checking
+	to describe all the possible arguments, including `all', `none',
+	`noFOO', multiple arguments, etc.
+
+	Change so that `--with-error-checking' is the same as
+	`--with-error-checking=all'.  Currently, `--with-error-checking' has
+	no effect at all!  It just means "leave all error-checking for
+	specific classes to their default values", which are "maybe", and
+	get converted to "yes" or "no" depending on whether we are running
+	a beta XEmacs.
+
+2010-01-23  Ben Wing  <ben@xemacs.org>
+
 	* configure: Regenerate.
 
 2010-01-20  Ben Wing  <ben@xemacs.org>
