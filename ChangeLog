@@ -1,3 +1,7 @@
+2010-01-23  Ben Wing  <ben@xemacs.org>
+
+	* configure: Regenerate.
+
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
