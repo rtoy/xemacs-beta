@@ -1,3 +1,10 @@
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number.c (Fnumerator, Fdenominator, Fcanonicalize_number):
+	Be more careful to return integers in their canonical forms here,
+	and to give the same answer all the time when treating a rational
+	that is itself is an integer as a ratio.
+
 2010-01-17  Vin Shelton  <acs@xemacs.org>
 
 	* fileio.c (check_writable): Remove cast from 2010-01-14
