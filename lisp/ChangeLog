@@ -1,5 +1,10 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* simple.el (capitalize-string-as-title):
+	Use `with-string-as-buffer-contents' instead of emulating it.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	* syntax.el:
 	* syntax.el (make-syntax-table):
 	Expand doc string.
