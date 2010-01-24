@@ -430,6 +430,12 @@ qxeEnumPrinters (DWORD arg1, Extbyte * arg2, DWORD arg3, PBYTE arg4, DWORD arg5,
 
 #if defined (HAVE_MS_WINDOWS)
 
+/* Error if GetDefaultPrinter used: Function needs review to determine how to handle it */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
 /* Error if GetForm used: not used, complicated interface with split structures */
 
 #endif /* defined (HAVE_MS_WINDOWS) */
@@ -616,6 +622,12 @@ qxeWNetUseConnection (HWND arg1, LPNETRESOURCEW arg2, const Extbyte * arg3, cons
 
 #if defined (HAVE_MS_WINDOWS)
 
+/* Error if WNetSetConnection used: Function needs review to determine how to handle it */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
 /* NOTE: contains split-simple LPNETRESOURCE */
 DWORD 
 qxeWNetConnectionDialog1 (LPCONNECTDLGSTRUCTW arg1)
@@ -721,6 +733,18 @@ qxeWNetGetNetworkInformation (const Extbyte * arg1, LPNETINFOSTRUCT arg2)
 
 #if defined (HAVE_MS_WINDOWS)
 
+/* Error if WNetGetResourceInformation used: Function needs review to determine how to handle it */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if WNetGetResourceParent used: Function needs review to determine how to handle it */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
 DWORD 
 qxeWNetGetLastError (PDWORD arg1, Extbyte * arg2, DWORD arg3, Extbyte * arg4, DWORD arg5)
 {
@@ -760,6 +784,8 @@ qxeAppendMenu (HMENU arg1, UINT arg2, UINT_PTR arg3, const Extbyte * arg4)
 }
 
 /* Error if BroadcastSystemMessage used: win95 version not split; NT 4.0+ only */
+
+/* Error if BroadcastSystemMessageEx used: Function needs review to determine how to handle it */
 
 #if !defined (CYGWIN_HEADERS)
 
@@ -1047,6 +1073,8 @@ qxeEnumDesktops (HWINSTA arg1, DESKTOPENUMPROCW arg2, LPARAM arg3)
 
 /* Error if EnumDisplaySettings used: split-sized LPDEVMODE */
 
+/* Error if EnumDisplaySettingsEx used: Function needs review to determine how to handle it */
+
 /* Error if EnumDisplayDevices used: split-sized PDISPLAY_DEVICE; NT 5.0+ only, no Win98 */
 
 /* NOTE: // callback fun differs only in string pointer type */
@@ -1125,6 +1153,8 @@ qxeGetClassLong (HWND arg1, int arg2)
   else
     return GetClassLongA (arg1, arg2);
 }
+
+/* Error if GetClassLongPtr used: Function needs review to determine how to handle it */
 
 int
 qxeGetClassName (HWND arg1, Extbyte * arg2, int arg3)
@@ -1208,6 +1238,8 @@ qxeGetProp (HWND arg1, const Extbyte * arg2)
     return GetPropA (arg1, (LPCSTR) arg2);
 }
 
+/* Error if GetRawInputDeviceInfo used: Function needs review to determine how to handle it */
+
 DWORD
 qxeGetTabbedTextExtent (HDC arg1, const Extbyte * arg2, int arg3, int arg4, LPINT arg5)
 {
@@ -1225,6 +1257,8 @@ qxeGetWindowLong (HWND arg1, int arg2)
   else
     return GetWindowLongA (arg1, arg2);
 }
+
+/* Error if GetWindowLongPtr used: Function needs review to determine how to handle it */
 
 BOOL
 qxeGetUserObjectInformation (HANDLE arg1, int arg2, PVOID arg3, DWORD arg4, PDWORD arg5)
@@ -1588,6 +1622,8 @@ qxeSetClassLong (HWND arg1, int arg2, LONG arg3)
     return SetClassLongA (arg1, arg2, arg3);
 }
 
+/* Error if SetClassLongPtr used: Function needs review to determine how to handle it */
+
 BOOL
 qxeSetDlgItemText (HWND arg1, int arg2, const Extbyte * arg3)
 {
@@ -1633,6 +1669,8 @@ qxeSetWindowLong (HWND arg1, int arg2, LONG arg3)
   else
     return SetWindowLongA (arg1, arg2, arg3);
 }
+
+/* Error if SetWindowLongPtr used: Function needs review to determine how to handle it */
 
 /* Error if SetWindowsHook used: obsolete; two versions, STRICT and non-STRICT */
 
@@ -1782,6 +1820,8 @@ qxeRegDeleteKey (HKEY arg1, const Extbyte * arg2)
   else
     return RegDeleteKeyA (arg1, (LPCSTR) arg2);
 }
+
+/* Error if RegDeleteKeyEx used: Function needs review to determine how to handle it */
 
 LONG
 qxeRegDeleteValue (HKEY arg1, const Extbyte * arg2)
@@ -1955,11 +1995,15 @@ qxeRegUnLoadKey (HKEY arg1, const Extbyte * arg2)
 
 /* Error if FoldString used: not used, not examined yet */
 
+/* Error if GetCalendarInfo used: Function needs review to determine how to handle it */
+
 /* Error if GetCPInfoEx used: not used, not examined yet */
 
 /* Error if GetCurrencyFormat used: not used, not examined yet */
 
 /* Error if GetDateFormat used: not used, not examined yet */
+
+/* Error if GetGeoInfo used: Function needs review to determine how to handle it */
 
 int
 qxeGetLocaleInfo (LCID arg1, LCTYPE arg2, Extbyte * arg3, int arg4)
@@ -1980,6 +2024,8 @@ qxeGetLocaleInfo (LCID arg1, LCTYPE arg2, Extbyte * arg3, int arg4)
 
 /* Error if LCMapString used: not used, not examined yet */
 
+/* Error if SetCalendarInfo used: Function needs review to determine how to handle it */
+
 BOOL
 qxeSetLocaleInfo (LCID arg1, LCTYPE arg2, const Extbyte * arg3)
 {
@@ -1992,6 +2038,12 @@ qxeSetLocaleInfo (LCID arg1, LCTYPE arg2, const Extbyte * arg3)
 /* Error if EnumCalendarInfoEx used: not used, not examined yet */
 
 /* Error if EnumDateFormatsEx used: not used, not examined yet */
+
+/* Error if EnumSystemLanguageGroups used: Function needs review to determine how to handle it */
+
+/* Error if EnumLanguageGroupLocales used: Function needs review to determine how to handle it */
+
+/* Error if EnumUILanguages used: Function needs review to determine how to handle it */
 
 
 /*----------------------------------------------------------------------*/
@@ -2518,6 +2570,14 @@ qxeSHGetPathFromIDList (LPCITEMIDLIST arg1, Extbyte * arg2)
 
 /* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 
+/* Error if SHGetFolderPath used: Function needs review to determine how to handle it */
+
+/* Error if SHGetIconOverlayIndex used: Function needs review to determine how to handle it */
+
+/* Error if SHCreateDirectoryEx used: Function needs review to determine how to handle it */
+
+/* Error if SHGetFolderPathAndSubDir used: Function needs review to determine how to handle it */
+
 
 /*----------------------------------------------------------------------*/
 /*                      Processing file COMMDLG.H                       */
@@ -2616,6 +2676,12 @@ qxeReplaceText (LPFINDREPLACEW arg1)
   else
     return ReplaceTextA ((LPFINDREPLACEA) arg1);
 }
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if PrintDlgEx used: Function needs review to determine how to handle it */
 
 #endif /* defined (HAVE_MS_WINDOWS) */
 
@@ -2906,6 +2972,8 @@ qxeCallNamedPipe (const Extbyte * arg1, PVOID arg2, DWORD arg3, PVOID arg4, DWOR
     return CallNamedPipeA ((LPCSTR) arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
+/* Error if CheckNameLegalDOS8Dot3 used: Function needs review to determine how to handle it */
+
 BOOL
 qxeClearEventLog (HANDLE arg1, const Extbyte * arg2)
 {
@@ -2942,6 +3010,8 @@ qxeCopyFileEx (const Extbyte * arg1, const Extbyte * arg2, LPPROGRESS_ROUTINE ar
   else
     return CopyFileExA ((LPCSTR) arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6);
 }
+
+/* Error if CreateActCtx used: Function needs review to determine how to handle it */
 
 BOOL
 qxeCreateDirectory (const Extbyte * arg1, LPSECURITY_ATTRIBUTES arg2)
@@ -3037,6 +3107,8 @@ qxeCreateProcessAsUser (HANDLE arg1, const Extbyte * arg2, Extbyte * arg3, LPSEC
     return CreateProcessAsUserA (arg1, (LPCSTR) arg2, (LPSTR) arg3, arg4, arg5, arg6, arg7, arg8, (LPCSTR) arg9, (LPSTARTUPINFOA) arg10, arg11);
 }
 
+/* Error if CreateProcessWithLogon used: Function needs review to determine how to handle it */
+
 HANDLE
 qxeCreateSemaphore (LPSECURITY_ATTRIBUTES arg1, LONG arg2, LONG arg3, const Extbyte * arg4)
 {
@@ -3072,6 +3144,10 @@ qxeDeleteFile (const Extbyte * arg1)
   else
     return DeleteFileA ((LPCSTR) arg1);
 }
+
+/* Error if DeleteVolumeMountPoint used: Function needs review to determine how to handle it */
+
+/* Error if DnsHostnameToComputerName used: Function needs review to determine how to handle it */
 
 #if !defined (CYGWIN_HEADERS)
 
@@ -3112,6 +3188,10 @@ qxeFatalAppExit (UINT arg1, const Extbyte * arg2)
     FatalAppExitA (arg1, (LPCSTR) arg2);
 }
 
+/* Error if FileEncryptionStatus used: Function needs review to determine how to handle it */
+
+/* Error if FindActCtxSectionString used: Function needs review to determine how to handle it */
+
 ATOM
 qxeFindAtom (const Extbyte * arg1)
 {
@@ -3134,7 +3214,15 @@ qxeFindFirstChangeNotification (const Extbyte * arg1, BOOL arg2, DWORD arg3)
 
 /* Error if FindFirstFileEx used: split-sized LPWIN32_FIND_DATA; not used, NT 4.0+ only */
 
+/* Error if FindFirstVolume used: Function needs review to determine how to handle it */
+
+/* Error if FindFirstVolumeMountPoint used: Function needs review to determine how to handle it */
+
 /* Skipping FindNextFile because split-sized LPWIN32_FIND_DATA */
+
+/* Error if FindNextVolume used: Function needs review to determine how to handle it */
+
+/* Error if FindNextVolumeMountPoint used: Function needs review to determine how to handle it */
 
 HRSRC
 qxeFindResource (HINSTANCE arg1, const Extbyte * arg2, const Extbyte * arg3)
@@ -3153,6 +3241,8 @@ qxeFindResourceEx (HINSTANCE arg1, const Extbyte * arg2, const Extbyte * arg3, W
   else
     return FindResourceExA (arg1, (LPCSTR) arg2, (LPCSTR) arg3, arg4);
 }
+
+/* Error if GetFirmwareEnvironmentVariable used: Function needs review to determine how to handle it */
 
 DWORD
 qxeFormatMessage (DWORD arg1, PCVOID arg2, DWORD arg3, DWORD arg4, Extbyte * arg5, DWORD arg6, va_list* arg7)
@@ -3217,6 +3307,8 @@ qxeGetComputerName (Extbyte * arg1, PDWORD arg2)
     return GetComputerNameA ((LPSTR) arg1, arg2);
 }
 
+/* Error if GetComputerNameEx used: Function needs review to determine how to handle it */
+
 DWORD
 qxeGetCurrentDirectory (DWORD arg1, Extbyte * arg2)
 {
@@ -3254,6 +3346,8 @@ qxeGetDiskFreeSpaceEx (const Extbyte * arg1, PULARGE_INTEGER arg2, PULARGE_INTEG
   else
     return GetDiskFreeSpaceExA ((LPCSTR) arg1, arg2, arg3, arg4);
 }
+
+/* Error if GetDllDirectory used: Function needs review to determine how to handle it */
 
 UINT
 qxeGetDriveType (const Extbyte * arg1)
@@ -3337,6 +3431,8 @@ qxeGetModuleHandle (const Extbyte * arg1)
   else
     return GetModuleHandleA ((LPCSTR) arg1);
 }
+
+/* Error if GetModuleHandleEx used: Function needs review to determine how to handle it */
 
 BOOL
 qxeGetNamedPipeHandleState (HANDLE arg1, PDWORD arg2, PDWORD arg3, PDWORD arg4, PDWORD arg5, Extbyte * arg6, DWORD arg7)
@@ -3446,6 +3542,10 @@ qxeGetSystemDirectory (Extbyte * arg1, UINT arg2)
     return GetSystemDirectoryA ((LPSTR) arg1, arg2);
 }
 
+/* Error if GetSystemWindowsDirectory used: Function needs review to determine how to handle it */
+
+/* Error if GetSystemWow64Directory used: Function needs review to determine how to handle it */
+
 UINT
 qxeGetTempFileName (const Extbyte * arg1, const Extbyte * arg2, UINT arg3, Extbyte * arg4)
 {
@@ -3483,6 +3583,12 @@ qxeGetVolumeInformation (const Extbyte * arg1, Extbyte * arg2, DWORD arg3, PDWOR
   else
     return GetVolumeInformationA ((LPCSTR) arg1, (LPSTR) arg2, arg3, arg4, arg5, arg6, (LPSTR) arg7, arg8);
 }
+
+/* Error if GetVolumeNameForVolumeMountPoint used: Function needs review to determine how to handle it */
+
+/* Error if GetVolumePathName used: Function needs review to determine how to handle it */
+
+/* Error if GetVolumePathNamesForVolumeName used: Function needs review to determine how to handle it */
 
 UINT
 qxeGetWindowsDirectory (Extbyte * arg1, UINT arg2)
@@ -3790,6 +3896,8 @@ qxePrivilegedServiceAuditAlarm (const Extbyte * arg1, const Extbyte * arg2, HAND
     return PrivilegedServiceAuditAlarmA ((LPCSTR) arg1, (LPCSTR) arg2, arg3, arg4, arg5);
 }
 
+/* Error if QueryActCtx used: Function needs review to determine how to handle it */
+
 DWORD
 qxeQueryDosDevice (const Extbyte * arg1, Extbyte * arg2, DWORD arg3)
 {
@@ -3828,6 +3936,8 @@ qxeRemoveDirectory (const Extbyte * arg1)
     return RemoveDirectoryA ((LPCSTR) arg1);
 }
 
+/* Error if ReplaceFile used: Function needs review to determine how to handle it */
+
 BOOL
 qxeReportEvent (HANDLE arg1, WORD arg2, WORD arg3, DWORD arg4, PSID arg5, WORD arg6, DWORD arg7, const Extbyte ** arg8, PVOID arg9)
 {
@@ -3855,6 +3965,8 @@ qxeSetComputerName (const Extbyte * arg1)
     return SetComputerNameA ((LPCSTR) arg1);
 }
 
+/* Error if SetComputerNameEx used: Function needs review to determine how to handle it */
+
 BOOL
 qxeSetCurrentDirectory (const Extbyte * arg1)
 {
@@ -3872,6 +3984,8 @@ qxeSetDefaultCommConfig (const Extbyte * arg1, LPCOMMCONFIG arg2, DWORD arg3)
   else
     return SetDefaultCommConfigA ((LPCSTR) arg1, arg2, arg3);
 }
+
+/* Error if SetDllDirectory used: Function needs review to determine how to handle it */
 
 BOOL
 qxeSetEnvironmentVariable (const Extbyte * arg1, const Extbyte * arg2)
@@ -3900,6 +4014,10 @@ qxeSetFileSecurity (const Extbyte * arg1, SECURITY_INFORMATION arg2, PSECURITY_D
     return SetFileSecurityA ((LPCSTR) arg1, arg2, arg3);
 }
 
+/* Error if SetFileShortName used: Function needs review to determine how to handle it */
+
+/* Error if SetFirmwareEnvironmentVariable used: Function needs review to determine how to handle it */
+
 BOOL
 qxeSetVolumeLabel (const Extbyte * arg1, const Extbyte * arg2)
 {
@@ -3909,6 +4027,8 @@ qxeSetVolumeLabel (const Extbyte * arg1, const Extbyte * arg2)
     return SetVolumeLabelA ((LPCSTR) arg1, (LPCSTR) arg2);
 }
 
+/* Error if SetVolumeMountPoint used: Function needs review to determine how to handle it */
+
 BOOL
 qxeUpdateResource (HANDLE arg1, const Extbyte * arg2, const Extbyte * arg3, WORD arg4, PVOID arg5, DWORD arg6)
 {
@@ -3917,6 +4037,8 @@ qxeUpdateResource (HANDLE arg1, const Extbyte * arg2, const Extbyte * arg3, WORD
   else
     return UpdateResourceA (arg1, (LPCSTR) arg2, (LPCSTR) arg3, arg4, arg5, arg6);
 }
+
+/* Error if VerifyVersionInfo used: Function needs review to determine how to handle it */
 
 BOOL
 qxeWaitNamedPipe (const Extbyte * arg1, DWORD arg2)
@@ -3977,6 +4099,24 @@ qxeWriteProfileString (const Extbyte * arg1, const Extbyte * arg2, const Extbyte
 /*                       Processing file ACLAPI.h                       */
 /*----------------------------------------------------------------------*/
 
+/* Error if BuildExplicitAccessWithName used: Function needs review to determine how to handle it */
+
+/* Error if BuildSecurityDescriptor used: Function needs review to determine how to handle it */
+
+/* Error if BuildTrusteeWithName used: Function needs review to determine how to handle it */
+
+/* Error if BuildTrusteeWithObjectsAndName used: Function needs review to determine how to handle it */
+
+/* Error if BuildTrusteeWithObjectsAndSid used: Function needs review to determine how to handle it */
+
+/* Error if BuildTrusteeWithSid used: Function needs review to determine how to handle it */
+
+/* Error if GetAuditedPermissionsFromAcl used: Function needs review to determine how to handle it */
+
+/* Error if GetEffectiveRightsFromAcl used: Function needs review to determine how to handle it */
+
+/* Error if GetExplicitEntriesFromAcl used: Function needs review to determine how to handle it */
+
 DWORD
 qxeGetNamedSecurityInfo (Extbyte * arg1, SE_OBJECT_TYPE arg2, SECURITY_INFORMATION arg3, PSID* arg4, PSID* arg5, PACL* arg6, PACL* arg7, PSECURITY_DESCRIPTOR* arg8)
 {
@@ -3985,6 +4125,26 @@ qxeGetNamedSecurityInfo (Extbyte * arg1, SE_OBJECT_TYPE arg2, SECURITY_INFORMATI
   else
     return GetNamedSecurityInfoA ((LPSTR) arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
+
+/* Error if GetTrusteeForm used: Function needs review to determine how to handle it */
+
+/* Error if GetTrusteeName used: Function needs review to determine how to handle it */
+
+/* Error if GetTrusteeType used: Function needs review to determine how to handle it */
+
+/* Error if LookupSecurityDescriptorParts used: Function needs review to determine how to handle it */
+
+/* Error if SetEntriesInAcl used: Function needs review to determine how to handle it */
+
+/* Error if SetNamedSecurityInfo used: Function needs review to determine how to handle it */
+
+/* Error if BuildImpersonateExplicitAccessWithName used: Function needs review to determine how to handle it */
+
+/* Error if BuildImpersonateTrustee used: Function needs review to determine how to handle it */
+
+/* Error if GetMultipleTrustee used: Function needs review to determine how to handle it */
+
+/* Error if GetMultipleTrusteeOperation used: Function needs review to determine how to handle it */
 
 
 /*----------------------------------------------------------------------*/

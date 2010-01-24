@@ -415,7 +415,6 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_READLINK
 #undef HAVE_RENAME
 #undef HAVE_RES_INIT
-#undef HAVE_RINT
 #undef HAVE_RMDIR
 #undef HAVE_SELECT
 #undef HAVE_SETITIMER

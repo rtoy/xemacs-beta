@@ -181,7 +181,7 @@ It takes one argument, a file name to view."
 		(function :tag "Other"))
   :group 'gnuserv)
 
-(defcustom gnuserv-program "gnuserv"
+(defcustom gnuserv-program (expand-file-name "gnuserv" exec-directory)
   "*Program to use as the editing server."
   :type 'string
   :group 'gnuserv)

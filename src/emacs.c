@@ -3396,6 +3396,13 @@ debug_memory_error (int signum)
   LONGJMP (memory_error_jump, 1);
 }
 
+/* Used in debug_can_access_memory().  Made into a global, externally
+   accessible variable to make absolutely sure that no compiler will
+   optimize away the memory-read function in debug_can_access_memory();
+   see comments there. */
+
+volatile int dcam_saveval;
+
 /* Return whether all bytes in the specified memory block can be read. */
 int
 debug_can_access_memory (const void *ptr, Bytecount len)
@@ -3406,6 +3413,7 @@ debug_can_access_memory (const void *ptr, Bytecount len)
   volatile int old_errno = errno;
   volatile int retval = 1;
 
+  assert (len > 0);
   if (!SETJMP (memory_error_jump))
     {
       old_sigbus =
@@ -3413,13 +3421,24 @@ debug_can_access_memory (const void *ptr, Bytecount len)
       old_sigsegv =
 	(SIGTYPE (*) (int)) EMACS_SIGNAL (SIGSEGV, debug_memory_error);
 
+      /* We could just do memcmp (ptr, ptr, len), but we want to avoid any
+	 possibility that a super-optimizing compiler might optimize away such
+	 a call by concluding that its result is always 1. */
       if (len > 1)
-	/* If we can, try to avoid problems with super-optimizing compilers
-	   that might decide that memcmp (ptr, ptr, len) can be optimized
-	   away since its result is always 1. */
-	memcmp (ptr, (Rawbyte *) ptr + 1, len - 1);
+	/* Instead, if length is > 1, do off-by-one comparison.
+           We save the value somewhere that is externally accessible to
+           make absolutely sure that a compiler won't optimize away the
+           call by concluding that the return value isn't really used.
+           */
+	dcam_saveval = memcmp (ptr, (Rawbyte *) ptr + 1, len - 1);
       else
-	memcmp (ptr, ptr, len);
+	{
+	  /* We can't do the off-by-one trick with only one byte, so instead,
+             we compare to a fixed-sized buffer. */
+	  char randval[1];
+	  randval[0] = 0;
+	  dcam_saveval = memcmp (randval, ptr, len);
+	}
     }
   else
     retval = 0;

@@ -602,7 +602,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		  sprintf (msg,
 			   "format specifier %%%c doesn't match argument type",
 			   ch);
-		  syntax_error (msg, Qnil);
+		  syntax_error (msg, Qunbound);
 		}
 	      else if (strchr (double_converters, ch))
 		{
@@ -725,7 +725,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		  CIbyte msg[60];
 		  sprintf (msg, "invalid character value %d to %%c spec",
 			   a);
-		  syntax_error (msg, Qnil);
+		  syntax_error (msg, Qunbound);
 		}
 
 	      charlen = set_itext_ichar (charbuf, a);

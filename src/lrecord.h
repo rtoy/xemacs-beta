@@ -26,36 +26,16 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
 
-#ifdef NEW_GC
-/* The "lrecord" type of Lisp object is used for all object types
-   other than a few simple ones (like char and int). This allows many
-   types to be implemented but only a few bits required in a Lisp
-   object for type information. (The tradeoff is that each object has
-   its type marked in it, thereby increasing its size.) All lrecords
-   begin with a `struct lrecord_header', which identifies the lisp
-   object type, by providing an index into a table of `struct
-   lrecord_implementation', which describes the behavior of the lisp
-   object.  It also contains some other data bits.
-
-   Creating a new lrecord type is fairly easy; just follow the
-   lead of some existing type (e.g. hash tables).  Note that you
-   do not need to supply all the methods (see below); reasonable
-   defaults are provided for many of them.  Alternatively, if you're
-   just looking for a way of encapsulating data (which possibly
-   could contain Lisp_Objects in it), you may well be able to use
-   the opaque type.
-*/
-#else /* not NEW_GC */
-/* The "lrecord" type of Lisp object is used for all object types
-   other than a few simple ones.  This allows many types to be
+/* The "lrecord" type of Lisp object is used for all object types other
+   than a few simple ones (like char and int). This allows many types to be
    implemented but only a few bits required in a Lisp object for type
-   information. (The tradeoff is that each object has its type marked
-   in it, thereby increasing its size.) All lrecords begin with a
-   `struct lrecord_header', which identifies the lisp object type, by
-   providing an index into a table of `struct lrecord_implementation',
-   which describes the behavior of the lisp object.  It also contains
-   some other data bits.
+   information. (The tradeoff is that each object has its type marked in
+   it, thereby increasing its size.) All lrecords begin with a `struct
+   lrecord_header', which identifies the lisp object type, by providing an
+   index into a table of `struct lrecord_implementation', which describes
+   the behavior of the lisp object.  It also contains some other data bits.
 
+#ifndef NEW_GC
    Lrecords are of two types: straight lrecords, and lcrecords.
    Straight lrecords are used for those types of objects that have
    their own allocation routines (typically allocated out of 2K chunks
@@ -70,16 +50,46 @@ Boston, MA 02111-1307, USA.  */
    Lcrecords have a `struct old_lcrecord_header' at the top, which
    contains a `struct lrecord_header' and a `next' pointer, and are
    allocated using old_alloc_lcrecord_type() or its variants.
+#endif
 
-   Creating a new lcrecord type is fairly easy; just follow the
+   Creating a new Lisp object type is fairly easy; just follow the
    lead of some existing type (e.g. hash tables).  Note that you
    do not need to supply all the methods (see below); reasonable
    defaults are provided for many of them.  Alternatively, if you're
    just looking for a way of encapsulating data (which possibly
    could contain Lisp_Objects in it), you may well be able to use
-   the opaque type. --ben
+   the opaque type.
 */
-#endif /* not NEW_GC */
+
+#ifdef NEW_GC
+/*
+  There are some limitations under New-GC that lead to the creation of a
+  large number of new internal object types.  I'm not completely sure what
+  all of them are, but they are at least partially related to limitations
+  on finalizers.  Something else must be going on as well, because
+  non-dumpable, non-finalizable objects like devices and frames also have
+  their window-system-specific substructures converted into Lisp objects.
+  It must have something to do with the fact that these substructures
+  contain pointers to Lisp objects, but it's not completely clear why --
+  object descriptions exist to indicate the size of these structures and
+  the Lisp object pointers within them.
+
+ At least one definite issue is that under New-GC dumpable objects cannot
+ contain any finalizers (see pdump_register_object()).  This means that any
+ substructures in dumpable objects that are allocated separately and
+ normally freed in a finalizer need instead to be made into actual Lisp
+ objects.  If those structures are Dynarrs, they need to be made into
+ Dynarr Lisp objects (e.g. face-cachel-dynarr or glyph-cachel-dynarr),
+ which are created using Dynarr_lisp_new() or Dynarr_new_new2().
+ Furthermore, the objects contained in the Dynarr also need to be Lisp
+ objects (e.g. face-cachel or glyph-cachel).
+
+ --ben
+ */
+
+#endif
+
+
 
 #ifdef NEW_GC
 #define ALLOC_LCRECORD_TYPE alloc_lrecord_type
@@ -309,6 +319,7 @@ enum lrecord_type
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
 #else
+  /* See comment up top explaining why these extra object types must exist. */
   lrecord_type_string_indirect_data,
   lrecord_type_string_direct_data,
   lrecord_type_hash_table_entry,
@@ -374,14 +385,15 @@ struct lrecord_implementation
      used instead. */
   void (*printer) (Lisp_Object, Lisp_Object printcharfun, int escapeflag);
 
-  /* `finalizer' is called at GC time when the object is about to
-     be freed, and at dump time (FOR_DISKSAVE will be non-zero in this
-     case).  It should perform any necessary cleanup (e.g. freeing
-     malloc()ed memory).  This can be NULL, meaning no special
-     finalization is necessary.
+  /* `finalizer' is called at GC time when the object is about to be freed,
+     and at dump time (FOR_DISKSAVE will be non-zero in this case).  It
+     should perform any necessary cleanup (e.g. freeing malloc()ed memory
+     or releasing objects created in external libraries, such as
+     window-system windows or file handles).  This can be NULL, meaning no
+     special finalization is necessary.
 
-     WARNING: remember that `finalizer' is called at dump time even
-     though the object is not being freed. */
+     WARNING: remember that `finalizer' is called at dump time even though
+     the object is not being freed -- check the FOR_DISKSAVE argument.   */
   void (*finalizer) (void *header, int for_disksave);
 
   /* This can be NULL, meaning compare objects with EQ(). */

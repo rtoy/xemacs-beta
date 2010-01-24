@@ -977,14 +977,14 @@ do {									\
 #else /* not HAVE_CYGWIN_CONV_PATH */
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
 do {							\
-  Ibyte *lfftt;						\
+  const Ibyte *lfftt;					\
 							\
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (path, lfftt);	\
   PATHNAME_CONVERT_OUT_TSTR (lfftt, out);		\
 } while (0)
 #define TSTR_TO_LOCAL_FILE_FORMAT(path, out)		\
 do {							\
-  Ibyte *ttlff;						\
+  const Ibyte *ttlff;					\
 							\
   TSTR_TO_C_STRING (path, ttlff);			\
   INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, out);	\
@@ -1012,7 +1012,7 @@ do {							\
 #define LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN(path, pathout)	\
 do								\
   {								\
-    Extbyte *lfftiwp;						\
+    const Extbyte *lfftiwp;					\
 								\
     LOCAL_FILE_FORMAT_TO_TSTR (path, lfftiwp);			\
     TSTR_TO_C_STRING (lfftiwp, pathout);			\
@@ -1020,7 +1020,7 @@ do								\
 while (0)
 #define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)	\
 do {								\
-  Extbyte *iwtlffp;						\
+  const Extbyte *iwtlffp;					\
   C_STRING_TO_TSTR (path, iwtlffp);				\
   TSTR_TO_LOCAL_FILE_FORMAT (iwtlffp, pathout);			\
 } while (0)
@@ -1034,7 +1034,7 @@ do {									\
      get 7-bit ISO2022-encoded data.  We know that our internal format	\
      is ASCII-compatible, and so these functions will work fine with	\
      this data. */							\
-  Ibyte *lfftiwp = (path);						\
+  const Ibyte *lfftiwp = (path);					\
   if (isalpha (lfftiwp[0]) && (IS_DEVICE_SEP (lfftiwp[1])))		\
     pathout = lfftiwp;							\
   else									\
@@ -1047,7 +1047,7 @@ do {									\
 } while (0)
 #define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)		\
 do {									\
-  Ibyte *wtlff1 = (path);						\
+  const Ibyte *wtlff1 = (path);						\
   int wtlff2 =								\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
   Ibyte *wtlff3 = alloca_ibytes (wtlff2);				\

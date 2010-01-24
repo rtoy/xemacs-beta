@@ -3105,6 +3105,14 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   const struct lrecord_implementation *implementation
     = LHEADER_IMPLEMENTATION (lheader);
 
+  /* If we try to debug-print during GC, we'll likely get a crash on the
+     following assert (called from Lstream_delete(), from prin1_to_string()).
+     Instead, just don't do anything.  Worst comes to worst, we have a
+     small memory leak -- and programs being debugged usually won't be
+     super long-lived afterwards, anyway. */
+  if (gc_in_progress && in_debug_print)
+    return;
+
   /* Finalizer methods may try to free objects within them, which typically
      won't be marked and thus are scheduled for demolition.  Putting them
      on the free list would be very bad, as we'd have xfree()d memory in
