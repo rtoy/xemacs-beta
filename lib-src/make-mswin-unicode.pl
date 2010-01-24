@@ -2,7 +2,7 @@
 
 ### make-mswin-unicode --- generate Unicode-encapsulation code for MS Windows
 
-## Copyright (C) 2001, 2002, 2004 Ben Wing.
+## Copyright (C) 2001, 2002, 2004, 2010 Ben Wing.
 
 ## Author: Ben Wing <ben@xemacs.org>
 ## Maintainer: Ben Wing <ben@xemacs.org>
@@ -68,6 +68,9 @@ soon indicates a function that should be automatically Unicode-encapsulated,
 no indicates a function we don't support (it will be #defined to cause
    a compile error, with the text after the function included in the
    erroneous definition to indicate why we don't support it).
+review indicates a function that we still need to review to determine whether
+   or how to support it.  This has the same effect as `no', with a comment
+   indicating that the function needs review.
 skip indicates a function we support manually; only a comment about this
    will be generated.
 split indicates a function with a split structure (different versions
@@ -173,7 +176,7 @@ while (<>)
       {
 	next if (m!^//!);
 	next if (/^[ \t]*$/);
-	if (/(file|yes|soon|no|skip|split|begin-bracket|end-bracket)(?: (.*))?/)
+	if (/(file|yes|soon|no|review|skip|split|begin-bracket|end-bracket)(?: (.*))?/)
 	  {
 	    my ($command, $parms) = ($1, $2);
 	    if ($command eq "file")
@@ -282,8 +285,11 @@ foreach my $file (keys %files)
 		print HOUT "#if $bracket\n";
 		print COUT "#if $bracket\n\n";
 	      }
-	    if ($command eq "no")
+	    if ($command eq "no" || $command eq "review")
 	      {
+		$reason = "Function needs review to determine how to handle it"
+		  if !defined ($reason) && $command eq "review";
+
 		if (!defined ($reason))
 		  {
 		    print "WARNING: No reason given for `no' with function $fun\n";

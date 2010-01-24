@@ -228,7 +228,7 @@ sheap_objs=sheap.o
 
 #ifdef HAVE_SHLIB
 shlib_objs=sysdll.o
-# ifdef HAVE_MS_WINDOWS
+# ifdef WIN32_ANY
 export_lib=xemacs-export.o
 xemacs-export.o: xemacs.def
 	dlltool -D xemacs-${version}.exe -d $< -l xemacs-import.a -e $@
@@ -243,7 +243,7 @@ sunpro_objs=sunpro.o
 tooltalk_objs=tooltalk.o
 #endif
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
  xemacs_res.o
 #endif

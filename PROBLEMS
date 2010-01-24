@@ -801,6 +801,8 @@ See also Intel Architecture General, above.
 
 *** Signal 11 when building or running a dumped XEmacs.
 
+Possibility #1:
+
 This appears to happen when using the traditional dumping mechanism and
 the system malloc.  Andy Piper writes:
 
@@ -809,6 +811,13 @@ the system malloc.  Andy Piper writes:
   is the problem.
 
 Try configuring with pdump or without system malloc.
+
+Possibility #2:
+
+Crashes when running a dumped XEmacs 21.5.29 have been observed circa
+January, 2010 in Cygwin 1.7 when configuring with C++, NEWGC and optimization
+(i.e. `--with-compiler=gcc --with-xemacs-compiler=g++ --with-mc-alloc
+--with-optimization').  Turning any one of these off produces a working build. 
 
 *** Syntax errors running configure scripts, make failing with exit code 127
     in inexplicable situations, etc.
