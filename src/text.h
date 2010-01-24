@@ -615,11 +615,12 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 #define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
 #define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
 
+typedef int (*charset_pred) (Lisp_Object);
+
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
-Ichar old_mule_unicode_to_ichar (int code,
-				 Lisp_Object precedence_array,
-				 enum converr fail);
+Ichar old_mule_unicode_to_ichar (int code, Lisp_Object precedence_array,
+				 charset_pred predicate, enum converr fail);
 int old_mule_charset_encodable (Lisp_Object charset);
 
 /* Convert an Ichar to a Unicode codepoint.
@@ -644,8 +645,10 @@ ichar_to_unicode (Ichar chr, enum converr USED_IF_OLD_MULE (fail))
 
 DECLARE_INLINE_HEADER (
 Ichar
-unicode_to_ichar (int code, Lisp_Object USED_IF_OLD_MULE (precedence_array),
-		  enum converr USED_IF_OLD_MULE (fail))
+filtered_unicode_to_ichar (int code,
+			   Lisp_Object USED_IF_OLD_MULE (precedence_array),
+			   charset_pred USED_IF_OLD_MULE (predicate),
+			   enum converr USED_IF_OLD_MULE (fail))
 )
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
@@ -653,13 +656,21 @@ unicode_to_ichar (int code, Lisp_Object USED_IF_OLD_MULE (precedence_array),
 #ifdef UNICODE_INTERNAL
   return (Ichar) code;
 #elif defined (MULE)
-  return old_mule_unicode_to_ichar (code, precedence_array, fail);
+  return old_mule_unicode_to_ichar (code, precedence_array, predicate, fail);
 #else
   if (code > 255)
     return (Ichar) -1;
   else
     return (Ichar) code;
 #endif /* (not) defined (MULE) */
+}
+
+DECLARE_INLINE_HEADER (
+Ichar
+unicode_to_ichar (int code, Lisp_Object precedence_array, enum converr fail)
+)
+{
+  return filtered_unicode_to_ichar (code, precedence_array, NULL, fail);
 }
 
 /****************************************************************************/

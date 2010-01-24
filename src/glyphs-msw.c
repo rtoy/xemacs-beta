@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "buffer.h"
 #include "charset.h"
 #include "device-impl.h"
 #include "elhash.h"
@@ -1809,7 +1810,7 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 /************************************************************************/
 
 static Lisp_Object
-charset_of_text (Lisp_Object USED_IF_MULE (text))
+charset_of_text (struct buffer *buf, Lisp_Object USED_IF_MULE (text))
 {
 #ifdef MULE
   Ibyte *p;
@@ -1820,7 +1821,8 @@ charset_of_text (Lisp_Object USED_IF_MULE (text))
     {
       Ichar c = itext_ichar (p);
       /* @@#### fix me */
-      Lisp_Object charset = ichar_charset_obsolete_me_baby_please (c);
+      Lisp_Object charset =
+	buffer_ichar_charset_obsolete_me_baby (buf, c);
       if (!EQ (charset, Vcharset_ascii))
 	return charset;
       INC_IBYTEPTR (p);
@@ -1850,7 +1852,7 @@ mswindows_widget_hfont (Lisp_Object face,
      the string, on the assumption that we can display ASCII characters in
      all fonts.  We really need to draw the text of the widget ourselves;
      or perhaps there are fonts supporting lots of character sets? */
-  charset = charset_of_text (text);
+  charset = charset_of_text (DOMAIN_XBUFFER (domain), text);
 
   font = FACE_CACHEL_FONT (cachel, charset);
 

@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,6 +32,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef INCLUDED_buffer_h_
 #define INCLUDED_buffer_h_
+
+#ifdef MULE
+#include "charset.h"
+#endif
 
 /************************************************************************/
 /*                                                                      */
@@ -875,6 +879,185 @@ BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
    set_itext_ichar (str, BYTE_BUF_FETCH_CHAR (buf, pos)))
 #define BUF_ITEXT_COPY_ICHAR(buf, pos, str) \
   BYTE_BUF_ITEXT_COPY_ICHAR (buf, charbpos_to_bytebpos (buf, pos), str)
+
+
+/*--------------------------------------------------------------------------*/
+/* Converting between characters, charset codepoints and Unicode codepoints */
+/*--------------------------------------------------------------------------*/
+
+DECLARE_INLINE_HEADER (
+Ichar
+buffer_filtered_unicode_to_ichar (int code, struct buffer *buf,
+				  charset_pred predicate,
+				  enum converr fail)
+)
+{
+  Ichar ch;
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
+  text_checking_assert (buf);
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  ch = filtered_unicode_to_ichar (code, buf->unicode_precedence_array,
+				  predicate, CONVERR_FAIL);
+  if (ch < 0)
+    ch = filtered_unicode_to_ichar (code, Vdefault_unicode_precedence_array,
+				    predicate, fail);
+  return ch;
+#else
+  return filtered_unicode_to_ichar (code, Qnil, predicate, fail);
+#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
+}
+
+DECLARE_INLINE_HEADER (
+Ichar
+buffer_unicode_to_ichar (int code, struct buffer *buf, enum converr fail)
+)
+{
+  return buffer_filtered_unicode_to_ichar (code, buf, NULL, fail);
+}
+
+#ifdef MULE
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_unicode_to_charset_codepoint (int code, struct buffer *buf,
+					      charset_pred predicate,
+					      Lisp_Object *charset,
+					      int *c1, int *c2,
+					      enum converr fail)
+)
+{
+  text_checking_assert (buf);
+  filtered_unicode_to_charset_codepoint (code, buf->unicode_precedence_array,
+					 predicate, charset, c1, c2,
+					 CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_unicode_to_charset_codepoint (code,
+					   Vdefault_unicode_precedence_array,
+					   predicate, charset, c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_unicode_to_charset_codepoint (int code, struct buffer *buf,
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr fail)
+)
+{
+  buffer_filtered_unicode_to_charset_codepoint (code, buf, NULL, charset,
+						c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_ichar_to_charset_codepoint (Ichar ch, struct buffer *buf,
+					    charset_pred predicate,
+					    Lisp_Object *charset,
+					    int *c1, int *c2,
+					    enum converr fail)
+)
+{
+  text_checking_assert (buf);
+#ifdef UNICODE_INTERNAL
+  filtered_ichar_to_charset_codepoint (ch, buf->unicode_precedence_array,
+				       predicate, charset, c1, c2,
+				       CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_ichar_to_charset_codepoint (ch, Vdefault_unicode_precedence_array,
+					 predicate, charset, c1, c2, fail);
+#else
+  filtered_ichar_to_charset_codepoint (ch, Qnil, predicate, charset, c1, c2,
+				       fail);
+#endif /* (not) UNICODE_INTERNAL */
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_ichar_to_charset_codepoint (Ichar ch, struct buffer *buf,
+				   Lisp_Object *charset, int *c1, int *c2,
+				   enum converr fail)
+)
+{
+  buffer_filtered_ichar_to_charset_codepoint (ch, buf, NULL, charset,
+					      c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_itext_to_charset_codepoint (const Ibyte *ptr,
+					    struct buffer *buf,
+					    charset_pred predicate,
+					    Lisp_Object *charset,
+					    int *c1, int *c2,
+					    enum converr fail)
+)
+{
+  text_checking_assert (buf);
+#ifdef UNICODE_INTERNAL
+  filtered_itext_to_charset_codepoint (ptr, buf->unicode_precedence_array,
+				       predicate, charset, c1, c2,
+				       CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_itext_to_charset_codepoint (ptr,
+					 Vdefault_unicode_precedence_array,
+					 predicate, charset, c1, c2, fail);
+#else
+  filtered_itext_to_charset_codepoint (ptr, Qnil, predicate, charset, c1, c2,
+				       fail);
+#endif /* (not) UNICODE_INTERNAL */
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_itext_to_charset_codepoint (const Ibyte *ptr, struct buffer *buf,
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr fail)
+)
+{
+  buffer_filtered_itext_to_charset_codepoint (ptr, buf, NULL, charset,
+					      c1, c2, fail);
+}
+
+#endif /* MULE */
+
+/* @@####
+   Get rid of this crap now!!!!!!!!!!!!!!
+
+   This will simply not fly in a Unicode world, where there may not be any
+   national charset for a particular character.  Almost everywhere that this
+   is used, it's used for font handling.  We need to replace device methods
+   like find_charset_font() and font_spec_matches_charset() with similar
+   methods that operate on a character, not a charset.  We might still need
+   to do some charset lookup if we want to implement the idea that we use
+   the appropriate Chinese, Japanese or Korean specific font depending
+   on the language that a particular character is tagged as (as determined
+   by the string extent surrounding the character in a buffer, or a
+   buffer-local value indicating the language) -- but we absolutely do not
+   want to be *dependent* on finding some national charset. (And in any
+   case it probably makes more sense to do such conditionalizing on the
+   Unicode range of the character, and just check whether a font
+   contains the appropriate character -- or maybe not even conditionalize
+   at all on any character-specific property.) */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+buffer_ichar_charset_obsolete_me_baby (struct buffer *
+				       USED_IF_UNICODE_INTERNAL (buf),
+				       Ichar ch)
+)
+{
+#ifdef UNICODE_INTERNAL
+  int byte1, byte2;
+  Lisp_Object charset;
+  buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+				     CONVERR_FAIL);
+  return charset;
+#elif defined (MULE)
+  return old_mule_ichar_charset (ch);
+#else
+  return Vcharset_ascii;
+#endif /* (not) defined (MULE) */
+
+}
 
 
 /************************************************************************/

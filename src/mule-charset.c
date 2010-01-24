@@ -1538,20 +1538,15 @@ their own tags set on them.
   return Qnil;
 }
 
-DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 4, 0, /*
+DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 3, 0, /*
 Return a list of the charsets in the region between START and END.
 BUFFER defaults to the current buffer if omitted.
-Charsets will be determined for characters in the buffer according to
-PRECEDENCE-LIST, a charset precedence list (see `make-char').  If
-PRECEDENCE-LIST is not given, the buffer-local value of the default
-Unicode precedence list will be used.
 */
-       (start, end, buffer, precedence_list))
+       (start, end, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
   Charbpos pos, stop;	/* Limits of the region. */
   Lisp_Object_dynarr *charset_dyn;
-  Lisp_Object preclist;
   Lisp_Object charset_list = Qnil;
   int i;
 
@@ -1560,18 +1555,8 @@ Unicode precedence list will be used.
 
   charset_dyn = Dynarr_new (Lisp_Object);
 
-  /* Get the proper Unicode precedence list */
-  if (NILP (precedence_list))
-    preclist = get_buffer_unicode_precedence (buf);
-  else
-    preclist = external_convert_precedence_list_to_array (precedence_list);
-
   /* Find the actual charsets */
-  find_charsets_in_buffer (charset_dyn, buf, pos, stop - pos, preclist);
-
-  /* Free it if and only if we created it */
-  if (!NILP (precedence_list))
-    free_precedence_array (preclist);
+  find_charsets_in_buffer (charset_dyn, buf, pos, stop - pos);
 
   /* Convert dynarr to list */
   for (i = 0; i < Dynarr_length (charset_dyn); i++)

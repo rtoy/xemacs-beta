@@ -1100,12 +1100,13 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
   else
     {
       /* @@#### fix me */
-      Lisp_Object charset = ichar_charset_obsolete_me_baby_please (data->ch);
+      struct window *w = XWINDOW (data->window);
+      Lisp_Object charset =
+	buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w), data->ch);
       if (!EQ (charset, data->last_charset) ||
 	  data->findex != data->last_findex)
 	{
 	  /* OK, we need to do things the hard way. */
-	  struct window *w = XWINDOW (data->window);
 	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, data->findex);
 	  Lisp_Object font_instance =
 	    ensure_face_cachel_contains_charset (cachel, data->window,

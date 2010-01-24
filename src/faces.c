@@ -1265,8 +1265,7 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
   find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
-				 get_buffer_unicode_precedence
-				 (DOMAIN_XBUFFER (domain)));
+				 DOMAIN_XBUFFER (domain));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     ensure_face_cachel_contains_charset (cachel, domain,
 					 Dynarr_at (face_charset_dynarr, i));
@@ -1291,8 +1290,7 @@ face_cachel_char_font_metric_info (struct face_cachel *cachel,
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
   find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
-				 get_buffer_unicode_precedence
-				 (DOMAIN_XBUFFER (domain)));
+				 DOMAIN_XBUFFER (domain));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {
       Lisp_Object charset = Dynarr_at (face_charset_dynarr, i);

@@ -77,9 +77,10 @@ struct textual_run
    the 8-bit versions in computing runs and runes, it would seem.
 */
 
-#if !defined(USE_XFT) && !defined(MULE)
+#if !defined (USE_XFT) && !defined (MULE)
 static int
-separate_textual_runs_nomule (unsigned char *text_storage,
+separate_textual_runs_nomule (struct buffer * UNUSED (buf),
+			      unsigned char *text_storage,
 			      struct textual_run *run_storage,
 			      const Ichar *str, Charcount len,
 			      struct face_cachel *UNUSED(cachel))
@@ -98,7 +99,7 @@ separate_textual_runs_nomule (unsigned char *text_storage,
 }
 #endif
 
-#if defined(USE_XFT) && !defined(MULE)
+#if defined (USE_XFT) && !defined (MULE)
 /*
   Note that in this configuration the "Croatian hack" of using an 8-bit,
   non-Latin-1 font to get localized display without Mule simply isn't
@@ -109,10 +110,11 @@ separate_textual_runs_nomule (unsigned char *text_storage,
   #### Is there an alignment issue with text_storage?
 */
 static int
-separate_textual_runs_xft_nomule (unsigned char *text_storage,
+separate_textual_runs_xft_nomule (struct buffer * UNUSED (buf),
+				  unsigned char *text_storage,
 				  struct textual_run *run_storage,
 				  const Ichar *str, Charcount len,
-				  struct face_cachel *UNUSED(cachel))
+				  struct face_cachel *UNUSED (cachel))
 {
   int i;
   if (!len)
@@ -125,19 +127,20 @@ separate_textual_runs_xft_nomule (unsigned char *text_storage,
 
   for (i = 0; i < len; i++)
     {
-      *(XftChar16 *)text_storage = str[i];
-      text_storage += sizeof(XftChar16);
+      *(XftChar16 *) text_storage = str[i];
+      text_storage += sizeof (XftChar16);
     }
   return 1;
 }
 #endif
 
-#if defined(USE_XFT) && defined(MULE)
+#if defined (USE_XFT) && defined (MULE)
 static int
-separate_textual_runs_xft_mule (unsigned char *text_storage,
+separate_textual_runs_xft_mule (struct buffer *buf,
+				unsigned char *text_storage,
 				struct textual_run *run_storage,
 				const Ichar *str, Charcount len,
-				struct face_cachel *UNUSED(cachel))
+				struct face_cachel *UNUSED (cachel))
 {
   Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
@@ -154,8 +157,12 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
       int byte1, byte2;
       int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 
-      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
-				  &byte1, &byte2);
+      /* @@#### This use of CONVERR_SUBSTITUTE is somewhat bogus.
+	 It will substitute a '?' if we can't convert.  Not clear whether
+	 this will work or not.  Problem is that we really shouldn't
+	 be doing things on a charset level. */
+      buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+					 CONVERR_SUBSTITUTE);
 
       /* If UCS is greater than 0xFFFF, set ucs2 to REPLACMENT
 	 CHARACTER. */
@@ -165,7 +172,8 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
       if (!EQ (charset, prev_charset))
 	{
 	  if (runs_so_far)
-	    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+	    run_storage[runs_so_far-1].len =
+	      (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
 	  run_storage[runs_so_far].ptr = text_storage;
 	  run_storage[runs_so_far].dimension = 2;
 	  run_storage[runs_so_far].charset = charset;
@@ -173,17 +181,18 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 	  runs_so_far++;
 	}
 
-      *(XftChar16 *)text_storage = ucs;
-      text_storage += sizeof(XftChar16);
+      * (XftChar16 *) text_storage = ucs;
+      text_storage += sizeof (XftChar16);
     }
 
   if (runs_so_far)
-    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+    run_storage[runs_so_far-1].len =
+      (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
   return runs_so_far;
 }
 #endif
 
-#if !defined(USE_XFT) && defined(MULE)
+#if !defined (USE_XFT) && defined (MULE)
 /*
   This is the most complex function of this group, due to the various
   indexing schemes used by different fonts.  For our purposes, they
@@ -195,7 +204,8 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   irregular indexes, and must be translated ad hoc.  In XEmacs ad hoc
   translations are accomplished with CCL programs. */
 static int
-separate_textual_runs_mule (unsigned char *text_storage,
+separate_textual_runs_mule (struct buffer *buf,
+			    unsigned char *text_storage,
 			    struct textual_run *run_storage,
 			    const Ichar *str, Charcount len,
 			    struct face_cachel *cachel)
@@ -214,8 +224,18 @@ separate_textual_runs_mule (unsigned char *text_storage,
       Lisp_Object charset;
       int byte1, byte2;
 
-      ichar_to_charset_codepoint (ch, get_unicode_precedence(), &charset,
-				  &byte1, &byte2);
+      buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+					 CONVERR_FAIL);
+      /* If we can't convert, substitute a '~' (CANT_DISPLAY_CHAR). */
+      /* @@#### This is extremely bogus.  We want it to substitute the
+	 Unicode replacement character, but there's no charset for this.
+	 We really shouldn't be doing things on a charset level. */
+      if (NILP (charset))
+	{
+	  charset = Vcharset_ascii;
+	  byte1 = 0;
+	  byte2 = CANT_DISPLAY_CHAR;
+	}
       dimension = XCHARSET_DIMENSION (charset);
 
       /* NOTE: Formerly we used to retrieve the XCHARSET_GRAPHIC() here
@@ -306,7 +326,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	  char_converter.reg[0] = XCHARSET_ID (charset);
 	  char_converter.reg[1] = byte1;
 	  char_converter.reg[2] = byte2;
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
+	  ccl_driver (&char_converter, 0, buf, 0, 0, 0, CCL_MODE_ENCODING);
 	  byte1 = char_converter.reg[1];
 	  byte2 = char_converter.reg[2];
 	  external_to_internal_charset_codepoint (charset, byte1, byte2,
@@ -332,25 +352,26 @@ separate_textual_runs_mule (unsigned char *text_storage,
 #endif
 
 static int
-separate_textual_runs (unsigned char *text_storage,
+separate_textual_runs (struct buffer *buf,
+		       unsigned char *text_storage,
 		       struct textual_run *run_storage,
 		       const Ichar *str, Charcount len,
 		       struct face_cachel *cachel)
 {
-#if defined(USE_XFT) && defined(MULE)
-  return separate_textual_runs_xft_mule (text_storage, run_storage,
+#if defined (USE_XFT) && defined (MULE)
+  return separate_textual_runs_xft_mule (buf, text_storage, run_storage,
 					 str, len, cachel);
 #endif
-#if defined(USE_XFT) && !defined(MULE)
-  return separate_textual_runs_xft_nomule (text_storage, run_storage,
+#if defined (USE_XFT) && !defined (MULE)
+  return separate_textual_runs_xft_nomule (buf, text_storage, run_storage,
 					   str, len, cachel);
 #endif
-#if !defined(USE_XFT) && defined(MULE)
-  return separate_textual_runs_mule (text_storage, run_storage,
+#if !defined (USE_XFT) && defined (MULE)
+  return separate_textual_runs_mule (buf, text_storage, run_storage,
 				     str, len, cachel);
 #endif
-#if !defined(USE_XFT) && !defined(MULE)
-  return separate_textual_runs_nomule (text_storage, run_storage,
+#if !defined (USE_XFT) && !defined (MULE)
+  return separate_textual_runs_nomule (buf, text_storage, run_storage,
 				       str, len, cachel);
 #endif
 }

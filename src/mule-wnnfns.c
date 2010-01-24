@@ -2012,8 +2012,9 @@ m2w (Ibyte *mp, w_char *wp)
       int c1, c2;
       int ch;
 
-      itext_to_charset_codepoint (mp, get_unicode_precedence (),
-				  &charset, &c1, &c2, CONVERR_FAIL);
+      /* @@#### current_buffer dependency */
+      buffer_itext_to_charset_codepoint (mp, current_buffer,
+					 &charset, &c1, &c2, CONVERR_FAIL);
       INC_IBYTEPTR (mp);
       if (EQ (charset, Vcharset_ascii) ||
 	  EQ (charset, Vcharset_latin_jisx0201) ||
