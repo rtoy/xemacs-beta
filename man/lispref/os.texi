@@ -419,7 +419,7 @@ killing XEmacs is @code{kill-emacs}.
 @deffn Command kill-emacs &optional exit-data
 This function exits the XEmacs process and kills it.
 
-If @var{exit-data} is an integer, then it is used as the exit status
+If @var{exit-data} is a fixnum, then it is used as the exit status
 of the XEmacs process.  (This is useful primarily in batch operation; see
 @ref{Batch Mode}.)
 
@@ -765,7 +765,7 @@ is set, that value is used.  Otherwise, if the environment variable
 on the effective @sc{uid}, not the real @sc{uid}.
 
 If you specify @var{uid}, the value is the user name that corresponds
-to @var{uid} (which should be an integer).
+to @var{uid} (which should be a fixnum).
 
 @example
 @group
@@ -884,7 +884,7 @@ additional information may be added at the end.
 @c Emacs 19 feature
 The argument @var{time-value}, if given, specifies a time to format
 instead of the current time.  The argument should be a list whose first
-two elements are integers.  Thus, you can use times obtained from
+two elements are fixnums.  Thus, you can use times obtained from
 @code{current-time} (see below) and from @code{file-attributes}
 (@pxref{File Attributes}).
 
@@ -935,15 +935,15 @@ compute the value, both elements of the list are @code{nil}.
 
 The argument @var{time-value}, if given, specifies a time to analyze
 instead of the current time.  The argument should be a cons cell
-containing two integers, or a list whose first two elements are
-integers.  Thus, you can use times obtained from @code{current-time}
+containing two fixnums, or a list whose first two elements are
+fixnums.  Thus, you can use times obtained from @code{current-time}
 (see above) and from @code{file-attributes} (@pxref{File Attributes}).
 @end defun
 
 @node Time Conversion
 @section Time Conversion
 
-  These functions convert time values (lists of two or three integers)
+  These functions convert time values (lists of two or three fixnums)
 to strings or to calendrical information.  There is also a function to
 convert calendrical information to a time value.  You can get time
 values from the functions @code{current-time} (@pxref{Time of Day}) and

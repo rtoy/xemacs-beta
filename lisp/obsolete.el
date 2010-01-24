@@ -275,6 +275,9 @@ set Info-directory-list.")
 ;; being called on the values of functions known to return keymaps,
 ;; or known to return vectors of events instead of strings...
 
+;;; Yes there is; make compiler macros for aref, assq, nconc, checking that
+;;; the car of the relevant argument is sane.
+
 (make-obsolete-variable 'executing-macro 'executing-kbd-macro)
 
 (define-compatible-function-alias 'interactive-form 

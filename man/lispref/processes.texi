@@ -757,7 +757,7 @@ job-control shells won't work when a pipe is used.  See
 @code{process-connection-type} in @ref{Asynchronous Processes}.
 
   Some of the functions below take a @var{signal} argument, which
-identifies a signal to be sent.  It must be either an integer or a
+identifies a signal to be sent.  It must be either a fixnum or a
 symbol which names the signal, like @code{SIGSEGV}.
 
 @defun process-send-signal signal &optional process current-group

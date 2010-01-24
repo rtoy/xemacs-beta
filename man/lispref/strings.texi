@@ -145,7 +145,7 @@ available in XEmacs prior to 21.0 and FSF Emacs prior to 20.3.
 @defun make-string length character
 This function returns a new string consisting entirely of @var{length}
 successive copies of @var{character}.  @var{length} must be a
-non-negative integer.
+non-negative fixnum.
 
 @example
 (make-string 5 ?x)
@@ -224,7 +224,7 @@ text properties, those are copied into the new string also.
 @xref{Duplicable Extents}.
 
 A @code{wrong-type-argument} error is signaled if either @var{start} or
-@var{end} is not an integer or @code{nil}.  An @code{args-out-of-range}
+@var{end} is not a fixnum or @code{nil}.  An @code{args-out-of-range}
 error is signaled if @var{start} indicates a character following
 @var{end}, or if either integer is out of range for @var{string}.
 
@@ -246,8 +246,8 @@ returns an empty string.
 @example
 (concat "abc" "-def")
      @result{} "abc-def"
-(concat "abc" (list 120 (+ 256 121)) [122])
-     @result{} "abcxyz"
+(equal (concat "abc" (list 120 (+ 256 121)) [122]) (format "abcx%cz" 377))
+     @result{} t
 ;; @r{@code{nil} is an empty sequence.}
 (concat "abc" nil "-def")
      @result{} "abc-def"
@@ -258,29 +258,8 @@ returns an empty string.
 @end example
 
 @noindent
-The second example above shows how characters stored in strings are
-taken modulo 256.  In other words, each character in the string is
-stored in one byte.
-
 The @code{concat} function always constructs a new string that is
 not @code{eq} to any existing string.
-
-When an argument is an integer (not a sequence of integers), it is
-converted to a string of digits making up the decimal printed
-representation of the integer.  @strong{Don't use this feature; we plan
-to eliminate it.  If you already use this feature, change your programs
-now!}  The proper way to convert an integer to a decimal number in this
-way is with @code{format} (@pxref{Formatting Strings}) or
-@code{number-to-string} (@pxref{String Conversion}).
-
-@example
-@group
-(concat 137)
-     @result{} "137"
-(concat 54 321)
-     @result{} "54321"
-@end group
-@end example
 
 For information about other concatenation functions, see the description
 of @code{mapconcat} in @ref{Mapping Functions}, @code{vconcat} in
@@ -1189,7 +1168,7 @@ is to appear when displayed.  #### Not yet implemented.
 @item syntax
 Used for syntax tables, which specify the syntax of a particular
 character.  Higher-level Lisp functions are provided for
-working with syntax tables.  The valid values are integers.
+working with syntax tables.  The valid values are fixnums.
 @end table
 
 @defun char-table-type char-table

@@ -207,13 +207,14 @@ lisp_string_hash (Lisp_Object obj)
 static int
 lisp_object_eql_equal (Lisp_Object obj1, Lisp_Object obj2)
 {
-  return EQ (obj1, obj2) || (FLOATP (obj1) && internal_equal (obj1, obj2, 0));
+  return EQ (obj1, obj2) ||
+    (NON_FIXNUM_NUMBER_P (obj1) && internal_equal (obj1, obj2, 0));
 }
 
 static Hashcode
 lisp_object_eql_hash (Lisp_Object obj)
 {
-  return FLOATP (obj) ? internal_hash (obj, 0) : LISP_HASH (obj);
+  return NON_FIXNUM_NUMBER_P (obj) ? internal_hash (obj, 0) : LISP_HASH (obj);
 }
 
 static int

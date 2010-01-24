@@ -734,7 +734,7 @@ otherwise pop it")
 (byte-defop 165 -1 byte-quo)
 (byte-defop 166 -1 byte-rem)
 (byte-defop 167  0 byte-numberp)
-(byte-defop 168  0 byte-integerp)
+(byte-defop 168  0 byte-fixnump)
 
 ;; unused: 169
 
@@ -3101,7 +3101,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler car-safe		1)
 (byte-defop-compiler cdr-safe		1)
 (byte-defop-compiler numberp		1)
-(byte-defop-compiler integerp		1)
+(byte-defop-compiler fixnump		1)
 (byte-defop-compiler skip-chars-forward     1-2+1)
 (byte-defop-compiler skip-chars-backward    1-2+1)
 (byte-defop-compiler (eql byte-eq) 	2)
@@ -3817,6 +3817,8 @@ function quoting" (car form))))
 (byte-defop-compiler-1 let)
 (byte-defop-compiler-1 let*)
 
+(byte-defop-compiler-1 integerp)
+
 (defun byte-compile-progn (form)
   (byte-compile-body-do-effect (cdr form)))
 
@@ -3999,6 +4001,55 @@ function quoting" (car form))))
 	(byte-compile-warn-about-unused-variables))
     (byte-compile-out 'byte-unbind (length (car (cdr form))))))
 
+;; We've renamed the integerp bytecode to fixnump, and changed its semantics
+;; accordingly.  This means #'integerp itself can't be as fast as it used to
+;; be, since it no longer has a bytecode to itself.  As it happens, though,
+;; most of the non-core calls to #'integerp are in contexts where it is
+;; either going to receive a fixnum, or something non-numeric entirely; the
+;; contexts where it needs to distinguish between an integer and a float are
+;; very rare. So, we can have (integerp X) compile to:
+;;
+;; (or (fixnump X) (and (numberp X) (funcall #'integerp X)))
+;;
+;; without the multiple evaluation of X, and where #'fixnump and #'numberp
+;; both have bytecodes. We ignore for-effect, because byte-optimize.el will
+;; delete this call in its presence.
+;;
+;; This approach is byte-code compatible with 21.4 and with earlier 21.5
+;; (except that earlier 21.5 with bignum support will confuse Bfixnump and
+;; Bintegerp; which it did in dealing with byte-compiled code from 21.4
+;; anyway).
+
+(defun byte-compile-integerp (form)
+  (if (/= 2 (length form))
+      (byte-compile-subr-wrong-args form 1)
+    (let ((donetag (byte-compile-make-tag))
+	  (wintag (byte-compile-make-tag))
+	  (failtag (byte-compile-make-tag)))
+      (byte-compile-constant 'integerp)
+      (byte-compile-form (second form))
+      (byte-compile-out 'byte-dup 0)
+      (byte-compile-out 'byte-fixnump 0)
+      (byte-compile-goto 'byte-goto-if-not-nil wintag)
+      (byte-compile-out 'byte-dup 0)
+      (byte-compile-out 'byte-numberp 0)
+      (byte-compile-goto 'byte-goto-if-nil failtag)
+      (byte-compile-out 'byte-call 1)
+      ;; At this point, the only thing from this function remaining on the
+      ;; stack is the return value of the called #'integerp, which reflects
+      ;; exactly what we want. Go directly to donetag, do not discard
+      ;; anything.
+      (byte-compile-goto 'byte-goto donetag)
+      (byte-compile-out-tag failtag)
+      (byte-compile-discard)
+      (byte-compile-discard)
+      (byte-compile-constant nil)
+      (byte-compile-goto 'byte-goto donetag)
+      (byte-compile-out-tag wintag)
+      (byte-compile-discard)
+      (byte-compile-discard)
+      (byte-compile-constant t)
+      (byte-compile-out-tag donetag))))
 
 ;;(byte-defop-compiler-1 /= byte-compile-negated)
 (byte-defop-compiler-1 atom byte-compile-negated)
