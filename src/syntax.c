@@ -230,6 +230,7 @@ SYNTAX-TABLE defaults to the standard syntax table.
 DEFUN ("set-syntax-table", Fset_syntax_table, 1, 2, 0, /*
 Select SYNTAX-TABLE as the new syntax table for BUFFER.
 BUFFER defaults to the current buffer if omitted.
+See `make-syntax-table' for more information.
 */
        (syntax_table, buffer))
 {
@@ -726,11 +727,11 @@ syntax table.
    characters C1 and C2 if they appear in this order, else return 0.
    There is no word boundary between two word-constituent ASCII
    characters.  */
-#define WORD_BOUNDARY_P(c1, c2)			\
+#define WORD_BOUNDARY_P(buf, c1, c2)		\
   (!(ichar_ascii_p (c1) && ichar_ascii_p (c2))	\
-   && word_boundary_p (c1, c2))
+   && word_boundary_p (buf, c1, c2))
 #else
-#define WORD_BOUNDARY_P(c1, c2) 0
+#define WORD_BOUNDARY_P(buf, c1, c2) 0
 #endif
 
 /* Return the position across COUNT words from FROM.
@@ -776,7 +777,7 @@ scan_words (struct buffer *buf, Charbpos from, int count)
 	  code = SYNTAX_FROM_CACHE (scache, ch1);
 	  if (!(words_include_escapes
 		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword || WORD_BOUNDARY_P (ch0, ch1))
+	    if (code != Sword || WORD_BOUNDARY_P (buf, ch0, ch1))
 	      break;
 	  ch0 = ch1;
 	  from++;
@@ -815,7 +816,7 @@ scan_words (struct buffer *buf, Charbpos from, int count)
 
 	  if (!(words_include_escapes
 		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword || WORD_BOUNDARY_P (ch0, ch1))
+	    if (code != Sword || WORD_BOUNDARY_P (buf, ch0, ch1))
 	      break;
 	  ch1 = ch0;
 	  from--;

@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2005, 2009 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -149,8 +149,8 @@ x_text_width (struct frame *f, struct face_cachel *cachel,
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
-				 cachel);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), text_storage, runs, str,
+				 len, cachel);
 
   for (i = 0; i < nruns; i++)
     width_so_far += x_text_width_single_run (f, cachel, runs + i);
@@ -245,7 +245,8 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
     /* @@#### fix me */
-    charset = ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
+    charset = buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						     rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -259,7 +260,8 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
 	  /* @@#### fix me */
 	  && EQ (charset,
-		 ichar_charset_obsolete_me_baby_please (rb->object.chr.ch)))
+		 buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+							rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -284,7 +286,8 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	      xpos = rb->xpos;
 	      /* @@#### fix me */
 	      charset =
-		ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
+		buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						       rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -807,8 +810,9 @@ x_output_string (struct window *w, struct display_line *dl,
 		      height);
     }
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
-				 Dynarr_length (buf), cachel);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), text_storage, runs,
+				 Dynarr_atp (buf, 0), Dynarr_length (buf),
+				 cachel);
 
   for (i = 0; i < nruns; i++)
     {

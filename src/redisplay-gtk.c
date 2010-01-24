@@ -213,7 +213,8 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
       width = 0;
       if (rb->type == RUNE_CHAR)
 	/* @@#### fix me */
-	charset = ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
+	charset = buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+							 rb->object.chr.ch);
     }
 
   if (end < 0)
@@ -228,7 +229,8 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
 	  /* @@#### fix me */
 	  && EQ (charset,
-		 ichar_charset_obsolete_me_baby_please (rb->object.chr.ch)))
+		 buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+							rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -253,7 +255,8 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 	      xpos = rb->xpos;
 	      /* @@#### fix me */
 	      charset =
-		ichar_charset_obsolete_me_baby_please (rb->object.chr.ch);
+		buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						       rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

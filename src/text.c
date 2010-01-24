@@ -1577,8 +1577,7 @@ old_mule_non_ascii_ichar_to_charset_codepoint_raw (Ichar c,
 void
 old_mule_non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
 						   Lisp_Object *charset,
-						   int *c1,
-						   int *c2)
+						   int *c1, int *c2)
 {
   int id;
 
@@ -1703,33 +1702,60 @@ old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
   }
 }
 
+/* @@#### This is a big kludge.  It could fail, e.g., if the predicate in
+   question triggers a recursive call to old_mule_unicode_to_ichar().
+   It would also fail if we parallelized XEmacs (not bloody likely).
+   A better fix is to change the predicate to take an extra "void *" argument
+   and add an extra void * argument to all functions that take a predicate
+   argument (yuck).  Alternatively, make the predicate argument a structure
+   and have it contain the predicate and extra argument.  That way there's
+   only one argument, a structure. */
+static charset_pred omu2i_kludge_predicate;
+
+static int
+omu2i_predicate (Lisp_Object charset)
+{
+  return (old_mule_charset_encodable (charset) &&
+	  omu2i_kludge_predicate (charset));
+}
+
 /* Convert a Unicode codepoint to an Ichar.  Return value will correspond
    to FAIL -- possibly (Ichar) -1, a substituted character, or something
    else. */
 
 Ichar
-old_mule_unicode_to_ichar (int code, Lisp_Object precedence_list,
-			   enum converr fail)
+old_mule_unicode_to_ichar (int code, Lisp_Object precarray,
+			   charset_pred predicate, enum converr fail)
 {
   Lisp_Object charset;
   int c1, c2;
+  charset_pred mypred;
 
   /* This shortcut depends on the representation of an Ichar, see text.c.
+     It could potentially be extended to 0x80 to 0x9F, if we bothered to
+     keep track of whether there are any Unicode mappings in the range
+     0x80 to 0x9F that override Control-1, similar to what we do below
+     for ASCII.
+
      Note that it may _not_ be extended to U+00A0 to U+00FF (many ISO 8859
      coded character sets have points that map into that region, so this
      function is many-valued).
-
-     #### We should be smarter about this to allow for jis-roman and such;
-     basically, we want to know if ASCII is in PRECEDENCE_LIST, with a high
-     precedence. */
-  if (code < 0xA0)
+  */
+  if (code <= 0x7F && !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii
+      && (!predicate || (*predicate) (Vcharset_ascii)))
     return (Ichar) code;
 
   /* Convert to a charset codepoint, but ignore charsets that can't be
      encoded into text */
-  non_ascii_unicode_to_charset_codepoint (code, precedence_list,
-					  old_mule_charset_encodable,
-					  &charset, &c1, &c2);
+  if (!predicate)
+    mypred = old_mule_charset_encodable;
+  else
+    {
+      mypred = omu2i_predicate;
+      omu2i_kludge_predicate = predicate;
+    }
+  unicode_to_charset_codepoint_raw (code, precarray, mypred,
+				    &charset, &c1, &c2);
   if (NILP (charset))
     {
       switch (fail)
@@ -2429,9 +2455,8 @@ add_to_dynarr_unless_present (Lisp_Object obj, Lisp_Object_dynarr *dynarr)
 
 void
 find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
-			       const Ibyte *USED_IF_MULE (str),
-			       Bytecount USED_IF_MULE (len),
-			       Lisp_Object unicode_precedence)
+			       const Ibyte *str, Bytecount len,
+			       struct buffer *buf)
 {
   Lisp_Object prev_charset = Qunbound;
   const Ibyte *strend = str + len;
@@ -2447,8 +2472,8 @@ find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
     {
       Lisp_Object charset;
       int c1, c2;
-      itext_to_charset_codepoint (str, unicode_precedence, &charset, &c1, &c2,
-				  CONVERR_FAIL);
+      buffer_itext_to_charset_codepoint (str, buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
       if (!NILP (charset) && !EQ (charset, prev_charset))
 	{
 	  prev_charset = charset;
@@ -2468,7 +2493,7 @@ find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 void
 find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 			       const Ichar *str, Charcount len,
-			       Lisp_Object unicode_precedence)
+			       struct buffer *buf)
 {
   Lisp_Object prev_charset = Qunbound;
   int j;
@@ -2484,8 +2509,8 @@ find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
     {
       Lisp_Object charset;
       int c1, c2;
-      ichar_to_charset_codepoint (str[j], unicode_precedence, &charset,
-				  &c1, &c2);
+      buffer_ichar_to_charset_codepoint (str[j], buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
       if (!NILP (charset) && !EQ (charset, prev_charset))
 	{
 	  prev_charset = charset;
@@ -2501,8 +2526,7 @@ find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 
 void
 find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
-			 struct buffer *buf, Charbpos pos, Charcount len,
-			 Lisp_Object unicode_precedence)
+			 struct buffer *buf, Charbpos pos, Charcount len)
 {
   Lisp_Object prev_charset = Qunbound;
   Charbpos stop = pos + len;
@@ -2513,8 +2537,8 @@ find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
       Lisp_Object charset;
       int c1, c2;
       
-      ichar_to_charset_codepoint (ich, unicode_precedence, &charset,
-				  &c1, &c2);
+      buffer_ichar_to_charset_codepoint (ich, buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
       if (!NILP (charset) && !EQ (charset, prev_charset))
 	{
 	  prev_charset = charset;
@@ -5333,11 +5357,12 @@ get_external_charset_codepoint (Lisp_Object charset,
 #endif /* (not) MULE */
 }
 
-/* Like ichar_to_charset_codepoint() but takes a PRECEDENCE_LIST list and
-   converts it into an internal dynarr. */
+/* Like ichar_to_charset_codepoint(..., CONVERR_FAIL) but takes a
+   BUFFER_OR_PRECEDENCE_LIST list and converts it into an internal
+   precedence array. */
 static void
 external_char_to_charset_codepoint (Lisp_Object lispch,
-				    Lisp_Object precedence_list,
+				    Lisp_Object buffer_or_precedence_list,
 				    Lisp_Object *charset, int *c1, int *c2,
 				    int munge_codepoints)
 {
@@ -5347,11 +5372,8 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 
   {
     Lisp_Object precarray =
-      external_convert_precedence_list_to_array (precedence_list);
-    ichar_to_charset_codepoint (ch, precarray, charset, c1, c2);
-    if (!NILP (precedence_list))
-      /* Don't free global or current-buffer list */
-      free_precedence_array (precarray);
+      external_convert_precedence_list_to_array (buffer_or_precedence_list, 1);
+    ichar_to_charset_codepoint (ch, precarray, charset, c1, c2, CONVERR_FAIL);
   }
   if (munge_codepoints)
     {
@@ -5376,15 +5398,15 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 }
 
 /* Convert an Lisp integer into a Unicode codepoint, and convert a
-   PRECEDENCE_LIST into a precedence array. */
+   BUFFER_OR_PRECEDENCE_LIST into a precedence array. */
 static int
 get_external_unicode_codepoint (Lisp_Object unicode,
-				Lisp_Object precedence_list,
+				Lisp_Object buffer_or_precedence_list,
 				Lisp_Object *precarray_out)
 {
   int code = decode_unicode (unicode);
   Lisp_Object precarray =
-    external_convert_precedence_list_to_array (precedence_list);
+    external_convert_precedence_list_to_array (buffer_or_precedence_list, 1);
 
   if (precarray_out)
     *precarray_out = precarray;
@@ -5652,33 +5674,45 @@ Convert Unicode codepoint to char.
 Attempts to generate a character from a particular Unicode codepoint, which
 should be a non-negative integer.  When the new Unicode-internal
 representation is used, the conversion is quite direct and there are no
-errors.  The rest of the doc string applies to the old Mule-internal
-representation.
+errors.
+
+See `make-char' for more information about characters.
 
 When the old Mule-internal representation is used, there are multiple
 possible return values; the particular value returned will reflect the
-given charset precedence list, or the default precedence.  If
-PRECEDENCE-LIST is given, it should be a list of charsets, and only those
-charsets will be consulted, in the given order, for a translation.
-Otherwise, the default ordering of all charsets will be given (see
-`set-default-unicode-charset-precedence').  When there is no international
-support \(i.e. the `mule' feature is not present, caused by configuring
-`--with-mule=no'), this function simply does `int-to-char' and ignores the
-PRECEDENCE-LIST argument. (Redisplay will work on the sjt-xft branch, but
-not with server-side X11 fonts as is the default.)
+given charset precedence list, or the default precedence.  The codepoint
+will be converted according to BUFFER-OR-PRECEDENCE-LIST.  This is either a
+Unicode precedence list, a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).
 
-If the UNICODE codepoint would not otherwise be converted to an XEmacs
-character, and the list of character sets to be consulted is nil or the
-default, a new XEmacs character will be created for it in one of the
-`jit-ucs-charset' Mule character sets, and that character will be returned.
+A Unicode precedence list is a list of charsets or charset tags, used to
+convert Unicode codepoints to charset codepoints.  These are searched in
+order for a translation matching a given Unicode character.  Charset tags
+are tags that can match multiple charsets and generally correspond to
+classes of charsets. (See `define-charset-tag'.)
 
-This is limited to around 400,000 characters per XEmacs session, though, so
-while normal usage will not be problematic, things like:
+The actual charset ordering used for converting Unicode codepoints is
+determined by concatenating the buffer-specific Unicode precedence list
+\(see `set-buffer-unicode-precedence-list'), the default precedence list
+\(see `set-default-unicode-precedence-list'), and the list of all charsets;
+converting tags to their corresponding charsets using
+`charset-tag-to-charset-list'; and removing any duplicates.
 
-\(dotimes (i #x110000) (decode-char 'ucs i))
+When there is no international support \(i.e. the `mule' feature is not
+present, caused by configuring `--with-mule=no'), this function simply does
+`int-to-char' and ignores the PRECEDENCE-LIST argument. (Redisplay will
+work on the sjt-xft branch, but not with server-side X11 fonts as is the
+default.)
 
-will eventually error.  The solution to this is to use the Unicode-internal
-encoding.
+Under old-Mule, if the UNICODE codepoint would not otherwise be converted
+to an XEmacs character, and a buffer or nil was given as the argument to
+BUFFER-OR-PRECEDENCE LIST, a new XEmacs character will be created for it in
+one of the `jit-ucs-charset' Mule character sets, and that character will
+be returned. (More specifically, this will happen when the list of charsets
+to be consulted includes `jit-ucs-charset-0', which will be the case for
+buffer-local Unicode precedence lists, since they list all existing
+charsets in some order.)
 
 HANDLE-ERROR controls error behavior:
 
@@ -5687,16 +5721,13 @@ nil or `fail'	Return nil
 `succeed'	Same as `substitute'
 `substitute'	Substitute a replacement character
 */
-       (unicode, precedence_list, handle_error))
+       (unicode, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object unicode_prec;
-  int c = get_external_unicode_codepoint (unicode, precedence_list,
+  int c = get_external_unicode_codepoint (unicode, buffer_or_precedence_list,
 					  &unicode_prec);
   enum converr fail = decode_handle_error (handle_error);
   Ichar ret = unicode_to_ichar (c, unicode_prec, fail);
-  if (!NILP (precedence_list))
-    /* Don't free global or current-buffer list */
-    free_precedence_array (unicode_prec);
 
   if (ret == -1)
     return Qnil;
@@ -5712,20 +5743,22 @@ character in the character set (see `make-char').
 Use this function in place of `split-char'.
 
 When a Unicode internal representation is used (--with-unicode-internal
-option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `unicode-to-char').  The returned charset will
-be the first (i.e. highest-precedence) charset listed the charset
-precedence list in which the character is found.  The return value will be
-nil if the character is not found in any of the charsets in the precedence
-list.
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
 */
-       (ch, precedence_list))
+       (ch, buffer_or_precedence_list))
 {
   Lisp_Object charset;
   int c1, c2;
 
-  external_char_to_charset_codepoint (ch, precedence_list, &charset, &c1, &c2,
-				      0);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5774,24 +5807,25 @@ national character set) and one or two octets, indexing the particular
 character in the character set (see `make-char').
 
 When a Unicode internal representation is used (--with-unicode-internal
-option to configure), CODE will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `unicode-to-char').  The returned charset will
-be the first (i.e. highest-precedence) charset listed the charset
-precedence list in which the character is found.  The return value will be
-nil if the character is not found in any of the charsets in the precedence
-list.
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given codepoint.  The return value will be nil if the codepoint is not
+found in any of the charsets in the precedence list.
 */
-       (code, precedence_list))
+       (code, buffer_or_precedence_list))
 {
   Lisp_Object precarray;
-  int c = get_external_unicode_codepoint (code, precedence_list, &precarray);
+  int c = get_external_unicode_codepoint (code, buffer_or_precedence_list,
+					  &precarray);
   Lisp_Object charset;
   int a1, a2;
 
-  unicode_to_charset_codepoint (c, precarray, &charset, &a1, &a2);
-  if (!NILP (precedence_list))
-    /* Don't free global or current-buffer list */
-    free_precedence_array (precarray);
+  unicode_to_charset_codepoint (c, precarray, &charset, &a1, &a2,
+				CONVERR_FAIL);
   
   if (NILP (charset))
     return Qnil;
@@ -5812,20 +5846,22 @@ This function is exactly equivalent to the expression
 \(first (char-to-charset-codepoint CH PRECEDENCE-LIST)).
 
 When a Unicode internal representation is used (--with-unicode-internal
-option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `unicode-to-char').  The returned charset will
-be the first (i.e. highest-precedence) charset listed the charset
-precedence list in which the character is found.  The return value will be
-nil if the character is not found in any of the charsets in the precedence
-list.
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
 */
-       (ch, precedence_list))
+       (ch, buffer_or_precedence_list))
 {
   Lisp_Object charset;
   int c1, c2;
 
-  external_char_to_charset_codepoint (ch, precedence_list, &charset, &c1, &c2,
-				      0);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5838,7 +5874,8 @@ Return the octet numbered N (should be 0 or 1) of char CH.
 N defaults to 0 if omitted.
 
 This function is for compatibility; consider using `char-to-charset-codepoint'
-instead.  See `char-to-charset-codepoint' for the semantics of PRECEDENCE-LIST.
+instead.  See `char-to-charset-codepoint' for the semantics of
+BUFFER-OR-PRECEDENCE-LIST.
 
 This function is not very useful when a Unicode internal representation is
 used (--with-unicode-internal option to configure). Specifically, this
@@ -5846,13 +5883,13 @@ function is more or less equivalent to (nth (1+ N) (split-char CH)), but
 returns 0 instead of nil when N=1 and the discovered charset of the character
 has only one dimension.
 */
-       (ch, n, precedence_list))
+       (ch, n, buffer_or_precedence_list))
 {
   Lisp_Object charset;
   int c1, c2;
 
-  external_char_to_charset_codepoint (ch, precedence_list, &charset, &c1, &c2,
-				      1);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, 1);
 
   if (NILP (charset))
     return Qnil;
@@ -5879,20 +5916,22 @@ the character is ISO-2022 compatible, the position codes will be coerced into
 the range [0, 127], even if they should be in the range [128, 255].
 
 When a Unicode internal representation is used (--with-unicode-internal
-option to configure), CH will be converted according to PRECEDENCE-LIST, a
-charset precedence list (see `unicode-to-char').  The returned charset will
-be the first (i.e. highest-precedence) charset listed the charset
-precedence list in which the character is found.  The return value will be
-nil if the character is not found in any of the charsets in the precedence
-list.
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
 */
-       (ch, precedence_list))
+       (ch, buffer_or_precedence_list))
 {
   Lisp_Object charset;
   int c1, c2;
 
-  external_char_to_charset_codepoint (ch, precedence_list, &charset,
-				     &c1, &c2, 1);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, 1);
 
   if (NILP (charset))
     return Qnil;

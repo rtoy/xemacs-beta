@@ -175,12 +175,12 @@ emacs_Xt_event_pending_p (int how_many)
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
-      return make_char (unicode_to_ichar ((int) map[keysym],		\
+      return make_char (buffer_unicode_to_ichar ((int) map[keysym],	\
 					  /* @@#### need to get some sort \
 					     of buffer to compute this off; \
 					     only applies in the old-Mule \
 					     world */			\
-					  get_unicode_precedence (),	\
+					  current_buffer,		\
 					  CONVERR_SUCCEED));		\
     } while (0)
 
@@ -1060,13 +1060,11 @@ gtk_keysym_to_character (guint keysym)
     return make_char (keysym & 0xFFFFFF);
 #else
   if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    return make_char (unicode_to_ichar ((int) (keysym & 0xFFFFFF),
-					/* @@####
-					 need to get some sort of buffer
-					 to compute this off; only
-					 applies in the old-Mule world */
-					get_unicode_precedence (),
-					CONVERR_SUCCEED));
+    return make_char (buffer_unicode_to_ichar
+		      ((int) (keysym & 0xFFFFFF),
+		       /* @@#### need to get some sort of buffer to compute
+			  this off; only applies in the old-Mule world */
+		       current_buffer, CONVERR_SUCCEED));
 #endif /* not MULE */
 
   if ((keysym & 0xff) < 0xa0)
@@ -1172,13 +1170,12 @@ gtk_keysym_to_character (guint keysym)
     case 32: /* Currency. The lower sixteen bits of these keysyms happily
 		correspond exactly to the Unicode code points of the
 		associated characters */
-      return make_char (unicode_to_ichar ((int) (keysym & 0xffff),
-					  /* @@####
-					     need to get some sort of buffer
-					     to compute this off; only
-					     applies in the old-Mule world */
-					  get_unicode_precedence (),
-					  CONVERR_SUCCEED));
+      return make_char (buffer_unicode_to_ichar
+			((int) (keysym & 0xffff),
+			 /* @@#### need to get some sort of buffer to
+			    compute this off; only applies in the old-Mule
+			    world */
+			 current_buffer, CONVERR_SUCCEED));
 
 /* @@#### Support me!
 
@@ -1258,8 +1255,9 @@ if necessary). DOCUMENT the existing system that does this.
       int ucs = charset_codepoint_to_unicode (charset, 0, code, CONVERR_FAIL);
       if (ucs >= 0)
 	{
-	  Ichar ich = unicode_to_ichar (ucs, get_unicode_precedence (),
-					CONVERR_FAIL);
+	  /* @@#### current_buffer dependency */
+	  Ichar ich = buffer_unicode_to_ichar (ucs, current_buffer,
+					       CONVERR_FAIL);
 	  if (ich >= 0)
 	    return make_char (ich);
 	}

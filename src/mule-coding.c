@@ -440,8 +440,9 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		{
 		  Lisp_Object charset;
 		  int c1, c2;
-		  non_ascii_itext_to_charset_codepoint_raw
-		    (str->partial, Vshift_jis_precedence, &charset, &c1, &c2);
+		  itext_to_charset_codepoint_raw
+		    (str->partial, Vshift_jis_precedence, NULL,
+		     &charset, &c1, &c2);
 		  if (EQ (charset, Vcharset_katakana_jisx0201))
 		    Dynarr_add (dst, c2);
 		  else if (EQ (charset, Vcharset_japanese_jisx0208) ||
@@ -498,7 +499,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 
   CHECK_CHAR_COERCE_INT (character);
   ichar_to_charset_codepoint (XCHAR (character), Vshift_jis_precedence,
-			      &charset, &c1, &c2);
+			      &charset, &c1, &c2, CONVERR_FAIL);
   if (EQ (charset, Vcharset_japanese_jisx0208) ||
       EQ (charset, Vcharset_japanese_jisx0208_1978))
     {
@@ -774,8 +775,9 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		{
 		  Lisp_Object charset;
 		  int c1, c2;
-		  non_ascii_itext_to_charset_codepoint_raw 
-		    (str->partial, Vbig5_precedence, &charset, &c1, &c2);
+		  itext_to_charset_codepoint_raw 
+		    (str->partial, Vbig5_precedence, NULL,
+		     &charset, &c1, &c2);
 #ifdef UNICODE_INTERNAL
 		  if (EQ (charset, Vcharset_chinese_big5))
 		    {
@@ -902,7 +904,7 @@ term `encode' is used for this operation.
 
   CHECK_CHAR_COERCE_INT (character);
   ichar_to_charset_codepoint (XCHAR (character), Vbig5_precedence,
-			      &charset, &c1, &c2);
+			      &charset, &c1, &c2, CONVERR_FAIL);
 #ifdef UNICODE_INTERNAL
   if (EQ (charset, Vcharset_chinese_big5))
     {
@@ -1734,16 +1736,12 @@ charset_iso2022_compatible (Lisp_Object charset)
 
    (1) Charsets currently designated should be at the top of the list.
    (2) Then ASCII and Control-1, if not already there. (Hack)
-   (3) Then any remaining ISO2022-compatible charsets.
-   (4) Then any others. */
+*/
 
 static void
 reset_iso2022_unicode_precedence (struct iso2022_coding_stream *data)
 {
   int i;
-  /* @@#### Make buffer-local */
-  Lisp_Object parent_precarray = get_unicode_precedence ();
-
   if (NILP (data->unicode_precedence))
     data->unicode_precedence = allocate_precedence_array ();
   else
@@ -1755,15 +1753,11 @@ reset_iso2022_unicode_precedence (struct iso2022_coding_stream *data)
 	add_charset_to_precedence_array (data->charset[i],
 					 data->unicode_precedence);
     }
-  /* Also ASCII and Control-1 */
+  /* Also ASCII and Control-1.
+     @@#### Do we really want to do this? */
   add_charset_to_precedence_array (Vcharset_ascii, data->unicode_precedence);
   add_charset_to_precedence_array (Vcharset_control_1,
 				  data->unicode_precedence);
-  /* Add ISO2022-compatible charsets to unicode_precedence */
-  filter_precedence_array (parent_precarray, data->unicode_precedence,
-			   charset_iso2022_compatible);
-  /* Add all other charsets */
-  filter_precedence_array (parent_precarray, data->unicode_precedence, NULL);
 }
 
 static void
@@ -2314,10 +2308,11 @@ add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
   Bytecount len;
 
   /* @@#### What about errors? */
+  /* @@#### current_buffer dependency */
   /* This conversion is used during decoding, so we want to use the
      standard precedence lists, not the special list we generate and store
      in data->unicode_precedence (used for encoding only). */
-  ch = unicode_to_ichar (ucs, get_unicode_precedence (), CONVERR_SUCCEED);
+  ch = buffer_unicode_to_ichar (ucs, current_buffer, CONVERR_SUCCEED);
   len = set_itext_ichar (work, ch);
   Dynarr_add_many (dst, work, len);
 }
@@ -2883,8 +2878,26 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      int half = 0;
 
 	      /* Convert character to a charset codepoint. */
-	      non_ascii_itext_to_charset_codepoint_raw
-		(str->partial, data->unicode_precedence, &charset, &c1, &c2);
+	      /* First, try the charsets mentioned in the coding system. */
+	      itext_to_charset_codepoint
+		(str->partial, data->unicode_precedence,
+		 &charset, &c1, &c2, CONVERR_FAIL);
+	      if (NILP (charset))
+		{
+		  /* Then try any ISO2022-compatible charset */
+		  /* @@#### current_buffer dependency */
+		  buffer_filtered_itext_to_charset_codepoint
+		    (str->partial, current_buffer, charset_iso2022_compatible,
+		     &charset, &c1, &c2, CONVERR_FAIL);
+		}
+	      if (NILP (charset))
+		{
+		  /* Then try any charset */
+		  /* @@#### current_buffer dependency */
+		  buffer_itext_to_charset_codepoint
+		    (str->partial, current_buffer,
+		     &charset, &c1, &c2, CONVERR_FAIL);
+		}
 
 	      /* ---------------------------------------------------- */
 	      /* 1. Are we processing control-1?                      */
@@ -3795,7 +3808,8 @@ ccl_convert (struct coding_stream *str, const UExtbyte *src,
      N == 0.
      */
   ccl_driver (&data->ccl, src ? src : (const unsigned char *) "",
-	      dst, n, 0,
+	      /* @@#### allow buffer to be specified */
+	      current_buffer, dst, n, 0,
 	      str->direction == CODING_DECODE ? CCL_MODE_DECODING :
 	      CCL_MODE_ENCODING);
   return orign;
@@ -3946,7 +3960,8 @@ fixed_width_convert (struct coding_stream *str, const UExtbyte *src,
      not allowed.  The code does not actually look at what SRC points to if
      N == 0. */
   ccl_driver (&data->ccl, src ? src : (const unsigned char *) "",
-	      dst, n, 0,
+	      /* @@#### allow buffer to be specified */
+	      current_buffer, dst, n, 0,
 	      str->direction == CODING_DECODE ? CCL_MODE_DECODING :
 	      CCL_MODE_ENCODING);
   return orign;

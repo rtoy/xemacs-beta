@@ -27,6 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_charset_h_
 #define INCLUDED_charset_h_
 
+#ifdef MULE
+#include "unicode.h"
+#endif
+
 /* If defined, we always use the maximum depth for the translation tables.
    This will increase their size to a certain extent but speed up lookup,
    as it eliminates all branches. */
@@ -46,9 +50,9 @@ Boston, MA 02111-1307, USA.  */
 void get_charset_limits (Lisp_Object charset, int *low0, int *high0,
 			 int *low1, int *high1);
 int get_charset_iso2022_type (Lisp_Object charset);
-void non_ascii_unicode_to_charset_codepoint (int code,
+void unicode_to_charset_codepoint_raw (int code,
 					     Lisp_Object precarray,
-					     int (*predicate) (Lisp_Object),
+					     charset_pred predicate,
 					     Lisp_Object *charset, int *c1,
 					     int *c2);
 Ichar old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
@@ -83,7 +87,6 @@ extern Lisp_Object Vcharset_hash_table;
 
 #define Vcharset_ascii Qascii
 #define Vcharset_control_1 Qcontrol_1
-#define ichar_charset_obsolete_me_baby_please(c) Vcharset_ascii
 #define XCHARSET_CCL_PROGRAM(cs) Qnil
 #define XCHARSET_DIMENSION(cs) 1
 #define XCHARSET_NAME(cs) (cs)
@@ -122,7 +125,8 @@ charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
 DECLARE_INLINE_HEADER (
 void
 ichar_to_charset_codepoint (Ichar ch, Lisp_Object UNUSED (precarray),
-			    Lisp_Object *charset, int *c1, int *c2)
+			    Lisp_Object *charset, int *c1, int *c2,
+			    enum converr UNUSED (fail))
 )
 {
   ASSERT_VALID_ICHAR (ch);
@@ -134,7 +138,8 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object UNUSED (precarray),
 DECLARE_INLINE_HEADER (
 void
 unicode_to_charset_codepoint (int c, Lisp_Object UNUSED (precarray),
-			      Lisp_Object *charset, int *c1, int *c2)
+			      Lisp_Object *charset, int *c1, int *c2,
+			      enum converr UNUSED (fail))
 )
 {
   ASSERT_VALID_UNICODE_CODEPOINT (c);
@@ -229,6 +234,13 @@ struct Lisp_Charset
      codepoints.  */
   unsigned int jit_charset_p :1;
 #endif /* not UNICODE_INTERNAL */
+
+  /* Number of Unicode mappings involving Unicode codepoints 0 - 127.
+     NOTE: Currently we don't really need to keep track of how many mappings
+     there are, just whether we've set a mapping.  But if we ever added
+     functionality to remove a mapping, we'd have to keep track of the number
+     of mappings to determine whether there are any currently. */
+  int number_of_ascii_mappings;
 
   /* If set, this is a "temporary" charset created when we encounter
      an unknown final.  This is so that we can successfully compile
@@ -399,6 +411,30 @@ do									\
     INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);		\
 } while (0)
 
+#define HANDLE_CHARSET_CODEPOINT_ERROR(errtext, errval)	\
+  if (NILP (*charset))					\
+    {							\
+      switch (fail)					\
+	{						\
+	case CONVERR_FAIL:				\
+	  break;					\
+							\
+	case CONVERR_ABORT:				\
+	default:					\
+	  ABORT (); break;				\
+							\
+	case CONVERR_ERROR:				\
+	  text_conversion_error (errtext, errval);	\
+							\
+	case CONVERR_SUCCEED:				\
+	case CONVERR_SUBSTITUTE:			\
+	  *charset = Vcharset_ascii;			\
+	  *c1 = 0;					\
+	  *c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;	\
+	  break;					\
+	}						\
+    }
+
 /* Convert a charset codepoint (CHARSET, one or two octets) to Unicode.
    Return -1 if can't convert. */
 
@@ -494,33 +530,56 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
   return code;
 }
 
-/* Convert Unicode codepoint to charset codepoint.  CHARSET will be nil if
-   can't convert.  Requires a precedence list of charsets, to determine
-   the order that charsets are checked for conversion codepoints. */
+/* Convert Unicode codepoint to charset codepoint.  FAIL determines what to
+   do upon failure to convert (if fail == CONVERR_FAIL, CHARSET will be nil
+   when unable to convert).  Requires a precedence list of charsets, to
+   determine the order that charsets are checked for conversion codepoints.
+   Also takes a predicate to determine which charsets to check when looking
+   for mappings; it's passed a charset object and should return non-zero if
+   the charset should be checked.  If predicate is NULL, check all
+   charsets. */
 
 DECLARE_INLINE_HEADER (
 void
-unicode_to_charset_codepoint (int code, Lisp_Object precarray,
-			      Lisp_Object *charset, int *c1, int *c2)
+filtered_unicode_to_charset_codepoint (int code, Lisp_Object precarray,
+				       charset_pred predicate,
+				       Lisp_Object *charset, int *c1, int *c2,
+				       enum converr fail)
 )
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
-  /* #### This optimization is not necessarily correct.  We'd like to be
-     able to have a jis-roman charset and to convert to that if called for.
-     What we really should do is have a special type for the charset
-     precedence list rather than just a dynarr; and in this type, mark
-     whether ASCII is higher-precedence than any other charsets with values
-     in the range 0 - 7F. */
-  if (code <= 0x7F)
+  if (code <= 0x7F && !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii
+      && (!predicate || (*predicate) (Vcharset_ascii)))
     {
       *charset = Vcharset_ascii;
       *c1 = 0;
       *c2 = code;
     }
   else
-    non_ascii_unicode_to_charset_codepoint (code, precarray, NULL,
-					    charset, c1, c2);
+    unicode_to_charset_codepoint_raw (code, precarray, predicate,
+				      charset, c1, c2);
+  HANDLE_CHARSET_CODEPOINT_ERROR
+    ("Can't convert Unicode codepoint to charset codepoint", make_int (code));
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
+}
+
+/* Convert Unicode codepoint to charset codepoint.  FAIL determines what to
+   do upon failure to convert (if fail == CONVERR_FAIL, CHARSET will be nil
+   when unable to convert).  Requires a precedence list of charsets, to
+   determine the order that charsets are checked for conversion codepoints.
+   
+   Same as filtered_unicode_to_charset_codepoint() but without a filtering
+   predicate. */
+
+DECLARE_INLINE_HEADER (
+void
+unicode_to_charset_codepoint (int code, Lisp_Object precarray,
+			      Lisp_Object *charset, int *c1, int *c2,
+			      enum converr fail)
+)
+{
+  filtered_unicode_to_charset_codepoint (code, precarray, NULL, charset,
+					 c1, c2, fail);
 }
 
 /* Return a character whose charset is CHARSET and position-codes are C1
@@ -583,18 +642,35 @@ charset_codepoint_to_ichar (Lisp_Object charset, int c1, int c2,
 }
 
 /* Given an Ichar and charset precedence dynarr, convert it to a charset
-   codepoint.  CHARSET will be nil if no conversion possible. */
+   codepoint.  CHARSET will be nil if no conversion possible.
+
+   Under Unicode-internal:
+
+   Requires a precedence list of charsets, to determine the order that
+   charsets are checked for conversion codepoints.  Also takes a predicate
+   to determine which charsets to check when looking for mappings; it's
+   passed a charset object and should return non-zero if the charset should
+   be checked.  If predicate is NULL, check all charsets.
+*/
  
 DECLARE_INLINE_HEADER (
 void
-ichar_to_charset_codepoint (Ichar ch, Lisp_Object 
-			    USED_IF_UNICODE_INTERNAL (precarray),
-			    Lisp_Object *charset, int *c1, int *c2)
+filtered_ichar_to_charset_codepoint (Ichar ch, Lisp_Object 
+				     USED_IF_UNICODE_INTERNAL (precarray),
+				     charset_pred
+				     USED_IF_UNICODE_INTERNAL (predicate),
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr
+				     USED_IF_UNICODE_INTERNAL (fail))
 )
 {
   ASSERT_VALID_ICHAR (ch);
 #ifdef UNICODE_INTERNAL
-  unicode_to_charset_codepoint ((int) ch, precarray, charset, c1, c2);
+  filtered_unicode_to_charset_codepoint ((int) ch, precarray, predicate,
+					 charset, c1, c2, fail);
+  HANDLE_CHARSET_CODEPOINT_ERROR
+    ("Can't convert character to charset codepoint", make_char (ch));
+  ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 #else
   if (ch <= 0x7F)
     {
@@ -604,9 +680,33 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object
     }
   else
     old_mule_non_ascii_ichar_to_charset_codepoint_raw (ch, charset, c1, c2);
-  ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
+  /* This should not fail */
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
 #endif /* (not) UNICODE_INTERNAL */
 }
+
+/* Given an Ichar and charset precedence dynarr, convert it to a charset
+   codepoint.  CHARSET will be nil if no conversion possible.
+
+   Requires a precedence list of charsets, to determine the order that
+   charsets are checked for conversion codepoints.
+*/
+
+DECLARE_INLINE_HEADER (
+void
+ichar_to_charset_codepoint (Ichar ch, Lisp_Object precarray,
+			    Lisp_Object *charset, int *c1, int *c2,
+			    enum converr fail)
+)
+{
+  filtered_ichar_to_charset_codepoint (ch, precarray, NULL, charset,
+				       c1, c2, fail);
+}
+
+#ifndef UNICODE_INTERNAL
+#define old_mule_ichar_charset(ch) \
+  charset_by_encodable_id (old_mule_ichar_charset_id (ch))
+#endif /* not UNICODE_INTERNAL */
 
 /* Convert a charset codepoint into a character in the internal string
    representation.  Return number of bytes written out.  FAIL controls
@@ -627,45 +727,83 @@ charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2, Ibyte *ptr,
 }
 
 /* Convert a character in the internal string representation (guaranteed
-   not to be ASCII) into a charset codepoint.  CHARSET will be nil if no
-   conversion possible. */
+   not to be ASCII under old-Mule) into a charset codepoint.  CHARSET will
+   be nil if no conversion possible. */
 DECLARE_INLINE_HEADER (
 void
-non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
-					  Lisp_Object 
-					  USED_IF_UNICODE_INTERNAL (precarray),
-					  Lisp_Object *charset, int *c1,
-					  int *c2)
+itext_to_charset_codepoint_raw (const Ibyte *ptr,
+				Lisp_Object
+				USED_IF_UNICODE_INTERNAL (precarray),
+				charset_pred
+				USED_IF_UNICODE_INTERNAL (predicate),
+				Lisp_Object *charset, int *c1,
+				int *c2)
 )
 {
 #ifdef UNICODE_INTERNAL
-  non_ascii_unicode_to_charset_codepoint
-    ((int) non_ascii_itext_ichar (ptr), precarray, NULL, charset, c1, c2);
+  unicode_to_charset_codepoint_raw
+    ((int) itext_ichar (ptr), precarray, predicate, charset, c1, c2);
 #else
   old_mule_non_ascii_itext_to_charset_codepoint_raw (ptr, charset, c1, c2);
 #endif /* (not) UNICODE_INTERNAL */
 }
 
-/* Convert a character in the internal string representation (guaranteed
-   not to be ASCII) into a charset codepoint.  CHARSET will be nil if no
-   conversion possible. */
+/* Convert a character in the internal string representation into a charset
+   codepoint.  CHARSET will be nil if no conversion possible.
+
+   Under Unicode-internal:
+
+   Requires a precedence list of charsets, to determine the order that
+   charsets are checked for conversion codepoints.  Also takes a predicate
+   to determine which charsets to check when looking for mappings; it's
+   passed a charset object and should return non-zero if the charset should
+   be checked.  If predicate is NULL, check all charsets.
+
+   Under old-Mule:
+
+   Ignores PRECARRAY and PREDICATE.
+ */
 DECLARE_INLINE_HEADER (
 void
-itext_to_charset_codepoint_raw (const Ibyte *ptr,
-				Lisp_Object precarray,
-				Lisp_Object *charset, int *c1, int *c2)
+filtered_itext_to_charset_codepoint_1 (const Ibyte *ptr,
+				       Lisp_Object precarray,
+				       charset_pred predicate,
+				       Lisp_Object *charset,
+				       int *c1, int *c2)
 )
 {
-  /* #### Not necessarily correct; see unicode_to_charset_codepoint(). */
   ASSERT_VALID_ITEXT (ptr);
-  if (byte_ascii_p (*ptr))
+  if (byte_ascii_p (*ptr)
+#ifdef UNICODE_INTERNAL
+      &&
+      !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii &&
+      (!predicate || (*predicate) (Vcharset_ascii))
+#endif
+      )
     {
       *charset = Vcharset_ascii;
       *c1 = 0;
       *c2 = *ptr;
     }
   else
-    non_ascii_itext_to_charset_codepoint_raw (ptr, precarray, charset, c1, c2);
+    itext_to_charset_codepoint_raw (ptr, precarray, predicate,
+				    charset, c1, c2);
+  ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
+}
+
+DECLARE_INLINE_HEADER (
+void
+filtered_itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object precarray,
+				     charset_pred predicate,
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr fail)
+)
+{
+  filtered_itext_to_charset_codepoint_1 (ptr, precarray, predicate, charset,
+					 c1, c2);
+  HANDLE_CHARSET_CODEPOINT_ERROR
+    ("Can't convert character to charset codepoint",
+     make_char (itext_ichar (ptr)));
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
 
@@ -676,32 +814,8 @@ itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object precarray,
 			    enum converr fail)
 )
 {
-  itext_to_charset_codepoint_raw (ptr, precarray, charset, c1, c2);
-  if (NILP (*charset))
-    {
-      switch (fail)
-	{
-	case CONVERR_FAIL:
-	  break;
-
-	case CONVERR_ABORT:
-	default:
-	  ABORT (); break;
-
-	case CONVERR_ERROR:
-	  text_conversion_error
-	    ("Can't convert character to charset codepoint",
-	     make_char (itext_ichar (ptr)));
-
-	case CONVERR_SUCCEED:
-	case CONVERR_SUBSTITUTE:
-	  *charset = Vcharset_ascii;
-	  *c1 = 0;
-	  *c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;
-	  break;
-	}
-    }
-  ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
+  filtered_itext_to_charset_codepoint (ptr, precarray, NULL, charset,
+				       c1, c2, fail);
 }
 
 /* Convert a charset codepoint (guaranteed not to be ASCII) into a
@@ -747,42 +861,6 @@ charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
 
   return non_ascii_charset_codepoint_to_dynarr (charset, c1, c2, dst, fail);
 }
-
-#ifdef UNICODE_INTERNAL
-/* @@####
-   Get rid of this crap now!!!!!!!!!!!!!!
-
-   This will simply not fly in a Unicode world, where there may not be any
-   national charset for a particular character.  Almost everywhere that this
-   is used, it's used for font handling.  We need to replace device methods
-   like find_charset_font() and font_spec_matches_charset() with similar
-   methods that operate on a character, not a charset.  We might still need
-   to do some charset lookup if we want to implement the idea that we use
-   the appropriate Chinese, Japanese or Korean specific font depending
-   on the language that a particular character is tagged as (as determined
-   by the string extent surrounding the character in a buffer, or a
-   buffer-local value indicating the language) -- but we absolutely do not
-   want to be *dependent* on finding some national charset. (And in any
-   case it probably makes more sense to do such conditionalizing on the
-   Unicode range of the character, and just check whether a font
-   contains the appropriate character -- or maybe not even conditionalize
-   at all on any character-specific property.) */
-DECLARE_INLINE_HEADER (
-Lisp_Object
-ichar_charset_obsolete_me_baby_please (Ichar ch)
-)
-{
-  int byte1, byte2;
-  Lisp_Object charset;
-  ichar_to_charset_codepoint (ch, get_unicode_precedence (), &charset,
-			      &byte1, &byte2);
-  return charset;
-}
-#else
-#define old_mule_ichar_charset(c) \
-  charset_by_encodable_id (old_mule_ichar_charset_id (c))
-#define ichar_charset_obsolete_me_baby_please(c) old_mule_ichar_charset (c)
-#endif /* (not) UNICODE_INTERNAL */
 
 #endif /* MULE */
 

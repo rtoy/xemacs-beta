@@ -1720,7 +1720,8 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
     syntax_error ("Invalid Unicode codepoint",
 		  emacs_sprintf_string ("#x%X", i));
 
-  c = unicode_to_ichar (i, get_unicode_precedence (), CONVERR_FAIL);
+  /* @@#### current_buffer dependency */
+  c = buffer_unicode_to_ichar (i, current_buffer, CONVERR_FAIL);
   /* Will happen on non-Mule. (On Mule, now, we have just-in-time creation
      of characters to handle this.)  Silent corruption is what happens
      elsewhere, and we used to do that to be consistent, but GNU error,

@@ -47,6 +47,14 @@ Boston, MA 02111-1307, USA.  */
    that they have complicated conversions that can't be done efficiently
    other than through CCL, we may rethink this, but no sense in creating
    general mechanisms that have no use.
+
+   An additional problem is that some CCL commands require that charset
+   codepoints be stored as two 7-bit numbers multiplexed into a single
+   14-bit value.  This was OK as long as no charsets could have a
+   size-per-dimension greater than 96, but fails now with charsets such as
+   Big5 or Shift-JIS that require 8-bit indices.  We currently work around
+   this by signalling a conversion error whenever we come across charsets
+   of this nature (see charset_7bit_p), but it's a nasty hack.
 */
 /* #error This file not currently compilable with Unicode-internal */
 #endif
@@ -744,17 +752,27 @@ static int stack_idx_of_map_multiple;
   if (1) goto ccl_finish;		\
   } while (0)
 
-/* Terminate CCL program because of invalid command.  Should not occur
-   in the normal case.  */
-#define CCL_INVALID_CMD					\
+#define CCL_HANDLE_ERROR(type)				\
   do {							\
-    ccl->status = CCL_STAT_INVALID_CMD;			\
+    ccl->status = type;					\
     /* enable this to debug invalid cmd errors */	\
     /* debug_break (); */				\
     /* The "if (1)" inhibits the warning		\
        "end-of loop code not reached" */		\
     if (1) goto ccl_error_handler;			\
   } while (0)
+
+
+/* Terminate CCL program because of invalid command.  Should not occur
+   in the normal case.  */
+#define CCL_INVALID_CMD CCL_HANDLE_ERROR (CCL_STAT_INVALID_CMD)
+
+/* Terminate CCL program because of invalid charset or charset ID.  */
+#define CCL_INVALID_CHARSET CCL_HANDLE_ERROR (CCL_STAT_INVALID_CHARSET)
+
+/* Terminate CCL program because of errors converting to/from characters
+   or Unicode codepoints. */
+#define CCL_CONVERSION_ERROR CCL_HANDLE_ERROR (CCL_STAT_CONVERSION_ERROR)
 
 /* Encode one character CH to multibyte form and write to the current
    output buffer.  At encoding time, if CH is less than 256, CH is
@@ -872,6 +890,7 @@ charset_7bit_p (Lisp_Object charset)
 {
   return !(XCHARSET_CHARS (charset, 0) > 128 ||
 	   XCHARSET_CHARS (charset, 1) > 128 ||
+	   /* The < and > are correct here! */
 	   (XCHARSET_OFFSET (charset, 0) < 128 &&
 	    XCHARSET_OFFSET (charset, 0) + XCHARSET_CHARS (charset, 0) > 128)
 	   ||
@@ -896,7 +915,7 @@ do									\
   Lisp_Object charset;							\
 									\
   if (NILP (charset = charset_by_id (csid)))				\
-    CCL_INVALID_CMD;							\
+    CCL_INVALID_CHARSET;						\
   if (EQ (charset, Vcharset_ascii))					\
     c = (Ichar) (code & 0xFF);						\
   else if (EQ (charset, Vcharset_control_1))				\
@@ -905,7 +924,7 @@ do									\
     {									\
       int c1, c2;							\
       if (!charset_7bit_p (charset))					\
-	CCL_INVALID_CMD;						\
+	CCL_INVALID_CHARSET;						\
       c1 = (code >> 7) & 0x7F, c2 = code & 0x7F;			\
       if (XCHARSET_OFFSET (charset, 0) >= 128)				\
 	c1 += 128;							\
@@ -916,7 +935,7 @@ do									\
 	  >= 0)								\
 	;								\
       else								\
-	CCL_INVALID_CMD;						\
+	CCL_CONVERSION_ERROR;						\
     }									\
 									\
 }									\
@@ -934,6 +953,7 @@ while (0)
    registers are permitted.  */
 
 #ifdef CCL_DEBUG
+/* Currently enabled when DEBUG_XEMACS, i.e. configure --with-debug */
 #define CCL_DEBUG_BACKTRACE_LEN 256
 int ccl_backtrace_table[CCL_DEBUG_BACKTRACE_LEN];
 int ccl_backtrace_idx;
@@ -952,6 +972,7 @@ static struct ccl_prog_stack ccl_prog_stack_struct[256];
 int
 ccl_driver (struct ccl_program *ccl,
 	    const unsigned char *source,
+	    struct buffer *buf,
 	    unsigned_char_dynarr *destination,
 	    int src_bytes,
 	    int *consumed,
@@ -1411,10 +1432,12 @@ ccl_driver (struct ccl_program *ccl,
 		  {
 		    int c1, c2;
 		    Lisp_Object charset;
-		    /* @@#### Better error-handling? */
-		    itext_to_charset_codepoint (src, get_unicode_precedence(),
-						&charset, &c1, &c2,
-						CONVERR_SUCCEED);
+		    /* @@#### Get rid of 7-bit stuff */
+		    buffer_filtered_itext_to_charset_codepoint
+		      (src, buf, charset_7bit_p, &charset, &c1, &c2,
+		       CONVERR_FAIL);
+		    if (NILP (charset))
+		      CCL_CONVERSION_ERROR;
 		    src += len;
 		    c1 &= 127;
 		    c2 &= 127;
@@ -1444,8 +1467,13 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object charset;
 	
-		ichar_to_charset_codepoint (op, get_unicode_precedence(),
-					    &charset, &i, &j);
+		/* @@#### Get rid of 7-bit stuff */
+		buffer_filtered_ichar_to_charset_codepoint (op, buf,
+							    charset_7bit_p,
+							    &charset, &i, &j,
+							    CONVERR_FAIL);
+		if (NILP (charset))
+		  CCL_CONVERSION_ERROR;
 		reg[RRR] = XCHARSET_ID (charset);
 	      }
 	      if (j != -1)
@@ -1466,8 +1494,13 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object charset;
 	
-		ichar_to_charset_codepoint (op, get_unicode_precedence(),
-					    &charset, &i, &j);
+		/* @@#### Get rid of 7-bit stuff */
+		buffer_filtered_ichar_to_charset_codepoint (op, buf,
+							    charset_7bit_p,
+							    &charset, &i, &j,
+							    CONVERR_FAIL);
+		if (NILP (charset))
+		  CCL_CONVERSION_ERROR;
 		reg[RRR] = XCHARSET_ID (charset);
 	      }
 	      if (j != -1)
@@ -1485,7 +1518,7 @@ ccl_driver (struct ccl_program *ccl,
 		int ucs;
 
 		CCL_MAKE_CHAR (reg[rrr], reg[RRR], ich);
-		/* @@#### Is this correct? */
+		/* @@#### Is USE_PRIVATE correct? or should I fail? */
 		ucs = ichar_to_unicode (ich, CONVERR_USE_PRIVATE);
 		reg[rrr] = ucs;
 		break;
@@ -1503,15 +1536,15 @@ ccl_driver (struct ccl_program *ccl,
 		  {
 		    Lisp_Object charset;
 
-		    unicode_to_charset_codepoint (reg[rrr],
-						  get_unicode_precedence (),
-						  &charset, &i, &j);
+		    /* @@#### This 7-bit stuff is awful, change it */
+		    buffer_filtered_unicode_to_charset_codepoint
+		      (reg[rrr], buf, charset_7bit_p, &charset, &i, &j,
+		       CONVERR_FAIL);
 		    if (NILP (charset))
 		      error = 1;
 		    else
 		      {
 			reg[RRR] = XCHARSET_ID (charset);
-			/* @@#### */
 			i &= 0x7f;
 			j &= 0x7f;
 			reg[rrr] = (i << 7) | j;
@@ -1520,7 +1553,8 @@ ccl_driver (struct ccl_program *ccl,
 
 		if (error)
 		  {
-		    reg[rrr] = reg[RRR] = 0;
+		    CCL_CONVERSION_ERROR;
+		    /* reg[rrr] = reg[RRR] = 0; */
 		  }
 		break;
 	      }
@@ -1530,20 +1564,22 @@ ccl_driver (struct ccl_program *ccl,
 	      ic++;
 	      {		
 		struct Lisp_Hash_Table *h = GET_HASH_TABLE (op);
-		htentry *e = find_htentry(make_int (reg[RRR]), h);
-                Lisp_Object scratch;
+		htentry *e = find_htentry (make_int (reg[RRR]), h);
+                Lisp_Object charset;
 
-                if (!HTENTRY_CLEAR_P(e))
+                if (!HTENTRY_CLEAR_P (e))
 		  {
                     op = XCHARVAL (e->value);
-		    if (!valid_ichar_p(op))
-                      {
-                        CCL_INVALID_CMD;
-                      }
+		    if (!valid_ichar_p (op))
+		      CCL_INVALID_CMD;
 
-		    ichar_to_charset_codepoint (op, get_unicode_precedence(),
-						&scratch, &i, &j);
-		    reg[RRR] = XCHARSET_ID (scratch);
+		    /* @@#### Get rid of 7-bit stuff */
+		    buffer_filtered_ichar_to_charset_codepoint
+		      (op, buf, charset_7bit_p, &charset, &i, &j,
+		       CONVERR_FAIL);
+		    if (NILP (charset))
+		      CCL_CONVERSION_ERROR;
+		    reg[RRR] = XCHARSET_ID (charset);
 		    if (j != 0)
                       {
                         i = (i << 7) | j;
@@ -1562,9 +1598,9 @@ ccl_driver (struct ccl_program *ccl,
 	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
 	      {		
 		struct Lisp_Hash_Table *h = GET_HASH_TABLE (op);
-                htentry *e = find_htentry(make_int(i), h);
+                htentry *e = find_htentry (make_int (i), h);
 
-		if (!HTENTRY_CLEAR_P(e))
+		if (!HTENTRY_CLEAR_P (e))
 		  {
 		    if (!INTP (e->value))
 		      CCL_INVALID_CMD;
@@ -1957,8 +1993,21 @@ ccl_driver (struct ccl_program *ccl,
       switch (ccl->status)
 	{
 	case CCL_STAT_INVALID_CMD:
-	  sprintf(msg, "\nCCL: Invalid command %x (ccl_code = %x) at %d.",
+	  sprintf (msg, "\nCCL: Invalid command %x (ccl_code = %x) at %d.",
 		  code & 0x1F, code, this_ic);
+	  goto ccl_error_continue;
+
+	case CCL_STAT_INVALID_CHARSET:
+	  sprintf (msg, "\nCCL: Invalid charset (command %x, ccl_code = %x) at %d.",
+		  code & 0x1F, code, this_ic);
+	  goto ccl_error_continue;
+
+	case CCL_STAT_CONVERSION_ERROR:
+	  sprintf (msg, "\nCCL: Conversion error (command %x, ccl_code = %x) at %d.",
+		  code & 0x1F, code, this_ic);
+	  goto ccl_error_continue;
+
+	ccl_error_continue:
 #ifdef CCL_DEBUG
 	  {
 	    int i = ccl_backtrace_idx - 1;
@@ -1971,7 +2020,7 @@ ccl_driver (struct ccl_program *ccl,
 		if (i < 0) i = CCL_DEBUG_BACKTRACE_LEN - 1;
 		if (ccl_backtrace_table[i] == 0)
 		  break;
-		sprintf(msg, " %d", ccl_backtrace_table[i]);
+		sprintf (msg, " %d", ccl_backtrace_table[i]);
 		Dynarr_add_many (destination, (unsigned char *) msg, strlen (msg));
 	      }
 	    goto ccl_finish;
@@ -2249,8 +2298,9 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 		  ? XCHAR_OR_INT (XVECTOR_DATA (reg)[i])
 		  : 0);
 
+  /* @@#### allow buffer to be specified */
   ccl_driver (&ccl, (const unsigned char *)0,
-	      (unsigned_char_dynarr *)0, 0, (int *)0,
+	      current_buffer, (unsigned_char_dynarr *)0, 0, (int *)0,
 	      CCL_MODE_ENCODING);
   QUIT;
   if (ccl.status != CCL_STAT_SUCCESS)
@@ -2325,7 +2375,8 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
     }
   outbuf = Dynarr_new (unsigned_char);
   ccl.last_block = NILP (continue_);
-  produced = ccl_driver (&ccl, XSTRING_DATA (string), outbuf,
+  /* @@#### allow buffer to be specified */
+  produced = ccl_driver (&ccl, XSTRING_DATA (string), current_buffer, outbuf,
 			 XSTRING_LENGTH (string),
 			 (int *) 0,
 			 CCL_MODE_DECODING);
