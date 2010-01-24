@@ -2181,4 +2181,52 @@
   do (Assert (functionp real-function)
 	     (format "checking %S is a function" real-function)))
 
+;; #'member, #'assoc tests.
+
+(when (featurep 'bignum)
+  (let* ((member*-list `(0 9 342 [hi there] ,(1+ most-positive-fixnum) 0
+			 0.0 ,(1- most-negative-fixnum) nil))
+	 (assoc*-list (loop
+			for elt in member*-list
+			collect (cons elt (random))))
+	 (hashing (make-hash-table :test 'eql))
+	 hashed-bignum)
+    (macrolet
+	((1+most-positive-fixnum ()
+	   (1+ most-positive-fixnum))
+	 (1-most-negative-fixnum ()
+	   (1- most-negative-fixnum))
+	 (*-2-most-positive-fixnum ()
+	   (* 2 most-positive-fixnum))) 
+      (Assert-eq
+       (member* (1+ most-positive-fixnum) member*-list)
+       (member* (1+ most-positive-fixnum) member*-list :test #'eql)
+       "checking #'member* correct if #'eql not explicitly specified")
+      (Assert-eq
+       (assoc* (1+ most-positive-fixnum) assoc*-list)
+       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'eql)
+       "checking #'assoc* correct if #'eql not explicitly specified")
+      (Assert-eq
+       (rassoc* (1- most-negative-fixnum) assoc*-list)
+       (rassoc* (1- most-negative-fixnum) assoc*-list :test #'eql)
+       "checking #'rassoc* correct if #'eql not explicitly specified")
+      (Assert-eq
+       (eql (1+most-positive-fixnum) (1+ most-positive-fixnum))
+       t
+       "checking #'eql handles a bignum literal properly.")
+      (Assert-eq 
+       (member* (1+most-positive-fixnum) member*-list)
+       (member* (1+ most-positive-fixnum) member*-list :test #'equal)
+       "checking #'member* compiler macro correct with literal bignum")
+      (Assert-eq
+       (assoc* (1+most-positive-fixnum) assoc*-list)
+       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'equal)
+       "checking #'assoc* compiler macro correct with literal bignum")
+      (puthash (setq hashed-bignum (*-2-most-positive-fixnum)) 
+	       (gensym) hashing)
+      (Assert-eq
+       (gethash (* 2 most-positive-fixnum) hashing)
+       (gethash hashed-bignum hashing)
+       "checking hashing works correctly with #'eql tests and bignums"))))
+
 ;;; end of lisp-tests.el

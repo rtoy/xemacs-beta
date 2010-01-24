@@ -290,31 +290,25 @@ latter are unique to XEmacs Lisp.
 @node Integer Type
 @subsection Integer Type
 
-  The range of values for integers in XEmacs Lisp is @minus{}134217728 to
-134217727 (28 bits; i.e.,
-@ifinfo
--2**27
-@end ifinfo
-@tex
-$-2^{27}$
-@end tex
-to
-@ifinfo
-2**27 - 1)
-@end ifinfo
-@tex
-$2^{28}-1$)
-@end tex
-on most machines.  (Some machines, in particular 64-bit machines such as
-the DEC Alpha, may provide a wider range.)  It is important to note that
-the XEmacs Lisp arithmetic functions do not check for overflow.  Thus
-@code{(1+ 134217727)} is @minus{}134217728 on most machines. (However,
-you @emph{will} get an error if you attempt to read an out-of-range
-number using the Lisp reader.)
+  In XEmacs Lisp, integers can be fixnums (that is, fixed-precision
+integers) or bignums (arbitrary-precision integers), if compile-time
+configuration supports this.  The read syntax for the two types is the
+same, the type chosen depending on the numeric values involved.
 
-  The read syntax for integers is a sequence of (base ten) digits with
-an optional sign at the beginning. (The printed representation produced
-by the Lisp interpreter never has a leading @samp{+}.)
+  The range of values for fixnums in XEmacs Lisp is given by the
+constants @code{most-positive-fixnum} and @code{most-negative-fixnum}.
+On 32-bit machines, these constants reflect 31 value bits, ranging from
+@minus{}1073741824 to 1073741823.
+
+  In the absence of @xref{The Bignum Extension}, XEmacs Lisp
+arithmetic functions do not check for overflow; so the code snippet
+@code{(= most-negative-fixnum (1+ most-positive-fixnum))} will give
+@code{t}.  However, you @emph{will} get an error if you attempt to read
+an out-of-range number using the Lisp reader.
+
+  The main read syntax for integers is a sequence of base ten digits
+with an optional sign at the beginning. (The printed representation
+produced by the Lisp interpreter never has a leading @samp{+}.)
 
 @example
 @group
@@ -1022,7 +1016,7 @@ same effect with an array of arrays.)  Each type of array has its own
 read syntax; see @ref{String Type}, @ref{Vector Type}, and @ref{Bit
 Vector Type}.
 
-  An array may have any length up to the largest integer; but once
+  An array may have any length up to the largest fixnum; but once
 created, it has a fixed size.  The first element of an array has index
 zero, the second element has index 1, and so on.  This is called
 @dfn{zero-origin} indexing.  For example, an array of four elements has
@@ -1331,7 +1325,7 @@ tables.
 @subsection Range Table Type
 @cindex range table type
 
-  A @dfn{range table} is a table that maps from ranges of integers to
+  A @dfn{range table} is a table that maps from ranges of fixnums to
 arbitrary Lisp objects.  Range tables automatically combine overlapping
 ranges that map to the same Lisp object, and operations are provided
 for mapping over all of the ranges in a range table.
@@ -1714,7 +1708,7 @@ keys, local as well as global keymaps, and changing key bindings.
 @subsection Syntax Table Type
 
   Under XEmacs 20, a @dfn{syntax table} is a particular type of char
-table.  Under XEmacs 19, a syntax table a vector of 256 integers.  In
+table.  Under XEmacs 19, a syntax table is a vector of 256 integers.  In
 both cases, each element defines how one character is interpreted when it
 appears in a buffer.  For example, in C mode (@pxref{Major Modes}), the
 @samp{+} character is punctuation, but in Lisp mode it is a valid
@@ -2245,7 +2239,7 @@ the same object, @code{nil} otherwise.  The ``same object'' means that a
 change in one will be reflected by the same change in the other.
 
 @code{eq} returns @code{t} if @var{object1} and @var{object2} are
-integers with the same value.  It is preferable to use @code{=} or
+fixnums with the same value.  It is preferable to use @code{=} or
 @code{eql} in many contexts for numeric comparison, especially since
 bignums (integers with values that would have otherwise overflowed, only
 available on some builds) with the same value are not @code{eq};

@@ -65,6 +65,8 @@ Lisp_Object Qbit_vectorp, Qbitp, Qcdr;
 Lisp_Object Qerror_lacks_explanatory_string;
 Lisp_Object Qfloatp;
 
+Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
+
 #ifdef DEBUG_XEMACS
 
 int debug_issue_ebola_notices;
@@ -420,7 +422,7 @@ nil is returned.
 */
        (integer))
 {
-  CHECK_INT (integer);
+  CHECK_INTEGER (integer);
   if (CHAR_INTP (integer))
     return make_char (XINT (integer));
   else
@@ -456,31 +458,34 @@ confoundedness in older versions of E-Lisp.
   return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
 }
 
-#ifdef HAVE_BIGNUM
-/* In this case, integerp is defined in number.c. */
 DEFUN ("fixnump", Ffixnump, 1, 1, 0, /*
 Return t if OBJECT is a fixnum.
+
+In this implementation, a fixnum is an immediate integer, and has a
+maximum value described by the constant `most-positive-fixnum'.  This
+contrasts with bignums, integers where the values are limited by your
+available memory.
 */
        (object))
 {
   return INTP (object) ? Qt : Qnil;
 }
-#else
 DEFUN ("integerp", Fintegerp, 1, 1, 0, /*
-Return t if OBJECT is an integer.
+Return t if OBJECT is an integer, nil otherwise.
+
+On builds without bignum support, this function is identical to `fixnump'.
 */
        (object))
 {
-  return INTP (object) ? Qt : Qnil;
+  return INTEGERP (object) ? Qt : Qnil;
 }
-#endif
 
 DEFUN ("integer-or-marker-p", Finteger_or_marker_p, 1, 1, 0, /*
 Return t if OBJECT is an integer or a marker (editor pointer).
 */
        (object))
 {
-  return INTP (object) || MARKERP (object) ? Qt : Qnil;
+  return INTEGERP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("integer-or-char-p", Finteger_or_char_p, 1, 1, 0, /*
@@ -488,7 +493,7 @@ Return t if OBJECT is an integer or a character.
 */
        (object))
 {
-  return INTP (object) || CHARP (object) ? Qt : Qnil;
+  return INTEGERP (object) || CHARP (object) ? Qt : Qnil;
 }
 
 DEFUN ("integer-char-or-marker-p", Finteger_char_or_marker_p, 1, 1, 0, /*
@@ -496,7 +501,7 @@ Return t if OBJECT is an integer, character or a marker (editor pointer).
 */
        (object))
 {
-  return INTP (object) || CHARP (object) || MARKERP (object) ? Qt : Qnil;
+  return INTEGERP (object) || CHARP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
@@ -542,11 +547,7 @@ Return t if OBJECT is a number (floating point or integer).
 */
        (object))
 {
-#ifdef WITH_NUMBER_TYPES
   return NUMBERP (object) ? Qt : Qnil;
-#else
-  return INT_OR_FLOATP (object) ? Qt : Qnil;
-#endif
 }
 
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p, 1, 1, 0, /*
@@ -554,7 +555,7 @@ Return t if OBJECT is a number or a marker.
 */
        (object))
 {
-  return INT_OR_FLOATP (object) || MARKERP (object) ? Qt : Qnil;
+  return NUMBERP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("number-char-or-marker-p", Fnumber_char_or_marker_p, 1, 1, 0, /*
@@ -562,9 +563,7 @@ Return t if OBJECT is a number, character or a marker.
 */
        (object))
 {
-  return (INT_OR_FLOATP (object) ||
-	  CHARP         (object) ||
-	  MARKERP       (object))
+  return (NUMBERP (object) || CHARP (object) || MARKERP (object))
     ? Qt : Qnil;
 }
 
@@ -740,6 +739,19 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
   if      (INTP  (index_)) idx = XINT  (index_);
   else if (CHARP (index_)) idx = XCHAR (index_); /* yuck! */
+#ifdef HAVE_BIGNUM
+  else if (BIGNUMP (index_))
+    {
+      Lisp_Object canon = Fcanonicalize_number (index_);
+      if (EQ (canon, index_))
+	{
+	  /* We don't support non-fixnum indices. */
+	  goto range_error;
+	}
+      index_ = canon;
+      goto retry;
+    }
+#endif
   else
     {
       index_ = wrong_type_argument (Qinteger_or_char_p, index_);
@@ -795,6 +807,19 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
   if      (INTP  (index_)) idx = XINT (index_);
   else if (CHARP (index_)) idx = XCHAR (index_); /* yuck! */
+#ifdef HAVE_BIGNUM
+  else if (BIGNUMP (index_))
+    {
+      Lisp_Object canon = Fcanonicalize_number (index_);
+      if (EQ (canon, index_))
+	{
+	  /* We don't support non-fixnum indices. */
+	  goto range_error;
+	}
+      index_ = canon;
+      goto retry;
+    }
+#endif
   else
     {
       index_ = wrong_type_argument (Qinteger_or_char_p, index_);
@@ -884,7 +909,7 @@ number_char_or_marker_to_double (Lisp_Object obj)
 #endif /* WITH_NUMBER_TYPES */
 
 static EMACS_INT
-integer_char_or_marker_to_int (Lisp_Object obj)
+fixnum_char_or_marker_to_int (Lisp_Object obj)
 {
  retry:
   if      (INTP    (obj)) return XINT  (obj);
@@ -892,6 +917,9 @@ integer_char_or_marker_to_int (Lisp_Object obj)
   else if (MARKERP (obj)) return marker_position (obj);
   else
     {
+      /* On bignum builds, we can only be called from #'lognot, which
+	 protects against this happening: */
+      assert (!BIGNUMP (obj));
       obj = wrong_type_argument (Qinteger_char_or_marker_p, obj);
       goto retry;
     }
@@ -1192,11 +1220,7 @@ If supported, it may also be a ratio.
 */
        (number))
 {
-#ifdef WITH_NUMBER_TYPES
   CHECK_NUMBER (number);
-#else
-  CHECK_INT_OR_FLOAT (number);
-#endif
 
   if (FLOATP (number))
     {
@@ -2132,7 +2156,7 @@ arguments: (&rest ARGS)
   Lisp_Object *args_end = args + nargs;
 
   while (args < args_end)
-    bits &= integer_char_or_marker_to_int (*args++);
+    bits &= fixnum_char_or_marker_to_int (*args++);
 
   return make_int (bits);
 #endif /* HAVE_BIGNUM */
@@ -2184,7 +2208,7 @@ arguments: (&rest ARGS)
   Lisp_Object *args_end = args + nargs;
 
   while (args < args_end)
-    bits |= integer_char_or_marker_to_int (*args++);
+    bits |= fixnum_char_or_marker_to_int (*args++);
 
   return make_int (bits);
 #endif /* HAVE_BIGNUM */
@@ -2206,7 +2230,7 @@ arguments: (&rest ARGS)
     return make_int (0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
-    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+    args[0] = wrong_type_argument (Qinteger_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
@@ -2216,7 +2240,7 @@ arguments: (&rest ARGS)
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
-	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+	args[i] = wrong_type_argument (Qinteger_char_or_marker_p, args[i]);
       other = args[i];
       if (promote_args (&result, &other) == FIXNUM_T)
 	{
@@ -2235,7 +2259,7 @@ arguments: (&rest ARGS)
   Lisp_Object *args_end = args + nargs;
 
   while (args < args_end)
-    bits ^= integer_char_or_marker_to_int (*args++);
+    bits ^= fixnum_char_or_marker_to_int (*args++);
 
   return make_int (bits);
 #endif /* !HAVE_BIGNUM */
@@ -2247,6 +2271,9 @@ NUMBER may be an integer, marker or character converted to integer.
 */
        (number))
 {
+  while (!(CHARP (number) || MARKERP (number) || INTEGERP (number)))
+    number = wrong_type_argument (Qinteger_char_or_marker_p, number);
+
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (number))
     {
@@ -2254,7 +2281,8 @@ NUMBER may be an integer, marker or character converted to integer.
       return make_bignum_bg (scratch_bignum);
     }
 #endif /* HAVE_BIGNUM */
-  return make_int (~ integer_char_or_marker_to_int (number));
+
+  return make_int (~ fixnum_char_or_marker_to_int (number));
 }
 
 DEFUN ("%", Frem, 2, 2, 0, /*
@@ -2284,8 +2312,8 @@ Both must be integers, characters or markers.
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
     }
 #else /* !HAVE_BIGNUM */
-  EMACS_INT ival1 = integer_char_or_marker_to_int (number1);
-  EMACS_INT ival2 = integer_char_or_marker_to_int (number2);
+  EMACS_INT ival1 = fixnum_char_or_marker_to_int (number1);
+  EMACS_INT ival2 = fixnum_char_or_marker_to_int (number2);
 
   if (ival2 == 0)
     Fsignal (Qarith_error, Qnil);
@@ -3550,11 +3578,8 @@ syms_of_data (void)
   DEFSUBR (Fchar_to_int);
   DEFSUBR (Fint_to_char);
   DEFSUBR (Fchar_or_char_int_p);
-#ifdef HAVE_BIGNUM
   DEFSUBR (Ffixnump);
-#else
   DEFSUBR (Fintegerp);
-#endif
   DEFSUBR (Finteger_or_marker_p);
   DEFSUBR (Finteger_or_char_p);
   DEFSUBR (Finteger_char_or_marker_p);
@@ -3643,6 +3668,16 @@ vars_of_data (void)
 
   Vall_weak_boxes = Qnil;
   dump_add_weak_object_chain (&Vall_weak_boxes);
+
+  DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
+The fixnum closest in value to negative infinity.
+*/);
+  Vmost_negative_fixnum = EMACS_INT_MIN;
+
+  DEFVAR_CONST_INT ("most-positive-fixnum", &Vmost_positive_fixnum /*
+The fixnum closest in value to positive infinity.
+*/);
+  Vmost_positive_fixnum = EMACS_INT_MAX;
 
 #ifdef DEBUG_XEMACS
   DEFVAR_BOOL ("debug-issue-ebola-notices", &debug_issue_ebola_notices /*

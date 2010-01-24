@@ -1,3 +1,51 @@
+2010-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Generally: be careful to say fixnum, not integer, when talking
+	about fixed-precision integral types. I'm sure I've missed
+	instances, both here and in the docstrings, but this is a decent
+	start.
+
+	* lispref/text.texi (Columns): 
+	Document where only fixnums, not integers generally, are accepted.
+	(Registers):
+	Remove some ancient char-int confoundance here.
+	* lispref/strings.texi (Creating Strings, Creating Strings):
+	Be more exact in describing where fixnums but not integers in
+	general are accepted.
+	(Creating Strings): Use a more contemporary example to illustrate
+	how concat deals with lists including integers about #xFF.  Delete
+	some obsolete documentation on same.
+	(Char Table Types): Document that only fixnums are accepted as
+	values in syntax tables.
+	* lispref/searching.texi (String Search, Search and Replace):
+	Be exact in describing where fixnums but not integers in general
+	are accepted.
+	* lispref/range-tables.texi (Range Tables): Be exact in describing
+	them; only fixnums are accepted to describe ranges.
+	* lispref/os.texi (Killing XEmacs, User Identification)
+	(Time of Day, Time Conversion):
+	Be more exact about using fixnum where only fixed-precision
+	integers are accepted.
+	* lispref/objects.texi (Integer Type): Be more exact (and
+	up-to-date) about the possible values for
+	integers. Cross-reference to documentation of the bignum extension.
+	(Equality Predicates):
+	(Range Table Type):
+	(Array Type): Use fixnum, not integer, to describe a
+	fixed-precision integer.
+	(Syntax Table Type): Correct some English syntax here.
+	* lispref/numbers.texi (Numbers): Change the phrasing here to use
+	fixnum to mean the fixed-precision integers normal in emacs.
+	Document that our terminology deviates from that of Common Lisp,
+	and that we're working on it.
+	(Compatibility Issues): Reiterate the Common Lisp versus Emacs
+	Lisp compatibility issues.
+	(Comparison of Numbers, Arithmetic Operations):
+	* lispref/commands.texi (Command Loop Info, Working With Events): 
+	* lispref/buffers.texi (Modification Time): 
+	Be more exact in describing where fixnums but not integers in
+	general are accepted.
+
 2010-01-06  Jerry James  <james@xemacs.org>
 
 	* internals/internals.texi (Debugging and Testing): Document
