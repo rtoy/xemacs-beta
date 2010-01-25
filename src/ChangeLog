@@ -1,5 +1,10 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* lrecord.h (enum lrecord_type):
+	Sort the order of types.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	Add all of the lrecord types to `pobj' and sort according to the
 	order in lrecord.h.
