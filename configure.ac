@@ -816,9 +816,14 @@ XE_MERGED_ARG([native-sound-lib],
 dnl
 XE_HELP_SUBSECTION([Internationalization options])
 XE_MERGED_ARG([mule],
-	AS_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs) support,
+	AS_HELP_STRING([--with-mule],[Compile with Mule (Multi-Lingual Emacs), i.e. internationalization support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
+	[], [])
+XE_MERGED_ARG([unicode-internal],
+	AS_HELP_STRING([--with-unicode-internal],[Use Unicode and UTF-8 internally for text.  Automatically selects `--with-mule'.  Without this,
+Mule uses an old internal encoding that explicitly encodes the national
+character set associated with a char and cannot represent all of Unicode.]),
 	[], [])
 XE_KEYWORD_ARG([xim],
 	AS_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
@@ -4174,6 +4179,16 @@ dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
 
+if test "$with_unicode_internal" = "yes"; then
+  test "$with_mule" = "no" && \
+	USAGE_ERROR("Cannot give \`--with-mule=no' and \`--with-unicode-internal=yes'.
+Unicode-internal requires Mule.")
+  test "$with_mule" != "yes" && \
+	AC_MSG_WARN([\`--with-mule' forced to \`yes': Unicode-internal requires Mule.])
+  with_mule=yes
+  AC_DEFINE(UNICODE_INTERNAL)
+fi
+
 test -z "$with_mule" && with_mule=no
 
 dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
@@ -4345,7 +4360,7 @@ dnl ----------------------------------------------------------------
 dnl Check for POSIX functions.
 dnl ----------------------------------------------------------------
 
-AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen)
+AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen wcwidth)
 
 dnl getaddrinfo() is borked under hpux11
 if test "$ac_cv_func_getaddrinfo" != "no" ; then
@@ -5782,7 +5797,11 @@ fi
 
 echo "
 Internationalization:"
-test "$with_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
+if test "$with_mule" = yes; then
+  echo "  Compiling in support for Mule (multi-lingual Emacs)."
+  test "$with_unicode_internal" = yes && echo "    -  Unicode and UTF-8 will be used internally for text."
+  test "$with_unicode_internal" != yes && echo "    -  The old-Mule format will be used internally for text."
+fi
 test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N input method)."
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."

@@ -539,6 +539,9 @@ nil or `undecided'
      Convert CRLF sequences or CR to LF.
 `shift-jis'
      Shift-JIS (a Japanese encoding commonly used in PC operating systems).
+`multibyte'
+     An encoding that directly encodes the indices of one or more charsets
+     with one or two bytes.
 `unicode'
      Any Unicode encoding (UCS-4, UTF-8, UTF-16, etc.).
 `mswindows-unicode-to-multibyte'
@@ -564,7 +567,7 @@ nil or `undecided'
 `ccl'
      The conversion is performed using a user-written pseudo-code
      program.  CCL (Code Conversion Language) is the name of this
-     pseudo-code.
+     pseudo-code.  Not available when (featurep 'unicode-internal).
 `gzip'
      GZIP compression format.
 `internal'
@@ -751,6 +754,12 @@ The following additional properties are recognized if TYPE is `iso2022':
      or Control-1 character sets; this is explicitly disallowed by the
      ISO2022 standard.
 
+`iso2022-preserve'
+     If non-nil, preserve round-trip conversion even when Unicode is used
+     as an internal representation, by using private characters from the
+     Unicode space.  WARNING: This will make such characters unusable for
+     normal editing purposes.
+
 `input-charset-conversion'
      A list of conversion specifications, specifying conversion of
      characters in one charset to another when decoding is performed.
@@ -840,6 +849,12 @@ The following additional properties are recognized if TYPE is `unicode':
      data as Unicode (at least, this is how Windows uses it).
      [[ The correct term is \"signature\", since this technique may also
      be used with UTF-8.  That is the term used in the standard. ]]
+
+
+The following additional property is recognized if TYPE is `multibyte':
+
+`charsets'
+     List of charsets encoded using this coding system.
 
 
 The following additional properties are recognized if TYPE is

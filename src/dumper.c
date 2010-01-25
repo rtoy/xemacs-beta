@@ -436,7 +436,7 @@ static FILE *pdump_out;
 
 #ifdef NEW_GC
 /* PDUMP_HASHSIZE is a large prime. */
-#define PDUMP_HASHSIZE        1000003
+#define PDUMP_HASHSIZE        4754591
 /* Nothing special about PDUMP_HASH_MULTIPLIER: arbitrary odd integer
    smaller than PDUMP_HASHSIZE. */
 #define PDUMP_HASH_MULTIPLIER   12347
@@ -444,7 +444,7 @@ static FILE *pdump_out;
    probing. */
 #define PDUMP_HASH_STEP        574853
 #else /* not NEW_GC */
-#define PDUMP_HASHSIZE 200001
+#define PDUMP_HASHSIZE        2164111
 #endif /* not NEW_GC */
 
 static pdump_block_list_elt **pdump_hash;

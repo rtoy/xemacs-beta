@@ -1,4 +1,5 @@
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Maintainers: Hrvoje Niksic <hniksic@xemacs.org>,
@@ -317,25 +318,26 @@ This is a naive implementation in Lisp.  "
   ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
-    (let (lo hi string n (gc-cons-threshold most-positive-fixnum))
-      (if (= (charset-chars charset) 94)
-	  (setq lo 33 hi 126)
-	(setq lo 32 hi 127))
+    (let ((gc-cons-threshold most-positive-fixnum)
+	  string n
+	  (chars (charset-chars charset))
+	  (offset (charset-offset charset)))
       (if (= (charset-dimension charset) 1)
 	  (progn
-	    (setq string (make-string (1+ (- hi lo)) ??))
+	    (setq string (make-string (charset-chars charset) ??))
 	    (setq n 0)
-	    (loop for j from lo to hi do
+	    (loop for j from offset to (+ offset chars -1) do
 	      (progn
 		(aset string n (make-char charset j))
 		(incf n)))
 	    (garbage-collect)
 	    string)
-	(progn
-	  (setq string (make-string (* (1+ (- hi lo)) (1+ (- hi lo))) ??))
+	(let ((ch1 (first chars)) (ch2 (second chars))
+	      (off1 (first offset)) (off2 (second offset)))
+	  (setq string (make-string (* ch1 ch2) ??))
 	  (setq n 0)
-	  (loop for j from lo to hi do
-	    (loop for k from lo to hi do
+	  (loop for j from off1 to (+ off1 ch1 -1) do
+	    (loop for k from off2 to (+ off2 ch2 -1) do
 	      (progn
 		(aset string n (make-char charset j k))
 		(incf n))))
@@ -426,18 +428,21 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   ;; Test Unicode-related functions
   ;;---------------------------------------------------------------
-  (let* ((scaron (make-char 'latin-iso8859-2 57)))
+  (let* ((scaron '(latin-iso8859-2 185)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
     (loop
       for code in '(#x0100 #x2222 #x4444 #xffff)
-      with initial-unicode = (char-to-unicode scaron)
+      with initial-unicode = (unicode-to-charset-codepoint
+			      code '(latin-iso8859-2))
       do
       (progn
-	(set-unicode-conversion scaron code)
-	(Assert-eq code (char-to-unicode scaron))
-	(Assert-eq scaron (unicode-to-char code '(latin-iso8859-2))))
-      finally (set-unicode-conversion scaron initial-unicode))
-    (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+	(apply 'set-unicode-conversion code scaron)
+	(Assert-eq code (apply 'charset-codepoint-to-unicode scaron))
+	(Assert-equal scaron (unicode-to-charset-codepoint
+			      code '(latin-iso8859-2)))
+	(apply 'set-unicode-conversion code initial-unicode)))
+    (Check-Error 'invalid-argument (apply 'set-unicode-conversion -10000
+					  scaron)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
@@ -534,7 +539,8 @@ This is a naive implementation in Lisp.  "
 				      (loop for i from ?\x00 to ?\xFF
 					collect i))
     do
-    (when (and (eq 'fixed-width (coding-system-type coding-system))
+    (when (and (eq 'multibyte (coding-system-type coding-system))
+	       (= 1 (coding-system-dimension coding-system))
 	       ;; Don't check the coding systems with odd line endings
 	       ;; (maybe we should):
 	       (eq 'lf (coding-system-eol-type coding-system)))

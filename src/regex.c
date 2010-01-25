@@ -5,7 +5,7 @@
 
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@
 
 #include "lisp.h"
 #include "buffer.h"
+#include "casetab.h"
 #include "syntax.h"
 
 #if (defined (DEBUG_XEMACS) && !defined (DEBUG))
@@ -634,7 +635,9 @@ typedef enum
   ,charset_mule, /* Matches any character belonging to specified set.
 		    The set is stored in "unified range-table
 		    format"; see rangetab.c.  Unlike the `charset'
-		    opcode, this can handle arbitrary characters. */
+		    opcode, this can handle arbitrary characters.
+		    NOTE: This has nothing to do with the `charset' object,
+		    despite its name. */
 
   charset_mule_not   /* Same parameters as charset_mule, but match any
 			character that is not one of those specified.  */
@@ -3638,31 +3641,49 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
   if (range_start > range_end)
     return syntax & RE_NO_EMPTY_RANGES ? REG_ERANGE : REG_NOERROR;
 
+#ifndef UNICODE_INTERNAL
   /* Can't have ranges spanning different charsets, except maybe for
-     ranges entirely within the first 256 chars. */
+     ranges entirely within the first 256 chars. (The intent of this is that
+     the effect of such a range would be unpredictable, since there is no
+     well-defined ordering over charsets and the particular assignment of
+     charset ID's is arbitrary.) This does not apply to Unicode, with
+     well-defined character values. */
 
   if ((range_start >= 0x100 || range_end >= 0x100)
-      && ichar_leading_byte (range_start) !=
-      ichar_leading_byte (range_end))
+      && !EQ (old_mule_ichar_charset (range_start),
+	      old_mule_ichar_charset (range_end)))
     return REG_ERANGESPAN;
+#endif /* not UNICODE_INTERNAL */
 
-  /* #### This might be way inefficient if the range encompasses 10,000
-     chars or something.  To be efficient, you'd have to do something like
-     this:
-
-     range_table a;
-     range_table b;
-     map over translation table in [range_start, range_end] of
-       (put the mapped range in a;
-        put the translation in b)
-     invert the range in a and truncate to [range_start, range_end]
-     compute the union of a, b
-     union the result into rtab
-   */
-  for (this_char = range_start; this_char <= range_end; this_char++)
+  if (TRANSLATE_P (translate))
     {
-      SET_RANGETAB_BIT (RE_TRANSLATE (this_char));
+      /* #### This might be way inefficient if the range encompasses 10,000
+	 chars or something.  To be efficient, you'd have to do something like
+	 this:
+
+	 range_table a
+	 range_table b;
+	 map_char_table (translation table, [range_start, range_end]) of
+           lambda (ch, translation):
+             put (ch, Qt) in a
+             put (translation, Qt) in b
+	 invert the range in a and truncate to [range_start, range_end]
+	 put the union of a, b in rtab
+
+	 This is to say, we want to map every character that has a translation
+	 to its translation, and other characters to themselves.
+
+	 This assumes, as is reasonable in practice, that a translation
+	 table maps individual characters to their translation, and does
+	 not generally map multiple characters to the same translation.
+   */
+      for (this_char = range_start; this_char <= range_end; this_char++)
+	{
+	  SET_RANGETAB_BIT (RE_TRANSLATE (this_char));
+	}
     }
+  else
+    put_range_table (rtab, range_start, range_end, Qt);
 
   if (this_char <= range_end)
     put_range_table (rtab, this_char, range_end, Qt);
@@ -3793,8 +3814,9 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	  for (j = *p * BYTEWIDTH; j < 0x80; j++)
             fastmap[j] = 1;
 	  /* And all extended characters must be allowed, too. */
-	  for (j = 0x80; j < 0xA0; j++)
-	    fastmap[j] = 1;
+	  for (j = 0x80; j < 0x100; j++)
+	    if (ibyte_first_byte_p (j))
+	      fastmap[j] = 1;
 #else /* not MULE */
 	  for (j = *p * BYTEWIDTH; j < (1 << BYTEWIDTH); j++)
             fastmap[j] = 1;
@@ -3809,18 +3831,18 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	case charset_mule:
 	  {
 	    int nentries;
-	    int i;
 
 	    nentries = unified_range_table_nentries (p);
-	    for (i = 0; i < nentries; i++)
+	    for (j = 0; j < nentries; j++)
 	      {
 		EMACS_INT first, last;
 		Lisp_Object dummy_val;
 		int jj;
 		Ibyte strr[MAX_ICHAR_LEN];
 
-		unified_range_table_get_range (p, i, &first, &last,
+		unified_range_table_get_range (p, j, &first, &last,
 					       &dummy_val);
+#ifndef UNICODE_INTERNAL
 		for (jj = first; jj <= last && jj < 0x80; jj++)
 		  fastmap[jj] = 1;
 		/* Ranges below 0x100 can span charsets, but there
@@ -3833,24 +3855,47 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		    set_itext_ichar (strr, last);
 		    fastmap[*strr] = 1;
 		  }
+#else
+		/* Ranges can span charsets.  We depend on the fact that
+		   lead bytes are monotonically non-decreasing as
+		   character values increase.  @@#### This is a fairly
+		   reasonable assumption in general (but DOES NOT WORK in
+		   old Mule due to the ordering of private dimension-1
+		   chars before official dimension-2 chars), and introduces
+		   a dependency on the particular representation. */
+		{
+		  Ibyte strrlast[MAX_ICHAR_LEN];
+		  set_itext_ichar (strr, first);
+		  set_itext_ichar (strrlast, last);
+		  for (jj = *strr; jj <= *strrlast; jj++)
+		    fastmap[*strr] = 1;
+		}
+#endif /* not UNICODE_INTERNAL */
 	      }
+	    /* If it's not a possible first byte, it can't be in the fastmap.
+	       In UTF-8, lead bytes are not contiguous with ASCII, so a
+	       range spanning the ASCII/non-ASCII boundary will put
+	       extraneous bytes in the range [0x80 - 0xBF] in the fastmap. */
+	    for (j = 0x80; j < 0x100; j++)
+	      if (!ibyte_first_byte_p (j))
+		fastmap[j] = 0;
 	  }
 	  break;
 
 	case charset_mule_not:
 	  {
 	    int nentries;
-	    int i;
 	    int smallest_prev = 0;
 
 	    nentries = unified_range_table_nentries (p);
-	    for (i = 0; i < nentries; i++)
+#ifndef UNICODE_INTERNAL
+	    for (j = 0; j < nentries; j++)
 	      {
 		EMACS_INT first, last;
 		Lisp_Object dummy_val;
 		int jj;
 
-		unified_range_table_get_range (p, i, &first, &last,
+		unified_range_table_get_range (p, j, &first, &last,
 					       &dummy_val);
 		for (jj = smallest_prev; jj < first && jj < 0x80; jj++)
 		  fastmap[jj] = 1;
@@ -3860,14 +3905,70 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	      }
 
 	    /* Also set lead bytes after the end */
-	    for (i = smallest_prev; i < 0x80; i++)
-	      fastmap[i] = 1;
+	    for (j = smallest_prev; j < 0x80; j++)
+	      fastmap[j] = 1;
 
-	    /* Calculating which leading bytes are actually allowed
+	    /* Calculating which lead bytes are actually allowed
 	       here is rather difficult, so we just punt and allow
-	       all of them. */
-	    for (i = 0x80; i < 0xA0; i++)
-	      fastmap[i] = 1;
+	       all of them.
+	    */
+	    for (j = 0x80; j < 0x100; j++)
+	      if (ibyte_first_byte_p (j))
+		fastmap[j] = 1;
+#else
+	    for (j = 0; j < nentries; j++)
+	      {
+		EMACS_INT first, last;
+		/* This denotes a range of lead bytes that are not
+		   in the fastmap. */
+		int firstlead, lastlead;
+		Lisp_Object dummy_val;
+		int jj;
+
+		unified_range_table_get_range (p, j, &first, &last,
+					       &dummy_val);
+		/* With Unicode-internal, lead bytes that are entirely
+		   within the range and not including the beginning or end
+		   are definitely not in the fastmap.  Leading bytes that
+		   include the beginning or ending characters will be in
+		   the fastmap unless the beginning or ending characters
+		   are the first or last character, respectively, that uses
+		   this lead byte. @@#### We should try to determine
+		   whether this is the case.  Currently we just assume it's
+		   not. */
+		if (first < 0x80)
+		  firstlead = first;
+		else
+		  {
+		    Ibyte strr[MAX_ICHAR_LEN];
+		    set_itext_ichar (strr, first);
+		    firstlead = *strr + 1;
+		  }
+		if (last < 0x80)
+		  lastlead = last;
+		else
+		  {
+		    Ibyte strr[MAX_ICHAR_LEN];
+		    set_itext_ichar (strr, last);
+		    lastlead = *strr - 1;
+		  }
+		for (jj = smallest_prev; jj < firstlead; jj++)
+		  fastmap[jj] = 1;
+		smallest_prev = last + 1;
+	      }
+
+	    /* Also set lead bytes after the end */
+	    for (j = smallest_prev; j < 0x100; j++)
+	      fastmap[j] = 1;
+
+	    /* If it's not a possible first byte, it can't be in the fastmap.
+	       In UTF-8, lead bytes are not contiguous with ASCII, so a
+	       range spanning the ASCII/non-ASCII boundary will put
+	       extraneous bytes in the range [0x80 - 0xBF] in the fastmap. */
+	    for (j = 0x80; j < 0x100; j++)
+	      if (!ibyte_first_byte_p (j))
+		fastmap[j] = 0;
+#endif /* UNICODE_INTERNAL */
 	  }
 	  break;
 #endif /* MULE */
@@ -3881,8 +3982,9 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 #ifdef MULE
 	    /* "anything" only includes bytes that can be the
 	       first byte of a character. */
-	    for (j = 0; j < 0xA0; j++)
-	      fastmap[j] = 1;
+	    for (j = 0; j < 0x100; j++)
+	      if (ibyte_first_byte_p (j))
+		fastmap[j] = 1;
 #else
 	    for (j = 0; j < (1 << BYTEWIDTH); j++)
 	      fastmap[j] = 1;
@@ -3947,25 +4049,12 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		(XCHAR_TABLE (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) ==
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
-	  for (j = 0x80; j < 0xA0; j++)
-	    {
-	      if (leading_byte_prefix_p ((unsigned char) j))
-		/* too complicated to calculate this right */
-		fastmap[j] = 1;
-	      else
-		{
-		  int multi_p;
-		  Lisp_Object cset;
-
-		  cset = charset_by_leading_byte (j);
-		  if (CHARSETP (cset))
-		    {
-		      if (charset_syntax (lispbuf, cset, &multi_p)
-			  == Sword || multi_p)
-			fastmap[j] = 1;
-		    }
-		}
-	    }
+	  /* @@#### To be correct, we need to set the fastmap for any
+	     lead byte any of whose characters can have this syntax code.
+	     This is hard to calculate so we just punt for now. */
+	  for (j = 0x80; j < 0x100; j++)
+	    if (ibyte_first_byte_p (j))
+	      fastmap[j] = 1;
 #else /* not MULE */
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
 	    if (SYNTAX
@@ -3986,25 +4075,12 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		 (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) !=
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
-	  for (j = 0x80; j < 0xA0; j++)
-	    {
-	      if (leading_byte_prefix_p ((unsigned char) j))
-		/* too complicated to calculate this right */
-		fastmap[j] = 1;
-	      else
-		{
-		  int multi_p;
-		  Lisp_Object cset;
-
-		  cset = charset_by_leading_byte (j);
-		  if (CHARSETP (cset))
-		    {
-		      if (charset_syntax (lispbuf, cset, &multi_p)
-			  != Sword || multi_p)
-			fastmap[j] = 1;
-		    }
-		}
-	    }
+	  /* @@#### To be correct, we need to set the fastmap for any
+	     lead byte all of whose characters do not have this syntax code.
+	     This is hard to calculate so we just punt for now. */
+	  for (j = 0x80; j < 0x100; j++)
+	    if (ibyte_first_byte_p (j))
+	      fastmap[j] = 1;
 #else /* not MULE */
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
 	    if (SYNTAX
