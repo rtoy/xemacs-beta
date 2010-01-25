@@ -1,6 +1,11 @@
 2010-01-25  Ben Wing  <ben@xemacs.org>
 
 	* mule/vietnamese.el (vietnamese-viscii):
+	Fix extraneous quote.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/vietnamese.el (vietnamese-viscii):
 	Use mapping file from libiconv instead of specifying our own.
 	Fixes bug in #xA6 mapping.
 
