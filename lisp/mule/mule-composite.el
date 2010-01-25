@@ -28,7 +28,6 @@
 
 ;;; Code:
 
-;;;###autoload
 (defconst reference-point-alist
   '((tl . 0) (tc . 1) (tr . 2)
     (Bl . 3) (Bc . 4) (Br . 5)
@@ -157,7 +156,6 @@ follows (the point `*' corresponds to both reference points):
       (setq i (+ i 2))))
   components)
 
-;;;###autoload
 (defun compose-region (start end &optional components modification-func)
   "UNIMPLEMENTED.
 Compose characters in the current region.
@@ -195,7 +193,6 @@ text in the composition."
     (compose-region-internal start end components modification-func)
     (set-buffer-modified-p modified-p)))
 
-;;;###autoload
 (defun decompose-region (start end)
   "UNIMPLEMENTED.
 Decompose text in the current region.
@@ -208,7 +205,6 @@ positions (integers or markers) specifying the region."
     (remove-text-properties start end '(composition nil))
     (set-buffer-modified-p modified-p)))
 
-;;;###autoload
 (defun compose-string (string &optional start end components modification-func)
   "UNIMPLEMENTED.
 Compose characters in string STRING.
@@ -234,14 +230,12 @@ text in the composition."
   (compose-string-internal string start end components modification-func)
   string)
 
-;;;###autoload
 (defun decompose-string (string)
   "UNIMPLEMENTED.
 Return STRING where `composition' property is removed."
   (remove-text-properties 0 (length string) '(composition nil) string)
   string)
 
-;;;###autoload
 (defun compose-chars (&rest args)
   "UNIMPLEMENTED.
 Return a string from arguments in which all characters are composed.
@@ -266,7 +260,6 @@ A composition rule is a cons of glyph reference points of the form
       (setq str (concat args)))
     (compose-string-internal str 0 (length str) components)))
 
-;;;###autoload
 (defun find-composition (pos &optional limit string detail-p)
   "UNIMPLEMENTED.
 Return information about a composition at or nearest to buffer position POS.
@@ -307,7 +300,6 @@ WIDTH is a number of columns the composition occupies on the screen."
     result))
 
 
-;;;###autoload
 (defun compose-chars-after (pos &optional limit object)
   "UNIMPLEMENTED.
 Compose characters in current buffer after position POS.
@@ -349,7 +341,6 @@ This function is the default value of `compose-chars-after-function'."
 	      (setq func nil tail (cdr tail)))))))
       result))
 
-;;;###autoload
 (defun compose-last-chars (args)
   "UNIMPLEMENTED.
 Compose last characters.
@@ -377,7 +368,6 @@ after a sequence character events."
 ;;; The following codes are only for backward compatibility with Emacs
 ;;; 20.4 and the earlier.
 
-;;;###autoload
 (defun decompose-composite-char (char &optional type with-composition-rule)
   "UNIMPLEMENTED.
 Convert CHAR to string.

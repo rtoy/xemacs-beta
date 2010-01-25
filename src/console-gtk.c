@@ -144,9 +144,12 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
    to 2.0. So if you're porting XEmacs to GTK 2.0, bear that in mind. */
       char_to_associate 
 #ifdef __GDK_KEYS_H__ 
-	= Funicode_to_char
-	      (make_int(gdk_keyval_to_unicode
-			(gdk_keyval_from_name(symbol_name))), Qnil);
+	= make_char (buffer_unicode_to_ichar
+		     (gdk_keyval_to_unicode
+		      (gdk_keyval_from_name (symbol_name)),
+		      /* @@#### need to get some sort of buffer to compute
+			 this off; only applies in the old-Mule world */
+		      current_buffer, CONVERR_SUCCEED));
 #else /* GTK 1.whatever doesn't. Use the X11 map. */
         = gtk_keysym_to_character(gdk_keyval_from_name(symbol_name));
 #endif

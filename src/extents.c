@@ -489,15 +489,6 @@ Lisp_Object Qpaste_function;
 static Lisp_Object canonicalize_extent_property (Lisp_Object prop,
 						 Lisp_Object value);
 
-typedef struct
-{
-  Lisp_Object key, value;
-} Lisp_Object_pair;
-typedef struct
-{
-  Dynarr_declare (Lisp_Object_pair);
-} Lisp_Object_pair_dynarr;
-
 static void extent_properties (EXTENT e, Lisp_Object_pair_dynarr *props);
 
 Lisp_Object Vextent_face_memoize_hash_table;
