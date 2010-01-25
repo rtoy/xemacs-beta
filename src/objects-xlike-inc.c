@@ -1,7 +1,7 @@
 /* Shared object code between X and GTK -- include file.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -106,7 +106,7 @@ x_font_spec_matches_charset (struct device * USED_IF_XFT (d),
   the_nonreloc += offset;
 
 #ifdef USE_XFT
-  if (stage)
+  if (stage == STAGE_FINAL)
     {
       Display *dpy = DEVICE_X_DISPLAY (d);
       Extbyte *extname;
@@ -146,11 +146,11 @@ x_font_spec_matches_charset (struct device * USED_IF_XFT (d),
       return 1;
     }
 
-  if (final == stage)
+  if (STAGE_FINAL == stage)
     {
       registries = Qunicode_registries;
     }
-  else if (initial == stage)
+  else if (STAGE_INITIAL == stage)
     {
       registries = XCHARSET_REGISTRIES (charset);
       if (NILP(registries))
@@ -364,13 +364,17 @@ static struct charset_reporter charset_table[] =
     { &Vcharset_latin_iso8859_15, NULL, NULL },
     { &Vcharset_thai_tis620, "Thai", "th" },
     /* We don't have an arabic charset.  bidi issues, I guess? */
-    /* { &Vcharset_arabic_iso8859_6, "Arabic", "ar" }, */
+    { &Vcharset_arabic_iso8859_6, "Arabic", "ar" },
     { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
     /* #### probably close enough for Ukraine? */
     { &Vcharset_cyrillic_iso8859_5, "Russian", "ru" },
+#ifdef UNICODE_INTERNAL
+    { &Vcharset_chinese_big5, "traditional Chinese", "zh-tw" },
+#else
     /* #### these probably are not quite right */
     { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-tw" },
     { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-tw" },
+#endif
     { NULL, NULL, NULL }
   };
 
@@ -394,7 +398,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
   /* #### with Xft need to handle second stage here -- sjt
      Hm.  Or maybe not.  That would be cool. :-) */
-  if (stage)
+  if (stage == STAGE_FINAL)
     return Qnil;
 
   /* Fontconfig converts all FreeType names to UTF-8 before passing them
@@ -693,7 +697,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 
   switch (stage) 
     {
-    case initial:
+    case STAGE_INITIAL:
       {
 	if (!(NILP(XCHARSET_REGISTRIES(charset))) 
 	    && VECTORP(XCHARSET_REGISTRIES(charset)))
@@ -703,7 +707,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	  }
 	break;
       }
-    case final:
+    case STAGE_FINAL:
       {
 	registries_len = 1;
 	registries = Qunicode_registries;
