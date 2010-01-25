@@ -5901,7 +5901,7 @@ Lisp_Object get_external_charset_codepoint (Lisp_Object charset,
 					    Lisp_Object arg1, Lisp_Object arg2,
 					    int *a1, int *a2,
 					    int munge_codepoints);
-enum converr decode_handle_error (Lisp_Object err);
+enum converr decode_handle_error (Lisp_Object err, int allow_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS
 Ichar lookup_composite_char (Ibyte *str, int len);
@@ -6171,9 +6171,8 @@ void add_charsets_to_precedence_array (Lisp_Object list,
 				       Lisp_Object precarray);
 void charset_created_recalculate_unicode_precedence (void);
 void disksave_clear_unicode_precedence (void);
-Lisp_Object internal_convert_precedence_list_to_array (Lisp_Object charsets);
-Lisp_Object external_convert_precedence_list_to_array (Lisp_Object charsets,
-						       int allow_buffer);
+Lisp_Object simple_convert_predence_list_to_array (Lisp_Object charsets);
+Lisp_Object decode_buffer_or_precedence_list (Lisp_Object preclist);
 int unicode_precedence_list_changed (Lisp_Object sym, Lisp_Object *val,
 				     Lisp_Object in_object, int flags);
 extern Lisp_Object Vdefault_unicode_precedence_array;

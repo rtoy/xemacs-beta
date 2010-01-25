@@ -2560,4 +2560,3 @@ console_type_create_redisplay_XLIKE (void)
   XLIKE_CONSOLE_HAS_METHOD (window_output_end);
 #endif
 }
->>>>>>> /DOCUME~1/Ben/LOCALS~2/Temp/redisplay-xlike-inc.c~other.yMYSLx

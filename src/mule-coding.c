@@ -820,26 +820,8 @@ decode_big5_char (int b1, int b2, enum converr fail)
       return charset_codepoint_to_ichar (charset, c1, c2, fail);
     }
   else
-    {
-      switch (fail)
-	{
-	case CONVERR_FAIL:
-	  return -1;
-
-	case CONVERR_ABORT:
-	default:
-	  ABORT (); return -1;
-
-	case CONVERR_ERROR:
-	  text_conversion_error
-	    ("Can't convert Big5 codepoint to character",
-	     list2 (make_int (b1), make_int (b2)));
-
-	case CONVERR_SUCCEED:
-	case CONVERR_SUBSTITUTE:
-	  return CANT_CONVERT_CHAR_WHEN_DECODING;
-	}
-    }
+    HANDLE_ICHAR_ERROR ("Can't convert Big5 codepoint to character",
+			list2 (make_int (b1), make_int (b2)), fail);
 #endif /* UNICODE_INTERNAL */
 }
 
@@ -874,18 +856,23 @@ representation of the character in the external Big Five encoding, and thus
 converting them to a character is analogous to any other operation that
 decodes an external representation.
 
-HANDLE-ERROR specifies error handling for illegal characters.
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
        (code, handle_error))
 {
   Ichar ch;
-  enum converr handl = decode_handle_error (handle_error);
+  enum converr fail = decode_handle_error (handle_error, 0);
 
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
   CHECK_INT (XCDR (code));
-  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)), handl);
-  if (ch == -1)
+  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)), fail);
+  if (ch < 0)
     return Qnil;
   else
     return make_char (ch);
@@ -4518,17 +4505,17 @@ init_mule_coding (void)
      of these, and similar variants. */
   assert (initialized);
   Vshift_jis_precedence =
-    internal_convert_precedence_list_to_array
+    simple_convert_predence_list_to_array
     (list3 (Vcharset_japanese_jisx0208, Vcharset_japanese_jisx0208_1978,
 	    Vcharset_katakana_jisx0201));
 
 #ifdef UNICODE_INTERNAL
   Vbig5_precedence =
-    internal_convert_precedence_list_to_array
+    simple_convert_predence_list_to_array
     (list1 (Vcharset_chinese_big5));
 #else /* not UNICODE_INTERNAL */
   Vbig5_precedence =
-    internal_convert_precedence_list_to_array
+    simple_convert_predence_list_to_array
     (list2 (Vcharset_chinese_big5_1, Vcharset_chinese_big5_2));
 #endif /* UNICODE_INTERNAL */
 }

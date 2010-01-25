@@ -71,7 +71,7 @@
   ;;
   ;; This must be run late, when all charsets have already been created.
   (declare-fboundp
-   (setq-default unicode-precedence-list
+   (set-default-unicode-precedence-list
     `(ascii control-1 latin-iso8859-1
       latin/list iso8859
       ,@(when (not (featurep 'unicode-internal)) '(jit-ucs-charset-0))
@@ -225,9 +225,9 @@ Standard encoding for representing UTF-8 under MS Windows."
    need-bom t))
 
 (defun init-windows-glyph-list-4 ()
-  ;; called from mule-charset.el, after defining functions necessary to
-  ;; be able to create charsets, but before creating the Asian charsets
-  ;; and loading their Unicode tables.
+  ;; called from mule-charset.el, after defining functions necessary to be
+  ;; able to create charsets (e.g. charset-tag-to-charset-list), but before
+  ;; creating the Asian charsets and loading their Unicode tables.
   (when (featurep 'mule)
     (make-charset 'windows-glyph-list-4
 		  "Windows Glyph List 4 etc."
