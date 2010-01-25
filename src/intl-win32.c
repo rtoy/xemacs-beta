@@ -85,7 +85,7 @@ LCID current_locale;
 struct lang_to_string
 {
   int code;
-  char *string;
+  const Ascbyte *string;
 };
 
 struct lang_to_string lang_to_string_table[] =

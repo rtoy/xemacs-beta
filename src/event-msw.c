@@ -4670,7 +4670,7 @@ debug_process_finalization (Lisp_Process *UNUSED (p))
 struct mswin_message_debug
 {
   int mess;
-  char *string;
+  const Ascbyte *string;
 };
 
 #define FROB(val) { val, #val, },
@@ -4961,7 +4961,7 @@ debug_output_mswin_message (HWND hwnd, UINT message_, WPARAM wParam,
 {
   Lisp_Object frame = mswindows_find_frame (hwnd);
   int i;
-  char *str = 0;
+  const Ascbyte *str = 0;
   /* struct mswin_message_debug *i_hate_cranking_out_code_like_this; */
 
   for (i = 0; i < countof (debug_mswin_messages); i++)

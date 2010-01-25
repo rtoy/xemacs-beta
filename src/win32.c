@@ -289,7 +289,7 @@ mswindows_lisp_error (int errnum)
 }
 
 void
-mswindows_output_last_error (char *frob)
+mswindows_output_last_error (const Ascbyte *frob)
 {
   int errval = GetLastError ();
   Lisp_Object errmess = mswindows_lisp_error (errval);

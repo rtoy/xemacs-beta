@@ -3114,13 +3114,15 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
       if (extent_start (e) == mempos && !NILP (extent_begin_glyph (e)))
 	{
 	  Lisp_Object glyph = extent_begin_glyph (e);
-	  if (seen_glyph) {
-	    struct glyph_block gb;
-	    
-	    gb.glyph = glyph;
-	    gb.extent = wrap_extent (e);
-	    Dynarr_add (ef->begin_glyphs, gb);
-	  }
+	  if (seen_glyph)
+	    {
+	      struct glyph_block gb;
+
+	      xzero (gb);
+	      gb.glyph = glyph;
+	      gb.extent = wrap_extent (e);
+	      Dynarr_add (ef->begin_glyphs, gb);
+	    }
 	  else if (EQ (glyph, last_glyph))
 	    seen_glyph = 1;
 	}
@@ -3133,13 +3135,15 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
       if (extent_end (e) == mempos && !NILP (extent_end_glyph (e)))
 	{
 	  Lisp_Object glyph = extent_end_glyph (e);
-	  if (seen_glyph) {
-	    struct glyph_block gb;
-
-	    gb.glyph = glyph;
-	    gb.extent = wrap_extent (e);
-	    Dynarr_add (ef->end_glyphs, gb);
-	  }
+	  if (seen_glyph)
+	    {
+	      struct glyph_block gb;
+	      
+	      xzero (gb);
+	      gb.glyph = glyph;
+	      gb.extent = wrap_extent (e);
+	      Dynarr_add (ef->end_glyphs, gb);
+	    }
 	  else if (EQ (glyph, last_glyph))
 	    seen_glyph = 1;
 	}

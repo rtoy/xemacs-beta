@@ -1,3 +1,9 @@
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* xlwgauge.c (GaugeResize):
+	* xlwgauge.c (GaugeSize):
+	Fix warnings about possible use of uninitialized vars.
+
 2009-12-09  Jerry James  <james@xemacs.org>
 
 	* lwlib-Xlw.c: Include needed Xmu headers instead of obsolete xmu.h.

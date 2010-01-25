@@ -106,6 +106,10 @@ Boston, MA 02111-1307, USA.  */
 #include <stddef.h>		/* offsetof */
 #include <sys/types.h>
 #include <limits.h>
+#ifdef __cplusplus
+#include <limits>		/* necessary for max()/min() under G++ 4 */
+#endif
+
 
 /* -------------------------- error-checking ------------------------ */
 
@@ -1261,8 +1265,9 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
    no effects.  We keep this abstracted out like this in case we want to
    change it in the future. */
 #define disabled_assert(x) ((void) (x))
-#define disabled_assert_with_message(x, msg) disabled_assert (x)
-#define disabled_assert_at_line(x, file, line) disabled_assert (x)
+#define disabled_assert_with_message(x, msg) ((void) msg, disabled_assert (x))
+#define disabled_assert_at_line(x, file, line) \
+  ((void) file, (void) line, disabled_assert (x))
 
 #ifdef USE_ASSERTIONS
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
@@ -1270,18 +1275,14 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
   ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
 # define assert_at_line(x, file, line) \
   ((x) ? (void) 0 : assert_failed (file, line, #x))
-#elif defined (DEBUG_XEMACS)
-# define assert(x) ((x) ? (void) 0 : (void) ABORT ())
-# define assert_with_message(x, msg) assert (x)
-# define assert_at_line(x, file, line) assert (x)
 #else
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
    added ifdefs.  Any reasonable compiler will eliminate an expression with
    no effects. */
-# define assert(x) ((void) (x))
-# define assert_with_message(x, msg) assert (x)
-# define assert_at_line(x, file, line) assert (x)
+# define assert(x) disabled_assert (x)
+# define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
+# define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
 #endif
 
 /************************************************************************/
@@ -4389,6 +4390,8 @@ EXFUN (Fbyte_code, 3);
 DECLARE_DOESNT_RETURN (invalid_byte_code
 		       (const CIbyte *reason, Lisp_Object frob));
 
+extern Lisp_Object Qbyte_code, Qinvalid_byte_code;
+
 /* Defined in callint.c */
 EXFUN (Fcall_interactively, 3);
 EXFUN (Fprefix_numeric_value, 1);
@@ -4467,6 +4470,26 @@ Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
    values!  Use make_time.  */
 Lisp_Object word_to_lisp (unsigned int);
 unsigned int lisp_to_word (Lisp_Object);
+
+extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
+    Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
+    Qinteger_or_char_p, Qinteger_or_marker_p, Qlambda, Qlistp, Qnatnump,
+    Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote, Qtrue_list_p;
+extern MODULE_API Lisp_Object Qintegerp;
+
+extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
+    Qcircular_list, Qcircular_property_list, Qconversion_error,
+    Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
+    Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
+    Qinvalid_change, Qinvalid_constant, Qinvalid_function, Qinvalid_operation,
+    Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
+    Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
+    Qoverflow_error, Qprinting_unreadable_object, Qquit, Qrange_error,
+    Qsetting_constant, Qsingularity_error, Qstack_overflow,
+    Qstructure_formation_error, Qtext_conversion_error, Qunderflow_error,
+    Qvoid_function, Qvoid_variable, Qwrong_number_of_arguments,
+    Qwrong_type_argument;
+extern MODULE_API Lisp_Object Qinvalid_argument, Qsyntax_error;
 
 /* Defined in dired.c */
 Lisp_Object make_directory_hash_table (const Ibyte *);
@@ -5929,62 +5952,31 @@ code)."
 
 */
 
-extern Lisp_Object Qactivate_menubar_hook, Qand_optional, Qand_rest;
-extern Lisp_Object Qarith_error, Qarrayp, Qautoload, Qbackground;
-extern Lisp_Object Qbackground_pixmap, Qbeginning_of_buffer, Qbitp, Qblinking;
-extern Lisp_Object Qbuffer_glyph_p, Qbuffer_live_p, Qbuffer_read_only;
-extern Lisp_Object Qbyte_code, Qcall_interactively, Qcategory_designator_p;
-extern Lisp_Object Qcategory_table_value_p, Qcdr, Qchar_or_string_p;
-extern Lisp_Object Qcharacterp, Qcircular_list, Qcircular_property_list;
-extern Lisp_Object Qcolor_pixmap_image_instance_p, Qcommandp;
-extern Lisp_Object Qcompletion_ignore_case, Qconsole_live_p, Qconst_specifier;
-extern Lisp_Object Qconversion_error, Qcurrent_menubar;
-extern Lisp_Object Qcyclic_variable_indirection, Qdefun, Qdevice_live_p, Qdim;
-extern Lisp_Object Qdirection, Qdisabled, Qdisabled_command_hook;
-extern Lisp_Object Qdisplay_table, Qdll_error, Qdomain_error, Qediting_error;
-extern Lisp_Object Qend_of_buffer, Qend_of_file, Qend_open, Qerror;
-extern Lisp_Object Qerror_conditions, Qerror_lacks_explanatory_string;
-extern Lisp_Object Qerror_message, Qevent_live_p, Qexit, Qextent_live_p;
-extern Lisp_Object Qexternal_debugging_output, Qfeaturep, Qfile_error;
-extern Lisp_Object Qfile_name_sans_extension, Qfinal;
-extern Lisp_Object Qforeground, Qformat, Qframe_live_p, Qgraphic;
-extern Lisp_Object Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit;
-extern Lisp_Object Qinhibit_read_only, Qinteger_char_or_marker_p;
-extern Lisp_Object Qinteger_or_char_p, Qinteger_or_marker_p;
-extern Lisp_Object Qinteractive, Qinternal_error;
-extern Lisp_Object Qinvalid_byte_code, Qinvalid_change, Qinvalid_constant;
-extern Lisp_Object Qinvalid_function, Qinvalid_operation;
-extern Lisp_Object Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlambda;
-extern Lisp_Object Qlayout, Qlist_formation_error, Qlistp, Qload;
-extern Lisp_Object Qlong_name, Qmacro, Qmakunbound, Qmalformed_list;
-extern Lisp_Object Qmalformed_property_list, Qmark, Qmodule;
-extern Lisp_Object Qmono_pixmap_image_instance_p, Qmouse_leave_buffer_hook;
-extern Lisp_Object Qnative_layout, Qnatnump, Qnetwork_error, Qno_catch;
-extern Lisp_Object Qnonnegativep, Qnothing_image_instance_p;
-extern Lisp_Object Qnumber_char_or_marker_p, Qnumberp, Qout_of_memory;
-extern Lisp_Object Qoverflow_error, Qpoint, Qpointer_glyph_p;
-extern Lisp_Object Qpointer_image_instance_p, Qprint_length;
-extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;
-extern Lisp_Object Qprogn, Qquit, Qquote, Qrange_error;
-extern Lisp_Object Qread_char, Qread_from_minibuffer;
-extern Lisp_Object Qreally_early_error_handler, Qregion_beginning;
-extern Lisp_Object Qregion_end, Qregistries, Qreverse_direction_charset;
-extern Lisp_Object Qrun_hooks, Qsans_modifiers, Qsave_buffers_kill_emacs;
-extern Lisp_Object Qself_insert_command, Qself_insert_defer_undo, Qsequencep;
-extern Lisp_Object Qset, Qsetting_constant, Qshort_name, Qsingularity_error;
-extern Lisp_Object Qsound_error, Qstack_overflow, Qstandard_input;
-extern Lisp_Object Qstandard_output, Qstart_open, Qstring_lessp;
-extern Lisp_Object Qstructure_formation_error, Qsubwindow;
-extern Lisp_Object Qsubwindow_image_instance_p;
-extern Lisp_Object Qtext_conversion_error, Qtext_image_instance_p, Qtop_level;
-extern Lisp_Object Qtrue_list_p, Qunderflow_error, Qunderline;
-extern Lisp_Object Quser_files_and_directories, Qvalues;
-extern Lisp_Object Qvariable_documentation, Qvariable_domain, Qvoid_function;
-extern Lisp_Object Qvoid_variable, Qwindow_live_p, Qwrong_number_of_arguments;
-extern Lisp_Object Qwrong_type_argument, Qyes_or_no_p;
+extern Lisp_Object Qactivate_menubar_hook, Qand_optional, Qand_rest, Qautoload,
+  Qbackground, Qbackground_pixmap, Qblinking, Qbuffer_glyph_p, Qbuffer_live_p,
+  Qcall_interactively, Qcategory_designator_p,
+  Qcategory_table_value_p, Qcdr, Qcolor_pixmap_image_instance_p, Qcommandp,
+  Qcompletion_ignore_case, Qconsole_live_p, Qconst_specifier, Qcurrent_menubar,
+  Qdefun, Qdevice_live_p, Qdim, Qdirection, Qdisabled, Qdisabled_command_hook,
+  Qdisplay_table, Qdll_error, Qend_open, Qerror_lacks_explanatory_string,
+  Qevent_live_p, Qexit, Qextent_live_p, Qexternal_debugging_output, Qfeaturep,
+  Qfile_error, Qfile_name_sans_extension, Qfinal, Qforeground, Qformat,
+  Qframe_live_p, Qgraphic, Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit,
+  Qinhibit_read_only, Qinteractive, Qlayout, Qload, Qlong_name, Qmacro,
+  Qmakunbound, Qmark, Qmodule, Qmono_pixmap_image_instance_p,
+  Qmouse_leave_buffer_hook, Qnative_layout, Qnetwork_error,
+  Qnothing_image_instance_p, Qpoint, Qpointer_glyph_p,
+  Qpointer_image_instance_p, Qprint_length, Qprint_string_length, Qprogn,
+  Qread_char, Qread_from_minibuffer, Qreally_early_error_handler,
+  Qregion_beginning, Qregion_end, Qregistries, Qreverse_direction_charset,
+  Qrun_hooks, Qsans_modifiers, Qsave_buffers_kill_emacs, Qself_insert_command,
+  Qself_insert_defer_undo, Qsequencep, Qset, Qshort_name, Qsound_error,
+  Qstandard_input, Qstandard_output, Qstart_open, Qstring_lessp, Qsubwindow,
+  Qsubwindow_image_instance_p, Qtext_image_instance_p, Qtop_level, Qunderline,
+  Quser_files_and_directories, Qvalues, Qvariable_documentation,
+  Qvariable_domain, Qwindow_live_p, Qyes_or_no_p;
 
-extern MODULE_API Lisp_Object Qintegerp, Qinvalid_argument, Qprocess_error;
-extern MODULE_API Lisp_Object Qsyntax_error, Qt, Qunbound;
+extern MODULE_API Lisp_Object Qprocess_error, Qt, Qunbound;
 
 #define SYMBOL(fou) extern Lisp_Object fou
 #define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou

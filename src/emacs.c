@@ -936,8 +936,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #define SHEBANG_PROGNAME_LENGTH                                         \
   (int)((sizeof (WEXTSTRING (SHEBANG_PROGNAME)) - sizeof (WEXTSTRING (""))))
-#define SHEBANG_EXE_PROGNAME_LENGTH                                     \
-  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME) WEXTSTRING(".exe"))       \
+#define SHEBANG_EXE_PROGNAME_LENGTH			\
+  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME ".exe"))	\
         - sizeof (WEXTSTRING ("")))
 
   {
@@ -959,7 +959,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    int j;
 
 	    newarr[0] = argv[0];
-	    newarr[1] = WEXTSTRING ("--script");
+	    newarr[1] = (Wexttext *) WEXTSTRING ("--script");
 	    for (j = 1; j < argc; ++j)
 	      {
 		newarr[j + 1] = argv[j];
@@ -1252,7 +1252,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 	  for (j = 0; j < count_before + 1; j++)
 	    new_[j] = argv[j];
-	  new_[count_before + 1] = WEXTSTRING ("-d");
+	  new_[count_before + 1] = (Wexttext *) WEXTSTRING ("-d");
 	  new_[count_before + 2] = dpy;
 	  for (j = count_before + 2; j <argc; j++)
 	    new_[j + 1] = argv[j];
@@ -1262,7 +1262,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Change --display to -d, when its arg is separate.  */
       else if (dpy != 0 && skip_args > count_before
 	       && argv[count_before + 1][1] == '-')
-	argv[count_before + 1] = WEXTSTRING ("-d");
+	argv[count_before + 1] = (Wexttext *) WEXTSTRING ("-d");
 
       /* Don't actually discard this arg.  */
       skip_args = count_before;
