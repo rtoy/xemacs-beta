@@ -1,3 +1,66 @@
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c (decode_char_table_range):
+	* extents.c (extent_fragment_update):
+	* objects-msw.c (initialize_font_instance):
+	* process.c (Fgetenv):
+	* redisplay-output.c (get_next_display_block):
+	Fix warnings about possible use of uninitialized vars.
+	
+	* compiler.h:
+	* compiler.h (REGISTER):
+	* event-stream.c (is_scrollbar_event):
+	* window.c (window_scrollbar_width):
+	* window.c (window_scrollbar_height):
+	* window.c (window_left_window_gutter_width):
+	* window.c (window_right_window_gutter_width):
+	Add USED_IF_SCROLLBARS.  Use it to fix warnings about unused
+	vars when --with-scrollbars=no.
+
+	* config.h.in:
+	Change comment to explain better why DECLARE_INLINE_HEADER
+	is needed.
+
+	* dialog-msw.c:
+	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
+	* emacs.c (main_1):
+	* event-msw.c (struct mswin_message_debug):
+	* event-msw.c (debug_output_mswin_message):
+	* font-mgr.c:
+	* font-mgr.c (Ffc_config_filename):
+	* glyphs-msw.c (struct):
+	* glyphs-msw.c (bitmap_table):
+	* glyphs-x.c (update_widget_face):
+	* intl-win32.c (struct lang_to_string):
+	* intl-win32.c (lang_to_string_table):
+	* nas.c:
+	* objects-xlike-inc.c:
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* syswindows.h:
+	* win32.c (mswindows_output_last_error):
+	Fix g++ 4.3 complaints about implicit conversions of string
+	literals (const char *) to char *.
+
+	* lisp.h:
+	G++ 4.3 needs #include <limits> to avoid errors about min/max.
+	
+	* lisp.h (disabled_assert_with_message):
+	Use disabled_assert* whenever asserts are disabled.  Rewrite
+	disabled_assert* to avoid complaints about unused vars by
+	pretending to use the vars but casting them to (void).
+	Remove code that defined assert() weirdly if DEBUG_XEMACS but
+	not USE_ASSERTIONS -- configure sets USE_ASSERTIONS automatically
+	when DEBUG_XEMACS, and if the user has forced it off, then
+	so be it.
+	
+	* lisp.h (SYMBOL_KEYWORD):
+	Put some of the combined `extern Lisp_Object's back under
+	the file they are declared in.  Cosmetic fix.
+	
+	* number.h:
+	Remove `extern Lisp_Object' decls that duplicate lisp.h,
+	since they have different C vs. C++ linkage.
+	
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
 	* lrecord.h:

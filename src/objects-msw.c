@@ -1837,6 +1837,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   hfont = create_hfont_from_font_spec (namestr, hdc, name, device_font_list,
 				       errb, &truename);
+  if (!hfont)
+    return 0;
   f->truename = truename;
   f->data = xnew_and_zero (struct mswindows_font_instance_data);
   FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0) = hfont;

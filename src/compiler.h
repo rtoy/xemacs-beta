@@ -243,6 +243,11 @@ Boston, MA 02111-1307, USA.  */
 # else
 #  define USED_IF_XFT(decl) UNUSED (decl)
 # endif
+# ifdef HAVE_SCROLLBARS
+#  define USED_IF_SCROLLBARS(decl) decl
+# else
+#  define USED_IF_SCROLLBARS(decl) UNUSED (decl)
+# endif
 #endif /* UNUSED */
 
 #ifdef DEBUG_XEMACS

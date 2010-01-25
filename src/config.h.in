@@ -1092,7 +1092,8 @@ extern "C" {
 
 /* Use DECLARE_INLINE_HEADER() to declare an inline function in a header
    file, like this: (This avoids the need to write a prototype directly
-   followed by the function header itself.)
+   followed by the function header itself, in order to avoid a
+   "no prototype" warning from GCC.)
 
   DECLARE_INLINE_HEADER (int foo (int x))
   {

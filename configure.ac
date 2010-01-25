@@ -1591,6 +1591,31 @@ dnl We don't do AC_PROG_CC for XEMACS_CC; if we can't trust these people....
 test -n "$with_xemacs_compiler" && XEMACS_CC="$with_xemacs_compiler"
 : ${XEMACS_CC:="$CC"}
 
+dnl Are we using g++?
+
+AC_MSG_CHECKING(whether we are using g++)
+
+dnl Is it named g++*?
+XEMACS_CC_GPP=no
+case "$XEMACS_CC" in
+  *g++* ) XEMACS_CC_GPP=yes ;;
+esac
+
+dnl If it's known to be in the GCC family, does it claim to be g++?  We don't
+dnl run this test unless we know it's GCC-like, because not all compilers
+dnl accept --version.
+dnl
+dnl It's not clear we need both tests, but it doesn't hurt.  g++ might not
+dnl have always output "g++" as the first thing in its version string, and
+dnl might not always in the future.
+if test "$XEMACS_CC_GPP" = "no" -a "$GCC" = "yes"; then
+  case "`$XEMACS_CC --version`" in
+    g++* ) XEMACS_CC_GPP=yes ;;
+  esac
+fi
+
+AC_MSG_RESULT($XEMACS_CC_GPP)
+
 dnl Figure out what C preprocessor to use.
 
 dnl On Sun systems, people sometimes set up the variable CPP
@@ -1877,24 +1902,13 @@ dnl No error/abort; detection is too fragile.
 
 xemacs_cc_cc_mismatch=no
 if test "$CC" != "$XEMACS_CC"; then
-  case "$XEMACS_CC" in
-  *g++* )
-    if test "$GCC" != "yes"; then
-      AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
-      xemacs_cc_cc_mismatch=yes
-    fi
-    ;;
-  esac
-  if test -n "$GCC"; then
-    case $XEMACS_CC in
-    *g++* )
-      # it's as expected, do nothing
-      ;;
-    * )
-      AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
-      xemacs_cc_cc_mismatch=yes
-      ;;
-    esac
+  if test "$XEMACS_CC_GPP" = "yes" -a "$GCC" != "yes"; then
+    AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
+    xemacs_cc_cc_mismatch=yes
+  fi
+  if test -n "$GCC" -a "$XEMACS_CC_GPP" != "yes" ; then
+    AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
+    xemacs_cc_cc_mismatch=yes
   fi
   dnl #### Add other detectable mismatches here.
 fi
@@ -1919,12 +1933,17 @@ if test -z "$with_optimization"; then
 fi
 
 AC_MSG_CHECKING([for preferred optimization flags])
-if test "$with_optimization" = "yes" ; then
-  if test "$cflags_optimization_specified" = "no"; then
+if test "$cflags_optimization_specified" = "no"; then
+  if test "$with_optimization" = "yes" ; then
     dnl Following values of cflags_optimization are known to work well.
     dnl Should we take debugging options into consideration?
     if test "$GCC" = "yes"; then
-      with_cflags_optimization="-O3"
+      dnl If you want to remove the -fno-strict-aliasing, then you will have
+      dnl to rewrite all cases of "type-punning" expressions like
+      dnl (* (foo *) (&bar)), which occur all over XEmacs, by making `bar' a
+      dnl union (use an anonymous union if you're willing to put in an ifdef
+      dnl for anon-union support, falling back to the type-punned expression.
+      with_cflags_optimization="-O3 -fno-strict-aliasing"
     elif test "$__SUNPRO_C" = "yes"; then
       case "$opsys" in
         sol2    ) with_cflags_optimization="-xO4" ;;
@@ -1940,9 +1959,12 @@ if test "$with_optimization" = "yes" ; then
     else
       with_cflags_optimization="-O" ;dnl The only POSIX-approved flag
     fi
+  elif test "$XEMACS_CC_GPP" = "yes" ; then
+    dnl Fuck me!  g++ v4 turns on strict aliasing by default, even without
+    dnl optimization.  See comment above about why we can't have strict
+    dnl aliasing currently in XEmacs.
+    with_cflags_optimization="-fno-strict-aliasing"
   fi
-else
-  with_cflags_optimization=
 fi
 
 AC_MSG_RESULT([${with_cflags_optimization}])
@@ -2005,7 +2027,7 @@ if test "$cflags_warning_specified" = "no"; then
     dnl But gcc warns about -Weffc++ in C compiles.
     dnl With g++, there is no effective way to use -Wunused-parameter without
     dnl some very ugly code changes.
-    if test "$with_xemacs_compiler" = "g++"; then
+    if test "$XEMACS_CC_GPP" = "yes"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
     elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
@@ -3312,7 +3334,7 @@ dnl Autodetect dll support
 dnl If g++ is used, we have to explicitly link modules with -lstdc++ on Cygwin
 dnl to avoid undefined symbol errors.  This will never hurt, so just do it on
 dnl all platforms in case others have the same brain damage.
-if test "$with_xemacs_compiler" = "g++"; then
+if test "$XEMACS_CC_GPP" = "yes"; then
   LIBSTDCPP=-lstdc++
 else
   LIBSTDCPP=
@@ -5490,24 +5512,24 @@ if   test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
-test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
-test "$with_xemacs_compiler" = "g++" && AC_DEFINE(USE_GPLUSPLUS)
+test "$GCC"                  = "yes" && AC_DEFINE(USE_GCC)
+test "$XEMACS_CC_GPP"        = "yes" && AC_DEFINE(USE_GPLUSPLUS)
 test "$with_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
-test "$with_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
-test "$with_newgc"       = "yes" && AC_DEFINE(NEW_GC)
-test "$have_vdb_posix"     = "yes" && AC_DEFINE(VDB_POSIX)
-test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
-test "$with_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
-test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
-test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
-test "$with_valgrind"      = "yes" && AC_DEFINE(USE_VALGRIND)
-test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
-test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
-test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-test "$with_union_type"  = "yes" && AC_DEFINE(USE_UNION_TYPE)
-test "$with_pdump"       = "yes" && AC_DEFINE(PDUMP)
-test "$with_dump_in_exec" = "yes" && AC_DEFINE(DUMP_IN_EXEC)
-test "$with_ipv6_cname"    = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
+test "$with_kkcc"            = "yes" && AC_DEFINE(USE_KKCC)
+test "$with_newgc"           = "yes" && AC_DEFINE(NEW_GC)
+test "$have_vdb_posix"       = "yes" && AC_DEFINE(VDB_POSIX)
+test "$have_vdb_fake"        = "yes" && AC_DEFINE(VDB_FAKE)
+test "$with_quick_build"     = "yes" && AC_DEFINE(QUICK_BUILD)
+test "$with_purify"          = "yes" && AC_DEFINE(PURIFY)
+test "$with_quantify"        = "yes" && AC_DEFINE(QUANTIFY)
+test "$with_valgrind"        = "yes" && AC_DEFINE(USE_VALGRIND)
+test "$with_pop"             = "yes" && AC_DEFINE(MAIL_USE_POP)
+test "$with_kerberos"        = "yes" && AC_DEFINE(KERBEROS)
+test "$with_hesiod"          = "yes" && AC_DEFINE(HESIOD)
+test "$with_union_type"      = "yes" && AC_DEFINE(USE_UNION_TYPE)
+test "$with_pdump"           = "yes" && AC_DEFINE(PDUMP)
+test "$with_dump_in_exec"    = "yes" && AC_DEFINE(DUMP_IN_EXEC)
+test "$with_ipv6_cname"      = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
 
 
 

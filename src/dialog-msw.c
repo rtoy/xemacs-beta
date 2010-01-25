@@ -297,7 +297,7 @@ dialog_popped_down (Lisp_Object UNUSED (arg))
 static struct
 {
   DWORD errmess;
-  Ascbyte *errname;
+  const Ascbyte *errname;
 } common_dialog_errors[] =
 {
   { CDERR_DIALOGFAILURE, "CDERR_DIALOGFAILURE" },
