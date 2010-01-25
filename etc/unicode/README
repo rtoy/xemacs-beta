@@ -26,6 +26,9 @@ The tables in ibm/ come from:
 
 http://oss.software.ibm.com/icu/charset/
 
+The tables in libiconv/ come from the `tests' subdirectory of
+libiconv-1.13.1 (http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.13.1.tar.gz).
+
 The tables in oreilly/ come from:
 
 http://examples.oreilly.com/cjkvinfo/unicode/
