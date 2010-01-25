@@ -375,7 +375,7 @@ time this function is called.
 	  Fselect_window (FRAME_SELECTED_WINDOW (f), Qnil);
 	}
       else
- invalid_operation ("Can't select console with no frames", Qunbound);
+	invalid_operation ("Can't select console with no frames", Qunbound);
     }
   else
     invalid_operation ("Can't select a console with no devices", Qunbound);

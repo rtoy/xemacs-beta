@@ -1,7 +1,7 @@
 /* Primitive operations on Lisp data types for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -3482,6 +3482,8 @@ init_errors_once_early (void)
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);
   DEFERROR (Qend_of_file, "End of file or stream", Qfile_error);
+  /* #### It's questionable whether conversion-error should be a subclass
+     of io-error or directly of invalid-operation */
   DEFERROR_STANDARD (Qconversion_error, Qio_error);
   DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 

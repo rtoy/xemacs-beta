@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985-7, 1993-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: lisp, extensions, internal, dumped
@@ -3855,6 +3855,15 @@ The words not capitalized are specified in `uncapitalized-title-words'."
 	      (capitalize-word 1)
 	    (forward-word 1))
 	  (setq first nil))))))
+
+(defun convert-symbol-into-title-string (symbol &optional titlify-fun)
+  "Convert symbol into a string suitable as a title in a menu option.
+This converts to a string, converts hyphens and underscores into spaces and
+applies TITLIFY-FUN to make the string into a form suitable for a title.
+TITLIFY-FUN defaults to `capitalize-string-as-title'."
+  (let ((str (replace-in-string (symbol-name symbol) "[-_]" " "))
+	(titlify-fun (or titlify-fun #'capitalize-string-as-title)))
+    (funcall titlify-fun str)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

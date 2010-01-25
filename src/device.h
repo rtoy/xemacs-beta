@@ -103,8 +103,6 @@ int valid_device_class_p (Lisp_Object class_);
 void select_device_1 (Lisp_Object);
 struct device *decode_device (Lisp_Object);
 void handle_asynch_device_change (void);
-Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
-				     Lisp_Object object);
 void delete_device_internal (struct device *d, int force,
 			     int called_from_delete_console,
 			     int from_io_error);

@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with char tables.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
    Licensed to the Free Software Foundation.
 
@@ -33,6 +33,10 @@ Boston, MA 02111-1307, USA.  */
              loosely based on the original Mule.
    Jareth Hein: fixed a couple of bugs in the implementation, and
    	     added regex support for categories with check_category_at
+   Ben Wing: Drastic rewrite, October 2005, for Unicode-internal support.
+   The old implementation used an ugly system indexed by charset ID,
+   with `char-table-entry' objects.  The implementation of map_char_table()
+   was long and nasty.  The new system uses page tables, as in unicode.c.
  */
 
 #include <config.h>
@@ -41,6 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "chartab.h"
 #include "syntax.h"
+
 
 Lisp_Object Qchar_tablep, Qchar_table;
 
@@ -93,100 +98,646 @@ static int check_valid_char_table_value (Lisp_Object value,
    */
 
 /************************************************************************/
-/*                         Char Table object                            */
+/*                         Char Table tables                            */
 /************************************************************************/
 
-#ifdef MULE
+/* We use the same code from unicode.c.
+
+   Code duplication is generally a bad thing, but there isn't that much total
+   code and there are a lot of differences.  I originally tried abstracting
+   using preprocessing, but it got real ugly real fast.  This is even more
+   the case now that char tables can use Lisp objects for their subtables. */
+
+static SUBTAB_TYPE chartab_blank[5];
+
+static const struct memory_description char_subtable_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Subtable, ptr), 256 }, 
+  { XD_END }
+};
 
 static Lisp_Object
-mark_char_table_entry (Lisp_Object obj)
+mark_char_subtable (Lisp_Object obj)
 {
-  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
   int i;
 
-  for (i = 0; i < 96; i++)
-    {
-      mark_object (cte->level2[i]);
-    }
-  return Qnil;
+  for (i = 1; i < 256; i++)
+    mark_object (XCHAR_SUBTABLE (obj)->ptr[i]);
+
+  return XCHAR_SUBTABLE (obj)->ptr[0];
 }
 
-static int
-char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+DEFINE_LRECORD_IMPLEMENTATION ("char-subtable", char_subtable,
+			       1, /*dumpable-flag*/
+                               mark_char_subtable, internal_object_printer,
+			       0, 0, 0, char_subtable_description,
+			       Lisp_Char_Subtable);
+
+
+/************************************************************************/
+/*                      Char table implementation                       */
+/************************************************************************/
+
+static void
+init_blank_chartab_tables (void)
 {
-  Lisp_Char_Table_Entry *cte1 = XCHAR_TABLE_ENTRY (obj1);
-  Lisp_Char_Table_Entry *cte2 = XCHAR_TABLE_ENTRY (obj2);
   int i;
 
-  for (i = 0; i < 96; i++)
-    if (!internal_equal (cte1->level2[i], cte2->level2[i], depth + 1))
-      return 0;
+  chartab_blank[1] = ALLOCATE_LEVEL_1_SUB_TABLE ();
+  chartab_blank[2] = ALLOCATE_LEVEL_N_SUB_TABLE ();
+  chartab_blank[3] = ALLOCATE_LEVEL_N_SUB_TABLE ();
+  chartab_blank[4] = ALLOCATE_LEVEL_N_SUB_TABLE ();
+  for (i = 0; i < 256; i++)
+    {
+      LISPOBJ_ARRAY_FROM_SUBTAB (chartab_blank[1])[i] = Qunbound;
+      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[2])[i] = chartab_blank[1];
+      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[3])[i] = chartab_blank[2];
+      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[4])[i] = chartab_blank[3];
+    }
+}
+
+static SUBTAB_TYPE
+copy_chartab_table (SUBTAB_TYPE table, int level)
+{
+  SUBTAB_TYPE newtab;
+  Bytecount size;
+
+  text_checking_assert (level >= 1 && level <= 4);
+  /* WARNING: sizeof (Lisp_Object) maybe != sizeof (SUBTAB_TYPE). */
+  if (level == 1)
+    {
+      size = sizeof (Lisp_Object);
+      newtab = ALLOCATE_LEVEL_1_SUB_TABLE ();
+      memcpy (LISPOBJ_ARRAY_FROM_SUBTAB (newtab),
+	      LISPOBJ_ARRAY_FROM_SUBTAB (table),
+	      256 * size);
+    }
+  else
+    {
+      size = sizeof (SUBTAB_TYPE);
+      newtab = ALLOCATE_LEVEL_N_SUB_TABLE ();
+      memcpy (SUBTAB_ARRAY_FROM_SUBTAB (newtab),
+	      SUBTAB_ARRAY_FROM_SUBTAB (table),
+	      256 * size);
+    }
+
+  if (level >= 2)
+    {
+      int i;
+      SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (newtab);
+      for (i = 0; i < 256; i++)
+	{
+	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
+	    tab[i] = copy_chartab_table (tab[i], level - 1);
+	}
+    }
+
+  return newtab;
+}
+
+static SUBTAB_TYPE
+create_new_chartab_table (int level)
+{
+  return copy_chartab_table (chartab_blank[level], level);
+}
+
+static void
+free_chartab_table (SUBTAB_TYPE table, int level)
+{
+  if (level >= 2)
+    {
+      int i;
+      SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
+
+      for (i = 0; i < 256; i++)
+	{
+	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
+	    free_chartab_table (tab[i], level - 1);
+	}
+    }
+
+  FREE_ONE_SUBTABLE (table);
+}
+
+#ifdef MEMORY_USAGE_STATS
+
+static Bytecount
+compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
+			      struct overhead_stats *stats)
+{
+  Bytecount size = 0;
+
+  if (level >= 2)
+    {
+      int i;
+      SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
+      for (i = 0; i < 256; i++)
+	{
+	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
+	    size += compute_chartab_table_size_1 (tab[i], level - 1, stats);
+	}
+    }
+
+  size += SUBTAB_STORAGE_SIZE (table, level, stats);
+  return size;
+}
+
+Bytecount
+compute_chartab_table_size (Lisp_Object chartab,
+			    struct overhead_stats *stats)
+{
+  return (compute_chartab_table_size_1
+	  (XCHAR_TABLE_TABLE (chartab),
+	   XCHAR_TABLE_LEVELS (chartab),
+	   stats));
+}
+
+#endif
+
+void
+put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
+{
+  /* #### NOTE NOTE NOTE!
+
+  If it turns out that people are often setting large ranges to a
+  particular value (and particularly so if we have to implement the FSF
+  characteristic of allowing `t' to signify *all* characters), then we
+  should consider either (a) modifying things so that the subtables are
+  actual Lisp objects and at any level there can either be a subtable or
+  some other Lisp object, which signifies the value everywhere at and below
+  that level (then we also don't need blank tables; instead we just use
+  Qunbound); (b) modifying the code that loops over a range to create
+  shared subtables, similar to the current blank tables. (Then, we would
+  need to implement reference-counting over the tables, to know when to
+  free them, and copy-on-write semantics if the reference count is greater
+  than one.  This would also obviate the need for special blank tables.
+  Either we need to keep the reference count with the subtables themselves,
+  which is convenient but potentially a bad idea since it makes the tables
+  slightly larger than a power of 2 and hence difficult for the memory
+  manager to handle efficiently, or we need to use a separate hash table to
+  track the references.  This scheme is harder to implement and may make
+  table updating slower compared to the Lisp-object scheme, but has the
+  advantage that lookup is faster -- we don't need to do a bunch of if-then
+  checks for each lookup.  The Lisp-object scheme also suffers from the
+  same slightly-over-a-power-of-2 problem.)
+
+  shared tables we check for could potentially be specific to the particular
+  char table; we'd keep track of the shared tables in the char-table object,
+  and check to see if they are shared with the generic blank tables.)
+
+  If we don't do this, we should make sure to put in a call to QUIT
+  periodically when setting a range so if someone does something stupid
+  like set a range of (0,2000000000), they can break out.  We also need a
+  big warning about this in the docs to `put-char-table' and such.
+  Maybe we should also allow for two different types of char tables, one
+  that allows for semi-efficient handling of large ranges and one that doesn't
+  (but is faster).  In such a case it might make sense for there to be a
+  get_char_table() method pointer to avoid an if-check every time for the
+  type.  Similarly if we allow the `always-maximize-table-size' option to
+  be given. */
+
+  int levels;
+  int u4, u3, u2, u1;
+#ifndef MAXIMIZE_CHAR_TABLE_DEPTH
+  int code_levels;
+#endif
+
+  text_checking_assert (valid_ichar_p (ch));
+  CHARTAB_BREAKUP_CHAR_CODE ((int) ch, u4, u3, u2, u1, code_levels);
+
+  levels = CHARTAB_LEVELS (XCHAR_TABLE_LEVELS (chartab));
+  text_checking_assert (levels >= 1 && levels <= 4);
+
+#ifndef MAXIMIZE_CHAR_TABLE_DEPTH
+  /* Make sure the chartab's tables have at least as many levels as
+     the code point has: Note that the table is guaranteed to have
+     at least one level, because it was created that way */
+  if (levels < code_levels)
+    {
+      int i;
+
+      for (i = 2; i <= code_levels; i++)
+	{
+	  if (levels < i)
+	    {
+	      SUBTAB_TYPE old_table = XCHAR_TABLE_TABLE (chartab);
+	      SUBTAB_TYPE table = create_new_chartab_table (i);
+	      XCHAR_TABLE_TABLE (chartab) = table;
+	      SUBTAB_ARRAY_FROM_SUBTAB (table)[0] = old_table;
+	    }
+	}
+
+      levels = code_levels;
+      XCHAR_TABLE_LEVELS (chartab) = code_levels;
+    }
+#endif /* not MAXIMIZE_CHAR_TABLE_DEPTH */
+
+  /* Now, make sure there is a non-default table at each level */
+  {
+    int i;
+    SUBTAB_TYPE table = XCHAR_TABLE_TABLE (chartab);
+
+    for (i = levels; i >= 2; i--)
+      {
+	int ind;
+
+	switch (i)
+	  {
+	  case 4: ind = u4; break;
+	  case 3: ind = u3; break;
+	  case 2: ind = u2; break;
+	  default: ABORT (); ind = 0;
+	  }
+
+	if (SUBTAB_EQ (SUBTAB_ARRAY_FROM_SUBTAB (table)[ind],
+		       chartab_blank[i - 1]))
+	  SUBTAB_ARRAY_FROM_SUBTAB (table)[ind] =
+	    create_new_chartab_table (i - 1);
+	table = SUBTAB_ARRAY_FROM_SUBTAB (table)[ind];
+      }
+  }
+
+  /* Finally, set the character */
+	  
+  {
+    register SUBTAB_TYPE table = XCHAR_TABLE_TABLE (chartab);
+    /* We are really helping the compiler here.  CHARTAB_LEVELS() will
+       evaluate to a constant when MAXIMIZE_CHAR_TABLE_DEPTH is true,
+       so any reasonable optimizing compiler should eliminate the
+       switch entirely. */
+    switch (CHARTAB_LEVELS (levels))
+      {
+#if 1 /* The new way */
+	/* fall through */
+      case 4: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u4];
+      case 3: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u3];
+      case 2: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u2];
+      case 1: LISPOBJ_ARRAY_FROM_SUBTAB (table)[u1] = val;
+#else /* The old way */
+      case 1: ((Lisp_Object *) table)[u1] = val; break;
+      case 2: ((Lisp_Object **) table)[u2][u1] = val; break;
+      case 3: ((Lisp_Object ***) table)[u3][u2][u1] = val; break;
+      case 4: ((Lisp_Object ****) table)[u4][u3][u2][u1] = val; break;
+#endif
+      }
+  }
+}
+
+/* Map over all characters in the range [START, END].  TABLE is an array
+   of 256 elements, LEVEL is the depth (1 - 4).  OFFSET is the character
+   offset corresponding to this table.  CHARTAB is the char-table object
+   being mapped over.  The FN will be called with CHARTAB, the code of the
+   character in question, its value, and the value of ARG.  Stops mapping
+   the first time that FN returns non-zero, and returns that value.
+   Returns zero if mapping got all the way to the end. */
+
+static int
+map_chartab_table (SUBTAB_TYPE table, int level, int offset, int start,
+		   int end, Lisp_Object chartab,
+		   int (*fn) (Lisp_Object chartab, Ichar code, Lisp_Object val,
+			      void *arg),
+		   void *arg)
+{
+  int i;
+  int startind = max (0, (start - offset) >> ((level - 1) * 8));
+  int endind = min (255, (end - offset) >> ((level - 1) * 8));
+
+  structure_checking_assert (startind <= 255);
+  structure_checking_assert (endind >= 0);
+  structure_checking_assert (startind <= endind);
+
+  switch (level)
+    {
+    case 1:
+      {
+	Lisp_Object *tab = LISPOBJ_ARRAY_FROM_SUBTAB (table);
+	for (i = startind; i <= endind; i++)
+	  {
+	    if (!UNBOUNDP (tab[i]))
+	      {
+		int retval = (fn) (chartab, offset + i, tab[i], arg);
+		if (retval)
+		  return retval;
+	      }
+	  }
+	break;
+      }
+    case 2:
+    case 3:
+    case 4:
+      {
+	SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
+	for (i = startind; i <= endind; i++)
+	  {
+	    if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
+	      {
+		int retval =
+		  map_chartab_table (tab[i], level - 1,
+				     offset + (i << ((level - 1) * 8)),
+				     start, end, chartab, fn, arg);
+		if (retval)
+		  return retval;
+	      }
+	  }
+	break;
+      }
+    default:
+      ABORT ();
+    }
+
+  return 0;
+}
+
+/* Check whether the given table is entirely blank.  TABLE is LEVEL levels
+   deep.  Start checking at START (this will normally be 1, since we don't
+   want to check the 0th level, which indexes the possibly non-blank
+   lower levels.
+   */
+
+static int
+check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
+{
+  int i;
+
+  switch (level)
+    {
+    case 1:
+      {
+	Lisp_Object *tab = LISPOBJ_ARRAY_FROM_SUBTAB (table);
+	for (i = start; i < 256; i++)
+	  {
+	    if (!UNBOUNDP (tab[i]))
+	      return 0;
+	  }
+	break;
+      }
+    case 2:
+    case 3:
+    case 4:
+      {
+	SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
+	for (i = start; i < 256; i++)
+	  {
+	    if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]) &&
+		!check_if_blank (tab[i], level - 1, 0, depth))
+	      return 0;
+	  }
+	break;
+      }
+    default:
+      ABORT ();
+    }
 
   return 1;
 }
 
-static Hashcode
-char_table_entry_hash (Lisp_Object obj, int depth)
+static int
+chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
+		      int depth)
 {
-  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
+  int i;
 
-  return internal_array_hash (cte->level2, 96, depth + 1);
+  switch (level)
+    {
+    case 1:
+      {
+	Lisp_Object *tab1 = LISPOBJ_ARRAY_FROM_SUBTAB (table1);
+	Lisp_Object *tab2 = LISPOBJ_ARRAY_FROM_SUBTAB (table2);
+	for (i = 0; i < 256; i++)
+	  {
+	    if (!internal_equal (tab1[i], tab2[i], depth + 1))
+	      return 0;
+	  }
+	break;
+      }
+    case 2:
+    case 3:
+    case 4:
+      {
+	SUBTAB_ARRAY_TYPE tab1 = SUBTAB_ARRAY_FROM_SUBTAB (table1);
+	SUBTAB_ARRAY_TYPE tab2 = SUBTAB_ARRAY_FROM_SUBTAB (table2);
+	for (i = 0; i < 256; i++)
+	  {
+	    if (SUBTAB_EQ (tab1[i], chartab_blank[level - 1]) &&
+		SUBTAB_EQ (tab2[i], chartab_blank[level - 1]))
+	      ;
+	    else if (SUBTAB_EQ (tab1[i], chartab_blank[level - 1]))
+	      {
+		if (!check_if_blank (tab2[i], level - 1, 0, depth))
+		  return 0;
+	      }
+	    else if (SUBTAB_EQ (tab2[i], chartab_blank[level - 1]))
+	      {
+		if (!check_if_blank (tab1[i], level - 1, 0, depth))
+		  return 0;
+	      }
+	    else
+	      {
+		if (!chartab_tables_equal (tab1[1], tab2[1], level - 1,
+					   depth))
+		  return 0;
+	      }
+	  }
+	break;
+      }
+    default:
+      ABORT ();
+    }
+
+  return 1;
 }
 
-static const struct memory_description char_table_entry_description[] = {
-  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table_Entry, level2), 96 },
-  { XD_END }
-};
+static int
+char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  /* NOTE:
 
-DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
-			       1, /* dumpable flag */
-                               mark_char_table_entry, internal_object_printer,
-			       0, char_table_entry_equal,
-			       char_table_entry_hash,
-			       char_table_entry_description,
-			       Lisp_Char_Table_Entry);
+     This code was formerly written so that it checks to see whether all
+     entries are actually equal, whether or not they have the same default,
+     by using the actual value of the char table entry, after the default
+     had been supplied if necessary.  What we do now, which is considerably
+     simpler, is just check the underlying entries, *before* applying the
+     default.  Some things that are `equal' under the other scheme aren't
+     `equal' under this scheme.  I think this makes more sense because
+     objects that are `equal' should be identical in their behavior and
+     have the same print representation; neither of these may be true in the
+     former case.
 
+     To speed things up, we should also keep track of the # of items
+     currently set. */
+
+  SUBTAB_TYPE table;
+
+  if (XCHAR_TABLE_TYPE (obj1) != XCHAR_TABLE_TYPE (obj2))
+    return 0;
+
+  if (!internal_equal (XCHAR_TABLE_DEFAULT (obj1), XCHAR_TABLE_DEFAULT (obj2),
+		       depth + 1) ||
+      !internal_equal (XCHAR_TABLE_PARENT (obj1), XCHAR_TABLE_PARENT (obj2),
+		       depth + 1))
+    return 0;
+
+  /* Switch if necessary so that obj1 always has >= # of levels of obj2 */
+  if (XCHAR_TABLE_LEVELS (obj2) > XCHAR_TABLE_LEVELS (obj1))
+    {
+      Lisp_Object tmp = obj1;
+      obj1 = obj2;
+      obj2 = tmp;
+    }
+
+  table = XCHAR_TABLE_TABLE (obj1);
+  /* If one table has more levels than the other, make sure the extra
+     levels are all blank.  Successively drill down the tables,
+     checking that all subtables except #0 are completely blank (including
+     recursively checking any sub-subtables of them). */
+  if (XCHAR_TABLE_LEVELS (obj1) > XCHAR_TABLE_LEVELS (obj2))
+    {
+      int i;
+      for (i = XCHAR_TABLE_LEVELS (obj1); i > XCHAR_TABLE_LEVELS (obj2); i--)
+	{
+	  if (!check_if_blank (table, i, 1, depth))
+	    return 0;
+	  table = SUBTAB_ARRAY_FROM_SUBTAB (table)[0];
+	}
+    }
+
+  /* If we got this far, TABLE points to the appropriate (sub)table with the
+     same number of levels as that of OBJ2. */
+  return chartab_tables_equal (table,
+			       XCHAR_TABLE_TABLE (obj2),
+			       XCHAR_TABLE_LEVELS (obj2),
+			       depth);
+}
+
+/* Characters likely to have case pairs or special syntax -- e.g. comment
+   characters -- or unusual mappings in e.g. JIS-ROMAN, or in certain
+   national character sets that map higher ASCII punctuation chars into
+   extra letters (cf. the need for digraphs and trigraphs in C/C++) plus
+   some random ones to boot; probably, ASCII chars are more likely to show
+   up in char tables than others. */
+static char *likely_test = "\t\n\r\f\016\025\0330128!@#$%^&*`'_+=-,.<>?;:/~()[]{}\\\"acehijlnortuxyzADEGIKMOQSVY";
+
+static Hashcode
+char_table_hash (Lisp_Object obj, int depth)
+{
+  Hashcode hashval = HASH2 (XCHAR_TABLE_TYPE (obj),
+			    internal_hash (XCHAR_TABLE_DEFAULT (obj),
+					   depth + 1));
+  char *p;
+  Ichar ch;
+
+  /* Hash those most likely to have values */
+  for (p = likely_test; *p; p++)
+    hashval = HASH2 (hashval, internal_hash
+		     (get_char_table_raw ((Ichar) *p, obj), depth + 1));
+  /* Hash some random Latin characters */
+  for (ch = 130; ch <= 255; ch += 5)
+    hashval = HASH2 (hashval, internal_hash
+		     (get_char_table_raw (ch, obj), depth + 1));
+  /* Don't bother trying to hash higher stuff if there is none. */
+  if (XCHAR_TABLE_LEVELS (obj) > 1)
+    {
+#ifdef UNICODE_INTERNAL
+      /* #### We should really hash less in some of the higher realms but try
+	 to get at least one value from each of the defined Unicode ranges.
+	 Note that we cannot do charset lookups like we do below for old-Mule
+	 because computed hash values for a particular object need to be the
+	 same throughout the lifetime of the program, whereas they would
+	 change if the Unicode-to-charset tables are changed. */
+      /* Hash some random extended Latin characters */
+      for (ch = 260; ch <= 500; ch += 10)
+	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
+						 depth + 1));
+      /* Hash some higher characters */
+      for (ch = 500; ch <= 4000; ch += 50)
+	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
+						 depth + 1));
+      /* Hash some random CJK characters */
+      for (ch = 0x4E00; ch <= 0x9FFF; ch += 791)
+	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
+						 depth + 1));
+      /* Hash some random Hangul characters */
+      for (ch = 0xAC00; ch <= 0xD7AF; ch += 791)
+	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
+						 depth + 1));
+#elif defined (MULE)
+/* 0xA1 is usually the first alphabetic character and differs across
+   charsets, whereas 0xA0 is no-break-space across many of them.
+   charset_codepoint_to_ichar_raw() can't fail because we are in non-
+   Unicode-internal. */
+#define FROB1(cs)							\
+  hashval = HASH2 (hashval,						\
+		   internal_hash (get_char_table_raw			\
+				  (charset_codepoint_to_ichar_raw	\
+				   (cs, 0, 0xA1),			\
+				   obj), depth + 1))
+/* 0x3021 is the first CJK character in a number of different CJK charsets
+   and differs across them. */
+#define FROB2(cs)							\
+  hashval = HASH2 (hashval,						\
+		   internal_hash (get_char_table_raw			\
+				  (charset_codepoint_to_ichar_raw	\
+				   (cs, 0x30, 0x21),			\
+				   obj), depth + 1))
+      FROB1 (Vcharset_latin_iso8859_2);
+      FROB1 (Vcharset_latin_iso8859_3);
+      FROB1 (Vcharset_latin_iso8859_4);
+      FROB1 (Vcharset_thai_tis620);
+      FROB1 (Vcharset_arabic_iso8859_6);
+      FROB1 (Vcharset_greek_iso8859_7);
+      FROB1 (Vcharset_hebrew_iso8859_8);
+      FROB1 (Vcharset_katakana_jisx0201);
+      FROB1 (Vcharset_latin_jisx0201);
+      FROB1 (Vcharset_cyrillic_iso8859_5);
+      FROB1 (Vcharset_latin_iso8859_9);
+      FROB1 (Vcharset_latin_iso8859_15);
+      FROB1 (Vcharset_chinese_sisheng);
+      FROB2 (Vcharset_japanese_jisx0208_1978);
+      FROB2 (Vcharset_chinese_gb2312);
+      FROB2 (Vcharset_japanese_jisx0208);
+      FROB2 (Vcharset_korean_ksc5601);
+      FROB2 (Vcharset_japanese_jisx0212);
+      FROB2 (Vcharset_chinese_cns11643_1);
+      FROB2 (Vcharset_chinese_cns11643_2);
+      FROB2 (Vcharset_chinese_big5_1);
+      FROB2 (Vcharset_chinese_big5_2);
+#undef FROB1
+#undef FROB2
 #endif /* MULE */
+    }
+  return hashval;
+}
 
 static Lisp_Object
 mark_char_table (Lisp_Object obj)
 {
-  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  int i;
-
-  for (i = 0; i < NUM_ASCII_CHARS; i++)
-    mark_object (ct->ascii[i]);
-#ifdef MULE
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    mark_object (ct->level1[i]);
-#endif
-  mark_object (ct->parent);
-  mark_object (ct->default_);
-  return ct->mirror_table;
+  mark_object (XCHAR_TABLE_PARENT (obj));
+  mark_object (XCHAR_TABLE_DEFAULT (obj));
+#ifdef MIRROR_TABLE
+  mark_object (XCHAR_TABLE_MIRROR_TABLE (obj));
+#endif /* MIRROR_TABLE */
+  return XCHAR_TABLE_TABLE (obj);
 }
 
-/* WARNING: All functions of this nature need to be written extremely
-   carefully to avoid crashes during GC.  Cf. prune_specifiers()
-   and prune_weak_hash_tables(). */
-
-void
-prune_syntax_tables (void)
+/* Allocate and blank the tables. */
+static void
+init_chartab_tables (Lisp_Object chartab)
 {
-  Lisp_Object rest, prev = Qnil;
+  /* CHARTAB_LEVELS (foo) will evaluates to 4 when MAXIMIZE_CHAR_TABLE_DEPTH
+     and MULE, to 1 if MAXIMIZE_CHAR_TABLE_DEPTH and not MULE, and to
+     foo otherwise. */
+  XCHAR_TABLE_LEVELS (chartab) = CHARTAB_LEVELS (1);
+  XCHAR_TABLE_TABLE (chartab) =
+    create_new_chartab_table (XCHAR_TABLE_LEVELS (chartab));
+}
 
-  for (rest = Vall_syntax_tables;
-       !NILP (rest);
-       rest = XCHAR_TABLE (rest)->next_table)
+static void
+free_chartab_tables (Lisp_Object chartab)
+{
+  if (!UNBOUNDP (XCHAR_TABLE_TABLE (chartab)))
     {
-      if (! marked_p (rest))
-	{
-	  /* This table is garbage.  Remove it from the list. */
-	  if (NILP (prev))
-	    Vall_syntax_tables = XCHAR_TABLE (rest)->next_table;
-	  else
-	    XCHAR_TABLE (prev)->next_table =
-	      XCHAR_TABLE (rest)->next_table;
-	}
+      free_chartab_table (XCHAR_TABLE_TABLE (chartab),
+			  XCHAR_TABLE_LEVELS (chartab));
+      XCHAR_TABLE_TABLE (chartab) = Qunbound;
     }
 }
 
@@ -223,83 +774,6 @@ symbol_to_char_table_type (Lisp_Object symbol)
   RETURN_NOT_REACHED (CHAR_TABLE_TYPE_GENERIC);
 }
 
-static void
-decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
-{
-  xzero (*outrange);
-  if (EQ (range, Qt))
-    outrange->type = CHARTAB_RANGE_ALL;
-  else if (CHAR_OR_CHAR_INTP (range))
-    {
-      outrange->type = CHARTAB_RANGE_CHAR;
-      outrange->ch = XCHAR_OR_CHAR_INT (range);
-    }
-#ifndef MULE
-  else
-    sferror ("Range must be t or a character", range);
-#else /* MULE */
-  else if (VECTORP (range))
-    {
-      Lisp_Vector *vec = XVECTOR (range);
-      Lisp_Object *elts = vector_data (vec);
-      if (vector_length (vec) != 2)
-	sferror ("Length of charset row vector must be 2",
-			     range);
-      outrange->type = CHARTAB_RANGE_ROW;
-      outrange->charset = Fget_charset (elts[0]);
-      CHECK_INT (elts[1]);
-      outrange->row = XINT (elts[1]);
-      switch (XCHARSET_TYPE (outrange->charset))
-	{
-	case CHARSET_TYPE_94:
-	case CHARSET_TYPE_96:
-	  sferror ("Charset in row vector must be multi-byte",
-			       outrange->charset);
-	case CHARSET_TYPE_94X94:
-	  check_int_range (outrange->row, 33, 126);
-	  break;
-	case CHARSET_TYPE_96X96:
-	  check_int_range (outrange->row, 32, 127);
-	  break;
-	default:
-	  ABORT ();
-	}
-    }
-  else
-    {
-      if (!CHARSETP (range) && !SYMBOLP (range))
-	sferror
-	  ("Char table range must be t, charset, char, or vector", range);
-      outrange->type = CHARTAB_RANGE_CHARSET;
-      outrange->charset = Fget_charset (range);
-    }
-#endif /* MULE */
-}
-
-static Lisp_Object
-encode_char_table_range (struct chartab_range *range)
-{
-  switch (range->type)
-    {
-    case CHARTAB_RANGE_ALL:
-      return Qt;
-      
-#ifdef MULE
-    case CHARTAB_RANGE_CHARSET:
-      return XCHARSET_NAME (Fget_charset (range->charset));
-
-    case CHARTAB_RANGE_ROW:
-      return vector2 (XCHARSET_NAME (Fget_charset (range->charset)),
-		      make_int (range->row));
-#endif
-    case CHARTAB_RANGE_CHAR:
-      return make_char (range->ch);
-    default:
-      ABORT ();
-    }
-  return Qnil; /* not reached */
-}
-
 struct ptemap
 {
   Lisp_Object printcharfun;
@@ -307,19 +781,14 @@ struct ptemap
 };
 
 static int
-print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
+print_table_entry (Lisp_Object UNUSED (table), Ichar ch,
 		   Lisp_Object val, void *arg)
 {
   struct ptemap *a = (struct ptemap *) arg;
-  struct gcpro gcpro1;
-  Lisp_Object lisprange;
   if (!a->first)
     write_c_string (a->printcharfun, " ");
   a->first = 0;
-  lisprange = encode_char_table_range (range);
-  GCPRO1 (lisprange);
-  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, lisprange, val);
-  UNGCPRO;
+  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, make_char (ch), val);
   return 0;
 }
 
@@ -344,61 +813,105 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
      default to be modified, which we don't (yet) support -- but FSF does */
 }
 
-static int
-char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
-{
-  Lisp_Char_Table *ct1 = XCHAR_TABLE (obj1);
-  Lisp_Char_Table *ct2 = XCHAR_TABLE (obj2);
-  int i;
-
-  if (CHAR_TABLE_TYPE (ct1) != CHAR_TABLE_TYPE (ct2))
-    return 0;
-
-  for (i = 0; i < NUM_ASCII_CHARS; i++)
-    if (!internal_equal (ct1->ascii[i], ct2->ascii[i], depth + 1))
-      return 0;
-
-#ifdef MULE
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (!internal_equal (ct1->level1[i], ct2->level1[i], depth + 1))
-      return 0;
-#endif /* MULE */
-
-  return internal_equal (ct1->default_, ct2->default_, depth + 1);
-}
-
-static Hashcode
-char_table_hash (Lisp_Object obj, int depth)
-{
-  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  Hashcode hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
-					   depth + 1);
-#ifdef MULE
-  hashval = HASH2 (hashval,
-		   internal_array_hash (ct->level1, NUM_LEADING_BYTES,
-					depth + 1));
-#endif /* MULE */
-  return HASH2 (hashval, internal_hash (ct->default_, depth + 1));
-}
-
 static const struct memory_description char_table_description[] = {
-  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, ascii), NUM_ASCII_CHARS },
-#ifdef MULE
-  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, level1), NUM_LEADING_BYTES },
-#endif
+  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, table) },
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, default_) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, mirror_table) },
   { XD_LO_LINK,     offsetof (Lisp_Char_Table, next_table) },
+#ifdef MIRROR_TABLE
+  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, mirror_table) },
+#endif /* MIRROR_TABLE */
   { XD_END }
 };
 
 DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
 			       1, /*dumpable-flag*/
-                               mark_char_table, print_char_table, 0,
+                               mark_char_table, print_char_table,
+			       0,
 			       char_table_equal, char_table_hash,
 			       char_table_description,
 			       Lisp_Char_Table);
+
+/* WARNING: All functions of this nature need to be written extremely
+   carefully to avoid crashes during GC.  Cf. prune_specifiers()
+   and prune_weak_hash_tables(). */
+
+void
+prune_syntax_tables (void)
+{
+  Lisp_Object rest, prev = Qnil;
+
+  for (rest = Vall_syntax_tables;
+       !NILP (rest);
+       rest = XCHAR_TABLE (rest)->next_table)
+    {
+      if (! marked_p (rest))
+	{
+	  /* This table is garbage.  Remove it from the list. */
+	  if (NILP (prev))
+	    Vall_syntax_tables = XCHAR_TABLE (rest)->next_table;
+	  else
+	    XCHAR_TABLE (prev)->next_table =
+	      XCHAR_TABLE (rest)->next_table;
+	}
+    }
+}
+
+static void
+decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
+{
+  xzero (*outrange);
+  if (EQ (range, Qt))
+    outrange->type = CHARTAB_RANGE_ALL;
+  else if (CHAR_OR_CHAR_INTP (range))
+    {
+      outrange->type = CHARTAB_RANGE_CHAR;
+      outrange->ch = XCHAR_OR_CHAR_INT (range);
+    }
+  else if (CONSP (range))
+    {
+      CHECK_CHAR_COERCE_INT (XCAR (range));
+      CHECK_CHAR_COERCE_INT (XCDR (range));
+      outrange->type = CHARTAB_RANGE_RANGE;
+      outrange->ch = XCHAR_OR_CHAR_INT (XCAR (range));
+      outrange->chtop = XCHAR_OR_CHAR_INT (XCDR (range));
+    }
+#ifndef MULE
+  else
+    sferror ("Range must be t, character or cons of char range", range);
+#else /* MULE */
+  else if (VECTORP (range))
+    {
+      Lisp_Vector *vec = XVECTOR (range);
+      Lisp_Object *elts = vector_data (vec);
+      if (vector_length (vec) != 2)
+	sferror ("Length of charset row vector must be 2",
+			     range);
+      outrange->type = CHARTAB_RANGE_ROW;
+      outrange->charset = Fget_charset (elts[0]);
+      CHECK_INT (elts[1]);
+      outrange->row = XINT (elts[1]);
+      if (XCHARSET_DIMENSION (outrange->charset) == 1)
+	sferror ("Charset in row vector must be multi-byte",
+		 outrange->charset);
+      else
+	{
+	  check_int_range (outrange->row,
+			   XCHARSET_OFFSET (outrange->charset, 0),
+			   XCHARSET_OFFSET (outrange->charset, 0) +
+			   XCHARSET_CHARS (outrange->charset, 0) - 1);
+	}
+    }
+  else
+    {
+      if (!CHARSETP (range) && !SYMBOLP (range))
+	sferror
+	  ("Char table range must be t, char, charset, cons or vector", range);
+      outrange->type = CHARTAB_RANGE_CHARSET;
+      outrange->charset = Fget_charset (range);
+    }
+#endif /* MULE */
+}
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.
@@ -447,10 +960,12 @@ See `make-char-table'.
 }
 
 static void
-set_char_table_dirty (Lisp_Object table)
+set_char_table_dirty (Lisp_Object USED_IF_MIRROR_TABLE (table))
 {
+#ifdef MIRROR_TABLE
   assert (!XCHAR_TABLE (table)->mirror_table_p);
   XCHAR_TABLE (XCHAR_TABLE (table)->mirror_table)->dirty = 1;
+#endif /* MIRROR_TABLE */
 }
 
 void
@@ -460,30 +975,6 @@ set_char_table_default (Lisp_Object table, Lisp_Object value)
   ct->default_ = value;
   if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
     set_char_table_dirty (table);
-}
-
-static void
-fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
-{
-  int i;
-
-  for (i = 0; i < NUM_ASCII_CHARS; i++)
-    ct->ascii[i] = value;
-#ifdef MULE
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    {
-      /* Don't get stymied when initting the table, or when trying to
-	 free a pdump object. */
-      if (!EQ (ct->level1[i], Qnull_pointer) &&
-	  CHAR_TABLE_ENTRYP (ct->level1[i]) &&
-	  !OBJECT_DUMPED_P (ct->level1[1]))
-	FREE_LCRECORD (ct->level1[i]);
-      ct->level1[i] = value;
-    }
-#endif /* MULE */
-
-  if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
-    set_char_table_dirty (wrap_char_table (ct));
 }
 
 DEFUN ("reset-char-table", Freset_char_table, 1, 1, 0, /*
@@ -522,8 +1013,9 @@ Reset CHAR-TABLE to its default state.
 
   /* Avoid doubly updating the syntax table by setting the default ourselves,
      since set_char_table_default() also updates. */
-  ct->default_ = def;
-  fill_char_table (ct, Qunbound);
+  XCHAR_TABLE_DEFAULT (char_table) = def;
+  free_chartab_tables (char_table);
+  init_chartab_tables (char_table);
 
   return Qnil;
 }
@@ -590,9 +1082,10 @@ sorts of values.  The different char table types are
 `syntax'
 	Used for syntax tables, which specify the syntax of a particular
 	character.  Higher-level Lisp functions are provided for
-	working with syntax tables.  The valid values are integers, and the
+	working with syntax tables.  The valid values are integers (intended
+        to be syntax codes as generated by `syntax-string-to-code'), and the
 	default result given by `get-char-table' is the syntax code for
-	`inherit'.
+	`word'. (Note: In 21.4 and prior, it was the code for `inherit'.)
 */
        (type))
 {
@@ -603,6 +1096,8 @@ sorts of values.  The different char table types are
   ct = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ct->type = ty;
   obj = wrap_char_table (ct);
+  ct->table = Qunbound;
+#ifdef MIRROR_TABLE
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       /* Qgeneric not Qsyntax because a syntax table has a mirror table
@@ -614,6 +1109,7 @@ sorts of values.  The different char table types are
     }
   else
     ct->mirror_table = Qnil;
+#endif /* MIRROR_TABLE */
   ct->next_table = Qnil;
   ct->parent = Qnil;
   ct->default_ = Qnil;
@@ -626,43 +1122,6 @@ sorts of values.  The different char table types are
   return obj;
 }
 
-#ifdef MULE
-
-static Lisp_Object
-make_char_table_entry (Lisp_Object initval)
-{
-  int i;
-  Lisp_Char_Table_Entry *cte =
-    ALLOC_LCRECORD_TYPE (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
-
-  for (i = 0; i < 96; i++)
-    cte->level2[i] = initval;
-
-  return wrap_char_table_entry (cte);
-}
-
-static Lisp_Object
-copy_char_table_entry (Lisp_Object entry)
-{
-  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
-  int i;
-  Lisp_Char_Table_Entry *ctenew =
-    ALLOC_LCRECORD_TYPE (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
-
-  for (i = 0; i < 96; i++)
-    {
-      Lisp_Object new_ = cte->level2[i];
-      if (CHAR_TABLE_ENTRYP (new_))
-	ctenew->level2[i] = copy_char_table_entry (new_);
-      else
-	ctenew->level2[i] = new_;
-    }
-
-  return wrap_char_table_entry (ctenew);
-}
-
-#endif /* MULE */
-
 DEFUN ("copy-char-table", Fcopy_char_table, 1, 1, 0, /*
 Return a new char table which is a copy of CHAR-TABLE.
 It will contain the same values for the same characters and ranges
@@ -672,40 +1131,22 @@ as CHAR-TABLE.  The values will not themselves be copied.
 {
   Lisp_Char_Table *ct, *ctnew;
   Lisp_Object obj;
-  int i;
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
-  assert(!ct->mirror_table_p);
+#ifdef MIRROR_TABLE
+  assert (!ct->mirror_table_p);
+#endif
   ctnew = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
-  ctnew->mirror_table_p = 0;
+  ctnew->levels = ct->levels;
+  ctnew->table = copy_chartab_table (ct->table, ct->levels);
   obj = wrap_char_table (ctnew);
 
-  for (i = 0; i < NUM_ASCII_CHARS; i++)
-    {
-      Lisp_Object new_ = ct->ascii[i];
-#ifdef MULE
-      assert (! (CHAR_TABLE_ENTRYP (new_)));
-#endif /* MULE */
-      ctnew->ascii[i] = new_;
-    }
-
-#ifdef MULE
-
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    {
-      Lisp_Object new_ = ct->level1[i];
-      if (CHAR_TABLE_ENTRYP (new_))
-	ctnew->level1[i] = copy_char_table_entry (new_);
-      else
-	ctnew->level1[i] = new_;
-    }
-
-#endif /* MULE */
-
+#ifdef MIRROR_TABLE
+  ctnew->mirror_table_p = 0;
   if (!EQ (ct->mirror_table, Qnil))
     {
       ctnew->mirror_table = Fmake_char_table (Qgeneric);
@@ -716,6 +1157,7 @@ as CHAR-TABLE.  The values will not themselves be copied.
     }
   else
     ctnew->mirror_table = Qnil;
+#endif /* MIRROR_TABLE */
 
   ctnew->next_table = Qnil;
   if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
@@ -725,37 +1167,6 @@ as CHAR-TABLE.  The values will not themselves be copied.
     }
   return obj;
 }
-
-#ifdef MULE
-
-/* called from get_char_table(). */
-Lisp_Object
-get_non_ascii_char_table_value (Lisp_Char_Table *ct, int leading_byte,
-				Ichar c)
-{
-  Lisp_Object val;
-  Lisp_Object charset = charset_by_leading_byte (leading_byte);
-  int byte1, byte2;
-
-  BREAKUP_ICHAR_1_UNSAFE (c, charset, byte1, byte2);
-  val = ct->level1[leading_byte - MIN_LEADING_BYTE];
-  if (CHAR_TABLE_ENTRYP (val))
-    {
-      Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
-      val = cte->level2[byte1 - 32];
-      if (CHAR_TABLE_ENTRYP (val))
-	{
-	  cte = XCHAR_TABLE_ENTRY (val);
-	  assert (byte2 >= 32);
-	  val = cte->level2[byte2 - 32];
-	  assert (!CHAR_TABLE_ENTRYP (val));
-	}
-    }
-
-  return val;
-}
-
-#endif /* MULE */
 
 DEFUN ("char-table-default", Fchar_table_default, 1, 1, 0, /*
 Return the default value for CHAR-TABLE.  When an entry for a character
@@ -793,157 +1204,6 @@ Find value for CHARACTER in CHAR-TABLE.
 
   return get_char_table (XCHAR (character), char_table);
 }
-
-static int
-copy_mapper (struct chartab_range *range, Lisp_Object UNUSED (table),
-	     Lisp_Object val, void *arg)
-{
-  put_char_table (VOID_TO_LISP (arg), range, val);
-  return 0;
-}
-
-void
-copy_char_table_range (Lisp_Object from, Lisp_Object to,
-		       struct chartab_range *range)
-{
-  map_char_table (from, range, copy_mapper, LISP_TO_VOID (to));
-}
-
-static Lisp_Object
-get_range_char_table_1 (struct chartab_range *range, Lisp_Object table,
-			Lisp_Object multi)
-{
-  Lisp_Char_Table *ct = XCHAR_TABLE (table);
-  Lisp_Object retval = Qnil;
-
-  switch (range->type)
-    {
-    case CHARTAB_RANGE_CHAR:
-      return get_char_table (range->ch, table);
-
-    case CHARTAB_RANGE_ALL:
-      {
-	int i;
-	retval = ct->ascii[0];
-
-	for (i = 1; i < NUM_ASCII_CHARS; i++)
-	  if (!EQ (retval, ct->ascii[i]))
-	    return multi;
-
-#ifdef MULE
-	for (i = MIN_LEADING_BYTE; i < MIN_LEADING_BYTE + NUM_LEADING_BYTES;
-	     i++)
-	  {
-	    if (!CHARSETP (charset_by_leading_byte (i))
-		|| i == LEADING_BYTE_ASCII
-		|| i == LEADING_BYTE_CONTROL_1)
-	      continue;
-	    if (!EQ (retval, ct->level1[i - MIN_LEADING_BYTE]))
-	      return multi;
-	  }
-#endif /* MULE */
-
-	break;
-      }
-
-#ifdef MULE
-    case CHARTAB_RANGE_CHARSET:
-      if (EQ (range->charset, Vcharset_ascii))
-	{
-	  int i;
-	  retval = ct->ascii[0];
-
-	  for (i = 1; i < 128; i++)
-	    if (!EQ (retval, ct->ascii[i]))
-	      return multi;
-	  break;
-	}
-
-      if (EQ (range->charset, Vcharset_control_1))
-	{
-	  int i;
-	  retval = ct->ascii[128];
-
-	  for (i = 129; i < 160; i++)
-	    if (!EQ (retval, ct->ascii[i]))
-	      return multi;
-	  break;
-	}
-
-      {
-	retval = ct->level1[XCHARSET_LEADING_BYTE (range->charset) -
-			    MIN_LEADING_BYTE];
-	if (CHAR_TABLE_ENTRYP (retval))
-	  return multi;
-	break;
-      }
-
-    case CHARTAB_RANGE_ROW:
-      {
-	retval = ct->level1[XCHARSET_LEADING_BYTE (range->charset) -
-			    MIN_LEADING_BYTE];
-	if (!CHAR_TABLE_ENTRYP (retval))
-	  break;
-	retval = XCHAR_TABLE_ENTRY (retval)->level2[range->row - 32];
-	if (CHAR_TABLE_ENTRYP (retval))
-	  return multi;
-	break;
-      }
-#endif /* not MULE */
-
-    default:
-      ABORT ();
-    }
-
-  if (UNBOUNDP (retval))
-    return ct->default_;
-  return retval;
-}
-
-Lisp_Object
-get_range_char_table (struct chartab_range *range, Lisp_Object table,
-		      Lisp_Object multi)
-{
-  if (range->type == CHARTAB_RANGE_CHAR)
-    return get_char_table (range->ch, table);
-  else
-    return get_range_char_table_1 (range, table, multi);
-}
-
-#ifdef ERROR_CHECK_TYPES
-
-/* Only exists so as not to trip an assert in get_char_table(). */
-Lisp_Object
-updating_mirror_get_range_char_table (struct chartab_range *range,
-				      Lisp_Object table,
-				      Lisp_Object multi)
-{
-  if (range->type == CHARTAB_RANGE_CHAR)
-    return get_char_table_1 (range->ch, table);
-  else
-    return get_range_char_table_1 (range, table, multi);
-}
-
-#endif /* ERROR_CHECK_TYPES */
-
-DEFUN ("get-range-char-table", Fget_range_char_table, 2, 3, 0, /*
-Find value for RANGE in CHAR-TABLE.
-If there is more than one value, return MULTI (defaults to nil).
-
-Valid values for RANGE are single characters, charsets, a row in a
-two-octet charset, and all characters.  See `put-char-table'.
-*/
-       (range, char_table, multi))
-{
-  struct chartab_range rainj;
-
-  if (CHAR_OR_CHAR_INTP (range))
-    return Fget_char_table (range, char_table);
-  CHECK_CHAR_TABLE (char_table);
-
-  decode_char_table_range (range, &rainj);
-  return get_range_char_table (&rainj, char_table, multi);
-}
     
 static int
 check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
@@ -979,8 +1239,8 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
     case CHAR_TABLE_TYPE_DISPLAY:
       /* #### fix this */
       maybe_signal_error (Qunimplemented,
-			       "Display char tables not yet implemented",
-			       value, Qchar_table, errb);
+			  "Display char tables not yet implemented",
+			  value, Qchar_table, errb);
       return 0;
 
     case CHAR_TABLE_TYPE_CHAR:
@@ -1047,91 +1307,57 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 		Lisp_Object val)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
+#ifdef MULE
+  int l1, h1, l2, h2;
+#endif
 
   switch (range->type)
     {
-    case CHARTAB_RANGE_ALL:
-      fill_char_table (ct, val);
-      return; /* fill_char_table() recorded the table as dirty. */
-
 #ifdef MULE
-    case CHARTAB_RANGE_CHARSET:
-      if (EQ (range->charset, Vcharset_ascii))
-	{
-	  int i;
-	  for (i = 0; i < 128; i++)
-	    ct->ascii[i] = val;
-	}
-      else if (EQ (range->charset, Vcharset_control_1))
-	{
-	  int i;
-	  for (i = 128; i < 160; i++)
-	    ct->ascii[i] = val;
-	}
-      else
-	{
-	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
-	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]) &&
-	      !OBJECT_DUMPED_P (ct->level1[lb]))
-	    FREE_LCRECORD (ct->level1[lb]);
-	  ct->level1[lb] = val;
-	}
-      break;
-
     case CHARTAB_RANGE_ROW:
       {
-	Lisp_Char_Table_Entry *cte;
-	int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
-	/* make sure that there is a separate entry for the row. */
-	if (!CHAR_TABLE_ENTRYP (ct->level1[lb]))
-	  ct->level1[lb] = make_char_table_entry (ct->level1[lb]);
-	cte = XCHAR_TABLE_ENTRY (ct->level1[lb]);
-	cte->level2[range->row - 32] = val;
+	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	l1 = h1 = range->row;
+	goto iterate_charset;
+      }
+
+    case CHARTAB_RANGE_CHARSET:
+      {
+	int i, j;
+	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+      iterate_charset:
+	for (i = l1; i <= h1; i++)
+	  for (j = l2; j <= h2; j++)
+	    {
+	      Ichar ch = charset_codepoint_to_ichar_raw (range->charset, i, j);
+	      if (ch >= 0)
+		put_char_table_1 (table, ch, val);
+	    }
       }
       break;
 #endif /* MULE */
 
-    case CHARTAB_RANGE_CHAR:
-#ifdef MULE
+#define CHAR_INTERVAL_FOR_QUIT 1000
+    case CHARTAB_RANGE_RANGE:
       {
-	Lisp_Object charset;
-	int byte1, byte2;
-
-	BREAKUP_ICHAR (range->ch, charset, byte1, byte2);
-	if (EQ (charset, Vcharset_ascii))
-	  ct->ascii[byte1] = val;
-	else if (EQ (charset, Vcharset_control_1))
-	  ct->ascii[byte1 + 128] = val;
-	else
+	Ichar i;
+	for (i = range->ch; i <= range->chtop; i += CHAR_INTERVAL_FOR_QUIT)
 	  {
-	    Lisp_Char_Table_Entry *cte;
-	    int lb = XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE;
-	    /* make sure that there is a separate entry for the row. */
-	    if (!CHAR_TABLE_ENTRYP (ct->level1[lb]))
-	      ct->level1[lb] = make_char_table_entry (ct->level1[lb]);
-	    cte = XCHAR_TABLE_ENTRY (ct->level1[lb]);
-	    /* now CTE is a char table entry for the charset;
-	       each entry is for a single row (or character of
-	       a one-octet charset). */
-	    if (XCHARSET_DIMENSION (charset) == 1)
-	      cte->level2[byte1 - 32] = val;
-	    else
-	      {
-		/* assigning to one character in a two-octet charset. */
-		/* make sure that the charset row contains a separate
-		   entry for each character. */
-		if (!CHAR_TABLE_ENTRYP (cte->level2[byte1 - 32]))
-		  cte->level2[byte1 - 32] =
-		    make_char_table_entry (cte->level2[byte1 - 32]);
-		cte = XCHAR_TABLE_ENTRY (cte->level2[byte1 - 32]);
-		cte->level2[byte2 - 32] = val;
-	      }
+	    Ichar stop = min (i + CHAR_INTERVAL_FOR_QUIT - 1, range->chtop);
+	    Ichar j;
+
+	    /* QUIT every CHAR_INTERVAL_FOR_QUIT characters */
+	    for (j = i; j <= stop; j++)
+	      put_char_table_1 (table, j, val);
+	    QUIT;
 	  }
       }
-#else /* not MULE */
-      ct->ascii[(unsigned char) (range->ch)] = val;
+
       break;
-#endif /* not MULE */
+
+    case CHARTAB_RANGE_CHAR:
+      put_char_table_1 (table, range->ch, val);
+      break;
     }
 
   if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
@@ -1139,16 +1365,17 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 }
 
 DEFUN ("put-char-table", Fput_char_table, 3, 3, 0, /*
-Set the value for chars in RANGE to be VALUE in CHAR-TABLE.
+Set the value for CHAR to be VALUE in CHAR-TABLE.
 
-RANGE specifies one or more characters to be affected and should be
+CHAR specifies one or more characters to be affected and should be
 one of the following:
 
--- t (all characters are affected)
--- A charset (only allowed when Mule support is present)
+-- A charset (only allowed when Mule support is present; all characters
+   in the charset are set)
 -- A vector of two elements: a two-octet charset and a row number; the row
    must be an integer, not a character (only allowed when Mule support is
    present)
+-- A cons of two characters (a range, inclusive on both ends)
 -- A single character
 
 VALUE must be a value appropriate for the type of CHAR-TABLE.
@@ -1163,6 +1390,9 @@ See `make-char-table'.
   ct = XCHAR_TABLE (char_table);
   check_valid_char_table_value (value, ct->type, ERROR_ME);
   decode_char_table_range (range, &rainj);
+  if (rainj.type == CHARTAB_RANGE_ALL)
+    invalid_argument ("Can't currently set all characters in a char table",
+                      range);
   value = canonicalize_char_table_value (value, ct->type);
   put_char_table (char_table, &rainj, value);
   return Qnil;
@@ -1175,6 +1405,7 @@ RANGE specifies one or more characters to be affected and should be
 one of the following:
 
 -- t (all characters are affected)
+-- A cons of two characters (a range, inclusive on both ends)
 -- A charset (only allowed when Mule support is present)
 -- A vector of two elements: a two-octet charset and a row number
    (only allowed when Mule support is present)
@@ -1189,258 +1420,91 @@ With all values removed, the default value will be returned by
 
   CHECK_CHAR_TABLE (char_table);
   decode_char_table_range (range, &rainj);
-  put_char_table (char_table, &rainj, Qunbound);
-  return Qnil;
-}
-
-/* Map FN over the ASCII chars in CT. */
-
-static int
-map_over_charset_ascii_1 (Lisp_Char_Table *ct,
-			  int start, int stop,
-			  int (*fn) (struct chartab_range *range,
-				     Lisp_Object table, Lisp_Object val,
-				     void *arg),
-			  void *arg)
-{
-  struct chartab_range rainj;
-  int i, retval;
-
-  rainj.type = CHARTAB_RANGE_CHAR;
-
-  for (i = start, retval = 0; i <= stop && retval == 0; i++)
+  if (rainj.type == CHARTAB_RANGE_ALL)
     {
-      rainj.ch = (Ichar) i;
-      if (!UNBOUNDP (ct->ascii[i]))
-	retval = (fn) (&rainj, wrap_char_table (ct), ct->ascii[i], arg);
-    }
-
-  return retval;
-}
-
-
-/* Map FN over the ASCII chars in CT. */
-
-static int
-map_over_charset_ascii (Lisp_Char_Table *ct,
-			int (*fn) (struct chartab_range *range,
-				   Lisp_Object table, Lisp_Object val,
-				   void *arg),
-			void *arg)
-{
-  return map_over_charset_ascii_1 (ct, 0,
-#ifdef MULE
-				   127,
-#else
-				   255,
-#endif
-				   fn, arg);
-}
-
-#ifdef MULE
-
-/* Map FN over the Control-1 chars in CT. */
-
-static int
-map_over_charset_control_1 (Lisp_Char_Table *ct,
-			    int (*fn) (struct chartab_range *range,
-				       Lisp_Object table, Lisp_Object val,
-				       void *arg),
-			    void *arg)
-{
-  return map_over_charset_ascii_1 (ct, 128, 159, fn, arg);
-}
-
-/* Map FN over the row ROW of two-byte charset CHARSET.
-   There must be a separate value for that row in the char table.
-   CTE specifies the char table entry for CHARSET. */
-
-static int
-map_over_charset_row (Lisp_Char_Table *ct,
-		      Lisp_Char_Table_Entry *cte,
-		      Lisp_Object charset, int row,
-		      int (*fn) (struct chartab_range *range,
-				 Lisp_Object table, Lisp_Object val,
-				 void *arg),
-		      void *arg)
-{
-  Lisp_Object val = cte->level2[row - 32];
-
-  if (UNBOUNDP (val))
-    return 0;
-  else if (!CHAR_TABLE_ENTRYP (val))
-    {
-      struct chartab_range rainj;
-      
-      rainj.type = CHARTAB_RANGE_ROW;
-      rainj.charset = charset;
-      rainj.row = row;
-      return (fn) (&rainj, wrap_char_table (ct), val, arg);
+      free_chartab_tables (char_table);
+      init_chartab_tables (char_table);
     }
   else
-    {
-      struct chartab_range rainj;
-      int i, retval;
-      int start, stop;
-	  
-      get_charset_limits (charset, &start, &stop);
-
-      cte = XCHAR_TABLE_ENTRY (val);
-
-      rainj.type = CHARTAB_RANGE_CHAR;
-
-      for (i = start, retval = 0; i <= stop && retval == 0; i++)
-	{
-	  rainj.ch = make_ichar (charset, row, i);
-	  if (!UNBOUNDP (cte->level2[i - 32]))
-	    retval = (fn) (&rainj, wrap_char_table (ct), cte->level2[i - 32],
-			   arg);
-	}
-      return retval;
-    }
+    put_char_table (char_table, &rainj, Qunbound);
+  return Qnil;
 }
-
-
-static int
-map_over_other_charset (Lisp_Char_Table *ct, int lb,
-			int (*fn) (struct chartab_range *range,
-				   Lisp_Object table, Lisp_Object val,
-				   void *arg),
-			void *arg)
-{
-  Lisp_Object val = ct->level1[lb - MIN_LEADING_BYTE];
-  Lisp_Object charset = charset_by_leading_byte (lb);
-
-  if (!CHARSETP (charset)
-      || lb == LEADING_BYTE_ASCII
-      || lb == LEADING_BYTE_CONTROL_1)
-    return 0;
-
-  if (UNBOUNDP (val))
-    return 0;
-  if (!CHAR_TABLE_ENTRYP (val))
-    {
-      struct chartab_range rainj;
-
-      rainj.type = CHARTAB_RANGE_CHARSET;
-      rainj.charset = charset;
-      return (fn) (&rainj, wrap_char_table (ct), val, arg);
-    }
-  {
-    Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
-    int start, stop;
-    int i, retval;
-
-    get_charset_limits (charset, &start, &stop);
-    if (XCHARSET_DIMENSION (charset) == 1)
-      {
-	struct chartab_range rainj;
-	rainj.type = CHARTAB_RANGE_CHAR;
-
-	for (i = start, retval = 0; i <= stop && retval == 0; i++)
-	  {
-	    rainj.ch = make_ichar (charset, i, 0);
-	    if (!UNBOUNDP (cte->level2[i - 32]))
-	      retval = (fn) (&rainj, wrap_char_table (ct), cte->level2[i - 32],
-			     arg);
-	  }
-      }
-    else
-      {
-	for (i = start, retval = 0; i <= stop && retval == 0; i++)
-	  retval = map_over_charset_row (ct, cte, charset, i, fn, arg);
-      }
-
-    return retval;
-  }
-}
-
-#endif /* MULE */
 
 /* Map FN (with client data ARG) over range RANGE in char table CT.
    Mapping stops the first time FN returns non-zero, and that value
    becomes the return value of map_char_table().
-
-   #### This mapping code is way ugly.  The FSF version, in contrast,
-   is short and sweet, and much more recursive.  There should be some way
-   of cleaning this up. */
+ */
 
 int
 map_char_table (Lisp_Object table,
 		struct chartab_range *range,
-		int (*fn) (struct chartab_range *range,
-			   Lisp_Object table, Lisp_Object val, void *arg),
+		int (*fn) (Lisp_Object table, Ichar code, Lisp_Object val,
+			   void *arg),
 		void *arg)
 {
-  Lisp_Char_Table *ct = XCHAR_TABLE (table);
+#ifdef MULE
+  int l1, h1, l2, h2;
+#endif
+  int levels = XCHAR_TABLE_LEVELS (table);
+  /* Compute maximum allowed value for this table, which may be less than
+     the range we have been requested to map over. */
+  int maxval = /* Value is 2^31-1 for 4, but 2^24-1 for 3,
+		  2^16-1 for 2, 2^8-1 for 1. */
+    levels == 4 ? INT_32_BIT_MAX : (1 << (levels * 8)) - 1;
   switch (range->type)
     {
     case CHARTAB_RANGE_ALL:
-      {
-	int retval;
+      return map_chartab_table (XCHAR_TABLE_TABLE (table),
+				XCHAR_TABLE_LEVELS (table),
+				0, 0, maxval,
+                                table, fn, arg);
 
-	retval = map_over_charset_ascii (ct, fn, arg);
-	if (retval)
-	  return retval;
-#ifdef MULE
-	retval = map_over_charset_control_1 (ct, fn, arg);
-	if (retval)
-	  return retval;
-	{
-	  int i;
-	  int start = MIN_LEADING_BYTE;
-	  int stop  = start + NUM_LEADING_BYTES;
-
-	  for (i = start, retval = 0; i < stop && retval == 0; i++)
-	    {
-	      if (i != LEADING_BYTE_ASCII && i != LEADING_BYTE_CONTROL_1)
-		retval = map_over_other_charset (ct, i, fn, arg);
-	    }
-	}
-#endif /* MULE */
-	return retval;
-      }
+    case CHARTAB_RANGE_RANGE:
+      return map_chartab_table (XCHAR_TABLE_TABLE (table),
+				XCHAR_TABLE_LEVELS (table),
+				0, min (range->ch, maxval),
+				min (range->chtop, maxval),
+				table, fn, arg);
 
 #ifdef MULE
-    case CHARTAB_RANGE_CHARSET:
-      return map_over_other_charset (ct,
-				     XCHARSET_LEADING_BYTE (range->charset),
-				     fn, arg);
-
     case CHARTAB_RANGE_ROW:
       {
-	Lisp_Object val = ct->level1[XCHARSET_LEADING_BYTE (range->charset) -
-				     MIN_LEADING_BYTE];
-
-	if (CHAR_TABLE_ENTRYP (val))
-	  return map_over_charset_row (ct, XCHAR_TABLE_ENTRY (val),
-				       range->charset, range->row, fn, arg);
-	else if (!UNBOUNDP (val))
-	  {
-	    struct chartab_range rainj;
-
-	    rainj.type = CHARTAB_RANGE_ROW;
-	    rainj.charset = range->charset;
-	    rainj.row = range->row;
-	    return (fn) (&rainj, table, val, arg);
-	  }
-	else
-	  return 0;
+	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	l1 = h1 = range->row;
+	goto iterate_charset;
       }
+
+    case CHARTAB_RANGE_CHARSET:
+      {
+	int i, j;
+	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+      iterate_charset:
+	for (i = l1; i <= h1; i++)
+	  for (j = l2; j <= h2; j++)
+	    {
+	      Ichar ch = charset_codepoint_to_ichar_raw (range->charset, i, j);
+	      if (ch >= 0)
+		{
+		  Lisp_Object val = get_char_table (ch, table);
+		  if (!UNBOUNDP (val))
+		    {
+		      int retval = (fn) (table, ch, val, arg);
+		      if (retval)
+			return retval;
+		    }
+		}
+	    }
+      }
+      break;
+
 #endif /* MULE */
 
     case CHARTAB_RANGE_CHAR:
       {
-	Ichar ch = range->ch;
-	Lisp_Object val = get_char_table (ch, table);
-	struct chartab_range rainj;
+	Lisp_Object val = get_char_table (range->ch, table);
 
 	if (!UNBOUNDP (val))
-	  {
-	    rainj.type = CHARTAB_RANGE_CHAR;
-	    rainj.ch = ch;
-	    return (fn) (&rainj, table, val, arg);
-	  }
+	  return (fn) (table, range->ch, val, arg);
 	else
 	  return 0;
       }
@@ -1459,31 +1523,26 @@ struct slow_map_char_table_arg
 };
 
 static int
-slow_map_char_table_fun (struct chartab_range *range,
-			 Lisp_Object UNUSED (table), Lisp_Object val,
-			 void *arg)
+slow_map_char_table_fun (Lisp_Object UNUSED (table),
+			 Ichar ch, Lisp_Object val, void *arg)
 {
   struct slow_map_char_table_arg *closure =
     (struct slow_map_char_table_arg *) arg;
 
-  closure->retval = call2 (closure->function, encode_char_table_range (range),
-			   val);
+  closure->retval = call2 (closure->function, make_char (ch), val);
   return !NILP (closure->retval);
 }
 
 DEFUN ("map-char-table", Fmap_char_table, 2, 3, 0, /*
 Map FUNCTION over CHAR-TABLE until it returns non-nil; return that value.
-FUNCTION is called with two arguments, each key and entry in the table.
+FUNCTION is called with two arguments, a character and the value for that
+character in the table.  FUNCTION will only be called for characters whose
+value has been set.
 
 RANGE specifies a subrange to map over.  If omitted or t, it defaults to
-the entire table.
-
-Both RANGE and the keys passed to FUNCTION are in the same format as the
-RANGE argument to `put-char-table'.  N.B. This function does NOT map over
-all characters in RANGE, but over the subranges that have been assigned to.
-Thus this function is most suitable for searching a char-table, or for
-populating one char-table based on the contents of another.  The current
-implementation does not coalesce ranges all of whose values are the same.
+the entire table.  Other possible values are the same as can be passed to
+`put-char-table': an individual character, a cons specifying a character
+range, a charset or a vector giving a charset and a row in that charset.
 */
        (function, char_table, range))
 {
@@ -1780,20 +1839,22 @@ Valid values are nil or a bit vector of size 95.
    directly.  */
 
 int
-word_boundary_p (Ichar c1, Ichar c2)
+word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2)
 {
   Lisp_Object category_set1, category_set2;
   Lisp_Object tail;
   int default_result;
 
-#if 0
+#ifdef ENABLE_COMPOSITE_CHARS
   if (COMPOSITE_CHAR_P (c1))
     c1 = cmpchar_component (c1, 0, 1);
   if (COMPOSITE_CHAR_P (c2))
     c2 = cmpchar_component (c2, 0, 1);
 #endif
 
-  if (EQ (ichar_charset (c1), ichar_charset (c2)))
+  /* @@#### fix me */
+  if (EQ (buffer_ichar_charset_obsolete_me_baby (buf, c1),
+	  buffer_ichar_charset_obsolete_me_baby (buf, c2)))
     {
       tail = Vword_separating_categories;
       default_result = 0;
@@ -1831,10 +1892,9 @@ void
 syms_of_chartab (void)
 {
   INIT_LRECORD_IMPLEMENTATION (char_table);
+  INIT_LRECORD_IMPLEMENTATION (char_subtable);
 
 #ifdef MULE
-  INIT_LRECORD_IMPLEMENTATION (char_table_entry);
-
   DEFSYMBOL (Qcategory_table_p);
   DEFSYMBOL (Qcategory_designator_p);
   DEFSYMBOL (Qcategory_table_value_p);
@@ -1853,7 +1913,6 @@ syms_of_chartab (void)
   DEFSUBR (Fmake_char_table);
   DEFSUBR (Fcopy_char_table);
   DEFSUBR (Fget_char_table);
-  DEFSUBR (Fget_range_char_table);
   DEFSUBR (Fvalid_char_table_value_p);
   DEFSUBR (Fcheck_valid_char_table_value);
   DEFSUBR (Fput_char_table);
@@ -1880,6 +1939,13 @@ vars_of_chartab (void)
   /* DO NOT staticpro this.  It works just like Vweak_hash_tables. */
   Vall_syntax_tables = Qnil;
   dump_add_weak_object_chain (&Vall_syntax_tables);
+
+  init_blank_chartab_tables ();
+
+  staticpro (&chartab_blank[1]);
+  staticpro (&chartab_blank[2]);
+  staticpro (&chartab_blank[3]);
+  staticpro (&chartab_blank[4]);
 }
 
 void
