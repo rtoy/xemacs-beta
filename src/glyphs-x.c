@@ -2382,7 +2382,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (rf)
       {
 	/* #### What to do about Motif? */
-	lw_add_widget_value_arg (wv, XtNxftFont, (XtArgVal) rf);
+	lw_add_widget_value_arg (wv, (String) XtNxftFont, (XtArgVal) rf);
       }
 #endif
 

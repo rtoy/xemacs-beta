@@ -1,3 +1,30 @@
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* fakemail.c (args_size):
+	* fakemail.c (parse_header):
+	* ootags.c (C_entries):
+	Fix warnings about possible use of uninitialized vars.
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
+	* make-mswin-unicode.pl:
+	Process the command `review'.  Cause an error to happen if we try to
+	use the command, indicating that the command needs review to determine
+	how to handle it.
+
+2010-01-15  Ben Wing  <ben@xemacs.org>
+
+	* make-mswin-unicode.pl:
+	Various fixes to get this to work when using the Cygwin header files
+	in /usr/include/w32api instead of the VC++ ones:
+	-- Use /usr/include/w32api as default; don't assume that a passed-in
+	   directory always ends in .../include.
+	-- Add `const' to list of known type modifiers.
+	-- If function already seen, warn but don't generate twice.
+	-- Eliminate `extern' from return type modifiers.
+	-- Cosmetic: When eliminating APIENTRY, also eliminate following
+	   whitespace.
+
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
 	* fix-perms.sh: New file.

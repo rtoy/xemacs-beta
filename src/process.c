@@ -2348,7 +2348,7 @@ When invoked interactively, prints the value in the echo area.
 */
        (var, interactivep))
 {
-  Ibyte *value;
+  Ibyte *value = NULL;
   Bytecount valuelen;
   Lisp_Object v = Qnil;
   struct gcpro gcpro1;

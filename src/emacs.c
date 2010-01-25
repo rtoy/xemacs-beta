@@ -936,8 +936,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #define SHEBANG_PROGNAME_LENGTH                                         \
   (int)((sizeof (WEXTSTRING (SHEBANG_PROGNAME)) - sizeof (WEXTSTRING (""))))
-#define SHEBANG_EXE_PROGNAME_LENGTH                                     \
-  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME) WEXTSTRING(".exe"))       \
+#define SHEBANG_EXE_PROGNAME_LENGTH			\
+  (int)(sizeof (WEXTSTRING (SHEBANG_PROGNAME ".exe"))	\
         - sizeof (WEXTSTRING ("")))
 
   {
@@ -959,7 +959,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    int j;
 
 	    newarr[0] = argv[0];
-	    newarr[1] = WEXTSTRING ("--script");
+	    newarr[1] = (Wexttext *) WEXTSTRING ("--script");
 	    for (j = 1; j < argc; ++j)
 	      {
 		newarr[j + 1] = argv[j];
@@ -1252,7 +1252,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 	  for (j = 0; j < count_before + 1; j++)
 	    new_[j] = argv[j];
-	  new_[count_before + 1] = WEXTSTRING ("-d");
+	  new_[count_before + 1] = (Wexttext *) WEXTSTRING ("-d");
 	  new_[count_before + 2] = dpy;
 	  for (j = count_before + 2; j <argc; j++)
 	    new_[j + 1] = argv[j];
@@ -1262,7 +1262,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Change --display to -d, when its arg is separate.  */
       else if (dpy != 0 && skip_args > count_before
 	       && argv[count_before + 1][1] == '-')
-	argv[count_before + 1] = WEXTSTRING ("-d");
+	argv[count_before + 1] = (Wexttext *) WEXTSTRING ("-d");
 
       /* Don't actually discard this arg.  */
       skip_args = count_before;
@@ -3373,6 +3373,13 @@ debug_memory_error (int signum)
   LONGJMP (memory_error_jump, 1);
 }
 
+/* Used in debug_can_access_memory().  Made into a global, externally
+   accessible variable to make absolutely sure that no compiler will
+   optimize away the memory-read function in debug_can_access_memory();
+   see comments there. */
+
+volatile int dcam_saveval;
+
 /* Return whether all bytes in the specified memory block can be read. */
 int
 debug_can_access_memory (const void *ptr, Bytecount len)
@@ -3383,6 +3390,7 @@ debug_can_access_memory (const void *ptr, Bytecount len)
   volatile int old_errno = errno;
   volatile int retval = 1;
 
+  assert (len > 0);
   if (!SETJMP (memory_error_jump))
     {
       old_sigbus =
@@ -3390,13 +3398,24 @@ debug_can_access_memory (const void *ptr, Bytecount len)
       old_sigsegv =
 	(SIGTYPE (*) (int)) EMACS_SIGNAL (SIGSEGV, debug_memory_error);
 
+      /* We could just do memcmp (ptr, ptr, len), but we want to avoid any
+	 possibility that a super-optimizing compiler might optimize away such
+	 a call by concluding that its result is always 1. */
       if (len > 1)
-	/* If we can, try to avoid problems with super-optimizing compilers
-	   that might decide that memcmp (ptr, ptr, len) can be optimized
-	   away since its result is always 1. */
-	memcmp (ptr, (Rawbyte *) ptr + 1, len - 1);
+	/* Instead, if length is > 1, do off-by-one comparison.
+           We save the value somewhere that is externally accessible to
+           make absolutely sure that a compiler won't optimize away the
+           call by concluding that the return value isn't really used.
+           */
+	dcam_saveval = memcmp (ptr, (Rawbyte *) ptr + 1, len - 1);
       else
-	memcmp (ptr, ptr, len);
+	{
+	  /* We can't do the off-by-one trick with only one byte, so instead,
+             we compare to a fixed-sized buffer. */
+	  char randval[1];
+	  randval[0] = 0;
+	  dcam_saveval = memcmp (randval, ptr, len);
+	}
     }
   else
     retval = 0;

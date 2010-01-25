@@ -1,3 +1,21 @@
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_exec):
+	* postgresql/postgresql.c (Fpq_get_result):
+	Fix g++ 4.3 complaints about implicit conversions of string
+	literals (const char *) to char *.
+
+2010-01-16  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common:
+	* common/Makefile.common (.PHONY):
+	Use WIN32_ANY not HAVE_MS_WINDOWS so we still link with the
+	import library even when --with-msw=no.
+
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
 	* ldap/eldap.c (Fldap_search_basic):

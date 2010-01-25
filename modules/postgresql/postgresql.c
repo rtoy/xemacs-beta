@@ -120,7 +120,7 @@ Lisp_Object Vpg_coding_system;
 
 #define CHECK_LIVE_CONNECTION(P) do {					\
 	if (!P || (PQstatus (P) != CONNECTION_OK)) {			\
-		char *e = "bad value";					\
+		const char *e = "bad value";				\
 		if (P) e = PQerrorMessage (P);				\
 	 signal_ferror (Qprocess_error, "dead connection [%s]", e);	\
 	} } while (0)
@@ -203,7 +203,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[256];
   PGconn *P;
   ConnStatusType cst;
-  char *host="", *db="", *user="", *port="";
+  const char *host="", *db="", *user="", *port="";
 
   P = (XPGCONN (obj))->pgconn;
 
@@ -472,7 +472,7 @@ Make a new connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  char *error_message = "Out of Memory?";
+  const char *error_message = "Out of Memory?";
   char *c_conninfo;
 
   CHECK_STRING (conninfo);
@@ -517,7 +517,7 @@ Make a new asynchronous connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  char *error_message = "Out of Memory?";
+  const char *error_message = "Out of Memory?";
   char *c_conninfo;
 
   CHECK_STRING (conninfo);
@@ -919,7 +919,8 @@ Submit a query to Postgres and wait for the result.
 
   R = PQexec (P, c_query);
   {
-    char *tag, buf[BLCKSZ];
+    const Ascbyte *tag;
+    char buf[BLCKSZ];
 
     if (!R) out_of_memory ("query: out of memory", Qunbound);
     else
@@ -992,7 +993,8 @@ NIL is returned when no more query work remains.
   if (!R) return Qnil; /* not an error, there's no more data to get */
 
   {
-    char *tag, buf[BLCKSZ];
+    const Ascbyte *tag;
+    char buf[BLCKSZ];
 
     switch (PQresultStatus (R))
       {

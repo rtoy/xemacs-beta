@@ -180,7 +180,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    ourselves; hash.c hashtables do not interpret the value pointers.
 
    This array should be FcChar8**, but GCC 4.x bitches about signedness. */
-static Extbyte *fc_standard_properties[] = {
+static const Extbyte *fc_standard_properties[] = {
   /* treated specially, ordered first */
   "family", "size",
   /* remaining are alphabetized by group */
@@ -838,7 +838,7 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
      FC_CONFIG_DIR environment variable. */
       (name))
 {
-  char *fcname = "";
+  const Ascbyte *fcname = "";
 
   if (!NILP (name))
     {

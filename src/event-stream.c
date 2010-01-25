@@ -4137,7 +4137,7 @@ lookup_command_event (struct command_builder *command_builder,
 }
 
 static int
-is_scrollbar_event (Lisp_Object event)
+is_scrollbar_event (Lisp_Object USED_IF_SCROLLBARS (event))
 {
 #ifdef HAVE_SCROLLBARS
   Lisp_Object fun;

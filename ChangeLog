@@ -1,3 +1,32 @@
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* aclocal.m4 (XE_SHLIB_STUFF):
+	Use -export-all-symbols instead of -export-dynamic on PE targets
+	(Cygwin and MinGW).
+	
+	* configure.ac (XE_EXPAND_VARIABLE):
+	* configure.ac (TAB):
+	Create variable XEMACS_CC_GPP to check whether we're running g++.
+	Don't just check for an executable called `g++' -- it might be
+	called g++-4 or whatever.  Instead, check for either named `g++*'
+	or claiming to be g++ when called with --version.  Rewrite code do
+	use the variable.
+
+	Add -fno-strict-aliasing to optimization flags when GCC and
+	optimized, and in all cases with g++, since under these circumstances
+	strict aliasing is otherwise assumed, and XEmacs can't easily be
+	made to respect its restrictions.
+
+	* configure: Regenerate.
+	
+	
+
+2010-01-14  Ben Wing  <ben@xemacs.org>
+
+	* PROBLEMS:
+	Add description of crash on recent Cygwin 1.7 when using C++, NEWGC
+        and optimization.
+
 2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerate, now we no longer look for rint().
