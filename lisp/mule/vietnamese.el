@@ -51,7 +51,7 @@
    short-name "Vietnamese (VISCII)"
    long-name "Vietnamese (VISCII)"
    tags (latin vietnamese)
-   unicode-map '("unicode/libiconv/VISCII.TXT")
+   unicode-map ("unicode/libiconv/VISCII.TXT")
    ))
 
 (make-coding-system 
