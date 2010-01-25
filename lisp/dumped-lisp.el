@@ -207,7 +207,8 @@ in dumped-lisp.el and is not itself listed.")
 ;; compile with -no-packages.
 
        (when (featurep 'mule)
-	 '("mule/arabic"
+	 '("mule/general-early"
+	   "mule/arabic"
 	   "mule/chinese"
 	   "mule/cyrillic"
 	   "mule/english"
@@ -234,7 +235,9 @@ in dumped-lisp.el and is not itself listed.")
 	 "mule/mule-msw-init-late")
 
        (when (featurep 'mule)
-	 "mule/general-late")
+	 '("mule/uni-case-conv" ;; for old-Mule, after all charsets created
+	   "mule/general-late"
+	   ))
 
 ;;; mule-load.el ends here
 

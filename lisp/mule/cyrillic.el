@@ -33,59 +33,54 @@
 ;;; Code:
 
 ;; Case table:
-(loop
-  for (upper lower)
-  in '((#xcf #xef) ; YA
-       (#xce #xee) ; YU
-       (#xcd #xed) ; E
-       (#xcc #xec) ; SOFT SIGN
-       (#xcb #xeb) ; YERU
-       (#xca #xea) ; HARD SIGN
-       (#xc9 #xe9) ; SHCHA
-       (#xc8 #xe8) ; SHA
-       (#xc7 #xe7) ; CHE
-       (#xc6 #xe6) ; TSE
-       (#xc5 #xe5) ; HA
-       (#xc4 #xe4) ; EF
-       (#xc3 #xe3) ; U
-       (#xc2 #xe2) ; TE
-       (#xc1 #xe1) ; ES
-       (#xc0 #xe0) ; ER
-       (#xbf #xdf) ; PE
-       (#xbe #xde) ; O
-       (#xbd #xdd) ; EN
-       (#xbc #xdc) ; EM
-       (#xbb #xdb) ; EL
-       (#xba #xda) ; KA
-       (#xb9 #xd9) ; SHORT I
-       (#xb8 #xd8) ; I
-       (#xb7 #xd7) ; ZE
-       (#xb6 #xd6) ; ZHE
-       (#xb5 #xd5) ; IE
-       (#xb4 #xd4) ; DE
-       (#xb3 #xd3) ; GHE
-       (#xb2 #xd2) ; VE
-       (#xb1 #xd1) ; BE
-       (#xb0 #xd0) ; A
-       (#xaf #xff) ; DZHE
-       (#xae #xfe) ; SHORT U
-       (#xac #xfc) ; KJE
-       (#xab #xfb) ; TSHE
-       (#xaa #xfa) ; NJE
-       (#xa9 #xf9) ; LJE
-       (#xa8 #xf8) ; JE
-       (#xa7 #xf7) ; YI
-       (#xa6 #xf6) ; BYELORUSSIAN-UKRAINIAN I
-       (#xa5 #xf5) ; DZE
-       (#xa4 #xf4) ; UKRAINIAN IE
-       (#xa3 #xf3) ; GJE
-       (#xa2 #xf2) ; DJE
-       (#xa1 #xf1)) ; IO
-  with case-table = (standard-case-table)
-  do
-  (put-case-table-pair (make-char 'cyrillic-iso8859-5 upper)
-                       (make-char 'cyrillic-iso8859-5 lower)
-                       case-table))
+(setup-case-pairs
+ 'cyrillic-iso8859-5
+ '((#xcf #xef)				; YA
+   (#xce #xee)				; YU
+   (#xcd #xed)				; E
+   (#xcc #xec)				; SOFT SIGN
+   (#xcb #xeb)				; YERU
+   (#xca #xea)				; HARD SIGN
+   (#xc9 #xe9)				; SHCHA
+   (#xc8 #xe8)				; SHA
+   (#xc7 #xe7)				; CHE
+   (#xc6 #xe6)				; TSE
+   (#xc5 #xe5)				; HA
+   (#xc4 #xe4)				; EF
+   (#xc3 #xe3)				; U
+   (#xc2 #xe2)				; TE
+   (#xc1 #xe1)				; ES
+   (#xc0 #xe0)				; ER
+   (#xbf #xdf)				; PE
+   (#xbe #xde)				; O
+   (#xbd #xdd)				; EN
+   (#xbc #xdc)				; EM
+   (#xbb #xdb)				; EL
+   (#xba #xda)				; KA
+   (#xb9 #xd9)				; SHORT I
+   (#xb8 #xd8)				; I
+   (#xb7 #xd7)				; ZE
+   (#xb6 #xd6)				; ZHE
+   (#xb5 #xd5)				; IE
+   (#xb4 #xd4)				; DE
+   (#xb3 #xd3)				; GHE
+   (#xb2 #xd2)				; VE
+   (#xb1 #xd1)				; BE
+   (#xb0 #xd0)				; A
+   (#xaf #xff)				; DZHE
+   (#xae #xfe)				; SHORT U
+   (#xac #xfc)				; KJE
+   (#xab #xfb)				; TSHE
+   (#xaa #xfa)				; NJE
+   (#xa9 #xf9)				; LJE
+   (#xa8 #xf8)				; JE
+   (#xa7 #xf7)				; YI
+   (#xa6 #xf6)				; BYELORUSSIAN-UKRAINIAN I
+   (#xa5 #xf5)				; DZE
+   (#xa4 #xf4)				; UKRAINIAN IE
+   (#xa3 #xf3)				; GJE
+   (#xa2 #xf2)				; DJE
+   (#xa1 #xf1)))			; IO
 
 ;; The default character syntax is now word. Pay attention to the
 ;; exceptions in ISO-8859-5, copying them from ISO-8859-1. 
@@ -189,17 +184,6 @@ YI instead of some box-drawing characters.  Russian in this encoding
 \(without using box-drawing characters) is bit-for-bit compatible with
 Russian in KOI8-R.  "))
 
-;; Case support, for the new characters.
-(loop
-  for (upper lower)
-  in '((?\u0404 ?\u0454) ; UKRAINIAN IE
-       (?\u0406 ?\u0456) ; BYELORUSSIAN-UKRAINIAN I
-       (?\u0407 ?\u0457) ; YI
-       (?\u0490 ?\u0491)); GHE WITH UPTURN
-  with case-table = (standard-case-table)
-  do
-  (put-case-table-pair upper lower case-table))
-
 (set-language-info-alist
  "Ukrainian" '((coding-system koi8-u)
                (coding-priority koi8-u)
@@ -289,19 +273,6 @@ Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
 this 8-bit Cyrillic coding system makes those characters available
 that are necessary for writing Tajik, (забонӣ тоҷикӣ) the main
 language of Tajikistan and a close relative of Persian.  "))
-
-;; Case support, for the new characters.
-(loop
-  for (upper lower)
-  in '((?\u04B6 ?\u04B7) ;; CHE WITH DESCENDER
-       (?\u0492 ?\u0493) ;; GHE WITH STROKE
-       (?\u04B2 ?\u04B3) ;; HA WITH DESCENDER
-       (?\u04E2 ?\u04E3) ;; I WITH MACRON
-       (?\u049A ?\u049B) ;; KA WITH DESCENDER
-       (?\u04EE ?\u04EF)) ;; U WITH MACRON
-  with case-table = (standard-case-table)
-  do
-  (put-case-table-pair upper lower case-table))
 
 ;; Support fot the languages of the Caucasus.
 (make-internal-128-byte-charset
@@ -443,23 +414,6 @@ language of Tajikistan and a close relative of Persian.  "))
    documentation 
    "Note that this does not support old Russian orthography;
 for that, see koi8-o. "))
-
-(loop
-  for (upper lower)
-  in '((?\u04E8 ?\u04E9) ;; BARRED O
-       (?\u04B8 ?\u04B9) ;; CHE WITH VERTICAL STROKE
-       (?\u0402 ?\u0452) ;; DJE
-       (?\u0405 ?\u0455) ;; DZE
-       (?\u04A2 ?\u04A3) ;; EN WITH DESCENDER
-       (?\u049C ?\u049D) ;; KA WITH VERTICAL STROKE
-       (?\u04BA ?\u04BB) ;; SHHA
-       (?\u04D8 ?\u04D9) ;; SCHWA
-       (?\u04AE ?\u04AF) ;; STRAIGHT U
-       (?\u04B0 ?\u04B1) ;; STRAIGHT U WITH STROKE
-       (?\u0496 ?\u0497)) ;; ZHE WITH DESCENDER
-  with case-table = (standard-case-table)
-  do
-  (put-case-table-pair upper lower case-table))
 
 ;; Archaic Russian support.
 (make-internal-128-byte-charset
@@ -604,16 +558,6 @@ for that, see koi8-o. "))
 
 This is mostly compatible with KOI8-R in the alphabetic characters, and
 provides Іі, Ѳѳ, Ѣѣ, and Ѵѵ instead of some of the box-drawing characters.  "))
-
-(loop
-  for (upper lower)
-  in '((?\u0472 ?\u0473) ;; FITA
-       (?\u0474 ?\u0475) ;; IZHITSA
-       (?\u0408 ?\u0458) ;; JE
-       (?\u0462 ?\u0463)) ;; YAT
-  with case-table = (standard-case-table)
-  do
-  (put-case-table-pair upper lower case-table))
 
 (provide 'cyrillic)
 

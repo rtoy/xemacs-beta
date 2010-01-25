@@ -45,12 +45,6 @@ charsets, then all other Latin charsets.")
 ;; (lisp/international/latin-*.el), written by several people and
 ;; updated by Erik Naggum.
 
-(defun setup-case-pairs (charset pairs)
-  (loop 
-    for (uc lc) in pairs 
-    with table = (standard-case-table)
-    do (put-case-table-pair
-        (make-char charset uc) (make-char charset lc) table)))
 
 ;; Latin-1's case is dealt with in iso8859-1.el, which see. Its syntax is
 ;; initialised in syntax.c:complex_vars_of_syntax.
@@ -714,11 +708,7 @@ Romanian language\""
 
 ;; end of ISO-8859-9
 
-;; This is a utility function; we don't want it in the dumped XEmacs.
 
-(fmakunbound 'setup-case-pairs)
-
-
 ;; Language environments. 
 (loop 
   for ((charset codesys default-input nice-charset-1 nice-charset-2
