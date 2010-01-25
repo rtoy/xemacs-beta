@@ -1,3 +1,7 @@
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* fix-perms.sh: Also make lib-src/*.py executable.
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* fakemail.c (args_size):
