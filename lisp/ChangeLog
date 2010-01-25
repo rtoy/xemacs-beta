@@ -1,5 +1,19 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* unicode.el (initialize-default-unicode-precedence-list):
+	Use `set-default-unicode-precedence-list'.
+	* unicode.el (init-windows-glyph-list-4):
+	Comment fixes.
+	
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Use `set-buffer-unicode-precedence-list'.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	* simple.el (capitalize-string-as-title):
 	Use `with-string-as-buffer-contents' instead of emulating it.
 

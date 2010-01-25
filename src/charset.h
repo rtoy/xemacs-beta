@@ -411,29 +411,89 @@ do									\
     INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);		\
 } while (0)
 
-#define HANDLE_CHARSET_CODEPOINT_ERROR(errtext, errval)	\
-  if (NILP (*charset))					\
-    {							\
-      switch (fail)					\
-	{						\
-	case CONVERR_FAIL:				\
-	  break;					\
+#define HANDLE_CHARSET_CODEPOINT_ERROR(errtext, errval, charset, c1, c2, fail)\
+do									\
+{									\
+  if (NILP (*charset))							\
+    {									\
+      switch (fail)							\
+	{								\
+	case CONVERR_FAIL:						\
+	  break;							\
+									\
+	case CONVERR_ABORT:						\
+	default:							\
+	  ABORT (); break;						\
+									\
+	case CONVERR_ERROR:						\
+	  text_conversion_error (errtext, errval);			\
+									\
+	case CONVERR_SUCCEED:						\
+	case CONVERR_SUBSTITUTE:					\
+	  *charset = Vcharset_ascii;					\
+	  *c1 = 0;							\
+	  *c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;			\
+	  break;							\
+	}								\
+    }									\
+}									\
+while (0)
+
+#define HANDLE_UNICODE_ERROR(errtext, errval, code, charset, c1, c2, fail) \
+do									\
+{									\
+  if (code < 0)								\
+    {									\
+      switch (fail)							\
+	{								\
+	case CONVERR_FAIL:						\
+	  break;							\
+									\
+	case CONVERR_ABORT:						\
+	default:							\
+	  ABORT (); break;						\
+									\
+	case CONVERR_ERROR:						\
+	  text_conversion_error (errtext, errval);			\
+									\
+	case CONVERR_SUCCEED:						\
+	case CONVERR_SUBSTITUTE:					\
+	  code = UNICODE_REPLACEMENT_CHAR;				\
+	  break;							\
+									\
+	case CONVERR_USE_PRIVATE:					\
+	  code = charset_codepoint_to_private_unicode (charset, c1, c2); \
+	  break;							\
+	}								\
+    }									\
+}									\
+while (0)
+
+/* WARNING: Unlike the previous two, this should be called *AFTER*
+   detecting an error condition, and will return the appropriate value
+   rather than storing it. */
+
+#define HANDLE_ICHAR_ERROR(errtext, errval, fail)	\
+do							\
+{							\
+switch (fail)						\
+  {							\
+  case CONVERR_FAIL:					\
+    return -1;						\
 							\
-	case CONVERR_ABORT:				\
-	default:					\
-	  ABORT (); break;				\
+  case CONVERR_ABORT:					\
+  default:						\
+    ABORT (); return -1;				\
 							\
-	case CONVERR_ERROR:				\
-	  text_conversion_error (errtext, errval);	\
+  case CONVERR_ERROR:					\
+    text_conversion_error (errtext, errval);		\
 							\
-	case CONVERR_SUCCEED:				\
-	case CONVERR_SUBSTITUTE:			\
-	  *charset = Vcharset_ascii;			\
-	  *c1 = 0;					\
-	  *c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;	\
-	  break;					\
-	}						\
-    }
+  case CONVERR_SUCCEED:					\
+  case CONVERR_SUBSTITUTE:				\
+    return CANT_CONVERT_CHAR_WHEN_DECODING;		\
+  }							\
+}							\
+while (0)
 
 /* Convert a charset codepoint (CHARSET, one or two octets) to Unicode.
    Return -1 if can't convert. */
@@ -497,35 +557,11 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
   int code;
 
   code = charset_codepoint_to_unicode_raw (charset, c1, c2);
-  if (code < 0)
-    {
-      switch (fail)
-	{
-	case CONVERR_FAIL:
-	  break;
-
-	case CONVERR_ABORT:
-	default:
-	  ABORT (); break;
-
-	case CONVERR_ERROR:
-	  text_conversion_error ("Can't convert charset codepoint to Unicode",
-				 XCHARSET_DIMENSION (charset) == 2 ?
-				 list3 (charset, make_int (c1),
-					make_int (c2)) :
-				 list2 (charset, make_int (c2)));
-
-	case CONVERR_SUCCEED:
-	case CONVERR_SUBSTITUTE:
-	  code = UNICODE_REPLACEMENT_CHAR;
-	  break;
-
-	case CONVERR_USE_PRIVATE:
-	  code = charset_codepoint_to_private_unicode (charset, c1, c2);
-	  break;
-	}
-    }
-
+  HANDLE_UNICODE_ERROR ("Can't convert charset codepoint to Unicode",
+			XCHARSET_DIMENSION (charset) == 2 ?
+			list3 (charset, make_int (c1), make_int (c2)) :
+			list2 (charset, make_int (c2)),
+			code, charset, c1, c2, fail);
   ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR (code);
   return code;
 }
@@ -556,10 +592,14 @@ filtered_unicode_to_charset_codepoint (int code, Lisp_Object precarray,
       *c2 = code;
     }
   else
-    unicode_to_charset_codepoint_raw (code, precarray, predicate,
-				      charset, c1, c2);
+    {
+      assert (code >= 0x80);
+      unicode_to_charset_codepoint_raw (code, precarray, predicate,
+					charset, c1, c2);
+    }
   HANDLE_CHARSET_CODEPOINT_ERROR
-    ("Can't convert Unicode codepoint to charset codepoint", make_int (code));
+    ("Can't convert Unicode codepoint to charset codepoint", make_int (code),
+     charset, c1, c2, fail);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
 
@@ -669,7 +709,8 @@ filtered_ichar_to_charset_codepoint (Ichar ch, Lisp_Object
   filtered_unicode_to_charset_codepoint ((int) ch, precarray, predicate,
 					 charset, c1, c2, fail);
   HANDLE_CHARSET_CODEPOINT_ERROR
-    ("Can't convert character to charset codepoint", make_char (ch));
+    ("Can't convert character to charset codepoint", make_char (ch),
+     charset, c1, c2, fail);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 #else
   if (ch <= 0x7F)
@@ -803,7 +844,7 @@ filtered_itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object precarray,
 					 c1, c2);
   HANDLE_CHARSET_CODEPOINT_ERROR
     ("Can't convert character to charset codepoint",
-     make_char (itext_ichar (ptr)));
+     make_char (itext_ichar (ptr)), charset, c1, c2, fail);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
 

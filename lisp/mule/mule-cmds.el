@@ -798,9 +798,10 @@ the language environment for the major languages of Western Europe."
          nil)
      unicode-error-default-translation-table))
 
-  ;; Fit the charsets preferences in unicode conversions for the
-  ;; language environment.
-  (setq unicode-precedence-list (get-language-info language-name 'charset))
+  ;; Set the buffer-local Unicode precedence list from the the charset
+  ;; preferences in the language environment.
+  (set-buffer-unicode-precedence-list
+   (current-buffer) (get-language-info language-name 'charset))
 
   (run-hooks 'set-language-environment-hook)
   (force-mode-line-update t))

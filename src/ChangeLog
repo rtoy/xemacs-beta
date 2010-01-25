@@ -1,5 +1,102 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* charset.h:
+	* charset.h (HANDLE_CHARSET_CODEPOINT_ERROR):
+	* mule-coding.c (decode_big5_char):
+	* text.c (old_mule_unicode_to_ichar):
+	Clean up, add HANDLE_UNICODE_ERROR, HANDLE_ICHAR_ERROR.
+	Use them.
+	
+	* emacs.c (main_1):
+	Comment fix.
+	
+	* mule-coding.c:
+	* mule-coding.c (Fdecode_big5_char):
+	Clean up doc string.
+	
+	* redisplay-xlike-inc.c:
+	Remove accidental merge marker.
+	
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add a FAIL argument and use it.
+
+	* lisp.h:
+	* mule-coding.c (Fdecode_big5_char):
+	* text.c (decode_handle_error):
+	* text.c (Fmake_char):
+	* text.c (Fchar_to_unicode):
+	* text.c (Funicode_to_char):
+	Add ALLOW_PRIVATE arg to decode_handle_error to control
+	whether to allow `use-private'.
+	
+	* text.c (Funicode_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add HANDLE-ERROR argument and document.
+	
+	* unicode.c:
+	Delete non-Mule stubs of precedence-array functions.
+	
+	* unicode.c (print_precedence_array):
+	New fun for displaying the contents of a precedence-array.
+	
+	* unicode.c (filter_precedence_array):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	Resurrect filter_precedence_array.
+	Use in Fnormalized_unicode_precedence_list.
+	
+	* unicode.c (free_precedence_array):
+	Comment fix.
+	
+	* lisp.h:
+	* mule-coding.c (init_mule_coding):
+	* unicode.c (simple_convert_predence_list_to_array):
+	Rename internal_convert_precedence_list_to_array() to
+	simple_convert_predence_list_to_array().
+
+	* lisp.h:
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (get_external_unicode_codepoint):
+	* text.c (Funicode_to_char):
+	* text.c (Funicode_to_charset_codepoint):
+	* unicode.c (external_convert_precedence_list_to_array):
+	* unicode.c (decode_buffer_or_precedence_list):
+	Don't allow external_convert_precedence_list_to_array() to take
+	a buffer, and don't directly retrieve a precedence list from a
+	buffer.  Instead, use the buffer_*() charset-codepoint functions
+	so that both the buffer-local and global precedence lists are
+	consulted; use new fn decode_buffer_or_precedence_list() in
+	doing this.
+	
+	* unicode.c (RUP_MAKE_FULL_P):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	Don't automatically make precedence lists full in
+	recalculate_unicode_precedence_1(), because then buffer-local
+	cached versions have everything in them.  Instead, add a flag
+	RUP_MAKE_FULL_P and use it only when normalizing the default
+	precedence list.
+	
+	* unicode.c (precedence_array_to_list):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	New fn precedence_array_to_list.  Use in
+	Fnormalized_unicode_precedence_list.  Clean up
+	Fnormalized_unicode_precedence_list to handle the
+	BUFFER-OR-PRECEDENCE-ARRAY argument properly.
+	
+	* unicode.c (complex_vars_of_unicode):
+	Set initial values of the default precedence arrays for use
+	in unicode.el before the proper value gets set.
+	Bracket precedence-array creation in #ifdef MULE.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	* lrecord.h (enum lrecord_type):
 	Sort the order of types.
 

@@ -214,7 +214,7 @@ static Lisp_Object Vunicode_query_string, Vunicode_invalid_string,
    set-default-unicode-precedence-list */
 static Lisp_Object Vdefault_unicode_precedence_list;
 /* Cached version of Vdefault_unicode_precedence_list, as a precedence array */
-static Lisp_Object Vdefault_unicode_precedence_array;
+Lisp_Object Vdefault_unicode_precedence_array;
 /* Cache mapping raw precedence lists to precedence arrays */
 static Lisp_Object Vprecedence_list_to_array;
 /* Cache mapping conses of pairs of precedence arrays to combined
@@ -1346,10 +1346,9 @@ private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
 /***************************************************************************/
 
 
-/******************** Non-Mule stubs *******************/
+#ifdef MULE
 
-#ifndef MULE
-
+/******************** Precedence-array object *******************/
 
 /************
 
@@ -1361,34 +1360,6 @@ private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
   a Lisp_Object_dynarr.
 
 ************/
-
-void
-free_precedence_array (Lisp_Object precarray)
-{
-  text_checking_assert (NILP (precarray));
-}
-
-/* Convert the given list of charsets (not previously validated) into a
-   precedence array for use with unicode_to_charset_codepoint(). */
-
-Lisp_Object
-external_convert_precedence_list_to_array (Lisp_Object UNUSED
-					   (precedence_array),
-					   int UNUSED (allow_buffer))
-{
-  return Qnil;
-}
-
-Lisp_Object
-internal_convert_precedence_list_to_array (Lisp_Object UNUSED
-					   (precedence_array))
-{
-  return Qnil;
-}
-
-#else /* MULE */
-
-/******************** Precedence-array object *******************/
 
 static const struct memory_description precedence_array_description [] = {
   { XD_BLOCK_PTR, offsetof (struct precedence_array, precdyn),
@@ -1421,6 +1392,30 @@ finalize_precedence_array (void *header, int for_disksave)
     }
 }
 
+static void
+print_precedence_array (Lisp_Object obj, Lisp_Object printcharfun,
+			int UNUSED (escapeflag))
+{
+  struct precedence_array *data =
+    (struct precedence_array *) XPRECEDENCE_ARRAY (obj);
+  int i;
+
+  if (print_readably)
+    printing_unreadable_object ("precedence array");
+
+  write_c_string (printcharfun,
+		  "#<INTERNAL OBJECT (XEmacs bug?) (precedence-array)");
+  write_fmt_string (printcharfun, " length=%d", Dynarr_length (data->precdyn));
+  for (i = 0; i < Dynarr_length (data->precdyn); i++)
+    {
+      Lisp_Object charset = Dynarr_at (data->precdyn, i);
+      write_fmt_string_lisp (printcharfun, " #%d: %s", 2, make_int (i + 1),
+			     XCHARSET_NAME (charset));
+    }
+  write_fmt_string (printcharfun, " 0x%lx>", (unsigned long) XPNTR (obj));
+}
+
+
 /* NOTE: This is non-dumpable currently, even though it would be more
    convenient if it were dumpable, due to annoying limitations in New GC.
    Basically, dumpable objects cannot have finalizers -- any objects that
@@ -1439,7 +1434,7 @@ finalize_precedence_array (void *header, int for_disksave)
 
 DEFINE_LRECORD_IMPLEMENTATION ("precedence-array", precedence_array,
 			       0, /*dumpable-flag*/
-                               mark_precedence_array, internal_object_printer,
+                               mark_precedence_array, print_precedence_array,
 			       finalize_precedence_array, 0, 0, 
 			       precedence_array_description,
 			       struct precedence_array);
@@ -1513,15 +1508,13 @@ add_charsets_to_precedence_array (Lisp_Object list, Lisp_Object precarray)
   }
 }
 
-#if 0 /* not currently used */
-
 /* Go through ORIG_PRECARRAY and add all charsets to NEW_PRECARRAY that pass
    the predicate, if not already added.  To keep track of charsets already
    seen, this makes use of a hash table.  At the beginning of generating
    the list, you must call begin_precedence_array_generation().  PREDICATE
    is passed a charset and should return non-zero if the charset is to be
    added.  If PREDICATE is NULL, always add the charset. */
-void
+static void
 filter_precedence_array (Lisp_Object orig_precarray,
 			Lisp_Object new_precarray,
 			int (*predicate) (Lisp_Object))
@@ -1535,8 +1528,6 @@ filter_precedence_array (Lisp_Object orig_precarray,
 	add_charset_to_precedence_array (charset, new_precarray);
     }
 }
-
-#endif /* 0 */
 
 void
 free_precedence_array (Lisp_Object precarray)
@@ -1635,10 +1626,11 @@ convert_precedence_list_to_array (Lisp_Object preclist, int flags)
 }
 
 /* Validate and convert the given list of charsets into a precedence array
-   object for use with unicode_to_charset_codepoint(). */
+   object for use with unicode_to_charset_codepoint().  Don't do any
+   caching, don't normalize or call Lisp, don't make full, etc. */
 
 Lisp_Object
-internal_convert_precedence_list_to_array (Lisp_Object preclist)
+simple_convert_predence_list_to_array (Lisp_Object preclist)
 {
   return convert_precedence_list_to_array (preclist, 0);
 }
@@ -1649,23 +1641,10 @@ internal_convert_precedence_list_to_array (Lisp_Object preclist)
 
    WARNING: This calls Lisp. */
 
-Lisp_Object
-external_convert_precedence_list_to_array (Lisp_Object preclist,
-					   int allow_buffer)
+static Lisp_Object
+external_convert_precedence_list_to_array (Lisp_Object preclist)
 {
-  Lisp_Object precarray;
-
-  if (allow_buffer)
-    {
-      struct buffer *buf;
-      if (NILP (preclist))
-	buf = current_buffer;
-      else if (BUFFERP (preclist))
-	buf = XBUFFER (preclist);
-      return buf->unicode_precedence_array;
-    }
-
-  precarray = Fgethash (preclist, Vprecedence_list_to_array, Qnil);
+  Lisp_Object precarray = Fgethash (preclist, Vprecedence_list_to_array, Qnil);
   if (NILP (precarray))
     {
       precarray = convert_precedence_list_to_array (preclist,
@@ -1675,11 +1654,24 @@ external_convert_precedence_list_to_array (Lisp_Object preclist,
   return precarray;
 }
 
+
+Lisp_Object
+decode_buffer_or_precedence_list (Lisp_Object preclist)
+{
+  if (NILP (preclist))
+    return wrap_buffer (current_buffer);
+  else if (BUFFERP (preclist))
+    return preclist;
+  else
+    return external_convert_precedence_list_to_array (preclist);
+}
+
 /**************** The global and buffer-local precedence lists ***************/
 
 #define RUP_NUKE_BUFFER_SLOTS (1 << 0)
 #define RUP_EARLY_ERROR_HANDLING (1 << 1)
 #define RUP_CLEAR_HASH_TABLE (1 << 2)
+#define RUP_MAKE_FULL_P (1 << 3)
 
 /* Rebuild one buffer-local Unicode precedence array slot.  Return a
    precedence array.  Compute the precedence array from PRECLIST1.  If
@@ -1700,10 +1692,10 @@ recalculate_unicode_precedence_1 (Lisp_Object preclist, int flags)
       else
 	{
 	  Lisp_Object precarr;
-	  int cplta_flags = CPLTA_NORMALIZE_P | CPLTA_MAKE_FULL_P |
-	    (flags & RUP_EARLY_ERROR_HANDLING
-	     ? CPLTA_EARLY_ERROR_HANDLING
-	     : 0);
+	  int cplta_flags = CPLTA_NORMALIZE_P |
+	    (flags & RUP_MAKE_FULL_P ? CPLTA_MAKE_FULL_P : 0) |
+	    (flags & RUP_EARLY_ERROR_HANDLING ? CPLTA_EARLY_ERROR_HANDLING : 0)
+	    ;
 
 	  /* No GCPRO because we don't have pointers to any created objects
 	     till after the following function runs, and it's the only one
@@ -1732,7 +1724,8 @@ recalculate_unicode_precedence (int flags)
       Fclrhash (Vprecedence_array_cons_to_array);
     }
   Vdefault_unicode_precedence_array =
-    recalculate_unicode_precedence_1 (Vdefault_unicode_precedence_list, flags);
+    recalculate_unicode_precedence_1 (Vdefault_unicode_precedence_list,
+				      flags | RUP_MAKE_FULL_P);
   {
     ALIST_LOOP_3 (name, buffer, Vbuffer_alist)
       {
@@ -1794,7 +1787,7 @@ removing any duplicates.
   /* Convert and validate first before changing
      Vdefault_unicode_precedence_list */
   Vdefault_unicode_precedence_array =
-    external_convert_precedence_list_to_array (list, 0);
+    external_convert_precedence_list_to_array (list);
   Vdefault_unicode_precedence_list = list;
   return Qnil;
 }
@@ -1838,7 +1831,7 @@ converting tags to their corresponding charsets using
      unicode_precedence_list */
   struct buffer *buf = decode_buffer (buffer, 0);
   buf->unicode_precedence_array =
-    external_convert_precedence_list_to_array (list, 0);
+    external_convert_precedence_list_to_array (list);
   buf->unicode_precedence_list = list;
   return Qnil;
 }
@@ -1856,40 +1849,58 @@ See `set-buffer-unicode-precedence-list' for more information.
   return buf->unicode_precedence_list;
 }
 
+static Lisp_Object
+precedence_array_to_list (Lisp_Object precarray)
+{
+  Lisp_Object list = Qnil;
+  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (precarray);
+  int i;
+
+  for (i = Dynarr_length (precdyn) - 1; i >= 0; i--)
+    list = Fcons (XCHARSET_NAME (Dynarr_at (precdyn, i)), list);
+  return list;
+}
+
 DEFUN ("normalized-unicode-precedence-list",
        Fnormalized_unicode_precedence_list,
        0, 1, 0, /*
 Return the precedence order among charsets used for Unicode decoding.
 
-Value is a list of charsets, which are searched in order for a translation
-matching a given Unicode character.  This value differs from the value
-returned by `buffer-unicode-precedence-list' or
-`default-unicode-precedence-list' in that it is  of the variable `unicode-precedence-list' in that charset tags are expanded
+Return value is the actual list of charsets that would be consulted if
+BUFFER-OR-PRECEDENCE-LIST were specified as the corresponding argument
+to any function that accepts a buffer or precedence list and uses it
+to convert Unicode codepoints to charset codepoints.  This value differs
+from the value returned by `buffer-unicode-precedence-list' or
+`default-unicode-precedence-list' in that charset tags are expanded and,
+in the case that `nil' or a buffer is given, any unspecified charsets
+are added at the end in an indeterminate order.
 
-The actual charset ordering used for converting Unicode codepoints to
-charset codepoints is determined by concatenating the buffer-specific
-Unicode precedence list (see `set-buffer-unicode-precedence-list'), the
-default precedence list, and the list of all charsets, converting tags to
-their corresponding charsets using `charset-tag-to-charset-list', and
-removing any duplicates.
+See `unicode-to-char' for more information on precedence lists, and
+`unicode-to-charset-codepoint' as an example of a function that takes a
+BUFFER-OR-PRECEDENCE-LIST argument.
 
-
-to the charsets they match, and any unspecified charsets are added at the
-end in an indeterminate order.
-
-Value is specific to BUFFER, which defaults to the current buffer.
+A Value of nil for BUFFER-OR-PRECEDENCE-LIST is the same as specifying
+the current buffer.
 */
        (buffer_or_precedence_list))
 {
-  int i;
-  Lisp_Object list = Qnil;
-  Lisp_Object precarray =
-    external_convert_precedence_list_to_array (buffer_or_precedence_list, 1);
-  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (precarray);
+  Lisp_Object bopa =
+    decode_buffer_or_precedence_list (buffer_or_precedence_list);
+  Lisp_Object precarray;
 
-  for (i = Dynarr_length (precdyn) - 1; i >= 0; i--)
-    list = Fcons (XCHARSET_NAME (Dynarr_at (precdyn, i)), list);
-  return list;
+  if (BUFFERP (bopa))
+    {
+      precarray = allocate_precedence_array ();
+      begin_precedence_array_generation ();
+      filter_precedence_array (XBUFFER (bopa)->unicode_precedence_array,
+			       precarray, NULL);
+      filter_precedence_array (Vdefault_unicode_precedence_array,
+			       precarray, NULL);
+    }
+  else
+    precarray = bopa;
+
+  return precedence_array_to_list (precarray);
 }
 
 /***************************************************************************/
@@ -3733,8 +3744,10 @@ vars_of_unicode (void)
     = build_msg_string ("Mule charset for otherwise unknown Unicode code points.");
 #endif
   staticpro (&Vdefault_unicode_precedence_list);
+  /* Gets reset in complex_vars_of_unicode() */
   Vdefault_unicode_precedence_list = Qnil;
   staticpro (&Vdefault_unicode_precedence_array);
+  /* Gets reset in complex_vars_of_unicode() */
   Vdefault_unicode_precedence_array = Qnil;
 
   staticpro (&Vprecedence_array_charsets_seen_hash);
@@ -3846,6 +3859,7 @@ complex_vars_of_unicode (void)
 		    Qmnemonic, build_string ("UTF8")),
 	     list2 (Qunicode_type, Qutf_8)));
 
+#ifdef MULE
 #ifndef UNICODE_INTERNAL
   /* Allocate the first JIT charset so that it appears in Unicode
      precedence lists.  This is important because JIT characters will only
@@ -3855,6 +3869,16 @@ complex_vars_of_unicode (void)
   Vcharset_jit_ucs_charset_0 = Vcurrent_jit_charset;
   staticpro (&Vcharset_jit_ucs_charset_0);
 #endif /* not UNICODE_INTERNAL */
+
+  /* Set up a default-unicode-precedence-list for the moment so that
+     e.g. unicode.el won't run into real problems doing the stuff it
+     does */
+  Vdefault_unicode_precedence_list =
+    list4 (Vcharset_ascii, Vcharset_control_1, Vcharset_latin_iso8859_1,
+	   Vcharset_jit_ucs_charset_0);
+  Vdefault_unicode_precedence_array =
+    simple_convert_predence_list_to_array (Vdefault_unicode_precedence_list);
+#endif /* MULE */
 }
 
 void

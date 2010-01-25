@@ -1757,26 +1757,8 @@ old_mule_unicode_to_ichar (int code, Lisp_Object precarray,
   unicode_to_charset_codepoint_raw (code, precarray, mypred,
 				    &charset, &c1, &c2);
   if (NILP (charset))
-    {
-      switch (fail)
-	{
-	case CONVERR_FAIL:
-	  return -1;
-
-	case CONVERR_ABORT:
-	default:
-	  ABORT (); break;
-
-	case CONVERR_ERROR:
-	  text_conversion_error
-	    ("Can't convert Unicode codepoint to character", make_int (code));
-
-	case CONVERR_SUCCEED:
-	case CONVERR_SUBSTITUTE:
-	  return CANT_CONVERT_CHAR_WHEN_DECODING;
-	}
-    }
-      
+    HANDLE_ICHAR_ERROR ("Can't convert Unicode codepoint to character",
+			make_int (code), fail);
   return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
 }
 
@@ -5364,17 +5346,21 @@ static void
 external_char_to_charset_codepoint (Lisp_Object lispch,
 				    Lisp_Object buffer_or_precedence_list,
 				    Lisp_Object *charset, int *c1, int *c2,
-				    int munge_codepoints)
+				    enum converr fail, int munge_codepoints)
 {
+  Lisp_Object bopa =
+    decode_buffer_or_precedence_list (buffer_or_precedence_list);
   Ichar ch;
   CHECK_CHAR_COERCE_INT (lispch);
   ch = XCHAR (lispch);
 
-  {
-    Lisp_Object precarray =
-      external_convert_precedence_list_to_array (buffer_or_precedence_list, 1);
-    ichar_to_charset_codepoint (ch, precarray, charset, c1, c2, CONVERR_FAIL);
-  }
+  if (BUFFERP (bopa))
+    buffer_ichar_to_charset_codepoint (ch, XBUFFER (bopa),
+				       charset, c1, c2, fail);
+  else
+    ichar_to_charset_codepoint (ch, bopa, charset, c1, c2, fail);
+  if (NILP (*charset))
+    return;
   if (munge_codepoints)
     {
       /* Bogus bogus bogus.  Munge the codepoints to match the old way of
@@ -5402,19 +5388,19 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
 static int
 get_external_unicode_codepoint (Lisp_Object unicode,
 				Lisp_Object buffer_or_precedence_list,
-				Lisp_Object *precarray_out)
+				Lisp_Object *buffer_or_precarray_out)
 {
   int code = decode_unicode (unicode);
-  Lisp_Object precarray =
-    external_convert_precedence_list_to_array (buffer_or_precedence_list, 1);
+  Lisp_Object bopa =
+    decode_buffer_or_precedence_list (buffer_or_precedence_list);
 
-  if (precarray_out)
-    *precarray_out = precarray;
+  if (buffer_or_precarray_out)
+    *buffer_or_precarray_out = bopa;
   return code;
 }
 
 enum converr
-decode_handle_error (Lisp_Object err)
+decode_handle_error (Lisp_Object err, int allow_use_private)
 {
   CHECK_SYMBOL (err);
   if (NILP (err) || EQ (err, Qfail))
@@ -5425,10 +5411,16 @@ decode_handle_error (Lisp_Object err)
     return CONVERR_SUCCEED;
   if (EQ (err, Qsubstitute))
     return CONVERR_SUBSTITUTE;
-  if (EQ (err, Quse_private))
-    return CONVERR_USE_PRIVATE;
-  invalid_constant
-    ("Must be nil, `fail', `error', `succeed', `substitute', or `use-private'", err);
+  if (allow_use_private)
+    {
+      if (EQ (err, Quse_private))
+	return CONVERR_USE_PRIVATE;
+      invalid_constant
+	("Must be nil, `fail', `error', `succeed', `substitute', or `use-private'", err);
+    }
+  else
+    invalid_constant
+      ("Must be nil, `fail', `error', `succeed', or `substitute'", err);
   /* Not reached */
 }
 
@@ -5635,7 +5627,7 @@ argument.  The following functions make use of a charset precedence list:
 */
        (charset, octet1, octet2, handle_error))
 {
-  enum converr fail = decode_handle_error (handle_error);
+  enum converr fail = decode_handle_error (handle_error, 1);
   int a1, a2;
   Ichar ch;
 
@@ -5662,7 +5654,7 @@ nil or `fail'	Return nil
 */
        (character, handle_error))
 {
-  enum converr fail = decode_handle_error (handle_error);
+  enum converr fail = decode_handle_error (handle_error, 1);
 
   CHECK_CHAR_COERCE_INT (character);
   return make_int (ichar_to_unicode (XCHAR (character), fail));
@@ -5719,22 +5711,27 @@ HANDLE-ERROR controls error behavior:
 nil or `fail'	Return nil
 `abort'		Signal an error
 `succeed'	Same as `substitute'
-`substitute'	Substitute a replacement character
+`substitute'	Substitute a '?' character
 */
        (unicode, buffer_or_precedence_list, handle_error))
 {
-  Lisp_Object unicode_prec;
+  Lisp_Object bopa;
   int c = get_external_unicode_codepoint (unicode, buffer_or_precedence_list,
-					  &unicode_prec);
-  enum converr fail = decode_handle_error (handle_error);
-  Ichar ret = unicode_to_ichar (c, unicode_prec, fail);
+					  &bopa);
+  enum converr fail = decode_handle_error (handle_error, 0);
+  Ichar ret;
+
+  if (BUFFERP (bopa))
+    ret = buffer_unicode_to_ichar (c, XBUFFER (bopa), fail);
+  else
+    ret = unicode_to_ichar (c, bopa, fail);
 
   if (ret == -1)
     return Qnil;
   return make_char (ret);
 }
 
-DEFUN ("char-to-charset-codepoint", Fchar_to_charset_codepoint, 1, 2, 0, /*
+DEFUN ("char-to-charset-codepoint", Fchar_to_charset_codepoint, 1, 3, 0, /*
 Return a charset codepoint corresponding to character CH.
 A charset codepoint is a list of a charset symbol (typically describing a
 national character set) and one or two octets, indexing the particular
@@ -5751,14 +5748,22 @@ precedence list).  The returned charset is determined by searching the list
 of charsets specified by the Unicode precedence list, in order, for the
 given character.  The return value will be nil if the character is not
 found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (ch, buffer_or_precedence_list))
+       (ch, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object charset;
   int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, 0);
+				      &charset, &c1, &c2, fail, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5789,7 +5794,7 @@ nil or `fail'	Return nil
        (charset, arg1, arg2, handle_error))
 {
   int a1, a2;
-  enum converr err = decode_handle_error (handle_error);
+  enum converr err = decode_handle_error (handle_error, 1);
   int code;
 
   charset = get_external_charset_codepoint (charset, arg1, arg2, &a1, &a2, 0);
@@ -5800,7 +5805,7 @@ nil or `fail'	Return nil
 }
 
 DEFUN ("unicode-to-charset-codepoint", Funicode_to_charset_codepoint,
-       1, 2, 0, /*
+       1, 3, 0, /*
 Convert a Unicode codepoint to a charset codepoint.
 A charset codepoint is a list of a charset symbol (typically describing a
 national character set) and one or two octets, indexing the particular
@@ -5815,17 +5820,28 @@ precedence list).  The returned charset is determined by searching the list
 of charsets specified by the Unicode precedence list, in order, for the
 given codepoint.  The return value will be nil if the codepoint is not
 found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (code, buffer_or_precedence_list))
+       (code, buffer_or_precedence_list, handle_error))
 {
-  Lisp_Object precarray;
+  Lisp_Object bopa;
   int c = get_external_unicode_codepoint (code, buffer_or_precedence_list,
-					  &precarray);
+					  &bopa);
+  enum converr fail = decode_handle_error (handle_error, 0);
   Lisp_Object charset;
   int a1, a2;
 
-  unicode_to_charset_codepoint (c, precarray, &charset, &a1, &a2,
-				CONVERR_FAIL);
+  if (BUFFERP (bopa))
+    buffer_unicode_to_charset_codepoint (c, XBUFFER (bopa),
+					 &charset, &a1, &a2, fail);
+  else
+    unicode_to_charset_codepoint (c, bopa, &charset, &a1, &a2, fail);
   
   if (NILP (charset))
     return Qnil;
@@ -5837,13 +5853,13 @@ found in any of the charsets in the precedence list.
     return list2 (XCHARSET_NAME (charset), make_int (a2));
 }
 
-DEFUN ("char-charset", Fchar_charset, 1, 2, 0, /*
+DEFUN ("char-charset", Fchar_charset, 1, 3, 0, /*
 Convert character CH to a charset codepoint and return the charset.
 The returned value is a symbol naming a charset (typically, a national
 character set); see `make-char'.
 
 This function is exactly equivalent to the expression
-\(first (char-to-charset-codepoint CH PRECEDENCE-LIST)).
+\(first (char-to-charset-codepoint CH PRECEDENCE-LIST HANDLE-ERROR)).
 
 When a Unicode internal representation is used (--with-unicode-internal
 option to configure), CH will be converted according to
@@ -5854,14 +5870,22 @@ precedence list).  The returned charset is determined by searching the list
 of charsets specified by the Unicode precedence list, in order, for the
 given character.  The return value will be nil if the character is not
 found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (ch, buffer_or_precedence_list))
+       (ch, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object charset;
   int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, 0);
+				      &charset, &c1, &c2, fail, 0);
 
   if (NILP (charset))
     return Qnil;
@@ -5869,13 +5893,13 @@ found in any of the charsets in the precedence list.
   return XCHARSET_NAME (charset);
 }
 
-DEFUN ("char-octet", Fchar_octet, 1, 3, 0, /*
+DEFUN ("char-octet", Fchar_octet, 1, 4, 0, /*
 Return the octet numbered N (should be 0 or 1) of char CH.
 N defaults to 0 if omitted.
 
 This function is for compatibility; consider using `char-to-charset-codepoint'
 instead.  See `char-to-charset-codepoint' for the semantics of
-BUFFER-OR-PRECEDENCE-LIST.
+BUFFER-OR-PRECEDENCE-LIST and HANDLE-ERROR.
 
 This function is not very useful when a Unicode internal representation is
 used (--with-unicode-internal option to configure). Specifically, this
@@ -5883,13 +5907,14 @@ function is more or less equivalent to (nth (1+ N) (split-char CH)), but
 returns 0 instead of nil when N=1 and the discovered charset of the character
 has only one dimension.
 */
-       (ch, n, buffer_or_precedence_list))
+       (ch, n, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object charset;
   int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, 1);
+				      &charset, &c1, &c2, fail, 1);
 
   if (NILP (charset))
     return Qnil;
@@ -5904,7 +5929,7 @@ has only one dimension.
     invalid_constant ("Octet number must be 0 or 1", n);
 }
 
-DEFUN ("split-char", Fsplit_char, 1, 2, 0, /*
+DEFUN ("split-char", Fsplit_char, 1, 3, 0, /*
 Return list of charset and one or two position-codes of char CH.
 
 This function is for compatibility; consider using `char-to-charset-codepoint'
@@ -5924,14 +5949,22 @@ precedence list).  The returned charset is determined by searching the list
 of charsets specified by the Unicode precedence list, in order, for the
 given character.  The return value will be nil if the character is not
 found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (ch, buffer_or_precedence_list))
+       (ch, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object charset;
   int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, 1);
+				      &charset, &c1, &c2, fail, 1);
 
   if (NILP (charset))
     return Qnil;

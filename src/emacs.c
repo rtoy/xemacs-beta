@@ -2421,7 +2421,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Define MS-Windows Unicode coding systems */
       complex_vars_of_intl_win32 ();
 #endif
-      /* Define UTF-8 coding system */
+      /* Define UTF-8 coding system, create JIT charset */
       complex_vars_of_unicode ();
 
       /* At this point we should be able to do conversion operations.
