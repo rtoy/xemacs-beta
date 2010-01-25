@@ -1,5 +1,9 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* configure: Rebuild.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	* aclocal.m4 (XE_SHLIB_STUFF):
 	Use -export-all-symbols instead of -export-dynamic on PE targets
 	(Cygwin and MinGW).

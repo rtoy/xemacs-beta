@@ -20376,10 +20376,6 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/etc/gdbinit.in.in"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit.in.in"
-  cp $srcdir/etc/gdbinit.in.in src/.gdbinit.in.in
-fi
 
 if test -f "$srcdir/etc/dbxrc.in"; then
   test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
