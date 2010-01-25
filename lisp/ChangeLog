@@ -1,3 +1,18 @@
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (cyrillic-koi8-u):
+	Fix mistake in name of mapping file.
+	
+	* mule/cyrillic.el (cyrillic-koi8-ru):
+	* mule/cyrillic.el (cyrillic-koi8-t):
+	Use mapping files from libiconv instead of specifying our own.
+	
+	* mule/cyrillic.el (cyrillic-koi8-c):
+	Fix mistake in mapping #x8C.
+	
+	* mule/cyrillic.el (for):
+	Fix reversed upper/lower in case mapping for KOI8-C, add SCHWA.
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* unicode.el (initialize-default-unicode-precedence-list):
