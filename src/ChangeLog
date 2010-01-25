@@ -1,5 +1,11 @@
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
+	* .gdbinit.in.in:
+	Add all of the lrecord types to `pobj' and sort according to the
+	order in lrecord.h.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
 	NOT WORKING, NEED TO CHECK IN TO SYNC WITH MAINLINE.
 	
 	* buffer.h:
