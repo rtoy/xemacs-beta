@@ -1092,3 +1092,11 @@ FRC.unicode-encapsulate:
 unicode-encapsulate: FRC.unicode-encapsulate
 	cd $(SRC) && \
 	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
+
+###################### Case-table generation
+
+.PHONY: make-case-conv
+FRC.make-case-conv:
+make-case-conv: FRC.make-case-conv
+	cd $(SRC) && \
+	python ../lib-src/make-case-conv.py > ../lisp/mule/uni-case-conv.el

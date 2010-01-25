@@ -120,4 +120,7 @@
 ;; Now, set the precedence list. @@#### There should be a better way.
 (initialize-default-unicode-precedence-list)
 
+;; This is a utility function; we don't want it in the dumped XEmacs.
+(fmakunbound 'setup-case-pairs)
+
 ;;; general-late.el ends here
