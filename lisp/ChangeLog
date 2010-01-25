@@ -1,3 +1,10 @@
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (koi8-c):
+	Fix bug in #83 mapping.
+	* mule/vietnamese.el (viscii):
+	Fix bug in #A6 mapping.
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* simple.el (capitalize-string-as-title):

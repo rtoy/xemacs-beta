@@ -551,25 +551,20 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   (with-temp-buffer
     (insert-file-contents (locate-data-file "HELLO"))
-    (Assert-equal 
-             ;; The sort is to make the algorithm of charsets-in-region
-             ;; irrelevant.
-             (sort (charsets-in-region (point-min) (point-max))
-                   #'string<)
-             '(ascii chinese-big5-1 chinese-gb2312 cyrillic-iso8859-5
-               ethiopic greek-iso8859-7 hebrew-iso8859-8 japanese-jisx0208
-               japanese-jisx0212 jit-ucs-charset-0 katakana-jisx0201
-               korean-ksc5601 latin-iso8859-1 latin-iso8859-2 thai-xtis
-               vietnamese-viscii-lower))
-    (Assert-equal 
-             (sort (charsets-in-string (buffer-substring (point-min)
-							 (point-max)))
-                   #'string<)
-             '(ascii chinese-big5-1 chinese-gb2312 cyrillic-iso8859-5
-               ethiopic greek-iso8859-7 hebrew-iso8859-8 japanese-jisx0208
-               japanese-jisx0212 jit-ucs-charset-0 katakana-jisx0201
-               korean-ksc5601 latin-iso8859-1 latin-iso8859-2 thai-xtis
-               vietnamese-viscii-lower)))
+    (let ((expected
+	   '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
+	     cyrillic-iso8859-5 ethiopic greek-iso8859-7 hebrew-iso8859-8
+	     japanese-jisx0208 japanese-jisx0212 katakana-jisx0201
+	     korean-ksc5601 latin-iso8859-1 latin-iso8859-2
+	     thai-xtis vietnamese-viscii-lower)))
+      (Assert-equal
+       ;; The sort is to make the algorithm of charsets-in-region
+       ;; irrelevant.
+       (sort (charsets-in-region (point-min) (point-max))
+	     #'string<) expected)
+      (Assert-equal 
+       (sort (charsets-in-string (buffer-substring (point-min) (point-max)))
+	     #'string<) expected)))
 
   ;;---------------------------------------------------------------
   ;; Language environments, and whether the specified values are sane.
