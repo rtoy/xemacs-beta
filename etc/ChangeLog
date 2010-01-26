@@ -1,3 +1,8 @@
+2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO: Encode the Arabic in arabic-iso8859-6 once more; delete
+	the old, experimentally-encoded Thai.
+
 2010-01-04  Jerry James  <james@xemacs.org>
 
 	* Emacs.ad: Change /usr/lib/X11 to /usr/share/X11.

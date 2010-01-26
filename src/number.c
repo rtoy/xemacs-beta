@@ -216,12 +216,13 @@ If RATIONAL is an integer, RATIONAL is returned.
 {
   CONCHECK_RATIONAL (rational);
 #ifdef HAVE_RATIO
-  return RATIOP (rational)
-    ? make_bignum_bg (XRATIO_NUMERATOR (rational))
-    : rational;
-#else
-  return rational;
+  if (RATIOP (rational))
+    {
+      return
+	Fcanonicalize_number (make_bignum_bg (XRATIO_NUMERATOR (rational)));
+    }
 #endif
+  return rational;
 }
 
 DEFUN ("denominator", Fdenominator, 1, 1, 0, /*
@@ -232,12 +233,13 @@ If RATIONAL is an integer, 1 is returned.
 {
   CONCHECK_RATIONAL (rational);
 #ifdef HAVE_RATIO
-  return RATIOP (rational)
-    ? make_bignum_bg (XRATIO_DENOMINATOR (rational))
-    : make_int (1);
+  if (RATIOP (rational))
+    {
+      return Fcanonicalize_number (make_bignum_bg
+				   (XRATIO_DENOMINATOR (rational)));
+    }
 #else
   return make_int (1);
-#endif
 }
 
 
@@ -419,7 +421,7 @@ Return the canonical form of NUMBER.
   if (RATIOP (number) &&
       bignum_fits_long_p (XRATIO_DENOMINATOR (number)) &&
       bignum_to_long (XRATIO_DENOMINATOR (number)) == 1L)
-    number = make_bignum_bg (XRATIO_NUMERATOR (number));
+    number = Fcanonicalize_number (make_bignum_bg (XRATIO_NUMERATOR (number)));
 #endif
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (number) && bignum_fits_emacs_int_p (XBIGNUM_DATA (number)))
