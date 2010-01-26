@@ -1,3 +1,10 @@
+2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is
+	actually *SMALL* LETTER A WITH CIRCUMFLEX AND HOOK ABOVE.
+	* mule/cyrillic.el (koi8-c): Correct the mapping here, #x8C is
+	actually ?\u04D9. Add a case mapping for it.
+
 2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (handle-pre-motion-command-current-command-is-motion):
