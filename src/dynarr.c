@@ -1,6 +1,6 @@
 /* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -126,6 +126,27 @@ Use the following global variable:
 
 #include <config.h>
 #include "lisp.h"
+
+static const struct memory_description const_Ascbyte_ptr_description_1[] = {
+  { XD_ASCII_STRING, 0 },
+  { XD_END }
+};
+
+const struct sized_memory_description const_Ascbyte_ptr_description = {
+  sizeof (const Ascbyte *),
+  const_Ascbyte_ptr_description_1
+};
+
+static const struct memory_description const_Ascbyte_ptr_dynarr_description_1[] = {
+  XD_DYNARR_DESC (const_Ascbyte_ptr_dynarr, &const_Ascbyte_ptr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description const_Ascbyte_ptr_dynarr_description = {
+  sizeof (const_Ascbyte_ptr_dynarr),
+  const_Ascbyte_ptr_dynarr_description_1
+};
+
 
 static int Dynarr_min_size = 8;
 

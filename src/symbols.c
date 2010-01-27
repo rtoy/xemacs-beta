@@ -731,7 +731,7 @@ SUBR must be a built-in function.
 */
        (subr))
 {
-  const char *name;
+  const Ascbyte *name;
   CHECK_SUBR (subr);
 
   name = XSUBR (subr)->name;
@@ -1182,29 +1182,29 @@ do_symval_forwarding (Lisp_Object valcontents, struct buffer *buffer,
       return *((Lisp_Object *)symbol_value_forward_forward (fwd));
 
     case SYMVAL_DEFAULT_BUFFER_FORWARD:
-      return (*((Lisp_Object *)((char *) XBUFFER (Vbuffer_defaults)
-				+ ((char *)symbol_value_forward_forward (fwd)
-				   - (char *)&buffer_local_flags))));
+      return (*((Lisp_Object *)((Rawbyte *) XBUFFER (Vbuffer_defaults)
+				+ ((Rawbyte *)symbol_value_forward_forward (fwd)
+				   - (Rawbyte *)&buffer_local_flags))));
 
 
     case SYMVAL_CURRENT_BUFFER_FORWARD:
     case SYMVAL_CONST_CURRENT_BUFFER_FORWARD:
       assert (buffer);
-      return (*((Lisp_Object *)((char *)buffer
-				+ ((char *)symbol_value_forward_forward (fwd)
-				   - (char *)&buffer_local_flags))));
+      return (*((Lisp_Object *)((Rawbyte *)buffer
+				+ ((Rawbyte *)symbol_value_forward_forward (fwd)
+				   - (Rawbyte *)&buffer_local_flags))));
 
     case SYMVAL_DEFAULT_CONSOLE_FORWARD:
-      return (*((Lisp_Object *)((char *) XCONSOLE (Vconsole_defaults)
-				+ ((char *)symbol_value_forward_forward (fwd)
-				   - (char *)&console_local_flags))));
+      return (*((Lisp_Object *)((Rawbyte *) XCONSOLE (Vconsole_defaults)
+				+ ((Rawbyte *)symbol_value_forward_forward (fwd)
+				   - (Rawbyte *)&console_local_flags))));
 
     case SYMVAL_SELECTED_CONSOLE_FORWARD:
     case SYMVAL_CONST_SELECTED_CONSOLE_FORWARD:
       assert (console);
-      return (*((Lisp_Object *)((char *)console
-				+ ((char *)symbol_value_forward_forward (fwd)
-				   - (char *)&console_local_flags))));
+      return (*((Lisp_Object *)((Rawbyte *)console
+				+ ((Rawbyte *)symbol_value_forward_forward (fwd)
+				   - (Rawbyte *)&console_local_flags))));
 
     case SYMVAL_UNBOUND_MARKER:
       return valcontents;
@@ -1230,13 +1230,13 @@ set_default_buffer_slot_variable (Lisp_Object sym,
   Lisp_Object valcontents = fetch_value_maybe_past_magic (sym, Qt);
   const struct symbol_value_forward *fwd
     = XSYMBOL_VALUE_FORWARD (valcontents);
-  int offset = ((char *) symbol_value_forward_forward (fwd)
-		- (char *) &buffer_local_flags);
+  int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
+		- (Rawbyte *) &buffer_local_flags);
   int mask = XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
   int (*magicfun) (Lisp_Object simm, Lisp_Object *val, Lisp_Object in_object,
 		   int flags) = symbol_value_forward_magicfun (fwd);
 
-  *((Lisp_Object *) (offset + (char *) XBUFFER (Vbuffer_defaults)))
+  *((Lisp_Object *) (offset + (Rawbyte *) XBUFFER (Vbuffer_defaults)))
     = value;
 
   if (mask > 0)		/* Not always per-buffer */
@@ -1249,7 +1249,7 @@ set_default_buffer_slot_variable (Lisp_Object sym,
 	    {
 	      if (magicfun)
 		magicfun (sym, &value, wrap_buffer (b), 0);
-	      *((Lisp_Object *) (offset + (char *) b)) = value;
+	      *((Lisp_Object *) (offset + (Rawbyte *) b)) = value;
 	    }
 	}
     }
@@ -1270,13 +1270,13 @@ set_default_console_slot_variable (Lisp_Object sym,
   Lisp_Object valcontents = fetch_value_maybe_past_magic (sym, Qt);
   const struct symbol_value_forward *fwd
     = XSYMBOL_VALUE_FORWARD (valcontents);
-  int offset = ((char *) symbol_value_forward_forward (fwd)
-		- (char *) &console_local_flags);
+  int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
+		- (Rawbyte *) &console_local_flags);
   int mask = XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
   int (*magicfun) (Lisp_Object simm, Lisp_Object *val, Lisp_Object in_object,
 		   int flags) = symbol_value_forward_magicfun (fwd);
 
-  *((Lisp_Object *) (offset + (char *) XCONSOLE (Vconsole_defaults)))
+  *((Lisp_Object *) (offset + (Rawbyte *) XCONSOLE (Vconsole_defaults)))
     = value;
 
   if (mask > 0)		/* Not always per-console */
@@ -1289,7 +1289,7 @@ set_default_console_slot_variable (Lisp_Object sym,
 	    {
 	      if (magicfun)
 		magicfun (sym, &value, console, 0);
-	      *((Lisp_Object *) (offset + (char *) d)) = value;
+	      *((Lisp_Object *) (offset + (Rawbyte *) d)) = value;
 	    }
 	}
     }
@@ -1366,9 +1366,9 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
 	case SYMVAL_CURRENT_BUFFER_FORWARD:
 	  if (magicfun)
 	    magicfun (sym, &newval, wrap_buffer (current_buffer), 0);
-	  *((Lisp_Object *) ((char *) current_buffer
-			     + ((char *) symbol_value_forward_forward (fwd)
-				- (char *) &buffer_local_flags)))
+	  *((Lisp_Object *) ((Rawbyte *) current_buffer
+			     + ((Rawbyte *) symbol_value_forward_forward (fwd)
+				- (Rawbyte *) &buffer_local_flags)))
 	    = newval;
 	  return;
 
@@ -1379,9 +1379,9 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
 	case SYMVAL_SELECTED_CONSOLE_FORWARD:
 	  if (magicfun)
 	    magicfun (sym, &newval, Vselected_console, 0);
-	  *((Lisp_Object *) ((char *) XCONSOLE (Vselected_console)
-			     + ((char *) symbol_value_forward_forward (fwd)
-				- (char *) &console_local_flags)))
+	  *((Lisp_Object *) ((Rawbyte *) XCONSOLE (Vselected_console)
+			     + ((Rawbyte *) symbol_value_forward_forward (fwd)
+				- (Rawbyte *) &console_local_flags)))
 	    = newval;
 	  return;
 
@@ -2058,18 +2058,18 @@ default_value (Lisp_Object sym)
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	return (*((Lisp_Object *)((char *) XBUFFER (Vbuffer_defaults)
-				  + ((char *)symbol_value_forward_forward (fwd)
-				     - (char *)&buffer_local_flags))));
+	return (*((Lisp_Object *)((Rawbyte *) XBUFFER (Vbuffer_defaults)
+				  + ((Rawbyte *)symbol_value_forward_forward (fwd)
+				     - (Rawbyte *)&buffer_local_flags))));
       }
 
     case SYMVAL_SELECTED_CONSOLE_FORWARD:
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	return (*((Lisp_Object *)((char *) XCONSOLE (Vconsole_defaults)
-				  + ((char *)symbol_value_forward_forward (fwd)
-				     - (char *)&console_local_flags))));
+	return (*((Lisp_Object *)((Rawbyte *) XCONSOLE (Vconsole_defaults)
+				  + ((Rawbyte *)symbol_value_forward_forward (fwd)
+				     - (Rawbyte *)&console_local_flags))));
       }
 
     case SYMVAL_BUFFER_LOCAL:
@@ -2505,8 +2505,8 @@ From now on the default value will apply in this buffer.
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	int offset = ((char *) symbol_value_forward_forward (fwd)
-			       - (char *) &buffer_local_flags);
+	int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
+			       - (Rawbyte *) &buffer_local_flags);
 	int mask =
 	  XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
 
@@ -2516,10 +2516,10 @@ From now on the default value will apply in this buffer.
 			     Lisp_Object in_object, int flags) =
 			       symbol_value_forward_magicfun (fwd);
 	    Lisp_Object oldval = * (Lisp_Object *)
-	      (offset + (char *) XBUFFER (Vbuffer_defaults));
+	      (offset + (Rawbyte *) XBUFFER (Vbuffer_defaults));
 	    if (magicfun)
 	      (magicfun) (variable, &oldval, wrap_buffer (current_buffer), 0);
-	    *(Lisp_Object *) (offset + (char *) current_buffer)
+	    *(Lisp_Object *) (offset + (Rawbyte *) current_buffer)
 	      = oldval;
 	    current_buffer->local_var_flags &= ~mask;
 	  }
@@ -2599,8 +2599,8 @@ From now on the default value will apply in this console.
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	int offset = ((char *) symbol_value_forward_forward (fwd)
-			       - (char *) &console_local_flags);
+	int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
+			       - (Rawbyte *) &console_local_flags);
 	int mask =
 	  XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
 
@@ -2610,10 +2610,10 @@ From now on the default value will apply in this console.
 			     Lisp_Object in_object, int flags) =
 			       symbol_value_forward_magicfun (fwd);
 	    Lisp_Object oldval = * (Lisp_Object *)
-	      (offset + (char *) XCONSOLE (Vconsole_defaults));
+	      (offset + (Rawbyte *) XCONSOLE (Vconsole_defaults));
 	    if (magicfun)
 	      magicfun (variable, &oldval, Vselected_console, 0);
-	    *(Lisp_Object *) (offset + (char *) XCONSOLE (Vselected_console))
+	    *(Lisp_Object *) (offset + (Rawbyte *) XCONSOLE (Vselected_console))
 	      = oldval;
 	    XCONSOLE (Vselected_console)->local_var_flags &= ~mask;
 	  }
@@ -3590,7 +3590,7 @@ reinit_symbols_early (void)
 }
 
 static void
-defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
+defsymbol_massage_name_1 (Lisp_Object *location, const Ascbyte *name, int dump_p,
 			  int multiword_predicate_p)
 {
   char temp[500];
@@ -3618,32 +3618,32 @@ defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
 }
 
 void
-defsymbol_massage_name_nodump (Lisp_Object *location, const char *name)
+defsymbol_massage_name_nodump (Lisp_Object *location, const Ascbyte *name)
 {
   defsymbol_massage_name_1 (location, name, 0, 0);
 }
 
 void
-defsymbol_massage_name (Lisp_Object *location, const char *name)
+defsymbol_massage_name (Lisp_Object *location, const Ascbyte *name)
 {
   defsymbol_massage_name_1 (location, name, 1, 0);
 }
 
 void
 defsymbol_massage_multiword_predicate_nodump (Lisp_Object *location,
-					      const char *name)
+					      const Ascbyte *name)
 {
   defsymbol_massage_name_1 (location, name, 0, 1);
 }
 
 void
-defsymbol_massage_multiword_predicate (Lisp_Object *location, const char *name)
+defsymbol_massage_multiword_predicate (Lisp_Object *location, const Ascbyte *name)
 {
   defsymbol_massage_name_1 (location, name, 1, 1);
 }
 
 void
-defsymbol_nodump (Lisp_Object *location, const char *name)
+defsymbol_nodump (Lisp_Object *location, const Ascbyte *name)
 {
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
@@ -3652,7 +3652,7 @@ defsymbol_nodump (Lisp_Object *location, const char *name)
 }
 
 void
-defsymbol (Lisp_Object *location, const char *name)
+defsymbol (Lisp_Object *location, const Ascbyte *name)
 {
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
@@ -3661,14 +3661,14 @@ defsymbol (Lisp_Object *location, const char *name)
 }
 
 void
-defkeyword (Lisp_Object *location, const char *name)
+defkeyword (Lisp_Object *location, const Ascbyte *name)
 {
   defsymbol (location, name);
   Fset (*location, *location);
 }
 
 void
-defkeyword_massage_name (Lisp_Object *location, const char *name)
+defkeyword_massage_name (Lisp_Object *location, const Ascbyte *name)
 {
   char temp[500];
   int len = strlen (name);
@@ -3761,7 +3761,7 @@ do {									      \
 									      \
     newsubr = xnew (Lisp_Subr);						      \
     memcpy (newsubr, subr, sizeof (Lisp_Subr));				      \
-    subr->doc = (const char *)newsubr;					      \
+    subr->doc = (const CIbyte *)newsubr;				      \
     subr = newsubr;							      \
   }									      \
 } while (0)
@@ -3848,7 +3848,7 @@ defsubr_macro (Lisp_Subr *subr)
 }
 
 static void
-deferror_1 (Lisp_Object *symbol, const char *name, const char *messuhhj,
+deferror_1 (Lisp_Object *symbol, const Ascbyte *name, const Ascbyte *messuhhj,
 	    Lisp_Object inherits_from, int massage_p)
 {
   Lisp_Object conds;
@@ -3863,25 +3863,25 @@ deferror_1 (Lisp_Object *symbol, const char *name, const char *messuhhj,
   /* NOT build_msg_string ().  This function is called at load time
      and the string needs to get translated at run time.  (This happens
      in the function (display-error) in cmdloop.el.) */
-  Fput (*symbol, Qerror_message, build_msg_string (messuhhj));
+  Fput (*symbol, Qerror_message, build_defer_string (messuhhj));
 }
 
 void
-deferror (Lisp_Object *symbol, const char *name, const char *messuhhj,
+deferror (Lisp_Object *symbol, const Ascbyte *name, const Ascbyte *messuhhj,
 	  Lisp_Object inherits_from)
 {
   deferror_1 (symbol, name, messuhhj, inherits_from, 0);
 }
 
 void
-deferror_massage_name (Lisp_Object *symbol, const char *name,
-		       const char *messuhhj, Lisp_Object inherits_from)
+deferror_massage_name (Lisp_Object *symbol, const Ascbyte *name,
+		       const Ascbyte *messuhhj, Lisp_Object inherits_from)
 {
   deferror_1 (symbol, name, messuhhj, inherits_from, 1);
 }
 
 void
-deferror_massage_name_and_message (Lisp_Object *symbol, const char *name,
+deferror_massage_name_and_message (Lisp_Object *symbol, const Ascbyte *name,
 				   Lisp_Object inherits_from)
 {
   char temp[500];
@@ -3985,7 +3985,8 @@ syms_of_symbols (void)
 
 /* Create and initialize a Lisp variable whose value is forwarded to C data */
 void
-defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
+defvar_magic (const Ascbyte *symbol_name,
+	      const struct symbol_value_forward *magic)
 {
   Lisp_Object sym;
 
@@ -3997,7 +3998,7 @@ defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
    */
   if (initialized)
     {
-      sym = Fintern (build_string (symbol_name), Qnil);
+      sym = Fintern (build_ascstring (symbol_name), Qnil);
       LOADHIST_ATTACH (sym);
     }
   else

@@ -3272,7 +3272,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
   EXTENT ext = XEXTENT (obj);
   EXTENT anc = extent_ancestor (ext);
   Lisp_Object tail;
-  char buf[64], *bp = buf;
+  Ascbyte buf[64], *bp = buf;
 
   /* Retrieve the ancestor and use it, for faster retrieval of properties */
 
@@ -3300,7 +3300,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
       extent_duplicable_p (anc) || !NILP (extent_invisible (anc)))
     *bp++ = ' ';
   *bp = '\0';
-  write_c_string (printcharfun, buf);
+  write_ascstring (printcharfun, buf);
 
   tail = extent_plist_slot (anc);
 
@@ -3362,12 +3362,12 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	}
 
       if (!EXTENT_LIVE_P (XEXTENT (obj)))
-	write_c_string (printcharfun, "#<destroyed extent");
+	write_ascstring (printcharfun, "#<destroyed extent");
       else
 	{
-	  write_c_string (printcharfun, "#<extent ");
+	  write_ascstring (printcharfun, "#<extent ");
 	  print_extent_1 (obj, printcharfun, escapeflag);
-	  write_c_string (printcharfun, extent_detached_p (XEXTENT (obj))
+	  write_ascstring (printcharfun, extent_detached_p (XEXTENT (obj))
 			  ? " from " : " in ");
 	  write_fmt_string (printcharfun, "%s%s%s", title, name, posttitle);
 	}
@@ -3376,9 +3376,9 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       if (print_readably)
 	printing_unreadable_object ("#<extent>");
-      write_c_string (printcharfun, "#<extent");
+      write_ascstring (printcharfun, "#<extent");
     }
-  write_c_string (printcharfun, ">");
+  write_ascstring (printcharfun, ">");
 }
 
 static int
@@ -7642,6 +7642,6 @@ functions `get-text-property' or `get-char-property' are called.
   Vextent_face_reverse_memoize_hash_table =
     make_lisp_hash_table (100, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 
-  QSin_map_extents_internal = build_msg_string ("(in map-extents-internal)");
+  QSin_map_extents_internal = build_defer_string ("(in map-extents-internal)");
   staticpro (&QSin_map_extents_internal);
 }

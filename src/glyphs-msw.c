@@ -1724,7 +1724,7 @@ mswindows_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_MSWINDOWS_MASK (p));
 	}
-      write_c_string (printcharfun, ")");
+      write_ascstring (printcharfun, ")");
       break;
 
     default:

@@ -202,7 +202,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
 
   /* Check for a couple of standard special cases */
   if (string_ichar (connection, 0) == ':')
-    connection = concat2 (build_string ("localhost"), connection);
+    connection = concat2 (build_ascstring ("localhost"), connection);
   else
     {
       /* connection =~ s/^unix:/localhost:/; */
@@ -217,7 +217,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
 	  INC_IBYTEPTR (p);
 	}
 
-      connection = concat2 (build_string ("localhost:"),
+      connection = concat2 (build_ascstring ("localhost:"),
 			    make_string (p, end - p));
     }
  ok:
@@ -277,7 +277,7 @@ x_semi_canonicalize_device_connection (Lisp_Object connection,
 			 &screen_length);
 
   if (!screen_length)
-    connection = concat2 (connection, build_string (".0"));
+    connection = concat2 (connection, build_ascstring (".0"));
   RETURN_UNGCPRO (connection);
 }
 

@@ -497,7 +497,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 }
 #define DIRECTORY_SEP sysfile_get_directory_sep()
 
-#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"C:\\")
+#define DEFAULT_DIRECTORY_FALLBACK "C:\\"
 
 #else /* not emacs */
 
@@ -511,7 +511,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 #define SEPCHAR ':'
 #define DEFAULT_DIRECTORY_SEP '/'
 #define DIRECTORY_SEP '/'
-#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"/")
+#define DEFAULT_DIRECTORY_FALLBACK "/"
 
 #endif /* WIN32_NATIVE */
 

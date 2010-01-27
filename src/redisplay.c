@@ -9843,7 +9843,7 @@ syms_of_redisplay (void)
 void
 vars_of_redisplay (void)
 {
-  QSin_redisplay = build_msg_string ("(in redisplay)");
+  QSin_redisplay = build_defer_string ("(in redisplay)");
   staticpro (&QSin_redisplay);
 
   Vpost_redisplay_actions = Qnil;

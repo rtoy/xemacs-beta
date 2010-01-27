@@ -362,7 +362,7 @@ gtk_print_image_instance (struct Lisp_Image_Instance *p,
       if (IMAGE_INSTANCE_GTK_MASK (p))
 	write_fmt_string (printcharfun, "/0x%lx",
 			  (unsigned long) IMAGE_INSTANCE_GTK_MASK (p));
-      write_c_string (printcharfun, ")");
+      write_ascstring (printcharfun, ")");
       break;
 #ifdef HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:

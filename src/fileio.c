@@ -143,13 +143,13 @@ EXFUN (Frunning_temacs_p, 0);
 
 DOESNT_RETURN
 report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const CIbyte *string, Lisp_Object data)
+			const Ascbyte *reason, Lisp_Object data)
 {
   struct gcpro gcpro1;
   Lisp_Object errdata = build_error_data (NULL, data);
 
   GCPRO1 (errdata);
-  errdata = Fcons (build_msg_string (string),
+  errdata = Fcons (build_msg_string (reason),
 		   Fcons (oserrmess, errdata));
   signal_error_1 (errtype, errdata);
   /* UNGCPRO; not reached */
@@ -157,17 +157,17 @@ report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
 
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
-			 const CIbyte *string, Lisp_Object data)
+			 const Ascbyte *reason, Lisp_Object data)
 {
-  report_file_type_error (errtype, lisp_strerror (errno), string, data);
+  report_file_type_error (errtype, lisp_strerror (errno), reason, data);
 }
 
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (const CIbyte *string, Lisp_Object data)
+report_file_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qfile_error, string, data);
+  report_error_with_errno (Qfile_error, reason, data);
 }
 
 
@@ -787,7 +787,7 @@ See also the function `substitute-in-file-name'.
   if (NILP (default_directory))
     default_directory = current_buffer->directory;
   if (! STRINGP (default_directory))
-    default_directory = build_string (DEFAULT_DIRECTORY_FALLBACK);
+    default_directory = build_ascstring (DEFAULT_DIRECTORY_FALLBACK);
 
   if (!NILP (default_directory))
     {
@@ -1761,7 +1761,7 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
    If the file does not exist, STATPTR->st_mode is set to 0.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, const CIbyte *querystring,
+barf_or_query_if_file_exists (Lisp_Object absname, const Ascbyte *querystring,
 			      int interactive, struct stat *statptr)
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
@@ -1780,8 +1780,8 @@ barf_or_query_if_file_exists (Lisp_Object absname, const CIbyte *querystring,
 
 	  prompt =
 	    emacs_sprintf_string
-	      (CGETTEXT ("File %s already exists; %s anyway? "),
-	       XSTRING_DATA (absname), CGETTEXT (querystring));
+	      (GETTEXT ("File %s already exists; %s anyway? "),
+	       XSTRING_DATA (absname), GETTEXT (querystring));
 
 	  GCPRO1 (prompt);
 	  tem = call1 (Qyes_or_no_p, prompt);
@@ -2103,7 +2103,7 @@ This is what happens in interactive use with M-x.
       NGCPRO1 (*args);
       ngcpro1.nvars = 3;
       if (string_byte (newname, XSTRING_LENGTH (newname) - 1) != '/')
-	args[i++] = build_string ("/");
+	args[i++] = build_ascstring ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
       NUNGCPRO;
@@ -4477,7 +4477,7 @@ void
 vars_of_fileio (void)
 {
   QSin_expand_file_name =
-    build_msg_string ("(in expand-file-name)");
+    build_defer_string ("(in expand-file-name)");
   staticpro (&QSin_expand_file_name);
 
   DEFVAR_LISP ("auto-save-file-format", &Vauto_save_file_format /*
@@ -4563,7 +4563,7 @@ Prefix for generating auto-save-list-file-name.
 Emacs's pid and the system name will be appended to
 this prefix to create a unique file name.
 */ );
-  Vauto_save_list_file_prefix = build_string ("~/.saves-");
+  Vauto_save_list_file_prefix = build_ascstring ("~/.saves-");
 
   DEFVAR_BOOL ("inhibit-auto-save-session", &inhibit_auto_save_session /*
 When non-nil, inhibit auto save list file creation.

@@ -1239,7 +1239,7 @@ extern int mswindows_compare_env (const void *strp1, const void *strp2);
 /* in win32.c */
 Extbyte *mswindows_get_module_file_name (void);
 void mswindows_output_last_error (const Ascbyte *frob);
-DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
+DECLARE_DOESNT_RETURN (mswindows_report_process_error (const Ascbyte *reason,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);

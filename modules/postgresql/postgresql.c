@@ -118,15 +118,28 @@ TODO (in rough order of priority):
 Lisp_Object Vpg_coding_system;
 #endif
 
-#define CHECK_LIVE_CONNECTION(P) do {					\
-	if (!P || (PQstatus (P) != CONNECTION_OK)) {			\
-		const char *e = "bad value";				\
-		if (P) e = PQerrorMessage (P);				\
-	 signal_ferror (Qprocess_error, "dead connection [%s]", e);	\
-	} } while (0)
-#define PUKE_IF_NULL(p) do {						 \
-	if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound); \
-	} while (0)
+#define CHECK_LIVE_CONNECTION(P)					\
+do									\
+{									\
+  if (!P || (PQstatus (P) != CONNECTION_OK))				\
+    {									\
+      const Ibyte *err;							\
+									\
+      if (P)								\
+	err = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING); \
+      else								\
+	err = (const Ibyte *) "bad value";				\
+      signal_ferror (Qprocess_error, "dead connection [%s]", err);	\
+    }									\
+}									\
+while (0)
+
+#define PUKE_IF_NULL(p)							\
+do									\
+{									\
+  if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound);	\
+}									\
+while (0)
 
 static Lisp_Object VXPGHOST;
 static Lisp_Object VXPGUSER;
@@ -338,7 +351,7 @@ print_pgresult (Lisp_Object obj, Lisp_Object printcharfun,
 		   PQcmdStatus (res));
 	  break;
 	default:
-notuples:
+	notuples:
 	  /* No counts to print */
 	  sprintf (buf, RESULT_DEFAULT_FMT, /* evil! */
 		   PQresStatus (PQresultStatus (res)),
@@ -431,23 +444,25 @@ Return a connection default structure.
 
   pcio = PQconndefaults();
   if (!pcio) return Qnil; /* can never happen in libpq-7.0 */
-  temp = list1 (Fcons (build_ext_string (pcio[0].keyword, PG_OS_CODING),
-		       Fcons (build_ext_string (pcio[0].envvar, PG_OS_CODING),
-			      Fcons (build_ext_string (pcio[0].compiled, PG_OS_CODING),
-				     Fcons (build_ext_string (pcio[0].val, PG_OS_CODING),
-					    Fcons (build_ext_string (pcio[0].label, PG_OS_CODING),
-						   Fcons (build_ext_string (pcio[0].dispchar, PG_OS_CODING),
-							  Fcons (make_int (pcio[0].dispsize), Qnil))))))));
+  temp =
+    list1 (nconc2 (list4 (build_ext_string (pcio[0].keyword, PG_OS_CODING),
+			  build_ext_string (pcio[0].envvar, PG_OS_CODING),
+			  build_ext_string (pcio[0].compiled, PG_OS_CODING),
+			  build_ext_string (pcio[0].val, PG_OS_CODING)),
+		   list3 (build_ext_string (pcio[0].label, PG_OS_CODING),
+			  build_ext_string (pcio[0].dispchar, PG_OS_CODING),
+			  make_int (pcio[0].dispsize))));
 
   for (i = 1; pcio[i].keyword; i++)
     {
-      temp1 = list1 (Fcons (build_ext_string (pcio[i].keyword, PG_OS_CODING),
-			    Fcons (build_ext_string (pcio[i].envvar, PG_OS_CODING),
-				   Fcons (build_ext_string (pcio[i].compiled, PG_OS_CODING),
-					  Fcons (build_ext_string (pcio[i].val, PG_OS_CODING),
-						 Fcons (build_ext_string (pcio[i].label, PG_OS_CODING),
-							Fcons (build_ext_string (pcio[i].dispchar, PG_OS_CODING),
-							       Fcons (make_int (pcio[i].dispsize), Qnil))))))));
+      temp1 =
+	list1 (nconc2 (list4 (build_ext_string (pcio[i].keyword, PG_OS_CODING),
+			      build_ext_string (pcio[i].envvar, PG_OS_CODING),
+			      build_ext_string (pcio[i].compiled, PG_OS_CODING),
+			      build_ext_string (pcio[i].val, PG_OS_CODING)),
+		       list3 (build_ext_string (pcio[i].label, PG_OS_CODING),
+			      build_ext_string (pcio[i].dispchar, PG_OS_CODING),
+			      make_int (pcio[i].dispsize))));
       {
 	Lisp_Object args[2];
 	args[0] = temp;
@@ -472,35 +487,33 @@ Make a new connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  const char *error_message = "Out of Memory?";
-  char *c_conninfo;
+  const Ascbyte *error_message = "Out of Memory?";
+  Extbyte *c_conninfo;
 
   CHECK_STRING (conninfo);
 
-  TO_EXTERNAL_FORMAT(LISP_STRING, conninfo,
-		     C_STRING_ALLOCA, c_conninfo, Qnative);
+  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
   P = PQconnectdb (c_conninfo);
   if (P && (PQstatus (P) == CONNECTION_OK))
     {
       (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
-      lisp_pgconn = allocate_pgconn();
+      lisp_pgconn = allocate_pgconn ();
       lisp_pgconn->pgconn = P;
       return make_pgconn (lisp_pgconn);
     }
   else
     {
       /* Connection failed.  Destroy the connection and signal an error. */
-      char buf[BLCKSZ];
-      strcpy (buf, error_message);
+      Ibyte *errmsg = (Ibyte *) error_message;
       if (P)
 	{
 	  /* storage for the error message gets erased when call PQfinish */
-	  /* so we must temporarily stash it somewhere */
-	  strncpy (buf, PQerrorMessage (P), sizeof (buf));
-	  buf[sizeof (buf) - 1] = '\0';
+	  /* so we must temporarily stash it somewhere -- make alloca() copy */
+	  errmsg = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING);
+	  IBYTE_STRING_TO_ALLOCA (errmsg, errmsg);
 	  PQfinish (P);
 	}
-      signal_ferror (Qprocess_error, "libpq: %s", buf);
+      signal_ferror (Qprocess_error, "libpq: %s", errmsg);
     }
 }
 
@@ -517,18 +530,18 @@ Make a new asynchronous connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  const char *error_message = "Out of Memory?";
-  char *c_conninfo;
+  const Ascbyte *error_message = "Out of Memory?";
+  Extbyte *c_conninfo;
 
   CHECK_STRING (conninfo);
-  TO_EXTERNAL_FORMAT (LISP_STRING, conninfo,
-		      C_STRING_ALLOCA, c_conninfo, Qnative);
+
+  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
   P = PQconnectStart (c_conninfo);
 
   if (P && (PQstatus (P) != CONNECTION_BAD))
     {
       (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
-      lisp_pgconn = allocate_pgconn();
+      lisp_pgconn = allocate_pgconn ();
       lisp_pgconn->pgconn = P;
 
       return make_pgconn (lisp_pgconn);
@@ -1046,7 +1059,9 @@ Return result status of the query.
   case PGRES_FATAL_ERROR: return Qpgres_fatal_error;
   default:
     /* they've added a new field we don't know about */
-    signal_ferror (Qprocess_error, "Help!  Unknown exec status code %08x from backend!", est);
+    signal_ferror (Qprocess_error,
+		   "Help!  Unknown exec status code %08x from backend!",
+		   est);
   }
 }
 

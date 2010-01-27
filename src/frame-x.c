@@ -466,7 +466,7 @@ static void
 init_x_prop_symbols (void)
 {
 #define def(sym, rsrc) \
-   Fput (sym, Qx_resource_name, build_string (rsrc))
+   Fput (sym, Qx_resource_name, build_ascstring (rsrc))
 #define defi(sym,rsrc) \
    def (sym, rsrc); Fput (sym, Qintegerp, Qt)
 
@@ -1300,8 +1300,8 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	     : build_ext_string (filePath, Q???); */
 	  /* what, if the data is no text, and how can I tell it? */
 	  l_data =
-	    Fcons (list3 (list1 (build_string ("text/plain")),
-			  build_string ("8bit"),
+	    Fcons (list3 (list1 (build_ascstring ("text/plain")),
+			  build_ascstring ("8bit"),
 			  make_ext_string
 			  (transferInfo->dropData->data.buffers[ii].bp,
 			   transferInfo->dropData->data.buffers[ii].size,

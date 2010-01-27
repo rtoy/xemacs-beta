@@ -491,12 +491,13 @@ get_object_file_name (Lisp_Object filepos)
 
 
 static void
-weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
+weird_doc (Lisp_Object sym, const Ascbyte *weirdness, const Ascbyte *type,
 	   int pos)
 {
-  if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
+  if (!strcmp (weirdness, "duplicate")) return;
   message ("Note: Strange doc (%s) for %s %s @ %d",
-           weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
+           GETTEXT (weirdness), GETTEXT (type),
+	   XSTRING_DATA (XSYMBOL (sym)->name), pos);
 }
 
 DEFUN ("built-in-symbol-file", Fbuilt_in_symbol_file, 1, 2, 0, /*
@@ -789,8 +790,8 @@ when doc strings are referred to in the dumped Emacs.
 		  Lisp_Object old = Fget (sym, Qvariable_documentation, Qzero);
                   if (!ZEROP (old))
 		    {
-		      weird_doc (sym, GETTEXT ("duplicate"),
-				 GETTEXT ("variable"), pos);
+		      weird_doc (sym, "duplicate",
+				 "variable", pos);
 		      /* In the case of duplicate doc file entries, always
 			 take the later one.  But if the doc is not an int
 			 (a string, say) leave it alone. */
@@ -830,8 +831,8 @@ when doc strings are referred to in the dumped Emacs.
 	 So I'm disabling this. --ben */
 
 		      /* May have been #if'ed out or something */
-		      weird_doc (sym, GETTEXT ("not fboundp"),
-				 GETTEXT ("function"), pos);
+		      weird_doc (sym, "not fboundp",
+				 "function", pos);
 #endif
 		      goto weird;
 		    }
@@ -840,8 +841,8 @@ when doc strings are referred to in the dumped Emacs.
 		      /* Lisp_Subrs have a slot for it.  */
 		      if (XSUBR (fun)->doc)
 			{
-			  weird_doc (sym, GETTEXT ("duplicate"),
-				     GETTEXT ("subr"), pos);
+			  weird_doc (sym, "duplicate",
+				     "subr", pos);
 			  goto weird;
 			}
 		      XSUBR (fun)->doc = (char *) (- XINT (offset));
@@ -859,11 +860,12 @@ when doc strings are referred to in the dumped Emacs.
 			      Lisp_Object old = XCAR (tem);
 			      if (!ZEROP (old))
 				{
-				  weird_doc (sym, GETTEXT ("duplicate"),
-					     (EQ (tem, Qlambda)
-					      ? GETTEXT ("lambda")
-					      : GETTEXT ("autoload")),
-					     pos);
+				  if (EQ (tem, Qlambda))
+				    weird_doc (sym, "duplicate", "lambda",
+					       pos);
+				  else
+				    weird_doc (sym, "duplicate", "autoload",
+					       pos);
 				  /* In the case of duplicate doc file entries,
 				     always take the later one.  But if the doc
 				     is not an int (a string, say) leave it
@@ -875,24 +877,23 @@ when doc strings are referred to in the dumped Emacs.
 			    }
                           else if (!CONSP (tem))
 			    {
-			      weird_doc (sym, GETTEXT ("!CONSP(tem)"),
-					 GETTEXT ("function"), pos);
+			      weird_doc (sym, "!CONSP(tem)", "function", pos);
 			      goto cont;
 			    }
                           else
 			    {
 			      /* DOC string is a string not integer 0 */
 #if 0
-			      weird_doc (sym, GETTEXT ("!INTP(XCAR(tem))"),
-					 GETTEXT ("function"), pos);
+			      weird_doc (sym, "!INTP(XCAR(tem))",
+					 "function", pos);
 #endif
 			      goto cont;
 			    }
                         }
                       else
 			{
-			  weird_doc (sym, GETTEXT ("not lambda or autoload"),
-				     GETTEXT ("function"), pos);
+			  weird_doc (sym, "not lambda or autoload",
+				     "function", pos);
 			  goto cont;
 			}
 		    }
@@ -911,8 +912,7 @@ when doc strings are referred to in the dumped Emacs.
 
                       if (! (f->flags.documentationp))
 			{
-			  weird_doc (sym, GETTEXT ("no doc slot"),
-				     GETTEXT ("bytecode"), pos);
+			  weird_doc (sym, "no doc slot", "bytecode", pos);
 			  goto weird;
 			}
 		      else
@@ -921,8 +921,7 @@ when doc strings are referred to in the dumped Emacs.
 			    compiled_function_documentation (f);
 			  if (!ZEROP (old))
 			    {
-			      weird_doc (sym, GETTEXT ("duplicate"),
-					 GETTEXT ("bytecode"), pos);
+			      weird_doc (sym, "duplicate", "bytecode", pos);
 			      /* In the case of duplicate doc file entries,
 				 always take the later one.  But if the doc is
 				 not an int (a string, say) leave it alone. */
@@ -936,8 +935,7 @@ when doc strings are referred to in the dumped Emacs.
                     {
                       /* Otherwise the function is undefined or
                          otherwise weird.   Ignore it. */
-                      weird_doc (sym, GETTEXT ("weird function"),
-				 GETTEXT ("function"), pos);
+                      weird_doc (sym, "weird function", "function", pos);
                       goto weird;
                     }
                 }
@@ -1315,6 +1313,6 @@ Name of file containing documentation strings of built-in symbols.
 */ );
   Vinternal_doc_file_name = Qnil;
 
-  QSsubstitute = build_string (" *substitute*");
+  QSsubstitute = build_ascstring (" *substitute*");
   staticpro (&QSsubstitute);
 }
