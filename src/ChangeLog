@@ -1,3 +1,7 @@
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c: Typo in comment.
+
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:
