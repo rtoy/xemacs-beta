@@ -235,7 +235,8 @@ in dumped-lisp.el and is not itself listed.")
 	 "mule/mule-msw-init-late")
 
        (when (featurep 'mule)
-	 '("mule/uni-case-conv" ;; for old-Mule, after all charsets created
+	 '(;;#### breaks byte-compilation, fix the bug!
+	   ;;"mule/uni-case-conv" ;; for old-Mule, after all charsets created
 	   "mule/general-late"
 	   ))
 

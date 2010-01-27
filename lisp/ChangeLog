@@ -425,6 +425,24 @@
 	Remove support in our generated code for emacs versions where
 	keywords are not self-quoting.
 
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	Always set up the case pairs for the moment, since we don't
+	dump uni-case-conv.el.
+	
+	* mule/uni-case-conv.el (for):
+	Update with various junk to check for mappings that cross charsets,
+	etc.  Put in for testing purposes.  Take out when the underlying
+	bug is fixed.
+
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Don't dump uni-case-conv.el for the moment, until we squash the
+	underlying bug that makes it screw things up.
+
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is
