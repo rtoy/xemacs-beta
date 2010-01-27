@@ -5158,10 +5158,10 @@ reinit_vars_of_text (void)
 void
 vars_of_text (void)
 {
-  QSin_char_byte_conversion = build_msg_string ("(in char-byte conversion)");
+  QSin_char_byte_conversion = build_defer_string ("(in char-byte conversion)");
   staticpro (&QSin_char_byte_conversion);
   QSin_internal_external_conversion =
-    build_msg_string ("(in internal-external conversion)");
+    build_defer_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
 
 #ifdef ENABLE_COMPOSITE_CHARS

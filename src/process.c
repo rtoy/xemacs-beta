@@ -159,15 +159,15 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else
     {
       int netp = network_connection_p (obj);
-      write_c_string (printcharfun,
+      write_ascstring (printcharfun,
 		      netp ? GETTEXT ("#<network connection ") :
 		      GETTEXT ("#<process "));
       print_internal (process->name, printcharfun, 1);
-      write_c_string (printcharfun, (netp ? " " : " pid "));
+      write_ascstring (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
       write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
-      write_c_string (printcharfun, ">");
+      write_ascstring (printcharfun, ">");
     }
 }
 
@@ -454,15 +454,15 @@ and the rest of the strings being the arguments given to it.
 /************************************************************************/
 
 DOESNT_RETURN
-report_process_error (const char *string, Lisp_Object data)
+report_process_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qprocess_error, string, data);
+  report_error_with_errno (Qprocess_error, reason, data);
 }
 
 DOESNT_RETURN
-report_network_error (const char *string, Lisp_Object data)
+report_network_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qnetwork_error, string, data);
+  report_error_with_errno (Qnetwork_error, reason, data);
 }
 
 Lisp_Object
@@ -479,12 +479,12 @@ make_process_internal (Lisp_Object name)
   name1 = name;
   for (i = 1; ; i++)
     {
-      char suffix[10];
+      Ascbyte suffix[10];
       Lisp_Object tem = Fget_process (name1);
       if (NILP (tem))
         break;
       sprintf (suffix, "<%d>", i);
-      name1 = concat2 (name, build_string (suffix));
+      name1 = concat2 (name, build_ascstring (suffix));
     }
   name = name1;
   p->name = name;
@@ -746,7 +746,7 @@ arguments: (NAME BUFFER PROGRAM &rest PROGRAM-ARGS)
 
       tem = Qnil;
       NGCPRO1 (tem);
-      locate_file (list1 (build_string ("")), program, Vlisp_EXEC_SUFFIXES,
+      locate_file (list1 (build_ascstring ("")), program, Vlisp_EXEC_SUFFIXES,
 		   &tem, X_OK);
       if (NILP (tem))
 	signal_error (Qprocess_error, "Searching for program", program);
@@ -1574,7 +1574,7 @@ status_message (Lisp_Process *p)
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
-	string2 = build_string ("\n");
+	string2 = build_ascstring ("\n");
       set_string_char (string, 0,
 		       DOWNCASE (0, string_ichar (string, 0)));
       return concat2 (string, string2);
@@ -1587,7 +1587,7 @@ status_message (Lisp_Process *p)
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
-	string2 = build_string ("\n");
+	string2 = build_ascstring ("\n");
       return concat2 (build_msg_string ("exited abnormally with code "),
 		      concat2 (string, string2));
     }
@@ -2308,14 +2308,14 @@ putenv_internal (const Ibyte *var,
 	  )
 	{
 	  XCAR (scan) = concat3 (make_string (var, varlen),
-				 build_string ("="),
+				 build_ascstring ("="),
 				 make_string (value, valuelen));
 	  return;
 	}
     }
 
   Vprocess_environment = Fcons (concat3 (make_string (var, varlen),
-					 build_string ("="),
+					 build_ascstring ("="),
 					 make_string (value, valuelen)),
 				Vprocess_environment);
 }
@@ -2605,7 +2605,7 @@ with memory-mapping.  We don't provide a Lisp variable for this because
 the operations needing this are lower level than what ELisp programs
 typically do, and in any case no equivalent exists under native MS Windows.
 */ );
-  Vnull_device = build_string (NULL_DEVICE);
+  Vnull_device = build_ascstring (NULL_DEVICE);
 
   DEFVAR_LISP ("process-connection-type", &Vprocess_connection_type /*
 Control type of device used to communicate with subprocesses.
@@ -2685,6 +2685,6 @@ The environment which Emacs inherits is placed in this variable
 when Emacs starts.
 */ );
 
-  Vlisp_EXEC_SUFFIXES = build_string (EXEC_SUFFIXES);
+  Vlisp_EXEC_SUFFIXES = build_ascstring (EXEC_SUFFIXES);
   staticpro (&Vlisp_EXEC_SUFFIXES);
 }

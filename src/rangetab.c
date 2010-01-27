@@ -107,13 +107,13 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
     write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
 			   1, range_table_type_to_symbol (rt->type));
   else
-    write_c_string (printcharfun, "#<range-table ");
+    write_ascstring (printcharfun, "#<range-table ");
   for (i = 0; i < Dynarr_length (rt->entries); i++)
     {
       struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
       int so, ec;
       if (i > 0)
-	write_c_string (printcharfun, " ");
+	write_ascstring (printcharfun, " ");
       switch (rt->type)
 	{
 	case RANGE_START_CLOSED_END_OPEN: so = 0, ec = 0; break;
@@ -131,7 +131,7 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
       print_internal (rte->val, printcharfun, 1);
     }
   if (print_readably)
-    write_c_string (printcharfun, "))");
+    write_ascstring (printcharfun, "))");
   else
     write_fmt_string (printcharfun, " 0x%x>", rt->header.uid);
 }

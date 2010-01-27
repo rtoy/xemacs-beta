@@ -1016,11 +1016,11 @@ mswindows_color_to_string (COLORREF color)
 
   for (i = 0; i < countof (mswindows_X_color_map); i++)
     if (pcolor == (mswindows_X_color_map[i].colorref))
-      return  build_string (mswindows_X_color_map[i].name);
+      return  build_ascstring (mswindows_X_color_map[i].name);
 
   sprintf (buf, "#%02X%02X%02X",
 	   GetRValue (color), GetGValue (color), GetBValue (color));
-  return build_string (buf);
+  return build_ascstring (buf);
 }
 
 /*
@@ -2242,7 +2242,7 @@ mswindows_color_list (void)
   int i;
 
   for (i = 0; i < countof (mswindows_X_color_map); i++)
-    result = Fcons (build_string (mswindows_X_color_map[i].name), result);
+    result = Fcons (build_ascstring (mswindows_X_color_map[i].name), result);
 
   return Fnreverse (result);
 }

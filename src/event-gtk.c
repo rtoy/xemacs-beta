@@ -1019,8 +1019,8 @@ dragndrop_data_received (GtkWidget          *widget,
     {
       /* Arbitrary string */
       l_type = Qdragdrop_MIME;
-      l_dndlist = list1 (list3 (list1 (build_string ("text/plain")),
-				build_string ("8_bit"),
+      l_dndlist = list1 (list3 (list1 (build_ascstring ("text/plain")),
+				build_ascstring ("8_bit"),
 				make_ext_string (data->data,
 						 strlen ((char *)data->data),
 						 Qctext)));
@@ -1049,7 +1049,7 @@ dragndrop_data_received (GtkWidget          *widget,
       */
       l_type = Qdragdrop_MIME;
       l_dndlist = list1 (list3 (list1 (build_string (gdk_atom_name (data->type))),
-				build_string ("8bit"),
+				build_ascstring ("8bit"),
 				make_ext_string ((Extbyte *) data->data,
 						 data->length, Qbinary)));
     }
@@ -1875,10 +1875,6 @@ gtk_reset_modifier_mapping (struct device *d)
 
   /* Boy, I really wish C had local functions...
    */
-
-  /* The call to warn_when_safe must be on the same line as the string or
-     make-msgfile won't pick it up properly (the newline doesn't confuse
-     it, but the backslash does). */
 
 #define store_modifier(name,old)					   \
     old = modifier_index;

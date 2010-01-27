@@ -1155,7 +1155,7 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
-  write_c_string (printcharfun, "#<msprinter-settings");
+  write_ascstring (printcharfun, "#<msprinter-settings");
   if (!NILP (dm->printer_name))
     write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
   if (!NILP (dm->device))

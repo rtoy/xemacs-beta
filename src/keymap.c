@@ -290,7 +290,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
-  write_c_string (printcharfun, "#<keymap ");
+  write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
@@ -1960,17 +1960,17 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   if (EQ (keys, new_keys))
     signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
 			     "can't bind %s: %s has a non-keymap binding",
-			     (char *) XSTRING_DATA (Fkey_description (keys)),
-			     (char *) XSTRING_DATA (Fsingle_key_description
-						    (Vmeta_prefix_char)));
+			     (CIbyte *) XSTRING_DATA (Fkey_description (keys)),
+			     (CIbyte *) XSTRING_DATA (Fsingle_key_description
+						      (Vmeta_prefix_char)));
   else
     signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
 			     "can't bind %s: %s %s has a non-keymap binding",
-			     (char *) XSTRING_DATA (Fkey_description (keys)),
-			     (char *) XSTRING_DATA (Fkey_description
-						    (new_keys)),
-			     (char *) XSTRING_DATA (Fsingle_key_description
-						    (Vmeta_prefix_char)));
+			     (CIbyte *) XSTRING_DATA (Fkey_description (keys)),
+			     (CIbyte *) XSTRING_DATA (Fkey_description
+						      (new_keys)),
+			     (CIbyte *) XSTRING_DATA (Fsingle_key_description
+						      (Vmeta_prefix_char)));
 }
 
 DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*
@@ -3497,7 +3497,7 @@ spaces are put between sequence elements, etc...
 	    string = s2;
 	  else
 	    {
-	      /* if (NILP (sep)) Lisp_Object sep = build_string (" ") */;
+	      /* if (NILP (sep)) Lisp_Object sep = build_ascstring (" ") */;
 	      string = concat2 (string, concat2 (Vsingle_space_string, s2));
 	    }
 	}
@@ -3655,7 +3655,7 @@ of a character from a buffer rather than a key read from the user.
     }
 
   *p = 0;
-  return build_string ((char *) buf);
+  return build_intstring (buf);
 }
 
 

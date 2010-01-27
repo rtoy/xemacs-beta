@@ -370,7 +370,7 @@ x_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_X_MASK (p));
 	}
-      write_c_string (printcharfun, ")");
+      write_ascstring (printcharfun, ")");
       break;
     default:
       break;
@@ -2400,7 +2400,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (!rf && !fs)
       warn_when_safe_lispobj
 	(intern ("xft"), Qdebug,
-	 Fcons (build_string ("missing font in update_widget_face"),
+	 Fcons (build_msg_string ("missing font in update_widget_face"),
 		Fface_name (face)));
 #endif
   }

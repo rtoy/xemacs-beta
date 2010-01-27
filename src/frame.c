@@ -529,17 +529,17 @@ See `set-frame-properties', `default-x-frame-plist', and
     {
       /* We leave Vdefault_frame_name alone here so that it'll remain Qnil
 	 in the dumped executable, and we can choose it at runtime. */
-      name = build_string("XEmacs");
+      name = build_ascstring ("XEmacs");
     }
   else if (NILP (Vdefault_frame_name))
     {
       if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
 	{
-	  Vdefault_frame_name = build_string ("emacs");
+	  Vdefault_frame_name = build_ascstring ("emacs");
 	}
       else
 	{
-	  Vdefault_frame_name = build_string ("XEmacs");
+	  Vdefault_frame_name = build_ascstring ("XEmacs");
 	}
     }
 
@@ -3862,16 +3862,16 @@ This is the same format as `modeline-format' with the exception that
 /* #### I would change this unilaterally but for the wrath of the Kyles
 of the world. */
 #ifdef WIN32_NATIVE
-  Vframe_title_format = build_string ("%b - XEmacs");
+  Vframe_title_format = build_ascstring ("%b - XEmacs");
 #else
-  Vframe_title_format = build_string ("%S: %b");
+  Vframe_title_format = build_ascstring ("%S: %b");
 #endif
 
   DEFVAR_LISP ("frame-icon-title-format", &Vframe_icon_title_format /*
 Controls the title of the icon corresponding to the selected frame.
 See also the variable `frame-title-format'.
 */ );
-  Vframe_icon_title_format = build_string ("%b");
+  Vframe_icon_title_format = build_ascstring ("%b");
 
   DEFVAR_LISP ("default-frame-name", &Vdefault_frame_name /*
 The default name to assign to newly-created frames.

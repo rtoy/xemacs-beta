@@ -592,7 +592,7 @@ make_string_from_file (Lisp_Object file)
 
   specbind (Qinhibit_quit, Qt);
   record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
-  temp_buffer = Fget_buffer_create (build_string (" *pixmap conversion*"));
+  temp_buffer = Fget_buffer_create (build_ascstring (" *pixmap conversion*"));
   GCPRO1 (temp_buffer);
   set_buffer_internal (XBUFFER (temp_buffer));
   Ferase_buffer (Qnil);
@@ -1032,37 +1032,37 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
       if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ||
 	  !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	{
-	  write_c_string (printcharfun, " @");
+	  write_ascstring (printcharfun, " @");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
 	    write_fmt_string (printcharfun, "%ld",
 			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
 	  else
-	    write_c_string (printcharfun, "??");
-	  write_c_string (printcharfun, ",");
+	    write_ascstring (printcharfun, "??");
+	  write_ascstring (printcharfun, ",");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	    write_fmt_string (printcharfun, "%ld",
 			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
 	  else
-	    write_c_string (printcharfun, "??");
+	    write_ascstring (printcharfun, "??");
 	}
       if (!NILP (IMAGE_INSTANCE_PIXMAP_FG (ii)) ||
 	  !NILP (IMAGE_INSTANCE_PIXMAP_BG (ii)))
 	{
-	  write_c_string (printcharfun, " (");
+	  write_ascstring (printcharfun, " (");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_FG (ii)))
 	    {
 	      print_internal
 		(XCOLOR_INSTANCE
 		 (IMAGE_INSTANCE_PIXMAP_FG (ii))->name, printcharfun, 0);
 	    }
-	  write_c_string (printcharfun, "/");
+	  write_ascstring (printcharfun, "/");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_BG (ii)))
 	    {
 	      print_internal
 		(XCOLOR_INSTANCE
 		 (IMAGE_INSTANCE_PIXMAP_BG (ii))->name, printcharfun, 0);
 	    }
-	  write_c_string (printcharfun, ")");
+	  write_ascstring (printcharfun, ")");
 	}
       break;
 
@@ -1086,17 +1086,17 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	 are specific to a particular frame so we want to print in their
 	 description what that frame is. */
 
-      write_c_string (printcharfun, " on #<");
+      write_ascstring (printcharfun, " on #<");
       {
 	struct frame* f  = XFRAME (IMAGE_INSTANCE_FRAME (ii));
 
 	if (!FRAME_LIVE_P (f))
-	  write_c_string (printcharfun, "dead");
+	  write_ascstring (printcharfun, "dead");
 	else
-	  write_c_string (printcharfun,
+	  write_ascstring (printcharfun,
 			  DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))));
       }
-      write_c_string (printcharfun, "-frame>");
+      write_ascstring (printcharfun, "-frame>");
       write_fmt_string (printcharfun, " 0x%p",
 			IMAGE_INSTANCE_SUBWINDOW_ID (ii));
 
@@ -2219,34 +2219,35 @@ invalidate_glyph_geometry_maybe (Lisp_Object glyph_or_ii, struct window* w)
 /*                              error helpers                           */
 /************************************************************************/
 DOESNT_RETURN
-signal_image_error (const CIbyte *reason, Lisp_Object frob)
+signal_image_error (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qimage_conversion_error, reason, frob);
 }
 
 DOESNT_RETURN
-signal_image_error_2 (const CIbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
+signal_image_error_2 (const Ascbyte *reason, Lisp_Object frob0,
+		      Lisp_Object frob1)
 {
   signal_error_2 (Qimage_conversion_error, reason, frob0, frob1);
 }
 
 DOESNT_RETURN
-signal_double_image_error (const CIbyte *string1, const CIbyte *string2,
+signal_double_image_error (const Ascbyte *reason1, const Ascbyte *reason2,
 			   Lisp_Object data)
 {
   signal_error_1 (Qimage_conversion_error,
-		list3 (build_msg_string (string1),
-		       build_msg_string (string2),
+		list3 (build_msg_string (reason1),
+		       build_msg_string (reason2),
 		       data));
 }
 
 DOESNT_RETURN
-signal_double_image_error_2 (const CIbyte *string1, const CIbyte *string2,
+signal_double_image_error_2 (const Ascbyte *reason1, const Ascbyte *reason2,
 			     Lisp_Object data1, Lisp_Object data2)
 {
   signal_error_1 (Qimage_conversion_error,
-		list4 (build_msg_string (string1),
-		       build_msg_string (string2),
+		list4 (build_msg_string (reason1),
+		       build_msg_string (reason2),
 		       data1, data2));
 }
 
@@ -2748,11 +2749,11 @@ xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
     {
       mask_file = MAYBE_LISP_CONTYPE_METH
 	(decode_console_type(console_type, ERROR_ME),
-	 locate_pixmap_file, (concat2 (file, build_string ("Mask"))));
+	 locate_pixmap_file, (concat2 (file, build_ascstring ("Mask"))));
       if (NILP (mask_file))
 	mask_file = MAYBE_LISP_CONTYPE_METH
 	  (decode_console_type(console_type, ERROR_ME),
-	   locate_pixmap_file, (concat2 (file, build_string ("msk"))));
+	   locate_pixmap_file, (concat2 (file, build_ascstring ("msk"))));
     }
 
   if (!NILP (mask_file))
@@ -2957,7 +2958,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
       Lisp_Object retval = Qnil;
       struct buffer *old_buffer = current_buffer;
       Lisp_Object temp_buffer =
-	Fget_buffer_create (build_string (" *pixmap conversion*"));
+	Fget_buffer_create (build_ascstring (" *pixmap conversion*"));
       int elt;
       int height, width, ncolors;
       struct gcpro gcpro1, gcpro2, gcpro3;

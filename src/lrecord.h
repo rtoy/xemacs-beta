@@ -721,7 +721,7 @@ int lrecord_stats_heap_size (void);
      ...
    };
 
-   lisp_object_description is declared in alloc.c, like this:
+   lisp_object_description is declared in gc.c, like this:
 
    static const struct memory_description lisp_object_description_1[] = {
      { XD_LISP_OBJECT, 0 },

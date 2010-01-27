@@ -1,3 +1,21 @@
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c:
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (print_pgresult):
+	* postgresql/postgresql.c (Fpq_conn_defaults):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_result_status):
+	* postgresql/postgresql.c (Fpq_res_status):
+	Mule-ize large parts of it.  
+
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (print_ldap):
+	* ldap/eldap.c (allocate_ldap):
+	Use write_ascstring().
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):

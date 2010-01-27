@@ -1005,10 +1005,10 @@ x_delete_device (struct device *d)
 /*				handle X errors				*/
 /************************************************************************/
 
-const char *
+const Ascbyte *
 x_event_name (int event_type)
 {
-  static const char *events[] =
+  static const Ascbyte *events[] =
   {
     "0: ERROR!",
     "1: REPLY",

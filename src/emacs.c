@@ -2012,6 +2012,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_string()
 	    - build_intstring()
 	    - build_string()
+	    - build_ascstring()
 	    - make_vector()
 	    - make_int()
 	    - make_char()
@@ -4208,7 +4209,7 @@ Symbol indicating type of operating system you are using.
   DEFVAR_LISP ("system-configuration", &Vsystem_configuration /*
 String naming the configuration XEmacs was built for.
 */ );
-  Vsystem_configuration = build_string (EMACS_CONFIGURATION);
+  Vsystem_configuration = build_ascstring (EMACS_CONFIGURATION);
 
 #ifndef EMACS_CONFIG_OPTIONS
 # define EMACS_CONFIG_OPTIONS "UNKNOWN"
@@ -4216,7 +4217,7 @@ String naming the configuration XEmacs was built for.
   DEFVAR_LISP ("system-configuration-options", &Vsystem_configuration_options /*
 String containing the configuration options XEmacs was built with.
 */ );
-  Vsystem_configuration_options = build_string (EMACS_CONFIG_OPTIONS);
+  Vsystem_configuration_options = build_ascstring (EMACS_CONFIG_OPTIONS);
 
   DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
 Major version number of this version of Emacs, as an integer.
@@ -4282,7 +4283,7 @@ Codename of this version of Emacs (a string).
 #ifndef XEMACS_CODENAME
 #define XEMACS_CODENAME "Noname"
 #endif
-  Vxemacs_codename = build_string (XEMACS_CODENAME);
+  Vxemacs_codename = build_ascstring (XEMACS_CODENAME);
 
   DEFVAR_LISP ("xemacs-extra-name", &Vxemacs_extra_name /*
 Arbitrary string to place in the version string after the codename.
@@ -4295,7 +4296,7 @@ changeset from which XEmacs was compiled.  Developers may also use it
 to indicate particular branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
-  Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);
+  Vxemacs_extra_name = build_ascstring (XEMACS_EXTRA_NAME);
 #endif
   
   DEFVAR_LISP ("xemacs-release-date", &Vxemacs_release_date /*
@@ -4307,7 +4308,7 @@ is (implicitly) UTC.  Currently not included in the version string.
 #ifndef XEMACS_RELEASE_DATE
 #define XEMACS_RELEASE_DATE "2005-02-18 (defaulted in emacs.c)"
 #endif
-  Vxemacs_release_date = build_string (XEMACS_RELEASE_DATE);
+  Vxemacs_release_date = build_ascstring (XEMACS_RELEASE_DATE);
   
   /* Lisp variables which contain command line flags.
 

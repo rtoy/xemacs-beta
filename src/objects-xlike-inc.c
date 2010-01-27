@@ -556,7 +556,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	  {
 	    /* OK, we fell off the end of the table */
 	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				    list2 (build_string ("unchecked charset"),
+				    list2 (build_ascstring ("unchecked charset"),
 					   charset));
 	    /* default to "en"
 	       #### THIS IS WRONG, WRONG, WRONG!!
@@ -822,7 +822,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	  Lisp_Object new_registries = make_vector(registries_len + 1, Qnil);
 
 	  XVECTOR_DATA(new_registries)[0]
-	    = build_string(FALLBACK_ASCII_REGISTRY);
+	    = build_ascstring(FALLBACK_ASCII_REGISTRY);
 
 	  memcpy(XVECTOR_DATA(new_registries) + 1,
 		 XVECTOR_DATA(registries),

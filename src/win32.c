@@ -299,11 +299,11 @@ mswindows_output_last_error (const Ascbyte *frob)
 }
 
 DOESNT_RETURN
-mswindows_report_process_error (const char *string, Lisp_Object data,
+mswindows_report_process_error (const Ascbyte *reason, Lisp_Object data,
 				int errnum)
 {
   report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
-			  string, data);
+			  reason, data);
 }
 
 DEFUN ("mswindows-shell-execute", Fmswindows_shell_execute, 2, 4, 0, /*

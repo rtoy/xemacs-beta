@@ -744,7 +744,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   struct passwd *pw = qxe_getpwuid (getuid ());
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
 
-  return build_string (pw ? pw->pw_name : "unknown");
+  return build_ext_string (pw ? pw->pw_name : "unknown", Quser_name_encoding);
 }
 
 DEFUN ("user-uid", Fuser_uid, 0, 0, 0, /*
@@ -869,7 +869,7 @@ get_home_directory (void)
                  We probably should try to extract pw_dir from /etc/passwd,
                  before falling back to this. */
 	      cached_home_directory
-                = qxestrdup ((const Ibyte *)DEFAULT_DIRECTORY_FALLBACK);
+                = qxestrdup ((const Ibyte *) DEFAULT_DIRECTORY_FALLBACK);
 	      output_home_warning = 1;
 	    }
 	}

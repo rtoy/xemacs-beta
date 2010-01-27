@@ -1847,7 +1847,8 @@ unix_canonicalize_host_name (Lisp_Object host)
     return host;
 
   if (address.sin_family == AF_INET)
-    return build_string (inet_ntoa (address.sin_addr));
+    return build_ext_string (inet_ntoa (address.sin_addr),
+			     Qunix_host_name_encoding);
   else
     /* #### any clue what to do here? */
     return host;

@@ -285,7 +285,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
   if (NILP (the_specs))
     /* there are no global specs */
-    write_c_string (printcharfun, "<unspecified>");
+    write_ascstring (printcharfun, "<unspecified>");
   else
     print_internal (the_specs, printcharfun, 1);
   if (!NILP (sp->fallback))

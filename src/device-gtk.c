@@ -236,7 +236,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   /* Attempt to load a site-specific gtkrc */
   {
-    Lisp_Object gtkrc = Fexpand_file_name (build_string ("gtkrc"), Vdata_directory);
+    Lisp_Object gtkrc = Fexpand_file_name (build_ascstring ("gtkrc"), Vdata_directory);
     gchar **default_files = gtk_rc_get_default_files ();
     gint num_files;
 
