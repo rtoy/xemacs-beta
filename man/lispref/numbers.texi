@@ -9,13 +9,13 @@
 @cindex integers
 @cindex numbers
 
-  XEmacs supports two to five numeric data types.  @dfn{Integers} and
+  XEmacs supports two to five numeric data types.  @dfn{Fixnums} and
 @dfn{floating point numbers} are always supported.  As a build-time
 option, @dfn{bignums}, @dfn{ratios}, and @dfn{bigfloats} may be
 enabled on some platforms.
 
-  Integers, which are what Common Lisp calls
-@dfn{fixnums}, are whole numbers such as @minus{}3, 0, #b0111, #xFEED,
+  Fixnums (called just @dfn{integers} in GNU Emacs and older versions
+of XEmacs) are whole numbers such as @minus{}3, 0, #b0111, #xFEED,
 #o744.  Their values are exact, and their range is limited.  The
 number prefixes `#b', `#o', and `#x' are supported to represent numbers
 in binary, octal, and hexadecimal notation (or radix).  Floating point
@@ -52,14 +52,15 @@ precision are mixed, the result will always have the larger precision.
 The exact rules are more carefully explained elsewhere
 (@pxref{Canonicalization and Contagion}).
 
-  Note that the term ``integer'' is used throughout the XEmacs
-documentation and code to mean ``fixnum''.  This is inconsistent with
-Common Lisp, and likely to cause confusion.  Similarly, ``float'' is
-used to mean ``fixed precision floating point number'', and the Common
-Lisp distinctions among @dfn{short-floats}, @dfn{long-floats},
-@emph{etc.}, and bigfloats (which are not standardized in Common Lisp)
-are not reflected in XEmacs terminology.  (Volunteers to fix this in the
-XEmacs manuals would be heartily welcomed.)
+  Common Lisp terminology and historical Emacs terminology conflict
+here, to an extent.  We attempt to use ``fixnum'' and ``integer''
+consistently, but older XEmacs and GNU Emacs code and documentation use
+the latter to mean the former.  ``Float'' is used in Emacs documentation
+to mean ``fixed precision floating point number'', and the Common Lisp
+distinctions among @dfn{short-floats}, @dfn{long-floats}, @emph{etc.},
+and bigfloats (which are not standardized in Common Lisp) are not
+reflected in XEmacs terminology.  We're working on this, but volunteers
+to fix it in the XEmacs manuals would be heartily welcomed.
 
 @menu
 * Integer Basics::            Representation and range of integers.
@@ -541,12 +542,11 @@ BSD MP implementations vary across vendors, but how much, we do not know
 yet.)
 
 @item
-Terminology is not Common-Lisp-conforming.  For example, ``integer'' for
-Emacs Lisp means what Common Lisp calls ``fixnum''.  This issue is being
-investigated, but the use of ``integer'' for fixnum is pervasive and may
-cause backward-compatibility and GNU-Emacs-compatibility problems.
-There are similar issues for floating point numbers.  Since Emacs Lisp
-has not had a ratio type before, there should be no problems there.
+Our documentation's terminology, and our API terminology, is not always
+Common-Lisp-conforming.  Many places use ``integer'' where ``fixnum''
+better reflects what the code accepts or produces; there are similar
+issues for the varying types of floating point numbers.  Since Emacs
+Lisp has not had a ratio type before, there are no problems there.
 
 @item
 An atom with ratio read syntax now returns a number, not a symbol.
@@ -759,8 +759,8 @@ Here's a function to do this:
 @b{Common Lisp note:} Comparing numbers in Common Lisp always requires
 @code{=} because Common Lisp implements multi-word integers, and two
 distinct integer objects can have the same numeric value.  XEmacs Lisp
-can have just one integer object for any given value because it has a
-limited range of integer values.
+can have just one fixnum object for any given value because it has a
+limited range of fixnum values.
 @end quotation
 
 In addition to numbers, all of the following functions also accept
@@ -914,7 +914,8 @@ if any argument is floating.
 
   It is important to note that in XEmacs Lisp, arithmetic functions
 do not check for overflow.  Thus @code{(1+ 134217727)} may evaluate to
-@minus{}134217728, depending on your hardware.
+@minus{}134217728, depending on your hardware and whether your XEmacs
+supports bignums.
 
 @defun 1+ number
 This function returns @var{number} plus one.  @var{number} may be a

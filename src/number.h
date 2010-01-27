@@ -338,4 +338,35 @@ enum number_type {FIXNUM_T, BIGNUM_T, RATIO_T, FLOAT_T, BIGFLOAT_T};
 extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
 
+#ifdef WITH_NUMBER_TYPES
+DECLARE_INLINE_HEADER (
+int
+non_fixnum_number_p (Lisp_Object object))
+{
+  if (LRECORDP (object))
+    {
+      switch (XRECORD_LHEADER (object)->type)
+        {
+        case lrecord_type_float:
+#ifdef HAVE_BIGNUM
+        case lrecord_type_bignum:
+#endif
+#ifdef HAVE_RATIO
+        case lrecord_type_ratio:
+#endif
+#ifdef HAVE_BIGFLOAT
+        case lrecord_type_bigfloat:
+#endif
+          return 1;
+        }
+    }
+  return 0;
+}
+#define NON_FIXNUM_NUMBER_P(X) non_fixnum_number_p (X)
+
+#else
+#define NON_FIXNUM_NUMBER_P FLOATP
+#endif
+
+
 #endif /* INCLUDED_number_h_ */

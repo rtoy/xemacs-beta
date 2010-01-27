@@ -232,7 +232,7 @@ enum Opcode /* Byte codes */
   Bquo 		 	= 0245,
   Brem 		 	= 0246,
   Bnumberp 	 	= 0247,
-  Bintegerp 	 	= 0250,
+  Bfixnump 	 	= 0250,	/* Was Bintegerp. */
 
   BRgoto 		= 0252,
   BRgotoifnil 		= 0253,
@@ -1076,12 +1076,8 @@ execute_optimized_program (const Opbyte *program,
 #endif
 	  break;
 
-	case Bintegerp:
-#ifdef HAVE_BIGNUM
-	  TOP_LVALUE = INTEGERP (TOP) ? Qt : Qnil;
-#else
+	case Bfixnump:
 	  TOP_LVALUE = INTP (TOP) ? Qt : Qnil;
-#endif
 	  break;
 
 	case Beq:
