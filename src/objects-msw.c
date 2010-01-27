@@ -1141,7 +1141,7 @@ font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
     return 1;
 
   /* Add the font name to the list if not already there */
-  fontname_lispstr = build_intstring (fontname);
+  fontname_lispstr = build_istring (fontname);
   if (NILP (Fassoc (fontname_lispstr, font_enum->list)))
     font_enum->list =
       Fcons (Fcons (fontname_lispstr,
@@ -1797,7 +1797,7 @@ create_hfont_from_font_spec (const Ibyte *namestr,
 			    ERROR_ME_DEBUG_WARN, &logfont, fontname, weight,
 			    points, effects, charset))
 	signal_error (Qinternal_error, "Bad value in device font list?",
-		      build_intstring (truername));
+		      build_istring (truername));
     }
   else if (!parse_font_spec (namestr, hdc, name_for_errors,
 			     errb, &logfont, fontname, weight, points,
@@ -1817,7 +1817,7 @@ create_hfont_from_font_spec (const Ibyte *namestr,
   qxesprintf (truename, "%s:%s:%s:%s:%s", fontname, weight,
 	      points, effects, charset);
   
-  *truename_ret = build_intstring (truename);
+  *truename_ret = build_istring (truename);
   return hfont;
 }
 
@@ -1948,7 +1948,7 @@ mswindows_font_list (Lisp_Object pattern, Lisp_Object device,
       if (match_font (XSTRING_DATA (XCAR (XCAR (fonttail))),
 		      XSTRING_DATA (pattern),
 		      fontname))
-	result = Fcons (build_intstring (fontname), result);
+	result = Fcons (build_istring (fontname), result);
     }
 
   return Fnreverse (result);
@@ -2054,7 +2054,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
      spec.  See if the FONTSIGNATURE data is already cached.  If not, get
      it and cache it. */
   if (!STRINGP (reloc) || the_nonreloc != XSTRING_DATA (reloc))
-    reloc = build_intstring (the_nonreloc);
+    reloc = build_istring (the_nonreloc);
   GCPRO1 (reloc);
   fontsig = Fgethash (reloc, Vfont_signature_data, Qunbound);
 

@@ -507,7 +507,7 @@ msprinter_default_printer (void)
      name[] or ALLOCA ()ed */
   qxestrtok (nameint, ",");
 
-  return build_intstring (nameint);
+  return build_istring (nameint);
 }
 
 
@@ -672,7 +672,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 	  Ibyte new_connext[20];
 
 	  qxesprintf (new_connext, ":%X", d->header.uid);
-	  new_connection = concat2 (devname, build_intstring (new_connext));
+	  new_connection = concat2 (devname, build_istring (new_connext));
 	}
       DEVICE_CONNECTION (d) = new_connection;
 

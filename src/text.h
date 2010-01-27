@@ -2431,7 +2431,7 @@ END_C_DECLS
   of conversions involving raw data and/or Lisp strings, especially when
   the output is an alloca()ed string. (When the destination is a
   Lisp_String, there are other functions that should be used instead --
-  build_ext_string() and make_ext_string(), for example.) The convenience
+  build_extstring() and make_extstring(), for example.) The convenience
   macros are of two types -- the older kind that store the result into a
   specified variable, and the newer kind that return the result.  The newer
   kind of macros don't exist when the output is sized data, because that
@@ -2854,8 +2854,8 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
   TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
 
-/* In place of EXTERNAL_TO_LISP_STRING(), use build_ext_string() and/or
-   make_ext_string(). */
+/* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
+   make_extstring(). */
 
 #ifdef TEST_NEW_DFC
 #define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
@@ -2992,7 +2992,7 @@ int wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len);
 #define wext_atol(str) wcstol (str, 0, 10)
 #define wext_sprintf wsprintfW /* Huh?  both wsprintfA and wsprintfW? */
 #define wext_getenv _wgetenv
-#define build_wext_string(str, cs) build_ext_string ((Extbyte *) str, cs)
+#define build_wext_string(str, cs) build_extstring ((Extbyte *) str, cs)
 #define WEXTTEXT_TO_8_BIT(arg) WEXTTEXT_TO_MULTIBYTE(arg)
 #ifdef WIN32_NATIVE
 int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
@@ -3017,7 +3017,7 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 #define wext_atol(str) atol (str)
 #define wext_sprintf sprintf
 #define wext_getenv getenv
-#define build_wext_string build_ext_string
+#define build_wext_string build_extstring
 #define wext_retry_open retry_open
 #define wext_access access
 #define wext_stat stat

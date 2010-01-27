@@ -514,7 +514,7 @@ tt_state_symbol (Tt_state n)
 static Lisp_Object
 tt_build_c_string (char *s)
 {
-  return build_string (s ? s : "");
+  return build_cistring (s ? s : "");
 }
 
 static Lisp_Object
@@ -1216,7 +1216,7 @@ Return current default process identifier for your process.
        ())
 {
   Extbyte *procid = tt_default_procid ();
-  return procid ? build_ext_string (procid, Qtooltalk_encoding) : Qnil;
+  return procid ? build_extstring (procid, Qtooltalk_encoding) : Qnil;
 }
 
 DEFUN ("tooltalk-default-session", Ftooltalk_default_session, 0, 0, 0, /*
@@ -1225,7 +1225,7 @@ Return current default session identifier for the current default procid.
        ())
 {
   Extbyte *session = tt_default_session ();
-  return session ? build_ext_string (session, Qtooltalk_encoding) : Qnil;
+  return session ? build_extstring (session, Qtooltalk_encoding) : Qnil;
 }
 
 static void

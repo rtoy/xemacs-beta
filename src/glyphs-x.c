@@ -602,7 +602,7 @@ x_locate_pixmap_file (Lisp_Object name)
 	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
 					  subs, XtNumber (subs), 0)))
 	  {
-	    name = build_ext_string (pathext, Qfile_name);
+	    name = build_extstring (pathext, Qfile_name);
 	    XtFree (pathext);
 	    return (name);
 	  }
@@ -1923,7 +1923,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   source = safe_XLoadFont (dpy, source_name);
   if (! source)
     signal_error_2 (Qgui_error,
-		    "couldn't load font", build_intstring (source_name), data);
+		    "couldn't load font", build_istring (source_name), data);
   if (count == 2)
     mask = 0;
   else if (!mask_name[0])
@@ -1934,7 +1934,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       if (!mask)
 	signal_continuable_error_2 (Qgui_error,
 				    "couldn't load font",
-				    build_intstring (mask_name), data);
+				    build_istring (mask_name), data);
     }
   if (!mask)
     mask_char = 0;
@@ -2561,7 +2561,7 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      return build_ext_string (wv->value, Qlwlib_encoding);
+      return build_extstring (wv->value, Qlwlib_encoding);
     }
   return Qunbound;
 }
@@ -3013,7 +3013,7 @@ complex_vars_of_glyphs_x (void)
      vector3 (Qxbm, Q_data,					\
 	      list3 (make_int (name##_width),			\
 		     make_int (name##_height),			\
-		     make_ext_string ((Extbyte *) name##_bits,	\
+		     make_extstring ((Extbyte *) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\
      Qglobal, Qx, Qnil)

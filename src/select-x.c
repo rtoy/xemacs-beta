@@ -192,7 +192,7 @@ x_atom_to_symbol (struct device *d, Atom atom)
 			C_STRING_ALLOCA, intstr,
 			Qctext);
     XFree (str);
-    return intern_int (intstr);
+    return intern_istring (intstr);
   }
 }
 
@@ -1377,7 +1377,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
      COMPOUND_TEXT that we stored there ourselves earlier,
      in x-store-cutbuffer-internal  */
   ret = (bytes ?
-	 make_ext_string ((Extbyte *) data, bytes,
+	 make_extstring ((Extbyte *) data, bytes,
 			  memchr (data, 0x1b, bytes) ?
 			  Qctext : Qbinary)
 	 : Qnil);

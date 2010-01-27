@@ -65,7 +65,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
   if (0 > lseek (fd, position, 0))
     {
       if (name_nonreloc)
-	name_reloc = build_intstring (name_nonreloc);
+	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
 			  name_reloc, make_int (position));
@@ -180,7 +180,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
   if (0 > lseek (fd, position, 0))
     {
       if (name_nonreloc)
-	name_reloc = build_intstring (name_nonreloc);
+	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
 			  name_reloc, make_int (position));
@@ -378,7 +378,7 @@ get_doc_string (Lisp_Object filepos)
 
       if (fd < 0)
 	report_file_error ("Cannot open doc string file",
-			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_nonreloc ? build_istring (name_nonreloc) :
 			   name_reloc);
     }
 
@@ -475,7 +475,7 @@ get_object_file_name (Lisp_Object filepos)
 
       if (fd < 0)
 	report_file_error ("Cannot open doc string file",
-			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_nonreloc ? build_istring (name_nonreloc) :
 			   name_reloc);
     }
 
@@ -599,7 +599,7 @@ string is passed through `substitute-command-keys'.
       if (XSUBR (fun)->doc == 0)
 	return Qnil;
       if ((EMACS_INT) XSUBR (fun)->doc >= 0)
-	doc = build_string (XSUBR (fun)->doc);
+	doc = build_cistring (XSUBR (fun)->doc);
       else
         doc = get_doc_string (make_int (- (EMACS_INT) XSUBR (fun)->doc));
     }
@@ -754,7 +754,7 @@ when doc strings are referred to in the dumped Emacs.
 
   fd = qxe_open (name, O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
-    report_file_error ("Opening doc string file", build_intstring (name));
+    report_file_error ("Opening doc string file", build_istring (name));
   Vinternal_doc_file_name = filename;
   filled = 0;
   pos = 0;
@@ -1243,9 +1243,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    if (NILP (tem))
 	      {
-		buffer_insert_c_string (buf_, "(uses keymap \"");
+		buffer_insert_ascstring (buf_, "(uses keymap \"");
 		buffer_insert_lisp_string (buf_, Fsymbol_name (name));
-		buffer_insert_c_string (buf_, "\", which is not currently defined) ");
+		buffer_insert_ascstring (buf_, "\", which is not currently defined) ");
 
 		if (start[-1] == '<') keymap = Qnil;
 	      }

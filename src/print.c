@@ -662,7 +662,7 @@ write_istring (Lisp_Object stream, const Ibyte *str)
 }
 
 void
-write_c_string (Lisp_Object stream, const CIbyte *str)
+write_cistring (Lisp_Object stream, const CIbyte *str)
 {
   /* This function can GC */
   write_istring (stream, (const Ibyte *) str);
@@ -1357,7 +1357,7 @@ print_vector_internal (const char *start, const char *end,
       if (max < len) last = max;
     }
 
-  write_c_string (printcharfun, start);
+  write_cistring (printcharfun, start);
   for (i = 0; i < last; i++)
     {
       Lisp_Object elt = XVECTOR_DATA (obj)[i];
@@ -1367,7 +1367,7 @@ print_vector_internal (const char *start, const char *end,
   UNGCPRO;
   if (last != len)
     write_ascstring (printcharfun, " ...");
-  write_c_string (printcharfun, end);
+  write_cistring (printcharfun, end);
 }
 
 void

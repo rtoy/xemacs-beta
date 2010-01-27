@@ -95,7 +95,7 @@ tstr_to_local_file_format (Extbyte *path)
   TSTR_TO_C_STRING (path, ttlff);
   INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
 
-  return build_intstring (ttlff);
+  return build_istring (ttlff);
 }
 
 /* Normalize filename by converting all path separators to the specified
@@ -405,7 +405,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 
   /* Use mule and cygwin-safe APIs top get at file data. */
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (p, p);
-  return build_intstring (p);
+  return build_istring (p);
 }
 #endif
 

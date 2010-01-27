@@ -177,7 +177,7 @@ check_obarray (Lisp_Object obarray)
 }
 
 Lisp_Object
-intern_int (const Ibyte *str)
+intern_istring (const Ibyte *str)
 {
   Bytecount len = qxestrlen (str);
   Lisp_Object obarray = Vobarray;
@@ -197,7 +197,7 @@ intern_int (const Ibyte *str)
 Lisp_Object
 intern (const CIbyte *str)
 {
-  return intern_int ((Ibyte *) str);
+  return intern_istring ((Ibyte *) str);
 }
 
 Lisp_Object
@@ -210,7 +210,7 @@ intern_converting_underscores_to_dashes (const CIbyte *str)
   for (i = 0; i < len; i++)
     if (tmp[i] == '_')
       tmp[i] = '-';
-  return intern_int ((Ibyte *) tmp);
+  return intern_istring ((Ibyte *) tmp);
 }
 
 DEFUN ("intern", Fintern, 1, 2, 0, /*

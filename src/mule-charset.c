@@ -625,7 +625,7 @@ character set.  Recognized properties are:
       Ibyte tempname[80];
 
       qxesprintf (tempname, "___temporary___%d__", id);
-      name = Fmake_symbol (build_intstring (tempname)); /* Uninterned. */
+      name = Fmake_symbol (build_istring (tempname)); /* Uninterned. */
     }
   if (NILP (doc_string))
     doc_string = build_ascstring ("");

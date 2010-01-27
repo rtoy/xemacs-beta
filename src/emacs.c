@@ -2010,8 +2010,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 -- Fset() on a symbol that is unbound
 	 -- Any of the object-creating functions in alloc.c: e.g.
 	    - make_string()
-	    - build_intstring()
-	    - build_string()
+	    - build_istring()
+	    - build_cistring()
 	    - build_ascstring()
 	    - make_vector()
 	    - make_int()
@@ -2633,7 +2633,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       if (XSTRING_DATA (Vinvocation_name)[0] == '-')
 	{
 	  /* XEmacs as a login shell, oh goody! */
-	  Vinvocation_name = build_intstring (egetenv ("SHELL"));
+	  Vinvocation_name = build_istring (egetenv ("SHELL"));
 	}
       Vinvocation_directory = Vinvocation_name;
 
@@ -4477,14 +4477,14 @@ complex_vars_of_emacs (void)
 For example, this may be \"xemacs\" or \"infodock\".
 This is mainly meant for use in path searching.
 */ );
-  Vemacs_program_name = build_ext_string (PATH_PROGNAME, Qfile_name);
+  Vemacs_program_name = build_extstring (PATH_PROGNAME, Qfile_name);
 
   DEFVAR_LISP ("emacs-program-version", &Vemacs_program_version /*
 *Version of the Emacs variant.
 This typically has the form NN.NN-bNN.
 This is mainly meant for use in path searching.
 */ );
-  Vemacs_program_version = build_ext_string (PATH_VERSION, Qfile_name);
+  Vemacs_program_version = build_extstring (PATH_VERSION, Qfile_name);
 
   DEFVAR_LISP ("exec-path", &Vexec_path /*
 *List of directories to search programs to run in subprocesses.
@@ -4504,7 +4504,7 @@ configure's idea of what `exec-directory' will be.
 */ );
 #ifdef PATH_EXEC
   Vconfigure_exec_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_EXEC, Qfile_name));
+    (build_extstring (PATH_EXEC, Qfile_name));
 #else
   Vconfigure_exec_directory = Qnil;
 #endif
@@ -4520,7 +4520,7 @@ configure's idea of what `lisp-directory' will be.
 */ );
 #ifdef PATH_LOADSEARCH
   Vconfigure_lisp_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_LOADSEARCH, Qfile_name));
+    (build_extstring (PATH_LOADSEARCH, Qfile_name));
 #else
   Vconfigure_lisp_directory = Qnil;
 #endif
@@ -4536,7 +4536,7 @@ configure's idea of what `mule-lisp-directory' will be.
 */ );
 #ifdef PATH_MULELOADSEARCH
   Vconfigure_mule_lisp_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_MULELOADSEARCH, Qfile_name);
+    (build_extstring (PATH_MULELOADSEARCH, Qfile_name);
 #else
   Vconfigure_mule_lisp_directory = Qnil;
 #endif
@@ -4552,7 +4552,7 @@ configure's idea of what `module-directory' will be.
 */ );
 #ifdef PATH_MODULESEARCH
   Vconfigure_module_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_MODULESEARCH, Qfile_name));
+    (build_extstring (PATH_MODULESEARCH, Qfile_name));
 #else
   Vconfigure_module_directory = Qnil;
 #endif
@@ -4612,7 +4612,7 @@ configure's idea of what `data-directory' will be.
 */ );
 #ifdef PATH_DATA
   Vconfigure_data_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_DATA, Qfile_name));
+    (build_extstring (PATH_DATA, Qfile_name));
 #else
   Vconfigure_data_directory = Qnil;
 #endif
@@ -4634,7 +4634,7 @@ configure's idea of what `site-directory' will be.
 */ );
 #ifdef PATH_SITE
   Vconfigure_site_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_SITE, Qfile_name));
+    (build_extstring (PATH_SITE, Qfile_name));
 #else
   Vconfigure_site_directory = Qnil;
 #endif
@@ -4650,7 +4650,7 @@ configure's idea of what `site-directory' will be.
 */ );
 #ifdef PATH_SITE_MODULES
   Vconfigure_site_module_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_SITE_MODULES, Qfile_name));
+    (build_extstring (PATH_SITE_MODULES, Qfile_name));
 #else
   Vconfigure_site_module_directory = Qnil;
 #endif
@@ -4667,7 +4667,7 @@ configure's idea of what `doc-directory' will be.
 */ );
 #ifdef PATH_DOC
   Vconfigure_doc_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_DOC, Qfile_name));
+    (build_extstring (PATH_DOC, Qfile_name));
 #else
   Vconfigure_doc_directory = Qnil;
 #endif
@@ -4678,7 +4678,7 @@ configure's idea of what `exec-prefix-directory' will be.
 */ );
 #ifdef PATH_EXEC_PREFIX
   Vconfigure_exec_prefix_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_EXEC_PREFIX, Qfile_name));
+    (build_extstring (PATH_EXEC_PREFIX, Qfile_name));
 #else
   Vconfigure_exec_prefix_directory = Qnil;
 #endif
@@ -4689,7 +4689,7 @@ configure's idea of what `prefix-directory' will be.
 */ );
 #ifdef PATH_PREFIX
   Vconfigure_prefix_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_PREFIX, Qfile_name));
+    (build_extstring (PATH_PREFIX, Qfile_name));
 #else
   Vconfigure_prefix_directory = Qnil;
 #endif
@@ -4702,7 +4702,7 @@ includes this.
 */ );
 #ifdef PATH_INFO
   Vconfigure_info_directory =
-    Ffile_name_as_directory (build_ext_string (PATH_INFO, Qfile_name));
+    Ffile_name_as_directory (build_extstring (PATH_INFO, Qfile_name));
 #else
   Vconfigure_info_directory = Qnil;
 #endif

@@ -117,7 +117,7 @@ dll_error ()
 #else
   msg = (const Extbyte *) "Shared library error";
 #endif
-  return build_ext_string (msg, Qerror_message_encoding);
+  return build_extstring (msg, Qerror_message_encoding);
 }
 
 #elif defined(HAVE_SHL_LOAD)
@@ -454,7 +454,7 @@ dll_error (void)
   int errorNumber;
   const Extbyte *fileNameWithError, *errorString;
   NSLinkEditError (&c, &errorNumber, &fileNameWithError, &errorString);
-  return build_ext_string (errorString, Qerror_message_encoding);
+  return build_extstring (errorString, Qerror_message_encoding);
 }
 #elif HAVE_LTDL
 /* Libtool's libltdl */
@@ -503,7 +503,7 @@ dll_variable (dll_handle h, const Ibyte *n)
 Lisp_Object
 dll_error (void)
 {
-  return build_ext_string (lt_dlerror (), Qerror_message_encoding);
+  return build_extstring (lt_dlerror (), Qerror_message_encoding);
 }
 #else
 /* Catchall if we don't know about this system's method of dynamic loading */

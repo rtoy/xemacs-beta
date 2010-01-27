@@ -255,7 +255,7 @@ end
 
 
 define leval
-ldp Feval(Fcar(Fread_from_string(build_string($arg0),Qnil,Qnil)))
+ldp Feval(Fcar(Fread_from_string(build_cistring($arg0),Qnil,Qnil)))
 end
 
 document leval

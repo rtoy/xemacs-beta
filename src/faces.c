@@ -2335,7 +2335,7 @@ complex_vars_of_faces (void)
 #ifdef USE_XFT
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list1 (device_symbol),
-				build_string (*fontptr)),
+				build_cistring (*fontptr)),
 			 inst_list);
 
 #else /* !USE_XFT */
@@ -2378,7 +2378,7 @@ complex_vars_of_faces (void)
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list3 (device_symbol,
 				       Qtwo_dimensional, Qinitial),
-				build_string (*fontptr)),
+				build_cistring (*fontptr)),
 			 inst_list);
 
     /* We need to set the font for the JIT-ucs-charsets separately from the

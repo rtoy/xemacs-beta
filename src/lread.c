@@ -1097,7 +1097,7 @@ locate_file_in_directory_mapper (Ibyte *fn, void *arg)
 	    {
 	      /* We succeeded; return this descriptor and filename.  */
 	      if (closure->storeptr)
-		*closure->storeptr = build_intstring (fn);
+		*closure->storeptr = build_istring (fn);
 
 	      return 1;
 	    }
@@ -1181,7 +1181,7 @@ static int
 locate_file_construct_suffixed_files_mapper (Ibyte *fn, void *arg)
 {
   Lisp_Object *tail = (Lisp_Object *) arg;
-  *tail = Fcons (build_intstring (fn), *tail);
+  *tail = Fcons (build_istring (fn), *tail);
   return 0;
 }
 

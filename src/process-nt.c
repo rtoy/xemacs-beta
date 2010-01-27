@@ -1313,7 +1313,7 @@ nt_canonicalize_host_name (Lisp_Object host)
     return host;
 
   if (address.sin_family == AF_INET)
-    return build_ext_string (inet_ntoa (address.sin_addr),
+    return build_extstring (inet_ntoa (address.sin_addr),
 			     Qunix_host_name_encoding);
   else
     return host;

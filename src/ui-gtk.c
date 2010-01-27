@@ -800,7 +800,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun, "#<GtkObject (");
   if (XGTK_OBJECT (obj)->alive_p)
-    write_c_string (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
+    write_cistring (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
     write_ascstring (printcharfun, "dead");
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_OBJECT (obj)->object);
@@ -1118,7 +1118,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lcrecord (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkBoxed (");
-  write_c_string (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
+  write_cistring (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_BOXED (obj)->object);
 }
 
@@ -1497,7 +1497,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
     case GTK_TYPE_DOUBLE:
       return (make_float (GTK_VALUE_DOUBLE (*arg)));
     case GTK_TYPE_STRING:
-      return (build_string (GTK_VALUE_STRING (*arg)));
+      return (build_cistring (GTK_VALUE_STRING (*arg)));
     case GTK_TYPE_FLAGS:
       return (flags_to_list (GTK_VALUE_FLAGS (*arg), arg->type));
     case GTK_TYPE_ENUM:
@@ -2137,7 +2137,7 @@ symbol_to_enum (Lisp_Object obj, GtkType t)
 
   if (NILP (alist))
     {
-      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_cistring (gtk_type_name (t)));
     }
 
   value = Fassq (obj, alist);
@@ -2206,7 +2206,7 @@ enum_to_symbol (guint value, GtkType t)
 
   if (NILP (alist))
     {
-      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_cistring (gtk_type_name (t)));
     }
 
   cell = Frassq (make_int (value), alist);

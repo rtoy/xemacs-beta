@@ -846,7 +846,7 @@ extern int mswindows_windows9x_p;
   EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
 
 #define build_tstr_string(in) \
-  make_ext_string (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+  make_extstring (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
 
 #define MAX_ANSI_CHAR_LEN 1
 #define MAX_UNICODE_CHAR_LEN 2

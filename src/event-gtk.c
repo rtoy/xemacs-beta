@@ -228,7 +228,7 @@ emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (emacs_event));
   if (CONSOLE_GTK_P (XCONSOLE (console)))
-    write_c_string
+    write_cistring
       (pstream,
        gtk_event_name (EVENT_MAGIC_GDK_EVENT (emacs_event).type));
 }
@@ -1021,7 +1021,7 @@ dragndrop_data_received (GtkWidget          *widget,
       l_type = Qdragdrop_MIME;
       l_dndlist = list1 (list3 (list1 (build_ascstring ("text/plain")),
 				build_ascstring ("8_bit"),
-				make_ext_string (data->data,
+				make_extstring (data->data,
 						 strlen ((char *)data->data),
 						 Qctext)));
     }
@@ -1048,9 +1048,9 @@ dragndrop_data_received (GtkWidget          *widget,
 	 We just pass it up to lisp - we already have a mime type.
       */
       l_type = Qdragdrop_MIME;
-      l_dndlist = list1 (list3 (list1 (build_string (gdk_atom_name (data->type))),
+      l_dndlist = list1 (list3 (list1 (build_cistring (gdk_atom_name (data->type))),
 				build_ascstring ("8bit"),
-				make_ext_string ((Extbyte *) data->data,
+				make_extstring ((Extbyte *) data->data,
 						 data->length, Qbinary)));
     }
 
@@ -1787,7 +1787,7 @@ gtk_reset_key_mapping (struct device *d)
 	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0], 0);
 	if (name)
 	  {
-	    Fputhash (build_ext_string (name, Qx_keysym_encoding),
+	    Fputhash (build_extstring (name, Qx_keysym_encoding),
 		      Qsans_modifiers, hashtable);
 	    Fputhash (sym, Qsans_modifiers, hashtable);
 	  }
@@ -1802,7 +1802,7 @@ gtk_reset_key_mapping (struct device *d)
 	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j], 0);
 	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
 		{
-		  Fputhash (build_ext_string (name, Qx_keysym_encoding),
+		  Fputhash (build_extstring (name, Qx_keysym_encoding),
 			    Qt, hashtable);
 		  Fputhash (sym, Qt, hashtable);
 		}
