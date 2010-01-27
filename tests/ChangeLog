@@ -1,5 +1,12 @@
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
+	* automated/test-harness.el (test-harness-from-buffer):
+	Update doc string of `Assert-test' and change the failing-case
+	message to be clearer.  Also add `Assert-test-not' for asserting
+	that a comparison should fail.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
 	* automated/case-tests.el:
 	* automated/case-tests.el (char-as-unicode-escape): New.
 	Add a "torture test" that uses the full set of lower-upper case
