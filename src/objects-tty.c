@@ -276,7 +276,7 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       if (*str != '/')
 	return 0;
       str++;
-      charset = Ffind_charset (intern_int (str));
+      charset = Ffind_charset (intern_istring (str));
       if (NILP (charset))
 	return 0;
 #else

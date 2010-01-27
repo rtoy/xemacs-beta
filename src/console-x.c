@@ -162,12 +162,12 @@ get_display_arg_connection (void)
       /* assert: display_arg is only set if we found the display
 	 arg earlier so we can't fail to find it now. */
       assert (disp_name != NULL);
-      conn = build_ext_string (disp_name, Qcommand_argument_encoding);
+      conn = build_extstring (disp_name, Qcommand_argument_encoding);
       free_argc_argv (argv);
       return conn;
     }
   else
-    return build_ext_string (XDisplayName (0), Qx_display_name_encoding);
+    return build_extstring (XDisplayName (0), Qx_display_name_encoding);
 }
 
 /* "semi-canonicalize" means convert to a nicer form for printing, but
@@ -335,7 +335,7 @@ x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
       CHECK_CHAR(key);
 
       buf[set_itext_ichar(buf, XCHAR(key))] = '\0';
-      key_name = build_intstring (buf);
+      key_name = build_istring (buf);
 
       /* We need to do the lookup and compare later, because we can't check
 	 the Qcharacter_of_keysym property belonging to an actual character. */

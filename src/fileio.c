@@ -182,9 +182,9 @@ lisp_strerror (int errnum)
     {
       Ibyte ffff[99];
       qxesprintf (ffff, "Unknown error %d", errnum);
-      return build_intstring (ffff);
+      return build_istring (ffff);
     }
-  return build_ext_string (ret, Qstrerror_encoding);
+  return build_extstring (ret, Qstrerror_encoding);
 }
 
 static Lisp_Object
@@ -429,7 +429,7 @@ Given a Unix syntax file name, returns a string ending in slash.
     qxestrncpy (newbeg, beg, len);
     newbeg[len] = '\0';
     newbeg = mswindows_canonicalize_filename (newbeg);
-    return build_intstring (newbeg);
+    return build_istring (newbeg);
   }
 #endif
 #endif /* not WIN32_NATIVE */
@@ -549,7 +549,7 @@ except for (file-name-as-directory \"\") => \"./\".
   buf = alloca_ibytes (XSTRING_LENGTH (filename) + 10);
   file_name_as_directory (buf, XSTRING_DATA (filename));
   if (qxestrcmp (buf, XSTRING_DATA (filename)))
-    return build_intstring (buf);
+    return build_istring (buf);
   else
     return filename;
 }
@@ -606,7 +606,7 @@ In Unix-syntax, this function just removes the final slash.
     return call2_check_string (handler, Qdirectory_file_name, directory);
   buf = alloca_ibytes (XSTRING_LENGTH (directory) + 20);
   directory_file_name (XSTRING_DATA (directory), buf);
-  return build_intstring (buf);
+  return build_istring (buf);
 }
 
 /* Fmake_temp_name used to be a simple wrapper around mktemp(), but it
@@ -946,7 +946,7 @@ See also the function `substitute-in-file-name'.
 		{
 		  newnm = mswindows_canonicalize_filename (nm);
 		  if (qxestrcmp (newnm, XSTRING_DATA (name)) != 0)
-		    name = build_intstring (newnm);
+		    name = build_istring (newnm);
 		}
 	      else
 		{
@@ -954,7 +954,7 @@ See also the function `substitute-in-file-name'.
 		  newnm = mswindows_canonicalize_filename (nm - 2);
 		  if (qxestrcmp (newnm, XSTRING_DATA (name)) != 0)
 		    {
-		      name = build_intstring (newnm);
+		      name = build_istring (newnm);
 		      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
 		      XSTRING_DATA (name)[1] = ':';
 		    }
@@ -967,7 +967,7 @@ See also the function `substitute-in-file-name'.
 	  if (nm == XSTRING_DATA (name))
 	    RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
 	  RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-					 build_intstring (nm));
+					 build_istring (nm));
 #endif /* not WIN32_NATIVE */
 	}
     }
@@ -1332,7 +1332,7 @@ See also the function `substitute-in-file-name'.
 
   {
     Ibyte *newtarget = mswindows_canonicalize_filename (target);
-    Lisp_Object result = build_intstring (newtarget);
+    Lisp_Object result = build_istring (newtarget);
     xfree (newtarget, Ibyte *);
 
     RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, result);
@@ -2607,7 +2607,7 @@ Otherwise returns nil.
       if (!fname)
 	return Qnil;
       {
-	Lisp_Object val = build_intstring (fname);
+	Lisp_Object val = build_istring (fname);
 	xfree (fname, Ibyte *);
 	return val;
       }
@@ -3858,7 +3858,7 @@ Encrypt STRING using KEY.
 
   ecb_crypt (raw_key, encrypted_string, rounded_size,
 	     DES_ENCRYPT | DES_SW);
-  return make_ext_string (encrypted_string, rounded_size, Qbinary);
+  return make_extstring (encrypted_string, rounded_size, Qbinary);
 }
 
 DEFUN ("decrypt-string", Fdecrypt_string, 2, 2, 0, /*
@@ -3889,7 +3889,7 @@ Decrypt STRING using KEY.
 
 
   ecb_crypt (raw_key, decrypted_string, string_size, D | DES_SW);
-  return make_ext_string (decrypted_string, string_size - 1, Qbinary);
+  return make_extstring (decrypted_string, string_size - 1, Qbinary);
 }
 #endif /* 0 */
 

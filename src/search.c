@@ -184,7 +184,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   re_set_syntax (old);
   if (val)
     {
-      maybe_signal_error (Qinvalid_regexp, 0, build_string (val),
+      maybe_signal_error (Qinvalid_regexp, 0, build_cistring (val),
 			  Qsearch, errb);
       return 0;
     }

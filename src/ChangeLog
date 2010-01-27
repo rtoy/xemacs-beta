@@ -1,3 +1,217 @@
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	* README:
+	* abbrev.c (write_abbrev):
+	* abbrev.c (describe_abbrev):
+	* alloc.c (make_extstring):
+	* alloc.c (build_istring):
+	* alloc.c (build_cistring):
+	* alloc.c (build_ascstring):
+	* alloc.c (build_extstring):
+	* alloc.c (build_msg_istring):
+	* alloc.c (build_defer_istring):
+	* buffer.c (Fgenerate_new_buffer_name):
+	* buffer.c (init_buffer_2):
+	* console-tty.c (tty_init_console):
+	* console-x.c (get_display_arg_connection):
+	* console-x.c (x_perhaps_init_unseen_key_defaults):
+	* database.c (dbm_map):
+	* database.c (dbm_get):
+	* database.c (berkdb_get):
+	* database.c (berkdb_map):
+	* device-gtk.c (FROB_PIXMAP):
+	* device-gtk.c (Fgtk_style_info):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-x.c (coding_system_of_xrm_database):
+	* device-x.c (x_init_device):
+	* device-x.c (signal_if_x_error):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_server_vendor):
+	* device-x.c (Fx_get_font_path):
+	* dialog-x.c (maybe_run_dbox_text_callback):
+	* doc.c (extract_object_file_name):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (get_doc_string):
+	* doc.c (get_object_file_name):
+	* doc.c (Fdocumentation):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (Fsubstitute_command_keys):
+	* editfns.c (init_editfns):
+	* editfns.c (Ftemp_directory):
+	* editfns.c (Fuser_login_name):
+	* editfns.c (Fuser_real_login_name):
+	* editfns.c (Fuser_home_directory):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fcurrent_time_string):
+	* editfns.c (Fcurrent_time_zone):
+	* emacs.c:
+	* emacs.c (main_1):
+	* emodules.c (Flist_modules):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_sym):
+	* emodules.c (vars_of_module):
+	* event-Xt.c (x_has_keysym):
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	* event-gtk.c (dragndrop_data_received):
+	* event-gtk.c (gtk_reset_key_mapping):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* faces.c (complex_vars_of_faces):
+	* file-coding.c (find_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (snarf_coding_system):
+	* fileio.c:
+	* fileio.c (lisp_strerror):
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (Ffile_name_as_directory):
+	* fileio.c (Fdirectory_file_name):
+	* fileio.c (if):
+	* fileio.c (Ffile_symlink_p):
+	* fileio.c (Fencrypt_string):
+	* fileio.c (Fdecrypt_string):
+	* filelock.c (lock_file):
+	* filelock.c (Ffile_locked_p):
+	* floatfns.c (matherr):
+	* font-mgr.c (build_fcapi_string):
+	* font-mgr.c (make_xlfd_font_regexp):
+	* frame-msw.c (mswindows_window_id):
+	* frame-msw.c (mswindows_frame_property):
+	* frame-x.c:
+	* frame-x.c (color_to_string):
+	* frame-x.c (maybe_set_frame_title_format):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (Fx_window_id):
+	* glade.c (connector):
+	* glade.c (Fglade_xml_textdomain):
+	* glade.c (syms_of_glade):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (font_instantiate):
+	* glyphs-gtk.c (BUILD_GLYPH_INST):
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs-x.c (font_instantiate):
+	* glyphs-x.c (x_widget_property):
+	* glyphs-x.c (BUILD_GLYPH_INST):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (bitmap_to_lisp_data):
+	* glyphs.c (pixmap_to_lisp_data):
+	* gpmevent.c (turn_off_gpm):
+	* gpmevent.c (Fgpm_enabled_p):
+	* gpmevent.c (Fgpm_enable):
+	* gtk-glue.c (__make_string_mapper):
+	* gtk-glue.c (xemacs_gtklist_to_list):
+	* gtk-xemacs.c (FROB_FACE):
+	* gtk-xemacs.c (xemacs_gtk_convert_color):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (myHandler):
+	* insdel.c (buffer_insert_ascstring_1):
+	* insdel.h:
+	* insdel.h (buffer_insert_ascstring):
+	* intl.c (Fcurrent_locale):
+	* intl.c (Fset_current_locale):
+	* keymap.c (make_key_description):
+	* keymap.c (Ftext_char_description):
+	* keymap.c (describe_command):
+	* keymap.c (describe_map):
+	* lisp.h:
+	* lread.c:
+	* lread.c (locate_file_in_directory_mapper):
+	* lread.c (locate_file_construct_suffixed_files_mapper):
+	* mule-charset.c (Fmake_charset):
+	* nt.c (Fmswindows_short_file_name):
+	* nt.c (Fmswindows_long_file_name):
+	* objects-gtk.c (__get_gtk_font_truename):
+	* objects-gtk.c (__gtk_font_list_internal):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (create_hfont_from_font_spec):
+	* objects-msw.c (mswindows_font_list):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-x.c (x_font_truename):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (x_font_instance_properties):
+	* objects-x.c (x_font_list):
+	* print.c (write_cistring):
+	* print.c (print_vector_internal):
+	* print.c (print_cons):
+	* process-nt.c (nt_canonicalize_host_name):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process.c (status_message):
+	* process.c (status_notify):
+	* process.c (init_xemacs_process):
+	* process.c (syms_of_process):
+	* redisplay-tty.c (term_get_fkeys_1):
+	* redisplay-tty.c (CONDITIONAL_REASSIGN):
+	* search.c (compile_pattern_1):
+	* select-common.h (selection_data_to_lisp_data):
+	* select-gtk.c (atom_to_symbol):
+	* select-gtk.c (PROCESSING_GTK_CODE):
+	* select-msw.c (mswindows_get_foreign_selection):
+	* select-x.c (x_atom_to_symbol):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* symbols.c (intern_istring):
+	* symbols.c (intern):
+	* symbols.c (intern_converting_underscores_to_dashes):
+	* symbols.c (Fintern):
+	* sysdep.c (init_system_name):
+	* sysdll.c (dll_error):
+	* sysdll.c (dll_open):
+	* syswindows.h:
+	* syswindows.h (build_tstr_string):
+	* tests.c (DFC_CHECK_LENGTH):
+	* tests.c (DFC_CHECK_CONTENT):
+	* tests.c (DFC_RESULT_PASS):
+	* tests.c (Ftest_data_format_conversion):
+	* text.c:
+	* text.c (new_dfc_convert_now_damn_it):
+	* text.h:
+	* text.h (build_wext_string):
+	* tooltalk.c (tt_build_c_string):
+	* tooltalk.c (Ftooltalk_default_procid):
+	* tooltalk.c (Ftooltalk_default_session):
+	* tooltalk.c (init_tooltalk):
+	* ui-byhand.c (Fgtk_clist_get_text):
+	* ui-byhand.c (Fgtk_clist_get_pixtext):
+	* ui-byhand.c (Fgtk_label_get):
+	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* ui-gtk.c (gtk_type_to_lisp):
+	* ui-gtk.c (symbol_to_enum):
+	* ui-gtk.c (enum_to_symbol):
+	* unexaix.c (report_error):
+	* unexaix.c (ERROR0):
+	* unexec.c (report_error):
+	* unexec.c (ERROR0):
+	* unicode.c (unicode_to_ichar):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (Fmswindows_cygwin_to_win32_path):
+	* win32.c (struct read_link_hash):
+	* xemacs.def.in.in:
+
+	Rename:
+
+	write_c_string -> write_cistring
+	build_intstring -> build_istring
+	build_string -> build_cistring
+	build_ext_string -> build_extstring
+	make_ext_string -> make_extstring
+	buffer_insert_c_string -> buffer_insert_ascstring
+	intern_int -> intern_istring
+
+	These functions have been renamed so that the naming harmonizes
+	with the typedefs for strings: `cistring' along with CIbyte *,
+	`istring' along with Ibyte *, `extstring' along with Extbyte *,
+	`ascstring' along with Ascbyte *.
+
+	Also make buffer_insert_ascstring take Ascbyte * and assert
+	that its argument is ASCII.
+
 2010-01-26  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

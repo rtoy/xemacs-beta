@@ -2118,7 +2118,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 
 	       they don't allow relative paths at all!  this is way bogus. */
 	    cmd = urlify_filename (cmd);
-	    l_dndlist = build_intstring (cmd);
+	    l_dndlist = build_istring (cmd);
 	    xfree (cmd, Ibyte *);
 	  }
 	  GCPRO2 (emacs_event, l_dndlist);
@@ -3735,7 +3735,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	    {
 	      Ibyte *fname2 = urlify_filename (fname);
-	      l_item = build_intstring (fname2);
+	      l_item = build_istring (fname2);
 	      xfree (fname2, Ibyte *);
 	      if (freeme)
 		xfree (fname, Ibyte *);

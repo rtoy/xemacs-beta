@@ -114,7 +114,7 @@ tty_init_console (struct console *con, Lisp_Object props)
 	  invalid_state ("Cannot determine terminal type", Qunbound);
 	}
       else
-	terminal_type = build_intstring (temp_type);
+	terminal_type = build_istring (temp_type);
     }
 
   /* Determine the controlling process */

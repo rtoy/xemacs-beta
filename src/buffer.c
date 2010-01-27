@@ -788,7 +788,7 @@ even if a buffer with that name exists.
   while (1)
     {
       qxesprintf (number, "<%d>", ++count);
-      gentemp = concat2 (name, build_intstring (number));
+      gentemp = concat2 (name, build_istring (number));
       if (!NILP (ignore))
         {
           tem = Fstring_equal (gentemp, ignore);
@@ -2999,7 +2999,7 @@ init_buffer_2 (void)
   /* This function can GC */
   Fset_buffer (Fget_buffer (QSscratch));
 
-  current_buffer->directory = build_intstring (initial_directory);
+  current_buffer->directory = build_istring (initial_directory);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

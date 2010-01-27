@@ -50,9 +50,9 @@ apply1
 #ifdef USE_ASSERTIONS
 assert_failed			/* abort(), assert(), etc. */
 #endif
-build_ext_string
-build_intstring
-build_string
+build_extstring
+build_istring
+build_cistring
 build_ascstring
 build_msg_istring
 build_msg_cistring
@@ -143,7 +143,7 @@ list3
 list4
 list5
 list6
-make_ext_string
+make_extstring
 make_float
 make_opaque_ptr
 make_string
@@ -228,7 +228,7 @@ warn_when_safe
 #ifdef XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
 wrap_record_1
 #endif
-write_c_string
+write_cistring
 write_fmt_string
 write_fmt_string_lisp
 write_istring

@@ -148,20 +148,20 @@ REASON is nil or a string describing the failure (not required).
 #define DFC_CHECK_LENGTH(len1,len2,str1)	\
     else if ((len1) != (len2))			\
       conversion_result =			\
-        Fcons (list3 (build_string(str1), Qnil, build_ascstring("wrong length")), \
+        Fcons (list3 (build_cistring(str1), Qnil, build_ascstring("wrong length")), \
 	       conversion_result)
 
 #define DFC_CHECK_CONTENT(str1,str2,len1,str3)	\
     else if (memcmp (str1, str2, len1))		\
       conversion_result =			\
-	Fcons (list3 (build_string(str3), Qnil,			\
+	Fcons (list3 (build_cistring(str3), Qnil,			\
 		      build_ascstring("octet comparison failed")),	\
 	       conversion_result)
 
 #define DFC_RESULT_PASS(str1)		\
     else				\
       conversion_result =		\
-	Fcons (list3 (build_string(str1), Qt, Qnil),	\
+	Fcons (list3 (build_cistring(str1), Qt, Qnil),	\
 	       conversion_result)
 
 #ifdef MULE

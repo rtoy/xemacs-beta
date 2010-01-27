@@ -201,10 +201,10 @@ is a bug, and you are encouraged to report it.
   for (i = 0; i < modnum; i++)
     {
       if (modules[i].used == 1)
-        mlist = Fcons (list4 (build_intstring (modules[i].soname),
-                              build_intstring (modules[i].modname),
-                              build_intstring (modules[i].modver),
-                              build_intstring (modules[i].modtitle)), mlist);
+        mlist = Fcons (list4 (build_istring (modules[i].soname),
+                              build_istring (modules[i].modname),
+                              build_istring (modules[i].modver),
+                              build_istring (modules[i].modtitle)), mlist);
     }
 
   return mlist;
@@ -361,7 +361,7 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
     invalid_argument ("Empty module name", Qunbound);
 
   GCPRO4 (filename, foundname, old_load_list, lisp_modname);
-  filename = build_intstring (module);
+  filename = build_istring (module);
   if (locate_file (Vmodule_load_path, filename, Vmodule_extensions,
 		   &foundname, 0) < 0)
     signal_error (Qdll_error, "Cannot open dynamic module", filename);
@@ -428,7 +428,7 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
     {
     missing_symbol:
       signal_error (Qdll_error, "Invalid dynamic module: Missing symbol",
-		    build_intstring (symname));
+		    build_istring (symname));
     }
 
   qxestrcpy_ascii (symname, "vars_of_");
@@ -558,7 +558,7 @@ emodules_doc_sym (const Ibyte *symname, const Ibyte *doc)
 
   if (SYMBOLP (sym))
     {
-      docstr = build_intstring (doc);
+      docstr = build_istring (doc);
       GCPRO1 (docstr);
       Fput (sym, Qvariable_documentation, docstr);
       UNGCPRO;
@@ -612,7 +612,7 @@ This variable can be used to distinguish between different versions of
 the dynamic loading technology used in Emacs, if required.  It is not
 a given that this value will be the same as the Emacs version number.
 */ );
-  Vmodule_version = build_string (EMODULES_VERSION);
+  Vmodule_version = build_cistring (EMODULES_VERSION);
 
   DEFVAR_BOOL ("load-modules-quietly", &load_modules_quietly /*
 *Set to t if module loading is to be silent.

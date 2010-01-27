@@ -4358,12 +4358,12 @@ extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
 MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
-MODULE_API Lisp_Object build_intstring (const Ibyte *);
-MODULE_API Lisp_Object build_string (const CIbyte *);
+MODULE_API Lisp_Object build_istring (const Ibyte *);
+MODULE_API Lisp_Object build_cistring (const CIbyte *);
 MODULE_API Lisp_Object build_ascstring (const Ascbyte *);
-MODULE_API Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
+MODULE_API Lisp_Object build_extstring (const Extbyte *, Lisp_Object);
 MODULE_API Lisp_Object make_string (const Ibyte *, Bytecount);
-MODULE_API Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
+MODULE_API Lisp_Object make_extstring (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
 MODULE_API Lisp_Object make_float (double);
@@ -5388,7 +5388,7 @@ void debug_backtrace (void);
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
 MODULE_API void write_istring (Lisp_Object stream, const Ibyte *str);
 /* Same goes for this function. */
-MODULE_API void write_c_string (Lisp_Object stream, const CIbyte *str);
+MODULE_API void write_cistring (Lisp_Object stream, const CIbyte *str);
 /* Same goes for this function. */
 MODULE_API void write_ascstring (Lisp_Object stream, const Ascbyte *str);
 /* Same goes for this function. */
@@ -5528,7 +5528,7 @@ EXFUN (Fsymbol_plist, 1);
 EXFUN (Fsymbol_value, 1);
 
 unsigned int hash_string (const Ibyte *, Bytecount);
-Lisp_Object intern_int (const Ibyte *str);
+Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);

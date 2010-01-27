@@ -2874,7 +2874,7 @@ make_string (const Ibyte *contents, Bytecount length)
 /* Take some raw memory, encoded in some external data format,
    and convert it into a Lisp string. */
 Lisp_Object
-make_ext_string (const Extbyte *contents, EMACS_INT length,
+make_extstring (const Extbyte *contents, EMACS_INT length,
 		 Lisp_Object coding_system)
 {
   Lisp_Object string;
@@ -2885,30 +2885,30 @@ make_ext_string (const Extbyte *contents, EMACS_INT length,
 }
 
 Lisp_Object
-build_intstring (const Ibyte *str)
+build_istring (const Ibyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
   return make_string (str, (str ? qxestrlen (str) : (Bytecount) 0));
 }
 
 Lisp_Object
-build_string (const CIbyte *str)
+build_cistring (const CIbyte *str)
 {
-  return build_intstring ((const Ibyte *) str);
+  return build_istring ((const Ibyte *) str);
 }
 
 Lisp_Object
 build_ascstring (const Ascbyte *str)
 {
   ASSERT_ASCTEXT_ASCII (str);
-  return build_intstring ((const Ibyte *) str);
+  return build_istring ((const Ibyte *) str);
 }
 
 Lisp_Object
-build_ext_string (const Extbyte *str, Lisp_Object coding_system)
+build_extstring (const Extbyte *str, Lisp_Object coding_system)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_ext_string ((const Extbyte *) str,
+  return make_extstring ((const Extbyte *) str,
 			  (str ? dfc_external_data_len (str, coding_system) :
 			   0),
 			  coding_system);
@@ -2920,7 +2920,7 @@ build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 Lisp_Object
 build_msg_istring (const Ibyte *str)
 {
-  return build_intstring (IGETTEXT (str));
+  return build_istring (IGETTEXT (str));
 }
 
 /* Build a string whose content is a translatable message, and translate
@@ -2956,7 +2956,7 @@ build_msg_ascstring (const Ascbyte *str)
 Lisp_Object
 build_defer_istring (const Ibyte *str)
 {
-  Lisp_Object retval = build_intstring ((Ibyte *) str);
+  Lisp_Object retval = build_istring ((Ibyte *) str);
   /* Possibly do something to the return value */
   return retval;
 }

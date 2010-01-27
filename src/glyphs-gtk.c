@@ -1775,7 +1775,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   source = gdk_font_load (source_name);
   if (! source)
     gui_error_2 ("couldn't load font",
-			   build_string (source_name),
+			   build_cistring (source_name),
 			   data);
   if (count == 2)
     mask = 0;
@@ -1787,7 +1787,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       if (!mask)
 	/* continuable */
 	Fsignal (Qgui_error, list3 (build_msg_string ("couldn't load font"),
-				    build_string (mask_name), data));
+				    build_cistring (mask_name), data));
     }
   if (!mask)
     mask_char = 0;
@@ -2941,7 +2941,7 @@ complex_vars_of_glyphs_gtk (void)
      vector3 (Qxbm, Q_data,					\
 	      list3 (make_int (name##_width),			\
 		     make_int (name##_height),			\
-		     make_ext_string ((Extbyte*) name##_bits,	\
+		     make_extstring ((Extbyte*) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\
      Qglobal, Qgtk, Qnil)

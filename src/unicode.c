@@ -1155,7 +1155,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets);
 
 	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern_int (setname), Vcharset_descr, 
+	    (intern_istring (setname), Vcharset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
 		using UTF-8 escapes in escape-quoted and ctext. This
 		sidesteps the fact that our internal character -> Unicode

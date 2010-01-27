@@ -192,7 +192,7 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
 		    EQ (new_value, Qt)))
 	    {
 	      maybe_define_x_key_as_self_inserting_character (keysym, sym);
-	      Fputhash (build_ext_string (name, Qbinary), new_value,
+	      Fputhash (build_extstring (name, Qbinary), new_value,
 			hash_table);
 	      Fputhash (sym, new_value, hash_table);
 	    }

@@ -1016,7 +1016,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  Lisp_Object filename = IMAGE_INSTANCE_PIXMAP_FILENAME (ii);
 	  s = qxestrrchr (XSTRING_DATA (filename), '/');
 	  if (s)
-	    print_internal (build_intstring (s + 1), printcharfun, 1);
+	    print_internal (build_istring (s + 1), printcharfun, 1);
 	  else
 	    print_internal (filename, printcharfun, 1);
 	}
@@ -2696,7 +2696,7 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
       int len = (w + 7) / 8 * h;
 
       retval = list3 (make_int (w), make_int (h),
-		      make_ext_string ((Extbyte *) data, len, Qbinary));
+		      make_extstring ((Extbyte *) data, len, Qbinary));
       XFree (data);
       return retval;
     }
@@ -2970,19 +2970,19 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
       set_buffer_internal (XBUFFER (temp_buffer));
       Ferase_buffer (Qnil);
 
-      buffer_insert_c_string (current_buffer, "/* XPM */\r");
-      buffer_insert_c_string (current_buffer, "static char *pixmap[] = {\r");
+      buffer_insert_ascstring (current_buffer, "/* XPM */\r");
+      buffer_insert_ascstring (current_buffer, "static char *pixmap[] = {\r");
 
       sscanf (data[0], "%d %d %d", &height, &width, &ncolors);
       for (elt = 0; elt <= width + ncolors; elt++)
 	{
-	  buffer_insert_c_string (current_buffer, "\"");
-	  buffer_insert_c_string (current_buffer, data[elt]);
+	  buffer_insert_ascstring (current_buffer, "\"");
+	  buffer_insert_ascstring (current_buffer, data[elt]);
 
 	  if (elt < width + ncolors)
-	    buffer_insert_c_string (current_buffer, "\",\r");
+	    buffer_insert_ascstring (current_buffer, "\",\r");
 	  else
-	    buffer_insert_c_string (current_buffer, "\"};\r");
+	    buffer_insert_ascstring (current_buffer, "\"};\r");
 	}
 
       retval = Fbuffer_substring (Qnil, Qnil, Qnil);

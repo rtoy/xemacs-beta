@@ -2037,7 +2037,7 @@ init_system_name (void)
 #elif !defined (HAVE_GETHOSTNAME)
   struct utsname uts;
   uname (&uts);
-  Vsystem_name = build_ext_string (uts.nodename, Qunix_host_name_encoding);
+  Vsystem_name = build_extstring (uts.nodename, Qunix_host_name_encoding);
 #else /* HAVE_GETHOSTNAME */
   int hostname_size = 256;
   Extbyte *hostname = alloca_extbytes (hostname_size);
@@ -2124,7 +2124,7 @@ init_system_name (void)
 #  endif  /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
       }
 # endif /* HAVE_SOCKETS */
-  Vsystem_name = build_ext_string (hostname, Qunix_host_name_encoding);
+  Vsystem_name = build_extstring (hostname, Qunix_host_name_encoding);
 #endif /* HAVE_GETHOSTNAME  */
   {
     Ibyte *p;
