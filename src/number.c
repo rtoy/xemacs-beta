@@ -238,7 +238,7 @@ If RATIONAL is an integer, 1 is returned.
       return Fcanonicalize_number (make_bignum_bg
 				   (XRATIO_DENOMINATOR (rational)));
     }
-#else
+#endif
   return make_int (1);
 }
 

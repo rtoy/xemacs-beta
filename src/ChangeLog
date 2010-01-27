@@ -1,3 +1,9 @@
+2010-01-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number.c (Fdenominator): 
+	Oops, change #else to #endif here; thank you Vin Shelton, thank
+	you Robert Delius Royar.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* casetab.c: Typo in comment.
