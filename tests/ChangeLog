@@ -1,3 +1,15 @@
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* automated/case-tests.el:
+	* automated/case-tests.el (char-as-unicode-escape): New.
+	Add a "torture test" that uses the full set of lower-upper case
+	mappings from Unicode.  See whether strings composed of all
+	lower-case characters across all languages will correctly be
+	uppercased to the string equivalent to all uppercase characters,
+	and vice-versa, and whether you can correctly do a case-folding
+	search in a buffer for these characters, all at once or individually.
+	Result: a number of assertion failures.
+
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
