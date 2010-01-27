@@ -4,6 +4,7 @@
 
 /* Localizable-message snarfing.
    Copyright (C) 1994, 1995 Amdahl Corporation.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -24,6 +25,27 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing, November 1994.  Some code based on earlier
    make-msgfile.c. */
+
+/* #### A comment:
+
+   Directly writing a lex file isn't right.  We want to be able to specify
+   functions to snarf in simpler ways, e.g.
+
+BEGIN_C_FUNCS
+
+weird_doc (arg, snarf, snarf, arg);
+signal_error (arg, snarf, arg);
+etc.
+
+END_C_FUNCS
+
+   In this case, `arg' indicates an arbitrary argument and `snarf' indicates
+   that when a quoted string is seen, it should be snarfed.
+
+   Then either we write a program to read this script and directly snarf
+   messages, or we write a program to convert the script into lex. 
+
+--ben, 1/26/10 */
 
 /* See text.c for a proposal about how this whole system should work. */
 
@@ -84,25 +106,34 @@ int snarf_return_state;
 %s DO_C DO_LISP DEFUN
 %s DEFUN2 DEFUN3 LDEF
 
-W	[ \t\n]
-Any	(.|"\n")
-Q	"\""
-NQ	[^"]
-NT	[^A-Za-z_0-9]
-LP	"("
-RP	")"
-BS	"\\"
-Esc	({BS}{Any})
-Wh	({W}*)
-LCom	(";"({Esc}|.)*)
-LWh	(({W}|{Lcom})*)
-Open	({Wh}{LP})
-OpWQ	({Open}{Wh}{Q})
-String	({Q}({Esc}|{NQ})*{Q})
-Arg	([^,]*",")
-StringArg	({Wh}{String}{Wh}",")
-OpenString	({Open}{StringArg})
-LispToken	(({Esc}|[-A-Za-z0-9!@$%^&*_=+|{}`~,<.>/?])+)
+W		[ \t\n]
+Any		.|\n
+Q		\"
+Cm      	,
+NQ		[^\"]
+NT		[^A-Za-z_0-9]
+LP		"("
+RP		")"
+NQP     	[^\"()]
+NQPCm   	[^,\"()]
+BS		"\\"
+Esc		({BS}{Any})
+Wh		({W}*)
+LCom		(;({Esc}|.)*)
+LWh		({W}|{LCom})*
+Open		{Wh}{LP}
+OpWQ		{Open}{Wh}{Q}
+String		{Q}({Esc}|{NQ})*{Q}
+ParenExpr5	"("({String}|{NQP})*")"
+ParenExpr4	"("({String}|{NQP}|{ParenExpr5})*")"
+ParenExpr3	"("({String}|{NQP}|{ParenExpr4})*")"
+ParenExpr2	"("({String}|{NQP}|{ParenExpr3})*")"
+ParenExpr	"("({String}|{NQP}|{ParenExpr5})*")"
+Arg		({NQPCm}|{String}|{ParenExpr})*
+ArgCm		{Arg}{Cm}
+StringArg	{Wh}{String}{Wh}","
+OpenString	{Open}{StringArg}
+LispToken	({Esc}|[-A-Za-z0-9!@$%^&*_=+|{}`~,<.>/?])+
 %%
 
 <DO_C>{NT}"GETTEXT"{OpWQ} { snarf (); }
@@ -128,16 +159,17 @@ LispToken	(({Esc}|[-A-Za-z0-9!@$%^&*_=+|{}`~,<.>/?])+)
 <DO_C>{NT}"stdout_out"{OpWQ} { snarf (); }
 <DO_C>{NT}"stderr_out"{OpWQ} { snarf (); }
 <DO_C>{NT}"with_output_to_temp_buffer"{OpWQ} { snarf (); }
+<DO_C>{NT}"weird_doc"{Open}{ArgCm}{Wh}{Q} { snarf (); /* #### FIXME snarf next arg() */}
 
-<DO_C>{NT}"DEFVAR_BOOL"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"DEFVAR_LISP"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"DEFVAR_SPECIFIER"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"DEFVAR_INT"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"DEFVAR_BUFFER_LOCAL"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"DEFVAR_BUFFER_DEFAULTS"{OpenString}{Arg}{Wh}{Q} { snarf (); }
-<DO_C>{NT}"deferror"{Open}{Arg}{StringArg}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_BOOL"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_LISP"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_SPECIFIER"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_INT"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_BUFFER_LOCAL"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"DEFVAR_BUFFER_DEFAULTS"{OpenString}{ArgCm}{Wh}{Q} { snarf (); }
+<DO_C>{NT}"deferror"{Open}{ArgCm}{StringArg}{Wh}{Q} { snarf (); }
 
-<DO_C>{NT}"barf_or_query_if_file_exists"{Open}{Arg}{Wh}{Q} {
+<DO_C>{NT}"barf_or_query_if_file_exists"{Open}{ArgCm}{Wh}{Q} {
   /* #### see comment above about use of Arg */
   snarf ();
 }
@@ -153,7 +185,7 @@ LispToken	(({Esc}|[-A-Za-z0-9!@$%^&*_=+|{}`~,<.>/?])+)
 <DO_C>{Q} { BEGIN C_QUOTE; }
 <DO_C>{Any} { }
 
-<DEFUN>{StringArg}{Arg}{Arg}{Arg}{Arg}{Wh} { BEGIN DEFUN2; }
+<DEFUN>{StringArg}{ArgCm}{ArgCm}{ArgCm}{ArgCm}{Wh} { BEGIN DEFUN2; }
 <DEFUN>{Any} { bad_c_defun (); }
 
 <DEFUN2>{Q} {
@@ -163,7 +195,7 @@ LispToken	(({Esc}|[-A-Za-z0-9!@$%^&*_=+|{}`~,<.>/?])+)
 }
 <DEFUN2>[^,]* {
   /* This function doesn't have an interactive specification.
-     Don't use {Arg} in the specification because DEFUN3 looks
+     Don't use {ArgCm} in the specification because DEFUN3 looks
      for the comma. */
   BEGIN DEFUN3;
 }
