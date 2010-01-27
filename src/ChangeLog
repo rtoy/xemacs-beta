@@ -1,5 +1,10 @@
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
+	* lread.c (vars_of_lread):
+	Turn on load-ignore-out-of-date-elc-files by default.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
 	* event-unixoid.c (read_event_from_tty_or_stream_desc):
 	Don't try to write one byte into a four-byte variable, leaving
 	the rest undefined.  This is a recipe for crashing.

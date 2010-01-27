@@ -3407,7 +3407,7 @@ This is normally used when compiling packages of elisp files that may have
 complex dependencies.  Ignoring all elc files with `load-ignore-elc-files'
 would also be safe, but much slower.
 */ );
-  load_ignore_out_of_date_elc_files = 0;
+  load_ignore_out_of_date_elc_files = 1;
 
   DEFVAR_BOOL ("load-always-display-messages",
 	       &load_always_display_messages /*
