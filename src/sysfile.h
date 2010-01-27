@@ -38,6 +38,11 @@ Boston, MA 02111-1307, USA.  */
 # include <sys/errno.h>		/* <errno.h> does not always imply this */
 #endif
 
+/* EOVERFLOW isn't defined on native Windows under VC6 */
+#ifndef EOVERFLOW
+# define EOVERFLOW    10139
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

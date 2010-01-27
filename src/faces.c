@@ -2244,7 +2244,7 @@ complex_vars_of_faces (void)
 #endif
 #ifdef HAVE_X_WINDOWS
     fg_fb = acons (list1 (Qx), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_string ("white"), bg_fb);
+    bg_fb = acons (list1 (Qx), build_string ("gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
     fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);

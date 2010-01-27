@@ -158,6 +158,42 @@
 	Declare some temporary pointer variables const to avoid compile
 	errors under C++ and/or Visual Studio 6.
 
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number.c (Fnumerator, Fdenominator, Fcanonicalize_number):
+	Be more careful to return integers in their canonical forms here,
+	and to give the same answer all the time when treating a rational
+	that is itself is an integer as a ratio.
+
+2010-01-17  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c (check_writable): Remove cast from 2010-01-14
+
+	* syswindows.h: Use consts in macros where appropriate in lieu of
+	cast in check_writable().  Patch from Ben Wing.
+
+2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	* floatfns.c (emacs_rint):
+	Don't look for rint in configure, always use our own
+	implementation that rounds to the even number in the case of
+	ambiguity, for consistency with the bignum code.
+
+2010-01-14  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c (check_writable): Fix compilation error under Visual
+	Studio 6.
+
+	* sysfile.h: 
+	Add conditional definition for EOVERFLOW, which isn't defined
+	under Visual Studio 6.
+
+2010-01-14  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): change X11 bgcolor fallback of
+	default face to match that of gui element face.
+
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
 	* buffer.h:
