@@ -1,5 +1,11 @@
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	Don't try to write one byte into a four-byte variable, leaving
+	the rest undefined.  This is a recipe for crashing.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	* README:
 	* abbrev.c (write_abbrev):
