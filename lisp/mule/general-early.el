@@ -31,7 +31,8 @@
 (defun setup-case-pairs (charset pairs)
   ;; Under Unicode-internal, don't do anything here, because we set up all
   ;; the case pairs at once in uni-case-conv.el
-  (unless (featurep 'unicode-internal)
+  ;; #### Unicode case-table causes byte-code corruption, fix this bug!
+  (unless nil ;;(featurep 'unicode-internal)
     (loop 
       for (uc lc) in pairs 
       with table = (standard-case-table)

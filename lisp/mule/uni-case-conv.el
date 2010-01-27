@@ -1288,7 +1288,24 @@
        )
   with case-table = (standard-case-table)
   do
-  (put-case-table-pair upper lower case-table))
+  (let* ((existing-lower (get-case-table 'downcase upper case-table))
+	 (existing-lower (and (not (eq existing-lower upper)) existing-lower)))
+    ;;(when (not (eq (char-charset lower) (char-charset upper)))
+    ;;  (princ (format "Upper %s (%s) not same charset as lower %s (%s)" upper (char-charset upper) lower (char-charset lower))))
+    (cond ((eq existing-lower lower)
+	   ;;(princ (format "Already seen mapping %s for char %s" lower upper))
+	   )
+	  (existing-lower
+	   ;;(princ (format "Existing mapping for char %s is %s, different from new %s?" upper existing-lower lower))
+	   )
+	  ((and (not (featurep 'unicode-internal))
+		(not (eq (char-charset lower) (char-charset upper))))
+	   ;;(princ (format "Not adding cross-charset mapping %s -> %s" upper lower))
+	   )
+	  (t
+	   ;;(princ (format "Adding mapping for upper %s -> lower %s" upper lower))
+	   (put-case-table-pair upper lower case-table)
+	   ))))
 
 (provide 'uni-case-conv)
 
