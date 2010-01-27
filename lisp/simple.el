@@ -957,7 +957,7 @@ A numeric argument serves as a repeat count."
     (let ((tail buffer-undo-list)
 	  done)
       (while (and tail (not done) (not (null (car tail))))
-	(if (integerp (car tail))
+	(if (fixnump (car tail))
 	    (progn
 	      (setq done t)
 	      (setq buffer-undo-list (delq (car tail) buffer-undo-list))))

@@ -32,7 +32,7 @@ Boston, MA 02111-1301, USA.  */
 
 Lisp_Object Qrationalp, Qfloatingp, Qrealp;
 Lisp_Object Vdefault_float_precision;
-Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
+
 static Lisp_Object Qunsupported_type;
 static Lisp_Object Vbigfloat_max_prec;
 static int number_initialized;
@@ -139,38 +139,6 @@ Return t if OBJECT is a bignum, nil otherwise.
 }
 
 
-/********************************* Integers *********************************/
-DEFUN ("integerp", Fintegerp, 1, 1, 0, /*
-Return t if OBJECT is an integer, nil otherwise.
-*/
-       (object))
-{
-  return INTEGERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("evenp", Fevenp, 1, 1, 0, /*
-Return t if INTEGER is even, nil otherwise.
-*/
-       (integer))
-{
-  CONCHECK_INTEGER (integer);
-  return (BIGNUMP (integer)
-	  ? bignum_evenp (XBIGNUM_DATA (integer))
-	  : XTYPE (integer) == Lisp_Type_Int_Even) ? Qt : Qnil;
-}
-
-DEFUN ("oddp", Foddp, 1, 1, 0, /*
-Return t if INTEGER is odd, nil otherwise.
-*/
-       (integer))
-{
-  CONCHECK_INTEGER (integer);
-  return (BIGNUMP (integer)
-	  ? bignum_oddp (XBIGNUM_DATA (integer))
-	  : XTYPE (integer) == Lisp_Type_Int_Odd) ? Qt : Qnil;
-}
-
-
 /********************************** Ratios **********************************/
 #ifdef HAVE_RATIO
 static void
@@ -270,7 +238,7 @@ If RATIONAL is an integer, 1 is returned.
       return Fcanonicalize_number (make_bignum_bg
 				   (XRATIO_DENOMINATOR (rational)));
     }
-#endif
+#else
   return make_int (1);
 }
 
@@ -810,9 +778,6 @@ syms_of_number (void)
 
   /* Functions */
   DEFSUBR (Fbignump);
-  DEFSUBR (Fintegerp);
-  DEFSUBR (Fevenp);
-  DEFSUBR (Foddp);
   DEFSUBR (Fratiop);
   DEFSUBR (Frationalp);
   DEFSUBR (Fnumerator);
@@ -854,16 +819,6 @@ This is determined by the underlying library used to implement bigfloats.
 #else
   Vbigfloat_max_prec = make_int (0);
 #endif /* HAVE_BIGFLOAT */
-
-  DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
-The fixnum closest in value to negative infinity.
-*/);
-  Vmost_negative_fixnum = EMACS_INT_MIN;
-
-  DEFVAR_CONST_INT ("most-positive-fixnum", &Vmost_positive_fixnum /*
-The fixnum closest in value to positive infinity.
-*/);
-  Vmost_positive_fixnum = EMACS_INT_MAX;
 
   Fprovide (intern ("number-types"));
 #ifdef HAVE_BIGNUM

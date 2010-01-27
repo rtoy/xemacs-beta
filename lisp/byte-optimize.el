@@ -1209,12 +1209,12 @@
 (let ((side-effect-free-fns
        '(% * + - / /= 1+ 1- < <= = > >= abs acos append aref ash asin atan
 	 assoc assq
-	 boundp buffer-file-name buffer-local-variables buffer-modified-p
-	 buffer-substring
+	 bigfloat-get-precision boundp buffer-file-name buffer-local-variables
+	 buffer-modified-p buffer-substring
 	 capitalize car-less-than-car car cdr ceiling concat
 	 ;; coordinates-in-window-p not in XEmacs
 	 copy-marker cos count-lines
-	 default-boundp default-value documentation downcase
+	 default-boundp default-value denominator documentation downcase
 	 elt exp expt fboundp featurep
 	 file-directory-p file-exists-p file-locked-p file-name-absolute-p
 	 file-newer-than-file-p file-readable-p file-symlink-p file-writable-p
@@ -1233,7 +1233,7 @@
 	 int-to-string
 	 length log log10 logand logb logior lognot logxor lsh
 	 marker-buffer max member memq min mod
-	 next-window nth nthcdr number-to-string
+	 next-window nth nthcdr number-to-string numerator
 	 parse-colon-path plist-get previous-window
 	 radians-to-degrees rassq regexp-quote reverse round
 	 sin sqrt string< string= string-equal string-lessp string-to-char
@@ -1252,7 +1252,8 @@
 	 ))
       (side-effect-and-error-free-fns
        '(arrayp atom
-	 bobp bolp buffer-end buffer-list buffer-size buffer-string bufferp
+	 bigfloatp bignump bobp bolp buffer-end buffer-list buffer-size
+	 buffer-string bufferp
 	 car-safe case-table-p cdr-safe char-or-string-p char-table-p
 	 characterp commandp cons
 	 consolep console-live-p consp
@@ -1260,7 +1261,7 @@
 	 ;; XEmacs: extent functions, frame-live-p, various other stuff
 	 devicep device-live-p
 	 dot dot-marker eobp eolp eq eql equal eventp extentp
-	 extent-live-p floatp framep frame-live-p
+	 extent-live-p fixnump floatingp floatp framep frame-live-p
 	 get-largest-window get-lru-window
 	 hash-table-p
 	 identity ignore integerp integer-or-marker-p interactive-p
@@ -1271,14 +1272,14 @@
 	 natnump nlistp not null number-or-marker-p numberp
 	 one-window-p ;; overlayp not in XEmacs
 	 point point-marker point-min point-max processp
-	 range-table-p
+	 rationalp ratiop range-table-p realp
 	 selected-window sequencep stringp subrp symbolp syntax-table-p
 	 user-full-name user-login-name user-original-login-name
 	 user-real-login-name user-real-uid user-uid
 	 vector vectorp
 	 window-configuration-p window-live-p windowp
 	 ;; Functions defined by cl
-	 eql floatp-safe list* subst acons equalp random-state-p
+	 eql list* subst acons equalp random-state-p
 	 copy-tree sublis
 	 )))
   (dolist (fn side-effect-free-fns)
@@ -1456,7 +1457,7 @@
 
 (defconst byte-after-unbind-ops
    '(byte-constant byte-dup
-     byte-symbolp byte-consp byte-stringp byte-listp byte-numberp byte-integerp
+     byte-symbolp byte-consp byte-stringp byte-listp byte-numberp byte-fixnump
      byte-eq byte-not
      byte-cons byte-list1 byte-list2	; byte-list3 byte-list4
      byte-interactive-p)
@@ -1469,7 +1470,7 @@
 
 (defconst byte-compile-side-effect-and-error-free-ops
   '(byte-constant byte-dup byte-symbolp byte-consp byte-stringp byte-listp
-    byte-integerp byte-numberp byte-eq byte-equal byte-not byte-car-safe
+    byte-fixnump byte-numberp byte-eq byte-equal byte-not byte-car-safe
     byte-cdr-safe byte-cons byte-list1 byte-list2 byte-point byte-point-max
     byte-point-min byte-following-char byte-preceding-char
     byte-current-column byte-eolp byte-eobp byte-bolp byte-bobp
