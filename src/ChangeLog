@@ -1,3 +1,9 @@
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h:
+	Add typedefs for PCVOID and PDWORD_PTR for non-Cygwin-headers folks
+	(i.e. Visual Studio et al.).
+
 2010-01-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* number.c (Fdenominator): 
