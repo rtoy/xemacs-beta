@@ -49,7 +49,7 @@ system-dependent, and there is no universal agreement.
   loc = setlocale (LC_CTYPE, NULL);
   if (!loc)
     return Qnil;
-  return build_ext_string (loc, Qctext);
+  return build_extstring (loc, Qctext);
 }
 
 DEFUN ("set-current-locale", Fset_current_locale, 1, 1, 0, /*
@@ -92,7 +92,7 @@ Otherwise, returns the locale, or possibly a more-specified version.
     }
 #endif
 
-  str = build_ext_string (loc, Qctext);
+  str = build_extstring (loc, Qctext);
   xfree (loc, Extbyte *);
   return str;
 }

@@ -100,12 +100,16 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
     ch = Lstream_get_ichar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
   else
     {
+      Ibyte byte;
       /* #### Definitely something strange here.  We should be setting
 	 the stdio handle unbuffered and reading from it instead of mixing
 	 stdio and raw io calls. */
-      int nread = retry_read (fileno (CONSOLE_STREAM_DATA (con)->in), &ch, 1);
+      int nread = retry_read (fileno (CONSOLE_STREAM_DATA (con)->in),
+			      &byte, 1);
       if (nread <= 0)
 	ch = -1;
+      else
+        ch = byte;
     }
 
   if (ch < 0)

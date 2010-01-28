@@ -19,6 +19,8 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+/* This file has been Mule-ized, Ben Wing, 1-26-10. */
+
 #ifndef INCLUDED_sysdll_h_
 #define INCLUDED_sysdll_h_
 
@@ -30,14 +32,9 @@ typedef void * dll_var;
 
 extern dll_handle dll_open (Lisp_Object);
 extern int dll_close (dll_handle);
-extern dll_func dll_function (dll_handle, const CIbyte *);
-extern dll_var dll_variable (dll_handle, const CIbyte *);
+extern dll_func dll_function (dll_handle, const Ibyte *);
+extern dll_var dll_variable (dll_handle, const Ibyte *);
 extern Lisp_Object dll_error (void);
-
-/* More stand-ins ... */
-
-#define Qdll_filename_encoding Qfile_name
-#define Qdll_function_name_encoding Qnative
 
 END_C_DECLS
 

@@ -990,11 +990,9 @@ reinit_complex_vars_of_minibuf (void)
      at runtime instead of at load time. */
 #endif
   Vminibuffer_zero
-    = Fget_buffer_create
-      (build_string (DEFER_GETTEXT (" *Minibuf-0*")));
+    = Fget_buffer_create (build_ascstring (" *Minibuf-0*"));
   Vecho_area_buffer
-    = Fget_buffer_create
-      (build_string (DEFER_GETTEXT (" *Echo Area*")));
+    = Fget_buffer_create (build_ascstring (" *Echo Area*"));
 }
 
 void

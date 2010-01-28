@@ -297,7 +297,7 @@ dialog_popped_down (Lisp_Object UNUSED (arg))
 static struct
 {
   DWORD errmess;
-  Ascbyte *errname;
+  const Ascbyte *errname;
 } common_dialog_errors[] =
 {
   { CDERR_DIALOGFAILURE, "CDERR_DIALOGFAILURE" },
@@ -394,7 +394,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
     BIF_RETURNONLYFSDIRS | BIF_STATUSTEXT | BIF_EDITBOX | BIF_NEWDIALOGSTYLE;
   bi.lpfn = handle_directory_proc;
   
-  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
+  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_ascstring (""), Qnil),
 			     pd.fname);
   
   {
@@ -468,7 +468,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
   ofn.nMaxFile = sizeof (fnbuf) / XETCHAR_SIZE;
   qxetcscpy (fnbuf, XETEXT (""));
   
-  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
+  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_ascstring (""), Qnil),
 			     ofn.lpstrInitialDir);
   
   {
@@ -844,9 +844,9 @@ vars_of_dialog_mswindows (void)
 	       &Vdefault_file_dialog_filter_alist /*
 						   */ );
   Vdefault_file_dialog_filter_alist =
-    list5 (Fcons (build_msg_string ("Text Files"), build_string ("*.txt")),
-	   Fcons (build_msg_string ("C Files"), build_string ("*.c;*.h")),
-	   Fcons (build_msg_string ("Elisp Files"), build_string ("*.el")),
-	   Fcons (build_msg_string ("HTML Files"), build_string ("*.html;*.html")),
-	   Fcons (build_msg_string ("All Files"), build_string ("*.*")));
+    list5 (Fcons (build_defer_string ("Text Files"), build_ascstring ("*.txt")),
+	   Fcons (build_defer_string ("C Files"), build_ascstring ("*.c;*.h")),
+	   Fcons (build_defer_string ("Elisp Files"), build_ascstring ("*.el")),
+	   Fcons (build_defer_string ("HTML Files"), build_ascstring ("*.html;*.html")),
+	   Fcons (build_defer_string ("All Files"), build_ascstring ("*.*")));
 }

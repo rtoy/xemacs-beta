@@ -1300,7 +1300,7 @@ unix_create_process (Lisp_Process *p,
   if (separate_err)
     retry_close (forkerr);
 
-  p->tty_name = pty_flag ? build_intstring (pty_name) : Qnil;
+  p->tty_name = pty_flag ? build_istring (pty_name) : Qnil;
 
   /* Notice that SIGCHLD was not blocked. (This is not possible on
      some systems.) No biggie if SIGCHLD occurs right around the
@@ -1833,7 +1833,7 @@ unix_canonicalize_host_name (Lisp_Object host)
       int gni = getnameinfo (res->ai_addr, res->ai_addrlen,
 			     addrbuf, sizeof(addrbuf),
 			     NULL, 0, NI_NUMERICHOST);
-      canonname = gni ? host : build_ext_string (addrbuf,
+      canonname = gni ? host : build_extstring (addrbuf,
 						 Qunix_host_name_encoding);
 
       freeaddrinfo (res);
@@ -1847,7 +1847,8 @@ unix_canonicalize_host_name (Lisp_Object host)
     return host;
 
   if (address.sin_family == AF_INET)
-    return build_string (inet_ntoa (address.sin_addr));
+    return build_extstring (inet_ntoa (address.sin_addr),
+			     Qunix_host_name_encoding);
   else
     /* #### any clue what to do here? */
     return host;

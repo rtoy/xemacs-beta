@@ -370,7 +370,7 @@ x_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_X_MASK (p));
 	}
-      write_c_string (printcharfun, ")");
+      write_ascstring (printcharfun, ")");
       break;
     default:
       break;
@@ -602,7 +602,7 @@ x_locate_pixmap_file (Lisp_Object name)
 	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
 					  subs, XtNumber (subs), 0)))
 	  {
-	    name = build_ext_string (pathext, Qfile_name);
+	    name = build_extstring (pathext, Qfile_name);
 	    XtFree (pathext);
 	    return (name);
 	  }
@@ -1923,7 +1923,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   source = safe_XLoadFont (dpy, source_name);
   if (! source)
     signal_error_2 (Qgui_error,
-		    "couldn't load font", build_intstring (source_name), data);
+		    "couldn't load font", build_istring (source_name), data);
   if (count == 2)
     mask = 0;
   else if (!mask_name[0])
@@ -1934,7 +1934,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       if (!mask)
 	signal_continuable_error_2 (Qgui_error,
 				    "couldn't load font",
-				    build_intstring (mask_name), data);
+				    build_istring (mask_name), data);
     }
   if (!mask)
     mask_char = 0;
@@ -2382,7 +2382,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (rf)
       {
 	/* #### What to do about Motif? */
-	lw_add_widget_value_arg (wv, XtNxftFont, (XtArgVal) rf);
+	lw_add_widget_value_arg (wv, (String) XtNxftFont, (XtArgVal) rf);
       }
 #endif
 
@@ -2400,7 +2400,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (!rf && !fs)
       warn_when_safe_lispobj
 	(intern ("xft"), Qdebug,
-	 Fcons (build_string ("missing font in update_widget_face"),
+	 Fcons (build_msg_string ("missing font in update_widget_face"),
 		Fface_name (face)));
 #endif
   }
@@ -2561,7 +2561,7 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      return build_ext_string (wv->value, Qlwlib_encoding);
+      return build_extstring (wv->value, Qlwlib_encoding);
     }
   return Qunbound;
 }
@@ -3013,7 +3013,7 @@ complex_vars_of_glyphs_x (void)
      vector3 (Qxbm, Q_data,					\
 	      list3 (make_int (name##_width),			\
 		     make_int (name##_height),			\
-		     make_ext_string ((Extbyte *) name##_bits,	\
+		     make_extstring ((Extbyte *) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\
      Qglobal, Qx, Qnil)

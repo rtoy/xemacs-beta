@@ -999,7 +999,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	i++;
 	write_fmt_string (Qexternal_debugging_output, "OPERATE (%d): ",i);
 	print_internal (t, Qexternal_debugging_output, 1);
-	write_c_string (Qexternal_debugging_output, "\n");
+	write_ascstring (Qexternal_debugging_output, "\n");
 	t = XEVENT_NEXT (t);
       }
   }

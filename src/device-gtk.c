@@ -236,7 +236,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   /* Attempt to load a site-specific gtkrc */
   {
-    Lisp_Object gtkrc = Fexpand_file_name (build_string ("gtkrc"), Vdata_directory);
+    Lisp_Object gtkrc = Fexpand_file_name (build_ascstring ("gtkrc"), Vdata_directory);
     gchar **default_files = gtk_rc_get_default_files ();
     gint num_files;
 
@@ -666,7 +666,7 @@ Get the style information for a Gtk device.
 
   result = nconc2 (result, list2 (Qfont, convert_font (style->font)));
 
-#define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_string (style->rc_style->bg_pixmap_name[state]) : Qnil)
+#define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
   if (style->rc_style)
     result = nconc2 (result, list2 (Qbackground,

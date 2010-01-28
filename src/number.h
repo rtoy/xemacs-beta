@@ -130,8 +130,7 @@ EXFUN (Fbignump, 1);
 
 
 /********************************* Integers *********************************/
-extern Lisp_Object Qintegerp;
-
+/* Qintegerp in lisp.h */
 #define INTEGERP(x) (INTP(x) || BIGNUMP(x))
 #define CHECK_INTEGER(x) do {			\
  if (!INTEGERP (x))				\
@@ -285,7 +284,7 @@ extern Lisp_Object Qbigfloatp;
 EXFUN (Fbigfloatp, 1);
 
 /********************************* Floating *********************************/
-extern Lisp_Object Qfloatingp, Qbigfloat;
+extern Lisp_Object Qfloatingp;
 extern Lisp_Object Qread_default_float_format, Vread_default_float_format;
 
 #define FLOATINGP(x) (FLOATP (x) || BIGFLOATP (x))
@@ -319,8 +318,7 @@ EXFUN (Frealp, 1);
 
 
 /********************************* Numbers **********************************/
-extern Lisp_Object Qnumberp;
-
+/* Qnumberp in lisp.h */
 #define NUMBERP(x) REALP (x)
 #define CHECK_NUMBER(x) do {			\
   if (!NUMBERP (x))				\

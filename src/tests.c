@@ -148,20 +148,20 @@ REASON is nil or a string describing the failure (not required).
 #define DFC_CHECK_LENGTH(len1,len2,str1)	\
     else if ((len1) != (len2))			\
       conversion_result =			\
-        Fcons (list3 (build_string(str1), Qnil, build_string("wrong length")), \
+        Fcons (list3 (build_cistring(str1), Qnil, build_ascstring("wrong length")), \
 	       conversion_result)
 
 #define DFC_CHECK_CONTENT(str1,str2,len1,str3)	\
     else if (memcmp (str1, str2, len1))		\
       conversion_result =			\
-	Fcons (list3 (build_string(str3), Qnil,			\
-		      build_string("octet comparison failed")),	\
+	Fcons (list3 (build_cistring(str3), Qnil,			\
+		      build_ascstring("octet comparison failed")),	\
 	       conversion_result)
 
 #define DFC_RESULT_PASS(str1)		\
     else				\
       conversion_result =		\
-	Fcons (list3 (build_string(str1), Qt, Qnil),	\
+	Fcons (list3 (build_cistring(str1), Qt, Qnil),	\
 	       conversion_result)
 
 #ifdef MULE
@@ -607,17 +607,17 @@ REASON is nil or a string describing the failure (not required).
   data.sum = 0;
   elisp_maphash_unsafe (test_hash_tables_mapper,
 			data.hash_table, (void *) &data);
-  hash_result = Fcons (list3 (build_string ("simple mapper"),
+  hash_result = Fcons (list3 (build_ascstring ("simple mapper"),
 				   (data.sum == 2 + 4) ? Qt : Qnil,
-				   build_string ("sum != 2 + 4")),
+				   build_ascstring ("sum != 2 + 4")),
 			    hash_result);
 
   data.sum = 0;
   elisp_maphash (test_hash_tables_modifying_mapper,
 		 data.hash_table, (void *) &data);
-  hash_result = Fcons (list3 (build_string ("modifying mapper"),
+  hash_result = Fcons (list3 (build_ascstring ("modifying mapper"),
 				   (data.sum == 2 + 4) ? Qt : Qnil,
-				   build_string ("sum != 2 + 4")),
+				   build_ascstring ("sum != 2 + 4")),
 			    hash_result);
 
   /* hash table now contains:  (1, 2) (3, 4) (-1, 2*2) (-3, 2*4) */
@@ -625,9 +625,9 @@ REASON is nil or a string describing the failure (not required).
   data.sum = 0;
   elisp_maphash_unsafe (test_hash_tables_mapper,
 			data.hash_table, (void *) &data);
-  hash_result = Fcons (list3 (build_string ("simple mapper"),
+  hash_result = Fcons (list3 (build_ascstring ("simple mapper"),
 				   (data.sum == 3 * (2 + 4)) ? Qt : Qnil,
-				   build_string ("sum != 3 * (2 + 4)")),
+				   build_ascstring ("sum != 3 * (2 + 4)")),
 			    hash_result);
 
   /* Remove entries with negative keys, added by modifying mapper */
@@ -637,9 +637,9 @@ REASON is nil or a string describing the failure (not required).
   data.sum = 0;
   elisp_maphash_unsafe (test_hash_tables_mapper,
 			data.hash_table, (void *) &data);
-  hash_result = Fcons (list3 (build_string ("remove negatives mapper"),
+  hash_result = Fcons (list3 (build_ascstring ("remove negatives mapper"),
 				   (data.sum == 2 + 4) ? Qt : Qnil,
-				   build_string ("sum != 2 + 4")),
+				   build_ascstring ("sum != 2 + 4")),
 			    hash_result);
 
   return hash_result;

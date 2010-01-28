@@ -276,7 +276,7 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       if (*str != '/')
 	return 0;
       str++;
-      charset = Ffind_charset (intern_int (str));
+      charset = Ffind_charset (intern_istring (str));
       if (NILP (charset))
 	return 0;
 #else
@@ -332,7 +332,7 @@ static Lisp_Object
 tty_font_list (Lisp_Object UNUSED (pattern), Lisp_Object UNUSED (device),
 		Lisp_Object UNUSED (maxnumber))
 {
-  return list1 (build_string ("normal"));
+  return list1 (build_ascstring ("normal"));
 }
 
 #ifdef MULE
@@ -388,7 +388,7 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
   if (NILP (charset))
     return font;
 
-  return concat3 (font, build_string ("/"),
+  return concat3 (font, build_ascstring ("/"),
 		  Fsymbol_name (XCHARSET_NAME (charset)));
 }
 

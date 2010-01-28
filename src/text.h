@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -537,6 +537,17 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
 #define validate_ibyte_string_backward(ptr, n) (n)
 
 #endif /* MULE */
+
+/* ASSERT_ASCTEXT_ASCII(ptr): Check that an Ascbyte * pointer points to
+   purely ASCII text.  Useful for checking that putatively ASCII strings
+   (i.e. declared as Ascbyte * or const Ascbyte *) are actually ASCII.
+   This is important because otherwise we need to worry about what
+   encoding they are in -- internal or some external encoding.
+
+   ASSERT_ASCTEXT_ASCII_LEN(ptr, len): Same as ASSERT_ASCTEXT_ASCII()
+   but where the length has been explicitly given.  Useful if the string
+   may contain embedded zeroes.
+*/
 
 #ifdef ERROR_CHECK_TEXT
 #define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)			\
@@ -2420,7 +2431,7 @@ END_C_DECLS
   of conversions involving raw data and/or Lisp strings, especially when
   the output is an alloca()ed string. (When the destination is a
   Lisp_String, there are other functions that should be used instead --
-  build_ext_string() and make_ext_string(), for example.) The convenience
+  build_extstring() and make_extstring(), for example.) The convenience
   macros are of two types -- the older kind that store the result into a
   specified variable, and the newer kind that return the result.  The newer
   kind of macros don't exist when the output is sized data, because that
@@ -2843,8 +2854,8 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
   TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
 
-/* In place of EXTERNAL_TO_LISP_STRING(), use build_ext_string() and/or
-   make_ext_string(). */
+/* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
+   make_extstring(). */
 
 #ifdef TEST_NEW_DFC
 #define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
@@ -2957,26 +2968,6 @@ END_C_DECLS
   (Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
 				      DFC_LISP_STRING, codesys)
 
-/* Standins for various encodings. */
-#ifdef WEXTTEXT_IS_WIDE
-#define Qcommand_argument_encoding Qmswindows_unicode
-#define Qenvironment_variable_encoding Qmswindows_unicode
-#else
-#define Qcommand_argument_encoding Qnative
-#define Qenvironment_variable_encoding Qnative
-#endif
-#define Qunix_host_name_encoding Qnative
-#define Qunix_service_name_encoding Qnative
-#define Qtime_function_encoding Qnative
-#define Qtime_zone_encoding Qtime_function_encoding
-#define Qmswindows_host_name_encoding Qmswindows_multibyte
-#define Qmswindows_service_name_encoding Qmswindows_multibyte
-#define Quser_name_encoding Qnative
-#define Qerror_message_encoding Qnative
-#define Qjpeg_error_message_encoding Qerror_message_encoding
-#define Qtooltalk_encoding Qnative
-#define Qgtk_encoding Qnative
-
 /* Wexttext functions.  The type of Wexttext is selected at compile time
    and will sometimes be wchar_t, sometimes char. */
 
@@ -3001,7 +2992,7 @@ int wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len);
 #define wext_atol(str) wcstol (str, 0, 10)
 #define wext_sprintf wsprintfW /* Huh?  both wsprintfA and wsprintfW? */
 #define wext_getenv _wgetenv
-#define build_wext_string(str, cs) build_ext_string ((Extbyte *) str, cs)
+#define build_wext_string(str, cs) build_extstring ((Extbyte *) str, cs)
 #define WEXTTEXT_TO_8_BIT(arg) WEXTTEXT_TO_MULTIBYTE(arg)
 #ifdef WIN32_NATIVE
 int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
@@ -3026,14 +3017,14 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 #define wext_atol(str) atol (str)
 #define wext_sprintf sprintf
 #define wext_getenv getenv
-#define build_wext_string build_ext_string
+#define build_wext_string build_extstring
 #define wext_retry_open retry_open
 #define wext_access access
 #define wext_stat stat
 #define WEXTTEXT_TO_8_BIT(arg) ((Extbyte *) arg)
 #endif
 
-/* Standins for various X encodings.
+/* Standins for various encodings.
 
    About encodings in X:
 
@@ -3088,6 +3079,31 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
    locale-specific encoding on input, and are stored as STRING if possible,
    COMPOUND_TEXT otherwise.
    */
+
+#ifdef WEXTTEXT_IS_WIDE
+#define Qcommand_argument_encoding Qmswindows_unicode
+#define Qenvironment_variable_encoding Qmswindows_unicode
+#else
+#define Qcommand_argument_encoding Qnative
+#define Qenvironment_variable_encoding Qnative
+#endif
+#define Qunix_host_name_encoding Qnative
+#define Qunix_service_name_encoding Qnative
+#define Qtime_function_encoding Qnative
+#define Qtime_zone_encoding Qtime_function_encoding
+#define Qmswindows_host_name_encoding Qmswindows_multibyte
+#define Qmswindows_service_name_encoding Qmswindows_multibyte
+#define Quser_name_encoding Qnative
+#define Qerror_message_encoding Qnative
+#define Qjpeg_error_message_encoding Qerror_message_encoding
+#define Qtooltalk_encoding Qnative
+#define Qgtk_encoding Qnative
+
+#define Qdll_symbol_encoding Qnative
+#define Qdll_function_name_encoding Qdll_symbol_encoding
+#define Qdll_variable_name_encoding Qdll_symbol_encoding
+#define Qdll_filename_encoding Qfile_name
+#define Qemodule_string_encoding Qnative
 
 /* !!#### Need to verify the encoding used in lwlib -- Qnative or Qctext?
    Almost certainly the former.  Use a standin for now. */
