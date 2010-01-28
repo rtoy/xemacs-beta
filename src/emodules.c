@@ -375,13 +375,15 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
       signal_error (Qdll_error, "Opening dynamic module", dll_error ());
     }
 
-  ellcc_rev = (const long *) dll_variable (dlhandle, "emodule_compiler");
+  ellcc_rev = (const long *) dll_variable (dlhandle,
+					   (const Ibyte *) "emodule_compiler");
   if (ellcc_rev == NULL || *ellcc_rev <= 0L)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_compiler'", Qunbound);
   if (*ellcc_rev > EMODULES_REVISION)
     signal_ferror (Qdll_error, "Invalid dynamic module: Unsupported version `%ld(%ld)'", *ellcc_rev, EMODULES_REVISION);
 
-  f = (const Extbyte **) dll_variable (dlhandle, "emodule_name");
+  f = (const Extbyte **) dll_variable (dlhandle,
+				       (const Ibyte *) "emodule_name");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_name'", Qunbound);
 
@@ -393,7 +395,8 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
   if (mname[0] == '\0')
     signal_error (Qdll_error, "Invalid dynamic module: Empty value for `emodule_name'", Qunbound);
 
-  f = (const Extbyte **) dll_variable (dlhandle, "emodule_version");
+  f = (const Extbyte **) dll_variable (dlhandle,
+				       (const Ibyte *) "emodule_version");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Missing symbol `emodule_version': Invalid dynamic module", Qunbound);
 
@@ -402,7 +405,8 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
      code did so */
   IBYTE_STRING_TO_ALLOCA (mver, mver);
 
-  f = (const Extbyte **) dll_variable (dlhandle, "emodule_title");
+  f = (const Extbyte **) dll_variable (dlhandle,
+				       (const Ibyte *) "emodule_title");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_title'", Qunbound);
 
@@ -528,12 +532,23 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
 }
 
 void
-emodules_doc_subr (const Ibyte *symname, const Ibyte *doc)
+emodules_doc_subr (const Ascbyte *symname, const Ascbyte *doc)
 {
-  Bytecount len = qxestrlen (symname);
-  Lisp_Object sym = oblookup (Vobarray, symname, len);
+  Bytecount len;
+  Lisp_Object sym;
   Lisp_Subr *subr;
 
+  ASSERT_ASCTEXT_ASCII (symname);
+  len = strlen (symname);
+  sym = oblookup (Vobarray, (const Ibyte *) symname, len);
+
+  /* We do this assert to avoid the possibility of externally formatted
+     text ending up in the doc string, where it could cause crashes.
+     It you need to have a non-ASCII doc string, create another version
+     emodules_doc_subr_istring() that accepts an Ibyte * and doesn't
+     assert, or create an emodules_doc_subr_extstring() that takes
+     an externally_formatted string and a coding system name. */
+  ASSERT_ASCTEXT_ASCII (doc);
   /* Skip autoload cookies */
   if (SYMBOLP (sym) && SUBRP (XSYMBOL (sym)->function))
     {
@@ -549,16 +564,23 @@ emodules_doc_subr (const Ibyte *symname, const Ibyte *doc)
 }
 
 void
-emodules_doc_sym (const Ibyte *symname, const Ibyte *doc)
+emodules_doc_sym (const Ascbyte *symname, const Ascbyte *doc)
 {
-  Bytecount len = qxestrlen (symname);
-  Lisp_Object sym = oblookup (Vobarray, symname, len);
+  Bytecount len;
+  Lisp_Object sym;
   Lisp_Object docstr;
   struct gcpro gcpro1;
 
+  ASSERT_ASCTEXT_ASCII (symname);
+  len = strlen (symname);
+  sym = oblookup (Vobarray, (const Ibyte *) symname, len);
+
+  /* See comments above in emodules_doc_subr() about why we assert like
+     this. */
+  ASSERT_ASCTEXT_ASCII (doc);
   if (SYMBOLP (sym))
     {
-      docstr = build_istring (doc);
+      docstr = build_ascstring (doc);
       GCPRO1 (docstr);
       Fput (sym, Qvariable_documentation, docstr);
       UNGCPRO;

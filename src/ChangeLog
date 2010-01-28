@@ -1,3 +1,15 @@
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_init_device):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_subr):
+	* emodules.c (emodules_doc_sym):
+	* emodules.h:
+	Make the externally-called functions emodules_doc_sym() and
+	emodules_doc_subr() take Ascbyte * pointers since they're usually
+	passed string constants and we can't guarantee the encoding if
+	it's not ASCII.  Fix pointer type in calls to dll_variable(), etc.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* lread.c (vars_of_lread):
