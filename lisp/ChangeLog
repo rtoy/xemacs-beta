@@ -1,3 +1,8 @@
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* lisp-mode.el: Finish documenting `lisp-indent-specform',
+	on Mike Sperber's request.
+
 2010-01-17  Ben Wing  <ben@xemacs.org>
 
 	* bytecomp-runtime.el:
