@@ -585,7 +585,8 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	/* Look for the Xaw3d function */
 	dll_func xaw_function_handle =
-	  dll_function (xaw_dll_handle, "Xaw3dComputeTopShadowRGB");
+	  dll_function (xaw_dll_handle,
+			(const Ibyte *) "Xaw3dComputeTopShadowRGB");
 
 	/* If we found it, warn the user in big, nasty, unfriendly letters */
 	if (xaw_function_handle != NULL)
