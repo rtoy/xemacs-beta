@@ -95,7 +95,7 @@ tstr_to_local_file_format (Extbyte *path)
   TSTR_TO_C_STRING (path, ttlff);
   INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
 
-  return build_intstring (ttlff);
+  return build_istring (ttlff);
 }
 
 /* Normalize filename by converting all path separators to the specified
@@ -289,7 +289,7 @@ mswindows_lisp_error (int errnum)
 }
 
 void
-mswindows_output_last_error (char *frob)
+mswindows_output_last_error (const Ascbyte *frob)
 {
   int errval = GetLastError ();
   Lisp_Object errmess = mswindows_lisp_error (errval);
@@ -299,11 +299,11 @@ mswindows_output_last_error (char *frob)
 }
 
 DOESNT_RETURN
-mswindows_report_process_error (const char *string, Lisp_Object data,
+mswindows_report_process_error (const Ascbyte *reason, Lisp_Object data,
 				int errnum)
 {
   report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
-			  string, data);
+			  reason, data);
 }
 
 DEFUN ("mswindows-shell-execute", Fmswindows_shell_execute, 2, 4, 0, /*
@@ -405,7 +405,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 
   /* Use mule and cygwin-safe APIs top get at file data. */
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (p, p);
-  return build_intstring (p);
+  return build_istring (p);
 }
 #endif
 

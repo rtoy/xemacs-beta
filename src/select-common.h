@@ -82,7 +82,7 @@ selection_data_to_lisp_data (struct device *d,
 
   /* Convert any 8-bit data to a string, for compactness. */
   else if (format == 8)
-    return make_ext_string ((Extbyte *) data, size,
+    return make_extstring ((Extbyte *) data, size,
 			    type == DEVICE_XATOM_TEXT (d) ||
 			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
 			    ? Qctext : Qbinary);
@@ -96,7 +96,7 @@ selection_data_to_lisp_data (struct device *d,
 
   /* Convert any 8-bit data to a string, for compactness. */
   else if (format == 8)
-    return make_ext_string ((Extbyte *) data, size,
+    return make_extstring ((Extbyte *) data, size,
 			    ((type == gdk_atom_intern ("TEXT", FALSE)) ||
 			     (type == gdk_atom_intern ("COMPOUND_TEXT", FALSE)))
 			    ? Qctext : Qbinary);

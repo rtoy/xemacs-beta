@@ -12,6 +12,7 @@ XCOMM gdb init file for XEmacs
 XCOMM AUTOMATICALLY GENERATED FROM etc/gdbinit.in BY configure -- DO NOT EDIT.
 XCOMM See etc/gdbinit.in for licensing information and usage hints.
 XCOMM Copyright (C) 1998 Free Software Foundation, Inc.
+XCOMM Copyright (C) 2010 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -141,13 +142,13 @@ end
 
 define environment-to-run-temacs
   unset env EMACSLOADPATH
-  set env EMACSBOOTSTRAPLOADPATH=../lisp/:..
+  set env EMACSBOOTSTRAPLOADPATH=@srcdir@/../lisp/:@srcdir@/..
   set env EMACSBOOTSTRAPMODULEPATH=../modules/:..
 end
 
 define run-temacs
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el run-temacs -q
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q
 end
 
 document run-temacs
@@ -157,30 +158,49 @@ Use this with debugging tools (like purify) that cannot deal with dumping,
 or when temacs builds successfully, but xemacs does not.
 end
 
+define check-xemacs-arg
+  run -vanilla -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/$arg0
+end
+
 define check-xemacs
-  run -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  if $argc == 0
+    check-xemacs-arg automated
+  else
+    check-xemacs-arg automated/$arg0
+  end
 end
 
 document check-xemacs
-Usage: check-xemacs
-Run the test suite.  Equivalent to 'make check'.
+Usage: check-xemacs [FILE]
+Run the test suite.  If no file given, run the whole suite, equivalent to
+'make check'.  If a file given, run the suite only on the specified file.
 end
 
-define check-temacs
+define check-temacs-arg
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/$arg0
+
+define check-temacs
+  if $argc == 0
+    check-temacs-arg automated
+  else
+    check-temacs-arg automated/$arg0
+  end
 end
 
 document check-temacs
-Usage: check-temacs
-Run the test suite on temacs.  Equivalent to 'make check-temacs'.
+Usage: check-temacs [FILE]
+Run the test suite on temacs.  If no file given, run the whole suite,
+equivalent to 'make check-temacs'.  If a file given, run the suite only on
+the specified file.
+
 Use this with debugging tools (like purify) that cannot deal with dumping,
 or when temacs builds successfully, but xemacs does not.
 end
 
 define update-elc
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/update-elc.el
+  run -nd -no-packages -batch -l @srcdir@/../lisp/update-elc.el
 end
 
 document update-elc
@@ -190,9 +210,19 @@ Use when debugging temacs, not xemacs!
 Use this when temacs builds successfully, but xemacs does not.
 end
 
+define update-elc-2
+  environment-to-run-temacs
+  run -no-packages -batch -no-autoloads -l update-elc-2.el -f batch-update-elc-2 @srcdir@/../lisp
+end
+
+document update-elc-2
+Usage: update-elc-2
+Run the post-dump core lisp byte compilation part of the build procedure.
+end
+
 define dmp
   environment-to-run-temacs
-  run -nd -batch -l ../lisp/loadup.el dump
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el dump
 end
 
 document dmp
@@ -225,7 +255,7 @@ end
 
 
 define leval
-ldp Feval(Fcar(Fread_from_string(build_string($arg0),Qnil,Qnil)))
+ldp Feval(Fcar(Fread_from_string(build_cistring($arg0),Qnil,Qnil)))
 end
 
 document leval

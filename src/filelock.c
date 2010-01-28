@@ -358,7 +358,7 @@ lock_file (Lisp_Object fn)
 
   attack = call2_in_buffer (BUFFERP (subject_buf) ? XBUFFER (subject_buf) :
 			    current_buffer, Qask_user_about_lock , fn,
-			    build_intstring (locker));
+			    build_istring (locker));
   if (!NILP (attack) && current_buffer == XBUFFER (old_current_buffer))
     /* User says take the lock */
     {
@@ -474,7 +474,7 @@ t if it is locked by you, else a string of the name of the locker.
   else if (owner == 2)
     ret = Qt;
   else
-    ret = build_intstring (locker.user);
+    ret = build_istring (locker.user);
 
   if (owner > 0)
     FREE_LOCK_INFO (locker);

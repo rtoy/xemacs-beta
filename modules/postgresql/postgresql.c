@@ -118,15 +118,28 @@ TODO (in rough order of priority):
 Lisp_Object Vpg_coding_system;
 #endif
 
-#define CHECK_LIVE_CONNECTION(P) do {					\
-	if (!P || (PQstatus (P) != CONNECTION_OK)) {			\
-		char *e = "bad value";					\
-		if (P) e = PQerrorMessage (P);				\
-	 signal_ferror (Qprocess_error, "dead connection [%s]", e);	\
-	} } while (0)
-#define PUKE_IF_NULL(p) do {						 \
-	if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound); \
-	} while (0)
+#define CHECK_LIVE_CONNECTION(P)					\
+do									\
+{									\
+  if (!P || (PQstatus (P) != CONNECTION_OK))				\
+    {									\
+      const Ibyte *err;							\
+									\
+      if (P)								\
+	err = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING); \
+      else								\
+	err = (const Ibyte *) "bad value";				\
+      signal_ferror (Qprocess_error, "dead connection [%s]", err);	\
+    }									\
+}									\
+while (0)
+
+#define PUKE_IF_NULL(p)							\
+do									\
+{									\
+  if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound);	\
+}									\
+while (0)
 
 static Lisp_Object VXPGHOST;
 static Lisp_Object VXPGUSER;
@@ -203,7 +216,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[256];
   PGconn *P;
   ConnStatusType cst;
-  char *host="", *db="", *user="", *port="";
+  const char *host="", *db="", *user="", *port="";
 
   P = (XPGCONN (obj))->pgconn;
 
@@ -231,7 +244,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_object ("%s", buf);
   else
-    write_c_string (printcharfun, buf);
+    write_cistring (printcharfun, buf);
 }
 
 static Lisp_PGconn *
@@ -338,7 +351,7 @@ print_pgresult (Lisp_Object obj, Lisp_Object printcharfun,
 		   PQcmdStatus (res));
 	  break;
 	default:
-notuples:
+	notuples:
 	  /* No counts to print */
 	  sprintf (buf, RESULT_DEFAULT_FMT, /* evil! */
 		   PQresStatus (PQresultStatus (res)),
@@ -352,7 +365,7 @@ notuples:
   if (print_readably)
     printing_unreadable_object ("%s", buf);
   else
-    write_c_string (printcharfun, buf);
+    write_cistring (printcharfun, buf);
 }
 
 #undef RESULT_TUPLES_FMT
@@ -431,23 +444,25 @@ Return a connection default structure.
 
   pcio = PQconndefaults();
   if (!pcio) return Qnil; /* can never happen in libpq-7.0 */
-  temp = list1 (Fcons (build_ext_string (pcio[0].keyword, PG_OS_CODING),
-		       Fcons (build_ext_string (pcio[0].envvar, PG_OS_CODING),
-			      Fcons (build_ext_string (pcio[0].compiled, PG_OS_CODING),
-				     Fcons (build_ext_string (pcio[0].val, PG_OS_CODING),
-					    Fcons (build_ext_string (pcio[0].label, PG_OS_CODING),
-						   Fcons (build_ext_string (pcio[0].dispchar, PG_OS_CODING),
-							  Fcons (make_int (pcio[0].dispsize), Qnil))))))));
+  temp =
+    list1 (nconc2 (list4 (build_extstring (pcio[0].keyword, PG_OS_CODING),
+			  build_extstring (pcio[0].envvar, PG_OS_CODING),
+			  build_extstring (pcio[0].compiled, PG_OS_CODING),
+			  build_extstring (pcio[0].val, PG_OS_CODING)),
+		   list3 (build_extstring (pcio[0].label, PG_OS_CODING),
+			  build_extstring (pcio[0].dispchar, PG_OS_CODING),
+			  make_int (pcio[0].dispsize))));
 
   for (i = 1; pcio[i].keyword; i++)
     {
-      temp1 = list1 (Fcons (build_ext_string (pcio[i].keyword, PG_OS_CODING),
-			    Fcons (build_ext_string (pcio[i].envvar, PG_OS_CODING),
-				   Fcons (build_ext_string (pcio[i].compiled, PG_OS_CODING),
-					  Fcons (build_ext_string (pcio[i].val, PG_OS_CODING),
-						 Fcons (build_ext_string (pcio[i].label, PG_OS_CODING),
-							Fcons (build_ext_string (pcio[i].dispchar, PG_OS_CODING),
-							       Fcons (make_int (pcio[i].dispsize), Qnil))))))));
+      temp1 =
+	list1 (nconc2 (list4 (build_extstring (pcio[i].keyword, PG_OS_CODING),
+			      build_extstring (pcio[i].envvar, PG_OS_CODING),
+			      build_extstring (pcio[i].compiled, PG_OS_CODING),
+			      build_extstring (pcio[i].val, PG_OS_CODING)),
+		       list3 (build_extstring (pcio[i].label, PG_OS_CODING),
+			      build_extstring (pcio[i].dispchar, PG_OS_CODING),
+			      make_int (pcio[i].dispsize))));
       {
 	Lisp_Object args[2];
 	args[0] = temp;
@@ -472,35 +487,33 @@ Make a new connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  char *error_message = "Out of Memory?";
-  char *c_conninfo;
+  const Ascbyte *error_message = "Out of Memory?";
+  Extbyte *c_conninfo;
 
   CHECK_STRING (conninfo);
 
-  TO_EXTERNAL_FORMAT(LISP_STRING, conninfo,
-		     C_STRING_ALLOCA, c_conninfo, Qnative);
+  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
   P = PQconnectdb (c_conninfo);
   if (P && (PQstatus (P) == CONNECTION_OK))
     {
       (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
-      lisp_pgconn = allocate_pgconn();
+      lisp_pgconn = allocate_pgconn ();
       lisp_pgconn->pgconn = P;
       return make_pgconn (lisp_pgconn);
     }
   else
     {
       /* Connection failed.  Destroy the connection and signal an error. */
-      char buf[BLCKSZ];
-      strcpy (buf, error_message);
+      Ibyte *errmsg = (Ibyte *) error_message;
       if (P)
 	{
 	  /* storage for the error message gets erased when call PQfinish */
-	  /* so we must temporarily stash it somewhere */
-	  strncpy (buf, PQerrorMessage (P), sizeof (buf));
-	  buf[sizeof (buf) - 1] = '\0';
+	  /* so we must temporarily stash it somewhere -- make alloca() copy */
+	  errmsg = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING);
+	  IBYTE_STRING_TO_ALLOCA (errmsg, errmsg);
 	  PQfinish (P);
 	}
-      signal_ferror (Qprocess_error, "libpq: %s", buf);
+      signal_ferror (Qprocess_error, "libpq: %s", errmsg);
     }
 }
 
@@ -517,18 +530,18 @@ Make a new asynchronous connection to a PostgreSQL backend.
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  char *error_message = "Out of Memory?";
-  char *c_conninfo;
+  const Ascbyte *error_message = "Out of Memory?";
+  Extbyte *c_conninfo;
 
   CHECK_STRING (conninfo);
-  TO_EXTERNAL_FORMAT (LISP_STRING, conninfo,
-		      C_STRING_ALLOCA, c_conninfo, Qnative);
+
+  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
   P = PQconnectStart (c_conninfo);
 
   if (P && (PQstatus (P) != CONNECTION_BAD))
     {
       (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
-      lisp_pgconn = allocate_pgconn();
+      lisp_pgconn = allocate_pgconn ();
       lisp_pgconn->pgconn = P;
 
       return make_pgconn (lisp_pgconn);
@@ -821,22 +834,22 @@ pq::backend-pid   Process ID of backend process
     /* PQdb Returns the database name of the connection.
        char *PQdb(PGconn *conn)
      */
-    return build_ext_string (PQdb(P), PG_OS_CODING);
+    return build_extstring (PQdb(P), PG_OS_CODING);
   else if (EQ (field, Qpquser))
     /* PQuser Returns the user name of the connection.
        char *PQuser(PGconn *conn)
      */
-    return build_ext_string (PQuser(P), PG_OS_CODING);
+    return build_extstring (PQuser(P), PG_OS_CODING);
   else if (EQ (field, Qpqpass))
     /* PQpass Returns the password of the connection.
        char *PQpass(PGconn *conn)
      */
-    return build_ext_string (PQpass(P), PG_OS_CODING);
+    return build_extstring (PQpass(P), PG_OS_CODING);
   else if (EQ (field, Qpqhost))
     /* PQhost Returns the server host name of the connection.
        char *PQhost(PGconn *conn)
      */
-    return build_ext_string (PQhost(P), PG_OS_CODING);
+    return build_extstring (PQhost(P), PG_OS_CODING);
   else if (EQ (field, Qpqport))
     {
       char *p;
@@ -852,12 +865,12 @@ pq::backend-pid   Process ID of backend process
     /* PQtty Returns the debug tty of the connection.
        char *PQtty(PGconn *conn)
      */
-    return build_ext_string (PQtty(P), PG_OS_CODING);
+    return build_extstring (PQtty(P), PG_OS_CODING);
   else if (EQ (field, Qpqoptions))
   /* PQoptions Returns the backend options used in the connection.
      char *PQoptions(PGconn *conn)
    */
-    return build_ext_string (PQoptions(P), PG_OS_CODING);
+    return build_extstring (PQoptions(P), PG_OS_CODING);
   else if (EQ (field, Qpqstatus))
     {
       ConnStatusType cst;
@@ -886,7 +899,7 @@ pq::backend-pid   Process ID of backend process
        by an operation on the connection.
        char *PQerrorMessage(PGconn* conn);
      */
-    return build_ext_string (PQerrorMessage(P), PG_OS_CODING);
+    return build_extstring (PQerrorMessage(P), PG_OS_CODING);
   else if (EQ (field, Qpqbackendpid))
     /* PQbackendPID Returns the process ID of the backend server handling
        this connection.
@@ -919,7 +932,8 @@ Submit a query to Postgres and wait for the result.
 
   R = PQexec (P, c_query);
   {
-    char *tag, buf[BLCKSZ];
+    const Ascbyte *tag;
+    char buf[BLCKSZ];
 
     if (!R) out_of_memory ("query: out of memory", Qunbound);
     else
@@ -992,7 +1006,8 @@ NIL is returned when no more query work remains.
   if (!R) return Qnil; /* not an error, there's no more data to get */
 
   {
-    char *tag, buf[BLCKSZ];
+    const Ascbyte *tag;
+    char buf[BLCKSZ];
 
     switch (PQresultStatus (R))
       {
@@ -1044,7 +1059,9 @@ Return result status of the query.
   case PGRES_FATAL_ERROR: return Qpgres_fatal_error;
   default:
     /* they've added a new field we don't know about */
-    signal_ferror (Qprocess_error, "Help!  Unknown exec status code %08x from backend!", est);
+    signal_ferror (Qprocess_error,
+		   "Help!  Unknown exec status code %08x from backend!",
+		   est);
   }
 }
 
@@ -1059,7 +1076,7 @@ Return stringified result status of the query.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQresStatus (PQresultStatus (R)), PG_OS_CODING);
+  return build_extstring (PQresStatus (PQresultStatus (R)), PG_OS_CODING);
 }
 
 /* Sundry PGresult accessor functions */
@@ -1074,7 +1091,7 @@ Return last message associated with the query.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQresultErrorMessage (R), PG_OS_CODING);
+  return build_extstring (PQresultErrorMessage (R), PG_OS_CODING);
 }
 
 DEFUN ("pq-ntuples", Fpq_ntuples, 1, 1, 0, /*
@@ -1132,7 +1149,7 @@ Field indices start at 0.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQfname (R, XINT (field_index)), PG_OS_CODING);
+  return build_extstring (PQfname (R, XINT (field_index)), PG_OS_CODING);
 }
 
 DEFUN ("pq-fnumber", Fpq_fnumber, 2, 2, 0, /*
@@ -1217,7 +1234,7 @@ Tuple and field indices start at 0.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQgetvalue (R, XINT (tup_num), XINT (field_num)),
+  return build_extstring (PQgetvalue (R, XINT (tup_num), XINT (field_num)),
 			   PG_OS_CODING);
 }
 
@@ -1267,7 +1284,7 @@ Returns the command status string from the SQL command that generated the result
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQcmdStatus (R), PG_OS_CODING);
+  return build_extstring (PQcmdStatus (R), PG_OS_CODING);
 }
 
 DEFUN ("pq-cmd-tuples", Fpq_cmd_tuples, 1, 1, 0, /*
@@ -1281,7 +1298,7 @@ Returns the number of rows affected by the SQL command.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_ext_string (PQcmdTuples (R), PG_OS_CODING);
+  return build_extstring (PQcmdTuples (R), PG_OS_CODING);
 }
 
 DEFUN ("pq-oid-value", Fpq_oid_value, 1, 1, 0, /*
@@ -1375,7 +1392,7 @@ aren't any notifications to process.
   {
     Lisp_Object temp;
 
-    temp = list2 (build_ext_string (PGN->relname, PG_OS_CODING), make_int (PGN->be_pid));
+    temp = list2 (build_extstring (PGN->relname, PG_OS_CODING), make_int (PGN->be_pid));
     free ((void *)PGN);
     return temp;
   }
@@ -1489,7 +1506,7 @@ returned.
 
   ret = PQgetline (P, buffer, sizeof (buffer));
 
-  return Fcons (make_int (ret), build_ext_string (buffer, PG_OS_CODING));
+  return Fcons (make_int (ret), build_extstring (buffer, PG_OS_CODING));
 }
 
 DEFUN ("pq-put-line", Fpq_put_line, 2, 2, 0, /*
@@ -1558,7 +1575,7 @@ The returned string is *not* null-terminated.
   if (ret == -1) return Qt; /* done! */
   else if (!ret) return Qnil; /* no data yet */
   else return Fcons (make_int (ret),
-		     make_ext_string ((Extbyte *) buffer, ret, PG_OS_CODING));
+		     make_extstring ((Extbyte *) buffer, ret, PG_OS_CODING));
 }
 
 DEFUN ("pq-put-nbytes", Fpq_put_nbytes, 2, 2, 0, /*
@@ -1828,7 +1845,7 @@ init_postgresql_from_environment (void)
 
 #define FROB(envvar, var)			\
   if ((p = egetenv (envvar)))			\
-    var = build_intstring (p);	\
+    var = build_istring (p);	\
   else						\
     var = Qnil
 

@@ -1,5 +1,6 @@
 /* The module API: core symbols that are visible to modules.
    Copyright (C) 2008 Jerry James
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,8 +23,14 @@ Boston, MA 02110-1301, USA. */
    meant to be used directly, but a macro or inline function in the
    API expands to a form containing the symbol, then the macro or
    inline function is named in a comment to the right. */
+
 #define NOT_C_CODE
 #include <config.h>
+
+#if defined (ERROR_CHECK_TYPES) && defined (XEMACS_DEFS_NEEDS_INLINE_DECLS)
+#define XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
+#endif
+
 NAME xemacs.exe
 EXPORTS
 /* Exported functions */
@@ -43,11 +50,13 @@ apply1
 #ifdef USE_ASSERTIONS
 assert_failed			/* abort(), assert(), etc. */
 #endif
-build_ext_string
-build_intstring
-build_msg_intstring
-build_msg_string
-build_string
+build_extstring
+build_istring
+build_cistring
+build_ascstring
+build_msg_istring
+build_msg_cistring
+build_msg_ascstring
 #ifdef MULE
 bytecount_to_charcount_fun	/* bytecount_to_charcount */
 #endif
@@ -65,6 +74,8 @@ charcount_to_bytecount_fun	/* charcount_to_bytecount */
 #endif
 check_quit			/* QUITP */
 check_what_happened		/* QUIT */
+concat2
+concat3
 cons3
 copy_lisp_object
 dead_wrong_type_argument	/* CHECK_xxx */
@@ -102,7 +113,7 @@ eputenv
 #ifdef DEBUG_XEMACS
 eq_with_ebola_notice		/* EQ_WITH_EBOLA_NOTICE */
 #endif
-#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+#ifdef XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
 error_check_cons
 #ifdef HAVE_LDAP
 error_check_ldap
@@ -117,7 +128,7 @@ error_check_string
 error_check_string_direct_data
 error_check_string_indirect_data
 #endif
-#endif /* NEED_ERROR_CHECK_TYPES_INLINES */
+#endif /* XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS */
 free_opaque_ptr
 get_coding_system_for_text_file
 intern
@@ -132,13 +143,14 @@ list3
 list4
 list5
 list6
-make_ext_string
+make_extstring
 make_float
 make_opaque_ptr
 make_string
 make_vector
 maybe_invalid_operation
 message
+nconc2
 new_dfc_convert_copy_data	/* C_STRING_TO_EXTERNAL, ... */
 new_dfc_convert_malloc		/* C_STRING_TO_EXTERNAL_MALLOC, ... */
 new_dfc_convert_size		/* C_STRING_TO_EXTERNAL, ... */
@@ -150,6 +162,38 @@ non_ascii_valid_ichar_p		/* valid_ichar_p */
 #endif
 out_of_memory			/* The postgresql module uses this */
 printing_unreadable_object
+#ifdef XEMACS_DEFS_NEEDS_INLINE_DECLS
+qxestrdup
+qxestrlen
+qxestrcharlen
+qxestrcmp
+qxestrcmp_ascii
+qxestrncmp
+qxestrncmp_ascii
+qxestrcpy
+qxestrcpy_ascii
+qxestrncpy
+qxestrncpy_ascii
+qxestrcat
+qxestrcat_ascii
+qxestrncat
+qxestrncat_ascii
+qxestrchr
+qxestrrchr
+qxestrstr
+qxestrcspn
+qxestrspn
+qxestrpbrk
+qxestrtok
+qxestrtod
+qxestrtol
+qxestrtoul
+qxeatoi
+qxestrupr
+qxestrlwr
+qxesprintf
+qxesscanf_ascii_1
+#endif /* XEMACS_DEFS_NEEDS_INLINE_DECLS */
 record_unwind_protect
 record_unwind_protect_freeing
 report_process_error
@@ -175,17 +219,20 @@ unstaticpro_nodump
 #else
 unstaticpro_nodump_1
 #endif
+vconcat2
+vconcat3
 vector1
 vector2
 vector3
 warn_when_safe
-#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+#ifdef XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
 wrap_record_1
 #endif
-write_c_string
+write_cistring
 write_fmt_string
 write_fmt_string_lisp
-write_string
+write_istring
+write_ascstring
 wrong_type_argument		/* CONCHECK_xxx */
 xemacs_c_alloca			/* ALLOCA */
 xfree_1				/* xfree */
@@ -225,7 +272,7 @@ Fset_buffer
 Fsignal
 Fthrow
 Fvector
-#ifdef NEED_ERROR_CHECK_TYPES_INLINES
+#ifdef XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
 XINT_1
 #endif
 

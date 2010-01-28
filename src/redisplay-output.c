@@ -422,7 +422,10 @@ get_next_display_block (layout_bounds bounds, display_block_dynarr *dba,
       else if (start_pos <= bounds.right_out)
 	*next_start = bounds.right_out;
       else
-	ABORT ();
+	{
+	  ABORT ();
+	  *next_start = 0;
+	}
     }
 
   for (block = 0; block < Dynarr_length (dba); block++)

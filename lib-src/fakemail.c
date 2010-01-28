@@ -512,7 +512,7 @@ args_size (header the_header)
   register int size = 0;
   do
     {
-      char *field;
+      char *field = NULL;
       register char *keyword = get_keyword (the_header->text->string, &field);
       if ((strcmp (keyword, "TO") == 0) ||
 	  (strcmp (keyword, "CC") == 0) ||
@@ -535,7 +535,7 @@ parse_header (header the_header, register char *where)
   register header old = the_header;
   do
     {
-      char *field;
+      char *field = NULL;
       register char *keyword = get_keyword (the_header->text->string, &field);
       if (strcmp (keyword, "TO") == 0)
 	where = add_field (the_header->text->continuation, field, where);

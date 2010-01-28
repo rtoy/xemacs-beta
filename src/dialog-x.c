@@ -58,7 +58,7 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
 	  void *tmp =
 	    LISP_TO_VOID (cons3 (Qnil,
 				 list2 (text_field_callback,
-					build_ext_string (text_field_value,
+					build_extstring (text_field_value,
 							  Qlwlib_encoding)),
 				 Qnil));
 	  popup_selection_callback (0, id, (XtPointer) tmp);

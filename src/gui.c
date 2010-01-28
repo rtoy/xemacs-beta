@@ -516,7 +516,7 @@ gui_item_display_flush_left (Lisp_Object gui_item)
 	  CHECK_STRING (suffix);
 	}
 
-      retval = concat3 (pgui_item->name, build_string (" "), suffix);
+      retval = concat3 (pgui_item->name, build_ascstring (" "), suffix);
     }
 
   return retval;

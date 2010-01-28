@@ -75,7 +75,7 @@ player_error_internal (Audio * audio, Ascbyte * text, long errorCode)
   AGetErrorText (audio, errorCode, errorbuff, 131);
   EXTERNAL_TO_C_STRING (errorbuf, interr, Qerror_message_encoding);
   
-  signal_error (Qsound_error, text, build_string (interr));
+  signal_error (Qsound_error, text, build_istring (interr));
 }
 
 long

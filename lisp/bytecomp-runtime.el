@@ -1,7 +1,7 @@
 ;;; bytecomp-runtime.el --- byte-compiler support for inlining
 
 ;; Copyright (C) 1992, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
 ;; Author: Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -491,6 +491,60 @@ SYMBOL must be quoted and can be a list of SYMBOLS.  See also
 SYMBOL must be quoted and can be a list of SYMBOLS.  See also
 `with-obsolete-variable'."
   `(with-byte-compiler-warnings-suppressed 'obsolete ,@body))
+
+
+
+(defmacro error-unless-tests-match (test &optional source)
+  "Signal an error unless TEST matches when being compiled and loaded.
+This is for use in a file that will be byte-compiled.  Unless TEST has the
+same nilness or non-nilness when the file is compiled and loaded, an error
+will be signalled.  SOURCE is the name of the source file."
+  (let ((source (eval source)))
+    `(unless (eq (not ,test) ,(not (eval test)))
+       (error ,(format "This file was compiled with `%s' %s,
+but it was %s when run.  This file needs to be compiled with
+the same value for the expression as when it is run.  Please delete
+%s and rebuild."
+		       test (if (eval test) "true" "false")
+		       (if (eval test) "false" "true")
+		       (cond
+			((null source) "the .elc for this file")
+			((string-match "\.elc$" source) source)
+			((string-match "\.el$" source) (concat source "c"))
+			(t (concat source ".elc"))))))))
+
+(defun byte-compile-file-being-compiled ()
+  "When byte-compiling a file, return the name of the file being compiled.
+Return nil otherwise."
+  (or
+   ;;The first of these, but not the second, seems to work noninteractively;
+   ;;vice-versa interactively.  This is because interactively a *Compile Log*
+   ;;buffer is created and byte-compile-log-1 inserts a "Compiling file ..."
+   ;;message into thelog buffer, and then sets byte-compile-current-file to 
+   ;;nil to indicate that the message shouldn't be printed again.
+   (and-boundp 'byte-compile-current-file byte-compile-current-file)
+   (and-boundp 'byte-compile-log-buffer
+     (with-current-buffer byte-compile-log-buffer
+       (save-excursion
+	 (and (re-search-backward "Compiling file \\(.*\\) at " nil t)
+	      (match-string 1)))))))
+
+
+(defmacro compiled-if (test if &rest else)
+  "Like a regular `if' statement but the TEST will be evalled at compile time.
+If TEST doesn't match at compile time and load time, an error will be
+signalled."
+  (let ((being-compiled (byte-compile-file-being-compiled)))
+    `(progn
+      (error-unless-tests-match ,test ,being-compiled)
+      ,(if (eval test)
+	   if
+	 `(progn ,else)))))
+
+(defmacro compiled-when (test &rest when)
+  "Like a regular `when' statement but the TEST will be evalled at compile time.
+See `compiled-if'."
+  `(compiled-if ,test (progn ,@when)))
 
 
 ;;; Interface to file-local byte-compiler parameters.
