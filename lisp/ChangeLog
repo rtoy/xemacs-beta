@@ -1,3 +1,26 @@
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* lisp-mode.el: Finish documenting `lisp-indent-specform',
+	on Mike Sperber's request.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (error-unless-tests-match): New.
+	* bytecomp-runtime.el (byte-compile-file-being-compiled): New.
+	* bytecomp-runtime.el (compiled-if): New.
+	* bytecomp-runtime.el (compiled-when): New.
+	Add functions for dealing with conditional compilation of different code
+	depending on the presence or absence of features.  Necessary for some
+	Mule code where code is run during compilation (macros or eval-when-compile)
+	but, depending on how the code is written, the code itself will crash
+	either with or without Unicode-internal.
+
+	compiled-if and compiled-when are the basic functions for conditional
+	compilation.  They automatically trigger an error message upon file
+	loading	if, at that time, the test expression that selected which code
+	to compile does	not have the same value as at compile time.
+
 2010-01-25  Ben Wing  <ben@xemacs.org>
 
 	* mule/cyrillic.el:
@@ -282,6 +305,170 @@
 	is useful when the number of distinguished (i.e. pre-body) arguments
 	isn't known, and is used for this purpose by `lisp-indent-function'.
 	
+
+2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	This function is called a *lot*, make it faster, making
+	keysyms-equal inline, calling #'characterp (which doesn't have a
+	bytecode) much more rarely, and not throwing and catching. This
+	won't make much difference in practice, but does eliminate losts
+	of noise from profiling, e.g. at startup.
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* loadup.el:
+	* loadup.el (featurep):
+	* loadup.el (member):
+	When featurep `debug-xemacs' (configure --with-debug), set
+	debug-on-error, so that we get an exit-to-debugger/assertion
+	failure upon Lisp error during loadup.  Unset before dumping.
+
+2010-01-10  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el (get-native-coding-system-from-language-environment):
+	Under Cygwin, force utf-8 if we are using Cygwin 1.7 or later
+	(making use of the magic feature 'cygwin-use-utf-8).
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (utf-8):
+	Don't define `utf-8' coding system here, because it's too late.
+	We need it during early startup code at dump time so we create it
+	in C in unicode.c.
+
+2010-01-10  Didier Verna  <didier@xemacs.org>
+
+	* x-faces.el (x-init-face-from-resources)
+	(x-init-device-faces)
+	(x-init-frame-faces): Cosmetic changes (comments formatting).
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	* x-faces.el (x-init-global-faces): Deactivate obsolete code.
+	* x-faces.el (x-init-device-faces): Ditto.
+	* x-faces.el (x-init-frame-faces): Ditto.
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.el (init-glyphs): Recognize bitmaps/ directory as
+	containing bitmap files.
+
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-trapping-errors): 
+	Fix a bug here, where I used a normal quote instead of a
+	backquote. Thank you the byte-compiler.
+
+2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* indent.el (indent-region):
+	Make COLUMN optional as in GNU, merging Andreas Roehler's change
+	of http://mid.gmane.org/4B46F5FC.2070506@online.de ; thank you
+	Andreas!
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (map):
+	Add a compiler macro for this function, for cases where CL-TYPE is
+	constant and understood.
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	* mule/mule-msw-init-late.el:
+	* mule/mule-category.el (predefined-category-list):
+	* mule/arabic.el:
+	Move arabic-iso8859-6 back to C, it needs to be there, otherwise
+	X11 character input lookup fails.
+
+2010-01-06  Didier Verna  <didier@xemacs.org>
+
+	* cl-extra.el (get-properties): New.
+
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* list-mode.el (next-list-mode-item, switch-to-completions): Use
+	next-single-char-property-change,
+	previous-single-char-property-change now
+	next-single-property-change no longer pays attention to extents
+	not created using the text property functions. Fix for issue 546,
+	bug dates from changeset 8c96bdabcaf9.
+
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* dragdrop.el (offix-start-drag): Remove.
+	(offix-start-drag-region): Remove.
+	* mouse.el (mouse-begin-drag-n-drop): Remove OffiX support.
+
+2009-12-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Remove
+	dk.xemacs.org from list of package download sites.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
+2009-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/arabic.el (arabic-iso8859-6):
+	Move the creation of this character set to this (dumped) file,
+	since it's needed for input on X11.
+	* mule/iso-with-esc.el:
+	Remove arabic-iso8859-6 and its Unicode map from this file.
+	* unicode.el (load-unicode-tables):
+	Load arabic-iso8859-6 on startup again.
+
+2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-do-arglist):
+	* cl-compat.el (keyword-of):
+	Remove support in our generated code for emacs versions where
+	keywords are not self-quoting.
+
+2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is
+	actually *SMALL* LETTER A WITH CIRCUMFLEX AND HOOK ABOVE.
+	* mule/cyrillic.el (koi8-c): Correct the mapping here, #x8C is
+	actually ?\u04D9. Add a case mapping for it.
+
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct the semantics of #'member*, #'eql, #'assoc* in the
+	presence of bignums; change the integerp byte code to fixnump
+	semantics.
+
+	* bytecomp.el (fixnump, integerp, byte-compile-integerp): 
+	Change the integerp byte code to fixnump; add a byte-compile
+	method to integerp using fixnump and numberp and avoiding a
+	funcall most of the time, since in the non-core contexts where
+	integerp is used, it's mostly distinguishing between fixnums and
+	things that are not numbers at all.
+	* byte-optimize.el (side-effect-free-fns, byte-after-unbind-ops)
+	(byte-compile-side-effect-and-error-free-ops):
+	Replace the integerp bytecode with fixnump; add fixnump to the
+	side-effect-free-fns. Add the other extended number type
+	predicates to the list in passing.
+
+	* obsolete.el (floatp-safe): Mark this as obsolete.
+
+	* cl.el (eql): Go into more detail in the docstring here. Don't
+	bother checking whether both arguments are numbers; one is enough,
+	#'equal will fail correctly if they have distinct types.
+	(subst): Replace a call to #'integerp (deciding whether to use
+	#'memq or not) with one to #'fixnump.
+	Delete most-positive-fixnum, most-negative-fixnum from this file;
+	they're now always in C, so they can't be modified from Lisp.
+	* cl-seq.el (member*, assoc*, rassoc*):
+	Correct these functions in the presence of bignums.
+	* cl-macs.el (cl-make-type-test): The type test for a fixnum is
+	now fixnump. Ditch floatp-safe, use floatp instead.
+	(eql): Correct this compiler macro in the presence of bignums.
+	(assoc*): Correct this compiler macro in the presence of bignums.
+
+	* simple.el (undo): 
+	Change #'integerp to #'fixnump here, since we use #'delq with the
+	same value as ELT a few lines down.
 
 2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 

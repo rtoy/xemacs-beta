@@ -2109,7 +2109,7 @@ All path elements in FILENAME are converted to their short names.
   TSTR_TO_C_STRING (shortname, shortint);
   MSWINDOWS_NORMALIZE_FILENAME (shortint);
 
-  return build_intstring (shortint);
+  return build_istring (shortint);
 }
 
 
@@ -2132,7 +2132,7 @@ All path elements in FILENAME are converted to their long names.
     return Qnil;
 
   canon = mswindows_canonicalize_filename (longname);
-  ret = build_intstring (canon);
+  ret = build_istring (canon);
   xfree (canon, Ibyte *);
   xfree (longname, Ibyte *);
   return ret;

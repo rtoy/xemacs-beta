@@ -524,7 +524,7 @@ visited file.
 
 If @var{time} is not @code{nil}, it should have the form
 @code{(@var{high} . @var{low})} or @code{(@var{high} @var{low})}, in
-either case containing two integers, each of which holds 16 bits of the
+either case containing two fixnums, each of which holds 16 bits of the
 time.
 
 This function is useful if the buffer was not read from the file

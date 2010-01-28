@@ -561,7 +561,7 @@ mswindows_get_foreign_selection (Lisp_Object selection_symbol,
     }
 
   /* Place it in a Lisp string */
-  ret = make_ext_string ((Extbyte *) data, size, Qbinary);
+  ret = make_extstring ((Extbyte *) data, size, Qbinary);
 
   GlobalUnlock (data);
   CloseClipboard ();

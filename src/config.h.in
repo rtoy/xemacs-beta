@@ -1209,9 +1209,9 @@ extern "C" {
    aren't using the C++ preprocessor when processing xemacs.def.in.in
    even if we're using a C++ compiler.  I suspect we only need this at
    all GCC is being used. */
-#if defined (ERROR_CHECK_TYPES) && !defined (USE_GPLUSPLUS)
+#if !defined (USE_GPLUSPLUS)
 /* #if !defined (INLINE_HEADERS_ARE_STATIC) */
-#define NEED_ERROR_CHECK_TYPES_INLINES
+#define XEMACS_DEFS_NEEDS_INLINE_DECLS
 #endif
 
 #endif /* _SRC_CONFIG_H_ */

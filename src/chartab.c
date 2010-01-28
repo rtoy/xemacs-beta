@@ -786,7 +786,7 @@ print_table_entry (Lisp_Object UNUSED (table), Ichar ch,
 {
   struct ptemap *a = (struct ptemap *) arg;
   if (!a->first)
-    write_c_string (a->printcharfun, " ");
+    write_ascstring (a->printcharfun, " ");
   a->first = 0;
   write_fmt_string_lisp (a->printcharfun, "%s %S", 2, make_char (ch), val);
   return 0;
@@ -807,7 +807,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
 			 1, char_table_type_to_symbol (ct->type));
   map_char_table (obj, &range, print_table_entry, &arg);
-  write_c_string (printcharfun, "))");
+  write_ascstring (printcharfun, "))");
 
   /* #### need to print and read the default; but that will allow the
      default to be modified, which we don't (yet) support -- but FSF does */

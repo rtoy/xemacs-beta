@@ -408,6 +408,7 @@ language of Tajikistan and a close relative of Persian.  "))
    (#xFF #x042A)) ;; CYRILLIC CAPITAL LETTER HARD SIGN
   :tags '(koi8 cyrillic caucasus))
 
+;; Support for the languages of the Caucasus. Never widely used.
 (make-coding-system
  'koi8-c 'multibyte "KOI-8, Caucasus."
  '(charsets (ascii cyrillic-koi8-c)

@@ -375,7 +375,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 	/* Create the message */
 	(*cinfo.err->format_message) ((j_common_ptr) &cinfo, buffer);
-	errstring = build_ext_string (buffer, Qjpeg_error_message_encoding);
+	errstring = build_extstring (buffer, Qjpeg_error_message_encoding);
 
 	signal_image_error_2 ("JPEG decoding error",
 			      errstring, instantiator);
@@ -902,7 +902,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       /* Something blew up:
 	 just display the error (cleanup happens in the unwind) */
       signal_image_error_2 ("Error decoding PNG",
-			     build_string(png_err_stct.err_str),
+			     build_extstring (png_err_stct.err_str,
+					       Qerror_message_encoding),
 			     instantiator);
     }
 
@@ -1300,7 +1301,8 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       /* An error was signaled. No clean up is needed, as unwind handles that
 	 for us.  Just pass the error along. */
       signal_image_error_2 ("TIFF decoding error",
-			    build_string(tiff_err_data.err_str),
+			    build_extstring (tiff_err_data.err_str,
+					      Qerror_message_encoding),
 			    instantiator);
     }
   TIFFSetErrorHandler ((TIFFErrorHandler)tiff_error_func);

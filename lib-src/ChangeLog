@@ -16,6 +16,11 @@
 
 	* fix-perms.sh: Also make lib-src/*.py executable.
 
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* make-msgfile.lex: Vague hacking on this file, insert a comment
+	about what should be done if we ever want this to work.
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* fakemail.c (args_size):

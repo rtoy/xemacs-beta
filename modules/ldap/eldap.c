@@ -99,7 +99,7 @@ signal_ldap_error (LDAP *ld,
 #endif
     }
   invalid_operation ("LDAP error",
-		     build_ext_string (ldap_err2string (ldap_err), Qnative));
+		     build_extstring (ldap_err2string (ldap_err), Qnative));
 }
 
 
@@ -134,7 +134,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 
   write_fmt_string_lisp (printcharfun, "#<ldap %S", 1, ldap->host);
   if (!ldap->ld)
-    write_c_string (printcharfun,"(dead) ");
+    write_ascstring (printcharfun,"(dead) ");
   write_fmt_string (printcharfun, " 0x%lx>", (long)ldap);
 }
 
@@ -346,7 +346,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   if (err != LDAP_SUCCESS)
     {
       signal_error (Qprocess_error, "Failed binding to the server",
-		    build_ext_string (ldap_err2string (err), Qnative));
+		    build_extstring (ldap_err2string (err), Qnative));
     }
 
   ldap = allocate_ldap ();
@@ -535,19 +535,19 @@ entry according to the value of WITHDN.
           dn = ldap_get_dn (ld, e);
           if (dn == NULL)
             signal_ldap_error (ld, e, 0);
-          entry = Fcons (build_ext_string (dn, Qnative), Qnil);
+          entry = Fcons (build_extstring (dn, Qnative), Qnil);
         }
       for (a = ldap_first_attribute (ld, e, &ptr);
            a != NULL;
            a = ldap_next_attribute (ld, e, ptr))
         {
-          list = Fcons (build_ext_string (a, Qnative), Qnil);
+          list = Fcons (build_extstring (a, Qnative), Qnil);
           unwind.vals = ldap_get_values_len (ld, e, a);
           if (unwind.vals != NULL)
             {
               for (i = 0; unwind.vals[i] != NULL; i++)
                 {
-                  list = Fcons (make_ext_string ((Extbyte *) unwind.vals[i]->bv_val,
+                  list = Fcons (make_extstring ((Extbyte *) unwind.vals[i]->bv_val,
                                                  unwind.vals[i]->bv_len,
                                                  Qnative),
                                 list);

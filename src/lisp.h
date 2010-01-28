@@ -545,7 +545,8 @@ typedef unsigned long uintptr_t;
    c) [Ascbyte] pure ASCII text
    d) [Binbyte] binary data that is not meant to be interpreted as text
    e) [Rawbyte] general data in memory, where we don't care about whether
-                it's text or binary
+                it's text or binary; often used when computing memory-
+                based/byte-based offsets of pointers
    f) [Boolbyte] a zero or a one
    g) [Bitbyte] a byte used for bit fields
    h) [Chbyte] null-semantics `char *'; used when casting an argument to
@@ -2193,6 +2194,15 @@ typedef struct
 {
   Dynarr_declare (unsigned long);
 } unsigned_long_dynarr;
+
+typedef const Ascbyte *const_Ascbyte_ptr;
+typedef struct
+{
+  Dynarr_declare (const Ascbyte *);
+} const_Ascbyte_ptr_dynarr;
+
+extern const struct sized_memory_description const_Ascbyte_ptr_description;
+extern const struct sized_memory_description const_Ascbyte_ptr_dynarr_description;
 
 typedef struct
 {
@@ -4077,22 +4087,100 @@ Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);
    format it and store it in the `string-translatable' property of the
    returned string.  See Fgettext().
 
-   CGETTEXT() is the same as GETTEXT() but works with char * strings
-   instead of Ibyte * strings.
+   The variations IGETTEXT, CIGETTEXT and ASCGETTEXT operate on
+   Ibyte *, CIbyte *, and Ascbyte * strings, respectively.  The
+   ASCGETTEXT version has an assert check to verify that its string
+   really is pure-ASCII.  Plain GETTEXT is defined as ASCGETTEXT, and
+   so works the same way. (There are no versions that work for Extbyte *.
+   Translate to internal format before working on it.)
 
-   build_msg_string() is a shorthand for build_string (GETTEXT (x)).
-   build_msg_intstring() is a shorthand for build_intstring (GETTEXT (x)).
+   There are similar functions for building a Lisp string from a C
+   string and translating in the process.  They again come in three
+   variants: build_msg_istring(), build_msg_cistring(), and
+   build_msg_ascstring().  Again, build_msg_ascstring() asserts that
+   its text is pure-ASCII, and build_msg_string() is the same as
+   build_msg_ascstring().
    */
 
-#define GETTEXT(x) (x)
-#define CGETTEXT(x) (x)
-#define LISP_GETTEXT(x) (x)
+/* Return value NOT Ascbyte, because the result in general will have been
+   translated into a foreign language. */
+DECLARE_INLINE_HEADER (const CIbyte *ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
 
-/* DEFER_GETTEXT is used to identify strings which are translated when
-   they are referenced instead of when they are defined.
-   These include Qerror_messages and initialized arrays of strings.
+DECLARE_INLINE_HEADER (const Ibyte *IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (Lisp_Object LISP_GETTEXT (Lisp_Object s))
+{
+  return s;
+}
+
+#define GETTEXT ASCGETTEXT
+
+MODULE_API Lisp_Object build_msg_istring (const Ibyte *);
+MODULE_API Lisp_Object build_msg_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_msg_ascstring (const Ascbyte *);
+#define build_msg_string build_msg_ascstring
+
+
+/* DEFER_GETTEXT() and variants are used to identify strings which are not
+   meant to be translated immediately, but instead at some later time.
+   This is used in strings that are stored somewhere at dump or
+   initialization time, at a time when the current language environment is
+   not set.  It is the duty of the user of the string to call GETTEXT or
+   some variant at the appropriate time.  DEFER_GETTTEXT() serves only as a
+   marker that the string is translatable, and will as a result be snarfed
+   during message snarfing (see above).
+
+   build_defer_string() and variants are the deferred equivalents of
+   build_msg_string() and variants.  Similarly to DEFER_GETTEXT(), they
+   don't actually do any translation, but serve as place markers for
+   message snarfing.  However, they may do something more than just build
+   a Lisp string -- in particular, they may store a string property
+   indicating that the string is translatable (see discussion above about
+   this property).
 */
-#define DEFER_GETTEXT(x) (x)
+
+DECLARE_INLINE_HEADER (const Ascbyte *DEFER_ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const Ibyte *DEFER_IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *DEFER_CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+#define DEFER_GETTEXT DEFER_ASCGETTEXT
+
+MODULE_API Lisp_Object build_defer_istring (const Ibyte *);
+MODULE_API Lisp_Object build_defer_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_defer_ascstring (const Ascbyte *);
+
+#define build_defer_string build_defer_ascstring
+
+
+void write_msg_istring (Lisp_Object stream, const Ibyte *str);
+void write_msg_cistring (Lisp_Object stream, const CIbyte *str);
+void write_msg_ascstring (Lisp_Object stream, const Ascbyte *str);
+
+#define write_msg_string write_msg_ascstring
 
 
 /************************************************************************/
@@ -4384,18 +4472,14 @@ extern Lisp_Object_ptr_dynarr *staticpros_nodump;
 
 /* Help debug crashes gc-marking a staticpro'ed object. */
 
-MODULE_API void staticpro_1 (Lisp_Object *, Ascbyte *);
-MODULE_API void staticpro_nodump_1 (Lisp_Object *, Ascbyte *);
-/* g++ 4.3 complains about the conversion of const char to char.
-   These end up in a dynarray, so we would need to define a whole new class
-   of dynarray just to handle the const char stuff.
-   ####Check to see how hard this might be. */
-#define staticpro(ptr) staticpro_1 (ptr, (Ascbyte *) #ptr)
-#define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, (Ascbyte *) #ptr)
+MODULE_API void staticpro_1 (Lisp_Object *, const Ascbyte *);
+MODULE_API void staticpro_nodump_1 (Lisp_Object *, const Ascbyte *);
+#define staticpro(ptr) staticpro_1 (ptr, #ptr)
+#define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, #ptr)
 
 #ifdef HAVE_SHLIB
-MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, Ascbyte *);
-#define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, (Ascbyte *) #ptr)
+MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, const Ascbyte *);
+#define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, #ptr)
 #endif
 
 #else
@@ -4418,7 +4502,7 @@ MODULE_API void unstaticpro_nodump (Lisp_Object *);
 extern Lisp_Object_dynarr *mcpros;
 #ifdef DEBUG_XEMACS
 /* Help debug crashes gc-marking a mcpro'ed object. */
-MODULE_API void mcpro_1 (Lisp_Object, char *);
+MODULE_API void mcpro_1 (Lisp_Object, const Ascbyte *);
 #define mcpro(ptr) mcpro_1 (ptr, #ptr)
 #else /* not DEBUG_XEMACS */
 /* Call mcpro (&var) to protect mc variable `var'. */
@@ -4441,11 +4525,7 @@ END_C_DECLS
 /************************************************************************/
 /*		             Other numeric types      	                */
 /************************************************************************/
-#ifdef WITH_NUMBER_TYPES
 #include "number.h"
-#else
-#define make_integer(x) make_int(x)
-#endif
 
 
 /************************************************************************/
@@ -4516,13 +4596,12 @@ extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
 MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
-MODULE_API Lisp_Object build_intstring (const Ibyte *);
-MODULE_API Lisp_Object build_string (const CIbyte *);
-MODULE_API Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
-MODULE_API Lisp_Object build_msg_intstring (const Ibyte *);
-MODULE_API Lisp_Object build_msg_string (const CIbyte *);
+MODULE_API Lisp_Object build_istring (const Ibyte *);
+MODULE_API Lisp_Object build_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_ascstring (const Ascbyte *);
+MODULE_API Lisp_Object build_extstring (const Extbyte *, Lisp_Object);
 MODULE_API Lisp_Object make_string (const Ibyte *, Bytecount);
-MODULE_API Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
+MODULE_API Lisp_Object make_extstring (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
 MODULE_API Lisp_Object make_float (double);
@@ -4630,7 +4709,7 @@ extern Lisp_Object Vinhibit_read_only, Vtransient_mark_mode;
 EXFUN (Fbyte_code, 3);
 
 DECLARE_DOESNT_RETURN (invalid_byte_code
-		       (const CIbyte *reason, Lisp_Object frob));
+		       (const Ascbyte *reason, Lisp_Object frob));
 
 extern Lisp_Object Qbyte_code, Qinvalid_byte_code;
 
@@ -4902,38 +4981,38 @@ Lisp_Object maybe_signal_continuable_ferror (Lisp_Object, Lisp_Object,
 					     const CIbyte *, ...)
      PRINTF_ARGS (4, 5);
 
-Lisp_Object build_error_data (const CIbyte *reason, Lisp_Object frob);
-DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const CIbyte *,
+Lisp_Object build_error_data (const Ascbyte *reason, Lisp_Object frob);
+DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const Ascbyte *,
 				     Lisp_Object));
-void maybe_signal_error (Lisp_Object, const CIbyte *, Lisp_Object,
+void maybe_signal_error (Lisp_Object, const Ascbyte *, Lisp_Object,
 			 Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error (Lisp_Object, const CIbyte *,
+Lisp_Object signal_continuable_error (Lisp_Object, const Ascbyte *,
 				      Lisp_Object);
-Lisp_Object maybe_signal_continuable_error (Lisp_Object, const CIbyte *,
+Lisp_Object maybe_signal_continuable_error (Lisp_Object, const Ascbyte *,
 					    Lisp_Object,
 					    Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN (signal_ferror_with_frob (Lisp_Object, Lisp_Object,
-						const CIbyte *, ...))
+						const Ascbyte *, ...))
        PRINTF_ARGS(3, 4);
 void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
 				    Error_Behavior,
-				    const CIbyte *, ...) PRINTF_ARGS (5, 6);
+				    const Ascbyte *, ...) PRINTF_ARGS (5, 6);
 Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
-						 const CIbyte *,
+						 const Ascbyte *,
 						 ...) PRINTF_ARGS (3, 4);
 Lisp_Object maybe_signal_continuable_ferror_with_frob (Lisp_Object,
 						       Lisp_Object,
 						       Lisp_Object,
 						       Error_Behavior,
-						       const CIbyte *, ...)
+						       const Ascbyte *, ...)
      PRINTF_ARGS (5, 6);
-DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const CIbyte *,
+DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const Ascbyte *,
 				       Lisp_Object, Lisp_Object));
-void maybe_signal_error_2 (Lisp_Object, const CIbyte *, Lisp_Object,
+void maybe_signal_error_2 (Lisp_Object, const Ascbyte *, Lisp_Object,
 			   Lisp_Object, Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error_2 (Lisp_Object, const CIbyte *,
+Lisp_Object signal_continuable_error_2 (Lisp_Object, const Ascbyte *,
 					Lisp_Object, Lisp_Object);
-Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const CIbyte *,
+Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const Ascbyte *,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object,
 					      Error_Behavior);
@@ -4946,57 +5025,57 @@ MODULE_API DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
 MODULE_API DECLARE_DOESNT_RETURN (signal_circular_property_list_error
 				  (Lisp_Object));
 
-DECLARE_DOESNT_RETURN (syntax_error (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (syntax_error (const Ascbyte *reason,
 				     Lisp_Object frob));
-DECLARE_DOESNT_RETURN (syntax_error_2 (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (syntax_error_2 (const Ascbyte *reason,
 				       Lisp_Object frob1,
 				       Lisp_Object frob2));
-void maybe_syntax_error (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_syntax_error (const Ascbyte *, Lisp_Object, Lisp_Object,
 			 Error_Behavior);
-DECLARE_DOESNT_RETURN (sferror (const CIbyte *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (sferror_2 (const CIbyte *reason, Lisp_Object frob1,
+DECLARE_DOESNT_RETURN (sferror (const Ascbyte *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (sferror_2 (const Ascbyte *reason, Lisp_Object frob1,
 				  Lisp_Object frob2));
-void maybe_sferror (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_sferror (const Ascbyte *, Lisp_Object, Lisp_Object,
 		    Error_Behavior);
-MODULE_API DECLARE_DOESNT_RETURN (invalid_argument (const CIbyte *reason,
+MODULE_API DECLARE_DOESNT_RETURN (invalid_argument (const Ascbyte *reason,
 						    Lisp_Object frob));
-MODULE_API DECLARE_DOESNT_RETURN (invalid_argument_2 (const CIbyte *reason,
+MODULE_API DECLARE_DOESNT_RETURN (invalid_argument_2 (const Ascbyte *reason,
 						      Lisp_Object frob1,
 						      Lisp_Object frob2));
-void maybe_invalid_argument (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_argument (const Ascbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-MODULE_API DECLARE_DOESNT_RETURN (invalid_operation (const CIbyte *reason,
+MODULE_API DECLARE_DOESNT_RETURN (invalid_operation (const Ascbyte *reason,
 						     Lisp_Object frob));
-MODULE_API DECLARE_DOESNT_RETURN (invalid_operation_2 (const CIbyte *reason,
+MODULE_API DECLARE_DOESNT_RETURN (invalid_operation_2 (const Ascbyte *reason,
 						       Lisp_Object frob1,
 						       Lisp_Object frob2));
-MODULE_API void maybe_invalid_operation (const CIbyte *, Lisp_Object,
+MODULE_API void maybe_invalid_operation (const Ascbyte *, Lisp_Object,
 					 Lisp_Object, Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_state (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_state (const Ascbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_state_2 (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_state_2 (const Ascbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_state (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_state (const Ascbyte *, Lisp_Object, Lisp_Object,
 			  Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_change (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_change (const Ascbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_change_2 (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_change_2 (const Ascbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_change (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_change (const Ascbyte *, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
-MODULE_API DECLARE_DOESNT_RETURN (invalid_constant (const CIbyte *reason,
+MODULE_API DECLARE_DOESNT_RETURN (invalid_constant (const Ascbyte *reason,
 						    Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_constant_2 (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_constant_2 (const Ascbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_constant (const CIbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_constant (const Ascbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (wtaerror (const CIbyte *reason, Lisp_Object frob));
-MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (wtaerror (const Ascbyte *reason, Lisp_Object frob));
+MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const Ascbyte *reason,
 						 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
+DECLARE_DOESNT_RETURN (stack_overflow (const Ascbyte *reason,
 				       Lisp_Object frob));
 DECLARE_DOESNT_RETURN (text_conversion_error (const CIbyte *reason,
 					      Lisp_Object frob));
@@ -5177,7 +5256,7 @@ int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
 void do_autoload (Lisp_Object, Lisp_Object); /* GCPROs both arguments */
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
-MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
+MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const Ascbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
@@ -5294,13 +5373,13 @@ EXFUN (Fverify_visited_file_modtime, 1);
 void record_auto_save (void);
 void force_auto_save_soon (void);
 DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
-						const CIbyte *string,
+						const Ascbyte *reason,
 						Lisp_Object data));
 DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
 					       Lisp_Object oserrmess,
-					       const CIbyte *string,
+					       const Ascbyte *reason,
 					       Lisp_Object data));
-DECLARE_DOESNT_RETURN (report_file_error (const CIbyte *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_file_error (const Ascbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 int internal_delete_file (Lisp_Object);
@@ -5401,11 +5480,11 @@ int internal_equal_trapping_problems (Lisp_Object warning_class,
 				      int depth);
 int internal_equal (Lisp_Object, Lisp_Object, int);
 int internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth);
-Lisp_Object concat2 (Lisp_Object, Lisp_Object);
-Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
-Lisp_Object vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object nconc2 (Lisp_Object, Lisp_Object);
+Lisp_Object MODULE_API concat2 (Lisp_Object, Lisp_Object);
+Lisp_Object MODULE_API concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object MODULE_API vconcat2 (Lisp_Object, Lisp_Object);
+Lisp_Object MODULE_API vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object MODULE_API nconc2 (Lisp_Object, Lisp_Object);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
 void check_losing_bytecode (const char *, Lisp_Object);
 
@@ -5641,9 +5720,11 @@ void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
-MODULE_API void write_c_string (Lisp_Object stream, const CIbyte *str);
+MODULE_API void write_istring (Lisp_Object stream, const Ibyte *str);
 /* Same goes for this function. */
-MODULE_API void write_string (Lisp_Object stream, const Ibyte *str);
+MODULE_API void write_cistring (Lisp_Object stream, const CIbyte *str);
+/* Same goes for this function. */
+MODULE_API void write_ascstring (Lisp_Object stream, const Ascbyte *str);
 /* Same goes for this function. */
 void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
 void write_eistring (Lisp_Object stream, const Eistring *ei);
@@ -5781,7 +5862,7 @@ EXFUN (Fsymbol_plist, 1);
 EXFUN (Fsymbol_value, 1);
 
 unsigned int hash_string (const Ibyte *, Bytecount);
-Lisp_Object intern_int (const Ibyte *str);
+Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);

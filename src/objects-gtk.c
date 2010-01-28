@@ -472,7 +472,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 	      if (!expandp)
 		{
 		  /* They want the wildcarded version */
-		  font_name = build_string ((char*) names->data);
+		  font_name = build_cistring ((char*) names->data);
 		}
 	      else
 		{
@@ -483,7 +483,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 		  x_font_names = XListFonts (dpy, (char*) names->data, 1, &nnames);
 		  if (x_font_names)
 		    {
-		      font_name = build_string (x_font_names[0]);
+		      font_name = build_cistring (x_font_names[0]);
 		      XFreeFontNames (x_font_names);
 		    }
 		}
@@ -503,7 +503,7 @@ static Lisp_Object __gtk_font_list_internal (const char *pattern)
 
   names = XListFonts (GDK_DISPLAY (), pattern, MAX_FONT_COUNT, &count);
   while (count--)
-    result = Fcons (build_ext_string (names [count], Qbinary), result);
+    result = Fcons (build_extstring (names [count], Qbinary), result);
   if (names)
     XFreeFontNames (names);
 

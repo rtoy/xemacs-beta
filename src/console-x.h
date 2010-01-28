@@ -104,7 +104,7 @@ void x_wm_set_shell_iconic_p (Widget shell, int iconic_p);
 void x_wm_set_cell_size (Widget wmshell, int cw, int ch);
 void x_wm_set_variable_size (Widget wmshell, int width, int height);
 
-const char *x_event_name (int event_type);
+const Ascbyte *x_event_name (int event_type);
 int check_if_pending_expose_event (struct device *d);
 int x_error_handler (Display *disp, XErrorEvent *event);
 void expect_x_error (Display *dpy);
