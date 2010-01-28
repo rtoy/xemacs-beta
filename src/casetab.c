@@ -53,7 +53,7 @@ Boston, MA 02111-1307, USA.  */
    entry; these groups are called "equivalence classes" and `eqv' lists them
    by linking the characters in each equivalence class together in a
    circular list. That is, to find out all all the members of a given char's
-   equivalence classe, you need something like the following code:
+   equivalence class, you need something like the following code:
 
     (let* ((char ?i)
            (original-char char)

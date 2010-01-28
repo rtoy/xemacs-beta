@@ -5055,8 +5055,8 @@ find_pos_of_existing_active_alloca_convert (const char *srctext)
 /* We handle here the cases where SRC is a Lisp_Object, internal data
    (sized or unsized), or external data (sized or unsized), and return type
    is unsized alloca() or malloc() data.  If the return type is a
-   Lisp_Object, use build_ext_string() for unsized external data,
-   make_ext_string() for sized external data.  If the return type needs to
+   Lisp_Object, use build_extstring() for unsized external data,
+   make_extstring() for sized external data.  If the return type needs to
    be sized data, use the *_TO_SIZED_*() macros, and for other more
    complicated cases, use the original TO_*_FORMAT() macros. */
 
@@ -6115,10 +6115,10 @@ reinit_vars_of_text (void)
 void
 vars_of_text (void)
 {
-  QSin_char_byte_conversion = build_msg_string ("(in char-byte conversion)");
+  QSin_char_byte_conversion = build_defer_string ("(in char-byte conversion)");
   staticpro (&QSin_char_byte_conversion);
   QSin_internal_external_conversion =
-    build_msg_string ("(in internal-external conversion)");
+    build_defer_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
 
 #ifdef ENABLE_COMPOSITE_CHARS

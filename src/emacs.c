@@ -2010,8 +2010,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 -- Fset() on a symbol that is unbound
 	 -- Any of the object-creating functions in alloc.c: e.g.
 	    - make_string()
-	    - build_intstring()
-	    - build_string()
+	    - build_istring()
+	    - build_cistring()
+	    - build_ascstring()
 	    - make_vector()
 	    - make_int()
 	    - make_char()
@@ -2655,7 +2656,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       if (XSTRING_DATA (Vinvocation_name)[0] == '-')
 	{
 	  /* XEmacs as a login shell, oh goody! */
-	  Vinvocation_name = build_intstring (egetenv ("SHELL"));
+	  Vinvocation_name = build_istring (egetenv ("SHELL"));
 	}
       Vinvocation_directory = Vinvocation_name;
 
@@ -4231,7 +4232,7 @@ Symbol indicating type of operating system you are using.
   DEFVAR_LISP ("system-configuration", &Vsystem_configuration /*
 String naming the configuration XEmacs was built for.
 */ );
-  Vsystem_configuration = build_string (EMACS_CONFIGURATION);
+  Vsystem_configuration = build_ascstring (EMACS_CONFIGURATION);
 
 #ifndef EMACS_CONFIG_OPTIONS
 # define EMACS_CONFIG_OPTIONS "UNKNOWN"
@@ -4239,7 +4240,7 @@ String naming the configuration XEmacs was built for.
   DEFVAR_LISP ("system-configuration-options", &Vsystem_configuration_options /*
 String containing the configuration options XEmacs was built with.
 */ );
-  Vsystem_configuration_options = build_string (EMACS_CONFIG_OPTIONS);
+  Vsystem_configuration_options = build_ascstring (EMACS_CONFIG_OPTIONS);
 
   DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
 Major version number of this version of Emacs, as an integer.
@@ -4305,7 +4306,7 @@ Codename of this version of Emacs (a string).
 #ifndef XEMACS_CODENAME
 #define XEMACS_CODENAME "Noname"
 #endif
-  Vxemacs_codename = build_string (XEMACS_CODENAME);
+  Vxemacs_codename = build_ascstring (XEMACS_CODENAME);
 
   DEFVAR_LISP ("xemacs-extra-name", &Vxemacs_extra_name /*
 Arbitrary string to place in the version string after the codename.
@@ -4318,7 +4319,7 @@ changeset from which XEmacs was compiled.  Developers may also use it
 to indicate particular branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
-  Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);
+  Vxemacs_extra_name = build_ascstring (XEMACS_EXTRA_NAME);
 #endif
   
   DEFVAR_LISP ("xemacs-release-date", &Vxemacs_release_date /*
@@ -4330,7 +4331,7 @@ is (implicitly) UTC.  Currently not included in the version string.
 #ifndef XEMACS_RELEASE_DATE
 #define XEMACS_RELEASE_DATE "2005-02-18 (defaulted in emacs.c)"
 #endif
-  Vxemacs_release_date = build_string (XEMACS_RELEASE_DATE);
+  Vxemacs_release_date = build_ascstring (XEMACS_RELEASE_DATE);
   
   /* Lisp variables which contain command line flags.
 
@@ -4499,14 +4500,14 @@ complex_vars_of_emacs (void)
 For example, this may be \"xemacs\" or \"infodock\".
 This is mainly meant for use in path searching.
 */ );
-  Vemacs_program_name = build_ext_string (PATH_PROGNAME, Qfile_name);
+  Vemacs_program_name = build_extstring (PATH_PROGNAME, Qfile_name);
 
   DEFVAR_LISP ("emacs-program-version", &Vemacs_program_version /*
 *Version of the Emacs variant.
 This typically has the form NN.NN-bNN.
 This is mainly meant for use in path searching.
 */ );
-  Vemacs_program_version = build_ext_string (PATH_VERSION, Qfile_name);
+  Vemacs_program_version = build_extstring (PATH_VERSION, Qfile_name);
 
   DEFVAR_LISP ("exec-path", &Vexec_path /*
 *List of directories to search programs to run in subprocesses.
@@ -4526,7 +4527,7 @@ configure's idea of what `exec-directory' will be.
 */ );
 #ifdef PATH_EXEC
   Vconfigure_exec_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_EXEC, Qfile_name));
+    (build_extstring (PATH_EXEC, Qfile_name));
 #else
   Vconfigure_exec_directory = Qnil;
 #endif
@@ -4542,7 +4543,7 @@ configure's idea of what `lisp-directory' will be.
 */ );
 #ifdef PATH_LOADSEARCH
   Vconfigure_lisp_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_LOADSEARCH, Qfile_name));
+    (build_extstring (PATH_LOADSEARCH, Qfile_name));
 #else
   Vconfigure_lisp_directory = Qnil;
 #endif
@@ -4558,7 +4559,7 @@ configure's idea of what `mule-lisp-directory' will be.
 */ );
 #ifdef PATH_MULELOADSEARCH
   Vconfigure_mule_lisp_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_MULELOADSEARCH, Qfile_name);
+    (build_extstring (PATH_MULELOADSEARCH, Qfile_name);
 #else
   Vconfigure_mule_lisp_directory = Qnil;
 #endif
@@ -4574,7 +4575,7 @@ configure's idea of what `module-directory' will be.
 */ );
 #ifdef PATH_MODULESEARCH
   Vconfigure_module_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_MODULESEARCH, Qfile_name));
+    (build_extstring (PATH_MODULESEARCH, Qfile_name));
 #else
   Vconfigure_module_directory = Qnil;
 #endif
@@ -4634,7 +4635,7 @@ configure's idea of what `data-directory' will be.
 */ );
 #ifdef PATH_DATA
   Vconfigure_data_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_DATA, Qfile_name));
+    (build_extstring (PATH_DATA, Qfile_name));
 #else
   Vconfigure_data_directory = Qnil;
 #endif
@@ -4656,7 +4657,7 @@ configure's idea of what `site-directory' will be.
 */ );
 #ifdef PATH_SITE
   Vconfigure_site_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_SITE, Qfile_name));
+    (build_extstring (PATH_SITE, Qfile_name));
 #else
   Vconfigure_site_directory = Qnil;
 #endif
@@ -4672,7 +4673,7 @@ configure's idea of what `site-directory' will be.
 */ );
 #ifdef PATH_SITE_MODULES
   Vconfigure_site_module_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_SITE_MODULES, Qfile_name));
+    (build_extstring (PATH_SITE_MODULES, Qfile_name));
 #else
   Vconfigure_site_module_directory = Qnil;
 #endif
@@ -4689,7 +4690,7 @@ configure's idea of what `doc-directory' will be.
 */ );
 #ifdef PATH_DOC
   Vconfigure_doc_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_DOC, Qfile_name));
+    (build_extstring (PATH_DOC, Qfile_name));
 #else
   Vconfigure_doc_directory = Qnil;
 #endif
@@ -4700,7 +4701,7 @@ configure's idea of what `exec-prefix-directory' will be.
 */ );
 #ifdef PATH_EXEC_PREFIX
   Vconfigure_exec_prefix_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_EXEC_PREFIX, Qfile_name));
+    (build_extstring (PATH_EXEC_PREFIX, Qfile_name));
 #else
   Vconfigure_exec_prefix_directory = Qnil;
 #endif
@@ -4711,7 +4712,7 @@ configure's idea of what `prefix-directory' will be.
 */ );
 #ifdef PATH_PREFIX
   Vconfigure_prefix_directory = Ffile_name_as_directory
-    (build_ext_string (PATH_PREFIX, Qfile_name));
+    (build_extstring (PATH_PREFIX, Qfile_name));
 #else
   Vconfigure_prefix_directory = Qnil;
 #endif
@@ -4724,7 +4725,7 @@ includes this.
 */ );
 #ifdef PATH_INFO
   Vconfigure_info_directory =
-    Ffile_name_as_directory (build_ext_string (PATH_INFO, Qfile_name));
+    Ffile_name_as_directory (build_extstring (PATH_INFO, Qfile_name));
 #else
   Vconfigure_info_directory = Qnil;
 #endif

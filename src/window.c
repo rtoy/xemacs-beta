@@ -311,10 +311,10 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
 
-  write_c_string (printcharfun, "#<window");
+  write_ascstring (printcharfun, "#<window");
   buf = XWINDOW_BUFFER (obj);
   if (EQ (buf, Qt))
-    write_c_string (printcharfun, " during creation");
+    write_ascstring (printcharfun, " during creation");
   else if (!NILP (buf))
     {
       

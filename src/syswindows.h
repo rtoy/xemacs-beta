@@ -473,8 +473,16 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
 
 #else /* !CYGWIN_HEADERS */
+
 #define W32API_VER(major,minor) 0
 #define W32API_INSTALLED_VER 0
+
+/* Some types that show up in Cygwin headers but not in Visual Studio headers,
+   and cause problems if we used Cygwin headers to generate
+   intl-auto-encap-win32.[ch]. */
+typedef LPCVOID PCVOID;
+typedef LPDWORD *PDWORD_PTR;
+
 #endif /* CYGWIN_HEADERS */
 
 /* Not in VC 6 */
@@ -846,7 +854,7 @@ extern int mswindows_windows9x_p;
   EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
 
 #define build_tstr_string(in) \
-  make_ext_string (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+  make_extstring (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
 
 #define MAX_ANSI_CHAR_LEN 1
 #define MAX_UNICODE_CHAR_LEN 2
@@ -1239,7 +1247,7 @@ extern int mswindows_compare_env (const void *strp1, const void *strp2);
 /* in win32.c */
 Extbyte *mswindows_get_module_file_name (void);
 void mswindows_output_last_error (const Ascbyte *frob);
-DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
+DECLARE_DOESNT_RETURN (mswindows_report_process_error (const Ascbyte *reason,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);

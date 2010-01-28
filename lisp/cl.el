@@ -123,10 +123,17 @@ a future Emacs interpreter will be able to use it.")
 ;;; Predicates.
 
 (defun eql (a b)    ; See compiler macro in cl-macs.el
-  "Return t if the two args are the same Lisp object.
-Floating-point numbers of equal value are `eql', but they may not be `eq'."
-  (or (eq a b)
-      (and (numberp a) (numberp b) (equal a b))))
+  "Return t if the arguments are the same Lisp object, or numerically equal.
+
+They must be of the same type; the difference between `eq' and `eql' is most
+relevant when it comes to the non-fixnum number types.  In this
+implementation, fixnums of the same numeric value are always `eq', but this
+is not true for other numeric types, among them floats, bignums and ratios,
+if available.
+
+See also `=' (which doesn't require that its arguments be of the same type,
+but only accepts numeric arguments, characters and markers) and `equal'."
+  (or (eq a b) (and (numberp a) (equal a b))))
 
 ;;; Generalized variables.  These macros are defined here so that they
 ;;; can safely be used in .emacs files.
@@ -317,11 +324,7 @@ If ARG is not a string, it is ignored."
 
 ;;; Numbers.
 
-;; XEmacs change: use floatp, which is right even in the presence of ratios
-;; and bigfloats
-(defun floatp-safe (object)
-  "Return t if OBJECT is a floating point number."
-  (floatp object))
+;; XEmacs change: ditch floatp-safe.
 
 (defun plusp (number)
   "Return t if NUMBER is positive."
@@ -343,15 +346,6 @@ If ARG is not a string, it is ignored."
 (defalias 'cl-abs 'abs)
 
 (defvar *random-state* (vector 'cl-random-state-tag -1 30 (cl-random-time)))
-
-;; XEmacs: These constants are defined in C when 'number-types is provided.
-;; They are always defined in C on Emacs.  Maybe we should, too.
-(unless (featurep 'number-types)
-;;; We use `eval' in case VALBITS differs from compile-time to load-time.
-  (defconst most-positive-fixnum (eval '(lsh -1 -1))
-    "The integer closest in value to positive infinity.")
-  (defconst most-negative-fixnum (eval '(- -1 (lsh -1 -1)))
-    "The integer closest in value to negative infinity."))
 
 ;;; The following are set by code in cl-extra.el
 (defconst most-positive-float nil
@@ -616,7 +610,7 @@ Keywords supported:  :test :test-not :key"
   "Substitute NEW for OLD everywhere in TREE (non-destructively).
 Return a copy of TREE with all elements `eql' to OLD replaced by NEW.
 Keywords supported:  :test :test-not :key"
-  (if (or cl-keys (and (numberp cl-old) (not (integerp cl-old))))
+  (if (or cl-keys (and (numberp cl-old) (not (fixnump cl-old))))
       (apply 'sublis (list (cons cl-old cl-new)) cl-tree cl-keys)
     (cl-do-subst cl-new cl-old cl-tree)))
 

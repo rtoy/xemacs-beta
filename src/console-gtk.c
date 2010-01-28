@@ -60,7 +60,7 @@ gtk_device_to_console_connection (Lisp_Object connection,
     return Qnil;
   else
     {
-	connection = build_string ("gtk");
+	connection = build_ascstring ("gtk");
     }
   return connection;
 }
@@ -73,7 +73,7 @@ gtk_semi_canonicalize_console_connection (Lisp_Object connection,
 
   GCPRO1 (connection);
 
-  connection = build_string ("gtk");
+  connection = build_ascstring ("gtk");
 
   RETURN_UNGCPRO (connection);
 }
@@ -87,7 +87,7 @@ gtk_canonicalize_console_connection (Lisp_Object connection,
 
   GCPRO2 (connection, hostname);
 
-  connection = build_string ("gtk");
+  connection = build_ascstring ("gtk");
 
   RETURN_UNGCPRO (connection);
 }
@@ -100,7 +100,7 @@ gtk_semi_canonicalize_device_connection (Lisp_Object connection,
 
   GCPRO1 (connection);
 
-  connection = build_string("gtk");
+  connection = build_ascstring("gtk");
 
   RETURN_UNGCPRO (connection);
 }
@@ -112,7 +112,7 @@ gtk_canonicalize_device_connection (Lisp_Object connection,
   struct gcpro gcpro1;
 
   GCPRO1 (connection);
-  connection = build_string("gtk");
+  connection = build_ascstring("gtk");
 
   RETURN_UNGCPRO (connection);
 }

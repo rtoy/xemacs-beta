@@ -464,6 +464,6 @@ void
 vars_of_realpath (void)
 {
   QSin_qxe_realpath =
-    build_msg_string ("(in qxe_realpath)");
+    build_defer_string ("(in qxe_realpath)");
   staticpro (&QSin_qxe_realpath);
 }

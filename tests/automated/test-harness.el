@@ -209,12 +209,20 @@ The output file's name is made by appending `c' to the end of FILENAME."
       (defconst test-harness-failure-tag "FAIL")
       (defconst test-harness-success-tag "PASS")
 
+;;;;; BEGIN DEFINITION OF MACROS USEFUL IN TEST CODE
+
       (defmacro Known-Bug-Expect-Failure (&rest body)
+	"Wrap a BODY that consists of tests that are known to fail.
+This causes messages to be printed on failure indicating that this is expected,
+and on success indicating that this is unexpected."
 	`(let ((test-harness-failure-tag "KNOWN BUG")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
 
       (defmacro Known-Bug-Expect-Error (expected-error &rest body)
+	"Wrap a BODY that consists of tests that are known to trigger an error.
+This causes messages to be printed on failure indicating that this is expected,
+and on success indicating that this is unexpected."
 	(let ((quoted-body (if (= 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
           `(let ((test-harness-failure-tag "KNOWN BUG")
@@ -237,6 +245,10 @@ The output file's name is made by appending `c' to the end of FILENAME."
                (incf wrong-error-failures))))))
 
       (defmacro Implementation-Incomplete-Expect-Failure (&rest body)
+	"Wrap a BODY containing tests that are known to fail due to incomplete code.
+This causes messages to be printed on failure indicating that the
+implementation is incomplete (and hence the failure is expected); and on
+success indicating that this is unexpected."
 	`(let ((test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
@@ -293,17 +305,42 @@ is used in a loop."
 	       (incf other-failures)
 	       ))))
 
+;;;;; BEGIN DEFINITION OF SPECIFIC KINDS OF ASSERT MACROS
+
       (defmacro Assert-test (test testval expected &optional failing-case
 			     description)
-	"Test passes if TESTVAL is equal to EXPECTED, using TEST as comparator.
-TEST should be a function such as `eq', `equal', `equalp', `=', `<=', etc.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
+	"Test passes if TESTVAL compares correctly to EXPECTED using TEST.
+TEST should be a two-argument predicate (i.e. a function of two arguments
+that returns t or nil), such as `eq', `eql', `equal', `equalp', `=', `<=',
+'>', 'file-newer-than-file-p' etc.  Optional FAILING-CASE describes the
+particular failure; any value given here will be concatenated with a phrase
+describing the expected and actual values of the comparison.  Optional
+DESCRIPTION describes the assertion; by default, the unevalated comparison
+expressions are given.  FAILING-CASE and DESCRIPTION are useful when Assert
+is used in a loop."
 	(let* ((assertion `(,test ,testval ,expected))
-	       (failmsg `(format "got %S, expected %S" ,testval ,expected))
+	       (failmsg `(format "%S should be `%s' to %S but isn't"
+			  ,testval ',test ,expected))
+	       (failmsg2 (if failing-case `(concat 
+					   (format "%S, " ,failing-case)
+					   ,failmsg)
+			  failmsg)))
+	  `(Assert ,assertion ,failmsg2 ,description)))
+
+      (defmacro Assert-test-not (test testval expected &optional failing-case
+				 description)
+	"Test passes if TESTVAL does not compare correctly to EXPECTED using TEST.
+TEST should be a two-argument predicate (i.e. a function of two arguments
+that returns t or nil), such as `eq', `eql', `equal', `equalp', `=', `<=',
+'>', 'file-newer-than-file-p' etc.  Optional FAILING-CASE describes the
+particular failure; any value given here will be concatenated with a phrase
+describing the expected and actual values of the comparison.  Optional
+DESCRIPTION describes the assertion; by default, the unevalated comparison
+expressions are given.  FAILING-CASE and DESCRIPTION are useful when Assert
+is used in a loop."
+	(let* ((assertion `(,test ,testval ,expected))
+	       (failmsg `(format "%S shouldn't be `%s' to %S but is"
+			  ,testval ',test ,expected))
 	       (failmsg2 (if failing-case `(concat 
 					   (format "%S, " ,failing-case)
 					   ,failmsg)

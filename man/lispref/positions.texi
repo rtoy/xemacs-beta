@@ -505,7 +505,7 @@ vertical pixels down from the frame line containing point, or up if
 @var{pixels} is negative.  The optional second argument @var{window} is
 the window to move in, and defaults to the selected window.  The
 optional third argument @var{how} specifies the stopping condition.  A
-negative integer indicates that the motion should be no more
+negative fixnum indicates that the motion should be no more
 than @var{pixels}.  A positive value indicates that the
 motion should be at least @var{pixels}.  Any other value indicates
 that the motion should be as close as possible to @var{pixels}.

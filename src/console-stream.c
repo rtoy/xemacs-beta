@@ -194,7 +194,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
     invalid_operation ("Only one frame allowed on stream devices", Qunbound);
 #endif
   if (frame_name_is_defaulted)
-    f->name = build_string ("stream");
+    f->name = build_ascstring ("stream");
   f->height = 80;
   f->width = 24;
   f->visible = 0; /* so redisplay doesn't try to do anything */
@@ -374,7 +374,7 @@ The initial frame object, which represents XEmacs' stdout.
   Vterminal_frame = Qnil;
 
   /* Moved from console-tty.c */
-  Vstdio_str = build_string ("stdio");
+  Vstdio_str = build_ascstring ("stdio");
   staticpro (&Vstdio_str);
 }
 

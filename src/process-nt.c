@@ -693,11 +693,11 @@ nt_init_process (void)
  */
 
 static DOESNT_RETURN
-mswindows_report_winsock_error (const char *string, Lisp_Object data,
+mswindows_report_winsock_error (const Ascbyte *reason, Lisp_Object data,
 				int errnum)
 {
   report_file_type_error (Qnetwork_error, mswindows_lisp_error (errnum),
-			  string, data);
+			  reason, data);
 }
 
 static void
@@ -1313,7 +1313,8 @@ nt_canonicalize_host_name (Lisp_Object host)
     return host;
 
   if (address.sin_family == AF_INET)
-    return build_string (inet_ntoa (address.sin_addr));
+    return build_extstring (inet_ntoa (address.sin_addr),
+			     Qunix_host_name_encoding);
   else
     return host;
 }

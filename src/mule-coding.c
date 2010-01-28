@@ -321,7 +321,7 @@ multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
   for (i = 0; i < Dynarr_length (charsets); i++)
     write_fmt_string_lisp (printcharfun, i == 0 ? "(%s" : " %s", 1,
                            XCHARSET_NAME (Dynarr_at (charsets, i)));
-  write_c_string (printcharfun, ")");
+  write_ascstring (printcharfun, ")");
 }
 
 /* @@#### Need MBCS detector; but probably need to redo the whole detection
@@ -3405,16 +3405,16 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
 {
   int i;
   
-  write_c_string (printcharfun, "(");
+  write_ascstring (printcharfun, "(");
   for (i = 0; i < 4; i++)
     {
       Lisp_Object charset = coding_system_charset (cs, i);
       if (i > 0)
-	write_c_string (printcharfun, ", ");
+	write_ascstring (printcharfun, ", ");
       write_fmt_string (printcharfun, "g%d=", i);
       print_internal (CHARSETP (charset) ? XCHARSET_NAME (charset) : charset, printcharfun, 0);
       if (XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (cs, i))
-	write_c_string (printcharfun, "(force)");
+	write_ascstring (printcharfun, "(force)");
     }
 
 #define FROB(prop)					        \
@@ -3451,7 +3451,7 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
 	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s",
 			       1, val);
       }
-    write_c_string (printcharfun, ")");
+    write_ascstring (printcharfun, ")");
   }
 }
 
@@ -4227,7 +4227,7 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
           XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys)), 
          XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys), 
          (flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES ?
-          build_string("") :
+          build_ascstring("") :
           XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys)),
          fastmap, (int)(sizeof (fastmap)));
 
@@ -4294,16 +4294,11 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
 
               if (flags & QUERY_METHOD_ERRORP)
                 {
-                  DECLARE_EISTRING (error_details);
-
-                  eicpy_ascii (error_details, "Cannot encode ");
-                  eicat_lstr (error_details,
-                              make_string_from_buffer (buf, fail_range_start, 
-                                                       pos - fail_range_start));
-                  eicat_ascii (error_details, " using coding system");
-
-                  text_conversion_error
-		    ((const CIbyte *)(eidata (error_details)),
+                  signal_error_2
+		    (Qtext_conversion_error,
+		     "Cannot encode using coding system",
+		     make_string_from_buffer (buf, fail_range_start,
+					      pos - fail_range_start),
 		     XCODING_SYSTEM_NAME (codesys));
                 }
 

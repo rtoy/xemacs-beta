@@ -7,8 +7,8 @@
 @chapter Range Tables
 @cindex Range Tables
 
-A range table is a table that efficiently associated values with
-ranges of integers.
+A range table is a table that efficiently associates values with
+ranges of fixnums.
 
 Note that range tables have a read syntax, like this:
 

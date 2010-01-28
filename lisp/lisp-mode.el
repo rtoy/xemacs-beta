@@ -863,12 +863,24 @@ word-end; i.e. defunbbb won't match.")
 (defvar lisp-body-indent 2
   "Number of columns to indent the second line of a `(def...)' form.")
 
+;; Calculate the appropriate indentation for a special form (e.g. defun) or
+;; a macro that behaves like a special form (e.g. with-temp-buffer).
+;; Return value is as for `calculate-lisp-indent' (q.v.).
+;;
 ;; COUNT is the number of "distinguished" forms (e.g. arguments before the
-;; "body", in a macro taking a body as its last argument).  STATE is
-;; #### DOCUMENT-ME. INDENT-POINT is #### DOCUMENT-ME.  NORMAL-INDENT
-;; is the amount of "full" indentation used for arguments that aren't given
-;; some special indentation (usually less), and normally it lines up with
-;; the first word after the function name.  forms are indented as follows:
+;; "body", in a macro taking a body as its last argument).
+;;
+;; INDENT-POINT is usually the value of (point) at the beginning of the
+;; line containing the form to be indented.
+;;
+;; STATE is the result of calling (parse-partial-sexp (point) INDENT-POINT)
+;; when (point) is sitting on (i.e. just before) the outermost containing
+;; left paren for the form to be indented.
+;;
+;; NORMAL-INDENT is the amount of "full" indentation used for arguments
+;; that aren't given some special indentation (usually less), and normally
+;; it lines up with the first word after the function name.  forms are
+;; indented as follows:
 ;;
 ;; -- The first and second distinguished forms are given 2 times body indent
 ;;    (determined by `lisp-body-indent')

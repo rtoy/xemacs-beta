@@ -693,13 +693,13 @@ make_charset (int id, int no_init_unicode_tables,
       Ibyte tempname[80];
 
       qxesprintf (tempname, "___temporary___%d__", id);
-      name = Fmake_symbol (build_intstring (tempname)); /* Uninterned. */
+      name = Fmake_symbol (build_istring (tempname)); /* Uninterned. */
     }
 
   /* Set certain other default values.  SHORT_NAME cannot be computed
      until the actual name is generated (just above, for temporaries). */
   if (NILP (doc_string))
-    doc_string = build_string ("");
+    doc_string = build_ascstring ("");
   if (NILP (registries))
     /* @@#### Why shouldn't this be a list? */
     registries = make_vector (0, Qnil);
@@ -1823,30 +1823,30 @@ complex_vars_of_mule_charset (void)
     make_charset (MAKE_CSID (ASCII), 0, Qascii, 1,
 		  1, 128, 0, 0, 1, 0, 'B',
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("ASCII"),
-		  build_msg_string ("ASCII"),
-		  build_msg_string ("ASCII (left half of ISO 8859-1)"),
-		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
+		  build_ascstring ("ASCII"),
+		  build_defer_string ("ASCII"),
+		  build_defer_string ("ASCII (left half of ISO 8859-1)"),
+		  vector1 (build_ascstring ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_control_1);
   Vcharset_control_1 =
     make_charset (MAKE_CSID (CONTROL_1), 0, Qcontrol_1, 1,
 		  1, 32, 0, 128, 1, 1, 0,
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("C1"),
-		  build_msg_string ("Control characters"),
-		  build_msg_string ("Control characters 128-159"),
-		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
+		  build_ascstring ("C1"),
+		  build_defer_string ("Control characters"),
+		  build_defer_string ("Control characters 128-159"),
+		  vector1 (build_ascstring ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_1);
   Vcharset_latin_iso8859_1 =
     make_charset (MAKE_CSID (LATIN_ISO8859_1), 0, Qlatin_iso8859_1, 1,
 		  1, 96, 0, 160, 1, 1, 'A',
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("Latin-1"),
-		  build_msg_string ("RHP of Latin-1 (ISO 8859-1): ISO-IR-100"),
-		  build_msg_string ("Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"),
-		  vector1 (build_string ("iso8859-1")), Qnil, Qnil, 0,
+		  build_ascstring ("Latin-1"),
+		  build_defer_string ("RHP of Latin-1 (ISO 8859-1): ISO-IR-100"),
+		  build_defer_string ("Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"),
+		  vector1 (build_ascstring ("iso8859-1")), Qnil, Qnil, 0,
 		  CSET_INTERNAL);
   staticpro (&Vcharset_latin_iso8859_2);
   Vcharset_latin_iso8859_2 = Qnil;
@@ -1912,10 +1912,10 @@ complex_vars_of_mule_charset (void)
     make_charset (MAKE_CSID (COMPOSITE), 0, Qcomposite, 2,
 		  96, 96, 32, 32, 2, 0, 0,
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("Composite"),
-		  build_msg_string ("Composite characters"),
-		  build_msg_string ("Composite characters"),
-		  vector1 (build_string ("")), Qnil, Qnil, 0, CSET_INTERNAL);
+		  build_ascstring ("Composite"),
+		  build_defer_string ("Composite characters"),
+		  build_defer_string ("Composite characters"),
+		  vector1 (build_ascstring ("")), Qnil, Qnil, 0, CSET_INTERNAL);
 #else
   /* We create a hack so that we have a way of storing ESC 0 and ESC 1
      sequences as "characters", so that they will be output correctly. */
@@ -1924,10 +1924,10 @@ complex_vars_of_mule_charset (void)
     make_charset (MAKE_CSID (COMPOSITE), 0, Qcomposite, 1,
 		  1, 96, 0, 32, 1, 0, '|',
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("Composite hack"),
-		  build_msg_string ("Composite characters hack"),
-		  build_msg_string ("Composite characters hack"),
-		  vector1 (build_string ("")), Qnil, Qnil, 0, CSET_INTERNAL);
+		  build_ascstring ("Composite hack"),
+		  build_defer_string ("Composite characters hack"),
+		  build_defer_string ("Composite characters hack"),
+		  vector1 (build_ascstring ("")), Qnil, Qnil, 0, CSET_INTERNAL);
 #endif /* ENABLE_COMPOSITE_CHARS */
 
 #ifdef FIXED_UNICODE_CHARSETS
@@ -1939,12 +1939,12 @@ complex_vars_of_mule_charset (void)
 		  Qunicode_##lclow##_##lchigh, 2,			\
 		  96, 96, 32, 32, 2, 0, 0,				\
 		  CHARSET_LEFT_TO_RIGHT,				\
-		  build_string ("Unicode " #uclow "-" #uchigh),		\
-		  build_msg_string ("Unicode subset (U+" #uclow "..U+" #uchigh), \
-		  build_msg_string ("Unicode subset (U+" #uclow "..U+" #uchigh "used for maintaining round-trip\n" \
+		  build_ascstring ("Unicode " #uclow "-" #uchigh),		\
+		  build_defer_string ("Unicode subset (U+" #uclow "..U+" #uchigh), \
+		  build_defer_string ("Unicode subset (U+" #uclow "..U+" #uchigh "used for maintaining round-trip\n" \
 "compatibility for Unicode characters that have no representation in any\n" \
 "other charset."),							\
-		  build_string ("ISO10646-1"), Qnil, Qnil, 0, 0x##lclow)
+		  build_ascstring ("ISO10646-1"), Qnil, Qnil, 0, 0x##lclow)
 
 #define FROB_OFFICIAL(lclow, lchigh, uclow, uchigh) \
   FROB_1 (MAKE_CSID (UNICODE_##uclow##_##uchigh), lclow, lchigh, uclow, uchigh)

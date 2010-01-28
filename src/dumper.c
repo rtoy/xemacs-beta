@@ -2123,11 +2123,11 @@ pdump (void)
 		   O_WRONLY | O_CREAT | O_TRUNC | OPEN_BINARY, 0666);
   if (pdump_fd < 0)
     report_file_error ("Unable to open dump file",
-		       build_string (EMACS_PROGNAME ".dmp"));
+		       build_ascstring (EMACS_PROGNAME ".dmp"));
   pdump_out = fdopen (pdump_fd, "w");
   if (pdump_out < 0)
     report_file_error ("Unable to open dump file for writing",
-		       build_string (EMACS_PROGNAME ".dmp"));
+		       build_ascstring (EMACS_PROGNAME ".dmp"));
 
   retry_fwrite (&header, sizeof (header), 1, pdump_out);
   PDUMP_ALIGN_OUTPUT (max_align_t);

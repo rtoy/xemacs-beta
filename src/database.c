@@ -327,9 +327,9 @@ dbm_map (Lisp_Database *db, Lisp_Object func)
        keydatum = dbm_nextkey (db->dbm_handle))
     {
       valdatum = dbm_fetch (db->dbm_handle, keydatum);
-      key = make_ext_string ((Extbyte *) keydatum.dptr, keydatum.dsize,
+      key = make_extstring ((Extbyte *) keydatum.dptr, keydatum.dsize,
 			     db->coding_system);
-      val = make_ext_string ((Extbyte *) valdatum.dptr, valdatum.dsize,
+      val = make_extstring ((Extbyte *) valdatum.dptr, valdatum.dsize,
 			     db->coding_system);
       call2 (func, key, val);
     }
@@ -346,7 +346,7 @@ dbm_get (Lisp_Database *db, Lisp_Object key)
   valdatum = dbm_fetch (db->dbm_handle, keydatum);
 
   return (valdatum.dptr
-	  ? make_ext_string ((Extbyte *) valdatum.dptr, valdatum.dsize,
+	  ? make_extstring ((Extbyte *) valdatum.dptr, valdatum.dsize,
 			     db->coding_system)
 	  : Qnil);
 }
@@ -473,7 +473,7 @@ berkdb_get (Lisp_Database *db, Lisp_Object key)
 #endif /* DB_VERSION_MAJOR */
 
   if (!status)
-    return make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
+    return make_extstring ((const Extbyte *) valdatum.data, valdatum.size,
 			    db->coding_system);
 
 #if DB_VERSION_MAJOR == 1
@@ -564,9 +564,9 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
        status == 0;
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
     {
-      key = make_ext_string ((const Extbyte *) keydatum.data, keydatum.size,
+      key = make_extstring ((const Extbyte *) keydatum.data, keydatum.size,
 			     db->coding_system);
-      val = make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
+      val = make_extstring ((const Extbyte *) valdatum.data, valdatum.size,
 			     db->coding_system);
       call2 (func, key, val);
     }
@@ -583,9 +583,9 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
 	 status == 0;
 	 status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
       {
-	key = make_ext_string ((const Extbyte *) keydatum.data, keydatum.size,
+	key = make_extstring ((const Extbyte *) keydatum.data, keydatum.size,
 			       db->coding_system);
-	val = make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
+	val = make_extstring ((const Extbyte *) valdatum.data, valdatum.size,
 			       db->coding_system);
 	call2 (func, key, val);
       }
