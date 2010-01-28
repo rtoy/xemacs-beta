@@ -1,3 +1,10 @@
+2010-01-28  Jerry James  <loganjerry@gmail.com>
+
+	* external-widget.texi: Add copyright and license boilerplate text
+	based on Ben's recollections.
+	* lispref/internationalization.texi (Documentation String Extraction):
+	Removed, as it refers to the obsolete make-po program.
+
 2010-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Generally: be careful to say fixnum, not integer, when talking

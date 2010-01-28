@@ -1,3 +1,8 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove internationalization rules, since the
+	lib-src programs they invoke are now gone.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* syswindows.h:
