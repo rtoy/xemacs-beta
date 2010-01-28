@@ -609,6 +609,12 @@
 	passed string constants and we can't guarantee the encoding if
 	it's not ASCII.  Fix pointer type in calls to dll_variable(), etc.
 
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* unicode.h:
+	* unicode.h (struct precedence_array):
+	Forgot to add this file.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* lread.c (vars_of_lread):
