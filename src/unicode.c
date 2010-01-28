@@ -3736,6 +3736,7 @@ vars_of_unicode (void)
   staticpro (&Vcharset_descr);
   Vcharset_descr
     = build_defer_string ("Mule charset for otherwise unknown Unicode code points.");
+#endif /* not UNICODE_INTERNAL */
 
   staticpro (&Vdefault_unicode_precedence_list);
   /* Gets reset in complex_vars_of_unicode() */
