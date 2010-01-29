@@ -1,3 +1,24 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove internationalization rules, since the
+	lib-src programs they invoke are now gone.
+
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h:
+	Add typedefs for PCVOID and PDWORD_PTR for non-Cygwin-headers folks
+	(i.e. Visual Studio et al.).
+
+2010-01-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number.c (Fdenominator): 
+	Oops, change #else to #endif here; thank you Vin Shelton, thank
+	you Robert Delius Royar.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c: Typo in comment.
+
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
 	* redisplay-gtk.c:
@@ -209,6 +230,83 @@
 	* syswindows.h (INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT):
 	Declare some temporary pointer variables const to avoid compile
 	errors under C++ and/or Visual Studio 6.
+
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number.c (Fnumerator, Fdenominator, Fcanonicalize_number):
+	Be more careful to return integers in their canonical forms here,
+	and to give the same answer all the time when treating a rational
+	that is itself is an integer as a ratio.
+
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix problems with #'eql, extended number types, and the hash table
+	implementation; change the Bintegerp bytecode to fixnump semantics
+	even on bignum builds, since #'integerp can have a fast
+	implementation in terms of #'fixnump for most of its extant uses,
+	but not vice-versa.
+
+	* lisp.h: Always #include number.h; we want the macros provided in
+	it, even if the various number types are not available.
+	* number.h (NON_FIXNUM_NUMBER_P): New macro, giving 1 when its
+	argument is of non-immediate number type.  Equivalent to FLOATP if
+	WITH_NUMBER_TYPES is not defined.
+
+	* elhash.c (lisp_object_eql_equal, lisp_object_eql_hash):
+	Use NON_FIXNUM_NUMBER_P in these functions, instead of FLOATP,
+	giving more correct behaviour in the presence of the extended
+	number types.
+	* bytecode.c (Bfixnump, execute_optimized_program):
+	Rename Bintegerp to Bfixnump; change its semantics to reflect the
+	new name on builds with bignum support.
+
+	* data.c (Ffixnump, Fintegerp, syms_of_data, vars_of_data): 
+	Always make #'fixnump available, even on non-BIGNUM builds;
+	always implement #'integerp in this file, even on BIGNUM builds.
+	Move most-positive-fixnum, most-negative-fixnum here from
+	number.c, so they are Lisp constants even on builds without number
+	types, and attempts to change or bind them error.
+	Use the NUMBERP and INTEGERP macros even on builds without
+	extended number types.
+	* data.c (fixnum_char_or_marker_to_int):
+	Rename this function from integer_char_or_marker_to_int, to better
+	reflect the arguments it accepts.
+
+	* number.c (Fevenp, Foddp, syms_of_number):
+	Never provide #'integerp in this file. Remove #'oddp,
+	#'evenp; their implementations are overridden by those in cl.el.
+	* number.c (vars_of_number):
+	most-positive-fixnum, most-negative-fixnum are no longer here.
+
+>>>>>>> other
+2010-01-17  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c (check_writable): Remove cast from 2010-01-14
+
+	* syswindows.h: Use consts in macros where appropriate in lieu of
+	cast in check_writable().  Patch from Ben Wing.
+
+2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	* floatfns.c (emacs_rint):
+	Don't look for rint in configure, always use our own
+	implementation that rounds to the even number in the case of
+	ambiguity, for consistency with the bignum code.
+
+2010-01-14  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c (check_writable): Fix compilation error under Visual
+	Studio 6.
+
+	* sysfile.h: 
+	Add conditional definition for EOVERFLOW, which isn't defined
+	under Visual Studio 6.
+
+2010-01-14  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): change X11 bgcolor fallback of
+	default face to match that of gui element face.
 
 2010-01-14  Ben Wing  <ben@xemacs.org>
 

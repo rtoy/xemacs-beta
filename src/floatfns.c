@@ -26,7 +26,6 @@ Boston, MA 02111-1307, USA.  */
 
    Define HAVE_INVERSE_HYPERBOLIC if you have acosh, asinh, and atanh.
    Define HAVE_CBRT if you have cbrt().
-   Define HAVE_RINT if you have rint().
    If you don't define these, then the appropriate routines will be simulated.
 
    Define HAVE_MATHERR if on a system supporting the SysV matherr() callback.
@@ -50,11 +49,8 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "sysfloat.h"
 
-/* The code uses emacs_rint, so that it works to undefine HAVE_RINT
-   if `rint' exists but does not work right.  */
-#ifdef HAVE_RINT
-#define emacs_rint rint
-#else
+/* An implementation of rint that always rounds towards the even number in
+   the case of ambiguity. */
 static double
 emacs_rint (double x)
 {
@@ -65,7 +61,6 @@ emacs_rint (double x)
     r += r < x ? 1.0 : -1.0;
   return r;
 }
-#endif
 
 /* Nonzero while executing in floating point.
    This tells float_error what to do.  */

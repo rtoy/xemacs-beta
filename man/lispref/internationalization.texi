@@ -35,7 +35,6 @@ completions and the character which would be produced.
 * Level 3 Primitives::
 * Dynamic Messaging::
 * Domain Specification::
-* Documentation String Extraction::
 @end menu
 
 @node Level 3 Basics
@@ -167,25 +166,6 @@ Example:
 (autoload 'explore "jungle" "Explore the jungle." nil nil "emacs-gorilla")
 @end example
 @end defun
-
-
-@node Documentation String Extraction
-@subsection Documentation String Extraction
-
-The utility @file{etc/make-po} scans the file @code{DOC} to extract
-documentation strings and creates a message file @code{doc.po}.  This file
-may then be inserted within @code{emacs.po}.
-
-Currently, @code{make-po} is hard-coded to read from @code{DOC} and write
-to @code{doc.po}.  In order to extract documentation strings from an add-on
-package, first run @code{make-docfile} on the package to produce the
-@code{DOC} file.  Then run @code{make-po -p} with the @code{-p} argument to
-indicate that we are extracting documentation for an add-on package.
-
-(The @code{-p} argument is a kludge to make up for a subtle difference
-between pre-loaded documentation and add-on documentation:  For add-on
-packages, the final carriage returns in the strings produced by
-@code{make-docfile} must be ignored.)
 
 @node I18N Level 4
 @section I18N Level 4

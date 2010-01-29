@@ -3026,9 +3026,9 @@ The type name can then be used in `typecase', `check-type', etc."
 	     (cl-make-type-test val (funcall (get type 'cl-deftype-handler))))
 	    ((memq type '(nil t)) type)
 	    ((eq type 'null) `(null ,val))
-	    ((eq type 'float) `(floatp-safe ,val))
+	    ((eq type 'float) `(floatp ,val))
 	    ((eq type 'real) `(numberp ,val))
-	    ((eq type 'fixnum) `(integerp ,val))
+	    ((eq type 'fixnum) `(fixnump ,val))
 	    ;; XEmacs change: we do not have char-valid-p
 	    ((memq type '(character string-char)) `(characterp ,val))
 	    (t
@@ -3205,12 +3205,12 @@ surrounded by (block NAME ...)."
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
 	 (let ((val (cl-const-expr-val a)))
-	   (if (and (numberp val) (not (integerp val)))
+	   (if (and (numberp val) (not (fixnump val)))
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	((eq (cl-const-expr-p b) t)
 	 (let ((val (cl-const-expr-val b)))
-	   (if (and (numberp val) (not (integerp val)))
+	   (if (and (numberp val) (not (fixnump val)))
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	((cl-simple-expr-p a 5)
@@ -3226,20 +3226,25 @@ surrounded by (block NAME ...)."
 
 (define-compiler-macro member* (&whole form a list &rest keys)
   (let ((test (and (= (length keys) 2) (eq (car keys) :test)
-		   (cl-const-expr-val (nth 1 keys)))))
+		   (cl-const-expr-val (nth 1 keys))))
+	a-val)
     (cond ((eq test 'eq) (list 'memq a list))
 	  ((eq test 'equal) (list 'member a list))
 	  ((or (null keys) (eq test 'eql))
 	   (if (eq (cl-const-expr-p a) t)
-	       (list (if (floatp-safe (cl-const-expr-val a)) 'member 'memq)
+	       (list (if (and (numberp (setq a-val (cl-const-expr-val a)))
+			      (not (fixnump a-val)))
+			 'member
+		       'memq)
 		     a list)
 	     (if (eq (cl-const-expr-p list) t)
 		 (let ((p (cl-const-expr-val list)) (mb nil) (mq nil))
 		   (if (not (cdr p))
 		       (and p (list 'eql a (list 'quote (car p))))
 		     (while p
-		       (if (floatp-safe (car p)) (setq mb t)
-			 (or (integerp (car p)) (symbolp (car p)) (setq mq t)))
+		       (if (and (numberp (car p)) (not (fixnump (car p))))
+			   (setq mb t)
+			 (or (fixnump (car p)) (symbolp (car p)) (setq mq t)))
 		       (setq p (cdr p)))
 		     (if (not mb) (list 'memq a list)
 		       (if (not mq) (list 'member a list) form))))
@@ -3248,11 +3253,13 @@ surrounded by (block NAME ...)."
 
 (define-compiler-macro assoc* (&whole form a list &rest keys)
   (let ((test (and (= (length keys) 2) (eq (car keys) :test)
-		   (cl-const-expr-val (nth 1 keys)))))
+		   (cl-const-expr-val (nth 1 keys))))
+	a-val)
     (cond ((eq test 'eq) (list 'assq a list))
 	  ((eq test 'equal) (list 'assoc a list))
 	  ((and (eq (cl-const-expr-p a) t) (or (null keys) (eq test 'eql)))
-	   (if (floatp-safe (cl-const-expr-val a))
+	   (if (and (numberp (setq a-val (cl-const-expr-val a)))
+		    (not (fixnump a-val)))
 	       (list 'assoc a list) (list 'assq a list)))
 	  (t form))))
 
@@ -3511,7 +3518,7 @@ the call to `map' to a more efficient expression."
    (cddadr cdr cdadr) (cdddar cdr cddar) (cddddr cdr cdddr)))
 
 ;;; Things that are inline.
-(proclaim '(inline floatp-safe acons map concatenate notany notevery
+(proclaim '(inline acons map concatenate notany notevery
 ;; XEmacs omission: gethash is builtin
 		   cl-set-elt revappend nreconc))
 
@@ -3523,7 +3530,7 @@ the call to `map' to a more efficient expression."
 
 ;;; Things that are side-effect-and-error-free.  Moved to byte-optimize.el
 ;(mapcar (function (lambda (x) (put x 'side-effect-free 'error-free)))
-;	'(eql floatp-safe list* subst acons equalp random-state-p
+;	'(eql list* subst acons equalp random-state-p
 ;	  copy-tree sublis))
 
 

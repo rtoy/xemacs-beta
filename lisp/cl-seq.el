@@ -664,7 +664,7 @@ Keywords supported:  :test :test-not :key"
 	(while (and cl-list (not (cl-check-test cl-item (car cl-list))))
 	  (setq cl-list (cdr cl-list)))
 	cl-list)
-    (if (and (numberp cl-item) (not (integerp cl-item)))
+    (if (and (numberp cl-item) (not (fixnump cl-item)))
 	(member cl-item cl-list)
       (memq cl-item cl-list))))
 
@@ -697,7 +697,7 @@ Keywords supported:  :test :test-not :key"
 			(not (cl-check-test cl-item (car (car cl-alist))))))
 	  (setq cl-alist (cdr cl-alist)))
 	(and cl-alist (car cl-alist)))
-    (if (and (numberp cl-item) (not (integerp cl-item)))
+    (if (and (numberp cl-item) (not (fixnump cl-item)))
 	(assoc cl-item cl-alist)
       (assq cl-item cl-alist))))
 
@@ -714,7 +714,7 @@ Keywords supported:  :key"
 (defun rassoc* (cl-item cl-alist &rest cl-keys)
   "Find the first item whose cdr matches ITEM in LIST.
 Keywords supported:  :test :test-not :key"
-  (if (or cl-keys (numberp cl-item))
+  (if (or cl-keys (and (numberp cl-item) (not (fixnump cl-item))))
       (cl-parsing-keywords (:test :test-not :key :if :if-not) ()
 	(while (and cl-alist
 		    (or (not (consp (car cl-alist)))
