@@ -368,10 +368,6 @@ othersrcs = $(otherobjs:.o=.c)
 
 LIBES = $(lwlib_lib) $(malloclib) $(ld_libs_all) $(lib_gcc)
 
-#ifdef I18N3
-mo_file = $(LIB_SRC)/emacs.mo
-#endif
-
 #########################################################################
 ##                           Implicit rules                            ##
 #########################################################################
@@ -663,35 +659,6 @@ all-elc:
 #########################################################################
 ##                     Subsidiary dependency rules                     ##
 #########################################################################
-
-#ifdef I18N3
-
-# if defined(SPARC) && !defined(USG)
-   xgettext=		 /usr/openwin/bin/xgettext
-   xgettext_args=	 -o emacs -m_X messages
-   msgfmt=		 /usr/openwin/bin/msgfmt
-# else
-   xgettext=		 xgettext
-   xgettext_args=	 -s -d emacs -M_X messages
-   msgfmt=		 msgfmt
-#endif
-
-$(LIB_SRC)/emacs.po: $(LIB_SRC)/make-msgfile $(LIB_SRC)/make-po $(objs)
-	$(LIB_SRC)/make-msgfile -o $(LIB_SRC)/messages $(objs)
-	cd $(LIB_SRC) && $(xgettext) $(xgettext_args)
-	$(RM) $(LIB_SRC)/emacs.po
-	cd $(LIB_SRC) && $(LIB_SRC)/make-po -a $(LIB_SRC)/emacs.po DOC
-
-$(LIB_SRC)/emacs.mo: $(LIB_SRC)/emacs.po
-	cd $(LIB_SRC)/ && $(msgfmt) -o emacs.mo emacs.po
-
-$(LIB_SRC)/make-msgfile:
-	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-msgfile
-
-$(LIB_SRC)/make-po:
-	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-po
-
-#endif /* I18N3 */
 
 TopLevelEmacsShell.o : $(SRC)/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
 	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL $(SRC)/EmacsShell-sub.c

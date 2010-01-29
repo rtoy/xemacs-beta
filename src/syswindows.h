@@ -473,8 +473,16 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
 
 #else /* !CYGWIN_HEADERS */
+
 #define W32API_VER(major,minor) 0
 #define W32API_INSTALLED_VER 0
+
+/* Some types that show up in Cygwin headers but not in Visual Studio headers,
+   and cause problems if we used Cygwin headers to generate
+   intl-auto-encap-win32.[ch]. */
+typedef LPCVOID PCVOID;
+typedef LPDWORD *PDWORD_PTR;
+
 #endif /* CYGWIN_HEADERS */
 
 /* Not in VC 6 */

@@ -1679,7 +1679,7 @@ enough to reach column @var{column}; in that case, unless the value of
 @var{force} is the special value @code{coerce}, it says to add
 whitespace at the end of the line to reach that column.
 
-If @var{column} is not a non-negative integer, an error is signaled.
+If @var{column} is not a non-negative fixnum, an error is signaled.
 
 The return value is the column number actually moved to.
 @end defun
@@ -2698,7 +2698,7 @@ This variable is an alist of elements of the form @code{(@var{name} .
 @var{contents})}.  Normally, there is one element for each XEmacs
 register that has been used.
 
-The object @var{name} is a character (an integer) identifying the
+The object @var{name} is a character identifying the
 register.  The object @var{contents} is a string, marker, or list
 representing the register contents.  A string represents text stored in
 the register.  A marker represents a position.  A list represents a

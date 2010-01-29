@@ -1,3 +1,57 @@
+2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is
+	actually *SMALL* LETTER A WITH CIRCUMFLEX AND HOOK ABOVE.
+	* mule/cyrillic.el (koi8-c): Correct the mapping here, #x8C is
+	actually ?\u04D9. Add a case mapping for it.
+
+2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct the semantics of #'member*, #'eql, #'assoc* in the
+	presence of bignums; change the integerp byte code to fixnump
+	semantics.
+
+	* bytecomp.el (fixnump, integerp, byte-compile-integerp): 
+	Change the integerp byte code to fixnump; add a byte-compile
+	method to integerp using fixnump and numberp and avoiding a
+	funcall most of the time, since in the non-core contexts where
+	integerp is used, it's mostly distinguishing between fixnums and
+	things that are not numbers at all.
+	* byte-optimize.el (side-effect-free-fns, byte-after-unbind-ops)
+	(byte-compile-side-effect-and-error-free-ops):
+	Replace the integerp bytecode with fixnump; add fixnump to the
+	side-effect-free-fns. Add the other extended number type
+	predicates to the list in passing.
+
+	* obsolete.el (floatp-safe): Mark this as obsolete.
+
+	* cl.el (eql): Go into more detail in the docstring here. Don't
+	bother checking whether both arguments are numbers; one is enough,
+	#'equal will fail correctly if they have distinct types.
+	(subst): Replace a call to #'integerp (deciding whether to use
+	#'memq or not) with one to #'fixnump.
+	Delete most-positive-fixnum, most-negative-fixnum from this file;
+	they're now always in C, so they can't be modified from Lisp.
+	* cl-seq.el (member*, assoc*, rassoc*):
+	Correct these functions in the presence of bignums.
+	* cl-macs.el (cl-make-type-test): The type test for a fixnum is
+	now fixnump. Ditch floatp-safe, use floatp instead.
+	(eql): Correct this compiler macro in the presence of bignums.
+	(assoc*): Correct this compiler macro in the presence of bignums.
+
+	* simple.el (undo): 
+	Change #'integerp to #'fixnump here, since we use #'delq with the
+	same value as ELT a few lines down.
+
+2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	This function is called a *lot*, make it faster, making
+	keysyms-equal inline, calling #'characterp (which doesn't have a
+	bytecode) much more rarely, and not throwing and catching. This
+	won't make much difference in practice, but does eliminate losts
+	of noise from profiling, e.g. at startup.
+
 2010-01-13  Ben Wing  <ben@xemacs.org>
 
 	* loadup.el:
@@ -107,6 +161,11 @@
 	* cl-compat.el (keyword-of):
 	Remove support in our generated code for emacs versions where
 	keywords are not self-quoting.
+
+2009-12-21  Michael Sperber  <mike@xemacs.org>
+
+	* gnuserv.el (gnuserv-program): Specifically look for gnuserv in
+	`exec-directory'.
 
 2009-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
