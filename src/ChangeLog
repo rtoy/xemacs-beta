@@ -1,3 +1,11 @@
+2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (search_buffer):
+	Don't use Boyer-Moore for case-insensitive search if the search
+	pattern contains repeated Ibytes and the corresponding character
+	has case information (or, equivalently, if one of its case
+	equivalents would contain repeated Ibytes).
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove internationalization rules, since the

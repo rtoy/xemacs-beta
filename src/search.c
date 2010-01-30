@@ -1425,6 +1425,37 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
                           break;
                         }
                     }
+
+		  if (ichar_len (c) > 2)
+		    {
+		      /* Case-equivalence plus repeated octets throws off
+			 the construction of the stride table; avoid this.
+
+		         It should be possible to correct boyer_moore to
+		         behave correctly even in this case--it doesn't have
+		         problems with repeated octets when case conversion
+		         is not involved--but this is not a critical
+		         issue. */
+		      Ibyte encoded[MAX_ICHAR_LEN];
+		      Bytecount len = set_itext_ichar (encoded, c);
+		      int i, j;
+		      for (i = 0; i < len && boyer_moore_ok; ++i)
+			{
+			  for (j = 0; i < len && boyer_moore_ok; ++j)
+			    {
+			      if (encoded[i] == encoded[j])
+				{
+				  boyer_moore_ok = 0;
+				}
+			    }
+			}
+
+		      if (0 == boyer_moore_ok)
+			{
+			  break;
+			}
+		    }
+			  
                 } while (c != starting_c);
 
               if (!checked)
