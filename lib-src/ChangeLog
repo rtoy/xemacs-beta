@@ -1,3 +1,9 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove make-msgfile and make-po rules.
+	* make-msgfile.c: Removed, obsolete code.
+	* make-po.c: Removed, obsolete code.
+
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
 	* make-mswin-unicode.pl:

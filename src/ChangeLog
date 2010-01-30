@@ -1,3 +1,8 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Remove internationalization rules, since the
+	lib-src programs they invoke are now gone.
+
 2010-01-29  Ben Wing  <ben@xemacs.org>
 
 	* search.c (boyer_moore): Fix longstanding bug involving
@@ -21,6 +26,58 @@
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* casetab.c: Typo in comment.
+
+2010-01-18  Ben Wing  <ben@xemacs.org>
+
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (gtk_bevel_area):
+	* redisplay-x.c:
+	* redisplay-x.c (THIS_IS_X):
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_OUTPUT_XLIKE_PIXMAP):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line):
+	* redisplay-xlike-inc.c (XLIKE_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_window):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	* redisplay-xlike-inc.c (console_type_create_redisplay_XLIKE):
+	Move lots more code into redisplay-xlike-inc.c.  Use macros to
+	isolate the code that differs among X vs. GTK, to reduce the need
+	for ifdefs in the middle of the code.  Now, redisplay-x.c and
+	redisplay-gtk.c only contain a few functions whose implementation
+	is completely different from one to the other, or which are not
+	present at all in one of them.
+
+	GTK code not currently tested, but it has bitrotted somewhat
+	any.  Doing this will help keep it less bitrotty.
+
+	* depend: Regenerate.
+
+2010-01-18  Ben Wing  <ben@xemacs.org>
+
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Break separate_textual_runs_* functions from redisplay-x.c.
+	(Code in redisplay-gtk.c should have been identical but was
+	bit-rotted.)
+	
+	* redisplay-gtk.c:
+	* redisplay-x.c:
+	Delete code, replace with include statement.
+
+	* depend: Regenerate.
 
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
@@ -229,7 +286,6 @@
 	* number.c (vars_of_number):
 	most-positive-fixnum, most-negative-fixnum are no longer here.
 
->>>>>>> other
 2010-01-17  Vin Shelton  <acs@xemacs.org>
 
 	* fileio.c (check_writable): Remove cast from 2010-01-14

@@ -1,3 +1,8 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* lwlib-internal.h: Add copyright and license boilerplate text
+	based on Ben's recollections.
+
 2009-12-09  Jerry James  <james@xemacs.org>
 
 	* lwlib-Xlw.c: Include needed Xmu headers instead of obsolete xmu.h.
