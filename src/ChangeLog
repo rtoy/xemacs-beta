@@ -1,3 +1,11 @@
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* search.c (boyer_moore): Fix longstanding bug involving
+	searching for Control-1 chars; code was trying to directly
+	extract the last byte in the textual representation of a char
+	from an Ichar (and doing it in a buggy fashion) rather than 
+	just converting the Ichar to text and looking at the last byte.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* syswindows.h:
