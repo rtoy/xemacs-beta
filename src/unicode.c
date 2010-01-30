@@ -988,13 +988,20 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 #define USED_IF_NOT_MUTD(arg) arg
 #endif
 
+#ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
+#define USED_IF_AACT(arg) arg
+#else
+#define USED_IF_AACT(arg) UNUSED (arg)
+#endif
+
 /* Actual implementation of lookup of a conversion mapping for Unicode
    codepoint CODE in CHARSET.  Requires extra arguments passed in that are
    the result of calling UNICODE_BREAKUP_CHAR_CODE() on code.
    Returns non-zero if mapping found. */
 
 inline static int
-get_unicode_conversion_1 (int code, int u1, int u2, int u3, int u4,
+get_unicode_conversion_1 (int USED_IF_AACT (code),
+			  int u1, int u2, int u3, int u4,
 			  int USED_IF_NOT_MUTD (code_levels),
 			  Lisp_Object charset, int *c1, int *c2)
 {
@@ -3869,8 +3876,13 @@ complex_vars_of_unicode (void)
      e.g. unicode.el won't run into real problems doing the stuff it
      does */
   Vdefault_unicode_precedence_list =
+#ifndef UNICODE_INTERNAL
     list4 (Vcharset_ascii, Vcharset_control_1, Vcharset_latin_iso8859_1,
-	   Vcharset_jit_ucs_charset_0);
+	   Vcharset_jit_ucs_charset_0)
+#else /* UNICODE_INTERNAL */
+    list3 (Vcharset_ascii, Vcharset_control_1, Vcharset_latin_iso8859_1)
+#endif /* UNICODE_INTERNAL */
+    ;
   Vdefault_unicode_precedence_array =
     simple_convert_predence_list_to_array (Vdefault_unicode_precedence_list);
 #endif /* MULE */

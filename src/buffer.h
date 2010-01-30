@@ -892,17 +892,19 @@ buffer_filtered_unicode_to_ichar (int code, struct buffer *buf,
 				  enum converr fail)
 )
 {
-  Ichar ch;
   ASSERT_VALID_UNICODE_CODEPOINT (code);
   text_checking_assert (buf);
 
 #if defined (MULE) && !defined (UNICODE_INTERNAL)
-  ch = filtered_unicode_to_ichar (code, buf->unicode_precedence_array,
-				  predicate, CONVERR_FAIL);
-  if (ch < 0)
-    ch = filtered_unicode_to_ichar (code, Vdefault_unicode_precedence_array,
-				    predicate, fail);
-  return ch;
+  {
+    Ichar ch;
+    ch = filtered_unicode_to_ichar (code, buf->unicode_precedence_array,
+				    predicate, CONVERR_FAIL);
+    if (ch < 0)
+      ch = filtered_unicode_to_ichar (code, Vdefault_unicode_precedence_array,
+				      predicate, fail);
+    return ch;
+  }
 #else
   return filtered_unicode_to_ichar (code, Qnil, predicate, fail);
 #endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
