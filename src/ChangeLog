@@ -1,3 +1,9 @@
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* objects.h (set_face_boolean_attached_to):
+	Use lisp.h for EXFUN of Fregexp_quote, that's what it's for.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* syswindows.h:

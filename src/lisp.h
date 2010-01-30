@@ -5464,6 +5464,7 @@ EXFUN (Fmatch_end, 1);
 EXFUN (Fskip_chars_backward, 3);
 EXFUN (Fskip_chars_forward, 3);
 EXFUN (Fstring_match, 4);
+EXFUN (Fregexp_quote, 1);
 
 struct re_pattern_buffer;
 struct re_registers;
