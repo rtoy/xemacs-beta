@@ -3685,9 +3685,6 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
   else
     put_range_table (rtab, range_start, range_end, Qt);
 
-  if (this_char <= range_end)
-    put_range_table (rtab, this_char, range_end, Qt);
-
   return REG_NOERROR;
 }
 

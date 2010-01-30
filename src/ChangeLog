@@ -1,3 +1,21 @@
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (common_init_alloc_early):
+	Fix compile error.
+	
+	* buffer.h:
+	Fix unused-var warning.
+	
+	* regex.c:
+	* regex.c (compile_extended_range):
+	Delete stray code that (thankfully) triggered an use-of-uninit-var
+	warning.
+
+	* unicode.c:
+	* unicode.c (get_unicode_conversion_1):
+	* unicode.c (complex_vars_of_unicode):
+	Fix compile error and unused-argument warning.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* unicode.h:
