@@ -1,3 +1,10 @@
+2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Make sure that control-1 characters are no longer treated as
+	second-class citizens in regexp ranges, as in
+	http://mid.gmane.org/18829.34118.709782.704574@parhasard.net .
+
 2010-01-29  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el:
