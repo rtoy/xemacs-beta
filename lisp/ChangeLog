@@ -1,3 +1,12 @@
+2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadup.el:
+	If any filename in load-history starts with the value of
+	source-lisp, delete that part of the string, so that
+	#'find-function works better with dumped functions in an installed
+	XEmacs (it will look in lisp-directory instead, where it will
+	probably succeed).
+
 2010-01-29  Ben Wing  <ben@xemacs.org>
 
 	* mule/cyrillic.el (for):
