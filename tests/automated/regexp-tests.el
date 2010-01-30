@@ -28,7 +28,11 @@
 
 ;;; Commentary:
 
-;; Test regular expression.
+;; Test regular expressions.
+
+;; NOTE NOTE NOTE: There is some domain overlap among regexp-tests.el,
+;; search-tests.el and case-tests.el.  See search-tests.el.
+;;
 
 (Check-Error-Message error "Trailing backslash"
 		     (string-match "\\" "a"))
@@ -562,4 +566,19 @@ baaaa
   (Assert (looking-at "\\="))
   (Assert= (re-search-forward "\\=") 4))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;     Tests involving case-changing replace-match   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(Assert (not (string-match "\\(\\.\\=\\)" ".")))
+(Assert (string= "" (let ((str "test string"))
+		      (if (string-match "^.*$" str)
+			  (replace-match "\\U" t nil str)))))
+(with-temp-buffer
+  (erase-buffer)
+  (insert "test string")
+  (re-search-backward "^.*$")
+  (replace-match "\\U" t)
+  (Assert (and (bobp) (eobp))))
 

@@ -31,15 +31,26 @@
 
 ;; Test case-table related functionality.
 
-(defvar pristine-case-table nil
-  "The standard case table, without manipulation from case-tests.el")
+;; NOTE NOTE NOTE: See also:
+;;
+;; (1) regexp-tests.el, for case-related regexp searching.
+;; (2) search-tests.el, for case-related non-regexp searching.
 
-(setq pristine-case-table (or
-			   ;; This is the compiled run; we've retained
-			   ;; it from the interpreted run.
-			   pristine-case-table 
-			   ;; This is the interpreted run; set it.
-			   (copy-case-table (standard-case-table))))
+;; NOTE NOTE NOTE: There is some domain overlap among regexp-tests.el,
+;; search-tests.el and case-tests.el.  See search-tests.el.
+;;
+
+;; Ben thinks this is unnecessary.  See comment in search-tests.el.
+
+;;(defvar pristine-case-table nil
+;;  "The standard case table, without manipulation from case-tests.el")
+;;
+;;(setq pristine-case-table (or
+;;			   ;; This is the compiled run; we've retained
+;;			   ;; it from the interpreted run.
+;;			   pristine-case-table 
+;;			   ;; This is the interpreted run; set it.
+;;			   (copy-case-table (standard-case-table))))
 
 (Assert (case-table-p (standard-case-table)))
 ;; Old case table test.
@@ -161,176 +172,6 @@
    (string=
     (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")))
-
-(with-temp-buffer
-  (insert "Test Buffer")
-  (let ((case-fold-search t))
-    (goto-char (point-min))
-    (Assert-eq (search-forward "test buffer" nil t) 12)
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test buffer" nil t) 12)
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test Buffer" nil t) 12)
-
-    (setq case-fold-search nil)
-    (goto-char (point-min))
-    (Assert (not (search-forward "test buffer" nil t)))
-    (goto-char (point-min))
-    (Assert (not (search-forward "Test buffer" nil t)))
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test Buffer" nil t) 12)))
-
-(with-temp-buffer
-  (insert "abcdefghijklmnäopqrstuÄvwxyz")
-  ;; case insensitive
-  (Assert (not (search-forward "ö" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "ä" nil t))
-  (Assert-eq 24 (search-forward "ä" nil t))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "Ä" nil t))
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "ä" nil t))
-  (Assert-eq 15 (search-backward "ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "Ä" nil t))
-  (Assert-eq 15 (search-backward "Ä" nil t))
-  ;; case sensitive
-  (setq case-fold-search nil)
-  (goto-char (point-min))
-  (Assert (not (search-forward "ö" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "ä" nil t))
-  (Assert (not (search-forward "ä" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char 16)
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 15 (search-backward "ä" nil t))
-  (goto-char 15)
-  (Assert (not (search-backward "ä" nil t)))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "Ä" nil t))
-  (Assert (not (search-backward "Ä" nil t))))
-
-(with-temp-buffer
-  (insert "aaaaäÄäÄäÄäÄäÄbbbb")
-  (goto-char (point-min))
-  (Assert-eq 15 (search-forward "ää" nil t 5))
-  (goto-char (point-min))
-  (Assert (not (search-forward "ää" nil t 6)))
-  (goto-char (point-max))
-  (Assert-eq 5 (search-backward "ää" nil t 5))
-  (goto-char (point-max))
-  (Assert (not (search-backward "ää" nil t 6))))
-
-(when (featurep 'mule)
-  (let* ((hiragana-a (make-char 'japanese-jisx0208 36 34))
-	 (a-diaeresis ?ä)
-	 (case-table (copy-case-table (standard-case-table)))
-	 (str-hiragana-a (char-to-string hiragana-a))
-	 (str-a-diaeresis (char-to-string a-diaeresis))
-	 (string (concat str-hiragana-a str-a-diaeresis)))
-    (put-case-table-pair hiragana-a a-diaeresis case-table)
-    (with-temp-buffer
-      (set-case-table case-table)
-      (insert hiragana-a "abcdefg" a-diaeresis)
-      ;; forward
-      (goto-char (point-min))
-      (Assert (not (search-forward "ö" nil t)))
-      (goto-char (point-min))
-      (Assert-eq 2 (search-forward str-hiragana-a nil t))
-      (goto-char (point-min))
-      (Assert-eq 2 (search-forward str-a-diaeresis nil t))
-      (goto-char (1+ (point-min)))
-      (Assert-eq (point-max)
-		  (search-forward str-hiragana-a nil t))
-      (goto-char (1+ (point-min)))
-      (Assert-eq (point-max)
-		  (search-forward str-a-diaeresis nil t))
-      ;; backward
-      (goto-char (point-max))
-      (Assert (not (search-backward "ö" nil t)))
-      (goto-char (point-max))
-      (Assert-eq (1- (point-max)) (search-backward str-hiragana-a nil t))
-      (goto-char (point-max))
-      (Assert-eq (1- (point-max)) (search-backward str-a-diaeresis nil t))
-      (goto-char (1- (point-max)))
-      (Assert-eq 1 (search-backward str-hiragana-a nil t))
-      (goto-char (1- (point-max)))
-      (Assert-eq 1 (search-backward str-a-diaeresis nil t))
-      (replace-match "a")
-      (Assert (looking-at (format "abcdefg%c" a-diaeresis))))
-    (with-temp-buffer
-      (set-case-table case-table)
-      (insert string)
-      (insert string)
-      (insert string)
-      (insert string)
-      (insert string)
-      (goto-char (point-min))
-      (Assert-eq 11 (search-forward string nil t 5))
-      (goto-char (point-min))
-      (Assert (not (search-forward string nil t 6)))
-      (goto-char (point-max))
-      (Assert-eq 1 (search-backward string nil t 5))
-      (goto-char (point-max))
-      (Assert (not (search-backward string nil t 6))))))
-
-;; Bug reported in http://mid.gmane.org/y9lk5lu5orq.fsf@deinprogramm.de from
-;; Michael Sperber. Fixed 2008-01-29.
-(with-string-as-buffer-contents "\n\nDer beruhmte deutsche Flei\xdf\n\n"
-  (goto-char (point-min))
-  (Assert (search-forward "Flei\xdf")))
-
-(with-temp-buffer
-  (let ((target "M\xe9zard")
-        (debug-xemacs-searches 1))
-    (Assert (not (search-forward target nil t)))
-    (insert target)
-    (goto-char (point-min))
-    ;; #### search-algorithm-used is simple-search after the following,
-    ;; which shouldn't be necessary; it should be possible to use
-    ;; Boyer-Moore. 
-    ;;
-    ;; But searches for ASCII strings in buffers with nothing above ?\xFF
-    ;; use Boyer Moore with the current implementation, which is the
-    ;; important thing for the Gnus use case.
-    (Assert= (1+ (length target)) (search-forward target nil t))))
-
-(Skip-Test-Unless
- (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
- "not a DEBUG_XEMACS build"
- "checks that the algorithm chosen by #'search-forward is relatively sane"
- (let ((debug-xemacs-searches 1))
-   (with-temp-buffer
-     (set-case-table pristine-case-table)
-     (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
-     (goto-char (point-min))
-     (Assert (search-forward "Fleiss"))
-     (delete-region (point-min) (point-max))
-     (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
-     (goto-char (point-min))
-     (Assert (search-forward "Flei\xdf"))
-     (Assert-eq 'boyer-moore search-algorithm-used)
-     (delete-region (point-min) (point-max))
-     (when (featurep 'mule)
-       (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
-       (goto-char (point-min))
-       (Assert 
-        (search-forward (format "Fle%c\xdf"
-                                (make-char 'latin-iso8859-9 #xfd))))
-       (Assert-eq 'boyer-moore search-algorithm-used)
-       (insert (make-char 'latin-iso8859-9 #xfd))
-       (goto-char (point-min))
-       (Assert (search-forward "Flei\xdf"))
-       (Assert-eq 'simple-search search-algorithm-used) 
-       (goto-char (point-min))
-       (Assert (search-forward (format "Fle%c\xdf"
-                                       (make-char 'latin-iso8859-9 #xfd))))
-       (Assert-eq 'simple-search search-algorithm-used)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1652,9 +1493,9 @@ For example, if CH is ?\\u00F1, the return value will be the string
 				 (,lc ,uc))
 	  do
 	  (erase-buffer)
-	  (insert ?a)
+	  (insert ?0)
 	  (insert ch1)
-	  (insert ?b)
+	  (insert ?1)
 	  (goto-char (point-min))
 	  (Assert-eql (search-forward (char-to-string ch2) nil t) 3
 		      (format "Case-folded searching doesn't equate %s and %s"

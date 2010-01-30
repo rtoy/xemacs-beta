@@ -1070,17 +1070,6 @@
 (Assert-equal (split-string "foobar" split-string-default-separators)
 	       '("foobar"))
 
-(Assert (not (string-match "\\(\\.\\=\\)" ".")))
-(Assert (string= "" (let ((str "test string"))
-		      (if (string-match "^.*$" str)
-			  (replace-match "\\U" t nil str)))))
-(with-temp-buffer
-  (erase-buffer)
-  (insert "test string")
-  (re-search-backward "^.*$")
-  (replace-match "\\U" t)
-  (Assert (and (bobp) (eobp))))
-
 ;;-----------------------------------------------------
 ;; Test near-text buffer functions.
 ;;-----------------------------------------------------

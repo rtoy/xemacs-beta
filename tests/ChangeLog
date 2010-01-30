@@ -1,3 +1,25 @@
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el:
+	New file.
+
+	* automated/search-tests.el:
+	* automated/case-tests.el:
+	* automated/case-tests.el (pristine-case-table): Removed.
+	* automated/case-tests.el (uni-mappings):
+	* automated/lisp-tests.el:
+	* automated/regexp-tests.el:
+	Extract some search-related code from case-tests and regexp-tests
+	and move to search-tests.  Move some regexp-related code from
+	lisp-tests to regexp-tests.
+
+	Write a comment trying to express the proper division of labor
+	between case-tests, search-tests and regexp-tests.
+
+	Add a new test for the Control-1 search bug.
+
+	Fix a buggy test in the Unicode torture-test section of case-tests.el.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* automated/test-harness.el (test-harness-from-buffer):
