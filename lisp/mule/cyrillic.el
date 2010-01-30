@@ -1304,17 +1304,17 @@ for that, see koi8-o. "))
 
 (loop
   for (upper lower)
-  in '((?\u04E9 ?\u04E8) ;; BARRED O
-       (?\u04B9 ?\u04B8) ;; CHE WITH VERTICAL STROKE
-       (?\u0452 ?\u0402) ;; DJE
-       (?\u0455 ?\u0405) ;; DZE
-       (?\u04A3 ?\u04A2) ;; EN WITH DESCENDER
-       (?\u049D ?\u049C) ;; KA WITH VERTICAL STROKE
-       (?\u04BB ?\u04BA) ;; SHHA
-       (?\u04D9 ?\u04D8) ;; SCHWA
-       (?\u04AF ?\u04AE) ;; STRAIGHT U
-       (?\u04B1 ?\u04B0) ;; STRAIGHT U WITH STROKE
-       (?\u0497 ?\u0496)) ;; ZHE WITH DESCENDER
+  in '((?\u04E8 ?\u04E9) ;; BARRED O
+       (?\u04B8 ?\u04B9) ;; CHE WITH VERTICAL STROKE
+       (?\u0402 ?\u0452) ;; DJE
+       (?\u0405 ?\u0455) ;; DZE
+       (?\u04A2 ?\u04A3) ;; EN WITH DESCENDER
+       (?\u049C ?\u049D) ;; KA WITH VERTICAL STROKE
+       (?\u04BA ?\u04BB) ;; SHHA
+       (?\u04D8 ?\u04D9) ;; SCHWA
+       (?\u04AE ?\u04AF) ;; STRAIGHT U
+       (?\u04B0 ?\u04B1) ;; STRAIGHT U WITH STROKE
+       (?\u0496 ?\u0497)) ;; ZHE WITH DESCENDER
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))

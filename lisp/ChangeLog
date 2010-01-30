@@ -1,3 +1,17 @@
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (for):
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (for):
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (for):
+	Upper and lowercase mappings were reversed for some old-Cyrillic
+	chars.
+
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is
