@@ -374,9 +374,11 @@ returned instead.
 */
        (frame))
 {
-  return Fmapcar (Qcdr,
-		  EQ (frame, Qt) ? Vbuffer_alist :
-		  decode_frame (frame)->buffer_alist);
+  Lisp_Object args[2];
+  args[0] = Qcdr;
+  args[1] = EQ (frame, Qt) ?
+    Vbuffer_alist : decode_frame (frame)->buffer_alist;
+  return FmapcarX (countof (args), args);
 }
 
 Lisp_Object

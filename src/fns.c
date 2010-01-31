@@ -56,6 +56,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qstring_lessp;
 Lisp_Object Qidentity;
+Lisp_Object Qvector, Qarray, Qstring, Qlist, Qbit_vector;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -981,6 +982,8 @@ are copied to the new string.
 {
   EMACS_INT len, s, e;
 
+  CHECK_SEQUENCE (sequence);
+
   if (STRINGP (sequence))
     return Fsubstring (sequence, start, end);
 
@@ -1042,8 +1045,8 @@ are copied to the new string.
     }
   else
     {
-      ABORT (); /* unreachable, since Flength (sequence) did not get
-                   an error */
+      ABORT (); /* unreachable, since CHECK_SEQUENCE (sequence) did not
+                   error */
       return Qnil;
     }
 }
@@ -3154,204 +3157,647 @@ arguments: (&rest ARGS)
 
 
 /* This is the guts of several mapping functions.
-   Apply FUNCTION to each element of SEQUENCE, one by one,
-   storing the results into elements of VALS, a C vector of Lisp_Objects.
-   LENI is the length of VALS, which should also be the length of SEQUENCE.
 
-   If VALS is a null pointer, do not accumulate the results. */
+   Call FUNCTION CALL_COUNT times, with NSEQUENCES arguments each time,
+   taking the elements from SEQUENCES.  If VALS is non-NULL, store the
+   results into VALS, a C array of Lisp_Objects; else, if LISP_VALS is
+   non-nil, store the results into LISP_VALS, a sequence with sufficient
+   room for CALL_COUNT results. Else, do not accumulate any result.
+
+   If VALS is non-NULL, NSEQUENCES is one, and SEQUENCES[0] is a cons,
+   mapcarX will store the elements of SEQUENCES[0] in stack and GCPRO them,
+   so FUNCTION cannot insert a non-cons into SEQUENCES[0] and throw off
+   mapcarX.
+
+   Otherwise, mapcarX signals a wrong-type-error if it encounters a
+   non-cons, non-array when traversing SEQUENCES.  Common Lisp specifies in
+   MAPPING-DESTRUCTIVE-INTERACTION that it is an error when FUNCTION
+   destructively modifies SEQUENCES in a way that might affect the ongoing
+   traversal operation. */
 
 static void
-mapcar1 (Elemcount leni, Lisp_Object *vals,
-	 Lisp_Object function, Lisp_Object sequence)
+mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
+	 Lisp_Object function, int nsequences, Lisp_Object *sequences)
 {
-  Lisp_Object result;
-  Lisp_Object args[2];
-  struct gcpro gcpro1;
+  Lisp_Object called, *args;
+  struct gcpro gcpro1, gcpro2;
+  int i, j;
+  enum lrecord_type lisp_vals_type;
 
-  if (vals)
-    {
-      GCPRO1 (vals[0]);
-      gcpro1.nvars = 0;
-    }
+  assert (LRECORDP (lisp_vals));
+  lisp_vals_type = XRECORD_LHEADER (lisp_vals)->type;
 
+  args = alloca_array (Lisp_Object, nsequences + 1);
   args[0] = function;
-
-  if (LISTP (sequence))
+  for (i = 1; i <= nsequences; ++i)
     {
-      /* A devious `function' could either:
-	 - insert garbage into the list in front of us, causing XCDR to crash
-	 - amputate the list behind us using (setcdr), causing the remaining
-	   elts to lose their GCPRO status.
-
-	 if (vals != 0) we avoid this by copying the elts into the
-	 `vals' array.  By a stroke of luck, `vals' is exactly large
-	 enough to hold the elts left to be traversed as well as the
-	 results computed so far.
-
-	 if (vals == 0) we don't have any free space available and
-	 don't want to eat up any more stack with ALLOCA ().
-	 So we use EXTERNAL_LIST_LOOP_3_NO_DECLARE and GCPRO the tail. */
-
-      if (vals)
-	{
-	  Lisp_Object *val = vals;
-	  Elemcount i;
-
-	  LIST_LOOP_2 (elt, sequence)
-	      *val++ = elt;
-
-	  gcpro1.nvars = leni;
-
-	  for (i = 0; i < leni; i++)
-	    {
-	      args[1] = vals[i];
-	      vals[i] = Ffuncall (2, args);
-	    }
-	}
-      else
-	{
-	  Lisp_Object elt, tail;
-	  EMACS_INT len_unused;
-	  struct gcpro ngcpro1;
-
-	  NGCPRO1 (tail);
-
-	  {
-	    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len_unused)
-	      {
-		args[1] = elt;
-		Ffuncall (2, args);
-	      }
-	  }
-
-	  NUNGCPRO;
-	}
+      args[i] = Qnil;
     }
-  else if (VECTORP (sequence))
-    {
-      Lisp_Object *objs = XVECTOR_DATA (sequence);
-      Elemcount i;
-      for (i = 0; i < leni; i++)
-	{
-	  args[1] = *objs++;
-	  result = Ffuncall (2, args);
-	  if (vals) vals[gcpro1.nvars++] = result;
-	}
-    }
-  else if (STRINGP (sequence))
-    {
-      /* The string data of `sequence' might be relocated during GC. */
-      Bytecount slen = XSTRING_LENGTH (sequence);
-      Ibyte *p = alloca_ibytes (slen);
-      Ibyte *end = p + slen;
 
-      memcpy (p, XSTRING_DATA (sequence), slen);
-
-      while (p < end)
-	{
-	  args[1] = make_char (itext_ichar (p));
-	  INC_IBYTEPTR (p);
-	  result = Ffuncall (2, args);
-	  if (vals) vals[gcpro1.nvars++] = result;
-	}
-    }
-  else if (BIT_VECTORP (sequence))
+  if (vals != NULL)
     {
-      Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
-      Elemcount i;
-      for (i = 0; i < leni; i++)
+      GCPRO2 (args[0], vals[0]);
+      gcpro1.nvars = nsequences + 1;
+      gcpro2.nvars = 0;
+    }
+  else
+    {
+      GCPRO1 (args[0]);
+      gcpro1.nvars = nsequences + 1;
+    }
+
+  /* Be extra nice in the event that we've been handed one list and one
+     only; make it possible for FUNCTION to set cdrs not yet processed to
+     non-cons, non-nil objects without ill-effect, if we have been handed
+     the stack space to do that. */
+  if (vals != NULL && 1 == nsequences && CONSP (sequences[0]))
+    {
+      Lisp_Object lst = sequences[0];
+      Lisp_Object *val = vals;
+      for (i = 0; i < call_count; ++i)
 	{
-	  args[1] = make_int (bit_vector_bit (v, i));
-	  result = Ffuncall (2, args);
-	  if (vals) vals[gcpro1.nvars++] = result;
+	  *val++ = XCAR (lst);
+	  lst = XCDR (lst);
+	}
+      gcpro2.nvars = call_count;
+
+      for (i = 0; i < call_count; ++i)
+	{
+	  args[1] = vals[i];
+	  vals[i] = Ffuncall (nsequences + 1, args);
 	}
     }
   else
-    ABORT (); /* unreachable, since Flength (sequence) did not get an error */
+    {
+      Binbyte *sequence_types = alloca_array (Binbyte, nsequences);
+      for (j = 0; j < nsequences; ++j)
+	{
+	  sequence_types[j] = XRECORD_LHEADER (sequences[j])->type;
+	}
 
-  if (vals)
-    UNGCPRO;
+      for (i = 0; i < call_count; ++i)
+	{
+	  for (j = 0; j < nsequences; ++j)
+	    {
+	      switch (sequence_types[j])
+		{
+		case lrecord_type_cons:
+		  {
+		    if (!CONSP (sequences[j]))
+		      {
+			/* This means FUNCTION has probably messed
+			   around with a cons in one of the sequences,
+			   since we checked the type
+			   (CHECK_SEQUENCE()) and the length and
+			   structure (with Flength()) correctly in our
+			   callers. */
+			dead_wrong_type_argument (Qconsp, sequences[j]);
+		      }
+		    args[j + 1] = XCAR (sequences[j]);
+		    sequences[j] = XCDR (sequences[j]);
+		    break;
+		  }
+		case lrecord_type_vector:
+		  {
+		    args[j + 1] = XVECTOR_DATA (sequences[j])[i];
+		    break;
+		  }
+		case lrecord_type_string:
+		  {
+		    args[j + 1] = make_char (string_ichar (sequences[j], i));
+		    break;
+		  }
+		case lrecord_type_bit_vector:
+		  {
+		    args[j + 1]
+		      = make_int (bit_vector_bit (XBIT_VECTOR (sequences[j]),
+						  i));
+		    break;
+		  }
+		default:
+		  ABORT();
+		}
+	    }
+	  called = Ffuncall (nsequences + 1, args);
+	  if (vals != NULL)
+	    {
+	      vals[i] = called;
+	      gcpro2.nvars += 1;
+	    }
+	  else
+	    {
+	      switch (lisp_vals_type)
+		{
+		case lrecord_type_symbol:
+		  break;
+		case lrecord_type_cons:
+		  {
+		    if (!CONSP (lisp_vals))
+		      {
+			/* If FUNCTION has inserted a non-cons non-nil cdr
+			   into the list before we've processed the relevant
+			   part, error. */
+			dead_wrong_type_argument (Qconsp, lisp_vals);
+		      }
+
+		    XSETCAR (lisp_vals, called);
+		    lisp_vals = XCDR (lisp_vals);
+		    break;
+		  }
+		case lrecord_type_vector:
+		  {
+		    i < XVECTOR_LENGTH (lisp_vals) ?
+		      (XVECTOR_DATA (lisp_vals)[i] = called) :
+		      /* Let #'aset error. */
+		      Faset (lisp_vals, make_int (i), called);
+		    break;
+		  }
+		case lrecord_type_string:
+		  {
+		    /* If this ever becomes a code hotspot, we can keep
+		       around pointers into the data of the string, checking
+		       each time that it hasn't been relocated. */
+		    Faset (lisp_vals, make_int (i), called);
+		    break;
+		  }
+		case lrecord_type_bit_vector:
+		  {
+		    (BITP (called) &&
+		     i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
+		      set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
+					  XINT (called)) :
+		      Faset (lisp_vals, make_int (i), called);
+		    break;
+		  }
+		default:
+		  {
+		    ABORT();
+		    break;
+		  }
+		}
+	    }
+	}
+    }
+  UNGCPRO;
 }
 
-DEFUN ("mapconcat", Fmapconcat, 3, 3, 0, /*
-Apply FUNCTION to each element of SEQUENCE, and concat the results to a string.
+DEFUN ("mapconcat", Fmapconcat, 3, MANY, 0, /*
+Call FUNCTION on each element of SEQUENCE, and concat results to a string.
 Between each pair of results, insert SEPARATOR.
 
 Each result, and SEPARATOR, should be strings.  Thus, using " " as SEPARATOR
 results in spaces between the values returned by FUNCTION.  SEQUENCE itself
 may be a list, a vector, a bit vector, or a string.
+
+With optional SEQUENCES, call FUNCTION each time with as many arguments as
+there are SEQUENCES, plus one for the element from SEQUENCE.  One element
+from each sequence will be used each time FUNCTION is called, and
+`mapconcat' will give up once the shortest sequence is exhausted.
+
+arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
 */
-       (function, sequence, separator))
+       (int nargs, Lisp_Object *args))
 {
-  EMACS_INT len = XINT (Flength (sequence));
-  Lisp_Object *args;
-  EMACS_INT i;
-  EMACS_INT nargs = len + len - 1;
+  Lisp_Object function = args[0];
+  Lisp_Object sequence = args[1];
+  Lisp_Object separator = args[2];
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object *args0;
+  EMACS_INT i, nargs0;
+
+  args[2] = sequence;
+  args[1] = separator;
+
+  for (i = 2; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
 
   if (len == 0) return build_string ("");
 
-  args = alloca_array (Lisp_Object, nargs);
+  nargs0 = len + len - 1;
+  args0 = alloca_array (Lisp_Object, nargs0);
 
-  mapcar1 (len, args, function, sequence);
+  /* Special-case this, it's very common and doesn't require any
+     funcalls. Upside of doing it here, instead of cl-macs.el: no consing,
+     apart from the final string, we allocate everything on the stack. */
+  if (EQ (function, Qidentity) && 3 == nargs && CONSP (sequence))
+    {
+      for (i = 0; i < len; ++i)
+	{
+	  args0[i] = XCAR (sequence);
+	  sequence = XCDR (sequence);
+	}
+    }
+  else
+    {
+      mapcarX (len, args0, Qnil, function, nargs - 2, args + 2);
+    }
 
   for (i = len - 1; i >= 0; i--)
-    args[i + i] = args[i];
+    args0[i + i] = args0[i];
 
-  for (i = 1; i < nargs; i += 2)
-    args[i] = separator;
+  for (i = 1; i < nargs0; i += 2)
+    args0[i] = separator;
 
-  return Fconcat (nargs, args);
+  return Fconcat (nargs0, args0);
 }
 
-DEFUN ("mapcar", Fmapcar, 2, 2, 0, /*
-Apply FUNCTION to each element of SEQUENCE; return a list of the results.
+DEFUN ("mapcar*", FmapcarX, 2, MANY, 0, /*
+Call FUNCTION on each element of SEQUENCE; return a list of the results.
 The result is a list of the same length as SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
+
+With optional SEQUENCES, call FUNCTION each time with as many arguments as
+there are SEQUENCES, plus one for the element from SEQUENCE.  One element
+from each sequence will be used each time FUNCTION is called, and `mapcar'
+stops calling FUNCTION once the shortest sequence is exhausted.
+
+arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 */
-       (function, sequence))
+       (int nargs, Lisp_Object *args))
 {
-  Elemcount len = XINT (Flength (sequence));
-  Lisp_Object *args = alloca_array (Lisp_Object, len);
+  Lisp_Object function = args[0];
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object *args0;
+  int i;
 
-  mapcar1 (len, args, function, sequence);
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
 
-  return Flist ((int) len, args);
+  args0 = alloca_array (Lisp_Object, len);
+  mapcarX (len, args0, Qnil, function, nargs - 1, args + 1);
+
+  return Flist ((int) len, args0);
 }
 
-DEFUN ("mapvector", Fmapvector, 2, 2, 0, /*
-Apply FUNCTION to each element of SEQUENCE; return a vector of the results.
+DEFUN ("mapvector", Fmapvector, 2, MANY, 0, /*
+Call FUNCTION on each element of SEQUENCE; return a vector of the results.
 The result is a vector of the same length as SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
-*/
-       (function, sequence))
-{
-  Elemcount len = XINT (Flength (sequence));
-  Lisp_Object result = make_vector (len, Qnil);
-  struct gcpro gcpro1;
 
+With optional SEQUENCES, call FUNCTION each time with as many arguments as
+there are SEQUENCES, plus one for the element from SEQUENCE.  One element
+from each sequence will be used each time FUNCTION is called, and
+`mapvector' stops calling FUNCTION once the shortest sequence is exhausted.
+
+arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object function = args[0];
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object result;
+  struct gcpro gcpro1;
+  int i;
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  result = make_vector (len, Qnil);
   GCPRO1 (result);
-  mapcar1 (len, XVECTOR_DATA (result), function, sequence);
+  /* Don't pass result as the lisp_object argument, we want mapcarX to protect 
+     a single list argument's elements from being garbage-collected. */
+  mapcarX (len, XVECTOR_DATA (result), Qnil, function, nargs - 1, args +1);
   UNGCPRO;
 
   return result;
 }
 
-DEFUN ("mapc-internal", Fmapc_internal, 2, 2, 0, /*
-Apply FUNCTION to each element of SEQUENCE.
+DEFUN ("mapcan", Fmapcan, 2, MANY, 0, /*
+Call FUNCTION on each element of SEQUENCE; chain the results together.
+
+FUNCTION must normally return a list; the results will be concatenated
+together using `nconc'.
+
+With optional SEQUENCES, call FUNCTION each time with as many arguments as
+there are SEQUENCES, plus one for the element from SEQUENCE.  One element
+from each sequence will be used each time FUNCTION is called, and
+`mapcan' stops calling FUNCTION once the shortest sequence is exhausted.
+
+arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object function = args[0], nconcing;
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object *args0;
+  struct gcpro gcpro1;
+  int i;
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  args0 = alloca_array (Lisp_Object, len + 1);
+  mapcarX (len, args0 + 1, Qnil, function, nargs - 1, args + 1);
+
+  if (len < 2)
+    {
+      return len ? args0[1] : Qnil;
+    }
+
+  /* bytecode_nconc2 can signal and return, we need to GCPRO the args, since
+     mapcarX is no longer doing this for us. */
+  args0[0] = Fcons (Qnil, Qnil);
+  GCPRO1 (args0[0]);
+  gcpro1.nvars = len + 1;
+
+  for (i = 0; i < len; ++i)
+    {
+      nconcing = bytecode_nconc2 (args0 + i);
+      args0[i + 1] = nconcing;
+    }
+
+  RETURN_UNGCPRO (XCDR (nconcing));
+}
+
+DEFUN ("mapc", Fmapc, 2, MANY, 0, /*
+Call FUNCTION on each element of SEQUENCE.
+
 SEQUENCE may be a list, a vector, a bit vector, or a string.
 This function is like `mapcar' but does not accumulate the results,
 which is more efficient if you do not use the results.
 
-The difference between this and `mapc' is that `mapc' supports all
-the spiffy Common Lisp arguments.  You should normally use `mapc'.
-*/
-       (function, sequence))
-{
-  mapcar1 (XINT (Flength (sequence)), 0, function, sequence);
+With optional SEQUENCES, call FUNCTION each time with as many arguments as
+there are SEQUENCES, plus one for the elements from SEQUENCE.  One element
+from each sequence will be used each time FUNCTION is called, and
+`mapc' stops calling FUNCTION once the shortest sequence is exhausted.
 
-  return sequence;
+Return SEQUENCE.
+
+arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object sequence = args[1];
+  struct gcpro gcpro1;
+  int i;
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  /* We need to GCPRO sequence, because mapcarX will modify the
+     elements of the args array handed to it, and this may involve
+     elements of sequence getting garbage collected. */
+  GCPRO1 (sequence);
+  mapcarX (len, NULL, Qnil, args[0], nargs - 1, args + 1);
+  RETURN_UNGCPRO (sequence);
 }
 
+DEFUN ("map", Fmap, 3, MANY, 0, /*
+Map FUNCTION across one or more sequences, returning a sequence.
+
+TYPE is the sequence type to return, FUNCTION is the function, SEQUENCE is
+the first argument sequence, SEQUENCES are the other argument sequences.
+
+FUNCTION will be called with (1+ (length SEQUENCES)) arguments, and must be
+capable of accepting this number of arguments.
+
+Certain TYPEs are recognised internally by `map', but others are not, and
+`coerce' may throw an error on an attempt to convert to a TYPE it does not
+understand.  A null TYPE means do not accumulate any values.
+
+arguments: (TYPE FUNCTION SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object type = args[0];
+  Lisp_Object function = args[1];
+  Lisp_Object result = Qnil;
+  Lisp_Object *args0 = NULL;
+  Elemcount len = EMACS_INT_MAX;
+  int i;
+  struct gcpro gcpro1;
+
+  for (i = 2; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  if (!NILP (type))
+    {
+      args0 = alloca_array (Lisp_Object, len);
+    }
+
+  mapcarX (len, args0, Qnil, function, nargs - 2, args + 2);
+
+  if (EQ (type, Qnil))
+    {
+      return result;
+    }
+
+  if (EQ (type, Qvector) || EQ (type, Qarray))
+    {
+      result = Fvector (len, args0);
+    }
+  else if (EQ (type, Qstring))
+    {
+      result = Fstring (len, args0);
+    }
+  else if (EQ (type, Qlist))
+    {
+      result = Flist (len, args0);
+    }
+  else if (EQ (type, Qbit_vector))
+    {
+      result = Fbit_vector (len, args0);
+    }
+  else
+    {
+      result = Flist (len, args0);
+      GCPRO1 (result);
+      result = call2 (Qcoerce, result, type);
+      UNGCPRO;
+    }
+
+  return result;
+}
+
+DEFUN ("map-into", Fmap_into, 2, MANY, 0, /*
+Modify RESULT-SEQUENCE using the return values of FUNCTION on SEQUENCES.
+
+RESULT-SEQUENCE and SEQUENCES can be lists or arrays.
+
+FUNCTION must accept at least as many arguments as there are SEQUENCES
+\(possibly zero).  If RESULT-SEQUENCE and the elements of SEQUENCES are not
+the same length, stop when the shortest is exhausted; any elements of
+RESULT-SEQUENCE beyond that are unmodified.
+
+Return RESULT-SEQUENCE.
+
+arguments: (RESULT-SEQUENCE FUNCTION &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object result_sequence = args[0];
+  Lisp_Object function = args[1];
+  int i;
+
+  args[0] = function;
+  args[1] = result_sequence;
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  mapcarX (len, NULL, result_sequence, function, nargs - 2, args + 2);
+
+  return result_sequence;
+}
+
+/* Call FUNCTION with NLISTS arguments repeatedly, each Nth argument
+   corresponding to the result of calling (nthcdr ITERATION-COUNT LISTS[N]),
+   until that #'nthcdr expression gives nil for some element of LISTS.
+
+   If MAPLP is zero, return LISTS[0]. Otherwise, return a list of the return
+   values from FUNCTION; if NCONCP is non-zero, nconc them together.
+
+   In contrast to mapcarX, we don't require our callers to check LISTS for
+   well-formedness, we signal wrong-type-argument if it's not a list, or
+   circular-list if it's circular. */
+
+static Lisp_Object
+maplist (Lisp_Object function, int nlists, Lisp_Object *lists, int maplp,
+	 int nconcp)
+{
+  Lisp_Object result = maplp ? lists[0] : Fcons (Qnil, Qnil), funcalled;
+  Lisp_Object nconcing[2], accum = result, *args;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  int i, j, continuing = (nlists > 0), called_count = 0;
+
+  args = alloca_array (Lisp_Object, nlists + 1);
+  args[0] = function;
+  for (i = 1; i <= nlists; ++i)
+    {
+      args[i] = Qnil;
+    }
+
+  if (nconcp)
+    {
+      nconcing[0] = result;
+      nconcing[1] = Qnil;
+      GCPRO3 (args[0], nconcing[0], result);
+      gcpro1.nvars = 1;
+      gcpro2.nvars = 2;
+    }
+  else
+    {
+      GCPRO2 (args[0], result);
+      gcpro1.nvars = 1;
+    }
+
+  while (continuing)
+    {
+      for (j = 0; j < nlists; ++j)
+	{
+	  if (CONSP (lists[j]))
+	    {
+	      args[j + 1] = lists[j];
+	      lists[j] = XCDR (lists[j]);
+	    }
+	  else if (NILP (lists[j]))
+	    {
+	      continuing = 0;
+	      break;
+	    }
+	  else
+	    {
+	      dead_wrong_type_argument (Qlistp, lists[j]);
+	    }
+	}
+      if (!continuing) break;
+      funcalled = Ffuncall (nlists + 1, args);
+      if (!maplp)
+	{
+	  if (nconcp)
+	    {
+	      /* This order of calls means we check that each list is
+		 well-formed once and once only. The last result does
+		 not have to be a list. */
+	      nconcing[1] = funcalled;
+	      nconcing[0] = bytecode_nconc2 (nconcing);
+	    }
+	  else
+	    {
+	      /* Add to the end, avoiding the need to call nreverse
+		 once we're done: */
+	      XSETCDR (accum, Fcons (funcalled, Qnil));
+	      accum = XCDR (accum);
+	    }
+	}
+
+      if (++called_count % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
+
+      for (j = 0; j < nlists; ++j)
+	{
+	  EXTERNAL_LIST_LOOP_1 (lists[j])
+	    {
+	      /* Just check the lists aren't circular, using the
+		 EXTERNAL_LIST_LOOP_1 macro. */
+	    }
+	}
+    }
+
+  if (!maplp)
+    {
+      result = XCDR (result);
+    }
+
+  RETURN_UNGCPRO (result);
+}
+
+DEFUN ("maplist", Fmaplist, 2, MANY, 0, /*
+Call FUNCTION on each sublist of LIST and LISTS.
+Like `mapcar', except applies to lists and their cdr's rather than to
+the elements themselves."
+
+arguments: (FUNCTION LIST &rest LISTS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return maplist (args[0], nargs - 1, args + 1, 0, 0);
+}
+
+DEFUN ("mapl", Fmapl, 2, MANY, 0, /*
+Like `maplist', but do not accumulate values returned by the function.
+
+arguments: (FUNCTION LIST &rest LISTS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return maplist (args[0], nargs - 1, args + 1, 1, 0);
+}
+
+DEFUN ("mapcon", Fmapcon, 2, MANY, 0, /*
+Like `maplist', but chains together the values returned by FUNCTION.
+
+FUNCTION must return a list (unless it happens to be the last
+iteration); the results will be concatenated together using `nconc'.
+
+arguments: (FUNCTION LIST &rest LISTS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return maplist (args[0], nargs - 1, args + 1, 0, 1);
+}
 
 /* Extra random functions */
 
@@ -3395,6 +3841,7 @@ length, no consing will take place.
   return old;
 }
 
+
 Lisp_Object
 add_suffix_to_symbol (Lisp_Object symbol, const Ascbyte *ascii_string)
 {
@@ -4033,6 +4480,12 @@ syms_of_fns (void)
 
   DEFSYMBOL (Qstring_lessp);
   DEFSYMBOL (Qidentity);
+  DEFSYMBOL (Qvector);
+  DEFSYMBOL (Qarray);
+  DEFSYMBOL (Qstring);
+  DEFSYMBOL (Qlist);
+  DEFSYMBOL (Qbit_vector);
+
   DEFSYMBOL (Qyes_or_no_p);
 
   DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
@@ -4109,10 +4562,19 @@ syms_of_fns (void)
   DEFSUBR (Fold_equal);
   DEFSUBR (Ffillarray);
   DEFSUBR (Fnconc);
-  DEFSUBR (Fmapcar);
+  DEFSUBR (FmapcarX);
   DEFSUBR (Fmapvector);
-  DEFSUBR (Fmapc_internal);
+  DEFSUBR (Fmapcan);
+  DEFSUBR (Fmapc);
   DEFSUBR (Fmapconcat);
+  DEFSUBR (Fmap);
+  DEFSUBR (Fmap_into);
+  Ffset (intern ("mapc-internal"), Fsymbol_function (intern ("mapc")));
+  Ffset (intern ("mapcar"), Fsymbol_function (intern ("mapcar*")));
+  DEFSUBR (Fmaplist);
+  DEFSUBR (Fmapl);
+  DEFSUBR (Fmapcon);
+
   DEFSUBR (Freplace_list);
   DEFSUBR (Fload_average);
   DEFSUBR (Ffeaturep);
