@@ -83,6 +83,7 @@ SYMBOL (Qcharacter);
 SYMBOL (Qchars);
 SYMBOL (Qcode_page);
 SYMBOL (Qcoding_system);
+SYMBOL (Qcoerce);
 SYMBOL (Qcolor);
 SYMBOL (Qcolumns);
 SYMBOL (Qcommand);

@@ -382,7 +382,7 @@ If any of these files are changed, we need to redump.")
 				(append '("-f" "batch-byte-compile-one-file")
 					(list arg))))
 			  bootstrap-other))))
-	     (mapc-internal
+	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile
 			(delete arg update-elc-files-to-compile)))

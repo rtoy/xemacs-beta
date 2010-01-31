@@ -297,10 +297,7 @@ Return t if OBJECT is an array (string, vector, or bit vector).
 */
        (object))
 {
-  return (VECTORP	(object) ||
-	  STRINGP	(object) ||
-	  BIT_VECTORP	(object))
-    ? Qt : Qnil;
+  return ARRAYP (object) ? Qt : Qnil;
 }
 
 DEFUN ("sequencep", Fsequencep, 1, 1, 0, /*
@@ -308,11 +305,7 @@ Return t if OBJECT is a sequence (list or array).
 */
        (object))
 {
-  return (LISTP		(object) ||
-	  VECTORP	(object) ||
-	  STRINGP	(object) ||
-	  BIT_VECTORP	(object))
-    ? Qt : Qnil;
+  return SEQUENCEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("markerp", Fmarkerp, 1, 1, 0, /*

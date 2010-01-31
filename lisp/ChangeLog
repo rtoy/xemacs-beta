@@ -21,6 +21,27 @@
 	Upper and lowercase mappings were reversed for some old-Cyrillic
 	chars.
 
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (mapcar*): Delete; this is now in fns.c.
+	Use #'mapc, not #'mapc-internal in a couple of places.
+	* cl-macs.el (mapc, mapcar*, map): Delete these compiler macros
+	now the corresponding functions are in fns.c; there's no run-time
+	advantage to the macros.
+	* cl-extra.el (coerce): Extend the possible conversions here a
+	little; it's not remotely comprehensive yet, though it does allow
+	running slightly more Common Lisp code than previously.
+	(cl-mapcar-many): Delete.
+	(map, maplist, mapc, mapl, mapcan, mapcon): Move these to fns.c.
+	* bytecomp.el (byte-compile-maybe-mapc):
+	Use #'mapc itself, not #'mapc-internal, now the former is in C.
+	(mapcar*): Use #'byte-compile-maybe-mapc as this function's
+	byte-compile method, now a #'mapc that can take more than one
+	sequence is in C.
+	* obsolete.el (cl-mapc): Move this compatibility alias to this file.
+	* update-elc.el (do-autoload-commands): Use #'mapc, not
+	#'mapc-internal here. 
+	
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is

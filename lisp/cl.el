@@ -366,21 +366,6 @@ If ARG is not a string, it is ignored."
 
 (defalias 'copy-seq 'copy-sequence)
 
-(defun mapcar* (cl-func cl-x &rest cl-rest)
-  "Apply FUNCTION to each element of SEQ, and make a list of the results.
-If there are several SEQs, FUNCTION is called with that many arguments,
-and mapping stops as soon as the shortest list runs out.  With just one
-SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
-`mapcar' function extended to arbitrary sequence types."
-  (if cl-rest
-      (if (or (cdr cl-rest) (nlistp cl-x) (nlistp (car cl-rest)))
-	  (cl-mapcar-many cl-func (cons cl-x cl-rest))
-	(let ((cl-res nil) (cl-y (car cl-rest)))
-	  (while (and cl-x cl-y)
-	    (push (funcall cl-func (pop cl-x) (pop cl-y)) cl-res))
-	  (nreverse cl-res)))
-    (mapcar cl-func cl-x)))
-
 (defalias 'svref 'aref)
 
 ;;; List functions.
@@ -638,9 +623,9 @@ Keywords supported:  :test :test-not :key"
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 
 ;;; Define data for indentation and edebug.
-(mapc-internal
+(mapc
  #'(lambda (entry)
-     (mapc-internal
+     (mapc
       #'(lambda (func)
 	  (put func 'lisp-indent-function (nth 1 entry))
 	  (put func 'lisp-indent-hook (nth 1 entry))

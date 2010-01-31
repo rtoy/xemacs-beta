@@ -36,6 +36,51 @@
 	has case information (or, equivalently, if one of its case
 	equivalents would contain repeated Ibytes).
 
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'mapcar*, #'mapcan, #'mapc, #'map, #'mapl, #'mapcon to C;
+	extend #'mapvector, #'mapconcat, #'mapcar to support more
+	SEQUENCES; have them all error with circular lists.
+
+	* fns.c (Fsubseq): Call CHECK_SEQUENCE here; Flength can return
+	from the debugger if it errors with a non-sequence, leading to a
+	crash in Fsubseq if sequence really is *not* a sequence.
+	(mapcarX): Rename mapcar1 to mapcarX; rework it comprehensively to
+	take an optional lisp output argument, and a varying number of
+	sequences.
+	Special-case a single list argument, as we used to, saving its
+	elements in the stack space for the results before calling
+	FUNCTION, so FUNCTION can corrupt the list all it
+	wants. dead_wrong_type_argument() in the other cases if we
+	encounter a non-cons where we expected a cons.
+	(Fmapconcat):
+	Accept further SEQUENCES after separator here. Special-case
+	the idiom (mapconcat 'identity SEQUENCE), don't even funcall.
+	(FmapcarX): Rename this from Fmapcar. Accept optional SEQUENCES.
+	(Fmapvector): Accept optional SEQUENCES.
+	(Fmapcan, Fmapc, Fmap): Move these here from cl-extra.el.
+	(Fmap_into): New function, as specified by Common Lisp.
+	(maplist): New function, the guts of the implementation of
+	Fmaplist and Fmapl. 
+	(Fmaplist, Fmapl, Fmapcon): Move these from cl-extra.el.
+	(syms_of_fns):
+	Add a few needed symbols here, for the type tests
+	used by #'map. Add the new subrs, with aliases for #'mapc-internal
+	and #'mapcar.
+
+	* general-slots.h: Declare Qcoerce here, now it's used in both
+	indent.c and fns.c
+	* indent.c (syms_of_indent): Qcoerce is gone from here.
+
+	* lisp.h: Add ARRAYP(), SEQUENCEP(), and the corresponding CHECK_*
+	macros. Declare Fbit_vector, Fstring, FmapcarX, now other files
+	need to use them.
+	* data.c (Farrayp, Fsequencep): Use ARRAYP and SEQUENCEP, just
+	added to lisp.h
+
+	* buffer.c (Fbuffer_list): Now Fmapcar has been renamed FmapcarX
+	and takes MANY arguments, update this function to reflect that.
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove internationalization rules, since the
