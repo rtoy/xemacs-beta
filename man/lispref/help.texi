@@ -555,8 +555,8 @@ it applies @var{function} to it if @var{function} is non-@code{nil}.
 Otherwise it calls @code{message} to display it in the echo area.
 
 This function expects to be called inside a
-@code{with-output-to-temp-buffer} special form, and expects
-@code{standard-output} to have the value bound by that special form.
+@code{with-output-to-temp-buffer} form, and expects
+@code{standard-output} to have the value bound by that special operator.
 For an example of its use, see the long example in @ref{Accessing
 Documentation}.
 @end defun

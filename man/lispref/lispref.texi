@@ -408,7 +408,7 @@ Kinds of Forms
 * Classifying Lists::       How to distinguish various sorts of list forms.
 * Function Forms::          Forms that call functions.
 * Macro Forms::             Forms that call macros.
-* Special Forms::           ``Special forms'' are idiosyncratic primitives,
+* Special Operators::       ``Special operators'' are idiosyncratic primitives,
                               most of them extremely important.
 * Autoloading::             Functions set up to load files
                               containing their real definitions.

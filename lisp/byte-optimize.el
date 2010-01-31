@@ -370,8 +370,8 @@
 (defun byte-optimize-form-code-walker (form for-effect)
   ;;
   ;; For normal function calls, We can just mapcar the optimizer the cdr.  But
-  ;; we need to have special knowledge of the syntax of the special forms
-  ;; like let and defun (that's why they're special forms :-).  (Actually,
+  ;; we need to have special knowledge of the syntax of the special operators
+  ;; like let and defun (that's why they're special operators :-).  (Actually,
   ;; the important aspect is that they are subrs that don't evaluate all of
   ;; their args.)
   ;;

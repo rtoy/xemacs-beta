@@ -252,8 +252,9 @@ starting with ``all other types'' which are self-evaluating forms.
 			      we find the real function via the symbol.
 * Function Forms::          Forms that call functions.
 * Macro Forms::             Forms that call macros.
-* Special Forms::           ``Special forms'' are idiosyncratic primitives,
+* Special Operators::       ``Special operators'' are idiosyncratic primitives,
                               most of them extremely important.
+                              Also known as special forms.
 * Autoloading::             Functions set up to load files
                               containing their real definitions.
 @end menu
@@ -354,7 +355,7 @@ these two symbols act like self-evaluating forms, even though
 call, or a special form, according to its first element.  These three
 kinds of forms are evaluated in different ways, described below.  The
 remaining list elements constitute the @dfn{arguments} for the function,
-macro, or special form.
+macro, or special operator.
 
   The first step in evaluating a nonempty list is to examine its first
 element.  This element alone determines what kind of form the list is
@@ -387,7 +388,7 @@ which ought to be a function or other suitable object.
 @cindex invalid function
   More precisely, we should now have a Lisp function (a lambda
 expression), a byte-code function, a primitive function, a Lisp macro, a
-special form, or an autoload object.  Each of these types is a case
+special operator, or an autoload object.  Each of these types is a case
 described in one of the following sections.  If the object is not one of
 these types, the error @code{invalid-function} is signaled.
 
@@ -531,20 +532,22 @@ expansion.
 
 @xref{Macros}, for a complete description of XEmacs Lisp macros.
 
-@node Special Forms
-@subsection Special Forms
-@cindex special form evaluation
+@node Special Operators
+@subsection Special Operators
+@cindex special operator evaluation
+@cindex special form
 
-  A @dfn{special form} is a primitive function specially marked so that
-its arguments are not all evaluated.  Most special forms define control
+  A @dfn{special operator} (historically, and less logically, a
+@dfn{special form}) is a primitive function specially marked so that
+its arguments are not all evaluated.  Most special operators define control
 structures or perform variable bindings---things which functions cannot
 do.
 
-  Each special form has its own rules for which arguments are evaluated
+  Each special operator has its own rules for which arguments are evaluated
 and which are used without evaluation.  Whether a particular argument is
 evaluated may depend on the results of evaluating other arguments.
 
-  Here is a list, in alphabetical order, of all of the special forms in
+  Here is a list, in alphabetical order, of all of the special operators in
 XEmacs Lisp with a reference to where each is described.
 
 @table @code
@@ -627,17 +630,16 @@ XEmacs Lisp with a reference to where each is described.
 @pxref{Temporary Displays}
 @end table
 
-@cindex CL note---special forms compared
+@cindex CL note---special operators compared
 @quotation
-@b{Common Lisp note:} here are some comparisons of special forms in
+@b{Common Lisp note:} here are some comparisons of special operators in
 XEmacs Lisp and Common Lisp.  @code{setq}, @code{if}, and
-@code{catch} are special forms in both XEmacs Lisp and Common Lisp.
-@code{defun} is a special form in XEmacs Lisp, but a macro in Common
-Lisp.  @code{save-excursion} is a special form in XEmacs Lisp, but
-doesn't exist in Common Lisp.  @code{throw} is a special form in
-Common Lisp (because it must be able to throw multiple values), but it
-is a function in XEmacs Lisp (which doesn't have multiple
-values).@refill
+@code{catch} are special operators in both XEmacs Lisp and Common Lisp.
+@code{defun} is a special operator in XEmacs Lisp, but a macro in Common
+Lisp.  @code{save-excursion} is a special operator in XEmacs Lisp, but
+doesn't exist in Common Lisp.  @code{throw} is a special operator in
+both Common Lisp and XEmacs Lisp (because it must be able to throw
+multiple values).@refill
 @end quotation
 
 @node Autoloading
@@ -654,14 +656,14 @@ definition loaded from that file.  @xref{Autoload}.
 @section Quoting
 @cindex quoting
 
-  The special form @code{quote} returns its single argument, as written,
+  The special operator @code{quote} returns its single argument, as written,
 without evaluating it.  This provides a way to include constant symbols
 and lists, which are not self-evaluating objects, in a program.  (It is
 not necessary to quote self-evaluating objects such as numbers, strings,
 and vectors.)
 
 @defspec quote object
-This special form returns @var{object}, without evaluating it.
+This special operator returns @var{object}, without evaluating it.
 @end defspec
 
 @cindex @samp{'} for quoting

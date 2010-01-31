@@ -46,7 +46,7 @@
 This is a file name, or nil if the source was a buffer with no associated file.
 
 If TYPE is nil or omitted, any kind of definition is acceptable.
-If TYPE is `defun', then function, subr, special form or macro definitions
+If TYPE is `defun', then function, subr, special operator or macro definitions
 are acceptable.
 If TYPE is `defvar', then variable definitions are acceptable.
 

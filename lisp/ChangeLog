@@ -1,3 +1,17 @@
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el:
+	* loadhist.el (symbol-file):
+	* help.el (describe-function-1):
+	* bytecomp.el: (byte-compile-save-current-buffer):
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* subr.el (subr-arity):
+	Change "special form" to "special operator" in these files, it's
+	the more logical term.
+
+	* subr.el (special-form-p): Provide this alias for
+	#'special-operator-p. 
+
 2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* loadup.el:
