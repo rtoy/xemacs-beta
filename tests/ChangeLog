@@ -1,3 +1,9 @@
+2010-01-30  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el:
+	* automated/search-tests.el (insert):
+	Use LF not CRLF for line endings.
+
 2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
