@@ -1,3 +1,27 @@
+2010-01-30  Ben Wing  <ben@xemacs.org>
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.c (qxeExtractAssociatedIcon):
+	* intl-auto-encap-win32.c (qxeExtractIconEx):
+	* intl-auto-encap-win32.c (qxeCreateMDIWindow):
+	* intl-auto-encap-win32.c (qxeCreateWindowStation):
+	* intl-auto-encap-win32.c (qxeDdeCreateStringHandle):
+	* intl-auto-encap-win32.c (qxeAbortSystemShutdown):
+	* intl-auto-encap-win32.c (qxeRegConnectRegistry):
+	* intl-auto-encap-win32.c (qxeGetICMProfile):
+	* intl-auto-encap-win32.h:
+	Rebuild.
+	
+	* intl-encap-win32.c:
+	* intl-encap-win32.c (qxeUpdateICMRegKey):
+	Delete manual definitions of functions with former errors in
+	Cygwin headers but no longer.  Use "override" with some functions
+	where Cygwin or VS6 accidentally omits a const declaration or
+	includes an extra one.  Use "no" on SendMessageTimeout, which
+	has an error in the VS6 prototype (you could manually fix this
+	with an ifdef to split the Cygwin vs. VS6 calls, if we ever
+	actually used this function).
+
 2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* search.c (search_buffer):

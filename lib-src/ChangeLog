@@ -1,3 +1,11 @@
+2010-01-30  Ben Wing  <ben@xemacs.org>
+
+	* make-mswin-unicode.pl:
+	Make it possible to specify an overridden prototype in cases where
+	either Cygwin or Visual Studio has errors in their headers that
+	can be corrected by falling back to a less qualified type (typically
+	without const).
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Remove make-msgfile and make-po rules.
