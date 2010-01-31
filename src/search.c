@@ -1441,7 +1441,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		      int i, j;
 		      for (i = 0; i < len && boyer_moore_ok; ++i)
 			{
-			  for (j = 0; i < len && boyer_moore_ok; ++j)
+			  for (j = i + 1; j < len && boyer_moore_ok; ++j)
 			    {
 			      if (encoded[i] == encoded[j])
 				{

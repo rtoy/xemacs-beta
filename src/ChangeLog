@@ -1,3 +1,9 @@
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (search_buffer): 
+	When checking the octets of c for identity, don't compare the
+	same octet with itself. Thank you Ben Wing!
+
 2010-01-30  Ben Wing  <ben@xemacs.org>
 
 	* intl-auto-encap-win32.c:

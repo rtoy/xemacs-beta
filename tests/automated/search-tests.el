@@ -192,22 +192,23 @@
  (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
  "not a DEBUG_XEMACS build"
  "checks that the algorithm chosen by #'search-forward is relatively sane"
- (let ((debug-xemacs-searches 1))
+ (let ((debug-xemacs-searches 1)
+       newcase)
    (with-temp-buffer
      ;;#### Ben thinks this is unnecessary.  with-temp-buffer creates
      ;;a new buffer, which automatically inherits the standard case table.
      ;;(set-case-table pristine-case-table)
-     (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
+     (insert "\n\nDer beruehmte deutsche Fleiss\n\n")
      (goto-char (point-min))
      (Assert (search-forward "Fleiss"))
      (delete-region (point-min) (point-max))
-     (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+     (insert "\n\nDer ber\xfchmte deutsche Flei\xdf\n\n")
      (goto-char (point-min))
      (Assert (search-forward "Flei\xdf"))
      (Assert-eq 'boyer-moore search-algorithm-used)
      (delete-region (point-min) (point-max))
      (when (featurep 'mule)
-       (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
+       (insert "\n\nDer ber\xfchmte deutsche Flei\xdf\n\n")
        (goto-char (point-min))
        (Assert 
         (search-forward (format "Fle%c\xdf"
@@ -220,8 +221,33 @@
        (goto-char (point-min))
        (Assert (search-forward (format "Fle%c\xdf"
                                        (make-char 'latin-iso8859-9 #xfd))))
-       (Assert-eq 'simple-search search-algorithm-used)))))
-
+       (Assert-eq 'simple-search search-algorithm-used)
+       (setq newcase (copy-case-table (standard-case-table)))
+       (put-case-table-pair (make-char 'ethiopic #x23 #x23)
+			    (make-char 'ethiopic #x23 #x25)
+			    newcase)
+       (with-case-table
+	 ;; Check that when a multidimensional character has case and two
+	 ;; repeating octets, searches involving it in the search pattern
+	 ;; use simple-search; otherwise boyer_moore() gets confused in the
+	 ;; construction of the stride table.
+	 newcase
+	 (delete-region (point-min) (point-max))
+	 (insert ?0)
+	 (insert (make-char 'ethiopic #x23 #x23))
+	 (insert ?1)
+	 (goto-char (point-min))
+	 (Assert-eql (search-forward
+		      (string (make-char 'ethiopic #x23 #x25))
+		      nil t)
+		     3)
+	 (Assert-eq 'simple-search search-algorithm-used)
+	 (goto-char (point-min))
+	 (Assert-eql (search-forward
+		      (string (make-char 'ethiopic #x23 #x27))
+		      nil t)
+		     nil)
+	 (Assert-eq 'boyer-moore search-algorithm-used))))))
 
 ;; XEmacs bug of long standing.
 
