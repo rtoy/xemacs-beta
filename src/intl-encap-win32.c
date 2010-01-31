@@ -312,7 +312,7 @@ yes GetKeyboardLayoutName
 no CreateDesktop split-sized LPDEVMODE
 yes OpenDesktop
 split EnumDesktops DESKTOPENUMPROC // callback fun differs only in string pointer type
-yes CreateWindowStation
+override HWINSTA CreateWindowStationW(LPWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES); error arg 1, VS6 prototype, missing const
 yes OpenWindowStation
 split EnumWindowStations WINSTAENUMPROC // callback fun differs only in string pointer type
 yes GetUserObjectInformation
@@ -322,7 +322,7 @@ yes GetMessage
 yes DispatchMessage
 yes PeekMessage
 skip SendMessage split messages and structures
-yes SendMessageTimeout
+no SendMessageTimeout VS6 has erroneous seventh parameter DWORD_PTR instead of PDWORD_PTR
 yes SendNotifyMessage
 yes SendMessageCallback
 no BroadcastSystemMessage win95 version not split; NT 4.0+ only
@@ -429,7 +429,7 @@ yes DlgDirListComboBox
 yes DlgDirSelectComboBoxEx
 yes DefFrameProc
 no DefMDIChildProc return value is conditionalized on _MAC, messes up parser
-yes CreateMDIWindow
+override HWND CreateMDIWindowW(LPWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM); error arg 1, VS6 prototype, missing const
 yes WinHelp
 no ChangeDisplaySettings split-sized LPDEVMODE
 no ChangeDisplaySettingsEx split-sized LPDEVMODE; NT 5.0/Win98+ only
@@ -516,7 +516,7 @@ yes GetKerningPairs
 // split-simple function pointer ICMENUMPROC
 no GetLogColorSpace split-sized LPLOGCOLORSPACE; NT 4.0+ only
 no CreateColorSpace split-sized LPLOGCOLORSPACE; NT 4.0+ only
-skip GetICMProfile NT 4.0+ only, error in Cygwin prototype
+yes GetICMProfile NT 4.0+ only, former error in Cygwin prototype but no more (Cygwin 1.7, 1-30-10)
 yes SetICMProfile NT 4.0+ only
 split EnumICMProfiles ICMENUMPROC NT 4.0+ only
 skip UpdateICMRegKey NT 4.0+ only, error in Cygwin prototype
@@ -602,14 +602,14 @@ yes ShellExecute
 yes FindExecutable
 no CommandLineToArgv Unicode-only
 yes ShellAbout
-yes ExtractAssociatedIcon
+override HICON ExtractAssociatedIconW(HINSTANCE, LPWSTR, LPWORD); error arg2, Cygwin prototype, extra const
 yes ExtractIcon
 // split-simple DRAGINFO, used ??? (docs say "Not currently supported")
 begin-bracket !defined (CYGWIN_HEADERS)
 yes DoEnvironmentSubst NT 4.0+ only
 end-bracket
 no FindEnvironmentString causes link error; NT 4.0+ only
-skip ExtractIconEx NT 4.0+ only, error in Cygwin prototype
+yes ExtractIconEx NT 4.0+ only, former error in Cygwin prototype but no more (Cygwin 1.7, 1-30-10)
 // split-simple SHFILEOPSTRUCT, used in SHFileOperation
 // split-simple SHNAMEMAPPING, used in SHFileOperation
 split SHFileOperation LPSHFILEOPSTRUCT NT 4.0+ only
@@ -853,7 +853,7 @@ file DDE.H
 file DDEML.H
 
 yes DdeInitialize
-skip DdeCreateStringHandle error in Cygwin prototype
+yes DdeCreateStringHandle former error in Cygwin prototype, but no more (Cygwin 1.7, 1-30-10)
 yes DdeQueryString
 // #### split-sized (or split-simple??? not completely obvious) structure MONHSZSTRUCT, used when DDE event MF_HSZ_INFO is sent as part of the XTYP_MONITOR transaction sent to a DDE callback; not yet handled
 
@@ -1055,7 +1055,7 @@ yes WriteConsole
 
 file WINREG.H
 
-skip RegConnectRegistry error in Cygwin prototype
+yes RegConnectRegistry former error in Cygwin prototype, but no more (Cygwin 1.7, 1-30-10)
 yes RegCreateKey
 yes RegCreateKeyEx
 yes RegDeleteKey
@@ -1077,7 +1077,7 @@ yes RegSetValue
 yes RegSetValueEx
 yes RegUnLoadKey
 yes InitiateSystemShutdown
-yes AbortSystemShutdown
+override BOOL AbortSystemShutdownW(LPWSTR); error arg 1, Cygwin prototype, extra const
 review RegDeleteKeyEx
 
 file EXCPT.H
@@ -1241,56 +1241,7 @@ qxeGetEnvironmentStrings (void)
 /*           would be encapsulatable but for Cygwin problems            */
 /************************************************************************/
 
-LONG
-qxeRegConnectRegistry (const Extbyte * lpMachineName, HKEY hKey, PHKEY phkResult)
-{
-  /* Cygwin mistakenly omits const in first argument. */
-  if (XEUNICODE_P)
-    return RegConnectRegistryW ((LPWSTR) lpMachineName, hKey, phkResult);
-  else
-    return RegConnectRegistryA ((LPSTR) lpMachineName, hKey, phkResult);
-}
-
-HSZ
-qxeDdeCreateStringHandle (DWORD idInst, const Extbyte * psz, int iCodePage)
-{
-  /* Cygwin mistakenly omits const in second argument. */
-  if (XEUNICODE_P)
-    return DdeCreateStringHandleW (idInst, (LPWSTR) psz, iCodePage);
-  else
-    return DdeCreateStringHandleA (idInst, (LPSTR) psz, iCodePage);
-}
-
-/* NOTE: NT 4.0+ only */
-UINT
-qxeExtractIconEx (const Extbyte * lpszFile, int nIconIndex, HICON FAR * phiconLarge, HICON FAR * phiconSmall, UINT nIcons)
-{
-  /* Cygwin mistakenly declares the return type as HICON. */
-  if (XEUNICODE_P)
-    return (UINT) ExtractIconExW ((LPCWSTR) lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
-  else
-    return (UINT) ExtractIconExA ((LPCSTR) lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
-}
-
 #ifdef HAVE_MS_WINDOWS
-
-/* NOTE: NT 4.0+ only */
-BOOL
-qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
-{
-#if 0 /* defined (CYGWIN_HEADERS) */ /* fixed at some point <= GCC 3.4.4 */
-  /* Cygwin mistakenly declares the second argument as DWORD. */
-  if (XEUNICODE_P)
-    return GetICMProfileW (arg1, (DWORD) arg2, (LPWSTR) arg3);
-  else
-    return GetICMProfileA (arg1, (DWORD) arg2, (LPSTR) arg3);
-#else
-  if (XEUNICODE_P)
-    return GetICMProfileW (arg1, arg2, (LPWSTR) arg3);
-  else
-    return GetICMProfileA (arg1, arg2, (LPSTR) arg3);
-#endif /* CYGWIN_HEADERS */
-}
 
 /* NOTE: NT 4.0+ only */
 BOOL

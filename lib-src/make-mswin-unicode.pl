@@ -156,6 +156,43 @@ my %bracket;
 my $current_file;
 my @current_bracket;
 
+my ($ws_re, $must_ws_re, $tok_ch) =
+  ("\\s*", "\\s+", "\\w");
+# unfortunately there is no surefire way short of
+# parsing all include files for typedefs to
+# distinguish types from parameters, and prototypes
+# appear in the include files both with and without
+# parameters -- the latter kinds appear in a very
+# different style and were obviously added later.  so
+# we rely on the fact that defined types are all
+# upper-case, and parameters generally are not, and
+# special-case the exceptions.
+my $typeword_re =
+  # note the negative lookahead assertions: the first
+  # one excludes the words "X" and "Y" from type
+  # words, since they appear as parameter names in
+  # CreateWindowEx; the second prevents "void
+  # *Argument" from being parsed as a type "void *A"
+  # followed by a parameter "rgument".
+  "(?:(?!(?:X\\b|Y\\b))(?:unsigned|int|long|const|short|va_list|[A-Z_0-9]+)(?!${tok_ch}))";
+my $typetoken_re = "(?:$typeword_re$ws_re\\**$ws_re)";
+# Regexp matching a particular argument
+my $arg_re = "(?:(?:$typetoken_re+)(?:${tok_ch}+)?(?: OPTIONAL)?)";
+# Same, but with groups to match the type and name
+my $argmatch_re = "(?:($typetoken_re+)(${tok_ch}+)?(?: OPTIONAL)?)";
+# regexp matching a parenthesized argument list in a prototype
+my $args_re = "\\(((?:${ws_re}${arg_re}${ws_re},)*${ws_re}${arg_re}${ws_re})\\)";
+# regexp matching a return type in a protype
+my $rettype_re = "(SHSTDAPI_\\(${tok_ch}+\\)|${tok_ch}" . "[A-Za-z_0-9 \t\n\r\f]*?${tok_ch})";
+# regexp matching a function name
+my $funname_re = "(${tok_ch}+)";
+# Regexp matching a function prototype, $1 = rettype, $2 = name, $3 = args
+my $fun_re = "${rettype_re}${ws_re}${funname_re}${ws_re}${args_re};";
+# Regexp matching a particular Unicode function (ending in ...W)
+my $wfun_re = "${rettype_re}${ws_re}${funname_re}W${ws_re}${args_re};";
+
+# print "regexp: $wfun_re\n";
+
 while (<>)
   {
     chomp;
@@ -176,7 +213,7 @@ while (<>)
       {
 	next if (m!^//!);
 	next if (/^[ \t]*$/);
-	if (/(file|yes|soon|no|review|skip|split|begin-bracket|end-bracket)(?: (.*))?/)
+	if (/(file|yes|soon|no|review|skip|split|begin-bracket|end-bracket|override)(?: (.*))?/)
 	  {
 	    my ($command, $parms) = ($1, $2);
 	    if ($command eq "file")
@@ -199,6 +236,15 @@ while (<>)
 	    elsif ($command eq "end-bracket")
 	      {
 		pop @current_bracket;
+	      }
+	    elsif ($command eq "override")
+	      {
+		die "Cannot parse prototype $parms" unless $parms =~ /$wfun_re(?: ?(.*))?/;
+		my ($rettype, $fun, $args, $reason) = ($1, $2, $3, $4);
+		$files{$current_file}{$fun} =
+		  [$command, $reason, $rettype, $fun, $args];
+		$bracket{$current_file}{$fun} =
+		  $current_bracket[$#current_bracket];
 	      }
 	    else
 	      {
@@ -233,31 +279,7 @@ foreach my $file (keys %files)
 
 ";
 
-    my ($ws_re, $must_ws_re, $tok_ch) =
-      ("\\s*", "\\s+", "\\w");
-    # unfortunately there is no surefire way short of
-    # parsing all include files for typedefs to
-    # distinguish types from parameters, and prototypes
-    # appear in the include files both with and without
-    # parameters -- the latter kinds appear in a very
-    # different style and were obviously added later.  so
-    # we rely on the fact that defined types are all
-    # upper-case, and parameters generally are not, and
-    # special-case the exceptions.
-    my $typeword_re =
-      # note the negative lookahead assertions: the first
-      # one excludes the words "X" and "Y" from type
-      # words, since they appear as parameter names in
-      # CreateWindowEx; the second prevents "void
-      # *Argument" from being parsed as a type "void *A"
-      # followed by a parameter "rgument".
-      "(?:(?!(?:X\\b|Y\\b))(?:unsigned|int|long|const|short|va_list|[A-Z_0-9]+)(?!${tok_ch}))";
-    my $typetoken_re = "(?:$typeword_re$ws_re\\**$ws_re)";
-    my $arg_re = "(?:($typetoken_re+)(${tok_ch}+)?(?: OPTIONAL)?)";
-    my $fun_re = "(SHSTDAPI_\\(${tok_ch}+\\)|${tok_ch}" . "[A-Za-z_0-9 \t\n\r\f]*?${tok_ch})${ws_re}(${tok_ch}+)W${ws_re}\\(((${ws_re}${arg_re}${ws_re},)*${ws_re}${arg_re}${ws_re})\\);";
-
-    # print "regexp: $fun_re\n";
-    while ($slurp =~ /$fun_re/g)
+    while ($slurp =~ /$wfun_re/g)
       {
 	my ($rettype, $fun, $args) = ($1, $2, $3);
 
@@ -271,7 +293,12 @@ foreach my $file (keys %files)
 
 	print "Processing: $fun";
 
-	my ($command, $reason) = ($files{$file}{$fun}[0], $files{$file}{$fun}[1]);
+	#my ($command, $reason) = ($files{$file}{$fun}[0], $files{$file}{$fun}[1]);
+	# Fuck perl!  There seems to be no way to write something like
+	# my ($command, $reason) = @$files{$file}{$fun};
+	# You have to use a temporary var.
+	my $filesarr = $files{$file}{$fun};
+	my ($command, $reason) = @$filesarr;
 	if (!defined ($command))
 	  {
 	    print " (no command found)\n";
@@ -327,8 +354,21 @@ foreach my $file (keys %files)
 		  {
 		    ($split_struct, $reason) = split /\s+/, $reason, 2;
 		  }
+		elsif ($command eq "override")
+		  {
+		    my ($nrettype, $nfun, $nargs) = @$filesarr[2 .. 4];
+		    $reason = "$reason.\n   NOTE: " if $reason;
+		    $reason = "${reason}Prototype manually overridden.
+         Header file claims:
+           $rettype $fun($args)
+         Overridden with:
+           $nrettype $nfun($nargs)
+         Differences in return-type qualifiers, e.g. WINAPI, are not important.
+";
+		    ($rettype, $fun, $args) = ($nrettype, $nfun, $nargs);
+		  }
 		my $argno = 0;
-		while ($args =~ /$arg_re/g)
+		while ($args =~ /$argmatch_re/g)
 		  {
 		    $argno++;
 		    my ($argtype, $argname) = ($1, $2);
