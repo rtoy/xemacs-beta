@@ -42,7 +42,7 @@ function-like objects.
 @cindex function
 In XEmacs Lisp, a @dfn{function} is anything that can be applied to
 arguments in a Lisp program.  In some cases, we use it more
-specifically to mean a function written in Lisp.  Special forms and
+specifically to mean a function written in Lisp.  Special operators and
 macros are not functions.
 
 @item command
@@ -84,7 +84,7 @@ editors; for Lisp programs, the distinction is normally unimportant.
 @cindex built-in function
 A @dfn{primitive} is a function callable from Lisp that is written in C,
 such as @code{car} or @code{append}.  These functions are also called
-@dfn{built-in} functions or @dfn{subrs}.  (Special forms are also
+@dfn{built-in} functions or @dfn{subrs}.  (Special operators are also
 considered primitives.)
 
 Usually the reason that a function is a primitives is because it is
@@ -101,11 +101,11 @@ These are described in the following section.
 @xref{Lambda Expressions}.
 @end ifinfo
 
-@item special form
-A @dfn{special form} is a primitive that is like a function but does not
+@item special operator
+A @dfn{special operator} is a primitive that is like a function but does not
 evaluate all of its arguments in the usual way.  It may evaluate only
 some of the arguments, or may evaluate them in an unusual order, or
-several times.  Many special forms are described in @ref{Control
+several times.  Many special operators are described in @ref{Control
 Structures}.
 
 @item macro
@@ -114,7 +114,7 @@ A @dfn{macro} is a construct defined in Lisp by the programmer.  It
 differs from a function in that it translates a Lisp expression that you
 write into an equivalent expression to be evaluated instead of the
 original expression.  Macros enable Lisp programmers to do the sorts of
-things that special forms can do.  @xref{Macros}, for how to define and
+things that special operators can do.  @xref{Macros}, for how to define and
 use macros.
 
 @item compiled function
@@ -267,14 +267,14 @@ argument values 1, 6 and 1 to produce the value 8.
 
   It is not often useful to write a lambda expression as the @sc{car} of
 a form in this way.  You can get the same result, of making local
-variables and giving them values, using the special form @code{let}
+variables and giving them values, using the special operator @code{let}
 (@pxref{Local Variables}).  And @code{let} is clearer and easier to use.
 In practice, lambda expressions are either stored as the function
 definitions of symbols, to produce named functions, or passed as
 arguments to other functions (@pxref{Anonymous Functions}).
 
   However, calls to explicit lambda expressions were very useful in the
-old days of Lisp, before the special form @code{let} was invented.  At
+old days of Lisp, before the special operator @code{let} was invented.  At
 that time, they were the only way to bind and initialize local
 variables.
 
@@ -472,7 +472,7 @@ these two uses of a symbol are independent and do not conflict.
 
   We usually give a name to a function when it is first created.  This
 is called @dfn{defining a function}, and it is done with the
-@code{defun} special form.
+@code{defun} special operator.
 
 @defspec defun name argument-list body-forms
 @code{defun} is the usual way to define new Lisp functions.  It
@@ -547,7 +547,7 @@ deliberate redefinition from unintentional redefinition.
 
 @defun define-function name definition
 @defunx defalias name definition
-These equivalent special forms define the symbol @var{name} as a
+These equivalent primitives define the symbol @var{name} as a
 function, with definition @var{definition} (which can be any valid Lisp
 function).
 
@@ -601,7 +601,7 @@ you write for the @var{arguments}, only their values.  These values are
 place where the arguments have already been evaluated.
 
 The argument @var{function} must be either a Lisp function or a
-primitive function.  Special forms and macros are not allowed, because
+primitive function.  Special operators and macros are not allowed, because
 they make sense only when given the ``unevaluated'' argument
 expressions.  @code{funcall} cannot provide these because, as we saw
 above, it never knows them in the first place.
@@ -637,7 +637,7 @@ each individual element becomes an argument.
 
 @code{apply} returns the result of calling @var{function}.  As with
 @code{funcall}, @var{function} must either be a Lisp function or a
-primitive function; special forms and macros do not make sense in
+primitive function; special operators and macros do not make sense in
 @code{apply}.
 
 @example
@@ -830,12 +830,12 @@ a number by two:
 @end example
 
 @noindent
-In such cases, we usually use the special form @code{function} instead
+In such cases, we usually use the special operator @code{function} instead
 of simple quotation to quote the anonymous function.
 
 @defspec function function-object
 @cindex function quoting
-This special form returns @var{function-object} without evaluating it.
+This special operator returns @var{function-object} without evaluating it.
 In this, it is equivalent to @code{quote}.  However, it serves as a
 note to the XEmacs Lisp compiler that @var{function-object} is intended
 to be used only as a function, and therefore can safely be compiled.

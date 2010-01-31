@@ -4072,7 +4072,7 @@ function quoting" (car form))))
 	       (car form)))
 	  (cdr form))))
 
-;;; other tricky macro-like special-forms
+;;; other tricky macro-like special-operators
 
 (byte-defop-compiler-1 catch)
 (byte-defop-compiler-1 unwind-protect)
@@ -4167,7 +4167,7 @@ function quoting" (car form))))
 
 (defun byte-compile-save-current-buffer (form)
   (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
-      ;; `save-current-buffer' special form is not available in XEmacs 19.
+      ;; `save-current-buffer' special operator is not available in XEmacs 19.
       (byte-compile-form
        `(let ((_byte_compiler_save_buffer_emulation_closure_ (current-buffer)))
 	  (unwind-protect

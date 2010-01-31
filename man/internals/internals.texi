@@ -451,7 +451,7 @@ Evaluation; Stack Frames; Bindings
 
 * Evaluation::                  
 * Dynamic Binding; The specbinding Stack; Unwind-Protects::  
-* Simple Special Forms::        
+* Simple Special Operators::        
 * Catch and Throw::             
 * Error Trapping::              
 
@@ -3518,7 +3518,7 @@ the XEmacs code.
 This module contains all of the functions to handle the flow of control.
 This includes the mechanisms of defining functions, calling functions,
 traversing stack frames, and binding variables; the control primitives
-and other special forms such as @code{while}, @code{if}, @code{eval},
+and other special operators such as @code{while}, @code{if}, @code{eval},
 @code{let}, @code{and}, @code{or}, @code{progn}, etc.; handling of
 non-local exits, unwind-protects, and exception handlers; entering the
 debugger; methods for the subr Lisp object type; etc.  It does
@@ -5323,7 +5323,7 @@ interfacing the C function so that Lisp can call it are handled by a few
 C macros.  The only way to really understand how to write new C code is
 to read the source, but we can explain some things here.
 
-An example of a special form is the definition of @code{prog1}, from
+An example of a special operator is the definition of @code{prog1}, from
 @file{eval.c}.  (An ordinary function would have the same general
 appearance.)
 
@@ -5404,7 +5404,7 @@ function @code{prog1} allows a minimum of one argument.
 @item max_args
 This is the maximum number of arguments that the function accepts, if
 there is a fixed maximum.  Alternatively, it can be @code{UNEVALLED},
-indicating a special form that receives unevaluated arguments, or
+indicating a special operator that receives unevaluated arguments, or
 @code{MANY}, indicating an unlimited number of evaluated arguments (the
 C equivalent of @code{&rest}).  Both @code{UNEVALLED} and @code{MANY}
 are macros.  If @var{max_args} is a number, it may not be less than
@@ -5457,7 +5457,7 @@ reserved words (like @code{default}) or global symbols (like
 or errors.
 
 A Lisp function with @w{@var{max_args} = @code{UNEVALLED}} is a
-@w{@dfn{special form}}; its arguments are not evaluated.  Instead it
+@w{@dfn{special operator}}; its arguments are not evaluated.  Instead it
 receives one argument of type @code{Lisp_Object}, a (Lisp) list of the
 unevaluated arguments, conventionally named @code{(args)}.
 
@@ -8954,7 +8954,7 @@ Not yet documented.
 @menu
 * Evaluation::                  
 * Dynamic Binding; The specbinding Stack; Unwind-Protects::  
-* Simple Special Forms::        
+* Simple Special Operators::        
 * Catch and Throw::             
 * Error Trapping::              
 @end menu
@@ -9090,7 +9090,7 @@ arguments are given as separate C arguments rather than being passed as
 an array).  @code{apply1()} uses @code{Fapply()} while the others use
 @code{Ffuncall()} to do the real work.
 
-@node Dynamic Binding; The specbinding Stack; Unwind-Protects, Simple Special Forms, Evaluation, Evaluation; Stack Frames; Bindings
+@node Dynamic Binding; The specbinding Stack; Unwind-Protects, Simple Special Operators, Evaluation, Evaluation; Stack Frames; Bindings
 @section Dynamic Binding; The specbinding Stack; Unwind-Protects
 @cindex dynamic binding; the specbinding stack; unwind-protects
 @cindex binding; the specbinding stack; unwind-protects, dynamic
@@ -9148,9 +9148,10 @@ a local-variable binding (@code{func} is 0, @code{symbol} is not
 the symbol's value).
 @end enumerate
 
-@node Simple Special Forms, Catch and Throw, Dynamic Binding; The specbinding Stack; Unwind-Protects, Evaluation; Stack Frames; Bindings
-@section Simple Special Forms
-@cindex special forms, simple
+@node Simple Special Operators, Catch and Throw, Dynamic Binding; The specbinding Stack; Unwind-Protects, Evaluation; Stack Frames; Bindings
+@section Simple Special Operators
+@cindex special operators, simple
+@cindex special forms
 
 @code{or}, @code{and}, @code{if}, @code{cond}, @code{progn},
 @code{prog1}, @code{prog2}, @code{setq}, @code{quote}, @code{function},
@@ -9166,7 +9167,7 @@ typically called in real life only in interpreted code, since the byte
 compiler knows how to convert calls to these functions directly into
 byte code.
 
-@node Catch and Throw, Error Trapping, Simple Special Forms, Evaluation; Stack Frames; Bindings
+@node Catch and Throw, Error Trapping, Simple Special Operators, Evaluation; Stack Frames; Bindings
 @section Catch and Throw
 @cindex catch and throw
 @cindex throw, catch and

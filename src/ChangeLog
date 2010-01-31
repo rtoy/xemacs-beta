@@ -1,5 +1,15 @@
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* symbols.c (Fspecial_operator_p, syms_of_symbols):
+	* eval.c (print_subr, Finteractive_p, Ffuncall)
+	(Ffunction_min_args, Ffunction_max_args, vars_of_eval):
+	* editfns.c:
+	* data.c (Fsubr_max_args):
+	* doc.c (Fbuilt_in_symbol_file):
+	Change "special form" to "special operator" in our sources.
+
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* search.c (search_buffer): 
 	When checking the octets of c for identity, don't compare the
 	same octet with itself. Thank you Ben Wing!

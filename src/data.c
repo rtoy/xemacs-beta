@@ -342,7 +342,7 @@ Return minimum number of args built-in function SUBR may be called with.
 
 DEFUN ("subr-max-args", Fsubr_max_args, 1, 1, 0, /*
 Return maximum number of args built-in function SUBR may be called with,
-or nil if it takes an arbitrary number of arguments or is a special form.
+or nil if it takes an arbitrary number of arguments or is a special operator.
 */
        (subr))
 {

@@ -427,7 +427,7 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 {
   Lisp_Subr *subr = XSUBR (obj);
   const CIbyte *header =
-    (subr->max_args == UNEVALLED) ? "#<special-form " : "#<subr ";
+    (subr->max_args == UNEVALLED) ? "#<special-operator " : "#<subr ";
   const CIbyte *name = subr_name (subr);
   const CIbyte *trailer = subr->prompt ? " (interactive)>" : ">";
 
@@ -823,7 +823,7 @@ signal_call_debugger (Lisp_Object conditions,
 /*		       The basic special forms				*/
 /************************************************************************/
 
-/* Except for Fprogn(), the basic special forms below are only called
+/* Except for Fprogn(), the basic special operators below are only called
    from interpreted code.  The byte compiler turns them into bytecodes. */
 
 DEFUN ("or", For, 0, UNEVALLED, 0, /*
@@ -3302,7 +3302,7 @@ and input is currently coming from the keyboard (not in keyboard macro).
     btp = btp->next;
 
   /* If this isn't a byte-compiled function, then we may now be
-     looking at several frames for special forms.  Skip past them.  */
+     looking at several frames for special operators.  Skip past them.  */
   while (btp &&
 	 btp->nargs == UNEVALLED)
     btp = btp->next;
@@ -4060,7 +4060,7 @@ arguments: (FUNCTION &rest ARGS)
 	  val = SUBR_FUNCTION (subr, MANY) (fun_nargs, fun_args);
 	  PROFILE_EXIT_FUNCTION ();
 	}
-      else if (max_args == UNEVALLED) /* Can't funcall a special form */
+      else if (max_args == UNEVALLED) /* Can't funcall a special operator */
 	{
           /* Ugh, ugh, ugh. */
           if (EQ (fun, XSYMBOL_FUNCTION (Qthrow)))
@@ -4243,7 +4243,7 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 DEFUN ("function-min-args", Ffunction_min_args, 1, 1, 0, /*
 Return the minimum number of arguments a function may be called with.
 The function may be any form that can be passed to `funcall',
-any special form, or any macro.
+any special operator, or any macro.
 
 To check if a function can be called with a specified number of
 arguments, use `function-allows-args'.
@@ -4256,9 +4256,9 @@ arguments, use `function-allows-args'.
 DEFUN ("function-max-args", Ffunction_max_args, 1, 1, 0, /*
 Return the maximum number of arguments a function may be called with.
 The function may be any form that can be passed to `funcall',
-any special form, or any macro.
+any special operator, or any macro.
 If the function takes an arbitrary number of arguments or is
-a built-in special form, nil is returned.
+a built-in special operator, nil is returned.
 
 To check if a function can be called with a specified number of
 arguments, use `function-allows-args'.
@@ -4415,7 +4415,7 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object args[])
    A multiple value object is returned by #'values if:
 
    -- The number of arguments to #'values is not one, and: 
-   -- Some special form in the call stack is prepared to handle more than
+   -- Some special operator in the call stack is prepared to handle more than
    one multiple value.
    
    The return value of #'values-list is analogous to that of #'values.
@@ -4430,7 +4430,7 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object args[])
    objects should be converted to heap allocation at that point.
 
    The specific multiple values saved and returned depend on how many
-   multiple-values special forms in the stack are interested in; for
+   multiple-values special operators in the stack are interested in; for
    example, if #'multiple-value-call is somewhere in the call stack, all
    values passed to #'values will be saved and returned.  If an expansion of
    #'multiple-value-setq with 10 SYMS is the only part of the call stack
@@ -7158,8 +7158,8 @@ unwind-protects, as well as function calls, were made.
 
 DEFUN ("backtrace-frame", Fbacktrace_frame, 1, 1, 0, /*
 Return the function and arguments NFRAMES up from current execution point.
-If that frame has not evaluated the arguments yet (or is a special form),
-the value is (nil FUNCTION ARG-FORMS...).
+If that frame has not evaluated the arguments yet (or involves a special
+operator), the value is (nil FUNCTION ARG-FORMS...).
 If that frame has evaluated its arguments and called its function already,
 the value is (t FUNCTION ARG-VALUES...).
 A &rest arg is represented as the tail of the list ARG-VALUES.
@@ -7527,7 +7527,7 @@ If due to `eval' entry, one arg, t.
 The exclusive upper bound on the number of multiple values. 
 
 This applies to `values', `values-list', `multiple-value-bind' and related
-macros and special forms.
+macros and special operators.
 */);
   Vmultiple_values_limit = EMACS_INT_MAX > INT_MAX ? INT_MAX : EMACS_INT_MAX;
 
