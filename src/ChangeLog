@@ -1,3 +1,19 @@
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (internal_equalp):
+	Use bytecode_arithcompare, which takes two args, instead of
+	passing a stack pointer to Feqlsign.
+	Use CANONCASE(), not DOWNCASE(), for case-insensitive character
+	comparison.
+	Correct a comment here.
+	* casefiddle.c (casify_object): New operation in this function,
+	CASE_CANONICALIZE.
+	(Fcanoncase): New function, used for case-insensitive comparison.
+	* lisp.h:
+	Make Fcanoncase, bytecode_arithcompare visible here.
+	* bytecode.c (bytecode_arithcompare):
+	Make this visible to other files.
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (common_init_alloc_early):
