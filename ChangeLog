@@ -1,3 +1,12 @@
+2010-01-31  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (TAB):
+	Say "This Xft feature" rather than just "This feature" to make it
+	possible to more safely filter out the warning in my `runcc'
+	script without the possibility of filtering out genuinely
+	important warnings.
+	* configure: Regenerate.
+
 2010-01-23  Ben Wing  <ben@xemacs.org>
 
 	* configure:

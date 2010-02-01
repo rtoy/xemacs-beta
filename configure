@@ -20869,7 +20869,7 @@ case "$with_menubars" in
 esac
 if test "$with_xft_menubars" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in menubars."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
@@ -20898,12 +20898,12 @@ case "$with_widgets" in
 esac
 if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 if test "$with_xft_gauges" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
-  echo "      WARNING: This feature will be replaced with a face."
-  echo "      WARNING: This feature not yet implemented; setting ignored."
+  echo "      WARNING: This Xft feature will be replaced with a face."
+  echo "      WARNING: This Xft feature not yet implemented; setting ignored."
 fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."
