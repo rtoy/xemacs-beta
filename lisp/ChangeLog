@@ -173,6 +173,13 @@
 	Remove support in our generated code for emacs versions where
 	keywords are not self-quoting.
 
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (equalp):
+	Remove special treatment for an #'equalp with a single character
+	constant argument, it was incorrect (it used #'downcase instead of
+	#'canoncase).
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* cl-extra.el:

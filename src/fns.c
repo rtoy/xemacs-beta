@@ -2888,15 +2888,12 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
   /* 2. If both numbers, compare with `='. */
   if (NUMBERP (obj1) && NUMBERP (obj2))
     {
-      Lisp_Object args[2];
-      args[0] = obj1;
-      args[1] = obj2;
-      return !NILP (Feqlsign (2, args));
+      return (0 == bytecode_arithcompare (obj1, obj2));
     }
 
   /* 3. If characters, compare case-insensitively. */
   if (CHARP (obj1) && CHARP (obj2))
-    return DOWNCASE (0, XCHAR (obj1)) == DOWNCASE (0, XCHAR (obj2));
+    return CANONCASE (0, XCHAR (obj1)) == CANONCASE (0, XCHAR (obj2));
 
   /* 4. If arrays of different types, compare their lengths, and
         then compare element-by-element. */
@@ -2909,7 +2906,7 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	EMACS_INT i;
 	EMACS_INT l1 = XINT (Flength (obj1));
 	EMACS_INT l2 = XINT (Flength (obj2));
-	/* Both arrays, but of different types */
+	/* Both arrays, but of different lengths */
 	if (l1 != l2)
 	  return 0;
 	for (i = 0; i < l1; i++)
