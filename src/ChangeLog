@@ -2188,6 +2188,21 @@
 	DEFER_GETTEXT() from error messages in sysdep.c and instead use
 	special comments /* @@@begin-snarf@@@ */ and /* @@@end-snarf@@@ */
 	that the message snarfer presumably knows about.
+	* objects-gtk-impl.h:
+	* objects-gtk-impl.h (XCOLOR_INSTANCE_GTK_COLOR):
+	* objects-gtk-impl.h (XFONT_INSTANCE_GTK_FONT):
+	* objects-x-impl.h (XCOLOR_INSTANCE_X_COLOR):
+	* objects-x-impl.h (XFONT_INSTANCE_X_FONT):
+	Define XCOLOR_INSTANCE_X_COLOR, XCOLOR_INSTANCE_GTK_COLOR,
+	XFONT_INSTANCE_X_FONT, XFONT_INSTANCE_GTK_FONT for convenience
+	purposes.  Fixes compile bug in redisplay-xlike-inc.c.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* compiler.h:
+	Create a USED() macro to force unused-var warnings to go away,
+	in certain cases where it's inconvenient to do otherwise (e.g.
+	when THIS_IS_GTK in redisplay-xlike-inc.c).
 	
 	Create build_ascstring() and use it in many instances in place
 	of build_string().  The purpose of having Ascbyte * variants is
