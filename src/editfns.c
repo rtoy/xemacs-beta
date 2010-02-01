@@ -2131,8 +2131,8 @@ DEFUN ("save-restriction", Fsave_restriction, 0, UNEVALLED, 0, /*
 Execute BODY, saving and restoring current buffer's restrictions.
 The buffer's restrictions make parts of the beginning and end invisible.
 \(They are set up with `narrow-to-region' and eliminated with `widen'.)
-This special form, `save-restriction', saves the current buffer's restrictions
-when it is entered, and restores them when it is exited.
+This special operator, `save-restriction', saves the current buffer's
+restrictions when it is entered, and restores them when it is exited.
 So any `narrow-to-region' within BODY lasts only until the end of the form.
 The old restrictions settings are restored
 even in case of abnormal exit (throw or error).
@@ -2258,7 +2258,7 @@ If BUFFER is nil, the current buffer is assumed.
   x2 = XCHAR (character2);
 
   return (!NILP (b->case_fold_search)
-	  ? DOWNCASE (b, x1) == DOWNCASE (b, x2)
+	  ? CANONCASE (b, x1) == CANONCASE (b, x2)
 	  : x1 == x2)
     ? Qt : Qnil;
 }

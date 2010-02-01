@@ -876,7 +876,7 @@ those cases it's probably best to use @code{add-spec-to-specifier} or
 @end defun
 
 @defspec let-specifier specifier-list &rest body
-This special form temporarily adds specifications to specifiers,
+This macro temporarily adds specifications to specifiers,
 evaluates forms in @var{body} and restores the specifiers to their
 previous states.  The specifiers and their temporary specifications are
 listed in @var{specifier-list}.
@@ -892,11 +892,10 @@ The format of @var{specifier-list} is
 @var{locale}.  @var{locale}, @var{tag-set} and @var{how-to-add} have the
 same meaning as in @code{add-spec-to-specifier}.
 
-This special form is implemented as a macro; the code resulting from
-macro expansion will add specifications to specifiers using
-@code{add-spec-to-specifier}.  After forms in @var{body} are evaluated,
-the temporary specifications are removed and old specifier spec-lists
-are restored.
+The code resulting from macro expansion will add specifications to
+specifiers using @code{add-spec-to-specifier}.  After forms in
+@var{body} are evaluated, the temporary specifications are removed and
+old specifier spec-lists are restored.
 
 @var{locale}, @var{tag-set} and @var{how-to-add} may be omitted, and
 default to @code{nil}.  The value of the last form in @var{body} is

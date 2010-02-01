@@ -21,22 +21,21 @@
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 ** Boston, MA 02111-1301, USA.  */
-*/
 
 #include <config.h>
 
 #include "lisp.h"
-#include "console-gtk.h"
-#include "objects-gtk.h"
-#include "gtk-xemacs.h"
+
 #include "device.h"
+#include "faces.h"
 #include "glyphs.h"
 #include "window.h"
-#include "faces.h"
-#include "event-gtk.h"
+
 #include "frame-impl.h"
 #include "console-gtk-impl.h"
 #include "device-impl.h"
+#include "gtk-xemacs.h"
+#include "objects-gtk.h"
 
 extern Lisp_Object Vmodeline_face;
 extern Lisp_Object Vscrollbar_on_left_p;

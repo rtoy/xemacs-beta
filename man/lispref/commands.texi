@@ -102,8 +102,8 @@ does.
 @cindex interactive function
 
   A Lisp function becomes a command when its body contains, at top
-level, a form that calls the special form @code{interactive}.  This
-form does nothing when actually executed, but its presence serves as a
+level, a form that calls the special operator @code{interactive}.  This
+operator does nothing when actually executed, but its presence serves as a
 flag to indicate that interactive calling is permitted.  Its argument
 controls the reading of arguments for an interactive call.
 
@@ -122,7 +122,7 @@ makes a Lisp function an interactively-callable command.
 
 @defspec interactive arg-descriptor
 @cindex argument descriptors
-This special form declares that the function in which it appears is a
+This special operator declares that the function in which it appears is a
 command, and that it may therefore be called interactively (via
 @kbd{M-x} or by entering a key sequence bound to it).  The argument
 @var{arg-descriptor} declares how to compute the arguments to the

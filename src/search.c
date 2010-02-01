@@ -1425,6 +1425,37 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
                           break;
                         }
                     }
+
+		  if (ichar_len (c) > 2)
+		    {
+		      /* Case-equivalence plus repeated octets throws off
+			 the construction of the stride table; avoid this.
+
+		         It should be possible to correct boyer_moore to
+		         behave correctly even in this case--it doesn't have
+		         problems with repeated octets when case conversion
+		         is not involved--but this is not a critical
+		         issue. */
+		      Ibyte encoded[MAX_ICHAR_LEN];
+		      Bytecount len = set_itext_ichar (encoded, c);
+		      int i, j;
+		      for (i = 0; i < len && boyer_moore_ok; ++i)
+			{
+			  for (j = i + 1; j < len && boyer_moore_ok; ++j)
+			    {
+			      if (encoded[i] == encoded[j])
+				{
+				  boyer_moore_ok = 0;
+				}
+			    }
+			}
+
+		      if (0 == boyer_moore_ok)
+			{
+			  break;
+			}
+		    }
+			  
                 } while (c != starting_c);
 
               if (!checked)
@@ -1779,7 +1810,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
       if (!NILP (trt))
 	{
 #ifdef MULE
-	  Ichar ch, untranslated;
+	  Ichar ch = -1, untranslated;
+	  Ibyte byte;
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
@@ -1829,16 +1861,23 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
                      for charset_base.) */
                   assert (1 == count || starting_ch != ch);
 		}
+	      {
+		Ibyte tmp[MAX_ICHAR_LEN];
+		Bytecount chlen;
+
+		chlen = set_itext_ichar (tmp, ch);
+		byte = tmp[chlen - 1];
+	      }
 	    }
 	  else
 	    {
-	      ch = *ptr;
+	      byte = *ptr;
 	      this_translated = 0;
+	      ch = -1;
 	    }
-	  if (ch > 0400)
-	    j = ((unsigned char) ch | 0200);
-	  else
-	    j = (unsigned char) ch;
+
+	  /* BYTE = last byte of character CH when represented as text */
+	  j = byte;
 	      
 	  if (i == infinity)
 	    stride_for_teases = BM_tab[j];
@@ -1849,6 +1888,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	    {
 	      Ichar starting_ch = ch;
 	      EMACS_INT starting_j = j;
+
+	      text_checking_assert (valid_ichar_p (ch));
 	      do
 		{
 		  ch = TRANSLATE (inverse_trt, ch);
@@ -1859,20 +1900,27 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
                   if (ch > 0xFF && buffer_nothing_greater_than_0xff)
                     continue;
 
-                  if (ch > 0400)
-                    j = ((unsigned char) ch | 0200);
-                  else
-                    j = (unsigned char) ch;
 
+		  /* Retrieve last byte of character CH when represented as
+		     text */
+		  {
+		    Ibyte tmp[MAX_ICHAR_LEN];
+		    Bytecount chlen;
+
+		    chlen = set_itext_ichar (tmp, ch);
+		    j = tmp[chlen - 1];
+		  }
+	      
                   /* For all the characters that map into CH, set up
                      simple_translate to map the last byte into
                      STARTING_J.  */
                   simple_translate[j] = (Ibyte) starting_j;
                   BM_tab[j] = dirlen - i;
 
-		} while (ch != starting_ch);
+		}
+	      while (ch != starting_ch);
 	    }
-#else
+#else /* not MULE */
 	  EMACS_INT k;
 	  j = *ptr;
 	  k = (j = TRANSLATE (trt, j));
@@ -1886,7 +1934,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	      simple_translate[j] = (Ibyte) k;
 	      BM_tab[j] = dirlen - i;
 	    }
-#endif
+#endif /* (not) MULE */
 	}
       else
 	{

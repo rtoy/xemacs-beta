@@ -137,7 +137,7 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   Lisp_Range_Table *rt1 = XRANGE_TABLE (obj1);
   Lisp_Range_Table *rt2 = XRANGE_TABLE (obj2);
@@ -153,7 +153,7 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 
       if (rte1->first != rte2->first
 	  || rte1->last != rte2->last
-	  || !internal_equal (rte1->val, rte2->val, depth + 1))
+	  || !internal_equal_0 (rte1->val, rte2->val, depth + 1, foldcase))
 	return 0;
     }
 

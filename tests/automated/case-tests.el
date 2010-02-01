@@ -29,17 +29,30 @@
 
 ;;; Commentary:
 
-;; Test case-table related functionality.
+;; Test case-table related functionality.  See test-harness.el for
+;; instructions on how to run these tests.
 
-(defvar pristine-case-table nil
-  "The standard case table, without manipulation from case-tests.el")
+;; NOTE NOTE NOTE: See also:
+;;
+;; (1) regexp-tests.el, for case-related regexp searching.
+;; (2) search-tests.el, for case-related non-regexp searching.
+;; (3) lisp-tests.el, for case-related comparisons with `equalp'.
 
-(setq pristine-case-table (or
-			   ;; This is the compiled run; we've retained
-			   ;; it from the interpreted run.
-			   pristine-case-table 
-			   ;; This is the interpreted run; set it.
-			   (copy-case-table (standard-case-table))))
+;; NOTE NOTE NOTE: There is some domain overlap among case-tests.el,
+;; lisp-tests.el, regexp-tests.el, and search-tests.el.  The current rule
+;; for what goes where is:
+;;
+;; (1) Anything regexp-related goes in regexp-tests.el, including searches.
+;; (2) Non-regexp searches go in search-tests.el.  This includes case-folding
+;;     searches in the situation where the test tests both folding and
+;;     non-folding behavior.
+;; (3) Anything else that involves case-testing but in an ancillary manner
+;;     goes into whichever primary area it is involved in (e.g. searches for
+;;     search-tests.el, Lisp primitives in lisp-tests.el).  But if it is
+;;     primarily case-related and happens to involve other areas in an
+;;     ancillary manner, it goes into case-tests.el.  This includes, for
+;;     example, the Unicode case map torture tests.
+
 
 (Assert (case-table-p (standard-case-table)))
 ;; Old case table test.
@@ -161,176 +174,6 @@
    (string=
     (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")))
-
-(with-temp-buffer
-  (insert "Test Buffer")
-  (let ((case-fold-search t))
-    (goto-char (point-min))
-    (Assert-eq (search-forward "test buffer" nil t) 12)
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test buffer" nil t) 12)
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test Buffer" nil t) 12)
-
-    (setq case-fold-search nil)
-    (goto-char (point-min))
-    (Assert (not (search-forward "test buffer" nil t)))
-    (goto-char (point-min))
-    (Assert (not (search-forward "Test buffer" nil t)))
-    (goto-char (point-min))
-    (Assert-eq (search-forward "Test Buffer" nil t) 12)))
-
-(with-temp-buffer
-  (insert "abcdefghijklmnäopqrstuÄvwxyz")
-  ;; case insensitive
-  (Assert (not (search-forward "ö" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "ä" nil t))
-  (Assert-eq 24 (search-forward "ä" nil t))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "Ä" nil t))
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "ä" nil t))
-  (Assert-eq 15 (search-backward "ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "Ä" nil t))
-  (Assert-eq 15 (search-backward "Ä" nil t))
-  ;; case sensitive
-  (setq case-fold-search nil)
-  (goto-char (point-min))
-  (Assert (not (search-forward "ö" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 16 (search-forward "ä" nil t))
-  (Assert (not (search-forward "ä" nil t)))
-  (goto-char (point-min))
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char 16)
-  (Assert-eq 24 (search-forward "Ä" nil t))
-  (goto-char (point-max))
-  (Assert-eq 15 (search-backward "ä" nil t))
-  (goto-char 15)
-  (Assert (not (search-backward "ä" nil t)))
-  (goto-char (point-max))
-  (Assert-eq 23 (search-backward "Ä" nil t))
-  (Assert (not (search-backward "Ä" nil t))))
-
-(with-temp-buffer
-  (insert "aaaaäÄäÄäÄäÄäÄbbbb")
-  (goto-char (point-min))
-  (Assert-eq 15 (search-forward "ää" nil t 5))
-  (goto-char (point-min))
-  (Assert (not (search-forward "ää" nil t 6)))
-  (goto-char (point-max))
-  (Assert-eq 5 (search-backward "ää" nil t 5))
-  (goto-char (point-max))
-  (Assert (not (search-backward "ää" nil t 6))))
-
-(when (featurep 'mule)
-  (let* ((hiragana-a (make-char 'japanese-jisx0208 36 34))
-	 (a-diaeresis ?ä)
-	 (case-table (copy-case-table (standard-case-table)))
-	 (str-hiragana-a (char-to-string hiragana-a))
-	 (str-a-diaeresis (char-to-string a-diaeresis))
-	 (string (concat str-hiragana-a str-a-diaeresis)))
-    (put-case-table-pair hiragana-a a-diaeresis case-table)
-    (with-temp-buffer
-      (set-case-table case-table)
-      (insert hiragana-a "abcdefg" a-diaeresis)
-      ;; forward
-      (goto-char (point-min))
-      (Assert (not (search-forward "ö" nil t)))
-      (goto-char (point-min))
-      (Assert-eq 2 (search-forward str-hiragana-a nil t))
-      (goto-char (point-min))
-      (Assert-eq 2 (search-forward str-a-diaeresis nil t))
-      (goto-char (1+ (point-min)))
-      (Assert-eq (point-max)
-		  (search-forward str-hiragana-a nil t))
-      (goto-char (1+ (point-min)))
-      (Assert-eq (point-max)
-		  (search-forward str-a-diaeresis nil t))
-      ;; backward
-      (goto-char (point-max))
-      (Assert (not (search-backward "ö" nil t)))
-      (goto-char (point-max))
-      (Assert-eq (1- (point-max)) (search-backward str-hiragana-a nil t))
-      (goto-char (point-max))
-      (Assert-eq (1- (point-max)) (search-backward str-a-diaeresis nil t))
-      (goto-char (1- (point-max)))
-      (Assert-eq 1 (search-backward str-hiragana-a nil t))
-      (goto-char (1- (point-max)))
-      (Assert-eq 1 (search-backward str-a-diaeresis nil t))
-      (replace-match "a")
-      (Assert (looking-at (format "abcdefg%c" a-diaeresis))))
-    (with-temp-buffer
-      (set-case-table case-table)
-      (insert string)
-      (insert string)
-      (insert string)
-      (insert string)
-      (insert string)
-      (goto-char (point-min))
-      (Assert-eq 11 (search-forward string nil t 5))
-      (goto-char (point-min))
-      (Assert (not (search-forward string nil t 6)))
-      (goto-char (point-max))
-      (Assert-eq 1 (search-backward string nil t 5))
-      (goto-char (point-max))
-      (Assert (not (search-backward string nil t 6))))))
-
-;; Bug reported in http://mid.gmane.org/y9lk5lu5orq.fsf@deinprogramm.de from
-;; Michael Sperber. Fixed 2008-01-29.
-(with-string-as-buffer-contents "\n\nDer beruhmte deutsche Flei\xdf\n\n"
-  (goto-char (point-min))
-  (Assert (search-forward "Flei\xdf")))
-
-(with-temp-buffer
-  (let ((target "M\xe9zard")
-        (debug-xemacs-searches 1))
-    (Assert (not (search-forward target nil t)))
-    (insert target)
-    (goto-char (point-min))
-    ;; #### search-algorithm-used is simple-search after the following,
-    ;; which shouldn't be necessary; it should be possible to use
-    ;; Boyer-Moore. 
-    ;;
-    ;; But searches for ASCII strings in buffers with nothing above ?\xFF
-    ;; use Boyer Moore with the current implementation, which is the
-    ;; important thing for the Gnus use case.
-    (Assert= (1+ (length target)) (search-forward target nil t))))
-
-(Skip-Test-Unless
- (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
- "not a DEBUG_XEMACS build"
- "checks that the algorithm chosen by #'search-forward is relatively sane"
- (let ((debug-xemacs-searches 1))
-   (with-temp-buffer
-     (set-case-table pristine-case-table)
-     (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
-     (goto-char (point-min))
-     (Assert (search-forward "Fleiss"))
-     (delete-region (point-min) (point-max))
-     (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
-     (goto-char (point-min))
-     (Assert (search-forward "Flei\xdf"))
-     (Assert-eq 'boyer-moore search-algorithm-used)
-     (delete-region (point-min) (point-max))
-     (when (featurep 'mule)
-       (insert "\n\nDer beruhmte deutsche Flei\xdf\n\n")
-       (goto-char (point-min))
-       (Assert 
-        (search-forward (format "Fle%c\xdf"
-                                (make-char 'latin-iso8859-9 #xfd))))
-       (Assert-eq 'boyer-moore search-algorithm-used)
-       (insert (make-char 'latin-iso8859-9 #xfd))
-       (goto-char (point-min))
-       (Assert (search-forward "Flei\xdf"))
-       (Assert-eq 'simple-search search-algorithm-used) 
-       (goto-char (point-min))
-       (Assert (search-forward (format "Fle%c\xdf"
-                                       (make-char 'latin-iso8859-9 #xfd))))
-       (Assert-eq 'simple-search search-algorithm-used)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1601,62 +1444,113 @@ For example, if CH is ?\\u00F1, the return value will be the string
 	  (?\U00010426 ?\U0001044E) ;; DESERET CAPITAL LETTER OI
 	  (?\U00010427 ?\U0001044F) ;; DESERET CAPITAL LETTER EW
 	  ))
-       (uni-casetab (loop
-		      with case-table = (make-case-table)
-		      for (uc lc) in uni-mappings
-		      do (put-case-table-pair uc lc case-table)
-		      finally return case-table))
-       ;; All lowercase
-       (lower (with-output-to-string
-		(loop for (uc lc) in uni-mappings do (princ lc))))
-       ;; All uppercase
-       (upper (with-output-to-string
-		(loop for (uc lc) in uni-mappings do (princ lc))))
-       ;; For each pair, lower followed by upper
-       (lowerupper (with-output-to-string
-		     (loop for (uc lc) in uni-mappings
-		       do (princ lc) (princ uc))))
-       ;; For each pair, upper followed by lower
-       (upperlower (with-output-to-string
-		     (loop for (uc lc) in uni-mappings
-		       do (princ uc) (princ lc))))
-       )
-  (with-case-table uni-casetab
-    (Assert-equalp lower upper)
-    (Assert-equalp lowerupper upperlower)
-    (Assert-equal lower (downcase upper))
-    (Assert-equal upper (downcase lower))
-    (Assert-equal lower (downcase upper))
-    (Assert-equal upper (downcase lower))
-    (Assert-equal (downcase lower) (downcase (downcase lower)))
-    (Assert-equal (upcase lowerupper) (upcase upperlower))
-    (Assert-equal (downcase lowerupper) (downcase upperlower))
-    (with-temp-buffer
-      (set-case-table uni-casetab)
-      (loop for (str1 str2) in `((,lower ,upper)
-				 (,lowerupper ,upperlower)
-				 (,upper ,lower)
-				 (,upperlower ,lowerupper))
-	do
-	(erase-buffer)
-	(Assert= (point-min) 1)
-	(Assert= (point) 1)
-	(insert str1)
-	(let ((point (point))
-	      (case-fold-search t))
-	  (Assert= (length str1) (1- point))
-	  (goto-char (point-min))
-	  (Assert-eql (search-forward str2 nil t) point)))
-      (loop for (uc lc) in uni-mappings do
-	(loop for (ch1 ch2) in `((,uc ,lc)
-				 (,lc ,uc))
+       ;; a table to track mappings that overlap with some other mapping
+       (multi-hash (make-hash-table))
+       (uni-casetab
+	(loop
+	  with case-table = (make-case-table)
+	  for (uc lc) in uni-mappings do
+	  ;; see if there are existing mappings for either char of the new
+	  ;; mapping pair.
+	  (let* ((curucval (get-case-table 'downcase uc case-table))
+		 (curlcval (get-case-table 'upcase lc case-table))
+		 (curucval (and (not (eq curucval uc)) curucval))
+		 (curlcval (and (not (eq curlcval lc)) curlcval))
+		 )
+	    ;; if so, flag both the existing and new mapping pair as having
+	    ;; an overlapping mapping. 
+	    (when (or curucval curlcval)
+	      (loop for ch in (list curucval curlcval uc lc) do
+		(puthash ch t multi-hash)))
+
+	    ;; finally, make the new mapping.
+	    (put-case-table-pair uc lc case-table))
+	  finally return case-table)))
+  (flet ((ismulti (uc lc)
+	   (or (gethash uc multi-hash) (gethash lc multi-hash))))
+    (let (
+	  ;; All lowercase
+	  (lowermulti (with-output-to-string
+			(loop for (uc lc) in uni-mappings do (princ lc))))
+	  ;; All uppercase
+	  (uppermulti (with-output-to-string
+			(loop for (uc lc) in uni-mappings do (princ uc))))
+	  ;; For each pair, lower followed by upper
+	  (loweruppermulti (with-output-to-string
+			     (loop for (uc lc) in uni-mappings
+			       do (princ lc) (princ uc))))
+	  ;; For each pair, upper followed by lower
+	  (upperlowermulti (with-output-to-string
+			     (loop for (uc lc) in uni-mappings
+			       do (princ uc) (princ lc))))
+	  ;; All lowercase, no complex mappings
+	  (lower (with-output-to-string
+		   (loop for (uc lc) in uni-mappings do
+		     (unless (ismulti uc lc) (princ lc)))))
+	  ;; All uppercase, no complex mappings
+	  (upper (with-output-to-string
+		   (loop for (uc lc) in uni-mappings do
+		     (unless (ismulti uc lc) (princ uc)))))
+	  ;; For each pair, lower followed by upper, no complex mappings
+	  (lowerupper (with-output-to-string
+			(loop for (uc lc) in uni-mappings do
+			  (unless (ismulti uc lc) (princ lc) (princ uc)))))
+	  ;; For each pair, upper followed by lower, no complex mappings
+	  (upperlower (with-output-to-string
+			(loop for (uc lc) in uni-mappings do
+			  (unless (ismulti uc lc) (princ uc) (princ lc)))))
+	  )
+      (with-case-table
+	uni-casetab
+	;; Comparison with `equalp' uses a canonical mapping internally and
+	;; so should be able to handle multi-mappings.  Just comparing
+	;; using downcase and upcase, however, won't necessarily work in
+	;; the presence of such mappings -- that's what the internal canon
+	;; and eqv tables are for.
+	(Assert-equalp lowermulti uppermulti)
+	(Assert-equalp loweruppermulti upperlowermulti)
+	(Assert-equal lower (downcase upper))
+	(Assert-equal upper (upcase lower))
+	(Assert-equal (downcase lower) (downcase (downcase lower)))
+	(Assert-equal (upcase lowerupper) (upcase upperlower))
+	(Assert-equal (downcase lowerupper) (downcase upperlower))
+	;; Individually -- we include multi-mappings since we're using
+	;; `equalp'.
+	(loop
+	  for (uc lc) in uni-mappings do
+	  (Assert-equalp uc lc)
+	  (Assert-equalp (string uc) (string lc)))
+	)
+
+      ;; Here we include multi-mappings -- searching should be able to
+      ;; handle it.
+      (with-temp-buffer
+	(set-case-table uni-casetab)
+	(loop for (str1 str2) in `((,lowermulti ,uppermulti)
+				   (,loweruppermulti ,upperlowermulti)
+				   (,uppermulti ,lowermulti)
+				   (,upperlowermulti ,loweruppermulti))
 	  do
 	  (erase-buffer)
-	  (insert ?a)
-	  (insert ch1)
-	  (insert ?b)
-	  (goto-char (point-min))
-	  (Assert-eql (search-forward (char-to-string ch2) nil t) 3
-		      (format "Case-folded searching doesn't equate %s and %s"
-			      (char-as-unicode-escape ch1)
-			      (char-as-unicode-escape ch2))))))))
+	  (Assert= (point-min) 1)
+	  (Assert= (point) 1)
+	  (insert str1)
+	  (let ((point (point))
+		(case-fold-search t))
+	    (Assert= (length str1) (1- point))
+	    (goto-char (point-min))
+	    (Assert-eql (search-forward str2 nil t) point)))
+	(loop for (uc lc) in uni-mappings do
+	  (loop for (ch1 ch2) in `((,uc ,lc)
+				   (,lc ,uc))
+	    do
+	    (erase-buffer)
+	    (insert ?0)
+	    (insert ch1)
+	    (insert ?1)
+	    (goto-char (point-min))
+	    (Assert-eql (search-forward (char-to-string ch2) nil t) 3
+			(format "Case-folded searching doesn't equate %s and %s"
+				(char-as-unicode-escape ch1)
+				(char-as-unicode-escape ch2))))))
+      )))

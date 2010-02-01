@@ -7781,12 +7781,10 @@ readable @code{incf} and @code{push} forms in your compiled code.
 
 @emph{Interpreted} code, on the other hand, must expand these macros
 every time they are executed.  For this reason it is strongly
-recommended that code making heavy use of macros be compiled.  (The
-features labelled @dfn{Special Form} instead of @dfn{Function} in this
-manual are macros.)  A loop using @code{incf} a hundred times will
-execute considerably faster if compiled, and will also garbage-collect
-less because the macro expansion will not have to be generated, used,
-and thrown away a hundred times.
+recommended that code making heavy use of macros be compiled. A loop
+using @code{incf} a hundred times will execute considerably faster if
+compiled, and will also garbage-collect less because the macro expansion
+will not have to be generated, used, and thrown away a hundred times.
 
 You can find out how a macro expands by using the @code{cl-prettyexpand}
 function.
@@ -8585,7 +8583,7 @@ specifications.
 @strong{Frame focus changes}: @code{focus-follows-mouse} works like FSF,
 prevents any attempt to permanently change the selected frame; new
 function @code{focus-frame} sets the window system focus a frame; new
-special forms @code{save-selected-frame} and @code{with-selected-frame}.
+macros @code{save-selected-frame} and @code{with-selected-frame}.
 
 @item
 @strong{Window function changes}: @code{select-window} now has optional

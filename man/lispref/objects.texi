@@ -1217,15 +1217,15 @@ of how to write a macro.
 
 @node Primitive Function Type
 @subsection Primitive Function Type
-@cindex special forms
+@cindex special operators
 
   A @dfn{primitive function} is a function callable from Lisp but
 written in the C programming language.  Primitive functions are also
 called @dfn{subrs} or @dfn{built-in functions}.  (The word ``subr'' is
 derived from ``subroutine''.)  Most primitive functions evaluate all
 their arguments when they are called.  A primitive function that does
-not evaluate all its arguments is called a @dfn{special form}
-(@pxref{Special Forms}).@refill
+not evaluate all its arguments is called a @dfn{special operator}
+(@pxref{Special Operators}).@refill
 
   It does not matter to the caller of a function whether the function is
 primitive.  However, this does matter if you try to substitute a

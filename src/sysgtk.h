@@ -1,5 +1,6 @@
-/* Header file for miscellaneous event functions for GTK.
-   Copyright (C) 2002 William Perry.
+/* Basic include file for GTK/GDK includes.
+
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -18,19 +19,20 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef __EVENT_GTK_H__
-#define __EVENT_GTK_H__
+/* Synched up with: Not in FSF. */
 
-int gtk_event_to_emacs_event (struct frame *frame,
-			      GdkEvent *gdk_event,
-			      struct Lisp_Event *emacs_event);
+/* Authorship:
 
-gint emacs_gtk_key_event_handler(GtkWidget *widget, GdkEventKey *event);
-gint emacs_gtk_button_event_handler(GtkWidget *widget, GdkEventButton *event);
-gint emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event);
+   Ben Wing, 1-28-10 extracted out of console-gtk.h and various other
+   files.
+*/
 
-gboolean emacs_shell_event_handler (GtkWidget *wid /* unused */,
-				    GdkEvent *event,
-				    gpointer closure);
+#ifndef INCLUDED_sysgtk_h_
+#define INCLUDED_sysgtk_h_
 
-#endif /* __EVENT-GTK_H__ */
+#include <gtk/gtk.h>
+#include <gtk/gtkfixed.h>
+#include <gdk/gdk.h>
+#include <gdk/gdkkeysyms.h>
+
+#endif /* INCLUDED_sysgtk_h_ */

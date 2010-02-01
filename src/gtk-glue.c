@@ -25,6 +25,7 @@ GtkType GTK_TYPE_STRING_LIST = 0;
 GtkType GTK_TYPE_OBJECT_LIST = 0;
 GtkType GTK_TYPE_GDK_GC = 0;
 
+#include "console-gtk.h"
 #include "objects-gtk-impl.h"
 
 static GtkType
@@ -86,7 +87,7 @@ xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
 	  temp = XCDR (temp);
 	}
 
-      GTK_VALUE_POINTER(*arg) = strings;
+      GTK_VALUE_POINTER (*arg) = strings;
     }
   else if (arg->type == GTK_TYPE_OBJECT_LIST)
     {
@@ -107,11 +108,11 @@ xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
 	  temp = XCDR (temp);
 	}
 
-      GTK_VALUE_POINTER(*arg) = objects;
+      GTK_VALUE_POINTER (*arg) = objects;
     }
   else
     {
-      ABORT();
+      ABORT ();
     }
 }
 
@@ -148,7 +149,7 @@ xemacs_gtklist_to_list (GtkArg *arg)
 	}
       else
 	{
-	  ABORT();
+	  ABORT ();
 	}
     }
   return (rval);
@@ -182,30 +183,27 @@ xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
 	temp = XCDR (temp);					\
       }								\
 								\
-    GTK_VALUE_POINTER(*arg) = array;				\
+    GTK_VALUE_POINTER (*arg) = array;				\
   } while (0);
   
   if (arg->type == GTK_TYPE_STRING_ARRAY)
     {
-      FROB(gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
+      FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
     }
   else if (arg->type == GTK_TYPE_FLOAT_ARRAY)
     {
-      FROB(gfloat, CHECK_FLOAT, extract_float);
+      FROB (gfloat, CHECK_FLOAT, extract_float);
     }
   else if (arg->type == GTK_TYPE_INT_ARRAY)
     {
-      FROB(gint, CHECK_INT, XINT);
+      FROB (gint, CHECK_INT, XINT);
     }
   else
     {
-      ABORT();
+      ABORT ();
     }
 #undef FROB
 }
-
-extern GdkGC *gtk_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
-			  Lisp_Object bg_pmap, Lisp_Object lwidth);
 
 static GdkGC *
 face_to_gc (Lisp_Object face)
@@ -213,10 +211,14 @@ face_to_gc (Lisp_Object face)
   Lisp_Object device = Fselected_device (Qnil);
 
   return (gtk_get_gc (XDEVICE (device),
-		      Fspecifier_instance (Fget (face, Qfont, Qnil), device, Qnil, Qnil),
-		      Fspecifier_instance (Fget (face, Qforeground, Qnil), device, Qnil, Qnil),
-		      Fspecifier_instance (Fget (face, Qbackground, Qnil), device, Qnil, Qnil),
-		      Fspecifier_instance (Fget (face, Qbackground_pixmap, Qnil), device, Qnil, Qnil),
+		      Fspecifier_instance (Fget (face, Qfont, Qnil),
+					   device, Qnil, Qnil),
+		      Fspecifier_instance (Fget (face, Qforeground, Qnil),
+					   device, Qnil, Qnil),
+		      Fspecifier_instance (Fget (face, Qbackground, Qnil),
+					   device, Qnil, Qnil),
+		      Fspecifier_instance (Fget (face, Qbackground_pixmap,
+						 Qnil), device, Qnil, Qnil),
 		      Qnil));
 }
 
@@ -227,17 +229,24 @@ face_to_style (Lisp_Object face)
   GtkStyle *style = gtk_style_new ();
   int i;
 
-  Lisp_Object font = Fspecifier_instance (Fget (face, Qfont, Qnil), device, Qnil, Qnil);
-  Lisp_Object fg = Fspecifier_instance (Fget (face, Qforeground, Qnil), device, Qnil, Qnil);
-  Lisp_Object bg = Fspecifier_instance (Fget (face, Qbackground, Qnil), device, Qnil, Qnil);
-  Lisp_Object pm = Fspecifier_instance (Fget (face, Qbackground_pixmap, Qnil), device, Qnil, Qnil);
+  Lisp_Object font = Fspecifier_instance (Fget (face, Qfont, Qnil),
+					  device, Qnil, Qnil);
+  Lisp_Object fg = Fspecifier_instance (Fget (face, Qforeground, Qnil),
+					device, Qnil, Qnil);
+  Lisp_Object bg = Fspecifier_instance (Fget (face, Qbackground, Qnil),
+					device, Qnil, Qnil);
+  Lisp_Object pm = Fspecifier_instance (Fget (face, Qbackground_pixmap,
+					      Qnil), device, Qnil, Qnil);
 
-  for (i = 0; i < 5; i++) style->fg[i] = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (fg));
-  for (i = 0; i < 5; i++) style->bg[i] = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (bg));
+  for (i = 0; i < 5; i++)
+    style->fg[i] = *COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (fg));
+  for (i = 0; i < 5; i++)
+    style->bg[i] = *COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (bg));
 
   if (IMAGE_INSTANCEP (pm))
     {
-      for (i = 0; i < 5; i++) style->bg_pixmap[i] = XIMAGE_INSTANCE_GTK_PIXMAP (pm);
+      for (i = 0; i < 5; i++)
+	style->bg_pixmap[i] = XIMAGE_INSTANCE_GTK_PIXMAP (pm);
     }
 
   style->font = FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (font));
@@ -246,7 +255,7 @@ face_to_style (Lisp_Object face)
 }
 
 static Lisp_Object
-gdk_event_to_emacs_event(GdkEvent *ev)
+gdk_event_to_emacs_event (GdkEvent *ev)
 {
   Lisp_Object event = Qnil;
 

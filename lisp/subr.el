@@ -218,6 +218,7 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
 (define-function 'remove-directory 'delete-directory)
 (define-function 'set-match-data 'store-match-data)
 (define-function 'send-string-to-terminal 'external-debugging-output)
+(define-function 'special-form-p 'special-operator-p)
 
 ;; XEmacs:
 (defun local-variable-if-set-p (sym buffer)
@@ -1763,14 +1764,14 @@ in Lisp; do not use it in performance-critical code."
 SUBR must be a built-in function (not just a symbol that refers to one).
 The returned value is a pair (MIN . MAX).  MIN is the minimum number
 of args.  MAX is the maximum number or the symbol `many', for a
-function with `&rest' args, or `unevalled' for a special form.
+function with `&rest' args, or `unevalled' for a special operator.
 
-See also `special-form-p', `subr-min-args', `subr-max-args',
+See also `special-operator-p', `subr-min-args', `subr-max-args',
 `function-allows-args'. "
   (check-argument-type #'subrp subr)
   (cons (subr-min-args subr)
         (cond
-         ((special-form-p subr)
+         ((special-operator-p subr)
           'unevalled)
          ((null (subr-max-args subr))
           'many)

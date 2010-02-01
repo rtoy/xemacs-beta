@@ -1459,22 +1459,9 @@ that shows the problem that arises if you fail to save the match data:
   You can save and restore the match data with @code{save-match-data}:
 
 @defspec save-match-data body@dots{}
-This special form executes @var{body}, saving and restoring the match
+This special operator executes @var{body}, saving and restoring the match
 data around it.
 @end defspec
-
-  You can use @code{set-match-data} together with @code{match-data} to
-imitate the effect of the special form @code{save-match-data}.  This is
-useful for writing code that can run in Emacs 18.  Here is how:
-
-@example
-@group
-(let ((data (match-data)))
-  (unwind-protect
-      @dots{}   ; @r{May change the original match data.}
-    (set-match-data data)))
-@end group
-@end example
 
   Emacs automatically saves and restores the match data when it runs
 process filter functions (@pxref{Filter Functions}) and process

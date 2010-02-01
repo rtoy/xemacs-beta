@@ -3414,11 +3414,12 @@ properties_equal (EXTENT e1, EXTENT e2, int depth)
   /* compare the random elements of the plists. */
   return !plists_differ (extent_no_chase_plist (e1),
 			 extent_no_chase_plist (e2),
-			 0, 0, depth + 1);
+			 0, 0, depth + 1, 0);
 }
 
 static int
-extent_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+extent_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+	      int UNUSED (foldcase))
 {
   struct extent *e1 = XEXTENT (obj1);
   struct extent *e2 = XEXTENT (obj2);

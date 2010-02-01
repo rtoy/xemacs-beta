@@ -1,4 +1,4 @@
-/* Shared event code between X and GTK -- include file.
+/* Common code between X and GTK -- event-related.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
@@ -22,10 +22,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* For some code it's reasonable to have only one copy and conditionalize
-   at run-time.  For other code it isn't. #### Perhaps all code should be
-   included here, not in event-xlike.c.  However, event-xlike.c is always
-   X-specific, whereas the following code isn't, in the GTK case. */
+/* Before including this file, you need to define either THIS_IS_X or
+   THIS_IS_GTK.  */
+
+/* See comment at top of redisplay-xlike-inc.c for an explanation of
+   how this file works. */
 
 static int
 #ifdef THIS_IS_GTK
@@ -160,7 +161,7 @@ emacs_Xt_event_pending_p (int how_many)
   return 0;
 }
 
-#if defined(THIS_IS_X) || !defined(__GDK_KEYS_H__)
+#if defined (THIS_IS_X) || !defined (__GDK_KEYS_H__)
 
 /* Use an appropriate map to Unicode within x_keysym_to_character. Arguments
    are evaluated multiple times.
@@ -169,11 +170,11 @@ emacs_Xt_event_pending_p (int how_many)
 
 #define USE_UNICODE_MAP(keysym, map)					\
   if (keysym >= FIRST_KNOWN_##map					\
-      && (keysym < (FIRST_KNOWN_##map + countof(map)))			\
+      && (keysym < (FIRST_KNOWN_##map + countof (map)))			\
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
-      return Funicode_to_char(make_int(map[keysym]), Qnil);		\
+      return Funicode_to_char (make_int (map[keysym]), Qnil);		\
     } while (0)
 
 /* Maps to Unicode for X11 KeySyms, where we don't have a direct internal
@@ -588,10 +589,10 @@ static UINT_16_BIT const CYRILLIC[] =
 
 #ifndef THIS_IS_GTK
 static Lisp_Object
-x_keysym_to_character(KeySym keysym)
+x_keysym_to_character (KeySym keysym)
 #else
 Lisp_Object
-gtk_keysym_to_character(guint keysym)
+gtk_keysym_to_character (guint keysym)
 #endif
 {
   Lisp_Object charset = Qzero;
@@ -604,7 +605,7 @@ gtk_keysym_to_character(guint keysym)
      #x01000000-#x01000100. */
 
   if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    return Funicode_to_char (make_int(keysym & 0xffffff), Qnil);
+    return Funicode_to_char (make_int (keysym & 0xffffff), Qnil);
 
   if ((keysym & 0xff) < 0xa0)
     return Qnil;
@@ -642,7 +643,7 @@ gtk_keysym_to_character(guint keysym)
       break;
     case 6: /* Cyrillic */
       {
-	USE_UNICODE_MAP(keysym, CYRILLIC);
+	USE_UNICODE_MAP (keysym, CYRILLIC);
 	break;
       }
     case 7: /* Greek */
@@ -665,16 +666,16 @@ gtk_keysym_to_character(guint keysym)
 	break;
       }
     case 8: 
-      USE_UNICODE_MAP(keysym, TECHNICAL);
+      USE_UNICODE_MAP (keysym, TECHNICAL);
       break;
     case 9: 
-      USE_UNICODE_MAP(keysym, SPECIAL);
+      USE_UNICODE_MAP (keysym, SPECIAL);
       break;
     case 10:
-      USE_UNICODE_MAP(keysym, PUBLISHING);
+      USE_UNICODE_MAP (keysym, PUBLISHING);
       break;
     case 11:
-      USE_UNICODE_MAP(keysym, APL);
+      USE_UNICODE_MAP (keysym, APL);
       break;
     case 12: /* Hebrew */
       USE_CHARSET (charset, HEBREW_ISO8859_8);
@@ -698,7 +699,7 @@ gtk_keysym_to_character(guint keysym)
     case 32: /* Currency. The lower sixteen bits of these keysyms happily
 		correspond exactly to the Unicode code points of the
 		associated characters */
-      return Funicode_to_char(make_int(keysym & 0xffff), Qnil);
+      return Funicode_to_char (make_int (keysym & 0xffff), Qnil);
       break;
     default:
       break;
@@ -722,4 +723,4 @@ gtk_keysym_to_character(guint keysym)
 #endif
 }
 
-#endif /* defined(THIS_IS_X) || !defined(__GDK_KEYS_H__) */
+#endif /* defined (THIS_IS_X) || !defined (__GDK_KEYS_H__) */

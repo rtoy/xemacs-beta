@@ -178,10 +178,39 @@ be a function; expansion of the macro works by applying the function
 from the macro call.
 
   It is possible to use an anonymous Lisp macro just like an anonymous
-function, but this is never done, because it does not make sense to pass
-an anonymous macro to functionals such as @code{mapcar}.  In practice,
-all Lisp macros have names, and they are usually defined with the
-special form @code{defmacro}.
+function.  It doesn't make sense to pass an anonymous macro to
+functionals such as @code{mapcar}, and it is usually more readable to
+use @code{macrolet} to make a local macro definition, and call that.
+But if, for whatever reason, @code{macrolet} is not available, code
+like the following may be useful:
+
+@example
+((macro . (lambda (&rest arguments)
+	    (let (res)
+	      (while (consp arguments)
+		(setq res (cons (cons 'put
+				      (cons (list 'quote (car arguments))
+					    '((quote my-property) t)))
+				res)
+		      arguments (cdr arguments)))
+	      (cons 'progn res))))
+ + - = floor ceiling round)
+@end example
+
+This expands to: 
+
+@example
+(progn
+  (put 'round 'my-property t)
+  (put 'ceiling 'my-property t)
+  (put 'floor 'my-property t)
+  (put '= 'my-property t)
+  (put '- 'my-property t)
+  (put '+ 'my-property t))
+@end example
+
+In practice, almost all Lisp macros have names, and they are usually
+defined with the special operator @code{defmacro}.
 
 @defspec defmacro name argument-list body-forms@dots{}
 @code{defmacro} defines the symbol @var{name} as a macro that looks
@@ -214,7 +243,7 @@ constants and nonconstant parts.  To make this easier, use the macro
 
   Backquote allows you to quote a list, but selectively evaluate
 elements of that list.  In the simplest case, it is identical to the
-special form @code{quote} (@pxref{Quoting}).  For example, these
+special operator @code{quote} (@pxref{Quoting}).  For example, these
 two forms yield identical results:
 
 @example

@@ -1,6 +1,6 @@
-/* Efficient caching of X GCs (graphics contexts).
-   Copyright (C) 1993 Free Software Foundation, Inc.
+/* Basic wrapper file around gdk/gdkx.h.
 
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,17 +21,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Written by jwz, 14 jun 93 */
-/* Hacked by wmperry, apr 2000 */
+/* Authorship:
 
-#ifndef _GCCACHE_GTK_H_
-#define _GCCACHE_GTK_H_
+   Ben Wing, 1-28-10 extracted out of console-gtk.h and various other
+   files.  We have a separate file rather than just putting it together
+   with sysgtk.h because Bill wanted to keep the X-specific stuff isolated.
+*/
 
-#include "sysgtk.h"
+#ifndef INCLUDED_sysgdkx_h_
+#define INCLUDED_sysgdkx_h_
 
-struct gc_cache;
-struct gc_cache *make_gc_cache (GtkWidget *);
-void free_gc_cache (struct gc_cache *cache);
-GdkGC *gc_cache_lookup (struct gc_cache *, GdkGCValues *, unsigned long mask);
+#include <gdk/gdkx.h>
 
-#endif /* _XGCCACHE_H_ */
+#endif /* INCLUDED_sysgdkx_h_ */

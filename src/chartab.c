@@ -112,14 +112,16 @@ mark_char_table_entry (Lisp_Object obj)
 }
 
 static int
-char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+			int foldcase)
 {
   Lisp_Char_Table_Entry *cte1 = XCHAR_TABLE_ENTRY (obj1);
   Lisp_Char_Table_Entry *cte2 = XCHAR_TABLE_ENTRY (obj2);
   int i;
 
   for (i = 0; i < 96; i++)
-    if (!internal_equal (cte1->level2[i], cte2->level2[i], depth + 1))
+    if (!internal_equal_0 (cte1->level2[i], cte2->level2[i], depth + 1,
+			   foldcase))
       return 0;
 
   return 1;
@@ -345,7 +347,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   Lisp_Char_Table *ct1 = XCHAR_TABLE (obj1);
   Lisp_Char_Table *ct2 = XCHAR_TABLE (obj2);
@@ -355,16 +357,16 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     return 0;
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
-    if (!internal_equal (ct1->ascii[i], ct2->ascii[i], depth + 1))
+    if (!internal_equal_0 (ct1->ascii[i], ct2->ascii[i], depth + 1, foldcase))
       return 0;
 
 #ifdef MULE
   for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (!internal_equal (ct1->level1[i], ct2->level1[i], depth + 1))
+    if (!internal_equal_0 (ct1->level1[i], ct2->level1[i], depth + 1, foldcase))
       return 0;
 #endif /* MULE */
 
-  return internal_equal (ct1->default_, ct2->default_, depth + 1);
+  return internal_equal_0 (ct1->default_, ct2->default_, depth + 1, foldcase);
 }
 
 static Hashcode
