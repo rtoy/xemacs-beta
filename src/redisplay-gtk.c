@@ -23,75 +23,50 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
+#define THIS_IS_GTK
 #include "redisplay-xlike-inc.c"
 
 /*****************************************************************************
- gtk_bevel_modeline
-
- Draw a 3d border around the modeline on window W.
- ****************************************************************************/
-static void
-gtk_bevel_modeline (struct window *w, struct display_line *dl)
-{
-  struct frame *f = XFRAME (w->frame);
-  int shadow_thickness = MODELINE_SHADOW_THICKNESS (w);
-  int x,y, width, height;
-
-  x = WINDOW_MODELINE_LEFT (w);
-  width = WINDOW_MODELINE_RIGHT (w) - x;
-  y = dl->ypos - dl->ascent - shadow_thickness;
-  height = dl->ascent + dl->descent + 2 * shadow_thickness;
-
-  gtk_output_shadows (f, x, y, width, height, shadow_thickness);
-}
-
-/*****************************************************************************
- gtk_output_shadows
-
  Draw a shadow around the given area using the standard theme engine routines.
  ****************************************************************************/
-void
-gtk_output_shadows (struct frame *f, int x, int y, int width, int height,
-		    int shadow_thickness)
-{
-  GdkWindow *x_win = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f));
-  GtkStyle *style = FRAME_GTK_TEXT_WIDGET (f)->style;
-  GtkShadowType stype = GTK_SHADOW_OUT;
 
-  if (shadow_thickness < 0)
-  {
-      stype = GTK_SHADOW_IN;
-  }
-  else if (shadow_thickness == 0)
-  {
-      stype = GTK_SHADOW_NONE;
-  }
+static void
+XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
+		  int x, int y, int width, int height,
+		  int shadow_thickness, int UNUSED (edges),
+		  enum edge_style style)
+{
+  struct frame *f = XFRAME (w->frame);
+  GdkWindow *x_win = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f));
+  GtkStyle *gstyle = FRAME_GTK_TEXT_WIDGET (f)->style;
+  GtkShadowType stype;
+
+  if (shadow_thickness == 0)
+    stype = GTK_SHADOW_NONE;
+  else
+    switch (style)
+      {
+      case EDGE_BEVEL_IN: style = GTK_SHADOW_IN; break;
+      case EDGE_BEVEL_OUT: style = GTK_SHADOW_OUT; break;
+      case EDGE_ETCHED_IN: style = GTK_SHADOW_ETCHED_IN; break;
+      case EDGE_ETCHED_OUT: style = GTK_SHADOW_ETCHED_OUT; break;
+      default: ABORT (); style = GTK_SHADOW_OUT;
+      }
 
   /* Do we want to have some magic constants to set
      GTK_SHADOW_ETCHED_IN or GTK_SHADOW_ETCHED_OUT? */
 
-  gtk_paint_shadow (style, x_win, GTK_STATE_NORMAL, stype, NULL,
+  gtk_paint_shadow (gstyle, x_win, GTK_STATE_NORMAL, stype, NULL,
 		    FRAME_GTK_TEXT_WIDGET (f), "modeline",
 		    x, y, width, height);
-}
-
-static void
-gtk_bevel_area (struct window *w, face_index UNUSED (findex),
-		int x, int y, int width, int height,
-		int shadow_thickness, int UNUSED (edges),
-		enum edge_style UNUSED (style))
-{
-  struct frame *f = XFRAME (w->frame);
-
-  gtk_output_shadows (f, x, y, width, height, shadow_thickness);
 }
 
 
 
 /* Make audible bell.  */
 static void
-gtk_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
-	       int UNUSED (duration))
+XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
+		 int UNUSED (duration))
 {
   /* Gdk does not allow us to control the duration / pitch / volume */
   if (volume > 0)
@@ -106,16 +81,16 @@ gtk_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
    single $#!%@ing piece of text, which I do NOT want to do. */
 #define USE_X_SPECIFIC_DRAW_ROUTINES 1
 
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
 
-static
-void gdk_draw_text_image (GdkDrawable *drawable,
-			  GdkFont     *font,
-			  GdkGC       *gc,
-			  gint         x,
-			  gint         y,
-			  const gchar *text,
-			  gint         text_length)
+static void
+gdk_draw_text_image (GdkDrawable *drawable,
+		     GdkFont     *font,
+		     GdkGC       *gc,
+		     gint         x,
+		     gint         y,
+		     const gchar *text,
+		     gint         text_length)
 {
 #if !USE_X_SPECIFIC_DRAW_ROUTINES
   int width = gdk_text_measure (font, text, text_length);

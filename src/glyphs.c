@@ -2936,7 +2936,7 @@ xface_possible_dest_types (void)
 #ifdef HAVE_GTK
 /* Gtk has to be gratuitously different, eh? */
 Lisp_Object
-pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
+pixmap_to_lisp_data (Lisp_Object name, int UNUSED (ok_if_data_invalid))
 {
   return (make_string_from_file (name));
 }
