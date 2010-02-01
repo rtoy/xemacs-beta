@@ -115,6 +115,12 @@ TESTS is a non-negative integer, the number of tests run.")
 	  (length "byte-compiler-tests.el:")) ; use the longest file name
   "Format for \"No tests\" lines printed after a file is run.")
 
+(defconst test-harness-aborted-summary-template
+  (format "%%-%ds          %%%dd tests completed (aborted)."
+	  (length "byte-compiler-tests.el:") ; use the longest file name
+	  5)
+  "Format for summary lines printed after a test run on a file was aborted.")
+
 ;;;###autoload
 (defun test-emacs-test-file (filename)
   "Test a file of Lisp code named FILENAME.
@@ -338,7 +344,7 @@ describing the expected and actual values of the comparison.  Optional
 DESCRIPTION describes the assertion; by default, the unevalated comparison
 expressions are given.  FAILING-CASE and DESCRIPTION are useful when Assert
 is used in a loop."
-	(let* ((assertion `(,test ,testval ,expected))
+	(let* ((assertion `(not (,test ,testval ,expected)))
 	       (failmsg `(format "%S shouldn't be `%s' to %S but is"
 			  ,testval ',test ,expected))
 	       (failmsg2 (if failing-case `(concat 
@@ -347,71 +353,52 @@ is used in a loop."
 			  failmsg)))
 	  `(Assert ,assertion ,failmsg2 ,description)))
 
-      (defmacro Assert-eq (testval expected &optional failing-case description)
-	"Test passes if TESTVAL is 'eq' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
+      ;; Specific versions of `Assert-test'.  These are just convenience
+      ;; functions, functioning identically to `Assert-test', and duplicating
+      ;; the doc string for each would be too annoying.
+      (defmacro Assert-eq (testval expected &optional failing-case
+			   description)
 	`(Assert-test eq ,testval ,expected ,failing-case ,description))
-
-      (defmacro Assert-eql (testval expected &optional failing-case description)
-	"Test passes if TESTVAL is 'eql' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
+      (defmacro Assert-eql (testval expected &optional failing-case
+			    description)
 	`(Assert-test eql ,testval ,expected ,failing-case ,description))
-
       (defmacro Assert-equal (testval expected &optional failing-case
 			      description)
-	"Test passes if TESTVAL is 'equal' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
 	`(Assert-test equal ,testval ,expected ,failing-case ,description))
-
       (defmacro Assert-equalp (testval expected &optional failing-case
 			      description)
-	"Test passes if TESTVAL is 'equalp' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
 	`(Assert-test equalp ,testval ,expected ,failing-case ,description))
-
       (defmacro Assert-string= (testval expected &optional failing-case
 			      description)
-	"Test passes if TESTVAL is 'string=' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
 	`(Assert-test string= ,testval ,expected ,failing-case ,description))
-
-      (defmacro Assert= (testval expected &optional failing-case description)
-	"Test passes if TESTVAL is '=' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
+      (defmacro Assert= (testval expected &optional failing-case
+			 description)
 	`(Assert-test = ,testval ,expected ,failing-case ,description))
-
-      (defmacro Assert<= (testval expected &optional failing-case description)
-	"Test passes if TESTVAL is '<=' to EXPECTED.
-Optional FAILING-CASE describes the particular failure; any value given
-here will be concatenated with a phrase describing the expected and actual
-values of the comparison.  Optional DESCRIPTION describes the assertion; by
-default, the unevalated comparison expressions are given.  FAILING-CASE and
-DESCRIPTION are useful when Assert is used in a loop."
+      (defmacro Assert<= (testval expected &optional failing-case
+			  description)
 	`(Assert-test <= ,testval ,expected ,failing-case ,description))
+
+      ;; Specific versions of `Assert-test-not'.  These are just convenience
+      ;; functions, functioning identically to `Assert-test-not', and
+      ;; duplicating the doc string for each would be too annoying.
+      (defmacro Assert-not-eq (testval expected &optional failing-case
+			       description)
+	`(Assert-test-not eq ,testval ,expected ,failing-case ,description))
+      (defmacro Assert-not-eql (testval expected &optional failing-case
+				description)
+	`(Assert-test-not eql ,testval ,expected ,failing-case ,description))
+      (defmacro Assert-not-equal (testval expected &optional failing-case
+				  description)
+	`(Assert-test-not equal ,testval ,expected ,failing-case ,description))
+      (defmacro Assert-not-equalp (testval expected &optional failing-case
+				   description)
+	`(Assert-test-not equalp ,testval ,expected ,failing-case ,description))
+      (defmacro Assert-not-string= (testval expected &optional failing-case
+				    description)
+	`(Assert-test-not string= ,testval ,expected ,failing-case ,description))
+      (defmacro Assert-not= (testval expected &optional failing-case
+			     description)
+	`(Assert-test-not = ,testval ,expected ,failing-case ,description))
 
       (defmacro Check-Error (expected-error &rest body)
 	(let ((quoted-body (if (= 1 (length body))
@@ -517,7 +504,7 @@ DESCRIPTION are useful when Assert is used in a loop."
 	 (princ (format "Unexpected error %S while executing interpreted code\n"
 		error-info))
 	 (message "Unexpected error %S while executing interpreted code." error-info)
-	 (message "Test suite execution aborted." error-info)
+	 (message "Test suite execution aborted.")
 	 ))
       (princ "\nTesting Compiled Lisp\n\n")
       (let (code
@@ -538,7 +525,7 @@ DESCRIPTION are useful when Assert is used in a loop."
 	   (princ (format "Unexpected error %S while executing byte-compiled code\n"
 			  error-info))
 	   (message "Unexpected error %S while executing byte-compiled code." error-info)
-	   (message "Test suite execution aborted." error-info)
+	   (message "Test suite execution aborted.")
 	   )))
       (princ (format "\nSUMMARY for %s:\n" filename))
       (princ (format "\t%5d passes\n" passes))
@@ -555,12 +542,16 @@ DESCRIPTION are useful when Assert is used in a loop."
 		       other-failures))
 	     (basename (file-name-nondirectory filename))
 	     (summary-msg
-	      (if (> total 0)
-		  (format test-harness-file-summary-template
-			  (concat basename ":")
-			  passes total (/ (* 100 passes) total))
-		(format test-harness-null-summary-template
-			(concat basename ":"))))
+	      (cond ((> unexpected-test-file-failures 0)
+		     (format test-harness-aborted-summary-template
+			     (concat basename ":") total))
+		    ((> total 0)
+		     (format test-harness-file-summary-template
+			     (concat basename ":")
+			     passes total (/ (* 100 passes) total)))
+		    (t
+		     (format test-harness-null-summary-template
+			     (concat basename ":")))))
 	     (reasons ""))
 	(maphash (lambda (key value)
 		   (setq reasons
@@ -700,14 +691,19 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 		 (basename (file-name-nondirectory (first head)))
 		 (nsucc (second head))
 		 (ntest (third head)))
-	    (if (> ntest 0)
-		(message test-harness-file-summary-template
-			 (concat basename ":")
-			 nsucc
-			 ntest
-			 (/ (* 100 nsucc) ntest))
-	      (message test-harness-null-summary-template
-		       (concat basename ":")))
+	    (cond ((member (first head) unexpected-test-suite-failure-files)
+		   (message test-harness-aborted-summary-template
+			    (concat basename ":")
+			    ntest))
+		  ((> ntest 0)
+		   (message test-harness-file-summary-template
+			    (concat basename ":")
+			    nsucc
+			    ntest
+			    (/ (* 100 nsucc) ntest)))
+		  (t
+		   (message test-harness-null-summary-template
+			    (concat basename ":"))))
 	    (setq results (cdr results)))))
       (when (> unexpected-test-suite-failures 0)
 	(message "\n***** There %s %d unexpected test suite %s in %s:"

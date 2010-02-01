@@ -1,3 +1,122 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c (abbrev_match_mapper):
+	* buffer.h (CANON_TABLE_OF):
+	* buffer.h:
+	* editfns.c (Fchar_equal):
+	* minibuf.c (scmp_1):
+	* text.c (qxestrcasecmp_i18n):
+	* text.c (qxestrncasecmp_i18n):
+	* text.c (qxetextcasecmp):
+	* text.c (qxetextcasecmp_matching):
+	Create new macro CANONCASE that converts to a canonical mapping
+	and use it to do caseless comparisons instead of DOWNCASE.
+	
+	* alloc.c:
+	* alloc.c (cons_equal):
+	* alloc.c (vector_equal):
+	* alloc.c (string_equal):
+	* bytecode.c (compiled_function_equal):
+	* chartab.c (char_table_entry_equal):
+	* chartab.c (char_table_equal):
+	* data.c (weak_list_equal):
+	* data.c (weak_box_equal):
+	* data.c (ephemeron_equal):
+	* device-msw.c (equal_devmode):
+	* elhash.c (hash_table_equal):
+	* events.c (event_equal):
+	* extents.c (properties_equal):
+	* extents.c (extent_equal):
+	* faces.c:
+	* faces.c (face_equal):
+	* faces.c (face_hash):
+	* floatfns.c (float_equal):
+	* fns.c:
+	* fns.c (bit_vector_equal):
+	* fns.c (plists_differ):
+	* fns.c (Fplists_eq):
+	* fns.c (Fplists_equal):
+	* fns.c (Flax_plists_eq):
+	* fns.c (Flax_plists_equal):
+	* fns.c (internal_equal):
+	* fns.c (internal_equalp):
+	* fns.c (internal_equal_0):
+	* fns.c (syms_of_fns):
+	* glyphs.c (image_instance_equal):
+	* glyphs.c (glyph_equal):
+	* glyphs.c (glyph_hash):
+	* gui.c (gui_item_equal):
+	* lisp.h:
+	* lrecord.h (struct lrecord_implementation):
+	* marker.c (marker_equal):
+	* number.c (bignum_equal):
+	* number.c (ratio_equal):
+	* number.c (bigfloat_equal):
+	* objects.c (color_instance_equal):
+	* objects.c (font_instance_equal):
+	* opaque.c (equal_opaque):
+	* opaque.c (equal_opaque_ptr):
+	* rangetab.c (range_table_equal):
+	* specifier.c (specifier_equal):
+	Add a `foldcase' param to the equal() method and use it to implement
+	`equalp' comparisons.  Also add to plists_differ(), although we
+	don't currently use it here.
+
+	Rewrite internal_equalp().  Implement cross-type vector comparisons.
+	Don't implement our own handling of numeric promotion -- just use
+	the `=' primitive.
+
+	Add internal_equal_0(), which takes a `foldcase' param and calls
+	either internal_equal() or internal_equalp().
+	
+	* buffer.h:
+	When given a 0 for buffer (which is the norm when functions don't
+	have a specific buffer available), use the current buffer's table,
+	not `standard-case-table'; otherwise the current settings are
+	ignored.
+	
+	* casetab.c:
+	* casetab.c (set_case_table):
+	When handling old-style vectors of 256 in `set-case-table' don't
+	overwrite the existing table!  Instead create a new table and
+	populate.
+	
+	* device-msw.c (sync_printer_with_devmode):
+	* lisp.h:
+	* text.c (lisp_strcasecmp_ascii):
+	Rename lisp_strcasecmp to lisp_strcasecmp_ascii and use
+	lisp_strcasecmp_i18n for caseless comparisons in some places.
+	
+	* elhash.c:
+	Delete unused lisp_string_hash and lisp_string_equal().
+	
+	* events.h:
+	* keymap-buttons.h:
+	* keymap.h:
+	* keymap.c (keymap_lookup_directly):
+	* keymap.c (keymap_store):
+	* keymap.c (FROB):
+	* keymap.c (key_desc_list_to_event):
+	* keymap.c (describe_map_mapper):
+	* keymap.c (INCLUDE_BUTTON_ZERO):
+	New file keymap-buttons.h; use to handle buttons 1-26 in place of
+	duplicating code 26 times.
+	
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-msw.c (mswindows_init_frame_1):
+	Fix some comments about internal_equal() in redisplay that don't
+	apply any more.
+	
+	* keymap-slots.h:
+	* keymap.c:
+	New file keymap-slots.h.  Use it to notate the slots in a keymap
+	structure, similar to frameslots.h or coding-system-slots.h.
+	
+	* keymap.c (MARKED_SLOT):
+	* keymap.c (keymap_equal):
+	* keymap.c (keymap_hash):
+	Implement.
+	
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fspecial_operator_p, syms_of_symbols):

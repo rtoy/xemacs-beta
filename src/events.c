@@ -396,7 +396,8 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	     int UNUSED (foldcase))
 {
   Lisp_Event *e1 = XEVENT (obj1);
   Lisp_Event *e2 = XEVENT (obj2);

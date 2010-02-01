@@ -1,3 +1,20 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* cl-extra.el:
+	* cl-extra.el (cl-string-vector-equalp): Removed.
+	* cl-extra.el (cl-bit-vector-vector-equalp): Removed.
+	* cl-extra.el (cl-vector-array-equalp): Removed.
+	* cl-extra.el (cl-hash-table-contents-equalp): Removed.
+	* cl-extra.el (equalp): Removed.
+	* cl-extra.el (cl-mapcar-many):
+	Comment out the whole `equalp' implementation for the moment;
+	remove once we're sure the C implementation works.
+	
+	* cl-macs.el:
+	* cl-macs.el (equalp):
+	Simplify the compiler-macro for `equalp' -- once it's in C,
+	we don't need to try so hard to expand it.
+
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* obsolete.el:
@@ -20,14 +37,6 @@
 	#'find-function works better with dumped functions in an installed
 	XEmacs (it will look in lisp-directory instead, where it will
 	probably succeed).
-
-2010-01-29  Ben Wing  <ben@xemacs.org>
-
-	* mule/cyrillic.el (for):
-
-2010-01-29  Ben Wing  <ben@xemacs.org>
-
-	* mule/cyrillic.el (for):
 
 2010-01-29  Ben Wing  <ben@xemacs.org>
 

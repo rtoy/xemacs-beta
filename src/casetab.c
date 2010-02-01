@@ -404,23 +404,19 @@ set_case_table (Lisp_Object table, int standard)
   /* This function can GC */
   struct buffer *buf =
     standard ? XBUFFER (Vbuffer_defaults) : current_buffer;
+  Lisp_Object casetab;
 
   check_case_table (table);
 
   if (CASE_TABLEP (table))
-    {
-      if (standard)
-	Vstandard_case_table = table;
-
-      buf->case_table = table;
-    }
+    casetab = table;
   else
     {
       /* For backward compatibility. */
       Lisp_Object down, up, canon, eqv, tail = table;
-      Lisp_Object casetab =
-	standard ? Vstandard_case_table :  buf->case_table;
       struct chartab_range range;
+
+      casetab = Fmake_case_table ();
 
       range.type = CHARTAB_RANGE_ALL;
 
@@ -466,6 +462,12 @@ set_case_table (Lisp_Object table, int standard)
       else
 	convert_old_style_syntax_string (XCASE_TABLE_CANON (casetab), eqv);
     }
+
+
+  if (standard)
+    Vstandard_case_table = casetab;
+
+  buf->case_table = casetab;
 
   return buf->case_table;
 }
