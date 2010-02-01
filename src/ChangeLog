@@ -1,3 +1,8 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (common_init_alloc_early):
+	Fix compiler breakage.
+
 2010-01-29  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:

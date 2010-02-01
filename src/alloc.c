@@ -4985,7 +4985,7 @@ common_init_alloc_early (void)
   mcpro_names = Dynarr_new2 (const_Ascbyte_ptr_dynarr, const Ascbyte *);
   Dynarr_resize (mcpro_names, 1410); /* merely a small optimization */
   dump_add_root_block_ptr (&mcpro_names,
-			   &const_Ascbyte_ptr_dynarr_description_1);
+			   &const_Ascbyte_ptr_dynarr_description);
 #endif
 #endif /* NEW_GC */
 
