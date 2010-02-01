@@ -49,10 +49,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "gtk-xemacs.h"
 
+#include "sysgdkx.h"
+
 #include "systime.h"
 #include "sysproc.h" /* for MAXDESC */
-
-#include <gdk/gdkkeysyms.h>
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
@@ -61,10 +61,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_MENUBARS
 # include "menubar.h"
 #endif
-
-#include <gdk/gdkx.h>
-
-#include "event-gtk.h"
 
 static struct event_stream *gtk_event_stream;
 
@@ -1582,8 +1578,6 @@ emacs_shell_event_handler (GtkWidget *UNUSED (wid),
 /*                      input pending / C-g checking                    */
 /************************************************************************/
 
-#include <gdk/gdkx.h>
-
 static void
 emacs_gtk_drain_queue (void)
 
@@ -1692,7 +1686,7 @@ event_name (GdkEvent *ev)
 /* This is down at the bottom of the file so I can avoid polluting the
    generic code with this X specific CRAP! */
 
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
 #include <X11/keysym.h>
 /* #### BILL!!! Fix this please! */
 
