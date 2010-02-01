@@ -2258,7 +2258,7 @@ If BUFFER is nil, the current buffer is assumed.
   x2 = XCHAR (character2);
 
   return (!NILP (b->case_fold_search)
-	  ? DOWNCASE (b, x1) == DOWNCASE (b, x2)
+	  ? CANONCASE (b, x1) == CANONCASE (b, x2)
 	  : x1 == x2)
     ? Qt : Qnil;
 }

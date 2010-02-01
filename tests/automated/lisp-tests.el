@@ -1957,35 +1957,28 @@
 		 (foo-zero 400 (1+ most-positive-fixnum)))))
    "Checking multiple values are discarded correctly when forced")
   (Check-Error setting-constant (setq multiple-values-limit 20))
-  (Assert
-   (equal '(-1 1)
-	  (multiple-value-list (floor -3 4)))
+  (Assert-equal '(-1 1)
+	  (multiple-value-list (floor -3 4))
    "Checking #'multiple-value-list gives a sane result")
   (let ((ey 40000)
 	(bee "this is a string")
 	(cee #s(hash-table size 256 data (969 ?\xF9))))
-    (Assert
-     (equal
-      (multiple-value-list (values ey bee cee))
-      (multiple-value-list (values-list (list ey bee cee))))
+    (Assert-equal
+     (multiple-value-list (values ey bee cee))
+     (multiple-value-list (values-list (list ey bee cee)))
      "Checking that #'values and #'values-list are correctly related")
-    (Assert
-     (equal
-      (multiple-value-list (values-list (list ey bee cee)))
-      (multiple-value-list (apply #'values (list ey bee cee))))
+    (Assert-equal
+     (multiple-value-list (values-list (list ey bee cee)))
+     (multiple-value-list (apply #'values (list ey bee cee)))
      "Checking #'values-list and #'apply with #values are correctly related"))
-  (Assert
-   (= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10)
+  (Assert= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10
    "Checking #'multiple-value-call gives reasonable results.")
-  (Assert
-   (= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10)
+  (Assert= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10
    "Checking #'multiple-value-call correct when first arg multiple.")
-  (Assert
-   (= 1 (length (multiple-value-list (prog1 (floor pi) "hi there"))))
+  (Assert= 1 (length (multiple-value-list (prog1 (floor pi) "hi there")))
    "Checking #'prog1 does not pass back multiple values")
-  (Assert
-   (= 2 (length (multiple-value-list
-		 (multiple-value-prog1 (floor pi) "hi there"))))
+  (Assert= 2 (length (multiple-value-list
+		 (multiple-value-prog1 (floor pi) "hi there")))
    "Checking #'multiple-value-prog1 passes back multiple values")
   (multiple-value-bind (floored remainder this-is-nil)
       (floor pi 1.0)
@@ -2003,75 +1996,59 @@
     (Assert-eql 2.0 ey "Checking ey set correctly")
     (Assert-eql bee (- e 2.0) "Checking bee set correctly")
     (Assert (null cee) "Checking cee set to nil correctly"))
-  (Assert
-   (= 3 (length (multiple-value-list (eval '(values nil t pi)))))
+  (Assert= 3 (length (multiple-value-list (eval '(values nil t pi))))
    "Checking #'eval passes back multiple values")
-  (Assert
-   (= 2 (length (multiple-value-list (apply #'floor '(5 3)))))
+  (Assert= 2 (length (multiple-value-list (apply #'floor '(5 3))))
    "Checking #'apply passes back multiple values")
-  (Assert 
-   (= 2 (length (multiple-value-list (funcall #'floor 5 3))))
+  (Assert= 2 (length (multiple-value-list (funcall #'floor 5 3)))
    "Checking #'funcall passes back multiple values")
-  (Assert 
-   (equal '(1 2) (multiple-value-list 
-		  (multiple-value-call #'floor (values 5 3))))
+  (Assert-equal '(1 2) (multiple-value-list 
+		  (multiple-value-call #'floor (values 5 3)))
    "Checking #'multiple-value-call passes back multiple values correctly")
-  (Assert
-   (= 1 (length (multiple-value-list
-		 (and (multiple-value-function-returning-nil) t))))
+  (Assert= 1 (length (multiple-value-list
+		 (and (multiple-value-function-returning-nil) t)))
    "Checking multiple values from non-trailing forms discarded by #'and")
-  (Assert
-   (= 5 (length (multiple-value-list 
-		 (and t (multiple-value-function-returning-nil)))))
+  (Assert= 5 (length (multiple-value-list 
+		 (and t (multiple-value-function-returning-nil))))
    "Checking multiple values from final forms not discarded by #'and")
-  (Assert
-   (= 1 (length (multiple-value-list
-		 (or (multiple-value-function-returning-t) t))))
+  (Assert= 1 (length (multiple-value-list
+		 (or (multiple-value-function-returning-t) t)))
    "Checking multiple values from non-trailing forms discarded by #'and")
-  (Assert
-   (= 5 (length (multiple-value-list 
-		 (or nil (multiple-value-function-returning-t)))))
+  (Assert= 5 (length (multiple-value-list 
+		 (or nil (multiple-value-function-returning-t))))
    "Checking multiple values from final forms not discarded by #'and")
-  (Assert
-   (= 1 (length (multiple-value-list
-		 (cond ((multiple-value-function-returning-t))))))
+  (Assert= 1 (length (multiple-value-list
+		 (cond ((multiple-value-function-returning-t)))))
    "Checking cond doesn't pass back multiple values in tests.")
-  (Assert
-   (equal (list nil pi e radians-to-degrees degrees-to-radians)
+  (Assert-equal (list nil pi e radians-to-degrees degrees-to-radians)
 	  (multiple-value-list
-	   (cond (t (multiple-value-function-returning-nil)))))
+	   (cond (t (multiple-value-function-returning-nil))))
    "Checking cond passes back multiple values in clauses.")
-  (Assert
-   (= 1 (length (multiple-value-list
-		 (prog1 (multiple-value-function-returning-nil)))))
+  (Assert= 1 (length (multiple-value-list
+		 (prog1 (multiple-value-function-returning-nil))))
    "Checking prog1 discards multiple values correctly.")
-  (Assert
-   (= 5 (length (multiple-value-list
+  (Assert= 5 (length (multiple-value-list
 		 (multiple-value-prog1
-		  (multiple-value-function-returning-nil)))))
+		  (multiple-value-function-returning-nil))))
    "Checking multiple-value-prog1 passes back multiple values correctly.")
-  (Assert
-   (equal (list t pi e degrees-to-radians radians-to-degrees)
+  (Assert-equal (list t pi e degrees-to-radians radians-to-degrees)
 	  (multiple-value-list
-	   (catch 'VoN61Lo4Y (function-throwing-multiple-values)))))
-  (Assert
-   (equal (list t pi e degrees-to-radians radians-to-degrees)
+	   (catch 'VoN61Lo4Y (function-throwing-multiple-values))))
+  (Assert-equal (list t pi e degrees-to-radians radians-to-degrees)
 	  (multiple-value-list
 	   (loop
 	     for eye in `(a b c d ,e f g ,nil ,pi)
 	     do (when (null eye)
-		  (return (multiple-value-function-returning-t))))))
+		  (return (multiple-value-function-returning-t)))))
    "Checking #'loop passes back multiple values correctly.")
   (Assert
    (null (or))
    "Checking #'or behaves correctly with zero arguments.")
-  (Assert
-   (eq t (and))
+  (Assert-eq t (and)
    "Checking #'and behaves correctly with zero arguments.")
-  (Assert
-   (= (* 3.0 (- pi 3.0))
+  (Assert= (* 3.0 (- pi 3.0))
       (letf (((values three one-four-one-five-nine) (floor pi)))
-        (* three one-four-one-five-nine)))
+        (* three one-four-one-five-nine))
    "checking letf handles #'values in a basic sense"))
 
 ;; #'equalp tests.
@@ -2079,66 +2056,105 @@
       (eacute-character ?\u00E9)
       (Eacute-character ?\u00c9)
       (+base-chars+ (loop
-		       with res = (make-string 96 ?\x20)
-		       for int-char from #x20 to #x7f
-		       for char being each element in-ref res
-		       do (setf char (int-to-char int-char))
-		       finally return res)))
+		      with res = (make-string 96 ?\x20)
+		      for int-char from #x20 to #x7f
+		      for char being each element in-ref res
+		      do (setf char (int-to-char int-char))
+		      finally return res)))
+  (let ((equal-lists
+	 '((111111111111111111111111111111111111111111111111111
+	    111111111111111111111111111111111111111111111111111.0)
+	   (0 0.0 0.000 -0 -0.0 -0.000 #b0 0/5 -0/5)
+	   (21845 #b101010101010101 #x5555)
+	   (1.5 1.500000000000000000000000000000000000000000000000000000000
+		3/2)
+	   (-55 -110/2)
+	   ;; Can't use this, these values aren't `='.
+	   ;;(-12345678901234567890123457890123457890123457890123457890123457890
+	   ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
+	   )))
+    (loop for li in equal-lists do
+      (loop for (x . tail) on li do
+	(loop for y in tail do
+	  (Assert-equalp x y)
+	  (Assert-equalp y x)))))
+
+  (let ((diff-list
+	 `(0 1 2 3 1000 5000000000 5555555555555555555555555555555555555
+	   -1 -2 -3 -1000 -5000000000 -5555555555555555555555555555555555555
+	   1/2 1/3 2/3 8/2 355/113 (/ 3/2 0.2) (/ 3/2 0.7)
+	   55555555555555555555555555555555555555555/2718281828459045
+	   0.111111111111111111111111111111111111111111111111111111111111111
+	   1e+300 1e+301 -1e+300 -1e+301)))
+    (loop for (x . tail) on diff-list do
+      (loop for y in tail do
+	(Assert-not-equalp x y)
+	(Assert-not-equalp y x))))
+
   (Assert-equalp "hi there" "Hi There"
-	  "checking equalp isn't case-sensitive")
+		 "checking equalp isn't case-sensitive")
   (Assert-equalp 99 99.0
-	  "checking equalp compares numerical values of different types")
+		 "checking equalp compares numerical values of different types")
   (Assert (null (equalp 99 ?c))
 	  "checking equalp does not convert characters to numbers")
   ;; Fixed in Hg d0ea57eb3de4.
   (Assert (null (equalp "hi there" [hi there]))
 	  "checking equalp doesn't error with string and non-string")
-  (Assert-eq t (equalp "ABCDEEFGH\u00CDJ" string-variable)
-	  "checking #'equalp is case-insensitive with an upcased constant") 
-  (Assert-eq t (equalp "abcdeefgh\xedj" string-variable)
-	  "checking #'equalp is case-insensitive with a downcased constant")
-  (Assert-eq t (equalp string-variable string-variable)
-	  "checking #'equalp works when handed the same string twice")
-  (Assert-eq t (equalp string-variable "aBcDeeFgH\u00Edj")
-	  "check #'equalp is case-insensitive with a variable-cased constant")
-  (Assert-eq t (equalp "" (bit-vector)) 
-	  "check empty string and empty bit-vector are #'equalp.")
-  (Assert-eq t (equalp (string) (bit-vector)) 
-	  "check empty string and empty bit-vector are #'equalp, no constants")
-  (Assert-eq t (equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp")
-  (Assert-eq t (equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
-			(vector ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp, no constants")
-  (Assert-eq t (equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
-			(string ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp, vector constant")
-  (Assert-eq t (equalp [0 1.0 0.0 0 1]
-			(bit-vector 0 1 0 0 1))
-	  "check vector and bit-vector with same contents #'equalp,\
+  (Assert-equalp "ABCDEEFGH\u00CDJ" string-variable
+		 "checking #'equalp is case-insensitive with an upcased constant") 
+  (Assert-equalp "abcdeefgh\xedj" string-variable
+		 "checking #'equalp is case-insensitive with a downcased constant")
+  (Assert-equalp string-variable string-variable
+		 "checking #'equalp works when handed the same string twice")
+  (Assert-equalp string-variable "aBcDeeFgH\u00Edj"
+		 "check #'equalp is case-insensitive with a variable-cased constant")
+  (Assert-equalp "" (bit-vector) 
+		 "check empty string and empty bit-vector are #'equalp.")
+  (Assert-equalp (string) (bit-vector) 
+		 "check empty string and empty bit-vector are #'equalp, no constants")
+  (Assert-equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
+		 "check string and vector with same contents #'equalp")
+  (Assert-equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+		 (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
+	     "check string and vector with same contents #'equalp, no constants")
+  (Assert-equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
+		 (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+	     "check string and vector with same contents #'equalp, vector constant")
+  (Assert-equalp [0 1.0 0.0 0 1]
+		 (bit-vector 0 1 0 0 1)
+	     "check vector and bit-vector with same contents #'equalp,\
  vector constant")
-  (Assert-eq t (equalp #*01001
-			(vector 0 1.0 0.0 0 1))
-	  "check vector and bit-vector with same contents #'equalp,\
+  (Assert-not-equalp [0 2 0.0 0 1]
+		     (bit-vector 0 1 0 0 1)
+	     "check vector and bit-vector with different contents not #'equalp,\
+ vector constant")
+  (Assert-equalp #*01001
+		 (vector 0 1.0 0.0 0 1)
+	     "check vector and bit-vector with same contents #'equalp,\
  bit-vector constant")
-  (Assert-eq t (equalp ?\u00E9 Eacute-character)
-	  "checking characters are case-insensitive, one constant")
-  (Assert-eq nil (equalp ?\u00E9 (aref (format "%c" ?a) 0))
-	  "checking distinct characters are not equalp, one constant")
-  (Assert-eq t (equalp t (and))
-	  "checking symbols are correctly #'equalp")
-  (Assert-eq nil (equalp t (or nil '#:t))
-	  "checking distinct symbols with the same name are not #'equalp")
-  (Assert-eq t (equalp #s(char-table type generic data (?\u0080 "hi-there"))
-			(let ((aragh (make-char-table 'generic)))
-			  (put-char-table ?\u0080 "hi-there" aragh)
-			  aragh))
-	  "checking #'equalp succeeds correctly, char-tables")
-  (Assert-eq nil (equalp #s(char-table type generic data (?\u0080 "hi-there"))
-			  (let ((aragh (make-char-table 'generic)))
-			    (put-char-table ?\u0080 "HI-THERE" aragh)
-			    aragh))
-	  "checking #'equalp fails correctly, char-tables"))
+  (Assert-equalp ?\u00E9 Eacute-character
+		 "checking characters are case-insensitive, one constant")
+  (Assert-not-equalp ?\u00E9 (aref (format "%c" ?a) 0)
+		     "checking distinct characters are not equalp, one constant")
+  (Assert-equalp t (and)
+		 "checking symbols are correctly #'equalp")
+  (Assert-not-equalp t (or nil '#:t)
+		     "checking distinct symbols with the same name are not #'equalp")
+  (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		 (let ((aragh (make-char-table 'generic)))
+		   (put-char-table ?\u0080 "hi-there" aragh)
+		   aragh)
+		 "checking #'equalp succeeds correctly, char-tables")
+  (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		 (let ((aragh (make-char-table 'generic)))
+		   (put-char-table ?\u0080 "HI-THERE" aragh)
+		   aragh)
+		 "checking #'equalp succeeds correctly, char-tables")
+  (Assert-not-equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		     (let ((aragh (make-char-table 'generic)))
+		       (put-char-table ?\u0080 "hi there" aragh)
+		       aragh)
+	     "checking #'equalp fails correctly, char-tables"))
 
 ;; There are more tests available for equalp here: 
 ;;
@@ -2199,10 +2215,8 @@
        (rassoc* (1- most-negative-fixnum) assoc*-list)
        (rassoc* (1- most-negative-fixnum) assoc*-list :test #'eql)
        "checking #'rassoc* correct if #'eql not explicitly specified")
-      (Assert-eq
-       (eql (1+most-positive-fixnum) (1+ most-positive-fixnum))
-       t
-       "checking #'eql handles a bignum literal properly.")
+      (Assert-eql (1+most-positive-fixnum) (1+ most-positive-fixnum)
+		  "checking #'eql handles a bignum literal properly.")
       (Assert-eq 
        (member* (1+most-positive-fixnum) member*-list)
        (member* (1+ most-positive-fixnum) member*-list :test #'equal)

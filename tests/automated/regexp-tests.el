@@ -30,9 +30,8 @@
 
 ;; Test regular expressions.
 
-;; NOTE NOTE NOTE: There is some domain overlap among regexp-tests.el,
-;; search-tests.el and case-tests.el.  See search-tests.el.
-;;
+;; NOTE NOTE NOTE: There is some domain overlap among case-tests.el,
+;; regexp-tests.el and search-tests.el.  See case-tests.el.
 
 (Check-Error-Message error "Trailing backslash"
 		     (string-match "\\" "a"))

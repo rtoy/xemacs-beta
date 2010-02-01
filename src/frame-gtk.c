@@ -988,9 +988,11 @@ allocate_gtk_frame_struct (struct frame *f)
     FRAME_GTK_LISP_WIDGETS (f)[i] = Qnil;
 
   /*
-    Hashtables of callback data for glyphs on the frame.  Make them EQ because
-    we only use ints as keys.  Otherwise we run into stickiness in redisplay
-    because internal_equal() can QUIT.  See enter_redisplay_critical_section().
+    Hashtables of callback data for glyphs on the frame.  [[ Make them EQ
+    because we only use ints as keys.  Otherwise we run into stickiness in
+    redisplay because internal_equal() can QUIT.  See
+    enter_redisplay_critical_section() ]] -- probably not true any more,
+    now that we have internal_equal_trapping_problems(). --ben
 */
   FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f) =
     make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);

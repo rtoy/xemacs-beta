@@ -5047,6 +5047,8 @@ EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
 MODULE_API EXFUN (Fequal, 2);
 MODULE_API EXFUN (Fget, 3);
+MODULE_API EXFUN (Feqlsign, MANY);
+MODULE_API EXFUN (Fequalp, 2);
 EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
@@ -5092,7 +5094,7 @@ Lisp_Object remassoc_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object remassq_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object remrassq_no_quit (Lisp_Object, Lisp_Object);
 
-int plists_differ (Lisp_Object, Lisp_Object, int, int, int);
+int plists_differ (Lisp_Object, Lisp_Object, int, int, int, int);
 Lisp_Object internal_plist_get (Lisp_Object, Lisp_Object);
 void internal_plist_put (Lisp_Object *, Lisp_Object, Lisp_Object);
 int internal_remprop (Lisp_Object *, Lisp_Object);
@@ -5110,6 +5112,7 @@ int internal_equal_trapping_problems (Lisp_Object warning_class,
 				      int depth);
 int internal_equal (Lisp_Object, Lisp_Object, int);
 int internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth);
+int internal_equal_0 (Lisp_Object, Lisp_Object, int, int);
 Lisp_Object concat2 (Lisp_Object, Lisp_Object);
 Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
@@ -5777,7 +5780,7 @@ int qxestrcasecmp (const Ibyte *s1, const Ibyte *s2);
 int qxestrcasecmp_ascii (const Ibyte *s1, const Ascbyte *s2);
 int qxestrcasecmp_i18n (const Ibyte *s1, const Ibyte *s2);
 int ascii_strcasecmp (const Ascbyte *s1, const Ascbyte *s2);
-int lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2);
+int lisp_strcasecmp_ascii (Lisp_Object s1, Lisp_Object s2);
 int lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2);
 int qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
 int qxestrncasecmp_ascii (const Ibyte *s1, const Ascbyte *s2,
