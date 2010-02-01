@@ -137,15 +137,6 @@ void x_output_string (struct window *w, struct display_line *dl,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);
-void x_output_x_pixmap (struct frame *f, Lisp_Image_Instance *p,
-			int x, int y, int xoffset, int yoffset,
-			int width, int height,
-			unsigned long fg, unsigned long bg,
-			GC override_gc);
-void x_output_shadows (struct frame *f, int x, int y, int width,
-		       int height, GC top_shadow_gc,
-		       GC bottom_shadow_gc, GC background_gc,
-		       int shadow_thickness, int edges);
 void x_generate_shadow_pixels (struct frame *f,
 			       unsigned long *top_shadow,
 			       unsigned long *bottom_shadow,

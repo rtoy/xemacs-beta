@@ -342,7 +342,7 @@ Return minimum number of args built-in function SUBR may be called with.
 
 DEFUN ("subr-max-args", Fsubr_max_args, 1, 1, 0, /*
 Return maximum number of args built-in function SUBR may be called with,
-or nil if it takes an arbitrary number of arguments or is a special form.
+or nil if it takes an arbitrary number of arguments or is a special operator.
 */
        (subr))
 {
@@ -2628,13 +2628,13 @@ print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   struct weak_list *w1 = XWEAK_LIST (obj1);
   struct weak_list *w2 = XWEAK_LIST (obj2);
 
   return ((w1->type == w2->type) &&
-	  internal_equal (w1->list, w2->list, depth + 1));
+	  internal_equal_0 (w1->list, w2->list, depth + 1, foldcase));
 }
 
 static Hashcode
@@ -3104,12 +3104,12 @@ print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   struct weak_box *wb1 = XWEAK_BOX (obj1);
   struct weak_box *wb2 = XWEAK_BOX (obj2);
 
-  return (internal_equal (wb1->value, wb2->value, depth + 1));
+  return (internal_equal_0 (wb1->value, wb2->value, depth + 1, foldcase));
 }
 
 static Hashcode
@@ -3330,10 +3330,11 @@ print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   return
-    internal_equal (XEPHEMERON_REF (obj1), XEPHEMERON_REF(obj2), depth + 1);
+    internal_equal_0 (XEPHEMERON_REF (obj1), XEPHEMERON_REF(obj2), depth + 1,
+		      foldcase);
 }
 
 static Hashcode

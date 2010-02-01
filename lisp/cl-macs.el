@@ -1,7 +1,7 @@
 ;;; cl-macs.el --- Common Lisp extensions for XEmacs Lisp (part four)
 
 ;; Copyright (C) 1993, 2003, 2004 Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Version: 2.02
@@ -3357,6 +3357,21 @@ surrounded by (block NAME ...)."
       (regexp-quote string)
     form))
 
+;; NOTE: `equalp' is now a primitive, although as of yet it still doesn't
+;; have a byte-compiler opcode for it.  The compiler-macro for `equalp' used
+;; to try and remove as much as possible of the logic of the Lisp `equalp' as
+;; possible whenever one of the arguments is a constant, boiling things down
+;; to a few if-statements and some calls to various no-longer-defined
+;; helper functions.  Besides the fact that the helper functions aren't
+;; defined, there's little point in doing any of that expansion, since it will
+;; end up executing in Lisp what would otherwise be done in C by a direct
+;; call to `equalp'.  The only exception is when the reduction is quite
+;; simple and is to functions that do have op-codes; that may gain something.
+;; However, if `equalp' becomes an opcode itself, consider removing everything
+;; here except maybe when the call can directly be reduced to `equal' or `eq'.
+;;
+;; --ben
+
 (define-compiler-macro equalp (&whole form x y) 
   "Expand calls to `equalp' where X or Y is a constant expression.
 
@@ -3372,8 +3387,6 @@ the byte optimizer in those cases."
   ;; constant here.
   (let* ((equalp-sym (eval-when-compile (gensym)))
 	(let-form '(progn))
-	(check-bit-vector t)
-	(check-string t)
 	(original-y y)
 	equalp-temp checked)
   (macrolet
@@ -3398,44 +3411,11 @@ the byte optimizer in those cases."
 	    ((member x '("" #* []))
 	     ;; No need to protect against multiple evaluation here:
 	     `(and (member ,original-y '("" #* [])) t))
-	    ((stringp x)
-	     `(,@let-form
-	       (if (stringp ,y)
-		   (eq t (compare-strings ,x nil nil
-					  ,y nil nil t))
-		 (if (vectorp ,y) 
-		     (cl-string-vector-equalp ,x ,y)))))
-	    ((bit-vector-p x)
-	     `(,@let-form
-	       (if (bit-vector-p ,y)
-		   ;; No need to call equalp on each element here:
-		   (equal ,x ,y)
-		 (if (vectorp ,y) 
-		     (cl-bit-vector-vector-equalp ,x ,y)))))
-	    (t
-	     (loop
-	       for elt across x
-	       ;; We may not need to check the other argument if it's a
-	       ;; string or bit vector, depending on the contents of x:
-	       always (progn
-			(unless (characterp elt) (setq check-string nil))
-			(unless (and (numberp elt) (or (= elt 0) (= elt 1)))
-			  (setq check-bit-vector nil))
-			(or check-string check-bit-vector)))
-	     `(,@let-form
-	       (cond
-		,@(if check-string
-		      `(((stringp ,y) 
-			 (cl-string-vector-equalp ,y ,x))))
-		,@(if check-bit-vector 
-		      `(((bit-vector-p ,y)
-			 (cl-bit-vector-vector-equalp ,y ,x))))
-		((vectorp ,y)
-		 (cl-vector-array-equalp ,x ,y)))))))
+	    (t form)))
 	  ((unordered-check (and (characterp x) (not (cl-const-expr-p y))))
 	   `(,@let-form
 	     (or (eq ,x ,y)
-		  ;; eq has a bytecode, char-equal doesn't.
+		 ;; eq has a bytecode, char-equal doesn't.
 		 (and (characterp ,y)
 		      (eq (downcase ,x) (downcase ,y))))))
 	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
@@ -3443,30 +3423,145 @@ the byte optimizer in those cases."
 	     (and (numberp ,y)
 		  (= ,x ,y))))
 	  ((unordered-check (and (hash-table-p x) (not (cl-const-expr-p y))))
-	   ;; Hash tables; follow the CL spec.
-	   `(,@let-form
-	     (and (hash-table-p ,y)
-		  (eq ',(hash-table-test x) (hash-table-test ,y))
-		  (= ,(hash-table-count x) (hash-table-count ,y))
-		  (cl-hash-table-contents-equalp ,x ,y))))
+	   form)
 	  ((unordered-check
 	    ;; Symbols; eq. 
 	    (and (not (cl-const-expr-p y))
 		 (or (memq x '(nil t))
 		     (and (eq (car-safe x) 'quote) (symbolp (second x))))))
 	   (cons 'eq (cdr form)))
-	  ((unordered-check
-	    ;; Compare conses at runtime, there's no real upside to
-	    ;; unrolling the function -> they fall through to the next
-	    ;; clause in this function.
-	    (and (cl-const-expr-p x) (not (consp x))
-		 (not (cl-const-expr-p y))))
-	   ;; All other types; use equal.
-	   (cons 'equal (cdr form)))
+
+	  ;; This clause is wrong -- e.g. when comparing a constant char-table
+	  ;; against a non-constant expression that evaluates to a char-table,
+	  ;; or some for range tables or certain other types, `equalp' is
+	  ;; not the same as `equal'.  We could insert the known list of
+	  ;; types with special `equalp' property, but it's fragile and may
+	  ;; not be much of an optimization, esp. since these types don't
+	  ;; occur that often are often big.
+	  ;;((unordered-check
+	  ;;  ;; Compare conses at runtime, there's no real upside to
+	  ;;  ;; unrolling the function -> they fall through to the next
+	  ;;  ;; clause in this function.
+	  ;;  (and (cl-const-expr-p x) (not (consp x))
+	  ;;       (not (cl-const-expr-p y))))
+	  ;; ;; All other types; use equal.
+	  ;; (cons 'equal (cdr form)))
+	  
 	  ;; Neither side is a constant expression, do all our evaluation at
 	  ;; runtime (or both are, and equalp will be called from
 	  ;; byte-optimize.el).
 	  (t form)))))
+
+;;(define-compiler-macro equalp (&whole form x y) 
+;;  "Expand calls to `equalp' where X or Y is a constant expression.
+;;
+;;Much of the processing that `equalp' does is dependent on the types of both
+;;of its arguments, and with type information for one of them, we can
+;;eliminate much of the body of the function at compile time.
+;;
+;;Where both X and Y are constant expressions, `equalp' is evaluated at
+;;compile time by byte-optimize.el--this compiler macro passes FORM through to
+;;the byte optimizer in those cases."
+;;  ;; Cases where both arguments are constant are handled in
+;;  ;; byte-optimize.el, we only need to handle those cases where one is
+;;  ;; constant here.
+;;  (let* ((equalp-sym (eval-when-compile (gensym)))
+;;	(let-form '(progn))
+;;	(check-bit-vector t)
+;;	(check-string t)
+;;	(original-y y)
+;;	equalp-temp checked)
+;;  (macrolet
+;;      ((unordered-check (check)
+;;	 `(prog1
+;;	     (setq checked
+;;		   (or ,check
+;;		       (prog1 ,(sublis '((x . y) (y . x)) check :test #'eq)
+;;			 (setq equalp-temp x x y y equalp-temp))))
+;;	   (when checked
+;;	     (unless (symbolp y)
+;;	       (setq let-form `(let ((,equalp-sym ,y))) y equalp-sym))))))
+;;    ;; In the bodies of the below clauses, x is always a constant expression
+;;    ;; of the type we're interested in, and y is always a symbol that refers
+;;    ;; to the result non-constant side of the comparison. 
+;;    (cond ((unordered-check (and (arrayp x) (not (cl-const-expr-p y))))
+;;	   ;; Strings and other arrays. A vector containing the same
+;;	   ;; character elements as a given string is equalp to that string;
+;;	   ;; a bit-vector can only be equalp to a string if both are
+;;	   ;; zero-length.
+;;	   (cond
+;;	    ((member x '("" #* []))
+;;	     ;; No need to protect against multiple evaluation here:
+;;	     `(and (member ,original-y '("" #* [])) t))
+;;	    ((stringp x)
+;;	     `(,@let-form
+;;	       (if (stringp ,y)
+;;		   (eq t (compare-strings ,x nil nil
+;;					  ,y nil nil t))
+;;		 (if (vectorp ,y) 
+;;		     (cl-string-vector-equalp ,x ,y)))))
+;;	    ((bit-vector-p x)
+;;	     `(,@let-form
+;;	       (if (bit-vector-p ,y)
+;;		   ;; No need to call equalp on each element here:
+;;		   (equal ,x ,y)
+;;		 (if (vectorp ,y) 
+;;		     (cl-bit-vector-vector-equalp ,x ,y)))))
+;;	    (t
+;;	     (loop
+;;	       for elt across x
+;;	       ;; We may not need to check the other argument if it's a
+;;	       ;; string or bit vector, depending on the contents of x:
+;;	       always (progn
+;;			(unless (characterp elt) (setq check-string nil))
+;;			(unless (and (numberp elt) (or (= elt 0) (= elt 1)))
+;;			  (setq check-bit-vector nil))
+;;			(or check-string check-bit-vector)))
+;;	     `(,@let-form
+;;	       (cond
+;;		,@(if check-string
+;;		      `(((stringp ,y) 
+;;			 (cl-string-vector-equalp ,y ,x))))
+;;		,@(if check-bit-vector 
+;;		      `(((bit-vector-p ,y)
+;;			 (cl-bit-vector-vector-equalp ,y ,x))))
+;;		((vectorp ,y)
+;;		 (cl-vector-array-equalp ,x ,y)))))))
+;;	  ((unordered-check (and (characterp x) (not (cl-const-expr-p y))))
+;;	   `(,@let-form
+;;	     (or (eq ,x ,y)
+;;		  ;; eq has a bytecode, char-equal doesn't.
+;;		 (and (characterp ,y)
+;;		      (eq (downcase ,x) (downcase ,y))))))
+;;	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
+;;	   `(,@let-form
+;;	     (and (numberp ,y)
+;;		  (= ,x ,y))))
+;;	  ((unordered-check (and (hash-table-p x) (not (cl-const-expr-p y))))
+;;	   ;; Hash tables; follow the CL spec.
+;;	   `(,@let-form
+;;	     (and (hash-table-p ,y)
+;;		  (eq ',(hash-table-test x) (hash-table-test ,y))
+;;		  (= ,(hash-table-count x) (hash-table-count ,y))
+;;		  (cl-hash-table-contents-equalp ,x ,y))))
+;;	  ((unordered-check
+;;	    ;; Symbols; eq. 
+;;	    (and (not (cl-const-expr-p y))
+;;		 (or (memq x '(nil t))
+;;		     (and (eq (car-safe x) 'quote) (symbolp (second x))))))
+;;	   (cons 'eq (cdr form)))
+;;	  ((unordered-check
+;;	    ;; Compare conses at runtime, there's no real upside to
+;;	    ;; unrolling the function -> they fall through to the next
+;;	    ;; clause in this function.
+;;	    (and (cl-const-expr-p x) (not (consp x))
+;;		 (not (cl-const-expr-p y))))
+;;	   ;; All other types; use equal.
+;;	   (cons 'equal (cdr form)))
+;;	  ;; Neither side is a constant expression, do all our evaluation at
+;;	  ;; runtime (or both are, and equalp will be called from
+;;	  ;; byte-optimize.el).
+;;	  (t form)))))
 
 (define-compiler-macro map (&whole form cl-type cl-func cl-seq
                             &rest cl-rest)

@@ -758,7 +758,7 @@ This function moves point backward, skipping characters that match
   It is often useful to move point ``temporarily'' within a localized
 portion of the program, or to switch buffers temporarily.  This is
 called an @dfn{excursion}, and it is done with the @code{save-excursion}
-special form.  This construct saves the current buffer and its values of
+special operator.  This construct saves the current buffer and its values of
 point and the mark so they can be restored after the completion of the
 excursion.
 
@@ -770,13 +770,13 @@ Configurations}).
 @cindex mark excursion
 @cindex point excursion
 @cindex current buffer excursion
-The @code{save-excursion} special form saves the identity of the current
+The @code{save-excursion} special operator saves the identity of the current
 buffer and the values of point and the mark in it, evaluates
 @var{forms}, and finally restores the buffer and its saved values of
 point and the mark.  All three saved values are restored even in case of
 an abnormal exit via @code{throw} or error (@pxref{Nonlocal Exits}).
 
-The @code{save-excursion} special form is the standard way to switch
+The @code{save-excursion} special operator is the standard way to switch
 buffers or move point within one part of a program and avoid affecting
 the rest of the program.  It is used more than 500 times in the Lisp
 sources of XEmacs.
@@ -813,24 +813,24 @@ The value returned by @code{save-excursion} is the result of the last of
 @end defspec
 
 @defspec save-current-buffer forms@dots{}
-This special form is similar to @code{save-excursion} but it only
+This special operator is similar to @code{save-excursion} but it only
 saves and restores the current buffer.  Beginning with XEmacs 20.3,
 @code{save-current-buffer} is a primitive.
 @end defspec
 
 @defspec with-current-buffer buffer forms@dots{}
-This special form evaluates @var{forms} with @var{buffer} as the current
+This macro evaluates @var{forms} with @var{buffer} as the current
 buffer.  It returns the value of the last form.
 @end defspec
 
 @defspec with-temp-file filename forms@dots{}
-This special form creates a new buffer, evaluates @var{forms} there, and
+This macro creates a new buffer, evaluates @var{forms} there, and
 writes the buffer to @var{filename}.  It returns the value of the last form
 evaluated.
 @end defspec
 
 @defspec save-selected-window forms@dots{}
-This special form is similar to @code{save-excursion} but it saves and
+This macro is similar to @code{save-excursion} but it saves and
 restores the selected window and nothing else.
 @end defspec
 
@@ -894,7 +894,7 @@ It is equivalent to the following expression:
 @end deffn
 
 @defspec save-restriction body@dots{}
-This special form saves the current bounds of the accessible portion,
+This special operator saves the current bounds of the accessible portion,
 evaluates the @var{body} forms, and finally restores the saved bounds,
 thus restoring the same state of narrowing (or absence thereof) formerly
 in effect.  The state of narrowing is restored even in the event of an
@@ -922,7 +922,7 @@ restored with temporary narrowing still in effect.  If the old point
 value were outside the limits of the temporary narrowing, this would
 fail to restore it accurately.
 
-The @code{save-restriction} special form records the values of the
+The @code{save-restriction} special operator records the values of the
 beginning and end of the accessible portion as distances from the
 beginning and end of the buffer.  In other words, it records the amount
 of inaccessible text before and after the accessible portion.

@@ -250,6 +250,13 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif /* UNUSED */
 
+/* Declaration that variable or expression X is "used" to defeat
+   "unused variable" warnings.  DON'T DO THIS FOR PARAMETERS IF IT ALL
+   POSSIBLE.  Use an UNUSED() or USED_IF_*() declaration on the parameter
+   instead.  Don't do this for unused local variables that should really
+   just be deleted. */
+#define USED(x) ((void) (x))
+
 #ifdef DEBUG_XEMACS
 # define REGISTER
 # define register

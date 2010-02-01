@@ -2955,7 +2955,7 @@ complex_vars_of_glyphs_gtk (void)
 }
 
 /* X specific crap */
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
 /* #### Should remove all this X specific stuff when GTK/GDK matures a
    bit more and provides an abstraction for it. */
 static int

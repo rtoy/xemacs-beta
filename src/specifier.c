@@ -311,7 +311,7 @@ finalize_specifier (void *header, int for_disksave)
 #endif /* not NEW_GC */
 
 static int
-specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   Lisp_Specifier *s1 = XSPECIFIER (obj1);
   Lisp_Specifier *s2 = XSPECIFIER (obj2);
@@ -325,12 +325,12 @@ specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   depth++;
   retval =
     (s1->methods == s2->methods &&
-     internal_equal (s1->global_specs, s2->global_specs, depth) &&
-     internal_equal (s1->device_specs, s2->device_specs, depth) &&
-     internal_equal (s1->frame_specs,  s2->frame_specs,  depth) &&
-     internal_equal (s1->window_specs, s2->window_specs, depth) &&
-     internal_equal (s1->buffer_specs, s2->buffer_specs, depth) &&
-     internal_equal (s1->fallback,     s2->fallback,     depth));
+     internal_equal_0 (s1->global_specs, s2->global_specs, depth, foldcase) &&
+     internal_equal_0 (s1->device_specs, s2->device_specs, depth, foldcase) &&
+     internal_equal_0 (s1->frame_specs,  s2->frame_specs,  depth, foldcase) &&
+     internal_equal_0 (s1->window_specs, s2->window_specs, depth, foldcase) &&
+     internal_equal_0 (s1->buffer_specs, s2->buffer_specs, depth, foldcase) &&
+     internal_equal_0 (s1->fallback,     s2->fallback,     depth, foldcase));
 
   if (retval && HAS_SPECMETH_P (s1, equal))
     retval = SPECMETH (s1, equal, (obj1, obj2, depth - 1));

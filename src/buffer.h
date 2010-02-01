@@ -1188,7 +1188,10 @@ Lisp_Object
 BUFFER_CASE_TABLE (struct buffer *buf)
 )
 {
-  return buf ? buf->case_table : Vstandard_case_table;
+  return buf ? buf->case_table : current_buffer->case_table;
+  /* When buf=0, was Vstandard_case_table, but this sucks.  If I set a
+     different case table in this buffer, operations that use a case table
+     by default should use the current one. */
 }
 
 /* Macros used below. */
@@ -1196,6 +1199,8 @@ BUFFER_CASE_TABLE (struct buffer *buf)
   TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (BUFFER_CASE_TABLE (buf)), c)
 #define UPCASE_TABLE_OF(buf, c)		\
   TRT_TABLE_OF (XCASE_TABLE_UPCASE (BUFFER_CASE_TABLE (buf)), c)
+#define CANON_TABLE_OF(buf, c)	\
+  TRT_TABLE_OF (XCASE_TABLE_CANON (BUFFER_CASE_TABLE (buf)), c)
 
 /* 1 if CH is upper case.  */
 
@@ -1245,5 +1250,10 @@ UPCASE (struct buffer *buf, Ichar ch)
 /* Downcase a character, or make no change if that cannot be done. */
 
 #define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
+
+/* Convert a character to a canonical representation, so that case-independent
+   comparisons will work. */
+
+#define CANONCASE(buf, ch) CANON_TABLE_OF (buf, ch)
 
 #endif /* INCLUDED_buffer_h_ */

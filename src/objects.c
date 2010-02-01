@@ -124,7 +124,8 @@ finalize_color_instance (void *header, int for_disksave)
 }
 
 static int
-color_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+color_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		      int UNUSED (foldcase))
 {
   Lisp_Color_Instance *c1 = XCOLOR_INSTANCE (obj1);
   Lisp_Color_Instance *c2 = XCOLOR_INSTANCE (obj2);
@@ -347,7 +348,8 @@ finalize_font_instance (void *header, int for_disksave)
    this means the `equal' could cause XListFonts to be run the first time.
  */
 static int
-font_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+font_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		     int UNUSED (foldcase))
 {
   /* #### should this be moved into a device method? */
   return internal_equal (font_instance_truename_internal

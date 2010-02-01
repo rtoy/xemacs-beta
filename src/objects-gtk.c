@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-gtk-impl.h"
 
 /* sigh */
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
 
 /* XListFonts doesn't allocate memory unconditionally based on this. (For
    XFree86 in 2005, at least. */

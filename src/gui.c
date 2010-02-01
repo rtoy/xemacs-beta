@@ -678,7 +678,8 @@ gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth)
 }
 
 static int
-gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		int UNUSED (foldcase))
 {
   Lisp_Gui_Item *p1 = XGUI_ITEM (obj1);
   Lisp_Gui_Item *p2 = XGUI_ITEM (obj2);

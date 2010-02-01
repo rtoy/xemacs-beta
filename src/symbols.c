@@ -738,13 +738,13 @@ SUBR must be a built-in function.
   return make_string ((const Ibyte *)name, strlen (name));
 }
 
-DEFUN ("special-form-p", Fspecial_form_p, 1, 1, 0, /*
-Return whether SUBR is a special form.
+DEFUN ("special-operator-p", Fspecial_operator_p, 1, 1, 0, /*
+Return whether SUBR is a special operator.
 
-A special form is a built-in function (a subr, that is a function
+A special operator is a built-in function (a subr, that is a function
 implemented in C, not Lisp) which does not necessarily evaluate all its
 arguments.  Much of the basic XEmacs Lisp syntax is implemented by means of
-special forms; examples are `let', `condition-case', `defun', `setq' and so
+special operators; examples are `let', `condition-case', `setq', and so
 on.
 
 If you intend to write a Lisp function that does not necessarily evaluate
@@ -3958,7 +3958,7 @@ syms_of_symbols (void)
   DEFSUBR (Fdefine_function);
   Ffset (intern ("defalias"), intern ("define-function"));
   DEFSUBR (Fsubr_name);
-  DEFSUBR (Fspecial_form_p);
+  DEFSUBR (Fspecial_operator_p);
   DEFSUBR (Fsetplist);
   DEFSUBR (Fsymbol_value_in_buffer);
   DEFSUBR (Fsymbol_value_in_console);

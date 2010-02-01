@@ -746,7 +746,8 @@ This is used during startup to communicate the default geometry to GTK.
   Qgtk_seen_characters = Qnil;
 }
 
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
+
 static void
 gtk_device_init_x_specific_cruft (struct device *d)
 {

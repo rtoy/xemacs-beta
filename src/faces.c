@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -148,7 +148,8 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
    This isn't concerned with "unspecified" attributes, that's what
    #'face-differs-from-default-p is for. */
 static int
-face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+	    int UNUSED (foldcase))
 {
   Lisp_Face *f1 = XFACE (obj1);
   Lisp_Face *f2 = XFACE (obj2);
@@ -168,7 +169,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
      internal_equal (f1->blinking,	     f2->blinking,	    depth) &&
      internal_equal (f1->reverse,	     f2->reverse,	    depth) &&
 
-     ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1));
+     ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1, 0));
 }
 
 static Hashcode

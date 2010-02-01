@@ -1,3 +1,11 @@
+2010-01-28  Jerry James  <james@xemacs.org>
+
+	* tests/external-widget/Makefile: Add copyright and license
+	boilerplate text based on Ben's recollection.
+	* tests/external-widget/test-ew-motif.c: Ditto.
+	* tests/external-widget/test-ew-xlib.c: Ditto.
+	* unicode/other/lao.txt: Ditto.
+
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* HELLO: Encode the Arabic in arabic-iso8859-6 once more; delete

@@ -227,6 +227,12 @@ with the exception of `loadup.el'.")
 ;; Make the path to this file look a little nicer: 
 (setcar (car load-history) (file-truename (caar load-history)))
 
+;; Make #'find-function behave better with dumped files.
+(let ((source-lisp (concat "^" (regexp-quote source-lisp))))
+  (mapc
+   #'(lambda (elt) (setcar elt (replace-in-string (car elt) source-lisp "")))
+   load-history))
+
 (garbage-collect)
 
 ;;; At this point, we're ready to resume undo recording for scratch.

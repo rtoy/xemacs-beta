@@ -28,10 +28,9 @@ Boston, MA 02111-1307, USA.  */
 #define _XEMACS_GLYPHS_GTK_H_
 
 #include "glyphs.h"
+#include "sysgtk.h"
 
 #ifdef HAVE_GTK
-
-#include <gtk/gtk.h>
 
 /****************************************************************************
  *                         Image-Instance Object                            *

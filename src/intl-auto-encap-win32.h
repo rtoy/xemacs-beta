@@ -96,7 +96,7 @@ UINT qxeDragQueryFile (HDROP arg1, UINT arg2, Extbyte * arg3, UINT arg4);
 #undef ExtractAssociatedIcon
 #define ExtractAssociatedIcon error_use_qxeExtractAssociatedIcon_or_ExtractAssociatedIconA_and_ExtractAssociatedIconW
 #endif
-HICON qxeExtractAssociatedIcon (HINSTANCE arg1, const Extbyte * arg2, PWORD arg3);
+HICON qxeExtractAssociatedIcon (HINSTANCE arg1, Extbyte * arg2, LPWORD arg3);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ExtractIcon
@@ -104,7 +104,11 @@ HICON qxeExtractAssociatedIcon (HINSTANCE arg1, const Extbyte * arg2, PWORD arg3
 #endif
 HICON qxeExtractIcon (HINSTANCE arg1, const Extbyte * arg2, UINT arg3);
 
-/* Skipping ExtractIconEx because NT 4.0+ only, error in Cygwin prototype */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ExtractIconEx
+#define ExtractIconEx error_use_qxeExtractIconEx_or_ExtractIconExA_and_ExtractIconExW
+#endif
+UINT qxeExtractIconEx (const Extbyte * arg1, int arg2, HICON* arg3, HICON* arg4, UINT arg5);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FindExecutable
@@ -657,7 +661,7 @@ HWND qxeCreateDialogParam (HINSTANCE arg1, const Extbyte * arg2, HWND arg3, DLGP
 #undef CreateMDIWindow
 #define CreateMDIWindow error_use_qxeCreateMDIWindow_or_CreateMDIWindowA_and_CreateMDIWindowW
 #endif
-HWND qxeCreateMDIWindow (const Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10);
+HWND qxeCreateMDIWindow (Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef CreateWindowEx
@@ -669,7 +673,7 @@ HWND qxeCreateWindowEx (DWORD arg1, const Extbyte * arg2, const Extbyte * arg3, 
 #undef CreateWindowStation
 #define CreateWindowStation error_use_qxeCreateWindowStation_or_CreateWindowStationA_and_CreateWindowStationW
 #endif
-HWINSTA qxeCreateWindowStation (const Extbyte * arg1, DWORD arg2, DWORD arg3, LPSECURITY_ATTRIBUTES arg4);
+HWINSTA qxeCreateWindowStation (Extbyte * arg1, DWORD arg2, DWORD arg3, LPSECURITY_ATTRIBUTES arg4);
 
 #undef DefDlgProc
 #define DefDlgProc error_return_value_is_conditionalized_on__MAC__messes_up_parser
@@ -1121,11 +1125,8 @@ LONG qxeSendDlgItemMessage (HWND arg1, int arg2, UINT arg3, WPARAM arg4, LPARAM 
 #endif
 BOOL qxeSendMessageCallback (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4, SENDASYNCPROC arg5, DWORD arg6);
 
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef SendMessageTimeout
-#define SendMessageTimeout error_use_qxeSendMessageTimeout_or_SendMessageTimeoutA_and_SendMessageTimeoutW
-#endif
-LRESULT qxeSendMessageTimeout (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4, UINT arg5, UINT arg6, PDWORD_PTR arg7);
+#define SendMessageTimeout error_VS6_has_erroneous_seventh_parameter_DWORD_PTR_instead_of_PDWORD_PTR
 
 /* Skipping SendMessage because split messages and structures */
 
@@ -1232,7 +1233,11 @@ int qxewvsprintf (Extbyte * arg1, const Extbyte * arg2, va_list arglist);
 
 /* Processing file DDEML.H */
 
-/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DdeCreateStringHandle
+#define DdeCreateStringHandle error_use_qxeDdeCreateStringHandle_or_DdeCreateStringHandleA_and_DdeCreateStringHandleW
+#endif
+HSZ qxeDdeCreateStringHandle (DWORD arg1, const Extbyte * arg2, int arg3);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef DdeInitialize
@@ -1253,7 +1258,7 @@ DWORD qxeDdeQueryString (DWORD arg1, HSZ arg2, Extbyte * arg3, DWORD arg4, int a
 #undef AbortSystemShutdown
 #define AbortSystemShutdown error_use_qxeAbortSystemShutdown_or_AbortSystemShutdownA_and_AbortSystemShutdownW
 #endif
-BOOL qxeAbortSystemShutdown (const Extbyte * arg1);
+BOOL qxeAbortSystemShutdown (Extbyte * arg1);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef InitiateSystemShutdown
@@ -1261,7 +1266,11 @@ BOOL qxeAbortSystemShutdown (const Extbyte * arg1);
 #endif
 BOOL qxeInitiateSystemShutdown (Extbyte * arg1, Extbyte * arg2, DWORD arg3, BOOL arg4, BOOL arg5);
 
-/* Skipping RegConnectRegistry because error in Cygwin prototype */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegConnectRegistry
+#define RegConnectRegistry error_use_qxeRegConnectRegistry_or_RegConnectRegistryA_and_RegConnectRegistryW
+#endif
+LONG qxeRegConnectRegistry (const Extbyte * arg1, HKEY arg2, PHKEY arg3);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef RegCreateKeyEx
@@ -1658,7 +1667,11 @@ DWORD qxeGetGlyphOutline (HDC arg1, UINT arg2, UINT arg3, LPGLYPHMETRICS arg4, D
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 #if defined (HAVE_MS_WINDOWS)
-/* Skipping GetICMProfile because NT 4.0+ only, error in Cygwin prototype */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef GetICMProfile
+#define GetICMProfile error_use_qxeGetICMProfile_or_GetICMProfileA_and_GetICMProfileW
+#endif
+BOOL qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3);
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 #if defined (HAVE_MS_WINDOWS)

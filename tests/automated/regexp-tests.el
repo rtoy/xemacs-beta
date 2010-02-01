@@ -28,7 +28,10 @@
 
 ;;; Commentary:
 
-;; Test regular expression.
+;; Test regular expressions.
+
+;; NOTE NOTE NOTE: There is some domain overlap among case-tests.el,
+;; regexp-tests.el and search-tests.el.  See case-tests.el.
 
 (Check-Error-Message error "Trailing backslash"
 		     (string-match "\\" "a"))
@@ -563,3 +566,34 @@ baaaa
   (Assert= (re-search-forward "\\=") 4))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;     Tests involving case-changing replace-match   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(Assert (not (string-match "\\(\\.\\=\\)" ".")))
+(Assert (string= "" (let ((str "test string"))
+		      (if (string-match "^.*$" str)
+			  (replace-match "\\U" t nil str)))))
+(with-temp-buffer
+  (erase-buffer)
+  (insert "test string")
+  (re-search-backward "^.*$")
+  (replace-match "\\U" t)
+  (Assert (and (bobp) (eobp))))
+
+;; Control-1 characters were second-class citizens in regexp ranges
+;; for a while there.  Addressed in Ben's Mercurial changeset
+;; 2e15c29cc2b3; attempt to ensure this doesn't happen again.
+(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "a") 0)
+(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "é") nil)
+;; Gave nil in 21.5 for a couple of years.
+(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "\x80") 0)
+(Assert-eql (string-match "[\x00-\x7f]\\|[\x80-\x9f]" "\x80") 0)
+;; Gave nil
+(Assert-eql (string-match "[\x7f\x80-\x9f]" "\x80") 0)
+(Assert-eql (string-match "[\x80-\x9f]" "\x80") 0)
+(Assert-eql (string-match "[\x7f\x80-\x9e]" "\x80") 0)
+;; Used to succeed even with the bug.
+(Assert-eql (string-match "[\x7f\x80\x9f]" "\x80") 0)
+(Assert-eql (string-match "[\x7e\x80-\x9f]" "\x80") 0)
+(Assert-eql (string-match "[\x7f\x81-\x9f]" "\x81") 0)

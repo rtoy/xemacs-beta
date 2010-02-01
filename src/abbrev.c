@@ -131,10 +131,10 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
 
     for (idx = 0; idx < abbrev_length; idx++)
       {
-	if (DOWNCASE (closure->buf,
+	if (CANONCASE (closure->buf,
 		      BUF_FETCH_CHAR (closure->buf,
 				      closure->point - abbrev_length + idx))
-	    != DOWNCASE (closure->buf, itext_ichar (ptr)))
+	    != CANONCASE (closure->buf, itext_ichar (ptr)))
 	  {
 	    break;
 	  }

@@ -184,25 +184,6 @@ hash_table_size (Elemcount requested_size)
 }
 
 
-#if 0 /* I don't think these are needed any more.
-	 If using the general lisp_object_equal_*() functions
-	 causes efficiency problems, these can be resurrected. --ben */
-/* equality and hash functions for Lisp strings */
-int
-lisp_string_equal (Lisp_Object str1, Lisp_Object str2)
-{
-  /* This is wrong anyway.  You can't use strcmp() on Lisp strings,
-     because they can contain zero characters.  */
-  return !strcmp ((char *) XSTRING_DATA (str1), (char *) XSTRING_DATA (str2));
-}
-
-static Hashcode
-lisp_string_hash (Lisp_Object obj)
-{
-  return hash_string (XSTRING_DATA (str), XSTRING_LENGTH (str));
-}
-
-#endif /* 0 */
 
 static int
 lisp_object_eql_equal (Lisp_Object obj1, Lisp_Object obj2)
@@ -263,7 +244,8 @@ mark_hash_table (Lisp_Object obj)
    the same result -- if the keys are not equal according to the test
    function, then Fgethash() in hash_table_equal_mapper() will fail.  */
 static int
-hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
+hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth,
+		  int foldcase)
 {
   Lisp_Hash_Table *ht1 = XHASH_TABLE (hash_table1);
   Lisp_Hash_Table *ht2 = XHASH_TABLE (hash_table2);
@@ -282,7 +264,7 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
       {
 	Lisp_Object value_in_other = Fgethash (e->key, hash_table2, Qunbound);
 	if (UNBOUNDP (value_in_other) ||
-	    !internal_equal (e->value, value_in_other, depth))
+	    !internal_equal_0 (e->value, value_in_other, depth, foldcase))
 	  return 0;		/* Give up */
       }
 
