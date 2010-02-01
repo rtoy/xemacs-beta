@@ -1223,15 +1223,15 @@ mark_cons (Lisp_Object obj)
 }
 
 static int
-cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth)
+cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth, int foldcase)
 {
   depth++;
-  while (internal_equal (XCAR (ob1), XCAR (ob2), depth))
+  while (internal_equal_0 (XCAR (ob1), XCAR (ob2), depth, foldcase))
     {
       ob1 = XCDR (ob1);
       ob2 = XCDR (ob2);
       if (! CONSP (ob1) || ! CONSP (ob2))
-	return internal_equal (ob1, ob2, depth);
+	return internal_equal_0 (ob1, ob2, depth, foldcase);
     }
   return 0;
 }
@@ -1547,7 +1547,7 @@ size_vector (const void *lheader)
 }
 
 static int
-vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   int len = XVECTOR_LENGTH (obj1);
   if (len != XVECTOR_LENGTH (obj2))
@@ -1557,7 +1557,7 @@ vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     Lisp_Object *ptr1 = XVECTOR_DATA (obj1);
     Lisp_Object *ptr2 = XVECTOR_DATA (obj2);
     while (len--)
-      if (!internal_equal (*ptr1++, *ptr2++, depth + 1))
+      if (!internal_equal_0 (*ptr1++, *ptr2++, depth + 1, foldcase))
 	return 0;
   }
   return 1;
@@ -2251,11 +2251,15 @@ mark_string (Lisp_Object obj)
 }
 
 static int
-string_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+string_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	      int foldcase)
 {
   Bytecount len;
-  return (((len = XSTRING_LENGTH (obj1)) == XSTRING_LENGTH (obj2)) &&
-	  !memcmp (XSTRING_DATA (obj1), XSTRING_DATA (obj2), len));
+  if (foldcase)
+    return !lisp_strcasecmp_i18n (obj1, obj2);
+  else
+    return (((len = XSTRING_LENGTH (obj1)) == XSTRING_LENGTH (obj2)) &&
+	    !memcmp (XSTRING_DATA (obj1), XSTRING_DATA (obj2), len));
 }
 
 static const struct memory_description string_description[] = {

@@ -218,8 +218,8 @@ scmp_1 (const Ibyte *s1, const Ibyte *s2, Charcount len,
     {
       while (l)
         {
-          Ichar c1 = DOWNCASE (0, itext_ichar (s1));
-          Ichar c2 = DOWNCASE (0, itext_ichar (s2));
+          Ichar c1 = CANONCASE (0, itext_ichar (s1));
+          Ichar c2 = CANONCASE (0, itext_ichar (s2));
 
           if (c1 == c2)
             {

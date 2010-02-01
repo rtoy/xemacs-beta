@@ -381,7 +381,8 @@ struct lrecord_implementation
   void (*finalizer) (void *header, int for_disksave);
 
   /* This can be NULL, meaning compare objects with EQ(). */
-  int (*equal) (Lisp_Object obj1, Lisp_Object obj2, int depth);
+  int (*equal) (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		int foldcase);
 
   /* `hash' generates hash values for use with hash tables that have
      `equal' as their test function.  This can be NULL, meaning use
