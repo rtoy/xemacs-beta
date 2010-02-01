@@ -1,3 +1,11 @@
+2010-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* intl-encap-win32.c: Added description of override keyword.
+	Fix 2nd arg to CreateMDIWindowW.
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h: Fix 2nd arg to qxeCreateMDIWindow.
+
 2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (internal_equalp):
