@@ -38,17 +38,8 @@
 ;; (1) regexp-tests.el, for regexp searching.
 ;; (2) case-tests.el, for some case-related searches.
 
-;; NOTE NOTE NOTE: There is some domain overlap among regexp-tests.el,
-;; search-tests.el and case-tests.el.  The current rule for what goes where
-;; is:
-;;
-;; (1) Anything regexp-related goes in regexp-tests.el, including searches.
-;; (2) Non-regexp searches go in search-tests.el.  This includes case-folding
-;;     searches in the situation where the test tests both folding and
-;;     non-folding behavior.
-;; (3) If it tests specifically case-folding search behavior, it may go in
-;;     case-tets.el, especially if it is testing something non-search-related
-;;     at the same time (e.g. the Unicode case map torture tests).
+;; NOTE NOTE NOTE: There is some domain overlap among case-tests.el,
+;; regexp-tests.el and search-tests.el.  See case-tests.el.
 
 (with-temp-buffer
   (insert "Test Buffer")
@@ -194,9 +185,6 @@
  "checks that the algorithm chosen by #'search-forward is relatively sane"
  (let ((debug-xemacs-searches 1))
    (with-temp-buffer
-     ;;#### Ben thinks this is unnecessary.  with-temp-buffer creates
-     ;;a new buffer, which automatically inherits the standard case table.
-     ;;(set-case-table pristine-case-table)
      (insert "\n\nDer beruhmte deutsche Fleiss\n\n")
      (goto-char (point-min))
      (Assert (search-forward "Fleiss"))

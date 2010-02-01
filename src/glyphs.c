@@ -1133,7 +1133,8 @@ finalize_image_instance (void *header, int for_disksave)
 }
 
 static int
-image_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+image_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		      int UNUSED (foldcase))
 {
   Lisp_Image_Instance *i1 = XIMAGE_INSTANCE (obj1);
   Lisp_Image_Instance *i2 = XIMAGE_INSTANCE (obj2);
@@ -3706,7 +3707,8 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
    This isn't concerned with "unspecified" attributes, that's what
    #'glyph-differs-from-default-p is for. */
 static int
-glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+	     int UNUSED (foldcase))
 {
   Lisp_Glyph *g1 = XGLYPH (obj1);
   Lisp_Glyph *g2 = XGLYPH (obj2);
@@ -3717,7 +3719,7 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  internal_equal (g1->contrib_p, g2->contrib_p, depth) &&
 	  internal_equal (g1->baseline,  g2->baseline,  depth) &&
 	  internal_equal (g1->face,      g2->face,      depth) &&
-	  !plists_differ (g1->plist,     g2->plist, 0, 0, depth + 1));
+	  !plists_differ (g1->plist,     g2->plist, 0, 0, depth + 1, 0));
 }
 
 static Hashcode

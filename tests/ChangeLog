@@ -1,3 +1,34 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* automated/case-tests.el:
+	* automated/case-tests.el (uni-mappings):
+	* automated/search-tests.el:
+	Delete old pristine-case-table code.  Rewrite the Unicode torture
+	test to take into account whether overlapping mappings exist for
+	more than one character, and not doing the upcase/downcase
+	comparisons in such cases.
+	
+	* automated/lisp-tests.el (foo):
+	* automated/lisp-tests.el (string-variable):
+	* automated/lisp-tests.el (featurep):
+	Replace Assert (equal ... with Assert-equal; same for other types
+	of equality.  Replace some awkward equivalents of Assert-equalp
+	with Assert-equalp.  Add lots of equalp tests.
+	
+	* automated/case-tests.el:
+	* automated/regexp-tests.el:
+	* automated/search-tests.el:
+	Fix up the comments at the top of the files.  Move rules about where
+	to put tests into case-tests.el.
+	
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-aborted-summary-template): New.
+	* automated/test-harness.el (test-harness-from-buffer):
+	* automated/test-harness.el (batch-test-emacs):
+	Fix Assert-test-not.  Create Assert-not-equal and variants.
+	Delete the doc strings from all these convenience functions to avoid
+	excessive repetition; instead use one copy in a comment.
+
 2010-01-30  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el:

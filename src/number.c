@@ -74,7 +74,8 @@ bignum_finalize (void *header, int for_disksave)
 #endif
 
 static int
-bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	      int UNUSED (foldcase))
 {
   return bignum_eql (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
 }
@@ -166,7 +167,8 @@ ratio_finalize (void *header, int for_disksave)
 #endif
 
 static int
-ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	     int UNUSED (foldcase))
 {
   return ratio_eql (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 }
@@ -270,7 +272,8 @@ bigfloat_finalize (void *header, int for_disksave)
 #endif
 
 static int
-bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+		int UNUSED (foldcase))
 {
   return bigfloat_eql (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
 }
