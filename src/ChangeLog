@@ -117,6 +117,16 @@
 	* keymap.c (keymap_hash):
 	Implement.
 	
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* syntax.c:
+	* syntax.c (scan_lists):
+	* syntax.c (syms_of_syntax):
+	Declare `scan-error' as a type of `syntax-error'.  In `scan-lists'
+	et al., don't signal a syntax error but instead a `scan-error', and
+	pass a couple of integer arguments, for GNU compatibility.  Fixes
+	problems with typing double-quote in texinfo.el.
+
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fspecial_operator_p, syms_of_symbols):
