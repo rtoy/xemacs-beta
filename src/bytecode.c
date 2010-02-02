@@ -1738,7 +1738,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       }
 
     default:
-      ABORT();
+      {
+	Ascbyte msg[100];
+	sprintf (msg, "Unknown opcode %d", opcode);
+	abort_with_msg (msg);
+      }
       break;
     }
   return stack_ptr;

@@ -1,3 +1,9 @@
+2010-02-02  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (execute_rare_opcode):
+	* lisp.h (abort_with_msg): New.
+	When aborting due to unknown opcode, output more descriptive msg.
+
 2010-02-01  Vin Shelton  <acs@xemacs.org>
 
 	* intl-encap-win32.c: Added description of override keyword.
