@@ -4388,6 +4388,7 @@ EXFUN (Fprefix_numeric_value, 1);
 
 /* Defined in casefiddle.c */
 EXFUN (Fdowncase, 2);
+EXFUN (Fcanoncase, 2);
 EXFUN (Fupcase, 2);
 EXFUN (Fupcase_initials, 2);
 EXFUN (Fupcase_initials_region, 3);
@@ -5119,6 +5120,7 @@ Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
 Lisp_Object vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object nconc2 (Lisp_Object, Lisp_Object);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
+int bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2);
 void check_losing_bytecode (const char *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,

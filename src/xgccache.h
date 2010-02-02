@@ -26,6 +26,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_xgccache_h_
 #define INCLUDED_xgccache_h_
 
+#include <X11/Xlib.h>
+
 struct gc_cache;
 struct gc_cache *make_gc_cache (Display *, Window);
 void free_gc_cache (struct gc_cache *cache);

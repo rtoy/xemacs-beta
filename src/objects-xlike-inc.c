@@ -1,4 +1,4 @@
-/* Shared object code between X and GTK -- include file.
+/* Common code between X and GTK -- fonts and colors.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
@@ -22,9 +22,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* Before including this file, you need to define either THIS_IS_X or
+   THIS_IS_GTK. */
+
+/* See comment at top of console-xlike-inc.h for an explanation of
+   how this file works. */
+
 /* Pango is ready for prime-time now, as far as I understand it. The GTK
    people should be using that. Oh well. (Aidan Kehoe, Sat Nov 4 12:41:12
    CET 2006) */
+
+#include "console-xlike-inc.h"
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
 
@@ -78,19 +86,11 @@ count_hyphens(const Ibyte *str, Bytecount length, Ibyte **last_hyphen)
 }
 
 static int
-#ifdef THIS_IS_GTK
-gtk_font_spec_matches_charset (struct device * USED_IF_XFT (d),
-			       Lisp_Object charset,
-			       const Ibyte *nonreloc, Lisp_Object reloc,
-			       Bytecount offset, Bytecount length,
-			       enum font_specifier_matchspec_stages stage)
-#else
-x_font_spec_matches_charset (struct device * USED_IF_XFT (d),
-			     Lisp_Object charset,
-			     const Ibyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount length,
-			     enum font_specifier_matchspec_stages stage)
-#endif
+XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
+				  Lisp_Object charset,
+				  const Ibyte *nonreloc, Lisp_Object reloc,
+				  Bytecount offset, Bytecount length,
+				  enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object registries = Qnil;
   long i, registries_len;
@@ -198,12 +198,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Extbyte *xlfd,
   int count = 0, i;
   DECLARE_EISTRING(ei_single_result);
 
-  names = XListFonts (
-#ifdef THIS_IS_GTK
-		      GDK_DISPLAY (),
-#else
-		      DEVICE_X_DISPLAY (XDEVICE (device)),
-#endif
+  names = XListFonts (GET_XLIKE_DISPLAY (XDEVICE (device)),
 		      xlfd, MAX_FONT_COUNT, &count);
 
   for (i = 0; i < count; ++i)
@@ -664,14 +659,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
-#ifdef THIS_IS_GTK
-gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
-		       Lisp_Object charset,
-		       enum font_specifier_matchspec_stages stage)
-#else
-x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
-		     enum font_specifier_matchspec_stages stage)
-#endif
+XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
+			  Lisp_Object charset,
+			  enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object result = Qnil, registries = Qnil;
   int j, hyphen_count, registries_len = 0;

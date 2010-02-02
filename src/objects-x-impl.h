@@ -53,6 +53,7 @@ struct x_color_instance_data
 
 #define X_COLOR_INSTANCE_DATA(c) ((struct x_color_instance_data *) (c)->data)
 #define COLOR_INSTANCE_X_COLOR(c) (X_COLOR_INSTANCE_DATA (c)->color)
+#define XCOLOR_INSTANCE_X_COLOR(c) COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (c))
 #ifdef USE_XFT
 #define COLOR_INSTANCE_X_XFTCOLOR(c) (X_COLOR_INSTANCE_DATA (c)->xftColor)
 #endif
@@ -77,6 +78,7 @@ struct x_font_instance_data
 
 #define X_FONT_INSTANCE_DATA(f) ((struct x_font_instance_data *) (f)->data)
 #define FONT_INSTANCE_X_FONT(f) (X_FONT_INSTANCE_DATA (f)->font)
+#define XFONT_INSTANCE_X_FONT(c) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (c))
 #ifdef USE_XFT
 #define FONT_INSTANCE_X_XFTFONT(f) (X_FONT_INSTANCE_DATA (f)->xftFont)
 #endif

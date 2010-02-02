@@ -32,8 +32,12 @@ Boston, MA 02111-1307, USA.  */
 int x_interline_space; /* #### this needs to be implemented, but per-font */
 
 #define THIS_IS_X
-
 #include "redisplay-xlike-inc.c"
+
+static void x_output_shadows (struct frame *f, int x, int y, int width,
+			      int height, GC top_shadow_gc,
+			      GC bottom_shadow_gc, GC background_gc,
+			      int shadow_thickness, int edges);
 
 /*****************************************************************************
  x_window_output_begin
@@ -41,7 +45,7 @@ int x_interline_space; /* #### this needs to be implemented, but per-font */
  Perform any necessary initialization prior to an update.
  ****************************************************************************/
 static void
-x_window_output_begin (struct window *UNUSED (w))
+XLIKE_window_output_begin (struct window *UNUSED (w))
 {
 }
 
@@ -51,7 +55,7 @@ x_window_output_begin (struct window *UNUSED (w))
  Perform any necessary flushing of queues when an update has completed.
  ****************************************************************************/
 static void
-x_window_output_end (struct window *w)
+XLIKE_window_output_end (struct window *w)
 {
   if (!(check_if_pending_expose_event (WINDOW_XDEVICE (w))))
     XFlush (DEVICE_X_DISPLAY (WINDOW_XDEVICE (w)));
@@ -63,9 +67,9 @@ x_window_output_end (struct window *w)
  Draw shadows for the given area in the given face.
  ****************************************************************************/
 static void
-x_bevel_area (struct window *w, face_index findex,
-	      int x, int y, int width, int height,
-	      int shadow_thickness, int edges, enum edge_style style)
+XLIKE_bevel_area (struct window *w, face_index findex,
+		  int x, int y, int width, int height,
+		  int shadow_thickness, int edges, enum edge_style style)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -188,7 +192,7 @@ x_bevel_area (struct window *w, face_index findex,
  Draw a shadow around the given area using the given GC's.  It is the
  callers responsibility to set the GC's appropriately.
  ****************************************************************************/
-void
+static void
 x_output_shadows (struct frame *f, int x, int y, int width, int height,
 		  GC top_shadow_gc, GC bottom_shadow_gc,
 		  GC UNUSED (background_gc), int shadow_thickness, int edges)
@@ -338,7 +342,7 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
 /* Make audible bell.  */
 
 static void
-x_ring_bell (struct device *d, int volume, int pitch, int duration)
+XLIKE_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
   Display *display = DEVICE_X_DISPLAY (d);
 
