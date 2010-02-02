@@ -21,15 +21,14 @@
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 ** Boston, MA 02111-1301, USA.  */
-*/
 
 #ifndef __UI_GTK_H__
 #define __UI_GTK_H__
 
 /* Encapsulate a foreign function call */
-#include <gtk/gtk.h>
+
+#include "sysgtk.h"
 #include "sysdll.h"
-#include "lrecord.h"
 
 typedef void (*ffi_actual_function) (void);
 typedef void (*ffi_marshalling_function) (ffi_actual_function, GtkArg *);

@@ -1,3 +1,156 @@
+2010-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* intl-encap-win32.c: Added description of override keyword.
+	Fix 2nd arg to CreateMDIWindowW.
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h: Fix 2nd arg to qxeCreateMDIWindow.
+
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (internal_equalp):
+	Use bytecode_arithcompare, which takes two args, instead of
+	passing a stack pointer to Feqlsign.
+	Use CANONCASE(), not DOWNCASE(), for case-insensitive character
+	comparison.
+	Correct a comment here.
+	* casefiddle.c (casify_object): New operation in this function,
+	CASE_CANONICALIZE.
+	(Fcanoncase): New function, used for case-insensitive comparison.
+	* lisp.h:
+	Make Fcanoncase, bytecode_arithcompare visible here.
+	* bytecode.c (bytecode_arithcompare):
+	Make this visible to other files.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* objects-gtk-impl.h:
+	* objects-gtk-impl.h (XCOLOR_INSTANCE_GTK_COLOR):
+	* objects-gtk-impl.h (XFONT_INSTANCE_GTK_FONT):
+	* objects-x-impl.h (XCOLOR_INSTANCE_X_COLOR):
+	* objects-x-impl.h (XFONT_INSTANCE_X_FONT):
+	Define XCOLOR_INSTANCE_X_COLOR, XCOLOR_INSTANCE_GTK_COLOR,
+	XFONT_INSTANCE_X_FONT, XFONT_INSTANCE_GTK_FONT for convenience
+	purposes.  Fixes compile bug in redisplay-xlike-inc.c.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* compiler.h:
+	Create a USED() macro to force unused-var warnings to go away,
+	in certain cases where it's inconvenient to do otherwise (e.g.
+	when THIS_IS_GTK in redisplay-xlike-inc.c).
+	
+	* console-x.h:
+	Remove unneeded decls, make some static.
+
+	* redisplay-xlike-inc.c:
+	* console-xlike-inc.h: New file.  Include defns from
+	redisplay-xlike-inc.c that may be useful in other XLIKE files.
+	Correct the handling of colors and font-style setting functions
+	in the xlike defns.  Lots of fixes in the GTK-specific defns.
+	
+	* depend: Regenerate.
+	
+	* event-xlike-inc.c:
+	* event-xlike-inc.c (USE_UNICODE_MAP):
+	* event-xlike-inc.c (endif):
+	* gccache-gtk.c:
+	* gtk-glue.c (xemacs_list_to_gtklist):
+	* gtk-glue.c (xemacs_gtklist_to_list):
+	* gtk-glue.c (FROB):
+	* gtk-glue.c (face_to_gc):
+	* gtk-glue.c (face_to_style):
+	* gtk-glue.c (gdk_event_to_emacs_event):
+	* gtk-xemacs.h (struct _GtkXEmacs):
+	* gtk-xemacs.h (struct _GtkXEmacsClass):
+	* objects-xlike-inc.c:
+	Cosmetic, comment fixes.
+	
+	* glyphs.c (pixmap_to_lisp_data):
+	Unused var fixes.
+	
+
+	* gtk-glue.c:
+	* gccache-gtk.c:
+	* gtk-xemacs.c:
+	* gtk-xemacs.h:
+	* objects-xlike-inc.c:
+	* ui-gtk.c:
+	* ui-gtk.h:
+	* xgccache.c:
+	* xgccache.c (GC_CACHE_SIZE):
+	* xgccache.h:
+	Misc include-file fixes.
+	
+	* objects-xlike-inc.c (XFUN):
+	* objects-xlike-inc.c (xlistfonts_checking_charset):
+	Combine some ifdeffed stuff using defs in console-xlike-inc.h.
+	
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (THIS_IS_GTK):
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	* redisplay-gtk.c (XLIKE_ring_bell):
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Fix numerous compile problems.  Delete gtk_output_shadows(),
+	which mostly duplicates generic bevel_modeline().  Fix up
+	gtk_bevel_modeline() into XLIKE_bevel_area() and make use of
+	the style var properly to set the appropriate GTK constant.
+	
+	* redisplay-x.c:
+	* redisplay-x.c (XLIKE_window_output_begin):
+	* redisplay-x.c (XLIKE_window_output_end):
+	* redisplay-x.c (XLIKE_bevel_area):
+	* redisplay-x.c (x_output_shadows):
+	* redisplay-x.c (XLIKE_ring_bell):
+	Make x_output_shadows be static.  Change the defn of various
+	functions to look like XLIKE_foo() so it matches the calling
+	convention elsewhere.
+	
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (NEED_GCCACHE_H):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR):
+	* redisplay-xlike-inc.c (XLIKE_output_xlike_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	Lots of header fixes.  Lots of stuff moved to console-xlike-inc.h.
+	Use XFUN() to generate function names instead of directly
+	calling XLIKE_PASTE().  Remove unnecessary prototypes.
+	Unify calls to text_width funs.  Make XLIKE_get_gc non-static
+	since it's called from gtk.  Change the color-function calls
+	and fill-style-setting calls to match the changes in
+	console-xlike-inc.h.  Use USED() to avoid some warnings.
+	
+	* symsinit.h:
+	Sort the prototypes, and add a fun `sort-symsinit' in a comment
+	that does the sorting (using sort-regexp-fields).
+	
+	* symsinit.h (init_number):
+	
+	
+	* sysgtk.h: New file, wraps the various GTK headers.
+	* sysgdkx.h: New file, wraps <gtk/gdkx.h>.  Keep this separate to
+	* event-gtk.h: Delete.  Combine stuff into console-gtk.h.
+	help isolate X-specific code from GTK.
+
+	* device-gtk.c:
+	* event-gtk.c:
+	* console-gtk.h:
+	* frame-gtk.c:
+	* gccache-gtk.c:
+	* gccache-gtk.h:
+	* glyphs-gtk.c (gtk_colorize_image_instance):
+	* glyphs-gtk.h:
+	* gtk-xemacs.h:
+	* objects-gtk.c:
+	* objects-gtk.c (MAX_FONT_COUNT):
+	* ui-gtk.h:
+	Use sysgtk.h or sysgdkx.h instead of directly including GTK
+	headers.  Don't include event-gtk.h.
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* abbrev.c (abbrev_match_mapper):

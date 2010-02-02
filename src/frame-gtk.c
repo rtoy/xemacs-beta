@@ -61,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 #define STUPID_X_SPECIFIC_GTK_STUFF
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
-#include <gdk/gdkx.h>
+#include "sysgdkx.h"
 #endif
 
 /* Default properties to use when creating frames.  */

@@ -21,24 +21,23 @@
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 ** Boston, MA 02111-1301, USA.  */
-*/
 
 #include <config.h>
 #include "lisp.h"
 
 #include "buffer.h"
-#include "console-gtk-impl.h"
 #include "device.h"
 #include "elhash.h"
-#include "event-gtk.h"
 #include "events.h"
 #include "faces.h"
-#include "glyphs-gtk.h"
 #include "hash.h"
-#include "objects-gtk.h"
 #include "sysdll.h"
-#include "ui-gtk.h"
 #include "window.h"
+
+#include "console-gtk-impl.h"
+#include "glyphs-gtk.h"
+#include "objects-gtk.h"
+#include "ui-gtk.h"
 
 /* XEmacs specific GTK types */
 #include "gtk-glue.c"

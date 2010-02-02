@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_GTK
 
 #include "console.h"
-#include <gtk/gtk.h>
+#include "sysgtk.h"
 
 /* Variables associated with the X display frame this emacs is using. */
 
@@ -64,8 +64,6 @@ void gtk_output_string (struct window *w, struct display_line *dl,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);
-void gtk_output_shadows (struct frame *f, int x, int y, int width,
-		       int height, int shadow_thickness);
 GdkGC *gtk_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
 		   Lisp_Object bg_pmap, Lisp_Object lwidth);
 
@@ -98,6 +96,18 @@ extern GUI_ID new_gui_id (void);
 extern void gcpro_popup_callbacks (GUI_ID id, Lisp_Object data);
 extern void ungcpro_popup_callbacks (GUI_ID id);
 extern Lisp_Object get_gcpro_popup_callbacks (GUI_ID id);
+
+int gtk_event_to_emacs_event (struct frame *frame,
+			      GdkEvent *gdk_event,
+			      struct Lisp_Event *emacs_event);
+
+gint emacs_gtk_key_event_handler(GtkWidget *widget, GdkEventKey *event);
+gint emacs_gtk_button_event_handler(GtkWidget *widget, GdkEventButton *event);
+gint emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event);
+
+gboolean emacs_shell_event_handler (GtkWidget *wid /* unused */,
+				    GdkEvent *event,
+				    gpointer closure);
 
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_DEVICE_X_H_ */

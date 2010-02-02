@@ -1,4 +1,4 @@
-/* Common code between X and GTK.
+/* Common code between X and GTK -- redisplay-related.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -29,6 +29,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Lots of work done by Ben Wing for Mule */
 
+/* Before including this file, you need to define either THIS_IS_X or
+   THIS_IS_GTK.  See comments in console-xlike-inc.h. */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -48,288 +51,46 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "charset.h"
 
-#ifdef THIS_IS_X
-#include "console-x-impl.h"
-#include "glyphs-x.h"
-#include "objects-x-impl.h"
-#include "xgccache.h"
-#else /* THIS_IS_GTK */
-#include "console-gtk-impl.h"
-#include "gccache-gtk.h"
-#include "glyphs-gtk.h"
-#include "objects-gtk-impl.h"
-#endif /* THIS_IS_GTK */
-
-#include "EmacsFrame.h"
-#include "EmacsFrameP.h"
+#define NEED_GCCACHE_H
+#define NEED_GLYPHS_H
+#define NEED_OBJECTS_IMPL_H
+#include "console-xlike-inc.h"
 
 #include "sysproc.h" /* for select() */
 
 #ifdef THIS_IS_X
+#include "EmacsFrame.h"
+#include "EmacsFrameP.h"
+
 #include <X11/bitmaps/gray>
 #endif /* THIS_IS_X */
 
 #define EOL_CURSOR_WIDTH	5
 
-/* About some of the types below:
-
-   X has two ways of representing a color: (a) as an unsigned long
-   representing a color pixel value, i.e. the actual value stored in memory
-   or a file at a particular pixel location to indicate that the pixel
-   takes on a specific color; and (b) an XColor structure, which
-   encapsulates both the RGB components of a color and the associated color
-   pixel value.
-
-   We call the former type XLIKE_PIXCOLOR and the latter XLIKE_COLOR.
-   GTK uses the same GdkColor structure for both, and normally passes in
-   a pointer.  We provide routines to handle the two logical color types.  */
-
-#ifdef THIS_IS_X
-
-/***************************************************************************/
-/*               Definitions implementing X flavor of XLIKE                */
-/***************************************************************************/
-
-#define XLIKE_NAME x
-#define USED_IF_X(var) var
-
-/* types */
-#define XLIKE_DISPLAY Display *
-#define XLIKE_WINDOW Window
-#define XLIKE_GC GC
-#define XLIKE_RECTANGLE XRectangle
-#define XLIKE_GCVALUES XGCValues
-#define XLIKE_COLOR XColor
-#define XLIKE_PIXCOLOR unsigned long
-
-/* constants */
-#define XLIKE_NONE None
-#define XLIKE_FALSE False
-
-#define XLIKE_GC_BACKGROUND GCBackground
-#define XLIKE_GC_CLIP_MASK GCClipMask
-#define XLIKE_GC_CLIP_X_ORIGIN GCClipXOrigin
-#define XLIKE_GC_CLIP_Y_ORIGIN GCClipYOrigin
-#define XLIKE_GC_EXPOSURES GCGraphicsExposures
-#define XLIKE_GC_FILL GCFillStyle
-#define XLIKE_GC_FONT GCFont
-#define XLIKE_GC_FOREGROUND GCForeground
-#define XLIKE_GC_FUNCTION GCFunction
-#define XLIKE_GC_LINE_WIDTH GCLineWidth
-#define XLIKE_GC_STIPPLE GCStipple
-#define XLIKE_GC_TILE GCTile
-
-#define XLIKE_GX_COPY GXcopy
-#define XLIKE_GX_XOR GXxor
-
-#define XLIKE_FILL_MEMBER fill_style
-#define XLIKE_FILL_STIPPLED FillStippled
-#define XLIKE_FILL_OPAQUE_STIPPLED FillOpaqueStippled
-#define XLIKE_FILL_TILED FillTiled
-#define XLIKE_FILL_SOLID FillSolid
-
-/* functions */
-#define GET_XLIKE_DISPLAY(d) DEVICE_X_DISPLAY (d)
-#define GET_XLIKE_WINDOW(w) XtWindow (FRAME_X_TEXT_WIDGET (f))
-#define XLIKE_FILL_RECTANGLE(dpy, x_win, gc, x, y, width, height) \
-  XFillRectangle (dpy, x_win, gc, x, y, width, height)
-#define XLIKE_DRAW_RECTANGLE(dpy, x_win, gc, x, y, width, height) \
-  XDrawRectangle (dpy, x_win, gc, x, y, width, height)
-#define XLIKE_DRAW_LINE(dpy, x_win, gc, x1, y1, x2, y2) \
-  XDrawLine (dpy, x_win, gc, x1, y1, x2, y2)
-#define XLIKE_OUTPUT_XLIKE_PIXMAP x_output_x_pixmap
-
-#define XLIKE_DISPLAY_LINE_HEIGHT(dl) DISPLAY_LINE_HEIGHT (dl)
-#define XLIKE_DISPLAY_LINE_YPOS(dl) DISPLAY_LINE_YPOS (dl)
-#define XLIKE_DISPLAY_LINE_TOP_CLIP(dl) ((dl)->top_clip)
-#define XLIKE_SET_CLIP_RECTANGLE(dpy, gc, xorig, yorig, prect)		\
-  /* #### why not Unsorted? */						\
-  XSetClipRectangles (dpy, gc, xorig, yorig, prect, 1, YXBanded)
-#define XLIKE_CLEAR_CLIP_MASK(dpy, gc)		\
-do						\
-  {						\
-    XSetClipMask (dpy, gc, None);		\
-    XSetClipOrigin (dpy, gc, 0, 0);		\
-  }						\
-while (0)
-#define XLIKE_FLUSH(dpy) XSync (dpy, False)
-#define XLIKE_CLEAR_AREA(dpy, win, x, y, width, height) \
-  XClearArea (dpy, win, x, y, width, height, False)
- 
-#define IMAGE_INSTANCE_XLIKE_MASK IMAGE_INSTANCE_X_MASK
-#define XIMAGE_INSTANCE_XLIKE_PIXMAP XIMAGE_INSTANCE_X_PIXMAP
-#define COLOR_INSTANCE_XLIKE_COLOR COLOR_INSTANCE_X_COLOR
-#define FONT_INSTANCE_XLIKE_FONT FONT_INSTANCE_X_FONT
-#define DEVICE_XLIKE_GC_CACHE DEVICE_X_GC_CACHE
-#define DEVICE_XLIKE_GRAY_PIXMAP DEVICE_X_GRAY_PIXMAP
-#define XLIKE_COLOR_TO_PIXCOLOR(ci) ((ci).pixel)
-#define XLIKE_SET_PIXCOLOR_COPY(lval, rval) ((lval) = (rval))
-#define XLIKE_SET_PIXCOLOR_NUM(lval, rval) ((lval) = (rval))
-#define XLIKE_FONT_NUM(val) ((val)->fid)
-
-#define XLIKE_OUTPUT_XLIKE_PIXMAP x_output_x_pixmap
-
-/************ End X flavor of XLIKE **********/
-
-
-
-
-#else /* THIS_IS_GTK */
-
-/***************************************************************************/
-/*              Definitions implementing GTK flavor of XLIKE               */
-/***************************************************************************/
-
-#define XLIKE_NAME gtk
-#define USED_IF_X(var) UNUSED (var)
-
-/*types */
-#define XLIKE_DISPLAY void *
-#define XLIKE_WINDOW GdkWindow *
-#define XLIKE_GC GdkGC *
-#define XLIKE_RECTANGLE GdkRectangle
-#define XLIKE_GCVALUES GdkGCValues
-#define XLIKE_COLOR GdkColor *
-#define XLIKE_PIXCOLOR GdkColor *
-
-/* constants */
-#define XLIKE_NONE 0
-#define XLIKE_FALSE FALSE
-
-#define XLIKE_GC_BACKGROUND GDK_GC_BACKGROUND
-#define XLIKE_GC_CLIP_MASK GDK_GC_CLIP_MASK
-#define XLIKE_GC_CLIP_X_ORIGIN GDK_GC_CLIP_X_ORIGIN
-#define XLIKE_GC_CLIP_Y_ORIGIN GDK_GC_CLIP_Y_ORIGIN
-#define XLIKE_GC_EXPOSURES GDK_GC_EXPOSURES
-#define XLIKE_GC_FILL GDK_GC_FILL
-#define XLIKE_GC_FONT GDK_GC_FONT
-#define XLIKE_GC_FOREGROUND GDK_GC_FOREGROUND
-#define XLIKE_GC_FUNCTION GDK_GC_FUNCTION
-#define XLIKE_GC_LINE_WIDTH GDK_GC_LINE_WIDTH
-#define XLIKE_GC_STIPPLE GDK_GC_STIPPLE
-#define XLIKE_GC_TILE GDK_GC_TILE
-
-#define XLIKE_GX_COPY GDK_COPY
-#define XLIKE_GX_XOR GDK_XOR
-
-#define XLIKE_FILL_MEMBER fill
-#define XLIKE_FILL_STIPPLED GDK_STIPPLED
-#define XLIKE_FILL_OPAQUE_STIPPLED GDK_OPAQUE_STIPPLED
-#define XLIKE_FILL_TILED GDK_TILED
-#define XLIKE_FILL_SOLID GDK_SOLID
-
-/* functions */
-
-#define GET_XLIKE_DISPLAY(d) NULL
-#define GET_XLIKE_WINDOW(w) GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (w))
-#define XLIKE_FILL_RECTANGLE(dpy, x_win, gc, x, y, width, height) \
-  gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE, x, y, width, height)
-#define XLIKE_DRAW_RECTANGLE(dpy, x_win, gc, x, y, width, height) \
-  gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, FALSE, x, y, width, height)
-#define XLIKE_DRAW_LINE(dpy, x_win, gc, x1, y1, x2, y2) \
-  gdk_draw_line (GDK_DRAWABLE (x_win), gc, x1, y1, x2, y2)
-#define XLIKE_OUTPUT_XLIKE_PIXMAP gtk_output_gdk_pixmap
-
-/* FIXME: This is totally bogus.  It removes dl->top_clip from the
-   equations.  If there is a bug involving this, fix it properly!
-   Or just ensure that top_clip is 0. */
-#define XLIKE_DISPLAY_LINE_HEIGHT(dl) \
-  ((dl)->ascent + ((dl)->descent - (dl)->clip)
-#define XLIKE_DISPLAY_LINE_YPOS(dl) ((dl)->ypos - (dl)->ascent)
-#define XLIKE_DISPLAY_LINE_TOP_CLIP(dl) ((0)
-#define XLIKE_SET_CLIP_RECTANGLE(dpy, gc, xorig, yorig, prect)	\
-do								\
-  {								\
-    gdk_gc_set_clip_rectangle (gc, prect);			\
-    gdk_gc_set_clip_origin (gc, xorig, yorig);			\
-  }								\
-while (0)
-#define XLIKE_CLEAR_CLIP_MASK(dpy, gc)		\
-do						\
-  {						\
-    gdk_gc_set_clip_rectangle (gc, NULL);	\
-    gdk_gc_set_clip_origin (gc, 0, 0);		\
-  }						\
-while (0)
-#define XLIKE_FLUSH(dpy) gdk_flush ()
-#define XLIKE_CLEAR_AREA(dpy, win, x, y, width, height) \
-  gdk_window_clear_area (win, x, y, width, height)
-
-#define IMAGE_INSTANCE_XLIKE_MASK IMAGE_INSTANCE_GTK_MASK
-#define XIMAGE_INSTANCE_XLIKE_PIXMAP XIMAGE_INSTANCE_GTK_PIXMAP
-#define COLOR_INSTANCE_XLIKE_COLOR COLOR_INSTANCE_GTK_COLOR
-#define FONT_INSTANCE_XLIKE_FONT FONT_INSTANCE_GTK_FONT
-#define DEVICE_XLIKE_GRAY_PIXMAP DEVICE_GTK_GRAY_PIXMAP
-#define DEVICE_XLIKE_GC_CACHE DEVICE_GTK_GC_CACHE
-#define XLIKE_COLOR_TO_PIXCOLOR(ci) (ci)
-#define XLIKE_SET_PIXCOLOR_COPY(lval, rval) ((lval) = *(rval))
-#define XLIKE_SET_PIXCOLOR_NUM(lval, rval) ((lval).pixel = (rval))
-#define XLIKE_FONT_NUM(val) (val)
-
-#define XLIKE_OUTPUT_XLIKE_PIXMAP gtk_output_gdk_pixmap
-
-static void gtk_output_pixmap (struct window *w,
-			       Lisp_Object image_instance,
-			       struct display_box *db,
-			       struct display_glyph_area *dga,
-			       face_index findex,
-			       int cursor_start,
-			       int cursor_width,
-			       int cursor_height,
-			       int bgpixmap);
-static void gtk_clear_region (Lisp_Object locale, struct device* d,
-			      struct frame* f, face_index findex, int x, int y,
-			      int width, int height, Lisp_Object fcolor,
-			      Lisp_Object bcolor,
-			      Lisp_Object background_pixmap);
-static void gtk_bevel_modeline (struct window *w, struct display_line *dl);
-
-#if 0
-static void __describe_gc (GdkGC *);
-#endif
-
-/************ End GTK flavor of XLIKE **********/
-
-#endif /* (not) THIS_IS_X */
-
-
-
-/***************************************************************************/
-/*                           Common definitions                            */
-/***************************************************************************/
-
-#define XCOLOR_INSTANCE_XLIKE_COLOR(x) \
-  COLOR_INSTANCE_XLIKE_COLOR (XCOLOR_INSTANCE (x))
-
-#define XLIKE_PASTE_1(a,b) a##_##b
-#define XLIKE_PASTE(a,b) XLIKE_PASTE_1(a,b)
-#define XLIKE_CONSOLE_HAS_METHOD_1(xlike, name) CONSOLE_HAS_METHOD (xlike, name)
-#define XLIKE_CONSOLE_HAS_METHOD(name) \
-  XLIKE_CONSOLE_HAS_METHOD_1 (XLIKE_NAME, name)
-
 /* Device methods */
 
-#define XLIKE_text_width XLIKE_PASTE (XLIKE_NAME, text_width)
-#define XLIKE_output_display_block XLIKE_PASTE (XLIKE_NAME, output_display_block)
-#define XLIKE_divider_height XLIKE_PASTE (XLIKE_NAME, divider_height)
-#define XLIKE_eol_cursor_width XLIKE_PASTE (XLIKE_NAME, eol_cursor_width)
-#define XLIKE_output_vertical_divider XLIKE_PASTE (XLIKE_NAME, output_vertical_divider)
-#define XLIKE_clear_region XLIKE_PASTE (XLIKE_NAME, clear_region)
-#define XLIKE_clear_frame XLIKE_PASTE (XLIKE_NAME, clear_frame)
-#define XLIKE_flash XLIKE_PASTE (XLIKE_NAME, flash)
-#define XLIKE_ring_bell XLIKE_PASTE (XLIKE_NAME, ring_bell)
-#define XLIKE_bevel_area XLIKE_PASTE (XLIKE_NAME, bevel_area)
-#define XLIKE_output_string XLIKE_PASTE (XLIKE_NAME, output_string)
-#define XLIKE_output_pixmap XLIKE_PASTE (XLIKE_NAME, output_pixmap)
-#define XLIKE_window_output_begin XLIKE_PASTE (XLIKE_NAME, window_output_begin)
-#define XLIKE_window_output_end XLIKE_PASTE (XLIKE_NAME, window_output_end)
+#define XLIKE_text_width XFUN (text_width)
+#define XLIKE_output_display_block XFUN (output_display_block)
+#define XLIKE_divider_height XFUN (divider_height)
+#define XLIKE_eol_cursor_width XFUN (eol_cursor_width)
+#define XLIKE_output_vertical_divider XFUN (output_vertical_divider)
+#define XLIKE_clear_region XFUN (clear_region)
+#define XLIKE_clear_frame XFUN (clear_frame)
+#define XLIKE_flash XFUN (flash)
+#define XLIKE_ring_bell XFUN (ring_bell)
+#define XLIKE_bevel_area XFUN (bevel_area)
+#define XLIKE_output_string XFUN (output_string)
+#define XLIKE_output_pixmap XFUN (output_pixmap)
+#define XLIKE_output_xlike_pixmap XFUN (output_xlike_pixmap)
+#define XLIKE_window_output_begin XFUN (window_output_begin)
+#define XLIKE_window_output_end XFUN (window_output_end)
 
 /* Miscellaneous split functions */
 
 #define console_type_create_redisplay_XLIKE XLIKE_PASTE (console_type_create_redisplay, XLIKE_NAME)
-#define XLIKE_get_gc XLIKE_PASTE (XLIKE_NAME, get_gc)
-#define XLIKE_output_blank XLIKE_PASTE (XLIKE_NAME, output_blank)
-#define XLIKE_text_width_single_run XLIKE_PASTE (XLIKE_NAME, text_width_single_run)
+#define XLIKE_get_gc XFUN (get_gc)
+#define XLIKE_output_blank XFUN (output_blank)
+#define XLIKE_text_width_single_run XFUN (text_width_single_run)
 
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 				struct rune *rb, int start_pixpos,
@@ -337,22 +98,22 @@ static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 static void XLIKE_output_horizontal_line (struct window *w,
 					  struct display_line *dl,
 					  struct rune *rb);
-
-static void XLIKE_output_vertical_divider (struct window *w, int clear);
-
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
-static void XLIKE_clear_frame (struct frame *f);
 static void XLIKE_clear_frame_windows (Lisp_Object window);
-static void XLIKE_window_output_begin (struct window *w);
-static void XLIKE_window_output_end (struct window *w);
 static void XLIKE_bevel_area (struct window *w, face_index findex,
 			      int x, int y, int width, int height,
 			      int shadow_thickness, int edges,
 			      enum edge_style style);
 static void XLIKE_ring_bell (struct device *d, int volume, int pitch,
 			     int duration);
+
+#ifdef THIS_IS_X
+static void XLIKE_window_output_begin (struct window *UNUSED (w));
+static void XLIKE_window_output_end (struct window *w);
+#endif /* THIS_IS_X */
+
 
 /****************************************************************************/
 /*                                                                          */
@@ -735,30 +496,21 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
     {
       if (run->dimension == 2)
 	{	
-#ifdef THIS_IS_X
-	  return XTextWidth16 (FONT_INSTANCE_X_FONT (fi),
-			       (XChar2b *) run->ptr, run->len);
-#else /* THIS_IS_GTK */
 	  /* stderr_out ("Measuring wide characters\n"); */
-	  return gdk_text_width_wc (FONT_INSTANCE_GTK_FONT (fi),
-				    (GdkWChar *) run->ptr, run->len);
-#endif /* THIS_IS_GTK */
+	  return XLIKE_TEXT_WIDTH_WIDE (FONT_INSTANCE_XLIKE_FONT (fi),
+					run->ptr, run->len);
 	}
       else
 	{
-#ifdef THIS_IS_X
-	  return XTextWidth (FONT_INSTANCE_X_FONT (fi),
-			     (char *) run->ptr, run->len);
-#else /* THIS_IS_GTK */
-	  return gdk_text_width (FONT_INSTANCE_GTK_FONT (fi),
-				 (char *) run->ptr, run->len);
-#endif /* THIS_IS_GTK */
+	  return XLIKE_TEXT_WIDTH (FONT_INSTANCE_XLIKE_FONT (fi),
+				   run->ptr, run->len);
 	}
     }
   else
     abort();
   return 0;			/* shut up GCC */
 }
+
 
 /*
    XLIKE_text_width
@@ -768,10 +520,10 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
    */
 
 /* #### Break me out into a separate header */
-int XLIKE_text_width (struct frame *USED_IF_X (f), struct face_cachel *cachel,
+int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		      const Ichar *str, Charcount len);
 int
-XLIKE_text_width (struct frame *USED_IF_X (f), struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
@@ -1060,12 +812,18 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
   Dynarr_free (buf);
 }
 
+/* Called as gtk_get_gc from gtk-glue.c */
+
+XLIKE_GC XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, 
+		       Lisp_Object bg, Lisp_Object bg_pmap,
+		       Lisp_Object lwidth);
+
 /*****************************************************************************
  XLIKE_get_gc
 
  Given a number of parameters return a GC with those properties.
  ****************************************************************************/
-static XLIKE_GC
+XLIKE_GC
 XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, 
 	      Lisp_Object bg, Lisp_Object bg_pmap, Lisp_Object lwidth)
 {
@@ -1079,7 +837,7 @@ XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg,
   gcv.clip_mask = XLIKE_NONE;
   gcv.clip_x_origin = 0;
   gcv.clip_y_origin = 0;
-  gcv.XLIKE_FILL_MEMBER = XLIKE_FILL_SOLID;
+  XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_SOLID);
   mask = XLIKE_GC_EXPOSURES | XLIKE_GC_CLIP_MASK | XLIKE_GC_CLIP_X_ORIGIN | XLIKE_GC_CLIP_Y_ORIGIN;
   mask |= XLIKE_GC_FILL;
 
@@ -1109,22 +867,18 @@ XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg,
   if (!NILP (fg))
     {
       if (COLOR_INSTANCEP (fg))
-	XLIKE_SET_PIXCOLOR_COPY
-	  (gcv.foreground,
-	   XLIKE_COLOR_TO_PIXCOLOR (XCOLOR_INSTANCE_XLIKE_COLOR (fg)));
+	XLIKE_SET_GC_COLOR (gcv.foreground, XCOLOR_INSTANCE_XLIKE_COLOR (fg));
       else
-	XLIKE_SET_PIXCOLOR_NUM (gcv.foreground, XINT (fg));
+	XLIKE_SET_GC_PIXEL (gcv.foreground, XINT (fg));
       mask |= XLIKE_GC_FOREGROUND;
     }
 
   if (!NILP (bg))
     {
       if (COLOR_INSTANCEP (bg))
-	XLIKE_SET_PIXCOLOR_COPY
-	  (gcv.background,
-	   XLIKE_COLOR_TO_PIXCOLOR (XCOLOR_INSTANCE_XLIKE_COLOR (bg)));
+	XLIKE_SET_GC_COLOR (gcv.background, XCOLOR_INSTANCE_XLIKE_COLOR (bg));
       else
-	XLIKE_SET_PIXCOLOR_NUM (gcv.background, XINT (bg));
+	XLIKE_SET_GC_PIXEL (gcv.background, XINT (bg));
       mask |= XLIKE_GC_BACKGROUND;
     }
 
@@ -1134,7 +888,7 @@ XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg,
     {
       assert (DEVICE_XLIKE_GRAY_PIXMAP (d) != XLIKE_NONE);
 
-      gcv.XLIKE_FILL_MEMBER = XLIKE_FILL_STIPPLED;
+      XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_STIPPLED);
       gcv.stipple = DEVICE_XLIKE_GRAY_PIXMAP (d);
       mask |= (XLIKE_GC_FILL | XLIKE_GC_STIPPLE);
     }
@@ -1143,13 +897,13 @@ XLIKE_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg,
     {
       if (XIMAGE_INSTANCE_PIXMAP_DEPTH (bg_pmap) == 0)
 	{
-	  gcv.XLIKE_FILL_MEMBER = XLIKE_FILL_OPAQUE_STIPPLED;
+	  XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_OPAQUE_STIPPLED);
 	  gcv.stipple = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pmap);
 	  mask |= (XLIKE_GC_STIPPLE | XLIKE_GC_FILL);
 	}
       else
 	{
-	  gcv.XLIKE_FILL_MEMBER = XLIKE_FILL_TILED;
+	  XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_TILED);
 	  gcv.tile = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pmap);
 	  mask |= (XLIKE_GC_TILE | XLIKE_GC_FILL);
 	}
@@ -1264,10 +1018,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   /* #### This will probably cause asserts when passed a Lisp integer for a
      color.  See ca. line 759 this file.
      #### Maybe xft_convert_color should take an XColor, not a pixel. */
-#define XFT_FROB_LISP_COLOR(color, dim) \
-  xft_convert_color (dpy, cmap, visual, \
-		     COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color)).pixel, \
-		     (dim))
+#define XFT_FROB_LISP_COLOR(color, dim)					\
+  xft_convert_color (dpy, cmap, visual,					\
+		     XCOLOR_INSTANCE_X_COLOR (color).pixel, (dim))
 #endif /* USE_XFT */
 
   if (width < 0)
@@ -1850,11 +1603,11 @@ our_draw_bitmap (GdkDrawable *drawable,
 #endif /* THIS_IS_GTK */
 
 
-void
-XLIKE_OUTPUT_XLIKE_PIXMAP (struct frame *f, Lisp_Image_Instance *p, int x,
+static void
+XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
 			   int width, int height,
-			   XLIKE_PIXCOLOR fg, XLIKE_PIXCOLOR bg,
+			   XLIKE_COLOR fg, XLIKE_COLOR bg,
 			   XLIKE_GC override_gc)
 {
   struct device *d = XDEVICE (f->device);
@@ -1868,8 +1621,8 @@ XLIKE_OUTPUT_XLIKE_PIXMAP (struct frame *f, Lisp_Image_Instance *p, int x,
     {
       memset (&gcv, ~0, sizeof (gcv));
       gcv.graphics_exposures = XLIKE_FALSE;
-      XLIKE_SET_PIXCOLOR_COPY (gcv.foreground, fg);
-      XLIKE_SET_PIXCOLOR_COPY (gcv.background, bg);
+      XLIKE_SET_GC_COLOR (gcv.foreground, fg);
+      XLIKE_SET_GC_COLOR (gcv.background, bg);
       pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
 
       if (IMAGE_INSTANCE_XLIKE_MASK (p))
@@ -1916,6 +1669,7 @@ XLIKE_OUTPUT_XLIKE_PIXMAP (struct frame *f, Lisp_Image_Instance *p, int x,
 		 yoffset, width,
 		 height, x, y);
 #else /* THIS_IS_GTK */
+      USED (dpy);
       gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
@@ -1928,6 +1682,7 @@ XLIKE_OUTPUT_XLIKE_PIXMAP (struct frame *f, Lisp_Image_Instance *p, int x,
 		  (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc,
 		  xoffset, yoffset, width, height, x, y, 1L);
 #else /* THIS_IS_GTK */
+      USED (dpy);
       our_draw_bitmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
@@ -1957,11 +1712,10 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
     tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
     tmp_bcolor = XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel);
 
-    XLIKE_OUTPUT_XLIKE_PIXMAP (f, p, db->xpos, db->ypos,
+    XLIKE_output_xlike_pixmap (f, p, db->xpos, db->ypos,
 			       dga->xoffset, dga->yoffset,
 			       dga->width, dga->height,
-			       XLIKE_COLOR_TO_PIXCOLOR (tmp_fcolor),
-			       XLIKE_COLOR_TO_PIXCOLOR (tmp_bcolor), 0);
+			       tmp_fcolor, tmp_bcolor, 0);
   }
 
   /* Draw a cursor over top of the pixmap. */
@@ -2008,9 +1762,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
   Lisp_Object tmp_pixel;
   XLIKE_GCVALUES gcv;
   XLIKE_GC background_gc;
-#ifdef THIS_IS_X
   enum edge_style style;
-#endif /* THIS_IS_X */
   unsigned long mask;
   int x, y1, y2, width, shadow_thickness, spacing, line_width;
   face_index div_face =
@@ -2029,9 +1781,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
   tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
 
   /* First, get the GC's. */
-  XLIKE_SET_PIXCOLOR_COPY
-    (gcv.background,
-     XLIKE_COLOR_TO_PIXCOLOR (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel)));
+  XLIKE_SET_GC_COLOR (gcv.background, XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
   gcv.foreground = gcv.background;
   gcv.graphics_exposures = XLIKE_FALSE;
   mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
@@ -2044,6 +1794,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
   if (clear)
     XClearArea (dpy, x_win, x, y1, width, y2 - y1, False);
 #else /* THIS_IS_GTK */
+  USED (dpy);
   /* if (clear) */
   gdk_draw_rectangle (GDK_DRAWABLE (x_win), background_gc, TRUE,
 		      x, y1, width, y2 - y1);
@@ -2055,9 +1806,8 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
   XLIKE_FILL_RECTANGLE (dpy, x_win, background_gc,
 			x + spacing + shadow_thickness, y1,
 			line_width, y2 - y1);
+#endif /* not THIS_IS_GTK */
 
-  /* This code not formerly present in GTK version, maybe the omittal
-     is intentional? */
   if (shadow_thickness < 0)
     {
       shadow_thickness = -shadow_thickness;
@@ -2067,18 +1817,11 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
     {
       style = EDGE_BEVEL_OUT;
     }
-#endif /* not THIS_IS_GTK */
 
   /* Draw the shadows around the divider line */
-#ifdef THIS_IS_X
-  x_bevel_area (w, div_face, x + spacing, y1,
-		width - 2 * spacing, y2 - y1,
-		shadow_thickness, EDGE_ALL, style);
-#else /* THIS_IS_GTK */
-  gtk_output_shadows (f, x + spacing, y1, 
-		      width - 2 * spacing, y2 - y1,
-		      shadow_thickness);
-#endif /* THIS_IS_GTK */
+  XLIKE_bevel_area (w, div_face, x + spacing, y1,
+		    width - 2 * spacing, y2 - y1,
+		    shadow_thickness, EDGE_ALL, style);
 }
 
 /*****************************************************************************
@@ -2430,7 +2173,7 @@ XLIKE_flash (struct device *d)
   XLIKE_WINDOW win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
   XLIKE_GCVALUES gcv;
-  XLIKE_COLOR tmp_fcolor, tmp_bcolor;
+  XLIKE_PIXEL tmp_fcolor, tmp_bcolor;
   Lisp_Object tmp_pixel, frame;
   struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
   int flash_height;
@@ -2438,14 +2181,11 @@ XLIKE_flash (struct device *d)
   frame = wrap_frame (f);
 
   tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
-  XLIKE_SET_PIXCOLOR_COPY (tmp_fcolor,
-			   XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  tmp_fcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
   tmp_pixel = FACE_BACKGROUND (Vdefault_face, frame);
-  XLIKE_SET_PIXCOLOR_COPY (tmp_bcolor,
-			   XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  tmp_bcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
   memset (&gcv, ~0, sizeof (gcv)); /* initialize all slots to ~0 */
-  XLIKE_SET_PIXCOLOR_NUM (gcv.foreground,
-			  (tmp_fcolor.pixel ^ tmp_bcolor.pixel));
+  XLIKE_SET_GC_PIXEL (gcv.foreground, tmp_fcolor ^ tmp_bcolor);
   gcv.function = XLIKE_GX_XOR;
   gcv.graphics_exposures = XLIKE_FALSE;
   gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
