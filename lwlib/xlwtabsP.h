@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "xlwtabs.h"
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 #include <X11/Xft/Xft.h>
 #endif
 
@@ -73,7 +73,7 @@ extern TabsClassRec tabsClassRec;
 typedef struct {
     /* resources */
     XFontStruct	*font ;
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
     XftFont	*renderFont;
     String	fcFontName;
     String	xftFontName;

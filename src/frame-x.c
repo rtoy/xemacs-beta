@@ -2606,7 +2606,7 @@ x_delete_frame (struct frame *f)
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
 #endif /* HAVE_CDE */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
   /* If we have an XftDraw structure, we need to free it here.
      We can't ever have an XftDraw without a Display, so we are safe
      to free it in here, and we avoid too much playing around with the 
@@ -2713,7 +2713,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
        {
 	 if (0)
 	   ;
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 	 else if (FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)))
 	   {
 	     Xt_SET_ARG (al[ac], XtNxftFont,

@@ -238,7 +238,7 @@ Boston, MA 02111-1307, USA.  */
 # else
 #  define USED_IF_MULE(decl) UNUSED (decl)
 # endif
-# ifdef USE_XFT
+# ifdef HAVE_XFT
 #  define USED_IF_XFT(decl) decl
 # else
 #  define USED_IF_XFT(decl) UNUSED (decl)

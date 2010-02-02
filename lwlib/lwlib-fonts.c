@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
  * code for handling Xft
  */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 
 /* helper function to correctly open Xft/core fonts by name
    #### Can't we use FcParseName here?
@@ -112,6 +112,6 @@ xft_open_font_by_name (Display *dpy, char *name)
   return res;
 }
 
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 /* End of lwlib-fonts.c */
