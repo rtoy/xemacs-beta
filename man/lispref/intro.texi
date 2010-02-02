@@ -720,7 +720,7 @@ The description follows on succeeding lines, sometimes with examples.
 @cindex function descriptions
 @cindex command descriptions
 @cindex macro descriptions
-@cindex special form descriptions
+@cindex special operator descriptions
 
   In a function description, the name of the function being described
 appears first.  It is followed on the same line by a list of parameters.
@@ -773,13 +773,13 @@ described at the beginning.
   @xref{Lambda Expressions}, for a more complete description of optional
 and rest arguments.
 
-  Command, macro, and special form descriptions have the same format,
+  Command, macro, and special operator descriptions have the same format,
 but the word `Function' is replaced by `Command', `Macro', or `Special
 Form', respectively.  Commands are simply functions that may be called
 interactively; macros process their arguments differently from functions
 (the arguments are not evaluated), but are presented the same way.
 
-  Special form descriptions use a more complex notation to specify
+  Special operator descriptions use a more complex notation to specify
 optional and repeated parameters because they can break the argument
 list down into separate arguments in more complicated ways.
 @samp{@code{@r{[}@var{optional-arg}@r{]}}} means that @var{optional-arg} is
@@ -788,7 +788,7 @@ arguments.  Parentheses are used when several arguments are grouped into
 additional levels of list structure.  Here is an example:
 
 @defspec count-loop (@var{var} [@var{from} @var{to} [@var{inc}]]) @var{body}@dots{}
-This imaginary special form implements a loop that executes the
+This imaginary special operator implements a loop that executes the
 @var{body} forms and then increments the variable @var{var} on each
 iteration.  On the first iteration, the variable has the value
 @var{from}; on subsequent iterations, it is incremented by 1 (or by
@@ -812,7 +812,7 @@ non-@code{nil} at the beginning of an iteration.  Here is an example:
     (setq done t)))
 @end example
 
-In this special form, the arguments @var{from} and @var{to} are
+With this special operator, the arguments @var{from} and @var{to} are
 optional, but must both be present or both absent.  If they are present,
 @var{inc} may optionally be specified as well.  These arguments are
 grouped with the argument @var{var} into a list, to distinguish them

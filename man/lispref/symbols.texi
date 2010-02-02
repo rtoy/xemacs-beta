@@ -132,7 +132,7 @@ symbol naming a function written in Lisp would have a lambda expression
 @section Defining Symbols
 @cindex definition of a symbol
 
-  A @dfn{definition} in Lisp is a special form that announces your
+  A @dfn{definition} in Lisp is a special operator that announces your
 intention to use a certain symbol in a particular way.  In XEmacs Lisp,
 you can define a symbol as a variable, or define it as a function (or
 macro), or both independently.
@@ -143,7 +143,7 @@ in this way.  Thus, when you define a symbol as a variable, you can
 supply an initial value for the variable, plus documentation for the
 variable.
 
-  @code{defvar} and @code{defconst} are special forms that define a
+  @code{defvar} and @code{defconst} are special operators that define a
 symbol as a global variable.  They are documented in detail in
 @ref{Defining Variables}.
 

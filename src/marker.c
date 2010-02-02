@@ -77,7 +77,8 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	      int UNUSED (foldcase))
 {
   Lisp_Marker *marker1 = XMARKER (obj1);
   Lisp_Marker *marker2 = XMARKER (obj2);

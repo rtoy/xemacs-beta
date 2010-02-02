@@ -43,6 +43,7 @@ struct gtk_color_instance_data
 
 #define GTK_COLOR_INSTANCE_DATA(c) ((struct gtk_color_instance_data *) (c)->data)
 #define COLOR_INSTANCE_GTK_COLOR(c) (GTK_COLOR_INSTANCE_DATA (c)->color)
+#define XCOLOR_INSTANCE_GTK_COLOR(c) COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (c))
 #define COLOR_INSTANCE_GTK_DEALLOC(c) (GTK_COLOR_INSTANCE_DATA (c)->dealloc_on_gc)
 
 /*****************************************************************************
@@ -57,6 +58,7 @@ struct gtk_font_instance_data
 
 #define GTK_FONT_INSTANCE_DATA(f) ((struct gtk_font_instance_data *) (f)->data)
 #define FONT_INSTANCE_GTK_FONT(f) (GTK_FONT_INSTANCE_DATA (f)->font)
+#define XFONT_INSTANCE_GTK_FONT(c) FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (c))
 
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_IMPL_H_ */

@@ -22,6 +22,83 @@
 	* automated/test-harness.el (batch-test-emacs):
 	Update doc to indicate that a directory is allowed.
 
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* automated/case-tests.el:
+	* automated/case-tests.el (uni-mappings):
+	* automated/search-tests.el:
+	Delete old pristine-case-table code.  Rewrite the Unicode torture
+	test to take into account whether overlapping mappings exist for
+	more than one character, and not doing the upcase/downcase
+	comparisons in such cases.
+	
+	* automated/lisp-tests.el (foo):
+	* automated/lisp-tests.el (string-variable):
+	* automated/lisp-tests.el (featurep):
+	Replace Assert (equal ... with Assert-equal; same for other types
+	of equality.  Replace some awkward equivalents of Assert-equalp
+	with Assert-equalp.  Add lots of equalp tests.
+	
+	* automated/case-tests.el:
+	* automated/regexp-tests.el:
+	* automated/search-tests.el:
+	Fix up the comments at the top of the files.  Move rules about where
+	to put tests into case-tests.el.
+	
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-aborted-summary-template): New.
+	* automated/test-harness.el (test-harness-from-buffer):
+	* automated/test-harness.el (batch-test-emacs):
+	Fix Assert-test-not.  Create Assert-not-equal and variants.
+	Delete the doc strings from all these convenience functions to avoid
+	excessive repetition; instead use one copy in a comment.
+
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/search-tests.el:
+	Check that multidimensional characters with repeated octets and
+	case information force simple_search(), since boyer_moore()
+	doesn't understand them when constructing its stride table.
+	In passing; correct my spelling.
+	* automated/case-tests.el (uni-mappings):
+	In passing; delete a couple of redundant tests, correct the logic
+	of another.
+
+2010-01-30  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el:
+	* automated/search-tests.el (insert):
+	Use LF not CRLF for line endings.
+
+2010-01-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Make sure that control-1 characters are no longer treated as
+	second-class citizens in regexp ranges, as in
+	http://mid.gmane.org/18829.34118.709782.704574@parhasard.net .
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el:
+	New file.
+
+	* automated/search-tests.el:
+	* automated/case-tests.el:
+	* automated/case-tests.el (pristine-case-table): Removed.
+	* automated/case-tests.el (uni-mappings):
+	* automated/lisp-tests.el:
+	* automated/regexp-tests.el:
+	Extract some search-related code from case-tests and regexp-tests
+	and move to search-tests.  Move some regexp-related code from
+	lisp-tests to regexp-tests.
+
+	Write a comment trying to express the proper division of labor
+	between case-tests, search-tests and regexp-tests.
+
+	Add a new test for the Control-1 search bug.
+
+	Fix a buggy test in the Unicode torture-test section of case-tests.el.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* automated/test-harness.el (test-harness-from-buffer):

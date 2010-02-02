@@ -176,7 +176,8 @@ mark_float (Lisp_Object UNUSED (obj))
 }
 
 static int
-float_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+float_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	     int UNUSED (foldcase))
 {
   return (extract_float (obj1) == extract_float (obj2));
 }

@@ -126,8 +126,6 @@ PRIVATE_INSTALLABLE_SCRIPTS = $(GEN_SCRIPTS) $(PKG_SCRIPTS)
 
 PRIVATE_INSTALLABLES = ${PRIVATE_INSTALLABLE_EXES} ${PRIVATE_INSTALLABLE_SCRIPTS}
 
-## These need to be conditional on I18N3: make-msgfile make-po
-
 ## ----------------------------------------------------------------
 ## Things that XEmacs uses during the build process itself.
 ## Not installed.
@@ -374,12 +372,6 @@ winclient: ${srcdir}/winclient.c
 
 hexl: ${srcdir}/hexl.c
 	$(CC) $(cflags) ${srcdir}/hexl.c $(ldflags) -o $@
-
-make-msgfile: ${srcdir}/make-msgfile.c
-	$(CC) $(cflags) ${srcdir}/make-msgfile.c $(ldflags) -o $@
-
-make-po: ${srcdir}/make-po.c
-	$(CC) $(cflags) ${srcdir}/make-po.c $(ldflags) -o $@
 
 make-dump-id: ${srcdir}/make-dump-id.c
 	$(CC) $(cflags) ${srcdir}/make-dump-id.c $(ldflags) -o $@

@@ -271,7 +271,7 @@ declared to be an opening delimiter and act like an open parenthesis.
 
   In Emacs, a parenthetical grouping at the top level in the buffer is
 called a @dfn{defun}.  The name derives from the fact that most
-top-level lists in Lisp are instances of the special form
+top-level lists in Lisp are instances of the special operator
 @code{defun}, but Emacs calls any top-level parenthetical
 grouping counts a defun regardless of its contents or
 the programming language.  For example, in C, the body of a

@@ -1,4 +1,4 @@
-/* Shared event code between X and GTK -- include file.
+/* Common code between X and GTK -- event-related.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
@@ -22,10 +22,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* For some code it's reasonable to have only one copy and conditionalize
-   at run-time.  For other code it isn't. #### Perhaps all code should be
-   included here, not in event-xlike.c.  However, event-xlike.c is always
-   X-specific, whereas the following code isn't, in the GTK case. */
+/* Before including this file, you need to define either THIS_IS_X or
+   THIS_IS_GTK.  */
+
+/* See comment at top of redisplay-xlike-inc.c for an explanation of
+   how this file works. */
 
 static int
 #ifdef THIS_IS_GTK
@@ -160,7 +161,7 @@ emacs_Xt_event_pending_p (int how_many)
   return 0;
 }
 
-#if defined(THIS_IS_X) || !defined(__GDK_KEYS_H__)
+#if defined (THIS_IS_X) || !defined (__GDK_KEYS_H__)
 
 #ifdef MULE
 
@@ -171,7 +172,7 @@ emacs_Xt_event_pending_p (int how_many)
 
 #define USE_UNICODE_MAP(keysym, map)					\
   if (keysym >= FIRST_KNOWN_##map					\
-      && (keysym < (FIRST_KNOWN_##map + countof(map)))			\
+      && (keysym < (FIRST_KNOWN_##map + countof (map)))			\
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
@@ -1100,7 +1101,7 @@ gtk_keysym_to_character (guint keysym)
       break;
     case 6: /* Cyrillic */
       {
-	USE_UNICODE_MAP(keysym, CYRILLIC);
+	USE_UNICODE_MAP (keysym, CYRILLIC);
 	break;
       }
     case 7: /* Greek */
@@ -1277,4 +1278,4 @@ if necessary). DOCUMENT the existing system that does this.
 #endif /* (not) MULE */
 }
 
-#endif /* defined(THIS_IS_X) || !defined(__GDK_KEYS_H__) */
+#endif /* defined (THIS_IS_X) || !defined (__GDK_KEYS_H__) */

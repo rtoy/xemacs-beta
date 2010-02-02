@@ -330,7 +330,7 @@ bytecode_nreverse (Lisp_Object list)
 
 /* We have our own two-argument versions of various arithmetic ops.
    Only two-argument arithmetic operations have their own byte codes. */
-static int
+int
 bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
 #ifdef WITH_NUMBER_TYPES
@@ -2299,7 +2299,8 @@ mark_compiled_function (Lisp_Object obj)
 }
 
 static int
-compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+			 int UNUSED (foldcase))
 {
   Lisp_Compiled_Function *f1 = XCOMPILED_FUNCTION (obj1);
   Lisp_Compiled_Function *f2 = XCOMPILED_FUNCTION (obj2);
