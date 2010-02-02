@@ -142,13 +142,21 @@ qxeDragQueryFile (HDROP arg1, UINT arg2, Extbyte * arg3, UINT arg4)
     return DragQueryFileA (arg1, arg2, (LPSTR) arg3, arg4);
 }
 
+/* NOTE: error arg2, Cygwin prototype, extra const.
+   NOTE: Prototype manually overridden.
+         Header file claims:
+           HICON WINAPI ExtractAssociatedIcon(HINSTANCE,LPCWSTR,PWORD)
+         Overridden with:
+           HICON ExtractAssociatedIcon(HINSTANCE, LPWSTR, LPWORD)
+         Differences in return-type qualifiers, e.g. WINAPI, are not important.
+ */
 HICON
-qxeExtractAssociatedIcon (HINSTANCE arg1, const Extbyte * arg2, PWORD arg3)
+qxeExtractAssociatedIcon (HINSTANCE arg1, Extbyte * arg2, LPWORD arg3)
 {
   if (XEUNICODE_P)
-    return ExtractAssociatedIconW (arg1, (LPCWSTR) arg2, arg3);
+    return ExtractAssociatedIconW (arg1, (LPWSTR) arg2, arg3);
   else
-    return ExtractAssociatedIconA (arg1, (LPCSTR) arg2, arg3);
+    return ExtractAssociatedIconA (arg1, (LPSTR) arg2, arg3);
 }
 
 HICON
@@ -160,7 +168,15 @@ qxeExtractIcon (HINSTANCE arg1, const Extbyte * arg2, UINT arg3)
     return ExtractIconA (arg1, (LPCSTR) arg2, arg3);
 }
 
-/* Skipping ExtractIconEx because NT 4.0+ only, error in Cygwin prototype */
+/* NOTE: NT 4.0+ only, former error in Cygwin prototype but no more (Cygwin 1.7, 1-30-10) */
+UINT
+qxeExtractIconEx (const Extbyte * arg1, int arg2, HICON* arg3, HICON* arg4, UINT arg5)
+{
+  if (XEUNICODE_P)
+    return ExtractIconExW ((LPCWSTR) arg1, arg2, arg3, arg4, arg5);
+  else
+    return ExtractIconExA ((LPCSTR) arg1, arg2, arg3, arg4, arg5);
+}
 
 HINSTANCE
 qxeFindExecutable (const Extbyte * arg1, const Extbyte * arg2, Extbyte * arg3)
@@ -926,13 +942,21 @@ qxeCreateDialogParam (HINSTANCE arg1, const Extbyte * arg2, HWND arg3, DLGPROC a
     return CreateDialogParamA (arg1, (LPCSTR) arg2, arg3, arg4, arg5);
 }
 
+/* NOTE: error arg 1, VS6 prototype, missing const.
+   NOTE: Prototype manually overridden.
+         Header file claims:
+           WINUSERAPI HWND WINAPI CreateMDIWindow(LPCWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM)
+         Overridden with:
+           HWND CreateMDIWindow(LPWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM)
+         Differences in return-type qualifiers, e.g. WINAPI, are not important.
+ */
 HWND
-qxeCreateMDIWindow (const Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10)
+qxeCreateMDIWindow (Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10)
 {
   if (XEUNICODE_P)
-    return CreateMDIWindowW ((LPCWSTR) arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+    return CreateMDIWindowW ((LPWSTR) arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
   else
-    return CreateMDIWindowA ((LPCSTR) arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+    return CreateMDIWindowA ((LPSTR) arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
 }
 
 HWND
@@ -944,13 +968,21 @@ qxeCreateWindowEx (DWORD arg1, const Extbyte * arg2, const Extbyte * arg3, DWORD
     return CreateWindowExA (arg1, (LPCSTR) arg2, (LPCSTR) arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
 }
 
+/* NOTE: error arg 1, VS6 prototype, missing const.
+   NOTE: Prototype manually overridden.
+         Header file claims:
+           WINUSERAPI HWINSTA WINAPI CreateWindowStation(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES)
+         Overridden with:
+           HWINSTA CreateWindowStation(LPWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES)
+         Differences in return-type qualifiers, e.g. WINAPI, are not important.
+ */
 HWINSTA
-qxeCreateWindowStation (const Extbyte * arg1, DWORD arg2, DWORD arg3, LPSECURITY_ATTRIBUTES arg4)
+qxeCreateWindowStation (Extbyte * arg1, DWORD arg2, DWORD arg3, LPSECURITY_ATTRIBUTES arg4)
 {
   if (XEUNICODE_P)
-    return CreateWindowStationW ((LPCWSTR) arg1, arg2, arg3, arg4);
+    return CreateWindowStationW ((LPWSTR) arg1, arg2, arg3, arg4);
   else
-    return CreateWindowStationA ((LPCSTR) arg1, arg2, arg3, arg4);
+    return CreateWindowStationA ((LPSTR) arg1, arg2, arg3, arg4);
 }
 
 /* Error if DefDlgProc used: return value is conditionalized on _MAC, messes up parser */
@@ -1593,14 +1625,7 @@ qxeSendMessageCallback (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4, SENDASYN
     return SendMessageCallbackA (arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
-LRESULT
-qxeSendMessageTimeout (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4, UINT arg5, UINT arg6, PDWORD_PTR arg7)
-{
-  if (XEUNICODE_P)
-    return SendMessageTimeoutW (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-  else
-    return SendMessageTimeoutA (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-}
+/* Error if SendMessageTimeout used: VS6 has erroneous seventh parameter DWORD_PTR instead of PDWORD_PTR */
 
 /* Skipping SendMessage because split messages and structures */
 
@@ -1749,7 +1774,15 @@ qxewvsprintf (Extbyte * arg1, const Extbyte * arg2, va_list arglist)
 /*                       Processing file DDEML.H                        */
 /*----------------------------------------------------------------------*/
 
-/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
+/* NOTE: former error in Cygwin prototype, but no more (Cygwin 1.7, 1-30-10) */
+HSZ
+qxeDdeCreateStringHandle (DWORD arg1, const Extbyte * arg2, int arg3)
+{
+  if (XEUNICODE_P)
+    return DdeCreateStringHandleW (arg1, (LPCWSTR) arg2, arg3);
+  else
+    return DdeCreateStringHandleA (arg1, (LPCSTR) arg2, arg3);
+}
 
 UINT
 qxeDdeInitialize (PDWORD arg1, PFNCALLBACK arg2, DWORD arg3, DWORD arg4)
@@ -1774,13 +1807,21 @@ qxeDdeQueryString (DWORD arg1, HSZ arg2, Extbyte * arg3, DWORD arg4, int arg5)
 /*                       Processing file WINREG.H                       */
 /*----------------------------------------------------------------------*/
 
+/* NOTE: error arg 1, Cygwin prototype, extra const.
+   NOTE: Prototype manually overridden.
+         Header file claims:
+           WINADVAPI BOOL WINAPI AbortSystemShutdown(LPCWSTR)
+         Overridden with:
+           BOOL AbortSystemShutdown(LPWSTR)
+         Differences in return-type qualifiers, e.g. WINAPI, are not important.
+ */
 BOOL
-qxeAbortSystemShutdown (const Extbyte * arg1)
+qxeAbortSystemShutdown (Extbyte * arg1)
 {
   if (XEUNICODE_P)
-    return AbortSystemShutdownW ((LPCWSTR) arg1);
+    return AbortSystemShutdownW ((LPWSTR) arg1);
   else
-    return AbortSystemShutdownA ((LPCSTR) arg1);
+    return AbortSystemShutdownA ((LPSTR) arg1);
 }
 
 BOOL
@@ -1792,7 +1833,15 @@ qxeInitiateSystemShutdown (Extbyte * arg1, Extbyte * arg2, DWORD arg3, BOOL arg4
     return InitiateSystemShutdownA ((LPSTR) arg1, (LPSTR) arg2, arg3, arg4, arg5);
 }
 
-/* Skipping RegConnectRegistry because error in Cygwin prototype */
+/* NOTE: former error in Cygwin prototype, but no more (Cygwin 1.7, 1-30-10) */
+LONG
+qxeRegConnectRegistry (const Extbyte * arg1, HKEY arg2, PHKEY arg3)
+{
+  if (XEUNICODE_P)
+    return RegConnectRegistryW ((LPCWSTR) arg1, arg2, arg3);
+  else
+    return RegConnectRegistryA ((LPCSTR) arg1, arg2, arg3);
+}
 
 LONG
 qxeRegCreateKeyEx (HKEY arg1, const Extbyte * arg2, DWORD arg3, Extbyte * arg4, DWORD arg5, REGSAM arg6, LPSECURITY_ATTRIBUTES arg7, PHKEY arg8, PDWORD arg9)
@@ -2342,7 +2391,15 @@ qxeGetGlyphOutline (HDC arg1, UINT arg2, UINT arg3, LPGLYPHMETRICS arg4, DWORD a
 
 #if defined (HAVE_MS_WINDOWS)
 
-/* Skipping GetICMProfile because NT 4.0+ only, error in Cygwin prototype */
+/* NOTE: NT 4.0+ only, former error in Cygwin prototype but no more (Cygwin 1.7, 1-30-10) */
+BOOL
+qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3)
+{
+  if (XEUNICODE_P)
+    return GetICMProfileW (arg1, arg2, (LPWSTR) arg3);
+  else
+    return GetICMProfileA (arg1, arg2, (LPSTR) arg3);
+}
 
 #endif /* defined (HAVE_MS_WINDOWS) */
 

@@ -529,7 +529,7 @@ explicitly.  This prints the backtrace to the stream
 @samp{backtrace-output}.  Each line of the backtrace represents one
 function call.  The line shows the values of the function's arguments if
 they are all known.  If they are still being computed, the line says so.
-The arguments of special forms are elided.
+The arguments of special operators are elided.
 
 @smallexample
 @group

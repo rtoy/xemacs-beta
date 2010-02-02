@@ -21,15 +21,9 @@
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 ** Boston, MA 02111-1301, USA.  */
-*/
 
 #ifndef __GTK_XEMACS_H__
 #define __GTK_XEMACS_H__
-
-#include <config.h>
-#include "frame.h"
-#include <gdk/gdk.h>
-#include <gtk/gtkfixed.h>
 
 BEGIN_C_DECLS
 
@@ -38,22 +32,22 @@ BEGIN_C_DECLS
 #define GTK_IS_XEMACS(obj)		GTK_CHECK_TYPE (obj, gtk_xemacs_get_type ())
 #define GTK_XEMACS_FRAME(obj)	GTK_XEMACS (obj)->f
 
-	typedef struct _GtkXEmacs GtkXEmacs;
-	typedef struct _GtkXEmacsClass GtkXEmacsClass;
+typedef struct _GtkXEmacs GtkXEmacs;
+typedef struct _GtkXEmacsClass GtkXEmacsClass;
 
-	struct _GtkXEmacs
-	{
-		GtkFixed fixed;
-		struct frame *f;
-	};
+struct _GtkXEmacs
+{
+  GtkFixed fixed;
+  struct frame *f;
+};
 
-	struct _GtkXEmacsClass
-	{
-		GtkFixedClass parent_class;
-	};
+struct _GtkXEmacsClass
+{
+  GtkFixedClass parent_class;
+};
 
-	guint gtk_xemacs_get_type (void);
-	GtkWidget *gtk_xemacs_new (struct frame *f);
+guint gtk_xemacs_get_type (void);
+GtkWidget *gtk_xemacs_new (struct frame *f);
 
 END_C_DECLS
 

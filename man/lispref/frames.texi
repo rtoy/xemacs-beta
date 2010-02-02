@@ -786,13 +786,13 @@ The operation of @code{focus-frame} is not affected by the value of
 @end defun
 
 @defspec save-selected-frame forms@dots{}
-This special form records the selected frame, executes @var{forms} in
+This special operator records the selected frame, executes @var{forms} in
 sequence, then restores the earlier selected frame.  The value returned
 is the value of the last form.
 @end defspec
 
 @defspec with-selected-frame frame forms@dots{}
-This special form records the selected frame, then selects @var{frame}
+This special operator records the selected frame, then selects @var{frame}
 and executes @var{forms} in sequence.  After the last form is finished,
 the earlier selected frame is restored.  The value returned is the value
 of the last form.

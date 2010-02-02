@@ -492,7 +492,7 @@ check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
 
 static int
 chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
-		      int depth)
+		      int depth, int foldcase)
 {
   int i;
 
@@ -504,7 +504,7 @@ chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
 	Lisp_Object *tab2 = LISPOBJ_ARRAY_FROM_SUBTAB (table2);
 	for (i = 0; i < 256; i++)
 	  {
-	    if (!internal_equal (tab1[i], tab2[i], depth + 1))
+	    if (!internal_equal_0 (tab1[i], tab2[i], depth + 1, foldcase))
 	      return 0;
 	  }
 	break;
@@ -533,7 +533,7 @@ chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
 	    else
 	      {
 		if (!chartab_tables_equal (tab1[1], tab2[1], level - 1,
-					   depth))
+					   depth, foldcase))
 		  return 0;
 	      }
 	  }
@@ -547,7 +547,7 @@ chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
 }
 
 static int
-char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   /* NOTE:
 
@@ -570,10 +570,12 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   if (XCHAR_TABLE_TYPE (obj1) != XCHAR_TABLE_TYPE (obj2))
     return 0;
 
-  if (!internal_equal (XCHAR_TABLE_DEFAULT (obj1), XCHAR_TABLE_DEFAULT (obj2),
-		       depth + 1) ||
-      !internal_equal (XCHAR_TABLE_PARENT (obj1), XCHAR_TABLE_PARENT (obj2),
-		       depth + 1))
+  if (!internal_equal_0 (XCHAR_TABLE_DEFAULT (obj1),
+			 XCHAR_TABLE_DEFAULT (obj2),
+			 depth + 1, foldcase) ||
+      !internal_equal_0 (XCHAR_TABLE_PARENT (obj1),
+			 XCHAR_TABLE_PARENT (obj2),
+			 depth + 1, foldcase))
     return 0;
 
   /* Switch if necessary so that obj1 always has >= # of levels of obj2 */
@@ -605,7 +607,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return chartab_tables_equal (table,
 			       XCHAR_TABLE_TABLE (obj2),
 			       XCHAR_TABLE_LEVELS (obj2),
-			       depth);
+			       depth, foldcase);
 }
 
 /* Characters likely to have case pairs or special syntax -- e.g. comment

@@ -658,7 +658,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 {
   /* Change connection if the device changed */
   if (!NILP (devname)
-      && lisp_strcasecmp (devname, DEVICE_MSPRINTER_NAME (d)) != 0)
+      && lisp_strcasecmp_i18n (devname, DEVICE_MSPRINTER_NAME (d)) != 0)
     {
       Lisp_Object new_connection = devname;
 
@@ -1181,7 +1181,8 @@ finalize_devmode (void *header, int for_disksave)
 }
 
 static int
-equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+	       int UNUSED (foldcase))
 {
   Lisp_Devmode *dm1 = XDEVMODE (obj1);
   Lisp_Devmode *dm2 = XDEVMODE (obj2);
@@ -1194,7 +1195,7 @@ equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
     return 0;
   if (NILP (dm1->printer_name) || NILP (dm2->printer_name))
     return 1;
-  return lisp_strcasecmp (dm1->printer_name, dm2->printer_name) == 0;
+  return lisp_strcasecmp_i18n (dm1->printer_name, dm2->printer_name) == 0;
 }
 
 static Hashcode
