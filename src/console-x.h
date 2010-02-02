@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/xpm.h>
 #endif
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 /* shut up GCC */
 #define face_index face_index_arg
 #define glyph_index glyph_index_arg

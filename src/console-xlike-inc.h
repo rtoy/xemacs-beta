@@ -93,6 +93,20 @@ Boston, MA 02111-1307, USA.  */
 #  endif
 #endif /* THIS_IS_GTK */
 
+/* Just because we have XFT support doesn't mean we should use it.
+   In particular, the xlike routines are used by both X and GTK code,
+   but XFT stuff is X-specific.  HAVE_XFT will still be defined when
+   the GTK flavor is active, but we don't want to trigger the XFT code
+   in this case.  We could just undefine HAVE_XFT but I'd rather make
+   it clearer that something else is going on. --ben */
+
+#if defined (THIS_IS_X) && defined (HAVE_XFT)
+#define USE_XFT
+#define USE_XFT_MENUBARS
+#define USE_XFT_TABS
+#define USE_XFT_GAUGES
+#endif
+
 /***************************************************************************/
 /*                           Common definitions                            */
 /***************************************************************************/

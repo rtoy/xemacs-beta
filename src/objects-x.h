@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_X_WINDOWS
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 EXFUN (Ffc_font_real_pattern, 2);
 #endif
 

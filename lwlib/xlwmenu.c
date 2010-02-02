@@ -46,7 +46,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* XmVersion < 1.2 */
 #endif
 
-/* #### we may want to turn off USE_XFT here if !USE_XFT_MENUBARS
+/* #### we may want to turn off HAVE_XFT here if !HAVE_XFT_MENUBARS
    In fact, maybe that's the right interface overall? */
 #include "lwlib-fonts.h"
 #include "lwlib-colors.h"
@@ -98,7 +98,7 @@ xlwMenuResources[] =
 #define pmres(name,cls,member) \
   Xt_RESOURCE (name, cls, XtRPixmap, Pixmap, offset(member), XtRImmediate, None)
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   /* There are three font list resources, so that we can accept either of
      the resources *fontList: or *font:, and so that we can tell the
      difference between them being specified, and being defaulted to a
@@ -113,7 +113,7 @@ xlwMenuResources[] =
 #else
   fontres (XtNfont, XtCFont, XtRFontStruct, XFontStruct *, font,
 	   "XtDefaultFont"),
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   fontres (XtNfcFontName, XtCFcFontName, XtRString, String, fcFontName,
 	   "sans-serif-12:bold"),
   /* #### This needs to be fixed to give a proper type and converter for
@@ -191,7 +191,7 @@ static void Start (Widget w, XEvent *ev, String *params, Cardinal *num_params);
 static void Drag  (Widget w, XEvent *ev, String *params, Cardinal *num_params);
 static void Select(Widget w, XEvent *ev, String *params, Cardinal *num_params);
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 static XFontStruct *default_font_of_font_list (XmFontList);
 #endif
 
@@ -330,14 +330,14 @@ close_to_reference_time (Widget w, Time reference_time, XEvent *ev)
 /* Size code */
 static int
 string_width (XlwMenuWidget mw,
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 	      XmString s
 #else
 	      char *s
 #endif
 	      )
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   Dimension width, height;
   XmStringExtent (mw->menu.font_list, s, &width, &height);
   return width;
@@ -347,7 +347,7 @@ string_width (XlwMenuWidget mw,
   XmbTextExtents (mw->menu.font_set, s, strlen (s), &ri, &rl);
   return rl.width;
 # else
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XGlyphInfo glyphinfo;
   XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, (FcChar8 *) s,
 		   strlen (s), &glyphinfo);
@@ -384,21 +384,21 @@ initialize_massaged_resource_char (void)
 
 static int
 string_width_u (XlwMenuWidget mw,
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 	      XmString string
 #else
 	      char *string
 #endif
 	      )
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   Dimension width, height;
   XmString newstring;
 #else
 # ifdef USE_XFONTSET
   XRectangle ri, rl;
 # else /* ! USE_XFONTSET */
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XGlyphInfo glyphinfo;
 #else
   XCharStruct xcs;
@@ -411,7 +411,7 @@ string_width_u (XlwMenuWidget mw,
   char *chars;
   int i, j;
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   chars = "";
   if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
     chars = "";
@@ -428,7 +428,7 @@ string_width_u (XlwMenuWidget mw,
 	    newchars[j++] = chars[i];
   newchars[j] = '\0';
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   newstring = XmStringLtoRCreate (newchars, XmFONTLIST_DEFAULT_TAG);
   XmStringExtent (mw->menu.font_list, newstring, &width, &height);
   XmStringFree (newstring);
@@ -439,7 +439,7 @@ string_width_u (XlwMenuWidget mw,
   XmbTextExtents (mw->menu.font_set, newchars, j, &ri, &rl);
   return rl.width;
 # else /* ! USE_XFONTSET */
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, (FcChar8 *) newchars,
 		   j, &glyphinfo);
   return glyphinfo.xOff;
@@ -613,7 +613,7 @@ parameterize_string (const char *string, const char *value)
   return result;
 }
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 
 static XmString
 resource_widget_value (XlwMenuWidget mw, widget_value *val)
@@ -764,7 +764,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 #define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \
 		   ? ((unsigned long) (x)) : ((unsigned long) (y)))
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 static int
 x_xft_text_width (Display *dpy, XftFont *xft_font, char *run, int len)
 {
@@ -782,20 +782,20 @@ static void
 string_draw (XlwMenuWidget mw,
 	     Window window,
 	     int x, int y,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	     XftColor *color,
 	     XftColor *colorBg,
 #else
 	     GC gc,
 #endif
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 	     XmString string
 #else
 	     char *string
 #endif
 )
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   XmStringDraw (XtDisplay (mw), window,
 		mw->menu.font_list,
 		string, gc,
@@ -805,7 +805,7 @@ string_draw (XlwMenuWidget mw,
 		0, /* ???? layout_direction */
 		0);
 #else
-# ifdef USE_XFT_MENUBARS
+# ifdef HAVE_XFT_MENUBARS
   Display *display = XtDisplay (mw);
   Visual *visual = DefaultVisualOfScreen (XtScreen (mw));
   Colormap cmap = mw->core.colormap;
@@ -828,7 +828,7 @@ string_draw (XlwMenuWidget mw,
   XDrawString (XtDisplay (mw), window, gc,
 	       x, y + mw->menu.font_ascent, string, strlen (string));
 #  endif /* USE_XFONTSET */
-# endif /* USE_XFT_MENUBARS */
+# endif /* HAVE_XFT_MENUBARS */
 #endif /* NEED_MOTIF */
 }
 
@@ -837,7 +837,7 @@ string_draw_range (
 	XlwMenuWidget mw,
 	Window window,
 	int x, int y,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	XftColor *color,
 	XftColor *colorBg,
 #else
@@ -848,7 +848,7 @@ string_draw_range (
 	int end
 )
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 	Dimension width, height;
 	XmString newstring;
 	int c;
@@ -885,7 +885,7 @@ string_draw_range (
 		mw->menu.font_set, &string[start], end - start, &ri, &rl);
 	return rl.width;
 # else
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	if (end <= start)
 		return 0;
 	else
@@ -937,12 +937,12 @@ static void
 string_draw_u (XlwMenuWidget mw,
 	       Window window,
 	       int x, int y,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	       XftColor *color, XftColor *colorBg, GC gc,
 #else
 	       GC gc,
 #endif
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 	       XmString string
 #else
 	       char *string
@@ -952,7 +952,7 @@ string_draw_u (XlwMenuWidget mw,
   int i, s = 0;
   char *chars;
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   chars = "";
   if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
     chars = "";
@@ -963,7 +963,7 @@ string_draw_u (XlwMenuWidget mw,
       if (chars[i] == '%' && chars[i+1] == '_') {
 	  int w;
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	  x += string_draw_range (mw, window, x, y, color, colorBg, chars, s, i);
 	  w = string_draw_range (mw, window, x, y, color, colorBg, chars, i+2, i+3);
 #else
@@ -980,19 +980,19 @@ string_draw_u (XlwMenuWidget mw,
 	  i += 2;
       }
   }
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   x += string_draw_range (mw, window, x, y, color, colorBg, chars, s, i);
 #else
   x += string_draw_range (mw, window, x, y, gc, chars, s, i);
 #endif
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   XtFree (chars);
 #endif
 }
 
 static void /* XXX */
 binding_draw (XlwMenuWidget mw, Window w, int x, int y,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	      XftColor *color,
 	      XftColor *colorBg,
 #else
@@ -1000,12 +1000,12 @@ binding_draw (XlwMenuWidget mw, Window w, int x, int y,
 #endif
 	      char *value)
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   XmString xm_value = XmStringCreateLtoR(value, XmSTRING_DEFAULT_CHARSET);
   string_draw (mw, w, x, y, gc, xm_value);
   XmStringFree (xm_value);
 #else
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   string_draw (mw, w, x, y, color, colorBg, value);
 #else
   string_draw (mw, w, x, y, gc, value);
@@ -1652,7 +1652,7 @@ label_button_draw (XlwMenuWidget mw,
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   GC gc;
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XftColor color, colorBg;
   Display *display = XtDisplay (mw);
   Colormap cmap = mw->core.colormap;
@@ -1667,7 +1667,7 @@ label_button_draw (XlwMenuWidget mw,
 
   if (highlighted && (in_menubar || val->contents)) 
     {
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       pixel = mw->menu.highlight_foreground;
       pixelBg = mw->core.background_pixel;
 #endif
@@ -1675,7 +1675,7 @@ label_button_draw (XlwMenuWidget mw,
     }
   else if (in_menubar || val->contents)
     {
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       pixel = mw->menu.foreground;
       pixelBg = mw->core.background_pixel;
 #endif
@@ -1683,13 +1683,13 @@ label_button_draw (XlwMenuWidget mw,
     }
   else
     {
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       pixel = mw->menu.title_foreground;
       pixelBg = mw->core.background_pixel;
 #endif
       gc = mw->menu.title_gc;
     }
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   color = xft_convert_color (display, cmap, visual, pixel, 0);
   colorBg = xft_convert_color (display, cmap, visual, pixelBg, 0);
 #endif
@@ -1698,7 +1698,7 @@ label_button_draw (XlwMenuWidget mw,
   string_draw_u (mw,    /* XXX */
 		 window,
 		 x + label_offset, y + y_offset,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 		 &color, &colorBg, gc,
 #else
 	       gc,
@@ -1724,7 +1724,7 @@ push_button_size (XlwMenuWidget mw,
   if (!in_menubar && val->key)
     {
       int w;
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
       XmString key = XmStringCreateLtoR (val->key, XmSTRING_DEFAULT_CHARSET);
       w = string_width (mw, key);
       XmStringFree (key);
@@ -1753,7 +1753,7 @@ push_button_draw (XlwMenuWidget mw,
   shadow_type type;
   Boolean menu_pb = in_menubar && (menu_item_type (val) == BUTTON_TYPE);
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XftColor color, colorBg;
   Display *display = XtDisplay (mw);
   Colormap cmap = mw->core.colormap;
@@ -1771,7 +1771,7 @@ push_button_draw (XlwMenuWidget mw,
     {
       if (val->enabled)
     {
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       pixel = mw->menu.highlight_foreground;
       pixelBg = mw->core.background_pixel;
 #endif
@@ -1779,7 +1779,7 @@ push_button_draw (XlwMenuWidget mw,
     }
       else
     {
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       dim = 1;
       pixel = mw->menu.foreground;
       pixelBg = mw->core.background_pixel;
@@ -1791,7 +1791,7 @@ push_button_draw (XlwMenuWidget mw,
     {
       if (val->enabled)
 	{
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	  pixel = mw->menu.button_foreground;
 	  pixelBg = mw->core.background_pixel;
 #endif
@@ -1799,7 +1799,7 @@ push_button_draw (XlwMenuWidget mw,
 	}
       else
 	{
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	  dim = 1;
 	  pixel = mw->menu.button_foreground;
 	  pixelBg = mw->core.background_pixel;
@@ -1811,7 +1811,7 @@ push_button_draw (XlwMenuWidget mw,
     {
       if (val->enabled)
 	{
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	  pixel = mw->menu.foreground;
 	  pixelBg = mw->core.background_pixel;
 #endif
@@ -1819,7 +1819,7 @@ push_button_draw (XlwMenuWidget mw,
 	}
       else
 	{
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 	  dim = 1;
 	  pixel = mw->menu.foreground;
 	  pixelBg = mw->core.background_pixel;
@@ -1828,7 +1828,7 @@ push_button_draw (XlwMenuWidget mw,
 	}
     }
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   color = xft_convert_color (display, cmap, visual, pixel, dim);
   colorBg = xft_convert_color (display, cmap, visual, pixelBg, 0);
 #endif
@@ -1836,7 +1836,7 @@ push_button_draw (XlwMenuWidget mw,
   string_draw_u (mw,
 		 window,
 		 x + label_offset, y + y_offset,
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 		 &color, &colorBg, gc,
 #else
 		 gc,
@@ -1855,7 +1855,7 @@ push_button_draw (XlwMenuWidget mw,
       binding_draw (mw, window,
 		    x + binding_offset + mw->menu.column_spacing,
 		    y + y_offset, 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 		    &color, &colorBg,
 #else
 		    gc,
@@ -2806,16 +2806,16 @@ static void
 make_drawing_gcs (XlwMenuWidget mw)
 {
   XGCValues xgcv;
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   unsigned long flags = (GCForeground | GCBackground);
 #else
   unsigned long flags = (GCFont | GCForeground | GCBackground);
 #endif
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   xgcv.font = default_font_of_font_list (mw->menu.font_list)->fid;
 #else
-#ifndef USE_XFT_MENUBARS
+#ifndef HAVE_XFT_MENUBARS
   xgcv.font = mw->menu.font->fid;
 #endif
 #endif
@@ -3064,7 +3064,7 @@ release_shadow_gcs (XlwMenuWidget mw)
 static void
 extract_font_extents (XlwMenuWidget mw)
 {
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   /* Find the maximal ascent/descent of the fonts in the font list
      so that all menu items can be the same height... */
   mw->menu.font_ascent  = 0;
@@ -3149,7 +3149,7 @@ extract_font_extents (XlwMenuWidget mw)
           mw->menu.font_descent = font->descent;
   }
 # else /* ! USE_XFONTSET */
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   mw->menu.font_ascent  = mw->menu.renderFont->ascent;
   mw->menu.font_descent = mw->menu.renderFont->descent;
 #else
@@ -3160,7 +3160,7 @@ extract_font_extents (XlwMenuWidget mw)
 #endif /* NEED_MOTIF */
 }
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
 static XFontStruct *
 default_font_of_font_list (XmFontList font_list)
 {
@@ -3230,7 +3230,7 @@ XlwMenuInitialize (Widget UNUSED (request), Widget new_, ArgList UNUSED (args),
     XCreatePixmapFromBitmapData (display, window, (char *) gray_bits,
 				 gray_width, gray_height, 1, 0, 1);
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   /* #### Even if it's a kludge!!!, we should consider doing the same for
      X Font Sets. */
   /* The menu.font_list slot came from the *fontList resource (Motif standard.)
@@ -3252,7 +3252,7 @@ XlwMenuInitialize (Widget UNUSED (request), Widget new_, ArgList UNUSED (args),
     mw->menu.font_list = mw->menu.fallback_font_list;
 #endif
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   /* #### kludge for name change */
   if (!mw->menu.fcFontName)
     mw->menu.fcFontName = mw->menu.xftFontName;
@@ -3363,7 +3363,7 @@ XlwMenuDestroy (Widget w)
   XFreePixmap (XtDisplay (mw), mw->menu.gray_pixmap);
   mw->menu.gray_pixmap = (Pixmap) -1;
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   XftFontClose (XtDisplay (mw), mw->menu.renderFont);
 #endif
 
@@ -3409,12 +3409,12 @@ XlwMenuSetValues (Widget current, Widget UNUSED (request), Widget new_,
   if (newmw->core.background_pixel != oldmw->core.background_pixel
       || newmw->menu.foreground != oldmw->menu.foreground
       /* For the XEditResource protocol, which may want to change the font. */
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
       || newmw->menu.font_list          != oldmw->menu.font_list
       || newmw->menu.font_list_2        != oldmw->menu.font_list_2
       || newmw->menu.fallback_font_list != oldmw->menu.fallback_font_list
 #else
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
       || newmw->menu.renderFont != oldmw->menu.renderFont
 #else
       || newmw->menu.font != oldmw->menu.font

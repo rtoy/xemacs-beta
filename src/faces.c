@@ -2272,12 +2272,12 @@ complex_vars_of_faces (void)
     Lisp_Object device_symbol = Qx;
 #endif
 
-#if defined (USE_XFT) || defined (MULE)
+#if defined (HAVE_XFT) || defined (MULE)
     const Ascbyte **fontptr;
 
     const Ascbyte *fonts[] =
     {
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       /************** Xft fonts *************/
 
       /* Note that fontconfig can search for several font families in one
@@ -2302,7 +2302,7 @@ complex_vars_of_faces (void)
       "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
 #endif
     };
-#endif /* defined (USE_XFT) || defined (MULE) */
+#endif /* defined (HAVE_XFT) || defined (MULE) */
 
 #ifdef MULE
 
@@ -2333,13 +2333,13 @@ complex_vars_of_faces (void)
 
 #endif /* MULE */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list1 (device_symbol),
 				build_string (*fontptr)),
 			 inst_list);
 
-#else /* !USE_XFT */
+#else /* !HAVE_XFT */
     inst_list =
       Fcons
       (Fcons
@@ -2420,7 +2420,7 @@ complex_vars_of_faces (void)
 	build_string ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
        inst_list);
 
-#endif /* !USE_XFT */
+#endif /* !HAVE_XFT */
 
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 

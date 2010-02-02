@@ -1,5 +1,40 @@
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in:
+	* compiler.h:
+	* config.h.in:
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_frame):
+	* console-x-impl.h (FRAME_X_TOTALLY_VISIBLE_P):
+	* console-x.h:
+	* console-xlike-inc.h:
+	* emacs.c (main_1):
+	* faces.c (complex_vars_of_faces):
+	* font-mgr.h:
+	* frame-x.c (x_delete_frame):
+	* frame-x.c (x_update_frame_external_traits):
+	* glyphs-x.c (update_widget_face):
+	* inline.c:
+	* objects-x-impl.h:
+	* objects-x-impl.h (struct x_color_instance_data):
+	* objects-x-impl.h (struct x_font_instance_data):
+	* objects-x.c:
+	* objects-x.c (x_initialize_color_instance):
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (x_print_font_instance):
+	* objects-x.c (x_finalize_font_instance):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (vars_of_objects_x):
+	* objects-x.h:
+	USE_XFT* -> HAVE_XFT*.  But in objects-xlike-inc.c and
+	redisplay-xlike-inc.c, continue to use USE_XFT, and define
+	it appropriately in console-xlike-inc.h when both HAVE_XFT
+	and THIS_IS_X -- even if HAVE_XFT, we don't want to enable
+	XFT code when included in a *-gtk.c file.
+
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
 	* objects-gtk-impl.h:
 	* objects-gtk-impl.h (XCOLOR_INSTANCE_GTK_COLOR):
 	* objects-gtk-impl.h (XFONT_INSTANCE_GTK_FONT):
