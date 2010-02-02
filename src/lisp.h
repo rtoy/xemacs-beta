@@ -1253,7 +1253,8 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
-#define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+#define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
+#define abort_with_msg(msg) assert_failed (__FILE__, __LINE__, msg)
 
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
