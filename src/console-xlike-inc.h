@@ -34,17 +34,29 @@ Boston, MA 02111-1307, USA.  */
    would lead to a large number of very small functions and very
    hard-to-read code.
 
-   Instead, we handle the situation by having only one copy, placed in a
-   file called *-xlike-inc.c (e.g. redisplay-xlike-inc.c) and
-   conditionalizing using ifdefs.  Because we can compile with both X and
-   GTK at once, we include this file inside of the appropriate
-   device-specific file (e.g. redisplay-gtk.c or redisplay-x.c).  The `inc'
-   in *-xlike-inc.c indicates that this is a file meant to be included in
-   another file, despite the fact that it is a .c file.
+   Instead, we handle the situation by the following:
+
+   (1) In cases where there are lots of individual differences, we have
+   only one copy, placed in a file called *-xlike-inc.c
+   (e.g. redisplay-xlike-inc.c), and conditionalize using ifdefs.  Because
+   we can compile with both X and GTK at once, we include this file inside
+   of the appropriate device-specific file (e.g. redisplay-gtk.c or
+   redisplay-x.c).  The `inc' in *-xlike-inc.c indicates that this is a
+   file meant to be included in another file, despite the fact that it is a
+   .c file.
 
    To signal which variety of "xlike" we are compiling for, either
    THIS_IS_X or THIS_IS_GTK needs to be defined, prior to including the
-   *-xlike-inc.c file. */
+   *-xlike-inc.c file.
+
+   (2) For code that is identical in both versions, or where it's possible
+   to have only one copy at runtime through some other means, we name
+   the file *-xlike.c.  This is a normal file, not included in some other
+   file.  An example of "other means" is toolbar-xlike.c, where all
+   functions are passed a frame or device, and it's possible to do run-time
+   conditionalization based on the device type. (This isn't currently the
+   case but will be soon once the related changes from my `hg-fixup'
+   workspace are checked in. --ben) */
 
 
 /* About the representation of color below:
@@ -72,7 +84,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef THIS_IS_X
 #  include "console-x-impl.h"
 #  ifdef NEED_GCCACHE_H
-#    include "xgccache.h"
+#    include "gccache-x.h"
 #  endif
 #  ifdef NEED_GLYPHS_H
 #    include "glyphs-x.h"

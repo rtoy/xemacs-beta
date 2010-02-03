@@ -1,3 +1,24 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Evaluation; Stack Frames; Bindings):
+	* internals/internals.texi (Ben's README):
+	* internals/internals.texi (Consoles; Devices; Frames; Windows):
+	* internals/internals.texi (Window Hierarchy):
+	* internals/internals.texi (The Window Object):
+	* internals/internals.texi (Modules for the Basic Displayable Lisp Objects):
+	* internals/internals.texi (Window-System Support):
+	* internals/internals.texi (Creating a Window-System Type):
+	* internals/internals.texi (Discussion -- Garbage Collection):
+	Update the part at the top about how to maintain the file with
+	more tips.
+
+	Add a chapter on "window-system support" describing in a general
+	way how the support for different window systems/device types
+	works, including the separation between device-independent and
+	device-dependent parts, device methods, the specific device types
+	and the "xlike" pseudo-type.
+
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/programs.texi (Defuns): 

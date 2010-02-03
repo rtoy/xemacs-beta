@@ -129,13 +129,37 @@ This Info file contains v21.5 of the XEmacs Internals Manual, October 2004.
 @end ifinfo
 
 @ignore
-Don't update this by hand!!!!!!
-Use C-u C-c C-u m (aka C-u M-x texinfo-master-list).
-NOTE: This command does not include the Index:: menu entry.
+Tips for maintaining this file:
+
+1. Updating the forward, back and up pointers in a @@node line:
+---------------------------------------------------------------
+
+Don't do it by hand!
+
+Use C-c C-u C-e (aka M-x texinfo-every-node-update).
+
+2. Updating the menus:
+----------------------
+
+This section describes how to update the menus at the end of chapters,
+sections with subsections, etc., and the master menu near the top of
+the file:
+
+Don't do it by hand!
+
+Use C-u C-c C-u m (aka C-u M-x texinfo-master-menu).
+N
+OTE: This command does not include the Index:: menu entry.
 You must add it by hand.
 
-Here are some useful Lisp routines for quickly Texinfo-izing text that
-has been formatted into ASCII lists and tables.
+3. Converting plain text into Texinfo:
+--------------------------------------
+
+3a. Here are some useful Lisp routines for quickly Texinfo-izing text
+    that has been formatted into ASCII lists and tables.
+
+Note: to define these routines, put point after the end of the definition
+and type C-x C-e.
 
 (defun list-to-texinfo (b e)
   "Convert the selected region from an ASCII list to a Texinfo list."
@@ -249,8 +273,8 @@ each entry is the table heading."
     (beginning-of-line)
     (insert "@end table\n")))
 
-A useful Lisp routine for adding markup based on conventions used in plain
-text files; see doc string below.
+3b. A useful Lisp routine for adding markup based on conventions used
+    in plain text files; see doc string below.
 
 (defun convert-text-to-texinfo (&optional no-narrow)
   "Convert text to Texinfo.
@@ -259,10 +283,10 @@ of the buffer.  This query-replaces for various kinds of conventions used
 in text: @code{} surrounded by ` and ' or followed by a (); @strong{}
 surrounded by *'s; @file{} something that looks like a file name."
   (interactive)
-  (if (region-active-p)
+  (if (and (not no-narrow) (region-active-p))
       (save-restriction
 	(narrow-to-region (region-beginning) (region-end))
-	(convert-comments-to-texinfo t))
+	(convert-text-to-texinfo t))
     (let ((p (point))
 	  (case-replace nil))
       (query-replace-regexp "`\\([^']+\\)'\\([^']\\)" "@code{\\1}\\2" nil)
@@ -274,31 +298,38 @@ surrounded by *'s; @file{} something that looks like a file name."
       (query-replace-regexp "\\(\\(\\s_\\|\\sw\\)+\\.[A-Za-z]+\\)\\([^A-Za-z.}]\\)" "@file{\\1}\\3" nil)
       )))
 
-Macro the generate the "Future Work" section from a title; put
-point at beginning.
+4. Adding new sections:
+-----------------------
+
+NOTE: These are in the form of macros. #### FIXME Convert them to
+proper functions.  To edit these macros, define them and then use
+M-x edit-kbd-macro.
+
+Macro to generate the "Future Work" section from a title; put
+point at the beginning of the title.
 
 (defalias 'make-future (read-kbd-macro
-"<S-end> <f3> <home> @node SPC <end> RET @section SPC <f4> <home> <up> <C-right> <right> Future SPC Work SPC - - SPC <home> <down> <C-right> <right> Future SPC Work SPC - - SPC <end> RET @cindex SPC future SPC work, SPC <f4> C-r , RET C-x C-x M-l RET @cindex SPC <f4> <home> <C-right> <S-end> M-l , SPC future SPC work RET"))
+"<S-end> M-w <home> @node SPC <end> RET @section SPC C-y <home> <up> <C-right> <right> Future SPC Work SPC - - SPC <home> <down> <C-right> <right> Future SPC Work SPC - - SPC <end> RET @cindex SPC future SPC work, SPC C-y C-r , RET C-x C-x M-l RET @cindex SPC C-y <home> <C-right> <S-end> M-l , SPC future SPC work RET"))
 
 Similar but generates a "Discussion" section.
 
 (defalias 'make-discussion (read-kbd-macro
-"<S-end> <f3> <home> @node SPC <end> RET @section SPC <f4> <home> <up> <C-right> <right> Discussion SPC - - SPC <home> <down> <C-right> <right> Discussion SPC - - SPC <end> RET @cindex SPC discussion, SPC <f4> C-r , RET C-x C-x M-l RET @cindex SPC <f4> <home> <C-right> <S-end> M-l , SPC discussion RET"))
+"<S-end> M-w <home> @node SPC <end> RET @section SPC C-y <home> <up> <C-right> <right> Discussion SPC - - SPC <home> <down> <C-right> <right> Discussion SPC - - SPC <end> RET @cindex SPC discussion, SPC C-y C-r , RET C-x C-x M-l RET @cindex SPC C-y <home> <C-right> <S-end> M-l , SPC discussion RET"))
 
 Similar but generates an "Old Future Work" section.
 
 (defalias 'make-old-future (read-kbd-macro
-"<S-end> <f3> <home> @node SPC <end> RET @section SPC <f4> <home> <up> <C-right> <right> Old SPC Future SPC Work SPC - - SPC <home> <down> <C-right> <right> Old SPC Future SPC Work SPC - - SPC <end> RET @cindex SPC old SPC future SPC work, SPC <f4> C-r , RET C-x C-x M-l RET @cindex SPC <f4> <home> <C-right> <S-end> M-l , SPC old SPC future SPC work RET"))
+"<S-end> M-w <home> @node SPC <end> RET @section SPC C-y <home> <up> <C-right> <right> Old SPC Future SPC Work SPC - - SPC <home> <down> <C-right> <right> Old SPC Future SPC Work SPC - - SPC <end> RET @cindex SPC old SPC future SPC work, SPC C-y C-r , RET C-x C-x M-l RET @cindex SPC C-y <home> <C-right> <S-end> M-l , SPC old SPC future SPC work RET"))
 
 Similar but generates a general section.
 
 (defalias 'make-section (read-kbd-macro
-"<S-end> <f3> <home> @node SPC <end> RET @section SPC <f4> RET @cindex SPC C-SPC C-g <f4> C-x C-x M-l <home> <down>"))
+"<S-end> M-w <home> @node SPC <end> RET @section SPC C-y RET @cindex SPC C-SPC C-g C-y C-x C-x M-l <home> <down>"))
 
 Similar but generates a general subsection.
 
 (defalias 'make-subsection (read-kbd-macro
-"<S-end> <f3> <home> @node SPC <end> RET @subsection SPC <f4> RET @cindex SPC C-SPC C-g <f4> C-x C-x M-l <home> <down>"))
+"<S-end> M-w <home> @node SPC <end> RET @subsection SPC C-y RET @cindex SPC C-SPC C-g C-y C-x C-x M-l <home> <down>"))
 @end ignore
 
 @menu
@@ -328,6 +359,7 @@ Similar but generates a general subsection.
 * Text::                        
 * Multilingual Support::        
 * Consoles; Devices; Frames; Windows::  
+* Window-System Support::       
 * The Redisplay Mechanism::     
 * Extents::                     
 * Faces::                       
@@ -451,7 +483,7 @@ Evaluation; Stack Frames; Bindings
 
 * Evaluation::                  
 * Dynamic Binding; The specbinding Stack; Unwind-Protects::  
-* Simple Special Operators::        
+* Simple Special Operators::    
 * Catch and Throw::             
 * Error Trapping::              
 
@@ -558,8 +590,11 @@ Consoles; Devices; Frames; Windows
 * Point::                       
 * Window Hierarchy::            
 * The Window Object::           
-* Creating a New Console/Device/Frame Type::  
 * Modules for the Basic Displayable Lisp Objects::  
+
+Window-System Support
+
+* Creating a Window-System Type::  
 
 The Redisplay Mechanism
 
@@ -740,8 +775,8 @@ Future Work Discussion
 
 Discussion -- Garbage Collection
 
-* Discussion -- KKCC::
-* Discussion -- Incremental Collector::
+* Discussion -- KKCC::          
+* Discussion -- Incremental Collector::  
 * Discussion -- Pure Space::    
 * Discussion -- Hashtable-Based Marking and Cleanup::  
 * Discussion -- The Anti-Cons::  
@@ -8954,7 +8989,7 @@ Not yet documented.
 @menu
 * Evaluation::                  
 * Dynamic Binding; The specbinding Stack; Unwind-Protects::  
-* Simple Special Operators::        
+* Simple Special Operators::    
 * Catch and Throw::             
 * Error Trapping::              
 @end menu
@@ -17141,7 +17176,7 @@ present in the fsf version, for compatibility.
 
 
 
-@node Consoles; Devices; Frames; Windows, The Redisplay Mechanism, Multilingual Support, Top
+@node Consoles; Devices; Frames; Windows, Window-System Support, Multilingual Support, Top
 @chapter Consoles; Devices; Frames; Windows
 @cindex consoles; devices; frames; windows
 @cindex devices; frames; windows, consoles;
@@ -17153,7 +17188,6 @@ present in the fsf version, for compatibility.
 * Point::                       
 * Window Hierarchy::            
 * The Window Object::           
-* Creating a New Console/Device/Frame Type::  
 * Modules for the Basic Displayable Lisp Objects::  
 @end menu
 
@@ -17323,7 +17357,7 @@ is @code{nil} but the @code{prev} points to itself. (#### This is an
 artifact that should be fixed.)
 @end enumerate
 
-@node The Window Object, Creating a New Console/Device/Frame Type, Window Hierarchy, Consoles; Devices; Frames; Windows
+@node The Window Object, Modules for the Basic Displayable Lisp Objects, Window Hierarchy, Consoles; Devices; Frames; Windows
 @section The Window Object
 @cindex window object, the
 @cindex object, the window
@@ -17431,143 +17465,7 @@ this field is @code{nil}.
 @end table
 
 
-@node Creating a New Console/Device/Frame Type, Modules for the Basic Displayable Lisp Objects, The Window Object, Consoles; Devices; Frames; Windows
-@section Creating a New Console, Device, or Frame Type
-@cindex creating a new console type
-@cindex console type, creating a new
-@cindex creating a new device type
-@cindex device type, creating a new
-@cindex creating a new frame type
-@cindex frame type, creating a new
-
-Unfortunately, at the present time, only the console abstraction is at
-all well-maintained.  Device and frame internals are referred to from
-many places in the redisplay and console code.  The best that can be
-done therefore is to create a whole new console type, even though much
-code will be shared.  (Ben Wing has complained about the code
-duplication in the GTK+ v1 console, and probably would not be happy with
-the unpublished Qt console or Andrew Choi's Carbon console, but it's
-hard to see how those consoles could have been done better without
-fixing the abstractions in the X (actually Xt), MS Windows, and tty
-consoles as well as doing a complete refactoring of the console, device,
-and frame code.)
-
-What is desireable is sharing console, device, and frame methods across
-platforms in a more general way, reducing the amount of duplicated code
-by pulling it back into the redisplay engine proper or the Lisp modules
-as appropriate.  For example, we should be able to use
-@samp{make-frame-on-device} to share a single X connection among GTK, X,
-and Xft frames.  Xft is partially implemented, but GTK would be much
-harder (impossible?) because it has its own event loop.  (Xft shares the
-Xt event loop with the X console.)
-
-The way all methods get added to the console type is uncool.  A console
-should be a composite, which indicates a collection of I/O resources
-``used together.''  It should indicate where operations that change
-``focus'' search for targets, @emph{i.e.}, by default new frames are
-created on the selected device of the console where the input that
-invoked the command was received, @samp{pop-to-buffer-other-window} only
-considers existing windows on the same device of the same console,
-@emph{etc.}  But it should be possible to assemble consoles out of
-component input channels, imaging devices, and multimedia (audio)
-channels.
-
-The following notes may provide some guidance to those who wish to
-create new console types (@emph{i.e.}, port the redisplay code to a new
-platform).  They are based on an unsuccessful attempt to refactor the
-Xft code into a new console type while sharing most routines with the X
-console.  (For clarification or suggestions, feel free to write
-@email{stephen@@xemacs.org,Stephen Turnbull}.)
-
-The first thing to realize is that the naming of many modules obscures
-their relationship to the console abstraction.  For example, the
-@file{objects-@var{console-type}}, @file{redisplay-@var{console-type}},
-and @file{glyphs-@var{console-type}} series of modules have nothing to
-do with Lisp objects and little to do with redisplay, respectively.
-Rather they implement abstractions used for rendering on each console
-type, such as fonts and colors (@file{objects}) and string and graphics
-drawing primitives (@file{redisplay}).  These modules are conceptually
-part of the console implementations, not part of redisplay or Lisp.
-
-Public methods of a console are implemented as C functions declared
-@code{static}, following a rigid naming convention:
-@samp{@var{console-type}_@var{method-name}}.  Methods are bound to the
-console type in the @samp{console_type_create_@var{file}} functions for
-each console component (console, device, and frame) using the
-@samp{CONSOLE_HAS_METHOD} family of macros.  Methods for displaying
-images are bound using the @samp{IIFORMAT_HAS_DEVMETHOD} family of
-macros.  Methods are invoked using the @samp{CONMETH}, @samp{DEVMETH},
-and @samp{FRAMEMETH} families of macros, which look up the relevant
-methods in the object's table of methods.
-
-@strong{N.B.} All of the object tables are actually references to
-console method tables.  To create a variant of an existing console,
-there is a @samp{CONSOLE_INHERITS_METHOD} constructor, but this actually
-constructs the name of the parent's method pointer and stores in the
-derived console type's method table.  Of course this is time-efficient,
-and since there are few console types it is a neglible waste of space.
-However in practice this may have contributed to breaking the various
-abstractions, and the variant console must be coded in the same file as
-the parent (because the methods are static).  Another minor symptom of
-the incompleteness of the abstraction is the fact that the API for
-inheritance of device methods for image formats is named
-@samp{IIFORMAT_HAS_SHARED_METHOD}, although the semantics are identical.
-
-One problem encountered in attempting to create an Xft console type as a
-derivative of the X console type was that there is no support for such
-union types in the consistency-checking code, whether for the
-fundamental Lisp consistency checks (the @samp{CHECK_SOMETHING} family
-of macros) or for the error-checking variants of many functions.  These
-APIs all simply check for the apparent console type, which is a single
-symbol (or enumerator).
-
-To create a new console with mostly new methods, it's probably best to
-copy all of the @file{@var{function}-@var{console-type}} files from a
-similar console (or several, if the new console type seems like a
-combination of several existing console types), renaming the files by
-substituting @var{new-console-type} for @var{console-type}.  Then
-proceed in the obvious way by renaming methods from
-@samp{@var{console-type}_@var{method-name}} to
-@samp{@var{new-console-type}_@var{method-name}}, and implementing them.
-
-Once you've done that, then the fun starts.  Insert the initialization
-functions (@samp{syms_of_@var{file}}, @samp{vars_of_@var{file}},
-@samp{console_type_create_@var{file}}, @emph{etc.}) in @samp{main_1} in
-@file{emacs.c}.
-
-Add a device creation function @samp{make-@var{console-type}-device} in
-@file{device.el}.  Add the device type to the calls to
-@samp{Face-frob-property} in @file{faces.el}, as well as calls to the
-device initializer functions for devices and frames, and ``additional
-frobbing'' in that file.
-
-You may wish to add an option to force the initial frame to that device
-type to @file{emacs.c}.  Don't forget to document it in the command help
-function in @file{startup.el}.
-
-You may need to add support for your console type in
-@samp{init_event_stream} in @file{event-stream.c}.
-
-If your console has a different UI for fonts or colors, or adds new
-capability, you may need to add a @file{@var{console-type}-faces.el}
-file, or add code to the @file{@var{parent-type}-faces.el} file, to
-support new font or color capability.  Probably initialization code in
-@file{faces.c} will be needed too.
-
-A check for the console type is probably needed in @samp{init_redisplay}
-in @file{redisplay.c}.
-
-Ditto for the @file{@var{console-type}-init.el} file.
-
-Don't forget that Emacs windows are console-dependent, too.  At least a
-@samp{WINDOW_@var{console-type}_P}-checking macro should be added in
-@file{window-impl.h}.
-
-Note that this project failed; there are probably many other details to
-be implemented that I didn't get to.  But don't let that stop you!
-
-
-@node Modules for the Basic Displayable Lisp Objects,  , Creating a New Console/Device/Frame Type, Consoles; Devices; Frames; Windows
+@node Modules for the Basic Displayable Lisp Objects,  , The Window Object, Consoles; Devices; Frames; Windows
 @section Modules for the Basic Displayable Lisp Objects
 @cindex modules for the basic displayable Lisp objects
 @cindex displayable Lisp objects, modules for the basic
@@ -17718,7 +17616,190 @@ is part of the redisplay mechanism or the code for particular object
 types such as scrollbars.
 
 
-@node The Redisplay Mechanism, Extents, Consoles; Devices; Frames; Windows, Top
+@node Window-System Support, The Redisplay Mechanism, Consoles; Devices; Frames; Windows, Top
+@chapter Window-System Support
+@cindex window-system support
+@cindex window systems
+@cindex X
+@cindex X Windows
+@cindex Windows
+@cindex Microsoft Windows
+@cindex MS-Windows
+@cindex GTK
+@cindex Gnome
+
+XEmacs defines the concept of a ``device type'', which approximately
+corresponds to a window-system type, and separates out display-related
+code into device-independent and device-dependent sections.
+Generally, the device-independent code will go into a generally-named
+file such as @file{redisplay.c}, while the device-dependent code goes
+into @file{redisplay-x.c}, @file{redisplay-gtk.c},
+@file{redisplay-msw.c}, etc.  Device-dependent methods are called
+using the @code{DEVMETH} macro.
+
+The following device types are defined:
+
+@table @asis
+@item X-Windows (@code{x})
+This supports rendering through @code{Xlib}, widget support through
+@code{Xt}, and event-handling through @code{Xt}.
+@item Microsoft Windows (@code{msw})
+@item GTK/Gnome (@code{gtk})
+@item TTY's (@code{tty})
+This is used for TTY connections (e.g. running inside of an @code{xterm} or
+Windows console window).
+@item Stream devices (@code{stream})
+This is used for ``stream'' devices, of which there is only one -- the
+initial stdio device used when XEmacs is running noninteractively.
+@end table
+
+In addition, there is a pseudo-device-type `xlike', which is used for
+abstracting X and GTK code that is very similar.
+
+@menu
+* Creating a Window-System Type::  
+@end menu
+
+@node Creating a Window-System Type,  , Window-System Support, Window-System Support
+@section Creating a Window-System Type
+@cindex creating a new window-system type
+@cindex window-system types, creating
+@cindex creating a new console type
+@cindex console types, creating
+@cindex creating a new device type
+@cindex device types, creating
+@cindex creating a new frame type
+@cindex frame types, creating
+
+Unfortunately, at the present time, only the console abstraction is
+really well-maintained.  Device and frame internals are referred to
+from many places in the redisplay and console code.  The best that can
+be done therefore is to create a whole new console type, even though
+much code will be shared.  (Ben Wing has complained about the code
+duplication in the GTK+ v1 console, and probably would not be happy
+with the unpublished Qt console or Andrew Choi's Carbon console, but
+it's hard to see how those consoles could have been done better
+without fixing the abstractions in the X (actually Xt), MS Windows,
+and tty consoles as well as doing a complete refactoring of the
+console, device, and frame code.)
+
+What is desireable is sharing console, device, and frame methods across
+platforms in a more general way, reducing the amount of duplicated code
+by pulling it back into the redisplay engine proper or the Lisp modules
+as appropriate.  For example, we should be able to use
+@samp{make-frame-on-device} to share a single X connection among GTK, X,
+and Xft frames.  Xft is partially implemented, but GTK would be much
+harder (impossible?) because it has its own event loop.  (Xft shares the
+Xt event loop with the X console.)
+
+The way all methods get added to the console type is uncool.  A console
+should be a composite, which indicates a collection of I/O resources
+``used together.''  It should indicate where operations that change
+``focus'' search for targets, @emph{i.e.}, by default new frames are
+created on the selected device of the console where the input that
+invoked the command was received, @samp{pop-to-buffer-other-window} only
+considers existing windows on the same device of the same console,
+@emph{etc.}  But it should be possible to assemble consoles out of
+component input channels, imaging devices, and multimedia (audio)
+channels.
+
+The following notes may provide some guidance to those who wish to
+create new console types (@emph{i.e.}, port the redisplay code to a new
+platform).  They are based on an unsuccessful attempt to refactor the
+Xft code into a new console type while sharing most routines with the X
+console.  (For clarification or suggestions, feel free to write
+@email{stephen@@xemacs.org,Stephen Turnbull}.)
+
+The first thing to realize is that the naming of many modules obscures
+their relationship to the console abstraction.  For example, the
+@file{objects-@var{console-type}}, @file{redisplay-@var{console-type}},
+and @file{glyphs-@var{console-type}} series of modules have nothing to
+do with Lisp objects and little to do with redisplay, respectively.
+Rather they implement abstractions used for rendering on each console
+type, such as fonts and colors (@file{objects}) and string and graphics
+drawing primitives (@file{redisplay}).  These modules are conceptually
+part of the console implementations, not part of redisplay or Lisp.
+
+Public methods of a console are implemented as C functions declared
+@code{static}, following a rigid naming convention:
+@samp{@var{console-type}_@var{method-name}}.  Methods are bound to the
+console type in the @samp{console_type_create_@var{file}} functions for
+each console component (console, device, and frame) using the
+@samp{CONSOLE_HAS_METHOD} family of macros.  Methods for displaying
+images are bound using the @samp{IIFORMAT_HAS_DEVMETHOD} family of
+macros.  Methods are invoked using the @samp{CONMETH}, @samp{DEVMETH},
+and @samp{FRAMEMETH} families of macros, which look up the relevant
+methods in the object's table of methods.
+
+@strong{N.B.} All of the object tables are actually references to
+console method tables.  To create a variant of an existing console,
+there is a @samp{CONSOLE_INHERITS_METHOD} constructor, but this actually
+constructs the name of the parent's method pointer and stores in the
+derived console type's method table.  Of course this is time-efficient,
+and since there are few console types it is a neglible waste of space.
+However in practice this may have contributed to breaking the various
+abstractions, and the variant console must be coded in the same file as
+the parent (because the methods are static).  Another minor symptom of
+the incompleteness of the abstraction is the fact that the API for
+inheritance of device methods for image formats is named
+@samp{IIFORMAT_HAS_SHARED_METHOD}, although the semantics are identical.
+
+One problem encountered in attempting to create an Xft console type as a
+derivative of the X console type was that there is no support for such
+union types in the consistency-checking code, whether for the
+fundamental Lisp consistency checks (the @samp{CHECK_SOMETHING} family
+of macros) or for the error-checking variants of many functions.  These
+APIs all simply check for the apparent console type, which is a single
+symbol (or enumerator).
+
+To create a new console with mostly new methods, it's probably best to
+copy all of the @file{@var{function}-@var{console-type}} files from a
+similar console (or several, if the new console type seems like a
+combination of several existing console types), renaming the files by
+substituting @var{new-console-type} for @var{console-type}.  Then
+proceed in the obvious way by renaming methods from
+@samp{@var{console-type}_@var{method-name}} to
+@samp{@var{new-console-type}_@var{method-name}}, and implementing them.
+
+Once you've done that, then the fun starts.  Insert the initialization
+functions (@samp{syms_of_@var{file}}, @samp{vars_of_@var{file}},
+@samp{console_type_create_@var{file}}, @emph{etc.}) in @samp{main_1} in
+@file{emacs.c}.
+
+Add a device creation function @samp{make-@var{console-type}-device} in
+@file{device.el}.  Add the device type to the calls to
+@samp{Face-frob-property} in @file{faces.el}, as well as calls to the
+device initializer functions for devices and frames, and ``additional
+frobbing'' in that file.
+
+You may wish to add an option to force the initial frame to that device
+type to @file{emacs.c}.  Don't forget to document it in the command help
+function in @file{startup.el}.
+
+You may need to add support for your console type in
+@samp{init_event_stream} in @file{event-stream.c}.
+
+If your console has a different UI for fonts or colors, or adds new
+capability, you may need to add a @file{@var{console-type}-faces.el}
+file, or add code to the @file{@var{parent-type}-faces.el} file, to
+support new font or color capability.  Probably initialization code in
+@file{faces.c} will be needed too.
+
+A check for the console type is probably needed in @samp{init_redisplay}
+in @file{redisplay.c}.
+
+Ditto for the @file{@var{console-type}-init.el} file.
+
+Don't forget that Emacs windows are console-dependent, too.  At least a
+@samp{WINDOW_@var{console-type}_P}-checking macro should be added in
+@file{window-impl.h}.
+
+Note that this project failed; there are probably many other details to
+be implemented that I didn't get to.  But don't let that stop you!
+
+
+
+@node The Redisplay Mechanism, Extents, Window-System Support, Top
 @chapter The Redisplay Mechanism
 @cindex redisplay mechanism, the
 
@@ -28402,8 +28483,8 @@ into the normal Future Work section.
 @cindex garbage collection, discussion
 
 @menu
-* Discussion -- KKCC::
-* Discussion -- Incremental Collector::
+* Discussion -- KKCC::          
+* Discussion -- Incremental Collector::  
 * Discussion -- Pure Space::    
 * Discussion -- Hashtable-Based Marking and Cleanup::  
 * Discussion -- The Anti-Cons::  

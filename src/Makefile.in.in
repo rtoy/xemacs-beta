@@ -132,13 +132,13 @@ gui_objs += toolbar.o
 
 #ifdef HAVE_X_WINDOWS
 x_objs=console-x.o device-x.o event-Xt.o frame-x.o \
- glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o intl-x.o
+ glyphs-x.o objects-x.o redisplay-x.o select-x.o gccache-x.o intl-x.o
 #ifdef HAVE_XFT
 x_objs += font-mgr.o
 #endif
 x_gui_objs=$(gui_objs:.o=-x.o)
 #ifdef HAVE_TOOLBARS
-x_gui_objs += toolbar-common.o
+x_gui_objs += toolbar-xlike.o
 #endif
 #endif
 
@@ -159,7 +159,7 @@ gtk_objs=console-gtk.o device-gtk.o event-gtk.o frame-gtk.o \
  gtk-xemacs.o ui-gtk.o
 gtk_gui_objs=$(gui_objs:.o=-gtk.o)
 #ifdef HAVE_TOOLBARS
-gtk_gui_objs += toolbar-common.o
+gtk_gui_objs += toolbar-xlike.o
 #endif
 #endif
 
