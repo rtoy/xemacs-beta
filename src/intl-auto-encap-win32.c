@@ -947,16 +947,16 @@ qxeCreateDialogParam (HINSTANCE arg1, const Extbyte * arg2, HWND arg3, DLGPROC a
          Header file claims:
            WINUSERAPI HWND WINAPI CreateMDIWindow(LPCWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM)
          Overridden with:
-           HWND CreateMDIWindow(LPWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM)
+           HWND CreateMDIWindow(LPWSTR,LPWSTR,DWORD,int,int,int,int,HWND,HINSTANCE,LPARAM)
          Differences in return-type qualifiers, e.g. WINAPI, are not important.
  */
 HWND
-qxeCreateMDIWindow (Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10)
+qxeCreateMDIWindow (Extbyte * arg1, Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10)
 {
   if (XEUNICODE_P)
-    return CreateMDIWindowW ((LPWSTR) arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+    return CreateMDIWindowW ((LPWSTR) arg1, (LPWSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
   else
-    return CreateMDIWindowA ((LPSTR) arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+    return CreateMDIWindowA ((LPSTR) arg1, (LPSTR) arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
 }
 
 HWND

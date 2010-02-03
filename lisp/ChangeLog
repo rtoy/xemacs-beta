@@ -1,3 +1,21 @@
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file):
+	If #'built-in-symbol-file returns a Lisp file name, and
+	source-lisp is readable, construct a full pathname to include
+	that. Otherwise use lisp-directory, as we used to.
+	* loadup.el:
+	Delete load-history entries for those files in
+	preloaded-file-list; unloading the associated features makes very
+	little sense, and the symbol file information can be had from DOC.
+
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (equalp):
+	Remove special treatment for an #'equalp with a single character
+	constant argument, it was incorrect (it used #'downcase instead of
+	#'canoncase).
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* cl-extra.el:
