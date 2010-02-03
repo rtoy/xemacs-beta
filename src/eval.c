@@ -3620,6 +3620,10 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
   {
     Lisp_Object value =
       execute_optimized_program ((Opbyte *) XOPAQUE_DATA (f->instructions),
+#ifdef ERROR_CHECK_BYTE_CODE
+				 XOPAQUE_SIZE (f->instructions) /
+				 sizeof (Opbyte),
+#endif
 				 f->stack_depth,
 				 XVECTOR_DATA (f->constants));
 

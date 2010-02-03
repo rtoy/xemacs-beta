@@ -460,7 +460,7 @@ do									    \
   DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);	    \
   {									    \
     Lisp_Object *DSF_location = c_location; /* Type check */		    \
-    staticpro (DSF_location);						    \
+    staticpro_1 (DSF_location, lname);					    \
     if (EQ (*DSF_location, Qnull_pointer)) *DSF_location = Qnil;	    \
   }									    \
 } while (0)
