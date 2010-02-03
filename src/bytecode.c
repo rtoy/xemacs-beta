@@ -724,7 +724,7 @@ execute_optimized_program (const Opbyte *program,
   struct gcpro gcpro1;
 
 #ifdef BYTE_CODE_METER
-  Opcode this_opcode = 0;
+  Opcode this_opcode = (Opcode) 0;
   Opcode prev_opcode;
 #endif
 
