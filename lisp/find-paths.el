@@ -352,25 +352,6 @@ DIRECTORIES is a list of strings."
       (setq directories (cdr directories)))
     (reverse reverse-directories)))
 
-(defun paths-uniq-append (list-1 list-2)
-  "Append LIST-1 and LIST-2, omitting EQUAL duplicates."
-  (let ((reverse-survivors '()))
-    (while list-2
-      (if (null (member (car list-2) list-1))
-	  (setq reverse-survivors (cons (car list-2) reverse-survivors)))
-      (setq list-2 (cdr list-2)))
-    (append list-1
-	    (reverse reverse-survivors))))
-
-(defun paths-filter (predicate list)
-  "Delete all matches of PREDICATE from LIST."
-  (let ((reverse-result '()))
-    (while list
-      (if (funcall predicate (car list))
-	  (setq reverse-result (cons (car list) reverse-result)))
-      (setq list (cdr list)))
-    (nreverse reverse-result)))
-
 (defun paths-decode-directory-path (string &optional drop-empties)
   "Split STRING at path separators into a directory list.
 Non-\"\" components are converted into directory form.
@@ -384,9 +365,7 @@ Otherwise, they are left alone."
 			(file-name-as-directory component)))
 		  components)))
     (if drop-empties
-	(paths-filter #'(lambda (component)
-			  (null (string-equal "" component)))
-		      directories)
+        (delete "" directories)
       directories)))
 
 ;;; find-paths.el ends here

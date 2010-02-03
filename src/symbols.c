@@ -54,6 +54,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "bytecode.h"		/* for COMPILED_FUNCTION_ANNOTATION_HACK,
+				   defined in bytecode.h and used here. */
 #include "buffer.h"		/* for Vbuffer_defaults */
 #include "console-impl.h"
 #include "elhash.h"
@@ -716,12 +718,19 @@ Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 DEFUN ("define-function", Fdefine_function, 2, 2, 0, /*
 Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 Associates the function with the current load file, if any.
+If NEWDEF is a compiled-function object, stores the function name in
+the `annotated' slot of the compiled-function (retrievable using
+`compiled-function-annotation').
 */
        (symbol, newdef))
 {
   /* This function can GC */
   Ffset (symbol, newdef);
   LOADHIST_ATTACH (Fcons (Qdefun, symbol));
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+  if (COMPILED_FUNCTIONP (newdef))
+    XCOMPILED_FUNCTION (newdef)->annotated = symbol;
+#endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
   return newdef;
 }
 
@@ -738,13 +747,13 @@ SUBR must be a built-in function.
   return make_string ((const Ibyte *)name, strlen (name));
 }
 
-DEFUN ("special-form-p", Fspecial_form_p, 1, 1, 0, /*
-Return whether SUBR is a special form.
+DEFUN ("special-operator-p", Fspecial_operator_p, 1, 1, 0, /*
+Return whether SUBR is a special operator.
 
-A special form is a built-in function (a subr, that is a function
+A special operator is a built-in function (a subr, that is a function
 implemented in C, not Lisp) which does not necessarily evaluate all its
 arguments.  Much of the basic XEmacs Lisp syntax is implemented by means of
-special forms; examples are `let', `condition-case', `defun', `setq' and so
+special operators; examples are `let', `condition-case', `setq', and so
 on.
 
 If you intend to write a Lisp function that does not necessarily evaluate
@@ -3899,7 +3908,7 @@ syms_of_symbols (void)
   DEFSUBR (Fdefine_function);
   Ffset (intern ("defalias"), intern ("define-function"));
   DEFSUBR (Fsubr_name);
-  DEFSUBR (Fspecial_form_p);
+  DEFSUBR (Fspecial_operator_p);
   DEFSUBR (Fsetplist);
   DEFSUBR (Fsymbol_value_in_buffer);
   DEFSUBR (Fsymbol_value_in_console);

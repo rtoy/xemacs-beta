@@ -63,6 +63,8 @@ file specifies a file to start reading from.
 yes indicates a function to be automatically Unicode-encapsulated.
    (All parameters either need no special processing or are LPTSTR or
    LPCTSTR.)
+override indidates a function where the prototype can be overridden
+   due to errors in Cygwin or Visual Studio.
 soon indicates a function that should be automatically Unicode-encapsulated,
    but we're not ready to process it yet.
 no indicates a function we don't support (it will be #defined to cause

@@ -1,3 +1,9 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (TAB):
+	USE_XFT* -> HAVE_XFT*.
+
 2010-01-14  Ben Wing  <ben@xemacs.org>
 
 	* PROBLEMS:

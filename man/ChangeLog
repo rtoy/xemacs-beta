@@ -1,3 +1,69 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Evaluation; Stack Frames; Bindings):
+	* internals/internals.texi (Ben's README):
+	* internals/internals.texi (Consoles; Devices; Frames; Windows):
+	* internals/internals.texi (Window Hierarchy):
+	* internals/internals.texi (The Window Object):
+	* internals/internals.texi (Modules for the Basic Displayable Lisp Objects):
+	* internals/internals.texi (Window-System Support):
+	* internals/internals.texi (Creating a Window-System Type):
+	* internals/internals.texi (Discussion -- Garbage Collection):
+	Update the part at the top about how to maintain the file with
+	more tips.
+
+	Add a chapter on "window-system support" describing in a general
+	way how the support for different window systems/device types
+	works, including the separation between device-independent and
+	device-dependent parts, device methods, the specific device types
+	and the "xlike" pseudo-type.
+
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/programs.texi (Defuns): 
+	* lispref/variables.texi (Local Variables, Defining Variables)
+	(Setting Variables, Default Value):
+	* lispref/symbols.texi (Definitions): 
+	* lispref/searching.texi (Saving Match Data): 
+	* lispref/positions.texi (Excursions, Narrowing):
+	* lispref/objects.texi (Primitive Function Type): 
+	* lispref/macros.texi (Defining Macros, Backquote): 
+	* lispref/lispref.texi (Top): 
+	* lispref/intro.texi (A Sample Function Description):
+	* lispref/help.texi (Help Functions):
+	* lispref/functions.texi (What Is a Function, Simple Lambda)
+	(Defining Functions, Calling Functions, Anonymous Functions):
+	* lispref/frames.texi (Input Focus):
+	* lispref/eval.texi (Forms, Function Indirection)
+	(Special Operators, Quoting):
+	* lispref/edebug-inc.texi (Instrumenting)
+	(Specification Examples):
+	* lispref/debugging.texi (Internals of Debugger):
+	* lispref/control.texi (Control Structures, Sequencing):
+	(Conditionals, Combining Conditions, Iteration):
+	(Catch and Throw, Handling Errors):
+	* lispref/commands.texi (Defining Commands, Using Interactive):
+	Terminology change; special operator -> special form. 
+
+	Don't attempt to change this in texinfo.texi or cl.texi, which use
+	macros I don't understand.
+
+	* lispref/macros.texi (Defining Macros): Give an anonymous macro
+	example here. 
+	* lispref/positions.texi (Excursions):
+	Correct some documentation that called a couple of macros special
+	forms.
+	* lispref/searching.texi (Saving Match Data):
+	Drop some documentation of how to write code that works with Emacs
+	18.
+	* lispref/specifiers.texi (Adding Specifications):
+	Correct this; #'let-specifier is a macro, not a special operator.
+	* lispref/windows.texi (Window Configurations)
+	(Selecting Windows): 
+	Correct this, #'save-selected-window and #'save-window-excursion
+	are macros, not special operators.
+
 2010-01-28  Jerry James  <loganjerry@gmail.com>
 
 	* external-widget.texi: Add copyright and license boilerplate text

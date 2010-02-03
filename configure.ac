@@ -3163,9 +3163,9 @@ this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
       dnl #### detect fontconfig properly!!!!
       with_fontconfig=yes
       AC_DEFINE(HAVE_FONTCONFIG)
-      AC_DEFINE(USE_XFT)
+      AC_DEFINE(HAVE_XFT)
       dnl Due to interactions with other libraries, must postpone AC_DEFINE
-      dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGES.
+      dnl of HAVE_XFT_MENUBARS, HAVE_XFT_TABS, and HAVE_XFT_GAUGES.
       unset xft_includes_found
     fi
   fi
@@ -4122,9 +4122,9 @@ test "$with_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "$with_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "$with_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
-test "$with_xft_menubars" = "yes"  && AC_DEFINE(USE_XFT_MENUBARS)
-test "$with_xft_tabs" = "yes"  && AC_DEFINE(USE_XFT_TABS)
-test "$with_xft_gauges" = "yes"  && AC_DEFINE(USE_XFT_GAUGES)
+test "$with_xft_menubars" = "yes"  && AC_DEFINE(HAVE_XFT_MENUBARS)
+test "$with_xft_tabs" = "yes"  && AC_DEFINE(HAVE_XFT_TABS)
+test "$with_xft_gauges" = "yes"  && AC_DEFINE(HAVE_XFT_GAUGES)
 
 dnl ----------------------
 dnl Mule-dependent options

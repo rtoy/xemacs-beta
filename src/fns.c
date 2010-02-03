@@ -96,7 +96,8 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static int
-bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
+bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+		  int UNUSED (foldcase))
 {
   Lisp_Bit_Vector *v1 = XBIT_VECTOR (obj1);
   Lisp_Bit_Vector *v2 = XBIT_VECTOR (obj2);
@@ -1985,7 +1986,7 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
  */
 int
 plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
-	       int laxp, int depth)
+	       int laxp, int depth, int foldcase)
 {
   int eqp = (depth == -1);	/* -1 as depth means use eq, not equal. */
   int la, lb, m, i, fill;
@@ -2029,12 +2030,13 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
       if (nil_means_not_present && NILP (v)) continue;
       for (i = 0; i < fill; i++)
 	{
-	  if (!laxp ? EQ (k, keys [i]) : internal_equal (k, keys [i], depth))
+	  if (!laxp ? EQ (k, keys [i]) :
+	      internal_equal_0 (k, keys [i], depth, foldcase))
 	    {
 	      if (eqp
 		  /* We narrowly escaped being Ebolified here. */
 		  ? !EQ_WITH_EBOLA_NOTICE (v, vals [i])
-		  : !internal_equal (v, vals [i], depth))
+		  : !internal_equal_0 (v, vals [i], depth, foldcase))
 		/* a property in B has a different value than in A */
 		goto MISMATCH;
 	      flags [i] = 1;
@@ -2070,7 +2072,7 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 */
        (a, b, nil_means_not_present))
 {
-  return (plists_differ (a, b, !NILP (nil_means_not_present), 0, -1)
+  return (plists_differ (a, b, !NILP (nil_means_not_present), 0, -1, 0)
 	  ? Qnil : Qt);
 }
 
@@ -2087,7 +2089,7 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 */
        (a, b, nil_means_not_present))
 {
-  return (plists_differ (a, b, !NILP (nil_means_not_present), 0, 1)
+  return (plists_differ (a, b, !NILP (nil_means_not_present), 0, 1, 0)
 	  ? Qnil : Qt);
 }
 
@@ -2107,7 +2109,7 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 */
        (a, b, nil_means_not_present))
 {
-  return (plists_differ (a, b, !NILP (nil_means_not_present), 1, -1)
+  return (plists_differ (a, b, !NILP (nil_means_not_present), 1, -1, 0)
 	  ? Qnil : Qt);
 }
 
@@ -2126,7 +2128,7 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 */
        (a, b, nil_means_not_present))
 {
-  return (plists_differ (a, b, !NILP (nil_means_not_present), 1, 1)
+  return (plists_differ (a, b, !NILP (nil_means_not_present), 1, 1, 0)
 	  ? Qnil : Qt);
 }
 
@@ -2848,10 +2850,30 @@ internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 
       return (imp1 == imp2) &&
 	/* EQ-ness of the objects was noticed above */
-	(imp1->equal && (imp1->equal) (obj1, obj2, depth));
+	(imp1->equal && (imp1->equal) (obj1, obj2, depth, 0));
     }
 
   return 0;
+}
+
+enum array_type
+  {
+    ARRAY_NONE = 0,
+    ARRAY_STRING,
+    ARRAY_VECTOR,
+    ARRAY_BIT_VECTOR
+  };
+
+static enum array_type
+array_type (Lisp_Object obj)
+{
+  if (STRINGP (obj))
+    return ARRAY_STRING;
+  if (VECTORP (obj))
+    return ARRAY_VECTOR;
+  if (BIT_VECTORP (obj))
+    return ARRAY_BIT_VECTOR;
+  return ARRAY_NONE;
 }
 
 int
@@ -2860,37 +2882,46 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
   if (depth > 200)
     stack_overflow ("Stack overflow in equalp", Qunbound);
   QUIT;
+
+  /* 1. Objects that are `eq' are equal.  This will catch the common case
+     of two equal fixnums or the same object seen twice. */
   if (EQ_WITH_EBOLA_NOTICE (obj1, obj2))
     return 1;
-#ifdef WITH_NUMBER_TYPES
+
+  /* 2. If both numbers, compare with `='. */
   if (NUMBERP (obj1) && NUMBERP (obj2))
     {
-      switch (promote_args (&obj1, &obj2))
-	{
-	case FIXNUM_T:
-	  return XREALINT (obj1) == XREALINT (obj2);
-#ifdef HAVE_BIGNUM
-	case BIGNUM_T:
-	  return bignum_eql (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
-#endif
-#ifdef HAVE_RATIO
-	case RATIO_T:
-	  return ratio_eql (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
-#endif
-	case FLOAT_T:
-	  return XFLOAT_DATA (obj1) == XFLOAT_DATA (obj2);
-#ifdef HAVE_BIGFLOAT
-	case BIGFLOAT_T:
-	  return bigfloat_eql (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
-#endif
-	}
+      return (0 == bytecode_arithcompare (obj1, obj2));
     }
-#else
-  if ((INTP (obj1) && FLOATP (obj2)) || (FLOATP (obj1) && INTP (obj2)))
-    return extract_float (obj1) == extract_float (obj2);
-#endif
+
+  /* 3. If characters, compare case-insensitively. */
   if (CHARP (obj1) && CHARP (obj2))
-    return DOWNCASE (0, XCHAR (obj1)) == DOWNCASE (0, XCHAR (obj2));
+    return CANONCASE (0, XCHAR (obj1)) == CANONCASE (0, XCHAR (obj2));
+
+  /* 4. If arrays of different types, compare their lengths, and
+        then compare element-by-element. */
+  {
+    enum array_type artype1, artype2;
+    artype1 = array_type (obj1);
+    artype2 = array_type (obj2);
+    if (artype1 != artype2 && artype1 && artype2)
+      {
+	EMACS_INT i;
+	EMACS_INT l1 = XINT (Flength (obj1));
+	EMACS_INT l2 = XINT (Flength (obj2));
+	/* Both arrays, but of different lengths */
+	if (l1 != l2)
+	  return 0;
+	for (i = 0; i < l1; i++)
+	  if (!internal_equalp (Faref (obj1, make_int (i)),
+				Faref (obj2, make_int (i)), depth + 1))
+	    return 0;
+	return 1;
+      }
+  }
+  /* 5. Else, they must be the same type.  If so, call the equal() method,
+        telling it to fold case.  For objects that care about case-folding
+	their contents, the equal() method will call internal_equal_0(). */
   if (XTYPE (obj1) != XTYPE (obj2))
     return 0;
   if (LRECORDP (obj1))
@@ -2899,14 +2930,21 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (obj1),
 	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (obj2);
 
-      /* #### not yet implemented properly, needs another flag to specify
-	 equalp-ness */
       return (imp1 == imp2) &&
 	/* EQ-ness of the objects was noticed above */
-	(imp1->equal && (imp1->equal) (obj1, obj2, depth));
+	(imp1->equal && (imp1->equal) (obj1, obj2, depth, 1));
     }
 
   return 0;
+}
+
+int
+internal_equal_0 (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
+{
+  if (foldcase)
+    return internal_equalp (obj1, obj2, depth);
+  else
+    return internal_equal (obj1, obj2, depth);
 }
 
 /* Note that we may be calling sub-objects that will use
@@ -2939,6 +2977,37 @@ Numbers are compared by value.  Symbols must match exactly.
        (object1, object2))
 {
   return internal_equal (object1, object2, 0) ? Qt : Qnil;
+}
+
+DEFUN ("equalp", Fequalp, 2, 2, 0, /*
+Return t if two Lisp objects have similar structure and contents.
+
+This is like `equal', except that it accepts numerically equal
+numbers of different types (float, integer, bignum, bigfloat), and also
+compares strings and characters case-insensitively.
+
+Type objects that are arrays (that is, strings, bit-vectors, and vectors)
+of the same length and with contents that are `equalp' are themselves
+`equalp', regardless of whether the two objects have the same type.
+
+Other objects whose primary purpose is as containers of other objects are
+`equalp' if they would otherwise be equal (same length, type, etc.) and
+their contents are `equalp'.  This goes for conses, weak lists,
+weak boxes, ephemerons, specifiers, hash tables, char tables and range
+tables.  However, objects that happen to contain other objects but are not
+primarily designed for this purpose (e.g. compiled functions, events or
+display-related objects such as glyphs, faces or extents) are currently
+compared using `equalp' the same way as using `equal'.
+
+More specifically, two hash tables are `equalp' if they have the same test
+(see `hash-table-test'), the same number of entries, and the same value for
+`hash-table-weakness', and if, for each entry in one hash table, its key is
+equivalent to a key in the other hash table using the hash table test, and
+its value is `equalp' to the other hash table's value for that key.
+*/
+       (object1, object2))
+{
+  return internal_equalp (object1, object2, 0) ? Qt : Qnil;
 }
 
 DEFUN ("old-equal", Fold_equal, 2, 2, 0, /*
@@ -4559,6 +4628,7 @@ syms_of_fns (void)
   DEFSUBR (Fremprop);
   DEFSUBR (Fobject_plist);
   DEFSUBR (Fequal);
+  DEFSUBR (Fequalp);
   DEFSUBR (Fold_equal);
   DEFSUBR (Ffillarray);
   DEFSUBR (Fnconc);

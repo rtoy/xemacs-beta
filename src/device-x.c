@@ -53,7 +53,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
 				   use XtGetValues(), but ... */
-#include "xgccache.h"
+#include "gccache-x.h"
 #include <X11/Shell.h>
 #include <X11/Xmu/Error.h>
 

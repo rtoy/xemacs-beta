@@ -39,7 +39,7 @@ int FIXME_allocate_nearest_color (Display *display, Colormap screen_colormap,
 int x_allocate_nearest_color (Display *display, Colormap screen_colormap,
 			      Visual *visual, XColor *color_def);
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 #define _XFT_NO_COMPAT_
 /* shut up GCC */
 #define face_index face_index_arg
@@ -54,6 +54,6 @@ int x_allocate_nearest_color (Display *display, Colormap screen_colormap,
 
 XftColor xft_convert_color (Display *dpy, Colormap cmap, Visual *visual,
 			    int c, int dim);
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 #endif /* INCLUDED_lwlib_colors_h_ */

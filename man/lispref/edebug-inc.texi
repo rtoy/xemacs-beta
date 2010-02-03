@@ -203,13 +203,13 @@ records the position of every definition it evaluates, even if not
 instrumenting it.  Also see the command @kbd{i} (@ref{Jumping}) which
 steps into the callee.
 
-@cindex special forms (Edebug)
+@cindex special operators (Edebug)
 @cindex interactive commands (Edebug)
 @cindex anonymous lambda expressions (Edebug)
 @cindex Common Lisp (Edebug)
 @pindex cl.el (Edebug)
 @pindex cl-specs.el
-  Edebug knows how to instrument all the standard special forms, an
+  Edebug knows how to instrument all the standard special operators, an
 interactive form with an expression argument, anonymous lambda
 expressions, and other defining forms.  (Specifications for macros
 defined by @file{cl.el} (version 2.03) are provided in
@@ -1497,7 +1497,7 @@ Edebug down to always do this.
 Here we provide several examples of Edebug specifications to show
 many of its capabilities.
 
-A @code{let} special form has a sequence of bindings and a body.  Each
+A @code{let} special operator has a sequence of bindings and a body.  Each
 of the bindings is either a symbol or a sublist with a symbol and
 optional value.  In the specification below, notice the @code{gate}
 inside of the sublist to prevent backtracking.

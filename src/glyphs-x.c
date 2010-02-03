@@ -2376,7 +2376,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 					 face,
 					 domain));
     XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
-#ifdef USE_XFT
+#ifdef HAVE_XFT
     XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
 
     if (rf)
@@ -2395,7 +2395,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 	lw_add_widget_value_arg (wv, XtNfont, (XtArgVal) fs);
       }
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
     /* #### sanity check, should wrap in appropriate ERROR_CHECK macro */
     if (!rf && !fs)
       warn_when_safe_lispobj

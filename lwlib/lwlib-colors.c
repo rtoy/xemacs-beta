@@ -328,7 +328,7 @@ FIXME_allocate_nearest_color (Display *display, Colormap screen_colormap,
 #endif
 
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 
 XftColor
 xft_convert_color (Display *dpy, Colormap cmap, Visual *visual, int c, int dim)
@@ -356,6 +356,6 @@ xft_convert_color (Display *dpy, Colormap cmap, Visual *visual, int c, int dim)
   return result;
 }
 
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 /* end of lwlib-colors.c */

@@ -661,7 +661,7 @@ HWND qxeCreateDialogParam (HINSTANCE arg1, const Extbyte * arg2, HWND arg3, DLGP
 #undef CreateMDIWindow
 #define CreateMDIWindow error_use_qxeCreateMDIWindow_or_CreateMDIWindowA_and_CreateMDIWindowW
 #endif
-HWND qxeCreateMDIWindow (Extbyte * arg1, const Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10);
+HWND qxeCreateMDIWindow (Extbyte * arg1, Extbyte * arg2, DWORD arg3, int arg4, int arg5, int arg6, int arg7, HWND arg8, HINSTANCE arg9, LPARAM arg10);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef CreateWindowEx

@@ -5,14 +5,14 @@
 @setfilename ../../info/control.info
 @node Control Structures, Variables, Evaluation, Top
 @chapter Control Structures
-@cindex special forms for control structures
+@cindex special operators for control structures
 @cindex control structures
 
   A Lisp program consists of expressions or @dfn{forms} (@pxref{Forms}).
 We control the order of execution of the forms by enclosing them in
-@dfn{control structures}.  Control structures are special forms which
-control when, whether, or how many times to execute the forms they
-contain.
+@dfn{control structures}.  Control structures are special operators which
+control when, whether, or how many times to execute the subforms of
+their containing forms.
 
   The simplest order of execution is sequential execution: first form
 @var{a}, then form @var{b}, and so on.  This is what happens when you
@@ -29,9 +29,9 @@ than sequential.
   XEmacs Lisp provides several kinds of control structure, including
 other varieties of sequencing, conditionals, iteration, and (controlled)
 jumps---all discussed below.  The built-in control structures are
-special forms since their subforms are not necessarily evaluated or not
-evaluated sequentially.  You can use macros to define your own control
-structure constructs (@pxref{Macros}).
+special operators since their enclosing forms' subforms are not
+necessarily evaluated or not evaluated sequentially.  You can use macros
+to define your own control structure constructs (@pxref{Macros}).
 
 @menu
 * Sequencing::             Evaluation in textual order.
@@ -77,7 +77,7 @@ needed now most often inside an @code{unwind-protect}, @code{and},
 @code{or}, or in the @var{then}-part of an @code{if}.
 
 @defspec progn forms@dots{}
-This special form evaluates all of the @var{forms}, in textual
+This special operator evaluates all of the @var{forms}, in textual
 order, returning the result of the final form.
 
 @example
@@ -97,7 +97,7 @@ order, returning the result of the final form.
 a different value:
 
 @defspec prog1 form1 forms@dots{}
-This special form evaluates @var{form1} and all of the @var{forms}, in
+This special operator evaluates @var{form1} and all of the @var{forms}, in
 textual order, returning the result of @var{form1}.
 
 @example
@@ -121,7 +121,7 @@ Here is a way to remove the first element from a list in the variable
 @end defspec
 
 @defspec prog2 form1 form2 forms@dots{}
-This special form evaluates @var{form1}, @var{form2}, and all of the
+This special operator evaluates @var{form1}, @var{form2}, and all of the
 following @var{forms}, in textual order, returning the result of
 @var{form2}.
 
@@ -157,7 +157,7 @@ an example of an implicit @code{progn}.  @xref{Sequencing}.)
 If @var{condition} has the value @code{nil}, and no @var{else-forms} are
 given, @code{if} returns @code{nil}.
 
-@code{if} is a special form because the branch that is not selected is
+@code{if} is a special operator because the branch that is not selected is
 never evaluated---it is ignored.  Thus, in the example below,
 @code{true} is not printed because @code{print} is never called.
 
@@ -269,7 +269,7 @@ using the name @code{null} if you are testing for an empty list.
 @end defun
 
 @defspec and conditions@dots{}
-The @code{and} special form tests whether all the @var{conditions} are
+The @code{and} special operator tests whether all the @var{conditions} are
 true.  It works by evaluating the @var{conditions} one by one in the
 order written.
 
@@ -323,7 +323,7 @@ For example:
 @end defspec
 
 @defspec or conditions@dots{}
-The @code{or} special form tests whether at least one of the
+The @code{or} special operator tests whether at least one of the
 @var{conditions} is true.  It works by evaluating all the
 @var{conditions} one by one in the order written.
 
@@ -379,7 +379,7 @@ This is not completely equivalent because it can evaluate @var{arg1} or
   Iteration means executing part of a program repetitively.  For
 example, you might want to repeat some computation once for each element
 of a list, or once for each integer from 0 to @var{n}.  You can do this
-in XEmacs Lisp with the special form @code{while}:
+in XEmacs Lisp with the special operator @code{while}:
 
 @defspec while condition forms@dots{}
 @code{while} first evaluates @var{condition}.  If the result is
@@ -488,7 +488,7 @@ and position saved by @code{save-excursion} (@pxref{Excursions}), and
 the narrowing status saved by @code{save-restriction} and the window
 selection saved by @code{save-window-excursion} (@pxref{Window
 Configurations}).  It also runs any cleanups established with the
-@code{unwind-protect} special form when it exits that form
+@code{unwind-protect} special operator when it exits that form
 (@pxref{Cleanups}).
 
   The @code{throw} need not appear lexically within the @code{catch}
@@ -957,7 +957,7 @@ variables precisely as they were at the time of the error.
   The usual effect of signaling an error is to terminate the command
 that is running and return immediately to the XEmacs editor command loop.
 You can arrange to trap errors occurring in a part of your program by
-establishing an error handler, with the special form
+establishing an error handler, with the special operator
 @code{condition-case}.  A simple example looks like this:
 
 @example
@@ -1029,7 +1029,7 @@ by an error handler (though using @code{throw} when there is no suitable
 @code{catch} signals an error that can be handled).
 
 @defspec condition-case var protected-form handlers@dots{}
-This special form establishes the error handlers @var{handlers} around
+This special operator establishes the error handlers @var{handlers} around
 the execution of @var{protected-form}.  If @var{protected-form} executes
 without error, the value it returns becomes the value of the
 @code{condition-case} form; in this case, the @code{condition-case} has

@@ -391,7 +391,7 @@ Epoch 4.0 released August 27, 1990.
      sysdep.c (maybe; wait_for_termination)
      unexec.c
      unicode.c
-     xgccache.c (a bit)
+     gccache-x.c (a bit)
 
      #### review .h files; write a perl program to look for long comments
      throughout the files, ignoring stuff inside of DEFUN's.
@@ -1641,7 +1641,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
 #endif /* HAVE_XIM */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       syms_of_font_mgr();
 #endif
 
@@ -2224,7 +2224,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_gui_x ();
 #endif
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       vars_of_font_mgr ();
 #endif
 
@@ -2295,6 +2295,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Now do additional vars_of_*() initialization that happens both
 	 at dump time and after pdump load. */
       reinit_vars_of_buffer ();
+      reinit_vars_of_bytecode ();
       reinit_vars_of_console ();
 #ifdef DEBUG_XEMACS
       reinit_vars_of_debug ();
@@ -2354,7 +2355,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
       reinit_vars_of_gui_x ();
 #endif
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       reinit_vars_of_font_mgr ();
 #endif
 #endif /* HAVE_X_WINDOWS */
@@ -2427,7 +2428,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 quite soon, e.g. in complex_vars_of_glyphs_x(). */
       inhibit_non_essential_conversion_operations = 0;
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       /* This uses coding systems.  Must be done before faces are init'ed. */
       /* not in xft reloaded #3 */
       complex_vars_of_font_mgr ();

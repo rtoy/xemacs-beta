@@ -4,7 +4,7 @@
 #include "xlwmenu.h"
 #include <X11/CoreP.h>
 
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 #include <X11/Xft/Xft.h>
 #endif
 
@@ -27,13 +27,13 @@ typedef struct _XlwMenu_part
 {
   /* slots set by the resources */
 
-#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
+#if defined(NEED_MOTIF) && !defined(HAVE_XFT_MENUBARS)
   XmFontList	font_list;
   XmFontList	font_list_2;
   XmFontList	fallback_font_list;
 #else
   XFontStruct *	font;
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
   String fcFontName;
   String xftFontName;
   XftFont *renderFont;
@@ -57,7 +57,7 @@ typedef struct _XlwMenu_part
   Pixel 	top_shadow_color;
   Pixel 	bottom_shadow_color;
   Pixel 	select_color;
-#ifdef USE_XFT_MENUBARS
+#ifdef HAVE_XFT_MENUBARS
 #endif
   Pixmap	top_shadow_pixmap;
   Pixmap	bottom_shadow_pixmap;
