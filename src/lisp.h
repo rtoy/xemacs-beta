@@ -1254,7 +1254,7 @@ BEGIN_C_DECLS
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 #define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
-#define abort_with_msg(msg) assert_failed (__FILE__, __LINE__, msg)
+#define abort_with_message(msg) assert_failed (__FILE__, __LINE__, msg)
 
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
@@ -6009,7 +6009,7 @@ extern Lisp_Object Vcommand_history;
 extern Lisp_Object Vcommand_line_args, Vconfigure_info_directory;
 extern Lisp_Object Vconfigure_site_directory, Vconfigure_site_module_directory;
 extern Lisp_Object Vconsole_list, Vcontrolling_terminal;
-extern Lisp_Object Vcurrent_compiled_function_annotation, Vcurrent_load_list;
+extern Lisp_Object Vcurrent_load_list;
 extern Lisp_Object Vcurrent_mouse_event, Vcurrent_prefix_arg, Vdata_directory;
 extern Lisp_Object Vdirectory_sep_char, Vdisabled_command_hook;
 extern Lisp_Object Vdoc_directory, Vinternal_doc_file_name;

@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -148,7 +148,36 @@ static Lisp_Object Vload_force_doc_string_list;
 /* A resizing-buffer stream used to temporarily hold data while reading */
 static Lisp_Object Vread_buffer_stream;
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
+/* The stuff throughout this file that sets the following variable is
+   concerned with old-style .elc files that set up compiled functions using
+
+   (fset 'fun #[... ...])
+
+   Where #[... ...] is a literal compiled-function object.  We want the
+   name of the function to get stored as the annotation, so in a clever but
+   nastily kludgy fashion, we hack the code that reads lists so that if it
+   sees a symbol `fset' as the first argument, it stores the second argument
+   in Vcurrent_compiled_function_annotation, and then when the third
+   argument gets read and a compiled-function object created by a call to
+   Fmake_byte_code(), the stored annotation will get snarfed up.  Elsewhere,
+   we reset Vcurrent_compiled_function_annotation to nil so it's not still
+   defined in case we have a #[... ...] in other circumstances -- in that
+   case we use the filename (Vload_file_name_internal).
+
+   Now it's arguable that I should simply have hacked Ffset()
+   appropriately.  This is all moot, however, be nowadays calls that set up
+   compiled functions look like
+
+   (defalias 'fun #[... ...])
+
+   Where Fdefalias is like Ffset but sets up load-history for the function.
+   Hence it's exactly the right place to hack, and it's not even messy.
+
+   When we're sure the annotation mechanism works the new way, delete all
+   this old nasty code.
+
+   --ben 2-2-10 */
 Lisp_Object Vcurrent_compiled_function_annotation;
 #endif
 
@@ -1451,7 +1480,7 @@ readevalloop (Lisp_Object readcharfun,
 
   internal_bind_lisp_object (&Vcurrent_load_list, Qnil);
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Vcurrent_compiled_function_annotation = Qnil;
 #endif
   GCPRO2 (val, sourcename);
@@ -1619,7 +1648,7 @@ STREAM or the value of `standard-input' may be:
 
   Vread_objects = Qnil;
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Vcurrent_compiled_function_annotation = Qnil;
 #endif
   if (EQ (stream, Qread_char))
@@ -1648,7 +1677,7 @@ START and END optionally delimit a substring of STRING from which to read;
   Lisp_Object lispstream = Qnil;
   struct gcpro gcpro1;
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Vcurrent_compiled_function_annotation = Qnil;
 #endif
   GCPRO1 (lispstream);
@@ -3009,7 +3038,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount UNUSED (len))
 	}
     }
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   if (s->length == 1 && s->allow_dotted_lists && EQ (XCAR (s->head), Qfset))
     {
       if (CONSP (elt) && EQ (XCAR (elt), Qquote) && CONSP (XCDR (elt)))
@@ -3054,7 +3083,7 @@ read_list (Lisp_Object readcharfun,
 {
   struct read_list_state s;
   struct gcpro gcpro1, gcpro2;
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Lisp_Object old_compiled_function_annotation =
     Vcurrent_compiled_function_annotation;
 #endif
@@ -3067,7 +3096,7 @@ read_list (Lisp_Object readcharfun,
   GCPRO2 (s.head, s.tail);
 
   sequence_reader (readcharfun, terminator, &s, read_list_conser);
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Vcurrent_compiled_function_annotation = old_compiled_function_annotation;
 #endif
 
@@ -3477,7 +3506,7 @@ character escape syntaxes or just read them incorrectly.
   Vload_file_name_internal = Qnil;
   staticpro (&Vload_file_name_internal);
 
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   Vcurrent_compiled_function_annotation = Qnil;
   staticpro (&Vcurrent_compiled_function_annotation);
 #endif

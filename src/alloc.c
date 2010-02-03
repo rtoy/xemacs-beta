@@ -1930,19 +1930,12 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
   f->stack_depth = (unsigned short) XINT (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
   if (!NILP (Vcurrent_compiled_function_annotation))
-    f->annotated = Fcopy (Vcurrent_compiled_function_annotation);
-  else if (!NILP (Vload_file_name_internal_the_purecopy))
-    f->annotated = Vload_file_name_internal_the_purecopy;
-  else if (!NILP (Vload_file_name_internal))
-    {
-      struct gcpro gcpro1;
-      GCPRO1 (fun);		/* don't let fun get reaped */
-      Vload_file_name_internal_the_purecopy =
-	Ffile_name_nondirectory (Vload_file_name_internal);
-      f->annotated = Vload_file_name_internal_the_purecopy;
-      UNGCPRO;
-    }
+    f->annotated = Vcurrent_compiled_function_annotation;
+  else
+#endif /* COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY */
+    f->annotated = Vload_file_name_internal;
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
 
   /* doc_string may be nil, string, int, or a cons (string . int).

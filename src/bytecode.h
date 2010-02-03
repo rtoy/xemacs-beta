@@ -67,8 +67,19 @@ DECLARE_LRECORD (compiled_function_args, Lisp_Compiled_Function_Args);
 #define COMPILED_INTERACTIVE	5
 #define COMPILED_DOMAIN		6
 
-/* It doesn't make sense to have this and also have load-history */
-/* #define COMPILED_FUNCTION_ANNOTATION_HACK */
+/* Someone claims: [[ It doesn't make sense to have this and also have
+   load-history ]] But in fact they are quite different things.  Perhaps
+   we should turn this on only when DEBUG_XEMACS but there's no speed
+   harm at all, so no reason not to do it always. */
+#define COMPILED_FUNCTION_ANNOTATION_HACK
+
+#ifdef DEBUG_XEMACS
+/* Define BYTE_CODE_METER to enable generation of a byte-op usage
+   histogram.  This isn't defined in FSF Emacs and isn't defined in XEmacs
+   v19.  But this is precisely the thing to turn on when DEBUG_XEMACS.  It
+   may lead to a slight speed penalty but nothing major. */
+#define BYTE_CODE_METER
+#endif
 
 struct Lisp_Compiled_Function
 {
@@ -131,6 +142,9 @@ void optimize_compiled_function (Lisp_Object compiled_function);
 
 typedef unsigned char Opbyte;
 Lisp_Object execute_optimized_program (const Opbyte *program,
+#ifdef ERROR_CHECK_BYTE_CODE
+				       Elemcount program_length,
+#endif
 				       int stack_depth,
 				       Lisp_Object *constants_data);
 
