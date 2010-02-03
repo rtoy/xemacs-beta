@@ -1930,12 +1930,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
   f->stack_depth = (unsigned short) XINT (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
-#ifdef COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY
-  if (!NILP (Vcurrent_compiled_function_annotation))
-    f->annotated = Vcurrent_compiled_function_annotation;
-  else
-#endif /* COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY */
-    f->annotated = Vload_file_name_internal;
+  f->annotated = Vload_file_name_internal;
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
 
   /* doc_string may be nil, string, int, or a cons (string . int).
