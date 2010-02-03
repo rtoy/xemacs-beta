@@ -3545,6 +3545,12 @@ the byte optimizer in those cases."
 ;;	  ;; byte-optimize.el).
 ;;	  (t form)))))
 
+(define-compiler-macro notany (&whole form &rest cl-rest)
+  (cons 'not (cons 'some (cdr cl-rest))))
+
+(define-compiler-macro notevery (&whole form &rest cl-rest)
+  (cons 'not (cons 'every (cdr cl-rest))))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
@@ -3572,7 +3578,7 @@ the byte optimizer in those cases."
    (cddadr cdr cdadr) (cdddar cdr cddar) (cddddr cdr cdddr)))
 
 ;;; Things that are inline.
-(proclaim '(inline acons map concatenate notany notevery
+(proclaim '(inline acons map concatenate
 ;; XEmacs omission: gethash is builtin
 		   cl-set-elt revappend nreconc))
 
