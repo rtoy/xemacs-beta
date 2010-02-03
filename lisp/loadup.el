@@ -218,20 +218,18 @@ with the exception of `loadup.el'.")
 ;; See also "site-load" above.
 (when (stringp site-start-file)
   (load "site-init" t))
-;; Add information from this file to the load history:
-(setq load-history (cons (nreverse current-load-list) load-history)
+
+;; Add information from this file to the load history. Delete information
+;; for those files in preloaded-file-list; the symbol file information can
+;; be taken from DOC, and #'unload-feature makes very little sense for
+;; dumped functionality.
+(setq load-history (cons (nreverse current-load-list) (last load-history))
       ;; Clear current-load-list; this (and adding information to
       ;; load-history) is normally done in lread.c after reading the
       ;; entirety of a file, something which never happens for loadup.el.
       current-load-list nil)
 ;; Make the path to this file look a little nicer: 
 (setcar (car load-history) (file-truename (caar load-history)))
-
-;; Make #'find-function behave better with dumped files.
-(let ((source-lisp (concat "^" (regexp-quote source-lisp))))
-  (mapc
-   #'(lambda (elt) (setcar elt (replace-in-string (car elt) source-lisp "")))
-   load-history))
 
 (garbage-collect)
 
