@@ -1,6 +1,19 @@
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (Fmake_byte_code):
+	* lread.c:
+	* lread.c (readevalloop):
+	* lread.c (Fread):
+	* lread.c (Fread_from_string):
+	* lread.c (read_list_conser):
+	* lread.c (read_list):
+	* lread.c (vars_of_lread):
+	Remove the old kludgy stuff bracketed by `#ifdef
+	COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY'.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (Fmake_byte_code):
 	* bytecode.h:
 	* lisp.h:
 	* lread.c:
