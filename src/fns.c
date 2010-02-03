@@ -3242,11 +3242,24 @@ arguments: (&rest ARGS)
    non-cons, non-array when traversing SEQUENCES.  Common Lisp specifies in
    MAPPING-DESTRUCTIVE-INTERACTION that it is an error when FUNCTION
    destructively modifies SEQUENCES in a way that might affect the ongoing
-   traversal operation. */
+   traversal operation.
+
+   If SOME_OR_EVERY is SOME_OR_EVERY_SOME, return the (possibly multiple)
+   values given by FUNCTION the first time it is non-nil, and abandon the
+   iterations.  LISP_VALS in this case must be an object created by
+   make_opaque_ptr, dereferenced as pointing to a Lisp object. If
+   SOME_OR_EVERY is SOME_OR_EVERY_EVERY, store Qnil at the Lisp_Object
+   pointer address provided by LISP_VALS if FUNCTION gives nil; otherwise
+   leave it alone. */
+
+#define SOME_OR_EVERY_NEITHER 0
+#define SOME_OR_EVERY_SOME    1
+#define SOME_OR_EVERY_EVERY   2
 
 static void
 mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
-	 Lisp_Object function, int nsequences, Lisp_Object *sequences)
+	 Lisp_Object function, int nsequences, Lisp_Object *sequences, 
+	 int some_or_every)
 {
   Lisp_Object called, *args;
   struct gcpro gcpro1, gcpro2;
@@ -3350,7 +3363,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 	  called = Ffuncall (nsequences + 1, args);
 	  if (vals != NULL)
 	    {
-	      vals[i] = called;
+	      vals[i] = IGNORE_MULTIPLE_VALUES (called);
 	      gcpro2.nvars += 1;
 	    }
 	  else
@@ -3361,20 +3374,50 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		  break;
 		case lrecord_type_cons:
 		  {
-		    if (!CONSP (lisp_vals))
+		    if (SOME_OR_EVERY_NEITHER == some_or_every)
 		      {
-			/* If FUNCTION has inserted a non-cons non-nil cdr
-			   into the list before we've processed the relevant
-			   part, error. */
-			dead_wrong_type_argument (Qconsp, lisp_vals);
+			called = IGNORE_MULTIPLE_VALUES (called);
+			if (!CONSP (lisp_vals))
+			  {
+			    /* If FUNCTION has inserted a non-cons non-nil
+			       cdr into the list before we've processed the
+			       relevant part, error. */
+			    dead_wrong_type_argument (Qconsp, lisp_vals);
+			  }
+
+			XSETCAR (lisp_vals, called);
+			lisp_vals = XCDR (lisp_vals);
+			break;
 		      }
 
-		    XSETCAR (lisp_vals, called);
-		    lisp_vals = XCDR (lisp_vals);
-		    break;
+		    if (SOME_OR_EVERY_SOME == some_or_every)
+		      {
+			if (!NILP (IGNORE_MULTIPLE_VALUES (called)))
+			  {
+			    XCAR (lisp_vals) = called;
+			    UNGCPRO;
+			    return;
+			  }
+			break;
+		      }
+
+		    if (SOME_OR_EVERY_EVERY == some_or_every)
+		      {
+			called = IGNORE_MULTIPLE_VALUES (called);
+			if (NILP (called))
+			  {
+			    XCAR (lisp_vals) = Qnil;
+			    UNGCPRO;
+			    return;
+			  }
+			break;
+		      }
+
+		    goto bad_show_or_every_flag;
 		  }
 		case lrecord_type_vector:
 		  {
+		    called = IGNORE_MULTIPLE_VALUES (called);
 		    i < XVECTOR_LENGTH (lisp_vals) ?
 		      (XVECTOR_DATA (lisp_vals)[i] = called) :
 		      /* Let #'aset error. */
@@ -3386,11 +3429,13 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		    /* If this ever becomes a code hotspot, we can keep
 		       around pointers into the data of the string, checking
 		       each time that it hasn't been relocated. */
+		    called = IGNORE_MULTIPLE_VALUES (called);
 		    Faset (lisp_vals, make_int (i), called);
 		    break;
 		  }
 		case lrecord_type_bit_vector:
 		  {
+		    called = IGNORE_MULTIPLE_VALUES (called);
 		    (BITP (called) &&
 		     i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
 		      set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
@@ -3398,6 +3443,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		      Faset (lisp_vals, make_int (i), called);
 		    break;
 		  }
+		bad_show_or_every_flag:
 		default:
 		  {
 		    ABORT();
@@ -3461,7 +3507,8 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
     }
   else
     {
-      mapcarX (len, args0, Qnil, function, nargs - 2, args + 2);
+      mapcarX (len, args0, Qnil, function, nargs - 2, args + 2,
+	       SOME_OR_EVERY_NEITHER);
     }
 
   for (i = len - 1; i >= 0; i--)
@@ -3499,7 +3546,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
     }
 
   args0 = alloca_array (Lisp_Object, len);
-  mapcarX (len, args0, Qnil, function, nargs - 1, args + 1);
+  mapcarX (len, args0, Qnil, function, nargs - 1, args + 1,
+	   SOME_OR_EVERY_NEITHER);
 
   return Flist ((int) len, args0);
 }
@@ -3534,7 +3582,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
   GCPRO1 (result);
   /* Don't pass result as the lisp_object argument, we want mapcarX to protect 
      a single list argument's elements from being garbage-collected. */
-  mapcarX (len, XVECTOR_DATA (result), Qnil, function, nargs - 1, args +1);
+  mapcarX (len, XVECTOR_DATA (result), Qnil, function, nargs - 1, args +1,
+	   SOME_OR_EVERY_NEITHER);
   UNGCPRO;
 
   return result;
@@ -3568,7 +3617,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
     }
 
   args0 = alloca_array (Lisp_Object, len + 1);
-  mapcarX (len, args0 + 1, Qnil, function, nargs - 1, args + 1);
+  mapcarX (len, args0 + 1, Qnil, function, nargs - 1, args + 1,
+	   SOME_OR_EVERY_NEITHER);
 
   if (len < 2)
     {
@@ -3623,7 +3673,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
      elements of the args array handed to it, and this may involve
      elements of sequence getting garbage collected. */
   GCPRO1 (sequence);
-  mapcarX (len, NULL, Qnil, args[0], nargs - 1, args + 1);
+  mapcarX (len, NULL, Qnil, args[0], nargs - 1, args + 1,
+	   SOME_OR_EVERY_NEITHER);
   RETURN_UNGCPRO (sequence);
 }
 
@@ -3663,7 +3714,8 @@ arguments: (TYPE FUNCTION SEQUENCE &rest SEQUENCES)
       args0 = alloca_array (Lisp_Object, len);
     }
 
-  mapcarX (len, args0, Qnil, function, nargs - 2, args + 2);
+  mapcarX (len, args0, Qnil, function, nargs - 2, args + 2,
+	   SOME_OR_EVERY_NEITHER);
 
   if (EQ (type, Qnil))
     {
@@ -3727,9 +3779,72 @@ arguments: (RESULT-SEQUENCE FUNCTION &rest SEQUENCES)
       len = min (len, XINT (Flength (args[i])));
     }
 
-  mapcarX (len, NULL, result_sequence, function, nargs - 2, args + 2);
+  mapcarX (len, NULL, result_sequence, function, nargs - 2, args + 2,
+	   SOME_OR_EVERY_NEITHER);
 
   return result_sequence;
+}
+
+DEFUN ("some", Fsome, 2, MANY, 0, /* 
+Return true if PREDICATE gives non-nil for an element of SEQUENCE.
+
+If so, return the value (possibly multiple) given by PREDICATE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object result_box = Fcons (Qnil, Qnil);
+  struct gcpro gcpro1;
+  Elemcount len = EMACS_INT_MAX;
+  int i;
+
+  GCPRO1 (result_box);
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  mapcarX (len, NULL, result_box, args[0], nargs - 1, args +1,
+	   SOME_OR_EVERY_SOME);
+
+  RETURN_UNGCPRO (XCAR (result_box));
+}
+
+DEFUN ("every", Fevery, 2, MANY, 0, /* 
+Return true if PREDICATE is true of every element of SEQUENCE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+In contrast to `some', `every' never returns multiple values.
+
+arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object result_box = Fcons (Qt, Qnil);
+  struct gcpro gcpro1;
+  Elemcount len = EMACS_INT_MAX;
+  int i;
+
+  GCPRO1 (result_box);
+
+  for (i = 1; i < nargs; ++i)
+    {
+      CHECK_SEQUENCE (args[i]);
+      len = min (len, XINT (Flength (args[i])));
+    }
+
+  mapcarX (len, NULL, result_box, args[0], nargs - 1, args +1,
+	   SOME_OR_EVERY_EVERY);
+
+  RETURN_UNGCPRO (XCAR (result_box));
 }
 
 /* Call FUNCTION with NLISTS arguments repeatedly, each Nth argument
@@ -3793,7 +3908,7 @@ maplist (Lisp_Object function, int nlists, Lisp_Object *lists, int maplp,
 	    }
 	}
       if (!continuing) break;
-      funcalled = Ffuncall (nlists + 1, args);
+      funcalled = IGNORE_MULTIPLE_VALUES (Ffuncall (nlists + 1, args));
       if (!maplp)
 	{
 	  if (nconcp)
@@ -4639,6 +4754,8 @@ syms_of_fns (void)
   DEFSUBR (Fmapconcat);
   DEFSUBR (Fmap);
   DEFSUBR (Fmap_into);
+  DEFSUBR (Fsome);
+  DEFSUBR (Fevery);
   Ffset (intern ("mapc-internal"), Fsymbol_function (intern ("mapc")));
   Ffset (intern ("mapcar"), Fsymbol_function (intern ("mapcar*")));
   DEFSUBR (Fmaplist);

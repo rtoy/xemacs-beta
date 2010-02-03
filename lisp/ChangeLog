@@ -1,5 +1,13 @@
 2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (some, every):
+	Move these functions to C.
+	* cl-macs.el (notany, notevery): Add compiler macros for these
+	functions, no longer proclaim them inline (which would involve
+	specbinding that's not necessary with the compiler macros).
+
+2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Delete a couple of XEmacs-specific functions that duplicate CL
 	functions.
 

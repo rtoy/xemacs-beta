@@ -225,34 +225,8 @@ TYPE is a Common Lisp type specifier."
 ;;		      (and (equal "" y) (equal #* x)))))
 ;;		 (t (equal x y)))))))
 
-;; XEmacs; #'map, #'mapc, #'mapl, #'maplist, #'mapcon are now in C, together
-;; with #'map-into, which was never in this file.
-
-(defun some (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is true of any element of SEQ or SEQs.
-If so, return the true (non-nil) value returned by PREDICATE."
-  (if (or cl-rest (nlistp cl-seq))
-      (catch 'cl-some
-	(apply 'map nil
-	       (function (lambda (&rest cl-x)
-			   (let ((cl-res (apply cl-pred cl-x)))
-			     (if cl-res (throw 'cl-some cl-res)))))
-	       cl-seq cl-rest) nil)
-    (let ((cl-x nil))
-      (while (and cl-seq (not (setq cl-x (funcall cl-pred (pop cl-seq))))))
-      cl-x)))
-
-(defun every (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is true of every element of SEQ or SEQs."
-  (if (or cl-rest (nlistp cl-seq))
-      (catch 'cl-every
-	(apply 'map nil
-	       (function (lambda (&rest cl-x)
-			   (or (apply cl-pred cl-x) (throw 'cl-every nil))))
-	       cl-seq cl-rest) t)
-    (while (and cl-seq (funcall cl-pred (car cl-seq)))
-      (setq cl-seq (cdr cl-seq)))
-    (null cl-seq)))
+;; XEmacs; #'map, #'mapc, #'mapl, #'maplist, #'mapcon, #'some and #'every
+;; are now in C, together with #'map-into, which was never in this file.
 
 (defun notany (cl-pred cl-seq &rest cl-rest)
   "Return true if PREDICATE is false of every element of SEQ or SEQs."
