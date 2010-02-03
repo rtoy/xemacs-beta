@@ -1,5 +1,16 @@
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Temporarily back out staticpro-related changes in symbols.c and
+	symeval.h to fix compile problems, will put back when `latest-fix'
+	workspace gets merged in.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c (Fmake_byte_code):
 	* lread.c:
 	* lread.c (readevalloop):
