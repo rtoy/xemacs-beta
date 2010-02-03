@@ -1,5 +1,10 @@
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
+	* bytecode.c:
+	Fix minor compile problem.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
 	* symbols.c (defsymbol_massage_name_1):
 	* symbols.c (defsymbol_nodump):
 	* symbols.c (defsymbol):
