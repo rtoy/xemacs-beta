@@ -90,7 +90,10 @@ with `defface' and `custom-declare-face'."
         ;; This is a bit heuristic, but shouldn't realistically be a
         ;; problem:
         (if (string-match "\.elc?$" built-in-file)
-            (concat lisp-directory built-in-file)
+            (concat (if (file-readable-p source-lisp)
+			source-lisp
+		      lisp-directory)
+		    built-in-file)
           (concat source-directory "/src/" built-in-file))))))
 
 (defun feature-symbols (feature)

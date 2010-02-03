@@ -1,3 +1,33 @@
+2010-02-02  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (execute_rare_opcode):
+	* lisp.h (abort_with_msg): New.
+	When aborting due to unknown opcode, output more descriptive msg.
+
+2010-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* intl-encap-win32.c: Added description of override keyword.
+	Fix 2nd arg to CreateMDIWindowW.
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h: Fix 2nd arg to qxeCreateMDIWindow.
+
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (internal_equalp):
+	Use bytecode_arithcompare, which takes two args, instead of
+	passing a stack pointer to Feqlsign.
+	Use CANONCASE(), not DOWNCASE(), for case-insensitive character
+	comparison.
+	Correct a comment here.
+	* casefiddle.c (casify_object): New operation in this function,
+	CASE_CANONICALIZE.
+	(Fcanoncase): New function, used for case-insensitive comparison.
+	* lisp.h:
+	Make Fcanoncase, bytecode_arithcompare visible here.
+	* bytecode.c (bytecode_arithcompare):
+	Make this visible to other files.
+
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
@@ -327,6 +357,16 @@
 	* keymap.c (keymap_hash):
 	Implement.
 	
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* syntax.c:
+	* syntax.c (scan_lists):
+	* syntax.c (syms_of_syntax):
+	Declare `scan-error' as a type of `syntax-error'.  In `scan-lists'
+	et al., don't signal a syntax error but instead a `scan-error', and
+	pass a couple of integer arguments, for GNU compatibility.  Fixes
+	problems with typing double-quote in texinfo.el.
+
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fspecial_operator_p, syms_of_symbols):

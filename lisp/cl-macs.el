@@ -3412,12 +3412,6 @@ the byte optimizer in those cases."
 	     ;; No need to protect against multiple evaluation here:
 	     `(and (member ,original-y '("" #* [])) t))
 	    (t form)))
-	  ((unordered-check (and (characterp x) (not (cl-const-expr-p y))))
-	   `(,@let-form
-	     (or (eq ,x ,y)
-		 ;; eq has a bytecode, char-equal doesn't.
-		 (and (characterp ,y)
-		      (eq (downcase ,x) (downcase ,y))))))
 	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
 	   `(,@let-form
 	     (and (numberp ,y)

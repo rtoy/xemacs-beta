@@ -330,7 +330,7 @@ bytecode_nreverse (Lisp_Object list)
 
 /* We have our own two-argument versions of various arithmetic ops.
    Only two-argument arithmetic operations have their own byte codes. */
-static int
+int
 bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
 #ifdef WITH_NUMBER_TYPES
@@ -1738,7 +1738,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       }
 
     default:
-      ABORT();
+      {
+	Ascbyte msg[100];
+	sprintf (msg, "Unknown opcode %d", opcode);
+	abort_with_msg (msg);
+      }
       break;
     }
   return stack_ptr;

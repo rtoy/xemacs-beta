@@ -1253,7 +1253,8 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
-#define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+#define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
+#define abort_with_msg(msg) assert_failed (__FILE__, __LINE__, msg)
 
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
@@ -4388,6 +4389,7 @@ EXFUN (Fprefix_numeric_value, 1);
 
 /* Defined in casefiddle.c */
 EXFUN (Fdowncase, 2);
+EXFUN (Fcanoncase, 2);
 EXFUN (Fupcase, 2);
 EXFUN (Fupcase_initials, 2);
 EXFUN (Fupcase_initials_region, 3);
@@ -5119,6 +5121,7 @@ Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
 Lisp_Object vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object nconc2 (Lisp_Object, Lisp_Object);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
+int bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2);
 void check_losing_bytecode (const char *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
