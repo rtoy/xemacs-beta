@@ -2295,6 +2295,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Now do additional vars_of_*() initialization that happens both
 	 at dump time and after pdump load. */
       reinit_vars_of_buffer ();
+      reinit_vars_of_bytecode ();
       reinit_vars_of_console ();
 #ifdef DEBUG_XEMACS
       reinit_vars_of_debug ();

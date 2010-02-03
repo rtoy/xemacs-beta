@@ -58,6 +58,8 @@ by Hallvard:
 #include "syntax.h"
 #include "window.h"
 
+#define NUM_REMEMBERED_BYTE_OPS 100
+
 #ifdef NEW_GC
 static Lisp_Object
 make_compiled_function_args (int totalargs)
@@ -101,169 +103,104 @@ EXFUN (Ffetch_bytecode, 1);
 
 Lisp_Object Qbyte_code, Qcompiled_functionp, Qinvalid_byte_code;
 
+
 enum Opcode /* Byte codes */
 {
-  Bvarref  		= 010,
-  Bvarset  		= 020,
-  Bvarbind 		= 030,
-  Bcall    		= 040,
-  Bunbind  		= 050,
-
-  Bnth     		= 070,
-  Bsymbolp 		= 071,
-  Bconsp   		= 072,
-  Bstringp 		= 073,
-  Blistp   		= 074,
-  Bold_eq  		= 075,
-  Bold_memq 		= 076,
-  Bnot    		= 077,
-  Bcar    		= 0100,
-  Bcdr 	  		= 0101,
-  Bcons   		= 0102,
-  Blist1  		= 0103,
-  Blist2  		= 0104,
-  Blist3  		= 0105,
-  Blist4  		= 0106,
-  Blength 		= 0107,
-  Baref   		= 0110,
-  Baset   		= 0111,
-  Bsymbol_value 	= 0112,
-  Bsymbol_function 	= 0113,
-  Bset    		= 0114,
-  Bfset   		= 0115,
-  Bget    		= 0116,
-  Bsubstring 		= 0117,
-  Bconcat2 		= 0120,
-  Bconcat3 		= 0121,
-  Bconcat4 		= 0122,
-  Bsub1 		= 0123,
-  Badd1 		= 0124,
-  Beqlsign 		= 0125,
-  Bgtr 			= 0126,
-  Blss 			= 0127,
-  Bleq 			= 0130,
-  Bgeq 			= 0131,
-  Bdiff 		= 0132,
-  Bnegate 		= 0133,
-  Bplus 		= 0134,
-  Bmax 			= 0135,
-  Bmin 			= 0136,
-  Bmult 		= 0137,
-
-  Bpoint 		= 0140,
-  Beq 			= 0141, /* was Bmark,
-				   but no longer generated as of v18 */
-  Bgoto_char 		= 0142,
-  Binsert 		= 0143,
-  Bpoint_max 		= 0144,
-  Bpoint_min 		= 0145,
-  Bchar_after 		= 0146,
-  Bfollowing_char 	= 0147,
-  Bpreceding_char 	= 0150,
-  Bcurrent_column 	= 0151,
-  Bindent_to 		= 0152,
-  Bequal 		= 0153, /* was Bscan_buffer,
-				   but no longer generated as of v18 */
-  Beolp 		= 0154,
-  Beobp 		= 0155,
-  Bbolp 		= 0156,
-  Bbobp 		= 0157,
-  Bcurrent_buffer 	= 0160,
-  Bset_buffer 		= 0161,
-  Bsave_current_buffer 	= 0162, /* was Bread_char,
-				   but no longer generated as of v19 */
-  Bmemq 		= 0163, /* was Bset_mark,
-				   but no longer generated as of v18 */
-  Binteractive_p 	= 0164, /* Needed since interactive-p takes
-				   unevalled args */
-  Bforward_char 	= 0165,
-  Bforward_word 	= 0166,
-  Bskip_chars_forward 	= 0167,
-  Bskip_chars_backward 	= 0170,
-  Bforward_line 	= 0171,
-  Bchar_syntax 		= 0172,
-  Bbuffer_substring 	= 0173,
-  Bdelete_region 	= 0174,
-  Bnarrow_to_region 	= 0175,
-  Bwiden 		= 0176,
-  Bend_of_line 		= 0177,
-
-  Bconstant2 		= 0201,
-  Bgoto 		= 0202,
-  Bgotoifnil 		= 0203,
-  Bgotoifnonnil 	= 0204,
-  Bgotoifnilelsepop 	= 0205,
-  Bgotoifnonnilelsepop 	= 0206,
-  Breturn 		= 0207,
-  Bdiscard 		= 0210,
-  Bdup 			= 0211,
-
-  Bsave_excursion 	= 0212,
-  Bsave_window_excursion= 0213,
-  Bsave_restriction 	= 0214,
-  Bcatch 		= 0215,
-
-  Bunwind_protect 	= 0216,
-  Bcondition_case 	= 0217,
-  Btemp_output_buffer_setup = 0220,
-  Btemp_output_buffer_show  = 0221,
-
-  Bunbind_all 		= 0222,
-
-  Bset_marker 		= 0223,
-  Bmatch_beginning 	= 0224,
-  Bmatch_end 		= 0225,
-  Bupcase 		= 0226,
-  Bdowncase 		= 0227,
-
-  Bstring_equal 	= 0230,
-  Bstring_lessp     	= 0231,
-  Bold_equal 	 	= 0232,
-  Bnthcdr 	 	= 0233,
-  Belt 		 	= 0234,
-  Bold_member 	 	= 0235,
-  Bold_assq 	 	= 0236,
-  Bnreverse 	 	= 0237,
-  Bsetcar 	 	= 0240,
-  Bsetcdr 	 	= 0241,
-  Bcar_safe 	 	= 0242,
-  Bcdr_safe 	 	= 0243,
-  Bnconc 	 	= 0244,
-  Bquo 		 	= 0245,
-  Brem 		 	= 0246,
-  Bnumberp 	 	= 0247,
-  Bfixnump 	 	= 0250,	/* Was Bintegerp. */
-
-  BRgoto 		= 0252,
-  BRgotoifnil 		= 0253,
-  BRgotoifnonnil 	= 0254,
-  BRgotoifnilelsepop 	= 0255,
-  BRgotoifnonnilelsepop = 0256,
-
-  BlistN 		= 0257,
-  BconcatN 		= 0260,
-  BinsertN 		= 0261,
-
-  Bbind_multiple_value_limits   = 0262,         /* New in 21.5. */
-  Bmultiple_value_list_internal = 0263,         /* New in 21.5. */
-  Bmultiple_value_call          = 0264,         /* New in 21.5. */
-  Bthrow                        = 0265,         /* New in 21.5. */
-
-  Bmember 		= 0266, /* new in v20 */
-  Bassq 		= 0267, /* new in v20 */
-
-  Bconstant 		= 0300
+#define OPCODE(sym, val) B##sym = val,
+#include "bytecode-ops.h"
 };
 typedef enum Opcode Opcode;
-
 
 Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
+#ifdef ERROR_CHECK_BYTE_CODE
+				   Lisp_Object *stack_beg,
+				   Lisp_Object *stack_end,
+#endif /* ERROR_CHECK_BYTE_CODE */
 				   const Opbyte *program_ptr,
 				   Opcode opcode);
 
-/* Define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
-   This isn't defined in FSF Emacs and isn't defined in XEmacs v19. */
-/* #define BYTE_CODE_METER */
+#ifndef ERROR_CHECK_BYTE_CODE
+
+# define bytecode_assert(x) disabled_assert (x)
+# define bytecode_assert_with_message(x, msg) disabled_assert(x)
+# define bytecode_abort_with_message(msg) abort_with_message (msg)
+
+#else /* ERROR_CHECK_BYTE_CODE */
+
+# define bytecode_assert(x) \
+  ((x) ? (void) 0 : assert_failed_with_remembered_ops (__FILE__, __LINE__, #x))
+# define bytecode_assert_with_message(x, msg) \
+  ((x) ? (void) 0 : assert_failed_with_remembered_ops (__FILE__, __LINE__, msg))
+# define bytecode_abort_with_message(msg) \
+  assert_failed_with_remembered_ops (__FILE__, __LINE__, msg)
+
+/* Table mapping opcodes to their names.  This handles opcodes like
+   Bvarref+7, but it doesn't list any of the Bconstant+N opcodes; those
+   are handled specially. */
+Ascbyte *opcode_name_table[256];
+
+/* Circular queue remembering the most recent operations. */
+Opcode remembered_ops[NUM_REMEMBERED_BYTE_OPS];
+int remembered_op_next_pos, num_remembered;
+
+static void
+remember_operation (Opcode op)
+{
+  remembered_ops[remembered_op_next_pos] = op;
+  remembered_op_next_pos =
+    (remembered_op_next_pos + 1) % NUM_REMEMBERED_BYTE_OPS;
+  if (num_remembered < NUM_REMEMBERED_BYTE_OPS)
+    num_remembered++;
+}
+
+static void
+assert_failed_with_remembered_ops (const Ascbyte *file, int line,
+				   Ascbyte *msg_to_abort_with)
+{
+  Ascbyte *msg =
+    alloca_array (Ascbyte,
+		  NUM_REMEMBERED_BYTE_OPS*50 + strlen (msg_to_abort_with));
+  int i;
+
+  if (msg_to_abort_with)
+    strcpy (msg, msg_to_abort_with);
+  strcat (msg, "\n\nRecent bytecodes, oldest first:\n\n");
+
+  for (i = 0; i < num_remembered; i++)
+    {
+      Ascbyte msg2[50];
+      int pos;
+      Opcode op;
+
+      sprintf (msg2, "%5d:  ", i - num_remembered + 1);
+      strcat (msg, msg2);
+      pos = (remembered_op_next_pos + NUM_REMEMBERED_BYTE_OPS +
+	     i - num_remembered) % NUM_REMEMBERED_BYTE_OPS;
+      op = remembered_ops[pos];
+      if (op >= Bconstant)
+	{
+	  sprintf (msg2, "constant+%d", op - Bconstant);
+	  strcat (msg, msg2);
+	}
+      else
+	{
+	  Ascbyte *opname = opcode_name_table[op];
+	  if (!opname)
+	    {
+	      stderr_out ("Internal error! NULL pointer in opcode_name_table, opcode %d\n", op);
+	      strcat (msg, "NULL");
+	    }
+	  else
+	    strcat (msg, opname);
+	}
+      sprintf (msg2, " (%d)\n", op);
+      strcat (msg, msg2);
+    }
+
+  assert_failed (file, line, msg);
+}
+
+#endif /* ERROR_CHECK_BYTE_CODE */
 
 
 #ifdef BYTE_CODE_METER
@@ -619,72 +556,127 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 }
 
 
+
+/*********************** The instruction array *********************/
+
+/* Check that there are at least LEN elements left in the end of the
+   instruction array before fetching them.  Note that we allow for
+   PROGRAM_PTR == PROGRAM_END after the fetch -- that means there are
+   no more elements to fetch next time around, but we might exit before
+   next time comes.
+
+   When checking the destination if jumps, however, we don't allow
+   PROGRAM_PTR to equal PROGRAM_END, since we will always be fetching
+   another instruction after the jump. */
+
+#define CHECK_OPCODE_SPACE(len) \
+  bytecode_assert (program_ptr + len <= program_end)
+
 /* Read next uint8 from the instruction stream. */
-#define READ_UINT_1 ((unsigned int) (unsigned char) *program_ptr++)
+#define READ_UINT_1 \
+  (CHECK_OPCODE_SPACE (1), (unsigned int) (unsigned char) *program_ptr++)
 
 /* Read next uint16 from the instruction stream. */
 #define READ_UINT_2						\
-  (program_ptr += 2,						\
+  (CHECK_OPCODE_SPACE (2),					\
+   program_ptr += 2,						\
    (((unsigned int) (unsigned char) program_ptr[-1]) * 256 +	\
     ((unsigned int) (unsigned char) program_ptr[-2])))
 
 /* Read next int8 from the instruction stream. */
-#define READ_INT_1 ((int) (signed char) *program_ptr++)
+#define READ_INT_1 \
+  (CHECK_OPCODE_SPACE (1), (int) (signed char) *program_ptr++)
 
 /* Read next int16 from the instruction stream. */
 #define READ_INT_2					\
-  (program_ptr += 2,					\
+  (CHECK_OPCODE_SPACE (2),				\
+   program_ptr += 2,					\
    (((int) (  signed char) program_ptr[-1]) * 256 +	\
     ((int) (unsigned char) program_ptr[-2])))
 
 /* Read next int8 from instruction stream; don't advance program_pointer */
-#define PEEK_INT_1 ((int) (signed char) program_ptr[0])
+#define PEEK_INT_1 \
+  (CHECK_OPCODE_SPACE (1), (int) (signed char) program_ptr[0])
 
 /* Read next int16 from instruction stream; don't advance program_pointer */
 #define PEEK_INT_2					\
-  ((((int) (  signed char) program_ptr[1]) * 256) |	\
+  (CHECK_OPCODE_SPACE (2),				\
+   (((int) (  signed char) program_ptr[1]) * 256) |	\
     ((int) (unsigned char) program_ptr[0]))
 
 /* Do relative jumps from the current location.
    We only do a QUIT if we jump backwards, for efficiency.
    No infloops without backward jumps! */
-#define JUMP_RELATIVE(jump) do {	\
-  int JR_jump = (jump);			\
-  if (JR_jump < 0) QUIT;		\
-  program_ptr += JR_jump;		\
+#define JUMP_RELATIVE(jump) do {					\
+  int _JR_jump = (jump);						\
+  if (_JR_jump < 0) QUIT;						\
+  /* Check that where we're going to is in range.  Note that we don't use \
+     CHECK_OPCODE_SPACE() -- that only checks the end, and it allows	\
+     program_ptr == program_end, which we don't allow. */		\
+  bytecode_assert (program_ptr + _JR_jump >= program &&			\
+		   program_ptr + _JR_jump < program_end);		\
+  program_ptr += _JR_jump;						\
 } while (0)
 
 #define JUMP  JUMP_RELATIVE (PEEK_INT_2)
 #define JUMPR JUMP_RELATIVE (PEEK_INT_1)
 
-#define JUMP_NEXT  ((void) (program_ptr += 2))
-#define JUMPR_NEXT ((void) (program_ptr += 1))
+#define JUMP_NEXT  (CHECK_OPCODE_SPACE (2), (void) (program_ptr += 2))
+#define JUMPR_NEXT (CHECK_OPCODE_SPACE (1), (void) (program_ptr += 1))
+
+/*********************** The stack array *********************/
+
+/* NOTE: The stack array doesn't work quite like you'd expect.
+
+   STACK_PTR points to the value on the top of the stack.  Popping a value
+   fetches the value from the STACK_PTR and then decrements it.  Pushing a
+   value first increments it, then writes the new value.  STACK_PTR -
+   STACK_BEG is the number of elements on the stack.
+
+   This means that when STACK_PTR == STACK_BEG, the stack is empty, and
+   the space at STACK_BEG is never written to -- the first push will write
+   into the space directly after STACK_BEG.  This is why the call to
+   alloca_array() below has a count of `stack_depth + 1', and why
+   we GCPRO1 (stack_ptr[1]) -- the value at stack_ptr[0] is unused and
+   uninitialized.
+
+   Also, STACK_END actually points to the last usable storage location,
+   and does not point past the end, like you'd expect. */
+
+#define CHECK_STACKPTR_OFFSET(len) \
+  bytecode_assert (stack_ptr + (len) >= stack_beg && \
+                   stack_ptr + (len) <= stack_end)
 
 /* Push x onto the execution stack. */
-#define PUSH(x) (*++stack_ptr = (x))
+#define PUSH(x) (CHECK_STACKPTR_OFFSET (1), *++stack_ptr = (x))
 
 /* Pop a value, which may be multiple, off the execution stack. */
-#define POP_WITH_MULTIPLE_VALUES (*stack_ptr--)
+#define POP_WITH_MULTIPLE_VALUES (CHECK_STACKPTR_OFFSET (-1), *stack_ptr--)
 
 /* Pop a value off the execution stack, treating multiple values as single. */
 #define POP (IGNORE_MULTIPLE_VALUES (POP_WITH_MULTIPLE_VALUES))
 
-#define DISCARD_PRESERVING_MULTIPLE_VALUES(n) (stack_ptr -= (n))
+/* ..._UNSAFE() means it evaluates its argument more than once. */
+#define DISCARD_PRESERVING_MULTIPLE_VALUES_UNSAFE(n) \
+  (CHECK_STACKPTR_OFFSET (-(n)), stack_ptr -= (n))
 
 /* Discard n values from the execution stack.  */
 #define DISCARD(n) do {                                         \
+    int _discard_n = (n);					\
     if (1 != multiple_value_current_limit)                      \
       {                                                         \
-        int i, en = n;                                          \
-        for (i = 0; i < en; i++)                                \
+        int i;							\
+        for (i = 0; i < _discard_n; i++)			\
           {                                                     \
+	    CHECK_STACKPTR_OFFSET (-1);				\
             *stack_ptr = ignore_multiple_values (*stack_ptr);   \
             stack_ptr--;                                        \
           }                                                     \
       }                                                         \
     else                                                        \
       {                                                         \
-        stack_ptr -= (n);                                       \
+	CHECK_STACKPTR_OFFSET (-_discard_n);			\
+        stack_ptr -= _discard_n;				\
       }                                                         \
   } while (0)
 
@@ -705,6 +697,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 /* See comment before the big switch in execute_optimized_program(). */
 #define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
 
+
 /* The actual interpreter for byte code.
    This function has been seriously optimized for performance.
    Don't change the constructs unless you are willing to do
@@ -713,11 +706,18 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 
 Lisp_Object
 execute_optimized_program (const Opbyte *program,
+#ifdef ERROR_CHECK_BYTE_CODE
+			   Elemcount program_length,
+#endif
 			   int stack_depth,
 			   Lisp_Object *constants_data)
 {
   /* This function can GC */
   REGISTER const Opbyte *program_ptr = (Opbyte *) program;
+#ifdef ERROR_CHECK_BYTE_CODE
+  const Opbyte *program_end = program_ptr + program_length;
+#endif
+  /* See comment above explaining the `+ 1' */
   Lisp_Object *stack_beg = alloca_array (Lisp_Object, stack_depth + 1);
   REGISTER Lisp_Object *stack_ptr = stack_beg;
   int speccount = specpdl_depth ();
@@ -759,13 +759,22 @@ execute_optimized_program (const Opbyte *program,
      return from the interpreter do we need to finalize the struct gcpro
      itself, and that's done at case Breturn.
   */
+
+  /* See comment above explaining the `[1]' */
   GCPRO1 (stack_ptr[1]);
 
   while (1)
     {
       REGISTER Opcode opcode = (Opcode) READ_UINT_1;
 
+#ifdef ERROR_CHECK_BYTE_CODE
+      remember_operation (opcode);
+#endif
+
       GCPRO_STACK;		/* Get nvars right before maybe signaling. */
+      /* #### NOTE: This code should probably never get triggered, since we
+	 now catch the problems earlier, farther down, before we ever set
+	 a bad value for STACK_PTR. */
 #ifdef ERROR_CHECK_BYTE_CODE
       if (stack_ptr > stack_end)
 	stack_overflow ("byte code stack overflow", Qunbound);
@@ -790,7 +799,13 @@ execute_optimized_program (const Opbyte *program,
 	    {
 	      /* We're not sure what these do, so better safe than sorry. */
 	      /* GCPRO_STACK; */
-	      stack_ptr = execute_rare_opcode (stack_ptr, program_ptr, opcode);
+	      stack_ptr = execute_rare_opcode (stack_ptr,
+#ifdef ERROR_CHECK_BYTE_CODE
+					       stack_beg,
+					       stack_end,
+#endif /* ERROR_CHECK_BYTE_CODE */
+					       program_ptr, opcode);
+	      CHECK_STACKPTR_OFFSET (0);
 	    }
 	  break;
 
@@ -1438,6 +1453,10 @@ execute_optimized_program (const Opbyte *program,
    Don't make this function static, since then the compiler might inline it. */
 Lisp_Object *
 execute_rare_opcode (Lisp_Object *stack_ptr,
+#ifdef ERROR_CHECK_BYTE_CODE
+		     Lisp_Object *stack_beg,
+		     Lisp_Object *stack_end,
+#endif /* ERROR_CHECK_BYTE_CODE */
 		     const Opbyte *UNUSED (program_ptr),
 		     Opcode opcode)
 {
@@ -1445,7 +1464,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
   switch (opcode)
     {
-
+      
     case Bsave_excursion:
       record_unwind_protect (save_excursion_restore,
 			     save_excursion_save ());
@@ -1714,7 +1733,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
     case Bmultiple_value_call:
       {
         n = XINT (POP);
-        DISCARD_PRESERVING_MULTIPLE_VALUES (n - 1);
+        DISCARD_PRESERVING_MULTIPLE_VALUES_UNSAFE (n - 1);
         /* Discard multiple values for the first (function) argument: */
         TOP_LVALUE = TOP;
         TOP_LVALUE = multiple_value_call (n, TOP_ADDRESS);
@@ -1723,7 +1742,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
     case Bmultiple_value_list_internal:
       {
-        DISCARD_PRESERVING_MULTIPLE_VALUES (3);
+        DISCARD_PRESERVING_MULTIPLE_VALUES_UNSAFE (3);
         TOP_LVALUE = multiple_value_list_internal (4, TOP_ADDRESS);
         break;
       }
@@ -1741,7 +1760,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
 	Ascbyte msg[100];
 	sprintf (msg, "Unknown opcode %d", opcode);
-	abort_with_msg (msg);
+	bytecode_abort_with_message (msg);
       }
       break;
     }
@@ -1866,8 +1885,8 @@ optimize_byte_code (/* in */
 		    Lisp_Object constants,
 		    /* out */
 		    Opbyte * const program,
-		    int * const program_length,
-		    int * const varbind_count)
+		    Elemcount * const program_length,
+		    Elemcount * const varbind_count)
 {
   Bytecount instructions_length = XSTRING_LENGTH (instructions);
   Elemcount comfy_size = (Elemcount) (2 * instructions_length);
@@ -2131,8 +2150,8 @@ void
 optimize_compiled_function (Lisp_Object compiled_function)
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (compiled_function);
-  int program_length;
-  int varbind_count;
+  Elemcount program_length;
+  Elemcount varbind_count;
   Opbyte *program;
 
   {
@@ -2704,8 +2723,8 @@ If STACK-DEPTH is incorrect, Emacs may crash.
        (instructions, constants, stack_depth))
 {
   /* This function can GC */
-  int varbind_count;
-  int program_length;
+  Elemcount varbind_count;
+  Elemcount program_length;
   Opbyte *program;
 
   CHECK_STRING (instructions);
@@ -2720,6 +2739,9 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 		      &program_length, &varbind_count);
   SPECPDL_RESERVE (varbind_count);
   return execute_optimized_program (program,
+#ifdef ERROR_CHECK_BYTE_CODE
+				    program_length,
+#endif
 				    XINT (stack_depth),
 				    XVECTOR_DATA (constants));
 }
@@ -2762,7 +2784,6 @@ void
 vars_of_bytecode (void)
 {
 #ifdef BYTE_CODE_METER
-
   DEFVAR_LISP ("byte-code-meter", &Vbyte_code_meter /*
 A vector of vectors which holds a histogram of byte code usage.
 \(aref (aref byte-code-meter 0) CODE) indicates how many times the byte
@@ -2786,4 +2807,58 @@ integer, it is incremented each time that symbol's function is called.
       XVECTOR_DATA (Vbyte_code_meter)[i] = make_vector (256, Qzero);
   }
 #endif /* BYTE_CODE_METER */
+}
+
+#ifdef ERROR_CHECK_BYTE_CODE
+
+/* Initialize the opcodes in the table that correspond to a base opcode
+   plus an offset (except for Bconstant). */
+
+static void
+init_opcode_table_multi_op (Opcode op)
+{
+  Ascbyte *basename = opcode_name_table[op];
+  Ascbyte temp[300];
+  int i;
+
+  for (i = 1; i < 7; i++)
+    {
+      assert (!opcode_name_table[op + i]);
+      sprintf (temp, "%s+%d", basename, i);
+      opcode_name_table[op + i] = xstrdup (temp);
+    }
+}
+
+#endif /* ERROR_CHECK_BYTE_CODE */
+
+void
+reinit_vars_of_bytecode (void)
+{
+#ifdef ERROR_CHECK_BYTE_CODE
+  int i;
+
+#define OPCODE(sym, val) opcode_name_table[val] = xstrdup (#sym);
+#include "bytecode-ops.h"
+
+  for (i = 0; i < countof (opcode_name_table); i++)
+    {
+      int j;
+      Ascbyte *name = opcode_name_table[i];
+      if (name)
+	{
+	  Bytecount len = strlen (name);
+	  /* Prettify the name by converting underscores to hyphens, similar
+	     to what happens with DEFSYMBOL. */
+	  for (j = 0; j < len; j++)
+	    if (name[j] == '_')
+	      name[j] = '-';
+	}
+    }
+
+  init_opcode_table_multi_op (Bvarref);
+  init_opcode_table_multi_op (Bvarset);
+  init_opcode_table_multi_op (Bvarbind);
+  init_opcode_table_multi_op (Bcall);
+  init_opcode_table_multi_op (Bunbind);
+#endif /* ERROR_CHECK_BYTE_CODE */
 }

@@ -1,3 +1,97 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (Fmake_byte_code):
+	* bytecode.h:
+	* lisp.h:
+	* lread.c:
+	* lread.c (readevalloop):
+	* lread.c (Fread):
+	* lread.c (Fread_from_string):
+	* lread.c (read_list_conser):
+	* lread.c (read_list):
+	* lread.c (vars_of_lread):
+	* symbols.c:
+	* symbols.c (Fdefine_function):
+	Turn on the "compiled-function annotation hack".  Implement it
+	properly by hooking into Fdefalias().  Note in the docstring to
+	`defalias' that we do this.  Remove some old broken code and
+	change code that implemented the old kludgy way of hooking into
+	the Lisp reader into bracketed by `#ifdef
+	COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY', which is not enabled.
+
+	Also enable byte-code metering when DEBUG_XEMACS -- this is a form
+	of profiling for computing histograms of which sequences of two
+	bytecodes are used most often.
+	
+	* bytecode-ops.h:
+	* bytecode-ops.h (OPCODE):
+	New file.  Extract out all the opcodes and declare them using
+	OPCODE(), a bit like frame slots and such.  This way the file can
+	be included multiple times if necessary to iterate multiple times
+	over the byte opcodes.
+	
+	* bytecode.c:
+	* bytecode.c (NUM_REMEMBERED_BYTE_OPS):
+	* bytecode.c (OPCODE):
+	* bytecode.c (assert_failed_with_remembered_ops):
+	* bytecode.c (READ_UINT_2):
+	* bytecode.c (READ_INT_1):
+	* bytecode.c (READ_INT_2):
+	* bytecode.c (PEEK_INT_1):
+	* bytecode.c (PEEK_INT_2):
+	* bytecode.c (JUMP_RELATIVE):
+	* bytecode.c (JUMP_NEXT):
+	* bytecode.c (PUSH):
+	* bytecode.c (POP_WITH_MULTIPLE_VALUES):
+	* bytecode.c (DISCARD):
+	* bytecode.c (UNUSED):
+	* bytecode.c (optimize_byte_code):
+	* bytecode.c (optimize_compiled_function):
+	* bytecode.c (Fbyte_code):
+	* bytecode.c (vars_of_bytecode):
+	* bytecode.c (init_opcode_table_multi_op):
+	* bytecode.c (reinit_vars_of_bytecode):
+	* emacs.c (main_1):
+	* eval.c (funcall_compiled_function):
+	* symsinit.h:
+	Any time we change either the instruction pointer or the stack
+	pointer, assert that we're going to move it to a valid location.
+	This should catch failures right when they occur rather than
+	sometime later.  This requires that we pass in another couple of
+	parameters into some functions (only with error-checking enabled,
+	see below).
+
+	Also keep track, using a circular queue, of the last 100 byte
+	opcodes seen, and when we hit an assert failure during byte-code
+	execution, output the contents of the queue in a nice readable
+	fashion.  This requires that bytecode-ops.h be included a second
+	time so that a table mapping opcodes to the name of their operation
+	can be constructed.  This table is constructed in new function
+	reinit_vars_of_bytecode().
+
+	Everything in the last two paras happens only when
+	ERROR_CHECK_BYTE_CODE.
+
+	Add some longish comments describing how the arrays that hold the
+	stack and instructions, and the pointers used to access them, work.
+	
+	* gc.c:
+	Import some code from my `latest-fix' workspace to mark the
+	staticpro's in order from lowest to highest, rather than highest to
+	lowest, so it's easier to debug when something goes wrong.
+	
+	* lisp.h (abort_with_message): Renamed from abort_with_msg().
+	
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Make the various calls to staticpro() instead call staticpro_1(),
+	passing in the name of the C var being staticpro'ed, so that it
+	shows up in staticpro_names.  Otherwise staticpro_names just has
+	1000+ copies of the word `location'.
+
 2010-02-02  Ben Wing  <ben@xemacs.org>
 
 	* bytecode.c (execute_rare_opcode):

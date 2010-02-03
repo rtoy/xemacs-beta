@@ -54,6 +54,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "bytecode.h"		/* for COMPILED_FUNCTION_ANNOTATION_HACK,
+				   defined in bytecode.h and used here. */
 #include "buffer.h"		/* for Vbuffer_defaults */
 #include "console-impl.h"
 #include "elhash.h"
@@ -716,12 +718,19 @@ Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 DEFUN ("define-function", Fdefine_function, 2, 2, 0, /*
 Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 Associates the function with the current load file, if any.
+If NEWDEF is a compiled-function object, stores the function name in
+the `annotated' slot of the compiled-function (retrievable using
+`compiled-function-annotation').
 */
        (symbol, newdef))
 {
   /* This function can GC */
   Ffset (symbol, newdef);
   LOADHIST_ATTACH (Fcons (Qdefun, symbol));
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+  if (COMPILED_FUNCTIONP (newdef))
+    XCOMPILED_FUNCTION (newdef)->annotated = symbol;
+#endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
   return newdef;
 }
 
@@ -3553,9 +3562,9 @@ defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
       temp[i] = '-';
   *location = Fintern (make_string ((const Ibyte *) temp, len), Qnil);
   if (dump_p)
-    staticpro (location);
+    staticpro_1 (location, name);
   else
-    staticpro_nodump (location);
+    staticpro_nodump_1 (location, name);
 }
 
 void
@@ -3589,7 +3598,7 @@ defsymbol_nodump (Lisp_Object *location, const char *name)
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
-  staticpro_nodump (location);
+  staticpro_nodump_1 (location, name);
 }
 
 void
@@ -3598,7 +3607,7 @@ defsymbol (Lisp_Object *location, const char *name)
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
-  staticpro (location);
+  staticpro_1 (location, name);
 }
 
 void
