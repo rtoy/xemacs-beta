@@ -1253,7 +1253,8 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
-#define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+#define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
+#define abort_with_message(msg) assert_failed (__FILE__, __LINE__, msg)
 
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
@@ -4415,6 +4416,7 @@ EXFUN (Fprefix_numeric_value, 1);
 
 /* Defined in casefiddle.c */
 EXFUN (Fdowncase, 2);
+EXFUN (Fcanoncase, 2);
 EXFUN (Fupcase, 2);
 EXFUN (Fupcase_initials, 2);
 EXFUN (Fupcase_initials_region, 3);
@@ -5074,6 +5076,8 @@ EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
 MODULE_API EXFUN (Fequal, 2);
 MODULE_API EXFUN (Fget, 3);
+MODULE_API EXFUN (Feqlsign, MANY);
+MODULE_API EXFUN (Fequalp, 2);
 EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
@@ -5119,7 +5123,7 @@ Lisp_Object remassoc_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object remassq_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object remrassq_no_quit (Lisp_Object, Lisp_Object);
 
-int plists_differ (Lisp_Object, Lisp_Object, int, int, int);
+int plists_differ (Lisp_Object, Lisp_Object, int, int, int, int);
 Lisp_Object internal_plist_get (Lisp_Object, Lisp_Object);
 void internal_plist_put (Lisp_Object *, Lisp_Object, Lisp_Object);
 int internal_remprop (Lisp_Object *, Lisp_Object);
@@ -5137,12 +5141,14 @@ int internal_equal_trapping_problems (Lisp_Object warning_class,
 				      int depth);
 int internal_equal (Lisp_Object, Lisp_Object, int);
 int internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth);
+int internal_equal_0 (Lisp_Object, Lisp_Object, int, int);
 Lisp_Object concat2 (Lisp_Object, Lisp_Object);
 Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
 Lisp_Object vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object nconc2 (Lisp_Object, Lisp_Object);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
+int bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2);
 void check_losing_bytecode (const char *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
@@ -5804,7 +5810,7 @@ int qxestrcasecmp (const Ibyte *s1, const Ibyte *s2);
 int qxestrcasecmp_ascii (const Ibyte *s1, const Ascbyte *s2);
 int qxestrcasecmp_i18n (const Ibyte *s1, const Ibyte *s2);
 int ascii_strcasecmp (const Ascbyte *s1, const Ascbyte *s2);
-int lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2);
+int lisp_strcasecmp_ascii (Lisp_Object s1, Lisp_Object s2);
 int lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2);
 int qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
 int qxestrncasecmp_ascii (const Ibyte *s1, const Ascbyte *s2,
@@ -6030,7 +6036,7 @@ extern Lisp_Object Vcommand_history;
 extern Lisp_Object Vcommand_line_args, Vconfigure_info_directory;
 extern Lisp_Object Vconfigure_site_directory, Vconfigure_site_module_directory;
 extern Lisp_Object Vconsole_list, Vcontrolling_terminal;
-extern Lisp_Object Vcurrent_compiled_function_annotation, Vcurrent_load_list;
+extern Lisp_Object Vcurrent_load_list;
 extern Lisp_Object Vcurrent_mouse_event, Vcurrent_prefix_arg, Vdata_directory;
 extern Lisp_Object Vdirectory_sep_char, Vdisabled_command_hook;
 extern Lisp_Object Vdoc_directory, Vinternal_doc_file_name;

@@ -100,130 +100,130 @@ TYPE is a Common Lisp type specifier."
 	(t (error "Can't coerce %s to type %s" x type))))
 
 
-;;; Predicates.
-
-;; I'd actually prefer not to have this inline, the space
-;; vs. amount-it's-called trade-off isn't reasonable, but that would
-;; introduce bytecode problems with the compiler macro in cl-macs.el.
-(defsubst cl-string-vector-equalp (cl-string cl-vector)
-  "Helper function for `equalp', which see."
-;  (check-argument-type #'stringp cl-string)
-;  (check-argument-type #'vector cl-vector)
-  (let ((cl-i (length cl-string))
-	cl-char cl-other)
-    (when (= cl-i (length cl-vector))
-      (while (and (>= (setq cl-i (1- cl-i)) 0)
-		  (or (eq (setq cl-char (aref cl-string cl-i))
-			  (setq cl-other (aref cl-vector cl-i)))
-		      (and (characterp cl-other) ; Note we want to call this
-						 ; as rarely as possible, it
-						 ; doesn't have a bytecode.
-			   (eq (downcase cl-char) (downcase cl-other))))))
-      (< cl-i 0))))
-
-;; See comment on cl-string-vector-equalp above.
-(defsubst cl-bit-vector-vector-equalp (cl-bit-vector cl-vector)
-  "Helper function for `equalp', which see."
-;  (check-argument-type #'bit-vector-p cl-bit-vector)
-;  (check-argument-type #'vectorp cl-vector)
-  (let ((cl-i (length cl-bit-vector))
-	cl-other)
-    (when (= cl-i (length cl-vector))
-      (while (and (>= (setq cl-i (1- cl-i)) 0)
-		  (numberp (setq cl-other (aref cl-vector cl-i)))
-		  ;; Differs from clisp here.
-		  (= (aref cl-bit-vector cl-i) cl-other)))
-      (< cl-i 0))))
-
-;; These two helper functions call equalp recursively, the two above have no
-;; need to.
-(defsubst cl-vector-array-equalp (cl-vector cl-array)
-  "Helper function for `equalp', which see."
-;  (check-argument-type #'vector cl-vector)
-;  (check-argument-type #'arrayp cl-array)
-  (let ((cl-i (length cl-vector)))
-    (when (= cl-i (length cl-array))
-      (while (and (>= (setq cl-i (1- cl-i)) 0)
-		  (equalp (aref cl-vector cl-i) (aref cl-array cl-i))))
-      (< cl-i 0))))
-
-(defsubst cl-hash-table-contents-equalp (cl-hash-table-1 cl-hash-table-2)
-  "Helper function for `equalp', which see."
-  (symbol-macrolet
-      ;; If someone has gone and fished the uninterned symbol out of this
-      ;; function's constants vector, and subsequently stored it as a value
-      ;; in a hash table, it's their own damn fault when
-      ;; `cl-hash-table-contents-equalp' gives the wrong answer.
-      ((equalp-default '#:equalp-default))
-    (loop
-      for x-key being the hash-key in cl-hash-table-1
-      using (hash-value x-value)
-      with y-value = nil
-      always (and (not (eq equalp-default
-			   (setq y-value (gethash x-key cl-hash-table-2
-						  equalp-default))))
-		  (equalp y-value x-value)))))
-
-(defun equalp (x y)
-  "Return t if two Lisp objects have similar structures and contents.
-
-This is like `equal', except that it accepts numerically equal
-numbers of different types (float, integer, bignum, bigfloat), and also
-compares strings and characters case-insensitively.
-
-Arrays (that is, strings, bit-vectors, and vectors) of the same length and
-with contents that are `equalp' are themselves `equalp'.
-
-Two hash tables are `equalp' if they have the same test (see
-`hash-table-test'), if they have the same number of entries, and if, for
-each entry in one hash table, its key is equivalent to a key in the other
-hash table using the hash table test, and its value is `equalp' to the other
-hash table's value for that key."
-  (cond ((eq x y))
-	((stringp x)
-	 (if (stringp y)
-	     (eq t (compare-strings x nil nil y nil nil t))
-	   (if (vectorp y)
-	       (cl-string-vector-equalp x y)
-	     ;; bit-vectors and strings are only equalp if they're
-	     ;; zero-length:
-	     (and (equal "" x) (equal #* y)))))
-	((numberp x)
-	 (and (numberp y) (= x y)))
-	((consp x)
-	 (while (and (consp x) (consp y) (equalp (car x) (car y)))
-	   (setq x (cdr x) y (cdr y)))
-	 (and (not (consp x)) (equalp x y)))
-	(t
-	 ;; From here on, the type tests don't (yet) have bytecodes.
-	 (let ((x-type (type-of x)))
-	   (cond ((eq 'vector x-type)
-		  (if (stringp y)
-		      (cl-string-vector-equalp y x)
-		    (if (vectorp y)
-			(cl-vector-array-equalp x y)
-		      (if (bit-vector-p y)
-			  (cl-bit-vector-vector-equalp y x)))))
-		 ((eq 'character x-type)
-		  (and (characterp y)
-		       ;; If the characters are actually identical, the
-		       ;; first eq test will have caught them above; we only
-		       ;; need to check them case-insensitively here.
-		       (eq (downcase x) (downcase y))))
-		 ((eq 'hash-table x-type)
-		  (and (hash-table-p y)
-		       (eq (hash-table-test x) (hash-table-test y))
-		       (= (hash-table-count x) (hash-table-count y))
-		       (cl-hash-table-contents-equalp x y)))
-		 ((eq 'bit-vector x-type)
-		  (if (bit-vector-p y)
-		      (equal x y)
-		    (if (vectorp y)
-			(cl-bit-vector-vector-equalp x y)
-		      ;; bit-vectors and strings are only equalp if they're
-		      ;; zero-length:
-		      (and (equal "" y) (equal #* x)))))
-		 (t (equal x y)))))))
+;;;;; Predicates.
+;;
+;;;; I'd actually prefer not to have this inline, the space
+;;;; vs. amount-it's-called trade-off isn't reasonable, but that would
+;;;; introduce bytecode problems with the compiler macro in cl-macs.el.
+;;(defsubst cl-string-vector-equalp (cl-string cl-vector)
+;;  "Helper function for `equalp', which see."
+;;;  (check-argument-type #'stringp cl-string)
+;;;  (check-argument-type #'vector cl-vector)
+;;  (let ((cl-i (length cl-string))
+;;	cl-char cl-other)
+;;    (when (= cl-i (length cl-vector))
+;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
+;;		  (or (eq (setq cl-char (aref cl-string cl-i))
+;;			  (setq cl-other (aref cl-vector cl-i)))
+;;		      (and (characterp cl-other) ; Note we want to call this
+;;						 ; as rarely as possible, it
+;;						 ; doesn't have a bytecode.
+;;			   (eq (downcase cl-char) (downcase cl-other))))))
+;;      (< cl-i 0))))
+;;
+;;;; See comment on cl-string-vector-equalp above.
+;;(defsubst cl-bit-vector-vector-equalp (cl-bit-vector cl-vector)
+;;  "Helper function for `equalp', which see."
+;;;  (check-argument-type #'bit-vector-p cl-bit-vector)
+;;;  (check-argument-type #'vectorp cl-vector)
+;;  (let ((cl-i (length cl-bit-vector))
+;;	cl-other)
+;;    (when (= cl-i (length cl-vector))
+;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
+;;		  (numberp (setq cl-other (aref cl-vector cl-i)))
+;;		  ;; Differs from clisp here.
+;;		  (= (aref cl-bit-vector cl-i) cl-other)))
+;;      (< cl-i 0))))
+;;
+;;;; These two helper functions call equalp recursively, the two above have no
+;;;; need to.
+;;(defsubst cl-vector-array-equalp (cl-vector cl-array)
+;;  "Helper function for `equalp', which see."
+;;;  (check-argument-type #'vector cl-vector)
+;;;  (check-argument-type #'arrayp cl-array)
+;;  (let ((cl-i (length cl-vector)))
+;;    (when (= cl-i (length cl-array))
+;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
+;;		  (equalp (aref cl-vector cl-i) (aref cl-array cl-i))))
+;;      (< cl-i 0))))
+;;
+;;(defsubst cl-hash-table-contents-equalp (cl-hash-table-1 cl-hash-table-2)
+;;  "Helper function for `equalp', which see."
+;;  (symbol-macrolet
+;;      ;; If someone has gone and fished the uninterned symbol out of this
+;;      ;; function's constants vector, and subsequently stored it as a value
+;;      ;; in a hash table, it's their own damn fault when
+;;      ;; `cl-hash-table-contents-equalp' gives the wrong answer.
+;;      ((equalp-default '#:equalp-default))
+;;    (loop
+;;      for x-key being the hash-key in cl-hash-table-1
+;;      using (hash-value x-value)
+;;      with y-value = nil
+;;      always (and (not (eq equalp-default
+;;			   (setq y-value (gethash x-key cl-hash-table-2
+;;						  equalp-default))))
+;;		  (equalp y-value x-value)))))
+;;
+;;(defun equalp (x y)
+;;  "Return t if two Lisp objects have similar structures and contents.
+;;
+;;This is like `equal', except that it accepts numerically equal
+;;numbers of different types (float, integer, bignum, bigfloat), and also
+;;compares strings and characters case-insensitively.
+;;
+;;Arrays (that is, strings, bit-vectors, and vectors) of the same length and
+;;with contents that are `equalp' are themselves `equalp'.
+;;
+;;Two hash tables are `equalp' if they have the same test (see
+;;`hash-table-test'), if they have the same number of entries, and if, for
+;;each entry in one hash table, its key is equivalent to a key in the other
+;;hash table using the hash table test, and its value is `equalp' to the other
+;;hash table's value for that key."
+;;  (cond ((eq x y))
+;;	((stringp x)
+;;	 (if (stringp y)
+;;	     (eq t (compare-strings x nil nil y nil nil t))
+;;	   (if (vectorp y)
+;;	       (cl-string-vector-equalp x y)
+;;	     ;; bit-vectors and strings are only equalp if they're
+;;	     ;; zero-length:
+;;	     (and (equal "" x) (equal #* y)))))
+;;	((numberp x)
+;;	 (and (numberp y) (= x y)))
+;;	((consp x)
+;;	 (while (and (consp x) (consp y) (equalp (car x) (car y)))
+;;	   (setq x (cdr x) y (cdr y)))
+;;	 (and (not (consp x)) (equalp x y)))
+;;	(t
+;;	 ;; From here on, the type tests don't (yet) have bytecodes.
+;;	 (let ((x-type (type-of x)))
+;;	   (cond ((eq 'vector x-type)
+;;		  (if (stringp y)
+;;		      (cl-string-vector-equalp y x)
+;;		    (if (vectorp y)
+;;			(cl-vector-array-equalp x y)
+;;		      (if (bit-vector-p y)
+;;			  (cl-bit-vector-vector-equalp y x)))))
+;;		 ((eq 'character x-type)
+;;		  (and (characterp y)
+;;		       ;; If the characters are actually identical, the
+;;		       ;; first eq test will have caught them above; we only
+;;		       ;; need to check them case-insensitively here.
+;;		       (eq (downcase x) (downcase y))))
+;;		 ((eq 'hash-table x-type)
+;;		  (and (hash-table-p y)
+;;		       (eq (hash-table-test x) (hash-table-test y))
+;;		       (= (hash-table-count x) (hash-table-count y))
+;;		       (cl-hash-table-contents-equalp x y)))
+;;		 ((eq 'bit-vector x-type)
+;;		  (if (bit-vector-p y)
+;;		      (equal x y)
+;;		    (if (vectorp y)
+;;			(cl-bit-vector-vector-equalp x y)
+;;		      ;; bit-vectors and strings are only equalp if they're
+;;		      ;; zero-length:
+;;		      (and (equal "" y) (equal #* x)))))
+;;		 (t (equal x y)))))))
 
 ;; XEmacs; #'map, #'mapc, #'mapl, #'maplist, #'mapcon are now in C, together
 ;; with #'map-into, which was never in this file.

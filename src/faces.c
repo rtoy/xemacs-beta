@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -148,7 +148,8 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
    This isn't concerned with "unspecified" attributes, that's what
    #'face-differs-from-default-p is for. */
 static int
-face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+	    int UNUSED (foldcase))
 {
   Lisp_Face *f1 = XFACE (obj1);
   Lisp_Face *f2 = XFACE (obj2);
@@ -168,7 +169,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
      internal_equal (f1->blinking,	     f2->blinking,	    depth) &&
      internal_equal (f1->reverse,	     f2->reverse,	    depth) &&
 
-     ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1));
+     ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1, 0));
 }
 
 static Hashcode
@@ -2271,12 +2272,12 @@ complex_vars_of_faces (void)
     Lisp_Object device_symbol = Qx;
 #endif
 
-#if defined (USE_XFT) || defined (MULE)
+#if defined (HAVE_XFT) || defined (MULE)
     const Ascbyte **fontptr;
 
     const Ascbyte *fonts[] =
     {
-#ifdef USE_XFT
+#ifdef HAVE_XFT
       /************** Xft fonts *************/
 
       /* Note that fontconfig can search for several font families in one
@@ -2301,7 +2302,7 @@ complex_vars_of_faces (void)
       "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
 #endif
     };
-#endif /* defined (USE_XFT) || defined (MULE) */
+#endif /* defined (HAVE_XFT) || defined (MULE) */
 
 #ifdef MULE
 
@@ -2332,13 +2333,13 @@ complex_vars_of_faces (void)
 
 #endif /* MULE */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list1 (device_symbol),
 				build_string (*fontptr)),
 			 inst_list);
 
-#else /* !USE_XFT */
+#else /* !HAVE_XFT */
     inst_list =
       Fcons
       (Fcons
@@ -2419,7 +2420,7 @@ complex_vars_of_faces (void)
 	build_string ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
        inst_list);
 
-#endif /* !USE_XFT */
+#endif /* !HAVE_XFT */
 
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 

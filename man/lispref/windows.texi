@@ -443,7 +443,7 @@ The return value is @var{window}.
 @end defun
 
 @defspec save-selected-window forms@dots{}
-This special form records the selected window, executes @var{forms} in
+This macro records the selected window, executes @var{forms} in
 sequence, then restores the earlier selected window.  It does not save
 or restore anything about the sizes, arrangement or contents of windows;
 therefore, if the @var{forms} change them, the changes are permanent.
@@ -1955,7 +1955,7 @@ as @code{save-window-excursion}:
 @end defun
 
 @defspec save-window-excursion forms@dots{}
-This special form records the window configuration, executes @var{forms}
+This macro records the window configuration, executes @var{forms}
 in sequence, then restores the earlier window configuration.  The window
 configuration includes the value of point and the portion of the buffer
 that is visible.  It also includes the choice of selected window.

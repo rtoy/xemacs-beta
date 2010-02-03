@@ -152,7 +152,7 @@ static XtResource resources[] = {
        selectInsensitive,  XtRImmediate, True),
   res (XtNfont, XtCFont, XtRFontStruct, XFontStruct *, 
        font,  XtRString, XtDefaultFont),
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
   /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here?
      or XtDefaultFont? */
   res (XtNfcFontName, XtCFcFontName, XtRString, String,
@@ -430,7 +430,7 @@ WidgetClass tabsWidgetClass = (WidgetClass)&tabsClassRec;
 
 static int debug_tabs = 0;	/* increase for more verbosity */
 
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 /* #### duplicated from xlwmenu.c -- CLEAN THIS SHIT UP!
    Undeclared so define at top. */
 #define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \
@@ -484,7 +484,7 @@ TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
      */
     newTw->tabs.tab_height = 2 * newTw->tabs.internalHeight + SHADWID ;
 
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
     /* #### kludge for name change */
     if (!newTw->tabs.fcFontName)
       newTw->tabs.fcFontName = newTw->tabs.xftFontName;
@@ -501,11 +501,11 @@ TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
       newTw->tabs.tab_height += newTw->tabs.renderFont->ascent +
 				newTw->tabs.renderFont->descent;
 #endif /* XFT_USE_HEIGHT_NOT_ASCENT_DESCENT */
-#else  /* ! USE_XFT_TABS */
+#else  /* ! HAVE_XFT_TABS */
     if (newTw->tabs.font != NULL)
       newTw->tabs.tab_height += newTw->tabs.font->max_bounds.ascent +
 				newTw->tabs.font->max_bounds.descent;
-#endif /* ! USE_XFT_TABS */
+#endif /* ! HAVE_XFT_TABS */
 
     /* if size not explicitly set, set it to our preferred size now. */
 
@@ -579,9 +579,9 @@ static	void
 TabsDestroy(Widget w)
 {
 	TabsWidget tw = (TabsWidget) w;
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	XftFontClose (XtDisplay (w), tw->tabs.renderFont);
-#endif /* ! USE_XFT_TABS */
+#endif /* ! HAVE_XFT_TABS */
 	TabsFreeGCs (tw) ;
 }
 
@@ -684,7 +684,7 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 	int	i ;
 
 	if(
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
             tw->tabs.renderFont != curtw->tabs.renderFont  ||
 #else
 	    tw->tabs.font != curtw->tabs.font  ||
@@ -694,7 +694,7 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 	{
 	  tw->tabs.tab_height = 2 * tw->tabs.internalHeight + SHADWID;
 
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	  if (tw->tabs.renderFont != NULL)
 #if XFT_USE_HEIGHT_NOT_ASCENT_DESCENT
 	    tw->tabs.tab_height += tw->tabs.renderFont->height;
@@ -702,11 +702,11 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 	    tw->tabs.tab_height += tw->tabs.renderFont->ascent +
 				   tw->tabs.renderFont->descent;
 #endif /* XFT_USE_HEIGHT_NOT_ASCENT_DESCENT */
-#else  /* ! USE_XFT_TABS */
+#else  /* ! HAVE_XFT_TABS */
 	  if (tw->tabs.font != NULL)
 	    tw->tabs.tab_height += tw->tabs.font->max_bounds.ascent +
 				   tw->tabs.font->max_bounds.descent;
-#endif /* ! USE_XFT_TABS */
+#endif /* ! HAVE_XFT_TABS */
 
 	  /* Tab size has changed.  Resize all tabs and request a new size */
 	  for(i=0, childP=tw->composite.children;
@@ -723,7 +723,7 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 
 	if( tw->core.background_pixel != curtw->core.background_pixel ||
 	    tw->core.background_pixmap != curtw->core.background_pixmap ||
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	    tw->tabs.renderFont != curtw->tabs.renderFont
 #else
 	    tw->tabs.font != curtw->tabs.font
@@ -1644,7 +1644,7 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	  Window	win = XtWindow((Widget)tw) ;
 	  String	lbl = tab->tabs.label != NULL ?
 			      tab->tabs.label : XtName(child) ;
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	  XftColor color;
 	  XftColor colorBG;
 	  Colormap cmap = tw->core.colormap;
@@ -1662,7 +1662,7 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	  if (XtIsSensitive(child))
 	  {
 	    gc = tw->tabs.foregroundGC;
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	    color = xft_convert_color (dpy, cmap, visual,
 				       tab->tabs.foreground, 0);
 #else
@@ -1684,7 +1684,7 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	      tab->tabs.greyAlloc = True;
 	    }
 	    gc = tw->tabs.greyGC;
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	    color = xft_convert_color (dpy, cmap, visual, tab->tabs.grey, 0);
 #else
 	    XSetForeground(dpy, gc, tab->tabs.grey);
@@ -1709,14 +1709,14 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	  }
 
 	  if (lbl != NULL &&
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	      tw->tabs.renderFont != NULL
 #else
 	      tw->tabs.font != NULL
 #endif
 	      )
 	    {
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	      XftDraw *xftDraw = XftDrawCreate (dpy, win, visual, cmap);
 	      XftFont *renderFont = tw->tabs.renderFont;
 	      XGlyphInfo glyphinfo;
@@ -1984,7 +1984,7 @@ TabWidth(Widget w)
 	TabsWidget	tw = (TabsWidget)XtParent(w) ;
 	String		lbl = tab->tabs.label != NULL ?
 				tab->tabs.label : XtName(w);
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	XftFont		*font = tw->tabs.renderFont;
 #else
 	XFontStruct	*font = tw->tabs.font;
@@ -2003,7 +2003,7 @@ TabWidth(Widget w)
 
 	if( lbl != NULL && font != NULL )
 	{
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	  tab->tabs.width += x_xft_text_width (XtDisplay(tw), font,
 					       (FcChar8 *) lbl,
 					       (int)strlen(lbl)) + iw;
@@ -2444,7 +2444,7 @@ TabsAllocFgGC(TabsWidget tw)
 
 	values.background = tw->core.background_pixel;
 	values.font =
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	  None;
 #else
 	  tw->tabs.font->fid;
@@ -2454,13 +2454,13 @@ TabsAllocFgGC(TabsWidget tw)
 
 	tw->tabs.foregroundGC =
 	  XtAllocateGC(w, w->core.depth,
-#ifndef USE_XFT_TABS
+#ifndef HAVE_XFT_TABS
 		       GCFont|
 #endif
 		       GCBackground|GCLineStyle,
 		       &values,
 		       GCForeground,
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 		       GCFont|
 #endif
 		       GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
@@ -2475,7 +2475,7 @@ TabsAllocGreyGC(TabsWidget tw)
 
 	values.background = tw->core.background_pixel;
 	values.font =
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	  None;
 #else
 	  tw->tabs.font->fid;
@@ -2488,12 +2488,12 @@ TabsAllocGreyGC(TabsWidget tw)
 
 	  tw->tabs.greyGC =
 	    XtAllocateGC(w, w->core.depth,
-#ifndef USE_XFT_TABS
+#ifndef HAVE_XFT_TABS
 	      GCFont|
 #endif
 	      GCBackground|GCStipple|GCFillStyle, &values,
 	      GCForeground,
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	      GCFont|
 #endif
 	      GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
@@ -2503,14 +2503,14 @@ TabsAllocGreyGC(TabsWidget tw)
 	{
 	  tw->tabs.greyGC =
 	    XtAllocateGC(w, w->core.depth,
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	      0L,
 #else
 	      GCFont,
 #endif
 	      &values,
 	      GCForeground,
-#ifdef USE_XFT_TABS
+#ifdef HAVE_XFT_TABS
 	      GCFont|
 #endif
 	      GCBackground|GCSubwindowMode|GCGraphicsExposures|GCDashOffset|

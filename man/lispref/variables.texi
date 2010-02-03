@@ -128,7 +128,7 @@ called @dfn{local variables}.
 
   For example, when a function is called, its argument variables receive
 new local values that last until the function exits.  The @code{let}
-special form explicitly establishes new local values for specified
+special operator explicitly establishes new local values for specified
 variables; these last until exit from the @code{let} form.
 
 @cindex shadowing of variables
@@ -144,7 +144,7 @@ previous local values that are shadowed.  To model this behavior, we
 speak of a @dfn{local binding} of the variable as well as a local value.
 
   The local binding is a conceptual place that holds a local value.
-Entry to a function, or a special form such as @code{let}, creates the
+Entry to a function, or a special operator such as @code{let}, creates the
 local binding; exit from the function or from the @code{let} removes the
 local binding.  As long as the local binding lasts, the variable's value
 is stored within it.  Use of @code{setq} or @code{set} while there is a
@@ -165,11 +165,11 @@ current binding the @dfn{most-local existing binding}, for emphasis.
 Ordinary evaluation of a symbol always returns the value of its current
 binding.
 
-  The special forms @code{let} and @code{let*} exist to create
+  The special operators @code{let} and @code{let*} exist to create
 local bindings.
 
 @defspec let (bindings@dots{}) forms@dots{}
-This special form binds variables according to @var{bindings} and then
+This special operator binds variables according to @var{bindings} and then
 evaluates all of the @var{forms} in textual order.  The @code{let}-form
 returns the value of the last form in @var{forms}.
 
@@ -199,7 +199,7 @@ which is 2, not the new value, 1.
 @end defspec
 
 @defspec let* (bindings@dots{}) forms@dots{}
-This special form is like @code{let}, but it binds each variable right
+This special operator is like @code{let}, but it binds each variable right
 after computing its local value, before computing the local value for
 the next variable.  Therefore, an expression in @var{bindings} can
 reasonably refer to the preceding symbols bound in this @code{let*}
@@ -376,7 +376,7 @@ more precisely, if its current binding is not void.  It returns
 @cindex variable definition
 
   You may announce your intention to use a symbol as a global variable
-with a @dfn{variable definition}: a special form, either @code{defconst}
+with a @dfn{variable definition}: a special operator, either @code{defconst}
 or @code{defvar}.
 
   In XEmacs Lisp, definitions serve three purposes.  First, they inform
@@ -404,7 +404,7 @@ files, and override the default values given in the definitions.  For
 this reason, user options must be defined with @code{defvar}.
 
 @defspec defvar symbol [value [doc-string]]
-This special form defines @var{symbol} as a value and initializes it.
+This special operator defines @var{symbol} as a value and initializes it.
 The definition informs a person reading your code that @var{symbol} is
 used as a variable that programs are likely to set or change.  It is
 also used for all user option variables except in the preloaded parts of
@@ -475,7 +475,7 @@ bar
 @end group
 @end example
 
-Here is an equivalent expression for the @code{defvar} special form:
+Here is an equivalent expression for the @code{defvar} special operator:
 
 @example
 @group
@@ -494,7 +494,7 @@ at top level in a file where its value does not matter.
 @end defspec
 
 @defspec defconst symbol [value [doc-string]]
-This special form defines @var{symbol} as a value and initializes it.
+This special operator defines @var{symbol} as a value and initializes it.
 It informs a person reading your code that @var{symbol} has a global
 value, established here, that will not normally be changed or locally
 bound by the execution of the program.  The user, however, may be
@@ -553,7 +553,7 @@ the argument to @code{interactive}.
   @strong{Warning:} If the @code{defconst} and @code{defvar} special
 forms are used while the variable has a local binding, they set the
 local binding's value; the global binding is not changed.  This is not
-what we really want.  To prevent it, use these special forms at top
+what we really want.  To prevent it, use these special operators at top
 level in a file, where normally no local binding is in effect, and make
 sure to load the file before making a local binding for the variable.
 
@@ -616,7 +616,7 @@ form @code{setq}.  When you need to compute the choice of variable at
 run time, use the function @code{set}.
 
 @defspec setq [symbol form]@dots{}
-This special form is the most common method of changing a variable's
+This special operator is the most common method of changing a variable's
 value.  Each @var{symbol} is given a new value, which is the result of
 evaluating the corresponding @var{form}.  The most-local existing
 binding of the symbol is changed.
@@ -1232,7 +1232,7 @@ you are in a C or Lisp mode buffer that has a buffer-local value for
 this variable.
 
 @c Emacs 19 feature
-  The special forms @code{defvar} and @code{defconst} also set the
+  The special operators @code{defvar} and @code{defconst} also set the
 default value (if they set the variable at all), rather than any local
 value.
 

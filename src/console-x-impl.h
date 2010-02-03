@@ -316,7 +316,7 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
   /* The Xft Drawable wrapper for this device.
      #### Should this be per-device, or per-frame? */
   /* This is persistent to take advantage of the ability of Xft's glyph
@@ -386,7 +386,7 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 #define FRAME_X_XFTDRAW(f)   (FRAME_X_DATA (f)->xftDraw)
 #endif
 

@@ -28,7 +28,8 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "syntax.h"
 
-enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
+enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP,
+                  CASE_CANONICALIZE};
 
 static Lisp_Object
 casify_object (enum case_action flag, Lisp_Object string_or_char,
@@ -43,7 +44,19 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
       Ichar c;
       CHECK_CHAR_COERCE_INT (string_or_char);
       c = XCHAR (string_or_char);
-      c = (flag == CASE_DOWN) ? DOWNCASE (buf, c) : UPCASE (buf, c);
+      if (flag == CASE_DOWN)
+	{
+	  c = DOWNCASE (buf, c);
+	}
+      else if (flag == CASE_UP)
+	{
+	  c = UPCASE (buf, c);
+	}
+      else
+	{
+	  c = CANONCASE (buf, c);
+	}
+
       return make_char (c);
     }
 
@@ -67,6 +80,9 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 	      break;
 	    case CASE_DOWN:
 	      c = DOWNCASE (buf, c);
+	      break;
+	    case CASE_CANONICALIZE:
+	      c = CANONCASE (buf, c);
 	      break;
 	    case CASE_CAPITALIZE:
 	    case CASE_CAPITALIZE_UP:
@@ -117,6 +133,23 @@ Optional second arg BUFFER specifies which buffer's case tables to use,
        (string_or_char, buffer))
 {
   return casify_object (CASE_DOWN, string_or_char, buffer);
+}
+
+DEFUN ("canoncase", Fcanoncase, 1, 2, 0, /*
+Convert STRING-OR-CHAR to its canonical lowercase form and return that.
+
+STRING-OR-CHAR may be a character or string.  The result has the same type.
+STRING-OR-CHAR is not altered--the value is a copy.
+
+Optional second arg BUFFER specifies which buffer's case tables to use,
+and defaults to the current buffer.
+
+For any N characters that are equivalent in case-insensitive searching,
+their canonical lowercase character will be the same.
+*/
+       (string_or_char, buffer))
+{
+  return casify_object (CASE_CANONICALIZE, string_or_char, buffer);
 }
 
 DEFUN ("capitalize", Fcapitalize, 1, 2, 0, /*
@@ -331,6 +364,7 @@ syms_of_casefiddle (void)
 {
   DEFSUBR (Fupcase);
   DEFSUBR (Fdowncase);
+  DEFSUBR (Fcanoncase);
   DEFSUBR (Fcapitalize);
   DEFSUBR (Fupcase_initials);
   DEFSUBR (Fupcase_region);

@@ -46,7 +46,7 @@
 This is a file name, or nil if the source was a buffer with no associated file.
 
 If TYPE is nil or omitted, any kind of definition is acceptable.
-If TYPE is `defun', then function, subr, special form or macro definitions
+If TYPE is `defun', then function, subr, special operator or macro definitions
 are acceptable.
 If TYPE is `defvar', then variable definitions are acceptable.
 
@@ -90,7 +90,10 @@ with `defface' and `custom-declare-face'."
         ;; This is a bit heuristic, but shouldn't realistically be a
         ;; problem:
         (if (string-match "\.elc?$" built-in-file)
-            (concat lisp-directory built-in-file)
+            (concat (if (file-readable-p source-lisp)
+			source-lisp
+		      lisp-directory)
+		    built-in-file)
           (concat source-directory "/src/" built-in-file))))))
 
 (defun feature-symbols (feature)

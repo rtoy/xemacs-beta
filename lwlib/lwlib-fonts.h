@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* get headers */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 #define _XFT_NO_COMPAT_
 /* shut up GCC */
 #define face_index face_index_arg
@@ -41,11 +41,11 @@ Boston, MA 02111-1307, USA.  */
 #if XFT_MAJOR < 2
 #error Xft versions < 2 not supported
 #endif
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 /* Xt name macros */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 #ifndef XtNxftFont
 #define XtNxftFont "xftFont"
 #define XtCXftFont "XftFont"
@@ -54,16 +54,16 @@ Boston, MA 02111-1307, USA.  */
 #define XtNfcFontName "fcFontName"
 #define XtCFcFontName "FcFontName"
 #endif
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 /* code 'n' stuff */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 #define FCSTRLEN 512
 
 /* non-Lisp prototypes */
 /* #### change this back to _open_name */
 XftFont *xft_open_font_by_name (Display *dpy, char *name);
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 #endif /* INCLUDED_lwlib_fonts_h_ */

@@ -1,4 +1,6 @@
-/* Copyright (C) 1997 Free Software Foundation, Inc.
+/* Basic wrapper file around gdk/gdkx.h.
+
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -14,13 +16,21 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St. - Fifth Floor,
-Boston, MA 02110-1301, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
-#ifdef INCLUDE_DUMP
-101    DUMP      "xemacs.dmp"
-#endif
+/* Synched up with: Not in FSF. */
 
-XEmacs ICON PRELOAD "xemacs.ico"
-XEmacsFile ICON "File.ico"
-XEmacsLisp ICON "Lisp.ico"
+/* Authorship:
+
+   Ben Wing, 1-28-10 extracted out of console-gtk.h and various other
+   files.  We have a separate file rather than just putting it together
+   with sysgtk.h because Bill wanted to keep the X-specific stuff isolated.
+*/
+
+#ifndef INCLUDED_sysgdkx_h_
+#define INCLUDED_sysgdkx_h_
+
+#include <gdk/gdkx.h>
+
+#endif /* INCLUDED_sysgdkx_h_ */

@@ -680,7 +680,7 @@ certain top-level forms, like @code{defmacro} (sort-of) and
 (compile load eval) @dots{})}.
 @end defspec
 
-Emacs 19 includes two special forms related to @code{eval-when}.
+Emacs 19 includes two special operators related to @code{eval-when}.
 One of these, @code{eval-when-compile}, is not quite equivalent to
 any @code{eval-when} construct and is described below.  This package
 defines a version of @code{eval-when-compile} for the benefit of
@@ -990,7 +990,7 @@ The @code{psetq} form is just like @code{setq}, except that multiple
 assignments are done in parallel rather than sequentially.
 
 @defspec psetq [symbol form]@dots{}
-This special form (actually a macro) is used to assign to several
+This macro is used to assign to several
 variables simultaneously.  Given only one @var{symbol} and @var{form},
 it has the same effect as @code{setq}.  Given several @var{symbol}
 and @var{form} pairs, it evaluates all the @var{form}s in advance

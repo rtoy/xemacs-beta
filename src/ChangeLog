@@ -1,3 +1,510 @@
+2010-02-03  Jerry James  <james@xemacs.org>
+
+	* s/mach-bsd4-3.h: Add historical copyright and license information,
+	unearthed by Ben Wing.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c:
+	Fix minor compile problem.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Temporarily back out staticpro-related changes in symbols.c and
+	symeval.h to fix compile problems, will put back when `latest-fix'
+	workspace gets merged in.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (Fmake_byte_code):
+	* lread.c:
+	* lread.c (readevalloop):
+	* lread.c (Fread):
+	* lread.c (Fread_from_string):
+	* lread.c (read_list_conser):
+	* lread.c (read_list):
+	* lread.c (vars_of_lread):
+	Remove the old kludgy stuff bracketed by `#ifdef
+	COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY'.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (Fmake_byte_code):
+	* bytecode.h:
+	* lisp.h:
+	* lread.c:
+	* lread.c (readevalloop):
+	* lread.c (Fread):
+	* lread.c (Fread_from_string):
+	* lread.c (read_list_conser):
+	* lread.c (read_list):
+	* lread.c (vars_of_lread):
+	* symbols.c:
+	* symbols.c (Fdefine_function):
+	Turn on the "compiled-function annotation hack".  Implement it
+	properly by hooking into Fdefalias().  Note in the docstring to
+	`defalias' that we do this.  Remove some old broken code and
+	change code that implemented the old kludgy way of hooking into
+	the Lisp reader into bracketed by `#ifdef
+	COMPILED_FUNCTION_ANNOTATION_HACK_OLD_WAY', which is not enabled.
+
+	Also enable byte-code metering when DEBUG_XEMACS -- this is a form
+	of profiling for computing histograms of which sequences of two
+	bytecodes are used most often.
+	
+	* bytecode-ops.h:
+	* bytecode-ops.h (OPCODE):
+	New file.  Extract out all the opcodes and declare them using
+	OPCODE(), a bit like frame slots and such.  This way the file can
+	be included multiple times if necessary to iterate multiple times
+	over the byte opcodes.
+	
+	* bytecode.c:
+	* bytecode.c (NUM_REMEMBERED_BYTE_OPS):
+	* bytecode.c (OPCODE):
+	* bytecode.c (assert_failed_with_remembered_ops):
+	* bytecode.c (READ_UINT_2):
+	* bytecode.c (READ_INT_1):
+	* bytecode.c (READ_INT_2):
+	* bytecode.c (PEEK_INT_1):
+	* bytecode.c (PEEK_INT_2):
+	* bytecode.c (JUMP_RELATIVE):
+	* bytecode.c (JUMP_NEXT):
+	* bytecode.c (PUSH):
+	* bytecode.c (POP_WITH_MULTIPLE_VALUES):
+	* bytecode.c (DISCARD):
+	* bytecode.c (UNUSED):
+	* bytecode.c (optimize_byte_code):
+	* bytecode.c (optimize_compiled_function):
+	* bytecode.c (Fbyte_code):
+	* bytecode.c (vars_of_bytecode):
+	* bytecode.c (init_opcode_table_multi_op):
+	* bytecode.c (reinit_vars_of_bytecode):
+	* emacs.c (main_1):
+	* eval.c (funcall_compiled_function):
+	* symsinit.h:
+	Any time we change either the instruction pointer or the stack
+	pointer, assert that we're going to move it to a valid location.
+	This should catch failures right when they occur rather than
+	sometime later.  This requires that we pass in another couple of
+	parameters into some functions (only with error-checking enabled,
+	see below).
+
+	Also keep track, using a circular queue, of the last 100 byte
+	opcodes seen, and when we hit an assert failure during byte-code
+	execution, output the contents of the queue in a nice readable
+	fashion.  This requires that bytecode-ops.h be included a second
+	time so that a table mapping opcodes to the name of their operation
+	can be constructed.  This table is constructed in new function
+	reinit_vars_of_bytecode().
+
+	Everything in the last two paras happens only when
+	ERROR_CHECK_BYTE_CODE.
+
+	Add some longish comments describing how the arrays that hold the
+	stack and instructions, and the pointers used to access them, work.
+	
+	* gc.c:
+	Import some code from my `latest-fix' workspace to mark the
+	staticpro's in order from lowest to highest, rather than highest to
+	lowest, so it's easier to debug when something goes wrong.
+	
+	* lisp.h (abort_with_message): Renamed from abort_with_msg().
+	
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Make the various calls to staticpro() instead call staticpro_1(),
+	passing in the name of the C var being staticpro'ed, so that it
+	shows up in staticpro_names.  Otherwise staticpro_names just has
+	1000+ copies of the word `location'.
+
+2010-02-02  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (execute_rare_opcode):
+	* lisp.h (abort_with_msg): New.
+	When aborting due to unknown opcode, output more descriptive msg.
+
+2010-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* intl-encap-win32.c: Added description of override keyword.
+	Fix 2nd arg to CreateMDIWindowW.
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h: Fix 2nd arg to qxeCreateMDIWindow.
+
+2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (internal_equalp):
+	Use bytecode_arithcompare, which takes two args, instead of
+	passing a stack pointer to Feqlsign.
+	Use CANONCASE(), not DOWNCASE(), for case-insensitive character
+	comparison.
+	Correct a comment here.
+	* casefiddle.c (casify_object): New operation in this function,
+	CASE_CANONICALIZE.
+	(Fcanoncase): New function, used for case-insensitive comparison.
+	* lisp.h:
+	Make Fcanoncase, bytecode_arithcompare visible here.
+	* bytecode.c (bytecode_arithcompare):
+	Make this visible to other files.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (x_objs):
+	* Makefile.in.in (gtk_gui_objs):
+	* console-xlike-inc.h:
+	* depend:
+	* device-x.c:
+	* emacs.c:
+	* gccache-gtk.h:
+	* gccache-gtk.h (gc_cache_lookup):
+	* gccache-x.c:
+	* gccache-x.c (GCCACHE_HASH):
+	* gccache-x.h:
+	* toolbar-gtk.c:
+	* toolbar-gtk.c (gtk_initialize_frame_toolbars):
+	* toolbar-x.c:
+	* toolbar-x.c (x_initialize_frame_toolbars):
+	* toolbar-xlike.c:
+	* toolbar-xlike.c (xlike_draw_blank_toolbar_button):
+	* toolbar-xlike.c (xlike_output_toolbar_button):
+	* toolbar-xlike.c (xlike_get_button_size):
+	* toolbar-xlike.c (XLIKE_OUTPUT_BUTTONS_LOOP):
+	* toolbar-xlike.c (xlike_output_toolbar):
+	* toolbar-xlike.c (xlike_clear_toolbar):
+	* toolbar-xlike.c (xlike_output_frame_toolbars):
+	* toolbar-xlike.c (xlike_clear_frame_toolbars):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbar):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbars):
+	* toolbar-xlike.c (xlike_redraw_frame_toolbars):
+	* toolbar-xlike.h:
+	* toolbar-xlike.h (xlike_clear_frame_toolbars):
+	Rename some files to make them consistent with general naming rules:
+	
+	xgccache.c -> gccache-x.c
+	xgccache.h -> gccache-x.h
+	toolbar-common.c -> toolbar-xlike.c
+	toolbar-common.h -> toolbar-xlike.h
+
+	Fix include-file references.  Also change the names of functions
+	in now-named toolbar-xlike.c to be xlike_foo() instead of common_foo().
+
+	Add a longish comment in console-xlike-inc.h describing the "xlike"
+	system, how it works and what the various files are used for.
+	
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* compiler.h:
+	* config.h.in:
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_frame):
+	* console-x-impl.h (FRAME_X_TOTALLY_VISIBLE_P):
+	* console-x.h:
+	* console-xlike-inc.h:
+	* emacs.c (main_1):
+	* faces.c (complex_vars_of_faces):
+	* font-mgr.h:
+	* frame-x.c (x_delete_frame):
+	* frame-x.c (x_update_frame_external_traits):
+	* glyphs-x.c (update_widget_face):
+	* inline.c:
+	* objects-x-impl.h:
+	* objects-x-impl.h (struct x_color_instance_data):
+	* objects-x-impl.h (struct x_font_instance_data):
+	* objects-x.c:
+	* objects-x.c (x_initialize_color_instance):
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (x_print_font_instance):
+	* objects-x.c (x_finalize_font_instance):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (vars_of_objects_x):
+	* objects-x.h:
+	USE_XFT* -> HAVE_XFT*.  But in objects-xlike-inc.c and
+	redisplay-xlike-inc.c, continue to use USE_XFT, and define
+	it appropriately in console-xlike-inc.h when both HAVE_XFT
+	and THIS_IS_X -- even if HAVE_XFT, we don't want to enable
+	XFT code when included in a *-gtk.c file.
+
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* objects-gtk-impl.h:
+	* objects-gtk-impl.h (XCOLOR_INSTANCE_GTK_COLOR):
+	* objects-gtk-impl.h (XFONT_INSTANCE_GTK_FONT):
+	* objects-x-impl.h (XCOLOR_INSTANCE_X_COLOR):
+	* objects-x-impl.h (XFONT_INSTANCE_X_FONT):
+	Define XCOLOR_INSTANCE_X_COLOR, XCOLOR_INSTANCE_GTK_COLOR,
+	XFONT_INSTANCE_X_FONT, XFONT_INSTANCE_GTK_FONT for convenience
+	purposes.  Fixes compile bug in redisplay-xlike-inc.c.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* compiler.h:
+	Create a USED() macro to force unused-var warnings to go away,
+	in certain cases where it's inconvenient to do otherwise (e.g.
+	when THIS_IS_GTK in redisplay-xlike-inc.c).
+	
+	* console-x.h:
+	Remove unneeded decls, make some static.
+
+	* redisplay-xlike-inc.c:
+	* console-xlike-inc.h: New file.  Include defns from
+	redisplay-xlike-inc.c that may be useful in other XLIKE files.
+	Correct the handling of colors and font-style setting functions
+	in the xlike defns.  Lots of fixes in the GTK-specific defns.
+	
+	* depend: Regenerate.
+	
+	* event-xlike-inc.c:
+	* event-xlike-inc.c (USE_UNICODE_MAP):
+	* event-xlike-inc.c (endif):
+	* gccache-gtk.c:
+	* gtk-glue.c (xemacs_list_to_gtklist):
+	* gtk-glue.c (xemacs_gtklist_to_list):
+	* gtk-glue.c (FROB):
+	* gtk-glue.c (face_to_gc):
+	* gtk-glue.c (face_to_style):
+	* gtk-glue.c (gdk_event_to_emacs_event):
+	* gtk-xemacs.h (struct _GtkXEmacs):
+	* gtk-xemacs.h (struct _GtkXEmacsClass):
+	* objects-xlike-inc.c:
+	Cosmetic, comment fixes.
+	
+	* glyphs.c (pixmap_to_lisp_data):
+	Unused var fixes.
+	
+
+	* gtk-glue.c:
+	* gccache-gtk.c:
+	* gtk-xemacs.c:
+	* gtk-xemacs.h:
+	* objects-xlike-inc.c:
+	* ui-gtk.c:
+	* ui-gtk.h:
+	* xgccache.c:
+	* xgccache.c (GC_CACHE_SIZE):
+	* xgccache.h:
+	Misc include-file fixes.
+	
+	* objects-xlike-inc.c (XFUN):
+	* objects-xlike-inc.c (xlistfonts_checking_charset):
+	Combine some ifdeffed stuff using defs in console-xlike-inc.h.
+	
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (THIS_IS_GTK):
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	* redisplay-gtk.c (XLIKE_ring_bell):
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Fix numerous compile problems.  Delete gtk_output_shadows(),
+	which mostly duplicates generic bevel_modeline().  Fix up
+	gtk_bevel_modeline() into XLIKE_bevel_area() and make use of
+	the style var properly to set the appropriate GTK constant.
+	
+	* redisplay-x.c:
+	* redisplay-x.c (XLIKE_window_output_begin):
+	* redisplay-x.c (XLIKE_window_output_end):
+	* redisplay-x.c (XLIKE_bevel_area):
+	* redisplay-x.c (x_output_shadows):
+	* redisplay-x.c (XLIKE_ring_bell):
+	Make x_output_shadows be static.  Change the defn of various
+	functions to look like XLIKE_foo() so it matches the calling
+	convention elsewhere.
+	
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (NEED_GCCACHE_H):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR):
+	* redisplay-xlike-inc.c (XLIKE_output_xlike_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	Lots of header fixes.  Lots of stuff moved to console-xlike-inc.h.
+	Use XFUN() to generate function names instead of directly
+	calling XLIKE_PASTE().  Remove unnecessary prototypes.
+	Unify calls to text_width funs.  Make XLIKE_get_gc non-static
+	since it's called from gtk.  Change the color-function calls
+	and fill-style-setting calls to match the changes in
+	console-xlike-inc.h.  Use USED() to avoid some warnings.
+	
+	* symsinit.h:
+	Sort the prototypes, and add a fun `sort-symsinit' in a comment
+	that does the sorting (using sort-regexp-fields).
+	
+	* symsinit.h (init_number):
+	
+	
+	* sysgtk.h: New file, wraps the various GTK headers.
+	* sysgdkx.h: New file, wraps <gtk/gdkx.h>.  Keep this separate to
+	* event-gtk.h: Delete.  Combine stuff into console-gtk.h.
+	help isolate X-specific code from GTK.
+
+	* device-gtk.c:
+	* event-gtk.c:
+	* console-gtk.h:
+	* frame-gtk.c:
+	* gccache-gtk.c:
+	* gccache-gtk.h:
+	* glyphs-gtk.c (gtk_colorize_image_instance):
+	* glyphs-gtk.h:
+	* gtk-xemacs.h:
+	* objects-gtk.c:
+	* objects-gtk.c (MAX_FONT_COUNT):
+	* ui-gtk.h:
+	Use sysgtk.h or sysgdkx.h instead of directly including GTK
+	headers.  Don't include event-gtk.h.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c (abbrev_match_mapper):
+	* buffer.h (CANON_TABLE_OF):
+	* buffer.h:
+	* editfns.c (Fchar_equal):
+	* minibuf.c (scmp_1):
+	* text.c (qxestrcasecmp_i18n):
+	* text.c (qxestrncasecmp_i18n):
+	* text.c (qxetextcasecmp):
+	* text.c (qxetextcasecmp_matching):
+	Create new macro CANONCASE that converts to a canonical mapping
+	and use it to do caseless comparisons instead of DOWNCASE.
+	
+	* alloc.c:
+	* alloc.c (cons_equal):
+	* alloc.c (vector_equal):
+	* alloc.c (string_equal):
+	* bytecode.c (compiled_function_equal):
+	* chartab.c (char_table_entry_equal):
+	* chartab.c (char_table_equal):
+	* data.c (weak_list_equal):
+	* data.c (weak_box_equal):
+	* data.c (ephemeron_equal):
+	* device-msw.c (equal_devmode):
+	* elhash.c (hash_table_equal):
+	* events.c (event_equal):
+	* extents.c (properties_equal):
+	* extents.c (extent_equal):
+	* faces.c:
+	* faces.c (face_equal):
+	* faces.c (face_hash):
+	* floatfns.c (float_equal):
+	* fns.c:
+	* fns.c (bit_vector_equal):
+	* fns.c (plists_differ):
+	* fns.c (Fplists_eq):
+	* fns.c (Fplists_equal):
+	* fns.c (Flax_plists_eq):
+	* fns.c (Flax_plists_equal):
+	* fns.c (internal_equal):
+	* fns.c (internal_equalp):
+	* fns.c (internal_equal_0):
+	* fns.c (syms_of_fns):
+	* glyphs.c (image_instance_equal):
+	* glyphs.c (glyph_equal):
+	* glyphs.c (glyph_hash):
+	* gui.c (gui_item_equal):
+	* lisp.h:
+	* lrecord.h (struct lrecord_implementation):
+	* marker.c (marker_equal):
+	* number.c (bignum_equal):
+	* number.c (ratio_equal):
+	* number.c (bigfloat_equal):
+	* objects.c (color_instance_equal):
+	* objects.c (font_instance_equal):
+	* opaque.c (equal_opaque):
+	* opaque.c (equal_opaque_ptr):
+	* rangetab.c (range_table_equal):
+	* specifier.c (specifier_equal):
+	Add a `foldcase' param to the equal() method and use it to implement
+	`equalp' comparisons.  Also add to plists_differ(), although we
+	don't currently use it here.
+
+	Rewrite internal_equalp().  Implement cross-type vector comparisons.
+	Don't implement our own handling of numeric promotion -- just use
+	the `=' primitive.
+
+	Add internal_equal_0(), which takes a `foldcase' param and calls
+	either internal_equal() or internal_equalp().
+	
+	* buffer.h:
+	When given a 0 for buffer (which is the norm when functions don't
+	have a specific buffer available), use the current buffer's table,
+	not `standard-case-table'; otherwise the current settings are
+	ignored.
+	
+	* casetab.c:
+	* casetab.c (set_case_table):
+	When handling old-style vectors of 256 in `set-case-table' don't
+	overwrite the existing table!  Instead create a new table and
+	populate.
+	
+	* device-msw.c (sync_printer_with_devmode):
+	* lisp.h:
+	* text.c (lisp_strcasecmp_ascii):
+	Rename lisp_strcasecmp to lisp_strcasecmp_ascii and use
+	lisp_strcasecmp_i18n for caseless comparisons in some places.
+	
+	* elhash.c:
+	Delete unused lisp_string_hash and lisp_string_equal().
+	
+	* events.h:
+	* keymap-buttons.h:
+	* keymap.h:
+	* keymap.c (keymap_lookup_directly):
+	* keymap.c (keymap_store):
+	* keymap.c (FROB):
+	* keymap.c (key_desc_list_to_event):
+	* keymap.c (describe_map_mapper):
+	* keymap.c (INCLUDE_BUTTON_ZERO):
+	New file keymap-buttons.h; use to handle buttons 1-26 in place of
+	duplicating code 26 times.
+	
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-msw.c (mswindows_init_frame_1):
+	Fix some comments about internal_equal() in redisplay that don't
+	apply any more.
+	
+	* keymap-slots.h:
+	* keymap.c:
+	New file keymap-slots.h.  Use it to notate the slots in a keymap
+	structure, similar to frameslots.h or coding-system-slots.h.
+	
+	* keymap.c (MARKED_SLOT):
+	* keymap.c (keymap_equal):
+	* keymap.c (keymap_hash):
+	Implement.
+	
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* syntax.c:
+	* syntax.c (scan_lists):
+	* syntax.c (syms_of_syntax):
+	Declare `scan-error' as a type of `syntax-error'.  In `scan-lists'
+	et al., don't signal a syntax error but instead a `scan-error', and
+	pass a couple of integer arguments, for GNU compatibility.  Fixes
+	problems with typing double-quote in texinfo.el.
+
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fspecial_operator_p, syms_of_symbols):
+	* eval.c (print_subr, Finteractive_p, Ffuncall)
+	(Ffunction_min_args, Ffunction_max_args, vars_of_eval):
+	* editfns.c:
+	* data.c (Fsubr_max_args):
+	* doc.c (Fbuilt_in_symbol_file):
+	Change "special form" to "special operator" in our sources.
+
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* search.c (search_buffer): 

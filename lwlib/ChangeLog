@@ -1,3 +1,34 @@
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-colors.c:
+	* lwlib-colors.h:
+	* lwlib-fonts.c:
+	* lwlib-fonts.h:
+	* xlwmenu.c:
+	* xlwmenu.c (xlwMenuResources):
+	* xlwmenu.c (x_xft_text_width):
+	* xlwmenu.c (label_button_draw):
+	* xlwmenu.c (push_button_size):
+	* xlwmenu.c (push_button_draw):
+	* xlwmenu.c (make_drawing_gcs):
+	* xlwmenu.c (extract_font_extents):
+	* xlwmenu.c (default_font_of_font_list):
+	* xlwmenu.c (XlwMenuInitialize):
+	* xlwmenu.c (XlwMenuDestroy):
+	* xlwmenu.c (XlwMenuSetValues):
+	* xlwmenuP.h:
+	* xlwmenuP.h (_XlwMenu_part):
+	* xlwtabs.c:
+	* xlwtabs.c (TabsInit):
+	* xlwtabs.c (TabsDestroy):
+	* xlwtabs.c (TabsSetValues):
+	* xlwtabs.c (DrawTab):
+	* xlwtabs.c (TabWidth):
+	* xlwtabs.c (TabsAllocFgGC):
+	* xlwtabs.c (TabsAllocGreyGC):
+	* xlwtabsP.h:
+	USE_XFT* -> HAVE_XFT*.
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* lwlib-internal.h: Add copyright and license boilerplate text

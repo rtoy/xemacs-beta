@@ -217,11 +217,11 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_FCCONFIGSETRESCANINTERVAL
 
 /* Compile with support for Xft? */
-#undef USE_XFT
+#undef HAVE_XFT
 /* Per-widget stuff will go away? */
-#undef USE_XFT_MENUBARS
-#undef USE_XFT_TABS
-#undef USE_XFT_GAUGES
+#undef HAVE_XFT_MENUBARS
+#undef HAVE_XFT_TABS
+#undef HAVE_XFT_GAUGES
 
 /* Defines for building X applications */
 #ifdef HAVE_X_WINDOWS

@@ -89,7 +89,7 @@ DECLARE_LRECORD(fc_config, struct fc_config);
 
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 
-#ifdef USE_XFT
+#ifdef HAVE_XFT
 
 #ifndef HAVE_FCCONFIGGETRESCANINTERVAL
 /* Older fontconfig versions misspell this function name. */
@@ -164,8 +164,8 @@ DECLARE_LRECORD(fc_config, struct fc_config);
     DEBUG_XFT2 (level, "checking if %s handles %s\n", font, lang);	\
   } while (0)
 
-#else /* USE_XFT */
+#else /* HAVE_XFT */
 
-#endif /* USE_XFT */
+#endif /* HAVE_XFT */
 
 #endif /* INCLUDED_font_mgr_h_ */

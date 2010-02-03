@@ -28,19 +28,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include "frame.h"
 
-#include "toolbar-common.h"
+#include "toolbar-xlike.h"
 
 #include "console-gtk-impl.h"
 
-/* We should really create a 'common' console type and fill it with
+/* We should really create a 'xlike' console type and fill it with
 ** all the shared code.  We would then just use
-** CONSOLE_INHERITS_METHOD(x,common,blah)
+** CONSOLE_INHERITS_METHOD(x,xlike,blah)
 */
-#define gtk_output_frame_toolbars common_output_frame_toolbars
-#define gtk_output_toolbar_button common_output_toolbar_button
-#define gtk_redraw_exposed_toolbars common_redraw_exposed_toolbars
-#define gtk_redraw_frame_toolbars common_redraw_frame_toolbars
-#define gtk_clear_frame_toolbars common_clear_frame_toolbars
+#define gtk_output_frame_toolbars xlike_output_frame_toolbars
+#define gtk_output_toolbar_button xlike_output_toolbar_button
+#define gtk_redraw_exposed_toolbars xlike_redraw_exposed_toolbars
+#define gtk_redraw_frame_toolbars xlike_redraw_frame_toolbars
+#define gtk_clear_frame_toolbars xlike_clear_frame_toolbars
 
 
 static void

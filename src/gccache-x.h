@@ -23,8 +23,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by jwz, 14 jun 93 */
 
-#ifndef INCLUDED_xgccache_h_
-#define INCLUDED_xgccache_h_
+#ifndef INCLUDED_gccache_x_h_
+#define INCLUDED_gccache_x_h_
+
+#include <X11/Xlib.h>
 
 struct gc_cache;
 struct gc_cache *make_gc_cache (Display *, Window);
@@ -45,4 +47,4 @@ void describe_gc_cache (struct gc_cache *cache, int flags);
 #define DGCCFLAG_DEFAULT		DGCCFLAG_SUMMARY | DGCCFLAG_LIST_CELLS
 #endif
 
-#endif /* INCLUDED_xgccache_h_ */
+#endif /* INCLUDED_gccache_x_h_ */
