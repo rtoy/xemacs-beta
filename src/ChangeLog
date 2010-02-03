@@ -1,3 +1,8 @@
+2010-02-03  Jerry James  <james@xemacs.org>
+
+	* s/mach-bsd4-3.h: Add historical copyright and license information,
+	unearthed by Ben Wing.
+
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
 	* bytecode.c:
