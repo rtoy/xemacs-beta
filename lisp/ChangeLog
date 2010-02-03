@@ -1,3 +1,23 @@
+2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Delete a couple of XEmacs-specific functions that duplicate CL
+	functions.
+
+	* find-paths.el (paths-filter, paths-uniq-append):
+	Remove #'paths-filter, a reimplementation of #'remove-if-not, and
+	#'paths-uniq-append, a reimplementation of #'union with test
+	#'equal.
+	(paths-decode-directory-path): Don't use #'path-filter here.
+	* packages.el (packages-package-hierarchy-directory-names):
+	Don't use #'path-filter here.
+	(packages-find-installation-package-directories):
+	Use #'union, not #'paths-uniq-append here.
+	* setup-paths.el (paths-find-invocation-roots)
+	(paths-find-emacs-roots, paths-construct-info-path)
+	(paths-construct-info-path):
+	Replace #'paths-filter with #'remove-if-not, #'paths-uniq-append
+	with #'union. 
+
 2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* loadhist.el (symbol-file):
