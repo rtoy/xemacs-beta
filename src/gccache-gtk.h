@@ -1,4 +1,4 @@
-/* Efficient caching of X GCs (graphics contexts).
+/* Efficient caching of GTK GCs (graphics contexts).
    Copyright (C) 1993 Free Software Foundation, Inc.
 
 
@@ -34,4 +34,4 @@ struct gc_cache *make_gc_cache (GtkWidget *);
 void free_gc_cache (struct gc_cache *cache);
 GdkGC *gc_cache_lookup (struct gc_cache *, GdkGCValues *, unsigned long mask);
 
-#endif /* _XGCCACHE_H_ */
+#endif /* _GCCACHE_GTK_H_ */

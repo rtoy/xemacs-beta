@@ -391,7 +391,7 @@ Epoch 4.0 released August 27, 1990.
      sysdep.c (maybe; wait_for_termination)
      unexec.c
      unicode.c
-     xgccache.c (a bit)
+     gccache-x.c (a bit)
 
      #### review .h files; write a perl program to look for long comments
      throughout the files, ignoring stuff inside of DEFUN's.

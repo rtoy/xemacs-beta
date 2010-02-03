@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 
-#include "toolbar-common.h"
+#include "toolbar-xlike.h"
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
@@ -42,15 +42,15 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 #include "EmacsFrameP.h"
 
-/* We should really create a 'common' console type and fill it with
+/* We should really create a 'xlike' console type and fill it with
 ** all the shared code.  We would then just use
-** CONSOLE_INHERITS_METHOD(x,common,blah)
+** CONSOLE_INHERITS_METHOD(x,xlike,blah)
 */
-#define x_output_frame_toolbars common_output_frame_toolbars
-#define x_output_toolbar_button common_output_toolbar_button
-#define x_redraw_exposed_toolbars common_redraw_exposed_toolbars
-#define x_redraw_frame_toolbars common_redraw_frame_toolbars
-#define x_clear_frame_toolbars common_clear_frame_toolbars
+#define x_output_frame_toolbars xlike_output_frame_toolbars
+#define x_output_toolbar_button xlike_output_toolbar_button
+#define x_redraw_exposed_toolbars xlike_redraw_exposed_toolbars
+#define x_redraw_frame_toolbars xlike_redraw_frame_toolbars
+#define x_clear_frame_toolbars xlike_clear_frame_toolbars
 
 static void
 x_initialize_frame_toolbars (struct frame *f)

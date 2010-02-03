@@ -1,3 +1,49 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (x_objs):
+	* Makefile.in.in (gtk_gui_objs):
+	* console-xlike-inc.h:
+	* depend:
+	* device-x.c:
+	* emacs.c:
+	* gccache-gtk.h:
+	* gccache-gtk.h (gc_cache_lookup):
+	* gccache-x.c:
+	* gccache-x.c (GCCACHE_HASH):
+	* gccache-x.h:
+	* toolbar-gtk.c:
+	* toolbar-gtk.c (gtk_initialize_frame_toolbars):
+	* toolbar-x.c:
+	* toolbar-x.c (x_initialize_frame_toolbars):
+	* toolbar-xlike.c:
+	* toolbar-xlike.c (xlike_draw_blank_toolbar_button):
+	* toolbar-xlike.c (xlike_output_toolbar_button):
+	* toolbar-xlike.c (xlike_get_button_size):
+	* toolbar-xlike.c (XLIKE_OUTPUT_BUTTONS_LOOP):
+	* toolbar-xlike.c (xlike_output_toolbar):
+	* toolbar-xlike.c (xlike_clear_toolbar):
+	* toolbar-xlike.c (xlike_output_frame_toolbars):
+	* toolbar-xlike.c (xlike_clear_frame_toolbars):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbar):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbars):
+	* toolbar-xlike.c (xlike_redraw_frame_toolbars):
+	* toolbar-xlike.h:
+	* toolbar-xlike.h (xlike_clear_frame_toolbars):
+	Rename some files to make them consistent with general naming rules:
+	
+	xgccache.c -> gccache-x.c
+	xgccache.h -> gccache-x.h
+	toolbar-common.c -> toolbar-xlike.c
+	toolbar-common.h -> toolbar-xlike.h
+
+	Fix include-file references.  Also change the names of functions
+	in now-named toolbar-xlike.c to be xlike_foo() instead of common_foo().
+
+	Add a longish comment in console-xlike-inc.h describing the "xlike"
+	system, how it works and what the various files are used for.
+	
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
