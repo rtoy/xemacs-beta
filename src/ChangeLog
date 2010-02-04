@@ -1,3 +1,10 @@
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c:
+	* chartab.c (char_table_hash):
+	* search.c (boyer_moore):
+	Fix compile errors.
+
 2010-01-29  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (common_init_alloc_early):
