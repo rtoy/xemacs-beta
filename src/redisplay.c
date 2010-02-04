@@ -5471,6 +5471,17 @@ Info on Re-entrancy crashes, with backtraces given:
   Dynarr_reset (dla);
   w->max_line_len = 0;
 
+  /* Added 2-1-10 -- we should never have empty face or glyph cachels
+     because we initialized them at startup and the only way to reduce
+     their number is through calling reset_face_cachels() or
+     reset_glyph_cachels(), which as a side effect sets up a number of
+     standard entries */
+  assert (Dynarr_length (w->face_cachels));
+  assert (Dynarr_length (w->glyph_cachels));
+
+#if 0
+  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
+     not needed */
   /* Normally these get updated in redisplay_window but it is possible
      for this function to get called from some other points where that
      update may not have occurred.  This acts as a safety check. */
@@ -5478,6 +5489,7 @@ Info on Re-entrancy crashes, with backtraces given:
     reset_face_cachels (w);
   if (!Dynarr_length (w->glyph_cachels))
     reset_glyph_cachels (w);
+#endif
 
   Fset_marker (w->start[type], make_int (start_pos), w->buffer);
   Fset_marker (w->pointm[type], make_int (point), w->buffer);
@@ -6288,10 +6300,22 @@ redisplay_window (Lisp_Object window, int skip_selected)
     }
   Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm), the_buffer);
 
+  /* Added 2-1-10 -- we should never have empty face or glyph cachels
+     because we initialized them at startup and the only way to reduce
+     their number is through calling reset_face_cachels() or
+     reset_glyph_cachels(), which as a side effect sets up a number of
+     standard entries */
+  assert (Dynarr_length (w->face_cachels));
+  assert (Dynarr_length (w->glyph_cachels));
+
   /* If the buffer has changed we have to invalidate all of our face
      cache elements. */
   if ((!echo_active && b != window_display_buffer (w))
+#if 0
+  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
+     not needed */
       || !Dynarr_length (w->face_cachels)
+#endif
       || f->faces_changed)
     reset_face_cachels (w);
   else
@@ -6301,7 +6325,12 @@ redisplay_window (Lisp_Object window, int skip_selected)
      the cache purely because glyphs have changed - this is now
      handled by the dirty flag.*/
   if ((!echo_active && b != window_display_buffer (w))
-      || !Dynarr_length (w->glyph_cachels) || f->faces_changed)
+#if 0
+  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
+     not needed */
+      || !Dynarr_length (w->glyph_cachels)
+#endif
+      || f->faces_changed)
     reset_glyph_cachels (w);
   else
     mark_glyph_cachels_as_not_updated (w);

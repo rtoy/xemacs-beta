@@ -1,5 +1,24 @@
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
+	* frame.c (Fmake_frame):
+	* glyphs.c:
+	* glyphs.c (NUM_PRECACHED_GLYPHS):
+	* glyphs.c (get_glyph_cachel_index):
+	* glyphs.c (FROB):
+	* glyphs.c (mark_glyph_cachels_as_not_updated):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	When creating a frame, call reset_glyph_cachels on the minibuffer
+	window as well as the root window.  Fixes a crash due to other
+	glyphs (e.g. the gutter glyph) getting in the glyph cachel before
+	the pre-cached glyphs that are supposed to have fixed indices
+	(continuation-glyph, truncation-glyph, etc.).
+
+	Add a bunch of asserts to make sure that the glyph cachels always
+	properly contain the pre-cached glyphs.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
 	* device-x.c (x_get_resource_prefix):
 	* device-x.c (Fx_get_resource):
 	* device-x.c (Fx_get_resource_prefix):

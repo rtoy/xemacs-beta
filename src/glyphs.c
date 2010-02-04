@@ -4276,8 +4276,18 @@ glyph_do_layout (Lisp_Object glyph_or_image, int width, int height,
 
 
 /*****************************************************************************
- *                     glyph cachel functions	     *
+ *                          glyph cachel functions                           *
  *****************************************************************************/
+
+#define NUM_PRECACHED_GLYPHS 6
+#define LOOP_OVER_PRECACHED_GLYPHS			\
+  FROB (Vcontinuation_glyph, CONT_GLYPH_INDEX)		\
+  FROB (Vtruncation_glyph, TRUN_GLYPH_INDEX)		\
+  FROB (Vhscroll_glyph, HSCROLL_GLYPH_INDEX)		\
+  FROB (Vcontrol_arrow_glyph, CONTROL_GLYPH_INDEX)	\
+  FROB (Voctal_escape_glyph, OCT_ESC_GLYPH_INDEX)	\
+  FROB (Vinvisible_text_glyph, INVIS_GLYPH_INDEX)
+
 
 /* #### All of this is 95% copied from face cachels.  Consider
   consolidating.
@@ -4352,6 +4362,27 @@ add_glyph_cachel (struct window *w, Lisp_Object glyph)
   Dynarr_add (w->glyph_cachels, new_cachel);
 }
 
+#ifdef ERROR_CHECK_GLYPHS
+
+/* The precached glyphs should always occur in slots 0 - 5, with each glyph in the
+   slot reserved for it.  Meanwhile any other glyphs should always occur in slots
+   6 or greater. */
+static void
+verify_glyph_index (Lisp_Object glyph, glyph_index idx)
+{
+  if (0)
+    ;
+#define FROB(glyph_obj, gindex)			\
+  else if (EQ (glyph, glyph_obj))		\
+    assert (gindex == idx);
+  LOOP_OVER_PRECACHED_GLYPHS
+  else
+    assert (idx >= NUM_PRECACHED_GLYPHS);
+#undef FROB
+}
+
+#endif /* ERROR_CHECK_GLYPHS */
+
 glyph_index
 get_glyph_cachel_index (struct window *w, Lisp_Object glyph)
 {
@@ -4367,6 +4398,9 @@ get_glyph_cachel_index (struct window *w, Lisp_Object glyph)
 
       if (EQ (cachel->glyph, glyph) && !NILP (glyph))
 	{
+#ifdef ERROR_CHECK_GLYPHS
+	  verify_glyph_index (glyph, elt);
+#endif /* ERROR_CHECK_GLYPHS */
 	  update_glyph_cachel_data (w, glyph, cachel);
 	  return elt;
 	}
@@ -4381,12 +4415,10 @@ void
 reset_glyph_cachels (struct window *w)
 {
   Dynarr_reset (w->glyph_cachels);
-  get_glyph_cachel_index (w, Vcontinuation_glyph);
-  get_glyph_cachel_index (w, Vtruncation_glyph);
-  get_glyph_cachel_index (w, Vhscroll_glyph);
-  get_glyph_cachel_index (w, Vcontrol_arrow_glyph);
-  get_glyph_cachel_index (w, Voctal_escape_glyph);
-  get_glyph_cachel_index (w, Vinvisible_text_glyph);
+#define FROB(glyph_obj, gindex)			\
+  get_glyph_cachel_index (w, glyph_obj);
+  LOOP_OVER_PRECACHED_GLYPHS
+#undef FROB
 }
 
 void
@@ -4394,19 +4426,18 @@ mark_glyph_cachels_as_not_updated (struct window *w)
 {
   int elt;
 
+  /* A previous bug resulted from the glyph cachels never getting reset
+     in the minibuffer window after creation, and another glyph added before
+     we got a chance to add the six normal glyphs that should go first, and
+     we got called with only one glyph present. */
+  assert (Dynarr_length (w->glyph_cachels) >= NUM_PRECACHED_GLYPHS);
   /* We need to have a dirty flag to tell if the glyph has changed.
      We can check to see if each glyph variable is actually a
      completely different glyph, though. */
 #define FROB(glyph_obj, gindex)						\
   update_glyph_cachel_data (w, glyph_obj,				\
-			      Dynarr_atp (w->glyph_cachels, gindex))
-
-  FROB (Vcontinuation_glyph, CONT_GLYPH_INDEX);
-  FROB (Vtruncation_glyph, TRUN_GLYPH_INDEX);
-  FROB (Vhscroll_glyph, HSCROLL_GLYPH_INDEX);
-  FROB (Vcontrol_arrow_glyph, CONTROL_GLYPH_INDEX);
-  FROB (Voctal_escape_glyph, OCT_ESC_GLYPH_INDEX);
-  FROB (Vinvisible_text_glyph, INVIS_GLYPH_INDEX);
+			    Dynarr_atp (w->glyph_cachels, gindex));
+  LOOP_OVER_PRECACHED_GLYPHS
 #undef FROB
 
   for (elt = 0; elt < Dynarr_length (w->glyph_cachels); elt++)
@@ -4449,7 +4480,7 @@ compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 
 
 /*****************************************************************************
- *                     subwindow cachel functions	     *
+ *                        subwindow cachel functions                         *
  *****************************************************************************/
 /* Subwindows are curious in that you have to physically unmap them to
    not display them. It is problematic deciding what to do in
@@ -4546,7 +4577,7 @@ reset_frame_subwindow_instance_cache (struct frame* f)
 }
 
 /*****************************************************************************
- *                              subwindow exposure ignorance                    *
+ *                           subwindow exposure ignorance                    *
  *****************************************************************************/
 /* when we unmap subwindows the associated window system will generate
    expose events. This we do not want as redisplay already copes with
