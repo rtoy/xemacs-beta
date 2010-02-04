@@ -1,5 +1,19 @@
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Put this back again:
+	
+	Make the various calls to staticpro() instead call staticpro_1(),
+	passing in the name of the C var being staticpro'ed, so that it
+	shows up in staticpro_names.  Otherwise staticpro_names just has
+	1000+ copies of the word `location'.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
 	* bytecode.c (assert_failed_with_remembered_ops):
 	* bytecode.c (init_opcode_table_multi_op):
 	Declare some things const to shut up G++ v4 warnings.
