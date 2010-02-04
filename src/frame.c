@@ -3541,7 +3541,7 @@ update_frame_title (struct frame *f)
       if (!EQ (icon_format, title_format) || !title)
 	{
 	  if (title)
-	    xfree (title, Ibyte *);
+	    xfree (title);
 
 	  title = generate_title_string (w, icon_format,
 					 DEFAULT_INDEX, CURRENT_DISP);
@@ -3550,7 +3550,7 @@ update_frame_title (struct frame *f)
     }
 
   if (title)
-    xfree (title, Ibyte *);
+    xfree (title);
 }
 
 

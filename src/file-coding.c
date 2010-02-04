@@ -1208,7 +1208,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 							  (name_or_existing))),
 			      ++coding_system_tick);
       name_or_existing = intern_istring (newname);
-      xfree (newname, Ibyte *);
+      xfree (newname);
       
       if (UNBOUNDP (description))
 	{
@@ -1217,12 +1217,12 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	      (NULL, "For Internal Use (%s)",
 	       XSTRING_DATA (Fsymbol_name (name_or_existing)));
 	  description = build_istring (newname);
-	  xfree (newname, Ibyte *);
+	  xfree (newname);
 	}
 
       newname = emacs_sprintf_malloc (NULL, "Int%d", coding_system_tick);
       defmnem = build_istring (newname);
-      xfree (newname, Ibyte *);
+      xfree (newname);
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1372,7 +1372,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	     ++coding_system_tick);
 	Lisp_Object newnamesym = intern_istring (newname);
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
-	xfree (newname, Ibyte *);
+	xfree (newname);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
@@ -2053,7 +2053,7 @@ coding_finalizer (Lstream *stream)
   MAYBE_XCODESYSMETH (str->codesys, finalize_coding_stream, (str));
   if (str->data)
     {
-      xfree (str->data, void *);
+      xfree (str->data);
       str->data = 0;
     }
   str->finalized = 1;
@@ -2112,7 +2112,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
   
   if (str->data)
     {
-      xfree (str->data, void *);
+      xfree (str->data);
       str->data = 0;
     }
   if (XCODING_SYSTEM_METHODS (str->codesys)->coding_data_size)
@@ -2719,7 +2719,7 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 	  for (i = 0; i < data->lstream_count; i++)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
-      xfree (data->lstreams, Lisp_Object *);
+      xfree (data->lstreams);
     }
 }
 
@@ -2733,7 +2733,7 @@ static void
 chain_finalize (Lisp_Object c)
 {
   if (XCODING_SYSTEM_CHAIN_CHAIN (c))
-    xfree (XCODING_SYSTEM_CHAIN_CHAIN (c), Lisp_Object *);
+    xfree (XCODING_SYSTEM_CHAIN_CHAIN (c));
 }
 
 static int
@@ -3360,7 +3360,7 @@ free_detection_state (struct detection_state *st)
 	  (st);
     }
 
-  xfree (st, struct detection_state *);
+  xfree (st);
 }
 
 static int

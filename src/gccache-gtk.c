@@ -141,13 +141,13 @@ free_gc_cache (struct gc_cache *cache)
     {
       gdk_gc_destroy(rest->gc);
       next = rest->next;
-      xfree (rest, struct gc_cache_cell *);
+      xfree (rest);
       rest = next;
     }
 #ifdef GCCACHE_HASH
   free_hash_table (cache->table);
 #endif
-  xfree (cache, struct gc_cache *);
+  xfree (cache);
 }
 
 GdkGC *

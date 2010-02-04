@@ -831,7 +831,7 @@ void
 uncache_home_directory (void)
 {
   if (cached_home_directory)
-    xfree (cached_home_directory, Ibyte *);
+    xfree (cached_home_directory);
   cached_home_directory = NULL;
 }
 
@@ -1439,7 +1439,7 @@ If TZ is nil, use implementation-defined default time zone information.
 
   set_time_zone_rule (tzstring);
   if (environbuf)
-    xfree (environbuf, Extbyte **);
+    xfree (environbuf);
   environbuf = environ;
 
   return Qnil;

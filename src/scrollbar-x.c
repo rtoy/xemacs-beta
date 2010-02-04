@@ -75,7 +75,7 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
   if (instance->scrollbar_data)
     {
       if (SCROLLBAR_X_NAME (instance))
-	xfree (SCROLLBAR_X_NAME (instance), char *);
+	xfree (SCROLLBAR_X_NAME (instance));
 
       if (SCROLLBAR_X_WIDGET (instance))
 	{
@@ -85,7 +85,7 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
 	  lw_destroy_all_widgets (SCROLLBAR_X_ID (instance));
 	}
 
-      xfree (instance->scrollbar_data, void *);
+      xfree (instance->scrollbar_data);
     }
 }
 

@@ -832,7 +832,7 @@ winsock_closer (Lstream *lstr)
 
   if (str->buffer)
     {
-      xfree (str->buffer, void *);
+      xfree (str->buffer);
       str->buffer = 0;
     }
 
@@ -2119,7 +2119,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	       they don't allow relative paths at all!  this is way bogus. */
 	    cmd = urlify_filename (cmd);
 	    l_dndlist = build_istring (cmd);
-	    xfree (cmd, Ibyte *);
+	    xfree (cmd);
 	  }
 	  GCPRO2 (emacs_event, l_dndlist);
 
@@ -2750,7 +2750,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				((LCID) GetKeyboardLayout (0) & 0xFFFF),
 				NULL));
 		    ch = itext_ichar (intchar);
-		    xfree (intchar, Ibyte *);
+		    xfree (intchar);
 		  }
 
 #ifdef DEBUG_XEMACS
@@ -2895,7 +2895,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 				XSET_EVENT_KEY_ALT_KEYCHARS
 				  (lastev, i, itext_ichar (intchar));
-				xfree (intchar, Ibyte *);
+				xfree (intchar);
 			      }
 			  }
 		      }
@@ -3415,8 +3415,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		   * recursion here. */
 		  if (FRAME_MSWINDOWS_TARGET_RECT (frame))
 		    {
-		      xfree (FRAME_MSWINDOWS_TARGET_RECT (frame),
-			     XEMACS_RECT_WH *);
+		      xfree (FRAME_MSWINDOWS_TARGET_RECT (frame));
 		      FRAME_MSWINDOWS_TARGET_RECT (frame) = 0;
 		    }
 		}
@@ -3736,9 +3735,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    {
 	      Ibyte *fname2 = urlify_filename (fname);
 	      l_item = build_istring (fname2);
-	      xfree (fname2, Ibyte *);
+	      xfree (fname2);
 	      if (freeme)
-		xfree (fname, Ibyte *);
+		xfree (fname);
 	      l_dndlist = Fcons (l_item, l_dndlist);
 	    }
 	  }
