@@ -585,6 +585,8 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   update_frame_window_mirror (f);
 
+  /* #### Do we need to be calling reset_face_cachels here, and then again
+     down below? */
   if (initialized && !DEVICE_STREAM_P (d))
     {
       if (!NILP (f->minibuffer_window))
@@ -642,8 +644,19 @@ See `set-frame-properties', `default-x-frame-plist', and
 	 things. */
       init_frame_toolbars (f);
 #endif
+      /* Added this assert recently (2-1-10); seems there should be only
+	 two windows, root and minibufer.  Probably we should just be
+	 calling reset_*_cachels on the root window directly instead of the
+	 selected window, but I want to make sure they are always the
+	 same. --ben */
+      assert (EQ (FRAME_SELECTED_WINDOW (f), f->root_window));
       reset_face_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
       reset_glyph_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
+      if (!NILP (f->minibuffer_window))
+	{
+	  reset_face_cachels (XWINDOW (f->minibuffer_window));
+	  reset_glyph_cachels (XWINDOW (f->minibuffer_window));
+	}
 
       change_frame_size (f, f->height, f->width, 0);
     }
