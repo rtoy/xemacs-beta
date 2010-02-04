@@ -155,7 +155,7 @@ remember_operation (Opcode op)
 
 static void
 assert_failed_with_remembered_ops (const Ascbyte *file, int line,
-				   Ascbyte *msg_to_abort_with)
+				   const Ascbyte *msg_to_abort_with)
 {
   Ascbyte *msg =
     alloca_array (Ascbyte,
@@ -184,7 +184,7 @@ assert_failed_with_remembered_ops (const Ascbyte *file, int line,
 	}
       else
 	{
-	  Ascbyte *opname = opcode_name_table[op];
+	  const Ascbyte *opname = opcode_name_table[op];
 	  if (!opname)
 	    {
 	      stderr_out ("Internal error! NULL pointer in opcode_name_table, opcode %d\n", op);
@@ -2817,7 +2817,7 @@ integer, it is incremented each time that symbol's function is called.
 static void
 init_opcode_table_multi_op (Opcode op)
 {
-  Ascbyte *basename = opcode_name_table[op];
+  const Ascbyte *basename = opcode_name_table[op];
   Ascbyte temp[300];
   int i;
 
