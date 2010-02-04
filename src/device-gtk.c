@@ -260,7 +260,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 	for (ctr = 1; new_rc_files[ctr]; ctr++)
 	  free(new_rc_files[ctr]);
 
-	xfree (new_rc_files, gchar **);
+	xfree (new_rc_files);
       }
   }
 
@@ -356,7 +356,7 @@ gtk_mark_device (struct device *d)
 static void
 free_gtk_device_struct (struct device *d)
 {
-  xfree (d->device_data, void *);
+  xfree (d->device_data);
 }
 #endif /* not NEW_GC */
 

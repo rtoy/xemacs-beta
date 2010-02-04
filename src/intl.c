@@ -93,7 +93,7 @@ Otherwise, returns the locale, or possibly a more-specified version.
 #endif
 
   str = build_extstring (loc, Qctext);
-  xfree (loc, Extbyte *);
+  xfree (loc);
   return str;
 }
 

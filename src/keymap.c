@@ -3739,7 +3739,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	      Lisp_Key_Data *new_ = xnew_array (Lisp_Key_Data, size);
 	      memcpy ((void *)new_, (const void *)c->keys_so_far,
 		      c->keys_so_far_total_size * sizeof (Lisp_Key_Data));
-	      xfree (c->keys_so_far, Lisp_Key_Data);
+	      xfree (c->keys_so_far);
 	      c->keys_so_far = new_;
 	    }
 	  else
@@ -3815,7 +3815,7 @@ where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
     result = Fnreverse (result);
 
   if (c.keys_so_far_malloced)
-    xfree (c.keys_so_far, Lisp_Key_Data *);
+    xfree (c.keys_so_far);
   return result;
 }
 
