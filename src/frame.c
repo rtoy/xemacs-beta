@@ -3491,7 +3491,7 @@ generate_title_string (struct window *w, Lisp_Object format_str,
 
   return
     convert_ichar_string_into_malloced_string
-    (Dynarr_atp (title_string_ichar_dynarr, 0),
+    (Dynarr_begin (title_string_ichar_dynarr),
      Dynarr_length (title_string_ichar_dynarr), 0);
 }
 

@@ -575,12 +575,12 @@ tty_output_ichar_dynarr (struct window *w, struct display_line *dl,
   else
     Dynarr_reset (tty_output_ichar_dynarr_dynarr);
 
-  convert_ichar_string_into_ibyte_dynarr (Dynarr_atp (buf, 0),
+  convert_ichar_string_into_ibyte_dynarr (Dynarr_begin (buf),
 					    Dynarr_length (buf),
 					    tty_output_ichar_dynarr_dynarr);
 
   tty_output_ibyte_string (w, dl,
-			     Dynarr_atp (tty_output_ichar_dynarr_dynarr, 0),
+			     Dynarr_begin (tty_output_ichar_dynarr_dynarr),
 			     Dynarr_length (tty_output_ichar_dynarr_dynarr),
 			     xpos, findex, cursor);
 }
@@ -641,7 +641,7 @@ set_foreground_to (struct console *c, Lisp_Object sym)
     {
       substitute_in_dynamic_color_string (Vtty_dynamic_color_fg,
 					  Fsymbol_name (sym));
-      escseq = Dynarr_atp (sidcs_dynarr, 0);
+      escseq = Dynarr_begin (sidcs_dynarr);
       escseqlen = Dynarr_length (sidcs_dynarr);
     }
 #endif
@@ -671,7 +671,7 @@ set_background_to (struct console *c, Lisp_Object sym)
     {
       substitute_in_dynamic_color_string (Vtty_dynamic_color_bg,
 					  Fsymbol_name (sym));
-      escseq = Dynarr_atp (sidcs_dynarr, 0);
+      escseq = Dynarr_begin (sidcs_dynarr);
       escseqlen = Dynarr_length (sidcs_dynarr);
     }
 #endif

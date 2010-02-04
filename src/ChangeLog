@@ -1,3 +1,114 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_get_resource_prefix):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_get_resource_prefix):
+	* device-x.c (Fx_put_resource):
+	* dialog-msw.c:
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired-msw.c (mswindows_sort_files):
+	* dired-msw.c (mswindows_get_files):
+	* extents.c (extent_fragment_sort_by_priority):
+	* extents.c (Fset_extent_parent):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* file-coding.c (gzip_convert):
+	* frame.c (generate_title_string):
+	* gutter.c (calculate_gutter_size_from_display_lines):
+	* indent.c (vmotion_1):
+	* lread.c (read_bit_vector):
+	* mule-coding.c (iso2022_decode):
+	* rangetab.c:
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (unified_range_table_copy_data):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-output.c (output_display_line):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_clear_bottom_of_window):
+	* redisplay-tty.c (tty_output_ichar_dynarr):
+	* redisplay-tty.c (set_foreground_to):
+	* redisplay-tty.c (set_background_to):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c (redisplay_window_text_width_string):
+	* redisplay.c (redisplay_text_width_string):
+	* redisplay.c (create_text_block):
+	* redisplay.c (SET_CURRENT_MODE_CHARS_PIXSIZE):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (regenerate_modeline):
+	* redisplay.c (ensure_modeline_generated):
+	* redisplay.c (real_current_modeline_height):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (REGEN_INC_FIND_START_END):
+	* redisplay.c (point_visible):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (mark_glyph_block_dynarr):
+	* redisplay.c (line_start_cache_start):
+	* redisplay.c (start_with_line_at_pixpos):
+	* redisplay.c (update_line_start_cache):
+	* redisplay.c (glyph_to_pixel_translation):
+	* redisplay.c (pixel_to_glyph_translation):
+	* sysdep.c (qxe_readdir):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* toolbar-common.c (common_output_toolbar_button):
+	* window.c (window_modeline_height):
+	* window.c (Fwindow_last_line_visible_height):
+	* window.c (window_displayed_height):
+	* window.c (window_scroll):
+	* window.c (get_current_pixel_pos):
+	Use Dynarr_begin() in place of Dynarr_atp (foo, 0).
+
+	* dynarr.c (Dynarr_realloc):
+	* dynarr.c (Dynarr_lisp_realloc):
+	* dynarr.c (Dynarr_resize):
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* dynarr.c (Dynarr_memory_usage):
+	* dynarr.c (stack_like_malloc):
+	* dynarr.c (stack_like_free):
+	* lisp.h:
+	* lisp.h (DECLARE_DYNARR_LISP_IMP):
+	* lisp.h (XD_DYNARR_DESC):
+	* lisp.h (Dynarr_pop):
+	* gutter.c (output_gutter):
+	* redisplay-output.c (sync_rune_structs):
+	* redisplay-output.c (redisplay_output_window):
+	Redo the dynarr code, add greater checks.
+
+	Rename the `len', `largest' and `max' members to `len_',
+	`largest_' and `max_' to try and catch existing places that might
+	directly modify these values.  Make new accessors Dynarr_largest()
+	and Dynarr_max() and make them and existing Dynarr_length() be
+	non-lvalues by adding '+ 0' to them; fix a couple of places in the
+	redisplay code that tried to modify the length directly by setting
+	Dynarr_length().  Use the accessors whenever possible even in the
+	dynarr code itself.  The accessors also verify that 0 <= len <=
+	largest <= max.  Rename settor function Dynarr_set_size() to
+	Dynarr_set_length() and use it more consistently; also create
+	lower-level Dynarr_set_length_1().  This latter function should be
+	the only function that directly modifies the `len_' member of a
+	Dynarr, and in the process makes sure that the `largest' value is
+	kept correct.
+
+	Consistently use ERROR_CHECK_STRUCTURES instead of
+	ERROR_CHECK_TYPES for error-checking code.  Reintroduce the
+	temporarily disabled verification code on the positions of
+	Dynarr_at(), Dynarr_atp() and Dynarr_atp_past_end().
+	Also create Dynarr_resize_if() in place of a repeated
+	code fragment.  Clean up all the functions that modify Dynarrs to
+	use the new macros and functions and verify the correctness of the
+	Dynarr both before and after the change.
+
+	Note that there are two kinds of verification -- one for accessing
+	and one for modifying.  The difference is that the modify
+	verification additionally checks to make sure that the Dynarr
+	isn't locked. (This is used in redisplay to check for problems
+	with reentrancy.)
+	
+	* lrecord.h: Move XD_DYNARR_DESC to lisp.h, grouping with the dynarr code.
+
 2010-02-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (internal_equalp):

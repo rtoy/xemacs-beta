@@ -1835,7 +1835,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	{
 	  Bytecount chunk =
 	    min (size, (Bytecount) Dynarr_length (str->convert_to));
-	  memcpy (data, Dynarr_atp (str->convert_to, 0), chunk);
+	  memcpy (data, Dynarr_begin (str->convert_to), chunk);
 	  Dynarr_delete_many (str->convert_to, 0, chunk);
 	  data += chunk;
 	  size -= chunk;
@@ -1864,7 +1864,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 				  Dynarr_atp (str->convert_from, rejected),
 				  readmore);
 	/* Trim size down to how much we actually got */
-	Dynarr_set_size (str->convert_from, rejected + max (0, read_size));
+	Dynarr_set_length (str->convert_from, rejected + max (0, read_size));
       }
 
       if (read_size < 0) /* LSTREAM_ERROR */
@@ -1886,7 +1886,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	/* Convert the data, and save any rejected data in convert_from */
 	processed =
 	  XCODESYSMETH (str->codesys, convert,
-			(str, Dynarr_atp (str->convert_from, 0),
+			(str, Dynarr_begin (str->convert_from),
 			 str->convert_to, to_process));
 	if (processed < 0)
 	  {
@@ -1895,10 +1895,10 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	  }
 	assert (processed <= to_process);
 	if (processed < to_process)
-	  memmove (Dynarr_atp (str->convert_from, 0),
+	  memmove (Dynarr_begin (str->convert_from),
 		   Dynarr_atp (str->convert_from, processed),
 		   to_process - processed);
-	Dynarr_set_size (str->convert_from, to_process - processed);
+	Dynarr_set_length (str->convert_from, to_process - processed);
       }
     }
 
@@ -1918,7 +1918,7 @@ coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
   Dynarr_reset (str->convert_to);
   size = XCODESYSMETH (str->codesys, convert,
 		       (str, data, str->convert_to, size));
-  if (Lstream_write (str->other_end, Dynarr_atp (str->convert_to, 0),
+  if (Lstream_write (str->other_end, Dynarr_begin (str->convert_to),
 		     Dynarr_length (str->convert_to)) < 0)
     return -1;
   else
@@ -4423,7 +4423,7 @@ gzip_convert (struct coding_stream *str,
 	  data->stream.avail_out = reserved;
 	  zerr = inflate (&data->stream, Z_NO_FLUSH);
 	  /* Lop off the unused portion */
-	  Dynarr_set_size (dst, Dynarr_length (dst) - data->stream.avail_out);
+	  Dynarr_set_length (dst, Dynarr_length (dst) - data->stream.avail_out);
 	  if (zerr != Z_OK)
 	    break;
 	}
@@ -4483,7 +4483,7 @@ gzip_convert (struct coding_stream *str,
 	    deflate (&data->stream,
 		     str->eof ? Z_FINISH : Z_NO_FLUSH);
 	  /* Lop off the unused portion */
-	  Dynarr_set_size (dst, Dynarr_length (dst) - data->stream.avail_out);
+	  Dynarr_set_length (dst, Dynarr_length (dst) - data->stream.avail_out);
 	  if (zerr != Z_OK)
 	    break;
 	}

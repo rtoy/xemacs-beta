@@ -1428,8 +1428,8 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
     class_len = strlen (appclass);
     Dynarr_add_many (name,  appname,  name_len);
     Dynarr_add_many (class_, appclass, class_len);
-    validify_resource_component (Dynarr_atp (name,  0), name_len);
-    validify_resource_component (Dynarr_atp (class_, 0), class_len);
+    validify_resource_component (Dynarr_begin (name), name_len);
+    validify_resource_component (Dynarr_begin (class_), class_len);
   }
 
   if (EQ (locale, Qglobal))
@@ -1571,8 +1571,8 @@ mean ``unspecified''.
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 
-  name_string  = Dynarr_atp (name_Extbyte_dynarr,  0);
-  class_string = Dynarr_atp (class_Extbyte_dynarr, 0);
+  name_string  = Dynarr_begin (name_Extbyte_dynarr);
+  class_string = Dynarr_begin (class_Extbyte_dynarr);
 
   {
     XrmValue xrm_value;
@@ -1671,9 +1671,9 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   if (!display)
     return Qnil;
 
-  return Fcons (make_string ((Ibyte *) Dynarr_atp (name_Extbyte_dynarr, 0),
+  return Fcons (make_string ((Ibyte *) Dynarr_begin (name_Extbyte_dynarr),
 			     Dynarr_length (name_Extbyte_dynarr)),
-		make_string ((Ibyte *) Dynarr_atp (class_Extbyte_dynarr, 0),
+		make_string ((Ibyte *) Dynarr_begin (class_Extbyte_dynarr),
 			     Dynarr_length (class_Extbyte_dynarr)));
 }
 
