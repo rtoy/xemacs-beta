@@ -1276,7 +1276,7 @@ add_ibyte_string_runes (pos_data *data, Ibyte *c_string,
 
 	      pb.type = PROP_STRING;
 	      pb.data.p_string.str = xnew_array (Ibyte, len);
-	      strncpy ((char *) pb.data.p_string.str, (char *) pos, len);
+	      qxestrncpy (pb.data.p_string.str, pos, len);
 	      pb.data.p_string.len = len;
 
 	      Dynarr_add (prop, pb);
@@ -4019,7 +4019,7 @@ add_string_to_fstring_db_runes (pos_data *data, const Ibyte *str,
     add_blank_rune (data, NULL, 0);
 
   end = (Dynarr_length (db->runes) +
-	 bytecount_to_charcount (str, strlen ((const char *) str)));
+	 bytecount_to_charcount (str, qxestrlen (str)));
   if (max_pos != -1)
     end = min (max_pos, end);
 
@@ -4454,7 +4454,7 @@ tail_recurse:
     {
     invalid:
       {
-	const char *str = GETTEXT ("*invalid*");
+	const Ascbyte *str = GETTEXT ("*invalid*");
 	Charcount size = (Charcount) strlen (str); /* is this ok ?? -- dv */
 
 	if (size <= *offset)
@@ -7230,7 +7230,7 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
    line-number-mode is on.  The first line in the buffer is counted as
    1.  If narrowing is in effect, the lines are counted from the
    beginning of the visible portion of the buffer.  */
-static char *
+static Ascbyte *
 window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
@@ -7250,7 +7250,7 @@ window_line_number (struct window *w, int type)
   line = buffer_line_number (b, pos, 1);
 
   {
-    static char window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
+    static Ascbyte window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
 
     long_to_string (window_line_number_buf, line + 1);
 
@@ -7275,7 +7275,7 @@ static void
 decode_mode_spec (struct window *w, Ichar spec, int type)
 {
   Lisp_Object obj = Qnil;
-  const char *str = NULL;
+  const Ascbyte *str = NULL;
   struct buffer *b = XBUFFER (w->buffer);
 
   Dynarr_reset (mode_spec_ibyte_string);
@@ -7299,7 +7299,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 		    ? BUF_PT (b)
 		    : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	char buf[DECIMAL_PRINT_SIZE (long)];
+	Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
 
 	long_to_string (buf, col);
 
@@ -7340,7 +7340,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	if (FRAME_TTY_P (f) && f->order_count > 1 && f->order_count <= 99999999)
 	  {
 	    /* Naughty, naughty */
-	    char * writable_str = alloca_array (char, 10);
+	    Ascbyte *writable_str = alloca_array (Ascbyte, 10);
 	    sprintf (writable_str, "-%d", f->order_count);
 	    str = writable_str;
 	  }
@@ -7422,7 +7422,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	{
 	  /* This hard limit is ok since the string it will hold has a
 	     fixed maximum length of 3.  But just to be safe... */
-	  char buf[10];
+	  Ascbyte buf[10];
 	  Charcount chars = pos - BUF_BEGV (b);
 	  Charcount total = BUF_ZV (b) - BUF_BEGV (b);
 
@@ -7469,7 +7469,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	{
 	  /* This hard limit is ok since the string it will hold has a
 	     fixed maximum length of around 6.  But just to be safe... */
-	  char buf[10];
+	  Ascbyte buf[10];
 	  Charcount chars = botpos - BUF_BEGV (b);
 	  Charcount total = BUF_ZV (b) - BUF_BEGV (b);
 

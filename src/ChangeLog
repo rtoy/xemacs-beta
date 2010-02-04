@@ -1,3 +1,16 @@
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (assert_failed_with_remembered_ops):
+	* bytecode.c (init_opcode_table_multi_op):
+	Declare some things const to shut up G++ v4 warnings.
+	
+	* redisplay.c (add_ibyte_string_runes):
+	* redisplay.c (add_string_to_fstring_db_runes):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (window_line_number):
+	* redisplay.c (decode_mode_spec):
+	Use Ascbyte instead of char in various places.
+
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
 	* frame.c (Fmake_frame):
