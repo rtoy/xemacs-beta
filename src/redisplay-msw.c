@@ -469,7 +469,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 #if 0	/* #### FIXME? */
   /* We can't work out the width before we've set the font in the DC */
   if (width < 0)
-    width = mswindows_text_width (w, cachel, Dynarr_atp (buf, 0),
+    width = mswindows_text_width (w, cachel, Dynarr_begin (buf),
 				  Dynarr_length (buf));
 #else
   assert (width >= 0);
@@ -518,7 +518,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
 
-  nruns = separate_textual_runs (&runs, Dynarr_atp (buf, 0),
+  nruns = separate_textual_runs (&runs, Dynarr_begin (buf),
 				 Dynarr_length (buf));
 
   for (i = 0; i < nruns; i++)

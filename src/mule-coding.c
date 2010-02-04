@@ -1889,7 +1889,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		  {
 		    Ibyte comstr[MAX_ICHAR_LEN];
 		    Bytecount len;
-		    Ichar emch = lookup_composite_char (Dynarr_atp (dst, 0),
+		    Ichar emch = lookup_composite_char (Dynarr_begin (dst),
 							 Dynarr_length (dst));
 		    dst = real_dst;
 		    len = set_itext_ichar (comstr, emch);

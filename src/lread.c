@@ -2129,7 +2129,7 @@ read_bit_vector (Lisp_Object readcharfun)
       Dynarr_add (dyn, bit);
     }
 
-  val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+  val = make_bit_vector_from_byte_vector (Dynarr_begin (dyn),
 					  Dynarr_length (dyn));
   Dynarr_free (dyn);
 

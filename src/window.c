@@ -1125,15 +1125,15 @@ window_modeline_height (struct window *w)
              since there is a redisplay condition that these
              structures be identical outside of redisplay. */
 	  dla = window_display_lines (w, DESIRED_DISP);
-	  if (dla && Dynarr_length (dla) && Dynarr_atp (dla, 0)->modeline)
-	    modeline_height = (Dynarr_atp (dla, 0)->ascent +
-			       Dynarr_atp (dla, 0)->descent);
+	  if (dla && Dynarr_length (dla) && Dynarr_begin (dla)->modeline)
+	    modeline_height = (Dynarr_begin (dla)->ascent +
+			       Dynarr_begin (dla)->descent);
 	  else
 	    {
 	      dla = window_display_lines (w, CURRENT_DISP);
-	      if (dla && Dynarr_length (dla) && Dynarr_atp (dla, 0)->modeline)
-		modeline_height = (Dynarr_atp (dla, 0)->ascent +
-				   Dynarr_atp (dla, 0)->descent);
+	      if (dla && Dynarr_length (dla) && Dynarr_begin (dla)->modeline)
+		modeline_height = (Dynarr_begin (dla)->ascent +
+				   Dynarr_begin (dla)->descent);
 	      else
 		/* This should be an abort except I'm not yet 100%
                    confident that it won't ever get hit (though I
@@ -1923,7 +1923,7 @@ If the last line is not clipped, return nil.
   struct display_line *dl;
 
   /* No lines - no clipped lines */
-  if (num_lines == 0 || (num_lines == 1 && Dynarr_atp (dla, 0)->modeline))
+  if (num_lines == 0 || (num_lines == 1 && Dynarr_begin (dla)->modeline))
     return Qnil;
 
   dl = Dynarr_atp (dla, num_lines - 1);
@@ -4209,7 +4209,7 @@ window_displayed_height (struct window *w)
      indicates that end-of-buffer is being displayed. */
   if (end_pos == -1)
     {
-      struct display_line *dl = Dynarr_atp (dla, 0);
+      struct display_line *dl = Dynarr_begin (dla);
       int ypos1 = dl->ypos + dl->descent;
       int ypos2 = WINDOW_TEXT_BOTTOM (w);
       Lisp_Object window;
@@ -4244,7 +4244,7 @@ window_displayed_height (struct window *w)
     }
   else
     {
-      if (num_lines > 1 && Dynarr_atp (dla, 0)->modeline)
+      if (num_lines > 1 && Dynarr_begin (dla)->modeline)
 	num_lines--;
 
       if (scroll_on_clipped_lines
@@ -4617,7 +4617,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
     default_face_height_and_width (window, &fheight, &fwidth);
 
   if (Dynarr_length (dla) >= 1)
-    modeline = Dynarr_atp (dla, 0)->modeline;
+    modeline = Dynarr_begin (dla)->modeline;
 
   dl = Dynarr_atp (dla, modeline);
 
@@ -5305,7 +5305,7 @@ get_current_pixel_pos (Lisp_Object window, Lisp_Object pos,
       CHECK_INT (pos);
       point = XINT (pos);
 
-      if (Dynarr_length (dla) && Dynarr_atp (dla, 0)->modeline)
+      if (Dynarr_length (dla) && Dynarr_begin (dla)->modeline)
 	first_line = 1;
       else
 	first_line = 0;

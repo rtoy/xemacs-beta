@@ -1143,22 +1143,6 @@ extern const struct sized_memory_description lisp_object_description;
 #define XD_INDIRECT_VAL(code) ((-1 - (code)) & 255)
 #define XD_INDIRECT_DELTA(code) ((-1 - (code)) >> 8)
 
-#define XD_DYNARR_DESC(base_type, sub_desc)				\
-  { XD_BLOCK_PTR, offsetof (base_type, base),				\
-    XD_INDIRECT(1, 0), {sub_desc} },					\
-  { XD_INT,        offsetof (base_type, len) },				\
-  { XD_INT_RESET,  offsetof (base_type, largest), XD_INDIRECT(1, 0) },	\
-  { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
-
-#ifdef NEW_GC
-#define XD_LISP_DYNARR_DESC(base_type, sub_desc)			\
-  { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
-    XD_INDIRECT(1, 0), {sub_desc} },					\
-  { XD_INT,        offsetof (base_type, len) },				\
-  { XD_INT_RESET,  offsetof (base_type, largest), XD_INDIRECT(1, 0) },	\
-  { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
-#endif /* NEW_GC */
-
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
  */

@@ -661,7 +661,7 @@ redisplay_window_text_width_string (struct window *w, int findex,
     nonreloc = XSTRING_DATA (reloc);
   convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
   return redisplay_window_text_width_ichar_string
-    (w, findex, Dynarr_atp (rtw_ichar_dynarr, 0),
+    (w, findex, Dynarr_begin (rtw_ichar_dynarr),
      Dynarr_length (rtw_ichar_dynarr));
 }
 
@@ -697,7 +697,7 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
 		     argument. */
 		  text_width, (XWINDOW (window),
 			       &cachel,
-			       Dynarr_atp (rtw_ichar_dynarr, 0),
+			       Dynarr_begin (rtw_ichar_dynarr),
 			       Dynarr_length (rtw_ichar_dynarr)));
 }
 
@@ -2312,9 +2312,9 @@ create_text_block (struct window *w, struct display_line *dl,
 	     works because we always recalculate the extent-fragments
 	     for propagated data, we never actually propagate the
 	     fragments that still need to be displayed. */
-	  if (*prop && Dynarr_atp (*prop, 0)->type == PROP_GLYPH)
+	  if (*prop && Dynarr_begin (*prop)->type == PROP_GLYPH)
 	    {
-	      last_glyph = Dynarr_atp (*prop, 0)->data.p_glyph.glyph;
+	      last_glyph = Dynarr_begin (*prop)->data.p_glyph.glyph;
 	      Dynarr_free (*prop);
 	      *prop = 0;
 	    }
@@ -4082,7 +4082,7 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
    true of max_pixsize. */
 #define SET_CURRENT_MODE_CHARS_PIXSIZE                                  \
   if (Dynarr_length (data->db->runes))                                  \
-    cur_pixsize = data->pixpos - Dynarr_atp (data->db->runes, 0)->xpos; \
+    cur_pixsize = data->pixpos - Dynarr_begin (data->db->runes)->xpos; \
   else                                                                  \
     cur_pixsize = 0;
 
@@ -4208,7 +4208,7 @@ tail_recurse:
 
 		  decode_mode_spec (w, ch, type);
 
-		  str = Dynarr_atp (mode_spec_ibyte_string, 0);
+		  str = Dynarr_begin (mode_spec_ibyte_string);
 		  size = bytecount_to_charcount
 		    /* Skip the null character added by `decode_mode_spec' */
 		    (str, Dynarr_length (mode_spec_ibyte_string)) - 1;
@@ -4489,11 +4489,11 @@ regenerate_modeline (struct window *w)
 {
   display_line_dynarr *dla = window_display_lines (w, DESIRED_DISP);
 
-  if (!Dynarr_length (dla) || !Dynarr_atp (dla, 0)->modeline)
+  if (!Dynarr_length (dla) || !Dynarr_begin (dla)->modeline)
     return;
   else
     {
-      generate_modeline (w, Dynarr_atp (dla, 0), DESIRED_DISP);
+      generate_modeline (w, Dynarr_begin (dla), DESIRED_DISP);
       redisplay_update_line (w, 0, 0, 0);
     }
 }
@@ -4545,7 +4545,7 @@ ensure_modeline_generated (struct window *w, int type)
       /* If we're adding a new place marker go ahead and generate the
 	 modeline so that it is available for use by
 	 window_modeline_height. */
-      generate_modeline (w, Dynarr_atp (dla, 0), type);
+      generate_modeline (w, Dynarr_begin (dla), type);
     }
 
   return need_modeline;
@@ -4564,9 +4564,9 @@ real_current_modeline_height (struct window *w)
 
       if (Dynarr_length (dla))
 	{
-	  if (Dynarr_atp (dla, 0)->modeline)
-	    return (Dynarr_atp (dla, 0)->ascent +
-		    Dynarr_atp (dla, 0)->descent);
+	  if (Dynarr_begin (dla)->modeline)
+	    return (Dynarr_begin (dla)->ascent +
+		    Dynarr_begin (dla)->descent);
 	}
     }
   return 0;
@@ -4781,9 +4781,9 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	{
 	  Lisp_Object last_glyph = Qnil;
 	  /* Deal with clipped glyphs that we have already displayed. */
-	  if (*prop && Dynarr_atp (*prop, 0)->type == PROP_GLYPH)
+	  if (*prop && Dynarr_begin (*prop)->type == PROP_GLYPH)
 	    {
-	      last_glyph = Dynarr_atp (*prop, 0)->data.p_glyph.glyph;
+	      last_glyph = Dynarr_begin (*prop)->data.p_glyph.glyph;
 	      Dynarr_free (*prop);
 	      *prop = 0;
 	    }
@@ -5649,7 +5649,7 @@ Info on Re-entrancy crashes, with backtraces given:
     {
       /* We know that this is the right thing to use because we put it
 	 there when we first started working in this function. */
-      generate_modeline (w, Dynarr_atp (dla, 0), type);
+      generate_modeline (w, Dynarr_begin (dla), type);
     }
 
   if (depth >= 0)
@@ -5663,12 +5663,12 @@ Info on Re-entrancy crashes, with backtraces given:
       return 0;								      \
     else								      \
       {									      \
-	if (Dynarr_atp (cdla, 0)->modeline && Dynarr_atp (ddla, 0)->modeline) \
+	if (Dynarr_begin (cdla)->modeline && Dynarr_begin (ddla)->modeline) \
 	  {								      \
 	    dla_start = 1;						      \
 	  }								      \
-	else if (!Dynarr_atp (cdla, 0)->modeline			      \
-		 && !Dynarr_atp (ddla, 0)->modeline)			      \
+	else if (!Dynarr_begin (cdla)->modeline			      \
+		 && !Dynarr_begin (ddla)->modeline)			      \
 	  {								      \
 	    dla_start = 0;						      \
 	  }								      \
@@ -6102,7 +6102,7 @@ point_visible (struct window *w, Charbpos point, int type)
   display_line_dynarr *dla = window_display_lines (w, type);
   int first_line;
 
-  if (Dynarr_length (dla) && Dynarr_atp (dla, 0)->modeline)
+  if (Dynarr_length (dla) && Dynarr_begin (dla)->modeline)
     first_line = 1;
   else
     first_line = 0;
@@ -7597,7 +7597,7 @@ mark_glyph_block_dynarr (glyph_block_dynarr *gba)
 {
   if (gba)
     {
-      glyph_block *gb = Dynarr_atp (gba, 0);
+      glyph_block *gb = Dynarr_begin (gba);
       glyph_block *gb_last = Dynarr_past_lastp (gba);
 
       for (; gb < gb_last; gb++)
@@ -7732,7 +7732,7 @@ line_start_cache_start (struct window *w)
   if (!Dynarr_length (cache))
     return -1;
   else
-    return Dynarr_atp (cache, 0)->start;
+    return Dynarr_begin (cache)->start;
 }
 
 /* Return the very last buffer position contained in the given
@@ -8227,7 +8227,7 @@ start_with_line_at_pixpos (struct window *w, Charbpos point, int pixpos)
 	     on that assert.  So we have no option but to continue the
 	     search if we found point at the top of the line_start_cache
 	     again. */
-	  cur_pos = Dynarr_atp (w->line_start_cache,0)->start;
+	  cur_pos = Dynarr_begin (w->line_start_cache)->start;
 	}
       prev_pos = cur_pos;
     }
@@ -8404,7 +8404,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 
       if (!Dynarr_length (cache))
 	{
-	  Dynarr_add_many (cache, Dynarr_atp (internal_cache, 0),
+	  Dynarr_add_many (cache, Dynarr_begin (internal_cache),
 			   Dynarr_length (internal_cache));
 	  w->line_cache_validation_override--;
 	  return;
@@ -8434,13 +8434,13 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	  if (!(ic_elt >= 0))
 	    {
 	      Dynarr_reset (cache);
-	      Dynarr_add_many (cache, Dynarr_atp (internal_cache, 0),
+	      Dynarr_add_many (cache, Dynarr_begin (internal_cache),
 			       Dynarr_length (internal_cache));
 	      w->line_cache_validation_override--;
 	      return;
 	    }
 
-	  Dynarr_insert_many_at_start (cache, Dynarr_atp (internal_cache, 0),
+	  Dynarr_insert_many_at_start (cache, Dynarr_begin (internal_cache),
 			      ic_elt + 1);
 	}
 
@@ -8459,7 +8459,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	  if (!(ic_elt < Dynarr_length (internal_cache)))
 	    {
 	      Dynarr_reset (cache);
-	      Dynarr_add_many (cache, Dynarr_atp (internal_cache, 0),
+	      Dynarr_add_many (cache, Dynarr_begin (internal_cache),
 			       Dynarr_length (internal_cache));
 	      w->line_cache_validation_override--;
 	      return;
@@ -8491,7 +8491,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	     to layout a single line. This is not possible since we
 	     force at least a single line to be layout for CMOTION_DISP */
 	  assert (Dynarr_length (internal_cache));
-	  assert (startp == Dynarr_atp (internal_cache, 0)->start);
+	  assert (startp == Dynarr_begin (internal_cache)->start);
 
 	  ic_elt = Dynarr_length (internal_cache) - 1;
 	  if (low_bound != -1)
@@ -8526,7 +8526,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 
 	  if (ic_elt >= 0)       /* we still have lines to add.. */
 	    {
-	      Dynarr_insert_many (cache, Dynarr_atp (internal_cache, 0),
+	      Dynarr_insert_many (cache, Dynarr_begin (internal_cache),
 				  ic_elt + 1, marker);
 	      marker += (ic_elt + 1);
 	    }
@@ -8561,7 +8561,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	  /* See comment above about regenerate_window failing. */
 	  assert (Dynarr_length (internal_cache));
 
-	  Dynarr_add_many (cache, Dynarr_atp (internal_cache, 0),
+	  Dynarr_add_many (cache, Dynarr_begin (internal_cache),
 			   Dynarr_length (internal_cache));
 	  high_bound = Dynarr_lastp (cache)->end;
 	  startp = high_bound + 1;
@@ -8606,7 +8606,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
   modeline = 0;
   if (num_disp_lines)
     {
-      if (Dynarr_atp (dla, 0)->modeline)
+      if (Dynarr_begin (dla)->modeline)
 	{
 	  num_disp_lines--;
 	  modeline = 1;
@@ -9063,9 +9063,9 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		  if (x_check <= left_bound)
 		    {
 		      if (dl->modeline)
-			*modeline_closest = Dynarr_atp (db->runes, 0)->charpos;
+			*modeline_closest = Dynarr_begin (db->runes)->charpos;
 		      else
-			*closest = Dynarr_atp (db->runes, 0)->charpos;
+			*closest = Dynarr_begin (db->runes)->charpos;
 		    }
 		  else
 		    {

@@ -355,7 +355,7 @@ The values will not themselves be copied.
   rtnew->entries = Dynarr_new (range_table_entry);
   rtnew->type = rt->type;
 
-  Dynarr_add_many (rtnew->entries, Dynarr_atp (rt->entries, 0),
+  Dynarr_add_many (rtnew->entries, Dynarr_begin (rt->entries),
 		   Dynarr_length (rt->entries));
   return wrap_range_table (rtnew);
 }
@@ -374,7 +374,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
   CHECK_INT_COERCE_CHAR (pos);
 
   return get_range_table (XINT (pos), Dynarr_length (rt->entries),
-			  Dynarr_atp (rt->entries, 0), default_);
+			  Dynarr_begin (rt->entries), default_);
 }
 
 static void
@@ -810,7 +810,7 @@ unified_range_table_copy_data (Lisp_Object rangetab, void *dest)
   un = (struct unified_range_table *) new_dest;
   un->nentries = Dynarr_length (rted);
   un->type = XRANGE_TABLE (rangetab)->type;
-  memcpy (&un->first, Dynarr_atp (rted, 0),
+  memcpy (&un->first, Dynarr_begin (rted),
 	  sizeof (struct range_table_entry) * Dynarr_length (rted));
 }
 

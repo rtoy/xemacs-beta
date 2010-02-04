@@ -296,7 +296,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
 	  buf = Dynarr_new (Ichar);
 	  convert_ibyte_string_into_ichar_dynarr
 	    (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
-	  find_charsets_in_ichar_string (charsets, Dynarr_atp (buf, 0),
+	  find_charsets_in_ichar_string (charsets, Dynarr_begin (buf),
 					  Dynarr_length (buf));
 	  ensure_face_cachel_complete (cachel, window, charsets);
 	  face_cachel_charset_font_metric_info (cachel, charsets, &fm);

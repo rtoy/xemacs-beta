@@ -2971,7 +2971,7 @@ extent_fragment_sort_by_priority (EXTENT_dynarr *extarr)
     /* But some loser programs mess up and may create a large number
        of extents overlapping the same spot.  This will result in
        catastrophic behavior if we use the bubble sort above. */
-    qsort (Dynarr_atp (extarr, 0), Dynarr_length (extarr),
+    qsort (Dynarr_begin (extarr), Dynarr_length (extarr),
 	   sizeof (EXTENT), extent_priority_sort_function);
 }
 
@@ -3884,14 +3884,14 @@ See `extent-parent'.
     if (!NILP (parent))
       extent_properties (XEXTENT (parent), newprops);
 
-    qsort (Dynarr_atp (oldprops, 0), Dynarr_length (oldprops),
+    qsort (Dynarr_begin (oldprops), Dynarr_length (oldprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
-    qsort (Dynarr_atp (newprops, 0), Dynarr_length (newprops),
+    qsort (Dynarr_begin (newprops), Dynarr_length (newprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
     orignewlength = Dynarr_length (newprops);
     for (i = 0; i < Dynarr_length (oldprops); i++)
       {
-	if (!bsearch (Dynarr_atp (oldprops, i), Dynarr_atp (newprops, 0),
+	if (!bsearch (Dynarr_atp (oldprops, i), Dynarr_begin (newprops),
 		      Dynarr_length (newprops), sizeof (Lisp_Object_pair),
 		      compare_key_value_pairs))
 	  {
@@ -3904,7 +3904,7 @@ See `extent-parent'.
     for (i = 0; i < orignewlength; i++)
       {
 	if (!Dynarr_length (oldprops) || !bsearch (Dynarr_atp (newprops, i), 
-						   Dynarr_atp (oldprops, 0),
+						   Dynarr_begin (oldprops),
 						   Dynarr_length (oldprops), 
 						   sizeof (Lisp_Object_pair),
 						   compare_key_value_pairs))
@@ -3915,9 +3915,9 @@ See `extent-parent'.
 	    Dynarr_add (oldprops, new_);
 	  }
       }
-    qsort (Dynarr_atp (oldprops, 0), Dynarr_length (oldprops),
+    qsort (Dynarr_begin (oldprops), Dynarr_length (oldprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
-    qsort (Dynarr_atp (newprops, 0), Dynarr_length (newprops),
+    qsort (Dynarr_begin (newprops), Dynarr_length (newprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
     for (i = 0; i < Dynarr_length (oldprops); i++)
       {

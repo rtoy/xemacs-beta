@@ -2773,7 +2773,7 @@ qxe_readdir (DIR *dirp)
 
       Dynarr_add_many (internal_DIRENTRY, internal_name, internal_len);
       Dynarr_add (internal_DIRENTRY, '\0'); /* NUL-terminate */
-      return (DIRENTRY *) Dynarr_atp (internal_DIRENTRY, 0);
+      return (DIRENTRY *) Dynarr_begin (internal_DIRENTRY);
     }
   }
 #endif /* MULE */

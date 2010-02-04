@@ -1,6 +1,6 @@
 /* Implements elisp-programmable dialog boxes -- MS Windows interface.
    Copyright (C) 1998 Kirill M. Katsnelson <kkm@kis.ru>
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -765,7 +765,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
     /* Woof! Everything is ready. Pop pop pop in now! */
     did->hwnd =
       qxeCreateDialogIndirectParam (NULL,
-				    (LPDLGTEMPLATE) Dynarr_atp (template_, 0),
+				    (LPDLGTEMPLATE) Dynarr_begin (template_),
 				    FRAME_MSWINDOWS_HANDLE (f), dialog_proc,
 				    (LPARAM) LISP_TO_VOID (dialog_data));
     if (!did->hwnd)
