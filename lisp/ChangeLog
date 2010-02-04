@@ -1,3 +1,15 @@
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	Turn off when Unicode, relying on uni-case-conv.el.
+	* mule/uni-case-conv.el (for): Regenerate.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Load uni-case-conv.el.  It seems to work now, after all the various
+	search and case-related fixes.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* lisp-mode.el: Finish documenting `lisp-indent-specform',
