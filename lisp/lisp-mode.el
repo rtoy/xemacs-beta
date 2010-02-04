@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985, 1996, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages, dumped
@@ -846,7 +846,11 @@ word-end; i.e. defunbbb won't match.")
 	       (lisp-indent-specform method state
 				     indent-point normal-indent))
 	      (method
-		(funcall method state indent-point)))))))
+		(funcall method state indent-point))
+	      ((and (> (length function) 5)
+		    (string-match "\\`with-" function))
+	       (lisp-indent-specform 0 state indent-point normal-indent
+				     t)))))))
 
 (defun lisp-indent-quoteform (state indent-point)
   (goto-char (car (cdr state)))
@@ -859,7 +863,36 @@ word-end; i.e. defunbbb won't match.")
 (defvar lisp-body-indent 2
   "Number of columns to indent the second line of a `(def...)' form.")
 
-(defun lisp-indent-specform (count state indent-point normal-indent)
+;; Calculate the appropriate indentation for a special form (e.g. defun) or
+;; a macro that behaves like a special form (e.g. with-temp-buffer).
+;; Return value is as for `calculate-lisp-indent' (q.v.).
+;;
+;; COUNT is the number of "distinguished" forms (e.g. arguments before the
+;; "body", in a macro taking a body as its last argument).
+;;
+;; INDENT-POINT is usually the value of (point) at the beginning of the
+;; line containing the form to be indented.
+;;
+;; STATE is the result of calling (parse-partial-sexp (point) INDENT-POINT)
+;; when (point) is sitting on (i.e. just before) the outermost containing
+;; left paren for the form to be indented.
+;;
+;; NORMAL-INDENT is the amount of "full" indentation used for arguments
+;; that aren't given some special indentation (usually less), and normally
+;; it lines up with the first word after the function name.  forms are
+;; indented as follows:
+;;
+;; -- The first and second distinguished forms are given 2 times body indent
+;;    (determined by `lisp-body-indent')
+;; -- Other distinguished forms are given normal indent
+;; -- The first nondistinguished form (the body, usually) is given body indent
+;; -- Normally, any further nondistinguished forms are given normal indent
+;; -- However, if INDENT-REMAINING-AS-BODY was specified, any further
+;;    nondistinguished forms are given body indent.  This is useful when the
+;;    number of distinguished forms isn't known or may vary.
+
+(defun lisp-indent-specform (count state indent-point normal-indent
+			     &optional indent-remaining-as-body)
   (let ((containing-form-start (elt state 1))
         (i count)
         body-indent containing-form-column)
@@ -900,7 +933,8 @@ word-end; i.e. defunbbb won't match.")
       ;; or if this is the first undistinguished form and the preceding
       ;; distinguished form has indentation at least as great as body-indent.
       (if (or (and (= i 0) (= count 0))
-              (and (= count 0) (<= body-indent normal-indent)))
+              (and (or (= count 0) indent-remaining-as-body)
+		   (<= body-indent normal-indent)))
           body-indent
           normal-indent))))
 

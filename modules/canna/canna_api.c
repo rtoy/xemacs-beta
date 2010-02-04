@@ -199,8 +199,8 @@ static Lisp_Object kanjiYomiList (int, int);
 static Lisp_Object CANNA_mode_keys (void);
 static Lisp_Object Qeuc_jp;
 
-#define make_euc_string(p, len) make_ext_string ((Extbyte *) p, len, Qeuc_jp)
-#define build_euc_string(p) build_ext_string ((Extbyte *) p, Qeuc_jp)
+#define make_euc_string(p, len) make_extstring ((Extbyte *) p, len, Qeuc_jp)
+#define build_euc_string(p) build_extstring ((Extbyte *) p, Qeuc_jp)
 
 #ifdef CANNA_MULE
 static int euc_jp_num_chars (unsigned char *, int);

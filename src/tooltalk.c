@@ -514,27 +514,27 @@ tt_state_symbol (Tt_state n)
 static Lisp_Object
 tt_build_c_string (char *s)
 {
-  return build_string (s ? s : "");
+  return build_cistring (s ? s : "");
 }
 
 static Lisp_Object
 tt_opnum_string (int n)
 {
-  char buf[32];
+  Ascbyte buf[32];
 
   sprintf (buf, "%u", n);
-  return build_string (buf);
+  return build_ascstring (buf);
 }
 
 static Lisp_Object
 tt_message_arg_ival_string (Tt_message m, int n)
 {
-  char buf[DECIMAL_PRINT_SIZE (long)];
+  Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
   int value;
 
   check_status (tt_message_arg_ival (m, n, &value));
   long_to_string (buf, value);
-  return build_string (buf);
+  return build_ascstring (buf);
 }
 
 static Lisp_Object
@@ -1215,8 +1215,8 @@ Return current default process identifier for your process.
 */
        ())
 {
-  char *procid = tt_default_procid ();
-  return procid ? build_string (procid) : Qnil;
+  Extbyte *procid = tt_default_procid ();
+  return procid ? build_extstring (procid, Qtooltalk_encoding) : Qnil;
 }
 
 DEFUN ("tooltalk-default-session", Ftooltalk_default_session, 0, 0, 0, /*
@@ -1224,8 +1224,8 @@ Return current default session identifier for the current default procid.
 */
        ())
 {
-  char *session = tt_default_session ();
-  return session ? build_string (session) : Qnil;
+  Extbyte *session = tt_default_session ();
+  return session ? build_extstring (session, Qtooltalk_encoding) : Qnil;
 }
 
 static void
@@ -1265,7 +1265,7 @@ init_tooltalk (void)
 
   tt_session_join (tt_default_session ());
 
-  lp = connect_to_file_descriptor (build_string ("tooltalk"), Qnil,
+  lp = connect_to_file_descriptor (build_ascstring ("tooltalk"), Qnil,
 				   Vtooltalk_fd, Vtooltalk_fd);
   if (!NILP (lp))
     {
@@ -1421,8 +1421,8 @@ Unprocessed messages are messages that didn't match any patterns.
 */ );
   Vtooltalk_unprocessed_message_hook = Qnil;
 
-  Tooltalk_Message_plist_str = build_msg_string ("Tooltalk Message plist");
-  Tooltalk_Pattern_plist_str = build_msg_string ("Tooltalk Pattern plist");
+  Tooltalk_Message_plist_str = build_defer_string ("Tooltalk Message plist");
+  Tooltalk_Pattern_plist_str = build_defer_string ("Tooltalk Pattern plist");
 
   staticpro(&Tooltalk_Message_plist_str);
   staticpro(&Tooltalk_Pattern_plist_str);

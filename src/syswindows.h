@@ -854,7 +854,7 @@ extern int mswindows_windows9x_p;
   EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
 
 #define build_tstr_string(in) \
-  make_ext_string (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+  make_extstring (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
 
 #define MAX_ANSI_CHAR_LEN 1
 #define MAX_UNICODE_CHAR_LEN 2
@@ -1246,8 +1246,8 @@ extern int mswindows_compare_env (const void *strp1, const void *strp2);
 
 /* in win32.c */
 Extbyte *mswindows_get_module_file_name (void);
-void mswindows_output_last_error (char *frob);
-DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
+void mswindows_output_last_error (const Ascbyte *frob);
+DECLARE_DOESNT_RETURN (mswindows_report_process_error (const Ascbyte *reason,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);

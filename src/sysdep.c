@@ -1,7 +1,7 @@
 /* Interfaces to system-dependent kernel and library entries.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2037,11 +2037,10 @@ init_system_name (void)
 #elif !defined (HAVE_GETHOSTNAME)
   struct utsname uts;
   uname (&uts);
-  Vsystem_name = build_string (uts.nodename);
+  Vsystem_name = build_extstring (uts.nodename, Qunix_host_name_encoding);
 #else /* HAVE_GETHOSTNAME */
   int hostname_size = 256;
-  /* !!#### Needs review */
-  char *hostname = (char *) ALLOCA (hostname_size);
+  Extbyte *hostname = alloca_extbytes (hostname_size);
 
   /* Try to get the host name; if the buffer is too short, try
      again.  Apparently, the only indication gethostname gives of
@@ -2057,17 +2056,17 @@ init_system_name (void)
 	break;
 
       hostname_size <<= 1;
-  /* !!#### Needs review */
-      hostname = (char *) ALLOCA (hostname_size);
+      hostname = alloca_extbytes (hostname_size);
     }
-# if defined( HAVE_SOCKETS)
+# if defined (HAVE_SOCKETS)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */
   if (initialized)
+    /* !!#### Could fail if we have a 7-bit external encoding */
     if (!strchr (hostname, '.'))
       {
-#  if !(defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO))
+#  if !(defined (HAVE_GETADDRINFO) && defined (HAVE_GETNAMEINFO))
 	struct hostent *hp = NULL;
 	int count;
 #   ifdef TRY_AGAIN
@@ -2087,20 +2086,20 @@ init_system_name (void)
 #   endif
 	if (hp)
 	  {
-	    const char *fqdn = (const char *) hp->h_name;
+	    const Extbyte *fqdn = (const Extbyte *) hp->h_name;
 
+	    /* !!#### Could fail if we have a 7-bit external encoding */
 	    if (!strchr (fqdn, '.'))
 	      {
 		/* We still don't have a fully qualified domain name.
 		   Try to find one in the list of alternate names */
-		char **alias = hp->h_aliases;
+		Extbyte **alias = hp->h_aliases;
 		while (*alias && !strchr (*alias, '.'))
 		  alias++;
 		if (*alias)
 		  fqdn = *alias;
 	      }
-  /* !!#### Needs review */
-	    hostname = (char *) ALLOCA (strlen (fqdn) + 1);
+	    hostname = alloca_extbytes (strlen (fqdn) + 1);
 	    strcpy (hostname, fqdn);
 	  }
 #  else /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
@@ -2117,8 +2116,7 @@ init_system_name (void)
 	hints.ai_protocol = 0;
 	if (!getaddrinfo (hostname, NULL, &hints, &res))
 	  {
-  /* !!#### Needs review */
-	    hostname = (char *) ALLOCA (strlen (res->ai_canonname) + 1);
+	    hostname = alloca_extbytes (strlen (res->ai_canonname) + 1);
 	    strcpy (hostname, res->ai_canonname);
 
 	    freeaddrinfo (res);
@@ -2126,7 +2124,7 @@ init_system_name (void)
 #  endif  /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
       }
 # endif /* HAVE_SOCKETS */
-  Vsystem_name = build_string (hostname);
+  Vsystem_name = build_extstring (hostname, Qunix_host_name_encoding);
 #endif /* HAVE_GETHOSTNAME  */
   {
     Ibyte *p;
@@ -2775,7 +2773,7 @@ qxe_readdir (DIR *dirp)
 
       Dynarr_add_many (internal_DIRENTRY, internal_name, internal_len);
       Dynarr_add (internal_DIRENTRY, '\0'); /* NUL-terminate */
-      return (DIRENTRY *) Dynarr_atp (internal_DIRENTRY, 0);
+      return (DIRENTRY *) Dynarr_begin (internal_DIRENTRY);
     }
   }
 #endif /* MULE */
@@ -3572,7 +3570,7 @@ get_random (void)
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
 const char *sys_siglist[] =
   {
-    /* $$####begin-snarf */
+    /* @@@begin-snarf@@@ */
     "bum signal!!",
     "hangup",
     "interrupt",
@@ -3598,8 +3596,8 @@ const char *sys_siglist[] =
     "background write attempted from control tty",
     "input record available at control tty",
     "exceeded CPU time limit",
-    "exceeded file size limit"
-    /* $$####end-snarf */
+    "exceeded file size limit",
+    /* @@@end-snarf@@@ */
     };
 #endif
 
@@ -3608,83 +3606,85 @@ const char *sys_siglist[] =
 const char *sys_siglist[NSIG + 1] =
   {
     /* AIX has changed the signals a bit */
-    DEFER_GETTEXT ("bogus signal"),			/* 0 */
-    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
-    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
-    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
-    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
-    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
-    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
-    DEFER_GETTEXT ("crash likely"),			/* 7  SIGDANGER */
-    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
-    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
-    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
-    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
-    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
-    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
-    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
-    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
-    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
-    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
-    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
-    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
-    DEFER_GETTEXT ("bogus signal"),			/* 20 */
-    DEFER_GETTEXT ("bogus signal"),			/* 21 */
-    DEFER_GETTEXT ("bogus signal"),			/* 22 */
-    DEFER_GETTEXT ("bogus signal"),			/* 23 */
-    DEFER_GETTEXT ("bogus signal"),			/* 24 */
-    DEFER_GETTEXT ("LAN I/O interrupt"),		/* 25 SIGAIO */
-    DEFER_GETTEXT ("PTY I/O interrupt"),		/* 26 SIGPTY */
-    DEFER_GETTEXT ("I/O intervention required"),	/* 27 SIGIOINT */
-    /* $$####end-snarf */
+    /* @@@begin-snarf@@@ */
+    "bogus signal",				/* 0 */
+    "hangup",					/* 1  SIGHUP */
+    "interrupt",				/* 2  SIGINT */
+    "quit",					/* 3  SIGQUIT */
+    "illegal instruction",			/* 4  SIGILL */
+    "trace trap",				/* 5  SIGTRAP */
+    "IOT instruction",				/* 6  SIGIOT */
+    "crash likely",				/* 7  SIGDANGER */
+    "floating point exception",			/* 8  SIGFPE */
+    "kill",					/* 9  SIGKILL */
+    "bus error",				/* 10 SIGBUS */
+    "segmentation violation",			/* 11 SIGSEGV */
+    "bad argument to system call",		/* 12 SIGSYS */
+    "write on a pipe with no one to read it",	/* 13 SIGPIPE */
+    "alarm clock",				/* 14 SIGALRM */
+    "software termination signal",		/* 15 SIGTERM */
+    "user defined signal 1",			/* 16 SIGUSR1 */
+    "user defined signal 2",			/* 17 SIGUSR2 */
+    "death of a child",				/* 18 SIGCLD */
+    "power-fail restart",			/* 19 SIGPWR */
+    "bogus signal",				/* 20 */
+    "bogus signal",				/* 21 */
+    "bogus signal",				/* 22 */
+    "bogus signal",				/* 23 */
+    "bogus signal",				/* 24 */
+    "LAN I/O interrupt",			/* 25 SIGAIO */
+    "PTY I/O interrupt",			/* 26 SIGPTY */
+    "I/O intervention required",		/* 27 SIGIOINT */
+    /* @@@end-snarf@@@ */
     0
   };
 #else /* USG, not AIX */
 const char *sys_siglist[NSIG + 1] =
   {
-    DEFER_GETTEXT ("bogus signal"),			/* 0 */
-    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
-    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
-    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
-    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
-    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
-    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
-    DEFER_GETTEXT ("EMT instruction"),			/* 7  SIGEMT */
-    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
-    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
-    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
-    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
-    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
-    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
-    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
-    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
-    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
-    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
-    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
-    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
-#ifdef sun
-    "window size changed",		/* 20 SIGWINCH */
-    "urgent socket condition",		/* 21 SIGURG */
-    "pollable event occurred",		/* 22 SIGPOLL */
-    "stop (cannot be caught or ignored)", /*  23 SIGSTOP */
-    "user stop requested from tty",	/* 24 SIGTSTP */
-    "stopped process has been continued", /* 25 SIGCONT */
-    "background tty read attempted",	/* 26 SIGTTIN */
-    "background tty write attempted",	/* 27 SIGTTOU */
-    "virtual timer expired",		/* 28 SIGVTALRM */
-    "profiling timer expired",		/* 29 SIGPROF */
-    "exceeded cpu limit",		/* 30 SIGXCPU */
-    "exceeded file size limit",		/* 31 SIGXFSZ */
-    "process's lwps are blocked",	/* 32 SIGWAITING */
-    "special signal used by thread library", /* 33 SIGLWP */
+    /* @@@begin-snarf@@@ */
+    "bogus signal",				/* 0 */
+    "hangup",					/* 1  SIGHUP */
+    "interrupt",				/* 2  SIGINT */
+    "quit",					/* 3  SIGQUIT */
+    "illegal instruction",			/* 4  SIGILL */
+    "trace trap",				/* 5  SIGTRAP */
+    "IOT instruction",				/* 6  SIGIOT */
+    "EMT instruction",				/* 7  SIGEMT */
+    "floating point exception",			/* 8  SIGFPE */
+    "kill",					/* 9  SIGKILL */
+    "bus error",				/* 10 SIGBUS */
+    "segmentation violation",			/* 11 SIGSEGV */
+    "bad argument to system call",		/* 12 SIGSYS */
+    "write on a pipe with no one to read it",	/* 13 SIGPIPE */
+    "alarm clock",				/* 14 SIGALRM */
+    "software termination signal",		/* 15 SIGTERM */
+    "user defined signal 1",			/* 16 SIGUSR1 */
+    "user defined signal 2",			/* 17 SIGUSR2 */
+    "death of a child",				/* 18 SIGCLD */
+    "power-fail restart",			/* 19 SIGPWR */
+#ifdef sun					
+    "window size changed",			/* 20 SIGWINCH */
+    "urgent socket condition",			/* 21 SIGURG */
+    "pollable event occurred",			/* 22 SIGPOLL */
+    "stop (cannot be caught or ignored)",	/*  23 SIGSTOP */
+    "user stop requested from tty",		/* 24 SIGTSTP */
+    "stopped process has been continued",	/* 25 SIGCONT */
+    "background tty read attempted",		/* 26 SIGTTIN */
+    "background tty write attempted",		/* 27 SIGTTOU */
+    "virtual timer expired",			/* 28 SIGVTALRM */
+    "profiling timer expired",			/* 29 SIGPROF */
+    "exceeded cpu limit",			/* 30 SIGXCPU */
+    "exceeded file size limit",			/* 31 SIGXFSZ */
+    "process's lwps are blocked",		/* 32 SIGWAITING */
+    "special signal used by thread library",	/* 33 SIGLWP */
 #ifdef SIGFREEZE
-    "special signal used by CPR",        /* 34 SIGFREEZE */
+    "special signal used by CPR",		/* 34 SIGFREEZE */
 #endif
 #ifdef SIGTHAW
-    "special signal used by CPR",        /* 35 SIGTHAW */
+    "special signal used by CPR",		/* 35 SIGTHAW */
 #endif
 #endif /* sun */
-    /* $$####end-snarf */
+    /* @@@end-snarf@@@ */
     0
   };
 #endif /* not AIX */

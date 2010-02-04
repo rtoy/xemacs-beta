@@ -1752,9 +1752,9 @@ dde_eval_string (Lisp_Object str)
    * get an error, or finish before the end of the string,
    * we know the original string had syntax errors.
    */
-  args[0] = build_string ("(progn ");
+  args[0] = build_ascstring ("(progn ");
   args[1] = str;
-  args[2] = build_string (")");
+  args[2] = build_ascstring (")");
   str = Fconcat (3, args);
 
   obj = Fread_from_string (str, Qnil, Qnil);
@@ -1820,10 +1820,10 @@ Allocate an advise item, and return its token.
   else
     {
       static int num = 0;
-      char buf[20];
+      Ascbyte buf[20];
       sprintf (buf, "Tok%d", num);
       ++num;
-      name = build_string (buf);
+      name = build_ascstring (buf);
     }
 
   token = Qnil;
@@ -1989,12 +1989,12 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	  {
 	    if (NILP (dde_eval_error))
 	      {
-		args[0] = build_string ("OK: %s");
+		args[0] = build_ascstring ("OK: %s");
 		args[1] = dde_eval_result;
 	      }
 	    else
 	      {
-		args[0] = build_string ("ERR: %s");
+		args[0] = build_ascstring ("ERR: %s");
 		args[1] = dde_eval_error;
 	      }
 	  }
@@ -2013,7 +2013,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 		if (!DdeCmpStringHandles (hszItem, hsz))
 		  args[1] = Fsymbol_value (elt);
 	      }
-	    args[0] = build_string ("%s");
+	    args[0] = build_ascstring ("%s");
 	  }
 
 	res = Fformat (2, args);
@@ -2118,7 +2118,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 
 	       they don't allow relative paths at all!  this is way bogus. */
 	    cmd = urlify_filename (cmd);
-	    l_dndlist = build_intstring (cmd);
+	    l_dndlist = build_istring (cmd);
 	    xfree (cmd, Ibyte *);
 	  }
 	  GCPRO2 (emacs_event, l_dndlist);
@@ -3735,7 +3735,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	    {
 	      Ibyte *fname2 = urlify_filename (fname);
-	      l_item = build_intstring (fname2);
+	      l_item = build_istring (fname2);
 	      xfree (fname2, Ibyte *);
 	      if (freeme)
 		xfree (fname, Ibyte *);
@@ -4274,7 +4274,7 @@ static void
 emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
 				    Lisp_Object pstream)
 {
-#define FROB(msg) case msg: write_c_string (pstream, "type=" #msg); break
+#define FROB(msg) case msg: write_ascstring (pstream, "type=" #msg); break
 
   switch (EVENT_MAGIC_MSWINDOWS_EVENT (emacs_event))
     {
@@ -4291,7 +4291,7 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
   
   if (!NILP (EVENT_CHANNEL (emacs_event)))
     {
-      write_c_string (pstream, " ");
+      write_ascstring (pstream, " ");
       print_internal (EVENT_CHANNEL (emacs_event), pstream, 1);
     }
 }
@@ -4670,7 +4670,7 @@ debug_process_finalization (Lisp_Process *UNUSED (p))
 struct mswin_message_debug
 {
   int mess;
-  char *string;
+  const Ascbyte *string;
 };
 
 #define FROB(val) { val, #val, },
@@ -4961,7 +4961,7 @@ debug_output_mswin_message (HWND hwnd, UINT message_, WPARAM wParam,
 {
   Lisp_Object frame = mswindows_find_frame (hwnd);
   int i;
-  char *str = 0;
+  const Ascbyte *str = 0;
   /* struct mswin_message_debug *i_hate_cranking_out_code_like_this; */
 
   for (i = 0; i < countof (debug_mswin_messages); i++)

@@ -137,7 +137,7 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
       write_fmt_string_lisp (printcharfun, "#<face %S", 1, face->name);
       if (!NILP (face->doc_string))
 	write_fmt_string_lisp (printcharfun, " %S", 1, face->doc_string);
-      write_c_string (printcharfun, ">");
+      write_ascstring (printcharfun, ">");
     }
 }
 
@@ -2230,7 +2230,7 @@ complex_vars_of_faces (void)
 
   Vdefault_face = Qnil; /* so that Fmake_face() doesn't set up a bogus
 			   default value */
-  Vdefault_face = Fmake_face (Qdefault, build_msg_string ("default face"),
+  Vdefault_face = Fmake_face (Qdefault, build_defer_string ("default face"),
 			      Qnil);
 
   /* Provide some last-resort fallbacks to avoid utter fuckage if
@@ -2240,22 +2240,22 @@ complex_vars_of_faces (void)
     Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
 #ifdef HAVE_GTK
-    fg_fb = acons (list1 (Qgtk), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_string ("white"), bg_fb);
+    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qgtk), build_ascstring ("white"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_string ("gray80"), bg_fb);
+    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qx), build_ascstring ("gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
     fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
     bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_string ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_string ("white"), bg_fb);
+    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmswindows), build_ascstring ("white"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
@@ -2336,7 +2336,7 @@ complex_vars_of_faces (void)
 #ifdef HAVE_XFT
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list1 (device_symbol),
-				build_string (*fontptr)),
+				build_cistring (*fontptr)),
 			 inst_list);
 
 #else /* !HAVE_XFT */
@@ -2346,7 +2346,7 @@ complex_vars_of_faces (void)
        (list1 (device_symbol),
 	/* grrr.  This really does need to be "*", not an XLFD.
 	   An unspecified XLFD won't pick up stuff like 10x20. */
-	build_string ("*")),
+	build_ascstring ("*")),
        inst_list);
 #ifdef MULE
 
@@ -2360,7 +2360,7 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list4(device_symbol, Qtwo_dimensional, Qfinal, Qx_coverage_instantiator),
-	build_string
+	build_ascstring
 	("-misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1")),
        inst_list);
 
@@ -2372,14 +2372,14 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list4(device_symbol, Qone_dimensional, Qfinal, Qx_coverage_instantiator),
-	build_string
+	build_ascstring
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
 
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list3 (device_symbol,
 				       Qtwo_dimensional, Qinitial),
-				build_string (*fontptr)),
+				build_cistring (*fontptr)),
 			 inst_list);
 
     /* We need to set the font for the JIT-ucs-charsets separately from the
@@ -2392,7 +2392,7 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list4(device_symbol, Qencode_as_utf_8, Qinitial, Qx_coverage_instantiator),
-	build_string
+	build_ascstring
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
 
@@ -2404,7 +2404,7 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list1 (device_symbol),
-	build_string ("-*-*-medium-r-*-*-*-120-*-*-c-*-*-*")),
+	build_ascstring ("-*-*-medium-r-*-*-*-120-*-*-c-*-*-*")),
        inst_list);
 
     /* With a Cygwin XFree86 install, this returns the best (clearest,
@@ -2417,7 +2417,7 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list1 (device_symbol),
-	build_string ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
+	build_ascstring ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
        inst_list);
 
 #endif /* !HAVE_XFT */
@@ -2425,7 +2425,7 @@ complex_vars_of_faces (void)
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 
 #ifdef HAVE_TTY
-    inst_list = Fcons (Fcons (list1 (Qtty), build_string ("normal")),
+    inst_list = Fcons (Fcons (list1 (Qtty), build_ascstring ("normal")),
 		       inst_list);
 #endif /* HAVE_TTY */
 
@@ -2444,18 +2444,18 @@ complex_vars_of_faces (void)
 	{
 	  /* display device */
 	  inst_list = Fcons (Fcons (list1 (Qmswindows),
-				    build_string (*mswfontptr)),
+				    build_ascstring (*mswfontptr)),
 			     inst_list);
 	  /* printer device */
 	  inst_list = Fcons (Fcons (list1 (Qmsprinter),
-				    build_string (*mswfontptr)),
+				    build_ascstring (*mswfontptr)),
 			     inst_list);
 	}
        /* Use Lucida Console rather than Courier New if it exists -- the
 	  line spacing is much less, so many more lines fit with the same
 	  size font. (And it's specifically designed for screens.) */
        inst_list = Fcons (Fcons (list1 (Qmswindows),
-				 build_string ("Lucida Console:Regular:10::")),
+				 build_ascstring ("Lucida Console:Regular:10::")),
 			  inst_list);
     }
 #endif /* HAVE_MS_WINDOWS */
@@ -2479,7 +2479,7 @@ complex_vars_of_faces (void)
   /* gui-element is the parent face of all gui elements such as
      modeline, vertical divider and toolbar. */
   Vgui_element_face = Fmake_face (Qgui_element,
-				  build_msg_string ("gui element face"),
+				  build_defer_string ("gui element face"),
 				  Qnil);
 
   /* Provide some last-resort fallbacks for gui-element face which
@@ -2493,22 +2493,22 @@ complex_vars_of_faces (void)
     /* We need to put something in there, or error checking gets
        #%!@#ed up before the styles are set, which override the
        fallbacks. */
-    fg_fb = acons (list1 (Qgtk), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_string ("Gray80"), bg_fb);
+    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_string ("Gray80"), bg_fb);
+    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
     fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
     bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_string ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_string ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_string ("Gray75"), bg_fb);
+    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vgui_element_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vgui_element_face, Qbackground, Qnil), bg_fb);
@@ -2519,7 +2519,7 @@ complex_vars_of_faces (void)
      way since we need to get them anyway. */
 
   /* modeline is gui element. */
-  Vmodeline_face = Fmake_face (Qmodeline, build_msg_string ("modeline face"),
+  Vmodeline_face = Fmake_face (Qmodeline, build_defer_string ("modeline face"),
 			       Qnil);
 
   set_specifier_fallback (Fget (Vmodeline_face, Qforeground, Qunbound),
@@ -2532,7 +2532,7 @@ complex_vars_of_faces (void)
 
   /* toolbar is another gui element */
   Vtoolbar_face = Fmake_face (Qtoolbar,
-			      build_msg_string ("toolbar face"),
+			      build_defer_string ("toolbar face"),
 			      Qnil);
   set_specifier_fallback (Fget (Vtoolbar_face, Qforeground, Qunbound),
 			  Fget (Vgui_element_face, Qforeground, Qunbound));
@@ -2544,7 +2544,7 @@ complex_vars_of_faces (void)
 
   /* vertical divider is another gui element */
   Vvertical_divider_face = Fmake_face (Qvertical_divider,
-				       build_msg_string ("vertical divider face"),
+				       build_defer_string ("vertical divider face"),
 				       Qnil);
 
   set_specifier_fallback (Fget (Vvertical_divider_face, Qforeground, Qunbound),
@@ -2558,7 +2558,7 @@ complex_vars_of_faces (void)
 
   /* widget is another gui element */
   Vwidget_face = Fmake_face (Qwidget,
-			     build_msg_string ("widget face"),
+			     build_defer_string ("widget face"),
 			     Qnil);
   /* #### weird ... the gui-element face doesn't have its own font yet */
   set_specifier_fallback (Fget (Vwidget_face, Qfont, Qunbound),
@@ -2570,17 +2570,17 @@ complex_vars_of_faces (void)
   /* We don't want widgets to have a default background pixmap. */
 
   Vleft_margin_face = Fmake_face (Qleft_margin,
-				  build_msg_string ("left margin face"),
+				  build_defer_string ("left margin face"),
 				  Qnil);
   Vright_margin_face = Fmake_face (Qright_margin,
-				   build_msg_string ("right margin face"),
+				   build_defer_string ("right margin face"),
 				   Qnil);
   Vtext_cursor_face = Fmake_face (Qtext_cursor,
-				  build_msg_string ("face for text cursor"),
+				  build_defer_string ("face for text cursor"),
 				  Qnil);
   Vpointer_face =
     Fmake_face (Qpointer,
-		build_msg_string
+		build_defer_string
 		("face for foreground/background colors of mouse pointer"),
 		Qnil);
 }

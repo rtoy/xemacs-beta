@@ -210,7 +210,7 @@ coding_system_of_xrm_database (XrmDatabase USED_IF_MULE (db))
   last_xrm_db = db;
 
   locale = XrmLocaleOfDatabase (db);
-  localestr = build_ext_string (locale, Qbinary);
+  localestr = build_extstring (locale, Qbinary);
   last_coding_system = call1 (Qget_coding_system_from_locale, localestr);
 
   return last_coding_system;
@@ -585,7 +585,8 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	/* Look for the Xaw3d function */
 	dll_func xaw_function_handle =
-	  dll_function (xaw_dll_handle, "Xaw3dComputeTopShadowRGB");
+	  dll_function (xaw_dll_handle,
+			(const Ibyte *) "Xaw3dComputeTopShadowRGB");
 
 	/* If we found it, warn the user in big, nasty, unfriendly letters */
 	if (xaw_function_handle != NULL)
@@ -667,7 +668,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	}
 
       /* need to update Vx_emacs_application_class: */
-      Vx_emacs_application_class = build_string (app_class);
+      Vx_emacs_application_class = build_cistring (app_class);
     }
 
   slow_down_interrupts ();
@@ -1005,10 +1006,10 @@ x_delete_device (struct device *d)
 /*				handle X errors				*/
 /************************************************************************/
 
-const char *
+const Ascbyte *
 x_event_name (int event_type)
 {
-  static const char *events[] =
+  static const Ascbyte *events[] =
   {
     "0: ERROR!",
     "1: REPLY",
@@ -1198,19 +1199,19 @@ signal_if_x_error (Display *dpy, int resumable_p)
     return 0;
   data = Qnil;
   qxesprintf (num, "0x%X", (unsigned int) last_error.resourceid);
-  data = Fcons (build_intstring (num), data);
+  data = Fcons (build_istring (num), data);
   qxesprintf (num, "%d", last_error.request_code);
   XGetErrorDatabaseText (last_error.display, "XRequest", (char *) num, "",
 			 buf, sizeof (buf));
   if (*buf)
-    data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
+    data = Fcons (build_extstring (buf, Qx_error_message_encoding), data);
   else
     {
       qxesprintf (num, "Request-%d", last_error.request_code);
-      data = Fcons (build_intstring (num), data);
+      data = Fcons (build_istring (num), data);
     }
   XGetErrorText (last_error.display, last_error.error_code, buf, sizeof (buf));
-  data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
+  data = Fcons (build_extstring (buf, Qx_error_message_encoding), data);
  again:
   Fsignal (Qx_error, data);
   if (! resumable_p) goto again;
@@ -1427,8 +1428,8 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
     class_len = strlen (appclass);
     Dynarr_add_many (name,  appname,  name_len);
     Dynarr_add_many (class_, appclass, class_len);
-    validify_resource_component (Dynarr_atp (name,  0), name_len);
-    validify_resource_component (Dynarr_atp (class_, 0), class_len);
+    validify_resource_component (Dynarr_begin (name), name_len);
+    validify_resource_component (Dynarr_begin (class_), class_len);
   }
 
   if (EQ (locale, Qglobal))
@@ -1570,8 +1571,8 @@ mean ``unspecified''.
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 
-  name_string  = Dynarr_atp (name_Extbyte_dynarr,  0);
-  class_string = Dynarr_atp (class_Extbyte_dynarr, 0);
+  name_string  = Dynarr_begin (name_Extbyte_dynarr);
+  class_string = Dynarr_begin (class_Extbyte_dynarr);
 
   {
     XrmValue xrm_value;
@@ -1605,7 +1606,7 @@ mean ``unspecified''.
   }
 
   if (EQ (type, Qstring))
-    return build_ext_string (raw_result, codesys);
+    return build_extstring (raw_result, codesys);
   else if (EQ (type, Qboolean))
     {
       if (!strcasecmp (raw_result, "off")   ||
@@ -1618,8 +1619,8 @@ mean ``unspecified''.
 	return Fcons (Qt, Qnil);
       return maybe_signal_continuable_error_2
 	(Qinvalid_operation, "Can't convert to a Boolean",
-	 build_ext_string (name_string, Qbinary),
-	 build_ext_string (raw_result, codesys), Qresource,
+	 build_extstring (name_string, Qbinary),
+	 build_extstring (raw_result, codesys), Qresource,
 	 errb);
     }
   else if (EQ (type, Qinteger) || EQ (type, Qnatnum))
@@ -1629,13 +1630,13 @@ mean ``unspecified''.
       if (1 != sscanf (raw_result, "%d%c", &i, &c))
       return maybe_signal_continuable_error_2
 	(Qinvalid_operation, "Can't convert to an integer",
-	 build_ext_string (name_string, Qbinary),
-	 build_ext_string (raw_result, codesys), Qresource,
+	 build_extstring (name_string, Qbinary),
+	 build_extstring (raw_result, codesys), Qresource,
 	 errb);
       else if (EQ (type, Qnatnum) && i < 0)
 	return maybe_signal_continuable_error_2
 	  (Qinvalid_argument, "Invalid numerical value for resource",
-	   make_int (i), build_ext_string (name_string, Qbinary),
+	   make_int (i), build_extstring (name_string, Qbinary),
 	   Qresource, errb);
       else
 	return make_int (i);
@@ -1670,9 +1671,9 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   if (!display)
     return Qnil;
 
-  return Fcons (make_string ((Ibyte *) Dynarr_atp (name_Extbyte_dynarr, 0),
+  return Fcons (make_string ((Ibyte *) Dynarr_begin (name_Extbyte_dynarr),
 			     Dynarr_length (name_Extbyte_dynarr)),
-		make_string ((Ibyte *) Dynarr_atp (class_Extbyte_dynarr, 0),
+		make_string ((Ibyte *) Dynarr_begin (class_Extbyte_dynarr),
 			     Dynarr_length (class_Extbyte_dynarr)));
 }
 
@@ -1803,7 +1804,7 @@ Return the empty string if the vendor ID string cannot be determined.
   Display *dpy = get_x_display (device);
   Extbyte *vendor = ServerVendor (dpy);
 
-  return build_ext_string (vendor ? vendor : "", Qx_hpc_encoding);
+  return build_extstring (vendor ? vendor : "", Qx_hpc_encoding);
 }
 
 DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
@@ -2048,7 +2049,7 @@ See also `x-set-font-path'.
     gui_error ("Can't get X font path", device);
 
   while (ndirs_return--)
-      font_path = Fcons (build_ext_string (directories[ndirs_return],
+      font_path = Fcons (build_extstring (directories[ndirs_return],
                                            Qfile_name),
 			 font_path);
 

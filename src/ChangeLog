@@ -1,3 +1,133 @@
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (Fmake_frame):
+	* glyphs.c:
+	* glyphs.c (NUM_PRECACHED_GLYPHS):
+	* glyphs.c (get_glyph_cachel_index):
+	* glyphs.c (FROB):
+	* glyphs.c (mark_glyph_cachels_as_not_updated):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	When creating a frame, call reset_glyph_cachels on the minibuffer
+	window as well as the root window.  Fixes a crash due to other
+	glyphs (e.g. the gutter glyph) getting in the glyph cachel before
+	the pre-cached glyphs that are supposed to have fixed indices
+	(continuation-glyph, truncation-glyph, etc.).
+
+	Add a bunch of asserts to make sure that the glyph cachels always
+	properly contain the pre-cached glyphs.
+
+2010-02-03  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_get_resource_prefix):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_get_resource_prefix):
+	* device-x.c (Fx_put_resource):
+	* dialog-msw.c:
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired-msw.c (mswindows_sort_files):
+	* dired-msw.c (mswindows_get_files):
+	* extents.c (extent_fragment_sort_by_priority):
+	* extents.c (Fset_extent_parent):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* file-coding.c (gzip_convert):
+	* frame.c (generate_title_string):
+	* gutter.c (calculate_gutter_size_from_display_lines):
+	* indent.c (vmotion_1):
+	* lread.c (read_bit_vector):
+	* mule-coding.c (iso2022_decode):
+	* rangetab.c:
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (unified_range_table_copy_data):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-output.c (output_display_line):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_clear_bottom_of_window):
+	* redisplay-tty.c (tty_output_ichar_dynarr):
+	* redisplay-tty.c (set_foreground_to):
+	* redisplay-tty.c (set_background_to):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c (redisplay_window_text_width_string):
+	* redisplay.c (redisplay_text_width_string):
+	* redisplay.c (create_text_block):
+	* redisplay.c (SET_CURRENT_MODE_CHARS_PIXSIZE):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (regenerate_modeline):
+	* redisplay.c (ensure_modeline_generated):
+	* redisplay.c (real_current_modeline_height):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (REGEN_INC_FIND_START_END):
+	* redisplay.c (point_visible):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (mark_glyph_block_dynarr):
+	* redisplay.c (line_start_cache_start):
+	* redisplay.c (start_with_line_at_pixpos):
+	* redisplay.c (update_line_start_cache):
+	* redisplay.c (glyph_to_pixel_translation):
+	* redisplay.c (pixel_to_glyph_translation):
+	* sysdep.c (qxe_readdir):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* toolbar-common.c (common_output_toolbar_button):
+	* window.c (window_modeline_height):
+	* window.c (Fwindow_last_line_visible_height):
+	* window.c (window_displayed_height):
+	* window.c (window_scroll):
+	* window.c (get_current_pixel_pos):
+	Use Dynarr_begin() in place of Dynarr_atp (foo, 0).
+
+	* dynarr.c (Dynarr_realloc):
+	* dynarr.c (Dynarr_lisp_realloc):
+	* dynarr.c (Dynarr_resize):
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* dynarr.c (Dynarr_memory_usage):
+	* dynarr.c (stack_like_malloc):
+	* dynarr.c (stack_like_free):
+	* lisp.h:
+	* lisp.h (DECLARE_DYNARR_LISP_IMP):
+	* lisp.h (XD_DYNARR_DESC):
+	* lisp.h (Dynarr_pop):
+	* gutter.c (output_gutter):
+	* redisplay-output.c (sync_rune_structs):
+	* redisplay-output.c (redisplay_output_window):
+	Redo the dynarr code, add greater checks.
+
+	Rename the `len', `largest' and `max' members to `len_',
+	`largest_' and `max_' to try and catch existing places that might
+	directly modify these values.  Make new accessors Dynarr_largest()
+	and Dynarr_max() and make them and existing Dynarr_length() be
+	non-lvalues by adding '+ 0' to them; fix a couple of places in the
+	redisplay code that tried to modify the length directly by setting
+	Dynarr_length().  Use the accessors whenever possible even in the
+	dynarr code itself.  The accessors also verify that 0 <= len <=
+	largest <= max.  Rename settor function Dynarr_set_size() to
+	Dynarr_set_length() and use it more consistently; also create
+	lower-level Dynarr_set_length_1().  This latter function should be
+	the only function that directly modifies the `len_' member of a
+	Dynarr, and in the process makes sure that the `largest' value is
+	kept correct.
+
+	Consistently use ERROR_CHECK_STRUCTURES instead of
+	ERROR_CHECK_TYPES for error-checking code.  Reintroduce the
+	temporarily disabled verification code on the positions of
+	Dynarr_at(), Dynarr_atp() and Dynarr_atp_past_end().
+	Also create Dynarr_resize_if() in place of a repeated
+	code fragment.  Clean up all the functions that modify Dynarrs to
+	use the new macros and functions and verify the correctness of the
+	Dynarr both before and after the change.
+
+	Note that there are two kinds of verification -- one for accessing
+	and one for modifying.  The difference is that the modify
+	verification additionally checks to make sure that the Dynarr
+	isn't locked. (This is used in redisplay to check for problems
+	with reentrancy.)
+	
+	* lrecord.h: Move XD_DYNARR_DESC to lisp.h, grouping with the dynarr code.
+
 2010-02-03  Jerry James  <james@xemacs.org>
 
 	* s/mach-bsd4-3.h: Add historical copyright and license information,
@@ -239,6 +369,11 @@
 
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c (common_init_alloc_early):
+	Fix compiler breakage.
+
+2010-02-01  Ben Wing  <ben@xemacs.org>
+
 	* objects-gtk-impl.h:
 	* objects-gtk-impl.h (XCOLOR_INSTANCE_GTK_COLOR):
 	* objects-gtk-impl.h (XFONT_INSTANCE_GTK_FONT):
@@ -247,6 +382,12 @@
 	Define XCOLOR_INSTANCE_X_COLOR, XCOLOR_INSTANCE_GTK_COLOR,
 	XFONT_INSTANCE_X_FONT, XFONT_INSTANCE_GTK_FONT for convenience
 	purposes.  Fixes compile bug in redisplay-xlike-inc.c.
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* objects.h (set_face_boolean_attached_to):
+	Use lisp.h for EXFUN of Fregexp_quote, that's what it's for.
 
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
@@ -568,9 +709,787 @@
 	Oops, change #else to #endif here; thank you Vin Shelton, thank
 	you Robert Delius Royar.
 
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_init_device):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_subr):
+	* emodules.c (emodules_doc_sym):
+	* emodules.h:
+	Make the externally-called functions emodules_doc_sym() and
+	emodules_doc_subr() take Ascbyte * pointers since they're usually
+	passed string constants and we can't guarantee the encoding if
+	it's not ASCII.  Fix pointer type in calls to dll_variable(), etc.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
-	* casetab.c: Typo in comment.
+	* lread.c (vars_of_lread):
+	Turn on load-ignore-out-of-date-elc-files by default.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	Don't try to write one byte into a four-byte variable, leaving
+	the rest undefined.  This is a recipe for crashing.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	* README:
+	* abbrev.c (write_abbrev):
+	* abbrev.c (describe_abbrev):
+	* alloc.c (make_extstring):
+	* alloc.c (build_istring):
+	* alloc.c (build_cistring):
+	* alloc.c (build_ascstring):
+	* alloc.c (build_extstring):
+	* alloc.c (build_msg_istring):
+	* alloc.c (build_defer_istring):
+	* buffer.c (Fgenerate_new_buffer_name):
+	* buffer.c (init_buffer_2):
+	* console-tty.c (tty_init_console):
+	* console-x.c (get_display_arg_connection):
+	* console-x.c (x_perhaps_init_unseen_key_defaults):
+	* database.c (dbm_map):
+	* database.c (dbm_get):
+	* database.c (berkdb_get):
+	* database.c (berkdb_map):
+	* device-gtk.c (FROB_PIXMAP):
+	* device-gtk.c (Fgtk_style_info):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-x.c (coding_system_of_xrm_database):
+	* device-x.c (x_init_device):
+	* device-x.c (signal_if_x_error):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_server_vendor):
+	* device-x.c (Fx_get_font_path):
+	* dialog-x.c (maybe_run_dbox_text_callback):
+	* doc.c (extract_object_file_name):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (get_doc_string):
+	* doc.c (get_object_file_name):
+	* doc.c (Fdocumentation):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (Fsubstitute_command_keys):
+	* editfns.c (init_editfns):
+	* editfns.c (Ftemp_directory):
+	* editfns.c (Fuser_login_name):
+	* editfns.c (Fuser_real_login_name):
+	* editfns.c (Fuser_home_directory):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fcurrent_time_string):
+	* editfns.c (Fcurrent_time_zone):
+	* emacs.c:
+	* emacs.c (main_1):
+	* emodules.c (Flist_modules):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_sym):
+	* emodules.c (vars_of_module):
+	* event-Xt.c (x_has_keysym):
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	* event-gtk.c (dragndrop_data_received):
+	* event-gtk.c (gtk_reset_key_mapping):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* faces.c (complex_vars_of_faces):
+	* file-coding.c (find_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (snarf_coding_system):
+	* fileio.c:
+	* fileio.c (lisp_strerror):
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (Ffile_name_as_directory):
+	* fileio.c (Fdirectory_file_name):
+	* fileio.c (if):
+	* fileio.c (Ffile_symlink_p):
+	* fileio.c (Fencrypt_string):
+	* fileio.c (Fdecrypt_string):
+	* filelock.c (lock_file):
+	* filelock.c (Ffile_locked_p):
+	* floatfns.c (matherr):
+	* font-mgr.c (build_fcapi_string):
+	* font-mgr.c (make_xlfd_font_regexp):
+	* frame-msw.c (mswindows_window_id):
+	* frame-msw.c (mswindows_frame_property):
+	* frame-x.c:
+	* frame-x.c (color_to_string):
+	* frame-x.c (maybe_set_frame_title_format):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (Fx_window_id):
+	* glade.c (connector):
+	* glade.c (Fglade_xml_textdomain):
+	* glade.c (syms_of_glade):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (font_instantiate):
+	* glyphs-gtk.c (BUILD_GLYPH_INST):
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs-x.c (font_instantiate):
+	* glyphs-x.c (x_widget_property):
+	* glyphs-x.c (BUILD_GLYPH_INST):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (bitmap_to_lisp_data):
+	* glyphs.c (pixmap_to_lisp_data):
+	* gpmevent.c (turn_off_gpm):
+	* gpmevent.c (Fgpm_enabled_p):
+	* gpmevent.c (Fgpm_enable):
+	* gtk-glue.c (__make_string_mapper):
+	* gtk-glue.c (xemacs_gtklist_to_list):
+	* gtk-xemacs.c (FROB_FACE):
+	* gtk-xemacs.c (xemacs_gtk_convert_color):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (myHandler):
+	* insdel.c (buffer_insert_ascstring_1):
+	* insdel.h:
+	* insdel.h (buffer_insert_ascstring):
+	* intl.c (Fcurrent_locale):
+	* intl.c (Fset_current_locale):
+	* keymap.c (make_key_description):
+	* keymap.c (Ftext_char_description):
+	* keymap.c (describe_command):
+	* keymap.c (describe_map):
+	* lisp.h:
+	* lread.c:
+	* lread.c (locate_file_in_directory_mapper):
+	* lread.c (locate_file_construct_suffixed_files_mapper):
+	* mule-charset.c (Fmake_charset):
+	* nt.c (Fmswindows_short_file_name):
+	* nt.c (Fmswindows_long_file_name):
+	* objects-gtk.c (__get_gtk_font_truename):
+	* objects-gtk.c (__gtk_font_list_internal):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (create_hfont_from_font_spec):
+	* objects-msw.c (mswindows_font_list):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-x.c (x_font_truename):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (x_font_instance_properties):
+	* objects-x.c (x_font_list):
+	* print.c (write_cistring):
+	* print.c (print_vector_internal):
+	* print.c (print_cons):
+	* process-nt.c (nt_canonicalize_host_name):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process.c (status_message):
+	* process.c (status_notify):
+	* process.c (init_xemacs_process):
+	* process.c (syms_of_process):
+	* redisplay-tty.c (term_get_fkeys_1):
+	* redisplay-tty.c (CONDITIONAL_REASSIGN):
+	* search.c (compile_pattern_1):
+	* select-common.h (selection_data_to_lisp_data):
+	* select-gtk.c (atom_to_symbol):
+	* select-gtk.c (PROCESSING_GTK_CODE):
+	* select-msw.c (mswindows_get_foreign_selection):
+	* select-x.c (x_atom_to_symbol):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* symbols.c (intern_istring):
+	* symbols.c (intern):
+	* symbols.c (intern_converting_underscores_to_dashes):
+	* symbols.c (Fintern):
+	* sysdep.c (init_system_name):
+	* sysdll.c (dll_error):
+	* sysdll.c (dll_open):
+	* syswindows.h:
+	* syswindows.h (build_tstr_string):
+	* tests.c (DFC_CHECK_LENGTH):
+	* tests.c (DFC_CHECK_CONTENT):
+	* tests.c (DFC_RESULT_PASS):
+	* tests.c (Ftest_data_format_conversion):
+	* text.c:
+	* text.c (new_dfc_convert_now_damn_it):
+	* text.h:
+	* text.h (build_wext_string):
+	* tooltalk.c (tt_build_c_string):
+	* tooltalk.c (Ftooltalk_default_procid):
+	* tooltalk.c (Ftooltalk_default_session):
+	* tooltalk.c (init_tooltalk):
+	* ui-byhand.c (Fgtk_clist_get_text):
+	* ui-byhand.c (Fgtk_clist_get_pixtext):
+	* ui-byhand.c (Fgtk_label_get):
+	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* ui-gtk.c (gtk_type_to_lisp):
+	* ui-gtk.c (symbol_to_enum):
+	* ui-gtk.c (enum_to_symbol):
+	* unexaix.c (report_error):
+	* unexaix.c (ERROR0):
+	* unexec.c (report_error):
+	* unexec.c (ERROR0):
+	* unicode.c (unicode_to_ichar):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (Fmswindows_cygwin_to_win32_path):
+	* win32.c (struct read_link_hash):
+	* xemacs.def.in.in:
+
+	Rename:
+
+	write_c_string -> write_cistring
+	build_intstring -> build_istring
+	build_string -> build_cistring
+	build_ext_string -> build_extstring
+	make_ext_string -> make_extstring
+	buffer_insert_c_string -> buffer_insert_ascstring
+	intern_int -> intern_istring
+
+	These functions have been renamed so that the naming harmonizes
+	with the typedefs for strings: `cistring' along with CIbyte *,
+	`istring' along with Ibyte *, `extstring' along with Extbyte *,
+	`ascstring' along with Ascbyte *.
+
+	Also make buffer_insert_ascstring take Ascbyte * and assert
+	that its argument is ASCII.
+
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (build_ascstring):
+	* alloc.c (build_msg_cistring):
+	* alloc.c (staticpro_1):
+	* alloc.c (staticpro_name):
+	* alloc.c (staticpro_nodump_1):
+	* alloc.c (staticpro_nodump_name):
+	* alloc.c (unstaticpro_nodump_1):
+	* alloc.c (mcpro_1):
+	* alloc.c (mcpro_name):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* buffer.c (print_buffer):
+	* buffer.c (vars_of_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (init_initial_directory):
+	* bytecode.c (invalid_byte_code):
+	* bytecode.c (print_compiled_function):
+	* bytecode.c (mark_compiled_function):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* config.h.in:
+	* console-gtk.c:
+	* console-gtk.c (gtk_device_to_console_connection):
+	* console-gtk.c (gtk_semi_canonicalize_console_connection):
+	* console-gtk.c (gtk_canonicalize_console_connection):
+	* console-gtk.c (gtk_semi_canonicalize_device_connection):
+	* console-gtk.c (gtk_canonicalize_device_connection):
+	* console-stream.c (stream_init_frame_1):
+	* console-stream.c (vars_of_console_stream):
+	* console-stream.c (init_console_stream):
+	* console-x.c (x_semi_canonicalize_console_connection):
+	* console-x.c (x_semi_canonicalize_device_connection):
+	* console-x.c (x_canonicalize_device_connection):
+	* console-x.h:
+	* data.c (eq_with_ebola_notice):
+	* data.c (Fsubr_interactive):
+	* data.c (Fnumber_to_string):
+	* data.c (digit_to_number):
+	* device-gtk.c (gtk_init_device):
+	* device-msw.c (print_devmode):
+	* device-x.c (x_event_name):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-msw.c (handle_file_dialog_box):
+	* dialog-msw.c (vars_of_dialog_mswindows):
+	* doc.c (weird_doc):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (vars_of_doc):
+	* dumper.c (pdump):
+	* dynarr.c:
+	* dynarr.c (Dynarr_realloc):
+	* editfns.c (Fuser_real_login_name):
+	* editfns.c (get_home_directory):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (print_hash_table):
+	* emacs.c (main_1):
+	* emacs.c (vars_of_emacs):
+	* emodules.c:
+	* emodules.c (_emodules_list):
+	* emodules.c (Fload_module):
+	* emodules.c (Funload_module):
+	* emodules.c (Flist_modules):
+	* emodules.c (find_make_module):
+	* emodules.c (attempt_module_delete):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_subr):
+	* emodules.c (emodules_doc_sym):
+	* emodules.c (syms_of_module):
+	* emodules.c (vars_of_module):
+	* emodules.h:
+	* eval.c (print_subr):
+	* eval.c (signal_call_debugger):
+	* eval.c (build_error_data):
+	* eval.c (signal_error):
+	* eval.c (maybe_signal_error):
+	* eval.c (signal_continuable_error):
+	* eval.c (maybe_signal_continuable_error):
+	* eval.c (signal_error_2):
+	* eval.c (maybe_signal_error_2):
+	* eval.c (signal_continuable_error_2):
+	* eval.c (maybe_signal_continuable_error_2):
+	* eval.c (signal_ferror):
+	* eval.c (maybe_signal_ferror):
+	* eval.c (signal_continuable_ferror):
+	* eval.c (maybe_signal_continuable_ferror):
+	* eval.c (signal_ferror_with_frob):
+	* eval.c (maybe_signal_ferror_with_frob):
+	* eval.c (signal_continuable_ferror_with_frob):
+	* eval.c (maybe_signal_continuable_ferror_with_frob):
+	* eval.c (syntax_error):
+	* eval.c (syntax_error_2):
+	* eval.c (maybe_syntax_error):
+	* eval.c (sferror):
+	* eval.c (sferror_2):
+	* eval.c (maybe_sferror):
+	* eval.c (invalid_argument):
+	* eval.c (invalid_argument_2):
+	* eval.c (maybe_invalid_argument):
+	* eval.c (invalid_constant):
+	* eval.c (invalid_constant_2):
+	* eval.c (maybe_invalid_constant):
+	* eval.c (invalid_operation):
+	* eval.c (invalid_operation_2):
+	* eval.c (maybe_invalid_operation):
+	* eval.c (invalid_change):
+	* eval.c (invalid_change_2):
+	* eval.c (maybe_invalid_change):
+	* eval.c (invalid_state):
+	* eval.c (invalid_state_2):
+	* eval.c (maybe_invalid_state):
+	* eval.c (wtaerror):
+	* eval.c (stack_overflow):
+	* eval.c (out_of_memory):
+	* eval.c (print_multiple_value):
+	* eval.c (issue_call_trapping_problems_warning):
+	* eval.c (backtrace_specials):
+	* eval.c (backtrace_unevalled_args):
+	* eval.c (Fbacktrace):
+	* eval.c (warn_when_safe):
+	* event-Xt.c (modwarn):
+	* event-Xt.c (modbarf):
+	* event-Xt.c (check_modifier):
+	* event-Xt.c (store_modifier):
+	* event-Xt.c (emacs_Xt_format_magic_event):
+	* event-Xt.c (describe_event):
+	* event-gtk.c (dragndrop_data_received):
+	* event-gtk.c (store_modifier):
+	* event-gtk.c (gtk_reset_modifier_mapping):
+	* event-msw.c (dde_eval_string):
+	* event-msw.c (Fdde_alloc_advise_item):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (FROB):
+	* event-msw.c (emacs_mswindows_format_magic_event):
+	* event-stream.c (external_debugging_print_event):
+	* event-stream.c (execute_help_form):
+	* event-stream.c (vars_of_event_stream):
+	* events.c (print_event_1):
+	* events.c (print_event):
+	* events.c (event_equal):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* extents.c (vars_of_extents):
+	* faces.c (print_face):
+	* faces.c (complex_vars_of_faces):
+	* file-coding.c:
+	* file-coding.c (print_coding_system):
+	* file-coding.c (print_coding_system_in_print_method):
+	* file-coding.c (default_query_method):
+	* file-coding.c (find_coding_system):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (chain_print):
+	* file-coding.c (undecided_print):
+	* file-coding.c (gzip_print):
+	* file-coding.c (vars_of_file_coding):
+	* file-coding.c (complex_vars_of_file_coding):
+	* fileio.c:
+	* fileio.c (report_file_type_error):
+	* fileio.c (report_error_with_errno):
+	* fileio.c (report_file_error):
+	* fileio.c (barf_or_query_if_file_exists):
+	* fileio.c (vars_of_fileio):
+	* floatfns.c (matherr):
+	* fns.c (print_bit_vector):
+	* fns.c (Fmapconcat):
+	* fns.c (add_suffix_to_symbol):
+	* fns.c (add_prefix_to_symbol):
+	* frame-gtk.c:
+	* frame-gtk.c (Fgtk_window_id):
+	* frame-x.c (def):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame.c:
+	* frame.c (Fmake_frame):
+	* gc.c (show_gc_cursor_and_message):
+	* gc.c (vars_of_gc):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (gtk_print_image_instance):
+	* glyphs-msw.c (mswindows_print_image_instance):
+	* glyphs-x.c (x_print_image_instance):
+	* glyphs-x.c (update_widget_face):
+	* glyphs.c (make_string_from_file):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (signal_image_error):
+	* glyphs.c (signal_image_error_2):
+	* glyphs.c (signal_double_image_error):
+	* glyphs.c (signal_double_image_error_2):
+	* glyphs.c (xbm_mask_file_munging):
+	* glyphs.c (pixmap_to_lisp_data):
+	* glyphs.h:
+	* gui.c (gui_item_display_flush_left):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (myHandler):
+	* intl-win32.c:
+	* intl-win32.c (langcode_to_lang):
+	* intl-win32.c (sublangcode_to_lang):
+	* intl-win32.c (Fmswindows_get_locale_info):
+	* intl-win32.c (lcid_to_locale_mule_or_no):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* intl-win32.c (complex_vars_of_intl_win32):
+	* keymap.c:
+	* keymap.c (print_keymap):
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* keymap.c (Fkey_description):
+	* keymap.c (Ftext_char_description):
+	* lisp.h:
+	* lisp.h (struct):
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lread.c (Fload_internal):
+	* lread.c (locate_file):
+	* lread.c (read_escape):
+	* lread.c (read_raw_string):
+	* lread.c (read1):
+	* lread.c (read_list):
+	* lread.c (read_compiled_function):
+	* lread.c (init_lread):
+	* lrecord.h:
+	* marker.c (print_marker):
+	* marker.c (marker_equal):
+	* menubar-msw.c (displayable_menu_item):
+	* menubar-x.c (command_builder_operate_menu_accelerator):
+	* menubar.c (vars_of_menubar):
+	* minibuf.c (reinit_complex_vars_of_minibuf):
+	* minibuf.c (complex_vars_of_minibuf):
+	* mule-charset.c (Fmake_charset):
+	* mule-charset.c (complex_vars_of_mule_charset):
+	* mule-coding.c (iso2022_print):
+	* mule-coding.c (fixed_width_query):
+	* number.c (bignum_print):
+	* number.c (ratio_print):
+	* number.c (bigfloat_print):
+	* number.c (bigfloat_finalize):
+	* objects-msw.c:
+	* objects-msw.c (mswindows_color_to_string):
+	* objects-msw.c (mswindows_color_list):
+	* objects-tty.c:
+	* objects-tty.c (tty_font_list):
+	* objects-tty.c (tty_find_charset_font):
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* objects-xlike-inc.c (endif):
+	* print.c:
+	* print.c (write_istring):
+	* print.c (write_ascstring):
+	* print.c (Fterpri):
+	* print.c (Fprint):
+	* print.c (print_error_message):
+	* print.c (print_vector_internal):
+	* print.c (print_cons):
+	* print.c (print_string):
+	* print.c (printing_unreadable_object):
+	* print.c (print_internal):
+	* print.c (print_float):
+	* print.c (print_symbol):
+	* process-nt.c (mswindows_report_winsock_error):
+	* process-nt.c (nt_canonicalize_host_name):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process.c (print_process):
+	* process.c (report_process_error):
+	* process.c (report_network_error):
+	* process.c (make_process_internal):
+	* process.c (Fstart_process_internal):
+	* process.c (status_message):
+	* process.c (putenv_internal):
+	* process.c (vars_of_process):
+	* process.h:
+	* profile.c (vars_of_profile):
+	* rangetab.c (print_range_table):
+	* realpath.c (vars_of_realpath):
+	* redisplay.c (vars_of_redisplay):
+	* search.c (wordify):
+	* search.c (Freplace_match):
+	* sheap.c (sheap_adjust_h):
+	* sound.c (report_sound_error):
+	* sound.c (Fplay_sound_file):
+	* specifier.c (print_specifier):
+	* symbols.c (Fsubr_name):
+	* symbols.c (do_symval_forwarding):
+	* symbols.c (set_default_buffer_slot_variable):
+	* symbols.c (set_default_console_slot_variable):
+	* symbols.c (store_symval_forwarding):
+	* symbols.c (default_value):
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_massage_name_nodump):
+	* symbols.c (defsymbol_massage_name):
+	* symbols.c (defsymbol_massage_multiword_predicate_nodump):
+	* symbols.c (defsymbol_massage_multiword_predicate):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symbols.c (defkeyword_massage_name):
+	* symbols.c (check_module_subr):
+	* symbols.c (deferror_1):
+	* symbols.c (deferror):
+	* symbols.c (deferror_massage_name):
+	* symbols.c (deferror_massage_name_and_message):
+	* symbols.c (defvar_magic):
+	* symeval.h:
+	* symeval.h (DEFVAR_SYMVAL_FWD):
+	* sysdep.c:
+	* sysdep.c (init_system_name):
+	* sysdll.c:
+	* sysdll.c (MAYBE_PREPEND_UNDERSCORE):
+	* sysdll.c (dll_function):
+	* sysdll.c (dll_variable):
+	* sysdll.c (dll_error):
+	* sysdll.c (dll_open):
+	* sysdll.c (dll_close):
+	* sysdll.c (image_for_address):
+	* sysdll.c (my_find_image):
+	* sysdll.c (search_linked_libs):
+	* sysdll.h:
+	* sysfile.h:
+	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
+	* syswindows.h:
+	* tests.c (DFC_CHECK_LENGTH):
+	* tests.c (DFC_CHECK_CONTENT):
+	* tests.c (Ftest_hash_tables):
+	* text.c (vars_of_text):
+	* text.h:
+	* tooltalk.c (tt_opnum_string):
+	* tooltalk.c (tt_message_arg_ival_string):
+	* tooltalk.c (Ftooltalk_default_procid):
+	* tooltalk.c (Ftooltalk_default_session):
+	* tooltalk.c (init_tooltalk):
+	* tooltalk.c (vars_of_tooltalk):
+	* ui-gtk.c (Fdll_load):
+	* ui-gtk.c (type_to_marshaller_type):
+	* ui-gtk.c (Fgtk_import_function_internal):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* unicode.c (unicode_to_ichar):
+	* unicode.c (unicode_print):
+	* unicode.c (unicode_query):
+	* unicode.c (vars_of_unicode):
+	* unicode.c (complex_vars_of_unicode):
+	* win32.c:
+	* win32.c (mswindows_report_process_error):
+	* window.c (print_window):
+	* xemacs.def.in.in:
+
+	BASIC IDEA: Further fixing up uses of char * and CIbyte *
+	to reflect their actual semantics; Mule-izing some code;
+	redoing of the not-yet-working code to handle message translation.
+	
+	Clean up code to handle message-translation (not yet working).
+	Create separate versions of build_msg_string() for working with
+	Ibyte *, CIbyte *, and Ascbyte * arguments.  Assert that Ascbyte *
+	arguments are pure-ASCII.  Make build_msg_string() be the same
+	as build_msg_ascstring().  Create same three versions of GETTEXT()
+	and DEFER_GETTEXT().  Also create build_defer_string() and
+	variants for the equivalent of DEFER_GETTEXT() when building a
+	string.  Remove old CGETTEXT().  Clean up code where GETTEXT(),
+	DEFER_GETTEXT(), build_msg_string(), etc. was being called and
+	introduce some new calls to build_msg_string(), etc.  Remove
+	GETTEXT() from calls to weird_doc() -- we assume that the
+	message snarfer knows about weird_doc().  Remove uses of
+	DEFER_GETTEXT() from error messages in sysdep.c and instead use
+	special comments /* @@@begin-snarf@@@ */ and /* @@@end-snarf@@@ */
+	that the message snarfer presumably knows about.
+	
+	Create build_ascstring() and use it in many instances in place
+	of build_string().  The purpose of having Ascbyte * variants is
+	to make the code more self-documenting in terms of what sort of
+	semantics is expected for char * strings.  In fact in the process
+	of looking for uses of build_string(), much improperly Mule-ized
+	was discovered.
+
+	Mule-ize a lot of code as described in previous paragraph,
+	e.g. in sysdep.c.
+
+	Make the error functions take Ascbyte * strings and fix up a
+	couple of places where non-pure-ASCII strings were being passed in
+	(file-coding.c, mule-coding.c, unicode.c). (It's debatable whether
+	we really need to make the error functions work this way.  It
+	helps catch places where code is written in a way that message
+	translation won't work, but we may well never implement message
+	translation.)
+
+	Make staticpro() and friends take Ascbyte * strings instead of
+	raw char * strings.  Create a const_Ascbyte_ptr dynarr type
+	to describe what's held by staticpro_names[] and friends,
+	create pdump descriptions for const_Ascbyte_ptr dynarrs, and
+	use them in place of specially-crafted staticpro descriptions.
+
+	Mule-ize certain other functions (e.g. x_event_name) by correcting
+	raw use of char * to Ascbyte *, Rawbyte * or another such type,
+	and raw use of char[] buffers to another type (usually Ascbyte[]).
+
+	Change many uses of write_c_string() to write_msg_string(),
+	write_ascstring(), etc.
+
+	Mule-ize emodules.c, emodules.h, sysdll.h.
+
+	Fix some un-Mule-ized code in intl-win32.c.
+	
+	A comment in event-Xt.c and the limitations of the message
+	snarfer (make-msgfile or whatever) is presumably incorrect --
+	it should be smart enough to handle function calls spread over
+	more than one line.  Clean up code in event-Xt.c that was
+	written awkwardly for this reason.
+
+	In config.h.in, instead of NEED_ERROR_CHECK_TYPES_INLINES,
+	create a more general XEMACS_DEFS_NEEDS_INLINE_DECLS to
+	indicate when inlined functions need to be declared in
+	xemacs.defs.in.in, and make use of it in xemacs.defs.in.in.
+	We need to do this because postgresql.c now calls qxestrdup(),
+	which is an inline function.
+
+	Make nconc2() and other such functions MODULE_API and put
+	them in xemacs.defs.in.in since postgresql.c now uses them.
+
+	Clean up indentation in lread.c and a few other places.
+	
+	In text.h, document ASSERT_ASCTEXT_ASCII() and
+	ASSERT_ASCTEXT_ASCII_LEN(), group together the stand-in
+	encodings and add some more for DLL symbols, function and
+	variable names, etc.
+	
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in: Allow an argument to check-xemacs and check-temacs
+	to check a specific file.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c (decode_char_table_range):
+	* extents.c (extent_fragment_update):
+	* objects-msw.c (initialize_font_instance):
+	* process.c (Fgetenv):
+	* redisplay-output.c (get_next_display_block):
+	Fix warnings about possible use of uninitialized vars.
+	
+	* compiler.h:
+	* compiler.h (REGISTER):
+	* event-stream.c (is_scrollbar_event):
+	* window.c (window_scrollbar_width):
+	* window.c (window_scrollbar_height):
+	* window.c (window_left_window_gutter_width):
+	* window.c (window_right_window_gutter_width):
+	Add USED_IF_SCROLLBARS.  Use it to fix warnings about unused
+	vars when --with-scrollbars=no.
+
+	* config.h.in:
+	Change comment to explain better why DECLARE_INLINE_HEADER
+	is needed.
+
+	* dialog-msw.c:
+	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
+	* emacs.c (main_1):
+	* event-msw.c (struct mswin_message_debug):
+	* event-msw.c (debug_output_mswin_message):
+	* font-mgr.c:
+	* font-mgr.c (Ffc_config_filename):
+	* glyphs-msw.c (struct):
+	* glyphs-msw.c (bitmap_table):
+	* glyphs-x.c (update_widget_face):
+	* intl-win32.c (struct lang_to_string):
+	* intl-win32.c (lang_to_string_table):
+	* nas.c:
+	* objects-xlike-inc.c:
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* syswindows.h:
+	* win32.c (mswindows_output_last_error):
+	Fix g++ 4.3 complaints about implicit conversions of string
+	literals (const char *) to char *.
+
+	* lisp.h:
+	G++ 4.3 needs #include <limits> to avoid errors about min/max.
+	
+	* lisp.h (disabled_assert_with_message):
+	Use disabled_assert* whenever asserts are disabled.  Rewrite
+	disabled_assert* to avoid complaints about unused vars by
+	pretending to use the vars but casting them to (void).
+	Remove code that defined assert() weirdly if DEBUG_XEMACS but
+	not USE_ASSERTIONS -- configure sets USE_ASSERTIONS automatically
+	when DEBUG_XEMACS, and if the user has forced it off, then
+	so be it.
+	
+	* lisp.h (SYMBOL_KEYWORD):
+	Put some of the combined `extern Lisp_Object's back under
+	the file they are declared in.  Cosmetic fix.
+	
+	* number.h:
+	Remove `extern Lisp_Object' decls that duplicate lisp.h,
+	since they have different C vs. C++ linkage.
+	
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	Oops.  Use two hashes for comments in Makefile.in.in.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* symbols.c:
+	Add long comment about the types of magic symbols, and the various
+	declarations that go along with them.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	Moved here from etc/.gdbinit.in.
+	Put @srcdir@ in various places rather than just `..' whenever
+	Makefile.in.in does so.  Fixes various strange crashes and errors
+	than occur when using `..'.
+	* Makefile.in.in (config-changed):
+	Add target, useful when building both Unicode-internal and
+	old-Mule workspaces using --srcdir and don't run configure before
+	switching from one to the other.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* lrecord.h (struct lrecord_implementation):
+	Clean up description of finalizer methods.  Clean up and expand
+	the long comment at the top of lrecord.h.  Add a section about why
+	New-GC requires a bunch of new internal objects to be created (not
+	completely understood).
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Disable error-checking code in Dynarr_at and related lookup
+	functions.  It leads to a crash in the glyph-cachels code under
+	Cygwin 1.7 and GCC 3.4.4.  I assume this is a compiler bug since
+	the code in question doesn't (or shouldn't) modify anything.
+	Changing the code from inline to non-inline didn't help.
+
+2010-01-19  Ben Wing  <ben@xemacs.org>
+
+	* console-impl.h (struct console_methods):
+	* console-stream.c (stream_text_width):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c:
+	* redisplay.c (redisplay_window_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string):
+	Change the text_width method to take a window instead of a frame.
+	Needed for Unicode-internal.
 
 2010-01-18  Ben Wing  <ben@xemacs.org>
 
@@ -783,6 +1702,10 @@
 	* syswindows.h (INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT):
 	Declare some temporary pointer variables const to avoid compile
 	errors under C++ and/or Visual Studio 6.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c: Typo in comment.
 
 2010-01-24  Aidan Kehoe  <kehoea@parhasard.net>
 

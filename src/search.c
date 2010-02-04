@@ -184,7 +184,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   re_set_syntax (old);
   if (val)
     {
-      maybe_signal_error (Qinvalid_regexp, 0, build_string (val),
+      maybe_signal_error (Qinvalid_regexp, 0, build_cistring (val),
 			  Qsearch, errb);
       return 0;
     }
@@ -2247,7 +2247,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
       }
   if (WORD_SYNTAX_P (syntax_table, string_ichar (string, len - 1)))
     word_count++;
-  if (!word_count) return build_string ("");
+  if (!word_count) return build_ascstring ("");
 
   {
     /* The following value is an upper bound on the amount of storage we
@@ -2905,7 +2905,7 @@ rare.)
 
       /* replacement can be nil. */
       if (NILP (replacement))
-	replacement = build_string ("");
+	replacement = build_ascstring ("");
 
       if (case_action == all_caps)
 	replacement = Fupcase (replacement, buffer);

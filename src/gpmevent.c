@@ -186,7 +186,7 @@ This function is the process handler for the GPM connection.
 
 static void turn_off_gpm (char *process_name)
 {
-  Lisp_Object process = Fget_process (build_string (process_name));
+  Lisp_Object process = Fget_process (build_cistring (process_name));
   int fd = -1;
 
   if (NILP (process))
@@ -201,7 +201,7 @@ static void turn_off_gpm (char *process_name)
 
   clear_gpm_state (fd);
 
-  Fdelete_process (build_string (process_name));
+  Fdelete_process (build_cistring (process_name));
 }
 
 #ifdef TIOCLINUX
@@ -493,7 +493,7 @@ Return non-nil if GPM mouse support is currently enabled on DEVICE.
   snprintf (process_name, sizeof(process_name) - 1, "gpm for %s",
 	    console_name);
 
-  proc = Fget_process (build_string (process_name));
+  proc = Fget_process (build_cistring (process_name));
 
   if (NILP (proc))
     return (Qnil);
@@ -585,7 +585,7 @@ Toggle accepting of GPM mouse events.
       set_descriptor_non_blocking (gpm_fd);
       store_gpm_state (gpm_fd);
       gpm_process =
-	connect_to_file_descriptor (build_string (process_name), Qnil,
+	connect_to_file_descriptor (build_cistring (process_name), Qnil,
 				    make_int (gpm_fd),
 				    make_int (gpm_fd));
 

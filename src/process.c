@@ -159,15 +159,15 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else
     {
       int netp = network_connection_p (obj);
-      write_c_string (printcharfun,
+      write_ascstring (printcharfun,
 		      netp ? GETTEXT ("#<network connection ") :
 		      GETTEXT ("#<process "));
       print_internal (process->name, printcharfun, 1);
-      write_c_string (printcharfun, (netp ? " " : " pid "));
+      write_ascstring (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
       write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
-      write_c_string (printcharfun, ">");
+      write_ascstring (printcharfun, ">");
     }
 }
 
@@ -454,15 +454,15 @@ and the rest of the strings being the arguments given to it.
 /************************************************************************/
 
 DOESNT_RETURN
-report_process_error (const char *string, Lisp_Object data)
+report_process_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qprocess_error, string, data);
+  report_error_with_errno (Qprocess_error, reason, data);
 }
 
 DOESNT_RETURN
-report_network_error (const char *string, Lisp_Object data)
+report_network_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qnetwork_error, string, data);
+  report_error_with_errno (Qnetwork_error, reason, data);
 }
 
 Lisp_Object
@@ -479,12 +479,12 @@ make_process_internal (Lisp_Object name)
   name1 = name;
   for (i = 1; ; i++)
     {
-      char suffix[10];
+      Ascbyte suffix[10];
       Lisp_Object tem = Fget_process (name1);
       if (NILP (tem))
         break;
       sprintf (suffix, "<%d>", i);
-      name1 = concat2 (name, build_string (suffix));
+      name1 = concat2 (name, build_ascstring (suffix));
     }
   name = name1;
   p->name = name;
@@ -746,7 +746,7 @@ arguments: (NAME BUFFER PROGRAM &rest PROGRAM-ARGS)
 
       tem = Qnil;
       NGCPRO1 (tem);
-      locate_file (list1 (build_string ("")), program, Vlisp_EXEC_SUFFIXES,
+      locate_file (list1 (build_ascstring ("")), program, Vlisp_EXEC_SUFFIXES,
 		   &tem, X_OK);
       if (NILP (tem))
 	signal_error (Qprocess_error, "Searching for program", program);
@@ -1570,11 +1570,11 @@ status_message (Lisp_Process *p)
 
   if (EQ (symbol, Qsignal) || EQ (symbol, Qstop))
     {
-      string = build_string (signal_name (code));
+      string = build_cistring (signal_name (code));
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
-	string2 = build_string ("\n");
+	string2 = build_ascstring ("\n");
       set_string_char (string, 0,
 		       DOWNCASE (0, string_ichar (string, 0)));
       return concat2 (string, string2);
@@ -1587,7 +1587,7 @@ status_message (Lisp_Process *p)
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
-	string2 = build_string ("\n");
+	string2 = build_ascstring ("\n");
       return concat2 (build_msg_string ("exited abnormally with code "),
 		      concat2 (string, string2));
     }
@@ -1696,9 +1696,9 @@ status_notify (void)
 	      int spec = process_setup_for_insertion (process, 0);
 
 	      NGCPRO1 (process);
-	      buffer_insert_c_string (current_buffer, "\nProcess ");
+	      buffer_insert_ascstring (current_buffer, "\nProcess ");
 	      Finsert (1, &p->name);
-	      buffer_insert_c_string (current_buffer, " ");
+	      buffer_insert_ascstring (current_buffer, " ");
 	      Finsert (1, &msg);
 	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
 			   p->buffer);
@@ -2308,14 +2308,14 @@ putenv_internal (const Ibyte *var,
 	  )
 	{
 	  XCAR (scan) = concat3 (make_string (var, varlen),
-				 build_string ("="),
+				 build_ascstring ("="),
 				 make_string (value, valuelen));
 	  return;
 	}
     }
 
   Vprocess_environment = Fcons (concat3 (make_string (var, varlen),
-					 build_string ("="),
+					 build_ascstring ("="),
 					 make_string (value, valuelen)),
 				Vprocess_environment);
 }
@@ -2348,7 +2348,7 @@ When invoked interactively, prints the value in the echo area.
 */
        (var, interactivep))
 {
-  Ibyte *value;
+  Ibyte *value = NULL;
   Bytecount valuelen;
   Lisp_Object v = Qnil;
   struct gcpro gcpro1;
@@ -2434,12 +2434,12 @@ init_xemacs_process (void)
     _wgetenv (L""); /* force initialization of _wenviron */
     for (envp = (Extbyte **) _wenviron; envp && *envp; envp++)
       Vprocess_environment =
-	Fcons (build_ext_string (*envp, Qmswindows_unicode),
+	Fcons (build_extstring (*envp, Qmswindows_unicode),
 	       Vprocess_environment);
 #else
     for (envp = environ; envp && *envp; envp++)
       Vprocess_environment =
-	Fcons (build_ext_string (*envp, Qenvironment_variable_encoding),
+	Fcons (build_extstring (*envp, Qenvironment_variable_encoding),
 	       Vprocess_environment);
 #endif
     /* This gets set back to 0 in disksave_object_finalization() */
@@ -2479,12 +2479,12 @@ init_xemacs_process (void)
       {
 	Ibyte *faux_var = alloca_ibytes (7 + qxestrlen (shell));
 	qxesprintf (faux_var, "SHELL=%s", shell);
-	Vprocess_environment = Fcons (build_intstring (faux_var),
+	Vprocess_environment = Fcons (build_istring (faux_var),
 				      Vprocess_environment);
       }
 #endif /* 0 */
 
-    Vshell_file_name = build_intstring (shell);
+    Vshell_file_name = build_istring (shell);
   }
 }
 
@@ -2605,7 +2605,7 @@ with memory-mapping.  We don't provide a Lisp variable for this because
 the operations needing this are lower level than what ELisp programs
 typically do, and in any case no equivalent exists under native MS Windows.
 */ );
-  Vnull_device = build_string (NULL_DEVICE);
+  Vnull_device = build_ascstring (NULL_DEVICE);
 
   DEFVAR_LISP ("process-connection-type", &Vprocess_connection_type /*
 Control type of device used to communicate with subprocesses.
@@ -2685,6 +2685,6 @@ The environment which Emacs inherits is placed in this variable
 when Emacs starts.
 */ );
 
-  Vlisp_EXEC_SUFFIXES = build_string (EXEC_SUFFIXES);
+  Vlisp_EXEC_SUFFIXES = build_ascstring (EXEC_SUFFIXES);
   staticpro (&Vlisp_EXEC_SUFFIXES);
 }

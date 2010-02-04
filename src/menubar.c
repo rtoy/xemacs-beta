@@ -456,8 +456,8 @@ vars_of_menubar (void)
    * and this works fine.
    */
 
-  Vblank_menubar = list1 (list2 (build_msg_string ("No active menubar"),
-				 vector3 (build_string (""), Qnil, Qnil)));
+  Vblank_menubar = list1 (list2 (build_defer_string ("No active menubar"),
+				 vector3 (build_ascstring (""), Qnil, Qnil)));
   staticpro (&Vblank_menubar);
 
   DEFVAR_BOOL ("popup-menu-titles", &popup_menu_titles /*

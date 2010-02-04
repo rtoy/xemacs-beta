@@ -466,7 +466,7 @@ static void
 init_x_prop_symbols (void)
 {
 #define def(sym, rsrc) \
-   Fput (sym, Qx_resource_name, build_string (rsrc))
+   Fput (sym, Qx_resource_name, build_ascstring (rsrc))
 #define defi(sym,rsrc) \
    def (sym, rsrc); Fput (sym, Qintegerp, Qt)
 
@@ -515,7 +515,7 @@ color_to_string (Widget w, unsigned long pixel)
   color.pixel = pixel;
   XQueryColor (XtDisplay (w), w->core.colormap, &color);
   qxesprintf (buf, "#%04x%04x%04x", color.red, color.green, color.blue);
-  return build_intstring (buf);
+  return build_istring (buf);
 }
 
 static void
@@ -990,9 +990,9 @@ maybe_set_frame_title_format (Widget shell)
 			 shell->core.widget_class->core_class.class_name,
 			 resources, XtNumber (resources), 0, 0);
       if (results[0])
-	Vframe_title_format = build_ext_string (results[0], Qctext);
+	Vframe_title_format = build_extstring (results[0], Qctext);
       if (results[1])
-	Vframe_icon_title_format = build_ext_string (results[1], Qctext);
+	Vframe_icon_title_format = build_extstring (results[1], Qctext);
     }
 
   frame_title_format_already_set = 1;
@@ -1274,7 +1274,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 				fileint, Qfile_name);
 
 	  hurl = dnd_url_hexify_string (fileint, "file:");
-	  l_data = Fcons (build_intstring (hurl), l_data);
+	  l_data = Fcons (build_istring (hurl), l_data);
 	  xfree (hurl, Ibyte *);
 	}
     }
@@ -1297,12 +1297,12 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  /* let us forget this name thing for now... */
  	  /* filePath = transferInfo->dropData->data.buffers[ii].name;
 	     path = (filePath == NULL) ? Qnil
-	     : build_ext_string (filePath, Q???); */
+	     : build_extstring (filePath, Q???); */
 	  /* what, if the data is no text, and how can I tell it? */
 	  l_data =
-	    Fcons (list3 (list1 (build_string ("text/plain")),
-			  build_string ("8bit"),
-			  make_ext_string
+	    Fcons (list3 (list1 (build_ascstring ("text/plain")),
+			  build_ascstring ("8bit"),
+			  make_extstring
 			  (transferInfo->dropData->data.buffers[ii].bp,
 			   transferInfo->dropData->data.buffers[ii].size,
 			   /* !!#### what goes here? */
@@ -2208,7 +2208,7 @@ a string.
   struct frame *f = decode_x_frame (frame);
 
   qxesprintf (str, "%lu", XtWindow (FRAME_X_TEXT_WIDGET (f)));
-  return build_intstring (str);
+  return build_istring (str);
 }
 
 
