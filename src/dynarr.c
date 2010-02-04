@@ -1,6 +1,6 @@
 /* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -127,6 +127,27 @@ Use the following global variable:
 #include <config.h>
 #include "lisp.h"
 
+static const struct memory_description const_Ascbyte_ptr_description_1[] = {
+  { XD_ASCII_STRING, 0 },
+  { XD_END }
+};
+
+const struct sized_memory_description const_Ascbyte_ptr_description = {
+  sizeof (const Ascbyte *),
+  const_Ascbyte_ptr_description_1
+};
+
+static const struct memory_description const_Ascbyte_ptr_dynarr_description_1[] = {
+  XD_DYNARR_DESC (const_Ascbyte_ptr_dynarr, &const_Ascbyte_ptr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description const_Ascbyte_ptr_dynarr_description = {
+  sizeof (const_Ascbyte_ptr_dynarr),
+  const_Ascbyte_ptr_dynarr_description_1
+};
+
+
 static int Dynarr_min_size = 8;
 
 static void
@@ -136,7 +157,8 @@ Dynarr_realloc (Dynarr *dy, int new_size)
     {
       void *new_base = malloc (new_size * dy->elsize);
       memcpy (new_base, dy->base, 
-	      (dy->max < new_size ? dy->max : new_size) * dy->elsize);
+	      (Dynarr_max (dy) < new_size ? Dynarr_max (dy) : new_size) *
+	      dy->elsize);
       dy->base = new_base;
     }
   else
@@ -165,7 +187,8 @@ Dynarr_lisp_realloc (Dynarr *dy, int new_size)
   void *new_base = alloc_lrecord_array (dy->elsize, new_size, dy->lisp_imp);
   if (dy->base)
     memcpy (new_base, dy->base, 
-	    (dy->max < new_size ? dy->max : new_size) * dy->elsize);
+	    (Dynarr_max (dy) < new_size ? Dynarr_max (dy) : new_size) *
+	    dy->elsize);
   dy->base = new_base;
 }
 
@@ -189,16 +212,16 @@ Dynarr_resize (void *d, Elemcount size)
   double multiplier;
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
 
-  if (dy->max <= 8)
+  if (Dynarr_max (dy) <= 8)
     multiplier = 2;
   else
     multiplier = 1.5;
 
-  for (newsize = dy->max; newsize < size;)
+  for (newsize = Dynarr_max (dy); newsize < size;)
     newsize = max (Dynarr_min_size, (int) (multiplier * newsize));
 
   /* Don't do anything if the array is already big enough. */
-  if (newsize > dy->max)
+  if (newsize > Dynarr_max (dy))
     {
 #ifdef NEW_GC
       if (dy->lisp_imp)
@@ -208,7 +231,7 @@ Dynarr_resize (void *d, Elemcount size)
 #else /* not NEW_GC */
       Dynarr_realloc (dy, newsize);
 #endif /* not NEW_GC */
-      dy->max = newsize;
+      dy->max_ = newsize;
     }
 }
 
@@ -216,47 +239,43 @@ Dynarr_resize (void *d, Elemcount size)
 void
 Dynarr_insert_many (void *d, const void *el, int len, int start)
 {
-  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
-  
-  if (dy->len + len > dy->max)
-    Dynarr_resize (dy, dy->len + len);
-#if 0
-  /* WTF? We should be catching these problems. */
-  /* Silently adjust start to be valid. */
-  if (start > dy->len)
-    start = dy->len;
-  else if (start < 0)
-    start = 0;
-#else
+  Dynarr *dy = Dynarr_verify_mod (d);
+
+  Dynarr_resize_if (dy, len);
+
   /* #### This could conceivably be wrong, if code wants to access stuff
      between len and largest. */
-  type_checking_assert (start >= 0 && start <= dy->len);
-#endif
+  structure_checking_assert (start >= 0 && start <= Dynarr_length (dy));
 
-  if (start != dy->len)
+  if (start != Dynarr_length (dy))
     {
       memmove ((char *) dy->base + (start + len)*dy->elsize,
 	       (char *) dy->base + start*dy->elsize,
-	       (dy->len - start)*dy->elsize);
+	       (Dynarr_length (dy) - start)*dy->elsize);
     }
+  /* Some functions call us with a value of 0 to mean "reserve space but
+     don't write into it" */
   if (el)
     memcpy ((char *) dy->base + start*dy->elsize, el, len*dy->elsize);
-  dy->len += len;
 
-  if (dy->len > dy->largest)
-    dy->largest = dy->len;
+  Dynarr_set_length_1 (dy, Dynarr_length (dy) + len);
+  (void) Dynarr_verify_mod (dy);
 }
 
 void
 Dynarr_delete_many (void *d, int start, int len)
 {
-  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
+  Dynarr *dy = Dynarr_verify_mod (d);
 
-  type_checking_assert (start >= 0 && len >= 0 && start + len <= dy->len);
+  structure_checking_assert (start >= 0 && len >= 0 &&
+			     start + len <= Dynarr_length (dy));
+
   memmove ((char *) dy->base + start*dy->elsize,
 	   (char *) dy->base + (start + len)*dy->elsize,
-	   (dy->len - start - len)*dy->elsize);
-  dy->len -= len;
+	   (Dynarr_length (dy) - start - len)*dy->elsize);
+
+  Dynarr_set_length_1 (dy, Dynarr_length (dy) - len);
+  (void) Dynarr_verify_mod (dy);
 }
 
 void
@@ -305,12 +324,13 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 
   if (dy->base)
     {
-      Bytecount malloc_used = malloced_storage_size (dy->base,
-						     dy->elsize * dy->max, 0);
+      Bytecount malloc_used =
+	malloced_storage_size (dy->base, dy->elsize * Dynarr_max (dy), 0);
       /* #### This may or may not be correct.  Some Dynarrs would
 	 prefer that we use dy->len instead of dy->largest here. */
-      Bytecount was_requested = dy->elsize * dy->largest;
-      Bytecount dynarr_overhead = dy->elsize * (dy->max - dy->largest);
+      Bytecount was_requested = dy->elsize * Dynarr_largest (dy);
+      Bytecount dynarr_overhead =
+	dy->elsize * (Dynarr_max (dy) - Dynarr_largest (dy));
 
       total += malloc_used;
       stats->was_requested += was_requested;
@@ -359,7 +379,7 @@ stack_like_malloc (Bytecount size)
   Dynarr_add (stack_like_in_use_list, this_one);
   Dynarr_reset (this_one);
   Dynarr_add_many (this_one, 0, size);
-  return Dynarr_atp (this_one, 0);
+  return Dynarr_begin (this_one);
 }
 
 void
@@ -371,7 +391,7 @@ stack_like_free (void *val)
      order, and the item at the end of the list will be the one we're
      looking for, so just check for this first and avoid any function
      calls. */
-  if (Dynarr_atp (Dynarr_at (stack_like_in_use_list, len - 1), 0) == val)
+  if (Dynarr_begin (Dynarr_at (stack_like_in_use_list, len - 1)) == val)
     {
       char_dynarr *this_one = Dynarr_pop (stack_like_in_use_list);
       Dynarr_add (stack_like_free_list, this_one);
@@ -382,7 +402,7 @@ stack_like_free (void *val)
       int i;
       assert (len >= 2);
       for (i = len - 2; i >= 0; i--)
-	if (Dynarr_atp (Dynarr_at (stack_like_in_use_list, i), 0) ==
+	if (Dynarr_begin (Dynarr_at (stack_like_in_use_list, i)) ==
 	    val)
 	  {
 	    char_dynarr *this_one = Dynarr_at (stack_like_in_use_list, i);

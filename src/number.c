@@ -53,9 +53,9 @@ static void
 bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
-  CIbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
-  write_c_string (printcharfun, bstr);
-  xfree (bstr, CIbyte *);
+  Ascbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
+  write_ascstring (printcharfun, bstr);
+  xfree (bstr, Ascbyte *);
 }
 
 #ifdef NEW_GC
@@ -147,7 +147,7 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
   CIbyte *rstr = ratio_to_string (XRATIO_DATA (obj), 10);
-  write_c_string (printcharfun, rstr);
+  write_ascstring (printcharfun, rstr);
   xfree (rstr, CIbyte *);
 }
 
@@ -251,8 +251,8 @@ static void
 bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
 		int UNUSED (escapeflag))
 {
-  CIbyte *fstr = bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
-  write_c_string (printcharfun, fstr);
+  Ascbyte *fstr = bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
+  write_ascstring (printcharfun, fstr);
   xfree (fstr, CIbyte *);
 }
 

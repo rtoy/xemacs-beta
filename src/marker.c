@@ -62,9 +62,9 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
 
-  write_c_string (printcharfun, GETTEXT ("#<marker "));
+  write_ascstring (printcharfun, GETTEXT ("#<marker "));
   if (!marker->buffer)
-    write_c_string (printcharfun, GETTEXT ("in no buffer"));
+    write_ascstring (printcharfun, GETTEXT ("in no buffer"));
   else
     {
       write_fmt_string (printcharfun, "at %ld in ",
@@ -72,7 +72,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
       print_internal (marker->buffer->name, printcharfun, 0);
     }
   if (marker->insertion_type)
-    write_c_string (printcharfun, " insertion-type=t");
+    write_ascstring (printcharfun, " insertion-type=t");
   write_fmt_string (printcharfun, " 0x%lx>", (long) marker);
 }
 

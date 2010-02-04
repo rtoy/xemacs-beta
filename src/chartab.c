@@ -228,6 +228,7 @@ symbol_to_char_table_type (Lisp_Object symbol)
 static void
 decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 {
+  xzero (*outrange);
   if (EQ (range, Qt))
     outrange->type = CHARTAB_RANGE_ALL;
   else if (CHAR_OR_CHAR_INTP (range))
@@ -315,7 +316,7 @@ print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
   struct gcpro gcpro1;
   Lisp_Object lisprange;
   if (!a->first)
-    write_c_string (a->printcharfun, " ");
+    write_ascstring (a->printcharfun, " ");
   a->first = 0;
   lisprange = encode_char_table_range (range);
   GCPRO1 (lisprange);
@@ -339,7 +340,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
 			 1, char_table_type_to_symbol (ct->type));
   map_char_table (obj, &range, print_table_entry, &arg);
-  write_c_string (printcharfun, "))");
+  write_ascstring (printcharfun, "))");
 
   /* #### need to print and read the default; but that will allow the
      default to be modified, which we don't (yet) support -- but FSF does */

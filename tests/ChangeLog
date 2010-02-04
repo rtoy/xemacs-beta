@@ -1,3 +1,27 @@
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* automated/file-tests.el:
+	New file.
+	
+	* automated/mule-tests.el (featurep):
+	
+	* automated/test-harness.el (test-harness-from-buffer):
+	* automated/test-harness.el (batch-test-emacs):
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* automated/file-tests.el:
+	* automated/mule-tests.el (featurep):
+	Clean up charsets-in-HELLO test and fix the list of expected
+	charsets.
+	
+	* automated/test-harness.el (test-harness-from-buffer):
+	Reverse order of "got" and "expected" values so it matches
+	order of call to comparison.
+	
+	* automated/test-harness.el (batch-test-emacs):
+	Update doc to indicate that a directory is allowed.
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* automated/case-tests.el:

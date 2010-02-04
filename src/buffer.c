@@ -309,7 +309,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	printing_unreadable_object ("#<buffer %s>", XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
-    write_c_string (printcharfun, "#<killed buffer>");
+    write_ascstring (printcharfun, "#<killed buffer>");
   else if (escapeflag)
     write_fmt_string_lisp (printcharfun, "#<buffer %S>", 1, b->name);
   else
@@ -788,7 +788,7 @@ even if a buffer with that name exists.
   while (1)
     {
       qxesprintf (number, "<%d>", ++count);
-      gentemp = concat2 (name, build_intstring (number));
+      gentemp = concat2 (name, build_istring (number));
       if (!NILP (ignore))
         {
           tem = Fstring_equal (gentemp, ignore);
@@ -1998,8 +1998,8 @@ vars_of_buffer (void)
   staticpro (&QSFundamental);
   staticpro (&QSscratch);
 
-  QSFundamental = build_string ("Fundamental");
-  QSscratch = build_string (DEFER_GETTEXT ("*scratch*"));
+  QSFundamental = build_ascstring ("Fundamental");
+  QSscratch = build_ascstring ("*scratch*");
 
   DEFVAR_LISP ("change-major-mode-hook", &Vchange_major_mode_hook /*
 List of hooks to be run before killing local variables in a buffer.
@@ -2258,7 +2258,7 @@ common_init_complex_vars_of_buffer (void)
   defs->syntax_table = Vstandard_syntax_table;
   defs->mirror_syntax_table =
     XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
-  defs->modeline_format = build_string ("%-");  /* reset in loaddefs.el */
+  defs->modeline_format = build_ascstring ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
   defs->tab_width = make_int (8);
@@ -2935,7 +2935,7 @@ init_initial_directory (void)
 	stderr_out ("`getcwd' failed: %s: changing default directory to %s\n",
                     errmess, DEFAULT_DIRECTORY_FALLBACK);
 
-        if (qxe_chdir ((Ibyte *)DEFAULT_DIRECTORY_FALLBACK) < 0)
+        if (qxe_chdir ((Ibyte *) DEFAULT_DIRECTORY_FALLBACK) < 0)
           {
             GET_STRERROR (errmess, errno);
 
@@ -2999,7 +2999,7 @@ init_buffer_2 (void)
   /* This function can GC */
   Fset_buffer (Fget_buffer (QSscratch));
 
-  current_buffer->directory = build_intstring (initial_directory);
+  current_buffer->directory = build_istring (initial_directory);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

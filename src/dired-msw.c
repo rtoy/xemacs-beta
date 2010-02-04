@@ -179,7 +179,7 @@ mswindows_sort_files (Win32_file_dynarr *files,
 {
   mswindows_sort_method = sort_by;
   mswindows_reverse_sort = reverse;
-  qsort (Dynarr_atp (files, 0), Dynarr_length (files),
+  qsort (Dynarr_begin (files), Dynarr_length (files),
 	 sizeof (Win32_file), mswindows_ls_sort_fcn);
 }
 

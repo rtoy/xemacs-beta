@@ -2971,7 +2971,7 @@ extent_fragment_sort_by_priority (EXTENT_dynarr *extarr)
     /* But some loser programs mess up and may create a large number
        of extents overlapping the same spot.  This will result in
        catastrophic behavior if we use the bubble sort above. */
-    qsort (Dynarr_atp (extarr, 0), Dynarr_length (extarr),
+    qsort (Dynarr_begin (extarr), Dynarr_length (extarr),
 	   sizeof (EXTENT), extent_priority_sort_function);
 }
 
@@ -3114,13 +3114,15 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
       if (extent_start (e) == mempos && !NILP (extent_begin_glyph (e)))
 	{
 	  Lisp_Object glyph = extent_begin_glyph (e);
-	  if (seen_glyph) {
-	    struct glyph_block gb;
-	    
-	    gb.glyph = glyph;
-	    gb.extent = wrap_extent (e);
-	    Dynarr_add (ef->begin_glyphs, gb);
-	  }
+	  if (seen_glyph)
+	    {
+	      struct glyph_block gb;
+
+	      xzero (gb);
+	      gb.glyph = glyph;
+	      gb.extent = wrap_extent (e);
+	      Dynarr_add (ef->begin_glyphs, gb);
+	    }
 	  else if (EQ (glyph, last_glyph))
 	    seen_glyph = 1;
 	}
@@ -3133,13 +3135,15 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
       if (extent_end (e) == mempos && !NILP (extent_end_glyph (e)))
 	{
 	  Lisp_Object glyph = extent_end_glyph (e);
-	  if (seen_glyph) {
-	    struct glyph_block gb;
-
-	    gb.glyph = glyph;
-	    gb.extent = wrap_extent (e);
-	    Dynarr_add (ef->end_glyphs, gb);
-	  }
+	  if (seen_glyph)
+	    {
+	      struct glyph_block gb;
+	      
+	      xzero (gb);
+	      gb.glyph = glyph;
+	      gb.extent = wrap_extent (e);
+	      Dynarr_add (ef->end_glyphs, gb);
+	    }
 	  else if (EQ (glyph, last_glyph))
 	    seen_glyph = 1;
 	}
@@ -3268,7 +3272,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
   EXTENT ext = XEXTENT (obj);
   EXTENT anc = extent_ancestor (ext);
   Lisp_Object tail;
-  char buf[64], *bp = buf;
+  Ascbyte buf[64], *bp = buf;
 
   /* Retrieve the ancestor and use it, for faster retrieval of properties */
 
@@ -3296,7 +3300,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
       extent_duplicable_p (anc) || !NILP (extent_invisible (anc)))
     *bp++ = ' ';
   *bp = '\0';
-  write_c_string (printcharfun, buf);
+  write_ascstring (printcharfun, buf);
 
   tail = extent_plist_slot (anc);
 
@@ -3358,12 +3362,12 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	}
 
       if (!EXTENT_LIVE_P (XEXTENT (obj)))
-	write_c_string (printcharfun, "#<destroyed extent");
+	write_ascstring (printcharfun, "#<destroyed extent");
       else
 	{
-	  write_c_string (printcharfun, "#<extent ");
+	  write_ascstring (printcharfun, "#<extent ");
 	  print_extent_1 (obj, printcharfun, escapeflag);
-	  write_c_string (printcharfun, extent_detached_p (XEXTENT (obj))
+	  write_ascstring (printcharfun, extent_detached_p (XEXTENT (obj))
 			  ? " from " : " in ");
 	  write_fmt_string (printcharfun, "%s%s%s", title, name, posttitle);
 	}
@@ -3372,9 +3376,9 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       if (print_readably)
 	printing_unreadable_object ("#<extent>");
-      write_c_string (printcharfun, "#<extent");
+      write_ascstring (printcharfun, "#<extent");
     }
-  write_c_string (printcharfun, ">");
+  write_ascstring (printcharfun, ">");
 }
 
 static int
@@ -3880,14 +3884,14 @@ See `extent-parent'.
     if (!NILP (parent))
       extent_properties (XEXTENT (parent), newprops);
 
-    qsort (Dynarr_atp (oldprops, 0), Dynarr_length (oldprops),
+    qsort (Dynarr_begin (oldprops), Dynarr_length (oldprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
-    qsort (Dynarr_atp (newprops, 0), Dynarr_length (newprops),
+    qsort (Dynarr_begin (newprops), Dynarr_length (newprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
     orignewlength = Dynarr_length (newprops);
     for (i = 0; i < Dynarr_length (oldprops); i++)
       {
-	if (!bsearch (Dynarr_atp (oldprops, i), Dynarr_atp (newprops, 0),
+	if (!bsearch (Dynarr_atp (oldprops, i), Dynarr_begin (newprops),
 		      Dynarr_length (newprops), sizeof (Lisp_Object_pair),
 		      compare_key_value_pairs))
 	  {
@@ -3900,7 +3904,7 @@ See `extent-parent'.
     for (i = 0; i < orignewlength; i++)
       {
 	if (!Dynarr_length (oldprops) || !bsearch (Dynarr_atp (newprops, i), 
-						   Dynarr_atp (oldprops, 0),
+						   Dynarr_begin (oldprops),
 						   Dynarr_length (oldprops), 
 						   sizeof (Lisp_Object_pair),
 						   compare_key_value_pairs))
@@ -3911,9 +3915,9 @@ See `extent-parent'.
 	    Dynarr_add (oldprops, new_);
 	  }
       }
-    qsort (Dynarr_atp (oldprops, 0), Dynarr_length (oldprops),
+    qsort (Dynarr_begin (oldprops), Dynarr_length (oldprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
-    qsort (Dynarr_atp (newprops, 0), Dynarr_length (newprops),
+    qsort (Dynarr_begin (newprops), Dynarr_length (newprops),
 	   sizeof (Lisp_Object_pair), compare_key_value_pairs);
     for (i = 0; i < Dynarr_length (oldprops); i++)
       {
@@ -7639,6 +7643,6 @@ functions `get-text-property' or `get-char-property' are called.
   Vextent_face_reverse_memoize_hash_table =
     make_lisp_hash_table (100, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 
-  QSin_map_extents_internal = build_msg_string ("(in map-extents-internal)");
+  QSin_map_extents_internal = build_defer_string ("(in map-extents-internal)");
   staticpro (&QSin_map_extents_internal);
 }

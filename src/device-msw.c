@@ -507,7 +507,7 @@ msprinter_default_printer (void)
      name[] or ALLOCA ()ed */
   qxestrtok (nameint, ",");
 
-  return build_intstring (nameint);
+  return build_istring (nameint);
 }
 
 
@@ -672,7 +672,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 	  Ibyte new_connext[20];
 
 	  qxesprintf (new_connext, ":%X", d->header.uid);
-	  new_connection = concat2 (devname, build_intstring (new_connext));
+	  new_connection = concat2 (devname, build_istring (new_connext));
 	}
       DEVICE_CONNECTION (d) = new_connection;
 
@@ -1155,7 +1155,7 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
-  write_c_string (printcharfun, "#<msprinter-settings");
+  write_ascstring (printcharfun, "#<msprinter-settings");
   if (!NILP (dm->printer_name))
     write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
   if (!NILP (dm->device))

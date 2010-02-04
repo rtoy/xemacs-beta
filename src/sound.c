@@ -98,9 +98,9 @@ Lisp_Object Q_volume, Q_pitch, Q_duration, Q_sound;
 Lisp_Object Qsound_error;
 
 DOESNT_RETURN
-report_sound_error (const Ascbyte *string, Lisp_Object data)
+report_sound_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qsound_error, string, data);
+  report_error_with_errno (Qsound_error, reason, data);
 }
 
 DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*

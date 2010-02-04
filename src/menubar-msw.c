@@ -138,7 +138,7 @@ displayable_menu_item (Lisp_Object gui_item, int bar_p, Ichar *accel)
     right = gui_item_display_flush_right (gui_item);
 
   if (!NILP (right))
-    return concat3 (left, build_string ("\t"), right);
+    return concat3 (left, build_ascstring ("\t"), right);
   else
     return left;
 }

@@ -122,7 +122,7 @@ report_error (char *file, int fd)
   if (fd)
     close (fd);
   report_error_with_errno (Qio_error, "Cannot unexec",
-			   build_string (file));
+			   build_cistring (file));
 }
 #endif /* emacs */
 

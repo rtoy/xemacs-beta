@@ -8678,7 +8678,7 @@ it as an indication that more verbose output should be given.
 Sub-objects are printed using @code{print_internal()}, which takes
 exactly the same arguments as are passed to the print method.
 
-Literal C strings should be printed using @code{write_c_string()},
+Literal C strings should be printed using @code{write_cistring()},
 or @code{write_string_1()} for non-null-terminated strings.
 
 Functions that do not have a readable representation should check the
@@ -11838,7 +11838,7 @@ source and sink, and usually data is output as @code{alloca()} rather than
 of conversions involving raw data and/or Lisp strings, especially when
 the output is an @code{alloca()}ed string. (When the destination is a
 Lisp_String, there are other functions that should be used instead --
-@code{build_ext_string()} and @code{make_ext_string()}, for example.) The convenience
+@code{build_extstring()} and @code{make_extstring()}, for example.) The convenience
 macros are of two types -- the older kind that store the result into a
 specified variable, and the newer kind that return the result.  The newer
 kind of macros don't exist when the output is sized data, because that
@@ -12900,7 +12900,7 @@ sink, and usually data is output as @code{alloca()}, or sometimes
 many types of conversions involving raw data and/or Lisp strings,
 especially when the output is an @code{alloca()}ed string. (When the
 destination is a Lisp string, there are other functions that should be
-used instead -- @code{build_ext_string()} and @code{make_ext_string()},
+used instead -- @code{build_extstring()} and @code{make_extstring()},
 for example.) The convenience macros are of two types -- the older kind
 that store the result into a specified variable, and the newer kind that
 return the result.  The newer kind of macros don't exist when the output
@@ -13061,13 +13061,13 @@ help:
 @item
 Check all uses of @code{XSTRING_DATA}.
 @item
-Check all uses of @code{build_string} and @code{make_string}.
+Check all uses of @code{build_cistring} and @code{make_string}.
 @item
 Check all uses of @code{tolower} and @code{toupper}.
 @item
 Check object print methods.
 @item
-Check for use of functions such as @code{write_c_string},
+Check for use of functions such as @code{write_cistring},
 @code{write_fmt_string}, @code{stderr_out}, @code{stdout_out}.
 @item
 Check all occurrences of @code{char} and correct to one of the other
@@ -14385,15 +14385,15 @@ declaration differences.  We use these whenever we have @code{Intbyte *}
 strings, which is quite often.
 
 @item
-new fun @code{build_intstring()} takes an @code{Intbyte *}.  also new
-funs @code{build_msg_intstring} (like @code{build_intstring()}) and
-@code{build_msg_string} (like @code{build_string()}) to do a
+new fun @code{build_istring()} takes an @code{Intbyte *}.  also new
+funs @code{build_msg_intstring} (like @code{build_istring()}) and
+@code{build_msg_string} (like @code{build_cistring()}) to do a
 @code{GETTEXT()} before building the string.  (elimination of old
 @code{build_translated_string()}, replaced by
 @code{build_msg_string()}).
 
 @item
-function @code{intern_int()} for @code{Intbyte *} arguments, like
+function @code{intern_istring()} for @code{Intbyte *} arguments, like
 @code{intern()}.
 
 @item
@@ -15379,10 +15379,10 @@ test @code{coding-system-base} and all its uses (grep for them).
 menu item to revert to most recent auto save.
 
 @item
-consider renaming @code{build_string} -> @code{build_intstring} and
-@code{build_c_string} to @code{build_string}. (consistent with
+consider renaming @code{build_cistring} -> @code{build_istring} and
+@code{build_c_string} to @code{build_cistring}. (consistent with
 @code{build_msg_string} et al; many more @code{build_c_string} than
-@code{build_string})
+@code{build_cistring})
 @end itemize
 
 @heading oct 20, 2001
@@ -25771,7 +25771,7 @@ For the emacs C code, we need to recognize the following patterns:
   signal_simple_error_2 ("string" ... )
   
   build_translated_string ("string")
-  #### add this and use it instead of @code{build_string()} in some places.
+  #### add this and use it instead of @code{build_cistring()} in some places.
   
   yes_or_no_p ("string" ... )
   #### add this instead of funcalling Qyes_or_no_p directly.

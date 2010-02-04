@@ -513,10 +513,17 @@ dnl is most often used to create temacs, so arguments to the linker will
 dnl usually need to be prefix with ${wl} or some other such thing.
 dnl
 
-if test "$xe_gnu_ld" = yes; then
-  if test "$ld_shlibs" = yes; then
+if test "$xe_gnu_ld" = yes -a "$ld_shlibs" = yes; then
+  case "$xehost_os" in
+  *cygwin* | *mingw* )
+    # -export-all-symbols is the PE equivalent of ELF-specific -export-dynamic
+    ld_dynamic_link_flags="${wl}-export-all-symbols"
+    ;;
+
+  *)  
     ld_dynamic_link_flags="${wl}-export-dynamic"
-  fi
+    ;;
+  esac
 fi
 
 if test -z "$ld_dynamic_link_flags"; then

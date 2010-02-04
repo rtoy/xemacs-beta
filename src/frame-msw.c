@@ -608,7 +608,7 @@ mswindows_window_id (Lisp_Object frame)
   struct frame *f = decode_mswindows_frame (frame);
 
   qxesprintf (str, "%lu", (unsigned long) FRAME_MSWINDOWS_HANDLE (f));
-  return build_intstring (str);
+  return build_istring (str);
 }
 
 static Lisp_Object

@@ -162,7 +162,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
   (NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
 
 #define build_fcapi_string(str) \
-  (build_ext_string ((Extbyte *) (str), Qfc_font_name_encoding))
+  (build_extstring ((Extbyte *) (str), Qfc_font_name_encoding))
 
 /* #### This homebrew lashup should be replaced with FcConstants.
 
@@ -180,7 +180,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    ourselves; hash.c hashtables do not interpret the value pointers.
 
    This array should be FcChar8**, but GCC 4.x bitches about signedness. */
-static Extbyte *fc_standard_properties[] = {
+static const Extbyte *fc_standard_properties[] = {
   /* treated specially, ordered first */
   "family", "size",
   /* remaining are alphabetized by group */
@@ -838,7 +838,7 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
      FC_CONFIG_DIR environment variable. */
       (name))
 {
-  char *fcname = "";
+  const Ascbyte *fcname = "";
 
   if (!NILP (name))
     {
@@ -1217,7 +1217,7 @@ make_xlfd_font_regexp (void)
   unsigned i;
   Lisp_Object reg = Qnil;
   const Extbyte *re[] = 	/* #### This could just be catenated by
-				   cpp and passed to build_ext_string. */
+				   cpp and passed to build_extstring. */
     {
       /* Regular expression matching XLFDs as defined by XLFD v. 1.5.
 	 Matches must be case-insensitive.
@@ -1264,7 +1264,7 @@ make_xlfd_font_regexp (void)
   for (i = 0; i < sizeof(re)/sizeof(Extbyte *); i++)
     {
       /* #### Currently this is Host Portable Coding, not ISO 8859-1. */
-      reg = concat2(reg, build_ext_string (re[i], Qx_font_name_encoding));
+      reg = concat2(reg, build_extstring (re[i], Qx_font_name_encoding));
     }
 
   RETURN_UNGCPRO (reg);

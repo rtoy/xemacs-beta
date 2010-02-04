@@ -93,7 +93,7 @@ This is for loading dependency DLLs into XEmacs.
 
   /* If the dll name has a directory component in it, then we should
      expand it. */
-  if (!NILP (Fstring_match (build_string ("/"), dll, Qnil, Qnil)))
+  if (!NILP (Fstring_match (build_ascstring ("/"), dll, Qnil, Qnil)))
     dll = Fexpand_file_name (dll, Qnil);
 
   /* Check if we have already opened it first */
@@ -462,43 +462,43 @@ static Lisp_Object type_to_marshaller_type (GtkType t)
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
     case GTK_TYPE_NONE:
-      return (build_string ("NONE"));
+      return (build_ascstring ("NONE"));
       /* flag types */
     case GTK_TYPE_CHAR:
     case GTK_TYPE_UCHAR:
-      return (build_string ("CHAR"));
+      return (build_ascstring ("CHAR"));
     case GTK_TYPE_BOOL:
-      return (build_string ("BOOL"));
+      return (build_ascstring ("BOOL"));
     case GTK_TYPE_ENUM:
     case GTK_TYPE_FLAGS:
     case GTK_TYPE_INT:
     case GTK_TYPE_UINT:
-      return (build_string ("INT"));
+      return (build_ascstring ("INT"));
     case GTK_TYPE_LONG:
     case GTK_TYPE_ULONG:
-      return (build_string ("LONG"));
+      return (build_ascstring ("LONG"));
     case GTK_TYPE_FLOAT:
     case GTK_TYPE_DOUBLE:
-      return (build_string ("FLOAT"));
+      return (build_ascstring ("FLOAT"));
     case GTK_TYPE_STRING:
-      return (build_string ("STRING"));
+      return (build_ascstring ("STRING"));
     case GTK_TYPE_BOXED:
     case GTK_TYPE_POINTER:
-      return (build_string ("POINTER"));
+      return (build_ascstring ("POINTER"));
     case GTK_TYPE_OBJECT:
-      return (build_string ("OBJECT"));
+      return (build_ascstring ("OBJECT"));
     case GTK_TYPE_CALLBACK:
-      return (build_string ("CALLBACK"));
+      return (build_ascstring ("CALLBACK"));
     default:
       /* I can't put this in the main switch statement because it is a
          new fundamental type that is not fixed at compile time.
          *sigh*
 	 */
       if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_ARRAY))
-	return (build_string ("ARRAY"));
+	return (build_ascstring ("ARRAY"));
 
       if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_LISTOF))
-	return (build_string ("LIST"));
+	return (build_ascstring ("LIST"));
       return (Qnil);
     }
 }
@@ -642,13 +642,13 @@ Import a function into the XEmacs namespace.
 	    {
 	      invalid_argument ("Do not know how to marshal", type);
 	    }
-	  marshaller = concat3 (marshaller, build_string ("_"), marshaller_type);
+	  marshaller = concat3 (marshaller, build_ascstring ("_"), marshaller_type);
 	  n_args++;
 	}
     }
   else
     {
-      marshaller = concat3 (marshaller, build_string ("_"), type_to_marshaller_type (GTK_TYPE_NONE));
+      marshaller = concat3 (marshaller, build_ascstring ("_"), type_to_marshaller_type (GTK_TYPE_NONE));
     }
 
   rettype = Fsymbol_name (rettype);
@@ -661,8 +661,8 @@ Import a function into the XEmacs namespace.
 
   import_gtk_type (data->return_type);
 
-  marshaller = concat3 (type_to_marshaller_type (data->return_type), build_string ("_"), marshaller);
-  marshaller = concat2 (build_string ("emacs_gtk_marshal_"), marshaller);
+  marshaller = concat3 (type_to_marshaller_type (data->return_type), build_ascstring ("_"), marshaller);
+  marshaller = concat2 (build_ascstring ("emacs_gtk_marshal_"), marshaller);
 
   marshaller_func = (ffi_marshalling_function) find_marshaller ((char *) XSTRING_DATA (marshaller));
 
@@ -797,11 +797,11 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
 
-  write_c_string (printcharfun, "#<GtkObject (");
+  write_ascstring (printcharfun, "#<GtkObject (");
   if (XGTK_OBJECT (obj)->alive_p)
-    write_c_string (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
+    write_cistring (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
-    write_c_string (printcharfun, "dead");
+    write_ascstring (printcharfun, "dead");
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_OBJECT (obj)->object);
 }
 
@@ -1116,8 +1116,8 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
 
-  write_c_string (printcharfun, "#<GtkBoxed (");
-  write_c_string (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
+  write_ascstring (printcharfun, "#<GtkBoxed (");
+  write_cistring (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_BOXED (obj)->object);
 }
 
@@ -1496,7 +1496,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
     case GTK_TYPE_DOUBLE:
       return (make_float (GTK_VALUE_DOUBLE (*arg)));
     case GTK_TYPE_STRING:
-      return (build_string (GTK_VALUE_STRING (*arg)));
+      return (build_cistring (GTK_VALUE_STRING (*arg)));
     case GTK_TYPE_FLAGS:
       return (flags_to_list (GTK_VALUE_FLAGS (*arg), arg->type));
     case GTK_TYPE_ENUM:
@@ -2136,7 +2136,7 @@ symbol_to_enum (Lisp_Object obj, GtkType t)
 
   if (NILP (alist))
     {
-      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_cistring (gtk_type_name (t)));
     }
 
   value = Fassq (obj, alist);
@@ -2205,7 +2205,7 @@ enum_to_symbol (guint value, GtkType t)
 
   if (NILP (alist))
     {
-      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_cistring (gtk_type_name (t)));
     }
 
   cell = Frassq (make_int (value), alist);

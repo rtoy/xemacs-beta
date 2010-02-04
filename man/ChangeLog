@@ -1,3 +1,25 @@
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (lrecords):
+	* internals/internals.texi (The DFC API):
+	* internals/internals.texi (Conversion to and from External Data):
+	* internals/internals.texi (Mule-izing Code):
+	* internals/internals.texi (Pervasive changes throughout XEmacs sources):
+	* internals/internals.texi (Ben's README):
+	* internals/internals.texi (Future Work -- Localized Text/Messages):
+	* emodules.texi (Defining Variables):
+	Rename:
+
+	write_c_string -> write_cistring
+	build_intstring -> build_istring
+	build_string -> build_cistring
+	build_ext_string -> build_extstring
+	make_ext_string -> make_extstring
+	buffer_insert_c_string -> buffer_insert_ascstring
+	intern_int -> intern_istring
+
+	See comment in src/ChangeLog about this.
+
 2010-02-03  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Top):

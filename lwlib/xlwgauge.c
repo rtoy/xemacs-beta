@@ -314,7 +314,7 @@ GaugeResize (Widget w)
 
 	if( gw->gauge.nlabels > 1 )
 	{
-	  Dimension	lwm, lw0, lw1 ;	/* width of max, left, right labels */
+	  Dimension	lwm, lw0=0, lw1 ;/* width of max, left, right labels */
 	  Dimension	lh ;
 
 	  MaxLabel(gw,&lwm,&lh, &lw0,&lw1) ;
@@ -1017,7 +1017,7 @@ GaugeSize (GaugeWidget gw,
 	 */
 	if( gw->gauge.nlabels > 0 )
 	{
-	  Dimension	lwm, lw0, lw1 ;	/* width of max, left, right labels */
+	  Dimension	lwm, lw0=0, lw1 ;/* width of max, left, right labels */
 	  Dimension	lh ;
 
 	  MaxLabel(gw,&lwm,&lh, &lw0,&lw1) ;

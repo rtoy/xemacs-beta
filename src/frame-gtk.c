@@ -1159,12 +1159,12 @@ a string.
 */
        (frame))
 {
-  char str[255];
+  Ascbyte str[255];
   struct frame *f = decode_gtk_frame (frame);
 
   /* Arrrrggghhh... this defeats the whole purpose of using Gdk... do we really need this? */
   sprintf (str, "%lu", GDK_WINDOW_XWINDOW( GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f))));
-  return build_string (str);
+  return build_ascstring (str);
 }
 #endif
 

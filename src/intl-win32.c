@@ -1,5 +1,5 @@
 /* Win32 internationalization functions.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 2000 IKEYAMA Tomonori.
 
 This file is part of XEmacs.
@@ -85,7 +85,7 @@ LCID current_locale;
 struct lang_to_string
 {
   int code;
-  char *string;
+  const Ascbyte *string;
 };
 
 struct lang_to_string lang_to_string_table[] =
@@ -650,7 +650,7 @@ langcode_to_lang (int code, struct lang_to_string *table,
 
   for (i = 0; i < table_size; i++)
     if (code == table[i].code)
-      return build_string (table[i].string);
+      return build_ascstring (table[i].string);
   return Qnil;
 }
 
@@ -668,7 +668,7 @@ sublangcode_to_lang (int lang, int sublang, struct lang_to_string *table,
 	  if (!table[i].string)
 	    break;
 	  if (sublang == table[i].code)
-	    return build_string (table[i].string);
+	    return build_ascstring (table[i].string);
 	}
       else if (!table[i].string && lang == table[i].code)
 	found_lang = 1;
@@ -677,11 +677,11 @@ sublangcode_to_lang (int lang, int sublang, struct lang_to_string *table,
   switch (sublang)
     {
     case SUBLANG_NEUTRAL:
-      return build_string ("NEUTRAL");
+      return build_ascstring ("NEUTRAL");
     case SUBLANG_DEFAULT:
-      return build_string ("DEFAULT");
+      return build_ascstring ("DEFAULT");
     case SUBLANG_SYS_DEFAULT:
-      return build_string ("SYS_DEFAULT");
+      return build_ascstring ("SYS_DEFAULT");
     }
 
   return Qnil;
@@ -1288,8 +1288,8 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.
 {
   int got_abbrev;
   int got_full;
-  char abbrev_name[32] = { 0 };
-  char full_name[256] = { 0 };
+  Extbyte abbrev_name[32] = { 0 };
+  Extbyte full_name[256] = { 0 };
 
   CHECK_INT (lcid);
 
@@ -1298,27 +1298,28 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.
 
   if (NILP (longform))
     {
-      got_abbrev = GetLocaleInfo (XINT (lcid),
-				  LOCALE_SABBREVLANGNAME | LOCALE_USE_CP_ACP,
-				  abbrev_name, sizeof (abbrev_name));
+      got_abbrev = qxeGetLocaleInfo (XINT (lcid),
+				     LOCALE_SABBREVLANGNAME |
+				     LOCALE_USE_CP_ACP,
+				     abbrev_name, sizeof (abbrev_name));
       if (got_abbrev)
-	return build_string (abbrev_name);
+	return build_tstr_string (abbrev_name);
     }
   else if (EQ (longform, Qt))
     {
-      got_full = GetLocaleInfo (XINT (lcid),
-				LOCALE_SLANGUAGE | LOCALE_USE_CP_ACP,
-				full_name, sizeof (full_name));
+      got_full = qxeGetLocaleInfo (XINT (lcid),
+				   LOCALE_SLANGUAGE | LOCALE_USE_CP_ACP,
+				   full_name, sizeof (full_name));
       if (got_full)
-	return build_string (full_name);
+	return build_tstr_string (full_name);
     }
   else if (NUMBERP (longform))
     {
-      got_full = GetLocaleInfo (XINT (lcid),
-				XINT (longform),
-				full_name, sizeof (full_name));
+      got_full = qxeGetLocaleInfo (XINT (lcid),
+				   XINT (longform),
+				   full_name, sizeof (full_name));
       if (got_full)
-	return make_unibyte_string (full_name, got_full);
+	return build_tstr_string (full_name);
     }
 
   return Qnil;
@@ -1703,7 +1704,7 @@ lcid_to_locale_mule_or_no (LCID USED_IF_MULE (lcid))
 #ifdef MULE
   return lcid_to_locale (lcid);
 #else
-  return Fcons (build_string ("NEUTRAL"), build_string ("DEFAULT"));
+  return Fcons (build_ascstring ("NEUTRAL"), build_ascstring ("DEFAULT"));
 #endif
 }
 
@@ -1866,7 +1867,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
   struct mswindows_multibyte_to_unicode_coding_system *data =
     XCODING_SYSTEM_TYPE_DATA (cs, mswindows_multibyte_to_unicode);
 
-  write_c_string (printcharfun, "(");
+  write_ascstring (printcharfun, "(");
   if (data->locale_type == MULTIBYTE_SPECIFIED_CODE_PAGE)
     print_internal (make_int (data->cp), printcharfun, 1);
   else
@@ -1874,7 +1875,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
       write_fmt_string_lisp (printcharfun, "%s, ", 1, mswindows_multibyte_to_unicode_getprop (cs, Qlocale));
       print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qcode_page), printcharfun, 0);
     }
-  write_c_string (printcharfun, ")");
+  write_ascstring (printcharfun, ")");
 }
 
 /* ----------------------------------------------------------------------- */
@@ -2351,13 +2352,13 @@ complex_vars_of_intl_win32 (void)
 {
   Fmake_coding_system_internal
     (Qmswindows_unicode, Qunicode,
-     build_msg_string ("MS Windows Unicode"),
+     build_defer_string ("MS Windows Unicode"),
      nconc2 (list4 (Qdocumentation,
-		    build_msg_string (
+		    build_defer_string (
 "Converts to the Unicode encoding for Windows API calls.\n"
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
-		    Qmnemonic, build_string ("MSW-U")),
+		    Qmnemonic, build_ascstring ("MSW-U")),
 	     list4 (Qunicode_type, Qutf_16,
 		    Qlittle_endian, Qt)));
 

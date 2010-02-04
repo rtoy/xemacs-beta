@@ -1769,7 +1769,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
 
 DOESNT_RETURN
-invalid_byte_code (const CIbyte *reason, Lisp_Object frob)
+invalid_byte_code (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_byte_code, reason, frob);
 }
@@ -2241,7 +2241,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  write_c_string (printcharfun, print_readably ? "#[" : "#<compiled-function ");
+  write_ascstring (printcharfun, print_readably ? "#[" : "#<compiled-function ");
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (!print_readably)
     {
@@ -2254,7 +2254,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   print_internal (compiled_function_arglist (f), printcharfun, escapeflag);
 
   /* COMPILED_INSTRUCTIONS = 1 */
-  write_c_string (printcharfun, " ");
+  write_ascstring (printcharfun, " ");
   {
     struct gcpro ngcpro1;
     Lisp_Object instructions = compiled_function_instructions (f);
@@ -2271,7 +2271,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   }
 
   /* COMPILED_CONSTANTS = 2 */
-  write_c_string (printcharfun, " ");
+  write_ascstring (printcharfun, " ");
   print_internal (compiled_function_constants (f), printcharfun, escapeflag);
 
   /* COMPILED_STACK_DEPTH = 3 */
@@ -2280,7 +2280,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   /* COMPILED_DOC_STRING = 4 */
   if (docp || intp)
     {
-      write_c_string (printcharfun, " ");
+      write_ascstring (printcharfun, " ");
       print_internal (compiled_function_documentation (f), printcharfun,
 		      escapeflag);
     }
@@ -2288,13 +2288,13 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   /* COMPILED_INTERACTIVE = 5 */
   if (intp)
     {
-      write_c_string (printcharfun, " ");
+      write_ascstring (printcharfun, " ");
       print_internal (compiled_function_interactive (f), printcharfun,
 		      escapeflag);
     }
 
   UNGCPRO;
-  write_c_string (printcharfun, print_readably ? "]" : ">");
+  write_ascstring (printcharfun, print_readably ? "]" : ">");
 }
 
 
