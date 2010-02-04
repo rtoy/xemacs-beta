@@ -616,7 +616,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
    extra letters (cf. the need for digraphs and trigraphs in C/C++) plus
    some random ones to boot; probably, ASCII chars are more likely to show
    up in char tables than others. */
-static char *likely_test = "\t\n\r\f\016\025\0330128!@#$%^&*`'_+=-,.<>?;:/~()[]{}\\\"acehijlnortuxyzADEGIKMOQSVY";
+static const Ascbyte *likely_test = "\t\n\r\f\016\025\0330128!@#$%^&*`'_+=-,.<>?;:/~()[]{}\\\"acehijlnortuxyzADEGIKMOQSVY";
 
 static Hashcode
 char_table_hash (Lisp_Object obj, int depth)
@@ -624,7 +624,7 @@ char_table_hash (Lisp_Object obj, int depth)
   Hashcode hashval = HASH2 (XCHAR_TABLE_TYPE (obj),
 			    internal_hash (XCHAR_TABLE_DEFAULT (obj),
 					   depth + 1));
-  char *p;
+  const Ascbyte *p;
   Ichar ch;
 
   /* Hash those most likely to have values */

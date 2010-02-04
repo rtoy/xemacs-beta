@@ -1829,6 +1829,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	{
 #ifdef MULE
 	  Ichar ch = -1;
+	  Ibyte byte;
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
