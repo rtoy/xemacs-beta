@@ -1,5 +1,14 @@
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
+	* filelock.c:
+	* filelock.c (fill_in_lock_file_name):
+	Name the lock symlink file .#FN# instead of .#FN for file FN, so
+	that the link file doesn't have a .c or .el or whatever extension,
+	which confuses programs/functions that search by extension (e.g.
+	etags, byte-recompile-directory, etc.).
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
 	* symbols.c (defsymbol_massage_name_1):
 	* symbols.c (defsymbol_nodump):
 	* symbols.c (defsymbol):
