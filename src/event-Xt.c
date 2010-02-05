@@ -2189,7 +2189,7 @@ unselect_filedesc (int fd)
 	}
     }
   XtRemoveInput (closure->id);
-  xfree (closure, struct what_is_ready_closure *);
+  xfree (closure);
   filedesc_to_what_closure[fd] = 0;
 }
 

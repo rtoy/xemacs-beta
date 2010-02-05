@@ -788,7 +788,7 @@ unselect_filedesc (int fd)
 	}
     }
   gdk_input_remove (closure->id);
-  xfree (closure, struct what_is_ready_closure *);
+  xfree (closure);
   filedesc_to_what_closure[fd] = 0;
 }
 
@@ -1029,7 +1029,7 @@ dragndrop_data_received (GtkWidget          *widget,
       l_dndlist = list1 (make_string ((Ibyte *)hurl, strlen (hurl)));
       l_type = Qdragdrop_URL;
 
-      xfree (hurl, char *);
+      xfree (hurl);
     }
   else if (data->type == preferred_targets[TARGET_NETSCAPE])
     {

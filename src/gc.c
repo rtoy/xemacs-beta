@@ -1377,7 +1377,7 @@ register_for_finalization (void)
       finalize_elem *temp = rest;
       Vfinalizers_to_run = Fcons (rest->obj, Vfinalizers_to_run);
       Vall_finalizable_objs = rest->next;
-      xfree (temp, finalize_elem *);
+      xfree (temp);
       rest = Vall_finalizable_objs;
     }
 
@@ -1389,7 +1389,7 @@ register_for_finalization (void)
 	  finalize_elem *temp = rest->next;
 	  Vfinalizers_to_run = Fcons (rest->next->obj, Vfinalizers_to_run);
 	  rest->next = rest->next->next;
-	  xfree (temp, finalize_elem *);
+	  xfree (temp);
 	}
       else
 	{

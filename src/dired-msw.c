@@ -587,7 +587,7 @@ switches do not contain `d', so that a full listing is expected.
   for (i = 0; i < Dynarr_length (files); ++i)
     {
       Win32_file *file = Dynarr_atp (files, i);
-      xfree (file->cFileName, Ibyte *);
+      xfree (file->cFileName);
     }
   Dynarr_free (files);
 

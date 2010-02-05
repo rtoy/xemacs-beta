@@ -265,7 +265,7 @@ Unparse an fc pattern object to a string.
   CHECK_FCPATTERN(pattern);
   name = FcNameUnparse (XFCPATTERN_PTR (pattern));
   result = build_fcapi_string (name);
-  xfree (name, FcChar8 *);
+  xfree (name);
   return result;
 }
 

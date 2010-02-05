@@ -2964,7 +2964,7 @@ init_initial_directory (void)
 #ifdef WIN32_NATIVE
   {
     Ibyte *newinit = mswindows_canonicalize_filename (initial_directory);
-    xfree (initial_directory, Ibyte *);
+    xfree (initial_directory);
     initial_directory = newinit;
   }
 
@@ -2982,7 +2982,7 @@ init_initial_directory (void)
     XECOPY_TCHAR (p, '\0');
   
     qxeSetCurrentDirectory (modname);
-    xfree (modname, Extbyte *);
+    xfree (modname);
   }
 #endif
 }

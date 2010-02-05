@@ -162,7 +162,7 @@ readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 	      return -1;
 	    }
 	  memcpy (buf, tmp, len);
-	  xfree (tmp, Ibyte *);
+	  xfree (tmp);
 	  return len;
 	}
     }

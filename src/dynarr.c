@@ -287,18 +287,18 @@ Dynarr_free (void *d)
   if (dy->base && !DUMPEDP (dy->base))
     {
       if (!dy->lisp_imp)
-	xfree (dy->base, void *);
+	xfree (dy->base);
     }
   if(!DUMPEDP (dy))
     {
       if (!dy->lisp_imp)
-	xfree (dy, Dynarr *);
+	xfree (dy);
     }
 #else /* not NEW_GC */
   if (dy->base && !DUMPEDP (dy->base))
-    xfree (dy->base, void *);
+    xfree (dy->base);
   if(!DUMPEDP (dy))
-    xfree (dy, Dynarr *);
+    xfree (dy);
 #endif /* not NEW_GC */
 }
 
