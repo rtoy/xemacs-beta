@@ -2834,7 +2834,7 @@ qxe_allocating_getcwd (void)
 	{
 	  Ibyte *retin;
 	  retin = TSTR_TO_ITEXT_MALLOC (ret);
-	  xfree (cwd, Extbyte *);
+	  xfree (cwd);
 	  return retin;
 	}
 #else
@@ -2843,7 +2843,7 @@ qxe_allocating_getcwd (void)
 	{
 	  Ibyte *retin;
 	  retin = EXTERNAL_TO_ITEXT_MALLOC (ret, Qfile_name);
-	  xfree (cwd, Extbyte *);
+	  xfree (cwd);
 	  return retin;
 	}
 #endif /* WIN32_NATIVE */
@@ -2855,7 +2855,7 @@ qxe_allocating_getcwd (void)
 	}
       else
 	{
-	  xfree (cwd, Extbyte *);
+	  xfree (cwd);
 	  return NULL;
 	}
     }
@@ -2939,7 +2939,7 @@ qxe_lstat (const Ibyte *path, struct stat *buf)
 	  resolved = mswindows_read_link (eidata (name2));
 	  if (resolved)
 	    {
-	      xfree (resolved, Ibyte *);
+	      xfree (resolved);
 	      return mswindows_stat (eidata (name2), buf);
 	    }
 	}
@@ -3131,15 +3131,15 @@ copy_in_passwd (struct passwd *pwd)
     return NULL;
 
   if (cached_pwd.pw_name)
-    xfree (cached_pwd.pw_name, char *);
+    xfree (cached_pwd.pw_name);
   if (cached_pwd.pw_passwd)
-    xfree (cached_pwd.pw_passwd, char *);
+    xfree (cached_pwd.pw_passwd);
   if (cached_pwd.pw_gecos)
-    xfree (cached_pwd.pw_gecos, char *);
+    xfree (cached_pwd.pw_gecos);
   if (cached_pwd.pw_dir)
-    xfree (cached_pwd.pw_dir, char *);
+    xfree (cached_pwd.pw_dir);
   if (cached_pwd.pw_shell)
-    xfree (cached_pwd.pw_shell, char *);
+    xfree (cached_pwd.pw_shell);
 
   cached_pwd = *pwd;
 
@@ -3206,7 +3206,7 @@ qxe_ctime (const time_t *t)
   if (!str) /* can happen on MS Windows */
     return (Ibyte *) "Sun Jan 01 00:00:00 1970";
   if (ctime_static)
-    xfree (ctime_static, Ibyte *);
+    xfree (ctime_static);
   ctime_static = EXTERNAL_TO_ITEXT_MALLOC (str, Qtime_function_encoding);
   return ctime_static;
 }
@@ -3708,9 +3708,9 @@ closedir (DIR *dirp)  /* stream from opendir */
      in one block.  Why in the world are we freeing this ourselves
      anyway?  */
 #if ! (defined (sun) && defined (USG5_4))
-  xfree (dirp->dd_buf, char *); /* directory block defined in <dirent.h> */
+  xfree (dirp->dd_buf); /* directory block defined in <dirent.h> */
 #endif
-  xfree (dirp, DIR *);
+  xfree (dirp);
   return (rtnval);
 }
 #endif /* not HAVE_CLOSEDIR */
@@ -3747,7 +3747,7 @@ void
 closedir (DIR *dirp)		/* stream from opendir */
 {
   retry_close (dirp->dd_fd);
-  xfree (dirp, DIR *);
+  xfree (dirp);
 }
 
 

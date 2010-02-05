@@ -742,7 +742,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     {
       /* Cast off const for G++ 4.3. */
       Extbyte *temp = (Extbyte *) locale;
-      xfree (temp, Extbyte*);
+      xfree (temp);
     }
  }
 #endif /* MULE */
@@ -950,7 +950,7 @@ x_mark_device (struct device *d)
 static void
 free_x_device_struct (struct device *d)
 {
-  xfree (d->device_data, void *);
+  xfree (d->device_data);
 }
 #endif /* not NEW_GC */
 

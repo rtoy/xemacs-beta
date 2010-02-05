@@ -2010,9 +2010,9 @@ do {						\
   if ((ei)->mallocp_)				\
     {						\
       if ((ei)->data_)				\
-	xfree ((ei)->data_, Ibyte *);		\
+	xfree ((ei)->data_);		\
       if ((ei)->extdata_)			\
-	xfree ((ei)->extdata_, Extbyte *);	\
+	xfree ((ei)->extdata_);	\
       eiinit_malloc (ei);			\
     }						\
   else						\
@@ -2037,7 +2037,7 @@ do {									\
 	eifind_large_enough_buffer (0, (ei)->bytelen_ + 1);		\
       ei13newdata = alloca_ibytes ((ei)->max_size_allocated_);		\
       memcpy (ei13newdata, (ei)->data_, (ei)->bytelen_ + 1);		\
-      xfree ((ei)->data_, Ibyte *);					\
+      xfree ((ei)->data_);					\
       (ei)->data_ = ei13newdata;					\
     }									\
 									\
@@ -2049,7 +2049,7 @@ do {									\
       /* Double null-terminate in case of Unicode data */		\
       ei13newdata[(ei)->extlen_] = '\0';				\
       ei13newdata[(ei)->extlen_ + 1] = '\0';				\
-      xfree ((ei)->extdata_, Extbyte *);				\
+      xfree ((ei)->extdata_);				\
       (ei)->extdata_ = ei13newdata;					\
     }									\
 } while (0)
@@ -2251,7 +2251,7 @@ do {									\
     {									\
       if ((ei)->extdata_)						\
 	{								\
-	  xfree ((ei)->extdata_, Extbyte *);				\
+	  xfree ((ei)->extdata_);				\
 	  (ei)->extdata_ = 0;						\
 	}								\
       TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\

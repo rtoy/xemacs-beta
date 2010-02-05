@@ -305,7 +305,7 @@ mswindows_delete_device (struct device *d)
 
   DeleteDC (DEVICE_MSWINDOWS_HCDC (d));
 #ifndef NEW_GC
-  xfree (d->device_data, void *);
+  xfree (d->device_data);
 #endif /* not NEW_GC */
 }
 
@@ -579,7 +579,7 @@ msprinter_delete_device (struct device *d)
 	}
 
 #ifndef NEW_GC
-      xfree (d->device_data, void *);
+      xfree (d->device_data);
 #endif /* not NEW_GC */
     }
 }

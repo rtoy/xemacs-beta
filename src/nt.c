@@ -338,16 +338,16 @@ mswindows_get_long_filename (Ibyte *name)
 	      *p++ = '\\';
 	      eicat_ch (o, '\\');
 	    }
-	  xfree (component, Ibyte *);
+	  xfree (component);
 	}
       else
 	{
-	  xfree (full, Ibyte *);
+	  xfree (full);
 	  return 0;
 	}
     }
 
-  xfree (full, Ibyte *);
+  xfree (full);
   return eicpyout_malloc (o, 0);
 }
 
@@ -395,7 +395,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 	return (lpvalue);
 
       if (lpvalue)
-	xfree (lpvalue, LPBYTE);
+	xfree (lpvalue);
 	
       RegCloseKey (hrootkey);
     } 
@@ -413,7 +413,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 	return (lpvalue);
 	
       if (lpvalue)
-	xfree (lpvalue, LPBYTE);
+	xfree (lpvalue);
 	
       RegCloseKey (hrootkey);
     } 
@@ -499,7 +499,7 @@ init_mswindows_environment (void)
 		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 
-	    xfree (lpval, LPBYTE);
+	    xfree (lpval);
 	  }
       }
   }
@@ -705,8 +705,8 @@ get_cached_volume_information (Ibyte *root_dir)
 	}
       else
 	{
-	  xfree (info->name, Ibyte *);
-	  xfree (info->type, Ibyte *);
+	  xfree (info->name);
+	  xfree (info->type);
 	}
 
       info->name = TSTR_TO_ITEXT_MALLOC (name);
@@ -828,7 +828,7 @@ mswindows_opendir (const Ibyte *filename)
     return NULL;
 
   if (dir_pathname)
-    xfree (dir_pathname, Ibyte *);
+    xfree (dir_pathname);
   dir_pathname = qxestrdup (filename);
 
   return dirp;
@@ -850,7 +850,7 @@ mswindows_closedir (DIR *dirp)
       retval = close_unc_volume (wnet_enum_handle);
       wnet_enum_handle = INVALID_HANDLE_VALUE;
     }
-  xfree (dirp, DIR *);
+  xfree (dirp);
 
   return retval;
 }
@@ -925,7 +925,7 @@ mswindows_readdir (DIR *UNUSED (dirp))
 	    resolved = mswindows_read_link (eidata (linkname));
 	    if (resolved)
 	      {
-		xfree (resolved, Ibyte *);
+		xfree (resolved);
 		len -= 4;
 		val[len] = '\0';
 	      }
@@ -934,7 +934,7 @@ mswindows_readdir (DIR *UNUSED (dirp))
 
     eicpy_rawz (found, val);
     if (need_to_free)
-      xfree (val, Ibyte *);
+      xfree (val);
 
     if (!NILP (Vmswindows_downcase_file_names))
       eilwr (found);
@@ -1690,7 +1690,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
 	      Ibyte *resolved = mswindows_read_link (name);
 	      if (resolved)
 		{
-		  xfree (resolved, Ibyte *);
+		  xfree (resolved);
 		  buf->st_mode = S_IFLNK;
 		}
 	    }
@@ -1842,7 +1842,7 @@ mswindows_getdcwd (int drivelet)
     cwdext = _getdcwd (drivelet, NULL, 0);
   if (cwdext == NULL) return NULL;
   cwd = TSTR_TO_ITEXT_MALLOC (cwdext);
-  xfree (cwdext, Extbyte *);
+  xfree (cwdext);
   return cwd;
 }
 
@@ -2133,8 +2133,8 @@ All path elements in FILENAME are converted to their long names.
 
   canon = mswindows_canonicalize_filename (longname);
   ret = build_istring (canon);
-  xfree (canon, Ibyte *);
-  xfree (longname, Ibyte *);
+  xfree (canon);
+  xfree (longname);
   return ret;
 }
 

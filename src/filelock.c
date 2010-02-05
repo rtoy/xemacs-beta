@@ -95,8 +95,8 @@ typedef struct
 
 /* Free the two dynamically-allocated pieces in PTR.  */
 #define FREE_LOCK_INFO(i) do {			\
-    xfree ((i).user, Ibyte *);			\
-    xfree ((i).host, Ibyte *);			\
+    xfree ((i).user);			\
+    xfree ((i).host);			\
   } while (0)
 
 /* Write the name of the lock file for FN into LFNAME.  Length will be that
@@ -193,7 +193,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   /* If nonexistent lock file, all is well; otherwise, got strange error. */
   if (len == -1)
     {
-      xfree (lfinfo, Ibyte *);
+      xfree (lfinfo);
       return errno == ENOENT ? 0 : -1;
     }
 
@@ -213,7 +213,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   at = qxestrchr (lfinfo, '@');
   dot = qxestrrchr (lfinfo, '.');
   if (!at || !dot) {
-    xfree (lfinfo, Ibyte *);
+    xfree (lfinfo);
     return -1;
   }
   len = at - lfinfo;
@@ -231,7 +231,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   owner->host[len] = 0;
 
   /* We're done looking at the link info.  */
-  xfree (lfinfo, Ibyte *);
+  xfree (lfinfo);
 
   /* On current host?  */
   if (STRINGP (Fsystem_name ())

@@ -87,7 +87,7 @@ bignum_to_string (bignum b, int base)
   for (; i < bufsize - 1; i++)
     retval[i] = buffer[--index];
   retval[bufsize - 1] = '\0';
-  xfree (buffer, char *);
+  xfree (buffer);
   return retval;
 }
 

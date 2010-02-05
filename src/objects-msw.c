@@ -1376,7 +1376,7 @@ mswindows_finalize_color_instance (Lisp_Color_Instance *c)
 {
   if (c->data)
     {
-      xfree (c->data, void *);
+      xfree (c->data);
       c->data = 0;
     }
 }
@@ -1904,7 +1904,7 @@ mswindows_finalize_font_instance (Lisp_Font_Instance *f)
 	    DeleteObject (FONT_INSTANCE_MSWINDOWS_HFONT_I (f, i));
 	}
 
-      xfree (f->data, void *);
+      xfree (f->data);
       f->data = 0;
    }
 }

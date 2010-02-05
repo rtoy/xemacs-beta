@@ -3599,8 +3599,8 @@ reinit_symbols_early (void)
 }
 
 static void
-defsymbol_massage_name_1 (Lisp_Object *location, const Ascbyte *name, int dump_p,
-			  int multiword_predicate_p)
+defsymbol_massage_name_1 (Lisp_Object *location, const Ascbyte *name,
+			  int dump_p, int multiword_predicate_p)
 {
   char temp[500];
   int len = strlen (name) - 1;
@@ -3646,7 +3646,8 @@ defsymbol_massage_multiword_predicate_nodump (Lisp_Object *location,
 }
 
 void
-defsymbol_massage_multiword_predicate (Lisp_Object *location, const Ascbyte *name)
+defsymbol_massage_multiword_predicate (Lisp_Object *location,
+				       const Ascbyte *name)
 {
   defsymbol_massage_name_1 (location, name, 1, 1);
 }

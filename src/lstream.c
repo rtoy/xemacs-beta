@@ -857,17 +857,17 @@ Lstream_close (Lstream *lstr)
      is called more than once on the same object */
   if (lstr->out_buffer)
     {
-      xfree (lstr->out_buffer, unsigned char *);
+      xfree (lstr->out_buffer);
       lstr->out_buffer = 0;
     }
   if (lstr->in_buffer)
     {
-      xfree (lstr->in_buffer, unsigned char *);
+      xfree (lstr->in_buffer);
       lstr->in_buffer = 0;
     }
   if (lstr->unget_buffer)
     {
-      xfree (lstr->unget_buffer, unsigned char *);
+      xfree (lstr->unget_buffer);
       lstr->unget_buffer = 0;
     }
 
@@ -1555,7 +1555,7 @@ resizing_buffer_closer (Lstream *stream)
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
   if (str->buf)
     {
-      xfree (str->buf, unsigned char *);
+      xfree (str->buf);
       str->buf = 0;
     }
   return 0;
