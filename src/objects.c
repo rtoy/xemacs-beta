@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,7 +43,8 @@ Boston, MA 02111-1307, USA.  */
    If we leave in the Qunbound value, we will probably get crashes. */
 Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
 
-/* Authors: Ben Wing, Chuck Thompson */
+/* Author: Ben Wing; some earlier code from Chuck Thompson, Jamie
+   Zawinski. */
 
 DOESNT_RETURN
 finalose (void *ptr)
@@ -845,6 +846,32 @@ invalidate_charset_font_caches (Lisp_Object charset)
 
 #endif /* MULE */
 
+/* It's a little non-obvious what's going on here.  Specifically:
+
+   MATCHSPEC is a somewhat bogus way in the specifier mechanism of passing
+   in additional information needed to instantiate some object.  For fonts,
+   it's a cons of (CHARSET . SECOND-STAGE-P).  SECOND-STAGE-P, if set,
+   means "try harder to find an appropriate font" and is a very bogus way
+   of dealing with the fact that it may not be possible to may a charset
+   directly onto a font; it's used esp. under Windows.  @@#### We need to
+   change this so that MATCHSPEC is just a character.
+
+   When redisplay is building up its structure, and needs font info, it
+   calls functions in faces.c such as ensure_face_cachel_complete() (map
+   fonts needed for a string of text) or
+   ensure_face_cachel_contains_charset() (map fonts needed for a charset
+   derived from a single character).  The former function calls the latter;
+   the latter calls face_property_matching_instance(); this constructs the
+   MATCHSPEC and calls specifier_instance_no_quit() twice (first stage and
+   second stage, updating MATCHSPEC appropriately).  That function, in
+   turn, looks up the appropriate specifier method to do the instantiation,
+   which, lo and behold, is this function here (because we set it in
+   initialization using `SPECIFIER_HAS_METHOD (font, instantiate);').  We
+   in turn call the device method `find_charset_font', which maps to
+   mswindows_find_charset_font(), x_find_charset_font(), or similar, in
+   objects-msw.c or the like.
+
+   --ben */
 
 static Lisp_Object
 font_instantiate (Lisp_Object UNUSED (specifier),
@@ -859,19 +886,20 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   Lisp_Object instance;
   Lisp_Object charset = Qnil;
 #ifdef MULE
-  enum font_specifier_matchspec_stages stage = initial;
+  enum font_specifier_matchspec_stages stage = STAGE_INITIAL;
 
   if (!UNBOUNDP (matchspec))
     {
       charset = Fget_charset (XCAR (matchspec));
 
-#define FROB(new_stage) if (EQ(Q##new_stage, XCDR(matchspec)))	\
-	    {							\
-	      stage = new_stage;				\
+#define FROB(new_stage, enumstage)			\
+          if (EQ(Q##new_stage, XCDR(matchspec)))	\
+	    {						\
+	      stage = enumstage;			\
 	    }
 
-	  FROB(initial)
-	  else FROB(final)
+	  FROB (initial, STAGE_INITIAL)
+	  else FROB (final, STAGE_FINAL)
 	  else assert(0);
 
 #undef FROB
@@ -899,7 +927,8 @@ font_instantiate (Lisp_Object UNUSED (specifier),
     {
 #ifdef MULE
       /* #### rename these caches. */
-      Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
+      Lisp_Object cache = stage == STAGE_FINAL ?
+	d->charset_font_cache_stage_2 :
 	d->charset_font_cache_stage_1;
 #else
       Lisp_Object cache = d->font_instance_cache;
@@ -961,13 +990,13 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 
       match_inst = face_property_matching_instance
 	(Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	 charset, domain, ERROR_ME, no_fallback, depth, initial);
+	 charset, domain, ERROR_ME, no_fallback, depth, STAGE_INITIAL);
 
       if (UNBOUNDP(match_inst))
 	{
 	  match_inst = face_property_matching_instance
 	    (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	     charset, domain, ERROR_ME, no_fallback, depth, final);
+	     charset, domain, ERROR_ME, no_fallback, depth, STAGE_FINAL);
 	}
 
       return match_inst;

@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -33,8 +33,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_buffer_h_
 #define INCLUDED_buffer_h_
 
-#include "casetab.h"
-#include "chartab.h"
+#ifdef MULE
+#include "charset.h"
+#endif
 
 /************************************************************************/
 /*                                                                      */
@@ -446,7 +447,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     case FORMAT_DEFAULT:						\
       {									\
 	Ibyte *VBB_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!ibyte_first_byte_p (*VBB_ptr))			\
+	while (!ibyte_first_byte_p (*VBB_ptr))				\
 	  VBB_ptr--, (x)--;						\
       }									\
       break;								\
@@ -478,7 +479,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     case FORMAT_DEFAULT:						\
       {									\
 	Ibyte *VBF_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!ibyte_first_byte_p (*VBF_ptr))			\
+	while (!ibyte_first_byte_p (*VBF_ptr))				\
 	  VBF_ptr++, (x)++;						\
       }									\
       break;								\
@@ -854,7 +855,7 @@ BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
 
 /* The character at position POS in buffer. */
 
-#define BYTE_BUF_FETCH_CHAR(buf, pos)					   \
+#define BYTE_BUF_FETCH_CHAR(buf, pos)					\
    itext_ichar_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf), \
 		       wrap_buffer (buf))
 #define BUF_FETCH_CHAR(buf, pos) \
@@ -878,6 +879,187 @@ BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
    set_itext_ichar (str, BYTE_BUF_FETCH_CHAR (buf, pos)))
 #define BUF_ITEXT_COPY_ICHAR(buf, pos, str) \
   BYTE_BUF_ITEXT_COPY_ICHAR (buf, charbpos_to_bytebpos (buf, pos), str)
+
+
+/*--------------------------------------------------------------------------*/
+/* Converting between characters, charset codepoints and Unicode codepoints */
+/*--------------------------------------------------------------------------*/
+
+DECLARE_INLINE_HEADER (
+Ichar
+buffer_filtered_unicode_to_ichar (int code, struct buffer *buf,
+				  charset_pred predicate,
+				  enum converr fail)
+)
+{
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
+  text_checking_assert (buf);
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  {
+    Ichar ch;
+    ch = filtered_unicode_to_ichar (code, buf->unicode_precedence_array,
+				    predicate, CONVERR_FAIL);
+    if (ch < 0)
+      ch = filtered_unicode_to_ichar (code, Vdefault_unicode_precedence_array,
+				      predicate, fail);
+    return ch;
+  }
+#else
+  return filtered_unicode_to_ichar (code, Qnil, predicate, fail);
+#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
+}
+
+DECLARE_INLINE_HEADER (
+Ichar
+buffer_unicode_to_ichar (int code, struct buffer *buf, enum converr fail)
+)
+{
+  return buffer_filtered_unicode_to_ichar (code, buf, NULL, fail);
+}
+
+#ifdef MULE
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_unicode_to_charset_codepoint (int code, struct buffer *buf,
+					      charset_pred predicate,
+					      Lisp_Object *charset,
+					      int *c1, int *c2,
+					      enum converr fail)
+)
+{
+  text_checking_assert (buf);
+  filtered_unicode_to_charset_codepoint (code, buf->unicode_precedence_array,
+					 predicate, charset, c1, c2,
+					 CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_unicode_to_charset_codepoint (code,
+					   Vdefault_unicode_precedence_array,
+					   predicate, charset, c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_unicode_to_charset_codepoint (int code, struct buffer *buf,
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr fail)
+)
+{
+  buffer_filtered_unicode_to_charset_codepoint (code, buf, NULL, charset,
+						c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_ichar_to_charset_codepoint (Ichar ch, struct buffer *buf,
+					    charset_pred predicate,
+					    Lisp_Object *charset,
+					    int *c1, int *c2,
+					    enum converr fail)
+)
+{
+  text_checking_assert (buf);
+#ifdef UNICODE_INTERNAL
+  filtered_ichar_to_charset_codepoint (ch, buf->unicode_precedence_array,
+				       predicate, charset, c1, c2,
+				       CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_ichar_to_charset_codepoint (ch, Vdefault_unicode_precedence_array,
+					 predicate, charset, c1, c2, fail);
+#else
+  filtered_ichar_to_charset_codepoint (ch, Qnil, predicate, charset, c1, c2,
+				       fail);
+#endif /* (not) UNICODE_INTERNAL */
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_ichar_to_charset_codepoint (Ichar ch, struct buffer *buf,
+				   Lisp_Object *charset, int *c1, int *c2,
+				   enum converr fail)
+)
+{
+  buffer_filtered_ichar_to_charset_codepoint (ch, buf, NULL, charset,
+					      c1, c2, fail);
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_filtered_itext_to_charset_codepoint (const Ibyte *ptr,
+					    struct buffer *buf,
+					    charset_pred predicate,
+					    Lisp_Object *charset,
+					    int *c1, int *c2,
+					    enum converr fail)
+)
+{
+  text_checking_assert (buf);
+#ifdef UNICODE_INTERNAL
+  filtered_itext_to_charset_codepoint (ptr, buf->unicode_precedence_array,
+				       predicate, charset, c1, c2,
+				       CONVERR_FAIL);
+  if (NILP (*charset))
+    filtered_itext_to_charset_codepoint (ptr,
+					 Vdefault_unicode_precedence_array,
+					 predicate, charset, c1, c2, fail);
+#else
+  filtered_itext_to_charset_codepoint (ptr, Qnil, predicate, charset, c1, c2,
+				       fail);
+#endif /* (not) UNICODE_INTERNAL */
+}
+
+DECLARE_INLINE_HEADER (
+void
+buffer_itext_to_charset_codepoint (const Ibyte *ptr, struct buffer *buf,
+				     Lisp_Object *charset, int *c1, int *c2,
+				     enum converr fail)
+)
+{
+  buffer_filtered_itext_to_charset_codepoint (ptr, buf, NULL, charset,
+					      c1, c2, fail);
+}
+
+#endif /* MULE */
+
+/* @@####
+   Get rid of this crap now!!!!!!!!!!!!!!
+
+   This will simply not fly in a Unicode world, where there may not be any
+   national charset for a particular character.  Almost everywhere that this
+   is used, it's used for font handling.  We need to replace device methods
+   like find_charset_font() and font_spec_matches_charset() with similar
+   methods that operate on a character, not a charset.  We might still need
+   to do some charset lookup if we want to implement the idea that we use
+   the appropriate Chinese, Japanese or Korean specific font depending
+   on the language that a particular character is tagged as (as determined
+   by the string extent surrounding the character in a buffer, or a
+   buffer-local value indicating the language) -- but we absolutely do not
+   want to be *dependent* on finding some national charset. (And in any
+   case it probably makes more sense to do such conditionalizing on the
+   Unicode range of the character, and just check whether a font
+   contains the appropriate character -- or maybe not even conditionalize
+   at all on any character-specific property.) */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+buffer_ichar_charset_obsolete_me_baby (struct buffer *
+				       USED_IF_UNICODE_INTERNAL (buf),
+				       Ichar ch)
+)
+{
+#ifdef UNICODE_INTERNAL
+  int byte1, byte2;
+  Lisp_Object charset;
+  buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+				     CONVERR_FAIL);
+  return charset;
+#elif defined (MULE)
+  return old_mule_ichar_charset (ch);
+#else
+  return Vcharset_ascii;
+#endif /* (not) defined (MULE) */
+
+}
 
 
 /************************************************************************/
@@ -943,8 +1125,8 @@ do									   \
 #define BUF_SIZE(buf) (BUF_Z (buf) - BUF_BEG (buf))
 
 /* Is this buffer narrowed? */
-#define BUF_NARROWED(buf) \
-   ((BYTE_BUF_BEGV (buf) != BYTE_BUF_BEG (buf)) || \
+#define BUF_NARROWED(buf)				\
+   ((BYTE_BUF_BEGV (buf) != BYTE_BUF_BEG (buf)) ||	\
     (BYTE_BUF_ZV   (buf) != BYTE_BUF_Z   (buf)))
 
 /* Modification count */
@@ -966,35 +1148,6 @@ POINT_MARKER_P (Lisp_Object marker)
 }
 
 #define BUF_MARKERS(buf) ((buf)->markers)
-
-#ifdef MULE
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_CATEGORY_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->category_table : Vstandard_category_table;
-}
-
-#endif /* MULE */
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_SYNTAX_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->syntax_table : Vstandard_syntax_table;
-}
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->mirror_syntax_table :
-    XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
-}
 
 /* WARNING:
 
@@ -1153,107 +1306,5 @@ void r_alloc_free (unsigned char **);
 #define R_ALLOC_DECLARE(var,data)
 
 #endif /* !REL_ALLOC */
-
-
-/************************************************************************/
-/*                         Case conversion                              */
-/************************************************************************/
-
-/* A "trt" table is a mapping from characters to other characters,
-   typically used to convert between uppercase and lowercase.
-   */
-
-/* The _1 macros are named as such because they assume that you have
-   already guaranteed that the character values are all in the range
-   0 - 255.  Bad lossage will happen otherwise. */
-
-#define MAKE_TRT_TABLE() Fmake_char_table (Qgeneric)
-DECLARE_INLINE_HEADER (
-Ichar
-TRT_TABLE_OF (Lisp_Object table, Ichar ch)
-)
-{
-  Lisp_Object TRT_char;
-  TRT_char = get_char_table (ch, table);
-  if (NILP (TRT_char))
-    return ch;
-  else
-    return XCHAR (TRT_char);
-}
-#define SET_TRT_TABLE_OF(table, ch1, ch2)	\
-  Fput_char_table (make_char (ch1), make_char (ch2), table)
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-BUFFER_CASE_TABLE (struct buffer *buf)
-)
-{
-  return buf ? buf->case_table : current_buffer->case_table;
-  /* When buf=0, was Vstandard_case_table, but this sucks.  If I set a
-     different case table in this buffer, operations that use a case table
-     by default should use the current one. */
-}
-
-/* Macros used below. */
-#define DOWNCASE_TABLE_OF(buf, c)	\
-  TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (BUFFER_CASE_TABLE (buf)), c)
-#define UPCASE_TABLE_OF(buf, c)		\
-  TRT_TABLE_OF (XCASE_TABLE_UPCASE (BUFFER_CASE_TABLE (buf)), c)
-#define CANON_TABLE_OF(buf, c)	\
-  TRT_TABLE_OF (XCASE_TABLE_CANON (BUFFER_CASE_TABLE (buf)), c)
-
-/* 1 if CH is upper case.  */
-
-DECLARE_INLINE_HEADER (
-int
-UPPERCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return DOWNCASE_TABLE_OF (buf, ch) != ch;
-}
-
-/* 1 if CH is lower case.  */
-
-DECLARE_INLINE_HEADER (
-int
-LOWERCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return (UPCASE_TABLE_OF   (buf, ch) != ch &&
-	  DOWNCASE_TABLE_OF (buf, ch) == ch);
-}
-
-/* 1 if CH is neither upper nor lower case.  */
-
-DECLARE_INLINE_HEADER (
-int
-NOCASEP (struct buffer *buf, Ichar ch)
-)
-{
-  return UPCASE_TABLE_OF (buf, ch) == ch;
-}
-
-/* Upcase a character, or make no change if that cannot be done.  */
-
-DECLARE_INLINE_HEADER (
-Ichar
-UPCASE (struct buffer *buf, Ichar ch)
-)
-{
-  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ? UPCASE_TABLE_OF (buf, ch) : ch;
-}
-
-/* Upcase a character known to be not upper case.  Unused. */
-
-#define UPCASE1(buf, ch) UPCASE_TABLE_OF (buf, ch)
-
-/* Downcase a character, or make no change if that cannot be done. */
-
-#define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
-
-/* Convert a character to a canonical representation, so that case-independent
-   comparisons will work. */
-
-#define CANONCASE(buf, ch) CANON_TABLE_OF (buf, ch)
 
 #endif /* INCLUDED_buffer_h_ */

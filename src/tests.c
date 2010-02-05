@@ -1,6 +1,6 @@
 /* C support for testing XEmacs - see tests/automated/c-tests.el
    Copyright (C) 2000 Martin Buchholz
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
    Copyright (C) 2006 The Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -60,11 +60,16 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_foo = make_string (int_foo, sizeof (int_foo) - 1);
 
   Extbyte ext_latin[]  = "f\372b\343\340";
-  Ibyte int_latin1[] = "f\200\372b\200\343\200\340";
-  Ibyte int_latin2[] = "f\201\372b\201\343\201\340";
+#ifdef UNICODE_INTERNAL
+  Ibyte int_latin1[] = "f\303\272b\303\243\303\240";
+  Ibyte int_latin2[] = "f\303\272b\304\203\305\225";
+#else /* not UNICODE_INTERNAL */
+  Ibyte int_latin1[] = "f\201\372b\201\343\201\340";
+  Ibyte int_latin2[] = "f\202\372b\202\343\202\340";
+#endif /* (not) UNICODE_INTERNAL */
 #ifdef MULE
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
-  Extbyte ext_tilde[]  = "f~b~~";
+  Extbyte ext_untranslatable[]  = "f?b??";
   Lisp_Object string_latin2 = make_string (int_latin2, sizeof (int_latin2) - 1);
 #endif
   Lisp_Object opaque_latin  = make_opaque (ext_latin,  sizeof (ext_latin) - 1);
@@ -72,6 +77,12 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
   int autodetect_eol_p =
     !NILP (Fsymbol_value (intern ("eol-detection-enabled-p")));
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  /* Check to make sure no one changed the internal charset ID's on us */
+  assert (XINT (Fcharset_id (Vcharset_latin_iso8859_1)) == int_latin1[1]);
+  assert (XINT (Fcharset_id (Vcharset_latin_iso8859_2)) == int_latin2[1]);
+#endif
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
@@ -151,11 +162,17 @@ REASON is nil or a string describing the failure (not required).
         Fcons (list3 (build_cistring(str1), Qnil, build_ascstring("wrong length")), \
 	       conversion_result)
 
-#define DFC_CHECK_CONTENT(str1,str2,len1,str3)	\
-    else if (memcmp (str1, str2, len1))		\
-      conversion_result =			\
-	Fcons (list3 (build_cistring(str3), Qnil,			\
-		      build_ascstring("octet comparison failed")),	\
+#define DFC_CHECK_CONTENT(str1,str2,len1,str3)				\
+    else if (memcmp (str1, str2, len1))					\
+      conversion_result =						\
+	Fcons (list3 (build_cistring (str3), Qnil,			\
+		      concat2						\
+		      (concat2						\
+		       (build_ascstring ("octet comparison failed: expected "), \
+			build_extstring ((Extbyte *) str2, Qbinary)),	\
+		       concat2						\
+		       (build_ascstring (", got "),			\
+			build_extstring ((Extbyte *) str1, Qbinary)))), \
 	       conversion_result)
 
 #define DFC_RESULT_PASS(str1)		\
@@ -271,7 +288,7 @@ REASON is nil or a string describing the failure (not required).
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      ALLOCA, (ptr, len),
 		      Qbinary);
-  DFC_CHECK_DATA_COND_MULE (ptr, len, ext_tilde, int_latin2,
+  DFC_CHECK_DATA_COND_MULE (ptr, len, ext_untranslatable, int_latin2,
 			    "Latin-2 DATA, ALLOCA, binary");
 
   ptr = NULL, len = rand();
@@ -315,7 +332,7 @@ REASON is nil or a string describing the failure (not required).
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      MALLOC, (ptr, len),
 		      Qbinary);
-  DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_tilde, int_latin2,
+  DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_untranslatable, int_latin2,
 				"Latin-2 DATA, MALLOC, binary/NUL");
   xfree (ptr);
 
@@ -338,7 +355,8 @@ REASON is nil or a string describing the failure (not required).
 		      LISP_OPAQUE, opaque,
 		      Qbinary);
   DFC_CHECK_DATA_COND_MULE_NUL (XOPAQUE_DATA (opaque),
-				XOPAQUE_SIZE (opaque), ext_tilde, int_latin2,
+				XOPAQUE_SIZE (opaque), ext_untranslatable,
+				int_latin2,
 				"Latin-2 DATA, Lisp opaque, binary");
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin1, sizeof (int_latin1) - 1),
@@ -682,4 +700,3 @@ List of all test functions defined in tests.c.
 For use by the automated test suite.  See tests/automated/c-tests.
 */ );
 }
-

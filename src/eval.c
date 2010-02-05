@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -3139,6 +3139,27 @@ out_of_memory (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qout_of_memory, reason, frob);
 }
+
+DOESNT_RETURN
+text_conversion_error (const CIbyte *reason, Lisp_Object frob)
+{
+  signal_error (Qtext_conversion_error, reason, frob);
+}
+
+DOESNT_RETURN
+text_conversion_error_2 (const CIbyte *reason, Lisp_Object frob1,
+			 Lisp_Object frob2)
+{
+  signal_error_2 (Qtext_conversion_error, reason, frob1, frob2);
+}
+
+void
+maybe_text_conversion_error (const CIbyte *reason, Lisp_Object frob,
+			     Lisp_Object class_, Error_Behavior errb)
+{
+  maybe_signal_error (Qtext_conversion_error, reason, frob, class_, errb);
+}
+
 
 
 /************************************************************************/
