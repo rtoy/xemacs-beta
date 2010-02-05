@@ -199,9 +199,8 @@ lisp_data_to_selection_data (struct device *d,
       const Extbyte *extval;
       Bytecount extvallen;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, obj,
-			  ALLOCA, (extval, extvallen),
-			  (NILP (type) ? Qctext : Qbinary));
+      LISP_STRING_TO_SIZED_EXTERNAL (obj, extval, extvallen,
+				     (NILP (type) ? Qctext : Qbinary));
       *format_ret = 8;
       *size_ret = extvallen;
       *data_ret = xnew_rawbytes (*size_ret);

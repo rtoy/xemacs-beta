@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2610,8 +2610,7 @@ maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class_,
   else if (ERRB_EQ (errb, ERROR_ME_WARN))
     warn_when_safe_lispobj (class_, Qwarning, Fcons (sig, data));
   else
-    for (;;)
-      Fsignal (sig, data);
+    signal_error_1 (sig, data);
 }
 
 /* Signal a continuable error or display a warning or do nothing,
@@ -2673,6 +2672,13 @@ signal_error (Lisp_Object type, const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error_1 (type, build_error_data (reason, frob));
 }
+
+/* NOTE NOTE NOTE: If you feel you need signal_ierror() or something
+   similar when reason is a non-ASCII message, you're probably doing
+   something wrong.  When you have an error message from an external
+   source, you should put the error message as the first item in FROB and
+   put a string in REASON indicating what you were doing when the error
+   message occurred.  Use signal_error_2() for such a case. */
 
 void
 maybe_signal_error (Lisp_Object type, const Ascbyte *reason,

@@ -250,9 +250,8 @@ push_lisp_string_as_unicode (unsigned_char_dynarr *dynarr, Lisp_Object string)
   int length;
   Extbyte *uni_string;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, string,
-		      ALLOCA, (uni_string, length),
-		      Qmswindows_unicode);
+  LISP_STRING_TO_SIZED_EXTERNAL (string, uni_string, length,
+				 Qmswindows_unicode);
   Dynarr_add_many (dynarr, uni_string, length);
   Dynarr_add (dynarr, '\0');
   Dynarr_add (dynarr, '\0');
@@ -403,7 +402,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
 	if (EQ (key, Q_title))
 	  {
 	    CHECK_STRING (value);
-	    LISP_STRING_TO_EXTERNAL (value, bi.lpszTitle, Qmswindows_tstr);
+	    bi.lpszTitle = (XELPTSTR) LISP_STRING_TO_TSTR (value);
 	  }
 	else if (EQ (key, Q_initial_directory))
 	  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
@@ -468,8 +467,9 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
   ofn.nMaxFile = sizeof (fnbuf) / XETCHAR_SIZE;
   qxetcscpy (fnbuf, XETEXT (""));
   
-  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_ascstring (""), Qnil),
-			     ofn.lpstrInitialDir);
+  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_ascstring (""),
+						     Qnil),
+				  ofn.lpstrInitialDir);
   
   {
     EXTERNAL_PROPERTY_LIST_LOOP_3 (key, value, keys)
@@ -485,11 +485,11 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	else if (EQ (key, Q_title))
 	  {
 	    CHECK_STRING (value);
-	    LISP_STRING_TO_TSTR (value, ofn.lpstrTitle);
+	    ofn.lpstrTitle = (XELPTSTR) LISP_STRING_TO_TSTR (value);
 	  }
 	else if (EQ (key, Q_initial_directory))
 	  LISP_LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (value, Qnil),
-				     ofn.lpstrInitialDir);
+					  ofn.lpstrInitialDir);
 	else if (EQ (key, Q_file_must_exist))
 	  {
 	    if (!NILP (value))

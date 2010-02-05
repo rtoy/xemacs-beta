@@ -171,7 +171,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
   wv_closure = make_opaque_ptr (kids);
   record_unwind_protect (widget_value_unwind, wv_closure);
   prev->name = xstrdup ("message");
-  LISP_STRING_TO_EXTERNAL_MALLOC (question, prev->value, Qlwlib_encoding);
+  prev->value = LISP_STRING_TO_EXTERNAL_MALLOC (question, Qlwlib_encoding);
   prev->enabled = 1;
 
   {

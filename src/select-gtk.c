@@ -59,7 +59,7 @@ symbol_to_gtk_atom (struct device *UNUSED (d), Lisp_Object sym,
 
   {
     const Extbyte *nameext;
-    LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), nameext, Qctext);
+    nameext = LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), Qctext);
     return gdk_atom_intern (nameext, only_if_exists ? TRUE : FALSE);
   }
 }
@@ -76,7 +76,7 @@ atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
 
     if (! str) return Qnil;
 
-    EXTERNAL_TO_C_STRING (str, intstr, Qctext);
+    intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     g_free (str);
     return intern_istring (intstr);
   }

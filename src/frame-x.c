@@ -651,10 +651,8 @@ x_set_frame_text_value (struct frame *f, Ibyte *value,
   for (ptr = value; *ptr; ptr++)
     if (!byte_ascii_p (*ptr))
       {
-        const Extbyte *tmp;
         encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));
-	C_STRING_TO_EXTERNAL (value, tmp, Qctext);
-        new_XtValue = (String) tmp;
+        new_XtValue = (String) ITEXT_TO_EXTERNAL (value, Qctext);
         break;
       }
 #endif /* MULE */
@@ -762,7 +760,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
-	  LISP_STRING_TO_EXTERNAL (prop, extprop, Qxt_widget_arg_encoding);
+	  extprop = LISP_STRING_TO_EXTERNAL (prop, Qxt_widget_arg_encoding);
 	  if (STRINGP (val))
 	    {
 	      const Extbyte *extval;
@@ -772,9 +770,8 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 		 for the value of a widget argument; it depends on the
 		 semantics of the argument.  So use of
 		 Qxt_widget_arg_encoding is totally bogus. --ben */
-	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
-				  ALLOCA, (extval, extvallen),
-				  Qxt_widget_arg_encoding);
+	      LISP_STRING_TO_SIZED_EXTERNAL (val, extval, extvallen,
+					     Qxt_widget_arg_encoding);
 	      XtVaSetValues (w, XtVaTypedArg, extprop,
 			     /* !!#### Verify this + 1 and document
 				as zero-termination */
@@ -854,7 +851,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      internal_border_width_specified = True;
 	    }
 
-	  LISP_STRING_TO_EXTERNAL (str, strext, Qxt_widget_arg_encoding);
+	  strext = LISP_STRING_TO_EXTERNAL (str, Qxt_widget_arg_encoding);
 	  if (int_p)
 	    {
 	      CHECK_INT (val);
@@ -874,9 +871,8 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      Bytecount extvallen;
 	      CHECK_STRING (val);
 
-	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
-				  ALLOCA, (extval, extvallen),
-				  Qxt_widget_arg_encoding);
+	      LISP_STRING_TO_SIZED_EXTERNAL (val, extval, extvallen,
+					     Qxt_widget_arg_encoding);
 	      XtVaSetValues (w, XtVaTypedArg,
 			     /* XtN... */
 			     strext,
@@ -1037,9 +1033,9 @@ start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
 	  (*num_items_out)++;
 	}
       eicat_ch (ei, '\0');
-      SIZED_C_STRING_TO_SIZED_EXTERNAL_MALLOC (eidata (ei), eilen (ei),
-					       dnd_data, *len_out,
-					       encoding);
+      TO_EXTERNAL_FORMAT (DATA, (eidata (ei), eilen (ei)),
+			  MALLOC, (dnd_data, *len_out),
+			  encoding);
     }
   else
     {
@@ -1270,8 +1266,9 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  Ibyte *fileint;
 	  Ibyte *hurl;
 
-	  EXTERNAL_TO_C_STRING (transferInfo->dropData->data.files[ii],
-				fileint, Qfile_name);
+	  fileint =
+	    EXTERNAL_TO_ITEXT (transferInfo->dropData->data.files[ii],
+				      Qfile_name);
 
 	  hurl = dnd_url_hexify_string (fileint, "file:");
 	  l_data = Fcons (build_istring (hurl), l_data);
@@ -1771,7 +1768,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #endif
 
   if (STRINGP (f->name))
-    LISP_STRING_TO_EXTERNAL (f->name, name, Qctext);
+    name = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
   else
     name = "emacs";
 

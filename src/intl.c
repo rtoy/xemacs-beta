@@ -75,7 +75,7 @@ Otherwise, returns the locale, or possibly a more-specified version.
   CHECK_STRING (locale);
   /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
      encoded in ISO2022! */
-  LISP_STRING_TO_EXTERNAL (locale, loc, Qctext);
+  loc = LISP_STRING_TO_EXTERNAL (locale, Qctext);
   loc = setlocale (LC_ALL, loc);
   if (!loc)
     return Qnil;

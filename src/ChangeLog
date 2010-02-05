@@ -1,5 +1,258 @@
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
+	* console-msw.c (write_string_to_mswindows_debugging_output):
+	* console-msw.c (Fmswindows_message_box):
+	* console-x.c (x_perhaps_init_unseen_key_defaults):
+	* console.c:
+	* database.c (dbm_get):
+	* database.c (dbm_put):
+	* database.c (dbm_remove):
+	* database.c (berkdb_get):
+	* database.c (berkdb_put):
+	* database.c (berkdb_remove):
+	* database.c (Fopen_database):
+	* device-gtk.c (gtk_init_device):
+	* device-msw.c (msprinter_init_device_internal):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (msprinter_init_device):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (Fmsprinter_select_settings):
+	* device-x.c (sanity_check_geometry_resource):
+	* device-x.c (Dynarr_add_validified_lisp_string):
+	* device-x.c (x_init_device):
+	* device-x.c (Fx_put_resource):
+	* device-x.c (Fx_valid_keysym_name_p):
+	* device-x.c (Fx_set_font_path):
+	* dialog-msw.c (push_lisp_string_as_unicode):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-msw.c (handle_file_dialog_box):
+	* dialog-x.c (dbox_descriptor_to_widget_value):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fencode_time):
+	* editfns.c (Fset_time_zone_rule):
+	* emacs.c (make_argc_argv):
+	* emacs.c (Fdump_emacs):
+	* emodules.c (emodules_load):
+	* eval.c:
+	* eval.c (maybe_signal_error_1):
+	* event-msw.c (Fdde_alloc_advise_item):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* fileio.c (report_error_with_errno):
+	* fileio.c (Fsysnetunam):
+	* fileio.c (Fdo_auto_save):
+	* font-mgr.c (extract_fcapi_string):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_filename):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_create_widgets):
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_set_title_from_ibyte):
+	* frame-msw.c (msprinter_init_frame_3):
+	* frame-x.c (x_set_frame_text_value):
+	* frame-x.c (x_set_frame_properties):
+	* frame-x.c (start_drag_internal_1):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (x_create_widgets):
+	* glyphs-eimage.c (my_jpeg_output_message):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (xbm_instantiate_1):
+	* glyphs-gtk.c (gtk_xbm_instantiate):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-gtk.c (gtk_xface_instantiate):
+	* glyphs-gtk.c (cursor_font_instantiate):
+	* glyphs-gtk.c (gtk_redisplay_widget):
+	* glyphs-gtk.c (gtk_widget_instantiate_1):
+	* glyphs-gtk.c (gtk_add_tab_item):
+	* glyphs-msw.c (mswindows_xpm_instantiate):
+	* glyphs-msw.c (bmp_instantiate):
+	* glyphs-msw.c (mswindows_resource_instantiate):
+	* glyphs-msw.c (xbm_instantiate_1):
+	* glyphs-msw.c (mswindows_xbm_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-msw.c (mswindows_redisplay_widget):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-msw.c (add_tree_item):
+	* glyphs-msw.c (add_tab_item):
+	* glyphs-msw.c (mswindows_combo_box_instantiate):
+	* glyphs-msw.c (mswindows_widget_query_string_geometry):
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs-x.c (xbm_instantiate_1):
+	* glyphs-x.c (x_xbm_instantiate):
+	* glyphs-x.c (extract_xpm_color_names):
+	* glyphs-x.c (x_xpm_instantiate):
+	* glyphs-x.c (x_xface_instantiate):
+	* glyphs-x.c (autodetect_instantiate):
+	* glyphs-x.c (safe_XLoadFont):
+	* glyphs-x.c (cursor_font_instantiate):
+	* glyphs-x.c (x_redisplay_widget):
+	* glyphs-x.c (Fchange_subwindow_property):
+	* glyphs-x.c (x_widget_instantiate):
+	* glyphs-x.c (x_tab_control_redisplay):
+	* glyphs.c (pixmap_to_lisp_data):
+	* gui-x.c (menu_separator_style_and_to_external):
+	* gui-x.c (add_accel_and_to_external):
+	* gui-x.c (button_item_to_widget_value):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (play_sound_file):
+	* hpplay.c (play_sound_data):
+	* intl.c (Fset_current_locale):
+	* lisp.h:
+	* menubar-gtk.c (gtk_xemacs_set_accel_keys):
+	* menubar-msw.c (populate_menu_add_item):
+	* menubar-msw.c (populate_or_checksum_helper):
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	* nt.c (init_user_info):
+	* nt.c (get_long_basename):
+	* nt.c (nt_get_resource):
+	* nt.c (init_mswindows_environment):
+	* nt.c (get_cached_volume_information):
+	* nt.c (mswindows_readdir):
+	* nt.c (read_unc_volume):
+	* nt.c (mswindows_stat):
+	* nt.c (mswindows_getdcwd):
+	* nt.c (mswindows_executable_type):
+	* nt.c (Fmswindows_short_file_name):
+	* ntplay.c (nt_play_sound_file):
+	* objects-gtk.c:
+	* objects-gtk.c (gtk_valid_color_name_p):
+	* objects-gtk.c (gtk_initialize_font_instance):
+	* objects-gtk.c (gtk_font_list):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (parse_font_spec):
+	* objects-x.c (x_parse_nearest_color):
+	* objects-x.c (x_valid_color_name_p):
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (x_font_list):
+	* objects-xlike-inc.c (XFUN):
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* process-nt.c (mswindows_report_winsock_error):
+	* process-nt.c (nt_create_process):
+	* process-nt.c (get_internet_address):
+	* process-nt.c (nt_open_network_stream):
+	* process-unix.c:
+	* process-unix.c (allocate_pty):
+	* process-unix.c (get_internet_address):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process-unix.c (unix_open_network_stream):
+	* realpath.c:
+	* select-common.h (lisp_data_to_selection_data):
+	* select-gtk.c (symbol_to_gtk_atom):
+	* select-gtk.c (atom_to_symbol):
+	* select-msw.c (symbol_to_ms_cf):
+	* select-msw.c (mswindows_register_selection_data_type):
+	* select-x.c (symbol_to_x_atom):
+	* select-x.c (x_atom_to_symbol):
+	* select-x.c (hack_motif_clipboard_selection):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	* sound.c (Fplay_sound_file):
+	* sound.c (Fplay_sound):
+	* sound.h (sound_perror):
+	* sysdep.c:
+	* sysdep.c (qxe_allocating_getcwd):
+	* sysdep.c (qxe_execve):
+	* sysdep.c (copy_in_passwd):
+	* sysdep.c (qxe_getpwnam):
+	* sysdep.c (qxe_ctime):
+	* sysdll.c (dll_open):
+	* sysdll.c (dll_function):
+	* sysdll.c (dll_variable):
+	* sysdll.c (search_linked_libs):
+	* sysdll.c (dll_error):
+	* sysfile.h:
+	* sysfile.h (PATHNAME_CONVERT_OUT_TSTR):
+	* sysfile.h (PATHNAME_CONVERT_OUT_UTF_8):
+	* sysfile.h (PATHNAME_CONVERT_OUT):
+	* sysfile.h (LISP_PATHNAME_CONVERT_OUT):
+	* syswindows.h (ITEXT_TO_TSTR):
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (TSTR_TO_LOCAL_FILE_FORMAT):
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN):
+	* syswindows.h (LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR):
+	* text.h:
+	* text.h (eicpy_ext_len):
+	* text.h (enum new_dfc_src_type):
+	* text.h (EXTERNAL_TO_ITEXT):
+	* text.h (GET_STRERROR):
+	* tooltalk.c (check_status):
+	* tooltalk.c (Fadd_tooltalk_message_arg):
+	* tooltalk.c (Fadd_tooltalk_pattern_attribute):
+	* tooltalk.c (Fadd_tooltalk_pattern_arg):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (mswindows_lisp_error_1):
+	* win32.c (mswindows_report_process_error):
+	* win32.c (Fmswindows_shell_execute):
+	* win32.c (mswindows_read_link_1):
+
+	Changes involving external/internal format conversion,
+	mostly code cleanup and renaming.
+
+	1. Eliminate the previous macros like LISP_STRING_TO_EXTERNAL
+	   that stored its result in a parameter.  The new version of
+	   LISP_STRING_TO_EXTERNAL returns its result through the
+	   return value, same as the previous NEW_LISP_STRING_TO_EXTERNAL.
+	   Use the new-style macros throughout the code.
+        2. Rename C_STRING_TO_EXTERNAL and friends to ITEXT_TO_EXTERNAL,
+	   in keeping with overall naming rationalization involving
+	   Itext and related types.
+
+	Macros involved in previous two:
+
+	EXTERNAL_TO_C_STRING -> EXTERNAL_TO_ITEXT
+	EXTERNAL_TO_C_STRING_MALLOC -> EXTERNAL_TO_ITEXT_MALLOC
+	SIZED_EXTERNAL_TO_C_STRING -> SIZED_EXTERNAL_TO_ITEXT
+	SIZED_EXTERNAL_TO_C_STRING_MALLOC -> SIZED_EXTERNAL_TO_ITEXT_MALLOC
+	C_STRING_TO_EXTERNAL -> ITEXT_TO_EXTERNAL
+	C_STRING_TO_EXTERNAL_MALLOC -> ITEXT_TO_EXTERNAL_MALLOC
+	LISP_STRING_TO_EXTERNAL
+	LISP_STRING_TO_EXTERNAL_MALLOC
+	LISP_STRING_TO_TSTR
+	C_STRING_TO_TSTR -> ITEXT_TO_TSTR
+	TSTR_TO_C_STRING -> TSTR_TO_ITEXT
+
+	The following four still return their values through parameters,
+	since they have more than one value to return:
+	
+	C_STRING_TO_SIZED_EXTERNAL -> ITEXT_TO_SIZED_EXTERNAL
+	LISP_STRING_TO_SIZED_EXTERNAL
+	C_STRING_TO_SIZED_EXTERNAL_MALLOC -> ITEXT_TO_SIZED_EXTERNAL_MALLOC
+	LISP_STRING_TO_SIZED_EXTERNAL_MALLOC
+
+	Sometimes additional casts had to be inserted, since the old
+	macros played strange games and completely defeated the type system
+	of the store params.
+	3. Rewrite many places where direct calls to TO_EXTERNAL_FORMAT
+	   occurred with calls to one of the convenience macros listed above,
+	   or to make_extstring().
+	4. Eliminate SIZED_C_STRING macros (they were hardly used, anyway)
+	   and use a direct call to TO_EXTERNAL_FORMAT or TO_INTERNAL_FORMAT.
+	4. Use LISP_PATHNAME_CONVERT_OUT in many places instead of something
+	   like LISP_STRING_TO_EXTERNAL(..., Qfile_name).
+	5. Eliminate some temporary variables that are no longer necessary
+	   now that we return a value rather than storing it into a variable.
+	6. Some Mule-izing in database.c.
+	7. Error functions:
+	   -- A bit of code cleanup in maybe_signal_error_1.
+	   -- Eliminate report_file_type_error; it's just an alias for
+	      signal_error_2 with params in a different order.
+	   -- Fix some places in the hostname-handling code that directly
+	      inserted externally-retrieved error strings into the
+	      supposed ASCII "reason" param instead of doing the right thing
+	      and sticking text descriptive of what was going on in "reason"
+	      and putting the external message in a frob.
+	8. Use Ascbyte instead of CIbyte in process-unix.c and maybe one
+	   or two other places.
+	9. Some code cleanup in copy_in_passwd() in sysdep.c.
+	10. Fix a real bug due to accidental variable shadowing in
+	    tstr_to_local_file_format() in win32.c.
+
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	* lisp.h (staticpro_nodump_1):
 	Define staticpro_1 and staticpro_nodump_1 when not XEMACS_DEBUG.
