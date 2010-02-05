@@ -1,3 +1,10 @@
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (bytecode_assert):
+	Use 0 instead of x in disabled_assert calls to avoid errors due
+	to using undefined vars/params (they are defined only when
+	ERROR_CHECK_BYTE_CODE, which also turns on/off the asserts).
+
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
 	* bytecode.c (assert_failed_with_remembered_ops):
