@@ -1,5 +1,16 @@
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
+	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
+	* emacs.c (main_1):
+	Restore old definition of SHEBANG_EXE_PROGNAME_LENGTH; not possible
+	to ANSI-concatenate wide and narrow strings.
+	* print.c (write_msg_istring):
+	* print.c (write_msg_cistring):
+	* print.c (write_msg_ascstring):
+	Can't return a value in a void-declared function.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
 	* filelock.c:
 	* filelock.c (fill_in_lock_file_name):
 	Name the lock symlink file .#FN# instead of .#FN for file FN, so
