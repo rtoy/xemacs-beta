@@ -1,3 +1,13 @@
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	* internals/internals.texi (Conversion to and from External Data):
+	* internals/internals.texi (General Guidelines for Writing Mule-Aware Code):
+	Correct names of files renamed common -> xlike.
+	Fix up outdated explanation of old-style DFC conversion macros.
+	Add a section on the different types of character and their uses,
+	taken from a long comment in lisp.h.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (lrecords):
