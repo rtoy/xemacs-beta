@@ -7,6 +7,40 @@
 
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
+	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
+	* emacs.c (main_1):
+	Restore old definition of SHEBANG_EXE_PROGNAME_LENGTH; not possible
+	to ANSI-concatenate wide and narrow strings.
+	* print.c (write_msg_istring):
+	* print.c (write_msg_cistring):
+	* print.c (write_msg_ascstring):
+	Can't return a value in a void-declared function.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* filelock.c:
+	* filelock.c (fill_in_lock_file_name):
+	Name the lock symlink file .#FN# instead of .#FN for file FN, so
+	that the link file doesn't have a .c or .el or whatever extension,
+	which confuses programs/functions that search by extension (e.g.
+	etags, byte-recompile-directory, etc.).
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defkeyword):
+	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
+	Put this back again:
+	
+	Make the various calls to staticpro() instead call staticpro_1(),
+	passing in the name of the C var being staticpro'ed, so that it
+	shows up in staticpro_names.  Otherwise staticpro_names just has
+	1000+ copies of the word `location'.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
 	* bytecode.c (assert_failed_with_remembered_ops):
 	* bytecode.c (init_opcode_table_multi_op):
 	Declare some things const to shut up G++ v4 warnings.

@@ -3621,9 +3621,9 @@ defsymbol_massage_name_1 (Lisp_Object *location, const Ascbyte *name, int dump_p
       temp[i] = '-';
   *location = Fintern (make_string ((const Ibyte *) temp, len), Qnil);
   if (dump_p)
-    staticpro (location);
+    staticpro_1 (location, name);
   else
-    staticpro_nodump (location);
+    staticpro_nodump_1 (location, name);
 }
 
 void
@@ -3657,7 +3657,7 @@ defsymbol_nodump (Lisp_Object *location, const Ascbyte *name)
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
-  staticpro_nodump (location);
+  staticpro_nodump_1 (location, name);
 }
 
 void
@@ -3666,7 +3666,7 @@ defsymbol (Lisp_Object *location, const Ascbyte *name)
   *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
-  staticpro (location);
+  staticpro_1 (location, name);
 }
 
 void
