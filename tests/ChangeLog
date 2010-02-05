@@ -1,5 +1,10 @@
 2010-02-05  Jerry James  <james@xemacs.org>
 
+	* DLL/dltest.c: Remove old test.  Building and using any module now
+	provides a better test than this.
+
+2010-02-05  Jerry James  <james@xemacs.org>
+
 	* frame.el: Martin Buchholz claims ownership.
 
 2010-01-25  Ben Wing  <ben@xemacs.org>
