@@ -1304,16 +1304,15 @@ MODULE_API Chbyte *xstrdup (const Chbyte *) ATTRIBUTE_MALLOC;
 
 MODULE_API void xfree_1 (void *);
 #ifdef ERROR_CHECK_MALLOC
-/* This used to use a temporary variable, which both avoided the multiple
-   evaluation and obviated the need for the TYPE argument.  But that triggered
+/* This used to use a temporary variable.  But that triggered
    complaints under strict aliasing. #### There should be a better way. */
-#define xfree(lvalue, type) do						\
+#define xfree(lvalue) do						\
 {									\
   xfree_1 (lvalue);							\
   VOIDP_CAST (lvalue) = (void *) DEADBEEF_CONSTANT;                     \
 } while (0)
 #else
-#define xfree(lvalue,type) xfree_1 (lvalue)
+#define xfree(lvalue) xfree_1 (lvalue)
 #endif /* ERROR_CHECK_MALLOC */
 
 /* ------------------------ stack allocation -------------------------- */
@@ -4301,10 +4300,20 @@ MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, const Ascbyte *);
 
 /* Call staticpro (&var) to protect static variable `var'. */
 MODULE_API void staticpro (Lisp_Object *);
+/* staticpro_1 (varptr, name) is used when we're not directly calling
+   staticpro() on the address of a Lisp variable, but on a pointer we
+   got from elsewhere.  In that case, NAME is a string describing the
+   actual variable in question.  NAME is used only for debugging purposes,
+   and hence when not DEBUG_XEMACS, staticpro_1() just calls staticpro().
+   With DEBUG_XEMACS, however, it's the reverse -- staticpro() calls
+   staticpro_1(), using the ANSI "stringize" operator to construct a string
+   out of the variable name. */
+#define staticpro_1(ptr, name) staticpro (ptr)
 
 /* Call staticpro_nodump (&var) to protect static variable `var'. */
 /* var will not be saved at dump time */
 MODULE_API void staticpro_nodump (Lisp_Object *);
+#define staticpro_nodump_1(ptr, name) staticpro_nodump (ptr)
 
 #ifdef HAVE_SHLIB
 /* Call unstaticpro_nodump (&var) to stop protecting static variable `var'. */

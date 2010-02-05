@@ -121,8 +121,14 @@ Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
 
 #ifndef ERROR_CHECK_BYTE_CODE
 
-# define bytecode_assert(x) disabled_assert (x)
-# define bytecode_assert_with_message(x, msg) disabled_assert(x)
+/* Normally we would use `x' instead of `0' in the argument list, to avoid
+   problems if `x' (an expression) has side effects, and warnings if `x'
+   contains variables or parameters that are otherwise unused.  But in
+   this case `x' contains references to vars and params that exist only
+   when ERROR_CHECK_BYTE_CODE, and leaving in `x' would result in compile
+   errors. */
+# define bytecode_assert(x) disabled_assert (0)
+# define bytecode_assert_with_message(x, msg) disabled_assert(0)
 # define bytecode_abort_with_message(msg) abort_with_message (msg)
 
 #else /* ERROR_CHECK_BYTE_CODE */

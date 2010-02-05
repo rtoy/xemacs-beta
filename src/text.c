@@ -4613,7 +4613,7 @@ new_dfc_convert_copy_data (const char *srctext, void *alloca_data)
   vals = Dynarr_atp (active_alloca_convert, i);
   assert (alloca_data);
   memcpy (alloca_data, vals->dst, vals->dst_size);
-  xfree (vals->dst, void *);
+  xfree (vals->dst);
   Dynarr_delete (active_alloca_convert, i);
   return alloca_data;
 }

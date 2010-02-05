@@ -508,7 +508,7 @@ free_from_unicode_table (void *table, int level)
       }
     }
 
-  xfree (table, void *);
+  xfree (table);
 }
 
 static void
@@ -526,7 +526,7 @@ free_to_unicode_table (void *table, int level)
 	}
     }
 
-  xfree (table, void *);
+  xfree (table);
 }
 
 void

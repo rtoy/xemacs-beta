@@ -216,11 +216,11 @@ free_tty_console_struct (struct console *con)
     {
       if (tty_con->term_entry_buffer) /* allocated in term_init () */
 	{
-	  xfree (tty_con->term_entry_buffer, char *);
+	  xfree (tty_con->term_entry_buffer);
 	  tty_con->term_entry_buffer = NULL;
 	}
 #ifndef NEW_GC
-      xfree (tty_con, struct tty_console *);
+      xfree (tty_con);
 #endif /* not NEW_GC */
       CONSOLE_TTY_DATA (con) = NULL;
     }

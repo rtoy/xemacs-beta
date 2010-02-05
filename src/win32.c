@@ -599,7 +599,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 
   /* Cache newly found value */
   if (rlh->resolved)
-    xfree (rlh->resolved, Ibyte *);
+    xfree (rlh->resolved);
   rlh->resolved = retval ? qxestrdup (retval) : NULL;
 
   return retval;
