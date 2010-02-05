@@ -384,7 +384,7 @@ typedef GList * (*__LIST_fn) (MANY_ARGS);
 	GTK_VALUE_POINTER (a) = * (void **) v;		\
 	break;						\
       }							\
-    if (freep) xfree(v, void *);			\
+    if (freep) xfree (v);			\
   } while (0)
 
 static gpointer __allocate_object_storage (GtkType t)

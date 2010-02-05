@@ -363,7 +363,7 @@ finalize_command_builder (void *header, int for_disksave)
       struct command_builder *b = (struct command_builder *) header;
       if (b->echo_buf)
 	{
-	  xfree (b->echo_buf, Ibyte *);
+	  xfree (b->echo_buf);
 	  b->echo_buf = 0;
 	}
     }
@@ -463,7 +463,7 @@ free_command_builder (struct command_builder *builder)
 {
   if (builder->echo_buf)
     {
-      xfree (builder->echo_buf, Ibyte *);
+      xfree (builder->echo_buf);
       builder->echo_buf = NULL;
     }
 #ifdef NEW_GC

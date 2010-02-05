@@ -536,7 +536,7 @@ build_EImage_quantable(Binbyte *eimage, int width, int height, int num_colors)
   qt->num_active_colors = i;
 
   /* We're done with the boxes now */
-  xfree (box_list, Colorbox *);
+  xfree (box_list);
   qt->freeboxes = qt->usedboxes = NULL;
 
   /*
@@ -551,13 +551,13 @@ build_EImage_quantable(Binbyte *eimage, int width, int height, int num_colors)
   /* 5c: done with ColorCells */
   for (i = 0; i < C_LEN*C_LEN*C_LEN; i++)
     if (qt->ColorCells[i])
-      xfree (qt->ColorCells[i], C_cell *);
-  xfree (qt->ColorCells, C_cell **);
+      xfree (qt->ColorCells[i]);
+  xfree (qt->ColorCells);
   
   if (res)
     {
       /* we failed in memory allocation, so clean up and leave */
-      xfree(qt, quant_table *);
+      xfree (qt);
       return NULL;
     }
   

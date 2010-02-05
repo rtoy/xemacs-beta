@@ -1304,16 +1304,15 @@ MODULE_API Chbyte *xstrdup (const Chbyte *) ATTRIBUTE_MALLOC;
 
 MODULE_API void xfree_1 (void *);
 #ifdef ERROR_CHECK_MALLOC
-/* This used to use a temporary variable, which both avoided the multiple
-   evaluation and obviated the need for the TYPE argument.  But that triggered
+/* This used to use a temporary variable.  But that triggered
    complaints under strict aliasing. #### There should be a better way. */
-#define xfree(lvalue, type) do						\
+#define xfree(lvalue) do						\
 {									\
   xfree_1 (lvalue);							\
   VOIDP_CAST (lvalue) = (void *) DEADBEEF_CONSTANT;                     \
 } while (0)
 #else
-#define xfree(lvalue,type) xfree_1 (lvalue)
+#define xfree(lvalue) xfree_1 (lvalue)
 #endif /* ERROR_CHECK_MALLOC */
 
 /* ------------------------ stack allocation -------------------------- */
