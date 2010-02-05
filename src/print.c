@@ -680,14 +680,14 @@ void
 write_msg_istring (Lisp_Object stream, const Ibyte *str)
 {
   /* This function can GC */
-  return write_istring (stream, IGETTEXT (str));
+  write_istring (stream, IGETTEXT (str));
 }
 
 void
 write_msg_cistring (Lisp_Object stream, const CIbyte *str)
 {
   /* This function can GC */
-  return write_msg_istring (stream, (const Ibyte *) str);
+  write_msg_istring (stream, (const Ibyte *) str);
 }
 
 void
@@ -695,7 +695,7 @@ write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
 {
   /* This function can GC */
   ASSERT_ASCTEXT_ASCII (str);
-  return write_msg_istring (stream, (const Ibyte *) str);
+  write_msg_istring (stream, (const Ibyte *) str);
 }
 
 void
