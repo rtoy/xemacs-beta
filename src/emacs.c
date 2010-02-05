@@ -714,7 +714,7 @@ make_arg_list_1 (int argc, Wexttext **argv, int skip_args)
 	      full_exe_path = mswindows_get_module_file_name ();
 	      assert (full_exe_path);
 	      fullpath = build_tstr_string (full_exe_path);
-	      xfree (full_exe_path, Extbyte *);
+	      xfree (full_exe_path);
 	      result = Fcons (fullpath, result);
 	    }
 	  else
@@ -761,10 +761,10 @@ free_argc_argv (Wexttext **argv)
 
   while (argv[elt])
     {
-      xfree (argv[elt], Wexttext *);
+      xfree (argv[elt]);
       elt++;
     }
-  xfree (argv, Wexttext **);
+  xfree (argv);
 }
 
 static void
@@ -2920,9 +2920,9 @@ sort_args (int argc, Wexttext **argv)
     }
 
   memcpy (argv, new_argv, sizeof (Wexttext *) * argc);
-  xfree (new_argv, Wexttext **);
-  xfree (options, int *);
-  xfree (priority, int *);
+  xfree (new_argv);
+  xfree (options);
+  xfree (priority);
 }
 
 DEFUN ("running-temacs-p", Frunning_temacs_p, 0, 0, 0, /*

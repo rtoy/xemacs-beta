@@ -138,7 +138,7 @@ stream_delete_console (struct console *con)
 	retry_fclose (stream_con->in);
 
 #ifndef NEW_GC
-      xfree (stream_con, struct stream_console *);
+      xfree (stream_con);
 #endif /* not NEW_GC */
       CONSOLE_STREAM_DATA (con) = NULL;
     }

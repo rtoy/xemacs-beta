@@ -2402,7 +2402,7 @@ pdump_load_finish (void)
     }
 
 #ifdef NEW_GC
-  xfree (pdump_mc_hash, mc_addr_elt *);
+  xfree (pdump_mc_hash);
 #endif /* NEW_GC */
 
 #ifdef NEW_GC
@@ -2518,7 +2518,7 @@ pdump_resource_get (void)
 static void
 pdump_file_free (void)
 {
-  xfree (pdump_start, Rawbyte *);
+  xfree (pdump_start);
 }
 
 #ifdef HAVE_MMAP

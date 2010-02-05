@@ -414,6 +414,6 @@ alsa_play_sound_file (const Extbyte *sound_file, int volume)
   retry_read (fd, data, st.st_size);
   retry_close (fd);
   retval = alsa_play_sound_data (data, st.st_size, volume);
-  xfree (data, Binbyte);
+  xfree (data);
   return retval;
 }
