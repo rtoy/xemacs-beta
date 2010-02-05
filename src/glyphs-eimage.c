@@ -321,7 +321,7 @@ my_jpeg_output_message (j_common_ptr cinfo)
 
   /* Create the message */
   (*cinfo->err->format_message) (cinfo, buffer);
-  EXTERNAL_TO_C_STRING (buffer, intbuf, Qjpeg_error_message_encoding);
+  intbuf = EXTERNAL_TO_ITEXT (buffer, Qjpeg_error_message_encoding);
   warn_when_safe (Qjpeg, Qinfo, "%s", intbuf);
 }
 
@@ -396,7 +396,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
        write out to a file. */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (data, bytes, len, Qbinary);
     jpeg_memory_src (&cinfo, (JOCTET *) bytes, len);
   }
 
@@ -660,7 +660,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     assert (!NILP (data));
 
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (data, bytes, len, Qbinary); 
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;
@@ -943,7 +943,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to think about using Lstreams */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (data, bytes, len, Qbinary); 
     tbr.bytes = bytes;
     tbr.len = len;
     tbr.index = 0;
@@ -1320,9 +1320,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Think about Lstreams... */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data,
-			ALLOCA, (bytes, len),
-			Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (data, bytes, len, Qbinary);
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;

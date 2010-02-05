@@ -139,7 +139,7 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 
   {
     const Extbyte *nameext;
-    LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), nameext, Qctext);
+    nameext = LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), Qctext);
     return XInternAtom (display, nameext, only_if_exists ? True : False);
   }
 }
@@ -188,9 +188,7 @@ x_atom_to_symbol (struct device *d, Atom atom)
 
     if (! str) return Qnil;
 
-    TO_INTERNAL_FORMAT (C_STRING, str,
-			C_STRING_ALLOCA, intstr,
-			Qctext);
+    intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     XFree (str);
     return intern_istring (intstr);
   }
@@ -339,14 +337,12 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	  }
 
 	if (chartypes == LATIN_1)
-	  TO_EXTERNAL_FORMAT (LISP_STRING, selection_value,
-			      ALLOCA, (data, bytes),
-			      Qbinary);
+	  LISP_STRING_TO_SIZED_EXTERNAL (selection_value, data, bytes,
+					 Qbinary);
 	else if (chartypes == WORLD)
 	  {
-	    TO_EXTERNAL_FORMAT (LISP_STRING, selection_value,
-				ALLOCA, (data, bytes),
-				Qctext);
+	    LISP_STRING_TO_SIZED_EXTERNAL (selection_value, data, bytes,
+					   Qctext);
 	    encoding = "COMPOUND_TEXT";
 	  }
       }
@@ -1442,13 +1438,9 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
     }
 
   if (chartypes == LATIN_1)
-    TO_EXTERNAL_FORMAT (LISP_STRING, string,
-			ALLOCA, (data, bytes),
-			Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (string, data, bytes, Qbinary);
   else if (chartypes == WORLD)
-    TO_EXTERNAL_FORMAT (LISP_STRING, string,
-			ALLOCA, (data, bytes),
-			Qctext);
+    LISP_STRING_TO_SIZED_EXTERNAL (string, data, bytes, Qctext);
 #endif /* MULE */
 
   bytes_remaining = bytes;

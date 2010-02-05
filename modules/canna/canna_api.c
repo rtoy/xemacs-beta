@@ -390,7 +390,7 @@ If nil is specified for each arg, the default value will be used.
       CHECK_STRING (server);
       jrKanjiControl (0, KC_SETSERVERNAME,
 		      /* !!#### Check encoding */
-		      NEW_LISP_STRING_TO_EXTERNAL (server, Qnative));
+		      LISP_STRING_TO_EXTERNAL (server, Qnative));
     }
 
   if (NILP (rcfile))
@@ -401,7 +401,7 @@ If nil is specified for each arg, the default value will be used.
     {
       CHECK_STRING (rcfile);
       jrKanjiControl (0, KC_SETINITFILENAME,
-		      NEW_LISP_STRING_TO_EXTERNAL (rcfile, Qfile_name));
+		      LISP_STRING_TO_EXTERNAL (rcfile, Qfile_name));
     }
 
   {
@@ -561,7 +561,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   Extbyte *ext;
 
   CHECK_STRING (yomi);
-  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (yomi, Qeuc_jp);
   strncpy (key_buffer, ext, sizeof (key_buffer));
   key_buffer[sizeof (key_buffer) - 1] = '\0';
   ks.length = strlen (key_buffer);
@@ -573,7 +573,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   else
     {
       CHECK_STRING (roma);
-      LISP_STRING_TO_EXTERNAL (roma, ext, Qeuc_jp);
+      ext = LISP_STRING_TO_EXTERNAL (roma, Qeuc_jp);
       ks.mode = (unsigned char *) (key_buffer + ks.length + 1);
       strncpy (key_buffer + ks.length + 1, ext,
 	       sizeof (key_buffer) - ks.length - 1);
@@ -629,7 +629,7 @@ Parse customize string.
   Extbyte *ext;
 
   CHECK_STRING (str);
-  LISP_STRING_TO_EXTERNAL (str, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (str, Qeuc_jp);
   strncpy (key_buffer, ext, sizeof (key_buffer));
   key_buffer[sizeof (key_buffer) - 1] = '\0';
   p = (Extbyte **) key_buffer;
@@ -716,7 +716,7 @@ Clause separator is set.
       return Qnil;
     }
 
-  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (yomi, Qeuc_jp);
   strncpy ((char *) yomibuf, ext, sizeof (yomibuf));
   yomibuf[sizeof (yomibuf) - 1] = '\0';
 

@@ -1,3 +1,30 @@
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c:
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_lo_import):
+	* postgresql/postgresql.c (Fpq_lo_export):
+	* ldap/eldap.c (Fldap_open):
+	* ldap/eldap.c (Fldap_search_basic):
+	* ldap/eldap.c (Fldap_add):
+	* ldap/eldap.c (Fldap_modify):
+	* ldap/eldap.c (Fldap_delete):
+	* canna/canna_api.c (Fcanna_initialize):
+	* canna/canna_api.c (Fcanna_store_yomi):
+	* canna/canna_api.c (Fcanna_parse):
+	* canna/canna_api.c (Fcanna_henkan_begin):
+	EXTERNAL_TO_C_STRING returns its argument instead of storing it
+	in a parameter, and is renamed to EXTERNAL_TO_ITEXT.  Similar
+	things happen to related macros.  See entry in src/ChangeLog.
+
+	More Mule-izing of postgresql.c.  Extract out common code
+	between `pq-connectdb' and `pq-connect-start'.  Fix places
+	that signal an error string using a formatted string to instead
+	follow the standard and have a fixed reason followed by the
+	particular error message stored as one of the frobs.
+
 2010-01-27  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c (print_pgconn):

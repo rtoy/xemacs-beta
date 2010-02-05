@@ -218,7 +218,7 @@ readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 	Extbyte *nameext;
 	HANDLE dir_handle;
 
-	C_STRING_TO_TSTR (name, nameext);
+	nameext = ITEXT_TO_TSTR (name);
 	dir_handle = qxeFindFirstFile (nameext, &find_data);
 	if (dir_handle == INVALID_HANDLE_VALUE)
 	  {

@@ -252,9 +252,9 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
     const Extbyte *nameext = 0;
 
     if (STRINGP (f->name))
-      LISP_STRING_TO_TSTR (f->name, nameext);
+      nameext = LISP_STRING_TO_TSTR (f->name);
     else if (STRINGP (name))
-      LISP_STRING_TO_TSTR (name, nameext);
+      nameext = LISP_STRING_TO_TSTR (name);
     else
       nameext = XETEXT (XEMACS_CLASS);
     hwnd = qxeCreateWindowEx (exstyle,
@@ -596,7 +596,7 @@ mswindows_set_title_from_ibyte (struct frame *f, Ibyte *title)
       Extbyte *title_ext;
 
       FRAME_MSWINDOWS_TITLE_CHECKSUM (f) = new_checksum;
-      C_STRING_TO_TSTR (title, title_ext);
+      title_ext = ITEXT_TO_TSTR (title);
       qxeSetWindowText (FRAME_MSWINDOWS_HANDLE (f), title_ext);
     }
 }
@@ -999,7 +999,7 @@ msprinter_init_frame_3 (struct frame *f)
     const Extbyte *nameext;
 
     if (STRINGP (f->name))
-      LISP_STRING_TO_TSTR (f->name, nameext);
+      nameext = LISP_STRING_TO_TSTR (f->name);
     else
       nameext = XETEXT ("XEmacs print document");
     di.lpszDocName = (XELPTSTR) nameext;

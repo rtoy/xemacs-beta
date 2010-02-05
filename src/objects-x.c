@@ -67,7 +67,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Lisp_Object name,
   {
     const Extbyte *extname;
 
-    LISP_STRING_TO_EXTERNAL (name, extname, Qx_color_name_encoding);
+    extname = LISP_STRING_TO_EXTERNAL (name, Qx_color_name_encoding);
     result = XParseColor (dpy, cmap, extname, color);
   }
   if (!result)
@@ -194,7 +194,7 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
   Colormap cmap = DEVICE_X_COLORMAP (d);
   const Extbyte *extname;
 
-  LISP_STRING_TO_EXTERNAL (color, extname, Qx_color_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qx_color_name_encoding);
 
   return XParseColor (dpy, cmap, extname, &c);
 }
@@ -232,10 +232,10 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
      The problem is that the fontconfig/Xft functions work much too hard
      to ensure that something is returned; but that something need not be
      at all close to what we asked for. */
-  LISP_STRING_TO_EXTERNAL (f->name, extname, Qfc_font_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qfc_font_name_encoding);
   rf = xft_open_font_by_name (dpy, extname);
 #endif
-  LISP_STRING_TO_EXTERNAL (f->name, extname, Qx_font_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
   /* With XFree86 4.0's fonts, XListFonts returns an entry for
      -isas-fangsong ti-medium-r-normal--16-160-72-72-c-160-gb2312.1980-0 but
      an XLoadQueryFont on the corresponding XLFD returns NULL.
@@ -785,7 +785,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   if (NILP (FONT_INSTANCE_TRUENAME (f))
       && FONT_INSTANCE_X_FONT (f))
     {
-      nameext = NEW_LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
+      nameext = LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
       FONT_INSTANCE_TRUENAME (f) =
 	x_font_truename (dpy, nameext, FONT_INSTANCE_X_FONT (f));
     }
@@ -880,7 +880,7 @@ x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
   Lisp_Object result = Qnil;
   const Extbyte *patternext;
 
-  LISP_STRING_TO_EXTERNAL (pattern, patternext, Qx_font_name_encoding);
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qx_font_name_encoding);
 
   if (!NILP(maxnumber) && INTP(maxnumber))
     {

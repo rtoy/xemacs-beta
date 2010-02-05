@@ -360,10 +360,7 @@ menu_separator_style_and_to_external (const Ibyte *s)
 	    : xstrdup ("shadowDoubleEtchedIn"));
   else if (*p == ':')
     {
-      Extbyte *retval;
-
-      C_STRING_TO_EXTERNAL_MALLOC (p + 1, retval, Qlwlib_encoding);
-      return retval;
+      return ITEXT_TO_EXTERNAL_MALLOC (p + 1, Qlwlib_encoding);
     }
 
   return NULL;
@@ -385,7 +382,7 @@ add_accel_and_to_external (Lisp_Object string)
       }
 
   if (found_accel)
-    LISP_STRING_TO_EXTERNAL_MALLOC (string, retval, Qlwlib_encoding);
+    retval = LISP_STRING_TO_EXTERNAL_MALLOC (string, Qlwlib_encoding);
   else
     {
       Bytecount namelen = XSTRING_LENGTH (string);
@@ -393,7 +390,7 @@ add_accel_and_to_external (Lisp_Object string)
       chars[0] = '%';
       chars[1] = '_';
       memcpy (chars + 2, name, namelen + 1);
-      C_STRING_TO_EXTERNAL_MALLOC (chars, retval, Qlwlib_encoding);
+      retval = ITEXT_TO_EXTERNAL_MALLOC (chars, Qlwlib_encoding);
     }
 
   return retval;
@@ -417,7 +414,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
       if (accel_p)
 	wv->name = add_accel_and_to_external (gui_item);
       else
-	LISP_STRING_TO_EXTERNAL_MALLOC (gui_item, wv->name, Qlwlib_encoding);
+	wv->name = LISP_STRING_TO_EXTERNAL_MALLOC (gui_item, Qlwlib_encoding);
       return 1;
     }
   else if (!GUI_ITEMP (gui_item))
@@ -447,7 +444,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL_MALLOC (pgui->name, wv->name, Qlwlib_encoding);
+      wv->name = LISP_STRING_TO_EXTERNAL_MALLOC (pgui->name, Qlwlib_encoding);
       wv->accel = LISP_TO_VOID (Qnil);
     }
 
@@ -464,7 +461,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
 	  CHECK_STRING (suffix2);
 	}
 
-      LISP_STRING_TO_EXTERNAL_MALLOC (suffix2, wv->value, Qlwlib_encoding);
+      wv->value = LISP_STRING_TO_EXTERNAL_MALLOC (suffix2, Qlwlib_encoding);
     }
 
   wv_set_evalable_slot (wv->enabled, pgui->active);
@@ -486,7 +483,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
       CHECK_STRING (pgui->keys);
       pgui->keys = Fsubstitute_command_keys (pgui->keys);
       if (XSTRING_LENGTH (pgui->keys) > 0)
-	LISP_STRING_TO_EXTERNAL_MALLOC (pgui->keys, wv->key, Qlwlib_encoding);
+	wv->key = LISP_STRING_TO_EXTERNAL_MALLOC (pgui->keys, Qlwlib_encoding);
       else
 	wv->key = 0;
     }
@@ -496,7 +493,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
       /* #### Warning, dependency here on current_buffer and point */
       where_is_to_char (pgui->callback, buf);
       if (eilen (buf) > 0)
-	C_STRING_TO_EXTERNAL_MALLOC (eidata (buf), wv->key, Qlwlib_encoding);
+	wv->key = ITEXT_TO_EXTERNAL_MALLOC (eidata (buf), Qlwlib_encoding);
       else
 	wv->key = 0;
       eifree (buf);

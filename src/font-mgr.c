@@ -46,6 +46,8 @@ Boston, MA 02111-1307, USA.  */
 #include "hash.h"
 #include "font-mgr.h"
 
+#include "sysfile.h"
+
 /* #### TO DO ####
    . The "x-xft-*" and "x_xft_*" nomenclature is mostly redundant, especially
      if we separate X fonts from Xft fonts, and use fontconfig more generally.
@@ -159,7 +161,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    is a Lisp string.
 */
 #define extract_fcapi_string(str) \
-  (NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
+  (LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
 
 #define build_fcapi_string(str) \
   (build_extstring ((Extbyte *) (str), Qfc_font_name_encoding))
@@ -782,7 +784,7 @@ DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
   if (FcConfigAppFontAddFile
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
+       (FcChar8 *) LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -801,7 +803,7 @@ DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
   if (FcConfigAppFontAddDir
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
+       (FcChar8 *) LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -844,7 +846,7 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
     {
       CHECK_STRING (name);
        /* #### FIXME! is Qfile_name right? */
-      fcname = NEW_LISP_STRING_TO_EXTERNAL (name, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (name, fcname);
     }
   return (build_fcapi_string (FcConfigFilename ((FcChar8 *) fcname)));
 }
