@@ -1,5 +1,15 @@
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* lisp.h (staticpro_nodump_1):
+	Define staticpro_1 and staticpro_nodump_1 when not XEMACS_DEBUG.
+	
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_massage_multiword_predicate):
+	Cosmetic fixes.
+
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
 	* bytecode.c (bytecode_assert):
 	Use 0 instead of x in disabled_assert calls to avoid errors due
 	to using undefined vars/params (they are defined only when
