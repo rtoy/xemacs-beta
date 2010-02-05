@@ -22,8 +22,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_syswait_h_
 #define INCLUDED_syswait_h_
 
-#include <sys/types.h>
-
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif

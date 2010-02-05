@@ -28,8 +28,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "elhash.h"
 #include "gui.h"
 #include "menubar.h"

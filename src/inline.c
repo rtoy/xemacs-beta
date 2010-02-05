@@ -66,6 +66,7 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "symeval.h"
 #include "syntax.h"
+#include "unicode.h"
 #include "window.h"
 
 /* If we demand !defined (HAVE_SHLIB) the INLINE_HEADERS aren't instantiated.
