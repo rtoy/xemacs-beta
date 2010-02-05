@@ -256,10 +256,10 @@ attempt_module_delete (int mod)
 {
   if (dll_close (modules[mod].dlhandle) == 0)
     {
-      xfree (modules[mod].soname, Ibyte *);
-      xfree (modules[mod].modname, Ibyte *);
-      xfree (modules[mod].modver, Ibyte *);
-      xfree (modules[mod].modtitle, Ibyte *);
+      xfree (modules[mod].soname);
+      xfree (modules[mod].modname);
+      xfree (modules[mod].modver);
+      xfree (modules[mod].modtitle);
       modules[mod].dlhandle = 0;
       modules[mod].used = 0;
     }

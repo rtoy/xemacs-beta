@@ -257,7 +257,7 @@ init_syntax_once (void)
 #define ALLOCA alloca
 #define xmalloc malloc
 #define xrealloc realloc
-#define xfree(x,type) free (x)
+#define xfree free
 #endif
 
 #ifdef emacs
@@ -363,7 +363,7 @@ void *alloca ();
 
 #define REGEX_ALLOCATE_STACK xmalloc
 #define REGEX_REALLOCATE_STACK(source, osize, nsize) xrealloc (source, nsize)
-#define REGEX_FREE_STACK(arg) xfree (arg, fail_stack_elt_t *)
+#define REGEX_FREE_STACK(arg) xfree (arg)
 
 #else /* not REGEX_MALLOC */
 
@@ -2096,7 +2096,7 @@ regex_grow_registers (int num_regs)
 #define FREE_STACK_RETURN(value)			\
 do							\
 {							\
-  xfree (compile_stack.stack, compile_stack_elt_t *);	\
+  xfree (compile_stack.stack);	\
   return value;						\
 } while (0)
 
@@ -3399,7 +3399,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
   if (syntax & RE_NO_POSIX_BACKTRACKING)
     BUF_PUSH (succeed);
 
-  xfree (compile_stack.stack, compile_stack_elt_t *);
+  xfree (compile_stack.stack);
 
   /* We have succeeded; set the length of the buffer.  */
   bufp->used = buf_end - bufp->buffer;
@@ -6950,8 +6950,8 @@ regexec (const regex_t *preg, const char *string, size_t nmatch,
         }
 
       /* If we needed the temporary register info, free the space now.  */
-      xfree (regs.start, regoff_t *);
-      xfree (regs.end, regoff_t *);
+      xfree (regs.start);
+      xfree (regs.end);
     }
 
   /* We want zero return to mean success, unlike `re_search'.  */
@@ -7003,19 +7003,19 @@ void
 regfree (regex_t *preg)
 {
   if (preg->buffer != NULL)
-    xfree (preg->buffer, unsigned char *);
+    xfree (preg->buffer);
   preg->buffer = NULL;
 
   preg->allocated = 0;
   preg->used = 0;
 
   if (preg->fastmap != NULL)
-    xfree (preg->fastmap, char *);
+    xfree (preg->fastmap);
   preg->fastmap = NULL;
   preg->fastmap_accurate = 0;
 
   if (preg->translate != NULL)
-    xfree (preg->translate, RE_TRANSLATE_TYPE);
+    xfree (preg->translate);
   preg->translate = NULL;
 }
 

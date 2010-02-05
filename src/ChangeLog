@@ -1,5 +1,234 @@
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c (release_breathing_space):
+	* alloc.c (resize_string):
+	* alloc.c (sweep_lcrecords_1):
+	* alloc.c (SWEEP_FIXED_TYPE_BLOCK_1):
+	* alloc.c (ADDITIONAL_FREE_compiled_function):
+	* alloc.c (compact_string_chars):
+	* alloc.c (ADDITIONAL_FREE_string):
+	* alloc.c (sweep_strings):
+	* alloca.c (xemacs_c_alloca):
+	* alsaplay.c (alsa_play_sound_file):
+	* buffer.c (init_initial_directory):
+	* buffer.h:
+	* buffer.h (BUFFER_FREE):
+	* console-stream.c (stream_delete_console):
+	* console-tty.c (free_tty_console_struct):
+	* data.c (Fnumber_to_string):
+	* device-gtk.c (gtk_init_device):
+	* device-gtk.c (free_gtk_device_struct):
+	* device-gtk.c (gtk_delete_device):
+	* device-msw.c (mswindows_delete_device):
+	* device-msw.c (msprinter_delete_device):
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (tty_delete_device):
+	* device-x.c (x_init_device):
+	* device-x.c (free_x_device_struct):
+	* device-x.c (x_delete_device):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-x.c (dbox_descriptor_to_widget_value):
+	* dired-msw.c (Fmswindows_insert_directory):
+	* dired.c (free_user_cache):
+	* dired.c (user_name_completion_unwind):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c (emacs_doprnt_1):
+	* dumper.c (pdump_load_finish):
+	* dumper.c (pdump_file_free):
+	* dumper.c (pdump_file_unmap):
+	* dynarr.c:
+	* dynarr.c (Dynarr_free):
+	* editfns.c (uncache_home_directory):
+	* editfns.c (Fset_time_zone_rule):
+	* elhash.c:
+	* elhash.c (pdump_reorganize_hash_table):
+	* elhash.c (maphash_unwind):
+	* emacs.c (make_arg_list_1):
+	* emacs.c (free_argc_argv):
+	* emacs.c (sort_args):
+	* emacs.c (Frunning_temacs_p):
+	* emodules.c (attempt_module_delete):
+	* eval.c (free_pointer):
+	* event-Xt.c (unselect_filedesc):
+	* event-Xt.c (emacs_Xt_select_process):
+	* event-gtk.c (unselect_filedesc):
+	* event-gtk.c (dragndrop_data_received):
+	* event-msw.c (winsock_closer):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-stream.c (finalize_command_builder):
+	* event-stream.c (free_command_builder):
+	* extents.c (free_gap_array):
+	* extents.c (free_extent_list):
+	* extents.c (free_soe):
+	* extents.c (extent_fragment_delete):
+	* extents.c (extent_priority_sort_function):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (coding_finalizer):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize):
+	* file-coding.c (free_detection_state):
+	* file-coding.c (coding_category_symbol_to_id):
+	* fileio.c:
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (if):
+	* fileio.c (Ffile_symlink_p):
+	* filelock.c (FREE_LOCK_INFO):
+	* filelock.c (current_lock_owner):
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_duplicate):
+	* frame-gtk.c (gtk_delete_frame):
+	* frame-msw.c (mswindows_delete_frame):
+	* frame-msw.c (msprinter_delete_frame):
+	* frame-x.c (x_cde_destroy_callback):
+	* frame-x.c (Fcde_start_drag_internal):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (x_delete_frame):
+	* frame.c (update_frame_title):
+	* frame.c (Fset_frame_pointer):
+	* gc.c (register_for_finalization):
+	* gccache-gtk.c (free_gc_cache):
+	* gccache-gtk.c (gc_cache_lookup):
+	* gccache-x.c (free_gc_cache):
+	* gccache-x.c (gc_cache_lookup):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* glyphs-gtk.c (convert_EImage_to_GDKImage):
+	* glyphs-gtk.c (gtk_finalize_image_instance):
+	* glyphs-gtk.c (gtk_init_image_instance_from_eimage):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-msw.c (convert_EImage_to_DIBitmap):
+	* glyphs-msw.c (mswindows_init_image_instance_from_eimage):
+	* glyphs-msw.c (mswindows_initialize_image_instance_mask):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (mswindows_xpm_instantiate):
+	* glyphs-msw.c (xbm_create_bitmap_from_data):
+	* glyphs-msw.c (mswindows_finalize_image_instance):
+	* glyphs-x.c (convert_EImage_to_XImage):
+	* glyphs-x.c (x_finalize_image_instance):
+	* glyphs-x.c (x_init_image_instance_from_eimage):
+	* glyphs-x.c (x_xpm_instantiate):
+	* gui-x.c (free_popup_widget_value_tree):
+	* hash.c (free_hash_table):
+	* hash.c (grow_hash_table):
+	* hash.c (pregrow_hash_table_if_necessary):
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (uninit_buffer_text):
+	* intl-win32.c (convert_multibyte_to_internal_malloc):
+	* intl.c:
+	* intl.c (Fset_current_locale):
+	* keymap.c:
+	* keymap.c (where_is_recursive_mapper):
+	* keymap.c (where_is_internal):
+	* lisp.h:
+	* lisp.h (xfree):
+	* lstream.c (Lstream_close):
+	* lstream.c (resizing_buffer_closer):
+	* mule-coding.c:
+	* mule-coding.c (iso2022_finalize_detection_state):
+	* nt.c:
+	* nt.c (mswindows_get_long_filename):
+	* nt.c (nt_get_resource):
+	* nt.c (init_mswindows_environment):
+	* nt.c (get_cached_volume_information):
+	* nt.c (mswindows_opendir):
+	* nt.c (mswindows_closedir):
+	* nt.c (mswindows_readdir):
+	* nt.c (mswindows_stat):
+	* nt.c (mswindows_getdcwd):
+	* nt.c (Fmswindows_long_file_name):
+	* ntplay.c (nt_play_sound_file):
+	* ntplay.c (play_sound_data_1):
+	* number-gmp.c (gmp_free):
+	* number-gmp.c (init_number_gmp):
+	* number-mp.c (bignum_to_string):
+	* number-mp.c (BIGNUM_TO_TYPE):
+	* number.c (bignum_print):
+	* number.c (bignum_convfree):
+	* number.c (ratio_print):
+	* number.c (bigfloat_print):
+	* number.c (bigfloat_finalize):
+	* objects-gtk.c (gtk_finalize_color_instance):
+	* objects-gtk.c (gtk_finalize_font_instance):
+	* objects-msw.c (mswindows_finalize_color_instance):
+	* objects-msw.c (mswindows_finalize_font_instance):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (tty_font_list):
+	* objects-x.c (x_finalize_color_instance):
+	* objects-x.c (x_finalize_font_instance):
+	* process.c:
+	* process.c (finalize_process):
+	* realpath.c:
+	* redisplay.c (add_propagation_runes):
+	* regex.c:
+	* regex.c (xfree):
+	* regex.c (REGEX_FREE_STACK):
+	* regex.c (FREE_STACK_RETURN):
+	* regex.c (regex_compile):
+	* regex.c (regexec):
+	* regex.c (regfree):
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance):
+	* scrollbar-gtk.c (gtk_release_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (unshow_that_mofo):
+	* scrollbar-x.c (x_free_scrollbar_instance):
+	* scrollbar-x.c (x_release_scrollbar_instance):
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-msw.c (mswindows_own_selection):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (unexpect_property_change):
+	* select-x.c (x_handle_property_notify):
+	* select-x.c (receive_incremental_selection):
+	* select-x.c (x_get_window_property_as_lisp_data):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* specifier.c (finalize_specifier):
+	* syntax.c (uninit_buffer_syntax_cache):
+	* sysdep.c (qxe_allocating_getcwd):
+	* sysdep.c (qxe_lstat):
+	* sysdep.c (copy_in_passwd):
+	* sysdep.c (qxe_ctime):
+	* sysdep.c (closedir):
+	* sysdep.c (DIRSIZ):
+	* termcap.c (tgetent):
+	* termcap.c (tprint):
+	* tests.c (Ftest_data_format_conversion):
+	* text.c (new_dfc_convert_copy_data):
+	* text.h (eifree):
+	* text.h (eito_alloca):
+	* text.h (eito_external):
+	* toolbar-msw.c (mswindows_output_toolbar):
+	* ui-gtk.c (CONVERT_RETVAL):
+	* ui-gtk.c (__allocate_object_storage):
+	* unicode.c (free_from_unicode_table):
+	* unicode.c (free_to_unicode_table):
+	* unicode.c (free_charset_unicode_tables):
+	* win32.c (mswindows_read_link_1):
+	Rename: xfree(VAL, TYPE)->xfree(VAL)
+
+	Command used:
+
+	gr 'xfree *\((.*),.*\);' 'xfree (\1);' *.[ch]
+
+	Followed by grepping for 'xfree.*,' and fixing anything left.
+
+	Rationale: Having to specify the TYPE argument is annoying and
+	error-prone.  It was originally put in to work around warnings
+	due to strict aliasing but years and years ago I rewrote it
+	in a way that doesn't use the TYPE argument at all and no one
+	has complained since then. (And anyway, XEmacs is far from
+	ever being in compliance with strict aliasing and would require
+	far-reaching changes to get that way.)
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
 	* emacs.c (main_1):
 	Restore old definition of SHEBANG_EXE_PROGNAME_LENGTH; not possible

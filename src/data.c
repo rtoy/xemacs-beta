@@ -1234,7 +1234,7 @@ If supported, it may also be a ratio.
     {
       Ascbyte *str = bignum_to_string (XBIGNUM_DATA (number), 10);
       Lisp_Object retval = build_ascstring (str);
-      xfree (str, Ascbyte *);
+      xfree (str);
       return retval;
     }
 #endif
@@ -1243,7 +1243,7 @@ If supported, it may also be a ratio.
     {
       Ascbyte *str = ratio_to_string (XRATIO_DATA (number), 10);
       Lisp_Object retval = build_ascstring (str);
-      xfree (str, Ascbyte *);
+      xfree (str);
       return retval;
     }
 #endif
@@ -1252,7 +1252,7 @@ If supported, it may also be a ratio.
     {
       Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
       Lisp_Object retval = build_ascstring (str);
-      xfree (str, Ascbyte *);
+      xfree (str);
       return retval;
     }
 #endif

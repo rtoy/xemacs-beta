@@ -417,7 +417,7 @@ free_hentries (htentry *hentries,
 #endif
 
   if (!DUMPEDP (hentries))
-    xfree (hentries, htentry *);
+    xfree (hentries);
 }
 
 static void
@@ -1128,7 +1128,7 @@ pdump_reorganize_hash_table (Lisp_Object hash_table)
   memcpy (ht->hentries, new_entries, ht->size * sizeof (htentry));
 
 #ifndef NEW_GC
-  xfree (new_entries, htentry *);
+  xfree (new_entries);
 #endif /* not NEW_GC */
 }
 
@@ -1423,7 +1423,7 @@ static Lisp_Object
 maphash_unwind (Lisp_Object unwind_obj)
 {
   void *ptr = (void *) get_opaque_ptr (unwind_obj);
-  xfree (ptr, void *);
+  xfree (ptr);
   free_opaque_ptr (unwind_obj);
   return Qnil;
 }

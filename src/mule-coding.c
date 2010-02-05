@@ -3247,7 +3247,7 @@ iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
   if (data->iso)
-    xfree (data->iso, struct iso2022_coding_stream *);
+    xfree (data->iso);
 }
 
 

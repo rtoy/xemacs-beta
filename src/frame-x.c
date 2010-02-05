@@ -1131,7 +1131,7 @@ x_cde_destroy_callback (Widget widget, XtPointer clientData,
     }
 
   /* free the data string */
-  xfree (clientData, XtPointer);
+  xfree (clientData);
 
   CurrentDragWidget = NULL;
 }
@@ -1229,7 +1229,7 @@ WARNING: can only handle plain/text and file: transfers!
 		    dnd_destroy_cb_rec,
 		    NULL, 0);
 
-  xfree (dnd_data, Extbyte *);
+  xfree (dnd_data);
 
   return num_items ? Qt : Qnil;
 }
@@ -1275,7 +1275,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 
 	  hurl = dnd_url_hexify_string (fileint, "file:");
 	  l_data = Fcons (build_istring (hurl), l_data);
-	  xfree (hurl, Ibyte *);
+	  xfree (hurl);
 	}
     }
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
@@ -2642,14 +2642,14 @@ x_delete_frame (struct frame *f)
 
   if (FRAME_X_GEOM_FREE_ME_PLEASE (f))
     {
-      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f), Ascbyte *);
+      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f));
       FRAME_X_GEOM_FREE_ME_PLEASE (f) = 0;
     }
 
   if (f->frame_data)
     {
 #ifndef NEW_GC
-      xfree (f->frame_data, void *);
+      xfree (f->frame_data);
 #endif /* not NEW_GC */
       f->frame_data = 0;
     }

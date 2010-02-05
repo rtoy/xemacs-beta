@@ -55,7 +55,7 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Ascbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
   write_ascstring (printcharfun, bstr);
-  xfree (bstr, Ascbyte *);
+  xfree (bstr);
 }
 
 #ifdef NEW_GC
@@ -98,7 +98,7 @@ static void
 bignum_convfree (const void * UNUSED (object), void *data,
 		 Bytecount UNUSED (size))
 {
-  xfree (data, void *);
+  xfree (data);
 }
 
 static void *
@@ -148,7 +148,7 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 {
   CIbyte *rstr = ratio_to_string (XRATIO_DATA (obj), 10);
   write_ascstring (printcharfun, rstr);
-  xfree (rstr, CIbyte *);
+  xfree (rstr);
 }
 
 #ifdef NEW_GC
@@ -253,7 +253,7 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Ascbyte *fstr = bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
   write_ascstring (printcharfun, fstr);
-  xfree (fstr, CIbyte *);
+  xfree (fstr);
 }
 
 #ifdef NEW_GC

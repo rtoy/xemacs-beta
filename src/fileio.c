@@ -416,7 +416,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	  return Qnil;
 	}
       if (wd)
-	xfree (wd, Ibyte *);
+	xfree (wd);
     }
 
 #if 0 /* No! This screws up efs, which calls file-name-directory on URL's
@@ -959,7 +959,7 @@ See also the function `substitute-in-file-name'.
 		      XSTRING_DATA (name)[1] = ':';
 		    }
 		}
-	      xfree (newnm, Ibyte *);
+	      xfree (newnm);
 	      RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
 	    }
 #endif /* WIN32_FILENAMES */
@@ -1072,7 +1072,7 @@ See also the function `substitute-in-file-name'.
 	  if (newcwd)
 	    {
 	      IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-	      xfree (newcwd, Ibyte *);
+	      xfree (newcwd);
 	    }
 	  else
 	    newdir = NULL;
@@ -1158,7 +1158,7 @@ See also the function `substitute-in-file-name'.
 	      if (newcwd)
 		{
 		  IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-		  xfree (newcwd, Ibyte *);
+		  xfree (newcwd);
 		}
 	      else
 #endif
@@ -1333,7 +1333,7 @@ See also the function `substitute-in-file-name'.
   {
     Ibyte *newtarget = mswindows_canonicalize_filename (target);
     Lisp_Object result = build_istring (newtarget);
-    xfree (newtarget, Ibyte *);
+    xfree (newtarget);
 
     RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, result);
   }
@@ -2569,16 +2569,16 @@ Otherwise returns nil.
 			      buf, bufsize);
       if (valsize < bufsize) break;
       /* Buffer was not long enough */
-      xfree (buf, Ibyte *);
+      xfree (buf);
       bufsize *= 2;
     }
   if (valsize == -1)
     {
-      xfree (buf, Ibyte *);
+      xfree (buf);
       return Qnil;
     }
   val = make_string (buf, valsize);
-  xfree (buf, Ibyte *);
+  xfree (buf);
   return val;
 #elif defined (WIN32_NATIVE)
   if (mswindows_shortcuts_are_symlinks)
@@ -2608,7 +2608,7 @@ Otherwise returns nil.
 	return Qnil;
       {
 	Lisp_Object val = build_istring (fname);
-	xfree (fname, Ibyte *);
+	xfree (fname);
 	return val;
       }
     }
