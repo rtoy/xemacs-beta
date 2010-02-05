@@ -1936,14 +1936,15 @@ do {						\
   eicpy_ext_len (ei, ei6, ei6len, Qbinary);	\
 } while (0)
 
-#define eicpy_ext_len(ei, extdata, extlen, codesys)			 \
-do {									 \
-  const Extbyte *ei7 = (extdata);					 \
-  int ei7len = (extlen);						 \
-									 \
-  SIZED_EXTERNAL_TO_SIZED_C_STRING (ei7, ei7len, (ei)->data_,		 \
-				    (ei)->bytelen_, codesys);		 \
-  (ei)->max_size_allocated_ = (ei)->bytelen_ + 1;			 \
+#define eicpy_ext_len(ei, extdata, extlen, codesys)			\
+do {									\
+  const Extbyte *ei7 = (extdata);					\
+  int ei7len = (extlen);						\
+									\
+  TO_INTERNAL_FORMAT (DATA, (ei7, ei7len),				\
+		      ALLOCA, ((ei)->data_, (ei)->bytelen_),		\
+		      codesys);						\
+  (ei)->max_size_allocated_ = (ei)->bytelen_ + 1;			\
   (ei)->charlen_ = bytecount_to_charcount ((ei)->data_, (ei)->bytelen_); \
 } while (0)
 
@@ -2811,96 +2812,6 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_LISP_BUFFER_USE_CONVERTED_DATA(sink) \
   Lstream_delete (XLSTREAM (dfc_sink.lisp_object))
 
-/* #define TEST_NEW_DFC */
-
-/* Convenience macros for extremely common invocations */
-#ifdef TEST_NEW_DFC
-#define C_STRING_TO_EXTERNAL(in, out, codesys)			\
-  do { * (Extbyte **) &(out) = 					\
-       NEW_C_STRING_TO_EXTERNAL (in, codesys); } while (0)
-#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys)		\
-  do { * (Extbyte **) &(out) =						\
-       NEW_SIZED_C_STRING_TO_EXTERNAL (in, inlen, codesys); } while (0)
-#define EXTERNAL_TO_C_STRING(in, out, codesys)			\
-  do { * (Ibyte **) &(out) =					\
-       NEW_EXTERNAL_TO_C_STRING (in, codesys); } while (0)
-#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys)		\
-  do { * (Ibyte **) &(out) =						\
-       NEW_SIZED_EXTERNAL_TO_C_STRING (in, inlen, codesys); } while (0)
-#define LISP_STRING_TO_EXTERNAL(in, out, codesys)		\
-  do { * (Extbyte **) &(out) =					\
-       NEW_LISP_STRING_TO_EXTERNAL (in, codesys); } while (0)
-#else
-#define C_STRING_TO_EXTERNAL(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
-#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
-#define EXTERNAL_TO_C_STRING(in, out, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
-#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
-#define LISP_STRING_TO_EXTERNAL(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_ALLOCA, out, codesys)
-#endif /* TEST_NEW_DFC */
-
-#define C_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
-#define SIZED_C_STRING_TO_SIZED_EXTERNAL(in, inlen, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
-#define EXTERNAL_TO_SIZED_C_STRING(in, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
-#define SIZED_EXTERNAL_TO_SIZED_C_STRING(in, inlen, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
-#define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
-
-/* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
-   make_extstring(). */
-
-#ifdef TEST_NEW_DFC
-#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
-  do { * (Extbyte **) &(out) =						\
-       NEW_C_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
-#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys)	\
-  do { * (Extbyte **) &(out) =						\
-       NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC (in, inlen, codesys); }	\
-  while (0)
-#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys)			\
-  do { * (Ibyte **) &(out) =						\
-       NEW_EXTERNAL_TO_C_STRING_MALLOC (in, codesys); } while (0)
-#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys)	\
-  do { * (Ibyte **) &(out) =						\
-       NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC (in, inlen, codesys); }	\
-  while (0)
-#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)		\
-  do { * (Extbyte **) &(out) =						\
-       NEW_LISP_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
-#else
-#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
-#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
-#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
-#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
-#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_MALLOC, out, codesys)
-#endif /* TEST_NEW_DFC */
-
-#define C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
-#define SIZED_C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, inlen, out, outlen, \
-						codesys)		\
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
-#define EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
-#define SIZED_EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, inlen, out, outlen, \
-						codesys)		\
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
-#define LISP_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, MALLOC, (out, outlen), codesys)
-
 enum new_dfc_src_type
 {
   DFC_EXTERNAL,
@@ -2923,7 +2834,7 @@ MODULE_API void *new_dfc_convert_copy_data (const char *srctext,
 
 END_C_DECLS
 
-/* Version of EXTERNAL_TO_C_STRING that *RETURNS* the translated string,
+/* Version of EXTERNAL_TO_ITEXT that *RETURNS* the translated string,
    still in alloca() space.  Requires some trickiness to do this, but gets
    it done! */
 
@@ -2945,28 +2856,36 @@ END_C_DECLS
    (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
 						   type, codesys)))
 
-#define NEW_EXTERNAL_TO_C_STRING(src, codesys)	\
-  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys)
-#define NEW_EXTERNAL_TO_C_STRING_MALLOC(src, codesys)	\
-  (Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys)
-#define NEW_SIZED_EXTERNAL_TO_C_STRING(src, len, codesys)	\
-  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys)
-#define NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC(src, len, codesys)	\
-  (Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys)
-#define NEW_C_STRING_TO_EXTERNAL(src, codesys)	\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys)
-#define NEW_C_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys)
-#define NEW_SIZED_C_STRING_TO_EXTERNAL(src, len, codesys)	\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_INTERNAL, codesys)
-#define NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC(src, len, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_INTERNAL, codesys)
-#define NEW_LISP_STRING_TO_EXTERNAL(src, codesys)			\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,		\
-					DFC_LISP_STRING, codesys)
-#define NEW_LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
-				      DFC_LISP_STRING, codesys)
+#define EXTERNAL_TO_ITEXT(src, codesys)	\
+  ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys))
+#define EXTERNAL_TO_ITEXT_MALLOC(src, codesys)	\
+  ((Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys))
+#define SIZED_EXTERNAL_TO_ITEXT(src, len, codesys)	\
+  ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys))
+#define SIZED_EXTERNAL_TO_ITEXT_MALLOC(src, len, codesys)	\
+  ((Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys))
+#define ITEXT_TO_EXTERNAL(src, codesys)	\
+  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys))
+#define ITEXT_TO_EXTERNAL_MALLOC(src, codesys)	\
+  ((Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys))
+#define LISP_STRING_TO_EXTERNAL(src, codesys)			\
+  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,	\
+					DFC_LISP_STRING, codesys))
+#define LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
+  ((Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
+				      DFC_LISP_STRING, codesys))
+/* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
+   make_extstring(). */
+
+/* The next four have two outputs, so we make both of them be parameters */
+#define ITEXT_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
+#define ITEXT_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, MALLOC, (out, outlen), codesys)
 
 /* Wexttext functions.  The type of Wexttext is selected at compile time
    and will sometimes be wchar_t, sometimes char. */
@@ -3146,11 +3065,11 @@ do {								\
 								\
   if (!__gserr__)						\
     {								\
-      var = alloca_ibytes (99);			\
+      var = alloca_ibytes (99);					\
       qxesprintf (var, "Unknown error %d", __gsnum__);		\
     }								\
   else								\
-    EXTERNAL_TO_C_STRING (__gserr__, var, Qstrerror_encoding);	\
+    var = EXTERNAL_TO_ITEXT (__gserr__, Qstrerror_encoding);	\
 } while (0)
 
 #endif /* INCLUDED_text_h_ */

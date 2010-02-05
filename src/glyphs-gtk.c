@@ -1089,9 +1089,9 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (mask_data))
     {
-      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (XCDR (XCDR (mask_data))),
-			  C_STRING_ALLOCA, gcc_may_you_rot_in_hell,
-			  Qfile_name);
+      gcc_may_you_rot_in_hell =
+	LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))),
+				 Qfile_name);
       mask =
 	pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				XINT (XCAR (mask_data)),
@@ -1116,9 +1116,7 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (XCDR (XCDR (data))),
-		      C_STRING_ALLOCA, gcc_go_home,
-		      Qbinary);
+  gcc_go_home = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
 		     pointer_bg, dest_mask, XINT (XCAR (data)),
@@ -1256,7 +1254,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					   &nsymbols);
   assert (!NILP (data));
 
-  LISP_STRING_TO_EXTERNAL(data, dstring, Qbinary);
+  dstring = LISP_STRING_TO_EXTERNAL (data, Qbinary);
 
   /*
    * GTK only uses the 'c' color entry of an XPM and doesn't use the symbolic
@@ -1383,7 +1381,7 @@ gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  LISP_STRING_TO_EXTERNAL (data, dstring, Qbinary);
+  dstring = LISP_STRING_TO_EXTERNAL (data, Qbinary);
 
   if ((p = strchr (dstring, ':')))
     {
@@ -1930,9 +1928,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (!(dest_mask & IMAGE_POINTER_MASK))
     incompatible_image_types (instantiator, dest_mask, IMAGE_POINTER_MASK);
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, data,
-		      C_STRING_ALLOCA, name_ext,
-		      Qfile_name);
+  name_ext = LISP_STRING_TO_EXTERNAL (data, Qfile_name);
 
   if ((i = cursor_name_to_index (name_ext)) == -1)
     invalid_argument ("Unrecognized cursor-font name", data);
@@ -2131,7 +2127,7 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
     {
       char* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
-      LISP_STRING_TO_EXTERNAL (val, str, Qnative);
+      str = LISP_STRING_TO_EXTERNAL (val, Qnative);
 
       /* #### Need to special case each type of GtkWidget here! */
     }
@@ -2279,7 +2275,7 @@ gtk_widget_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
     {
-      LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), nm, Qnative);
+      nm = LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), Qnative);
     }
 
   ii->data = xnew_and_zero (struct gtk_subwindow_data);
@@ -2534,9 +2530,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
       name = item;
     }
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, name,
-		      C_STRING_ALLOCA, c_name,
-		      Qctext);
+  c_name = LISP_STRING_TO_EXTERNAL (name, Qctext);
 
   /* Dummy widget that the notbook wants to display when a tab is selected. */
   box = gtk_vbox_new (FALSE, 3);

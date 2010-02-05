@@ -265,9 +265,9 @@ sanity_check_geometry_resource (Display *dpy)
     {
       Ibyte *app_name_int, *app_class_int, *value_addr_int;
       Lisp_Object codesys = coding_system_of_xrm_database (XtDatabase (dpy));
-      EXTERNAL_TO_C_STRING (app_name, app_name_int, codesys);
-      EXTERNAL_TO_C_STRING (app_class, app_class_int, codesys);
-      EXTERNAL_TO_C_STRING (value.addr, value_addr_int, codesys);
+      app_name_int = EXTERNAL_TO_ITEXT (app_name, codesys);
+      app_class_int = EXTERNAL_TO_ITEXT (app_class, codesys);
+      value_addr_int = EXTERNAL_TO_ITEXT (value.addr, codesys);
 
       warn_when_safe (Qgeometry, Qerror,
 		      "\n"
@@ -389,7 +389,7 @@ Dynarr_add_validified_lisp_string (Extbyte_dynarr *cda, Lisp_Object str)
   Bytecount len;
   Extbyte *data;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, str, ALLOCA, (data, len), Qbinary);
+  LISP_STRING_TO_SIZED_EXTERNAL (str, data, len, Qbinary); 
   Dynarr_add_many (cda, data, len);
   validify_resource_component (Dynarr_atp (cda, Dynarr_length (cda) - len),
 			       len);
@@ -624,7 +624,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
-  LISP_STRING_TO_EXTERNAL (display, disp_name, Qctext);
+  disp_name = LISP_STRING_TO_EXTERNAL (display, Qctext);
 
   /*
    * Break apart the old XtOpenDisplay call into XOpenDisplay and
@@ -648,7 +648,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   if (STRINGP (Vx_emacs_application_class) &&
       XSTRING_LENGTH (Vx_emacs_application_class) > 0)
-    LISP_STRING_TO_EXTERNAL (Vx_emacs_application_class, app_class, Qctext);
+    app_class = LISP_STRING_TO_EXTERNAL (Vx_emacs_application_class, Qctext);
   else
     {
       if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
@@ -697,14 +697,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if (STRINGP (Vx_app_defaults_directory) &&
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
       {
-	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
-				 Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (Vx_app_defaults_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
 	format = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
-	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (Vdata_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
 	format = "%sapp-defaults/%s/Emacs";
       }
@@ -1692,8 +1691,8 @@ standard resource specification.
       Extbyte *str, *colon_pos;
 
       CHECK_STRING (resource_line);
-      LISP_STRING_TO_EXTERNAL (resource_line, str,
-			       coding_system_of_xrm_database (db));
+      str = LISP_STRING_TO_EXTERNAL (resource_line,
+				     coding_system_of_xrm_database (db));
       if (!(colon_pos = strchr (str, ':')) || strchr (str, '\n'))
       invalid:
 	syntax_error ("Invalid resource line", resource_line);
@@ -1832,7 +1831,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   const Extbyte *keysym_ext;
 
   CHECK_STRING (keysym);
-  LISP_STRING_TO_EXTERNAL (keysym, keysym_ext, Qctext);
+  keysym_ext = LISP_STRING_TO_EXTERNAL (keysym, Qctext);
 
   return XStringToKeysym (keysym_ext) ? Qt : Qnil;
 }
@@ -2090,10 +2089,7 @@ See also `x-get-font-path'.
 
   {
     EXTERNAL_LIST_LOOP_2 (path_entry, font_path)
-      {
-	LISP_STRING_TO_EXTERNAL (path_entry, directories[i++],
-				 Qfile_name);
-      }
+      LISP_PATHNAME_CONVERT_OUT (path_entry, directories[i++]);
   }
 
   expect_x_error (dpy);

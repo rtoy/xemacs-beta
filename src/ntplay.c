@@ -41,7 +41,7 @@ nt_play_sound_file (Lisp_Object path, int UNUSED (volume))
   Lisp_Object fname = Ffile_name_nondirectory (path);
   Extbyte *fnameext;
 
-  LISP_STRING_TO_TSTR (fname, fnameext);
+  fnameext = LISP_STRING_TO_TSTR (fname);
 
   if (qxeSearchPath (NULL, fnameext, NULL, 0, NULL, NULL) == 0)
     {

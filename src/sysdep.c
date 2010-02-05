@@ -2833,7 +2833,7 @@ qxe_allocating_getcwd (void)
       if (ret)
 	{
 	  Ibyte *retin;
-	  TSTR_TO_C_STRING_MALLOC (ret, retin);
+	  retin = TSTR_TO_ITEXT_MALLOC (ret);
 	  xfree (cwd);
 	  return retin;
 	}
@@ -2842,7 +2842,7 @@ qxe_allocating_getcwd (void)
       if (ret)
 	{
 	  Ibyte *retin;
-	  EXTERNAL_TO_C_STRING_MALLOC (ret, retin, Qfile_name);
+	  retin = EXTERNAL_TO_ITEXT_MALLOC (ret, Qfile_name);
 	  xfree (cwd);
 	  return retin;
 	}
@@ -2865,7 +2865,7 @@ qxe_allocating_getcwd (void)
 
   if (!getwd (chingame_limitos_arbitrarios))
     return 0;
-  EXTERNAL_TO_C_STRING_MALLOC (chingame_limitos_arbitrarios, ret2, Qfile_name);
+  ret2 = EXTERNAL_TO_ITEXT_MALLOC (chingame_limitos_arbitrarios, Qfile_name);
   return ret2;
 #endif /* HAVE_GETCWD */
 }
@@ -3090,15 +3090,14 @@ qxe_execve (const Ibyte *filename, Ibyte * const argv[],
     ;
   new_argv = alloca_array (Extbyte *, argc + 1);
   for (i = 0; i < argc; i++)
-    C_STRING_TO_EXTERNAL (argv[i], new_argv[i], Qcommand_argument_encoding);
+    new_argv[i] = ITEXT_TO_EXTERNAL (argv[i], Qcommand_argument_encoding);
   new_argv[argc] = NULL;
 
   for (envc = 0; envp[envc]; envc++)
     ;
   new_envp = alloca_array (Extbyte *, envc + 1);
   for (i = 0; i < envc; i++)
-    C_STRING_TO_EXTERNAL (envp[i], new_envp[i],
-			  Qenvironment_variable_encoding);
+    new_envp[i] = ITEXT_TO_EXTERNAL (envp[i], Qenvironment_variable_encoding);
   new_envp[envc] = NULL;
 
 #if defined (WIN32_NATIVE)
@@ -3143,24 +3142,21 @@ copy_in_passwd (struct passwd *pwd)
     xfree (cached_pwd.pw_shell);
 
   cached_pwd = *pwd;
-  if (cached_pwd.pw_name)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_name,
-			C_STRING_MALLOC, cached_pwd.pw_name,
-			Quser_name_encoding);
-  if (cached_pwd.pw_passwd)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_passwd,
-			C_STRING_MALLOC, cached_pwd.pw_passwd,
-			Quser_name_encoding);
-  if (cached_pwd.pw_gecos)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_gecos,
-			C_STRING_MALLOC, cached_pwd.pw_gecos,
-			Quser_name_encoding);
-  if (cached_pwd.pw_dir)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_dir,
-			C_STRING_MALLOC, cached_pwd.pw_dir, Qfile_name);
-  if (cached_pwd.pw_shell)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_shell,
-			C_STRING_MALLOC, cached_pwd.pw_shell, Qfile_name);
+
+#define FROB(field, encoding)					\
+do								\
+{								\
+  if (cached_pwd.field)						\
+    cached_pwd.field = (CIbyte *)				\
+      EXTERNAL_TO_ITEXT_MALLOC (cached_pwd.field, encoding);	\
+} while (0)
+
+  FROB (pw_name, Quser_name_encoding);
+  FROB (pw_passwd, Quser_name_encoding);
+  FROB (pw_gecos, Quser_name_encoding);
+  FROB (pw_dir, Qfile_name);
+  FROB (pw_shell, Qfile_name);
+#undef FROB
   return &cached_pwd;
 }
 
@@ -3171,8 +3167,7 @@ qxe_getpwnam (const Ibyte *name)
   /* Synthetic versions are defined in nt.c and already do conversion. */
   return getpwnam (name);
 #else
-  Extbyte *nameext;
-  C_STRING_TO_EXTERNAL (name, nameext, Quser_name_encoding);
+  Extbyte *nameext = ITEXT_TO_EXTERNAL (name, Quser_name_encoding);
 
   return copy_in_passwd (getpwnam (nameext));
 #endif /* WIN32_NATIVE */
@@ -3212,7 +3207,7 @@ qxe_ctime (const time_t *t)
     return (Ibyte *) "Sun Jan 01 00:00:00 1970";
   if (ctime_static)
     xfree (ctime_static);
-  EXTERNAL_TO_C_STRING_MALLOC (str, ctime_static, Qtime_function_encoding);
+  ctime_static = EXTERNAL_TO_ITEXT_MALLOC (str, Qtime_function_encoding);
   return ctime_static;
 }
 
@@ -3387,14 +3382,14 @@ set_file_times (
   Extbyte *filename;
   utb.actime = EMACS_SECS (atime);
   utb.modtime = EMACS_SECS (mtime);
-  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (path, filename);
   return utime (filename, &utb);
 #elif defined (HAVE_UTIMES)
   struct timeval tv[2];
   Extbyte *filename;
   tv[0] = atime;
   tv[1] = mtime;
-  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (path, filename);
   return utimes (filename, tv);
 #else
   /* No file times setting function available. */

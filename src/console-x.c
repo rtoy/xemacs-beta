@@ -347,7 +347,7 @@ x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
       return Qnil;
     }
 
-  LISP_STRING_TO_EXTERNAL (key_name, keysym_ext, Qctext);
+  keysym_ext = LISP_STRING_TO_EXTERNAL (key_name, Qctext);
   xkeysym = XStringToKeysym(keysym_ext);
   if (NoSymbol == xkeysym) 
     {

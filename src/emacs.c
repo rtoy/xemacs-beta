@@ -747,8 +747,8 @@ make_argc_argv (Lisp_Object argv_list, int *argc, Wexttext ***argv)
     {
       CHECK_STRING (XCAR (next));
 
-      LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (next), (*argv) [i],
-				      Qcommand_argument_encoding);
+      (*argv)[i] = LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (next),
+						   Qcommand_argument_encoding);
     }
   (*argv) [n] = 0;
   *argc = i;
@@ -3010,15 +3010,15 @@ arguments: (&rest ARGS)
   run_temacs_argc = nargs + 1;
   run_temacs_argv = xnew_array (Wexttext *, nargs + 2);
 
-  LISP_STRING_TO_EXTERNAL_MALLOC (Fcar (Vcommand_line_args),
-				  run_temacs_argv[0],
-				  Qcommand_argument_encoding);
+  run_temacs_argv[0] =
+    LISP_STRING_TO_EXTERNAL_MALLOC (Fcar (Vcommand_line_args),
+				    Qcommand_argument_encoding);
   for (i = 0; i < nargs; i++)
     {
       CHECK_STRING (args[i]);
 
-      LISP_STRING_TO_EXTERNAL_MALLOC (args[i], run_temacs_argv[i + 1],
-				      Qcommand_argument_encoding);
+      run_temacs_argv[i + 1] =
+	LISP_STRING_TO_EXTERNAL_MALLOC (args[i], Qcommand_argument_encoding);
     }
   run_temacs_argv[nargs + 1] = 0;
 
@@ -3295,10 +3295,10 @@ and announce itself normally when it is run.
     Extbyte *filename_ext;
     Extbyte *symfile_ext;
 
-    LISP_STRING_TO_EXTERNAL (filename, filename_ext, Qfile_name);
+    LISP_PATHNAME_CONVERT_OUT (filename, filename_ext);
 
     if (STRINGP (symfile))
-      LISP_STRING_TO_EXTERNAL (symfile, symfile_ext, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (symfile, symfile_ext);
     else
       symfile_ext = 0;
 

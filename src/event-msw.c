@@ -1811,7 +1811,6 @@ Allocate an advise item, and return its token.
       (name))
 {
   Lisp_Object token;
-  Extbyte *str;
   HSZ hsz;
   struct gcpro gcpro1, gcpro2;
 
@@ -1829,9 +1828,8 @@ Allocate an advise item, and return its token.
   token = Qnil;
   GCPRO2 (name, token);
   token = Fmake_symbol (name);
-  TO_EXTERNAL_FORMAT (LISP_STRING, name, C_STRING_ALLOCA, str,
-		      Qmswindows_tstr);
-  hsz = qxeDdeCreateStringHandle (mswindows_dde_mlid, str,
+  hsz = qxeDdeCreateStringHandle (mswindows_dde_mlid,
+				  LISP_STRING_TO_TSTR (name),
 				  XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
 
   Fput(token, QHSZ, make_float ((int)hsz));
@@ -2020,10 +2018,10 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	UNGCPRO;
 
 	bytes = (uFmt == CF_TEXT ? 1 : 2) * (XSTRING_LENGTH (res) + 1);
-	TO_EXTERNAL_FORMAT (LISP_STRING, res,
-			    C_STRING_ALLOCA, result,
-			    uFmt == CF_TEXT ? Qmswindows_multibyte
-			    : Qmswindows_unicode);
+	result =
+	  LISP_STRING_TO_EXTERNAL (res,
+				   uFmt == CF_TEXT ? Qmswindows_multibyte
+				   : Qmswindows_unicode);
 
 	/* If we cannot create the data handle, this passes the null
 	 * return back to the client, which signals an error as we wish.
@@ -2045,9 +2043,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	  /* Grab a pointer to the raw data supplied */
 	  extcmd = DdeAccessData (hdata, &len);
 
-	  TO_INTERNAL_FORMAT (DATA, (extcmd, len),
-			      LISP_STRING, tmp,
-			      Qmswindows_tstr);
+	  tmp = make_extstring ((Extbyte *) extcmd, len, Qmswindows_tstr);
 
 	  /* Release and free the data handle */
 	  DdeUnaccessData (hdata);
@@ -2078,9 +2074,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	  DdeGetData (hdata, (LPBYTE) extcmd, len, 0);
 	  DdeFreeDataHandle (hdata);
 
-	  TO_INTERNAL_FORMAT (DATA, (extcmd, len),
-			      C_STRING_ALLOCA, cmd,
-			      Qmswindows_tstr);
+	  cmd = SIZED_EXTERNAL_TO_ITEXT (extcmd, len, Qmswindows_tstr);
 
 	  /* Check syntax & that it's an [Open("foo")] command, which we
 	   * treat like a file drop */
@@ -2734,9 +2728,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		if (XEUNICODE_P)
 		  {
 		    length = unicode_char_to_text (tranmsg.wParam, extchar);
-		    TO_INTERNAL_FORMAT (DATA, (extchar, length),
-					C_STRING_ALLOCA, (intchar),
-					Qmswindows_unicode);
+		    intchar = SIZED_EXTERNAL_TO_ITEXT (extchar, length,
+						       Qmswindows_unicode);
 		    ch = itext_ichar (intchar);
 		  }
 		else
@@ -2850,10 +2843,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 			      {
 				Ibyte *intchar;
 
-				TO_INTERNAL_FORMAT
-				  (DATA,
-				   (received_keys + (tounret - 1) * 2, 2),
-				   C_STRING_ALLOCA, intchar,
+				intchar =
+				  SIZED_EXTERNAL_TO_ITEXT
+				  (received_keys + (tounret - 1) * 2, 2,
 				   Qmswindows_unicode);
 				XSET_EVENT_KEY_ALT_KEYCHARS
 				  (lastev, i, itext_ichar (intchar));
@@ -3199,7 +3191,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    tttextw->hinst = NULL;
 
 	    if (!NILP (btext))
-	      LISP_STRING_TO_TSTR (btext, btextext);
+	      btextext = LISP_STRING_TO_TSTR (btext);
 
 	    if (btextext)
 	      {

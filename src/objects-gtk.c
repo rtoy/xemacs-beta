@@ -208,7 +208,7 @@ gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
   GdkColor c;
   const char *extname;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, color, C_STRING_ALLOCA, extname, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qctext);
 
   if (gdk_color_parse (extname, &c) != TRUE)
       return(0);
@@ -237,7 +237,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   XFontStruct *xf;
   const char *extname;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, f->name, C_STRING_ALLOCA, extname, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
   gf = gdk_font_load (extname);
 
@@ -383,7 +383,7 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 {
   const char *patternext;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, pattern, C_STRING_ALLOCA, patternext, Qbinary);
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qbinary);
 
   return (__gtk_font_list_internal (patternext));
 }

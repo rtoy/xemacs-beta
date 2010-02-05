@@ -35,13 +35,12 @@ do {									 \
   Ibyte *errmess;							 \
   Ibyte *string_int;							 \
   GET_STRERROR (errmess, errno);					 \
-  EXTERNAL_TO_C_STRING (string, string_int, Qerror_message_encoding);	 \
+  string_int = EXTERNAL_TO_ITEXT (string, Qerror_message_encoding);	 \
   warn_when_safe (Qsound, Qerror, "audio: %s, %s", string_int, errmess); \
 } while (0)
 # define sound_warn(string)					\
 do {								\
   Ibyte *string_int;						\
-  EXTERNAL_TO_C_STRING (GETTEXT (string), string_int,		\
-                        Qerror_message_encoding);		\
+  string_int = EXTERNAL_TO_ITEXT (GETTEXT (string), Qerror_message_encoding);		\
   warn_when_safe (Qsound, Qwarning, "audio: %s", string_int);	\
 } while (0)

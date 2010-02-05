@@ -5181,10 +5181,6 @@ void force_auto_save_soon (void);
 DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
 						const Ascbyte *reason,
 						Lisp_Object data));
-DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
-					       Lisp_Object oserrmess,
-					       const Ascbyte *reason,
-					       Lisp_Object data));
 DECLARE_DOESNT_RETURN (report_file_error (const Ascbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
