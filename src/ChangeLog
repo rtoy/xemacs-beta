@@ -1,3 +1,621 @@
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c:
+	* chartab.c (char_table_hash):
+	* search.c (boyer_moore):
+	Fix compile errors.
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (common_init_alloc_early):
+	Fix compile error.
+	
+	* buffer.h:
+	Fix unused-var warning.
+	
+	* regex.c:
+	* regex.c (compile_extended_range):
+	Delete stray code that (thankfully) triggered an use-of-uninit-var
+	warning.
+
+	* unicode.c:
+	* unicode.c (get_unicode_conversion_1):
+	* unicode.c (complex_vars_of_unicode):
+	Fix compile error and unused-argument warning.
+
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* unicode.h:
+	* unicode.h (struct precedence_array):
+	Forgot to add this file.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in: New target `make-case-conv' to generate
+	mule/uni-case-conv.el.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (HANDLE_CHARSET_CODEPOINT_ERROR):
+	* mule-coding.c (decode_big5_char):
+	* text.c (old_mule_unicode_to_ichar):
+	Clean up, add HANDLE_UNICODE_ERROR, HANDLE_ICHAR_ERROR.
+	Use them.
+	
+	* emacs.c (main_1):
+	Comment fix.
+	
+	* mule-coding.c:
+	* mule-coding.c (Fdecode_big5_char):
+	Clean up doc string.
+	
+	* redisplay-xlike-inc.c:
+	Remove accidental merge marker.
+	
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add a FAIL argument and use it.
+
+	* lisp.h:
+	* mule-coding.c (Fdecode_big5_char):
+	* text.c (decode_handle_error):
+	* text.c (Fmake_char):
+	* text.c (Fchar_to_unicode):
+	* text.c (Funicode_to_char):
+	Add ALLOW_PRIVATE arg to decode_handle_error to control
+	whether to allow `use-private'.
+	
+	* text.c (Funicode_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add HANDLE-ERROR argument and document.
+	
+	* unicode.c:
+	Delete non-Mule stubs of precedence-array functions.
+	
+	* unicode.c (print_precedence_array):
+	New fun for displaying the contents of a precedence-array.
+	
+	* unicode.c (filter_precedence_array):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	Resurrect filter_precedence_array.
+	Use in Fnormalized_unicode_precedence_list.
+	
+	* unicode.c (free_precedence_array):
+	Comment fix.
+	
+	* lisp.h:
+	* mule-coding.c (init_mule_coding):
+	* unicode.c (simple_convert_predence_list_to_array):
+	Rename internal_convert_precedence_list_to_array() to
+	simple_convert_predence_list_to_array().
+
+	* lisp.h:
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (get_external_unicode_codepoint):
+	* text.c (Funicode_to_char):
+	* text.c (Funicode_to_charset_codepoint):
+	* unicode.c (external_convert_precedence_list_to_array):
+	* unicode.c (decode_buffer_or_precedence_list):
+	Don't allow external_convert_precedence_list_to_array() to take
+	a buffer, and don't directly retrieve a precedence list from a
+	buffer.  Instead, use the buffer_*() charset-codepoint functions
+	so that both the buffer-local and global precedence lists are
+	consulted; use new fn decode_buffer_or_precedence_list() in
+	doing this.
+	
+	* unicode.c (RUP_MAKE_FULL_P):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	Don't automatically make precedence lists full in
+	recalculate_unicode_precedence_1(), because then buffer-local
+	cached versions have everything in them.  Instead, add a flag
+	RUP_MAKE_FULL_P and use it only when normalizing the default
+	precedence list.
+	
+	* unicode.c (precedence_array_to_list):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	New fn precedence_array_to_list.  Use in
+	Fnormalized_unicode_precedence_list.  Clean up
+	Fnormalized_unicode_precedence_list to handle the
+	BUFFER-OR-PRECEDENCE-ARRAY argument properly.
+	
+	* unicode.c (complex_vars_of_unicode):
+	Set initial values of the default precedence arrays for use
+	in unicode.el before the proper value gets set.
+	Bracket precedence-array creation in #ifdef MULE.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* lrecord.h (enum lrecord_type):
+	Sort the order of types.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	Add all of the lrecord types to `pobj' and sort according to the
+	order in lrecord.h.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	NOT WORKING, NEED TO CHECK IN TO SYNC WITH MAINLINE.
+	
+	* buffer.h:
+	Create buffer_*() versions of charset-codepoint functions that
+	take a precedence array.  Make them take a buffer instead and call
+	the wrapped functions first on the buffer-local precedence array
+	then the default one.
+
+	* buffer.c (finish_init_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	* lisp.h:
+	* unicode.c (free_precedence_array):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	* unicode.c (Fset_buffer_unicode_precedence_list,
+	             Fset_default_unicode_precedence_list,
+		     Fbuffer_unicode_precedence_list,
+		     Fdefault_unicode_precedence_list):
+	* unicode.c (syms_of_unicode):
+	Remove buffer-local variable unicode-precedence-list.
+	Instead have subrs `set-default-unicode-precedence-list',
+	`set-buffer-unicode-precedence-list', etc.  Also resurrect
+	Vdefault_unicode_precedence_array and
+	Vdefault_unicode_precedence_list instead of using the
+	buffer-defaults structure.
+	
+	Keep the cached buffer-local Unicode-precedence array but now it
+	caches only the values specified in the buffer.  At buffer
+	creation just allocate a blank precedence array for this field.
+
+	Don't cache a combined buffer-local/global Unicode-precedence
+	array because we don't use it anymore; instead, we have
+	buffer_*() charset-codepoint functions (described above),
+	which implement what this combined array was doing.
+	
+	* buffer.h:
+	* charset.h:
+	Rename ichar_charset_obsolete_me_baby_please() to
+	buffer_ichar_charset_obsolete_me_baby(), add a `buffer' argument
+	and move to buffer.h from charset.h.
+	
+	* charset.h (ichar_to_charset_codepoint, unicode_to_charset_codepoint):
+	* charset.h (filtered_*()):
+	* charset.h (HANDLE_CHARSET_CODEPOINT_ERROR):
+	* mule-coding.c (Fencode_shift_jis_char):
+	* mule-coding.c (Fencode_big5_char):
+	* text.h:
+	* text.c (old_mule_unicode_to_ichar):
+	Add a `fail' argument to certain functions that took a precedence
+	list but had no `fail' argument.  Use HANDLE_CHARSET_CODEPOINT_ERROR()
+	to abstract the handle-failure behavior.
+
+	Add various filtered_*() versions of all the functions that take
+	a precedence list, allowing a predicate to be specified to control
+	which charsets are processed.
+
+	* charset.h (struct Lisp_Charset):
+	* text.c (old_mule_unicode_to_ichar):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	* unicode.c (add_charset_to_precedence_array):
+	* unicode.c (unicode_convert):
+	* unicode.h:
+	Fix a longstanding problem: Don't do shortcuts involving ASCII
+	if there is a charset higher in the precedence list that specifies
+	Unicode translations involving ASCII characters.  Remove shortcuts
+	involving Control-1 entirely.  Add flags to `struct Lisp_Charset'
+	and `struct precedence_array' to facilitate this change.
+	Track them in add_charset_to_precedence_array().
+	Rename non_ascii_itext_to_charset_codepoint_raw() to just
+	itext_to_charset_codepoint_raw() since it now has to handle
+	ASCII as result of these changes.
+	
+	* chartab.c (Fmake_char_table): Comment fix, default value for
+	syntax tables changed in 21.5 to `word' not `inherit'.
+
+	* chartab.c (word_boundary_p):
+	* chartab.h:
+	* glyphs-msw.c (charset_of_text):
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	* event-Xt.c:
+	* event-xlike-inc.c (USE_UNICODE_MAP):
+	* event-xlike-inc.c (endif):
+	* glyphs-msw.c:
+	* glyphs-msw.c (mswindows_widget_hfont):
+	* lisp.h:
+	* lread.c (read_unicode_escape):
+	* mule-charset.c (Fcharsets_in_region):
+	* mule-coding.c (add_unicode_to_dynarr):
+	* mule-wnnfns.c (m2w):
+	* redisplay-gtk.c (gtk_output_display_block):
+	* redisplay-msw.c:
+	* redisplay-msw.c (separate_textual_runs):
+	* redisplay-msw.c (mswindows_output_cursor):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_output_display_block):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-x.c:
+	* redisplay-x.c (x_text_width):
+	* redisplay-x.c (x_output_display_block):
+	* redisplay-x.c (x_output_string):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs):
+	* redisplay.c (add_ichar_rune_1):
+	* syntax.c (Fset_syntax_table):
+	* syntax.c (WORD_BOUNDARY_P):
+	* syntax.c (scan_words):
+	* unicode.c (decode_unicode_char):
+	Add a `buffer' argument to various functions that used to call
+	charset-codepoint functions that took a precedence array and
+	passed in get_unicode_precedence().
+
+	Don't call get_unicode_precedence() when calling charset-
+	codepoint functions taking a precedence array, instead use the
+	buffer_*() version of charset-codepoint functions and pass in
+	`current_buffer' (@@#### FIXME) or a buffer derived from
+	an argument or elsewhere.  In fact, delete get_unicode_precedence().
+
+	Remove `precedence-list' argument from `charsets-in-region',
+	use precedence-list from buffer argument.
+	
+	* mule-ccl.c (charset_7bit_p):
+	* mule-ccl.c (ccl_driver):
+	* mule-coding.c (ccl_convert):
+	* mule-coding.c (fixed_width_convert):
+	* mule-ccl.h:
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Add a buffer argument to ccl_driver() and pass it in when
+	possible, otherwise current_buffer. (See previous entry.)
+
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	If we can't convert to a charset codepoint, substitute the
+	CANT_DISPLAY_CHAR (~).  @@#### Big hack, needs to be fixed.
+
+	* depend: Regenerate.
+	
+	* faces.c (ensure_face_cachel_complete):
+	* faces.c (face_cachel_char_font_metric_info):
+	* lisp.h:
+	* text.c (find_charsets_in_ibyte_string):
+	* text.c (find_charsets_in_ichar_string):
+	* text.c (find_charsets_in_buffer):
+	Change `find_charsets_in*' to take a buffer argument instead of
+	a precedence array, and use the buffer_*()
+	version of charset-codepoint functions.
+	
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_HANDLE_ERROR):
+	* mule-ccl.c (Fccl_execute):
+	* mule-ccl.h:
+	When DEBUG_XEMACS, turn on CCL_DEBUG.
+
+	Clean up error-handling code when unable to convert or a
+	bad charset or charset ID passed in.  Create new CCL error
+	classes for these two types of errors.
+
+	Use a filtering predicate to ensure that we only process
+	"7-bit" charsets when we are forced to shove charset codepoints
+	into 14 bits. (@@#### Nasty hack.  Don't maul the codepoints
+	like this.  At least use 16 bits.)
+	
+	
+	* mule-coding.c (reset_iso2022_unicode_precedence):
+	* mule-coding.c (iso2022_encode):
+	Don't create a full precedence array listing all charsets.
+	Instead list only the ones derivable from the coding system
+	(@@#### also currently ASCII and Control-1, should be removed),
+	and implement the preference for ISO2022 charsets by using
+	a filter predicate when converting to a charset codepoint.	
+
+	* text.c (old_mule_non_ascii_itext_to_charset_codepoint_raw):
+	Cosmetic change.
+
+	* text.c (Funicode_to_char):
+	Clean up doc string.
+
+	* lisp.h:
+	* text.c:
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (get_external_unicode_codepoint):
+	* text.c (Funicode_to_char):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	* unicode.c (external_convert_precedence_list_to_array):
+	Modify various subrs that took a precedence-list to have an
+	argument that can either be a buffer (retrieve the buffer's
+	precedence list) or an explicit precedence list.  Modify
+	external_convert_precedence_list_to_array() to optionally
+	allow buffers in place of predence lists.
+
+	* unicode.c: Some rearrangement of code in header section.
+
+	* text.c (old_mule_unicode_to_ichar):
+	* unicode.c (get_unicode_conversion_1):
+	* unicode.c (get_unicode_conversion):
+	* unicode.c (unicode_to_charset_codepoint_raw):
+	Abstract out the section to retrieve a mapping for a single
+	charset from unicode_to_charset_codepoint_raw() (renamed from
+	non_ascii_unicode_to_charset_codepoint).  Function
+	get_unicode_conversion(), to do a single charset mapping,
+	not currently used but was at one point and might be in the future.
+	
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* buffer.c (finish_init_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	Create a new buffer-local variable `unicode-precedence-list'.
+	Create a couple of extra buffer slots for caching an internal
+	normalized version of the list.
+	
+	* emacs.c (main_1):
+	Comment about new dependencies on complex_vars_of_buffer().
+	
+	* lisp.h:
+	Declare some functions in unicode.c.
+	
+	* mule-charset.c:
+	* mule-charset.c (remove_charset_from_hash_tables):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fmake_charset):
+	Put an unwind-protect around the code that handles initializing
+	tags and unicode maps -- in case of error, remove the charset
+	from the hash tables that record it.
+	
+	* mule-charset.c (Fset_charset_tags):
+	* mule-charset.c (syms_of_mule_charset):
+	New function `set-charset-tags'.
+	
+	* unicode.c:
+	* unicode.c (allocate_jit_ucs_charset):
+	Add tags `jit' and `internal' to JIT charsets.
+	
+	* unicode.c (free_precedence_array):
+	Check that any global or buffer-local precedence array isn't
+	being freed.
+	
+	* unicode.c (cplta_mapper):
+	* unicode.c (convert_precedence_list_to_array_1):
+	* unicode.c (convert_precedence_list_to_array):
+	* unicode.c (internal_convert_precedence_list_to_array):
+	* unicode.c (external_convert_precedence_list_to_array):
+	Clean up and use bit flags rather than extra parameters for
+	holding flags.
+	
+	* unicode.c (RUP_NUKE_BUFFER_SLOTS):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (charset_created_recalculate_unicode_precedence):
+	* unicode.c (disksave_clear_unicode_precedence):
+	* unicode.c (unicode_precedence_list_changed):
+	When recalculating the precedence arrays, compute both the
+	global and buffer-local values.  Create another hash table
+	to cache mappings from conses of buffer-local and default
+	precedence arrays to the precedence array representing the
+	combined value.  Create functions init_default_unicode_precedence()
+	and init_buffer_unicode_precedence() to initialize default and
+	buffer-local values of the caches when a new buffer is created.
+	
+	* unicode.c (syms_of_unicode):
+	* unicode.c (init_unicode):
+	Delete the various old functions for manipulating Unicode
+	precedence list.  Access is now through the variable
+	`unicode-precedence-list' and a single function
+	`normalized-unicode-precedence-list'.  Delete the old hash
+	table that holds the global precedence array.
+
+	* lisp.h:
+	* unicode.c (filter_precedence_array):
+	No longer used, so #if-0 out.
+	
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* tests.c (Ftest_data_format_conversion):
+	Put in the right internal-format data under Unicode-internal;
+	at least it doesn't crash any more.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* search.c (boyer_moore):
+	Initialize translate_prev_len in the right place in the inner
+	loop; fixes `make check' failures.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (disksave_object_finalization):
+	* lisp.h:
+	* unicode.c (disksave_clear_unicode_precedence):
+	Clear Unicode precedence tables before dumping so we don't have
+	precedence-array objects trying to get dumped.
+	
+	* device.c:
+	* device.c (call_critical_lisp_code):
+	* device.h:
+	* lisp.h:
+	Allow call_critical_lisp_code to be called by callers who don't
+	have any devices to lock.
+	
+	* emacs.c (main_1):
+	* intl.c (init_intl):
+	* intl.c (syms_of_intl):
+	* symsinit.h:
+	* unicode.c (init_unicode):
+	New function init_unicode() to recreate the Unicode precedence
+	tables after dumping.  Call it from main_1().  Declare it in
+	symsinit.h.  Use call_critical_lisp_code in init_intl() instead
+	of home-grown code to do the same thing.
+	
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Funicode_to_char):
+	* unicode.c:
+	* unicode.c (free_precedence_array):
+	* unicode.c (convert_precedence_list_to_array_2):
+	* unicode.c (cplta_mapper):
+	* unicode.c (convert_precedence_list_to_array_1):
+	* unicode.c (internal_convert_precedence_list_to_array):
+	* unicode.c (external_convert_precedence_list_to_array):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	Redo somewhat the code handling precedence-array objects.
+	For simplicity, don't overwrite an existing precedence-array
+	object, but create a new one when we need to recalculate the
+	precedence arrays.
+
+	Fix a genuine bug: recalculating the precedence arrays, we
+	didn't clear the precedence-array hash tables.  Clean up the
+	code so that this always happens.
+
+	When calling Lisp, if we're doing it from init_unicode(),
+	wrap in call_critical_lisp_code().  Add a flag to various
+	precedence-array functions to indicate whether we need to
+	be wrapping in this way.
+
+	* mule-charset.c (vars_of_mule_charset):
+	* mule-coding.c:
+	* mule-coding.c (struct multibyte_coding_system):
+	* mule-coding.c (struct multibyte_coding_stream):
+	* mule-coding.c (multibyte_init_coding_stream):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (multibyte_init):
+	* mule-coding.c (multibyte_mark):
+	* mule-coding.c (multibyte_finalize):
+	* mule-coding.c (multibyte_putprop):
+	* mule-coding.c (multibyte_getprop):
+	* mule-coding.c (multibyte_print):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	Put back the old way of storing a Lisp-object dynarr of
+	charsets rather than a precedence array in multibyte coding
+	systems.  Instead, create the precedence array in the
+	type-specific coding-stream object -- create two new methods
+	multibyte_init_coding_stream() and multibyte_mark_coding_stream()
+	for this purpose.  This way, no precedence arrays will be
+	hanging around at dump time.
+
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule-charset.c:
+	* mule-charset.c (Fcharset_short_name):
+	* mule-charset.c (Fcharset_long_name):
+	* mule-charset.c (Fcharset_description):
+	* text.c:
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Rewrite many docstrings for additional clarity.  `make-char'
+	got an especially thorough rewrite.
+
+	* text.c (syms_of_text):
+	Add comments about where some symbols are to be found, and
+	a #### comment about Qsubstitute_negated.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule-charset.c (make_charset):
+	Initialize Unicode-map to Qnil, for charsets such as `ascii' without
+	an explicit map.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+
+	Fundamental changes:
+
+	1) We no longer create the "internal" charsets.  Instead that
+	happens in Lisp, and at run time we fetch pointers to the charsets
+	using their names.
+
+	2) When allocating ID's for charsets, we first allocate official
+	ID's, then private ID's, then non-encodable ID's. (Under
+	Unicode-internal, there is only one kind of ID.) Formerly under
+	old-Mule, official ID's were reserved for charsets created in C,
+	and Lisp-created charsets always went into private ID space even
+	if there was room in the official ID space.
+	
+	* charset.h:
+	* charset.h (struct charset_lookup):
+	* mule-charset.c:
+
+	Rename next_allocated_private_* to next_allocated_*.
+	
+	* emacs.c (main_1):
+	* symsinit.h:
+	* mule-charset.c (init_mule_charset):
+	* mule-coding.c (complex_vars_of_mule_coding):
+	* mule-coding.c (init_mule_coding):
+	New init_mule_* functions.  Define them in mule-*.c, declare them
+	in symsinit.h, and call them in emacs.c (but only when we have
+	previously dumped).
+
+	The charsets are no longer created during early initialization but
+	during dumping, so at run-time, init_mule_charset() fetches the
+	created charsets and stores them into variables.
+
+	Some code to set precedence tables for Big5 and Shift-JIS depends
+	on charsets being created, so move it out of
+	complex_vars_of_mule_coding() (run at init time) to
+	init_mule_coding() (run at run time, after init_mule_charset()).
+	
+	* lisp.h:
+	Add external declarations for all charset symbols, so code can
+	fetch charsets through Fget_charset() if necessary.
+	
+	* mule-charset.c (get_unallocated_encodable_charset_id):
+	Rename next_charset_id -> next_non_encodable_charset_id.
+	Fix up get_unallocated_encodable_charset_id() so that under
+	old-Mule it allocates first official ID's, then private ID's.
+	Previously it only allocated private ID's.
+	
+	* mule-charset.c (make_charset):
+	Clean up code to allocate charset ID's.
+	
+	* mule-charset.c (syms_of_mule_charset):
+	Set next_allocated_*_id to point to the beginning of allocatable
+	official ID space rather than private ID space.
+	
+	* mule-charset.c (vars_of_mule_charset):
+	Don't create charsets here, except for ascii, control-1,
+	iso-8859-1 and composite.  For remaining charsets, set their value
+	to nil.
+	
+	* mule-charset.c (complex_vars_of_mule_charset):
+	Bracket code to create special fixed-offset Unicode charsets
+	in FIXED_UNICODE_CHARSETS; not currently used.
+	
+	* mule-charset.c (enum fixed_unicode_charset_id):
+	Delete enum CHARSET_ID_OFFICIAL; we fetch these charsets through
+	symbols.  Take what's left of the enum and put it into `enum
+	fixed_unicode_charset_id', only used when FIXED_UNICODE_CHARSETS.
+
+	* text.h:
+	Move CHARSET_ID_COMPOSITE here from mule-charset.c, and create
+	constants for the boundaries of 1- and 2-dimensional official ID
+	space.
+	
+	* unicode.c:
+	When processing special `big5' flag, fetch the big5 charsets
+	through their names, since we may be called at dump time when the
+	charset variables have not been initialized. (Warning: This
+	depends on the initialization of the Unicode map specified at
+	creation time happening as the *very last* thing at creation, in
+	particular after the charset has been added to the
+	name->charset-object hash table.
+	
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* console-msw.c (write_string_to_mswindows_debugging_output):

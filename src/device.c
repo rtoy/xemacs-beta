@@ -1353,6 +1353,12 @@ unlock_device (Lisp_Object d)
   return Qnil;
 }
 
+/* Call lisp function FUNCTION, with argument OBJECT (if OBJECT is nil,
+   call FUNCTION without arguments).  If D is non-NULL, lock the device
+   in the process.  Inhibit garbage collection and quitting during the
+   process, and arrange that all errors trigger `really-early-error-handler'
+   and lead to an abort. */
+
 Lisp_Object
 call_critical_lisp_code (struct device *d, Lisp_Object function,
 			 Lisp_Object object)
@@ -1364,7 +1370,9 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
   Lisp_Object retval;
 
   specbind (Qinhibit_quit, Qt);
-  record_unwind_protect (unlock_device, wrap_device (d));
+  if (d)
+    {
+      record_unwind_protect (unlock_device, wrap_device (d));
 
   /* [[There's no real reason to bother doing unwind-protects, because if
      initialize-*-faces signals an error, emacs is going to crash
@@ -1373,7 +1381,8 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
      with non-initial devices, we should signal an error but NOT kill
      ourselves! --ben
      */
-  LOCK_DEVICE (d);
+      LOCK_DEVICE (d);
+    }
 
   args[0] = Qreally_early_error_handler;
   args[1] = function;
