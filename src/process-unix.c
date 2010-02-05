@@ -222,8 +222,8 @@ allocate_pty (void)
      grovelling code in allocate_pty_the_old_fashioned_way(). */
   int master_fd = -1;
   const Extbyte *slave_name = NULL;
-  const CIbyte *clone = NULL;
-  static const CIbyte * const clones[] =
+  const Ascbyte *clone = NULL;
+  static const Ascbyte * const clones[] =
     /* Different pty master clone devices */
     {
       "/dev/ptmx",      /* Various systems */
@@ -307,7 +307,7 @@ allocate_pty (void)
   {
     Ibyte *slaveint;
 
-    EXTERNAL_TO_C_STRING (slave_name, slaveint, Qfile_name);
+    slaveint = EXTERNAL_TO_ITEXT (slave_name, Qfile_name);
     qxestrncpy (pty_name, slaveint, sizeof (pty_name));
   }
 
@@ -334,9 +334,7 @@ allocate_pty (void)
     struct group *tty_group = getgrnam ("tty");
     if (tty_group != NULL)
       {
-	Extbyte *ptyout;
-
-	C_STRING_TO_EXTERNAL (pty_name, ptyout, Qfile_name);
+	Extbyte *ptyout = ITEXT_TO_EXTERNAL (pty_name, Qfile_name);
 	chown (ptyout, (uid_t) -1, tty_group->gr_gid);
       }
   }
@@ -458,7 +456,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       h_errno = 0;
 #endif
 
-      LISP_STRING_TO_EXTERNAL (host, hostext, Qunix_host_name_encoding);
+      hostext = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
 
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();
@@ -482,7 +480,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       Extbyte *hostext;
 
       /* Attempt to interpret host as numeric inet address */
-      LISP_STRING_TO_EXTERNAL (host, hostext, Qunix_host_name_encoding);
+      hostext = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
       numeric_addr = inet_addr (hostext);
       if (NUMERIC_ADDR_ERROR)
 	{
@@ -524,10 +522,9 @@ set_socket_nonblocking_maybe (int fd,
 	  Extbyte *tailportext;
 
 	  CHECK_STRING (tail_port);
-	  TO_EXTERNAL_FORMAT (LISP_STRING, tail_port, C_STRING_ALLOCA,
-			      tailportext, Qunix_service_name_encoding);
-
-	  svc_info = getservbyname (tailportext, proto);
+	  svc_info = getservbyname (LISP_STRING_TO_EXTERNAL
+				    (tail_port, Qunix_service_name_encoding),
+				    proto);
 	  if ((svc_info != 0) && (svc_info->s_port == port))
 	    break;
 	  else
@@ -1816,16 +1813,14 @@ unix_canonicalize_host_name (Lisp_Object host)
 #endif
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
-  LISP_STRING_TO_EXTERNAL (host, ext_host, Qunix_host_name_encoding);
+  ext_host = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      CIbyte *gai_err;
-
-      EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
-			    Qstrerror_encoding);
-      maybe_signal_error (Qio_error, gai_err, host,
-			  Qprocess, ERROR_ME_DEBUG_WARN);
+      maybe_signal_error_2 (Qio_error, "Canonicalizing host name",
+			    build_extstring (gai_strerror (retval),
+					     Qstrerror_encoding),
+			    host, Qprocess, ERROR_ME_DEBUG_WARN);
       canonname = host;
     }
   else
@@ -1901,8 +1896,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else
       {
 	CHECK_STRING (service);
-	LISP_STRING_TO_EXTERNAL (service, portstring,
-				 Qunix_service_name_encoding);
+	portstring = LISP_STRING_TO_EXTERNAL (service,
+					      Qunix_service_name_encoding);
 	port = 0;
       }
 
@@ -1914,15 +1909,14 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else /* EQ (protocol, Qudp) */
       hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = 0;
-    LISP_STRING_TO_EXTERNAL (host, ext_host, Qunix_host_name_encoding);
+    ext_host = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	CIbyte *gai_err;
-
-	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
-			      Qstrerror_encoding);
-	signal_error (Qio_error, gai_err, list2 (host, service));
+	signal_error_2 (Qio_error, "Converting host name to IP address",
+			build_extstring (gai_strerror (retval),
+					 Qstrerror_encoding),
+			list2 (host, service));
       }
 
     /* address loop */
@@ -1941,8 +1935,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	Extbyte *servext;
 
 	CHECK_STRING (service);
-	LISP_STRING_TO_EXTERNAL (service, servext,
-				 Qunix_service_name_encoding);
+	servext = LISP_STRING_TO_EXTERNAL (service,
+					   Qunix_service_name_encoding);
 
 	if (EQ (protocol, Qtcp))
 	  svc_info = getservbyname (servext, "tcp");

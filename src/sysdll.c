@@ -77,7 +77,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) dlopen (soname, RTLD_NOW);
 }
@@ -93,7 +93,7 @@ dll_function (dll_handle h, const Ibyte *n)
 {
   Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_function_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
   return (dll_func) dlsym ((void *) h, next);
 }
 
@@ -102,7 +102,7 @@ dll_variable (dll_handle h, const Ibyte *n)
 {
   Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_variable_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
   return (dll_var)dlsym ((void *)h, next);
 }
 
@@ -134,7 +134,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) shl_load (soname, BIND_DEFERRED, 0L);
 }
@@ -205,14 +205,14 @@ dll_close (dll_handle h)
 dll_func
 dll_function (dll_handle h, const Ibyte *n)
 {
-  Extbyte *next = NEW_C_STRING_TO_EXTERNAL (n, Qmswindows_multibyte);
+  Extbyte *next = ITEXT_TO_EXTERNAL (n, Qmswindows_multibyte);
   return (dll_func) GetProcAddress ((HINSTANCE) h, next);
 }
 
 dll_func
 dll_variable (dll_handle h, const Ibyte *n)
 {
-  Extbyte *next = NEW_C_STRING_TO_EXTERNAL (n, Qmswindows_multibyte);
+  Extbyte *next = ITEXT_TO_EXTERNAL (n, Qmswindows_multibyte);
   return (dll_func) GetProcAddress ((HINSTANCE) h, next);
 }
 
@@ -250,7 +250,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   ret = NSCreateObjectFileImageFromFile (soname, &file);
   if (ret != NSObjectFileImageSuccess)
@@ -373,7 +373,7 @@ search_linked_libs (const struct mach_header * mh, const Ibyte *symbol)
 			      dylib.name.offset + (Rawbyte *) lc))))
 	    {
 	      Extbyte *symext =
-		NEW_C_STRING_TO_EXTERNAL (symbol, Qdll_symbol_encoding);
+		ITEXT_TO_EXTERNAL (symbol, Qdll_symbol_encoding);
 	      if (NSIsSymbolNameDefinedInImage (wh, symext))
 		{
 		  nssym =
@@ -398,7 +398,7 @@ dll_function (dll_handle h, const Ibyte *n)
   Extbyte *next;
 
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_function_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
 
   /* NULL means the program image and shared libraries, not bundles. */
 
@@ -440,7 +440,7 @@ dll_variable (dll_handle h, const Ibyte *n)
   Extbyte *next;
 
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_variable_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
 
   sym = NSLookupSymbolInModule ((NSModule) h, n);
   if (sym == 0) return 0;
@@ -471,7 +471,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) lt_dlopen (soname);
 }
@@ -487,7 +487,7 @@ dll_function (dll_handle h, const Ibyte *n)
 {
   Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_function_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
   return (dll_func) lt_dlsym ((lt_dlhandle) h, next);
 }
 
@@ -496,7 +496,7 @@ dll_variable (dll_handle h, const Ibyte *n)
 {
   Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  C_STRING_TO_EXTERNAL (n, next, Qdll_variable_name_encoding);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
   return (dll_var) lt_dlsym ((lt_dlhandle) h, next);
 }
 

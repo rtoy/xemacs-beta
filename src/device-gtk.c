@@ -250,7 +250,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
 	new_rc_files = xnew_array_and_zero (gchar *, num_files + 3);
 
-	LISP_STRING_TO_EXTERNAL (gtkrc, new_rc_files[0], Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (gtkrc, new_rc_files[0]);
 
 	for (ctr = 1; default_files[ctr-1]; ctr++)
 	  new_rc_files[ctr] = g_strdup (default_files[ctr-1]);

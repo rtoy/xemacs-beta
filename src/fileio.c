@@ -138,28 +138,11 @@ Lisp_Object QSin_expand_file_name;
 
 EXFUN (Frunning_temacs_p, 0);
 
-/* DATA can be anything acceptable to signal_error ().
- */
-
-DOESNT_RETURN
-report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const Ascbyte *reason, Lisp_Object data)
-{
-  struct gcpro gcpro1;
-  Lisp_Object errdata = build_error_data (NULL, data);
-
-  GCPRO1 (errdata);
-  errdata = Fcons (build_msg_string (reason),
-		   Fcons (oserrmess, errdata));
-  signal_error_1 (errtype, errdata);
-  /* UNGCPRO; not reached */
-}
-
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
 			 const Ascbyte *reason, Lisp_Object data)
 {
-  report_file_type_error (errtype, lisp_strerror (errno), reason, data);
+  signal_error_2 (errtype, reason, lisp_strerror (errno), data);
 }
 
 /* signal a file error when errno contains a meaningful value. */
@@ -2270,8 +2253,8 @@ Open a network connection to PATH using LOGIN as the login string.
   /* netunam, being a strange-o system call only used once, is not
      encapsulated. */
 
-  LISP_STRING_TO_EXTERNAL (path, path_ext, Qfile_name);
-  LISP_STRING_TO_EXTERNAL (login, login_ext, Quser_name_encoding);
+  LISP_PATHNAME_CONVERT_OUT (path, path_ext);
+  login_ext = LISP_STRING_TO_EXTERNAL (login, Quser_name_encoding);
 
   netresult = netunam (path_ext, login_ext);
 
@@ -4249,19 +4232,19 @@ Non-nil second argument means save only current buffer.
 		  const Extbyte *auto_save_file_name_ext;
 		  Bytecount auto_save_file_name_ext_len;
 
-		  TO_EXTERNAL_FORMAT (LISP_STRING, b->auto_save_file_name,
-				      ALLOCA, (auto_save_file_name_ext,
-					       auto_save_file_name_ext_len),
-				      Qescape_quoted);
+		  LISP_STRING_TO_SIZED_EXTERNAL (b->auto_save_file_name,
+						 auto_save_file_name_ext,
+						 auto_save_file_name_ext_len,
+						 Qescape_quoted);
 		  if (!NILP (b->filename))
 		    {
 		      const Extbyte *filename_ext;
 		      Bytecount filename_ext_len;
 
-		      TO_EXTERNAL_FORMAT (LISP_STRING, b->filename,
-					  ALLOCA, (filename_ext,
-						   filename_ext_len),
-					  Qescape_quoted);
+		      LISP_STRING_TO_SIZED_EXTERNAL (b->filename,
+						     filename_ext,
+						     filename_ext_len,
+						     Qescape_quoted);
 		      retry_write (listdesc, filename_ext, filename_ext_len);
 		    }
 		  retry_write (listdesc, "\n", 1);

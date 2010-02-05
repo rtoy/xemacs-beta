@@ -109,7 +109,7 @@ symbol_to_ms_cf (Lisp_Object value)
   if (STRINGP (value))
     {
       Extbyte *valext;
-      LISP_STRING_TO_TSTR (value, valext);
+      valext = LISP_STRING_TO_TSTR (value);
       return qxeRegisterClipboardFormat (valext);
     }
 
@@ -438,7 +438,7 @@ mswindows_register_selection_data_type (Lisp_Object type_name)
   Extbyte *nameext;
   UINT format;
 
-  LISP_STRING_TO_TSTR (type_name, nameext);
+  nameext = LISP_STRING_TO_TSTR (type_name);
   format = qxeRegisterClipboardFormat (nameext);
 
   if (format)

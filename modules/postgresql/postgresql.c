@@ -97,7 +97,6 @@ TODO (in rough order of priority):
 /* #define POSTGRES_LO_IMPORT_IS_VOID 1 */
 
 #include "lisp.h"
-#include "sysdep.h"
 
 #include "buffer.h"
 #include "postgresql.h"
@@ -105,6 +104,8 @@ TODO (in rough order of priority):
 #ifdef HAVE_SHLIB
 # include "emodules.h"
 #endif
+#include "sysdep.h"
+#include "sysfile.h"
 
 #ifdef RUNNING_XEMACS_21_1 /* handle interface changes */
 #define PG_OS_CODING FORMAT_FILENAME
@@ -123,13 +124,13 @@ do									\
 {									\
   if (!P || (PQstatus (P) != CONNECTION_OK))				\
     {									\
-      const Ibyte *err;							\
+      Lisp_Object err;							\
 									\
       if (P)								\
-	err = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING); \
+	err = build_extstring (PQerrorMessage (P), PG_OS_CODING);	\
       else								\
-	err = (const Ibyte *) "bad value";				\
-      signal_ferror (Qprocess_error, "dead connection [%s]", err);	\
+	err = build_msg_string ("Bad value");				\
+      signal_error (Qprocess_error, "Dead connection", err);		\
     }									\
 }									\
 while (0)
@@ -137,9 +138,17 @@ while (0)
 #define PUKE_IF_NULL(p)							\
 do									\
 {									\
-  if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound);	\
+  if (!p) signal_error (Qinvalid_argument, "Bad value", Qunbound);	\
 }									\
 while (0)
+
+#define SIGNAL_ERROR(p, reason)						\
+do									\
+{									\
+  signal_error (Qprocess_error, reason,					\
+		build_extstring (PQerrorMessage (p), PG_OS_CODING));	\
+}									\
+while (0)  
 
 static Lisp_Object VXPGHOST;
 static Lisp_Object VXPGUSER;
@@ -479,24 +488,29 @@ Return a connection default structure.
 PGconn *PQconnectdb(const char *conninfo)
 */
 
-/* ###autoload */
-DEFUN ("pq-connectdb", Fpq_connectdb, 1, 1, 0, /*
-Make a new connection to a PostgreSQL backend.
-*/
-	(conninfo))
+#ifdef HAVE_POSTGRESQLV7
+#define USED_IF_V7(x) x
+#else
+#define USED_IF_V7(x) UNUSED (x)
+#endif
+
+static Lisp_Object
+postgresql_connect (Lisp_Object conninfo, int USED_IF_V7 (async))
 {
   PGconn *P;
   Lisp_PGconn *lisp_pgconn;
-  const Ascbyte *error_message = "Out of Memory?";
-  Extbyte *c_conninfo;
 
   CHECK_STRING (conninfo);
 
-  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
-  P = PQconnectdb (c_conninfo);
+  P = (
+#ifdef HAVE_POSTGRESQLV7
+       async ? PQconnectStart : 
+#endif
+       PQconnectdb)
+    (LISP_STRING_TO_EXTERNAL (conninfo, PG_OS_CODING));
   if (P && (PQstatus (P) == CONNECTION_OK))
     {
-      (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
+      (void) PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
       lisp_pgconn = allocate_pgconn ();
       lisp_pgconn->pgconn = P;
       return make_pgconn (lisp_pgconn);
@@ -504,17 +518,27 @@ Make a new connection to a PostgreSQL backend.
   else
     {
       /* Connection failed.  Destroy the connection and signal an error. */
-      Ibyte *errmsg = (Ibyte *) error_message;
+
+      Lisp_Object errmsg;
       if (P)
 	{
-	  /* storage for the error message gets erased when call PQfinish */
-	  /* so we must temporarily stash it somewhere -- make alloca() copy */
-	  errmsg = NEW_EXTERNAL_TO_C_STRING (PQerrorMessage (P), PG_OS_CODING);
-	  IBYTE_STRING_TO_ALLOCA (errmsg, errmsg);
+	  errmsg = build_extstring (PQerrorMessage (P), PG_OS_CODING);
 	  PQfinish (P);
 	}
-      signal_ferror (Qprocess_error, "libpq: %s", errmsg);
+      else
+	errmsg = build_msg_string ("Out of Memory?");
+      signal_error (Qprocess_error, "Connecting to PostGreSQL backend",
+		    errmsg);
     }
+}
+
+/* ###autoload */
+DEFUN ("pq-connectdb", Fpq_connectdb, 1, 1, 0, /*
+Make a new connection to a PostgreSQL backend.
+*/
+	(conninfo))
+{
+  return postgresql_connect (conninfo, 0);
 }
 
 /* PQconnectStart Makes a new asynchronous connection to a backend.
@@ -528,37 +552,7 @@ Make a new asynchronous connection to a PostgreSQL backend.
 */
 	(conninfo))
 {
-  PGconn *P;
-  Lisp_PGconn *lisp_pgconn;
-  const Ascbyte *error_message = "Out of Memory?";
-  Extbyte *c_conninfo;
-
-  CHECK_STRING (conninfo);
-
-  LISP_STRING_TO_EXTERNAL (conninfo, c_conninfo, PG_OS_CODING);
-  P = PQconnectStart (c_conninfo);
-
-  if (P && (PQstatus (P) != CONNECTION_BAD))
-    {
-      (void)PQsetNoticeProcessor (P, xemacs_notice_processor, NULL);
-      lisp_pgconn = allocate_pgconn ();
-      lisp_pgconn->pgconn = P;
-
-      return make_pgconn (lisp_pgconn);
-    }
-  else
-    {
-      /* capture the error message before destroying the object */
-      char buf[BLCKSZ];
-      strcpy (buf, error_message);
-      if (P)
-	{
-	  strncpy (buf, PQerrorMessage (P), sizeof (buf));
-	  buf[sizeof (buf) - 1] = '\0';
-	  PQfinish (P);
-	}
-      signal_ferror (Qprocess_error, "libpq: %s", buf);
-    }
+  return postgresql_connect (conninfo, 1);
 }
 
 DEFUN ("pq-connect-poll", Fpq_connect_poll, 1, 1, 0, /*
@@ -579,10 +573,7 @@ Poll an asynchronous connection for completion
     {
     case PGRES_POLLING_FAILED:
       /* Something Bad has happened */
-      {
-	char *e = PQerrorMessage (P);
-	signal_ferror (Qprocess_error, "libpq: %s", e);
-      }
+      SIGNAL_ERROR (P, "Polling asynchronous connection");
     case PGRES_POLLING_OK:
       return Qpgres_polling_ok;
     case PGRES_POLLING_READING:
@@ -745,10 +736,7 @@ Reset connection to the backend asynchronously.
   CHECK_LIVE_CONNECTION (P);
 
   if (PQresetStart (P)) return Qt;
-  {
-    char *e = PQerrorMessage (P);
-    signal_ferror (Qprocess_error, "libpq: %s", e);
-  }
+  SIGNAL_ERROR (P, "Resetting connection");
 }
 
 DEFUN ("pq-reset-poll", Fpq_reset_poll, 1, 1, 0, /*
@@ -768,11 +756,7 @@ Poll an asynchronous reset for completion.
   switch (polling_status)
     {
     case PGRES_POLLING_FAILED:
-      /* Something Bad has happened */
-      {
-	char *e = PQerrorMessage (P);
-	signal_ferror (Qprocess_error, "libpq: %s", e);
-      }
+      SIGNAL_ERROR (P, "Polling asynchronous reset");
     case PGRES_POLLING_OK:
       return Qpgres_polling_ok;
     case PGRES_POLLING_READING:
@@ -984,7 +968,7 @@ Returns: t if successfully submitted
 		      C_STRING_ALLOCA, c_query, Qnative);
 
   if (PQsendQuery (P, c_query)) return Qt;
-  else signal_ferror (Qprocess_error, "async query: %s", PQerrorMessage (P));
+  else SIGNAL_ERROR (P, "Sending asynchronous query");
 }
 
 DEFUN ("pq-get-result", Fpq_get_result, 1, 1, 0, /*
@@ -1422,9 +1406,7 @@ DEFUN ("pq-lo-import", Fpq_lo_import, 2, 2, 0, /*
   P = (XPGCONN (conn))->pgconn;
   CHECK_LIVE_CONNECTION (P);
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, filename,
-		      C_STRING_ALLOCA, c_filename,
-		      Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (filename, c_filename);
 
   return make_int ((int)lo_import (P, c_filename));
 }
@@ -1443,8 +1425,7 @@ DEFUN ("pq-lo-export", Fpq_lo_export, 3, 3, 0, /*
   P = (XPGCONN (conn))->pgconn;
   CHECK_LIVE_CONNECTION (P);
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, filename,
-		      C_STRING_ALLOCA, c_filename, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (filename, c_filename);
 
   return make_int ((int)lo_export (P, XINT (oid), c_filename));
 }

@@ -122,7 +122,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	}
       else
 	{
-	  LISP_STRING_TO_EXTERNAL_MALLOC (desc, wv->name, Qlwlib_encoding);
+	  wv->name = LISP_STRING_TO_EXTERNAL_MALLOC (desc, Qlwlib_encoding);
 	  wv->enabled = 1;
 	  /* dverna Dec. 98: command_builder_operate_menu_accelerator will
 	     manipulate the accel as a Lisp_Object if the widget has a name.

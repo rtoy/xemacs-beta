@@ -2951,7 +2951,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
   Ibyte *resolved;
 
   LISP_PATHNAME_RESOLVE_LINKS (name, resolved);
-  C_STRING_TO_EXTERNAL (resolved, fname, Qfile_name);
+  fname = ITEXT_TO_EXTERNAL (resolved, Qfile_name);
   result = XpmReadFileToData (fname, &data);
 
   if (result == XpmSuccess)

@@ -446,7 +446,7 @@ msprinter_init_device_internal (struct device *d, Lisp_Object printer_name)
 
   DEVICE_MSPRINTER_NAME (d) = printer_name;
 
-  LISP_STRING_TO_TSTR (printer_name, printer_ext);
+  printer_ext = LISP_STRING_TO_TSTR (printer_name);
 
   if (!qxeOpenPrinter (printer_ext, &DEVICE_MSPRINTER_HPRINTER (d), NULL))
     {
@@ -498,7 +498,7 @@ msprinter_default_printer (void)
   if (qxeGetProfileString (XETEXT ("windows"), XETEXT ("device"), NULL, name,
 			   sizeof (name) / XETCHAR_SIZE) <= 0)
     return Qnil;
-  TSTR_TO_C_STRING (name, nameint);
+  nameint = TSTR_TO_ITEXT (name);
 
   if (nameint[0] == '\0')
     return Qnil;
@@ -545,7 +545,7 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   if (!msprinter_init_device_internal (d, DEVICE_CONNECTION (d)))
     signal_open_printer_error (d);
 
-  LISP_STRING_TO_TSTR (DEVICE_CONNECTION (d), printer_name);
+  printer_name = LISP_STRING_TO_TSTR (DEVICE_CONNECTION (d));
   /* Determine DEVMODE size and store the default DEVMODE */
   dm_size = qxeDocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER (d),
 				   printer_name, NULL, NULL, 0);
@@ -687,7 +687,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
   {
     Extbyte *nameext;
 
-    LISP_STRING_TO_TSTR (DEVICE_MSPRINTER_NAME (d), nameext);
+    nameext = LISP_STRING_TO_TSTR (DEVICE_MSPRINTER_NAME (d));
 
     /* Apply the new devmode to the printer */
     qxeDocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER (d),
@@ -1043,7 +1043,7 @@ Return value is the previously selected settings object.
       Extbyte *nameext;
       LONG dm_size;
 
-      LISP_STRING_TO_TSTR (DEVICE_MSPRINTER_NAME (d), nameext);
+      nameext = LISP_STRING_TO_TSTR (DEVICE_MSPRINTER_NAME (d));
       dm_size = qxeDocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER (d),
 				       nameext, NULL, NULL, 0);
       if (dm_size <= 0)

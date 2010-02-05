@@ -116,7 +116,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
       if (!NILP(reloc))
 	{
 	  the_nonreloc = XSTRING_DATA (reloc);
-	  LISP_STRING_TO_EXTERNAL (reloc, extname, Qx_font_name_encoding);
+	  extname = LISP_STRING_TO_EXTERNAL (reloc, Qx_font_name_encoding);
 	  rf = xft_open_font_by_name (dpy, extname);
 	  return 0;	 /* #### maybe this will compile and run ;) */
 			 /* Jesus, Stephen, what the fuck? */
@@ -425,7 +425,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
       DECLARE_EISTRING (eistr_longname);  /* omit FC_LANG and FC_CHARSET */
       DECLARE_EISTRING (eistr_fullname);  /* everything */
 
-      LISP_STRING_TO_EXTERNAL (font, patternext, Qfc_font_name_encoding);
+      patternext = LISP_STRING_TO_EXTERNAL (font, Qfc_font_name_encoding);
       fcc = FcConfigGetCurrent ();
 
       /* parse the name, do the substitutions, and match the font */

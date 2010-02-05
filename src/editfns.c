@@ -1068,14 +1068,14 @@ characters appearing in the day and month names may be incorrect.
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
       /* make a copy of the static buffer returned by localtime() */
-      struct tm tm = * localtime(&value); 
+      struct tm tm = *localtime (&value); 
       
       *buf = 1;
 
       /* !!#### this use of external here is not totally safe, and
 	 potentially data lossy. */
-      LISP_STRING_TO_EXTERNAL (format_string, formext,
-			       Qtime_function_encoding);
+      formext = LISP_STRING_TO_EXTERNAL (format_string,
+					 Qtime_function_encoding);
       if (emacs_strftime (buf, size, formext, &tm)
 	  || !*buf)
 	return build_extstring (buf, Qtime_function_encoding);
@@ -1188,7 +1188,7 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
       Extbyte **oldenv = environ, **newenv;
 
       if (STRINGP (zone))
-	LISP_STRING_TO_EXTERNAL (zone, tzstring, Qtime_zone_encoding);
+	tzstring = LISP_STRING_TO_EXTERNAL (zone, Qtime_zone_encoding);
       else if (INTP (zone))
 	{
 	  int abszone = abs (XINT (zone));
@@ -1434,7 +1434,7 @@ If TZ is nil, use implementation-defined default time zone information.
   else
     {
       CHECK_STRING (tz);
-      LISP_STRING_TO_EXTERNAL (tz, tzstring, Qtime_zone_encoding);
+      tzstring = LISP_STRING_TO_EXTERNAL (tz, Qtime_zone_encoding);
     }
 
   set_time_zone_rule (tzstring);
