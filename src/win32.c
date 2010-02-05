@@ -21,7 +21,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
+#include "casetab.h"
 #include "console-msw.h"
 #include "hash.h"
 #include "profile.h"

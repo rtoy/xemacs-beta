@@ -138,6 +138,9 @@
 ;; there. This may be a bug in our use of XIM, or it may a bug in XIM
 ;; itself.
 
+;; @@#### This should probably be integrated into general Usenet handling
+;; of composition sequences.
+
 ;;; Code:
 
 (macrolet

@@ -221,133 +221,146 @@ struct free_lcrecord_header
 };
 #endif /* not NEW_GC */
 
-/* DON'T FORGET to update .gdbinit.in if you change this list. */
+/* DON'T FORGET to update .gdbinit.in.in if you change this list. */
 enum lrecord_type
 {
-  /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
+  /* Symbol value magic types come first so that SYMBOL_VALUE_MAGIC_P
+     can be written as a single '<= lrecord_type_max_symbol_value_magic'.
+     In practice, if we moved them somewhere else but kept them together,
+     the single extra comparison would hardly make a difference.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward,      /*  0 */
-  lrecord_type_symbol_value_varalias,
-  lrecord_type_symbol_value_lisp_magic,
-  lrecord_type_symbol_value_buffer_local,
+  lrecord_type_symbol_value_forward = 0, /* struct symbol_value_forward */
+  lrecord_type_symbol_value_varalias,    /* struct symbol_value_varalias */
+  lrecord_type_symbol_value_lisp_magic,  /* struct symbol_value_lisp_magic */
+  lrecord_type_symbol_value_buffer_local,/* struct symbol_value_buffer_local */
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
-  lrecord_type_symbol,
-  lrecord_type_subr,
-  lrecord_type_multiple_value,
-  lrecord_type_cons,
-  lrecord_type_vector,
-  lrecord_type_string,
-#ifndef NEW_GC
-  lrecord_type_lcrecord_list,
-#endif /* not NEW_GC */
-  lrecord_type_compiled_function,
-  lrecord_type_weak_list,
-  lrecord_type_bit_vector,
-  lrecord_type_float,
-  lrecord_type_hash_table,
-  lrecord_type_lstream,
-  lrecord_type_process,
-  lrecord_type_charset,
-  lrecord_type_coding_system,
-  lrecord_type_char_table,
-  lrecord_type_char_table_entry,
-  lrecord_type_range_table,
-  lrecord_type_opaque,
-  lrecord_type_opaque_ptr,
-  lrecord_type_buffer,
-  lrecord_type_extent,
-  lrecord_type_extent_info,
-  lrecord_type_extent_auxiliary,
-  lrecord_type_marker,
-  lrecord_type_event,
+
+  /* Keep the rest of these (up to #ifdef EVENT_DATA_AS_OBJECTS) sorted,
+     to facilitate keeping .gdbinit.in.in in sync.  Also sort within
+     the #ifdef EVENT_DATA_AS_OBJECTS and within the commented-out
+     #ifdef NEW_GC.  Leave the symbol-value stuff at the beginning and the
+     free/undefined/last at the end as-is. */
+  lrecord_type_bigfloat,		/* Lisp_Bigfloat */
+  lrecord_type_bignum,			/* Lisp_Bignum */
+  lrecord_type_bit_vector,		/* Lisp_Bit_Vector */
+  lrecord_type_buffer,			/* struct buffer */
+  lrecord_type_case_table,		/* Lisp_Case_Table */
+  lrecord_type_char_subtable,		/* Lisp_Char_Subtable */
+  lrecord_type_char_table,		/* Lisp_Char_Table */
+  lrecord_type_charset,			/* Lisp_Charset */
+  lrecord_type_coding_system,		/* Lisp_Coding_System */
+  lrecord_type_color_instance,		/* Lisp_Color_Instance */
+  lrecord_type_command_builder,		/* struct command_builder */
+  lrecord_type_compiled_function,	/* Lisp_Compiled_Function */
+  lrecord_type_cons,			/* Lisp_Cons */
+  lrecord_type_console,			/* struct console */
+  lrecord_type_database,		/* Lisp_Database */
+  lrecord_type_device,			/* struct device */
+  lrecord_type_devmode,			/* Lisp_Devmode */
+  lrecord_type_emacs_ffi,		/* emacs_ffi_data */
+  lrecord_type_emacs_gtk_boxed,		/* emacs_gtk_boxed_data */
+  lrecord_type_emacs_gtk_object,	/* emacs_gtk_object_data */
+  lrecord_type_ephemeron,		/* struct ephemeron */
+  lrecord_type_event,			/* Lisp_Event */
+  lrecord_type_extent,			/* struct extent */
+  lrecord_type_extent_auxiliary,	/* struct extent_auxiliary */
+  lrecord_type_extent_info,		/* struct extent_info */
+  lrecord_type_face,			/* Lisp_Face */
+  lrecord_type_fc_config,		/* struct fc_config */
+  lrecord_type_fc_pattern,		/* struct fc_pattern */
+  lrecord_type_float,			/* Lisp_Float */
+  lrecord_type_font_instance,		/* Lisp_Font_Instance */
+  lrecord_type_frame,			/* struct frame */
+  lrecord_type_glyph,			/* Lisp_Glyph */
+  lrecord_type_gui_item,		/* Lisp_Gui_Item */
+  lrecord_type_hash_table,		/* Lisp_Hash_Table */
+  lrecord_type_image_instance,		/* Lisp_Image_Instance */
+  lrecord_type_keymap,			/* Lisp_Keymap */
+  /* #ifndef NEW_GC */
+  lrecord_type_lcrecord_list,		/* struct lcrecord_list */
+  /* #endif not NEW_GC */
+  /* #### Do we need the following module entry? */
+  lrecord_type_ldap,			/* Lisp_LDAP */
+  lrecord_type_lstream,			/* struct lstream */
+  lrecord_type_marker,			/* Lisp_Marker */
+  lrecord_type_mswindows_dialog_id,	/* struct mswindows_dialog_id */
+  lrecord_type_multiple_value,		/* multiple_value */
+  lrecord_type_opaque,			/* Lisp_Opaque */
+  lrecord_type_opaque_ptr,		/* Lisp_Opaque_Ptr */
+  /* #### Do we need the following two module entries? */
+  lrecord_type_pgconn,			/* Lisp_PGconn */
+  lrecord_type_pgresult,		/* Lisp_PGresult */
+  lrecord_type_precedence_array,	/* struct precedence_array */
+  lrecord_type_process,			/* Lisp_Process */
+  lrecord_type_range_table,		/* Lisp_Range_Table */
+  lrecord_type_ratio,			/* Lisp_Ratio */
+  lrecord_type_scrollbar_instance,	/* struct scrollbar_instance */
+  lrecord_type_specifier,		/* Lisp_Specifier */
+  lrecord_type_string,			/* Lisp_String */
+  lrecord_type_subr,			/* Lisp_Subr */
+  lrecord_type_symbol,			/* Lisp_Symbol */
+  lrecord_type_timeout,			/* Lisp_Timeout */
+  lrecord_type_toolbar_button,		/* struct toolbar_button */
+  lrecord_type_tooltalk_message,	/* Lisp_Tooltalk_Message */
+  lrecord_type_tooltalk_pattern,	/* Lisp_Tooltalk_Pattern */
+  lrecord_type_vector,			/* Lisp_Vector */
+  lrecord_type_weak_box,		/* struct weak_box */
+  lrecord_type_weak_list,		/* struct weak_list */
+  lrecord_type_window,			/* struct window */
+  lrecord_type_window_configuration,	/* struct window_config */
+  lrecord_type_window_mirror,		/* struct window_mirror */
+
 #ifdef EVENT_DATA_AS_OBJECTS /* not defined */
-  lrecord_type_key_data,
-  lrecord_type_button_data,
-  lrecord_type_motion_data,
-  lrecord_type_process_data,
-  lrecord_type_timeout_data,
-  lrecord_type_eval_data,
-  lrecord_type_misc_user_data,
-  lrecord_type_magic_eval_data,
-  lrecord_type_magic_data,
+  lrecord_type_button_data,		/* Lisp_Button_Data */
+  lrecord_type_eval_data,		/* Lisp_Eval_Data */
+  lrecord_type_key_data,		/* Lisp_Key_Data */
+  lrecord_type_magic_data,		/* Lisp_Magic_Data */
+  lrecord_type_magic_eval_data,		/* Lisp_Magic_Eval_Data */
+  lrecord_type_misc_user_data,		/* Lisp_Misc_User_Data */
+  lrecord_type_motion_data,		/* Lisp_Motion_Data */
+  lrecord_type_process_data,		/* Lisp_Process_Data */
+  lrecord_type_timeout_data,		/* Lisp_Timeout_Data */
 #endif /* EVENT_DATA_AS_OBJECTS */
-  lrecord_type_keymap,
-  lrecord_type_command_builder,
-  lrecord_type_timeout,
-  lrecord_type_specifier,
-  lrecord_type_console,
-  lrecord_type_device,
-  lrecord_type_frame,
-  lrecord_type_window,
-  lrecord_type_window_mirror,
-  lrecord_type_window_configuration,
-  lrecord_type_gui_item,
-  lrecord_type_popup_data,
-  lrecord_type_toolbar_button,
-  lrecord_type_scrollbar_instance,
-  lrecord_type_color_instance,
-  lrecord_type_font_instance,
-  lrecord_type_image_instance,
-  lrecord_type_glyph,
-  lrecord_type_face,
-  lrecord_type_fc_config,
-  lrecord_type_fc_pattern,
-  lrecord_type_database,
-  lrecord_type_tooltalk_message,
-  lrecord_type_tooltalk_pattern,
-  lrecord_type_ldap,
-  lrecord_type_pgconn,
-  lrecord_type_pgresult,
-  lrecord_type_devmode,
-  lrecord_type_mswindows_dialog_id,
-  lrecord_type_case_table,
-  lrecord_type_emacs_ffi,
-  lrecord_type_emacs_gtk_object,
-  lrecord_type_emacs_gtk_boxed,
-  lrecord_type_weak_box,
-  lrecord_type_ephemeron,
-  lrecord_type_bignum,
-  lrecord_type_ratio,
-  lrecord_type_bigfloat,
-#ifndef NEW_GC
-  lrecord_type_free, /* only used for "free" lrecords */
-  lrecord_type_undefined, /* only used for debugging */
-#endif /* not NEW_GC */
-#ifdef NEW_GC
+
+  /* #ifdef NEW_GC */
   /* See comment up top explaining why these extra object types must exist. */
-  lrecord_type_string_indirect_data,
-  lrecord_type_string_direct_data,
-  lrecord_type_hash_table_entry,
-  lrecord_type_syntax_cache,
-  lrecord_type_buffer_text,
-  lrecord_type_compiled_function_args,
-  lrecord_type_tty_console,
-  lrecord_type_stream_console,
-  lrecord_type_dynarr,
-  lrecord_type_face_cachel,
-  lrecord_type_face_cachel_dynarr,
-  lrecord_type_glyph_cachel,
-  lrecord_type_glyph_cachel_dynarr,
-  lrecord_type_x_device,
-  lrecord_type_gtk_device,
-  lrecord_type_tty_device,
-  lrecord_type_mswindows_device,
-  lrecord_type_msprinter_device,
-  lrecord_type_x_frame,
-  lrecord_type_gtk_frame,
-  lrecord_type_mswindows_frame,
-  lrecord_type_gap_array_marker,
-  lrecord_type_gap_array,
-  lrecord_type_extent_list_marker,
-  lrecord_type_extent_list,
-  lrecord_type_stack_of_extents,
-  lrecord_type_tty_color_instance_data,
-  lrecord_type_tty_font_instance_data,
-  lrecord_type_specifier_caching,
-  lrecord_type_expose_ignore,
-#endif /* NEW_GC */
-  lrecord_type_last_built_in_type         /* must be last */
+  lrecord_type_buffer_text,		/* Lisp_Buffer_Text */
+  lrecord_type_compiled_function_args,	/* Lisp_Compiled_Function_Args */
+  lrecord_type_dynarr,			/* Dynarr */
+  lrecord_type_expose_ignore,		/* struct expose_ignore */
+  lrecord_type_extent_list,		/* struct extent_list */
+  lrecord_type_extent_list_marker,	/* struct extent_list_marker */
+  lrecord_type_face_cachel,		/* Lisp_Face_Cachel */
+  lrecord_type_face_cachel_dynarr,	/* face_cachel_dynarr */
+  lrecord_type_gap_array,		/* struct gap_array */
+  lrecord_type_gap_array_marker,	/* struct gap_array_marker */
+  lrecord_type_glyph_cachel,		/* Lisp_Glyph_Cachel */
+  lrecord_type_glyph_cachel_dynarr,	/* glyph_cachel_dynarr */
+  lrecord_type_gtk_device,		/* Lisp_Gtk_Device */
+  lrecord_type_gtk_frame,		/* Lisp_Gtk_Frame */
+  lrecord_type_hash_table_entry,	/* Lisp_Hash_Table_Entry */
+  lrecord_type_msprinter_device,	/* Lisp_Msprinter_Device */
+  lrecord_type_mswindows_device,	/* Lisp_Mswindows_Device */
+  lrecord_type_mswindows_frame,		/* Lisp_Mswindows_Frame */
+  lrecord_type_specifier_caching,	/* struct specifier_caching */
+  lrecord_type_stack_of_extents,	/* struct stack_of_extents */
+  lrecord_type_stream_console,		/* Lisp_Stream_Console */
+  lrecord_type_string_direct_data,	/* Lisp_String_Direct_Data */
+  lrecord_type_string_indirect_data,	/* Lisp_String_Indirect_Data */
+  lrecord_type_syntax_cache,		/* Lisp_Syntax_Cache */
+  lrecord_type_tty_color_instance_data,	/* struct tty_color_instance_data */
+  lrecord_type_tty_console,		/* Lisp_Tty_Console */
+  lrecord_type_tty_device,		/* Lisp_Tty_Device */
+  lrecord_type_tty_font_instance_data,	/* struct tty_font_instance_data */
+  lrecord_type_x_device,		/* Lisp_X_Device */
+  lrecord_type_x_frame,			/* Lisp_X_Frame */
+  /* #endif NEW_GC */
+
+  /* next two not used under NEW_GC */
+  lrecord_type_free,			/* only used for "free" lrecords */
+  lrecord_type_undefined,		/* only used for debugging */
+  lrecord_type_last_built_in_type,	/* must be last */
 };
 
 extern MODULE_API int lrecord_type_count;
@@ -1134,8 +1147,6 @@ struct opaque_convert_functions
   void *(*deconvert)(void *object, void *data, Bytecount size);
 
 };
-
-extern const struct sized_memory_description lisp_object_description;
 
 #define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
 

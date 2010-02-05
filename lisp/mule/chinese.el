@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -37,6 +37,14 @@
 (loop for row in '(33 34 41)
       do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
 
+;; Setup auto-fill-chars for charsets that should invoke auto-filling.
+;; SPACE and NEWLINE are already set.
+(loop for l in `(chinese-gb2312
+		 ,@(if (find-charset 'chinese-big5-1)
+		       '(chinese-big5-1 chinese-big5-2)
+		     '(chinese-big5)))
+  do (put-char-table l t auto-fill-chars))
+
 ;; CNS11643 Plane3 thru Plane7
 ;; These represent more and more obscure Chinese characters.
 ;; By the time you get to Plane 7, we're talking about characters
@@ -46,7 +54,7 @@
 (flet
     ((make-chinese-cns11643-charset
       (name plane final)
-      (make-charset
+      (make-internal-charset
        name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
        `(registries 
          ,(vector (concat "cns11643.1992-" plane ))
@@ -54,6 +62,9 @@
          chars 94
          final ,final
          graphic 0
+	 unicode-map (,(format "unicode/mule-ucs/chinese-cns11643-%s.txt"
+			       plane))
+	 tags (cns kanji traditional-chinese chinese/language)
 	 short-name ,(concat "CNS11643-" plane)
 	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
 			    plane)))
@@ -70,7 +81,7 @@
 ;; ISO-IR-165 (CCITT Extended GB)
 ;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
 ;;    GB 8565-88 table A4 + 293 characters.
-(make-charset ;; not in FSF 21.1
+(make-internal-charset ;; not in FSF 21.1
  'chinese-isoir165
  "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
  `(registries ["isoir165-0"]
@@ -78,25 +89,42 @@
    chars 94
    final ?E
    graphic 0
+   tags (gb kanji simplified-chinese chinese/language)
    short-name "ISO-IR-165"
    long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
-;; PinYin-ZhuYin
-(make-charset 'chinese-sisheng 
-	      "SiSheng characters for PinYin/ZhuYin"
-	      '(dimension
-		1
-		;; XEmacs addition: second half of registry spec
-		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?0
-		graphic 0
-		short-name "SiSheng"
-		long-name "SiSheng (PinYin/ZhuYin)"
-		))
+ ;; PinYin-ZhuYin
+(make-internal-charset
+ 'chinese-sisheng
+ "SiSheng characters for PinYin/ZhuYin"
+ '(dimension 1
+   chars 94
+   final ?0
+   graphic 0
+   short-name "SiSheng"
+   long-name "SiSheng (PinYin/ZhuYin)"
+   ;; XEmacs addition: first of the two registries
+   registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
+   unicode-map ("unicode/mule-ucs/chinese-sisheng.txt")
+   tags (bopomofo chinese/language)
+   ))
 
+(define-charset-tag 'chinese-cns/list
+  :list '(chinese-cns11643-1 chinese-cns11643-2 chinese-cns11643-3
+	  chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
+	  chinese-cns11643-7))
+(define-charset-tag 'chinese-big5/list
+  :list (if (featurep 'unicode-internal) '(chinese-big5)
+	  '(chinese-big5-1 chinese-big5-2)))
+(define-charset-tag 'chinese-gb/list
+  :list '(chinese-gb2312 chinese-sisheng))
+
+(define-charset-tag 'chinese-gb-env/list
+  :list '(chinese-gb/list chinese-big5/list chinese-cns/list chinese/language))
+
+(define-charset-tag 'chinese-big5-env/list
+  :list '(chinese-big5/list chinese-gb/list chinese-cns/list chinese/language))
+ 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
 ;;(when (and (featurep 'egg) (featurep 'wnn))
 ;;  (setq wnn-server-type 'cserver)
@@ -223,7 +251,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 
 (set-language-info-alist
  "Chinese-GB" '((setup-function . setup-chinese-gb-environment-internal)
-		(charset chinese-gb2312 chinese-sisheng)
+		(charset chinese-gb-env/list)
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
 		(cygwin-locale "zh")
@@ -243,7 +271,7 @@ Uses the GB2312 character set."))
                    (list "zh_CN.eucCN" "zh_CN.EUC" "zh_CN" "chinese-s" "zh"
 			 (lambda (arg)
                            (and arg (let ((case-fold-search t))
-                                      (string-match "^zh_.*.GB.*" arg))))))
+                                      (string-match "^zh_.*\\.GB.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
@@ -260,8 +288,10 @@ Uses the GB2312 character set."))
 (make-coding-system
  'big5 'big5
  "Big5"
- '(mnemonic "Zh/Big5"
-   safe-charsets (ascii chinese-big5-1 chinese-big5-2)
+ `(mnemonic "Zh/Big5"
+   safe-charsets (ascii ,@(if (find-charset 'chinese-big5-1)
+			      '(chinese-big5-1 chinese-big5-2)
+			    '(chinese-big5)))
    documentation
    "A non-modal encoding formed by five large Taiwanese companies
 \(hence \"Big5\") to produce a character set and encoding for
@@ -278,28 +308,39 @@ of a Chinese character\"."))
 
 (define-coding-system-alias 'cn-big5 'big5)
 
-;; Big5 font requires special encoding.
-(define-ccl-program ccl-encode-big5-font
-  `(0
-    ;; In:  R0:chinese-big5-1 or chinese-big5-2
-    ;;      R1:position code 1
-    ;;      R2:position code 2
-    ;; Out: R1:font code point 1
-    ;;      R2:font code point 2
-    ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
-     (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-     (r1 = ((r2 / 157) + #xA1))
-     (r2 %= 157)
-     (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
-  "CCL program to encode a Big5 code to code point of Big5 font.")
+;; Need to use `compiled-when' because otherwise we will get an error when
+;; compiling this file under Unicode-internal because (charset-id
+;; 'chinese-big5-2) gets evaluated at compile time and fails.
+(compiled-when (find-charset 'chinese-big5-1)
+  ;; Big5 font requires special encoding.  But under Unicode-internal we
+  ;; have one single charset `chinese-big5', with no special encoding
+  ;; needed.
+  (define-ccl-program ccl-encode-big5-font
+    `(0
+      ;; In:  R0:chinese-big5-1 or chinese-big5-2
+      ;;      R1:position code 1
+      ;;      R2:position code 2
+      ;; Out: R1:font code point 1
+      ;;      R2:font code point 2
+      ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
+       (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
+       (r1 = ((r2 / 157) + #xA1))
+       (r2 %= 157)
+       (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
+    "CCL program to encode a Big5 code to code point of Big5 font.")
 
-(set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
-(set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
+  (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font))
 
 (set-language-info-alist
- "Chinese-BIG5" '((charset chinese-big5-1 chinese-big5-2)
+ "Chinese-BIG5" `((charset chinese-big5-env/list)
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
+		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
+			  "chinese-t"
+			  #'(lambda (arg)
+			      (and arg (let ((case-fold-search t))
+					 (string-match "^zh_.*.BIG5.*" arg)))))
 		  (cygwin-locale "zh_TW")
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
 		  (native-coding-system big5)
@@ -312,24 +353,13 @@ Uses the Chinese Big5 character set."
 ))
  '("Chinese"))
 
-;; Set the locale information separately so that the lambda gets compiled.
-(set-language-info "Chinese-BIG5" 
-                   'locale
-		  (list "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
-                        "chinese-t"
-                        (lambda (arg)
-                          (and arg (let ((case-fold-search t))
-                                     (string-match "^zh_.*.BIG5.*" arg))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese CNS11643 (traditional)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (set-language-info-alist
-;;  "Chinese-CNS" '((charset chinese-cns11643-1 chinese-cns11643-2
-;;                           chinese-cns11643-3 chinese-cns11643-4
-;;                           chinese-cns11643-5 chinese-cns11643-6
-;;                           chinese-cns11643-7)
+;;  "Chinese-CNS" '((charset chinese-cns/list chinese-big5/list
+;;                   chinese-gb/list chinese)
 ;;                  (coding-system iso-2022-cn)
 ;;                  (coding-priority iso-2022-cn chinese-big5 chinese-iso-8bit)
 ;;                  (features china-util)
