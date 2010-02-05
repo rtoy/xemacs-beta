@@ -194,9 +194,9 @@ x_atom_to_symbol (struct device *d, Atom atom)
   }
 }
 
-#define PROCESSING_X_CODE
-#include "select-common.h"
-#undef PROCESSING_X_CODE
+#define THIS_IS_X
+#include "select-xlike-inc.c"
+#undef THIS_IS_X
 
 /* Do protocol to assert ourself as a selection owner.
  */
