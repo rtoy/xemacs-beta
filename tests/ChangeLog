@@ -1,3 +1,7 @@
+2010-02-05  Jerry James  <james@xemacs.org>
+
+	* frame.el: Martin Buchholz claims ownership.
+
 2010-01-25  Ben Wing  <ben@xemacs.org>
 
 	* automated/file-tests.el:
