@@ -1,3 +1,8 @@
+2010-02-05  Jerry James  <james@xemacs.org>
+
+	* s/sco7.h: Add copyright and license header with the permission of
+	Ron Record, the author.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* depend:
