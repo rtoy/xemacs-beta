@@ -332,8 +332,7 @@ gtk_set_frame_text_value (struct frame *UNUSED (f), Ibyte *value,
     for (ptr = value; *ptr; ptr++)
       if (!byte_ascii_p (*ptr))
 	{
-	  char *tmp;
-	  C_STRING_TO_EXTERNAL (value, tmp, Qctext);
+	  char *tmp = ITEXT_TO_EXTERNAL (value, Qctext);
 	  the_text = tmp;
 	  break;
 	}
@@ -812,7 +811,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 #endif
 
   if (STRINGP (f->name))
-    TO_EXTERNAL_FORMAT (LISP_STRING, f->name, C_STRING_ALLOCA, name, Qctext);
+    name = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
   else
     name = "emacs";
 
@@ -1159,12 +1158,12 @@ a string.
 */
        (frame))
 {
-  char str[255];
+  Ascbyte str[255];
   struct frame *f = decode_gtk_frame (frame);
 
   /* Arrrrggghhh... this defeats the whole purpose of using Gdk... do we really need this? */
   sprintf (str, "%lu", GDK_WINDOW_XWINDOW( GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f))));
-  return build_string (str);
+  return build_ascstring (str);
 }
 #endif
 
@@ -1355,9 +1354,9 @@ gtk_delete_frame (struct frame *f)
     gtk_widget_destroy (w);
 
     if (FRAME_GTK_GEOM_FREE_ME_PLEASE (f))
-	xfree (FRAME_GTK_GEOM_FREE_ME_PLEASE (f), char *);
+	xfree (FRAME_GTK_GEOM_FREE_ME_PLEASE (f));
 #ifndef NEW_GC
-    xfree (f->frame_data, void *);
+    xfree (f->frame_data);
 #endif /* not NEW_GC */
     f->frame_data = 0;
 }

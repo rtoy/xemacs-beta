@@ -683,28 +683,28 @@ value can be.
   profiling_lock = 0;
 
 #ifdef DEBUG_XEMACS
-  QSin_temp_spot_1 = build_msg_string ("(in temp spot 1)");
+  QSin_temp_spot_1 = build_defer_string ("(in temp spot 1)");
   staticpro (&QSin_temp_spot_1);
 
-  QSin_temp_spot_2 = build_msg_string ("(in temp spot 2)");
+  QSin_temp_spot_2 = build_defer_string ("(in temp spot 2)");
   staticpro (&QSin_temp_spot_2);
 
-  QSin_temp_spot_3 = build_msg_string ("(in temp spot 3)");
+  QSin_temp_spot_3 = build_defer_string ("(in temp spot 3)");
   staticpro (&QSin_temp_spot_3);
 
-  QSin_temp_spot_4 = build_msg_string ("(in temp spot 4)");
+  QSin_temp_spot_4 = build_defer_string ("(in temp spot 4)");
   staticpro (&QSin_temp_spot_4);
 
-  QSin_temp_spot_5 = build_msg_string ("(in temp spot 5)");
+  QSin_temp_spot_5 = build_defer_string ("(in temp spot 5)");
   staticpro (&QSin_temp_spot_5);
 #endif /* DEBUG_XEMACS */
 
-  QSunknown = build_msg_string ("(unknown)");
+  QSunknown = build_defer_string ("(unknown)");
   staticpro (&QSunknown);
   QSprocessing_events_at_top_level =
-    build_msg_string ("(processing events at top level)");
+    build_defer_string ("(processing events at top level)");
   staticpro (&QSprocessing_events_at_top_level);
-  QSprofile_overhead = build_msg_string ("(profile overhead)");
+  QSprofile_overhead = build_defer_string ("(profile overhead)");
   staticpro (&QSprofile_overhead);
 
   DEFSYMBOL (Qtiming);

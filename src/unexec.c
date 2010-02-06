@@ -298,7 +298,7 @@ report_error (const char *file, int fd)
   if (fd)
     close (fd);
   report_error_with_errno (Qio_error, "Cannot unexec",
-			   build_ext_string (file, Qfile_name));
+			   build_extstring (file, Qfile_name));
 }
 #endif /* emacs */
 

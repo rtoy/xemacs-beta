@@ -46,8 +46,8 @@ Charcount buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
 				      Bytecount length, int flags);
 Charcount buffer_insert_lisp_string_1 (struct buffer *buf, Charbpos pos,
 				       Lisp_Object str, int flags);
-Charcount buffer_insert_c_string_1 (struct buffer *buf, Charbpos pos,
-				    const char *s, int flags);
+Charcount buffer_insert_ascstring_1 (struct buffer *buf, Charbpos pos,
+				    const Ascbyte *s, int flags);
 Charcount buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos,
 				      Ichar ch, int flags);
 Charcount buffer_insert_c_char_1 (struct buffer *buf, Charbpos pos, char c,
@@ -63,8 +63,8 @@ Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
   buffer_insert_string_1 (buf, -1, nonreloc, reloc, offset, length, 0)
 #define buffer_insert_raw_string(buf, string, length) \
   buffer_insert_raw_string_1 (buf, -1, string, length, 0)
-#define buffer_insert_c_string(buf, s) \
-  buffer_insert_c_string_1 (buf, -1, s, 0)
+#define buffer_insert_ascstring(buf, s) \
+  buffer_insert_ascstring_1 (buf, -1, s, 0)
 #define buffer_insert_lisp_string(buf, str) \
   buffer_insert_lisp_string_1 (buf, -1, str, 0)
 #define buffer_insert_c_char(buf, c) \

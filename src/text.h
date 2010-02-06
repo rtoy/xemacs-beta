@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -537,6 +537,17 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
 #define validate_ibyte_string_backward(ptr, n) (n)
 
 #endif /* MULE */
+
+/* ASSERT_ASCTEXT_ASCII(ptr): Check that an Ascbyte * pointer points to
+   purely ASCII text.  Useful for checking that putatively ASCII strings
+   (i.e. declared as Ascbyte * or const Ascbyte *) are actually ASCII.
+   This is important because otherwise we need to worry about what
+   encoding they are in -- internal or some external encoding.
+
+   ASSERT_ASCTEXT_ASCII_LEN(ptr, len): Same as ASSERT_ASCTEXT_ASCII()
+   but where the length has been explicitly given.  Useful if the string
+   may contain embedded zeroes.
+*/
 
 #ifdef ERROR_CHECK_TEXT
 #define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)			\
@@ -1925,14 +1936,15 @@ do {						\
   eicpy_ext_len (ei, ei6, ei6len, Qbinary);	\
 } while (0)
 
-#define eicpy_ext_len(ei, extdata, extlen, codesys)			 \
-do {									 \
-  const Extbyte *ei7 = (extdata);					 \
-  int ei7len = (extlen);						 \
-									 \
-  SIZED_EXTERNAL_TO_SIZED_C_STRING (ei7, ei7len, (ei)->data_,		 \
-				    (ei)->bytelen_, codesys);		 \
-  (ei)->max_size_allocated_ = (ei)->bytelen_ + 1;			 \
+#define eicpy_ext_len(ei, extdata, extlen, codesys)			\
+do {									\
+  const Extbyte *ei7 = (extdata);					\
+  int ei7len = (extlen);						\
+									\
+  TO_INTERNAL_FORMAT (DATA, (ei7, ei7len),				\
+		      ALLOCA, ((ei)->data_, (ei)->bytelen_),		\
+		      codesys);						\
+  (ei)->max_size_allocated_ = (ei)->bytelen_ + 1;			\
   (ei)->charlen_ = bytecount_to_charcount ((ei)->data_, (ei)->bytelen_); \
 } while (0)
 
@@ -1998,9 +2010,9 @@ do {						\
   if ((ei)->mallocp_)				\
     {						\
       if ((ei)->data_)				\
-	xfree ((ei)->data_, Ibyte *);		\
+	xfree ((ei)->data_);		\
       if ((ei)->extdata_)			\
-	xfree ((ei)->extdata_, Extbyte *);	\
+	xfree ((ei)->extdata_);	\
       eiinit_malloc (ei);			\
     }						\
   else						\
@@ -2025,7 +2037,7 @@ do {									\
 	eifind_large_enough_buffer (0, (ei)->bytelen_ + 1);		\
       ei13newdata = alloca_ibytes ((ei)->max_size_allocated_);		\
       memcpy (ei13newdata, (ei)->data_, (ei)->bytelen_ + 1);		\
-      xfree ((ei)->data_, Ibyte *);					\
+      xfree ((ei)->data_);					\
       (ei)->data_ = ei13newdata;					\
     }									\
 									\
@@ -2037,7 +2049,7 @@ do {									\
       /* Double null-terminate in case of Unicode data */		\
       ei13newdata[(ei)->extlen_] = '\0';				\
       ei13newdata[(ei)->extlen_ + 1] = '\0';				\
-      xfree ((ei)->extdata_, Extbyte *);				\
+      xfree ((ei)->extdata_);				\
       (ei)->extdata_ = ei13newdata;					\
     }									\
 } while (0)
@@ -2239,7 +2251,7 @@ do {									\
     {									\
       if ((ei)->extdata_)						\
 	{								\
-	  xfree ((ei)->extdata_, Extbyte *);				\
+	  xfree ((ei)->extdata_);				\
 	  (ei)->extdata_ = 0;						\
 	}								\
       TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
@@ -2420,7 +2432,7 @@ END_C_DECLS
   of conversions involving raw data and/or Lisp strings, especially when
   the output is an alloca()ed string. (When the destination is a
   Lisp_String, there are other functions that should be used instead --
-  build_ext_string() and make_ext_string(), for example.) The convenience
+  build_extstring() and make_extstring(), for example.) The convenience
   macros are of two types -- the older kind that store the result into a
   specified variable, and the newer kind that return the result.  The newer
   kind of macros don't exist when the output is sized data, because that
@@ -2800,96 +2812,6 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_LISP_BUFFER_USE_CONVERTED_DATA(sink) \
   Lstream_delete (XLSTREAM (dfc_sink.lisp_object))
 
-/* #define TEST_NEW_DFC */
-
-/* Convenience macros for extremely common invocations */
-#ifdef TEST_NEW_DFC
-#define C_STRING_TO_EXTERNAL(in, out, codesys)			\
-  do { * (Extbyte **) &(out) = 					\
-       NEW_C_STRING_TO_EXTERNAL (in, codesys); } while (0)
-#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys)		\
-  do { * (Extbyte **) &(out) =						\
-       NEW_SIZED_C_STRING_TO_EXTERNAL (in, inlen, codesys); } while (0)
-#define EXTERNAL_TO_C_STRING(in, out, codesys)			\
-  do { * (Ibyte **) &(out) =					\
-       NEW_EXTERNAL_TO_C_STRING (in, codesys); } while (0)
-#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys)		\
-  do { * (Ibyte **) &(out) =						\
-       NEW_SIZED_EXTERNAL_TO_C_STRING (in, inlen, codesys); } while (0)
-#define LISP_STRING_TO_EXTERNAL(in, out, codesys)		\
-  do { * (Extbyte **) &(out) =					\
-       NEW_LISP_STRING_TO_EXTERNAL (in, codesys); } while (0)
-#else
-#define C_STRING_TO_EXTERNAL(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
-#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
-#define EXTERNAL_TO_C_STRING(in, out, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
-#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
-#define LISP_STRING_TO_EXTERNAL(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_ALLOCA, out, codesys)
-#endif /* TEST_NEW_DFC */
-
-#define C_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
-#define SIZED_C_STRING_TO_SIZED_EXTERNAL(in, inlen, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
-#define EXTERNAL_TO_SIZED_C_STRING(in, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
-#define SIZED_EXTERNAL_TO_SIZED_C_STRING(in, inlen, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
-#define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
-
-/* In place of EXTERNAL_TO_LISP_STRING(), use build_ext_string() and/or
-   make_ext_string(). */
-
-#ifdef TEST_NEW_DFC
-#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
-  do { * (Extbyte **) &(out) =						\
-       NEW_C_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
-#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys)	\
-  do { * (Extbyte **) &(out) =						\
-       NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC (in, inlen, codesys); }	\
-  while (0)
-#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys)			\
-  do { * (Ibyte **) &(out) =						\
-       NEW_EXTERNAL_TO_C_STRING_MALLOC (in, codesys); } while (0)
-#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys)	\
-  do { * (Ibyte **) &(out) =						\
-       NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC (in, inlen, codesys); }	\
-  while (0)
-#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)		\
-  do { * (Extbyte **) &(out) =						\
-       NEW_LISP_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
-#else
-#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
-#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys) \
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
-#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
-#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys) \
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
-#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_MALLOC, out, codesys)
-#endif /* TEST_NEW_DFC */
-
-#define C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
-#define SIZED_C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, inlen, out, outlen, \
-						codesys)		\
-  TO_EXTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
-#define EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, out, outlen, codesys) \
-  TO_INTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
-#define SIZED_EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, inlen, out, outlen, \
-						codesys)		\
-  TO_INTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
-#define LISP_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, MALLOC, (out, outlen), codesys)
-
 enum new_dfc_src_type
 {
   DFC_EXTERNAL,
@@ -2912,7 +2834,7 @@ MODULE_API void *new_dfc_convert_copy_data (const char *srctext,
 
 END_C_DECLS
 
-/* Version of EXTERNAL_TO_C_STRING that *RETURNS* the translated string,
+/* Version of EXTERNAL_TO_ITEXT that *RETURNS* the translated string,
    still in alloca() space.  Requires some trickiness to do this, but gets
    it done! */
 
@@ -2934,48 +2856,36 @@ END_C_DECLS
    (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
 						   type, codesys)))
 
-#define NEW_EXTERNAL_TO_C_STRING(src, codesys)	\
-  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys)
-#define NEW_EXTERNAL_TO_C_STRING_MALLOC(src, codesys)	\
-  (Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys)
-#define NEW_SIZED_EXTERNAL_TO_C_STRING(src, len, codesys)	\
-  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys)
-#define NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC(src, len, codesys)	\
-  (Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys)
-#define NEW_C_STRING_TO_EXTERNAL(src, codesys)	\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys)
-#define NEW_C_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys)
-#define NEW_SIZED_C_STRING_TO_EXTERNAL(src, len, codesys)	\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_INTERNAL, codesys)
-#define NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC(src, len, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_INTERNAL, codesys)
-#define NEW_LISP_STRING_TO_EXTERNAL(src, codesys)			\
-  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,		\
-					DFC_LISP_STRING, codesys)
-#define NEW_LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  (Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
-				      DFC_LISP_STRING, codesys)
+#define EXTERNAL_TO_ITEXT(src, codesys)	\
+  ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys))
+#define EXTERNAL_TO_ITEXT_MALLOC(src, codesys)	\
+  ((Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys))
+#define SIZED_EXTERNAL_TO_ITEXT(src, len, codesys)	\
+  ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys))
+#define SIZED_EXTERNAL_TO_ITEXT_MALLOC(src, len, codesys)	\
+  ((Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys))
+#define ITEXT_TO_EXTERNAL(src, codesys)	\
+  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys))
+#define ITEXT_TO_EXTERNAL_MALLOC(src, codesys)	\
+  ((Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys))
+#define LISP_STRING_TO_EXTERNAL(src, codesys)			\
+  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,	\
+					DFC_LISP_STRING, codesys))
+#define LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
+  ((Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
+				      DFC_LISP_STRING, codesys))
+/* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
+   make_extstring(). */
 
-/* Standins for various encodings. */
-#ifdef WEXTTEXT_IS_WIDE
-#define Qcommand_argument_encoding Qmswindows_unicode
-#define Qenvironment_variable_encoding Qmswindows_unicode
-#else
-#define Qcommand_argument_encoding Qnative
-#define Qenvironment_variable_encoding Qnative
-#endif
-#define Qunix_host_name_encoding Qnative
-#define Qunix_service_name_encoding Qnative
-#define Qtime_function_encoding Qnative
-#define Qtime_zone_encoding Qtime_function_encoding
-#define Qmswindows_host_name_encoding Qmswindows_multibyte
-#define Qmswindows_service_name_encoding Qmswindows_multibyte
-#define Quser_name_encoding Qnative
-#define Qerror_message_encoding Qnative
-#define Qjpeg_error_message_encoding Qerror_message_encoding
-#define Qtooltalk_encoding Qnative
-#define Qgtk_encoding Qnative
+/* The next four have two outputs, so we make both of them be parameters */
+#define ITEXT_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
+#define ITEXT_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, MALLOC, (out, outlen), codesys)
 
 /* Wexttext functions.  The type of Wexttext is selected at compile time
    and will sometimes be wchar_t, sometimes char. */
@@ -3001,7 +2911,7 @@ int wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len);
 #define wext_atol(str) wcstol (str, 0, 10)
 #define wext_sprintf wsprintfW /* Huh?  both wsprintfA and wsprintfW? */
 #define wext_getenv _wgetenv
-#define build_wext_string(str, cs) build_ext_string ((Extbyte *) str, cs)
+#define build_wext_string(str, cs) build_extstring ((Extbyte *) str, cs)
 #define WEXTTEXT_TO_8_BIT(arg) WEXTTEXT_TO_MULTIBYTE(arg)
 #ifdef WIN32_NATIVE
 int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
@@ -3026,14 +2936,14 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 #define wext_atol(str) atol (str)
 #define wext_sprintf sprintf
 #define wext_getenv getenv
-#define build_wext_string build_ext_string
+#define build_wext_string build_extstring
 #define wext_retry_open retry_open
 #define wext_access access
 #define wext_stat stat
 #define WEXTTEXT_TO_8_BIT(arg) ((Extbyte *) arg)
 #endif
 
-/* Standins for various X encodings.
+/* Standins for various encodings.
 
    About encodings in X:
 
@@ -3089,6 +2999,31 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
    COMPOUND_TEXT otherwise.
    */
 
+#ifdef WEXTTEXT_IS_WIDE
+#define Qcommand_argument_encoding Qmswindows_unicode
+#define Qenvironment_variable_encoding Qmswindows_unicode
+#else
+#define Qcommand_argument_encoding Qnative
+#define Qenvironment_variable_encoding Qnative
+#endif
+#define Qunix_host_name_encoding Qnative
+#define Qunix_service_name_encoding Qnative
+#define Qtime_function_encoding Qnative
+#define Qtime_zone_encoding Qtime_function_encoding
+#define Qmswindows_host_name_encoding Qmswindows_multibyte
+#define Qmswindows_service_name_encoding Qmswindows_multibyte
+#define Quser_name_encoding Qnative
+#define Qerror_message_encoding Qnative
+#define Qjpeg_error_message_encoding Qerror_message_encoding
+#define Qtooltalk_encoding Qnative
+#define Qgtk_encoding Qnative
+
+#define Qdll_symbol_encoding Qnative
+#define Qdll_function_name_encoding Qdll_symbol_encoding
+#define Qdll_variable_name_encoding Qdll_symbol_encoding
+#define Qdll_filename_encoding Qfile_name
+#define Qemodule_string_encoding Qnative
+
 /* !!#### Need to verify the encoding used in lwlib -- Qnative or Qctext?
    Almost certainly the former.  Use a standin for now. */
 #define Qlwlib_encoding Qnative
@@ -3130,11 +3065,11 @@ do {								\
 								\
   if (!__gserr__)						\
     {								\
-      var = alloca_ibytes (99);			\
+      var = alloca_ibytes (99);					\
       qxesprintf (var, "Unknown error %d", __gsnum__);		\
     }								\
   else								\
-    EXTERNAL_TO_C_STRING (__gserr__, var, Qstrerror_encoding);	\
+    var = EXTERNAL_TO_ITEXT (__gserr__, Qstrerror_encoding);	\
 } while (0)
 
 #endif /* INCLUDED_text_h_ */

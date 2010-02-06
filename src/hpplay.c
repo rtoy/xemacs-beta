@@ -73,9 +73,9 @@ player_error_internal (Audio * audio, Ascbyte * text, long errorCode)
   Ibyte *interr;
 
   AGetErrorText (audio, errorCode, errorbuff, 131);
-  EXTERNAL_TO_C_STRING (errorbuf, interr, Qerror_message_encoding);
+  interr = EXTERNAL_TO_ITEXT (errorbuf, Qerror_message_encoding);
   
-  signal_error (Qsound_error, text, build_string (interr));
+  signal_error (Qsound_error, text, build_istring (interr));
 }
 
 long
@@ -148,8 +148,8 @@ play_sound_file (Extbyte * sound_file, int volume)
   Extbyte *server;
 
   if (STRINGP (Vhp_play_server))
-    LISP_STRING_TO_EXTERNAL (Vhp_play_server, server,
-			     Qunix_host_name_encoding);
+    server = LISP_STRING_TO_EXTERNAL (Vhp_play_server,
+				      Qunix_host_name_encoding);
   else
     server = "";
 
@@ -202,8 +202,8 @@ play_sound_data (Binbyte * data, int UNUSED (length), int volume)
        
     
   if (STRINGP (Vhp_play_server))
-    LISP_STRING_TO_EXTERNAL (Vhp_play_server, server,
-			     Qunix_host_name_encoding);
+    server = LISP_STRING_TO_EXTERNAL (Vhp_play_server,
+				      Qunix_host_name_encoding);
   else
     server = "";
 

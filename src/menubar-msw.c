@@ -138,7 +138,7 @@ displayable_menu_item (Lisp_Object gui_item, int bar_p, Ichar *accel)
     right = gui_item_display_flush_right (gui_item);
 
   if (!NILP (right))
-    return concat3 (left, build_string ("\t"), right);
+    return concat3 (left, build_ascstring ("\t"), right);
   else
     return left;
 }
@@ -241,12 +241,9 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	item_info.fType = MFT_SEPARATOR;
       else
 	{
-	  Extbyte *itemext;
-
 	  item_info.fType = MFT_STRING;
 	  item_info.fState = MFS_DISABLED;
-	  LISP_STRING_TO_TSTR (item, itemext);
-	  item_info.dwTypeData = (XELPTSTR) itemext;
+	  item_info.dwTypeData = (XELPTSTR) LISP_STRING_TO_TSTR (item);
 	}
     }
   else if (CONSP (item))
@@ -257,7 +254,6 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2, gcpro3;
       Ichar accel;
-      Extbyte *itemext;
 
       GCPRO3 (gui_item, path, *accel_list);
 
@@ -281,9 +277,8 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       submenu = create_empty_popup_menu ();
 
       item_info.fMask |= MIIM_SUBMENU;
-      LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel),
-			   itemext);
-      item_info.dwTypeData = (XELPTSTR) itemext;
+      item_info.dwTypeData = (XELPTSTR)
+	LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel));
       item_info.hSubMenu = submenu;
 
       if (accel && bar_p)
@@ -315,7 +310,6 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2;
       Ichar accel;
-      Extbyte *itemext;
 
       GCPRO2 (gui_item, *accel_list);
 
@@ -348,9 +342,8 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 
       item_info.wID = (UINT) XINT (id);
       item_info.fType |= MFT_STRING;
-      LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel),
-			   itemext);
-      item_info.dwTypeData = (XELPTSTR) itemext;
+      item_info.dwTypeData = (XELPTSTR)
+	LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel));
 
       if (accel && bar_p)
 	*accel_list = Fcons (make_char (accel), *accel_list);
@@ -449,12 +442,9 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 	 two separators in X... In Windows this looks ugly, anyways.) */
       if (!bar_p && !deep_p && popup_menu_titles && !NILP (pgui_item->name))
 	{
-	  Extbyte *nameext;
-
-	  LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, NULL),
-			       nameext);
 	  qxeInsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
-			 0, nameext);
+			 0, LISP_STRING_TO_TSTR (displayable_menu_item
+						 (gui_item, bar_p, NULL)));
 	  qxeInsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	  SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
 	}

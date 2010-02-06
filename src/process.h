@@ -55,8 +55,8 @@ EXFUN (Fprocess_kill_without_query, 2);
 EXFUN (Fprocess_id, 1);
 
 MODULE_API
-DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
-DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_process_error (const Ascbyte *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_network_error (const Ascbyte *, Lisp_Object));
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 MODULE_API Ibyte *egetenv (const CIbyte *var);

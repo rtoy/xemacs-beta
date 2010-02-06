@@ -519,17 +519,15 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
    when displayed in the fonts associated with the face.
    */
 
-/* #### Break me out into a separate header */
-int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-		      const Ichar *str, Charcount len);
-int
-XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
+static int
+XLIKE_text_width (struct window *w, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
+  struct frame *f = WINDOW_XFRAME (w);
   int nruns;
   int i;
 
@@ -1024,7 +1022,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif /* USE_XFT */
 
   if (width < 0)
-    width = XLIKE_text_width (f, cachel, Dynarr_atp (buf, 0),
+    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
@@ -1088,7 +1086,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			    height);
     }
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
+  nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
 
   for (i = 0; i < nruns; i++)

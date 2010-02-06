@@ -1,5 +1,6 @@
 /* New incremental garbage collector for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1376,7 +1377,7 @@ register_for_finalization (void)
       finalize_elem *temp = rest;
       Vfinalizers_to_run = Fcons (rest->obj, Vfinalizers_to_run);
       Vall_finalizable_objs = rest->next;
-      xfree (temp, finalize_elem *);
+      xfree (temp);
       rest = Vall_finalizable_objs;
     }
 
@@ -1388,7 +1389,7 @@ register_for_finalization (void)
 	  finalize_elem *temp = rest->next;
 	  Vfinalizers_to_run = Fcons (rest->next->obj, Vfinalizers_to_run);
 	  rest->next = rest->next->next;
-	  xfree (temp, finalize_elem *);
+	  xfree (temp);
 	}
       else
 	{
@@ -1496,7 +1497,7 @@ show_gc_cursor_and_message (void)
 	      Lisp_Object args[2], whole_msg;
 	      args[0] = (STRINGP (Vgc_message) ? Vgc_message :
 			 build_msg_string (gc_default_message));
-	      args[1] = build_string ("...");
+	      args[1] = build_ascstring ("...");
 	      whole_msg = Fconcat (2, args);
 	      echo_area_message (f, (Ibyte *) 0, whole_msg, 0, -1,
 				 Qgarbage_collecting);
@@ -1624,8 +1625,9 @@ gc_mark_root_set (
 
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
+    Elemcount len = Dynarr_length (staticpros);
     Elemcount count;
-    for (count = Dynarr_length (staticpros); count; count--, p++)
+    for (count = 0; count < len; count++, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
@@ -1636,8 +1638,9 @@ gc_mark_root_set (
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
+    Elemcount len = Dynarr_length (staticpros_nodump);
     Elemcount count;
-    for (count = Dynarr_length (staticpros_nodump); count; count--, p++)
+    for (count = 0; count < len; count++, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
@@ -1649,9 +1652,10 @@ gc_mark_root_set (
 #ifdef NEW_GC
   { /* mcpro () */
     Lisp_Object *p = Dynarr_begin (mcpros);
+    Elemcount len = Dynarr_length (mcpros);
     Elemcount count;
-    for (count = Dynarr_length (mcpros); count; count--)
-      mark_object (*p++);
+    for (count = 0; count < len; count++, p++)
+      mark_object (*p);
   }
 #endif /* NEW_GC */
 
@@ -2098,7 +2102,7 @@ vars_of_gc (void)
 {
   staticpro_nodump (&pre_gc_cursor);
 
-  QSin_garbage_collection = build_msg_string ("(in garbage collection)");
+  QSin_garbage_collection = build_defer_string ("(in garbage collection)");
   staticpro (&QSin_garbage_collection);
 
   DEFVAR_INT ("gc-cons-threshold", &gc_cons_threshold /*
@@ -2193,7 +2197,7 @@ window system and `gc-pointer-glyph' specifies a value (i.e. a pointer
 image instance) in the domain of the selected frame, the mouse pointer
 will change instead of this message being printed.
 */ );
-  Vgc_message = build_string (gc_default_message);
+  Vgc_message = build_defer_string (gc_default_message);
 
   DEFVAR_LISP ("gc-pointer-glyph", &Vgc_pointer_glyph /*
 Pointer glyph used to indicate that a garbage collection is in progress.

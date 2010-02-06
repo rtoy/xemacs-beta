@@ -90,12 +90,10 @@ urlify_filename (Ibyte *filename)
 Lisp_Object
 tstr_to_local_file_format (Extbyte *path)
 {
-  Ibyte *ttlff;
+  Ibyte *pathint = TSTR_TO_ITEXT (path);
+  INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (pathint, pathint);
 
-  TSTR_TO_C_STRING (path, ttlff);
-  INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
-
-  return build_intstring (ttlff);
+  return build_istring (pathint);
 }
 
 /* Normalize filename by converting all path separators to the specified
@@ -271,7 +269,7 @@ mswindows_lisp_error_1 (int errnum, int no_recurse)
 	break;
     }
 
-  TSTR_TO_C_STRING (lpMsgBuf, inres);
+  inres = TSTR_TO_ITEXT (lpMsgBuf);
   len = qxestrlen (inres);
   /* Messages tend to end with a period and newline */
   if (len >= 3 && !qxestrcmp_ascii (inres + len - 3, ".\r\n"))
@@ -289,7 +287,7 @@ mswindows_lisp_error (int errnum)
 }
 
 void
-mswindows_output_last_error (char *frob)
+mswindows_output_last_error (const Ascbyte *frob)
 {
   int errval = GetLastError ();
   Lisp_Object errmess = mswindows_lisp_error (errval);
@@ -299,11 +297,10 @@ mswindows_output_last_error (char *frob)
 }
 
 DOESNT_RETURN
-mswindows_report_process_error (const char *string, Lisp_Object data,
+mswindows_report_process_error (const Ascbyte *reason, Lisp_Object data,
 				int errnum)
 {
-  report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
-			  string, data);
+  signal_error_2 (Qprocess_error, reason, mswindows_lisp_error (errnum), data);
 }
 
 DEFUN ("mswindows-shell-execute", Fmswindows_shell_execute, 2, 4, 0, /*
@@ -345,10 +342,10 @@ otherwise it is an integer representing a ShowWindow flag:
     Extbyte *doc = NULL;
 
     if (STRINGP (operation))
-      LISP_STRING_TO_TSTR (operation, opext);
+      opext = LISP_STRING_TO_TSTR (operation);
     /* #### What about path names, which may be links? */
     if (STRINGP (parameters))
-      LISP_STRING_TO_TSTR (parameters, parmext);
+      parmext = LISP_STRING_TO_TSTR (parameters);
     if (STRINGP (current_dir))
       LISP_LOCAL_FILE_FORMAT_TO_TSTR (current_dir, path);
     if (STRINGP (document))
@@ -405,7 +402,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 
   /* Use mule and cygwin-safe APIs top get at file data. */
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (p, p);
-  return build_intstring (p);
+  return build_istring (p);
 }
 #endif
 
@@ -435,7 +432,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 
   if (!mswindows_read_link_hash)
     mswindows_read_link_hash = make_string_hash_table (1000);
-  C_STRING_TO_TSTR (fname, fnameext);
+  fnameext = ITEXT_TO_TSTR (fname);
 
   /* See if we can find a cached value. */
 
@@ -552,7 +549,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 			      PATH_MAX_TCHAR, &wfd, 0)
 #endif
 		  == S_OK)
-		TSTR_TO_C_STRING_MALLOC (resolved, retval);
+		retval = TSTR_TO_ITEXT_MALLOC (resolved);
 
 	      XECOMCALL0 (ppf, Release);
 	    }
@@ -584,15 +581,14 @@ mswindows_read_link_1 (const Ibyte *fname)
 	      /* Always Unicode.  Not obvious from the
 		 IPersistFile documentation, but look under
 		 "Shell Link" for example code. */
-	      C_STRING_TO_EXTERNAL (fname, fname_unicode,
-				    Qmswindows_unicode);
+	      fname_unicode = ITEXT_TO_EXTERNAL (fname, Qmswindows_unicode);
 
 	      if (XECOMCALL2 (ppf, Load,
 			      (LPWSTR) fname_unicode,
 			      STGM_READ) == S_OK
 		  && XECOMCALL4 (psl, GetPath, resolved,
 				 PATH_MAX_TCHAR, &wfd, 0) == S_OK)
-		TSTR_TO_C_STRING_MALLOC (resolved, retval);
+		retval = TSTR_TO_ITEXT_MALLOC (resolved);
 
 	      XECOMCALL0 (ppf, Release);
 	    }
@@ -603,7 +599,7 @@ mswindows_read_link_1 (const Ibyte *fname)
 
   /* Cache newly found value */
   if (rlh->resolved)
-    xfree (rlh->resolved, Ibyte *);
+    xfree (rlh->resolved);
   rlh->resolved = retval ? qxestrdup (retval) : NULL;
 
   return retval;

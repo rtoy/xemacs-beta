@@ -91,7 +91,7 @@ Boston, MA 02111-1307, USA.  */
 /* # include <sys/fcntl.h> */
 #endif /* WIN32_NATIVE */
 
-/* Needed for C_STRING_TO_TSTR, MAX_XETCHAR_SIZE below; but syswindows.h
+/* Needed for ITEXT_TO_TSTR, MAX_XETCHAR_SIZE below; but syswindows.h
    depends on lisp.h being previously included. */
 #if defined (WIN32_ANY) && defined (emacs)
 # include "syswindows.h"
@@ -497,7 +497,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 }
 #define DIRECTORY_SEP sysfile_get_directory_sep()
 
-#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"C:\\")
+#define DEFAULT_DIRECTORY_FALLBACK "C:\\"
 
 #else /* not emacs */
 
@@ -511,7 +511,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 #define SEPCHAR ':'
 #define DEFAULT_DIRECTORY_SEP '/'
 #define DIRECTORY_SEP '/'
-#define DEFAULT_DIRECTORY_FALLBACK ((const CIbyte *)"/")
+#define DEFAULT_DIRECTORY_FALLBACK "/"
 
 #endif /* WIN32_NATIVE */
 
@@ -597,23 +597,26 @@ do							\
 {							\
   const Ibyte *_pco_path_;				\
   PATHNAME_RESOLVE_LINKS (path, _pco_path_);		\
-  C_STRING_TO_TSTR (_pco_path_, pathout);		\
+  (pathout) = ITEXT_TO_TSTR (_pco_path_);		\
 } while (0)
 
-#define PATHNAME_CONVERT_OUT_UTF_8(path, pathout)	\
-do							\
-{							\
-  const Ibyte *_pco_path_;				\
-  PATHNAME_RESOLVE_LINKS (path, _pco_path_);		\
-  C_STRING_TO_EXTERNAL (_pco_path_, pathout, Qutf_8);	\
+#define PATHNAME_CONVERT_OUT_UTF_8(path, pathout)		\
+do								\
+{								\
+  const Ibyte *_pco_path_;					\
+  PATHNAME_RESOLVE_LINKS (path, _pco_path_);			\
+  (pathout) = ITEXT_TO_EXTERNAL (_pco_path_, Qutf_8);	\
 } while (0)
 
 #ifdef WIN32_NATIVE
 #define PATHNAME_CONVERT_OUT(path, pathout) \
   PATHNAME_CONVERT_OUT_TSTR (path, pathout)
 #else
-# define PATHNAME_CONVERT_OUT(path, pathout) \
-  C_STRING_TO_EXTERNAL (path, pathout, Qfile_name)
+# define PATHNAME_CONVERT_OUT(path, pathout)		\
+do							\
+{							\
+  (pathout) = ITEXT_TO_EXTERNAL (path, Qfile_name);	\
+} while (0)
 #endif
 
 #define LISP_PATHNAME_CONVERT_OUT(path, pathout) \

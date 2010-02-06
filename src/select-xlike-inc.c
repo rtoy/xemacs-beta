@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not synched with FSF. */
 
-#ifdef PROCESSING_X_CODE
+#ifdef THIS_IS_X
 #define XE_ATOM_TYPE Atom
 #define XE_ATOM_TO_SYMBOL x_atom_to_symbol
 #define XE_SYMBOL_TO_ATOM symbol_to_x_atom
@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #define XE_ATOM_TYPE GdkAtom
 #define XE_ATOM_TO_SYMBOL atom_to_symbol
 #define XE_SYMBOL_TO_ATOM symbol_to_gtk_atom
-#endif /* PROCESSING_X_CODE */
+#endif /* THIS_IS_X */
 
 /* #### These are going to move into Lisp code(!) with the aid of
         some new functions I'm working on - ajh */
@@ -76,13 +76,13 @@ selection_data_to_lisp_data (struct device *d,
 			     XE_ATOM_TYPE type,
 			     int format)
 {
-#ifdef PROCESSING_X_CODE
+#ifdef THIS_IS_X
   if (type == DEVICE_XATOM_NULL (d))
     return QNULL;
 
   /* Convert any 8-bit data to a string, for compactness. */
   else if (format == 8)
-    return make_ext_string ((Extbyte *) data, size,
+    return make_extstring ((Extbyte *) data, size,
 			    type == DEVICE_XATOM_TEXT (d) ||
 			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
 			    ? Qctext : Qbinary);
@@ -96,7 +96,7 @@ selection_data_to_lisp_data (struct device *d,
 
   /* Convert any 8-bit data to a string, for compactness. */
   else if (format == 8)
-    return make_ext_string ((Extbyte *) data, size,
+    return make_extstring ((Extbyte *) data, size,
 			    ((type == gdk_atom_intern ("TEXT", FALSE)) ||
 			     (type == gdk_atom_intern ("COMPOUND_TEXT", FALSE)))
 			    ? Qctext : Qbinary);
@@ -104,7 +104,7 @@ selection_data_to_lisp_data (struct device *d,
   /* Convert a single atom to a Lisp Symbol.
      Convert a set of atoms to a vector of symbols. */
   else if (type == gdk_atom_intern ("ATOM", FALSE))
-#endif /* PROCESSING_X_CODE */
+#endif /* THIS_IS_X */
     {
       if (size == sizeof (XE_ATOM_TYPE))
 	return XE_ATOM_TO_SYMBOL (d, *((XE_ATOM_TYPE *) data));
@@ -199,9 +199,8 @@ lisp_data_to_selection_data (struct device *d,
       const Extbyte *extval;
       Bytecount extvallen;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, obj,
-			  ALLOCA, (extval, extvallen),
-			  (NILP (type) ? Qctext : Qbinary));
+      LISP_STRING_TO_SIZED_EXTERNAL (obj, extval, extvallen,
+				     (NILP (type) ? Qctext : Qbinary));
       *format_ret = 8;
       *size_ret = extvallen;
       *data_ret = xnew_rawbytes (*size_ret);

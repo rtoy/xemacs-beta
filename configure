@@ -1952,13 +1952,37 @@ Platform Specific options
 Debugging options
 -----------------
 
-  --with-debug            Enable additional debugging information. No time
-                          cost.
-  --with-error-checking=TESTS
+  --with-debug            Enable additional debugging information. No
+                          noticeable time cost (unlike
+                          `--with-error-checking'). This turns adds `-g' to
+                          the compiler options so that debug information is
+                          compiled into the XEmacs executable. It also turns
+                          on assert checks in the source code (i.e. same as
+                          `--with-assertions'); enables Lisp commands for
+                          determining detailed memory usage statistics (same
+                          as `--with-memory-usage-stats'); adds various Lisp
+                          variables and functions that allow one to display
+                          internal structures, show the internal workings of
+                          certain subsystems, and exit to the debugger; causes
+                          Lisp errors during building to exit to the debugger
+                          or dump core; and adds debugging-related C functions
+                          meant to be called from a debugger.
+  --with-error-checking=CLASS|all|none
                           Compile with internal error-checking added. Causes
-                          noticeable loss of speed. Valid TESTS are
-                          `byte_code', `display', `extents', `gc', `glyphs',
-                          `malloc', `structures' `text', `types'.
+                          noticeable loss of speed. Valid classes are
+                          `byte_code', `display' (redisplay), `extents', `gc'
+                          (garbage collection), `glyphs', `malloc' (memory
+                          allocation), `structures' (C structures), `text'
+                          (text handling and conversion), `types' (correct
+                          Lisp-object type for type-specific operations).
+                          `all' or `none' can be given to set all or no
+                          classes, respectively. Any of the classes can be
+                          prefixed with `no' to turn the class off. A
+                          comma-separated list of classes can also be given.
+                          For example, `all,nogc' turns on all but
+                          garbage-collection-related checking. Omitting any
+                          argument or specifying just `yes' is the same as
+                          `all'.
   --with-assertions       Compile in runtime assertions.
   --with-memory-usage-stats
                           Enable LISP memory usage API.
@@ -5152,6 +5176,9 @@ if test "${with_debug+set}" = set; then
   withval="$with_debug"
 
 fi;
+if test "$with_error_checking" = "yes"; then
+  with_error_checking=all
+fi
 _error_checking_notfirst=""
 _error_checking_byte_code_default=""
 _error_checking_display_default=""
@@ -8935,6 +8962,24 @@ test -n "$with_xemacs_compiler" && XEMACS_CC="$with_xemacs_compiler"
 : ${XEMACS_CC:="$CC"}
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are using g++" >&5
+$as_echo_n "checking whether we are using g++... " >&6; }
+
+XEMACS_CC_GPP=no
+case "$XEMACS_CC" in
+  *g++* ) XEMACS_CC_GPP=yes ;;
+esac
+
+if test "$XEMACS_CC_GPP" = "no" -a "$GCC" = "yes"; then
+  case "`$XEMACS_CC --version`" in
+    g++* ) XEMACS_CC_GPP=yes ;;
+  esac
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $XEMACS_CC_GPP" >&5
+$as_echo "$XEMACS_CC_GPP" >&6; }
+
+
 test -n "$CPP" -a -d "$CPP" && CPP=
 
 test -n "$NON_GNU_CPP" -a "$GCC" != "yes" -a -z "$CPP" && CPP="$NON_GNU_CPP"
@@ -9463,26 +9508,15 @@ fi
 
 xemacs_cc_cc_mismatch=no
 if test "$CC" != "$XEMACS_CC"; then
-  case "$XEMACS_CC" in
-  *g++* )
-    if test "$GCC" != "yes"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&5
+  if test "$XEMACS_CC_GPP" = "yes" -a "$GCC" != "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&5
 $as_echo "$as_me: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&2;}
-      xemacs_cc_cc_mismatch=yes
-    fi
-    ;;
-  esac
-  if test -n "$GCC"; then
-    case $XEMACS_CC in
-    *g++* )
-      # it's as expected, do nothing
-      ;;
-    * )
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&5
+    xemacs_cc_cc_mismatch=yes
+  fi
+  if test -n "$GCC" -a "$XEMACS_CC_GPP" != "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&5
 $as_echo "$as_me: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&2;}
-      xemacs_cc_cc_mismatch=yes
-      ;;
-    esac
+    xemacs_cc_cc_mismatch=yes
   fi
   fi
 
@@ -9505,10 +9539,10 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for preferred optimization flags" >&5
 $as_echo_n "checking for preferred optimization flags... " >&6; }
-if test "$with_optimization" = "yes" ; then
-  if test "$cflags_optimization_specified" = "no"; then
+if test "$cflags_optimization_specified" = "no"; then
+  if test "$with_optimization" = "yes" ; then
             if test "$GCC" = "yes"; then
-      with_cflags_optimization="-O3"
+                                    with_cflags_optimization="-O3 -fno-strict-aliasing"
     elif test "$__SUNPRO_C" = "yes"; then
       case "$opsys" in
         sol2    ) with_cflags_optimization="-xO4" ;;
@@ -9521,9 +9555,9 @@ if test "$with_optimization" = "yes" ; then
       with_cflags_optimization="-O3 -Ob2"
         else
       with_cflags_optimization="-O" ;    fi
+  elif test "$XEMACS_CC_GPP" = "yes" ; then
+                with_cflags_optimization="-fno-strict-aliasing"
   fi
-else
-  with_cflags_optimization=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_cflags_optimization}" >&5
@@ -9566,7 +9600,7 @@ if test "$cflags_warning_specified" = "no"; then
     test "$__GCC" -ge 3 && with_cflags_warning="$with_cflags_warning -Wpacked"
             test "$have_glibc" != "yes" && \
       with_cflags_warning="$with_cflags_warning -Wpointer-arith"
-                                        if test "$with_xemacs_compiler" = "g++"; then
+                                        if test "$XEMACS_CC_GPP" = "yes"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
     elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
@@ -13909,7 +13943,7 @@ fi
 
 
 
-if test "$with_xemacs_compiler" = "g++"; then
+if test "$XEMACS_CC_GPP" = "yes"; then
   LIBSTDCPP=-lstdc++
 else
   LIBSTDCPP=
@@ -14581,10 +14615,17 @@ $as_echo "${ld_shlibs}" >&6; }
 fi # End of if cc_produces_so = no
 
 
-if test "$xe_gnu_ld" = yes; then
-  if test "$ld_shlibs" = yes; then
+if test "$xe_gnu_ld" = yes -a "$ld_shlibs" = yes; then
+  case "$xehost_os" in
+  *cygwin* | *mingw* )
+    # -export-all-symbols is the PE equivalent of ELF-specific -export-dynamic
+    ld_dynamic_link_flags="${wl}-export-all-symbols"
+    ;;
+
+  *)
     ld_dynamic_link_flags="${wl}-export-dynamic"
-  fi
+    ;;
+  esac
 fi
 
 if test -z "$ld_dynamic_link_flags"; then
@@ -20315,7 +20356,7 @@ if test "$with_modules" = "no"; then
 fi
 
 
-internal_makefile_list="Makefile.in"
+internal_makefile_list="Makefile.in src/.gdbinit.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
@@ -20362,10 +20403,6 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/etc/gdbinit.in"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
-fi
 
 if test -f "$srcdir/etc/dbxrc.in"; then
   test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
@@ -20673,41 +20710,41 @@ elif test "$with_debug_malloc"  = "yes"; then $as_echo "#define USE_DEBUG_MALLOC
 					      $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
 
 fi
-test "$GCC"                = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
+test "$GCC"                  = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
 
-test "$with_xemacs_compiler" = "g++" && $as_echo "#define USE_GPLUSPLUS 1" >>confdefs.h
+test "$XEMACS_CC_GPP"        = "yes" && $as_echo "#define USE_GPLUSPLUS 1" >>confdefs.h
 
 test "$with_external_widget" = "yes" && $as_echo "#define EXTERNAL_WIDGET 1" >>confdefs.h
 
-test "$with_kkcc"        = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
+test "$with_kkcc"            = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
 
-test "$with_newgc"       = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
+test "$with_newgc"           = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
 
-test "$have_vdb_posix"     = "yes" && $as_echo "#define VDB_POSIX 1" >>confdefs.h
+test "$have_vdb_posix"       = "yes" && $as_echo "#define VDB_POSIX 1" >>confdefs.h
 
-test "$have_vdb_fake"      = "yes" && $as_echo "#define VDB_FAKE 1" >>confdefs.h
+test "$have_vdb_fake"        = "yes" && $as_echo "#define VDB_FAKE 1" >>confdefs.h
 
-test "$with_quick_build" = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
+test "$with_quick_build"     = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
 
-test "$with_purify"        = "yes" && $as_echo "#define PURIFY 1" >>confdefs.h
+test "$with_purify"          = "yes" && $as_echo "#define PURIFY 1" >>confdefs.h
 
-test "$with_quantify"      = "yes" && $as_echo "#define QUANTIFY 1" >>confdefs.h
+test "$with_quantify"        = "yes" && $as_echo "#define QUANTIFY 1" >>confdefs.h
 
-test "$with_valgrind"      = "yes" && $as_echo "#define USE_VALGRIND 1" >>confdefs.h
+test "$with_valgrind"        = "yes" && $as_echo "#define USE_VALGRIND 1" >>confdefs.h
 
-test "$with_pop"           = "yes" && $as_echo "#define MAIL_USE_POP 1" >>confdefs.h
+test "$with_pop"             = "yes" && $as_echo "#define MAIL_USE_POP 1" >>confdefs.h
 
-test "$with_kerberos"      = "yes" && $as_echo "#define KERBEROS 1" >>confdefs.h
+test "$with_kerberos"        = "yes" && $as_echo "#define KERBEROS 1" >>confdefs.h
 
-test "$with_hesiod"        = "yes" && $as_echo "#define HESIOD 1" >>confdefs.h
+test "$with_hesiod"          = "yes" && $as_echo "#define HESIOD 1" >>confdefs.h
 
-test "$with_union_type"  = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
+test "$with_union_type"      = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
 
-test "$with_pdump"       = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
+test "$with_pdump"           = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
 
-test "$with_dump_in_exec" = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
+test "$with_dump_in_exec"    = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
 
-test "$with_ipv6_cname"    = "yes" && $as_echo "#define IPV6_CANONICALIZE 1" >>confdefs.h
+test "$with_ipv6_cname"      = "yes" && $as_echo "#define IPV6_CANONICALIZE 1" >>confdefs.h
 
 
 
@@ -20832,7 +20869,7 @@ case "$with_menubars" in
 esac
 if test "$with_xft_menubars" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in menubars."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
@@ -20861,12 +20898,12 @@ case "$with_widgets" in
 esac
 if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 if test "$with_xft_gauges" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
-  echo "      WARNING: This feature will be replaced with a face."
-  echo "      WARNING: This feature not yet implemented; setting ignored."
+  echo "      WARNING: This Xft feature will be replaced with a face."
+  echo "      WARNING: This Xft feature not yet implemented; setting ignored."
 fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."

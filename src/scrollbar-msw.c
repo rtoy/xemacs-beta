@@ -101,7 +101,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
       ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
       assert (!NILP (ptr));
       DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
-      xfree (sb->scrollbar_data, void *);
+      xfree (sb->scrollbar_data);
     }
 }
 
