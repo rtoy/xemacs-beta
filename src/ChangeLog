@@ -10,6 +10,35 @@
 
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	Cast pointer when storing value to avoid problems because some
+	store vars are Extbyte * and some are LPTSTR.
+
+2010-02-05  Jerry James  <james@xemacs.org>
+
+	* s/sco7.h: Add copyright and license header with the permission of
+	Ron Record, the author.
+
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* depend:
+	Regenerate.
+	* make-src-depend (PrintPatternDeps):
+	Remove refs to xgccache, no longer existent.
+	
+	* select-gtk.c (THIS_IS_GTK):
+	* select-gtk.c (gtk_decline_selection_request):
+	* select-x.c (THIS_IS_X):
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	Rename PROCESSING_X_CODE to THIS_IS_X and PROCESSING_GTK_CODE to
+	THIS_SI_GTK for consistency with other xlike code.
+	
+	Rename select-xlike-inc.c from select-common.h, in keeping with
+	xlike terminology.
+
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
 	* console-msw.c (write_string_to_mswindows_debugging_output):
 	* console-msw.c (Fmswindows_message_box):
 	* console-x.c (x_perhaps_init_unseen_key_defaults):

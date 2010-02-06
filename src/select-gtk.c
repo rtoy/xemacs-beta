@@ -82,9 +82,9 @@ atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
   }
 }
 
-#define PROCESSING_GTK_CODE
-#include "select-common.h"
-#undef PROCESSING_GTK_CODE
+#define THIS_IS_GTK
+#include "select-xlike-inc.c"
+#undef THIS_IS_GTK
 
 
 /* Set the selection data to GDK_NONE and NULL data, meaning we were
