@@ -1,3 +1,9 @@
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	Cast pointer when storing value to avoid problems because some
+	store vars are Extbyte * and some are LPTSTR.
+
 2010-02-05  Jerry James  <james@xemacs.org>
 
 	* s/sco7.h: Add copyright and license header with the permission of
