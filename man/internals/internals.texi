@@ -3183,7 +3183,7 @@ The following table contains cross-references from each module in XEmacs
 @item @file{scrollbar.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{scrollbar.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{search.c} @tab @ref{Modules for Standard Editing Operations}.
-@item @file{select-common.h} @tab
+@item @file{select-xlike-inc.c} @tab
 @item @file{select-gtk.c} @tab
 @item @file{select-msw.c} @tab @ref{Modules for Interfacing with X Windows}.
 @item @file{select-x.c} @tab @ref{Modules for Interfacing with X Windows}.
@@ -3229,8 +3229,8 @@ The following table contains cross-references from each module in XEmacs
 @item @file{tests.c} @tab
 @item @file{text.c} @tab
 @item @file{text.h} @tab
-@item @file{toolbar-common.c} @tab
-@item @file{toolbar-common.h} @tab
+@item @file{toolbar-xlike.c} @tab
+@item @file{toolbar-xlike.h} @tab
 @item @file{toolbar-gtk.c} @tab
 @item @file{toolbar-msw.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{toolbar-x.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
@@ -12901,19 +12901,18 @@ many types of conversions involving raw data and/or Lisp strings,
 especially when the output is an @code{alloca()}ed string. (When the
 destination is a Lisp string, there are other functions that should be
 used instead -- @code{build_extstring()} and @code{make_extstring()},
-for example.) The convenience macros are of two types -- the older kind
-that store the result into a specified variable, and the newer kind that
-return the result.  The newer kind of macros don't exist when the output
-is sized data, because that would have two return values.  NOTE: All
-convenience macros are ultimately defined in terms of
-@code{TO_EXTERNAL_FORMAT} and @code{TO_INTERNAL_FORMAT}.  Thus, any
-comments above about the workings of these macros also apply to all
-convenience macros.
+for example.) Most convenience macros return the result as the return
+value.  However, when two values need to be returned (that is, the
+output is sized data), both values are stored into variables that are
+passed into the macros as parameters.  NOTE: All convenience macros
+are ultimately defined in terms of @code{TO_EXTERNAL_FORMAT} and
+@code{TO_INTERNAL_FORMAT}.  Thus, any comments above about the
+workings of these macros also apply to all convenience macros.
 
-A typical old-style convenience macro is
+A typical convenience macro is
 
 @example
-  C_STRING_TO_EXTERNAL (in, out, codesys);
+  out = ITEXT_TO_EXTERNAL (in, codesys);
 @end example
 
 This is equivalent to
@@ -12922,14 +12921,13 @@ This is equivalent to
   TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys);
 @end example
 
-but is easier to write and somewhat clearer, since it clearly identifies
-the arguments without the clutter of having the preprocessor types mixed
-in.
-
-The new-style equivalent is @code{NEW_C_STRING_TO_EXTERNAL (src,
-codesys)}, which @emph{returns} the converted data (still in
-@code{alloca()} space).  This is far more convenient for most
-operations.
+but is easier to write and somewhat clearer, since it clearly
+identifies the arguments without the clutter of having the
+preprocessor types mixed in.  Furthermore, it @emph{returns} the
+converted data (still in @code{alloca()} space) rather than
+@emph{storing} it, which is far more convenient for most operations
+as there is no need to declare an extra temporary variable to hold
+the return value.
 
 @node General Guidelines for Writing Mule-Aware Code, An Example of Mule-Aware Code, Conversion to and from External Data, Coding for Mule
 @subsection General Guidelines for Writing Mule-Aware Code
@@ -12948,9 +12946,69 @@ mistake.  If you want to manipulate an Emacs character from ``C'', use
 format, use @code{Ibyte}.  If you want a Lisp-visible character, use a
 @code{Lisp_Object} and @code{make_char}.  If you want a pointer to move
 through the internal text, use @code{Ibyte *}.  Also note that you
-almost certainly do not need @code{Ichar *}.  Other typedefs to clarify
-the use of @code{char} are @code{Char_ASCII}, @code{Char_Binary},
-@code{UChar_Binary}, and @code{CIbyte}.
+almost certainly do not need @code{Ichar *}.
+
+All uses of @code{char} should be replaced with one of the following:
+
+@table @code
+@item Ibyte
+Pointer to internally-formatted text.  The data representing the text
+in a buffer is logically a set of Ibytes.
+@item CIbyte
+Used when you are working with internal data but for whatever reason
+need to have it declared a @code{char *}.  Examples are function arguments
+whose values are most commonly literal strings, or where you have to
+apply a stdlib string function to internal data.
+
+In general, you should avoid this where possible and use Ascbyte if the
+text is just ASCII (e.g. string literals) or otherwise Ibyte, for
+consistency.  For example, the new Mule workspace contains Ibyte
+versions of the stdlib string functions.
+@item Extbyte, UExtbyte
+Pointer to text in some external format, which can be defined as all
+formats other than the internal one.  The data representing a string
+in "external" format (binary or any external encoding) is logically a
+set of Extbytes.  Extbyte is guaranteed to be just a char, so for
+example strlen (Extbyte *) is OK.  Extbyte is only a documentation
+device for referring to external text.
+@item Ascbyte, UAscbyte
+pure ASCII text, consisting of bytesf in a string in entirely US-ASCII
+format: (Nothing outside the range 00 - 7F).
+@item Binbyte, CBinbyte, SBinbyte
+Binary data that is not meant to be interpreted as text.
+@item Rawbyte, CRawbyte
+General data in memory, where we don't care about whether it's text or
+binary; often used when computing memory-based/byte-based offsets of
+pointers.  In general, there should be no manipulation of the memory
+pointed to by these pointers other than just copying it around.
+@item Boolbyte
+A byte used to represent a boolean value: 0 or 1.
+Normally use plain Boolint, and only use Boolbyte to save space.
+@item Bitbyte
+A byte composed of bitfields.  Hardly ever used.
+@item Chbyte, UChbyte, SChbyte
+A no-semantics @code{char}.  Used (pretty-much) ONLY for casting
+arguments to functions accepting a @code{char *}, @code{unsigned char
+*}, etc. where the other types don't exactly apply and what you are
+logically concerned with is the type of the function's argument and
+not its semantics.
+
+DO NOT DO NOT DO NOT DO NOT use this as a sloppy replacement for one of
+the other types.  If you're not using this as part of casting an
+argument to a function call, and you're not Ben Wing, you're using it
+wrong.  Go find another one of the types.
+@end table
+
+Note the significance of the prefixed versions of the above types:
+
+@table @code
+@item U
+@code{unsigned char}
+@item S
+@code{signed char}
+@item C
+plain @code{char}
+@end table
 
 @item Be careful not to confuse @code{Charcount}, @code{Bytecount}, @code{Charbpos} and @code{Bytebpos}.
 The whole point of using different types is to avoid confusion about the
