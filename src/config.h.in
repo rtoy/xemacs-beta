@@ -1,6 +1,6 @@
 /* XEmacs site configuration template file.  -*- C -*-
    Copyright (C) 1986, 1991-1994, 1998, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -534,6 +534,8 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_DBM
 /* Full #include file path for GDBM's or platforms ndbm.h */
 #undef NDBM_H_FILE
+/* Can we trust the prototypes in ndbm.h?  If not, we need to declare our own */
+#undef TRUST_NDBM_H_PROTOTYPES
 
 /* Define to 1 if the system has the type `u_int8_t'. */
 #undef HAVE_U_INT8_T

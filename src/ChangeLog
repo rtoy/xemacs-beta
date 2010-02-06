@@ -1,3 +1,13 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in: Add undef for TRUST_NDBM_H_PROTOTYPES.
+	* database.c:
+	* database.c (struct):
+	Use TRUST_NDBM_H_PROTOTYPES to determine whether to include ndbm.h
+	or to specify our own prototypes, in place of CYGWIN_HEADERS (or
+	more generally, any random list of systems).
+	* depend: Regenerate.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* console-msw.c (write_string_to_mswindows_debugging_output):
