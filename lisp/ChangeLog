@@ -1,3 +1,9 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (for):
+	Convert file to utf-8.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* lisp-mode.el: Finish documenting `lisp-indent-specform',
