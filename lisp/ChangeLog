@@ -1,5 +1,11 @@
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
+	* unicode.el:
+	* unicode.el (for):
+	Convert file to utf-8.
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
 	* code-init.el:
 	* code-init.el (set-eol-detection):
 	* code-init.el (coding-system-current-system-configuration):
