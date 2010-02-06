@@ -1,4 +1,4 @@
-;;; unicode.el --- Unicode support -*- coding: iso-2022-7bit; -*-
+;;; unicode.el --- Unicode support -*- coding: utf-8; -*-
 
 ;; Copyright (C) 2001, 2002 Ben Wing.
 
@@ -424,14 +424,14 @@ Standard encoding for representing UTF-8 under MS Windows."
        (#x2534 ?|) ;; U+2534 BOX DRAWINGS LIGHT UP AND HORIZONTAL
        (#x253c ?|) ;; U+253C BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
        (#x02da ?^) ;; U+02DA RING ABOVE
-       (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?,A)(B
+       (#x2122 ?\xa9) ;; U+2122 TRADE MARK SIGN, ?©
 
-       (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?,Af(B
-       (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?,Af(B
+       (#x0132 ?\xe6) ;; U+0132 LATIN CAPITAL LIGATURE IJ, ?æ
+       (#x013f ?\xe6) ;; U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT, ?æ
 
-       (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?,Af(B
-       (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?,Af(B
-       (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?,Af(B
+       (#x0133 ?\xe6) ;; U+0133 LATIN SMALL LIGATURE IJ, ?æ
+       (#x0140 ?\xe6) ;; U+0140 LATIN SMALL LETTER L WITH MIDDLE DOT, ?æ
+       (#x0149 ?\xe6) ;; U+0149 LATIN SMALL LETTER N PRECEDED BY APOSTROPH,?æ
 
        (#x2194 ?|) ;; U+2194 LEFT RIGHT ARROW
        (#x2660 ?*) ;; U+2660 BLACK SPADE SUIT
@@ -440,12 +440,12 @@ Standard encoding for representing UTF-8 under MS Windows."
        (#x2592 ?|) ;; U+2592 MEDIUM SHADE
        (#x2195 ?|) ;; U+2195 UP DOWN ARROW
 
-       (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?,A9(B
-       (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?,A>(B
-       (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?,A>(B
-       (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?,A>(B
-       (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?,A>(B
-       (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A>(B
+       (#x2113 ?\xb9) ;; U+2113 SCRIPT SMALL L, ?¹
+       (#x215b ?\xbe) ;; U+215B VULGAR FRACTION ONE EIGHTH, ?¾
+       (#x215c ?\xbe) ;; U+215C VULGAR FRACTION THREE EIGHTHS, ?¾
+       (#x215d ?\xbe) ;; U+215D VULGAR FRACTION FIVE EIGHTHS, ?¾
+       (#x215e ?\xbe) ;; U+215E VULGAR FRACTION SEVEN EIGHTHS, ?¾
+       (#x207f ?\xbe) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?¾
   
        ;; These are not in WGL 4, but are IPA characters that should not
        ;; be double width. They are the only IPA characters that both
@@ -455,7 +455,7 @@ Standard encoding for representing UTF-8 under MS Windows."
        (#x2197 ?|) ;; U+2197 NORTH EAST ARROW
        (#x2199 ?|) ;; U+2199 SOUTH WEST ARROW
        (#x2191 ?|) ;; U+2191 UPWARDS ARROW
-       (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?,A9(B
+       (#x207f ?\xb9)) ;; U+207F SUPERSCRIPT LATIN SMALL LETTER N, ?¹
   with decoded = nil
   with syntax-table = (standard-syntax-table)
   initially (unless (featurep 'mule) (return))

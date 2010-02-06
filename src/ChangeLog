@@ -1,3 +1,8 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* mule-wnnfns.c:
+	Convert file to utf-8.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
