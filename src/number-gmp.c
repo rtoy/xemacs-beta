@@ -101,7 +101,7 @@ static void *gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
 
 static void gmp_free (void *ptr, size_t UNUSED (size))
 {
-  xfree (ptr, void *);
+  xfree (ptr);
 }
 
 void

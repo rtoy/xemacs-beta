@@ -138,36 +138,19 @@ Lisp_Object QSin_expand_file_name;
 
 EXFUN (Frunning_temacs_p, 0);
 
-/* DATA can be anything acceptable to signal_error ().
- */
-
-DOESNT_RETURN
-report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const CIbyte *string, Lisp_Object data)
-{
-  struct gcpro gcpro1;
-  Lisp_Object errdata = build_error_data (NULL, data);
-
-  GCPRO1 (errdata);
-  errdata = Fcons (build_msg_string (string),
-		   Fcons (oserrmess, errdata));
-  signal_error_1 (errtype, errdata);
-  /* UNGCPRO; not reached */
-}
-
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
-			 const CIbyte *string, Lisp_Object data)
+			 const Ascbyte *reason, Lisp_Object data)
 {
-  report_file_type_error (errtype, lisp_strerror (errno), string, data);
+  signal_error_2 (errtype, reason, lisp_strerror (errno), data);
 }
 
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (const CIbyte *string, Lisp_Object data)
+report_file_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qfile_error, string, data);
+  report_error_with_errno (Qfile_error, reason, data);
 }
 
 
@@ -182,9 +165,9 @@ lisp_strerror (int errnum)
     {
       Ibyte ffff[99];
       qxesprintf (ffff, "Unknown error %d", errnum);
-      return build_intstring (ffff);
+      return build_istring (ffff);
     }
-  return build_ext_string (ret, Qstrerror_encoding);
+  return build_extstring (ret, Qstrerror_encoding);
 }
 
 static Lisp_Object
@@ -416,7 +399,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	  return Qnil;
 	}
       if (wd)
-	xfree (wd, Ibyte *);
+	xfree (wd);
     }
 
 #if 0 /* No! This screws up efs, which calls file-name-directory on URL's
@@ -429,7 +412,7 @@ Given a Unix syntax file name, returns a string ending in slash.
     qxestrncpy (newbeg, beg, len);
     newbeg[len] = '\0';
     newbeg = mswindows_canonicalize_filename (newbeg);
-    return build_intstring (newbeg);
+    return build_istring (newbeg);
   }
 #endif
 #endif /* not WIN32_NATIVE */
@@ -549,7 +532,7 @@ except for (file-name-as-directory \"\") => \"./\".
   buf = alloca_ibytes (XSTRING_LENGTH (filename) + 10);
   file_name_as_directory (buf, XSTRING_DATA (filename));
   if (qxestrcmp (buf, XSTRING_DATA (filename)))
-    return build_intstring (buf);
+    return build_istring (buf);
   else
     return filename;
 }
@@ -606,7 +589,7 @@ In Unix-syntax, this function just removes the final slash.
     return call2_check_string (handler, Qdirectory_file_name, directory);
   buf = alloca_ibytes (XSTRING_LENGTH (directory) + 20);
   directory_file_name (XSTRING_DATA (directory), buf);
-  return build_intstring (buf);
+  return build_istring (buf);
 }
 
 /* Fmake_temp_name used to be a simple wrapper around mktemp(), but it
@@ -787,7 +770,7 @@ See also the function `substitute-in-file-name'.
   if (NILP (default_directory))
     default_directory = current_buffer->directory;
   if (! STRINGP (default_directory))
-    default_directory = build_string (DEFAULT_DIRECTORY_FALLBACK);
+    default_directory = build_ascstring (DEFAULT_DIRECTORY_FALLBACK);
 
   if (!NILP (default_directory))
     {
@@ -946,7 +929,7 @@ See also the function `substitute-in-file-name'.
 		{
 		  newnm = mswindows_canonicalize_filename (nm);
 		  if (qxestrcmp (newnm, XSTRING_DATA (name)) != 0)
-		    name = build_intstring (newnm);
+		    name = build_istring (newnm);
 		}
 	      else
 		{
@@ -954,12 +937,12 @@ See also the function `substitute-in-file-name'.
 		  newnm = mswindows_canonicalize_filename (nm - 2);
 		  if (qxestrcmp (newnm, XSTRING_DATA (name)) != 0)
 		    {
-		      name = build_intstring (newnm);
+		      name = build_istring (newnm);
 		      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
 		      XSTRING_DATA (name)[1] = ':';
 		    }
 		}
-	      xfree (newnm, Ibyte *);
+	      xfree (newnm);
 	      RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
 	    }
 #endif /* WIN32_FILENAMES */
@@ -967,7 +950,7 @@ See also the function `substitute-in-file-name'.
 	  if (nm == XSTRING_DATA (name))
 	    RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
 	  RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
-					 build_intstring (nm));
+					 build_istring (nm));
 #endif /* not WIN32_NATIVE */
 	}
     }
@@ -1072,7 +1055,7 @@ See also the function `substitute-in-file-name'.
 	  if (newcwd)
 	    {
 	      IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-	      xfree (newcwd, Ibyte *);
+	      xfree (newcwd);
 	    }
 	  else
 	    newdir = NULL;
@@ -1158,7 +1141,7 @@ See also the function `substitute-in-file-name'.
 	      if (newcwd)
 		{
 		  IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-		  xfree (newcwd, Ibyte *);
+		  xfree (newcwd);
 		}
 	      else
 #endif
@@ -1332,8 +1315,8 @@ See also the function `substitute-in-file-name'.
 
   {
     Ibyte *newtarget = mswindows_canonicalize_filename (target);
-    Lisp_Object result = build_intstring (newtarget);
-    xfree (newtarget, Ibyte *);
+    Lisp_Object result = build_istring (newtarget);
+    xfree (newtarget);
 
     RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, result);
   }
@@ -1761,7 +1744,7 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
    If the file does not exist, STATPTR->st_mode is set to 0.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, const CIbyte *querystring,
+barf_or_query_if_file_exists (Lisp_Object absname, const Ascbyte *querystring,
 			      int interactive, struct stat *statptr)
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
@@ -1780,8 +1763,8 @@ barf_or_query_if_file_exists (Lisp_Object absname, const CIbyte *querystring,
 
 	  prompt =
 	    emacs_sprintf_string
-	      (CGETTEXT ("File %s already exists; %s anyway? "),
-	       XSTRING_DATA (absname), CGETTEXT (querystring));
+	      (GETTEXT ("File %s already exists; %s anyway? "),
+	       XSTRING_DATA (absname), GETTEXT (querystring));
 
 	  GCPRO1 (prompt);
 	  tem = call1 (Qyes_or_no_p, prompt);
@@ -2103,7 +2086,7 @@ This is what happens in interactive use with M-x.
       NGCPRO1 (*args);
       ngcpro1.nvars = 3;
       if (string_byte (newname, XSTRING_LENGTH (newname) - 1) != '/')
-	args[i++] = build_string ("/");
+	args[i++] = build_ascstring ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
       NUNGCPRO;
@@ -2270,8 +2253,8 @@ Open a network connection to PATH using LOGIN as the login string.
   /* netunam, being a strange-o system call only used once, is not
      encapsulated. */
 
-  LISP_STRING_TO_EXTERNAL (path, path_ext, Qfile_name);
-  LISP_STRING_TO_EXTERNAL (login, login_ext, Quser_name_encoding);
+  LISP_PATHNAME_CONVERT_OUT (path, path_ext);
+  login_ext = LISP_STRING_TO_EXTERNAL (login, Quser_name_encoding);
 
   netresult = netunam (path_ext, login_ext);
 
@@ -2569,16 +2552,16 @@ Otherwise returns nil.
 			      buf, bufsize);
       if (valsize < bufsize) break;
       /* Buffer was not long enough */
-      xfree (buf, Ibyte *);
+      xfree (buf);
       bufsize *= 2;
     }
   if (valsize == -1)
     {
-      xfree (buf, Ibyte *);
+      xfree (buf);
       return Qnil;
     }
   val = make_string (buf, valsize);
-  xfree (buf, Ibyte *);
+  xfree (buf);
   return val;
 #elif defined (WIN32_NATIVE)
   if (mswindows_shortcuts_are_symlinks)
@@ -2607,8 +2590,8 @@ Otherwise returns nil.
       if (!fname)
 	return Qnil;
       {
-	Lisp_Object val = build_intstring (fname);
-	xfree (fname, Ibyte *);
+	Lisp_Object val = build_istring (fname);
+	xfree (fname);
 	return val;
       }
     }
@@ -3858,7 +3841,7 @@ Encrypt STRING using KEY.
 
   ecb_crypt (raw_key, encrypted_string, rounded_size,
 	     DES_ENCRYPT | DES_SW);
-  return make_ext_string (encrypted_string, rounded_size, Qbinary);
+  return make_extstring (encrypted_string, rounded_size, Qbinary);
 }
 
 DEFUN ("decrypt-string", Fdecrypt_string, 2, 2, 0, /*
@@ -3889,7 +3872,7 @@ Decrypt STRING using KEY.
 
 
   ecb_crypt (raw_key, decrypted_string, string_size, D | DES_SW);
-  return make_ext_string (decrypted_string, string_size - 1, Qbinary);
+  return make_extstring (decrypted_string, string_size - 1, Qbinary);
 }
 #endif /* 0 */
 
@@ -4249,19 +4232,19 @@ Non-nil second argument means save only current buffer.
 		  const Extbyte *auto_save_file_name_ext;
 		  Bytecount auto_save_file_name_ext_len;
 
-		  TO_EXTERNAL_FORMAT (LISP_STRING, b->auto_save_file_name,
-				      ALLOCA, (auto_save_file_name_ext,
-					       auto_save_file_name_ext_len),
-				      Qescape_quoted);
+		  LISP_STRING_TO_SIZED_EXTERNAL (b->auto_save_file_name,
+						 auto_save_file_name_ext,
+						 auto_save_file_name_ext_len,
+						 Qescape_quoted);
 		  if (!NILP (b->filename))
 		    {
 		      const Extbyte *filename_ext;
 		      Bytecount filename_ext_len;
 
-		      TO_EXTERNAL_FORMAT (LISP_STRING, b->filename,
-					  ALLOCA, (filename_ext,
-						   filename_ext_len),
-					  Qescape_quoted);
+		      LISP_STRING_TO_SIZED_EXTERNAL (b->filename,
+						     filename_ext,
+						     filename_ext_len,
+						     Qescape_quoted);
 		      retry_write (listdesc, filename_ext, filename_ext_len);
 		    }
 		  retry_write (listdesc, "\n", 1);
@@ -4477,7 +4460,7 @@ void
 vars_of_fileio (void)
 {
   QSin_expand_file_name =
-    build_msg_string ("(in expand-file-name)");
+    build_defer_string ("(in expand-file-name)");
   staticpro (&QSin_expand_file_name);
 
   DEFVAR_LISP ("auto-save-file-format", &Vauto_save_file_format /*
@@ -4563,7 +4546,7 @@ Prefix for generating auto-save-list-file-name.
 Emacs's pid and the system name will be appended to
 this prefix to create a unique file name.
 */ );
-  Vauto_save_list_file_prefix = build_string ("~/.saves-");
+  Vauto_save_list_file_prefix = build_ascstring ("~/.saves-");
 
   DEFVAR_BOOL ("inhibit-auto-save-session", &inhibit_auto_save_session /*
 When non-nil, inhibit auto save list file creation.

@@ -158,7 +158,7 @@ init_user_info (void)
       && qxeLookupAccountSid (NULL, sidinfo.User.Sid, name, &length,
 			      domain, &dlength, &user_type))
     {
-      TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
+      the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
       /* Determine a reasonable uid value. */
       if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
 	{
@@ -202,7 +202,7 @@ init_user_info (void)
        are running under Windows 95), fallback to this. */
   else if (qxeGetUserName (name, &length))
     {
-      TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
+      the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
       if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
 	the_passwd.pw_uid = 0;
       else
@@ -223,7 +223,7 @@ init_user_info (void)
   DWORD length = UNLEN + 1;
   Extbyte name[MAX_XETCHAR_SIZE * (UNLEN + 1)];
   if (qxeGetUserName (name, &length))
-    TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
+    the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
   else
     the_passwd.pw_name = "unknown";
 #endif
@@ -301,7 +301,7 @@ get_long_basename (Ibyte *name)
     {
       Ibyte *fileint;
 
-      TSTR_TO_C_STRING_MALLOC (find_data.cFileName, fileint);
+      fileint = TSTR_TO_ITEXT_MALLOC (find_data.cFileName);
       FindClose (dir_handle);
       return fileint;
     }
@@ -338,16 +338,16 @@ mswindows_get_long_filename (Ibyte *name)
 	      *p++ = '\\';
 	      eicat_ch (o, '\\');
 	    }
-	  xfree (component, Ibyte *);
+	  xfree (component);
 	}
       else
 	{
-	  xfree (full, Ibyte *);
+	  xfree (full);
 	  return 0;
 	}
     }
 
-  xfree (full, Ibyte *);
+  xfree (full);
   return eicpyout_malloc (o, 0);
 }
 
@@ -377,7 +377,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
   DWORD cbData;
   Extbyte *keyext;
 
-  C_STRING_TO_TSTR (key, keyext);
+  keyext = ITEXT_TO_TSTR (key);
   
   /* Check both the current user and the local machine to see if 
      we have any resources.  */
@@ -395,7 +395,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 	return (lpvalue);
 
       if (lpvalue)
-	xfree (lpvalue, LPBYTE);
+	xfree (lpvalue);
 	
       RegCloseKey (hrootkey);
     } 
@@ -413,7 +413,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 	return (lpvalue);
 	
       if (lpvalue)
-	xfree (lpvalue, LPBYTE);
+	xfree (lpvalue);
 	
       RegCloseKey (hrootkey);
     } 
@@ -488,18 +488,18 @@ init_mswindows_environment (void)
 		cch = qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, 0);
 		buf = alloca_extbytes (cch * XETCHAR_SIZE);
 		qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, cch);
-		TSTR_TO_C_STRING (buf, envval);
+		envval = TSTR_TO_ITEXT (buf);
 		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 	    else if (dwType == REG_SZ)
 	      {
 		Ibyte *envval;
 
-		TSTR_TO_C_STRING (lpval, envval);
+		envval = TSTR_TO_ITEXT (lpval);
 		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 
-	    xfree (lpval, LPBYTE);
+	    xfree (lpval);
 	  }
       }
   }
@@ -635,7 +635,7 @@ get_cached_volume_information (Ibyte *root_dir)
       rootext = alloca_extbytes (nchars * XETCHAR_SIZE);
       if (!qxeGetCurrentDirectory (nchars, rootext))
 	return NULL;
-      TSTR_TO_C_STRING (rootext, default_root);
+      default_root = TSTR_TO_ITEXT (rootext);
       parse_root (default_root, &root_dir);
       *root_dir = 0;
       root_dir = default_root;
@@ -705,15 +705,15 @@ get_cached_volume_information (Ibyte *root_dir)
 	}
       else
 	{
-	  xfree (info->name, Ibyte *);
-	  xfree (info->type, Ibyte *);
+	  xfree (info->name);
+	  xfree (info->type);
 	}
 
-      TSTR_TO_C_STRING_MALLOC (name, info->name);
+      info->name = TSTR_TO_ITEXT_MALLOC (name);
       info->serialnum = serialnum;
       info->maxcomp = maxcomp;
       info->flags = flags;
-      TSTR_TO_C_STRING_MALLOC (type, info->type);
+      info->type = TSTR_TO_ITEXT_MALLOC (type);
       info->timestamp = GetTickCount ();
     }
 
@@ -828,7 +828,7 @@ mswindows_opendir (const Ibyte *filename)
     return NULL;
 
   if (dir_pathname)
-    xfree (dir_pathname, Ibyte *);
+    xfree (dir_pathname);
   dir_pathname = qxestrdup (filename);
 
   return dirp;
@@ -850,7 +850,7 @@ mswindows_closedir (DIR *dirp)
       retval = close_unc_volume (wnet_enum_handle);
       wnet_enum_handle = INVALID_HANDLE_VALUE;
     }
-  xfree (dirp, DIR *);
+  xfree (dirp);
 
   return retval;
 }
@@ -885,13 +885,13 @@ mswindows_readdir (DIR *UNUSED (dirp))
 
       if (dir_find_handle == INVALID_HANDLE_VALUE)
 	return NULL;
-      TSTR_TO_C_STRING (dir_find_data.cFileName, val);
+      val = TSTR_TO_ITEXT (dir_find_data.cFileName);
     }
   else
     {
       if (!qxeFindNextFile (dir_find_handle, &dir_find_data))
 	return NULL;
-      TSTR_TO_C_STRING (dir_find_data.cFileName, val);
+      val = TSTR_TO_ITEXT (dir_find_data.cFileName);
     }
   
   /* XEmacs never uses this value, so don't bother making it match
@@ -925,7 +925,7 @@ mswindows_readdir (DIR *UNUSED (dirp))
 	    resolved = mswindows_read_link (eidata (linkname));
 	    if (resolved)
 	      {
-		xfree (resolved, Ibyte *);
+		xfree (resolved);
 		len -= 4;
 		val[len] = '\0';
 	      }
@@ -934,7 +934,7 @@ mswindows_readdir (DIR *UNUSED (dirp))
 
     eicpy_rawz (found, val);
     if (need_to_free)
-      xfree (val, Ibyte *);
+      xfree (val);
 
     if (!NILP (Vmswindows_downcase_file_names))
       eilwr (found);
@@ -998,7 +998,7 @@ read_unc_volume (HANDLE UNUSED (henum))
     return NULL;
 
   /* WNetEnumResource returns \\resource\share...skip forward to "share". */
-  TSTR_TO_C_STRING (((LPNETRESOURCEW) buf)->lpRemoteName, ptr);
+  ptr = TSTR_TO_ITEXT (((LPNETRESOURCEW) buf)->lpRemoteName);
   INC_IBYTEPTR (ptr);
   INC_IBYTEPTR (ptr);
   while (*ptr && !IS_DIRECTORY_SEP (itext_ichar (ptr)))
@@ -1564,7 +1564,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
 	qxestrcat (name, (Ibyte *) "\\");
       /* File has already been resolved and we don't want to do it again
 	 in case of lstat() */
-      C_STRING_TO_TSTR (name, nameext);
+      nameext = ITEXT_TO_TSTR (name);
       if (qxeGetDriveType (nameext) < 2)
 	{
 	  SetErrorMode (errm);
@@ -1605,7 +1605,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
 	}
       else
 	{
-	  C_STRING_TO_TSTR (name, nameext);
+	  nameext = ITEXT_TO_TSTR (name);
 	  fh = qxeFindFirstFile (nameext, &wfd);
 	  if (fh == INVALID_HANDLE_VALUE)
 	    {
@@ -1630,7 +1630,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
       if (!NILP (Vmswindows_get_true_file_attributes))
 	/* File has already been resolved and we don't want to do it again
 	   in case of lstat() */
-	C_STRING_TO_TSTR (name, nameext);
+	nameext = ITEXT_TO_TSTR (name);
       if (!NILP (Vmswindows_get_true_file_attributes)
 	  /* No access rights required to get info.  */
 	  && (fh = qxeCreateFile (nameext, 0, 0, NULL, OPEN_EXISTING, 0, NULL))
@@ -1690,7 +1690,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
 	      Ibyte *resolved = mswindows_read_link (name);
 	      if (resolved)
 		{
-		  xfree (resolved, Ibyte *);
+		  xfree (resolved);
 		  buf->st_mode = S_IFLNK;
 		}
 	    }
@@ -1841,8 +1841,8 @@ mswindows_getdcwd (int drivelet)
   else
     cwdext = _getdcwd (drivelet, NULL, 0);
   if (cwdext == NULL) return NULL;
-  TSTR_TO_C_STRING_MALLOC (cwdext, cwd);
-  xfree (cwdext, Extbyte *);
+  cwd = TSTR_TO_ITEXT_MALLOC (cwdext);
+  xfree (cwdext);
   return cwd;
 }
 
@@ -2052,7 +2052,7 @@ mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
 		(Extbyte *) RVA_TO_PTR (imports->Name, section, executable);
 	      Ibyte *dllname;
 
-	      EXTERNAL_TO_C_STRING (dllname_ext, dllname, Qbinary);
+	      dllname = EXTERNAL_TO_ITEXT (dllname_ext, Qbinary);
 
 	      /* The exact name of the cygwin dll has changed with
 		 various releases, but hopefully this will be reasonably
@@ -2106,10 +2106,10 @@ All path elements in FILENAME are converted to their short names.
 			   sizeof (shortname) / XETCHAR_SIZE) == 0)
     return Qnil;
 
-  TSTR_TO_C_STRING (shortname, shortint);
+  shortint = TSTR_TO_ITEXT (shortname);
   MSWINDOWS_NORMALIZE_FILENAME (shortint);
 
-  return build_intstring (shortint);
+  return build_istring (shortint);
 }
 
 
@@ -2132,9 +2132,9 @@ All path elements in FILENAME are converted to their long names.
     return Qnil;
 
   canon = mswindows_canonicalize_filename (longname);
-  ret = build_intstring (canon);
-  xfree (canon, Ibyte *);
-  xfree (longname, Ibyte *);
+  ret = build_istring (canon);
+  xfree (canon);
+  xfree (longname);
   return ret;
 }
 

@@ -61,7 +61,7 @@ General changes for XEmacs:
       eval.c for a classification of various error functions.
 
    -- Constant strings occurring in source files need to get wrapped
-      in a call to GETTEXT (or if inside of a call to `build_string',
+      in a call to GETTEXT (or if inside of a call to `build_ascstring',
       change that function to `build_translated_string') if they don't
       occur in certain places where the I18N3 message snarfer will see
       them.  For a complete discussion of this, see the file

@@ -1007,9 +1007,7 @@ stuff_buffered_input (
       Bytecount count;
       Extbyte *p;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, stuffstring,
-			  ALLOCA, (p, count),
-			  Qkeyboard);
+      LISP_STRING_TO_SIZED_EXTERNAL (stuffstring, p, count, Qkeyboard);
       while (count-- > 0)
 	stuff_char (XCONSOLE (Vcontrolling_terminal), *p++);
       stuff_char (XCONSOLE (Vcontrolling_terminal), '\n');

@@ -81,17 +81,17 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (INTP (Vprint_length))
     last = min (len, XINT (Vprint_length));
-  write_c_string (printcharfun, "#*");
+  write_ascstring (printcharfun, "#*");
   for (i = 0; i < last; i++)
     {
       if (bit_vector_bit (v, i))
-	write_c_string (printcharfun, "1");
+	write_ascstring (printcharfun, "1");
       else
-	write_c_string (printcharfun, "0");
+	write_ascstring (printcharfun, "0");
     }
 
   if (last != len)
-    write_c_string (printcharfun, "...");
+    write_ascstring (printcharfun, "...");
 }
 
 static int
@@ -3357,7 +3357,7 @@ may be a list, a vector, a bit vector, or a string.
   EMACS_INT i;
   EMACS_INT nargs = len + len - 1;
 
-  if (len == 0) return build_string ("");
+  if (len == 0) return build_ascstring ("");
 
   args = alloca_array (Lisp_Object, nargs);
 
@@ -3468,14 +3468,14 @@ Lisp_Object
 add_suffix_to_symbol (Lisp_Object symbol, const Ascbyte *ascii_string)
 {
   return Fintern (concat2 (Fsymbol_name (symbol),
-			   build_string (ascii_string)),
+			   build_ascstring (ascii_string)),
 		  Qnil);
 }
 
 Lisp_Object
 add_prefix_to_symbol (const Ascbyte *ascii_string, Lisp_Object symbol)
 {
-  return Fintern (concat2 (build_string (ascii_string),
+  return Fintern (concat2 (build_ascstring (ascii_string),
 			   Fsymbol_name (symbol)),
 		  Qnil);
 }

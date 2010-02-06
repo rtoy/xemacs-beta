@@ -1033,9 +1033,6 @@ $(SRC)\config.h:	$(SRC)\config.h.in
 	set COPYCMD=$(COPYCMD)
 	@copy $(SRC)\config.h.in $(SRC)\config.h
 
-#$(SRC)\Emacs.ad.h: $(SRCROOT)\etc\Emacs.ad
-#	!"sed -f ad2c.sed < $(SRCROOT)\etc\Emacs.ad > $(SRC)\Emacs.ad.h"
-
 #$(SRC)\paths.h: $(SRC)\paths.h.in
 #	!"cd $(SRC); cp paths.h.in paths.h"
 

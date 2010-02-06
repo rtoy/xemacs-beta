@@ -1,3 +1,93 @@
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c:
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_lo_import):
+	* postgresql/postgresql.c (Fpq_lo_export):
+	* ldap/eldap.c (Fldap_open):
+	* ldap/eldap.c (Fldap_search_basic):
+	* ldap/eldap.c (Fldap_add):
+	* ldap/eldap.c (Fldap_modify):
+	* ldap/eldap.c (Fldap_delete):
+	* canna/canna_api.c (Fcanna_initialize):
+	* canna/canna_api.c (Fcanna_store_yomi):
+	* canna/canna_api.c (Fcanna_parse):
+	* canna/canna_api.c (Fcanna_henkan_begin):
+	EXTERNAL_TO_C_STRING returns its argument instead of storing it
+	in a parameter, and is renamed to EXTERNAL_TO_ITEXT.  Similar
+	things happen to related macros.  See entry in src/ChangeLog.
+
+	More Mule-izing of postgresql.c.  Extract out common code
+	between `pq-connectdb' and `pq-connect-start'.  Fix places
+	that signal an error string using a formatted string to instead
+	follow the standard and have a fixed reason followed by the
+	particular error message stored as one of the frobs.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (print_pgresult):
+	* postgresql/postgresql.c (Fpq_conn_defaults):
+	* postgresql/postgresql.c (Fpq_pgconn):
+	* postgresql/postgresql.c (Fpq_res_status):
+	* postgresql/postgresql.c (Fpq_result_error_message):
+	* postgresql/postgresql.c (Fpq_fname):
+	* postgresql/postgresql.c (Fpq_get_value):
+	* postgresql/postgresql.c (Fpq_cmd_status):
+	* postgresql/postgresql.c (Fpq_cmd_tuples):
+	* postgresql/postgresql.c (Fpq_notifies):
+	* postgresql/postgresql.c (Fpq_get_line):
+	* postgresql/postgresql.c (Fpq_get_line_async):
+	* postgresql/postgresql.c (FROB):
+	* postgresql/postgresql.c (init_postgresql_from_environment):
+	* ldap/eldap.c:
+	* ldap/eldap.c (Fldap_open):
+	* ldap/eldap.c (Fldap_search_basic):
+	* canna/canna_api.c:
+	* canna/canna_api.c (make_euc_string):
+	Rename:
+
+	write_c_string -> write_cistring
+	build_intstring -> build_istring
+	build_string -> build_cistring
+	build_ext_string -> build_extstring
+	make_ext_string -> make_extstring
+	buffer_insert_c_string -> buffer_insert_ascstring
+	intern_int -> intern_istring
+
+	See comment in src/ChangeLog about this.
+	
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c:
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (print_pgresult):
+	* postgresql/postgresql.c (Fpq_conn_defaults):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_result_status):
+	* postgresql/postgresql.c (Fpq_res_status):
+	Mule-ize large parts of it.  
+
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (print_ldap):
+	* ldap/eldap.c (allocate_ldap):
+	Use write_ascstring().
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (CHECK_LIVE_CONNECTION):
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (Fpq_connectdb):
+	* postgresql/postgresql.c (Fpq_connect_start):
+	* postgresql/postgresql.c (Fpq_exec):
+	* postgresql/postgresql.c (Fpq_get_result):
+	Fix g++ 4.3 complaints about implicit conversions of string
+	literals (const char *) to char *.
+
 2010-01-16  Ben Wing  <ben@xemacs.org>
 
 	* common/Makefile.common:

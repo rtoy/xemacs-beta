@@ -252,9 +252,9 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
     const Extbyte *nameext = 0;
 
     if (STRINGP (f->name))
-      LISP_STRING_TO_TSTR (f->name, nameext);
+      nameext = LISP_STRING_TO_TSTR (f->name);
     else if (STRINGP (name))
-      LISP_STRING_TO_TSTR (name, nameext);
+      nameext = LISP_STRING_TO_TSTR (name);
     else
       nameext = XETEXT (XEMACS_CLASS);
     hwnd = qxeCreateWindowEx (exstyle,
@@ -365,7 +365,7 @@ mswindows_delete_frame (struct frame *f)
       ReleaseDC (FRAME_MSWINDOWS_HANDLE (f), FRAME_MSWINDOWS_DC (f));
       DestroyWindow (FRAME_MSWINDOWS_HANDLE (f));
 #ifndef NEW_GC
-      xfree (f->frame_data, void *);
+      xfree (f->frame_data);
 #endif /* not NEW_GC */
     }
   f->frame_data = 0;
@@ -596,7 +596,7 @@ mswindows_set_title_from_ibyte (struct frame *f, Ibyte *title)
       Extbyte *title_ext;
 
       FRAME_MSWINDOWS_TITLE_CHECKSUM (f) = new_checksum;
-      C_STRING_TO_TSTR (title, title_ext);
+      title_ext = ITEXT_TO_TSTR (title);
       qxeSetWindowText (FRAME_MSWINDOWS_HANDLE (f), title_ext);
     }
 }
@@ -608,7 +608,7 @@ mswindows_window_id (Lisp_Object frame)
   struct frame *f = decode_mswindows_frame (frame);
 
   qxesprintf (str, "%lu", (unsigned long) FRAME_MSWINDOWS_HANDLE (f));
-  return build_intstring (str);
+  return build_istring (str);
 }
 
 static Lisp_Object
@@ -999,7 +999,7 @@ msprinter_init_frame_3 (struct frame *f)
     const Extbyte *nameext;
 
     if (STRINGP (f->name))
-      LISP_STRING_TO_TSTR (f->name, nameext);
+      nameext = LISP_STRING_TO_TSTR (f->name);
     else
       nameext = XETEXT ("XEmacs print document");
     di.lpszDocName = (XELPTSTR) nameext;
@@ -1034,7 +1034,7 @@ msprinter_delete_frame (struct frame *f)
 	EndPage (hdc);
       if (FRAME_MSPRINTER_JOB_STARTED (f))
 	EndDoc (hdc);
-      xfree (f->frame_data, void *);
+      xfree (f->frame_data);
     }
 
   f->frame_data = 0;

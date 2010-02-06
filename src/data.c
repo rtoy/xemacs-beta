@@ -81,13 +81,13 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
     {
       /* #### It would be really nice if this were a proper warning
          instead of brain-dead print to Qexternal_debugging_output.  */
-      write_c_string
+      write_msg_string
 	(Qexternal_debugging_output,
 	 "Comparison between integer and character is constant nil (");
       Fprinc (obj1, Qexternal_debugging_output);
-      write_c_string (Qexternal_debugging_output, " and ");
+      write_msg_string (Qexternal_debugging_output, " and ");
       Fprinc (obj2, Qexternal_debugging_output);
-      write_c_string (Qexternal_debugging_output, ")\n");
+      write_msg_string (Qexternal_debugging_output, ")\n");
       debug_short_backtrace (debug_ebola_backtrace_length);
     }
   return EQ (obj1, obj2);
@@ -365,7 +365,7 @@ If non-nil, the return value will be a list whose first element is
   const CIbyte *prompt;
   CHECK_SUBR (subr);
   prompt = XSUBR (subr)->prompt;
-  return prompt ? list2 (Qinteractive, build_msg_string (prompt)) : Qnil;
+  return prompt ? list2 (Qinteractive, build_msg_cistring (prompt)) : Qnil;
 }
 
 
@@ -1224,44 +1224,44 @@ If supported, it may also be a ratio.
 
   if (FLOATP (number))
     {
-      char pigbuf[350];	/* see comments in float_to_string */
+      Ascbyte pigbuf[350];	/* see comments in float_to_string */
 
       float_to_string (pigbuf, XFLOAT_DATA (number));
-      return build_string (pigbuf);
+      return build_ascstring (pigbuf);
     }
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (number))
     {
-      char *str = bignum_to_string (XBIGNUM_DATA (number), 10);
-      Lisp_Object retval = build_string (str);
-      xfree (str, char *);
+      Ascbyte *str = bignum_to_string (XBIGNUM_DATA (number), 10);
+      Lisp_Object retval = build_ascstring (str);
+      xfree (str);
       return retval;
     }
 #endif
 #ifdef HAVE_RATIO
   if (RATIOP (number))
     {
-      char *str = ratio_to_string (XRATIO_DATA (number), 10);
-      Lisp_Object retval = build_string (str);
-      xfree (str, char *);
+      Ascbyte *str = ratio_to_string (XRATIO_DATA (number), 10);
+      Lisp_Object retval = build_ascstring (str);
+      xfree (str);
       return retval;
     }
 #endif
 #ifdef HAVE_BIGFLOAT
   if (BIGFLOATP (number))
     {
-      char *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
-      Lisp_Object retval = build_string (str);
-      xfree (str, char *);
+      Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
+      Lisp_Object retval = build_ascstring (str);
+      xfree (str);
       return retval;
     }
 #endif
 
   {
-    char buffer[DECIMAL_PRINT_SIZE (long)];
+    Ascbyte buffer[DECIMAL_PRINT_SIZE (long)];
 
     long_to_string (buffer, XINT (number));
-    return build_string (buffer);
+    return build_ascstring (buffer);
   }
 }
 

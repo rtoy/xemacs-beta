@@ -1,3 +1,15 @@
+2010-01-26  Ben Wing  <ben@xemacs.org>
+
+	* make-msgfile.lex: Vague hacking on this file, insert a comment
+	about what should be done if we ever want this to work.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* fakemail.c (args_size):
+	* fakemail.c (parse_header):
+	* ootags.c (C_entries):
+	Fix warnings about possible use of uninitialized vars.
+
 2010-02-01  Vin Shelton  <acs@xemacs.org>
 
 	* make-mswin-unicode.pl: Add description of override.

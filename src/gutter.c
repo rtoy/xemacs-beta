@@ -302,7 +302,7 @@ calculate_gutter_size_from_display_lines (enum gutter_pos pos,
 	{
 	  dl = Dynarr_atp (ddla, Dynarr_length (ddla) - 1);
 	  size = (dl->ypos + dl->descent - dl->clip)
-	    - (Dynarr_atp (ddla, 0)->ypos - Dynarr_atp (ddla, 0)->ascent);
+	    - (Dynarr_begin (ddla)->ypos - Dynarr_begin (ddla)->ascent);
 	}
     }
   /* For left and right we have to do some maths. */
@@ -450,7 +450,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       /* If the number of display lines has shrunk, adjust. */
       if (cdla_len > Dynarr_length (ddla))
 	{
-	  Dynarr_length (cdla) = Dynarr_length (ddla);
+	  Dynarr_set_length (cdla, Dynarr_length (ddla));
 	}
 
       /* grab coordinates of last line and blank after it. */

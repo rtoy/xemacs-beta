@@ -179,7 +179,7 @@ mswindows_sort_files (Win32_file_dynarr *files,
 {
   mswindows_sort_method = sort_by;
   mswindows_reverse_sort = reverse;
-  qsort (Dynarr_atp (files, 0), Dynarr_length (files),
+  qsort (Dynarr_begin (files), Dynarr_length (files),
 	 sizeof (Win32_file), mswindows_ls_sort_fcn);
 }
 
@@ -587,7 +587,7 @@ switches do not contain `d', so that a full listing is expected.
   for (i = 0; i < Dynarr_length (files); ++i)
     {
       Win32_file *file = Dynarr_atp (files, i);
-      xfree (file->cFileName, Ibyte *);
+      xfree (file->cFileName);
     }
   Dynarr_free (files);
 

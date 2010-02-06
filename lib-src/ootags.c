@@ -2639,7 +2639,7 @@ C_entries (c_ext, inf)
   int parlev;			/* current parenthesis level */
   bool incomm, inquote, inchar, quotednl, midtoken;
   bool cplpl, cjava;
-  token savetok;		/* token saved during preprocessor handling */
+  token savetok = {0};		/* token saved during preprocessor handling */
 
 
   tokoff = toklen = 0;		/* keep compiler quiet */

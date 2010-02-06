@@ -41,7 +41,7 @@ nt_play_sound_file (Lisp_Object path, int UNUSED (volume))
   Lisp_Object fname = Ffile_name_nondirectory (path);
   Extbyte *fnameext;
 
-  LISP_STRING_TO_TSTR (fname, fnameext);
+  fnameext = LISP_STRING_TO_TSTR (fname);
 
   if (qxeSearchPath (NULL, fnameext, NULL, 0, NULL, NULL) == 0)
     {
@@ -66,7 +66,7 @@ nt_play_sound_file (Lisp_Object path, int UNUSED (volume))
       if (retry_read (ofd, data, size) != size)
 	{
 	  retry_close (ofd);
-	  xfree (data, Binbyte *);
+	  xfree (data);
 	  return;
 	}
       retry_close (ofd);
@@ -88,7 +88,7 @@ play_sound_data_1 (Binbyte *data, int length, int UNUSED (volume),
   if (sound_data)
     {
       qxePlaySound (NULL, NULL, flags);
-      xfree (sound_data, Binbyte *);
+      xfree (sound_data);
       sound_data = 0;
     }
 

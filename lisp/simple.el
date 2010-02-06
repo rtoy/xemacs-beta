@@ -3835,13 +3835,8 @@ the front of the list of recently selected ones."
 (defun capitalize-string-as-title (string)
   "Capitalize the words in the string, except for small words (as in titles).
 The words not capitalized are specified in `uncapitalized-title-words'."
-  (let ((buffer (get-buffer-create " *capitalize-string-as-title*")))
-    (unwind-protect
-	(progn
-	  (insert-string string buffer)
-	  (capitalize-region-as-title 1 (point-max buffer) buffer)
-	  (buffer-string buffer))
-      (kill-buffer buffer))))
+  (with-string-as-buffer-contents string
+    (capitalize-region-as-title (point-min) (point-max))))
 
 (defun capitalize-region-as-title (b e &optional buffer)
   "Capitalize the words in the region, except for small words (as in titles).

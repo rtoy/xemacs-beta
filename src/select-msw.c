@@ -109,7 +109,7 @@ symbol_to_ms_cf (Lisp_Object value)
   if (STRINGP (value))
     {
       Extbyte *valext;
-      LISP_STRING_TO_TSTR (value, valext);
+      valext = LISP_STRING_TO_TSTR (value);
       return qxeRegisterClipboardFormat (valext);
     }
 
@@ -324,7 +324,7 @@ mswindows_own_selection (Lisp_Object selection_name,
     {
       CloseClipboard ();
 
-      xfree (src, void *);
+      xfree (src);
       return Qnil;
     }
 
@@ -335,12 +335,12 @@ mswindows_own_selection (Lisp_Object selection_name,
       GlobalFree (hValue);
       CloseClipboard ();
 
-      xfree (src, void *);
+      xfree (src);
       return Qnil;
     }
 
   memcpy (dst, src, size);
-  xfree (src, void *);
+  xfree (src);
 
   GlobalUnlock (hValue);
 
@@ -438,7 +438,7 @@ mswindows_register_selection_data_type (Lisp_Object type_name)
   Extbyte *nameext;
   UINT format;
 
-  LISP_STRING_TO_TSTR (type_name, nameext);
+  nameext = LISP_STRING_TO_TSTR (type_name);
   format = qxeRegisterClipboardFormat (nameext);
 
   if (format)
@@ -561,7 +561,7 @@ mswindows_get_foreign_selection (Lisp_Object selection_symbol,
     }
 
   /* Place it in a Lisp string */
-  ret = make_ext_string ((Extbyte *) data, size, Qbinary);
+  ret = make_extstring ((Extbyte *) data, size, Qbinary);
 
   GlobalUnlock (data);
   CloseClipboard ();

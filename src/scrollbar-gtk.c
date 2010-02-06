@@ -64,7 +64,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 	  gtk_widget_destroy (SCROLLBAR_GTK_WIDGET (instance));
 	}
 
-      xfree (instance->scrollbar_data, void *);
+      xfree (instance->scrollbar_data);
     }
 }
 
