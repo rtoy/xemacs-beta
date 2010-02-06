@@ -386,14 +386,16 @@ Lisp_Object make_image_instance_cache_hash_table (void);
 DECLARE_DOESNT_RETURN (incompatible_image_types (Lisp_Object instantiator,
                                                  int given_dest_mask,
                                                  int desired_dest_mask));
-DECLARE_DOESNT_RETURN (signal_image_error (const char *, Lisp_Object));
-DECLARE_DOESNT_RETURN (signal_image_error_2 (const char *, Lisp_Object,
-					     Lisp_Object));
-DECLARE_DOESNT_RETURN (signal_double_image_error (const char *string1,
-						  const char *string2,
+DECLARE_DOESNT_RETURN (signal_image_error (const Ascbyte *reason,
+					   Lisp_Object frob));
+DECLARE_DOESNT_RETURN (signal_image_error_2 (const Ascbyte *reason,
+					     Lisp_Object frob0,
+					     Lisp_Object frob1));
+DECLARE_DOESNT_RETURN (signal_double_image_error (const Ascbyte *reason1,
+						  const Ascbyte *reason2,
 						  Lisp_Object data));
-DECLARE_DOESNT_RETURN (signal_double_image_error_2 (const char *string1,
-						    const char *string2,
+DECLARE_DOESNT_RETURN (signal_double_image_error_2 (const Ascbyte *reason1,
+						    const Ascbyte *reason2,
 						    Lisp_Object data1,
 						    Lisp_Object data2));
 

@@ -285,7 +285,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
   if (NILP (the_specs))
     /* there are no global specs */
-    write_c_string (printcharfun, "<unspecified>");
+    write_ascstring (printcharfun, "<unspecified>");
   else
     print_internal (the_specs, printcharfun, 1);
   if (!NILP (sp->fallback))
@@ -304,7 +304,7 @@ finalize_specifier (void *header, int for_disksave)
   /* don't be snafued by the disksave finalization. */
   if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
     {
-      xfree (sp->caching, struct specifier_caching *);
+      xfree (sp->caching);
       sp->caching = 0;
     }
 }

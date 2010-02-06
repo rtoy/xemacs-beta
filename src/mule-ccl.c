@@ -2366,7 +2366,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   XVECTOR_DATA (status)[8] = make_int (ccl.ic);
   UNGCPRO;
 
-  val = make_string (Dynarr_atp (outbuf, 0), produced);
+  val = make_string (Dynarr_begin (outbuf), produced);
   Dynarr_free (outbuf);
   QUIT;
   if (ccl.status == CCL_STAT_SUSPEND_BY_DST)

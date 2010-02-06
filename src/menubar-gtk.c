@@ -260,9 +260,7 @@ gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l, Lisp_Object keys)
   /* Set the string straight from the object. */
   if (STRINGP (keys) && XSTRING_LENGTH (keys))
     {
-      C_STRING_TO_EXTERNAL_MALLOC(XSTRING_DATA (keys),
-				  l->label.accel_string,
-				  Qctext);
+      l->label.accel_string = ITEXT_TO_EXTERNAL_MALLOC (XSTRING_DATA (keys), Qctext);
     }
   else
     {

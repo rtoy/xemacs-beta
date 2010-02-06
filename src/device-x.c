@@ -210,7 +210,7 @@ coding_system_of_xrm_database (XrmDatabase USED_IF_MULE (db))
   last_xrm_db = db;
 
   locale = XrmLocaleOfDatabase (db);
-  localestr = build_ext_string (locale, Qbinary);
+  localestr = build_extstring (locale, Qbinary);
   last_coding_system = call1 (Qget_coding_system_from_locale, localestr);
 
   return last_coding_system;
@@ -265,9 +265,9 @@ sanity_check_geometry_resource (Display *dpy)
     {
       Ibyte *app_name_int, *app_class_int, *value_addr_int;
       Lisp_Object codesys = coding_system_of_xrm_database (XtDatabase (dpy));
-      EXTERNAL_TO_C_STRING (app_name, app_name_int, codesys);
-      EXTERNAL_TO_C_STRING (app_class, app_class_int, codesys);
-      EXTERNAL_TO_C_STRING (value.addr, value_addr_int, codesys);
+      app_name_int = EXTERNAL_TO_ITEXT (app_name, codesys);
+      app_class_int = EXTERNAL_TO_ITEXT (app_class, codesys);
+      value_addr_int = EXTERNAL_TO_ITEXT (value.addr, codesys);
 
       warn_when_safe (Qgeometry, Qerror,
 		      "\n"
@@ -389,7 +389,7 @@ Dynarr_add_validified_lisp_string (Extbyte_dynarr *cda, Lisp_Object str)
   Bytecount len;
   Extbyte *data;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, str, ALLOCA, (data, len), Qbinary);
+  LISP_STRING_TO_SIZED_EXTERNAL (str, data, len, Qbinary); 
   Dynarr_add_many (cda, data, len);
   validify_resource_component (Dynarr_atp (cda, Dynarr_length (cda) - len),
 			       len);
@@ -585,7 +585,8 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	/* Look for the Xaw3d function */
 	dll_func xaw_function_handle =
-	  dll_function (xaw_dll_handle, "Xaw3dComputeTopShadowRGB");
+	  dll_function (xaw_dll_handle,
+			(const Ibyte *) "Xaw3dComputeTopShadowRGB");
 
 	/* If we found it, warn the user in big, nasty, unfriendly letters */
 	if (xaw_function_handle != NULL)
@@ -623,7 +624,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
-  LISP_STRING_TO_EXTERNAL (display, disp_name, Qctext);
+  disp_name = LISP_STRING_TO_EXTERNAL (display, Qctext);
 
   /*
    * Break apart the old XtOpenDisplay call into XOpenDisplay and
@@ -647,7 +648,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   if (STRINGP (Vx_emacs_application_class) &&
       XSTRING_LENGTH (Vx_emacs_application_class) > 0)
-    LISP_STRING_TO_EXTERNAL (Vx_emacs_application_class, app_class, Qctext);
+    app_class = LISP_STRING_TO_EXTERNAL (Vx_emacs_application_class, Qctext);
   else
     {
       if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
@@ -667,7 +668,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	}
 
       /* need to update Vx_emacs_application_class: */
-      Vx_emacs_application_class = build_string (app_class);
+      Vx_emacs_application_class = build_cistring (app_class);
     }
 
   slow_down_interrupts ();
@@ -696,14 +697,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if (STRINGP (Vx_app_defaults_directory) &&
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
       {
-	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
-				 Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (Vx_app_defaults_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
 	format = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
-	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (Vdata_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
 	format = "%sapp-defaults/%s/Emacs";
       }
@@ -742,7 +742,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     {
       /* Cast off const for G++ 4.3. */
       Extbyte *temp = (Extbyte *) locale;
-      xfree (temp, Extbyte*);
+      xfree (temp);
     }
  }
 #endif /* MULE */
@@ -950,7 +950,7 @@ x_mark_device (struct device *d)
 static void
 free_x_device_struct (struct device *d)
 {
-  xfree (d->device_data, void *);
+  xfree (d->device_data);
 }
 #endif /* not NEW_GC */
 
@@ -1005,10 +1005,10 @@ x_delete_device (struct device *d)
 /*				handle X errors				*/
 /************************************************************************/
 
-const char *
+const Ascbyte *
 x_event_name (int event_type)
 {
-  static const char *events[] =
+  static const Ascbyte *events[] =
   {
     "0: ERROR!",
     "1: REPLY",
@@ -1198,19 +1198,19 @@ signal_if_x_error (Display *dpy, int resumable_p)
     return 0;
   data = Qnil;
   qxesprintf (num, "0x%X", (unsigned int) last_error.resourceid);
-  data = Fcons (build_intstring (num), data);
+  data = Fcons (build_istring (num), data);
   qxesprintf (num, "%d", last_error.request_code);
   XGetErrorDatabaseText (last_error.display, "XRequest", (char *) num, "",
 			 buf, sizeof (buf));
   if (*buf)
-    data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
+    data = Fcons (build_extstring (buf, Qx_error_message_encoding), data);
   else
     {
       qxesprintf (num, "Request-%d", last_error.request_code);
-      data = Fcons (build_intstring (num), data);
+      data = Fcons (build_istring (num), data);
     }
   XGetErrorText (last_error.display, last_error.error_code, buf, sizeof (buf));
-  data = Fcons (build_ext_string (buf, Qx_error_message_encoding), data);
+  data = Fcons (build_extstring (buf, Qx_error_message_encoding), data);
  again:
   Fsignal (Qx_error, data);
   if (! resumable_p) goto again;
@@ -1427,8 +1427,8 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
     class_len = strlen (appclass);
     Dynarr_add_many (name,  appname,  name_len);
     Dynarr_add_many (class_, appclass, class_len);
-    validify_resource_component (Dynarr_atp (name,  0), name_len);
-    validify_resource_component (Dynarr_atp (class_, 0), class_len);
+    validify_resource_component (Dynarr_begin (name), name_len);
+    validify_resource_component (Dynarr_begin (class_), class_len);
   }
 
   if (EQ (locale, Qglobal))
@@ -1570,8 +1570,8 @@ mean ``unspecified''.
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 
-  name_string  = Dynarr_atp (name_Extbyte_dynarr,  0);
-  class_string = Dynarr_atp (class_Extbyte_dynarr, 0);
+  name_string  = Dynarr_begin (name_Extbyte_dynarr);
+  class_string = Dynarr_begin (class_Extbyte_dynarr);
 
   {
     XrmValue xrm_value;
@@ -1605,7 +1605,7 @@ mean ``unspecified''.
   }
 
   if (EQ (type, Qstring))
-    return build_ext_string (raw_result, codesys);
+    return build_extstring (raw_result, codesys);
   else if (EQ (type, Qboolean))
     {
       if (!strcasecmp (raw_result, "off")   ||
@@ -1618,8 +1618,8 @@ mean ``unspecified''.
 	return Fcons (Qt, Qnil);
       return maybe_signal_continuable_error_2
 	(Qinvalid_operation, "Can't convert to a Boolean",
-	 build_ext_string (name_string, Qbinary),
-	 build_ext_string (raw_result, codesys), Qresource,
+	 build_extstring (name_string, Qbinary),
+	 build_extstring (raw_result, codesys), Qresource,
 	 errb);
     }
   else if (EQ (type, Qinteger) || EQ (type, Qnatnum))
@@ -1629,13 +1629,13 @@ mean ``unspecified''.
       if (1 != sscanf (raw_result, "%d%c", &i, &c))
       return maybe_signal_continuable_error_2
 	(Qinvalid_operation, "Can't convert to an integer",
-	 build_ext_string (name_string, Qbinary),
-	 build_ext_string (raw_result, codesys), Qresource,
+	 build_extstring (name_string, Qbinary),
+	 build_extstring (raw_result, codesys), Qresource,
 	 errb);
       else if (EQ (type, Qnatnum) && i < 0)
 	return maybe_signal_continuable_error_2
 	  (Qinvalid_argument, "Invalid numerical value for resource",
-	   make_int (i), build_ext_string (name_string, Qbinary),
+	   make_int (i), build_extstring (name_string, Qbinary),
 	   Qresource, errb);
       else
 	return make_int (i);
@@ -1670,9 +1670,9 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   if (!display)
     return Qnil;
 
-  return Fcons (make_string ((Ibyte *) Dynarr_atp (name_Extbyte_dynarr, 0),
+  return Fcons (make_string ((Ibyte *) Dynarr_begin (name_Extbyte_dynarr),
 			     Dynarr_length (name_Extbyte_dynarr)),
-		make_string ((Ibyte *) Dynarr_atp (class_Extbyte_dynarr, 0),
+		make_string ((Ibyte *) Dynarr_begin (class_Extbyte_dynarr),
 			     Dynarr_length (class_Extbyte_dynarr)));
 }
 
@@ -1691,8 +1691,8 @@ standard resource specification.
       Extbyte *str, *colon_pos;
 
       CHECK_STRING (resource_line);
-      LISP_STRING_TO_EXTERNAL (resource_line, str,
-			       coding_system_of_xrm_database (db));
+      str = LISP_STRING_TO_EXTERNAL (resource_line,
+				     coding_system_of_xrm_database (db));
       if (!(colon_pos = strchr (str, ':')) || strchr (str, '\n'))
       invalid:
 	syntax_error ("Invalid resource line", resource_line);
@@ -1803,7 +1803,7 @@ Return the empty string if the vendor ID string cannot be determined.
   Display *dpy = get_x_display (device);
   Extbyte *vendor = ServerVendor (dpy);
 
-  return build_ext_string (vendor ? vendor : "", Qx_hpc_encoding);
+  return build_extstring (vendor ? vendor : "", Qx_hpc_encoding);
 }
 
 DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
@@ -1831,7 +1831,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   const Extbyte *keysym_ext;
 
   CHECK_STRING (keysym);
-  LISP_STRING_TO_EXTERNAL (keysym, keysym_ext, Qctext);
+  keysym_ext = LISP_STRING_TO_EXTERNAL (keysym, Qctext);
 
   return XStringToKeysym (keysym_ext) ? Qt : Qnil;
 }
@@ -2048,7 +2048,7 @@ See also `x-set-font-path'.
     gui_error ("Can't get X font path", device);
 
   while (ndirs_return--)
-      font_path = Fcons (build_ext_string (directories[ndirs_return],
+      font_path = Fcons (build_extstring (directories[ndirs_return],
                                            Qfile_name),
 			 font_path);
 
@@ -2089,10 +2089,7 @@ See also `x-get-font-path'.
 
   {
     EXTERNAL_LIST_LOOP_2 (path_entry, font_path)
-      {
-	LISP_STRING_TO_EXTERNAL (path_entry, directories[i++],
-				 Qfile_name);
-      }
+      LISP_PATHNAME_CONVERT_OUT (path_entry, directories[i++]);
   }
 
   expect_x_error (dpy);

@@ -178,7 +178,7 @@ do {											\
 	if (style->rc_style && style->rc_style->bg_pixmap_name[GTK_STATE_NORMAL])	\
 	{										\
 		FROB (Vdefault_face, Qbackground_pixmap,				\
-			Fmake_image_instance (build_string (style->rc_style->bg_pixmap_name[GTK_STATE_NORMAL]), \
+			Fmake_image_instance (build_cistring (style->rc_style->bg_pixmap_name[GTK_STATE_NORMAL]), \
 					  f->device, Qnil, make_int (5)));			\
 	}										\
 	else										\
@@ -436,5 +436,5 @@ xemacs_gtk_convert_color(GdkColor *c, GtkWidget *UNUSED (w))
 
   sprintf (color_buf, "#%04x%04x%04x", c->red, c->green, c->blue);
 
-  return (build_string (color_buf));
+  return (build_cistring (color_buf));
 }

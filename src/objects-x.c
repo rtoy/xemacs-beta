@@ -67,7 +67,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Lisp_Object name,
   {
     const Extbyte *extname;
 
-    LISP_STRING_TO_EXTERNAL (name, extname, Qx_color_name_encoding);
+    extname = LISP_STRING_TO_EXTERNAL (name, Qx_color_name_encoding);
     result = XParseColor (dpy, cmap, extname, color);
   }
   if (!result)
@@ -148,7 +148,7 @@ x_finalize_color_instance (Lisp_Color_Instance *c)
 			   &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
 	    }
 	}
-      xfree (c->data, void *);
+      xfree (c->data);
       c->data = 0;
     }
 }
@@ -194,7 +194,7 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
   Colormap cmap = DEVICE_X_COLORMAP (d);
   const Extbyte *extname;
 
-  LISP_STRING_TO_EXTERNAL (color, extname, Qx_color_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qx_color_name_encoding);
 
   return XParseColor (dpy, cmap, extname, &c);
 }
@@ -232,10 +232,10 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
      The problem is that the fontconfig/Xft functions work much too hard
      to ensure that something is returned; but that something need not be
      at all close to what we asked for. */
-  LISP_STRING_TO_EXTERNAL (f->name, extname, Qfc_font_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qfc_font_name_encoding);
   rf = xft_open_font_by_name (dpy, extname);
 #endif
-  LISP_STRING_TO_EXTERNAL (f->name, extname, Qx_font_name_encoding);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
   /* With XFree86 4.0's fonts, XListFonts returns an entry for
      -isas-fangsong ti-medium-r-normal--16-160-72-72-c-160-gb2312.1980-0 but
      an XLoadQueryFont on the corresponding XLFD returns NULL.
@@ -442,7 +442,7 @@ x_finalize_font_instance (Lisp_Font_Instance *f)
 	    XftFontClose (dpy, FONT_INSTANCE_X_XFTFONT (f));
 #endif
 	}
-      xfree (f->data, void *);
+      xfree (f->data);
       f->data = 0;
     }
 }
@@ -733,7 +733,7 @@ x_font_truename (Display *dpy, Extbyte *name, XFontStruct *font)
 
   if (truename)
     {
-      Lisp_Object result = build_ext_string (truename, Qx_font_name_encoding);
+      Lisp_Object result = build_extstring (truename, Qx_font_name_encoding);
       XFree (truename);
       return result;
     }
@@ -767,7 +767,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
-	    build_ext_string ((Extbyte *) res, Qfc_font_name_encoding); 
+	    build_extstring ((Extbyte *) res, Qfc_font_name_encoding); 
 	  free (res);
 	  return FONT_INSTANCE_TRUENAME (f);
 	}
@@ -785,7 +785,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   if (NILP (FONT_INSTANCE_TRUENAME (f))
       && FONT_INSTANCE_X_FONT (f))
     {
-      nameext = NEW_LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
+      nameext = LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
       FONT_INSTANCE_TRUENAME (f) =
 	x_font_truename (dpy, nameext, FONT_INSTANCE_X_FONT (f));
     }
@@ -834,7 +834,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 			    ALLOCA, (name_str, name_len),
 			    Qx_atom_name_encoding);
 
-      name = (name_str ? intern_int (name_str) : Qnil);
+      name = (name_str ? intern_istring (name_str) : Qnil);
       if (name_str &&
 	  (atom == XA_FONT ||
 	   atom == DEVICE_XATOM_FOUNDRY (d) ||
@@ -860,7 +860,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 	{
 	  Extbyte *val_str = XGetAtomName (dpy, props [i].card32);
 
-	  value = (val_str ? build_ext_string (val_str, Qx_atom_name_encoding)
+	  value = (val_str ? build_extstring (val_str, Qx_atom_name_encoding)
 		   : Qnil);
 	}
       else
@@ -880,7 +880,7 @@ x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
   Lisp_Object result = Qnil;
   const Extbyte *patternext;
 
-  LISP_STRING_TO_EXTERNAL (pattern, patternext, Qx_font_name_encoding);
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qx_font_name_encoding);
 
   if (!NILP(maxnumber) && INTP(maxnumber))
     {
@@ -890,7 +890,7 @@ x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
 		      patternext, max_number, &count);
   while (count--)
-    result = Fcons (build_ext_string (names[count], Qx_font_name_encoding),
+    result = Fcons (build_extstring (names[count], Qx_font_name_encoding),
 		    result);
   if (names)
     XFreeFontNames (names);

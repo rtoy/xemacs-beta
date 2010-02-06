@@ -1,4 +1,4 @@
-/* CANNA interface -*- coding: euc-jp -*-
+/* CANNA interface -*- coding: utf-8 -*-
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -199,8 +199,8 @@ static Lisp_Object kanjiYomiList (int, int);
 static Lisp_Object CANNA_mode_keys (void);
 static Lisp_Object Qeuc_jp;
 
-#define make_euc_string(p, len) make_ext_string ((Extbyte *) p, len, Qeuc_jp)
-#define build_euc_string(p) build_ext_string ((Extbyte *) p, Qeuc_jp)
+#define make_euc_string(p, len) make_extstring ((Extbyte *) p, len, Qeuc_jp)
+#define build_euc_string(p) build_extstring ((Extbyte *) p, Qeuc_jp)
 
 #ifdef CANNA_MULE
 static int euc_jp_num_chars (unsigned char *, int);
@@ -237,10 +237,10 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
     }
   else
     {
-      /* ≥ŒƒÍ§∑§ø ∏ª˙ŒÛ (the confirmed string) */
+      /* Á¢∫ÂÆö„Åó„ÅüÊñáÂ≠óÂàó (the confirmed string) */
       Vcanna_kakutei_string = make_euc_string (buf, len);
       val = make_int (len);
-      /* ≥ŒƒÍ§∑§ø ∏ª˙ŒÛ§Œ∆…§ﬂ§Œæ Û...
+      /* Á¢∫ÂÆö„Åó„ÅüÊñáÂ≠óÂàó„ÅÆË™≠„Åø„ÅÆÊÉÖÂ†±...
 	 (info about the reading of the confirmed string) */
       Vcanna_kakutei_yomi = Vcanna_kakutei_romaji = Qnil;
       if (ks->info & KanjiYomiInfo)
@@ -253,20 +253,20 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 	      int yomilen2;
 
 	      Vcanna_kakutei_yomi =
-		make_euc_string (p, yomilen); /* ∆…§ﬂ (reading) */
+		make_euc_string (p, yomilen); /* Ë™≠„Åø (reading) */
 	      p += yomilen + 1;
 	      yomilen2 = strlen (p);
 	      if (len + yomilen + yomilen2 + 2 < KEYTOSTRSIZE)
 		{
 		  Vcanna_kakutei_romaji =
 		    make_euc_string (p, yomilen2);
-				/* •Ì°º•ﬁª˙ (romanization) */
+				/* „É≠„Éº„ÉûÂ≠ó (romanization) */
 		}
 	    }
 	}
 
 
-      /* ∏ı ‰…Ωº®§Œ ∏ª˙ŒÛ§«§π°£
+      /* ÂÄôË£úË°®Á§∫„ÅÆÊñáÂ≠óÂàó„Åß„Åô„ÄÇ
 	 (string for displaying candidate translations) */
       Vcanna_henkan_string = Qnil;
       if (ks->length >= 0)
@@ -293,7 +293,7 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 #endif /* CANNA_MULE */
 	}
 
-      /* ∞ÏÕ˜§Œæ Û (information about the echo area menu) */
+      /* ‰∏ÄË¶ß„ÅÆÊÉÖÂ†± (information about the echo area menu) */
       Vcanna_ichiran_string = Qnil;
       if (ks->info & KanjiGLineInfo && ks->gline.length >= 0)
 	{
@@ -311,14 +311,14 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 #endif /* CANNA_MULE */
 	}
 
-      /* •‚°º•…§Œæ Û (mode information) */
+      /* „É¢„Éº„Éâ„ÅÆÊÉÖÂ†± (mode information) */
       Vcanna_mode_string = Qnil;
       if (ks->info & KanjiModeInfo)
 	{
 	  Vcanna_mode_string = build_euc_string ((Extbyte *) ks->mode);
 	}
 
-      /* §Ω§Œ¬æ§Œæ Û (other information) */
+      /* „Åù„ÅÆ‰ªñ„ÅÆÊÉÖÂ†± (other information) */
       canna_empty_info = (ks->info & KanjiEmptyInfo) ? 1 : 0;
       canna_through_info = (ks->info & KanjiThroughInfo) ? 1 : 0;
     }
@@ -334,7 +334,7 @@ No separator will be used otherwise.
        (num))
 {
   /* This is actually a Boolean! */
-  char *kugiri; /*  ∏¿·∂Ë¿⁄§Í§Ú§π§Î§´°© (display clause separator?) */
+  char *kugiri; /* ÊñáÁØÄÂå∫Âàá„Çä„Çí„Åô„Çã„ÅãÔºü (display clause separator?) */
 
   kugiri = NILP (num) ? (char *) 0 : (char *) 1;
 
@@ -367,7 +367,7 @@ If nil is specified for each arg, the default value will be used.
   char **p, **q;
 
   /* This is actually a Boolean! */
-  char *kugiri; /*  ∏¿·∂Ë¿⁄§Í§Ú§π§Î§´°© (display clause separator?) */
+  char *kugiri; /* ÊñáÁØÄÂå∫Âàá„Çä„Çí„Åô„Çã„ÅãÔºü (display clause separator?) */
 
   IRCP_context = -1;
 
@@ -390,7 +390,7 @@ If nil is specified for each arg, the default value will be used.
       CHECK_STRING (server);
       jrKanjiControl (0, KC_SETSERVERNAME,
 		      /* !!#### Check encoding */
-		      NEW_LISP_STRING_TO_EXTERNAL (server, Qnative));
+		      LISP_STRING_TO_EXTERNAL (server, Qnative));
     }
 
   if (NILP (rcfile))
@@ -401,7 +401,7 @@ If nil is specified for each arg, the default value will be used.
     {
       CHECK_STRING (rcfile);
       jrKanjiControl (0, KC_SETINITFILENAME,
-		      NEW_LISP_STRING_TO_EXTERNAL (rcfile, Qfile_name));
+		      LISP_STRING_TO_EXTERNAL (rcfile, Qfile_name));
     }
 
   {
@@ -424,7 +424,7 @@ If nil is specified for each arg, the default value will be used.
   if (res == -1)
     {
       val = Fcons (build_euc_string (jrKanjiError), val);
-      /* •§•À•∑•„•È•§•∫§«º∫«‘§∑§øæÏπÁ°£ (on initialization failure) */
+      /* „Ç§„Éã„Ç∑„É£„É©„Ç§„Ç∫„ÅßÂ§±Êïó„Åó„ÅüÂ†¥Âêà„ÄÇ (on initialization failure) */
       return Fcons (Qnil, val);
     }
   else
@@ -444,12 +444,12 @@ If nil is specified for each arg, the default value will be used.
 #ifndef CANNA_MULE
       jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);
 #else
-      /* mule §¿§√§ø§È»æ≥—•´•ø•´• §‚ª»§®§Î
+      /* mule „Å†„Å£„Åü„ÇâÂçäËßí„Ç´„Çø„Ç´„Éä„ÇÇ‰Ωø„Åà„Çã
 	 (Mule can use half-width katakana) */
       if (canna_inhibit_hankakukana)
 	jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);
 #endif
-      jrKanjiControl (0, KC_YOMIINFO, (char *) 2); /* ¢®£≤: •Ì°º•ﬁª˙§ﬁ§« ÷§π
+      jrKanjiControl (0, KC_YOMIINFO, (char *) 2); /* ‚ÄªÔºí: „É≠„Éº„ÉûÂ≠ó„Åæ„ÅßËøî„Åô
 						      (*2: return to
 						      romanized form) */
       val = Fcons (Qnil, val);
@@ -561,7 +561,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   Extbyte *ext;
 
   CHECK_STRING (yomi);
-  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (yomi, Qeuc_jp);
   strncpy (key_buffer, ext, sizeof (key_buffer));
   key_buffer[sizeof (key_buffer) - 1] = '\0';
   ks.length = strlen (key_buffer);
@@ -573,7 +573,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   else
     {
       CHECK_STRING (roma);
-      LISP_STRING_TO_EXTERNAL (roma, ext, Qeuc_jp);
+      ext = LISP_STRING_TO_EXTERNAL (roma, Qeuc_jp);
       ks.mode = (unsigned char *) (key_buffer + ks.length + 1);
       strncpy (key_buffer + ks.length + 1, ext,
 	       sizeof (key_buffer) - ks.length - 1);
@@ -581,7 +581,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
     }
 
   ks.echoStr = (unsigned char *) key_buffer;
-  ksv.buffer = (unsigned char *) key_buffer; /*  ÷√ÕÕ— (return value) */
+  ksv.buffer = (unsigned char *) key_buffer; /* ËøîÂÄ§Áî® (return value) */
   ksv.bytes_buffer = KEYTOSTRSIZE;
   ksv.ks = &ks;
 
@@ -629,7 +629,7 @@ Parse customize string.
   Extbyte *ext;
 
   CHECK_STRING (str);
-  LISP_STRING_TO_EXTERNAL (str, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (str, Qeuc_jp);
   strncpy (key_buffer, ext, sizeof (key_buffer));
   key_buffer[sizeof (key_buffer) - 1] = '\0';
   p = (Extbyte **) key_buffer;
@@ -716,7 +716,7 @@ Clause separator is set.
       return Qnil;
     }
 
-  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  ext = LISP_STRING_TO_EXTERNAL (yomi, Qeuc_jp);
   strncpy ((char *) yomibuf, ext, sizeof (yomibuf));
   yomibuf[sizeof (yomibuf) - 1] = '\0';
 
@@ -836,7 +836,7 @@ End conversion.
     {
       return Qnil;
     }
-  RkEndBun (IRCP_context, 1); /* ≥ÿΩ¨§œ§§§ƒ§«§‚π‘§√§∆Œ…§§§‚§Œ§ §Œ§´°©
+  RkEndBun (IRCP_context, 1); /* Â≠¶Áøí„ÅØ„ÅÑ„Å§„Åß„ÇÇË°å„Å£„Å¶ËâØ„ÅÑ„ÇÇ„ÅÆ„Å™„ÅÆ„ÅãÔºü
 				 (is it OK to invoke learning function
 				 at arbitrary times?) */
   return Qt;

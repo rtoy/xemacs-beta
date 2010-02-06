@@ -285,7 +285,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
     printing_unreadable_lcrecord (obj, 0);
-  write_c_string (printcharfun, "#<keymap ");
+  write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
@@ -464,7 +464,7 @@ make_key_description (const Lisp_Key_Data *key, int prettify)
       Ibyte str [1 + MAX_ICHAR_LEN];
       Bytecount count = set_itext_ichar (str, XCHAR (keysym));
       str[count] = 0;
-      keysym = intern_int (str);
+      keysym = intern_istring (str);
     }
   return control_meta_superify (keysym, modifiers);
 }
@@ -1748,17 +1748,17 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   if (EQ (keys, new_keys))
     signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
 			     "can't bind %s: %s has a non-keymap binding",
-			     (char *) XSTRING_DATA (Fkey_description (keys)),
-			     (char *) XSTRING_DATA (Fsingle_key_description
-						    (Vmeta_prefix_char)));
+			     (CIbyte *) XSTRING_DATA (Fkey_description (keys)),
+			     (CIbyte *) XSTRING_DATA (Fsingle_key_description
+						      (Vmeta_prefix_char)));
   else
     signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
 			     "can't bind %s: %s %s has a non-keymap binding",
-			     (char *) XSTRING_DATA (Fkey_description (keys)),
-			     (char *) XSTRING_DATA (Fkey_description
-						    (new_keys)),
-			     (char *) XSTRING_DATA (Fsingle_key_description
-						    (Vmeta_prefix_char)));
+			     (CIbyte *) XSTRING_DATA (Fkey_description (keys)),
+			     (CIbyte *) XSTRING_DATA (Fkey_description
+						      (new_keys)),
+			     (CIbyte *) XSTRING_DATA (Fsingle_key_description
+						      (Vmeta_prefix_char)));
 }
 
 DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*
@@ -3285,7 +3285,7 @@ spaces are put between sequence elements, etc...
 	    string = s2;
 	  else
 	    {
-	      /* if (NILP (sep)) Lisp_Object sep = build_string (" ") */;
+	      /* if (NILP (sep)) Lisp_Object sep = build_ascstring (" ") */;
 	      string = concat2 (string, concat2 (Vsingle_space_string, s2));
 	    }
 	}
@@ -3443,7 +3443,7 @@ of a character from a buffer rather than a key read from the user.
     }
 
   *p = 0;
-  return build_string ((char *) buf);
+  return build_istring (buf);
 }
 
 
@@ -3739,7 +3739,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	      Lisp_Key_Data *new_ = xnew_array (Lisp_Key_Data, size);
 	      memcpy ((void *)new_, (const void *)c->keys_so_far,
 		      c->keys_so_far_total_size * sizeof (Lisp_Key_Data));
-	      xfree (c->keys_so_far, Lisp_Key_Data);
+	      xfree (c->keys_so_far);
 	      c->keys_so_far = new_;
 	    }
 	  else
@@ -3815,7 +3815,7 @@ where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
     result = Fnreverse (result);
 
   if (c.keys_so_far_malloced)
-    xfree (c.keys_so_far, Lisp_Key_Data *);
+    xfree (c.keys_so_far);
   return result;
 }
 
@@ -3938,7 +3938,7 @@ describe_command (Lisp_Object definition, Lisp_Object buffer)
 
   Findent_to (make_int (16), make_int (3), buffer);
   if (keymapp)
-    buffer_insert_c_string (XBUFFER (buffer), "<< ");
+    buffer_insert_ascstring (XBUFFER (buffer), "<< ");
 
   if (SYMBOLP (definition))
     {
@@ -3946,19 +3946,19 @@ describe_command (Lisp_Object definition, Lisp_Object buffer)
     }
   else if (STRINGP (definition) || VECTORP (definition))
     {
-      buffer_insert_c_string (XBUFFER (buffer), "Kbd Macro: ");
+      buffer_insert_ascstring (XBUFFER (buffer), "Kbd Macro: ");
       buffer_insert1 (XBUFFER (buffer), Fkey_description (definition));
     }
   else if (COMPILED_FUNCTIONP (definition))
-    buffer_insert_c_string (XBUFFER (buffer), "Anonymous Compiled Function");
+    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Compiled Function");
   else if (CONSP (definition) && EQ (XCAR (definition), Qlambda))
-    buffer_insert_c_string (XBUFFER (buffer), "Anonymous Lambda");
+    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Lambda");
   else if (KEYMAPP (definition))
     {
       Lisp_Object name = XKEYMAP (definition)->name;
       if (STRINGP (name) || (SYMBOLP (name) && !NILP (name)))
 	{
-	  buffer_insert_c_string (XBUFFER (buffer), "Prefix command ");
+	  buffer_insert_ascstring (XBUFFER (buffer), "Prefix command ");
 	  if (SYMBOLP (name)
 	      && EQ (find_symbol_value (name), definition))
 	    buffer_insert1 (XBUFFER (buffer), Fsymbol_name (name));
@@ -3968,14 +3968,14 @@ describe_command (Lisp_Object definition, Lisp_Object buffer)
 	    }
 	}
       else
-	buffer_insert_c_string (XBUFFER (buffer), "Prefix Command");
+	buffer_insert_ascstring (XBUFFER (buffer), "Prefix Command");
     }
   else
-    buffer_insert_c_string (XBUFFER (buffer), "??");
+    buffer_insert_ascstring (XBUFFER (buffer), "??");
 
   if (keymapp)
-    buffer_insert_c_string (XBUFFER (buffer), " >>");
-  buffer_insert_c_string (XBUFFER (buffer), "\n");
+    buffer_insert_ascstring (XBUFFER (buffer), " >>");
+  buffer_insert_ascstring (XBUFFER (buffer), "\n");
   UNGCPRO;
 }
 
@@ -4210,7 +4210,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
   if (!NILP (list))
     {
       list = list_sort (list, Qnil, describe_map_sort_predicate);
-      buffer_insert_c_string (buf, "\n");
+      buffer_insert_ascstring (buf, "\n");
       while (!NILP (list))
 	{
           Lisp_Object elt = XCAR (XCAR (list));
@@ -4221,17 +4221,17 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	    buffer_insert_lisp_string (buf, elt_prefix);
 
 	  if (modifiers & XEMACS_MOD_META)
-	    buffer_insert_c_string (buf, "M-");
+	    buffer_insert_ascstring (buf, "M-");
 	  if (modifiers & XEMACS_MOD_CONTROL)
-	    buffer_insert_c_string (buf, "C-");
+	    buffer_insert_ascstring (buf, "C-");
 	  if (modifiers & XEMACS_MOD_SUPER)
-	    buffer_insert_c_string (buf, "S-");
+	    buffer_insert_ascstring (buf, "S-");
 	  if (modifiers & XEMACS_MOD_HYPER)
-	    buffer_insert_c_string (buf, "H-");
+	    buffer_insert_ascstring (buf, "H-");
 	  if (modifiers & XEMACS_MOD_ALT)
-	    buffer_insert_c_string (buf, "Alt-");
+	    buffer_insert_ascstring (buf, "Alt-");
 	  if (modifiers & XEMACS_MOD_SHIFT)
-	    buffer_insert_c_string (buf, "Sh-");
+	    buffer_insert_ascstring (buf, "Sh-");
 	  if (SYMBOLP (keysym))
 	    {
 	      Lisp_Object code = Fget (keysym, Qcharacter_of_keysym, Qnil);
@@ -4240,19 +4240,19 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      /* Calling Fsingle_key_description() would cons more */
 #if 0                           /* This is bogus */
 	      if (EQ (keysym, QKlinefeed))
-		buffer_insert_c_string (buf, "LFD");
+		buffer_insert_ascstring (buf, "LFD");
 	      else if (EQ (keysym, QKtab))
-		buffer_insert_c_string (buf, "TAB");
+		buffer_insert_ascstring (buf, "TAB");
 	      else if (EQ (keysym, QKreturn))
-		buffer_insert_c_string (buf, "RET");
+		buffer_insert_ascstring (buf, "RET");
 	      else if (EQ (keysym, QKescape))
-		buffer_insert_c_string (buf, "ESC");
+		buffer_insert_ascstring (buf, "ESC");
 	      else if (EQ (keysym, QKdelete))
-		buffer_insert_c_string (buf, "DEL");
+		buffer_insert_ascstring (buf, "DEL");
 	      else if (EQ (keysym, QKspace))
-		buffer_insert_c_string (buf, "SPC");
+		buffer_insert_ascstring (buf, "SPC");
 	      else if (EQ (keysym, QKbackspace))
-		buffer_insert_c_string (buf, "BS");
+		buffer_insert_ascstring (buf, "BS");
 	      else
 #endif
                 if (c >= printable_min)
@@ -4262,7 +4262,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	  else if (CHARP (keysym))
 	    buffer_insert_emacs_char (buf, XCHAR (keysym));
 	  else
-	    buffer_insert_c_string (buf, "---bad keysym---");
+	    buffer_insert_ascstring (buf, "---bad keysym---");
 
 	  if (elided)
 	    elided = 0;
@@ -4278,9 +4278,9 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      if (k != 0)
 		{
 		  if (k == 1)
-		    buffer_insert_c_string (buf, ", ");
+		    buffer_insert_ascstring (buf, ", ");
 		  else
-		    buffer_insert_c_string (buf, " .. ");
+		    buffer_insert_ascstring (buf, " .. ");
 		  elided = 1;
 		  continue;
 		}

@@ -129,7 +129,7 @@ __make_string_mapper (gpointer data, gpointer user_data)
 {
   Lisp_Object *rv = (Lisp_Object *) user_data;
 
-  *rv = Fcons (build_string ((char *)data), *rv);
+  *rv = Fcons (build_cistring ((char *)data), *rv);
 }
 
 static Lisp_Object

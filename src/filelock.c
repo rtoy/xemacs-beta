@@ -1,5 +1,5 @@
 /* Copyright (C) 1985, 86, 87, 93, 94, 96 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -38,7 +38,7 @@ int inhibit_clash_detection;
 
 #ifdef CLASH_DETECTION
 
-/* The strategy: to lock a file FN, create a symlink .#FN in FN's
+/* The strategy: to lock a file FN, create a symlink .#FN# in FN's
    directory, with link data `user@host.pid'.  This avoids a single
    mount (== failure) point for lock files.
 
@@ -67,11 +67,17 @@ int inhibit_clash_detection;
    file names, because those are all the same systems that don't have
    symlinks.
 
-   This is compatible with the locking scheme used by Interleaf (which
-   has contributed this implementation for Emacs), and was designed by
-   Ethan Jacobson, Kimbo Mundy, and others.
+   Originally we used a name .#FN without the final #; this may have been
+   compatible with the locking scheme used by Interleaf (which has
+   contributed this implementation for Emacs), and was designed by Ethan
+   Jacobson, Kimbo Mundy, and others.
 
    --karl@cs.umb.edu/karl@hq.ileaf.com.  */
+
+/* NOTE:  We added the final # in the name .#FN# so that programs
+   that e.g. search for all .c files, such as etags, or try to
+   byte-compile all .el files in a directory (byte-recompile-directory),
+   won't get tripped up by the bogus symlink file. --ben */
 
 
 /* Here is the structure that stores information about a lock.  */
@@ -89,14 +95,15 @@ typedef struct
 
 /* Free the two dynamically-allocated pieces in PTR.  */
 #define FREE_LOCK_INFO(i) do {			\
-    xfree ((i).user, Ibyte *);			\
-    xfree ((i).host, Ibyte *);			\
+    xfree ((i).user);			\
+    xfree ((i).host);			\
   } while (0)
 
-/* Write the name of the lock file for FN into LFNAME.  Length will be
-   that of FN plus two more for the leading `.#' plus one for the null.  */
+/* Write the name of the lock file for FN into LFNAME.  Length will be that
+   of FN plus two more for the leading `.#' plus one for the trailing #
+   plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = alloca_ibytes (XSTRING_LENGTH (file) + 2 + 1), \
+  (lock = alloca_ibytes (XSTRING_LENGTH (file) + 2 + 1 + 1), \
    fill_in_lock_file_name (lock, file))
 
 static void
@@ -116,7 +123,10 @@ fill_in_lock_file_name (Ibyte *lockfile, Lisp_Object fn)
   p = lockfile + dirlen;
   *(p++) = '.';
   *(p++) = '#';
-  memcpy (p, file_name + dirlen, XSTRING_LENGTH (fn) - dirlen + 1);
+  memcpy (p, file_name + dirlen, XSTRING_LENGTH (fn) - dirlen);
+  p += XSTRING_LENGTH (fn) - dirlen;
+  *(p++) = '#';
+  *p = '\0';
 }
 
 /* Lock the lock file named LFNAME.
@@ -183,7 +193,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   /* If nonexistent lock file, all is well; otherwise, got strange error. */
   if (len == -1)
     {
-      xfree (lfinfo, Ibyte *);
+      xfree (lfinfo);
       return errno == ENOENT ? 0 : -1;
     }
 
@@ -203,7 +213,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   at = qxestrchr (lfinfo, '@');
   dot = qxestrrchr (lfinfo, '.');
   if (!at || !dot) {
-    xfree (lfinfo, Ibyte *);
+    xfree (lfinfo);
     return -1;
   }
   len = at - lfinfo;
@@ -221,7 +231,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
   owner->host[len] = 0;
 
   /* We're done looking at the link info.  */
-  xfree (lfinfo, Ibyte *);
+  xfree (lfinfo);
 
   /* On current host?  */
   if (STRINGP (Fsystem_name ())
@@ -358,7 +368,7 @@ lock_file (Lisp_Object fn)
 
   attack = call2_in_buffer (BUFFERP (subject_buf) ? XBUFFER (subject_buf) :
 			    current_buffer, Qask_user_about_lock , fn,
-			    build_intstring (locker));
+			    build_istring (locker));
   if (!NILP (attack) && current_buffer == XBUFFER (old_current_buffer))
     /* User says take the lock */
     {
@@ -474,7 +484,7 @@ t if it is locked by you, else a string of the name of the locker.
   else if (owner == 2)
     ret = Qt;
   else
-    ret = build_intstring (locker.user);
+    ret = build_istring (locker.user);
 
   if (owner > 0)
     FREE_LOCK_INFO (locker);

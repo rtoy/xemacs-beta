@@ -59,7 +59,7 @@ symbol_to_gtk_atom (struct device *UNUSED (d), Lisp_Object sym,
 
   {
     const Extbyte *nameext;
-    LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), nameext, Qctext);
+    nameext = LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), Qctext);
     return gdk_atom_intern (nameext, only_if_exists ? TRUE : FALSE);
   }
 }
@@ -76,15 +76,15 @@ atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
 
     if (! str) return Qnil;
 
-    EXTERNAL_TO_C_STRING (str, intstr, Qctext);
+    intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     g_free (str);
-    return intern_int (intstr);
+    return intern_istring (intstr);
   }
 }
 
-#define PROCESSING_GTK_CODE
-#include "select-common.h"
-#undef PROCESSING_GTK_CODE
+#define THIS_IS_GTK
+#include "select-xlike-inc.c"
+#undef THIS_IS_GTK
 
 
 /* Set the selection data to GDK_NONE and NULL data, meaning we were
@@ -213,7 +213,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     cl->successful = TRUE;
-    xfree (data, Rawbyte *);
+    xfree (data);
   }
 
   unbind_to (count);
@@ -221,7 +221,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
  DONE_LABEL:
 
   if (cl)
-    xfree (cl, struct _selection_closure *);
+    xfree (cl);
 
   UNGCPRO;
 

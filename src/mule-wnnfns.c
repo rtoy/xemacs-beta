@@ -1,4 +1,4 @@
-/* -*- coding: iso-2022-jp -*-
+/* -*- coding: utf-8 -*-
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
@@ -35,13 +35,13 @@ Boston, MA 02111-1307, USA.  */
  *		login-name: STRING
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		jserver $B$H@\B3$7!"%5!<%P!<FbIt$K@5JQ49!?5UJQ49#2$D$N4D6-$r(B
- *		$B:n$k!#%(%i!<$N;~$O(B nil $B$rJV$9!#(B
+ *		jserver と接続し、サーバー内部に正変換／逆変換２つの環境を
+ *		作る。エラーの時は nil を返す。
  *
  *	   (wnn-server-close)
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		jserver $B$H$N@\B3$r@Z$k!#<-=q!"IQEY$O%;!<%V$5$l$J$$!#(B
+ *		jserver との接続を切る。辞書、頻度はセーブされない。
  *
  *	   (wnn-server-dict-add dict-file-name hindo-file-name priority
  *		dict-file-mode hindo-file-mode pw1 pw2)
@@ -53,79 +53,79 @@ Boston, MA 02111-1307, USA.  */
  *		pw1: STRING or NIL
  *		pw2: STRING or NIL
  *		DESCRIPTION:
- *		$B<-=q%U%!%$%kL>!"IQEY%U%!%$%kL>!"M%@hEY!"<-=q%U%!%$%k%b!<%I(B
- *		$BIQEY%U%!%$%k%b!<%I$G;XDj$7$?<-=q$r%P%C%U%!$KDI2C$9$k!#(B
- *		pw1, pw2 $B$O<-=q%U%!%$%k!"IQEY%U%!%$%k$N%Q%9%o!<%I!#(B
+ *		辞書ファイル名、頻度ファイル名、優先度、辞書ファイルモード
+ *		頻度ファイルモードで指定した辞書をバッファに追加する。
+ *		pw1, pw2 は辞書ファイル、頻度ファイルのパスワード。
  *
  *	   (wnn-server-dict-delete dic-no)
  *		dic-no: INTEGER
- *		RETURNS: $B%(%i!<$N;~(B nil
- *		DESCRIPTION: dic-no $B$N<-=qHV9f$N<-=q$r!"%P%C%U%!$+$i(B
- *		$B:o=|$9$k!#(B
+ *		RETURNS: エラーの時 nil
+ *		DESCRIPTION: dic-no の辞書番号の辞書を、バッファから
+ *		削除する。
  *
  *	   (wnn-server-dict-list)
  *		RETURNS: ((dic-no1 file-name1 comment1 word-no1 nice1)
  *			  (dic-no2 file-name2 comment2 word-no2 nice2)...)
- *		DESCRIPTION: $B%P%C%U%!>e$N<-=q$N%j%9%H$rF@$k!#(B
+ *		DESCRIPTION: バッファ上の辞書のリストを得る。
  *
  *	   (wnn-server-dict-comment dic-no comment)
- *		RETURNS: $B%(%i!<$N;~(B nil
- *		DESCRIPTION: dic-no $B$N<-=q$K%3%a%s%H$r$D$1$k!#(B
+ *		RETURNS: エラーの時 nil
+ *		DESCRIPTION: dic-no の辞書にコメントをつける。
  *
  *	   (wnn-server-set-rev rev)
  *		rev: BOOLEAN
- *		rev $B$,(B nil $B$N;~$O@5JQ49!"$=$l0J30$N;~$O5UJQ49(B
+ *		rev が nil の時は正変換、それ以外の時は逆変換
  *
  *	   (wnn-server-henkan-begin henkan-string)
  *		henkan-string: STRING
  *		RETURNS: bunsetu-suu
  *		DESCRIPTION:
- *		$B2>L>4A;zJQ49$r$7!"Bh0l8uJd$NJ8@a?t$rJV$9!#(B
+ *		仮名漢字変換をし、第一候補の文節数を返す。
  *
  *	   (wnn-server-zenkouho bunsetu-no dai)
  *		bunsetu-no: INTEGER
  *		dai: BOOLEAN
  *		RETURNS: offset
  *		DESCRIPTION:
- *		$BJ8@aHV9f$G;XDj$5$l$?J8@a$NA48uJd$r$H$j$@$7(B
- *		$B!"8=:_$N%*%U%;%C%H$rJV$9!#(B
+ *		文節番号で指定された文節の全候補をとりだし
+ *		、現在のオフセットを返す。
  *
  *	   (wnn-server-get-zenkouho offset)
  *		bunsetu-no: INTEGER
  *		dai: BOOLEAN
  *		RETURNS: list of zenkouho
  *		DESCRIPTION:
- *		$B%*%U%;%C%H$G;XDj$5$l$?8uJd$rF@$k!#(B
+ *		オフセットで指定された候補を得る。
  *
  *	   (wnn-server-zenkouho-bun)
  *		RETURNS: INTEGER
  *		DESCRIPTION:
- *		$BA48uJd$rI=<($7$F$$$kJ8@aHV9f$rF@$k!#(B
+ *		全候補を表示している文節番号を得る。
  *
  *	   (wnn-server-zenkouho-suu)
  *		RETURNS: INTEGER
  *		DESCRIPTION:
- *		$BA48uJd$rI=<($7$F$$$kJ8@a$NA48uJd?t$rF@$k!#(B
+ *		全候補を表示している文節の全候補数を得る。
  *
  *	   (wnn-server-dai-top bun-no)
  *		bun-no: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$BJ8@a$,BgJ8@a$N@hF,$J$i(B t
+ *		文節が大文節の先頭なら t
  *
  *	   (wnn-server-dai-end bun-no)
  *		bun-no: INTEGER
  *		RETURNS: INTEGER
  *		DESCRIPTION:
- *		$B<!$NBgJ8@a$NJ8@aHV9f$rF@$k!#(B
+ *		次の大文節の文節番号を得る。
  *
  *	   (wnn-server-henkan-kakutei kouho-no dai)
  *		kouho-no: INTEGER
  *		dai: BOOLEAN
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B8uJdHV9f$G<($5$l$?8uJd$rA*Br$9$k!#(B
- *		(wnn-server-zenkouho) $B$r8F$s$F$+$i$G$J$$$H$$$1$J$$!#(B
+ *		候補番号で示された候補を選択する。
+ *		(wnn-server-zenkouho) を呼んてからでないといけない。
  *
  *	   (wnn-server-bunsetu-henkou bunsetu-no bunsetu-length dai)
  *		bunsetu-no: INTEGER
@@ -133,19 +133,19 @@ Boston, MA 02111-1307, USA.  */
  *		dai: BOOLEAN
  *		RETURNS:
  *		DESCRIPTION:
- *		$BJ8@a$ND9$5$rJQ99$9$k!#(B
+ *		文節の長さを変更する。
  *
  *         (wnn-bunsetu-kouho-inspect bunsetu-no)
  *              bunsetu-no: INTEGER
  *              RETURNS: (kanji yomi jisho-no serial-no hinsi hindo
  *		ima hyoka daihyoka kangovect)
  *		DESCRIPTION:
- *		$BJ8@a$N?'!9$J>pJs$rJQ49%P%C%U%!$+$i$H$j=P$9!#(B
+ *		文節の色々な情報を変換バッファからとり出す。
  *
  *	   (wnn-server-henkan-quit)
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B2?$b$7$J$$!#(B
+ *		何もしない。
  *
  *	   (wnn-server-bunsetu-kanji bun-no)
  *		RETURNS: (bunsetu-kanji length)
@@ -163,7 +163,7 @@ Boston, MA 02111-1307, USA.  */
  *              bunsetu-no: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$BIQEY>pJs$r99?7$9$k!#(B
+ *		頻度情報を更新する。
  *
  *	   (wnn-server-word-add dic-no tango yomi comment hinsi)
  *		dic-no: INTEGER
@@ -173,28 +173,28 @@ Boston, MA 02111-1307, USA.  */
  *		hinsi: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B<-=q$KC18l$rEPO?$9$k!#(B
+ *		辞書に単語を登録する。
  *
  *	   (wnn-server-word-delete dic-no entry)
  *		dic-no: INTEGER
  *		entry: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B<-=q$+$i%(%s%H%jHV9f$G<($5$l$kC18l$r:o=|$9$k!#(B
+ *		辞書からエントリ番号で示される単語を削除する。
  *
  *	   (wnn-server-word-use dic-no entry)
  *		dic-no: INTEGER
  *		entry: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B<-=q$+$i%(%s%H%jHV9f$G<($5$l$kC18l$NM-8z!?L58z$r%H%0%k$9$k!#(B
+ *		辞書からエントリ番号で示される単語の有効／無効をトグルする。
   *
  *	   (wnn-server-word-info dic-no entry)
  *		dic-no: INTEGER
  *		entry: INTEGER
  *		RETURNS: (yomi kanji comment hindo hinsi)
  *		DESCRIPTION:
- *		$B<-=q$+$i%(%s%H%jHV9f$G<($5$l$kC18l$N>pJs$rF@$k!#(B
+ *		辞書からエントリ番号で示される単語の情報を得る。
  *
  *	   (wnn-server-word-hindo-set dic-no entry hindo)
  *		dic-no: INTEGER
@@ -202,61 +202,61 @@ Boston, MA 02111-1307, USA.  */
  *		hindo: INTEGER
  *		RETURNS: BOOLEAN
  *		DESCRIPTION:
- *		$B<-=q$+$i%(%s%H%jHV9f$G<($5$l$kC18l$NIQEY$r@_Dj$9$k!#(B
+ *		辞書からエントリ番号で示される単語の頻度を設定する。
  *
  *	   (wnn-server-word-search yomi)
  *		yomi: STRING
  *		RETURNS: a LIST of dict-joho
  *		DESCRIPTION:
- *		$BA4$F$N<-=q$+$iC18l8!:w$r9T$J$&!#(B
+ *		全ての辞書から単語検索を行なう。
  *
  *         (wnn-server-dict-save)
  *              RETURNS: BOOLEAN
  *              DESCRIPTION:
- *		$BA4$F$N<-=q$HIQEY%U%!%$%k$r%;!<%V$9$k!#(B
+ *		全ての辞書と頻度ファイルをセーブする。
  *
  *	   (wnn-server-get-param)
  *		RETURNS: (n nsho p1 p2 p3 ... p15)
- *		DESCRIPTION: $BJQ49%Q%i%a!<%?$rF@$k!#(B
+ *		DESCRIPTION: 変換パラメータを得る。
  *
  *	   (wnn-server-set-param n sho p1 ... p15)
- *		RETURNS: $B%(%i!<$N;~(B nil
- *		DESCRIPTION: $BJQ49%Q%i%a!<%?$r@_Dj$9$k!#(B
+ *		RETURNS: エラーの時 nil
+ *		DESCRIPTION: 変換パラメータを設定する。
  *
  *	   (wnn-server-get-msg error-no)
- *		RETURNS: $B%(%i!<%a225;!<%8(B
- *		DESCRIPTION: $B%(%i!<HV9f$+$i%a%C%;!<%8$rF@$k!#(B
+ *		RETURNS: エラーメ臆技ージ
+ *		DESCRIPTION: エラー番号からメッセージを得る。
  *
  *	   (wnn-server-fuzokugo-set fname)
- *		RETURNS: $B%(%i!<$N;~(B nil
- *		DESCRIPTION: $B%P%C%U%!$KImB08l%U%!%$%k$rFI$_9~$`!#(B
+ *		RETURNS: エラーの時 nil
+ *		DESCRIPTION: バッファに附属語ファイルを読み込む。
  *
  *	   (wnn-server-fuzokugo-get)
- *		RETURNS: $B%U%!%$%kL>(B
- *		DESCRIPTION: $B%P%C%U%!$NImB08l%U%!%$%kL>$rF@$k!#(B
+ *		RETURNS: ファイル名
+ *		DESCRIPTION: バッファの附属語ファイル名を得る。
  *
  *	   (wnn-server-isconnect)
- *		RETURNS: $B%3%M%/%H$7$F$l$P(B t, $B$7$F$J$1$l$P(B nil
- *		DESCRIPTION: $B%5!<%P$H7Q$C$F$$$k$+D4$Y$k!#(B
+ *		RETURNS: コネクトしてれば t, してなければ nil
+ *		DESCRIPTION: サーバと継っているか調べる。
  *
  *	   (wnn-server-hinsi-dicts hinsi-no)
  *		RETURNS: (dic-no1 dic-no2 ...)
- *		DESCRIPTION: hinsi-no $B$NIJ;l$,EPO?$G$-$k<-=q$N%j%9%H$rF@$k!#(B
- *		hinsi-no = -1 $B$N$H$-$K$O!"EPO?2DG=$JA4<-=q$rF@$k!#(B
+ *		DESCRIPTION: hinsi-no の品詞が登録できる辞書のリストを得る。
+ *		hinsi-no = -1 のときには、登録可能な全辞書を得る。
  *
  *	   (wnn-server-hinsi-list dic-no name)
  *		RETURNS: (name1 name2 ... )
- *		DESCRIPTION: dic-no $B$N<-=q$G!"IJ;l%N!<%I$KB0$9$k(B
- *		$BIJ;l%N!<%I!JL>!K$N%j%9%H$rF@$k!#(B
- *		$BIJ;lL>$rM?$($?;~$O!"#0$rJV$9!#(B
+ *		DESCRIPTION: dic-no の辞書で、品詞ノードに属する
+ *		品詞ノード（名）のリストを得る。
+ *		品詞名を与えた時は、０を返す。
  *
  *	   (wnn-server-hinsi-name hinsi-no)
  *		RETURNS: hinsi-name
- *		DESCRIPTION: $BIJ;lHV9f$+$iL>A0$r<h$k!#(B
+ *		DESCRIPTION: 品詞番号から名前を取る。
  *
  *	   (wnn-server-hinsi-number hinsi-name)
  *		RETURNS: hinsi-no
- *		DESCRIPTION: $BIJ;lL>$rIJ;lHV9f$KJQ49$9$k!#(B
+ *		DESCRIPTION: 品詞名を品詞番号に変換する。
  *
  *         (wnn-server-version)
  *              RETURNS: version ID(int)
@@ -275,7 +275,7 @@ Boston, MA 02111-1307, USA.  */
 #include "wnn/jllib.h"
 #include "wnn/cplib.h"
 
-/* UCHAR $B$,Fs=EDj5A$5$l$k$N$G(B */
+/* UCHAR が二重定義されるので */
 #define _UCHAR_T
 
 #define EGG_TIMEOUT 5

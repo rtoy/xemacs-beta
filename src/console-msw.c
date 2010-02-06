@@ -347,8 +347,7 @@ write_string_to_mswindows_debugging_output (const Ibyte *str, Bytecount len)
   if (initialized && !inhibit_non_essential_conversion_operations)
     {
       TO_EXTERNAL_FORMAT (DATA, (str, len),
-			  C_STRING_ALLOCA, extptr,
-			  Qmswindows_tstr);
+			  C_STRING_ALLOCA, extptr, Qmswindows_tstr);
       qxeOutputDebugString (extptr);
     }
   else
@@ -578,12 +577,12 @@ no effect.  */
     }
 
   CHECK_STRING (message_);
-  LISP_STRING_TO_TSTR (message_, msgout);
+  msgout = LISP_STRING_TO_TSTR (message_);
   
   if (!NILP (title))
     {
       CHECK_STRING (title);
-      LISP_STRING_TO_TSTR (title, titleout);
+      titleout = LISP_STRING_TO_TSTR (title);
     }
 
   {

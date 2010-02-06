@@ -844,17 +844,14 @@ extern int mswindows_windows9x_p;
   (XEUNICODE_P ? (char *) wcsdup ((wchar_t *) s) \
    : xstrdup (s))
 
-#define C_STRING_TO_TSTR(in, out) \
-  C_STRING_TO_EXTERNAL (in, out, Qmswindows_tstr)
-#define LISP_STRING_TO_TSTR(in, out) \
-  LISP_STRING_TO_EXTERNAL (in, out, Qmswindows_tstr)
-#define TSTR_TO_C_STRING(in, out) \
-  EXTERNAL_TO_C_STRING (in, out, Qmswindows_tstr)
-#define TSTR_TO_C_STRING_MALLOC(in, out) \
-  EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
+#define ITEXT_TO_TSTR(in) ITEXT_TO_EXTERNAL (in, Qmswindows_tstr)
+#define LISP_STRING_TO_TSTR(in) LISP_STRING_TO_EXTERNAL (in, Qmswindows_tstr)
+#define TSTR_TO_ITEXT(in) EXTERNAL_TO_ITEXT (in, Qmswindows_tstr)
+#define TSTR_TO_ITEXT_MALLOC(in) \
+  EXTERNAL_TO_ITEXT_MALLOC (in, Qmswindows_tstr)
 
 #define build_tstr_string(in) \
-  make_ext_string (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+  make_extstring (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
 
 #define MAX_ANSI_CHAR_LEN 1
 #define MAX_UNICODE_CHAR_LEN 2
@@ -952,8 +949,9 @@ int mswindows_locale_to_oem_code_page (LCID lcid);
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)				\
 do {									\
   const Ibyte *lfftt = (path);						\
+  const Extbyte **lffttout = (const Extbyte **) &(out);			\
   if (isalpha (lfftt[0]) && (IS_DEVICE_SEP (lfftt[1])))			\
-    PATHNAME_CONVERT_OUT_TSTR (lfftt, out);				\
+    PATHNAME_CONVERT_OUT_TSTR (lfftt, *lffttout);			\
   else									\
     {									\
       int lfftt_size;							\
@@ -966,7 +964,7 @@ do {									\
       lfftt_tstr_path = alloca_extbytes (lfftt_size);			\
       cygwin_conv_path (CCP_POSIX_TO_WIN_T | CCP_RELATIVE,		\
 			lfftt_utf8_path, lfftt_tstr_path, lfftt_size);	\
-      * (const Extbyte **) &(out) = lfftt_tstr_path;			\
+      *lffttout = lfftt_tstr_path;					\
     }									\
 } while (0)
 #define TSTR_TO_LOCAL_FILE_FORMAT(path, out)				\
@@ -980,21 +978,22 @@ do {									\
   ttlff_utf8_path = alloca_extbytes (ttlff_size);			\
   cygwin_conv_path (CCP_WIN_T_TO_POSIX | CCP_RELATIVE,			\
 		    ttlff, ttlff_utf8_path, ttlff_size);		\
-  EXTERNAL_TO_C_STRING (ttlff_utf8_path, out, Qutf_8);			\
+  (out) = EXTERNAL_TO_ITEXT (ttlff_utf8_path, Qutf_8);			\
 } while (0)
 #else /* not HAVE_CYGWIN_CONV_PATH */
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
 do {							\
   const Ibyte *lfftt;					\
+  const Extbyte **lffttout = (const Extbyte **) &(out);	\
 							\
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (path, lfftt);	\
-  PATHNAME_CONVERT_OUT_TSTR (lfftt, out);		\
+  PATHNAME_CONVERT_OUT_TSTR (lfftt, *lffttout);		\
 } while (0)
 #define TSTR_TO_LOCAL_FILE_FORMAT(path, out)		\
 do {							\
   const Ibyte *ttlff;					\
 							\
-  TSTR_TO_C_STRING (path, ttlff);			\
+  ttlff = TSTR_TO_ITEXT (path);				\
   INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, out);	\
 } while (0)
 #endif /* (not) HAVE_CYGWIN_CONV_PATH */
@@ -1023,13 +1022,13 @@ do								\
     const Extbyte *lfftiwp;					\
 								\
     LOCAL_FILE_FORMAT_TO_TSTR (path, lfftiwp);			\
-    TSTR_TO_C_STRING (lfftiwp, pathout);			\
+    (pathout) = TSTR_TO_ITEXT (lfftiwp);			\
   }								\
 while (0)
 #define INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT(path, pathout)	\
 do {								\
   const Extbyte *iwtlffp;					\
-  C_STRING_TO_TSTR (path, iwtlffp);				\
+  iwtlffp = ITEXT_TO_TSTR (path);				\
   TSTR_TO_LOCAL_FILE_FORMAT (iwtlffp, pathout);			\
 } while (0)
 #elif defined (CYGWIN)
@@ -1041,15 +1040,15 @@ do {									\
      conversion functions are *NOT* localized, and will fail if they	\
      get 7-bit ISO2022-encoded data.  We know that our internal format	\
      is ASCII-compatible, and so these functions will work fine with	\
-     this data. */							\
+     this data (maybe ...  not when Cygwin uses UTF-8) */		\
   const Ibyte *lfftiwp = (path);					\
   if (isalpha (lfftiwp[0]) && (IS_DEVICE_SEP (lfftiwp[1])))		\
-    pathout = lfftiwp;							\
+    (pathout) = lfftiwp;						\
   else									\
     {									\
       int lfftiw2 =							\
         cygwin_posix_to_win32_path_list_buf_size ((char *) lfftiwp);	\
-      pathout = alloca_ibytes (lfftiw2);				\
+      (pathout) = alloca_ibytes (lfftiw2);				\
       cygwin_posix_to_win32_path_list ((char *) lfftiwp, (char *) pathout); \
     }									\
 } while (0)
@@ -1106,11 +1105,11 @@ do									\
 	      qxestrncpy (lffmutt_path2, lffmutt_pathint, 7);		\
 	      qxestrcpy (lffmutt_path2 + 7, lffmutt_path1);		\
 	    }								\
-	  C_STRING_TO_TSTR (lffmutt_path2, pathout);			\
+	  (pathout) = ITEXT_TO_TSTR (lffmutt_path2);			\
 	}								\
       else								\
 	/* A straight URL, just convert */				\
-	LISP_STRING_TO_TSTR (lispstr, pathout);				\
+	(pathout) = LISP_STRING_TO_TSTR (lispstr);			\
     }									\
   else									\
     /* Not URL-style, must be a straight filename. */			\
@@ -1246,8 +1245,8 @@ extern int mswindows_compare_env (const void *strp1, const void *strp2);
 
 /* in win32.c */
 Extbyte *mswindows_get_module_file_name (void);
-void mswindows_output_last_error (char *frob);
-DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
+void mswindows_output_last_error (const Ascbyte *frob);
+DECLARE_DOESNT_RETURN (mswindows_report_process_error (const Ascbyte *reason,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);

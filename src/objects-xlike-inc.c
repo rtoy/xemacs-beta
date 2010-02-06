@@ -116,7 +116,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
       if (!NILP(reloc))
 	{
 	  the_nonreloc = XSTRING_DATA (reloc);
-	  LISP_STRING_TO_EXTERNAL (reloc, extname, Qx_font_name_encoding);
+	  extname = LISP_STRING_TO_EXTERNAL (reloc, Qx_font_name_encoding);
 	  rf = xft_open_font_by_name (dpy, extname);
 	  return 0;	 /* #### maybe this will compile and run ;) */
 			 /* Jesus, Stephen, what the fuck? */
@@ -322,10 +322,10 @@ mule_to_fc_charset (Lisp_Object cs)
 struct charset_reporter {
   Lisp_Object *charset;
   /* This is a debug facility, require ASCII. */
-  Extbyte *language;		/* ASCII, please */
+  const Ascbyte *language;	/* ASCII, please */
   /* Technically this is FcChar8, but fsckin' GCC 4 bitches.
      RFC 3066 is a combination of ISO 639 and ISO 3166. */
-  Extbyte *rfc3066;		/* ASCII, please */
+  const Ascbyte *rfc3066;	/* ASCII, please */
 };
 
 static struct charset_reporter charset_table[] =
@@ -419,13 +419,13 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
       FcPattern *fontxft;	/* long-lived, freed at end of this block */
       FcResult fcresult;
       FcConfig *fcc;
-      FcChar8 *lang = (FcChar8 *) "en";	/* #### fix this bogus hack! */
+      const Ascbyte *lang = "en";
       FcCharSet *fccs = NULL;
       DECLARE_EISTRING (eistr_shortname); /* user-friendly nickname */
       DECLARE_EISTRING (eistr_longname);  /* omit FC_LANG and FC_CHARSET */
       DECLARE_EISTRING (eistr_fullname);  /* everything */
 
-      LISP_STRING_TO_EXTERNAL (font, patternext, Qfc_font_name_encoding);
+      patternext = LISP_STRING_TO_EXTERNAL (font, Qfc_font_name_encoding);
       fcc = FcConfigGetCurrent ();
 
       /* parse the name, do the substitutions, and match the font */
@@ -536,28 +536,29 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	  {
 	    DECLARE_DEBUG_FONTNAME (name);
 	    CHECKING_LANG (0, eidata(name), cr->language);
-	    lang = (FcChar8 *) cr->rfc3066;
+	    lang = cr->rfc3066;
 	  }
 	else if (cr->charset)
 	  {
 	    /* what the hey, build 'em on the fly */
 	    /* #### in the case of error this could return NULL! */
 	    fccs = mule_to_fc_charset (charset);
-	    lang = (FcChar8 *) XSTRING_DATA (XSYMBOL
-					     (XCHARSET_NAME (charset))-> name);
+	    /* #### Bad idea here */
+	    lang = (const Ascbyte *) XSTRING_DATA (XSYMBOL (XCHARSET_NAME
+							    (charset))->name);
 	  }
 	else
 	  {
 	    /* OK, we fell off the end of the table */
 	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				    list2 (build_string ("unchecked charset"),
+				    list2 (build_ascstring ("unchecked charset"),
 					   charset));
 	    /* default to "en"
 	       #### THIS IS WRONG, WRONG, WRONG!!
 	       It is why we never fall through to XLFD-checking. */
 	  }
 
-	ASSERT_ASCTEXT_ASCII((Extbyte *) lang);
+	ASSERT_ASCTEXT_ASCII (lang);
 
       if (fccs)
 	{
@@ -616,7 +617,8 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 			       FcTypeOfValueToString (v));
 		  result = Qnil;
 		}
-	      else if (FcLangSetHasLang (v.u.l, lang) != FcLangDifferentLang)
+	      else if (FcLangSetHasLang (v.u.l, (FcChar8 *) lang)
+		       != FcLangDifferentLang)
 		{
 		  DECLARE_DEBUG_FONTNAME (name);
 		  DEBUG_XFT2 (0, "Xft font %s supports %s\n",
@@ -810,7 +812,7 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 	  Lisp_Object new_registries = make_vector(registries_len + 1, Qnil);
 
 	  XVECTOR_DATA(new_registries)[0]
-	    = build_string(FALLBACK_ASCII_REGISTRY);
+	    = build_ascstring(FALLBACK_ASCII_REGISTRY);
 
 	  memcpy(XVECTOR_DATA(new_registries) + 1,
 		 XVECTOR_DATA(registries),

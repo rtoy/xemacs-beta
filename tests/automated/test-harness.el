@@ -642,7 +642,10 @@ is used in a loop."
 Use this from the command line, with `-batch';
 it won't work in an interactive Emacs.
 Each file is processed even if an error occurred previously.
-For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
+A directory can be given as well, and all files will be processed --
+however, the file test-harness.el, which implements the test harness,
+will be skipped.
+For example, invoke \"xemacs -batch -f batch-test-emacs tests\""
   ;; command-line-args-left is what is left of the command line (from
   ;; startup.el)
   (defvar command-line-args-left)	;Avoid 'free variable' warning

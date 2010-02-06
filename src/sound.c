@@ -98,9 +98,9 @@ Lisp_Object Q_volume, Q_pitch, Q_duration, Q_sound;
 Lisp_Object Qsound_error;
 
 DOESNT_RETURN
-report_sound_error (const Ascbyte *string, Lisp_Object data)
+report_sound_error (const Ascbyte *reason, Lisp_Object data)
 {
-  report_error_with_errno (Qsound_error, string, data);
+  report_error_with_errno (Qsound_error, reason, data);
 }
 
 DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*
@@ -158,7 +158,7 @@ Windows the sound file must be in WAV format.
     {
       Extbyte *fileext;
 
-      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (file, fileext);
       /* #### ALSA code should allow specification of a device. */
       if (alsa_play_sound_file (fileext, vol))
 	return Qnil;
@@ -170,7 +170,7 @@ Windows the sound file must be in WAV format.
     {
       Extbyte *fileext;
 
-      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (file, fileext);
       /* #### NAS code should allow specification of a device. */
       if (nas_play_sound_file (fileext, vol))
 	return Qnil;
@@ -183,7 +183,7 @@ Windows the sound file must be in WAV format.
       Extbyte *fileext;
       int result;
 
-      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (file, fileext);
 
       /* #### ESD uses alarm(). But why should we also stop SIGIO? */
       stop_interrupts ();
@@ -382,9 +382,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
       Binbyte *soundext;
       Bytecount soundextlen;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, sound,
-			  ALLOCA, (soundext, soundextlen),
-			  Qbinary);
+      LISP_STRING_TO_SIZED_EXTERNAL (sound, soundext, soundextlen, Qbinary);
       if (alsa_play_sound_data (soundext, soundextlen, vol))
 	return Qnil;
     }
@@ -396,9 +394,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
       Binbyte *soundext;
       Bytecount soundextlen;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, sound,
-			  ALLOCA, (soundext, soundextlen),
-			  Qbinary);
+      LISP_STRING_TO_SIZED_EXTERNAL (sound, soundext, soundextlen, Qbinary);
       if (nas_play_sound_data (soundext, soundextlen, vol))
 	return Qnil;
     }
@@ -411,8 +407,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
       Bytecount soundextlen;
       int succes;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, sound, ALLOCA, (soundext, soundextlen),
-			  Qbinary);
+      LISP_STRING_TO_SIZED_EXTERNAL (sound, soundext, soundextlen, Qbinary);
       
       /* #### ESD uses alarm(). But why should we also stop SIGIO? */
       stop_interrupts ();
@@ -432,9 +427,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
       Bytecount soundextlen;
       int succes;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, sound,
-			  ALLOCA, (soundext, soundextlen),
-			  Qbinary);
+      LISP_STRING_TO_SIZED_EXTERNAL (sound, soundext, soundextlen, Qbinary);
       /* The sound code doesn't like getting SIGIO interrupts. Unix sucks! */
       stop_interrupts ();
       succes = play_sound_data (soundext, soundextlen, vol);

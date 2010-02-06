@@ -255,13 +255,14 @@ static Lisp_Object QSexecute_internal_event;
 Fixnum debug_emacs_events;
 
 static void
-external_debugging_print_event (const char *event_description, Lisp_Object event)
+external_debugging_print_event (const Ascbyte *event_description,
+				Lisp_Object event)
 {
-  write_c_string (Qexternal_debugging_output, "(");
-  write_c_string (Qexternal_debugging_output, event_description);
-  write_c_string (Qexternal_debugging_output, ") ");
+  write_ascstring (Qexternal_debugging_output, "(");
+  write_ascstring (Qexternal_debugging_output, event_description);
+  write_ascstring (Qexternal_debugging_output, ") ");
   print_internal (event,	     Qexternal_debugging_output, 1);
-  write_c_string (Qexternal_debugging_output, "\n");
+  write_ascstring (Qexternal_debugging_output, "\n");
 }
 #define DEBUG_PRINT_EMACS_EVENT(event_description, event) do {	\
   if (debug_emacs_events)					\
@@ -362,7 +363,7 @@ finalize_command_builder (void *header, int for_disksave)
       struct command_builder *b = (struct command_builder *) header;
       if (b->echo_buf)
 	{
-	  xfree (b->echo_buf, Ibyte *);
+	  xfree (b->echo_buf);
 	  b->echo_buf = 0;
 	}
     }
@@ -462,7 +463,7 @@ free_command_builder (struct command_builder *builder)
 {
   if (builder->echo_buf)
     {
-      xfree (builder->echo_buf, Ibyte *);
+      xfree (builder->echo_buf);
       builder->echo_buf = NULL;
     }
 #ifdef NEW_GC
@@ -846,7 +847,7 @@ execute_help_form (struct command_builder *command_builder,
 
   help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));
   if (STRINGP (help))
-    internal_with_output_to_temp_buffer (build_string ("*Help*"),
+    internal_with_output_to_temp_buffer (build_ascstring ("*Help*"),
 					 print_help, help, Qnil);
   Fnext_command_event (event, Qnil);
   /* Remove the help from the frame */
@@ -4137,7 +4138,7 @@ lookup_command_event (struct command_builder *command_builder,
 }
 
 static int
-is_scrollbar_event (Lisp_Object event)
+is_scrollbar_event (Lisp_Object USED_IF_SCROLLBARS (event))
 {
 #ifdef HAVE_SCROLLBARS
   Lisp_Object fun;
@@ -4979,9 +4980,9 @@ vars_of_event_stream (void)
   last_point_position_buffer = Qnil;
   staticpro (&last_point_position_buffer);
 
-  QSnext_event_internal = build_string ("next_event_internal()");
+  QSnext_event_internal = build_ascstring ("next_event_internal()");
   staticpro (&QSnext_event_internal);
-  QSexecute_internal_event = build_string ("execute_internal_event()");
+  QSexecute_internal_event = build_ascstring ("execute_internal_event()");
   staticpro (&QSexecute_internal_event);
 
   DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*

@@ -139,7 +139,7 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 
   {
     const Extbyte *nameext;
-    LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), nameext, Qctext);
+    nameext = LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), Qctext);
     return XInternAtom (display, nameext, only_if_exists ? True : False);
   }
 }
@@ -188,17 +188,15 @@ x_atom_to_symbol (struct device *d, Atom atom)
 
     if (! str) return Qnil;
 
-    TO_INTERNAL_FORMAT (C_STRING, str,
-			C_STRING_ALLOCA, intstr,
-			Qctext);
+    intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     XFree (str);
-    return intern_int (intstr);
+    return intern_istring (intstr);
   }
 }
 
-#define PROCESSING_X_CODE
-#include "select-common.h"
-#undef PROCESSING_X_CODE
+#define THIS_IS_X
+#include "select-xlike-inc.c"
+#undef THIS_IS_X
 
 /* Do protocol to assert ourself as a selection owner.
  */
@@ -339,14 +337,12 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	  }
 
 	if (chartypes == LATIN_1)
-	  TO_EXTERNAL_FORMAT (LISP_STRING, selection_value,
-			      ALLOCA, (data, bytes),
-			      Qbinary);
+	  LISP_STRING_TO_SIZED_EXTERNAL (selection_value, data, bytes,
+					 Qbinary);
 	else if (chartypes == WORLD)
 	  {
-	    TO_EXTERNAL_FORMAT (LISP_STRING, selection_value,
-				ALLOCA, (data, bytes),
-				Qctext);
+	    LISP_STRING_TO_SIZED_EXTERNAL (selection_value, data, bytes,
+					   Qctext);
 	    encoding = "COMPOUND_TEXT";
 	  }
       }
@@ -697,7 +693,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
        lisp/select.el . */
     if ((Rawbyte *)0 != data)
     {
-      xfree (data, Rawbyte *);
+      xfree (data);
     }
   }
 
@@ -827,7 +823,7 @@ unexpect_property_change (int tick)
 	    prev->next = rest->next;
 	  else
 	    for_whom_the_bell_tolls = rest->next;
-	  xfree (rest, struct prop_location *);
+	  xfree (rest);
 	  return;
 	}
       prev = rest;
@@ -868,7 +864,7 @@ x_handle_property_notify (XPropertyEvent *event)
 	    prev->next = rest->next;
 	  else
 	    for_whom_the_bell_tolls = rest->next;
-	  xfree (rest, struct prop_location *);
+	  xfree (rest);
 	  return;
 	}
       prev = rest;
@@ -1171,7 +1167,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 #endif
 	  unexpect_property_change (prop_id);
 	  if (tmp_data)
-	    xfree (tmp_data, Rawbyte *);
+	    xfree (tmp_data);
 	  break;
 	}
 #if 0
@@ -1188,7 +1184,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 	}
       memcpy ((*data_ret) + offset, tmp_data, tmp_size_bytes);
       offset += tmp_size_bytes;
-      xfree (tmp_data, Rawbyte *);
+      xfree (tmp_data);
     }
 }
 
@@ -1237,7 +1233,7 @@ x_get_window_property_as_lisp_data (Display *display,
       Bytecount min_size_bytes =
 	/* careful here. */
 	(Bytecount) (* ((unsigned int *) data));
-      xfree (data, Rawbyte *);
+      xfree (data);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
 				     &actual_type, &actual_format,
@@ -1249,7 +1245,7 @@ x_get_window_property_as_lisp_data (Display *display,
   val = selection_data_to_lisp_data (d, data, bytes,
 				     actual_type, actual_format);
 
-  xfree (data, Rawbyte *);
+  xfree (data);
   return val;
 }
 
@@ -1377,11 +1373,11 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
      COMPOUND_TEXT that we stored there ourselves earlier,
      in x-store-cutbuffer-internal  */
   ret = (bytes ?
-	 make_ext_string ((Extbyte *) data, bytes,
+	 make_extstring ((Extbyte *) data, bytes,
 			  memchr (data, 0x1b, bytes) ?
 			  Qctext : Qbinary)
 	 : Qnil);
-  xfree (data, Rawbyte *);
+  xfree (data);
   return ret;
 }
 
@@ -1442,13 +1438,9 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
     }
 
   if (chartypes == LATIN_1)
-    TO_EXTERNAL_FORMAT (LISP_STRING, string,
-			ALLOCA, (data, bytes),
-			Qbinary);
+    LISP_STRING_TO_SIZED_EXTERNAL (string, data, bytes, Qbinary);
   else if (chartypes == WORLD)
-    TO_EXTERNAL_FORMAT (LISP_STRING, string,
-			ALLOCA, (data, bytes),
-			Qctext);
+    LISP_STRING_TO_SIZED_EXTERNAL (string, data, bytes, Qctext);
 #endif /* MULE */
 
   bytes_remaining = bytes;

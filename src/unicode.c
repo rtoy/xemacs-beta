@@ -508,7 +508,7 @@ free_from_unicode_table (void *table, int level)
       }
     }
 
-  xfree (table, void *);
+  xfree (table);
 }
 
 static void
@@ -526,7 +526,7 @@ free_to_unicode_table (void *table, int level)
 	}
     }
 
-  xfree (table, void *);
+  xfree (table);
 }
 
 void
@@ -1155,7 +1155,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets);
 
 	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern((const CIbyte *)setname), Vcharset_descr, 
+	    (intern_istring (setname), Vcharset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
 		using UTF-8 escapes in escape-quoted and ctext. This
 		sidesteps the fact that our internal character -> Unicode
@@ -2826,10 +2826,10 @@ unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
   write_fmt_string_lisp (printcharfun, "(%s", 1,
                          unicode_getprop (cs, Qunicode_type));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
-    write_c_string (printcharfun, ", little-endian");
+    write_ascstring (printcharfun, ", little-endian");
   if (XCODING_SYSTEM_UNICODE_NEED_BOM (cs))
-    write_c_string (printcharfun, ", need-bom");
-  write_c_string (printcharfun, ")");
+    write_ascstring (printcharfun, ", need-bom");
+  write_ascstring (printcharfun, ")");
 }
 
 #ifdef MULE
@@ -3048,18 +3048,12 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
 
               if (flags & QUERY_METHOD_ERRORP)
                 {
-                  DECLARE_EISTRING (error_details);
-
-                  eicpy_ascii (error_details, "Cannot encode ");
-                  eicat_lstr (error_details,
-                              make_string_from_buffer (buf, fail_range_start, 
-                                                       pos -
-                                                       fail_range_start));
-                  eicat_ascii (error_details, " using coding system");
-
-                  signal_error (Qtext_conversion_error, 
-                                (const CIbyte *)(eidata (error_details)),
-                                XCODING_SYSTEM_NAME (codesys));
+                  signal_error_2
+		    (Qtext_conversion_error,
+		     "Cannot encode using coding system",
+		     make_string_from_buffer (buf, fail_range_start,
+					      pos - fail_range_start),
+		     XCODING_SYSTEM_NAME (codesys));
                 }
 
               if (NILP (result))
@@ -3219,7 +3213,7 @@ vars_of_unicode (void)
   Vlast_jit_charset_final = make_char (0x30);
   staticpro (&Vcharset_descr);
   Vcharset_descr
-    = build_string ("Mule charset for otherwise unknown Unicode code points.");
+    = build_defer_string ("Mule charset for otherwise unknown Unicode code points.");
 
   staticpro (&Vlanguage_unicode_precedence_list);
   Vlanguage_unicode_precedence_list = Qnil;
@@ -3268,7 +3262,7 @@ those used when no font matching the charset's registries property has been
 found (that is, they're probably Mule-specific charsets like Ethiopic or
 IPA.)
 */ );
-  Qunicode_registries = vector1(build_string("iso10646-1"));
+  Qunicode_registries = vector1(build_ascstring("iso10646-1"));
 
   /* Initialised in lisp/mule/general-late.el, by a call to
      #'set-unicode-query-skip-chars-args. Or at least they would be, but we
@@ -3298,9 +3292,9 @@ complex_vars_of_unicode (void)
      Cygwin 1.7 -- used in LOCAL_FILE_FORMAT_TO_TSTR() et al. */
   Fmake_coding_system_internal
     (Qutf_8, Qunicode,
-     build_msg_string ("UTF-8"),
+     build_defer_string ("UTF-8"),
      nconc2 (list4 (Qdocumentation,
-		    build_msg_string (
+		    build_defer_string (
 "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding\n"
 "sharing the following principles with the Mule-internal encoding:\n"
 "\n"
@@ -3322,6 +3316,6 @@ complex_vars_of_unicode (void)
 "  -- Given only the leading byte, you know how many following bytes\n"
 "     are present.\n"
 ),
-		    Qmnemonic, build_string ("UTF8")),
+		    Qmnemonic, build_ascstring ("UTF8")),
 	     list2 (Qunicode_type, Qutf_8)));
 }
