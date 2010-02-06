@@ -1,5 +1,10 @@
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
+	* mule-wnnfns.c:
+	Convert file to utf-8.
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
 	* config.h.in: Add undef for TRUST_NDBM_H_PROTOTYPES.
 	* database.c:
 	* database.c (struct):
