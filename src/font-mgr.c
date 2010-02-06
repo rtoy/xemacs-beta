@@ -46,6 +46,8 @@ Boston, MA 02111-1307, USA.  */
 #include "hash.h"
 #include "font-mgr.h"
 
+#include "sysfile.h"
+
 /* #### TO DO ####
    . The "x-xft-*" and "x_xft_*" nomenclature is mostly redundant, especially
      if we separate X fonts from Xft fonts, and use fontconfig more generally.
@@ -159,10 +161,10 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    is a Lisp string.
 */
 #define extract_fcapi_string(str) \
-  (NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
+  (LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
 
 #define build_fcapi_string(str) \
-  (build_ext_string ((Extbyte *) (str), Qfc_font_name_encoding))
+  (build_extstring ((Extbyte *) (str), Qfc_font_name_encoding))
 
 /* #### This homebrew lashup should be replaced with FcConstants.
 
@@ -180,7 +182,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    ourselves; hash.c hashtables do not interpret the value pointers.
 
    This array should be FcChar8**, but GCC 4.x bitches about signedness. */
-static Extbyte *fc_standard_properties[] = {
+static const Extbyte *fc_standard_properties[] = {
   /* treated specially, ordered first */
   "family", "size",
   /* remaining are alphabetized by group */
@@ -265,7 +267,7 @@ Unparse an fc pattern object to a string.
   CHECK_FCPATTERN(pattern);
   name = FcNameUnparse (XFCPATTERN_PTR (pattern));
   result = build_fcapi_string (name);
-  xfree (name, FcChar8 *);
+  xfree (name);
   return result;
 }
 
@@ -782,7 +784,7 @@ DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
   if (FcConfigAppFontAddFile
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
+       (FcChar8 *) LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -801,7 +803,7 @@ DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
   if (FcConfigAppFontAddDir
       (XFCCONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
-       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
+       (FcChar8 *) LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
     return Qnil;
   else
     return Qt;
@@ -838,13 +840,13 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
      FC_CONFIG_DIR environment variable. */
       (name))
 {
-  char *fcname = "";
+  const Ascbyte *fcname = "";
 
   if (!NILP (name))
     {
       CHECK_STRING (name);
        /* #### FIXME! is Qfile_name right? */
-      fcname = NEW_LISP_STRING_TO_EXTERNAL (name, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (name, fcname);
     }
   return (build_fcapi_string (FcConfigFilename ((FcChar8 *) fcname)));
 }
@@ -1217,7 +1219,7 @@ make_xlfd_font_regexp (void)
   unsigned i;
   Lisp_Object reg = Qnil;
   const Extbyte *re[] = 	/* #### This could just be catenated by
-				   cpp and passed to build_ext_string. */
+				   cpp and passed to build_extstring. */
     {
       /* Regular expression matching XLFDs as defined by XLFD v. 1.5.
 	 Matches must be case-insensitive.
@@ -1264,7 +1266,7 @@ make_xlfd_font_regexp (void)
   for (i = 0; i < sizeof(re)/sizeof(Extbyte *); i++)
     {
       /* #### Currently this is Host Portable Coding, not ISO 8859-1. */
-      reg = concat2(reg, build_ext_string (re[i], Qx_font_name_encoding));
+      reg = concat2(reg, build_extstring (re[i], Qx_font_name_encoding));
     }
 
   RETURN_UNGCPRO (reg);

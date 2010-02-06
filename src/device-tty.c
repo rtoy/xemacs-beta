@@ -118,7 +118,7 @@ static void
 free_tty_device_struct (struct device *d)
 {
   if (d->device_data)
-    xfree (d->device_data, void *);
+    xfree (d->device_data);
 }
 
 static void

@@ -187,7 +187,7 @@ Returns the text from GtkCList OBJ cell at coordinates ROW, COLUMN.
 
   if (text)
     {
-      rval = build_string (text);
+      rval = build_cistring (text);
       /* NOTE: This is NOT a memory leak.  GtkCList returns a pointer
 	 to internally used memory, not a copy of it.
 	 g_free (text);
@@ -274,7 +274,7 @@ Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
 
   return (list3 (pixmap ? build_gtk_boxed (pixmap, GTK_TYPE_GDK_WINDOW) : Qnil,
 		 mask ? build_gtk_boxed (mask, GTK_TYPE_GDK_WINDOW) : Qnil,
-		 (text && text[0]) ? build_string (text) : Qnil));
+		 (text && text[0]) ? build_cistring (text) : Qnil));
 }
 
 /* void gtk_color_selection_get_color(GtkColorSelection *colorsel, gdouble *color); */
@@ -425,7 +425,7 @@ Return the text of LABEL.
 
   gtk_label_get (GTK_LABEL (XGTK_OBJECT (label)->object), &string);
 
-  return (build_string (string));
+  return (build_cistring (string));
 }
 
 DEFUN ("gtk-notebook-query-tab-label-packing", Fgtk_notebook_query_tab_label_packing, 2, 2, 0, /*

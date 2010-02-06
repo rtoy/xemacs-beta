@@ -2454,7 +2454,7 @@ matherr (struct exception *x)
 
   /* if (!strcmp (x->name, "pow")) x->name = "expt"; */
 
-  args = Fcons (build_string (x->name),
+  args = Fcons (build_extstring (x->name, Qerror_message_encoding),
                 Fcons (make_float (x->arg1),
                        ((in_float == 2)
                         ? Fcons (make_float (x->arg2), Qnil)

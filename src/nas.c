@@ -187,7 +187,7 @@ nas_init_play (
     {
       EMACS_SIGNAL (SIGPIPE, old_sigpipe);
       start_interrupts ();
-      return "error in NAS";
+      return (Extbyte *) "error in NAS";
     }
 #endif
 
@@ -205,7 +205,7 @@ nas_init_play (
       EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
       if (err_message == NULL)
-	return "Can't connect to audio server";
+	return (Extbyte *) "Can't connect to audio server";
       else
 	return err_message;
     }

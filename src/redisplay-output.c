@@ -83,7 +83,7 @@ sync_rune_structs (struct window *UNUSED (w), rune_dynarr *cra,
 	 redisplay performance so avoiding all excess overhead is a
 	 good thing.  Is all of this true? */
       memcpy (cra->base, dra->base, sizeof (struct rune) * max_move);
-      Dynarr_set_size (cra, max_move);
+      Dynarr_set_length (cra, max_move);
     }
   else
     Dynarr_reset (cra);
@@ -422,7 +422,10 @@ get_next_display_block (layout_bounds bounds, display_block_dynarr *dba,
       else if (start_pos <= bounds.right_out)
 	*next_start = bounds.right_out;
       else
-	ABORT ();
+	{
+	  ABORT ();
+	  *next_start = 0;
+	}
     }
 
   for (block = 0; block < Dynarr_length (dba); block++)
@@ -715,7 +718,7 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
 	 block, if present, must always be the first display block. */
       assert (Dynarr_length (ddba) != 0);
 
-      db = Dynarr_atp (ddba, 0);
+      db = Dynarr_begin (ddba);
       assert (db->type == TEXT);
 
       get_cursor_size_and_location (w, db, ddl->cursor_elt, &cursor_start,
@@ -1026,7 +1029,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
       w->last_point_y[CURRENT_DISP] = y;
       Fset_marker (w->last_point[CURRENT_DISP], Qzero, w->buffer);
 
-      rb = Dynarr_atp (db->runes, 0);
+      rb = Dynarr_begin (db->runes);
       rb->cursor_type = CURSOR_ON;
       dl->cursor_elt = 0;
 
@@ -2193,7 +2196,7 @@ redisplay_clear_bottom_of_window (struct window *w, display_line_dynarr *ddla,
 
   if (ddla_len)
     {
-      if (ddla_len == 1 && Dynarr_atp (ddla, 0)->modeline)
+      if (ddla_len == 1 && Dynarr_begin (ddla)->modeline)
 	{
 	  ypos1 = WINDOW_TEXT_TOP (w);
 #ifdef HAVE_SCROLLBARS
@@ -2395,9 +2398,9 @@ redisplay_output_window (struct window *w)
 	  cdl = ddl = 0;
 
 	  if (cdla_len)
-	    cdl = Dynarr_atp (cdla, 0);
+	    cdl = Dynarr_begin (cdla);
 	  if (ddla_len)
-	    ddl = Dynarr_atp (ddla, 0);
+	    ddl = Dynarr_begin (ddla);
 
 	  if (!cdl || !ddl)
 	    need_to_clear_bottom = 1;
@@ -2461,7 +2464,7 @@ redisplay_output_window (struct window *w)
   /* If the number of display lines has shrunk, adjust. */
   if (cdla_len > ddla_len)
     {
-      Dynarr_length (cdla) = ddla_len;
+      Dynarr_set_length (cdla, ddla_len);
     }
 
   /* Output a vertical divider between windows, if necessary. */

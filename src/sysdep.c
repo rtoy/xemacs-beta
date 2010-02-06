@@ -1,7 +1,7 @@
 /* Interfaces to system-dependent kernel and library entries.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2037,11 +2037,10 @@ init_system_name (void)
 #elif !defined (HAVE_GETHOSTNAME)
   struct utsname uts;
   uname (&uts);
-  Vsystem_name = build_string (uts.nodename);
+  Vsystem_name = build_extstring (uts.nodename, Qunix_host_name_encoding);
 #else /* HAVE_GETHOSTNAME */
   int hostname_size = 256;
-  /* !!#### Needs review */
-  char *hostname = (char *) ALLOCA (hostname_size);
+  Extbyte *hostname = alloca_extbytes (hostname_size);
 
   /* Try to get the host name; if the buffer is too short, try
      again.  Apparently, the only indication gethostname gives of
@@ -2057,17 +2056,17 @@ init_system_name (void)
 	break;
 
       hostname_size <<= 1;
-  /* !!#### Needs review */
-      hostname = (char *) ALLOCA (hostname_size);
+      hostname = alloca_extbytes (hostname_size);
     }
-# if defined( HAVE_SOCKETS)
+# if defined (HAVE_SOCKETS)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */
   if (initialized)
+    /* !!#### Could fail if we have a 7-bit external encoding */
     if (!strchr (hostname, '.'))
       {
-#  if !(defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO))
+#  if !(defined (HAVE_GETADDRINFO) && defined (HAVE_GETNAMEINFO))
 	struct hostent *hp = NULL;
 	int count;
 #   ifdef TRY_AGAIN
@@ -2087,20 +2086,20 @@ init_system_name (void)
 #   endif
 	if (hp)
 	  {
-	    const char *fqdn = (const char *) hp->h_name;
+	    const Extbyte *fqdn = (const Extbyte *) hp->h_name;
 
+	    /* !!#### Could fail if we have a 7-bit external encoding */
 	    if (!strchr (fqdn, '.'))
 	      {
 		/* We still don't have a fully qualified domain name.
 		   Try to find one in the list of alternate names */
-		char **alias = hp->h_aliases;
+		Extbyte **alias = hp->h_aliases;
 		while (*alias && !strchr (*alias, '.'))
 		  alias++;
 		if (*alias)
 		  fqdn = *alias;
 	      }
-  /* !!#### Needs review */
-	    hostname = (char *) ALLOCA (strlen (fqdn) + 1);
+	    hostname = alloca_extbytes (strlen (fqdn) + 1);
 	    strcpy (hostname, fqdn);
 	  }
 #  else /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
@@ -2117,8 +2116,7 @@ init_system_name (void)
 	hints.ai_protocol = 0;
 	if (!getaddrinfo (hostname, NULL, &hints, &res))
 	  {
-  /* !!#### Needs review */
-	    hostname = (char *) ALLOCA (strlen (res->ai_canonname) + 1);
+	    hostname = alloca_extbytes (strlen (res->ai_canonname) + 1);
 	    strcpy (hostname, res->ai_canonname);
 
 	    freeaddrinfo (res);
@@ -2126,7 +2124,7 @@ init_system_name (void)
 #  endif  /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
       }
 # endif /* HAVE_SOCKETS */
-  Vsystem_name = build_string (hostname);
+  Vsystem_name = build_extstring (hostname, Qunix_host_name_encoding);
 #endif /* HAVE_GETHOSTNAME  */
   {
     Ibyte *p;
@@ -2775,7 +2773,7 @@ qxe_readdir (DIR *dirp)
 
       Dynarr_add_many (internal_DIRENTRY, internal_name, internal_len);
       Dynarr_add (internal_DIRENTRY, '\0'); /* NUL-terminate */
-      return (DIRENTRY *) Dynarr_atp (internal_DIRENTRY, 0);
+      return (DIRENTRY *) Dynarr_begin (internal_DIRENTRY);
     }
   }
 #endif /* MULE */
@@ -2835,8 +2833,8 @@ qxe_allocating_getcwd (void)
       if (ret)
 	{
 	  Ibyte *retin;
-	  TSTR_TO_C_STRING_MALLOC (ret, retin);
-	  xfree (cwd, Extbyte *);
+	  retin = TSTR_TO_ITEXT_MALLOC (ret);
+	  xfree (cwd);
 	  return retin;
 	}
 #else
@@ -2844,8 +2842,8 @@ qxe_allocating_getcwd (void)
       if (ret)
 	{
 	  Ibyte *retin;
-	  EXTERNAL_TO_C_STRING_MALLOC (ret, retin, Qfile_name);
-	  xfree (cwd, Extbyte *);
+	  retin = EXTERNAL_TO_ITEXT_MALLOC (ret, Qfile_name);
+	  xfree (cwd);
 	  return retin;
 	}
 #endif /* WIN32_NATIVE */
@@ -2857,7 +2855,7 @@ qxe_allocating_getcwd (void)
 	}
       else
 	{
-	  xfree (cwd, Extbyte *);
+	  xfree (cwd);
 	  return NULL;
 	}
     }
@@ -2867,7 +2865,7 @@ qxe_allocating_getcwd (void)
 
   if (!getwd (chingame_limitos_arbitrarios))
     return 0;
-  EXTERNAL_TO_C_STRING_MALLOC (chingame_limitos_arbitrarios, ret2, Qfile_name);
+  ret2 = EXTERNAL_TO_ITEXT_MALLOC (chingame_limitos_arbitrarios, Qfile_name);
   return ret2;
 #endif /* HAVE_GETCWD */
 }
@@ -2941,7 +2939,7 @@ qxe_lstat (const Ibyte *path, struct stat *buf)
 	  resolved = mswindows_read_link (eidata (name2));
 	  if (resolved)
 	    {
-	      xfree (resolved, Ibyte *);
+	      xfree (resolved);
 	      return mswindows_stat (eidata (name2), buf);
 	    }
 	}
@@ -3092,15 +3090,14 @@ qxe_execve (const Ibyte *filename, Ibyte * const argv[],
     ;
   new_argv = alloca_array (Extbyte *, argc + 1);
   for (i = 0; i < argc; i++)
-    C_STRING_TO_EXTERNAL (argv[i], new_argv[i], Qcommand_argument_encoding);
+    new_argv[i] = ITEXT_TO_EXTERNAL (argv[i], Qcommand_argument_encoding);
   new_argv[argc] = NULL;
 
   for (envc = 0; envp[envc]; envc++)
     ;
   new_envp = alloca_array (Extbyte *, envc + 1);
   for (i = 0; i < envc; i++)
-    C_STRING_TO_EXTERNAL (envp[i], new_envp[i],
-			  Qenvironment_variable_encoding);
+    new_envp[i] = ITEXT_TO_EXTERNAL (envp[i], Qenvironment_variable_encoding);
   new_envp[envc] = NULL;
 
 #if defined (WIN32_NATIVE)
@@ -3134,35 +3131,32 @@ copy_in_passwd (struct passwd *pwd)
     return NULL;
 
   if (cached_pwd.pw_name)
-    xfree (cached_pwd.pw_name, char *);
+    xfree (cached_pwd.pw_name);
   if (cached_pwd.pw_passwd)
-    xfree (cached_pwd.pw_passwd, char *);
+    xfree (cached_pwd.pw_passwd);
   if (cached_pwd.pw_gecos)
-    xfree (cached_pwd.pw_gecos, char *);
+    xfree (cached_pwd.pw_gecos);
   if (cached_pwd.pw_dir)
-    xfree (cached_pwd.pw_dir, char *);
+    xfree (cached_pwd.pw_dir);
   if (cached_pwd.pw_shell)
-    xfree (cached_pwd.pw_shell, char *);
+    xfree (cached_pwd.pw_shell);
 
   cached_pwd = *pwd;
-  if (cached_pwd.pw_name)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_name,
-			C_STRING_MALLOC, cached_pwd.pw_name,
-			Quser_name_encoding);
-  if (cached_pwd.pw_passwd)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_passwd,
-			C_STRING_MALLOC, cached_pwd.pw_passwd,
-			Quser_name_encoding);
-  if (cached_pwd.pw_gecos)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_gecos,
-			C_STRING_MALLOC, cached_pwd.pw_gecos,
-			Quser_name_encoding);
-  if (cached_pwd.pw_dir)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_dir,
-			C_STRING_MALLOC, cached_pwd.pw_dir, Qfile_name);
-  if (cached_pwd.pw_shell)
-    TO_INTERNAL_FORMAT (C_STRING, cached_pwd.pw_shell,
-			C_STRING_MALLOC, cached_pwd.pw_shell, Qfile_name);
+
+#define FROB(field, encoding)					\
+do								\
+{								\
+  if (cached_pwd.field)						\
+    cached_pwd.field = (CIbyte *)				\
+      EXTERNAL_TO_ITEXT_MALLOC (cached_pwd.field, encoding);	\
+} while (0)
+
+  FROB (pw_name, Quser_name_encoding);
+  FROB (pw_passwd, Quser_name_encoding);
+  FROB (pw_gecos, Quser_name_encoding);
+  FROB (pw_dir, Qfile_name);
+  FROB (pw_shell, Qfile_name);
+#undef FROB
   return &cached_pwd;
 }
 
@@ -3173,8 +3167,7 @@ qxe_getpwnam (const Ibyte *name)
   /* Synthetic versions are defined in nt.c and already do conversion. */
   return getpwnam (name);
 #else
-  Extbyte *nameext;
-  C_STRING_TO_EXTERNAL (name, nameext, Quser_name_encoding);
+  Extbyte *nameext = ITEXT_TO_EXTERNAL (name, Quser_name_encoding);
 
   return copy_in_passwd (getpwnam (nameext));
 #endif /* WIN32_NATIVE */
@@ -3213,8 +3206,8 @@ qxe_ctime (const time_t *t)
   if (!str) /* can happen on MS Windows */
     return (Ibyte *) "Sun Jan 01 00:00:00 1970";
   if (ctime_static)
-    xfree (ctime_static, Ibyte *);
-  EXTERNAL_TO_C_STRING_MALLOC (str, ctime_static, Qtime_function_encoding);
+    xfree (ctime_static);
+  ctime_static = EXTERNAL_TO_ITEXT_MALLOC (str, Qtime_function_encoding);
   return ctime_static;
 }
 
@@ -3389,14 +3382,14 @@ set_file_times (
   Extbyte *filename;
   utb.actime = EMACS_SECS (atime);
   utb.modtime = EMACS_SECS (mtime);
-  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (path, filename);
   return utime (filename, &utb);
 #elif defined (HAVE_UTIMES)
   struct timeval tv[2];
   Extbyte *filename;
   tv[0] = atime;
   tv[1] = mtime;
-  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (path, filename);
   return utimes (filename, tv);
 #else
   /* No file times setting function available. */
@@ -3572,7 +3565,7 @@ get_random (void)
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
 const char *sys_siglist[] =
   {
-    /* $$####begin-snarf */
+    /* @@@begin-snarf@@@ */
     "bum signal!!",
     "hangup",
     "interrupt",
@@ -3598,8 +3591,8 @@ const char *sys_siglist[] =
     "background write attempted from control tty",
     "input record available at control tty",
     "exceeded CPU time limit",
-    "exceeded file size limit"
-    /* $$####end-snarf */
+    "exceeded file size limit",
+    /* @@@end-snarf@@@ */
     };
 #endif
 
@@ -3608,83 +3601,85 @@ const char *sys_siglist[] =
 const char *sys_siglist[NSIG + 1] =
   {
     /* AIX has changed the signals a bit */
-    DEFER_GETTEXT ("bogus signal"),			/* 0 */
-    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
-    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
-    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
-    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
-    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
-    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
-    DEFER_GETTEXT ("crash likely"),			/* 7  SIGDANGER */
-    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
-    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
-    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
-    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
-    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
-    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
-    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
-    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
-    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
-    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
-    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
-    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
-    DEFER_GETTEXT ("bogus signal"),			/* 20 */
-    DEFER_GETTEXT ("bogus signal"),			/* 21 */
-    DEFER_GETTEXT ("bogus signal"),			/* 22 */
-    DEFER_GETTEXT ("bogus signal"),			/* 23 */
-    DEFER_GETTEXT ("bogus signal"),			/* 24 */
-    DEFER_GETTEXT ("LAN I/O interrupt"),		/* 25 SIGAIO */
-    DEFER_GETTEXT ("PTY I/O interrupt"),		/* 26 SIGPTY */
-    DEFER_GETTEXT ("I/O intervention required"),	/* 27 SIGIOINT */
-    /* $$####end-snarf */
+    /* @@@begin-snarf@@@ */
+    "bogus signal",				/* 0 */
+    "hangup",					/* 1  SIGHUP */
+    "interrupt",				/* 2  SIGINT */
+    "quit",					/* 3  SIGQUIT */
+    "illegal instruction",			/* 4  SIGILL */
+    "trace trap",				/* 5  SIGTRAP */
+    "IOT instruction",				/* 6  SIGIOT */
+    "crash likely",				/* 7  SIGDANGER */
+    "floating point exception",			/* 8  SIGFPE */
+    "kill",					/* 9  SIGKILL */
+    "bus error",				/* 10 SIGBUS */
+    "segmentation violation",			/* 11 SIGSEGV */
+    "bad argument to system call",		/* 12 SIGSYS */
+    "write on a pipe with no one to read it",	/* 13 SIGPIPE */
+    "alarm clock",				/* 14 SIGALRM */
+    "software termination signal",		/* 15 SIGTERM */
+    "user defined signal 1",			/* 16 SIGUSR1 */
+    "user defined signal 2",			/* 17 SIGUSR2 */
+    "death of a child",				/* 18 SIGCLD */
+    "power-fail restart",			/* 19 SIGPWR */
+    "bogus signal",				/* 20 */
+    "bogus signal",				/* 21 */
+    "bogus signal",				/* 22 */
+    "bogus signal",				/* 23 */
+    "bogus signal",				/* 24 */
+    "LAN I/O interrupt",			/* 25 SIGAIO */
+    "PTY I/O interrupt",			/* 26 SIGPTY */
+    "I/O intervention required",		/* 27 SIGIOINT */
+    /* @@@end-snarf@@@ */
     0
   };
 #else /* USG, not AIX */
 const char *sys_siglist[NSIG + 1] =
   {
-    DEFER_GETTEXT ("bogus signal"),			/* 0 */
-    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
-    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
-    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
-    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
-    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
-    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
-    DEFER_GETTEXT ("EMT instruction"),			/* 7  SIGEMT */
-    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
-    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
-    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
-    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
-    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
-    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
-    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
-    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
-    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
-    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
-    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
-    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
-#ifdef sun
-    "window size changed",		/* 20 SIGWINCH */
-    "urgent socket condition",		/* 21 SIGURG */
-    "pollable event occurred",		/* 22 SIGPOLL */
-    "stop (cannot be caught or ignored)", /*  23 SIGSTOP */
-    "user stop requested from tty",	/* 24 SIGTSTP */
-    "stopped process has been continued", /* 25 SIGCONT */
-    "background tty read attempted",	/* 26 SIGTTIN */
-    "background tty write attempted",	/* 27 SIGTTOU */
-    "virtual timer expired",		/* 28 SIGVTALRM */
-    "profiling timer expired",		/* 29 SIGPROF */
-    "exceeded cpu limit",		/* 30 SIGXCPU */
-    "exceeded file size limit",		/* 31 SIGXFSZ */
-    "process's lwps are blocked",	/* 32 SIGWAITING */
-    "special signal used by thread library", /* 33 SIGLWP */
+    /* @@@begin-snarf@@@ */
+    "bogus signal",				/* 0 */
+    "hangup",					/* 1  SIGHUP */
+    "interrupt",				/* 2  SIGINT */
+    "quit",					/* 3  SIGQUIT */
+    "illegal instruction",			/* 4  SIGILL */
+    "trace trap",				/* 5  SIGTRAP */
+    "IOT instruction",				/* 6  SIGIOT */
+    "EMT instruction",				/* 7  SIGEMT */
+    "floating point exception",			/* 8  SIGFPE */
+    "kill",					/* 9  SIGKILL */
+    "bus error",				/* 10 SIGBUS */
+    "segmentation violation",			/* 11 SIGSEGV */
+    "bad argument to system call",		/* 12 SIGSYS */
+    "write on a pipe with no one to read it",	/* 13 SIGPIPE */
+    "alarm clock",				/* 14 SIGALRM */
+    "software termination signal",		/* 15 SIGTERM */
+    "user defined signal 1",			/* 16 SIGUSR1 */
+    "user defined signal 2",			/* 17 SIGUSR2 */
+    "death of a child",				/* 18 SIGCLD */
+    "power-fail restart",			/* 19 SIGPWR */
+#ifdef sun					
+    "window size changed",			/* 20 SIGWINCH */
+    "urgent socket condition",			/* 21 SIGURG */
+    "pollable event occurred",			/* 22 SIGPOLL */
+    "stop (cannot be caught or ignored)",	/*  23 SIGSTOP */
+    "user stop requested from tty",		/* 24 SIGTSTP */
+    "stopped process has been continued",	/* 25 SIGCONT */
+    "background tty read attempted",		/* 26 SIGTTIN */
+    "background tty write attempted",		/* 27 SIGTTOU */
+    "virtual timer expired",			/* 28 SIGVTALRM */
+    "profiling timer expired",			/* 29 SIGPROF */
+    "exceeded cpu limit",			/* 30 SIGXCPU */
+    "exceeded file size limit",			/* 31 SIGXFSZ */
+    "process's lwps are blocked",		/* 32 SIGWAITING */
+    "special signal used by thread library",	/* 33 SIGLWP */
 #ifdef SIGFREEZE
-    "special signal used by CPR",        /* 34 SIGFREEZE */
+    "special signal used by CPR",		/* 34 SIGFREEZE */
 #endif
 #ifdef SIGTHAW
-    "special signal used by CPR",        /* 35 SIGTHAW */
+    "special signal used by CPR",		/* 35 SIGTHAW */
 #endif
 #endif /* sun */
-    /* $$####end-snarf */
+    /* @@@end-snarf@@@ */
     0
   };
 #endif /* not AIX */
@@ -3713,9 +3708,9 @@ closedir (DIR *dirp)  /* stream from opendir */
      in one block.  Why in the world are we freeing this ourselves
      anyway?  */
 #if ! (defined (sun) && defined (USG5_4))
-  xfree (dirp->dd_buf, char *); /* directory block defined in <dirent.h> */
+  xfree (dirp->dd_buf); /* directory block defined in <dirent.h> */
 #endif
-  xfree (dirp, DIR *);
+  xfree (dirp);
   return (rtnval);
 }
 #endif /* not HAVE_CLOSEDIR */
@@ -3752,7 +3747,7 @@ void
 closedir (DIR *dirp)		/* stream from opendir */
 {
   retry_close (dirp->dd_fd);
-  xfree (dirp, DIR *);
+  xfree (dirp);
 }
 
 

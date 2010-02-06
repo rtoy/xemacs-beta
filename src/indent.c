@@ -661,7 +661,7 @@ vmotion_1 (struct window *w, Charbpos orig, int vtarget,
           if (ret_vpix)
             *ret_vpix = vpix_motion (w->line_start_cache, 0, elt);
 	  /* #### This should be BUF_BEGV (b), right? */
-	  return Dynarr_atp (w->line_start_cache, 0)->start;
+	  return Dynarr_begin (w->line_start_cache)->start;
 	}
       else
 	{

@@ -1,3 +1,9 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (for):
+	Convert file to utf-8.
+
 2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (some, every):
@@ -5,6 +11,228 @@
 	* cl-macs.el (notany, notevery): Add compiler macros for these
 	functions, no longer proclaim them inline (which would involve
 	specbinding that's not necessary with the compiler macros).
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el:
+	* code-init.el (set-eol-detection):
+	* code-init.el (coding-system-current-system-configuration):
+	* code-init.el (coding-system-default-configuration-table): New.
+	* code-init.el (no-mule-no-eol-detection):
+	* code-init.el (define-coding-system-default-configuration): New.
+	* code-init.el (coding-system-variable-default-value-table): Removed.
+	* code-init.el (no-mule-eol-detection):
+	* code-init.el (coding-system-default-configuration-list): Removed.
+	* code-init.el (coding-system-default-variable-list):
+	* code-init.el (get-coding-system-variable):
+	* code-init.el (set-coding-system-variable):
+	* code-init.el (coding-system-variable-default-value):
+	* code-init.el (reset-coding-categories-to-default):
+	Significant clean-up, add Cygwin-UTF-8 support.
+
+	1. Shorten the names of the coding system variables to follow
+	   what used to be considered the "abbreviations":
+
+	   default-process-coding-system-read	->	process-read
+	   default-process-coding-system-write	->	process-write
+	   buffer-file-coding-system-for-read	->	bfcs-for-read
+	   default-buffer-file-coding-system	->	default-bfcs
+	   no-conversion-coding-system-mapping	->	no-conv-cs
+
+	2. Instead of listing all the defaults in a big, strangely organized
+	   table, use a new function
+	   `define-coding-system-default-configuration' to define a
+	   particular configuration.  This uses a hash table stored in
+	   `coding-system-default-configuration-table'.  Rewrite
+	   `coding-system-variable-default-value' appropriately.
+
+	3. Rename configurations to eliminate `unix' from the name:
+
+	   unix-no-mule-no-eol-detection      ->     no-mule-no-eol-detection
+	   unix-no-mule-eol-detection	      ->     no-mule-eol-detection
+	   unix-mule			      ->     mule
+
+	   This is because these are really for all systems but Windows,
+	   not just Unix.
+
+	4. Add configuration `cygwin-utf-8', enabled when (featurep
+	   'cygwin-use-utf-8).  Uses `utf-8' for all defaults except for
+	   `bfcs-for-read', which is `undecided'.
+
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* lisp-mode.el: Finish documenting `lisp-indent-specform',
+	on Mike Sperber's request.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (error-unless-tests-match): New.
+	* bytecomp-runtime.el (byte-compile-file-being-compiled): New.
+	* bytecomp-runtime.el (compiled-if): New.
+	* bytecomp-runtime.el (compiled-when): New.
+	Add functions for dealing with conditional compilation of different code
+	depending on the presence or absence of features.  Necessary for some
+	Mule code where code is run during compilation (macros or eval-when-compile)
+	but, depending on how the code is written, the code itself will crash
+	either with or without Unicode-internal.
+
+	compiled-if and compiled-when are the basic functions for conditional
+	compilation.  They automatically trigger an error message upon file
+	loading	if, at that time, the test expression that selected which code
+	to compile does	not have the same value as at compile time.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (koi8-c):
+	Fix bug in #83 mapping.
+	* mule/vietnamese.el (viscii):
+	Fix bug in #A6 mapping.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* simple.el (capitalize-string-as-title):
+	Use `with-string-as-buffer-contents' instead of emulating it.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* syntax.el:
+	* syntax.el (make-syntax-table):
+	Expand doc string.
+
+2010-01-22  Ben Wing  <ben@xemacs.org>
+
+	* lisp-mode.el:
+	* lisp-mode.el (lisp-indent-function):
+	If the function begins with `with-', assume it is a macro or
+	special form whose last argument is a body.  Call
+	`lisp-indent-specform' with a flag indicating that it should indent
+	all arguments as a body instead of with normal (full) indent.
+	* lisp-mode.el (lisp-indent-specform):
+	Add an optional flag argument indicating that all non-distinguished
+	arguments, not just the first, should be indented as a body.  This
+	is useful when the number of distinguished (i.e. pre-body) arguments
+	isn't known, and is used for this purpose by `lisp-indent-function'.
+	
+
+2010-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	This function is called a *lot*, make it faster, making
+	keysyms-equal inline, calling #'characterp (which doesn't have a
+	bytecode) much more rarely, and not throwing and catching. This
+	won't make much difference in practice, but does eliminate losts
+	of noise from profiling, e.g. at startup.
+
+2010-01-13  Ben Wing  <ben@xemacs.org>
+
+	* loadup.el:
+	* loadup.el (featurep):
+	* loadup.el (member):
+	When featurep `debug-xemacs' (configure --with-debug), set
+	debug-on-error, so that we get an exit-to-debugger/assertion
+	failure upon Lisp error during loadup.  Unset before dumping.
+
+2010-01-10  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el (get-native-coding-system-from-language-environment):
+	Under Cygwin, force utf-8 if we are using Cygwin 1.7 or later
+	(making use of the magic feature 'cygwin-use-utf-8).
+
+2010-01-11  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (utf-8):
+	Don't define `utf-8' coding system here, because it's too late.
+	We need it during early startup code at dump time so we create it
+	in C in unicode.c.
+
+2010-01-10  Didier Verna  <didier@xemacs.org>
+
+	* x-faces.el (x-init-face-from-resources)
+	(x-init-device-faces)
+	(x-init-frame-faces): Cosmetic changes (comments formatting).
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	* x-faces.el (x-init-global-faces): Deactivate obsolete code.
+	* x-faces.el (x-init-device-faces): Ditto.
+	* x-faces.el (x-init-frame-faces): Ditto.
+
+2010-01-09  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.el (init-glyphs): Recognize bitmaps/ directory as
+	containing bitmap files.
+
+2010-01-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-trapping-errors): 
+	Fix a bug here, where I used a normal quote instead of a
+	backquote. Thank you the byte-compiler.
+
+2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* indent.el (indent-region):
+	Make COLUMN optional as in GNU, merging Andreas Roehler's change
+	of http://mid.gmane.org/4B46F5FC.2070506@online.de ; thank you
+	Andreas!
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (map):
+	Add a compiler macro for this function, for cases where CL-TYPE is
+	constant and understood.
+
+2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	* mule/mule-msw-init-late.el:
+	* mule/mule-category.el (predefined-category-list):
+	* mule/arabic.el:
+	Move arabic-iso8859-6 back to C, it needs to be there, otherwise
+	X11 character input lookup fails.
+
+2010-01-06  Didier Verna  <didier@xemacs.org>
+
+	* cl-extra.el (get-properties): New.
+
+2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* list-mode.el (next-list-mode-item, switch-to-completions): Use
+	next-single-char-property-change,
+	previous-single-char-property-change now
+	next-single-property-change no longer pays attention to extents
+	not created using the text property functions. Fix for issue 546,
+	bug dates from changeset 8c96bdabcaf9.
+
+2009-12-21  Jerry James  <james@xemacs.org>
+
+	* dragdrop.el (offix-start-drag): Remove.
+	(offix-start-drag-region): Remove.
+	* mouse.el (mouse-begin-drag-n-drop): Remove OffiX support.
+
+2009-12-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Remove
+	dk.xemacs.org from list of package download sites.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
+2009-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/arabic.el (arabic-iso8859-6):
+	Move the creation of this character set to this (dumped) file,
+	since it's needed for input on X11.
+	* mule/iso-with-esc.el:
+	Remove arabic-iso8859-6 and its Unicode map from this file.
+	* unicode.el (load-unicode-tables):
+	Load arabic-iso8859-6 on startup again.
+
+2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-do-arglist):
+	* cl-compat.el (keyword-of):
+	Remove support in our generated code for emacs versions where
+	keywords are not self-quoting.
 
 2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 

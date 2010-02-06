@@ -589,7 +589,7 @@ encoding detection or end-of-line detection.
 
       fd = locate_file (Vload_path, file,
                         ((!NILP (nosuffix)) ? Qnil :
-			 build_string (load_ignore_elc_files ? ".el:" :
+			 build_ascstring (load_ignore_elc_files ? ".el:" :
 				       ".elc:.el:")),
                         &found,
                         -1);
@@ -1093,7 +1093,7 @@ locate_file_in_directory_mapper (Ibyte *fn, void *arg)
 	    {
 	      /* We succeeded; return this descriptor and filename.  */
 	      if (closure->storeptr)
-		*closure->storeptr = build_intstring (fn);
+		*closure->storeptr = build_istring (fn);
 
 	      return 1;
 	    }
@@ -1177,7 +1177,7 @@ static int
 locate_file_construct_suffixed_files_mapper (Ibyte *fn, void *arg)
 {
   Lisp_Object *tail = (Lisp_Object *) arg;
-  *tail = Fcons (build_intstring (fn), *tail);
+  *tail = Fcons (build_istring (fn), *tail);
   return 0;
 }
 
@@ -1267,7 +1267,7 @@ locate_file (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
   /* Is it really necessary to gcpro path and str?  It shouldn't be
      unless some caller has fucked up.  There are known instances that
-     call us with build_string("foo:bar") as SUFFIXES, though. */
+     call us with build_ascstring("foo:bar") as SUFFIXES, though. */
   GCPRO4 (path, str, suffixes, suffixtab);
 
   /* if this filename has directory components, it's too complicated
@@ -1859,7 +1859,7 @@ read_escape (Lisp_Object readcharfun)
                 else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
                 else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
 
-                args[0] = build_string ("?\\x%x");
+                args[0] = build_ascstring ("?\\x%x");
                 args[1] = make_int (i);
                 syntax_error ("Overlong hex character escape",
                               Fformat (2, args));
@@ -2116,7 +2116,7 @@ read_bit_vector (Lisp_Object readcharfun)
       Dynarr_add (dyn, bit);
     }
 
-  val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+  val = make_bit_vector_from_byte_vector (Dynarr_begin (dyn),
 					  Dynarr_length (dyn));
   Dynarr_free (dyn);
 
@@ -2381,34 +2381,36 @@ read_raw_string (Lisp_Object readcharfun)
   Ichar c;
   Ichar permit_unicode = 0; 
 
-  do {
-    c = reader_nextchar(readcharfun);
-    switch (c) {
-      /* #r:engine"my sexy raw string" -- raw string w/ flags*/
-      /* case ':': */
-      /* #ru"Hi there\u20AC \U000020AC" -- raw string, honouring Unicode. */
-    case 'u':
-    case 'U':
-      permit_unicode = c; 
-      continue;
+  do
+    {
+      c = reader_nextchar (readcharfun);
+      switch (c)
+	{
+	  /* #r:engine"my sexy raw string" -- raw string w/ flags*/
+	  /* case ':': */
+	  /* #ru"Hi there\u20AC \U000020AC" -- raw string, honouring Unicode. */
+	case 'u':
+	case 'U':
+	  permit_unicode = c; 
+	  continue;
 
-      /* #r"my raw string" -- raw string */
-    case '\"':
-      return read_string(readcharfun, '\"', 1, permit_unicode);
-      /* invalid syntax */
-    default:
-      {
-	if (permit_unicode)
+	  /* #r"my raw string" -- raw string */
+	case '\"':
+	  return read_string (readcharfun, '\"', 1, permit_unicode);
+	  /* invalid syntax */
+	default:
 	  {
-	    unreadchar(readcharfun, permit_unicode);
+	    if (permit_unicode)
+	      {
+		unreadchar (readcharfun, permit_unicode);
+	      }
+	    unreadchar (readcharfun, c);
+	    return Fsignal (Qinvalid_read_syntax,
+			    list1 (build_msg_string
+				   ("unrecognized raw string syntax")));
 	  }
-	unreadchar(readcharfun, c);
-	return Fsignal(Qinvalid_read_syntax,
-		       list1(build_string
-			     ("unrecognized raw string syntax")));
-      }
-    }
-  } while (1);
+	}
+    } while (1);
 }
 
 /* Read the next Lisp object from the stream READCHARFUN and return it.
@@ -2567,7 +2569,7 @@ retry:
 		  if (CONSP (tmp) && UNBOUNDP (XCAR (tmp)))
 		    free_cons (tmp);
 		  return Fsignal (Qinvalid_read_syntax,
-				   list1 (build_string ("#")));
+				   list1 (build_ascstring ("#")));
 		}
 	      GCPRO1 (tmp);
 	      /* Read the intervals and their properties.  */
@@ -2725,13 +2727,13 @@ retry:
 					   make_int (n)));
 		}
 	      return Fsignal (Qinvalid_read_syntax,
-			      list1 (build_string ("#")));
+			      list1 (build_ascstring ("#")));
 	    }
 	  default:
 	    {
 	      unreadchar (readcharfun, c);
 	      return Fsignal (Qinvalid_read_syntax,
-			      list1 (build_string ("#")));
+			      list1 (build_ascstring ("#")));
 	    }
 	  }
       }
@@ -3090,7 +3092,7 @@ read_list (Lisp_Object readcharfun,
 		       because that would make the directory absolute
 		       now.  */
 		    XCAR (XCAR (holding_cons)) =
-		      concat2 (build_string ("../lisp/"),
+		      concat2 (build_ascstring ("../lisp/"),
 			       Ffile_name_nondirectory
 			       (Vload_file_name_internal));
 		}
@@ -3184,7 +3186,7 @@ read_compiled_function (Lisp_Object readcharfun, Ichar terminator)
 		make_byte_code_args[iii] = Qzero;
 	      else
 		XCAR (make_byte_code_args[iii]) =
-		  concat2 (build_string ("../lisp/"),
+		  concat2 (build_ascstring ("../lisp/"),
 			   Ffile_name_nondirectory
 			   (Vload_file_name_internal));
 	    }
@@ -3225,7 +3227,7 @@ init_lread (void)
   /* kludge: locate-file does not work for a null load-path, even if
      the file name is absolute. */
 
-  Vload_path = Fcons (build_string (""), Qnil);
+  Vload_path = Fcons (build_ascstring (""), Qnil);
 
   /* This used to get initialized in init_lread because all streams
      got closed when dumping occurs.  This is no longer true --
@@ -3375,7 +3377,7 @@ This is normally used when compiling packages of elisp files that may have
 complex dependencies.  Ignoring all elc files with `load-ignore-elc-files'
 would also be safe, but much slower.
 */ );
-  load_ignore_out_of_date_elc_files = 0;
+  load_ignore_out_of_date_elc_files = 1;
 
   DEFVAR_BOOL ("load-always-display-messages",
 	       &load_always_display_messages /*

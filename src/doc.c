@@ -65,7 +65,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
   if (0 > lseek (fd, position, 0))
     {
       if (name_nonreloc)
-	name_reloc = build_intstring (name_nonreloc);
+	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
 			  name_reloc, make_int (position));
@@ -180,7 +180,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
   if (0 > lseek (fd, position, 0))
     {
       if (name_nonreloc)
-	name_reloc = build_intstring (name_nonreloc);
+	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
 			  name_reloc, make_int (position));
@@ -289,7 +289,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
     }
   UNGCPRO;
   if (buffer != buf) /* We must have allocated buffer above */
-    xfree (buffer, Ibyte *);
+    xfree (buffer);
   return return_me;
 }
 
@@ -378,7 +378,7 @@ get_doc_string (Lisp_Object filepos)
 
       if (fd < 0)
 	report_file_error ("Cannot open doc string file",
-			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_nonreloc ? build_istring (name_nonreloc) :
 			   name_reloc);
     }
 
@@ -475,7 +475,7 @@ get_object_file_name (Lisp_Object filepos)
 
       if (fd < 0)
 	report_file_error ("Cannot open doc string file",
-			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_nonreloc ? build_istring (name_nonreloc) :
 			   name_reloc);
     }
 
@@ -491,12 +491,13 @@ get_object_file_name (Lisp_Object filepos)
 
 
 static void
-weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
+weird_doc (Lisp_Object sym, const Ascbyte *weirdness, const Ascbyte *type,
 	   int pos)
 {
-  if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
+  if (!strcmp (weirdness, "duplicate")) return;
   message ("Note: Strange doc (%s) for %s %s @ %d",
-           weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
+           GETTEXT (weirdness), GETTEXT (type),
+	   XSTRING_DATA (XSYMBOL (sym)->name), pos);
 }
 
 DEFUN ("built-in-symbol-file", Fbuilt_in_symbol_file, 1, 2, 0, /*
@@ -598,7 +599,7 @@ string is passed through `substitute-command-keys'.
       if (XSUBR (fun)->doc == 0)
 	return Qnil;
       if ((EMACS_INT) XSUBR (fun)->doc >= 0)
-	doc = build_string (XSUBR (fun)->doc);
+	doc = build_cistring (XSUBR (fun)->doc);
       else
         doc = get_doc_string (make_int (- (EMACS_INT) XSUBR (fun)->doc));
     }
@@ -753,7 +754,7 @@ when doc strings are referred to in the dumped Emacs.
 
   fd = qxe_open (name, O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
-    report_file_error ("Opening doc string file", build_intstring (name));
+    report_file_error ("Opening doc string file", build_istring (name));
   Vinternal_doc_file_name = filename;
   filled = 0;
   pos = 0;
@@ -789,8 +790,8 @@ when doc strings are referred to in the dumped Emacs.
 		  Lisp_Object old = Fget (sym, Qvariable_documentation, Qzero);
                   if (!ZEROP (old))
 		    {
-		      weird_doc (sym, GETTEXT ("duplicate"),
-				 GETTEXT ("variable"), pos);
+		      weird_doc (sym, "duplicate",
+				 "variable", pos);
 		      /* In the case of duplicate doc file entries, always
 			 take the later one.  But if the doc is not an int
 			 (a string, say) leave it alone. */
@@ -830,8 +831,8 @@ when doc strings are referred to in the dumped Emacs.
 	 So I'm disabling this. --ben */
 
 		      /* May have been #if'ed out or something */
-		      weird_doc (sym, GETTEXT ("not fboundp"),
-				 GETTEXT ("function"), pos);
+		      weird_doc (sym, "not fboundp",
+				 "function", pos);
 #endif
 		      goto weird;
 		    }
@@ -840,8 +841,8 @@ when doc strings are referred to in the dumped Emacs.
 		      /* Lisp_Subrs have a slot for it.  */
 		      if (XSUBR (fun)->doc)
 			{
-			  weird_doc (sym, GETTEXT ("duplicate"),
-				     GETTEXT ("subr"), pos);
+			  weird_doc (sym, "duplicate",
+				     "subr", pos);
 			  goto weird;
 			}
 		      XSUBR (fun)->doc = (char *) (- XINT (offset));
@@ -859,11 +860,12 @@ when doc strings are referred to in the dumped Emacs.
 			      Lisp_Object old = XCAR (tem);
 			      if (!ZEROP (old))
 				{
-				  weird_doc (sym, GETTEXT ("duplicate"),
-					     (EQ (tem, Qlambda)
-					      ? GETTEXT ("lambda")
-					      : GETTEXT ("autoload")),
-					     pos);
+				  if (EQ (tem, Qlambda))
+				    weird_doc (sym, "duplicate", "lambda",
+					       pos);
+				  else
+				    weird_doc (sym, "duplicate", "autoload",
+					       pos);
 				  /* In the case of duplicate doc file entries,
 				     always take the later one.  But if the doc
 				     is not an int (a string, say) leave it
@@ -875,24 +877,23 @@ when doc strings are referred to in the dumped Emacs.
 			    }
                           else if (!CONSP (tem))
 			    {
-			      weird_doc (sym, GETTEXT ("!CONSP(tem)"),
-					 GETTEXT ("function"), pos);
+			      weird_doc (sym, "!CONSP(tem)", "function", pos);
 			      goto cont;
 			    }
                           else
 			    {
 			      /* DOC string is a string not integer 0 */
 #if 0
-			      weird_doc (sym, GETTEXT ("!INTP(XCAR(tem))"),
-					 GETTEXT ("function"), pos);
+			      weird_doc (sym, "!INTP(XCAR(tem))",
+					 "function", pos);
 #endif
 			      goto cont;
 			    }
                         }
                       else
 			{
-			  weird_doc (sym, GETTEXT ("not lambda or autoload"),
-				     GETTEXT ("function"), pos);
+			  weird_doc (sym, "not lambda or autoload",
+				     "function", pos);
 			  goto cont;
 			}
 		    }
@@ -911,8 +912,7 @@ when doc strings are referred to in the dumped Emacs.
 
                       if (! (f->flags.documentationp))
 			{
-			  weird_doc (sym, GETTEXT ("no doc slot"),
-				     GETTEXT ("bytecode"), pos);
+			  weird_doc (sym, "no doc slot", "bytecode", pos);
 			  goto weird;
 			}
 		      else
@@ -921,8 +921,7 @@ when doc strings are referred to in the dumped Emacs.
 			    compiled_function_documentation (f);
 			  if (!ZEROP (old))
 			    {
-			      weird_doc (sym, GETTEXT ("duplicate"),
-					 GETTEXT ("bytecode"), pos);
+			      weird_doc (sym, "duplicate", "bytecode", pos);
 			      /* In the case of duplicate doc file entries,
 				 always take the later one.  But if the doc is
 				 not an int (a string, say) leave it alone. */
@@ -936,8 +935,7 @@ when doc strings are referred to in the dumped Emacs.
                     {
                       /* Otherwise the function is undefined or
                          otherwise weird.   Ignore it. */
-                      weird_doc (sym, GETTEXT ("weird function"),
-				 GETTEXT ("function"), pos);
+                      weird_doc (sym, "weird function", "function", pos);
                       goto weird;
                     }
                 }
@@ -1245,9 +1243,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    if (NILP (tem))
 	      {
-		buffer_insert_c_string (buf_, "(uses keymap \"");
+		buffer_insert_ascstring (buf_, "(uses keymap \"");
 		buffer_insert_lisp_string (buf_, Fsymbol_name (name));
-		buffer_insert_c_string (buf_, "\", which is not currently defined) ");
+		buffer_insert_ascstring (buf_, "\", which is not currently defined) ");
 
 		if (start[-1] == '<') keymap = Qnil;
 	      }
@@ -1284,7 +1282,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
     tem = make_string (buf, bufp - buf);
   else
     tem = string;
-  xfree (buf, Ibyte *);
+  xfree (buf);
   UNGCPRO;
   return tem;
 }
@@ -1315,6 +1313,6 @@ Name of file containing documentation strings of built-in symbols.
 */ );
   Vinternal_doc_file_name = Qnil;
 
-  QSsubstitute = build_string (" *substitute*");
+  QSsubstitute = build_ascstring (" *substitute*");
   staticpro (&QSsubstitute);
 }

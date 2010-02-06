@@ -142,8 +142,8 @@ sub PrintPatternDeps {
 
 PrintPatternDeps ('-msw\\.',   "HAVE_MS_WINDOWS");
 PrintPatternDeps ('-xlike',   "HAVE_XLIKE");
-# X-specific files: *-x.c *-x-impl.h xgccache.c balloon_help.c x*.h Emacs*.[ch]
-PrintPatternDeps ('-x\\.|xgccache|balloon_help|^Emacs',     "HAVE_X_WINDOWS");
+# X-specific files: *-x.c *-x-impl.h balloon_help.c x*.h Emacs*.[ch]
+PrintPatternDeps ('-x\\.|balloon_help|^Emacs',     "HAVE_X_WINDOWS");
 PrintPatternDeps ('-tty\\.',   "HAVE_TTY");
 # GTK-specific files: *-gtk.[ch] *-gtk-*.[ch] gtk-*.[ch] emacs-marshals.c emacs-widget-accessors.c glade.c ui-byhand.c
 PrintPatternDeps ('gtk|emacs-marshals|emacs-widget-accessors|glade|ui-byhand',   "HAVE_GTK");

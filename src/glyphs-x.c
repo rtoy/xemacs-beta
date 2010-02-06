@@ -272,7 +272,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 #endif
 	    }
 	}
-      xfree (qtable, quant_table *);
+      xfree (qtable);
     } else {
       unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
       junk = vis->red_mask;
@@ -370,7 +370,7 @@ x_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_X_MASK (p));
 	}
-      write_c_string (printcharfun, ")");
+      write_ascstring (printcharfun, ")");
       break;
     default:
       break;
@@ -438,7 +438,7 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
 		    XFreePixmap (dpy, IMAGE_INSTANCE_X_PIXMAP_SLICE (p,i));
 		    IMAGE_INSTANCE_X_PIXMAP_SLICE (p, i) = 0;
 		  }
-	      xfree (IMAGE_INSTANCE_X_PIXMAP_SLICES (p), Pixmap *);
+	      xfree (IMAGE_INSTANCE_X_PIXMAP_SLICES (p));
 	      IMAGE_INSTANCE_X_PIXMAP_SLICES (p) = 0;
 	    }
 
@@ -466,11 +466,11 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
       && IMAGE_INSTANCE_TYPE (p) != IMAGE_SUBWINDOW
       && IMAGE_INSTANCE_X_PIXELS (p))
     {
-      xfree (IMAGE_INSTANCE_X_PIXELS (p), unsigned long *);
+      xfree (IMAGE_INSTANCE_X_PIXELS (p));
       IMAGE_INSTANCE_X_PIXELS (p) = 0;
     }
 
-  xfree (p->data, void *);
+  xfree (p->data);
   p->data = 0;
 }
 
@@ -594,15 +594,15 @@ x_locate_pixmap_file (Lisp_Object name)
 	Extbyte *pathext;
 	SubstitutionRec subs[1];
 	subs[0].match = 'B';
-	LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
-	C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
+	LISP_PATHNAME_CONVERT_OUT (name, subs[0].substitution);
+	pathext = ITEXT_TO_EXTERNAL (path, Qfile_name);
 	/* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
 	   We don't.  If you want it used, set it. */
 	if (pathext &&
 	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
 					  subs, XtNumber (subs), 0)))
 	  {
-	    name = build_ext_string (pathext, Qfile_name);
+	    name = build_extstring (pathext, Qfile_name);
 	    XtFree (pathext);
 	    return (name);
 	  }
@@ -620,7 +620,7 @@ x_locate_pixmap_file (Lisp_Object name)
 	{
 	  Ibyte *path;
 
-	  EXTERNAL_TO_C_STRING (value.addr, path, Qfile_name);
+	  path = EXTERNAL_TO_ITEXT (value.addr, Qfile_name);
 	  Vx_bitmap_file_path = split_env_path (0, path);
 	}
       Vx_bitmap_file_path = nconc2 (Vx_bitmap_file_path,
@@ -1033,7 +1033,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
       if (!ximage)
 	{
 	  if (pixtbl)
-	    xfree (pixtbl, unsigned long *);
+	    xfree (pixtbl);
 	  signal_image_error ("EImage to XImage conversion failed",
 			      instantiator);
 	}
@@ -1051,7 +1051,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 	{
 	  if (ximage->data)
 	    {
-	      xfree (ximage->data, char *);
+	      xfree (ximage->data);
 	      ximage->data = 0;
 	    }
 	  XDestroyImage (ximage);
@@ -1228,8 +1228,8 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
     {
       CBinbyte *ext_data;
 
-      LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), ext_data,
-			       Qbinary);
+      ext_data = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), 
+					  Qbinary);
       mask = pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				     XINT (XCAR (mask_data)),
 				     XINT (XCAR (XCDR (mask_data))),
@@ -1253,7 +1253,7 @@ x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), ext_data, Qbinary);
+  ext_data = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
 		     pointer_bg, dest_mask, XINT (XCAR (data)),
@@ -1338,8 +1338,8 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       if (! XAllocColor (dpy, cmap, &color))
 	ABORT ();  /* it must be allocable since we're just duplicating it */
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (cons), C_STRING_MALLOC,
-			  symbols[i].name, Qctext);
+      
+      symbols[i].name = LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (cons), Qctext);
       symbols[i].pixel = color.pixel;
       symbols[i].value = 0;
       free_cons (cons);
@@ -1460,7 +1460,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     Extbyte *dataext;
 
-    LISP_STRING_TO_EXTERNAL (data, dataext, Qctext);
+    dataext = LISP_STRING_TO_EXTERNAL (data, Qctext);
 
     result =
       XpmCreatePixmapFromBuffer (dpy,
@@ -1474,8 +1474,8 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       int i;
 
       for (i = 0; i < (int) xpmattrs.numsymbols; i++)
-	xfree (color_symbols[i].name, char *);
-      xfree (color_symbols, XpmColorSymbol *);
+	xfree (color_symbols[i].name);
+      xfree (color_symbols);
       xpmattrs.colorsymbols = 0; /* in case XpmFreeAttr is too smart... */
       xpmattrs.numsymbols = 0;
     }
@@ -1612,9 +1612,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, data,
-		      C_STRING_ALLOCA, dstring,
-		      Qbinary);
+  dstring = (const Binbyte *) LISP_STRING_TO_EXTERNAL (data, Qbinary);
 
   if ((p = (Binbyte *) strchr ((char *) dstring, ':')))
     {
@@ -1787,7 +1785,7 @@ autodetect_instantiate (Lisp_Object image_instance,
   if (dest_mask & IMAGE_POINTER_MASK)
     {
       const char *name_ext;
-      LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
+      LISP_PATHNAME_CONVERT_OUT (data, name_ext);
       if (XmuCursorNameToIndex (name_ext) != -1)
 	{
 	  result = alist_to_tagged_vector (Qcursor_font, alist);
@@ -1851,13 +1849,11 @@ safe_XLoadFont (Display *dpy, Ibyte *name)
 {
   Font font;
   int (*old_handler) (Display *, XErrorEvent *);
-  Extbyte *nameext;
 
   XLoadFont_got_error = 0;
   XSync (dpy, 0);
   old_handler = XSetErrorHandler (XLoadFont_error_handler);
-  C_STRING_TO_EXTERNAL (name, nameext, Qfile_name);
-  font = XLoadFont (dpy, nameext);
+  font = XLoadFont (dpy, ITEXT_TO_EXTERNAL (name, Qfile_name));
   XSync (dpy, 0);
   XSetErrorHandler (old_handler);
   if (XLoadFont_got_error) return 0;
@@ -1923,7 +1919,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   source = safe_XLoadFont (dpy, source_name);
   if (! source)
     signal_error_2 (Qgui_error,
-		    "couldn't load font", build_intstring (source_name), data);
+		    "couldn't load font", build_istring (source_name), data);
   if (count == 2)
     mask = 0;
   else if (!mask_name[0])
@@ -1934,7 +1930,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       if (!mask)
 	signal_continuable_error_2 (Qgui_error,
 				    "couldn't load font",
-				    build_intstring (mask_name), data);
+				    build_istring (mask_name), data);
     }
   if (!mask)
     mask_char = 0;
@@ -1990,7 +1986,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (!(dest_mask & IMAGE_POINTER_MASK))
     incompatible_image_types (instantiator, dest_mask, IMAGE_POINTER_MASK);
 
-  LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
+  LISP_PATHNAME_CONVERT_OUT (data, name_ext);
   if ((i = XmuCursorNameToIndex (name_ext)) == -1)
     invalid_argument ("Unrecognized cursor-font name", data);
 
@@ -2201,7 +2197,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
     {
       Extbyte* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
-      LISP_STRING_TO_EXTERNAL (val, str, Qlwlib_encoding);
+      str = LISP_STRING_TO_EXTERNAL (val, Qlwlib_encoding);
       wv->value = str;
     }
 
@@ -2333,8 +2329,7 @@ Subwindows are not currently implemented.
 			 (FRAME_DEVICE (XFRAME (sw->frame))));
 
   LISP_TO_EXTERNAL (property, propext, Qctext);
-  TO_EXTERNAL_FORMAT (LISP_STRING, data,
-		      ALLOCA, (dataext, datalen), Qctext);
+  LISP_STRING_TO_SIZED_EXTERNAL (data, dataext, datalen, Qctext); 
   property_atom = XInternAtom (dpy, propext, False);
   XChangeProperty (dpy, sw->subwindow, property_atom, XA_STRING, 8,
 		   PropModeReplace, dataext, datalen);
@@ -2382,7 +2377,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (rf)
       {
 	/* #### What to do about Motif? */
-	lw_add_widget_value_arg (wv, XtNxftFont, (XtArgVal) rf);
+	lw_add_widget_value_arg (wv, (String) XtNxftFont, (XtArgVal) rf);
       }
 #endif
 
@@ -2400,7 +2395,7 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
     if (!rf && !fs)
       warn_when_safe_lispobj
 	(intern ("xft"), Qdebug,
-	 Fcons (build_string ("missing font in update_widget_face"),
+	 Fcons (build_msg_string ("missing font in update_widget_face"),
 		Fface_name (face)));
 #endif
   }
@@ -2469,8 +2464,8 @@ x_widget_instantiate (Lisp_Object image_instance,
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_WIDGET;
 
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
-    LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), nm,
-			     Qlwlib_encoding);
+    nm = LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+				  Qlwlib_encoding);
 
   ii->data = xnew_and_zero (struct x_subwindow_data);
 
@@ -2561,7 +2556,7 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      return build_ext_string (wv->value, Qlwlib_encoding);
+      return build_extstring (wv->value, Qlwlib_encoding);
     }
   return Qunbound;
 }
@@ -2776,8 +2771,9 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 		  unsigned int num_children, i;
 		  Widget* children;
 
-		  LISP_STRING_TO_EXTERNAL (XGUI_ITEM (XCAR (rest))->name,
-					   name, Qlwlib_encoding);
+		  name =
+		    LISP_STRING_TO_EXTERNAL (XGUI_ITEM (XCAR (rest))->name,
+					     Qlwlib_encoding);
 		  /* The name may contain a `.' which confuses
 		     XtNameToWidget, so we do it ourselves. */
 		  children =
@@ -3013,7 +3009,7 @@ complex_vars_of_glyphs_x (void)
      vector3 (Qxbm, Q_data,					\
 	      list3 (make_int (name##_width),			\
 		     make_int (name##_height),			\
-		     make_ext_string ((Extbyte *) name##_bits,	\
+		     make_extstring ((Extbyte *) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\
      Qglobal, Qx, Qnil)

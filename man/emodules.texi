@@ -1058,7 +1058,7 @@ Nothing magical about it.
 */);
 
   sample_boolean = 0;
-  Vsample_string = build_string("My string");
+  Vsample_string = build_ascstring ("My string");
 @}
 @end cartouche
 @end example

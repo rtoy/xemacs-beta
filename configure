@@ -712,6 +712,9 @@ SUBDIR_MAKEFILES
 MAKE_SUBDIR
 INSTALL_ARCH_DEP_SUBDIR
 SRC_SUBDIR_DEPS
+ac_ct_CXX
+CXXFLAGS
+CXX
 have_esd_config
 ALLOCA
 canna_libs
@@ -1035,7 +1038,10 @@ CPPFLAGS
 CPP
 YACC
 YFLAGS
-XMKMF'
+XMKMF
+CXX
+CXXFLAGS
+CCC'
 
 
 # Initialize some variables set by options.
@@ -1952,13 +1958,37 @@ Platform Specific options
 Debugging options
 -----------------
 
-  --with-debug            Enable additional debugging information. No time
-                          cost.
-  --with-error-checking=TESTS
+  --with-debug            Enable additional debugging information. No
+                          noticeable time cost (unlike
+                          `--with-error-checking'). This turns adds `-g' to
+                          the compiler options so that debug information is
+                          compiled into the XEmacs executable. It also turns
+                          on assert checks in the source code (i.e. same as
+                          `--with-assertions'); enables Lisp commands for
+                          determining detailed memory usage statistics (same
+                          as `--with-memory-usage-stats'); adds various Lisp
+                          variables and functions that allow one to display
+                          internal structures, show the internal workings of
+                          certain subsystems, and exit to the debugger; causes
+                          Lisp errors during building to exit to the debugger
+                          or dump core; and adds debugging-related C functions
+                          meant to be called from a debugger.
+  --with-error-checking=CLASS|all|none
                           Compile with internal error-checking added. Causes
-                          noticeable loss of speed. Valid TESTS are
-                          `byte_code', `display', `extents', `gc', `glyphs',
-                          `malloc', `structures' `text', `types'.
+                          noticeable loss of speed. Valid classes are
+                          `byte_code', `display' (redisplay), `extents', `gc'
+                          (garbage collection), `glyphs', `malloc' (memory
+                          allocation), `structures' (C structures), `text'
+                          (text handling and conversion), `types' (correct
+                          Lisp-object type for type-specific operations).
+                          `all' or `none' can be given to set all or no
+                          classes, respectively. Any of the classes can be
+                          prefixed with `no' to turn the class off. A
+                          comma-separated list of classes can also be given.
+                          For example, `all,nogc' turns on all but
+                          garbage-collection-related checking. Omitting any
+                          argument or specifying just `yes' is the same as
+                          `all'.
   --with-assertions       Compile in runtime assertions.
   --with-memory-usage-stats
                           Enable LISP memory usage API.
@@ -1998,6 +2028,8 @@ Some influential environment variables:
               This script will default YFLAGS to the empty string to avoid a
               default value of `-d' given by some make applications.
   XMKMF       Path to xmkmf, Makefile generator for X Window System
+  CXX         C++ compiler command
+  CXXFLAGS    C++ compiler flags
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2806,6 +2838,44 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
+
+# ac_fn_cxx_try_compile LINENO
+# ----------------------------
+# Try to compile conftest.$ac_ext, and return whether this succeeded.
+ac_fn_cxx_try_compile ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext
+  if { { ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_compile") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_compile
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -5152,6 +5222,9 @@ if test "${with_debug+set}" = set; then
   withval="$with_debug"
 
 fi;
+if test "$with_error_checking" = "yes"; then
+  with_error_checking=all
+fi
 _error_checking_notfirst=""
 _error_checking_byte_code_default=""
 _error_checking_display_default=""
@@ -8935,6 +9008,24 @@ test -n "$with_xemacs_compiler" && XEMACS_CC="$with_xemacs_compiler"
 : ${XEMACS_CC:="$CC"}
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are using g++" >&5
+$as_echo_n "checking whether we are using g++... " >&6; }
+
+XEMACS_CC_GPP=no
+case "$XEMACS_CC" in
+  *g++* ) XEMACS_CC_GPP=yes ;;
+esac
+
+if test "$XEMACS_CC_GPP" = "no" -a "$GCC" = "yes"; then
+  case "`$XEMACS_CC --version`" in
+    g++* ) XEMACS_CC_GPP=yes ;;
+  esac
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $XEMACS_CC_GPP" >&5
+$as_echo "$XEMACS_CC_GPP" >&6; }
+
+
 test -n "$CPP" -a -d "$CPP" && CPP=
 
 test -n "$NON_GNU_CPP" -a "$GCC" != "yes" -a -z "$CPP" && CPP="$NON_GNU_CPP"
@@ -9463,26 +9554,15 @@ fi
 
 xemacs_cc_cc_mismatch=no
 if test "$CC" != "$XEMACS_CC"; then
-  case "$XEMACS_CC" in
-  *g++* )
-    if test "$GCC" != "yes"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&5
+  if test "$XEMACS_CC_GPP" = "yes" -a "$GCC" != "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&5
 $as_echo "$as_me: WARNING: CC and g++ are mismatched; XE_CFLAGS may be wrong" >&2;}
-      xemacs_cc_cc_mismatch=yes
-    fi
-    ;;
-  esac
-  if test -n "$GCC"; then
-    case $XEMACS_CC in
-    *g++* )
-      # it's as expected, do nothing
-      ;;
-    * )
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&5
+    xemacs_cc_cc_mismatch=yes
+  fi
+  if test -n "$GCC" -a "$XEMACS_CC_GPP" != "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&5
 $as_echo "$as_me: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong" >&2;}
-      xemacs_cc_cc_mismatch=yes
-      ;;
-    esac
+    xemacs_cc_cc_mismatch=yes
   fi
   fi
 
@@ -9505,10 +9585,10 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for preferred optimization flags" >&5
 $as_echo_n "checking for preferred optimization flags... " >&6; }
-if test "$with_optimization" = "yes" ; then
-  if test "$cflags_optimization_specified" = "no"; then
+if test "$cflags_optimization_specified" = "no"; then
+  if test "$with_optimization" = "yes" ; then
             if test "$GCC" = "yes"; then
-      with_cflags_optimization="-O3"
+                                    with_cflags_optimization="-O3 -fno-strict-aliasing"
     elif test "$__SUNPRO_C" = "yes"; then
       case "$opsys" in
         sol2    ) with_cflags_optimization="-xO4" ;;
@@ -9521,9 +9601,9 @@ if test "$with_optimization" = "yes" ; then
       with_cflags_optimization="-O3 -Ob2"
         else
       with_cflags_optimization="-O" ;    fi
+  elif test "$XEMACS_CC_GPP" = "yes" ; then
+                with_cflags_optimization="-fno-strict-aliasing"
   fi
-else
-  with_cflags_optimization=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${with_cflags_optimization}" >&5
@@ -9566,7 +9646,7 @@ if test "$cflags_warning_specified" = "no"; then
     test "$__GCC" -ge 3 && with_cflags_warning="$with_cflags_warning -Wpacked"
             test "$have_glibc" != "yes" && \
       with_cflags_warning="$with_cflags_warning -Wpointer-arith"
-                                        if test "$with_xemacs_compiler" = "g++"; then
+                                        if test "$XEMACS_CC_GPP" = "yes"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
     elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
@@ -13909,7 +13989,7 @@ fi
 
 
 
-if test "$with_xemacs_compiler" = "g++"; then
+if test "$XEMACS_CC_GPP" = "yes"; then
   LIBSTDCPP=-lstdc++
 else
   LIBSTDCPP=
@@ -14581,10 +14661,17 @@ $as_echo "${ld_shlibs}" >&6; }
 fi # End of if cc_produces_so = no
 
 
-if test "$xe_gnu_ld" = yes; then
-  if test "$ld_shlibs" = yes; then
+if test "$xe_gnu_ld" = yes -a "$ld_shlibs" = yes; then
+  case "$xehost_os" in
+  *cygwin* | *mingw* )
+    # -export-all-symbols is the PE equivalent of ELF-specific -export-dynamic
+    ld_dynamic_link_flags="${wl}-export-all-symbols"
+    ;;
+
+  *)
     ld_dynamic_link_flags="${wl}-export-dynamic"
-  fi
+    ;;
+  esac
 fi
 
 if test -z "$ld_dynamic_link_flags"; then
@@ -19710,6 +19797,320 @@ _ACEOF
 
   $as_echo "#define HAVE_DBM 1" >>confdefs.h
 
+        if test "$XEMACS_CC_GPP" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+    ac_ext=c
+xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
+xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+ac_cpp='$CPP '"$xe_cppflags"
+ac_compile='$XEMACS_CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_link='$XEMACS_CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    ac_ext=c
+xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
+xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+ac_cpp='$CPP '"$xe_cppflags"
+ac_compile='$XEMACS_CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_link='$XEMACS_CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+if test -z "$CXX"; then
+  if test -n "$CCC"; then
+    CXX=$CCC
+  else
+    if test -n "$ac_tool_prefix"; then
+  for ac_prog in g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC
+  do
+    # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
+set dummy $ac_tool_prefix$ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_CXX+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CXX"; then
+  ac_cv_prog_CXX="$CXX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_CXX="$ac_tool_prefix$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+CXX=$ac_cv_prog_CXX
+if test -n "$CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXX" >&5
+$as_echo "$CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    test -n "$CXX" && break
+  done
+fi
+if test -z "$CXX"; then
+  ac_ct_CXX=$CXX
+  for ac_prog in g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC xlC_r xlC
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_ac_ct_CXX+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_CXX"; then
+  ac_cv_prog_ac_ct_CXX="$ac_ct_CXX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_ac_ct_CXX="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_CXX=$ac_cv_prog_ac_ct_CXX
+if test -n "$ac_ct_CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CXX" >&5
+$as_echo "$ac_ct_CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$ac_ct_CXX" && break
+done
+
+  if test "x$ac_ct_CXX" = x; then
+    CXX="g++"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    CXX=$ac_ct_CXX
+  fi
+fi
+
+  fi
+fi
+# Provide some information about the compiler.
+$as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ compiler version" >&5
+set X $ac_compile
+ac_compiler=$2
+for ac_option in --version -v -V -qversion; do
+  { { ac_try="$ac_compiler $ac_option >&5"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_compiler $ac_option >&5") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    sed '10a\
+... rest of stderr output deleted ...
+         10q' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+  fi
+  rm -f conftest.er1 conftest.err
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we are using the GNU C++ compiler" >&5
+$as_echo_n "checking whether we are using the GNU C++ compiler... " >&6; }
+if test "${ac_cv_cxx_compiler_gnu+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+#ifndef __GNUC__
+       choke me
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_compiler_gnu=yes
+else
+  ac_compiler_gnu=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_cv_cxx_compiler_gnu=$ac_compiler_gnu
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cxx_compiler_gnu" >&5
+$as_echo "$ac_cv_cxx_compiler_gnu" >&6; }
+if test $ac_compiler_gnu = yes; then
+  GXX=yes
+else
+  GXX=
+fi
+ac_test_CXXFLAGS=${CXXFLAGS+set}
+ac_save_CXXFLAGS=$CXXFLAGS
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX accepts -g" >&5
+$as_echo_n "checking whether $CXX accepts -g... " >&6; }
+if test "${ac_cv_prog_cxx_g+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+   ac_cxx_werror_flag=yes
+   ac_cv_prog_cxx_g=no
+   CXXFLAGS="-g"
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_prog_cxx_g=yes
+else
+  CXXFLAGS=""
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+else
+  ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+	 CXXFLAGS="-g"
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_prog_cxx_g=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+   ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_g" >&5
+$as_echo "$ac_cv_prog_cxx_g" >&6; }
+if test "$ac_test_CXXFLAGS" = set; then
+  CXXFLAGS=$ac_save_CXXFLAGS
+elif test $ac_cv_prog_cxx_g = yes; then
+  if test "$GXX" = yes; then
+    CXXFLAGS="-g -O2"
+  else
+    CXXFLAGS="-g"
+  fi
+else
+  if test "$GXX" = yes; then
+    CXXFLAGS="-O2"
+  else
+    CXXFLAGS=
+  fi
+fi
+ac_ext=c
+xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
+xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+ac_cpp='$CPP '"$xe_cppflags"
+ac_compile='$XEMACS_CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_link='$XEMACS_CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "$ndbm_h_file"
+int
+main ()
+{
+dbm_close((DBM *) 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ndbm.h is compatible with g++" >&5
+$as_echo_n "checking whether ndbm.h is compatible with g++... " >&6; }
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+       $as_echo "#define TRUST_NDBM_H_PROTOTYPES 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ndbm.h is compatible with g++" >&5
+$as_echo_n "checking whether ndbm.h is compatible with g++... " >&6; }
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    ac_ext=c
+xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
+xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+ac_cpp='$CPP '"$xe_cppflags"
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  else
+    $as_echo "#define TRUST_NDBM_H_PROTOTYPES 1" >>confdefs.h
+
+  fi
   $as_unset ndbm_h_file
 fi
 
@@ -20315,7 +20716,7 @@ if test "$with_modules" = "no"; then
 fi
 
 
-internal_makefile_list="Makefile.in"
+internal_makefile_list="Makefile.in src/.gdbinit.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
@@ -20362,10 +20763,6 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/etc/gdbinit.in"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
-fi
 
 if test -f "$srcdir/etc/dbxrc.in"; then
   test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
@@ -20673,41 +21070,41 @@ elif test "$with_debug_malloc"  = "yes"; then $as_echo "#define USE_DEBUG_MALLOC
 					      $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
 
 fi
-test "$GCC"                = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
+test "$GCC"                  = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
 
-test "$with_xemacs_compiler" = "g++" && $as_echo "#define USE_GPLUSPLUS 1" >>confdefs.h
+test "$XEMACS_CC_GPP"        = "yes" && $as_echo "#define USE_GPLUSPLUS 1" >>confdefs.h
 
 test "$with_external_widget" = "yes" && $as_echo "#define EXTERNAL_WIDGET 1" >>confdefs.h
 
-test "$with_kkcc"        = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
+test "$with_kkcc"            = "yes" && $as_echo "#define USE_KKCC 1" >>confdefs.h
 
-test "$with_newgc"       = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
+test "$with_newgc"           = "yes" && $as_echo "#define NEW_GC 1" >>confdefs.h
 
-test "$have_vdb_posix"     = "yes" && $as_echo "#define VDB_POSIX 1" >>confdefs.h
+test "$have_vdb_posix"       = "yes" && $as_echo "#define VDB_POSIX 1" >>confdefs.h
 
-test "$have_vdb_fake"      = "yes" && $as_echo "#define VDB_FAKE 1" >>confdefs.h
+test "$have_vdb_fake"        = "yes" && $as_echo "#define VDB_FAKE 1" >>confdefs.h
 
-test "$with_quick_build" = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
+test "$with_quick_build"     = "yes" && $as_echo "#define QUICK_BUILD 1" >>confdefs.h
 
-test "$with_purify"        = "yes" && $as_echo "#define PURIFY 1" >>confdefs.h
+test "$with_purify"          = "yes" && $as_echo "#define PURIFY 1" >>confdefs.h
 
-test "$with_quantify"      = "yes" && $as_echo "#define QUANTIFY 1" >>confdefs.h
+test "$with_quantify"        = "yes" && $as_echo "#define QUANTIFY 1" >>confdefs.h
 
-test "$with_valgrind"      = "yes" && $as_echo "#define USE_VALGRIND 1" >>confdefs.h
+test "$with_valgrind"        = "yes" && $as_echo "#define USE_VALGRIND 1" >>confdefs.h
 
-test "$with_pop"           = "yes" && $as_echo "#define MAIL_USE_POP 1" >>confdefs.h
+test "$with_pop"             = "yes" && $as_echo "#define MAIL_USE_POP 1" >>confdefs.h
 
-test "$with_kerberos"      = "yes" && $as_echo "#define KERBEROS 1" >>confdefs.h
+test "$with_kerberos"        = "yes" && $as_echo "#define KERBEROS 1" >>confdefs.h
 
-test "$with_hesiod"        = "yes" && $as_echo "#define HESIOD 1" >>confdefs.h
+test "$with_hesiod"          = "yes" && $as_echo "#define HESIOD 1" >>confdefs.h
 
-test "$with_union_type"  = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
+test "$with_union_type"      = "yes" && $as_echo "#define USE_UNION_TYPE 1" >>confdefs.h
 
-test "$with_pdump"       = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
+test "$with_pdump"           = "yes" && $as_echo "#define PDUMP 1" >>confdefs.h
 
-test "$with_dump_in_exec" = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
+test "$with_dump_in_exec"    = "yes" && $as_echo "#define DUMP_IN_EXEC 1" >>confdefs.h
 
-test "$with_ipv6_cname"    = "yes" && $as_echo "#define IPV6_CANONICALIZE 1" >>confdefs.h
+test "$with_ipv6_cname"      = "yes" && $as_echo "#define IPV6_CANONICALIZE 1" >>confdefs.h
 
 
 
@@ -20832,7 +21229,7 @@ case "$with_menubars" in
 esac
 if test "$with_xft_menubars" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in menubars."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 case "$with_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
@@ -20861,12 +21258,12 @@ case "$with_widgets" in
 esac
 if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
-  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This Xft feature will be replaced with a face."
 fi
 if test "$with_xft_gauges" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
-  echo "      WARNING: This feature will be replaced with a face."
-  echo "      WARNING: This feature not yet implemented; setting ignored."
+  echo "      WARNING: This Xft feature will be replaced with a face."
+  echo "      WARNING: This Xft feature not yet implemented; setting ignored."
 fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."

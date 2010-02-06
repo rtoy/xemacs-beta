@@ -152,7 +152,7 @@ xemacs_c_alloca (unsigned int size)
 	  register header *np = hp->h.next;
 
 #ifdef emacs
-	  xfree (hp, header *);	/* Collect garbage.  */
+	  xfree (hp);	/* Collect garbage.  */
 #else
 	  free (hp);		/* Collect garbage.  */
 #endif

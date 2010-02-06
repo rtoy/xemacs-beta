@@ -693,11 +693,10 @@ nt_init_process (void)
  */
 
 static DOESNT_RETURN
-mswindows_report_winsock_error (const char *string, Lisp_Object data,
+mswindows_report_winsock_error (const Ascbyte *reason, Lisp_Object data,
 				int errnum)
 {
-  report_file_type_error (Qnetwork_error, mswindows_lisp_error (errnum),
-			  string, data);
+  signal_error_2 (Qnetwork_error, reason, mswindows_lisp_error (errnum), data);
 }
 
 static void
@@ -861,7 +860,7 @@ nt_create_process (Lisp_Process *p,
 	 args_or_ret);
 
     /* #### What about path names, which may be links? */
-    LISP_STRING_TO_TSTR (args_or_ret, command_line);
+    command_line = LISP_STRING_TO_TSTR (args_or_ret);
 
     UNGCPRO; /* args_or_ret */
   }
@@ -1237,7 +1236,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
     Extbyte *hostext;
     unsigned long inaddr;
 
-    LISP_STRING_TO_EXTERNAL (host, hostext, Qmswindows_host_name_encoding);
+    hostext = LISP_STRING_TO_EXTERNAL (host, Qmswindows_host_name_encoding);
     inaddr = inet_addr (hostext);
     if (inaddr != INADDR_NONE)
       {
@@ -1255,7 +1254,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
   {
     Extbyte *hostext;
 
-    LISP_STRING_TO_EXTERNAL (host, hostext, Qmswindows_host_name_encoding);
+    hostext = LISP_STRING_TO_EXTERNAL (host, Qmswindows_host_name_encoding);
 
     hasync = WSAAsyncGetHostByName (hwnd, XM_SOCKREPLY, hostext,
 				    buf, sizeof (buf));
@@ -1313,7 +1312,8 @@ nt_canonicalize_host_name (Lisp_Object host)
     return host;
 
   if (address.sin_family == AF_INET)
-    return build_string (inet_ntoa (address.sin_addr));
+    return build_extstring (inet_ntoa (address.sin_addr),
+			     Qunix_host_name_encoding);
   else
     return host;
 }
@@ -1348,8 +1348,8 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
       Extbyte *servext;
 
       CHECK_STRING (service);
-      LISP_STRING_TO_EXTERNAL (service, servext,
-			       Qmswindows_service_name_encoding);
+      servext = LISP_STRING_TO_EXTERNAL (service,
+					 Qmswindows_service_name_encoding);
 
       svc_info = getservbyname (servext, "tcp");
       if (svc_info == 0)

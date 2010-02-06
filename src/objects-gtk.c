@@ -168,7 +168,7 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
 	    }
 	    gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
 	}
-      xfree (c->data, void *);
+      xfree (c->data);
       c->data = 0;
     }
 }
@@ -208,7 +208,7 @@ gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
   GdkColor c;
   const char *extname;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, color, C_STRING_ALLOCA, extname, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qctext);
 
   if (gdk_color_parse (extname, &c) != TRUE)
       return(0);
@@ -237,7 +237,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   XFontStruct *xf;
   const char *extname;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, f->name, C_STRING_ALLOCA, extname, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
   gf = gdk_font_load (extname);
 
@@ -340,7 +340,7 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 	{
 	    gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
 	}
-      xfree (f->data, void *);
+      xfree (f->data);
       f->data = 0;
     }
 }
@@ -383,7 +383,7 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 {
   const char *patternext;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, pattern, C_STRING_ALLOCA, patternext, Qbinary);
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qbinary);
 
   return (__gtk_font_list_internal (patternext));
 }
@@ -472,7 +472,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 	      if (!expandp)
 		{
 		  /* They want the wildcarded version */
-		  font_name = build_string ((char*) names->data);
+		  font_name = build_cistring ((char*) names->data);
 		}
 	      else
 		{
@@ -483,7 +483,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 		  x_font_names = XListFonts (dpy, (char*) names->data, 1, &nnames);
 		  if (x_font_names)
 		    {
-		      font_name = build_string (x_font_names[0]);
+		      font_name = build_cistring (x_font_names[0]);
 		      XFreeFontNames (x_font_names);
 		    }
 		}
@@ -503,7 +503,7 @@ static Lisp_Object __gtk_font_list_internal (const char *pattern)
 
   names = XListFonts (GDK_DISPLAY (), pattern, MAX_FONT_COUNT, &count);
   while (count--)
-    result = Fcons (build_ext_string (names [count], Qbinary), result);
+    result = Fcons (build_extstring (names [count], Qbinary), result);
   if (names)
     XFreeFontNames (names);
 

@@ -1,3 +1,71 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (AC_LANG):
+	* configure.ac (TAB):
+	Add AC_LANG(C++) defs in a way very similar to AC_LANG(C), inserting
+	our own flags, compiler, etc.
+
+	When using g++, if we found ndbm, check whether we can compile a
+	file using g++ and ndbm.h, calling some DBM routines.  Currently, this
+	fails because the prototypes in ndbm.h are incomplete, omitting the
+	arguments, which doesn't work with g++.  When ndbm.h is bad, we don't
+	include it and instead provide our own prototypes; otherwise, we
+	define TRUST_NDBM_H_PROTOTYPES, which signals to use the ones in
+	ndbm.h.
+
+2010-01-31  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (TAB):
+	Say "This Xft feature" rather than just "This feature" to make it
+	possible to more safely filter out the warning in my `runcc'
+	script without the possibility of filtering out genuinely
+	important warnings.
+	* configure: Regenerate.
+
+2010-01-23  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (XE_COMPLEX_ARG):
+	Expand the help for --with-debug to describe more specifically what
+	exactly gets turned on.  Expand the help for --with-error-checking
+	to describe all the possible arguments, including `all', `none',
+	`noFOO', multiple arguments, etc.
+
+	Change so that `--with-error-checking' is the same as
+	`--with-error-checking=all'.  Currently, `--with-error-checking' has
+	no effect at all!  It just means "leave all error-checking for
+	specific classes to their default values", which are "maybe", and
+	get converted to "yes" or "no" depending on whether we are running
+	a beta XEmacs.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* configure: Rebuild.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* aclocal.m4 (XE_SHLIB_STUFF):
+	Use -export-all-symbols instead of -export-dynamic on PE targets
+	(Cygwin and MinGW).
+	
+	* configure.ac (XE_EXPAND_VARIABLE):
+	* configure.ac (TAB):
+	Create variable XEMACS_CC_GPP to check whether we're running g++.
+	Don't just check for an executable called `g++' -- it might be
+	called g++-4 or whatever.  Instead, check for either named `g++*'
+	or claiming to be g++ when called with --version.  Rewrite code do
+	use the variable.
+
+	Add -fno-strict-aliasing to optimization flags when GCC and
+	optimized, and in all cases with g++, since under these circumstances
+	strict aliasing is otherwise assumed, and XEmacs can't easily be
+	made to respect its restrictions.
+
+	* configure: Regenerate.
+	
+	
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* configure:
@@ -9,6 +77,26 @@
 	* PROBLEMS:
 	Add description of crash on recent Cygwin 1.7 when using C++, NEWGC
         and optimization.
+
+2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure: Regenerate, now we no longer look for rint().
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (GENERATED_HEADERS):
+	* Makefile.in.in (.PHONY):
+	* Makefile.in.in (src/.gdbinit):
+	* configure:
+	* configure.ac (TAB):
+	etc/gdbinit.in has been moved to src/.gdbinit.in.in.  Reflect
+	this -- generate src/.gdbinit.in from src/.gdbinit.in.in, and
+	use the normal mechanism for doing so instead of copying it
+	specially.
+
+	Add target for `config-changed' and pass down to `src'.
+	Move some PHONY declarations to just before the actual targets.
 
 2010-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 

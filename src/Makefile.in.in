@@ -3,7 +3,7 @@
 ##   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 ##   Copyright (C) 1998, 1999 J. Kean Johnston.
-##   Copyright (C) 2001, 2002, 2003, 2005 Ben Wing.
+##   Copyright (C) 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -883,6 +883,19 @@ lint: $(LINTFILES)
 ###################### Automated tests
 testdir = $(SRC)/../tests/automated
 batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+
+## `config-changed' is useful if you are building both Unicode-internal
+## and old-Mule workspaces using --srcdir and don't run configure before
+## switching from one to the other.  If you rerun configure, update-elc.el
+## notices this and automatically removes the two files below, but not
+## if you just switch directories and `make'.  In that case, do
+## `make config-changed' to avoid an error.
+
+.PHONY: remove-config-dependent-elcs config-changed
+remove-config-dependent-elcs:
+	rm $(LISP)/mule/chinese.elc $(LISP)/mule/general-late.elc
+config-changed: remove-config-dependent-elcs all
+
 
 .PHONY: check check-temacs check-features
 check:

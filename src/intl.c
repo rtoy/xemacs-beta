@@ -49,7 +49,7 @@ system-dependent, and there is no universal agreement.
   loc = setlocale (LC_CTYPE, NULL);
   if (!loc)
     return Qnil;
-  return build_ext_string (loc, Qctext);
+  return build_extstring (loc, Qctext);
 }
 
 DEFUN ("set-current-locale", Fset_current_locale, 1, 1, 0, /*
@@ -75,7 +75,7 @@ Otherwise, returns the locale, or possibly a more-specified version.
   CHECK_STRING (locale);
   /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
      encoded in ISO2022! */
-  LISP_STRING_TO_EXTERNAL (locale, loc, Qctext);
+  loc = LISP_STRING_TO_EXTERNAL (locale, Qctext);
   loc = setlocale (LC_ALL, loc);
   if (!loc)
     return Qnil;
@@ -92,8 +92,8 @@ Otherwise, returns the locale, or possibly a more-specified version.
     }
 #endif
 
-  str = build_ext_string (loc, Qctext);
-  xfree (loc, Extbyte *);
+  str = build_extstring (loc, Qctext);
+  xfree (loc);
   return str;
 }
 

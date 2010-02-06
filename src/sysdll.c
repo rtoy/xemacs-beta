@@ -1,5 +1,7 @@
 /* sysdll.c --- system dependent support for dynamic linked libraries
    Copyright (C) 1998 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
+
    Author:  William Perry <wmperry@aventail.com>
 
 This file is part of XEmacs.
@@ -19,6 +21,8 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+/* This file has been Mule-ized, Ben Wing, 1-26-10. */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -29,9 +33,9 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef DLSYM_NEEDS_UNDERSCORE
 #define MAYBE_PREPEND_UNDERSCORE(n) do {		\
-  CIbyte *buf = alloca_array (CIbyte, strlen (n) + 2);	\
+  Ibyte *buf = alloca_array (Ibyte, qxestrlen (n) + 2);	\
   *buf = '_';						\
-  strcpy (buf + 1, n);					\
+  qxestrcpy (buf + 1, n);				\
   n = buf;						\
 } while (0)
 #else
@@ -73,7 +77,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) dlopen (soname, RTLD_NOW);
 }
@@ -85,17 +89,21 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const CIbyte *n)
+dll_function (dll_handle h, const Ibyte *n)
 {
+  Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  return (dll_func) dlsym ((void *) h, n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
+  return (dll_func) dlsym ((void *) h, next);
 }
 
 dll_var
-dll_variable (dll_handle h, const CIbyte *n)
+dll_variable (dll_handle h, const Ibyte *n)
 {
+  Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  return (dll_var)dlsym ((void *)h, n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
+  return (dll_var)dlsym ((void *)h, next);
 }
 
 Lisp_Object
@@ -109,7 +117,7 @@ dll_error ()
 #else
   msg = (const Extbyte *) "Shared library error";
 #endif
-  return build_ext_string (msg, Qerror_message_encoding);
+  return build_extstring (msg, Qerror_message_encoding);
 }
 
 #elif defined(HAVE_SHL_LOAD)
@@ -126,7 +134,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) shl_load (soname, BIND_DEFERRED, 0L);
 }
@@ -164,8 +172,7 @@ dll_error ()
 {
   /* #### WTF?!  Shouldn't this at least attempt to get strerror or
      something?  --hniksic */
-  return build_string ("Generic shared library error",
-		       Qerror_message_encoding);
+  return build_ascstring ("Generic shared library error");
 }
 
 #elif defined (WIN32_NATIVE) || defined (CYGWIN)
@@ -196,25 +203,27 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const CIbyte *n)
+dll_function (dll_handle h, const Ibyte *n)
 {
-  return (dll_func) GetProcAddress ((HINSTANCE) h, n);
+  Extbyte *next = ITEXT_TO_EXTERNAL (n, Qmswindows_multibyte);
+  return (dll_func) GetProcAddress ((HINSTANCE) h, next);
 }
 
 dll_func
-dll_variable (dll_handle h, const CIbyte *n)
+dll_variable (dll_handle h, const Ibyte *n)
 {
-  return (dll_func) GetProcAddress ((HINSTANCE) h, n);
+  Extbyte *next = ITEXT_TO_EXTERNAL (n, Qmswindows_multibyte);
+  return (dll_func) GetProcAddress ((HINSTANCE) h, next);
 }
 
 Lisp_Object
 dll_error ()
 {
-  CIbyte err[32];
+  Ascbyte err[32];
   snprintf (err, 32, "Windows DLL Error %lu", GetLastError ());
-  return build_string (err);
+  return build_ascstring (err);
 }
-#elif defined(HAVE_DYLD)
+#elif defined (HAVE_DYLD)
 /* This section supports MacOSX dynamic libraries. Dynamically
    loadable libraries must be compiled as bundles, not dynamiclibs.
 */
@@ -241,23 +250,22 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
-  ret = NSCreateObjectFileImageFromFile(soname, &file);
-  if (ret != NSObjectFileImageSuccess) {
+  ret = NSCreateObjectFileImageFromFile (soname, &file);
+  if (ret != NSObjectFileImageSuccess)
     return NULL;
-  }
-  out = NSLinkModule(file, soname,
-		     NSLINKMODULE_OPTION_BINDNOW |
-		     NSLINKMODULE_OPTION_PRIVATE |
-		     NSLINKMODULE_OPTION_RETURN_ON_ERROR);
-  return (dll_handle)out;
+  out = NSLinkModule (file, soname,
+		      NSLINKMODULE_OPTION_BINDNOW |
+		      NSLINKMODULE_OPTION_PRIVATE |
+		      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+  return (dll_handle) out;
 }
 
 int
 dll_close (dll_handle h)
 {
-  return NSUnLinkModule((NSModule)h, NSUNLINKMODULE_OPTION_NONE);
+  return NSUnLinkModule ((NSModule) h, NSUNLINKMODULE_OPTION_NONE);
 }
 
 /* Given an address, return the mach_header for the image containing it
@@ -268,27 +276,28 @@ dll_close (dll_handle h)
  * (http://www.opendarwin.org/projects/dlcompat).
  */
 
-static const struct mach_header*
-image_for_address(void *address)
+static const struct mach_header *
+image_for_address (void *address)
 {
   unsigned long i;
-  unsigned long count = _dyld_image_count();
+  unsigned long count = _dyld_image_count ();
   const struct mach_header *mh = 0;
 
   for (i = 0; i < count; i++)
     {
-      unsigned long addr = (unsigned long)address -
-	_dyld_get_image_vmaddr_slide(i);
-      mh = _dyld_get_image_header(i);
+      unsigned long addr = (unsigned long) address -
+	_dyld_get_image_vmaddr_slide (i);
+      mh = _dyld_get_image_header (i);
 
       if (mh)
 	{
 	  struct load_command *lc =
-	    (struct load_command *)((char *)mh + sizeof(struct mach_header));
+	    (struct load_command *) ((Rawbyte *) mh +
+				     sizeof(struct mach_header));
 	  unsigned long j;
 
 	  for (j = 0; j < mh->ncmds;
-	       j++, lc = (struct load_command *)((char *)lc + lc->cmdsize))
+	       j++, lc = (struct load_command *) ((Rawbyte *)lc + lc->cmdsize))
 	    {
 	      if (LC_SEGMENT == lc->cmd &&
 		  addr >= ((struct segment_command *)lc)->vmaddr &&
@@ -308,25 +317,25 @@ image_for_address(void *address)
   return mh;
 }
 
-static const struct mach_header*
-my_find_image(const char *name)
+static const struct mach_header *
+my_find_image (const char *name)
 {
   const struct mach_header *mh = (struct mach_header *)
-    NSAddImage(name, NSADDIMAGE_OPTION_RETURN_ONLY_IF_LOADED |
-	       NSADDIMAGE_OPTION_RETURN_ON_ERROR);
+    NSAddImage (name, NSADDIMAGE_OPTION_RETURN_ONLY_IF_LOADED |
+		NSADDIMAGE_OPTION_RETURN_ON_ERROR);
 
   if (!mh)
     {
-      int count = _dyld_image_count();
+      int count = _dyld_image_count ();
       int j;
 
       for (j = 0; j < count; j++)
 	{
-	  const char *id = _dyld_get_image_name(j);
+	  const char *id = _dyld_get_image_name (j);
 
-	  if (!strcmp(id, name))
+	  if (!strcmp (id, name))
 	    {
-	      mh = _dyld_get_image_header(j);
+	      mh = _dyld_get_image_header (j);
 	      break;
 	    }
 	}
@@ -343,32 +352,36 @@ my_find_image(const char *name)
  * dependencies, then it probably isn't there.
  */
 static NSSymbol
-search_linked_libs(const struct mach_header * mh, const char *symbol)
+search_linked_libs (const struct mach_header * mh, const Ibyte *symbol)
 {
   unsigned long n;
   NSSymbol nssym = 0;
 
   struct load_command *lc =
-    (struct load_command *)((char *)mh + sizeof(struct mach_header));
+    (struct load_command *) ((Rawbyte *) mh + sizeof (struct mach_header));
 
   for (n = 0; n < mh->ncmds;
-       n++, lc = (struct load_command *)((char *)lc + lc->cmdsize))
+       n++, lc = (struct load_command *) ((Rawbyte *) lc + lc->cmdsize))
     {
       if ((LC_LOAD_DYLIB == lc->cmd) || (LC_LOAD_WEAK_DYLIB == lc->cmd))
 	{
 	  struct mach_header *wh;
 
 	  if ((wh = (struct mach_header *)
-	       my_find_image((char *)(((struct dylib_command *)lc)->dylib.name.offset +
-				      (char *)lc))))
+	       my_find_image((Rawbyte *)
+			     (((struct dylib_command *) lc)->
+			      dylib.name.offset + (Rawbyte *) lc))))
 	    {
-	      if (NSIsSymbolNameDefinedInImage(wh, symbol))
+	      Extbyte *symext =
+		ITEXT_TO_EXTERNAL (symbol, Qdll_symbol_encoding);
+	      if (NSIsSymbolNameDefinedInImage (wh, symext))
 		{
 		  nssym =
-		    NSLookupSymbolInImage(wh,
-					  symbol,
-					  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
-					  NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+		    NSLookupSymbolInImage
+		    (wh,
+		     symext,
+		     NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
+		     NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 		  break;
 		}
 	    }
@@ -379,10 +392,13 @@ search_linked_libs(const struct mach_header * mh, const char *symbol)
 }
 
 dll_func
-dll_function (dll_handle h, const CIbyte *n)
+dll_function (dll_handle h, const Ibyte *n)
 {
   NSSymbol sym = 0;
+  Extbyte *next;
+
   MAYBE_PREPEND_UNDERSCORE (n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
 
   /* NULL means the program image and shared libraries, not bundles. */
 
@@ -390,49 +406,55 @@ dll_function (dll_handle h, const CIbyte *n)
     {
       /* NOTE: This assumes that this function is included in the main program
 	 and not in a shared library. */
-      const struct mach_header* my_mh = image_for_address((void*) &dll_function);
+      const struct mach_header* my_mh =
+	image_for_address ((void*) &dll_function);
 
-      if (NSIsSymbolNameDefinedInImage(my_mh, n))
+      if (NSIsSymbolNameDefinedInImage (my_mh, next))
 	{
 	  sym =
-	    NSLookupSymbolInImage(my_mh,
-				  n,
-				  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
-				  NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+	    NSLookupSymbolInImage
+	    (my_mh,
+	     next,
+	     NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
+	     NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 	}
 
       if (!sym)
 	{
-	  sym = search_linked_libs(my_mh, n);
+	  sym = search_linked_libs (my_mh, n);
 	}
     }
   else
     {
-      sym = NSLookupSymbolInModule((NSModule)h, n);
+      sym = NSLookupSymbolInModule ((NSModule)h, next);
     }
 
    if (sym == 0) return 0;
-   return (dll_func)NSAddressOfSymbol(sym);
+   return (dll_func) NSAddressOfSymbol (sym);
  }
 
 dll_var
-dll_variable (dll_handle h, const CIbyte *n)
+dll_variable (dll_handle h, const Ibyte *n)
 {
   NSSymbol sym;
+  Extbyte *next;
+
   MAYBE_PREPEND_UNDERSCORE (n);
-  sym = NSLookupSymbolInModule((NSModule)h, n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
+
+  sym = NSLookupSymbolInModule ((NSModule) h, n);
   if (sym == 0) return 0;
-  return (dll_var)NSAddressOfSymbol(sym);
+  return (dll_var) NSAddressOfSymbol (sym);
 }
 
 Lisp_Object
-dll_error ()
+dll_error (void)
 {
   NSLinkEditErrors c;
   int errorNumber;
-  const CIbyte *fileNameWithError, *errorString;
-  NSLinkEditError(&c, &errorNumber, &fileNameWithError, &errorString);
-  return build_ext_string (errorString, Qerror_message_encoding);
+  const Extbyte *fileNameWithError, *errorString;
+  NSLinkEditError (&c, &errorNumber, &fileNameWithError, &errorString);
+  return build_extstring (errorString, Qerror_message_encoding);
 }
 #elif HAVE_LTDL
 /* Libtool's libltdl */
@@ -449,7 +471,7 @@ dll_open (Lisp_Object fname)
     }
   else
     {
-      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+      soname = LISP_STRING_TO_EXTERNAL (fname, Qdll_filename_encoding);
     }
   return (dll_handle) lt_dlopen (soname);
 }
@@ -461,23 +483,27 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const CIbyte *n)
+dll_function (dll_handle h, const Ibyte *n)
 {
+  Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  return (dll_func) lt_dlsym ((lt_dlhandle) h, n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_function_name_encoding);
+  return (dll_func) lt_dlsym ((lt_dlhandle) h, next);
 }
 
 dll_var
-dll_variable (dll_handle h, const CIbyte *n)
+dll_variable (dll_handle h, const Ibyte *n)
 {
+  Extbyte *next;
   MAYBE_PREPEND_UNDERSCORE (n);
-  return (dll_var) lt_dlsym ((lt_dlhandle) h, n);
+  next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
+  return (dll_var) lt_dlsym ((lt_dlhandle) h, next);
 }
 
 Lisp_Object
-dll_error ()
+dll_error (void)
 {
-  return build_ext_string (lt_dlerror (), Qerror_message_encoding);
+  return build_extstring (lt_dlerror (), Qerror_message_encoding);
 }
 #else
 /* Catchall if we don't know about this system's method of dynamic loading */
@@ -494,21 +520,21 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const CIbyte *n)
+dll_function (dll_handle h, const Ibyte *n)
 {
   return NULL;
 }
 
 dll_func
-dll_variable (dll_handle h, const CIbyte *n)
+dll_variable (dll_handle h, const Ibyte *n)
 {
   return NULL;
 }
 
 Lisp_Object
-dll_error ()
+dll_error (void)
 {
-  return build_string ("Shared libraries not implemented on this system");
+  return build_ascstring ("Shared libraries not implemented on this system");
 }
 #endif /* System conditionals */
 
