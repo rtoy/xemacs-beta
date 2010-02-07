@@ -3267,7 +3267,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
   enum lrecord_type lisp_vals_type;
 
   assert (LRECORDP (lisp_vals));
-  lisp_vals_type = XRECORD_LHEADER (lisp_vals)->type;
+  lisp_vals_type = (enum lrecord_type) XRECORD_LHEADER (lisp_vals)->type;
 
   args = alloca_array (Lisp_Object, nsequences + 1);
   args[0] = function;
