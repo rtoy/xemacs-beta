@@ -1353,7 +1353,28 @@ private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
 /***************************************************************************/
 
 
-#ifdef MULE
+#ifndef MULE
+
+Lisp_Object
+decode_buffer_or_precedence_list (Lisp_Object preclist)
+{
+  if (NILP (preclist))
+    return wrap_buffer (current_buffer);
+  else if (BUFFERP (preclist))
+    return preclist;
+  else
+    {
+      EXTERNAL_LIST_LOOP_2 (elt, preclist)
+	{
+	  if (!EQ (elt, Vcharset_ascii))
+	    invalid_argument ("In non-Mule, charset must be `ascii'", elt);
+	}
+      return wrap_buffer (current_buffer);
+    }
+}
+
+
+#else /* MULE */
 
 /******************** Precedence-array object *******************/
 
@@ -3655,9 +3676,9 @@ initialize_ascii_control_1_latin_1_unicode_translation (void)
 void
 syms_of_unicode (void)
 {
+#ifdef MULE
   INIT_LRECORD_IMPLEMENTATION (precedence_array);
 
-#ifdef MULE
   DEFSUBR (Fset_default_unicode_precedence_list);
   DEFSUBR (Fdefault_unicode_precedence_list);
   DEFSUBR (Fset_buffer_unicode_precedence_list);
@@ -3891,6 +3912,7 @@ complex_vars_of_unicode (void)
 void
 init_unicode (void)
 {
+#ifdef MULE
   /* We had to clear all references to precedence arrays before dumping,
      because precedence arrays aren't dumpable.  So put them back now.
      WARNING: This calls Lisp, very early in the init process!
@@ -3899,4 +3921,5 @@ init_unicode (void)
   if (initialized)
     recalculate_unicode_precedence (RUP_CLEAR_HASH_TABLE |
 				    RUP_EARLY_ERROR_HANDLING);
+#endif /* MULE */
 }

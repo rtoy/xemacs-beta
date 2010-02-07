@@ -1,3 +1,36 @@
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (disksave_object_finalization):
+	Don't clear Unicode precedence when non-Mule, fn doesn't exist.
+	
+	* buffer.h:
+	buffer_* versions of charset functions need to be defined even when
+	non-Mule.
+	
+	* charset.h:
+	* charset.h (INLINE_ASSERT_VALID_CHARSET_CODEPOINT):
+	filtered_* versions of charset functions need to be defined even when
+	non-Mule.
+	
+	* emacs.c (main_1):
+	Don't call init_mule_* when non-Mule.
+	
+	* glyphs-msw.c:
+	* glyphs-msw.c (charset_of_text):
+	No need to special-case this when non-Mule.
+	
+	* text.c:
+	* text.c (find_charsets_in_buffer):
+	Fix comments.
+	
+	* unicode.c:
+	Need a non-Mule version of decode_buffer_or_precedence_list.
+	
+	* unicode.c (syms_of_unicode):
+	* unicode.c (init_unicode):
+	Don't initialize or recalculate precedence arrays when non-Mule,
+	since precedence array object doesn't exist.
+
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
 	* chartab.c:

@@ -93,67 +93,6 @@ extern Lisp_Object Vcharset_hash_table;
 #define Fget_charset(cs) (cs)
 #define Fcharset_list() list1 (Qascii)
 
-#define ASSERT_VALID_CHARSET_CODEPOINT(charset, a1, a2)		\
-do								\
-  {								\
-    text_checking_assert (EQ (charset, Vcharset_ascii));	\
-    text_checking_assert (a1 == 0);				\
-    text_checking_assert (a2 >= 0 && a2 <= 255);		\
-  }								\
-while (0)
-    
-DECLARE_INLINE_HEADER (
-Ichar
-charset_codepoint_to_ichar (Lisp_Object charset, int a1, int a2,
-			    enum converr UNUSED (fail))
-)
-{
-  ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
-  return (Ichar) a2;
-}
-
-DECLARE_INLINE_HEADER (
-int
-charset_codepoint_to_unicode (Lisp_Object charset, int a1, int a2,
-			      enum converr UNUSED (fail))
-)
-{
-  ASSERT_VALID_CHARSET_CODEPOINT (charset, a1, a2);
-  return (int) a2;
-}
-
-DECLARE_INLINE_HEADER (
-void
-ichar_to_charset_codepoint (Ichar ch, Lisp_Object UNUSED (precarray),
-			    Lisp_Object *charset, int *c1, int *c2,
-			    enum converr UNUSED (fail))
-)
-{
-  ASSERT_VALID_ICHAR (ch);
-  *charset = Vcharset_ascii;
-  *c1 = 0;
-  *c2 = (int) ch;
-}
-
-DECLARE_INLINE_HEADER (
-void
-unicode_to_charset_codepoint (int c, Lisp_Object UNUSED (precarray),
-			      Lisp_Object *charset, int *c1, int *c2,
-			      enum converr UNUSED (fail))
-)
-{
-  ASSERT_VALID_UNICODE_CODEPOINT (c);
-  if (c > 255)
-    *charset = Qnil, *c1 = -1, *c2 = -1;
-  else
-    {
-      *charset = Vcharset_ascii;
-      *c1 = 0;
-      *c2 = c;
-    }
-}
-
-
 #else /* MULE */
 
 
@@ -373,10 +312,14 @@ charset_by_attributes (int type, int final, int dir)
   return chlook->charset_by_attributes[type][final][dir];
 }
 
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                     General character manipulation                   */
 /************************************************************************/
+
+#ifdef MULE
 
 DECLARE_INLINE_HEADER (
 int
@@ -393,16 +336,40 @@ do {									\
   text_checking_assert (CHARSETP (charset));				\
   text_checking_assert (valid_charset_codepoint_p (charset, c1, c2));	\
 } while (0)
+#define INLINE_ASSERT_VALID_CHARSET_CODEPOINT(charset, c1, c2)		\
+do {									\
+  inline_text_checking_assert (CHARSETP (charset));			\
+  inline_text_checking_assert (valid_charset_codepoint_p (charset, c1, c2)); \
+} while (0)
+
+#else /* not MULE */
+
+#define ASSERT_VALID_CHARSET_CODEPOINT(charset, a1, a2)		\
+do								\
+  {								\
+    text_checking_assert (EQ (charset, Vcharset_ascii));	\
+    text_checking_assert (a1 == 0);				\
+    text_checking_assert (a2 >= 0 && a2 <= 255);		\
+  }								\
+while (0)
+#define INLINE_ASSERT_VALID_CHARSET_CODEPOINT(charset, a1, a2)	\
+do								\
+  {								\
+    inline_text_checking_assert (EQ (charset, Vcharset_ascii));	\
+    inline_text_checking_assert (a1 == 0);			\
+    inline_text_checking_assert (a2 >= 0 && a2 <= 255);		\
+  }								\
+while (0)
+
+#endif /* MULE */
+
+
+
 #define ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)	\
 do									\
 {									\
   if (!NILP (charset))							\
     ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);			\
-} while (0)
-#define INLINE_ASSERT_VALID_CHARSET_CODEPOINT(charset, c1, c2)		\
-do {									\
-  inline_text_checking_assert (CHARSETP (charset));			\
-  inline_text_checking_assert (valid_charset_codepoint_p (charset, c1, c2)); \
 } while (0)
 #define INLINE_ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)	\
 do									\
@@ -495,6 +462,8 @@ switch (fail)						\
 }							\
 while (0)
 
+#ifdef MULE
+
 /* Convert a charset codepoint (CHARSET, one or two octets) to Unicode.
    Return -1 if can't convert. */
 
@@ -537,6 +506,7 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
 #define charset_codepoint_to_unicode_raw(charset, c1, c2) \
   charset_codepoint_to_unicode_raw_1 (charset, c1, c2 INLINE_TEXT_CHECK_CALL)
 
+#endif /* MULE */
 
 /* Convert a charset codepoint to Unicode, with error behavior specifiable.
    FAIL controls what happens when the charset codepoint cannot be
@@ -551,9 +521,10 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
 DECLARE_INLINE_HEADER (
 int
 charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
-			      enum converr fail)
+			      enum converr USED_IF_MULE (fail))
 )
 {
+#ifdef MULE
   int code;
 
   code = charset_codepoint_to_unicode_raw (charset, c1, c2);
@@ -564,6 +535,10 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 			code, charset, c1, c2, fail);
   ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR (code);
   return code;
+#else /* not MULE */
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  return (int) c2;
+#endif /* (not) MULE */
 }
 
 /* Convert Unicode codepoint to charset codepoint.  FAIL determines what to
@@ -577,13 +552,15 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
 
 DECLARE_INLINE_HEADER (
 void
-filtered_unicode_to_charset_codepoint (int code, Lisp_Object precarray,
-				       charset_pred predicate,
+filtered_unicode_to_charset_codepoint (int code,
+				       Lisp_Object USED_IF_MULE (precarray),
+				       charset_pred USED_IF_MULE (predicate),
 				       Lisp_Object *charset, int *c1, int *c2,
 				       enum converr fail)
 )
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
+#ifdef MULE
   if (code <= 0x7F && !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii
       && (!predicate || (*predicate) (Vcharset_ascii)))
     {
@@ -597,6 +574,16 @@ filtered_unicode_to_charset_codepoint (int code, Lisp_Object precarray,
       unicode_to_charset_codepoint_raw (code, precarray, predicate,
 					charset, c1, c2);
     }
+#else /* not MULE */
+  if (code > 255)
+    *charset = Qnil, *c1 = -1, *c2 = -1;
+  else
+    {
+      *charset = Vcharset_ascii;
+      *c1 = 0;
+      *c2 = code;
+    }
+#endif /* (not) MULE */
   HANDLE_CHARSET_CODEPOINT_ERROR
     ("Can't convert Unicode codepoint to charset codepoint", make_int (code),
      charset, c1, c2, fail);
@@ -645,6 +632,7 @@ unicode_to_charset_codepoint (int code, Lisp_Object precarray,
    handling such cases.
    */
 
+
 DECLARE_INLINE_HEADER (
 Ichar
 charset_codepoint_to_ichar_raw (Lisp_Object charset, int c1, int c2)
@@ -652,14 +640,19 @@ charset_codepoint_to_ichar_raw (Lisp_Object charset, int c1, int c2)
 {
 #ifdef UNICODE_INTERNAL
   return (Ichar) charset_codepoint_to_unicode_raw (charset, c1, c2);
-#else
+
+#else /* not UNICODE_INTERNAL */
   Ichar retval;
   ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+# ifdef MULE
   if (EQ (charset, Vcharset_ascii))
     retval = c2;
   else
     retval = old_mule_non_ascii_charset_codepoint_to_ichar_raw (charset, c1,
 								c2);
+# else /* not MULE */
+  retval = c2;
+# endif /* (not) MULE */
   ASSERT_VALID_ICHAR_OR_ERROR (retval);
   return retval;
 #endif /* (not) UNICODE_INTERNAL */
@@ -713,6 +706,7 @@ filtered_ichar_to_charset_codepoint (Ichar ch, Lisp_Object
      charset, c1, c2, fail);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 #else
+# ifdef MULE
   if (ch <= 0x7F)
     {
       *charset = Vcharset_ascii;
@@ -721,6 +715,11 @@ filtered_ichar_to_charset_codepoint (Ichar ch, Lisp_Object
     }
   else
     old_mule_non_ascii_ichar_to_charset_codepoint_raw (ch, charset, c1, c2);
+# else /* not MULE */
+  *charset = Vcharset_ascii;
+  *c1 = 0;
+  *c2 = (int) ch;
+# endif /* (not) MULE */
   /* This should not fail */
   ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
 #endif /* (not) UNICODE_INTERNAL */
@@ -755,17 +754,24 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object precarray,
 DECLARE_INLINE_HEADER (
 Bytecount
 charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2, Ibyte *ptr,
-			    enum converr fail)
+			    enum converr USED_IF_MULE (fail))
 )
 {
   ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+#ifdef MULE
   if (EQ (charset, Vcharset_ascii))
     {
       ptr[0] = (Ibyte) c2;
       return 1;
     }
   return non_ascii_charset_codepoint_to_itext (charset, c1, c2, ptr, fail);
+#else
+  ptr[0] = (Ibyte) c2;
+  return 1;
+#endif /* (not) MULE */
 }
+
+#ifdef MULE
 
 /* Convert a character in the internal string representation (guaranteed
    not to be ASCII under old-Mule) into a charset codepoint.  CHARSET will
@@ -789,6 +795,8 @@ itext_to_charset_codepoint_raw (const Ibyte *ptr,
 #endif /* (not) UNICODE_INTERNAL */
 }
 
+#endif /* MULE */
+
 /* Convert a character in the internal string representation into a charset
    codepoint.  CHARSET will be nil if no conversion possible.
 
@@ -807,19 +815,20 @@ itext_to_charset_codepoint_raw (const Ibyte *ptr,
 DECLARE_INLINE_HEADER (
 void
 filtered_itext_to_charset_codepoint_1 (const Ibyte *ptr,
-				       Lisp_Object precarray,
-				       charset_pred predicate,
+				       Lisp_Object USED_IF_MULE (precarray),
+				       charset_pred USED_IF_MULE (predicate),
 				       Lisp_Object *charset,
 				       int *c1, int *c2)
 )
 {
   ASSERT_VALID_ITEXT (ptr);
+#ifdef MULE
   if (byte_ascii_p (*ptr)
-#ifdef UNICODE_INTERNAL
+# ifdef UNICODE_INTERNAL
       &&
       !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii &&
       (!predicate || (*predicate) (Vcharset_ascii))
-#endif
+# endif
       )
     {
       *charset = Vcharset_ascii;
@@ -829,6 +838,11 @@ filtered_itext_to_charset_codepoint_1 (const Ibyte *ptr,
   else
     itext_to_charset_codepoint_raw (ptr, precarray, predicate,
 				    charset, c1, c2);
+#else /* not MULE */
+  *charset = Vcharset_ascii;
+  *c1 = 0;
+  *c2 = *ptr;
+#endif /* (not) MULE */
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }
 
@@ -859,6 +873,8 @@ itext_to_charset_codepoint (const Ibyte *ptr, Lisp_Object precarray,
 				       c1, c2, fail);
 }
 
+#ifdef MULE
+
 /* Convert a charset codepoint (guaranteed not to be ASCII) into a
    character in the internal string representation and write to dynarr DST.
    Returns number of bytes added to the Dynarr.  FAIL controls failure
@@ -882,6 +898,8 @@ non_ascii_charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
   return len;
 }
 
+#endif /* MULE */
+
 /* Convert a charset codepoint into a character in the internal string
    representation and write to dynarr DST.  Returns length of chars added
    to the Dynarr.  FAIL controls failure mode when charset conversion to
@@ -890,10 +908,11 @@ DECLARE_INLINE_HEADER (
 int
 charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
 			     unsigned_char_dynarr *dst,
-			     enum converr fail)
+			     enum converr USED_IF_MULE (fail))
 )
 {
   ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+#ifdef MULE
   if (EQ (charset, Vcharset_ascii))
     {
       Dynarr_add (dst, (Ibyte) c2);
@@ -901,9 +920,11 @@ charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
     }
 
   return non_ascii_charset_codepoint_to_dynarr (charset, c1, c2, dst, fail);
+#else /* not MULE */
+  Dynarr_add (dst, (Ibyte) c2);
+  return 1;
+#endif /* (not) MULE */
 }
-
-#endif /* MULE */
 
 void set_charset_registries (Lisp_Object charset, Lisp_Object registries);
 

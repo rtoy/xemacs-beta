@@ -2468,9 +2468,9 @@ find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 
 #endif /* 0 */
 
-/* Find the charsets in an array of Ichars, using UNICODE_PRECEDENCE when under
-   Unicode-internal to decide which charset to pick.  Add the charsets found
-   to CHARSETS, but don't add any duplicates. */
+/* Find the charsets in an array of Ichars, using BUF's Unicode-precedence
+   list when under Unicode-internal to decide which charset to pick.  Add
+   the charsets found to CHARSETS, but don't add any duplicates. */
 
 void
 find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
@@ -2502,8 +2502,7 @@ find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
 }
 
 
-/* Find the charsets in a region of a buffer, using UNICODE_PRECEDENCE when
-   under Unicode-internal to decide which charset to pick.  Add the
+/* Find the charsets in a region of a buffer.  Add the
    charsets found to CHARSETS, but don't add any duplicates. */
 
 void

@@ -4400,7 +4400,9 @@ disksave_object_finalization (void)
   uncache_home_directory ();
   zero_out_command_line_status_vars ();
   clear_default_devices ();
+#ifdef MULE
   disksave_clear_unicode_precedence ();
+#endif /* MULE */
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))
