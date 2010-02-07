@@ -152,9 +152,6 @@ file using the `binary' coding system.  ")
   (save-current-buffer
     (set-buffer (get-buffer-create (generate-new-buffer-name
 				    " *temp*")))
-    ;; insert-file-contents-internal bogusly calls
-    ;; format-decode without checking if it's defined.
-    (fset 'format-decode #'(lambda (f l &optional v) l))
     (insert-file-contents-internal
      (expand-file-name "Installation" build-directory)
      ;; Relies on our working out the system coding system
@@ -164,7 +161,6 @@ file using the `binary' coding system.  ")
      ;; mule/general-late.el, after all the dumped coding systems have been
      ;; loaded.
      'binary)
-    (fmakunbound 'format-decode)
     (prog1 (buffer-substring)
       (kill-buffer (current-buffer))))
   "Description of XEmacs installation.

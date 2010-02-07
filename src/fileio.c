@@ -3268,10 +3268,10 @@ under Mule, is very difficult.)
     }
 
   /* Decode file format */
-  if (inserted > 0)
+  if (inserted > 0 && !UNBOUNDP (XSYMBOL_FUNCTION (Qformat_decode)))
     {
-      Lisp_Object insval = call3 (Qformat_decode,
-                                  Qnil, make_int (inserted), visit);
+      Lisp_Object insval = call3 (Qformat_decode, Qnil, make_int (inserted),
+				  visit);
       CHECK_INT (insval);
       inserted = XINT (insval);
     }
@@ -3628,33 +3628,6 @@ here because write-region handler writers need to be aware of it.
   return Qnil;
 }
 
-/* #### This is such a load of shit!!!!  There is no way we should define
-   something so stupid as a subr, just sort the fucking list more
-   intelligently. */
-DEFUN ("car-less-than-car", Fcar_less_than_car, 2, 2, 0, /*
-Return t if (car A) is numerically less than (car B).
-*/
-       (a, b))
-{
-  Lisp_Object objs[2];
-  objs[0] = Fcar (a);
-  objs[1] = Fcar (b);
-  return Flss (2, objs);
-}
-
-/* Heh heh heh, let's define this too, just to aggravate the person who
-   wrote the above comment. */
-DEFUN ("cdr-less-than-cdr", Fcdr_less_than_cdr, 2, 2, 0, /*
-Return t if (cdr A) is numerically less than (cdr B).
-*/
-       (a, b))
-{
-  Lisp_Object objs[2];
-  objs[0] = Fcdr (a);
-  objs[1] = Fcdr (b);
-  return Flss (2, objs);
-}
-
 /* Build the complete list of annotations appropriate for writing out
    the text between START and END, by calling all the functions in
    write-region-annotate-functions and merging the lists they return.
@@ -3698,10 +3671,19 @@ build_annotations (Lisp_Object start, Lisp_Object end)
     }
 
   /* Now do the same for annotation functions implied by the file-format */
-  if (auto_saving && (!EQ (Vauto_save_file_format, Qt)))
-    p = Vauto_save_file_format;
+  if (UNBOUNDP (XSYMBOL_FUNCTION (Qformat_annotate_function)))
+    {
+      p = Qnil;
+    }
+  else if (auto_saving && (!EQ (Vauto_save_file_format, Qt)))
+    {
+      p = Vauto_save_file_format;
+    }
   else
-    p = current_buffer->file_format;
+    {
+      p = current_buffer->file_format;
+    }
+
   while (!NILP (p))
     {
       struct buffer *given_buffer = current_buffer;
@@ -3718,6 +3700,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
       annotations = merge (annotations, res, Qcar_less_than_car);
       p = Fcdr (p);
     }
+
   UNGCPRO;
   return annotations;
 }
@@ -4439,8 +4422,6 @@ syms_of_fileio (void)
   DEFSUBR (Ffile_newer_than_file_p);
   DEFSUBR (Finsert_file_contents_internal);
   DEFSUBR (Fwrite_region_internal);
-  DEFSUBR (Fcar_less_than_car); /* Vomitous! */
-  DEFSUBR (Fcdr_less_than_cdr); /* Yeah oh yeah bucko .... */
 #if 0
   DEFSUBR (Fencrypt_string);
   DEFSUBR (Fdecrypt_string);
