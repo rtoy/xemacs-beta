@@ -618,7 +618,7 @@ race condition by specifying the appropriate flags to `write-region'.
 */
        (prefix))
 {
-  static const char tbl[64] =
+  static const Ascbyte tbl[64] =
   {
     'A','B','C','D','E','F','G','H',
     'I','J','K','L','M','N','O','P',
@@ -1803,7 +1803,7 @@ A prefix arg makes KEEP-TIME non-nil.
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
   int ifd, ofd, n;
-  char buf[16 * 1024];
+  Rawbyte buf[16 * 1024];
   struct stat st, out_st;
   Lisp_Object handler;
   int speccount = specpdl_depth ();
@@ -3045,7 +3045,7 @@ under Mule, is very difficult.)
 			     !NILP (visit) ? INSDEL_NO_LOCKING : 0);
       else
 	{
-	  char buffer[1 << 14];
+	  Rawbyte buffer[1 << 14];
 	  Charbpos same_at_start = BUF_BEGV (buf);
 	  Charbpos same_at_end = BUF_ZV (buf);
 	  int overlap;
@@ -3743,7 +3743,7 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 {
   Lisp_Object tem;
   int nextpos;
-  unsigned char largebuf[A_WRITE_BATCH_SIZE];
+  Ibyte largebuf[A_WRITE_BATCH_SIZE];
   Lstream *instr = XLSTREAM (instream);
   Lstream *outstr = XLSTREAM (outstream);
 
