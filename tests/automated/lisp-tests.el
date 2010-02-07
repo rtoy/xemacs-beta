@@ -1,4 +1,4 @@
-;; Copyright (C) 1998 Free Software Foundation, Inc.
+;; Copyright (C) 1998 Free Software Foundation, Inc. -*- coding: iso-8859-1 -*-
 
 ;; Author: Martin Buchholz <martin@xemacs.org>
 ;; Maintainer: Martin Buchholz <martin@xemacs.org>
@@ -1075,6 +1075,76 @@
 	       '("foo" "bar" ""))
 (Assert-equal (split-string "foobar" split-string-default-separators)
 	       '("foobar"))
+
+;;-----------------------------------------------------
+;; Test split-string-by-char
+;;-----------------------------------------------------
+
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+tocopherol
+Vitamin E: any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. "
+  ?: ?\\)
+  '("re:ee" "this\\is\\text\\\\" "oops" "
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen: Geister brüten.\\
+tocopherol
+Vitamin E" " any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. ")))
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+tocopherol
+Vitamin E: any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. "
+   ?: ?\x00)
+  '("re\\" "ee" "this\\\\is\\\\text\\\\\\\\" "oo\\ps" "
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\\" " Geister brüten.\\\\
+tocopherol
+Vitamin E" " any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. ")))
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+tocopherol
+Vitamin E: any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. " ?\\)
+  '("re" ":ee:this" "" "is" "" "text" "" "" "" ":oo" "ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen" ": Geister brüten." "" "
+tocopherol
+Vitamin E: any or all of a group of closely related fat-soluble compounds
+that occur especially in plant oils and are anti-oxidants essential in the
+diets of many animals and probably of man. ")))
 
 ;;-----------------------------------------------------
 ;; Test near-text buffer functions.
