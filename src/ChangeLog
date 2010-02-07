@@ -1,5 +1,11 @@
 2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h (Dynarr_verify, Dynarr_verify_mod):
+	If ERROR_CHECK_STRUCTURES is not defined, cast the argument in
+	these two macros; fixes the g++ build.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fileio.c (Finsert_file_contents_internal):
 	Only call format-decode if it has a function binding.
 	(build_annotations): Only call format-annotate-function if it has

@@ -1859,8 +1859,8 @@ do {						\
   dy->locked = 0;				\
 } while (0)
 #else
-#define Dynarr_verify(d) (d)
-#define Dynarr_verify_mod(d) (d)
+#define Dynarr_verify(d) ((Dynarr *) d)
+#define Dynarr_verify_mod(d) ((Dynarr *) d)
 #define Dynarr_lock(d) DO_NOTHING
 #define Dynarr_unlock(d) DO_NOTHING
 #endif /* ERROR_CHECK_STRUCTURES */
