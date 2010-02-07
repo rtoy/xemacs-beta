@@ -1,3 +1,39 @@
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* emacs.c (make_argc_argv):
+	Cast to Wexttext * to fix compile error.
+	
+	* nt.c (init_user_info):
+	Cast to CIbyte * to fix compile error.
+	
+	* nt.c (open_unc_volume):
+	To fix compile error, store pathname into an Extbyte * variable
+	then write into the dest, casting to LPTSTR.
+
+	* emacs.c (debug_can_access_memory):
+	* fileio.c (Fmake_temp_name):
+	* fileio.c (a_write):
+	* fns.c:
+	* fns.c (check_losing_bytecode):
+	* fns.c (plists_differ):
+	* fns.c (internal_equal_trapping_problems):
+	* fns.c (base64_value_to_char):
+	* fns.c (base64_conversion_error):
+	* fns.c (STORE_BYTE):
+	* fns.c (vars_of_fns):
+	* lisp.h:
+	* nt.c (init_user_info):
+	* nt.c (mswindows_readdir):
+	* nt.c (mswindows_executable_type):
+	Replace raw `char *' or `unsigned char *' with characterized type --
+	Rawbyte, Binbyte, Boolbyte, Ibyte or Ascbyte.  This should fix at
+	least one real bug -- in a_write(), the "speedy insert" code that
+	checks for an unchanged region declared the file data read in as
+	char[] but then compared the value to an Ichar.  Hence, any chars
+	in the range 128-255 would always appear changed -- in particular,
+	this algorithm would fail completely with binary data.
+	
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* mule-wnnfns.c:

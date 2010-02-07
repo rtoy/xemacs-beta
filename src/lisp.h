@@ -5292,7 +5292,7 @@ Lisp_Object MODULE_API nconc2 (Lisp_Object, Lisp_Object);
 int internal_equal_0 (Lisp_Object, Lisp_Object, int, int);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
 int bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2);
-void check_losing_bytecode (const char *, Lisp_Object);
+void check_losing_bytecode (const Ascbyte *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
 				  const Ascbyte *ascii_string);
