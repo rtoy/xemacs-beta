@@ -1,3 +1,13 @@
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	Only call format-decode if it has a function binding.
+	(build_annotations): Only call format-annotate-function if it has
+	a function binding; incidentally only calling #'car-less-than-car
+	if *it* has a function binding.
+	(syms_of_fileio): #'car-less-than-car and #'cdr-less-than-cdr are
+	now in Lisp.
+
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
 	* fns.c: Qlist, Qstring mistakenly declared twice.

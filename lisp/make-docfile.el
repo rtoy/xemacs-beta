@@ -78,11 +78,6 @@
 
 ;; (message (concat "Options: " (prin1-to-string options)))
 
-;; insert-file-contents-internal calls out to `format-decode' afterwards,
-;; so it must be defined.  if non-zero, it tries to do a bunch more stuff
-;; so say, "NOOOOOOOOOOOOO!  Basta!  Ca soufit!   Enough, already, OK?"
-(defun format-decode (fuck me harder) 0)
-
 ;; Next process the list of C files.
 (defun process-args (args)
   (while args
