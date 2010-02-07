@@ -274,6 +274,11 @@
 	* automated/mule-tests.el (featurep):
 	Use utf-8 as file-name-coding-system under Cygwin 1.7+.
 
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (split-string-by-char):
+	Test this function, and its new ESCAPE-CHAR argument.
+
 2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el: 

@@ -1053,31 +1053,129 @@ are copied to the new string.
 }
 
 /* Split STRING into a list of substrings.  The substrings are the
-   parts of original STRING separated by SEPCHAR.  */
+   parts of original STRING separated by SEPCHAR.
+
+   If UNESCAPE is non-zero, ESCAPECHAR specifies a character that will quote
+   SEPCHAR, and cause it not to split STRING. A double ESCAPECHAR is
+   necessary for ESCAPECHAR to appear once in a substring. */
+
 static Lisp_Object
 split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
-			  Ichar sepchar)
+                         Ichar sepchar, int unescape, Ichar escapechar)
 {
   Lisp_Object result = Qnil;
   const Ibyte *end = string + size;
 
-  while (1)
+  if (unescape)
     {
-      const Ibyte *p = string;
-      while (p < end)
-	{
-	  if (itext_ichar (p) == sepchar)
-	    break;
-	  INC_IBYTEPTR (p);
-	}
-      result = Fcons (make_string (string, p - string), result);
-      if (p < end)
-	{
-	  string = p;
-	  INC_IBYTEPTR (string);	/* skip sepchar */
-	}
-      else
-	break;
+      Ibyte unescape_buffer[64], *unescape_buffer_ptr = unescape_buffer,
+        escaped[MAX_ICHAR_LEN], *unescape_cursor;
+      int deleting_escapes, previous_escaped, escaped_len; 
+      Ichar pchar, unescape_buffer_size = countof (unescape_buffer);
+
+      escaped_len = set_itext_ichar (escaped, escapechar);
+
+      while (1)
+        {
+          const Ibyte *p = string, *cursor;
+          deleting_escapes = 0;
+          previous_escaped = 0;
+
+          while (p < end)
+            {
+              pchar = itext_ichar (p);
+
+              if (pchar == sepchar)
+                {
+                  if (!previous_escaped)
+                    {
+                      break;
+                    }
+                }
+              else if (pchar == escapechar
+                       /* Doubled escapes don't escape: */
+                       && !previous_escaped)
+                {
+                  ++deleting_escapes;
+                  previous_escaped = 1;
+                }
+              else
+                {
+                  previous_escaped = 0;
+                }
+
+              INC_IBYTEPTR (p);
+            }
+
+          if (deleting_escapes)
+            {
+              if (((p - string) - (escaped_len * deleting_escapes))
+                  > unescape_buffer_size)
+                {
+                  unescape_buffer_size =
+                    ((p - string) - (escaped_len * deleting_escapes)) * 1.5;
+                  unescape_buffer_ptr = alloca_ibytes (unescape_buffer_size);
+                }
+
+              cursor = string;
+              unescape_cursor = unescape_buffer_ptr;
+              previous_escaped = 0;
+
+              while (cursor < p)
+                {
+                  pchar = itext_ichar (cursor);
+
+                  if (pchar != escapechar || previous_escaped)
+                    {
+                      memcpy (unescape_cursor, cursor,
+                              itext_ichar_len (cursor));
+                      INC_IBYTEPTR (unescape_cursor);
+                    }
+
+                  previous_escaped = !previous_escaped
+                    && (pchar == escapechar);
+
+                  INC_IBYTEPTR (cursor);
+                }
+
+              result = Fcons (make_string (unescape_buffer_ptr,
+                                           unescape_cursor
+                                           - unescape_buffer_ptr),
+                              result);
+            }
+          else
+            {
+              result = Fcons (make_string (string, p - string), result);
+            }
+          if (p < end)
+            {
+              string = p;
+              INC_IBYTEPTR (string);	/* skip sepchar */
+            }
+          else
+            break;
+        }
+    }
+  else
+    {
+      while (1)
+        {
+          const Ibyte *p = string;
+          while (p < end)
+            {
+              if (itext_ichar (p) == sepchar)
+                break;
+              INC_IBYTEPTR (p);
+            }
+          result = Fcons (make_string (string, p - string), result);
+          if (p < end)
+            {
+              string = p;
+              INC_IBYTEPTR (string);	/* skip sepchar */
+            }
+          else
+            break;
+        }
     }
   return Fnreverse (result);
 }
@@ -1102,7 +1200,7 @@ split_external_path (const Extbyte *path)
   if (!newlen)
     return Qnil;
 
-  return split_string_by_ichar_1 (newpath, newlen, SEPCHAR);
+  return split_string_by_ichar_1 (newpath, newlen, SEPCHAR, 0, 0);
 }
 
 Lisp_Object
@@ -1115,22 +1213,34 @@ split_env_path (const CIbyte *evarname, const Ibyte *default_)
     path = default_;
   if (!path)
     return Qnil;
-  return split_string_by_ichar_1 (path, qxestrlen (path), SEPCHAR);
+  return split_string_by_ichar_1 (path, qxestrlen (path), SEPCHAR, 0, 0);
 }
 
 /* Ben thinks this function should not exist or be exported to Lisp.
    We use it to define split-path-string in subr.el (not!).  */
 
-DEFUN ("split-string-by-char", Fsplit_string_by_char, 2, 2, 0, /*
+DEFUN ("split-string-by-char", Fsplit_string_by_char, 2, 3, 0, /*
 Split STRING into a list of substrings originally separated by SEPCHAR.
+
+With optional ESCAPE-CHAR, any instances of SEPCHAR preceded by that
+character will not split the string, and a double instance of ESCAPE-CHAR
+will be necessary for a single ESCAPE-CHAR to appear in the output string.
 */
-       (string, sepchar))
+       (string, sepchar, escape_char))
 {
+  Ichar escape_ichar = 0;
+
   CHECK_STRING (string);
   CHECK_CHAR (sepchar);
+  if (!NILP (escape_char))
+    {
+      CHECK_CHAR (escape_char);
+      escape_ichar = XCHAR (escape_char);
+    }
   return split_string_by_ichar_1 (XSTRING_DATA (string),
-				   XSTRING_LENGTH (string),
-				   XCHAR (sepchar));
+                                  XSTRING_LENGTH (string),
+                                  XCHAR (sepchar),
+                                  !NILP (escape_char), escape_ichar);
 }
 
 /* #### This was supposed to be in subr.el, but is used VERY early in
@@ -1154,7 +1264,7 @@ with `path-separator'.
 
   return (split_string_by_ichar_1
 	  (XSTRING_DATA (path), XSTRING_LENGTH (path),
-	   itext_ichar (XSTRING_DATA (Vpath_separator))));
+	   itext_ichar (XSTRING_DATA (Vpath_separator)), 0, 0));
 }
 
 
