@@ -747,8 +747,9 @@ make_argc_argv (Lisp_Object argv_list, int *argc, Wexttext ***argv)
     {
       CHECK_STRING (XCAR (next));
 
-      (*argv)[i] = LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (next),
-						   Qcommand_argument_encoding);
+      (*argv)[i] =
+	(Wexttext *) LISP_STRING_TO_EXTERNAL_MALLOC
+	(XCAR (next), Qcommand_argument_encoding);
     }
   (*argv) [n] = 0;
   *argc = i;
@@ -3011,13 +3012,14 @@ arguments: (&rest ARGS)
   run_temacs_argv = xnew_array (Wexttext *, nargs + 2);
 
   run_temacs_argv[0] =
-    LISP_STRING_TO_EXTERNAL_MALLOC (Fcar (Vcommand_line_args),
-				    Qcommand_argument_encoding);
+    (Wexttext *) LISP_STRING_TO_EXTERNAL_MALLOC (Fcar (Vcommand_line_args),
+						 Qcommand_argument_encoding);
   for (i = 0; i < nargs; i++)
     {
       CHECK_STRING (args[i]);
 
       run_temacs_argv[i + 1] =
+	(Wexttext *)
 	LISP_STRING_TO_EXTERNAL_MALLOC (args[i], Qcommand_argument_encoding);
     }
   run_temacs_argv[nargs + 1] = 0;
@@ -3414,7 +3416,7 @@ debug_can_access_memory (const void *ptr, Bytecount len)
 	{
 	  /* We can't do the off-by-one trick with only one byte, so instead,
              we compare to a fixed-sized buffer. */
-	  char randval[1];
+	  Rawbyte randval[1];
 	  randval[0] = 0;
 	  dcam_saveval = memcmp (randval, ptr, len);
 	}

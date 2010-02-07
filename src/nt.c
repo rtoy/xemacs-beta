@@ -158,9 +158,9 @@ init_user_info (void)
       && qxeLookupAccountSid (NULL, sidinfo.User.Sid, name, &length,
 			      domain, &dlength, &user_type))
     {
-      the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
+      the_passwd.pw_name = (CIbyte *) TSTR_TO_ITEXT_MALLOC (name);
       /* Determine a reasonable uid value. */
-      if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
+      if (qxestrcasecmp ((Ibyte *) the_passwd.pw_name, "administrator") == 0)
 	{
 	  the_passwd.pw_uid = 0;
 	  the_passwd.pw_gid = 0;
@@ -202,8 +202,9 @@ init_user_info (void)
        are running under Windows 95), fallback to this. */
   else if (qxeGetUserName (name, &length))
     {
-      the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
-      if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
+      the_passwd.pw_name = (CIbyte *) TSTR_TO_ITEXT_MALLOC (name);
+      if (qxestrcasecmp_ascii ((Ibyte *) the_passwd.pw_name,
+			       "administrator") == 0)
 	the_passwd.pw_uid = 0;
       else
 	the_passwd.pw_uid = 123;
@@ -223,7 +224,7 @@ init_user_info (void)
   DWORD length = UNLEN + 1;
   Extbyte name[MAX_XETCHAR_SIZE * (UNLEN + 1)];
   if (qxeGetUserName (name, &length))
-    the_passwd.pw_name = TSTR_TO_ITEXT_MALLOC (name);
+    the_passwd.pw_name = (CIbyte *) TSTR_TO_ITEXT_MALLOC (name);
   else
     the_passwd.pw_name = "unknown";
 #endif
@@ -238,7 +239,7 @@ init_user_info (void)
 #endif
 
   /* Set dir from environment variables. */
-  the_passwd.pw_dir = (char *) qxestrdup (get_home_directory ());
+  the_passwd.pw_dir = (CIbyte *) qxestrdup (get_home_directory ());
   /* We used to set pw_shell here, but the order is wrong (SHELL gets
      initted in process.c, called later in the init process) and pw_shell
      is not used anywhere. */
@@ -940,7 +941,7 @@ mswindows_readdir (DIR *UNUSED (dirp))
       eilwr (found);
 
     namlen = min (eilen (found), sizeof (dir_static.d_name) - 1);
-    strncpy (dir_static.d_name, (char *) eidata (found), namlen);
+    qxestrncpy ((Ibyte *) dir_static.d_name, eidata (found), namlen);
     dir_static.d_name[namlen] = '\0';
     dir_static.d_namlen = (unsigned short) namlen;
   }
@@ -954,13 +955,15 @@ open_unc_volume (const Ibyte *path)
   NETRESOURCEW nr; 
   HANDLE henum;
   int result;
+  Extbyte *extpath;
 
   nr.dwScope = RESOURCE_GLOBALNET; 
   nr.dwType = RESOURCETYPE_DISK; 
   nr.dwDisplayType = RESOURCEDISPLAYTYPE_SERVER; 
   nr.dwUsage = RESOURCEUSAGE_CONTAINER; 
   nr.lpLocalName = NULL;
-  PATHNAME_CONVERT_OUT (path, nr.lpRemoteName);
+  PATHNAME_CONVERT_OUT (path, extpath);
+  nr.lpRemoteName = (LPTSTR) extpath;
   nr.lpComment = NULL; 
   nr.lpProvider = NULL;   
 
@@ -2002,7 +2005,7 @@ mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
       if (exe_header->e_magic != DOSMAGIC)
 	goto unwind;
 
-      if ((char *) exe_header->e_lfanew > (char *) executable.size)
+      if ((Rawbyte *) exe_header->e_lfanew > (Rawbyte *) executable.size)
 	{
 	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
 	  *is_dos_app = TRUE;
@@ -2019,10 +2022,10 @@ mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
       if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
 	goto unwind;
 	  
-      nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header +
+      nt_header = (PIMAGE_NT_HEADERS) ((Rawbyte *) dos_header +
 				       dos_header->e_lfanew);
 	  
-      if ((char *) nt_header > (char *) dos_header + executable.size) 
+      if ((Rawbyte *) nt_header > (Rawbyte *) dos_header + executable.size) 
 	{
 	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
 	  *is_dos_app = TRUE;
