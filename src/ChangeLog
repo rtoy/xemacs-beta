@@ -1,5 +1,11 @@
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
+	* fns.c: Qlist, Qstring mistakenly declared twice.
+	* fns.c (mapcarX):
+	(void) cast needed to avoid compile problem.
+
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c (make_argc_argv):
 	Cast to Wexttext * to fix compile error.
 	

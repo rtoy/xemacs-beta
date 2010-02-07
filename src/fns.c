@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qstring_lessp;
 Lisp_Object Qidentity;
-Lisp_Object Qvector, Qarray, Qstring, Qlist, Qbit_vector;
+Lisp_Object Qvector, Qarray, Qbit_vector;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -3440,7 +3440,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		     i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
 		      set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
 					  XINT (called)) :
-		      Faset (lisp_vals, make_int (i), called);
+		      (void) Faset (lisp_vals, make_int (i), called);
 		    break;
 		  }
 		bad_show_or_every_flag:
