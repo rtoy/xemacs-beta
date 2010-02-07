@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
    Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -218,7 +218,7 @@ length_with_bytecode_hack (Lisp_Object seq)
 #endif /* LOSING_BYTECODE */
 
 void
-check_losing_bytecode (const char *function, Lisp_Object seq)
+check_losing_bytecode (const Ascbyte *function, Lisp_Object seq)
 {
   if (COMPILED_FUNCTIONP (seq))
     signal_ferror_with_frob
@@ -1988,7 +1988,7 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
   int eqp = (depth == -1);	/* -1 as depth means use eq, not equal. */
   int la, lb, m, i, fill;
   Lisp_Object *keys, *vals;
-  char *flags;
+  Boolbyte *flags;
   Lisp_Object rest;
 
   if (NILP (a) && NILP (b))
@@ -2003,7 +2003,7 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
   fill = 0;
   keys  = alloca_array (Lisp_Object, m);
   vals  = alloca_array (Lisp_Object, m);
-  flags = alloca_array (char, m);
+  flags = alloca_array (Boolbyte, m);
 
   /* First extract the pairs from A. */
   for (rest = a; !NILP (rest); rest = XCDR (XCDR (rest)))
@@ -2810,7 +2810,7 @@ tweaked_internal_equal (Lisp_Object obj1, Lisp_Object obj2,
 
 int
 internal_equal_trapping_problems (Lisp_Object warning_class,
-				  const char *warning_string,
+				  const Ascbyte *warning_string,
 				  int flags,
 				  struct call_trapping_problems_result *p,
 				  int retval,
@@ -3725,7 +3725,7 @@ requires an explicit \(eval-and-compile ...\) block.
   (IS_ASCII (Character) && base64_char_to_value[Character] >= 0)
 
 /* Table of characters coding the 64 values.  */
-static char base64_value_to_char[64] =
+static Ascbyte base64_value_to_char[64] =
 {
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',	/*  0- 9 */
   'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',	/* 10-19 */
@@ -3772,11 +3772,11 @@ static short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-static DECLARE_DOESNT_RETURN (base64_conversion_error (const char *,
+static DECLARE_DOESNT_RETURN (base64_conversion_error (const Ascbyte *,
 						       Lisp_Object));
 
 static DOESNT_RETURN
-base64_conversion_error (const char *reason, Lisp_Object frob)
+base64_conversion_error (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qbase64_conversion_error, reason, frob);
 }
@@ -3859,7 +3859,7 @@ base64_encode_1 (Lstream *istream, Ibyte *to, int line_break)
 } while (1)
 
 #define STORE_BYTE(pos, val, ccnt) do {					\
-  pos += set_itext_ichar (pos, (Ichar)((unsigned char)(val)));	\
+  pos += set_itext_ichar (pos, (Ichar)((Binbyte)(val)));		\
   ++ccnt;								\
 } while (0)
 
@@ -4204,7 +4204,7 @@ vars_of_fns (void)
 The directory separator in search paths, as a string.
 */ );
   {
-    char c = SEPCHAR;
+    Ascbyte c = SEPCHAR;
     Vpath_separator = make_string ((Ibyte *) &c, 1);
   }
 }
