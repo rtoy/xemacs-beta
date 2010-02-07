@@ -1804,9 +1804,8 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 /************************************************************************/
 
 static Lisp_Object
-charset_of_text (struct buffer *buf, Lisp_Object USED_IF_MULE (text))
+charset_of_text (struct buffer *buf, Lisp_Object text)
 {
-#ifdef MULE
   Ibyte *p;
 
   if (NILP (text))
@@ -1821,7 +1820,6 @@ charset_of_text (struct buffer *buf, Lisp_Object USED_IF_MULE (text))
 	return charset;
       INC_IBYTEPTR (p);
     }
-#endif /* MULE */
 
   return Vcharset_ascii;
 }

@@ -33,9 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_buffer_h_
 #define INCLUDED_buffer_h_
 
-#ifdef MULE
 #include "charset.h"
-#endif
 
 /************************************************************************/
 /*                                                                      */
@@ -918,8 +916,6 @@ buffer_unicode_to_ichar (int code, struct buffer *buf, enum converr fail)
   return buffer_filtered_unicode_to_ichar (code, buf, NULL, fail);
 }
 
-#ifdef MULE
-
 DECLARE_INLINE_HEADER (
 void
 buffer_filtered_unicode_to_charset_codepoint (int code, struct buffer *buf,
@@ -930,6 +926,7 @@ buffer_filtered_unicode_to_charset_codepoint (int code, struct buffer *buf,
 )
 {
   text_checking_assert (buf);
+#ifdef MULE
   filtered_unicode_to_charset_codepoint (code, buf->unicode_precedence_array,
 					 predicate, charset, c1, c2,
 					 CONVERR_FAIL);
@@ -937,6 +934,10 @@ buffer_filtered_unicode_to_charset_codepoint (int code, struct buffer *buf,
     filtered_unicode_to_charset_codepoint (code,
 					   Vdefault_unicode_precedence_array,
 					   predicate, charset, c1, c2, fail);
+#else
+  filtered_unicode_to_charset_codepoint (code, Qnil, predicate,
+					 charset, c1, c2, fail);
+#endif /* (not) MULE */
 }
 
 DECLARE_INLINE_HEADER (
@@ -1020,8 +1021,6 @@ buffer_itext_to_charset_codepoint (const Ibyte *ptr, struct buffer *buf,
 					      c1, c2, fail);
 }
 
-#endif /* MULE */
-
 /* @@####
    Get rid of this crap now!!!!!!!!!!!!!!
 
@@ -1044,7 +1043,7 @@ DECLARE_INLINE_HEADER (
 Lisp_Object
 buffer_ichar_charset_obsolete_me_baby (struct buffer *
 				       USED_IF_UNICODE_INTERNAL (buf),
-				       Ichar ch)
+				       Ichar USED_IF_MULE (ch))
 )
 {
 #ifdef UNICODE_INTERNAL
