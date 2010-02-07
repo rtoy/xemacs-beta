@@ -1,3 +1,13 @@
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* setup-paths.el (paths-find-emacs-roots)
+	(paths-construct-info-path):
+	* packages.el (packages-find-installation-package-directories):
+	#'union doesn't guarantee that it will preserve the relative order
+	of elements in its arguments; use #'delete-duplicates
+	instead. Thank you for the bug reports, Robert Pluim, Stephen
+	Turnbull.
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* unicode.el:
