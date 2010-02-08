@@ -670,8 +670,11 @@ int fatal_error_in_progress;
 int preparing_for_armageddon;
 
 /* Nonzero means we're in an unstable situation and need to skip
-   i18n conversions and such.  During printing we check for this,
-   and during conversion we abort if we see this. */
+   internal->external conversions, QUIT checking and such.  This gets set
+   during early startup, during shutdown, and when debug printing
+   (i.e. called from a debugger such as gdb to print Lisp objects or
+   backtraces).  During printing we check for this, and during conversion
+   we abort if we see this. */
 int inhibit_non_essential_conversion_operations;
 
 static JMP_BUF run_temacs_catch;
@@ -3967,7 +3970,7 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
   /* We are extremely paranoid so we sensibly deal with recursive
      assertion failures. */
   in_assert_failed++;
-  inhibit_non_essential_conversion_operations = 1;
+  inhibit_non_essential_conversion_operations++;
 
   if (in_assert_failed >= 4)
     _exit (-1);
@@ -4035,8 +4038,8 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
   really_abort ();
 #endif /* defined (_MSC_VER) || defined (CYGWIN) */
 #endif /* !defined (ASSERTIONS_DONT_ABORT) */
-  inhibit_non_essential_conversion_operations = 0;
-  in_assert_failed = 0;
+  inhibit_non_essential_conversion_operations--;
+  in_assert_failed--;
 }
 
 /* -------------------------------------- */

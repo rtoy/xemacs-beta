@@ -137,7 +137,8 @@ struct debug_bindings
   Lisp_Object Vinhibit_quit;
 };
 
-static Lisp_Object debug_prin1_bindings;
+static int begin_inhibit_non_essential_conversion_operations (void);
+
 
 
 int stdout_needs_newline;
@@ -362,10 +363,12 @@ external_out (int dest, const CIbyte *fmt, ...)
 void
 debug_out (const CIbyte *fmt, ...)
 {
+  int depth =  begin_inhibit_non_essential_conversion_operations ();
   va_list args;
   va_start (args, fmt);
   write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
   va_end (args);
+  unbind_to (depth);
 }
 
 DOESNT_RETURN
@@ -2142,8 +2145,8 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
   if (alternate_do_pointer + extlen >= alternate_do_size)
     {
       alternate_do_size =
-	max(alternate_do_size * 2, alternate_do_pointer + extlen + 1);
-      XREALLOC_ARRAY (alternate_do_string, char, alternate_do_size);
+	max (alternate_do_size * 2, alternate_do_pointer + extlen + 1);
+      XREALLOC_ARRAY (alternate_do_string, CIbyte, alternate_do_size);
     }
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
@@ -2260,18 +2263,38 @@ FILENAME = nil means just close any termscript file currently open.
   return Qnil;
 }
 
+static Lisp_Object
+restore_inhibit_non_essential_conversion_operations (Lisp_Object obj)
+{
+  inhibit_non_essential_conversion_operations = XINT (obj);
+  return Qnil;
+}
+
+/* Bind the value of inhibit_non_essential_conversion_operations to 1
+   in a way that involves no consing. */
+static int
+begin_inhibit_non_essential_conversion_operations (void)
+{
+  int depth =
+    record_unwind_protect
+    (restore_inhibit_non_essential_conversion_operations,
+     make_int (inhibit_non_essential_conversion_operations));
+  inhibit_non_essential_conversion_operations = 1;
+  return depth;
+}
+
 static int debug_print_length   = 50;
 static int debug_print_level    = 15;
 static int debug_print_readably = -1;
 
 /* Restore values temporarily bound by debug_prin1.  We use this approach to
-   avoid consing in debug_prin1.  That is verboten, since debug_prin1 can be
+   avoid consing in debug_prin1.  That is verboten, since debug_print can be
    called by cons debugging code. */
 static Lisp_Object
-debug_prin1_exit (Lisp_Object UNUSED (ignored))
+debug_print_exit (Lisp_Object val)
 {
-  struct debug_bindings *bindings = 
-    (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
+  struct debug_bindings *bindings =
+    (struct debug_bindings *) GET_VOID_FROM_LISP (val);
   inhibit_non_essential_conversion_operations =
     bindings->inhibit_non_essential_conversion_operations;
   print_depth = bindings->print_depth;
@@ -2285,20 +2308,18 @@ debug_prin1_exit (Lisp_Object UNUSED (ignored))
   return Qnil;
 }
 
-/* Print an object, `prin1'-style, to various possible debugging outputs.
-   Make sure it's completely unbuffered so that, in the event of a crash
-   somewhere, we see as much as possible that happened before it.
-   */
-static void
-debug_prin1 (Lisp_Object debug_print_obj, int flags)
-{
-  /* This function can GC */
+/* Save values and bind them to new values suitable for debug output.  We
+   try very hard to avoid any Lisp allocation (i.e. consing) during the
+   operation of debug printing, since we might be calling it from inside GC
+   or other sensitive places.  This means we have to be a bit careful with
+   record_unwind_protect to not create any temporary Lisp objects. */
 
+static int
+debug_print_enter (struct debug_bindings *bindings)
+{
   /* by doing this, we trick various things that are non-essential
      but might cause crashes into not getting executed. */
   int specdepth;
-  struct debug_bindings *bindings = 
-    (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
 
   bindings->inhibit_non_essential_conversion_operations =
     inhibit_non_essential_conversion_operations;
@@ -2310,7 +2331,8 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   bindings->Vprint_length = Vprint_length;
   bindings->Vprint_level = Vprint_level;
   bindings->Vinhibit_quit = Vinhibit_quit;
-  specdepth = record_unwind_protect (debug_prin1_exit, Qnil);
+  specdepth = record_unwind_protect (debug_print_exit,
+				     STORE_VOID_IN_LISP (bindings));
 
   inhibit_non_essential_conversion_operations = 1;
   print_depth = 0;
@@ -2323,6 +2345,20 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   if (debug_print_level > 0)
     Vprint_level = make_int (debug_print_level);
   Vinhibit_quit = Qt;
+
+  return specdepth;
+}
+
+/* Print an object, `prin1'-style, to various possible debugging outputs.
+   Make sure it's completely unbuffered so that, in the event of a crash
+   somewhere, we see as much as possible that happened before it.
+   */
+static void
+debug_prin1 (Lisp_Object debug_print_obj, int flags)
+{
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
 
   if ((flags & EXT_PRINT_STDOUT) || (flags & EXT_PRINT_STDERR))
     print_internal (debug_print_obj, Qexternal_debugging_output, 1);
@@ -2342,7 +2378,6 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
 void
 debug_p4 (Lisp_Object obj)
 {
-  inhibit_non_essential_conversion_operations = 1;
   if (STRINGP (obj))
     debug_out ("\"%s\"", XSTRING_DATA (obj));
   else if (CONSP (obj))
@@ -2416,42 +2451,41 @@ debug_p4 (Lisp_Object obj)
 				((struct old_lcrecord_header *) header)->uid));
 #endif /* not NEW_GC */
     }
-
-  inhibit_non_essential_conversion_operations = 0;
 }
 
-static void
+static int
 ext_print_begin (int dest)
 {
+  int depth = begin_inhibit_non_essential_conversion_operations ();
   if (dest & EXT_PRINT_ALTERNATE)
     alternate_do_pointer = 0;
   if (dest & (EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
     stdout_clear_before_next_output = 1;
+  return depth;
 }
 
 static void
-ext_print_end (int dest)
+ext_print_end (int dest, int depth)
 {
   if (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
     external_out (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR |
 			  EXT_PRINT_STDOUT), "\n");
+  unbind_to (depth);
 }
 
 static void
 external_debug_print (Lisp_Object object, int dest)
 {
-  ext_print_begin (dest);
+  int depth = ext_print_begin (dest);
   debug_prin1 (object, dest);
-  ext_print_end (dest);
+  ext_print_end (dest, depth);
 }
 
 void
 debug_p3 (Lisp_Object obj)
 {
   debug_p4 (obj);
-  inhibit_non_essential_conversion_operations = 1;
   debug_out ("\n");
-  inhibit_non_essential_conversion_operations = 0;
 }
 
 void
@@ -2483,22 +2517,9 @@ dpa (Lisp_Object debug_print_obj)
 void
 debug_backtrace (void)
 {
-  /* This function can GC */
-
-  /* by doing this, we trick various things that are non-essential
-     but might cause crashes into not getting executed. */
-  int specdepth = 
-    internal_bind_int (&inhibit_non_essential_conversion_operations, 1);
-
-  internal_bind_int (&print_depth, 0);
-  internal_bind_int (&print_readably, 0);
-  internal_bind_int (&print_unbuffered, print_unbuffered + 1);
-  if (debug_print_length > 0)
-    internal_bind_lisp_object (&Vprint_length, make_int (debug_print_length));
-  if (debug_print_level > 0)
-    internal_bind_lisp_object (&Vprint_level, make_int (debug_print_level));
-  /* #### Do we need this?  It was in the old code. */
-  internal_bind_lisp_object (&Vinhibit_quit, Vinhibit_quit);
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
 
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("\n");
@@ -2519,6 +2540,7 @@ debug_short_backtrace (int length)
 {
   int first = 1;
   struct backtrace *bt = backtrace_list;
+
   debug_out ("   [");
   while (length > 0 && bt)
     {
@@ -2698,10 +2720,9 @@ generally be bound with `let' rather than set.  (See `display-message'.)
 */ );
   Vprint_message_label = Qprint;
 
-  debug_prin1_bindings =
-    make_opaque (OPAQUE_UNINIT, sizeof (struct debug_bindings));
-  staticpro (&debug_prin1_bindings);
-
+  /* The exact size doesn't matter since we realloc when necessary.
+     Use CIbyte instead of Ibyte so that debuggers show the associated
+     string automatically. */
   alternate_do_size = 5000;
-  alternate_do_string = xnew_array(char, 5000);
+  alternate_do_string = xnew_array (CIbyte, 5000);
 }

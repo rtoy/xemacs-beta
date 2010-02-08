@@ -1,5 +1,52 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* emacs.c:
+	* emacs.c (assert_failed):
+	Fix comments about when inhibit_non_essential_printing_operations
+	is set and how used.  Increment/decrement in assert_failed rather
+	than just setting/resetting to avoid hosing things in case we're
+	called when the value is already non-zero.  Similarly increment/
+	decrement in_assert_failed.
+	
+	* gc.c (gc_prepare):
+	* gc.c (gc_finish):
+	Increment/decrement inhibit_non_essential_printing_operations
+	rather than setting/resetting.
+	
+	* print.c:
+	* print.c (debug_out):
+	* print.c (write_string_to_alternate_debugging_output):
+	* print.c (restore_inhibit_non_essential_conversion_operations):
+	* print.c (debug_print_exit):
+	* print.c (debug_print_enter):
+	* print.c (debug_prin1):
+	* print.c (debug_p4):
+	* print.c (ext_print_begin):
+	* print.c (ext_print_end):
+	* print.c (external_debug_print):
+	* print.c (debug_p3):
+	* print.c (debug_backtrace):
+	* print.c (debug_short_backtrace):
+	* print.c (vars_of_print):
+	Lots of cleanup.  Fix debug_out() so it binds
+	inhibit_non_essential_printing_operations around it to ensure no
+	conversion.  Remove many other places that set the same var since
+	the lower-level functions now all do it.  A few other places, add
+	inhibit_non_essential_printing_operations bindings.Extract the
+	code out that sets up and resets lots of bindings in debug_prin1()
+	so that debug_backtrace() can use it, and rewrite it to use the
+	new STORE_VOID_IN_LISP() rather than having to have a single
+	static opaque structure holding all the bindings (and not handling
+	reentrancy).  Fix raw `char' to be `CIbyte' in the declaration of
+	`alternate_do_string'.
+	
+	* signal.c (check_what_happened):
+	Fix bug: Don't try to check for QUIT when
+	inhibit_non_essential_printing_operations or we may screw things
+	up if QUIT happens during debug printing.
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* casetab.c (compute_canon_mapper):
 	* casetab.c (initialize_identity_mapper):
 	* casetab.c (compute_up_or_eqv_mapper):
