@@ -978,21 +978,22 @@ do {									\
   ttlff_utf8_path = alloca_extbytes (ttlff_size);			\
   cygwin_conv_path (CCP_WIN_T_TO_POSIX | CCP_RELATIVE,			\
 		    ttlff, ttlff_utf8_path, ttlff_size);		\
-  (out) = EXTERNAL_TO_ITEXT (ttlff_utf8_path, Qutf_8);		\
+  (out) = EXTERNAL_TO_ITEXT (ttlff_utf8_path, Qutf_8);			\
 } while (0)
 #else /* not HAVE_CYGWIN_CONV_PATH */
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
 do {							\
   const Ibyte *lfftt;					\
+  const Extbyte **lffttout = (const Extbyte **) &(out);	\
 							\
   LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN (path, lfftt);	\
-  PATHNAME_CONVERT_OUT_TSTR (lfftt, out);		\
+  PATHNAME_CONVERT_OUT_TSTR (lfftt, *lffttout);		\
 } while (0)
 #define TSTR_TO_LOCAL_FILE_FORMAT(path, out)		\
 do {							\
   const Ibyte *ttlff;					\
 							\
-  ttlff = TSTR_TO_ITEXT (path);			\
+  ttlff = TSTR_TO_ITEXT (path);				\
   INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT (ttlff, out);	\
 } while (0)
 #endif /* (not) HAVE_CYGWIN_CONV_PATH */

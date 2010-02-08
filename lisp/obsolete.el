@@ -411,5 +411,7 @@ we no longer encounter bytecode from 21.4."
  'obsolete-throw
  "it says `obsolete' in the name, you know you shouldn't be using this.")
 
+(define-compatible-function-alias 'cl-mapc 'mapc)
+
 (provide 'obsolete)
 ;;; obsolete.el ends here

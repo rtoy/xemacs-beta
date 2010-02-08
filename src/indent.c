@@ -41,8 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "window.h"
 
-Lisp_Object Qcoerce;
-
 /* Indentation can insert tabs if this is non-zero;
    otherwise always uses spaces */
 int indent_tabs_mode;
@@ -925,8 +923,6 @@ syms_of_indent (void)
 #endif
   DEFSUBR (Fvertical_motion);
   DEFSUBR (Fvertical_motion_pixels);
-
-  DEFSYMBOL (Qcoerce);
 }
 
 void

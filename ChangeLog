@@ -5,6 +5,22 @@
 	Also pass unicode-encapsulate and make-case-conv targets down
 	to src/Makefile.in.in.
 
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (AC_LANG):
+	* configure.ac (TAB):
+	Add AC_LANG(C++) defs in a way very similar to AC_LANG(C), inserting
+	our own flags, compiler, etc.
+
+	When using g++, if we found ndbm, check whether we can compile a
+	file using g++ and ndbm.h, calling some DBM routines.  Currently, this
+	fails because the prototypes in ndbm.h are incomplete, omitting the
+	arguments, which doesn't work with g++.  When ndbm.h is bad, we don't
+	include it and instead provide our own prototypes; otherwise, we
+	define TRUST_NDBM_H_PROTOTYPES, which signals to use the ones in
+	ndbm.h.
+
 2010-01-31  Ben Wing  <ben@xemacs.org>
 
 	* configure.ac (TAB):

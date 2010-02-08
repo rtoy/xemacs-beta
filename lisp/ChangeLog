@@ -10,6 +10,86 @@
 	Load uni-case-conv.el.  It seems to work now, after all the various
 	search and case-related fixes.
 
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el (format-decode): Remove this temporary function
+	definition, now we check the symbol is bound in fileio.c
+	* version.el (format-decode): Ditto.
+	* format.el (car-less-than-car, cdr-less-than-cdr): Move these
+	here from fileio.c, now they are only called once format.el is
+	available.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* setup-paths.el (paths-find-emacs-roots)
+	(paths-construct-info-path):
+	* packages.el (packages-find-installation-package-directories):
+	#'union doesn't guarantee that it will preserve the relative order
+	of elements in its arguments; use #'delete-duplicates
+	instead. Thank you for the bug reports, Robert Pluim, Stephen
+	Turnbull.
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (for):
+	Convert file to utf-8.
+
+2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (some, every):
+	Move these functions to C.
+	* cl-macs.el (notany, notevery): Add compiler macros for these
+	functions, no longer proclaim them inline (which would involve
+	specbinding that's not necessary with the compiler macros).
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el:
+	* code-init.el (set-eol-detection):
+	* code-init.el (coding-system-current-system-configuration):
+	* code-init.el (coding-system-default-configuration-table): New.
+	* code-init.el (no-mule-no-eol-detection):
+	* code-init.el (define-coding-system-default-configuration): New.
+	* code-init.el (coding-system-variable-default-value-table): Removed.
+	* code-init.el (no-mule-eol-detection):
+	* code-init.el (coding-system-default-configuration-list): Removed.
+	* code-init.el (coding-system-default-variable-list):
+	* code-init.el (get-coding-system-variable):
+	* code-init.el (set-coding-system-variable):
+	* code-init.el (coding-system-variable-default-value):
+	* code-init.el (reset-coding-categories-to-default):
+	Significant clean-up, add Cygwin-UTF-8 support.
+
+	1. Shorten the names of the coding system variables to follow
+	   what used to be considered the "abbreviations":
+
+	   default-process-coding-system-read	->	process-read
+	   default-process-coding-system-write	->	process-write
+	   buffer-file-coding-system-for-read	->	bfcs-for-read
+	   default-buffer-file-coding-system	->	default-bfcs
+	   no-conversion-coding-system-mapping	->	no-conv-cs
+
+	2. Instead of listing all the defaults in a big, strangely organized
+	   table, use a new function
+	   `define-coding-system-default-configuration' to define a
+	   particular configuration.  This uses a hash table stored in
+	   `coding-system-default-configuration-table'.  Rewrite
+	   `coding-system-variable-default-value' appropriately.
+
+	3. Rename configurations to eliminate `unix' from the name:
+
+	   unix-no-mule-no-eol-detection      ->     no-mule-no-eol-detection
+	   unix-no-mule-eol-detection	      ->     no-mule-eol-detection
+	   unix-mule			      ->     mule
+
+	   This is because these are really for all systems but Windows,
+	   not just Unix.
+
+	4. Add configuration `cygwin-utf-8', enabled when (featurep
+	   'cygwin-use-utf-8).  Uses `utf-8' for all defaults except for
+	   `bfcs-for-read', which is `undecided'.
+
 2010-01-28  Ben Wing  <ben@xemacs.org>
 
 	* lisp-mode.el: Finish documenting `lisp-indent-specform',
@@ -539,6 +619,27 @@
 	Upper and lowercase mappings were reversed for some old-Cyrillic
 	chars.
 
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (mapcar*): Delete; this is now in fns.c.
+	Use #'mapc, not #'mapc-internal in a couple of places.
+	* cl-macs.el (mapc, mapcar*, map): Delete these compiler macros
+	now the corresponding functions are in fns.c; there's no run-time
+	advantage to the macros.
+	* cl-extra.el (coerce): Extend the possible conversions here a
+	little; it's not remotely comprehensive yet, though it does allow
+	running slightly more Common Lisp code than previously.
+	(cl-mapcar-many): Delete.
+	(map, maplist, mapc, mapl, mapcan, mapcon): Move these to fns.c.
+	* bytecomp.el (byte-compile-maybe-mapc):
+	Use #'mapc itself, not #'mapc-internal, now the former is in C.
+	(mapcar*): Use #'byte-compile-maybe-mapc as this function's
+	byte-compile method, now a #'mapc that can take more than one
+	sequence is in C.
+	* obsolete.el (cl-mapc): Move this compatibility alias to this file.
+	* update-elc.el (do-autoload-commands): Use #'mapc, not
+	#'mapc-internal here. 
+	
 2010-01-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/vietnamese.el (viscii): Correct the mapping here, #xA6 is

@@ -618,7 +618,7 @@ race condition by specifying the appropriate flags to `write-region'.
 */
        (prefix))
 {
-  static const char tbl[64] =
+  static const Ascbyte tbl[64] =
   {
     'A','B','C','D','E','F','G','H',
     'I','J','K','L','M','N','O','P',
@@ -1803,7 +1803,7 @@ A prefix arg makes KEEP-TIME non-nil.
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
   int ifd, ofd, n;
-  char buf[16 * 1024];
+  Rawbyte buf[16 * 1024];
   struct stat st, out_st;
   Lisp_Object handler;
   int speccount = specpdl_depth ();
@@ -3045,7 +3045,7 @@ under Mule, is very difficult.)
 			     !NILP (visit) ? INSDEL_NO_LOCKING : 0);
       else
 	{
-	  char buffer[1 << 14];
+	  Rawbyte buffer[1 << 14];
 	  Charbpos same_at_start = BUF_BEGV (buf);
 	  Charbpos same_at_end = BUF_ZV (buf);
 	  int overlap;
@@ -3268,10 +3268,10 @@ under Mule, is very difficult.)
     }
 
   /* Decode file format */
-  if (inserted > 0)
+  if (inserted > 0 && !UNBOUNDP (XSYMBOL_FUNCTION (Qformat_decode)))
     {
-      Lisp_Object insval = call3 (Qformat_decode,
-                                  Qnil, make_int (inserted), visit);
+      Lisp_Object insval = call3 (Qformat_decode, Qnil, make_int (inserted),
+				  visit);
       CHECK_INT (insval);
       inserted = XINT (insval);
     }
@@ -3628,33 +3628,6 @@ here because write-region handler writers need to be aware of it.
   return Qnil;
 }
 
-/* #### This is such a load of shit!!!!  There is no way we should define
-   something so stupid as a subr, just sort the fucking list more
-   intelligently. */
-DEFUN ("car-less-than-car", Fcar_less_than_car, 2, 2, 0, /*
-Return t if (car A) is numerically less than (car B).
-*/
-       (a, b))
-{
-  Lisp_Object objs[2];
-  objs[0] = Fcar (a);
-  objs[1] = Fcar (b);
-  return Flss (2, objs);
-}
-
-/* Heh heh heh, let's define this too, just to aggravate the person who
-   wrote the above comment. */
-DEFUN ("cdr-less-than-cdr", Fcdr_less_than_cdr, 2, 2, 0, /*
-Return t if (cdr A) is numerically less than (cdr B).
-*/
-       (a, b))
-{
-  Lisp_Object objs[2];
-  objs[0] = Fcdr (a);
-  objs[1] = Fcdr (b);
-  return Flss (2, objs);
-}
-
 /* Build the complete list of annotations appropriate for writing out
    the text between START and END, by calling all the functions in
    write-region-annotate-functions and merging the lists they return.
@@ -3698,10 +3671,19 @@ build_annotations (Lisp_Object start, Lisp_Object end)
     }
 
   /* Now do the same for annotation functions implied by the file-format */
-  if (auto_saving && (!EQ (Vauto_save_file_format, Qt)))
-    p = Vauto_save_file_format;
+  if (UNBOUNDP (XSYMBOL_FUNCTION (Qformat_annotate_function)))
+    {
+      p = Qnil;
+    }
+  else if (auto_saving && (!EQ (Vauto_save_file_format, Qt)))
+    {
+      p = Vauto_save_file_format;
+    }
   else
-    p = current_buffer->file_format;
+    {
+      p = current_buffer->file_format;
+    }
+
   while (!NILP (p))
     {
       struct buffer *given_buffer = current_buffer;
@@ -3718,6 +3700,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
       annotations = merge (annotations, res, Qcar_less_than_car);
       p = Fcdr (p);
     }
+
   UNGCPRO;
   return annotations;
 }
@@ -3743,7 +3726,7 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 {
   Lisp_Object tem;
   int nextpos;
-  unsigned char largebuf[A_WRITE_BATCH_SIZE];
+  Ibyte largebuf[A_WRITE_BATCH_SIZE];
   Lstream *instr = XLSTREAM (instream);
   Lstream *outstr = XLSTREAM (outstream);
 
@@ -4439,8 +4422,6 @@ syms_of_fileio (void)
   DEFSUBR (Ffile_newer_than_file_p);
   DEFSUBR (Finsert_file_contents_internal);
   DEFSUBR (Fwrite_region_internal);
-  DEFSUBR (Fcar_less_than_car); /* Vomitous! */
-  DEFSUBR (Fcdr_less_than_cdr); /* Yeah oh yeah bucko .... */
 #if 0
   DEFSUBR (Fencrypt_string);
   DEFSUBR (Fdecrypt_string);

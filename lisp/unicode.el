@@ -1,4 +1,4 @@
-;;; unicode.el --- Unicode support
+;;; unicode.el --- Unicode support -*- coding: utf-8; -*-
 
 ;; Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 

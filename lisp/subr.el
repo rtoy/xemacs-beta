@@ -1777,4 +1777,19 @@ See also `special-operator-p', `subr-min-args', `subr-max-args',
           'many)
          (t (subr-max-args subr)))))
 
+;; XEmacs; move these here from C. Would be nice to drop them entirely, but
+;; they're used reasonably often, since they've been around for a long time
+;; and they're portable to GNU.
+
+;; Used in fileio.c if format-annotate-function has a function binding
+;; (which it won't have before this file is loaded):
+(defun car-less-than-car (a b)
+  "Return t if the car of A is numerically less than the car of B."
+  (< (car a) (car b)))
+
+;; Used in packages.
+(defun cdr-less-than-cdr (a b)
+  "Return t if (cdr A) is numerically less than (cdr B)."
+  (< (cdr a) (cdr b)))
+
 ;;; subr.el ends here
