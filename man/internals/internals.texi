@@ -7601,10 +7601,9 @@ initialized through a read syntax.
 @cindex objects are represented in C, how Lisp
 @cindex represented in C, how Lisp objects are
 
-Lisp objects are represented in C using a 32-bit or 64-bit machine word
-(depending on the processor; i.e. DEC Alphas use 64-bit Lisp objects and
-most other processors use 32-bit Lisp objects).  The representation
-stuffs a pointer together with a tag, as follows:
+Lisp objects are represented in C using a 32-bit or 64-bit machine
+word (depending on the processor).  The representation stuffs a
+pointer together with a tag, as follows:
 
 @example
  [ 3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 ]
@@ -7624,18 +7623,17 @@ so the lower 2 bits are always zero.
 
 Lisp objects use the typedef @code{Lisp_Object}, but the actual C type
 used for the Lisp object can vary.  It can be either a simple type
-(@code{long} on the DEC Alpha, @code{int} on other machines) or a
-structure whose fields are bit fields that line up properly (actually, a
-union of structures is used).  Generally the simple integral type is
-preferable because it ensures that the compiler will actually use a
-machine word to represent the object (some compilers will use more
-general and less efficient code for unions and structs even if they can
-fit in a machine word).  The union type, however, has the advantage of
-stricter type checking.  If you accidentally pass an integer where a Lisp
-object is desired, you get a compile error.  The choice of which type
-to use is determined by the preprocessor constant @code{USE_UNION_TYPE}
-which is defined via the @code{--use-union-type} option to
-@code{configure}.
+(generally @code{long}) or a structure whose fields are bit fields
+that line up properly (actually, a union of structures is used).
+Generally the simple integral type is preferable because it ensures
+that the compiler will actually use a machine word to represent the
+object (some compilers will use more general and less efficient code
+for unions and structs even if they can fit in a machine word).  The
+union type, however, has the advantage of stricter type checking.  If
+you accidentally pass an integer where a Lisp object is desired, you
+get a compile error.  The choice of which type to use is determined by
+the preprocessor constant @code{USE_UNION_TYPE} which is defined via
+the @code{--use-union-type} option to @code{configure}.
 
 Various macros are used to convert between Lisp_Objects and the
 corresponding C type.  Macros of the form @code{XINT()}, @code{XCHAR()},
@@ -7648,7 +7646,7 @@ than shifting in a zero, so that it mimics a divide-by-two even for
 negative numbers) the shift to remove the tag bit is enough.  This is
 the case on all the systems we support.
 
-Note that when @code{ERROR_CHECK_TYPECHECK} is defined, the converter
+Note that when @code{ERROR_CHECK_TYPES} is defined, the converter
 macros become more complicated---they check the tag bits and/or the
 type field in the first four bytes of a record type to ensure that the
 object is really of the correct type.  This is great for catching places
@@ -7665,7 +7663,7 @@ sometimes isn't too convenient; for the case of integers, at least, you
 can use the function @code{make_int()}, which constructs and
 @emph{returns} an integer Lisp object.  Note that the
 @code{XSET@var{TYPE}()} macros are also affected by
-@code{ERROR_CHECK_TYPECHECK} and make sure that the structure is of the
+@code{ERROR_CHECK_TYPES} and make sure that the structure is of the
 right type in the case of record types, where the type is contained in
 the structure.
 
@@ -7676,15 +7674,11 @@ macros.  This is especially important in the case of lists.  Use
 else use @code{Fcar()} and @code{Fcdr()}.  Trust other C code, but not
 Lisp code.  On the other hand, if XEmacs has an internal logic error,
 it's better to crash immediately, so sprinkle @code{assert()}s and
-``unreachable'' @code{abort()}s liberally about the source code.  Where
-performance is an issue, use @code{type_checking_assert},
-@code{bufpos_checking_assert}, and @code{gc_checking_assert}, which do
-nothing unless the corresponding configure error checking flag was
-specified.
-
-Note that in some cases @samp{assert}s will expand to nothing in a
-context where that produces an empty statement.  Some compilers will
-warn about this.
+``unreachable'' @code{abort()}s liberally about the source code.
+Where performance is an issue, use @code{type_checking_assert},
+@code{bufpos_checking_assert}, @code{gc_checking_assert}, and the
+like, which do nothing unless the corresponding configure error
+checking flag was specified.
 
 @node Allocation of Objects in XEmacs Lisp, The Lisp Reader and Compiler, How Lisp Objects Are Represented in C, Top
 @chapter Allocation of Objects in XEmacs Lisp
