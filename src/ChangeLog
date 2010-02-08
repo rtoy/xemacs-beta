@@ -1,5 +1,25 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* mule-coding.c (struct iso2022_coding_system):
+	* mule-coding.c (struct iso2022_coding_stream):
+	Use `Boolbyte' for a byte-wide flag instead of `unsigned char'.
+	Remove `warned_chars'.  Correct the comment about the contents
+	of the Unicode precedence array.
+	
+	* mule-coding.c (reset_iso2022_decode):
+	* mule-coding.c (reset_iso2022_encode):
+	* mule-coding.c (iso2022_mark_coding_stream):
+	* mule-coding.c (iso2022_encode):
+	Get rid of `warned_chars' and the whole warning mechanism since
+	it never happens any more.  Fix problems under Unicode-internal
+	with non-ISO2022-encodable characters -- they should properly be
+	encoded as UTF-8.
+	
+	* mule-coding.c (FROB_INITIAL_CHARSET):
+	Fix spacing typo.
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in (remove-config-dependent-elcs):
 	Use $(RM) instead of just `rm' so it doesn't make things fail
 	if the target doesn't exist.
