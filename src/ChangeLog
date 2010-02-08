@@ -1,3 +1,9 @@
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (remove-config-dependent-elcs):
+	Use $(RM) instead of just `rm' so it doesn't make things fail
+	if the target doesn't exist.
+
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (disksave_object_finalization):
