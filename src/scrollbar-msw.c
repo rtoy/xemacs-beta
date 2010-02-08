@@ -84,7 +84,7 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
   Fputhash (ptr, wrap_scrollbar_instance (sb),
 	    Vmswindows_scrollbar_instance_table);
   qxeSetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA,
-		 (LONG) LISP_TO_VOID (ptr));
+		 (LONG) STORE_LISP_IN_VOID (ptr));
 }
 
 static void
@@ -96,7 +96,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
 	(void *) qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
       Lisp_Object ptr;
 
-      ptr = VOID_TO_LISP (opaque);
+      ptr = GET_LISP_FROM_VOID (opaque);
       assert (OPAQUE_PTRP (ptr));
       ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
       assert (!NILP (ptr));
@@ -223,7 +223,7 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int UNUSED (pos))
   else
     {
       Lisp_Object ptr;
-      ptr = VOID_TO_LISP (v);
+      ptr = GET_LISP_FROM_VOID (v);
       assert (OPAQUE_PTRP (ptr));
       ptr = Fgethash (ptr, Vmswindows_scrollbar_instance_table, Qnil);
       sb = XSCROLLBAR_INSTANCE (ptr);

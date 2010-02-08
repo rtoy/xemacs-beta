@@ -203,7 +203,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
     case WM_DESTROY:
       {
 	Lisp_Object data;
-	data = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, DWL_USER));
+	data = GET_LISP_FROM_VOID ((void *) qxeGetWindowLong (hwnd, DWL_USER));
 	Vdialog_data_list = delq_no_quit (data, Vdialog_data_list);
       }
       break;
@@ -213,7 +213,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 	Lisp_Object fn, arg, data;
 	struct mswindows_dialog_id *did;
 
-	data = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, DWL_USER));
+	data = GET_LISP_FROM_VOID ((void *) qxeGetWindowLong (hwnd, DWL_USER));
 	did = XMSWINDOWS_DIALOG_ID (data);
 	if (w_param != IDCANCEL) /* user pressed escape */
 	  {
@@ -767,7 +767,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
       qxeCreateDialogIndirectParam (NULL,
 				    (LPDLGTEMPLATE) Dynarr_begin (template_),
 				    FRAME_MSWINDOWS_HANDLE (f), dialog_proc,
-				    (LPARAM) LISP_TO_VOID (dialog_data));
+				    (LPARAM) STORE_LISP_IN_VOID (dialog_data));
     if (!did->hwnd)
       /* Something went wrong creating the dialog */
       signal_error (Qdialog_box_error, "Creating dialog", keys);

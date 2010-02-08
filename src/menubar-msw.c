@@ -97,7 +97,7 @@ Boston, MA 02111-1307, USA.  */
 /* #### */
 #define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH 0
 
-#define EMPTY_ITEM_ID ((UINT)LISP_TO_VOID (Qunbound))
+#define EMPTY_ITEM_ID ((UINT)STORE_LISP_IN_VOID (Qunbound))
 #define EMPTY_ITEM_NAME "(empty)" /* WARNING: uses of this need XETEXT */
 
 /* Current menu (bar or popup) descriptor. gcpro'ed */

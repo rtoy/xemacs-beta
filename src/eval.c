@@ -6341,7 +6341,7 @@ run_hook_trapping_problems (Lisp_Object warning_class,
 static Lisp_Object
 safe_run_hook_trapping_problems_1 (void *puta)
 {
-  Lisp_Object hook = VOID_TO_LISP (puta);
+  Lisp_Object hook = GET_LISP_FROM_VOID (puta);
 
   run_hook (hook);
   return Qnil;
@@ -6369,7 +6369,7 @@ safe_run_hook_trapping_problems (Lisp_Object warning_class,
 				flags | POSTPONE_WARNING_ISSUE,
 				&prob,
 				safe_run_hook_trapping_problems_1,
-				LISP_TO_VOID (hook_symbol));
+				STORE_LISP_IN_VOID (hook_symbol));
   {
     Lisp_Object hook_name = XSYMBOL_NAME (hook_symbol);
     Ibyte *hook_str = XSTRING_DATA (hook_name);
@@ -6701,10 +6701,9 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object arg),
 static Lisp_Object
 restore_lisp_object (Lisp_Object cons)
 {
-  Lisp_Object opaque = XCAR (cons);
-  Lisp_Object *addr = (Lisp_Object *) get_opaque_ptr (opaque);
+  Lisp_Object laddr = XCAR (cons);
+  Lisp_Object *addr = (Lisp_Object *) GET_VOID_FROM_LISP (laddr);
   *addr = XCDR (cons);
-  free_opaque_ptr (opaque);
   free_cons (cons);
   return Qnil;
 }
@@ -6715,9 +6714,11 @@ static int
 record_unwind_protect_restoring_lisp_object (Lisp_Object *addr,
 					     Lisp_Object val)
 {
-  Lisp_Object opaque = make_opaque_ptr (addr);
+  /* We use a cons rather than a malloc()ed structure because we want the
+     Lisp object to have garbage-collection protection */
+  Lisp_Object laddr = STORE_VOID_IN_LISP (addr);
   return record_unwind_protect (restore_lisp_object,
-				noseeum_cons (opaque, val));
+				noseeum_cons (laddr, val));
 }
 
 /* Similar to specbind() but for any C variable whose value is a
@@ -6734,35 +6735,18 @@ internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval)
   return count;
 }
 
-static Lisp_Object
-restore_int (Lisp_Object cons)
+struct restore_int
 {
-  Lisp_Object opaque = XCAR (cons);
-  Lisp_Object lval = XCDR (cons);
-  int *addr = (int *) get_opaque_ptr (opaque);
+  int *addr;
   int val;
+};
 
-  /* In the event that a C integer will always fit in an Emacs int, we
-     haven't ever stored a C integer as an opaque pointer. This #ifdef
-     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
-     integers have 32 value bits.  */
-#if INT_VALBITS < INTBITS
-  if (INTP (lval))
-    {
-      val = XINT (lval);
-    }
-  else
-    {
-      val = (int) get_opaque_ptr (lval);
-      free_opaque_ptr (lval);
-    }
-#else /* !(INT_VALBITS < INTBITS) */
-  val = XINT(lval);
-#endif /* INT_VALBITS < INTBITS */
-
-  *addr = val;
-  free_opaque_ptr (opaque);
-  free_cons (cons);
+static Lisp_Object
+restore_int (Lisp_Object obj)
+{
+  struct restore_int *ri = (struct restore_int *) GET_VOID_FROM_LISP (obj);
+  *(ri->addr) = ri->val;
+  xfree (ri);
   return Qnil;
 }
 
@@ -6772,23 +6756,10 @@ restore_int (Lisp_Object cons)
 int
 record_unwind_protect_restoring_int (int *addr, int val)
 {
-  Lisp_Object opaque = make_opaque_ptr (addr);
-  Lisp_Object lval;
-
-  /* In the event that a C integer will always fit in an Emacs int, we don't
-     ever want to store a C integer as an opaque pointer. This #ifdef
-     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
-     integers have 32 value bits.  */
-#if INT_VALBITS <= INTBITS
-  if (NUMBER_FITS_IN_AN_EMACS_INT (val))
-    lval = make_int (val);
-  else
-    lval = make_opaque_ptr ((void *) val);
-#else /* !(INT_VALBITS < INTBITS) */
-  lval = make_int (val);
-#endif /* INT_VALBITS <= INTBITS */
-
-  return record_unwind_protect (restore_int, noseeum_cons (opaque, lval));
+  struct restore_int *ri = xnew (struct restore_int);
+  ri->addr = addr;
+  ri->val = val;
+  return record_unwind_protect (restore_int, STORE_VOID_IN_LISP (ri));
 }
 
 /* Similar to specbind() but for any C variable whose value is an int.
@@ -6809,8 +6780,8 @@ internal_bind_int (int *addr, int newval)
 static Lisp_Object
 free_pointer (Lisp_Object opaque)
 {
-  xfree (get_opaque_ptr (opaque));
-  free_opaque_ptr (opaque);
+  void *ptr = GET_VOID_FROM_LISP (opaque);
+  xfree (ptr);
   return Qnil;
 }
 
@@ -6819,23 +6790,20 @@ free_pointer (Lisp_Object opaque)
 int
 record_unwind_protect_freeing (void *ptr)
 {
-  Lisp_Object opaque = make_opaque_ptr (ptr);
-  return record_unwind_protect (free_pointer, opaque);
+  return record_unwind_protect (free_pointer, STORE_VOID_IN_LISP (ptr));
 }
 
 static Lisp_Object
 free_dynarr (Lisp_Object opaque)
 {
-  Dynarr_free (get_opaque_ptr (opaque));
-  free_opaque_ptr (opaque);
+  Dynarr_free (GET_VOID_FROM_LISP (opaque));
   return Qnil;
 }
 
 int
 record_unwind_protect_freeing_dynarr (void *ptr)
 {
-  Lisp_Object opaque = make_opaque_ptr (ptr);
-  return record_unwind_protect (free_dynarr, opaque);
+  return record_unwind_protect (free_dynarr, STORE_VOID_IN_LISP (ptr));
 }
 
 /* Unwind the stack till specpdl_depth() == COUNT.

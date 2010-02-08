@@ -2869,10 +2869,10 @@ END_C_DECLS
 #define ITEXT_TO_EXTERNAL_MALLOC(src, codesys)	\
   ((Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys))
 #define LISP_STRING_TO_EXTERNAL(src, codesys)			\
-  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,	\
+  ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (STORE_LISP_IN_VOID (src), -1,	\
 					DFC_LISP_STRING, codesys))
 #define LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  ((Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
+  ((Extbyte *) new_dfc_convert_malloc (STORE_LISP_IN_VOID (src), -1,	\
 				      DFC_LISP_STRING, codesys))
 /* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
    make_extstring(). */

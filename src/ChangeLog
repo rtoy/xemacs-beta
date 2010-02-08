@@ -1,3 +1,135 @@
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.c (recompute_case_table):
+	* casetab.c (set_case_table):
+	* chartab.c (copy_mapper):
+	* chartab.c (copy_char_table_range):
+	* chartab.c (get_range_char_table_1):
+	* console.c (find_nonminibuffer_frame_not_on_console_predicate):
+	* console.c (find_nonminibuffer_frame_not_on_console):
+	* console.c (nuke_all_console_slots):
+	* device.c:
+	* device.c (find_nonminibuffer_frame_not_on_device_predicate):
+	* device.c (find_nonminibuffer_frame_not_on_device):
+	* dialog-msw.c (dialog_proc):
+	* dialog-msw.c (handle_question_dialog_box):
+	* dialog-x.c (maybe_run_dbox_text_callback):
+	* eval.c:
+	* eval.c (safe_run_hook_trapping_problems_1):
+	* eval.c (safe_run_hook_trapping_problems):
+	* event-msw.c:
+	* event-msw.c (mswindows_wnd_proc):
+	* event-msw.c (mswindows_find_frame):
+	* faces.c (update_face_inheritance_mapper):
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_get_mouse_position):
+	* frame-msw.c (mswindows_get_frame_parent):
+	* glade.c (connector):
+	* glade.c (Fglade_xml_signal_connect):
+	* glade.c (Fglade_xml_signal_autoconnect):
+	* glade.c (Fglade_xml_textdomain):
+	* glyphs-msw.c (mswindows_subwindow_instantiate):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs.c (check_instance_cache_mapper):
+	* glyphs.c (check_window_subwindow_cache):
+	* glyphs.c (check_image_instance_structure):
+	* gui-x.c (snarf_widget_value_mapper):
+	* gui-x.c (popup_selection_callback):
+	* gui-x.c (button_item_to_widget_value):
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (Fmap_keymap):
+	* menubar-gtk.c (__torn_off_sir):
+	* menubar-gtk.c (__activate_menu):
+	* menubar-gtk.c (menu_convert):
+	* menubar-gtk.c (__generic_button_callback):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar-msw.c:
+	* menubar-msw.c (EMPTY_ITEM_ID):
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	* menubar-x.c (pre_activate_callback):
+	* menubar-x.c (command_builder_operate_menu_accelerator):
+	* menubar-x.c (command_builder_find_menu_accelerator):
+	* print.c (print_internal):
+	* process-unix.c (close_process_descs_mapfun):
+	* process.c (get_process_from_usid):
+	* process.c (init_process_io_handles):
+	* profile.c (sigprof_handler):
+	* profile.c (get_profiling_info_timing_maphash):
+	* profile.c (Fget_profiling_info):
+	* profile.c (set_profiling_info_timing_maphash):
+	* profile.c (mark_profiling_info_maphash):
+	* scrollbar-msw.c (mswindows_create_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	* specifier.c (recompute_cached_specifier_everywhere_mapfun):
+	* specifier.c (recompute_cached_specifier_everywhere):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* text.c (new_dfc_convert_now_damn_it):
+	* text.h (LISP_STRING_TO_EXTERNAL):
+	* tooltalk.c:
+	* tooltalk.c (tooltalk_message_callback):
+	* tooltalk.c (tooltalk_pattern_callback):
+	* tooltalk.c (Fcreate_tooltalk_message):
+	* tooltalk.c (Fcreate_tooltalk_pattern):
+	* ui-byhand.c (__generic_toolbar_callback):
+	* ui-byhand.c (generic_toolbar_insert_item):
+	* ui-byhand.c (__emacs_gtk_ctree_recurse_internal):
+	* ui-byhand.c (Fgtk_ctree_recurse):
+	* ui-gtk.c (__internal_callback_destroy):
+	* ui-gtk.c (__internal_callback_marshal):
+	* ui-gtk.c (Fgtk_signal_connect):
+	* ui-gtk.c (gtk_type_to_lisp):
+	* ui-gtk.c (lisp_to_gtk_type):
+	* ui-gtk.c (lisp_to_gtk_ret_type):
+	* lisp-disunion.h:
+	* lisp-disunion.h (NON_LVALUE):
+	* lisp-union.h:
+	* lisp.h (LISP_HASH):
+	Rename:
+
+	LISP_TO_VOID -> STORE_LISP_IN_VOID
+	VOID_TO_LISP -> GET_LISP_FROM_VOID
+
+	These new names are meant to clearly identify that the Lisp object
+	is the source and void the sink, and that they can't be used the
+	other way around -- they aren't exact opposites despite the old
+	names.  The names are also important given the new functions
+	created just below.  Also, clarify comments in lisp-union.h and
+	lisp-disunion.h about the use of the functions.
+
+	* lisp.h:
+	New functions STORE_VOID_IN_LISP and GET_VOID_FROM_LISP.  These
+	are different from the above in that the source is a void *
+	(previously, you had to use make_opaque_ptr()).
+
+	* eval.c (restore_lisp_object):
+	* eval.c (record_unwind_protect_restoring_lisp_object):
+	* eval.c (struct restore_int):
+	* eval.c (restore_int):
+	* eval.c (record_unwind_protect_restoring_int):
+	* eval.c (free_pointer):
+	* eval.c (record_unwind_protect_freeing):
+	* eval.c (free_dynarr):
+	* eval.c (record_unwind_protect_freeing_dynarr):
+	* eval.c (unbind_to_1):
+	Use STORE_VOID_IN_LISP and GET_VOID_FROM_LISP to eliminate the
+	use of make_opaque_ptr() and mostly eliminate Lisp consing
+	entirely in the use of these various record_unwind_protect_*
+	functions as well as internal_bind_* (e.g. internal_bind_int).
+
+	* tests.c:
+	* tests.c (Ftest_store_void_in_lisp):
+	* tests.c (syms_of_tests):
+	* tests.c (vars_of_tests):
+	Add an C-assert-style test to test STORE_VOID_IN_LISP and
+	GET_VOID_FROM_LISP to make sure the same value comes back that
+	was put in.
+
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
 	* fns.c: Qlist, Qstring mistakenly declared twice.

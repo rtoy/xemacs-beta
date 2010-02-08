@@ -3022,7 +3022,7 @@ map_keymap_mapper (const Lisp_Key_Data *key,
 {
   /* This function can GC */
   Lisp_Object fn;
-  fn = VOID_TO_LISP (function);
+  fn = GET_LISP_FROM_VOID (function);
   call2 (fn, make_key_description (key, 1), binding);
 }
 
@@ -3082,7 +3082,7 @@ faster.
   GCPRO2 (function, keymap);
   keymap = get_keymap (keymap, 1, 1);
   map_keymap (XKEYMAP (keymap)->table, !NILP (sort_first),
-	      map_keymap_mapper, LISP_TO_VOID (function));
+	      map_keymap_mapper, STORE_LISP_IN_VOID (function));
   UNGCPRO;
   return Qnil;
 }

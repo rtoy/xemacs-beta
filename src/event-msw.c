@@ -3629,7 +3629,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	if (ii)
 	  {
 	    Lisp_Object image_instance;
-	    image_instance = VOID_TO_LISP ((void *) ii);
+	    image_instance = GET_LISP_FROM_VOID ((void *) ii);
 	    if (IMAGE_INSTANCEP (image_instance)
 		&&
 		IMAGE_INSTANCE_TYPE_P (image_instance, IMAGE_WIDGET))
@@ -4155,7 +4155,7 @@ mswindows_find_frame (HWND hwnd)
       assert (!NILP (Vmswindows_frame_being_created));
       return Vmswindows_frame_being_created;
     }
-  f = VOID_TO_LISP ((void *) l);
+  f = GET_LISP_FROM_VOID ((void *) l);
   return f;
 }
 

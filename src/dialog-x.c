@@ -51,12 +51,12 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
     {
       Lisp_Object text_field_callback;
       Extbyte *text_field_value = wv->value;
-      text_field_callback = VOID_TO_LISP (wv->call_data);
+      text_field_callback = GET_LISP_FROM_VOID (wv->call_data);
       text_field_callback = XCAR (XCDR (text_field_callback));
       if (text_field_value)
 	{
 	  void *tmp =
-	    LISP_TO_VOID (cons3 (Qnil,
+	    STORE_LISP_IN_VOID (cons3 (Qnil,
 				 list2 (text_field_callback,
 					build_extstring (text_field_value,
 							  Qlwlib_encoding)),
