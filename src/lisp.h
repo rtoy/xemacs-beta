@@ -1699,6 +1699,44 @@ END_C_DECLS
 
 #include "lrecord.h"
 
+/* Turn any void * pointer into a Lisp object.  This is the counterpart of
+   STORE_LISP_IN_VOID, which works in the opposite direction.  Note that
+   you CANNOT use STORE_LISP_IN_VOID to undo the effects of STORE_VOID_IN_LISP!
+   Instead, you GET_VOID_FROM_LISP:
+
+   STORE_VOID_IN_LISP <--> GET_VOID_FROM_LISP         vs.
+   STORE_LISP_IN_VOID <--> GET_LISP_FROM_VOID
+
+   STORE_VOID_IN_LISP has a restriction on the void * pointers it can
+   handle -- the pointer must be an even address (lowest bit set to 0).
+   Generally this is not a problem as nowadays virtually all allocation is
+   at least 4-byte aligned, if not 8-byte.
+
+   However, if this proves problematic, you can use make_opaque_ptr(), which
+   is guaranteed to handle any kind of void * pointer but which does
+   Lisp allocation.
+   */
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+STORE_VOID_IN_LISP (void *ptr)
+)
+{
+  EMACS_UINT p = (EMACS_UINT) ptr;
+
+  type_checking_assert ((p & 1) == 0);
+  return make_int (p >> 1);
+}
+
+DECLARE_INLINE_HEADER (
+void *
+GET_VOID_FROM_LISP (Lisp_Object obj)
+)
+{
+  EMACS_UINT p = XUINT (obj);
+  return (void *) (p << 1);
+}
+
 /************************************************************************/
 /**    Definitions of dynamic arrays (Dynarrs) and other allocators    **/
 /************************************************************************/
@@ -3897,7 +3935,7 @@ int begin_do_check_for_quit (void);
 #define HASH8(a,b,c,d,e,f,g,h)   (GOOD_HASH * HASH7 (a,b,c,d,e,f,g)   + (h))
 #define HASH9(a,b,c,d,e,f,g,h,i) (GOOD_HASH * HASH8 (a,b,c,d,e,f,g,h) + (i))
 
-#define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
+#define LISP_HASH(obj) ((unsigned long) STORE_LISP_IN_VOID (obj))
 Hashcode memory_hash (const void *xv, Bytecount size);
 Hashcode internal_hash (Lisp_Object obj, int depth);
 Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);

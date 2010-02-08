@@ -3548,7 +3548,7 @@ recompute_cached_specifier_everywhere_mapfun (struct window *w,
 {
   Lisp_Object specifier = Qnil;
 
-  specifier = VOID_TO_LISP (closure);
+  specifier = GET_LISP_FROM_VOID (closure);
   recompute_one_cached_specifier_in_window (specifier, w);
   return 0;
 }
@@ -3568,7 +3568,7 @@ recompute_cached_specifier_everywhere (Lisp_Object specifier)
       FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
 	map_windows (XFRAME (XCAR (frmcons)),
 		     recompute_cached_specifier_everywhere_mapfun,
-		     LISP_TO_VOID (specifier));
+		     STORE_LISP_IN_VOID (specifier));
     }
 
   if (XSPECIFIER (specifier)->caching->offset_into_struct_frame)

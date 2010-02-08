@@ -490,7 +490,7 @@ __generic_toolbar_callback (GtkWidget *UNUSED (item), gpointer user_data)
   Lisp_Object callback;
   Lisp_Object lisp_user_data;
 
-  callback = VOID_TO_LISP (user_data);
+  callback = GET_LISP_FROM_VOID (user_data);
 
   lisp_user_data = XCAR (callback);
   callback = XCDR (callback);
@@ -549,7 +549,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
 	 (char*) XSTRING_DATA (tooltip_private_text),
 	 GTK_WIDGET (XGTK_OBJECT (icon)->object),
 	 GTK_SIGNAL_FUNC (__generic_toolbar_callback),
-	 LISP_TO_VOID (callback));
+	 STORE_LISP_IN_VOID (callback));
     }
   else
     {
@@ -559,7 +559,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
 				   (char*) XSTRING_DATA (tooltip_private_text),
 				   GTK_WIDGET (XGTK_OBJECT (icon)->object),
 				   GTK_SIGNAL_FUNC (__generic_toolbar_callback),
-				   LISP_TO_VOID (callback),
+				   STORE_LISP_IN_VOID (callback),
 				   XINT (position));
     }
 
@@ -599,7 +599,7 @@ __emacs_gtk_ctree_recurse_internal (GtkCTree *ctree, GtkCTreeNode *node, gpointe
 {
   Lisp_Object closure;
 
-  closure = VOID_TO_LISP (user_data);
+  closure = GET_LISP_FROM_VOID (user_data);
 
   call3 (XCAR (closure),
 	 build_gtk_object (GTK_OBJECT (ctree)),
@@ -666,7 +666,7 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
 	(GTK_CTREE (XGTK_OBJECT (ctree)->object),
 	 NILP (node) ? NULL : (GtkCTreeNode *) XGTK_BOXED (node)->object,
 	 __emacs_gtk_ctree_recurse_internal,
-	 LISP_TO_VOID (closure));
+	 STORE_LISP_IN_VOID (closure));
     }
   else
     {
@@ -675,7 +675,7 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
 	 NILP (node) ? NULL : (GtkCTreeNode *) XGTK_BOXED (node)->object,
 	 XINT (depth),
 	 __emacs_gtk_ctree_recurse_internal,
-	 LISP_TO_VOID (closure));
+	 STORE_LISP_IN_VOID (closure));
     }
 
   UNGCPRO;

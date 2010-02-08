@@ -1016,7 +1016,7 @@ __internal_callback_destroy (gpointer data)
 {
   Lisp_Object lisp_data;
 
-  lisp_data = VOID_TO_LISP (data);
+  lisp_data = GET_LISP_FROM_VOID (data);
 
   ungcpro_popup_callbacks (XINT (XCAR (lisp_data)));
 }
@@ -1032,7 +1032,7 @@ __internal_callback_marshal (GtkObject *obj, gpointer data, guint n_args, GtkArg
   struct gcpro gcpro1;
   int i;
 
-  callback_fn = VOID_TO_LISP (data);
+  callback_fn = GET_LISP_FROM_VOID (data);
 
   /* Nuke the GUI_ID off the front */
   callback_fn = XCDR (callback_fn);
@@ -1098,7 +1098,7 @@ DEFUN ("gtk-signal-connect", Fgtk_signal_connect, 3, 6, 0, /*
   gcpro_popup_callbacks (id, func);
 
   gtk_signal_connect_full (XGTK_OBJECT (obj)->object, (char *) XSTRING_DATA (name),
-			   NULL, __internal_callback_marshal, LISP_TO_VOID (func),
+			   NULL, __internal_callback_marshal, STORE_LISP_IN_VOID (func),
 			   __internal_callback_destroy, c_object_signal, c_after);
   return (Qt);
 }
@@ -1516,7 +1516,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
 	{
 	  Lisp_Object rval;
 	  
-	  rval = VOID_TO_LISP (GTK_VALUE_POINTER (*arg));
+	  rval = GET_LISP_FROM_VOID (GTK_VALUE_POINTER (*arg));
 	  return (rval);
 	}
       else
@@ -1531,7 +1531,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
       {
 	Lisp_Object rval;
 
-	rval = VOID_TO_LISP (GTK_VALUE_CALLBACK (*arg).data);
+	rval = GET_LISP_FROM_VOID (GTK_VALUE_CALLBACK (*arg).data);
 
 	return (rval);
       }
@@ -1752,7 +1752,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
       if (NILP (obj))
 	GTK_VALUE_POINTER(*arg) = NULL;
       else
-	GTK_VALUE_POINTER(*arg) = LISP_TO_VOID (obj);
+	GTK_VALUE_POINTER(*arg) = STORE_LISP_IN_VOID (obj);
       break;
 
       /* structured types */
@@ -2032,7 +2032,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
       if (NILP (obj))
 	*(GTK_RETLOC_POINTER(*arg)) = NULL;
       else
-	*(GTK_RETLOC_POINTER(*arg)) = LISP_TO_VOID (obj);
+	*(GTK_RETLOC_POINTER(*arg)) = STORE_LISP_IN_VOID (obj);
       break;
 
       /* structured types */

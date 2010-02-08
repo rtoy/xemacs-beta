@@ -128,7 +128,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	     manipulate the accel as a Lisp_Object if the widget has a name.
 	     Since simple labels have a name, but no accel, we *must* set it
 	     to nil */
-	  wv->accel = LISP_TO_VOID (Qnil);
+	  wv->accel = STORE_LISP_IN_VOID (Qnil);
 	}
     }
   else if (VECTORP (desc))
@@ -162,7 +162,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	  wv->name = add_accel_and_to_external (XCAR (desc));
 
 	  accel = gui_name_accelerator (XCAR (desc));
-	  wv->accel = LISP_TO_VOID (accel);
+	  wv->accel = STORE_LISP_IN_VOID (accel);
 
 	  desc = Fcdr (desc);
 
@@ -186,7 +186,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		{
 		  if ( SYMBOLP (val)
 		       || CHARP (val))
-		    wv->accel = LISP_TO_VOID (val);
+		    wv->accel = STORE_LISP_IN_VOID (val);
 		  else
 		    invalid_argument ("bad keyboard accelerator", val);
 		}
@@ -231,7 +231,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		  /* This is automatically GC protected through
 		     the call to lw_map_widget_values(); no need
 		     to worry. */
-		  incr_wv->call_data = LISP_TO_VOID (incremental_data);
+		  incr_wv->call_data = STORE_LISP_IN_VOID (incremental_data);
 		  goto menu_item_done;
 		}
 #endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
@@ -261,7 +261,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      /* Add a fake entry so the menus show up */
 	      wv->contents = dummy = xmalloc_widget_value ();
 	      dummy->name = xstrdup ("(inactive)");
-	      dummy->accel = LISP_TO_VOID (Qnil);
+	      dummy->accel = STORE_LISP_IN_VOID (Qnil);
 	      dummy->enabled = 0;
 	      dummy->selected = 0;
 	      dummy->value = NULL;
@@ -471,7 +471,7 @@ pre_activate_callback (Widget widget, LWLIB_ID UNUSED (id),
       widget_value *wv;
 
       assert (hack_wv->type == INCREMENTAL_TYPE);
-      submenu_desc = VOID_TO_LISP (hack_wv->call_data);
+      submenu_desc = GET_LISP_FROM_VOID (hack_wv->call_data);
 
       wv = (protected_menu_item_descriptor_to_widget_value
 	    (submenu_desc, SUBMENU_TYPE, 1, 0));
@@ -481,12 +481,12 @@ pre_activate_callback (Widget widget, LWLIB_ID UNUSED (id),
 	  wv = xmalloc_widget_value ();
 	  wv->type = CASCADE_TYPE;
 	  wv->next = NULL;
-	  wv->accel = LISP_TO_VOID (Qnil);
+	  wv->accel = STORE_LISP_IN_VOID (Qnil);
 	  wv->contents = xmalloc_widget_value ();
 	  wv->contents->type = TEXT_TYPE;
 	  wv->contents->name = xstrdup ("No menu");
 	  wv->contents->next = NULL;
-	  wv->contents->accel = LISP_TO_VOID (Qnil);
+	  wv->contents->accel = STORE_LISP_IN_VOID (Qnil);
 	}
       assert (wv && wv->type == CASCADE_TYPE && wv->contents);
       replace_widget_value_tree (hack_wv, wv->contents);
@@ -1032,7 +1032,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
   while (entries)
     {
       Lisp_Object accel;
-      accel = VOID_TO_LISP (entries->accel);
+      accel = GET_LISP_FROM_VOID (entries->accel);
       if (entries->name && !NILP (accel))
 	{
 	  if (event_matches_key_specifier_p (evee, accel))
@@ -1265,7 +1265,7 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
       while (val)
 	{
 	  Lisp_Object accel;
-	  accel = VOID_TO_LISP (val->accel);
+	  accel = GET_LISP_FROM_VOID (val->accel);
 	  if (val->name && !NILP (accel))
 	    {
 	      Fsetcar (last, accel);

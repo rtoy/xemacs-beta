@@ -320,7 +320,7 @@ __torn_off_sir(GtkMenuItem *UNUSED (item), gpointer user_data)
       Lisp_Object menu_desc = Qnil;
       GtkWidget *old_submenu = GTK_MENU_ITEM (menu_item)->submenu;
 
-      menu_desc = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
+      menu_desc = GET_LISP_FROM_VOID (gtk_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
 
       /* GCPRO all of our very own */
       gcpro_popup_callbacks (id, menu_desc);
@@ -385,7 +385,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       return;
     }
 
-  desc = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_DESCR_TAG));
+  desc = GET_LISP_FROM_VOID (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_DESCR_TAG));
 
 #ifdef TEAR_OFF_MENUS
   /* Lets stick in a detacher just for giggles */
@@ -404,7 +404,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       Lisp_Object hook_fn;
       struct gcpro gcpro1, gcpro2;
 
-      hook_fn = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
+      hook_fn = GET_LISP_FROM_VOID (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
 
       GCPRO2 (desc, hook_fn);
 
@@ -646,7 +646,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 #if 0
 	      if ( SYMBOLP (val)
 		   || CHARP (val))
-		wv->accel = LISP_TO_VOID (val);
+		wv->accel = STORE_LISP_IN_VOID (val);
 	      else
 		invalid_argument ("bad keyboard accelerator", val);
 #endif
@@ -659,8 +659,8 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	    invalid_argument ("unknown menu cascade keyword", cascade);
 	}
 
-      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, LISP_TO_VOID (desc));
-      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FILTER_TAG, LISP_TO_VOID (hook_fn));
+      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, STORE_LISP_IN_VOID (desc));
+      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FILTER_TAG, STORE_LISP_IN_VOID (hook_fn));
 
       if ((!NILP (config_tag)
 	   && NILP (Fmemq (config_tag, Vmenubar_configuration)))
@@ -741,7 +741,7 @@ __generic_button_callback (GtkMenuItem *item, gpointer user_data)
 
   channel = wrap_frame (gtk_widget_to_frame (GTK_WIDGET (item)));
 
-  callback = VOID_TO_LISP (user_data);
+  callback = GET_LISP_FROM_VOID (user_data);
 
   get_gui_callback (callback, &function, &data);
 
@@ -1007,11 +1007,11 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
       gtk_signal_connect (GTK_OBJECT (widget), "activate-item",
 			  GTK_SIGNAL_FUNC (__generic_button_callback),
-			  LISP_TO_VOID (callback));
+			  STORE_LISP_IN_VOID (callback));
 
       gtk_signal_connect (GTK_OBJECT (widget), "activate",
 			  GTK_SIGNAL_FUNC (__generic_button_callback),
-			  LISP_TO_VOID (callback));
+			  STORE_LISP_IN_VOID (callback));
 
       /* Now that all the information about the menu item is know, set the
 	 remaining properties.

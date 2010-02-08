@@ -1944,7 +1944,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       {
 	/* We're in trouble if this happens! */
 	printing_major_badness (printcharfun, "ILLEGAL LISP OBJECT TAG TYPE",
-				XTYPE (obj), LISP_TO_VOID (obj), 0,
+				XTYPE (obj), STORE_LISP_IN_VOID (obj), 0,
 				BADNESS_INTEGER_OBJECT);
 	break;
       }

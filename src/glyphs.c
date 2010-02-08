@@ -660,7 +660,7 @@ check_instance_cache_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
   if (!NILP (value))
     {
       Lisp_Object window;
-      window = VOID_TO_LISP (flag_closure);
+      window = GET_LISP_FROM_VOID (flag_closure);
       assert (EQ (XIMAGE_INSTANCE_DOMAIN (value), window));
     }
 
@@ -676,7 +676,7 @@ check_window_subwindow_cache (struct window* w)
   assert (!NILP (w->subwindow_instance_cache));
   elisp_maphash (check_instance_cache_mapper,
 		 w->subwindow_instance_cache,
-		 LISP_TO_VOID (window));
+		 STORE_LISP_IN_VOID (window));
 }
 
 void

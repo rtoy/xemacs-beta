@@ -527,8 +527,8 @@ update_face_inheritance_mapper (const void *hash_key, void *hash_contents,
   struct face_inheritance_closure *fcl =
     (struct face_inheritance_closure *) face_inheritance_closure;
 
-  key = VOID_TO_LISP (hash_key);
-  contents = VOID_TO_LISP (hash_contents);
+  key = GET_LISP_FROM_VOID (hash_key);
+  contents = GET_LISP_FROM_VOID (hash_contents);
 
   if (EQ (fcl->property, Qfont))
     {

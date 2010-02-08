@@ -276,7 +276,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 			   
   FRAME_MSWINDOWS_HANDLE (f) = hwnd;
 
-  qxeSetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID (frame_obj));
+  qxeSetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)STORE_LISP_IN_VOID (frame_obj));
   FRAME_MSWINDOWS_DC (f) = GetDC (hwnd);
   SetTextAlign (FRAME_MSWINDOWS_DC (f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
 
@@ -556,7 +556,7 @@ mswindows_get_mouse_position (struct device *UNUSED (d), Lisp_Object *frame,
 
   /* Yippie! */
   ScreenToClient (hwnd, &pt);
-  *frame = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
+  *frame = GET_LISP_FROM_VOID ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
   *x = pt.x;
   *y = pt.y;
   return 1;
@@ -824,7 +824,7 @@ mswindows_get_frame_parent (struct frame *f)
   if (hwnd)
     {
       Lisp_Object parent;
-      parent = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
+      parent = GET_LISP_FROM_VOID ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
       assert (FRAME_MSWINDOWS_P (XFRAME (parent)));
       return parent;
     }
