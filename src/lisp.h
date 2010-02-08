@@ -1596,6 +1596,18 @@ enum munge_me_out_the_door
   MUNGE_ME_KEY_TRANSLATION
 };
 
+/* The various stages of font instantiation; initial means "find a font for
+   CHARSET that matches the charset's registries" and final means "find a
+   font for CHARSET that matches iso10646-1, since we haven't found a font
+   that matches its registry."
+*/
+enum font_specifier_matchspec_stages
+{
+  STAGE_INITIAL,
+  STAGE_FINAL,
+  NUM_MATCHSPEC_STAGES,
+};
+
 /* ------------------------------- */
 /*                misc             */
 /* ------------------------------- */

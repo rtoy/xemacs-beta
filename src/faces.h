@@ -393,7 +393,7 @@ Lisp_Object face_property_matching_instance
 #define FACE_FONT(face, domain, charset)				\
   face_property_matching_instance (face, Qfont, charset, domain,	\
 				   ERROR_ME_DEBUG_WARN, 0, Qzero,	\
-				   initial)
+				   STAGE_INITIAL)
 #define FACE_DISPLAY_TABLE(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\
