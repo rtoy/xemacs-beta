@@ -1,6 +1,6 @@
 /* Specifier implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "chartab.h"
 #include "device-impl.h"
+#include "elhash.h"
 #include "frame.h"
 #include "glyphs.h"
 #include "opaque.h"
@@ -47,6 +48,14 @@ Lisp_Object Qremove_locale, Qremove_locale_type;
 Lisp_Object Qconsole_type, Qdevice_class;
 
 static Lisp_Object Vuser_defined_tags;
+/* This is a hash table mapping charsets to "tag lists".  A tag list here
+   is an assoc list mapping charset tags to size-two vectors (one for the
+   initial stage, one for the final stage) containing t or nil, indicating
+   whether the charset tag matches the charset for the given stage.  These
+   values are determined at the time a charset tag is defined by calling
+   the charset predicate on all the existing charsets, and at the time a
+   charset is defined by calling the predicate on all existing charset
+   tags. */
 static Lisp_Object Vcharset_tag_lists;
 
 typedef struct specifier_type_entry specifier_type_entry;
@@ -982,46 +991,42 @@ device_matches_specifier_tag_set_p (Lisp_Object device, Lisp_Object tag_set)
 }
 
 static int
-charset_matches_specifier_tag_set_p (Lisp_Object USED_IF_MULE (charset),
-				     Lisp_Object tag_set,
+charset_matches_specifier_tag_set_p (Lisp_Object charset, Lisp_Object tag_set,
 				     enum font_specifier_matchspec_stages
 				     stage)
 {
   Lisp_Object rest;
   int res = 0;
 
-  assert(stage != impossible);
+  assert(stage < NUM_MATCHSPEC_STAGES);
 
   LIST_LOOP (rest, tag_set)
     {
       Lisp_Object tag = XCAR (rest);
       Lisp_Object assoc;
+      Lisp_Object tag_list = Fgethash (charset, Vcharset_tag_lists, Qnil);
 
       /* In the event that, during the creation of a charset, no specifier
 	 tags exist for which CHARSET-PREDICATE has been specified, then
 	 that charset's entry in Vcharset_tag_lists will be nil, and this
 	 charset shouldn't match. */
 
-      if (NILP (XVECTOR_DATA(Vcharset_tag_lists)[XCHARSET_LEADING_BYTE(charset)
-						 - MIN_LEADING_BYTE]))
+      if (NILP (tag_list))
 	{
 	  return 0;
 	}
 
       /* Now, find out what the pre-calculated value is. */
-      assoc = assq_no_quit(tag,
-			   XVECTOR_DATA(Vcharset_tag_lists)
-			   [XCHARSET_LEADING_BYTE(charset)
-			    - MIN_LEADING_BYTE]);
+      assoc = assq_no_quit (tag, tag_list);
 
-      if (!(NILP(assoc)) && !(NILP(XCDR(assoc))))
+      if (!(NILP (assoc)))
 	{
-	  assert(VECTORP(XCDR(assoc)));
+	  assert (VECTORP (XCDR (assoc)));
 
 	  /* In the event that a tag specifies a charset, then the specifier
 	     must match for (this stage and this charset) for all
 	     charset-specifying tags.  */
-	  if (NILP(XVECTOR_DATA(XCDR(assoc))[stage]))
+	  if (NILP (XVECTOR_DATA (XCDR (assoc))[stage]))
 	    {
 	      /* It doesn't match for this tag, even though the tag
 		 specifies a charset. Return 0. */
@@ -1059,13 +1064,65 @@ specifies which devices match it.)
   return device_matches_specifier_tag_set_p (device, tag_set) ? Qt : Qnil;
 }
 
+/* Call CHARSET_PREDICATE on CHARSET, evaluating it at both stages (initial
+   and final) and returning a size-two vector of the results. */
+
+static Lisp_Object
+call_charset_predicate (Lisp_Object charset_predicate, Lisp_Object charset)
+{
+  struct gcpro gcpro1;
+  Lisp_Object charpres = make_vector (NUM_MATCHSPEC_STAGES, Qnil);
+  GCPRO1 (charpres);
+  int max_args = XINT (Ffunction_max_args (charset_predicate));
+    
+
+#define DEFINE_SPECIFIER_TAG_FROB(stage, enumstage)		\
+  do {								\
+    if (max_args > 1)						\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] =			\
+	  call2_trapping_problems				\
+	  ("Error during specifier tag charset predicate,"	\
+	   " stage " #stage, charset_predicate,			\
+	   charset, Q##stage, 0);				\
+      }								\
+    else							\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] =			\
+	  call1_trapping_problems				\
+	  ("Error during specifier tag charset predicate,"	\
+	   " stage " #stage, charset_predicate,			\
+	   charset, 0);						\
+      }								\
+								\
+    if (UNBOUNDP (XVECTOR_DATA (charpres)[enumstage]))		\
+      {								\
+	XVECTOR_DATA (charpres)[enumstage] = Qnil;		\
+      }								\
+    else if (!NILP (XVECTOR_DATA (charpres)[enumstage]))	\
+      {								\
+	/* Don't want refs to random other objects.  */		\
+	XVECTOR_DATA (charpres)[enumstage] = Qt;		\
+      }								\
+  } while (0)
+
+  DEFINE_SPECIFIER_TAG_FROB (initial, STAGE_INITIAL);
+  DEFINE_SPECIFIER_TAG_FROB (final, STAGE_FINAL);
+
+#undef DEFINE_SPECIFIER_TAG_FROB
+
+  UNGCPRO;
+
+  return charpres;
+}
+
 Lisp_Object
-define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
-		     Lisp_Object charset_predicate)
+define_specifier_tag (Lisp_Object tag, Lisp_Object device_predicate,
+		      Lisp_Object charset_predicate)
 {
   Lisp_Object assoc = assq_no_quit (tag, Vuser_defined_tags),
-    concons, devcons, charpres = Qnil;
-  int recompute_devices = 0, recompute_charsets = 0, i, max_args = -1;
+    concons, devcons;
+  int recompute_devices = 0, recompute_charsets = 0;
 
   if (NILP (assoc))
     {
@@ -1081,31 +1138,14 @@ define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
 	  DEVICE_USER_DEFINED_TAGS (d) =
 	    Fcons (Fcons (tag, Qt), DEVICE_USER_DEFINED_TAGS (d));
 	}
-
-      if (!NILP (charset_predicate))
-	{
-	  max_args = XINT(Ffunction_max_args(charset_predicate));
-	  if (max_args < 1)
-	    {
-	      invalid_argument
-		("Charset predicate must be able to take an argument", tag);
-	    }
-	}
     }
   else if (!NILP (device_predicate) && !NILP (XCADR (assoc)))
     {
       recompute_devices = 1;
-      XCDR (assoc) = list2(device_predicate, charset_predicate);
+      XCDR (assoc) = list2 (device_predicate, charset_predicate);
     }
-  else if (!NILP (charset_predicate) || !NILP(XCADDR (assoc)))
+  else if (!NILP (charset_predicate) || !NILP (XCADDR (assoc)))
     {
-      max_args = XINT(Ffunction_max_args(charset_predicate));
-      if (max_args < 1)
-	{
-	  invalid_argument
-	    ("Charset predicate must be able to take an argument", tag);
-	}
-
       /* If there exists a charset_predicate for the tag currently (even if
 	 the new charset_predicate is nil), or if we're adding one, we need
 	 to recompute.  This contrasts with the device predicates, where we
@@ -1113,7 +1153,7 @@ define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
 	 both nil.  */
 
       recompute_charsets = 1;
-      XCDR (assoc) = list2(device_predicate, charset_predicate);
+      XCDR (assoc) = list2 (device_predicate, charset_predicate);
     }
 
   /* Recompute the tag values for all devices and charsets, if necessary. In
@@ -1141,80 +1181,28 @@ define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
 
   if (recompute_charsets)
     {
-      if (NILP(charset_predicate))
+
+      LIST_LOOP_2 (charset_name, Fcharset_list ())
 	{
-	  charpres = Qnil;
-	}
+	  Lisp_Object charset = Fget_charset (charset_name);
+	  Lisp_Object tag_list = Fgethash (charset, Vcharset_tag_lists, Qnil);
+	  Lisp_Object charpres;
 
-      for (i = 0; i < NUM_LEADING_BYTES; ++i)
-	{
-	  if (NILP(charset_by_leading_byte(MIN_LEADING_BYTE + i)))
+	  if (NILP (charset_predicate))
+	    continue;
+
+	  charpres = call_charset_predicate (charset_predicate, charset);
+
+	  assoc = assq_no_quit (tag, tag_list);
+	  if (!NILP (assoc))
 	    {
-	      continue;
-	    }
-
-	  assoc = assq_no_quit (tag,
-				XVECTOR_DATA(Vcharset_tag_lists)[i]);
-
-	  if (!NILP(charset_predicate))
-	    {
-	      struct gcpro gcpro1;
-	      charpres = make_vector(impossible, Qnil);
-	      GCPRO1 (charpres);
-
-	      /* If you want to extend the number of stages available, here
-		 in setup_charset_initial_specifier_tags, and in specifier.h
-		 is where you want to go. */
-
-#define DEFINE_SPECIFIER_TAG_FROB(stage)	do {			\
-		if (max_args > 1)					\
-		  {							\
-		    XVECTOR_DATA(charpres)[stage] =			\
-		      call2_trapping_problems				\
-		      ("Error during specifier tag charset predicate,"	\
-		       " stage " #stage, charset_predicate,		\
-		       charset_by_leading_byte(MIN_LEADING_BYTE + i),	\
-		       Q##stage, 0);					\
-		  }							\
-		else							\
-		  {							\
-		    XVECTOR_DATA(charpres)[stage] =			\
-		      call1_trapping_problems				\
-		      ("Error during specifier tag charset predicate,"	\
-		       " stage " #stage, charset_predicate,		\
-		       charset_by_leading_byte(MIN_LEADING_BYTE + i),	\
-		       0);						\
-		  }							\
-									\
-		if (UNBOUNDP(XVECTOR_DATA(charpres)[stage]))		\
-		  {							\
-		    XVECTOR_DATA(charpres)[stage] = Qnil;		\
-		  }							\
-		else if (!NILP(XVECTOR_DATA(charpres)[stage]))		\
-		  {							\
-		    /* Don't want refs to random other objects.  */	\
-		    XVECTOR_DATA(charpres)[stage] = Qt;			\
-		  }							\
-	      } while (0)
-
-	      DEFINE_SPECIFIER_TAG_FROB (initial);
-	      DEFINE_SPECIFIER_TAG_FROB (final);
-
-#undef DEFINE_SPECIFIER_TAG_FROB
-
-	      UNGCPRO;
-	    }
-
-	  if (!NILP(assoc))
-	    {
-	      assert(CONSP(assoc));
+	      assert (CONSP (assoc));
 	      XCDR (assoc) = charpres;
 	    }
 	  else
 	    {
-	      XVECTOR_DATA(Vcharset_tag_lists)[i]
-		= Fcons(Fcons(tag, charpres),
-			XVECTOR_DATA (Vcharset_tag_lists)[i]);
+	      Fputhash (charset, Fcons (Fcons (tag, charpres), tag_list),
+			Vcharset_tag_lists);
 	    }
 	}
     }
@@ -1259,8 +1247,6 @@ change.
 */
        (tag, device_predicate, charset_predicate))
 {
-  int max_args;
-
   CHECK_SYMBOL (tag);
   if (valid_device_class_p (tag) ||
       valid_console_type_p (tag) ||
@@ -1273,8 +1259,10 @@ change.
 
   if (!NILP (charset_predicate))
     {
-      max_args = XINT(Ffunction_max_args(charset_predicate));
-      if (max_args != 1)
+      Lisp_Object min_args = Ffunction_min_args (charset_predicate);
+      Lisp_Object max_args = Ffunction_max_args (charset_predicate);
+      if (!(INTP (min_args) && XINT (min_args) == 1 &&
+	    INTP (max_args) && XINT (max_args) == 1))
 	{
 	  /* We only allow the stage argument to be specifed from C.  */
 	  invalid_change ("Charset predicate must take one argument",
@@ -1333,47 +1321,19 @@ setup_charset_initial_specifier_tags (Lisp_Object charset)
 
   LIST_LOOP (rest, Vuser_defined_tags)
     {
-      tag = XCAR(XCAR(rest));
-      charset_predicate = XCADDR(XCAR (rest));
+      tag = XCAR (XCAR (rest));
+      charset_predicate = XCADDR (XCAR (rest));
 
-      if (NILP(charset_predicate))
+      if (NILP (charset_predicate))
 	{
 	  continue;
 	}
 
-      new_value = make_vector(impossible, Qnil);
-
-#define SETUP_CHARSET_TAGS_FROB(stage)		do {			\
-									\
-	XVECTOR_DATA(new_value)[stage] = call2_trapping_problems	\
-	  ("Error during specifier tag charset predicate,"		\
-	   " stage " #stage,						\
-	   charset_predicate, charset, Q##stage, 0);			\
-									\
-	if (UNBOUNDP(XVECTOR_DATA(new_value)[stage]))			\
-	  {								\
-	    XVECTOR_DATA(new_value)[stage] = Qnil;			\
-	  }								\
-	else if (!NILP(XVECTOR_DATA(new_value)[stage]))			\
-	  {								\
-	    /* Don't want random other objects hanging around. */	\
-	    XVECTOR_DATA(new_value)[stage] = Qt;			\
-	  }								\
-									\
-      } while (0)
-
-      SETUP_CHARSET_TAGS_FROB (initial);
-      SETUP_CHARSET_TAGS_FROB (final);
-      /* More later?  */
-
-#undef SETUP_CHARSET_TAGS_FROB
-
-      charset_tag_list = Fcons(Fcons(tag, new_value), charset_tag_list);
+      new_value = call_charset_predicate (charset_predicate, charset);
+      charset_tag_list = Fcons (Fcons (tag, new_value), charset_tag_list);
     }
 
-  XVECTOR_DATA
-    (Vcharset_tag_lists)[XCHARSET_LEADING_BYTE(charset) - MIN_LEADING_BYTE]
-    = charset_tag_list;
+  Fputhash (charset, charset_tag_list, Vcharset_tag_lists);
 }
 
 /* VM calls this, in vm-multiple-frames-possible-p, in the event that you're
@@ -2812,7 +2772,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
   Lisp_Object device, charset = Qnil, rest;
   int count = specpdl_depth (), respected_charsets = 0;
   struct gcpro gcpro1, gcpro2;
-  enum font_specifier_matchspec_stages stage = initial;
+  enum font_specifier_matchspec_stages stage = STAGE_INITIAL;
 
   GCPRO2 (specifier, inst_list);
 
@@ -2829,9 +2789,9 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 #ifdef MULE
   /* #### FIXME Does this font-specific stuff need to be here and not in
      the font-specifier-specific code? --ben */
-  if (CONSP(matchspec) && (CHARSETP(Ffind_charset(XCAR(matchspec)))))
+  if (CONSP (matchspec) && (CHARSETP (Ffind_charset (XCAR (matchspec)))))
     {
-      charset = Ffind_charset(XCAR(matchspec));
+      charset = Ffind_charset (XCAR (matchspec));
 
 #ifdef DEBUG_XEMACS
       /* This is mostly to have somewhere to set debug breakpoints. */
@@ -2841,16 +2801,17 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 	}
 #endif /* DEBUG_XEMACS */
 
-      if (!NILP(XCDR(matchspec)))
+      if (!NILP (XCDR (matchspec)))
 	{
 
-#define FROB(new_stage) if (EQ(Q##new_stage, XCDR(matchspec)))	\
-	    {							\
-	      stage = new_stage;				\
+#define FROB(new_stage, enumstage)			\
+          if (EQ (Q##new_stage, XCDR (matchspec)))	\
+	    {						\
+	      stage = enumstage;			\
 	    }
 
-	  FROB(initial)
-	  else FROB(final)
+	  FROB (initial, STAGE_INITIAL)
+	  else FROB (final, STAGE_FINAL)
 	  else assert(0);
 #undef FROB
 
@@ -3923,6 +3884,7 @@ vars_of_specifier (void)
   Vunlock_ghost_specifiers = Qnil;
   staticpro (&Vunlock_ghost_specifiers);
 
-  Vcharset_tag_lists = make_vector(NUM_LEADING_BYTES, Qnil);
+  Vcharset_tag_lists =
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   staticpro (&Vcharset_tag_lists);
 }

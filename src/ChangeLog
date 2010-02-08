@@ -1,5 +1,59 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* faces.c:
+	* faces.c (face_property_matching_instance):
+	* faces.c (ensure_face_cachel_contains_charset):
+	* faces.h (FACE_FONT):
+	* lisp.h:
+	* lisp.h (enum font_specifier_matchspec_stages):
+	* objects-msw.c:
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-msw.c (mswindows_find_charset_font):
+	* objects-tty.c:
+	* objects-tty.c (tty_font_spec_matches_charset):
+	* objects-tty.c (tty_find_charset_font):
+	* objects-xlike-inc.c:
+	* objects-xlike-inc.c (XFUN):
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* objects.c:
+	* objects.c (font_instantiate):
+	* objects.c (FROB):
+	* specifier.c:
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	* specifier.c (call_charset_predicate):
+	* specifier.c (define_specifier_tag):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (setup_charset_initial_specifier_tags):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (FROB):
+	* specifier.c (vars_of_specifier):
+	* specifier.h:
+	Rename the specifier-font-matching stages in preparation for
+	eliminating shadowed warnings, some other related fixes from
+	ben-unicode-internal.
+
+	1. Rename raw enums:
+	   initial	 -> STAGE_INITIAL
+	   final	 -> STAGE_FINAL
+	   impossible	 -> NUM_MATCHSPEC_STAGES
+	2. Move `enum font_specifier_matchspec_stages' from
+	   specifier.h to lisp.h.
+	3. Whitespace changes to match coding standards.
+	4. Eliminate unused second argument STAGE in charset predicates
+	   that don't use it -- the code that calls the charset predicates
+	   is now smart enough to supply the right number of arguments
+	   automatically.
+	5. Add some long(ish) comments and authorial notices, esp. in
+	   objects.c.
+	6. In specifier.c, change Vcharset_tag_lists from a vector over
+	   leading bytes to a hash table over charsets.  This change is
+	   unnecessary currently but doesn't hurt and will be required
+	   when we merge in Unicode-internal.
+	7. In specifier.c, extract out the code that calls charset predicates
+	   into a function call_charset_predicate().
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c:
 	* emacs.c (assert_failed):
 	Fix comments about when inhibit_non_essential_printing_operations

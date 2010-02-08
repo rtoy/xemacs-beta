@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -589,16 +589,20 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 
   if (!NILP (charset))
     matchspec = noseeum_cons (charset,
-			      stage == initial ? Qinitial : Qfinal);
+			      stage == STAGE_INITIAL ? Qinitial : Qfinal);
 
   GCPRO1 (matchspec);
+  /* This call to specifier_instance_no_quit(), will end up calling
+     font_instantiate() if the property in a question is a font (currently,
+     this means EQ (property, Qfont), because only the face property named
+     `font' contains a font object).  See the comments there. */
   retval = specifier_instance_no_quit (Fget (face, property, Qnil), matchspec,
 				       domain, errb, no_fallback, depth);
   UNGCPRO;
   if (CONSP (matchspec))
     free_cons (matchspec);
 
-  if (UNBOUNDP (retval) && !no_fallback && final == stage)
+  if (UNBOUNDP (retval) && !no_fallback && STAGE_FINAL == stage)
     {
       if (EQ (property, Qfont))
 	{
@@ -1159,7 +1163,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       /* ERROR_ME_DEBUG_WARN is
 						  fine here.  */
 					       ERROR_ME_DEBUG_WARN, 1, Qzero,
-					       initial);
+					       STAGE_INITIAL);
     DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
 		"result was something %s\n",
 		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
@@ -1181,15 +1185,15 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
 					       Qzero,
-					       initial);
+					       STAGE_INITIAL);
 
-    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
-		"allow fallback, result was something %s\n",
-		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
-		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
-		UNBOUNDP(new_val) ? "not bound" : "bound");
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
 
-    if (!UNBOUNDP(new_val))
+    if (!UNBOUNDP (new_val))
       {
 	break;
       }
@@ -1200,7 +1204,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 1,
 					       Qzero,
-					       final);
+					       STAGE_FINAL);
 
     DEBUG_FACES("just called f_p_m_i on face %s, charset %s, final, "
 		"result was something %s\n",
@@ -1208,7 +1212,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
 		UNBOUNDP(new_val) ? "not bound" : "bound");
     /* Tell X11 redisplay that it should translate to iso10646-1. */
-    if (!UNBOUNDP(new_val))
+    if (!UNBOUNDP (new_val))
       {
 	final_stage = 1;
 	break;
@@ -1222,13 +1226,13 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
 					       Qzero,
-					       final);
+					       STAGE_FINAL);
 
-    DEBUG_FACES("just called f_p_m_i on face %s, charset %s, initial, "
-		"allow fallback, result was something %s\n",
-		XSTRING_DATA(XSYMBOL_NAME(XFACE(cachel->face)->name)),
-		XSTRING_DATA(XSYMBOL_NAME(XCHARSET_NAME(charset))),
-		UNBOUNDP(new_val) ? "not bound" : "bound");
+    DEBUG_FACES ("just called f_p_m_i on face %s, charset %s, initial, "
+		 "allow fallback, result was something %s\n",
+		 XSTRING_DATA (XSYMBOL_NAME (XFACE (cachel->face)->name)),
+		 XSTRING_DATA (XSYMBOL_NAME (XCHARSET_NAME (charset))),
+		 UNBOUNDP (new_val) ? "not bound" : "bound");
     if (!UNBOUNDP(new_val))
       {
 	/* Tell X11 redisplay that it should translate to iso10646-1. */
@@ -2029,30 +2033,30 @@ Lisp_Object Qone_dimensional, Qtwo_dimensional, Qx_coverage_instantiator;
 
 DEFUN ("specifier-tag-one-dimensional-p",
        Fspecifier_tag_one_dimensional_p,
-       2, 2, 0, /*
+       1, 1, 0, /*
 Return non-nil if (charset-dimension CHARSET) is 1.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this yourself.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
-  CHECK_CHARSET(charset);
-  return (1 == XCHARSET_DIMENSION(charset)) ? Qt : Qnil;
+  CHECK_CHARSET (charset);
+  return (1 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
 }
 
 DEFUN ("specifier-tag-two-dimensional-p",
        Fspecifier_tag_two_dimensional_p,
-       2, 2, 0, /*
+       1, 1, 0, /*
 Return non-nil if (charset-dimension CHARSET) is 2.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this yourself.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
-  CHECK_CHARSET(charset);
-  return (2 == XCHARSET_DIMENSION(charset)) ? Qt : Qnil;
+  CHECK_CHARSET (charset);
+  return (2 == XCHARSET_DIMENSION (charset)) ? Qt : Qnil;
 }
 
 DEFUN ("specifier-tag-final-stage-p",
@@ -2063,9 +2067,9 @@ Return non-nil if STAGE is 'final.
 Used by the X11 platform font code for giving fallbacks; see
 `define-specifier-tag'.  You shouldn't ever need to call this.
 */
-       (UNUSED(charset), stage))
+       (UNUSED (charset), stage))
 {
-  return EQ(stage, Qfinal) ? Qt : Qnil;
+  return EQ (stage, Qfinal) ? Qt : Qnil;
 }
 
 DEFUN ("specifier-tag-initial-stage-p",
