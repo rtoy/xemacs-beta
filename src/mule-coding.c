@@ -1119,7 +1119,7 @@ struct iso2022_coding_system
 
   /* If true, a designation escape sequence needs to be sent on output
      for the charset in G[0-3] before that charset is used. */
-  unsigned char force_charset_on_output[4];
+  Boolbyte force_charset_on_output[4];
 
   charset_conversion_spec_dynarr *input_conv;
   charset_conversion_spec_dynarr *output_conv;
@@ -1225,15 +1225,12 @@ struct iso2022_coding_stream
   /* Whether we need to explicitly designate the charset in the
      G? register before using it.  It is initialized from the
      array FORCE_CHARSET_ON_OUTPUT in CODESYS. */
-  unsigned char force_charset_on_output[4];
+  Boolbyte force_charset_on_output[4];
 
-  /* List of invalid chars that we attempted to output */
-  Lisp_Object warned_chars;
-
-  /* Unicode precedence used for this conversion.  We put in this list only
-     charsets that can be encoded using ISO2022 and preferring currently
-     designated charsets.  @@#### We should be still smarter, making use of
-     the precedence list of the buffer we're coming from. */
+  /* Unicode precedence used for this conversion.  This lists only the
+     charsets that are currently designated, and is changed when we
+     designate a new charset. @@#### It also lists ASCII and Control-1.
+     Why? */
   Lisp_Object unicode_precedence;
 
   /* Used for handling UTF-8. */
@@ -1709,7 +1706,6 @@ reset_iso2022_decode (Lisp_Object coding_system,
       Dynarr_reset (data->composite_chars);
     }
 #endif
-  data->warned_chars = Qnil;
   data->unicode_precedence = Qnil;
 }
 
@@ -1763,7 +1759,6 @@ reset_iso2022_encode (Lisp_Object coding_system,
 	XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (coding_system, i);
     }
   data->register_right = 1;
-  data->warned_chars = Qnil;
   data->unicode_precedence = Qnil;
   reset_iso2022_unicode_precedence (data);
 }
@@ -1784,7 +1779,6 @@ iso2022_mark_coding_stream (struct coding_stream *str)
 {
   int i;
   struct iso2022_coding_stream *data = CODING_STREAM_TYPE_DATA (str, iso2022);
-  mark_object (data->warned_chars);
   for (i = 0; i < 4; i++)
     mark_object (data->charset[i]);
   mark_object (data->unicode_precedence);
@@ -2877,14 +2871,9 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    (str->partial, current_buffer, charset_iso2022_compatible,
 		     &charset, &c1, &c2, CONVERR_FAIL);
 		}
-	      if (NILP (charset))
-		{
-		  /* Then try any charset */
-		  /* @@#### current_buffer dependency */
-		  buffer_itext_to_charset_codepoint
-		    (str->partial, current_buffer,
-		     &charset, &c1, &c2, CONVERR_FAIL);
-		}
+	      /* No point in trying to find a non-ISO2022-compatible
+		 charset -- at this point we will encode in UTF-8
+		 anyway */
 
 	      /* ---------------------------------------------------- */
 	      /* 1. Are we processing control-1?                      */
@@ -2942,12 +2931,16 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      /* 3. Do we need to represent as UTF-8?                 */
 	      /* ---------------------------------------------------- */
 
-	      /* If no final byte, we must encode as UTF-8 */
-	      else if (!NILP (charset) && !XCHARSET_FINAL (charset))
+	      /* If no ISO2022-compatible charset found, we must encode as
+		 UTF-8 */
+	      else if (NILP (charset) ||
+		       /* This happens when non-Unicode-internal and the
+			  character is stored in the buffer using an
+			  encodable but non-ISO2022-compatible charset,
+			  e.g. jit-ucs-charset-0 */
+		       (!NILP (charset) &&
+			!charset_iso2022_compatible (charset)))
 		{
-		  assert (!EQ (charset, Vcharset_control_1)
-			  && !EQ (charset, Vcharset_composite));
-
 		  /* If the character set is to be encoded as UTF-8, the
 		     escape is always the same. */
 		  if (!(flags & ISO_STATE_UTF_8)) 
@@ -2978,25 +2971,6 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		     that the charset is in the register. */
 
 		  int reg;
-
-		  if (NILP (charset))
-		    {
-		      Lisp_Object chr =
-			make_char (itext_ichar (str->partial));
-		      if (NILP (memq_no_quit (chr, data->warned_chars)))
-			{
-			  warn_when_safe_lispobj
-			    (intern ("encoding"),
-			     Qwarning,
-			     emacs_sprintf_string_lisp
-			     ("Unable to encode character #x`%x'",
-			      Qnil, 1, chr));
-			  data->warned_chars =
-			    Fcons (chr, data->warned_chars);
-			}
-		      charset = Vcharset_ascii;
-		      c2 = CANT_CONVERT_CHAR_WHEN_ENCODING;
-		    }
 
 		  /* End the UTF-8 state. */
 		  if (flags & ISO_STATE_UTF_8)
@@ -3262,7 +3236,7 @@ iso2022_putprop (Lisp_Object codesys,
 		 Lisp_Object key,
 		 Lisp_Object value)
 {
- #define FROB_INITIAL_CHARSET(charset_num)				\
+#define FROB_INITIAL_CHARSET(charset_num)				\
   XCODING_SYSTEM_ISO2022_INITIAL_CHARSET (codesys, charset_num) =	\
     ((EQ (value, Qt) || EQ (value, Qnil)) ? value :			\
      get_valid_iso2022_charset (value))
