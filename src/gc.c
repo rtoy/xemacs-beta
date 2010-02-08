@@ -1568,7 +1568,7 @@ gc_prepare (void)
 
   gc_in_progress = 1;
 #ifndef NEW_GC
-  inhibit_non_essential_conversion_operations = 1;
+  inhibit_non_essential_conversion_operations++;
 #endif /* not NEW_GC */
 
 #if MAX_SAVE_STACK > 0
@@ -1789,7 +1789,7 @@ gc_finish (void)
   recompute_need_to_garbage_collect ();
 
 #ifndef NEW_GC
-  inhibit_non_essential_conversion_operations = 0;
+  inhibit_non_essential_conversion_operations--;
 #endif /* not NEW_GC */
   gc_in_progress = 0;
 
