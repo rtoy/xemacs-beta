@@ -1,10 +1,6 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (How Lisp Objects Are Represented in C):
-
-2010-02-08  Ben Wing  <ben@xemacs.org>
-
-	* internals/internals.texi (How Lisp Objects Are Represented in C):
 	* internals/internals.texi (Allocation of Objects in XEmacs Lisp):
 	DEC Alpha is hardly the only 64-bit processor any more.
 	Also, ERROR_CHECK_TYPECHECK is now ERROR_CHECK_TYPES.
