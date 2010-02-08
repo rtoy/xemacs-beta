@@ -675,6 +675,108 @@
 	name->charset-object hash table.
 	
 
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (Dynarr_verify, Dynarr_verify_mod):
+	If ERROR_CHECK_STRUCTURES is not defined, cast the argument in
+	these two macros; fixes the g++ build.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	Only call format-decode if it has a function binding.
+	(build_annotations): Only call format-annotate-function if it has
+	a function binding; incidentally only calling #'car-less-than-car
+	if *it* has a function binding.
+	(syms_of_fileio): #'car-less-than-car and #'cdr-less-than-cdr are
+	now in Lisp.
+
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* fns.c: Qlist, Qstring mistakenly declared twice.
+	* fns.c (mapcarX):
+	(void) cast needed to avoid compile problem.
+
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* emacs.c (make_argc_argv):
+	Cast to Wexttext * to fix compile error.
+	
+	* nt.c (init_user_info):
+	Cast to CIbyte * to fix compile error.
+	
+	* nt.c (open_unc_volume):
+	To fix compile error, store pathname into an Extbyte * variable
+	then write into the dest, casting to LPTSTR.
+
+	* emacs.c (debug_can_access_memory):
+	* fileio.c (Fmake_temp_name):
+	* fileio.c (a_write):
+	* fns.c:
+	* fns.c (check_losing_bytecode):
+	* fns.c (plists_differ):
+	* fns.c (internal_equal_trapping_problems):
+	* fns.c (base64_value_to_char):
+	* fns.c (base64_conversion_error):
+	* fns.c (STORE_BYTE):
+	* fns.c (vars_of_fns):
+	* lisp.h:
+	* nt.c (init_user_info):
+	* nt.c (mswindows_readdir):
+	* nt.c (mswindows_executable_type):
+	Replace raw `char *' or `unsigned char *' with characterized type --
+	Rawbyte, Binbyte, Boolbyte, Ibyte or Ascbyte.  This should fix at
+	least one real bug -- in a_write(), the "speedy insert" code that
+	checks for an unchanged region declared the file data read in as
+	char[] but then compared the value to an Ichar.  Hence, any chars
+	in the range 128-255 would always appear changed -- in particular,
+	this algorithm would fail completely with binary data.
+	
+
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* fns.c (mapcarX):
+	C++ requires explicit cast to enum lrecord_type.
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* mule-wnnfns.c:
+	Convert file to utf-8.
+	
+2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (mapcarX):
+	Accept a new argument, indicating whether the function is being
+	called from #'some or #'every. Implement it.
+	Discard any multiple values where that is appropriate.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into):
+	Pass the new flag to mapcarX.
+	(Fsome, Fevery): Move these functions here from cl-extra.el;
+	implement them in terms of mapcarX.
+	(maplist): Discard multiple values where appropriate.
+
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in: Add undef for TRUST_NDBM_H_PROTOTYPES.
+	* database.c:
+	* database.c (struct):
+	Use TRUST_NDBM_H_PROTOTYPES to determine whether to include ndbm.h
+	or to specify our own prototypes, in place of CYGWIN_HEADERS (or
+	more generally, any random list of systems).
+	* depend: Regenerate.
+
+2010-02-05  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	Cast pointer when storing value to avoid problems because some
+	store vars are Extbyte * and some are LPTSTR.
+
+2010-02-05  Jerry James  <james@xemacs.org>
+
+	* s/sco7.h: Add copyright and license header with the permission of
+	Ron Record, the author.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* depend:
@@ -1924,6 +2026,51 @@
 	pattern contains repeated Ibytes and the corresponding character
 	has case information (or, equivalently, if one of its case
 	equivalents would contain repeated Ibytes).
+
+2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'mapcar*, #'mapcan, #'mapc, #'map, #'mapl, #'mapcon to C;
+	extend #'mapvector, #'mapconcat, #'mapcar to support more
+	SEQUENCES; have them all error with circular lists.
+
+	* fns.c (Fsubseq): Call CHECK_SEQUENCE here; Flength can return
+	from the debugger if it errors with a non-sequence, leading to a
+	crash in Fsubseq if sequence really is *not* a sequence.
+	(mapcarX): Rename mapcar1 to mapcarX; rework it comprehensively to
+	take an optional lisp output argument, and a varying number of
+	sequences.
+	Special-case a single list argument, as we used to, saving its
+	elements in the stack space for the results before calling
+	FUNCTION, so FUNCTION can corrupt the list all it
+	wants. dead_wrong_type_argument() in the other cases if we
+	encounter a non-cons where we expected a cons.
+	(Fmapconcat):
+	Accept further SEQUENCES after separator here. Special-case
+	the idiom (mapconcat 'identity SEQUENCE), don't even funcall.
+	(FmapcarX): Rename this from Fmapcar. Accept optional SEQUENCES.
+	(Fmapvector): Accept optional SEQUENCES.
+	(Fmapcan, Fmapc, Fmap): Move these here from cl-extra.el.
+	(Fmap_into): New function, as specified by Common Lisp.
+	(maplist): New function, the guts of the implementation of
+	Fmaplist and Fmapl. 
+	(Fmaplist, Fmapl, Fmapcon): Move these from cl-extra.el.
+	(syms_of_fns):
+	Add a few needed symbols here, for the type tests
+	used by #'map. Add the new subrs, with aliases for #'mapc-internal
+	and #'mapcar.
+
+	* general-slots.h: Declare Qcoerce here, now it's used in both
+	indent.c and fns.c
+	* indent.c (syms_of_indent): Qcoerce is gone from here.
+
+	* lisp.h: Add ARRAYP(), SEQUENCEP(), and the corresponding CHECK_*
+	macros. Declare Fbit_vector, Fstring, FmapcarX, now other files
+	need to use them.
+	* data.c (Farrayp, Fsequencep): Use ARRAYP and SEQUENCEP, just
+	added to lisp.h
+
+	* buffer.c (Fbuffer_list): Now Fmapcar has been renamed FmapcarX
+	and takes MANY arguments, update this function to reflect that.
 
 2010-01-28  Jerry James  <james@xemacs.org>
 

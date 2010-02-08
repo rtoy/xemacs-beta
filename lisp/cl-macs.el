@@ -3337,18 +3337,6 @@ surrounded by (block NAME ...)."
           (t
            form))))
 
-;; XEmacs change, the GNU mapc doesn't accept the Common Lisp args, so this
-;; change isn't helpful.
-(define-compiler-macro mapc (&whole form cl-func cl-seq &rest cl-rest)
-  (if cl-rest
-      form
-    (cons 'mapc-internal (cdr form))))
-
-(define-compiler-macro mapcar* (&whole form cl-func cl-x &rest cl-rest)
-  (if cl-rest
-      form
-    (cons 'mapcar (cdr form))))
-
 ;; XEmacs; it's perfectly reasonable, and often much clearer to those
 ;; reading the code, to call regexp-quote on a constant string, which is
 ;; something we can optimise here easily.
@@ -3557,28 +3545,11 @@ the byte optimizer in those cases."
 ;;	  ;; byte-optimize.el).
 ;;	  (t form)))))
 
-(define-compiler-macro map (&whole form cl-type cl-func cl-seq
-                            &rest cl-rest)
-  "If CL-TYPE is a constant expression that we know how to handle, transform
-the call to `map' to a more efficient expression."
-  (cond
-   ;; The first two here rely on the compiler macros for mapc and mapcar*,
-   ;; to convert to mapc-internal and mapcar, where appropriate (that is, in
-   ;; the absence of cl-rest.)
-   ((null cl-type)
-    `(prog1 nil (mapc ,@(nthcdr 2 form))))
-   ((equal '(quote list) cl-type)
-    (cons 'mapcar* (nthcdr 2 form)))
-   ((or (equal '(quote vector) cl-type)
-        (equal '(quote array) cl-type))
-    (if cl-rest
-        `(vconcat (mapcar* ,@(nthcdr 2 form)))
-      (cons 'mapvector (nthcdr 2 form))))
-   ((equal '(quote string) cl-type)
-    `(concat (mapcar* ,@(nthcdr 2 form))))
-   ((equal '(quote bit-vector) cl-type)
-    `(bvconcat (mapcar* ,@(nthcdr 2 form))))
-   (t form)))
+(define-compiler-macro notany (&whole form &rest cl-rest)
+  (cons 'not (cons 'some (cdr cl-rest))))
+
+(define-compiler-macro notevery (&whole form &rest cl-rest)
+  (cons 'not (cons 'every (cdr cl-rest))))
 
 (mapc
  #'(lambda (y)
@@ -3607,7 +3578,7 @@ the call to `map' to a more efficient expression."
    (cddadr cdr cdadr) (cdddar cdr cddar) (cddddr cdr cdddr)))
 
 ;;; Things that are inline.
-(proclaim '(inline acons map concatenate notany notevery
+(proclaim '(inline acons map concatenate
 ;; XEmacs omission: gethash is builtin
 		   cl-set-elt revappend nreconc))
 

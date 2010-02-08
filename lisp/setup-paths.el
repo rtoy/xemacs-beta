@@ -142,17 +142,19 @@ ROOT-P is a function that tests whether a root is plausible."
 				       invocation-name
 				       root-p))
 	 (potential-installation-roots
-	  (union
-	   (and configure-exec-prefix-directory
-		(list (file-name-as-directory
-		       configure-exec-prefix-directory)))
-	   (and configure-prefix-directory
-		(list (file-name-as-directory
-		       configure-prefix-directory)))
+	  (delete-duplicates
+           (append
+            (and configure-exec-prefix-directory
+                 (list (file-name-as-directory
+                        configure-exec-prefix-directory)))
+            (and configure-prefix-directory
+                 (list (file-name-as-directory
+                        configure-prefix-directory))))
            :test #'equal))
 	 (installation-roots
 	  (remove-if-not root-p potential-installation-roots)))
-    (union invocation-roots installation-roots :test #'equal)))
+    (delete-duplicates (nconc invocation-roots installation-roots)
+                       :test #'equal)))
 
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy.
@@ -260,24 +262,26 @@ EARLY-PACKAGE-HIERARCHIES, LATE-PACKAGE-HIERARCHIES, and
 LAST-PACKAGE-HIERARCHIES are lists of package hierarchy roots,
 respectively."
   (let ((info-path-envval (getenv "INFOPATH")))
-    (union
-     (append
-      (let ((info-directory
-	     (paths-find-version-directory roots (list "info")
-					   nil nil
-					   configure-info-directory)))
-	(and info-directory
-	     (list info-directory)))
-      (packages-find-package-info-path early-package-hierarchies)
-      (packages-find-package-info-path late-package-hierarchies)
-      (packages-find-package-info-path last-package-hierarchies)
-      (and info-path-envval
-	   (paths-decode-directory-path info-path-envval 'drop-empties)))
-     (and (null info-path-envval)
-	  (union
-	   (paths-directories-which-exist configure-info-path)
-	   (paths-directories-which-exist paths-default-info-directories)
-           :test #'equal))
+    (delete-duplicates
+     (nconc
+      (append
+       (let ((info-directory
+              (paths-find-version-directory roots (list "info")
+                                            nil nil
+                                            configure-info-directory)))
+         (and info-directory
+              (list info-directory)))
+       (packages-find-package-info-path early-package-hierarchies)
+       (packages-find-package-info-path late-package-hierarchies)
+       (packages-find-package-info-path last-package-hierarchies)
+       (and info-path-envval
+            (paths-decode-directory-path info-path-envval 'drop-empties)))
+      (and (null info-path-envval)
+           (delete-duplicates
+            (nconc
+             (paths-directories-which-exist configure-info-path)
+             (paths-directories-which-exist paths-default-info-directories))
+           :test #'equal)))
      :test #'equal)))
 
 (defun paths-find-doc-directory (roots)

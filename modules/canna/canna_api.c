@@ -1,4 +1,4 @@
-/* CANNA interface -*- coding: euc-jp -*-
+/* CANNA interface -*- coding: utf-8 -*-
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -237,10 +237,10 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
     }
   else
     {
-      /* ³ÎÄê¤·¤¿Ê¸»úÎó (the confirmed string) */
+      /* ç¢ºå®šã—ãŸæ–‡å­—åˆ— (the confirmed string) */
       Vcanna_kakutei_string = make_euc_string (buf, len);
       val = make_int (len);
-      /* ³ÎÄê¤·¤¿Ê¸»úÎó¤ÎÆÉ¤ß¤Î¾ğÊó...
+      /* ç¢ºå®šã—ãŸæ–‡å­—åˆ—ã®èª­ã¿ã®æƒ…å ±...
 	 (info about the reading of the confirmed string) */
       Vcanna_kakutei_yomi = Vcanna_kakutei_romaji = Qnil;
       if (ks->info & KanjiYomiInfo)
@@ -253,20 +253,20 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 	      int yomilen2;
 
 	      Vcanna_kakutei_yomi =
-		make_euc_string (p, yomilen); /* ÆÉ¤ß (reading) */
+		make_euc_string (p, yomilen); /* èª­ã¿ (reading) */
 	      p += yomilen + 1;
 	      yomilen2 = strlen (p);
 	      if (len + yomilen + yomilen2 + 2 < KEYTOSTRSIZE)
 		{
 		  Vcanna_kakutei_romaji =
 		    make_euc_string (p, yomilen2);
-				/* ¥í¡¼¥Ş»ú (romanization) */
+				/* ãƒ­ãƒ¼ãƒå­— (romanization) */
 		}
 	    }
 	}
 
 
-      /* ¸õÊäÉ½¼¨¤ÎÊ¸»úÎó¤Ç¤¹¡£
+      /* å€™è£œè¡¨ç¤ºã®æ–‡å­—åˆ—ã§ã™ã€‚
 	 (string for displaying candidate translations) */
       Vcanna_henkan_string = Qnil;
       if (ks->length >= 0)
@@ -293,7 +293,7 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 #endif /* CANNA_MULE */
 	}
 
-      /* °ìÍ÷¤Î¾ğÊó (information about the echo area menu) */
+      /* ä¸€è¦§ã®æƒ…å ± (information about the echo area menu) */
       Vcanna_ichiran_string = Qnil;
       if (ks->info & KanjiGLineInfo && ks->gline.length >= 0)
 	{
@@ -311,14 +311,14 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 #endif /* CANNA_MULE */
 	}
 
-      /* ¥â¡¼¥É¤Î¾ğÊó (mode information) */
+      /* ãƒ¢ãƒ¼ãƒ‰ã®æƒ…å ± (mode information) */
       Vcanna_mode_string = Qnil;
       if (ks->info & KanjiModeInfo)
 	{
 	  Vcanna_mode_string = build_euc_string ((Extbyte *) ks->mode);
 	}
 
-      /* ¤½¤ÎÂ¾¤Î¾ğÊó (other information) */
+      /* ãã®ä»–ã®æƒ…å ± (other information) */
       canna_empty_info = (ks->info & KanjiEmptyInfo) ? 1 : 0;
       canna_through_info = (ks->info & KanjiThroughInfo) ? 1 : 0;
     }
@@ -334,7 +334,7 @@ No separator will be used otherwise.
        (num))
 {
   /* This is actually a Boolean! */
-  char *kugiri; /* Ê¸Àá¶èÀÚ¤ê¤ò¤¹¤ë¤«¡© (display clause separator?) */
+  char *kugiri; /* æ–‡ç¯€åŒºåˆ‡ã‚Šã‚’ã™ã‚‹ã‹ï¼Ÿ (display clause separator?) */
 
   kugiri = NILP (num) ? (char *) 0 : (char *) 1;
 
@@ -367,7 +367,7 @@ If nil is specified for each arg, the default value will be used.
   char **p, **q;
 
   /* This is actually a Boolean! */
-  char *kugiri; /* Ê¸Àá¶èÀÚ¤ê¤ò¤¹¤ë¤«¡© (display clause separator?) */
+  char *kugiri; /* æ–‡ç¯€åŒºåˆ‡ã‚Šã‚’ã™ã‚‹ã‹ï¼Ÿ (display clause separator?) */
 
   IRCP_context = -1;
 
@@ -424,7 +424,7 @@ If nil is specified for each arg, the default value will be used.
   if (res == -1)
     {
       val = Fcons (build_euc_string (jrKanjiError), val);
-      /* ¥¤¥Ë¥·¥ã¥é¥¤¥º¤Ç¼ºÇÔ¤·¤¿¾ì¹ç¡£ (on initialization failure) */
+      /* ã‚¤ãƒ‹ã‚·ãƒ£ãƒ©ã‚¤ã‚ºã§å¤±æ•—ã—ãŸå ´åˆã€‚ (on initialization failure) */
       return Fcons (Qnil, val);
     }
   else
@@ -444,12 +444,12 @@ If nil is specified for each arg, the default value will be used.
 #ifndef CANNA_MULE
       jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);
 #else
-      /* mule ¤À¤Ã¤¿¤éÈ¾³Ñ¥«¥¿¥«¥Ê¤â»È¤¨¤ë
+      /* mule ã ã£ãŸã‚‰åŠè§’ã‚«ã‚¿ã‚«ãƒŠã‚‚ä½¿ãˆã‚‹
 	 (Mule can use half-width katakana) */
       if (canna_inhibit_hankakukana)
 	jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);
 #endif
-      jrKanjiControl (0, KC_YOMIINFO, (char *) 2); /* ¢¨£²: ¥í¡¼¥Ş»ú¤Ş¤ÇÊÖ¤¹
+      jrKanjiControl (0, KC_YOMIINFO, (char *) 2); /* â€»ï¼’: ãƒ­ãƒ¼ãƒå­—ã¾ã§è¿”ã™
 						      (*2: return to
 						      romanized form) */
       val = Fcons (Qnil, val);
@@ -581,7 +581,7 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
     }
 
   ks.echoStr = (unsigned char *) key_buffer;
-  ksv.buffer = (unsigned char *) key_buffer; /* ÊÖÃÍÍÑ (return value) */
+  ksv.buffer = (unsigned char *) key_buffer; /* è¿”å€¤ç”¨ (return value) */
   ksv.bytes_buffer = KEYTOSTRSIZE;
   ksv.ks = &ks;
 
@@ -836,7 +836,7 @@ End conversion.
     {
       return Qnil;
     }
-  RkEndBun (IRCP_context, 1); /* ³Ø½¬¤Ï¤¤¤Ä¤Ç¤â¹Ô¤Ã¤ÆÎÉ¤¤¤â¤Î¤Ê¤Î¤«¡©
+  RkEndBun (IRCP_context, 1); /* å­¦ç¿’ã¯ã„ã¤ã§ã‚‚è¡Œã£ã¦è‰¯ã„ã‚‚ã®ãªã®ã‹ï¼Ÿ
 				 (is it OK to invoke learning function
 				 at arbitrary times?) */
   return Qt;

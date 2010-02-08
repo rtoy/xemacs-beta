@@ -3571,7 +3571,7 @@ function quoting" (car form))))
 	   (byte-compile-warn
 	    "Discarding the result of #'%s; maybe you meant #'mapc?"
 	    (car form)))
-       (setq form (cons 'mapc-internal (cdr form))))
+       (setq form (cons 'mapc (cdr form))))
   (byte-compile-funarg form))
 
 (defun byte-compile-maplist (form)
@@ -3776,7 +3776,7 @@ function quoting" (car form))))
 (byte-defop-compiler-1 map-plist byte-compile-funarg)
 (byte-defop-compiler-1 map-range-table byte-compile-funarg)
 (byte-defop-compiler-1 map-syntax-table byte-compile-funarg)
-(byte-defop-compiler-1 mapcar* byte-compile-funarg)
+(byte-defop-compiler-1 mapcar* byte-compile-maybe-mapc)
 
 (byte-defop-compiler-1 remove-if byte-compile-funarg)
 (byte-defop-compiler-1 remove-if-not byte-compile-funarg)

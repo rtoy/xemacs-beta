@@ -15,6 +15,19 @@ ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&AS_MESSAGE_LOG_FD
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&AS_MESSAGE_LOG_FD'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ])
+# AC_LANG(C++)
+# ----------
+# Similar to AC_LANG(C) but we use XEMACS_CC, which may be g++.
+m4_define([AC_LANG(C++)],
+[ac_ext=c
+xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
+xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+ac_cpp='$CPP '"$xe_cppflags"
+ac_compile='$XEMACS_CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&AS_MESSAGE_LOG_FD'
+ac_link='$XEMACS_CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&AS_MESSAGE_LOG_FD'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+])
 dnl
 dnl -------------------------------------------------------------------------
 dnl Autoconf startup.
@@ -5097,6 +5110,23 @@ if test "$with_database_gdbm" = "yes" -o \
         "$with_database_dbm"  = "yes"; then
   AC_DEFINE_UNQUOTED(NDBM_H_FILE,"$ndbm_h_file")
   AC_DEFINE(HAVE_DBM)
+  dnl gdbm's ndbm.h has old-style prototypes with missing arguments.
+  dnl These just don't cut it for c++.  So if we're using c++, then
+  dnl test whether we can make a dbm call, using dbm_close(DBM *).
+  if test "$XEMACS_CC_GPP" = "yes"; then
+    AC_MSG_RESULT()
+    AC_LANG_PUSH(C++)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include "$ndbm_h_file"],
+    [dbm_close((DBM *) 0);])],
+      [AC_MSG_CHECKING(whether ndbm.h is compatible with g++)
+       AC_MSG_RESULT(yes)
+       AC_DEFINE(TRUST_NDBM_H_PROTOTYPES)],
+      [AC_MSG_CHECKING(whether ndbm.h is compatible with g++)
+       AC_MSG_RESULT(no)])
+    AC_LANG_POP()
+  else
+    AC_DEFINE(TRUST_NDBM_H_PROTOTYPES)
+  fi
   $as_unset ndbm_h_file
 fi
 

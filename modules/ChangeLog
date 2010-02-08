@@ -1,3 +1,13 @@
+2010-02-06  Ben Wing  <ben@xemacs.org>
+
+	* canna/canna_api.c:
+	* canna/canna_api.c (storeResults):
+	* canna/canna_api.c (Fcanna_set_bunsetsu):
+	* canna/canna_api.c (Fcanna_initialize):
+	* canna/canna_api.c (Fcanna_store_yomi):
+	* canna/canna_api.c (Fcanna_henkan_end):
+	Convert file to utf-8.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c:

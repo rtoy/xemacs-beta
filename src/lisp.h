@@ -1912,8 +1912,8 @@ do {						\
   dy->locked = 0;				\
 } while (0)
 #else
-#define Dynarr_verify(d) (d)
-#define Dynarr_verify_mod(d) (d)
+#define Dynarr_verify(d) ((Dynarr *) d)
+#define Dynarr_verify_mod(d) ((Dynarr *) d)
 #define Dynarr_lock(d) DO_NOTHING
 #define Dynarr_unlock(d) DO_NOTHING
 #endif /* ERROR_CHECK_STRUCTURES */
@@ -3198,6 +3198,31 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
   Elemcount size;						\
   unsigned long bits[BIT_VECTOR_LONG_STORAGE(numbits)];		\
 }
+/*---------------------- array, sequence -----------------------------*/
+
+#define ARRAYP(x) (VECTORP (x) || STRINGP (x) || BIT_VECTORP (x))
+
+#define CHECK_ARRAY(x) do {			\
+  if (!ARRAYP (x))				\
+    dead_wrong_type_argument (Qarrayp, x);	\
+} while (0)
+
+#define CONCHECK_ARRAY(x) do {			\
+  if (!ARRAYP (x))				\
+    x = wrong_type_argument (Qarrayp, x);	\
+} while (0)
+
+#define SEQUENCEP(x) (LISTP (x) || ARRAYP (x))
+
+#define CHECK_SEQUENCE(x) do {			\
+  if (!SEQUENCEP (x))				\
+    dead_wrong_type_argument (Qsequencep, x);	\
+} while (0)
+
+#define CONCHECK_SEQUENCE(x) do {		\
+  if (!SEQUENCEP (x))				\
+    x = wrong_type_argument (Qsequencep, x);	\
+} while (0)
 
 /*------------------------------ symbol --------------------------------*/
 
@@ -4622,9 +4647,11 @@ MODULE_API EXFUN (Fexpand_abbrev, 0);
 /* Defined in alloc.c */
 MODULE_API EXFUN (Fcons, 2);
 MODULE_API EXFUN (Flist, MANY);
+EXFUN (Fbit_vector, MANY);
 EXFUN (Fmake_byte_code, MANY);
 MODULE_API EXFUN (Fmake_list, 2);
 MODULE_API EXFUN (Fmake_string, 2);
+EXFUN (Fstring, MANY);
 MODULE_API EXFUN (Fmake_symbol, 1);
 MODULE_API EXFUN (Fmake_vector, 2);
 MODULE_API EXFUN (Fvector, MANY);
@@ -5487,7 +5514,7 @@ EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
 MODULE_API EXFUN (Flength, 1);
-EXFUN (Fmapcar, 2);
+EXFUN (FmapcarX, MANY);
 EXFUN (Fmember, 2);
 EXFUN (Fmemq, 2);
 EXFUN (Fnconc, MANY);
@@ -5554,7 +5581,7 @@ Lisp_Object MODULE_API nconc2 (Lisp_Object, Lisp_Object);
 int internal_equal_0 (Lisp_Object, Lisp_Object, int, int);
 Lisp_Object bytecode_nconc2 (Lisp_Object *);
 int bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2);
-void check_losing_bytecode (const char *, Lisp_Object);
+void check_losing_bytecode (const Ascbyte *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
 				  const Ascbyte *ascii_string);
