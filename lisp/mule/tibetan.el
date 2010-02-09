@@ -84,33 +84,6 @@
 ;;;2570 $(7%p(B $(7%q(B $(7%r(B $(7%s(B $(7%t(B $(7%u(B $(7%v(B $(7%w(B $(7%x(B $(7%y(B $(7%z(B $(7%{(B $(7%|(B $(7%}(B $(7%~(B // ;
 ;;;
 
-(make-charset 'tibetan-1-column "Tibetan 1 column glyph"
-	      '(dimension
-		2
-		registries ["MuleTibetan-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?8
-		graphic 0
-		short-name "Tibetan 1-col"
-		long-name "Tibetan 1 column"
-		))
-
-;; Tibetan script.
-(make-charset 'tibetan "Tibetan characters"
-	      '(dimension
-		2
-		registries ["MuleTibetan-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?7
-		graphic 0
-		short-name "Tibetan 2-col"
-		long-name "Tibetan 2 column"
-		))
-
 ; (make-coding-system
 ;  'tibetan-iso-8bit 2 ?Q
 ;  "8-bit encoding for ASCII (MSB=0) and TIBETAN (MSB=1)"

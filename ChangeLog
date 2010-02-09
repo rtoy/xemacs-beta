@@ -1,3 +1,10 @@
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (.PHONY):
+	Also pass unicode-encapsulate and make-case-conv targets down
+	to src/Makefile.in.in.
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* configure:

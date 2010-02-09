@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "commands.h"
 #include "insdel.h"
 #include "syntax.h"
@@ -162,7 +163,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   closure.buf = buf;
   closure.point = BUF_PT (buf);
   closure.maxlen = closure.point - BUF_BEGV (buf);
-  closure.chartab = buf->mirror_syntax_table;
+  closure.chartab = BUFFER_MIRROR_SYNTAX_TABLE (buf);
   closure.found = 0;
 
   map_obarray (obarray, abbrev_match_mapper, &closure);
@@ -388,7 +389,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
       Charbpos pos = abbrev_start;
       /* Find the initial.  */
       while (pos < point
-	     && !WORD_SYNTAX_P (buf->mirror_syntax_table,
+	     && !WORD_SYNTAX_P (BUFFER_MIRROR_SYNTAX_TABLE (buf),
 				BUF_FETCH_CHAR (buf, pos)))
 	pos++;
       /* Change just that.  */

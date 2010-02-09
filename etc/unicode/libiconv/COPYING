@@ -1,0 +1,16 @@
+The source to libiconv 1.13.1 has both COPYING (GPL v3) and COPYING.LIB
+(LGPL v2) in it.  The README has the following to say:
+
+================================ cut ==============================
+Copyright
+---------
+
+The libiconv and libcharset _libraries_ and their header files are under LGPL,
+see file COPYING.LIB.
+
+The iconv _program_ and the documentation are under GPL, see file COPYING.
+================================ cut ==============================
+
+The .TXT files that we copied have no copyright info in them, but the
+C files in the same directory indicate that they are part of `libiconv'.
+As a result I (Ben Wing) assume that the .TXT files are under the LPGL.

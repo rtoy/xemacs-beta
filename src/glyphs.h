@@ -1057,8 +1057,6 @@ void glyph_do_layout (Lisp_Object glyph_or_image, int width, int height,
 void query_string_geometry ( Lisp_Object string, Lisp_Object face,
 			     int* width, int* height, int* descent,
 			     Lisp_Object domain);
-Lisp_Object query_string_font (Lisp_Object string,
-			       Lisp_Object face, Lisp_Object domain);
 Lisp_Object add_glyph_animated_timeout (EMACS_INT tickms, Lisp_Object device);
 void disable_glyph_animated_timeout (int i);
 
