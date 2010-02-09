@@ -1,3 +1,10 @@
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* help.el (describe-function-1):
+	Don't use compiled-function-annotation to retrieve the file name
+	for a function since it doesn't provide this info and load-history
+	already does provide it.
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* unicode.el:
