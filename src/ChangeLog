@@ -1,5 +1,12 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* charset.h:
+	* charset.h (Fget_charset): Declare some fake charset defs so
+	we can compile when non-Mule.
+	* depend: Rebuild.
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* event-Xt.c:
 	Add comment about simultaneous window-system consoles/devices.
 
