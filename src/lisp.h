@@ -165,8 +165,9 @@ Boston, MA 02111-1307, USA.  */
 /* For assertions in inline header functions which will report the file and
    line of the calling function */
 #define inline_assert(assertion) assert_at_line (assertion, __file__, __line__)
-#define disabled_inline_assert(assertion) \
-  disabled_assert_at_line (assertion, __file__, __line__)
+/* The following should not use disabled_assert_at_line() because when the
+   inline assert is disabled, params __file__ and __line__ do not exist. */
+#define disabled_inline_assert(assertion) disabled_assert (assertion)
 
 #ifdef ERROR_CHECK_TEXT
 #define text_checking_assert(assertion) assert (assertion)
