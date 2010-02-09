@@ -2140,7 +2140,7 @@ mswindows_subwindow_instantiate (Lisp_Object image_instance,
 			  GWL_HINSTANCE),
 			 NULL);
 
-  qxeSetWindowLong (wnd, GWL_USERDATA, (LONG)LISP_TO_VOID(image_instance));
+  qxeSetWindowLong (wnd, GWL_USERDATA, (LONG)STORE_LISP_IN_VOID(image_instance));
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = wnd;
 }
 
@@ -2288,7 +2288,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 	       make_int (GetLastError()));
 
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = wnd;
-  qxeSetWindowLong (wnd, GWL_USERDATA, (LONG)LISP_TO_VOID(image_instance));
+  qxeSetWindowLong (wnd, GWL_USERDATA, (LONG)STORE_LISP_IN_VOID(image_instance));
   /* set the widget font from the widget face */
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
     qxeSendMessage (wnd, WM_SETFONT,

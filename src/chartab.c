@@ -800,7 +800,7 @@ static int
 copy_mapper (struct chartab_range *range, Lisp_Object UNUSED (table),
 	     Lisp_Object val, void *arg)
 {
-  put_char_table (VOID_TO_LISP (arg), range, val);
+  put_char_table (GET_LISP_FROM_VOID (arg), range, val);
   return 0;
 }
 
@@ -808,7 +808,7 @@ void
 copy_char_table_range (Lisp_Object from, Lisp_Object to,
 		       struct chartab_range *range)
 {
-  map_char_table (from, range, copy_mapper, LISP_TO_VOID (to));
+  map_char_table (from, range, copy_mapper, STORE_LISP_IN_VOID (to));
 }
 
 static Lisp_Object

@@ -1,3 +1,10 @@
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* xt-wrappers.h:
+	* xt-wrappers.h (Xt_SET_VALUE):
+	* xt-wrappers.h (Xt_GET_VALUE):
+	Rename var to avoid shadowing problems.
+
 2010-01-24  Ben Wing  <ben@xemacs.org>
 
 	* xlwgauge.c (GaugeResize):

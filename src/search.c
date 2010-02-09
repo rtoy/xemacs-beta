@@ -1437,13 +1437,13 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		         is not involved--but this is not a critical
 		         issue. */
 		      Ibyte encoded[MAX_ICHAR_LEN];
-		      Bytecount len = set_itext_ichar (encoded, c);
-		      int i, j;
-		      for (i = 0; i < len && boyer_moore_ok; ++i)
+		      Bytecount clen = set_itext_ichar (encoded, c);
+		      int a, b;
+		      for (a = 0; a < clen && boyer_moore_ok; ++a)
 			{
-			  for (j = i + 1; j < len && boyer_moore_ok; ++j)
+			  for (b = a + 1; b < clen && boyer_moore_ok; ++b)
 			    {
-			      if (encoded[i] == encoded[j])
+			      if (encoded[a] == encoded[b])
 				{
 				  boyer_moore_ok = 0;
 				}

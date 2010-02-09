@@ -360,7 +360,7 @@ tooltalk_message_callback (Tt_message m, Tt_pattern p)
   fflush (tooltalk_log_file);
 #endif
 
-  message_ = VOID_TO_LISP (tt_message_user (m, TOOLTALK_MESSAGE_KEY));
+  message_ = GET_LISP_FROM_VOID (tt_message_user (m, TOOLTALK_MESSAGE_KEY));
   pattern = make_tooltalk_pattern (p);
   cb = XTOOLTALK_MESSAGE (message_)->callback;
   GCPRO2 (message_, pattern);
@@ -404,7 +404,7 @@ tooltalk_pattern_callback (Tt_message m, Tt_pattern p)
 #endif
 
   message_ = make_tooltalk_message (m);
-  pattern = VOID_TO_LISP (tt_pattern_user (p, TOOLTALK_PATTERN_KEY));
+  pattern = GET_LISP_FROM_VOID (tt_pattern_user (p, TOOLTALK_PATTERN_KEY));
   cb = XTOOLTALK_PATTERN (pattern)->callback;
   GCPRO2 (message_, pattern);
   if (!NILP (Vtooltalk_pattern_handler_hook))
@@ -864,7 +864,7 @@ calling `make-tooltalk-message'.
       tt_message_callback_add (m, tooltalk_message_callback);
     }
   tt_message_session_set (m, tt_default_session ());
-  tt_message_user_set (m, TOOLTALK_MESSAGE_KEY, LISP_TO_VOID (message_));
+  tt_message_user_set (m, TOOLTALK_MESSAGE_KEY, STORE_LISP_IN_VOID (message_));
   return message_;
 }
 
@@ -972,7 +972,7 @@ Its session attribute is initialized to be the default session.
 
   tt_pattern_callback_add (p, tooltalk_pattern_callback);
   tt_pattern_session_add (p, tt_default_session ());
-  tt_pattern_user_set (p, TOOLTALK_PATTERN_KEY, LISP_TO_VOID (pattern));
+  tt_pattern_user_set (p, TOOLTALK_PATTERN_KEY, STORE_LISP_IN_VOID (pattern));
 
   return pattern;
 }

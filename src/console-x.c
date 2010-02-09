@@ -43,8 +43,6 @@ DEFINE_CONSOLE_TYPE (x);
 
 int wedge_metacity;	/* nonzero means update WM_HINTS always */
 
-extern void x_has_keysym (KeySym, Lisp_Object, int);
-
 static int
 x_initially_selected_for_input (struct console *UNUSED (con))
 {

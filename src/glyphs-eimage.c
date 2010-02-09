@@ -598,7 +598,7 @@ gif_read_from_memory (GifFileType *gif, GifByteType *buf, int size)
 }
 
 static const char *
-gif_decode_error_string ()
+gif_decode_error_string (void)
 {
   switch (GifLastError ())
     {

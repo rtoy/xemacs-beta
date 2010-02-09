@@ -315,13 +315,13 @@ sigprof_handler (int UNUSED (signo))
 	long count;
 	const void *vval;
 
-	if (gethash (LISP_TO_VOID (fun), big_profile_table, &vval))
+	if (gethash (STORE_LISP_IN_VOID (fun), big_profile_table, &vval))
 	  count = (long) vval;
 	else
 	  count = 0;
 	count++;
 	vval = (const void *) count;
-	puthash (LISP_TO_VOID (fun), (void *) vval, big_profile_table);
+	puthash (STORE_LISP_IN_VOID (fun), (void *) vval, big_profile_table);
       }
 
       profiling_lock = 0;
@@ -463,7 +463,7 @@ get_profiling_info_timing_maphash (const void *void_key,
     = (struct get_profiling_info_closure *) void_closure;
   EMACS_INT val;
 
-  key = VOID_TO_LISP (void_key);
+  key = GET_LISP_FROM_VOID (void_key);
   val = (EMACS_INT) void_val;
 
   Fputhash (key, make_int (val), closure->timing);
@@ -524,7 +524,7 @@ are recorded
       /* OK, OK ...  the total-timing table is not going to have an entry
 	 for profile overhead, and it looks strange for it to come out 0,
 	 so make sure it looks reasonable. */
-      if (!gethash (LISP_TO_VOID (QSprofile_overhead), big_profile_table,
+      if (!gethash (STORE_LISP_IN_VOID (QSprofile_overhead), big_profile_table,
 		    &overhead))
 	overhead = 0;
       Fputhash (QSprofile_overhead, make_int ((EMACS_INT) overhead),
@@ -557,7 +557,7 @@ set_profiling_info_timing_maphash (Lisp_Object key,
       ("Function timing count is not an integer in given entry",
        key, val);
 
-  puthash (LISP_TO_VOID (key), (void *) XINT (val), big_profile_table);
+  puthash (STORE_LISP_IN_VOID (key), (void *) XINT (val), big_profile_table);
 
   return 0;
 }
@@ -609,9 +609,9 @@ mark_profiling_info_maphash (const void *void_key,
 			     void *UNUSED (void_closure))
 {
 #ifdef USE_KKCC
-  kkcc_gc_stack_push_lisp_object (VOID_TO_LISP (void_key), 0, -1);
+  kkcc_gc_stack_push_lisp_object (GET_LISP_FROM_VOID (void_key), 0, -1);
 #else /* NOT USE_KKCC */
-  mark_object (VOID_TO_LISP (void_key));
+  mark_object (GET_LISP_FROM_VOID (void_key));
 #endif /* NOT USE_KKCC */
   return 0;
 }

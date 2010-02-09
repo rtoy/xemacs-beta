@@ -126,7 +126,7 @@ static int
 close_process_descs_mapfun (const void *UNUSED (key), void *contents,
 			    void *UNUSED (arg))
 {
-  Lisp_Object proc = VOID_TO_LISP (contents);
+  Lisp_Object proc = GET_LISP_FROM_VOID (contents);
   USID vaffan, culo;
 
   event_stream_delete_io_streams (XPROCESS (proc)->pipe_instream,

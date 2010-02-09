@@ -444,6 +444,11 @@ check_what_happened (void)
 #endif
     something_happened = 0;
 
+  /* Don't try to do anything clever if we're called from debug_print()
+     or very close to startup or shutdown. */
+  if (inhibit_non_essential_conversion_operations)
+    return;
+
   if (async_timeout_happened)
     {
       async_timeout_happened = 0;

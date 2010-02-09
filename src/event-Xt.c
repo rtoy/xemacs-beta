@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,6 +21,14 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* NOTE: It would be possible to fix things so that all of GTK, Windows, X,
+   TTY and stream can have consoles at the same time.  We already do lots
+   of combinations.  Basically, either call select() directly or some
+   interface onto it, and select() over all the filedescs, including the
+   X and GTK socket, and under Cygwin, the Windows device.  Then for whichever
+   filedesc there's an event, call the appropriate window-system-specific
+   method to pull the event(s) and store onto the dispatch queue. --ben */
 
 #include <config.h>
 #include "lisp.h"
