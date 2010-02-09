@@ -421,6 +421,8 @@ struct console
      an XD_UNION clause to determine the Lisp objects in console_data. */
   enum console_variant contype;
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* A structure of auxiliary data specific to the console type.
      struct x_console is used for X window frames; defined in console-x.h
      struct tty_console is used to TTY's; defined in console-tty.h */
