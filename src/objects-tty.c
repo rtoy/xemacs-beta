@@ -1,6 +1,6 @@
 /* TTY-specific Lisp objects.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -345,7 +345,7 @@ tty_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
 {
   const Ibyte *the_nonreloc = nonreloc;
 
-  if (stage)
+  if (stage == STAGE_FINAL)
     return 0;
 
   if (!the_nonreloc)
@@ -374,13 +374,13 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
 {
   Ibyte *fontname = XSTRING_DATA (font);
 
-  if (stage)
+  if (stage == STAGE_FINAL)
     return Qnil;
 
   if (strchr ((const char *) fontname, '/'))
     {
       if (tty_font_spec_matches_charset (XDEVICE (device), charset, 0,
-					 font, 0, -1, initial))
+					 font, 0, -1, STAGE_INITIAL))
 	return font;
       return Qnil;
     }

@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -63,11 +63,6 @@ int no_quit_in_re_search;
 Lisp_Object Vstandard_syntax_table;
 
 Lisp_Object Vsyntax_designator_chars_string;
-
-Lisp_Object Vtemp_table_for_use_updating_syntax_tables;
-
-/* A value that is guaranteed not be in a syntax table. */
-Lisp_Object Vbogus_syntax_table_value;
 
 Lisp_Object Qscan_error;
 
@@ -184,6 +179,8 @@ is non-nil.
 
 #ifdef DEBUG_XEMACS
 
+#ifdef MIRROR_TABLE
+
 DEFUN ("mirror-syntax-table", Fmirror_syntax_table, 0, 1, 0, /*
 Return the current mirror syntax table, for debugging purposes.
 This is the one specified by the current buffer, or by BUFFER if it
@@ -193,6 +190,8 @@ is non-nil.
 {
   return decode_buffer (buffer, 0)->mirror_syntax_table;
 }
+
+#endif /* MIRROR_TABLE */
 
 DEFUN ("syntax-cache-info", Fsyntax_cache_info, 0, 1, 0, /*
 Return info about the syntax cache in BUFFER.
@@ -233,13 +232,16 @@ SYNTAX-TABLE defaults to the standard syntax table.
 DEFUN ("set-syntax-table", Fset_syntax_table, 1, 2, 0, /*
 Select SYNTAX-TABLE as the new syntax table for BUFFER.
 BUFFER defaults to the current buffer if omitted.
+See `make-syntax-table' for more information.
 */
        (syntax_table, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   syntax_table = check_syntax_table (syntax_table, Qnil);
   buf->syntax_table = syntax_table;
+#ifdef MIRROR_TABLE
   buf->mirror_syntax_table = XCHAR_TABLE (syntax_table)->mirror_table;
+#endif /* MIRROR_TABLE */
   syntax_cache_table_was_changed (buf);
   /* Indicate that this buffer now has a specified syntax table.  */
   buf->local_var_flags |= XINT (buffer_local_flags.syntax_table);
@@ -258,7 +260,9 @@ static const struct memory_description syntax_cache_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
+#ifdef MIRROR_TABLE
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
+#endif
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
   { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
   { XD_END }
@@ -288,8 +292,10 @@ syntax_cache_table_was_changed (struct buffer *buf)
     {
       cache->syntax_table =
 	BUFFER_SYNTAX_TABLE (buf);
+#ifdef MIRROR_TABLE
       cache->mirror_table =
 	BUFFER_MIRROR_SYNTAX_TABLE (buf);
+#endif /* MIRROR_TABLE */
     }
 }
 
@@ -325,8 +331,10 @@ init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
   cache->no_syntax_table_prop = 1;
   cache->syntax_table =
     BUFFER_SYNTAX_TABLE (cache->buffer);
+#ifdef MIRROR_TABLE
   cache->mirror_table =
     BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+#endif /* MIRROR_TABLE */
   cache->start = Qnil;
   cache->end = Qnil;
   /* #### I'm not sure what INFINITE is for, but it's apparently needed by
@@ -481,7 +489,9 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
     {
       cache->use_code = 0;
       cache->syntax_table = tmp_table;
+#ifdef MIRROR_TABLE
       cache->mirror_table = XCHAR_TABLE (tmp_table)->mirror_table;
+#endif /* MIRROR_TABLE */
       cache->no_syntax_table_prop = 0;
 #ifdef NOT_WORTH_THE_EFFORT
       update_mirror_syntax_if_dirty (cache->mirror_table);
@@ -498,7 +508,9 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
       cache->use_code = 0;
       cache->no_syntax_table_prop = 1;
       cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
+#ifdef MIRROR_TABLE
       cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+#endif /* MIRROR_TABLE */
 #ifdef NOT_WORTH_THE_EFFORT
       update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
@@ -519,7 +531,9 @@ mark_buffer_syntax_cache (struct buffer *buf)
   if (cache->buffer)
     mark_object (wrap_buffer (cache->buffer));
   mark_object (cache->syntax_table);
+#ifdef MIRROR_TABLE
   mark_object (cache->mirror_table);
+#endif /* MIRROR_TABLE */
   mark_object (cache->start);
   mark_object (cache->end);
 }
@@ -539,7 +553,9 @@ init_buffer_syntax_cache (struct buffer *buf)
   cache->buffer = buf;
   cache->no_syntax_table_prop = 1;
   cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
+#ifdef MIRROR_TABLE
   cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+#endif /* MIRROR_TABLE */
   cache->start = Fmake_marker ();
   cache->end = Fmake_marker ();
   reset_buffer_syntax_cache_range (cache, cache->object, 0);
@@ -653,8 +669,6 @@ syntax table.
 */
        (character, syntax_table))
 {
-  Lisp_Object mirrortab;
-
   if (NILP (character))
     {
       character = make_char ('\000');
@@ -662,23 +676,15 @@ syntax table.
   CHECK_CHAR_COERCE_INT (character);
   syntax_table = check_syntax_table (syntax_table,
 				     current_buffer->syntax_table);
-  mirrortab = XCHAR_TABLE (syntax_table)->mirror_table;
-  return make_char (syntax_code_spec[(int) SYNTAX (mirrortab,
+#ifdef MIRROR_TABLE
+  return make_char
+    (syntax_code_spec[(int) SYNTAX (XCHAR_TABLE (syntax_table)->mirror_table,
+				    XCHAR (character))]);
+#else
+  return make_char (syntax_code_spec[(int) SYNTAX (syntax_table,
 						   XCHAR (character))]);
+#endif /* MIRROR_TABLE */
 }
-
-#ifdef MULE
-
-enum syntaxcode
-charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
-		int *multi_p_out)
-{
-  *multi_p_out = 1;
-  /* !!#### get this right */
-  return Sword;
-}
-
-#endif
 
 Lisp_Object
 syntax_match (Lisp_Object syntax_table, Ichar ch)
@@ -701,14 +707,16 @@ syntax table.
 */
        (character, syntax_table))
 {
-  Lisp_Object mirrortab;
   enum syntaxcode code;
 
   CHECK_CHAR_COERCE_INT (character);
   syntax_table = check_syntax_table (syntax_table,
 				     current_buffer->syntax_table);
-  mirrortab = XCHAR_TABLE (syntax_table)->mirror_table;
-  code = SYNTAX (mirrortab, XCHAR (character));
+#ifdef MIRROR_TABLE
+  code = SYNTAX (XCHAR_TABLE (syntax_table)->mirror_table, XCHAR (character));
+#else
+  code = SYNTAX (syntax_table, XCHAR (character));
+#endif /* MIRROR_TABLE */
   if (code == Sopen || code == Sclose || code == Sstring)
     return syntax_match (syntax_table, XCHAR (character));
   return Qnil;
@@ -721,9 +729,11 @@ syntax table.
    characters C1 and C2 if they appear in this order, else return 0.
    There is no word boundary between two word-constituent ASCII
    characters.  */
-#define WORD_BOUNDARY_P(c1, c2)			\
+#define WORD_BOUNDARY_P(buf, c1, c2)		\
   (!(ichar_ascii_p (c1) && ichar_ascii_p (c2))	\
-   && word_boundary_p (c1, c2))
+   && word_boundary_p (buf, c1, c2))
+#else
+#define WORD_BOUNDARY_P(buf, c1, c2) 0
 #endif
 
 /* Return the position across COUNT words from FROM.
@@ -769,15 +779,9 @@ scan_words (struct buffer *buf, Charbpos from, int count)
 	  code = SYNTAX_FROM_CACHE (scache, ch1);
 	  if (!(words_include_escapes
 		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword
-#ifdef MULE
-		|| WORD_BOUNDARY_P (ch0, ch1)
-#endif
-		)
+	    if (code != Sword || WORD_BOUNDARY_P (buf, ch0, ch1))
 	      break;
-#ifdef MULE
 	  ch0 = ch1;
-#endif
 	  from++;
 	}
       count--;
@@ -814,15 +818,9 @@ scan_words (struct buffer *buf, Charbpos from, int count)
 
 	  if (!(words_include_escapes
 		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword
-#ifdef MULE
-		|| WORD_BOUNDARY_P (ch0, ch1)
-#endif
-		)
+	    if (code != Sword || WORD_BOUNDARY_P (buf, ch0, ch1))
 	      break;
-#ifdef MULE
 	  ch1 = ch0;
-#endif
 	  from--;
 	}
       count++;
@@ -2276,6 +2274,7 @@ to the current buffer.
   return val;
 }
 
+#ifdef MIRROR_TABLE
 
 /* Updating of the mirror syntax table.
 
@@ -2295,7 +2294,7 @@ to the current buffer.
    */
 
 static int
-copy_to_mirrortab (struct chartab_range *range, Lisp_Object UNUSED (table),
+copy_to_mirrortab (Lisp_Object UNUSED (table), Ichar ch,
 		   Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = GET_LISP_FROM_VOID (arg);
@@ -2303,13 +2302,12 @@ copy_to_mirrortab (struct chartab_range *range, Lisp_Object UNUSED (table),
   if (CONSP (val))
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
-    put_char_table (mirrortab, range, val);
+    put_char_table_1 (mirrortab, ch, val);
   return 0;
 }
 
 static int
-copy_if_not_already_present (struct chartab_range *range,
-			     Lisp_Object UNUSED (table),
+copy_if_not_already_present (Lisp_Object UNUSED (table), Ichar ch,
 			     Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = GET_LISP_FROM_VOID (arg);
@@ -2317,24 +2315,10 @@ copy_if_not_already_present (struct chartab_range *range,
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
     {
-      Lisp_Object existing =
-	updating_mirror_get_range_char_table (range, mirrortab,
-					      Vbogus_syntax_table_value);
-      if (NILP (existing))
+      Lisp_Object existing = get_char_table_raw (ch, mirrortab);
+      if (UNBOUNDP (existing))
 	/* nothing at all */
-	put_char_table (mirrortab, range, val);
-      else if (!EQ (existing, Vbogus_syntax_table_value))
-	/* full */
-	;
-      else
-	{
-	  Freset_char_table (Vtemp_table_for_use_updating_syntax_tables);
-	  copy_char_table_range
-	    (mirrortab, Vtemp_table_for_use_updating_syntax_tables, range);
-	  put_char_table (mirrortab, range, val);
-	  copy_char_table_range
-	    (Vtemp_table_for_use_updating_syntax_tables, mirrortab, range);
-	}
+	put_char_table_1 (mirrortab, ch, val);
     }
 
   return 0;
@@ -2356,7 +2340,6 @@ update_just_this_syntax_table (Lisp_Object table)
      entries don't already exist in that table. (The copying step requires
      another mapping.)
      */
-
   map_char_table (table, &range, copy_to_mirrortab, STORE_LISP_IN_VOID (mirrortab));
   /* second clause catches bootstrapping problems when initializing the
      standard syntax table */
@@ -2368,14 +2351,17 @@ update_just_this_syntax_table (Lisp_Object table)
   XCHAR_TABLE (mirrortab)->dirty = 0;
 }
 
+#endif /* MIRROR_TABLE */
+
 /* Called from chartab.c when a change is made to a syntax table.
    If this is the standard syntax table, we need to recompute
    *all* syntax tables (yuck).  Otherwise we just recompute this
    one. */
 
 void
-update_syntax_table (Lisp_Object table)
+update_syntax_table (Lisp_Object USED_IF_MIRROR_TABLE (table))
 {
+#ifdef MIRROR_TABLE
   Lisp_Object nonmirror = XCHAR_TABLE (table)->mirror_table;
   assert (XCHAR_TABLE (table)->mirror_table_p);
   if (EQ (nonmirror, Vstandard_syntax_table))
@@ -2388,6 +2374,7 @@ update_syntax_table (Lisp_Object table)
     }
   else
     update_just_this_syntax_table (nonmirror);
+#endif /* MIRROR_TABLE */
 }
 
 
@@ -2407,7 +2394,9 @@ syms_of_syntax (void)
   DEFSUBR (Fsyntax_table_p);
   DEFSUBR (Fsyntax_table);
 #ifdef DEBUG_XEMACS
+#ifdef MIRROR_TABLE
   DEFSUBR (Fmirror_syntax_table);
+#endif /* MIRROR_TABLE */
   DEFSUBR (Fsyntax_cache_info);
 #endif /* DEBUG_XEMACS */
   DEFSUBR (Fstandard_syntax_table);
@@ -2457,9 +2446,6 @@ Non-nil means `forward-word', etc., should treat escape chars part of words.
   words_include_escapes = 0;
 
   no_quit_in_re_search = 0;
-
-  Vbogus_syntax_table_value = make_float (0.0);
-  staticpro (&Vbogus_syntax_table_value);
 }
 
 static void
@@ -2490,9 +2476,6 @@ complex_vars_of_syntax (void)
   Vstandard_syntax_table = Fcopy_syntax_table (Qnil);
   staticpro (&Vstandard_syntax_table);
 
-  Vtemp_table_for_use_updating_syntax_tables = Fmake_char_table (Qgeneric);
-  staticpro (&Vtemp_table_for_use_updating_syntax_tables);
-  
   Vsyntax_designator_chars_string = make_string_nocopy (syntax_code_spec,
 							Smax);
   staticpro (&Vsyntax_designator_chars_string);

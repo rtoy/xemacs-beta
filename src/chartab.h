@@ -1,7 +1,7 @@
 /* Declarations having to do with Mule char tables.
    Copyright (C) 1992 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -31,35 +31,104 @@ Boston, MA 02111-1307, USA.  */
 #include "charset.h"
 
 /************************************************************************/
+/*                            Basic Char Table Format                   */
+/************************************************************************/
+
+/* Things are written this way because at one point I designed the
+   subtables so they could either be stored as "plain tables" (as direct
+   256-element arrays), as unified Lisp objects (where the header and
+   following array is a single unit) or as split Lisp object (with a
+   wrapper Lisp object around a separately allocated table).  The plain
+   tables are the fastest and most memory efficient of the three, but
+   can't be used with either KKCC or NEWGC. (KKCC doesn't keep track of
+   whether it has already traversed non-Lisp-object arrays, and thus
+   traverses the shared "blank" subtables numerous times when marking,
+   making it become *extremely* slow.  NEWGC requires that all Lisp objects
+   occur inside of other Lisp objects, never inside of The split
+   Lisp object is slightly more efficient than the */
+
+struct Lisp_Char_Subtable
+{
+  struct LCRECORD_HEADER lheader;
+  Lisp_Object ptr[256];
+};
+
+#define ALLOCATE_LEVEL_N_SUB_TABLE()					\
+  wrap_char_subtable (ALLOC_LCRECORD_TYPE				\
+		      (Lisp_Char_Subtable, &lrecord_char_subtable))
+
+#define SUBTAB_STORAGE_SIZE(table, level, stats)			\
+  LISPOBJ_STORAGE_SIZE (XCHAR_SUBTABLE (table),				\
+			sizeof (struct Lisp_Char_Subtable), stats)
+
+#define FREE_ONE_SUBTABLE(table) FREE_LCRECORD (table)
+
+/* If we use split Lisp char subtables, we'd modify the above struct and
+   three defines.  If we use "plain" non-Lisp char subtables, we'd modify
+   the three macros above and the macros below as well, and omit the
+   definition of a Lisp subtable object. */
+
+#define SUBTAB_TYPE Lisp_Object
+#define SUBTAB_ARRAY_TYPE SUBTAB_TYPE *
+#define SUBTAB_ARRAY_FROM_SUBTAB(tab) (XCHAR_SUBTABLE (tab)->ptr)
+#define LISPOBJ_ARRAY_FROM_SUBTAB(tab) (XCHAR_SUBTABLE (tab)->ptr)
+#define SUBTAB_EQ(a, b) EQ (a, b)
+
+#define ALLOCATE_LEVEL_1_SUB_TABLE() ALLOCATE_LEVEL_N_SUB_TABLE ()
+
+typedef struct Lisp_Char_Subtable Lisp_Char_Subtable;
+
+DECLARE_LRECORD (char_subtable, Lisp_Char_Subtable);
+#define XCHAR_SUBTABLE(x) XRECORD (x, char_subtable, Lisp_Char_Subtable)
+#define wrap_char_subtable(p) wrap_record (p, char_subtable)
+#define CHAR_SUBTABLEP(x) RECORDP (x, char_subtable)
+#define CHECK_CHAR_SUBTABLE(x) CHECK_RECORD (x, char_subtable)
+#define CONCHECK_CHAR_SUBTABLE(x) CONCHECK_RECORD (x, char_subtable)
+
+/************************************************************************/
 /*                               Char Tables                            */
 /************************************************************************/
 
-/* Under Mule, we use a complex representation (see below).
-   When not under Mule, there are only 256 possible characters
-   so we just represent them directly. */
+#ifndef MULE
+#define MAXIMIZE_CHAR_TABLE_DEPTH
+#endif
 
-#ifdef MULE
+/* Break up a 32-bit character code into 8-bit parts. */
 
-struct Lisp_Char_Table_Entry
-{
-  struct LCRECORD_HEADER header;
-
-  /* In the interests of simplicity, we just use a fixed 96-entry
-     table.  If we felt like being smarter, we could make this
-     variable-size and add an offset value into this structure. */
-  Lisp_Object level2[96];
-};
-typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
-
-DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
-#define XCHAR_TABLE_ENTRY(x) \
-  XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
-#define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
-#define CHAR_TABLE_ENTRYP(x) RECORDP (x, char_table_entry)
-/* #define CHECK_CHAR_TABLE_ENTRY(x) CHECK_RECORD (x, char_table_entry)
-   char table entries should never escape to Lisp */
-
-#endif /* MULE */
+#ifdef MAXIMIZE_CHAR_TABLE_DEPTH
+# define CHARTAB_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
+do {								\
+  int buc_val = (val);						\
+								\
+  (u1) = buc_val >> 24;						\
+  (u2) = (buc_val >> 16) & 255;					\
+  (u3) = (buc_val >> 8) & 255;					\
+  (u4) = buc_val & 255;						\
+} while (0)
+/* Define the current chartab levels given an expr indicating the level value.
+   This is an optimization designed to cause compiler simplfication of code
+   due to constant expression in if, switch, etc. statements. */
+# ifdef MULE
+#  define CHARTAB_LEVELS(expr) 4
+# else
+#  define CHARTAB_LEVELS(expr) 1
+# endif
+#else /* not MAXIMIZE_CHAR_TABLE_DEPTH */
+# define CHARTAB_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
+do {								\
+  int buc_val = (val);						\
+								\
+  (u1) = buc_val >> 24;						\
+  (u2) = (buc_val >> 16) & 255;					\
+  (u3) = (buc_val >> 8) & 255;					\
+  (u4) = buc_val & 255;						\
+  (levels) = (buc_val <= 0xFF ? 1 :				\
+	      buc_val <= 0xFFFF ? 2 :				\
+	      buc_val <= 0xFFFFFF ? 3 :				\
+	      4);						\
+} while (0)
+# define CHARTAB_LEVELS(expr) (expr)
+#endif /* not MAXIMIZE_CHAR_TABLE_DEPTH */
 
 enum char_table_type
 {
@@ -72,59 +141,35 @@ enum char_table_type
   CHAR_TABLE_TYPE_CHAR
 };
 
-#ifdef MULE
-#define NUM_ASCII_CHARS 160
-#else
-#define NUM_ASCII_CHARS 256
-#endif
-
 struct Lisp_Char_Table
 {
   struct LCRECORD_HEADER header;
 
-  Lisp_Object ascii[NUM_ASCII_CHARS];
+  /* Currently we use the same structure as for the Unicode->charset
+     translation tables in unicode.c.  This is extremely fast (constant-
+     time lookup) but a potential space hog, especially in the presence of
+     sparse, non-localized data.  Alternative representations could use
+     hash tables or sorted gap arrays (see extents.c; all the code is
+     already there, including the binary-search algorithm to do lookups).
+     Possibly, we could/should allow the type to be chosen at creation
+     time as a parameter to `make-char-table'. */
+
+  SUBTAB_TYPE table;
+  int levels;
   Lisp_Object default_;
   Lisp_Object parent; /* #### not yet implemented */
   
-#ifdef MULE
-  /* We basically duplicate the Mule vectors-of-vectors implementation.
-     We can do this because we know a great deal about the sorts of
-     things we are going to be indexing.
-
-     The current implementation is as follows:
-
-     ascii[0-159] is used for ASCII and Control-1 characters.
-
-     level1[0 .. (NUM_LEADING_BYTES-1)] indexes charsets by leading
-     byte (subtract MIN_LEADING_BYTE from the leading byte).  If the
-     value of this is not an opaque, then it specifies a value for all
-     characters in the charset.  Otherwise, it will be a
-     96-Lisp-Object opaque that we created, specifying a value for
-     each row.  If the value of this is not an opaque, then it
-     specifies a value for all characters in the row.  Otherwise, it
-     will be a 96-Lisp-Object opaque that we created, specifying a
-     value for each character.
-
-     NOTE: 1) This will fail if some C routine passes an opaque to
-              Fput_char_table().  Currently this is not a problem
-	      since all char tables that are created are Lisp-visible
-	      and thus no one should ever be putting an opaque in
-	      a char table.  Another possibility is to consider
-	      adding a type to */
-
-  Lisp_Object level1[NUM_LEADING_BYTES];
-
-#endif /* MULE */
-
   enum char_table_type type;
 
+  Lisp_Object next_table; /* DO NOT mark through this. */
+#ifdef MIRROR_TABLE
   /* stuff used for syntax tables */
   Lisp_Object mirror_table; /* points to mirror table for this table
 			       (a cache for quicker access), or a back
 			       pointer if MIRROR_TABLE_P. */
-  Lisp_Object next_table; /* DO NOT mark through this. */
   char dirty; /* nonzero if mirror dirty and needs updating. */
   char mirror_table_p; /* nonzero if this is a mirror table. */
+#endif /* MIRROR_TABLE */
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
@@ -135,39 +180,100 @@ DECLARE_LRECORD (char_table, Lisp_Char_Table);
 #define CHECK_CHAR_TABLE(x) CHECK_RECORD (x, char_table)
 #define CONCHECK_CHAR_TABLE(x) CONCHECK_RECORD (x, char_table)
 
-#define CHAR_TABLE_TYPE(ct) ((ct)->type)
-#define XCHAR_TABLE_TYPE(ct) CHAR_TABLE_TYPE (XCHAR_TABLE (ct))
+/* Note, there is no speed gain whatsoever from dereferencing XCHAR_TABLE()
+   once into a temporary variable and then using it, as compared with just
+   repeatedly using with XCHAR_TABLE_FOO macros, at least in a production
+   build (no-error checking, optimization).  Without error-checking,
+   XCHAR_TABLE() is merely a cast to (foo *), which is a no-op. */
 
-Lisp_Object get_non_ascii_char_table_value (Lisp_Char_Table *ct,
-					    int leading_byte,
-					    Ichar c);
+#define XCHAR_TABLE_TABLE(ct) (XCHAR_TABLE (ct)->table)
+#define XCHAR_TABLE_LEVELS(ct) (XCHAR_TABLE (ct)->levels)
+#define XCHAR_TABLE_DEFAULT(ct) (XCHAR_TABLE (ct)->default_)
+#define XCHAR_TABLE_PARENT(ct) (XCHAR_TABLE (ct)->parent)
+
+#define CHAR_TABLE_TYPE(ct) ((ct)->type)
+#define XCHAR_TABLE_TYPE(ct) (XCHAR_TABLE (ct)->type)
+
+#define XCHAR_TABLE_NEXT_TABLE(ct) (XCHAR_TABLE (ct)->next_table)
+#ifdef MIRROR_TABLE
+#define XCHAR_TABLE_MIRROR_TABLE(ct) (XCHAR_TABLE (ct)->mirror_table)
+#define XCHAR_TABLE_DIRTY(ct) (XCHAR_TABLE (ct)->dirty)
+#define XCHAR_TABLE_MIRROR_TABLE_P(ct) (XCHAR_TABLE (ct)->mirror_table_p)
+#endif /* MIRROR_TABLE */
+
+/* Get the raw value of CHARTAB for character CH.  This returns Qunbound
+   if the character's value has not been set. */
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-get_char_table_1 (Ichar ch, Lisp_Object table)
+get_char_table_raw (Ichar ch, Lisp_Object chartab)
 )
 {
-  Lisp_Object retval;
-  Lisp_Char_Table *ct = XCHAR_TABLE (table);
-#ifdef MULE
-  if (ch < NUM_ASCII_CHARS)
-    retval = ct->ascii[ch];
-  else
-    {
-      unsigned char lb = ichar_leading_byte (ch);
-      if (!CHAR_TABLE_ENTRYP (ct->level1[lb - MIN_LEADING_BYTE]))
-	retval = ct->level1[lb - MIN_LEADING_BYTE];
-      else
-	retval = get_non_ascii_char_table_value (ct, lb, ch);
-    }
-#else /* not MULE */
-  retval = ct->ascii[(unsigned char) ch];
-#endif /* not MULE */
+  int levels;
+  int u4, u3, u2, u1;
+#ifndef MAXIMIZE_CHAR_TABLE_DEPTH
+  int code_levels;
+#endif
+
+  text_checking_assert (valid_ichar_p (ch));
+  CHARTAB_BREAKUP_CHAR_CODE ((int) ch, u4, u3, u2, u1, code_levels);
+
+  levels = CHARTAB_LEVELS (XCHAR_TABLE_LEVELS (chartab));
+  text_checking_assert (levels >= 1 && levels <= 4);
+
+#if !defined (MULE) && defined (MAXIMIZE_CHAR_TABLE_DEPTH)
+  /* This better be the case or something has gone majorly wrong --
+     the "maximum" depth can't actually account for the highest possible
+     character. */
+  text_checking_assert (ch <= 255);
+#endif
+
+#ifndef MAXIMIZE_CHAR_TABLE_DEPTH
+  /* If not that many levels even in the table, then value definitely not
+     in the table */
+  if (levels < code_levels)
+    return Qunbound;
+#endif /* not MAXIMIZE_CHAR_TABLE_DEPTH */
+
+  {
+    register SUBTAB_TYPE table = XCHAR_TABLE_TABLE (chartab);
+    /* We are really helping the compiler here.  CHARTAB_LEVELS() will
+       evaluate to a constant when MAXIMIZE_CHAR_TABLE_DEPTH is true,
+       so any reasonable optimizing compiler should eliminate the
+       switch entirely. */
+    switch (CHARTAB_LEVELS (levels))
+      {
+	/* Fall through */
+      case 4: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u4];
+      case 3: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u3];
+      case 2: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u2];
+      case 1: return LISPOBJ_ARRAY_FROM_SUBTAB (table)[u1];
+      }
+  }
+
+  ABORT (); /* Should never happen */
+  return Qunbound;
+}
+
+/* Same as get_char_table but don't trip an assert that we aren't retrieving
+   the value for a mirror table. (Normally we have this assert in place
+   to make sure that mirror tables don't escape to where they shouldn't be.
+   But some code really does need to access the mirror value itself --
+   otherwise, of course, we wouldn't have any need for mirror tables. */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+get_char_table_1 (Ichar ch, Lisp_Object chartab)
+)
+{
+  Lisp_Object retval = get_char_table_raw (ch, chartab);
   if (!UNBOUNDP (retval))
     return retval;
   else
-    return ct->default_;
+    return XCHAR_TABLE_DEFAULT (chartab);
 }
+
+/* Get the value of CHARTAB for character CH.  If the character's value has
+   not been set, this returns the default value for the char table. */
 
 #ifdef ERROR_CHECK_TYPES
 DECLARE_INLINE_HEADER (
@@ -175,7 +281,9 @@ Lisp_Object
 get_char_table (Ichar ch, Lisp_Object table)
 )
 {
+#ifdef MIRROR_TABLE
   assert (!XCHAR_TABLE (table)->mirror_table_p);
+#endif /* MIRROR_TABLE */
   return get_char_table_1 (ch, table);
 }
 #else
@@ -189,39 +297,29 @@ enum chartab_range_type
   CHARTAB_RANGE_CHARSET,
   CHARTAB_RANGE_ROW,
 #endif
+  CHARTAB_RANGE_RANGE,
   CHARTAB_RANGE_CHAR
 };
 
 struct chartab_range
 {
   enum chartab_range_type type;
-  Ichar ch;
+  Ichar ch, chtop;
   Lisp_Object charset;
   int row;
 };
 
 void set_char_table_default (Lisp_Object table, Lisp_Object value);
+void put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val);
 void put_char_table (Lisp_Object table, struct chartab_range *range,
 		     Lisp_Object val);
 int map_char_table (Lisp_Object table,
 		    struct chartab_range *range,
-		    int (*fn) (struct chartab_range *range,
-			       Lisp_Object table,
-			       Lisp_Object val, void *arg),
+		    int (*fn) (Lisp_Object table, Ichar code, Lisp_Object val,
+			       void *arg),
 		    void *arg);
 void prune_syntax_tables (void);
-Lisp_Object get_range_char_table (struct chartab_range *range,
-				  Lisp_Object table, Lisp_Object multi);
-#ifdef ERROR_CHECK_TYPES
-Lisp_Object updating_mirror_get_range_char_table (struct chartab_range *range,
-						  Lisp_Object table,
-						  Lisp_Object multi);
-#else
-#define updating_mirror_get_range_char_table get_range_char_table
-#endif
-void copy_char_table_range (Lisp_Object from, Lisp_Object to,
-			    struct chartab_range *range);
-int word_boundary_p (Ichar c1, Ichar c2);
+int word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2);
 
 EXFUN (Fcopy_char_table, 1);
 EXFUN (Fmake_char_table, 1);
