@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "blocktype.h"
+#include "buffer.h"
 #include "charset.h"
 #include "console.h"
 #include "device-impl.h"
@@ -142,6 +143,14 @@ Lisp_Object Qsans_modifiers;
 /************************************************************************/
 /*                            keymap handling                           */
 /************************************************************************/
+
+/* @@#### This is the wrong approach, I think.  We should not be exposing the
+   name of the keysym anywhere, or forcing the user to use this name.
+   At the Lisp level, the user should simply see the character itself, and
+   should be able to bind the actual character.  Furthermore, introducing
+   the symbol introduces an X-specific dependency; I can't expect to set
+   a binding for a particular Unicode character and have it work on both
+   Windows and X. --ben */
 
 /* See comment near character_to_event(). */
 static void
