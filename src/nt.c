@@ -963,7 +963,7 @@ open_unc_volume (const Ibyte *path)
   nr.dwUsage = RESOURCEUSAGE_CONTAINER; 
   nr.lpLocalName = NULL;
   PATHNAME_CONVERT_OUT (path, extpath);
-  nr.lpRemoteName = (LPTSTR) extpath;
+  nr.lpRemoteName = (XELPTSTR) extpath;
   nr.lpComment = NULL; 
   nr.lpProvider = NULL;   
 
