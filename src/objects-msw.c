@@ -2081,28 +2081,30 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
 	  assert(0);
 	}
 
-      HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
-						 font_list,
-						 ERROR_ME_DEBUG_WARN,
-						 &truename);
+      {
+	HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
+						   font_list,
+						   ERROR_ME_DEBUG_WARN,
+						   &truename);
 
-      if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
-	{
-	nope:
-	  DeleteDC (hdc);
-	  UNGCPRO;
-	  return 0;
-	}
-    
-      if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
-	{
-	  SelectObject (hdc, hfont);
-	  goto nope;
-	}
-      SelectObject (hdc, hfont);
-      DeleteDC (hdc);
-      Fputhash (reloc, make_opaque (&fs, sizeof (fs)), Vfont_signature_data);
-      UNGCPRO;
+	if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
+	  {
+	    nope:
+	    DeleteDC (hdc);
+	    UNGCPRO;
+	    return 0;
+	  }
+
+	if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
+	  {
+	    SelectObject (hdc, hfont);
+	    goto nope;
+	  }
+	SelectObject (hdc, hfont);
+	DeleteDC (hdc);
+	Fputhash (reloc, make_opaque (&fs, sizeof (fs)), Vfont_signature_data);
+	UNGCPRO;
+      }
     }
 
   {
