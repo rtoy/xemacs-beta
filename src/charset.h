@@ -60,6 +60,8 @@ Boston, MA 02111-1307, USA.  */
 } while (0)
 #define XCHARSET_CCL_PROGRAM(cs) Qnil
 #define XCHARSET_NAME(cs) Qascii
+#define Fget_charset(cs) (cs)
+#define Fcharset_list() list1 (Vcharset_ascii)
 
 #else /* MULE */
 
