@@ -154,7 +154,6 @@ Lisp_Object find_some_frame (int (*predicate) (Lisp_Object, void *),
 			     void *closure);
 int device_matches_device_spec (Lisp_Object device, Lisp_Object device_spec);
 Lisp_Object frame_first_window (struct frame *f);
-int show_gc_cursor (struct frame *f, Lisp_Object cursor);
 void set_frame_selected_window (struct frame *f, Lisp_Object window);
 int is_surrogate_for_selected_frame (struct frame *f);
 void update_frame_icon (struct frame *f);

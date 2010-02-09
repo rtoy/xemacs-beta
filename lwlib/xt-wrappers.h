@@ -89,15 +89,15 @@ Boston, MA 02111-1307, USA.  */
 /* Convenience macros for getting/setting one resource value. */
 
 #define Xt_SET_VALUE(widget, resource, value) do {	\
-  Arg al;						\
-  Xt_SET_ARG (al, resource, value);			\
-  XtSetValues (widget, &al, 1);				\
+  Arg al__;						\
+  Xt_SET_ARG (al__, resource, value);			\
+  XtSetValues (widget, &al__, 1);			\
 } while (0)
 
 #define Xt_GET_VALUE(widget, resource, location) do {	\
-  Arg al;						\
-  Xt_SET_ARG (al, resource, location);			\
-  XtGetValues (widget, &al, 1);				\
+  Arg al__;						\
+  Xt_SET_ARG (al__, resource, location);		\
+  XtGetValues (widget, &al__, 1);			\
 } while (0)
 
 #endif /* INCLUDED_xt_wrappers_h_ */

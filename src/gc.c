@@ -1449,7 +1449,7 @@ struct backtrace backtrace;
 #define MAX_SAVE_STACK 0 /* 16000 */
 #endif
 
-void
+static void
 show_gc_cursor_and_message (void) 
 {
   /* Now show the GC cursor/message. */
@@ -1506,7 +1506,7 @@ show_gc_cursor_and_message (void)
     }
 }
 
-void
+static void
 remove_gc_cursor_and_message (void)
 {
   /* Now remove the GC cursor/message */
@@ -1536,7 +1536,7 @@ remove_gc_cursor_and_message (void)
     }
 }
 
-void
+static void
 gc_prepare (void)
 {
 #if MAX_SAVE_STACK > 0
@@ -1604,7 +1604,7 @@ gc_prepare (void)
   cleanup_buffer_undo_lists ();
 }
 
-void
+static void
 gc_mark_root_set (
 #ifdef NEW_GC
 		  enum gc_phase phase
@@ -1711,7 +1711,7 @@ gc_mark_root_set (
 #endif
 }
 
-void
+static void
 gc_finish_mark (void)
 {
 #ifdef NEW_GC
@@ -1758,14 +1758,14 @@ gc_finish_mark (void)
 }
 
 #ifdef NEW_GC
-void
+static void
 gc_finalize (void)
 {
   GC_SET_PHASE (FINALIZE);
   register_for_finalization ();
 }
 
-void
+static void
 gc_sweep (void)
 {
   GC_SET_PHASE (SWEEP);
@@ -1774,7 +1774,7 @@ gc_sweep (void)
 #endif /* NEW_GC */
 
 
-void
+static void
 gc_finish (void)
 {
 #ifdef NEW_GC
@@ -1815,7 +1815,7 @@ gc_finish (void)
 }
 
 #ifdef NEW_GC
-void
+static void
 gc_suspend_mark_phase (void)
 {
   PROFILE_RECORD_EXITING_SECTION (QSin_garbage_collection);
@@ -1824,7 +1824,7 @@ gc_suspend_mark_phase (void)
   vdb_start_dirty_bits_recording ();
 }
 
-int
+static int
 gc_resume_mark_phase (void)
 {
   PROFILE_RECORD_ENTERING_SECTION (QSin_garbage_collection);
@@ -1834,7 +1834,7 @@ gc_resume_mark_phase (void)
   return vdb_read_dirty_bits ();
 }
 
-int
+static int
 gc_mark (int incremental)
 {
   GC_SET_PHASE (MARK);
@@ -1854,7 +1854,7 @@ gc_mark (int incremental)
   return 1;
 }
 
-int
+static int
 gc_resume_mark (int incremental)
 {
   if (!incremental)

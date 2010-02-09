@@ -145,6 +145,7 @@ void x_generate_shadow_pixels (struct frame *f,
 
 int x_initialize_frame_menubar (struct frame *f);
 void x_init_modifier_mapping (struct device *d);
+void x_has_keysym (KeySym, Lisp_Object, int);
 
 int x_frame_window_state (struct frame *f);
 

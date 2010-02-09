@@ -2070,6 +2070,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
     {
       HDC hdc = CreateCompatibleDC (NULL);
       Lisp_Object font_list = Qnil, truename; 
+      HFONT hfont;
 
       if (DEVICE_TYPE_P (d, mswindows))
 	{
@@ -2084,10 +2085,10 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
 	  assert(0);
 	}
 
-      HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
-						 font_list,
-						 ERROR_ME_DEBUG_WARN,
-						 &truename);
+      hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
+					   font_list,
+					   ERROR_ME_DEBUG_WARN,
+					   &truename);
 
       if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
 	{

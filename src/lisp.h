@@ -99,7 +99,12 @@ Boston, MA 02111-1307, USA.  */
    large so they shouldn't cause that much of a slowdown. */
 
 #include <stdlib.h>
+/* Evil, but ...  -Wshadow is genuinely useful but also leads to spurious
+   warnings when you have a local var named `index'.  Avoid this by
+   hacking around it. */
+#define index old_index
 #include <string.h>		/* primarily for memcpy, etc. */
+#undef index
 #include <stdio.h>		/* NULL, etc. */
 #include <ctype.h>
 #include <stdarg.h>

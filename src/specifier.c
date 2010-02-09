@@ -1072,8 +1072,8 @@ call_charset_predicate (Lisp_Object charset_predicate, Lisp_Object charset)
 {
   struct gcpro gcpro1;
   Lisp_Object charpres = make_vector (NUM_MATCHSPEC_STAGES, Qnil);
-  GCPRO1 (charpres);
   int max_args = XINT (Ffunction_max_args (charset_predicate));
+  GCPRO1 (charpres);
     
 
 #define DEFINE_SPECIFIER_TAG_FROB(stage, enumstage)		\

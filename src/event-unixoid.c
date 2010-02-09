@@ -100,16 +100,16 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
     ch = Lstream_get_ichar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
   else
     {
-      Ibyte byte;
+      Ibyte ibyte;
       /* #### Definitely something strange here.  We should be setting
 	 the stdio handle unbuffered and reading from it instead of mixing
 	 stdio and raw io calls. */
       int nread = retry_read (fileno (CONSOLE_STREAM_DATA (con)->in),
-			      &byte, 1);
+			      &ibyte, 1);
       if (nread <= 0)
 	ch = -1;
       else
-        ch = byte;
+        ch = ibyte;
     }
 
   if (ch < 0)
@@ -132,7 +132,7 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
 void
 signal_fake_event (void)
 {
-  char byte = 0;
+  Rawbyte rbyte = 0;
   /* We do the write always.  Formerly I tried to "optimize" this
      by setting a flag indicating whether we're blocking and only
      doing the write in that case, but there is a race condition
@@ -148,7 +148,7 @@ signal_fake_event (void)
     /* In case a signal comes through while we're dumping */
     {
       int old_errno = errno;
-      retry_write (signal_event_pipe[1], &byte, 1);
+      retry_write (signal_event_pipe[1], &rbyte, 1);
       errno = old_errno;
     }
 }
@@ -156,7 +156,7 @@ signal_fake_event (void)
 void
 drain_signal_event_pipe (void)
 {
-  char chars[128];
+  Rawbyte chars[128];
   /* The input end of the pipe has been set to non-blocking. */
   while (retry_read (signal_event_pipe[0], chars, sizeof (chars)) > 0)
     ;

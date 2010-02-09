@@ -356,23 +356,23 @@ check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
     len -= 3;
 
   {
-      EXTERNAL_LIST_LOOP_2 (acons, Vload_suppress_alist)
+    EXTERNAL_LIST_LOOP_2 (cons, Vload_suppress_alist)
       {
-	  if (CONSP (acons) && STRINGP (XCAR (acons)))
+	if (CONSP (cons) && STRINGP (XCAR (cons)))
 	  {
-	      Lisp_Object name = XCAR (acons);
-	      if (XSTRING_LENGTH (name) == len &&
-		  !memcmp (XSTRING_DATA (name), nonreloc, len))
+	    Lisp_Object name = XCAR (cons);
+	    if (XSTRING_LENGTH (name) == len &&
+		!memcmp (XSTRING_DATA (name), nonreloc, len))
 	      {
-		  struct gcpro gcpro1;
-		  Lisp_Object val;
+		struct gcpro gcpro1;
+		Lisp_Object val;
 
-		  GCPRO1 (reloc);
-		  val = IGNORE_MULTIPLE_VALUES (Feval (XCDR (acons)));
-		  UNGCPRO;
+		GCPRO1 (reloc);
+		val = IGNORE_MULTIPLE_VALUES (Feval (XCDR (cons)));
+		UNGCPRO;
 
-		  if (!NILP (val))
-		      return 1;
+		if (!NILP (val))
+		  return 1;
 	      }
 	  }
       }
