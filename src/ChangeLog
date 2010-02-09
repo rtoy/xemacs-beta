@@ -1,5 +1,10 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* event-Xt.c:
+	Add comment about simultaneous window-system consoles/devices.
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	Add prototypes for debugging functions.
 	
