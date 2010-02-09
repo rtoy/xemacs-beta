@@ -1,3 +1,7 @@
+2010-02-08  Vin Shelton  <acs@xemacs.org>
+
+	* nt.c (open_unc_volume): lpRemoteName is an XELPTSTR.
+
 2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (Dynarr_verify, Dynarr_verify_mod):
