@@ -1,3 +1,10 @@
+2010-02-09  Vin Shelton  <acs@xemacs.org>
+
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	Declare hfont at start of a code block.
+
+	* glyphs-eimage.c: Undefine and then redefine FAR around the jpeg headers.
+
 2010-02-08  Vin Shelton  <acs@xemacs.org>
 
 	* nt.c (open_unc_volume): lpRemoteName is an XELPTSTR.

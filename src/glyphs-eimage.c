@@ -120,8 +120,15 @@ typedef unsigned char boolean;
 #define HAVE_BOOLEAN		/* prevent jmorecfg.h from redefining it */
 #endif
 
+/* Yet more breakage... jmorecfg.h unconditionally defines FAR either as
+   "far" or as blank.  Windef.h unconditionally defines FAR as "far".
+   We'll avoid the compile warning by redefing FAR the way windows defines it,
+   after loading the JPEG headers. */
+#undef FAR
 #include <jpeglib.h>
 #include <jerror.h>
+#undef FAR
+#define FAR far
 
 END_C_DECLS
 
