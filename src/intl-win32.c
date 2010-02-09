@@ -1601,10 +1601,10 @@ wcslen (const wchar_t *str)
 wchar_t *
 wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)
 {
-  if (dst0 == NULL || src0 == NULL) return NULL;
   wchar_t *dscan;
   const wchar_t *sscan;
 
+  if (dst0 == NULL || src0 == NULL) return NULL;
   dscan = dst0;
   sscan = src0;
   while (count > 0)

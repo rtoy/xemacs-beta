@@ -4723,11 +4723,11 @@ multiple_value_call (int nargs, Lisp_Object *args)
       if (MULTIPLE_VALUEP (result))
         {
           Lisp_Object val;
-          Elemcount i, count = XMULTIPLE_VALUE_COUNT (result);
+          Elemcount j, count = XMULTIPLE_VALUE_COUNT (result);
 
-          for (i = 0; i < count; i++)
+          for (j = 0; j < count; j++)
             {
-              val = multiple_value_aref (result, i);
+              val = multiple_value_aref (result, j);
               assert (!UNBOUNDP (val));
 
               XSETCDR (list_offset, Fcons (val, Qnil));

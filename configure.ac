@@ -2053,28 +2053,52 @@ if test "$cflags_warning_specified" = "no"; then
     dnl Ulrich Drepper has rejected patches to fix the glibc header files.
     test "$have_glibc" != "yes" && \
       with_cflags_warning="$with_cflags_warning -Wpointer-arith"
+    dnl
     dnl Warning flags that may differ for gcc and g++ (xemacs_compiler)
+    dnl
     dnl With g++, -Wshadow produces five zillion utterly random warnings --
     dnl a local var named `buffer' conflicts with `struct buffer' for
     dnl example.  Even with gcc, -Wshadow is questionable because of its
     dnl complaints about parameters with the same names as global functions.
-    dnl There is no -Wmissing-declarations under g++.
+    dnl There is no -Wmissing-declarations, -Wmissing-prototypes, or
+    dnl -Wstrict-prototypes under g++.
     dnl But gcc warns about -Weffc++ in C compiles.
+    dnl
+    dnl with_cflags_warning_c is for C-only warnings.
+    dnl with_cflags_warning_cxx is for C++-only warnings.
+    dnl with_cflags_warning_c_xe is for C-only warnings and only when
+    dnl   compiling the source tree (i.e. when --xemacs-compiler is used).
+    with_cflags_warning_c="-Wshadow -Wmissing-declarations"
+    with_cflags_warning_c="$with_cflags_warning_c -Wmissing-prototypes -Wstrict-prototypes"
+    with_cflags_warning_cxx="-Weffc++"
+    with_cflags_warning_c_xe=""
+    dnl -Wunused-parameter only appeared in gcc 3.
+    dnl -Wdeclaration-after-statement only appeared in gcc 3.4, and is C-only.
+    dnl -Wunused-parameter is too annoying for use in lib-src, partly because
+    dnl the UNUSED() decl is in compiler.h and we don't include that in any
+    dnl of the lib-src files.
     dnl With g++, there is no effective way to use -Wunused-parameter without
     dnl some very ugly code changes.
-    if test "$XEMACS_CC_GPP" = "yes"; then
-      xe_cflags_warning="$with_cflags_warning -Weffc++"
-    elif test "$__GCC" -ge 3; then
-      xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
+    if test "$__GCC" -ge 3; then
+      with_cflags_warning_c_xe="$with_cflags_warning_c_xe -Wunused-parameter"
       if test "$__GCC" -gt 3 || test "$__GCC_MINOR" -ge 4; then
-        with_cflags_warning="$with_cflags_warning -Wdeclaration-after-statement"
+        with_cflags_warning_c="$with_cflags_warning_c -Wdeclaration-after-statement"
       fi
     fi
-    with_cflags_warning="$with_cflags_warning -Wshadow -Wmissing-declarations"
-    with_cflags_warning="$with_cflags_warning -Wmissing-prototypes -Wstrict-prototypes"
-    dnl **** If more gcc/g++ flags are added, from here on must handle
-    dnl **** with_cflags_warning and xe_cflags_warning in parallel
+    dnl **** If more gcc/g++ flags are added, add them above, not below
+    dnl
+    dnl Now set warnings for the source tree (xe_cflags_warning) and for
+    dnl lib-src (with_cflags_warning).  Note that if we didn't set
+    dnl xe_cflags_warning, it would automatically be initialized from
+    dnl with_cflags_warning.
+    if test "$XEMACS_CC_GPP" = "yes"; then
+      xe_cflags_warning="$with_cflags_warning $with_cflags_warning_cxx"
+    else
+      xe_cflags_warning="$with_cflags_warning $with_cflags_warning_c $with_cflags_warning_c_xe"
+    fi
+    with_cflags_warning="$with_cflags_warning $with_cflags_warning_c"
   elif test "$__ICC" = "yes"; then
+    dnl This will apply to both source tree and lib-src
     with_cflags_warning="-Wall -w1 -we147"
   dnl ### Add optimal with_cflags_warning support for other compilers HERE!
   fi

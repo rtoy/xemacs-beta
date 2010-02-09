@@ -1,5 +1,61 @@
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c:
+	Add prototypes for debugging functions.
+	
+	* alloc.c (compact_string_chars): Make static.
+	
+	* console-x.c (x_initially_selected_for_input):
+	* console-x.h:
+	* console-x.h (X_ERROR_OCCURRED):
+	Delete x_has_keysym() prototype from console-x.c, move to console-x.h.
+
+	* eval.c (multiple_value_call):
+	Real bug: Fix shadowing local vars.
+	
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	* event-unixoid.c (signal_fake_event):
+	* lread.c (check_if_suppressed):
+	* strftime.c (strftime):
+	Fix stupid global shadowing warnings.
+	
+	* event-unixoid.c (signal_fake_event):
+	* event-unixoid.c (drain_signal_event_pipe):
+	Use Rawbyte, not char.
+	
+	* frame.h: Remove old prototype.
+	
+	* gc.c:
+	* gc.c (show_gc_cursor_and_message):
+	* gc.c (remove_gc_cursor_and_message):
+	* gc.c (gc_prepare):
+	* gc.c (gc_finish_mark):
+	* gc.c (gc_finalize):
+	* gc.c (gc_sweep):
+	* gc.c (gc_finish):
+	* gc.c (gc_suspend_mark_phase):
+	* gc.c (gc_resume_mark_phase):
+	* gc.c (gc_mark):
+	* gc.c (gc_resume_mark):
+	Make fns static.
+	
+	* glyphs-eimage.c (gif_decode_error_string):
+	Fix non-prototype.
+	
+	* lisp.h:
+	Hack around global shadowing warnings involving `index'.
+	
+	* intl-win32.c (wcsncpy):
+	* number-gmp.c (bigfloat_to_string):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* specifier.c (call_charset_predicate):
+	* specifier.c (DEFINE_SPECIFIER_TAG_FROB):
+	Declarations cannot follow statements in standard C.
+
+	* search.c (search_buffer): Fix local shadowing warnings.
+	
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
 	* faces.c:
 	* faces.c (face_property_matching_instance):
 	* faces.c (ensure_face_cachel_contains_charset):

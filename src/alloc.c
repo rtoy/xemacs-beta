@@ -3304,6 +3304,8 @@ staticpro_1 (Lisp_Object *varaddress, const Ascbyte *varname)
   dump_add_root_lisp_object (varaddress);
 }
 
+const Ascbyte *staticpro_name (int count);
+
 /* External debugging function: Return the name of the variable at offset
    COUNT. */
 const Ascbyte *
@@ -3323,6 +3325,8 @@ staticpro_nodump_1 (Lisp_Object *varaddress, const Ascbyte *varname)
   Dynarr_add (staticpros_nodump, varaddress);
   Dynarr_add (staticpro_nodump_names, varname);
 }
+
+const Ascbyte *staticpro_nodump_name (int count);
 
 /* External debugging function: Return the name of the variable at offset
    COUNT. */
@@ -4136,7 +4140,7 @@ verify_string_chars_integrity (void)
 #ifndef NEW_GC
 /* Compactify string chars, relocating the reference to each --
    free any empty string_chars_block we see. */
-void
+static void
 compact_string_chars (void)
 {
   struct string_chars_block *to_sb = first_string_chars_block;
