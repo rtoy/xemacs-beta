@@ -396,13 +396,13 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
             case 'G':
               {
                 int year = tm->tm_year + 1900;
-                int days = iso_week_days (tm->tm_yday, tm->tm_wday);
+                int ndays = iso_week_days (tm->tm_yday, tm->tm_wday);
 
-                if (days < 0)
+                if (ndays < 0)
                   {
                     /* This ISO week belongs to the previous year.  */
                     year--;
-                    days =
+                    ndays =
                       iso_week_days (tm->tm_yday + (365 + __isleap (year)),
                                      tm->tm_wday);
                   }
@@ -415,7 +415,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
                       {
                         /* This ISO week belongs to the next year.  */
                         year++;
-                        days = d;
+                        ndays = d;
                       }
                   }
 
@@ -442,7 +442,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
                     
                   default:
                     length +=
-                      add_num2 (&string[length], days / 7 + 1,
+                      add_num2 (&string[length], ndays / 7 + 1,
                                 max - length, pad);
                     break;
                   }
@@ -474,7 +474,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
                 /* tm diff code below is based on mktime.c, glibc 2.3.2 */
                 {
                   int lt4, ut4, lt100, ut100, lt400, ut400;
-                  int intervening_leap_days, years, days;
+                  int intervening_leap_days, years, ndays;
 
                   lt4 = (lt.tm_year >> 2) + (1900 >> 2) -
                     ! (lt.tm_year & 3);
@@ -487,9 +487,10 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
                   intervening_leap_days =
                     (lt4 - ut4) - (lt100 - ut100) + (lt400 - ut400);
                   years = lt.tm_year - ut->tm_year;
-                  days = (365 * years + intervening_leap_days
+                  ndays = (365 * years + intervening_leap_days
                           + (lt.tm_yday - ut->tm_yday));
-                  offset = (60 * (60 * (24 * days + (lt.tm_hour - ut->tm_hour))
+                  offset = (60 * (60 * (24 * ndays
+					+ (lt.tm_hour - ut->tm_hour))
                                  + (lt.tm_min - ut->tm_min))
                            + (lt.tm_sec - ut->tm_sec));
                 }

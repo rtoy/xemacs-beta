@@ -572,16 +572,6 @@ DECLARE_SPECIFIER_TYPE (display_table);
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)
 
-/* The various stages of font instantiation; initial means "find a font for
-   CHARSET that matches the charset's registries" and final means "find a
-   font for CHARSET that matches iso10646-1, since we haven't found a font
-   that matches its registry."  */
-enum font_specifier_matchspec_stages {
-  initial,
-  final,
-  impossible,
-};
-
 Lisp_Object define_specifier_tag(Lisp_Object tag,
 				 Lisp_Object device_predicate,
 				 Lisp_Object charset_predicate);

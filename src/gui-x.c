@@ -81,9 +81,9 @@ snarf_widget_value_mapper (widget_value *val, void *closure)
   struct widget_value_mapper *z = (struct widget_value_mapper *) closure;
 
   if (val->call_data)
-    z->protect_me = Fcons (VOID_TO_LISP (val->call_data), z->protect_me);
+    z->protect_me = Fcons (GET_LISP_FROM_VOID (val->call_data), z->protect_me);
   if (val->accel)
-    z->protect_me = Fcons (VOID_TO_LISP (val->accel), z->protect_me);
+    z->protect_me = Fcons (GET_LISP_FROM_VOID (val->accel), z->protect_me);
 
   return 0;
 }
@@ -243,7 +243,7 @@ popup_selection_callback (Widget widget, LWLIB_ID UNUSED (id),
     return;
   if (((EMACS_INT) client_data) == 0)
     return;
-  data = VOID_TO_LISP (client_data);
+  data = GET_LISP_FROM_VOID (client_data);
   frame = wrap_frame (f);
 
 #if 0
@@ -440,12 +440,12 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
   if (accel_p)
     {
       wv->name = add_accel_and_to_external (pgui->name);
-      wv->accel = LISP_TO_VOID (gui_item_accelerator (gui_item));
+      wv->accel = STORE_LISP_IN_VOID (gui_item_accelerator (gui_item));
     }
   else
     {
       wv->name = LISP_STRING_TO_EXTERNAL_MALLOC (pgui->name, Qlwlib_encoding);
-      wv->accel = LISP_TO_VOID (Qnil);
+      wv->accel = STORE_LISP_IN_VOID (Qnil);
     }
 
   if (!NILP (pgui->suffix))
@@ -468,7 +468,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
   wv_set_evalable_slot (wv->selected, pgui->selected);
 
   if (!NILP (pgui->callback) || !NILP (pgui->callback_ex))
-    wv->call_data = LISP_TO_VOID (cons3 (gui_object_instance,
+    wv->call_data = STORE_LISP_IN_VOID (cons3 (gui_object_instance,
 					 pgui->callback,
 					 pgui->callback_ex));
 

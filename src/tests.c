@@ -1,6 +1,6 @@
 /* C support for testing XEmacs - see tests/automated/c-tests.el
    Copyright (C) 2000 Martin Buchholz
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
    Copyright (C) 2006 The Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -645,6 +645,46 @@ REASON is nil or a string describing the failure (not required).
   return hash_result;
 }
 
+DEFUN ("test-store-void-in-lisp", Ftest_store_void_in_lisp, 0, 0, "", /*
+  Test STORE_VOID_IN_LISP and its inverse GET_VOID_FROM_LISP.
+Tests by internal assert(); only returns if it succeeds.
+*/
+       ())
+{
+  struct foobar { int x; int y; short z; void *q; } baz;
+
+#define FROB(val)							\
+do									\
+{									\
+  void *pval = (void *) (val);						\
+  assert (GET_VOID_FROM_LISP (STORE_VOID_IN_LISP (pval)) == pval);	\
+}									\
+while (0)
+  assert (INT_VALBITS >= 31);
+  FROB (&baz);
+  FROB (&baz.x);
+  FROB (&baz.y);
+  FROB (&baz.z);
+  FROB (&baz.q);
+  FROB (0);
+  FROB (2);
+  FROB (&Vtest_function_list);
+  FROB (0x00000080);
+  FROB (0x00008080);
+  FROB (0x00808080);
+  FROB (0x80808080);
+  FROB (0xCAFEBABE);
+  FROB (0xFFFFFFFE);
+#if INT_VALBITS >= 63
+  FROB (0x0000808080808080);
+  FROB (0x8080808080808080);
+  FROB (0XDEADBEEFCAFEBABE);
+  FROB (0XFFFFFFFFFFFFFFFE);
+#endif /* INT_VALBITS >= 63 */
+
+  return list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil);
+}
+
 
 
 #ifdef NEW_GC
@@ -671,6 +711,7 @@ syms_of_tests (void)
 
   TESTS_DEFSUBR (Ftest_data_format_conversion);
   TESTS_DEFSUBR (Ftest_hash_tables);
+  TESTS_DEFSUBR (Ftest_store_void_in_lisp);
   /* Add other test functions here with TESTS_DEFSUBR */
 }
 

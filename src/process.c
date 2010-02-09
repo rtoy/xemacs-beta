@@ -232,7 +232,7 @@ get_process_from_usid (USID usid)
   if (gethash ((const void*)usid, usid_to_process, &vval))
     {
       Lisp_Object process;
-      process = VOID_TO_LISP (vval);
+      process = GET_LISP_FROM_VOID (vval);
       return XPROCESS (process);
     }
   else
@@ -560,14 +560,14 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, void* err,
     {
       Lisp_Object process = Qnil;
       process = wrap_process (p);
-      puthash ((const void*) in_usid, LISP_TO_VOID (process), usid_to_process);
+      puthash ((const void*) in_usid, STORE_LISP_IN_VOID (process), usid_to_process);
     }
 
   if (err_usid != USID_DONTHASH)
     {
       Lisp_Object process = Qnil;
       process = wrap_process (p);
-      puthash ((const void*) err_usid, LISP_TO_VOID (process),
+      puthash ((const void*) err_usid, STORE_LISP_IN_VOID (process),
 	       usid_to_process);
     }
 

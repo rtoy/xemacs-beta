@@ -651,7 +651,7 @@ find_nonminibuffer_frame_not_on_console_predicate (Lisp_Object frame,
 {
   Lisp_Object console;
 
-  console = VOID_TO_LISP (closure);
+  console = GET_LISP_FROM_VOID (closure);
   if (FRAME_MINIBUF_ONLY_P (XFRAME (frame)))
     return 0;
   if (EQ (console, FRAME_CONSOLE (XFRAME (frame))))
@@ -663,7 +663,7 @@ static Lisp_Object
 find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 {
   return find_some_frame (find_nonminibuffer_frame_not_on_console_predicate,
-			  LISP_TO_VOID (console));
+			  STORE_LISP_IN_VOID (console));
 }
 
 static void

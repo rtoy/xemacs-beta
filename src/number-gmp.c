@@ -76,18 +76,20 @@ bigfloat_to_string(mpf_t f, int base)
 	 point, format identifier, and exponent */
       /* GMP's idea of the exponent is 1 greater than scientific notation's */
       expt--;
-      const int point = (len == neg + 2) ? 0 : 1;
-      const int exponent = (expt < 0)
-	? (int)(log ((double) (-expt)) / log ((double) base)) + 3
-	: (int)(log ((double) expt) / log ((double) base)) + 2;
-      const int space = point + exponent;
-      XREALLOC_ARRAY (str, CIbyte, len + space);
-      if (point > 0)
-	{
-	  memmove (&str[neg + 2], &str[neg + 1], len - neg);
-	  str[neg + 1] = '.';
-	}
-      sprintf (&str[len + point - 1], "E%ld", expt);
+      {
+	const int point = (len == neg + 2) ? 0 : 1;
+	const int exponent = (expt < 0)
+	  ? (int)(log ((double) (-expt)) / log ((double) base)) + 3
+	  : (int)(log ((double) expt) / log ((double) base)) + 2;
+	const int space = point + exponent;
+	XREALLOC_ARRAY (str, CIbyte, len + space);
+	if (point > 0)
+	  {
+	    memmove (&str[neg + 2], &str[neg + 1], len - neg);
+	    str[neg + 1] = '.';
+	  }
+	sprintf (&str[len + point - 1], "E%ld", expt);
+      }
     }
   return str;
 }

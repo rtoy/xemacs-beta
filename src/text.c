@@ -4571,7 +4571,7 @@ new_dfc_convert_now_damn_it (const void *src, Bytecount src_size,
       break;
 
     case DFC_LISP_STRING:
-      TO_EXTERNAL_FORMAT (LISP_STRING, VOID_TO_LISP (src),
+      TO_EXTERNAL_FORMAT (LISP_STRING, GET_LISP_FROM_VOID (src),
 			  MALLOC, (*dst, *dst_size), codesys);
       break;
 
