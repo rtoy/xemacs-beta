@@ -1,5 +1,33 @@
 2010-02-09  Ben Wing  <ben@xemacs.org>
 
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* emacs.c:
+	* emacs.c (pause_so_user_can_read_messages):
+	* emacs.c (Fkill_emacs):
+	* emacs.c (guts_of_fatal_error_signal):
+	* lisp.h:
+	* lisp.h (INLINE_ERROR_CHECK_ARGS):
+	* lisp.h (Dynarr_set_length_1):
+	* lisp.h (Dynarr_set_length):
+	* lisp.h (Dynarr_pop):
+	Add ERROR_CHECK_DYNARR, dynarr_checking_assert().  Use it.
+	Sort existing error-check categories in lisp.h, remove most of the
+	(unused) assert variations from most categories.  Add a long
+	comment about reorganizing the system by categories and
+	subcategories.  Create ERROR_CHECK_ANY if any error-checking
+	categories defined, and use it in emacs.c to define
+	USER_IS_DEVELOPING_XEMACS.
+
+	In emacs.c and cmdloop.c, don't display a message at early
+	shutdown or fatal shutdown when on Cygwin, only Windows native --
+	Cygwin has a working stderr that shows error output.
+
+	Update comment in Dynarr_verify_pos_atp().
+	
+
+2010-02-09  Ben Wing  <ben@xemacs.org>
+
 	* syswindows.h:
 	Create a long comment about build flags such as WIN32_NATIVE,
 	HAVE_MS_WINDOWS.

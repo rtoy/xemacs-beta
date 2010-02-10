@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -3334,6 +3334,21 @@ and announce itself normally when it is run.
 /*                  exiting XEmacs (intended or not)                    */
 /************************************************************************/
 
+/* Do we need to pause with a message box so that messages can be read
+   at shutdown?  We do this is we have support for native Windows frames
+   and if we are native Windows.  The first part is because only when compiled
+   for native Windows frames do we have Fmswindows_message_box(), and
+   the second part is because we don't want to do this under Cygwin, where
+   we have a Unix-like environment and a working stderr where the messages
+   go.  The two conditions sound somewhat redundant (maybe we could just
+   use the second?) but they aren't completely: Theoretically (maybe with
+   MinGW?) we could imagine compiling under native Windows as the OS
+   but e.g. targetting only X Windows as the window system. --ben */
+
+#if defined (HAVE_MS_WINDOWS) && defined (WIN32_NATIVE)
+# define NEED_WINDOWS_MESSAGE_PAUSE
+#endif
+
 /*
 
 Info on intended/unintended exits:
@@ -3468,7 +3483,7 @@ ensure_no_quitting_from_now_on (void)
   Vquit_flag = Qnil;
 }
 
-#ifdef HAVE_MS_WINDOWS
+#ifdef NEED_WINDOWS_MESSAGE_PAUSE
 static void
 pause_so_user_can_read_messages (int allow_further)
 {
@@ -3719,7 +3734,7 @@ all of which are called before XEmacs is actually killed.
 
   UNGCPRO;
 
-#ifdef HAVE_MS_WINDOWS
+#ifdef NEED_WINDOWS_MESSAGE_PAUSE
   pause_so_user_can_read_messages (1);
 #endif
 
@@ -3755,7 +3770,7 @@ all of which are called before XEmacs is actually killed.
    loops will fight each other and the return key will never be passed to
    the "pause" handler so that XEmacs's GPF handler can return, resignal
    the GPF, and properly go into the debugger.) */
-#if defined (ERROR_CHECK_TYPES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_STRUCTURES)
+#ifdef ERROR_CHECK_ANY
 #define USER_IS_DEVELOPING_XEMACS
 #endif
 
@@ -3811,7 +3826,7 @@ guts_of_fatal_error_signal (int sig)
           }
       }
 # endif
-#if defined (HAVE_MS_WINDOWS) && !defined (USER_IS_DEVELOPING_XEMACS)
+#if defined (NEED_WINDOWS_MESSAGE_PAUSE) && !defined (USER_IS_DEVELOPING_XEMACS)
       pause_so_user_can_read_messages (0);
 #endif
     }
