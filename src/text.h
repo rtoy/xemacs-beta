@@ -480,7 +480,7 @@ do {									   \
 /* Note that this reads the byte at *PTR! */
 
 #define VALIDATE_IBYTEPTR_BACKWARD(ptr) do {	\
-  while (!valid_ibyteptr_p (ptr)) ptr--;		\
+  while (!valid_ibyteptr_p (ptr)) ptr--;	\
 } while (0)
 
 /* Make sure that PTR is pointing to the beginning of a character.  If not,
@@ -1814,41 +1814,41 @@ do {							\
    including existing zero terminator.  Put a new zero terminator where it
    should go if NEWZ if non-zero.  All args but EI are evalled only once. */
 
-#define EI_ALLOC(ei, newbytelen, newcharlen, newz)			      \
-do {									      \
-  int ei1oldeibytelen = (ei)->bytelen_;					      \
-									      \
-  (ei)->charlen_ = (newcharlen);					      \
-  (ei)->bytelen_ = (newbytelen);					      \
-									      \
-  if (ei1oldeibytelen != (ei)->bytelen_)				      \
-    {									      \
-      int ei1newsize = (ei)->max_size_allocated_;			      \
-      while (ei1newsize < (ei)->bytelen_ + 1)				      \
-	{								      \
-	  ei1newsize = (int) (ei1newsize * 1.5);			      \
-	  if (ei1newsize < 32)						      \
-	    ei1newsize = 32;						      \
-	}								      \
-      if (ei1newsize != (ei)->max_size_allocated_)			      \
-	{								      \
-	  if ((ei)->mallocp_)						      \
+#define EI_ALLOC(ei, newbytelen, newcharlen, newz)			\
+do {									\
+  int ei1oldeibytelen = (ei)->bytelen_;					\
+									\
+  (ei)->charlen_ = (newcharlen);					\
+  (ei)->bytelen_ = (newbytelen);					\
+									\
+  if (ei1oldeibytelen != (ei)->bytelen_)				\
+    {									\
+      int ei1newsize = (ei)->max_size_allocated_;			\
+      while (ei1newsize < (ei)->bytelen_ + 1)				\
+	{								\
+	  ei1newsize = (int) (ei1newsize * 1.5);			\
+	  if (ei1newsize < 32)						\
+	    ei1newsize = 32;						\
+	}								\
+      if (ei1newsize != (ei)->max_size_allocated_)			\
+	{								\
+	  if ((ei)->mallocp_)						\
 	    /* xrealloc always preserves existing data as much as possible */ \
-	    (ei)->data_ = (Ibyte *) xrealloc ((ei)->data_, ei1newsize);       \
-	  else								      \
-	    {								      \
-	      /* We don't have realloc, so ALLOCA() more space and copy the   \
-		 data into it. */					      \
-	      Ibyte *ei1oldeidata = (ei)->data_;			      \
-	      (ei)->data_ = alloca_ibytes (ei1newsize);		      \
-              if (ei1oldeidata)						      \
-	        memcpy ((ei)->data_, ei1oldeidata, ei1oldeibytelen + 1);      \
-	    }								      \
-	  (ei)->max_size_allocated_ = ei1newsize;			      \
-	}								      \
-      if (newz)								      \
-        (ei)->data_[(ei)->bytelen_] = '\0';				      \
-    }									      \
+	    (ei)->data_ = (Ibyte *) xrealloc ((ei)->data_, ei1newsize);	\
+	  else								\
+	    {								\
+	      /* We don't have realloc, so ALLOCA() more space and copy the \
+		 data into it. */					\
+	      Ibyte *ei1oldeidata = (ei)->data_;			\
+	      (ei)->data_ = alloca_ibytes (ei1newsize);			\
+              if (ei1oldeidata)						\
+	        memcpy ((ei)->data_, ei1oldeidata, ei1oldeibytelen + 1); \
+	    }								\
+	  (ei)->max_size_allocated_ = ei1newsize;			\
+	}								\
+      if (newz)								\
+        (ei)->data_[(ei)->bytelen_] = '\0';				\
+    }									\
 } while (0)
 
 #define EI_ALLOC_AND_COPY(ei, data, bytelen, charlen)	\
@@ -1999,7 +1999,7 @@ do {								\
   assert (ei23fmt == FORMAT_DEFAULT);				\
 								\
   *ei23lenout = (eistr)->bytelen_;				\
-  *ei23ptrout = alloca_ibytes ((eistr)->bytelen_ + 1);	\
+  *ei23ptrout = alloca_ibytes ((eistr)->bytelen_ + 1);		\
   memcpy (*ei23ptrout, (eistr)->data_, (eistr)->bytelen_ + 1);	\
 } while (0)
 
@@ -2010,9 +2010,9 @@ do {						\
   if ((ei)->mallocp_)				\
     {						\
       if ((ei)->data_)				\
-	xfree ((ei)->data_);		\
+	xfree ((ei)->data_);			\
       if ((ei)->extdata_)			\
-	xfree ((ei)->extdata_);	\
+	xfree ((ei)->extdata_);			\
       eiinit_malloc (ei);			\
     }						\
   else						\
@@ -2037,7 +2037,7 @@ do {									\
 	eifind_large_enough_buffer (0, (ei)->bytelen_ + 1);		\
       ei13newdata = alloca_ibytes ((ei)->max_size_allocated_);		\
       memcpy (ei13newdata, (ei)->data_, (ei)->bytelen_ + 1);		\
-      xfree ((ei)->data_);					\
+      xfree ((ei)->data_);						\
       (ei)->data_ = ei13newdata;					\
     }									\
 									\
@@ -2049,7 +2049,7 @@ do {									\
       /* Double null-terminate in case of Unicode data */		\
       ei13newdata[(ei)->extlen_] = '\0';				\
       ei13newdata[(ei)->extlen_ + 1] = '\0';				\
-      xfree ((ei)->extdata_);				\
+      xfree ((ei)->extdata_);						\
       (ei)->extdata_ = ei13newdata;					\
     }									\
 } while (0)
@@ -2251,7 +2251,7 @@ do {									\
     {									\
       if ((ei)->extdata_)						\
 	{								\
-	  xfree ((ei)->extdata_);				\
+	  xfree ((ei)->extdata_);					\
 	  (ei)->extdata_ = 0;						\
 	}								\
       TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
@@ -2429,17 +2429,69 @@ END_C_DECLS
   However, 99% of conversions involve raw data or Lisp strings as both
   source and sink, and usually data is output as alloca() rather than
   malloc().  For this reason, convenience macros are defined for many types
-  of conversions involving raw data and/or Lisp strings, especially when
-  the output is an alloca()ed string. (When the destination is a
+  of conversions involving raw data and/or Lisp strings, when the output is
+  an alloca()ed or malloc()ed string. (When the destination is a
   Lisp_String, there are other functions that should be used instead --
-  build_extstring() and make_extstring(), for example.) The convenience
-  macros are of two types -- the older kind that store the result into a
-  specified variable, and the newer kind that return the result.  The newer
-  kind of macros don't exist when the output is sized data, because that
-  would have two return values.  NOTE: All convenience macros are
-  ultimately defined in terms of TO_EXTERNAL_FORMAT and TO_INTERNAL_FORMAT.
-  Thus, any comments below about the workings of these macros also apply to
-  all convenience macros.
+  build_extstring() and make_extstring(), for example.) In general, the
+  convenience macros return their result as a return value, even if the
+  result is an alloca()ed string -- some trickery is required to do this,
+  but it's definitely possible.  However, for macros whose result is a
+  "sized string" (i.e. a string plus a length), there are two values to
+  return, and both are returned through parameters.
+
+  The convenience macros have the form:
+
+  (a) (SIZED_)?EXTERNAL_TO_ITEXT(_MALLOC)?
+  (b) (ITEXT|LISP_STRING)_TO_(SIZED_)?EXTERNAL(_MALLOC)?
+
+  Note also that there are some additional, more specific macros defined
+  elsewhere, for example macros like EXTERNAL_TO_TSTR() in syswindows.h for
+  conversions that specifically involve the `mswindows-tstr' coding system
+  (which is normally an alias of `mswindows-unicode', a variation of
+  UTF-16).
+
+  Convenience macros of type (a) are for conversion from external to
+  internal, while type (b) macros convert internal to external.  A few
+  notes:
+
+  -- The output is an alloca()ed string unless `_MALLOC' is appended,
+     in which case it's a malloc()ed string.
+  -- When the destination says ITEXT, it means internally-formatted text of
+     type `Ibyte *' (which boils down to `unsigned char *').
+  -- When the destination says EXTERNAL, it means externally-formatted
+     text of type `Extbyte *' (which boils down to `char *').  Because
+     `Ibyte *' and `Extbyte *' are different underlying types, accidentally
+     mixing them will generally lead to a warning under gcc, and an error
+     under g++.
+  -- When SIZED_EXTERNAL is involved, there are two parameters, one for
+     the string and one for its length.  When SIZED_EXTERNAL is the
+     destination, these two parameters should be lvalues and will have the
+     result stored into them.
+  -- There is no LISP_STRING destination; use `build_extstring' instead of
+     `EXTERNAL_TO_LISP_STRING' and `make_extstring' instead of
+     `SIZED_EXTERNAL_TO_LISP_STRING'.
+  -- There is no SIZED_ITEXT type.  If you need this: First, if your data
+     is coming from a Lisp string, it would be better to use the
+     LISP_STRING_TO_* macros.  If this doesn't apply or work, call the
+     TO_EXTERNAL_FORMAT() or TO_INTERNAL_FORMAT() macros directly.
+
+  Note that previously the convenience macros, like the raw TO_*_FORMAT
+  macros, were always written to store their arguments into a passed-in
+  lvalue rather than return them, due to major bugs in calling alloca()
+  inside of a function call on x86 gcc circa version 2.6.  This has
+  apparently long since been fixed, but just to make sure we have a
+  `configure' test for broken alloca() in function calls, and in such case
+  the portable xemacs_c_alloca() implementation is substituted instead.
+  Note that this implementation actually uses malloc() but notes the stack
+  pointer at the time of allocation, and at next call any allocations
+  belonging to inner stack frames are freed.  This isn't perfect but
+  more-or-less gets the job done as an emergency backup, and in most
+  circumstances it prevents arbitrary memory leakage -- at most you should
+  get a fixed amount of leakage.
+
+  NOTE: All convenience macros are ultimately defined in terms of
+  TO_EXTERNAL_FORMAT and TO_INTERNAL_FORMAT.  Thus, any comments below
+  about the workings of these macros also apply to all convenience macros.
 
   TO_EXTERNAL_FORMAT (source_type, source, sink_type, sink, codesys)
   TO_INTERNAL_FORMAT (source_type, source, sink_type, sink, codesys)
@@ -2509,25 +2561,12 @@ END_C_DECLS
   Anything prefixed by dfc_ (`data format conversion') is private.
   They are only used to implement these macros.
 
-  [[Using C_STRING* is appropriate for using with external APIs that
-  take null-terminated strings.  For internal data, we should try to
-  be '\0'-clean - i.e. allow arbitrary data to contain embedded '\0'.
-
-  Sometime in the future we might allow output to C_STRING_ALLOCA or
-  C_STRING_MALLOC _only_ with TO_EXTERNAL_FORMAT(), not
-  TO_INTERNAL_FORMAT().]]
-
-  The above comments are not true.  Frequently (most of the time, in
-  fact), external strings come as zero-terminated entities, where the
-  zero-termination is the only way to find out the length.  Even in
-  cases where you can get the length, most of the time the system will
-  still use the null to signal the end of the string, and there will
-  still be no way to either send in or receive a string with embedded
-  nulls.  In such situations, it's pointless to track the length
-  because null bytes can never be in the string.  We have a lot of
-  operations that make it easy to operate on zero-terminated strings,
-  and forcing the user the deal with the length everywhere would only
-  make the code uglier and more complicated, for no gain. --ben
+  Using C_STRING* is appropriate for data that comes from or is going to
+  an external API that takes null-terminated strings, or when the string is
+  always intended to contain text and never binary data, e.g. file names.
+  Any time we are dealing with binary or general data, we must be '\0'-clean,
+  i.e. allow arbitrary data which might contain embedded '\0', by tracking
+  both pointer and length.
 
   There is no problem using the same lvalue for source and sink.
 
@@ -2553,44 +2592,7 @@ END_C_DECLS
   the most you can rely on is that sink data in Unicode format will
   have two terminating nulls, which combine to form one Unicode null
   character.
-
-  NOTE: You might ask, why are these not written as functions that
-  *RETURN* the converted string, since that would allow them to be used
-  much more conveniently, without having to constantly declare temporary
-  variables?  The answer is that in fact I originally did write the
-  routines that way, but that required either
-
-  (a) calling alloca() inside of a function call, or
-  (b) using expressions separated by commas and a global temporary variable, or
-  (c) using the GCC extension ({ ... }).
-
-  Turned out that all of the above had bugs, all caused by GCC (hence the
-  comments about "those GCC wankers" and "ream gcc up the ass").  As for
-  (a), some versions of GCC (especially on Intel platforms), which had
-  buggy implementations of alloca() that couldn't handle being called
-  inside of a function call -- they just decremented the stack right in the
-  middle of pushing args.  Oops, crash with stack trashing, very bad.  (b)
-  was an attempt to fix (a), and that led to further GCC crashes, esp. when
-  you had two such calls in a single subexpression, because GCC couldn't be
-  counted upon to follow even a minimally reasonable order of execution.
-  True, you can't count on one argument being evaluated before another, but
-  GCC would actually interleave them so that the temp var got stomped on by
-  one while the other was accessing it.  So I tried (c), which was
-  problematic because that GCC extension has more bugs in it than a
-  termite's nest.
-
-  So reluctantly I converted to the current way.  Now, that was awhile ago
-  (c. 1994), and it appears that the bug involving alloca in function calls
-  has long since been fixed.  More recently, I defined the new-dfc routines
-  down below, which DO allow exactly such convenience of returning your
-  args rather than store them in temp variables, and I also wrote a
-  configure check to see whether alloca() causes crashes inside of function
-  calls, and if so use the portable alloca() implementation in alloca.c.
-  If you define TEST_NEW_DFC, the old routines get written in terms of the
-  new ones, and I've had a beta put out with this on and it appeared to
-  this appears to cause no problems -- so we should consider
-  switching, and feel no compunctions about writing further such function-
-  like alloca() routines in lieu of statement-like ones. --ben */
+*/
 
 #define TO_EXTERNAL_FORMAT(source_type, source, sink_type, sink, codesys)  \
 do {									   \
@@ -2804,12 +2806,12 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
   VOIDP_CAST (sink) = dfc_sink_ret;					\
 } while (0)
-#define DFC_LISP_STRING_USE_CONVERTED_DATA(sink) \
+#define DFC_LISP_STRING_USE_CONVERTED_DATA(sink)			\
   sink = make_string ((Ibyte *) dfc_sink.data.ptr, dfc_sink.data.len)
-#define DFC_LISP_OPAQUE_USE_CONVERTED_DATA(sink) \
+#define DFC_LISP_OPAQUE_USE_CONVERTED_DATA(sink)		\
   sink = make_opaque (dfc_sink.data.ptr, dfc_sink.data.len)
 #define DFC_LISP_LSTREAM_USE_CONVERTED_DATA(sink) /* data already used */
-#define DFC_LISP_BUFFER_USE_CONVERTED_DATA(sink) \
+#define DFC_LISP_BUFFER_USE_CONVERTED_DATA(sink)	\
   Lstream_delete (XLSTREAM (dfc_sink.lisp_object))
 
 enum new_dfc_src_type
@@ -2856,23 +2858,23 @@ END_C_DECLS
    (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
 						   type, codesys)))
 
-#define EXTERNAL_TO_ITEXT(src, codesys)	\
+#define EXTERNAL_TO_ITEXT(src, codesys)					\
   ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys))
-#define EXTERNAL_TO_ITEXT_MALLOC(src, codesys)	\
+#define EXTERNAL_TO_ITEXT_MALLOC(src, codesys)				\
   ((Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys))
-#define SIZED_EXTERNAL_TO_ITEXT(src, len, codesys)	\
+#define SIZED_EXTERNAL_TO_ITEXT(src, len, codesys)			\
   ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys))
-#define SIZED_EXTERNAL_TO_ITEXT_MALLOC(src, len, codesys)	\
+#define SIZED_EXTERNAL_TO_ITEXT_MALLOC(src, len, codesys)		\
   ((Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys))
-#define ITEXT_TO_EXTERNAL(src, codesys)	\
+#define ITEXT_TO_EXTERNAL(src, codesys)					\
   ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys))
-#define ITEXT_TO_EXTERNAL_MALLOC(src, codesys)	\
+#define ITEXT_TO_EXTERNAL_MALLOC(src, codesys)				\
   ((Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys))
-#define LISP_STRING_TO_EXTERNAL(src, codesys)			\
+#define LISP_STRING_TO_EXTERNAL(src, codesys)				\
   ((Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,	\
 					DFC_LISP_STRING, codesys))
-#define LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
-  ((Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
+#define LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)			\
+  ((Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,		\
 				      DFC_LISP_STRING, codesys))
 /* In place of EXTERNAL_TO_LISP_STRING(), use build_extstring() and/or
    make_extstring(). */
