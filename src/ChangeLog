@@ -1,3 +1,7 @@
+2010-02-09  Jerry James  <james@xemacs.org>
+
+	* s/hpux11-shr.h: Add license information from Marcus Thiessel.
+
 2010-02-09  Ben Wing  <ben@xemacs.org>
 
 	* dynarr.c (Dynarr_insert_many):
