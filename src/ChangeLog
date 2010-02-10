@@ -1,3 +1,19 @@
+2010-02-10  Ben Wing  <ben@xemacs.org>
+
+	* text.h:
+	* text.h (VALIDATE_IBYTEPTR_BACKWARD):
+	* text.h (EI_ALLOC):
+	* text.h (eicpyout_alloca_fmt):
+	* text.h (eifree):
+	* text.h (eito_alloca):
+	* text.h (eito_external):
+	* text.h (DFC_LISP_STRING_USE_CONVERTED_DATA):
+	* text.h (EXTERNAL_TO_ITEXT):
+	(1) Fix up long comment about the internal-external conversion
+	macros to reflect the recent changes to the macros.
+
+	(2) Reformat the macros in text.h so they line up properly.
+
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
 	* fns.c: Qlist, Qstring mistakenly declared twice.
