@@ -1,5 +1,11 @@
 2010-02-09  Ben Wing  <ben@xemacs.org>
 
+	* syswindows.h:
+	Create a long comment about build flags such as WIN32_NATIVE,
+	HAVE_MS_WINDOWS.
+
+2010-02-09  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	Disabled inline assert should just use disabled_assert()
 	not disabled_assert_at_line() otherwise you get compile errors.
