@@ -20,6 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+#ifndef INCLUDED_syswindows_h_
+#define INCLUDED_syswindows_h_
+
 /* Authorship:
 
    Current primary author: Ben Wing <ben@xemacs.org>
@@ -36,10 +39,98 @@ Boston, MA 02111-1307, USA.  */
 
 */
 
-#ifndef INCLUDED_syswindows_h_
-#define INCLUDED_syswindows_h_
-
 /* See win32.c for info about the different Windows files in XEmacs. */
+
+/* 
+   A capsule introduction to Windows-related build flags:
+
+   See also: (Info-goto-node "(internals)Windows Build Flags")
+
+   1. Operating-system level:
+   --------------------------
+
+   `CYGWIN'	Compiled for Cygwin.  Cygwin provides a full Unix-like
+		environment under Windows.  Applications compiled for Cygwin
+		are linked with CYGWIN1.DLL, which provides the POSIX
+		emulation.
+
+		Corresponding s/ file: s/cygwin32.h
+
+   `MINGW'	Compiled for MinGW.  MinGW is a Unix-like environment under
+		Windows that allows for the use of `gcc' to create fully
+		native Windows applications that link with the normal
+		Microsoft C-runtime library (e.g. MSVCRT.DLL), and don't
+		require a special POSIX-emulation DLL (e.g. CYGWIN1.DLL).
+		Conversely, the only POSIX-like services available are
+		those in MSVCRT.DLL, which isn't much.  Essentially, coding
+		for MinGW is identical to coding for native Windows using
+		Visual C++ or the like, whereas coding for Cygwin is like
+		coding for Linux, but with the additional possibility of
+		making Win32-API calls.  Additional confusion comes from
+		the fact that you can use the Cygwin environment and
+		compilers to build a MINGW application (e.g. by passing the
+		`-mno-cygwin' command-line argument to `gcc').
+
+		Corresponding s/ file: s/mingw32.h
+
+   (none)	There's no flag to indicate that you are specifically
+		targetting native Windows and not doing this with MINGW.
+		Presumably this means you're using Visual C++.
+
+		Corresponding s/ file: s/windowsnt.h
+
+   `WIN32_ANY'	Any of the above three environments.
+
+		Corresponding s/ file: s/win32-common.h
+
+   `WIN32_NATIVE'
+		Native Windows target, either MinGW or Visual C++.
+                That is, not Cygwin.
+
+		Corresponding s/ file: s/win32-native.h
+
+
+   2. Compiler level:
+   ------------------
+
+   `__GNUC__'	Defined whenever compiling with gcc (Cygwin or MinGW).
+
+   `_MSC_VER'	Defined whenever compiling with Visual C++.
+
+   `CYGWIN_HEADERS'
+		Defined whenever using Cygwin-style header files rather
+		than Visual C++ headers.  Currently this means the same
+		as "Cygwin or MinGW" and the same as "compiling with gcc".
+		This applies especially to the header files in
+		/usr/include/w32api, which is a free replacement for the
+		standard Visual C++ headers for the Win32 API.
+
+
+   3. Window-system level:
+   -----------------------
+
+   `HAVE_MS_WINDOWS'
+		MS Windows native windowing system (anything related to the
+		appearance of the graphical screen).  May or may not apply
+		to any of VC++, MinGW, or Cygwin.  For example, it's
+		definitely possible to compile XEmacs under Cygwin with
+		support for X-Windows frames and TTY frames, but no
+		native MS Windows frames.  It may also be possible to do that
+		under MinGW or (less likely, but feasible) Visual C++.
+   
+   `HAVE_X_WINDOWS'
+		Support for X-Windows frames, regardless of whether under
+		MS Windows.  You can certainly compile XEmacs with support
+		for X-Windows frames when running on MS Windows, using Cygwin.
+
+   `HAVE_GTK', `HAVE_TTY'
+		Likewise.  All are available on MS Windows with Cygwin.
+
+    Note further that more than one of these can be defined at the same time.
+    In fact, in general, it's possible to compile with support for all of
+    these at the same time.
+
+*/
 
 /* ------------------------- Basic includes ------------------------- */
 
