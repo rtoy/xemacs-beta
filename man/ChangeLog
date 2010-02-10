@@ -5,6 +5,11 @@
 	DEC Alpha is hardly the only 64-bit processor any more.
 	Also, ERROR_CHECK_TYPECHECK is now ERROR_CHECK_TYPES.
 
+2010-02-08  Jerry James  <james@xemacs.org>
+
+	* emodules.texi: Relicense as GPL v2 or later, using J. Kean
+	Johnston's blanket permission for such relicensing of his works.
+
 2010-02-05  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (A Summary of the Various XEmacs Modules):
