@@ -696,6 +696,52 @@
 	(syms_of_fileio): #'car-less-than-car and #'cdr-less-than-cdr are
 	now in Lisp.
 
+2010-02-09  Jerry James  <james@xemacs.org>
+
+	* s/hpux11-shr.h: Add license information from Marcus Thiessel.
+
+2010-02-09  Ben Wing  <ben@xemacs.org>
+
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* emacs.c:
+	* emacs.c (pause_so_user_can_read_messages):
+	* emacs.c (Fkill_emacs):
+	* emacs.c (guts_of_fatal_error_signal):
+	* lisp.h:
+	* lisp.h (INLINE_ERROR_CHECK_ARGS):
+	* lisp.h (Dynarr_set_length_1):
+	* lisp.h (Dynarr_set_length):
+	* lisp.h (Dynarr_pop):
+	Add ERROR_CHECK_DYNARR, dynarr_checking_assert().  Use it.
+	Sort existing error-check categories in lisp.h, remove most of the
+	(unused) assert variations from most categories.  Add a long
+	comment about reorganizing the system by categories and
+	subcategories.  Create ERROR_CHECK_ANY if any error-checking
+	categories defined, and use it in emacs.c to define
+	USER_IS_DEVELOPING_XEMACS.
+
+	In emacs.c and cmdloop.c, don't display a message at early
+	shutdown or fatal shutdown when on Cygwin, only Windows native --
+	Cygwin has a working stderr that shows error output.
+
+	Update comment in Dynarr_verify_pos_atp().
+	
+
+2010-02-09  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h:
+	Create a long comment about build flags such as WIN32_NATIVE,
+	HAVE_MS_WINDOWS.
+
+2010-02-09  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Disabled inline assert should just use disabled_assert()
+	not disabled_assert_at_line() otherwise you get compile errors.
+	(Hasn't bitten us only because no one is currently using inline
+	asserts -- but this is different in the Unicode-internal repo.)
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* charset.h:
@@ -996,6 +1042,14 @@
 	Add an C-assert-style test to test STORE_VOID_IN_LISP and
 	GET_VOID_FROM_LISP to make sure the same value comes back that
 	was put in.
+
+2010-02-09  Vin Shelton  <acs@xemacs.org>
+
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	Declare hfont at start of a code block.
+
+	* glyphs-eimage.c: Undefine and then redefine FAR around the jpeg
+	header.
 
 2010-02-08  Vin Shelton  <acs@xemacs.org>
 
