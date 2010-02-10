@@ -89,6 +89,9 @@ Boston, MA 02111-1307, USA.  */
 
    %%#### marks places that need work for KKCC (the new garbage collector).
 
+   @@#### marks places that need work to get Unicode-internal working,
+   i.e. using UTF-8 as the internal text format.
+
    */
 
 /* -------------------------- include files --------------------- */

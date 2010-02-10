@@ -1,3 +1,8 @@
+2010-02-10  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Add comment about @@####.
+	
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* mule-coding.c (struct iso2022_coding_system):
