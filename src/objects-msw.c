@@ -2097,7 +2097,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
 	  UNGCPRO;
 	  return 0;
 	}
-    
+      
       if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
 	{
 	  SelectObject (hdc, hfont);
