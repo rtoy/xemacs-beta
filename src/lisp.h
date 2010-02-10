@@ -22,6 +22,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
+#ifndef INCLUDED_lisp_h_
+#define INCLUDED_lisp_h_
+
 /* Authorship:
 
    Based on code from pre-release FSF 19, c. 1991.
@@ -49,13 +52,6 @@ Boston, MA 02111-1307, USA.  */
      MODULE_API introduced;
      Compiler-specific definitions modernized and moved to compiler.h.
 */
-
-#ifndef INCLUDED_lisp_h_
-#define INCLUDED_lisp_h_
-
-/************************************************************************/
-/*			  general definitions				*/
-/************************************************************************/
 
 /* Conventions in comments:
 
@@ -91,7 +87,9 @@ Boston, MA 02111-1307, USA.  */
 
    */
 
-/* -------------------------- include files --------------------- */
+/************************************************************************/
+/*                            include files                             */
+/************************************************************************/
 
 /* We include the following generally useful header files so that you
    don't have to worry about prototypes when using the standard C
@@ -116,12 +114,11 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 
-/* -------------------------- error-checking ------------------------ */
+/************************************************************************/
+/*                            error checking                            */
+/************************************************************************/
 
-/* The large categories established by configure can be subdivided into
-   smaller subcategories, for problems in specific modules.  You can't
-   control this using configure, but you can manually stick in a define as
-   necessary. */
+/* ------------------------- large categories ------------------------- */
 
 /* How these work:
 
@@ -146,16 +143,55 @@ Boston, MA 02111-1307, USA.  */
    the file and line (__FILE__, __LINE__) at place where the call occurs in
    the calling function; but nothing will get passed in when ERROR_CHECK_TEXT
    is not defined.
+
+   Currently the full bevy of *foo_checking_assert* macros are defined only
+   for `text' and `types'; for others, only the basic foo_checking_assert()
+   macro is defined.  Writing out all the variations for all possible error
+   categories would produce too much clutter.  If any of these become
+   needed, they can always be defined. */
+
+   /* #### I suggest revamping these and making proper use of the
+      category/subcategory system.  Here is one proposal:
+
+	Major category 	Minor categories
+	--------------------------------
+	Allocation
+			Malloc
+			Dynarr
+
+	Display
+			Extents
+			Glyphs
+			Redisplay
+
+	Execution
+			Byte-Code
+			Catch
+			Garbage Collection
+			Trapping-Problems
+
+	Lisp Objects
+			Buffers
+			Char Tables
+			Events
+			Lstreams
+			Hash Tables
+			Range Tables
+
+	Types
+			Lrecord Types
+			Subtypes
+
+	Text
+			Byte Positions
+			Conversion
+			Eistrings
+			Itext
+			Lisp Strings
+
+    --ben
 */
 
-
-#ifdef ERROR_CHECK_STRUCTURES
-/* Check for problems with the catch list and specbind stack */
-#define ERROR_CHECK_CATCH
-/* Check for insufficient use of call_trapping_problems(), particularly
-   due to glyph-related changes causing eval or QUIT within redisplay */
-#define ERROR_CHECK_TRAPPING_PROBLEMS
-#endif /* ERROR_CHECK_STRUCTURES */
 
 #define INLINE_ERROR_CHECK_ARGS , const char *__file__, int __line__
 #define INLINE_ERROR_CHECK_CALL , __FILE__, __LINE__
@@ -168,6 +204,56 @@ Boston, MA 02111-1307, USA.  */
 /* The following should not use disabled_assert_at_line() because when the
    inline assert is disabled, params __file__ and __line__ do not exist. */
 #define disabled_inline_assert(assertion) disabled_assert (assertion)
+
+/* ------- the specific categories -------- */
+
+#if defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_STRUCTURES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_TYPES)
+#define ERROR_CHECK_ANY
+#endif
+
+/* KEEP THESE SORTED! */
+
+#ifdef ERROR_CHECK_BYTE_CODE
+#define byte_code_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_BYTE_CODE */
+#define byte_code_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_BYTE_CODE */
+
+#ifdef ERROR_CHECK_DISPLAY
+#define display_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_DISPLAY */
+#define display_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_DISPLAY */
+
+#ifdef ERROR_CHECK_EXTENTS
+#define extent_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_EXTENTS */
+#define extent_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_EXTENTS */
+
+#ifdef ERROR_CHECK_GC
+#define gc_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_GC */
+#define gc_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_GC */
+
+#ifdef ERROR_CHECK_GLYPHS
+#define glyph_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_GLYPHS */
+#define glyph_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_GLYPHS */
+
+#ifdef ERROR_CHECK_MALLOC
+#define malloc_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_MALLOC */
+#define malloc_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_MALLOC */
+
+#ifdef ERROR_CHECK_STRUCTURES
+#define structure_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_STRUCTURES */
+#define structure_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_STRUCTURES */
 
 #ifdef ERROR_CHECK_TEXT
 #define text_checking_assert(assertion) assert (assertion)
@@ -211,172 +297,51 @@ Boston, MA 02111-1307, USA.  */
   disabled_assert_with_message (assertion, msg)
 #endif /* ERROR_CHECK_TYPES */
 
+/* ------------------------- small categories ------------------------- */
+
+/* The large categories established by configure can be subdivided into
+   smaller subcategories, for problems in specific modules.  You can't
+   control this using configure, but you can manually stick in a define as
+   necessary.
+
+   The idea is to go ahead and create a new type of error-checking and
+   have it turned on if the larger category it is a part of is also
+   turned on.  For example, ERROR_CHECK_DYNARR is considered a subcategory
+   of ERROR_CHECK_STRUCTURES.
+
+   We also define foo_checking_assert() macros for convenience, but
+   generally don't define the many variations of this macro as for the
+   major types above, because it produces too much clutter.  If any of
+   these become needed, they can always be defined. */
+
 #ifdef ERROR_CHECK_STRUCTURES
-#define structure_checking_assert(assertion) assert (assertion)
-#define structure_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_structure_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_STRUCTURE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_STRUCTURE_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define structure_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_STRUCTURES */
-#define structure_checking_assert(assertion) disabled_assert (assertion)
-#define structure_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_structure_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_STRUCTURE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_STRUCTURE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define structure_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
+/* Check for problems with the catch list and specbind stack */
+#define ERROR_CHECK_CATCH
+/* Check for incoherent Dynarr structures, attempts to access Dynarr
+   positions out of range, reentrant use of Dynarrs through Dynarr locking,
+   etc. */
+#define ERROR_CHECK_DYNARR
+/* Check for insufficient use of call_trapping_problems(), particularly
+   due to glyph-related changes causing eval or QUIT within redisplay */
+#define ERROR_CHECK_TRAPPING_PROBLEMS
 #endif /* ERROR_CHECK_STRUCTURES */
 
-#ifdef ERROR_CHECK_GC
-#define gc_checking_assert(assertion) assert (assertion)
-#define gc_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_gc_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_GC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_GC_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define gc_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_GC */
-#define gc_checking_assert(assertion) disabled_assert (assertion)
-#define gc_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_gc_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_GC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_GC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define gc_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_GC */
+#ifdef ERROR_CHECK_CATCH
+#define catch_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_CATCH */
+#define catch_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_CATCH */
 
-#ifdef ERROR_CHECK_DISPLAY
-#define display_checking_assert(assertion) assert (assertion)
-#define display_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_display_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_DISPLAY_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_DISPLAY_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define display_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_DISPLAY */
-#define display_checking_assert(assertion) disabled_assert (assertion)
-#define display_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_display_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_DISPLAY_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_DISPLAY_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define display_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_DISPLAY */
-
-#ifdef ERROR_CHECK_GLYPHS
-#define glyph_checking_assert(assertion) assert (assertion)
-#define glyph_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_glyph_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_GLYPH_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_GLYPH_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define glyph_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_GLYPHS */
-#define glyph_checking_assert(assertion) disabled_assert (assertion)
-#define glyph_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_glyph_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_GLYPH_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_GLYPH_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define glyph_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_GLYPHS */
-
-#ifdef ERROR_CHECK_EXTENTS
-#define extent_checking_assert(assertion) assert (assertion)
-#define extent_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_extent_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_EXTENT_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_EXTENT_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define extent_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_EXTENTS */
-#define extent_checking_assert(assertion) disabled_assert (assertion)
-#define extent_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_extent_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_EXTENT_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_EXTENT_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define extent_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_EXTENTS */
-
-#ifdef ERROR_CHECK_MALLOC
-#define malloc_checking_assert(assertion) assert (assertion)
-#define malloc_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_malloc_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_MALLOC_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_MALLOC_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define malloc_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_MALLOC */
-#define malloc_checking_assert(assertion) disabled_assert (assertion)
-#define malloc_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_malloc_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_MALLOC_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_MALLOC_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define malloc_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_MALLOC */
-
-#ifdef ERROR_CHECK_BYTE_CODE
-#define byte_code_checking_assert(assertion) assert (assertion)
-#define byte_code_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_byte_code_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_BYTE_CODE_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_BYTE_CODE_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define byte_code_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
-#else /* not ERROR_CHECK_BYTE_CODE */
-#define byte_code_checking_assert(assertion) disabled_assert (assertion)
-#define byte_code_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_byte_code_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_BYTE_CODE_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_BYTE_CODE_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define byte_code_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
-#endif /* ERROR_CHECK_BYTE_CODE */
+#ifdef ERROR_CHECK_DYNARR
+#define dynarr_checking_assert(assertion) assert (assertion)
+#else /* not ERROR_CHECK_DYNARR */
+#define dynarr_checking_assert(assertion) disabled_assert (assertion)
+#endif /* ERROR_CHECK_DYNARR */
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 #define trapping_problems_checking_assert(assertion) assert (assertion)
-#define trapping_problems_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#define inline_trapping_problems_checking_assert(assertion) inline_assert (assertion)
-#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS INLINE_ERROR_CHECK_ARGS
-#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL INLINE_ERROR_CHECK_CALL
-#define trapping_problems_checking_assert_with_message(assertion, msg) \
-  assert_with_message (assertion, msg)
 #else /* not ERROR_CHECK_TRAPPING_PROBLEMS */
 #define trapping_problems_checking_assert(assertion) disabled_assert (assertion)
-#define trapping_problems_checking_assert_at_line(assertion, file, line) \
-  disabled_assert_at_line (assertion, file, line)
-#define inline_trapping_problems_checking_assert(assertion) \
-  disabled_inline_assert (assertion)
-#define INLINE_TRAPPING_PROBLEMS_CHECK_ARGS DISABLED_INLINE_ERROR_CHECK_ARGS
-#define INLINE_TRAPPING_PROBLEMS_CHECK_CALL DISABLED_INLINE_ERROR_CHECK_CALL
-#define trapping_problems_checking_assert_with_message(assertion, msg) \
-  disabled_assert_with_message (assertion, msg)
 #endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 /************************************************************************/
@@ -1770,7 +1735,7 @@ BEGIN_C_DECLS
 #define DECLARE_DYNARR_LISP_IMP()
 #endif
 
-#ifdef ERROR_CHECK_STRUCTURES
+#ifdef ERROR_CHECK_DYNARR
 #define DECLARE_DYNARR_LOCKED()				\
   int locked;
 #else
@@ -1810,7 +1775,7 @@ typedef struct dynarr
 
 /************* Dynarr verification *************/
 
-#ifdef ERROR_CHECK_STRUCTURES
+#ifdef ERROR_CHECK_DYNARR
 DECLARE_INLINE_HEADER (
 int
 Dynarr_verify_pos_at (void *d, int pos, const Ascbyte *file, int line)
@@ -1831,7 +1796,7 @@ Dynarr_verify_pos_atp (void *d, int pos, const Ascbyte *file, int line)
   Dynarr *dy = (Dynarr *) d;
   /* We use `largest', not `len', because the redisplay code often
      accesses stuff between len and largest. */
-  /* Code will often do something like ...
+  /* [[ Code will often do something like ...
 
      val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
 	                                     Dynarr_length (dyn));
@@ -1841,7 +1806,11 @@ Dynarr_verify_pos_atp (void *d, int pos, const Ascbyte *file, int line)
      allocated array, but the array may not have ever been allocated and
      hence the return value is NULL.  But the length of 0 causes the
      pointer to never get checked.  These can occur throughout the code
-     so we put in a special check. */
+     so we put in a special check. --ben ]]
+
+     Update: The common idiom `Dynarr_atp (dyn, 0)' has been changed to
+     `Dynarr_begin (dyn)'.  Possibly this special check at POS 0 can be
+     done only for Dynarr_begin() not for general Dynarr_atp(). --ben */
   if (pos == 0 && dy->len_ == 0)
     return pos;
   /* #### It's vaguely possible that some code could legitimately want to
@@ -1854,7 +1823,7 @@ Dynarr_verify_pos_atp (void *d, int pos, const Ascbyte *file, int line)
      really want to check for cases of accessing just past the end of
      memory, which is a likely off-by-one problem to occur and will usually
      not trigger a protection fault (instead, you'll just get random
-     behavior, possibly overwriting other memory, which is bad). */
+     behavior, possibly overwriting other memory, which is bad). --ben */
   assert_at_line (pos >= 0 && pos < dy->largest_, file, line);
   return pos;
 }
@@ -1878,9 +1847,9 @@ Dynarr_verify_pos_atp_allow_end (void *d, int pos, const Ascbyte *file,
 #define Dynarr_verify_pos_at(d, pos, file, line) (pos)
 #define Dynarr_verify_pos_atp(d, pos, file, line) (pos)
 #define Dynarr_verify_pos_atp_allow_end(d, pos, file, line) (pos)
-#endif /* ERROR_CHECK_STRUCTURES */
+#endif /* ERROR_CHECK_DYNARR */
 
-#ifdef ERROR_CHECK_STRUCTURES
+#ifdef ERROR_CHECK_DYNARR
 DECLARE_INLINE_HEADER (
 Dynarr *
 Dynarr_verify_1 (void *d, const Ascbyte *file, int line)
@@ -1919,7 +1888,7 @@ do {						\
 #define Dynarr_verify_mod(d) ((Dynarr *) d)
 #define Dynarr_lock(d) DO_NOTHING
 #define Dynarr_unlock(d) DO_NOTHING
-#endif /* ERROR_CHECK_STRUCTURES */
+#endif /* ERROR_CHECK_DYNARR */
 
 /************* Dynarr creation *************/
 
@@ -1943,8 +1912,7 @@ MODULE_API void *Dynarr_lisp_newf (int elsize,
 
 /************* Dynarr access *************/
 
-#ifdef ERROR_CHECK_STRUCTURES
-/* Enabling this leads to crashes in Cygwin 1.7, gcc 3.4.4 */
+#ifdef ERROR_CHECK_DYNARR
 #define Dynarr_at(d, pos) \
   ((d)->base[Dynarr_verify_pos_at (d, pos, __FILE__, __LINE__)])
 #define Dynarr_atp_allow_end(d, pos) \
@@ -1983,7 +1951,7 @@ MODULE_API void *Dynarr_lisp_newf (int elsize,
 #define Dynarr_set_length_1(d, n)					\
 do {									\
   Elemcount _dsl1_n = (n);						\
-  structure_checking_assert (_dsl1_n >= 0 && _dsl1_n <= Dynarr_max (d)); \
+  dynarr_checking_assert (_dsl1_n >= 0 && _dsl1_n <= Dynarr_max (d));	\
   (void) Dynarr_verify_mod (d);						\
   (d)->len_ = _dsl1_n;							\
   /* Use the raw field references here otherwise we get a crash because	\
@@ -1998,7 +1966,7 @@ do {									\
 #define Dynarr_set_length(d, n)						\
 do {									\
   Elemcount _dsl_n = (n);						\
-  structure_checking_assert (_dsl_n >= 0 && _dsl_n <= Dynarr_largest (d)); \
+  dynarr_checking_assert (_dsl_n >= 0 && _dsl_n <= Dynarr_largest (d)); \
   Dynarr_set_length_1 (d, _dsl_n);					\
 } while (0)
 #define Dynarr_increment(d) \
@@ -2088,7 +2056,7 @@ Dynarr_add_many (void *d, const void *el, int len)
 }
 
 #define Dynarr_pop(d)					\
-  (structure_checking_assert (Dynarr_length (d) > 0),	\
+  (dynarr_checking_assert (Dynarr_length (d) > 0),	\
    Dynarr_verify_mod (d)->len_--,			\
    Dynarr_at (d, Dynarr_length (d)))
 #define Dynarr_delete(d, i) Dynarr_delete_many (d, i, 1)

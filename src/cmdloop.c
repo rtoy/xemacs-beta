@@ -161,7 +161,8 @@ You should almost certainly not be using this.
       Fforce_debugging_signal (Qt);
     }
 #endif
-#ifdef HAVE_MS_WINDOWS
+#if defined (HAVE_MS_WINDOWS) && defined (WIN32_NATIVE)
+  /* Don't do this under Cygwin, since we have output on stderr. */
   Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);
 #endif

@@ -245,7 +245,7 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
 
   /* #### This could conceivably be wrong, if code wants to access stuff
      between len and largest. */
-  structure_checking_assert (start >= 0 && start <= Dynarr_length (dy));
+  dynarr_checking_assert (start >= 0 && start <= Dynarr_length (dy));
 
   if (start != Dynarr_length (dy))
     {
@@ -267,8 +267,8 @@ Dynarr_delete_many (void *d, int start, int len)
 {
   Dynarr *dy = Dynarr_verify_mod (d);
 
-  structure_checking_assert (start >= 0 && len >= 0 &&
-			     start + len <= Dynarr_length (dy));
+  dynarr_checking_assert (start >= 0 && len >= 0 &&
+			  start + len <= Dynarr_length (dy));
 
   memmove ((char *) dy->base + start*dy->elsize,
 	   (char *) dy->base + (start + len)*dy->elsize,
