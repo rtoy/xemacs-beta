@@ -890,9 +890,10 @@ non_ascii_charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
      to work directly with Dynarrs, but it would be a lot of code
      duplication and it's not clear it would be any faster. */
   Ibyte work[MAX_ICHAR_LEN];
+  Bytecount len;
+
   text_checking_assert (!EQ (charset, Vcharset_ascii));
-  Bytecount len = non_ascii_charset_codepoint_to_itext (charset, c1, c2, work,
-							fail);
+  len = non_ascii_charset_codepoint_to_itext (charset, c1, c2, work, fail);
   if (len)
     Dynarr_add_many (dst, work, len);
   return len;

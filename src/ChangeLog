@@ -1,5 +1,15 @@
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
+	* charset.h:
+	* mule-ccl.c (ccl_driver):
+	* mule-coding.c (multibyte_putprop):
+	* search.c (boyer_moore):
+	* unicode.c (get_unicode_conversion_1):
+	Fix warnings due to shadowing local variables (some real bugs here)
+	and declarations after statements.
+
+2010-02-10  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	Add comment about @@####.
 	

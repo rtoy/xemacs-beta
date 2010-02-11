@@ -985,7 +985,6 @@ ccl_driver (struct ccl_program *ccl,
   register Lisp_Object *ccl_prog = ccl->prog;
   const unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address;
-  int i, j, op;
   int stack_idx = ccl->stack_idx;
   /* Instruction counter of the current CCL code. */
   int this_ic = 0;
@@ -1007,6 +1006,8 @@ ccl_driver (struct ccl_program *ccl,
 
   for (;;)
     {
+      int i, j, op;
+
     ccl_repeat:
 #ifdef CCL_DEBUG
       ccl_backtrace_table[ccl_backtrace_idx++] = ic;
