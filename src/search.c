@@ -2075,13 +2075,13 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 				 || ibyte_first_byte_p (cursor[1]));
 		      if (dotrans)
 			{
-			  int i = 0;
+			  int k = 0;
 			  Ibyte *curs2 = cursor;
 			  while (1)
 			    {
 			      if (ibyte_first_byte_p (*curs2))
 				break;
-			      if (translate_prev[i++] != *--curs2)
+			      if (translate_prev[k++] != *--curs2)
 				{
 				  dotrans = 0;
 				  break;
@@ -2178,13 +2178,13 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 			     || ibyte_first_byte_p (ptr[1]));
 		  if (dotrans)
 		    {
-		      int i = 0;
-		      Ibyte *ptr2 = ptr;
+		      int k = 0;
+		      Ibyte *ptrq = ptr;
 		      while (1)
 			{
-			  if (ibyte_first_byte_p (*ptr2))
+			  if (ibyte_first_byte_p (*ptrq))
 			    break;
-			  if (translate_prev[i++] != *--ptr2)
+			  if (translate_prev[k++] != *--ptrq)
 			    {
 			      dotrans = 0;
 			      break;

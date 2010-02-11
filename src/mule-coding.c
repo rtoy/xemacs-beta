@@ -284,11 +284,13 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
     {
       Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
       Dynarr_reset (charsets);
-      EXTERNAL_LIST_LOOP_2 (elt, value)
-        {
-          Lisp_Object charset = Fget_charset (elt);
-          Dynarr_add (charsets, charset);
-        }
+      {
+	EXTERNAL_LIST_LOOP_2 (elt, value)
+	  {
+	    Lisp_Object charset = Fget_charset (elt);
+	    Dynarr_add (charsets, charset);
+	  }
+      }
     }
   else
     return 0;

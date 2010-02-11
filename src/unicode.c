@@ -1027,37 +1027,39 @@ get_unicode_conversion_1 (int USED_IF_AACT (code),
       return 0;
     }
 #endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
+  {
 #ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
-  UINT_16_BIT retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1];
-  if (retval != BADVAL_FROM_TABLE)
-    {
-      *c1 = retval >> 8;
-      *c2 = retval & 0xFF;
-      return 1;
-    }
+    UINT_16_BIT retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1];
+    if (retval != BADVAL_FROM_TABLE)
+      {
+	*c1 = retval >> 8;
+	*c2 = retval & 0xFF;
+	return 1;
+      }
 #else
-  int levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
-  if (levels >= code_levels)
-    {
-      UINT_16_BIT retval;
+    int levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
+    if (levels >= code_levels)
+      {
+	UINT_16_BIT retval;
+	
+	switch (levels)
+	  {
+	  case 1: retval = ((UINT_16_BIT *) table)[u1]; break;
+	  case 2: retval = ((UINT_16_BIT **) table)[u2][u1]; break;
+	  case 3: retval = ((UINT_16_BIT ***) table)[u3][u2][u1]; break;
+	  case 4: retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1]; break;
+	  default: ABORT (); retval = 0;
+	  }
 
-      switch (levels)
-	{
-	case 1: retval = ((UINT_16_BIT *) table)[u1]; break;
-	case 2: retval = ((UINT_16_BIT **) table)[u2][u1]; break;
-	case 3: retval = ((UINT_16_BIT ***) table)[u3][u2][u1]; break;
-	case 4: retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1]; break;
-	default: ABORT (); retval = 0;
-	}
-
-      if (retval != BADVAL_FROM_TABLE)
-	{
-	  c1 = retval >> 8;
-	  c2 = retval & 0xFF;
-	  return 1;
-	}
-    }
+	if (retval != BADVAL_FROM_TABLE)
+	  {
+	    *c1 = retval >> 8;
+	    *c2 = retval & 0xFF;
+	    return 1;
+	  }
+      }
 #endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
+  }
   return 0;
 }
 
