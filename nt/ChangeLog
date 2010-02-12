@@ -1,3 +1,8 @@
+2010-02-11  Vin Shelton  <acs@xemacs.org>
+ 
+ 	* xemacs.mak (LIB_SRC_DEFINES): Added PROGRAM_DEFINES to lib_src
+ 	compilation options so winclient.c can see them.
+ 
 2010-02-03  Jerry James  <james@xemacs.org>
 
 	* xemacs.rc: Add license and copyright boilerplate text for Jonathan
