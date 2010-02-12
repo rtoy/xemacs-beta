@@ -1065,7 +1065,7 @@ $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
 
 ###################### lib-src programs
 
-LIB_SRC_DEFINES = -DHAVE_CONFIG_H -DWIN32_NATIVE
+LIB_SRC_DEFINES = -DHAVE_CONFIG_H -DWIN32_NATIVE $(PROGRAM_DEFINES)
 
 #
 # Creating config.values to be used by config.el

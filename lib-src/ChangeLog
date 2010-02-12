@@ -1,3 +1,14 @@
+2010-02-11  Vin Shelton  <acs@xemacs.org>
+ 
+ 	* winclient.c: Bump connection retries to 20 because some people
+	have long startup files.
+	(openConversation): If CreateProcess cannot find
+ 	xemacs.exe, try again with the name of the version-specific
+ 	executable.  This is useful because the cygwin version of XEmacs
+ 	doesn't install an xemacs.exe executable.
+	(parseCommandLine): Fix tracker issue 675 - add current	directory
+	to filenames under cygwin. 
+
 2010-01-26  Ben Wing  <ben@xemacs.org>
 
 	* make-msgfile.lex: Vague hacking on this file, insert a comment
