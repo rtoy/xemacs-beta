@@ -32,6 +32,11 @@
 #include <ctype.h>
 #include <errno.h>
 
+#ifdef __CYGWIN__
+#include <stdlib.h>
+#include <unistd.h>
+#endif
+
 static void error (const char* s1, const char* s2);
 static void fatal (const char *s1, const char *s2);
 static void * xmalloc (size_t size);
@@ -40,7 +45,7 @@ static char * getNextArg (const char **ptr, unsigned *len);
 /* -- Post-Include Defines -------------------------------------------------- */
 
 /* Timeouts & delays */
-#define CONNECT_RETRIES		10
+#define CONNECT_RETRIES		20
 #define CONNECT_DELAY		500		/* ms */
 #define TRANSACTION_TIMEOUT	5000		/* ms */
 #define MAX_INPUT_IDLE_WAIT     INFINITE	/* ms */
@@ -51,7 +56,8 @@ static char * getNextArg (const char **ptr, unsigned *len);
 #define COMMAND_FORMAT	"[open(\"%s%s\")]"
 
 /* XEmacs program name */
-#define PROGRAM_TO_RUN	"xemacs.exe"
+#define GENERIC_PROGRAM		EMACS_PROGNAME ".exe"
+#define VERSIONED_PROGRAM	EMACS_PROGNAME "-" EMACS_VERSION ".exe"
 
 /* -- Constants ------------------------------------------------------------- */
 
@@ -107,7 +113,7 @@ WinMain (HINSTANCE hInst,
   HCONV hConv;
   int   ret = 0;
   UINT  uiRet;
-  
+
   /* Initialise the DDEML library */
   uiRet = DdeInitialize (&idInst,
 			 (PFNCALLBACK) ddeCallback,
@@ -134,7 +140,7 @@ WinMain (HINSTANCE hInst,
       /* Close the conversation */
       closeConversation (hConv);
     }
-  
+
   DdeUninitialize (idInst);
 
   return ret;
@@ -164,7 +170,7 @@ openConversation (void)
 
       goto error;
     }
-  
+
   /* Get the topic name */
   hszTopic = DdeCreateStringHandle (idInst,
 				    TOPIC_NAME,
@@ -186,11 +192,13 @@ openConversation (void)
       STARTUPINFO         sti;
       PROCESS_INFORMATION pi;
       int                 n;
-      
+
       /* Try to start the program */
       ZeroMemory (&sti, sizeof (sti));
       sti.cb = sizeof (sti);
-      if (!CreateProcess (NULL, PROGRAM_TO_RUN, NULL, NULL, FALSE, 0,
+      if (!CreateProcess (NULL, GENERIC_PROGRAM, NULL, NULL, FALSE, 0,
+			  NULL, NULL, &sti, &pi) &&
+	  !CreateProcess (NULL, VERSIONED_PROGRAM, NULL, NULL, FALSE, 0,
 			  NULL, NULL, &sti, &pi))
 	{
 	  MessageBox (NULL, "Could not start process.",
@@ -205,12 +213,12 @@ openConversation (void)
       /* Close the handles */
       CloseHandle (pi.hThread);
       CloseHandle (pi.hProcess);
-      
+
       /* Try to connect */
       for (n = 0; n < CONNECT_RETRIES; n++)
 	{
 	  Sleep (CONNECT_DELAY);
-	  
+	
 	  hConv = DdeConnect (idInst, hszService, hszTopic, NULL);
 
 	  if (hConv)
@@ -232,7 +240,7 @@ openConversation (void)
   DdeFreeStringHandle (idInst, hszTopic);
 
   return hConv;
-  
+
  error:
   if (hConv)
     DdeDisconnect (hConv);
@@ -268,11 +276,11 @@ doFile (HCONV hConv, LPSTR lpszFileName1, LPSTR lpszFileName2)
 {
   char            *buf = NULL;
   unsigned        len;
-  
+
   /* Calculate the buffer length */
   len = strlen (lpszFileName1) + strlen (lpszFileName2)
     + strlen (COMMAND_FORMAT);
-  
+
   /* Allocate a buffer */
   buf = (char *) xmalloc (len);
 
@@ -286,15 +294,14 @@ doFile (HCONV hConv, LPSTR lpszFileName1, LPSTR lpszFileName2)
 
   /* Build the command */
   len = wsprintf (buf, COMMAND_FORMAT, lpszFileName1, lpszFileName2);
-
   len++;
-  
+
   /* OK. We're connected. Send the message. */
   DdeClientTransaction (buf, len, hConv, NULL,
 			0, XTYP_EXECUTE, TRANSACTION_TIMEOUT, NULL);
 
   free (buf);
-  
+
   return 0;
 }
 
@@ -319,14 +326,14 @@ getNextArg (const char **ptr, unsigned *len)
   /* If this is the end, return NULL */
   if (!*p)
     return NULL;
-  
+
   /* Remember where we are */
   start = p;
-  
+
   /* Find the next whitespace character outside quotes */
   if (*p == '"')
     all_in_quotes = 1;
-  
+
   while (*p && !quit)
     {
       switch (*p)
@@ -339,7 +346,7 @@ getNextArg (const char **ptr, unsigned *len)
 	case '\\':
 	  if (!in_quotes)
 	    all_in_quotes = 0;
-	  
+	
 	  p++;
 
 	  if (!*p)
@@ -368,13 +375,13 @@ getNextArg (const char **ptr, unsigned *len)
       start++;
       length -= 2;
     }
-  
+
   /* Copy */
   buf = (char *) xmalloc (length + 1);
 
   if (!buf)
     return NULL;
-  
+
   strncpy (buf, start, length);
   buf[length] = '\0';
 
@@ -405,6 +412,38 @@ parseCommandLine (HCONV hConv, LPSTR lpszCommandLine)
   /* Retrieve arguments */
   while ((arg = getNextArg ((const char**)&lpszCommandLine, &len)) != NULL)
     {
+      fullpath = NULL;
+#ifdef __CYGWIN__
+      /* If the filename is not an absolute path,
+	 add the current directory to the pathname */
+      if (*arg != '/')
+	{
+	  len = pathconf(".", _PC_PATH_MAX);
+	  fullpath = (char *) xmalloc (len+1);
+	  if (!fullpath)
+	    {
+		MessageBox (NULL, "Not enough memory.", "winclient",
+			    MB_ICONEXCLAMATION | MB_OK);
+		ret = 1;
+		break;
+	    }
+	  if (!getcwd(fullpath, (size_t)len))
+	    {
+	      MessageBox (NULL, "Could not retrieve current directory.",
+			  "winclient", MB_ICONEXCLAMATION | MB_OK);
+	      ret = 1;
+	      break;
+	    }
+          /* Append trailing slash */
+	  strcat(fullpath, "/");
+	  ret = doFile (hConv, fullpath, arg);
+	}
+      else
+	{
+	  /* The arg has already been expanded, so pass it as it is */
+	  ret = doFile (hConv, "", arg);
+	}
+#else
       /* First find the canonical path name */
       fullpath = filepart = NULL;
       pathlen = GetFullPathName (arg, 0, fullpath, &filepart);
@@ -415,10 +454,7 @@ parseCommandLine (HCONV hConv, LPSTR lpszCommandLine)
 	{
 	  MessageBox (NULL, "Not enough memory.", "winclient",
 		      MB_ICONEXCLAMATION | MB_OK);
-	  
 	  ret = 1;
-	  free (arg);
-	  
 	  break;
 	}
 
@@ -448,9 +484,10 @@ parseCommandLine (HCONV hConv, LPSTR lpszCommandLine)
 
 	  FindClose (hFindFile);
 	}
-
+#endif
       /* Release the path name buffers */
-      free (fullpath);
+      if (fullpath)
+	free (fullpath);
       free (arg);
 
       if (ret)
