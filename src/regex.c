@@ -3865,7 +3865,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		  set_itext_ichar (strr, first);
 		  set_itext_ichar (strrlast, last);
 		  for (jj = *strr; jj <= *strrlast; jj++)
-		    fastmap[*strr] = 1;
+		    fastmap[jj] = 1;
 		}
 #endif /* not UNICODE_INTERNAL */
 	      }
