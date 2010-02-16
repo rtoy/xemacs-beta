@@ -188,7 +188,8 @@ library directory>/info/}. For example in
 * Advanced::              Advanced Customization Using XEmacs Lisp.
 * Other Packages::        Other External Packages.
 * Current Events::        What the Future Holds.
-* Legacy Versions::       New information about old XEmacsen.
+* Legacy Versions::       New Information about Old XEmacsen.
+* Bleeding Edge::         Working with XEmacs Source Code Repositories.
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -566,6 +567,27 @@ library directory>/info/}. For example in
 10.0: XEmacs 21.1
 * Q10.0.1::   Gnus 5.10 won't display smileys in XEmacs 21.1.
 * Q10.0.2::   XEmacs won't start on Windows in XEmacs 21.1.
+
+11 Working with XEmacs source code repositories
+
+11.0: The XEmacs repositories
+* Q11.0.1::   Where is the most recent XEmacs development code?
+* Q11.0.2::   Where is the most recent XEmacs stable code?
+* Q11.0.3::   Where is the most recent XEmacs package code?
+* Q11.0.4::   Why isn't @var{package} available? and what to do about it.
+* Q11.0.5::   How do I get commit access?
+
+11.1: Working with CVS
+* Q11.1.1::   How do I keep cool using CVS?
+
+11.2: Working with Mercurial
+* Q11.2.1::   What is Mercurial?
+* Q11.2.2::   Where do I get Mercurial?
+* Q11.2.3::   Do I really have to waste space on history?
+* Q11.2.4::   @code{hg diff} gives bizarre output.
+* Q11.2.5::   How do I recover from a bad commit?  (I already pushed.)
+* Q11.2.6::   How do I recover from a bad commit?  (I haven't pushed yet.)
+* Q11.2.7::   Testing patches with Mercurial Queues.
 
 @end detailmenu
 @end menu
@@ -8669,7 +8691,7 @@ considered unstable.
 For older news, see the file @file{ONEWS} in the @file{etc} directory of
 the XEmacs distribution.
 
-@node Legacy Versions,  , Current Events, Top
+@node Legacy Versions,  Bleeding Edge, Current Events, Top
 @unnumbered 10 New information about old XEmacsen
 
 This is part 10 of the XEmacs Frequently Asked Questions list.  It will
@@ -8744,5 +8766,551 @@ problem for most people.  21.4 implements "portable dumping", which
 eliminates the problem altogether.  We recommend you use the 21.4
 binaries, but you can use the 21.1 binaries if you are very paranoid
 about stability.  @xref{Q1.1.2, Are binaries available?}.
+
+
+@node Bleeding Edge, , Legacy Versions, Top
+@unnumbered 10 Working with XEmacs Source Code Repositories.
+
+This is part 11 of the XEmacs Frequently Asked Questions list.  The
+primary purpose is advice on use of the version control systems used to
+keep the history of XEmacs development.
+
+@menu
+11.0: The XEmacs repositories
+* Q11.0.1::   Where is the most recent XEmacs development code?
+* Q11.0.2::   Where is the most recent XEmacs stable code?
+* Q11.0.3::   Where is the most recent XEmacs package code?
+* Q11.0.4::   Why isn't @var{package} available? and what to do about it.
+* Q11.0.5::   How do I get commit access?
+
+11.1: Working with CVS
+* Q11.1.1::   How do I keep cool using CVS?
+
+11.2: Working with Mercurial
+* Q11.2.1::   What is Mercurial?
+* Q11.2.2::   Where do I get Mercurial?
+* Q11.2.3::   Do I really have to waste space on history?
+* Q11.2.4::   @code{hg diff} gives bizarre output.
+* Q11.2.5::   How do I recover from a bad commit?  (I already pushed.)
+* Q11.2.6::   How do I recover from a bad commit?  (I haven't pushed yet.)
+* Q11.2.7::   Testing patches with Mercurial Queues.
+@end menu
+
+
+@node Q11.0.1, Q11.0.2, Bleeding Edge, Bleeding Edge
+@unnumberedsubsec Where is the most recent XEmacs development code?
+
+The most recent XEmacs @emph{development} code is kept in a Mercurial
+repository, hosted by the Debian project.  The read-only URL, for
+anybody who doesn't intend to push upstream directly, is
+
+@example
+http://hg.debian.org/hg/xemacs/xemacs
+@end example
+
+The read-write URL for committers is
+
+@example
+ssh://sperber-guest@@hg.debian.org//hg/xemacs/xemacs
+@end example
+
+Yes, Virginia, that doubled slash is correct.
+
+@xref{Q11.0.5, How do I get commit access?}.
+
+@xref{Q11.2.1, What is Mercurial?}.
+
+@node Q11.0.2, Q11.0.3, Q11.0.1, Bleeding Edge
+@unnumberedsubsec Where is the most recent XEmacs stable code?
+
+The most recent XEmacs @emph{stable} code is kept in a Mercurial
+repository, hosted by the Debian project.  The read-only URL is
+
+@example
+http://hg.debian.org/hg/xemacs/xemacs-21.4
+@end example
+
+If you're @emph{not} Vin, you don't need commit access.  If you
+@emph{are} Vin, you shouldn't need to refer to this FAQ.
+
+@xref{Q11.2.1, What is Mercurial?}.
+
+
+@node Q11.0.3, Q11.0.4, Q11.0.2, Bleeding Edge
+@unnumberedsubsec Where is the most recent XEmacs package code?
+
+The most recent XEmacs @emph{packages} code is kept in a CVS
+repository, hosted by the Debian project.  The read-only @code{CVSROOT},
+for anybody who doesn't intend to push upstream directly, is
+
+@example
+CVSROOT=:pserver:anonymous@@cvs.alioth.debian.org:/cvsroot/xemacs
+@end example
+
+The read-write @code{CVSROOT} for committers is
+
+@example
+CVSROOT=:ext:@var{aliothuser}@@cvs.alioth.debian.org:/cvsroot/xemacs
+@end example
+
+where @var{aliothuser} is your account on @code{alioth.debian.org}.  Then
+
+@example
+cvs checkout packages
+@end example
+
+as usual.  For more information, see
+@uref{http://www.xemacs.org/Develop/cvsaccess.html, XEmacs CVS Archive}
+on the website.
+
+@xref{Q11.1.1, How do I stay cool using CVS?}.
+
+@xref{Q11.0.5, How do I get commit access?}.
+
+
+@node Q11.0.4, Q11.0.5, Q11.0.3, Bleeding Edge
+@unnumberedsubsec Why isn't @var{package} available? and what to do about it.
+
+If a package isn't available from the Packages repository, probably
+nobody has shown enough interest to add it yet.  (Occasionally, there is
+a better package already in the XEmacs repository, of course.)
+
+The first step is to ask about it, and propose addition, on
+@email{xemacs-beta@@xemacs.org, the XEmacs Contributors list}.
+
+Most regular XEmacs contributors already shoulder primary responsibility
+for several packages, and contribute to maintenance of the rest, so you
+are unlikely to get a massively enthusiastic response unless you
+volunteer to become the maintainer of the version packaged for XEmacs
+yourself.  The duties are not terribly onerous if you're an active user
+of the package @ref{(xemacs-devguide)XEmacs Package Maintainer}.
+
+
+@node Q11.0.5, Q11.1.1, Q11.0.4, Bleeding Edge
+@unnumberedsubsec How do I get commit access?
+
+To get commit access to XEmacs code, write to
+@email{xemacs-review@@xemacs.org, the XEmacs Review Board} and request
+it.  Once approved, for the development code, you also need to send
+@email{mike@@xemacs.org, Michael Sperber} your SSH v2 RSA key (Alioth
+policy; v1 and DSA keys aren't acceptable).  A CC to
+@email{xemacs-services@@xemacs.org, the XEmacs Services team} is a good
+idea, although not absolutely necessary.  You should also get an Alioth
+account so that you can publish branches for review.
+
+For packages code, you must get an Alioth account.  Send your account
+name information to @email{xemacs-services@@xemacs.org, the XEmacs
+Services team}.
+
+The stable repository is gated; only the gatekeeper (currently Vin
+Shelton) has commit access.  Patches for the stable repository should be
+submitted to @email{xemacs-patches@@xemacs.org, XEmacs Patches}, as usual.
+
+@uref{http://www.xemacs.org/Develop/hgaccess.html, XEmacs Mercurial Archive}
+
+@uref{http://www.xemacs.org/Develop/cvsaccess.html, XEmacs CVS Archive}
+
+@xref{Q11.1.1, How do I stay cool using CVS?}.
+
+@xref{Q11.2.1, What is Mercurial?}.
+
+
+@node Q11.1.1, Q11.2.1, Q11.0.5, Bleeding Edge
+@unnumberedsubsec How do I keep cool using CVS?
+
+You don't.  CVS is just basically and in detail @emph{un}-cool.
+
+What would be really cool is if you would help us out in moving the
+packages repository to Mercurial.  Volunteer on
+@email{xemacs-beta@@xemacs.org, the XEmacs Contributors list}.  What's
+needed is to figure out how to provide a one step checkout for the whole
+package hierarchy, while restricting commits to one package at a time.
+
+For help using CVS, Google or ask on @email{xemacs-beta@@xemacs.org}.
+Please update this FAQ with one or two of the best references you find.
+
+
+@node Q11.2.1, Q11.2.2, Q11.1.1, Bleeding Edge
+@unnumberedsubsec What is Mercurial?
+
+Mercurial is a @dfn{distributed version control system}, or DVCS.  This
+means that versioning information can be easily exchanged between
+different lines of development, even if located on different hosts.  In
+the older @dfn{centralize version control system} model, when you
+@dfn{commit} a change, it is immediately reflected in the public
+repository.  In a DVCS, each user has a @dfn{local repository}, and
+the commit operation creates a version in that repository.  To
+communicate with the public repository, a separate @dfn{push} operation
+must be executed.  The DVCS model is more appropriate for open source
+development.
+
+@itemize
+@item
+The VCS model mirrors the development organization, where developers
+tend to work independently or in very small groups.
+
+@item
+Users without commit access can conveniently manage their local changes.
+
+@item
+Developers can work, and commit changes, while disconnected from the
+Internet.  Then they merge and push their changes later.
+@end itemize
+
+Use of a DVCS does require some changes in workflow, but the XEmacs
+developers consider that inconvenience to be far more than balanced by
+the advantages.
+
+
+@node Q11.2.2, Q11.2.3, Q11.2.1, Bleeding Edge
+@unnumberedsubsec Where do I get Mercurial?
+
+Most OS distributions (including add-on distributions like
+@uref{http://www.cygwin.com/, Cygwin} and
+@uref{http://www.macports.org/, MacPorts}) include Mercurial packages.
+Of course, you can get the source distribution, as well as pre-built
+packages for most major platforms, from
+@uref{http://mercurial.selenic.com/wiki/, the Mercurial developers}.
+
+
+@node Q11.2.3, Q11.2.4, Q11.2.2, Bleeding Edge
+@unnumberedsubsec Do I really have to waste space on history?
+
+Yes, you do.  It's really not that much, though.  In one of my current
+workspaces, I see
+
+@table @code
+@item XEmacs source files (and other cruft, such as editor backups)
+115464KB
+@item Build products
+49676
+@item Mercurial control files and history
+25644
+@end table
+
+That really does include all of the history available in the main XEmacs
+development branch, and the build products are near twice the size of
+all of the Mercurial-specific information.
+
+
+@node Q11.2.4, Q11.2.5, Q11.2.3, Bleeding Edge
+@unnumberedsubsec @code{hg diff} gives bizarre output.
+
+You may see an unreasonable diff (often large) that doesn't seem to
+reflect your work.
+
+This is usually due to using @code{hg diff} on a @dfn{merge commit}.
+That means the commit has multiple parents, and joins together two lines
+of development that occured concurrently.
+
+You're diffing against the "wrong" one; try the other one.  You get the
+relevent revision number or ID from @code{hg log}.  In more detail:
+
+When there is a merge in Mercurial, it will often be the case that
+one of the parents is the immediate predecessor of the merge
+commit.  @code{hg log} will report something like
+
+@example
+    changeset:   4789:56049bea9231    # revision D, below
+    parent:      4788:5cca06f930ea    # your commit
+    parent:      4787:6e6f7b79c1fc    # diff against this
+    user:        you (or somebody else)
+
+    changeset:   4788:5cca06f930ea    # revision B, below
+    parent:      4760:217abcf015c4    # revision A, below
+    user:        you
+
+    changeset:   4787:6e6f7b79c1fc    # revision C, below
+    parent:      4786:d6cfba1cc388
+    user:        somebody else
+@end example
+
+Note that the divergence took place a long time ago (r4760).
+It's natural to diff against (tip - 1), in the example above,
+@code{hg diff -r 4788}.  But this will give unexpected output!
+
+A picture of this history looks something like
+
+@example
+      B --- D
+     /     /
+    A ... C
+@end example
+
+where A is the common ancestor, B is the commit you did, C is the
+mainline at the time of the merge, and D is the merge commit.  The
+three dots between A and C can represent many commits, and a lot
+of work.  Given no conflicts in the merge, @code{hg diff -r C -r D} is
+the same as @code{hg diff -r A -r B}, @emph{i.e.}, it shows your work.
+Similarly, @code{hg diff -r B -r D} is the same as
+@code{hg diff -r A -r C}.  This latter diff is likely to be quite large,
+and it doesn't show your work.  Unfortunately, that is the typical
+result of diffing against the "previous" commit.
+
+@node Q11.2.5, Q11.2.6, Q11.2.4, Bleeding Edge
+@unnumberedsubsec How do I recover from a bad commit?  (I already pushed.)
+
+Once upon a time, an XEmacs developer wrote:
+
+ > GAAAAK!  What's the best way to restore ChangeLog and its history?
+
+He had just inadvertantly pushed a commit which deleted
+@file{src/ChangeLog}!  The history is still there, not to worry.  (In
+this case, another developer had restored src/ChangeLog already.)  The
+best way depends on a number of things.  First, let's look at the log
+and the state of the DAG (the graph of commits).  Here's the log,
+formatted somewhat differently from the usual output for compactness.
+
+@example
+5025    anne    Restore src/ChangeLog.
+5024    barb    merge
+        parents: 5023 5010
+5023    barb    Error-checking.
+5020    barb    merge
+        parents: 5019 5006 
+5019    barb    Fix non-Mule build.
+5011    barb    Some internals-manual updates.
+        parents: 5002
+5010    cary    Windows fixes for Visual Studio 6.
+        parents: 5008 5009
+5009    cary    Miscellaneous small fixes to Windows VS6 build.
+        parents: 5006
+5008    dana    Add license information.
+5007    dana    Relicense emodules.texi.
+5006    cary    Instantiate compile fix for nt.c.
+5005    edna    Cast correctly.
+5003    edna    #'union doesn't preserve relative order
+5002    barb    Fix some compile bugs.
+@end example
+
+(The gaps at 5003...5005, 5011...5019, and 5020...5023 are filled with
+sequences of commits by the same developers.)  Let's visualize this as a
+graph.  Time increases to the right, the leading "50" is omitted for
+brevity, and the dotted links indicate that several irrelevant commits
+were omitted, also for brevity.
+
+@example
+                        ,------ 09 -----.
+                       /                 \
+02 --- 03 ... 05 --- 06 --- 07 --- 08 --- 10 --- 24 --- 25
+  \                    \                        /
+   `-- 11 ... 19 -------`-- 20 ... 23 ---------'
+@end example
+
+The "problem commit" is 5010, which merges 5008 with 5009, and somehow
+managed to "lose" @file{src/ChangeLog}.  The unobvious consequence is
+that, although the @emph{other} changes made in 5007 and 5008 were
+successfully merged and are present in 5010, the log entry made by
+Dana for 5008 "just disappeared".  (The log entry for 5007 is in a
+different @file{ChangeLog}, so it's safe.)
+
+@subsubheading The safe and simple way for Cary
+
+To recover state file-by-file (also for whole directories), use @code{hg
+revert}.  This does not change the "current" version, @emph{i.e.}, the
+commit that will be the parent for your next commit.
+
+If it's not a merge commit, it's simple to restore the ChangeLog.  It's
+best to do it before making any other commits in your own workspace, and
+before pulling in new commits from others.  If there are a lot of such
+commits in your workspace already, ask for help.  But in this case,
+there was no such problem.  Just
+
+@example
+hg revert -r 5009 src/ChangeLog
+# Add Dana's log entry by hand.
+hg commit -m "Restore src/ChangeLog."
+@end example
+
+5009 is the revision id of the most recent commit that had the correct
+version of the file.  You get that from the "parent" field in @code{hg
+log}, or from the DAG browser (@code{hg view}, requires @code{hgk}
+extension enabled).
+
+Alternatively, Cary could revert from 5008.  This would leave her with
+@emph{her} log entry for 5009 missing, and that would have to be added
+by hand.
+
+Note that in the actual history, Cary didn't realize that Dana's log
+went missing, so Anne had to pick up the slack in 5025.
+
+@subsubheading Recovery by another developer
+
+Another way to recover earlier state is with @code{hg checkout} (or
+@code{hg update}, which is another way to spell the same command).  This
+changes the version that hg sees as "current", as well as reverting the
+workspace.
+
+A common scenario is that another developer, such as Barb in the log
+above, was already working on @file{src/ChangeLog}, saves her copy, then
+tries to merge.  She would then get a modify/delete conflict.  It's
+tempting to just resolve that in favor of keeping the file, and commit.
+This often works, but an alternative way uses the VCS:
+
+@example
+hg checkout 5010
+hg revert -r 5009 src/ChangeLog
+# Add Dana's log entry by hand.
+hg commit -m "Restore src/ChangeLog."
+@end example
+
+to get the same effect as described above, then
+
+@example
+hg merge
+@end example
+
+(making her changes "float to the top" of the log) or
+
+@example
+hg checkout 5023
+hg merge
+@end example
+
+(putting the Cary's branch at the top of the log).  This assumes she has
+no other heads in her workspace.  If she does have other heads she would
+have to use an explicit argument to @code{hg merge}.
+
+Note that in the actual history, Barb didn't realize that Dana's log
+went missing, so Anne (or somebody) had to pick up the slack in 5025.
+
+@subsubheading The hard but accurate way
+
+Suppose Barb did @code{hg pull -u}, but notices the problem before
+resolving conflicts and committing the merge.  Assume Barb was fully committed
+before doing @code{hg pull -u}.
+
+@example
+# Restore the ChangeLog, "covering up" the broken commit.
+# Check out Cary's head.  This nukes the merged files in the workspace,
+# but @emph{the history and versions in Barb's rev. 5023 are preserved
+# in the repository}.  The -C is necessary to overwrite files.
+hg checkout -C 5010
+hg revert -r 5009 src/ChangeLog
+# Merge Dana's branch (yes, again).
+# The repeated merge outside of src/ChangeLog should resolve to a
+# no-op, but the ChangeLog probably conflicts.
+# The -f is needed because revert leaves uncommitted changes.
+hg merge -f 5008
+hg commit -m "Re-merge Dana's branch to recover her logs."
+# Merge Barb's work.
+# If Barb has only two heads, which seems likely, the argument to
+# merge is optional.
+hg merge 5023
+hg commit -m merge
+@end example
+
+Visualizing this with a graph, we have:
+
+@example
+                        ,------ 09 -----.
+                       /                 \
+02 --- 03 ... 05 --- 06 --- 07 --- 08 --- 10 *** 24 --- 25
+  \                    \             \          /      /
+   \                    \             `--------'      /
+    \                    \                           /
+     `-- 11 ... 19 -------`-- 20 ... 23 ------------'
+@end example
+
+Note that the versions 5024 and 5025 in this graph denote
+@emph{different} versions from the actual history.  The starred link
+means that editing work (aside from resolving conflicts) was done, on
+top of the merge.  However, the editing work is actually done by
+Mercurial (the revert command)!
+
+
+@node Q11.2.6, Q11.2.7, Q11.2.5, Bleeding Edge
+@unnumberedsubsec How do I recover from a bad commit?  (I haven't pushed yet.)
+
+If you hadn't yet pushed the commit you now regret, and realize it
+before doing further commits, you can use @code{hg strip tip}.  Then
+just redo the commit, possibly with additional changes before
+committing.
+
+@code{hg strip} is dangerous; for practical purposes it destroys
+history, and it also reverts the files in your workspace.  It's
+probably possible to recover the history, but I don't know how.  And any
+uncommitted changes that might be lost are gone forever.  However, it
+is useful in cases like this.
+
+When in doubt, use the safer method @ref{Q11.2.5}.
+
+
+@node Q11.2.7, , Q11.2.6, Bleeding Edge
+@unnumberedsubsec Testing patches with Mercurial Queues.
+
+When testing a patch proposed on xemacs-beta or xemacs-patches,
+conflicts or new heads often appear later, when using @code{hg pull -u}.
+
+There are both theoretical and practical reasons why this happens,
+and it's unlikely to change.  The current workflow of XEmacs is also
+unlikely to change soon; testing patches is also probably going to
+remain necessary.  One way to avoid this issue is to use Mercurial
+Queues (mq), an extension distributed with Mercurial.
+
+Enable mq by adding
+
+@example
+    [extensions]
+
+    hgext.mq =
+@end example
+
+to your @file{~/.hgrc}.  (Yes, the right hand side is empty.)  If you
+already have an @code{[extensions]} section, don't repeat it.  Add
+@code{hgext.mq =} to the existing extensions section.
+
+When you want to test a patch, you need an hg workspace with no
+uncommitted changes.  If you already have some uncommitted changes,
+you can preserve them with mq as follows:
+
+@example
+    $ hg qnew -f -m "Preserve local changes." local-changes
+@end example
+
+The @code{-m} flag specifies the commit message for the new patch.  The
+@code{-f} flag "forces" qnew to put all of the uncommitted local changes
+into an mq patch, and commits it (you will see a commit with summary
+"Preserve local changes." if you do an @code{hg log} now).
+"local-changes" is the name of the patch.
+
+Now, create an mq patch for the test patch (which we assume was saved
+to @file{/tmp/xemacs.patch}):
+
+    $ hg qimport -P -n test-xemacs-patch /tmp/xemacs.patch
+
+The @code{-n} flag specifies the name of the patch.  Give it a name
+sufficiently explicit so you'll know what it is later.  Remember, it
+may take several weeks for the patch to be pushed to the public
+mainline.  The @code{-P} flag says "apply this patch to the workspace
+now".
+
+When you want to update the workspace, you need to remove the mq
+commits, update, and restore your local changes and the test patch.
+You do it this way:
+
+@example
+    $ hg qpop --all
+    $ hg pull -u                # use your usual method, hg fetch etc.
+    $ hg qpush --all
+@end example
+
+@code{hg qpop --all} undoes all the mq commits, but leaves the patches
+in @file{.hg/patches}.  @code{hg qpush --all} reapplies the patches and
+restores the mq commits.  Of course you hope that the patch will be
+committed upstream.  When it is, you do this:
+
+@example
+    $ hg qpop --all
+    $ hg pull -u
+    $ hg qdelete test-xemacs-patch
+    $ hg qpush --all
+@end example
+
+and you're back in business with the official version of the patch you
+tested, and all your local changes applied.
+
+It's also possible to split your local changes into smaller mq
+patches, but that's out of scope for this answer.
 
 @bye
