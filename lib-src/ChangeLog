@@ -1,3 +1,45 @@
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	Take out the junk but leave it in the form of a comment.  Take out
+	the commented junk entirely when we're sure the bug is fixed.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	Update with various junk to check for mappings that cross charsets,
+	etc.  Put in for testing purposes.  Take out when the underlying
+	bug is fixed.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	* make-case-conv.py (uni_casefold_url):
+	* make-case-conv.py (our_filepath):
+	* make-case-conv.py (output_filename):
+	* make-case-conv.py (argformat):
+	* make-case-conv.py (outout):
+	* make-case-conv.py (errout):
+	* make-case-conv.py (saveline):
+	* make-case-conv.py (line):
+	New file.  Reads http://www.unicode.org/Public/UNIDATA/CaseFolding.txt
+	and generates lisp/mule/uni-case-conv.el.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* fix-perms.sh: Also make lib-src/*.py executable.
+
+2010-02-11  Vin Shelton  <acs@xemacs.org>
+ 
+ 	* winclient.c: Bump connection retries to 20 because some people
+	have long startup files.
+	(openConversation): If CreateProcess cannot find
+ 	xemacs.exe, try again with the name of the version-specific
+ 	executable.  This is useful because the cygwin version of XEmacs
+ 	doesn't install an xemacs.exe executable.
+	(parseCommandLine): Fix tracker issue 675 - add current	directory
+	to filenames under cygwin. 
+
 2010-01-26  Ben Wing  <ben@xemacs.org>
 
 	* make-msgfile.lex: Vague hacking on this file, insert a comment

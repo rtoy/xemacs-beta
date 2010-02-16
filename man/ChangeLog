@@ -1,3 +1,23 @@
+2010-02-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Top): Update menu.
+	(Legacy Versions): Update next pointer.
+	(Bleeding Edge):
+	(Q11.0.1):
+	(Q11.0.2):
+	(Q11.0.3):
+	(Q11.0.4):
+	(Q11.0.5):
+	(Q11.1.1):
+	(Q11.2.1):
+	(Q11.2.2):
+	(Q11.2.3):
+	(Q11.2.4):
+	(Q11.2.5):
+	(Q11.2.6):
+	(Q11.2.7):
+	New nodes, describing repositories and VCS usage.
+
 2010-02-16  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Top):

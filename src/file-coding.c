@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1411,7 +1411,7 @@ See `make-coding-system'.  This does much of the work of that function.
 
 Without Mule support, it does all the work of that function, and an alias
 exists, mapping `make-coding-system' to
-`make-coding-system-internal'. You'll need a non-Mule XEmacs to read the
+`make-coding-system-internal'. You'll need a Mule XEmacs to read the
 complete docstring. Or you can just read it in make-coding-system.el;
 something like the following should work:
 
@@ -1994,7 +1994,8 @@ coding_rewinder (Lstream *stream)
   struct coding_stream *str = CODING_STREAM_DATA (stream);
   MAYBE_XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
 
-  str->ch = 0;
+  str->ch = -1;
+  str->pind_remaining = 0;
   Dynarr_reset (str->convert_to);
   Dynarr_reset (str->convert_from);
   return Lstream_rewind (str->other_end);
@@ -2109,6 +2110,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
     }
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
+  str->ch = -1;
   
   if (str->data)
     {
@@ -2147,6 +2149,7 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   xzero (*str);
   str->codesys = Qnil;
   str->orig_codesys = Qnil;
+  str->ch = -1;
   str->us = lstr;
   str->other_end = stream;
   str->convert_to = Dynarr_new (unsigned_char);
@@ -2432,9 +2435,8 @@ is non-nil, all ranges will map to the symbol `unencodable'.  See
 
   if (UNBOUNDP (result))
     {
-      signal_error (Qtext_conversion_error,
-                    "Coding system doesn't say what it can encode", 
-                    XCODING_SYSTEM_NAME (coding_system));
+      text_conversion_error ("Coding system doesn't say what it can encode", 
+			     XCODING_SYSTEM_NAME (coding_system));
     }
 
   result = (NILP (result)) ? Qt : values2 (Qnil, result); 
@@ -2850,7 +2852,6 @@ no_conversion_convert (struct coding_stream *str,
 		       unsigned_char_dynarr *dst, Bytecount n)
 {
   UExtbyte c;
-  unsigned int ch     = str->ch;
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -2861,9 +2862,6 @@ no_conversion_convert (struct coding_stream *str,
 
 	  DECODE_ADD_BINARY_CHAR (c, dst);
 	}
-
-      if (str->eof)
-	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
     }
   else
     {
@@ -2872,40 +2870,26 @@ no_conversion_convert (struct coding_stream *str,
 	{
 	  c = *src++;
 	  if (byte_ascii_p (c))
-	    {
-	      assert (ch == 0);
-	      Dynarr_add (dst, c);
-	    }
+	    Dynarr_add (dst, c);
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c))
-	    {
-	      assert (ch == 0);
-	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
-		  c == LEADING_BYTE_CONTROL_1)
-		ch = c;
-	      else
-		/* #### This is just plain unacceptable. */
-		Dynarr_add (dst, '~'); /* untranslatable character */
-	    }
 	  else
 	    {
-	      if (ch == LEADING_BYTE_LATIN_ISO8859_1)
-		Dynarr_add (dst, c);
-	      else if (ch == LEADING_BYTE_CONTROL_1)
+	      COPY_PARTIAL_CHAR_BYTE (c, str);
+	      if (!str->pind_remaining)
 		{
-		  assert (c < 0xC0);
-		  Dynarr_add (dst, c - 0x20);
+		  Ichar ch = non_ascii_itext_ichar (str->partial);
+		  if (ch < 256)
+		    Dynarr_add (dst, (unsigned char) ch);
+		  else
+		    /* #### This is just plain unacceptable. */
+		    /* untranslatable character */
+		    Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
 		}
-	      /* else it should be the second or third byte of an
-		 untranslatable character, so ignore it */
-	      ch = 0;
 	    }
 #endif /* MULE */
-
 	}
     }
 
-  str->ch    = ch;
   return orign;
 }
 
