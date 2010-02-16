@@ -1,3 +1,26 @@
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* regex.c:
+	* regex.c (DEBUG_FAIL_PRINT1):
+	* regex.c (PUSH_FAILURE_POINT):
+	* regex.c (POP_FAILURE_POINT):
+	* regex.c (regex_compile):
+	* regex.c (re_match_2_internal):
+	* regex.h:
+	* search.c:
+	* search.c (search_buffer):
+	* search.c (debug_regexps_changed):
+	* search.c (vars_of_search):
+	Add an internal variable debug_regexps and a corresponding Lisp
+	variable `debug-regexps' that takes a list of areas in which to
+	display debugging info about regex compilation and matching
+	(currently three areas exist).  Use existing debugging code
+	already in regex.c and modify it so that it recognizes the
+	debug_regexps variable and the flags in it.
+
+	Rename variable `debug-xemacs-searches' to just `debug-searches',
+	consistent with other debug vars.
+
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
 	* text.h:
