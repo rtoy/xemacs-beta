@@ -1,3 +1,28 @@
+2010-02-16  Ben Wing  <ben@xemacs.org>
+
+	* frame-impl.h:
+	* frame-impl.h (FRAME_INTERNAL_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_BOTTOM_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_BORDER_START):
+	* frame-impl.h (FRAME_RIGHT_BORDER_START):
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (change_frame_size_1):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-output.c (redisplay_clear_bottom_of_window):
+	Rename FRAME_BORDER_* to FRAME_INTERNAL_BORDER_*.  Add
+	general FRAME_INTERNAL_BORDER_SIZE().  Add FRAME_REAL_TOOLBAR_BOUNDS()
+	to encompass the entire size of the toolbar including its border.
+	Add specific top/left/bottom/right versions of this macro.
+	Rewrite FRAME_*_BORDER_START and FRAME_*_BORDER_END to take into use
+	FRAME_REAL_*_TOOLBAR_BOUNDS().  Add some comments about existing
+	problems in frame sizing and how they might be fixed.  Simplify
+	change_frame_size_1() using the macros just created.
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* frame.c (change_frame_size_1):

@@ -1,3 +1,20 @@
+2010-02-16  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Modules for the Basic Displayable Lisp Objects):
+	* internals/internals.texi (Creating a Window-System Type):
+	* internals/internals.texi (Window and Frame Geometry):
+	* internals/internals.texi (Intro to Window and Frame Geometry):
+	* internals/internals.texi (The Frame):
+	* internals/internals.texi (The Non-Client Area):
+	* internals/internals.texi (The Client Area):
+	* internals/internals.texi (The Paned Area):
+	* internals/internals.texi (Text Areas):
+	* internals/internals.texi (The Displayable Area):
+	* internals/internals.texi (Which Functions Use Which?):
+	* internals/internals.texi (The Redisplay Mechanism):
+	Integrate the long comment in frame.c into the internals manual.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (How Lisp Objects Are Represented in C):
