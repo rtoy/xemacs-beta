@@ -3559,7 +3559,6 @@ get_frame_displayable_pixel_size (struct frame *f, int *out_width,
 static void
 change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 {
-  Lisp_Object frame;
   int new_pixheight, new_pixwidth;
   int real_font_height, real_font_width;
 
@@ -3572,36 +3571,20 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (in_display || hold_frame_size_changes)
     ABORT ();
 
-  /* If we don't have valid values, exit. */
-  if (!newheight && !newwidth)
-    return;
+  /* We no longer allow bogus values passed in. */
+  assert (newheight && newwidth);
 
-  frame = wrap_frame (f);
+  default_face_height_and_width (wrap_frame (f), &real_font_height,
+				 &real_font_width);
 
-  default_face_height_and_width (frame, &real_font_height, &real_font_width);
-  if (window_system_pixelated_geometry (frame))
-    {
-      new_pixheight = newheight;
-      new_pixwidth = newwidth - real_font_width;
-    }
-  else
-    {
-      new_pixheight = newheight * real_font_height;
-      new_pixwidth = (newwidth - 1) * real_font_width;
-    }
+  frame_conversion_internal (f, SIZE_FRAME_UNIT, newwidth, newheight,
+			     SIZE_TOTAL_PIXEL, &new_pixwidth,
+			     &new_pixheight);
 
   /* This size-change overrides any pending one for this frame.  */
   f->size_change_pending = 0;
   FRAME_NEW_HEIGHT (f) = 0;
   FRAME_NEW_WIDTH (f) = 0;
-
-
-  /* #### dependency on FRAME_WIN_P should be removed. */
-  if (FRAME_WIN_P (f))
-    {
-      new_pixheight += FRAME_SCROLLBAR_HEIGHT (f);
-      new_pixwidth += FRAME_SCROLLBAR_WIDTH (f);
-    }
 
   /* when frame_conversion_internal() calculated the number of rows/cols
      in the frame, the theoretical toolbar sizes were subtracted out.
@@ -3609,118 +3592,89 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
      frame, which may be different from frame spec, taking the above
      fact into account */
   new_pixheight +=
-    + FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f)
-    + 2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f)
     - FRAME_REAL_TOP_TOOLBAR_HEIGHT (f)
     - 2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f);
 
   new_pixheight +=
-    + FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f)
-    + 2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f)
     - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f)
     - 2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
 
   new_pixwidth +=
-    + FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f)
-    + 2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f)
     - FRAME_REAL_LEFT_TOOLBAR_WIDTH (f)
     - 2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
 
   new_pixwidth +=
-    + FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f)
-    + 2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f)
     - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f)
     - 2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
 
-  /* Adjust the width for the end glyph which may be a different width
-     than the default character width. */
-  {
-    int adjustment, trunc_width, cont_width;
+  /* Adjust for gutters here so that we always get set
+     properly. */
+  new_pixheight -=
+    (FRAME_TOP_GUTTER_BOUNDS (f)
+     + FRAME_BOTTOM_GUTTER_BOUNDS (f));
 
-    trunc_width = glyph_width (Vtruncation_glyph,
-			       FRAME_SELECTED_WINDOW (f));
-    cont_width = glyph_width (Vcontinuation_glyph,
-			      FRAME_SELECTED_WINDOW (f));
-    adjustment = max (trunc_width, cont_width);
-    adjustment = max (adjustment, real_font_width);
+  /* Adjust for gutters here so that we always get set
+     properly. */
+  new_pixwidth -=
+    (FRAME_LEFT_GUTTER_BOUNDS (f)
+     + FRAME_RIGHT_GUTTER_BOUNDS (f));
 
-    new_pixwidth += adjustment;
-  }
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
+    = FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
 
-  if (newheight)
+  if (FRAME_HAS_MINIBUF_P (f)
+      && ! FRAME_MINIBUF_ONLY_P (f))
+    /* Frame has both root and minibuffer.  */
     {
-      /* Adjust for gutters here so that we always get set
-	 properly. */
-      new_pixheight -=
-	(FRAME_TOP_GUTTER_BOUNDS (f)
-	 + FRAME_BOTTOM_GUTTER_BOUNDS (f));
+      /*
+       * Leave the minibuffer height the same if the frame has
+       * been initialized, and the minibuffer height is tall
+       * enough to display at least one line of text in the default
+       * font, and the old minibuffer height is a multiple of the
+       * default font height.  This should cause the minibuffer
+       * height to be recomputed on font changes but not for
+       * other frame size changes, which seems reasonable.
+       */
+      int old_minibuf_height =
+	XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
+      int minibuf_height =
+	f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
+	max(old_minibuf_height, real_font_height) :
+	real_font_height;
+      set_window_pixheight (FRAME_ROOT_WINDOW (f),
+			    /* - font_height for minibuffer */
+			    new_pixheight - minibuf_height, 0);
 
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
-	= FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+      XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
+	FRAME_TOP_BORDER_END (f) +
+	FRAME_TOP_GUTTER_BOUNDS (f) +
+	FRAME_BOTTOM_GUTTER_BOUNDS (f) +
+	new_pixheight - minibuf_height;
 
-      if (FRAME_HAS_MINIBUF_P (f)
-	  && ! FRAME_MINIBUF_ONLY_P (f))
-	/* Frame has both root and minibuffer.  */
-	{
-	  /*
-	   * Leave the minibuffer height the same if the frame has
-	   * been initialized, and the minibuffer height is tall
-	   * enough to display at least one line of text in the default
-	   * font, and the old minibuffer height is a multiple of the
-	   * default font height.  This should cause the minibuffer
-	   * height to be recomputed on font changes but not for
-	   * other frame size changes, which seems reasonable.
-	   */
-	  int old_minibuf_height =
-	    XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-	  int minibuf_height =
-	    f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
-	    max(old_minibuf_height, real_font_height) :
-	    real_font_height;
-	  set_window_pixheight (FRAME_ROOT_WINDOW (f),
-				/* - font_height for minibuffer */
-				new_pixheight - minibuf_height, 0);
-
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	    FRAME_TOP_BORDER_END (f) +
-	    FRAME_TOP_GUTTER_BOUNDS (f) +
-	    FRAME_BOTTOM_GUTTER_BOUNDS (f) +
-	    new_pixheight - minibuf_height;
-
-	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
-	}
-      else
-	/* Frame has just one top-level window.  */
-	set_window_pixheight (FRAME_ROOT_WINDOW (f), new_pixheight, 0);
-
-      FRAME_HEIGHT (f) = newheight;
-      if (FRAME_TTY_P (f))
-	f->pixheight = newheight;
+      set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
     }
+  else
+    /* Frame has just one top-level window.  */
+    set_window_pixheight (FRAME_ROOT_WINDOW (f), new_pixheight, 0);
 
-  if (newwidth)
+  FRAME_HEIGHT (f) = newheight;
+  if (FRAME_TTY_P (f))
+    f->pixheight = newheight;
+
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
+    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+  set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
+
+  if (FRAME_HAS_MINIBUF_P (f))
     {
-      /* Adjust for gutters here so that we always get set
-	 properly. */
-      new_pixwidth -=
-	(FRAME_LEFT_GUTTER_BOUNDS (f)
-	 + FRAME_RIGHT_GUTTER_BOUNDS (f));
-
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
+      XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
 	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
-      set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
-
-      if (FRAME_HAS_MINIBUF_P (f))
-	{
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
-	  set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
-	}
-
-      FRAME_WIDTH (f) = newwidth;
-      if (FRAME_TTY_P (f))
-	f->pixwidth = newwidth;
+      set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
     }
+
+  FRAME_WIDTH (f) = newwidth;
+  if (FRAME_TTY_P (f))
+    f->pixwidth = newwidth;
 
   get_frame_char_size (f, &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
 
