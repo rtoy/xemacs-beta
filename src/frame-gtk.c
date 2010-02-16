@@ -1,6 +1,6 @@
 /* Functions for the GTK toolkit.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -384,7 +384,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
   FRAME_HEIGHT (f) = h;
   FRAME_WIDTH (f) = w;
 
-  change_frame_size (f, h, w, 0);
+  change_frame_size (f, w, h, 0);
   {
     GtkRequisition req;
  
@@ -1197,7 +1197,7 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
     }
 
-  change_frame_size (f, rows, cols, 0);
+  change_frame_size (f, cols, rows, 0);
 
   {
     GtkRequisition req;

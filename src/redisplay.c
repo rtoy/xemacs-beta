@@ -6764,7 +6764,7 @@ end_hold_frame_size_changes (Lisp_Object UNUSED (obj))
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
 	  if (f->size_change_pending)
-	    change_frame_size (f, f->new_height, f->new_width, 0);
+	    change_frame_size (f, f->new_width, f->new_height, 0);
 	}
     }
   return Qnil;
@@ -6901,7 +6901,7 @@ redisplay_frame (struct frame *f, int preemption_check)
   /* Before we put a hold on frame size changes, attempt to process
      any which are already pending. */
   if (f->size_change_pending)
-    change_frame_size (f, f->new_height, f->new_width, 0);
+    change_frame_size (f, f->new_width, f->new_height, 0);
 
   /* If frame size might need to be changed, due to changed size
      of toolbars, scrollbars etc, change it now */

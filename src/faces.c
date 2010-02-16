@@ -788,21 +788,6 @@ default_face_height_and_width (Lisp_Object domain,
   default_face_font_info (domain, 0, 0, height, width, 0);
 }
 
-void
-default_face_height_and_width_1 (Lisp_Object domain,
-				 int *height, int *width)
-{
-  if (window_system_pixelated_geometry (domain))
-    {
-      if (height)
-	*height = 1;
-      if (width)
-	*width = 1;
-    }
-  else
-    default_face_height_and_width (domain, height, width);
-}
-
 DEFUN ("face-list", Fface_list, 0, 1, 0, /*
 Return a list of the names of all defined faces.
 If TEMPORARY is nil, only the permanent faces are included.
