@@ -1,3 +1,33 @@
+2-10-10
+
+BUGS noticed running 0bui:
+
+1. Open up redisplay-msw.c.
+Do:
+(query-replace-regexp "int \\(.*?\\)cursor" "Pixcount \\1cursor" nil)
+
+It seems to ignore the `curs' entirely, finding any matches whose final two
+chars are `or' and when a `cursor' is found, including an extra `curs' in the
+replaced text.
+
+2. Open up bad-c-fill-paragraph.h.
+
+Try filling the paragraph "We define ..." or "To use, ..." near the top, and
+you'll see that it's filling the paragraphs to an exact fixed number of
+chars, splitting words, sometimes removing spaces, etc.
+
+3. etc/HELLO:
+
+Big5 doesn't show up, third char of four GB chars doesn't show up, Greek
+doesn't show up.  Some of the GB chars look grayed out.
+
+4. Replacing with case-matching:
+
+Open up bad-replace.h.  Search-and-replace "ite" with "sized_ite".  Find
+anywhere that contains the string "ITE" in capital letters.  Do the search-
+and-replace and you'll find "?IZED_ITE" in place of "SIZED_ITE".
+
+
 1-21-10
 
 To do:
