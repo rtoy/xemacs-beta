@@ -1,5 +1,23 @@
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
+	* mc-alloc.c:
+	* mc-alloc.c (mc_realloc_1):
+	* mc-alloc.c (set_dirty_bit):
+	* mc-alloc.c (set_dirty_bit_for_address):
+	* mc-alloc.c (get_dirty_bit):
+	* mc-alloc.c (get_dirty_bit_for_address):
+	* mc-alloc.c (set_protection_bit):
+	* mc-alloc.c (set_protection_bit_for_address):
+	* mc-alloc.c (get_protection_bit):
+	* mc-alloc.c (get_protection_bit_for_address):
+	* mc-alloc.c (get_page_start):
+	* vdb-win32.c (win32_fault_handler):
+	* vdb.c:
+	Fix some compile warnings, make vdb test code conditional on
+	DEBUG_XEMACS.
+	
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
 	* regex.c:
 	* regex.c (DEBUG_FAIL_PRINT1):
 	* regex.c (PUSH_FAILURE_POINT):
