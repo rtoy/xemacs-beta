@@ -3318,6 +3318,14 @@ frame_conversion_internal_1 (struct frame *f,
 
   window = FRAME_SELECTED_WINDOW (f);
 
+  /* #### It really seems like we should also be subtracting out the
+     theoretical gutter width and height, just like we do for toolbars.
+     There is currently a bug where if you call `set-frame-pixel-width'
+     on MS Windows (at least, possibly also X) things get confused and
+     the top of the root window overlaps the top gutter instead of being
+     below it.  This gets fixed next time you resize the frame using the
+     mouse.  Possibly this is caused by not handling the gutter height
+     here? */
   egw = max (glyph_width (Vcontinuation_glyph, window),
 	     glyph_width (Vtruncation_glyph, window));
   egw = max (egw, cpw);
@@ -3554,8 +3562,9 @@ get_frame_displayable_pixel_size (struct frame *f, int *out_width,
 			     out_width, out_height);
 }
 
-/* Change the frame height and/or width.  Values may be given as zero to
-   indicate no change is to take place. */
+/* Change the frame height and/or width.  Values passed in are in
+   frame units (character cells on X/GTK, displayable-area pixels
+   on MS Windows or generally on pixelated-geometry window systems). */
 static void
 change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 {
@@ -3586,37 +3595,20 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   FRAME_NEW_HEIGHT (f) = 0;
   FRAME_NEW_WIDTH (f) = 0;
 
-  /* when frame_conversion_internal() calculated the number of rows/cols
-     in the frame, the theoretical toolbar sizes were subtracted out.
-     The calculations below adjust for real toolbar height/width in
-     frame, which may be different from frame spec, taking the above
-     fact into account */
-  new_pixheight +=
-    - FRAME_REAL_TOP_TOOLBAR_HEIGHT (f)
-    - 2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f);
+  /* We need to remove the boundaries of the paned area (see top of file)
+     from the total-area pixel size, which is what we have now.
 
-  new_pixheight +=
-    - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f)
-    - 2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
-
-  new_pixwidth +=
-    - FRAME_REAL_LEFT_TOOLBAR_WIDTH (f)
-    - 2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
-
-  new_pixwidth +=
-    - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f)
-    - 2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
-
-  /* Adjust for gutters here so that we always get set
-     properly. */
+     #### We should also be subtracting the internal borders. */
   new_pixheight -=
-    (FRAME_TOP_GUTTER_BOUNDS (f)
+    (FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
+     + FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f)
+     + FRAME_TOP_GUTTER_BOUNDS (f)
      + FRAME_BOTTOM_GUTTER_BOUNDS (f));
 
-  /* Adjust for gutters here so that we always get set
-     properly. */
   new_pixwidth -=
-    (FRAME_LEFT_GUTTER_BOUNDS (f)
+    (FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
+     + FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f)
+     + FRAME_LEFT_GUTTER_BOUNDS (f)
      + FRAME_RIGHT_GUTTER_BOUNDS (f));
 
   XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
@@ -3676,6 +3668,12 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (FRAME_TTY_P (f))
     f->pixwidth = newwidth;
 
+  /* #### On MS Windows, this references FRAME_PIXWIDTH() and FRAME_PIXHEIGHT().
+     I'm not sure we can count on those values being set.  Instead we should
+     use the total pixel size we got near the top by calling
+     frame_conversion_internal().  We should inline the logic in
+     get_frame_char_size() here and change that function so it just looks
+     at FRAME_CHARWIDTH() and FRAME_CHARHEIGHT(). */
   get_frame_char_size (f, &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
 
   MARK_FRAME_TOOLBARS_CHANGED (f);
