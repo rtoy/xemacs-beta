@@ -1,5 +1,18 @@
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
+	* frame.c (change_frame_size_1):
+	Simplify the logic in this function.
+
+	(1) Don't allow 0 as the value of height or width.  The old code
+	that tried to allow this was totally broken, anyway, so obviously
+	this never happens any more.
+
+	(2) Don't duplicate the code in frame_conversion_internal() that
+	converts displayable pixel size to total pixel size -- just call
+	that function.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
 	* EmacsFrame.c:
 	* EmacsFrame.c (EmacsFrameResize):
 	* console-msw-impl.h:
