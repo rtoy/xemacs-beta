@@ -3146,6 +3146,27 @@ out_of_memory (const Ascbyte *reason, Lisp_Object frob)
   signal_error (Qout_of_memory, reason, frob);
 }
 
+DOESNT_RETURN
+text_conversion_error (const CIbyte *reason, Lisp_Object frob)
+{
+  signal_error (Qtext_conversion_error, reason, frob);
+}
+
+DOESNT_RETURN
+text_conversion_error_2 (const CIbyte *reason, Lisp_Object frob1,
+			 Lisp_Object frob2)
+{
+  signal_error_2 (Qtext_conversion_error, reason, frob1, frob2);
+}
+
+void
+maybe_text_conversion_error (const CIbyte *reason, Lisp_Object frob,
+			     Lisp_Object class_, Error_Behavior errb)
+{
+  maybe_signal_error (Qtext_conversion_error, reason, frob, class_, errb);
+}
+
+
 
 /************************************************************************/
 /*			      User commands				*/

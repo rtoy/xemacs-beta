@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -33,6 +33,52 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_text_h_
 #define INCLUDED_text_h_
 
+/****************************************************************************/
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*          NOTE NOTE NOTE: The specifics of how characters are             */
+/*          represented as Ichars and Ibytes should be *entirely*           */
+/*          contained in the top portions of text.c and text.h, above       */
+/*          the places with a note saying "Everything above here knows      */
+/*          about the specifics of the internal character and text          */
+/*          formats.  Nothing below or anywhere else knows ...".            */
+/*          --ben                                                           */
+/*--------------------------------------------------------------------------*/
+/****************************************************************************/
+
+/* Approach for checking the validity of functions that manipulate
+   charset codepoints, unicode codepoints, Ichars, and Itext:
+
+   1. Use one of the following asserts for checking both values coming in
+      (parameters) and values going out (return values):
+
+      ASSERT_VALID_CHARSET_CODEPOINT(charset, c1, c2)
+      ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)
+      ASSERT_VALID_UNICODE_CODEPOINT(code)
+      ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)
+      ASSERT_VALID_ICHAR(ich)
+      ASSERT_VALID_ICHAR_OR_ERROR(ich)
+      ASSERT_VALID_ITEXT(itextptr)
+
+      The *_OR_ERROR varieties allow for an error return value, i.e.
+      NILP (charset) or code == -1 or ich == -1.
+
+      They are all conditioned on ERROR_CHECK_TEXT, and if this isn't
+      defined, they won't do anything at all, so they won't slow down
+      production code.
+
+   2. Take a sledgehammer approach.  When in doubt, insert checks at the
+      beginning and end of *EVERY* function.  The only allowed exception
+      to this is when a function directly passes its arguments to another
+      function on input, or directly returns the return value of another
+      function -- it can be assumed (perhaps wrongly, of course) that
+      these functions also check their input/output.
+
+   --ben
+*/
+
+BEGIN_C_DECLS
+
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
 #else
@@ -45,28 +91,140 @@ char *strlwr (char *);
 char *strupr (char *);
 #endif
 
-BEGIN_C_DECLS
+/* Following used for functions that do character conversion and need to
+   handle errors. */
+
+enum converr
+  {
+    /* ---- Basic actions ---- */
+
+    /* Do nothing upon failure and return a failure indication.
+       Same as what happens when the *_raw() version is called. */
+    CONVERR_FAIL,
+    /* abort() on failure, i.e. crash. */
+    CONVERR_ABORT,
+    /* Signal a Lisp error. */
+    CONVERR_ERROR,
+    /* Try to "recover" and continue processing.  Currently this is always
+       the same as CONVERR_SUBSTITUTE, where one of the substitution
+       characters defined below (CANT_CONVERT_*) is used. */
+    CONVERR_SUCCEED,
+
+    /* ---- More specific actions ---- */
+
+    /* Substitute something (0xFFFD, the Unicode replacement character,
+       when converting to Unicode or to a Unicode-internal Ichar, JISX0208
+       GETA mark when converting to non-Mule Ichar). */
+    CONVERR_SUBSTITUTE,
+    /* Use private Unicode space when converting to Unicode. */
+    CONVERR_USE_PRIVATE
+  };
+
+/* ---------------------------------------------------------------------- */
+/*       Characters to use when conversion or display is impossible       */
+/* ---------------------------------------------------------------------- */
+
+#define UNICODE_REPLACEMENT_CHAR 0xFFFD
+
+/* When unable to convert a character when encoding to an external
+   ASCII-compatible format, substitute the following character instead.
+   Should be ASCII. */
+#define CANT_CONVERT_CHAR_WHEN_ENCODING '?'
+#define CANT_CONVERT_CHAR_WHEN_ENCODING_UNICODE UNICODE_REPLACEMENT_CHAR
+/* When unable to convert a character when decoding to internal format,
+   substitute the following character instead.  Value should be an Ichar.
+   Use Unicode replacement char in Unicode-internal world, else JISX0208
+   GETA MARK. */
+#ifdef UNICODE_INTERNAL
+#define CANT_CONVERT_CHAR_WHEN_DECODING UNICODE_REPLACEMENT_CHAR
+#elif defined (MULE)
+#define CANT_CONVERT_CHAR_WHEN_DECODING					\
+  charset_codepoint_to_ichar (Vcharset_japanese_jisx0208, 34, 46,	\
+			      /* Shouldn't matter, we're old-Mule */	\
+			      CONVERR_SUCCEED)
+#else
+#define CANT_CONVERT_CHAR_WHEN_DECODING '?'
+#endif /* UNICODE_INTERNAL */
+/* When unable to display a character in a buffer, substitute the following
+   character instead.  #### Possibly we should use some sort of box, e.g.
+   the full-height open rectangular box often used for this. */
+#define CANT_DISPLAY_CHAR '~'
 
 /* ---------------------------------------------------------------------- */
 /*                     Super-basic character properties                   */
 /* ---------------------------------------------------------------------- */
 
 /* These properties define the specifics of how our current encoding fits
-   in the basic model used for the encoding.  Because this model is the same
-   as is used for UTF-8, all these properties could be defined for it, too.
-   This would instantly make the rest of this file work with UTF-8 (with
-   the exception of a few called functions that would need to be redefined).
+   in the basic model used for the encoding.  This model is the same
+   for the old Mule encoding and for UTF-8, used in Unicode-internal,
+   and essentially assumes, given that a logical sequence of characters
+   is represented as a sequence of bytes:
 
-   (UTF-2000 implementers, take note!)
+   (1) The byte range(s) used to represent the first byte of a character
+       are disjoint from the byte range(s) used to represent any remaining
+       bytes.  This way, moving backwards over a string is easy (i.e.
+       constant time).
+
+   (2) Given the first byte of a character, you can determine the number
+       of bytes in the character using a table lookup, i.e. without looking
+       at any of the other bytes in the character.  This way, there is no
+       need for a "sentinel" character at the end of a sequence of
+       text. (If, in order to find the end of a character, you had to scan
+       forward to the beginning of the next character, you would be in
+       danger of illegal memory accesses.)
+
+   (3) The representation is ASCII-compatible, i.e. ASCII characters are
+       represented by bytes 00 - 7F. (By property #1, *all* bytes used
+       to represent any other character must be in the range 80 - FF.)
+
+   The old-Mule encoding satisfies this; the first byte of multi-byte
+   sequences is in the range 80-9F, and remaining bytes are A0-FF.
+
+   UTF-8 also satisfies this; the first byte of multi-byte sequences is in
+   the range C0-FD, and remaining bytes are 80-BF. (Bytes FE and FF are not
+   used at all.)
+
+   NOTE: The properties above do *not* require that the range of the first
+   byte of a character is contiguous, and UTF-8 does not satisfy this.
+   For this reason we need to be careful in regex.c.
+
+   NOTE: Ideally, the specifics of the particular encoding should be
+   *completely* encapsulated in a small number of files -- currently,
+   text.h, text.c and charset.h. (Indicated by conditionalization on
+   UNICODE_INTERNAL.) In practice, we need to conditionalize elsewhere
+   due to the fact that old-Mule characters explicitly encode a national
+   charset in their representation (and hence encode the same logical
+   character multiple ways, especially the different accented Latin
+   characters), while Unicode/UTF-8 doesn't do this.  But none of this
+   code assumes (or should assume) anything specific about the encoding
+   used, more than above; e.g. if we wanted to switch the ranges of our
+   UTF-8-like encoding to use 80-BF for the first bytes and C0-FF for
+   the remaining ones, we should be able to change *only* the three
+   files just specified.
+
+   (A fourth pervasive assumption is that characters fit into a 32-bit
+   signed integer.  To change this requires reworking of the char tables
+   and Unicode translation tables.)
+
+   --ben
 */
 
-/* If you want more than this, you need to include charset.h */
+/* NOTE: Some basic character functions are defined in lisp.h, because
+   they are used earlier than this file is included. */
 
 #ifndef MULE
 
 #define rep_bytes_by_first_byte(fb) 1
 #define byte_ascii_p(byte) 1
 #define MAX_ICHAR_LEN 1
+
+#define ichar_len(ch) 1
+#define ichar_columns(ch) 1
+
+#define DECODE_ADD_BINARY_CHAR(c, dst)		\
+do {						\
+  Dynarr_add (dst, c);				\
+} while (0)
 
 #else /* MULE */
 
@@ -79,6 +237,12 @@ BEGIN_C_DECLS
 
 /* Does BYTE represent the first byte of a character? */
 
+#ifdef UNICODE_INTERNAL
+#define ibyte_first_byte_p_2(byte) (((byte) & 0xC0) != 0x80)
+#else
+#define ibyte_first_byte_p_2(byte) ((byte) < 0xA0)
+#endif /* UNICODE_INTERNAL */
+
 #ifdef ERROR_CHECK_TEXT
 
 DECLARE_INLINE_HEADER (
@@ -87,47 +251,60 @@ ibyte_first_byte_p_1 (int byte, const char *file, int line)
 )
 {
   assert_at_line (byte >= 0 && byte < 256, file, line);
-  return byte < 0xA0;
+  return ibyte_first_byte_p_2 (byte);
 }
 
 #define ibyte_first_byte_p(byte) \
   ibyte_first_byte_p_1 (byte, __FILE__, __LINE__) 
 
-#else
+#else /* not ERROR_CHECK_TEXT */
 
-#define ibyte_first_byte_p(byte) ((byte) < 0xA0)
+#define ibyte_first_byte_p(byte) ibyte_first_byte_p_2 (byte)
 
-#endif
+#endif /* ERROR_CHECK_TEXT */
 
-#ifdef ERROR_CHECK_TEXT
+#if 0 /* Unused currently 11-19-05 ben */
 
-/* Does BYTE represent the first byte of a multi-byte character? */
+/* Does BYTE represent the first byte of a multi-byte character?  (Usually
+   such a byte is called a "lead byte" and the remaining bytes the "fill
+   bytes".) */
+
+# ifdef UNICODE_INTERNAL
+# define ibyte_lead_byte_p_2(byte) ((byte) >= 0xC0)
+# else
+# define ibyte_lead_byte_p_2(byte) byte_c1_p (byte)
+# endif /* UNICODE_INTERNAL */
+
+# ifdef ERROR_CHECK_TEXT
 
 DECLARE_INLINE_HEADER (
 int
-ibyte_leading_byte_p_1 (int byte, const char *file, int line)
+ibyte_lead_byte_p_1 (int byte, const char *file, int line)
 )
 {
   assert_at_line (byte >= 0 && byte < 256, file, line);
-  return byte_c1_p (byte);
+  return ibyte_lead_byte_p_2 (byte);
 }
 
-#define ibyte_leading_byte_p(byte) \
-  ibyte_leading_byte_p_1 (byte, __FILE__, __LINE__) 
+# define ibyte_lead_byte_p(byte) \
+  ibyte_lead_byte_p_1 (byte, __FILE__, __LINE__) 
 
-#else
+# else /* not ERROR_CHECK_TEXT */
 
-#define ibyte_leading_byte_p(byte) byte_c1_p (byte)
+# define ibyte_lead_byte_p(byte) ibyte_lead_byte_p_2 (byte)
 
-#endif
+# endif /* ERROR_CHECK_TEXT */
+
+#endif /* 0 */
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
-
-   This value can be derived in other ways -- e.g. something like
-   XCHARSET_REP_BYTES (charset_by_leading_byte (first_byte))
-   but it's faster this way. */
+*/
+#ifdef UNICODE_INTERNAL
+extern MODULE_API const Bytecount rep_bytes_by_first_byte[256];
+#else
 extern MODULE_API const Bytecount rep_bytes_by_first_byte[0xA0];
+#endif
 
 /* Number of bytes in the string representation of a character. */
 
@@ -138,7 +315,12 @@ Bytecount
 rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 )
 {
+#ifdef UNICODE_INTERNAL
+  assert_at_line ((fb >= 0 && fb < 0x80) ||
+		  (fb >= 0xC0 && fb <= 0xFD), file, line);
+#else
   assert_at_line (fb >= 0 && fb < 0xA0, file, line);
+#endif
   return rep_bytes_by_first_byte[fb];
 }
 
@@ -162,9 +344,348 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
  any format.
  */
 
+#ifdef UNICODE_INTERNAL
+#define MAX_ICHAR_LEN 6
+#else
 #define MAX_ICHAR_LEN 4
+#endif
 
-#endif /* not MULE */
+#ifndef UNICODE_INTERNAL
+
+/************************************************************************/
+/*              Definition of charset ID's and lead bytes               */
+/************************************************************************/
+
+/* The following three are used elsewhere in this file and are generally
+   "special".  All other predefined charset ID's are defined and accessed
+   only in mule-charset.c.  CHARSET_ID_ASCII is not used to represent text
+   in a buffer.  CHARSET_ID_LATIN_ISO8859_1 *MUST* be equal to 0x81; or
+   more correctly, CHARSET_ID_LATIN_ISO8859_1 - FIELD2_TO_CHARSET_ID *MUST*
+   equal 1.  Be very careful if you are considering changing the value of
+   any of these three; but the other values in mule-charset.c can be
+   changed without problem as long as they are distinct and within the
+   range 0x80 - 0x9D. */
+
+#define CHARSET_ID_ASCII           0x7F /* Not used except in arrays
+					   indexed by charset ID */
+#define CHARSET_ID_CONTROL_1       0x80
+#define CHARSET_ID_LATIN_ISO8859_1 0x81 /* 0x81 Right half of ISO 8859-1 */
+
+/* WARNING!!!  If you change any of the following official ID boundaries,
+   *you MUST* change rep_bytes_by_first_byte[] in text.c
+   *correspondingly. */
+#define MIN_OFFICIAL_DIM1_CHARSET_ID    0x82
+#define MAX_OFFICIAL_DIM1_CHARSET_ID    0x8C
+  /* With ENABLE_COMPOSITE_CHARS, this is a dimension-2 set of composite
+     characters.  Otherwise it's a dimension-1 set of "fake" characters
+     used to represent the GNU Emacs compositing sequences ESC 0 - ESC 4 in
+     a buffer. */
+#define CHARSET_ID_COMPOSITE            0x8D
+#define MIN_OFFICIAL_DIM2_CHARSET_ID    0x8E
+#define MAX_OFFICIAL_DIM2_CHARSET_ID    0x9D
+
+/** The following are for 1- and 2-byte characters in a private charset. **/
+
+#define LEAD_BYTE_PRIVATE_1	0x9E	/* 1-byte char-set */
+#define LEAD_BYTE_PRIVATE_2	0x9F	/* 2-byte char-set */
+
+/* We can have up to 96 encodable private charsets of dimension 1 and 96 of
+   dimension 2, currently */
+#define MIN_PRIVATE_DIM1_CHARSET_ID	0xA0
+#define MAX_PRIVATE_DIM1_CHARSET_ID	0xFF
+#define MIN_PRIVATE_DIM2_CHARSET_ID	0x100
+#define MAX_PRIVATE_DIM2_CHARSET_ID	0x15F
+
+#define MIN_PRIVATE_CHARSET_ID	MIN_PRIVATE_DIM1_CHARSET_ID
+#define MAX_PRIVATE_CHARSET_ID	MAX_PRIVATE_DIM2_CHARSET_ID
+
+#define MIN_ENCODABLE_CHARSET_ID	CHARSET_ID_ASCII
+#define MAX_ENCODABLE_CHARSET_ID	MAX_PRIVATE_CHARSET_ID
+#define NUM_ENCODABLE_CHARSET_IDS \
+ (MAX_ENCODABLE_CHARSET_ID - MIN_ENCODABLE_CHARSET_ID + 1)
+
+/************************************************************************/
+/*                Old-Mule-internal character manipulation              */
+/************************************************************************/
+
+/* The bit fields of character are divided into 3 parts:
+   FIELD1(7bits):FIELD2(7bits):FIELD3(7bits) */
+
+/* Macros to access each field of a character code of C.  */
+
+#define ichar_field1(c) (((c) >> 14) & 0x7F)
+#define ichar_field2(c) (((c) >> 7) & 0x7F)
+#define ichar_field3(c)  ((c) & 0x7F)
+
+/* Field 1, if non-zero, usually holds a charset ID for a dimension-2
+   charset.  Field 2, if non-zero, usually holds a charset ID for a
+   dimension-1 charset. */
+
+/* Converting between field values and charset ID's.  */
+
+#define FIELD2_TO_CHARSET_ID  0x80
+#define FIELD1_TO_OFFICIAL_CHARSET_ID  0x80
+#define FIELD1_TO_PRIVATE_CHARSET_ID  0xE0
+
+#define MIN_ICHAR_FIELD2_OFFICIAL 1
+#define MIN_ICHAR_FIELD1_OFFICIAL 1
+
+#define MAX_ICHAR_FIELD2_OFFICIAL 0x1F /* properly 0x1D, but be safe */
+#define MAX_ICHAR_FIELD1_OFFICIAL 0x1F /* properly 0x1D, but be safe */
+
+#define MIN_ICHAR_FIELD2_PRIVATE 0x20
+#define MIN_ICHAR_FIELD1_PRIVATE 0x20
+
+#define MAX_ICHAR_FIELD2_PRIVATE 0x7F
+#define MAX_ICHAR_FIELD1_PRIVATE 0x7F
+
+/* Min/max values of all types (official/private dim 1/2) of character.
+
+  Ordered in character space so that
+
+  official-1 < private-1 < official-2 < private-2 */
+
+#define MIN_CHAR_OFFICIAL_DIM1     (MIN_ICHAR_FIELD2_OFFICIAL <<  7)
+#define MIN_CHAR_PRIVATE_DIM1      (MIN_ICHAR_FIELD2_PRIVATE  <<  7)
+#define MIN_CHAR_OFFICIAL_DIM2     (MIN_ICHAR_FIELD1_OFFICIAL << 14)
+#define MIN_CHAR_PRIVATE_DIM2      (MIN_ICHAR_FIELD1_PRIVATE  << 14)
+
+#define MAX_CHAR_OFFICIAL_DIM1     ((MAX_ICHAR_FIELD2_OFFICIAL << 7) | 0x7F)
+#define MAX_CHAR_PRIVATE_DIM1      ((MAX_ICHAR_FIELD2_PRIVATE  << 7) | 0x7F)
+#define MAX_CHAR_OFFICIAL_DIM2     ((MAX_ICHAR_FIELD1_OFFICIAL << 14) | 0x3FFF)
+#define MAX_CHAR_PRIVATE_DIM2      ((MAX_ICHAR_FIELD1_PRIVATE  << 14) | 0x3FFF)
+
+
+#define byte_id_to_official_charset_id(x) (x)
+#define byte_id_to_private_charset_id(x, dim) ((dim) == 2 ? (x) + 0x60 : (x))
+
+#define official_charset_id_to_byte_id(x) ((Ibyte) (x))
+#define private_charset_id_to_byte_id(x, dim) \
+  ((Ibyte) ((dim) == 2 ? (x) - 0x60 : (x)))
+
+/* Charset ID of a character. */
+
+DECLARE_INLINE_HEADER (
+int
+old_mule_ichar_charset_id (Ichar c)
+)
+{
+  ASSERT_VALID_ICHAR (c);
+  if (ichar_ascii_p (c))
+    return CHARSET_ID_ASCII;
+  else if (c < 0xA0)
+    return CHARSET_ID_CONTROL_1;
+  else if (c <= MAX_CHAR_PRIVATE_DIM1)
+    return ichar_field2 (c) + FIELD2_TO_CHARSET_ID;
+  else if (c <= MAX_CHAR_OFFICIAL_DIM2)
+    return ichar_field1 (c) + FIELD1_TO_OFFICIAL_CHARSET_ID;
+  else
+    {
+      text_checking_assert (c <= MAX_CHAR_PRIVATE_DIM2);
+      return ichar_field1 (c) + FIELD1_TO_PRIVATE_CHARSET_ID;
+    }
+}
+
+#endif /* not UNICODE_INTERNAL */
+
+/************************************************************************/
+/*                         Other char functions                         */
+/************************************************************************/
+
+/* Return the length of an Ichar in internal string format, in bytes */
+
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_len (Ichar c)
+)
+{
+  ASSERT_VALID_ICHAR (c);
+  if (ichar_ascii_p (c))
+    return 1;
+#ifdef UNICODE_INTERNAL
+  else if (c <= 0x7FF)
+    return 2;
+  else if (c <= 0xFFFF)
+    return 3;
+  else if (c <= 0x1FFFFF)
+    return 4;
+  else if (c <= 0x3FFFFFF)
+    return 5;
+  else
+    return 6;
+#else /* not UNICODE_INTERNAL */
+  else if (c <= MAX_CHAR_OFFICIAL_DIM1)
+    return 2;
+  else if (c <= MAX_CHAR_OFFICIAL_DIM2)
+    return 3; /* dimension-2 official or dimension-1 private */
+  else
+    {
+      text_checking_assert (c <= MAX_CHAR_PRIVATE_DIM2);
+      return 4;
+    }
+#endif /* UNICODE_INTERNAL */
+}
+
+int unicode_char_columns (int code);
+int old_mule_ichar_columns (Ichar c);
+
+/* Number of columns of C, in a TTY representation */
+DECLARE_INLINE_HEADER (
+int
+ichar_columns (Ichar c)
+)
+{
+  ASSERT_VALID_ICHAR (c);
+#ifdef UNICODE_INTERNAL
+  return unicode_char_columns ((int) c);
+#else
+  return old_mule_ichar_columns (c);
+#endif
+}
+
+/* C should be a binary character in the range 0 - 255; convert
+   to internal format and add to Dynarr DST. */
+
+/* We place this here because of its dependencies on the particular format
+   of UTF-8.  We'd like to gather all such dependencies in this file, as
+   much as possible.
+
+   Note: These could be rewritten in a more general fashion using the
+   functions in charset.h, but it's faster, and not much more code, to
+   just do it manually. */
+
+#ifdef UNICODE_INTERNAL
+
+DECLARE_INLINE_HEADER (
+void
+DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
+)
+{
+  if (byte_ascii_p (c))
+    Dynarr_add (dst, c);
+  else if (c <= 0xBF)
+    {
+      Dynarr_add (dst, 0xC2);
+      Dynarr_add (dst, c);
+    }
+  else
+    {
+      Dynarr_add (dst, 0xC3);
+      Dynarr_add (dst, c - 0x40);
+    }
+}
+
+#else
+
+DECLARE_INLINE_HEADER (
+void
+DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
+)
+{
+  if (byte_ascii_p (c))
+    Dynarr_add (dst, c);
+  else if (byte_c1_p (c))
+    {
+      Dynarr_add (dst, CHARSET_ID_CONTROL_1);
+      Dynarr_add (dst, c + 0x20);
+    }
+  else
+    {
+      Dynarr_add (dst, CHARSET_ID_LATIN_ISO8859_1);
+      Dynarr_add (dst, c);
+    }
+}
+
+#endif /* UNICODE_INTERNAL */
+
+#endif /* MULE */
+
+/************************************************************************/
+/*                         Unicode conversion                           */
+/************************************************************************/
+
+/* Where to place the 256 private Unicode codepoints used for encoding
+   erroneous octets in a UTF-8 or UTF-16 file.  Note: This MUST be below
+   the space used for encoding unknown charset codepoints, which currently
+   starts at 0x800000.  See charset_codepoint_to_private_unicode(). */
+#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
+#define UNICODE_ERROR_OCTET_RANGE_END (UNICODE_ERROR_OCTET_RANGE_START + 0xFF)
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
+
+typedef int (*charset_pred) (Lisp_Object);
+
+
+int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
+Ichar old_mule_unicode_to_ichar (int code, Lisp_Object precedence_array,
+				 charset_pred predicate, enum converr fail);
+int old_mule_charset_encodable (Lisp_Object charset);
+
+/* Convert an Ichar to a Unicode codepoint.
+   Return value will be -1 if cannot convert. */
+DECLARE_INLINE_HEADER (
+int
+ichar_to_unicode (Ichar chr, enum converr USED_IF_OLD_MULE (fail))
+)
+{
+  ASSERT_VALID_ICHAR (chr);
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  return old_mule_ichar_to_unicode (chr, fail);
+#else
+  /* Unicode-internal or non-Mule */
+  return (int) chr;
+#endif /* (not) defined (MULE) && !defined (UNICODE_INTERNAL) */
+}
+
+/* Convert a Unicode codepoint to an Ichar.  Return value will be (Ichar) -1
+   if no conversion can be found. */
+
+DECLARE_INLINE_HEADER (
+Ichar
+filtered_unicode_to_ichar (int code,
+			   Lisp_Object USED_IF_OLD_MULE (precedence_array),
+			   charset_pred USED_IF_OLD_MULE (predicate),
+			   enum converr USED_IF_OLD_MULE (fail))
+)
+{
+  ASSERT_VALID_UNICODE_CODEPOINT (code);
+
+#ifdef UNICODE_INTERNAL
+  return (Ichar) code;
+#elif defined (MULE)
+  return old_mule_unicode_to_ichar (code, precedence_array, predicate, fail);
+#else
+  if (code > 255)
+    return (Ichar) -1;
+  else
+    return (Ichar) code;
+#endif /* (not) defined (MULE) */
+}
+
+DECLARE_INLINE_HEADER (
+Ichar
+unicode_to_ichar (int code, Lisp_Object precedence_array, enum converr fail)
+)
+{
+  return filtered_unicode_to_ichar (code, precedence_array, NULL, fail);
+}
+
+/****************************************************************************/
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*              Everything above here knows about the specifics of          */
+/*              the internal character and text formats.  Nothing           */
+/*              below or anywhere else knows, except text.h.                */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
+/****************************************************************************/
+
+/* ---------------------------------------------------------------------- */
+/*                     Working with non-default formats                   */
+/* ---------------------------------------------------------------------- */
 
 /* For more discussion, see text.c, "handling non-default formats" */
 
@@ -200,6 +721,27 @@ typedef enum internal_format
 /* Convert the other way. */
 #define raw_32_bit_fixed_to_ichar(ch, object) ((Ichar) (ch))
 
+/* Return the length of an Ichar in the specified string format, in bytes */
+
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_len_fmt (Ichar c, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return ichar_len (c);
+    case FORMAT_16_BIT_FIXED:
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
+
 /* Return the "raw value" of a character as stored in the buffer.  In the
    default format, this is just the same as the character.  In fixed-width
    formats, this is the actual value in the buffer, which will be limited
@@ -214,6 +756,7 @@ ichar_to_raw (Ichar ch, Internal_Format fmt,
 	      Lisp_Object UNUSED (object))
 )
 {
+  ;
   switch (fmt)
     {
     case FORMAT_DEFAULT:
@@ -239,6 +782,8 @@ ichar_fits_in_format (Ichar ch, Internal_Format fmt,
 		      Lisp_Object UNUSED (object))
 )
 {
+  ASSERT_VALID_ICHAR (ch);
+
   switch (fmt)
     {
     case FORMAT_DEFAULT:
@@ -269,6 +814,7 @@ objects_have_same_internal_representation (Lisp_Object UNUSED (srcobj),
 
 #else
 
+#define ichar_len_fmt(ch, fmt) 1
 #define ichar_to_raw(ch, fmt, object) ((Raw_Ichar) (ch))
 #define ichar_fits_in_format(ch, fmt, object) 1
 #define objects_have_same_internal_representation(srcobj, dstobj) 1
@@ -365,7 +911,7 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 */
 
 /* ---------------------------------------------------------------------- */
-/*      Working with itext's (pointers to internally-formatted text)    */
+/*       Working with itext's (pointers to internally-formatted text)     */
 /* ---------------------------------------------------------------------- */
 
 /* Given an itext, does it point to the beginning of a character?
@@ -378,10 +924,28 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 #endif
 
 /* If error-checking is enabled, assert that the given itext points to
-   the beginning of a character.  Otherwise, do nothing.
-   */
+   the beginning of a character and make sure the rest of the character
+   is valid.  Otherwise, do nothing. */
 
-#define assert_valid_ibyteptr(ptr) text_checking_assert (valid_ibyteptr_p (ptr))
+#ifdef ERROR_CHECK_TEXT
+
+DECLARE_INLINE_HEADER (
+void
+ASSERT_VALID_ITEXT (const Ibyte *ptr)
+)
+{
+  Bytecount len;
+  assert (ibyte_first_byte_p (*ptr));
+  len = rep_bytes_by_first_byte (*ptr);
+  /* For total char of length 3, we check only the 2
+     bytes following the first char, hence the predec. */
+  while (--len > 0)
+    assert (!ibyte_first_byte_p (*++ptr));
+}
+
+#else
+#define ASSERT_VALID_ITEXT(ptr) disabled_assert (ptr)
+#endif /* ERROR_CHECK_TEXT */
 
 /* Given a itext (assumed to point at the beginning of a character),
    modify that pointer so it points to the beginning of the next character.
@@ -394,7 +958,7 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
    the character it's moving over. */
 
 #define INC_IBYTEPTR(ptr) do {			\
-  assert_valid_ibyteptr (ptr);			\
+  ASSERT_VALID_ITEXT (ptr);			\
   (ptr) += rep_bytes_by_first_byte (* (ptr));	\
 } while (0)
 
@@ -428,18 +992,18 @@ do {									   \
 
 #ifdef ERROR_CHECK_TEXT
 /* We use a separate definition to avoid warnings about unused dc_ptr1 */
-#define DEC_IBYTEPTR(ptr) do {						      \
-  const Ibyte *dc_ptr1 = (ptr);						      \
-  do {									      \
-    (ptr)--;								      \
-  } while (!valid_ibyteptr_p (ptr));					      \
+#define DEC_IBYTEPTR(ptr) do {						\
+  const Ibyte *dc_ptr1 = (ptr);						\
+  do {									\
+    (ptr)--;								\
+  } while (!valid_ibyteptr_p (ptr));					\
   text_checking_assert (dc_ptr1 - (ptr) == rep_bytes_by_first_byte (*(ptr))); \
 } while (0)
 #else
-#define DEC_IBYTEPTR(ptr) do {						      \
-  do {									      \
-    (ptr)--;								      \
-  } while (!valid_ibyteptr_p (ptr));					      \
+#define DEC_IBYTEPTR(ptr) do {			\
+  do {						\
+    (ptr)--;					\
+  } while (!valid_ibyteptr_p (ptr));		\
 } while (0)
 #endif /* ERROR_CHECK_TEXT */
 
@@ -503,8 +1067,8 @@ do {									   \
 } while (0)
 
 #else /* not MULE */
-#define VALIDATE_IBYTEPTR_BACKWARD(ptr)
-#define VALIDATE_IBYTEPTR_FORWARD(ptr)
+#define VALIDATE_IBYTEPTR_BACKWARD(ptr) DO_NOTHING
+#define VALIDATE_IBYTEPTR_FORWARD(ptr) DO_NOTHING
 #endif /* not MULE */
 
 #ifdef MULE
@@ -766,7 +1330,7 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
 /* Return the length of the first character at PTR.  Equivalent to
    charcount_to_bytecount (ptr, 1).
 
-   [Since charcount_to_bytecount() is Written as inline, a smart compiler
+   [Since charcount_to_bytecount() is written as inline, a smart compiler
    should really optimize charcount_to_bytecount (ptr, 1) to the same as
    the following, with no error checking.  But since this idiom occurs so
    often, we'll be helpful and define a special macro for it.]
@@ -817,25 +1381,65 @@ itext_n_addr (const Ibyte *ptr, Charcount offset)
 */
 
 #define INC_BYTECOUNT(ptr, pos) do {			\
-  assert_valid_ibyteptr (ptr);				\
+  ASSERT_VALID_ITEXT (ptr);				\
   (pos += rep_bytes_by_first_byte (* ((ptr) + (pos))));	\
 } while (0)
 
 /* -------------------------------------------------------------------- */
-/*      Retrieving or changing the character pointed to by a itext    */
+/*        Retrieving or changing the character pointed to by itext      */
 /* -------------------------------------------------------------------- */
 
+#ifdef ERROR_CHECK_TEXT
+DECLARE_INLINE_HEADER (
+Ichar
+simple_itext_ichar (const Ibyte *ptr)
+)
+{
+  Ichar retval = ((Ichar) (ptr)[0]);
+  ASSERT_VALID_ITEXT (ptr);
+  assert (byte_ascii_p (retval));
+  return retval;
+}
+
+DECLARE_INLINE_HEADER (
+Bytecount
+simple_set_itext_ichar (Ibyte *ptr, Ichar x)
+)
+{
+  ASSERT_VALID_ICHAR (x);
+  assert (byte_ascii_p (x));
+  (ptr)[0] = (Ibyte) (x);
+  return 1;
+}
+#else
 #define simple_itext_ichar(ptr)		((Ichar) (ptr)[0])
 #define simple_set_itext_ichar(ptr, x) \
-	((ptr)[0] = (Ibyte) (x), (Bytecount) 1)
+        ((ptr)[0] = (Ibyte) (x), (Bytecount) 1)
+#endif /* ERROR_CHECK_TEXT */
+
 #define simple_itext_copy_ichar(src, dst) \
 	((dst)[0] = *(src), (Bytecount) 1)
 
 #ifdef MULE
 
+/* Copy the character pointed to by SRC into DST.  Do not call this
+   directly.  Use the macro itext_copy_ichar() instead.
+   Return the number of bytes copied.  */
+
+DECLARE_INLINE_HEADER (
+Bytecount
+non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
+)
+{
+  Bytecount bytes = rep_bytes_by_first_byte (*src);
+  ASSERT_VALID_ITEXT (src);
+  text_checking_assert (bytes > 1); /* ASCII should have been filtered out */
+  memcpy (dst, src, bytes);
+  return bytes;
+}
+
 MODULE_API Ichar non_ascii_itext_ichar (const Ibyte *ptr);
 MODULE_API Bytecount non_ascii_set_itext_ichar (Ibyte *ptr, Ichar c);
-MODULE_API Bytecount non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst);
 
 /* Retrieve the character pointed to by PTR as an Ichar. */
 
@@ -997,6 +1601,16 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
     non_ascii_itext_copy_ichar (src, dst);
 }
 
+DECLARE_INLINE_HEADER (
+void
+Dynarr_add_ichar (unsigned_char_dynarr *dyn, Ichar ich)
+)
+{
+  Ibyte work[MAX_ICHAR_LEN];
+  Bytecount len = set_itext_ichar (work, ich);
+  Dynarr_add_many (dyn, work, len);
+}
+
 #else /* not MULE */
 
 # define itext_ichar(ptr) simple_itext_ichar (ptr)
@@ -1006,6 +1620,7 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 # define set_itext_ichar(ptr, x) simple_set_itext_ichar (ptr, x)
 # define set_itext_ichar_fmt(ptr, x, fmt, obj) set_itext_ichar (ptr, x)
 # define itext_copy_ichar(src, dst) simple_itext_copy_ichar (src, dst)
+# define Dynarr_add_ichar(dyn, ich) Dynarr_add (dyn, (unsigned char) (ich))
 
 #endif /* not MULE */
 
@@ -1033,9 +1648,9 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
   text_checking_assert ((x) >= 0 && x <= string_char_length (s));	\
 } while (0)
 
-#define ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE(s, x) do {		\
-  text_checking_assert ((x) >= 0 && x <= XSTRING_LENGTH (s));		\
-  text_checking_assert (valid_ibyteptr_p (string_byte_addr (s, x)));	\
+#define ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE(s, x) do {	\
+  text_checking_assert ((x) >= 0 && x <= XSTRING_LENGTH (s));	\
+  ASSERT_VALID_ITEXT (string_byte_addr (s, x));			\
 } while (0)
 
 /* Convert offset I in string S to a pointer to text there. */

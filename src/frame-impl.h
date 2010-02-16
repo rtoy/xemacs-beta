@@ -112,6 +112,8 @@ struct frame
   display_line_dynarr *current_display_lines[4];
   display_line_dynarr *desired_display_lines[4];
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* A structure of auxiliary data specific to the device type.  For
      example, struct x_frame is for X window frames; defined in
      console-x-impl.h. */
