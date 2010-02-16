@@ -1,7 +1,7 @@
 /* The emacs frame widget.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -324,8 +324,8 @@ EmacsFrameResize (Widget widget)
 
   update_various_frame_slots (ew);
 
-  pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
-  change_frame_size (f, rows, columns, 0);
+  pixel_to_frame_unit_size (f, ew->core.width, ew->core.height, &columns, &rows);
+  change_frame_size (f, columns, rows, 0);
 
   /* The code below is just plain wrong.  If the EmacsShell or EmacsManager
      needs to know, they should just ask.  If needed information is being

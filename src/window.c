@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -3495,7 +3495,7 @@ int
 frame_pixsize_valid_p (struct frame *frame, int width, int height)
 {
   int rows, cols;
-  pixel_to_real_char_size (frame, width, height, &cols, &rows);
+  pixel_to_char_size (frame, width, height, &cols, &rows);
   return frame_size_valid_p (frame, rows, cols);
 }
 
@@ -3505,11 +3505,20 @@ void
 check_frame_size (struct frame *frame, int *rows, int *cols)
 {
   int min_height = frame_min_height (frame);
+  int min_pixwidth, min_pixheight;
+  int min_geomwidth, min_geomheight;
 
-  if (*rows < min_height)
-    *rows = min_height;
-  if (*cols  < MIN_SAFE_WINDOW_WIDTH)
-    *cols = MIN_SAFE_WINDOW_WIDTH;
+  /* There is no char_to_frame_unit_size().  This can be done with
+     frame_conversion_internal(), but that's currently static, and we can
+     do it fine with two steps, as follows. */
+  char_to_pixel_size (frame, MIN_SAFE_WINDOW_WIDTH, min_height,
+		      &min_pixwidth, &min_pixheight);
+  pixel_to_frame_unit_size (frame, min_pixwidth, min_pixheight,
+			   &min_geomwidth, &min_geomheight);
+  if (*rows < min_geomheight)
+    *rows = min_geomheight;
+  if (*cols  < min_geomwidth)
+    *cols = min_geomwidth;
 }
 
 /* Normally the window is deleted if it gets too small.
