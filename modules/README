@@ -1,0 +1,27 @@
+This directory contains a number of XEmacs dynamic modules.  These
+modules can be loaded directly with the command 'M-x load-module'.
+However, the preferred method of loading a module is to issue a
+"(require 'module-name)" command to the Lisp interpreter.  This will
+store information so that a later "(unload-feature 'module-name)" can
+succeed.
+
+To compile one of these modules, simply enter the desired directory,
+type 'configure', and then 'make'.  If you are building the module for
+an installed XEmacs, then 'make install' will place the module in the
+appropriate directory for XEmacs to find it later (assuming you have
+permission to write to that directory).  A subsequent 'load-module' or
+'require' will then load the module, as described above.
+
+Each of these demonstrates different features and limitations of the
+XEmacs module loading technology.  For a complete discussion on XEmacs
+dynamic modules, please consult the XEmacs Module Writers Guide, which
+can be found in the ../info directory.
+
+For those wanting to get started with module writing, please see the
+'sample' directory.  It contains two subdirectories: internal and
+external.  The 'internal' subdirectory contains the framework needed to
+migrate some core piece of XEmacs functionality into code that can
+either be compiled into the core or built as a separate module.  The
+'external' subdirectory contains the somewhat simpler framework needed
+to build a module separately from XEmacs.  These should be considered
+starting places for module writing.

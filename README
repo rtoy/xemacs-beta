@@ -1,0 +1,15 @@
+This directory tree holds version 21.5 of XEmacs.
+
+The information in this file has been superseded by the XEmacs FAQ.
+
+The easiest way to read the FAQ is to go to
+
+http://www.xemacs.org/Documentation/21.5/html/xemacs-faq_1.html
+
+You can also the local copy of the FAQ inside XEmacs by using
+use Help->XEmacs FAQ from the menu, or `C-h F'.
+
+If you don't have XEmacs running and can't access the web,
+look directly at `man/xemacs-faq.texi' or `info/xemacs-faq.info'.
+
+
