@@ -1,3 +1,7 @@
+2010-02-18  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak (INFO_FILES): Removed term.info.
+
 2010-02-11  Vin Shelton  <acs@xemacs.org>
  
  	* xemacs.mak (LIB_SRC_DEFINES): Added PROGRAM_DEFINES to lib_src
