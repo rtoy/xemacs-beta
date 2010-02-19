@@ -973,6 +973,12 @@
       (car y))
     x)))
 
+(Assert-eql
+ (length (multiple-value-list
+          (car (mapcar #'(lambda (argument) (floor argument)) (list pi e)))))
+ 1
+ "checking multiple values are correctly discarded in mapcar")
+
 ;;-----------------------------------------------------
 ;; Test vector functions
 ;;-----------------------------------------------------

@@ -1,3 +1,10 @@
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (mapcarX):
+	Correct this function, discarding multiple values when one
+	SEQUENCE is supplied, choosing a better label name.  Correct the
+	comment describing the SOME_OR_EVERY argument.
+
 2010-02-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* syswindows.h:
