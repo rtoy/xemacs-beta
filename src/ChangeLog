@@ -1,3 +1,10 @@
+2010-02-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* syswindows.h:
+	Remove the PDWORD_PTR typedef; it's not used in
+	intl-auto-encap-win32.h , and it breaks the build with Visual C++
+	2005 Express Edition and a 2005 copy of the SDK.
+
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
 	* text.h:
