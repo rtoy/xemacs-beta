@@ -3231,7 +3231,8 @@ arguments: (&rest ARGS)
    taking the elements from SEQUENCES.  If VALS is non-NULL, store the
    results into VALS, a C array of Lisp_Objects; else, if LISP_VALS is
    non-nil, store the results into LISP_VALS, a sequence with sufficient
-   room for CALL_COUNT results. Else, do not accumulate any result.
+   room for CALL_COUNT results (but see the documentation of SOME_OR_EVERY.) 
+   Else, do not accumulate any result.
 
    If VALS is non-NULL, NSEQUENCES is one, and SEQUENCES[0] is a cons,
    mapcarX will store the elements of SEQUENCES[0] in stack and GCPRO them,
@@ -3246,11 +3247,10 @@ arguments: (&rest ARGS)
 
    If SOME_OR_EVERY is SOME_OR_EVERY_SOME, return the (possibly multiple)
    values given by FUNCTION the first time it is non-nil, and abandon the
-   iterations.  LISP_VALS in this case must be an object created by
-   make_opaque_ptr, dereferenced as pointing to a Lisp object. If
-   SOME_OR_EVERY is SOME_OR_EVERY_EVERY, store Qnil at the Lisp_Object
-   pointer address provided by LISP_VALS if FUNCTION gives nil; otherwise
-   leave it alone. */
+   iterations.  LISP_VALS must be a cons, and the return value will be
+   stored in its car.  If SOME_OR_EVERY is SOME_OR_EVERY_EVERY, store Qnil
+   in the car of LISP_VALS if FUNCTION gives nil; otherwise leave it
+   alone. */
 
 #define SOME_OR_EVERY_NEITHER 0
 #define SOME_OR_EVERY_SOME    1
@@ -3306,7 +3306,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
       for (i = 0; i < call_count; ++i)
 	{
 	  args[1] = vals[i];
-	  vals[i] = Ffuncall (nsequences + 1, args);
+	  vals[i] = IGNORE_MULTIPLE_VALUES (Ffuncall (nsequences + 1, args));
 	}
     }
   else
@@ -3413,7 +3413,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 			break;
 		      }
 
-		    goto bad_show_or_every_flag;
+		    goto bad_some_or_every_flag;
 		  }
 		case lrecord_type_vector:
 		  {
@@ -3443,7 +3443,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		      (void) Faset (lisp_vals, make_int (i), called);
 		    break;
 		  }
-		bad_show_or_every_flag:
+		bad_some_or_every_flag:
 		default:
 		  {
 		    ABORT();

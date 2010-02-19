@@ -1,3 +1,9 @@
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that multiple values are discarded correctly with #'mapcar
+	and one SEQUENCE.
+
 2010-02-05  Jerry James  <james@xemacs.org>
 
 	* DLL/dltest.c: Remove old test.  Building and using any module now
