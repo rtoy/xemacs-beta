@@ -1,8 +1,19 @@
 2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
+	Change the #'split-string-by-char text to use US federal
+	government information instead of a couple of sentences from the
+	OED; the latter would probably have qualified as non-infringement,
+	but with the former the question won't arise.
+	(The German text in the same tests is from a very public domain
+	19th-century work.)
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
 	Check that multiple values are discarded correctly with #'mapcar
 	and one SEQUENCE.
+	(equal): 
 
 2010-02-05  Jerry James  <james@xemacs.org>
 
