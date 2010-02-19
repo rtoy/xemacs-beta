@@ -1070,10 +1070,10 @@ split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
     {
       Ibyte unescape_buffer[64], *unescape_buffer_ptr = unescape_buffer,
         escaped[MAX_ICHAR_LEN], *unescape_cursor;
-      int deleting_escapes, previous_escaped, escaped_len; 
-      Ichar pchar, unescape_buffer_size = countof (unescape_buffer);
-
-      escaped_len = set_itext_ichar (escaped, escapechar);
+      Bytecount unescape_buffer_size = countof (unescape_buffer),
+        escaped_len = set_itext_ichar (escaped, escapechar);
+      Boolint deleting_escapes, previous_escaped;
+      Ichar pchar;
 
       while (1)
         {

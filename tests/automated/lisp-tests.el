@@ -1088,20 +1088,20 @@ Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen\: Geister brüten.\\
-tocopherol
-Vitamin E: any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. "
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein"
   ?: ?\\)
   '("re:ee" "this\\is\\text\\\\" "oops" "
 Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen: Geister brüten.\\
-tocopherol
-Vitamin E" " any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. ")))
+Serum concentrations of vitamin E" " (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
 (Assert
  (equal
   (split-string-by-char
@@ -1110,20 +1110,20 @@ Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen\: Geister brüten.\\
-tocopherol
-Vitamin E: any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. "
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein"
    ?: ?\x00)
   '("re\\" "ee" "this\\\\is\\\\text\\\\\\\\" "oo\\ps" "
 Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen\\" " Geister brüten.\\\\
-tocopherol
-Vitamin E" " any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. ")))
+Serum concentrations of vitamin E" " (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
 (Assert
  (equal
   (split-string-by-char
@@ -1132,19 +1132,19 @@ Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen\: Geister brüten.\\
-tocopherol
-Vitamin E: any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. " ?\\)
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein" ?\\)
   '("re" ":ee:this" "" "is" "" "text" "" "" "" ":oo" "ps:
 Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
 bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
 worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
 unreinen" ": Geister brüten." "" "
-tocopherol
-Vitamin E: any or all of a group of closely related fat-soluble compounds
-that occur especially in plant oils and are anti-oxidants essential in the
-diets of many animals and probably of man. ")))
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
 
 ;;-----------------------------------------------------
 ;; Test near-text buffer functions.

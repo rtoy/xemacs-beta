@@ -1,5 +1,11 @@
 2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (split_string_by_ichar_1):
+	Use better types (e.g., not an Ichar for a buffer size) in this
+	function when dealing with ESCAPECHAR.
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (mapcarX):
 	Correct this function, discarding multiple values when one
 	SEQUENCE is supplied, choosing a better label name.  Correct the
