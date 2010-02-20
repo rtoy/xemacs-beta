@@ -130,6 +130,30 @@ Boston, MA 02111-1307, USA.  */
     In fact, in general, it's possible to compile with support for all of
     these at the same time.
 
+
+
+   Here is a table mapping from GNU Emacs constants to XEmacs constants for
+   use in porting code.
+ 
+
+   Old Constant       New Constant
+   ---------------------------------------------------------------
+   `WINDOWSNT'        `WIN32_NATIVE'
+   `WIN32'            `WIN32_NATIVE'
+   `_WIN32'           `WIN32_NATIVE'
+   `HAVE_WIN32'       `WIN32_NATIVE'
+   `DOS_NT'           `WIN32_NATIVE'
+   `HAVE_NTGUI'       `WIN32_NATIVE', unless it ends up already bracketed
+                      by this
+   `HAVE_FACES'       always true
+   `MSDOS'            determine whether this code is really specific to
+                      MS-DOS (and not Windows - e.g. DJGPP code); if so,
+                      delete the code; otherwise, convert to `WIN32_NATIVE'
+                      (we do not support MS-DOS w/DOS Extender under XEmacs)
+   `__CYGWIN__'       `CYGWIN'
+   `__CYGWIN32__'     `CYGWIN'
+   `__MINGW32__'      `MINGW'
+
 */
 
 /* ------------------------- Basic includes ------------------------- */
