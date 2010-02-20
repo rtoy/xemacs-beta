@@ -1272,7 +1272,7 @@ remove_page_from_used_list (page_header *ph)
 {
   page_list_header *plh = PH_PLH (ph);
 
-  if (gc_in_progress && PH_PROTECTION_BIT (ph)) ABORT();
+  assert (!(gc_in_progress && PH_PROTECTION_BIT (ph)));
   /* cleanup: remove memory protection, zero page_header bits. */
 
 #ifdef MEMORY_USAGE_STATS

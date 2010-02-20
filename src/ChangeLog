@@ -1,3 +1,123 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c:
+	* EmacsFrame.c (EmacsFrameRecomputeCellSize):
+	* alloca.c (i00afunc):
+	* buffer.c:
+	* buffer.c (MARKED_SLOT):
+	* buffer.c (complex_vars_of_buffer):
+	* cm.c:
+	* cm.c (cmcheckmagic):
+	* console.c:
+	* console.c (MARKED_SLOT):
+	* device-x.c:
+	* device-x.c (x_get_visual_depth):
+	* emacs.c (sort_args):
+	* eval.c (throw_or_bomb_out):
+	* event-stream.c:
+	* event-stream.c (Fadd_timeout):
+	* event-stream.c (Fadd_async_timeout):
+	* event-stream.c (Frecent_keys):
+	* events.c:
+	* events.c (Fdeallocate_event):
+	* events.c (event_pixel_translation):
+	* extents.c:
+	* extents.c (process_extents_for_insertion_mapper):
+	* fns.c (Fbase64_encode_region):
+	* fns.c (Fbase64_encode_string):
+	* fns.c (Fbase64_decode_region):
+	* fns.c (Fbase64_decode_string):
+	* font-lock.c:
+	* font-lock.c (find_context):
+	* frame-x.c:
+	* frame-x.c (x_wm_mark_shell_size_user_specified):
+	* frame-x.c (x_wm_mark_shell_position_user_specified):
+	* frame-x.c (x_wm_set_shell_iconic_p):
+	* frame-x.c (x_wm_set_cell_size):
+	* frame-x.c (x_wm_set_variable_size):
+	* frame-x.c (x_wm_store_class_hints):
+	* frame-x.c (x_wm_maybe_store_wm_command):
+	* frame-x.c (x_initialize_frame_size):
+	* frame.c (delete_frame_internal):
+	* frame.c (change_frame_size_1):
+	* free-hook.c (check_free):
+	* free-hook.c (note_block_input):
+	* free-hook.c (log_gcpro):
+	* gccache-gtk.c (gc_cache_lookup):
+	* gccache-x.c:
+	* gccache-x.c (gc_cache_lookup):
+	* glyphs-gtk.c:
+	* glyphs-gtk.c (init_image_instance_from_gdk_pixmap):
+	* glyphs-x.c:
+	* glyphs-x.c (extract_xpm_color_names):
+	* insdel.c:
+	* insdel.c (move_gap):
+	* keymap.c:
+	* keymap.c (keymap_lookup_directly):
+	* keymap.c (keymap_delete_inverse_internal):
+	* keymap.c (accessible_keymaps_mapper_1):
+	* keymap.c (where_is_recursive_mapper):
+	* lisp.h:
+	* lstream.c (make_lisp_buffer_stream_1):
+	* macros.c:
+	* macros.c (pop_kbd_macro_event):
+	* mc-alloc.c (remove_page_from_used_list):
+	* menubar-x.c:
+	* menubar-x.c (set_frame_menubar):
+	* ralloc.c:
+	* ralloc.c (obtain):
+	* ralloc.c (relinquish):
+	* ralloc.c (relocate_blocs):
+	* ralloc.c (resize_bloc):
+	* ralloc.c (r_alloc_free):
+	* ralloc.c (r_re_alloc):
+	* ralloc.c (r_alloc_thaw):
+	* ralloc.c (init_ralloc):
+	* ralloc.c (Free_Addr_Block):
+	* scrollbar-x.c:
+	* scrollbar-x.c (x_update_scrollbar_instance_status):
+	* sunplay.c (init_device):
+	* unexnt.c:
+	* unexnt.c (read_in_bss):
+	* unexnt.c (map_in_heap):
+	* window.c:
+	* window.c (real_window):
+	* window.c (window_display_lines):
+	* window.c (window_display_buffer):
+	* window.c (set_window_display_buffer):
+	* window.c (unshow_buffer):
+	* window.c (Fget_lru_window):
+	if (...) ABORT(); ---> assert();
+
+	More specifically:
+
+	if (x == y) ABORT (); --> assert (x != y);
+	if (x != y) ABORT (); --> assert (x == y);
+	if (x > y) ABORT (); --> assert (x <= y);
+	etc.
+	if (!x) ABORT (); --> assert (x);
+	if (x) ABORT (); --> assert (!x);
+
+	DeMorgan's Law's applied and manually simplified:
+	if (x && !y) ABORT (); --> assert (!x || y);
+	if (!x || y >= z) ABORT (); --> assert (x && y < z); 
+
+	Checked to make sure that assert() of an expression with side
+	effects ensures that the side effects get executed even when
+	asserts are disabled, and add a comment about this being a
+	requirement of any "disabled assert" expression.
+
+	* depend:
+	* make-src-depend:
+	* make-src-depend (PrintDeps):
+	Fix broken code in make-src-depend so it does what it was always
+	supposed to do, which was separate out config.h and lisp.h and
+	all the files they include into separate variables in the
+	depend part of Makefile so that quick-build can turn off the
+	lisp.h/config.h/text.h/etc. dependencies of the source files, to
+	speed up recompilation.
+
+
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
 	* text.h:

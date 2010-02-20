@@ -1,5 +1,6 @@
 /* Cursor motion subroutines for XEmacs.
    Copyright (C) 1985, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
     loosely based primarily on public domain code written by Chris Torek
 
 This file is part of XEmacs.
@@ -100,8 +101,7 @@ cmcheckmagic (void)
 {
   if (curX == FrameCols)
     {
-      if (!MagicWrap || curY >= FrameRows - 1)
-	ABORT ();
+      assert (MagicWrap && curY < FrameRows - 1);
       if (termscript)
 	putc ('\r', termscript);
       putchar ('\r');

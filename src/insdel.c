@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -420,8 +420,7 @@ gap_right (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 static void
 move_gap (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
-  if (! BUF_BEG_ADDR (buf))
-    ABORT ();
+  assert (BUF_BEG_ADDR (buf));
   if (bpos < BYTE_BUF_GPT (buf))
     gap_left (buf, cpos, bpos);
   else if (bpos > BYTE_BUF_GPT (buf))

@@ -1,6 +1,6 @@
 /* The console object.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1598,10 +1598,9 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
   /* Check for DEFVAR_CONSOLE_LOCAL without initializing the corresponding
      slot of console_local_flags and vice-versa.  Must be done after all
      DEFVAR_CONSOLE_LOCAL() calls. */
-#define MARKED_SLOT(slot)					\
-  if ((XINT (console_local_flags.slot) != -2 &&			\
-         XINT (console_local_flags.slot) != -3)			\
-      != !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)))	\
-  ABORT ();
+#define MARKED_SLOT(slot)						\
+  assert ((XINT (console_local_flags.slot) != -2 &&			\
+           XINT (console_local_flags.slot) != -3)			\
+	  == !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)));
 #include "conslots.h"
 }
