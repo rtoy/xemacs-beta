@@ -450,7 +450,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       /* If the number of display lines has shrunk, adjust. */
       if (cdla_len > Dynarr_length (ddla))
 	{
-	  Dynarr_set_length (cdla, Dynarr_length (ddla));
+	  Dynarr_set_lengthr (cdla, Dynarr_length (ddla));
 	}
 
       /* grab coordinates of last line and blank after it. */

@@ -83,7 +83,7 @@ sync_rune_structs (struct window *UNUSED (w), rune_dynarr *cra,
 	 redisplay performance so avoiding all excess overhead is a
 	 good thing.  Is all of this true? */
       memcpy (cra->base, dra->base, sizeof (struct rune) * max_move);
-      Dynarr_set_length (cra, max_move);
+      Dynarr_set_lengthr (cra, max_move);
     }
   else
     Dynarr_reset (cra);
@@ -171,7 +171,7 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
 	      tr = cdb->runes;
 	      memcpy (cdb, ddb, sizeof (struct display_block));
 	      cdb->runes = tr;
-	      Dynarr_increment (clp->display_blocks);
+	      Dynarr_incrementr (clp->display_blocks);
 	    }
 
 	  sync_rune_structs (w, cdb->runes, ddb->runes);
@@ -183,7 +183,7 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
   else if (line >= Dynarr_length (cdla))
     {
       assert (line == Dynarr_length (cdla));
-      Dynarr_increment (cdla);
+      Dynarr_incrementr (cdla);
     }
 }
 
@@ -2464,7 +2464,7 @@ redisplay_output_window (struct window *w)
   /* If the number of display lines has shrunk, adjust. */
   if (cdla_len > ddla_len)
     {
-      Dynarr_set_length (cdla, ddla_len);
+      Dynarr_set_lengthr (cdla, ddla_len);
     }
 
   /* Output a vertical divider between windows, if necessary. */
