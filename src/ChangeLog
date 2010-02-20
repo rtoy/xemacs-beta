@@ -1,3 +1,29 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h:
+	Add table about GNU Emacs -> XEmacs Windows constants from
+	the internals manual.
+
+	* frame.c:
+	Shrink size of diagram consistent with internals manual.
+	
+	* alloc.c:
+	* compiler.h:
+	* console.c:
+	* events.c:
+	* gc.c (gc_stat_start_new_gc):
+	* gc.c (gc_stat_resume_gc):
+	* gc.c (kkcc_marking):
+	* gc.c (gc_1):
+	* gc.c (gc):
+	* objects-tty.c:
+	* redisplay-msw.c:
+	* redisplay-msw.c (mswindows_clear_region):
+	* syntax.c:
+	* syntax.c (ST_COMMENT_STYLE):
+	* sysdep.c:
+	Fix various compiler warnings.
+
 2010-02-16  Ben Wing  <ben@xemacs.org>
 
 	* frame-impl.h:
