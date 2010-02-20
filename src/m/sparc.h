@@ -49,6 +49,8 @@ NOTE-END  */
 #if ! defined (__NetBSD__) && ! defined (__linux__) && !defined (__OpenBSD__)
 /* This really belongs in s/sun.h.  */
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long
@@ -56,6 +58,8 @@ NOTE-END  */
 /* Convert that into an integer that is 100 for a load average of 1.0  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
+
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
 
 /* Say that the text segment of a.out includes the header;
    the header actually occupies the first few bytes of the text segment

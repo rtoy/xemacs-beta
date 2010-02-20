@@ -4,9 +4,6 @@ particular operating system.  The emacs configuration script edits
 ../config.h to include the appropriate one of these files, and then
 each emacs source file includes config.h.
 
-template.h is a generic template for system descriptions; it describes
-the parameters a system file can specify.
-
 General XEmacs Changes
 ---------------------------
 The following is a list of those changes made globally across all
@@ -65,10 +62,10 @@ other changes should be preceded by a comment /* XEmacs change */.
 14. Removed references to SYSV_SYSTEM_DIR, NONSYSTEM_DIR_LIBRARY,
     HAVE_SOCKETS, HAVE_SYSVIPC.  configure detects these.
 
-15. Removed defines of HAVE_TERMIOS, HAVE_TERMIO, and
-    HAVE_TCATTR (when HAVE_TERMIOS was also defined).
-    configure detects these and systty.h automatically defines
-    HAVE_TCATTR when HAVE_TERMIOS is defined.
+15. Removed defines of HAVE_TERMIOS, HAVE_TERMIO, HAVE_TCATTR (when
+    HAVE_TERMIOS was also defined), and SIGNALS_VIA_CHARACTERS.  configure
+    detects these and systty.h automatically defines HAVE_TCATTR when
+    HAVE_TERMIOS is defined.
 
 16. Removed SETPGRP_RELEASES_CTTY.  Not necessary any more, with
     fixed definitions of EMACS_SEPARATE_PROCESS_GROUP et al.
@@ -80,3 +77,21 @@ other changes should be preceded by a comment /* XEmacs change */.
 19. Removed all '#define static' business.  Defines NO_REMAP instead.
 
 20. Removed defines of HAVE_MACH_MACH_H.  configure detects this.
+
+21. Removed KERNEL_FILE and LDAV_SYMBOL from most if not all files.
+    getloadavg.c has all sorts of conditional defns to define these.
+
+22. Got rid of most PTY-related stuff.  We try hard to autodetect the
+    proper way of allocating PTY's.  Removed HAVE_PTYS defn.
+
+23. Removed HAVE_SOCKETS, we autodetect this.
+
+24. Removed CLASH_DETECTION; this is now a configurable option.
+
+25. Removed BSD_PGRPS; this is autodetected.
+
+26. Removed NARROWPROTO; this is autodetected.
+
+27. Removed LIBS_DEBUG, C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH.
+    None of them are used any more.  Any such stuff goes into
+    configure.ac.

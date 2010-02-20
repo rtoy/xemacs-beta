@@ -20,11 +20,11 @@ Boston, MA 02110-1301, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-/* I don't care if this doesn't do more than including bsd4-3.h;
-   Mach is not bsd4-3 and the moment you forget it chances are that
+/* I don't care if this doesn't do more than including bsd-common.h;
+   Mach is not BSD and the moment you forget it chances are that
    you're in deep shit.  */
 
-#include "bsd4-3.h"
+#include "bsd-common.h"
 
 /* The rest of this stuff is XEmacs additions. */
  
@@ -37,13 +37,8 @@ Boston, MA 02110-1301, USA.  */
 /* Don't send signals to subprocesses by "typing" special chars at them. */
 #undef SIGNALS_VIA_CHARACTERS
 
-/* XEmacs change */
-/* unistd.h defines _POSIX_VERSION, which leads some things to believe 
-   that _POSIX_PATH_MAX should be defined.  Unfortunately, it isn't. */
-#ifndef NOT_C_CODE
-#include <sys/param.h>
-#define _POSIX_PATH_MAX MAXPATHLEN
-#endif
+/* Delete defn of _POSIX_PATH_MAX -- we check for being defined before using
+   it */
 
 #ifndef NOT_C_CODE
 typedef int pid_t;

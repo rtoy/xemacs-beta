@@ -43,6 +43,8 @@ Boston, MA 02111-1307, USA.  */
 #ifdef USG5_4 /* Older USG systems do not support the load average.  */
 /* Data type of load average, as read out of kmem.  */
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 #define LOAD_AVE_TYPE long
 
 /* Convert that into an integer that is 100 for a load average of 1.0  */
@@ -61,7 +63,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #define LOAD_AVE_CVT(x) ((int) (((double) (x)) * 100.0 / FSCALE))
-#endif
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
+
+#endif /* USG5_4 */
 
 
 /* this brings in alloca() if we're using cc */

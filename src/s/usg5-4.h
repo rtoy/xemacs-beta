@@ -1,24 +1,25 @@
-/* Definitions file for XEmacs running on AT&T's System V Release 4
-   Copyright (C) 1987, 1990 Free Software Foundation, Inc.
+/* Definitions file for GNU Emacs running on AT&T's System V Release 4
+   Copyright (C) 1987, 1990, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+                 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
-This file is part of XEmacs.
+This file is part of GNU Emacs.
 
-XEmacs is free software; you can redistribute it and/or modify
+GNU Emacs is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-XEmacs is distributed in the hope that it will be useful,
+GNU Emacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Synched up with: FSF 19.31. */
+/* Synced up with: FSF 23.1.92. */
+/* Synced by: Ben Wing, 2-18-10. */
 
 /* This file written by James Van Artsdalen of Dell Computer Corporation.
  * james@bigtex.cactus.org.  Subsequently improved for Dell 2.2 by Eric
@@ -34,80 +35,26 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "usg-unix-v"
 
-/* Letter to use in finding device name of first pty,
- * if system supports pty's.  'p' means it is /dev/ptyp0  */
+/* Delete HAVE_TERMIO, SYSV_SYSTEM_DIR, KERNEL_FILE, LDAV_SYMBOL,
+   sigsetmask, _setjmp, _longjmp, HAVE_INDEX, HAVE_RINDEX, TERMINFO,
+   HAVE_SYSV_SIGPAUSE, BSTRING, SIGTYPE -- not used in XEmacs or found by
+   configure */
 
-#define FIRST_PTY_LETTER 'z'
-
-/* define MAIL_USE_FLOCK if the mailer uses flock
- * to interlock access to /usr/spool/mail/$USER.
- * The alternative is that a lock file named
- * /usr/spool/mail/$USER.lock.  */
-
-/* #define MAIL_USE_FLOCK */
-
-/* The file containing the kernel's symbol table is called /unix.  */
-
-#define KERNEL_FILE "/unix"
-
-/* The symbol in the kernel where the load average is found
- * is named avenrun.  */
-
-#define LDAV_SYMBOL "avenrun"
-
-/* Special hacks needed to make Emacs run on this system.  */
-
-/* On USG systems the system calls are interruptible by signals
- * that the user program has elected to catch.  Thus the system call
- * must be retried in these cases.  To handle this without massive
- * changes in the source code, we remap the standard system call names
- * to names for our own functions in sysdep.c that do the system call
- * with retries. */
-
-#define INTERRUPTIBLE_OPEN
-#define INTERRUPTIBLE_IO
-
-/* Compiler bug bites on many systems when default ADDR_CORRECT is used.  */
-
-#define ADDR_CORRECT(x) (x)
-
-/* Prevent -lg from being used for debugging.  Not implemented?  */
-
-#define LIBS_DEBUG
-
-/* Use terminfo instead of termcap.  */
-
-#define TERMINFO
-
-/* 5.3 apparently makes close() interruptible */
-
-#define INTERRUPTIBLE_CLOSE
-
-/* Apparently -lg is provided in 5.3 */
-
-#undef LIBS_DEBUG
-
-/* Enable support for shared libraries in unexec.  */
-
-#define USG_SHARED_LIBRARIES
-
-#define LIBS_SYSTEM "-lsocket -lnsl -lelf"
 #define ORDINARY_LINK
-#define LIB_STANDARD
 
 /* there are no -lg libraries on this system, and no libPW */
 
-#define LIBS_DEBUG
+/* XEmacs deleted LIBS_DEBUG, LIB_STANDARD */
 
-/* No <sioctl.h> */
+/* Undump with ELF */
 
-#define NO_SIOCTL_H
+#undef COFF
 
 #define UNEXEC "unexelf.o"
 
-/* Get <sys/ttold.h> to get struct
+/* Get FIONREAD from <sys/filio.h>.  Get <sys/ttold.h> to get struct
  * tchars. But get <termio.h> first to make sure ttold.h doesn't
- * interfere.
+ * interfere.  And don't try to use SIGIO yet.
  */
 
 #ifndef NOT_C_CODE
@@ -118,54 +65,41 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/filio.h>
 #include <termio.h>
 #include <sys/ttold.h>
+/* Delete #include <signal.h> */
 #include <sys/stream.h>
+#include <sys/stropts.h>
 #include <sys/termios.h>
+/* XEmacs -- GNU added this, but we never had it defined and C-g apparently
+   worked fine before, so don't define it */
+/* #define BROKEN_SIGIO */
 #endif
 
-/* This sets the name of the master side of the PTY. */
+/* Delete NSIG_MINIMUM -- unused in XEmacs */
 
-#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
+/* Delete CLASH_DETECTION (config option), HAVE_PTYS, HAVE_TERMIOS,
+   wait3, WRETCODE, TIOCSIGSEND -- not used in XEmacs or found by configure */
 
-/* This sets the name of the slave side of the PTY.  On SysVr4,
-   grantpt(3) forks a subprocess, so keep sigchld_handler() from
-   intercepting that death.  If any child but grantpt's should die
-   within, it should be caught after EMACS_UNBLOCK_SIGNAL. */
+/* Delete FIRST_PTY_LETTER, PTY_NAME_SPRINTF, PTY_TTY_NAME_SPRINTF --
+   duplicative of code already in process-unix.c */
 
-/* XEmacs change */
-#ifndef NOT_C_CODE
-# if !__STDC__ && !defined(STDC_HEADERS)
-char *ptsname ();
-# endif
-#endif
+/* Delete SETUP_SLAVE_PTY -- unused in XEmacs */
 
-#define PTY_TTY_NAME_SPRINTF				\
-  {							\
-    char *ptyname;					\
-							\
-    EMACS_BLOCK_SIGCHLD;				\
-    if (grantpt (fd) == -1)				\
-      { close (fd); return -1; }			\
-    EMACS_UNBLOCK_SIGCHLD;				\
-    if (unlockpt (fd) == -1)				\
-      { close (fd); return -1; }			\
-    if (!(ptyname = ptsname (fd)))			\
-      { close (fd); return -1; }			\
-    strncpy (pty_name, ptyname, sizeof (pty_name));	\
-    pty_name[sizeof (pty_name) - 1] = 0;		\
-  }
+/* Delete HAVE_SOCKETS -- autodetected */
 
-/* Push various streams modules onto a PTY channel. */
 
-#define SETUP_SLAVE_PTY \
-  if (ioctl (xforkin, I_PUSH, "ptem") == -1)		\
-    fatal ("ioctl I_PUSH ptem: errno %d\n", errno);	\
-  if (ioctl (xforkin, I_PUSH, "ldterm") == -1)		\
-    fatal ("ioctl I_PUSH ldterm: errno %d\n", errno);	\
-  if (ioctl (xforkin, I_PUSH, "ttcompat") == -1) 	\
-    fatal ("ioctl I_PUSH ttcompat: errno %d\n", errno);
 
-/* Tell x11term.c and keyboard.c we have the system V streams feature.  */
-#define SYSV_STREAMS
+/* Begin XEmacs additions */
+
+/* Compiler bug bites on many systems when default ADDR_CORRECT is used.  */
+
+#define ADDR_CORRECT(x) (x)
+
+/* Enable support for shared libraries in unexec.  */
+
+#define USG_SHARED_LIBRARIES
+
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf"
+
 /* On Some SysV System , w3 freeze. If freeze your xemacs , Add below definition */
 /* This definition added by Shogo Fujii(shogo@bsd1.kbnes.nec.co.jp) */
 #define PROCESS_IO_BLOCKING

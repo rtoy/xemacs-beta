@@ -1,6 +1,6 @@
  /* Lisp functions for making directory listings.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -862,7 +862,7 @@ If file does not exist, returns nil.
       return Qnil;
     }
 
-#ifdef BSD4_2
+#ifdef BSD4_3
   directory = Ffile_name_directory (filename);
 #endif
 
@@ -912,7 +912,7 @@ If file does not exist, returns nil.
 
   filemodestring (&s, modes);
   values[8] = make_string ((Ibyte *) modes, 10);
-#if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
+#ifdef BSD4_3	/* file gid will be dir gid */
   {
     struct stat sdir;
 
@@ -923,7 +923,7 @@ If file does not exist, returns nil.
   }
 #else                           /* file gid will be egid */
   values[9] = (s.st_gid != getegid ()) ? Qt : Qnil;
-#endif	/* BSD4_2 or BSD4_3 */
+#endif	/* BSD4_3 */
   values[10] = make_int (s.st_ino);
   values[11] = make_int (s.st_dev);
   UNGCPRO;

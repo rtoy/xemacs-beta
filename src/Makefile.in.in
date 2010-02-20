@@ -683,7 +683,7 @@ TransientEmacsShell.c.rtl : TopLevelEmacsShell.c.rtl
 ## Position-independent code for shared library creation
 #if USE_GCC
 pic_arg = -fpic
-#elif defined (IRIX)
+#elif defined (IRIX6_5)
 pic_arg = -KPIC
 # else
 pic_arg = -K pic
@@ -770,17 +770,17 @@ extw_link_mid = -o
 extw_link_end =
 #  endif
 # elif defined (USG5)
-#  if defined (IRIX)
+#  if defined (IRIX6_5)
 #   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations objs -o output
 extw_link_beg = $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations
 extw_link_mid =  -o
 extw_link_end =
-#  else /* not IRIX */
+#  else /* not IRIX6_5 */
 #   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
 extw_link_beg = $(CC) -G
 extw_link_mid = -z text -o
 extw_link_end =
-#  endif /* not IRIX */
+#  endif /* not IRIX6_5 */
 # else /* not USG5 */
 #  define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc

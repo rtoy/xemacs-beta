@@ -37,6 +37,8 @@ NOTE-END  */
 #	define mips
 #endif
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long
@@ -45,11 +47,18 @@ NOTE-END  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / 256.0)
 
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
+
 #ifndef linux
 /* CDC EP/IX 1.4.3 uses /unix */
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 #undef KERNEL_FILE
 #define KERNEL_FILE "/unix"
+
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
+
 #endif /* ! linux */
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -94,10 +103,10 @@ NOTE-END  */
 #define LD_SWITCH_MACHINE "-D 800000 -g3"
 #define START_FILES "pre-crt0.o /usr/lib/crt1.o"
 #define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o"
-#define LIBS_TERMCAP "-lcurses"
+/* LIBS_TERMCAP deleted */
 
 #define C_SWITCH_MACHINE "-I/usr/include/bsd"
-#define C_DEBUG_SWITCH "-O -g3"
+/* XEmacs deleted C_DEBUG_SWITCH */
 
 #endif /* not BSD */
 #endif /* !linux */
