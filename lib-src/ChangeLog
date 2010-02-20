@@ -1,3 +1,19 @@
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* digest-doc.c:
+	* digest-doc.c (main):
+	* emacs.csh:
+	* hexl.c:
+	* hexl.c (Gabryelski):
+	* hexl.c (main):
+	* hexl.c (usage):
+	* sorted-doc.c:
+	* sorted-doc.c (fatal):
+	* sorted-doc.c (xstrdup):
+	* sorted-doc.c (main):
+	* vcdiff:
+	Merge up to FSF 23.1.92.
+
 2010-02-11  Vin Shelton  <acs@xemacs.org>
  
  	* winclient.c: Bump connection retries to 20 because some people

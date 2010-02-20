@@ -1,19 +1,42 @@
-/* Give this program DOCSTR.mm.nn as standard input
-   and it outputs to standard output
-   a file of texinfo input containing the doc strings.
-   
-   This version sorts the output by function name.
-   */
+/* Give this program DOC-mm.nn.oo as standard input and it outputs to
+   standard output a file of texinfo input containing the doc strings.
 
-/* Synched up with: FSF 19.28. */
+Copyright (C) 1989, 1992, 1994, 1996, 1999, 2000, 2001, 2002, 2003,
+              2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 
+This file is part of GNU Emacs.
+
+GNU Emacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GNU Emacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* Synced up with: GNU 23.1.92. */
+/* Synced by: Ben Wing, 2-17-10. */
+
+/* This version sorts the output by function name.  */
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h> /* for qsort() and malloc() */
 #include <string.h>
 static void *xmalloc (size_t);
+#ifdef WIN32_NATIVE
+#include <fcntl.h>		/* for O_BINARY */
+#include <io.h>			/* for setmode */
+#endif
 
 #define NUL	'\0'
 #define MARKER '\037'
@@ -55,7 +78,7 @@ static void
 fatal (char *s1, char *s2)
 {
   error (s1, s2);
-  exit (1);
+  exit (EXIT_FAILURE);
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
@@ -70,11 +93,11 @@ xmalloc (size_t size)
 }
 
 static char *
-strsav (char *str)
+xstrdup (char *str)
 {
-  char *buf = (char *) xmalloc (strlen (str) + 1);
-  strcpy (buf, str);
-  return buf;
+  char *buf = xmalloc (strlen (str) + 1);
+  (void) strcpy (buf, str);
+  return (buf);
 }
 
 /* Comparison function for qsort to call.  */
@@ -104,13 +127,20 @@ main (int argc, char **argv)
   register DOCSTR *dp = NULL;	/* allocated DOCSTR */
   register LINE *lp = NULL;	/* allocated line */
   register char *bp = 0;	/* ptr inside line buffer */
-  /* int notfirst = 0;		/ * set after read something */
   register enum state state = WAITING; /* state at start */
   int cnt = 0;			/* number of DOCSTRs read */
 
-  DOCSTR *docs = 0;		/* chain of allocated DOCSTRS */
+  DOCSTR *docs = NULL;          /* chain of allocated DOCSTRS */
   char buf[512];		/* line buffer */
-    
+
+#ifdef DOS_NT
+  /* DOC is a binary file.  */
+  if (!isatty (fileno (stdin)))
+    setmode (fileno (stdin), O_BINARY);
+#endif
+
+  bp = buf;
+
   while (1)			/* process one char at a time */
     {
       /* this char from the DOCSTR file */
@@ -158,7 +188,7 @@ main (int argc, char **argv)
 	  bp = buf;
 	  state = DESC_GET;
 	}
-	
+
       /* process gets */
 
       if (state == NAME_GET || state == DESC_GET)
@@ -170,7 +200,7 @@ main (int argc, char **argv)
 	  else			/* saving and changing state */
 	    {
 	      *bp = NUL;
-	      bp = strsav (buf);
+	      bp = xstrdup (buf);
 
 	      if (state == NAME_GET)
 		dp->name = bp;
@@ -205,10 +235,13 @@ main (int argc, char **argv)
     printf ("\\input texinfo  @c -*-texinfo-*-\n");
     printf ("@setfilename ../info/summary\n");
     printf ("@settitle Command Summary for XEmacs\n");
+    printf ("@finalout\n");
     printf ("@unnumbered Command Summary for XEmacs\n");
     printf ("@table @asis\n");
     printf ("\n");
     printf ("@iftex\n");
+    /* #### XEmacs note: FSF 23.1.92 is missing the = sign below.
+       Which is correct? */
     printf ("@global@let@ITEM=@item\n");
     printf ("@def@item{@filbreak@vskip5pt@ITEM}\n");
     printf ("@font@tensy cmsy10 scaled @magstephalf\n");
@@ -246,12 +279,20 @@ main (int argc, char **argv)
 	    putchar ('\n');
 	  }
 	printf("@end display\n");
-	if ( i%200 == 0 && i != 0 ) printf("@end table\n\n@table @asis\n");
+	/* Try to avoid a save size overflow in the TeX output
+           routine.  */
+	if (i%100 == 0 && i > 0 && i != cnt)
+	  printf("\n@end table\n@table @asis\n");
       }
 
     printf ("@end table\n");
     printf ("@bye\n");
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
+
+/* arch-tag: ce28f204-1e70-4b34-8210-3d54a5662071
+   (do not change this comment) */
+
+/* sorted-doc.c ends here */
