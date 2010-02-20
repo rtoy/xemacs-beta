@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -702,8 +702,7 @@ real_window (struct window_mirror *mir, int no_abort)
   Lisp_Object retval =
     real_window_internal (mir->frame->root_window,
 			  XWINDOW_MIRROR (mir->frame->root_mirror), mir);
-  if (NILP (retval) && !no_abort)
-    ABORT ();
+  assert (!NILP (retval) || no_abort);
 
   return retval;
 }
@@ -765,8 +764,7 @@ window_display_lines (struct window *w, int which)
   if (XFRAME (w->frame)->mirror_dirty)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
-  if (!t)
-    ABORT ();
+  assert (t);
 
   if (which == CURRENT_DISP)
     return t->current_display_lines;
@@ -789,8 +787,7 @@ window_display_buffer (struct window *w)
   if (XFRAME (w->frame)->mirror_dirty)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
-  if (!t)
-    ABORT ();
+  assert (t);
 
   return t->buffer;
 }
@@ -803,8 +800,7 @@ set_window_display_buffer (struct window *w, struct buffer *b)
   if (XFRAME (w->frame)->mirror_dirty)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
-  if (!t)
-    ABORT ();
+  assert (t);
 
   t->buffer = b;
 }
@@ -2024,8 +2020,7 @@ unshow_buffer (struct window *w)
   Lisp_Object buf = w->buffer;
   struct buffer *b = XBUFFER (buf);
 
-  if (b != XMARKER (w->pointm[CURRENT_DISP])->buffer)
-    ABORT ();
+  assert (b == XMARKER (w->pointm[CURRENT_DISP])->buffer);
 
   /* FSF disables this check, so I'll do it too.  I hope it won't
      break things.  --ben */
@@ -3138,7 +3133,7 @@ Any other non-nil value means search all devices.
   w = window_loop (GET_LRU_WINDOW, Qnil, 0, which_frames, 1, which_devices);
 
   /* At this point we damn well better have found something. */
-  if (NILP (w)) ABORT ();
+  assert (!NILP (w));
 #endif
 
   return w;

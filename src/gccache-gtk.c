@@ -156,8 +156,8 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
   struct gc_cache_cell *cell, *next, *prev;
   struct gcv_and_mask gcvm;
 
-  if ((!!cache->head) != (!!cache->tail)) ABORT ();
-  if (cache->head && (cache->head->prev || cache->tail->next)) ABORT ();
+  assert ((!!cache->head) == (!!cache->tail));
+  assert (!(cache->head && (cache->head->prev || cache->tail->next)));
 
   /* Gdk does not have the equivalent of 'None' for the clip_mask, so
      we need to check it carefully, or gdk_gc_new_with_values will
@@ -212,10 +212,10 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
       cell->prev = cache->tail;
       cache->tail->next = cell;
       cache->tail = cell;
-      if (cache->head == cell) ABORT ();
-      if (cell->next) ABORT ();
-      if (cache->head->prev) ABORT ();
-      if (cache->tail->next) ABORT ();
+      assert (cache->head != cell);
+      assert (!cell->next);
+      assert (!cache->head->prev);
+      assert (!cache->tail->next);
       return cell->gc;
     }
 
