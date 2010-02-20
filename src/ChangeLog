@@ -1,5 +1,69 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
+	* device-x.c (Fx_get_resource):
+	* dynarr.c:
+	* dynarr.c (Dynarr_realloc):
+	* dynarr.c (Dynarr_newf):
+	* dynarr.c (Dynarr_lisp_realloc):
+	* dynarr.c (Dynarr_lisp_newf):
+	* dynarr.c (Dynarr_resize):
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* dynarr.c (Dynarr_memory_usage):
+	* dynarr.c (stack_like_free):
+	* file-coding.c (coding_reader):
+	* file-coding.c (gzip_convert):
+	* gutter.c (output_gutter):
+	* lisp.h:
+	* lisp.h (Dynarr_declare):
+	* lisp.h (DYNARR_SET_LISP_IMP):
+	* lisp.h (CHECK_NATNUM):
+	* profile.c (create_timing_profile_table):
+	* redisplay-output.c (sync_rune_structs):
+	* redisplay-output.c (sync_display_line_structs):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c:
+	* redisplay.c (get_display_block_from_line):
+	* redisplay.c (add_ichar_rune_1):
+	* redisplay.c (ensure_modeline_generated):
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (update_line_start_cache):
+	* signal.c:
+	* signal.c (check_quit):
+
+	Lots of rewriting of dynarr code.
+
+	(1) Lots of documentation added.  Also fix places that
+	referenced a now-bogus internals node concerning redisplay
+	critical sections.
+	
+	(2) Rename:
+
+	Dynarr_add_lisp_string -> Dynarr_add_ext_lisp_string
+	Dynarr_set_length -> Dynarr_set_lengthr ("restricted")
+	Dynarr_increment -> Dynarr_incrementr
+	Dynarr_resize_if -> Dynarr_resize_to_add
+
+	(3) New functions:
+
+	Dynarr_elsize = dy->elsize_
+	Dynarr_set_length(): Set length, resizing as necessary
+	Dynarr_set_length_and_zero(): Set length, resizing as necessary,
+	  zeroing out new elements
+	Dynarr_increase_length(), Dynarr_increase_length_and_zero():
+	  Optimization of Dynarr_set_length(), Dynarr_set_length_and_zero()
+	  when size is known to increase
+	Dynarr_resize_to_fit(): Resize as necessary to fit a given length.
+	Dynarr_set(): Set element at a given position, increasing length
+	  as necessary and setting any newly created positions to 0
+	
+	(4) Use Elemcount, Bytecount.
+
+	(5) Rewrite many macros as inline functions.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
 	* tests.c:
 	Fix operation of c-tests.
 

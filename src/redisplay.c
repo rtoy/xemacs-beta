@@ -728,7 +728,7 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
 	  struct display_block *dbp = Dynarr_atp (dl->display_blocks, elt);
 
 	  /* "add" the block to the list */
-	  Dynarr_increment (dl->display_blocks);
+	  Dynarr_incrementr (dl->display_blocks);
 
 	  /* initialize and return */
 	  dbp->type = type;
@@ -1221,7 +1221,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
   if (local)
     Dynarr_add (data->db->runes, *crb);
   else
-    Dynarr_increment (data->db->runes);
+    Dynarr_incrementr (data->db->runes);
 
   data->pixpos += width;
 
@@ -4532,7 +4532,7 @@ ensure_modeline_generated (struct window *w, int type)
       if (Dynarr_length (dla) == 0)
 	{
 	  if (Dynarr_largest (dla) > 0)
-	    Dynarr_increment (dla);
+	    Dynarr_incrementr (dla);
 	  else
 	    {
 	      struct display_line modeline;
@@ -5301,9 +5301,10 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
 
 /*
 
-Info on Re-entrancy crashes, with backtraces given:
+Info on reentrancy crashes, with backtraces given:
 
-  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+  (Info-goto-node "(internals)Critical Redisplay Sections")
+
 */
 
 
@@ -5405,7 +5406,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
       if (pos_of_dlp < 0)
 	Dynarr_add (dla, *dlp);
       else if (pos_of_dlp == Dynarr_length (dla))
-	Dynarr_increment (dla);
+	Dynarr_incrementr (dla);
       else
 	ABORT ();
 
@@ -5459,13 +5460,13 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point,
   if (!in_display)
     depth = enter_redisplay_critical_section ();
 
-  /* This is one spot where a re-entrancy crash will occur, due to a check
+  /* This is one spot where a reentrancy crash will occur, due to a check
      in the dynarr to make sure it isn't "locked" */
 /*
 
-Info on Re-entrancy crashes, with backtraces given:
+Info on reentrancy crashes, with backtraces given:
 
-  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+  (Info-goto-node "(internals)Critical Redisplay Sections")
 */
 
   Dynarr_reset (dla);
@@ -5628,7 +5629,7 @@ Info on Re-entrancy crashes, with backtraces given:
       if (pos_of_dlp < 0)
 	Dynarr_add (dla, *dlp);
       else if (pos_of_dlp == Dynarr_length (dla))
-	Dynarr_increment (dla);
+	Dynarr_incrementr (dla);
       else
 	ABORT ();
 
@@ -8469,7 +8470,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	      return;
 	    }
 
-	  Dynarr_insert_many_at_start (cache, Dynarr_begin (internal_cache),
+	  Dynarr_prepend_many (cache, Dynarr_begin (internal_cache),
 			      ic_elt + 1);
 	}
 
