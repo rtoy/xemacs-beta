@@ -1,3 +1,107 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* sysdep.c:
+	* sysdep.c (qxe_reliable_signal):
+	* sysdep.c (retry_open_1):
+	* sysdep.c (retry_close):
+	* sysdep.c (retry_read_1):
+	* sysdep.c (retry_write_1):
+	* sysdep.c (retry_fopen):
+	* sysdep.c (retry_fclose):
+	* sysdep.c (retry_fread):
+	* sysdep.c (retry_fwrite):
+	Remove conditionalization on INTERRUPTIBLE_IO, INTERRUPTIBLE_OPEN,
+	INTERRUPTIBLE_CLOSE -- always check for EINTR as there's no harm
+	in it.
+
+	Remove old #if 0'ed out SA_RESTART code.
+
+	Use manifest constant IRIX6_5 instead of IRIX.
+
+	* Makefile.in.in:
+	* dired.c:
+	* dired.c (Ffile_attributes):
+	Use manifest constant IRIX6_5 instead of IRIX.
+	Eliminate constant BSD4_2, use BSD4_3 instead.
+	
+	* getloadavg.c:
+	* getloadavg.c (getloadavg):
+	* getloadavg.c (LDAV_PRIVILEGED):
+	* getloadavg.c (LDAV_DONE):
+	Sync with GNU 23.1.92.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* s/README:
+	* s/aix4-2.h:
+	* s/aix4-2.h (MAIL_USE_LOCKF):
+	* s/bsd-common.h:
+	* s/freebsd.h:
+	* s/freebsd.h (Carey):
+	* s/freebsd.h (or):
+	* s/gnu.h:
+	* s/gnu.h (DATA_START):
+	* s/hpux11-shr.h:
+	* s/hpux11.h:
+	* s/hpux11.h (random):
+	* s/irix6-5.h:
+	* s/linux.h:
+	* s/mach-bsd4-3.h:
+	* s/netbsd.h:
+	* s/netbsd.h (or):
+	* s/netbsd.h (A_TEXT_OFFSET):
+	* s/netbsd.h (NO_MATHERR):
+	* s/openbsd.h:
+	* s/sol2.h:
+	* s/usg5-4-2.h:
+	* s/usg5-4.h:
+	* s/usg5-4.h (or):
+	* s/usg5-4.h (ORDINARY_LINK):
+	Sync with GNU 23.1.92.
+
+	Put back linux.h.
+
+	Rename: bsd4-3.h -> bsd-common.h; irix6-0.h -> irix6-5.h.
+	Delete: template.h (useless).
+
+	Delete a whole bunch of obsolete stuff in sol2.h, linux.h,
+	freebsd.h -- assume anything over 10 years old is sufficiently
+	obsolete to be deleted.
+
+	Remove LIBS_DEBUG, C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH, KERNEL_FILE,
+	LDAV_SYMBOL, most remaining PTY stuff, remaining TERMINFO/TERMCAP
+	stuff.  Update README appropriately.
+
+	Remove stuff in hpux11-shr.h duplicated in hpux11.h.
+
+	Remove sco7.h, identical with usg5-4-2.h.
+
+	Remove unused POSIX flag, BROKEN_TIOC*, NO_SIOCTL_H.
+	
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* m/arm.h:
+	* m/hp800.h:
+	* m/intel386.h:
+	* m/mips.h:
+	* m/powerpc.h:
+	* m/sparc.h:
+	* m/template.h:
+	Temporarily ifdef out all defines involving load-average stuff --
+	using define ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF, which is not
+	defined.
+
+	I'm pretty sure getloadavg.c will take care of defining stuff
+	properly on all systems without the need to duplicate the info
+	in m/*. --ben
+
+	Delete LIBS_TERMCAP; configure auto-handles this.
+
+	Delete extra stuff in hp800.h.
+
+	Delete C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH, LDAV_SYMBOL; incorporate
+	some stuff into configure.ac.
+
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
 	* text.h:

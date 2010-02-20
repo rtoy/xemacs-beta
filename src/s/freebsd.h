@@ -1,105 +1,154 @@
-/* Synched up with: FSF 19.31. */
+/* System description header for FreeBSD systems.
+   This file describes the parameters that system description files
+   should define or not.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+                 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+                 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
-/* s/ file for freebsd system.  */
+Author: Shawn M. Carey
+(according to authors.el)
 
-/* '__FreeBSD__' is defined by the preprocessor on FreeBSD-1.1 and up.
-   Earlier versions do not have shared libraries, so inhibit them.
-   You can inhibit them on newer systems if you wish
-   by defining NO_SHARED_LIBS.  */
-#ifndef __FreeBSD__
-#define NO_SHARED_LIBS
-#endif
+This file is part of XEmacs.
 
-/* Get most of the stuff from bsd4.3 */
-#include "bsd4-3.h"
+XEmacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-/* For mem-limits.h. */
-#define BSD4_2
+XEmacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-/* These aren't needed, since we have getloadavg.  */
-#undef KERNEL_FILE
-#undef LDAV_SYMBOL
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
+/* Synced up with: FSF 23.1.92. */
+/* Synced by: Ben Wing, 2-18-10. */
 
-#define INTERRUPTIBLE_OPEN
-
-#define LIBS_DEBUG
-/* FreeBSD 2.2 or later */
+/* Get the correct __FreeBSD_version, even if this is before that was
+   defined. */
 #ifndef __FreeBSD_version
 #include <osreldate.h>
-#endif
+#endif /* !defined __FreeBSD_version */
+
+/* XEmacs: Delete obsolete stuff for FreeBSD v1 and v2 */
+/* Get most of the stuff from bsd-common */
+#include "bsd-common.h"
+
+/* Delete BSD4_2 -- unused in XEmacs */
+
+/* KERNEL_FILE, LDAV_SYMBOL deleted */
+#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
+
+/* XEmacs deleted LIBS_DEBUG */
+
 #if __FreeBSD_version >= 199701 && __FreeBSD_version < 600006
+/* XEmacs: */
 #define LIBS_SYSTEM "-lutil -lxpg4"
 #else
 #define LIBS_SYSTEM "-lutil"
 #endif
 
-#ifndef NOT_C_CODE
-#ifdef BSD /* fixing BSD define */
-#undef BSD
-#endif
-#include <sys/param.h>
-/* Kludge to work around setlocale(LC_ALL,...) not working after 01/1997 */
-#if __FreeBSD_version >= 199701 && __FreeBSD_version < 226000
-#ifdef HAVE_X_WINDOWS
-#include <X11/Xlocale.h>
-#define setlocale(locale_category, locale_spec) setlocale(LC_CTYPE, locale_spec)
-#endif /* HAVE X */
-#endif /* FreeBSD >= 199701 && < 226000 */
-#endif /* C code */
+/* LIBS_TERMCAP, TERMINFO deleted */
 
-#define LIBS_TERMCAP "-ltermcap"
+/* SYSV_SYSTEM_DIR, BSD_PGRPS deleted */
 
 #ifdef __ELF__ /* since from 3.0-CURRENT(maybe 19980831 or later) */
+/* XEmacs: */
 #ifndef NOT_C_CODE
 #include <stddef.h>
 #endif
-#define LD_SWITCH_SYSTEM
+
+/* GNU: [[ Let `ld' find image libs and similar things in /usr/local/lib.  The
+   system compiler, GCC, has apparently been modified to not look
+   there, contrary to what a stock GCC would do. ]] But we don't add
+   /usr/local/lib to LD_SWITCH_SYSTEM; there are configure flags for that. */
+
+#define LD_SWITCH_SYSTEM /* -L/usr/local/lib */
 #define START_FILES pre-crt0.o /usr/lib/crt1.o /usr/lib/crti.o /usr/lib/crtbegin.o
 #define UNEXEC "unexelf.o"
 #define LIB_STANDARD -lgcc -lc -lgcc /usr/lib/crtend.o /usr/lib/crtn.o
+/* XEmacs addition this line: */
 #define LINKER "$(CC) -nostdlib"
 #undef LIB_GCC
 #define LIB_GCC
 
 #else /* not __ELF__ */
 
-#ifndef NO_SHARED_LIBS
-#if 0 /* mrb */
-#define LIB_GCC "-lgcc"
-#define LD_SWITCH_SYSTEM "-dc -dp -e start"
-#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
-#else /* mrb */
-#define ORDINARY_LINK
-#undef LIB_GCC
-#undef LD_SWITCH_SYSTEM
-#undef START_FILES
-#endif /* mrb */
-
-#define HAVE_TEXT_START		/* No need to define `start_of_text'. */
-#define UNEXEC "unexfreebsd.o"
-#define RUN_TIME_REMAP
-
-#ifndef N_TRELOFF
-#define N_PAGSIZ(x) __LDPGSZ
-#define N_BSSADDR(x) (N_ALIGN(x, N_DATADDR(x)+x.a_data))
-#define N_TRELOFF(x) N_RELOFF(x)
-#endif
-#else /* NO_SHARED_LIBS */
-#ifdef __FreeBSD__  /* shared libs are available, but the user prefers
-                     not to use them.  */
-#define LD_SWITCH_SYSTEM "-Bstatic"
-#define A_TEXT_OFFSET(x) (sizeof (struct exec))
-#define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
-#endif /* __FreeBSD__ */
-#endif /* NO_SHARED_LIBS */
+#error "Obsolete pre-v3 versions not supported"
 
 #endif /* not __ELF__ */
 
-/* #define NO_TERMIO */ /* detected in configure */
+/* HAVE_GETLOADAVG, HAVE_TERMIOS, NO_TERMIO deleted */
 #define DECLARE_GETPWUID_WITH_UID_T
 
 /* freebsd uses OXTABS instead of the expected TAB3. */
 #define TABDLY OXTABS
 #define TAB3 OXTABS
+
+/* this silences a few compilation warnings */
+#undef BSD_SYSTEM
+/* XEmacs: Delete obsolete stuff for FreeBSD v1 and v2 */
+#define BSD_SYSTEM 199506
+#endif
+
+/* DONT_REOPEN_PTY deleted -- unused in XEmacs */
+
+/* If the system's imake configuration file defines `NeedWidePrototypes'
+   as `NO', we must define NARROWPROTO manually.  Such a define is
+   generated in the Makefile generated by `xmkmf'.  If we don't
+   define NARROWPROTO, we will see the wrong function prototypes
+   for X functions taking float or double parameters.  */
+
+/* NARROWPROTO deleted */
+
+/* The following is needed to make `configure' find Xpm, Xaw3d and
+   image include and library files if using /usr/bin/gcc.  That
+   compiler seems to be modified to not find headers in
+   /usr/local/include or libs in /usr/local/lib by default.  */
+
+/* XEmacs: let configure flags do this */
+/* #define C_SWITCH_SYSTEM -I/usr/X11R6/include -I/usr/local/include -L/usr/local/lib */
+
+#if 0 /* unnecessary GNU stuff */
+/* Circumvent a bug in FreeBSD.  In the following sequence of
+   writes/reads on a PTY, read(2) returns bogus data:
+
+   write(2)  1022 bytes
+   write(2)   954 bytes, get EAGAIN
+   read(2)   1024 bytes in process_read_output
+   read(2)     11 bytes in process_read_output
+
+   That is, read(2) returns more bytes than have ever been written
+   successfully.  The 1033 bytes read are the 1022 bytes written
+   successfully after processing (for example with CRs added if the
+   terminal is set up that way which it is here).  The same bytes will
+   be seen again in a later read(2), without the CRs.  */
+
+#define BROKEN_PTY_READ_AFTER_EAGAIN 1
+
+/* Deleted GC_SETJMP_WORKS, GC_MARK_STACK, USE_MMAP_FOR_BUFFERS,
+   POSIX_SIGNALS -- unnecessary and/or autoconfigured on XEmacs */
+
+/* The `combreloc' setting became the default, and it seems to be
+   incompatible with unexec.  Symptom is an immediate SEGV in
+   XtInitializeWidget when starting Emacs under X11.  */
+
+#if defined __FreeBSD_version && __FreeBSD_version >= 500042
+#define LD_SWITCH_SYSTEM_TEMACS -znocombreloc
+#endif
+#endif /* 0 */
+
+/* arch-tag: 426529ca-b7c4-448f-b10a-d4dcdc9c78eb
+   (do not change this comment) */
+
+/* Begin XEmacs additions */
+
+#ifndef NOT_C_CODE
+#ifdef BSD /* fixing BSD define */
+#undef BSD
+#endif
+#include <sys/param.h>
+#endif /* C code */

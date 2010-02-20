@@ -1320,16 +1320,18 @@ dnl Straightforward machine determination
 case "$ac_cv_build" in
   sparc-*-*        ) machine=sparc ;;
   alpha*-*-*       ) machine=alpha ;;
-  mips*-linux      ) machine=mips ;;
+  mips*-*          ) machine=mips ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
   powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
+  i[[3-9]]86-*-*   ) machine=intel386 ;;
 esac
 
 dnl Straightforward OS determination
 case "$ac_cv_build" in
+  *-*-linux*    ) opsys=linux ;;
   *-*-netbsd*   ) opsys=netbsd ;;
   *-*-openbsd*	) opsys=openbsd ;;
 
@@ -1338,8 +1340,8 @@ case "$ac_cv_build" in
 
   dnl Other generic OSes
   *-gnu* )			opsys=gnu    ;;
-  *-*-bsd4.3 )			opsys=bsd4-3 ;;
-  *-*-aos*   )			opsys=bsd4-3 ;;
+  *-*-bsd4.3 )			opsys=bsd-common ;;
+  *-*-aos*   )			opsys=bsd-common ;;
   *-*-sysv4.1* | *-*-sysvr4.1* )opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
   *-*-sysv4.[[2-9]]* | *-sysvr4.[[2-9]]* )
 	if test -z "$NON_GNU_CPP" ; then
@@ -1353,20 +1355,6 @@ case "$ac_cv_build" in
 esac
 
 case "$ac_cv_build" in
-
-  dnl NetBSD ports
-  *-*-netbsd* )
-    case "${ac_cv_build}" in
-      i[[3-9]]86-*-netbsd*) machine=intel386 ;;
-    esac
-  ;;
-
-  dnl OpenBSD ports
-  *-*-openbsd* )
-    case "${ac_cv_build}" in
-      i386-*-openbsd*)		machine=intel386 ;;
-     esac
-   ;;
 
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
@@ -1385,20 +1373,15 @@ case "$ac_cv_build" in
   dnl Workstations sold by MIPS
   dnl This is not necessarily all workstations using the MIPS processor -
   dnl Irises are produced by SGI, and DECstations by DEC.
-  mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
-  mips-mips-*    ) machine=mips opsys=usg5-4-2 ;;
+  mips-mips-bsd* ) opsys=bsd-common ;;
+  mips-mips-*    ) opsys=usg5-4-2 ;;
 
   dnl Silicon Graphics machines
   dnl Iris 4D
-  mips-sgi-irix6*     ) opsys=irix6-0 ;;
+  mips-sgi-irix6*     ) opsys=irix6-5 ;;
 
   dnl Suns
   *-*-solaris* | *-sun-mach* | *-sun-bsd* )
-    dnl Hardware type
-    case "$ac_cv_build" in
-      i*86-*-* )	         machine=intel386 ;;
-    esac
-
     dnl Make $canonical even more so.
     case "$ac_cv_build" in *-sunos5*)
       ac_cv_build=`echo $ac_cv_build | sed -e s/sunos5/solaris2/`;;
@@ -1422,7 +1405,7 @@ case "$ac_cv_build" in
 	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
 
       *-mach*		  ) opsys=mach-bsd4-3	;;
-      *			  ) opsys=bsd4-3	;;
+      *			  ) opsys=bsd-common	;;
     esac
 
     dnl Watch out for a compiler guaranteed not to work.
@@ -1431,10 +1414,9 @@ case "$ac_cv_build" in
 
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
-    machine=intel386
     case "$ac_cv_build" in
       *-mach* )			opsys=mach-bsd4-3 ;;
-      *-sysv5* )		opsys=sco7 ;;
+      *-sysv5* )		opsys=usg5-4-2 ;;
       *-freebsd* )		opsys=freebsd ;;
       *-pc-cygwin* )		opsys=cygwin32 ;;
       *-pc-mingw* )		opsys=mingw32 ;
@@ -1990,6 +1972,16 @@ if test "$cflags_optimization_specified" = "no"; then
       with_cflags_optimization="-O3 -qstrict -qnoansialias -qlibansi -qmaxmem=20000"
     elif test "$__ICC" = "yes"; then
       with_cflags_optimization="-O3 -Ob2"
+    elif test "$opsys" = "irix6-5"; then
+      dnl Optimize, inaccurate debugging, increase limit on size of what's
+      dnl optimized.
+      dnl
+      dnl This should also be applicable other than on Irix 6.5, but I don't
+      dnl know for which compiler versions.  -- fx
+      with_cflags_optimization="-O -OPT:Olimit=3500"
+    dnl #### FIXME FOR LCC:
+    dnl elif test "USE_LCC" = "yes"; then
+    dnl   with_cflags_optimization="-O4 -Oi"
     dnl ### Add optimal cflags_optimization support for other compilers HERE!
     else
       with_cflags_optimization="-O" ;dnl The only POSIX-approved flag
@@ -2006,11 +1998,16 @@ AC_MSG_RESULT([${with_cflags_optimization}])
 
 AC_MSG_CHECKING([for preferred debugging flags])
 if test "$cflags_debugging_specified" = "no"; then
+  if test "$GCC" = "no" -a "$opsys" = "irix6-5" -a "$with_optimization" = "yes" ; then
+    dnl MIPSpro C special debugging stuff for use with optimization
+    with_cflags_debugging="-g3"
   dnl ### Add optimal debugging support for other compilers HERE!
-  with_cflags_debugging="-g"
+  else
+    with_cflags_debugging="-g"
+  fi
   
   debugging_ok_with_optimization=no
-  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes"; then
+  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes" -o "$opsys" = "irix6-5"; then
     debugging_ok_with_optimization=yes
   fi
   
@@ -4479,6 +4476,7 @@ if test "$ac_cv_header_stropts_h" = "yes"; then
   AC_CHECK_HEADERS(strtio.h) dnl TIOCSIGNAL
 fi
 
+dnl There is also AC_FUNC_GETLOADAVG; why don't we use it?
 dnl Check whether the system provides getloadavg().
 AC_CHECK_FUNCS(getloadavg)
 

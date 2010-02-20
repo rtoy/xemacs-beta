@@ -1,5 +1,6 @@
 /* Definitions file for XEmacs running on the GNU Hurd.
    Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,13 +24,12 @@ Boston, MA 02111-1307, USA.  */
 /* Get most of the stuff from bsd4.3 */
 #include "bsd4-3.h"
 
-/* For mem-limits.h.  */
-#define BSD4_2
+/* Delete BSD4_2 -- unused in XEmacs */
 
 #undef SYSTEM_TYPE
 #define SYSTEM_TYPE "gnu"
 
-#define LIBS_DEBUG
+/* XEmacs deleted LIBS_DEBUG */
 
 /* GNU needs its own crt0, and libc defines data_start.  */
 #define ORDINARY_LINK

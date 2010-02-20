@@ -1,5 +1,7 @@
-/* Definitions file for XEmacs running on bsd 4.3
-   Copyright (C) 1985, 1986, 1994 Free Software Foundation, Inc.
+/* Definitions file for GNU Emacs running on bsd 4.3
+   Copyright (C) 1985, 1986, 2001, 2002, 2003, 2004, 2005, 2006,
+                 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -18,25 +20,13 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 19.31. */
+/* Synced up with: FSF 23.1.92 */
+/* Synced by: Ben Wing, 2-17-10 */
 
-#ifndef BSD
-#define BSD 43
-#endif /* BSD */
-
-/* SYSTEM_TYPE should indicate the kind of system you are using.
- *  It sets the Lisp variable system-type.  */
-
-#define SYSTEM_TYPE "berkeley-unix"
-
-/* The file containing the kernel's symbol table is called /vmunix.  */
-
-#define KERNEL_FILE "/vmunix"
-
-/* The symbol in the kernel where the load average is found
- *    is named _avenrun.  */
-
-#define LDAV_SYMBOL "_avenrun"
+/*
+ *	Define symbols to identify the version of Unix this is.
+ *	Define all the symbols that apply correctly.
+ */
 
 /* We give these symbols the numeric values found in <sys/param.h> to
    avoid warnings about redefined macros.  */
@@ -44,9 +34,33 @@ Boston, MA 02111-1307, USA.  */
 #define BSD4_3 1
 #endif /* BSD4_3 */
 
+#ifndef BSD_SYSTEM
+#define BSD_SYSTEM 43
+#endif /* BSD_SYSTEM */
+
+/* SYSTEM_TYPE should indicate the kind of system you are using.
+ *  It sets the Lisp variable system-type.  */
+
+#define SYSTEM_TYPE "berkeley-unix"
+
+/* Deleted INTERRUPT_INPUT, FIRST_PTY_LETTER, HAVE_PTYS, HAVE_SOCKETS,
+   BSTRING -- unnecessary and/or autoconfigured on XEmacs */
+
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named
    /usr/spool/mail/$USER.lock.  */
 
 #define MAIL_USE_FLOCK
+
+/* Deleted CLASH_DETECTION, KERNEL_FILE, LDAV_SYMBOL, SIGNALS_VIA_CHARACTERS
+   -- unnecessary and/or autoconfigured on XEmacs */
+
+/* arch-tag: 0c367245-bde3-492e-9029-3ff6898beb95
+   (do not change this comment) */
+
+/* XEmacs addition: `ifdef BSD' used in many places */
+
+#ifndef BSD
+#define BSD 43
+#endif /* BSD */

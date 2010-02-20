@@ -1,3 +1,21 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (XE_EXPAND_VARIABLE):
+	* configure.ac (TAB):
+	irix6-0.h renamed to irix6-5.h; sco7.h deleted.
+	bsd4-3.h renamed to bsd-common.h.
+
+	Simplify setting machine= for intel386, mips.
+
+	Put back linux.h.
+
+	Incorporate some stuff about debug/optimization flags in irix6-5.h
+	into configure.ac.
+
+	Add a comment about LCC stuff with optimization flags that should be
+	fixed up.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* configure:

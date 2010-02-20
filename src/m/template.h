@@ -1,5 +1,6 @@
 /* machine description file template.
    Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of GNU Emacs.
 
@@ -29,6 +30,8 @@ Boston, MA 02111-1307, USA.  */
    Ones defined so far include vax, m68000, ns16000, pyramid,
    orion, tahoe, APOLLO and many others */
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long
@@ -36,6 +39,8 @@ Boston, MA 02111-1307, USA.  */
 /* Convert that into an integer that is 100 for a load average of 1.0  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
+
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
 
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section
