@@ -1,3 +1,8 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* tests.c:
+	Fix operation of c-tests.
+
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
 	* text.h:
