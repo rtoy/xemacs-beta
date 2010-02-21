@@ -4466,6 +4466,60 @@ gc_plist_hack (const Ascbyte *name, EMACS_INT value, Lisp_Object tail)
   return cons3 (intern (name), make_int (value), tail);
 }
 
+/* Pluralize a lowercase English word stored in BUF, assuming BUF has
+   enough space to hold the extra letters (at most 2). */
+static void
+pluralize_word (Ascbyte *buf)
+{
+  Bytecount len = strlen (buf);
+  int upper = 0;
+  Ascbyte d, e;
+
+  if (len == 0 || len == 1)
+    goto pluralize_apostrophe_s;
+  e = buf[len - 1];
+  d = buf[len - 2];
+  upper = isupper (e);
+  e = tolower (e);
+  d = tolower (d);
+  if (e == 'y')
+    {
+      switch (d)
+	{
+	case 'a':
+	case 'e':
+	case 'i':
+	case 'o':
+	case 'u':
+	  goto pluralize_s;
+	default:
+	  buf[len - 1] = (upper ? 'I' : 'i');
+	  goto pluralize_es;
+	}
+    }
+  else if (e == 's' || e == 'x' || (e == 'h' && (d == 's' || d == 'c')))
+    {
+      pluralize_es:
+      buf[len++] = (upper ? 'E' : 'e');
+    }
+  pluralize_s:
+  buf[len++] = (upper ? 'S' : 's');
+  buf[len] = '\0';
+  return;
+
+  pluralize_apostrophe_s:
+  buf[len++] = '\'';
+  goto pluralize_s;
+}
+
+static void
+pluralize_and_append (Ascbyte *buf, const Ascbyte *name, const Ascbyte *suffix)
+{
+  strcpy (buf, name);
+  pluralize_word (buf);
+  strcat (buf, suffix);
+}
+
 static Lisp_Object
 object_memory_usage_stats (int set_total_gc_usage)
 {
@@ -4498,11 +4552,8 @@ object_memory_usage_stats (int set_total_gc_usage)
 			      lrecord_stats[i].bytes_in_use,
 			      pl);
 	  tgu_val += lrecord_stats[i].bytes_in_use_including_overhead;
-	  
-	  if (name[len-1] == 's')
-	    sprintf (buf, "%ses-used", name);
-	  else
-	    sprintf (buf, "%ss-used", name);
+
+	  pluralize_and_append (buf, name, "-used");
 	  pl = gc_plist_hack (buf, lrecord_stats[i].instances_in_use, pl);
         }
     }
@@ -4525,59 +4576,44 @@ object_memory_usage_stats (int set_total_gc_usage)
         {
           Ascbyte buf[255];
           const Ascbyte *name = lrecord_implementations_table[i]->name;
-	  int len = strlen (name);
 
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lcrecord_stats[i].bytes_in_use, pl);
 	  tgu_val += lcrecord_stats[i].bytes_in_use;
-	  /* Okay, simple pluralization check for `symbol-value-varalias' */
-	  if (name[len-1] == 's')
-	    sprintf (buf, "%ses-freed", name);
-	  else
-	    sprintf (buf, "%ss-freed", name);
+	  pluralize_and_append (buf, name, "-freed");
           if (lcrecord_stats[i].instances_freed != 0)
             pl = gc_plist_hack (buf, lcrecord_stats[i].instances_freed, pl);
-	  if (name[len-1] == 's')
-	    sprintf (buf, "%ses-on-free-list", name);
-	  else
-	    sprintf (buf, "%ss-on-free-list", name);
+	  pluralize_and_append (buf, name, "-on-free-list");
           if (lcrecord_stats[i].instances_on_free_list != 0)
             pl = gc_plist_hack (buf, lcrecord_stats[i].instances_on_free_list,
 				pl);
-	  if (name[len-1] == 's')
-	    sprintf (buf, "%ses-used", name);
-	  else
-	    sprintf (buf, "%ss-used", name);
+	  pluralize_and_append (buf, name, "-used");
           pl = gc_plist_hack (buf, lcrecord_stats[i].instances_in_use, pl);
         }
     }
 
-  HACK_O_MATIC (extent, "extent-storage", pl);
-  pl = gc_plist_hack ("extents-free", gc_count_num_extent_freelist, pl);
-  pl = gc_plist_hack ("extents-used", gc_count_num_extent_in_use, pl);
-  HACK_O_MATIC (event, "event-storage", pl);
-  pl = gc_plist_hack ("events-free", gc_count_num_event_freelist, pl);
-  pl = gc_plist_hack ("events-used", gc_count_num_event_in_use, pl);
-  HACK_O_MATIC (marker, "marker-storage", pl);
-  pl = gc_plist_hack ("markers-free", gc_count_num_marker_freelist, pl);
-  pl = gc_plist_hack ("markers-used", gc_count_num_marker_in_use, pl);
-  HACK_O_MATIC (float, "float-storage", pl);
-  pl = gc_plist_hack ("floats-free", gc_count_num_float_freelist, pl);
-  pl = gc_plist_hack ("floats-used", gc_count_num_float_in_use, pl);
+/* The most general version -- handle TYPE, with strings using ENGTYPE
+   instead (generally the same, but with hyphen in place of underscore)
+   and ENGTYPES as the plural of ENGTYPE. */
+#define FROB3(type, engtype, engtypes)					\
+  HACK_O_MATIC (type, engtype "-storage", pl);				\
+  pl = gc_plist_hack (engtypes "-free", gc_count_num_##type##_freelist, pl); \
+  pl = gc_plist_hack (engtypes "-used", gc_count_num_##type##_in_use, pl)
+
+#define FROB(type) FROB3(type, #type, #type "s")
+
+  FROB (extent);
+  FROB (event);
+  FROB (marker);
+  FROB (float);
 #ifdef HAVE_BIGNUM
-  HACK_O_MATIC (bignum, "bignum-storage", pl);
-  pl = gc_plist_hack ("bignums-free", gc_count_num_bignum_freelist, pl);
-  pl = gc_plist_hack ("bignums-used", gc_count_num_bignum_in_use, pl);
+  FROB (bignum);
 #endif /* HAVE_BIGNUM */
 #ifdef HAVE_RATIO
-  HACK_O_MATIC (ratio, "ratio-storage", pl);
-  pl = gc_plist_hack ("ratios-free", gc_count_num_ratio_freelist, pl);
-  pl = gc_plist_hack ("ratios-used", gc_count_num_ratio_in_use, pl);
+  FROB (ratio);
 #endif /* HAVE_RATIO */
 #ifdef HAVE_BIGFLOAT
-  HACK_O_MATIC (bigfloat, "bigfloat-storage", pl);
-  pl = gc_plist_hack ("bigfloats-free", gc_count_num_bigfloat_freelist, pl);
-  pl = gc_plist_hack ("bigfloats-used", gc_count_num_bigfloat_in_use, pl);
+  FROB (bigfloat);
 #endif /* HAVE_BIGFLOAT */
   HACK_O_MATIC (string, "string-header-storage", pl);
   pl = gc_plist_hack ("long-strings-total-length",
@@ -4593,19 +4629,9 @@ object_memory_usage_stats (int set_total_gc_usage)
   pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
 
-  HACK_O_MATIC (compiled_function, "compiled-function-storage", pl);
-  pl = gc_plist_hack ("compiled-functions-free",
-		      gc_count_num_compiled_function_freelist, pl);
-  pl = gc_plist_hack ("compiled-functions-used",
-		      gc_count_num_compiled_function_in_use, pl);
-
-  HACK_O_MATIC (symbol, "symbol-storage", pl);
-  pl = gc_plist_hack ("symbols-free", gc_count_num_symbol_freelist, pl);
-  pl = gc_plist_hack ("symbols-used", gc_count_num_symbol_in_use, pl);
-
-  HACK_O_MATIC (cons, "cons-storage", pl);
-  pl = gc_plist_hack ("conses-free", gc_count_num_cons_freelist, pl);
-  pl = gc_plist_hack ("conses-used", gc_count_num_cons_in_use, pl);
+  FROB3 (compiled_function, "compiled-function", "compiled-functions");
+  FROB  (symbol);
+  FROB3 (cons, "cons", "conses");
 
 #undef HACK_O_MATIC
 
