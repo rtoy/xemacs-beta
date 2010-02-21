@@ -1150,7 +1150,12 @@ typedef struct Lisp_Free
   PUT_FIXED_TYPE_ON_FREE_LIST (type, structtype, FFT_ptr);	\
   MARK_LRECORD_AS_FREE (FFT_ptr);				\
 } while (0)
+#endif /* NEW_GC */
 
+#ifdef NEW_GC
+#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(lo, type, structtype, ptr)	\
+  free_lrecord (lo)
+#else /* not NEW_GC */
 /* Like FREE_FIXED_TYPE() but used when we are explicitly
    freeing a structure through free_cons(), free_marker(), etc.
    rather than through the normal process of sweeping.
@@ -1165,15 +1170,15 @@ typedef struct Lisp_Free
    set, which is used for Purify and the like. */
 
 #ifndef ALLOC_NO_POOLS
-#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(type, structtype, ptr)	\
-do { FREE_FIXED_TYPE (type, structtype, ptr);			\
-     DECREMENT_CONS_COUNTER (sizeof (structtype));		\
-     gc_count_num_##type##_freelist++;				\
+#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(lo, type, structtype, ptr)	\
+do { FREE_FIXED_TYPE (type, structtype, ptr);				\
+     DECREMENT_CONS_COUNTER (sizeof (structtype));			\
+     gc_count_num_##type##_freelist++;					\
    } while (0)
 #else
-#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(type, structtype, ptr)
+#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(lo, type, structtype, ptr)
 #endif
-#endif /* NEW_GC */
+#endif /* (not) NEW_GC */
 
 #ifdef NEW_GC
 #define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
@@ -3481,33 +3486,45 @@ static struct
   int instances_freed;
   int bytes_freed;
   int instances_on_free_list;
-} lcrecord_stats [countof (lrecord_implementations_table)];
+  int bytes_on_free_list;
+} lrecord_stats [countof (lrecord_implementations_table)];
 
-static void
-tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
+void
+tick_lrecord_stats (const struct lrecord_header *h,
+		    enum lrecord_alloc_status status)
 {
   int type_index = h->type;
+  Bytecount sz = detagged_lisp_object_size (h);
 
+  switch (status)
+    {
+    case ALLOC_IN_USE:
+      lrecord_stats[type_index].instances_in_use++;
+      lrecord_stats[type_index].bytes_in_use += sz;
+      break;
+    case ALLOC_FREE:
+      lrecord_stats[type_index].instances_freed++;
+      lrecord_stats[type_index].bytes_freed += sz;
+      break;
+    case ALLOC_ON_FREE_LIST:
+      lrecord_stats[type_index].instances_on_free_list++;
+      lrecord_stats[type_index].bytes_on_free_list += sz;
+      break;
+    default:
+      ABORT ();
+    }
+}
+
+inline static void
+tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
+{
   if (((struct old_lcrecord_header *) h)->free)
     {
       gc_checking_assert (!free_p);
-      lcrecord_stats[type_index].instances_on_free_list++;
+      tick_lrecord_stats (h, ALLOC_ON_FREE_LIST);
     }
   else
-    {
-      Bytecount sz = detagged_lisp_object_size (h);
-
-      if (free_p)
-	{
-	  lcrecord_stats[type_index].instances_freed++;
-	  lcrecord_stats[type_index].bytes_freed += sz;
-	}
-      else
-	{
-	  lcrecord_stats[type_index].instances_in_use++;
-	  lcrecord_stats[type_index].bytes_in_use += sz;
-	}
-    }
+    tick_lrecord_stats (h, free_p ? ALLOC_FREE : ALLOC_IN_USE);
 }
 #endif /* not NEW_GC */
 
@@ -3520,8 +3537,6 @@ sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
   struct old_lcrecord_header *header;
   int num_used = 0;
   /* int total_size = 0; */
-
-  xzero (lcrecord_stats); /* Reset all statistics to 0. */
 
   /* First go through and call all the finalize methods.
      Then go through and free the objects.  There used to
@@ -3577,6 +3592,22 @@ sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
 /* And the Lord said: Thou shalt use the `c-backslash-region' command
    to make macros prettier. */
 
+#define COUNT_FROB_BLOCK_USAGE(type)					\
+  EMACS_INT s = 0;							\
+  struct type##_block *x = current_##type##_block;			\
+  while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
+  DO_NOTHING
+
+#define COPY_INTO_LRECORD_STATS(type)				\
+do {								\
+  COUNT_FROB_BLOCK_USAGE (type);				\
+  lrecord_stats[lrecord_type_##type].bytes_in_use += s;		\
+  lrecord_stats[lrecord_type_##type].instances_on_free_list +=	\
+    gc_count_num_##type##_freelist;				\
+  lrecord_stats[lrecord_type_##type].instances_in_use +=	\
+    gc_count_num_##type##_in_use;				\
+} while (0)
+
 #ifdef ERROR_CHECK_GC
 
 #define SWEEP_FIXED_TYPE_BLOCK_1(typename, obj_type, lheader)		\
@@ -3621,86 +3652,88 @@ do {									\
 									\
   gc_count_num_##typename##_in_use = num_used;				\
   gc_count_num_##typename##_freelist = num_free;			\
+  COPY_INTO_LRECORD_STATS (typename);					\
 } while (0)
 
 #else /* !ERROR_CHECK_GC */
 
-#define SWEEP_FIXED_TYPE_BLOCK_1(typename, obj_type, lheader)		     \
-do {									     \
-  struct typename##_block *SFTB_current;				     \
-  struct typename##_block **SFTB_prev;					     \
-  int SFTB_limit;							     \
-  int num_free = 0, num_used = 0;					     \
-									     \
-  typename##_free_list = 0;						     \
-									     \
-  for (SFTB_prev = &current_##typename##_block,				     \
-       SFTB_current = current_##typename##_block,			     \
-       SFTB_limit = current_##typename##_block_index;			     \
-       SFTB_current;							     \
-       )								     \
-    {									     \
-      int SFTB_iii;							     \
-      int SFTB_empty = 1;						     \
-      Lisp_Free *SFTB_old_free_list = typename##_free_list;		     \
-									     \
-      for (SFTB_iii = 0; SFTB_iii < SFTB_limit; SFTB_iii++)		     \
-	{								     \
-	  obj_type *SFTB_victim = &(SFTB_current->block[SFTB_iii]);	     \
-									     \
-	  if (LRECORD_FREE_P (SFTB_victim))				     \
-	    {								     \
-	      num_free++;						     \
+#define SWEEP_FIXED_TYPE_BLOCK_1(typename, obj_type, lheader)		\
+do {									\
+  struct typename##_block *SFTB_current;				\
+  struct typename##_block **SFTB_prev;					\
+  int SFTB_limit;							\
+  int num_free = 0, num_used = 0;					\
+									\
+  typename##_free_list = 0;						\
+									\
+  for (SFTB_prev = &current_##typename##_block,				\
+       SFTB_current = current_##typename##_block,			\
+       SFTB_limit = current_##typename##_block_index;			\
+       SFTB_current;							\
+       )								\
+    {									\
+      int SFTB_iii;							\
+      int SFTB_empty = 1;						\
+      Lisp_Free *SFTB_old_free_list = typename##_free_list;		\
+									\
+      for (SFTB_iii = 0; SFTB_iii < SFTB_limit; SFTB_iii++)		\
+	{								\
+	  obj_type *SFTB_victim = &(SFTB_current->block[SFTB_iii]);	\
+									\
+	  if (LRECORD_FREE_P (SFTB_victim))				\
+	    {								\
+	      num_free++;						\
 	      PUT_FIXED_TYPE_ON_FREE_LIST (typename, obj_type, SFTB_victim); \
-	    }								     \
-	  else if (C_READONLY_RECORD_HEADER_P (&SFTB_victim->lheader))	     \
-	    {								     \
-	      SFTB_empty = 0;						     \
-	      num_used++;						     \
-	    }								     \
-	  else if (! MARKED_RECORD_HEADER_P (&SFTB_victim->lheader))	     \
-	    {								     \
-	      num_free++;						     \
-	      FREE_FIXED_TYPE (typename, obj_type, SFTB_victim);	     \
-	    }								     \
-	  else								     \
-	    {								     \
-	      SFTB_empty = 0;						     \
-	      num_used++;						     \
-	      UNMARK_##typename (SFTB_victim);				     \
-	    }								     \
-	}								     \
-      if (!SFTB_empty)							     \
-	{								     \
-	  SFTB_prev = &(SFTB_current->prev);				     \
-	  SFTB_current = SFTB_current->prev;				     \
-	}								     \
-      else if (SFTB_current == current_##typename##_block		     \
-	       && !SFTB_current->prev)					     \
-	{								     \
-	  /* No real point in freeing sole allocation block */		     \
-	  break;							     \
-	}								     \
-      else								     \
-	{								     \
-	  struct typename##_block *SFTB_victim_block = SFTB_current;	     \
-	  if (SFTB_victim_block == current_##typename##_block)		     \
-	    current_##typename##_block_index				     \
-	      = countof (current_##typename##_block->block);		     \
-	  SFTB_current = SFTB_current->prev;				     \
-	  {								     \
-	    *SFTB_prev = SFTB_current;					     \
-	    xfree (SFTB_victim_block);	     \
-	    /* Restore free list to what it was before victim was swept */   \
-	    typename##_free_list = SFTB_old_free_list;			     \
-	    num_free -= SFTB_limit;					     \
-	  }								     \
-	}								     \
-      SFTB_limit = countof (current_##typename##_block->block);		     \
-    }									     \
-									     \
-  gc_count_num_##typename##_in_use = num_used;				     \
-  gc_count_num_##typename##_freelist = num_free;			     \
+	    }								\
+	  else if (C_READONLY_RECORD_HEADER_P (&SFTB_victim->lheader))	\
+	    {								\
+	      SFTB_empty = 0;						\
+	      num_used++;						\
+	    }								\
+	  else if (! MARKED_RECORD_HEADER_P (&SFTB_victim->lheader))	\
+	    {								\
+	      num_free++;						\
+	      FREE_FIXED_TYPE (typename, obj_type, SFTB_victim);	\
+	    }								\
+	  else								\
+	    {								\
+	      SFTB_empty = 0;						\
+	      num_used++;						\
+	      UNMARK_##typename (SFTB_victim);				\
+	    }								\
+	}								\
+      if (!SFTB_empty)							\
+	{								\
+	  SFTB_prev = &(SFTB_current->prev);				\
+	  SFTB_current = SFTB_current->prev;				\
+	}								\
+      else if (SFTB_current == current_##typename##_block		\
+	       && !SFTB_current->prev)					\
+	{								\
+	  /* No real point in freeing sole allocation block */		\
+	  break;							\
+	}								\
+      else								\
+	{								\
+	  struct typename##_block *SFTB_victim_block = SFTB_current;	\
+	  if (SFTB_victim_block == current_##typename##_block)		\
+	    current_##typename##_block_index				\
+	      = countof (current_##typename##_block->block);		\
+	  SFTB_current = SFTB_current->prev;				\
+	  {								\
+	    *SFTB_prev = SFTB_current;					\
+	    xfree (SFTB_victim_block);					\
+	    /* Restore free list to what it was before victim was swept */ \
+	    typename##_free_list = SFTB_old_free_list;			\
+	    num_free -= SFTB_limit;					\
+	  }								\
+	}								\
+      SFTB_limit = countof (current_##typename##_block->block);		\
+    }									\
+									\
+  gc_count_num_##typename##_in_use = num_used;				\
+  gc_count_num_##typename##_freelist = num_free;			\
+  COPY_INTO_LRECORD_STATS (typename);					\
 } while (0)
 
 #endif /* !ERROR_CHECK_GC */
@@ -3748,11 +3781,7 @@ free_cons (Lisp_Object cons)
     ASSERT_VALID_POINTER (XPNTR (cons_car (ptr)));
 #endif /* ERROR_CHECK_GC */
 
-#ifdef NEW_GC
-  free_lrecord (cons);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (cons, Lisp_Cons, ptr);
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (cons, cons, Lisp_Cons, ptr);
 }
 
 /* explicitly free a list.  You **must make sure** that you have
@@ -3887,11 +3916,8 @@ sweep_key_data (void)
 void
 free_key_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (key_data, Lisp_Key_Data, XKEY_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, key_data, Lisp_Key_Data,
+				  XKEY_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -3908,11 +3934,8 @@ sweep_button_data (void)
 void
 free_button_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (button_data, Lisp_Button_Data, XBUTTON_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, button_data, Lisp_Button_Data,
+				  XBUTTON_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -3929,11 +3952,8 @@ sweep_motion_data (void)
 void
 free_motion_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (motion_data, Lisp_Motion_Data, XMOTION_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, motion_data, Lisp_Motion_Data,
+				  XMOTION_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -3950,11 +3970,8 @@ sweep_process_data (void)
 void
 free_process_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (process_data, Lisp_Process_Data, XPROCESS_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, process_data, Lisp_Process_Data,
+				  XPROCESS_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -3971,11 +3988,8 @@ sweep_timeout_data (void)
 void
 free_timeout_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (timeout_data, Lisp_Timeout_Data, XTIMEOUT_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, timeout_data, Lisp_Timeout_Data,
+				  XTIMEOUT_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -3992,11 +4006,8 @@ sweep_magic_data (void)
 void
 free_magic_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_data, Lisp_Magic_Data, XMAGIC_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, magic_data, Lisp_Magic_Data,
+				  XMAGIC_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -4013,11 +4024,8 @@ sweep_magic_eval_data (void)
 void
 free_magic_eval_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_eval_data, Lisp_Magic_Eval_Data, XMAGIC_EVAL_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, magic_eval_data, Lisp_Magic_Eval_Data,
+				  XMAGIC_EVAL_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -4034,11 +4042,8 @@ sweep_eval_data (void)
 void
 free_eval_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (eval_data, Lisp_Eval_Data, XEVAL_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, eval_data, Lisp_Eval_Data,
+				  XEVAL_DATA (ptr));
 }
 
 #ifndef NEW_GC
@@ -4055,11 +4060,8 @@ sweep_misc_user_data (void)
 void
 free_misc_user_data (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (misc_user_data, Lisp_Misc_User_Data, XMISC_USER_DATA (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, misc_user_data, Lisp_Misc_User_Data,
+				  XMISC_USER_DATA (ptr));
 }
 
 #endif /* EVENT_DATA_AS_OBJECTS */
@@ -4083,11 +4085,7 @@ sweep_markers (void)
 void
 free_marker (Lisp_Object ptr)
 {
-#ifdef NEW_GC
-  free_lrecord (ptr);
-#else /* not NEW_GC */
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, Lisp_Marker, XMARKER (ptr));
-#endif /* not NEW_GC */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (ptr, marker, Lisp_Marker, XMARKER (ptr));
 }
 
 
@@ -4304,6 +4302,10 @@ sweep_strings (void)
 void
 gc_sweep_1 (void)
 {
+  /* Reset all statistics to 0.  They will be incremented when
+     sweeping lcrecords, frob-block lrecords and dumped objects. */
+  xzero (lrecord_stats);
+
   /* Free all unmarked records.  Do this at the very beginning,
      before anything else, so that the finalize methods can safely
      examine items in the objects.  sweep_lcrecords_1() makes
@@ -4560,47 +4562,18 @@ object_memory_usage_stats (int set_total_gc_usage)
 
 #else /* not NEW_GC */
 
-#define HACK_O_MATIC(type, name, pl) do {				\
-  EMACS_INT s = 0;							\
-  struct type##_block *x = current_##type##_block;			\
-  while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
-  tgu_val += s;							\
-  (pl) = gc_plist_hack ((name), s, (pl));				\
+#define HACK_O_MATIC(type, name, pl)		\
+do {						\
+  COUNT_FROB_BLOCK_USAGE (type);		\
+  tgu_val += s;					\
+  (pl) = gc_plist_hack ((name), s, (pl));	\
 } while (0)
 
-  for (i = 0; i < lrecord_type_count; i++)
-    {
-      if (lcrecord_stats[i].bytes_in_use != 0
-          || lcrecord_stats[i].bytes_freed != 0
-	  || lcrecord_stats[i].instances_on_free_list != 0)
-        {
-          Ascbyte buf[255];
-          const Ascbyte *name = lrecord_implementations_table[i]->name;
-
-          sprintf (buf, "%s-storage", name);
-          pl = gc_plist_hack (buf, lcrecord_stats[i].bytes_in_use, pl);
-	  tgu_val += lcrecord_stats[i].bytes_in_use;
-	  pluralize_and_append (buf, name, "-freed");
-          if (lcrecord_stats[i].instances_freed != 0)
-            pl = gc_plist_hack (buf, lcrecord_stats[i].instances_freed, pl);
-	  pluralize_and_append (buf, name, "-on-free-list");
-          if (lcrecord_stats[i].instances_on_free_list != 0)
-            pl = gc_plist_hack (buf, lcrecord_stats[i].instances_on_free_list,
-				pl);
-	  pluralize_and_append (buf, name, "-used");
-          pl = gc_plist_hack (buf, lcrecord_stats[i].instances_in_use, pl);
-        }
-    }
-
-/* The most general version -- handle TYPE, with strings using ENGTYPE
-   instead (generally the same, but with hyphen in place of underscore)
-   and ENGTYPES as the plural of ENGTYPE. */
-#define FROB3(type, engtype, engtypes)					\
-  HACK_O_MATIC (type, engtype "-storage", pl);				\
-  pl = gc_plist_hack (engtypes "-free", gc_count_num_##type##_freelist, pl); \
-  pl = gc_plist_hack (engtypes "-used", gc_count_num_##type##_in_use, pl)
-
-#define FROB(type) FROB3(type, #type, #type "s")
+#define FROB(type)				\
+do {						\
+  COUNT_FROB_BLOCK_USAGE (type);		\
+  tgu_val += s;					\
+} while (0)
 
   FROB (extent);
   FROB (event);
@@ -4615,6 +4588,36 @@ object_memory_usage_stats (int set_total_gc_usage)
 #ifdef HAVE_BIGFLOAT
   FROB (bigfloat);
 #endif /* HAVE_BIGFLOAT */
+  FROB (compiled_function);
+  FROB (symbol);
+  FROB (cons);
+
+#undef FROB
+
+  for (i = 0; i < lrecord_type_count; i++)
+    {
+      if (lrecord_stats[i].bytes_in_use != 0
+          || lrecord_stats[i].bytes_freed != 0
+	  || lrecord_stats[i].instances_on_free_list != 0)
+        {
+          Ascbyte buf[255];
+          const Ascbyte *name = lrecord_implementations_table[i]->name;
+
+          sprintf (buf, "%s-storage", name);
+          pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use, pl);
+	  tgu_val += lrecord_stats[i].bytes_in_use;
+	  pluralize_and_append (buf, name, "-freed");
+          if (lrecord_stats[i].instances_freed != 0)
+            pl = gc_plist_hack (buf, lrecord_stats[i].instances_freed, pl);
+	  pluralize_and_append (buf, name, "-on-free-list");
+          if (lrecord_stats[i].instances_on_free_list != 0)
+            pl = gc_plist_hack (buf, lrecord_stats[i].instances_on_free_list,
+				pl);
+	  pluralize_and_append (buf, name, "-used");
+          pl = gc_plist_hack (buf, lrecord_stats[i].instances_in_use, pl);
+        }
+    }
+
   HACK_O_MATIC (string, "string-header-storage", pl);
   pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
@@ -4628,10 +4631,6 @@ object_memory_usage_stats (int set_total_gc_usage)
 		      - gc_count_num_short_string_in_use, pl);
   pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
-
-  FROB3 (compiled_function, "compiled-function", "compiled-functions");
-  FROB  (symbol);
-  FROB3 (cons, "cons", "conses");
 
 #undef HACK_O_MATIC
 
@@ -4709,8 +4708,9 @@ Garbage collection happens automatically if you cons more than
 	   Fcons (make_int (gc_count_num_marker_in_use),
 		  make_int (gc_count_num_marker_freelist)),
 	   make_int (gc_count_string_total_size),
-	   make_int (lcrecord_stats[lrecord_type_vector].bytes_in_use +
-		     lcrecord_stats[lrecord_type_vector].bytes_freed),
+	   make_int (lrecord_stats[lrecord_type_vector].bytes_in_use +
+		     lrecord_stats[lrecord_type_vector].bytes_freed +
+		     lrecord_stats[lrecord_type_vector].bytes_on_free_list),
 	   object_memory_usage_stats (1));
 #endif /* not NEW_GC */
 #else /* not ALLOC_TYPE_STATS */

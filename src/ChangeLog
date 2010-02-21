@@ -1,6 +1,51 @@
 2010-02-21  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
+	* alloc.c (FREE_FIXED_TYPE_WHEN_NOT_IN_GC):
+	* alloc.c (struct):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (sweep_lcrecords_1):
+	* alloc.c (COUNT_FROB_BLOCK_USAGE):
+	* alloc.c (SWEEP_FIXED_TYPE_BLOCK_1):
+	* alloc.c (free_cons):
+	* alloc.c (free_key_data):
+	* alloc.c (free_button_data):
+	* alloc.c (free_motion_data):
+	* alloc.c (free_process_data):
+	* alloc.c (free_timeout_data):
+	* alloc.c (free_magic_data):
+	* alloc.c (free_magic_eval_data):
+	* alloc.c (free_eval_data):
+	* alloc.c (free_misc_user_data):
+	* alloc.c (free_marker):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (HACK_O_MATIC):
+	* alloc.c (FROB):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fgarbage_collect):
+	* dumper.c:
+	* dumper.c (pdump_objects_unmark):
+	* lrecord.h:
+	* lrecord.h (enum lrecord_alloc_status):
+	Fixes to memory-usage-tracking code, etc.
+
+	(1) Incorporate NEW_GC stuff into FREE_FIXED_TYPE_WHEN_NOT_IN_GC
+	to avoid duplication.
+
+	(2) Rewrite tick_lcrecord_stats() to include separate
+	tick_lrecord_stats(); use in dumper.c to note pdumped objects.
+
+	(3) Instead of handling frob-block objects specially in
+	object_memory_usage_stats(), have SWEEP_FIXED_TYPE_BLOCK_1
+	increment the stats in lrecord_stats[] so that they get handled
+	like other objects.
+
+	(4) Pluralize entry as entries, etc.
+
+2010-02-21  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
 	* alloc.c (pluralize_word):
 	New function to pluralize a word.
 	* alloc.c (pluralize_and_append): New function.
