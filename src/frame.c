@@ -1806,8 +1806,7 @@ delete_frame_internal (struct frame *f, int force,
 	     point their minibuffer frames must have been deleted, but
 	     that is prohibited at the top; you can't delete surrogate
 	     minibuffer frames.  */
-	  if (NILP (frame_with_minibuf))
-	    ABORT ();
+	  assert (!NILP (frame_with_minibuf));
 
 	  con->default_minibuffer_frame = frame_with_minibuf;
 	}
@@ -3276,8 +3275,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
      update code relies on this function to cause window `top' and
      `left' coordinates to be recomputed even though no frame size
      change occurs. --kyle */
-  if (in_display || hold_frame_size_changes)
-    ABORT ();
+  assert (!in_display && !hold_frame_size_changes);
 
   frame = wrap_frame (f);
 

@@ -1,5 +1,6 @@
 /* Keyboard macros.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -181,7 +182,7 @@ store_kbd_macro_event (Lisp_Object event)
 void
 pop_kbd_macro_event (Lisp_Object event)
 {
-  if (NILP (Vexecuting_macro)) ABORT ();
+  assert (!NILP (Vexecuting_macro));
 
   if (STRINGP (Vexecuting_macro) || VECTORP (Vexecuting_macro))
     {

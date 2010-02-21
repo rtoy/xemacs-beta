@@ -1,6 +1,7 @@
 /* Efficient caching of X GCs (graphics contexts).
    Copyright (C) 1993 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -157,8 +158,8 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
   (void) describe_gc_cache (cache, DGCCFLAG_DISABLE);
 #endif
 
-  if ((!!cache->head) != (!!cache->tail)) ABORT ();
-  if (cache->head && (cache->head->prev || cache->tail->next)) ABORT ();
+  assert ((!!cache->head) == (!!cache->tail));
+  assert (!(cache->head && (cache->head->prev || cache->tail->next)));
 
   gcvm.mask = mask;
   gcvm.gcv = *gcv;	/* this copies... */
@@ -210,10 +211,10 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
       cell->prev = cache->tail;
       cache->tail->next = cell;
       cache->tail = cell;
-      if (cache->head == cell) ABORT ();
-      if (cell->next) ABORT ();
-      if (cache->head->prev) ABORT ();
-      if (cache->tail->next) ABORT ();
+      assert (cache->head != cell);
+      assert (!cell->next);
+      assert (!cache->head->prev);
+      assert (!cache->tail->next);
       return cell->gc;
     }
 

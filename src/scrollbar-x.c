@@ -3,6 +3,7 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -283,7 +284,7 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
 	    }
 	}
 
-      if (!wv->scrollbar_data) ABORT ();
+      assert (wv->scrollbar_data);
       free_widget_value_tree (wv);
     }
   else if (managed)

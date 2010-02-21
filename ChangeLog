@@ -1,3 +1,8 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_ARG):
+	Correct doc of --quick-build: It also doesn't check for Lisp shadows.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* configure:

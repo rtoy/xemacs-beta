@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -575,8 +575,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
     menubar_visible = !NILP (w->menubar_visible_p);
 
   data = compute_menubar_data (f, menubar, deep_p);
-  if (!data || (!data->next && !data->contents))
-    ABORT ();
+  assert (data && (data->next || data->contents));
 
   if (!FRAME_X_MENUBAR_ID (f))
     FRAME_X_MENUBAR_ID (f) = new_lwlib_id ();
