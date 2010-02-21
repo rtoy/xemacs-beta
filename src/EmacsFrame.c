@@ -592,7 +592,7 @@ EmacsFrameRecomputeCellSize (Widget w)
   if (! XtIsSubclass (w, emacsFrameClass))
     ABORT ();
 
-  default_face_height_and_width (wrap_frame (f), &ch, &cw);
+  default_face_width_and_height (wrap_frame (f), &cw, &ch);
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_set_cell_size (FRAME_X_SHELL_WIDGET (f), cw, ch);
 }

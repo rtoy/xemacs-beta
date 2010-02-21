@@ -1,5 +1,61 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
+	* EmacsFrame.c (EmacsFrameRecomputeCellSize):
+	* faces.c (default_face_font_info):
+	* faces.c (default_face_width_and_height):
+	* faces.c (Fface_list):
+	* faces.h:
+	* frame-gtk.c (gtk_set_initial_frame_size):
+	* frame-gtk.c (gtk_set_frame_size):
+	* frame-gtk.c (gtk_recompute_cell_sizes):
+	* frame.c:
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (change_frame_size_1):
+	* frame.c (change_frame_size):
+	* glyphs-msw.c (mswindows_combo_box_instantiate):
+	* glyphs-widget.c (widget_instantiate):
+	* glyphs-widget.c (tree_view_query_geometry):
+	* glyphs-widget.c (Fwidget_logical_to_character_width):
+	* glyphs-widget.c (Fwidget_logical_to_character_height):
+	* indent.c (vmotion_pixels):
+	* redisplay-output.c (get_cursor_size_and_location):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	* redisplay.c (calculate_baseline):
+	* redisplay.c (start_with_point_on_display_line):
+	* redisplay.c (glyph_to_pixel_translation):
+	* redisplay.c (pixel_to_glyph_translation):
+	* window.c (margin_width_internal):
+	* window.c (frame_size_valid_p):
+	* window.c (frame_pixsize_valid_p):
+	* window.c (check_frame_size):
+	* window.c (set_window_pixsize):
+	* window.c (window_pixel_height_to_char_height):
+	* window.c (window_char_height_to_pixel_height):
+	* window.c (window_displayed_height):
+	* window.c (window_pixel_width_to_char_width):
+	* window.c (window_char_width_to_pixel_width):
+	* window.c (change_window_height):
+	* window.c (window_scroll):
+	* window.h:
+	IMPORTANT: Aidan and Carbon Repo, please pay attention and fix
+	appropriately!
+	
+	Rename: default_face_height_and_width -> default_face_width_and_height
+	and reverse width/height arguments.
+
+	Reverse width/height arguments to the following functions:
+	-- default_face_font_info
+	-- default_face_height_and_width (see above)
+	-- check_frame_size
+	-- frame_size_valid_p (made into a static function)
+
+	Fix a redisplay bug where args to default_face_height_and_width
+	were in the wrong order.
+	
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
 	* syswindows.h:
 	Add table about GNU Emacs -> XEmacs Windows constants from
 	the internals manual.

@@ -475,7 +475,7 @@ get_cursor_size_and_location (struct window *w, struct display_block *db,
   rb = Dynarr_atp (db->runes, cursor_location);
   *cursor_start = rb->xpos;
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
   *cursor_height = defheight;
 
   if (rb->type == RUNE_BLANK)
