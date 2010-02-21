@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -1179,7 +1179,7 @@ margin_width_internal (struct window *w, int left_margin)
   margin_cwidth = (left_margin ? XINT (w->left_margin_width) :
 		   XINT (w->right_margin_width));
 
-  default_face_height_and_width (window, 0, &font_width);
+  default_face_width_and_height (window, &font_width, 0);
 
   /* The left margin takes precedence over the right margin so we
      subtract its width from the space available for the right
@@ -1662,7 +1662,7 @@ is non-nil, do not include space occupied by clipped lines.
   hlimit = WINDOW_TEXT_HEIGHT (w);
   eobuf  = BUF_ZV (XBUFFER (w->buffer));
 
-  default_face_height_and_width (window, &defheight, NULL);
+  default_face_width_and_height (window, NULL, &defheight);
 
   /* guess lines needed in line start cache + a few extra */
   needed = (hlimit + defheight-1) / defheight + 3;
@@ -3482,8 +3482,8 @@ frame_min_height (struct frame *frame)
 
 /* Return non-zero if both frame sizes are less than or equal to
    minimal allowed values. ROWS and COLS are in characters */
-int
-frame_size_valid_p (struct frame *frame, int rows, int cols)
+static int
+frame_size_valid_p (struct frame *frame, int cols, int rows)
 {
   return (rows >= frame_min_height (frame)
 	  && cols >= MIN_SAFE_WINDOW_WIDTH);
@@ -3495,21 +3495,30 @@ int
 frame_pixsize_valid_p (struct frame *frame, int width, int height)
 {
   int rows, cols;
-  pixel_to_real_char_size (frame, width, height, &cols, &rows);
-  return frame_size_valid_p (frame, rows, cols);
+  pixel_to_char_size (frame, width, height, &cols, &rows);
+  return frame_size_valid_p (frame, cols, rows);
 }
 
 /* If *ROWS or *COLS are too small a size for FRAME, set them to the
    minimum allowable size.  */
 void
-check_frame_size (struct frame *frame, int *rows, int *cols)
+check_frame_size (struct frame *frame, int *cols, int *rows)
 {
   int min_height = frame_min_height (frame);
+  int min_pixwidth, min_pixheight;
+  int min_geomwidth, min_geomheight;
 
-  if (*rows < min_height)
-    *rows = min_height;
-  if (*cols  < MIN_SAFE_WINDOW_WIDTH)
-    *cols = MIN_SAFE_WINDOW_WIDTH;
+  /* There is no char_to_frame_unit_size().  This can be done with
+     frame_conversion_internal(), but that's currently static, and we can
+     do it fine with two steps, as follows. */
+  char_to_pixel_size (frame, MIN_SAFE_WINDOW_WIDTH, min_height,
+		      &min_pixwidth, &min_pixheight);
+  pixel_to_frame_unit_size (frame, min_pixwidth, min_pixheight,
+			   &min_geomwidth, &min_geomheight);
+  if (*rows < min_geomheight)
+    *rows = min_geomheight;
+  if (*cols  < min_geomwidth)
+    *cols = min_geomwidth;
 }
 
 /* Normally the window is deleted if it gets too small.
@@ -3528,7 +3537,7 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
   int line_size;
   int defheight, defwidth;
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
   line_size = (set_height ? defheight : defwidth);
 
   check_min_window_sizes ();
@@ -4132,7 +4141,7 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
 		   window_top_window_gutter_height (w) +
 		   window_bottom_window_gutter_height (w)));
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   if (defheight)
     char_height = avail_height / defheight;
@@ -4156,7 +4165,7 @@ window_char_height_to_pixel_height (struct window *w, int char_height,
   Lisp_Object window = wrap_window (w);
 
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   avail_height = char_height * defheight;
   pixel_height = (avail_height +
@@ -4236,7 +4245,7 @@ window_displayed_height (struct window *w)
 	    }
 	}
 
-      default_face_height_and_width (window, &defheight, &defwidth);
+      default_face_width_and_height (window, &defwidth, &defheight);
       /* #### This probably needs to know about the clipping area once a
          final definition is decided on. */
       if (defheight)
@@ -4279,7 +4288,7 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
 		 (include_margins_p ? 0 : window_left_margin_width (w)) -
 		 (include_margins_p ? 0 : window_right_margin_width (w)));
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   if (defwidth) 
     char_width = (avail_width / defwidth);
@@ -4302,7 +4311,7 @@ window_char_width_to_pixel_width (struct window *w, int char_width,
   Lisp_Object window = wrap_window (w);
 
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   avail_width = char_width * defwidth;
   pixel_width = (avail_width +
@@ -4385,7 +4394,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
   if (EQ (window, FRAME_ROOT_WINDOW (f)))
     invalid_operation ("Won't change only window", Qunbound);
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   while (1)
     {
@@ -4614,7 +4623,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
   if (INTP (Vwindow_pixel_scroll_increment))
     fheight = XINT (Vwindow_pixel_scroll_increment);
   else if (!NILP (Vwindow_pixel_scroll_increment))
-    default_face_height_and_width (window, &fheight, &fwidth);
+    default_face_width_and_height (window, &fwidth, &fheight);
 
   if (Dynarr_length (dla) >= 1)
     modeline = Dynarr_begin (dla)->modeline;

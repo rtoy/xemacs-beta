@@ -4,6 +4,7 @@
 **
 ** Created by: William M. Perry
 ** Copyright (c) 2000 William M. Perry <wmperry@gnu.org>
+** Copyright (C) 2010 Ben Wing.
 **
 ** This file is part of XEmacs.
 **
@@ -275,7 +276,7 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
 
     if (f)
       {
-	char_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
+	frame_unit_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
 			    &width, &height);
 	requisition->width = width;
 	requisition->height = height;
@@ -344,11 +345,11 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	f->pixwidth = allocation->width;
 	f->pixheight = allocation->height;
 
-	pixel_to_char_size (f,
+	pixel_to_frame_unit_size (f,
 			    allocation->width,
 			    allocation->height, &columns, &rows);
 
-	change_frame_size (f, rows, columns, 1);
+	change_frame_size (f, columns, rows, 1);
       }
 }
 

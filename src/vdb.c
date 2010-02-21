@@ -1,5 +1,6 @@
 /* Virtual diry bit implementation (platform independent) for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -73,6 +74,8 @@ vdb_designate_modified (void *addr)
 
 
 /* For testing and debugging... */
+
+#ifdef DEBUG_XEMACS
 
 DEFUN ("test-vdb", Ftest_vdb, 0, 0, "", /*
 Test virtual dirty bit implementation. Prints results to stderr.
@@ -148,9 +151,13 @@ enabled.
   return Qnil;
 }
 
+#endif /* DEBUG_XEMACS */
+
 void
 syms_of_vdb (void)
 {
+#ifdef DEBUG_XEMACS
   DEFSUBR (Ftest_vdb);
   DEFSUBR (Ftest_segfault);
+#endif /* DEBUG_XEMACS */
 }
