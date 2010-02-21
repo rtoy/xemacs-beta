@@ -2780,7 +2780,7 @@ mswindows_combo_box_instantiate (Lisp_Object image_instance,
 		      pointer_bg, dest_mask, domain);
 
   /* We now have everything right apart from the height. */
-  default_face_font_info (domain, 0, 0, &height, 0, 0);
+  default_face_font_info (domain, 0, 0, 0, &height, 0);
   GET_LIST_LENGTH (items, len);
 
   height = (height + DEFAULT_WIDGET_BORDER_WIDTH * 2 ) * len;

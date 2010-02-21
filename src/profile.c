@@ -125,7 +125,7 @@ create_timing_profile_table (void)
 {
   /* The hash code can safely be called from a signal handler except when
      it has to grow the hash table.  In this case, it calls realloc(),
-     which is not (in general) re-entrant.  The way we deal with this is
+     which is not (in general) reentrant.  The way we deal with this is
      documented at the top of this file. */
   if (!big_profile_table)
     big_profile_table = make_hash_table (2000);

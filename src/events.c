@@ -41,18 +41,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
 
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
-#ifdef HAVE_TOOLBARS
-#define USED_IF_TOOLBARS(decl) decl
-#else
-#define USED_IF_TOOLBARS(decl) UNUSED (decl)
-#endif
-
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
    eventually.

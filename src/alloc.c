@@ -3438,6 +3438,8 @@ mcpro_1 (Lisp_Object varaddress, const Ascbyte *varname)
   Dynarr_add (mcpro_names, varname);
 }
 
+const Ascbyte *mcpro_name (int count);
+
 /* External debugging function: Return the name of the variable at offset
    COUNT. */
 const Ascbyte *

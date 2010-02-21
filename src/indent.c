@@ -801,7 +801,7 @@ vmotion_pixels (Lisp_Object window, Charbpos start, int pixels, int how,
   eobuf = BUF_ZV (XBUFFER (w->buffer));
   bobuf = BUF_BEGV (XBUFFER (w->buffer));
 
-  default_face_height_and_width (window, &defheight, NULL);
+  default_face_width_and_height (window, NULL, &defheight);
 
   /* guess num lines needed in line start cache + a few extra */
   abspix = abs (pixels);

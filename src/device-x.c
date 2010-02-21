@@ -1564,9 +1564,9 @@ mean ``unspecified''.
   db = XtDatabase (display);
   codesys = coding_system_of_xrm_database (db);
   Dynarr_add (name_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (name_Extbyte_dynarr, name, Qbinary);
+  Dynarr_add_ext_lisp_string (name_Extbyte_dynarr, name, Qbinary);
   Dynarr_add (class_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
+  Dynarr_add_ext_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 

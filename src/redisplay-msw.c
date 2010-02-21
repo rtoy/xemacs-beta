@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1208,12 +1208,7 @@ mswindows_text_width (struct window *w, struct face_cachel *cachel,
  given face.
  ****************************************************************************/
 static void
-mswindows_clear_region (
-#ifdef HAVE_SCROLLBARS
-			Lisp_Object locale,
-#else
-			Lisp_Object UNUSED (locale),
-#endif
+mswindows_clear_region (Lisp_Object USED_IF_SCROLLBARS (locale),
 			struct device *UNUSED (d), struct frame *f, 
 			face_index UNUSED (findex), int x, int y,
 			int width, int height, Lisp_Object fcolor,
