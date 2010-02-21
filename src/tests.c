@@ -682,7 +682,7 @@ while (0)
   FROB (0XFFFFFFFFFFFFFFFE);
 #endif /* INT_VALBITS >= 63 */
 
-  return list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil);
+  return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }
 
 
