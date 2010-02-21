@@ -43,12 +43,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty-impl.h"
 #endif
 
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
 Lisp_Object Vconsole_list, Vselected_console;
 
 Lisp_Object Vcreate_console_hook, Vdelete_console_hook;

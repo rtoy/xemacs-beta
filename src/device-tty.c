@@ -1,7 +1,7 @@
 /* TTY device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -177,7 +177,7 @@ tty_asynch_device_change (void)
 
 	      /* We know the frame is tty because we made sure that the
 		 device is tty. */
-	      change_frame_size (f, height, width, 1);
+	      change_frame_size (f, width, height, 1);
 	    }
 	}
     }

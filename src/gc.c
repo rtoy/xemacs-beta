@@ -184,7 +184,7 @@ gc_state_type gc_state;
   gc_state.stat[GC_STAT_IN_THIS_GC] = 0;	\
   GC_STAT_RESUME (stat)
 
-void
+static void
 gc_stat_start_new_gc (void)
 {
   gc_state.n_gc[GC_STAT_TOTAL]++;
@@ -201,7 +201,7 @@ gc_stat_start_new_gc (void)
   GC_STAT_RESTART (freed);
 } 
 
-void
+static void
 gc_stat_resume_gc (void)
 {
   gc_state.n_cycles[GC_STAT_TOTAL]++;
@@ -1022,20 +1022,14 @@ mark_lisp_object_block_contents_1 (const void *data,
    on the kkcc_gc_stack. This function processes all elements on the stack
    according to their descriptions. */
 static void
-kkcc_marking (
-#ifdef NEW_GC
-	      int cnt
-#else /* not NEW_GC */
-	      int UNUSED(cnt)
-#endif /* not NEW_GC */ 
-	      )
+kkcc_marking (USED_IF_NEW_GC (cnt))
 {
   kkcc_gc_stack_entry *stack_entry = 0;
   void *data = 0;
   const struct memory_description *desc = 0;
   int pos;
 #ifdef NEW_GC
-  int count = cnt;
+  int obj_count = cnt;
 #endif /* NEW_GC */
 #ifdef DEBUG_XEMACS
   int level = 0;
@@ -1182,7 +1176,7 @@ kkcc_marking (
 
 #ifdef NEW_GC
       if (cnt) 
-	if (!--count)
+	if (!--obj_count)
 	  break;
 #endif /* NEW_GC */
     }
@@ -1894,7 +1888,7 @@ gc_resume_mark (int incremental)
 }
 
 
-void
+static void
 gc_1 (int incremental)
 {
   switch (GC_PHASE)
@@ -1930,7 +1924,8 @@ gc_1 (int incremental)
     }
 }
 
-void gc (int incremental)
+static void
+gc (int incremental)
 {
   if (gc_currently_forbidden
       || in_display

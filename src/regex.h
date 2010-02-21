@@ -2,7 +2,7 @@
    expression library, version 0.12.
 
    Copyright (C) 1985, 89, 90, 91, 92, 93, 95 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -525,5 +525,14 @@ int regexec (const regex_t *preg, const char *string, size_t nmatch,
 size_t regerror (int errcode, const regex_t *preg, char *errbuf,
 		 size_t errbuf_size);
 void regfree (regex_t *preg);
+
+enum regex_debug
+  {
+    RE_DEBUG_COMPILATION = 1 << 0,
+    RE_DEBUG_FAILURE_POINT = 1 << 1,
+    RE_DEBUG_MATCHING = 1 << 2,
+  };
+
+extern int debug_regexps;
 
 #endif /* INCLUDED_regex_h_ */
