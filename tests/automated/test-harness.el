@@ -70,6 +70,9 @@ on the system, or a system error might occur while reading a data file.")
 ;; Declared for dynamic scope; _do not_ initialize here.
 (defvar unexpected-test-file-failures)
 
+(defvar test-harness-bug-expected nil
+  "Non-nil means a bug is expected; backtracing/debugging should not happen.")
+
 (defvar test-harness-test-compiled nil
   "Non-nil means the test code was compiled before execution.
 
@@ -86,6 +89,31 @@ implementation of this variable:
 (defvar test-harness-verbose
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of emacs-tester.")
+
+(defvar test-harness-unexpected-error-enter-debugger debug-on-error
+  "*Non-nil means enter debugger when an unexpected error occurs.
+Only applies interactively.  Normally true if `debug-on-error' has been set.
+See also `test-harness-assertion-failure-enter-debugger' and
+`test-harness-unexpected-error-show-backtrace'.")
+
+(defvar test-harness-assertion-failure-enter-debugger debug-on-error
+  "*Non-nil means enter debugger when an assertion failure occurs.
+Only applies interactively.  Normally true if `debug-on-error' has been set.
+See also `test-harness-unexpected-error-enter-debugger' and
+`test-harness-assertion-failure-show-backtrace'.")
+
+(defvar test-harness-unexpected-error-show-backtrace t
+  "*Non-nil means show backtrace upon unexpected error.
+Only applies when debugger is not entered.  Normally true by default.  See also
+`test-harness-unexpected-error-enter-debugger' and
+`test-harness-assertion-failure-show-backtrace'.")
+
+(defvar test-harness-assertion-failure-show-backtrace stack-trace-on-error
+  "*Non-nil means show backtrace upon assertion failure.
+Only applies when debugger is not entered.  Normally true if
+`stack-trace-on-error' has been set.  See also
+`test-harness-assertion-failure-enter-debugger' and
+`test-harness-unexpected-error-show-backtrace'.")
 
 (defvar test-harness-file-results-alist nil
   "Each element is a list (FILE SUCCESSES TESTS).
@@ -166,18 +194,88 @@ The output file's name is made by appending `c' to the end of FILENAME."
     (kill-buffer input-buffer)
     ))
 
+(defsubst test-harness-assertion-failure-do-debug (error-info)
+  "Maybe enter debugger or display a backtrace on assertion failure.
+ERROR-INFO is a cons of the args (SIG . DATA) that were passed to `signal'.
+The debugger will be entered if noninteractive and
+`test-harness-unexpected-error-enter-debugger' is non-nil; else, a
+backtrace will be displayed if `test-harness-unexpected-error-show-backtrace'
+is non-nil."
+  (when (not test-harness-bug-expected)
+    (cond ((and (not noninteractive)
+		test-harness-assertion-failure-enter-debugger)
+	   (funcall debugger 'error error-info))
+	  (test-harness-assertion-failure-show-backtrace
+	   (backtrace nil t)))))
+
+(defsubst test-harness-unexpected-error-do-debug (error-info)
+  "Maybe enter debugger or display a backtrace on unexpected error.
+ERROR-INFO is a cons of the args (SIG . DATA) that were passed to `signal'.
+The debugger will be entered if noninteractive and
+`test-harness-unexpected-error-enter-debugger' is non-nil; else, a
+backtrace will be displayed if `test-harness-unexpected-error-show-backtrace'
+is non-nil."
+  (when (not test-harness-bug-expected)
+    (cond ((and (not noninteractive)
+		test-harness-unexpected-error-enter-debugger)
+	   (funcall debugger 'error error-info))
+	  (test-harness-unexpected-error-show-backtrace
+	   (backtrace nil t)))))
+
+(defsubst test-harness-unexpected-error-condition-handler (error-info context-msg)
+  "Condition handler for when unexpected errors occur.
+Useful in conjunction with `call-with-condition-handler'.  ERROR-INFO is the
+value passed to the condition handler.  CONTEXT-MSG is a string indicating
+the context in which the unexpected error occurred.  A message is outputted
+including CONTEXT-MSG in it, `unexpected-test-file-failures' is incremented,
+and `test-harness-unexpected-error-do-debug' is called, which may enter the
+debugger or output a backtrace, depending on the settings of
+`test-harness-unexpected-error-enter-debugger' and
+`test-harness-unexpected-error-show-backtrace'.
+
+The function returns normally, which causes error-handling processing to
+continue; if you want to catch the error, you also need to wrap everything
+in `condition-case'.  See also `test-harness-error-wrap', which does this
+wrapping."
+  (incf unexpected-test-file-failures)
+  (princ (format "Unexpected error %S while %s\n"
+		 error-info context-msg))
+  (message "Unexpected error %S while %s." error-info context-msg)
+  (test-harness-unexpected-error-do-debug error-info))
+
+(defmacro test-harness-error-wrap (context-msg abort-msg &rest body)
+  "Wrap BODY so that unexpected errors are caught.
+The debugger will be entered if noninteractive and
+`test-harness-unexpected-error-enter-debugger' is non-nil; else, a backtrace
+will be displayed if `test-harness-unexpected-error-show-backtrace' is
+non-nil.  CONTEXT-MSG is displayed as part of a message shown before entering
+the debugger or showing a backtrace, and ABORT-MSG, if non-nil, is displayed
+afterwards.  See "
+  `(condition-case nil
+    (call-with-condition-handler
+	#'(lambda (error-info)
+	    (test-harness-unexpected-error-condition-handler
+	     error-info ,context-msg))
+	#'(lambda ()
+	    ,@body))
+    (error ,(if abort-msg `(message ,abort-msg) nil))))
+
 (defun test-harness-read-from-buffer (buffer)
   "Read forms from BUFFER, and turn it into a lambda test form."
   (let ((body nil))
     (goto-char (point-min) buffer)
-    (condition-case error-info
-	(while t
-	  (setq body (cons (read buffer) body)))
-      (end-of-file nil)
-      (error
-       (incf unexpected-test-file-failures)
-       (princ (format "Unexpected error %S reading forms from buffer\n"
-		      error-info))))
+    (condition-case nil
+	(call-with-condition-handler
+	    #'(lambda (error-info)
+		;; end-of-file is expected, so don't output error or backtrace
+		;; or enter debugger in this case.
+		(unless (eq 'end-of-file (car error-info))
+		  (test-harness-unexpected-error-condition-handler
+		   error-info "reading forms from buffer")))
+	    #'(lambda ()
+		(while t
+		  (setq body (cons (read buffer) body)))))
+      (error nil))
     `(lambda ()
        (defvar passes)
        (defvar assertion-failures)
@@ -221,7 +319,8 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	"Wrap a BODY that consists of tests that are known to fail.
 This causes messages to be printed on failure indicating that this is expected,
 and on success indicating that this is unexpected."
-	`(let ((test-harness-failure-tag "KNOWN BUG")
+	`(let ((test-harness-bug-expected t)
+	       (test-harness-failure-tag "KNOWN BUG")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
 
@@ -231,7 +330,8 @@ This causes messages to be printed on failure indicating that this is expected,
 and on success indicating that this is unexpected."
 	(let ((quoted-body (if (= 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
-          `(let ((test-harness-failure-tag "KNOWN BUG")
+          `(let ((test-harness-bug-expected t)
+		 (test-harness-failure-tag "KNOWN BUG")
                  (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
             (condition-case error-info
                 (progn
@@ -255,7 +355,8 @@ and on success indicating that this is unexpected."
 This causes messages to be printed on failure indicating that the
 implementation is incomplete (and hence the failure is expected); and on
 success indicating that this is unexpected."
-	`(let ((test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
+	`(let ((test-harness-bug-expected t)
+	       (test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
 	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
 	  ,@body))
     
@@ -293,23 +394,30 @@ expression is given.  FAILING-CASE and DESCRIPTION are useful when Assert
 is used in a loop."
 	(let ((description
 	       (or description `(quote ,assertion))))
-	  `(condition-case error-info
-	    (progn
-	      (assert ,assertion)
-	      (Print-Pass "%S" ,description)
-	      (incf passes))
-	    (cl-assertion-failed
-	     (Print-Failure (if ,failing-case
-				"Assertion failed: %S; failing case = %S"
-			      "Assertion failed: %S")
-			    ,description ,failing-case)
-	     (incf assertion-failures))
-	    (t (Print-Failure (if ,failing-case
-				  "%S ==> error: %S; failing case =  %S"
-				"%S ==> error: %S")
-			      ,description error-info ,failing-case)
-	       (incf other-failures)
-	       ))))
+	  `(condition-case nil
+	    (call-with-condition-handler
+		#'(lambda (error-info)
+		    (if (eq 'cl-assertion-failed (car error-info))
+			(progn
+			  (Print-Failure
+			   (if ,failing-case
+			       "Assertion failed: %S; failing case = %S"
+			     "Assertion failed: %S")
+			   ,description ,failing-case)
+			  (incf assertion-failures)
+			  (test-harness-assertion-failure-do-debug error-info))
+		      (Print-Failure
+		       (if ,failing-case
+			   "%S ==> error: %S; failing case =  %S"
+			 "%S ==> error: %S")
+		       ,description error-info ,failing-case)
+		      (incf other-failures)
+		      (test-harness-unexpected-error-do-debug error-info)))
+		#'(lambda ()
+		    (assert ,assertion)
+		    (Print-Pass "%S" ,description)
+		    (incf passes)))
+	    (cl-assertion-failed nil))))
 
 ;;;;; BEGIN DEFINITION OF SPECIFIC KINDS OF ASSERT MACROS
 
@@ -462,22 +570,27 @@ is used in a loop."
 		 (let ((msg-string (apply 'format (ad-get-args 0))))
 		   (setq messages (concat messages msg-string))
 		   msg-string))
-	       (condition-case error-info
-		   (progn
-		     (setq trick-optimizer (progn ,@body))
-		     (if (string-match ,expected-message-regexp messages)
-			 (progn
-			   (Print-Pass "%S ==> value %S, message %S, matching %S, as expected"
-				       ,quoted-body trick-optimizer messages ',expected-message-regexp)
-			   (incf passes))
-		       (Print-Failure "%S ==> value %S, message %S, NOT matching expected %S"
-				      ,quoted-body  trick-optimizer messages
-				      ',expected-message-regexp)
-		       (incf missing-message-failures)))
-		 (error
-		  (Print-Failure "%S ==> unexpected error %S"
-				 ,quoted-body error-info)
-		  (incf other-failures)))
+	       (ignore-errors
+		 (call-with-condition-handler
+		     #'(lambda (error-info)
+			 (Print-Failure "%S ==> unexpected error %S"
+					,quoted-body error-info)
+			 (incf other-failures)
+			 (test-harness-unexpected-error-do-debug error-info))
+		     #'(lambda ()
+			 (setq trick-optimizer (progn ,@body))
+			 (if (string-match ,expected-message-regexp messages)
+			     (progn
+			       (Print-Pass
+				"%S ==> value %S, message %S, matching %S, as expected"
+				,quoted-body trick-optimizer messages
+				',expected-message-regexp)
+			       (incf passes))
+			   (Print-Failure
+			    "%S ==> value %S, message %S, NOT matching expected %S"
+			    ,quoted-body  trick-optimizer messages
+			    ',expected-message-regexp)
+			   (incf missing-message-failures)))))
 	       (ad-unadvise 'message)))))
 
       ;; #### Perhaps this should override `message' itself, too?
@@ -497,36 +610,31 @@ is used in a loop."
 	    (point-marker))))
 
       (princ "Testing Interpreted Lisp\n\n")
-      (condition-case error-info
-	  (funcall (test-harness-read-from-buffer inbuffer))
-	(error
-	 (incf unexpected-test-file-failures)
-	 (princ (format "Unexpected error %S while executing interpreted code\n"
-		error-info))
-	 (message "Unexpected error %S while executing interpreted code." error-info)
-	 (message "Test suite execution aborted.")
-	 ))
+
+      (test-harness-error-wrap
+       "executing interpreted code"
+       "Test suite execution aborted."
+       (funcall (test-harness-read-from-buffer inbuffer)))
+
       (princ "\nTesting Compiled Lisp\n\n")
+
       (let (code
 	    (test-harness-test-compiled t))
-	(condition-case error-info
-	    (setq code
-		  ;; our lisp code is often intentionally dubious,
-		  ;; so throw away _all_ the byte compiler warnings.
-		  (letf (((symbol-function 'byte-compile-warn) 'ignore))
-		    (byte-compile (test-harness-read-from-buffer inbuffer))))
-	  (error
-	   (princ (format "Unexpected error %S while byte-compiling code\n"
-			  error-info))))
-	(condition-case error-info
-	    (if code (funcall code))
-	  (error
-	   (incf unexpected-test-file-failures)
-	   (princ (format "Unexpected error %S while executing byte-compiled code\n"
-			  error-info))
-	   (message "Unexpected error %S while executing byte-compiled code." error-info)
-	   (message "Test suite execution aborted.")
-	   )))
+	(test-harness-error-wrap
+	 "byte-compiling code" nil
+	 (setq code
+	       ;; our lisp code is often intentionally dubious,
+	       ;; so throw away _all_ the byte compiler warnings.
+	       (letf (((symbol-function 'byte-compile-warn)
+		       'ignore))
+		 (byte-compile (test-harness-read-from-buffer
+				inbuffer))))
+	 )
+
+	(test-harness-error-wrap "executing byte-compiled code"
+				 "Test suite execution aborted."
+				 (if code (funcall code)))
+	)
       (princ (format "\nSUMMARY for %s:\n" filename))
       (princ (format "\t%5d passes\n" passes))
       (princ (format "\t%5d assertion failures\n" assertion-failures))
