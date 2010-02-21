@@ -1233,8 +1233,9 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 #define abort_with_message(msg) assert_failed (__FILE__, __LINE__, msg)
 
 /* This used to be ((void) (0)) but that triggers lots of unused variable
-   warnings.  It's pointless to force all that code to be rewritten, with
-   added ifdefs.  Any reasonable compiler will eliminate an expression with
+   warnings -- furthermore, if `x' has any side effects, e.g.
+   assert (++depth <= 20);, we DEFINITELY want to execute the code inside of
+   `x'.  Any reasonable compiler will eliminate an expression with
    no effects.  We keep this abstracted out like this in case we want to
    change it in the future. */
 #define disabled_assert(x) ((void) (x))
@@ -3178,7 +3179,7 @@ DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
 #define CONCHECK_MARKER(x) CONCHECK_RECORD (x, marker)
 
 /* The second check was looking for GCed markers still in use */
-/* if (INTP (XMARKER (x)->lheader.next.v)) ABORT (); */
+/* assert (!INTP (XMARKER (x)->lheader.next.v)); */
 
 #define marker_next(m) ((m)->next)
 #define marker_prev(m) ((m)->prev)

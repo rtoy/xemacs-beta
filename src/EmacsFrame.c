@@ -1,7 +1,7 @@
 /* The emacs frame widget.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -589,8 +589,7 @@ EmacsFrameRecomputeCellSize (Widget w)
   int cw, ch;
   struct frame *f = ew->emacs_frame.frame;
 
-  if (! XtIsSubclass (w, emacsFrameClass))
-    ABORT ();
+  assert (XtIsSubclass (w, emacsFrameClass));
 
   default_face_height_and_width (wrap_frame (f), &ch, &cw);
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))

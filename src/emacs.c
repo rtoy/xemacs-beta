@@ -2908,8 +2908,7 @@ sort_args (int argc, Wexttext **argv)
 	    from += options[from];
 	}
 
-      if (best < 0)
-	ABORT ();
+      assert (best >= 0);
 
       /* Copy the highest priority remaining option, with its args, to
 	 NEW_ARGV.  */
