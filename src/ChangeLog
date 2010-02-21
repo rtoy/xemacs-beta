@@ -1,5 +1,277 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
+	* EmacsFrame.c (EmacsFrameRecomputeCellSize):
+	* faces.c (default_face_font_info):
+	* faces.c (default_face_width_and_height):
+	* faces.c (Fface_list):
+	* faces.h:
+	* frame-gtk.c (gtk_set_initial_frame_size):
+	* frame-gtk.c (gtk_set_frame_size):
+	* frame-gtk.c (gtk_recompute_cell_sizes):
+	* frame.c:
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (change_frame_size_1):
+	* frame.c (change_frame_size):
+	* glyphs-msw.c (mswindows_combo_box_instantiate):
+	* glyphs-widget.c (widget_instantiate):
+	* glyphs-widget.c (tree_view_query_geometry):
+	* glyphs-widget.c (Fwidget_logical_to_character_width):
+	* glyphs-widget.c (Fwidget_logical_to_character_height):
+	* indent.c (vmotion_pixels):
+	* redisplay-output.c (get_cursor_size_and_location):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor):
+	* redisplay-xlike-inc.c (XLIKE_flash):
+	* redisplay.c (calculate_baseline):
+	* redisplay.c (start_with_point_on_display_line):
+	* redisplay.c (glyph_to_pixel_translation):
+	* redisplay.c (pixel_to_glyph_translation):
+	* window.c (margin_width_internal):
+	* window.c (frame_size_valid_p):
+	* window.c (frame_pixsize_valid_p):
+	* window.c (check_frame_size):
+	* window.c (set_window_pixsize):
+	* window.c (window_pixel_height_to_char_height):
+	* window.c (window_char_height_to_pixel_height):
+	* window.c (window_displayed_height):
+	* window.c (window_pixel_width_to_char_width):
+	* window.c (window_char_width_to_pixel_width):
+	* window.c (change_window_height):
+	* window.c (window_scroll):
+	* window.h:
+	IMPORTANT: Aidan and Carbon Repo, please pay attention and fix
+	appropriately!
+	
+	Rename: default_face_height_and_width -> default_face_width_and_height
+	and reverse width/height arguments.
+
+	Reverse width/height arguments to the following functions:
+	-- default_face_font_info
+	-- default_face_height_and_width (see above)
+	-- check_frame_size
+	-- frame_size_valid_p (made into a static function)
+
+	Fix a redisplay bug where args to default_face_height_and_width
+	were in the wrong order.
+	
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* syswindows.h:
+	Add table about GNU Emacs -> XEmacs Windows constants from
+	the internals manual.
+
+	* frame.c:
+	Shrink size of diagram consistent with internals manual.
+	
+	* alloc.c:
+	* compiler.h:
+	* console.c:
+	* events.c:
+	* gc.c (gc_stat_start_new_gc):
+	* gc.c (gc_stat_resume_gc):
+	* gc.c (kkcc_marking):
+	* gc.c (gc_1):
+	* gc.c (gc):
+	* objects-tty.c:
+	* redisplay-msw.c:
+	* redisplay-msw.c (mswindows_clear_region):
+	* syntax.c:
+	* syntax.c (ST_COMMENT_STYLE):
+	* sysdep.c:
+	Fix various compiler warnings.
+
+2010-02-16  Ben Wing  <ben@xemacs.org>
+
+	* frame-impl.h:
+	* frame-impl.h (FRAME_INTERNAL_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_BOTTOM_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_BORDER_START):
+	* frame-impl.h (FRAME_RIGHT_BORDER_START):
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (change_frame_size_1):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-output.c (redisplay_clear_bottom_of_window):
+	Rename FRAME_BORDER_* to FRAME_INTERNAL_BORDER_*.  Add
+	general FRAME_INTERNAL_BORDER_SIZE().  Add FRAME_REAL_TOOLBAR_BOUNDS()
+	to encompass the entire size of the toolbar including its border.
+	Add specific top/left/bottom/right versions of this macro.
+	Rewrite FRAME_*_BORDER_START and FRAME_*_BORDER_END to take into use
+	FRAME_REAL_*_TOOLBAR_BOUNDS().  Add some comments about existing
+	problems in frame sizing and how they might be fixed.  Simplify
+	change_frame_size_1() using the macros just created.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (change_frame_size_1):
+	Simplify the logic in this function.
+
+	(1) Don't allow 0 as the value of height or width.  The old code
+	that tried to allow this was totally broken, anyway, so obviously
+	this never happens any more.
+
+	(2) Don't duplicate the code in frame_conversion_internal() that
+	converts displayable pixel size to total pixel size -- just call
+	that function.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c:
+	* EmacsFrame.c (EmacsFrameResize):
+	* console-msw-impl.h:
+	* console-msw-impl.h (struct mswindows_frame):
+	* console-msw-impl.h (FRAME_MSWINDOWS_TARGET_RECT):
+	* device-tty.c:
+	* device-tty.c (tty_asynch_device_change):
+	* event-msw.c:
+	* event-msw.c (mswindows_wnd_proc):
+	* faces.c (Fface_list):
+	* faces.h:
+	* frame-gtk.c:
+	* frame-gtk.c (gtk_set_initial_frame_size):
+	* frame-gtk.c (gtk_set_frame_size):
+	* frame-msw.c:
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_set_frame_size):
+	* frame-msw.c (mswindows_size_frame_internal):
+	* frame-msw.c (msprinter_init_frame_3):
+	* frame.c:
+	* frame.c (enum):
+	* frame.c (Fmake_frame):
+	* frame.c (adjust_frame_size):
+	* frame.c (store_minibuf_frame_prop):
+	* frame.c (Fframe_property):
+	* frame.c (Fframe_properties):
+	* frame.c (Fframe_displayable_pixel_height):
+	* frame.c (Fframe_displayable_pixel_width):
+	* frame.c (internal_set_frame_size):
+	* frame.c (Fset_frame_height):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_width):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (Fset_frame_size):
+	* frame.c (Fset_frame_pixel_size):
+	* frame.c (Fset_frame_displayable_pixel_size):
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (get_frame_displayable_pixel_size):
+	* frame.c (change_frame_size_1):
+	* frame.c (change_frame_size):
+	* frame.c (generate_title_string):
+	* frame.h:
+	* gtk-xemacs.c:
+	* gtk-xemacs.c (gtk_xemacs_size_request):
+	* gtk-xemacs.c (gtk_xemacs_size_allocate):
+	* gtk-xemacs.c (gtk_xemacs_paint):
+	* gutter.c:
+	* gutter.c (update_gutter_geometry):
+	* redisplay.c (end_hold_frame_size_changes):
+	* redisplay.c (redisplay_frame):
+	* toolbar.c:
+	* toolbar.c (update_frame_toolbars_geometry):
+	* window.c:
+	* window.c (frame_pixsize_valid_p):
+	* window.c (check_frame_size):
+	Various fixes to frame geometry to make it a bit easier to understand
+	and fix some bugs.
+
+	1. IMPORTANT: Some renamings.  Will need to be applied carefully to
+	the carbon repository, in the following order:
+
+	-- pixel_to_char_size -> pixel_to_frame_unit_size
+	-- char_to_pixel_size -> frame_unit_to_pixel_size
+	-- pixel_to_real_char_size -> pixel_to_char_size
+	-- char_to_real_pixel_size -> char_to_pixel_size
+	-- Reverse second and third arguments of change_frame_size() and
+	   change_frame_size_1() to try to make functions consistent in
+	   putting width before height.
+	-- Eliminate old round_size_to_char, because it didn't really
+	   do anything differently from round_size_to_real_char()
+	-- round_size_to_real_char -> round_size_to_char; any places that
+	   called the old round_size_to_char should just call the new one.
+
+	2. IMPORTANT FOR CARBON: The set_frame_size() method is now passed
+	   sizes in "frame units", like all other frame-sizing functions,
+	   rather than some hacked-up combination of char-cell units and
+	   total pixel size.  This only affects window systems that use
+	   "pixelated geometry", and I'm not sure if Carbon is one of them.
+	   MS Windows is pixelated, X and GTK are not.  For pixelated-geometry
+	   systems, the size in set_frame_size() is in displayable pixels
+	   rather than total pixels and needs to be converted appropriately;
+	   take a look at the changes made to mswindows_set_frame_size()
+	   method if necessary.
+	
+	3. Add a big long comment in frame.c describing how frame geometry
+	   works.
+
+	4. Remove MS Windows-specific character height and width fields,
+	   duplicative and unused.
+
+	5. frame-displayable-pixel-* and set-frame-displayable-pixel-*
+	   didn't use to work on MS Windows, but they do now.
+
+	6. In general, clean up the handling of "pixelated geometry" so
+	   that fewer functions have to worry about this.  This is really
+	   an abomination that should be removed entirely but that will
+	   have to happen later.  Fix some buggy code in
+	   frame_conversion_internal() that happened to "work" because it
+	   was countered by oppositely buggy code in change_frame_size().
+
+	7. Clean up some frame-size code in toolbar.c and use functions
+	   already provided in frame.c instead of rolling its own.
+
+	8. Fix check_frame_size() in window.c, which formerly didn't take
+	   pixelated geometry into account.
+
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* mc-alloc.c:
+	* mc-alloc.c (mc_realloc_1):
+	* mc-alloc.c (set_dirty_bit):
+	* mc-alloc.c (set_dirty_bit_for_address):
+	* mc-alloc.c (get_dirty_bit):
+	* mc-alloc.c (get_dirty_bit_for_address):
+	* mc-alloc.c (set_protection_bit):
+	* mc-alloc.c (set_protection_bit_for_address):
+	* mc-alloc.c (get_protection_bit):
+	* mc-alloc.c (get_protection_bit_for_address):
+	* mc-alloc.c (get_page_start):
+	* vdb-win32.c (win32_fault_handler):
+	* vdb.c:
+	Fix some compile warnings, make vdb test code conditional on
+	DEBUG_XEMACS.
+	
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* regex.c:
+	* regex.c (DEBUG_FAIL_PRINT1):
+	* regex.c (PUSH_FAILURE_POINT):
+	* regex.c (POP_FAILURE_POINT):
+	* regex.c (regex_compile):
+	* regex.c (re_match_2_internal):
+	* regex.h:
+	* search.c:
+	* search.c (search_buffer):
+	* search.c (debug_regexps_changed):
+	* search.c (vars_of_search):
+	Add an internal variable debug_regexps and a corresponding Lisp
+	variable `debug-regexps' that takes a list of areas in which to
+	display debugging info about regex compilation and matching
+	(currently three areas exist).  Use existing debugging code
+	already in regex.c and modify it so that it recognizes the
+	debug_regexps variable and the flags in it.
+
+	Rename variable `debug-xemacs-searches' to just `debug-searches',
+	consistent with other debug vars.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
 	* device-x.c (Fx_get_resource):
 	* dynarr.c:
 	* dynarr.c (Dynarr_realloc):

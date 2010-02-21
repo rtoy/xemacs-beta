@@ -2056,7 +2056,7 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 
   gc = XLIKE_get_gc (d, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
 
-  default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
+  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
 
   /* make sure the cursor is entirely contained between y and y+height */
   cursor_height = min (defheight, height);
@@ -2188,7 +2188,7 @@ XLIKE_flash (struct device *d)
   gcv.graphics_exposures = XLIKE_FALSE;
   gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
 			XLIKE_GC_FOREGROUND | XLIKE_GC_FUNCTION | XLIKE_GC_EXPOSURES);
-  default_face_height_and_width (frame, &flash_height, 0);
+  default_face_width_and_height (frame, 0, &flash_height);
 
   /* If window is tall, flash top and bottom line.  */
   if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)

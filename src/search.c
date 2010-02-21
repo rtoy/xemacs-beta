@@ -1,7 +1,7 @@
 /* String search routines for XEmacs.
    Copyright (C) 1985, 1986, 1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -50,9 +50,16 @@ Boston, MA 02111-1307, USA.  */
 #ifdef DEBUG_XEMACS
 
 /* Used in tests/automated/case-tests.el if available. */
-Fixnum debug_xemacs_searches;
+Fixnum debug_searches;
+
+/* Declare as int rather than Bitflags because it's used by regex.c, which
+   may be used outside of XEmacs (e.g. etags.c). */
+int debug_regexps;
+Lisp_Object Vdebug_regexps;
 
 Lisp_Object Qsearch_algorithm_used, Qboyer_moore, Qsimple_search;
+
+Lisp_Object Qcompilation, Qfailure_point, Qmatching;
 
 #endif
 
@@ -1461,7 +1468,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
               if (!checked)
                 {
 #ifdef DEBUG_XEMACS
-                  if (debug_xemacs_searches)
+                  if (debug_searches)
                     {
                       Lisp_Symbol *sym = XSYMBOL (Qsearch_algorithm_used);
                       sym->value = Qnil;
@@ -1527,7 +1534,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
       pat = base_pat = patbuf;
 
 #ifdef DEBUG_XEMACS
-      if (debug_xemacs_searches)
+      if (debug_searches)
         {
           Lisp_Symbol *sym = XSYMBOL (Qsearch_algorithm_used);
           sym->value = boyer_moore_ok ? Qboyer_moore : Qsimple_search;
@@ -3333,6 +3340,35 @@ Set the regexp to be used to match a word in regular-expression searching.
 }
 
 
+#ifdef DEBUG_XEMACS
+
+static int
+debug_regexps_changed (Lisp_Object UNUSED (sym), Lisp_Object *val,
+		       Lisp_Object UNUSED (in_object),
+		       int UNUSED (flags))
+{
+  int newval = 0;
+
+  EXTERNAL_LIST_LOOP_2 (elt, *val)
+    {
+      CHECK_SYMBOL (elt);
+      if (EQ (elt, Qcompilation))
+	newval |= RE_DEBUG_COMPILATION;
+      else if (EQ (elt, Qfailure_point))
+	newval |= RE_DEBUG_FAILURE_POINT;
+      else if (EQ (elt, Qmatching))
+	newval |= RE_DEBUG_MATCHING;
+      else
+	invalid_argument
+	  ("Expected `compilation', `failure-point' or `matching'", elt);
+    }
+  debug_regexps = newval;
+  return 0;
+}
+
+#endif /* DEBUG_XEMACS */
+
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
@@ -3421,10 +3457,26 @@ occur and a back reference to one of them is directly followed by a digit.
   DEFSYMBOL (Qboyer_moore);
   DEFSYMBOL (Qsimple_search);
 
-  DEFVAR_INT ("debug-xemacs-searches", &debug_xemacs_searches /*
+  DEFSYMBOL (Qcompilation);
+  DEFSYMBOL (Qfailure_point);
+  DEFSYMBOL (Qmatching);
+
+  DEFVAR_INT ("debug-searches", &debug_searches /*
 If non-zero, bind `search-algorithm-used' to `boyer-moore' or `simple-search',
 depending on the algorithm used for each search.  Used for testing.
 */ );
-  debug_xemacs_searches = 0;
-#endif 
+  debug_searches = 0;
+
+  DEFVAR_LISP_MAGIC ("debug-regexps", &Vdebug_regexps, /*
+List of areas to display debug info about during regexp operation.
+The following areas are recognized:
+
+`compilation'    Display the result of compiling a regexp.
+`failure-point'	 Display info about failure points reached.
+`matching'	 Display info about the process of matching a regex against
+                 text.
+*/ debug_regexps_changed);
+  Vdebug_regexps = Qnil;
+  debug_regexps = 0;
+#endif /* DEBUG_XEMACS */
 }

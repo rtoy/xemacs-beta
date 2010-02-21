@@ -811,7 +811,7 @@ widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (tw)
     {
       int charwidth;
-      default_face_font_info (domain, 0, 0, 0, &charwidth, 0);
+      default_face_font_info (domain, 0, 0, &charwidth, 0, 0);
       pw = ROUND_UP (charwidth * tw + 4 * widget_instance_border_width (ii), charwidth);
     }
 
@@ -827,7 +827,7 @@ widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	}
       else 
 	{
-	  default_face_font_info (domain, 0, 0, &charheight, 0, 0);
+	  default_face_font_info (domain, 0, 0, 0, &charheight, 0);
 	}
       ph = (charheight + 2 * widget_instance_border_width (ii)) * th;
     }
@@ -949,7 +949,7 @@ tree_view_query_geometry (Lisp_Object image_instance,
     {
       int len, h;
       /* #### widget face would be better here. */
-      default_face_font_info (domain, 0, 0, &h, 0, 0);
+      default_face_font_info (domain, 0, 0, 0, &h, 0);
       GET_LIST_LENGTH (items, len);
       *height = len * h;
     }
@@ -1659,7 +1659,7 @@ layout borders, so this adjustment is approximated.
   if (HAS_DEVMETH_P (DOMAIN_XDEVICE (domain), widget_border_width))
     border_width = DEVMETH (DOMAIN_XDEVICE (domain), widget_border_width, ());
 
-  default_face_font_info (domain, 0, 0, 0, &charwidth, 0);
+  default_face_font_info (domain, 0, 0, &charwidth, 0, 0);
   neww = ROUND_UP (charwidth * w + 4 * border_width + 2 * widget_spacing (domain), 
 		charwidth) / charwidth;
   
@@ -1693,7 +1693,7 @@ to do appropriate conversion between logical units and characters.
 
   h = XINT (height);
 
-  default_face_font_info (domain, 0, 0, &charheight, 0, 0);
+  default_face_font_info (domain, 0, 0, 0, &charheight, 0);
   newh = ROUND_UP (logical_unit_height (Fsymbol_name (Qwidget), 
 					Vwidget_face, domain) * h, charheight)
     / charheight;

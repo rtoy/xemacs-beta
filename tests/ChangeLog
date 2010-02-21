@@ -1,3 +1,9 @@
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	debug-xemacs-searches renamed to debug-searches.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* automated/test-harness.el:

@@ -475,7 +475,7 @@ get_cursor_size_and_location (struct window *w, struct display_block *db,
   rb = Dynarr_atp (db->runes, cursor_location);
   *cursor_start = rb->xpos;
 
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
   *cursor_height = defheight;
 
   if (rb->type == RUNE_BLANK)
@@ -638,7 +638,7 @@ clear_left_border (struct window *w, int y, int height)
 
   redisplay_clear_region (window, DEFAULT_INDEX,
 		FRAME_LEFT_BORDER_START (f), y,
-		FRAME_BORDER_WIDTH (f), height);
+		FRAME_INTERNAL_BORDER_WIDTH (f), height);
 }
 
 /*****************************************************************************
@@ -654,7 +654,7 @@ clear_right_border (struct window *w, int y, int height)
 
   redisplay_clear_region (window, DEFAULT_INDEX,
 		FRAME_RIGHT_BORDER_START (f),
-		y, FRAME_BORDER_WIDTH (f), height);
+		y, FRAME_INTERNAL_BORDER_WIDTH (f), height);
 }
 
 /*****************************************************************************
@@ -2102,14 +2102,14 @@ redisplay_clear_top_of_window (struct window *w)
 
       if (window_is_leftmost (w))
 	{
-	  x -= FRAME_BORDER_WIDTH (f);
-	  width += FRAME_BORDER_WIDTH (f);
+	  x -= FRAME_INTERNAL_BORDER_WIDTH (f);
+	  width += FRAME_INTERNAL_BORDER_WIDTH (f);
 	}
       if (window_is_rightmost (w))
-	width += FRAME_BORDER_WIDTH (f);
+	width += FRAME_INTERNAL_BORDER_WIDTH (f);
 
       y = FRAME_TOP_BORDER_START (f) - 1;
-      height = FRAME_BORDER_HEIGHT (f) + 1;
+      height = FRAME_INTERNAL_BORDER_HEIGHT (f) + 1;
 
       redisplay_clear_region (window, DEFAULT_INDEX, x, y, width, height);
     }
@@ -2145,7 +2145,7 @@ redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 
 	  if (window_is_leftmost (w))
 	    redisplay_clear_region (window, DEFAULT_INDEX, FRAME_LEFT_BORDER_START (f),
-				    ypos1, FRAME_BORDER_WIDTH (f), height);
+				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f), height);
 
 	  if (bounds.left_in - bounds.left_out > 0)
 	    redisplay_clear_region (window,
@@ -2167,7 +2167,7 @@ redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 
 	  if (window_is_rightmost (w))
 	    redisplay_clear_region (window, DEFAULT_INDEX, FRAME_RIGHT_BORDER_START (f),
-				    ypos1, FRAME_BORDER_WIDTH (f), height);
+				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f), height);
 	}
     }
 }
@@ -2217,7 +2217,7 @@ redisplay_clear_bottom_of_window (struct window *w, display_line_dynarr *ddla,
   /* #### See if this can be made conditional on the frame
      changing size. */
   if (MINI_WINDOW_P (w))
-    ypos2 += FRAME_BORDER_HEIGHT (f);
+    ypos2 += FRAME_INTERNAL_BORDER_HEIGHT (f);
 
   if (min_start >= 0 && ypos1 < min_start)
     ypos1 = min_start;
