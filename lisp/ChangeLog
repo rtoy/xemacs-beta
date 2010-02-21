@@ -9,21 +9,35 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* mule/general-early.el (setup-case-pairs):
+	Conditionalize on use-unidata-case-tables.
+	
 	* mule/mule-category.el:
 	* mule/mule-category.el (predefined-category-list):
+	Take out chinese-cns11643-1 for the moment, since it makes
+	category ?t include ASCII and other stuff that shouldn't be there,
+	which messes up word-across-newline, which messes up fill-paragraph.
+	
 	* mule/mule-category.el (kanji-Greek-Upper):
 	* mule/mule-category.el (kanji-kanji-char):
+	Bogus changes that will be reverted.
+	
 	* mule/mule-charset.el:
 	* mule/mule-charset.el (charset-iso-2022-p): New.
-	* mule/mule-charset.el (map-charset-chars): Removed.
 	* mule/mule-charset.el (charset-ccl-program):
+	Add author comment.  New function charset-iso-2022-p.
+	
 	* mule/uni-case-conv.el:
 	* mule/uni-case-conv.el (for):
+	Regenerate; nreverse case table mapping list, see comment in file.
 
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* dumped-lisp.el (use-unidata-case-tables):
 	* dumped-lisp.el (preloaded-file-list):
+	New feature `use-unidata-case-tables', to control whether we
+	use the new Unicode case table info from unicode.org.  When we're
+	sure we've gotten this to work and it causes no bugs, get rid of
+	this.
 
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
