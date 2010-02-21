@@ -1,3 +1,8 @@
+2010-02-17  Jerry James  <james@xemacs.org>
+
+	* term.texi: Move to the eterm package.
+	* Makefile: Remove all rules relating to term.texi.
+
 2010-02-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Top): Update menu.
