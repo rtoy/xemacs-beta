@@ -1,4 +1,4 @@
-;; Copyright (C) 1998 Free Software Foundation, Inc.
+;; Copyright (C) 1998 Free Software Foundation, Inc. -*- coding: iso-8859-1 -*-
 
 ;; Author: Martin Buchholz <martin@xemacs.org>
 ;; Maintainer: Martin Buchholz <martin@xemacs.org>
@@ -973,6 +973,12 @@
       (car y))
     x)))
 
+(Assert-eql
+ (length (multiple-value-list
+          (car (mapcar #'(lambda (argument) (floor argument)) (list pi e)))))
+ 1
+ "checking multiple values are correctly discarded in mapcar")
+
 ;;-----------------------------------------------------
 ;; Test vector functions
 ;;-----------------------------------------------------
@@ -1069,6 +1075,76 @@
 	       '("foo" "bar" ""))
 (Assert-equal (split-string "foobar" split-string-default-separators)
 	       '("foobar"))
+
+;;-----------------------------------------------------
+;; Test split-string-by-char
+;;-----------------------------------------------------
+
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein"
+  ?: ?\\)
+  '("re:ee" "this\\is\\text\\\\" "oops" "
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen: Geister brüten.\\
+Serum concentrations of vitamin E" " (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein"
+   ?: ?\x00)
+  '("re\\" "ee" "this\\\\is\\\\text\\\\\\\\" "oo\\ps" "
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\\" " Geister brüten.\\\\
+Serum concentrations of vitamin E" " (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
+(Assert
+ (equal
+  (split-string-by-char
+   #r"re\:ee:this\\is\\text\\\\:oo\ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen\: Geister brüten.\\
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein" ?\\)
+  '("re" ":ee:this" "" "is" "" "text" "" "" "" ":oo" "ps:
+Eine Sprache, die stagnirt, ist zu vergleichen mit einem See, dem der
+bisherige Quellenzufluß versiegt oder abgeleitet wird. Aus dem Wasser,
+worüber der Geist Gottes schwebte, wird Sumpf und Moder, worüber die
+unreinen" ": Geister brüten." "" "
+Serum concentrations of vitamin E: (alpha-tocopherol) depend on the liver,
+which takes up the nutrient after the various forms are absorbed from the
+small intestine. The liver preferentially resecretes only alpha-tocopherol
+via the hepatic alpha-tocopherol transfer protein")))
 
 ;;-----------------------------------------------------
 ;; Test near-text buffer functions.

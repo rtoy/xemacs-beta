@@ -9,6 +9,44 @@
 	* automated/search-tests.el (boundp):
 	debug-xemacs-searches renamed to debug-searches.
 
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-bug-expected): New.
+	* automated/test-harness.el (test-harness-unexpected-error-enter-debugger): New.
+	* automated/test-harness.el (test-harness-assertion-failure-enter-debugger): New.
+	* automated/test-harness.el (test-harness-unexpected-error-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-condition-handler): New.
+	* automated/test-harness.el (test-harness-error-wrap): New.
+	* automated/test-harness.el (test-harness-from-buffer):
+	New variables that allow a backtrace to be displayed and/or the
+	debugger to be entered when an assertion failure or unexpected error
+	occurs.  By default, debugging occurs when interactive and debug-on-error
+	is set, and backtrace-displaying occurs either
+	(a) when stack-trace-on-error is set, or (b) always, when an unexpected
+	error occurs. (However, no backtracing or debugging occurs when a bug
+	is expected.)
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Change the #'split-string-by-char text to use US federal
+	government information instead of a couple of sentences from the
+	OED; the latter would probably have qualified as non-infringement,
+	but with the former the question won't arise.
+	(The German text in the same tests is from a very public domain
+	19th-century work.)
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that multiple values are discarded correctly with #'mapcar
+	and one SEQUENCE.
+	(equal): 
+
 2010-02-05  Jerry James  <james@xemacs.org>
 
 	* DLL/dltest.c: Remove old test.  Building and using any module now
@@ -278,6 +316,11 @@
 
 	* automated/mule-tests.el (featurep):
 	Use utf-8 as file-name-coding-system under Cygwin 1.7+.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (split-string-by-char):
+	Test this function, and its new ESCAPE-CHAR argument.
 
 2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 

@@ -1511,7 +1511,6 @@ INFO_FILES= \
 	$(INFODIR)\lispref.info \
 	$(INFODIR)\new-users-guide.info \
 	$(INFODIR)\standards.info \
-	$(INFODIR)\term.info \
 	$(INFODIR)\termcap.info \
 	$(INFODIR)\texinfo.info \
 	$(INFODIR)\widget.info \

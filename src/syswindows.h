@@ -572,7 +572,6 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
    and cause problems if we used Cygwin headers to generate
    intl-auto-encap-win32.[ch]. */
 typedef LPCVOID PCVOID;
-typedef LPDWORD *PDWORD_PTR;
 
 #endif /* CYGWIN_HEADERS */
 
