@@ -1,6 +1,6 @@
 /* unexec for XEmacs on Windows NT.
    Copyright (C) 1994 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -525,12 +525,11 @@ read_in_bss (Extbyte *filename)
 
   file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE)
-    ABORT ();
+  assert (file != INVALID_HANDLE_VALUE);
   
   /* Seek to where the .bss section is tucked away after the heap...  */
   index = heap_index_in_executable + get_committed_heap_size ();
-  if (SetFilePointer (file, index, NULL, FILE_BEGIN) == 0xFFFFFFFF) 
+  if (SetFilePointer (file, index, NULL, FILE_BEGIN) == 0xFFFFFFFF)
     ABORT ();
 
   /* Ok, read in the saved .bss section and initialize all 
@@ -553,14 +552,12 @@ map_in_heap (Extbyte *filename)
 
   file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE) 
-    ABORT ();
+  assert (file != INVALID_HANDLE_VALUE);
 
   size = GetFileSize (file, &upper_size);
   file_mapping = qxeCreateFileMapping (file, NULL, PAGE_WRITECOPY, 
 				       0, size, NULL);
-  if (!file_mapping) 
-    ABORT ();
+  assert (file_mapping);
 
   size = get_committed_heap_size ();
   file_base = MapViewOfFileEx (file_mapping, FILE_MAP_COPY, 0, 

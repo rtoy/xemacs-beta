@@ -141,8 +141,7 @@ check_free (void *ptr)
 #if !defined(__linux__)
 	  /* I originally wrote:  "There's really no need to drop core."
 	     I have seen the error of my ways. -slb */
-	  if (strict_free_check)
-	    ABORT ();
+	  assert (!strict_free_check);
 #endif
 	  printf("Freeing unmalloc'ed memory at %p\n", ptr);
 	  __free_hook = check_free;
@@ -155,8 +154,7 @@ check_free (void *ptr)
 	  /* This happens when you free twice */
 #if !defined(__linux__)
 	  /* See above comment. */
-	  if (strict_free_check)
-	    ABORT ();
+	  assert (!strict_free_check);
 #endif
 	  printf("Freeing %p twice\n", ptr);
 	  __free_hook = check_free;
@@ -448,7 +446,7 @@ block_input_history blhist[BLHISTLIMIT];
 note_block_input (char *file, int line)
 {
   note_block (file, line, block_type);
-  if (interrupt_input_blocked > 2) ABORT();
+  assert (interrupt_input_blocked <= 2);
 }
 
 note_unblock_input (char* file, int line)
@@ -488,13 +486,13 @@ log_gcpro (char *file, int line, struct gcpro *value, blocktype type)
   if (type == ungcpro_type)
     {
       if (value == gcprolist) goto OK;
-      if (! gcprolist) ABORT ();
+      assert (gcprolist);
       if (value == gcprolist->next) goto OK;
-      if (! gcprolist->next) ABORT ();
+      assert (gcprolist->next);
       if (value == gcprolist->next->next) goto OK;
-      if (! gcprolist->next->next) ABORT ();
+      assert (gcprolist->next->next);
       if (value == gcprolist->next->next->next) goto OK;
-      if (! gcprolist->next->next->next) ABORT ();
+      assert (gcprolist->next->next->next);
       if (value == gcprolist->next->next->next->next) goto OK;
       ABORT ();
     OK:;

@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000, 2002 Andy Piper
 
@@ -1335,8 +1335,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
       /* Duplicate the pixel value so that we still have a lock on it if
 	 the pixel we were passed is later freed. */
-      if (! XAllocColor (dpy, cmap, &color))
-	ABORT ();  /* it must be allocable since we're just duplicating it */
+      assert (XAllocColor (dpy, cmap, &color));  /* it must be allocable since we're just duplicating it */
 
       
       symbols[i].name = LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (cons), Qctext);
