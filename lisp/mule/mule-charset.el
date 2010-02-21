@@ -162,28 +162,6 @@ characters in CHARSET."
 		    `("Charset not encodable in a buffer" ,charset)))
     (format "%c-%c" lowchar highchar)))
 
-;; From GNU.
-(defun map-charset-chars (func charset)
-  "Use FUNC to map over all characters in CHARSET for side effects.
-FUNC is a function of two args, the start and end (inclusive) of a
-character code range.  Thus FUNC should iterate over [START, END]."
-  (check-argument-type #'functionp func)
-  (setq charset (get-charset charset))
-  (let ((dim (charset-dimension charset))
-	(chars (charset-chars charset))
-	(offset (charset-offset charset)))
-    (if (= dim 1)
-	(funcall func
-		 (make-char charset offset)
-		 (make-char charset (+ offset chars -1)))
-      (loop with (off1 off2) = offset
-	with (chars1 chars2) = chars
-	for i from off1 to (+ off1 chars1 -1)
-	do
-	(funcall func
-		 (make-char charset i off2)
-		 (make-char charset i (+ off2 chars2 -1)))))))
-
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)

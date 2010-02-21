@@ -327,10 +327,18 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 (defvar kanji-English-Lower  "[ａ-ｚ]")
 (defvar kanji-hiragana "\\cH")
 (defvar kanji-katakana "\\cK")
-(defvar kanji-Greek-Upper "[,FA-,FY]")
-(defvar kanji-Greek-Lower "[,Fa-,Fy]")
-(defvar kanji-Russian-Upper "[,L0-,LO]")
-(defvar kanji-Russian-Lower "[,LP-,Lo]")
+;; @@#### HACK FIXME.  The Unicode mappings for these double-width Kanji
+;; characters are the regular Greek/Cyrillic equivalents, and so saving/loading
+;; this file using Unicode-internal messes things up.  To get around this
+;; for the moment, decode things on-the-fly.
+(defvar kanji-Greek-Upper
+  (decode-coding-string "[\033$B&!\033(B-\033$B&8\033(B]" 'iso-2022-7bit))
+(defvar kanji-Greek-Lower
+  (decode-coding-string "[\033$B&A\033(B-\033$B&X\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Upper
+  (decode-coding-string "[\033$B'!\033(B-\033$B'A\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Lower
+  (decode-coding-string "[\033$B'Q\033(B-\033$B'q\033(B]" 'iso-2022-7bit))
 (defvar kanji-Kanji-1st-Level  "[亜-腕]")
 (defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
 
