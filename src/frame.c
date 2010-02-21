@@ -3295,7 +3295,7 @@ the rightmost or bottommost possible position (that stays within the screen).
 /* Frame size conversion functions moved here from EmacsFrame.c
    because they're generic and really don't belong in that file.
    Function get_default_char_pixel_size() removed because it's
-   exactly the same as default_face_height_and_width().
+   exactly the same as default_face_width_and_height().
 
    Convert between total pixel size, displayable pixel size and
    character-cell size.  Variables are either "in" or "out"
@@ -3314,7 +3314,7 @@ frame_conversion_internal_1 (struct frame *f,
   Lisp_Object frame, window;
 
   frame = wrap_frame (f);
-  default_face_height_and_width (frame, &cph, &cpw);
+  default_face_width_and_height (frame, &cpw, &cph);
 
   window = FRAME_SELECTED_WINDOW (f);
 
@@ -3583,8 +3583,8 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   /* We no longer allow bogus values passed in. */
   assert (newheight && newwidth);
 
-  default_face_height_and_width (wrap_frame (f), &real_font_height,
-				 &real_font_width);
+  default_face_width_and_height (wrap_frame (f), &real_font_width,
+				 &real_font_height);
 
   frame_conversion_internal (f, SIZE_FRAME_UNIT, newwidth, newheight,
 			     SIZE_TOTAL_PIXEL, &new_pixwidth,
@@ -3688,7 +3688,7 @@ change_frame_size (struct frame *f, int newwidth, int newheight, int delay)
   /* sometimes we get passed a size that's too small (esp. when a
      client widget gets resized, since we have no control over this).
      So deal. */
-  check_frame_size (f, &newheight, &newwidth);
+  check_frame_size (f, &newwidth, &newheight);
 
   /* Unconditionally mark that the frame has changed size. This is
      because many things need to know after the

@@ -299,10 +299,10 @@ void update_frame_face_values (struct frame *f);
 void face_property_was_changed (Lisp_Object face, Lisp_Object property,
 				Lisp_Object locale);
 void default_face_font_info (Lisp_Object domain, int *ascent,
-			     int *descent, int *height, int *width,
+			     int *descent, int *width, int *height,
 			     int *proportional_p);
-void default_face_height_and_width (Lisp_Object domain,
-				    int *height, int *width);
+void default_face_width_and_height (Lisp_Object domain, int *width,
+				    int *height);
 
 #define FACE_CACHEL_FONT(cachel, charset) \
   (cachel->font[XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE])

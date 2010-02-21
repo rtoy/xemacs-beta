@@ -924,8 +924,8 @@ calculate_baseline (pos_data *data)
       int scaled_default_font_ascent, scaled_default_font_descent;
 
       default_face_font_info (data->window, &default_font_ascent,
-			      &default_font_descent, &default_font_height,
-			      0, 0);
+			      &default_font_descent, 0, &default_font_height,
+			      0);
 
       scaled_default_font_ascent = data->max_pixmap_height *
 	default_font_ascent / default_font_height;
@@ -8316,7 +8316,7 @@ start_with_point_on_display_line (struct window *w, Charbpos point, int line)
 	  int defheight;
 
 	  window = wrap_window (w);
-	  default_face_height_and_width (window, &defheight, 0);
+	  default_face_width_and_height (window, 0, &defheight);
 
 	  cur_elt = Dynarr_length (w->line_start_cache) - 1;
 
@@ -8621,7 +8621,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
   int defheight, defwidth;
 
   window = wrap_window (w);
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   /* If we get a bogus value indicating somewhere above or to the left of
      the window, use the first window line or character position
@@ -9290,7 +9290,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	  int defheight;
 
 	  lwin = wrap_window (*w);
-	  default_face_height_and_width (lwin, 0, &defheight);
+	  default_face_width_and_height (lwin, 0, &defheight);
 
 	  *row += (adj_area / defheight);
 	}
