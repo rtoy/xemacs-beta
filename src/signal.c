@@ -1,6 +1,6 @@
 /* Handling asynchronous signals.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -727,7 +727,7 @@ Fatal error: assertion failed, file c:\xemacs\build\src\redisplay.c, line 5532,
 
 Backtrace given in
 
-  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+  (Info-goto-node "(internals)Critical Redisplay Sections")
 
     */
       assert_with_message
