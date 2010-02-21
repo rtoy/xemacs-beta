@@ -4944,8 +4944,8 @@ process_extents_for_insertion_mapper (EXTENT extent, void *arg)
      the insertion overlaps any existing extent, something is wrong.
    */
 #ifdef ERROR_CHECK_EXTENTS
-  assert (extent_start (extent) <= indice || extent_start (extent) > indice + closure->length);
-  assert (extent_end (extent) <= indice || extent_end (extent) > indice + closure->length);
+  assert (extent_start (extent) <= indice || extent_start (extent) >= indice + closure->length);
+  assert (extent_end (extent) <= indice || extent_end (extent) >= indice + closure->length);
 #endif
 
   /* The extent-adjustment code adjusted the extent's endpoints as if
