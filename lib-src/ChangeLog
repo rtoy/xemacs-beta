@@ -1,3 +1,9 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	nreverse the list of mappings before applying so that the bad
+	mappings for S, K, etc. get overridden.
+
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
 	* make-case-conv.py:

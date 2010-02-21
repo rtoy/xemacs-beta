@@ -421,14 +421,17 @@ do {								\
    make sure it does, and return it. */
 
 int
-decode_unicode (Lisp_Object unicode)
+decode_unicode (Lisp_Object unicode, enum unicode_allow allow)
 {
   EMACS_INT val;
   CHECK_INT (unicode);
   val = XINT (unicode);
-  if (!valid_unicode_codepoint_p (val, UNICODE_ALLOW_PRIVATE))
-    invalid_argument ("Invalid unicode codepoint (range 0 .. 2^31 - 1)",
-		      unicode);
+  if (!valid_unicode_codepoint_p (val, allow))
+    {
+      EMACS_INT maxval = allow == UNICODE_ALLOW_PRIVATE ?
+	EMACS_INT_UNICODE_PRIVATE_MAX : UNICODE_OFFICIAL_MAX;
+      args_out_of_range_3 (unicode, Qzero, make_int (maxval));
+    }
   return (int) val;
 }
 
@@ -1956,7 +1959,9 @@ CHARSET (see `make-char').
        (unicode, charset, c1, c2))
 {
   int a1, a2;
-  int ucp = decode_unicode (unicode);
+  /* Private codepoints should not get put into conversion tables. */
+
+  int ucp = decode_unicode (unicode, UNICODE_OFFICIAL_ONLY);
   charset = get_external_charset_codepoint (charset, c1, c2, &a1, &a2, 0);
   
   /* The translations of ASCII, Control-1, and Latin-1 code points are
@@ -2292,6 +2297,7 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 /*                      Properties of Unicode chars                     */
 /************************************************************************/
 
+#ifdef MULE
 
 int
 unicode_char_columns (int code)
@@ -2328,6 +2334,8 @@ unicode_char_columns (int code)
 #endif /* defined (HAVE_WCWIDTH) && defined (__STDC_ISO_10646__) */
 }
 
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                         Unicode coding system                        */
@@ -2335,7 +2343,7 @@ unicode_char_columns (int code)
 
 struct unicode_coding_system
 {
-  enum unicode_type type;
+  enum unicode_encoding_type type;
   unsigned int little_endian :1;
   unsigned int need_bom :1;
 };
@@ -2449,7 +2457,8 @@ add_16_bit_char (int code, unsigned_char_dynarr *dst, int little_endian)
    encodings. */
 void
 encode_unicode_char (int code, unsigned_char_dynarr *dst,
-		     enum unicode_type type, unsigned int little_endian,
+		     enum unicode_encoding_type type,
+		     unsigned int little_endian,
                      int write_error_characters_as_such)
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
@@ -2581,7 +2590,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		 unsigned_char_dynarr *dst, Bytecount n)
 {
   struct unicode_coding_stream *data = CODING_STREAM_TYPE_DATA (str, unicode);
-  enum unicode_type type =
+  enum unicode_encoding_type type =
     XCODING_SYSTEM_UNICODE_TYPE (str->codesys);
   unsigned int little_endian =
     XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
@@ -3305,7 +3314,7 @@ unicode_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qunicode_type))
     {
-      enum unicode_type type;
+      enum unicode_encoding_type type;
 
       if (EQ (value, Qutf_8))
 	type = UNICODE_UTF_8;

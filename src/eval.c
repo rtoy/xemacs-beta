@@ -7516,7 +7516,8 @@ particularly useful when XEmacs crashes, in helping to pinpoint the problem.
 Function to call to invoke debugger.
 If due to frame exit, args are `exit' and the value being returned;
  this function's value will be returned instead of that.
-If due to error, args are `error' and a list of the args to `signal'.
+If due to error, args are `error' and a cons of the args
+ (SIG . DATA) that were passed to `signal'.
 If due to `apply' or `funcall' entry, one arg, `lambda'.
 If due to `eval' entry, one arg, t.
 */ );

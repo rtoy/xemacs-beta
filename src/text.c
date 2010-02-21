@@ -2530,20 +2530,11 @@ find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
     }
 }
 
-/* A couple of these functions should only be called on a Mule build. */
-#ifdef MULE
-#define ASSERT_BUILT_WITH_MULE() assert (1)
-#else /* MULE */
-#define ASSERT_BUILT_WITH_MULE() assert (0)
-#endif /* MULE */
-
 int
 ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 {
   int cols = 0;
   const Ibyte *end = str + len;
-
-  ASSERT_BUILT_WITH_MULE ();
 
   while (str < end)
     {
@@ -2560,8 +2551,6 @@ ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str),
 {
   int cols = 0;
   int i;
-
-  ASSERT_BUILT_WITH_MULE ();
 
   for (i = 0; i < len; i++)
     cols += ichar_columns (str[i]);
@@ -5389,7 +5378,7 @@ get_external_unicode_codepoint (Lisp_Object unicode,
 				Lisp_Object buffer_or_precedence_list,
 				Lisp_Object *buffer_or_precarray_out)
 {
-  int code = decode_unicode (unicode);
+  int code = decode_unicode (unicode, UNICODE_ALLOW_PRIVATE);
   Lisp_Object bopa =
     decode_buffer_or_precedence_list (buffer_or_precedence_list);
 

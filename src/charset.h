@@ -226,6 +226,10 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_TO_UNICODE_TABLE(cs) ((cs)->to_unicode_table)
 #define CHARSET_UNICODE_MAP(cs)	 ((cs)->unicode_map)
 #define CHARSET_TAGS(cs)	 ((cs)->tags)
+#define CHARSET_MIN_CODE(cs, dim) CHARSET_OFFSET (cs, dim)
+#define CHARSET_MAX_CODE(cs, dim) \
+  (CHARSET_OFFSET (cs, dim) + CHARSET_CHARS (cs, dim) - 1)
+
 
 #define XCHARSET_CHARS(cs, dim)	  CHARSET_CHARS        (XCHARSET (cs), dim)
 #define XCHARSET_COLUMNS(cs)	  CHARSET_COLUMNS      (XCHARSET (cs))
@@ -246,6 +250,8 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_TO_UNICODE_TABLE(cs) CHARSET_TO_UNICODE_TABLE (XCHARSET (cs))
 #define XCHARSET_UNICODE_MAP(cs)  CHARSET_UNICODE_MAP         (XCHARSET (cs))
 #define XCHARSET_TAGS(cs)         CHARSET_TAGS         (XCHARSET (cs))
+#define XCHARSET_MIN_CODE(cs, dim) CHARSET_MIN_CODE (XCHARSET (cs), dim)
+#define XCHARSET_MAX_CODE(cs, dim) CHARSET_MAX_CODE (XCHARSET (cs), dim)
 
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
 #define CHARSET_ALGO_LOW(cs)	 ((cs)->algo_low)

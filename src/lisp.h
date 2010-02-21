@@ -3398,7 +3398,7 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
    Ichar when converted to text, etc.
 */
 
-enum unicode_class
+enum unicode_allow
   {
     /* Allow only official characters in the range 0 - 0x10FFFF, i.e.
        those that will ever be allocated by the Unicode consortium */
@@ -3408,24 +3408,32 @@ enum unicode_class
     UNICODE_ALLOW_PRIVATE,
   };
 
+#define UNICODE_PRIVATE_MAX 0x7FFFFFFF
+#if SIZEOF_EMACS_INT > 4
+#define EMACS_INT_UNICODE_PRIVATE_MAX UNICODE_PRIVATE_MAX
+#else
+#define EMACS_INT_UNICODE_PRIVATE_MAX EMACS_INT_MAX
+#endif
+#define UNICODE_OFFICIAL_MAX 0x10FFFF
+
 DECLARE_INLINE_HEADER (
 int
-valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_class uclass)
+valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_allow allow)
 )
 {
-  if (uclass == UNICODE_ALLOW_PRIVATE)
+  if (allow == UNICODE_ALLOW_PRIVATE)
     {
 #if SIZEOF_EMACS_INT > 4
       /* On 64-bit machines, we could have a value too large */
-      return ch >= 0 && ch <= 0x7FFFFFFF;
+      return ch >= 0 && ch <= UNICODE_PRIVATE_MAX;
 #else
       return ch >= 0;
 #endif
     }
   else
     {
-      text_checking_assert (uclass == UNICODE_OFFICIAL_ONLY);
-      return ch <= 0x10FFFF && ch >= 0;
+      text_checking_assert (allow == UNICODE_OFFICIAL_ONLY);
+      return ch <= UNICODE_OFFICIAL_MAX && ch >= 0;
     }
 }
 
@@ -6400,11 +6408,11 @@ Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 					    struct overhead_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
 void initialize_ascii_control_1_latin_1_unicode_translation (void);
-int decode_unicode (Lisp_Object unicode);
+int decode_unicode (Lisp_Object unicode, enum unicode_allow allow);
 void free_precedence_array (Lisp_Object preclist);
 void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
 
-enum unicode_type
+enum unicode_encoding_type
 {
   UNICODE_UTF_16,
   UNICODE_UTF_8,
@@ -6413,10 +6421,10 @@ enum unicode_type
   UNICODE_UTF_32
 };
 
-void
-encode_unicode_char (int code, unsigned_char_dynarr *dst,
-		     enum unicode_type type, unsigned int little_endian,
-                     int write_error_characters_as_such);
+void encode_unicode_char (int code, unsigned_char_dynarr *dst,
+			  enum unicode_encoding_type type,
+			  unsigned int little_endian,
+			  int write_error_characters_as_such);
 
 EXFUN (Fset_charset_tags, 2);
 

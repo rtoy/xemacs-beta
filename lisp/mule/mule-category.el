@@ -5,6 +5,7 @@
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -253,8 +254,11 @@ The descriptions are inserted in a buffer, which is then displayed."
     (japanese-jisx0208	?j "Japanese 2-byte character set")
     (japanese-jisx0212	?j)
     (chinese-gb2312	?c "Chinese GB (China, PRC) 2-byte character set")
-    (chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
-    (chinese-cns11643-2	?t)
+    ;;@@#### This messes up things because it has ASCII and other chars in it.
+    ;;We need to incorporate the GNU Emacs stuff in their characters.el, which has
+    ;;much better category definitions.
+    ;;(chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
+    (chinese-cns11643-2	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
     ,@(if (find-charset 'chinese-big5-1)
 	  '((chinese-big5-1	?t)
 	    (chinese-big5-2	?t))
@@ -323,10 +327,10 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 (defvar kanji-English-Lower  "[ａ-ｚ]")
 (defvar kanji-hiragana "\\cH")
 (defvar kanji-katakana "\\cK")
-(defvar kanji-Greek-Upper "[Α-Ω]")
-(defvar kanji-Greek-Lower "[α-ω]")
-(defvar kanji-Russian-Upper "[А-Я]")
-(defvar kanji-Russian-Lower "[а-я]")
+(defvar kanji-Greek-Upper "[,FA-,FY]")
+(defvar kanji-Greek-Lower "[,Fa-,Fy]")
+(defvar kanji-Russian-Upper "[,L0-,LO]")
+(defvar kanji-Russian-Lower "[,LP-,Lo]")
 (defvar kanji-Kanji-1st-Level  "[亜-腕]")
 (defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
 

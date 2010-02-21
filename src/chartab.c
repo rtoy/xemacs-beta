@@ -62,6 +62,10 @@ Lisp_Object Vstandard_category_table;
 Lisp_Object Vword_combining_categories, Vword_separating_categories;
 #endif /* MULE */
 
+#ifdef MEMORY_USAGE_STATS
+Lisp_Object Qpage_tables;
+#endif
+
 static int check_valid_char_table_value (Lisp_Object value,
 					 enum char_table_type type,
 			                 Error_Behavior errb);
@@ -220,6 +224,13 @@ free_chartab_table (SUBTAB_TYPE table, int level)
 
 #ifdef MEMORY_USAGE_STATS
 
+/* #### Define better */
+
+struct char_table_stats
+{
+  int page_tables;
+};
+
 static Bytecount
 compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
 			      struct overhead_stats *stats)
@@ -241,7 +252,7 @@ compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
   return size;
 }
 
-Bytecount
+static Bytecount
 compute_chartab_table_size (Lisp_Object chartab,
 			    struct overhead_stats *stats)
 {
@@ -251,7 +262,51 @@ compute_chartab_table_size (Lisp_Object chartab,
 	   stats));
 }
 
-#endif
+static void
+compute_char_table_usage (Lisp_Object chartab, struct char_table_stats *stats,
+			  struct overhead_stats *ovstats)
+{
+  xzero (*stats);
+  stats->page_tables += compute_chartab_table_size (chartab, ovstats);
+}
+
+DEFUN ("char-table-memory-usage", Fchar_table_memory_usage, 1, 1, 0, /*
+Return stats about the memory usage of char table CHAR_TABLE.
+The values returned are in the form of an alist of usage types and
+byte counts.  The byte counts attempt to encompass all the memory used
+by the char table (separate from memory used by objects pointed to by
+the char table), including internal structures and any malloc()
+overhead associated with them.  In practice, the byte counts are
+underestimated for various reasons, e.g. because certain memory usage
+is very hard to determine.
+
+Multiple slices of the total memory usage may be returned, separated
+by a nil.  Each slice represents a particular view of the memory, a
+particular way of partitioning it into groups.  Within a slice, there
+is no overlap between the groups of memory, and each slice collectively
+represents all the memory concerned.
+*/
+       (char_table))
+{
+  struct char_table_stats stats;
+  struct overhead_stats ovstats;
+  Lisp_Object val = Qnil;
+
+  CHECK_CHAR_TABLE (char_table);
+  xzero (ovstats);
+  compute_char_table_usage (char_table, &stats, &ovstats);
+
+  val = acons (Qpage_tables,       make_int (stats.page_tables),      val);
+  val = Fcons (Qnil, val);
+  val = acons (Qactually_requested, make_int (ovstats.was_requested),   val);
+  val = acons (Qmalloc_overhead,    make_int (ovstats.malloc_overhead), val);
+  val = acons (Qgap_overhead,       make_int (ovstats.gap_overhead),    val);
+  val = acons (Qdynarr_overhead,    make_int (ovstats.dynarr_overhead), val);
+
+  return Fnreverse (val);
+}
+
+#endif /* MEMORY_USAGE_STATS */
 
 void
 put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
@@ -1904,6 +1959,11 @@ syms_of_chartab (void)
 
   DEFSYMBOL (Qchar_table);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qchar_tablep);
+
+#ifdef MEMORY_USAGE_STATS
+  DEFSYMBOL (Qpage_tables);
+  DEFSUBR (Fchar_table_memory_usage);
+#endif
 
   DEFSUBR (Fchar_table_p);
   DEFSUBR (Fchar_table_type_list);
