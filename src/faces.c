@@ -723,7 +723,7 @@ specifier properties from Lisp.
 
 void
 default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
-			int *height, int *width, int *proportional_p)
+			int *width, int *height, int *proportional_p)
 {
   Lisp_Object font_instance;
   struct face_cachel *cachel;
@@ -782,25 +782,9 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
 }
 
 void
-default_face_height_and_width (Lisp_Object domain,
-			       int *height, int *width)
+default_face_width_and_height (Lisp_Object domain, int *width, int *height)
 {
-  default_face_font_info (domain, 0, 0, height, width, 0);
-}
-
-void
-default_face_height_and_width_1 (Lisp_Object domain,
-				 int *height, int *width)
-{
-  if (window_system_pixelated_geometry (domain))
-    {
-      if (height)
-	*height = 1;
-      if (width)
-	*width = 1;
-    }
-  else
-    default_face_height_and_width (domain, height, width);
+  default_face_font_info (domain, 0, 0, width, height, 0);
 }
 
 DEFUN ("face-list", Fface_list, 0, 1, 0, /*

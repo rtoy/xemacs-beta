@@ -1,7 +1,7 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -3386,13 +3386,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	      FRAME_PIXWIDTH (frame) = rect.right;
 	      FRAME_PIXHEIGHT (frame) = rect.bottom;
 
-	      pixel_to_real_char_size (frame, rect.right, rect.bottom,
-				       &FRAME_MSWINDOWS_CHARWIDTH (frame),
-				       &FRAME_MSWINDOWS_CHARHEIGHT (frame));
-
-	      pixel_to_char_size (frame, rect.right, rect.bottom, &columns,
+	      pixel_to_frame_unit_size (frame, rect.right, rect.bottom, &columns,
 				  &rows);
-	      change_frame_size (frame, rows, columns, 1);
+	      change_frame_size (frame, columns, rows, 1);
 
 	      /* If we are inside frame creation, we have to apply geometric
 		 properties now. */
@@ -3477,7 +3473,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				GetMenu(hwnd) != NULL,
 				qxeGetWindowLong (hwnd, GWL_EXSTYLE));
 
-	    round_size_to_real_char (XFRAME (mswindows_find_frame (hwnd)),
+	    round_size_to_char (XFRAME (mswindows_find_frame (hwnd)),
 				     wp->cx - (ncsize.right - ncsize.left),
 				     wp->cy - (ncsize.bottom - ncsize.top),
 				     &pixwidth, &pixheight);

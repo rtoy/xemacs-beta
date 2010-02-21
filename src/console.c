@@ -1,6 +1,6 @@
 /* The console object.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -41,12 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-stream-impl.h"
 #ifdef HAVE_TTY
 #include "console-tty-impl.h"
-#endif
-
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
 #endif
 
 Lisp_Object Vconsole_list, Vselected_console;
