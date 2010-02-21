@@ -1,6 +1,6 @@
 /* Define frame-object for XEmacs.
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -543,8 +543,16 @@ extern int frame_changed;
 
 #endif /* FSFmacs */
 
-#define FRAME_BORDER_WIDTH(f) ((f)->internal_border_width)
-#define FRAME_BORDER_HEIGHT(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_WIDTH(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_HEIGHT(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_SIZE(f, pos) ((f)->internal_border_width)
+
+/************************************************************************/
+/*	                        toolbars      				*/
+/************************************************************************/
+
+/*---------------- Theoretical and real toolbar values ----------------*/
+
 
 /* This returns the frame-local value; that tells you what you should
    use when computing the frame size.  It is *not* the actual toolbar
@@ -657,6 +665,10 @@ extern int frame_changed;
    ? FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
 
+#define FRAME_REAL_TOOLBAR_BOUNDS(f, pos)		\
+  (FRAME_REAL_TOOLBAR_SIZE (f, pos) +			\
+   2 * FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos))
+
 #define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f) \
   FRAME_REAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
 #define FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT(f) \
@@ -684,32 +696,39 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
   FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_TOOLBAR)
 
+#define FRAME_REAL_TOP_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_TOOLBAR)
+#define FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_TOOLBAR)
+#define FRAME_REAL_LEFT_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_TOOLBAR)
+#define FRAME_REAL_RIGHT_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_TOOLBAR)
+
+/************************************************************************/
+/*         frame dimensions defined using toolbars and gutters          */
+/************************************************************************/
+
+/* #### These should be using the gutter sizes, but aren't yet */
+
 #define FRAME_TOP_BORDER_START(f)				\
-  (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) +				\
-   2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f))
+  FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
 #define FRAME_TOP_BORDER_END(f)					\
-  (FRAME_TOP_BORDER_START (f) + FRAME_BORDER_HEIGHT (f))
+  (FRAME_TOP_BORDER_START (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
 
 #define FRAME_BOTTOM_BORDER_START(f)				\
-  (FRAME_PIXHEIGHT (f) - FRAME_BORDER_HEIGHT (f) -		\
-   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -			\
-   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
+  (FRAME_BOTTOM_BORDER_END (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
 #define FRAME_BOTTOM_BORDER_END(f)				\
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -	\
-   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f))
 
 #define FRAME_LEFT_BORDER_START(f)				\
-  (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) +				\
-   2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f))
+  FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
 #define FRAME_LEFT_BORDER_END(f)				\
-  (FRAME_LEFT_BORDER_START (f) + FRAME_BORDER_WIDTH (f))
+  (FRAME_LEFT_BORDER_START (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
 
 #define FRAME_RIGHT_BORDER_START(f)				\
-  (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -		\
-   FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) -                          \
-   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f))
+  (FRAME_RIGHT_BORDER_END (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
 #define FRAME_RIGHT_BORDER_END(f)				\
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -	\
-   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f))
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f))
 
 #endif /* INCLUDED_frame_impl_h_ */

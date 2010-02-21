@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 #include "syswindows.h"
 
 
-LONG WINAPI 
+static LONG WINAPI 
 win32_fault_handler (LPEXCEPTION_POINTERS e)
 {
 #define GET_FAULT_ADDRESS (void *) e->ExceptionRecord->ExceptionInformation[1]

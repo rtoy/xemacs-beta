@@ -924,8 +924,8 @@ calculate_baseline (pos_data *data)
       int scaled_default_font_ascent, scaled_default_font_descent;
 
       default_face_font_info (data->window, &default_font_ascent,
-			      &default_font_descent, &default_font_height,
-			      0, 0);
+			      &default_font_descent, 0, &default_font_height,
+			      0);
 
       scaled_default_font_ascent = data->max_pixmap_height *
 	default_font_ascent / default_font_height;
@@ -6765,7 +6765,7 @@ end_hold_frame_size_changes (Lisp_Object UNUSED (obj))
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
 	  if (f->size_change_pending)
-	    change_frame_size (f, f->new_height, f->new_width, 0);
+	    change_frame_size (f, f->new_width, f->new_height, 0);
 	}
     }
   return Qnil;
@@ -6902,7 +6902,7 @@ redisplay_frame (struct frame *f, int preemption_check)
   /* Before we put a hold on frame size changes, attempt to process
      any which are already pending. */
   if (f->size_change_pending)
-    change_frame_size (f, f->new_height, f->new_width, 0);
+    change_frame_size (f, f->new_width, f->new_height, 0);
 
   /* If frame size might need to be changed, due to changed size
      of toolbars, scrollbars etc, change it now */
@@ -8317,7 +8317,7 @@ start_with_point_on_display_line (struct window *w, Charbpos point, int line)
 	  int defheight;
 
 	  window = wrap_window (w);
-	  default_face_height_and_width (window, &defheight, 0);
+	  default_face_width_and_height (window, 0, &defheight);
 
 	  cur_elt = Dynarr_length (w->line_start_cache) - 1;
 
@@ -8622,7 +8622,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
   int defheight, defwidth;
 
   window = wrap_window (w);
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   /* If we get a bogus value indicating somewhere above or to the left of
      the window, use the first window line or character position
@@ -9291,7 +9291,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	  int defheight;
 
 	  lwin = wrap_window (*w);
-	  default_face_height_and_width (lwin, 0, &defheight);
+	  default_face_width_and_height (lwin, 0, &defheight);
 
 	  *row += (adj_area / defheight);
 	}

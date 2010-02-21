@@ -1,5 +1,6 @@
 /* Gutter implementation.
    Copyright (C) 1999, 2000 Andy Piper.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -589,9 +590,9 @@ update_gutter_geometry (struct frame *f, enum gutter_pos pos)
   if (FRAME_GUTTER_BOUNDS (f, pos) != f->current_gutter_bounds[pos])
     {
       int width, height;
-      pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+      pixel_to_frame_unit_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
 			  &width, &height);
-      change_frame_size (f, height, width, 0);
+      change_frame_size (f, width, height, 0);
       MARK_FRAME_LAYOUT_CHANGED (f);
     }
 

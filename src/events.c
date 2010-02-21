@@ -1,7 +1,7 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -40,18 +40,6 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
-
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
-#ifdef HAVE_TOOLBARS
-#define USED_IF_TOOLBARS(decl) decl
-#else
-#define USED_IF_TOOLBARS(decl) UNUSED (decl)
-#endif
 
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed

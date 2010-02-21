@@ -166,7 +166,7 @@
 
 (with-temp-buffer
   (let ((target "M\xe9zard")
-        (debug-xemacs-searches 1))
+        (debug-searches 1))
     (Assert (not (search-forward target nil t)))
     (insert target)
     (goto-char (point-min))
@@ -180,10 +180,10 @@
     (Assert= (1+ (length target)) (search-forward target nil t))))
 
 (Skip-Test-Unless
- (boundp 'debug-xemacs-searches) ; normal when we have DEBUG_XEMACS
+ (boundp 'debug-searches) ; normal when we have DEBUG_XEMACS
  "not a DEBUG_XEMACS build"
  "checks that the algorithm chosen by #'search-forward is relatively sane"
- (let ((debug-xemacs-searches 1)
+ (let ((debug-searches 1)
        newcase)
    (with-temp-buffer
      (insert "\n\nDer beruehmte deutsche Fleiss\n\n")
