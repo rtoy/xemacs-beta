@@ -28,55 +28,55 @@ Boston, MA 02111-1307, USA.  */
 
    Here is an ASCII diagram:
 
-+-----------------------------------------------------------------------------|
-|                          window-manager decoration                          |
-| +-------------------------------------------------------------------------+ |
-| |                                menubar                                  | |
-| ########################################################################### |
-| #                                toolbar                                  # |
-| #-------------------------------------------------------------------------# |
-| #  |                             gutter                                |  # |
-| #  |-------------------------------------------------------------------|  # |
-| #  | |                   internal border width                       | |  # |
-| #  | |-*************************************************************-| |  # |
-|w#  | | *                          |s|v*                          |s* | |  #w|
-|i#  | | *                          |c|e*                          |c* | |  #i|
-|n#  | | *                          |r|r*                          |r* | |  #n|
-|d#  | | *                          |o|t*                          |o* | |  #d|
-|o#  | | *         text area        |l|.*        text area         |l* | |  #o|
-|w#  | |i*                          |l| *                          |l*i| |  #w|
-|-#  | |n*                          |b|d*                          |b*n| |  #-|
-|m#  | |t*                          |a|i*                          |a*t| |  #m|
-|a#  | |.*                          |r|v*                          |r*.| |  #a|
-|n# t| | *--------------------------+-|i*--------------------------+-* | |t #n|
-|a# o|g|b*         scrollbar        | |d*        scrollbar         | *b|g|o #a|
-|g# o|u|o*--------------------------+-|e*--------------------------+-*o|u|o #g|
-|e# l|t|r*         modeline           |r*        modeline            *r|t|l #e|
-|r# b|t|d*************************************************************d|t|b #r|
-| # a|e|e*   =...texttexttex....=   |s|v*                          |s*e|e|a # |
-|d# r|r|r*o m=...texttexttextt..=o m|c|e*                          |c*r|r|r #d|
-|e#  | | *u a=.texttexttextte...=u a|r|r*                          |r* | |  #e|
-|c#  | |w*t r=.....texttexttex..=t r|o|t*                          |o*w| |  #c|
-|o#  | |i*s g=         etc.     =s g|l|.*        text area         |l*i| |  #o|
-|r#  | |d*i i=                  =i i|l| *                          |l*d| |  #r|
-|a#  | |t*d n=                  =d n|b|d*                          |b*t| |  #a|
-|t#  | |h*e  =  inner text area =e  |a|i*                          |a*h| |  #t|
-|i#  | | *   =                  =   |r|v*                          |r* | |  #i|
-|o#  | | *---====================---+-|i*--------------------------+-* | |  #o|
-|n#  | | *         scrollbar        | |d*        scrollbar         | * | |  #n|
-| #  | | *--------------------------+-|e*--------------------------+-* | |  # |
-| #  | | *         modeline           |r*        modeline            * | |  # |
-| #  | | ************************************************************* | |  # |
-| #  | | *                         minibuffer                        * | |  # |
-| #  | | ************************************************************* | |  # |
-| #  | |                    internal border width                      | |  # |
-| #  |-------------------------------------------------------------------|  # |
-| #  |                              gutter                               |  # |
-| #-------------------------------------------------------------------------# |
-| #                                 toolbar                                 # |
-| ########################################################################### |
-|                           window manager decoration                         |
-+-----------------------------------------------------------------------------+
++------------------------------------------------------------------------|
+|                         window-manager decoration                      |
+| +--------------------------------------------------------------------+ |
+| |                               menubar                              | |
+| ###################################################################### |
+| #                               toolbar                              # |
+| #--------------------------------------------------------------------# |
+| #  |                            gutter                            |  # |
+| #  |--------------------------------------------------------------|  # |
+| #  | |                  internal border width                   | |  # |
+| #  | | ******************************************************** | |  # |
+|w#  | | *                         |s|v*                      |s* | |  #w|
+|i#  | | *                         |c|e*                      |c* | |  #i|
+|n#  | | *                         |r|r*                      |r* | |  #n|
+|d#  | | *                         |o|t*                      |o* | |  #d|
+|o#  | | *        text area        |l|.*      text area       |l* | |  #o|
+|w#  | |i*                         |l| *                      |l*i| |  #w|
+|-#  | |n*                         |b|d*                      |b*n| |  #-|
+|m#  | |t*                         |a|i*                      |a*t| |  #m|
+|a#  | |.*                         |r|v*                      |r*.| |  #a|
+|n# t| | *-------------------------+-|i*----------------------+-* | |t #n|
+|a# o|g|b*        scrollbar        | |d*      scrollbar       | *b|g|o #a|
+|g# o|u|o*-------------------------+-|e*----------------------+-*o|u|o #g|
+|e# l|t|r*        modeline           |r*      modeline          *r|t|l #e|
+|r# b|t|d********************************************************d|t|b #r|
+| # a|e|e*   =..texttexttex....=   |s|v*                      |s*e|e|a # |
+|d# r|r|r*o m=..texttexttextt..=o m|c|e*                      |c*r|r|r #d|
+|e#  | | *u a=.exttexttextte...=u a|r|r*                      |r* | |  #e|
+|c#  | |w*t r=....texttexttex..=t r|o|t*                      |o*w| |  #c|
+|o#  | |i*s g=        etc.     =s g|l|.*      text area       |l*i| |  #o|
+|r#  | |d*i i=                 =i i|l| *                      |l*d| |  #r|
+|a#  | |t*d n=                 =d n|b|d*                      |b*t| |  #a|
+|t#  | |h*e  = inner text area =e  |a|i*                      |a*h| |  #t|
+|i#  | | *   =                 =   |r|v*                      |r* | |  #i|
+|o#  | | *---===================---+-|i*----------------------+-* | |  #o|
+|n#  | | *        scrollbar        | |d*      scrollbar       | * | |  #n|
+| #  | | *-------------------------+-|e*----------------------+-* | |  # |
+| #  | | *        modeline           |r*      modeline          * | |  # |
+| #  | | ******************************************************** | |  # |
+| #  | | *                        minibuffer                    * | |  # |
+| #  | | ******************************************************** | |  # |
+| #  | |                   internal border width                  | |  # |
+| #  |--------------------------------------------------------------|  # |
+| #  |                             gutter                           |  # |
+| #--------------------------------------------------------------------# |
+| #                                toolbar                             # |
+| ###################################################################### |
+|                          window manager decoration                     |
++------------------------------------------------------------------------+
 
    # = boundary of client area; * = window boundaries, boundary of paned area
    = = boundary of inner text area; . = inside margin area
@@ -2107,8 +2107,7 @@ delete_frame_internal (struct frame *f, int force,
 	     point their minibuffer frames must have been deleted, but
 	     that is prohibited at the top; you can't delete surrogate
 	     minibuffer frames.  */
-	  if (NILP (frame_with_minibuf))
-	    ABORT ();
+	  assert (!NILP (frame_with_minibuf));
 
 	  con->default_minibuffer_frame = frame_with_minibuf;
 	}
@@ -3295,7 +3294,7 @@ the rightmost or bottommost possible position (that stays within the screen).
 /* Frame size conversion functions moved here from EmacsFrame.c
    because they're generic and really don't belong in that file.
    Function get_default_char_pixel_size() removed because it's
-   exactly the same as default_face_height_and_width().
+   exactly the same as default_face_width_and_height().
 
    Convert between total pixel size, displayable pixel size and
    character-cell size.  Variables are either "in" or "out"
@@ -3314,7 +3313,7 @@ frame_conversion_internal_1 (struct frame *f,
   Lisp_Object frame, window;
 
   frame = wrap_frame (f);
-  default_face_height_and_width (frame, &cph, &cpw);
+  default_face_width_and_height (frame, &cpw, &cph);
 
   window = FRAME_SELECTED_WINDOW (f);
 
@@ -3577,14 +3576,13 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
      update code relies on this function to cause window `top' and
      `left' coordinates to be recomputed even though no frame size
      change occurs. --kyle */
-  if (in_display || hold_frame_size_changes)
-    ABORT ();
+  assert (!in_display && !hold_frame_size_changes);
 
   /* We no longer allow bogus values passed in. */
   assert (newheight && newwidth);
 
-  default_face_height_and_width (wrap_frame (f), &real_font_height,
-				 &real_font_width);
+  default_face_width_and_height (wrap_frame (f), &real_font_width,
+				 &real_font_height);
 
   frame_conversion_internal (f, SIZE_FRAME_UNIT, newwidth, newheight,
 			     SIZE_TOTAL_PIXEL, &new_pixwidth,
@@ -3688,7 +3686,7 @@ change_frame_size (struct frame *f, int newwidth, int newheight, int delay)
   /* sometimes we get passed a size that's too small (esp. when a
      client widget gets resized, since we have no control over this).
      So deal. */
-  check_frame_size (f, &newheight, &newwidth);
+  check_frame_size (f, &newwidth, &newheight);
 
   /* Unconditionally mark that the frame has changed size. This is
      because many things need to know after the

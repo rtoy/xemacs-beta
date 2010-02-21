@@ -1659,8 +1659,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
   int reading = !strcmp (mode, "r");
 
   /* Make sure the luser didn't pass "w" in. */
-  if (!strcmp (mode, "w"))
-    ABORT ();
+  assert (strcmp (mode, "w"));
 
   if (flags & LSTR_IGNORE_ACCESSIBLE)
     {

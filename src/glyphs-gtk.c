@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -819,8 +819,7 @@ void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
   GdkWindow *d;
   gint width, height, depth;
 
-  if (!DEVICE_GTK_P (device))
-    ABORT ();
+  assert (DEVICE_GTK_P (device));
 
   IMAGE_INSTANCE_DEVICE (ii) = device;
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_COLOR_PIXMAP;

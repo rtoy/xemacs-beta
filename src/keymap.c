@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -490,10 +490,10 @@ keymap_lookup_directly (Lisp_Object keymap,
 #define FROB(num) XEMACS_MOD_BUTTON##num |
 #include "keymap-buttons.h"
                  0);
-  if ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER
-		     | XEMACS_MOD_HYPER | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
-      != 0)
-    ABORT ();
+  assert ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META |
+			 XEMACS_MOD_SUPER | XEMACS_MOD_HYPER |
+			 XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
+	  == 0);
 
   k = XKEYMAP (keymap);
 
@@ -567,8 +567,7 @@ keymap_delete_inverse_internal (Lisp_Object inverse_table,
   Lisp_Object tail;
   Lisp_Object *prev;
 
-  if (UNBOUNDP (keys))
-    ABORT ();
+  assert (!UNBOUNDP (keys));
 
   for (prev = &new_keys, tail = new_keys;
        ;
@@ -3132,11 +3131,9 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       key.keysym = keysym;
       key.modifiers = modifiers;
 
-      if (NILP (cmd))
-	ABORT ();
+      assert (!NILP (cmd));
       cmd = get_keymap (cmd, 0, 1);
-      if (!KEYMAPP (cmd))
-	ABORT ();
+      assert (KEYMAPP (cmd));
 
       vec = make_vector (XVECTOR_LENGTH (thisseq) + 1, Qnil);
       len = XVECTOR_LENGTH (thisseq);
@@ -3694,7 +3691,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  /* OK, the key is for real */
 	  if (target_buffer)
 	    {
-	      if (!firstonly) ABORT ();
+	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
 	      return make_int (1);
 	    }
