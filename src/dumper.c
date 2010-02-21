@@ -1,7 +1,7 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000,2004 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -253,8 +253,20 @@ pdump_objects_unmark (void)
 	    for (i=0; i<rt->count; i++)
 	      {
 		struct lrecord_header *lh = * (struct lrecord_header **) p;
+#ifdef ALLOC_TYPE_STATS
+		if (C_READONLY_RECORD_HEADER_P (lh))
+		  tick_lrecord_stats (lh, ALLOC_IN_USE);
+
+		else
+		  {
+		    tick_lrecord_stats (lh, MARKED_RECORD_HEADER_P (lh) ?
+					ALLOC_IN_USE : ALLOC_ON_FREE_LIST);
+		    UNMARK_RECORD_HEADER (lh);
+		  }
+#else /* not ALLOC_TYPE_STATS */
 		if (! C_READONLY_RECORD_HEADER_P (lh))
 		  UNMARK_RECORD_HEADER (lh);
+#endif /* (not) ALLOC_TYPE_STATS */
 		p += sizeof (EMACS_INT);
 	      }
 	  } else
