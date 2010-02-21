@@ -7,7 +7,7 @@
 ;; Copyright (C) 1996 Sun Microsystems.
 ;; Copyright (C) 2002, 2005, 2010 Ben Wing.
 
-;; Author: Unknown
+;; Author: Mostly Ben Wing
 ;; Keywords: i18n, mule, internal
 
 ;; This file is part of XEmacs.
@@ -33,6 +33,12 @@
 
 ;; These functions are not compatible at the bytecode level with Emacs/Mule,
 ;; and they never will be.  -sb [1999-05-26]
+
+;; Most of this file was written by Ben Wing, including all of the charset
+;; tag code and the charset creation code, and some of the
+;; charset-properties code.  Translation table stuff from FSF (?) with
+;; mods from ?.  Various extra authors in the charset-properties code.
+;; Author of charsets-in-string: ?
 
 ;;; Code:
 
@@ -65,6 +71,14 @@ See `make-charset'."
 (defun charset-iso-final-char (charset)
   "Return the final byte of the ISO 2022 escape sequence designating CHARSET."
   (charset-property charset 'final))
+
+(defun charset-iso-2022-p (charset)
+  "Return whether CHARSET is normally encodable using an ISO-2022 coding system.
+\"Normally encodable\" means that CHARSET can be designated using a standard
+ISO 2022 escape sequence.  Almost any charset can be encoded in ISO-2022 by
+using the extension allowing UTF-8 to be embedded in an ISO-2022 encoding,
+but that does not count as \"normally encodable\"."
+  (not (null (charset-property charset 'final))))
 
 (defun charset-chars (charset)
   "Return the number of characters per dimension of CHARSET."

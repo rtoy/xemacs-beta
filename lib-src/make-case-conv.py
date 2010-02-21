@@ -97,9 +97,25 @@ print """\
 
 ;;; Code:
 
+;; Hack: We nreverse the table below before applying it so that the more
+;; desirable mappings, which come early, override less desirable later ones.
+;; In particular, we definitely do not want the following bindings to work
+;; both ways:
+
+;;        (?\u017F ?\u0073) ;; LATIN SMALL LETTER LONG S
+;;        (?\u212A ?\u006B) ;; KELVIN SIGN
+;;        (?\u212B ?\u00E5) ;; ANGSTROM SIGN
+
+;; The first two are especially bad as they will cause upcasing operations
+;; on lowercase s and k to give strange results.  It's actually worse than
+;; that -- for unknown reasons, with the bad mappings in place, the byte-
+;; compiler produces broken code for some files, which results in a stack-
+;; underflow crash upon loadup in preparation for dumping.
+
 (loop
   for (upper lower)
-  in '(
+  in (nreverse
+      '(
 """ % (output_filename, our_filepath),
 
 #for line in fileinput.input():
@@ -143,10 +159,10 @@ for line in urllib2.urlopen(uni_casefold_url):
             return r'?\U%08X' % val
     upper = tounichar(int(m.group(1), 16))
     lower = tounichar(int(m.group(2), 16))
-    print r'       (%s %s) ;; %s' % (upper, lower, comment)
+    print r'        (%s %s) ;; %s' % (upper, lower, comment)
 
 print """\
-       )
+        ))
   with case-table = (standard-case-table)
   do
   (put-case-table-pair upper lower case-table))

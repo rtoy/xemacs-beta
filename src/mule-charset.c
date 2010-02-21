@@ -247,16 +247,12 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
   if (XCHARSET_DIMENSION (obj) == 1)
     write_fmt_string (printcharfun, " %d [%d-%d]",
 		      XCHARSET_CHARS (obj, 1),
-		      XCHARSET_OFFSET (obj, 1),
-		      XCHARSET_OFFSET (obj, 1) + XCHARSET_CHARS (obj, 1) -1);
+		      XCHARSET_MIN_CODE (obj, 1), XCHARSET_MAX_CODE (obj, 1));
   else
     write_fmt_string (printcharfun, " %dx%d [(%d,%d)-(%d,%d)]",
-		      XCHARSET_CHARS (obj, 0),
-		      XCHARSET_CHARS (obj, 1),
-		      XCHARSET_OFFSET (obj, 0),
-		      XCHARSET_OFFSET (obj, 1),
-		      XCHARSET_OFFSET (obj, 0) + XCHARSET_CHARS (obj, 0) -1,
-		      XCHARSET_OFFSET (obj, 1) + XCHARSET_CHARS (obj, 1) -1);
+		      XCHARSET_CHARS (obj, 0), XCHARSET_CHARS (obj, 1),
+		      XCHARSET_MIN_CODE (obj, 0), XCHARSET_MIN_CODE (obj, 1),
+		      XCHARSET_MAX_CODE (obj, 0), XCHARSET_MAX_CODE (obj, 1));
   write_fmt_string (printcharfun, " %s cols=%d g%d ",
 		    XCHARSET_DIRECTION (obj) == CHARSET_LEFT_TO_RIGHT ? "l2r" :
 		    "r2l",
@@ -360,10 +356,10 @@ void
 get_charset_limits (Lisp_Object charset, int *low0, int *high0,
 		    int *low1, int *high1)
 {
-  *low0 = XCHARSET_OFFSET (charset, 0);
-  *low1 = XCHARSET_OFFSET (charset, 1);
-  *high0 = *low0 + XCHARSET_CHARS (charset, 0) - 1;
-  *high1 = *low1 + XCHARSET_CHARS (charset, 1) - 1;
+  *low0 = XCHARSET_MIN_CODE (charset, 0);
+  *low1 = XCHARSET_MIN_CODE (charset, 1);
+  *high0 = XCHARSET_MAX_CODE (charset, 0);
+  *high1 = XCHARSET_MAX_CODE (charset, 1);
 #ifdef ERROR_CHECK_STRUCTURES
   if (XCHARSET_DIMENSION (charset) == 1)
     {
@@ -1388,7 +1384,13 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qdimension))   return make_int (CHARSET_DIMENSION (cs));
   if (EQ (prop, Qcolumns))     return make_int (CHARSET_COLUMNS (cs));
   if (EQ (prop, Qgraphic))     return make_int (CHARSET_GRAPHIC (cs));
-  if (EQ (prop, Qfinal))       return make_char (CHARSET_FINAL (cs));
+  if (EQ (prop, Qfinal))
+    {
+      if (CHARSET_FINAL (cs))
+	return make_char (CHARSET_FINAL (cs));
+      else
+	return Qnil;
+    }
   if (EQ (prop, Qchars))
     {
       if (CHARSET_DIMENSION (cs) == 1)
@@ -1538,6 +1540,11 @@ their own tags set on them.
   return Qnil;
 }
 
+
+/************************************************************************/
+/*                       Other charset functions                        */
+/************************************************************************/
+
 DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 3, 0, /*
 Return a list of the charsets in the region between START and END.
 BUFFER defaults to the current buffer if omitted.
@@ -1562,12 +1569,110 @@ BUFFER defaults to the current buffer if omitted.
   for (i = 0; i < Dynarr_length (charset_dyn); i++)
     {
       Lisp_Object charset = Dynarr_at (charset_dyn, i);
-      charset_list = Fcons (charset, charset_list);
+      charset_list = Fcons (XCHARSET_NAME (charset), charset_list);
     }
 
   Dynarr_free (charset_dyn);
   return Fnreverse (charset_list);
 }
+
+#if 0 /* awaits my latest-fix ws */
+
+static void
+split_combined_codepoint (Lisp_Object charset, Lisp_Object codepoint,
+			  int *c1, int *c2)
+{
+  EMACS_INT cp;
+  CHECK_NATNUM (codepoint);
+  cp = XINT (codepoint);
+  *c1 = cp >> 8;
+  *c2 = cp & 255;
+  check_int_range (*c1, XCHARSET_MIN_CODE (charset, 0),
+		   XCHARSET_MAX_CODE (charset, 0));
+  check_int_range (*c2, XCHARSET_MIN_CODE (charset, 1),
+		   XCHARSET_MAX_CODE (charset, 1));
+}
+
+DEFUN ("map-charset-chars", Fmap_charset_chars, 2, 5, 0, /*
+Call FUNCTION for all or a range of characters in CHARSET.
+FUNCTION is called with two arguments: a cons (FROM . TO), where FROM and TO
+indicate a range of characters contained in CHARSET, and ARG.  For
+compatibility with GNU Emacs, FUNCTION will be called with two arguments
+whether or not ARG is given.
+
+The optional 4th and 5th arguments FROM-CODE and TO-CODE specify a
+range of codepoints in CHARSET to map over; if omitted, the entire
+set of characters in CHARSET is mapped over.  If CHARSET has one dimension,
+FROM-CODE and TO-CODE are simply codepoints.  However, if CHARSET has two
+dimensions, FROM-CODE and TO-CODE are multiplexed codepoints, where the
+octets C1 and C2 are stored in the high and low byte, respectively.
+*/
+       (func, charset, arg, from_code, to_code))
+{
+  int low_c1, low_c2, high_c1, high_c2;
+  int c1, c2;
+
+  charset = Fget_charset (charset);
+  split_combined_codepoint (charset, from_code, &low_c1, &low_c2);
+  split_combined_codepoint (charset, to_code, &high_c1, &high_c2);
+
+#ifndef UNICODE_INTERNAL
+  {
+    int i;
+
+    for (i = low_c1; i <= high_c1; i++)
+      {
+	Ichar low =
+	  charset_codepoint_to_ichar (charset, i, low_c2, CONVERR_FAIL);
+	Ichar high =
+	  charset_codepoint_to_ichar (charset, i, high_c2, CONVERR_FAIL);
+	assert (low >= 0);
+	assert (high >= 0);
+	call2 (func, Fcons (make_char (low), make_char (high)), arg);
+      }
+  }
+#else
+  {
+    /* #### Perhaps we should use a range table instead? */
+    unsigned_char_dynarr *seen = Dynarr_new (unsigned_char);
+    
+    int i, j;
+
+    /* First, make a note of all Unicode codepoints seen in charset. */
+    for (i = low_c1; i <= high_c1; i++)
+      for (j = low_c2; j <= high_c2; j++)
+	{
+	  int code = charset_codepoint_to_unicode (charset, i, j);
+	  if (code >= 0)
+	    Dynarr_set (seen, code, 1);
+	}
+
+    /* Now, go through and snarf off the ranges */
+    for (i = 0; i < Dynarr_length (seen); i++)
+      {
+	/* If we've seen a 1 ... */
+	if (Dynarr_at (seen, i))
+	  {
+	    /* If this is the first time, make note of it */
+	    if (j == -1)
+	      j = i;
+	  }
+	/* Else, we've seen a 0.  If we have a beginning of range noted,
+	   we've just passed the end of the range, so we've got a range. */
+	else if (j != -1)
+	  {
+	    call2 (func, Fcons (make_char (j), make_char (i - 1)), arg);
+	    j = -1;
+	  }
+      }
+
+    Dynarr_free (seen);
+#endif /* UNICODE_INTERNAL */
+  
+  return Qnil;
+}
+
+#endif /* 0 */
 
 
 /************************************************************************/
@@ -1598,12 +1703,10 @@ DEFUN ("charset-memory-usage", Fcharset_memory_usage, 1, 1, 0, /*
 Return stats about the memory usage of charset CHARSET.
 The values returned are in the form of an alist of usage types and
 byte counts.  The byte counts attempt to encompass all the memory used
-by the charset (separate from the memory logically associated with a
-charset or frame), including internal structures and any malloc()
+by the charset, including internal structures and any malloc()
 overhead associated with them.  In practice, the byte counts are
 underestimated for various reasons, e.g. because certain memory usage
-is very hard to determine \(e.g. the amount of memory used inside the
-Xt library or inside the X server).
+is very hard to determine.
 
 Multiple slices of the total memory usage may be returned, separated
 by a nil.  Each slice represents a particular view of the memory, a

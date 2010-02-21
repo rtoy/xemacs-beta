@@ -1,3 +1,30 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* subr.el:
+	* subr.el (backtrace-in-condition-handler-eliminating-handler):
+	Use minimal matching to try to avoid possible stack-overflow errors.
+	* subr.el (with-trapping-errors):
+	Add :debug argument for calling the debugger.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	* mule/mule-category.el:
+	* mule/mule-category.el (predefined-category-list):
+	* mule/mule-category.el (kanji-Greek-Upper):
+	* mule/mule-category.el (kanji-kanji-char):
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charset-iso-2022-p): New.
+	* mule/mule-charset.el (map-charset-chars): Removed.
+	* mule/mule-charset.el (charset-ccl-program):
+	* mule/uni-case-conv.el:
+	* mule/uni-case-conv.el (for):
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (use-unidata-case-tables):
+	* dumped-lisp.el (preloaded-file-list):
+
 2010-02-04  Ben Wing  <ben@xemacs.org>
 
 	* mule/general-early.el (setup-case-pairs):

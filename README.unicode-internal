@@ -1,3 +1,94 @@
+2-16-10
+
+BUGS:
+
+1.
+Fix map-charset-chars to be compatible with GNU Emacs, so that we can
+incorporate much of characters.el.
+
+It's documented as:
+
+DEFUN ("map-charset-chars", Fmap_charset_chars, Smap_charset_chars, 2, 5, 0,
+     (function, charset, arg, from_code, to_code)
+       Lisp_Object function, charset, arg, from_code, to_code;
+
+Call FUNCTION for all characters in CHARSET.
+FUNCTION is called with an argument RANGE and the optional 3rd
+argument ARG.
+
+RANGE is a cons (FROM .  TO), where FROM and TO indicate a range of
+characters contained in CHARSET.
+
+The optional 4th and 5th arguments FROM-CODE and TO-CODE specify the
+range of code points (in CHARSET) of target characters.  */)
+
+Note also: I commented out charset chinese-cns11643-1 for category ?t.
+We need to junk what we've got, incorporate characters.el which the new
+categories, and fix whatever stuff references the old categories
+(e.g. word-across-newline) -- maybe just sync with the latest version of
+fill.el.
+
+2. etc/HELLO:
+
+Big5 doesn't show up, third char of four GB chars doesn't show up, Greek
+doesn't show up.  Some of the GB chars look grayed out.
+
+3. `make check' fails in various ways (but less than before).
+
+
+
+2-14-10
+
+Bugs #1 and #4 below were due to bad case tables, which boiled down to a
+combination of questionable entries in uni-case-conv.el and a regexp bug
+in searching for negated ranges, which led to uni-case-conv.el getting
+byte-compiled incorrectly.
+
+FIXME: There are three translations in uni-case-conv that I had to disable.
+Those three translations overwrite the lowercase->capital mapping for s,
+k, and a with ring above it.  Probably the first two are the important
+ones.  With these three mappings (which come from the Unidata case-
+conversion info), byte-compilation messes up -- remove all the .elc files
+and recompile and it seems to work, but then during loadup in preparation
+for dumping you get a crash due to stack underflow while loading
+behavior-defs.el (the particular file may change).  This crash also
+occurs if you add uni-case-conv to the standard repo -- it's not specific
+to Unicode-internal.
+
+FIXME: Currently I just hacked those three translations by moving them to
+the top, so good translations overwrite them.  We want to do the equivalent
+in a less ad-hoc fashion by looking to see whether existing conversions
+exist, and if so making sure we put them back after adding the new conversion.
+Modify the python script that creates uni-case-conv.el to do this --
+there's already some commented out code that does something similar.
+
+1. Open up bad-c-fill-paragraph.h.
+
+Try filling the paragraph "We define ..." or "To use, ..." near the top, and
+you'll see that it's filling the paragraphs to an exact fixed number of
+chars, splitting words, sometimes removing spaces, etc.
+
+NOTE NOTE: This apparently doesn't happen when not Unicode-internal.  What
+changes?  Also, check whether the default syntax class is correct --
+apparently it was changed to `word' at some point, did we get the change
+merged?
+
+PARTIAL ANSWER: (looking-at word-across-newline) behaves differently -- it
+returns `t' at the beginning of a line when it should return `nil'.
+
+ANSWER: Category ?t contained ASCII characters because it contained all characters
+in charset chinese-cns11643-1, which contains ASCII characters in it (yuck).
+@@#### We need to incorporate the GNU Emacs categories in characters.el, and first
+add a few functions to support it.
+
+2. etc/HELLO:
+
+Big5 doesn't show up, third char of four GB chars doesn't show up, Greek
+doesn't show up.  Some of the GB chars look grayed out.
+
+3. `make check' fails in various ways.
+
+
 2-10-10
 
 BUGS noticed running 0bui:

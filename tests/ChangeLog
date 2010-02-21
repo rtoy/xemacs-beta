@@ -1,3 +1,8 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Various fixes to make tests more correct in Unicode-internal.
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el (let):

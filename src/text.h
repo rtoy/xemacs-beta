@@ -350,6 +350,15 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define MAX_ICHAR_LEN 4
 #endif
 
+#ifdef UNICODE_INTERNAL
+#define FIRST_TRAILING_BYTE 0x80
+#define LAST_TRAILING_BYTE 0xBF
+#else
+#define FIRST_TRAILING_BYTE 0xA0
+#define LAST_TRAILING_BYTE 0xFF
+#endif
+
+
 #ifndef UNICODE_INTERNAL
 
 /************************************************************************/

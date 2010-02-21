@@ -6,6 +6,7 @@
 This includes every package that is loaded directly by a package listed
 in dumped-lisp.el and is not itself listed.")
 
+(provide 'use-unidata-case-tables)
 
 ;; WARNING WARNING WARNING: None of the files below, until where it says
 ;; "All files after this can have extended characters in them", can have
@@ -234,12 +235,10 @@ in dumped-lisp.el and is not itself listed.")
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))
 	 "mule/mule-msw-init-late")
 
-       (when (featurep 'mule)
-	 '(
-	   ;; in old-Mule, must be loaded after all charsets created
-	   "mule/uni-case-conv"
-	   "mule/general-late"
-	   ))
+       ;; in old-Mule, must be loaded after all charsets created
+       (when (and (featurep 'mule) (featurep 'use-unidata-case-tables))
+	 "mule/uni-case-conv")
+       (when (featurep 'mule) "mule/general-late")
 
 ;;; mule-load.el ends here
 

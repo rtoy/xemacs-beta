@@ -1,3 +1,77 @@
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (CHARSET_MIN_CODE):
+	* charset.h (XCHARSET_MIN_CODE):
+	* charset.h (XCHARSET_ALGO_LOW):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* mule-charset.c (get_charset_limits):
+	New macros X?CHARSET_(MIN|MAX)_CODE.  Use them instead of
+	XCHARSET_OFFSET, XCHARSET_CHARS when appropriate.
+	
+	* mule-charset.c (Fcharset_property):
+	When no final byte, return nil instead of ?\^@; fixes some `make
+	check' issues.
+
+	* mule-charset.c (Fcharsets_in_region):
+	Return name of charsets, not charset objects; fixes some `make
+	check' issues.
+	
+	* mule-charset.c (Fmap_charset_chars):
+	New function, #if 0 still.
+
+	* mule-charset.c (Fcharset_memory_usage):
+	Fix doc string.
+
+	* chartab.c:
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (Fchar_table_memory_usage):
+	* chartab.c (syms_of_chartab):
+	New function char-table-memory-usage.
+	
+	* eval.c:
+	Better doc string for `debugger'.
+	
+	* lisp.h:
+	* lisp.h (UNICODE_PRIVATE_MAX):
+	* lisp.h (enum unicode_encoding_type):
+	* text.c (get_external_unicode_codepoint):
+	* unicode.c (struct unicode_coding_system):
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.c (unicode_putprop):
+	* unicode.c (decode_unicode):
+	Rename `enum unicode_class' to `enum unicode_allow'.
+	Rename `enum unicode_type' to `enum unicode_encoding_type'.
+	Create UNICODE_OFFICIAL_MAX, UNICODE_PRIVATE_MAX and
+	EMACS_INT_UNICODE_PRIVATE_MAX.  Use in valid_unicode_codepoint_p().
+	Add an allow-private arg to decode_unicode(); use it, and review
+	places where Unicode codepoints are called for to see whether they
+	should allow private or not.
+	
+	* mule-coding.c:
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* mule-coding.c (decode_big5_char):
+	* mule-coding.c (Fdecode_big5_char):
+	Don't allow a second arg `handle-error' to `decode-big5-char',
+	just return nil on error.  Don't crash when unable to decode
+	a Shift-JIS char, just return nil; fixes some `make check' issues.
+	
+	* regex.c (re_compile_fastmap):
+	* text.h:
+	Fix a bug in computing the fastmap; fixes some `make check' issues.
+	Also do a better job determining the exact fastmap bounds of a
+	Unicode range.  Create FIRST_TRAILING_BYTE and LAST_TRAILING_BYTE
+	for use in this computation.
+	
+	* text.c:
+	* text.c (ibyte_string_displayed_columns):
+	* text.c (ichar_string_displayed_columns):
+	Don't abort when non-Mule, since some of these functions are used
+	in non-Mule.
+
 2010-02-16  Ben Wing  <ben@xemacs.org>
 
 	* frame-impl.h:

@@ -3976,31 +3976,77 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		   include the beginning or ending characters will be in
 		   the fastmap unless the beginning or ending characters
 		   are the first or last character, respectively, that uses
-		   this lead byte. @@#### We should try to determine
-		   whether this is the case.  Currently we just assume it's
-		   not. */
+		   this lead byte.
+
+		   @@#### WARNING! In order to determine whether we are the
+		   first or last character using a lead byte we use and
+		   embed in the code some knowledge of how UTF-8 works --
+		   at least, the fact that the the first character using a
+		   particular lead byte has the minimum-numbered trailing
+		   byte in all its trailing bytes, and the last character
+		   using a particular lead byte has the maximum-numbered
+		   trailing byte in all its trailing bytes.  We abstract
+		   away the actual minimum/maximum trailing byte numbers,
+		   at least.  We could perhaps do this more portably by
+		   just looking at the representation of the character one
+		   higher or lower and seeing if the lead byte changes, but
+		   you'd run into the problem of invalid characters, e.g.
+		   if you're at the edge of the range of surrogates or are
+		   the top-most allowed character.
+		   */
 		if (first < 0x80)
 		  firstlead = first;
 		else
 		  {
 		    Ibyte strr[MAX_ICHAR_LEN];
-		    set_itext_ichar (strr, first);
-		    firstlead = *strr + 1;
+		    Bytecount slen = set_itext_ichar (strr, first);
+		    int kk;
+		    /* Determine if we're the first character using our
+		       leading byte. */
+		    for (kk = 1; kk < slen; kk++)
+		      if (strr[kk] != FIRST_TRAILING_BYTE)
+			{
+			  /* If not, this leading byte might occur, so
+			     make sure it gets added to the fastmap. */
+			  firstlead = *strr + 1;
+			  break;
+			}
+		    /* Otherwise, we're the first character using our
+		       leading byte, and we don't need to add the leading
+		       byte to the fastmap. (If our range doesn't
+		       completely cover the leading byte, it will get added
+		       anyway by the code handling the other end of the
+		       range.) */
+		    firstlead = *strr;
 		  }
 		if (last < 0x80)
 		  lastlead = last;
 		else
 		  {
 		    Ibyte strr[MAX_ICHAR_LEN];
-		    set_itext_ichar (strr, last);
-		    lastlead = *strr - 1;
+		    Bytecount slen = set_itext_ichar (strr, last);
+		    int kk;
+		    /* Same as above but for the last character using
+		       our leading byte. */
+		    for (kk = 1; kk < slen; kk++)
+		      if (strr[kk] != LAST_TRAILING_BYTE)
+			{
+			  lastlead = *strr - 1;
+			  break;
+			}
+		    lastlead = *strr;
 		  }
+		/* Now, FIRSTLEAD and LASTLEAD are set to the beginning and
+		   end, inclusive, of a range of lead bytes that cannot be
+		   in the fastmap.  Essentially, we want to set all the other
+		   bytes to be in the fastmap.  Here we handle those after
+		   the previous range and before this one. */
 		for (jj = smallest_prev; jj < firstlead; jj++)
 		  fastmap[jj] = 1;
-		smallest_prev = last + 1;
+		smallest_prev = lastlead + 1;
 	      }
 
-	    /* Also set lead bytes after the end */
+	    /* Also set lead bytes after the end of the final range. */
 	    for (j = smallest_prev; j < 0x100; j++)
 	      fastmap[j] = 1;
 

@@ -468,7 +468,7 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 DEFUN ("decode-shift-jis-char", Fdecode_shift_jis_char, 1, 1, 0, /*
 Decode a JISX0208 character of Shift-JIS coding-system.
 CODE is the character code in Shift-JIS as a cons of type bytes.
-Return the corresponding character.
+Return the corresponding character, or nil if no character can be found.
 */
        (code))
 {
@@ -482,9 +482,14 @@ Return the corresponding character.
   if (byte_shift_jis_two_byte_1_p (s1) &&
       byte_shift_jis_two_byte_2_p (s2))
     {
+      Ichar ch;
       DECODE_SHIFT_JIS (s1, s2, c1, c2);
-      return make_char (charset_codepoint_to_ichar
-			(Vcharset_japanese_jisx0208, c1, c2, CONVERR_FAIL));
+      ch = charset_codepoint_to_ichar
+	(Vcharset_japanese_jisx0208, c1, c2, CONVERR_FAIL);
+      if (ch >= 0)
+	return make_char (ch);
+      else
+	return Qnil;
     }
   else
     return Qnil;
@@ -807,10 +812,11 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 }
 
 static Ichar
-decode_big5_char (int b1, int b2, enum converr fail)
+decode_big5_char (int b1, int b2)
 {
 #ifdef UNICODE_INTERNAL
-  return charset_codepoint_to_ichar (Vcharset_chinese_big5, b1, b2, fail);
+  return charset_codepoint_to_ichar (Vcharset_chinese_big5, b1, b2,
+				     CONVERR_FAIL);
 #else /* not UNICODE_INTERNAL */
   if (byte_big5_two_byte_1_p (b1) &&
       byte_big5_two_byte_2_p (b2))
@@ -819,11 +825,10 @@ decode_big5_char (int b1, int b2, enum converr fail)
       int c1, c2;
 
       DECODE_BIG5 (b1, b2, charset, c1, c2);
-      return charset_codepoint_to_ichar (charset, c1, c2, fail);
+      return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
     }
   else
-    HANDLE_ICHAR_ERROR ("Can't convert Big5 codepoint to character",
-			list2 (make_int (b1), make_int (b2)), fail);
+    return -1;
 #endif /* UNICODE_INTERNAL */
 }
 
@@ -848,7 +853,7 @@ big5_char_to_fake_codepoint (int b1, int b2, Lisp_Object *charset, int *c1,
 
 #endif /* not UNICODE_INTERNAL */
 
-DEFUN ("decode-big5-char", Fdecode_big5_char, 1, 2, 0, /*
+DEFUN ("decode-big5-char", Fdecode_big5_char, 1, 1, 0, /*
 Convert Big Five character codes in CODE into a character.
 CODE is a cons of two integers specifying the codepoints in Big Five.
 Return the corresponding character, or nil if the codepoints are out of range.
@@ -857,23 +862,15 @@ The term `decode' is used because the codepoints can be viewed as the
 representation of the character in the external Big Five encoding, and thus
 converting them to a character is analogous to any other operation that
 decodes an external representation.
-
-HANDLE-ERROR controls error behavior:
-
-nil or `fail'	Return nil
-`abort'		Signal an error
-`succeed'	Same as `substitute'
-`substitute'	Substitute a '?' character
 */
-       (code, handle_error))
+       (code))
 {
   Ichar ch;
-  enum converr fail = decode_handle_error (handle_error, 0);
 
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
   CHECK_INT (XCDR (code));
-  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)), fail);
+  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)));
   if (ch < 0)
     return Qnil;
   else
