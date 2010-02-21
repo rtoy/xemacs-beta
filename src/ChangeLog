@@ -1,5 +1,13 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
+	* mule-charset.c:
+	* mule-charset.c (split_combined_codepoint):
+	* mule-charset.c (Fmap_charset_chars):
+	* mule-charset.c (syms_of_mule_charset):
+	map-charset-chars moved to C.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
 	* charset.h:
 	* charset.h (CHARSET_MIN_CODE):
 	* charset.h (XCHARSET_MIN_CODE):

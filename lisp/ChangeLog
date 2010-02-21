@@ -1,5 +1,21 @@
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
+	* mule/general-late.el (eval-when-compile):
+	map-charset-chars interface has changed.
+	
+	* mule/mule-category.el:
+	* mule/mule-category.el (kanji-kanji-char):
+	Separate double-width Kanji Greek and Cyrillic chars don't exist
+	in Unicode-internal, so use decode-coding-string to encode them
+	rather than doing it directly, to avoid problems when saving the
+	file in Unicode-internal.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (map-charset-chars): Removed.
+	map-charset-chars moved to C.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
 	* subr.el:
 	* subr.el (backtrace-in-condition-handler-eliminating-handler):
 	Use minimal matching to try to avoid possible stack-overflow errors.

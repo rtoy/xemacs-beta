@@ -1576,21 +1576,32 @@ BUFFER defaults to the current buffer if omitted.
   return Fnreverse (charset_list);
 }
 
-#if 0 /* awaits my latest-fix ws */
+/* Split up multiplexed CODEPOINT in charset CHARSET into C1 and C2.
+   If nil, substitute DEFAULT_C1 and DEFAULT_C2; else make sure it's an
+   integer and within range of the limits as specified in CHARSET. */
 
 static void
 split_combined_codepoint (Lisp_Object charset, Lisp_Object codepoint,
+			  int default_c1, int default_c2,
 			  int *c1, int *c2)
 {
-  EMACS_INT cp;
-  CHECK_NATNUM (codepoint);
-  cp = XINT (codepoint);
-  *c1 = cp >> 8;
-  *c2 = cp & 255;
-  check_int_range (*c1, XCHARSET_MIN_CODE (charset, 0),
-		   XCHARSET_MAX_CODE (charset, 0));
-  check_int_range (*c2, XCHARSET_MIN_CODE (charset, 1),
-		   XCHARSET_MAX_CODE (charset, 1));
+  if (NILP (codepoint))
+    {
+      *c1 = default_c1;
+      *c2 = default_c2;
+    }
+  else
+    {
+      EMACS_INT cp;
+      CHECK_NATNUM (codepoint);
+      cp = XINT (codepoint);
+      *c1 = cp >> 8;
+      *c2 = cp & 255;
+      check_int_range (*c1, XCHARSET_MIN_CODE (charset, 0),
+		       XCHARSET_MAX_CODE (charset, 0));
+      check_int_range (*c2, XCHARSET_MIN_CODE (charset, 1),
+		       XCHARSET_MAX_CODE (charset, 1));
+    }
 }
 
 DEFUN ("map-charset-chars", Fmap_charset_chars, 2, 5, 0, /*
@@ -1610,11 +1621,12 @@ octets C1 and C2 are stored in the high and low byte, respectively.
        (func, charset, arg, from_code, to_code))
 {
   int low_c1, low_c2, high_c1, high_c2;
-  int c1, c2;
 
   charset = Fget_charset (charset);
-  split_combined_codepoint (charset, from_code, &low_c1, &low_c2);
-  split_combined_codepoint (charset, to_code, &high_c1, &high_c2);
+  split_combined_codepoint (charset, from_code, XCHARSET_MIN_CODE (charset, 0),
+			    XCHARSET_MIN_CODE (charset, 1), &low_c1, &low_c2);
+  split_combined_codepoint (charset, to_code, XCHARSET_MAX_CODE (charset, 0),
+			    XCHARSET_MAX_CODE (charset, 1), &high_c1, &high_c2);
 
 #ifndef UNICODE_INTERNAL
   {
@@ -1635,18 +1647,22 @@ octets C1 and C2 are stored in the high and low byte, respectively.
   {
     /* #### Perhaps we should use a range table instead? */
     unsigned_char_dynarr *seen = Dynarr_new (unsigned_char);
-    
+    int depth = specpdl_depth ();
     int i, j;
+
+    record_unwind_protect_freeing_dynarr (seen);
 
     /* First, make a note of all Unicode codepoints seen in charset. */
     for (i = low_c1; i <= high_c1; i++)
       for (j = low_c2; j <= high_c2; j++)
 	{
-	  int code = charset_codepoint_to_unicode (charset, i, j);
+	  int code = charset_codepoint_to_unicode (charset, i, j,
+						   CONVERR_FAIL);
 	  if (code >= 0)
 	    Dynarr_set (seen, code, 1);
 	}
 
+    j = -1;
     /* Now, go through and snarf off the ranges */
     for (i = 0; i < Dynarr_length (seen); i++)
       {
@@ -1666,13 +1682,16 @@ octets C1 and C2 are stored in the high and low byte, respectively.
 	  }
       }
 
-    Dynarr_free (seen);
+    /* If the last codepoint is valid, we still have a range to process */
+    if (j != -1)
+      call2 (func, Fcons (make_char (j), make_char (i - 1)), arg);
+
+    unbind_to (depth);
+  }
 #endif /* UNICODE_INTERNAL */
   
   return Qnil;
 }
-
-#endif /* 0 */
 
 
 /************************************************************************/
@@ -1769,6 +1788,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fset_charset_registries);
   DEFSUBR (Fset_charset_tags);
   DEFSUBR (Fcharsets_in_region);
+  DEFSUBR (Fmap_charset_chars);
 
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fcharset_memory_usage);
