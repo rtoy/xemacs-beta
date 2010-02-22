@@ -1782,6 +1782,8 @@ syms_of_mc_alloc (void)
 
 /*--- incremental garbage collector ----------------------------------*/
 
+#if 0 /* currently unused */
+
 /* access dirty bit of page header */
 static void
 set_dirty_bit (page_header *ph, unsigned int value)
@@ -1840,6 +1842,8 @@ get_page_start (void *ptr)
 {
   return PH_HEAP_SPACE (get_page_header (ptr));
 }
+
+#endif /* 0 */
 
 /* Make PAGE_SIZE globally available. */
 EMACS_INT

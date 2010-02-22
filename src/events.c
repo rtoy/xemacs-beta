@@ -2134,11 +2134,12 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
      pointer points to random memory, often filled with 0, sometimes not.
    */
   /* #### Chuck, do we still need this crap? */
-  assert (NILP (ret_obj1) || GLYPHP (ret_obj1)
 #ifdef HAVE_TOOLBARS
-	  || TOOLBAR_BUTTONP (ret_obj1)
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1)
+	  || TOOLBAR_BUTTONP (ret_obj1));
+#else
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1));
 #endif
-	  );
   assert (NILP (ret_obj2) || EXTENTP (ret_obj2) || CONSP (ret_obj2));
 
   if (char_x)
