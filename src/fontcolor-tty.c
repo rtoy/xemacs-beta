@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty-impl.h"
 #include "insdel.h"
-#include "objects-tty-impl.h"
+#include "fontcolor-tty-impl.h"
 #include "device.h"
 #include "charset.h"
 
@@ -394,7 +394,7 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
 /************************************************************************/
 
 void
-syms_of_objects_tty (void)
+syms_of_fontcolor_tty (void)
 {
 #ifdef NEW_GC
   INIT_LRECORD_IMPLEMENTATION (tty_color_instance_data);
@@ -411,7 +411,7 @@ syms_of_objects_tty (void)
 }
 
 void
-console_type_create_objects_tty (void)
+console_type_create_fontcolor_tty (void)
 {
   /* object methods */
   CONSOLE_HAS_METHOD (tty, initialize_color_instance);
@@ -435,7 +435,7 @@ console_type_create_objects_tty (void)
 }
 
 void
-vars_of_objects_tty (void)
+vars_of_fontcolor_tty (void)
 {
   staticpro (&Vtty_color_alist);
   Vtty_color_alist = Qnil;

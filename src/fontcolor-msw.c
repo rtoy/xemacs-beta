@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    This file created by Jonathan Harris, November 1997 for 21.0; based
-   heavily on objects-x.c (see authorship there).  Much further work
+   heavily on fontcolor-x.c (see authorship there).  Much further work
    by Ben Wing.
  */
 
@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-msw-impl.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #include "buffer.h"
 #include "charset.h"
@@ -2257,12 +2257,12 @@ mswindows_color_list (void)
 /************************************************************************/
 
 void
-syms_of_objects_mswindows (void)
+syms_of_fontcolor_mswindows (void)
 {
 }
 
 void
-console_type_create_objects_mswindows (void)
+console_type_create_fontcolor_mswindows (void)
 {
   /* object methods */
   CONSOLE_HAS_METHOD (mswindows, initialize_color_instance);
@@ -2312,7 +2312,7 @@ console_type_create_objects_mswindows (void)
 }
 
 void
-reinit_vars_of_object_mswindows (void)
+reinit_vars_of_fontcolor_mswindows (void)
 {
 #ifdef MULE
   int i;
@@ -2331,7 +2331,7 @@ reinit_vars_of_object_mswindows (void)
 }
 
 void
-vars_of_objects_mswindows (void)
+vars_of_fontcolor_mswindows (void)
 {
 #ifdef MULE
   Vfont_signature_data =

@@ -1,3 +1,8 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* dbxrc.in:
+	Rename objects.c -> fontcolor.c.
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* tests/external-widget/Makefile: Add copyright and license

@@ -611,7 +611,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;; -- sjt 2007-10-06
 
 ;; This function is probably also used by the GTK platform.  Cf.
-;; gtk_color_list in src/objects-gtk.c.
+;; gtk_color_list in src/fontcolor-gtk.c.
 (defun x-color-list-internal ()
   (if (boundp 'x-color-list-internal-cache)
       x-color-list-internal-cache

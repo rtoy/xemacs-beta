@@ -1,3 +1,9 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	* internals/internals.texi (Modules for other Display-Related Lisp Objects):
+	objects*.[ch] -> fontcolor*.[ch].
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Intro to Window and Frame Geometry):

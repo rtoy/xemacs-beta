@@ -36,7 +36,7 @@
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 #include "ui-gtk.h"
 
 /* XEmacs specific GTK types */

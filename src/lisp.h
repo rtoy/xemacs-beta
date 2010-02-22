@@ -1528,8 +1528,8 @@ typedef struct extent *EXTENT; /* extents-impl.h */
 typedef struct Lisp_Event Lisp_Event; /* "events.h" */
 typedef struct Lisp_Face Lisp_Face;   /* "faces-impl.h" */
 typedef struct Lisp_Process Lisp_Process; /* "procimpl.h" */
-typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* objects-impl.h */
-typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* objects-impl.h */
+typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* fontcolor-impl.h */
+typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* fontcolor-impl.h */
 typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs.h */
 typedef struct Lisp_Gui_Item Lisp_Gui_Item;
 

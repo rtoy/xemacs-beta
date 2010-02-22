@@ -31,11 +31,11 @@ Boston, MA 02111-1307, USA.  */
  */
 
 
-#ifndef INCLUDED_objects_msw_impl_h_
-#define INCLUDED_objects_msw_impl_h_
+#ifndef INCLUDED_fontcolor_msw_impl_h_
+#define INCLUDED_fontcolor_msw_impl_h_
 
-#include "objects-impl.h"
-#include "objects-msw.h"
+#include "fontcolor-impl.h"
+#include "fontcolor-msw.h"
 
 struct mswindows_color_instance_data
 {
@@ -72,4 +72,4 @@ struct mswindows_font_instance_data
    Redisplay uses the "main" font when encounters this value */
 #define MSWINDOWS_BAD_HFONT ((HFONT)INVALID_HANDLE_VALUE)
 
-#endif /* INCLUDED_objects_msw_impl_h_ */
+#endif /* INCLUDED_fontcolor_msw_impl_h_ */

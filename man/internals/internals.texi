@@ -3139,21 +3139,21 @@ The following table contains cross-references from each module in XEmacs
 @item @file{number-mp.h} @tab
 @item @file{number.c} @tab
 @item @file{number.h} @tab
-@item @file{objects-gtk-impl.h} @tab
-@item @file{objects-gtk.c} @tab
-@item @file{objects-gtk.h} @tab
-@item @file{objects-impl.h} @tab
-@item @file{objects-msw-impl.h} @tab
-@item @file{objects-msw.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects-msw.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects-tty-impl.h} @tab
-@item @file{objects-tty.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects-tty.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects-x-impl.h} @tab
-@item @file{objects-x.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects-x.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{objects.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-gtk-impl.h} @tab
+@item @file{fontcolor-gtk.c} @tab
+@item @file{fontcolor-gtk.h} @tab
+@item @file{fontcolor-impl.h} @tab
+@item @file{fontcolor-msw-impl.h} @tab
+@item @file{fontcolor-msw.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-msw.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-tty-impl.h} @tab
+@item @file{fontcolor-tty.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-tty.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-x-impl.h} @tab
+@item @file{fontcolor-x.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor-x.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
+@item @file{fontcolor.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{opaque.c} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{opaque.h} @tab @ref{Modules for Other Aspects of the Lisp Interpreter and Object System}.
 @item @file{paths.h.in} @tab
@@ -18820,14 +18820,14 @@ probably be merged into @file{redisplay-tty.c}.
 
 
 @example
-@file{objects-msw.c}
-@file{objects-msw.h}
-@file{objects-tty.c}
-@file{objects-tty.h}
-@file{objects-x.c}
-@file{objects-x.h}
-@file{objects.c}
-@file{objects.h}
+@file{fontcolor-msw.c}
+@file{fontcolor-msw.h}
+@file{fontcolor-tty.c}
+@file{fontcolor-tty.h}
+@file{fontcolor-x.c}
+@file{fontcolor-x.h}
+@file{fontcolor.c}
+@file{fontcolor.h}
 @end example
 
 

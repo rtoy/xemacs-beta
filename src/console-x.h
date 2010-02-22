@@ -98,7 +98,7 @@ void x_handle_selection_clear (XSelectionClearEvent *event);
 void x_handle_property_notify (XPropertyEvent *event);
 
 void Xatoms_of_select_x (struct device *d);
-void Xatoms_of_objects_x (struct device *d);
+void Xatoms_of_fontcolor_x (struct device *d);
 
 void x_wm_set_shell_iconic_p (Widget shell, int iconic_p);
 void x_wm_set_cell_size (Widget wmshell, int cw, int ch);

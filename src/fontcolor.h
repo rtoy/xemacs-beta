@@ -21,8 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_objects_h_
-#define INCLUDED_objects_h_
+#ifndef INCLUDED_fontcolor_h_
+#define INCLUDED_fontcolor_h_
 
 DECLARE_DOESNT_RETURN (finalose (void *ptr));
 
@@ -76,4 +76,4 @@ void set_font_attached_to (Lisp_Object obj, Lisp_Object face,
 void set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
 				   Lisp_Object property);
 
-#endif /* INCLUDED_objects_h_ */
+#endif /* INCLUDED_fontcolor_h_ */

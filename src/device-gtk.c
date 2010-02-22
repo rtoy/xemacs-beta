@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk-impl.h"
 #include "gccache-gtk.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 #include "gtk-xemacs.h"
 
 #include "sysfile.h"
