@@ -61,7 +61,7 @@ in dumped-lisp.el and is not itself listed.")
        "faces"			; must be loaded before any make-face call
        ;;(pureload "facemenu") #### not yet ported
        "glyphs"
-       "objects"
+       "fontcolor"
        "extents"
        "events"
        "hash-table"

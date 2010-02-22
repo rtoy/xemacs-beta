@@ -31,12 +31,12 @@ Boston, MA 02111-1307, USA.  */
  */
 
 
-#ifndef INCLUDED_objects_msw_h_
-#define INCLUDED_objects_msw_h_
+#ifndef INCLUDED_fontcolor_msw_h_
+#define INCLUDED_fontcolor_msw_h_
 
-#include "objects.h"
+#include "fontcolor.h"
 
 HFONT mswindows_get_hfont (Lisp_Font_Instance *f, int under, int strike);
 Lisp_Object mswindows_color_to_string (COLORREF color);
 
-#endif /* INCLUDED_objects_msw_h_ */
+#endif /* INCLUDED_fontcolor_msw_h_ */

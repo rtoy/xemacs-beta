@@ -1288,7 +1288,7 @@ The variable x-library-search-path is use to locate the rgb.txt file."
 
 (defun font-tty-find-closest-color (r g b)
   ;; This is basically just a lisp copy of allocate_nearest_color
-  ;; from objects-x.c from Emacs 19
+  ;; from fontcolor-x.c from Emacs 19
   ;; We really should just check tty-color-list, but unfortunately
   ;; that does not include any RGB information at all.
   ;; So for now we just hardwire in the default list and call it

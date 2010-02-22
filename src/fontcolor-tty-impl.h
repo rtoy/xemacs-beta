@@ -21,11 +21,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
-#ifndef INCLUDED_objects_tty_impl_h_
-#define INCLUDED_objects_tty_impl_h_
+#ifndef INCLUDED_fontcolor_tty_impl_h_
+#define INCLUDED_fontcolor_tty_impl_h_
 
-#include "objects-impl.h"
-#include "objects-tty.h"
+#include "fontcolor-impl.h"
+#include "fontcolor-tty.h"
 
 struct tty_color_instance_data
 {
@@ -79,4 +79,4 @@ DECLARE_LRECORD (tty_font_instance_data, struct tty_font_instance_data);
 
 #define FONT_INSTANCE_TTY_CHARSET(c) (TTY_FONT_INSTANCE_DATA (c)->charset)
 
-#endif /* INCLUDED_objects_tty_impl_h_ */
+#endif /* INCLUDED_fontcolor_tty_impl_h_ */

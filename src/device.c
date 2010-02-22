@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame-impl.h"
 #include "keymap.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysdep.h"

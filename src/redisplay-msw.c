@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 

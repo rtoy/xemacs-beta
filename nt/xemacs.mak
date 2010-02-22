@@ -515,7 +515,7 @@ OPT_OBJS=$(OPT_OBJS) \
 	$(OUTDIR)\frame-msw.obj \
 	$(OUTDIR)\glyphs-msw.obj \
 	$(OUTDIR)\gui-msw.obj \
-	$(OUTDIR)\objects-msw.obj \
+	$(OUTDIR)\fontcolor-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\select-msw.obj \
 	$(OUTDIR)\dired-msw.obj
@@ -903,7 +903,7 @@ TEMACS_COMMON_OBJS= \
 #	#### Leave the next one out when integrating my working ws
 	$(OUTDIR)\nt.obj \
 	$(OUTDIR)\ntplay.obj \
-	$(OUTDIR)\objects.obj \
+	$(OUTDIR)\fontcolor.obj \
 	$(OUTDIR)\opaque.obj \
 	$(OUTDIR)\print.obj \
 	$(OUTDIR)\process.obj \

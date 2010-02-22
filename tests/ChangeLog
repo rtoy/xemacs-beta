@@ -1,3 +1,8 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* reproduce-crashes.el (8):
+	objects*.[ch] -> fontcolor*.[ch].
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el (let):

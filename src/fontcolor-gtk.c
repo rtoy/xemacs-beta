@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 
 #include "console-gtk-impl.h"
-#include "objects-gtk-impl.h"
+#include "fontcolor-gtk-impl.h"
 
 /* sigh */
 #include "sysgdkx.h"
@@ -390,7 +390,7 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 
 /* Include the charset support, shared, for the moment, with X11.  */
 #define THIS_IS_GTK
-#include "objects-xlike-inc.c"
+#include "fontcolor-xlike-inc.c"
 
 
 /************************************************************************/
@@ -398,12 +398,12 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 /************************************************************************/
 
 void
-syms_of_objects_gtk (void)
+syms_of_fontcolor_gtk (void)
 {
 }
 
 void
-console_type_create_objects_gtk (void)
+console_type_create_fontcolor_gtk (void)
 {
   /* object methods */
 
@@ -429,7 +429,7 @@ console_type_create_objects_gtk (void)
 }
 
 void
-vars_of_objects_gtk (void)
+vars_of_fontcolor_gtk (void)
 {
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-x-objects", &debug_x_objects /*

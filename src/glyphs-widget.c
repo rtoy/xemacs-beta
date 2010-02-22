@@ -35,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gui.h"
 #include "insdel.h"
 #include "lstream.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "opaque.h"
 #include "window.h"
 

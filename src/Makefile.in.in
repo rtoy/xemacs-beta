@@ -132,7 +132,7 @@ gui_objs += toolbar.o
 
 #ifdef HAVE_X_WINDOWS
 x_objs=console-x.o device-x.o event-Xt.o frame-x.o \
- glyphs-x.o objects-x.o redisplay-x.o select-x.o gccache-x.o intl-x.o
+ glyphs-x.o fontcolor-x.o redisplay-x.o select-x.o gccache-x.o intl-x.o
 #ifdef HAVE_XFT
 x_objs += font-mgr.o
 #endif
@@ -144,18 +144,18 @@ x_gui_objs += toolbar-xlike.o
 
 #ifdef HAVE_MS_WINDOWS
 mswindows_objs=console-msw.o device-msw.o event-msw.o frame-msw.o \
-  objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o
+  fontcolor-msw.o select-msw.o redisplay-msw.o glyphs-msw.o
 mswindows_gui_objs=$(gui_objs:.o=-msw.o)
 #endif
 
 #ifdef HAVE_TTY
-tty_objs=console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o \
+tty_objs=console-tty.o device-tty.o event-tty.o frame-tty.o fontcolor-tty.o \
  redisplay-tty.o cm.o
 #endif
 
 #ifdef HAVE_GTK
 gtk_objs=console-gtk.o device-gtk.o event-gtk.o frame-gtk.o \
- objects-gtk.o redisplay-gtk.o glyphs-gtk.o select-gtk.o gccache-gtk.o \
+ fontcolor-gtk.o redisplay-gtk.o glyphs-gtk.o select-gtk.o gccache-gtk.o \
  gtk-xemacs.o ui-gtk.o
 gtk_gui_objs=$(gui_objs:.o=-gtk.o)
 #ifdef HAVE_TOOLBARS
@@ -288,7 +288,7 @@ objs=\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
  $(new_gc_objs) $(vdb_objs) \
  macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
- $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
+ $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) fontcolor.o\
  opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\

@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 
 #include "sysfile.h"
 #include "systime.h"
@@ -924,7 +924,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_X_GRAY_PIXMAP (d) = None;
   Xatoms_of_device_x (d);
   Xatoms_of_select_x (d);
-  Xatoms_of_objects_x (d);
+  Xatoms_of_fontcolor_x (d);
   x_init_device_class (d);
 }
 

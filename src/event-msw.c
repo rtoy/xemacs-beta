@@ -83,7 +83,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-stream-impl.h"
 #include "console-msw-impl.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #ifdef HAVE_SCROLLBARS
 # include "scrollbar-msw.h"
