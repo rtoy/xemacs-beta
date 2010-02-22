@@ -1,3 +1,9 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/case-tests.el:
+	* automated/case-tests.el (downcase1):
+	Fix so that `make check' no longer fails on this file.
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el (let):
