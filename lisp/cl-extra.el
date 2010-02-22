@@ -612,6 +612,17 @@ Return 3 values:
 	  ((memq (car plst) indicator-list)
 	   (return (values (car plst) (cadr plst) plst))))))
 
+;; See our compiler macro in cl-macs.el, we will only pass back the
+;; actual lambda list in interpreted code or if we've been funcalled
+;; (from #'apply or #'mapcar or whatever).
+(defun constantly (value &rest more-values)
+  "Construct a function always returning VALUE, and possibly MORE-VALUES.
+
+The constructed function accepts any number of arguments, and ignores them.
+
+Members of MORE-VALUES, if provided, will be passed as multiple values; see
+`multiple-value-bind' and `multiple-value-setq'."
+  `(lambda (&rest ignore) (values-list ',(cons value more-values))))
 
 ;;; Hash tables.
 
