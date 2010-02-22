@@ -1,3 +1,10 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* mule/thai.el ("Thai"):
+	* mule/thai.el (thai):
+	Don't set input method as thai-kesmanee, this isn't currently working
+	in quail.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* mule/general-late.el (eval-when-compile):
