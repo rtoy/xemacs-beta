@@ -52,6 +52,11 @@
 	* alloc.c (object_memory_usage_stats):
 	Clean up duplication.
 
+2010-02-21  Ben Wing  <ben@xemacs.org>
+
+	* extents.c (process_extents_for_insertion_mapper):
+	Assertion wasn't quite set up correctly in previous patch.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* EmacsFrame.c:
