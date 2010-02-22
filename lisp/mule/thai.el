@@ -62,7 +62,7 @@
 	  (coding-system thai-tis620)
 	  (coding-priority thai-tis620)
 	  (nonascii-translation . thai-tis620)
-	  (input-method . "thai-kesmanee")
+	  ;;(input-method . "thai-kesmanee")@@#### not working in XEmacs quail
 	  (unibyte-display . thai-tis620)
 	  (features thai-util)
 	  (sample-text 
@@ -76,9 +76,6 @@
 		'(("\\c0\\c4\\|\\c0\\(\\c2\\|\\c3\\)\\c4?" .
 		   thai-composition-function))
 		composition-function-table)
-
-;; @@#### Where are thai-composition-function, thai-compose-string, and
-;; thai-post-read-conversion?
 
 (provide 'thai)
 
