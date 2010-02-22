@@ -1,3 +1,14 @@
+2010-02-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (constantly): 
+	Add this function, from ANSI Common Lisp, using the SBCL extension
+	that extra arguments to it are passed back as multiple values in
+	the constructed function.
+	* cl-macs.el (constantly):
+	In the compiler macro for #'constantly, construct a
+	compiled-function object almost every time, at compile time when
+	all arguments are constant, and at runtime when they vary.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* help.el (describe-function-1):
