@@ -1,3 +1,8 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (object_memory_usage_stats):
+	Remove unused var.
+
 2010-02-21  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
