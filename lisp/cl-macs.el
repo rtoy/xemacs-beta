@@ -3551,6 +3551,41 @@ the byte optimizer in those cases."
 (define-compiler-macro notevery (&whole form &rest cl-rest)
   (cons 'not (cons 'every (cdr cl-rest))))
 
+(define-compiler-macro constantly (&whole form value &rest more-values)
+  (cond
+   ((< (length form) 2)
+    ;; Error at runtime:
+    form)
+   ((cl-const-exprs-p (cdr form))
+    `#'(lambda (&rest ignore) (values ,@(cdr form))))
+   (t
+    (let* ((num-values (length (cdr form)))
+	   (placeholders-counts (make-vector num-values -1))
+	   (placeholders (loop
+			   for i from 0 below num-values
+			   collect (make-symbol (format "%d" i))))
+	   (compiled
+	    (byte-compile-sexp
+	     `#'(lambda (&rest ignore)
+		  ;; Compiles to a references into the compiled function
+		  ;; constants vector:
+		  (values ,@(mapcar #'quote-maybe placeholders)))))
+	   position)
+      `(make-byte-code '(&rest ignore)
+	,(compiled-function-instructions compiled)
+	(vector ,@(loop
+		    for constant across (compiled-function-constants compiled)
+		    collect (if (setq position
+				      (position constant placeholders))
+				(prog2
+				    (incf (aref placeholders-counts position))
+				    (nth position (cdr form)))
+			      (quote-maybe constant))
+		    finally
+		    (assert (every #'zerop placeholders-counts)
+			    t "Placeholders should each have been used once")))
+	,(compiled-function-stack-depth compiled))))))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
