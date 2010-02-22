@@ -1,3 +1,14 @@
+2010-02-21  Vin Shelton  <acs@xemacs.org>
+
+	* events.c (event_pixel_translation): Simplify assertion for
+	Visual C 6.
+
+2010-02-21  Ben Wing  <ben@xemacs.org>
+
+	* gc.c (kkcc_marking): Fix compile error.
+	* mc-alloc.c:
+	#if 0 out some unused functions.
+
 2010-02-21  Ben Wing  <ben@xemacs.org>
 
 	* extents.c (process_extents_for_insertion_mapper):
