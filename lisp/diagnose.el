@@ -1,6 +1,6 @@
 ;;; diagnose.el --- routines for debugging problems in XEmacs
 
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: dumped
@@ -197,29 +197,33 @@
 			 (intern (concat (match-string 1 (symbol-name stat))
 					 "-storage-including-overhead"))))
 		       (storage-count 
-			(or (plist-get 
-			     plist 
-			     (intern 
-			      (concat (match-string 1 (symbol-name stat)) 
-				      "s-used")))
+			(or (loop for str in '("s-used" "es-used" "-used")
+			      for val = (plist-get
+					 plist
+					 (intern
+					  (concat (match-string
+						   1 (symbol-name stat)) 
+						  str)))
+			      if val
+			      return val)
 			    (plist-get 
 			     plist 
 			     (intern 
-			      (concat (match-string 1 (symbol-name stat))
-				      "es-used")))
-			    (plist-get 
-			     plist 
-			     (intern 
-			      (concat (match-string 1 (symbol-name stat))
-				      "-used"))))))
+			      (concat (substring
+				       (match-string 1 (symbol-name stat))
+				       0 -1)
+				      "ies-used")))
+			    )))
 		   (incf total-use storage-use)
 		   (incf total-use-overhead (if storage-use-overhead 
 						storage-use-overhead 
 					      storage-use))
-		   (incf total-count storage-count)
-		   (princ (format fmt
-				  (match-string 1 (symbol-name stat)) 
-				  storage-count storage-use)))))
+		   (incf total-count (or storage-count 0))
+		   (and (> storage-use 0)
+			(princ (format fmt
+				       (match-string 1 (symbol-name stat)) 
+				       (or storage-count "unknown")
+				       storage-use))))))
 	   plist)
 	  (princ "\n")
 	  (princ (format fmt "total" 
@@ -229,7 +233,7 @@
             (sort-numeric-fields -1
                                  (save-excursion
                                    (goto-char begin)
-                                   (forward-line 2)
+                                   (forward-line 3)
                                    (point))
                                  (save-excursion
                                    (forward-line -2)

@@ -1,3 +1,10 @@
+2010-02-21  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el:
+	* diagnose.el (show-object-memory-usage-stats):
+	Fix errors preventing this from working properly, account for
+	words like "entry" pluralized to "entries".
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* help.el (describe-function-1):
