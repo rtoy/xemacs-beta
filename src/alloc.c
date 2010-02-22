@@ -4537,7 +4537,6 @@ object_memory_usage_stats (int set_total_gc_usage)
         {
           Ascbyte buf[255];
           const Ascbyte *name = lrecord_implementations_table[i]->name;
-	  int len = strlen (name);
 
 	  if (lrecord_stats[i].bytes_in_use_including_overhead != 
 	      lrecord_stats[i].bytes_in_use)
