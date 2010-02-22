@@ -1022,7 +1022,7 @@ mark_lisp_object_block_contents_1 (const void *data,
    on the kkcc_gc_stack. This function processes all elements on the stack
    according to their descriptions. */
 static void
-kkcc_marking (USED_IF_NEW_GC (cnt))
+kkcc_marking (int USED_IF_NEW_GC (cnt))
 {
   kkcc_gc_stack_entry *stack_entry = 0;
   void *data = 0;
