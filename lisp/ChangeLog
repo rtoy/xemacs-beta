@@ -1,3 +1,31 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* obsolete.el:
+	* obsolete.el ('show-buffer): New.
+	* obsolete.el ('buffer-flush-undo): New.
+	* obsolete.el (buffer-local-value): New.
+	* obsolete.el (Info-default-directory-list): Removed.
+	* obsolete.el (x-color-values): New.
+	* obsolete.el (mswindows-color-list):
+	* obsolete.el (init-file-user): Removed.
+	* obsolete.el ('pui-add-install-directory): Removed.
+	* obsolete.el (line-beginning-position):
+	* obsolete.el ('line-beginning-position): New.
+	* obsolete.el ('line-end-position): New.
+	* obsolete.el (obsolete-throw): New.
+	* obsolete.el ('cl-mapc): New.
+	* obsolete.el ('byte-code-function-p): New.
+	* obsolete.el ('interactive-form): New.
+	* obsolete.el ('assq-delete-all): New.
+	* obsolete.el (makehash): New.
+	* obsolete.el ('user-original-login-name): Removed.
+	* obsolete.el ('isearch-yank-x-selection): Removed.
+	* obsolete.el ('isearch-yank-x-clipboard): Removed.
+	* obsolete.el ('display-column-mode): New.
+	Rearrange; create some new categories out of "misc" stuff,
+	put categories in alphabetical order, move remaning "misc"
+	stuff to bottom.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* help.el (describe-function-1):
