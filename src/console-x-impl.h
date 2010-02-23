@@ -88,7 +88,7 @@ struct x_device
   Atom Xatom_ATOM_PAIR;
   Atom Xatom_COMPOUND_TEXT;
 
-  /* allocated in Xatoms_of_objects_x */
+  /* allocated in Xatoms_of_fontcolor_x */
   Atom Xatom_FOUNDRY;
   Atom Xatom_FAMILY_NAME;
   Atom Xatom_WEIGHT_NAME;
@@ -218,7 +218,7 @@ DECLARE_LRECORD (x_device, Lisp_X_Device);
 #define DEVICE_XATOM_ATOM_PAIR(d) 	(DEVICE_X_DATA (d)->Xatom_ATOM_PAIR)
 #define DEVICE_XATOM_COMPOUND_TEXT(d) 	(DEVICE_X_DATA (d)->Xatom_COMPOUND_TEXT)
 
-/* allocated in Xatoms_of_objects_x */
+/* allocated in Xatoms_of_fontcolor_x */
 #define DEVICE_XATOM_FOUNDRY(d)		(DEVICE_X_DATA (d)->Xatom_FOUNDRY)
 #define DEVICE_XATOM_FAMILY_NAME(d)	(DEVICE_X_DATA (d)->Xatom_FAMILY_NAME)
 #define DEVICE_XATOM_WEIGHT_NAME(d)	(DEVICE_X_DATA (d)->Xatom_WEIGHT_NAME)

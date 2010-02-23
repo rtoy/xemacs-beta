@@ -1,3 +1,10 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.dsp:
+	* xemacs.mak:
+	* xemacs.mak (OPT_OBJS):
+	objects*.[ch] -> fontcolor*.[ch].
+
 2010-02-18  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak (INFO_FILES): Removed term.info.

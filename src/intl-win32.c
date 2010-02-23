@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "window-impl.h"
 
 #include "console-msw-impl.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #ifndef CYGWIN_HEADERS
 # include <mbctype.h>

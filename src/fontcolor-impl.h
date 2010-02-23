@@ -21,11 +21,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_objects_impl_h_
-#define INCLUDED_objects_impl_h_
+#ifndef INCLUDED_fontcolor_impl_h_
+#define INCLUDED_fontcolor_impl_h_
 
 #include "specifier.h"
-#include "objects.h"
+#include "fontcolor.h"
 
 /*****************************************************************************
  *                        Color Specifier Object                             *
@@ -164,4 +164,4 @@ struct Lisp_Font_Instance
 #define XFONT_INSTANCE_WIDTH(f)	   FONT_INSTANCE_WIDTH (XFONT_INSTANCE (f))
 #define XFONT_INSTANCE_HEIGHT(f)   FONT_INSTANCE_HEIGHT (XFONT_INSTANCE (f))
 
-#endif /* INCLUDED_objects_impl_h_ */
+#endif /* INCLUDED_fontcolor_impl_h_ */

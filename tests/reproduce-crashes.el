@@ -206,7 +206,7 @@ This bug has been fixed. -sb"
 
 (defbug 8 current
   "Crashes in debug version only
-Fatal error: assertion failed, file src/objects.h, line 149,
+Fatal error: assertion failed, file src/fontcolor.h, line 149,
 RECORD_TYPEP (_obj, lrecord_font_instance) || MARKED_RECORD_P (_obj)"
   (let (glyph ext)
     (make-face 'adobe-symbol-face)

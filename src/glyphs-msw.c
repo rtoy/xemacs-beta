@@ -47,7 +47,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #define WIDGET_GLYPH_SLOT 0
 

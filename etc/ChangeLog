@@ -1,6 +1,11 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* dbxrc.in:
+	Rename objects.c -> fontcolor.c.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* dbxrc.in:
 	test-harness.el is in lisp directory now.
 
 2010-01-28  Jerry James  <james@xemacs.org>

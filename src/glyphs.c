@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "gui.h"
 #include "insdel.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "rangetab.h"
 #include "redisplay.h"

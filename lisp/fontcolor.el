@@ -1,4 +1,4 @@
-;;; objects.el --- Lisp interface to C window-system objects
+;;; fontcolor.el --- Lisp interface to fonts and colors
 
 ;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Ben Wing
@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(defun ws-object-property-1 (function object domain &optional matchspec)
+(defun fontcolor-property-1 (function object domain &optional matchspec)
   (let ((instance (if matchspec
 		      (specifier-matching-instance object matchspec domain)
 		    (specifier-instance object domain))))
@@ -69,7 +69,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-name' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-name font domain charset))
+  (fontcolor-property-1 'font-instance-name font domain charset))
 
 (defun font-ascent (font &optional domain charset)
   "Return the ascent of the FONT in the specified DOMAIN, if any.
@@ -77,7 +77,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-ascent' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-ascent font domain charset))
+  (fontcolor-property-1 'font-instance-ascent font domain charset))
 
 (defun font-descent (font &optional domain charset)
   "Return the descent of the FONT in the specified DOMAIN, if any.
@@ -85,7 +85,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-descent' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-descent font domain charset))
+  (fontcolor-property-1 'font-instance-descent font domain charset))
 
 (defun font-width (font &optional domain charset)
   "Return the width of the FONT in the specified DOMAIN, if any.
@@ -93,7 +93,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-width' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-width font domain charset))
+  (fontcolor-property-1 'font-instance-width font domain charset))
 
 (defun font-height (font &optional domain charset)
   "Return the height of the FONT in the specified DOMAIN, if any.
@@ -101,7 +101,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-height' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-height font domain charset))
+  (fontcolor-property-1 'font-instance-height font domain charset))
 
 (defun font-proportional-p (font &optional domain charset)
   "Return whether FONT is proportional in the specified DOMAIN, if known.
@@ -109,7 +109,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-proportional-p' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-proportional-p font domain charset))
+  (fontcolor-property-1 'font-instance-proportional-p font domain charset))
 
 (defun font-properties (font &optional domain charset)
   "Return the properties of the FONT in the specified DOMAIN, if any.
@@ -117,7 +117,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-properties'
 to the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-properties font domain charset))
+  (fontcolor-property-1 'font-instance-properties font domain charset))
 
 (defun font-truename (font &optional domain charset)
   "Return the truename of the FONT in the specified DOMAIN, if any.
@@ -125,7 +125,7 @@ FONT should be a font specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `font-instance-truename'
 to the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'font-instance-truename font domain charset))
+  (fontcolor-property-1 'font-instance-truename font domain charset))
 
 (defun font-instance-height (font-instance)
   "Return the height in pixels of FONT-INSTANCE.
@@ -164,7 +164,7 @@ COLOR should be a color specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `color-instance-name' to
 the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'color-instance-name color domain))
+  (fontcolor-property-1 'color-instance-name color domain))
 
 (defun color-rgb-components (color &optional domain)
   "Return the RGB components of the COLOR in the specified DOMAIN, if any.
@@ -172,7 +172,7 @@ COLOR should be a color specifier object and DOMAIN is normally a window
 and defaults to the selected window if omitted.  This is equivalent
 to using `specifier-instance' and applying `color-instance-rgb-components'
 to the result.  See `make-specifier' for more information about specifiers."
-  (ws-object-property-1 'color-instance-rgb-components color domain))
+  (fontcolor-property-1 'color-instance-rgb-components color domain))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; face-boolean specifiers
 
@@ -194,4 +194,4 @@ Valid instantiators for face-boolean specifiers are
    if non-nil, means to invert the sense of the inherited property."
   (make-specifier-and-init 'face-boolean spec-list))
 
-;;; objects.el ends here.
+;;; fontcolor.el ends here.

@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "specifier.h"
 #include "window.h"
 
@@ -869,7 +869,7 @@ invalidate_charset_font_caches (Lisp_Object charset)
    initialization using `SPECIFIER_HAS_METHOD (font, instantiate);').  We
    in turn call the device method `find_charset_font', which maps to
    mswindows_find_charset_font(), x_find_charset_font(), or similar, in
-   objects-msw.c or the like.
+   fontcolor-msw.c or the like.
 
    --ben */
 
@@ -1217,7 +1217,7 @@ face-boolean instantiators.
 /************************************************************************/
 
 void
-syms_of_objects (void)
+syms_of_fontcolor (void)
 {
   INIT_LRECORD_IMPLEMENTATION (color_instance);
   INIT_LRECORD_IMPLEMENTATION (font_instance);
@@ -1252,7 +1252,7 @@ syms_of_objects (void)
 }
 
 void
-specifier_type_create_objects (void)
+specifier_type_create_fontcolor (void)
 {
   INITIALIZE_SPECIFIER_TYPE_WITH_DATA (color, "color", "color-specifier-p");
   INITIALIZE_SPECIFIER_TYPE_WITH_DATA (font, "font", "font-specifier-p");
@@ -1285,7 +1285,7 @@ specifier_type_create_objects (void)
 }
 
 void
-reinit_specifier_type_create_objects (void)
+reinit_specifier_type_create_fontcolor (void)
 {
   REINITIALIZE_SPECIFIER_TYPE (color);
   REINITIALIZE_SPECIFIER_TYPE (font);
@@ -1293,7 +1293,7 @@ reinit_specifier_type_create_objects (void)
 }
 
 void
-reinit_vars_of_objects (void)
+reinit_vars_of_fontcolor (void)
 {
   staticpro_nodump (&Vthe_null_color_instance);
   {
@@ -1325,6 +1325,6 @@ reinit_vars_of_objects (void)
 }
 
 void
-vars_of_objects (void)
+vars_of_fontcolor (void)
 {
 }

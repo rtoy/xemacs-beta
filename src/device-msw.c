@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "console-stream.h"
-#include "objects-msw.h"
+#include "fontcolor-msw.h"
 
 #include "sysdep.h"
 

@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "lstream.h"
 #include "mule-ccl.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "specifier.h"
 
 /* The various pre-defined charsets. */
