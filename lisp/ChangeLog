@@ -1,5 +1,21 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* test-harness.el:
+	* test-harness.el (test-harness-from-buffer):
+	* test-harness.el (batch-test-emacs):
+	Move file from tests/automated into lisp/ so it gets
+	byte-compiled.  This significantly reduces the amount of extra
+	crap in outputted backtraces.  Delete hack in batch-test-emacs to
+	look for test-harness.el in the test directory since it's not there
+	any more.
+
+	Also, in `Check-Message', incorporate call to `Skip-Test-Unless'
+	in the macro output rather than its body, to avoid problems byte-
+	compiling the file -- `Skip-Test-Unless' isn't available in the
+	environment during byte-compilation so we can't call it then.
+	
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* mule/make-coding-system.el:
 	* mule/make-coding-system.el (fixed-width-generate-helper):
 	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.

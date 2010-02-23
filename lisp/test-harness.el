@@ -48,7 +48,7 @@
 ;;; test, not on tests.
 ;;; 
 ;;; You run the tests using M-x test-emacs-test-file,
-;;; or $(EMACS) -batch -l .../test-harness.el -f batch-test-emacs file ...
+;;; or $(EMACS) -batch -l test-harness -f batch-test-emacs file ...
 ;;; which is run for you by the `make check' target in the top-level Makefile.
 
 (require 'bytecomp)
@@ -558,40 +558,39 @@ is used in a loop."
 
       ;; Do not use this with Silence-Message.
       (defmacro Check-Message (expected-message-regexp &rest body)
-	(Skip-Test-Unless (fboundp 'defadvice)
-			  "can't defadvice"
-			  expected-message-regexp
-	  (let ((quoted-body (if (= 1 (length body))
-				 `(quote ,(car body))
-			       `(quote (progn ,@body)))))
-	    `(let ((messages ""))
-	       (defadvice message (around collect activate)
-		 (defvar messages)
-		 (let ((msg-string (apply 'format (ad-get-args 0))))
-		   (setq messages (concat messages msg-string))
-		   msg-string))
-	       (ignore-errors
-		 (call-with-condition-handler
-		     #'(lambda (error-info)
-			 (Print-Failure "%S ==> unexpected error %S"
-					,quoted-body error-info)
-			 (incf other-failures)
-			 (test-harness-unexpected-error-do-debug error-info))
-		     #'(lambda ()
-			 (setq trick-optimizer (progn ,@body))
-			 (if (string-match ,expected-message-regexp messages)
-			     (progn
-			       (Print-Pass
-				"%S ==> value %S, message %S, matching %S, as expected"
-				,quoted-body trick-optimizer messages
-				',expected-message-regexp)
-			       (incf passes))
-			   (Print-Failure
-			    "%S ==> value %S, message %S, NOT matching expected %S"
-			    ,quoted-body  trick-optimizer messages
-			    ',expected-message-regexp)
-			   (incf missing-message-failures)))))
-	       (ad-unadvise 'message)))))
+	(let ((quoted-body (if (= 1 (length body))
+			       `(quote ,(car body))
+			     `(quote (progn ,@body)))))
+	  `(Skip-Test-Unless (fboundp 'defadvice) "can't defadvice"
+	    expected-message-regexp
+	    (let ((messages ""))
+	      (defadvice message (around collect activate)
+		(defvar messages)
+		(let ((msg-string (apply 'format (ad-get-args 0))))
+		  (setq messages (concat messages msg-string))
+		  msg-string))
+	      (ignore-errors
+		(call-with-condition-handler
+		    #'(lambda (error-info)
+			(Print-Failure "%S ==> unexpected error %S"
+				       ,quoted-body error-info)
+			(incf other-failures)
+			(test-harness-unexpected-error-do-debug error-info))
+		    #'(lambda ()
+			(setq trick-optimizer (progn ,@body))
+			(if (string-match ,expected-message-regexp messages)
+			    (progn
+			      (Print-Pass
+			       "%S ==> value %S, message %S, matching %S, as expected"
+			       ,quoted-body trick-optimizer messages
+			       ',expected-message-regexp)
+			      (incf passes))
+			  (Print-Failure
+			   "%S ==> value %S, message %S, NOT matching expected %S"
+			   ,quoted-body  trick-optimizer messages
+			   ',expected-message-regexp)
+			  (incf missing-message-failures)))))
+	      (ad-unadvise 'message)))))
 
       ;; #### Perhaps this should override `message' itself, too?
       (defmacro Silence-Message (&rest body)
@@ -750,9 +749,7 @@ is used in a loop."
 Use this from the command line, with `-batch';
 it won't work in an interactive Emacs.
 Each file is processed even if an error occurred previously.
-A directory can be given as well, and all files will be processed --
-however, the file test-harness.el, which implements the test harness,
-will be skipped.
+A directory can be given as well, and all files will be processed.
 For example, invoke \"xemacs -batch -f batch-test-emacs tests\""
   ;; command-line-args-left is what is left of the command line (from
   ;; startup.el)
@@ -766,9 +763,7 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests\""
 	  (dolist (file-in-dir (directory-files file t))
 	    (when (and (string-match emacs-lisp-file-regexp file-in-dir)
 		       (not (or (auto-save-file-name-p file-in-dir)
-				(backup-file-name-p file-in-dir)
-				(equal (file-name-nondirectory file-in-dir)
-				       "test-harness.el"))))
+				(backup-file-name-p file-in-dir))))
 	      (or (batch-test-emacs-1 file-in-dir)
 		  (setq error t))))
 	(or (batch-test-emacs-1 file)
