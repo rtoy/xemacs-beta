@@ -1,5 +1,28 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* mule/make-coding-system.el:
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.
+	* mule/make-coding-system.el (fixed-width-create-decode-encode-tables):
+	* coding.el:
+	* coding.el (decode-char): New.
+	* coding.el (featurep):
+	* coding.el (encode-char): New.
+	* dumped-lisp.el (preloaded-file-list):
+	Dump make-coding-system.  Aidan's hack to avoid dumping this file
+	never really worked right -- with some configurations (not clear
+	exactly which ones) `make-coding-system.el' gets dumped anyway due to
+	calls to `make-coding-system' in unicode.el, with the result that
+	the documentation of functions in make-coding-system.el gets lost.
+
+	Also needed to remove defvar fixed-width-private-use-start and
+	incorporate it inline, due to bootstrapping issues -- the call to
+	decode-char introduced a cross-dependency between unicode.el and
+	make-coding-system.el.
+	
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* cl-seq.el:
 	* cl-seq.el (stable-union): New.
 	* cl-seq.el (stable-intersection): New.
