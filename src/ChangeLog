@@ -1,5 +1,11 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* .gdbinit.in.in:
+	* Makefile.in.in (batch_test_emacs):
+	test-harness.el is in lisp directory now so change how we call it.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c (object_memory_usage_stats):
 	Remove unused var.
 
