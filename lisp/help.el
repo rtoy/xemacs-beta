@@ -1213,7 +1213,7 @@ arguments in the standard Lisp style."
 
 ;; If STRIP-ARGLIST is true, return a cons (DOC . ARGS) of the documentation
 ;; with any embedded arglist stripped out, and the arglist that was stripped
-;; out.  If STIRP-ARGLIST is false, the cons will be (FULL-DOC . nil),
+;; out.  If STRIP-ARGLIST is false, the cons will be (FULL-DOC . nil),
 ;; where FULL-DOC is the full documentation without the embedded arglist
 ;; stripped out.
 (defun function-documentation-1 (function &optional strip-arglist)
