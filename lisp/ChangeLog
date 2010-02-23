@@ -1,3 +1,26 @@
+2010-02-23  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el:
+	* autoload.el (make-autoload):
+	* cl-macs.el (cl-function-arglist):
+	* cl-macs.el (cl-transform-lambda):
+	Don't add argument list with the tag "Common Lisp lambda list:";
+	instead add in "standard" form using "arguments:" and omitting the
+	function name.  Add an arg to `cl-function-arglist' to omit the
+	name and use it in autoload.el instead of just hacking it off.
+	
+	* help.el:
+	* help.el (function-arglist):
+	* help.el (function-documentation-1): New.
+	Extract out common code to recognize and/or strip the arglist from
+	documentation into `function-documentation-1'.  Use in
+	`function-arglist' and `function-documentation'.  Modify
+	`function-arglist' so it looks for the `arguments: ' stuff in all
+	doc strings, not just subrs/autoloads, so that CL functions get
+	recognized properly.  Change the regexp used to match "arguments: "
+	specs to allow nested parens inside the arg list (happens when you
+	have a default value specified in a CL arglist).
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* test-harness.el:

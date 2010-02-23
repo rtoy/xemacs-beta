@@ -299,29 +299,33 @@ ARGLIST allows full Common Lisp conventions."
 
 ;; npak@ispras.ru
 ;;;###autoload
-(defun cl-function-arglist (name arglist)
+(defun cl-function-arglist (name arglist &optional omit-name)
   "Returns string with printed representation of arguments list.
 Supports Common Lisp lambda lists."
+  ;; #### I would just change this so that OMIT-NAME is always true and
+  ;; eliminate the argument, but this function is autoloaded, which means
+  ;; someone might be using it somewhere.
   (if (not (or (listp arglist) (symbolp arglist)))
       "Not available"
     (check-argument-type #'true-list-p arglist)
     (let ((print-gensym nil))
       (condition-case nil
           (prin1-to-string
-           (cons (if (eq name 'cl-none) 'lambda name)
-                 (cond ((null arglist) nil)
-                       ((listp arglist) (cl-upcase-arg arglist))
-                       ((symbolp arglist)
-                        (cl-upcase-arg (list '&rest arglist)))
-                       (t (wrong-type-argument 'listp arglist)))))
-      (t "Not available")))))
+	   (let ((args (cond ((null arglist) nil)
+			     ((listp arglist) (cl-upcase-arg arglist))
+			     ((symbolp arglist)
+			      (cl-upcase-arg (list '&rest arglist)))
+			     (t (wrong-type-argument 'listp arglist)))))
+	     (if omit-name args
+	       (cons (if (eq name 'cl-none) 'lambda name) args))))
+	(t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
   (let* ((args (car form)) (body (cdr form))
 	 (bind-defs nil) (bind-enquote nil)
 	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
-         (complex-arglist (cl-function-arglist bind-block args))
+         (complex-arglist (cl-function-arglist bind-block args t))
          (doc ""))
     (while (or (stringp (car body)) (eq (car-safe (car body)) 'interactive))
       (push (pop body) header))
@@ -348,12 +352,12 @@ Supports Common Lisp lambda lists."
     ;; Add CL lambda list to documentation, if the CL lambda list differs
     ;; from the non-CL lambda list. npak@ispras.ru
     (unless (equal complex-arglist
-                   (cl-function-arglist bind-block simple-args))
+                   (cl-function-arglist bind-block simple-args t))
       (and (stringp (car header)) (setq doc (pop header)))
-      (push (concat doc
-                    "\n\nCommon Lisp lambda list:\n" 
-                    "  " complex-arglist "\n\n")
-	  header))
+      ;; Stick the arguments onto the end of the doc string in a way that
+      ;; will be recognized specially by `function-arglist'.
+      (push (concat doc "\n\narguments: " complex-arglist "\n")
+	    header))
     (if (null args)
 	(list* nil simple-args (nconc header body))
       (if (memq '&optional simple-args) (push '&optional args))
