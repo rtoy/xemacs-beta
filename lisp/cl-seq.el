@@ -850,6 +850,40 @@ See `union' for the meaning of :test, :test-not and :key."
   (cond ((null cl-list1) cl-list2) ((null cl-list2) cl-list1)
 	(t (apply 'union cl-list1 cl-list2 cl-keys))))
 
+;; XEmacs addition: NOT IN COMMON LISP.
+(defun stable-union (cl-list1 cl-list2 &rest cl-keys)
+  "Stably combine LIST1 and LIST2 using a set-union operation.
+The result list contains all items that appear in either LIST1 or LIST2.
+The result is \"stable\" in that it preserves the ordering of elements in
+LIST1 and LIST2.  The result specifically consists of the elements in LIST1
+in order, followed by any elements in LIST2 that are not also in LIST1, in
+the order given in LIST2.
+This is a non-destructive function; it makes a copy of the data if necessary
+to avoid corrupting the original LIST1 and LIST2.
+Keywords supported:  :test :test-not :key
+See `union' for the meaning of :test, :test-not and :key.
+
+NOTE: This is *NOT* a function defined by Common Lisp, but an XEmacs
+extension."
+  ;; The standard `union' doesn't produce a "stable" union --
+  ;; it iterates over the second list instead of the first one, and returns
+  ;; the values in backwards order.  According to the CLTL2 documentation,
+  ;; `union' is not required to preserve the ordering of elements in
+  ;; any fashion, so we add a new function rather than changing the
+  ;; semantics of `union'.
+  (cond ((null cl-list1) cl-list2) ((null cl-list2) cl-list1)
+	((equal cl-list1 cl-list2) cl-list1)
+	(t
+	 (append
+	  cl-list1
+	  (cl-parsing-keywords (:key) (:test :test-not)
+	    (loop for cl-l in cl-list2
+	      if (not (if (or cl-keys (numberp cl-l))
+			  (apply 'member* (cl-check-key cl-l)
+				 cl-list1 cl-keys)
+			(memq cl-l cl-list1)))
+	      collect cl-l))))))
+
 (defun intersection (cl-list1 cl-list2 &rest cl-keys)
   "Combine LIST1 and LIST2 using a set-intersection operation.
 The result list contains all items that appear in both LIST1 and LIST2.
@@ -880,6 +914,35 @@ whenever possible.
 Keywords supported:  :test :test-not :key
 See `union' for the meaning of :test, :test-not and :key."
   (and cl-list1 cl-list2 (apply 'intersection cl-list1 cl-list2 cl-keys)))
+
+;; XEmacs addition: NOT IN COMMON LISP.
+(defun stable-intersection (cl-list1 cl-list2 &rest cl-keys)
+  "Stably combine LIST1 and LIST2 using a set-intersection operation.
+The result list contains all items that appear in both LIST1 and LIST2.
+The result is \"stable\" in that it preserves the ordering of elements in
+LIST1 that are also in LIST2.
+This is a non-destructive function; it makes a copy of the data if necessary
+to avoid corrupting the original LIST1 and LIST2.
+Keywords supported:  :test :test-not :key
+See `union' for the meaning of :test, :test-not and :key.
+
+NOTE: This is *NOT* a function defined by Common Lisp, but an XEmacs
+extension."
+  ;; The standard `intersection' doesn't produce a "stable" intersection --
+  ;; it iterates over the second list instead of the first one, and returns
+  ;; the values in backwards order.  According to the CLTL2 documentation,
+  ;; `intersection' is not required to preserve the ordering of elements in
+  ;; any fashion, so we add a new function rather than changing the
+  ;; semantics of `intersection'.
+  (and cl-list1 cl-list2
+       (if (equal cl-list1 cl-list2) cl-list1
+	 (cl-parsing-keywords (:key) (:test :test-not)
+	   (loop for cl-l in cl-list1
+	     if (if (or cl-keys (numberp cl-l))
+		    (apply 'member* (cl-check-key cl-l)
+			   cl-list2 cl-keys)
+		  (memq cl-l cl-list2))
+	     collect cl-l)))))
 
 (defun set-difference (cl-list1 cl-list2 &rest cl-keys)
   "Combine LIST1 and LIST2 using a set-difference operation.

@@ -1,6 +1,20 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* cl-seq.el:
+	* cl-seq.el (stable-union): New.
+	* cl-seq.el (stable-intersection): New.
+	New functions to do stable set operations, i.e. preserve the order
+	of the elements in the argument lists, and prefer LIST1 over LIST2
+	when ordering the combined result.  The result looks as much like
+	LIST1 as possible, followed (in the case of `stable-union') by
+	any necessary elements from LIST2, in order.  This is contrary to
+	`union' and `intersection', which are not required to be order-
+	preserving and are not -- they prefer LIST2 and output results in
+	backwards order.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* cl-seq.el:
 	* cl-seq.el (reduce):
 	* cl-seq.el (fill):
 	* cl-seq.el (replace):
