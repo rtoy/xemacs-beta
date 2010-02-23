@@ -1,5 +1,9 @@
 2010-02-23  Ben Wing  <ben@xemacs.org>
 
+	* help.el: fux typo in comment. (oops)
+
+2010-02-23  Ben Wing  <ben@xemacs.org>
+
 	* autoload.el:
 	* autoload.el (make-autoload):
 	* cl-macs.el (cl-function-arglist):
