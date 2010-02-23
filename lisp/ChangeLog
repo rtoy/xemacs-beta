@@ -1,3 +1,70 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* cl-seq.el:
+	* cl-seq.el (reduce):
+	* cl-seq.el (fill):
+	* cl-seq.el (replace):
+	* cl-seq.el (remove*):
+	* cl-seq.el (remove-if):
+	* cl-seq.el (remove-if-not):
+	* cl-seq.el (delete*):
+	* cl-seq.el (delete-if):
+	* cl-seq.el (delete-if-not):
+	* cl-seq.el (remove-duplicates):
+	* cl-seq.el (delete-duplicates):
+	* cl-seq.el (substitute):
+	* cl-seq.el (substitute-if):
+	* cl-seq.el (substitute-if-not):
+	* cl-seq.el (nsubstitute):
+	* cl-seq.el (nsubstitute-if):
+	* cl-seq.el (nsubstitute-if-not):
+	* cl-seq.el (find):
+	* cl-seq.el (find-if):
+	* cl-seq.el (find-if-not):
+	* cl-seq.el (position):
+	* cl-seq.el (position-if):
+	* cl-seq.el (position-if-not):
+	* cl-seq.el (count):
+	* cl-seq.el (count-if):
+	* cl-seq.el (count-if-not):
+	* cl-seq.el (mismatch):
+	* cl-seq.el (search):
+	* cl-seq.el (sort*):
+	* cl-seq.el (stable-sort):
+	* cl-seq.el (merge):
+	* cl-seq.el (member*):
+	* cl-seq.el (member-if):
+	* cl-seq.el (member-if-not):
+	* cl-seq.el (assoc*):
+	* cl-seq.el (assoc-if):
+	* cl-seq.el (assoc-if-not):
+	* cl-seq.el (rassoc*):
+	* cl-seq.el (rassoc-if):
+	* cl-seq.el (rassoc-if-not):
+	* cl-seq.el (union):
+	* cl-seq.el (nunion):
+	* cl-seq.el (intersection):
+	* cl-seq.el (nintersection):
+	* cl-seq.el (set-difference):
+	* cl-seq.el (nset-difference):
+	* cl-seq.el (set-exclusive-or):
+	* cl-seq.el (nset-exclusive-or):
+	* cl-seq.el (subsetp):
+	* cl-seq.el (subst-if):
+	* cl-seq.el (subst-if-not):
+	* cl-seq.el (nsubst):
+	* cl-seq.el (nsubst-if):
+	* cl-seq.el (nsubst-if-not):
+	* cl-seq.el (sublis):
+	* cl-seq.el (nsublis):
+	* cl-seq.el (tree-equal):
+	* cl-seq.el (cl-tree-equal-rec):
+	* cl.el:
+	* cl.el (pushnew):
+	* cl.el (adjoin):
+	* cl.el (subst):
+	Document the keywords to the various sequence/list functions.
+
 2010-02-21  Ben Wing  <ben@xemacs.org>
 
 	* diagnose.el:
