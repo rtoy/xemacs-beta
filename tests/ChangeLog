@@ -1,5 +1,11 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* automated/syntax-tests.el:
+	Use Known-Bug-Expect-Error, not Known-Bug-Expect-Failure, when
+	error expected; else test suite will abort this file.
+	
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* automated/test-harness.el (test-harness-from-buffer):
 	Remove unused binding.
 
