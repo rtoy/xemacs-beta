@@ -1,4 +1,4 @@
-;;; thai.el --- support for Thai -*- coding: iso-2022-7bit; -*-
+;;; thai.el --- support for Thai -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Copyright (C) 2010 Ben Wing.
@@ -67,7 +67,7 @@
 	  (features thai-util)
 	  (sample-text 
 	   . (thai-compose-string
-	      (copy-sequence "Thai (,T@RIRd7B(B)		,TJ0GQ1J04U1$0CQ1:(B, ,TJ0GQ1J04U10$h1P(B")))
+	      (copy-sequence "Thai (ภาษาไทย)		ส�วั�ส�ดี�ค�รั�บ, ส�วั�ส�ดี��ค่�ะ")))
 	  (documentation . t)))
 
 
