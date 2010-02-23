@@ -1,5 +1,13 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* mule/thai-util.el:
+	* mule/thai-util.el (l):
+	* mule/thai.el:
+	* mule/thai.el ("Thai"):
+	Convert to utf-8.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* mule/thai.el ("Thai"):
 	* mule/thai.el (thai):
 	Don't set input method as thai-kesmanee, this isn't currently working
