@@ -1,6 +1,7 @@
 ;;; cl.el --- Common Lisp extensions for XEmacs Lisp
 
 ;; Copyright (C) 1993, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Maintainer: XEmacs Development Team
@@ -179,7 +180,8 @@ lists.  "
   "Add NEWELT at the beginning of LISTNAME, unless it's already in LISTNAME.
 Like (push NEWELT LISTNAME), except that the list is unmodified if NEWELT is
 `eql' to an element already on the list.
-Keywords supported:  :test :test-not :key"
+Keywords supported:  :test :test-not :key
+See `member*' for the meaning of :test, :test-not and :key."
   (if (symbolp listname) (list 'setq listname 
 			       (list* 'adjoin newelt listname keys))
     (list* 'callf2 'adjoin newelt listname keys)))
@@ -583,7 +585,8 @@ Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
 (defun adjoin (cl-item cl-list &rest cl-keys)  ; See compiler macro in cl-macs
   "Return ITEM consed onto the front of LIST only if it's not already there.
 Otherwise, return LIST unmodified.
-Keywords supported:  :test :test-not :key"
+Keywords supported:  :test :test-not :key
+See `member*' for the meaning of :test, :test-not and :key."
   (cond ((or (equal cl-keys '(:test eq))
 	     (and (null cl-keys) (not (numberp cl-item))))
 	 (if (memq cl-item cl-list) cl-list (cons cl-item cl-list)))
@@ -594,7 +597,8 @@ Keywords supported:  :test :test-not :key"
 (defun subst (cl-new cl-old cl-tree &rest cl-keys)
   "Substitute NEW for OLD everywhere in TREE (non-destructively).
 Return a copy of TREE with all elements `eql' to OLD replaced by NEW.
-Keywords supported:  :test :test-not :key"
+Keywords supported:  :test :test-not :key
+See `member*' for the meaning of :test, :test-not and :key."
   (if (or cl-keys (and (numberp cl-old) (not (fixnump cl-old))))
       (apply 'sublis (list (cons cl-old cl-new)) cl-tree cl-keys)
     (cl-do-subst cl-new cl-old cl-tree)))
