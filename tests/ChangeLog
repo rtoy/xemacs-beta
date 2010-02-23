@@ -1,3 +1,8 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer):
+	Remove unused binding.
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* automated/search-tests.el (let):

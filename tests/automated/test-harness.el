@@ -306,7 +306,7 @@ afterwards.  See "
 
 	(trick-optimizer nil)
 	(debug-on-error t)
-	(pass-stream nil))
+	)
     (with-output-to-temp-buffer "*Test-Log*"
       (princ (format "Testing %s...\n\n" filename))
 
