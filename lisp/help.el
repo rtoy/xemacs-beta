@@ -1,7 +1,7 @@
 ;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: help, internal, dumped
@@ -1182,27 +1182,21 @@ arguments in the standard Lisp style."
 	 (fndef (if (eq (car-safe fnc) 'macro)
 		    (cdr fnc)
 		  fnc))
+	 (args (cdr (function-documentation-1 function t)))
 	 (arglist
-	  (cond ((compiled-function-p fndef)
-		 (compiled-function-arglist fndef))
-		((eq (car-safe fndef) 'lambda)
-		 (nth 1 fndef))
-		((or (subrp fndef) (eq 'autoload (car-safe fndef)))
-		 (let* ((doc (documentation function))
-			(args (and doc
-				   (string-match
-				    "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
-				    doc)
-				   (match-string 1 doc)))
-                        (args (and args (replace-in-string args
-                                                           "[ ]*\\\\\n[ \t]*"
-                                                           " " t))))
-		   ;; If there are no arguments documented for the
-		   ;; subr, rather don't print anything.
-		   (cond ((null args) t)
-			 ((equal args "") nil)
-			 (args))))
-		(t t)))
+	  (or args
+	      (cond ((compiled-function-p fndef)
+		     (compiled-function-arglist fndef))
+		    ((eq (car-safe fndef) 'lambda)
+		     (nth 1 fndef))
+		    ((or (subrp fndef) (eq 'autoload (car-safe fndef)))
+		 
+		     ;; If there are no arguments documented for the
+		     ;; subr, rather don't print anything.
+		     (cond ((null args) t)
+			   ((equal args "") nil)
+			   (args)))
+		    (t t))))
          (print-gensym nil))
     (cond ((listp arglist)
 	   (prin1-to-string
@@ -1217,20 +1211,31 @@ arguments in the standard Lisp style."
 	  ((stringp arglist)
 	   (format "(%s %s)" function arglist)))))
 
-(defun function-documentation (function &optional strip-arglist)
-  "Return a string giving the documentation for FUNCTION, if any.
-If the optional argument STRIP-ARGLIST is non-nil, remove the arglist
-part of the documentation of internal subroutines."
+;; If STRIP-ARGLIST is true, return a cons (DOC . ARGS) of the documentation
+;; with any embedded arglist stripped out, and the arglist that was stripped
+;; out.  If STIRP-ARGLIST is false, the cons will be (FULL-DOC . nil),
+;; where FULL-DOC is the full documentation without the embedded arglist
+;; stripped out.
+(defun function-documentation-1 (function &optional strip-arglist)
   (let ((doc (condition-case nil
 		 (or (documentation function)
 		     (gettext "not documented"))
 	       (void-function "(alias for undefined function)")
-	       (error "(unexpected error from `documention')"))))
+	       (error "(unexpected error from `documentation')")))
+	args)
     (when (and strip-arglist
-               (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
+               (string-match "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'" doc))
+      (setq args (match-string 1 doc))
       (setq doc (substring doc 0 (match-beginning 0)))
+      (and args (setq args (replace-in-string args "[ ]*\\\\\n[ \t]*" " " t)))
       (and (zerop (length doc)) (setq doc (gettext "not documented"))))
-    doc))
+    (cons doc args)))
+
+(defun function-documentation (function &optional strip-arglist)
+  "Return a string giving the documentation for FUNCTION, if any.
+If the optional argument STRIP-ARGLIST is non-nil, remove the arglist
+part of the documentation of internal subroutines, CL lambda forms, etc."
+  (car (function-documentation-1 function strip-arglist)))
 
 ;; replacement for `princ' that puts the text in the specified face,
 ;; if possible
