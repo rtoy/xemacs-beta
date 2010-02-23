@@ -937,7 +937,7 @@ void tick_lrecord_stats (const struct lrecord_header *h,
   "inline" to the union data, like XD_BLOCK_ARRAY and not XD_BLOCK_PTR.
   If the union data is a pointer to different types of structures, each
   element in the memory_description should be an XD_BLOCK_PTR.  See
-  unicode.c, redisplay.c and objects.c for examples of XD_UNION.
+  unicode.c, redisplay.c and fontcolor.c for examples of XD_UNION.
 
     XD_UNION_DYNAMIC_SIZE
 

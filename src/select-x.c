@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "select.h"
 
 #include "console-x-impl.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 
 #include "systime.h"
 

@@ -24,11 +24,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file Mule-ized (more like Mule-verified) by Ben Wing, 7-10-00. */
 
-#ifndef INCLUDED_objects_x_impl_h_
-#define INCLUDED_objects_x_impl_h_
+#ifndef INCLUDED_fontcolor_x_impl_h_
+#define INCLUDED_fontcolor_x_impl_h_
 
-#include "objects-impl.h"
-#include "objects-x.h"
+#include "fontcolor-impl.h"
+#include "fontcolor-x.h"
 #ifdef HAVE_XFT
 /* for resource name definitions, etc */
 #include "../lwlib/lwlib-fonts.h"
@@ -85,4 +85,4 @@ struct x_font_instance_data
 
 #endif /* HAVE_X_WINDOWS */
 
-#endif /* INCLUDED_objects_x_impl_h_ */
+#endif /* INCLUDED_fontcolor_x_impl_h_ */

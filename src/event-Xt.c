@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 
 #include "console-x-impl.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 #include "../lwlib/lwlib.h"
 #include "EmacsFrame.h"
 

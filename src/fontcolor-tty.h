@@ -21,12 +21,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
-#ifndef INCLUDED_objects_tty_h_
-#define INCLUDED_objects_tty_h_
+#ifndef INCLUDED_fontcolor_tty_h_
+#define INCLUDED_fontcolor_tty_h_
 
-#include "objects.h"
+#include "fontcolor.h"
 
 extern Lisp_Object Vtty_color_alist, Vtty_dynamic_color_bg;
 extern Lisp_Object Vtty_dynamic_color_fg;
 
-#endif /* INCLUDED_objects_tty_h_ */
+#endif /* INCLUDED_fontcolor_tty_h_ */

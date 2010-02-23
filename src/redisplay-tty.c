@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "console-tty-impl.h"
-#include "objects-tty-impl.h"
+#include "fontcolor-tty-impl.h"
 
 #include "syssignal.h"
 

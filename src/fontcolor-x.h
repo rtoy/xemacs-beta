@@ -24,10 +24,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file Mule-ized (more like Mule-verified) by Ben Wing, 7-10-00. */
 
-#ifndef INCLUDED_objects_x_h_
-#define INCLUDED_objects_x_h_
+#ifndef INCLUDED_fontcolor_x_h_
+#define INCLUDED_fontcolor_x_h_
 
-#include "objects.h"
+#include "fontcolor.h"
 #include "../lwlib/lwlib-colors.h" /* for x_allocate_nearest_color */
 
 #ifdef HAVE_X_WINDOWS
@@ -40,4 +40,4 @@ EXFUN (Ffc_font_real_pattern, 2);
 
 #endif /* HAVE_X_WINDOWS */
 
-#endif /* INCLUDED_objects_x_h_ */
+#endif /* INCLUDED_fontcolor_x_h_ */

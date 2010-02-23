@@ -106,7 +106,7 @@ Boston, MA 02111-1307, USA.  */
      to determine an appropriate font. */
   MARKED_SLOT (charset_font_cache_stage_1)
 
-  /* Similar cache for stage 2, if it exists.  See objects.c. */
+  /* Similar cache for stage 2, if it exists.  See fontcolor.c. */
   MARKED_SLOT (charset_font_cache_stage_2)
 #endif
 

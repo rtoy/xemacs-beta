@@ -55,7 +55,7 @@ void send_string_to_tty_console (struct console *c, unsigned char *str,
 extern const struct sized_memory_description tty_console_data_description;
 
 
-/***************     Prototypes from objects-tty.c     ****************/
+/***************     Prototypes from fontcolor-tty.c     ****************/
 
 extern const struct sized_memory_description tty_color_instance_data_description;
 extern const struct sized_memory_description tty_font_instance_data_description;

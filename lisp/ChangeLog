@@ -1,3 +1,51 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	* font.el (font-tty-find-closest-color):
+	* fontcolor.el:
+	* fontcolor.el (ws-object-property-1): Removed.
+	* fontcolor.el (fontcolor-property-1): New.
+	* fontcolor.el (font-name):
+	* fontcolor.el (font-ascent):
+	* fontcolor.el (font-descent):
+	* fontcolor.el (font-width):
+	* fontcolor.el (font-height):
+	* fontcolor.el (font-proportional-p):
+	* fontcolor.el (font-properties):
+	* fontcolor.el (font-truename):
+	* fontcolor.el (color-name):
+	* fontcolor.el (color-rgb-components):
+	* x-faces.el:
+	Rename objects.el -> fontcolor.el.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* obsolete.el:
+	* obsolete.el ('show-buffer): New.
+	* obsolete.el ('buffer-flush-undo): New.
+	* obsolete.el (buffer-local-value): New.
+	* obsolete.el (Info-default-directory-list): Removed.
+	* obsolete.el (x-color-values): New.
+	* obsolete.el (mswindows-color-list):
+	* obsolete.el (init-file-user): Removed.
+	* obsolete.el ('pui-add-install-directory): Removed.
+	* obsolete.el (line-beginning-position):
+	* obsolete.el ('line-beginning-position): New.
+	* obsolete.el ('line-end-position): New.
+	* obsolete.el (obsolete-throw): New.
+	* obsolete.el ('cl-mapc): New.
+	* obsolete.el ('byte-code-function-p): New.
+	* obsolete.el ('interactive-form): New.
+	* obsolete.el ('assq-delete-all): New.
+	* obsolete.el (makehash): New.
+	* obsolete.el ('user-original-login-name): Removed.
+	* obsolete.el ('isearch-yank-x-selection): Removed.
+	* obsolete.el ('isearch-yank-x-clipboard): Removed.
+	* obsolete.el ('display-column-mode): New.
+	Rearrange; create some new categories out of "misc" stuff,
+	put categories in alphabetical order, move remaning "misc"
+	stuff to bottom.
+
 2010-02-23  Ben Wing  <ben@xemacs.org>
 
 	* help.el: fux typo in comment. (oops)

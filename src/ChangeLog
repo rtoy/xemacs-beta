@@ -1,5 +1,100 @@
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* EmacsFrame.c:
+	* Makefile.in.in (x_objs):
+	* Makefile.in.in (mswindows_objs):
+	* Makefile.in.in (tty_objs):
+	* Makefile.in.in (gtk_objs):
+	* Makefile.in.in (objs):
+	* console-tty.h:
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_device):
+	* console-x.h:
+	* console-xlike-inc.h:
+	* depend:
+	* device-gtk.c:
+	* device-msw.c:
+	* device-x.c:
+	* device-x.c (x_init_device):
+	* device-x.c (x_finish_init_device):
+	* device.c:
+	* devslots.h (MARKED_SLOT):
+	* emacs.c (main_1):
+	* event-Xt.c:
+	* event-gtk.c:
+	* event-msw.c:
+	* faces.c:
+	* font-mgr.c:
+	* fontcolor-gtk-impl.h:
+	* fontcolor-gtk.c:
+	* fontcolor-gtk.c (syms_of_fontcolor_gtk):
+	* fontcolor-gtk.c (console_type_create_fontcolor_gtk):
+	* fontcolor-gtk.c (vars_of_fontcolor_gtk):
+	* fontcolor-gtk.h:
+	* fontcolor-impl.h:
+	* fontcolor-msw-impl.h:
+	* fontcolor-msw.c:
+	* fontcolor-msw.c (syms_of_fontcolor_mswindows):
+	* fontcolor-msw.c (console_type_create_fontcolor_mswindows):
+	* fontcolor-msw.c (reinit_vars_of_fontcolor_mswindows):
+	* fontcolor-msw.c (vars_of_fontcolor_mswindows):
+	* fontcolor-msw.h:
+	* fontcolor-msw.h (mswindows_color_to_string):
+	* fontcolor-tty-impl.h:
+	* fontcolor-tty.c:
+	* fontcolor-tty.c (syms_of_fontcolor_tty):
+	* fontcolor-tty.c (console_type_create_fontcolor_tty):
+	* fontcolor-tty.c (vars_of_fontcolor_tty):
+	* fontcolor-tty.h:
+	* fontcolor-x-impl.h:
+	* fontcolor-x.c:
+	* fontcolor-x.c (syms_of_fontcolor_x):
+	* fontcolor-x.c (console_type_create_fontcolor_x):
+	* fontcolor-x.c (vars_of_fontcolor_x):
+	* fontcolor-x.c (Xatoms_of_fontcolor_x):
+	* fontcolor-x.h:
+	* fontcolor.c:
+	* fontcolor.c (syms_of_fontcolor):
+	* fontcolor.c (specifier_type_create_fontcolor):
+	* fontcolor.c (reinit_specifier_type_create_fontcolor):
+	* fontcolor.c (reinit_vars_of_fontcolor):
+	* fontcolor.c (vars_of_fontcolor):
+	* fontcolor.h:
+	* fontcolor.h (set_face_boolean_attached_to):
+	* frame-gtk.c:
+	* frame-x.c:
+	* glyphs-eimage.c:
+	* glyphs-gtk.c:
+	* glyphs-msw.c:
+	* glyphs-widget.c:
+	* glyphs-x.c:
+	* glyphs.c:
+	* gtk-glue.c:
+	* gtk-glue.c (xemacs_type_register):
+	* gtk-xemacs.c:
+	* inline.c:
+	* intl-win32.c:
+	* lisp.h:
+	* lrecord.h:
+	* mule-charset.c:
+	* native-gtk-toolbar.c:
+	* redisplay-msw.c:
+	* redisplay-tty.c:
+	* redisplay.c:
+	* select-x.c:
+	* select.c:
+	* symsinit.h:
+	* toolbar-msw.c:
+	* toolbar-msw.c (TOOLBAR_ITEM_ID_BITS):
+	* toolbar-x.c:
+	* ui-gtk.c:
+	* window.c:
+	Rename objects*.[ch] -> fontcolor*.[ch].  Fix up all references to
+	the old files (e.g. in #include statements, Makefiles,
+	functions like syms_of_objects_x(), etc.).
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	* Makefile.in.in (batch_test_emacs):
 	test-harness.el is in lisp directory now so change how we call it.
