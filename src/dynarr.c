@@ -166,7 +166,7 @@ Dynarr_realloc (Dynarr *dy, int new_size)
 }
 
 void *
-Dynarr_newf (int elsize)
+Dynarr_newf (Bytecount elsize)
 {
   Dynarr *d = xnew_and_zero (Dynarr);
   d->elsize = elsize;
@@ -175,16 +175,15 @@ Dynarr_newf (int elsize)
 }
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("dynarr", dynarr,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       0,
-			       Dynarr);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("dynarr", dynarr,
+				      0, 0,
+				      Dynarr);
 
 static void
-Dynarr_lisp_realloc (Dynarr *dy, int new_size)
+Dynarr_lisp_realloc (Dynarr *dy, Elemcount new_size)
 {
-  void *new_base = alloc_lrecord_array (dy->elsize, new_size, dy->lisp_imp);
+  void *new_base =
+    XPNTR (alloc_sized_lrecord_array (dy->elsize, new_size, dy->lisp_imp));
   if (dy->base)
     memcpy (new_base, dy->base, 
 	    (Dynarr_max (dy) < new_size ? Dynarr_max (dy) : new_size) *
@@ -193,11 +192,12 @@ Dynarr_lisp_realloc (Dynarr *dy, int new_size)
 }
 
 void *
-Dynarr_lisp_newf (int elsize, 
+Dynarr_lisp_newf (Bytecount elsize, 
 		  const struct lrecord_implementation *dynarr_imp, 
 		  const struct lrecord_implementation *imp)
 {
-  Dynarr *d = (Dynarr *) alloc_lrecord (sizeof (Dynarr), dynarr_imp);
+  Dynarr *d = (Dynarr *) XPNTR (alloc_sized_lrecord (sizeof (Dynarr),
+                                                     dynarr_imp));
   d->elsize = elsize;
   d->lisp_imp = imp;
 

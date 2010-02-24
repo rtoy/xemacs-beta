@@ -54,13 +54,13 @@ extern Fixnum debug_xft;
 
 struct fc_pattern
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   FcPattern *fcpatPtr;
 };
 
 typedef struct fc_pattern fc_pattern;
 
-DECLARE_LRECORD(fc_pattern, struct fc_pattern);
+DECLARE_LISP_OBJECT(fc_pattern, struct fc_pattern);
 #define XFCPATTERN(x) XRECORD (x, fc_pattern, struct fc_pattern)
 #define wrap_fcpattern(p) wrap_record (p, fc_pattern)
 #define FCPATTERNP(x) RECORDP (x, fc_pattern)
@@ -73,13 +73,13 @@ DECLARE_LRECORD(fc_pattern, struct fc_pattern);
 
 struct fc_config
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
   FcConfig *fccfgPtr;
 };
 
 typedef struct fc_config fc_config;
 
-DECLARE_LRECORD(fc_config, struct fc_config);
+DECLARE_LISP_OBJECT(fc_config, struct fc_config);
 #define XFCCONFIG(x) XRECORD (x, fc_config, struct fc_config)
 #define wrap_fcconfig(p) wrap_record (p, fc_config)
 #define FCCONFIGP(x) RECORDP (x, fc_config)

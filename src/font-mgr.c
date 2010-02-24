@@ -93,7 +93,7 @@ static Lisp_Object Vfc_config_weak_list;
 ****************************************************************/
 
 static void
-finalize_fc_pattern (void *header, int UNUSED (for_disksave))
+finalize_fc_pattern (void *header)
 {
   struct fc_pattern *p = (struct fc_pattern *) header;
   if (p->fcpatPtr)
@@ -142,10 +142,10 @@ static const struct memory_description fcpattern_description [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION("fc-pattern", fc_pattern, 0,
-			      0, print_fc_pattern, finalize_fc_pattern,
-			      0, 0, fcpattern_description,
-			      struct fc_pattern);
+DEFINE_NODUMP_LISP_OBJECT ("fc-pattern", fc_pattern,
+			   0, print_fc_pattern, finalize_fc_pattern,
+			   0, 0, fcpattern_description,
+			   struct fc_pattern);
 
 /*
  * Helper Functions
@@ -234,11 +234,10 @@ Return a new, empty fc-pattern object.
 */
       ())
 {
-  fc_pattern *fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+  fc_pattern *fcpat = XFCPATTERN (ALLOC_LISP_OBJECT (fc_pattern));
 
-  fcpat->fcpatPtr = FcPatternCreate();
-  return wrap_fcpattern(fcpat);
+  fcpat->fcpatPtr = FcPatternCreate ();
+  return wrap_fcpattern (fcpat);
 }
 
 DEFUN("fc-name-parse", Ffc_name_parse, 1, 1, 0, /*
@@ -246,13 +245,12 @@ Parse an Fc font name and return its representation as a fc pattern object.
 */
       (name))
 {
-  struct fc_pattern *fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+  fc_pattern *fcpat = XFCPATTERN (ALLOC_LISP_OBJECT (fc_pattern));
 
-  CHECK_STRING(name);
+  CHECK_STRING (name);
 
   fcpat->fcpatPtr = FcNameParse ((FcChar8 *) extract_fcapi_string (name));
-  return wrap_fcpattern(fcpat);
+  return wrap_fcpattern (fcpat);
 }
 
 /* #### Ga-a-ack!  Xft's similar function is actually a different API.
@@ -277,11 +275,11 @@ Make a copy of the fc pattern object PATTERN and return it.
       (pattern))
 {
   struct fc_pattern *copy = NULL;
-  CHECK_FCPATTERN(pattern);
+  CHECK_FCPATTERN (pattern);
 
-  copy = ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
-  copy->fcpatPtr = FcPatternDuplicate(XFCPATTERN_PTR(pattern));
-  return wrap_fcpattern(copy);
+  copy = XFCPATTERN (ALLOC_LISP_OBJECT (fc_pattern));
+  copy->fcpatPtr = FcPatternDuplicate (XFCPATTERN_PTR (pattern));
+  return wrap_fcpattern (copy);
 }
 
 DEFUN("fc-pattern-add", Ffc_pattern_add, 3, 3, 0, /*
@@ -297,8 +295,8 @@ will be added as an FcChar8[], int, double, or FcBool respectively.
   const Extbyte *obj;
   FcPattern *fcpat;
 
-  CHECK_FCPATTERN(pattern);
-  CHECK_STRING(property);
+  CHECK_FCPATTERN (pattern);
+  CHECK_STRING (property);
 
   obj = fc_intern (property);
   fcpat = XFCPATTERN_PTR (pattern);
@@ -522,8 +520,7 @@ fc_config_create_using (FcConfig * (*create_function) ())
   }
 
   {
-    fc_config *fccfg =
-      ALLOC_LCRECORD_TYPE (struct fc_config, &lrecord_fc_config);
+    fc_config *fccfg = XFCCONFIG (ALLOC_LISP_OBJECT (fc_config));
     fccfg->fccfgPtr = fc;
     configs = Fcons (wrap_fcconfig (fccfg), configs);
     XWEAK_LIST_LIST (Vfc_config_weak_list) = configs;
@@ -562,8 +559,7 @@ fontset_to_list (FcFontSet *fontset, enum DestroyFontsetP destroyp)
     invalid_state ("failed to create FcFontSet", Qunbound);
   for (idx = 0; idx < fontset->nfont; ++idx)
     {
-      fcpat = 
-	ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+      fcpat = XFCPATTERN (ALLOC_LISP_OBJECT (fc_pattern));
       fcpat->fcpatPtr = FcPatternDuplicate (fontset->fonts[idx]);
       fontlist = Fcons (wrap_fcpattern(fcpat), fontlist);
     }
@@ -994,7 +990,7 @@ being processed by FcFontMatch. */
   if (!NILP (config))
     CHECK_FCCONFIG (config);
 
-  res_fcpat = ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+  res_fcpat = XFCPATTERN (ALLOC_LISP_OBJECT (fc_pattern));
   p = XFCPATTERN_PTR(pattern);
   fcc = NILP (config) ? FcConfigGetCurrent () : XFCCONFIG_PTR (config);
 
@@ -1096,7 +1092,7 @@ match other font-listing APIs. */
 */
 
 static void
-finalize_fc_config (void *header, int UNUSED (for_disksave))
+finalize_fc_config (void *header)
 {
   struct fc_config *p = (struct fc_config *) header;
   if (p->fccfgPtr && p->fccfgPtr != FcConfigGetCurrent())
@@ -1124,10 +1120,10 @@ static const struct memory_description fcconfig_description [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION("fc-config", fc_config, 0,
-			      0, print_fc_config, finalize_fc_config, 0, 0,
-			      fcconfig_description,
-			      struct fc_config);
+DEFINE_NODUMP_LISP_OBJECT ("fc-config", fc_config,
+			   0, print_fc_config, finalize_fc_config, 0, 0,
+			   fcconfig_description,
+			   struct fc_config);
 
 DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
  -- Function: FcBool FcInit (void)
@@ -1299,7 +1295,7 @@ string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os)
 
 void
 syms_of_font_mgr (void) {
-  INIT_LRECORD_IMPLEMENTATION(fc_pattern);
+  INIT_LISP_OBJECT(fc_pattern);
 
   DEFSYMBOL_MULTIWORD_PREDICATE(Qfc_patternp);
 
@@ -1328,7 +1324,7 @@ syms_of_font_mgr (void) {
   DEFSUBR(Fxlfd_font_name_p);
 
 #ifdef FONTCONFIG_EXPOSE_CONFIG
-  INIT_LRECORD_IMPLEMENTATION(fc_config);
+  INIT_LISP_OBJECT(fc_config);
 
   DEFSYMBOL_MULTIWORD_PREDICATE(Qfc_configp);
 

@@ -1,7 +1,7 @@
 /* Generic stream implementation.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -69,37 +69,31 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_lstream (void *header, int for_disksave)
+finalize_lstream (void *header)
 {
   /* WARNING WARNING WARNING.  This function (and all finalize functions)
-     may get called more than once on the same object, and may get called
-     (at dump time) on objects that are not being released. */
+     may get called more than once on the same object. */
   Lstream *lstr = (Lstream *) header;
 
-#if 0 /* this may cause weird Broken Pipes? */
-  if (for_disksave)
-    {
-      Lstream_pseudo_close (lstr);
-      return;
-    }
-#endif
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
-    {
-      if (for_disksave)
-	{
-	  if (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE)
-	    Lstream_close (lstr);
-	}
-      else
-	/* Just close. */
-	Lstream_close (lstr);
-    }
+    Lstream_close (lstr);
 
-  if (!for_disksave)
-    {
-      if (lstr->imp->finalizer)
-	(lstr->imp->finalizer) (lstr);
-    }
+  if (lstr->imp->finalizer)
+    (lstr->imp->finalizer) (lstr);
+}
+
+static void
+disksave_lstream (Lisp_Object lstream)
+{
+  Lstream *lstr = XLSTREAM (lstream);
+
+#if 0 /* this may cause weird Broken Pipes? */
+  Lstream_pseudo_close (lstr);
+  return;
+#endif
+  if ((lstr->flags & LSTREAM_FL_IS_OPEN) &&
+      (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE))
+    Lstream_close (lstr);
 }
 
 inline static Bytecount
@@ -150,12 +144,14 @@ const struct sized_memory_description lstream_empty_extra_description = {
   0, lstream_empty_extra_description_1
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
-					0, /*dumpable-flag*/
-					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0,
-					lstream_description,
-					sizeof_lstream, Lstream);
+DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT ("stream", lstream,
+					   mark_lstream, print_lstream,
+					   finalize_lstream,
+					   0, 0, /* no equal or hash */
+					   lstream_description,
+					   0, 0, 0, 0, /* no property meths */
+					   disksave_lstream,
+					   sizeof_lstream, Lstream);
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the
@@ -197,9 +193,8 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 {
   Lstream *p;
 #ifdef NEW_GC
-  p = XLSTREAM (wrap_pointer_1 
-		(alloc_lrecord (aligned_sizeof_lstream (imp->size),
-				&lrecord_lstream)));
+  p = XLSTREAM (alloc_sized_lrecord (aligned_sizeof_lstream (imp->size),
+			             &lrecord_lstream));
 #else /* not NEW_GC */
   int i;
 
@@ -1882,5 +1877,5 @@ reinit_vars_of_lstream (void)
 void
 vars_of_lstream (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (lstream);
+  INIT_LISP_OBJECT (lstream);
 }

@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct extent
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 
   Memxpos start;
   Memxpos end;
@@ -103,7 +103,7 @@ struct extent
 typedef struct extent_auxiliary extent_auxiliary;
 struct extent_auxiliary
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   Lisp_Object begin_glyph;
   Lisp_Object end_glyph;
@@ -129,7 +129,7 @@ extern struct extent_auxiliary extent_auxiliary_defaults;
 
 struct extent_info
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 
   struct extent_list *extents;
   struct stack_of_extents *soe;

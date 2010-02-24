@@ -444,11 +444,10 @@ static const struct memory_description subr_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
-				     1, /*dumpable-flag*/
-				     0, print_subr, 0, 0, 0,
-				     subr_description,
-				     Lisp_Subr);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("subr", subr,
+					0, print_subr, 0, 0, 0,
+					subr_description,
+					Lisp_Subr);
 
 /************************************************************************/
 /*			 Entering the debugger				*/
@@ -4492,6 +4491,7 @@ make_multiple_value (Lisp_Object first_value, Elemcount count,
   Bytecount sizem;
   struct multiple_value *mv;
   Elemcount i, allocated_count;
+  Lisp_Object mvobj;
 
   assert (count != 1);
 
@@ -4517,8 +4517,8 @@ make_multiple_value (Lisp_Object first_value, Elemcount count,
   sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (multiple_value,
                                         Lisp_Object,
                                         contents, allocated_count);
-  mv = (multiple_value *) BASIC_ALLOC_LCRECORD (sizem,
-                                                &lrecord_multiple_value);
+  mvobj = ALLOC_SIZED_LISP_OBJECT (sizem, multiple_value);
+  mv = XMULTIPLE_VALUE (mvobj);
 
   mv->count = count;
   mv->first_desired = first_desired;
@@ -4530,7 +4530,7 @@ make_multiple_value (Lisp_Object first_value, Elemcount count,
       mv->contents[1 + (i - first_desired)] = Qunbound;
     }
 
-  return wrap_multiple_value (mv);
+  return mvobj;
 }
 
 void
@@ -4641,15 +4641,14 @@ static const struct memory_description multiple_value_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("multiple-value", multiple_value,
-					1, /*dumpable-flag*/
-					mark_multiple_value,
-                                        print_multiple_value, 0,
-					0, /* No equal method. */
-					0, /* No hash method. */
-					multiple_value_description,
-					size_multiple_value,
-                                        struct multiple_value);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("multiple-value", multiple_value,
+				     mark_multiple_value,
+				     print_multiple_value, 0,
+				     0, /* No equal method. */
+				     0, /* No hash method. */
+				     multiple_value_description,
+				     size_multiple_value,
+				     struct multiple_value);
 
 /* Given that FIRST and UPPER are the inclusive lower and exclusive upper
    bounds for the multiple values we're interested in, modify (or don't) the
@@ -7237,8 +7236,8 @@ warn_when_safe (Lisp_Object class_, Lisp_Object level, const Ascbyte *fmt, ...)
 void
 syms_of_eval (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (subr);
-  INIT_LRECORD_IMPLEMENTATION (multiple_value);
+  INIT_LISP_OBJECT (subr);
+  INIT_LISP_OBJECT (multiple_value);
 
   DEFSYMBOL (Qinhibit_quit);
   DEFSYMBOL (Qautoload);

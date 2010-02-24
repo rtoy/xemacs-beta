@@ -1539,7 +1539,7 @@ printing_unreadable_object (const Ascbyte *fmt, ...)
 DOESNT_RETURN
 printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
+  LISP_OBJECT_HEADER *header = (LISP_OBJECT_HEADER *) XPNTR (obj);
 
 #ifndef NEW_GC
   /* This must be a real lcrecord */
@@ -1568,10 +1568,10 @@ printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
 }
 
 void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
+  LISP_OBJECT_HEADER *header = (LISP_OBJECT_HEADER *) XPNTR (obj);
 
 #ifndef NEW_GC
   /* This must be a real lcrecord */
@@ -1594,6 +1594,12 @@ void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
+  if (print_readably)
+    printing_unreadable_object
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
+       (unsigned long) XPNTR (obj));
+
   /* Internal objects shouldn't normally escape to the Lisp level;
      that's why we say "XEmacs bug?".  This can happen, however, when
      printing backtraces. */
@@ -1935,11 +1941,13 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-	if (LHEADER_IMPLEMENTATION (lheader)->printer)
-	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
-	   (obj, printcharfun, escapeflag));
-	else
-	  internal_object_printer (obj, printcharfun, escapeflag);
+	/* Either use a custom-written printer, or use
+	   internal_object_printer or external_object_printer, depending on
+	   whether the object is internal (not visible at Lisp level) or
+	   external. */
+	assert (LHEADER_IMPLEMENTATION (lheader)->printer);
+	((LHEADER_IMPLEMENTATION (lheader)->printer)
+	 (obj, printcharfun, escapeflag));
 	break;
       }
 
