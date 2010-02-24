@@ -1804,8 +1804,8 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
   if (UNBOUNDP (background_pixmap))
     background_pixmap = Qnil;
 
-  DEVMETH (d, clear_region,
-	   (locale, d, f, findex, x, y, width, height, fcolor, bcolor, background_pixmap));
+  DEVMETH (d, clear_region, (locale, d, f, findex, x, y, width, height,
+			     fcolor, bcolor, background_pixmap));
 }
 
 /****************************************************************************

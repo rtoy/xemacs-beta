@@ -1,5 +1,20 @@
 2010-02-24  Didier Verna  <didier@xemacs.org>
 
+	Modify XLIKE_get_gc's prototype.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Take a frame instead of a
+	device as first argument.
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update caller.
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Ditto.
+	* console-gtk.h (gtk_get_gc):  Take a frame instead of a device as
+	first argument.
+	* gtk-glue.c (face_to_gc): Update caller.
+
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
 	* glyphs.c: Clarify comment about potential_pixmap_file_instantiator.
 	* glyphs.c (xbm_mask_file_munging): Clarify comment, remove
 	unreachable condition and provide a cuple of assertions.
