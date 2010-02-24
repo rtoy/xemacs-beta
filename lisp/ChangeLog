@@ -1,3 +1,13 @@
+2010-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (constantly):
+	Normally return a compiled function from #'constantly if we are
+	handed a single argument. Shouldn't actually matter, the overhead
+	for returning a single constant in a lambda form vs. in a compiled
+	function is minuscule, but using compiled functions as much as
+	possible is good style in XEmacs, our interpreter is not stellar
+	(nor indeed should it need to be).
+
 2010-02-23  Ben Wing  <ben@xemacs.org>
 
 	* help.el: fux typo in comment. (oops)
