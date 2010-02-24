@@ -27,7 +27,7 @@ BEGIN_C_DECLS
 /* struct Lisp_Process is defined in procimpl.h; only process-*.c need
    to know about the guts of it. */
 
-DECLARE_LRECORD (process, Lisp_Process);
+DECLARE_LISP_OBJECT (process, Lisp_Process);
 #define XPROCESS(x) XRECORD (x, process, Lisp_Process)
 #define wrap_process(p) wrap_record (p, process)
 #define PROCESSP(x) RECORDP (x, process)

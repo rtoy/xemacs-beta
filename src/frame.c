@@ -180,12 +180,9 @@ static const struct memory_description expose_ignore_description_1 [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("expose-ignore",
-			       expose_ignore,
-			       1, /*dumpable-flag*/
-			       0, 0, 0, 0, 0,
-			       expose_ignore_description_1,
-			       struct expose_ignore);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("expose-ignore", expose_ignore,
+				      0, expose_ignore_description_1,
+				      struct expose_ignore);
 #else /* not NEW_GC */
 extern const struct sized_memory_description expose_ignore_description;
 
@@ -282,16 +279,15 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
-			       0, /*dumpable-flag*/
-			       mark_frame, print_frame, 0, 0, 0,
-			       frame_description,
-			       struct frame);
+DEFINE_NODUMP_LISP_OBJECT ("frame", frame,
+			   mark_frame, print_frame, 0, 0, 0,
+			   frame_description,
+			   struct frame);
 
 static void
 nuke_all_frame_slots (struct frame *f)
 {
-  ZERO_LCRECORD (f);
+  ZERO_LISP_OBJECT (f);
 
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
@@ -305,12 +301,11 @@ static struct frame *
 allocate_frame_core (Lisp_Object device)
 {
   /* This function can GC */
-  Lisp_Object frame;
   Lisp_Object root_window;
-  struct frame *f = ALLOC_LCRECORD_TYPE (struct frame, &lrecord_frame);
+  Lisp_Object frame = ALLOC_LISP_OBJECT (frame);
+  struct frame *f = XFRAME (frame);
 
   nuke_all_frame_slots (f);
-  frame = wrap_frame (f);
 
   f->device = device;
   f->framemeths = XDEVICE (device)->devmeths;
@@ -3624,9 +3619,9 @@ init_frame (void)
 void
 syms_of_frame (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (frame);
+  INIT_LISP_OBJECT (frame);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (expose_ignore);
+  INIT_LISP_OBJECT (expose_ignore);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qdelete_frame_hook);

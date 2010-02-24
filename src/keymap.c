@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -148,7 +148,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-  struct LCRECORD_HEADER header;
+  LISP_OBJECT_HEADER header;
 #define MARKED_SLOT(x) Lisp_Object x;
 #include "keymap-slots.h"
 };
@@ -300,12 +300,11 @@ static const struct memory_description keymap_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
-			       1, /*dumpable-flag*/
-                               mark_keymap, print_keymap, 0,
-			       keymap_equal, keymap_hash,
-			       keymap_description,
-			       Lisp_Keymap);
+DEFINE_DUMPABLE_LISP_OBJECT ("keymap", keymap,
+			     mark_keymap, print_keymap, 0,
+			     keymap_equal, keymap_hash,
+			     keymap_description,
+			     Lisp_Keymap);
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */
@@ -778,10 +777,8 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (Elemcount size)
 {
-  Lisp_Object result;
-  Lisp_Keymap *keymap = ALLOC_LCRECORD_TYPE (Lisp_Keymap, &lrecord_keymap);
-
-  result = wrap_keymap (keymap);
+  Lisp_Object obj = ALLOC_LISP_OBJECT (keymap);
+  Lisp_Keymap *keymap = XKEYMAP (obj);
 
 #define MARKED_SLOT(x) keymap->x = Qnil;
 #include "keymap-slots.h"
@@ -796,7 +793,7 @@ make_keymap (Elemcount size)
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
 			      HASH_TABLE_EQ);
     }
-  return result;
+  return obj;
 }
 
 DEFUN ("make-keymap", Fmake_keymap, 0, 1, 0, /*
@@ -4298,7 +4295,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 void
 syms_of_keymap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (keymap);
+  INIT_LISP_OBJECT (keymap);
 
   DEFSYMBOL (Qminor_mode_map_alist);
 

@@ -45,7 +45,7 @@ extern int wedge_metacity;
 struct x_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* The X connection of this device. */
   Display *display;
@@ -167,7 +167,7 @@ struct x_device
 #ifdef NEW_GC
 typedef struct x_device Lisp_X_Device;
 
-DECLARE_LRECORD (x_device, Lisp_X_Device);
+DECLARE_LISP_OBJECT (x_device, Lisp_X_Device);
 
 #define XX_DEVICE(x) \
   XRECORD (x, x_device, Lisp_X_Device)
@@ -243,7 +243,7 @@ DECLARE_LRECORD (x_device, Lisp_X_Device);
 struct x_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame.
@@ -351,7 +351,7 @@ struct x_frame
 #ifdef NEW_GC
 typedef struct x_frame Lisp_X_Frame;
 
-DECLARE_LRECORD (x_frame, Lisp_X_Frame);
+DECLARE_LISP_OBJECT (x_frame, Lisp_X_Frame);
 
 #define XX_FRAME(x) \
   XRECORD (x, x_frame, Lisp_X_Frame)

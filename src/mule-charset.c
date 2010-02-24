@@ -178,10 +178,9 @@ static const struct memory_description charset_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-			       1, /* dumpable flag */
-                               mark_charset, print_charset, 0,
-			       0, 0, charset_description, Lisp_Charset);
+DEFINE_DUMPABLE_LISP_OBJECT ("charset", charset,
+			     mark_charset, print_charset, 0,
+			     0, 0, charset_description, Lisp_Charset);
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object
@@ -196,8 +195,8 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
 
   if (!overwrite)
     {
-      cs = ALLOC_LCRECORD_TYPE (Lisp_Charset, &lrecord_charset);
-      obj = wrap_charset (cs);
+      obj = ALLOC_LISP_OBJECT (charset);
+      cs = XCHARSET (obj);
 
       if (final)
 	{
@@ -1002,7 +1001,7 @@ compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 {
   struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (c, sizeof (*c), ovstats);
+  stats->other   += LISP_OBJECT_STORAGE_SIZE (c, sizeof (*c), ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }
@@ -1055,7 +1054,7 @@ represents all the memory concerned.
 void
 syms_of_mule_charset (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (charset);
+  INIT_LISP_OBJECT (charset);
 
   DEFSUBR (Fcharsetp);
   DEFSUBR (Ffind_charset);
