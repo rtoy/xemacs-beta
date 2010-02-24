@@ -1,3 +1,12 @@
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.c: Clarify comment about potential_pixmap_file_instantiator.
+	* glyphs.c (xbm_mask_file_munging): Clarify comment, remove
+	unreachable condition and provide a cuple of assertions.
+	* glyphs.c (xbm_normalize): Clarify comments, error on mask file
+	not found.
+	* glyphs.c (xface_normalize): Ditto, and handle inline data properly.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* .gdbinit.in.in:
