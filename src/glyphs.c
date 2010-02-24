@@ -4,7 +4,7 @@
    Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
-   Copyright (C) 2007 Didier Verna
+   Copyright (C) 2007, 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -2521,15 +2521,16 @@ formatted_string_instantiate (Lisp_Object image_instance,
 /*                        pixmap file functions                         */
 /************************************************************************/
 
-/* If INSTANTIATOR refers to inline data, return Qt.
-   If INSTANTIATOR refers to data in a file, return the full filename
-   if it exists, Qnil if there's no console method for locating the file, or
-   (filename) if there was an error locating the file.
+/* - If INSTANTIATOR refers to inline data, or there is no file keyword, we
+     have nothing to do, so return Qt.
+   - If INSTANTIATOR refers to data in a file, return the full filename
+     if it exists; otherwise, return '(filename), meaning "file not found".
+   - If there is no locate_pixmap_file method for this console, return Qnil.
 
    FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
    keywords used to look up the file and inline data,
-   respectively, in the instantiator.  Normally these would
-   be Q_file and Q_data, but might be different for mask data. */
+   respectively, in the instantiator.  These would be Q_file and Q_data,
+   Q_mask_file or Q_mask_data. */
 
 Lisp_Object
 potential_pixmap_file_instantiator (Lisp_Object instantiator,
@@ -2736,18 +2737,20 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
   return Qnil; /* not reached */
 }
 
+/* This function attempts to find implicit mask files by appending "Mask" or
+   "msk" to the original bitmap file name. This is more or less standard: a
+   number of bitmaps in /usr/include/X11/bitmaps use it. */
 Lisp_Object
 xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 		       Lisp_Object mask_file, Lisp_Object console_type)
 {
-  /* This is unclean but it's fairly standard -- a number of the
-     bitmaps in /usr/include/X11/bitmaps use it -- so we support
-     it. */
-  if (EQ (mask_file, Qt)
-      /* don't override explicitly specified mask data. */
-      && NILP (assq_no_quit (Q_mask_data, alist))
-      && !EQ (file, Qt))
+  /* Let's try to find an implicit mask file if we have neither an explicit
+     mask file name, nor inline mask data. Note that no errors are reported in
+     case of failure because the mask file we're looking for might not
+     exist. */ 
+  if (EQ (mask_file, Qt) && NILP (assq_no_quit (Q_mask_data, alist)))
     {
+      assert (!EQ (file, Qt) && !EQ (file, Qnil));
       mask_file = MAYBE_LISP_CONTYPE_METH
 	(decode_console_type(console_type, ERROR_ME),
 	 locate_pixmap_file, (concat2 (file, build_ascstring ("Mask"))));
@@ -2757,10 +2760,14 @@ xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 	   locate_pixmap_file, (concat2 (file, build_ascstring ("msk"))));
     }
 
+  /* We got a mask file, either explicitely or from the search above. */
   if (!NILP (mask_file))
     {
-      Lisp_Object mask_data =
-	bitmap_to_lisp_data (mask_file, 0, 0, 0);
+      Lisp_Object mask_data;
+
+      assert (!EQ (mask_file, Qt));
+
+      mask_data = bitmap_to_lisp_data (mask_file, 0, 0, 0);
       alist = remassq_no_quit (Q_mask_file, alist);
       /* there can't be a :mask-data at this point. */
       alist = Fcons (Fcons (Q_mask_file, mask_file),
@@ -2776,9 +2783,8 @@ static Lisp_Object
 xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 	       Lisp_Object UNUSED (dest_mask))
 {
-  Lisp_Object file = Qnil, mask_file = Qnil;
+  Lisp_Object file = Qnil, mask_file = Qnil, alist = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object alist = Qnil;
 
   GCPRO3 (file, mask_file, alist);
 
@@ -2796,13 +2802,20 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
-  if (NILP (file)) /* normalization impossible for the console type */
+  /* No locate_pixmap_file method for this console type, so we can't get a
+     file (neither a mask file BTW). */
+  if (NILP (file))
     RETURN_UNGCPRO (Qnil);
 
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening bitmap file",
 			       "no such file or directory",
 			       Fcar (file));
+
+  if (CONSP (mask_file)) /* failure locating filename */
+    signal_double_image_error ("Opening bitmap mask file",
+			       "no such file or directory",
+			       Fcar (mask_file));
 
   if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
@@ -2863,10 +2876,8 @@ static Lisp_Object
 xface_normalize (Lisp_Object inst, Lisp_Object console_type,
 		 Lisp_Object UNUSED (dest_mask))
 {
-  /* This function can call lisp */
-  Lisp_Object file = Qnil, mask_file = Qnil;
+  Lisp_Object file = Qnil, mask_file = Qnil, alist = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object alist = Qnil;
 
   GCPRO3 (file, mask_file, alist);
 
@@ -2884,28 +2895,34 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
-  if (NILP (file)) /* normalization impossible for the console type */
+  /* No locate_pixmap_file method for this console type, so we can't get a
+     file (neither a mask file BTW). */
+  if (NILP (file))
     RETURN_UNGCPRO (Qnil);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_image_error ("Opening bitmap file",
+    signal_double_image_error ("Opening face file",
 			       "no such file or directory",
 			       Fcar (file));
+
+  if (CONSP (mask_file)) /* failure locating filename */
+    signal_double_image_error ("Opening face mask file",
+			       "no such file or directory",
+			       Fcar (mask_file));
 
   if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);
 
-  {
-    /* #### FIXME: what if EQ (file, Qt) && !EQ (mask, Qt) ? Is that possible?
-       If so, we have a problem... -- dvl */
-    Lisp_Object data = make_string_from_file (file);
-    alist = remassq_no_quit (Q_file, alist);
-    /* there can't be a :data at this point. */
-    alist = Fcons (Fcons (Q_file, file),
-		   Fcons (Fcons (Q_data, data), alist));
-  }
+  if (!EQ (file, Qt))
+    {
+      Lisp_Object data = make_string_from_file (file);
+      alist = remassq_no_quit (Q_file, alist);
+      /* there can't be a :data at this point. */
+      alist = Fcons (Fcons (Q_file, file),
+		     Fcons (Fcons (Q_data, data), alist));
+    }
 
   alist = xbm_mask_file_munging (alist, file, mask_file, console_type);
 
