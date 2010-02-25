@@ -1544,16 +1544,6 @@ enum run_hooks_condition
   RUN_HOOKS_UNTIL_FAILURE
 };
 
-#ifdef HAVE_TOOLBARS
-enum toolbar_pos
-{
-  TOP_TOOLBAR,
-  BOTTOM_TOOLBAR,
-  LEFT_TOOLBAR,
-  RIGHT_TOOLBAR
-};
-#endif
-
 enum edge_style
 {
   EDGE_ETCHED_IN,

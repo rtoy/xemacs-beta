@@ -100,17 +100,23 @@ struct frame
   /* Size of toolbars as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  int current_toolbar_size[4];
+  int current_toolbar_size[NUM_EDGES];
 #endif
 
   /* Size of gutters as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  int current_gutter_bounds[4];
+  int current_gutter_bounds[NUM_EDGES];
+
+  /* Toolbar visibility */
+  int toolbar_was_visible[NUM_EDGES];
+
+  /* gutter visibility */
+  int gutter_was_visible[NUM_EDGES];
 
   /* Dynamic arrays of display lines for gutters */
-  display_line_dynarr *current_display_lines[4];
-  display_line_dynarr *desired_display_lines[4];
+  display_line_dynarr *current_display_lines[NUM_EDGES];
+  display_line_dynarr *desired_display_lines[NUM_EDGES];
 
   /* A structure of auxiliary data specific to the device type.  For
      example, struct x_frame is for X window frames; defined in
@@ -159,16 +165,6 @@ Value : Emacs meaning                           :f-v-p : X meaning
 
   /* True if frame's root window can't be split.  */
   unsigned int no_split :1;
-
-  unsigned int top_toolbar_was_visible :1;
-  unsigned int bottom_toolbar_was_visible :1;
-  unsigned int left_toolbar_was_visible :1;
-  unsigned int right_toolbar_was_visible :1;
-  /* gutter visibility */
-  unsigned int top_gutter_was_visible :1;
-  unsigned int bottom_gutter_was_visible :1;
-  unsigned int left_gutter_was_visible :1;
-  unsigned int right_gutter_was_visible :1;
 
   /* redisplay flags */
   unsigned int buffers_changed :1;
@@ -581,13 +577,13 @@ extern int frame_changed;
    : 0)
 
 #define FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, TOP_EDGE)
 #define FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, BOTTOM_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, BOTTOM_EDGE)
 #define FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, LEFT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, LEFT_EDGE)
 #define FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_EDGE)
 
 #define FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
   (FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE (f, pos)		\
@@ -595,13 +591,13 @@ extern int frame_changed;
    : 0)
 
 #define FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
 #define FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, LEFT_EDGE)
 #define FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_EDGE)
 
 /* This returns the window-local value rather than the frame-local value;
    that tells you about what's actually visible rather than what should
@@ -670,40 +666,40 @@ extern int frame_changed;
    2 * FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos))
 
 #define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_EDGE)
 
 #define FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_EDGE)
 
 #define FRAME_REAL_TOP_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_EDGE)
 
 #define FRAME_REAL_TOP_TOOLBAR_BOUNDS(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_BOUNDS(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_BOUNDS(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_EDGE)
 
 /************************************************************************/
 /*         frame dimensions defined using toolbars and gutters          */
