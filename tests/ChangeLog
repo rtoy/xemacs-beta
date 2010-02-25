@@ -1,3 +1,41 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/syntax-tests.el:
+	Use Known-Bug-Expect-Error, not Known-Bug-Expect-Failure, when
+	error expected; else test suite will abort this file.
+	
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer):
+	Remove unused binding.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	debug-xemacs-searches renamed to debug-searches.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-bug-expected): New.
+	* automated/test-harness.el (test-harness-unexpected-error-enter-debugger): New.
+	* automated/test-harness.el (test-harness-assertion-failure-enter-debugger): New.
+	* automated/test-harness.el (test-harness-unexpected-error-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-condition-handler): New.
+	* automated/test-harness.el (test-harness-error-wrap): New.
+	* automated/test-harness.el (test-harness-from-buffer):
+	New variables that allow a backtrace to be displayed and/or the
+	debugger to be entered when an assertion failure or unexpected error
+	occurs.  By default, debugging occurs when interactive and debug-on-error
+	is set, and backtrace-displaying occurs either
+	(a) when stack-trace-on-error is set, or (b) always, when an unexpected
+	error occurs. (However, no backtracing or debugging occurs when a bug
+	is expected.)
+
 2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

@@ -1293,7 +1293,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 0);
   lid = make_int (id);
-  if (id != XINT (lid)) ABORT ();
+  assert (id == XINT (lid));
   return lid;
 }
 
@@ -1372,7 +1372,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 1);
   lid = make_int (id);
-  if (id != XINT (lid)) ABORT ();
+  assert (id == XINT (lid));
   return lid;
 }
 
@@ -3742,8 +3742,7 @@ modify them.
   {
     Lisp_Object e = XVECTOR_DATA (Vrecent_keys_ring)[j];
 
-    if (NILP (e))
-      ABORT ();
+    assert (!NILP (e));
     XVECTOR_DATA (val)[i] = Fcopy_event (e, Qnil);
     if (++j >= recent_keys_ring_size)
       j = 0;

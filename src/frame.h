@@ -1,6 +1,6 @@
 /* Define frame-object for XEmacs.
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -120,22 +120,22 @@ Lisp_Object frame_device (struct frame *f);
 void update_frame_title (struct frame *f);
 Lisp_Object next_frame (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object previous_frame (Lisp_Object, Lisp_Object, Lisp_Object);
+void pixel_to_frame_unit_size (struct frame *f, int pixel_width, int pixel_height,
+			 int *char_width, int *char_height);
+void frame_unit_to_pixel_size (struct frame *f, int char_width, int char_height,
+			 int *pixel_width, int *pixel_height);
 void pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 			 int *char_width, int *char_height);
 void char_to_pixel_size (struct frame *f, int char_width, int char_height,
 			 int *pixel_width, int *pixel_height);
 void round_size_to_char (struct frame *f, int in_width, int in_height,
 			 int *out_width, int *out_height);
-void pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
-			 int *char_width, int *char_height);
-void char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
-			 int *pixel_width, int *pixel_height);
-void round_size_to_real_char (struct frame *f, int in_width, int in_height,
-			      int *out_width, int *out_height);
 void change_frame_size (struct frame *frame,
 			int newlength, int newwidth,
 			int delay);
 void adjust_frame_size (struct frame *frame);
+void internal_set_frame_size (struct frame *f, int cols, int rows,
+			      int pretend);
 void frame_size_slipped (Lisp_Object specifier, struct frame *f,
 			 Lisp_Object oldval);
 void select_frame_1 (Lisp_Object frame);

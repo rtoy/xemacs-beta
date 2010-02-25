@@ -1,7 +1,7 @@
 /* Buffer manipulation primitives for XEmacs.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2870,10 +2870,9 @@ handled:
      slot of buffer_local_flags and vice-versa.  Must be done after all
      DEFVAR_BUFFER_LOCAL() calls. */
 #define MARKED_SLOT(slot)					\
-  if ((XINT (buffer_local_flags.slot) != -2 &&			\
-       XINT (buffer_local_flags.slot) != -3)			\
-      != !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)))	\
-  ABORT ();
+  assert ((XINT (buffer_local_flags.slot) != -2 &&		\
+           XINT (buffer_local_flags.slot) != -3)		\
+	  == !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)));
 #include "bufslots.h"
 
   {

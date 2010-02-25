@@ -1,6 +1,6 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation, Inc.
    Copyright (c) 1995 Sun Microsystems, Inc.
-   Copyright (c) 1995, 1996, 2000, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (c) 1995, 1996, 2000, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -4927,12 +4927,8 @@ process_extents_for_insertion_mapper (EXTENT extent, void *arg)
      the insertion overlaps any existing extent, something is wrong.
    */
 #ifdef ERROR_CHECK_EXTENTS
-  if (extent_start (extent) > indice &&
-      extent_start (extent) < indice + closure->length)
-    ABORT ();
-  if (extent_end (extent) > indice &&
-      extent_end (extent) < indice + closure->length)
-    ABORT ();
+  assert (extent_start (extent) <= indice || extent_start (extent) >= indice + closure->length);
+  assert (extent_end (extent) <= indice || extent_end (extent) >= indice + closure->length);
 #endif
 
   /* The extent-adjustment code adjusted the extent's endpoints as if

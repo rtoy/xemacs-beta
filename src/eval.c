@@ -1766,8 +1766,7 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 {
 #ifdef DEFEND_AGAINST_THROW_RECURSION
   /* die if we recurse more than is reasonable */
-  if (++throw_level > 20)
-    ABORT ();
+  assert (++throw_level <= 20);
 #endif
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS

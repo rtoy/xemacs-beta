@@ -1032,13 +1032,13 @@ XE_MERGED_ARG([quick-build],
 	AS_HELP_STRING([--with-quick-build],[Speed up the build cycle by leaving out steps where
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
-                        doing. This (1) doesn't garbage-collect after loading
-                        each file during dumping, (2) doesn't
+                        doing. This (1) Doesn't garbage-collect after loading
+                        each file during dumping, (2) Doesn't
                         automatically rebuild the DOC file (remove it by hand
                         to get it rebuilt), (3) Removes config.h, lisp.h and
                         associated files from the dependency lists, so changes
                         to these files don't automatically cause all .c files
-                        to be rebuilt.]),
+                        to be rebuilt, (4) Doesn't check for Lisp shadows.]),
 	[], [])
 XE_MERGED_ARG([union-type],
 	AS_HELP_STRING([--with-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),

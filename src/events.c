@@ -1,7 +1,7 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -40,18 +40,6 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
-
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
-#ifdef HAVE_TOOLBARS
-#define USED_IF_TOOLBARS(decl) decl
-#else
-#define USED_IF_TOOLBARS(decl) UNUSED (decl)
-#endif
 
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
@@ -880,21 +868,18 @@ that it is safe to do so.
   {
     int i, len;
 
-    if (EQ (event, Vlast_command_event) ||
-	EQ (event, Vlast_input_event)   ||
-	EQ (event, Vunread_command_event))
-      ABORT ();
+    assert (!(EQ (event, Vlast_command_event) ||
+	      EQ (event, Vlast_input_event)   ||
+	      EQ (event, Vunread_command_event)));
 
     len = XVECTOR_LENGTH (Vthis_command_keys);
     for (i = 0; i < len; i++)
-      if (EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]))
-	ABORT ();
+      assert (!EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]));
     if (!NILP (Vrecent_keys_ring))
       {
 	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
 	for (i = 0; i < recent_ring_len; i++)
-	  if (EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]))
-	    ABORT ();
+	  assert (!EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]));
       }
   }
 #endif /* 0 */
@@ -2140,14 +2125,13 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
      pointer points to random memory, often filled with 0, sometimes not.
    */
   /* #### Chuck, do we still need this crap? */
-  if (!NILP (ret_obj1) && !(GLYPHP (ret_obj1)
 #ifdef HAVE_TOOLBARS
-			    || TOOLBAR_BUTTONP (ret_obj1)
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1)
+	  || TOOLBAR_BUTTONP (ret_obj1));
+#else
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1));
 #endif
-     ))
-    ABORT ();
-  if (!NILP (ret_obj2) && !(EXTENTP (ret_obj2) || CONSP (ret_obj2)))
-    ABORT ();
+  assert (NILP (ret_obj2) || EXTENTP (ret_obj2) || CONSP (ret_obj2));
 
   if (char_x)
     *char_x = ret_x;

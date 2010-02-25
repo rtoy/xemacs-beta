@@ -31,12 +31,6 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "extents.h"
 
-#ifdef NEW_GC
-# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
-#else
-# define UNUSED_IF_NEW_GC(decl) decl
-#endif
-
 #define ST_COMMENT_STYLE 0x101
 #define ST_STRING_STYLE  0x102
 

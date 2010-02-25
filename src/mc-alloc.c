@@ -1,5 +1,6 @@
 /* New size-based allocator for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1272,7 +1273,7 @@ remove_page_from_used_list (page_header *ph)
 {
   page_list_header *plh = PH_PLH (ph);
 
-  if (gc_in_progress && PH_PROTECTION_BIT (ph)) ABORT();
+  assert (!(gc_in_progress && PH_PROTECTION_BIT (ph)));
   /* cleanup: remove memory protection, zero page_header bits. */
 
 #ifdef MEMORY_USAGE_STATS
@@ -1578,7 +1579,7 @@ mc_sweep (void)
 
 /* Changes the size of the cell pointed to by ptr.
    Returns the new address of the new cell with new size. */
-void *
+static void *
 mc_realloc_1 (void *ptr, size_t size, int elemcount)
 {
   if (ptr)
@@ -1781,26 +1782,28 @@ syms_of_mc_alloc (void)
 
 /*--- incremental garbage collector ----------------------------------*/
 
+#if 0 /* currently unused */
+
 /* access dirty bit of page header */
-void
+static void
 set_dirty_bit (page_header *ph, unsigned int value)
 {
   PH_DIRTY_BIT (ph) = value;
 }
 
-void
+static void
 set_dirty_bit_for_address (void *ptr, unsigned int value)
 {
   set_dirty_bit (get_page_header (ptr), value);
 }
 
-unsigned int
+static unsigned int
 get_dirty_bit (page_header *ph)
 {
   return PH_DIRTY_BIT (ph);
 }
 
-unsigned int
+static unsigned int
 get_dirty_bit_for_address (void *ptr)
 {
   return get_dirty_bit (get_page_header (ptr));
@@ -1808,25 +1811,25 @@ get_dirty_bit_for_address (void *ptr)
 
 
 /* access protection bit of page header */
-void
+static void
 set_protection_bit (page_header *ph, unsigned int value)
 {
   PH_PROTECTION_BIT (ph) = value;
 }
 
-void
+static void
 set_protection_bit_for_address (void *ptr, unsigned int value)
 {
   set_protection_bit (get_page_header (ptr), value);
 }
 
-unsigned int
+static unsigned int
 get_protection_bit (page_header *ph)
 {
   return PH_PROTECTION_BIT (ph);
 }
 
-unsigned int
+static unsigned int
 get_protection_bit_for_address (void *ptr)
 {
   return get_protection_bit (get_page_header (ptr));
@@ -1834,11 +1837,13 @@ get_protection_bit_for_address (void *ptr)
 
 
 /* Returns the start of the page of the object pointed to by ptr. */
-void *
+static void *
 get_page_start (void *ptr)
 {
   return PH_HEAP_SPACE (get_page_header (ptr));
 }
+
+#endif /* 0 */
 
 /* Make PAGE_SIZE globally available. */
 EMACS_INT

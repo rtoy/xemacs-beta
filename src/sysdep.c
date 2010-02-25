@@ -108,12 +108,6 @@ static int baud_convert[] =
 
 #endif
 
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
 
 /************************************************************************/
 /*                         subprocess control                           */

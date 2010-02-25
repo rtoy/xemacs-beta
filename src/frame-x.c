@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -224,14 +224,14 @@ decode_x_frame (Lisp_Object frame)
 void
 x_wm_mark_shell_size_user_specified (Widget wmshell)
 {
-  if (! XtIsWMShell (wmshell)) ABORT ();
+  assert (XtIsWMShell (wmshell));
   EmacsShellSetSizeUserSpecified (wmshell);
 }
 
 void
 x_wm_mark_shell_position_user_specified (Widget wmshell)
 {
-  if (! XtIsWMShell (wmshell)) ABORT ();
+  assert (XtIsWMShell (wmshell));
   EmacsShellSetPositionUserSpecified (wmshell);
 }
 
@@ -240,7 +240,7 @@ x_wm_mark_shell_position_user_specified (Widget wmshell)
 void
 x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
 {
-  if (! XtIsWMShell (shell)) ABORT ();
+  assert (XtIsWMShell (shell));
 
   /* Because of questionable logic in Shell.c, this sequence can't work:
 
@@ -269,10 +269,8 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
 {
   Arg al [2];
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
-  if (cw <= 0 || ch <= 0)
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
+  assert (cw > 0 && ch > 0);
 
   Xt_SET_ARG (al[0], XtNwidthInc,  cw);
   Xt_SET_ARG (al[1], XtNheightInc, ch);
@@ -284,8 +282,7 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
 {
   Arg al [2];
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
 #ifdef DEBUG_GEOMETRY_MANAGEMENT
   /* See comment in EmacsShell.c */
   printf ("x_wm_set_variable_size: %d %d\n", width, height);
@@ -353,8 +350,7 @@ x_wm_store_class_hints (Widget shell, Extbyte *frame_name)
   Extbyte *app_name, *app_class;
   XClassHint classhint;
 
-  if (!XtIsWMShell (shell))
-    ABORT ();
+  assert (XtIsWMShell (shell));
 
   XtGetApplicationNameAndClass (dpy, &app_name, &app_class);
   classhint.res_name = frame_name;
@@ -370,8 +366,7 @@ x_wm_maybe_store_wm_command (struct frame *f)
   Widget w = FRAME_X_SHELL_WIDGET (f);
   struct device *d = XDEVICE (FRAME_DEVICE (f));
 
-  if (!XtIsWMShell (w))
-    ABORT ();
+  assert (XtIsWMShell (w));
 
   if (NILP (DEVICE_X_WM_COMMAND_FRAME (d)))
     {
@@ -1524,8 +1519,7 @@ x_initialize_frame_size (struct frame *f)
 
   /* OK, we're a top-level shell. */
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
 
   /* If the EmacsFrame doesn't have a geometry but the shell does,
      treat that as the geometry of the frame.
