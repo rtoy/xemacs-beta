@@ -208,17 +208,18 @@ xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
 static GdkGC *
 face_to_gc (Lisp_Object face)
 {
-  Lisp_Object device = Fselected_device (Qnil);
+  Lisp_Object frame = Fselected_frame (Qnil);
 
-  return (gtk_get_gc (XDEVICE (device),
+  return (gtk_get_gc (XFRAME (frame),
 		      Fspecifier_instance (Fget (face, Qfont, Qnil),
-					   device, Qnil, Qnil),
+					   frame, Qnil, Qnil),
 		      Fspecifier_instance (Fget (face, Qforeground, Qnil),
-					   device, Qnil, Qnil),
+					   frame, Qnil, Qnil),
 		      Fspecifier_instance (Fget (face, Qbackground, Qnil),
-					   device, Qnil, Qnil),
+					   frame, Qnil, Qnil),
 		      Fspecifier_instance (Fget (face, Qbackground_pixmap,
-						 Qnil), device, Qnil, Qnil),
+						 Qnil),
+					   frame, Qnil, Qnil),
 		      Qnil));
 }
 
