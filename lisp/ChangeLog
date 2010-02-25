@@ -1,3 +1,17 @@
+c2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (make-autoload):
+	Call cl-function-arglist with one arg.
+	
+	* cl-macs.el (cl-function-arglist):
+	* cl-macs.el (cl-transform-lambda):
+	Make cl-function-arglist take only one arg, the arglist; no
+	function name passed.  Also make sure to print () instead of nil
+	when empty arglist, or function-documentation-1 won't recognize
+	the arguments: line.
+	* help.el (function-arglist): If empty arg, don't display extra
+	space after function name.
+
 2010-02-23  Ben Wing  <ben@xemacs.org>
 
 	* help.el: fux typo in comment. (oops)

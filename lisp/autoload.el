@@ -286,11 +286,10 @@ or macro definition or a defcustom)."
 	     (body (nthcdr (get car 'doc-string-elt) form))
 	     (doc (if (stringp (car body)) (pop body))))
 	(if (memq car '(defmacro defmacro* defun defun*))
-	    (let ((arglist (nth 2 form))
-		  (placeholder (eval-when-compile (gensym))))
+	    (let ((arglist (nth 2 form)))
 	      (setq doc (concat (or doc "")
 				"\n\narguments: "
-				(cl-function-arglist placeholder arglist t)
+				(cl-function-arglist arglist)
 				"\n"))))
 	;; `define-generic-mode' quotes the name, so take care of that
 	(list 'autoload (if (listp name) name (list 'quote name)) file doc
