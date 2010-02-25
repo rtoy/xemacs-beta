@@ -3595,22 +3595,13 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 
   /* We need to remove the boundaries of the paned area (see top of file)
      from the total-area pixel size, which is what we have now.
-
-     #### We should also be subtracting the internal borders. */
+  */
   new_pixheight -=
-    (FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
-     + FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f)
-     + FRAME_TOP_GUTTER_BOUNDS (f)
-     + FRAME_BOTTOM_GUTTER_BOUNDS (f));
-
+    (FRAME_NONPANED_SIZE (f, TOP_EDGE) + FRAME_NONPANED_SIZE (f, BOTTOM_EDGE));
   new_pixwidth -=
-    (FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
-     + FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f)
-     + FRAME_LEFT_GUTTER_BOUNDS (f)
-     + FRAME_RIGHT_GUTTER_BOUNDS (f));
+    (FRAME_NONPANED_SIZE (f, LEFT_EDGE) + FRAME_NONPANED_SIZE (f, RIGHT_EDGE));
 
-  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
-    = FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_PANED_TOP_EDGE (f);
 
   if (FRAME_HAS_MINIBUF_P (f)
       && ! FRAME_MINIBUF_ONLY_P (f))
@@ -3636,8 +3627,7 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 			    new_pixheight - minibuf_height, 0);
 
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	FRAME_TOP_BORDER_END (f) +
-	FRAME_TOP_GUTTER_BOUNDS (f) +
+	FRAME_PANED_TOP_EDGE (f) +
 	FRAME_BOTTOM_GUTTER_BOUNDS (f) +
 	new_pixheight - minibuf_height;
 
@@ -3651,14 +3641,13 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (FRAME_TTY_P (f))
     f->pixheight = newheight;
 
-  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
-    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_PANED_LEFT_EDGE (f);
   set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
 
   if (FRAME_HAS_MINIBUF_P (f))
     {
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+	FRAME_PANED_LEFT_EDGE (f);
       set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
     }
 
@@ -3666,10 +3655,10 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (FRAME_TTY_P (f))
     f->pixwidth = newwidth;
 
-  /* #### On MS Windows, this references FRAME_PIXWIDTH() and FRAME_PIXHEIGHT().
-     I'm not sure we can count on those values being set.  Instead we should
-     use the total pixel size we got near the top by calling
-     frame_conversion_internal().  We should inline the logic in
+  /* #### On MS Windows, this references FRAME_PIXWIDTH() and
+     FRAME_PIXHEIGHT().  I'm not sure we can count on those values being
+     set.  Instead we should use the total pixel size we got near the top
+     by calling frame_conversion_internal().  We should inline the logic in
      get_frame_char_size() here and change that function so it just looks
      at FRAME_CHARWIDTH() and FRAME_CHARHEIGHT(). */
   get_frame_char_size (f, &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
