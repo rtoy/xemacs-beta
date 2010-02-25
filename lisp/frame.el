@@ -3,6 +3,7 @@
 ;; Copyright (C) 1993, 1994, 1996, 1997, 2000, 2001, 2003
 ;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
+;; Copyright (C) 2010 Didier Verna
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -1014,6 +1015,28 @@ pixels) is kept by adjusting the numbers of the lines and columns."
 (defun set-frame-property (frame prop val)
   "Set property PROP of FRAME to VAL.  See `set-frame-properties'."
   (set-frame-properties frame (list prop val)))
+
+(defun set-frame-background-placement (placement)
+  "Set the background placement of the selected frame to PLACEMENT.
+When called interactively, prompt for the placement to use."
+  (interactive (list (intern (completing-read "Placement: "
+					      '(("absolute" absolute)
+						("relative" relative))
+					      nil t))))
+  (set-face-background-placement 'default placement (selected-frame)))
+
+(defun frame-background-placement ()
+  "Retrieve the selected frame's background placement."
+  (interactive)
+  (face-background-placement 'default (selected-frame)))
+
+(defun frame-background-placement-instance ()
+  "Retrieve the selected frame's background placement instance."
+  (interactive)
+  (face-background-placement-instance 'default (selected-frame)))
+
+;; #### FIXME: misnomers ! The functions below should be called
+;; set-frame-<blabla> -- dvl.
 
 ;; XEmacs change: this function differs significantly from Emacs.
 (defun set-background-color (color-name)

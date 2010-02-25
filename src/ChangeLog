@@ -1,3 +1,70 @@
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* console-x-impl.h (struct x_frame): Add new slots x and y.
+	* console-x-impl.h (FRAME_X_X, FRAME_X_Y): New slot accessors.
+	* console-gtk-impl.h: Fake something similar for potential port.
+	* frame-x.c (x_get_frame_text_position): New function.
+	* frame-x.c (x_init_frame_3): Use it.
+	* event-Xt.c (emacs_Xt_handle_magic_event): Eat spurious
+	ConfigureNotify events, get the frame position and mark frame
+	faces changed.
+	* objects-impl.h: The face_background_placement_specifier
+	structure and its accessors.
+	* objects.c: New symbols Qabsolute and Qrelative.
+	* objects.c (face_background_placement_create):
+	* objects.c (face_background_placement_mark):
+	* objects.c (face_background_placement_instantiate):
+	* objects.c (face_background_placement_validate):
+	* objects.c (face_background_placement_after_change):
+	* objects.c (set_face_background_placement_attached_to): New.
+	* objects.h (set_face_background_palcement_attached_to): Declare
+	the one above.
+	* objects.c (syms_of_objects):
+	* objects.c (specifier_type_create_objects):
+	* objects.c (reinit_specifier_type_create_objects):
+	* objects.c (reinit_vars_of_objects): Update for the modifications
+	above.
+	* console-xlike-inc.h (XLIKE_GC_TS_X_ORIGIN, XLIKE_GC_TS_X_ORIGIN): 
+	New X11/Gtk compatibility macros.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Add a background placement
+	argument and handle it.
+	* gtk-glue.c (face_to_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Update
+	accordingly.
+	* console-impl.h (struct console_methods): Add a background
+	placement (Lisp_Object) argument to the clear_region method.
+	* console-stream.c (stream_clear_region):
+	* redisplay-tty.c (tty_clear_region):
+	* redisplay-msw.c (mswindows_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Update accordingly.
+	* redisplay-output.c (redisplay_clear_region): Handle the
+	background placement property and update the call to the
+	clear_region method.
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel): Add a background placement slot.
+	* faces.h (WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT): New accessor.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (Fmake_face):
+	* faces.c (Fcopy_face): Handle the background placement property.
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces): Update accordingly.
+
 2010-02-25  Ben Wing  <ben@xemacs.org>
 
 	* frame-impl.h:

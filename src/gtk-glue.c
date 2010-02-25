@@ -220,6 +220,9 @@ face_to_gc (Lisp_Object face)
 		      Fspecifier_instance (Fget (face, Qbackground_pixmap,
 						 Qnil),
 					   frame, Qnil, Qnil),
+		      Fspecifier_instance (Fget (face, Qbackground_placement,
+						 Qnil),
+					   frame, Qnil, Qnil),
 		      Qnil));
 }
 

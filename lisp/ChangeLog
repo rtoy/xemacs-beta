@@ -1,3 +1,21 @@
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* cl-macs.el (face-background-placement): New defsetf.
+	* cus-face.el (custom-face-attributes):
+	* faces.el (face-interactive):
+	* faces.el (set-face-property):
+	* faces.el (face-equal):
+	* faces.el (init-other-random-faces): Update.
+	* faces.el (face-background-placement):
+	* faces.el (set-face-background-placement):
+	* faces.el (face-background-placement-instance):
+	* faces.el (face-background-placement-instance-p):
+	* frame.el (set-frame-background-placement):
+	* frame.el (frame-background-placement):
+	* frame.el (frame-background-placement-instance):
+	* objects.el (make-face-background-placement-specifier): New.
+
 c2010-02-25  Ben Wing  <ben@xemacs.org>
 
 	* autoload.el (make-autoload):

@@ -2159,6 +2159,8 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
+(defsetf face-background-placement (f &optional s) (x)
+  (list 'set-face-background-placement f x s))
 (defsetf face-font (f &optional s) (x) (list 'set-face-font f x s))
 (defsetf face-foreground (f &optional s) (x) (list 'set-face-foreground f x s))
 (defsetf face-underline-p (f &optional s) (x)
