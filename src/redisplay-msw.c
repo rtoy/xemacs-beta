@@ -1212,8 +1212,13 @@ mswindows_clear_region (Lisp_Object USED_IF_SCROLLBARS (locale),
 			struct device *UNUSED (d), struct frame *f, 
 			face_index UNUSED (findex), int x, int y,
 			int width, int height, Lisp_Object fcolor,
-			Lisp_Object bcolor, Lisp_Object background_pixmap)
+			Lisp_Object bcolor,
+			Lisp_Object background_pixmap,
+			Lisp_Object background_placement)
 {
+  /* #### FIXME: don't know how to handle background_placement in mswindows.
+     -- dvl */
+
   RECT rect = { x, y, x+width, y+height };
   HDC hdc = get_frame_dc (f, 1);
 

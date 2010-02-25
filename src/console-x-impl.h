@@ -2,6 +2,7 @@
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -265,6 +266,8 @@ struct x_frame
   /* The widget of the edit portion of this frame; this is an EmacsFrame,
      and the window of this widget is what the redisplay code draws on. */
   Widget edit_widget;
+  /* Position of the edit widget above, for absolute background placement. */
+  int x, y;
 
   /* Lists the widgets above the text area, in the proper order.
      Used by the EmacsManager. */
@@ -360,6 +363,8 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 #endif /* NEW_GC */
 #define FRAME_X_DATA(f) FRAME_TYPE_DATA (f, x)
 
+#define FRAME_X_X(f) (FRAME_X_DATA (f)->x)
+#define FRAME_X_Y(f) (FRAME_X_DATA (f)->y)
 #define FRAME_X_SHELL_WIDGET(f)	    (FRAME_X_DATA (f)->widget)
 #define FRAME_X_CONTAINER_WIDGET(f) (FRAME_X_DATA (f)->container)
 #define FRAME_X_MENUBAR_WIDGET(f)   (FRAME_X_DATA (f)->menubar_widget)
@@ -406,6 +411,8 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 #endif /* HAVE_XIM */
 
 extern struct console_type *x_console_type;
+
+void x_get_frame_text_position (struct frame *);
 
 #endif /* HAVE_X_WINDOWS */
 

@@ -1,6 +1,7 @@
 /* Generic object functions -- header implementation.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -92,6 +93,31 @@ extern Lisp_Object Qface_boolean;
   CHECK_SPECIFIER_TYPE (x, face_boolean)
 #define CONCHECK_FACE_BOOLEAN_SPECIFIER(x) \
   CONCHECK_SPECIFIER_TYPE (x, face_boolean)
+
+/*****************************************************************************
+ *                  Background Placement Specifier Object                    *
+ *****************************************************************************/
+
+struct face_background_placement_specifier
+{
+  Lisp_Object face;		/* face this is attached to, or nil */
+};
+
+#define FACE_BACKGROUND_PLACEMENT_SPECIFIER_DATA(g)	\
+  SPECIFIER_TYPE_DATA (g, face_background_placement)
+#define FACE_BACKGROUND_PLACEMENT_SPECIFIER_FACE(g)	\
+  (FACE_BACKGROUND_PLACEMENT_SPECIFIER_DATA (g)->face)
+
+DECLARE_SPECIFIER_TYPE (face_background_placement);
+extern Lisp_Object Qface_background_placement, Qabsolute, Qrelative;
+#define XFACE_BACKGROUND_PLACEMENT_SPECIFIER(x)		\
+  XSPECIFIER_TYPE (x, face_background_placement)
+#define FACE_BACKGROUND_PLACEMENT_SPECIFIERP(x)		\
+  SPECIFIER_TYPEP (x, face_background_placement)
+#define CHECK_FACE_BACKGROUND_PLACEMENT_SPECIFIER(x)	\
+  CHECK_SPECIFIER_TYPE (x, face_background_placement)
+#define CONCHECK_FACE_BACKGROUND_PLACEMENT_SPECIFIER(x)		\
+  CONCHECK_SPECIFIER_TYPE (x, face_background_placement)
 
 /****************************************************************************
  *                           Color Instance Object                          *

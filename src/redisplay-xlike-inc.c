@@ -3,6 +3,7 @@
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 2002, 2003, 2005, 2009, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -812,8 +813,9 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 
 /* Called as gtk_get_gc from gtk-glue.c */
 
-XLIKE_GC XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg, 
-		       Lisp_Object bg, Lisp_Object bg_pmap,
+XLIKE_GC XLIKE_get_gc (struct frame *f, Lisp_Object font,
+		       Lisp_Object fg, Lisp_Object bg,
+		       Lisp_Object bg_pixmap, Lisp_Object bg_placement,
 		       Lisp_Object lwidth);
 
 /*****************************************************************************
@@ -822,8 +824,10 @@ XLIKE_GC XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg,
  Given a number of parameters return a GC with those properties.
  ****************************************************************************/
 XLIKE_GC
-XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg, 
-	      Lisp_Object bg, Lisp_Object bg_pmap, Lisp_Object lwidth)
+XLIKE_get_gc (struct frame *f, Lisp_Object font, 
+	      Lisp_Object fg, Lisp_Object bg,
+	      Lisp_Object bg_pixmap, Lisp_Object bg_placement, 
+	      Lisp_Object lwidth)
 {
   struct device *d = XDEVICE (f->device);
   XLIKE_GCVALUES gcv;
@@ -837,7 +841,8 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg,
   gcv.clip_x_origin = 0;
   gcv.clip_y_origin = 0;
   XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_SOLID);
-  mask = XLIKE_GC_EXPOSURES | XLIKE_GC_CLIP_MASK | XLIKE_GC_CLIP_X_ORIGIN | XLIKE_GC_CLIP_Y_ORIGIN;
+  mask = XLIKE_GC_EXPOSURES
+    | XLIKE_GC_CLIP_MASK | XLIKE_GC_CLIP_X_ORIGIN | XLIKE_GC_CLIP_Y_ORIGIN;
   mask |= XLIKE_GC_FILL;
 
   if (!NILP (font)
@@ -883,7 +888,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg,
 
   /* This special case comes from a request to draw text with a face which has
      the dim property. We'll use a stippled foreground GC. */
-  if (EQ (bg_pmap, Qdim))
+  if (EQ (bg_pixmap, Qdim))
     {
       assert (DEVICE_XLIKE_GRAY_PIXMAP (d) != XLIKE_NONE);
 
@@ -891,20 +896,34 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font, Lisp_Object fg,
       gcv.stipple = DEVICE_XLIKE_GRAY_PIXMAP (d);
       mask |= (XLIKE_GC_FILL | XLIKE_GC_STIPPLE);
     }
-  else if (IMAGE_INSTANCEP (bg_pmap)
-	   && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
+  else if (IMAGE_INSTANCEP (bg_pixmap)
+	   && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pixmap)))
     {
-      if (XIMAGE_INSTANCE_PIXMAP_DEPTH (bg_pmap) == 0)
+      if (XIMAGE_INSTANCE_PIXMAP_DEPTH (bg_pixmap) == 0)
 	{
 	  XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_OPAQUE_STIPPLED);
-	  gcv.stipple = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pmap);
+	  gcv.stipple = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pixmap);
 	  mask |= (XLIKE_GC_STIPPLE | XLIKE_GC_FILL);
 	}
       else
 	{
 	  XLIKE_SET_GC_FILL (gcv, XLIKE_FILL_TILED);
-	  gcv.tile = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pmap);
+	  gcv.tile = XIMAGE_INSTANCE_XLIKE_PIXMAP (bg_pixmap);
 	  mask |= (XLIKE_GC_TILE | XLIKE_GC_FILL);
+	}
+      if (EQ (bg_placement, Qabsolute))
+	{
+#ifdef THIS_IS_GTK
+	  /* #### WARNING: this does not currently work. -- dvl
+	     gcv.ts_x_origin = - FRAME_GTK_X (f);
+	     gcv.ts_y_origin = - FRAME_GTK_Y (f);
+	     mask |= (XLIKE_GC_TS_X_ORIGIN | XLIKE_GC_TS_Y_ORIGIN);
+	  */
+#else
+	  gcv.ts_x_origin = - FRAME_X_X (f);
+	  gcv.ts_y_origin = - FRAME_X_Y (f);
+	  mask |= (XLIKE_GC_TS_X_ORIGIN | XLIKE_GC_TS_Y_ORIGIN);
+#endif
 	}
     }
 
@@ -1078,7 +1097,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     bgc = 0;
   else
     bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
-			bg_pmap, Qnil);
+			bg_pmap, cachel->background_placement, Qnil);
 
   if (bgc)
     {
@@ -1159,7 +1178,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-			     cursor_cachel->background, Qnil, Qnil);
+			     cursor_cachel->background, Qnil, Qnil, Qnil);
 	}
       else if (cachel->dim)
 	{
@@ -1181,7 +1200,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qdim, Qnil);
+			     Qdim, Qnil, Qnil);
 	}
       else
 	{
@@ -1190,7 +1209,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qnil, Qnil);
+			     Qnil, Qnil, Qnil);
 	}
 #ifdef USE_XFT
       {
@@ -1464,7 +1483,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      XLIKE_RECTANGLE clip_box;
 	      XLIKE_GC cgc;
 	      cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-				  cursor_cachel->background, Qnil, Qnil);
+				  cursor_cachel->background, Qnil, Qnil, Qnil);
 
 	      clip_box.x = 0;
 	      clip_box.y = 0;
@@ -1535,13 +1554,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!NILP (bar_cursor_value))
 	{
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil,
+	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+			     Qnil, Qnil,
 			     make_int (bar_width));
 	}
       else
 	{
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
-			     Qnil, Qnil, Qnil);
+			     Qnil, Qnil, Qnil, Qnil);
 	}
 
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
@@ -1729,7 +1749,8 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 			    get_builtin_face_cache_index
 			    (w, Vtext_cursor_face));
 
-      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
+      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
+			 Qnil);
 
       if (cursor_width > db->xpos + dga->width - cursor_start)
 	cursor_width = db->xpos + dga->width - cursor_start;
@@ -1874,10 +1895,12 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 
   if (NILP (bg_pmap))
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		       Qnil, Qnil, Qnil);
+		       Qnil, Qnil, Qnil, Qnil);
   else
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
-		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex), bg_pmap,
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		       bg_pmap,
+		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),
 		       Qnil);
 
   XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
@@ -1898,7 +1921,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 			   (WINDOW_FACE_CACHEL (w, rb->findex),
 			    Vcharset_ascii));
 
-      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
+      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+			 Qnil, Qnil, Qnil);
 
       cursor_y = dl->ypos - fi->ascent;
       cursor_height = fi->height;
@@ -1917,7 +1941,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
 
 	      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
-				 Qnil, Qnil, make_int (bar_width));
+				 Qnil, Qnil, Qnil,
+				 make_int (bar_width));
 	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
 			       cursor_y, cursor_start + bar_width - 1,
 			       cursor_y + cursor_height - 1);
@@ -1962,7 +1987,7 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
     {
       gc = XLIKE_get_gc (f, Qnil,
 			 WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
-			 Qnil, Qnil, Qnil);
+			 Qnil, Qnil, Qnil, Qnil);
 
       if (ypos2 - ypos1 > 0)
 	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
@@ -1979,7 +2004,7 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 #else /* THIS_IS_X */
   /* Now draw the line. */
   gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		     Qnil, Qnil, Qnil);
+		     Qnil, Qnil, Qnil, Qnil);
 
   if (ypos2 < ypos1)
     ypos2 = ypos1;
@@ -2000,8 +2025,10 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 static void
 XLIKE_clear_region (Lisp_Object UNUSED (locale), struct device* d,
 		    struct frame* f, face_index UNUSED (findex), int x, int y,
-		    int width, int height, Lisp_Object fcolor,
-		    Lisp_Object bcolor, Lisp_Object background_pixmap)
+		    int width, int height,
+		    Lisp_Object fcolor, Lisp_Object bcolor,
+		    Lisp_Object background_pixmap,
+		    Lisp_Object background_placement)
 {
   XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
@@ -2009,7 +2036,8 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct device* d,
 
   if (!UNBOUNDP (background_pixmap))
     {
-      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor, background_pixmap, Qnil);
+      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
+			 background_pixmap, background_placement, Qnil);
     }
 
   if (gc)
@@ -2055,7 +2083,8 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   if (NILP (w->text_cursor_visible_p))
     return;
 
-  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
+  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+		     Qnil, Qnil, Qnil);
 
   default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
 
@@ -2079,7 +2108,8 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 	{
 	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
 
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil,
+	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+			     Qnil, Qnil,
 			     make_int (bar_width));
 	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
 			   x + bar_width - 1, cursor_y + cursor_height - 1);

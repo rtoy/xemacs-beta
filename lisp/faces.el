@@ -3,6 +3,7 @@
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 ;; Copyright (C) 1995, 1996, 2002, 2005 Ben Wing
+;; Copyright (C) 2010 Didier Verna
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: faces, internal, dumped
@@ -87,6 +88,8 @@ Such a collection of attributes is called a \"face\"."
 			  (color-instance-name default))
 			 ((image-instance-p default)
 			  (image-instance-file-name default))
+			 ((face-background-placement-instance-p default)
+			  (symbol-name default))
 			 (t default))))))
     (list face (if (equal value "") nil value))))
 
@@ -332,6 +335,11 @@ The following symbols have predefined meanings:
  background-pixmap  The pixmap displayed in the background of the face.
                     Only used by faces on X and MS Windows devices.
                     For valid instantiators, see `make-image-specifier'.
+
+ background-placement  The placement of the face's background pixmap.
+                    Only used by faces on X devices.
+                    For valid instantiators,
+                    see `make-face-background-placement-specifier'.
 
  underline          Underline all text covered by this face.
                     For valid instantiators, see `make-face-boolean-specifier'.
@@ -716,6 +724,45 @@ designed for interactive use."
      (list face (if (equal file "") nil file))))
   (set-face-property face 'background-pixmap file))
 
+(defun face-background-placement (face &optional domain default no-fallback)
+  "Return FACE's background placement in DOMAIN.
+See `face-property-instance' for the semantics of the DOMAIN argument."
+  (face-property face 'background-placement domain default no-fallback))
+
+(defun set-face-background-placement (face placement &optional locale tag-set
+				      how-to-add)
+  "Change the background-placement property of FACE to PLACEMENT.
+PLACEMENT is normally a background-placement instantiator; see
+`make-face-background-placement-specifier'.
+See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
+HOW-TO-ADD arguments."
+  (interactive (face-interactive "background placement"))
+  ;; When called non-interactively (for example via custom), PLACEMENT is
+  ;; expected to be a symbol. -- dvl
+  (unless (symbolp placement)
+    (setq placement (intern placement)))
+  (set-face-property face 'background-placement placement locale tag-set
+		     how-to-add))
+
+(defun face-background-placement-instance (face &optional domain default
+					   no-fallback)
+  "Return FACE's background-placement instance in DOMAIN.
+Return value will be a background-placement instance object.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+and an instance object describing the background placement in that particular
+window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (face-property-instance face 'background-placement domain default
+			  no-fallback))
+
+(defun face-background-placement-instance-p (object)
+  "Return t if OBJECT is a face-background-placement instance."
+  (or (eq object 'absolute) (eq object 'relative)))
+
 (defun face-display-table (face &optional locale tag-set exact-p)
   "Return the display table spec of FACE in LOCALE, or nil if unspecified..
 
@@ -871,7 +918,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (let ((device (dfw-device domain))
 	(common-props '(foreground background font display-table underline
 				   dim inherit))
-	(win-props '(background-pixmap strikethru))
+	(win-props '(background-pixmap background-placement strikethru))
 	(tty-props '(highlight blinking reverse)))
 
     ;; First check the properties which are used in common between the
@@ -1943,7 +1990,8 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; element faces. So take the modeline face information from its
   ;; fallbacks, themselves ultimately set up in faces.c:
   (loop
-    for face-property in '(foreground background background-pixmap)
+    for face-property in '(foreground background 
+			   background-pixmap background-placement)
     do (when (and (setq face-property (face-property 'modeline face-property))
                   (null (specifier-instance face-property device nil t))
                   (specifier-instance face-property device))

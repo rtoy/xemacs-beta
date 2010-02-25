@@ -3,6 +3,7 @@
    Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1999, 2002 Andy Piper.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -1721,6 +1722,7 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
   struct frame *f = NULL;
   struct device *d;
   Lisp_Object background_pixmap = Qunbound;
+  Lisp_Object background_placement = Qunbound;
   Lisp_Object fcolor = Qnil, bcolor = Qnil;
 
   if (!width || !height)
@@ -1765,22 +1767,26 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 	      /* #### maybe we could implement such that a string
 		 can be a background pixmap? */
 	      background_pixmap = temp;
+	      background_placement
+		= WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, findex);
 	    }
 	}
       else
 	{
 	  temp = FACE_BACKGROUND_PIXMAP (Vdefault_face, locale);
-
+	  
 	  if (IMAGE_INSTANCEP (temp)
 	      && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (temp)))
 	    {
 	      background_pixmap = temp;
+	      background_placement
+		= FACE_BACKGROUND_PLACEMENT (Vdefault_face, locale);
 	    }
 	}
     }
 
-  if (!UNBOUNDP (background_pixmap) &&
-      XIMAGE_INSTANCE_PIXMAP_DEPTH (background_pixmap) == 0)
+  if (!UNBOUNDP (background_pixmap)
+      && XIMAGE_INSTANCE_PIXMAP_DEPTH (background_pixmap) == 0)
     {
       if (w)
 	{
@@ -1805,7 +1811,8 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
     background_pixmap = Qnil;
 
   DEVMETH (d, clear_region, (locale, d, f, findex, x, y, width, height,
-			     fcolor, bcolor, background_pixmap));
+			     fcolor, bcolor, 
+			     background_pixmap, background_placement));
 }
 
 /****************************************************************************
