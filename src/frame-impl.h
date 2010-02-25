@@ -727,4 +727,66 @@ extern int frame_changed;
 #define FRAME_RIGHT_BORDER_END(f)				\
   (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f))
 
+
+/************************************************************************/
+/*         frame dimensions defined using toolbars and gutters          */
+/************************************************************************/
+
+/* Bounds of the area framed by the toolbars is the client area --
+   (0, 0) - (FRAME_PIXWIDTH, FRAME_PIXHEIGHT). */
+
+/* Bounds of the area framed by the gutters -- inside of the toolbars,
+   outside of everything else. */
+
+#define FRAME_GUTTER_TOP_EDGE(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_EDGE)
+#define FRAME_GUTTER_BOTTOM_EDGE(f) \
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_EDGE))
+#define FRAME_GUTTER_LEFT_EDGE(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_EDGE)
+#define FRAME_GUTTER_RIGHT_EDGE(f) \
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_EDGE))
+
+/* Bounds of the area framed by the internal border width -- inside of the
+   toolbars and gutters. */
+
+#define FRAME_INTERNAL_BORDER_TOP_EDGE(f) \
+  (FRAME_GUTTER_TOP_EDGE (f) + FRAME_GUTTER_BOUNDS (f, TOP_EDGE))
+#define FRAME_INTERNAL_BORDER_BOTTOM_EDGE(f) \
+  (FRAME_GUTTER_BOTTOM_EDGE (f) - FRAME_GUTTER_BOUNDS (f, BOTTOM_EDGE))
+#define FRAME_INTERNAL_BORDER_LEFT_EDGE(f) \
+  (FRAME_GUTTER_LEFT_EDGE (f) + FRAME_GUTTER_BOUNDS (f, LEFT_EDGE))
+#define FRAME_INTERNAL_BORDER_RIGHT_EDGE(f) \
+  (FRAME_GUTTER_RIGHT_EDGE (f) - FRAME_GUTTER_BOUNDS (f, RIGHT_EDGE))
+
+/* These are the bounds of the paned area -- inside of the toolbars,
+   gutters, and internal border width.  The paned area is the same as the
+   area occupied by windows, including the minibuffer.  See long comment in
+   frame.c. */
+
+#define FRAME_PANED_TOP_EDGE(f) \
+  (FRAME_INTERNAL_BORDER_TOP_EDGE (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
+#define FRAME_PANED_BOTTOM_EDGE(f) \
+  (FRAME_INTERNAL_BORDER_BOTTOM_EDGE (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
+#define FRAME_PANED_LEFT_EDGE(f) \
+  (FRAME_INTERNAL_BORDER_LEFT_EDGE (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
+#define FRAME_PANED_RIGHT_EDGE(f) \
+  (FRAME_INTERNAL_BORDER_RIGHT_EDGE (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
+
+/* Thickness of non-paned area at edge of frame;
+   
+   FRAME_PANED_TOP_EDGE (f) == FRAME_NONPANED_SIZE (f, TOP_EDGE)
+   FRAME_PANED_LEFT_EDGE (f) == FRAME_NONPANED_SIZE (f, LEFT_EDGE)
+   FRAME_PANED_BOTTOM_EDGE (f) ==
+     FRAME_PIXHEIGHT (f) - FRAME_NONPANED_SIZE (f, BOTTOM_EDGE)
+   FRAME_PANED_RIGHT_EDGE (f) ==
+     FRAME_PIXWIDTH (f) - FRAME_NONPANED_SIZE (f, RIGHT_EDGE)
+   
+*/
+#define FRAME_NONPANED_SIZE(f, pos)					\
+  (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_GUTTER_BOUNDS (f, pos) + \
+   FRAME_INTERNAL_BORDER_SIZE (f, pos))
+
+
+
 #endif /* INCLUDED_frame_impl_h_ */

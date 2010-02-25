@@ -1,5 +1,15 @@
 2010-02-25  Ben Wing  <ben@xemacs.org>
 
+	* frame-impl.h:
+	Create some new macros for more clearly getting the size/edges
+	of various rectangles surrounding the paned area.
+	* frame.c (change_frame_size_1):
+	Use the new macros.  Clean up change_frame_size_1 and make sure
+	the internal border width gets taken into account -- that was what
+	was causing the clipped bottom and right.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
 	* EmacsFrame.c (EmacsFrameSetValues):
 	* frame-impl.h:
 	* frame-impl.h (struct frame):
