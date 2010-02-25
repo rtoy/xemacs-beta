@@ -1209,7 +1209,9 @@ arguments in the standard Lisp style."
 
 	    t))
 	  ((stringp arglist)
-	   (format "(%s %s)" function arglist)))))
+	   (if (> (length arglist) 0)
+	       (format "(%s %s)" function arglist)
+	     (format "(%s)" function))))))
 
 ;; If STRIP-ARGLIST is true, return a cons (DOC . ARGS) of the documentation
 ;; with any embedded arglist stripped out, and the arglist that was stripped

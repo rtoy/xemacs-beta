@@ -3,7 +3,7 @@
    Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1998, 1999 J. Kean Johnston.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -651,11 +651,11 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	}
 
       /* Print the C argument list as it would appear in lisp:
-	 print underscores as hyphens, and print commas and newlines
+	 print underscores as hyphens, and print commas, tabs and newlines
 	 as spaces.  Collapse adjacent spaces into one.  */
       if (c == '_')
 	c = '-';
-      else if (c == ',' /* || c == '\n' */)
+      else if (c == ',' || c == '\n' || c == '\t')
 	c = ' ';
       /* XEmacs change: handle \n below for readability */
 
@@ -682,18 +682,28 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	  in_ident = 0;
 	  just_spaced = 0;
 	}
-      /* XEmacs change: if the character is carriage return or linefeed,
-	 escape it for the compiler */
+#if 0
+      /* [[ XEmacs change: if the character is carriage return or linefeed,
+	 escape it for the compiler ]] I doubt the clause with '\r' ever
+	 worked right, and outputting newlines now screws up the regexp
+	 in function-documentation-1, so don't do this; instead, we treat
+	 newlines like spaces. --ben */
       else if (c == '\n')
 	{
 	  putc('\\', out);
 	  putc('\n', out);
+	  c = ' ';
 	}
       else if (c == '\r')
 	{
 	  putc('\\', out);
 	  putc('\r', out);
 	}
+#else
+      else if (c == '\r') /* Just eat it, since we expect a newline to
+			     follow */
+	;
+#endif /* (not) 0 */
       else if (c != ' ' || !just_spaced)
 	{
 	  if (c >= 'a' && c <= 'z')
