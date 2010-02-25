@@ -1,3 +1,168 @@
+2010-02-23  Ben Wing  <ben@xemacs.org>
+
+	* help.el: fux typo in comment. (oops)
+
+2010-02-23  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el:
+	* autoload.el (make-autoload):
+	* cl-macs.el (cl-function-arglist):
+	* cl-macs.el (cl-transform-lambda):
+	Don't add argument list with the tag "Common Lisp lambda list:";
+	instead add in "standard" form using "arguments:" and omitting the
+	function name.  Add an arg to `cl-function-arglist' to omit the
+	name and use it in autoload.el instead of just hacking it off.
+	
+	* help.el:
+	* help.el (function-arglist):
+	* help.el (function-documentation-1): New.
+	Extract out common code to recognize and/or strip the arglist from
+	documentation into `function-documentation-1'.  Use in
+	`function-arglist' and `function-documentation'.  Modify
+	`function-arglist' so it looks for the `arguments: ' stuff in all
+	doc strings, not just subrs/autoloads, so that CL functions get
+	recognized properly.  Change the regexp used to match "arguments: "
+	specs to allow nested parens inside the arg list (happens when you
+	have a default value specified in a CL arglist).
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* test-harness.el:
+	* test-harness.el (test-harness-from-buffer):
+	* test-harness.el (batch-test-emacs):
+	Move file from tests/automated into lisp/ so it gets
+	byte-compiled.  This significantly reduces the amount of extra
+	crap in outputted backtraces.  Delete hack in batch-test-emacs to
+	look for test-harness.el in the test directory since it's not there
+	any more.
+
+	Also, in `Check-Message', incorporate call to `Skip-Test-Unless'
+	in the macro output rather than its body, to avoid problems byte-
+	compiling the file -- `Skip-Test-Unless' isn't available in the
+	environment during byte-compilation so we can't call it then.
+	
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* mule/make-coding-system.el:
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.
+	* mule/make-coding-system.el (fixed-width-create-decode-encode-tables):
+	* coding.el:
+	* coding.el (decode-char): New.
+	* coding.el (featurep):
+	* coding.el (encode-char): New.
+	* dumped-lisp.el (preloaded-file-list):
+	Dump make-coding-system.  Aidan's hack to avoid dumping this file
+	never really worked right -- with some configurations (not clear
+	exactly which ones) `make-coding-system.el' gets dumped anyway due to
+	calls to `make-coding-system' in unicode.el, with the result that
+	the documentation of functions in make-coding-system.el gets lost.
+
+	Also needed to remove defvar fixed-width-private-use-start and
+	incorporate it inline, due to bootstrapping issues -- the call to
+	decode-char introduced a cross-dependency between unicode.el and
+	make-coding-system.el.
+	
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* cl-seq.el:
+	* cl-seq.el (stable-union): New.
+	* cl-seq.el (stable-intersection): New.
+	New functions to do stable set operations, i.e. preserve the order
+	of the elements in the argument lists, and prefer LIST1 over LIST2
+	when ordering the combined result.  The result looks as much like
+	LIST1 as possible, followed (in the case of `stable-union') by
+	any necessary elements from LIST2, in order.  This is contrary to
+	`union' and `intersection', which are not required to be order-
+	preserving and are not -- they prefer LIST2 and output results in
+	backwards order.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* cl-seq.el:
+	* cl-seq.el (reduce):
+	* cl-seq.el (fill):
+	* cl-seq.el (replace):
+	* cl-seq.el (remove*):
+	* cl-seq.el (remove-if):
+	* cl-seq.el (remove-if-not):
+	* cl-seq.el (delete*):
+	* cl-seq.el (delete-if):
+	* cl-seq.el (delete-if-not):
+	* cl-seq.el (remove-duplicates):
+	* cl-seq.el (delete-duplicates):
+	* cl-seq.el (substitute):
+	* cl-seq.el (substitute-if):
+	* cl-seq.el (substitute-if-not):
+	* cl-seq.el (nsubstitute):
+	* cl-seq.el (nsubstitute-if):
+	* cl-seq.el (nsubstitute-if-not):
+	* cl-seq.el (find):
+	* cl-seq.el (find-if):
+	* cl-seq.el (find-if-not):
+	* cl-seq.el (position):
+	* cl-seq.el (position-if):
+	* cl-seq.el (position-if-not):
+	* cl-seq.el (count):
+	* cl-seq.el (count-if):
+	* cl-seq.el (count-if-not):
+	* cl-seq.el (mismatch):
+	* cl-seq.el (search):
+	* cl-seq.el (sort*):
+	* cl-seq.el (stable-sort):
+	* cl-seq.el (merge):
+	* cl-seq.el (member*):
+	* cl-seq.el (member-if):
+	* cl-seq.el (member-if-not):
+	* cl-seq.el (assoc*):
+	* cl-seq.el (assoc-if):
+	* cl-seq.el (assoc-if-not):
+	* cl-seq.el (rassoc*):
+	* cl-seq.el (rassoc-if):
+	* cl-seq.el (rassoc-if-not):
+	* cl-seq.el (union):
+	* cl-seq.el (nunion):
+	* cl-seq.el (intersection):
+	* cl-seq.el (nintersection):
+	* cl-seq.el (set-difference):
+	* cl-seq.el (nset-difference):
+	* cl-seq.el (set-exclusive-or):
+	* cl-seq.el (nset-exclusive-or):
+	* cl-seq.el (subsetp):
+	* cl-seq.el (subst-if):
+	* cl-seq.el (subst-if-not):
+	* cl-seq.el (nsubst):
+	* cl-seq.el (nsubst-if):
+	* cl-seq.el (nsubst-if-not):
+	* cl-seq.el (sublis):
+	* cl-seq.el (nsublis):
+	* cl-seq.el (tree-equal):
+	* cl-seq.el (cl-tree-equal-rec):
+	* cl.el:
+	* cl.el (pushnew):
+	* cl.el (adjoin):
+	* cl.el (subst):
+	Document the keywords to the various sequence/list functions.
+
+2010-02-21  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el:
+	* diagnose.el (show-object-memory-usage-stats):
+	Fix errors preventing this from working properly, account for
+	words like "entry" pluralized to "entries".
+
+2010-02-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (constantly): 
+	Add this function, from ANSI Common Lisp, using the SBCL extension
+	that extra arguments to it are passed back as multiple values in
+	the constructed function.
+	* cl-macs.el (constantly):
+	In the compiler macro for #'constantly, construct a
+	compiled-function object almost every time, at compile time when
+	all arguments are constant, and at runtime when they vary.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* help.el (describe-function-1):

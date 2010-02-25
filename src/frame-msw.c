@@ -1,6 +1,6 @@
 /* Functions for the mswindows window system.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -235,7 +235,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
       GetWindowRect (hwnd_parent, &rect);
       rect_default.left = rect.left + POPUP_OFFSET;
       rect_default.top = rect.top + POPUP_OFFSET;
-      char_to_real_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
+      char_to_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
 			       &rect_default.width, &rect_default.height);
       FRAME_MSWINDOWS_POPUP (f) = 1;
     }
@@ -372,14 +372,14 @@ static void
 mswindows_set_frame_size (struct frame *f, int width, int height)
 {
   RECT rect;
-  int columns, rows;
+  int pwidth, pheight;
+
+  change_frame_size (f, width, height, 0);
+  frame_unit_to_pixel_size (f, width, height, &pwidth, &pheight);
 
   rect.left = rect.top = 0;
-  rect.right = width;
-  rect.bottom = height;
-
-  pixel_to_char_size (f, rect.right, rect.bottom, &columns, &rows);
-  change_frame_size (f, rows, columns, 0);
+  rect.right = pwidth;
+  rect.bottom = pheight;
 
   /* This can call Lisp, because it runs the window procedure, which can
      call redisplay() */
@@ -738,7 +738,7 @@ mswindows_size_frame_internal (struct frame *f, XEMACS_RECT_WH *dest)
   int pixel_width, pixel_height;
   int size_p = (dest->width >=0 || dest->height >=0);
   int move_p = (dest->top >=0 || dest->left >=0);
-  char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width,
+  char_to_pixel_size (f, dest->width, dest->height, &pixel_width,
 			   &pixel_height);
 
   if (dest->width < 0)
@@ -937,7 +937,7 @@ msprinter_init_frame_3 (struct frame *f)
 
   if (FRAME_MSPRINTER_CHARWIDTH (f) > 0)
     {
-      char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH (f), 0,
+      char_to_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH (f), 0,
 			       &frame_width, NULL);
       FRAME_MSPRINTER_RIGHT_MARGIN(f) =
 	MulDiv (physicalwidth - (frame_left + frame_width), 1440,
@@ -953,7 +953,7 @@ msprinter_init_frame_3 (struct frame *f)
 
   if (FRAME_MSPRINTER_CHARHEIGHT (f) > 0)
     {
-      char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT (f),
+      char_to_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT (f),
 			       NULL, &frame_height);
 
       FRAME_MSPRINTER_BOTTOM_MARGIN(f) =
@@ -983,8 +983,8 @@ msprinter_init_frame_3 (struct frame *f)
     int rows, columns;
     FRAME_PIXWIDTH (f) = frame_width;
     FRAME_PIXHEIGHT (f) = frame_height;
-    pixel_to_char_size (f, frame_width, frame_height, &columns, &rows);
-    change_frame_size (f, rows, columns, 0);
+    pixel_to_frame_unit_size (f, frame_width, frame_height, &columns, &rows);
+    change_frame_size (f, columns, rows, 0);
   }
 
   FRAME_MSPRINTER_PIXLEFT(f) = frame_left;

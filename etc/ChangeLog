@@ -1,3 +1,8 @@
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* dbxrc.in:
+	test-harness.el is in lisp directory now.
+
 2010-01-28  Jerry James  <james@xemacs.org>
 
 	* tests/external-widget/Makefile: Add copyright and license

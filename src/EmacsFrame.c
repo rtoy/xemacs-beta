@@ -1,7 +1,7 @@
 /* The emacs frame widget.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -324,8 +324,8 @@ EmacsFrameResize (Widget widget)
 
   update_various_frame_slots (ew);
 
-  pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
-  change_frame_size (f, rows, columns, 0);
+  pixel_to_frame_unit_size (f, ew->core.width, ew->core.height, &columns, &rows);
+  change_frame_size (f, columns, rows, 0);
 
   /* The code below is just plain wrong.  If the EmacsShell or EmacsManager
      needs to know, they should just ask.  If needed information is being
@@ -589,10 +589,9 @@ EmacsFrameRecomputeCellSize (Widget w)
   int cw, ch;
   struct frame *f = ew->emacs_frame.frame;
 
-  if (! XtIsSubclass (w, emacsFrameClass))
-    ABORT ();
+  assert (XtIsSubclass (w, emacsFrameClass));
 
-  default_face_height_and_width (wrap_frame (f), &ch, &cw);
+  default_face_width_and_height (wrap_frame (f), &cw, &ch);
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_set_cell_size (FRAME_X_SHELL_WIDGET (f), cw, ch);
 }

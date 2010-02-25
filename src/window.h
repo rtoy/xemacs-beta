@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -148,9 +148,8 @@ void window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 		    Error_Behavior errb);
 int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
-void check_frame_size (struct frame *frame, int *rows, int *cols);
+void check_frame_size (struct frame *frame, int *cols, int *rows);
 int frame_pixsize_valid_p (struct frame *frame, int width, int height);
-int frame_size_valid_p (struct frame *frame, int rows, int cols);
 struct window *decode_window (Lisp_Object window);
 struct window *find_window_by_pixel_pos (int pix_x, int pix_y, Lisp_Object win);
 

@@ -30,12 +30,6 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "charset.h"
 
-#ifdef NEW_GC
-# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
-#else
-# define UNUSED_IF_NEW_GC(decl) decl
-#endif
-
 /* An alist mapping from color names to a cons of (FG-STRING, BG-STRING). */
 Lisp_Object Vtty_color_alist;
 #if 0 /* This stuff doesn't quite work yet */

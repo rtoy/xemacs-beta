@@ -338,8 +338,7 @@ i00afunc (long *address)
   /* There must be at least one stack segment.  Therefore it is
      a fatal error if "trailer" is null.  */
 
-  if (trailer == 0)
-    ABORT ();
+  assert (trailer != 0);
 
   /* Discard segments that do not contain our argument address.  */
 
@@ -366,8 +365,7 @@ i00afunc (long *address)
 
   do
     {
-      if (trailer->this_size <= 0)
-	ABORT ();
+      assert (trailer->this_size > 0);
       result += trailer->this_size;
       trailer = (struct stk_trailer *) trailer->link;
     }

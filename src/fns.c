@@ -4639,8 +4639,7 @@ into shorter lines.
   encoded = (Ibyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
-  if (encoded_length > allength)
-    ABORT ();
+  assert (encoded_length <= allength);
   Lstream_delete (XLSTREAM (input));
 
   /* Now we have encoded the region, so we insert the new contents
@@ -4681,8 +4680,7 @@ into shorter lines.
   encoded = (Ibyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
-  if (encoded_length > allength)
-    ABORT ();
+  assert (encoded_length <= allength);
   Lstream_delete (XLSTREAM (input));
   result = make_string (encoded, encoded_length);
   unbind_to (speccount);
@@ -4714,8 +4712,7 @@ Characters out of the base64 alphabet are ignored.
   /* We need to allocate enough room for decoding the text. */
   decoded = (Ibyte *) MALLOC_OR_ALLOCA (length * MAX_ICHAR_LEN);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded, &cc_decoded_length);
-  if (decoded_length > length * MAX_ICHAR_LEN)
-    ABORT ();
+  assert (decoded_length <= length * MAX_ICHAR_LEN);
   Lstream_delete (XLSTREAM (input));
 
   /* Now we have decoded the region, so we insert the new contents
@@ -4755,8 +4752,7 @@ Characters out of the base64 alphabet are ignored.
   input = make_lisp_string_input_stream (string, 0, -1);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded,
 				    &cc_decoded_length);
-  if (decoded_length > length * MAX_ICHAR_LEN)
-    ABORT ();
+  assert (decoded_length <= length * MAX_ICHAR_LEN);
   Lstream_delete (XLSTREAM (input));
 
   result = make_string (decoded, decoded_length);

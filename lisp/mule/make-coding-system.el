@@ -2,6 +2,7 @@
 ;;; much of the implementation of the fixed-width coding system type.
 
 ;; Copyright (C) 2009 Free Software Foundation
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe
 
@@ -25,13 +26,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-(defvar fixed-width-private-use-start (decode-char 'ucs #xE000)
-  "Start of a 256 code private use area for fixed-width coding systems.
-
-This is used to ensure that distinct octets on disk for a given coding
-system map to distinct XEmacs characters, preventing spurious changes when
-a file is read, not changed, and then written.  ")
 
 (defun fixed-width-generate-helper (decode-table encode-table
 				   encode-failure-octet)
@@ -323,7 +317,7 @@ to 256 distinct characters."
   (check-argument-type #'listp unicode-map)
   (let ((decode-table (make-vector 256 nil))
         (encode-table (make-hash-table :size 256 :rehash-threshold 0.999))
-	(private-use-start (encode-char fixed-width-private-use-start 'ucs))
+	(private-use-start #xE000)
         (invalid-sequence-code-point-start
          (eval-when-compile
            (char-to-unicode

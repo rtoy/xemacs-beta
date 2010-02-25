@@ -1,7 +1,7 @@
 /* Device functions for X windows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -486,7 +486,7 @@ x_get_visual_depth (Display *dpy, Visual *visual)
   vi_in.visualid = XVisualIDFromVisual (visual);
   vi_out = XGetVisualInfo (dpy, /*VisualScreenMask|*/VisualIDMask,
 			   &vi_in, &out_count);
-  if (! vi_out) ABORT ();
+  assert (vi_out);
   d = vi_out [0].depth;
   XFree ((char *) vi_out);
   return d;
@@ -1562,9 +1562,9 @@ mean ``unspecified''.
   db = XtDatabase (display);
   codesys = coding_system_of_xrm_database (db);
   Dynarr_add (name_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (name_Extbyte_dynarr, name, Qbinary);
+  Dynarr_add_ext_lisp_string (name_Extbyte_dynarr, name, Qbinary);
   Dynarr_add (class_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
+  Dynarr_add_ext_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 

@@ -538,6 +538,16 @@ int lrecord_stats_heap_size (void);
 
 #else /* not NEW_GC */
 
+enum lrecord_alloc_status
+{
+  ALLOC_IN_USE,
+  ALLOC_FREE,
+  ALLOC_ON_FREE_LIST
+};
+
+void tick_lrecord_stats (const struct lrecord_header *h,
+			 enum lrecord_alloc_status status);
+
 #define LRECORD_FREE_P(ptr)					\
 (((struct lrecord_header *) ptr)->type == lrecord_type_free)
 
