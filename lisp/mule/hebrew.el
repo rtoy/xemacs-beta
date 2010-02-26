@@ -1,4 +1,4 @@
-;;; hebrew.el --- Support for Hebrew -*- coding: iso-2022-7bit; -*-
+;;; hebrew.el --- Support for Hebrew -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -56,7 +56,7 @@
 	    (coding-priority iso-8859-8)
             ;; Not available in packages. 
 	    ;; (input-method . "hebrew")
-	    (sample-text . "Hebrew	[2],Hylem[0](B")
+	    (sample-text . "Hebrew	שלום")
 	    (documentation . "Right-to-left writing is not yet supported.")
 	    ))
 

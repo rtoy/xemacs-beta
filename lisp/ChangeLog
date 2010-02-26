@@ -1,3 +1,11 @@
+2010-02-26  Ben Wing  <ben@xemacs.org>
+
+	* mule/hebrew.el:
+	* mule/hebrew.el ("Hebrew"):
+	* mule/lao.el:
+	* mule/lao.el (make-char):
+	Convert to utf-8.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* mule/thai-util.el:
