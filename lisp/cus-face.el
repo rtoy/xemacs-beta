@@ -1,6 +1,7 @@
 ;;; cus-face.el -- Support for Custom faces.
 ;;
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Didier Verna
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
@@ -83,7 +84,12 @@ Name of font family to use (e.g. times).")
 					:help-echo "\
 Name of background pixmap file.")
 	      set-face-background-pixmap custom-face-background-pixmap)
-    (:dim (toggle :format "%[Dim%]: %v\n"
+    (:background-placement (choice :tag "Background placement" :value relative
+				   (const :tag "Relative" :value relative)
+				   (const :tag "Absolute" :value absolute))
+			   set-face-background-placement
+			   face-background-placement) 
+   (:dim (toggle :format "%[Dim%]: %v\n"
 		  :help-echo "Control whether the text should be dimmed.")
 	  set-face-dim-p face-dim-p)
     (:bold (toggle :format "%[Bold%]: %v\n"

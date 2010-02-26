@@ -297,9 +297,9 @@ ARGLIST allows full Common Lisp conventions."
 	   (mapcar 'cl-upcase-arg arg)))
 	(t arg)))                         ; Maybe we are in initializer
 
-;; npak@ispras.ru
+;; npak@ispras.ru, modified by ben@666.com
 ;;;###autoload
-(defun cl-function-arglist (name arglist)
+(defun cl-function-arglist (arglist)
   "Returns string with printed representation of arguments list.
 Supports Common Lisp lambda lists."
   (if (not (or (listp arglist) (symbolp arglist)))
@@ -307,21 +307,20 @@ Supports Common Lisp lambda lists."
     (check-argument-type #'true-list-p arglist)
     (let ((print-gensym nil))
       (condition-case nil
-          (prin1-to-string
-           (cons (if (eq name 'cl-none) 'lambda name)
-                 (cond ((null arglist) nil)
-                       ((listp arglist) (cl-upcase-arg arglist))
-                       ((symbolp arglist)
-                        (cl-upcase-arg (list '&rest arglist)))
-                       (t (wrong-type-argument 'listp arglist)))))
-      (t "Not available")))))
+	  (let ((args (cond ((null arglist) nil)
+			    ((listp arglist) (cl-upcase-arg arglist))
+			    ((symbolp arglist)
+			     (cl-upcase-arg (list '&rest arglist)))
+			    (t (wrong-type-argument 'listp arglist)))))
+	    (if args (prin1-to-string args) "()"))
+	(t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
   (let* ((args (car form)) (body (cdr form))
 	 (bind-defs nil) (bind-enquote nil)
 	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
-         (complex-arglist (cl-function-arglist bind-block args))
+         (complex-arglist (cl-function-arglist args))
          (doc ""))
     (while (or (stringp (car body)) (eq (car-safe (car body)) 'interactive))
       (push (pop body) header))
@@ -348,12 +347,12 @@ Supports Common Lisp lambda lists."
     ;; Add CL lambda list to documentation, if the CL lambda list differs
     ;; from the non-CL lambda list. npak@ispras.ru
     (unless (equal complex-arglist
-                   (cl-function-arglist bind-block simple-args))
+                   (cl-function-arglist simple-args))
       (and (stringp (car header)) (setq doc (pop header)))
-      (push (concat doc
-                    "\n\nCommon Lisp lambda list:\n" 
-                    "  " complex-arglist "\n\n")
-	  header))
+      ;; Stick the arguments onto the end of the doc string in a way that
+      ;; will be recognized specially by `function-arglist'.
+      (push (concat doc "\n\narguments: " complex-arglist "\n")
+	    header))
     (if (null args)
 	(list* nil simple-args (nconc header body))
       (if (memq '&optional simple-args) (push '&optional args))
@@ -2160,6 +2159,8 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
+(defsetf face-background-placement (f &optional s) (x)
+  (list 'set-face-background-placement f x s))
 (defsetf face-font (f &optional s) (x) (list 'set-face-font f x s))
 (defsetf face-foreground (f &optional s) (x) (list 'set-face-foreground f x s))
 (defsetf face-underline-p (f &optional s) (x)
@@ -3550,6 +3551,41 @@ the byte optimizer in those cases."
 
 (define-compiler-macro notevery (&whole form &rest cl-rest)
   (cons 'not (cons 'every (cdr cl-rest))))
+
+(define-compiler-macro constantly (&whole form value &rest more-values)
+  (cond
+   ((< (length form) 2)
+    ;; Error at runtime:
+    form)
+   ((cl-const-exprs-p (cdr form))
+    `#'(lambda (&rest ignore) (values ,@(cdr form))))
+   (t
+    (let* ((num-values (length (cdr form)))
+	   (placeholders-counts (make-vector num-values -1))
+	   (placeholders (loop
+			   for i from 0 below num-values
+			   collect (make-symbol (format "%d" i))))
+	   (compiled
+	    (byte-compile-sexp
+	     `#'(lambda (&rest ignore)
+		  ;; Compiles to a references into the compiled function
+		  ;; constants vector:
+		  (values ,@(mapcar #'quote-maybe placeholders)))))
+	   position)
+      `(make-byte-code '(&rest ignore)
+	,(compiled-function-instructions compiled)
+	(vector ,@(loop
+		    for constant across (compiled-function-constants compiled)
+		    collect (if (setq position
+				      (position constant placeholders))
+				(prog2
+				    (incf (aref placeholders-counts position))
+				    (nth position (cdr form)))
+			      (quote-maybe constant))
+		    finally
+		    (assert (every #'zerop placeholders-counts)
+			    t "Placeholders should each have been used once")))
+	,(compiled-function-stack-depth compiled))))))
 
 (mapc
  #'(lambda (y)

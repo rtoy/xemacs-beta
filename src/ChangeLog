@@ -1,3 +1,220 @@
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* console-x-impl.h (struct x_frame): Add new slots x and y.
+	* console-x-impl.h (FRAME_X_X, FRAME_X_Y): New slot accessors.
+	* console-gtk-impl.h: Fake something similar for potential port.
+	* frame-x.c (x_get_frame_text_position): New function.
+	* frame-x.c (x_init_frame_3): Use it.
+	* event-Xt.c (emacs_Xt_handle_magic_event): Eat spurious
+	ConfigureNotify events, get the frame position and mark frame
+	faces changed.
+	* objects-impl.h: The face_background_placement_specifier
+	structure and its accessors.
+	* objects.c: New symbols Qabsolute and Qrelative.
+	* objects.c (face_background_placement_create):
+	* objects.c (face_background_placement_mark):
+	* objects.c (face_background_placement_instantiate):
+	* objects.c (face_background_placement_validate):
+	* objects.c (face_background_placement_after_change):
+	* objects.c (set_face_background_placement_attached_to): New.
+	* objects.h (set_face_background_palcement_attached_to): Declare
+	the one above.
+	* objects.c (syms_of_objects):
+	* objects.c (specifier_type_create_objects):
+	* objects.c (reinit_specifier_type_create_objects):
+	* objects.c (reinit_vars_of_objects): Update for the modifications
+	above.
+	* console-xlike-inc.h (XLIKE_GC_TS_X_ORIGIN, XLIKE_GC_TS_X_ORIGIN): 
+	New X11/Gtk compatibility macros.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Add a background placement
+	argument and handle it.
+	* gtk-glue.c (face_to_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Update
+	accordingly.
+	* console-impl.h (struct console_methods): Add a background
+	placement (Lisp_Object) argument to the clear_region method.
+	* console-stream.c (stream_clear_region):
+	* redisplay-tty.c (tty_clear_region):
+	* redisplay-msw.c (mswindows_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Update accordingly.
+	* redisplay-output.c (redisplay_clear_region): Handle the
+	background placement property and update the call to the
+	clear_region method.
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel): Add a background placement slot.
+	* faces.h (WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT): New accessor.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (Fmake_face):
+	* faces.c (Fcopy_face): Handle the background placement property.
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces): Update accordingly.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* frame-impl.h:
+	Create some new macros for more clearly getting the size/edges
+	of various rectangles surrounding the paned area.
+	* frame.c (change_frame_size_1):
+	Use the new macros.  Clean up change_frame_size_1 and make sure
+	the internal border width gets taken into account -- that was what
+	was causing the clipped bottom and right.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* frame-impl.h:
+	* frame-impl.h (struct frame):
+	* frame-impl.h (FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT):
+	* frame-impl.h (FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_HEIGHT):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_VISIBLE):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS):
+	* frame.h:
+	* frame.h (enum edge_pos):
+	* gutter.c:
+	* gutter.c (get_gutter_coords):
+	* gutter.c (display_boxes_in_gutter_p):
+	* gutter.c (construct_window_gutter_spec):
+	* gutter.c (calculate_gutter_size_from_display_lines):
+	* gutter.c (calculate_gutter_size):
+	* gutter.c (output_gutter):
+	* gutter.c (clear_gutter):
+	* gutter.c (mark_gutters):
+	* gutter.c (gutter_extent_signal_changed_region_maybe):
+	* gutter.c (update_gutter_geometry):
+	* gutter.c (update_frame_gutter_geometry):
+	* gutter.c (update_frame_gutters):
+	* gutter.c (reset_gutter_display_lines):
+	* gutter.c (redraw_exposed_gutter):
+	* gutter.c (redraw_exposed_gutters):
+	* gutter.c (free_frame_gutters):
+	* gutter.c (decode_gutter_position):
+	* gutter.c (Fset_default_gutter_position):
+	* gutter.c (Fgutter_pixel_width):
+	* gutter.c (Fgutter_pixel_height):
+	* gutter.c (recompute_overlaying_specifier):
+	* gutter.c (gutter_specs_changed_1):
+	* gutter.c (gutter_specs_changed):
+	* gutter.c (top_gutter_specs_changed):
+	* gutter.c (bottom_gutter_specs_changed):
+	* gutter.c (left_gutter_specs_changed):
+	* gutter.c (right_gutter_specs_changed):
+	* gutter.c (gutter_geometry_changed_in_window):
+	* gutter.c (init_frame_gutters):
+	* gutter.c (specifier_vars_of_gutter):
+	* gutter.h:
+	* gutter.h (WINDOW_REAL_TOP_GUTTER_BOUNDS):
+	* gutter.h (FRAME_TOP_GUTTER_BOUNDS):
+	* lisp.h (enum edge_style):
+	* native-gtk-toolbar.c:
+	* native-gtk-toolbar.c (gtk_output_toolbar):
+	* native-gtk-toolbar.c (gtk_clear_toolbar):
+	* native-gtk-toolbar.c (gtk_output_frame_toolbars):
+	* native-gtk-toolbar.c (gtk_initialize_frame_toolbars):
+	* toolbar-msw.c:
+	* toolbar-msw.c (TOOLBAR_HANDLE):
+	* toolbar-msw.c (allocate_toolbar_item_id):
+	* toolbar-msw.c (mswindows_clear_toolbar):
+	* toolbar-msw.c (mswindows_output_toolbar):
+	* toolbar-msw.c (mswindows_move_toolbar):
+	* toolbar-msw.c (mswindows_redraw_exposed_toolbars):
+	* toolbar-msw.c (mswindows_initialize_frame_toolbars):
+	* toolbar-msw.c (mswindows_output_frame_toolbars):
+	* toolbar-msw.c (mswindows_clear_frame_toolbars):
+	* toolbar-msw.c (DELETE_TOOLBAR):
+	* toolbar-msw.c (mswindows_free_frame_toolbars):
+	* toolbar-msw.c (mswindows_get_toolbar_button_text):
+	* toolbar-xlike.c:
+	* toolbar-xlike.c (__prepare_button_area):
+	* toolbar-xlike.c (XLIKE_OUTPUT_BUTTONS_LOOP):
+	* toolbar-xlike.c (xlike_output_toolbar):
+	* toolbar-xlike.c (xlike_clear_toolbar):
+	* toolbar-xlike.c (xlike_output_frame_toolbars):
+	* toolbar-xlike.c (xlike_clear_frame_toolbars):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbar):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbars):
+	* toolbar-xlike.c (xlike_redraw_frame_toolbars):
+	* toolbar.c:
+	* toolbar.c (decode_toolbar_position):
+	* toolbar.c (Fset_default_toolbar_position):
+	* toolbar.c (mark_frame_toolbar_buttons_dirty):
+	* toolbar.c (compute_frame_toolbar_buttons):
+	* toolbar.c (set_frame_toolbar):
+	* toolbar.c (compute_frame_toolbars_data):
+	* toolbar.c (update_frame_toolbars_geometry):
+	* toolbar.c (init_frame_toolbars):
+	* toolbar.c (get_toolbar_coords):
+	* toolbar.c (CHECK_TOOLBAR):
+	* toolbar.c (toolbar_buttons_at_pixpos):
+	* toolbar.c (CTB_ERROR):
+	* toolbar.c (recompute_overlaying_specifier):
+	* toolbar.c (specifier_vars_of_toolbar):
+	* toolbar.h:
+	* toolbar.h (SET_TOOLBAR_WAS_VISIBLE_FLAG):
+	Create new enum edge_pos with TOP_EDGE, BOTTOM_EDGE, LEFT_EDGE,
+	RIGHT_EDGE; subsume TOP_BORDER, TOP_GUTTER, enum toolbar_pos,
+	enum gutter_pos, etc.
+
+	Create EDGE_POS_LOOP, subsuming GUTTER_POS_LOOP.
+
+	Create NUM_EDGES, use in many places instead of hardcoded '4'.
+
+	Instead of top_toolbar_was_visible, bottom_toolbar_was_visible,
+	etc. make an array toolbar_was_visible[NUM_EDGES].  This increases
+	the frame size by 15 bytes or so (could be 3 if we use Boolbytes)
+	but hardly seems w to matter -- frames are heavy weight objects
+	anyway.  Same with top_gutter_was_visible, etc.
+	
+	Remove duplicated SET_TOOLBAR_WAS_VISIBLE_FLAG and put defn in
+	one place (toolbar.h).
+
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
+	Modify XLIKE_get_gc's prototype.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Take a frame instead of a
+	device as first argument.
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update caller.
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Ditto.
+	* console-gtk.h (gtk_get_gc):  Take a frame instead of a device as
+	first argument.
+	* gtk-glue.c (face_to_gc): Update caller.
+
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.c: Clarify comment about potential_pixmap_file_instantiator.
+	* glyphs.c (xbm_mask_file_munging): Clarify comment, remove
+	unreachable condition and provide a cuple of assertions.
+	* glyphs.c (xbm_normalize): Clarify comments, error on mask file
+	not found.
+	* glyphs.c (xface_normalize): Ditto, and handle inline data properly.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	* Makefile.in.in (batch_test_emacs):
+	test-harness.el is in lisp directory now so change how we call it.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (object_memory_usage_stats):
