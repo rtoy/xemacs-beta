@@ -1,4 +1,4 @@
-;;; lao.el --- support for Lao -*- coding: iso-2022-7bit; -*-
+;;; lao.el --- support for Lao -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -53,11 +53,11 @@
 	 (features lao-util)
 	 (documentation . t)))
 
-(put-char-table (make-char 'lao #x3b) t use-default-ascent) ;?(1;(B
-(put-char-table (make-char 'lao #x3d) t use-default-ascent) ;?(1=(B
-(put-char-table (make-char 'lao #x3f) t use-default-ascent) ;?(1?(B
-(put-char-table (make-char 'lao #x42) t use-default-ascent) ;?(1B(B
-(put-char-table (make-char 'lao #x5c) t ignore-relative-composition) ;?(1\(B
+(put-char-table (make-char 'lao #x3b) t use-default-ascent) ;?ປ
+(put-char-table (make-char 'lao #x3d) t use-default-ascent) ;?ຝ
+(put-char-table (make-char 'lao #x3f) t use-default-ascent) ;?ຟ
+(put-char-table (make-char 'lao #x42) t use-default-ascent) ;?ຢ
+(put-char-table (make-char 'lao #x5c) t ignore-relative-composition) ;?ຼ
 
 ;; Register a function to compose Lao characters.
 (put-char-table 'lao
