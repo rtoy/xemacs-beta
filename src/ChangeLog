@@ -1,3 +1,10 @@
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (Fmake_coding_system_internal):
+	Be somewhat clearer in this docstring, especially for the sake of
+	people running non-Mule builds who will see this docstring when
+	they do F1 f make-coding-system RET.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.
