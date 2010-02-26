@@ -1,3 +1,18 @@
+2010-02-26  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (autoload-featurep-protect-autoloads):
+	Always insert a coding-system cookie, either raw-text-unix or
+	escape-quoted.  As before, insert an error statement when an
+	escape-quoted auto-autoload is loaded in a non-Mule XEmacs.
+
+	This fixes problems when the default coding system is UTF-8,
+	as in Cygwin.  Under some circumstances, the file can get
+	written out as raw text and read in as UTF-8, where invididual
+	high-bytes are usually invalid UTF-8 sequences and lead to
+	error octets in the buffer; when written out again, these
+	force escape-quoted.  Result: auto-autoloads.el for the
+	source-tree lisp/ directory would end up as escape-quoted.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.
@@ -16,7 +31,7 @@
 	* frame.el (frame-background-placement-instance):
 	* objects.el (make-face-background-placement-specifier): New.
 
-c2010-02-25  Ben Wing  <ben@xemacs.org>
+2010-02-25  Ben Wing  <ben@xemacs.org>
 
 	* autoload.el (make-autoload):
 	Call cl-function-arglist with one arg.
