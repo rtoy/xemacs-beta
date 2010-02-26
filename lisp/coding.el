@@ -487,6 +487,19 @@ The optional third argument CHARSET is, for the moment, ignored."
 
   ;; Mule's not available; 
   (fset 'make-coding-system (symbol-function 'make-coding-system-internal))
+  (define-compiler-macro make-coding-system (&whole form name type
+                                             &optional description props)
+    (cond
+     ;; We shouldn't normally see these forms under non-Mule; they're all in
+     ;; the mule/ subdirectory.
+     ((equal '(quote fixed-width) type)
+      form)
+     ((byte-compile-constp type)
+      `(funcall (or (and (fboundp 'make-coding-system-internal)
+                         'make-coding-system-internal) 'make-coding-system)
+        ,@(cdr form)))
+     (t form)))
+
   (define-coding-system-alias 'escape-quoted 'binary)
 
   ;; These are so that gnus and friends work when not mule:

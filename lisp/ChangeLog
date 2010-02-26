@@ -1,3 +1,13 @@
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Back out Ben's revision c673987f5f3d.
+	* coding.el:
+	Add a compiler macro for #'make-coding-system on non-Mule builds
+	too, to fix the problem he addressed with that changeset.
+	* mule/make-coding-system.el (fixed-width-private-use-start):
+	Don't call (decode-char ... 'ucs) here, it can make bootstrapping
+	harder.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.
