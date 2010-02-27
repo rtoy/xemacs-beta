@@ -1,3 +1,9 @@
+2010-02-27  Ben Wing  <ben@xemacs.org>
+
+	* mule/latin.el (code):
+	Use char codes rather than directly encoding the chars for the
+	remaining few directly encoded chars (latin-15).
+
 2010-02-26  Ben Wing  <ben@xemacs.org>
 
 	* mule/hebrew.el:
