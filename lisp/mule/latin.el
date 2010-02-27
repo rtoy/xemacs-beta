@@ -468,10 +468,16 @@ covered).\""
       syntax-table))
 
 ;; Now, the exceptions. The Euro sign retains the syntax of CURRENCY SIGN.
-(loop
-  for c in '(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
-  with syntax-table = (standard-syntax-table)
-  do (modify-syntax-entry c "w" syntax-table))
+(dolist (code '(#xa6 ;?,b&(B
+		#xa8 ;?,b((B
+		#xb4 ;?,b4(B
+		#xb8 ;?,b8(B
+		#xbc ;?,b<(B
+		#xbd ;?,b=(B
+		#xbe ;?,b>(B
+		))
+  (modify-syntax-entry (make-char 'latin-iso8859-15 code) "w"
+                       (standard-syntax-table)))
 
 ;; Case. 
 (setup-case-pairs
