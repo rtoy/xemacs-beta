@@ -1,5 +1,20 @@
 2010-02-27  Ben Wing  <ben@xemacs.org>
 
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charset-tag-property): New.
+	* mule/mule-charset.el (charset-tag-properties): New.
+	* mule/mule-charset.el (charset-tag-to-charset-list):
+	Add a couple of functions `charset-tag-property' and
+	`charset-tag-properties'.  Modify charset-tag-to-charset-list to
+	use these functions.  Also use :from-end property to
+	`remove-duplicates' so that result is "stable" in that later extra
+	elements rather than earlier ones get deleted.  Also reverse the
+	order of charsets associated with a tag so that it matches the
+	order that charsets were added. (Not strictly necessary but principle
+	of least surprised.)
+
+2010-02-27  Ben Wing  <ben@xemacs.org>
+
 	* mule/latin.el (code):
 	Use char codes rather than directly encoding the chars for the
 	remaining few directly encoded chars (latin-15).

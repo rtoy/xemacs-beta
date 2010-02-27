@@ -384,6 +384,14 @@ no such translation table instead of returning nil."
   (if (charset-tag-full-p tag) (list tag)
     (gethash tag charset-tag-short-to-full-mapping)))
 
+(defun charset-tag-property (tag property)
+  "Return a property of a charset tag."
+  (getf (charset-tag-properties tag) property))
+
+(defun charset-tag-properties (tag)
+  "Return the list of properties of a charset tag."
+  (gethash tag charset-tag-to-properties-mapping))
+
 (defun* define-charset-tag (tag &key list parent function doc-string)
   "Define a charset tag.
 PARENT specifies the parent(s) of the tag.  PARENT can be a symbol or list
@@ -491,8 +499,7 @@ This is called from the C code."
 		  ((= 1 (length full-tags))
 		   ;; If there's only one, then:
 		   (let* ((full-tag (first full-tags))
-			  (props (gethash full-tag
-					  charset-tag-to-properties-mapping))
+			  (props (charset-tag-properties full-tag))
 			  (list (getf props 'list)))
 		     ;; 1. If a list tag, recurse over the elements of the
 		     ;;    list.
@@ -504,13 +511,19 @@ This is called from the C code."
 			       (loop for par in (getf props 'parent)
 				 append (charset-tag-to-charset-list par))))
 			 ;; ... then add charsets for the tag itself.
-			 (append (gethash full-tag
-					  charset-tag-to-charset-mapping)
+			 ;; Technically the order of these is undefined,
+			 ;; but we may as well make it agree with the
+			 ;; order the charsets are added, so it is halfway
+			 ;; reasonable.
+			 (append (reverse
+				  (gethash full-tag
+					   charset-tag-to-charset-mapping))
 				 ancestor-charsets)))))
 		  (t
 		   ;; Otherwise, loop over all full tags.
 		   (loop for full-tag in full-tags
-		     append (charset-tag-to-charset-list full-tag)))))))))
+		     append (charset-tag-to-charset-list full-tag)))))
+	  :from-end t))))
 
 (defun register-charset-tags-1 (charset full-tag)
   ;; Actually make a note of this CHARSET/FULL-TAG combination.
