@@ -63,20 +63,62 @@ static Lisp_Object Vshift_jis_precedence, Vbig5_precedence;
 
 
 /************************************************************************/
-/*                           MBCS coding system                         */
+/*                          Utility functions                           */
 /************************************************************************/
+
+/* Convert Unicode codepoint UCS into an Ichar and add to the dynarr DST */
+static void
+add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
+{
+  Ibyte work[MAX_ICHAR_LEN];
+  Ichar ch;
+  Bytecount len;
+
+  /* @@#### What about errors? */
+  /* @@#### current_buffer dependency */
+  /* This conversion is used during decoding, so we want to use the
+     standard precedence lists, not the special list we generate and store
+     in data->unicode_precedence (used for encoding only). */
+  ch = buffer_unicode_to_ichar (ucs, current_buffer, CONVERR_SUCCEED);
+  len = set_itext_ichar (work, ch);
+  Dynarr_add_many (dst, work, len);
+}
+
+/* Add OCTET as an undecodable literal "error" octet character, stored
+   using a 256-byte range in private Unicode space */
+#define DECODE_ERROR_OCTET(octet, dst) \
+  add_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
+
+
+/************************************************************************/
+/*                          MBCS coding system                          */
+/************************************************************************/
+
+/* Not defined because it requires careful thinking out, and currently it
+   doesn't seem necessary to allow this. */
+/* #define ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 
 struct multibyte_coding_system
 {
   /* A dynarr containing the charsets given in the `charsets' property when
      creating the coding system */
   Lisp_Object_dynarr *charsets;
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+  int overlap; /* true if the ranges of the charsets overlap */
+#endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 };
 
 #define CODING_SYSTEM_MBCS_CHARSETS(codesys) \
   (CODING_SYSTEM_TYPE_DATA (codesys, multibyte)->charsets)
 #define XCODING_SYSTEM_MBCS_CHARSETS(codesys) \
   CODING_SYSTEM_MBCS_CHARSETS (XCODING_SYSTEM (codesys))
+
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+#define CODING_SYSTEM_MBCS_OVERLAP(codesys) \
+  (CODING_SYSTEM_TYPE_DATA (codesys, multibyte)->overlap)
+#define XCODING_SYSTEM_MBCS_OVERLAP(codesys) \
+  CODING_SYSTEM_MBCS_OVERLAP (XCODING_SYSTEM (codesys))
+#endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 
 /* ~~#### Must be converted to Lisp object.  struct multibyte_coding_system
    does not need to be because it actually forms the latter part of a
@@ -136,19 +178,73 @@ multibyte_mark_coding_stream (struct coding_stream *str)
 
 static Ichar
 try_to_derive_character (int c1, int c2, int dimension,
-			 Lisp_Object charsets,
-			 enum converr handling)
+			 Lisp_Object charsets)
 {
   int i;
   Ichar ich = -1;
   Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
 
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+  /* Example: What if I specify `vietnamese-viscii' followed by `ascii'?
+     Under old-Mule, need to think carefully about what would happen if
+     some parts of the lower half of `vietnamese-viscii' are missing
+     Unicode translations and let ASCII through, and/or if some parts of the
+     upper half of `vietnamese-viscii' are missing translations. */
+#error "Need to think carefully here."
+#endif
+
+#ifndef UNICODE_INTERNAL
+  /* Try to find another character that is unified with the given
+     codepoint.
+
+     Example: `viscii' is based on charset `vietnamese-viscii'.  Say we're
+     trying to decode codepoint 255 in coding system `viscii'.  This
+     codepoint is valid in charset `vietnamese-viscii' as Unicode codepoint
+     0x1EEE.  Under Unicode-internal,
+     charset_codepoint_to_ichar(`vietnamese-viscii', 255) directly returns
+     the appropriate Unicode codepoint.  Under old-Mule, however,
+     `vietnamese-viscii' is not encodable in a buffer, so the call to
+     charset_codepoint_to_ichar() just fails.  Instead we need to convert
+     to the appropriate Unicode codepoint and then to an internal character.
+     */
+  for (i = 0; i < Dynarr_length (precdyn); i++)
+    {
+      Lisp_Object charset = Dynarr_at (precdyn, i);
+      int code;
+      if (XCHARSET_DIMENSION (charset) == dimension &&
+	  valid_charset_codepoint_p (charset, c1, c2) &&
+	  (code = charset_codepoint_to_unicode (charset, c1, c2,
+						CONVERR_FAIL)) >= 0 &&
+	  /* @@#### current-buffer dependency */
+	  (ich = buffer_unicode_to_ichar (code, current_buffer,
+					  CONVERR_FAIL)) >= 0)
+	break;
+    }
+
+  if (ich >= 0)
+    return ich;
+#endif /* not UNICODE_INTERNAL */
+
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+  /* When overlap is allowed, we need to think carefully about the order of
+     the following clause w.r.t. the previous one.  I think the current
+     order is correct -- in the case where we have `vietnamese-viscii' (0 -
+     255) shadowing `ascii' (0 - 127), putting the following clause first
+     causes e.g.  codepoint 5 to be converted to ?^E (based on ASCII)
+     instead of ?\u1eb4 (based on VISCII), which is wrong. */
+#endif
+
+  /* Under Unicode-internal, this does the actual conversion.  Under
+     old-Mule, this handles the case where an encodable charset is missing
+     a translation for a codepoint and we've specified that codepoint -- we
+     can still encode the character. */
   for (i = 0; i < Dynarr_length (precdyn); i++)
     {
       Lisp_Object charset = Dynarr_at (precdyn, i);
       if (XCHARSET_DIMENSION (charset) == dimension &&
 	  valid_charset_codepoint_p (charset, c1, c2) &&
-	  (ich = charset_codepoint_to_ichar (charset, c1, c2, handling)) >= 0)
+	  (ich = charset_codepoint_to_ichar (charset, c1, c2,
+					     CONVERR_FAIL)) >= 0)
 	break;
     }
 
@@ -174,63 +270,49 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 
 	  if (str->ch >= 0)
 	    {
-	      /* See if we can derive a legimitate character out of
-		 the specified charsets */
-	      ich = try_to_derive_character (str->ch, c, 2, charsets,
-					     CONVERR_FAIL);
-	      if (ich < 0)
-		/* See if we can derive an "illegitimate" two-byte
-		   character out of the charsets -- one that's within
-		   range but happens not to have a Unicode
-		   translation. */
-		ich = try_to_derive_character (str->ch, c, 2, charsets,
-					       CONVERR_USE_PRIVATE);
-	      if (ich < 0)
-		/* See if we can derive an "illegitimate" one-byte
-		   character from the first byte. */
-		ich = try_to_derive_character (0, str->ch, 1, charsets,
-					       CONVERR_USE_PRIVATE);
-
-	      str->ch = -1;
-
+	      /* See if we can derive a two-byte character out of the
+		 specified charsets */
+	      ich = try_to_derive_character (str->ch, c, 2, charsets);
 	      if (ich >= 0)
 		{
 		  Dynarr_add_ichar (dst, ich);
-		  goto retry_one_byte;
+		  str->ch = -1;
 		}
 	      else
-		ich = CANT_CONVERT_CHAR_WHEN_DECODING;
+		{
+		  /* If not, then the first byte was definitely erroneous,
+		     but we might still be able to derive a character
+		     starting with the second byte. */
+		  DECODE_ERROR_OCTET (str->ch, dst);
+		  str->ch = -1;
+		  goto retry_one_byte;
+		}
 	    }
 	  else
 	    {
-	      retry_one_byte:
-	      /* See if we can derive a legimitate character out of
-		 the specified charsets */
-	      ich = try_to_derive_character (0, c, 1, charsets,
-					     CONVERR_FAIL);
-	      /* Don't try and derive an illegitimate character yet;
-		 that happens after we try to find legitimate two-byte
-		 characters. */
+	    retry_one_byte:
+	      /* See if we can one-byte character out of the specified
+		 charsets */
+	      ich = try_to_derive_character (0, c, 1, charsets);
+	      /* If not, retry as a two-byte character. */
 	      if (ich < 0)
 		{
 		  str->ch = c;
 		  continue;
 		}
-	    }
 
-	  Dynarr_add_ichar (dst, ich);
+	      Dynarr_add_ichar (dst, ich);
+	    }
 	}
 
       if (str->eof)
 	{
-	  /* See if we can derive an "illegitimate" one-byte
-	     character from the last, straggling byte. */
-	  Ichar ich = try_to_derive_character (0, str->ch, 1, charsets,
-					       CONVERR_USE_PRIVATE);
-	  if (ich >= 0)
-	    Dynarr_add_ichar (dst, ich);
-	  else
-	    DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
+	  if (str->ch >= 0)
+	    {
+	      /* We have a straggler. */
+	      DECODE_ERROR_OCTET (str->ch, dst);
+	      str->ch = -1;
+	    }
 	}
     }
   else
@@ -241,10 +323,90 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	  COPY_PARTIAL_CHAR_BYTE (c, str);
 	  if (!str->pind_remaining)
 	    {
-	      Lisp_Object charset;
+	      Lisp_Object charset = Qnil;
 	      int c1, c2;
-	      itext_to_charset_codepoint (str->partial, charsets, &charset,
-					  &c1, &c2, CONVERR_SUBSTITUTE);
+	      Ichar ich = itext_ichar (str->partial);
+#ifndef UNICODE_INTERNAL
+	      /* Under old-Mule, first look to see if the character's
+		 charset is listed in coding system's charsets.  If so,
+		 we're done right now -- output the codepoints, regardless
+		 of whether they have Unicode mappings. */
+	      ichar_to_charset_codepoint (ich, charsets, &charset,
+					  &c1, &c2, CONVERR_ABORT);
+	      {
+		int i;
+		Lisp_Object_dynarr *precdyn =
+		  XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
+		for (i = 0; i < Dynarr_length (precdyn); i++)
+		  {
+		    Lisp_Object charset2 = Dynarr_at (precdyn, i);
+		    if (EQ (charset, charset2))
+		      break;
+		  }
+		if (i == Dynarr_length (precdyn))
+		  charset = Qnil; /* didn't find a matching one */
+	      }
+#endif /* not UNICODE_INTERNAL */
+	      if (NILP (charset))
+		/* If no conversion in old-Mule (or first time,
+		   Unicode-internal), trying unifying charsets (for old-Mule)
+		   by converting through Unicode.  Doing it this way also
+		   lets us handle error-octet characters. */
+		{
+		  int code = ichar_to_unicode (ich, CONVERR_FAIL);
+		  if (code >= 0)
+		    {
+		      if (unicode_error_octet_code_p (code))
+			{
+			  Dynarr_add
+			    (dst, (unsigned char)
+			     unicode_error_octet_code_to_octet (code));
+			  continue;
+			}
+		      unicode_to_charset_codepoint (code, charsets, &charset,
+						    &c1, &c2, CONVERR_FAIL);
+		    }
+		}
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+	      /* If we've found a conversion, but there is charset overlap
+		 in this coding system, we need to convert the other way to
+		 see whether we get the right result; otherwise, we don't have
+		 a good conversion, because we need to have two-way
+		 reversibility. */
+	      if (!NILP (charset) &&
+		  XCODING_SYSTEM_MBCS_OVERLAP (str->codesys))
+		{
+		  Ichar other_way =
+		    try_to_derive_character (c1, c2,
+					     XCHARSET_DIMENSION (charset),
+					     charsets);
+		  /* Under Unicode-internal, the conversion the other way
+		     needs to produce the same character.  Under old-Mule,
+		     it's OK if the characters are different as long as they
+		     unify under Unicode. */
+#ifdef UNICODE_INTERNAL
+		  if (ich != other_way)
+		    charset = Qnil;
+#else
+		  if (ich != other_way)
+		    {
+		      int code = ichar_to_unicode (ich, CONVERR_FAIL);
+		      int other_code = ichar_to_unicode (other_way,
+							 CONVERR_FAIL);
+		      if (!(code >= 0 && other_code >= 0 &&
+			    code == other_code))
+			charset = Qnil;
+		    }
+#endif /* (not) UNICODE_INTERNAL */
+		}
+#endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
+
+	      /* If no charset, substitute a ? */
+	      if (NILP (charset))
+		HANDLE_CHARSET_CODEPOINT_ERROR
+		  ("foo", Qunbound, &charset, &c1, &c2, CONVERR_SUBSTITUTE);
+
+	      /* Finally, add the character */
 	      if (XCHARSET_DIMENSION (charset) == 2)
 		Dynarr_add (dst, c1);
 	      Dynarr_add (dst, c2);
@@ -277,20 +439,62 @@ multibyte_finalize (Lisp_Object cs)
     }
 }
 
+/* Return true if range [FROM1,TO1] overlaps range [FROM2,TO2], where all
+   endpoints are inclusive. */
+
+static int
+ranges_overlap (int from1, int to1, int from2, int to2)
+{
+  return !(to1 < from2 || to2 < from1);
+}
+
 static int
 multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qcharsets))
     {
-      Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
+      Lisp_Object_dynarr *charsets = Dynarr_new (Lisp_Object);
+      
+      /* Now add set the new values to a new dynarr, so we don't overwrite
+	 the old one before we're sure things are OK. */
       Dynarr_reset (charsets);
       {
 	EXTERNAL_LIST_LOOP_2 (elt, value)
 	  {
 	    Lisp_Object charset = Fget_charset (elt);
+	    int lo1, hi1, lo2, hi2;
+	    int olo1, ohi1, olo2, ohi2;
+	    int i;
+	    get_charset_limits (charset, &lo1, &hi1, &lo2, &hi2);
+	    /* Check for duplicated and overlapping charsets */
+	    for (i = 0; i < Dynarr_length (charsets); i++)
+	      {
+		Lisp_Object ocharset = Dynarr_at (charsets, i);
+		if (EQ (ocharset, charset))
+		  invalid_argument ("Duplicated charset in `charsets' list",
+				    charset);
+		get_charset_limits (ocharset, &olo1, &ohi1, &olo2, &ohi2);
+		if (ranges_overlap (lo1, hi1, olo1, ohi1) &&
+		    ranges_overlap (lo2, hi2, olo2, ohi2))
+		  {
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+		    XCODING_SYSTEM_MBCS_OVERLAP (codesys) = 1;
+#else
+		    /* Specifying Qunbound as the first element of the list
+		       indicates that we want to pass in two frobs, not
+		       a single frob that's a list of two elements.
+		       See build_error_data(). */
+		    invalid_argument ("Charset overlaps with existing charset",
+				      list3 (Qunbound, charset, ocharset));
+#endif /* (not) ALLOW_MULTIBYTE_CHARSET_OVERLAP */
+		  }
+	      }
 	    Dynarr_add (charsets, charset);
 	  }
       }
+
+      Dynarr_free (XCODING_SYSTEM_MBCS_CHARSETS (codesys));
+      XCODING_SYSTEM_MBCS_CHARSETS (codesys) = charsets;
     }
   else
     return 0;
@@ -752,8 +956,8 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		}
 	      else
 		{
-		  DECODE_ADD_BINARY_CHAR (str->ch, dst);
-		  DECODE_ADD_BINARY_CHAR (c, dst);
+		  DECODE_ERROR_OCTET (str->ch, dst);
+		  DECODE_ERROR_OCTET (c, dst);
 		}
 	      str->ch = -1;
 	    }
@@ -2279,27 +2483,6 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
     }
 }
 
-/* Convert Unicode codepoint UCS into an Ichar and add to the dynarr DST */
-static void
-add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
-{
-  Ibyte work[MAX_ICHAR_LEN];
-  Ichar ch;
-  Bytecount len;
-
-  /* @@#### What about errors? */
-  /* @@#### current_buffer dependency */
-  /* This conversion is used during decoding, so we want to use the
-     standard precedence lists, not the special list we generate and store
-     in data->unicode_precedence (used for encoding only). */
-  ch = buffer_unicode_to_ichar (ucs, current_buffer, CONVERR_SUCCEED);
-  len = set_itext_ichar (work, ch);
-  Dynarr_add_many (dst, work, len);
-}
-
-#define DECODE_ERROR_OCTET(octet, dst) \
-  add_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
-
 static inline void
 indicate_invalid_utf_8 (unsigned char indicated_length,
                         unsigned char counter,
@@ -2390,7 +2573,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	      /* Output the (possibly invalid) sequence */
 	      int i;
 	      for (i = 0; i < data->esc_bytes_index; i++)
-		DECODE_ADD_BINARY_CHAR (data->esc_bytes[i], dst);
+		DECODE_ERROR_OCTET (data->esc_bytes[i], dst);
 	      flags &= ISO_STATE_LOCK;
 	      n++, src--;/* Repeat the loop with the same character. */
 	    }
@@ -2506,7 +2689,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                           ((ch < 0x10000) && indicated_length > 3) || 
                           /* We accept values above #x110000 in
                              escape-quoted, though not in UTF-8. */
-                          /* (ch > 0x110000) || */
+                          /* (ch > UNICODE_OFFICIAL_MAX) || */
                           valid_utf_16_surrogate (ch))
                         {
                           indicate_invalid_utf_8 (indicated_length, 

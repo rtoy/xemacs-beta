@@ -1,5 +1,39 @@
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
+	* mule-coding.c:
+	* mule-coding.c (add_unicode_to_dynarr):
+	Move this function and macro DECODE_ERROR_OCTET up top so they can
+	be used everywhere in the file.
+
+	Various changes to multibyte:
+
+	(1) Check for and disallow overlapping ranges.  Alternate code is in
+	place to handle overlapping ranges, protected by an ifdef; but it
+	needs more thought so it isn't enabled currently.
+
+	(2) Implement Unicode unification under old-Mule -- if it can't
+	convert directly between charset codepoint and character encoded
+	using that charset, convert between charset codepoint and any
+	character with the same Unicode mapping as the charset codepoint.
+
+	(3) Implement proper error-handling -- or at least, insert error
+	octets in a buffer upon error, and translate them back into raw
+	octets upon write-out.
+
+	In ISO-2022 decoding, instead of adding raw bytes upon invalid
+	sequence, add equivalent error octets.
+
+	Use UNICODE_PRIVATE_MAX instead of hardcoded number.
+	
+	* mule-coding.c (try_to_derive_character):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (multibyte_putprop):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (indicate_invalid_utf_8):
+	* mule-coding.c (iso2022_decode):
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	* redisplay-xlike-inc.c (separate_textual_runs_mule):
 	* text.c (internal_to_external_charset_codepoint):
