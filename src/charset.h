@@ -90,6 +90,25 @@ extern Lisp_Object Vcharset_hash_table;
 #define XCHARSET_CCL_PROGRAM(cs) Qnil
 #define XCHARSET_DIMENSION(cs) 1
 #define XCHARSET_NAME(cs) (cs)
+DECLARE_INLINE_HEADER (
+int
+XCHARSET_MIN_CODE (Lisp_Object UNUSED (cs), int UNUSED (dim))
+)
+{
+  return 0;
+}
+
+DECLARE_INLINE_HEADER (
+int
+XCHARSET_MAX_CODE (Lisp_Object UNUSED (cs), int dim)
+)
+{
+  if (dim == 0)
+    return 0;
+  assert (dim == 1);
+  return 255;
+}
+
 #define Fget_charset(cs) (cs)
 #define Fcharset_list() list1 (Vcharset_ascii)
 
@@ -575,11 +594,8 @@ filtered_unicode_to_charset_codepoint (int code,
       *c2 = code;
     }
   else
-    {
-      assert (code >= 0x80);
-      unicode_to_charset_codepoint_raw (code, precarray, predicate,
-					charset, c1, c2);
-    }
+    unicode_to_charset_codepoint_raw (code, precarray, predicate,
+				      charset, c1, c2);
 #else /* not MULE */
   if (code > 255)
     *charset = Qnil, *c1 = -1, *c2 = -1;
