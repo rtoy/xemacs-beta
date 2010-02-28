@@ -1,3 +1,21 @@
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* text.h:
+	* text.h (ibyte_first_byte_p):
+	* unicode.c:
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.h:
+	Add non-Mule defn of ibyte_first_byte_p(), now needed.
+
+	Move some basic Unicode defns from text.h and unicode.c
+	to unicode.h.	Add unicode_error_octet_code_p() to check if
+	a particular Unicode codepoint is an error-octet codepoint.
+
+	Use unicode_error_octet_code_p() and UNICODE_OFFICIAL_MAX in
+	place of hard-coded values.  Simplify logic that handles
+	error-octets.
+
 2010-02-21  Vin Shelton  <acs@xemacs.org>
 
 	* events.c (event_pixel_translation): Simplify assertion for

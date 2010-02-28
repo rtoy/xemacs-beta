@@ -238,24 +238,6 @@ Lisp_Object Vcharset_descr;
 #endif
 #endif /* MULE */
 
-/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
-   algorithm. 
- 
-   (They also give another, really verbose one, as part of their explanation
-   of the various planes of the encoding, but we won't use that.) */
- 
-#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
-#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
-
-#define utf_16_surrogates_to_code(lead, trail) \
-  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
-
-#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
-    int __ctu16s_code = (codepoint);				\
-    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
-    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
-} while (0)
-
 #ifdef MULE 
 
 /* There is no single badval that will work for all cases with the from tables,
@@ -2462,19 +2444,21 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
                      int write_error_characters_as_such)
 {
   ASSERT_VALID_UNICODE_CODEPOINT (code);
+
+  if (write_error_characters_as_such && 
+      unicode_error_octet_code_p (code))
+    {
+      Dynarr_add (dst, unicode_error_octet_code_to_octet (code));
+      return;
+    }
+  
   switch (type)
     {
     case UNICODE_UTF_16:
       /* Handle surrogates */
       if (code < 0x10000)
 	add_16_bit_char (code, dst, little_endian);
-      else if (write_error_characters_as_such && 
-	       code >= UNICODE_ERROR_OCTET_RANGE_START &&
-	       code <= UNICODE_ERROR_OCTET_RANGE_END)
-	{
-	  Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
-	}
-      else if (code < 0x110000)
+      else if (code <= UNICODE_OFFICIAL_MAX)
 	{
 	  int first, second;
 	  
@@ -2492,42 +2476,21 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 
     case UNICODE_UCS_4:
     case UNICODE_UTF_32:
+      /* We generate and accept incorrect sequences here, which is okay,
+	 in the interest of preservation of the user's data.  */
       if (little_endian)
 	{
-          if (write_error_characters_as_such && 
-              code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code <= UNICODE_ERROR_OCTET_RANGE_END)
-            {
-              Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
-            }
-          else
-            {
-              /* We generate and accept incorrect sequences here, which is
-                 okay, in the interest of preservation of the user's
-                 data.  */
-              Dynarr_add (dst, (unsigned char) (code & 255));
-              Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
-              Dynarr_add (dst, (unsigned char) ((code >> 16) & 255));
-              Dynarr_add (dst, (unsigned char) (code >> 24));
-            }
+	  Dynarr_add (dst, (unsigned char) (code & 255));
+	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	  Dynarr_add (dst, (unsigned char) ((code >> 16) & 255));
+	  Dynarr_add (dst, (unsigned char) (code >> 24));
 	}
       else
 	{
-          if (write_error_characters_as_such && 
-              code >= UNICODE_ERROR_OCTET_RANGE_START &&
-              code <= UNICODE_ERROR_OCTET_RANGE_END)
-            {
-              Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
-            }
-          else
-            {
-              /* We generate and accept incorrect sequences here, which is okay,
-                 in the interest of preservation of the user's data.  */
-              Dynarr_add (dst, (unsigned char) (code >> 24));
-              Dynarr_add (dst, (unsigned char) ((code >> 16) & 255));
-              Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
-              Dynarr_add (dst, (unsigned char) (code & 255));
-            }
+	  Dynarr_add (dst, (unsigned char) (code >> 24));
+	  Dynarr_add (dst, (unsigned char) ((code >> 16) & 255));
+	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	  Dynarr_add (dst, (unsigned char) (code & 255));
 	}
       break;
 
@@ -2545,22 +2508,7 @@ encode_unicode_char (int code, unsigned_char_dynarr *dst,
 	    if (code <= 0x7ff) bytes = 2;
 	    else if (code <= 0xffff) bytes = 3;
 	    else if (code <= 0x1fffff) bytes = 4;
-	    else if (code <= 0x3ffffff)
-             {
-#if !(UNICODE_ERROR_OCTET_RANGE_START > 0x1fffff \
-          && UNICODE_ERROR_OCTET_RANGE_START < 0x3ffffff)
-#error "This code needs to be rewritten. " 
-#endif
-	       if (write_error_characters_as_such && 
-		   code >= UNICODE_ERROR_OCTET_RANGE_START &&
-		   code <= UNICODE_ERROR_OCTET_RANGE_END)
-		 {
-		   Dynarr_add (dst, (unsigned char) ((code & 0xFF)));
-		   break;
-		 }
-	       else
-		 bytes = 5;
-	     }
+	    else if (code <= 0x3ffffff) bytes = 5;
 	    else bytes = 6;
 
 	    Dynarr_add_many (dst, 0, bytes);
@@ -2657,9 +2605,9 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                   /* counter != 0 */
                   if ((0 == (c & 0x80)) || (0 != (c & 0x40)))
                     {
-                      indicate_invalid_utf_8(indicated_length, 
-                                             counter, 
-                                             ch, dst, data, ignore_bom);
+                      indicate_invalid_utf_8 (indicated_length, 
+					      counter, 
+					      ch, dst, data, ignore_bom);
                       if (c & 0x80)
                         {
                           DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
@@ -2685,12 +2633,13 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                           if ((ch < 0x80) ||
                               ((ch < 0x800) && indicated_length > 2) || 
                               ((ch < 0x10000) && indicated_length > 3) || 
-                              valid_utf_16_surrogate(ch) || (ch > 0x110000))
+                              valid_utf_16_surrogate (ch) ||
+			      (ch > UNICODE_OFFICIAL_MAX))
                             {
-                              indicate_invalid_utf_8(indicated_length, 
-                                                     counter, 
-                                                     ch, dst, data,
-                                                     ignore_bom);
+                              indicate_invalid_utf_8 (indicated_length, 
+						      counter, 
+						      ch, dst, data,
+						      ignore_bom);
                             }
                           else
                             {
@@ -2784,7 +2733,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	      counter += 8;
 	      if (counter == 32)
 		{
-		  if (ch > 0x10ffff)
+		  if (ch > UNICODE_OFFICIAL_MAX)
 		    {
                       /* ch is not a legal Unicode character. We're fine
                          with that in UCS-4, though not in UTF-32. */
@@ -2796,24 +2745,24 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                       else if (little_endian)
                         {
                           DECODE_ERROR_OCTET (ch & 0xFF, dst, data, 
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                         }
                       else
                         {
                           DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-                                            ignore_bom);
+					      ignore_bom);
                           DECODE_ERROR_OCTET (ch & 0xFF, dst, data, 
-                                            ignore_bom);
+					      ignore_bom);
                         }
 		    }
                   else
@@ -2886,7 +2835,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                                           ignore_bom); 
                     }
                 }
-              else assert(0);
+              else assert (0);
               break;
             }
           ch = 0;
