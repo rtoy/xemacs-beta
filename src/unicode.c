@@ -699,9 +699,9 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 			     int codetop)
 {
   int i;
-  int low1, high1, low2, high2;
+  int low1, low2, high1, high2;
 
-  get_charset_limits (charset, &low1, &high1, &low2, &high2);
+  get_charset_limits (charset, &low1, &low2, &high1, &high2);
 
   switch (level)
     {
@@ -2185,10 +2185,10 @@ Unicode tables or in the charset:
 	  else
 #endif /* not UNICODE_INTERNAL */
 	    {
-	      int l1, h1, l2, h2;
+	      int l1, l2, h1, h2;
 	      int c1 = cp1high, c2 = cp1low;
 
-	      get_charset_limits (charset, &l1, &h1, &l2, &h2);
+	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
 
 	      if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
 		goto out_of_range;

@@ -47,8 +47,8 @@ Boston, MA 02111-1307, USA.  */
 #define CHARSET_MIN_OFFSET 0
 #define CHARSET_MAX_SIZE 256
 
-void get_charset_limits (Lisp_Object charset, int *low0, int *high0,
-			 int *low1, int *high1);
+void get_charset_limits (Lisp_Object charset, int *low0, int *low1, int *high0,
+			 int *high1);
 int get_charset_iso2022_type (Lisp_Object charset);
 void unicode_to_charset_codepoint_raw (int code,
 					     Lisp_Object precarray,
@@ -351,8 +351,8 @@ int
 valid_charset_codepoint_p (Lisp_Object charset, int c1, int c2)
 )
 {
-  int l1, h1, l2, h2;
-  get_charset_limits (charset, &l1, &h1, &l2, &h2);
+  int l1, l2, h1, h2;
+  get_charset_limits (charset, &l1, &l2, &h1, &h2);
   return c1 >= l1 && c1 <= h1 && c2 >= l2 && c2 <= h2;
 }
 

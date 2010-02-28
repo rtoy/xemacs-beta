@@ -462,10 +462,10 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	EXTERNAL_LIST_LOOP_2 (elt, value)
 	  {
 	    Lisp_Object charset = Fget_charset (elt);
-	    int lo1, hi1, lo2, hi2;
-	    int olo1, ohi1, olo2, ohi2;
+	    int lo1, lo2, hi1, hi2;
+	    int olo1, olo2, ohi1, ohi2;
 	    int i;
-	    get_charset_limits (charset, &lo1, &hi1, &lo2, &hi2);
+	    get_charset_limits (charset, &lo1, &lo2, &hi1, &hi2);
 	    /* Check for duplicated and overlapping charsets */
 	    for (i = 0; i < Dynarr_length (charsets); i++)
 	      {
@@ -473,7 +473,7 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 		if (EQ (ocharset, charset))
 		  invalid_argument ("Duplicated charset in `charsets' list",
 				    charset);
-		get_charset_limits (ocharset, &olo1, &ohi1, &olo2, &ohi2);
+		get_charset_limits (ocharset, &olo1, &olo2, &ohi1, &ohi2);
 		if (ranges_overlap (lo1, hi1, olo1, ohi1) &&
 		    ranges_overlap (lo2, hi2, olo2, ohi2))
 		  {

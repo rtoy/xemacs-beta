@@ -1365,7 +1365,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
 #ifdef MULE
-  int l1, h1, l2, h2;
+  int l1, l2, h1, h2;
 #endif
 
   switch (range->type)
@@ -1373,7 +1373,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 #ifdef MULE
     case CHARTAB_RANGE_ROW:
       {
-	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	get_charset_limits (range->charset, &l1, &l2, &h1, &h2);
 	l1 = h1 = range->row;
 	goto iterate_charset;
       }
@@ -1381,7 +1381,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
     case CHARTAB_RANGE_CHARSET:
       {
 	int i, j;
-	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	get_charset_limits (range->charset, &l1, &l2, &h1, &h2);
       iterate_charset:
 	for (i = l1; i <= h1; i++)
 	  for (j = l2; j <= h2; j++)
@@ -1526,7 +1526,7 @@ map_char_table (Lisp_Object table,
 #ifdef MULE
     case CHARTAB_RANGE_ROW:
       {
-	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	get_charset_limits (range->charset, &l1, &l2, &h1, &h2);
 	l1 = h1 = range->row;
 	goto iterate_charset;
       }
@@ -1534,7 +1534,7 @@ map_char_table (Lisp_Object table,
     case CHARTAB_RANGE_CHARSET:
       {
 	int i, j;
-	get_charset_limits (range->charset, &l1, &h1, &l2, &h2);
+	get_charset_limits (range->charset, &l1, &l2, &h1, &h2);
       iterate_charset:
 	for (i = l1; i <= h1; i++)
 	  for (j = l2; j <= h2; j++)
