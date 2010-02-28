@@ -168,6 +168,20 @@ This is a naive implementation in Lisp.  "
 ;;-----------------------------------------------------------------
 
 (when (featurep 'mule)
+
+  ;;-----------------------------------------------------------------
+  ;; Some tests of the multibyte coding system
+  ;;-----------------------------------------------------------------
+
+  (let ((cap-y-umlaut (make-char 'latin-iso8859-15 190))
+	(cap-y-umlaut2 (make-char 'latin-iso8859-16 190)))
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-15) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-16) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-1) "?")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-15) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-16) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-1) "?"))
+
   ;;---------------------------------------------------------------
   ;; Test fillarray
   ;;---------------------------------------------------------------

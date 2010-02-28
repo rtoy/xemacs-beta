@@ -1,3 +1,9 @@
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Add a few more Mule tests for Unicode-merging behavior of
+	`multibyte' coding system.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* automated/case-tests.el:
