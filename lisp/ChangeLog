@@ -1,3 +1,19 @@
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* mule/vietnamese.el (viscii):
+	Don't have ASCII shadowing; overlapping charsets no longer allowed.
+	
+	* mule/windows.el:
+	* mule/windows.el (make-windows-coding-system):
+	* mule/windows.el (1361):
+	Change `unicode-file' so it takes a filename relative to
+	`data-directory' not a Microsoft-specific subdir.  Fix various charsets
+	that use `unicode-file'.  Put proper bounds and add Unicode conversion
+	file in `korean-johab' and `japanese-windows-10001' (Macintosh
+	Japanese).  Make `windows-875' be `greek' not `latin', and comment
+	out for the moment all the EBCDIC charsets because I didn't feel like
+	fixing `make-windows-coding-system' (see comments in file).
+
 2010-02-27  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-charset.el:

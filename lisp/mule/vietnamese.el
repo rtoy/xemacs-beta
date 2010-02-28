@@ -56,7 +56,7 @@
 
 (make-coding-system 
  'viscii 'multibyte "VISCII 1.1 (Vietnamese)"
- '(charsets (vietnamese-viscii ascii)
+ '(charsets (vietnamese-viscii)
    mnemonic "VISCII"))
 
 (set-language-info-alist
