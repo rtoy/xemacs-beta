@@ -421,15 +421,15 @@ separate_textual_runs_mule (struct buffer *buf,
       else if (need_ccl_conversion)
 	{
 	  internal_to_external_charset_codepoint (charset, byte1, byte2,
-						  &byte1, &byte2);
+						  &byte1, &byte2, 1);
 	  char_converter.reg[0] = XCHARSET_ID (charset);
 	  char_converter.reg[1] = byte1;
 	  char_converter.reg[2] = byte2;
 	  ccl_driver (&char_converter, 0, buf, 0, 0, 0, CCL_MODE_ENCODING);
 	  byte1 = char_converter.reg[1];
 	  byte2 = char_converter.reg[2];
-	  external_to_internal_charset_codepoint (charset, byte1, byte2,
-						  &byte1, &byte2);
+	  get_external_charset_codepoint (charset, make_int (byte1), make_int (byte2),
+					  &byte1, &byte2, 1);
 	}
 
       if (dimension == 2)

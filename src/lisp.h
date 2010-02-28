@@ -6346,10 +6346,8 @@ Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
 						 Bytexpos pos);
 void internal_to_external_charset_codepoint (Lisp_Object charset,
 					     int int_c1, int int_c2,
-					     int *ext_c1, int *ext_c2);
-void external_to_internal_charset_codepoint (Lisp_Object charset,
-					     int ext_c1, int ext_c2,
-					     int *int_c1, int *int_c2);
+					     int *ext_c1, int *ext_c2,
+					     int munge_codepoints);
 Lisp_Object get_external_charset_codepoint (Lisp_Object charset,
 					    Lisp_Object arg1, Lisp_Object arg2,
 					    int *a1, int *a2,
