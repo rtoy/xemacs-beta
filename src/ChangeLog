@@ -1,5 +1,28 @@
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* text.c (internal_to_external_charset_codepoint):
+	* text.c (check_coerce_octet):
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add munge_codepoints argument to
+	internal_to_external_charset_codepoint so in a single step we
+	convert from internal to external, either munged or not.  Remove
+	the munge_codepoints argument from
+	external_char_to_charset_codepoint().  Together, these get rid
+	of assertion failures that came from have internal munged (i.e.
+	invalid) codepoints.  It may also fix some CCL problems -- it
+	definitely fixed a bug in CCL handling, where munging wasn't
+	happening but was certainly expected.  Eliminate
+	external_to_internal_charset_codepoint() --
+	just use get_external_unicode_codepoint().  
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
 	* text.h:
 	* text.h (ibyte_first_byte_p):
 	* unicode.c:

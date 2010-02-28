@@ -5197,7 +5197,8 @@ Lstream_funget_ichar (Lstream *stream, Ichar ch)
 void
 internal_to_external_charset_codepoint (Lisp_Object charset,
 					int int_c1, int int_c2,
-					int *ext_c1, int *ext_c2)
+					int *ext_c1, int *ext_c2,
+					int munge_codepoints)
 {
   ASSERT_VALID_CHARSET_CODEPOINT (charset, int_c1, int_c2);
   if (XCHARSET_DIMENSION (charset) == 1)
@@ -5210,24 +5211,27 @@ internal_to_external_charset_codepoint (Lisp_Object charset,
       *ext_c1 = int_c1;
       *ext_c2 = int_c2;
     }
-}
 
-void
-external_to_internal_charset_codepoint (Lisp_Object charset,
-					int ext_c1, int ext_c2,
-					int *int_c1, int *int_c2)
-{
-  if (XCHARSET_DIMENSION (charset) == 1)
+  if (munge_codepoints)
     {
-      *int_c1 = 0;
-      *int_c2 = ext_c1;
+      /* Bogus bogus bogus.  Munge the codepoints to match the old way of
+	 doing things, where all charset codepoints were coerced to be in
+	 the range of 32-127 and ascii and control-1 were handled specially.
+      */
+      if (EQ (charset, Vcharset_control_1))
+	{
+	  text_checking_assert (*ext_c2 == 0);
+	  text_checking_assert (*ext_c1 >= 128 && *ext_c1 <= 159);
+	  *ext_c1 -= 96;
+	}
+#ifdef MULE
+      else if (get_charset_iso2022_type (charset) >= 0)
+	{
+	  *ext_c1 &= 127;
+	  *ext_c2 &= 127;
+	}
+#endif /* MULE */
     }
-  else
-    {
-      *int_c1 = ext_c1;
-      *int_c2 = ext_c2;
-    }
-  ASSERT_VALID_CHARSET_CODEPOINT (charset, *int_c1, *int_c2);
 }
 
 #ifdef MULE
@@ -5256,8 +5260,7 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
 	    retval += 128;
 	}
     }
-  if (retval < low || retval > high)
-    args_out_of_range_3 (arg, make_int (low), make_int (high));
+  check_int_range (retval, low, high);
   return retval;
 }
 
@@ -5334,7 +5337,7 @@ static void
 external_char_to_charset_codepoint (Lisp_Object lispch,
 				    Lisp_Object buffer_or_precedence_list,
 				    Lisp_Object *charset, int *c1, int *c2,
-				    enum converr fail, int munge_codepoints)
+				    enum converr fail)
 {
   Lisp_Object bopa =
     decode_buffer_or_precedence_list (buffer_or_precedence_list);
@@ -5349,26 +5352,6 @@ external_char_to_charset_codepoint (Lisp_Object lispch,
     ichar_to_charset_codepoint (ch, bopa, charset, c1, c2, fail);
   if (NILP (*charset))
     return;
-  if (munge_codepoints)
-    {
-      /* Bogus bogus bogus.  Munge the codepoints to match the old way of
-	 doing things, where all charset codepoints were coerced to be in
-	 the range of 32-127 and ascii and control-1 were handled specially.
-      */
-      if (EQ (*charset, Vcharset_control_1))
-	{
-	  text_checking_assert (*c1 == 0);
-	  text_checking_assert (*c2 >= 128 && *c2 <= 159);
-	  *c2 -= 96;
-	}
-#ifdef MULE
-      else if (get_charset_iso2022_type (*charset) >= 0)
-	{
-	  *c1 &= 127;
-	  *c2 &= 127;
-	}
-#endif /* MULE */
-    }
 }
 
 /* Convert an Lisp integer into a Unicode codepoint, and convert a
@@ -5751,7 +5734,7 @@ nil or `fail'	Return nil
   enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, fail, 0);
+				      &charset, &c1, &c2, fail);
 
   if (NILP (charset))
     return Qnil;
@@ -5873,7 +5856,7 @@ nil or `fail'	Return nil
   enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, fail, 0);
+				      &charset, &c1, &c2, fail);
 
   if (NILP (charset))
     return Qnil;
@@ -5902,12 +5885,12 @@ has only one dimension.
   enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, fail, 1);
+				      &charset, &c1, &c2, fail);
 
   if (NILP (charset))
     return Qnil;
 
-  internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2);
+  internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (NILP (n) || EQ (n, Qzero))
     return make_int (c1);
@@ -5952,16 +5935,18 @@ nil or `fail'	Return nil
   enum converr fail = decode_handle_error (handle_error, 0);
 
   external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
-				      &charset, &c1, &c2, fail, 1);
+				      &charset, &c1, &c2, fail);
 
   if (NILP (charset))
     return Qnil;
+
+  internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (XCHARSET_DIMENSION (charset) == 2)
     return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
   else
     /* See comment at internal_to_external_charset_codepoint(). */
-    return list2 (XCHARSET_NAME (charset), make_int (c2));
+    return list2 (XCHARSET_NAME (charset), make_int (c1));
 }
 
 
