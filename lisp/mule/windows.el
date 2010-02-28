@@ -91,8 +91,7 @@
 			:unicode-map unicode-map))
 
 (defun* make-windows-coding-system (codepage script name
-					     &key category ansioem
-					     mnemonic extra-doc)
+				    &key category ansioem mnemonic extra-doc)
   (make-coding-system
    (intern (format "windows-%s" codepage))
    'multibyte
@@ -107,15 +106,18 @@ This implements the encoding specified by code page %s.
   (coding-system-put (intern (format "windows-%s" codepage))
 		     'category (or category 'no-conversion)))
 
+;; If `unicode-dir' is given, use CP###.TXT (### is the codepage) in
+;; directory `unicode-dir' under unicode/unicode-consortium/VENDORS/MICSFT/.
+;; If `unicode-file' is given, just use it directly.
+
 (defun windows-generate-unicode-map (codepage unicode-file unicode-dir
-					      unicode-offset)
-  (let ((unicode-file (or unicode-file
-			  (and unicode-dir
-			       (format "%s/CP%d.TXT" unicode-dir codepage)))))
+				     unicode-offset)
+  (let ((unicode-file
+	 (or unicode-file (and unicode-dir (format
+		    "unicode/unicode-consortium/VENDORS/MICSFT/%s/CP%d.TXT"
+					    unicode-dir codepage)))))
     (and unicode-file
-	 `(,(format "unicode/unicode-consortium/VENDORS/MICSFT/%s"
-		    unicode-file)
-	   ,unicode-offset))))
+	 `(,unicode-file ,unicode-offset))))
   
 (defun* make-1d-windows-charset-and-coding-system
   (codepage script name &key tags unicode-file unicode-dir
@@ -292,7 +294,10 @@ that latter standard is not used in Greece.")
 ;; #### Is this category right? I don't have Lunde to hand, and the
 ;; online information on Johab is scant.
 (make-2d-windows-charset-and-coding-system
- 1361 'korean "Korean (Johab)" :category 'iso-8-2 :ansioem "Ansi/OEM")
+ 1361 'korean "Korean (Johab)"
+ :low '(#x84 #x31) :high '(#xf9 #xfe)
+ :unicode-file "unicode/libiconv/JOHAB.TXT"
+ :category 'iso-8-2 :ansioem "Ansi/OEM")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; The MAC code pages
@@ -301,41 +306,56 @@ that latter standard is not used in Greece.")
 
 ;;We provide this in latin.el
 ;;(make-1d-windows-charset-and-coding-system
-;; 10000 'latin "Macintosh Roman" :unicode-file "MAC/ROMAN.TXT"
+;; 10000 'latin "Macintosh Roman"
+;; :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/ROMAN.TXT"
 ;; :ansioem "Mac")
 (make-2d-windows-charset-and-coding-system
  10001 'japanese "Macintosh Japanese"
+ :low '(#x81 #x40) :high '(#xfe #xfe)
+ ;; #### Not clear about this, take a random guess that it's the same as
+ ;; Shift-JIS, i.e. code page 932.
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/WINDOWS/CP932.TXT" 
  :category 'shift-jis :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
- 10006 'greek "Macintosh Greek I" :unicode-file "MAC/GREEK.TXT" 
+ 10006 'greek "Macintosh Greek I"
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/GREEK.TXT" 
  :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
- 10007 'cyrillic "Macintosh Cyrillic" :unicode-file "MAC/CYRILLIC.TXT"
+ 10007 'cyrillic "Macintosh Cyrillic"
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/CYRILLIC.TXT"
  :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
- 10029 'latin "Macintosh Latin 2" :unicode-file "MAC/LATIN2.TXT"
+ 10029 'latin "Macintosh Latin 2"
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/LATIN2.TXT"
  :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
- 10079 'latin "Macintosh Icelandic" :unicode-file "MAC/ICELAND.TXT"
+ 10079 'latin "Macintosh Icelandic"
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/ICELAND.TXT"
  :ansioem "Mac")
 (make-1d-windows-charset-and-coding-system
- 10081 'latin "Macintosh Turkish" :unicode-file "MAC/TURKISH.TXT"
+ 10081 'latin "Macintosh Turkish"
+ :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/MAC/TURKISH.TXT"
  :ansioem "Mac")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; The EBCDIC code pages
 
-
-(make-1d-windows-charset-and-coding-system
- ;; need to specify the filename otherwise we try to look for CP37.TXT
- 037 'latin "EBCDIC" :unicode-file "EBCDIC/CP037.TXT" :low 0 :high 255
- :ansioem "EBCDIC")
-(make-1d-windows-charset-and-coding-system
- 500 'latin "EBCDIC \"500V1\"" :unicode-dir "EBCDIC" :low 0 :high 255
- :ansioem "EBCDIC")
-(make-1d-windows-charset-and-coding-system
- 875 'latin "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
- :ansioem "EBCDIC")
-(make-1d-windows-charset-and-coding-system
- 1026 'latin "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
- :ansioem "EBCDIC")
+;; #### Fuck this shit!  I don't feel like dealing with this now.  If we
+;; do want to deal with it, we have to fix `make-windows-coding-system'
+;; so it doesn't include `ascii' as one of the charsets.
+;; 
+;; (make-1d-windows-charset-and-coding-system
+;;  ;; need to specify the filename otherwise we try to look for CP37.TXT
+;;  037 'latin "EBCDIC"
+;;  :unicode-file "unicode/unicode-consortium/VENDORS/MICSFT/EBCDIC/CP037.TXT"
+;;  :low 0 :high 255
+;;  :ansioem "EBCDIC")
+;; (make-1d-windows-charset-and-coding-system
+;;  500 'latin "EBCDIC \"500V1\"" :unicode-dir "EBCDIC" :low 0 :high 255
+;;  :ansioem "EBCDIC")
+;; (make-1d-windows-charset-and-coding-system
+;;  875 'greek "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
+;;  :ansioem "EBCDIC")
+;; (make-1d-windows-charset-and-coding-system
+;;  1026 'latin "EBCDIC" :unicode-dir "EBCDIC" :low 0 :high 255
+;;  :ansioem "EBCDIC")
