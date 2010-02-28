@@ -1,3 +1,30 @@
+2-25-10
+
+PROBLEMS IN ADDITION TO 2-23-10 BUGS:
+
+1. DECODE_OUTPUT_PARTIAL_CHAR changed to look for ch = -1 instead of ch = 0.
+   This requires a corresponding change throughout the conversion methods.
+2. check_nonoverlapping_charsets needs to be written and the algorithm fixed up.
+
+2-23-10
+
+BUGS:
+
+1. etc/HELLO:
+
+Big5 doesn't show up, third char of four GB chars doesn't show up, Greek
+doesn't show up.  Some of the GB chars look grayed out.
+
+COMMENTS: The Greek problems were due to `windows-875', an EBCDIC charset
+with both Latin and Greek characters in them that ends up higher inthe
+precedence list than greek.  I fixed this for the moment by commenting out
+all the EBCDIC charsets, since there were other issues.  I also make this a
+`greek' charset not a `latin' one (after all, it's nicknamed "IBM Greek").
+If we put the EBCDIC charsets back, we have to make sure the order of Greek
+charsets is such that windows-875 comes after the others.
+
+2. `make check' -- getting better.
+
 2-16-10
 
 BUGS:
@@ -27,6 +54,8 @@ We need to junk what we've got, incorporate characters.el which the new
 categories, and fix whatever stuff references the old categories
 (e.g. word-across-newline) -- maybe just sync with the latest version of
 fill.el.
+
+FIXED.
 
 2. etc/HELLO:
 
