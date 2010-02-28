@@ -1,5 +1,14 @@
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
+	* charset.h:
+	Add non-Mule XCHARSET_MIN_CODE and XCHARSET_MAX_CODE defs to
+	get things to compile.
+
+	Delete an erroneous assert triggered by preceding changes in
+	multibyte encoding/decoding.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
 	* mule-coding.c:
 	* mule-coding.c (add_unicode_to_dynarr):
 	Move this function and macro DECODE_ERROR_OCTET up top so they can
