@@ -215,6 +215,7 @@ enum converr
 #ifndef MULE
 
 #define rep_bytes_by_first_byte(fb) 1
+#define ibyte_first_byte_p(ptr) 1
 #define byte_ascii_p(byte) 1
 #define MAX_ICHAR_LEN 1
 
@@ -613,19 +614,7 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 /*                         Unicode conversion                           */
 /************************************************************************/
 
-/* Where to place the 256 private Unicode codepoints used for encoding
-   erroneous octets in a UTF-8 or UTF-16 file.  Note: This MUST be below
-   the space used for encoding unknown charset codepoints, which currently
-   starts at 0x800000.  See charset_codepoint_to_private_unicode(). */
-#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
-#define UNICODE_ERROR_OCTET_RANGE_END (UNICODE_ERROR_OCTET_RANGE_START + 0xFF)
-
-#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
-#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
-#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
-
 typedef int (*charset_pred) (Lisp_Object);
-
 
 int old_mule_ichar_to_unicode (Ichar chr, enum converr fail);
 Ichar old_mule_unicode_to_ichar (int code, Lisp_Object precedence_array,

@@ -24,6 +24,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef MULE
 
+/************************************************************************/
+/*                          Precedence arrays                           */
+/************************************************************************/
+
 struct precedence_array
 {
   struct LCRECORD_HEADER header;
@@ -50,5 +54,54 @@ DECLARE_LRECORD (precedence_array, struct precedence_array);
 #define XPRECEDENCE_ARRAY_DYNARR(x) (XPRECEDENCE_ARRAY (x)->precdyn)
 
 #endif /* MULE */
+
+/************************************************************************/
+/*                    Unicode error octet characters                    */
+/************************************************************************/
+
+/* Where to place the 256 private Unicode codepoints used for encoding
+   erroneous octets in a UTF-8 or UTF-16 file.  Note: This MUST be below
+   the space used for encoding unknown charset codepoints, which currently
+   starts at 0x800000.  See charset_codepoint_to_private_unicode(). */
+#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
+#define UNICODE_ERROR_OCTET_RANGE_END (UNICODE_ERROR_OCTET_RANGE_START + 0xFF)
+
+DECLARE_INLINE_HEADER (
+int
+unicode_error_octet_code_p (int code)
+)
+{
+  return (code >= UNICODE_ERROR_OCTET_RANGE_START &&
+	  code <= UNICODE_ERROR_OCTET_RANGE_END);
+}
+
+#define unicode_error_octet_code_to_octet(code) \
+  ((unsigned char) ((code) & 0xFF))
+
+/************************************************************************/
+/*                          UTF-16 properties                           */
+/************************************************************************/
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
+
+/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
+   algorithm. 
+ 
+   (They also give another, really verbose one, as part of their explanation
+   of the various planes of the encoding, but we won't use that.) */
+ 
+#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
+#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
+
+#define utf_16_surrogates_to_code(lead, trail) \
+  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
+
+#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
+    int __ctu16s_code = (codepoint);				\
+    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
+    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
+} while (0)
 
 #endif /* INCLUDED_unicode_h_ */
