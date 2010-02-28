@@ -5279,10 +5279,10 @@ get_external_charset_codepoint (Lisp_Object charset,
 				int *a1, int *a2, int munge_codepoints)
 {
 #ifdef MULE
-  int low1, high1, low2, high2;
+  int low1, low2, high1, high2;
 
   charset = Fget_charset (charset);
-  get_charset_limits (charset, &low1, &high1, &low2, &high2);
+  get_charset_limits (charset, &low1, &low2, &high1, &high2);
 
   if (XCHARSET_DIMENSION (charset) == 1)
     {

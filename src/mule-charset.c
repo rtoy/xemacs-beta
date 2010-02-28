@@ -353,8 +353,8 @@ get_unallocated_encodable_charset_id (int dimension)
    second index varies. */
 
 void
-get_charset_limits (Lisp_Object charset, int *low0, int *high0,
-		    int *low1, int *high1)
+get_charset_limits (Lisp_Object charset, int *low0, int *low1,
+		    int *high0, int *high1)
 {
   *low0 = XCHARSET_MIN_CODE (charset, 0);
   *low1 = XCHARSET_MIN_CODE (charset, 1);

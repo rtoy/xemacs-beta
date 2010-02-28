@@ -2110,7 +2110,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
     }
 
   {
-    int l1, h1, l2, h2;
+    int l1, l2, h1, h2;
     int j, cp = -1;
 
     /* Try to find a Unicode char in the charset.  #### This is somewhat
@@ -2118,7 +2118,7 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
 
        #### Cache me baby!!!!!!!!!!!!!
     */
-    get_charset_limits (charset, &l1, &h1, &l2, &h2);
+    get_charset_limits (charset, &l1, &l2, &h1, &h2);
 
     /* @@#### This needs major fixing.  We need to be passed the character,
        not the charset. */

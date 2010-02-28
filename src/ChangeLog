@@ -1,6 +1,22 @@
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
 	* charset.h:
+	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT):
+	* chartab.c (put_char_table):
+	* chartab.c (map_char_table):
+	* mule-charset.c (get_charset_limits):
+	* mule-coding.c (multibyte_putprop):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* text.c (get_external_charset_codepoint):
+	* unicode.c (sledgehammer_check_to_table):
+	Reverse args 3/4 of get_charset_limits so that the new order mirrors
+	the logical range statement (LO1,LO2) - (HI1,HI2).  That is,
+	logically it's a single two-dimensional range not two one-dimensional
+	ranges, and the order now mirrors that.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
 	Add non-Mule XCHARSET_MIN_CODE and XCHARSET_MAX_CODE defs to
 	get things to compile.
 
