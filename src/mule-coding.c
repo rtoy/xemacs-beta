@@ -449,6 +449,45 @@ ranges_overlap (int from1, int to1, int from2, int to2)
 }
 
 static int
+charsets_overlap (Lisp_Object cseta, Lisp_Object csetb)
+{
+  int alo1, alo2, ahi1, ahi2;
+  int blo1, blo2, bhi1, bhi2;
+  get_charset_limits (cseta, &alo1, &alo2, &ahi1, &ahi2);
+  get_charset_limits (csetb, &blo1, &blo2, &bhi1, &bhi2);
+
+  /* If we have a mixed one-dimensional and two-dimensional charset list,
+     then the first byte of the two-dimensional charset codepoint has to
+     completely avoid the single byte of the one-dimensional charset
+     codepoint or we have overlap.  So to make comparison possible we
+     "promote" a one-d charset to a two-d charset by switching rows and
+     columns to match the fact that the first octet of a two-d charset
+     overlaps the one-d charset's octet, and extend the second octet to
+     cover the entire row. */
+     
+  if (XCHARSET_DIMENSION (cseta) == 1)
+    {
+      assert (alo1 == 0);
+      assert (ahi1 == 0);
+      alo1 = alo2, ahi1 = ahi2, alo2 = 0, ahi2 = 255;
+    }
+  if (XCHARSET_DIMENSION (csetb) == 1)
+    {
+      assert (blo1 == 0);
+      assert (bhi1 == 0);
+      blo1 = blo2, bhi1 = bhi2, blo2 = 0, bhi2 = 255;
+    }
+
+  /* Two rectangles overlap when both dimensions overlap -- if there is
+     no overlap in either dimension, the rectangle is off to the side of
+     the other rectangle even if there is overlap in the other dimension.
+     */
+
+  return (ranges_overlap (alo1, ahi1, blo1, bhi1) &&
+	  ranges_overlap (alo2, ahi2, blo2, bhi2));
+}
+
+static int
 multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qcharsets))
@@ -462,10 +501,7 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	EXTERNAL_LIST_LOOP_2 (elt, value)
 	  {
 	    Lisp_Object charset = Fget_charset (elt);
-	    int lo1, lo2, hi1, hi2;
-	    int olo1, olo2, ohi1, ohi2;
 	    int i;
-	    get_charset_limits (charset, &lo1, &lo2, &hi1, &hi2);
 	    /* Check for duplicated and overlapping charsets */
 	    for (i = 0; i < Dynarr_length (charsets); i++)
 	      {
@@ -473,9 +509,7 @@ multibyte_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 		if (EQ (ocharset, charset))
 		  invalid_argument ("Duplicated charset in `charsets' list",
 				    charset);
-		get_charset_limits (ocharset, &olo1, &olo2, &ohi1, &ohi2);
-		if (ranges_overlap (lo1, hi1, olo1, ohi1) &&
-		    ranges_overlap (lo2, hi2, olo2, ohi2))
+		if (charsets_overlap (charset, ocharset))
 		  {
 #ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
 		    XCODING_SYSTEM_MBCS_OVERLAP (codesys) = 1;
