@@ -1,3 +1,15 @@
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS): New macro, for parsing keyword
+	arguments from C subrs.
+	* elhash.c (Fmake_hash_table): Use it.
+	* general-slots.h (Q_allow_other_keys): Add this symbol.
+	* eval.c (non_nil_allow_other_keys_p):
+	(invalid_keyword_argument):
+	New functions, called from the keyword argument parsing code.
+	* data.c (init_errors_once_early):
+	Add the new invalid-keyword-argument error here.
+
 2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (Fmake_coding_system_internal):

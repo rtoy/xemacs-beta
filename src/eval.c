@@ -418,6 +418,29 @@ static int warning_will_be_discarded (Lisp_Object level);
 static Lisp_Object maybe_get_trapping_problems_backtrace (void);
 
 
+
+/* When parsing keyword arguments; is some element of NARGS
+   :allow-other-keys, and is that element followed by a non-nil Lisp
+   object? */
+
+Boolint
+non_nil_allow_other_keys_p (Elemcount offset, int nargs, Lisp_Object *args)
+{
+  Lisp_Object key, value;
+  while (offset + 1 < nargs)
+    {
+      key = args[offset++];
+      value = args[offset++];
+      if (EQ (key, Q_allow_other_keys)) 
+	{
+          /* The ANSI Common Lisp standard says the first value for a given
+             keyword overrides. */
+          return !NILP (value);
+	}
+    }
+  return 0;
+}
+
 /************************************************************************/
 /*			The subr object type				*/
 /************************************************************************/
@@ -3047,6 +3070,12 @@ maybe_invalid_argument (const Ascbyte *reason, Lisp_Object frob,
 			Lisp_Object class_, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_argument, reason, frob, class_, errb);
+}
+
+DOESNT_RETURN
+invalid_keyword_argument (Lisp_Object function, Lisp_Object keyword)
+{
+  signal_error_1 (Qinvalid_keyword_argument, list2 (function, keyword));
 }
 
 DOESNT_RETURN

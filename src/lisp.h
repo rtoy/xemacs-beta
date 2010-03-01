@@ -4041,6 +4041,136 @@ extern MODULE_API int specpdl_depth_counter;
  while (NILP (Ffunctionp (fun)))		\
    signal_invalid_function_error (fun);		\
  } while (0)
+
+/************************************************************************/
+/*                      Parsing keyword arguments                       */
+/************************************************************************/
+
+/* The C subr must have been declared with MANY as its max args, and this
+   PARSE_KEYWORDS call must come before any statements.
+
+   FUNCTION is the name of the current function, as a symbol.
+
+   NARGS is the count of arguments supplied to FUNCTION.
+
+   ARGS is a pointer to the argument vector (not a Lisp vector) supplied to
+   FUNCTION.
+
+   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments start.
+
+   KEYWORD_COUNT is the number of keywords FUNCTION is normally prepared to
+   handle.
+
+   KEYWORDS is a parenthesised list of those keywords, without the initial
+   Q_.
+
+   KEYWORD_DEFAULTS allows you to set non-nil defaults. Put (keywordname =
+   initial_value) in this parameter, a collection of C statements surrounded
+   by parentheses and separated by the comma operator. If you don't need
+   this, supply NULL as KEYWORD_DEFAULTS.
+
+   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list
+   entry in defun*; it is 1 if other keys are normally allowed, 0
+   otherwise. This may be overridden in the caller by specifying
+   :allow-other-keys t in the argument list.
+
+   For keywords which appear multiple times in the called argument list, the
+   leftmost one overrides, as specified in section 7.1.1 of the CLHS.
+
+   If you want to check whether a given keyword argument was set (as in the
+   SVAR argument to defun*), supply Qunbound as its default in
+   KEYWORD_DEFAULTS, and examine it once PARSE_KEYWORDS is done. Lisp code
+   cannot supply Qunbound as an argument, so if it is still Qunbound, it was
+   not set.
+
+   There is no elegant way with this macro to have one name for the keyword
+   and an unrelated name for the local variable, as is possible with the
+   ((:keyword unrelated-var)) syntax in defun* and in Common Lisp. That
+   shouldn't matter in practice. */
+ 
+#define PARSE_KEYWORDS(function, nargs, args, keywords_offset,          \
+                       keyword_count, keywords, keyword_defaults,       \
+                       allow_other_keys)                                \
+  DECLARE_N_KEYWORDS_##keyword_count keywords;                          \
+                                                                        \
+  do                                                                    \
+    {                                                                   \
+      Lisp_Object pk_key, pk_value;                                     \
+      Elemcount pk_i = nargs - 1;                                       \
+      Boolint pk_allow_other_keys = allow_other_keys;                   \
+                                                                        \
+      if ((nargs - keywords_offset) & 1)                                \
+        {                                                               \
+          if (!allow_other_keys                                         \
+              && !(pk_allow_other_keys                                  \
+                   = non_nil_allow_other_keys_p (keywords_offset,       \
+                                                 nargs, args)))         \
+            {                                                           \
+              signal_wrong_number_of_arguments_error (function, nargs); \
+            }                                                           \
+          else                                                          \
+            {                                                           \
+              /* Ignore the trailing arg; so below always sees an even  \
+                 number of arguments. */                                \
+              pk_i -= 1;                                                \
+            }                                                           \
+        }                                                               \
+                                                                        \
+      (void)(keyword_defaults);                                         \
+                                                                        \
+      /* Start from the end, because the leftmost element overrides. */ \
+      while (pk_i > keywords_offset)                                    \
+        {                                                               \
+          pk_value = args[pk_i--];                                      \
+          pk_key = args[pk_i--];                                        \
+                                                                        \
+          if (0) {}                                                     \
+          CHECK_N_KEYWORDS_##keyword_count keywords                     \
+          else if (allow_other_keys || pk_allow_other_keys)             \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else if (!(pk_allow_other_keys                                \
+                     = non_nil_allow_other_keys_p (keywords_offset,     \
+                                                   nargs, args)))       \
+            {                                                           \
+              invalid_keyword_argument (function, pk_key);              \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+#define DECLARE_N_KEYWORDS_1(a)                 \
+    Lisp_Object a = Qnil
+#define DECLARE_N_KEYWORDS_2(a,b)               \
+  DECLARE_N_KEYWORDS_1(a), b = Qnil
+#define DECLARE_N_KEYWORDS_3(a,b,c)             \
+  DECLARE_N_KEYWORDS_2(a,b), c = Qnil
+#define DECLARE_N_KEYWORDS_4(a,b,c,d)           \
+  DECLARE_N_KEYWORDS_3(a,b,c), d = Qnil
+#define DECLARE_N_KEYWORDS_5(a,b,c,d,e)         \
+  DECLARE_N_KEYWORDS_4(a,b,c,d), e = Qnil
+#define DECLARE_N_KEYWORDS_6(a,b,c,d,e,f)       \
+  DECLARE_N_KEYWORDS_5(a,b,c,d,e), f = Qnil
+#define DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g)     \
+  DECLARE_N_KEYWORDS_6(a,b,c,d,e,f), g = Qnil
+
+#define CHECK_N_KEYWORDS_1(a)                                           \
+    else if (EQ (pk_key, Q_##a)) { a = pk_value; }
+#define CHECK_N_KEYWORDS_2(a,b)             CHECK_N_KEYWORDS_1(a)       \
+    else if (EQ (pk_key, Q_##b)) { b = pk_value; }
+#define CHECK_N_KEYWORDS_3(a,b,c)           CHECK_N_KEYWORDS_2(a,b)     \
+    else if (EQ (pk_key, Q_##c)) { c = pk_value; }
+#define CHECK_N_KEYWORDS_4(a,b,c,d)         CHECK_N_KEYWORDS_3(a,b,c)   \
+    else if (EQ (pk_key, Q_##d)) { d = pk_value; }
+#define CHECK_N_KEYWORDS_5(a,b,c,d,e)       CHECK_N_KEYWORDS_4(a,b,c,d) \
+    else if (EQ (pk_key, Q_##e)) { e = pk_value; }
+#define CHECK_N_KEYWORDS_6(a,b,c,d,e,f)     CHECK_N_KEYWORDS_5(a,b,c,d,e) \
+    else if (EQ (pk_key, Q_##f)) { f = pk_value; }
+#define CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)   CHECK_N_KEYWORDS_6(a,b,c,d,e,f) \
+    else if (EQ (pk_key, Q_##g)) { g = pk_value; }
+
+Boolint non_nil_allow_other_keys_p (Elemcount offset, int nargs,
+                                    Lisp_Object *args);
 
 
 /************************************************************************/
@@ -4898,7 +5028,8 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qcircular_list, Qcircular_property_list, Qconversion_error,
     Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
     Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
-    Qinvalid_change, Qinvalid_constant, Qinvalid_function, Qinvalid_operation,
+    Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
+    Qinvalid_keyword_argument, Qinvalid_operation,
     Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
     Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
     Qoverflow_error, Qprinting_unreadable_object, Qquit, Qrange_error,
@@ -5126,6 +5257,8 @@ MODULE_API DECLARE_DOESNT_RETURN (invalid_argument_2 (const Ascbyte *reason,
 						      Lisp_Object frob2));
 void maybe_invalid_argument (const Ascbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
+MODULE_API DECLARE_DOESNT_RETURN (invalid_keyword_argument (Lisp_Object fun,
+                                                            Lisp_Object kw));
 MODULE_API DECLARE_DOESNT_RETURN (invalid_operation (const Ascbyte *reason,
 						     Lisp_Object frob));
 MODULE_API DECLARE_DOESNT_RETURN (invalid_operation_2 (const Ascbyte *reason,

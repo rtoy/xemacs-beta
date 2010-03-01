@@ -494,8 +494,7 @@ Supports Common Lisp lambda lists."
 			  (list t
 				(list
 				 'error
-				 (format "Keyword argument %%s not one of %s"
-					 keys)
+                                 ''invalid-keyword-argument
 				 (list 'car var)))))))
 	    (push (list 'let (list (list var restarg)) check) bind-forms)))
       (while (and (eq (car args) '&aux) (pop args))
