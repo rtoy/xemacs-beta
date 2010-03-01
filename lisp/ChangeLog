@@ -1,3 +1,9 @@
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (cl-parsing-keywords):
+	* cl-macs.el (cl-do-arglist):
+	Use the new invalid-keyword-argument error here.
+
 2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Back out Ben's revision c673987f5f3d.
