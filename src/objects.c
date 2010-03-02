@@ -2,6 +2,7 @@
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996, 2002, 2004, 2005, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -1212,6 +1213,130 @@ face-boolean instantiators.
 }
 
 
+/*****************************************************************************
+ Face Background Placement Object
+ ****************************************************************************/
+Lisp_Object Qabsolute, Qrelative;
+
+static const struct memory_description
+face_background_placement_specifier_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct face_background_placement_specifier,
+			      face) },
+  { XD_END }
+};
+
+DEFINE_SPECIFIER_TYPE_WITH_DATA (face_background_placement);
+Lisp_Object Qface_background_placement;
+
+static void
+face_background_placement_create (Lisp_Object obj)
+{
+  Lisp_Specifier *face_background_placement
+    = XFACE_BACKGROUND_PLACEMENT_SPECIFIER (obj);
+
+  FACE_BACKGROUND_PLACEMENT_SPECIFIER_FACE (face_background_placement) = Qnil;
+}
+
+static void
+face_background_placement_mark (Lisp_Object obj)
+{
+  Lisp_Specifier *face_background_placement
+    = XFACE_BACKGROUND_PLACEMENT_SPECIFIER (obj);
+
+  mark_object
+    (FACE_BACKGROUND_PLACEMENT_SPECIFIER_FACE (face_background_placement));
+}
+
+/* No equal or hash methods; ignore the face the background-placement is based
+   off of for `equal' */
+
+extern Lisp_Object Qbackground_placement;
+
+static Lisp_Object
+face_background_placement_instantiate (Lisp_Object UNUSED (specifier),
+				       Lisp_Object UNUSED (matchspec),
+				       Lisp_Object domain,
+				       Lisp_Object instantiator,
+				       Lisp_Object depth,
+				       int no_fallback)
+{
+  /* When called, we're inside of call_with_suspended_errors(),
+     so we can freely error. */
+  if (EQ (instantiator, Qabsolute) || EQ (instantiator, Qrelative))
+    return instantiator;
+  else if (VECTORP (instantiator))
+    {
+      assert (XVECTOR_LENGTH (instantiator) == 1);
+
+      return FACE_PROPERTY_INSTANCE_1
+	(Fget_face (XVECTOR_DATA (instantiator)[0]),
+	 Qbackground_placement, domain, ERROR_ME, no_fallback, depth);
+    }
+  else
+    ABORT ();	/* Eh? */
+
+  return Qunbound;
+}
+
+static void
+face_background_placement_validate (Lisp_Object instantiator)
+{
+  if (EQ (instantiator, Qabsolute) || EQ (instantiator, Qrelative))
+    return;
+  else if (VECTORP (instantiator) &&
+	   (XVECTOR_LENGTH (instantiator) == 1))
+    {
+      Lisp_Object face = XVECTOR_DATA (instantiator)[0];
+
+      Fget_face (face); /* just to check that the face exists -- dvl */
+    }
+  else if (VECTORP (instantiator))
+    sferror ("Wrong length for background-placement inheritance spec",
+	     instantiator);
+  else
+    invalid_argument
+      ("\
+Background-placement instantiator must be absolute, relative or vector",
+       instantiator);
+}
+
+static void
+face_background_placement_after_change (Lisp_Object specifier,
+					Lisp_Object locale)
+{
+  Lisp_Object face
+    = FACE_BACKGROUND_PLACEMENT_SPECIFIER_FACE
+    (XFACE_BACKGROUND_PLACEMENT_SPECIFIER (specifier));
+
+  if (!NILP (face))
+    {
+      face_property_was_changed (face, Qbackground_placement, locale);
+      if (BUFFERP (locale))
+	XBUFFER (locale)->buffer_local_face_property = 1;
+    }
+}
+
+void
+set_face_background_placement_attached_to (Lisp_Object obj, Lisp_Object face)
+{
+  Lisp_Specifier *face_background_placement
+    = XFACE_BACKGROUND_PLACEMENT_SPECIFIER (obj);
+
+  FACE_BACKGROUND_PLACEMENT_SPECIFIER_FACE (face_background_placement) = face;
+}
+
+DEFUN ("face-background-placement-specifier-p", Fface_background_placement_specifier_p, 1, 1, 0, /*
+Return non-nil if OBJECT is a face-background-placement specifier.
+
+See `make-face-background-placement-specifier' for a description of possible
+face-background-placement instantiators.
+*/
+       (object))
+{
+  return FACE_BACKGROUND_PLACEMENT_SPECIFIERP (object) ? Qt : Qnil;
+}
+
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
@@ -1225,6 +1350,7 @@ syms_of_objects (void)
   DEFSUBR (Fcolor_specifier_p);
   DEFSUBR (Ffont_specifier_p);
   DEFSUBR (Fface_boolean_specifier_p);
+  DEFSUBR (Fface_background_placement_specifier_p);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcolor_instancep);
   DEFSUBR (Fmake_color_instance);
@@ -1249,6 +1375,10 @@ syms_of_objects (void)
 
   /* Qcolor, Qfont defined in general.c */
   DEFSYMBOL (Qface_boolean);
+
+  DEFSYMBOL (Qface_background_placement);
+  DEFSYMBOL (Qabsolute);
+  DEFSYMBOL (Qrelative);
 }
 
 void
@@ -1258,26 +1388,35 @@ specifier_type_create_objects (void)
   INITIALIZE_SPECIFIER_TYPE_WITH_DATA (font, "font", "font-specifier-p");
   INITIALIZE_SPECIFIER_TYPE_WITH_DATA (face_boolean, "face-boolean",
 					 "face-boolean-specifier-p");
+  INITIALIZE_SPECIFIER_TYPE_WITH_DATA (face_background_placement,
+				       "face-background-placement",
+				       "\
+face-background-placement-specifier-p");
 
   SPECIFIER_HAS_METHOD (color, instantiate);
   SPECIFIER_HAS_METHOD (font, instantiate);
   SPECIFIER_HAS_METHOD (face_boolean, instantiate);
+  SPECIFIER_HAS_METHOD (face_background_placement, instantiate);
 
   SPECIFIER_HAS_METHOD (color, validate);
   SPECIFIER_HAS_METHOD (font, validate);
   SPECIFIER_HAS_METHOD (face_boolean, validate);
+  SPECIFIER_HAS_METHOD (face_background_placement, validate);
 
   SPECIFIER_HAS_METHOD (color, create);
   SPECIFIER_HAS_METHOD (font, create);
   SPECIFIER_HAS_METHOD (face_boolean, create);
+  SPECIFIER_HAS_METHOD (face_background_placement, create);
 
   SPECIFIER_HAS_METHOD (color, mark);
   SPECIFIER_HAS_METHOD (font, mark);
   SPECIFIER_HAS_METHOD (face_boolean, mark);
+  SPECIFIER_HAS_METHOD (face_background_placement, mark);
 
   SPECIFIER_HAS_METHOD (color, after_change);
   SPECIFIER_HAS_METHOD (font, after_change);
   SPECIFIER_HAS_METHOD (face_boolean, after_change);
+  SPECIFIER_HAS_METHOD (face_background_placement, after_change);
 
 #ifdef MULE
   SPECIFIER_HAS_METHOD (font, validate_matchspec);
@@ -1290,6 +1429,7 @@ reinit_specifier_type_create_objects (void)
   REINITIALIZE_SPECIFIER_TYPE (color);
   REINITIALIZE_SPECIFIER_TYPE (font);
   REINITIALIZE_SPECIFIER_TYPE (face_boolean);
+  REINITIALIZE_SPECIFIER_TYPE (face_background_placement);
 }
 
 void

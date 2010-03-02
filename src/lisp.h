@@ -1632,16 +1632,6 @@ enum run_hooks_condition
   RUN_HOOKS_UNTIL_FAILURE
 };
 
-#ifdef HAVE_TOOLBARS
-enum toolbar_pos
-{
-  TOP_TOOLBAR,
-  BOTTOM_TOOLBAR,
-  LEFT_TOOLBAR,
-  RIGHT_TOOLBAR
-};
-#endif
-
 enum edge_style
 {
   EDGE_ETCHED_IN,
@@ -3658,7 +3648,15 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
     x = wrong_type_argument (Qnatnump, x);	\
 } while (0)
 
+END_C_DECLS
+
+/* -------------- properties of internally-formatted text ------------- */
+
+#include "text.h"
+
 /*------------------------------- char ---------------------------------*/
+
+BEGIN_C_DECLS
 
 /* NOTE: There are basic functions for converting between a character and
    the string representation of a character in text.h, as well as lots of
@@ -3666,115 +3664,6 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
    working with Ichars in charset.h, for retrieving the charset of an
    Ichar, the length of an Ichar when converted to text, etc.
 */
-
-/* NOTE: There are other functions/macros for working with Ichars in
-   charset.h, for retrieving the charset of an Ichar, the length of an
-   Ichar when converted to text, etc.
-*/
-
-enum unicode_allow
-  {
-    /* Allow only official characters in the range 0 - 0x10FFFF, i.e.
-       those that will ever be allocated by the Unicode consortium */
-    UNICODE_OFFICIAL_ONLY,
-    /* Allow "private" Unicode characters, which should not escape out
-       into UTF-8 or other external encoding.  */
-    UNICODE_ALLOW_PRIVATE,
-  };
-
-#define UNICODE_PRIVATE_MAX 0x7FFFFFFF
-#if SIZEOF_EMACS_INT > 4
-#define EMACS_INT_UNICODE_PRIVATE_MAX UNICODE_PRIVATE_MAX
-#else
-#define EMACS_INT_UNICODE_PRIVATE_MAX EMACS_INT_MAX
-#endif
-#define UNICODE_OFFICIAL_MAX 0x10FFFF
-
-DECLARE_INLINE_HEADER (
-int
-valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_allow allow)
-)
-{
-  if (allow == UNICODE_ALLOW_PRIVATE)
-    {
-#if SIZEOF_EMACS_INT > 4
-      /* On 64-bit machines, we could have a value too large */
-      return ch >= 0 && ch <= UNICODE_PRIVATE_MAX;
-#else
-      return ch >= 0;
-#endif
-    }
-  else
-    {
-      text_checking_assert (allow == UNICODE_OFFICIAL_ONLY);
-      return ch <= UNICODE_OFFICIAL_MAX && ch >= 0;
-    }
-}
-
-#define ASSERT_VALID_UNICODE_CODEPOINT(code)				\
-  text_checking_assert (valid_unicode_codepoint_p (code,		\
-						   UNICODE_ALLOW_PRIVATE))
-#define ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
-do							\
-{							\
-  if (code != -1)					\
-    ASSERT_VALID_UNICODE_CODEPOINT (code);		\
-} while (0)
-#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT(code)			\
-  inline_text_checking_assert (valid_unicode_codepoint_p (code,		\
-						   UNICODE_ALLOW_PRIVATE))
-#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
-do								\
-{								\
-  if (code != -1)						\
-    INLINE_ASSERT_VALID_UNICODE_CODEPOINT (code);		\
-} while (0)
-
-
-#ifdef MULE
-
-#ifndef UNICODE_INTERNAL
-MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
-#endif
-
-/* Return whether the given Ichar is valid.
- */
-
-DECLARE_INLINE_HEADER (
-int
-valid_ichar_p (Ichar ch)
-)
-{
-#ifdef UNICODE_INTERNAL
-  return valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
-#else
-  return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
-#endif /* UNICODE_INTERNAL */
-}
-
-#else /* not MULE */
-
-/* This appears to work both for values > 255 and < 0. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
-
-#endif /* (not) MULE */
-
-#define ASSERT_VALID_ICHAR(ich)			\
-  text_checking_assert (valid_ichar_p (ich))
-#define ASSERT_VALID_ICHAR_OR_ERROR(ich)	\
-do						\
-{						\
-  if (ich != -1)				\
-    ASSERT_VALID_ICHAR (ich);			\
-} while (0)
-#define INLINE_ASSERT_VALID_ICHAR(ich)			\
-  inline_text_checking_assert (valid_ichar_p (ich))
-#define INLINE_ASSERT_VALID_ICHAR_OR_ERROR(ich)		\
-do							\
-{							\
-  if (ich != -1)					\
-    INLINE_ASSERT_VALID_ICHAR (ich);			\
-} while (0)
 
 #ifdef ERROR_CHECK_TYPES
 
@@ -4123,37 +4012,6 @@ int finish_marking_weak_lists (void);
 void prune_weak_lists (void);
 
 END_C_DECLS
-
-/************************************************************************/
-/*      Definitions related to the format of text and of characters     */
-/************************************************************************/
-
-/* Note:
-
-   "internally formatted text" and the term "internal format" in
-   general are likely to refer to the format of text in buffers and
-   strings; "externally formatted text" and the term "external format"
-   refer to any text format used in the O.S. or elsewhere outside of
-   XEmacs.  The format of text and of a character are related and
-   there must be a one-to-one relationship (hopefully through a
-   relatively simple algorithmic means of conversion) between a string
-   of text and an equivalent array of characters, but the conversion
-   between the two is NOT necessarily trivial.
-
-   In a non-Mule XEmacs, allowed characters are numbered 0 through
-   255, where no fixed meaning is assigned to them, but (when
-   representing text, rather than bytes in a binary file) in practice
-   the lower half represents ASCII and the upper half some other 8-bit
-   character set (chosen by setting the font, case tables, syntax
-   tables, etc. appropriately for the character set through ad-hoc
-   means such as the `iso-8859-1' file and the
-   `standard-display-european' function).
-
-   #### Finish this.
-
-	*/
-#include "text.h"
-
 
 /************************************************************************/
 /*	   Definitions of primitive Lisp functions and variables	*/

@@ -159,7 +159,7 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 define check-xemacs-arg
-  run -vanilla -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/$arg0
+  run -vanilla -batch -l test-harness -f batch-test-emacs @srcdir@/../tests/$arg0
 end
 
 define check-xemacs
@@ -178,7 +178,7 @@ end
 
 define check-temacs-arg
   environment-to-run-temacs
-  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q -batch -l @srcdir@/../tests/automated/test-harness.el -f batch-test-emacs @srcdir@/../tests/$arg0
+  run -nd -no-packages -batch -l @srcdir@/../lisp/loadup.el run-temacs -q -batch -l test-harness -f batch-test-emacs @srcdir@/../tests/$arg0
 
 define check-temacs
   if $argc == 0

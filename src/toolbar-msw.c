@@ -1,7 +1,7 @@
 /* toolbar implementation -- mswindows interface.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1998 Andy Piper.
 
@@ -52,39 +52,18 @@ Boston, MA 02111-1307, USA.  */
 #define TOOLBAR_ITEM_ID_BITS(x) (((x) & 0x3FFF) | 0x4000)
 #define TOOLBAR_ID_BIAS 16
 #define TOOLBAR_HANDLE(f,p) \
-GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS + p)
+GetDlgItem (FRAME_MSWINDOWS_HANDLE (f), TOOLBAR_ID_BIAS + p)
 
 #define MSWINDOWS_BUTTON_SHADOW_THICKNESS 2
 #define MSWINDOWS_BLANK_SIZE 5
 #define MSWINDOWS_MINIMUM_TOOLBAR_SIZE 8
 
 static void
-mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos);
-
-#define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)			\
-  do {									\
-    switch (pos)							\
-      {									\
-      case TOP_TOOLBAR:							\
-	(frame)->top_toolbar_was_visible = flag;			\
-	break;								\
-      case BOTTOM_TOOLBAR:						\
-	(frame)->bottom_toolbar_was_visible = flag;			\
-	break;								\
-      case LEFT_TOOLBAR:						\
-	(frame)->left_toolbar_was_visible = flag;			\
-	break;								\
-      case RIGHT_TOOLBAR:						\
-	(frame)->right_toolbar_was_visible = flag;			\
-	break;								\
-      default:								\
-	ABORT ();							\
-      }									\
-  } while (0)
+mswindows_move_toolbar (struct frame *f, enum edge_pos pos);
 
 static int
 allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
-			  enum toolbar_pos UNUSED (pos))
+			  enum edge_pos UNUSED (pos))
 {
   /* hmm what do we generate an id based on */
   int id = TOOLBAR_ITEM_ID_BITS (internal_hash (button->callback, 0));
@@ -97,7 +76,7 @@ allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
 }
 
 static void
-mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
+mswindows_clear_toolbar (struct frame *f, enum edge_pos pos,
 			 int UNUSED (thickness_change))
 {
   HIMAGELIST ilist = NULL;
@@ -123,11 +102,11 @@ mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
       qxeSendMessage (toolbarwnd, TB_GETIMAGELIST, 0, (LONG) &ilist);
       if (ilist)
 	{
-	  ImageList_Destroy(ilist);
+	  ImageList_Destroy (ilist);
 	}
       qxeSendMessage (toolbarwnd, TB_SETIMAGELIST, 0, (LPARAM)NULL);
 
-      ShowWindow(toolbarwnd, SW_HIDE);
+      ShowWindow (toolbarwnd, SW_HIDE);
     }
 
   FRAME_MSWINDOWS_TOOLBAR_CHECKSUM (f, pos) = 0;
@@ -135,7 +114,7 @@ mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
 }
 
 static void
-mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
+mswindows_output_toolbar (struct frame *f, enum edge_pos pos)
 {
   int x, y, bar_width, bar_height, vert;
   int width=-1, height=-1, bmwidth=0, bmheight=0, maxbmwidth, maxbmheight;
@@ -208,7 +187,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
       struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
       checksum = HASH5 (checksum, 
-			internal_hash (get_toolbar_button_glyph(w, tb), 0),
+			internal_hash (get_toolbar_button_glyph (w, tb), 0),
 			internal_hash (tb->callback, 0),
 			width,
 			LISP_HASH (w->toolbar_buttons_captioned_p));
@@ -217,7 +196,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
     }
 
   /* only rebuild if something has changed */
-  if (!toolbarwnd || FRAME_MSWINDOWS_TOOLBAR_CHECKSUM(f,pos)!=checksum)
+  if (!toolbarwnd || FRAME_MSWINDOWS_TOOLBAR_CHECKSUM (f,pos)!=checksum)
     {
       /* remove the old one */
       mswindows_clear_toolbar (f, pos, 0);
@@ -401,7 +380,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
       /* finally populate with images */
       if (qxeSendMessage (toolbarwnd, TB_BUTTONSTRUCTSIZE,
-			  (WPARAM)sizeof(TBBUTTON), (LPARAM)0) == -1) 
+			  (WPARAM)sizeof (TBBUTTON), (LPARAM)0) == -1) 
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
 	  gui_error ("couldn't set button structure size", Qunbound);
@@ -446,7 +425,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       else
 	{
 	  RECT tmp;
-	  qxeSendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM(1, FALSE), 
+	  qxeSendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM (1, FALSE), 
 			  (LPARAM)&tmp);
 	}
 
@@ -475,10 +454,10 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 }
 
 static void
-mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
+mswindows_move_toolbar (struct frame *f, enum edge_pos pos)
 {
   int bar_x, bar_y, bar_width, bar_height, vert;
-  HWND toolbarwnd = TOOLBAR_HANDLE(f,pos);
+  HWND toolbarwnd = TOOLBAR_HANDLE (f,pos);
 
   if (toolbarwnd)
     {
@@ -490,19 +469,19 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
 	 by Windows and by XEmacs. */
       switch (pos)
 	{
-	case TOP_TOOLBAR:
+	case TOP_EDGE:
 	  bar_x--; bar_y-=2;
 	  bar_width+=3; bar_height+=3;
 	  break;
-	case LEFT_TOOLBAR:
+	case LEFT_EDGE:
 	  bar_x--; bar_y-=2;
 	  bar_height++; bar_width++;
 	  break;
-	case BOTTOM_TOOLBAR:
+	case BOTTOM_EDGE:
 	  bar_y-=2; 
 	  bar_width+=4; bar_height+=4;
 	  break;
-	case RIGHT_TOOLBAR:
+	case RIGHT_EDGE:
 	  bar_y-=2; bar_x++;
 	  bar_width++; bar_height++;
 	  break;
@@ -517,19 +496,14 @@ mswindows_redraw_exposed_toolbars (struct frame *f,
 				   int UNUSED (x), int UNUSED (y),
 				   int UNUSED (width), int UNUSED (height))
 {
+  enum edge_pos pos;
   assert (FRAME_MSWINDOWS_P (f));
 
-  if (FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    mswindows_move_toolbar (f, TOP_TOOLBAR);
-
-  if (FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    mswindows_move_toolbar (f, BOTTOM_TOOLBAR);
-
-  if (FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    mswindows_move_toolbar (f, LEFT_TOOLBAR);
-
-  if (FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    mswindows_move_toolbar (f, RIGHT_TOOLBAR);
+  EDGE_POS_LOOP (pos)
+    {
+      if (FRAME_REAL_TOOLBAR_VISIBLE (f, pos))
+	mswindows_move_toolbar (f, pos);
+    }
 }
 
 static void
@@ -542,41 +516,33 @@ mswindows_redraw_frame_toolbars (struct frame *f)
 static void
 mswindows_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
-
 }
 
 static void
 mswindows_output_frame_toolbars (struct frame *f)
 {
+  enum edge_pos pos;
   assert (FRAME_MSWINDOWS_P (f));
 
-  if (FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    mswindows_output_toolbar (f, TOP_TOOLBAR);
-  if (FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    mswindows_output_toolbar (f, BOTTOM_TOOLBAR);
-  if (FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    mswindows_output_toolbar (f, LEFT_TOOLBAR);
-  if (FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    mswindows_output_toolbar (f, RIGHT_TOOLBAR);
+  EDGE_POS_LOOP (pos)
+    {
+      if (FRAME_REAL_TOOLBAR_VISIBLE (f, pos))
+	mswindows_output_toolbar (f, pos);
+    }
 }
 
 static void
 mswindows_clear_frame_toolbars (struct frame *f)
 {
+  enum edge_pos pos;
   assert (FRAME_MSWINDOWS_P (f));
 
-  if (f->top_toolbar_was_visible
-      && !FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    mswindows_clear_toolbar (f, TOP_TOOLBAR, 0);
-  if (f->bottom_toolbar_was_visible
-      && !FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    mswindows_clear_toolbar (f, BOTTOM_TOOLBAR, 0);
-  if (f->left_toolbar_was_visible 
-      && !FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    mswindows_clear_toolbar (f, LEFT_TOOLBAR, 0);
-  if (f->right_toolbar_was_visible 
-      && !FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    mswindows_clear_toolbar (f, RIGHT_TOOLBAR, 0);
+  EDGE_POS_LOOP (pos)
+    {
+      if (f->toolbar_was_visible[pos]
+	  && !FRAME_REAL_TOOLBAR_VISIBLE (f, pos))
+	mswindows_clear_toolbar (f, pos, 0);
+    }
 }
 
 static void
@@ -584,15 +550,15 @@ mswindows_free_frame_toolbars (struct frame *f)
 {
   HWND twnd=NULL;
 #define DELETE_TOOLBAR(pos)				\
-  mswindows_clear_toolbar(f, pos, 0);			\
-  if ((twnd=GetDlgItem(FRAME_MSWINDOWS_HANDLE(f),	\
+  mswindows_clear_toolbar (f, pos, 0);			\
+  if ((twnd=GetDlgItem (FRAME_MSWINDOWS_HANDLE (f),	\
 		       TOOLBAR_ID_BIAS + pos)))		\
-      DestroyWindow(twnd)
+      DestroyWindow (twnd)
 
-  DELETE_TOOLBAR(TOP_TOOLBAR);
-  DELETE_TOOLBAR(BOTTOM_TOOLBAR);
-  DELETE_TOOLBAR(LEFT_TOOLBAR);
-  DELETE_TOOLBAR(RIGHT_TOOLBAR);
+  DELETE_TOOLBAR (TOP_EDGE);
+  DELETE_TOOLBAR (BOTTOM_EDGE);
+  DELETE_TOOLBAR (LEFT_EDGE);
+  DELETE_TOOLBAR (RIGHT_EDGE);
 #undef DELETE_TOOLBAR
 }
 

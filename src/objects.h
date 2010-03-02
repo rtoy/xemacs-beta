@@ -76,4 +76,12 @@ void set_font_attached_to (Lisp_Object obj, Lisp_Object face,
 void set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
 				   Lisp_Object property);
 
+/*****************************************************************************
+ *              Face Background Placement Specifier Object                   *
+ *****************************************************************************/
+
+void set_face_background_placement_attached_to
+(Lisp_Object obj, Lisp_Object face);
+
+
 #endif /* INCLUDED_objects_h_ */

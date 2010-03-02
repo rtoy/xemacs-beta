@@ -612,6 +612,32 @@ Return 3 values:
 	  ((memq (car plst) indicator-list)
 	   (return (values (car plst) (cadr plst) plst))))))
 
+;; See also the compiler macro in cl-macs.el.
+(defun constantly (value &rest more-values)
+  "Construct a function always returning VALUE, and possibly MORE-VALUES.
+
+The constructed function accepts any number of arguments, and ignores them.
+
+Members of MORE-VALUES, if provided, will be passed as multiple values; see
+`multiple-value-bind' and `multiple-value-setq'."
+  (symbol-macrolet
+      ((arglist '(&rest ignore)))
+    (if (or more-values (eval-when-compile (not (cl-compiling-file))))
+        `(lambda ,arglist (values-list ',(cons value more-values)))
+      (make-byte-code
+       arglist
+       (eval-when-compile
+         (let ((compiled (byte-compile-sexp #'(lambda (&rest ignore)
+                                                (declare (ignore ignore))
+                                                'placeholder))))
+           (assert (and
+                    (equal [placeholder]
+                           (compiled-function-constants compiled))
+                    (= 1 (compiled-function-stack-depth compiled)))
+		   t
+		   "Our assumptions about compiled code appear not to hold.")
+           (compiled-function-instructions compiled)))
+       (vector value) 1))))
 
 ;;; Hash tables.
 

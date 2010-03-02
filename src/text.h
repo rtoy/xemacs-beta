@@ -46,6 +46,33 @@ Boston, MA 02111-1307, USA.  */
 /*--------------------------------------------------------------------------*/
 /****************************************************************************/
 
+/************************************************************************/
+/*        A short intro to the format of text and of characters         */
+/************************************************************************/
+
+/*
+   "internally formatted text" and the term "internal format" in
+   general are likely to refer to the format of text in buffers and
+   strings; "externally formatted text" and the term "external format"
+   refer to any text format used in the O.S. or elsewhere outside of
+   XEmacs.  The format of text and of a character are related and
+   there must be a one-to-one relationship (hopefully through a
+   relatively simple algorithmic means of conversion) between a string
+   of text and an equivalent array of characters, but the conversion
+   between the two is NOT necessarily trivial.
+
+   In a non-Mule XEmacs, allowed characters are numbered 0 through
+   255, where no fixed meaning is assigned to them, but (when
+   representing text, rather than bytes in a binary file) in practice
+   the lower half represents ASCII and the upper half some other 8-bit
+   character set (chosen by setting the font, case tables, syntax
+   tables, etc. appropriately for the character set through ad-hoc
+   means such as the `iso-8859-1' file and the
+   `standard-display-european' function).
+   
+   For more info, see `text.c' and the Internals Manual.
+*/
+
 /* Approach for checking the validity of functions that manipulate
    charset codepoints, unicode codepoints, Ichars, and Itext:
 
@@ -90,6 +117,11 @@ char *strlwr (char *);
 #ifndef HAVE_STRUPR
 char *strupr (char *);
 #endif
+
+
+/************************************************************************/
+/*                  Unicode properties and codepoints                   */
+/************************************************************************/
 
 /* Following used for functions that do character conversion and need to
    handle errors. */
@@ -150,9 +182,128 @@ enum converr
    the full-height open rectangular box often used for this. */
 #define CANT_DISPLAY_CHAR '~'
 
+/* NOTE: There are other functions/macros for working with Ichars in
+   charset.h, for retrieving the charset of an Ichar, the length of an
+   Ichar when converted to text, etc.
+*/
+
 /* ---------------------------------------------------------------------- */
-/*                     Super-basic character properties                   */
+/*                     Validating Unicode code points                     */
 /* ---------------------------------------------------------------------- */
+
+enum unicode_allow
+  {
+    /* Allow only official characters in the range 0 - 0x10FFFF, i.e.
+       those that will ever be allocated by the Unicode consortium */
+    UNICODE_OFFICIAL_ONLY,
+    /* Allow "private" Unicode characters, which should not escape out
+       into UTF-8 or other external encoding.  */
+    UNICODE_ALLOW_PRIVATE,
+  };
+
+#define UNICODE_PRIVATE_MAX 0x7FFFFFFF
+#if SIZEOF_EMACS_INT > 4
+#define EMACS_INT_UNICODE_PRIVATE_MAX UNICODE_PRIVATE_MAX
+#else
+#define EMACS_INT_UNICODE_PRIVATE_MAX EMACS_INT_MAX
+#endif
+#define UNICODE_OFFICIAL_MAX 0x10FFFF
+
+DECLARE_INLINE_HEADER (
+int
+valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_allow allow)
+)
+{
+  if (allow == UNICODE_ALLOW_PRIVATE)
+    {
+#if SIZEOF_EMACS_INT > 4
+      /* On 64-bit machines, we could have a value too large */
+      return ch >= 0 && ch <= UNICODE_PRIVATE_MAX;
+#else
+      return ch >= 0;
+#endif
+    }
+  else
+    {
+      text_checking_assert (allow == UNICODE_OFFICIAL_ONLY);
+      return ch <= UNICODE_OFFICIAL_MAX && ch >= 0;
+    }
+}
+
+#define ASSERT_VALID_UNICODE_CODEPOINT(code)				\
+  text_checking_assert (valid_unicode_codepoint_p (code,		\
+						   UNICODE_ALLOW_PRIVATE))
+#define ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
+do							\
+{							\
+  if (code != -1)					\
+    ASSERT_VALID_UNICODE_CODEPOINT (code);		\
+} while (0)
+#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT(code)			\
+  inline_text_checking_assert (valid_unicode_codepoint_p (code,		\
+						   UNICODE_ALLOW_PRIVATE))
+#define INLINE_ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR(code)	\
+do								\
+{								\
+  if (code != -1)						\
+    INLINE_ASSERT_VALID_UNICODE_CODEPOINT (code);		\
+} while (0)
+
+/* ---------------------------------------------------------------------- */
+/*                     Unicode error octet characters                     */
+/* ---------------------------------------------------------------------- */
+
+/* Where to place the 256 private Unicode codepoints used for encoding
+   erroneous octets in a UTF-8 or UTF-16 file.  Note: This MUST be below
+   the space used for encoding unknown charset codepoints, which currently
+   starts at 0x800000.  See charset_codepoint_to_private_unicode(). */
+#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
+#define UNICODE_ERROR_OCTET_RANGE_END (UNICODE_ERROR_OCTET_RANGE_START + 0xFF)
+
+DECLARE_INLINE_HEADER (
+int
+unicode_error_octet_code_p (int code)
+)
+{
+  return (code >= UNICODE_ERROR_OCTET_RANGE_START &&
+	  code <= UNICODE_ERROR_OCTET_RANGE_END);
+}
+
+#define unicode_error_octet_code_to_octet(code) \
+  ((unsigned char) ((code) & 0xFF))
+
+/* ---------------------------------------------------------------------- */
+/*                           UTF-16 properties                            */
+/* ---------------------------------------------------------------------- */
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
+
+/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
+   algorithm. 
+ 
+   (They also give another, really verbose one, as part of their explanation
+   of the various planes of the encoding, but we won't use that.) */
+ 
+#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
+#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
+
+#define utf_16_surrogates_to_code(lead, trail) \
+  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
+
+#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
+    int __ctu16s_code = (codepoint);				\
+    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
+    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
+} while (0)
+
+
+/****************************************************************************/
+/*--------------------------------------------------------------------------*/
+/*                      Super-basic character properties                    */
+/*--------------------------------------------------------------------------*/
+/****************************************************************************/
 
 /* These properties define the specifics of how our current encoding fits
    in the basic model used for the encoding.  This model is the same
@@ -341,6 +492,51 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #define ichar_ascii_p(c) (!ichar_multibyte_p (c))
 
+#ifdef MULE
+
+#ifndef UNICODE_INTERNAL
+MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
+#endif
+
+/* Return whether the given Ichar is valid.
+ */
+
+DECLARE_INLINE_HEADER (
+int
+valid_ichar_p (Ichar ch)
+)
+{
+#ifdef UNICODE_INTERNAL
+  return valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
+#else
+  return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
+#endif /* UNICODE_INTERNAL */
+}
+
+#else /* not MULE */
+
+/* This appears to work both for values > 255 and < 0. */
+#define valid_ichar_p(ch) (! (ch & ~0xFF))
+
+#endif /* (not) MULE */
+
+#define ASSERT_VALID_ICHAR(ich)			\
+  text_checking_assert (valid_ichar_p (ich))
+#define ASSERT_VALID_ICHAR_OR_ERROR(ich)	\
+do						\
+{						\
+  if (ich != -1)				\
+    ASSERT_VALID_ICHAR (ich);			\
+} while (0)
+#define INLINE_ASSERT_VALID_ICHAR(ich)			\
+  inline_text_checking_assert (valid_ichar_p (ich))
+#define INLINE_ASSERT_VALID_ICHAR_OR_ERROR(ich)		\
+do							\
+{							\
+  if (ich != -1)					\
+    INLINE_ASSERT_VALID_ICHAR (ich);			\
+} while (0)
+
 /* Maximum number of bytes per Emacs character when represented as text, in
  any format.
  */
@@ -358,7 +554,6 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define FIRST_TRAILING_BYTE 0xA0
 #define LAST_TRAILING_BYTE 0xFF
 #endif
-
 
 #ifndef UNICODE_INTERNAL
 

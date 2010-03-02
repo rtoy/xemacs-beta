@@ -282,7 +282,8 @@ stream_clear_region (Lisp_Object UNUSED (window), struct device* UNUSED (d),
 		     int UNUSED (x), int UNUSED (y), int UNUSED (width),
 		     int UNUSED (height), Lisp_Object UNUSED (fcolor),
 		     Lisp_Object UNUSED (bcolor),
-		     Lisp_Object UNUSED (background_pixmap))
+		     Lisp_Object UNUSED (background_pixmap),
+		     Lisp_Object UNUSED (background_placement))
 {
   ABORT ();
 }
