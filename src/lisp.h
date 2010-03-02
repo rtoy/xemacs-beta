@@ -1365,10 +1365,37 @@ extern MODULE_API int regex_malloc_disallowed;
 /* Do stack or heap alloca() depending on size.
 
 NOTE: The use of a global temporary like this is unsafe if ALLOCA() occurs
-twice anywhere in the same expression; but that seems highly unlikely.  The
-alternative is to force all callers to declare a local temporary if the
-expression has side effects -- something easy to forget. */
+twice anywhere in the same expression.  The alternative is to force all
+callers to declare a local temporary if the argument to ALLOCA() has side
+effects -- something easy to forget.
 
+Normally, the use of ALLOCA() twice in the same expression is unlikely,
+but it can certainly occur in conjunction with the DFC macros.  To fix this,
+we do two things:
+
+  (1) Under GCC, there's an extended syntax we can use that avoids the problem
+      with global temporaries.
+  (2) For other compilers, we provide a special two-argument version that
+      is passed the size twice and uses each argument once and in a guaranteed
+      order.  This is useful in cases where the size argument to ALLOCA()
+      has side effects -- as is the case with the DFC macros. */
+
+/* #define TEST_MULTIUSE_ALLOCA */
+
+#if defined (__GNUC__) && !defined (TEST_MULTIUSE_ALLOCA)
+#define USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#endif
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define ALLOCA(size)						\
+  ({ Bytecount temp_alloca_size;				\
+     REGEX_MALLOC_CHECK ();					\
+     temp_alloca_size = (size);					\
+     temp_alloca_size  > MAX_ALLOCA_VS_C_ALLOCA ?		\
+       xemacs_c_alloca (temp_alloca_size) :			\
+       (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+	alloca (temp_alloca_size)); })
+#else /* not USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 #define ALLOCA(size)					\
   (REGEX_MALLOC_CHECK (),				\
    __temp_alloca_size__ = (size),			\
@@ -1376,15 +1403,42 @@ expression has side effects -- something easy to forget. */
    xemacs_c_alloca (__temp_alloca_size__) :		\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
     alloca (__temp_alloca_size__)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
+
+/* Version of ALLOCA() that can be safely used multiple times within
+   a single expression.  Regular ALLOCA() is not safe in this way since it
+   uses a global temporary variable.  However, regular ALLOCA() under GCC
+   *IS* safe since it uses a GCC extension that allows arbitrary code to
+   be made into an expression.  For non-GCC, we define a special
+   MULTIUSE_ALLOCA() that is safe for multiple use in function calls and
+   avoids global temporaries.  To do that, however, it needs to be able to
+   retrieve the size twice -- hence the two arguments.  MULTIUSE_ALLOCA()
+   is guaranteed to evaluate SIZE prior to SIZEAGAIN.  If the first SIZE
+   expression has no side effects, just make SIZEAGAIN be the same as
+   SIZE; otherwise, SIZEAGAIN may have to be different. */
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define MULTIUSE_ALLOCA(size, sizeagain) ALLOCA(size)
+#else
+#define MULTIUSE_ALLOCA(size, sizeagain)		\
+  (REGEX_MALLOC_CHECK (),				\
+   (size)  > MAX_ALLOCA_VS_C_ALLOCA ?			\
+   xemacs_c_alloca (sizeagain) :			\
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+    alloca (sizeagain)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 
 /* Version of ALLOCA() that is guaranteed to work inside of function calls
    (i.e., we call the C alloca if regular alloca() is broken inside of
    function calls). */
 #ifdef BROKEN_ALLOCA_IN_FUNCTION_CALLS
 #define ALLOCA_FUNCALL_OK(size) xemacs_c_alloca (size)
-#else
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) xemacs_c_alloca (size)
+#else /* not BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 #define ALLOCA_FUNCALL_OK(size) ALLOCA (size)
-#endif
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) \
+  MULTIUSE_ALLOCA (size, sizeagain)
+#endif /* (not) BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 
 MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
 
@@ -1453,18 +1507,8 @@ do {						\
   Extbyte **_esta_ = (Extbyte **) &(lval);	\
   const Extbyte *_esta_2 = (p);			\
   Bytecount _esta_3 = strlen (_esta_2);		\
-  *_esta_ = alloca_ibytes (1 + _esta_3);	\
+  *_esta_ = alloca_extbytes (1 + _esta_3);	\
   memcpy (*_esta_, _esta_2, 1 + _esta_3);	\
-} while (0)
-
-/* Make an alloca'd copy of a char * */
-#define C_STRING_TO_ALLOCA(p, lval)		\
-do {						\
-  Chbyte **_csta_ = (Chbyte **) &(lval);	\
-  const Chbyte *_csta_2 = (p);			\
-  Bytecount _csta_3 = strlen (_csta_2);		\
-  *_csta_ = alloca_ibytes (1 + _csta_3);	\
-  memcpy (*_csta_, _csta_2, 1 + _csta_3);	\
 } while (0)
 
 /* ----------------- convenience functions for reallocation --------------- */

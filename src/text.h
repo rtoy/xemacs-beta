@@ -3444,6 +3444,7 @@ MODULE_API Bytecount new_dfc_convert_size (const char *srctext,
 					   Bytecount src_size,
 					   enum new_dfc_src_type type,
 					   Lisp_Object codesys);
+MODULE_API Bytecount new_dfc_get_existing_size (const char *srctxt);
 MODULE_API void *new_dfc_convert_copy_data (const char *srctext,
 					    void *alloca_data);
 
@@ -3459,18 +3460,20 @@ END_C_DECLS
    need to rewrite the code.
 */
 
-/* We need to use ALLOCA_FUNCALL_OK here.  Some compilers have been known
-   to choke when alloca() occurs as a funcall argument, and so we check
-   this in configure.  Rewriting the expressions below to use a temporary
-   variable, so that the call to alloca() is outside of
+/* We need to use MULTIUSE_ALLOCA_FUNCALL_OK here.  Some compilers have
+   been known to choke when alloca() occurs as a funcall argument, and so
+   we check this in configure.  Rewriting the expressions below to use a
+   temporary variable, so that the call to alloca() is outside of
    new_dfc_convert_copy_data(), won't help because the entire NEW_DFC call
-   could be inside of a function call. */
+   could be inside of a function call.  We need to use the multi-use
+   version since more than one DFC call can easily occur in a single
+   expression. */
 
 #define NEW_DFC_CONVERT_1_ALLOCA(src, src_size, type, codesys)		\
-  new_dfc_convert_copy_data						\
-   (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
-						   type, codesys)))
-
+   new_dfc_convert_copy_data						\
+     (#src, MULTIUSE_ALLOCA_FUNCALL_OK					\
+             (new_dfc_convert_size (#src, src, src_size, type, codesys), \
+	      new_dfc_get_existing_size (#src)))
 #define EXTERNAL_TO_ITEXT(src, codesys)					\
   ((Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys))
 #define EXTERNAL_TO_ITEXT_MALLOC(src, codesys)				\

@@ -1,5 +1,26 @@
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* lisp.h (MULTIUSE_ALLOCA_FUNCALL_OK):
+	New multi-use versions of ALLOCA() that are safe to use when
+	more than one call to ALLOCA() occurs inside a single expression.
+	Using GCC extensions, we can make all ALLOCA() calls safe in this
+	way; otherwise we need additional trickery.
+	
+	* lisp.h (EXTBYTE_STRING_TO_ALLOCA):
+	Fix defn of this macro.
+
+	* lisp.h (C_STRING_TO_ALLOCA):
+	Remove unused C_STRING_TO_ALLOCA.
+	
+	* text.c:
+	* text.c (new_dfc_get_existing_size):
+	* text.h:
+	* text.h (NEW_DFC_CONVERT_1_ALLOCA):
+	Fix DFC macros to use the multi-use versions of ALLOCA().
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
 	* mule-wnnfns.c:
 	* mule-wnnfns.c (Fwnn_open):
 	* mule-wnnfns.c (Fwnn_dict_add):
