@@ -1,3 +1,9 @@
+2010-03-02  Jerry James  <james@xemacs.org>
+
+	* custom.texi: Delete, redundant with xemacs/custom.texi and
+	lispref/customize.texi.
+	* Makefile: Remove all rules relating to custom.texi.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.
