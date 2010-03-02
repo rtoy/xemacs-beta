@@ -192,8 +192,9 @@
     (Assert (backward-up-list-moves-point-from-to 20 3))
     (Known-Bug-Expect-Failure
      (Assert (backward-up-list-moves-point-from-to 22 3)))
-    (Known-Bug-Expect-Failure
-     (Assert (backward-up-list-moves-point-from-to 23 3)))
+    (Known-Bug-Expect-Error scan-error
+     (Assert (backward-up-list-moves-point-from-to 23 3))
+     )
     (Assert (backward-up-list-moves-point-from-to 24 3))
     ;; This is maybe a little tricky, since we don't expect the position
     ;; check to happen -- so use an illegal expected position

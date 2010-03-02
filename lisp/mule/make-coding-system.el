@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(defvar fixed-width-private-use-start (decode-char 'ucs #xE000)
+(defvar fixed-width-private-use-start ?\uE000
   "Start of a 256 code private use area for fixed-width coding systems.
 
 This is used to ensure that distinct octets on disk for a given coding

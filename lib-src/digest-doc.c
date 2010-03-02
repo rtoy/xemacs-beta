@@ -5,7 +5,7 @@
    See also sorted-doc.c, which produces similar output
    but in texinfo format and sorted by function/variable name.  */
 
-#ifdef emacs
+#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 #include <stdio.h>

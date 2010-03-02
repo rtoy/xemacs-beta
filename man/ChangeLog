@@ -1,3 +1,8 @@
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* xemacs/custom.texi (Faces): Document it.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Intro to Window and Frame Geometry):
