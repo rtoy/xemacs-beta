@@ -3292,50 +3292,113 @@ surrounded by (block NAME ...)."
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
 
-;; XEmacs; inline delete-duplicates if it's called with a literal
-;; #'equal or #'eq and no other keywords, we want the speed in
-;; font-lock.el.
+(define-compiler-macro delete-dups (list)
+  `(delete-duplicates (the list ,list) :test #'equal :from-end t))
+
+;; XEmacs; inline delete-duplicates if it's called with one of the
+;; common compile-time constant tests and an optional :from-end
+;; argument, we want the speed in font-lock.el.
 (define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
   (let ((listp-check 
-         (if (memq (car-safe cl-seq)
-                   ;; No need to check for a list at runtime with these. We
-                   ;; could expand the list, but these are all the functions
-                   ;; in the relevant context at the moment.
-                   '(nreverse append nconc mapcan mapcar))
-             t
-           '(listp begin))))
-    (cond ((and (= 4 (length form))
-                (eq :test (third form))
-                (or (equal '(quote eq) (fourth form))
-                    (equal '(function eq) (fourth form))))
-           `(let* ((begin ,cl-seq)
-                   (cl-seq begin))
-             (if ,listp-check
-                 (progn
-                   (while cl-seq
-                     (setq cl-seq (setcdr cl-seq (delq (car cl-seq)
-                                                       (cdr cl-seq)))))
-                   begin)
-               ;; Call cl-delete-duplicates explicitly, to avoid the form
-               ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ',cl-keys nil))))
-          ((and (= 4 (length form))
-                (eq :test (third form))
-                (or (equal '(quote equal) (fourth form))
-                    (equal '(function equal) (fourth form))))
-           `(let* ((begin ,cl-seq)
-                   (cl-seq begin))
-             (if ,listp-check
-                 (progn
-                   (while cl-seq
-                     (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
-                                                         (cdr cl-seq)))))
-                   begin)
-               ;; Call cl-delete-duplicates explicitly, to avoid the form
-               ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ',cl-keys nil))))
+         (cond
+          ((memq (car-safe cl-seq)
+                 ;; No need to check for a list at runtime with these. We
+                 ;; could expand the list, but these are all the functions
+                 ;; in the relevant context at the moment.
+                 '(nreverse append nconc mapcan mapcar string-to-list))
+             t)
+          ((and (listp cl-seq) (eq (first cl-seq) 'the)
+                (eq (second cl-seq) 'list))
+           ;; Allow users to force this, if they really want to.
+           t)
           (t
-           form))))
+           '(listp begin)))))
+    (cond ((loop
+	     for relevant-key-values
+	     in '((:test 'eq)
+		  (:test #'eq)
+		  (:test 'eq :from-end nil)
+		  (:test #'eq :from-end nil))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   cl-seq)
+             (if ,listp-check
+                 (progn
+                   (while (memq (car begin) (cdr begin))
+                     (setq begin (cdr begin)))
+                   (setq cl-seq begin)
+                   (while (cddr cl-seq)
+                     (if (memq (cadr cl-seq) (cddr cl-seq))
+                         (setcdr (cdr cl-seq) (cddr cl-seq))
+                       (setq cl-seq (cdr cl-seq))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'eq :from-end t)
+		  (:test #'eq :from-end t))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq
+                                          (delq (car cl-seq) (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'equal)
+		  (:test #'equal)
+		  (:test 'equal :from-end nil)
+		  (:test #'equal :from-end nil))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   cl-seq)
+             (if ,listp-check
+                 (progn
+		   (while (member (car begin) (cdr begin))
+		     (setq begin (cdr begin)))
+		   (setq cl-seq begin)
+		   (while (cddr cl-seq)
+		     (if (member (cadr cl-seq) (cddr cl-seq))
+			 (setcdr (cdr cl-seq) (cddr cl-seq)))
+		     (setq cl-seq (cdr cl-seq)))
+		   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'equal :from-end t)
+		  (:test #'equal :from-end t))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq
+			   (setcdr cl-seq (delete (car cl-seq) (cdr cl-seq)))))
+		   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          (t form))))
 
 ;; XEmacs; it's perfectly reasonable, and often much clearer to those
 ;; reading the code, to call regexp-quote on a constant string, which is
