@@ -1005,7 +1005,7 @@ struct coding_stream
 do {						\
   if (str->eof && str->ch >= 0)			\
     {						\
-      DECODE_ADD_BINARY_CHAR (str->ch, dst);	\
+      DECODE_ERROR_OCTET (str->ch, dst);	\
       str->ch = -1;				\
     }						\
 } while (0)

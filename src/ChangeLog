@@ -1,5 +1,40 @@
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
+	* file-coding.h (DECODE_OUTPUT_PARTIAL_CHAR):
+	When there's a leftover partial, it's an error, so output an
+	error octet character.
+	
+	* mule-coding.c (try_to_derive_character): Remove accidental
+	debugging junk.
+	* mule-coding.c (multibyte_print): Cosmetic fixes.
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	Rather than just outputting binary characters when an error is found,
+	output an error-octet character.  Treat all high bytes other than
+	those that correspond with Big5 or Shift-JIS character encoding
+	sequences as errors.
+	
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	Output error-octet characters in various situations where errors
+	occur.  FIXME: Currently, not guaranteed that we can exactly
+	preserve the output upon various types of errors, although we try.
+	We need to try harder and insert more error-octets.
+
+	Upon encoding, recognize error-octet characters and output as such.
+	(Same thing also happens now with Shift-JIS, and Big5, as well as
+	Multibyte and Unicode, where it was doing it before.)
+
+	Also fix a problem where interpretation of str->ch was changed from
+	"0 means not there" to "-1 means not there" (so that zero bytes
+	can be handled properly) but change wasn't propagated into code
+	that Aidan had added.
+	
+	* mule-coding.c (ccl_convert):
+	Comment fix.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
 	* charset.h: 
 	* unicode.c:
 	New functions unicode_to_one_charset_codepoint() and
