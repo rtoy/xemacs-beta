@@ -1,3 +1,9 @@
+2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (print_multiple_value):
+	Say #<INTERNAL OBJECT (XEmacs bug?) ...> when printing these, for
+	consistency with the rest of the print code.
+
 2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (PARSE_KEYWORDS): New macro, for parsing keyword

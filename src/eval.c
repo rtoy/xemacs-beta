@@ -4608,10 +4608,9 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       printing_unreadable_object ("multiple values");
     }
 
-  if (0 == count)
-    {
-      write_msg_string (printcharfun, "#<zero-length multiple value>");
-    }
+  write_fmt_string (printcharfun,
+                    "#<INTERNAL OBJECT (XEmacs bug?) %d multiple values,"
+                    " data (", count);
 
   for (index = 0; index < count;)
     {
@@ -4632,9 +4631,11 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
       if (count > 1 && index < count)
         {
-          write_ascstring (printcharfun, " ;\n");
+          write_ascstring (printcharfun, " ");
         }
     }
+
+  write_fmt_string (printcharfun, ") 0x%lx>", (unsigned long) XPNTR (obj));
 }
 
 static Lisp_Object
