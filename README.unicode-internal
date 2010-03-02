@@ -1,10 +1,51 @@
+3-2-10
+
+1. Multibyte should use private Unicode codepoints to handle gaps in charsets.
+2. Problems with corruption of foo_coding_stream -- there needs to be a
+   description for the coding stream, stored using a "description map" that
+   points from the coding stream through the coding system, from coding system
+   to the methods, and from the methods to the stream description.
+3. At some point, fix up text.h so that all the stuff in lisp.h about the
+   basic of characters and unicode can go in text.h.  Maybe just move text.h
+   earlier and remove some of the high-level garbage in text.h that requires
+   XSTRING and such into another file.
+4. At some point, eliminate Big5 and Shift-JIS coding systems in favor
+   of multibyte.
+5. Need to implement multibyte detect; implement a generalized detection routine
+   that looks for non-ASCII characters and also looks for error bytes.
+6. multibyte query: add to foo_convert a `struct convert_error *' argument:
+
+   struct convert_error
+   {
+     Bytecount num_error_source;
+     Bytecount num_error_out;
+     enum how_to_convert;
+   }
+
+   how_to_convert =
+     CONVERT_STOP_UPON_ERROR
+     CONVERT_CONTINUE_UPON_ERROR
+
+   If the `struct convert_error' poiner is NULL, then how_to_convert should
+   be taken as CONVERT_CONTINUE_UPON_ERROR and no error info recorded.
+   Otherwise, num_error_source indicates the number of erroneous source
+   bytes and num_error_out the number of bytes written out to indicate an
+   error.  The number of good bytes in the source and output can be derived,
+   respectively from the return value (total bytes of source processed)
+   and size increase in output Dynarr.
+
+7. still various `make check' problems
+
+
 2-25-10
 
 PROBLEMS IN ADDITION TO 2-23-10 BUGS:
 
 1. DECODE_OUTPUT_PARTIAL_CHAR changed to look for ch = -1 instead of ch = 0.
    This requires a corresponding change throughout the conversion methods.
+FIXED
 2. check_nonoverlapping_charsets needs to be written and the algorithm fixed up.
+FIXED
 
 2-23-10
 
