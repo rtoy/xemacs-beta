@@ -1,5 +1,22 @@
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
+	* charset.h: 
+	* unicode.c:
+	New functions unicode_to_one_charset_codepoint() and
+	ichar_to_one_charset_codepoint() for converting a Unicode codepoint
+	or Ichar to a charset codepoint of a single specified charset.
+	
+	* mule-coding.c:
+	* mule-coding.c (handle_possible_error_octet):
+	* mule-coding.c (try_to_derive_character):
+	* mule-coding.c (multibyte_convert):
+	Change the algorithm under old-Mule to iterate one charset at a
+	time, in each charset trying to convert directly and then through
+	Unicode-unification, rather than trying to convert directly on
+	all charsets then do Unicode-unification on all charsets.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	* lisp.h (MULTIUSE_ALLOCA_FUNCALL_OK):
 	New multi-use versions of ALLOCA() that are safe to use when
