@@ -73,6 +73,12 @@ Bytecount non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1,
 int charset_codepoint_to_private_unicode (Lisp_Object charset, int c1, int c2);
 void private_unicode_to_charset_codepoint (int priv, Lisp_Object *charset,
 					   int *c1, int *c2);
+EXFUN (Fcharset_encodable_p, 1);
+#ifndef UNICODE_INTERNAL
+#define old_mule_ichar_charset(ch) \
+  charset_by_encodable_id (old_mule_ichar_charset_id (ch))
+#endif /* not UNICODE_INTERNAL */
+
 extern Lisp_Object Vcharset_hash_table;
 
 
@@ -631,6 +637,12 @@ unicode_to_charset_codepoint (int code, Lisp_Object precarray,
 					 c1, c2, fail);
 }
 
+/* Convert a Unicode codepoint to a charset codepoint of a specified
+   charset CHARSET. */
+
+int unicode_to_one_charset_codepoint (int code, Lisp_Object charset,
+				      int *c1, int *c2);
+
 /* Return a character whose charset is CHARSET and position-codes are C1
    and C2.  C1 and C2 must be within the range of the charset. (For
    charsets of dimension 1, C1 must be 0.)
@@ -765,10 +777,25 @@ ichar_to_charset_codepoint (Ichar ch, Lisp_Object precarray,
 				       c1, c2, fail);
 }
 
-#ifndef UNICODE_INTERNAL
-#define old_mule_ichar_charset(ch) \
-  charset_by_encodable_id (old_mule_ichar_charset_id (ch))
-#endif /* not UNICODE_INTERNAL */
+/* Convert an ichar to a charset codepoint of a specified charset CHARSET. */
+
+DECLARE_INLINE_HEADER (
+int
+ichar_to_one_charset_codepoint (Ichar ch, Lisp_Object charset,
+				int *c1, int *c2)
+)
+{
+#ifdef UNICODE_INTERNAL
+  return unicode_to_one_charset_codepoint ((int) ch, charset, c1, c2);
+#else /* not UNICODE_INTERNAL */
+  {
+    Lisp_Object charset2;
+    ichar_to_charset_codepoint (ch, Qnil, &charset2, c1, c2, CONVERR_FAIL);
+    text_checking_assert (EQ (old_mule_ichar_charset (ch), charset2));
+    return EQ (charset, charset2);
+  }
+#endif /* (not) UNICODE_INTERNAL */
+}
 
 /* Convert a charset codepoint into a character in the internal string
    representation.  Return number of bytes written out.  FAIL controls

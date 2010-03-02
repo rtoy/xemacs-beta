@@ -1048,12 +1048,12 @@ get_unicode_conversion_1 (int USED_IF_AACT (code),
   return 0;
 }
 
-#if 0 /* not currently used */
-/* Lookup the conversion mapping for Unicode codepoint CODE in CHARSET.
-   Return non-zero if mapping found. */
+/* Convert a Unicode codepoint to a charset codepoint of a specified
+   charset CHARSET. */
 
-static int
-get_unicode_conversion (int code, Lisp_Object charset, int *c1, int *c2)
+int
+unicode_to_one_charset_codepoint (int code, Lisp_Object charset,
+				  int *c1, int *c2)
 {
   int u1, u2, u3, u4;
   int code_levels = 0;
@@ -1062,8 +1062,6 @@ get_unicode_conversion (int code, Lisp_Object charset, int *c1, int *c2)
   return get_unicode_conversion_1 (code, u1, u2, u3, u4, code_levels, charset,
 				   c1, c2);
 }
-
-#endif /* 0 */
 
 #ifndef UNICODE_INTERNAL
 

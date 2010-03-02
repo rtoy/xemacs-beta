@@ -84,6 +84,31 @@ add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
   Dynarr_add_many (dst, work, len);
 }
 
+static int
+handle_possible_error_octet (Ichar ich, unsigned_char_dynarr *dst,
+			     int *code_out)
+{
+  int code = ichar_to_unicode (ich, CONVERR_FAIL);
+  if (code >= 0)
+    {
+      if (code_out)
+	*code_out = code;
+      if (unicode_error_octet_code_p (code))
+	{
+	  Dynarr_add
+	    (dst, (unsigned char)
+	     unicode_error_octet_code_to_octet (code));
+	  return 1;
+	}
+    }
+  else
+    {
+      if (code_out)
+	*code_out = -1;
+    }
+  return 0;
+}
+
 /* Add OCTET as an undecodable literal "error" octet character, stored
    using a 256-byte range in private Unicode space */
 #define DECODE_ERROR_OCTET(octet, dst) \
@@ -178,74 +203,72 @@ multibyte_mark_coding_stream (struct coding_stream *str)
 
 static Ichar
 try_to_derive_character (int c1, int c2, int dimension,
-			 Lisp_Object charsets)
+			 Lisp_Object precarr)
 {
   int i;
   Ichar ich = -1;
-  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (charsets);
-
-#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
-  /* Example: What if I specify `vietnamese-viscii' followed by `ascii'?
-     Under old-Mule, need to think carefully about what would happen if
-     some parts of the lower half of `vietnamese-viscii' are missing
-     Unicode translations and let ASCII through, and/or if some parts of the
-     upper half of `vietnamese-viscii' are missing translations. */
-#error "Need to think carefully here."
-#endif
-
-#ifndef UNICODE_INTERNAL
-  /* Try to find another character that is unified with the given
-     codepoint.
-
-     Example: `viscii' is based on charset `vietnamese-viscii'.  Say we're
-     trying to decode codepoint 255 in coding system `viscii'.  This
-     codepoint is valid in charset `vietnamese-viscii' as Unicode codepoint
-     0x1EEE.  Under Unicode-internal,
-     charset_codepoint_to_ichar(`vietnamese-viscii', 255) directly returns
-     the appropriate Unicode codepoint.  Under old-Mule, however,
-     `vietnamese-viscii' is not encodable in a buffer, so the call to
-     charset_codepoint_to_ichar() just fails.  Instead we need to convert
-     to the appropriate Unicode codepoint and then to an internal character.
-     */
-  for (i = 0; i < Dynarr_length (precdyn); i++)
+  if (!PRECEDENCE_ARRAYP (precarr))
     {
-      Lisp_Object charset = Dynarr_at (precdyn, i);
-      int code;
-      if (XCHARSET_DIMENSION (charset) == dimension &&
-	  valid_charset_codepoint_p (charset, c1, c2) &&
-	  (code = charset_codepoint_to_unicode (charset, c1, c2,
-						CONVERR_FAIL)) >= 0 &&
-	  /* @@#### current-buffer dependency */
-	  (ich = buffer_unicode_to_ichar (code, current_buffer,
-					  CONVERR_FAIL)) >= 0)
-	break;
+      stderr_out ("Oops ");
+    debug_print (precarr);
     }
+  Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (precarr);
 
-  if (ich >= 0)
-    return ich;
-#endif /* not UNICODE_INTERNAL */
-
-#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
-  /* When overlap is allowed, we need to think carefully about the order of
-     the following clause w.r.t. the previous one.  I think the current
-     order is correct -- in the case where we have `vietnamese-viscii' (0 -
-     255) shadowing `ascii' (0 - 127), putting the following clause first
-     causes e.g.  codepoint 5 to be converted to ?^E (based on ASCII)
-     instead of ?\u1eb4 (based on VISCII), which is wrong. */
-#endif
-
-  /* Under Unicode-internal, this does the actual conversion.  Under
-     old-Mule, this handles the case where an encodable charset is missing
-     a translation for a codepoint and we've specified that codepoint -- we
-     can still encode the character. */
   for (i = 0; i < Dynarr_length (precdyn); i++)
     {
       Lisp_Object charset = Dynarr_at (precdyn, i);
       if (XCHARSET_DIMENSION (charset) == dimension &&
-	  valid_charset_codepoint_p (charset, c1, c2) &&
-	  (ich = charset_codepoint_to_ichar (charset, c1, c2,
-					     CONVERR_FAIL)) >= 0)
-	break;
+	  valid_charset_codepoint_p (charset, c1, c2))
+	{
+	  /* Try to convert directly.  Under Unicode-internal, this just does
+	     the conversion.  Under old-Mule, this only works for encodable
+	     charsets and only when the character is encoded using the
+	     same charset. */
+	  if ((ich = charset_codepoint_to_ichar (charset, c1, c2,
+						 CONVERR_FAIL)) >= 0)
+	    break;
+#ifndef UNICODE_INTERNAL
+	  {
+	    int code;
+	    /* Under old-Mule, the second clause handles selecting a
+	       character that is encoded with a different charset from the
+	       charset being matched but is Unicode-equivalent to the
+	       codepoint being matched. */
+#ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
+	    /* This should work properly.  We still prefer finding a charset
+	       match over a Unicode-equivalent match, which is good.
+
+	       Three scenarios:
+
+	       (1) Charset list is ('vietnamese-viscii, 'ascii).
+                   `vietnamese-viscii' has range [0, 255] and ASCII [0, 127].
+                   For VISCII codepoint 5, we get the Unicode equivalent char
+                   ?\u1eb4, not the exact-match ASCII char ?\^E.
+               (2) Same charset list but holes in `vietnamese-viscii' for some
+                   of the VISCII codepoints with the same mapping as ASCII at
+                   that codepoint, and imagine `vietnamese-viscii' is
+                   encodable.  Where a hole occurs, we still get a
+                   character `vietnamese-viscii' with codepoint under old-Mule.
+                   #### Not clear if this is the correct behavior.  Perhaps
+                   this means we should reject a match if it has no
+                   Unicode mapping.  If we reject, we fall through and the
+                   ASCII character gets returned.  Where no hole occurs, we
+                   get a `vietnamese-viscii' character, as expected.
+               (3) Same scenario as two, but holes in high bytes where there
+                   is no ASCII behind.  We either get a `vietnamese-viscii'
+                   character with no corresponding Unicode mapping or no
+                   character at all.
+	    */
+#endif
+	    if ((code = charset_codepoint_to_unicode (charset, c1, c2,
+						      CONVERR_FAIL)) >= 0 &&
+		/* @@#### current-buffer dependency */
+		(ich = buffer_unicode_to_ichar (code, current_buffer,
+						CONVERR_FAIL)) >= 0)
+	      break;
+	  }
+#endif /* not UNICODE_INTERNAL */
+	}
     }
 
   return ich;
@@ -258,7 +281,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 {
   struct multibyte_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, multibyte);
-  Lisp_Object charsets = data->charset_precedence;
+  Lisp_Object precarr = data->charset_precedence;
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -272,7 +295,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	    {
 	      /* See if we can derive a two-byte character out of the
 		 specified charsets */
-	      ich = try_to_derive_character (str->ch, c, 2, charsets);
+	      ich = try_to_derive_character (str->ch, c, 2, precarr);
 	      if (ich >= 0)
 		{
 		  Dynarr_add_ichar (dst, ich);
@@ -293,7 +316,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	    retry_one_byte:
 	      /* See if we can one-byte character out of the specified
 		 charsets */
-	      ich = try_to_derive_character (0, c, 1, charsets);
+	      ich = try_to_derive_character (0, c, 1, precarr);
 	      /* If not, retry as a two-byte character. */
 	      if (ich < 0)
 		{
@@ -326,13 +349,18 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	      Lisp_Object charset = Qnil;
 	      int c1, c2;
 	      Ichar ich = itext_ichar (str->partial);
-#ifndef UNICODE_INTERNAL
-	      /* Under old-Mule, first look to see if the character's
-		 charset is listed in coding system's charsets.  If so,
-		 we're done right now -- output the codepoints, regardless
-		 of whether they have Unicode mappings. */
-	      ichar_to_charset_codepoint (ich, charsets, &charset,
-					  &c1, &c2, CONVERR_ABORT);
+	      if (handle_possible_error_octet (ich, dst, NULL))
+		continue;
+
+	      /* Logic here similar to the logic in try_to_derive_character().
+		 Under Unicode-internal, just try directly to derive a
+		 codepoint.  Under old-Mule, for each charset, first try to
+		 derive a codepoint directly, then through Unicode unification.
+		 */
+#ifdef UNICODE_INTERNAL
+	      ichar_to_charset_codepoint (ich, precarr, &charset,
+					  &c1, &c2, CONVERR_FAIL);
+#else
 	      {
 		int i;
 		Lisp_Object_dynarr *precdyn =
@@ -340,33 +368,28 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 		for (i = 0; i < Dynarr_length (precdyn); i++)
 		  {
 		    Lisp_Object charset2 = Dynarr_at (precdyn, i);
-		    if (EQ (charset, charset2))
-		      break;
+		    int code;
+
+		    if (ichar_to_one_charset_codepoint (ich, charset2,
+							&c1, &c2))
+		      {
+			charset = charset2;
+			break;
+		      }
+		    code = ichar_to_unicode (ich, CONVERR_FAIL);
+		    if (code >= 0)
+		      {
+			if (unicode_to_one_charset_codepoint (code, charset2,
+							      &c1, &c2))
+			  {
+			    charset = charset2;
+			    break;
+			  }
+		      }
 		  }
-		if (i == Dynarr_length (precdyn))
-		  charset = Qnil; /* didn't find a matching one */
 	      }
 #endif /* not UNICODE_INTERNAL */
-	      if (NILP (charset))
-		/* If no conversion in old-Mule (or first time,
-		   Unicode-internal), trying unifying charsets (for old-Mule)
-		   by converting through Unicode.  Doing it this way also
-		   lets us handle error-octet characters. */
-		{
-		  int code = ichar_to_unicode (ich, CONVERR_FAIL);
-		  if (code >= 0)
-		    {
-		      if (unicode_error_octet_code_p (code))
-			{
-			  Dynarr_add
-			    (dst, (unsigned char)
-			     unicode_error_octet_code_to_octet (code));
-			  continue;
-			}
-		      unicode_to_charset_codepoint (code, charsets, &charset,
-						    &c1, &c2, CONVERR_FAIL);
-		    }
-		}
+
 #ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
 	      /* If we've found a conversion, but there is charset overlap
 		 in this coding system, we need to convert the other way to
@@ -379,7 +402,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 		  Ichar other_way =
 		    try_to_derive_character (c1, c2,
 					     XCHARSET_DIMENSION (charset),
-					     charsets);
+					     precarr);
 		  /* Under Unicode-internal, the conversion the other way
 		     needs to produce the same character.  Under old-Mule,
 		     it's OK if the characters are different as long as they
