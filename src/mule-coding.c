@@ -207,11 +207,6 @@ try_to_derive_character (int c1, int c2, int dimension,
 {
   int i;
   Ichar ich = -1;
-  if (!PRECEDENCE_ARRAYP (precarr))
-    {
-      stderr_out ("Oops ");
-    debug_print (precarr);
-    }
   Lisp_Object_dynarr *precdyn = XPRECEDENCE_ARRAY_DYNARR (precarr);
 
   for (i = 0; i < Dynarr_length (precdyn); i++)
@@ -576,7 +571,7 @@ multibyte_getprop (Lisp_Object codesys, Lisp_Object prop)
 
 static void
 multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
-            int UNUSED (escapeflag))
+		 int UNUSED (escapeflag))
 {
   Lisp_Object_dynarr *charsets = XCODING_SYSTEM_MBCS_CHARSETS (codesys);
   int i;
@@ -669,8 +664,8 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		}
 	      else
 		{
-		  DECODE_ADD_BINARY_CHAR (str->ch, dst);
-		  DECODE_ADD_BINARY_CHAR (c, dst);
+		  DECODE_ERROR_OCTET (str->ch, dst);
+		  DECODE_ERROR_OCTET (c, dst);
 		}
 	      str->ch = -1;
 	    }
@@ -682,8 +677,10 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		  non_ascii_charset_codepoint_to_dynarr
 		    (Vcharset_katakana_jisx0201, 0, c, dst,
 		     CONVERR_USE_PRIVATE);
-	      else
+	      else if (byte_ascii_p (c))
 		DECODE_ADD_BINARY_CHAR (c, dst);
+	      else
+		DECODE_ERROR_OCTET (c, dst);
 	    }
 	}
 
@@ -703,9 +700,12 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		{
 		  Lisp_Object charset;
 		  int c1, c2;
-		  itext_to_charset_codepoint_raw
-		    (str->partial, Vshift_jis_precedence, NULL,
-		     &charset, &c1, &c2);
+		  Ichar ich = itext_ichar (str->partial);
+		  if (handle_possible_error_octet (ich, dst, NULL))
+		    continue;
+		  ichar_to_charset_codepoint
+		    (ich, Vshift_jis_precedence, &charset, &c1, &c2,
+		     CONVERR_FAIL);
 		  if (EQ (charset, Vcharset_katakana_jisx0201))
 		    Dynarr_add (dst, c2);
 		  else if (EQ (charset, Vcharset_japanese_jisx0208) ||
@@ -1022,8 +1022,10 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 	    {
 	      if (byte_big5_two_byte_1_p (c))
 		str->ch = c;
-	      else
+	      else if (byte_ascii_p (c))
 		DECODE_ADD_BINARY_CHAR (c, dst);
+	      else
+		DECODE_ERROR_OCTET (c, dst);
 	    }
 	}
 
@@ -1043,9 +1045,11 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		{
 		  Lisp_Object charset;
 		  int c1, c2;
-		  itext_to_charset_codepoint_raw 
-		    (str->partial, Vbig5_precedence, NULL,
-		     &charset, &c1, &c2);
+		  Ichar ich = itext_ichar (str->partial);
+		  if (handle_possible_error_octet (ich, dst, NULL))
+		    continue;
+		  ichar_to_charset_codepoint
+		    (ich, Vbig5_precedence, &charset, &c1, &c2, CONVERR_FAIL);
 #ifdef UNICODE_INTERNAL
 		  if (EQ (charset, Vcharset_chinese_big5))
 		    {
@@ -2562,7 +2566,6 @@ static Bytecount
 iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		unsigned_char_dynarr *dst, Bytecount n)
 {
-  int ch     = str->ch;
 #ifdef ENABLE_COMPOSITE_CHARS
   unsigned_char_dynarr *real_dst = dst;
 #endif
@@ -2634,7 +2637,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	      flags &= ISO_STATE_LOCK;
 	      n++, src--;/* Repeat the loop with the same character. */
 	    }
-	  ch = -1;
+	  str->ch = -1;
 	}
       else if (flags & ISO_STATE_UTF_8)
 	{
@@ -2665,19 +2668,19 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                 }
               else if (0 == (c & 0x20))
                 {
-                  ch = c & 0x1f; 
+                  str->ch = c & 0x1f; 
                   counter = 1;
                   indicated_length = 2;
                 }
               else if (0 == (c & 0x10))
                 {
-                  ch = c & 0x0f;
+                  str->ch = c & 0x0f;
                   counter = 2;
                   indicated_length = 3;
                 }
               else if (0 == (c & 0x08))
                 {
-                  ch = c & 0x0f;
+                  str->ch = c & 0x0f;
                   counter = 3;
                   indicated_length = 4;
                 }
@@ -2693,13 +2696,13 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                  occurs, XEmacs generated it.  */
               else if (0 == (c & 0x04))
                 {
-                  ch = c & 0x03;
+                  str->ch = c & 0x03;
                   counter = 4;
                   indicated_length = 5;
                 }
               else if (0 == (c & 0x02))
                 {
-                  ch = c & 0x01;
+                  str->ch = c & 0x01;
                   counter = 5;
                   indicated_length = 6;
                 }
@@ -2718,7 +2721,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                 {
                   indicate_invalid_utf_8(indicated_length, 
                                          counter, 
-                                         ch, dst);
+                                         str->ch, dst);
                   if (c & 0x80)
                     {
                       DECODE_ERROR_OCTET (c, dst);
@@ -2729,43 +2732,43 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
                          such.  */
                       add_unicode_to_dynarr (c, dst);
                     }
-                  ch = 0;
+                  str->ch = -1;
                   counter = 0;
                 }
               else 
                 {
-                  ch = (ch << 6) | (c & 0x3f);
+                  str->ch = (str->ch << 6) | (c & 0x3f);
                   counter--;
 
                   /* Just processed the final byte. Emit the character. */
                   if (!counter)
                     {
                       /* Don't accept over-long sequences, or surrogates. */
-                      if ((ch < 0x80) ||
-                          ((ch < 0x800) && indicated_length > 2) || 
-                          ((ch < 0x10000) && indicated_length > 3) || 
+                      if ((str->ch < 0x80) ||
+                          ((str->ch < 0x800) && indicated_length > 2) || 
+                          ((str->ch < 0x10000) && indicated_length > 3) || 
                           /* We accept values above #x110000 in
                              escape-quoted, though not in UTF-8. */
-                          /* (ch > UNICODE_OFFICIAL_MAX) || */
-                          valid_utf_16_surrogate (ch))
+                          /* (str->ch > UNICODE_OFFICIAL_MAX) || */
+                          valid_utf_16_surrogate (str->ch))
                         {
                           indicate_invalid_utf_8 (indicated_length, 
 						  counter, 
-						  ch, dst);
+						  str->ch, dst);
                         }
                       else
                         {
-                          add_unicode_to_dynarr (ch, dst);
+                          add_unicode_to_dynarr (str->ch, dst);
                         }
-                      ch = 0;
+                      str->ch = -1;
                     }
                 }
             }
 
-          if (str->eof && ch)
+          if (str->eof && str->ch >= 0)
             {
-              DECODE_ERROR_OCTET (ch, dst);
-              ch  = 0;
+              DECODE_ERROR_OCTET (str->ch, dst);
+              str->ch  = -1;
             }
 
 	  data->counter = counter;
@@ -2778,9 +2781,9 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 
 	  /* If we were in the middle of a character, dump out the
 	     partial character. */
-	  if (ch >= 0)
-	    DECODE_ADD_BINARY_CHAR (ch, dst);
-	  ch = -1;
+	  if (str->ch >= 0)
+	    DECODE_ERROR_OCTET (str->ch, dst);
+	  str->ch = -1;
 
 	  /* If we just saw a single-shift character, dump it out.
 	     This may dump out the wrong sort of single-shift character,
@@ -2788,12 +2791,12 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	     wrong. */
 	  if (flags & ISO_STATE_SS2)
 	    {
-	      DECODE_ADD_BINARY_CHAR (ISO_CODE_SS2, dst);
+	      DECODE_ERROR_OCTET (ISO_CODE_SS2, dst);
 	      flags &= ~ISO_STATE_SS2;
 	    }
 	  if (flags & ISO_STATE_SS3)
 	    {
-	      DECODE_ADD_BINARY_CHAR (ISO_CODE_SS3, dst);
+	      DECODE_ERROR_OCTET (ISO_CODE_SS3, dst);
 	      flags &= ~ISO_STATE_SS3;
 	    }
 
@@ -2826,10 +2829,10 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	       outside the range of the charset.  Insert that char literally
 	       to preserve it for the output. */
 	    {
-	      if (ch >= 0)
-		DECODE_ADD_BINARY_CHAR (ch, dst);
-	      ch = -1;
-	      DECODE_ADD_BINARY_CHAR (c, dst);
+	      if (str->ch >= 0)
+		DECODE_ERROR_OCTET (str->ch, dst);
+	      str->ch = -1;
+	      DECODE_ERROR_OCTET (c, dst);
 	    }
 	  else
 	    {
@@ -2848,12 +2851,12 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		    charset = new_charset;
 		}
 
-	      if (XCHARSET_DIMENSION (charset) == 2 && ch < 0)
-		ch = c;
+	      if (XCHARSET_DIMENSION (charset) == 2 && str->ch < 0)
+		str->ch = c;
 	      else
 		{
 		  int c1, c2;
-		  c1 = XCHARSET_DIMENSION (charset) == 2 ? ch & 0x7F : 0;
+		  c1 = XCHARSET_DIMENSION (charset) == 2 ? str->ch & 0x7F : 0;
 		  c2 = c & 0x7F;
 
 		  if (XCHARSET_OFFSET (charset, 0) >= 128)
@@ -2884,18 +2887,17 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		      charset_codepoint_to_dynarr
 			(charset, c1, c2, dst, CONVERR_USE_PRIVATE);
 		    }
-		  ch = -1;
+		  str->ch = -1;
 		}
 	    }
 
-	  if (ch < 0)
+	  if (str->ch < 0)
 	    flags &= ISO_STATE_LOCK;
 	}
 
     }
 
   data->flags = flags;
-  str->ch    = ch;
 
   DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
 
@@ -3096,18 +3098,21 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      Lisp_Object charset;
 	      int c1, c2;
 	      int half = 0;
+	      Ichar ich = itext_ichar (str->partial);
+	      if (handle_possible_error_octet (ich, dst, NULL))
+		continue;
 
 	      /* Convert character to a charset codepoint. */
 	      /* First, try the charsets mentioned in the coding system. */
-	      itext_to_charset_codepoint
-		(str->partial, data->unicode_precedence,
-		 &charset, &c1, &c2, CONVERR_FAIL);
+	      ichar_to_charset_codepoint
+		(ich, data->unicode_precedence, &charset, &c1, &c2,
+		 CONVERR_FAIL);
 	      if (NILP (charset))
 		{
 		  /* Then try any ISO2022-compatible charset */
 		  /* @@#### current_buffer dependency */
-		  buffer_filtered_itext_to_charset_codepoint
-		    (str->partial, current_buffer, charset_iso2022_compatible,
+		  buffer_filtered_ichar_to_charset_codepoint
+		    (ich, current_buffer, charset_iso2022_compatible,
 		     &charset, &c1, &c2, CONVERR_FAIL);
 		}
 	      /* No point in trying to find a non-ISO2022-compatible
@@ -3191,7 +3196,6 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    }
 
 		  {
-		    Ichar ich = itext_ichar (str->partial);
 		    /* @@#### Error handling? */
 		    int code = ichar_to_unicode (ich, CONVERR_SUBSTITUTE);
 		    encode_unicode_char (code, dst, UNICODE_UTF_8, 0, 0);
@@ -4008,7 +4012,7 @@ ccl_convert (struct coding_stream *str, const UExtbyte *src,
      N == 0.
      */
   ccl_driver (&data->ccl, src ? src : (const unsigned char *) "",
-	      /* @@#### allow buffer to be specified */
+	      /* @@#### current_buffer dependency */
 	      current_buffer, dst, n, 0,
 	      str->direction == CODING_DECODE ? CCL_MODE_DECODING :
 	      CCL_MODE_ENCODING);
