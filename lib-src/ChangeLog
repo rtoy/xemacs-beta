@@ -1,3 +1,13 @@
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* digest-doc.c:
+	* make-path.c:
+	`emacs' isn't defined, but HAVE_CONFIG_H is, so use it to get
+	config.h.
+	
+	* getopt.h:
+	Conditionalize on HAVE_CONFIG_H to get real prototypes.
+
 2010-02-25  Ben Wing  <ben@xemacs.org>
 
 	* make-docfile.c:

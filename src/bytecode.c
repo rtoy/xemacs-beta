@@ -2823,14 +2823,14 @@ integer, it is incremented each time that symbol's function is called.
 static void
 init_opcode_table_multi_op (Opcode op)
 {
-  const Ascbyte *basename = opcode_name_table[op];
+  const Ascbyte *base = opcode_name_table[op];
   Ascbyte temp[300];
   int i;
 
   for (i = 1; i < 7; i++)
     {
       assert (!opcode_name_table[op + i]);
-      sprintf (temp, "%s+%d", basename, i);
+      sprintf (temp, "%s+%d", base, i);
       opcode_name_table[op + i] = xstrdup (temp);
     }
 }
