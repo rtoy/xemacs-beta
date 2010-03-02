@@ -1,3 +1,24 @@
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (objs):
+	glyphs-shared.o, glyphs-eimage.o only needed when HAVE_WINDOW_SYSTEM.
+	glyphs-widget.o should be too, but we need a bit of work ifdeffing
+	out the subwindow stuff from redisplay.c et al.
+	
+	* bytecode.c (init_opcode_table_multi_op):
+	Change var name to avoid shadowing with `basename'.
+	
+	* emacs.c (main_1):
+	Don't call init/etc. routines for glyphs-shared, glyphs-eimage unless
+	HAVE_WINDOW_SYSTEM is defined.
+	
+	* linuxplay.c:
+	* linuxplay.c (sighandler):
+	* vdb-posix.c (vdb_fault_handler):
+	Use const for variables holding string constants to avoid C++
+	warnings.
+
 2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (Fmake_coding_system_internal):

@@ -72,7 +72,7 @@ static  SIGTYPE (*sigint_handler) (int);
 static int           mix_fd;
 static int           audio_vol;
 static int           audio_fd;
-static Ascbyte    *audio_dev = "/dev/dsp";
+static const Ascbyte *audio_dev = "/dev/dsp";
 
 /* Intercept SIGINT and SIGHUP in order to close the audio and mixer
    devices before terminating sound output; this requires reliable
