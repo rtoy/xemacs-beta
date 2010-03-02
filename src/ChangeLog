@@ -1,3 +1,8 @@
+2010-03-02  Jerry James  <james@xemacs.org>
+
+	* lread.c (read_atom): Signal a read error upon encountering a
+	ratio constant with a zero denominator.
+
 2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (print_multiple_value):
