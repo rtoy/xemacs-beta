@@ -1,5 +1,16 @@
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* text.h:
+	Move inclusion point of text.h earlier in lisp.h -- just before
+	the definition of characters, which needs some of the stuff in
+	text.h.  With text.h later, some basic character properties had to
+	be defined in lisp.h -- put them back into text.h where they belong.
+	Move some text in lisp.h at the point of text.h inclusion into
+	text.h -- it serves as a mini-introduction.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in:
 	* Makefile.in.in (objs):
 	glyphs-shared.o, glyphs-eimage.o only needed when HAVE_WINDOW_SYSTEM.
