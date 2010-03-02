@@ -5114,6 +5114,17 @@ new_dfc_convert_size (const char *srctext, const void *src,
   return vals.dst_size;
 }
 
+Bytecount
+new_dfc_get_existing_size (const char *srctext)
+{
+  alloca_convert_vals *vals;
+  int i = find_pos_of_existing_active_alloca_convert (srctext);
+
+  assert (i >= 0);
+  vals = Dynarr_atp (active_alloca_convert, i);
+  return vals->dst_size;
+}
+
 void *
 new_dfc_convert_copy_data (const char *srctext, void *alloca_data)
 {
