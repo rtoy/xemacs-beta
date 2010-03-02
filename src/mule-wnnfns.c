@@ -1,7 +1,7 @@
 /* -*- coding: utf-8 -*-
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2005 Ben Wing.
+   Copyright (C) 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -268,11 +268,11 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "window.h"
 #include "sysdep.h"
 
 #include "wnn/commonhd.h"
-#include "charset.h"
 #include "wnn/jllib.h"
 #include "wnn/cplib.h"
 
@@ -335,7 +335,6 @@ Return nil if error occurs.
   Ascbyte *langname;
   Extbyte *hostname;
   int	snum;
-  int size;
 
   snum = check_wnn_server_type ();
   switch (snum)
@@ -361,13 +360,13 @@ Return nil if error occurs.
   /* #### This is extremely stupid.  I'm sure these alloca() copies are
      unnecessary, but the old code went out of its way to do this. --ben */
   CHECK_STRING (lname);
-  EXTBYTE_STRING_TO_ALLOCA (NEW_LISP_STRING_TO_EXTERNAL (lname, Qnative),
+  EXTBYTE_STRING_TO_ALLOCA (LISP_STRING_TO_EXTERNAL (lname, Qnative),
 			    envname);
   if (NILP (hname)) hostname = "";
   else
     {
       CHECK_STRING (hname);
-      EXTBYTE_STRING_TO_ALLOCA (NEW_LISP_STRING_TO_EXTERNAL (hname, Qnative),
+      EXTBYTE_STRING_TO_ALLOCA (LISP_STRING_TO_EXTERNAL (hname, Qnative),
 				hostname);
     }
   /* 97/4/16 jhod@po.iijnet.or.jp
@@ -449,16 +448,16 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
   if (jl_dic_add (wnnfns_buf[snum],
-		  NEW_LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
-		  NEW_LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
+		  LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		  LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
 		  wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV,
 		  XINT (args[2]),
 		  NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		  NILP (args[4]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		  NILP (args[5]) ? 0 :
-		  NEW_LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
+		  LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
 		  NILP (args[6]) ? 0 :
-		  NEW_LISP_STRING_TO_EXTERNAL (args[6], Qfile_name),
+		  LISP_STRING_TO_EXTERNAL (args[6], Qfile_name),
 		  yes_or_no,
 		  puts2 ) < 0)
     {
@@ -512,8 +511,8 @@ Return information of dictionaries.
       w2m (dicinfo->comment, comment, charset);
       val =
 	Fcons (Fcons (make_int (dicinfo->dic_no),
-		      list4 (build_ext_string (dicinfo->fname, Qfile_name),
-			     build_intstring (comment),
+		      list4 (build_extstring (dicinfo->fname, Qfile_name),
+			     build_istring (comment),
 			     make_int (dicinfo->gosuu),
 			     make_int (dicinfo->nice))), val);
     }
@@ -626,14 +625,14 @@ Get kanji string of KOUHO-NUMBER.
   Ibyte		kanji_buf[256];
   w_char	wbuf[256];
   int	snum;
-  Lisp_Object charsetl
+  Lisp_Object charset;
   CHECK_INT (kouhoNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   jl_get_zenkouho_kanji (wnnfns_buf[snum], XINT (kouhoNo), wbuf);
   w2m (wbuf, kanji_buf, charset);
-  return build_intstring (kanji_buf);
+  return build_istring (kanji_buf);
 }
 
 DEFUN ("wnn-server-zenkouho-bun", Fwnn_zenkouho_bun, 0, 0, 0, /*
@@ -756,10 +755,10 @@ Get bunsetsu information specified by BUN-NUMBER.
   for (i = yomilen; i >= jirilen; i--) wbuf[i+1] = wbuf[i];
   wbuf[jirilen] = '+';
   w2m (wbuf, cbuf, charset);
-  val = Fcons (build_intstring (cbuf), val);
+  val = Fcons (build_istring (cbuf), val);
   jl_get_kanji (wnnfns_buf[snum], bun_no, bun_no + 1, wbuf);
   w2m (wbuf, cbuf, charset);
-  return Fcons (build_intstring (cbuf), val);
+  return Fcons (build_istring (cbuf), val);
 }
 
 
@@ -792,7 +791,7 @@ Get the pair of kanji and length of bunsetsu specified by BUN-NUMBER.
   no = XINT (bunNo);
   kanji_len = jl_get_kanji (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, kanji_buf, charset);
-  return Fcons (build_intstring (kanji_buf), make_int (kanji_len));
+  return Fcons (build_istring (kanji_buf), make_int (kanji_len));
 }
 
 DEFUN ("wnn-server-bunsetu-yomi", Fwnn_bunsetu_yomi, 1, 1, 0, /*
@@ -813,7 +812,7 @@ Get the pair of yomi and length of bunsetsu specified by BUN-NUMBER.
   no = XINT (bunNo);
   yomi_len = jl_get_yomi (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, yomi_buf, charset);
-  return Fcons (build_intstring (yomi_buf), make_int (yomi_len));
+  return Fcons (build_istring (yomi_buf), make_int (yomi_len));
 }
 
 DEFUN ("wnn-server-bunsetu-suu", Fwnn_bunsetu_suu, 0, 0, 0, /*
@@ -935,11 +934,11 @@ Return list of yomi, kanji, comment, hindo, hinshi.
       val = Fcons (make_int (info_buf->hinshi), val);
       val = Fcons (make_int (info_buf->hindo), val);
       w2m (info_buf->com, cbuf, charset);
-      val = Fcons (build_intstring (cbuf), val);
+      val = Fcons (build_istring (cbuf), val);
       w2m (info_buf->kanji, cbuf, charset);
-      val = Fcons (build_intstring (cbuf), val);
+      val = Fcons (build_istring (cbuf), val);
       w2m (info_buf->yomi, cbuf, charset);
-      val = Fcons (build_intstring (cbuf), val);
+      val = Fcons (build_istring (cbuf), val);
       return val;
     }
 }
@@ -994,7 +993,7 @@ Return list of (kanji hinshi freq dic_no serial).
     {
       wordinfo--;
       w2m (wordinfo->kanji, kanji_buf, charset);
-      val = Fcons (Fcons (build_intstring (kanji_buf),
+      val = Fcons (Fcons (build_istring (kanji_buf),
 			  list4 (make_int (wordinfo->hinshi),
 				 make_int (wordinfo->hindo),
 				 make_int (wordinfo->dic_no),
@@ -1154,7 +1153,7 @@ Get message string from wnn_perror.
 /*  msgp = msg_get (wnn_msg_cat, XINT (errno), 0, 0);*/
   msgp = wnn_perror_lang (langname);
   c2m ((UExtbyte *) msgp, mbuf, charset);
-  return build_intstring (mbuf);
+  return build_istring (mbuf);
 }
 
 
@@ -1168,7 +1167,7 @@ For Wnn.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_fuzokugo_set (wnnfns_buf[snum],
-		       NEW_LISP_STRING_TO_EXTERNAL (file, Qfile_name)) < 0)
+		       LISP_STRING_TO_EXTERNAL (file, Qfile_name)) < 0)
     return Qnil;
   return Qt;
 }
@@ -1183,7 +1182,7 @@ For Wnn.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_fuzokugo_get (wnnfns_buf[snum], fname) < 0) return Qnil;
-  return build_ext_string (fname, Qfile_name);
+  return build_extstring (fname, Qfile_name);
 }
 
 
@@ -1248,7 +1247,7 @@ For Wnn.
     {
       area--;
       w2m (*area, cbuf, charset);
-      val = Fcons (build_intstring (cbuf), val);
+      val = Fcons (build_istring (cbuf), val);
     }
   return val;
 }
@@ -1268,7 +1267,7 @@ For Wnn.
   if (!wnnfns_buf[snum]) return Qnil;
   if ((wname = jl_hinsi_name (wnnfns_buf[snum], XINT (no))) == 0) return Qnil;
   w2m (wname, name, charset);
-  return build_intstring (name);
+  return build_istring (name);
 }
 #ifdef	WNN6
 DEFUN ("wnn-server-fisys-dict-add", Fwnn_fisys_dict_add, 3, MANY, 0, /*
@@ -1288,14 +1287,14 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
   if (jl_fi_dic_add (wnnfns_buf[snum],
-		     NEW_LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
-		     NEW_LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
 		     WNN_FI_SYSTEM_DICT,
 		     WNN_DIC_RDONLY,
 		     NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		     0,
 		     NILP (args[3]) ? 0 :
-		     NEW_LISP_STRING_TO_EXTERNAL (args[3], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[3], Qfile_name),
 		     yes_or_no,
 		     puts2) < 0)
     {
@@ -1324,15 +1323,15 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
   if (jl_fi_dic_add (wnnfns_buf[snum],
-		     NEW_LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
-		     NEW_LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
 		     WNN_FI_USER_DICT,
 		     NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		     NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		     NILP (args[4]) ? 0 :
-		     NEW_LISP_STRING_TO_EXTERNAL (args[4], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[4], Qfile_name),
 		     NILP (args[5]) ? 0 :
-		     NEW_LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
 		     yes_or_no,
 		     puts2) < 0)
     {
@@ -1370,7 +1369,7 @@ Specify password files of dictionary and frequency PW1 if needed.
   if (dic_no == WNN_NO_LEARNING)
     {
       if ((dic_no = jl_dic_add (wnnfns_buf[snum],
-				NEW_LISP_STRING_TO_EXTERNAL (args[0],
+				LISP_STRING_TO_EXTERNAL (args[0],
 							     Qfile_name),
 				0,
 				wnnfns_norm ? WNN_DIC_ADD_NOR :
@@ -1378,7 +1377,7 @@ Specify password files of dictionary and frequency PW1 if needed.
 				XINT (args[1]),
 				WNN_DIC_RW, WNN_DIC_RW,
 				NILP (args[3]) ? 0 :
-				NEW_LISP_STRING_TO_EXTERNAL (args[3],
+				LISP_STRING_TO_EXTERNAL (args[3],
 							     Qfile_name),
 				0,
 				yes_or_no,
@@ -1439,16 +1438,16 @@ Specify password files of dictionary and frequency PW1 if needed.
   if (dic_no == WNN_NO_LEARNING)
     {
       if ((dic_no = jl_dic_add (wnnfns_buf[snum],
-				NEW_LISP_STRING_TO_EXTERNAL (args[0],
-							     Qfile_name),
+				LISP_STRING_TO_EXTERNAL (args[0],
+							 Qfile_name),
 				0,
 				wnnfns_norm ? WNN_DIC_ADD_NOR :
 				WNN_DIC_ADD_REV,
 				XINT(args[1]),
 				WNN_DIC_RW, WNN_DIC_RW,
 				NILP (args[3]) ? 0 :
-				NEW_LISP_STRING_TO_EXTERNAL (args[3],
-							     Qfile_name),
+				LISP_STRING_TO_EXTERNAL (args[3],
+							 Qfile_name),
 				0,
 				yes_or_no,
 				puts2)) < 0)
@@ -2132,7 +2131,7 @@ yes_or_no (UExtbyte *s)
 }
 
 static void
-puts2 (char *s)
+puts2 (char *UNUSED (s))
 {
 #if 0 /* jhod: We don't really need this echoed... */
   Ibyte			mbuf[512];
