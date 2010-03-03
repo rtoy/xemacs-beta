@@ -466,7 +466,7 @@ This and following examples are taken from the Emacs sources.
 @smallexample
 @group
 (setq base-version-list                 ; there was a base
-      (assoc (substring fn 0 start-vn)  ; version to which
+      (assoc (subseq fn 0 start-vn)     ; version to which
              file-version-assoc-list))  ; this looks like
                                         ; a subversion
 @end group

@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
   OPCODE (set,    			0114)
   OPCODE (fset,   			0115)
   OPCODE (get,    			0116)
-  OPCODE (substring, 			0117)
+  OPCODE (subseq, 			0117)
   OPCODE (concat2, 			0120)
   OPCODE (concat3, 			0121)
   OPCODE (concat4, 			0122)
