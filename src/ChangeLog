@@ -1,5 +1,9 @@
 2010-03-03  Ben Wing  <ben@xemacs.org>
 
+	* lrecord.h: Fix outdated comment.
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c:
 	* emacs.c (assert_equal_failed):
 	* lisp.h:
