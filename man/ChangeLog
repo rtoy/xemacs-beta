@@ -1,3 +1,11 @@
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Intro to Window and Frame Geometry):
+	* internals/internals.texi (The Paned Area):
+	* internals/internals.texi (The Displayable Area):
+	Update to make note of e.g. the fact that the bottom gutter is
+	actually above the minibuffer.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.

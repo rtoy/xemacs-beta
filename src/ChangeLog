@@ -1,3 +1,66 @@
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* emacs.c:
+	* emacs.c (assert_equal_failed):
+	* lisp.h:
+	* lisp.h (assert_equal):
+	New fun assert_equal, asserting that two values == each other, and
+	printing out both values upon failure.
+	
+	* frame-gtk.c (gtk_initialize_frame_size):
+	* frame-impl.h:
+	* frame-impl.h (FRAME_TOP_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_BOTTOM_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_PANED_TOP_EDGE):
+	* frame-impl.h (FRAME_NONPANED_SIZE):
+	* frame-x.c (x_initialize_frame_size):
+	* frame.c:
+	* gutter.c (get_gutter_coords):
+	* gutter.c (calculate_gutter_size):
+	* gutter.h:
+	* gutter.h (WINDOW_REAL_TOP_GUTTER_BOUNDS):
+	* gutter.h (FRAME_TOP_GUTTER_BOUNDS):
+	* input-method-xlib.c:
+	* input-method-xlib.c (XIM_SetGeometry):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_output_pixmap):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame):
+	* redisplay.c:
+	* redisplay.c (UPDATE_CACHE_RETURN):
+	* redisplay.c (pixel_to_glyph_translation):
+	* toolbar.c (update_frame_toolbars_geometry):
+	* window.c (Fwindow_pixel_edges):
+	Get rid of some redundant macros.  Consistently use the
+	FRAME_TOP_*_START, FRAME_RIGHT_*_END, etc. format.  Rename
+	FRAME_*_BORDER_* to FRAME_*_INTERNAL_BORDER_*. Comment out
+	FRAME_BOTTOM_* for gutters and the paned area due to the
+	uncertainty over where the paned area actually begins. (Eventually
+	we should probably move the gutters outside the minibuffer so that
+	the paned area is contiguous.) Use FRAME_PANED_* more often in the
+	code to make things clearer.
+
+	Update the diagram to show that the bottom gutter is inside the
+	minibuffer (!) and that there are "junk boxes" when you have left
+	and/or right gutters (dead boxes that are mistakenly left uncleared,
+	unlike the corresponding scrollbar dead boxes).  Update the text
+	appropriately to cover the bottom gutter position, etc.
+
+	Rewrite gutter-geometry code to use the FRAME_*_GUTTER_* in place of
+	equivalent expressions referencing other frame elements, to make the
+	code more portable in case we move around the gutter location.
+
+	Cleanup FRAME_*_GUTTER_BOUNDS() in gutter.h.
+
+	Add some #### GEOM! comments where I think code is incorrect --
+	typically, it wasn't fixed up properly when the gutter was added.
+
+	Some cosmetic changes.
+	
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:

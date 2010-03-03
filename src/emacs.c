@@ -4062,6 +4062,20 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
   in_assert_failed--;
 }
 
+/* This is called when an assert() fails or when ABORT() is called -- both
+   of those are defined in the preprocessor to an expansion involving
+   assert_failed(). */
+void
+assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x, EMACS_INT y,
+		     const Ascbyte *exprx, const Ascbyte *expry)
+{
+  Ascbyte bigstr[1000]; /* #### Could overflow, but avoids any need to do any
+			   allocation, even alloca(), hence safer */
+  sprintf (bigstr, "%s (%ld) should == %s (%ld) but doesn't",
+	   exprx, x, expry, y);
+  assert_failed (file, line, bigstr);
+}
+
 /* -------------------------------------- */
 /*        low-memory notification         */
 /* -------------------------------------- */
