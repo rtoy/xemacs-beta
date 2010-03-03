@@ -136,43 +136,45 @@ static void
 get_gutter_coords (struct frame *f, enum edge_pos pos, int *x, int *y,
 		   int *width, int *height)
 {
-  struct window
-    * bot = XWINDOW (frame_bottommost_window (f));
+  /* We use the bottommost window (not the minibuffer, but the bottommost
+     non-minibuffer window) rather than any FRAME_BOTTOM_GUTTER_START
+     because the gutter goes *above* the minibuffer -- for this same reason,
+     FRAME_BOTTOM_GUTTER_START isn't currently defined. */
+  struct window *bot = XWINDOW (frame_bottommost_window (f));
   /* The top and bottom gutters take precedence over the left and
      right. */
   switch (pos)
     {
     case TOP_EDGE:
-      *x = FRAME_LEFT_BORDER_END (f);
-      *y = FRAME_TOP_BORDER_END (f);
-      *width = FRAME_RIGHT_BORDER_START (f)
-	- FRAME_LEFT_BORDER_END (f);
+      *x = FRAME_LEFT_GUTTER_START (f);
+      *y = FRAME_TOP_GUTTER_START (f);
+      *width = FRAME_RIGHT_GUTTER_END (f) - *x;
       *height = FRAME_TOP_GUTTER_BOUNDS (f);
       break;
 
     case BOTTOM_EDGE:
-      *x = FRAME_LEFT_BORDER_END (f);
+      *x = FRAME_LEFT_GUTTER_START (f);
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+      *y = FRAME_BOTTOM_GUTTER_START (f);
+#else
       *y = WINDOW_BOTTOM (bot);
-      *width = FRAME_RIGHT_BORDER_START (f)
-	- FRAME_LEFT_BORDER_END (f);
+#endif
+      *width = FRAME_RIGHT_GUTTER_END (f) - *x;
       *height = FRAME_BOTTOM_GUTTER_BOUNDS (f);
       break;
 
     case LEFT_EDGE:
-      *x = FRAME_LEFT_BORDER_END (f);
-      *y = FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+      *x = FRAME_LEFT_GUTTER_START (f);
+      *y = FRAME_TOP_GUTTER_END (f);
       *width = FRAME_LEFT_GUTTER_BOUNDS (f);
-      *height = WINDOW_BOTTOM (bot)
-	- (FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f));
+      *height = WINDOW_BOTTOM (bot) - *y;
       break;
 
     case RIGHT_EDGE:
-      *x = FRAME_RIGHT_BORDER_START (f)
-	- FRAME_RIGHT_GUTTER_BOUNDS (f);
-      *y = FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+      *x = FRAME_RIGHT_GUTTER_START (f);
+      *y = FRAME_TOP_GUTTER_END (f);
       *width = FRAME_RIGHT_GUTTER_BOUNDS (f);
-      *height = WINDOW_BOTTOM (bot)
-	- (FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f));
+      *height = WINDOW_BOTTOM (bot) - *y;
       break;
 
     default:
@@ -321,12 +323,20 @@ calculate_gutter_size (struct window *w, enum edge_pos pos)
       ddla = Dynarr_new (display_line);
       /* generate some display lines */
       generate_displayable_area (w, WINDOW_GUTTER (w, pos),
-				 FRAME_LEFT_BORDER_END (f),
-				 FRAME_TOP_BORDER_END (f),
-				 FRAME_RIGHT_BORDER_START (f)
-				 - FRAME_LEFT_BORDER_END (f),
-				 FRAME_BOTTOM_BORDER_START (f)
-				 - FRAME_TOP_BORDER_END (f),
+				 FRAME_LEFT_GUTTER_START (f),
+				 FRAME_TOP_GUTTER_START (f),
+				 FRAME_RIGHT_GUTTER_END (f)
+				 - FRAME_LEFT_GUTTER_START (f),
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+				 FRAME_BOTTOM_GUTTER_END (f)
+#else
+				 /* #### GEOM! This is how it used to read,
+				    and this includes both gutter and
+				    minibuffer below it.  Not clear whether
+				    it was intended that way. --ben */
+				 FRAME_BOTTOM_INTERNAL_BORDER_START (f)
+#endif
+				 - FRAME_TOP_GUTTER_START (f),
 				 ddla, 0, DEFAULT_INDEX);
 
       /* Let GC happen again. */

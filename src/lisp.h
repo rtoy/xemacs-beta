@@ -85,6 +85,16 @@ Boston, MA 02111-1307, USA.  */
 
    %%#### marks places that need work for KKCC (the new garbage collector).
 
+   @@#### marks places that need work to get Unicode-internal working,
+   i.e. using UTF-8 as the internal text format.
+
+   #### BILL! marks places that need work for GTK.
+
+   #### GEOM! marks places needing work to fix various bugs in the handling
+        of window and frame sizing and positioning.  Often the root of the
+        problems is that the code was originally written before there was a
+	gutter and then not completely fixed up to accommodate the gutter.
+
    */
 
 /************************************************************************/
@@ -1229,6 +1239,9 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
+void assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x,
+			  EMACS_INT y, const Ascbyte *exprx,
+			  const Ascbyte *expry);
 #define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
 #define abort_with_message(msg) assert_failed (__FILE__, __LINE__, msg)
 
@@ -1249,6 +1262,10 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
   ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
 # define assert_at_line(x, file, line) \
   ((x) ? (void) 0 : assert_failed (file, line, #x))
+# define assert_equal(x, y)						\
+  ((x) == (y) ? (void) 0 :						\
+   assert_equal_failed (__FILE__, __LINE__, (EMACS_INT) x, (EMACS_INT) y, \
+                        #x, #y))
 #else
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
@@ -1257,6 +1274,7 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 # define assert(x) disabled_assert (x)
 # define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
 # define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
+# define assert_equal(x, y) disabled_assert ((x) == (y))
 #endif
 
 /************************************************************************/
