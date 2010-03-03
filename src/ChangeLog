@@ -3,6 +3,24 @@
 	* lread.c (read_atom): Signal a read error upon encountering a
 	ratio constant with a zero denominator.
 
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring): Removed.
+	* search.c (Freplace_match):
+	* minibuf.c (Ftry_completion):
+	* lisp.h:
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* dired.c (user_name_completion, file_name_completion):
+	* console-x.c (x_canonicalize_console_connection):
+	* bytecode.c (Bsubseq):
+	* bytecode-ops.h (subseq):
+	Move #'substring to Lisp, as an alias for #'subseq; change all
+	C Fsubstring() calls to Fsubseq(), change the Bsubstring bytecode
+	to Bsubseq.
+
+	Motivation; not accepting vectors in #'substring is incompatible
+	with GNU, and Common Lisp prefers #'subseq, it has no #'substring.
+
 2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (print_multiple_value):

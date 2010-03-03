@@ -4,6 +4,19 @@
 	lispref/customize.texi.
 	* Makefile: Remove all rules relating to custom.texi.
 
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/tips.texi (Comment Tips):
+	* lispref/text.texi (Text Properties):
+	* lispref/strings.texi (Creating Strings):
+	* lispref/processes.texi (Input to Processes):
+	* lispref/functions.texi (Argument List):
+	* lispref/extents.texi (Duplicable Extents):
+	Move examples that used substring to using subseq; in
+	strings.texi, do not change the examples, but document that in
+	this XEmacs, it is an alias for subseq, and that there may be some
+	incompatibilities if you depend on that.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.

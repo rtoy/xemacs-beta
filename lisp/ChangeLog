@@ -1,3 +1,13 @@
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move byte code #o117 to #'subseq, not #'substring.
+	Make #'substring available as an alias for #'subseq in Lisp.
+	* bytecomp.el (79, subseq, substring):
+	* bytecomp.el (byte-compile-subseq): New.
+	* update-elc.el (update-elc-chop-extension): Use #'subseq, not
+	#'substring, the latter is not yet available.
+	* subr.el (substring): New alias, to #'subseq.
+
 2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-dups): New compiler macro for this function,

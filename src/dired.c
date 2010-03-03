@@ -508,7 +508,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
     return bestmatch;
   if (matchcount == 1 && bestmatchsize == file_name_length)
     return Qt;
-  return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
 }
 
 
@@ -772,7 +772,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
     return bestmatch;
   if (matchcount == 1 && bestmatchsize == user_name_length)
     return Qt;
-  return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
 }
 
 

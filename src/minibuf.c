@@ -513,7 +513,7 @@ or the symbol from the obarray.
     return Qt;
 
   /* Else extract the part in which all completions agree */
-  return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
 }
 
 
