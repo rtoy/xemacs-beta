@@ -1573,11 +1573,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
-    case Bsubstring:
+    case Bsubseq:
       {
 	Lisp_Object arg2 = POP;
 	Lisp_Object arg1 = POP;
-	TOP_LVALUE = Fsubstring (TOP, arg1, arg2);
+	TOP_LVALUE = Fsubseq (TOP, arg1, arg2);
 	break;
       }
 

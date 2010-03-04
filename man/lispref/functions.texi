@@ -290,10 +290,10 @@ arguments: if you try to call it with only two arguments or four
 arguments, you get a @code{wrong-number-of-arguments} error.
 
   It is often convenient to write a function that allows certain
-arguments to be omitted.  For example, the function @code{substring}
-accepts three arguments---a string, the start index and the end
+arguments to be omitted.  For example, the function @code{subseq}
+accepts three arguments---a sequence, the start index and the end
 index---but the third argument defaults to the @var{length} of the
-string if you omit it.  It is also convenient for certain functions to
+sequence if you omit it.  It is also convenient for certain functions to
 accept an indefinite number of arguments, as the functions @code{list}
 and @code{+} do.
 
@@ -331,8 +331,8 @@ then they always default to @code{nil}.  There is no way for the
 function to distinguish between an explicit argument of @code{nil} and
 an omitted argument.  However, the body of the function is free to
 consider @code{nil} an abbreviation for some other meaningful value.
-This is what @code{substring} does; @code{nil} as the third argument to
-@code{substring} means to use the length of the string supplied.
+This is what @code{subseq} does; @code{nil} as the third argument to
+@code{subseq} means to use the length of the sequence supplied.
 
 @cindex CL note---default optional arg
 @quotation
