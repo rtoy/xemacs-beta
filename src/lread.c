@@ -1982,8 +1982,14 @@ read_atom (Lisp_Object readcharfun,
 	  if (*read_ptr == '+')
 	    read_ptr++;
 	  ratio_set_string (scratch_ratio, read_ptr, 0);
-	  ratio_canonicalize (scratch_ratio);
-	  return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+	  if (bignum_sign (ratio_denominator (scratch_ratio)) != 0) {
+	    ratio_canonicalize (scratch_ratio);
+	    return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+	  }
+	  return Fsignal (Qinvalid_read_syntax,
+			  list2 (build_msg_string
+				 ("Invalid ratio constant in reader"),
+				 make_string ((Ibyte *) read_ptr, len)));
 	}
 #endif
       if (isfloat_string (read_ptr))
