@@ -5624,7 +5624,7 @@ EXFUN (Fsafe_length, 1);
 EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
-EXFUN (Fsubstring, 3);
+EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
 Lisp_Object list_sort (Lisp_Object, Lisp_Object,

@@ -2801,8 +2801,8 @@ rare.)
       Lisp_Object before, after;
 
       speccount = specpdl_depth ();
-      before = Fsubstring (string, Qzero, make_int (search_regs.start[sub]));
-      after = Fsubstring (string, make_int (search_regs.end[sub]), Qnil);
+      before = Fsubseq (string, Qzero, make_int (search_regs.start[sub]));
+      after = Fsubseq (string, make_int (search_regs.end[sub]), Qnil);
 
       /* Do case substitution into REPLACEMENT if desired.  */
       if (NILP (literal))
@@ -2888,13 +2888,12 @@ rare.)
 		  Lisp_Object literal_text = Qnil;
 		  Lisp_Object substring = Qnil;
 		  if (literal_end != literal_start)
-		    literal_text = Fsubstring (replacement,
-					       make_int (literal_start),
-					       make_int (literal_end));
+		    literal_text = Fsubseq (replacement,
+                                            make_int (literal_start),
+                                            make_int (literal_end));
 		  if (substart >= 0 && subend != substart)
-		    substring = Fsubstring (string,
-					    make_int (substart),
-					    make_int (subend));
+		    substring = Fsubseq (string, make_int (substart),
+                                         make_int (subend));
 		  if (!NILP (literal_text) || !NILP (substring))
 		    accum = concat3 (accum, literal_text, substring);
 		  literal_start = strpos + 1;
@@ -2903,9 +2902,9 @@ rare.)
 
 	  if (strpos != literal_start)
 	    /* some literal text at end to be inserted */
-	    replacement = concat2 (accum, Fsubstring (replacement,
-						      make_int (literal_start),
-						      make_int (strpos)));
+	    replacement = concat2 (accum, Fsubseq (replacement,
+                                                   make_int (literal_start),
+                                                   make_int (strpos)));
 	  else
 	    replacement = accum;
 	}
