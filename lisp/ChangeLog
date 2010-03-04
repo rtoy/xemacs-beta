@@ -1,3 +1,9 @@
+2010-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el (process-args):
+	Use #'subseq here, not #'substring, fixing the native Windows
+	build. Thank you for the error report, Vin!
+
 2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move byte code #o117 to #'subseq, not #'substring.

@@ -92,7 +92,7 @@
 	  ;; no generate-new-buffer so use its implementation.
 	  (let ((buf (get-buffer-create (generate-new-buffer-name "foo"))))
 	    (set-buffer buf)
-	    (insert-file-contents-internal (substring arg 1))
+	    (insert-file-contents-internal (subseq arg 1))
 	    ;; now majorly grind up the response file.
 	    ;; backslashes get doubled, quotes around strings,
 	    ;; get rid of pesky CR's and NL's, and put parens around
@@ -123,8 +123,7 @@
 		       (concat 
 			(file-name-nondirectory
 			 ;; no match-string so use its implementation.
-			 (substring arg (match-beginning 1)
-				    (match-end 1)))
+			 (subseq arg (match-beginning 1) (match-end 1)))
 			".c")
 		       source-src)))
 	  (if (and (null docfile-out-of-date)
