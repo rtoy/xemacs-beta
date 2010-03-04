@@ -107,7 +107,7 @@ keyword :allow-other-keys (which defaults to t)."
 							   other-keys))))
 				  '(car (cdr (memq (quote :allow-other-keys)
 						   cl-keys)))
-				  '(error "Bad keyword argument %s"
+				  '(error 'invalid-keyword-argument
 					  (car cl-keys-temp)))
 			    '(setq cl-keys-temp (cdr (cdr cl-keys-temp)))))))
 	  body))))
