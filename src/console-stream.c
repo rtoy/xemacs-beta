@@ -72,7 +72,7 @@ stream_init_console (struct console *con, Lisp_Object UNUSED (params))
 #ifdef NEW_GC
   if (CONSOLE_STREAM_DATA (con) == NULL)
     CONSOLE_STREAM_DATA (con) =
-      XSTREAM_CONSOLE (ALLOC_LISP_OBJECT (stream_console));
+      XSTREAM_CONSOLE (ALLOC_NORMAL_LISP_OBJECT (stream_console));
 #else /* not NEW_GC */
   if (CONSOLE_STREAM_DATA (con) == NULL)
     CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);

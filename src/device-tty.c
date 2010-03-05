@@ -58,7 +58,7 @@ static void
 allocate_tty_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = XTTY_DEVICE (ALLOC_LISP_OBJECT (tty_device));
+  d->device_data = XTTY_DEVICE (ALLOC_NORMAL_LISP_OBJECT (tty_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct tty_device);
 #endif /* not NEW_GC */

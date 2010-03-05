@@ -193,11 +193,11 @@ set_quit_events (struct console *con, Lisp_Object key)
 static struct console *
 allocate_console (Lisp_Object type)
 {
-  Lisp_Object console = ALLOC_LISP_OBJECT (console);
+  Lisp_Object console = ALLOC_NORMAL_LISP_OBJECT (console);
   struct console *con = XCONSOLE (console);
   struct gcpro gcpro1;
 
-  COPY_LISP_OBJECT (con, XCONSOLE (Vconsole_defaults));
+  copy_lisp_object (console, Vconsole_defaults);
 
   GCPRO1 (console);
 
@@ -661,7 +661,7 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 static void
 nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
-  ZERO_LISP_OBJECT (con);
+  zero_nonsized_lisp_object (wrap_console (con));
 
 #define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
@@ -1318,7 +1318,7 @@ One argument, the to-be-deleted console.
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do {									   \
   struct symbol_value_forward *I_hate_C =				   \
-    XSYMBOL_VALUE_FORWARD (ALLOC_LISP_OBJECT (symbol_value_forward));	   \
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	   \
   /*mcpro ((Lisp_Object) I_hate_C);*/					   \
 									   \
   I_hate_C->magic.value = &(console_local_flags.field_name);		   \
@@ -1395,9 +1395,9 @@ common_init_complex_vars_of_console (void)
   /* Make sure all markable slots in console_defaults
      are initialized reasonably, so mark_console won't choke.
    */
-  Lisp_Object defobj = ALLOC_LISP_OBJECT (console);
+  Lisp_Object defobj = ALLOC_NORMAL_LISP_OBJECT (console);
   struct console *defs = XCONSOLE (defobj);
-  Lisp_Object symobj = ALLOC_LISP_OBJECT (console);
+  Lisp_Object symobj = ALLOC_NORMAL_LISP_OBJECT (console);
   struct console *syms = XCONSOLE (symobj);
 
   staticpro_nodump (&Vconsole_defaults);
@@ -1441,6 +1441,8 @@ common_init_complex_vars_of_console (void)
        The local flag bits are in the local_var_flags slot of the
        console.  */
 
+    set_lheader_implementation ((struct lrecord_header *)
+				&console_local_flags, &lrecord_console);
     nuke_all_console_slots (&console_local_flags, make_int (-2));
     console_local_flags.defining_kbd_macro = always_local_resettable;
     console_local_flags.last_kbd_macro = always_local_resettable;

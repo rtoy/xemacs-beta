@@ -352,9 +352,9 @@ mark_command_builder (Lisp_Object obj)
 }
 
 static void
-finalize_command_builder (void *header)
+finalize_command_builder (Lisp_Object obj)
 {
-  struct command_builder *b = (struct command_builder *) header;
+  struct command_builder *b = XCOMMAND_BUILDER (obj);
   if (b->echo_buf)
     {
       xfree (b->echo_buf);
@@ -382,7 +382,7 @@ reset_command_builder_event_chain (struct command_builder *builder)
 Lisp_Object
 allocate_command_builder (Lisp_Object console, int with_echo_buf)
 {
-  Lisp_Object builder_obj = ALLOC_LISP_OBJECT (command_builder);
+  Lisp_Object builder_obj = ALLOC_NORMAL_LISP_OBJECT (command_builder);
   struct command_builder *builder = XCOMMAND_BUILDER (builder_obj);
 
   builder->console = console;
@@ -453,7 +453,7 @@ free_command_builder (struct command_builder *builder)
       xfree (builder->echo_buf);
       builder->echo_buf = NULL;
     }
-  FREE_LISP_OBJECT (wrap_command_builder (builder));
+  free_normal_lisp_object (wrap_command_builder (builder));
 }
 
 static void
@@ -1043,7 +1043,7 @@ event_stream_generate_wakeup (unsigned int milliseconds,
 			      Lisp_Object function, Lisp_Object object,
 			      int async_p)
 {
-  Lisp_Object op = ALLOC_LISP_OBJECT (timeout);
+  Lisp_Object op = ALLOC_NORMAL_LISP_OBJECT (timeout);
   Lisp_Timeout *timeout = XTIMEOUT (op);
   EMACS_TIME current_time;
   EMACS_TIME interval;
@@ -1161,7 +1161,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
       *timeout_list = noseeum_cons (op, *timeout_list);
     }
   else
-    FREE_LISP_OBJECT (op);
+    free_normal_lisp_object (op);
 
   UNGCPRO;
   return id;
@@ -1198,7 +1198,7 @@ event_stream_disable_wakeup (int id, int async_p)
 	signal_remove_async_interval_timeout (timeout->interval_id);
       else
 	event_stream_remove_timeout (timeout->interval_id);
-      FREE_LISP_OBJECT (op);
+      free_normal_lisp_object (op);
     }
 }
 

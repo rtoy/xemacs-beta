@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_LDAP
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   /* The LDAP connection handle used by the LDAP API */
   LDAP *ld;
   /* Name of the host we connected to */

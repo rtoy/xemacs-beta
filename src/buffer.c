@@ -600,12 +600,11 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (buffer);
-  struct buffer *b = XBUFFER (obj);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (buffer);
 
-  COPY_LISP_OBJECT (b, XBUFFER (Vbuffer_defaults));
+  copy_lisp_object (obj, Vbuffer_defaults);
 
-  return b;
+  return XBUFFER (obj);
 }
 
 static Lisp_Object
@@ -1777,7 +1776,7 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other   += LISP_OBJECT_STORAGE_SIZE (b, sizeof (*b), ovstats);
+  stats->other   += lisp_object_storage_size (wrap_buffer (b), ovstats);
   stats->text    += compute_buffer_text_usage   (b, ovstats);
   stats->markers += compute_buffer_marker_usage (b, ovstats);
   stats->extents += compute_buffer_extent_usage (b, ovstats);
@@ -2141,7 +2140,7 @@ List of functions called with no args to query before killing a buffer.
 do									  \
 {									  \
   struct symbol_value_forward *I_hate_C =				  \
-    XSYMBOL_VALUE_FORWARD (ALLOC_LISP_OBJECT (symbol_value_forward));	  \
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	  \
   /*mcpro ((Lisp_Object) I_hate_C);*/					  \
 									  \
   I_hate_C->magic.value = &(buffer_local_flags.field_name);		  \
@@ -2216,7 +2215,7 @@ do {									 \
 static void
 nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
 {
-  ZERO_LISP_OBJECT (b);
+  zero_nonsized_lisp_object (wrap_buffer (b));
 
   b->extent_info = Qnil;
   b->indirect_children = Qnil;
@@ -2231,9 +2230,9 @@ common_init_complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
-  Lisp_Object defobj = ALLOC_LISP_OBJECT (buffer);
+  Lisp_Object defobj = ALLOC_NORMAL_LISP_OBJECT (buffer);
   struct buffer *defs = XBUFFER (defobj);
-  Lisp_Object symobj = ALLOC_LISP_OBJECT (buffer);
+  Lisp_Object symobj = ALLOC_NORMAL_LISP_OBJECT (buffer);
   struct buffer *syms = XBUFFER (symobj);
 
   staticpro_nodump (&Vbuffer_defaults);
@@ -2296,6 +2295,8 @@ common_init_complex_vars_of_buffer (void)
        The local flag bits are in the local_var_flags slot of the
        buffer.  */
 
+    set_lheader_implementation ((struct lrecord_header *)
+				&buffer_local_flags, &lrecord_buffer);
     nuke_all_buffer_slots (&buffer_local_flags, make_int (-2));
     buffer_local_flags.filename		   = always_local_no_default;
     buffer_local_flags.directory	   = always_local_no_default;

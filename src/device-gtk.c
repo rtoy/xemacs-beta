@@ -115,7 +115,7 @@ static void
 allocate_gtk_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = XGTK_DEVICE (ALLOC_LISP_OBJECT (gtk_device));
+  d->device_data = XGTK_DEVICE (ALLOC_NORMAL_LISP_OBJECT (gtk_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct gtk_device);
 #endif /* not NEW_GC */

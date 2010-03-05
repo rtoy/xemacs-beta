@@ -80,7 +80,7 @@ Boston, MA 02111-1307, USA.  */
 struct buffer_text
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Ibyte *beg;		/* Actual address of buffer contents. */
   Bytebpos gpt;		/* Index of gap in buffer. */
@@ -157,7 +157,7 @@ DECLARE_LISP_OBJECT (buffer_text, Lisp_Buffer_Text);
 
 struct buffer
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* This structure holds the coordinates of the buffer contents
      in ordinary buffers.  In indirect buffers, this is not used.  */

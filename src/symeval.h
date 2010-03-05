@@ -77,7 +77,7 @@ typedef EMACS_INT Fixnum;
 
 struct symbol_value_magic
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   void *value;
   enum symbol_value_type type;
 };
@@ -401,7 +401,7 @@ MODULE_API void defvar_magic (const Ascbyte *symbol_name,
 do									\
 {									\
   struct symbol_value_forward *I_hate_C =				\
-    XSYMBOL_VALUE_FORWARD (ALLOC_LISP_OBJECT (symbol_value_forward));	\
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	\
   /*  mcpro ((Lisp_Object) I_hate_C);*/					\
 									\
   MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				\
@@ -488,7 +488,7 @@ do									    \
 void flush_all_buffer_local_cache (void);
 
 struct multiple_value {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Elemcount count;
   Elemcount allocated_count; 
   Elemcount first_desired;

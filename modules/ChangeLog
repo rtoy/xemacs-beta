@@ -1,3 +1,17 @@
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (allocate_pgconn):
+	* postgresql/postgresql.c (allocate_pgresult):
+	* postgresql/postgresql.h (struct Lisp_PGconn):
+	* postgresql/postgresql.h (struct Lisp_PGresult):
+	* ldap/eldap.c (allocate_ldap):
+	* ldap/eldap.h (struct Lisp_LDAP):
+	Same changes as in src/ dir.  See large log there in ChangeLog,
+	but basically:
+
+	ALLOC_LISP_OBJECT -> ALLOC_NORMAL_LISP_OBJECT
+	LISP_OBJECT_HEADER -> NORMAL_LISP_OBJECT_HEADER
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* canna/canna_api.c:

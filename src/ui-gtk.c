@@ -4,6 +4,7 @@
 **
 ** Created by: William M. Perry <wmperry@gnu.org>
 ** Copyright (c) 2000 William M. Perry <wmperry@gnu.org>
+** Copyright (C) 2010 Ben Wing.
 **
 ** This file is part of XEmacs.
 **
@@ -295,7 +296,7 @@ import_gtk_type (GtkType t)
 static emacs_ffi_data *
 allocate_ffi_data (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (emacs_ffi);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_ffi);
   emacs_ffi_data *data = XFFI (obj);
 
   data->return_type = GTK_TYPE_NONE;
@@ -923,9 +924,9 @@ mark_gtk_object_data (Lisp_Object obj)
 }
 
 static void
-emacs_gtk_object_finalizer (void *header)
+emacs_gtk_object_finalizer (Lisp_Object obj)
 {
-  emacs_gtk_object_data *data = (emacs_gtk_object_data *) header;
+  emacs_gtk_object_data *data = XEMACS_GTK_OBJECT_DATA (obj);
 
   if (data->alive_p)
     gtk_object_unref (data->object);
@@ -948,7 +949,7 @@ DEFINE_NODUMP_GENERAL_LISP_OBJECT ("GtkObject", emacs_gtk_object,
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (emacs_gtk_object);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_gtk_object);
   emacs_gtk_object_data *data = XGTK_OBJECT (obj);
 
   data->object = NULL;
@@ -1152,7 +1153,7 @@ DEFINE_NODUMP_LISP_OBJECT ("GtkBoxed", emacs_gtk_boxed,
 static emacs_gtk_boxed_data *
 allocate_emacs_gtk_boxed_data (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (emacs_gtk_boxed);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_gtk_boxed);
   emacs_gtk_boxed_data *data = XGTK_BOXED (obj);
 
   data->object = NULL;

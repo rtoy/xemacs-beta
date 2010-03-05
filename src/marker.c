@@ -1,6 +1,6 @@
 /* Markers: examining, setting and killing.
    Copyright (C) 1985, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -107,10 +107,9 @@ static const struct memory_description marker_description[] = {
 
 #ifdef NEW_GC
 static void
-finalize_marker (void *header)
+finalize_marker (Lisp_Object obj)
 {
-  Lisp_Object tem = wrap_marker (header);
-  unchain_marker (tem);
+  unchain_marker (obj);
 }
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
@@ -509,7 +508,7 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
     total += sizeof (Lisp_Marker);
   ovstats->was_requested += total;
 #ifdef NEW_GC
-  overhead = mc_alloced_storage_size (total, 0);
+  overhead = mc_alloced_storage_size (total, 0) - total;
 #else /* not NEW_GC */
   overhead = fixed_type_block_overhead (total);
 #endif /* not NEW_GC */

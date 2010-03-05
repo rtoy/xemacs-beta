@@ -71,6 +71,33 @@ static const struct memory_description toolbar_button_description [] = {
   { XD_END }
 };
 
+
+static Lisp_Object
+allocate_toolbar_button (struct frame *f, int pushright)
+{
+  struct toolbar_button *tb;
+
+  tb = XTOOLBAR_BUTTON (ALLOC_NORMAL_LISP_OBJECT (toolbar_button));
+  tb->next = Qnil;
+  tb->frame = wrap_frame (f);
+  tb->up_glyph = Qnil;
+  tb->down_glyph = Qnil;
+  tb->disabled_glyph = Qnil;
+  tb->cap_up_glyph = Qnil;
+  tb->cap_down_glyph = Qnil;
+  tb->cap_disabled_glyph = Qnil;
+  tb->callback = Qnil;
+  tb->enabled_p = Qnil;
+  tb->help_string = Qnil;
+
+  tb->pushright = pushright;
+  tb->x = tb->y = tb->width = tb->height = -1;
+  tb->dirty = 1;
+
+  return wrap_toolbar_button (tb);
+}
+
+
 static Lisp_Object
 mark_toolbar_button (Lisp_Object obj)
 {
@@ -301,27 +328,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
   buffer = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
 
   if (!tb)
-    {
-      tb = XTOOLBAR_BUTTON (ALLOC_LISP_OBJECT (toolbar_button));
-      tb->next = Qnil;
-      tb->frame = wrap_frame (f);
-      tb->up_glyph = Qnil;
-      tb->down_glyph = Qnil;
-      tb->disabled_glyph = Qnil;
-      tb->cap_up_glyph = Qnil;
-      tb->cap_down_glyph = Qnil;
-      tb->cap_disabled_glyph = Qnil;
-      tb->callback = Qnil;
-      tb->enabled_p = Qnil;
-      tb->help_string = Qnil;
-
-      tb->enabled = 0;
-      tb->down = 0;
-      tb->pushright = pushright;
-      tb->blank = 0;
-      tb->x = tb->y = tb->width = tb->height = -1;
-      tb->dirty = 1;
-    }
+    tb = XTOOLBAR_BUTTON (allocate_toolbar_button (f, pushright));
   retval = wrap_toolbar_button (tb);
 
   /* Let's make sure nothing gets mucked up by the potential call to

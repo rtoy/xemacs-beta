@@ -521,7 +521,7 @@ init_buffer_syntax_cache (struct buffer *buf)
 {
   struct syntax_cache *cache;
 #ifdef NEW_GC
-  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_LISP_OBJECT (syntax_cache));
+  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
   buf->syntax_cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */

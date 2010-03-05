@@ -2642,7 +2642,7 @@ weak_list_hash (Lisp_Object obj, int depth)
 Lisp_Object
 make_weak_list (enum weak_list_type type)
 {
-  Lisp_Object result = ALLOC_LISP_OBJECT (weak_list);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (weak_list);
   struct weak_list *wl = XWEAK_LIST (result);
 
   wl->list = Qnil;
@@ -3113,7 +3113,7 @@ weak_box_hash (Lisp_Object obj, int depth)
 Lisp_Object
 make_weak_box (Lisp_Object value)
 {
-  Lisp_Object result = ALLOC_LISP_OBJECT (weak_box);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (weak_box);
   struct weak_box *wb = XWEAK_BOX (result);
 
   wb->value = value;
@@ -3334,7 +3334,7 @@ make_ephemeron (Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
 {
   Lisp_Object temp = Qnil;
   struct gcpro gcpro1, gcpro2;
-  Lisp_Object result = ALLOC_LISP_OBJECT (ephemeron);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (ephemeron);
   struct ephemeron *eph = XEPHEMERON (result);
 
   eph->key = Qnil;

@@ -94,7 +94,7 @@ extern struct process_methods the_process_methods;
 
 struct Lisp_Process
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Exit code if process has terminated,
      signal which stopped/interrupted process

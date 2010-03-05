@@ -69,11 +69,11 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_lstream (void *header)
+finalize_lstream (Lisp_Object obj)
 {
   /* WARNING WARNING WARNING.  This function (and all finalize functions)
      may get called more than once on the same object. */
-  Lstream *lstr = (Lstream *) header;
+  Lstream *lstr = XLSTREAM (obj);
 
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
     Lstream_close (lstr);
@@ -104,9 +104,9 @@ aligned_sizeof_lstream (Bytecount lstream_type_specific_size)
 }
 
 static Bytecount
-sizeof_lstream (const void *header)
+sizeof_lstream (Lisp_Object obj)
 {
-  return aligned_sizeof_lstream (((const Lstream *) header)->imp->size);
+  return aligned_sizeof_lstream (XLSTREAM (obj)->imp->size);
 }
 
 static const struct memory_description lstream_implementation_description_1[]
@@ -193,8 +193,8 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 {
   Lstream *p;
 #ifdef NEW_GC
-  p = XLSTREAM (alloc_sized_lrecord (aligned_sizeof_lstream (imp->size),
-			             &lrecord_lstream));
+  p = XLSTREAM (ALLOC_SIZED_LISP_OBJECT (aligned_sizeof_lstream (imp->size),
+					 lstream));
 #else /* not NEW_GC */
   int i;
 
@@ -216,9 +216,10 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 
   p = XLSTREAM (alloc_managed_lcrecord (Vlstream_free_list[i]));
 #endif /* not NEW_GC */
-  /* Zero it out, except the header. */
-  memset ((char *) p + sizeof (p->header), '\0',
-	  aligned_sizeof_lstream (imp->size) - sizeof (p->header));
+  /* Formerly, we zeroed out the object minus its header, but it's now
+     handled automatically.  ALLOC_SIZED_LISP_OBJECT() always zeroes out
+     the whole object other than its header, and alloc_managed_lcrecord()
+     does the same. */
   p->imp = imp;
   Lstream_set_buffering (p, LSTREAM_BLOCK_BUFFERED, 0);
   p->flags = LSTREAM_FL_IS_OPEN;
@@ -297,7 +298,7 @@ Lstream_delete (Lstream *lstr)
   Lisp_Object val = wrap_lstream (lstr);
 
 #ifdef NEW_GC
-  free_lrecord (val);
+  free_normal_lisp_object (val);
 #else /* not NEW_GC */
   for (i = 0; i < lstream_type_count; i++)
     {

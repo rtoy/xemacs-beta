@@ -331,7 +331,7 @@ Range tables allow you to efficiently set values for ranges of integers.
 */
        (type))
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (range_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   rt->entries = Dynarr_new (range_table_entry);
   rt->type = range_table_symbol_to_type (type);
@@ -351,7 +351,7 @@ The values will not themselves be copied.
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
 
-  obj = ALLOC_LISP_OBJECT (range_table);
+  obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
   rtnew = XRANGE_TABLE (obj);
   rtnew->entries = Dynarr_new (range_table_entry);
   rtnew->type = rt->type;

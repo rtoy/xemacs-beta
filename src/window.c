@@ -325,9 +325,9 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_window (void *header)
+finalize_window (Lisp_Object obj)
 {
-  struct window *w = (struct window *) header;
+  struct window *w = XWINDOW (obj);
 
   if (w->line_start_cache)
     {
@@ -389,7 +389,7 @@ DEFINE_NODUMP_LISP_OBJECT ("window", window,
 Lisp_Object
 allocate_window (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (window);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
   struct window *p = XWINDOW (obj);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
@@ -533,7 +533,7 @@ DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("window-mirror", window_mirror,
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (window_mirror);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window_mirror);
   struct window_mirror *t = XWINDOW_MIRROR (obj);
 
   t->frame = f;
@@ -2137,7 +2137,7 @@ mark_window_as_deleted (struct window *w)
   /* Free the extra data structures attached to windows immediately so
      they don't sit around consuming excess space.  They will be
      reinitialized by the window-configuration code as necessary. */
-  finalize_window ((void *) w);
+  finalize_window (wrap_window (w));
 
   /* Nobody should be accessing anything in this object any more,
      and making them Qnil allows for better GC'ing in case a pointer
@@ -3866,10 +3866,10 @@ static void
 make_dummy_parent (Lisp_Object window)
 {
   struct window *o = XWINDOW (window);
-  Lisp_Object obj = ALLOC_LISP_OBJECT (window);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
   struct window *p = XWINDOW (obj);
 
-  COPY_LISP_OBJECT (p, o);
+  copy_lisp_object (obj, window);
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
@@ -5177,7 +5177,7 @@ compute_window_mirror_usage (struct window_mirror *mir,
 {
   if (!mir)
     return;
-  stats->other += LISP_OBJECT_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
+  stats->other += lisp_object_storage_size (wrap_window_mirror (mir), ovstats);
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
@@ -5201,7 +5201,7 @@ compute_window_usage (struct window *w, struct window_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other += LISP_OBJECT_STORAGE_SIZE (w, sizeof (*w), ovstats);
+  stats->other += lisp_object_storage_size (wrap_window (w), ovstats);
   stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
   stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
   stats->line_start +=

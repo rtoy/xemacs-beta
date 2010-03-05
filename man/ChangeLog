@@ -1,3 +1,13 @@
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Introduction to Allocation):
+	* internals/internals.texi (Integers and Characters):
+	* internals/internals.texi (Allocation from Frob Blocks):
+	* internals/internals.texi (lrecords):
+	* internals/internals.texi (Low-level allocation):
+	Rewrite section on allocation of Lisp objects to reflect the new
+	reality.  Remove references to nonexistent XSETINT and XSETCHAR.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Intro to Window and Frame Geometry):

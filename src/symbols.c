@@ -2290,7 +2290,7 @@ sets it.
   {
     struct symbol_value_buffer_local *bfwd
       = XSYMBOL_VALUE_BUFFER_LOCAL
-      (ALLOC_LISP_OBJECT (symbol_value_buffer_local));
+      (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
     Lisp_Object foo;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2398,7 +2398,7 @@ Use `make-local-hook' instead.
 
   /* Make sure variable is set up to hold per-buffer values */
   bfwd = XSYMBOL_VALUE_BUFFER_LOCAL
-    (ALLOC_LISP_OBJECT (symbol_value_buffer_local));
+    (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -3191,7 +3191,7 @@ pity, thereby invalidating your code.
     {
       bfwd =
 	XSYMBOL_VALUE_LISP_MAGIC
-	(ALLOC_LISP_OBJECT (symbol_value_lisp_magic));
+	(ALLOC_NORMAL_LISP_OBJECT (symbol_value_lisp_magic));
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3409,7 +3409,7 @@ what you're doing.
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
   bfwd =
-    XSYMBOL_VALUE_VARALIAS (ALLOC_LISP_OBJECT (symbol_value_varalias));
+    XSYMBOL_VALUE_VARALIAS (ALLOC_NORMAL_LISP_OBJECT (symbol_value_varalias));
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = aliased;
   bfwd->shadowed = valcontents;

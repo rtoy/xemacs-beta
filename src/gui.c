@@ -197,7 +197,7 @@ gui_item_init (Lisp_Object gui_item)
 Lisp_Object
 allocate_gui_item (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (gui_item);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (gui_item);
 
   gui_item_init (obj);
   return obj;

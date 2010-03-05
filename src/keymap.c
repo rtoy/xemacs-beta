@@ -148,7 +148,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #define MARKED_SLOT(x) Lisp_Object x;
 #include "keymap-slots.h"
 };
@@ -776,7 +776,7 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (Elemcount size)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (keymap);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (keymap);
   Lisp_Keymap *keymap = XKEYMAP (obj);
 
 #define MARKED_SLOT(x) keymap->x = Qnil;

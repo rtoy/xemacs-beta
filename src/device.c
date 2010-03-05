@@ -1,7 +1,7 @@
 /* Generic device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -200,7 +200,7 @@ Return a list of valid device classes.
 static void
 nuke_all_device_slots (struct device *d, Lisp_Object zap)
 {
-  ZERO_LISP_OBJECT (d);
+  zero_nonsized_lisp_object (wrap_device (d));
 
 #define MARKED_SLOT(x)	d->x = zap;
 #include "devslots.h"
@@ -209,7 +209,7 @@ nuke_all_device_slots (struct device *d, Lisp_Object zap)
 static struct device *
 allocate_device (Lisp_Object console)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (device);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (device);
   struct device *d = XDEVICE (obj);
   struct gcpro gcpro1;
 

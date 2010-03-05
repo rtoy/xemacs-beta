@@ -3014,7 +3014,7 @@ TRUE_LIST_P (Lisp_Object object)
 #ifdef NEW_GC
 struct Lisp_String_Direct_Data
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Bytecount size;
   Ibyte data[1];
 };
@@ -3034,7 +3034,7 @@ DECLARE_MODULE_API_LISP_OBJECT (string_direct_data, Lisp_String_Direct_Data);
 
 struct Lisp_String_Indirect_Data
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Bytecount size;
   Ibyte *data;
 };
@@ -3188,7 +3188,7 @@ DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 
 struct Lisp_Vector
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   long size;
   Lisp_Object contents[1];
 };
@@ -3225,7 +3225,7 @@ DECLARE_LISP_OBJECT (vector, Lisp_Vector);
 
 struct Lisp_Bit_Vector
 {
-  LISP_OBJECT_HEADER lheader;
+  NORMAL_LISP_OBJECT_HEADER lheader;
   Elemcount size;
   unsigned long bits[1];
 };
@@ -3279,7 +3279,7 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 /* For when we want to include a bit vector in another structure, and we
    know it's of a fixed size. */
 #define DECLARE_INLINE_LISP_BIT_VECTOR(numbits) struct {	\
-  LISP_OBJECT_HEADER lheader;				        \
+  NORMAL_LISP_OBJECT_HEADER lheader;				        \
   Elemcount size;						\
   unsigned long bits[BIT_VECTOR_LONG_STORAGE(numbits)];		\
 }
@@ -3734,7 +3734,7 @@ void define_structure_type_keyword (struct structure_type *st,
 
 struct weak_box
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object value;
 
   Lisp_Object next_weak_box; /* don't mark through this! */
@@ -3756,7 +3756,7 @@ DECLARE_LISP_OBJECT (weak_box, struct weak_box);
 
 struct ephemeron 
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object key;
 
@@ -3815,7 +3815,7 @@ enum weak_list_type
 
 struct weak_list
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object list; /* don't mark through this! */
   enum weak_list_type type;
   Lisp_Object next_weak; /* don't mark through this! */
@@ -4700,7 +4700,6 @@ extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
-MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
 MODULE_API Lisp_Object build_istring (const Ibyte *);
 MODULE_API Lisp_Object build_cistring (const CIbyte *);
 MODULE_API Lisp_Object build_ascstring (const Ascbyte *);

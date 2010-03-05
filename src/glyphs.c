@@ -1112,9 +1112,9 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_image_instance (void *header)
+finalize_image_instance (Lisp_Object obj)
 {
-  Lisp_Image_Instance *i = (Lisp_Image_Instance *) header;
+  Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
 
   /* objects like this exist at dump time, so don't bomb out. */
   if (IMAGE_INSTANCE_TYPE (i) == IMAGE_NOTHING
@@ -1324,7 +1324,7 @@ static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 			 Lisp_Object instantiator)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (image_instance);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (image_instance);
   Lisp_Image_Instance *lp = XIMAGE_INSTANCE (obj);
 
   /* It's not possible to simply keep a record of the domain in which
@@ -1990,7 +1990,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
      device-specific method to copy the window-system subobject. */
   new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
-  COPY_LISP_OBJECT (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
+  copy_lisp_object (new_, image_instance);
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
@@ -3833,7 +3833,7 @@ allocate_glyph (enum glyph_type type,
 				      Lisp_Object locale))
 {
   /* This function can GC */
-  Lisp_Object obj = ALLOC_LISP_OBJECT (glyph);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (glyph);
   Lisp_Glyph *g = XGLYPH (obj);
 
   g->type = type;
@@ -4549,7 +4549,7 @@ unmap_subwindow_instance_cache_mapper (Lisp_Object UNUSED (key),
 	  XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))
 	    = delq_no_quit (value,
 			    XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f)));
-	  finalize_image_instance (XIMAGE_INSTANCE (value));
+	  finalize_image_instance (value);
 	}
     }
   return 0;
@@ -4652,7 +4652,7 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
       struct expose_ignore *ei;
 
 #ifdef NEW_GC
-      ei = XEXPOSE_IGNORE (ALLOC_LISP_OBJECT (expose_ignore));
+      ei = XEXPOSE_IGNORE (ALLOC_NORMAL_LISP_OBJECT (expose_ignore));
 #else /* not NEW_GC */
       ei = Blocktype_alloc (the_expose_ignore_blocktype);
 #endif /* not NEW_GC */

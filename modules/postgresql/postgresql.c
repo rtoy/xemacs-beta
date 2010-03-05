@@ -268,7 +268,7 @@ allocate_pgconn (void)
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     &lrecord_pgconn);
 #else
-  Lisp_PGconn *pgconn = XPGCONN (ALLOC_LISP_OBJECT (pgconn));
+  Lisp_PGconn *pgconn = XPGCONN (ALLOC_NORMAL_LISP_OBJECT (pgconn));
 #endif
   pgconn->pgconn = (PGconn *)NULL;
   return pgconn;
@@ -420,7 +420,7 @@ allocate_pgresult (void)
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 &lrecord_pgresult);
 #else
-  Lisp_PGresult *pgresult = XPGRESULT (ALLOC_LISP_OBJECT (pgresult));
+  Lisp_PGresult *pgresult = XPGRESULT (ALLOC_NORMAL_LISP_OBJECT (pgresult));
 #endif
   pgresult->pgresult = (PGresult *)NULL;
   return pgresult;

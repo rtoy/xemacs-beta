@@ -748,7 +748,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
      list. */
   {
     int i;
-    Lisp_Object obj = ALLOC_LISP_OBJECT (mswindows_dialog_id);
+    Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (mswindows_dialog_id);
     struct mswindows_dialog_id *did = XMSWINDOWS_DIALOG_ID (obj);
     
     did->frame = wrap_frame (f);
