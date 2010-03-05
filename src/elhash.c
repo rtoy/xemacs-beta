@@ -84,7 +84,7 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 
 Lisp_Object Qhash_tablep;
-static Lisp_Object Qhashtable, Qhash_table;
+static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
@@ -993,29 +993,27 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
-  int i = 0;
-  Lisp_Object test	       = Qnil;
-  Lisp_Object size	       = Qnil;
-  Lisp_Object rehash_size      = Qnil;
-  Lisp_Object rehash_threshold = Qnil;
-  Lisp_Object weakness	       = Qnil;
+#ifdef NO_NEED_TO_HANDLE_21_4_CODE
+  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
+                  (test, size, rehash_size, rehash_threshold, weakness),
+                  NULL, weakness = Qunbound), 0);
+#else
+  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
+                  (test, size, rehash_size, rehash_threshold, weakness,
+		   type), (type = Qunbound, weakness = Qunbound), 0);
 
-  while (i + 1 < nargs)
+  if (EQ (weakness, Qunbound))
     {
-      Lisp_Object keyword = args[i++];
-      Lisp_Object value   = args[i++];
-
-      if      (EQ (keyword, Q_test))		 test		  = value;
-      else if (EQ (keyword, Q_size))		 size		  = value;
-      else if (EQ (keyword, Q_rehash_size))	 rehash_size	  = value;
-      else if (EQ (keyword, Q_rehash_threshold)) rehash_threshold = value;
-      else if (EQ (keyword, Q_weakness))	 weakness	  = value;
-      else if (EQ (keyword, Q_type))/*obsolete*/ weakness	  = value;
-      else invalid_constant ("Invalid hash table property keyword", keyword);
+      if (EQ (weakness, Qunbound) && !EQ (type, Qunbound))
+        {
+          weakness = type;
+        }
+      else
+        {
+          weakness = Qnil;
+        }
     }
-
-  if (i < nargs)
-    sferror ("Hash table property requires a value", args[i]);
+#endif
 
 #define VALIDATE_VAR(var) \
 if (!NILP (var)) hash_table_##var##_validate (Q##var, var, ERROR_ME);
@@ -1854,6 +1852,7 @@ syms_of_elhash (void)
   DEFSYMBOL_MULTIWORD_PREDICATE (Qhash_tablep);
   DEFSYMBOL (Qhash_table);
   DEFSYMBOL (Qhashtable);
+  DEFSYMBOL (Qmake_hash_table);
   DEFSYMBOL (Qweakness);
   DEFSYMBOL (Qvalue);
   DEFSYMBOL (Qkey_or_value);

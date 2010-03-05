@@ -418,6 +418,29 @@ static int warning_will_be_discarded (Lisp_Object level);
 static Lisp_Object maybe_get_trapping_problems_backtrace (void);
 
 
+
+/* When parsing keyword arguments; is some element of NARGS
+   :allow-other-keys, and is that element followed by a non-nil Lisp
+   object? */
+
+Boolint
+non_nil_allow_other_keys_p (Elemcount offset, int nargs, Lisp_Object *args)
+{
+  Lisp_Object key, value;
+  while (offset + 1 < nargs)
+    {
+      key = args[offset++];
+      value = args[offset++];
+      if (EQ (key, Q_allow_other_keys)) 
+	{
+          /* The ANSI Common Lisp standard says the first value for a given
+             keyword overrides. */
+          return !NILP (value);
+	}
+    }
+  return 0;
+}
+
 /************************************************************************/
 /*			The subr object type				*/
 /************************************************************************/
@@ -3050,6 +3073,12 @@ maybe_invalid_argument (const Ascbyte *reason, Lisp_Object frob,
 }
 
 DOESNT_RETURN
+invalid_keyword_argument (Lisp_Object function, Lisp_Object keyword)
+{
+  signal_error_1 (Qinvalid_keyword_argument, list2 (function, keyword));
+}
+
+DOESNT_RETURN
 invalid_constant (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_constant, reason, frob);
@@ -4579,10 +4608,9 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       printing_unreadable_object ("multiple values");
     }
 
-  if (0 == count)
-    {
-      write_msg_string (printcharfun, "#<zero-length multiple value>");
-    }
+  write_fmt_string (printcharfun,
+                    "#<INTERNAL OBJECT (XEmacs bug?) %d multiple values,"
+                    " data (", count);
 
   for (index = 0; index < count;)
     {
@@ -4603,9 +4631,11 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
       if (count > 1 && index < count)
         {
-          write_ascstring (printcharfun, " ;\n");
+          write_ascstring (printcharfun, " ");
         }
     }
+
+  write_fmt_string (printcharfun, ") 0x%lx>", (unsigned long) XPNTR (obj));
 }
 
 static Lisp_Object

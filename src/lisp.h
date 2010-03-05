@@ -85,6 +85,16 @@ Boston, MA 02111-1307, USA.  */
 
    %%#### marks places that need work for KKCC (the new garbage collector).
 
+   @@#### marks places that need work to get Unicode-internal working,
+   i.e. using UTF-8 as the internal text format.
+
+   #### BILL! marks places that need work for GTK.
+
+   #### GEOM! marks places needing work to fix various bugs in the handling
+        of window and frame sizing and positioning.  Often the root of the
+        problems is that the code was originally written before there was a
+	gutter and then not completely fixed up to accommodate the gutter.
+
    */
 
 /************************************************************************/
@@ -1229,6 +1239,9 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
+void assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x,
+			  EMACS_INT y, const Ascbyte *exprx,
+			  const Ascbyte *expry);
 #define ABORT() assert_failed (__FILE__, __LINE__, "ABORT()")
 #define abort_with_message(msg) assert_failed (__FILE__, __LINE__, msg)
 
@@ -1249,6 +1262,10 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
   ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
 # define assert_at_line(x, file, line) \
   ((x) ? (void) 0 : assert_failed (file, line, #x))
+# define assert_equal(x, y)						\
+  ((x) == (y) ? (void) 0 :						\
+   assert_equal_failed (__FILE__, __LINE__, (EMACS_INT) x, (EMACS_INT) y, \
+                        #x, #y))
 #else
 /* This used to be ((void) (0)) but that triggers lots of unused variable
    warnings.  It's pointless to force all that code to be rewritten, with
@@ -1257,6 +1274,7 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 # define assert(x) disabled_assert (x)
 # define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
 # define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
+# define assert_equal(x, y) disabled_assert ((x) == (y))
 #endif
 
 /************************************************************************/
@@ -3448,7 +3466,17 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
     x = wrong_type_argument (Qnatnump, x);	\
 } while (0)
 
+END_C_DECLS
+
+/* -------------- properties of internally-formatted text ------------- */
+
+#include "text.h"
+
 /*------------------------------- char ---------------------------------*/
+
+BEGIN_C_DECLS
+
+#ifdef ERROR_CHECK_TYPES
 
 /* NOTE: There are basic functions for converting between a character and
    the string representation of a character in text.h, as well as lots of
@@ -3456,31 +3484,6 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
    working with Ichars in charset.h, for retrieving the charset of an
    Ichar, the length of an Ichar when converted to text, etc.
 */
-
-#ifdef MULE
-
-MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
-
-/* Return whether the given Ichar is valid.
- */
-
-DECLARE_INLINE_HEADER (
-int
-valid_ichar_p (Ichar ch)
-)
-{
-  return (! (ch & ~0xFF)) || non_ascii_valid_ichar_p (ch);
-}
-
-#else /* not MULE */
-
-/* This works when CH is negative, and correctly returns non-zero only when CH
-   is in the range [0, 255], inclusive. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
-
-#endif /* not MULE */
-
-#ifdef ERROR_CHECK_TYPES
 
 DECLARE_INLINE_HEADER (
 int
@@ -3829,37 +3832,6 @@ void prune_weak_lists (void);
 END_C_DECLS
 
 /************************************************************************/
-/*      Definitions related to the format of text and of characters     */
-/************************************************************************/
-
-/* Note:
-
-   "internally formatted text" and the term "internal format" in
-   general are likely to refer to the format of text in buffers and
-   strings; "externally formatted text" and the term "external format"
-   refer to any text format used in the O.S. or elsewhere outside of
-   XEmacs.  The format of text and of a character are related and
-   there must be a one-to-one relationship (hopefully through a
-   relatively simple algorithmic means of conversion) between a string
-   of text and an equivalent array of characters, but the conversion
-   between the two is NOT necessarily trivial.
-
-   In a non-Mule XEmacs, allowed characters are numbered 0 through
-   255, where no fixed meaning is assigned to them, but (when
-   representing text, rather than bytes in a binary file) in practice
-   the lower half represents ASCII and the upper half some other 8-bit
-   character set (chosen by setting the font, case tables, syntax
-   tables, etc. appropriately for the character set through ad-hoc
-   means such as the `iso-8859-1' file and the
-   `standard-display-european' function).
-
-   #### Finish this.
-
-	*/
-#include "text.h"
-
-
-/************************************************************************/
 /*	   Definitions of primitive Lisp functions and variables	*/
 /************************************************************************/
 
@@ -4041,6 +4013,136 @@ extern MODULE_API int specpdl_depth_counter;
  while (NILP (Ffunctionp (fun)))		\
    signal_invalid_function_error (fun);		\
  } while (0)
+
+/************************************************************************/
+/*                      Parsing keyword arguments                       */
+/************************************************************************/
+
+/* The C subr must have been declared with MANY as its max args, and this
+   PARSE_KEYWORDS call must come before any statements.
+
+   FUNCTION is the name of the current function, as a symbol.
+
+   NARGS is the count of arguments supplied to FUNCTION.
+
+   ARGS is a pointer to the argument vector (not a Lisp vector) supplied to
+   FUNCTION.
+
+   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments start.
+
+   KEYWORD_COUNT is the number of keywords FUNCTION is normally prepared to
+   handle.
+
+   KEYWORDS is a parenthesised list of those keywords, without the initial
+   Q_.
+
+   KEYWORD_DEFAULTS allows you to set non-nil defaults. Put (keywordname =
+   initial_value) in this parameter, a collection of C statements surrounded
+   by parentheses and separated by the comma operator. If you don't need
+   this, supply NULL as KEYWORD_DEFAULTS.
+
+   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list
+   entry in defun*; it is 1 if other keys are normally allowed, 0
+   otherwise. This may be overridden in the caller by specifying
+   :allow-other-keys t in the argument list.
+
+   For keywords which appear multiple times in the called argument list, the
+   leftmost one overrides, as specified in section 7.1.1 of the CLHS.
+
+   If you want to check whether a given keyword argument was set (as in the
+   SVAR argument to defun*), supply Qunbound as its default in
+   KEYWORD_DEFAULTS, and examine it once PARSE_KEYWORDS is done. Lisp code
+   cannot supply Qunbound as an argument, so if it is still Qunbound, it was
+   not set.
+
+   There is no elegant way with this macro to have one name for the keyword
+   and an unrelated name for the local variable, as is possible with the
+   ((:keyword unrelated-var)) syntax in defun* and in Common Lisp. That
+   shouldn't matter in practice. */
+ 
+#define PARSE_KEYWORDS(function, nargs, args, keywords_offset,          \
+                       keyword_count, keywords, keyword_defaults,       \
+                       allow_other_keys)                                \
+  DECLARE_N_KEYWORDS_##keyword_count keywords;                          \
+                                                                        \
+  do                                                                    \
+    {                                                                   \
+      Lisp_Object pk_key, pk_value;                                     \
+      Elemcount pk_i = nargs - 1;                                       \
+      Boolint pk_allow_other_keys = allow_other_keys;                   \
+                                                                        \
+      if ((nargs - keywords_offset) & 1)                                \
+        {                                                               \
+          if (!allow_other_keys                                         \
+              && !(pk_allow_other_keys                                  \
+                   = non_nil_allow_other_keys_p (keywords_offset,       \
+                                                 nargs, args)))         \
+            {                                                           \
+              signal_wrong_number_of_arguments_error (function, nargs); \
+            }                                                           \
+          else                                                          \
+            {                                                           \
+              /* Ignore the trailing arg; so below always sees an even  \
+                 number of arguments. */                                \
+              pk_i -= 1;                                                \
+            }                                                           \
+        }                                                               \
+                                                                        \
+      (void)(keyword_defaults);                                         \
+                                                                        \
+      /* Start from the end, because the leftmost element overrides. */ \
+      while (pk_i > keywords_offset)                                    \
+        {                                                               \
+          pk_value = args[pk_i--];                                      \
+          pk_key = args[pk_i--];                                        \
+                                                                        \
+          if (0) {}                                                     \
+          CHECK_N_KEYWORDS_##keyword_count keywords                     \
+          else if (allow_other_keys || pk_allow_other_keys)             \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else if (!(pk_allow_other_keys                                \
+                     = non_nil_allow_other_keys_p (keywords_offset,     \
+                                                   nargs, args)))       \
+            {                                                           \
+              invalid_keyword_argument (function, pk_key);              \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+#define DECLARE_N_KEYWORDS_1(a)                 \
+    Lisp_Object a = Qnil
+#define DECLARE_N_KEYWORDS_2(a,b)               \
+  DECLARE_N_KEYWORDS_1(a), b = Qnil
+#define DECLARE_N_KEYWORDS_3(a,b,c)             \
+  DECLARE_N_KEYWORDS_2(a,b), c = Qnil
+#define DECLARE_N_KEYWORDS_4(a,b,c,d)           \
+  DECLARE_N_KEYWORDS_3(a,b,c), d = Qnil
+#define DECLARE_N_KEYWORDS_5(a,b,c,d,e)         \
+  DECLARE_N_KEYWORDS_4(a,b,c,d), e = Qnil
+#define DECLARE_N_KEYWORDS_6(a,b,c,d,e,f)       \
+  DECLARE_N_KEYWORDS_5(a,b,c,d,e), f = Qnil
+#define DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g)     \
+  DECLARE_N_KEYWORDS_6(a,b,c,d,e,f), g = Qnil
+
+#define CHECK_N_KEYWORDS_1(a)                                           \
+    else if (EQ (pk_key, Q_##a)) { a = pk_value; }
+#define CHECK_N_KEYWORDS_2(a,b)             CHECK_N_KEYWORDS_1(a)       \
+    else if (EQ (pk_key, Q_##b)) { b = pk_value; }
+#define CHECK_N_KEYWORDS_3(a,b,c)           CHECK_N_KEYWORDS_2(a,b)     \
+    else if (EQ (pk_key, Q_##c)) { c = pk_value; }
+#define CHECK_N_KEYWORDS_4(a,b,c,d)         CHECK_N_KEYWORDS_3(a,b,c)   \
+    else if (EQ (pk_key, Q_##d)) { d = pk_value; }
+#define CHECK_N_KEYWORDS_5(a,b,c,d,e)       CHECK_N_KEYWORDS_4(a,b,c,d) \
+    else if (EQ (pk_key, Q_##e)) { e = pk_value; }
+#define CHECK_N_KEYWORDS_6(a,b,c,d,e,f)     CHECK_N_KEYWORDS_5(a,b,c,d,e) \
+    else if (EQ (pk_key, Q_##f)) { f = pk_value; }
+#define CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)   CHECK_N_KEYWORDS_6(a,b,c,d,e,f) \
+    else if (EQ (pk_key, Q_##g)) { g = pk_value; }
+
+Boolint non_nil_allow_other_keys_p (Elemcount offset, int nargs,
+                                    Lisp_Object *args);
 
 
 /************************************************************************/
@@ -4898,7 +5000,8 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qcircular_list, Qcircular_property_list, Qconversion_error,
     Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
     Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
-    Qinvalid_change, Qinvalid_constant, Qinvalid_function, Qinvalid_operation,
+    Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
+    Qinvalid_keyword_argument, Qinvalid_operation,
     Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
     Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
     Qoverflow_error, Qprinting_unreadable_object, Qquit, Qrange_error,
@@ -5126,6 +5229,8 @@ MODULE_API DECLARE_DOESNT_RETURN (invalid_argument_2 (const Ascbyte *reason,
 						      Lisp_Object frob2));
 void maybe_invalid_argument (const Ascbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
+MODULE_API DECLARE_DOESNT_RETURN (invalid_keyword_argument (Lisp_Object fun,
+                                                            Lisp_Object kw));
 MODULE_API DECLARE_DOESNT_RETURN (invalid_operation (const Ascbyte *reason,
 						     Lisp_Object frob));
 MODULE_API DECLARE_DOESNT_RETURN (invalid_operation_2 (const Ascbyte *reason,
@@ -5519,7 +5624,7 @@ EXFUN (Fsafe_length, 1);
 EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
-EXFUN (Fsubstring, 3);
+EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
 Lisp_Object list_sort (Lisp_Object, Lisp_Object,

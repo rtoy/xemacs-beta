@@ -638,8 +638,8 @@ clear_left_border (struct window *w, int y, int height)
   Lisp_Object window = wrap_window (w);
 
   redisplay_clear_region (window, DEFAULT_INDEX,
-		FRAME_LEFT_BORDER_START (f), y,
-		FRAME_INTERNAL_BORDER_WIDTH (f), height);
+			  FRAME_LEFT_INTERNAL_BORDER_START (f), y,
+			  FRAME_INTERNAL_BORDER_WIDTH (f), height);
 }
 
 /*****************************************************************************
@@ -654,8 +654,8 @@ clear_right_border (struct window *w, int y, int height)
   Lisp_Object window = wrap_window (w);
 
   redisplay_clear_region (window, DEFAULT_INDEX,
-		FRAME_RIGHT_BORDER_START (f),
-		y, FRAME_INTERNAL_BORDER_WIDTH (f), height);
+			  FRAME_RIGHT_INTERNAL_BORDER_START (f),
+			  y, FRAME_INTERNAL_BORDER_WIDTH (f), height);
 }
 
 /*****************************************************************************
@@ -1663,8 +1663,7 @@ redisplay_output_pixmap (struct window *w,
   dga->width = IMAGE_INSTANCE_PIXMAP_WIDTH (p);
 
 #ifdef DEBUG_REDISPLAY
-  printf ("redisplay_output_pixmap(request) \
-[%dx%d@%d+%d] in [%dx%d@%d+%d]\n",
+  printf ("redisplay_output_pixmap(request) [%dx%d@%d+%d] in [%dx%d@%d+%d]\n",
 	  db->width, db->height, db->xpos, db->ypos,
 	  dga->width, dga->height, dga->xoffset, dga->yoffset);
 #endif
@@ -1674,8 +1673,7 @@ redisplay_output_pixmap (struct window *w,
     return;
 
 #ifdef DEBUG_REDISPLAY
-  printf ("redisplay_output_pixmap(normalized) \
-[%dx%d@%d+%d] in [%dx%d@%d+%d]\n",
+  printf ("redisplay_output_pixmap(normalized) [%dx%d@%d+%d] in [%dx%d@%d+%d]\n",
 	  db->width, db->height, db->xpos, db->ypos,
 	  dga->width, dga->height, dga->xoffset, dga->yoffset);
 #endif
@@ -1749,11 +1747,12 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
   /* #### This isn't quite right for when this function is called
      from the toolbar code. */
 
+  /* #### GEOM! This uses a backing pixmap in the gutter.  Correct? */
   /* Don't use a backing pixmap in the border area */
-  if (x >= FRAME_LEFT_BORDER_END (f)
-      && x < FRAME_RIGHT_BORDER_START (f)
-      && y >= FRAME_TOP_BORDER_END (f)
-      && y < FRAME_BOTTOM_BORDER_START (f))
+  if (x >= FRAME_LEFT_INTERNAL_BORDER_END (f)
+      && x < FRAME_RIGHT_INTERNAL_BORDER_START (f)
+      && y >= FRAME_TOP_INTERNAL_BORDER_END (f)
+      && y < FRAME_BOTTOM_INTERNAL_BORDER_START (f))
     {
       Lisp_Object temp;
 
@@ -2098,7 +2097,10 @@ redisplay_clear_top_of_window (struct window *w)
 {
   Lisp_Object window = wrap_window (w);
 
-
+  /* #### GEOM! FIXME #### This is definitely wrong.  It was clearly not
+     fixed up to accommodate the gutter.  The internal border width is now
+     no longer adjacent to the leftmost window, since the gutter
+     intervenes. */
   if (!NILP (Fwindow_highest_p (window)))
     {
       struct frame *f = XFRAME (w->frame);
@@ -2115,7 +2117,8 @@ redisplay_clear_top_of_window (struct window *w)
       if (window_is_rightmost (w))
 	width += FRAME_INTERNAL_BORDER_WIDTH (f);
 
-      y = FRAME_TOP_BORDER_START (f) - 1;
+      /* #### This off-by-one stuff also occurs in XLIKE_clear_frame(). */
+      y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
       height = FRAME_INTERNAL_BORDER_HEIGHT (f) + 1;
 
       redisplay_clear_region (window, DEFAULT_INDEX, x, y, width, height);
@@ -2151,12 +2154,15 @@ redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 	  window = wrap_window (w);
 
 	  if (window_is_leftmost (w))
-	    redisplay_clear_region (window, DEFAULT_INDEX, FRAME_LEFT_BORDER_START (f),
-				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f), height);
+	    redisplay_clear_region (window, DEFAULT_INDEX,
+				    FRAME_LEFT_INTERNAL_BORDER_START (f),
+				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f),
+				    height);
 
 	  if (bounds.left_in - bounds.left_out > 0)
 	    redisplay_clear_region (window,
-				    get_builtin_face_cache_index (w, Vleft_margin_face),
+				    get_builtin_face_cache_index
+				    (w, Vleft_margin_face),
 				    bounds.left_out, ypos1,
 				    bounds.left_in - bounds.left_out, height);
 
@@ -2168,13 +2174,17 @@ redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 
 	  if (bounds.right_out - bounds.right_in > 0)
 	    redisplay_clear_region (window,
-				    get_builtin_face_cache_index (w, Vright_margin_face),
+				    get_builtin_face_cache_index
+				    (w, Vright_margin_face),
 				    bounds.right_in, ypos1,
-				    bounds.right_out - bounds.right_in, height);
+				    bounds.right_out - bounds.right_in,
+				    height);
 
 	  if (window_is_rightmost (w))
-	    redisplay_clear_region (window, DEFAULT_INDEX, FRAME_RIGHT_BORDER_START (f),
-				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f), height);
+	    redisplay_clear_region (window, DEFAULT_INDEX,
+				    FRAME_RIGHT_INTERNAL_BORDER_START (f),
+				    ypos1, FRAME_INTERNAL_BORDER_WIDTH (f),
+				    height);
 	}
     }
 }

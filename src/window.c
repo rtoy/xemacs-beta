@@ -1813,10 +1813,8 @@ of this area, while the scrollbars are considered to be inside.
   struct window *w = decode_window (window);
   struct frame *f = XFRAME (w->frame);
 
-  int left =
-    w->pixel_left - FRAME_LEFT_BORDER_END (f) - FRAME_LEFT_GUTTER_BOUNDS (f);
-  int top =
-    w->pixel_top - FRAME_TOP_BORDER_END (f) - FRAME_TOP_GUTTER_BOUNDS (f);
+  int left = w->pixel_left - FRAME_PANED_LEFT_EDGE (f);
+  int top = w->pixel_top - FRAME_PANED_TOP_EDGE (f);
 
   return list4 (make_int (left),
 		make_int (top),

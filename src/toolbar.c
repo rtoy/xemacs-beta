@@ -778,6 +778,17 @@ update_frame_toolbars_geometry (struct frame *f)
 	 throughout the toolbar code. */
       compute_frame_toolbars_data (f);
 
+      /* #### GEOM! Turning the toolbar on and off repeatedly causes the
+	 frame to steadily shrink.  Basically, turning it on doesn't
+	 increase the frame size, while turning it off does reduce the
+	 frame size.  The cause has something to do with the combination
+	 of this maybe questionable code here, plus the fact that toolbars
+	 are included in the displayable area, and the difference between
+	 real and theoretical toolbar sizes, and exactly when the various
+	 computations happen w.r.t. the specifiers or whatever that control
+	 whether toolbars are visible and hence whether their thickness is
+	 greater than zero. --ben */
+
       if (frame_size_changed)
 	{
 	  int width, height;

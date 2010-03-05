@@ -1,3 +1,158 @@
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c:
+	* mule-coding.c (iso2022_encode):
+	Horrible bug: `escape-quoted' was failing to escape-quote special
+	characters in the 0x80 - 0x9F range.  Who knows what breakage ensued?
+	SAME BUG IN XEMACS 21.4; MUST BE FIXED THERE TOO.
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* lrecord.h: Fix outdated comment.
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* emacs.c:
+	* emacs.c (assert_equal_failed):
+	* lisp.h:
+	* lisp.h (assert_equal):
+	New fun assert_equal, asserting that two values == each other, and
+	printing out both values upon failure.
+	
+	* frame-gtk.c (gtk_initialize_frame_size):
+	* frame-impl.h:
+	* frame-impl.h (FRAME_TOP_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_BOTTOM_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_PANED_TOP_EDGE):
+	* frame-impl.h (FRAME_NONPANED_SIZE):
+	* frame-x.c (x_initialize_frame_size):
+	* frame.c:
+	* gutter.c (get_gutter_coords):
+	* gutter.c (calculate_gutter_size):
+	* gutter.h:
+	* gutter.h (WINDOW_REAL_TOP_GUTTER_BOUNDS):
+	* gutter.h (FRAME_TOP_GUTTER_BOUNDS):
+	* input-method-xlib.c:
+	* input-method-xlib.c (XIM_SetGeometry):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_output_pixmap):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame):
+	* redisplay.c:
+	* redisplay.c (UPDATE_CACHE_RETURN):
+	* redisplay.c (pixel_to_glyph_translation):
+	* toolbar.c (update_frame_toolbars_geometry):
+	* window.c (Fwindow_pixel_edges):
+	Get rid of some redundant macros.  Consistently use the
+	FRAME_TOP_*_START, FRAME_RIGHT_*_END, etc. format.  Rename
+	FRAME_*_BORDER_* to FRAME_*_INTERNAL_BORDER_*. Comment out
+	FRAME_BOTTOM_* for gutters and the paned area due to the
+	uncertainty over where the paned area actually begins. (Eventually
+	we should probably move the gutters outside the minibuffer so that
+	the paned area is contiguous.) Use FRAME_PANED_* more often in the
+	code to make things clearer.
+
+	Update the diagram to show that the bottom gutter is inside the
+	minibuffer (!) and that there are "junk boxes" when you have left
+	and/or right gutters (dead boxes that are mistakenly left uncleared,
+	unlike the corresponding scrollbar dead boxes).  Update the text
+	appropriately to cover the bottom gutter position, etc.
+
+	Rewrite gutter-geometry code to use the FRAME_*_GUTTER_* in place of
+	equivalent expressions referencing other frame elements, to make the
+	code more portable in case we move around the gutter location.
+
+	Cleanup FRAME_*_GUTTER_BOUNDS() in gutter.h.
+
+	Add some #### GEOM! comments where I think code is incorrect --
+	typically, it wasn't fixed up properly when the gutter was added.
+
+	Some cosmetic changes.
+	
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* text.h:
+	Move inclusion point of text.h earlier in lisp.h -- just before
+	the definition of characters, which needs some of the stuff in
+	text.h.  With text.h later, some basic character properties had to
+	be defined in lisp.h -- put them back into text.h where they belong.
+	Move some text in lisp.h at the point of text.h inclusion into
+	text.h -- it serves as a mini-introduction.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (objs):
+	glyphs-shared.o, glyphs-eimage.o only needed when HAVE_WINDOW_SYSTEM.
+	glyphs-widget.o should be too, but we need a bit of work ifdeffing
+	out the subwindow stuff from redisplay.c et al.
+	
+	* bytecode.c (init_opcode_table_multi_op):
+	Change var name to avoid shadowing with `basename'.
+	
+	* emacs.c (main_1):
+	Don't call init/etc. routines for glyphs-shared, glyphs-eimage unless
+	HAVE_WINDOW_SYSTEM is defined.
+	
+	* linuxplay.c:
+	* linuxplay.c (sighandler):
+	* vdb-posix.c (vdb_fault_handler):
+	Use const for variables holding string constants to avoid C++
+	warnings.
+
+2010-03-02  Jerry James  <james@xemacs.org>
+
+	* lread.c (read_atom): Signal a read error upon encountering a
+	ratio constant with a zero denominator.
+
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring): Removed.
+	* search.c (Freplace_match):
+	* minibuf.c (Ftry_completion):
+	* lisp.h:
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* dired.c (user_name_completion, file_name_completion):
+	* console-x.c (x_canonicalize_console_connection):
+	* bytecode.c (Bsubseq):
+	* bytecode-ops.h (subseq):
+	Move #'substring to Lisp, as an alias for #'subseq; change all
+	C Fsubstring() calls to Fsubseq(), change the Bsubstring bytecode
+	to Bsubseq.
+
+	Motivation; not accepting vectors in #'substring is incompatible
+	with GNU, and Common Lisp prefers #'subseq, it has no #'substring.
+
+2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (print_multiple_value):
+	Say #<INTERNAL OBJECT (XEmacs bug?) ...> when printing these, for
+	consistency with the rest of the print code.
+
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS): New macro, for parsing keyword
+	arguments from C subrs.
+	* elhash.c (Fmake_hash_table): Use it.
+	* general-slots.h (Q_allow_other_keys): Add this symbol.
+	* eval.c (non_nil_allow_other_keys_p):
+	(invalid_keyword_argument):
+	New functions, called from the keyword argument parsing code.
+	* data.c (init_errors_once_early):
+	Add the new invalid-keyword-argument error here.
+
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (Fmake_coding_system_internal):
+	Be somewhat clearer in this docstring, especially for the sake of
+	people running non-Mule builds who will see this docstring when
+	they do F1 f make-coding-system RET.
+
 2010-02-25  Didier Verna  <didier@xemacs.org>
 
 	The background-placement face property.

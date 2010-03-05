@@ -705,73 +705,68 @@ extern int frame_changed;
 /*         frame dimensions defined using toolbars and gutters          */
 /************************************************************************/
 
-/* #### These should be using the gutter sizes, but aren't yet */
-
-#define FRAME_TOP_BORDER_START(f)				\
-  FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
-#define FRAME_TOP_BORDER_END(f)					\
-  (FRAME_TOP_BORDER_START (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
-
-#define FRAME_BOTTOM_BORDER_START(f)				\
-  (FRAME_BOTTOM_BORDER_END (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
-#define FRAME_BOTTOM_BORDER_END(f)				\
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f))
-
-#define FRAME_LEFT_BORDER_START(f)				\
-  FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
-#define FRAME_LEFT_BORDER_END(f)				\
-  (FRAME_LEFT_BORDER_START (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
-
-#define FRAME_RIGHT_BORDER_START(f)				\
-  (FRAME_RIGHT_BORDER_END (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
-#define FRAME_RIGHT_BORDER_END(f)				\
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f))
-
-
-/************************************************************************/
-/*         frame dimensions defined using toolbars and gutters          */
-/************************************************************************/
-
 /* Bounds of the area framed by the toolbars is the client area --
    (0, 0) - (FRAME_PIXWIDTH, FRAME_PIXHEIGHT). */
 
-/* Bounds of the area framed by the gutters -- inside of the toolbars,
-   outside of everything else. */
-
-#define FRAME_GUTTER_TOP_EDGE(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_EDGE)
-#define FRAME_GUTTER_BOTTOM_EDGE(f) \
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_EDGE))
-#define FRAME_GUTTER_LEFT_EDGE(f) \
-  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_EDGE)
-#define FRAME_GUTTER_RIGHT_EDGE(f) \
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_EDGE))
-
 /* Bounds of the area framed by the internal border width -- inside of the
-   toolbars and gutters. */
+   toolbars, outside of everything else. */
 
-#define FRAME_INTERNAL_BORDER_TOP_EDGE(f) \
-  (FRAME_GUTTER_TOP_EDGE (f) + FRAME_GUTTER_BOUNDS (f, TOP_EDGE))
-#define FRAME_INTERNAL_BORDER_BOTTOM_EDGE(f) \
-  (FRAME_GUTTER_BOTTOM_EDGE (f) - FRAME_GUTTER_BOUNDS (f, BOTTOM_EDGE))
-#define FRAME_INTERNAL_BORDER_LEFT_EDGE(f) \
-  (FRAME_GUTTER_LEFT_EDGE (f) + FRAME_GUTTER_BOUNDS (f, LEFT_EDGE))
-#define FRAME_INTERNAL_BORDER_RIGHT_EDGE(f) \
-  (FRAME_GUTTER_RIGHT_EDGE (f) - FRAME_GUTTER_BOUNDS (f, RIGHT_EDGE))
+#define FRAME_TOP_INTERNAL_BORDER_START(f)				\
+  FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
+#define FRAME_TOP_INTERNAL_BORDER_END(f)				\
+  (FRAME_TOP_INTERNAL_BORDER_START (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
+
+#define FRAME_BOTTOM_INTERNAL_BORDER_START(f)				\
+  (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
+#define FRAME_BOTTOM_INTERNAL_BORDER_END(f)				\
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f))
+
+#define FRAME_LEFT_INTERNAL_BORDER_START(f)				\
+  FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
+#define FRAME_LEFT_INTERNAL_BORDER_END(f)				\
+  (FRAME_LEFT_INTERNAL_BORDER_START (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
+
+#define FRAME_RIGHT_INTERNAL_BORDER_START(f)				\
+  (FRAME_RIGHT_INTERNAL_BORDER_END (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
+#define FRAME_RIGHT_INTERNAL_BORDER_END(f)				\
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f))
+
+/* Bounds of the area framed by the gutter -- inside of the
+   toolbars and internal border width. */
+
+#define FRAME_TOP_GUTTER_START(f)					\
+  FRAME_TOP_INTERNAL_BORDER_END (f)
+#define FRAME_TOP_GUTTER_END(f)						\
+  (FRAME_TOP_GUTTER_START (f) + FRAME_TOP_GUTTER_BOUNDS (f))
+
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+#define FRAME_BOTTOM_GUTTER_START(f)					\
+  (FRAME_BOTTOM_GUTTER_END (f) - FRAME_BOTTOM_GUTTER_BOUNDS (f))
+#define FRAME_BOTTOM_GUTTER_END(f)					\
+  FRAME_BOTTOM_INTERNAL_BORDER_START (f)
+#endif /* BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER */
+
+#define FRAME_LEFT_GUTTER_START(f)					\
+  FRAME_LEFT_INTERNAL_BORDER_END (f)
+#define FRAME_LEFT_GUTTER_END(f)					\
+  (FRAME_LEFT_GUTTER_START (f) + FRAME_LEFT_GUTTER_BOUNDS (f))
+
+#define FRAME_RIGHT_GUTTER_START(f)					\
+  (FRAME_RIGHT_GUTTER_END (f) - FRAME_RIGHT_GUTTER_BOUNDS (f))
+#define FRAME_RIGHT_GUTTER_END(f)					\
+  FRAME_RIGHT_INTERNAL_BORDER_START (f)
 
 /* These are the bounds of the paned area -- inside of the toolbars,
    gutters, and internal border width.  The paned area is the same as the
    area occupied by windows, including the minibuffer.  See long comment in
    frame.c. */
 
-#define FRAME_PANED_TOP_EDGE(f) \
-  (FRAME_INTERNAL_BORDER_TOP_EDGE (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
-#define FRAME_PANED_BOTTOM_EDGE(f) \
-  (FRAME_INTERNAL_BORDER_BOTTOM_EDGE (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
-#define FRAME_PANED_LEFT_EDGE(f) \
-  (FRAME_INTERNAL_BORDER_LEFT_EDGE (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
-#define FRAME_PANED_RIGHT_EDGE(f) \
-  (FRAME_INTERNAL_BORDER_RIGHT_EDGE (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
+#define FRAME_PANED_TOP_EDGE(f) FRAME_TOP_GUTTER_END (f)
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+#define FRAME_PANED_BOTTOM_EDGE(f) FRAME_BOTTOM_GUTTER_START (f)
+#endif /* BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER */
+#define FRAME_PANED_LEFT_EDGE(f) FRAME_LEFT_GUTTER_END (f)
+#define FRAME_PANED_RIGHT_EDGE(f) FRAME_RIGHT_GUTTER_START (f)
 
 /* Thickness of non-paned area at edge of frame;
    
@@ -784,8 +779,8 @@ extern int frame_changed;
    
 */
 #define FRAME_NONPANED_SIZE(f, pos)					\
-  (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_GUTTER_BOUNDS (f, pos) + \
-   FRAME_INTERNAL_BORDER_SIZE (f, pos))
+  (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_INTERNAL_BORDER_SIZE (f, pos) + \
+   FRAME_GUTTER_BOUNDS (f, pos))
 
 
 
