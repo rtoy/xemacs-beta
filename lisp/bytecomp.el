@@ -609,7 +609,7 @@ Each element is (INDEX . VALUE)")
 (byte-defop  76 -1 byte-set)
 (byte-defop  77 -1 byte-fset) ; this was commented out
 (byte-defop  78 -1 byte-get)
-(byte-defop  79 -2 byte-substring)
+(byte-defop  79 -2 byte-subseq)
 (byte-defop  80 -1 byte-concat2)
 (byte-defop  81 -2 byte-concat3)
 (byte-defop  82 -3 byte-concat4)
@@ -3111,7 +3111,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler aref		2)
 (byte-defop-compiler get		2+1)
 (byte-defop-compiler nth		2)
-(byte-defop-compiler substring		2-3)
+(byte-defop-compiler subseq byte-compile-subseq)
+(byte-defop-compiler (substring byte-subseq) 2-3)
 (byte-defop-compiler (move-marker byte-set-marker) 2-3)
 (byte-defop-compiler set-marker		2-3)
 (byte-defop-compiler match-beginning	1)
@@ -3523,6 +3524,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
      not what you want, as that lambda cannot be compiled.  Consider using
      the syntax (function (lambda (...) ...)) instead."))))
   (byte-compile-two-args form))
+
+(defun byte-compile-subseq (form)
+  (byte-compile-two-or-three-args form)
+  ;; Check that XEmacs supports the substring-subseq equivalence.
+  (pushnew '(eq 'subseq (symbol-function 'substring))
+           byte-compile-checks-on-load :test #'equal))
 
 (defmacro byte-compile-funarg-n (&rest n)
   `#'(lambda (form)

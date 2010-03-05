@@ -850,8 +850,8 @@ When @code{concat} is called on strings, the extents in the strings are
 copied into the resulting string.
 
 @item
-When @code{substring} is called on a string, the relevant extents
-are copied into the resulting string.
+When @code{subseq} (or its alias, @code{substring}) is called on a
+string, the relevant extents are copied into the resulting string.
 
 @item
 When a duplicable extent is detached by @code{detach-extent} or string

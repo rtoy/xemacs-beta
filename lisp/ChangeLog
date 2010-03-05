@@ -1,3 +1,36 @@
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move byte code #o117 to #'subseq, not #'substring.
+	Make #'substring available as an alias for #'subseq in Lisp.
+	* bytecomp.el (79, subseq, substring):
+	* bytecomp.el (byte-compile-subseq): New.
+	* update-elc.el (update-elc-chop-extension): Use #'subseq, not
+	#'substring, the latter is not yet available.
+	* subr.el (substring): New alias, to #'subseq.
+
+2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-dups): New compiler macro for this function,
+	expanding to inline byte codes.
+	(delete-duplicates): Handle the :from-end argument correctly in
+	this compiler macro.
+
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (cl-parsing-keywords):
+	* cl-macs.el (cl-do-arglist):
+	Use the new invalid-keyword-argument error here.
+
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Back out Ben's revision c673987f5f3d.
+	* coding.el:
+	Add a compiler macro for #'make-coding-system on non-Mule builds
+	too, to fix the problem he addressed with that changeset.
+	* mule/make-coding-system.el (fixed-width-private-use-start):
+	Don't call (decode-char ... 'ucs) here, it can make bootstrapping
+	harder.
+
 2010-02-26  Ben Wing  <ben@xemacs.org>
 
 	* autoload.el (autoload-featurep-protect-autoloads):
@@ -98,29 +131,6 @@
 	compiling the file -- `Skip-Test-Unless' isn't available in the
 	environment during byte-compilation so we can't call it then.
 	
-2010-02-22  Ben Wing  <ben@xemacs.org>
-
-	* mule/make-coding-system.el:
-	* mule/make-coding-system.el (fixed-width-generate-helper):
-	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.
-	* mule/make-coding-system.el (fixed-width-create-decode-encode-tables):
-	* coding.el:
-	* coding.el (decode-char): New.
-	* coding.el (featurep):
-	* coding.el (encode-char): New.
-	* dumped-lisp.el (preloaded-file-list):
-	Dump make-coding-system.  Aidan's hack to avoid dumping this file
-	never really worked right -- with some configurations (not clear
-	exactly which ones) `make-coding-system.el' gets dumped anyway due to
-	calls to `make-coding-system' in unicode.el, with the result that
-	the documentation of functions in make-coding-system.el gets lost.
-
-	Also needed to remove defvar fixed-width-private-use-start and
-	incorporate it inline, due to bootstrapping issues -- the call to
-	decode-char introduced a cross-dependency between unicode.el and
-	make-coding-system.el.
-	
-
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* cl-seq.el:

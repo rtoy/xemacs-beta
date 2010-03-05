@@ -1731,7 +1731,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   if (indx == 0)
     new_keys = keys;
   else if (STRINGP (keys))
-    new_keys = Fsubstring (keys, Qzero, make_int (indx));
+    new_keys = Fsubseq (keys, Qzero, make_int (indx));
   else if (VECTORP (keys))
     {
       new_keys = make_vector (indx, Qnil);

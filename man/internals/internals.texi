@@ -161,13 +161,13 @@ You must add it by hand.
 Note: to define these routines, put point after the end of the definition
 and type C-x C-e.
 
-(defun list-to-texinfo (b e)
+(defun convert-list-to-texinfo (b e)
   "Convert the selected region from an ASCII list to a Texinfo list."
   (interactive "r")
   (save-restriction
     (narrow-to-region b e)
     (goto-char (point-min))
-    (let ((dash-type "^ *-+ +")
+    (let ((dash-type "^ *\\(-+\\|o\\) +")
 	  ;; allow single-letter numbering or roman numerals
 	  (letter-type "^ *[[(]?\\([a-zA-Z]\\|[IVXivx]+\\)[]).] +")
 	  (num-type "^ *[[(]?[0-9]+[]).] +")
@@ -239,7 +239,7 @@ This includes all lines any part of which are in the region."
 	  (forward-char min))
 	(kill-rectangle b (point))))))
 
-(defun table-to-texinfo (b e)
+(defun convert-table-to-texinfo (b e)
   "Convert the selected region from an ASCII table to a Texinfo table.
 Assumes entries are separated by a blank line, and the first sexp in
 each entry is the table heading."
@@ -283,20 +283,24 @@ of the buffer.  This query-replaces for various kinds of conventions used
 in text: @code{} surrounded by ` and ' or followed by a (); @strong{}
 surrounded by *'s; @file{} something that looks like a file name."
   (interactive)
-  (if (and (not no-narrow) (region-active-p))
-      (save-restriction
-	(narrow-to-region (region-beginning) (region-end))
-	(convert-text-to-texinfo t))
-    (let ((p (point))
-	  (case-replace nil))
-      (query-replace-regexp "`\\([^']+\\)'\\([^']\\)" "@code{\\1}\\2" nil)
-      (goto-char p)
-      (query-replace-regexp "\\(\\Sw\\)\\*\\(\\(?:\\s_\\|\\sw\\)+\\)\\*\\([^A-Za-z.}]\\)" "\\1@strong{\\2}\\3" nil)
-      (goto-char p)
-      (query-replace-regexp "\\(\\(\\s_\\|\\sw\\)+()\\)\\([^}]\\)" "@code{\\1}\\3" nil)
-      (goto-char p)
-      (query-replace-regexp "\\(\\(\\s_\\|\\sw\\)+\\.[A-Za-z]+\\)\\([^A-Za-z.}]\\)" "@file{\\1}\\3" nil)
-      )))
+  (save-excursion
+    (if (and (not no-narrow) (region-active-p))
+	(save-restriction
+	  (narrow-to-region (region-beginning) (region-end))
+	  (goto-char (region-beginning))
+	  (zmacs-deactivate-region)
+	  (convert-text-to-texinfo t))
+      (let ((p (point))
+	    (case-replace nil))
+	(message "Point is %d" (point))
+	(query-replace-regexp "`\\([^']+\\)'\\([^']\\)" "@code{\\1}\\2" nil)
+	(goto-char p)
+	(query-replace-regexp "\\(\\Sw\\)\\*\\(\\(?:\\s_\\|\\sw\\)+\\)\\*\\([^A-Za-z.}]\\)" "\\1@strong{\\2}\\3" nil)
+	(goto-char p)
+	(query-replace-regexp "\\(\\(\\s_\\|\\sw\\)+()\\)\\([^}]\\)" "@code{\\1}\\3" nil)
+	(goto-char p)
+	(query-replace-regexp "\\(\\(\\s_\\|\\sw\\)+\\.[A-Za-z]+\\)\\([^A-Za-z.}]\\)" "@file{\\1}\\3" nil)
+	))))
 
 4. Adding new sections:
 -----------------------
@@ -1238,7 +1242,7 @@ environment.  It began in 1991 as Lucid Emacs, which was in turn
 derived from GNU Emacs, a program written by Richard Stallman of the
 Free Software Foundation.  GNU Emacs dates back to 1985 and was
 modelled after Unipress Emacs, an editor written by James Gosling in
-1981 and based on a series of other "Emacs"-like editors, including
+1981 and based on a series of other ``Emacs''-like editors, including
 EINE (EINE Is Not EMACS), c. 1976, by Dan Weinreb, which run on the
 MIT Lisp Machine and was the first Emacs written in Lisp; ZWEI (ZWEI
 Was EINE Initially), c. 1978, by Dan Weinreb and Mike McMahon; Multics
@@ -1248,7 +1252,7 @@ descendant of ZWEI that on ran the Symbolics LM-2, LMI LispM, and
 later, TI Explorer (1983-1989).  These in turn were inspired by the
 first Emacs, a package called EMACS, written in 1976 by Richard
 Stallman, Guy Steele, and Dave Moon.  This was a merger of TECMAC and
-TMACS, a pair of "TECO-macro realtime editors" written by Guy Steele,
+TMACS, a pair of ``TECO-macro realtime editors'' written by Guy Steele,
 Dave Moon, Richard Greenblatt, Charles Frankston, et al., and added a
 dynamic loader and Meta-key cmds.  It ran under ITS (the Incompatible
 Timesharing System) on a DEC PDP 10 and under TWENEX on a Tops-20 and
@@ -1286,7 +1290,7 @@ language was known as @dfn{Mocklisp}.  This version of Emacs-in-C formed
 the basis for the early versions of GNU Emacs and also for Gosling's
 Unipress Emacs, a commercial product.  Because of bad blood between the
 two over the issue of commercialism, RMS pretty much disowned this
-collaboration, referring to it as "Gosling Emacs".
+collaboration, referring to it as ``Gosling Emacs''.
 
 At this point we pick up with a time line of events. (A broader timeline
 is available at @uref{http://www.jwz.org/doc/emacs-timeline.html,
@@ -1577,9 +1581,9 @@ redisplay code, preliminary I18N support, code merged from GNU Emacs
 @item
 Version 19.9 released January 12, 1994. (Scrollbars, Athena.)
 @item
-Version 19.10 released May 27, 1994. (Uses `configure'; code merged
+Version 19.10 released May 27, 1994. (Uses @code{configure}; code merged
 from GNU Emacs 19.23 beta and further merging with Epoch 4.0) Known as
-"Lucid Emacs" when shipped by Lucid, and as "XEmacs" when shipped by
+``Lucid Emacs'' when shipped by Lucid, and as ``XEmacs'' when shipped by
 Sun; but Lucid went out of business a few days later and it's unclear
 very many copies of 19.10 were released by Lucid. (Last release by
 Jamie Zawinski.)
@@ -1889,7 +1893,7 @@ console objects, specifiers, glyphs, toolbars, horizontal scrollbars,
 Lucid scrollbar widget, 3-d modeline, stay-up Lucid menus, resizable
 minibuffer, echo area is a true buffer, MD5 hashing support, expanded
 menubar, redone menu specification format (including menu filters),
-rewritten extents, renamed "screen" to "frame", misc-user events,
+rewritten extents, renamed ``screen'' to ``frame'', misc-user events,
 rewritten face code, rewritten mouse code, warnings system, CL
 backquote syntax, critical C-g, code merging with GNU Emacs 19.28.
 New packages Hyperbole, OOBR, hm--html-menus, viper, lazy-lock,
@@ -1937,9 +1941,9 @@ version 20.4 released February 28, 1998.
 version 21.0.60 released December 10, 1998. (The version naming scheme was
 changed at this point: [a] the second version number is odd for stable
 versions, even for beta versions; [b] a third version number is added,
-replacing the "beta xxx" ending for beta versions and allowing for
+replacing the ``beta xxx'' ending for beta versions and allowing for
 periodic maintenance releases for stable versions.  Therefore, 21.0 was
-never "officially" released; similarly for 21.2, etc.)
+never ``officially'' released; similarly for 21.2, etc.)
 @item
 version 21.0.61 released January 4, 1999.
 @item
@@ -1955,7 +1959,7 @@ version 21.0.67 released March 25, 1999.
 @item
 version 21.1.2 released May 14, 1999. (This is the followup to 21.0.67.
 The second version number was bumped to indicate the beginning of the
-"stable" series.)
+``stable'' series.)
 @item
 version 21.1.3 released June 26, 1999.
 @item
@@ -2045,91 +2049,91 @@ version 21.2.39 released December 31, 2000.
 @item
 version 21.2.40 released January 8, 2001.
 @item
-version 21.2.41 "Polyhymnia" released January 17, 2001.
+version 21.2.41 ``Polyhymnia'' released January 17, 2001.
 @item
-version 21.2.42 "Poseidon" released January 20, 2001.
+version 21.2.42 ``Poseidon'' released January 20, 2001.
 @item
-version 21.2.43 "Terspichore" released January 26, 2001.
+version 21.2.43 ``Terspichore'' released January 26, 2001.
 @item
-version 21.2.44 "Thalia" released February 8, 2001.
+version 21.2.44 ``Thalia'' released February 8, 2001.
 @item
-version 21.2.45 "Thelxepeia" released February 23, 2001.
+version 21.2.45 ``Thelxepeia'' released February 23, 2001.
 @item
-version 21.2.46 "Urania" released March 21, 2001.
+version 21.2.46 ``Urania'' released March 21, 2001.
 @item
-version 21.2.47 "Zephir" released April 14, 2001.
+version 21.2.47 ``Zephir'' released April 14, 2001.
 @item
-XEmacs 21.4.0 "Solid Vapor" released April 16, 2001.
+XEmacs 21.4.0 ``Solid Vapor'' released April 16, 2001.
 @item
-XEmacs 21.4.1 "Copyleft" released April 19, 2001.
+XEmacs 21.4.1 ``Copyleft'' released April 19, 2001.
 @item
-XEmacs 21.4.2 "Developer-Friendly Unix APIs" released May 10, 2001.
+XEmacs 21.4.2 ``Developer-Friendly Unix APIs'' released May 10, 2001.
 @item
-XEmacs 21.4.3 "Academic Rigor" released May 17, 2001.
+XEmacs 21.4.3 ``Academic Rigor'' released May 17, 2001.
 @item
-XEmacs 21.4.4 "Artificial Intelligence" released July 28, 2001.
+XEmacs 21.4.4 ``Artificial Intelligence'' released July 28, 2001.
 @item
-XEmacs 21.4.5 "Civil Service" released October 23, 2001.
+XEmacs 21.4.5 ``Civil Service'' released October 23, 2001.
 @item
-XEmacs 21.4.6 "Common Lisp" released December 17, 2001.
+XEmacs 21.4.6 ``Common Lisp'' released December 17, 2001.
 @item
-XEmacs 21.4.7 "Economic Science" released May 4, 2002.
+XEmacs 21.4.7 ``Economic Science'' released May 4, 2002.
 @item
-XEmacs 21.4.8 "Honest Recruiter" released May 9, 2002.
+XEmacs 21.4.8 ``Honest Recruiter'' released May 9, 2002.
 @item
-XEmacs 21.4.9 "Informed Management" released August 23, 2002.
+XEmacs 21.4.9 ``Informed Management'' released August 23, 2002.
 @item
-XEmacs 21.4.10 "Military Intelligence" released November 2, 2002.
+XEmacs 21.4.10 ``Military Intelligence'' released November 2, 2002.
 @item
-XEmacs 21.4.11 "Native Windows TTY Support" released January 3, 2003.
+XEmacs 21.4.11 ``Native Windows TTY Support'' released January 3, 2003.
 @item
-XEmacs 21.4.12 "Portable Code" released January 15, 2003.
+XEmacs 21.4.12 ``Portable Code'' released January 15, 2003.
 @item
-XEmacs 21.4.13 "Rational FORTRAN" released May 25, 2003.
+XEmacs 21.4.13 ``Rational FORTRAN'' released May 25, 2003.
 @item
-XEmacs 21.4.14 "Reasonable Discussion" released September 3, 2003.
+XEmacs 21.4.14 ``Reasonable Discussion'' released September 3, 2003.
 @item
-XEmacs 21.4.15 "Security Through Obscurity" released February 2, 2004.
+XEmacs 21.4.15 ``Security Through Obscurity'' released February 2, 2004.
 @item
-XEmacs 21.4.16 "Successful IPO" released December 5, 2004.
+XEmacs 21.4.16 ``Successful IPO'' released December 5, 2004.
 @item
-version 21.5.0 "alfalfa" released April 18, 2001.
+version 21.5.0 ``alfalfa'' released April 18, 2001.
 @item
-version 21.5.1 "anise" released May 9, 2001.
+version 21.5.1 ``anise'' released May 9, 2001.
 @item
-version 21.5.2 "artichoke" released July 28, 2001.
+version 21.5.2 ``artichoke'' released July 28, 2001.
 @item
-version 21.5.3 "asparagus" released September 7, 2001.
+version 21.5.3 ``asparagus'' released September 7, 2001.
 @item
-version 21.5.4 "bamboo" released January 8, 2002.
+version 21.5.4 ``bamboo'' released January 8, 2002.
 @item
-version 21.5.5 "beets" released March 5, 2002.
+version 21.5.5 ``beets'' released March 5, 2002.
 @item
-version 21.5.6 "bok choi" released April 5, 2002.
+version 21.5.6 ``bok choi'' released April 5, 2002.
 @item
-version 21.5.7 "broccoflower" released July 2, 2002.
+version 21.5.7 ``broccoflower'' released July 2, 2002.
 @item
-version 21.5.8 "broccoli" released July 27, 2002.
+version 21.5.8 ``broccoli'' released July 27, 2002.
 @item
-version 21.5.9 "brussels sprouts" released August 30, 2002.
+version 21.5.9 ``brussels sprouts'' released August 30, 2002.
 @item
-version 21.5.10 "burdock" released January 4, 2003.
+version 21.5.10 ``burdock'' released January 4, 2003.
 @item
-version 21.5.11 "cabbage" released February 16, 2003.
+version 21.5.11 ``cabbage'' released February 16, 2003.
 @item
-version 21.5.12 "carrot" released April 24, 2003.
+version 21.5.12 ``carrot'' released April 24, 2003.
 @item
-version 21.5.13 "cauliflower" released May 10, 2003.
+version 21.5.13 ``cauliflower'' released May 10, 2003.
 @item
-version 21.5.14 "cassava" released June 1, 2003.
+version 21.5.14 ``cassava'' released June 1, 2003.
 @item
-version 21.5.15 "celery" released September 3, 2003.
+version 21.5.15 ``celery'' released September 3, 2003.
 @item
-version 21.5.16 "celeriac" released September 26, 2003.
+version 21.5.16 ``celeriac'' released September 26, 2003.
 @item
-version 21.5.17 "chayote" released March 22, 2004.
+version 21.5.17 ``chayote'' released March 22, 2004.
 @item
-version 21.5.18 "chestnut" released October 22, 2004.
+version 21.5.18 ``chestnut'' released October 22, 2004.
 @end itemize
 
 @node The XEmacs Split, XEmacs from the Outside, A History of Emacs, Top
@@ -2153,7 +2157,7 @@ fact there have been six to seven major attempts at merging, each running
 hundreds of messages long and all of them coming from the XEmacs side. All
 have failed because they have eventually come to the same conclusion, which
 is that RMS has no real interest in cooperation at all. If you work with
-him, you have to do it his way -- "my way or the highway".  Specifically:
+him, you have to do it his way -- ``my way or the highway''.  Specifically:
 
 @enumerate
 @item 
@@ -4048,8 +4052,8 @@ Hiragana characters.
 @end display
 
 Then, the problem is that now we can't say that a sequence of
-word-constituents makes up a word.  For instance, both Hiragana "A"
-and Kanji "KAN" are word-constituents but the sequence of these two
+word-constituents makes up a word.  For instance, both Hiragana ``A''
+and Kanji ``KAN'' are word-constituents but the sequence of these two
 letters can't be a single word.
 
 So, we introduced Sextword for Japanese letters.
@@ -5008,7 +5012,7 @@ Any header-file declarations of the sort
 
 struct foobar;
 
-go into the "types" section of lisp.h.
+go into the ``types'' section of @file{lisp.h}.
 @end itemize
 
 @node Writing New Modules, Working with Lisp Objects, Introduction to Writing C Code, Rules When Writing New C Code
@@ -5666,7 +5670,7 @@ paragraph.  Whenever you work on a section of code, @emph{always} make
 sure to update any comments to be correct -- or, at the very least, flag
 them as incorrect.
 
-To indicate a "todo" or other problem, use four pound signs --
+To indicate a ``todo'' or other problem, use four pound signs --
 i.e. @samp{####}.
 
 @node Adding Global Lisp Variables, Writing Macros, Writing Good Comments, Rules When Writing New C Code
@@ -5851,7 +5855,7 @@ The three golden rules of macros:
 Anything that's an lvalue can be evaluated more than once.
 @item
 Macros where anything else can be evaluated more than once should
-have the word "unsafe" in their name (exceptions may be made for
+have the word ``unsafe'' in their name (exceptions may be made for
 large sets of macros that evaluate arguments of certain types more
 than once, e.g. struct buffer * arguments, when clearly indicated in
 the macro documentation).  These macros are generally meant to be
@@ -5883,7 +5887,7 @@ functions, e.g. directly modifying arguments as if they were passed by
 reference.
 @item
 Capitalize macros that evaluate @strong{any} argument more than once regardless
-of whether that's "allowed" (e.g. buffer arguments).
+of whether that's ``allowed'' (e.g. buffer arguments).
 @item
 Capitalize macros that directly access a field in a Lisp_Object or
 its equivalent underlying structure.  In such cases, access through the
@@ -5938,8 +5942,8 @@ disagree with such changes, and certainly if done without good reason
 will just lead to headaches.  But it's important to keep the code clean
 and understandable, and consistent naming goes a long way towards this.
 
-An example of the right way to do this was the so-called "great integral
-type renaming".
+An example of the right way to do this was the so-called ``great integral
+type renaming''.
 
 @menu
 * Great Integral Type Renaming::  
@@ -5966,13 +5970,13 @@ All integral types that measure quantities of anything are signed.  Some
 people disagree vociferously with this, but their arguments are mostly
 theoretical, and are vastly outweighed by the practical headaches of
 mixing signed and unsigned values, and more importantly by the far
-increased likelihood of inadvertent bugs: Because of the broken "viral"
+increased likelihood of inadvertent bugs: Because of the broken ``viral''
 nature of unsigned quantities in C (operations involving mixed
 signed/unsigned are done unsigned, when exactly the opposite is nearly
 always wanted), even a single error in declaring a quantity unsigned
 that should be signed, or even the even more subtle error of comparing
 signed and unsigned values and forgetting the necessary cast, can be
-catastrophic, as comparisons will yield wrong results.  -Wsign-compare
+catastrophic, as comparisons will yield wrong results.  @samp{-Wsign-compare}
 is turned on specifically to catch this, but this tends to result in a
 great number of warnings when mixing signed and unsigned, and the casts
 are annoying.  More has been written on this elsewhere.
@@ -5991,17 +5995,17 @@ so), with the first letter capitalized and no underscores if they can at
 all be avoided.
 
 @item
-"count" == a zero-based measurement of some quantity.  Includes sizes,
+``count'' == a zero-based measurement of some quantity.  Includes sizes,
 offsets, and indexes.
 
 @item
-"bpos" == a one-based measurement of a position in a buffer.  "Charbpos"
-and "Bytebpos" count text in the buffer, rather than bytes in memory;
+``bpos'' == a one-based measurement of a position in a buffer.  ``Charbpos''
+and ``Bytebpos'' count text in the buffer, rather than bytes in memory;
 thus Bytebpos does not directly correspond to the memory representation.
-Use "Membpos" for this.
+Use ``Membpos'' for this.
 
 @item
-"Char" refers to internal-format characters, not to the C type "char",
+``Char'' refers to internal-format characters, not to the C type ``char'',
 which is really a byte.
 @end itemize
 
@@ -6096,7 +6100,7 @@ comment about this type.  The changed code should now look like this:
 /* The have been some arguments over the what the type should be that
    specifies a count of bytes in a data block to be written out or read in,
    using @code{Lstream_read()}, @code{Lstream_write()}, and related functions.
-   Originally it was long, which worked fine; Martin "corrected" these to
+   Originally it was long, which worked fine; Martin ``corrected'' these to
    size_t and ssize_t on the grounds that this is theoretically cleaner and
    is in keeping with the C standards.  Unfortunately, this practice is
    horribly error-prone due to design flaws in the way that mixed
@@ -6471,7 +6475,7 @@ them.
 
 @deffn Macro Known-Bug-Expect-Failure body
 Arrange for failing tests in @var{body} to generate messages prefixed
-with "KNOWN BUG:" instead of "FAIL:".  @var{body} is a @code{progn}-like
+with ``KNOWN BUG:'' instead of ``FAIL:''.  @var{body} is a @code{progn}-like
 body, and may contain several tests.
 @end deffn
 
@@ -6652,7 +6656,7 @@ simply fail.  If you are less lucky, it will proceed, but make the
 adds and deletes on the main line, which you do not want at all.
 Therefore, you must undo all adds and deletes.  To find out what is
 added and deleted, use something like @code{cvs -n update >&! 
-cvs.out}, which does a "dry run". (You did make a backup copy first,
+cvs.out}, which does a ``dry run''. (You did make a backup copy first,
 right?  What if you forgot the @samp{-n}, for example, and wasn't
 prepared for the sudden onslaught of merging action?) Take a look at
 the output file @file{cvs.out} and check very carefully for newly
@@ -6684,7 +6688,7 @@ crw tag -b ben-mule-21-5
 
 Note that this doesn't actually do anything to your local workspace!
 It basically just creates another tag in the repository, identical to
-the branch point tag but internally marked as a "branch tag" rather
+the branch point tag but internally marked as a ``branch tag'' rather
 than a regular tag.
 
 @item
@@ -7018,13 +7022,13 @@ if it isn't big enough.  Dynarrs are extensively used in the redisplay
 mechanism.
 
 
-A "dynamic array" is a contiguous array of fixed-size elements where there
+A ``dynamic array'' is a contiguous array of fixed-size elements where there
 is no upper limit (except available memory) on the number of elements in the
 array.  Because the elements are maintained contiguously, space is used
 efficiently (no per-element pointers necessary) and random access to a
 particular element is in constant time.  At any one point, the block of memory
 that holds the array has an upper limit; if this limit is exceeded, the
-memory is realloc()ed into a new array that is twice as big.  Assuming that
+memory is @code{realloc()}ed into a new array that is twice as big.  Assuming that
 the time to grow the array is on the order of the new size of the array
 block, this scheme has a provably constant amortized time (i.e. average
 time over all additions).
@@ -7132,10 +7136,10 @@ is not much used in XEmacs currently, because it's a fairly new
 addition.
 
 
-A "block-type object" is used to efficiently allocate and free blocks
+A ``block-type object'' is used to efficiently allocate and free blocks
 of a particular size.  Freed blocks are remembered in a free list and
 are reused as necessary to allocate new blocks, so as to avoid as
-much as possible making calls to malloc() and free().
+much as possible making calls to @code{malloc()} and @code{free()}.
 
 This is a container object.  Declare a block-type object of a specific type
 as follows:
@@ -8277,7 +8281,7 @@ sit in some const space, and can therefore not be marked, see
 Now, the actual marking is feasible. We do so by once using the macro
 @code{MARK_RECORD_HEADER} to mark the object itself (actually the
 special flag in the lrecord header), and calling its special marker
-"method" @code{marker} if available. The marker method marks every
+``method'' @code{marker} if available. The marker method marks every
 other object that is in reach from our current object. Note, that these
 marker methods should not call @code{mark_object} recursively, but
 instead should return the next object from where further marking has to
@@ -8332,7 +8336,7 @@ After that, the other types are swept step by step using functions
 @code{sweep_symbols}, @code{sweep_extents}, @code{sweep_markers} and
 @code{sweep_extents}.  They are the fixed-size types cons, floats,
 compiled-functions, symbol, marker, extent, and event stored in
-so-called "frob blocks", and therefore we can basically do the same on
+so-called ``frob blocks'', and therefore we can basically do the same on
 every type objects, using the same macros, especially defined only to
 handle everything with respect to fixed-size blocks. The only fixed-size
 type that is not handled here are the fixed-size portion of strings,
@@ -10006,7 +10010,7 @@ the known region, we always cache the correct conversions for point,
 BEGV, and ZV, and in addition to this we cache 16 positions where the
 conversion is known.  We only look in the cache or update it when we
 need to move the known region more than a certain amount (currently 50
-chars), and then we throw away a "random" value and replace it with the
+chars), and then we throw away a ``random'' value and replace it with the
 newly calculated value.
 
 Finally, we maintain an extra flag that tracks whether the buffer is
@@ -10042,7 +10046,7 @@ Multiplying by 3 can be implemented by doubling and then adding the
 original value.  Dividing by 3, alas, cannot be implemented in any
 simple shift/subtract method, as far as I know; so we just do a table
 lookup.  For simplicity, we use a table of size 128K, which indexes the
-"divide-by-3" values for the first 64K non-negative numbers. (Note that
+``divide-by-3'' values for the first 64K non-negative numbers. (Note that
 we can increase the size up to 384K, i.e. indexing the first 192K
 non-negative numbers, while still using shorts in the array.) This also
 means that the size of the known region can be at most 64K for
@@ -10072,7 +10076,7 @@ the position of the gap
 @item
 the last value we computed
 @item
-a set of positions that are "far away" from previously computed positions
+a set of positions that are ``far away'' from previously computed positions
 (5000 chars currently; #### perhaps should be smaller)
 @end itemize
 
@@ -10098,7 +10102,7 @@ the simple loop in FSF with the use of @code{bytecount_to_charcount()},
 @code{charcount_to_bytecount_down()}. (The latter two I added for this purpose.) 
 These scan 4 or 8 bytes at a time through purely single-byte characters.
 
-If the amount we had to scan was more than our "far away" distance (5000
+If the amount we had to scan was more than our ``far away'' distance (5000
 characters, see above), then cache the new position.
 
 #### Things to do:
@@ -10108,7 +10112,7 @@ characters, see above), then cache the new position.
 Look at the most recent GNU Emacs to see whether anything has changed.
 @item
 Think about whether it makes sense to try to implement some sort of
-known region or list of "known regions", like we had before.  This would
+known region or list of ``known regions'', like we had before.  This would
 be a region of entirely single-byte characters that we can check very
 quickly. (Previously I used a range of same-width characters of any
 size; but this adds extra complexity and slows down the scanning, and is
@@ -10326,7 +10330,7 @@ In terms of reading the actual code, there are five optimizations
 
 @enumerate
 @item
-An explicit "failure stack" has been substituted for recursion.
+An explicit ``failure stack'' has been substituted for recursion.
 
 @item
 The @code{match_1_operator}, @code{next_p}, and @code{next_b} functions
@@ -10339,7 +10343,7 @@ sometimes implicit in the operations retrieving the context.
 
 @item
 Some cases are combined into short preparation for individual cases, and
-a "fall-through" into combined code for several cases.
+a ``fall-through'' into combined code for several cases.
 
 @item
 The @code{pattern} type is not an explicit @samp{struct}.  Instead, the
@@ -10358,7 +10362,7 @@ in @code{next_p}, because the compiled pattern is laid out
 @end example
 @end enumerate
 
-But if you keep your eye on the "switch in a loop" structure, you
+But if you keep your eye on the ``switch in a loop'' structure, you
 should be able to understand the parts you need.
 
 @node Multilingual Support, Consoles; Devices; Frames; Windows, Text, Top
@@ -10820,7 +10824,7 @@ each character is represented by a single byte, with the same value as
 its code point.  For more complicated charsets, however, things are not
 so obvious.  Unicode version 2, for example, is a large charset with
 thousands of characters, each indexed by a 16-bit number, often
-represented in hex, e.g. 0x05D0 for the Hebrew letter "aleph".  One
+represented in hex, e.g. 0x05D0 for the Hebrew letter ``aleph''.  One
 obvious encoding uses two bytes per character (actually two encodings,
 depending on which of the two possible byte orderings is chosen).  This
 encoding is convenient for internal processing of Unicode text; however,
@@ -10841,10 +10845,10 @@ In an ASCII or single-European-character-set world, life is very simple.
 There are 256 characters, and each character is represented using the
 numbers 0 through 255, which fit into a single byte.  With a few
 exceptions (such as case-changing operations or syntax classes like
-'whitespace'), "text" is simply an array of indices into a font.  You
+@code{whitespace}), ``text'' is simply an array of indices into a font.  You
 can get different languages simply by choosing fonts with different
 8-bit character sets (ISO-8859-1, -2, special-symbol fonts, etc.), and
-everything will "just work" as long as anyone else receiving your text
+everything will ``just work'' as long as anyone else receiving your text
 uses a compatible font.
 
 In the multi-lingual world, however, it is much more complicated.  There
@@ -10894,8 +10898,8 @@ in an external representation other than simple copying, because no
 assumptions can reliably be made about the format of this text.  You
 cannot assume, for example, that the end of text is terminated by a null
 byte. (For example, if the text is Unicode, it will have many null bytes
-in it.)  You cannot find the next "slash" character by searching through
-the bytes until you find a byte that looks like a "slash" character,
+in it.)  You cannot find the next ``slash'' character by searching through
+the bytes until you find a byte that looks like a ``slash'' character,
 because it might actually be the second byte of a Kanji character.
 Furthermore, all text in the internal representation must be converted,
 even if it is known to be completely ASCII, because the external
@@ -10925,7 +10929,7 @@ to convert to and from this encoding.  A facility exists to create coding
 system aliases, which in essence gives a single coding system two
 different names.  It is effectively used in XEmacs to provide a layer of
 abstraction on top of the actual coding systems.  For example, the coding
-system alias "file-name" points to whichever coding system is currently
+system alias ``file-name'' points to whichever coding system is currently
 used for encoding and decoding file names as passed to or retrieved from
 system calls.  In general, the actual encoding will differ from system to
 system, and also on the particular locale that the user is in.  The use
@@ -11436,8 +11440,8 @@ U = unsigned
 S = signed
 @end example
 
-(Formerly I had a comment saying that type (e) "should be replaced with
-void *".  However, there are in fact many places where an unsigned char
+(Formerly I had a comment saying that type (e) ``should be replaced with
+void *''.  However, there are in fact many places where an unsigned char
 * might be used -- e.g. for ease in pointer computation, since void *
 doesn't allow this, and for compatibility with external APIs.)
 
@@ -11458,8 +11462,8 @@ code that has not been properly Mule-ized yet.
 @cindex different ways of seeing internal text
 
 There are various ways of representing internal text.  The two primary
-ways are as an "array" of individual characters; the other is as a
-"stream" of bytes.  In the ASCII world, where there are only 255
+ways are as an ``array'' of individual characters; the other is as a
+``stream'' of bytes.  In the ASCII world, where there are only 255
 characters at most, things are easy because each character fits into a
 byte.  In general, however, this is not true -- see the above discussion
 of characters vs. encodings.
@@ -11467,12 +11471,12 @@ of characters vs. encodings.
 In some cases, it's also important to distinguish between a stream
 representation as a series of bytes and as a series of textual units.
 This is particularly important wrt Unicode.  The UTF-16 representation
-(sometimes referred to, rather sloppily, as simply the "Unicode" format)
+(sometimes referred to, rather sloppily, as simply the ``Unicode'' format)
 represents text as a series of 16-bit units.  Mostly, each unit
 corresponds to a single character, but not necessarily, as characters
-outside of the range 0-65535 (the BMP or "Basic Multilingual Plane" of
+outside of the range 0-65535 (the BMP or ``Basic Multilingual Plane'' of
 Unicode) require two 16-bit units, through the mechanism of
-"surrogates".  When a series of 16-bit units is serialized into a byte
+``surrogates''.  When a series of 16-bit units is serialized into a byte
 stream, there are at least two possible representations, little-endian
 and big-endian, and which one is used may depend on the native format of
 16-bit integers in the CPU of the machine that XEmacs is running
@@ -11489,10 +11493,10 @@ UTF-16 has 2-byte (16-bit) units.
 @item
 UTF-32 has 4-byte (32-bit) units.
 @item
-XEmacs-internal encoding (the old "Mule" encoding) has 1-byte (8-bit)
+XEmacs-internal encoding (the old ``Mule'' encoding) has 1-byte (8-bit)
 units.
 @item
-UTF-7 technically has 7-bit units that are within the "mail-safe" range
+UTF-7 technically has 7-bit units that are within the ``mail-safe'' range
 (ASCII 32 - 126 plus a few control characters), but normally is encoded
 in an 8-bit stream. (UTF-7 is also a modal encoding, since it has a
 normal mode where printable ASCII characters represent themselves and a
@@ -11557,7 +11561,7 @@ e.g. manipulating string objects or passing data to/from the clipboard.
 The data in a buffer or string is logically made up of Ibyte objects,
 where a Ibyte takes up the same amount of space as a char. (It is
 declared differently, though, to catch invalid usages.) Strings stored
-using Ibytes are said to be in "internal format".  The important
+using Ibytes are said to be in ``internal format''.  The important
 characteristics of internal format are
 
 @itemize @minus
@@ -11610,11 +11614,11 @@ This means that Ichar values are upwardly compatible with the standard
 8-bit representation of ASCII/ISO-8859-1.
 
 @item Extbyte
-Strings that go in or out of Emacs are in "external format", typedef'ed
+Strings that go in or out of Emacs are in ``external format'', typedef'ed
 as an array of char or a char *.  There is more than one external format
 (JIS, EUC, etc.) but they all have similar properties.  They are modal
 encodings, which is to say that the meaning of particular bytes is not
-fixed but depends on what "mode" the string is currently in (e.g. bytes
+fixed but depends on what ``mode'' the string is currently in (e.g. bytes
 in the range 0 - 0x7f might be interpreted as ASCII, or as Hiragana, or
 as 2-byte Kanji, depending on the current mode).  The mode starts out in
 ASCII/ISO-8859-1 and is switched using escape sequences -- for example,
@@ -11644,7 +11648,7 @@ There are three possible ways to specify positions in a buffer.  All
 of these are one-based: the beginning of the buffer is position or
 index 1, and 0 is not a valid position.
 
-As a "buffer position" (typedef Charbpos):
+As a ``buffer position'' (typedef Charbpos):
 
    This is an index specifying an offset in characters from the
    beginning of the buffer.  Note that buffer positions are
@@ -11653,7 +11657,7 @@ As a "buffer position" (typedef Charbpos):
    characters between those positions.  Buffer positions are the
    only kind of position externally visible to the user.
 
-As a "byte index" (typedef Bytebpos):
+As a ``byte index'' (typedef Bytebpos):
 
    This is an index over the bytes used to represent the characters
    in the buffer.  If there is no Mule support, this is identical
@@ -11663,7 +11667,7 @@ As a "byte index" (typedef Bytebpos):
    byte index may be greater than the corresponding buffer
    position.
 
-As a "memory index" (typedef Membpos):
+As a ``memory index'' (typedef Membpos):
 
    This is the byte index adjusted for the gap.  For positions
    before the gap, this is identical to the byte index.  For
@@ -11672,7 +11676,7 @@ As a "memory index" (typedef Membpos):
    position; the memory index at the beginning of the gap should
    always be used, except in code that deals with manipulating the
    gap, where both indices may be seen.  The address of the
-   character "at" (i.e. following) a particular position can be
+   character ``at'' (i.e. following) a particular position can be
    obtained from the formula
 
      buffer_start_address + memory_index(position) - 1
@@ -11781,7 +11785,7 @@ correct format and handle the gap.
 
 Some terminology:
 
-"itext" appearing in the macros means "internal-format text" -- type
+itext" appearing in the macros means "internal-format text" -- type
 @code{Ibyte *}.  Operations on such pointers themselves, rather than on the
 text being pointed to, have "itext" instead of "itext" in the macro
 name.  "ichar" in the macro names means an Ichar -- the representation
@@ -11990,7 +11994,7 @@ routines that way, but that required either
 @end itemize
 
 Turned out that all of the above had bugs, all caused by GCC (hence the
-comments about "those GCC wankers" and "ream gcc up the ass").  As for
+comments about ``those GCC wankers'' and ``ream gcc up the ass'').  As for
 (a), some versions of GCC (especially on Intel platforms), which had
 buggy implementations of @code{alloca()} that couldn't handle being called
 inside of a function call -- they just decremented the stack right in the
@@ -12973,7 +12977,7 @@ versions of the stdlib string functions.
 @item Extbyte, UExtbyte
 Pointer to text in some external format, which can be defined as all
 formats other than the internal one.  The data representing a string
-in "external" format (binary or any external encoding) is logically a
+in ``external'' format (binary or any external encoding) is logically a
 set of Extbytes.  Extbyte is guaranteed to be just a char, so for
 example strlen (Extbyte *) is OK.  Extbyte is only a documentation
 device for referring to external text.
@@ -13117,7 +13121,7 @@ proceed writing new Mule-aware code.
 @subsection Mule-izing Code
 
 A lot of code is written without Mule in mind, and needs to be made
-Mule-correct or "Mule-ized".  There is really no substitute for
+Mule-correct or ``Mule-ized''.  There is really no substitute for
 line-by-line analysis when doing this, but the following checklist can
 help:
 
@@ -13335,23 +13339,23 @@ Look in the CRT sources!  They come with VC++.  See win32.c.
 @end enumerate
 
 @node Locales, More about code pages, Microsoft Documentation, Microsoft Windows-Related Multilingual Issues
-@subsection Locales, code pages, and other concepts of "language"
-@cindex locales, code pages, and other concepts of "language"
+@subsection Locales, code pages, and other concepts of ``language''
+@cindex locales, code pages, and other concepts of ``language''
 
 First, make sure you clearly understand the difference between the C
 runtime library (CRT) and the Win32 API!  See win32.c.
 
 There are various different ways of representing the vague concept
-of "language", and it can be very confusing.  So:
+of ``language'', and it can be very confusing.  So:
 
 @itemize @bullet
 @item
-The CRT library has the concept of "locale", which is a
+The CRT library has the concept of ``locale'', which is a
 combination of language and country, and which controls the way
 currency and dates are displayed, the encoding of data, etc.
 
 @item
-XEmacs has the concept of "language environment", more or less
+XEmacs has the concept of ``language environment'', more or less
 like a locale; although currently in most cases it just refers to
 the language, and no sub-language distinctions are
 made. (Exceptions are with Chinese, which has different language
@@ -13363,23 +13367,23 @@ Windows has a number of different language concepts:
 
 @enumerate
 @item
-There are "languages" and "sublanguages", which correspond to
+There are ``languages'' and ``sublanguages'', which correspond to
 the languages and countries of the C library -- e.g. LANG_ENGLISH
 and SUBLANG_ENGLISH_US.  These are identified by 8-bit integers,
-called the "primary language identifier" and "sublanguage
-identifier", respectively.  These are combined into a 16-bit
-integer or "language identifier" by MAKELANGID().
+called the ``primary language identifier'' and ``sublanguage
+identifier'', respectively.  These are combined into a 16-bit
+integer or ``language identifier'' by @code{MAKELANGID()}.
 
 @item
-The language identifier in turn is combined with a "sort
-identifier" (and optionally a "sort version") to yield a 32-bit
-integer called a "locale identifier" (type LCID), which identifies
+The language identifier in turn is combined with a ``sort
+identifier'' (and optionally a ``sort version'') to yield a 32-bit
+integer called a ``locale identifier'' (type LCID), which identifies
 locales -- the primary means of distinguishing language/regional
 settings and similar to C library locales.
 
 @item
-A "code page" combines the XEmacs concepts of "charset" and "coding
-system".  It logically encompasses
+A ``code page'' combines the XEmacs concepts of ``charset'' and ``coding
+system''.  It logically encompasses
 
 @itemize @minus
 @item
@@ -13392,12 +13396,12 @@ supported
 a way of encoding a series of characters into a string of bytes
 @end itemize
 
-Note that the first two properties correspond to an XEmacs "charset"
-and the latter an XEmacs "coding system".
+Note that the first two properties correspond to an XEmacs ``charset''
+and the latter an XEmacs ``coding system''.
 
 Traditional encodings are either simple one-byte encodings, or
 combination one-byte/two-byte encodings (aka MBCS encodings, where MBCS
-stands for "Multibyte Character Set") with the following properties:
+stands for ``Multibyte Character Set'') with the following properties:
 
 @itemize @minus
 @item
@@ -13407,7 +13411,7 @@ the encoding is stateless (non-modal)
 @item
 the lower 128 bytes are compatible with ASCII
 @item
-in the higher bytes, the value of the first byte ("lead byte")
+in the higher bytes, the value of the first byte (``lead byte'')
 determines whether a second byte follows
 @item
 the values used for second bytes may overlap those used for first
@@ -13429,22 +13433,22 @@ international standard or some Microsoft-created approximation; the
 native code page under Windows), OEM (a DOS encoding, still used in the
 FAT file system), Mac (an encoding used on the Macintosh) and EBCDIC (a
 non-ASCII-compatible encoding used on IBM mainframes, originally based
-on the BCD or "binary-coded decimal" encoding of numbers).  All code
+on the BCD or ``binary-coded decimal'' encoding of numbers).  All code
 pages associated with a locale follow (as far as I know) the properties
 listed above for traditional code pages.  More than one locale can share
 a code page -- e.g. all the Western European languages, including
 English, do.
 
 @item
-Windows also has an "input locale identifier" (aka "keyboard
-layout id") or HKL, which is a 32-bit integer composed of the
-16-bit language identifier and a 16-bit "device identifier", which
+Windows also has an ``input locale identifier'' (aka ``keyboard
+layout id'') or HKL, which is a 32-bit integer composed of the
+16-bit language identifier and a 16-bit ``device identifier'', which
 originally specified a particular keyboard layout (e.g. the locale
-"US English" can have the QWERTY layout, the Dvorak layout, etc.),
+``US English'' can have the QWERTY layout, the Dvorak layout, etc.),
 but has been expanded to include speech-to-text converters and
 other non-keyboard ways of inputting text.  Note that both the HKL
 and LCID share the language identifier in the lower 16 bits, and in
-both cases a 0 in the upper 16 bits means "default" (sort order or
+both cases a 0 in the upper 16 bits means ``default'' (sort order or
 device), providing a way to convert between HKL's, LCID's, and
 language identifiers (i.e. language/sublanguage pairs).  The
 default keyboard layout for a language is (as far as I can
@@ -13462,7 +13466,7 @@ appears to be no way to do so on a per-language basis.
 @subsection More about code pages
 @cindex more about code pages
 
-Here is what MSDN says about code pages (article "Code Pages"):
+Here is what MSDN says about code pages (article ``Code Pages''):
 
 @quotation
 A code page is a character set, which can include numbers,
@@ -13504,10 +13508,10 @@ code page with _getmbcp and _setmbcp, respectively.
 which C programs have traditionally executed. The code page for the 
 "C" locale (code page) corresponds to the ASCII character
 set. For example, in the "C" locale, islower returns true for the
-values 0x61 ?0x7A only. In another locale, islower may return true
+values 0x61 to 0x7A only. In another locale, islower may return true
 for these as well as other values, as defined by that locale.
 
-Under "Locale-Dependent Routines" we notice the following setlocale
+Under ``Locale-Dependent Routines'' we notice the following setlocale
 dependencies:
 
 atof, atoi, atol (LC_NUMERIC)
@@ -13540,8 +13544,8 @@ wctomb (LC_CTYPE)
 _wtoi/_wtol (LC_NUMERIC)
 @end quotation
 
-NOTE: The above documentation doesn't clearly explain the "locale code
-page" and "multibyte code page".  These are two different values,
+NOTE: The above documentation doesn't clearly explain the ``locale code
+page'' and ``multibyte code page''.  These are two different values,
 maintained respectively in the CRT global variables __lc_codepage and
 __mbcodepage.  Calling e.g. setlocale (LC_ALL, "JAPANESE") sets @strong{ONLY}
 __lc_codepage to 932 (the code page for Japanese), and leaves
@@ -13551,12 +13555,12 @@ documentation which routines use which code page is not so obvious.  But:
 
 @itemize @bullet
 @item
-from "Interpretation of Multibyte-Character Sequences" it appears that
-all "multibyte-character routines" use the multibyte code page except for
-mblen(), _mbstrlen(), mbstowcs(), mbtowc(), wcstombs(), and wctomb().
+from ``Interpretation of Multibyte-Character Sequences'' it appears that
+all ``multibyte-character routines'' use the multibyte code page except for
+@code{mblen()}, @code{_mbstrlen()}, @code{mbstowcs()}, @code{mbtowc()}, @code{wcstombs()}, and @code{wctomb()}.
 
 @item
-from "_setmbcp": "The multibyte code page also affects
+from ``_setmbcp'': ``The multibyte code page also affects
 multibyte-character processing by the following run-time library
 routines: _exec functions _mktemp _stat _fullpath _spawn functions
 _tempnam _makepath _splitpath tmpnam.  In addition, all run-time library
@@ -13564,7 +13568,7 @@ routines that receive multibyte-character argv or envp program arguments
 as parameters (such as the _exec and _spawn families) process these
 strings according to the multibyte code page. Hence these routines are
 also affected by a call to _setmbcp that changes the multibyte code
-page."
+page.''
 @end itemize
 
 Summary: from looking at the CRT source (which comes with VC++) and
@@ -13572,15 +13576,15 @@ carefully looking through the docs, it appears that:
 
 @itemize @bullet
 @item
-the "locale code page" is used by all of the routines listed above
-under "Locale-Dependent Routines" (EXCEPT _mbccpy() and _mbclen()),
+the ``locale code page'' is used by all of the routines listed above
+under ``Locale-Dependent Routines'' (EXCEPT @code{_mbccpy()} and @code{_mbclen()}),
 as well as any other place that converts between multibyte and Unicode
 strings, e.g. the startup code.
 @item
-the "multibyte code page" is used in all of the *mb*() routines
-except mblen(), _mbstrlen(), mbstowcs(), mbtowc(), wcstombs(),
-and wctomb(); also _exec*(), _spawn*(), _mktemp(), _stat(), _fullpath(),
-_tempnam(), _makepath(), _splitpath(), tmpnam(), and similar functions
+the ``multibyte code page'' is used in all of the @code{mb*()} routines
+except @code{mblen()}, @code{_mbstrlen()}, @code{mbstowcs()}, @code{mbtowc()}, @code{wcstombs()},
+and @code{wctomb()}; also @code{_exec*()}, @code{_spawn*()}, @code{_mktemp()}, @code{_stat()}, @code{_fullpath()},
+@code{_tempnam()}, @code{_makepath()}, @code{_splitpath()}, @code{tmpnam()}, and similar functions
 without the leading underscore.
 @end itemize
 
@@ -13593,16 +13597,16 @@ defines various locales:
 
 @itemize @bullet
 @item
-The system-default locale is the locale defined under "Language
-settings for the system" in the "Regional Options" control panel.  This
+The system-default locale is the locale defined under ``Language
+settings for the system'' in the ``Regional Options'' control panel.  This
 is NOT user-specific, and changing it requires a reboot (at least under
 Windows 2000).  The ANSI code page of the system-default locale is
-returned by GetACP(), and you can specify this code page in calls
+returned by @code{GetACP()}, and you can specify this code page in calls
 e.g. to MultiByteToWideChar with the constant CP_ACP.
 
 @item
-The user-default locale is the locale defined under "Settings for the
-current user" in the "Regional Options" control panel.
+The user-default locale is the locale defined under ``Settings for the
+current user'' in the ``Regional Options'' control panel.
 
 @item
 There is a thread-local locale set by SetThreadLocale. #### What is this
@@ -13610,11 +13614,11 @@ used for?
 @end itemize
 
 The Win32 API has a bunch of multibyte functions -- all of those that
-end with ...A(), and on which we spend so much effort in
+end with ...@code{A()}, and on which we spend so much effort in
 intl-encap-win32.c.  These appear to ALWAYS use the ANSI code page of
-the system-default locale (GetACP(), CP_ACP).  Note that this applies
+the system-default locale (@code{GetACP()}, CP_ACP).  Note that this applies
 also, for example, to the encoding of filenames in all file-handling
-routines, including the CRT ones such as open(), because they pass their
+routines, including the CRT ones such as @code{open()}, because they pass their
 args unchanged to the Win32 API.
 
 @node Unicode support under Windows, The golden rules of writing Unicode-safe code, More about locales, Microsoft Windows-Related Multilingual Issues
@@ -13632,20 +13636,20 @@ the Win32 API itself probably (perhaps always) uses Unicode internally.
 
 Under Windows there are two different versions of all library routines that
 accept or return text, those that handle Unicode text and those handling
-"multibyte" text, i.e. variable-width ASCII-compatible text in some
+``multibyte'' text, i.e. variable-width ASCII-compatible text in some
 national format such as EUC or Shift-JIS.  Because Windows 95 basically
 doesn't support Unicode but Windows NT does, and Microsoft doesn't provide
 any way of writing a single binary that will work on both systems and still
 use Unicode when it's available (although see below, Microsoft Layer for
 Unicode), we need to provide a way of run-time conditionalizing so you
-could have one binary for both systems.  "Unicode-splitting" refers to
+could have one binary for both systems.  ``Unicode-splitting'' refers to
 writing code that will handle this properly.  This means using
 Qmswindows_tstr as the external conversion format, calling the appropriate
 qxe...() Unicode-split version of library functions, and doing other things
-in certain cases, e.g. when a qxe() function is not present.
+in certain cases, e.g. when a @code{qxe()} function is not present.
 
 Unicode support also requires that the various Windows APIs be
-"Unicode-encapsulated", so that they automatically call the ANSI or
+``Unicode-encapsulated'', so that they automatically call the ANSI or
 Unicode version of the API call appropriately and handle the size
 differences in structures.  What this means is:
 
@@ -13653,7 +13657,7 @@ differences in structures.  What this means is:
 @item
 first, note that Windows already provides a sort of encapsulation
 of all APIs that deal with text.  All such APIs are underlyingly
-provided in two versions, with an A or W suffix (ANSI or "wide"
+provided in two versions, with an A or W suffix (ANSI or ``wide''
 i.e. Unicode), and the compile-time constant UNICODE controls which is
 selected by the unsuffixed API.  Same thing happens with structures, and
 also with types, where the generic types have names beginning with T --
@@ -13672,7 +13676,7 @@ such an API available internally.)
 @item
 what we do is provide an encapsulation of each standard Windows API call
 that is split into A and W versions.  current theory is to avoid all
-preprocessor games; so we name the function with a prefix -- "qxe"
+preprocessor games; so we name the function with a prefix -- ``qxe''
 currently -- and require callers to use the prefixed name.  Callers need
 to explicitly use the W version of all structures, and convert text
 themselves using Qmswindows_tstr.  the qxe encapsulated version will
@@ -13732,8 +13736,8 @@ with it.  until our library is really complete and bug-free, we should
 think twice before doing this.
 
 According to Microsoft documentation, only the following functions are
-provided under Windows 9x to support Unicode (see MSDN page "Windows
-95/98/Me General Limitations"):
+provided under Windows 9x to support Unicode (see MSDN page ``Windows
+95/98/Me General Limitations''):
 
 EnumResourceLanguagesW
 EnumResourceNamesW
@@ -13754,8 +13758,8 @@ MultiByteToWideChar
 TextOutW
 WideCharToMultiByte
 
-also maybe GetTextExtentExPoint? (KB Q125671 "Unicode Functions Supported
-by Windows 95")
+also maybe GetTextExtentExPoint? (KB Q125671 ``Unicode Functions Supported
+by Windows 95'')
 
 Q210341 says this in addition:
 
@@ -13780,7 +13784,7 @@ range beyond the 256 limitation of a one-byte representation.
 The Unicode standard offers application developers an opportunity to
 work with text without the limitations of character set based
 systems. For more information on the Unicode standard see the
-"References" section of this article. Windows NT is a fully Unicode
+References" section of this article. Windows NT is a fully Unicode
 capable operating system so it may be desirable to write software that
 supports Unicode on Windows 95.
 
@@ -13863,12 +13867,12 @@ to the CRT sources, as the docs are not very clear on this):
 wmain() is completely supported, and appropriate Unicode-formatted argv
 and envp will always be passed.
 @item
-Likewise, wWinMain() is completely supported. (NOTE: The docs are not at
+Likewise, @code{wWinMain()} is completely supported. (NOTE: The docs are not at
 all clear on how these various entry points interact, and implies that
-a windows-subsystem program "must" use WinMain(), while a console-
-subsystem program "must" use main(), and a program compiled with UNICODE
-(which we don't, see above) "must" use the w*() versions, while a program
-not compiled this way "must" use the plain versions.  In fact it appears
+a windows-subsystem program ``must'' use @code{WinMain()}, while a console-
+subsystem program ``must'' use @code{main()}, and a program compiled with UNICODE
+(which we don't, see above) ``must'' use the @code{w*()} versions, while a program
+not compiled this way ``must'' use the plain versions.  In fact it appears
 that the CRT provides four different compiler entry points, namely
 w?(main|WinMain)CRTStartup, and we simply choose the one we like using
 the appropriate link flag.
@@ -17890,69 +17894,72 @@ Here is an ASCII diagram:
 | ###################################################################### |
 | #                               toolbar                              # |
 | #--------------------------------------------------------------------# |
-| #  |                            gutter                            |  # |
-| #  |--------------------------------------------------------------|  # |
-| #  | |                  internal border width                   | |  # |
-| #  | | ******************************************************** | |  # |
-|w#  | | *                         |s|v*                      |s* | |  #w|
-|i#  | | *                         |c|e*                      |c* | |  #i|
-|n#  | | *                         |r|r*                      |r* | |  #n|
-|d#  | | *                         |o|t*                      |o* | |  #d|
-|o#  | | *        text area        |l|.*      text area       |l* | |  #o|
-|w#  | |i*                         |l| *                      |l*i| |  #w|
-|-#  | |n*                         |b|d*                      |b*n| |  #-|
-|m#  | |t*                         |a|i*                      |a*t| |  #m|
-|a#  | |.*                         |r|v*                      |r*.| |  #a|
-|n# t| | *-------------------------+-|i*----------------------+-* | |t #n|
-|a# o|g|b*        scrollbar        | |d*      scrollbar       | *b|g|o #a|
-|g# o|u|o*-------------------------+-|e*----------------------+-*o|u|o #g|
-|e# l|t|r*        modeline           |r*      modeline          *r|t|l #e|
-|r# b|t|d********************************************************d|t|b #r|
-| # a|e|e*   =..texttexttex....=   |s|v*                      |s*e|e|a # |
-|d# r|r|r*o m=..texttexttextt..=o m|c|e*                      |c*r|r|r #d|
-|e#  | | *u a=.exttexttextte...=u a|r|r*                      |r* | |  #e|
-|c#  | |w*t r=....texttexttex..=t r|o|t*                      |o*w| |  #c|
-|o#  | |i*s g=        etc.     =s g|l|.*      text area       |l*i| |  #o|
-|r#  | |d*i i=                 =i i|l| *                      |l*d| |  #r|
-|a#  | |t*d n=                 =d n|b|d*                      |b*t| |  #a|
-|t#  | |h*e  = inner text area =e  |a|i*                      |a*h| |  #t|
+| #  |                        internal border                       |  # |
+| #  | +----------------------------------------------------------+ |  # |
+| #  | |                          gutter                          | |  # |
+| #  | |-********************************************************-| |  # |
+|w#  | | *@|        scrollbar        |v*                      |s* | |  #w|
+|i#  | | *-+-------------------------|e*                      |c* | |  #i|
+|n#  | | *s|                         |r*                      |r* | |  #n|
+|d#  | | *c|                         |t*                      |o* | |  #d|
+|o#  | | *r|                         |.*      text area       |l* | |  #o|
+|w#  |i| *o|                         | *                      |l* |i|  #w|
+|-#  |n| *l|        text area        |d*                      |b* |n|  #-|
+|m#  |t| *l|                         |i*                      |a* |t|  #m|
+|a#  |e| *b|                         |v*                      |r* |e|  #a|
+|n# t|r| *a|                         |i*----------------------+-* |r|t #n|
+|a# o|n|g*r|                         |d*      scrollbar       |@*g|n|o #a|
+|g# o|a|u*-+-------------------------|e*----------------------+-*u|a|o #g|
+|e# l|l|t*        modeline           |r*      modeline          *t|l|l #e|
+|r# b| |t********************************************************t| |b #r|
+| # a|b|e*   =..texttexttex....=   |s|v*                      |s*e|b|a # |
+|d# r|o|r*o m=..texttexttextt..=o m|c|e*                      |c*r|o|r #d|
+|e#  |r| *u a=.exttexttextte...=u a|r|r*                      |r* |r|  #e|
+|c#  |d| *t r=....texttexttex..=t r|o|t*                      |o* |d|  #c|
+|o#  |e| *s g=        etc.     =s g|l|.*      text area       |l* |e|  #o|
+|r#  |r| *i i=                 =i i|l| *                      |l* |r|  #r|
+|a#  | | *d n=                 =d n|b|d*                      |b* | |  #a|
+|t#  | | *e  = inner text area =e  |a|i*                      |a* | |  #t|
 |i#  | | *   =                 =   |r|v*                      |r* | |  #i|
 |o#  | | *---===================---+-|i*----------------------+-* | |  #o|
-|n#  | | *        scrollbar        | |d*      scrollbar       | * | |  #n|
+|n#  | | *        scrollbar        |@|d*      scrollbar       |@* | |  #n|
 | #  | | *-------------------------+-|e*----------------------+-* | |  # |
 | #  | | *        modeline           |r*      modeline          * | |  # |
-| #  | | ******************************************************** | |  # |
-| #  | | *                        minibuffer                    * | |  # |
-| #  | | ******************************************************** | |  # |
-| #  | |                   internal border width                  | |  # |
-| #  |--------------------------------------------------------------|  # |
-| #  |                             gutter                           |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |                           gutter                         | |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |@*                       minibuffer                     *@| |  # |
+| #  | +-********************************************************-+ |  # |
+| #  |                         internal border                      |  # |
 | #--------------------------------------------------------------------# |
 | #                                toolbar                             # |
 | ###################################################################### |
 |                          window manager decoration                     |
 +------------------------------------------------------------------------+
 
-   # = boundary of client area; * = window boundaries, boundary of paned area
-   = = boundary of inner text area; . = inside margin area
+# = boundary of client area; * = window boundaries, boundary of paned area
+= = boundary of inner text area; . = inside margin area; @ = dead boxes
 @end example
 
-Note in particular what happens at the corners, where a "corner box"
+Note in particular what happens at the corners, where a ``corner box''
 occurs.  Top and bottom toolbars take precedence over left and right
 toolbars, extending out horizontally into the corner boxes.  Gutters
 work the same way.  The corner box where the scrollbars meet, however,
-is assigned to neither scrollbar, and is known as the "dead box"; it is
-an area that must be cleared specially.
+is assigned to neither scrollbar, and is known as the ``dead box''; it is
+an area that must be cleared specially.  There are similar dead boxes at
+the bottom-right and bottom-left corners where the minibuffer and
+left/right gutters meet, but there is currently a bug in that these dead
+boxes are not explicitly cleared and may contain junk.
 
 @node The Frame, The Non-Client Area, Intro to Window and Frame Geometry, Window and Frame Geometry
 @section The Frame
 
-The "top-level window area" is the entire area of a top-level window (or
-"frame").  The "client area" (a term from MS Windows) is the area of a
+The ``top-level window area'' is the entire area of a top-level window (or
+``frame'').  The ``client area'' (a term from MS Windows) is the area of a
 top-level window that XEmacs draws into and manages with redisplay.
 This includes the toolbar, scrollbars, gutters, dividers, text area,
 modeline and minibuffer.  It does not include the menubar, title or
-outer borders.  The "non-client area" is the area of a top-level window
+outer borders.  The ``non-client area'' is the area of a top-level window
 outside of the client area and includes the menubar, title and outer
 borders.  Internally, all frame coordinates are relative to the client
 area.
@@ -17969,7 +17976,7 @@ The outer layer is the window-manager decorations: The title and
 borders.  These are controlled by the window manager, a separate process
 that controls the desktop, the location of icons, etc.  When a process
 tries to create a window, the window manager intercepts this action and
-"reparents" the window, placing another window around it which contains
+``reparents'' the window, placing another window around it which contains
 the window decorations, including the title bar, outer borders used for
 resizing, etc.  The window manager also implements any actions involving
 the decorations, such as the ability to resize a window by dragging its
@@ -17979,12 +17986,12 @@ will lose them if they previously had any) and you will not be able to
 move or resize them.
 
 @item
-Inside of the window-manager decorations is the "shell", which is
+Inside of the window-manager decorations is the ``shell'', which is
 managed by the toolkit and widget libraries your program is linked with.
 The code in @file{*-x.c} uses the Xt toolkit and various possible widget
-libraries built on top of Xt, such as Motif, Athena, the "Lucid"
+libraries built on top of Xt, such as Motif, Athena, the ``Lucid''
 widgets, etc.  Another possibility is GTK (@file{*-gtk.c}), which implements
-both the toolkit and widgets.  Under Xt, the "shell" window is an
+both the toolkit and widgets.  Under Xt, the ``shell'' window is an
 EmacsShell widget, containing an EmacsManager widget of the same size,
 which in turn contains a menubar widget and an EmacsFrame widget, inside
 of which is the client area. (The division into EmacsShell and
@@ -18000,10 +18007,10 @@ Under Windows, the non-client area is managed by the window system.
 There is no division such as under X.  Part of the window-system API
 (@file{USER.DLL}) of Win32 includes functions to control the menubars, title,
 etc. and implements the move and resize behavior.  There @strong{is} an
-equivalent of the window manager, called the "shell", but it manages
+equivalent of the window manager, called the ``shell'', but it manages
 only the desktop, not the windows themselves.  The normal shell under
 Windows is @file{EXPLORER.EXE}; if you kill this, you will lose the bar
-containing the "Start" menu and tray and such, but the windows
+containing the ``Start'' menu and tray and such, but the windows
 themselves will not be affected or lose their decorations.
 
 
@@ -18012,14 +18019,14 @@ themselves will not be affected or lose their decorations.
 
 Inside of the client area is the toolbars, the gutters (where the buffer
 tabs are displayed), the minibuffer, the internal border width, and one
-or more non-overlapping "windows" (this is old Emacs terminology, from
+or more non-overlapping ``windows'' (this is old Emacs terminology, from
 before the time when frames existed at all; the standard terminology for
-this would be "pane").  Each window can contain a modeline, horizontal
+this would be ``pane'').  Each window can contain a modeline, horizontal
 and/or vertical scrollbars, and (for non-rightmost windows) a vertical
 divider, surrounding a text area.
 
 The dimensions of the toolbars and gutters are determined by the formula
-(THICKNESS + 2 * BORDER-THICKNESS), where "thickness" is a cover term
+(THICKNESS + 2 * BORDER-THICKNESS), where ``thickness'' is a cover term
 for height or width, as appropriate.  The height and width come from
 @code{default-toolbar-height} and @code{default-toolbar-width} and the specific
 versions of these (@code{top-toolbar-height}, @code{left-toolbar-width}, etc.).
@@ -18044,13 +18051,19 @@ same.
 @node The Paned Area, Text Areas, The Client Area, Window and Frame Geometry
 @section The Paned Area
 
-The area occupied by the "windows" is called the paned area.  Note that
-this includes the minibuffer, which is just another window but is
-special-cased in XEmacs.  Each window can include a horizontal and/or
-vertical scrollbar, a modeline and a vertical divider to its right, as
-well as the text area.  Only non-rightmost windows can include a
-vertical divider. (The minibuffer normally does not include either
-modeline or scrollbars.)
+The area occupied by the ``windows'' is called the paned area.
+Unfortunately, because of the presence of the gutter @strong{between} the
+minibuffer and other windows, the bottom of the paned area is not
+well-defined -- does it include the minibuffer (in which case it also
+includes the bottom gutter, but none others) or does it not include
+the minibuffer? (In which case not all windows are included.) It would
+be cleaner to put the bottom gutter @strong{below} the minibuffer instead of
+above it.
+
+Each window can include a horizontal and/or vertical scrollbar, a
+modeline and a vertical divider to its right, as well as the text area.
+Only non-rightmost windows can include a vertical divider. (The
+minibuffer normally does not include either modeline or scrollbars.)
 
 Note that, because the toolbars and gutters are controlled by
 specifiers, and specifiers can have window-specific and buffer-specific
@@ -18073,7 +18086,7 @@ controlled by specifiers, e.g. @code{has-modeline-p},
 
 In addition, it is possible to set margins in the text area using the
 specifiers @code{left-margin-width} and @code{right-margin-width}.  When this is
-done, only the "inner text area" (the area inside of the margins) will
+done, only the ``inner text area'' (the area inside of the margins) will
 be used for normal display of text; the margins will be used for glyphs
 with a layout policy of @code{outside-margin} (as set on an extent containing
 the glyph by @code{set-extent-begin-glyph-layout} or
@@ -18084,7 +18097,7 @@ as the begin-glyph or end-glyph of an extent (@code{set-extent-begin-glyph}
 etc.), using the left and right margins, respectively.
 
 Technically, the margins outside of the inner text area are known as the
-"outside margins".  The "inside margins" are in the inner text area and
+``outside margins''.  The ``inside margins'' are in the inner text area and
 constitute the whitespace between the outside margins and the first or
 last non-whitespace character in a line; their width can vary from line
 to line.  Glyphs will be placed in the inside margin if their layout
@@ -18099,31 +18112,36 @@ See the Lisp Reference manual, under Annotations, for more details.
 @node The Displayable Area, Which Functions Use Which?, Text Areas, Window and Frame Geometry
 @section The Displayable Area
 
-The "displayable area" is not so much an actual area as a convenient
+The ``displayable area'' is not so much an actual area as a convenient
 fiction.  It is the area used to convert between pixel and character
 dimensions for frames.  The character dimensions for a frame (e.g. as
 returned by @code{frame-width} and @code{frame-height} and set by
 @code{set-frame-width} and @code{set-frame-height}) are determined from the
 displayable area by dividing by the pixel size of the default font as
-instantiated in the frame. (For proportional fonts, the "average" width
+instantiated in the frame. (For proportional fonts, the ``average'' width
 is used.  Under Windows, this is a built-in property of the fonts.
 Under X, this is based on the width of the lowercase 'n', or if this is
 zero then the width of the default character. [We prefer 'n' to the
 specified default character because many X fonts have a default
 character with a zero or otherwise non-representative width.])
 
-The displayable area is essentially the "theoretical" paned area of the
-frame excluding the rightmost and bottom-most scrollbars.  In this
-context, "theoretical" means that all calculations on based on
-frame-level values for toolbar, gutter and scrollbar thicknesses.
-Because these thicknesses are controlled by specifiers, and specifiers
-can have window-specific and buffer-specific values, these calculations
-may or may not reflect the actual size of the paned area or of the
-scrollbars when any particular window is selected.  Note also that the
-"displayable area" may not even be contiguous!  In particular, if the
-frame-level value of the horizontal scrollbar height is non-zero, then
-the displayable area includes the paned area above and below the bottom
-horizontal scrollbar but not the scrollbar itself.
+The displayable area is essentially the ``theoretical'' gutter area of the
+frame, excluding the rightmost and bottom-most scrollbars.  That is, it
+starts from the client (or ``total'') area and then excludes the
+``theoretical'' toolbars and bottom-most/rightmost scrollbars, and the
+internal border width.  In this context, ``theoretical'' means that all
+calculations on based on frame-level values for toolbar and scrollbar
+thicknesses.  Because these thicknesses are controlled by specifiers,
+and specifiers can have window-specific and buffer-specific values,
+these calculations may or may not reflect the actual size of the paned
+area or of the scrollbars when any particular window is selected.  Note
+also that the ``displayable area'' may not even be contiguous!  In
+particular, the gutters are included, but the bottom-most and rightmost
+scrollbars are excluded even though they are inside of the gutters.
+Furthermore, if the frame-level value of the horizontal scrollbar height
+is non-zero, then the displayable area includes the paned area above and
+below the bottom horizontal scrollbar (i.e. the modeline and minibuffer)
+but not the scrollbar itself.
 
 As a further twist, the character-dimension calculations are adjusted so
 that the truncation and continuation glyphs (see @code{truncation-glyph} and
@@ -18136,7 +18154,7 @@ the result.) (The ultimate motivation for this kludge as well as the
 subtraction of the scrollbars, but not the minibuffer or bottom-most
 modeline, is to maintain compatibility with TTY's.)
 
-Despite all these concerns and kludges, however, the "displayable area"
+Despite all these concerns and kludges, however, the ``displayable area''
 concept works well in practice and mostly ensures that by default the
 frame will actually fit 79 characters + continuation/truncation glyph.
 
@@ -19785,7 +19803,7 @@ a SIGINT?   @code{emacs_Xt_next_event()}
 @cindex queues, event
 
 There are two event queues here -- the command event queue (#### which
-should be called "deferred event queue" and is in my glyph ws) and the
+should be called ``deferred event queue'' and is in my glyph ws) and the
 dispatch event queue. (MS Windows actually has an extra dispatch queue
 for non-user events and uses the generic one only for user events.  This
 is because user and non-user events in Windows come through the same
@@ -19890,7 +19908,7 @@ occur, such as redisplay not occurring until the next event occurs.
 XEmacs calls this with an event structure which contains window-system
 dependent information that XEmacs doesn't need to know about, but which
 must happen in order.  If the @code{next_event_cb} never returns an
-event of type "magic", this will never be used.
+event of type ``magic'', this will never be used.
 
 @item format_magic_event_cb
 Called with a magic event; print a representation of the innards of the
@@ -19922,7 +19940,7 @@ wakeup has already expired, this should do nothing.
 These callbacks tell the underlying implementation to add or remove a
 file descriptor from the list of fds which are polled for
 inferior-process input.  When input becomes available on the given
-process connection, an event of type "process" should be generated.
+process connection, an event of type ``process'' should be generated.
 
 @item select_console_cb
 @item unselect_console_cb
@@ -20050,7 +20068,7 @@ Not yet documented.
 Ben's capsule lecture on focus:
 
 In GNU Emacs @code{select-frame} never changes the window-manager frame
-focus.  All it does is change the "selected frame".  This is similar to
+focus.  All it does is change the ``selected frame''.  This is similar to
 what happens when we call @code{select-device} or @code{select-console}.
 Whenever an event comes in (including a keyboard event), its frame is
 selected; therefore, evaluating @code{select-frame} in @samp{*scratch*}
@@ -20085,8 +20103,8 @@ the frame with the minibuffer, and switch it back when you exit the
 minibuffer.
 
 GNU Emacs solves this with the crockish @code{redirect-frame-focus},
-which says "for keyboard events received from FRAME, act like they're
-coming from FOCUS-FRAME".  I think what this means is that, when a
+which says ``for keyboard events received from FRAME, act like they're
+coming from FOCUS-FRAME''.  I think what this means is that, when a
 keyboard event comes in and the event manager is about to select the
 event's frame, if that frame has its focus redirected, the redirected-to
 frame is selected instead.  That way, if you're in a minibufferless
@@ -20100,8 +20118,8 @@ from one frame to another if Lisp code explicitly calls
 @code{select-frame} (but not if @code{handle-switch-frame} is called),
 and saves and restores the frame focus in window configurations,
 etc. etc.  All of this logic is heavily @code{#if 0}'d, with lots of
-comments saying "No, this approach doesn't seem to work, so I'm trying
-this ...  is it reasonable?  Well, I'm not sure ..." that are a red flag
+comments saying ``No, this approach doesn't seem to work, so I'm trying
+this ...  is it reasonable?  Well, I'm not sure ...'' that are a red flag
 indicating crockishness.
 
 Because of our way of doing things, we can avoid all this crock.
@@ -24884,22 +24902,22 @@ defined subtypes for that coding system type along with a level of
 likelihood and a list of additional properties indicating certain
 features detected in the data. The extra properties returned are
 defined entirely by the particular coding system type and are used
-only in the algorithm described below under "user control." However,
+only in the algorithm described below under ``user control.'' However,
 the levels of likelihood have a standard meaning as follows:
 
-Level 4 means "near certainty" and typically indicates that a
+Level 4 means ``near certainty'' and typically indicates that a
 signature has been detected, usually at the beginning of the data,
 indicating that the data is encoded in this particular coding system
 type. An example of this would be the byte order mark at the beginning
 of UCS2 encoded data or the GZIP mark at the beginning of GZIP data.
 
-Level 3 means "highly likely" and indicates that tell-tale signs have
+Level 3 means ``highly likely'' and indicates that tell-tale signs have
 been discovered in the data that are characteristic of this particular
 coding system type. Examples of this might be ISO 2022 escape
 sequences or the current Unicode end of line markers at regular
 intervals.
 
-Level 2 means "strongly statistically likely" indicating that
+Level 2 means ``strongly statistically likely'' indicating that
 statistical analysis concludes that there's a high chance that this
 data is encoded according to this particular type. For example, this
 might mean that for UCS2 data, there is a high proportion of null bytes
@@ -24908,7 +24926,7 @@ high variance in the even-numbered bytes of the data. For Shift-JIS,
 this might indicate that there were no illegal Shift-JIS sequences
 and a fairly high occurrence of common Shift-JIS characters.
 
-Level 1 means "weak statistical likelihood" meaning that there is some
+Level 1 means ``weak statistical likelihood'' meaning that there is some
 indication that the data is encoded in this coding system type. In
 fact, there is a reasonable chance that it may be some other type as
 well. This means, for example, that no illegal sequences were
@@ -24916,17 +24934,17 @@ encountered and at least some data was encountered that is purposely
 not in other coding system types. For Shift-JIS data, this might mean
 that some bytes in the range 128 to 159 were encountered in the data.
 
-Level 0 means "neutral" which is to say that there's either not enough
+Level 0 means ``neutral'' which is to say that there's either not enough
 data to make any decision or that the data could well be interpreted
 as this type (meaning no illegal sequences), but there is little or no
 indication of anything particular to this particular type.
 
-Level -1 means "weakly unlikely" meaning that some data was
+Level -1 means ``weakly unlikely'' meaning that some data was
 encountered that could conceivably be part of the coding system type
 but is probably not. For example, successively long line-lengths or
 very rarely-encountered sequences.
 
-Level -2 means "strongly unlikely" meaning that typically a number
+Level -2 means ``strongly unlikely'' meaning that typically a number
 of illegal sequences were encountered.
 
 The algorithm to determine when to stop and indicate that the data has
@@ -24945,8 +24963,8 @@ associated with the Japanese coding system version of those
 subtypes). It is perfectly legal and quite common in fact, to list the
 same subtype more than once in the priority list with successively
 lower requirements. Other facts that can be listed in the priority
-list for a subtype are "reject", meaning that the data should never be
-detected as this subtype, or "ask", meaning that if the data is
+list for a subtype are ``reject'', meaning that the data should never be
+detected as this subtype, or ``ask'', meaning that if the data is
 detected to be this subtype, the user will be asked whether they
 actually mean this. This latter property could be used, for example,
 towards the bottom of the priority list.
@@ -24963,7 +24981,7 @@ likelihood will be prominently displayed either in the echo area or in
 a status box somewhere.
 
 If no positive match is found according to the priority list, or if
-the matches that are found have the "ask" property on them, then the
+the matches that are found have the ``ask'' property on them, then the
 user will be presented with a list of choices of possible encodings
 and asked to choose one. This list is typically sorted first by level
 of likelihood, and then within this, by the order in which the
@@ -24980,10 +24998,10 @@ which may be severe enough to stop the decoding entirely, and some of
 which may either indicate definitely malformed data but from which
 it's possible to recover, or simply data that appears rather
 questionable. If any of these status values are reported during
-decoding, the user will be informed of this and asked "are you sure?"
-As part of the "are you sure" dialog box or question, the user can
+decoding, the user will be informed of this and asked ``are you sure?''
+As part of the ``are you sure'' dialog box or question, the user can
 display the results of the decoding to make sure it's correct. If the
-user says "no, they're not sure," then the same list of choices as
+user says ``no, they're not sure,'' then the same list of choices as
 previously mentioned will be presented.
 
 @subheading RFC: Autodetection
@@ -25203,7 +25221,7 @@ Unicode and general locales; multilingual use
 @item
 Hopefully a system general enough to handle (2)--(4) will
 handle these, too, but we should watch out for gotchas like
-Unicode "plane 14" tags which (I think _both_ Ben and Olivier
+Unicode ``plane 14'' tags which (I think _both_ Ben and Olivier
 will agree) have no place in the internal representation, and
 thus must be treated as out-of-band control sequences.  I
 don't know if all such gotchas will be as easy to dispose of.
@@ -25244,7 +25262,7 @@ sly, it can't be perfect if any autodecoding is done;
 like Hrvoje should have an easily available option to
  to this default (or an optimized approximation which
 t actually read the whole file into a buffer) or simply
-y everything as binary (with the "font" for binary files
+y everything as binary (with the ``font'' for binary files
 a user option).
 
 @item
@@ -25353,7 +25371,7 @@ Date: 11/1/1999 7:24 AM
 
 Stephen, thank you very much for writing this up.  I think it is a good start,
 and definitely moving in the direction I would like to see things going: more
-proposals, less arguing. (aka "more light, less heat") However, I have some
+proposals, less arguing. (aka ``more light, less heat'') However, I have some
 suggestions for cleaning this up:
 
 You should try to make it more layered.  For example, you might have one

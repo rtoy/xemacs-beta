@@ -650,7 +650,7 @@ a buffer or the name of a buffer, in which case the buffer's process is
 used.  If it is @code{nil}, the current buffer's process is used.
 
 Optional arguments @var{start} and @var{end} specify part of @var{string};
-see @code{substring}.
+see @code{subseq}.
 
   The function returns @code{nil}.
 

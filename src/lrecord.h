@@ -645,12 +645,10 @@ void tick_lrecord_stats (const struct lrecord_header *h,
    doesn't care about the dumper flag and makes use of some of the stuff
    normally omitted from the "abbreviated" description -- see above.
 
-   A memory_description is an array of values. (This is actually
-   misnamed, in that it does not just describe lrecords, but any
-   blocks of memory.) The first value of each line is a type, the
-   second the offset in the lrecord structure.  The third and
-   following elements are parameters; their presence, type and number
-   is type-dependent.
+   A memory_description is an array of values.  The first value of each
+   line is a type, the second the offset in the lrecord structure.  The
+   third and following elements are parameters; their presence, type and
+   number is type-dependent.
 
    The description ends with an "XD_END" record.
 
