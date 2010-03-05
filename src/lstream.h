@@ -230,7 +230,7 @@ typedef struct lstream_implementation
 
 struct lstream
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   const Lstream_implementation *imp; /* methods for this stream */
   Lstream_buffering buffering; /* type of buffering in use */
   Bytecount buffering_size; /* number of bytes buffered */

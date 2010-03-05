@@ -660,7 +660,7 @@ DECLARE_LISP_OBJECT (magic_data, Lisp_Magic_Data);
 
 struct Lisp_Timeout
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   int id; /* Id we use to identify the timeout over its lifetime */
   int interval_id; /* Id for this particular interval; this may
                       be different each time the timeout is
@@ -1117,7 +1117,7 @@ void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
  */
 struct command_builder
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object console; /* back pointer to the console this command
                           builder is for */
 #if 0

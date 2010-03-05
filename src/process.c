@@ -176,11 +176,11 @@ extern void debug_process_finalization (Lisp_Process *p);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 static void
-finalize_process (void *header)
+finalize_process (Lisp_Object obj)
 {
   /* #### this probably needs to be tied into the tty event loop */
   /* #### when there is one */
-  Lisp_Process *p = (Lisp_Process *) header;
+  Lisp_Process *p = XPROCESS (obj);
 #ifdef HAVE_WINDOW_SYSTEM
   debug_process_finalization (p);
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -465,7 +465,7 @@ make_process_internal (Lisp_Object name)
 {
   Lisp_Object name1;
   int i;
-  Lisp_Object obj = ALLOC_LISP_OBJECT (process);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (process);
   Lisp_Process *p = XPROCESS (obj);
 
 #define MARKED_SLOT(x)	p->x = Qnil;

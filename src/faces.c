@@ -399,7 +399,7 @@ reset_face (Lisp_Face *f)
 static Lisp_Face *
 allocate_face (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (face);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (face);
   Lisp_Face *result = XFACE (obj);
 
   reset_face (result);

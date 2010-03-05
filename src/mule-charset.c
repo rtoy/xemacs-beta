@@ -1,7 +1,7 @@
 /* Functions to handle multilingual characters.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -195,7 +195,7 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
 
   if (!overwrite)
     {
-      obj = ALLOC_LISP_OBJECT (charset);
+      obj = ALLOC_NORMAL_LISP_OBJECT (charset);
       cs = XCHARSET (obj);
 
       if (final)
@@ -999,9 +999,8 @@ static void
 compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 		      struct overhead_stats *ovstats)
 {
-  struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-  stats->other   += LISP_OBJECT_STORAGE_SIZE (c, sizeof (*c), ovstats);
+  stats->other   += lisp_object_storage_size (charset, ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }

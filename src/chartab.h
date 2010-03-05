@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Char_Table_Entry
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* In the interests of simplicity, we just use a fixed 96-entry
      table.  If we felt like being smarter, we could make this
@@ -80,7 +80,7 @@ enum char_table_type
 
 struct Lisp_Char_Table
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object ascii[NUM_ASCII_CHARS];
   Lisp_Object default_;

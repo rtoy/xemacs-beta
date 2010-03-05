@@ -477,7 +477,7 @@ fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
       if (!EQ (ct->level1[i], Qnull_pointer) &&
 	  CHAR_TABLE_ENTRYP (ct->level1[i]) &&
 	  !OBJECT_DUMPED_P (ct->level1[1]))
-	FREE_LISP_OBJECT (ct->level1[i]);
+	free_normal_lisp_object (ct->level1[i]);
       ct->level1[i] = value;
     }
 #endif /* MULE */
@@ -596,7 +596,7 @@ sorts of values.  The different char table types are
 */
        (type))
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (char_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   enum char_table_type ty = symbol_to_char_table_type (type);
 
@@ -630,7 +630,7 @@ static Lisp_Object
 make_char_table_entry (Lisp_Object initval)
 {
   int i;
-  Lisp_Object obj = ALLOC_LISP_OBJECT (char_table_entry);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table_entry);
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
 
   for (i = 0; i < 96; i++)
@@ -644,7 +644,7 @@ copy_char_table_entry (Lisp_Object entry)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
   int i;
-  Lisp_Object obj = ALLOC_LISP_OBJECT (char_table_entry);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table_entry);
   Lisp_Char_Table_Entry *ctenew = XCHAR_TABLE_ENTRY (obj);
 
   for (i = 0; i < 96; i++)
@@ -675,7 +675,7 @@ as CHAR-TABLE.  The values will not themselves be copied.
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
   assert(!ct->mirror_table_p);
-  obj = ALLOC_LISP_OBJECT (char_table);
+  obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
   ctnew = XCHAR_TABLE (obj);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
@@ -1071,7 +1071,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
 	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]) &&
 	      !OBJECT_DUMPED_P (ct->level1[lb]))
-	    FREE_LISP_OBJECT (ct->level1[lb]);
+	    free_normal_lisp_object (ct->level1[lb]);
 	  ct->level1[lb] = val;
 	}
       break;

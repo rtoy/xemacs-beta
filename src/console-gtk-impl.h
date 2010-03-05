@@ -50,7 +50,7 @@ DECLARE_CONSOLE_TYPE (gtk);
 struct gtk_device
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* Gtk application info. */
   GtkWidget *gtk_app_shell;
@@ -144,7 +144,7 @@ DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 struct gtk_frame
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame. */

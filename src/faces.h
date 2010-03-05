@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Face
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object name;
   Lisp_Object doc_string;
@@ -119,7 +119,7 @@ typedef struct face_cachel face_cachel;
 struct face_cachel
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former

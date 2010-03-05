@@ -589,7 +589,7 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
 #else /* not NEW_GC */
 #define GC_CHECK_NOT_FREE(lheader)					\
       gc_checking_assert (! LRECORD_FREE_P (lheader));			\
-      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
+      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->frob_block_p ||	\
 			  ! ((struct old_lcrecord_header *) lheader)->free)
 #endif /* not NEW_GC */
 

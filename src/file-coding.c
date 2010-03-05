@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -318,20 +318,19 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_coding_system (void *header)
+finalize_coding_system (Lisp_Object obj)
 {
-  Lisp_Object cs = wrap_coding_system ((Lisp_Coding_System *) header);
   /* Since coding systems never go away, this function is not
      necessary.  But it would be necessary if we changed things
      so that coding systems could go away. */
-  MAYBE_XCODESYSMETH (cs, finalize, (cs));
+  MAYBE_XCODESYSMETH (obj, finalize, (obj));
 }
 #endif /* not NEW_GC */
 
 static Bytecount
-sizeof_coding_system (const void *header)
+sizeof_coding_system (Lisp_Object obj)
 {
-  const Lisp_Coding_System *p = (const Lisp_Coding_System *) header;
+  const Lisp_Coding_System *p = XCODING_SYSTEM (obj);
   return offsetof (Lisp_Coding_System, data) + p->methods->extra_data_size;
 }
 
@@ -1448,12 +1447,8 @@ Use `define-coding-system-alias' instead.
     invalid_operation_2 ("Coding systems not same type",
 			 old_coding_system, new_coding_system);
 
-  {
-    Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
-    Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-    COPY_SIZED_LISP_OBJECT (to, from, sizeof_coding_system (from));
-    to->name = new_name;
-  }
+  copy_lisp_object (new_coding_system, old_coding_system);
+  XCODING_SYSTEM (new_coding_system)->name = new_name;
   return new_coding_system;
 }
 

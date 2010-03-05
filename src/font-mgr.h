@@ -54,38 +54,38 @@ extern Fixnum debug_xft;
 
 struct fc_pattern
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   FcPattern *fcpatPtr;
 };
 
 typedef struct fc_pattern fc_pattern;
 
 DECLARE_LISP_OBJECT(fc_pattern, struct fc_pattern);
-#define XFCPATTERN(x) XRECORD (x, fc_pattern, struct fc_pattern)
-#define wrap_fcpattern(p) wrap_record (p, fc_pattern)
-#define FCPATTERNP(x) RECORDP (x, fc_pattern)
-#define CHECK_FCPATTERN(x) CHECK_RECORD (x, fc_pattern)
-#define CONCHECK_FCPATTERN(x) CONCHECK_RECORD (x, fc_pattern)
-#define XFCPATTERN_PTR(x) (XFCPATTERN(x)->fcpatPtr)
+#define XFC_PATTERN(x) XRECORD (x, fc_pattern, struct fc_pattern)
+#define wrap_fc_pattern(p) wrap_record (p, fc_pattern)
+#define FC_PATTERNP(x) RECORDP (x, fc_pattern)
+#define CHECK_FC_PATTERN(x) CHECK_RECORD (x, fc_pattern)
+#define CONCHECK_FC_PATTERN(x) CONCHECK_RECORD (x, fc_pattern)
+#define XFC_PATTERN_PTR(x) (XFC_PATTERN(x)->fcpatPtr)
 
 #define FONTCONFIG_EXPOSE_CONFIG
 #ifdef FONTCONFIG_EXPOSE_CONFIG
 
 struct fc_config
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   FcConfig *fccfgPtr;
 };
 
 typedef struct fc_config fc_config;
 
 DECLARE_LISP_OBJECT(fc_config, struct fc_config);
-#define XFCCONFIG(x) XRECORD (x, fc_config, struct fc_config)
-#define wrap_fcconfig(p) wrap_record (p, fc_config)
-#define FCCONFIGP(x) RECORDP (x, fc_config)
-#define CHECK_FCCONFIG(x) CHECK_RECORD (x, fc_config)
-#define CONCHECK_FCCONFIG(x) CONCHECK_RECORD (x, fc_config)
-#define XFCCONFIG_PTR(x) (XFCCONFIG(x)->fccfgPtr)
+#define XFC_CONFIG(x) XRECORD (x, fc_config, struct fc_config)
+#define wrap_fc_config(p) wrap_record (p, fc_config)
+#define FC_CONFIGP(x) RECORDP (x, fc_config)
+#define CHECK_FC_CONFIG(x) CHECK_RECORD (x, fc_config)
+#define CONCHECK_FC_CONFIG(x) CONCHECK_RECORD (x, fc_config)
+#define XFC_CONFIG_PTR(x) (XFC_CONFIG(x)->fccfgPtr)
 
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 

@@ -36,7 +36,7 @@ DECLARE_LISP_OBJECT (hash_table, Lisp_Hash_Table);
 typedef struct htentry
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER lheader;
+  NORMAL_LISP_OBJECT_HEADER lheader;
 #endif /* NEW_GC */  
   Lisp_Object key;
   Lisp_Object value;

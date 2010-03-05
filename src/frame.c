@@ -588,7 +588,7 @@ DEFINE_NODUMP_LISP_OBJECT ("frame", frame,
 static void
 nuke_all_frame_slots (struct frame *f)
 {
-  ZERO_LISP_OBJECT (f);
+  zero_nonsized_lisp_object (wrap_frame (f));
 
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
@@ -603,7 +603,7 @@ allocate_frame_core (Lisp_Object device)
 {
   /* This function can GC */
   Lisp_Object root_window;
-  Lisp_Object frame = ALLOC_LISP_OBJECT (frame);
+  Lisp_Object frame = ALLOC_NORMAL_LISP_OBJECT (frame);
   struct frame *f = XFRAME (frame);
 
   nuke_all_frame_slots (f);

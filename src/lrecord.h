@@ -26,40 +26,136 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
 
-/* The "lrecord" type of Lisp object is used for all object types other
-   than a few simple ones (like char and int). This allows many types to be
-   implemented but only a few bits required in a Lisp object for type
-   information. (The tradeoff is that each object has its type marked in
-   it, thereby increasing its size.) All lrecords begin with a `struct
-   lrecord_header', which identifies the lisp object type, by providing an
-   index into a table of `struct lrecord_implementation', which describes
-   the behavior of the lisp object.  It also contains some other data bits.
+/* All objects other than char and int are implemented as structures and
+   passed by reference.  Such objects are called "record objects" ("record"
+   is another term for "structure").  The "wrapped" value of such an object
+   (i.e. when stored in a variable of type Lisp_Object) is simply the raw
+   pointer coerced to an integral type the same size as the pointer
+   (usually `long').
+   
+   Under old-GC (i.e. when NEW_GC is not defined), there are two kinds of
+   record objects: normal objects (those allocated on their own with
+   xmalloc()) and frob-block objects (those allocated as pieces of large,
+   usually 2K, chunks of memory known as "frob blocks").  Under NEW_GC,
+   there is only one type of record object.  Stuff below that applies to
+   frob-block objects is assumed to apply to the same type of object as
+   normal objects under NEW_GC.
 
-#ifndef NEW_GC
-   Lrecords are of two types: straight lrecords, and lcrecords.
-   Straight lrecords are used for those types of objects that have
-   their own allocation routines (typically allocated out of 2K chunks
-   of memory called `frob blocks').  These objects have a `struct
-   lrecord_header' at the top, containing only the bits needed to find
-   the lrecord_implementation for the object.  There are special
-   routines in alloc.c to create an object of each such type.
+   Record objects have a header at the beginning of their structure, which
+   is used internally to identify the type of the object (so that an
+   object's type can be recovered from its pointer); in addition, it holds
+   a few flags and a "UID", which for most objects is shown when it is
+   printed, and is primarily useful for debugging purposes.  The header of
+   a normal object is declared as NORMAL_LISP_OBJECT_HEADER and that of a
+   frob-block object FROB_BLOCK_LISP_OBJECT_HEADER.
 
-   Lcrecords are used for less common sorts of objects that don't do
-   their own allocation.  Each such object is malloc()ed individually,
-   and the objects are chained together through a `next' pointer.
-   Lcrecords have a `struct old_lcrecord_header' at the top, which
-   contains a `struct lrecord_header' and a `next' pointer, and are
-   allocated using old_alloc_lcrecord_type() or its variants.
-#endif
+   FROB_BLOCK_LISP_OBJECT_HEADER boils down to a `struct lrecord_header'.
+   This is a 32-bit value made up of bit fields, where 8 bits are used to
+   hold the type, 2 or 3 bits are used for flags associated with the
+   garbage collector, and the remaining 21 or 22 bits hold the UID.
 
-   Creating a new Lisp object type is fairly easy; just follow the
-   lead of some existing type (e.g. hash tables).  Note that you
-   do not need to supply all the methods (see below); reasonable
-   defaults are provided for many of them.  Alternatively, if you're
-   just looking for a way of encapsulating data (which possibly
-   could contain Lisp_Objects in it), you may well be able to use
-   the opaque type.
+   Under NEW_GC, NORMAL_LISP_OBJECT_HEADER also resolves to `struct
+   lrecord_header'.  Under old-GC, however, NORMAL_LISP_OBJECT_HEADER
+   resolves to a `struct old_lcrecord_header' (note the `c'), which is a
+   larger structure -- on 32-bit machines it occupies 3 machine words
+   instead of 1.  Such an object is known internally as an "lcrecord".  The
+   first word of `struct old_lcrecord_header' is an embedded `struct
+   lrecord_header' with the same information as for frob-block objects;
+   that way, all objects can be cast to a `struct lrecord_header' to
+   determine their type or other info.  The other words consist of a
+   pointer, used to thread all lcrecords together in one big linked list,
+   and a 32-bit structure that contains another UID field (#### which
+   should be deleted, as it is redundant; it dates back to the days when
+   the lrecord_header consisted of a pointer to an object's implementation
+   structure rather than an index).
+
+   Under old-GC, normal objects (i.e. lcrecords) are allocated in
+   individual chunks using the underlying allocator (i.e. xmalloc(), which
+   is a thin wrapper around malloc()).  Frob-block objects are more
+   efficient than normal objects, as they have a smaller header and don't
+   have the additional memory overhead associated with malloc() -- instead,
+   as mentioned above, they are carved out of 2K chunks of memory called
+   "frob blocks").  However, it is slightly more tricky to create such
+   objects, as they require special routines in alloc.c to create an object
+   of each such type and to sweep them during garbage collection.  In
+   addition, there is currently no mechanism for handling variable-sized
+   frob-block objects (e.g. vectors), whereas variable-sized normal objects
+   are not a problem.  Frob-block objects are typically used for basic
+   objects that exist in large numbers, such as `cons' or `string'.
+
+   Note that strings are an apparent exception to the statement above that
+   variable-sized objects can't be handled.  Under old-GC strings work as
+   follows.  A string consists of two parts -- a fixed-size "string header"
+   that is allocated as a standard frob-block object, and a "string-chars"
+   structure that is allocated out of special 8K-sized frob blocks that
+   have a dedicated garbage-collection handler that compacts the blocks
+   during the sweep stage, relocating the string-chars data (but not the
+   string headers) to eliminate gaps.  Strings larger than 8K are not
+   placed in frob blocks, but instead are stored as individually malloc()ed
+   blocks of memory.  Strings larger than 8K are called "big strings" and
+   those smaller than 8K are called "small strings".
+
+   Under new-GC, there is no difference between big and small strings,
+   just as there is no difference between normal and frob-block objects.
+   There is only one allocation method, which is capable of handling
+   variable-sized objects.  This apparently allocates all objects in
+   frob blocks according to the size of the object.
+
+   To create a new normal Lisp object, see the toolbar-button example
+   below.  To create a new frob-block Lisp object, follow the lead of
+   one of the existing frob-block objects, such as extents or events.
+   Note that you do not need to supply all the methods (see below);
+   reasonable defaults are provided for many of them.  Alternatively, if
+   you're just looking for a way of encapsulating data (which possibly
+   could contain Lisp_Objects in it), you may well be able to use the
+   opaque type.
 */
+
+/*
+  How to declare a Lisp object:
+
+   NORMAL_LISP_OBJECT_HEADER:
+      Header for normal objects
+
+   FROB_BLOCK_LISP_OBJECT_HEADER:
+      Header for frob-block objects
+
+  How to allocate a Lisp object:
+
+   - For normal objects of a fixed size, simply call
+     ALLOC_NORMAL_LISP_OBJECT (type), where TYPE is the name of the type
+     (e.g. toolbar_button).  Such objects can be freed manually using
+     free_normal_lisp_object.
+
+   - For normal objects whose size can vary (and hence which have a
+     size_in_bytes_method rather than a static_size), call
+     ALLOC_SIZED_LISP_OBJECT (size, type), where TYPE is the
+     name of the type. NOTE: You cannot call free_normal_lisp_object() on such
+     on object! (At least when not NEW_GC)
+
+   - For frob-block objects, use
+     ALLOC_FROB_BLOCK_LISP_OBJECT (type, lisp_type, var, lrec_ptr).
+     But these objects need special handling; if you don't understand this,
+     just ignore it.
+
+   - Some lrecords, which are used totally internally, use the
+     noseeum-* functions for debugging reasons.
+
+  Other operations:
+
+   - copy_lisp_object (dst, src)
+
+   - zero_nonsized_lisp_object (obj), zero_sized_lisp_object (obj, size):
+     BUT NOTE, it is not necessary to zero out newly allocated Lisp objects.
+     This happens automatically.
+
+   - lisp_object_size (obj): Return the size of a Lisp object. NOTE: This
+     requires that the object is properly initialized.
+
+   - lisp_object_storage_size (obj, stats): Return the storage size of a
+     Lisp objcet, including malloc or frob-block overhead; also, if STATS
+     is non-NULL, accumulate info about the size and overhead into STATS.
+ */
 
 #ifdef NEW_GC
 /*
@@ -74,46 +170,34 @@ Boston, MA 02111-1307, USA.  */
   object descriptions exist to indicate the size of these structures and
   the Lisp object pointers within them.
 
- At least one definite issue is that under New-GC dumpable objects cannot
- contain any finalizers (see pdump_register_object()).  This means that any
- substructures in dumpable objects that are allocated separately and
- normally freed in a finalizer need instead to be made into actual Lisp
- objects.  If those structures are Dynarrs, they need to be made into
- Dynarr Lisp objects (e.g. face-cachel-dynarr or glyph-cachel-dynarr),
- which are created using Dynarr_lisp_new() or Dynarr_new_new2().
- Furthermore, the objects contained in the Dynarr also need to be Lisp
- objects (e.g. face-cachel or glyph-cachel).
+  At least one definite issue is that under New-GC dumpable objects cannot
+  contain any finalizers (see pdump_register_object()).  This means that
+  any substructures in dumpable objects that are allocated separately and
+  normally freed in a finalizer need instead to be made into actual Lisp
+  objects.  If those structures are Dynarrs, they need to be made into
+  Dynarr Lisp objects (e.g. face-cachel-dynarr or glyph-cachel-dynarr),
+  which are created using Dynarr_lisp_new() or Dynarr_new_new2().
+  Furthermore, the objects contained in the Dynarr also need to be Lisp
+  objects (e.g. face-cachel or glyph-cachel).
 
  --ben
  */
-
 #endif
 
-
-
 #ifdef NEW_GC
-#define ALLOC_LISP_OBJECT(type) alloc_lrecord (&lrecord_##type)
+#define ALLOC_NORMAL_LISP_OBJECT(type) alloc_lrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
   alloc_sized_lrecord (size, &lrecord_##type)
-#define COPY_SIZED_LISP_OBJECT copy_sized_lrecord
-#define COPY_LISP_OBJECT copy_lrecord
-#define LISP_OBJECT_STORAGE_SIZE(ptr, size, stats) \
-  mc_alloced_storage_size (size, stats)
-#define ZERO_LISP_OBJECT zero_lrecord
-#define LISP_OBJECT_HEADER struct lrecord_header
+#define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
-#define FREE_LISP_OBJECT free_lrecord
+#define LISP_OBJECT_FROB_BLOCK_P(obj) 0
 #else /* not NEW_GC */
-#define ALLOC_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
+#define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
   old_alloc_sized_lcrecord (size, &lrecord_##type)
-#define COPY_SIZED_LISP_OBJECT old_copy_sized_lcrecord
-#define COPY_LISP_OBJECT old_copy_lcrecord
-#define LISP_OBJECT_STORAGE_SIZE malloced_storage_size
-#define ZERO_LISP_OBJECT old_zero_lcrecord
-#define LISP_OBJECT_HEADER struct old_lcrecord_header
+#define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
-#define FREE_LISP_OBJECT old_free_lcrecord
+#define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
 #endif /* not NEW_GC */
 
 BEGIN_C_DECLS
@@ -393,7 +477,7 @@ struct lrecord_implementation
      memory or releasing pointers or handles to objects created in external
      libraries, such as window-system windows or file handles.  This can be
      NULL, meaning no special finalization is necessary. */
-  void (*finalizer) (void *header);
+  void (*finalizer) (Lisp_Object obj);
 
   /* This can be NULL, meaning compare objects with EQ(). */
   int (*equal) (Lisp_Object obj1, Lisp_Object obj2, int depth,
@@ -436,19 +520,20 @@ struct lrecord_implementation
 
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.  If
      `static_size' is 0, this type is not instantiable by
-     ALLOC_LISP_OBJECT().  If both are 0 (this should never happen), this
-     object cannot be instantiated; you will get an abort() if you try.*/
+     ALLOC_NORMAL_LISP_OBJECT().  If both are 0 (this should never happen),
+     this object cannot be instantiated; you will get an abort() if you
+     try.*/
   Bytecount static_size;
-  Bytecount (*size_in_bytes_method) (const void *header);
+  Bytecount (*size_in_bytes_method) (Lisp_Object);
 
   /* The (constant) index into lrecord_implementations_table */
   enum lrecord_type lrecord_type_index;
 
 #ifndef NEW_GC
-  /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
+  /* A "frob-block" lrecord is any lrecord that's not an lcrecord, i.e.
      one that does not have an old_lcrecord_header at the front and which
      is (usually) allocated in frob blocks. */
-  unsigned int basic_p :1;
+  unsigned int frob_block_p :1;
 #endif /* not NEW_GC */
 };
 
@@ -460,6 +545,8 @@ struct lrecord_implementation
 extern MODULE_API const struct lrecord_implementation *
 lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 
+/* Given a Lisp object, return its implementation
+   (struct lrecord_implementation) */
 #define XRECORD_LHEADER_IMPLEMENTATION(obj) \
    LHEADER_IMPLEMENTATION (XRECORD_LHEADER (obj))
 #define LHEADER_IMPLEMENTATION(lh) lrecord_implementations_table[(lh)->type]
@@ -496,7 +583,7 @@ int lrecord_stats_heap_size (void);
       if (MCACF_implementation && MCACF_implementation->finalizer)	\
         {								\
 	  GC_STAT_FINALIZED;						\
-          MCACF_implementation->finalizer (ptr);			\
+          MCACF_implementation->finalizer (MCACF_obj);			\
         }								\
     }									\
 } while (0)
@@ -769,7 +856,7 @@ void tick_lrecord_stats (const struct lrecord_header *h,
    
    struct Lisp_Hash_Table
    {
-     LISP_OBJECT_HEADER header;
+     NORMAL_LISP_OBJECT_HEADER header;
      Elemcount size;
      Elemcount count;
      Elemcount rehash_count;
@@ -834,7 +921,7 @@ void tick_lrecord_stats (const struct lrecord_header *h,
 
    struct Lisp_Specifier
    {
-     LISP_OBJECT_HEADER header;
+     NORMAL_LISP_OBJECT_HEADER header;
      struct specifier_methods *methods;
    
      ...
@@ -1396,7 +1483,7 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    1. Declare the struct for your object in a header file somewhere.
    Remember that it must begin with
 
-   LISP_OBJECT_HEADER header;
+   NORMAL_LISP_OBJECT_HEADER header;
 
    2. Put the "standard junk" (DECLARE_LISP_OBJECT()/XFOO/etc.) below the
       struct definition -- see below.
@@ -1429,121 +1516,156 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
    --ben
 
-An example:
+  An example:
 
 ------------------------------ in toolbar.h -----------------------------
 
-struct toolbar_button
-{
-  LISP_OBJECT_HEADER header;
-
-  Lisp_Object next;
-  Lisp_Object frame;
-
-  Lisp_Object up_glyph;
-  Lisp_Object down_glyph;
-  Lisp_Object disabled_glyph;
-
-  Lisp_Object cap_up_glyph;
-  Lisp_Object cap_down_glyph;
-  Lisp_Object cap_disabled_glyph;
-
-  Lisp_Object callback;
-  Lisp_Object enabled_p;
-  Lisp_Object help_string;
-
-  char enabled;
-  char down;
-  char pushright;
-  char blank;
-
-  int x, y;
-  int width, height;
-  int dirty;
-  int vertical;
-  int border_width;
-};
-
-[[ the standard junk: ]]
-
-DECLARE_LISP_OBJECT (toolbar_button, struct toolbar_button);
-#define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
-#define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
-#define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
-#define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
-#define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
-
+  struct toolbar_button
+  {
+    NORMAL_LISP_OBJECT_HEADER header;
+  
+    Lisp_Object next;
+    Lisp_Object frame;
+  
+    Lisp_Object up_glyph;
+    Lisp_Object down_glyph;
+    Lisp_Object disabled_glyph;
+  
+    Lisp_Object cap_up_glyph;
+    Lisp_Object cap_down_glyph;
+    Lisp_Object cap_disabled_glyph;
+  
+    Lisp_Object callback;
+    Lisp_Object enabled_p;
+    Lisp_Object help_string;
+  
+    char enabled;
+    char down;
+    char pushright;
+    char blank;
+  
+    int x, y;
+    int width, height;
+    int dirty;
+    int vertical;
+    int border_width;
+  };
+  
+  [[ the standard junk: ]]
+  
+  DECLARE_LISP_OBJECT (toolbar_button, struct toolbar_button);
+  #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
+  #define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
+  #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
+  #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
+  #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
+  
 ------------------------------ in toolbar.c -----------------------------
-
-#include "toolbar.h"
-
-...
-
-static const struct memory_description toolbar_button_description [] = {
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, next) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, frame) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, up_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, down_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, disabled_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_up_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_down_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_disabled_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, callback) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, enabled_p) },
-  { XD_LISP_OBJECT, offsetof (struct toolbar_button, help_string) },
-  { XD_END }
-};
-
-static Lisp_Object
-mark_toolbar_button (Lisp_Object obj)
-\{
-  struct toolbar_button *data = XTOOLBAR_BUTTON (obj);
-  mark_object (data->next);
-  mark_object (data->frame);
-  mark_object (data->up_glyph);
-  mark_object (data->down_glyph);
-  mark_object (data->disabled_glyph);
-  mark_object (data->cap_up_glyph);
-  mark_object (data->cap_down_glyph);
-  mark_object (data->cap_disabled_glyph);
-  mark_object (data->callback);
-  mark_object (data->enabled_p);
-  return data->help_string;
-}
-
-DEFINE_NODUMP_LISP_OBJECT ("toolbar-button", toolbar_button,
-			     mark_toolbar_button,
-			     external_object_printer, 0, 0, 0,
-			     toolbar_button_description,
-			     struct toolbar_button);
-
-...
-
-void
-syms_of_toolbar (void)
-{
-  INIT_LISP_OBJECT (toolbar_button);
-
-  ...;
-}
-
+  
+  #include "toolbar.h"
+  
+  ...
+  
+  static const struct memory_description toolbar_button_description [] = {
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, next) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, frame) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, up_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, down_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, disabled_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_up_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_down_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_disabled_glyph) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, callback) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, enabled_p) },
+    { XD_LISP_OBJECT, offsetof (struct toolbar_button, help_string) },
+    { XD_END }
+  };
+  
+  static Lisp_Object
+  allocate_toolbar_button (struct frame *f, int pushright)
+  {
+    struct toolbar_button *tb;
+  
+    tb = XTOOLBAR_BUTTON (ALLOC_NORMAL_LISP_OBJECT (toolbar_button));
+    tb->next = Qnil;
+    tb->frame = wrap_frame (f);
+    tb->up_glyph = Qnil;
+    tb->down_glyph = Qnil;
+    tb->disabled_glyph = Qnil;
+    tb->cap_up_glyph = Qnil;
+    tb->cap_down_glyph = Qnil;
+    tb->cap_disabled_glyph = Qnil;
+    tb->callback = Qnil;
+    tb->enabled_p = Qnil;
+    tb->help_string = Qnil;
+  
+    tb->pushright = pushright;
+    tb->x = tb->y = tb->width = tb->height = -1;
+    tb->dirty = 1;
+  
+    return wrap_toolbar_button (tb);
+  }
+   
+  static Lisp_Object
+  mark_toolbar_button (Lisp_Object obj)
+  {
+    struct toolbar_button *data = XTOOLBAR_BUTTON (obj);
+    mark_object (data->next);
+    mark_object (data->frame);
+    mark_object (data->up_glyph);
+    mark_object (data->down_glyph);
+    mark_object (data->disabled_glyph);
+    mark_object (data->cap_up_glyph);
+    mark_object (data->cap_down_glyph);
+    mark_object (data->cap_disabled_glyph);
+    mark_object (data->callback);
+    mark_object (data->enabled_p);
+    return data->help_string;
+  }
+  
+  DEFINE_NODUMP_LISP_OBJECT ("toolbar-button", toolbar_button,
+  			     mark_toolbar_button,
+  			     external_object_printer, 0, 0, 0,
+  			     toolbar_button_description,
+  			     struct toolbar_button);
+  
+  ...
+  
+  void
+  syms_of_toolbar (void)
+  {
+    INIT_LISP_OBJECT (toolbar_button);
+  
+    ...;
+  }
+  
 ------------------------------ in inline.c -----------------------------
-
-#ifdef HAVE_TOOLBARS
-#include "toolbar.h"
-#endif
-
+  
+  #ifdef HAVE_TOOLBARS
+  #include "toolbar.h"
+  #endif
+  
 ------------------------------ in lrecord.h -----------------------------
+  
+  enum lrecord_type
+  {
+    ...
+    lrecord_type_toolbar_button,
+    ...
+  };
 
-enum lrecord_type
-{
+------------------------------ in .gdbinit.in.in -----------------------------
+
   ...
-  lrecord_type_toolbar_button,
+  else
+  if $lrecord_type == lrecord_type_toolbar_button
+    pstructtype toolbar_button
   ...
-};
+  ...
+  ...
+  end
 
-
---ben
+  --ben
 
 */
 
@@ -1676,32 +1798,12 @@ extern struct lrecord_implementation lrecord_##c_name
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-/* How to allocate a Lisp object:
-
-   - For most objects, simply call ALLOC_LISP_OBJECT (type), where TYPE is
-     the name of the type (e.g. toolbar_button).  Such objects can be freed
-     manually using FREE_LISP_OBJECT.
-
-   - For objects whose size can vary (and hence which have a
-     size_in_bytes_method rather than a static_size), call
-     ALLOC_SIZED_LISP_OBJECT (size, type), where TYPE is the
-     name of the type. NOTE: You cannot call FREE_LISP_OBJECT() on such
-     on object! (At least when not NEW_GC)
-
-   - Basic lrecords (of which there are a limited number, which exist only
-     when not NEW_GC, and which have special handling in alloc.c) need
-     special handling; if you don't understand this, just ignore it.
-
-   - Some lrecords, which are used totally internally, use the
-     noseeum-* functions for the reason of debugging. 
- */
-
 #ifndef NEW_GC
 /*-------------------------- lcrecord-list -----------------------------*/
 
 struct lcrecord_list
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object free;
   Elemcount size;
   const struct lrecord_implementation *implementation;
@@ -1722,13 +1824,13 @@ DECLARE_LISP_OBJECT (lcrecord_list, struct lcrecord_list);
    lrecords.  lcrecords themselves are divided into three types: (1)
    auto-managed, (2) hand-managed, and (3) unmanaged.  "Managed" refers to
    using a special object called an lcrecord-list to keep track of freed
-   lcrecords, which can freed with FREE_LISP_OBJECT() or the like and later be
-   recycled when a new lcrecord is required, rather than requiring new
-   malloc().  Thus, allocation of lcrecords can be very
+   lcrecords, which can freed with free_normal_lisp_object() or the like
+   and later be recycled when a new lcrecord is required, rather than
+   requiring new malloc().  Thus, allocation of lcrecords can be very
    cheap. (Technically, the lcrecord-list manager could divide up large
    chunks of memory and allocate out of that, mimicking what happens with
    lrecords.  At that point, however, we'd want to rethink the whole
-   division between lrecords and lcrecords.) 
+   division between lrecords and lcrecords.)
 
    NOTE: There is a fundamental limitation of lcrecord-lists, which is that
    they only handle blocks of a particular, fixed size.  Thus, objects that
@@ -1736,9 +1838,9 @@ DECLARE_LISP_OBJECT (lcrecord_list, struct lcrecord_list);
    in particular dictate the various types of management:
 
    -- "Auto-managed" means that you just go ahead and allocate the lcrecord
-   whenever you want, using ALLOC_LISP_OBJECT(), and the appropriate
+   whenever you want, using ALLOC_NORMAL_LISP_OBJECT(), and the appropriate
    lcrecord-list manager is automatically created.  To free, you just call
-   "FREE_LISP_OBJECT()" and the appropriate lcrecord-list manager is
+   "free_normal_lisp_object()" and the appropriate lcrecord-list manager is
    automatically located and called.  The limitation here of course is that
    all your objects are of the same size. (#### Eventually we should have a
    more sophisticated system that tracks the sizes seen and creates one
@@ -1816,24 +1918,6 @@ alloc_automanaged_lcrecord (const struct lrecord_implementation *imp);
 
 void old_free_lcrecord (Lisp_Object rec);
 
-
-/* Copy the data from one lcrecord structure into another, but don't
-   overwrite the header information. */
-
-#define old_copy_sized_lcrecord(dst, src, size)				\
-  memcpy ((Rawbyte *) (dst) + sizeof (struct old_lcrecord_header),	\
-	  (Rawbyte *) (src) + sizeof (struct old_lcrecord_header),	\
-	  (size) - sizeof (struct old_lcrecord_header))
-
-#define old_copy_lcrecord(dst, src) \
-  old_copy_sized_lcrecord (dst, src, sizeof (*(dst)))
-
-#define old_zero_sized_lcrecord(lcr, size)				\
-   memset ((Rawbyte *) (lcr) + sizeof (struct old_lcrecord_header), 0,	\
-	   (size) - sizeof (struct old_lcrecord_header))
-
-#define old_zero_lcrecord(lcr) old_zero_sized_lcrecord (lcr, sizeof (*(lcr)))
-
 #else /* NEW_GC */
 
 MODULE_API Lisp_Object alloc_sized_lrecord (Bytecount size,
@@ -1849,26 +1933,7 @@ MODULE_API Lisp_Object alloc_sized_lrecord_array (Bytecount size,
 						  int elemcount,
 						  const struct lrecord_implementation *imp);
 
-void free_lrecord (Lisp_Object rec);
-
-
-/* Copy the data from one lrecord structure into another, but don't
-   overwrite the header information. */
-
-#define copy_sized_lrecord(dst, src, size)			\
-  memcpy ((char *) (dst) + sizeof (struct lrecord_header),	\
-	  (char *) (src) + sizeof (struct lrecord_header),	\
-	  (size) - sizeof (struct lrecord_header))
-
-#define copy_lrecord(dst, src) copy_sized_lrecord (dst, src, sizeof (*(dst)))
-
 #endif /* NEW_GC */
-
-#define zero_sized_lrecord(lcr, size)				\
-   memset ((char *) (lcr) + sizeof (struct lrecord_header), 0,	\
-	   (size) - sizeof (struct lrecord_header))
-
-#define zero_lrecord(lcr) zero_sized_lrecord (lcr, sizeof (*(lcr)))
 
 DECLARE_INLINE_HEADER (
 Bytecount
@@ -1878,7 +1943,7 @@ detagged_lisp_object_size (const struct lrecord_header *h)
   const struct lrecord_implementation *imp = LHEADER_IMPLEMENTATION (h);
 
   return (imp->size_in_bytes_method ?
-	  imp->size_in_bytes_method (h) :
+	  imp->size_in_bytes_method (wrap_pointer_1 (h)) :
 	  imp->static_size);
 }
 
@@ -1889,6 +1954,17 @@ lisp_object_size (Lisp_Object o)
 {
   return detagged_lisp_object_size (XRECORD_LHEADER (o));
 }
+
+struct overhead_stats;
+
+MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
+MODULE_API void zero_sized_lisp_object (Lisp_Object obj, Bytecount size);
+MODULE_API void zero_nonsized_lisp_object (Lisp_Object obj);
+#ifdef MEMORY_USAGE_STATS
+Bytecount lisp_object_storage_size (Lisp_Object obj,
+				    struct overhead_stats *ovstats);
+#endif /* MEMORY_USAGE_STATS */
+void free_normal_lisp_object (Lisp_Object obj);
 
 
 /************************************************************************/

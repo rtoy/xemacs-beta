@@ -243,7 +243,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct gap_array_marker
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int pos;
   struct gap_array_marker *next;
@@ -273,7 +273,7 @@ typedef struct gap_array_marker
 typedef struct gap_array
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Elemcount gap;
   Elemcount gapsize;
@@ -319,7 +319,7 @@ static Gap_Array_Marker *gap_array_marker_freelist;
 typedef struct extent_list_marker
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array_Marker *m;
   int endp;
@@ -329,7 +329,7 @@ typedef struct extent_list_marker
 typedef struct extent_list
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array *start;
   Gap_Array *end;
@@ -382,19 +382,13 @@ static Extent_List_Marker *extent_list_marker_freelist;
 #define EXTENT_GAP_ARRAY_AT(ga, pos) (* (EXTENT *) GAP_ARRAY_EL_ADDR(ga, pos))
 
 /* ------------------------------- */
-/*    auxiliary extent structure   */
-/* ------------------------------- */
-
-struct extent_auxiliary extent_auxiliary_defaults;
-
-/* ------------------------------- */
 /*     buffer-extent primitives    */
 /* ------------------------------- */
 
 typedef struct stack_of_extents
 {
 #ifdef NEW_GC
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Extent_List *extents;
   Memxpos pos; /* Position of stack of extents.  EXTENTS is the list of
@@ -441,6 +435,8 @@ typedef int Endpoint_Index;
 #define DE_MUST_BE_ATTACHED 2
 
 Lisp_Object Vlast_highlighted_extent;
+
+Lisp_Object Vextent_auxiliary_defaults;
 
 Lisp_Object QSin_map_extents_internal;
 
@@ -691,7 +687,7 @@ gap_array_make_marker (Gap_Array *ga, Elemcount pos)
 
   assert (pos >= 0 && pos <= ga->numels);
 #ifdef NEW_GC
-    m = XGAP_ARRAY_MARKER (ALLOC_LISP_OBJECT (gap_array_marker));
+    m = XGAP_ARRAY_MARKER (ALLOC_NORMAL_LISP_OBJECT (gap_array_marker));
 #else /* not NEW_GC */
   if (gap_array_marker_freelist)
     {
@@ -929,7 +925,7 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
   Extent_List_Marker *m;
 
 #ifdef NEW_GC
-  m = XEXTENT_LIST_MARKER (ALLOC_LISP_OBJECT (extent_list_marker));
+  m = XEXTENT_LIST_MARKER (ALLOC_NORMAL_LISP_OBJECT (extent_list_marker));
 #else /* not NEW_GC */
   if (extent_list_marker_freelist)
     {
@@ -978,7 +974,7 @@ static Extent_List *
 allocate_extent_list (void)
 {
 #ifdef NEW_GC
-  Extent_List *el = XEXTENT_LIST (ALLOC_LISP_OBJECT (extent_list));
+  Extent_List *el = XEXTENT_LIST (ALLOC_NORMAL_LISP_OBJECT (extent_list));
 #else /* not NEW_GC */
   Extent_List *el = xnew (Extent_List);
 #endif /* not NEW_GC */
@@ -1004,46 +1000,48 @@ free_extent_list (Extent_List *el)
 /************************************************************************/
 
 static const struct memory_description extent_auxiliary_description[] ={
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, begin_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, end_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, parent) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, children) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, invisible) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, read_only) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, mouse_face) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, initial_redisplay_function) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, before_change_functions) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, after_change_functions) },
+#define SLOT(x) \
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, x) },
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
   { XD_END }
 };
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj)
 {
   struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
-  mark_object (data->begin_glyph);
-  mark_object (data->end_glyph);
-  mark_object (data->invisible);
-  mark_object (data->children);
-  mark_object (data->read_only);
-  mark_object (data->mouse_face);
-  mark_object (data->initial_redisplay_function);
-  mark_object (data->before_change_functions);
-  mark_object (data->after_change_functions);
-  return data->parent;
+#define SLOT(x) mark_object (data->x);
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
+
+  return Qnil;
 }
 
-DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-auxiliary",
-				    extent_auxiliary,
-				    mark_extent_auxiliary,
-				    extent_auxiliary_description,
-				    struct extent_auxiliary);
-void
-allocate_extent_auxiliary (EXTENT ext)
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("extent-auxiliary",
+				      extent_auxiliary,
+				      mark_extent_auxiliary,
+				      extent_auxiliary_description,
+				      struct extent_auxiliary);
+
+
+static Lisp_Object
+allocate_extent_auxiliary (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (extent_auxiliary);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (extent_auxiliary);
   struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
 
-  COPY_LISP_OBJECT (data, &extent_auxiliary_defaults);
+#define SLOT(x) data->x = Qnil;
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
+
+  return obj;
+}
+
+void
+attach_extent_auxiliary (EXTENT ext)
+{
+  Lisp_Object obj = allocate_extent_auxiliary ();
+
   ext->plist = Fcons (obj, ext->plist);
   ext->flags.has_aux = 1;
 }
@@ -1123,9 +1121,9 @@ static const struct memory_description lispobj_gap_array_description_1[] = {
 #ifdef NEW_GC
 
 static Bytecount
-size_gap_array (const void *lheader)
+size_gap_array (Lisp_Object obj)
 {
-  Gap_Array *ga = (Gap_Array *) lheader;
+  Gap_Array *ga = XGAP_ARRAY (obj);
   return offsetof (Gap_Array, array) + (ga->numels + ga->gapsize) * ga->elsize;
 }
 
@@ -1266,9 +1264,9 @@ DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-info", extent_info,
 				    struct extent_info);
 #else /* not NEW_GC */
 static void
-finalize_extent_info (void *header)
+finalize_extent_info (Lisp_Object obj)
 {
-  struct extent_info *data = (struct extent_info *) header;
+  struct extent_info *data = XEXTENT_INFO (obj);
 
   data->soe = 0;
   data->extents = 0;
@@ -1294,7 +1292,7 @@ DEFINE_NODUMP_LISP_OBJECT ("extent-info", extent_info,
 static Lisp_Object
 allocate_extent_info (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (extent_info);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (extent_info);
   struct extent_info *data = XEXTENT_INFO (obj);
 
   data->extents = allocate_extent_list ();
@@ -1456,15 +1454,11 @@ init_buffer_extents (struct buffer *b)
 void
 uninit_buffer_extents (struct buffer *b)
 {
-#ifndef NEW_GC
-  struct extent_info *data = XEXTENT_INFO (b->extent_info);
-#endif /* not NEW_GC */
-
   /* Don't destroy the extents here -- there may still be children
      extents pointing to the extents. */
   detach_all_extents (wrap_buffer (b));
 #ifndef NEW_GC
-  finalize_extent_info (data);
+  finalize_extent_info (b->extent_info);
 #endif /* not NEW_GC */
 }
 
@@ -1785,7 +1779,7 @@ allocate_soe (void)
 {
 #ifdef NEW_GC
   struct stack_of_extents *soe =
-    XSTACK_OF_EXTENTS (ALLOC_LISP_OBJECT (stack_of_extents));
+    XSTACK_OF_EXTENTS (ALLOC_NORMAL_LISP_OBJECT (stack_of_extents));
 #else /* not NEW_GC */
   struct stack_of_extents *soe = xnew_and_zero (struct stack_of_extents);
 #endif /* not NEW_GC */
@@ -4043,10 +4037,9 @@ copy_extent (EXTENT original, Bytexpos from, Bytexpos to, Lisp_Object object)
       /* also need to copy the aux struct.  It won't work for
 	 this extent to share the same aux struct as the original
 	 one. */
-      Lisp_Object ea = ALLOC_LISP_OBJECT (extent_auxiliary);
-      struct extent_auxiliary *data = XEXTENT_AUXILIARY (ea);
+      Lisp_Object ea = ALLOC_NORMAL_LISP_OBJECT (extent_auxiliary);
 
-      COPY_LISP_OBJECT (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
+      copy_lisp_object (ea, XCAR (original->plist));
       XCAR (e->plist) = ea;
     }
 
@@ -7565,22 +7558,6 @@ syms_of_extents (void)
 }
 
 void
-reinit_vars_of_extents (void)
-{
-  extent_auxiliary_defaults.begin_glyph = Qnil;
-  extent_auxiliary_defaults.end_glyph = Qnil;
-  extent_auxiliary_defaults.parent = Qnil;
-  extent_auxiliary_defaults.children = Qnil;
-  extent_auxiliary_defaults.priority = 0;
-  extent_auxiliary_defaults.invisible = Qnil;
-  extent_auxiliary_defaults.read_only = Qnil;
-  extent_auxiliary_defaults.mouse_face = Qnil;
-  extent_auxiliary_defaults.initial_redisplay_function = Qnil;
-  extent_auxiliary_defaults.before_change_functions = Qnil;
-  extent_auxiliary_defaults.after_change_functions = Qnil;
-}
-
-void
 vars_of_extents (void)
 {
   DEFVAR_INT ("mouse-highlight-priority", &mouse_highlight_priority /*
@@ -7624,4 +7601,8 @@ functions `get-text-property' or `get-char-property' are called.
 
   QSin_map_extents_internal = build_defer_string ("(in map-extents-internal)");
   staticpro (&QSin_map_extents_internal);
+
+  Vextent_auxiliary_defaults =
+    allocate_extent_auxiliary ();
+  staticpro (&Vextent_auxiliary_defaults);
 }

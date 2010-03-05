@@ -409,7 +409,7 @@ struct console_methods * type##_console_methods
 
 struct console
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Description of this console's methods.  */
   struct console_methods *conmeths;

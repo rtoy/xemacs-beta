@@ -1,6 +1,6 @@
 /* Implementation of the hash table lisp object type.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -96,7 +96,7 @@ static Lisp_Object Qnon_weak, Q_type, Q_data;
 
 struct Lisp_Hash_Table
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Elemcount size;
   Elemcount count;
   Elemcount rehash_count;
@@ -421,9 +421,9 @@ free_hentries (htentry *hentries,
 }
 
 static void
-finalize_hash_table (void *header)
+finalize_hash_table (Lisp_Object obj)
 {
-  Lisp_Hash_Table *ht = (Lisp_Hash_Table *) header;
+  Lisp_Hash_Table *ht = XHASH_TABLE (obj);
   free_hentries (ht->hentries, ht->size);
   ht->hentries = 0;
 }
@@ -583,7 +583,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 			      double rehash_threshold,
 			      enum hash_table_weakness weakness)
 {
-  Lisp_Object hash_table = ALLOC_LISP_OBJECT (hash_table);
+  Lisp_Object hash_table = ALLOC_NORMAL_LISP_OBJECT (hash_table);
   Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
 
   ht->test_function = test_function;
@@ -1037,9 +1037,9 @@ The keys and values will not themselves be copied.
        (hash_table))
 {
   const Lisp_Hash_Table *ht_old = xhash_table (hash_table);
-  Lisp_Object obj = ALLOC_LISP_OBJECT (hash_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (hash_table);
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
-  COPY_LISP_OBJECT (ht, ht_old);
+  copy_lisp_object (obj, hash_table);
 
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   ht->hentries = allocate_hash_table_entries (ht_old->size + 1);

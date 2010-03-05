@@ -1,5 +1,5 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation.
-   Copyright (c) 1995, 1996, 2002 Ben Wing.
+   Copyright (c) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -101,35 +101,42 @@ struct extent
    have this structure around and thus the size of an extent is smaller. */
 
 typedef struct extent_auxiliary extent_auxiliary;
+
+#define EXTENT_AUXILIARY_SLOTS						\
+  SLOT (begin_glyph)							\
+  SLOT (end_glyph)							\
+  SLOT (parent)								\
+  /* We use a weak list here.  Originally I didn't do this and		\
+     depended on having the extent's finalization method remove		\
+     itself from its parent's children list.  This runs into		\
+     lots and lots of problems though because everything is in		\
+     a really really bizarre state when an extent's finalization	\
+     method is called (it happens in sweep_extents() by way of		\
+     ADDITIONAL_FREE_extent()) and it's extremely difficult to		\
+     avoid getting hosed by just-freed objects. */			\
+  SLOT (children)							\
+  SLOT (invisible)							\
+  SLOT (read_only)							\
+  SLOT (mouse_face)							\
+  SLOT (initial_redisplay_function)					\
+  SLOT (before_change_functions)					\
+  SLOT (after_change_functions)
+
+
 struct extent_auxiliary
 {
-  LISP_OBJECT_HEADER header;
-
-  Lisp_Object begin_glyph;
-  Lisp_Object end_glyph;
-  Lisp_Object parent;
-  /* We use a weak list here.  Originally I didn't do this and
-     depended on having the extent's finalization method remove
-     itself from its parent's children list.  This runs into
-     lots and lots of problems though because everything is in
-     a really really bizarre state when an extent's finalization
-     method is called (it happens in sweep_extents() by way of
-     ADDITIONAL_FREE_extent()) and it's extremely difficult to
-     avoid getting hosed by just-freed objects. */
-  Lisp_Object children;
-  Lisp_Object invisible;
-  Lisp_Object read_only;
-  Lisp_Object mouse_face;
-  Lisp_Object initial_redisplay_function;
-  Lisp_Object before_change_functions, after_change_functions;
+  NORMAL_LISP_OBJECT_HEADER header;
+#define SLOT(x) Lisp_Object x;
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
   int priority;
 };
 
-extern struct extent_auxiliary extent_auxiliary_defaults;
+extern Lisp_Object Vextent_auxiliary_defaults;
 
 struct extent_info
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   struct extent_list *extents;
   struct stack_of_extents *soe;
@@ -153,7 +160,7 @@ extent_aux_or_default (EXTENT e)
 {
   return e->flags.has_aux ?
     XEXTENT_AUXILIARY (XCAR (e->plist)) :
-    & extent_auxiliary_defaults;
+    XEXTENT_AUXILIARY (Vextent_auxiliary_defaults);
 }
 
 #define extent_no_chase_aux_field(e, field) (extent_aux_or_default(e)->field)
@@ -167,8 +174,8 @@ extent_aux_or_default (EXTENT e)
 #define set_extent_no_chase_aux_field(e, field, value) do {	\
   EXTENT sencaf_e = (e);					\
   if (! sencaf_e->flags.has_aux)				\
-    allocate_extent_auxiliary (sencaf_e);			\
-  XEXTENT_AUXILIARY (XCAR (sencaf_e->plist))->field = (value);\
+    attach_extent_auxiliary (sencaf_e);				\
+  XEXTENT_AUXILIARY (XCAR (sencaf_e->plist))->field = (value);	\
 } while (0)
 
 #define set_extent_no_chase_normal_field(e, field, value)	\

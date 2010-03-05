@@ -129,7 +129,7 @@ DEFINE_DUMPABLE_LISP_OBJECT ("case-table", case_table,
 static Lisp_Object
 allocate_case_table (int init_tables)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (case_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (case_table);
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
 
   if (init_tables)

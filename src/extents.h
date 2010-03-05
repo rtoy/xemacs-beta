@@ -1,5 +1,5 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation.
-   Copyright (c) 1995, 1996, 2002 Ben Wing.
+   Copyright (c) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -228,7 +228,7 @@ void extent_fragment_delete (struct extent_fragment *ef);
 /* from alloc.c */
 struct extent *allocate_extent (void);
 
-void allocate_extent_auxiliary (EXTENT ext);
+void attach_extent_auxiliary (EXTENT ext);
 void init_buffer_extents (struct buffer *b);
 void uninit_buffer_extents (struct buffer *b);
 

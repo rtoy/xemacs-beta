@@ -113,9 +113,9 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_color_instance (void *header)
+finalize_color_instance (Lisp_Object obj)
 {
-  Lisp_Color_Instance *c = (Lisp_Color_Instance *) header;
+  Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
 
   if (!NILP (c->device))
     MAYBE_DEVMETH (XDEVICE (c->device), finalize_color_instance, (c));
@@ -180,7 +180,7 @@ is deallocated as well.
   CHECK_STRING (name);
   device = wrap_device (decode_device (device));
 
-  obj = ALLOC_LISP_OBJECT (color_instance);
+  obj = ALLOC_NORMAL_LISP_OBJECT (color_instance);
   c = XCOLOR_INSTANCE (obj);
   c->name = name;
   c->device = device;
@@ -331,9 +331,9 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
-finalize_font_instance (void *header)
+finalize_font_instance (Lisp_Object obj)
 {
-  Lisp_Font_Instance *f = (Lisp_Font_Instance *) header;
+  Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
 
   if (!NILP (f->device))
     {
@@ -402,7 +402,7 @@ these objects are GCed, the underlying GUI data is deallocated as well.
 
   device = wrap_device (decode_device (device));
 
-  obj = ALLOC_LISP_OBJECT (font_instance);
+  obj = ALLOC_NORMAL_LISP_OBJECT (font_instance);
   f = XFONT_INSTANCE (obj);
   f->name = name;
   f->truename = Qnil;
@@ -1294,7 +1294,7 @@ void
 reinit_vars_of_objects (void)
 {
   {
-    Lisp_Object obj = ALLOC_LISP_OBJECT (color_instance);
+    Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (color_instance);
     Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
     c->name = Qnil;
     c->device = Qnil;
@@ -1305,7 +1305,7 @@ reinit_vars_of_objects (void)
   }
 
   {
-    Lisp_Object obj = ALLOC_LISP_OBJECT (font_instance);
+    Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (font_instance);
     Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
     f->name = Qnil;
     f->truename = Qnil;

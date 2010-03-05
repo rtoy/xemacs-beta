@@ -228,7 +228,7 @@ static void
 allocate_x_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = XX_DEVICE (ALLOC_LISP_OBJECT (x_device));
+  d->device_data = XX_DEVICE (ALLOC_NORMAL_LISP_OBJECT (x_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct x_device);
 #endif /* not NEW_GC */

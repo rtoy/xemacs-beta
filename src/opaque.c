@@ -1,6 +1,6 @@
 /* Opaque Lisp objects.
    Copyright (C) 1993, 1994, 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -62,9 +62,9 @@ aligned_sizeof_opaque (Bytecount opaque_size)
 }
 
 static Bytecount
-sizeof_opaque (const void *header)
+sizeof_opaque (Lisp_Object obj)
 {
-  return aligned_sizeof_opaque (((const Lisp_Opaque *) header)->size);
+  return aligned_sizeof_opaque (XOPAQUE (obj)->size);
 }
 
 /* Return an opaque object of size SIZE.
@@ -162,7 +162,7 @@ Lisp_Object
 make_opaque_ptr (void *val)
 {
 #ifdef NEW_GC
-  Lisp_Object res = ALLOC_LISP_OBJECT (opaque_ptr);
+  Lisp_Object res = ALLOC_NORMAL_LISP_OBJECT (opaque_ptr);
 #else /* not NEW_GC */
   Lisp_Object res = alloc_managed_lcrecord (Vopaque_ptr_free_list);
 #endif /* not NEW_GC */
@@ -177,7 +177,7 @@ void
 free_opaque_ptr (Lisp_Object ptr)
 {
 #ifdef NEW_GC
-  free_lrecord (ptr);
+  free_normal_lisp_object (ptr);
 #else /* not NEW_GC */
   free_managed_lcrecord (Vopaque_ptr_free_list, ptr);
 #endif /* not NEW_GC */

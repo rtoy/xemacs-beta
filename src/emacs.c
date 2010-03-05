@@ -2021,7 +2021,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - ALLOC_LISP_OBJECT()
+	    - ALLOC_NORMAL_LISP_OBJECT()
 	    - ALLOC_SIZED_LISP_OBJECT()
 	    - Fcons()
 	    - listN()
@@ -2312,7 +2312,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
-      reinit_vars_of_extents ();
       reinit_vars_of_file_coding ();
       reinit_vars_of_fileio ();
 #ifdef USE_C_FONT_LOCK

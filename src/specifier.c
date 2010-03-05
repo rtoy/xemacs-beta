@@ -307,9 +307,9 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_specifier (void *header)
+finalize_specifier (Lisp_Object obj)
 {
-  Lisp_Specifier *sp = (Lisp_Specifier *) header;
+  Lisp_Specifier *sp = XSPECIFIER (obj);
   if (!GHOST_SPECIFIER_P(sp) && sp->caching)
     {
       xfree (sp->caching);
@@ -371,9 +371,9 @@ aligned_sizeof_specifier (Bytecount specifier_type_specific_size)
 }
 
 static Bytecount
-sizeof_specifier (const void *header)
+sizeof_specifier (Lisp_Object obj)
 {
-  const Lisp_Specifier *p = (const Lisp_Specifier *) header;
+  const Lisp_Specifier *p = XSPECIFIER (obj);
   return aligned_sizeof_specifier (GHOST_SPECIFIER_P (p)
 				   ? 0
 				   : p->methods->extra_data_size);
@@ -3386,7 +3386,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
 
   if (!sp->caching)
 #ifdef NEW_GC
-    sp->caching = XSPECIFIER_CACHING (ALLOC_LISP_OBJECT (specifier_caching));
+    sp->caching = XSPECIFIER_CACHING (ALLOC_NORMAL_LISP_OBJECT (specifier_caching));
 #else /* not NEW_GC */
   sp->caching = xnew_and_zero (struct specifier_caching);
 #endif /* not NEW_GC */

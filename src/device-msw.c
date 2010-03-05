@@ -1,7 +1,7 @@
 /* device functions for mswindows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -162,7 +162,7 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_one_device (d);
 
 #ifdef NEW_GC
-  d->device_data = XMSWINDOWS_DEVICE (ALLOC_LISP_OBJECT (mswindows_device));
+  d->device_data = XMSWINDOWS_DEVICE (ALLOC_NORMAL_LISP_OBJECT (mswindows_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct mswindows_device);
 #endif /* not NEW_GC */
@@ -518,7 +518,7 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   Extbyte *printer_name;
 
 #ifdef NEW_GC
-  d->device_data = XMSPRINTER_DEVICE (ALLOC_LISP_OBJECT (msprinter_device));
+  d->device_data = XMSPRINTER_DEVICE (ALLOC_NORMAL_LISP_OBJECT (msprinter_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct msprinter_device);
 #endif /* not NEW_GC */
@@ -1158,9 +1158,9 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_devmode (void *header)
+finalize_devmode (Lisp_Object obj)
 {
-  Lisp_Devmode *dm = (Lisp_Devmode *) header;
+  Lisp_Devmode *dm = XDEVMODE (obj);
 
   assert (NILP (dm->device));
 }
@@ -1205,7 +1205,7 @@ static Lisp_Object
 allocate_devmode (DEVMODEW* src_devmode, int do_copy,
 		  Lisp_Object src_name, struct device *d)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (devmode);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (devmode);
   Lisp_Devmode *dm = XDEVMODE (obj);
 
   if (d)

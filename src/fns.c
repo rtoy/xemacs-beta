@@ -119,9 +119,9 @@ bit_vector_hash (Lisp_Object obj, int UNUSED (depth))
 }
 
 static Bytecount
-size_bit_vector (const void *lheader)
+size_bit_vector (Lisp_Object obj)
 {
-  Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, unsigned long, bits,
 				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
 }

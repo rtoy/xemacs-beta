@@ -147,7 +147,7 @@ Lisp_Object Qtooltalk_messagep;
 
 struct Lisp_Tooltalk_Message
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_message m;
 };
@@ -187,7 +187,7 @@ DEFINE_NODUMP_LISP_OBJECT ("tooltalk-message", tooltalk_message,
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (tooltalk_message);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (tooltalk_message);
   Lisp_Tooltalk_Message *msg = XTOOLTALK_MESSAGE (obj);
 
   msg->m = m;
@@ -222,7 +222,7 @@ Lisp_Object Qtooltalk_patternp;
 
 struct Lisp_Tooltalk_Pattern
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_pattern p;
 };
@@ -262,7 +262,7 @@ DEFINE_NODUMP_LISP_OBJECT ("tooltalk-pattern", tooltalk_pattern,
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (tooltalk_pattern);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (tooltalk_pattern);
   Lisp_Tooltalk_Pattern *pat = XTOOLTALK_PATTERN (obj);
 
   pat->p = p;

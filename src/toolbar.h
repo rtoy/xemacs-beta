@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct toolbar_button
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object next;
   Lisp_Object frame;

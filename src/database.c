@@ -1,6 +1,6 @@
 /* Database access routines
    Copyright (C) 1996, William M. Perry
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -147,7 +147,7 @@ typedef struct
 
 struct Lisp_Database
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object fname;
   int mode;
   int access_;
@@ -180,7 +180,7 @@ struct Lisp_Database
 static Lisp_Database *
 allocate_database (void)
 {
-  Lisp_Object obj = ALLOC_LISP_OBJECT (database);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (database);
   Lisp_Database *db = XDATABASE (obj);
 
   db->fname = Qnil;
@@ -236,9 +236,9 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_database (void *header)
+finalize_database (Lisp_Object obj)
 {
-  Lisp_Database *db = (Lisp_Database *) header;
+  Lisp_Database *db = XDATABASE (obj);
 
   db->funcs->close (db);
 }

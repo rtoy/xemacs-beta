@@ -4623,12 +4623,11 @@ mark_multiple_value (Lisp_Object obj)
 }
 
 static Bytecount
-size_multiple_value (const void *lheader)
+size_multiple_value (Lisp_Object obj)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (struct multiple_value,
                                        Lisp_Object, contents,
-                                       ((struct multiple_value *) lheader)->
-                                       allocated_count);
+                                       XMULTIPLE_VALUE (obj)->allocated_count);
 }
 
 static const struct memory_description multiple_value_description[] = {

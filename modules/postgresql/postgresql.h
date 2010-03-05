@@ -28,7 +28,7 @@ xemacs-patches.
 */
 struct Lisp_PGconn
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   PGconn *pgconn;
 };
 typedef struct Lisp_PGconn Lisp_PGconn;
@@ -48,7 +48,7 @@ DECLARE_LISP_OBJECT (pgconn, Lisp_PGconn);
 */
 struct Lisp_PGresult
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   PGresult *pgresult;
 };
 typedef struct Lisp_PGresult Lisp_PGresult;

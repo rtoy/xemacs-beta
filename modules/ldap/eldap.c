@@ -141,7 +141,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 static Lisp_LDAP *
 allocate_ldap (void)
 {
-  Lisp_LDAP *ldap = XLDAP (ALLOC_LISP_OBJECT (ldap));
+  Lisp_LDAP *ldap = XLDAP (ALLOC_NORMAL_LISP_OBJECT (ldap));
 
   ldap->ld = NULL;
   ldap->host = Qnil;

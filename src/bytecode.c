@@ -1,7 +1,7 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -66,21 +66,20 @@ make_compiled_function_args (int totalargs)
 {
   Lisp_Compiled_Function_Args *args;
   args = XCOMPILED_FUNCTION_ARGS
-    (alloc_sized_lrecord 
+    (ALLOC_SIZED_LISP_OBJECT 
      (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
 				    Lisp_Object, args, totalargs),
-      &lrecord_compiled_function_args));
+      compiled_function_args));
   args->size = totalargs;
   return wrap_compiled_function_args (args);
 }
 
 static Bytecount
-size_compiled_function_args (const void *lheader)
+size_compiled_function_args (Lisp_Object obj)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
 				       Lisp_Object, args,
-				       ((Lisp_Compiled_Function_Args *) 
-					lheader)->size);
+				       XCOMPILED_FUNCTION_ARGS (obj)->size);
 }
 
 static const struct memory_description compiled_function_args_description[] = {

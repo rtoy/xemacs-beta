@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef NEW_GC
 struct compiled_function_args
 {
-  LISP_OBJECT_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   long size;
   Lisp_Object args[1];
 };
