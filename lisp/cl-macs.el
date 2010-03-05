@@ -3331,8 +3331,8 @@ surrounded by (block NAME ...)."
                    (setq cl-seq begin)
                    (while (cddr cl-seq)
                      (if (memq (cadr cl-seq) (cddr cl-seq))
-                         (setcdr (cdr cl-seq) (cddr cl-seq))
-                       (setq cl-seq (cdr cl-seq))))
+                         (setcdr (cdr cl-seq) (cddr cl-seq)))
+                     (setq cl-seq (cdr cl-seq)))
                    begin)
                ;; Call cl-delete-duplicates explicitly, to avoid the form
                ;; getting compiler-macroexpanded again:
