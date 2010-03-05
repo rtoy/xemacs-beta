@@ -1,3 +1,11 @@
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c:
+	* mule-coding.c (iso2022_encode):
+	Horrible bug: `escape-quoted' was failing to escape-quote special
+	characters in the 0x80 - 0x9F range.  Who knows what breakage ensued?
+	SAME BUG IN XEMACS 21.4; MUST BE FIXED THERE TOO.
+
 2010-03-03  Ben Wing  <ben@xemacs.org>
 
 	* lrecord.h: Fix outdated comment.
