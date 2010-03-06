@@ -1,4 +1,5 @@
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Maintainers: Hrvoje Niksic <hniksic@xemacs.org>,
@@ -167,6 +168,20 @@ This is a naive implementation in Lisp.  "
 ;;-----------------------------------------------------------------
 
 (when (featurep 'mule)
+
+  ;;-----------------------------------------------------------------
+  ;; Some tests of the multibyte coding system
+  ;;-----------------------------------------------------------------
+
+  (let ((cap-y-umlaut (make-char 'latin-iso8859-15 190))
+	(cap-y-umlaut2 (make-char 'latin-iso8859-16 190)))
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-15) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-16) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-1) "?")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-15) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-16) "¾")
+    (Assert-equal (encode-coding-string cap-y-umlaut2 'iso-8859-1) "?"))
+
   ;;---------------------------------------------------------------
   ;; Test fillarray
   ;;---------------------------------------------------------------
@@ -317,27 +332,30 @@ This is a naive implementation in Lisp.  "
   ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
-    (let (lo hi string n (gc-cons-threshold most-positive-fixnum))
-      (if (= (charset-chars charset) 94)
-	  (setq lo 33 hi 126)
-	(setq lo 32 hi 127))
+    (let ((gc-cons-threshold most-positive-fixnum)
+	  string n
+	  (chars (charset-chars charset))
+	  (offset (charset-offset charset)))
       (if (= (charset-dimension charset) 1)
 	  (progn
-	    (setq string (make-string (1+ (- hi lo)) ??))
+	    (setq string (make-string (charset-chars charset) ??))
 	    (setq n 0)
-	    (loop for j from lo to hi do
+	    (loop for j from offset to (+ offset chars -1)
+	      for ch = (make-char charset j) do
 	      (progn
-		(aset string n (make-char charset j))
+		(when ch (aset string n ch))
 		(incf n)))
 	    (garbage-collect)
 	    string)
-	(progn
-	  (setq string (make-string (* (1+ (- hi lo)) (1+ (- hi lo))) ??))
+	(let ((ch1 (first chars)) (ch2 (second chars))
+	      (off1 (first offset)) (off2 (second offset)))
+	  (setq string (make-string (* ch1 ch2) ??))
 	  (setq n 0)
-	  (loop for j from lo to hi do
-	    (loop for k from lo to hi do
+	  (loop for j from off1 to (+ off1 ch1 -1) do
+	    (loop for k from off2 to (+ off2 ch2 -1)
+	      for ch = (make-char charset j k) do
 	      (progn
-		(aset string n (make-char charset j k))
+		(when ch (aset string n ch))
 		(incf n))))
 	  (garbage-collect)
 	  string))))
@@ -426,18 +444,20 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   ;; Test Unicode-related functions
   ;;---------------------------------------------------------------
-  (let* ((scaron (make-char 'latin-iso8859-2 57)))
+  (let* ((scaron '(latin-iso8859-2 185)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
     (loop
       for code in '(#x0100 #x2222 #x4444 #xffff)
-      with initial-unicode = (char-to-unicode scaron)
+      with initial-unicode = (apply 'charset-codepoint-to-unicode scaron)
       do
       (progn
-	(set-unicode-conversion scaron code)
-	(Assert-eq code (char-to-unicode scaron))
-	(Assert-eq scaron (unicode-to-char code '(latin-iso8859-2))))
-      finally (set-unicode-conversion scaron initial-unicode))
-    (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+	(apply 'set-unicode-conversion code scaron)
+	(Assert-eq code (apply 'charset-codepoint-to-unicode scaron))
+	(Assert-equal scaron (unicode-to-charset-codepoint
+			      code '(latin-iso8859-2))))
+      finally (apply 'set-unicode-conversion initial-unicode scaron))
+    (Check-Error 'invalid-argument (apply 'set-unicode-conversion -10000
+					  scaron)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
@@ -462,13 +482,14 @@ This is a naive implementation in Lisp.  "
 		      (encode-char xemacs-character 'ucs))
 		     utf-8-char)
 
-      ;; Check that, if this character has been JIT-allocated, it is encoded
+      ;; Check that, if this character has no corresponding ISO-2022 charset
+      ;; (under old-Mule, this means it's been JIT-allocated), it is encoded
       ;; in escape-quoted using the corresponding UTF-8 escape. 
-      (when (charset-property xemacs-charset 'encode-as-utf-8)
+      (when (and xemacs-charset (not (charset-iso-2022-p xemacs-charset)))
 	(Assert-equal (concat "\033%G" utf-8-char)
-		       (encode-coding-string xemacs-character 'escape-quoted))
+		      (encode-coding-string xemacs-character 'escape-quoted))
 	(Assert-equal (concat "\033%G" utf-8-char)
-		       (encode-coding-string xemacs-character 'ctext)))))
+		      (encode-coding-string xemacs-character 'ctext)))))
 
   (loop
     for (code-point utf-16-big-endian utf-16-little-endian) 
@@ -491,26 +512,26 @@ This is a naive implementation in Lisp.  "
     (define-ccl-program ccl-write-two-control-1-chars 
       `(1 
 	((r0 = ,(charset-id 'control-1))
-	 (r1 = 0) 
+	 (r1 = 128) 
 	 (write-multibyte-character r0 r1) 
-	 (r1 = 31) 
+	 (r1 = 159) 
 	 (write-multibyte-character r0 r1))) 
       "CCL program that writes two control-1 multibyte characters.") 
  
     (Assert-equal 
 	     (ccl-execute-on-string 'ccl-write-two-control-1-chars  
 				    ccl-vector "") 
-	     (format "%c%c" (make-char 'control-1 0) 
-		     (make-char 'control-1 31)))
+	     (format "%c%c" (make-char 'control-1 128) 
+		     (make-char 'control-1 159)))
 
     (define-ccl-program ccl-unicode-two-control-1-chars 
       `(1 
 	((r0 = ,(charset-id 'control-1))
-	 (r1 = 31) 
+	 (r1 = 159) 
 	 (mule-to-unicode r0 r1) 
 	 (r4 = r0) 
 	 (r3 = ,(charset-id 'control-1))
-	 (r2 = 0) 
+	 (r2 = 128) 
 	 (mule-to-unicode r3 r2))) 
       "CCL program that writes two control-1 UCS code points in r3 and r4")
 
@@ -521,9 +542,9 @@ This is a naive implementation in Lisp.  "
     (ccl-execute-on-string 'ccl-unicode-two-control-1-chars ccl-vector "") 
  
     (Assert (and (eq (aref ccl-vector 3)  
-                   (encode-char (make-char 'control-1 0) 'ucs)) 
+                   (encode-char (make-char 'control-1 128) 'ucs)) 
                (eq (aref ccl-vector 4)  
-                   (encode-char (make-char 'control-1 31) 'ucs)))))
+                   (encode-char (make-char 'control-1 159) 'ucs)))))
 
 
   ;; Test the 8 bit fixed-width coding systems for round-trip
@@ -534,7 +555,11 @@ This is a naive implementation in Lisp.  "
 				      (loop for i from ?\x00 to ?\xFF
 					collect i))
     do
-    (when (and (eq 'fixed-width (coding-system-type coding-system))
+    (when (and (eq 'multibyte (coding-system-type coding-system))
+	       ;; Should have only dimension-1 charsets.
+	       (every #'(lambda (x)
+			  (= 1 (charset-dimension x)))
+		      (coding-system-property coding-system 'charsets))
 	       ;; Don't check the coding systems with odd line endings
 	       ;; (maybe we should):
 	       (eq 'lf (coding-system-eol-type coding-system)))
