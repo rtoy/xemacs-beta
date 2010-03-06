@@ -365,6 +365,9 @@ define pobj
   if $lrecord_type == lrecord_type_database
     pptype Lisp_Database
   else
+  if $lrecord_type == lrecord_type_detection_state
+    pstructtype detection_state
+  else
   if $lrecord_type == lrecord_type_device
     pstructtype device
   else
@@ -602,6 +605,7 @@ define pobj
     echo Unknown Lisp Object type\n
     print $arg0
   ## Barf, gag, retch
+  end
   end
   end
   end

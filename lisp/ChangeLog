@@ -1,3 +1,8 @@
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el (reset-coding-categories-to-default):
+	Move some documentation here from file-coding.h.
+
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
 	* mule/vietnamese.el (viscii):

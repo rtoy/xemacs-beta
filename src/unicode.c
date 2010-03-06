@@ -2357,6 +2357,10 @@ static const struct memory_description unicode_coding_system_description[] = {
   { XD_END }
 };
 
+static const struct memory_description unicode_coding_stream_description[] = {
+  { XD_END }
+};
+
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (unicode);
 
 /* Decode a UCS-2 or UCS-4 character (or -1 for error) into a buffer. */

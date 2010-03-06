@@ -145,17 +145,6 @@ struct multibyte_coding_system
   CODING_SYSTEM_MBCS_OVERLAP (XCODING_SYSTEM (codesys))
 #endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 
-/* ~~#### Must be converted to Lisp object.  struct multibyte_coding_system
-   does not need to be because it actually forms the latter part of a
-   coding system object.  The struct multibyte_coding_streams are currently
-   separate objects with a pointer to them in the struct coding_stream,
-   which itself is the latter part of an Lstream object.  It cannot be
-   converted into an "extended lump" on the end of the struct coding_stream
-   (then it'd be a lump on a lump, so to speak) because the size and type
-   of these data changes during the life of the stream, esp. when the
-   autodetection detects a particular coding system and switches to the
-   appropriate foo_coding_stream structure. */
-
 struct multibyte_coding_stream
 {
   /* Equivalent of dynarr in struct multibyte_coding_system as a
@@ -167,6 +156,12 @@ struct multibyte_coding_stream
 static const struct memory_description multibyte_coding_system_description[] = {
   { XD_BLOCK_PTR, offsetof (struct multibyte_coding_system, charsets),
     1, { &Lisp_Object_dynarr_description} },
+  { XD_END }
+};
+
+static const struct memory_description multibyte_coding_stream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct multibyte_coding_stream,
+			      charset_precedence), },
   { XD_END }
 };
 
@@ -1448,7 +1443,6 @@ struct iso2022_coding_system
 #define XCODING_SYSTEM_ISO2022_OUTPUT_CONV(codesys) \
   CODING_SYSTEM_ISO2022_OUTPUT_CONV (XCODING_SYSTEM (codesys))
 
-/* ~~#### Must be converted to Lisp object */
 /* Additional information used by the ISO2022 decoder and detector. */
 struct iso2022_coding_stream
 {
@@ -1534,6 +1528,18 @@ static const struct memory_description iso2022_coding_system_description[] = {
     1, { &ccsd_description } },
   { XD_BLOCK_PTR, offsetof (struct iso2022_coding_system, output_conv),
     1, { &ccsd_description } },
+  { XD_END }
+};
+
+static const struct memory_description iso2022_coding_stream_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct iso2022_coding_stream, 
+				    charset), 4 },
+#ifdef ENABLE_COMPOSITE_CHARS
+  { XD_BLOCK_PTR, offsetof (struct iso2022_coding_stream, composite_chars),
+    1, { &unsigned_char_dynarr_description} },
+#endif
+  { XD_LISP_OBJECT, offsetof (struct iso2022_coding_stream,
+			      unicode_precedence) },
   { XD_END }
 };
 
@@ -2037,15 +2043,20 @@ iso2022_init_coding_stream (struct coding_stream *str)
     reset_iso2022_encode (str->codesys,
 			  CODING_STREAM_TYPE_DATA (str, iso2022));
 }
+static void
+iso2022_mark_iso2022_coding_stream (struct iso2022_coding_stream *data)
+{
+  int i;
+  for (i = 0; i < 4; i++)
+    mark_object (data->charset[i]);
+  mark_object (data->unicode_precedence);
+}
 
 static void
 iso2022_mark_coding_stream (struct coding_stream *str)
 {
-  int i;
   struct iso2022_coding_stream *data = CODING_STREAM_TYPE_DATA (str, iso2022);
-  for (i = 0; i < 4; i++)
-    mark_object (data->charset[i]);
-  mark_object (data->unicode_precedence);
+  iso2022_mark_iso2022_coding_stream (data);
 }
 
 static void
@@ -3677,24 +3688,6 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
 /*                           ISO2022 detector                           */
 /************************************************************************/
 
-DEFINE_DETECTOR (iso2022);
-/* ISO2022 system using only seven-bit bytes, no locking shift */
-DEFINE_DETECTOR_CATEGORY (iso2022, iso_7);
-/* ISO2022 system using eight-bit bytes, no locking shift, no single shift,
-   using designation to switch charsets */
-DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_designate);
-/* ISO2022 system using eight-bit bytes, no locking shift, no designation
-   sequences, one-dimension characters in the upper half. */
-DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_1);
-/* ISO2022 system using eight-bit bytes, no locking shift, no designation
-   sequences, two-dimension characters in the upper half. */
-DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_2);
-/* ISO2022 system using locking shift */
-DEFINE_DETECTOR_CATEGORY (iso2022, iso_lock_shift);
-
-/* ~~#### Must properly mark the coding stream in here; these form parts of
-   the struct detection_state, so it in turn must be a Lisp object and
-   have mark methods for the appropriate parts. */
 struct iso2022_detector
 {
   int initted;
@@ -3717,6 +3710,27 @@ struct iso2022_detector
   int longest_even_high_byte;
   int odd_high_byte_groups;
 };
+
+static const struct memory_description iso2022_detector_description[] = {
+  { XD_BLOCK_PTR, offsetof (struct iso2022_detector, iso),
+    1, { &iso2022_coding_stream_description_0 } },
+  { XD_END }
+};  
+
+DEFINE_DETECTOR_WITH_DESCRIPTION (iso2022);
+/* ISO2022 system using only seven-bit bytes, no locking shift */
+DEFINE_DETECTOR_CATEGORY (iso2022, iso_7);
+/* ISO2022 system using eight-bit bytes, no locking shift, no single shift,
+   using designation to switch charsets */
+DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_designate);
+/* ISO2022 system using eight-bit bytes, no locking shift, no designation
+   sequences, one-dimension characters in the upper half. */
+DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_1);
+/* ISO2022 system using eight-bit bytes, no locking shift, no designation
+   sequences, two-dimension characters in the upper half. */
+DEFINE_DETECTOR_CATEGORY (iso2022, iso_8_2);
+/* ISO2022 system using locking shift */
+DEFINE_DETECTOR_CATEGORY (iso2022, iso_lock_shift);
 
 static void
 iso2022_detect (struct detection_state *st, const UExtbyte *src,
@@ -3945,6 +3959,13 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
 }      
 
 static void
+iso2022_mark_detection_state (struct detection_state *st)
+{
+  struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
+  iso2022_mark_iso2022_coding_stream (data->iso);
+}
+
+static void
 iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
@@ -3985,6 +4006,12 @@ struct ccl_coding_stream
 static const struct memory_description ccl_coding_system_description[] = {
   { XD_LISP_OBJECT, offsetof (struct ccl_coding_system, decode) },
   { XD_LISP_OBJECT, offsetof (struct ccl_coding_system, encode) },
+  { XD_END }
+};
+
+static const struct memory_description ccl_coding_stream_description[] = {
+  { XD_BLOCK_ARRAY, offsetof (struct ccl_coding_stream, ccl),
+    1, { &ccl_program_description } },
   { XD_END }
 };
 
@@ -4029,6 +4056,15 @@ ccl_init_coding_stream (struct coding_stream *str)
 		     str->direction == CODING_DECODE ?
 		     XCODING_SYSTEM_CCL_DECODE (str->codesys) :
 		     XCODING_SYSTEM_CCL_ENCODE (str->codesys));
+}
+
+static void
+ccl_mark_coding_stream (struct coding_stream *str)
+{
+  struct ccl_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, ccl);
+
+  mark_ccl_program (&data->ccl);
 }
 
 static void
@@ -4135,6 +4171,12 @@ fixed_width_coding_system_description[] = {
   { XD_END }
 };
 
+static const struct memory_description fixed_width_coding_stream_description[] = {
+  { XD_BLOCK_ARRAY, offsetof (struct fixed_width_coding_stream, ccl),
+    1, { &ccl_program_description } },
+  { XD_END }
+};
+
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (fixed_width);
 
 static void
@@ -4181,6 +4223,15 @@ fixed_width_init_coding_stream (struct coding_stream *str)
 		     str->direction == CODING_DECODE ?
 		     XCODING_SYSTEM_FIXED_WIDTH_DECODE (str->codesys) :
 		     XCODING_SYSTEM_FIXED_WIDTH_ENCODE (str->codesys));
+}
+
+static void
+fixed_width_mark_coding_stream (struct coding_stream *str)
+{
+  struct fixed_width_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, fixed_width);
+
+  mark_ccl_program (&data->ccl);
 }
 
 static void
@@ -4630,9 +4681,10 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (iso2022, putprop);
   CODING_SYSTEM_HAS_METHOD (iso2022, getprop);
 
-  INITIALIZE_DETECTOR (iso2022);
+  INITIALIZE_DETECTOR_WITH_DESCRIPTION (iso2022);
   DETECTOR_HAS_METHOD (iso2022, detect);
   DETECTOR_HAS_METHOD (iso2022, finalize_detection_state);
+  DETECTOR_HAS_METHOD (iso2022, mark_detection_state);
   INITIALIZE_DETECTOR_CATEGORY (iso2022, iso_7);
   INITIALIZE_DETECTOR_CATEGORY (iso2022, iso_8_designate);
   INITIALIZE_DETECTOR_CATEGORY (iso2022, iso_8_1);
@@ -4644,6 +4696,7 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (ccl, convert);
   CODING_SYSTEM_HAS_METHOD (ccl, init);
   CODING_SYSTEM_HAS_METHOD (ccl, init_coding_stream);
+  CODING_SYSTEM_HAS_METHOD (ccl, mark_coding_stream);
   CODING_SYSTEM_HAS_METHOD (ccl, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (ccl, putprop);
   CODING_SYSTEM_HAS_METHOD (ccl, getprop);
@@ -4655,6 +4708,7 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (fixed_width, query);
   CODING_SYSTEM_HAS_METHOD (fixed_width, init);
   CODING_SYSTEM_HAS_METHOD (fixed_width, init_coding_stream);
+  CODING_SYSTEM_HAS_METHOD (fixed_width, mark_coding_stream);
   CODING_SYSTEM_HAS_METHOD (fixed_width, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (fixed_width, putprop);
   CODING_SYSTEM_HAS_METHOD (fixed_width, getprop);

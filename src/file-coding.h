@@ -2,7 +2,7 @@
    #### rename me to coding-system.h
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Current primary author: Ben Wing <ben@xemacs.org>
-   
+
    Written by Ben Wing <ben@xemacs.org> for XEmacs, 1995, loosely based
      on code written 91.10.09 by K.Handa <handa@etl.go.jp>.
    Rewritten again 2000-2001 by Ben Wing to support properly
@@ -127,9 +127,7 @@ Boston, MA 02111-1307, USA.  */
    compound text extended segments by saving the state of the ctext stream,
    and installing an appropriate for the duration of the segment.
 
-   IMPORTANT NOTE: There are at least two ancillary data structures
-   associated with a coding system type. (There may also be detection data;
-   see elsewhere.) It's important, when writing a coding system type, to
+   IMPORTANT NOTE: It's important, when writing a coding system type, to
    keep straight which type of data goes where.  In particular, `struct
    foo_coding_system' is attached to the coding system object itself.  This
    is a permanent object and there's only one per coding system.  It's
@@ -161,7 +159,54 @@ Boston, MA 02111-1307, USA.  */
    Initialize this structure whenever init_coding_stream_method is called
    (this may happen more than once), and finalize it (free resources, etc.)
    when finalize_coding_stream_method is called.
-    */
+
+   Here is a diagram of the structures:
+
+   +------------------------------------------------------------------+
+   |                                                                  |
+   |                                    +---------------------------+ |
+   | struct Lisp_Coding_System          |                           | |
+   |                                    | struct foo_coding_system  | |
+   |                                    |                           | |
+   |                                    +---------------------------+ |
+   +------------------------------------------------------------------+
+
+
+
+   +------------------------------------------------------------------+
+   |                                                                  |
+   |                            +-----------------------------------+ |
+   |                            |                            +-----+| |
+   |    struct lstream          |    struct coding_stream    | PTR || |
+   |                            |                            +-----+| |
+   |                            +-------------------------------|---+ |
+   |                                                            |     |
+   +------------------------------------------------------------|-----+
+                                                                |
+                                                              \ | /
+                                                               \|/
+                                                                v
+                                        +---------------------------+
+                                        |                           |
+                                        | struct foo_coding_stream  |
+                                        |                           |
+                                        +---------------------------+
+
+
+   +-------------------------------------------------------------------------+
+   |                   struct detection_state                                |
+   |                                                                         |
+   | data_offset[detector_foo]:   data_offset[detector_bar]:                 |
+   | +-----------------------+    +------------------------+                 |
+   | |                       |    |                        |                 |
+   | |  struct foo_detector  |    |  struct bar_detector   |     etc.        |
+   | |                       |    |                        |                 |
+   | +-----------------------+    +------------------------+                 |
+   |                                                                         |
+   +-------------------------------------------------------------------------+
+
+  --ben
+*/
 
 struct coding_stream;
 struct detection_state;
@@ -317,15 +362,15 @@ struct coding_system_methods
      for coding streams, there's the canonicalize_after_coding() method.)
      Required. */
   Bytecount (*convert_method) (struct coding_stream *str,
-				  const unsigned char *src,
-				  unsigned_char_dynarr *dst, Bytecount n);
+			       const unsigned char *src,
+			       unsigned_char_dynarr *dst, Bytecount n);
 
   /* Query method: Check whether the buffer text between point and END
      can be encoded by this coding system. Returns
      either nil (meaning the text can be encoded by the coding system) or a
      range table object describing the stretches that the coding system
      cannot encode.
-     
+
      Possible values for flags are below, search for
      QUERY_METHOD_IGNORE_INVALID_SEQUENCES.
 
@@ -397,18 +442,21 @@ struct coding_system_methods
      INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
 
   /* Description of the extra data (struct foo_coding_system) attached to a
-     coding system, for pdump purposes. */
+     coding system, for pdump/KKCC purposes. */
   const struct sized_memory_description *extra_description;
   /* size of struct foo_coding_system -- extra data associated with
      the coding system */
-  int extra_data_size;
+  Bytecount extra_data_size;
+  /* Description of the extra data (struct foo_coding_stream) attached to an
+     lstream, for KKCC purposes. */
+  const struct sized_memory_description *stream_description;
   /* size of struct foo_coding_stream -- extra data associated with the
      struct coding_stream, needed for each active coding process
      using this coding system.  note that we can have more than one
      process active at once (simply by creating more than one coding
      lstream using this coding system), so we can't store this data in
      the coding system object. */
-  int coding_data_size;
+  Bytecount stream_data_size;
 };
 
 /* Values for flags, as passed to query_method. */
@@ -420,9 +468,9 @@ struct coding_system_methods
 enum query_coding_failure_reasons
   {
     query_coding_succeeded = 0,
-    query_coding_unencodable = 1, 
+    query_coding_unencodable = 1,
     query_coding_invalid_sequence = 2
-  }; 
+  };
 
 extern Lisp_Object Qquery_coding_warning_face;
 
@@ -509,6 +557,11 @@ static const struct sized_memory_description			\
   type##_coding_system_description_0 = {			\
   sizeof (struct type##_coding_system),				\
   type##_coding_system_description				\
+};								\
+static const struct sized_memory_description			\
+  type##_coding_stream_description_0 = {			\
+  sizeof (struct type##_coding_stream),				\
+  type##_coding_stream_description				\
 }
 
 #define INITIALIZE_CODING_SYSTEM_TYPE(ty, pred_sym) do {		\
@@ -544,11 +597,13 @@ static const struct sized_memory_description			\
 #define INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA(type, pred_sym)	\
 do {								\
   INITIALIZE_CODING_SYSTEM_TYPE (type, pred_sym);		\
-  type##_coding_system_methods->extra_data_size =		\
-    sizeof (struct type##_coding_system);			\
   type##_coding_system_methods->extra_description =		\
     &type##_coding_system_description_0;			\
-  type##_coding_system_methods->coding_data_size =		\
+  type##_coding_system_methods->extra_data_size =		\
+    sizeof (struct type##_coding_system);			\
+  type##_coding_system_methods->stream_description =		\
+    &type##_coding_stream_description_0;			\
+  type##_coding_system_methods->stream_data_size =		\
     sizeof (struct type##_coding_stream);			\
 } while (0)
 
@@ -688,13 +743,10 @@ do {								\
 
 #define MAX_BYTES_PROCESSED_FOR_DETECTION 65536
 
-/* ~~#### Must be a Lisp object because some detection states need a pointer
-   back to the stream in which this detection is operating. (Maybe just move
-   the stream up and make it a general property?  That way we could avoid,
-   for the moment, at least, any need to have mark methods for the various
-   detector parts). */
 struct detection_state
 {
+  struct LCRECORD_HEADER header;
+
   int seen_non_ascii;
   Bytecount bytes_seen;
 
@@ -704,39 +756,16 @@ struct detection_state
      the data for that type */
 };
 
+DECLARE_LRECORD (detection_state, struct detection_state);
+#define XDETECTION_STATE(x) XRECORD (x, detection_state, struct detection_state)
+#define wrap_detection_state(p) wrap_record (p, detection_state)
+#define DETECTION_STATEP(x) RECORDP (x, detection_state)
+#define CHECK_DETECTION_STATE(x) CHECK_RECORD (x, detection_state)
+#define CONCHECK_DETECTION_STATE(x) CONCHECK_RECORD (x, detection_state)
+
 #define DETECTION_STATE_DATA(st, type)				\
   ((struct type##_detector *)					\
    ((char *) (st) + (st)->data_offset[detector_##type]))
-
-/* Distinguishable categories of encodings.
-
-   This list determines the initial priority of the categories.
-
-   For better or worse, currently Mule files are encoded in 7-bit ISO 2022.
-   For this reason, under Mule ISO_7 gets highest priority.
-
-   Putting NO_CONVERSION second prevents "binary corruption" in the
-   default case in all but the (presumably) extremely rare case of a
-   binary file which contains redundant escape sequences but no 8-bit
-   characters.
-
-   The remaining priorities are based on perceived "internationalization
-   political correctness."  An exception is UCS-4 at the bottom, since
-   basically everything is compatible with UCS-4, but it is likely to
-   be very rare as an external encoding. */
-
-/* Macros to define code of control characters for ISO2022's functions.  */
-/* Used by the detection routines of other coding system types as well. */
-			/* code */	/* function */
-#define ISO_CODE_LF	0x0A		/* line-feed */
-#define ISO_CODE_CR	0x0D		/* carriage-return */
-#define ISO_CODE_SO	0x0E		/* shift-out */
-#define ISO_CODE_SI	0x0F		/* shift-in */
-#define ISO_CODE_ESC	0x1B		/* escape */
-#define ISO_CODE_DEL	0x7F		/* delete */
-#define ISO_CODE_SS2	0x8E		/* single-shift-2 */
-#define ISO_CODE_SS3	0x8F		/* single-shift-3 */
-#define ISO_CODE_CSI	0x9B		/* control-sequence-introduce */
 
 enum detection_result
  {
@@ -790,9 +819,6 @@ enum detection_result
   DET_LOWEST = -3
  };
 
-extern int coding_detector_count;
-extern int coding_detector_category_count;
-
 struct detector_category
 {
   int id;
@@ -808,14 +834,27 @@ struct detector
 {
   int id;
   detector_category_dynarr *cats;
-  Bytecount data_size;
+
   /* Detect method: Required. */
   void (*detect_method) (struct detection_state *st,
 			 const unsigned char *src, Bytecount n);
+
+  /* Mark the detection state, if there are any Lisp objects in it:
+     Optional.  But  */
+  void (*mark_detection_state_method) (struct detection_state *st);
+
   /* Finalize detection state method: Clean up any allocated data in the
      detection state.  Called only once (NOT called at disksave time).
      Optional. */
   void (*finalize_detection_state_method) (struct detection_state *st);
+
+  /* Size of struct foo_detection_state -- data associated with the
+     detector, during detection.  Note that `struct foo_detection_state'
+     forms part of `struct detection_state' -- for a particular
+     struct detection_state `st', it's located at the offset
+     st->data_offset[detector_foo].
+     */
+  Bytecount data_size;
 };
 
 /* Lvalue for a particular detection result -- detection state ST,
@@ -833,10 +872,17 @@ typedef struct
 
 extern detector_dynarr *all_coding_detectors;
 
+extern int coding_detector_count;
+extern int coding_detector_description_lines_count;
+extern int coding_detector_category_count;
+extern struct memory_description detection_state_description[];
+
 #define DEFINE_DETECTOR_CATEGORY(detector, cat) \
 int detector_category_##cat
+
 #define DECLARE_DETECTOR_CATEGORY(detector, cat) \
 extern int detector_category_##cat
+
 #define INITIALIZE_DETECTOR_CATEGORY(detector, cat)			  \
 do {									  \
   struct detector_category dog;						  \
@@ -851,8 +897,27 @@ do {									  \
 
 #define DEFINE_DETECTOR(Detector) \
 int detector_##Detector
+
+/* Here we define a detector that has Lisp objects in it.  We need to
+   create a sized_memory_description that points to the memory description
+   for the detector-specific detection state (which is the responsibility
+   of the creator of the detector). */
+
+#define DEFINE_DETECTOR_WITH_DESCRIPTION(Detector)	\
+DEFINE_DETECTOR (Detector);				\
+static const struct sized_memory_description		\
+   Detector##_detector_description_0 =			\
+  { sizeof (struct Detector##_detector),		\
+    Detector##_detector_description }
+
 #define DECLARE_DETECTOR(Detector) \
 extern int detector_##Detector
+
+/* Initialize a detector without Lisp objects in it.  This creates a blank
+   `struct detector' and adds it to the dynarr that tracks all detectors
+   so far known about.  We also need to initialize the variable
+   `detector_foo' with the index of the detector. */
+
 #define INITIALIZE_DETECTOR(Detector)			\
 do {							\
   struct detector det;					\
@@ -865,10 +930,46 @@ do {							\
   det.data_size = sizeof (struct Detector##_detector);	\
   Dynarr_add (all_coding_detectors, det);		\
 } while (0)
+
+/* Here we initialize a detector that has Lisp objects in it that need to
+   be noted for KKCC.  Because `struct detection_state' has a strange
+   format -- it has the whole set of detector-specific detection states
+   included within it, with an array indicating the offset of each
+   detector-specific structure within the whole structure -- we can't simply
+   declare a static object description, since there isn't any means of
+   handling this weird type of object.  Instead, we must build up the
+   description bit-by-bit based on individual descriptions of the
+   detector-specific structures.  We use XD_BLOCK_ARRAY, and take advantage
+   of the fact that we can specify the offset using an XD_INDIRECT pointer,
+   pointing to the value of data_offset[detector_foo] -- but to do this we
+   have to declare data_offset[detector_foo] as an XD_BYTECOUNT. */
+
+#define INITIALIZE_DETECTOR_WITH_DESCRIPTION(Detector)			\
+do {									\
+  struct memory_description *desc;					\
+  INITIALIZE_DETECTOR (Detector);					\
+  desc =								\
+    &detection_state_description[coding_detector_description_lines_count++]; \
+  desc->type = XD_BYTECOUNT;						\
+  desc->offset = portable_offsetof (struct detection_state,		\
+			            data_offset[detector_##Detector]);	\
+  desc =								\
+    &detection_state_description[coding_detector_description_lines_count]; \
+  desc->type = XD_BLOCK_ARRAY;						\
+  desc->offset =							\
+    XD_INDIRECT (coding_detector_description_lines_count - 1, 0);	\
+  desc->data1 = 1;							\
+  desc->data2.descr = &Detector##_detector_description_0;		\
+  coding_detector_description_lines_count++;				\
+  desc =								\
+    &detection_state_description[coding_detector_description_lines_count]; \
+  desc->type = XD_END;							\
+} while (0)
+
 #define DETECTOR_HAS_METHOD(Detector, Meth)				\
   Dynarr_at (all_coding_detectors, detector_##Detector).Meth##_method =	\
     Detector##_##Meth
-  
+
 
 /**************************************************/
 /*               Decoding/Encoding                */
@@ -899,12 +1000,12 @@ enum encode_decode
 
 struct coding_stream
 {
-  /* Enumerated constant listing which type of console this is (TTY, X,
-     MS-Windows, etc.).  This duplicates the method structure in
-     XCODING_SYSTEM (str->codesys)->methods->type, which formerly was the
-     only way to determine the coding system type.  We need this constant
-     now for KKCC, so that it can be used in an XD_UNION clause to
-     determine the Lisp objects in the type-specific data. */
+  /* Enumerated constant listing which type of coding system this is.  This
+     duplicates the method structure in XCODING_SYSTEM
+     (str->codesys)->methods->type, which formerly was the only way to
+     determine the coding system type.  We need this constant now for KKCC,
+     so that it can be used in an XD_UNION clause to determine the Lisp
+     objects in the type-specific data. */
   enum coding_system_variant type;
 
   /* Coding system that governs the conversion. */
@@ -967,7 +1068,7 @@ struct coding_stream
      CODING_STREAM_TYPE_DATA().  Allocated at the same time that
      CODESYS is set (which may occur at any time, even multiple times,
      during the lifetime of the stream).  The size comes from
-     methods->coding_data_size.  */
+     methods->stream_data_size.  */
   void *data;
 
   enum encode_decode direction;
@@ -986,12 +1087,12 @@ struct coding_stream
      necessary to prevent the caller from getting partial characters. (the
      default) */
   unsigned int set_char_mode_on_us_when_reading:1;
-  
+
   /* #### Temporary test */
   unsigned int finalized:1;
 };
 
-#define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)    
+#define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)
 
 #ifdef ERROR_CHECK_TYPES
 # define CODING_STREAM_TYPE_DATA(s, type) \
@@ -1009,6 +1110,24 @@ do {						\
       str->ch = -1;				\
     }						\
 } while (0)
+
+/* Copy the byte C in string representation into the accumulated partial
+   character in coding_stream STR. */
+#define COPY_PARTIAL_CHAR_BYTE(c, str)				\
+do {								\
+  if (ibyte_first_byte_p (c))					\
+    {								\
+      str->partial[0] = c;					\
+      str->pind = 1;						\
+      str->pind_remaining = rep_bytes_by_first_byte (c) - 1;	\
+    }								\
+  else								\
+    {								\
+      str->partial[str->pind++] = c;				\
+      str->pind_remaining--;					\
+    }								\
+ }                                                              \
+while (0)
 
 #ifdef MULE
 /* Convert shift-JIS code (sj1, sj2) into JISX0208 position codes (c1, c2). */
@@ -1039,23 +1158,18 @@ do {							\
 } while (0)
 #endif /* MULE */
 
-/* Copy the byte C in string representation into the accumulated partial
-   character in coding_stream STR. */
-#define COPY_PARTIAL_CHAR_BYTE(c, str)				\
-do {								\
-  if (ibyte_first_byte_p (c))					\
-    {								\
-      str->partial[0] = c;					\
-      str->pind = 1;						\
-      str->pind_remaining = rep_bytes_by_first_byte (c) - 1;	\
-    }								\
-  else								\
-    {								\
-      str->partial[str->pind++] = c;				\
-      str->pind_remaining--;					\
-    }								\
- }                                                              \
-while (0)
+/* Macros to define code of control characters for ISO2022's functions.  */
+/* Used by the detection routines of other coding system types as well. */
+			/* code */	/* function */
+#define ISO_CODE_LF	0x0A		/* line-feed */
+#define ISO_CODE_CR	0x0D		/* carriage-return */
+#define ISO_CODE_SO	0x0E		/* shift-out */
+#define ISO_CODE_SI	0x0F		/* shift-in */
+#define ISO_CODE_ESC	0x1B		/* escape */
+#define ISO_CODE_DEL	0x7F		/* delete */
+#define ISO_CODE_SS2	0x8E		/* single-shift-2 */
+#define ISO_CODE_SS3	0x8F		/* single-shift-3 */
+#define ISO_CODE_CSI	0x9B		/* control-sequence-introduce */
 
 DECLARE_CODING_SYSTEM_TYPE (no_conversion);
 DECLARE_CODING_SYSTEM_TYPE (convert_eol);
