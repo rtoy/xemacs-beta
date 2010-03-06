@@ -1,7 +1,7 @@
 /* Compiler-specific definitions for XEmacs.
    Copyright (C) 1998-1999, 2003 Free Software Foundation, Inc.
    Copyright (C) 1994 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000-2004, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2000-2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -240,8 +240,17 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef MULE
 # define USED_IF_MULE(decl) decl
+# ifdef UNICODE_INTERNAL
+#  define USED_IF_UNICODE_INTERNAL(decl) decl
+#  define USED_IF_OLD_MULE(decl) UNUSED (decl)
+# else
+#  define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
+#  define USED_IF_OLD_MULE(decl) decl
+# endif
 #else
 # define USED_IF_MULE(decl) UNUSED (decl)
+# define USED_IF_UNICODE_INTERNAL(decl) UNUSED (decl)
+# define USED_IF_OLD_MULE(decl) UNUSED (decl)
 #endif
 #ifdef HAVE_XFT
 # define USED_IF_XFT(decl) decl

@@ -1,5 +1,6 @@
 /* New incremental garbage collector for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -115,7 +116,11 @@ void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos);
 void kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj, int level, int pos);
 #define kkcc_gc_stack_repush_dirty_object(obj) \
   kkcc_gc_stack_repush_dirty_object_1 (obj, 0, -2)
-void kkcc_backtrace (void);
+void kkcc_backtrace_1 (int size, int detailed);
+void kkcc_short_backtrace (void);
+void kkcc_detailed_backtrace (void);
+void kkcc_short_backtrace_full (void);
+void kkcc_detailed_backtrace_full (void);
 #else
 void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
 #define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
@@ -123,7 +128,7 @@ void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
 void kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj);
 #define kkcc_gc_stack_repush_dirty_object(obj) \
   kkcc_gc_stack_repush_dirty_object_1 (obj)
-#define kkcc_backtrace()
+#define kkcc_detailed_backtrace()
 #endif
 
 #ifdef NEW_GC

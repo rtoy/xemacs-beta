@@ -1,8 +1,9 @@
-;;; ethiopic.el --- Support for Ethiopic -*- coding: iso-2022-7bit; -*-
+;;; ethiopic.el --- Support for Ethiopic -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Keywords: multilingual, Ethiopic
 
@@ -28,19 +29,9 @@
 
 ;;; Code:
 
-;; Ethiopic characters (Amahric and Tigrigna).
-(make-charset 'ethiopic "Ethiopic characters"
-	      '(dimension
-		2
-		registries ["Ethiopic-Unicode"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?3
-		graphic 0
-		short-name "Ethiopic"
-		long-name "Ethiopic characters"
-		))
+;;; Ethiopic characters (Amharic and Tigrinya).
+;(make-internal-charset 'ethiopic "Ethiopic characters" ...
+;moved to mule-charset.el.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ETHIOPIC
@@ -61,11 +52,11 @@
      (r1 *= 94)
      (r2 += r1)
      (if (r2 < 256)
-	 (r1 = #x12)
+  	 (r1 = #x12)
        (if (r2 < 448)
-	   ((r1 = #x13) (r2 -= 256))
-	 ((r1 = #xfd) (r2 -= 208))
-	 ))))
+  	   ((r1 = #x13) (r2 -= 256))
+  	 ((r1 = #xfd) (r2 -= 208))
+  	 ))))
   "CCL program to encode an Ethiopic code to code point of Ethiopic font.")
 
 (set-charset-ccl-program 'ethiopic 'ccl-encode-ethio-font)
@@ -78,7 +69,7 @@
 	      (coding-priority iso-2022-7bit)
 	      ;; (input-method . "ethiopic")
 	      (features ethio-util)
-	      (sample-text . "$(3$Q#U!.(B")
+	      (sample-text . "ፊደል")
 	      (documentation . t)))
 
 ;; In a more ideal world, we could set the default face fallback from here
