@@ -486,8 +486,12 @@ static void frame_conversion_internal (struct frame *f,
 				       int *dest_width, int *dest_height);
 static void get_frame_char_size (struct frame *f, int *out_width,
 				 int *out_height);
-static void get_frame_displayable_pixel_size (struct frame *f, int *out_width,
-					      int *out_height);
+static void get_frame_new_displayable_pixel_size (struct frame *f,
+						  int *out_width,
+						  int *out_height);
+static void get_frame_new_total_pixel_size (struct frame *f,
+					    int *out_width,
+					    int *out_height);
 
 static struct display_line title_string_display_line;
 /* Used by generate_title_string. Global because they get used so much that
@@ -3078,7 +3082,11 @@ Return the total height in pixels of FRAME.
 */
        (frame))
 {
-  return make_int (decode_frame (frame)->pixheight);
+  struct frame *f = decode_frame (frame);
+  int width, height;
+
+  get_frame_new_total_pixel_size (f, &width, &height);
+  return make_int (height);
 }
 
 DEFUN ("frame-displayable-pixel-height", Fframe_displayable_pixel_height, 0, 1, 0, /*
@@ -3089,7 +3097,7 @@ Return the height of the displayable area in pixels of FRAME.
   struct frame *f = decode_frame (frame);
   int width, height;
 
-  get_frame_displayable_pixel_size (f, &width, &height);
+  get_frame_new_displayable_pixel_size (f, &width, &height);
   return make_int (height);
 }
 
@@ -3098,7 +3106,11 @@ Return the total width in pixels of FRAME.
 */
        (frame))
 {
-  return make_int (decode_frame (frame)->pixwidth);
+  struct frame *f = decode_frame (frame);
+  int width, height;
+
+  get_frame_new_total_pixel_size (f, &width, &height);
+  return make_int (width);
 }
 
 DEFUN ("frame-displayable-pixel-width", Fframe_displayable_pixel_width, 0, 1, 0, /*
@@ -3109,7 +3121,7 @@ Return the width of the displayable area in pixels of FRAME.
   struct frame *f = decode_frame (frame);
   int width, height;
 
-  get_frame_displayable_pixel_size (f, &width, &height);
+  get_frame_new_displayable_pixel_size (f, &width, &height);
   return make_int (width);
 }
 
@@ -3147,8 +3159,8 @@ but that the idea of the actual height of the frame should not be changed.
   int guwidth, guheight;
 
   CHECK_INT (height);
+  get_frame_new_total_pixel_size (f, &pwidth, &pheight);
   pheight = XINT (height);
-  pwidth = FRAME_PIXWIDTH (f);
   frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3168,7 +3180,7 @@ but that the idea of the actual height of the frame should not be changed.
   int guwidth, guheight;
 
   CHECK_INT (height);
-  get_frame_displayable_pixel_size (f, &pwidth, &pheight);
+  get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
   pheight = XINT (height);
   frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
@@ -3211,8 +3223,8 @@ but that the idea of the actual height of the frame should not be changed.
   int guwidth, guheight;
 
   CHECK_INT (width);
+  get_frame_new_total_pixel_size (f, &pwidth, &pheight);
   pwidth = XINT (width);
-  pheight = FRAME_PIXHEIGHT (f);
   frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3232,7 +3244,7 @@ but that the idea of the actual height of the frame should not be changed.
   int guwidth, guheight;
 
   CHECK_INT (width);
-  get_frame_displayable_pixel_size (f, &pwidth, &pheight);
+  get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
   pwidth = XINT (width);
   frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
@@ -3564,38 +3576,39 @@ round_size_to_char (struct frame *f, int in_width, int in_height,
   char_to_pixel_size (f, char_width, char_height, out_width, out_height);
 }
 
-/* Get the frame size in character cells, recalculating on the fly.
-   #### The logic of this function follows former logic elsewhere,
-   which used FRAME_PIXWIDTH() on pixelated-geometry systems but
-   FRAME_WIDTH() on non-pixelated-geometry systems.  Not clear why not
-   always just use one or the other.
-
-   Why don't we just use FRAME_CHARWIDTH() etc. in get_frame_char_size()?
-   That wouldn't work because change_frame_size_1() depends on the
-   following function to *set* the values of FRAME_CHARWIDTH() etc.
-
-   But elsewhere I suppose we could use it.
-*/
-
 static void
 get_frame_char_size (struct frame *f, int *out_width, int *out_height)
 {
-  if (window_system_pixelated_geometry (wrap_frame (f)))
-    pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			out_width, out_height);
-  else
-    {
-      *out_width = FRAME_WIDTH (f);
-      *out_height = FRAME_HEIGHT (f);
-    }
+  *out_width = FRAME_CHARWIDTH (f);
+  *out_height = FRAME_CHARHEIGHT (f);
 }
 
+/* Return the "new" frame size in displayable pixels, which will be
+   accurate as of next redisplay.  If we have changed the default font or
+   toolbar or scrollbar specifiers, the frame pixel size will change as of
+   next redisplay, but the frame character-cell size will remain the same.
+   So use those dimensions to compute the displayable-pixel size. */
+
 static void
-get_frame_displayable_pixel_size (struct frame *f, int *out_width,
-				  int *out_height)
+get_frame_new_displayable_pixel_size (struct frame *f, int *out_width,
+				      int *out_height)
 {
-  frame_conversion_internal (f, SIZE_FRAME_UNIT, FRAME_WIDTH (f),
-			     FRAME_HEIGHT (f), SIZE_DISPLAYABLE_PIXEL,
+  frame_conversion_internal (f, SIZE_CHAR_CELL, FRAME_CHARWIDTH (f),
+			     FRAME_CHARHEIGHT (f), SIZE_DISPLAYABLE_PIXEL,
+			     out_width, out_height);
+}
+
+/* Return the "new" frame size in total pixels, which will be
+   accurate as of next redisplay.  See get_frame_new_displayable_pixel_size().
+*/
+
+
+static void
+get_frame_new_total_pixel_size (struct frame *f, int *out_width,
+				int *out_height)
+{
+  frame_conversion_internal (f, SIZE_CHAR_CELL, FRAME_CHARWIDTH (f),
+			     FRAME_CHARHEIGHT (f), SIZE_TOTAL_PIXEL,
 			     out_width, out_height);
 }
 
@@ -3613,6 +3626,7 @@ static void
 change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 {
   int new_pixheight, new_pixwidth;
+  int paned_pixheight, paned_pixwidth;
   int real_font_height, real_font_width;
 
   /* #### Chuck -- shouldn't we be checking to see if the frame
@@ -3641,9 +3655,9 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   /* We need to remove the boundaries of the paned area (see top of file)
      from the total-area pixel size, which is what we have now.
   */
-  new_pixheight -=
+  paned_pixheight = new_pixheight -
     (FRAME_NONPANED_SIZE (f, TOP_EDGE) + FRAME_NONPANED_SIZE (f, BOTTOM_EDGE));
-  new_pixwidth -=
+  paned_pixwidth = new_pixwidth -
     (FRAME_NONPANED_SIZE (f, LEFT_EDGE) + FRAME_NONPANED_SIZE (f, RIGHT_EDGE));
 
   XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_PANED_TOP_EDGE (f);
@@ -3662,51 +3676,53 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
        * other frame size changes, which seems reasonable.
        */
       int old_minibuf_height =
-	XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
+	XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_height;
       int minibuf_height =
 	f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
-	max(old_minibuf_height, real_font_height) :
+	max (old_minibuf_height, real_font_height) :
 	real_font_height;
       set_window_pixheight (FRAME_ROOT_WINDOW (f),
 			    /* - font_height for minibuffer */
-			    new_pixheight - minibuf_height, 0);
+			    paned_pixheight - minibuf_height, 0);
 
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
 	FRAME_PANED_TOP_EDGE (f) +
 	FRAME_BOTTOM_GUTTER_BOUNDS (f) +
-	new_pixheight - minibuf_height;
+	paned_pixheight - minibuf_height;
 
       set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
     }
   else
     /* Frame has just one top-level window.  */
-    set_window_pixheight (FRAME_ROOT_WINDOW (f), new_pixheight, 0);
+    set_window_pixheight (FRAME_ROOT_WINDOW (f), paned_pixheight, 0);
 
   FRAME_HEIGHT (f) = newheight;
   if (FRAME_TTY_P (f))
     f->pixheight = newheight;
 
   XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_PANED_LEFT_EDGE (f);
-  set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
+  set_window_pixwidth (FRAME_ROOT_WINDOW (f), paned_pixwidth, 0);
 
   if (FRAME_HAS_MINIBUF_P (f))
     {
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
 	FRAME_PANED_LEFT_EDGE (f);
-      set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
+      set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), paned_pixwidth, 0);
     }
 
   FRAME_WIDTH (f) = newwidth;
   if (FRAME_TTY_P (f))
     f->pixwidth = newwidth;
 
-  /* #### On MS Windows, this references FRAME_PIXWIDTH() and
-     FRAME_PIXHEIGHT().  I'm not sure we can count on those values being
-     set.  Instead we should use the total pixel size we got near the top
-     by calling frame_conversion_internal().  We should inline the logic in
-     get_frame_char_size() here and change that function so it just looks
-     at FRAME_CHARWIDTH() and FRAME_CHARHEIGHT(). */
-  get_frame_char_size (f, &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
+  /* Set the frame character-cell width appropriately. */
+  if (window_system_pixelated_geometry (wrap_frame (f)))
+    pixel_to_char_size (f, new_pixwidth, new_pixheight,
+			&FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
+  else
+    {
+      FRAME_CHARWIDTH (f) = FRAME_WIDTH (f);
+      FRAME_CHARHEIGHT (f) = FRAME_HEIGHT (f);
+    }
 
   MARK_FRAME_TOOLBARS_CHANGED (f);
   MARK_FRAME_GUTTERS_CHANGED (f);
