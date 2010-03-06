@@ -1,5 +1,30 @@
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
+	* frame.c:
+	* frame.c (frame_live_p):
+	* frame.c (Fframep):
+	* frame.c (Fdisable_frame):
+	* frame.c (Fenable_frame):
+	* frame.c (Fraise_frame):
+	* frame.c (Fframe_name):
+	* frame.c (Fset_frame_height):
+	* frame.c (internal_set_frame_size):
+	* frame.c (adjust_frame_size):
+	Add documentation on the different types of units used to measure
+	frame size.
+
+	Add section headers to the various sections.
+	
+	Rearrange the location of some functions in the file to keep
+	related functions together.  This especially goes for frame-sizing
+	functions (internal_set_frame_size() and adjust_frame_size()),
+	which have been moved so that they form a group with
+	change_frame_size() and change_frame_size_1().
+
+	No functionality should change.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
 	* mule-coding.c:
 	* mule-coding.c (iso2022_encode):
 	Horrible bug: `escape-quoted' was failing to escape-quote special
