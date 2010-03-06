@@ -1685,6 +1685,11 @@ static const struct memory_description
   { XD_END }
 };
 
+static const struct memory_description
+  mswindows_multibyte_to_unicode_coding_stream_description[] = {
+  { XD_END }
+};
+
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte_to_unicode);
 
 static void
@@ -2146,6 +2151,11 @@ static const struct memory_description
     offsetof (struct mswindows_multibyte_coding_system, code_page) },
   { XD_LISP_OBJECT,
     offsetof (struct mswindows_multibyte_coding_system, locale) },
+  { XD_END }
+};
+
+static const struct memory_description
+  mswindows_multibyte_coding_stream_description[] = {
   { XD_END }
 };
 

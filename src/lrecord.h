@@ -256,6 +256,7 @@ enum lrecord_type
   lrecord_type_cons,			/* Lisp_Cons */
   lrecord_type_console,			/* struct console */
   lrecord_type_database,		/* Lisp_Database */
+  lrecord_type_detection_state,		/* struct detection_state */
   lrecord_type_device,			/* struct device */
   lrecord_type_devmode,			/* Lisp_Devmode */
   lrecord_type_emacs_ffi,		/* emacs_ffi_data */
@@ -1397,7 +1398,7 @@ static const struct memory_description toolbar_button_description [] = {
 
 static Lisp_Object
 mark_toolbar_button (Lisp_Object obj)
-\{
+ {
   struct toolbar_button *data = XTOOLBAR_BUTTON (obj);
   mark_object (data->next);
   mark_object (data->frame);
@@ -1412,7 +1413,7 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-[[ If your object should never escape to Lisp, declare its print method
+ [[ If your object should never escape to Lisp, declare its print method
    as internal_object_printer instead of 0. ]]
 
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,

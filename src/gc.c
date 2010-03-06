@@ -412,7 +412,7 @@ lispdesc_indirect_count_1 (EMACS_INT code,
 		  idesc[line].type, line, (long) code);
 #if defined(USE_KKCC) && defined(DEBUG_XEMACS)
       if (gc_in_progress)
-	kkcc_backtrace ();
+	kkcc_detailed_backtrace ();
 #endif
 #ifdef PDUMP
       if (in_pdump)
@@ -662,24 +662,29 @@ kkcc_bt_init (void)
 }
 
 void
-kkcc_backtrace (void)
+kkcc_backtrace_1 (int size, int detailed)
 {
   int i;
   stderr_out ("KKCC mark stack backtrace :\n");
-  for (i = kkcc_bt_depth - 1; i >= 0; i--)
+  for (i = kkcc_bt_depth - 1; i >= kkcc_bt_depth - size; i--)
     {
       Lisp_Object obj = wrap_pointer_1 (kkcc_bt[i].obj);
-      stderr_out (" [%d]", i);
+      stderr_out (" [%d] ", i);
       if ((XRECORD_LHEADER (obj)->type >= lrecord_type_last_built_in_type)
 	  || (!LRECORDP (obj))
 	  || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
 	{
-	  stderr_out (" non Lisp Object");
+	  stderr_out ("non Lisp Object");
 	}
       else
 	{
-	  stderr_out (" %s",
+	  stderr_out ("%s",
 		      XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
+	}
+      if (detailed)
+	{
+	  stderr_out (" ");
+	  debug_print (obj);
 	}
       stderr_out (" (addr: %p, desc: %p, ",
 		  (void *) kkcc_bt[i].obj,
@@ -692,6 +697,30 @@ kkcc_backtrace (void)
 	else if (kkcc_bt[i].pos == -2)
 	  stderr_out ("dirty object)\n");
     }
+}
+
+void
+kkcc_short_backtrace (void)
+{
+  kkcc_backtrace_1 (100, 0);
+}
+
+void
+kkcc_detailed_backtrace (void)
+{
+  kkcc_backtrace_1 (100, 1);
+}
+
+void
+kkcc_short_backtrace_full (void)
+{
+  kkcc_backtrace_1 (kkcc_bt_depth, 0);
+}
+
+void
+kkcc_detailed_backtrace_full (void)
+{
+  kkcc_backtrace_1 (kkcc_bt_depth, 1);
 }
 
 static void
@@ -1198,7 +1227,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		    
 	    default:
 	      stderr_out ("Unsupported description type : %d\n", desc1->type);
-	      kkcc_backtrace ();
+	      kkcc_detailed_backtrace ();
 	      ABORT ();
 	    }
 	}

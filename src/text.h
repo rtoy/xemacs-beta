@@ -369,14 +369,8 @@ unicode_error_octet_code_p (int code)
 #define ibyte_first_byte_p(ptr) 1
 #define byte_ascii_p(byte) 1
 #define MAX_ICHAR_LEN 1
-
-#define ichar_len(ch) 1
-#define ichar_columns(ch) 1
-
-#define DECODE_ADD_BINARY_CHAR(c, dst)		\
-do {						\
-  Dynarr_add (dst, c);				\
-} while (0)
+/* This appears to work both for values > 255 and < 0. */
+#define valid_ichar_p(ch) (! (ch & ~0xFF))
 
 #else /* MULE */
 
@@ -492,7 +486,23 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #define ichar_ascii_p(c) (!ichar_multibyte_p (c))
 
-#ifdef MULE
+/* Maximum number of bytes per Emacs character when represented as text, in
+ any format.
+ */
+
+#ifdef UNICODE_INTERNAL
+#define MAX_ICHAR_LEN 6
+#else
+#define MAX_ICHAR_LEN 4
+#endif
+
+#ifdef UNICODE_INTERNAL
+#define FIRST_TRAILING_BYTE 0x80
+#define LAST_TRAILING_BYTE 0xBF
+#else
+#define FIRST_TRAILING_BYTE 0xA0
+#define LAST_TRAILING_BYTE 0xFF
+#endif
 
 #ifndef UNICODE_INTERNAL
 MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
@@ -513,12 +523,7 @@ valid_ichar_p (Ichar ch)
 #endif /* UNICODE_INTERNAL */
 }
 
-#else /* not MULE */
-
-/* This appears to work both for values > 255 and < 0. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
-
-#endif /* (not) MULE */
+#endif /* MULE */
 
 #define ASSERT_VALID_ICHAR(ich)			\
   text_checking_assert (valid_ichar_p (ich))
@@ -537,25 +542,8 @@ do							\
     INLINE_ASSERT_VALID_ICHAR (ich);			\
 } while (0)
 
-/* Maximum number of bytes per Emacs character when represented as text, in
- any format.
- */
 
-#ifdef UNICODE_INTERNAL
-#define MAX_ICHAR_LEN 6
-#else
-#define MAX_ICHAR_LEN 4
-#endif
-
-#ifdef UNICODE_INTERNAL
-#define FIRST_TRAILING_BYTE 0x80
-#define LAST_TRAILING_BYTE 0xBF
-#else
-#define FIRST_TRAILING_BYTE 0xA0
-#define LAST_TRAILING_BYTE 0xFF
-#endif
-
-#ifndef UNICODE_INTERNAL
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
 
 /************************************************************************/
 /*              Definition of charset ID's and lead bytes               */
@@ -691,7 +679,7 @@ old_mule_ichar_charset_id (Ichar c)
     }
 }
 
-#endif /* not UNICODE_INTERNAL */
+#endif /* defined (MULE) && !defined (UNICODE_INTERNAL) */
 
 /************************************************************************/
 /*                         Other char functions                         */
@@ -705,6 +693,9 @@ ichar_len (Ichar c)
 )
 {
   ASSERT_VALID_ICHAR (c);
+#ifndef MULE
+  return 1;
+#else /* MULE */
   if (ichar_ascii_p (c))
     return 1;
 #ifdef UNICODE_INTERNAL
@@ -729,6 +720,7 @@ ichar_len (Ichar c)
       return 4;
     }
 #endif /* UNICODE_INTERNAL */
+#endif /* MULE */
 }
 
 int unicode_char_columns (int code);
@@ -741,7 +733,9 @@ ichar_columns (Ichar c)
 )
 {
   ASSERT_VALID_ICHAR (c);
-#ifdef UNICODE_INTERNAL
+#ifndef MULE
+  return 1;
+#elif defined (UNICODE_INTERNAL)
   return unicode_char_columns ((int) c);
 #else
   return old_mule_ichar_columns (c);
@@ -759,13 +753,14 @@ ichar_columns (Ichar c)
    functions in charset.h, but it's faster, and not much more code, to
    just do it manually. */
 
-#ifdef UNICODE_INTERNAL
-
 DECLARE_INLINE_HEADER (
 void
 DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
 )
 {
+#ifndef MULE
+  Dynarr_add (dst, c);
+#elif defined (UNICODE_INTERNAL)
   if (byte_ascii_p (c))
     Dynarr_add (dst, c);
   else if (c <= 0xBF)
@@ -778,15 +773,7 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
       Dynarr_add (dst, 0xC3);
       Dynarr_add (dst, c - 0x40);
     }
-}
-
-#else
-
-DECLARE_INLINE_HEADER (
-void
-DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
-)
-{
+#else /* old Mule */
   if (byte_ascii_p (c))
     Dynarr_add (dst, c);
   else if (byte_c1_p (c))
@@ -799,11 +786,8 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
       Dynarr_add (dst, CHARSET_ID_LATIN_ISO8859_1);
       Dynarr_add (dst, c);
     }
+#endif /* (not) defined (UNICODE_INTERNAL) */
 }
-
-#endif /* UNICODE_INTERNAL */
-
-#endif /* MULE */
 
 /************************************************************************/
 /*                         Unicode conversion                           */
@@ -1005,14 +989,14 @@ objects_have_same_internal_representation (Lisp_Object UNUSED (srcobj),
   return 1;
 }
 
-#else
+#else /* not MULE */
 
 #define ichar_len_fmt(ch, fmt) 1
 #define ichar_to_raw(ch, fmt, object) ((Raw_Ichar) (ch))
 #define ichar_fits_in_format(ch, fmt, object) 1
 #define objects_have_same_internal_representation(srcobj, dstobj) 1
 
-#endif /* MULE */
+#endif /* (not) MULE */
 
 MODULE_API int dfc_coding_system_is_unicode (Lisp_Object codesys);
 
@@ -1136,9 +1120,9 @@ ASSERT_VALID_ITEXT (const Ibyte *ptr)
     assert (!ibyte_first_byte_p (*++ptr));
 }
 
-#else
+#else /* not ERROR_CHECK_TEXT */
 #define ASSERT_VALID_ITEXT(ptr) disabled_assert (ptr)
-#endif /* ERROR_CHECK_TEXT */
+#endif /* (not) ERROR_CHECK_TEXT */
 
 /* Given a itext (assumed to point at the beginning of a character),
    modify that pointer so it points to the beginning of the next character.
@@ -1289,11 +1273,11 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
   return n;
 }
 
-#else
+#else /* not MULE */
 
 #define validate_ibyte_string_backward(ptr, n) (n)
 
-#endif /* MULE */
+#endif /* (not) MULE */
 
 /* ASSERT_ASCTEXT_ASCII(ptr): Check that an Ascbyte * pointer points to
    purely ASCII text.  Useful for checking that putatively ASCII strings
@@ -1415,12 +1399,15 @@ bytecount_to_charcount_down (const Ibyte *ptr, Bytecount len)
    BEFORE the pointer.
 */
 
+#ifdef ERROR_CHECK_TEXT
+#define SLEDGEHAMMER_CHECK_TEXT
+#endif
+
 DECLARE_INLINE_HEADER (
 Bytecount
 charcount_to_bytecount_down (const Ibyte *ptr, Charcount len)
 )
 {
-#define SLEDGEHAMMER_CHECK_TEXT
 #ifdef SLEDGEHAMMER_CHECK_TEXT
   Charcount len1 = len;
   Bytecount ret1, ret2;
@@ -1511,14 +1498,14 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
     }
 }
 
-#else
+#else /* not MULE */
 
 #define bytecount_to_charcount(ptr, len) ((Charcount) (len))
 #define bytecount_to_charcount_fmt(ptr, len, fmt) ((Charcount) (len))
 #define charcount_to_bytecount(ptr, len) ((Bytecount) (len))
 #define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
 
-#endif /* MULE */
+#endif /* (not) MULE */
 
 /* Return the length of the first character at PTR.  Equivalent to
    charcount_to_bytecount (ptr, 1).

@@ -2527,6 +2527,31 @@ Return index number of the registered map.
   return idx;
 }
 
+
+
+static const struct memory_description ccl_program_description_1[] =
+{
+  { XD_INT, offsetof (struct ccl_program, size) },
+  { XD_BLOCK_PTR,	offsetof (struct ccl_program, prog),
+    XD_INDIRECT (0, 0), { &lisp_object_description } },
+  { XD_END }
+};
+
+const struct sized_memory_description ccl_program_description =
+{
+  sizeof (struct ccl_program),
+  ccl_program_description_1
+};
+  
+void
+mark_ccl_program (struct ccl_program *ccl)
+{
+  int i;
+  for (i = 0; i < ccl->size; i++)
+    mark_object (ccl->prog[i]);
+}
+
+
 
 void
 syms_of_mule_ccl (void)

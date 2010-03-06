@@ -1,3 +1,96 @@
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	* charset.h:
+	* file-coding.c:
+	* file-coding.c (coding_stream_extra_description_map):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (sizeof_detection_state):
+	* file-coding.c (allocate_detection_state):
+	* file-coding.c (mark_detection_state):
+	* file-coding.c (free_detection_state):
+	* file-coding.c (struct undecided_coding_stream):
+	* file-coding.c (undecided_init):
+	* file-coding.c (undecided_mark):
+	* file-coding.c (undecided_print):
+	* file-coding.c (undecided_putprop):
+	* file-coding.c (undecided_getprop):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (syms_of_file_coding):
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h:
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (DEFINE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (struct detection_state):
+	* file-coding.h (struct detector_category):
+	* file-coding.h (struct detector):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (CODING_STREAM_DATA):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (kkcc_backtrace_1):
+	* gc.c (kkcc_short_backtrace):
+	* gc.c (kkcc_marking):
+	* gc.h:
+	* gc.h (kkcc_detailed_backtrace):
+	* inline.c:
+	* intl-win32.c:
+	* intl-win32.c (mswindows_multibyte_convert):
+	* lisp.h:
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* mule-ccl.c:
+	* mule-ccl.c (syms_of_mule_ccl):
+	* mule-ccl.h:
+	* mule-coding.c:
+	* mule-coding.c (struct multibyte_coding_stream):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (iso2022_mark_iso2022_coding_stream):
+	* mule-coding.c (iso2022_mark_coding_stream):
+	* mule-coding.c (struct iso2022_detector):
+	* mule-coding.c (iso2022_detect):
+	* mule-coding.c (iso2022_mark_detection_state):
+	* mule-coding.c (ccl_mark_coding_stream):
+	* mule-coding.c (fixed_width_mark_coding_stream):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	* text.h:
+	* unicode.c:
+	Add general mechanisms for marking foo_coding_stream and
+	foo_detector structures.  We have to add two mechanisms: one
+	for old-GC (mark functions) and one for NEW_GC (KKCC/pdump
+	object descriptions).  The latter is more of a pain and requires
+	that we do some serious hacking in DEFINE_DETECTOR and friends.
+	We also have to create a new `detection-state' Lisp object.
+	All coding-system types that have associated data now have to
+	provide a KKCC object description for the data.  Add descriptions
+	and mark_coding_stream methods for iso2022, fixed-width, ccl and
+	multibyte coding-system types.  We also add
+	a new class of detectors with associated KKCC descriptions,
+	when the foo_detector structure has Lisp objects in it;
+	currently only iso2022 uses this.  Add a mark_detection_state()
+	method for use in old-GC; again, only iso2022 uses this.
+
+	Add mark_ccl_program() and a CCL-program KKCC description for
+	use by the CCL coding-system type.
+
+	Expand KKCC backtrace methods to four: short vs. detailed (detailed
+	backtraces print the objects in question as opposed to just their
+	types) and full vs. normal (normal prints only the 100 items at
+	the top of the stack, instead of all of them).
+
+	Clean up file-coding.h and add a big diagram at top showing
+	how the various conversion and detection structures work.
+
+	Clean up file-coding.c, rearranging code so that the detection
+	code and the `undecided' coding system are no longer intermingled.
+
+	Various fixes to charset.h and text.h to make things work under
+	non-Mule; previous changes broke this.  Also change so that
+	SLEDGEHAMMER_CHECK_TEXT is only defined when ERROR_CHECK_TEXT, not
+	always.
+	
+
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
 	* file-coding.h (DECODE_OUTPUT_PARTIAL_CHAR):

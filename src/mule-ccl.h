@@ -91,7 +91,7 @@ struct ccl_program {
    resolved, if that is currently possible in this XEmacs.
 
    Otherwise, signal `invalid-argument'. */
-extern Lisp_Object get_ccl_program (Lisp_Object object);
+Lisp_Object get_ccl_program (Lisp_Object object);
 
 /* Set up fields of the structure pointed by CCL appropriately for the
    execution of ccl program CCL_PROG (a symbol or a vector).
@@ -100,11 +100,15 @@ extern Lisp_Object get_ccl_program (Lisp_Object object);
    will throw an assertion failure. To avoid this, call get_ccl_program at
    the point that you receive the CCL program from Lisp, and use and store
    its (resolved) result instead. */
-extern int setup_ccl_program (struct ccl_program *, Lisp_Object ccl_prog);
+int setup_ccl_program (struct ccl_program *, Lisp_Object ccl_prog);
 
-extern int ccl_driver (struct ccl_program *, const unsigned char *,
-		       struct buffer *, unsigned_char_dynarr *, int, int *,
-		       int);
+int ccl_driver (struct ccl_program *, const unsigned char *,
+		struct buffer *, unsigned_char_dynarr *, int, int *,
+		int);
+
+void mark_ccl_program (struct ccl_program *ccl);
+
+extern const struct sized_memory_description ccl_program_description;
 
 EXFUN (Fregister_ccl_program, 2);
 

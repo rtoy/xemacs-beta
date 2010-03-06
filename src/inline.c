@@ -1,5 +1,6 @@
 /* Repository for inline functions
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -54,6 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "extents-impl.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "glyphs.h"
 #include "gui.h"
@@ -115,8 +117,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk.h"
 #include "ui-gtk.h"
 #endif
-
-#include "file-coding.h"
 
 #ifdef TOOLTALK
 #include "tooltalk.h"

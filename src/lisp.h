@@ -116,7 +116,6 @@ Boston, MA 02111-1307, USA.  */
 #include <limits>		/* necessary for max()/min() under G++ 4 */
 #endif
 
-
 /************************************************************************/
 /*                            error checking                            */
 /************************************************************************/
@@ -1468,6 +1467,14 @@ xmalloc_and_record_unwind (Bytecount size)
 /* -------------- convenience functions for memory allocation ------------- */
 
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
+/* This is a hack.  Here below we have the standard "portable" definition of
+   offsetof().  Normally we just use offsetof(), but under g++ (but not gcc)
+   complains about using offsetof when the `field' argument is not constant,
+   e.g. it's an array reference using a variable as the index.  So in that
+   case, which happens in file-coding.h, we fall back to portable_offsetof().
+   Fuck me harder!!!! --ben */
+#define portable_offsetof(st, m) \
+    ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
 #define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
 #define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))

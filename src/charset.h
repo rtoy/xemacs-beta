@@ -791,7 +791,9 @@ ichar_to_one_charset_codepoint (Ichar ch, Lisp_Object charset,
   {
     Lisp_Object charset2;
     ichar_to_charset_codepoint (ch, Qnil, &charset2, c1, c2, CONVERR_FAIL);
+#ifdef MULE
     text_checking_assert (EQ (old_mule_ichar_charset (ch), charset2));
+#endif /* MULE */
     return EQ (charset, charset2);
   }
 #endif /* (not) UNICODE_INTERNAL */
