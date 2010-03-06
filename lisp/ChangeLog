@@ -1,3 +1,10 @@
+2010-03-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-compiled-obj-to-list):
+	Remove this function, printing a compiled object to a string and
+	then reading back a substring is senseless, just use the
+	compiled-function slot accessor functions.
+
 2010-03-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-duplicates):

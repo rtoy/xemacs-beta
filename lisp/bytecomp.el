@@ -2247,22 +2247,6 @@ list that represents a doc string reference.
 (defun byte-compile-file-form-defmacro (form)
   (byte-compile-file-form-defmumble form t))
 
-(defun byte-compile-compiled-obj-to-list (obj)
-  ;; #### this is fairly disgusting.  Rewrite the code instead
-  ;; so that it doesn't create compiled objects in the first place!
-  ;; Much better than creating them and then "uncreating" them
-  ;; like this.
-  (read (concat "("
-		(substring (let ((print-readably t)
-				 (print-gensym
-				  (if (and byte-compile-print-gensym
-					   (not byte-compile-emacs19-compatibility))
-				      '(t) nil))
-				 (print-gensym-alist nil))
-			     (prin1-to-string obj))
-			   2 -1)
-		")")))
-
 (defun byte-compile-file-form-defmumble (form macrop)
   (let* ((name (car (cdr form)))
 	 (this-kind (if macrop 'byte-compile-macro-environment
@@ -2330,7 +2314,14 @@ list that represents a doc string reference.
 	  (byte-compile-warn "Probable `\"' without `\\' in doc string of %s"
 			     (nth 1 form))))
     (let* ((new-one (byte-compile-lambda (cons 'lambda (nthcdr 2 form))))
-	   (code (byte-compile-byte-code-maker new-one)))
+	   (code (byte-compile-byte-code-maker new-one))
+           (docform-info
+            (cond ((atom code) ; compiled-function-p
+                   (if macrop '(" '(macro . #[" 4 "])") '(" #[" 4 "]")))
+                  ((eq (car code) 'quote)
+                   (setq code new-one)
+                   (if macrop '(" '(macro " 2 ")") '(" '(" 2 ")")))
+                  ((if macrop '(" (cons 'macro (" 5 "))") '(" (" 5 ")"))))))
       (if this-one
 	  (setcdr this-one new-one)
 	(set this-kind
@@ -2339,60 +2330,37 @@ list that represents a doc string reference.
 	       (eq 'quote (car-safe code))
 	       (eq 'lambda (car-safe (nth 1 code))))
 	  (cons (car form)
-		(cons name (cdr (nth 1 code))))
+                (cons name (cdr (nth 1 code))))
 	(byte-compile-flush-pending)
 	(if (not (stringp (nth 3 form)))
-	    ;; No doc string.  Provide -1 as the "doc string index"
-	    ;; so that no element will be treated as a doc string.
-	    (byte-compile-output-docform
-	     "\n(defalias '"
-	     name
-	     (cond ((atom code)
-		    (if macrop '(" '(macro . #[" -1 "])") '(" #[" -1 "]")))
-		   ((eq (car code) 'quote)
-		    (setq code new-one)
-		    (if macrop '(" '(macro " -1 ")") '(" '(" -1 ")")))
-		   ((if macrop '(" (cons 'macro (" -1 "))") '(" (" -1 ")"))))
-	     ;; FSF just calls `(append code nil)' here but that relies
-	     ;; on horrible C kludges in concat() that accept byte-
-	     ;; compiled objects and pretend they're vectors.
-	     (if (compiled-function-p code)
-		 (byte-compile-compiled-obj-to-list code)
-	       (append code nil))
-	     (and (atom code) byte-compile-dynamic
-		  1)
-	     nil)
-	  ;; Output the form by hand, that's much simpler than having
-	  ;; b-c-output-file-form analyze the defalias.
-	  (byte-compile-output-docform
-	   "\n(defalias '"
-	   name
-	   (cond ((atom code) ; compiled-function-p
-		  (if macrop '(" '(macro . #[" 4 "])") '(" #[" 4 "]")))
-		 ((eq (car code) 'quote)
-		  (setq code new-one)
-		  (if macrop '(" '(macro " 2 ")") '(" '(" 2 ")")))
-		 ((if macrop '(" (cons 'macro (" 5 "))") '(" (" 5 ")"))))
-	   ;; The result of byte-compile-byte-code-maker is either a
-	   ;; compiled-function object, or a list of some kind.  If it's
-	   ;; not a cons, we must coerce it into a list of the elements
-	   ;; to be printed to the file.
-	   (if (consp code)
-	       code
-	     (nconc (list
-		     (compiled-function-arglist code)
-		     (compiled-function-instructions code)
-		     (compiled-function-constants code)
-		     (compiled-function-stack-depth code))
-		    (let ((doc (documentation code t)))
-		      (if doc (list doc)))
-		    (if (commandp code)
-			(list (nth 1 (compiled-function-interactive code))))))
-	   (and (atom code) byte-compile-dynamic
-		1)
+            ;; No doc string.  Provide -1 as the "doc string index" so that
+            ;; no element will be treated as a doc string by
+            ;; byte-compile-output-doc-form.
+            (setq docform-info (list (first docform-info) -1
+                                     (third docform-info))))
+        (byte-compile-output-docform
+         "\n(defalias '"
+         name
+         docform-info
+         ;; The result of byte-compile-byte-code-maker is either a
+         ;; compiled-function object, or a list of some kind.  If it's not a
+         ;; cons, we must coerce it into a list of the elements to be
+         ;; printed to the file.
+         (if (consp code)
+             code
+           (nconc (list
+                   (compiled-function-arglist code)
+                   (compiled-function-instructions code)
+                   (compiled-function-constants code)
+                   (compiled-function-stack-depth code)
+                   (compiled-function-doc-string code))
+                  (if (commandp code)
+                      (list (nth 1 (compiled-function-interactive code))))))
+         (and (atom code) byte-compile-dynamic
+              1)
 	   nil))
 	(princ ")" byte-compile-outbuffer)
-	nil))))
+	nil)))
 
 ;; Print Lisp object EXP in the output file, inside a comment,
 ;; and return the file position it will have.
