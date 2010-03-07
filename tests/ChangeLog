@@ -1,3 +1,9 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Doing all 256 rows was way too slow interactively (#### don't know
+	why it was OK when noninteractive).
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* automated/mule-tests.el:
