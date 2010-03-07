@@ -645,6 +645,12 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
 						   HASH_TABLE_EQ);
 
+#ifdef MULE
+  /* Fill in a blank array for now, to go with the value of `nil' for
+     b->unicode_precedence_list.  This will change if
+     `set-buffer-unicode-precedence-list' is called. */
+  b->unicode_precedence_array = allocate_precedence_array ();
+#endif
 
   return buf;
 }
@@ -2258,8 +2264,10 @@ common_init_complex_vars_of_buffer (void)
   defs->category_table = Vstandard_category_table;
 #endif /* MULE */
   defs->syntax_table = Vstandard_syntax_table;
+#ifdef MIRROR_TABLE
   defs->mirror_syntax_table =
     XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
+#endif /* MIRROR_TABLE */
   defs->modeline_format = build_ascstring ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
@@ -2274,6 +2282,8 @@ common_init_complex_vars_of_buffer (void)
   defs->invisibility_spec = Qt;
   defs->buffer_local_face_property = 0;
 
+  /* These are not listed in the buffer slots because we don't want them
+     marked, so we need to initialize them to nil. */
   defs->indirect_children = Qnil;
   syms->indirect_children = Qnil;
 
@@ -2342,11 +2352,8 @@ common_init_complex_vars_of_buffer (void)
 #endif
     buffer_local_flags.buffer_file_coding_system  = make_int (1<<14);
 
-    /* #### Warning: 1<<31 is the largest number currently allowable
-       due to the XINT() handling of this value.  With some
-       rearrangement you can get 3 more bits.
-
-       #### 3 more?  34 bits???? -ben */
+    /* Warning: 1<<30 is the largest number currently allowable
+       due to the XINT() handling of this value. */
   }
 }
 
