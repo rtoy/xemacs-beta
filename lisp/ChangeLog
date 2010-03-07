@@ -1,3 +1,10 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* disp-table.el:
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	Fix up docs; add comments about authorship.
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* test-harness.el:
