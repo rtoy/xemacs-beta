@@ -1,6 +1,7 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 2001, 2002, 2004, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -533,6 +534,23 @@ x_get_top_level_position (Display *d, Window w, Position *x, Position *y)
   XGetWindowAttributes (d, w, &xwa);
   *x = xwa.x;
   *y = xwa.y;
+}
+
+void x_get_frame_text_position (struct frame *f)
+{
+  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE (f)));
+  Window window = XtWindow (FRAME_X_TEXT_WIDGET (f));
+  Window root, child;
+  int x, y;
+  unsigned int width, height, border_width;
+  unsigned int depth;
+
+  XGetGeometry (dpy, window, &root, &x, &y, &width, &height, &border_width,
+		&depth);
+  XTranslateCoordinates (dpy, window, root, 0, 0, &x, &y, &child);
+
+  FRAME_X_X (f) = x;
+  FRAME_X_Y (f) = y;
 }
 
 #if 0
@@ -1432,16 +1450,13 @@ x_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-      + FRAME_LEFT_GUTTER_BOUNDS (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f)
-      + FRAME_TOP_GUTTER_BOUNDS (f);
+    WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
+    WINDOW_TOP (win) = FRAME_PANED_TOP_EDGE (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-	  + FRAME_LEFT_GUTTER_BOUNDS (f);
+	WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
       }
   }
 
@@ -2117,9 +2132,13 @@ x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 static void
 x_init_frame_3 (struct frame *f)
 {
-  /* Pop up the frame. */
-
+  /* #### NOTE: This whole business of splitting frame initialization into
+     #### different functions is somewhat messy. The latest one seems a good
+     #### place to initialize the edit widget's position because we're sure
+     #### that the frame is now relalized. -- dvl */
+  
   x_popup_frame (f);
+  x_get_frame_text_position (f);
 }
 
 static void

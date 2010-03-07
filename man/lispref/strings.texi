@@ -165,6 +165,10 @@ from @var{string} in the range from (and including) the character at the
 index @var{start} up to (but excluding) the character at the index
 @var{end}.  The first character is at index zero.
 
+In this implementation, @code{substring} is an alias for @code{subseq},
+so @var{string} can be any sequence.  In GNU Emacs, @var{string} can be
+a string or a vector, and in older XEmacs it can only be a string.
+
 @example
 @group
 (substring "abcdefg" 0 3)

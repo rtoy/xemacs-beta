@@ -220,6 +220,9 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
 (define-function 'send-string-to-terminal 'external-debugging-output)
 (define-function 'special-form-p 'special-operator-p)
 
+;; XEmacs; this is in Lisp, its bytecode now taken by subseq.
+(define-function 'substring 'subseq)
+  
 ;; XEmacs:
 (defun local-variable-if-set-p (sym buffer)
   "Return t if SYM would be local to BUFFER after it is set.

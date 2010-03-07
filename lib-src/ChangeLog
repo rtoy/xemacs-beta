@@ -1,3 +1,20 @@
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* digest-doc.c:
+	* make-path.c:
+	`emacs' isn't defined, but HAVE_CONFIG_H is, so use it to get
+	config.h.
+	
+	* getopt.h:
+	Conditionalize on HAVE_CONFIG_H to get real prototypes.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* make-docfile.c:
+	* make-docfile.c (write_c_args):
+	Convert newlines to spaces so that argument lists are always on one
+	line, because that's what function-documentation-1 expects.
+
 2010-02-11  Vin Shelton  <acs@xemacs.org>
  
  	* winclient.c: Bump connection retries to 20 because some people

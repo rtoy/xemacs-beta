@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
    command on some of the purer BSD systems (like Mt. Xinu) don't have
    that option. */
 
-#ifdef emacs
+#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 

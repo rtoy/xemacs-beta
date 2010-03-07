@@ -1,5 +1,6 @@
 /* toolbar implementation -- GTK interface.
    Copyright (C) 2000 Aaron Lehmann
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,29 +33,8 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 
-#define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)			\
-  do {									\
-    switch (pos)							\
-      {									\
-      case TOP_TOOLBAR:							\
-	(frame)->top_toolbar_was_visible = flag;			\
-	break;								\
-      case BOTTOM_TOOLBAR:						\
-	(frame)->bottom_toolbar_was_visible = flag;			\
-	break;								\
-      case LEFT_TOOLBAR:						\
-	(frame)->left_toolbar_was_visible = flag;			\
-	break;								\
-      case RIGHT_TOOLBAR:						\
-	(frame)->right_toolbar_was_visible = flag;			\
-	break;								\
-      default:								\
-	ABORT ();							\
-      }									\
-  } while (0)
-
 static void
-gtk_clear_toolbar (struct frame *f, enum toolbar_pos pos);
+gtk_clear_toolbar (struct frame *f, enum edge_pos pos);
 
 static void
 gtk_toolbar_callback (GtkWidget *UNUSED (w), gpointer user_data)
@@ -66,7 +46,7 @@ gtk_toolbar_callback (GtkWidget *UNUSED (w), gpointer user_data)
 
 
 static void
-gtk_output_toolbar (struct frame *f, enum toolbar_pos pos)
+gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 {
   GtkWidget *toolbar;
   Lisp_Object button, window, glyph, instance;
@@ -114,7 +94,7 @@ gtk_output_toolbar (struct frame *f, enum toolbar_pos pos)
   {
     gtk_clear_toolbar (f, pos);
     FRAME_GTK_TOOLBAR_WIDGET (f)[pos] = toolbar =
-      gtk_toolbar_new (((pos == TOP_TOOLBAR) || (pos == BOTTOM_TOOLBAR)) ?
+      gtk_toolbar_new (((pos == TOP_EDGE) || (pos == BOTTOM_EDGE)) ?
 		       GTK_ORIENTATION_HORIZONTAL : GTK_ORIENTATION_VERTICAL,
 		       GTK_TOOLBAR_BOTH);
   }
@@ -193,7 +173,7 @@ gtk_output_toolbar (struct frame *f, enum toolbar_pos pos)
 }
 
 static void
-gtk_clear_toolbar (struct frame *f, enum toolbar_pos pos)
+gtk_clear_toolbar (struct frame *f, enum edge_pos pos)
 {
   FRAME_GTK_TOOLBAR_CHECKSUM (f, pos) = 0;
   SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 0);
@@ -204,25 +184,15 @@ gtk_clear_toolbar (struct frame *f, enum toolbar_pos pos)
 static void
 gtk_output_frame_toolbars (struct frame *f)
 {
-  if (FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    gtk_output_toolbar (f, TOP_TOOLBAR);
-  else if (f->top_toolbar_was_visible)
-    gtk_clear_toolbar (f, TOP_TOOLBAR);
+  enum edge_pos pos;
 
-  if (FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    gtk_output_toolbar (f, BOTTOM_TOOLBAR);
-  else if (f->bottom_toolbar_was_visible)
-    gtk_clear_toolbar (f, LEFT_TOOLBAR);
-
-  if (FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    gtk_output_toolbar (f, LEFT_TOOLBAR);
-  else if (f->left_toolbar_was_visible)
-    gtk_clear_toolbar (f, LEFT_TOOLBAR);
-
-  if (FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    gtk_output_toolbar (f, RIGHT_TOOLBAR);
-  else if (f->right_toolbar_was_visible)
-    gtk_clear_toolbar (f, RIGHT_TOOLBAR);
+  EDGE_POS_LOOP (pos)
+    {
+      if (FRAME_REAL_TOOLBAR_VISIBLE (f, pos))
+	gtk_output_toolbar (f, pos);
+      else if (f->toolbar_was_visible[pos])
+	gtk_clear_toolbar (f, pos);
+    }
 }
 
 static void

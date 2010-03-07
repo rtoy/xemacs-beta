@@ -8768,7 +8768,7 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
     d->pixel_to_glyph_cache.obj_x = *obj_x;				\
     d->pixel_to_glyph_cache.obj_y = *obj_y;				\
     d->pixel_to_glyph_cache.w = *w;					\
-    d->pixel_to_glyph_cache.charpos = *charpos;			\
+    d->pixel_to_glyph_cache.charpos = *charpos;				\
     d->pixel_to_glyph_cache.closest = *closest;				\
     d->pixel_to_glyph_cache.modeline_closest = *modeline_closest;	\
     d->pixel_to_glyph_cache.obj1 = *obj1;				\
@@ -8785,9 +8785,14 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
      OVER_TOOLBAR:	over one of the 4 frame toolbars
      OVER_MODELINE:	over a modeline
      OVER_BORDER:	over an internal border
+     OVER_V_DIVIDER:    over a vertical divider between windows (used as a
+                        grab bar for resizing)
      OVER_NOTHING:	over the text area, but not over text
      OVER_OUTSIDE:	outside of the frame border
      OVER_TEXT:		over text in the text area
+
+   #### GEOM! We need to also have an OVER_GUTTER, OVER_SCROLLBAR and
+   OVER_DEAD_BOX.
 
    OBJ1 is one of
 
@@ -8881,25 +8886,28 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
   if (device_check_failed)
     return OVER_NOTHING;
 
-  frm_left = FRAME_LEFT_BORDER_END (f);
-  frm_right = FRAME_RIGHT_BORDER_START (f);
-  frm_top = FRAME_TOP_BORDER_END (f);
-  frm_bottom = FRAME_BOTTOM_BORDER_START (f);
+  /* #### GEOM! The gutter is just inside of this.  We should also have an
+     OVER_GUTTER return value to indicate that we're over a gutter.  See
+     above. */
+  frm_left = FRAME_LEFT_INTERNAL_BORDER_END (f);
+  frm_right = FRAME_RIGHT_INTERNAL_BORDER_START (f);
+  frm_top = FRAME_TOP_INTERNAL_BORDER_END (f);
+  frm_bottom = FRAME_BOTTOM_INTERNAL_BORDER_START (f);
 
   /* Check if the mouse is outside of the text area actually used by
      redisplay. */
   if (y_coord < frm_top)
     {
-      if (y_coord >= FRAME_TOP_BORDER_START (f))
+      if (y_coord >= FRAME_TOP_INTERNAL_BORDER_START (f))
 	{
-	  low_y_coord = FRAME_TOP_BORDER_START (f);
+	  low_y_coord = FRAME_TOP_INTERNAL_BORDER_START (f);
 	  high_y_coord = frm_top;
 	  position = OVER_BORDER;
 	}
       else if (y_coord >= 0)
 	{
 	  low_y_coord = 0;
-	  high_y_coord = FRAME_TOP_BORDER_START (f);
+	  high_y_coord = FRAME_TOP_INTERNAL_BORDER_START (f);
 	  position = OVER_TOOLBAR;
 	}
       else
@@ -8911,15 +8919,15 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
     }
   else if (y_coord >= frm_bottom)
     {
-      if (y_coord < FRAME_BOTTOM_BORDER_END (f))
+      if (y_coord < FRAME_BOTTOM_INTERNAL_BORDER_END (f))
 	{
 	  low_y_coord = frm_bottom;
-	  high_y_coord = FRAME_BOTTOM_BORDER_END (f);
+	  high_y_coord = FRAME_BOTTOM_INTERNAL_BORDER_END (f);
 	  position = OVER_BORDER;
 	}
       else if (y_coord < FRAME_PIXHEIGHT (f))
 	{
-	  low_y_coord = FRAME_BOTTOM_BORDER_END (f);
+	  low_y_coord = FRAME_BOTTOM_INTERNAL_BORDER_END (f);
 	  high_y_coord = FRAME_PIXHEIGHT (f);
 	  position = OVER_TOOLBAR;
 	}
@@ -8935,16 +8943,16 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
     {
       if (x_coord < frm_left)
 	{
-	  if (x_coord >= FRAME_LEFT_BORDER_START (f))
+	  if (x_coord >= FRAME_LEFT_INTERNAL_BORDER_START (f))
 	    {
-	      low_x_coord = FRAME_LEFT_BORDER_START (f);
+	      low_x_coord = FRAME_LEFT_INTERNAL_BORDER_START (f);
 	      high_x_coord = frm_left;
 	      position = OVER_BORDER;
 	    }
 	  else if (x_coord >= 0)
 	    {
 	      low_x_coord = 0;
-	      high_x_coord = FRAME_LEFT_BORDER_START (f);
+	      high_x_coord = FRAME_LEFT_INTERNAL_BORDER_START (f);
 	      position = OVER_TOOLBAR;
 	    }
 	  else
@@ -8956,15 +8964,15 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	}
       else if (x_coord >= frm_right)
 	{
-	  if (x_coord < FRAME_RIGHT_BORDER_END (f))
+	  if (x_coord < FRAME_RIGHT_INTERNAL_BORDER_END (f))
 	    {
 	      low_x_coord = frm_right;
-	      high_x_coord = FRAME_RIGHT_BORDER_END (f);
+	      high_x_coord = FRAME_RIGHT_INTERNAL_BORDER_END (f);
 	      position = OVER_BORDER;
 	    }
 	  else if (x_coord < FRAME_PIXWIDTH (f))
 	    {
-	      low_x_coord = FRAME_RIGHT_BORDER_END (f);
+	      low_x_coord = FRAME_RIGHT_INTERNAL_BORDER_END (f);
 	      high_x_coord = FRAME_PIXWIDTH (f);
 	      position = OVER_TOOLBAR;
 	    }

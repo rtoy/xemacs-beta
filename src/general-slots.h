@@ -49,6 +49,7 @@ SYMBOL_KEYWORD (Q_active);
 SYMBOL (Qactually_requested);
 SYMBOL (Qafter);
 SYMBOL (Qall);
+SYMBOL_KEYWORD (Q_allow_other_keys);
 SYMBOL (Qand);
 SYMBOL (Qappend);
 SYMBOL (Qascii);

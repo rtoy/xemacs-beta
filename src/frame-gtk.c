@@ -633,13 +633,13 @@ gtk_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f);
+    WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
+    WINDOW_TOP (win) = FRAME_PANED_TOP_EDGE (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
+	WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
       }
   }
 

@@ -1538,8 +1538,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       syms_of_glyphs_eimage ();
       syms_of_glyphs_shared ();
+#endif
       syms_of_glyphs_widget ();
       syms_of_gui ();
       syms_of_gutter ();
@@ -1873,7 +1875,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 called before the any calls to the other macros. */
 
       image_instantiator_format_create ();
+#ifdef HAVE_WINDOW_SYSTEM
       image_instantiator_format_create_glyphs_eimage ();
+#endif
       image_instantiator_format_create_glyphs_widget ();
 #ifdef HAVE_TTY
       image_instantiator_format_create_glyphs_tty ();
@@ -2104,7 +2108,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_frame ();
       vars_of_gc ();
       vars_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       vars_of_glyphs_eimage ();
+#endif
       vars_of_glyphs_widget ();
       vars_of_gui ();
       vars_of_gutter ();
@@ -4053,6 +4059,20 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
 #endif /* !defined (ASSERTIONS_DONT_ABORT) */
   inhibit_non_essential_conversion_operations--;
   in_assert_failed--;
+}
+
+/* This is called when an assert() fails or when ABORT() is called -- both
+   of those are defined in the preprocessor to an expansion involving
+   assert_failed(). */
+void
+assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x, EMACS_INT y,
+		     const Ascbyte *exprx, const Ascbyte *expry)
+{
+  Ascbyte bigstr[1000]; /* #### Could overflow, but avoids any need to do any
+			   allocation, even alloca(), hence safer */
+  sprintf (bigstr, "%s (%ld) should == %s (%ld) but doesn't",
+	   exprx, x, expry, y);
+  assert_failed (file, line, bigstr);
 }
 
 /* -------------------------------------- */

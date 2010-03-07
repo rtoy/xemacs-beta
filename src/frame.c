@@ -35,43 +35,43 @@ Boston, MA 02111-1307, USA.  */
 | ###################################################################### |
 | #                               toolbar                              # |
 | #--------------------------------------------------------------------# |
-| #  |                            gutter                            |  # |
-| #  |--------------------------------------------------------------|  # |
-| #  | |                  internal border width                   | |  # |
-| #  | | ******************************************************** | |  # |
-|w#  | | *                         |s|v*                      |s* | |  #w|
-|i#  | | *                         |c|e*                      |c* | |  #i|
-|n#  | | *                         |r|r*                      |r* | |  #n|
-|d#  | | *                         |o|t*                      |o* | |  #d|
-|o#  | | *        text area        |l|.*      text area       |l* | |  #o|
-|w#  | |i*                         |l| *                      |l*i| |  #w|
-|-#  | |n*                         |b|d*                      |b*n| |  #-|
-|m#  | |t*                         |a|i*                      |a*t| |  #m|
-|a#  | |.*                         |r|v*                      |r*.| |  #a|
-|n# t| | *-------------------------+-|i*----------------------+-* | |t #n|
-|a# o|g|b*        scrollbar        | |d*      scrollbar       | *b|g|o #a|
-|g# o|u|o*-------------------------+-|e*----------------------+-*o|u|o #g|
-|e# l|t|r*        modeline           |r*      modeline          *r|t|l #e|
-|r# b|t|d********************************************************d|t|b #r|
-| # a|e|e*   =..texttexttex....=   |s|v*                      |s*e|e|a # |
-|d# r|r|r*o m=..texttexttextt..=o m|c|e*                      |c*r|r|r #d|
-|e#  | | *u a=.exttexttextte...=u a|r|r*                      |r* | |  #e|
-|c#  | |w*t r=....texttexttex..=t r|o|t*                      |o*w| |  #c|
-|o#  | |i*s g=        etc.     =s g|l|.*      text area       |l*i| |  #o|
-|r#  | |d*i i=                 =i i|l| *                      |l*d| |  #r|
-|a#  | |t*d n=                 =d n|b|d*                      |b*t| |  #a|
-|t#  | |h*e  = inner text area =e  |a|i*                      |a*h| |  #t|
+| #  |                        internal border                       |  # |
+| #  | +----------------------------------------------------------+ |  # |
+| #  | |                          gutter                          | |  # |
+| #  | |-********************************************************-| |  # |
+|w#  | | *@|        scrollbar        |v*                      |s* | |  #w|
+|i#  | | *-+-------------------------|e*                      |c* | |  #i|
+|n#  | | *s|                         |r*                      |r* | |  #n|
+|d#  | | *c|                         |t*                      |o* | |  #d|
+|o#  | | *r|                         |.*      text area       |l* | |  #o|
+|w#  |i| *o|                         | *                      |l* |i|  #w|
+|-#  |n| *l|        text area        |d*                      |b* |n|  #-|
+|m#  |t| *l|                         |i*                      |a* |t|  #m|
+|a#  |e| *b|                         |v*                      |r* |e|  #a|
+|n# t|r| *a|                         |i*----------------------+-* |r|t #n|
+|a# o|n|g*r|                         |d*      scrollbar       |@*g|n|o #a|
+|g# o|a|u*-+-------------------------|e*----------------------+-*u|a|o #g|
+|e# l|l|t*        modeline           |r*      modeline          *t|l|l #e|
+|r# b| |t********************************************************t| |b #r|
+| # a|b|e*   =..texttexttex....=   |s|v*                      |s*e|b|a # |
+|d# r|o|r*o m=..texttexttextt..=o m|c|e*                      |c*r|o|r #d|
+|e#  |r| *u a=.exttexttextte...=u a|r|r*                      |r* |r|  #e|
+|c#  |d| *t r=....texttexttex..=t r|o|t*                      |o* |d|  #c|
+|o#  |e| *s g=        etc.     =s g|l|.*      text area       |l* |e|  #o|
+|r#  |r| *i i=                 =i i|l| *                      |l* |r|  #r|
+|a#  | | *d n=                 =d n|b|d*                      |b* | |  #a|
+|t#  | | *e  = inner text area =e  |a|i*                      |a* | |  #t|
 |i#  | | *   =                 =   |r|v*                      |r* | |  #i|
 |o#  | | *---===================---+-|i*----------------------+-* | |  #o|
-|n#  | | *        scrollbar        | |d*      scrollbar       | * | |  #n|
+|n#  | | *        scrollbar        |@|d*      scrollbar       |@* | |  #n|
 | #  | | *-------------------------+-|e*----------------------+-* | |  # |
 | #  | | *        modeline           |r*      modeline          * | |  # |
-| #  | | ******************************************************** | |  # |
-| #  | | *                        minibuffer                    * | |  # |
-| #  | | ******************************************************** | |  # |
-| #  | |                   internal border width                  | |  # |
-| #  |--------------------------------------------------------------|  # |
-| #  |                             gutter                           |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |                           gutter                         | |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |@*                       minibuffer                     *@| |  # |
+| #  | +-********************************************************-+ |  # |
+| #  |                         internal border                      |  # |
 | #--------------------------------------------------------------------# |
 | #                                toolbar                             # |
 | ###################################################################### |
@@ -79,14 +79,17 @@ Boston, MA 02111-1307, USA.  */
 +------------------------------------------------------------------------+
 
    # = boundary of client area; * = window boundaries, boundary of paned area
-   = = boundary of inner text area; . = inside margin area
+   = = boundary of inner text area; . = inside margin area; @ = dead boxes
 
    Note in particular what happens at the corners, where a "corner box"
    occurs.  Top and bottom toolbars take precedence over left and right
    toolbars, extending out horizontally into the corner boxes.  Gutters
    work the same way.  The corner box where the scrollbars meet, however,
    is assigned to neither scrollbar, and is known as the "dead box"; it is
-   an area that must be cleared specially.
+   an area that must be cleared specially.  There are similar dead boxes at
+   the bottom-right and bottom-left corners where the minibuffer and
+   left/right gutters meet, but there is currently a bug in that these dead
+   boxes are not explicitly cleared and may contain junk.
 
    THE FRAME
    ---------
@@ -184,13 +187,18 @@ Boston, MA 02111-1307, USA.  */
    THE PANED AREA
    --------------
 
-   The area occupied by the "windows" is called the paned area.  Note that
-   this includes the minibuffer, which is just another window but is
-   special-cased in XEmacs.  Each window can include a horizontal and/or
-   vertical scrollbar, a modeline and a vertical divider to its right, as
-   well as the text area.  Only non-rightmost windows can include a
-   vertical divider. (The minibuffer normally does not include either
-   modeline or scrollbars.)
+   The area occupied by the "windows" is called the paned area.  Unfortunately,
+   because of the presence of the gutter *between* the minibuffer and other
+   windows, the bottom of the paned area is not well-defined -- does it
+   include the minibuffer (in which case it also includes the bottom gutter,
+   but none others) or does it not include the minibuffer? (In which case
+   not all windows are included.) #### GEOM! It would be cleaner to put the
+   bottom gutter *below* the minibuffer instead of above it.
+
+   Each window can include a horizontal and/or vertical scrollbar, a
+   modeline and a vertical divider to its right, as well as the text area.
+   Only non-rightmost windows can include a vertical divider. (The
+   minibuffer normally does not include either modeline or scrollbars.)
 
    Note that, because the toolbars and gutters are controlled by
    specifiers, and specifiers can have window-specific and buffer-specific
@@ -252,18 +260,23 @@ Boston, MA 02111-1307, USA.  */
    specified default character because many X fonts have a default
    character with a zero or otherwise non-representative width.])
 
-   The displayable area is essentially the "theoretical" paned area of the
-   frame excluding the rightmost and bottom-most scrollbars.  In this
-   context, "theoretical" means that all calculations on based on
-   frame-level values for toolbar, gutter and scrollbar thicknesses.
-   Because these thicknesses are controlled by specifiers, and specifiers
-   can have window-specific and buffer-specific values, these calculations
-   may or may not reflect the actual size of the paned area or of the
-   scrollbars when any particular window is selected.  Note also that the
-   "displayable area" may not even be contiguous!  In particular, if the
-   frame-level value of the horizontal scrollbar height is non-zero, then
-   the displayable area includes the paned area above and below the bottom
-   horizontal scrollbar but not the scrollbar itself.
+   The displayable area is essentially the "theoretical" gutter area of the
+   frame, excluding the rightmost and bottom-most scrollbars.  That is, it
+   starts from the client (or "total") area and then excludes the
+   "theoretical" toolbars and bottom-most/rightmost scrollbars, and the
+   internal border width.  In this context, "theoretical" means that all
+   calculations on based on frame-level values for toolbar and scrollbar
+   thicknesses.  Because these thicknesses are controlled by specifiers,
+   and specifiers can have window-specific and buffer-specific values,
+   these calculations may or may not reflect the actual size of the paned
+   area or of the scrollbars when any particular window is selected.  Note
+   also that the "displayable area" may not even be contiguous!  In
+   particular, the gutters are included, but the bottom-most and rightmost
+   scrollbars are excluded even though they are inside of the gutters.
+   Furthermore, if the frame-level value of the horizontal scrollbar height
+   is non-zero, then the displayable area includes the paned area above and
+   below the bottom horizontal scrollbar (i.e. the modeline and minibuffer)
+   but not the scrollbar itself.
 
    As a further twist, the character-dimension calculations are adjusted so
    that the truncation and continuation glyphs (see `truncation-glyph' and
@@ -3590,22 +3603,13 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 
   /* We need to remove the boundaries of the paned area (see top of file)
      from the total-area pixel size, which is what we have now.
-
-     #### We should also be subtracting the internal borders. */
+  */
   new_pixheight -=
-    (FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
-     + FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f)
-     + FRAME_TOP_GUTTER_BOUNDS (f)
-     + FRAME_BOTTOM_GUTTER_BOUNDS (f));
-
+    (FRAME_NONPANED_SIZE (f, TOP_EDGE) + FRAME_NONPANED_SIZE (f, BOTTOM_EDGE));
   new_pixwidth -=
-    (FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
-     + FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f)
-     + FRAME_LEFT_GUTTER_BOUNDS (f)
-     + FRAME_RIGHT_GUTTER_BOUNDS (f));
+    (FRAME_NONPANED_SIZE (f, LEFT_EDGE) + FRAME_NONPANED_SIZE (f, RIGHT_EDGE));
 
-  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
-    = FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_PANED_TOP_EDGE (f);
 
   if (FRAME_HAS_MINIBUF_P (f)
       && ! FRAME_MINIBUF_ONLY_P (f))
@@ -3631,8 +3635,7 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 			    new_pixheight - minibuf_height, 0);
 
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	FRAME_TOP_BORDER_END (f) +
-	FRAME_TOP_GUTTER_BOUNDS (f) +
+	FRAME_PANED_TOP_EDGE (f) +
 	FRAME_BOTTOM_GUTTER_BOUNDS (f) +
 	new_pixheight - minibuf_height;
 
@@ -3646,14 +3649,13 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (FRAME_TTY_P (f))
     f->pixheight = newheight;
 
-  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
-    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_PANED_LEFT_EDGE (f);
   set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
 
   if (FRAME_HAS_MINIBUF_P (f))
     {
       XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+	FRAME_PANED_LEFT_EDGE (f);
       set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
     }
 
@@ -3661,10 +3663,10 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
   if (FRAME_TTY_P (f))
     f->pixwidth = newwidth;
 
-  /* #### On MS Windows, this references FRAME_PIXWIDTH() and FRAME_PIXHEIGHT().
-     I'm not sure we can count on those values being set.  Instead we should
-     use the total pixel size we got near the top by calling
-     frame_conversion_internal().  We should inline the logic in
+  /* #### On MS Windows, this references FRAME_PIXWIDTH() and
+     FRAME_PIXHEIGHT().  I'm not sure we can count on those values being
+     set.  Instead we should use the total pixel size we got near the top
+     by calling frame_conversion_internal().  We should inline the logic in
      get_frame_char_size() here and change that function so it just looks
      at FRAME_CHARWIDTH() and FRAME_CHARHEIGHT(). */
   get_frame_char_size (f, &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
