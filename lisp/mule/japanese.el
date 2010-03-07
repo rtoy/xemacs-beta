@@ -74,8 +74,19 @@
 	  japanese/language))
 
 ;;; Syntax of Japanese characters.
-(loop for row in '(33 34 40)
-      do (modify-syntax-entry `[japanese-jisx0208 ,row] "_"))
+(loop for row in '(33 34 40) do
+  (loop for col from #x21 to #x7e
+    for ch = (make-char 'japanese-jisx0208 row col)
+    ;; #### This is all messed up.  Under Unicode-internal, there are all
+    ;; sorts of random characters in these rows and it's far from obvious
+    ;; we want to be setting them to have a syntax of _.  We definitely
+    ;; don't want to do that for ASCII or Latin-1 characters -- e.g.
+    ;; JISX0208 0x2140 is Unicode 0x5C "REVERSE SOLIDUS" aka backslash,
+    ;; and setting its syntax to _ messes things up majorly.  We really
+    ;; need to copy the stuff from GNU Emacs 23.1, but first we have to
+    ;; sort out the GPL v3 stuff. --ben
+    if (and ch (>= ch 256))
+    do (modify-syntax-entry ch "_")))
 (loop for char in '(#x3c #x2b #x2c #x33 #x34 #x35 #x36 #x37 #x38 #x39
 		    #x3a #x3b)
   ;;(?ー ?゛ ?゜ ?ヽ ?ヾ ?ゝ ?ゞ ?〃 ?仝 ?々 ?〆 ?〇)
