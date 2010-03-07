@@ -1402,13 +1402,15 @@ make_internal_coding_system (Lisp_Object existing, const Ascbyte *prefix,
 }
 
 DEFUN ("make-coding-system-internal", Fmake_coding_system_internal, 2, 4, 0, /*
-See `make-coding-system'.  This does much of the work of that function.
+Create a new coding system object, and register NAME as its name.
 
+With Mule support, this does much of the work of `make-coding-system'.
 Without Mule support, it does all the work of that function, and an alias
-exists, mapping `make-coding-system' to
-`make-coding-system-internal'. You'll need a non-Mule XEmacs to read the
-complete docstring. Or you can just read it in make-coding-system.el;
-something like the following should work:
+exists, mapping `make-coding-system' to `make-coding-system-internal'.
+
+You'll need a Mule XEmacs to read the complete docstring. Or you can
+just read it in make-coding-system.el; something like the following
+should work:
 
  \\[find-function-other-window] find-file RET \\[find-file] mule/make-coding-system.el RET
 

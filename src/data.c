@@ -41,7 +41,8 @@ Lisp_Object Qmalformed_list, Qmalformed_property_list;
 Lisp_Object Qcircular_list, Qcircular_property_list;
 Lisp_Object Qinvalid_argument, Qinvalid_constant, Qwrong_type_argument;
 Lisp_Object Qargs_out_of_range;
-Lisp_Object Qwrong_number_of_arguments, Qinvalid_function, Qno_catch;
+Lisp_Object Qwrong_number_of_arguments, Qinvalid_function;
+Lisp_Object Qinvalid_keyword_argument, Qno_catch;
 Lisp_Object Qinternal_error, Qinvalid_state, Qstack_overflow, Qout_of_memory;
 Lisp_Object Qvoid_variable, Qcyclic_variable_indirection;
 Lisp_Object Qvoid_function, Qcyclic_function_indirection;
@@ -3463,6 +3464,7 @@ init_errors_once_early (void)
   DEFERROR_STANDARD (Qwrong_number_of_arguments, Qinvalid_argument);
   DEFERROR_STANDARD (Qinvalid_function, Qinvalid_argument);
   DEFERROR_STANDARD (Qinvalid_constant, Qinvalid_argument);
+  DEFERROR_STANDARD (Qinvalid_keyword_argument, Qinvalid_argument);
   DEFERROR (Qno_catch, "No catch for tag", Qinvalid_argument);
 
   DEFERROR_STANDARD (Qinvalid_state, Qerror);

@@ -946,30 +946,6 @@ safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
   return arg;
 }
 
-DEFUN ("substring", Fsubstring, 2, 3, 0, /*
-Return the substring of STRING starting at START and ending before END.
-END may be nil or omitted; then the substring runs to the end of STRING.
-If START or END is negative, it counts from the end.
-Relevant parts of the string-extent-data are copied to the new string.
-*/
-       (string, start, end))
-{
-  Charcount ccstart, ccend;
-  Bytecount bstart, blen;
-  Lisp_Object val;
-
-  CHECK_STRING (string);
-  CHECK_INT (start);
-  get_string_range_char (string, start, end, &ccstart, &ccend,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
-  bstart = string_index_char_to_byte (string, ccstart);
-  blen = string_offset_char_to_byte_len (string, bstart, ccend - ccstart);
-  val = make_string (XSTRING_DATA (string) + bstart, blen);
-  /* Copy any applicable extent information into the new string. */
-  copy_string_extents (val, string, 0, bstart, blen);
-  return val;
-}
-
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
 Return the subsequence of SEQUENCE starting at START and ending before END.
 END may be omitted; then the subsequence runs to the end of SEQUENCE.
@@ -982,10 +958,24 @@ are copied to the new string.
 {
   EMACS_INT len, s, e;
 
-  CHECK_SEQUENCE (sequence);
-
   if (STRINGP (sequence))
-    return Fsubstring (sequence, start, end);
+    {
+      Charcount ccstart, ccend;
+      Bytecount bstart, blen;
+      Lisp_Object val;
+
+      CHECK_INT (start);
+      get_string_range_char (sequence, start, end, &ccstart, &ccend,
+                             GB_HISTORICAL_STRING_BEHAVIOR);
+      bstart = string_index_char_to_byte (sequence, ccstart);
+      blen = string_offset_char_to_byte_len (sequence, bstart, ccend - ccstart);
+      val = make_string (XSTRING_DATA (sequence) + bstart, blen);
+      /* Copy any applicable extent information into the new string. */
+      copy_string_extents (val, sequence, 0, bstart, blen);
+      return val;
+    }
+
+  CHECK_SEQUENCE (sequence);
 
   len = XINT (Flength (sequence));
 
@@ -4795,7 +4785,6 @@ syms_of_fns (void)
   DEFSUBR (Fcopy_sequence);
   DEFSUBR (Fcopy_alist);
   DEFSUBR (Fcopy_tree);
-  DEFSUBR (Fsubstring);
   DEFSUBR (Fsubseq);
   DEFSUBR (Fnthcdr);
   DEFSUBR (Fnth);

@@ -2,6 +2,7 @@
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -1898,6 +1899,25 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
       break;
 
     case ConfigureNotify:
+      {
+	XEvent xev;
+	
+	/* Let's eat all events of that type to avoid useless
+	   reconfigurations. */
+	while (XCheckTypedWindowEvent
+	       (DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE (f))),
+		XtWindow (FRAME_X_TEXT_WIDGET (f)),
+		ConfigureNotify,
+		&xev)
+	       == True);
+      }
+      /* #### NOTE: in fact, the frame faces didn't really change, but if some
+	 #### of them have their background-placement property set to
+	 #### absolute, we need a redraw. This is semantically equivalent to
+	 #### changing the background pixmap. -- dvl */
+      x_get_frame_text_position (f);
+      MARK_FRAME_FACES_CHANGED (f);
+
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
 #endif

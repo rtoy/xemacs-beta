@@ -1,6 +1,6 @@
 /* Define general toolbar support.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -33,6 +33,11 @@ Boston, MA 02111-1307, USA.  */
   ((frame)->toolbar_buttons[pos])
 #define FRAME_CURRENT_TOOLBAR_SIZE(frame, pos)	\
   ((frame)->current_toolbar_size[pos])
+#define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)	\
+  do {							\
+    (frame)->toolbar_was_visible[pos] = flag;		\
+  } while (0)
+
 #define DEVICE_SUPPORTS_TOOLBARS_P(d)		\
   HAS_DEVMETH_P (d, output_frame_toolbars)
 
@@ -76,7 +81,7 @@ DECLARE_LISP_OBJECT (toolbar_button, struct toolbar_button);
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
 #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
 
-void get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x,
+void get_toolbar_coords (struct frame *f, enum edge_pos pos, int *x,
 			 int *y, int *width, int *height, int *vert,
 			 int for_layout);
 Lisp_Object toolbar_button_at_pixpos (struct frame *f, int x_coord,
@@ -106,7 +111,7 @@ void init_global_toolbars (struct device *d);
 void free_frame_toolbars (struct frame *f);
 Lisp_Object get_toolbar_button_glyph (struct window *w,
 				      struct toolbar_button *tb);
-void mark_frame_toolbar_buttons_dirty (struct frame *f, enum toolbar_pos pos);
+void mark_frame_toolbar_buttons_dirty (struct frame *f, enum edge_pos pos);
 
 #endif /* HAVE_TOOLBARS */
 

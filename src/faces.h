@@ -1,6 +1,7 @@
 /* Face data structures.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 2002, 2010 Ben Wing
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -47,6 +48,7 @@ struct Lisp_Face
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
+  Lisp_Object background_placement;
 
   Lisp_Object underline;
   Lisp_Object strikethru;
@@ -172,6 +174,7 @@ struct face_cachel
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
+  Lisp_Object background_placement;
 
   unsigned int underline :1;
   unsigned int strikethru :1;
@@ -188,6 +191,7 @@ struct face_cachel
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
   unsigned int background_pixmap_specified :1;
+  unsigned int background_placement_specified :1;
 
   unsigned int strikethru_specified :1;
   unsigned int underline_specified :1;
@@ -340,6 +344,8 @@ void default_face_width_and_height (Lisp_Object domain, int *width,
   (WINDOW_FACE_CACHEL (window, index)->display_table)
 #define WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP(window, index)		\
   (WINDOW_FACE_CACHEL (window, index)->background_pixmap)
+#define WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT(window, index)		\
+  (WINDOW_FACE_CACHEL (window, index)->background_placement)
 #define WINDOW_FACE_CACHEL_DIRTY(window, index)				\
   (WINDOW_FACE_CACHEL (window, index)->dirty)
 #define WINDOW_FACE_CACHEL_UNDERLINE_P(window, index)			\
@@ -396,6 +402,11 @@ Lisp_Object face_property_matching_instance
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qbackground_pixmap, domain, 0, Qzero)
+
+extern Lisp_Object Qbackground_placement;
+#define FACE_BACKGROUND_PLACEMENT(face, domain)				\
+  FACE_PROPERTY_INSTANCE (face, Qbackground_placement, domain, 0, Qzero)
+
 #define FACE_UNDERLINE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qunderline, domain, 0, Qzero)))
 #define FACE_STRIKETHRU_P(face, domain)					\
