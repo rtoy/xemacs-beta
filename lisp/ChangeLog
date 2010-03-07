@@ -1,3 +1,9 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* mule/japanese.el (for):
+	Don't blindly set syntax of entire rows -- check to make sure we aren't
+	changing syntax of Latin-1.
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* code-init.el (reset-coding-categories-to-default):
