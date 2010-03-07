@@ -556,7 +556,10 @@ This is a naive implementation in Lisp.  "
       (loop for c1 from 0 to 255 do
 	(loop for c2 from 0 to 255 do
 	  (set-unicode-conversion (codepoint-to-unicode c1 c2) charset c1 c2)))
-      (loop for c1 from 0 to 255 do
+      ;; #### We used to loop over all 256 rows; this was reasonably fast
+      ;; when called noninteractively, but horrendously show when called
+      ;; interactively.  I don't know why.
+      (loop for c1 in '(0 1 254 255) do
 	(loop for c2 from 0 to 255 do
 	  (Assert-eq (charset-codepoint-to-unicode charset c1 c2)
 		     (codepoint-to-unicode c1 c2))
@@ -566,7 +569,7 @@ This is a naive implementation in Lisp.  "
       (loop for c1 from 0 to 255 do
 	(loop for c2 from 0 to 255 do
 	  (set-unicode-conversion nil charset c1 c2)))
-      (loop for c1 from 0 to 255 do
+      (loop for c1 in '(0 1 254 255) do
 	(loop for c2 from 0 to 255 do
 	  (Assert-eq nil (charset-codepoint-to-unicode charset c1 c2))
 	  (Assert-equal (unicode-to-charset-codepoint
