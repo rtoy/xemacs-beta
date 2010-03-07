@@ -1,3 +1,9 @@
+2010-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (string character conversion):
+	Test escape-quoted for the range U+0000 to U+00FF.
+	Inspired by Ben's patch to fix quoting of specials from C1 controls.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* automated/syntax-tests.el:
