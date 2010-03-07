@@ -3696,6 +3696,22 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
     /* Frame has just one top-level window.  */
     set_window_pixheight (FRAME_ROOT_WINDOW (f), paned_pixheight, 0);
 
+  /* Set the value of FRAME_WIDTH/FRAME_HEIGHT and
+     FRAME_CHARWIDTH/FRAME_CHARHEIGHT.
+
+     Question: Where is FRAME_PIXWIDTH/FRAME_PIXHEIGHT set?
+     Answer: In the device-specific code, as a result of a callback from
+     the window system indicating that the frame has changed size.
+     This happens:
+
+     (1) in the WM_SIZE processing in event-msw.c
+     (2) in update_various_frame_slots() called from EmacsFrameResize()
+         (called from Xt when the frame is resized) in EmacsFrame.c for X
+     (3) in resize_event_cb() in frame-gtk.c
+     (4) For TTY's, there is no such callback, so we have to set it
+         ourselves.
+  */
+
   FRAME_HEIGHT (f) = newheight;
   if (FRAME_TTY_P (f))
     f->pixheight = newheight;

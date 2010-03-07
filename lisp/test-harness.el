@@ -194,6 +194,12 @@ The output file's name is made by appending `c' to the end of FILENAME."
     (kill-buffer input-buffer)
     ))
 
+(defsubst test-harness-backtrace ()
+  "Display a reasonable-size backtrace."
+  (let ((print-escape-newlines t)
+	(print-length 50))
+    (backtrace nil t)))
+
 (defsubst test-harness-assertion-failure-do-debug (error-info)
   "Maybe enter debugger or display a backtrace on assertion failure.
 ERROR-INFO is a cons of the args (SIG . DATA) that were passed to `signal'.
@@ -206,7 +212,7 @@ is non-nil."
 		test-harness-assertion-failure-enter-debugger)
 	   (funcall debugger 'error error-info))
 	  (test-harness-assertion-failure-show-backtrace
-	   (backtrace nil t)))))
+	   (test-harness-backtrace)))))
 
 (defsubst test-harness-unexpected-error-do-debug (error-info)
   "Maybe enter debugger or display a backtrace on unexpected error.
@@ -220,7 +226,7 @@ is non-nil."
 		test-harness-unexpected-error-enter-debugger)
 	   (funcall debugger 'error error-info))
 	  (test-harness-unexpected-error-show-backtrace
-	   (backtrace nil t)))))
+	   (test-harness-backtrace)))))
 
 (defsubst test-harness-unexpected-error-condition-handler (error-info context-msg)
   "Condition handler for when unexpected errors occur.
