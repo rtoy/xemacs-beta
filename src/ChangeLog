@@ -1,3 +1,56 @@
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (change_frame_size_1):
+	Add a comment about where FRAME_PIXWIDTH/FRAME_PIXHEIGHT is set.
+	
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* frame.c:
+	* frame.c (Fframe_pixel_height):
+	* frame.c (Fframe_displayable_pixel_height):
+	* frame.c (Fframe_pixel_width):
+	* frame.c (Fframe_displayable_pixel_width):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (get_frame_char_size):
+	* frame.c (change_frame_size_1):
+	Make it so that `frame-pixel-height', `set-frame-pixel-height', etc.
+	use updated values for the displayable or total pixel size that
+	will reflect what will happen as of the next redisplay.  This
+	basically means using the character-cell height and converting
+	on-the-fly to pixel units.  In the process, make sure FRAME_CHARWIDTH/
+	FRAME_CHARHEIGHT are always correct and change
+	get_frame_char_size() to simply use them; the old logic in that
+	function was inlined into change_frame_size_1(), which is the only
+	place that needs the logic.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* frame.c:
+	* frame.c (frame_live_p):
+	* frame.c (Fframep):
+	* frame.c (Fdisable_frame):
+	* frame.c (Fenable_frame):
+	* frame.c (Fraise_frame):
+	* frame.c (Fframe_name):
+	* frame.c (Fset_frame_height):
+	* frame.c (internal_set_frame_size):
+	* frame.c (adjust_frame_size):
+	Add documentation on the different types of units used to measure
+	frame size.
+
+	Add section headers to the various sections.
+	
+	Rearrange the location of some functions in the file to keep
+	related functions together.  This especially goes for frame-sizing
+	functions (internal_set_frame_size() and adjust_frame_size()),
+	which have been moved so that they form a group with
+	change_frame_size() and change_frame_size_1().
+
+	No functionality should change.
+
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

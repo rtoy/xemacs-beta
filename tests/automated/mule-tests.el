@@ -375,6 +375,29 @@ This is a naive implementation in Lisp.  "
       (Assert-equal (substring string (* 94 k) (* 94 (1+ k))) ascii-string)))
 
   ;;---------------------------------------------------------------
+  ;; Test string character conversion
+  ;;---------------------------------------------------------------
+
+  ;; #### This should test all coding systems!
+
+  (let ((all-octets (let ((s (make-string 256 ?\000)))
+		      (loop for i from (1- (length s)) downto 0 do
+			(aset s i (int-char i)))
+		      s))
+	(escape-quoted-result (let ((schar '(27 155 142 143 14 15))
+				    (s (make-string 262 ?\000))
+				    (pos 0))
+				(loop for ord from 0 to 255 do
+				  (when (member ord schar)
+				    (aset s pos ?\033)
+				    (incf pos))
+				  (aset s pos (int-char ord))
+				  (incf pos))
+				s)))
+    (Assert (string= (encode-coding-string all-octets 'escape-quoted)
+		     escape-quoted-result)))
+
+  ;;---------------------------------------------------------------
   ;; Test file-system character conversion (and, en passant, file ops)
   ;;---------------------------------------------------------------
   (let* ((dstroke (make-char 'latin-iso8859-2 80))
