@@ -1,5 +1,40 @@
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_BADVAL_UNICODE_CODE):
+	* charset.h (XCHARSET_BADVAL_UNICODE_CODE):
+	* text.c:
+	* text.c (ichar_string_displayed_columns):
+	* text.c (ibyte_string_nonascii_chars):
+	* unicode.c:
+	* unicode.c (find_badval_for_charset):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (set_unicode_conversion_char_to_unicode):
+	* unicode.c (set_unicode_conversion_unicode_to_char):
+	* unicode.c (set_unicode_conversion):
+	* unicode.c (get_unicode_conversion_1):
+	(1) Allow `nil' as a value to `set-unicode-conversion', to remove
+	    a conversion for a particular charset codepoint.
+	(2) Fix Unicode conversion so that all charset codepoints can be
+	    assigned Unicode conversions.  We have to reserve one charset
+	    codepoint as a "badval" to indicate that no conversion from
+	    a particular Unicode codepoint exists.  Previously it was
+	    impossible to assign a conversion to that charset codepoint,
+	    but now we store the value specially in the charset and check
+	    for it.  The setting for "badval" attempts to avoid any value
+	    that is likely to exist in any known charsets, but the previous
+	    value was set incorrectly so that it included an actual 
+	    codepoint in `viscii'.  We also now have a test in mule-tests
+	    that creates a 256x256 charset and checks that all codepoints
+	    can be assigned conversions, to make sure we exercise the
+	    "badval"-handling code.
+	(3) There was still a bug in text.h that prevented non-Mule compiling;
+	    fixed.
+	(4) The previous check for setting a conversion for ascii or latin-1
+	    was incorrect.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	* charset.h:
 	* file-coding.c:

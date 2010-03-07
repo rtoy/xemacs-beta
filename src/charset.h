@@ -149,16 +149,15 @@ struct Lisp_Charset
   void *to_unicode_table;
   void *from_unicode_table;
   int from_unicode_levels;
-  /* A value (combination of two octets) that is not a legal index in this
-     charset. #### Problematic with a full 256x256 charset.  To get around
-     this partially, we choose a value that is outside the range of nearly
-     all charsets, and unlikely in Unicode.  #### But to do it properly,
-     we need a separate table tracking all entries that map to this value.
-     Most likely we should use a hash table; you're unlikely to have many
-     entries mapping to the same conversion value.  Use a simple NULL
-     pointer for an empty hash table, in the common case where no entries
-     at all have that value. */
-  UINT_16_BIT badval;
+
+  /* A Unicode value that maps to BADVAL_FROM_TABLE.  Because we allow
+     256x256 charsets, there is no value we can use in all circumstances to
+     mean "no charset codepoint for this Unicode value".  To get around
+     this, we choose a value for BADVAL_FROM_TABLE that is outside the
+     range of nearly all charsets.  In the unlikely case that a charset
+     uses BADVAL_FROM_TABLE as a codepoint, we store the corresponding
+     Unicode codepoint here. */
+  int badval_unicode_code;
 
   /* Final byte of this character set in ISO2022 designating escape
      sequence */
@@ -232,6 +231,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_LEFT_TO_RIGHT	0
 #define CHARSET_RIGHT_TO_LEFT	1
 
+#define CHARSET_BADVAL_UNICODE_CODE(cs)	 ((cs)->badval_unicode_code)
 #define CHARSET_CHARS(cs, dim)	 ((cs)->chars[dim])
 #define CHARSET_COLUMNS(cs)	 ((cs)->columns)
 #define CHARSET_DIMENSION(cs)	 ((cs)->dimension)
@@ -256,6 +256,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
   (CHARSET_OFFSET (cs, dim) + CHARSET_CHARS (cs, dim) - 1)
 
 
+#define XCHARSET_BADVAL_UNICODE_CODE(cs) CHARSET_BADVAL_UNICODE_CODE (XCHARSET (cs))
 #define XCHARSET_CHARS(cs, dim)	  CHARSET_CHARS        (XCHARSET (cs), dim)
 #define XCHARSET_COLUMNS(cs)	  CHARSET_COLUMNS      (XCHARSET (cs))
 #define XCHARSET_DIMENSION(cs)	  CHARSET_DIMENSION    (XCHARSET (cs))
