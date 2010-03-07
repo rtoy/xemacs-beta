@@ -635,7 +635,27 @@
 	* window.c (allocate_window):
 	* window.c (new_window_mirror):
 	* window.c (make_dummy_parent):
-	Create a simpler interface (ALLOC_LCRECORD) for allocating 
+	Create a simpler interface for allocating/declaring Lisp objects;
+	documented in lrecord.h.
+
+	ALLOC_LCRECORD_TYPE -> ALLOC_LISP_OBJECT (returns a Lisp object
+	                                          rather than a pointer),
+	BASIC_ALLOC_LCRECORD -> ALLOC_SIZED_LISP_OBJECT
+	DEFINE_LRECORD_IMPLEMENTATION -> DEFINE_*_LISP_OBJECT
+	DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION -> DEFINE_*SIZABLE_*LISP_OBJECT
+	DEFINE_LRECORD_*IMPLEMENTATION_WITH_PROPS -> DEFINE_*GENERAL_LISP_OBJECT
+	DEFINE_BASIC_LRECORD_IMPLEMENTATION -> DEFINE_*FROB_BLOCK_LISP_OBJECT
+	DEFINE_DUMPABLE_*/DEFINE_NODUMP_* instead of a 0 or 1 dumpable flag
+	DEFINE_*INTERNAL_* for "internal" Lisp objects (shouldn't escape
+							to Lisp)
+	DEFINE_EXTERNAL_* -> DEFINE_MODULE_*
+	MAKE_LRECORD_IMPLEMENTATION -> MAKE_LISP_OBJECT
+	MAKE_EXTERNAL_LRECORD_IMPLEMENTATION -> MAKE_MODULE_LISP_OBJECT
+	DECLARE_LRECORD -> DECLARE_LISP_OBJECT
+	INIT_LRECORD_IMPLEMENTATION -> INIT_LISP_OBJECT
+	alloc_lrecord -> alloc_sized_lrecord (since it takes a size)
+	
+	Dynarr_newf, Dynarr_lisp_newf: takes a Bytecount instead of an int
 
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
