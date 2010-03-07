@@ -1,3 +1,4 @@
+;; mule-tests.el --- Test of international support     -*- coding: utf-8 -*-
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
 ;; Copyright (C) 2010 Ben Wing.
 
@@ -119,7 +120,7 @@ This is a naive implementation in Lisp.  "
 ;; Fixed 2007-06-22 <18043.2793.611745.734215@parhasard.net>.
 ;;----------------------------------------------------------------
 
-(let ((test-file-name 
+(let ((test-file-name
        (make-temp-file (expand-file-name "tXfXsKc" (temp-directory))))
       revert-buffer-function
       kill-buffer-hook)		; paranoia
@@ -175,6 +176,8 @@ This is a naive implementation in Lisp.  "
 
   (let ((cap-y-umlaut (make-char 'latin-iso8859-15 190))
 	(cap-y-umlaut2 (make-char 'latin-iso8859-16 190)))
+    ;; Test that the `multibyte' coding system unifies characters by
+    ;; Unicode codepoint.
     (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-15) "¾")
     (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-16) "¾")
     (Assert-equal (encode-coding-string cap-y-umlaut 'iso-8859-1) "?")
@@ -329,7 +332,8 @@ This is a naive implementation in Lisp.  "
   (Assert (not (coding-system-alias-p 'nested-mule-tests-alias-dos)))
 
   ;;---------------------------------------------------------------
-  ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
+  ;; Test strings waxing and waning across the 8k BIG_STRING limit (see
+  ;; alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
     (let ((gc-cons-threshold most-positive-fixnum)
@@ -364,33 +368,28 @@ This is a naive implementation in Lisp.  "
   (Assert (charset-char-string 'japanese-jisx0208))
   (aset (make-string 9003 ??) 1 (make-char 'latin-iso8859-1 77))
 
-  (let ((greek-string (charset-char-string 'greek-iso8859-7))
-	(string (make-string (* 96 60) ??)))
-    (loop for j from 0 below (length string) do
-      (aset string j (aref greek-string (mod j 96))))
-    (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 96 k) (* 96 (1+ k))) greek-string)))
+  (loop for (charset ch) in `((greek-iso8859-7 ??)
+			      (ascii ,(make-char 'greek-iso8859-7 57)))
+    do
 
-  (let ((greek-string (charset-char-string 'greek-iso8859-7))
-	(string (make-string (* 96 60) ??)))
-   (loop for j from (1- (length string)) downto 0 do
-     (aset string j (aref greek-string (mod j 96))))
-   (loop for k in '(0 1 58 59) do
-     (Assert-equal (substring string (* 96 k) (* 96 (1+ k))) greek-string)))
+    (let* ((charset-string (charset-char-string charset))
+	   (len (length charset-string))
+	   (string (make-string (* len 60) ch)))
+      (loop for j from 0 below (length string) do
+	(aset string j (aref charset-string (mod j len))))
+      (loop for k in '(0 1 58 59) do
+	(Assert-equal (substring string (* len k) (* len (1+ k)))
+		      charset-string)))
 
-  (let ((ascii-string (charset-char-string 'ascii))
-	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
-   (loop for j from 0 below (length string) do
-      (aset string j (aref ascii-string (mod j 94))))
-    (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 94 k) (+ 94 (* 94 k))) ascii-string)))
-
-  (let ((ascii-string (charset-char-string 'ascii))
-	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
-    (loop for j from (1- (length string)) downto 0 do
-      (aset string j (aref ascii-string (mod j 94))))
-    (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 94 k) (* 94 (1+ k))) ascii-string)))
+    (let* ((charset-string (charset-char-string charset))
+	   (len (length charset-string))
+	   (string (make-string (* len 60) ch)))
+      (loop for j from (1- (length string)) downto 0 do
+	(aset string j (aref charset-string (mod j len))))
+      (loop for k in '(0 1 58 59) do
+	(Assert-equal (substring string (* len k) (* len (1+ k)))
+		      charset-string)))
+    )
 
   ;;---------------------------------------------------------------
   ;; Test file-system character conversion (and, en passant, file ops)
@@ -447,14 +446,28 @@ This is a naive implementation in Lisp.  "
   (let* ((scaron '(latin-iso8859-2 185)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
     (loop
-      for code in '(#x0100 #x2222 #x4444 #xffff)
+      ;; We have to be VERY careful here not to mess up the Unicode
+      ;; conversion tables.  The problem is that the code internally has
+      ;; tables to convert in both directions; however, the two directions
+      ;; are not equivalent in function, since a charset codepoint maps to
+      ;; only one Unicode code, but a single Unicode code can map to
+      ;; multiple charset codepoints.  Because the tables go in both
+      ;; directions, we have to put both directions back when undoing a
+      ;; single change.  Currently there is no way to put a null conversion
+      ;; back, but that isn't a problem because the C code is able to
+      ;; handle this case by itself.
       with initial-unicode = (apply 'charset-codepoint-to-unicode scaron)
+      for code in '(#x0100 #x2222 #x4444 #xffff)
+      for initial-codepoint = (unicode-to-charset-codepoint code
+							    '(latin-iso8859-2))
       do
       (progn
 	(apply 'set-unicode-conversion code scaron)
 	(Assert-eq code (apply 'charset-codepoint-to-unicode scaron))
 	(Assert-equal scaron (unicode-to-charset-codepoint
-			      code '(latin-iso8859-2))))
+			      code '(latin-iso8859-2)))
+	(when initial-codepoint
+	  (apply 'set-unicode-conversion code initial-codepoint)))
       finally (apply 'set-unicode-conversion initial-unicode scaron))
     (Check-Error 'invalid-argument (apply 'set-unicode-conversion -10000
 					  scaron)))
@@ -503,7 +516,40 @@ This is a naive implementation in Lisp.  "
                     (decode-char 'ucs code-point) 'utf-16-le)
                    utf-16-little-endian))
 
-         
+  ;; Create a 256x256 charset and test that we can assign Unicode codepoints
+  ;; to all charset codepoints, and the conversion works in both directions.
+  ;; Then remove all conversions and test that conversion in both directions
+  ;; for all codepoints returns nil.  Among other things, this tests the
+  ;; C code that handles charset codepoints equal to BADVAL_FROM_TABLE, and
+  ;; tests that removal of codepoints works correctly.
+  (when (not (find-charset 'mule-test-unicode))
+    ;; The second time around (testing byte-compiled code), the charset
+    ;; will already exist, and we can't create it again.
+    (make-charset 'mule-test-unicode "Test Unicode"
+		  '(dimension 2 chars 256 offset 0)))
+  (let ((charset 'mule-test-unicode))
+    (flet ((codepoint-to-unicode (c1 c2)
+	     (+ 65536 (+ (* c1 256) c2))))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (set-unicode-conversion (codepoint-to-unicode c1 c2) charset c1 c2)))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (Assert-eq (charset-codepoint-to-unicode charset c1 c2)
+		     (codepoint-to-unicode c1 c2))
+	  (Assert-equal (unicode-to-charset-codepoint
+			 (codepoint-to-unicode c1 c2) (list charset))
+			`(,charset ,c1 ,c2))))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (set-unicode-conversion nil charset c1 c2)))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (Assert-eq nil (charset-codepoint-to-unicode charset c1 c2))
+	  (Assert-equal (unicode-to-charset-codepoint
+			 (codepoint-to-unicode c1 c2) (list charset))
+			nil)))))
+
   ;;---------------------------------------------------------------
   ;; Regression test for a couple of CCL-related bugs. 
   ;;---------------------------------------------------------------
@@ -628,7 +674,7 @@ This is a naive implementation in Lisp.  "
        (Assert-equal language-input-method current-input-method)))
 
     (dolist (charset (get-language-info language 'charset))
-      (Assert (charsetp (find-charset charset))))
+      (Assert (charset-or-charset-tag-p (find-charset charset))))
     (dolist (coding-system (get-language-info language 'coding-system))
       (Assert (coding-system-p (find-coding-system coding-system))))
     (dolist (coding-system

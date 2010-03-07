@@ -1,3 +1,31 @@
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (test-file-name):
+	* automated/mule-tests.el (featurep):
+	Fix a number of bad tests in mule-tests.el.
+
+	-- One test broke for some reason unless utf-8 was explicitly
+	given as the encoding.  (#### The fix actually hides the bug
+	rather than fixing it.  We have to investigate to see why
+	detection isn't working.)
+	
+	-- Another test seemed to depend on `ascii' having 94 chars instead
+	of 128.
+
+	-- Also, the test involving changing the Unicode conversion
+	for Latin-2 s-caron didn't put the conversions back correctly,
+	which messed up later tests. (And the code in unicode.c
+	implementing `set-unicode-conversion' didn't correctly handle the
+	case where an existing conversion is changed.)
+
+	-- Finally, a test for the value of language-info `charset' had to
+	be fixed to take into account the fact that charset tags are now
+	allowed.
+
+	-- We also added a more thorough test of `set-unicode-conversion';
+	see ChangeLog entry for this date in src/ChangeLog.
+	
 2010-02-28  Ben Wing  <ben@xemacs.org>
 
 	* automated/mule-tests.el (featurep):

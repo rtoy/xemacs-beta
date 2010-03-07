@@ -2546,8 +2546,7 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 }
 
 int
-ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str),
-				Charcount len)
+ichar_string_displayed_columns (const Ichar *str, Charcount len)
 {
   int cols = 0;
   int i;
@@ -2559,10 +2558,8 @@ ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str),
 }
 
 Charcount
-ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
-			     Bytecount USED_IF_MULE (len))
+ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len)
 {
-#ifdef MULE
   const Ibyte *end = str + len;
   Charcount retval = 0;
 
@@ -2574,9 +2571,6 @@ ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
     }
 
   return retval;
-#else
-  return 0;
-#endif
 }
 
 

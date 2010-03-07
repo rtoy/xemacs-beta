@@ -245,15 +245,15 @@ Lisp_Object Vcharset_descr;
    need a better fix.  One possibility is to compute a bad value that is
    outside the range of a particular charset, and have separate blank tables
    for each charset.  This still chokes on 256x256, but not anywhere else.
-   The value of 0x0001 will not be valid in any dimension-1 charset (they
-   always are of the form 0xXX00), not valid in a ku-ten style charset, and
+   The value of 0x0100 will not be valid in any dimension-1 charset (they
+   always are of the form 0x0001), not valid in a ku-ten style charset, and
    not valid in any ISO-2022-like charset, or Shift-JIS, Big5, JOHAB, etc.;
    or any related charset, all of which try to avoid using the control
    character ranges.  Of course it *is* valid in Unicode, if someone tried
    to create a national unicode charset; but if we chose a value that is
    invalid in Unicode, it's likely to be valid for many other charsets; no
    win. */
-#define BADVAL_FROM_TABLE ((UINT_16_BIT) 1)
+#define BADVAL_FROM_TABLE ((UINT_16_BIT) 0x0100)
 /* For the to tables we are safe, because -1 is never a valid Unicode
    codepoint. */
 #define BADVAL_TO_TABLE (-1)
@@ -461,6 +461,42 @@ create_new_from_unicode_table (int level)
   return newtab;
 }
 
+#if 0
+
+/* If we ever implement the idea of finding a value for BADVAL_FROM_TABLE
+   that is specific to a particular charset, the following function may
+   prove useful.  It's not clear whether there's much of a point doing
+   this, because we still run into the problem of dealing with a charset
+   that is 256x256, where there is no safe value of BADVAL_FROM_TABLE.
+   Furthermore, if we implement this, we have to change the handling of the
+   blank from-tables: The zero-level blank from-table has BADVAL_FROM_TABLE
+   stored in it, so we'd need to have charset-specific blank from-tables
+   with the charset-specific value of BADVAL_FROM_TABLE stored in them. */
+
+static int
+find_badval_for_charset (Lisp_Object charset)
+{
+  int val1, val2;
+  int low1, low2, high1, high2;
+
+  get_charset_limits (charset, &low1, &low2, &high1, &high2);
+  if (low1 > 0)
+    val1 = 0;
+  else if (high1 < 255)
+    val1 = 255;
+  else
+    val1 = 1;
+  if (low2 > 0)
+    val2 = 0;
+  else if (high2 < 255)
+    val2 = 255;
+  else
+    val2 = 1;
+  return (val1 << 8) + val2;
+}
+
+#endif /* 0 */
+
 /* Allocate and blank the tables.
    Loading them up is done by load-unicode-mapping-table. */
 void
@@ -486,6 +522,8 @@ init_charset_unicode_tables (Lisp_Object charset)
   XCHARSET_FROM_UNICODE_TABLE (charset) = create_new_from_unicode_table (1);
   XCHARSET_FROM_UNICODE_LEVELS (charset) = 1;
 #endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
+
+  XCHARSET_BADVAL_UNICODE_CODE (charset) = -1;
 }
 
 static void
@@ -832,32 +870,9 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 #endif /* SLEDGEHAMMER_CHECK_UNICODE */
 
 static void
-set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
+set_unicode_conversion_char_to_unicode (int code, Lisp_Object charset,
+					int c1, int c2)
 {
-  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
-  /* @@#### Is UNICODE_ALLOW_PRIVATE correct here?  If so, replace with
-     ASSERT_VALID_UNICODE_CODEPOINT(). */
-  text_checking_assert (valid_unicode_codepoint_p (code,
-						   UNICODE_ALLOW_PRIVATE));
-
-  /* I tried an assert on code > 255 || chr == code, but that fails because
-     Mule gives many Latin characters separate code points for different
-     ISO 8859 coded character sets.  Obvious in hindsight.... */
-  text_checking_assert (!EQ (charset, Vcharset_ascii) || code == c2);
-  text_checking_assert (!EQ (charset, Vcharset_control_1) || code == c2);
-  text_checking_assert (!EQ (charset, Vcharset_latin_iso8859_1) ||
-			code == c2);
-
-  /* This assert is needed because it is simply unimplemented. */
-  text_checking_assert (!EQ (charset, Vcharset_composite));
-
-  if (code <= 127)
-    XCHARSET (charset)->number_of_ascii_mappings++;
-
-#ifdef SLEDGEHAMMER_CHECK_UNICODE
-  sledgehammer_check_unicode_tables (charset);
-#endif
-
   /* First, the char -> unicode translation */
 
   if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
@@ -880,7 +895,12 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 	}
       to_table_1[c2 - CHARSET_MIN_OFFSET] = code;
     }
+}
 
+static void
+set_unicode_conversion_unicode_to_char (int code, Lisp_Object charset,
+					int combined_code)
+{
   /* Then, unicode -> char: much harder */
 
   {
@@ -950,17 +970,74 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 #ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
       switch (levels)
 	{
-	case 4: ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2; break;
-	case 3: ((UINT_16_BIT ***) table)[u3][u2][u1] = (c1 << 8) + c2; break;
-	case 2: ((UINT_16_BIT **) table)[u2][u1] = (c1 << 8) + c2; break;
-	case 1: ((UINT_16_BIT *) table)[u1] = (c1 << 8) + c2; break;
+	case 4: ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = combined_code; break;
+	case 3: ((UINT_16_BIT ***) table)[u3][u2][u1] = combined_code; break;
+	case 2: ((UINT_16_BIT **) table)[u2][u1] = combined_code; break;
+	case 1: ((UINT_16_BIT *) table)[u1] = combined_code; break;
 	default:  ABORT ();
 	}
 #else /* MAXIMIZE_UNICODE_TABLE_DEPTH */
-      ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2;
+      ((UINT_16_BIT ****) table)[u4][u3][u2][u1] = combined_code;
 #endif /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
     }
   }
+}
+
+/* Actual function to store a conversion between charset codepoint (C1, C2)
+   in CHARSET and Unicode codepoint CODE.  If CODE is -1, remove any
+   conversion for the charset codepoint. */
+
+static void
+set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
+{
+  int old_code = charset_codepoint_to_unicode (charset, c1, c2, CONVERR_FAIL);
+  int combined_code = (c1 << 8) + c2;
+
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  if (code != -1)
+    /* @@#### Is UNICODE_ALLOW_PRIVATE correct here?  If so, replace with
+       ASSERT_VALID_UNICODE_CODEPOINT(). */
+    text_checking_assert (valid_unicode_codepoint_p (code,
+						     UNICODE_ALLOW_PRIVATE));
+
+  /* I tried an assert on code > 255 || chr == code, but that fails because
+     Mule gives many Latin characters separate code points for different
+     ISO 8859 coded character sets.  Obvious in hindsight.... */
+  text_checking_assert (!EQ (charset, Vcharset_ascii) || code == c2);
+  text_checking_assert (!EQ (charset, Vcharset_control_1) || code == c2);
+  text_checking_assert (!EQ (charset, Vcharset_latin_iso8859_1) ||
+			code == c2);
+
+  /* This assert is needed because it is simply unimplemented. */
+  text_checking_assert (!EQ (charset, Vcharset_composite));
+
+  if (old_code >= 0 && old_code <= 127)
+    {
+      assert (XCHARSET (charset)->number_of_ascii_mappings > 0);
+      XCHARSET (charset)->number_of_ascii_mappings--;
+    }
+  if (code >= 0 && code <= 127)
+    XCHARSET (charset)->number_of_ascii_mappings++;
+
+#ifdef SLEDGEHAMMER_CHECK_UNICODE
+  sledgehammer_check_unicode_tables (charset);
+#endif
+
+  set_unicode_conversion_char_to_unicode (code, charset, c1, c2);
+  if (code != -1)
+    set_unicode_conversion_unicode_to_char (code, charset, combined_code);
+
+  /* If there was a previous mapping, we have to erase the mapping in the
+     unicode->char direction; else it will persist and we will get incorrect
+     results when doing a conversion from the previous Unicode value to
+     a charset codepoint. */
+  if (old_code >= 0 && old_code != code)
+    set_unicode_conversion_unicode_to_char (old_code, charset,
+					    BADVAL_FROM_TABLE);
+  if (combined_code == BADVAL_FROM_TABLE)
+    XCHARSET_BADVAL_UNICODE_CODE (charset) = code;
+  else if (XCHARSET_BADVAL_UNICODE_CODE (charset) == old_code)
+    XCHARSET_BADVAL_UNICODE_CODE (charset) = -1;
 
 #ifdef SLEDGEHAMMER_CHECK_UNICODE
   sledgehammer_check_unicode_tables (charset);
@@ -973,20 +1050,13 @@ set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 #define USED_IF_NOT_MUTD(arg) arg
 #endif
 
-#ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
-#define USED_IF_AACT(arg) arg
-#else
-#define USED_IF_AACT(arg) UNUSED (arg)
-#endif
-
 /* Actual implementation of lookup of a conversion mapping for Unicode
    codepoint CODE in CHARSET.  Requires extra arguments passed in that are
    the result of calling UNICODE_BREAKUP_CHAR_CODE() on code.
    Returns non-zero if mapping found. */
 
 inline static int
-get_unicode_conversion_1 (int USED_IF_AACT (code),
-			  int u1, int u2, int u3, int u4,
+get_unicode_conversion_1 (int code, int u1, int u2, int u3, int u4,
 			  int USED_IF_NOT_MUTD (code_levels),
 			  Lisp_Object charset, int *c1, int *c2)
 {
@@ -1013,20 +1083,13 @@ get_unicode_conversion_1 (int USED_IF_AACT (code),
     }
 #endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
   {
+    UINT_16_BIT retval;
 #ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
-    UINT_16_BIT retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1];
-    if (retval != BADVAL_FROM_TABLE)
-      {
-	*c1 = retval >> 8;
-	*c2 = retval & 0xFF;
-	return 1;
-      }
+    retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1];
 #else
     int levels = XCHARSET_FROM_UNICODE_LEVELS (charset);
     if (levels >= code_levels)
       {
-	UINT_16_BIT retval;
-	
 	switch (levels)
 	  {
 	  case 1: retval = ((UINT_16_BIT *) table)[u1]; break;
@@ -1035,21 +1098,26 @@ get_unicode_conversion_1 (int USED_IF_AACT (code),
 	  case 4: retval = ((UINT_16_BIT ****) table)[u4][u3][u2][u1]; break;
 	  default: ABORT (); retval = 0;
 	  }
-
-	if (retval != BADVAL_FROM_TABLE)
-	  {
-	    *c1 = retval >> 8;
-	    *c2 = retval & 0xFF;
-	    return 1;
-	  }
       }
 #endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
+    if (retval != BADVAL_FROM_TABLE)
+      {
+      found_value:
+	*c1 = retval >> 8;
+	*c2 = retval & 0xFF;
+	return 1;
+      }
+    if (code == XCHARSET_BADVAL_UNICODE_CODE (charset))
+      {
+	retval = BADVAL_FROM_TABLE;
+	goto found_value;
+      }
   }
   return 0;
 }
 
 /* Convert a Unicode codepoint to a charset codepoint of a specified
-   charset CHARSET. */
+   charset CHARSET.  Return non-zero if codepoint found. */
 
 int
 unicode_to_one_charset_codepoint (int code, Lisp_Object charset,
@@ -1929,6 +1997,9 @@ Unicode codepoint.  Further calls to this function with the same
 values for (CHARSET, C1 [, C2]) and a different value for UNICODE
 will overwrite the previous value.
 
+If UNICODE is nil, remove any Unicode conversion for the given charset
+codepoint.
+
 Note that the Unicode codepoints corresponding to the ASCII, Control-1,
 and Latin-1 charsets are hard-wired.  Attempts to set these values
 will raise an error.
@@ -1939,24 +2010,25 @@ CHARSET (see `make-char').
        (unicode, charset, c1, c2))
 {
   int a1, a2;
-  /* Private codepoints should not get put into conversion tables. */
+  int ucp;
 
-  int ucp = decode_unicode (unicode, UNICODE_OFFICIAL_ONLY);
+  /* Private codepoints should not get put into conversion tables. */
+  if (!NILP (unicode))
+    ucp = decode_unicode (unicode, UNICODE_OFFICIAL_ONLY);
+  else
+    ucp = -1;
   charset = get_external_charset_codepoint (charset, c1, c2, &a1, &a2, 0);
   
-  /* The translations of ASCII, Control-1, and Latin-1 code points are
-     hard-coded in ichar_to_unicode and unicode_to_ichar.
-
-     #### But they shouldn't be; see comments elsewhere.
-
-     Checking for all unicode < 256 && c1 | 0x80 != unicode is wrong
-     because Mule gives many Latin characters code points in a few
-     different character sets. */
+  /* It would not be a good idea to change these.  We definitely have
+     hardcoded assumptions about ASCII mapping to Unicode 0 - 127 in
+     various places.  It's not clear whether we have such assumptions
+     about Control-1 or Latin-1 but it's clearly not a good idea to
+     change them. */
   if ((EQ (charset, Vcharset_ascii) ||
        EQ (charset, Vcharset_latin_iso8859_1) ||
        EQ (charset, Vcharset_control_1)))
     {
-      if (ucp != (a2 | 0x80))
+      if (ucp != a2)
 	invalid_argument
 	  ("Can't change Unicode translation for ASCII, Control-1 or Latin-1 character",
            unicode);
