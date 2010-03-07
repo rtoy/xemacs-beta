@@ -554,6 +554,13 @@ encoding detection or end-of-line detection.
 
   PROFILE_RECORD_ENTERING_SECTION (Qload_internal);
 
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp ("Called: (load-internal %s %s %s %s %s %s)\n",
+		    6, file, noerror, nomessage, nosuffix, codesys,
+		    used_codesys);
+#endif /* DEBUG_XEMACS */
+
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))

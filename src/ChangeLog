@@ -1,3 +1,32 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_rewind_coding_stream):
+	Use debug_out* instead of stderr_out*, in case print-readably has
+	been set.
+	
+	* file-coding.h:
+	* file-coding.h (LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING):
+	extern Vdebug_coding_detection.
+
+	* fileio.c:
+	* lread.c (Fload_internal):
+	during load-internal, insert-file-contents-internal and
+	write-region-internal, if `debug-coding-detection', show arguments
+	to all calls.
+
+	* lisp.h:
+	* print.c:
+	* print.c (fatal):
+	* print.c (ext_print_begin):
+	* print.c (debug_out_lisp):
+	* print.c (debug_backtrace):
+	* print.c (debug_short_backtrace):
+	Clean up and rearrange; add debug_out_lisp(), for printf-like
+	output involving Lisp objects.
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* charset.h (struct Lisp_Charset):

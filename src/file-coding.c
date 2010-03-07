@@ -3406,7 +3406,7 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   eicpy_ext(eistr_hex, hex, Qbinary);
   eicpy_ext(eistr_ascii, ascii, Qbinary);
 
-  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
+  debug_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
@@ -3432,12 +3432,12 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
   if (!NILP (Vdebug_coding_detection))
     {
       int bytes = min (16, n);
-      stderr_out ("detect_coding_type: processing %ld bytes\n", n);
-      stderr_out ("First %d: ", bytes);
+      debug_out ("detect_coding_type: processing %ld bytes\n", n);
+      debug_out ("First %d: ", bytes);
       output_bytes_in_ascii_and_hex (src, bytes);
-      stderr_out ("\nLast %d: ", bytes);
+      debug_out ("\nLast %d: ", bytes);
       output_bytes_in_ascii_and_hex (src + n - bytes, bytes);
-      stderr_out ("\n");
+      debug_out ("\n");
     }
 #endif /* DEBUG_XEMACS */
   if (!st->seen_non_ascii)
@@ -3461,12 +3461,12 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
     {
-      stderr_out ("seen_non_ascii: %d\n", st->seen_non_ascii);
+      debug_out ("seen_non_ascii: %d\n", st->seen_non_ascii);
       if (coding_detector_category_count <= 0)
-	stderr_out ("found %d detector categories\n",
+	debug_out ("found %d detector categories\n",
 		    coding_detector_category_count);
       for (i = 0; i < coding_detector_category_count; i++)
-	stderr_out_lisp
+	debug_out_lisp
 	  ("%s: %s\n",
 	   2,
 	   coding_category_id_to_symbol (i),
@@ -3491,7 +3491,7 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out ("detect_coding_type: returning %d (%s)\n",
+    debug_out ("detect_coding_type: returning %d (%s)\n",
 		retval, retval ? "stop" : "keep going");
 #endif /* DEBUG_XEMACS */
     
@@ -3898,7 +3898,7 @@ undecided_init_coding_stream (struct coding_stream *str)
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+    debug_out_lisp ("detected coding system: %s\n", 1, data->actual);
 #endif /* DEBUG_XEMACS */
 }
 
