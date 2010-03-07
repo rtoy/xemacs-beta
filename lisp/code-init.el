@@ -397,6 +397,26 @@ bound to each category are as follows:
   (set-coding-category-system 'utf-16-little-endian-bom
 			      'utf-16-little-endian-bom)
   (set-coding-category-system 'utf-16-bom 'utf-16-bom)
+   
+  ;; Distinguishable categories of encodings.
+  ;;
+  ;; This list determines the initial priority of the categories.
+  ;;
+  ;; For better or worse, currently most Mule files are encoded in 7-bit
+  ;; ISO 2022 (but are gradually being moved to UTF-8).  For this reason,
+  ;; under Mule ISO_7 gets highest priority, below the utf-*-bom
+  ;; categories, which apply only when a byte-order mark is seen.
+  ;;
+  ;; Putting NO_CONVERSION second prevents "binary corruption" in the
+  ;; default case in all but the (presumably) extremely rare case of a
+  ;; binary file which contains redundant escape sequences but no 8-bit
+  ;; characters.
+  ;;
+  ;; The remaining priorities are based on perceived "internationalization
+  ;; political correctness."  An exception is UCS-4 at the bottom, since
+  ;; basically everything is compatible with UCS-4, but it is likely to
+  ;; be very rare as an external encoding.
+
   (set-coding-priority-list
    (if (featurep 'mule)
        '(utf-16-little-endian-bom

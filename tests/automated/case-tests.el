@@ -1,4 +1,4 @@
-;;; -*- coding: iso-8859-1 -*-
+;;; -*- coding: utf-8 -*-
 
 ;; Copyright (C) 2000 Free Software Foundation, Inc.
 ;; Copyright (C) 2010 Ben Wing.
@@ -97,89 +97,63 @@
 \(no-break-space).")
 
 ;; Case table sanity check.
-(let ((downcase-string
-       (concat string-0-through-32
-	       "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
-	       string-127-through-160
-		"¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ"))
+(let* ((downcase1 "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
+       (upcase1   "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
+       (flipcase1 "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
+       (downcase2 "Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬Â­Â®Â¯Â°Â±Â²Â³Â´Î¼Â¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã—Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾ÃŸÃ Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã·Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾Ã¿")
+       (upcase2   "Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬Â­Â®Â¯Â°Â±Â²Â³Â´ÂµÂ¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã—Ã˜Ã™ÃšÃ›ÃœÃÃáºÃ€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã·Ã˜Ã™ÃšÃ›ÃœÃÃÅ¸")
+       (flipcase2 "Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬Â­Â®Â¯Â°Â±Â²Â³Â´Î¼Â¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã—Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾áºÃ€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã·Ã˜Ã™ÃšÃ›ÃœÃÃÅ¸")
+       (downcase-string
+	(concat string-0-through-32 downcase1 string-127-through-160 downcase2))
        (upcase-string
-	(concat string-0-through-32
-		"!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~"
-		string-127-through-160
-		"¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ"))
+	(concat string-0-through-32 flipcase1 string-127-through-160 flipcase2))
        (table (standard-case-table)))
   (dotimes (i 256)
     (Assert-eq (get-case-table 'downcase (int-to-char i) table)
-		(aref downcase-string i))
+	       (aref downcase-string i))
     (Assert-eq (get-case-table 'upcase (int-to-char i) table)
-		(aref upcase-string i))))
+	       (aref upcase-string i)))
 
-(Check-Error-Message error "Char case must be downcase or upcase"
-		     (get-case-table 'foo ?a (standard-case-table)))
+  (Check-Error-Message error "Char case must be downcase or upcase"
+		       (get-case-table 'foo ?a (standard-case-table)))
 
-(Assert
- (string=
-  (upcase "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")
-  "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+  (Assert (string= (upcase downcase1) upcase1))
 
-(Assert
- (string=
-  (upcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-  "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+  (Assert (string= (upcase upcase1) upcase1))
 
-(Assert
- (string=
-  (upcase " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ")
-  " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ"))
+  (Assert (string= (upcase downcase2) upcase2))
+  
+  (Assert (string= (upcase upcase2) upcase2))
 
-(Assert
- (string=
-  (upcase " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ")
-  " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ"))
+  (Assert (string= (downcase downcase1) downcase1))
 
-(Assert
- (string=
-  (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")
-  "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz"))
+  (Assert (string= (downcase upcase1) downcase1))
 
-(Assert
- (string=
-  (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-  "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz"))
+  (Assert (string= (downcase downcase2) downcase2))
 
-(Assert
- (string=
-  (downcase " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ")
-  " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ"))
+  (Assert (string= (downcase upcase2) downcase2))
 
-(Assert
- (string=
-  (downcase " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ")
-  " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ"))
-
-;; Old case table format test.
-(with-temp-buffer
-  (set-case-table
-   (list
-    (concat string-0-through-32
-	     "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
-	     string-127-through-160
-	     "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ")
-     nil nil nil))
-  (Assert
-   (string=
-    (upcase "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")
-    "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-  (Assert
-   (string=
-    (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")))
+  ;; Old case table format test.
+  (with-temp-buffer
+    (set-case-table
+     (list
+      (concat string-0-through-32 downcase1 string-127-through-160 downcase2)
+      nil nil nil))
+    (Assert
+     (string=
+      (upcase "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")
+      "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+    (Assert
+     (string=
+      (downcase "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+      "!\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz")))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Torture test, using all the non-"full" mappings from the Unicode case
 ;; tables. (Full mappings are those that involve sequences of more than one
-;; character, e.g. lowercase German ß (esszet) -> uppercase sequence "SS").
+;; character, e.g. lowercase German ÃŸ (esszet) -> uppercase sequence "SS").
 
 (defun char-as-unicode-escape (ch)
   "Return a string corresponding to the Unicode read-expression of CH.
@@ -187,6 +161,11 @@ For example, if CH is ?\\u00F1, the return value will be the string
 \"?\\\\u00F1\"."
   (let ((uni (char-to-unicode ch)))
     (if (< uni #x10000) (format "?\\u%04X" uni) (format "?\\U%08X" uni))))
+
+;; NOTE NOTE NOTE! *DO NOT* apply nreverse to the following list, as we do in
+;; uni-case-conv.el.  By keeping the order as-is, we ensure that some "obnoxious"
+;; mappings get tested, i.e. those where upcase and downcase do not mutually
+;; correspond.
 
 (let* ((uni-mappings
 	'(;  UPPER   LOWER
