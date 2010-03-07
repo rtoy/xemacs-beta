@@ -1216,6 +1216,9 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Lisp_Object type,
 					 Lisp_Object description,
 					 Lisp_Object props);
+#ifdef DEBUG_XEMACS
+extern Lisp_Object Vdebug_coding_detection;
+#endif /* DEBUG_XEMACS */
 
 #define LSTREAM_FL_NO_CLOSE_OTHER	(1 << 16)
 #define LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME (1 << 17)

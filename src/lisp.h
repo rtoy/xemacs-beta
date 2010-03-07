@@ -6117,11 +6117,6 @@ Lisp_Object prin1_to_string (Lisp_Object, int);
 /* Lower-level ways to output data: */
 void default_object_printer (Lisp_Object, Lisp_Object, int);
 void print_internal (Lisp_Object, Lisp_Object, int);
-void debug_print (Lisp_Object);
-void debug_p4 (Lisp_Object obj);
-void debug_p3 (Lisp_Object obj);
-void debug_short_backtrace (int);
-void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
@@ -6143,6 +6138,12 @@ void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void debug_out_lisp (const CIbyte *, int nargs, ...);
+void debug_print (Lisp_Object);
+void debug_p4 (Lisp_Object obj);
+void debug_p3 (Lisp_Object obj);
+void debug_short_backtrace (int);
+void debug_backtrace (void);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */
