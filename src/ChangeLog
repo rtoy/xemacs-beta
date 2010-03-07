@@ -329,6 +329,11 @@
 	place of hard-coded values.  Simplify logic that handles
 	error-octets.
 
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (change_frame_size_1):
+	Add a comment about where FRAME_PIXWIDTH/FRAME_PIXHEIGHT is set.
+	
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
 	* frame.c:
