@@ -295,9 +295,9 @@ finalize_pgconn (void *header, int for_disksave)
 #else /* not RUNNING_XEMACS_21_4 */
 
 static void
-finalize_pgconn (void *header)
+finalize_pgconn (Lisp_Object obj)
 {
-  Lisp_PGconn *pgconn = (Lisp_PGconn *)header;
+  Lisp_PGconn *pgconn = XPGCONN (obj);
 
   if (pgconn->pgconn)
     {
@@ -447,9 +447,9 @@ finalize_pgresult (void *header, int for_disksave)
 #else /* not RUNNING_XEMACS_21_4 */
 
 static void
-finalize_pgresult (void *header)
+finalize_pgresult (Lisp_Object obj)
 {
-  Lisp_PGresult *pgresult = (Lisp_PGresult *)header;
+  Lisp_PGresult *pgresult = XPGRESULT (obj);
 
   if (pgresult->pgresult)
     {

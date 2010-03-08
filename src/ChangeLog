@@ -1,3 +1,11 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* number.c (bignum_finalize):
+	* number.c (ratio_finalize):
+	* number.c (bigfloat_finalize):
+	Fix the finalizers to go with the new calling sequence.  Done
+	previously but somehow got lost.
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* frame.c (change_frame_size_1):

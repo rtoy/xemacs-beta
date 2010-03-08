@@ -1,3 +1,11 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (finalize_pgconn):
+	* postgresql/postgresql.c (finalize_pgresult):
+	* ldap/eldap.c (finalize_ldap):
+	Fix the finalizers to go with the new calling sequence.  Done
+	previously but somehow got lost.
+
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c (allocate_pgconn):

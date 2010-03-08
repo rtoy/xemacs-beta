@@ -61,9 +61,9 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bignum_finalize (void *header)
+bignum_finalize (Lisp_Object obj)
 {
-  struct Lisp_Bignum *num = (struct Lisp_Bignum *) header;
+  struct Lisp_Bignum *num = XBIGNUM (obj);
   /* #### WARNING: It would be better to put some sort of check to make
      sure this doesn't happen more than once, just in case ---
      e.g. checking if it's zero before finalizing and then setting it to
@@ -155,9 +155,9 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-ratio_finalize (void *header)
+ratio_finalize (Lisp_Object obj)
 {
-  struct Lisp_Ratio *num = (struct Lisp_Ratio *) header;
+  struct Lisp_Ratio *num = XRATIO (obj);
   /* #### WARNING: It would be better to put some sort of check to make
      sure this doesn't happen more than once, just in case ---
      e.g. checking if it's zero before finalizing and then setting it to
@@ -261,9 +261,9 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bigfloat_finalize (void *header)
+bigfloat_finalize (Lisp_Object obj)
 {
-  struct Lisp_Bigfloat *num = (struct Lisp_Bigfloat *) header;
+  struct Lisp_Bigfloat *num = XBIGFLOAT (obj);
   /* #### WARNING: It would be better to put some sort of check to make
      sure this doesn't happen more than once, just in case ---
      e.g. checking if it's zero before finalizing and then setting it to
