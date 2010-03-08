@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -150,6 +150,7 @@ int coding_system_tick;
 
 int coding_detector_count;
 int coding_detector_category_count;
+int coding_detector_description_lines_count;
 
 detector_dynarr *all_coding_detectors;
 
@@ -1771,19 +1772,12 @@ Return the PROP property of CODING-SYSTEM.
    that is at the other end, and data that needs to be persistent across
    the lifetime of the stream. */
 
-extern const struct sized_memory_description chain_coding_stream_description;
-extern const struct sized_memory_description undecided_coding_stream_description;
-
-static const struct memory_description coding_stream_data_description_1 []= {
-  { XD_BLOCK_PTR, chain_coding_system, 1,
-    { &chain_coding_stream_description } },
-  { XD_BLOCK_PTR, undecided_coding_system, 1,
-    { &undecided_coding_stream_description } },
-  { XD_END }
-};
-
-static const struct sized_memory_description coding_stream_data_description = {
-  sizeof (void *), coding_stream_data_description_1
+static const struct sized_memory_description coding_stream_extra_description_map[] =
+{
+  { offsetof (struct coding_stream, codesys) },
+  { offsetof (Lisp_Coding_System, methods) },
+  { offsetof (struct coding_system_methods, stream_description) },
+  { -1 },
 };
 
 static const struct memory_description coding_lstream_description[] = {
@@ -1791,8 +1785,8 @@ static const struct memory_description coding_lstream_description[] = {
   { XD_LISP_OBJECT, offsetof (struct coding_stream, orig_codesys) },
   { XD_LISP_OBJECT, offsetof (struct coding_stream, codesys) },
   { XD_LISP_OBJECT, offsetof (struct coding_stream, other_end) },
-  { XD_UNION, offsetof (struct coding_stream, data), 
-    XD_INDIRECT (0, 0), { &coding_stream_data_description } },
+  { XD_BLOCK_PTR, offsetof (struct coding_stream, data), 1,
+    { coding_stream_extra_description_map } },
   { XD_END }
 };
 
@@ -1996,7 +1990,8 @@ coding_rewinder (Lstream *stream)
   struct coding_stream *str = CODING_STREAM_DATA (stream);
   MAYBE_XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
 
-  str->ch = 0;
+  str->ch = -1;
+  str->pind_remaining = 0;
   Dynarr_reset (str->convert_to);
   Dynarr_reset (str->convert_from);
   return Lstream_rewind (str->other_end);
@@ -2111,17 +2106,18 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
     }
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
+  str->ch = -1;
   
   if (str->data)
     {
       xfree (str->data);
       str->data = 0;
     }
-  if (XCODING_SYSTEM_METHODS (str->codesys)->coding_data_size)
+  if (XCODING_SYSTEM_METHODS (str->codesys)->stream_data_size)
     {
       str->data =
 	xmalloc_and_zero (XCODING_SYSTEM_METHODS (str->codesys)->
-			  coding_data_size);
+			  stream_data_size);
       str->type = XCODING_SYSTEM_METHODS (str->codesys)->enumtype;
     }
   MAYBE_XCODESYSMETH (str->codesys, init_coding_stream, (str));
@@ -2149,6 +2145,7 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   xzero (*str);
   str->codesys = Qnil;
   str->orig_codesys = Qnil;
+  str->ch = -1;
   str->us = lstr;
   str->other_end = stream;
   str->convert_to = Dynarr_new (unsigned_char);
@@ -2434,9 +2431,8 @@ is non-nil, all ranges will map to the symbol `unencodable'.  See
 
   if (UNBOUNDP (result))
     {
-      signal_error (Qtext_conversion_error,
-                    "Coding system doesn't say what it can encode", 
-                    XCODING_SYSTEM_NAME (coding_system));
+      text_conversion_error ("Coding system doesn't say what it can encode", 
+			     XCODING_SYSTEM_NAME (coding_system));
     }
 
   result = (NILP (result)) ? Qt : values2 (Qnil, result); 
@@ -2482,15 +2478,11 @@ static const struct memory_description chain_coding_system_description[] = {
   { XD_END }
 };
 
-static const struct memory_description chain_coding_stream_description_1 [] = {
+static const struct memory_description chain_coding_stream_description [] = {
   { XD_INT, offsetof (struct chain_coding_stream, lstream_count) },
   { XD_BLOCK_PTR, offsetof (struct chain_coding_stream, lstreams),
     XD_INDIRECT (0, 0), { &lisp_object_description } },
   { XD_END }
-};
-
-const struct sized_memory_description chain_coding_stream_description = {
-  sizeof (struct chain_coding_stream), chain_coding_stream_description_1
 };
 
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (chain);
@@ -2852,7 +2844,6 @@ no_conversion_convert (struct coding_stream *str,
 		       unsigned_char_dynarr *dst, Bytecount n)
 {
   UExtbyte c;
-  unsigned int ch     = str->ch;
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -2863,9 +2854,6 @@ no_conversion_convert (struct coding_stream *str,
 
 	  DECODE_ADD_BINARY_CHAR (c, dst);
 	}
-
-      if (str->eof)
-	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
     }
   else
     {
@@ -2874,40 +2862,26 @@ no_conversion_convert (struct coding_stream *str,
 	{
 	  c = *src++;
 	  if (byte_ascii_p (c))
-	    {
-	      assert (ch == 0);
-	      Dynarr_add (dst, c);
-	    }
+	    Dynarr_add (dst, c);
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c))
-	    {
-	      assert (ch == 0);
-	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
-		  c == LEADING_BYTE_CONTROL_1)
-		ch = c;
-	      else
-		/* #### This is just plain unacceptable. */
-		Dynarr_add (dst, '~'); /* untranslatable character */
-	    }
 	  else
 	    {
-	      if (ch == LEADING_BYTE_LATIN_ISO8859_1)
-		Dynarr_add (dst, c);
-	      else if (ch == LEADING_BYTE_CONTROL_1)
+	      COPY_PARTIAL_CHAR_BYTE (c, str);
+	      if (!str->pind_remaining)
 		{
-		  assert (c < 0xC0);
-		  Dynarr_add (dst, c - 0x20);
+		  Ichar ch = non_ascii_itext_ichar (str->partial);
+		  if (ch < 256)
+		    Dynarr_add (dst, (unsigned char) ch);
+		  else
+		    /* #### This is just plain unacceptable. */
+		    /* untranslatable character */
+		    Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
 		}
-	      /* else it should be the second or third byte of an
-		 untranslatable character, so ignore it */
-	      ch = 0;
 	    }
 #endif /* MULE */
-
 	}
     }
 
-  str->ch    = ch;
   return orign;
 }
 
@@ -2965,6 +2939,11 @@ struct convert_eol_coding_stream
 
 static const struct memory_description
   convert_eol_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description
+  convert_eol_coding_stream_description[] = {
   { XD_END }
 };
 
@@ -3188,157 +3167,33 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
 
 
 /************************************************************************/
-/*                            Undecided methods                         */
+/*                        Detection state object                        */
 /************************************************************************/
 
-/* Do autodetection.  We can autodetect the EOL type only, the coding
-   system only, or both.  We only do autodetection when decoding; when
-   encoding, we just pass the data through.
+/* All `struct detection_state's are the same size, but we can't easily
+   compute the size at compile time because it depends on all of the
+   different defined detectors. */
 
-   When doing just EOL detection, a coding system can be specified; if so,
-   we will decode this data through the coding system before doing EOL
-   detection.  The reason for specifying this is so that
-   canonicalize-after-coding works: We will canonicalize the specified
-   coding system into the appropriate EOL type.  When doing both coding and
-   EOL detection, we do similar canonicalization, and also catch situations
-   where the EOL type is overspecified, i.e. the detected coding system
-   specifies an EOL type, and either switch to the equivalent
-   non-EOL-processing coding system (if possible), or terminate EOL
-   detection and use the specified EOL type.  This prevents data from being
-   EOL-processed twice.
-   */
-
-struct undecided_coding_system
+static Bytecount
+sizeof_detection_state (const void * UNUSED (header))
 {
-  int do_eol, do_coding;
-  Lisp_Object cs;
-};
-
-struct undecided_coding_stream
-{
-  Lisp_Object actual;
-  /* Either 2 or 3 lstreams here; see undecided_convert */
-  struct chain_coding_stream c;
-
-  struct detection_state *st;
-};
-
-static const struct memory_description undecided_coding_system_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct undecided_coding_system, cs) },
-  { XD_END }
-};
-
-static const struct memory_description undecided_coding_stream_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, actual) },
-  { XD_BLOCK_ARRAY, offsetof (struct undecided_coding_stream, c),
-    1, { &chain_coding_stream_description } },
-  { XD_END }
-};
-
-const struct sized_memory_description undecided_coding_stream_description = {
-  sizeof (struct undecided_coding_stream), undecided_coding_stream_description_1
-};
-
-DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (undecided);
-
-static void
-undecided_init (Lisp_Object codesys)
-{
-  struct undecided_coding_system *data =
-    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
-
-  data->cs = Qnil;
-}
-
-static void
-undecided_mark (Lisp_Object codesys)
-{
-  struct undecided_coding_system *data =
-    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
-
-  mark_object (data->cs);
-}
-
-static void
-undecided_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
-{
-  struct undecided_coding_system *data =
-    XCODING_SYSTEM_TYPE_DATA (cs, undecided);
-  int need_space = 0;
-
-  write_ascstring (printcharfun, "(");
-  if (data->do_eol)
-    {
-      write_ascstring (printcharfun, "do-eol");
-      need_space = 1;
-    }
-  if (data->do_coding)
-    {
-      if (need_space)
-	write_ascstring (printcharfun, " ");
-      write_ascstring (printcharfun, "do-coding");
-      need_space = 1;
-    }
-  if (!NILP (data->cs))
-    {
-      if (need_space)
-	write_ascstring (printcharfun, " ");
-      write_ascstring (printcharfun, "coding-system=");
-      print_coding_system_in_print_method (data->cs, printcharfun, escapeflag);
-    }      
-  write_ascstring (printcharfun, ")");
-}
-
-static void
-undecided_mark_coding_stream (struct coding_stream *str)
-{
-  mark_object (CODING_STREAM_TYPE_DATA (str, undecided)->actual);
-  chain_mark_coding_stream_1 (&CODING_STREAM_TYPE_DATA (str, undecided)->c);
-}
-
-static int
-undecided_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
-{
-  struct undecided_coding_system *data =
-    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
-
-  if (EQ (key, Qdo_eol))
-    data->do_eol = 1;
-  else if (EQ (key, Qdo_coding))
-    data->do_coding = 1;
-  else if (EQ (key, Qcoding_system))
-    data->cs = get_coding_system_for_text_file (value, 0);
-  else
-    return 0;
-  return 1;
-}
-
-static Lisp_Object
-undecided_getprop (Lisp_Object codesys, Lisp_Object prop)
-{
-  struct undecided_coding_system *data =
-    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
-
-  if (EQ (prop, Qdo_eol))
-    return data->do_eol ? Qt : Qnil;
-  if (EQ (prop, Qdo_coding))
-    return data->do_coding ? Qt : Qnil;
-  if (EQ (prop, Qcoding_system))
-    return data->cs;
-  return Qunbound;
+  int i;
+  Bytecount size = MAX_ALIGN_SIZE (sizeof (struct detection_state));
+  for (i = 0; i < coding_detector_count; i++)
+    size += MAX_ALIGN_SIZE (Dynarr_at (all_coding_detectors, i).data_size);
+  return size;
 }
 
 static struct detection_state *
 allocate_detection_state (void)
 {
   int i;
-  Bytecount size = MAX_ALIGN_SIZE (sizeof (struct detection_state));
   struct detection_state *block;
+  Bytecount size = sizeof_detection_state (NULL);
 
-  for (i = 0; i < coding_detector_count; i++)
-    size += MAX_ALIGN_SIZE (Dynarr_at (all_coding_detectors, i).data_size);
-
-  block = (struct detection_state *) xmalloc_and_zero (size);
+  block =
+    (struct detection_state *) BASIC_ALLOC_LCRECORD (size,
+						     &lrecord_detection_state);
 
   size = MAX_ALIGN_SIZE (sizeof (struct detection_state));
   for (i = 0; i < coding_detector_count; i++)
@@ -3348,6 +3203,27 @@ allocate_detection_state (void)
     }
 
   return block;
+}
+
+struct memory_description detection_state_description[MAX_DETECTORS + 1];
+
+const static struct sized_memory_description detection_state_description_0 =
+  {
+    0, detection_state_description
+  };
+
+static Lisp_Object
+mark_detection_state (Lisp_Object obj)
+{
+  int i;
+
+  struct detection_state *st = XDETECTION_STATE (obj);
+  for (i = 0; i < coding_detector_count; i++)
+    {
+      if (Dynarr_at (all_coding_detectors, i).mark_detection_state_method)
+	Dynarr_at (all_coding_detectors, i).mark_detection_state_method (st);
+    }
+  return Qnil;
 }
 
 static void
@@ -3361,9 +3237,20 @@ free_detection_state (struct detection_state *st)
 	Dynarr_at (all_coding_detectors, i).finalize_detection_state_method
 	  (st);
     }
-
-  xfree (st);
 }
+
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("detection-state", detection_state,
+					0, /*dumpable-flag*/
+					mark_detection_state,
+					internal_object_printer, 0, 0, 0,
+					detection_state_description,
+					sizeof_detection_state,
+					struct detection_state);
+
+
+/************************************************************************/
+/*                       Coding-system detection                        */
+/************************************************************************/
 
 static int
 coding_category_symbol_to_id (Lisp_Object symbol)
@@ -3519,7 +3406,7 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   eicpy_ext(eistr_hex, hex, Qbinary);
   eicpy_ext(eistr_ascii, ascii, Qbinary);
 
-  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
+  debug_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
@@ -3545,12 +3432,12 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
   if (!NILP (Vdebug_coding_detection))
     {
       int bytes = min (16, n);
-      stderr_out ("detect_coding_type: processing %ld bytes\n", n);
-      stderr_out ("First %d: ", bytes);
+      debug_out ("detect_coding_type: processing %ld bytes\n", n);
+      debug_out ("First %d: ", bytes);
       output_bytes_in_ascii_and_hex (src, bytes);
-      stderr_out ("\nLast %d: ", bytes);
+      debug_out ("\nLast %d: ", bytes);
       output_bytes_in_ascii_and_hex (src + n - bytes, bytes);
-      stderr_out ("\n");
+      debug_out ("\n");
     }
 #endif /* DEBUG_XEMACS */
   if (!st->seen_non_ascii)
@@ -3574,12 +3461,12 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
     {
-      stderr_out ("seen_non_ascii: %d\n", st->seen_non_ascii);
+      debug_out ("seen_non_ascii: %d\n", st->seen_non_ascii);
       if (coding_detector_category_count <= 0)
-	stderr_out ("found %d detector categories\n",
+	debug_out ("found %d detector categories\n",
 		    coding_detector_category_count);
       for (i = 0; i < coding_detector_category_count; i++)
-	stderr_out_lisp
+	debug_out_lisp
 	  ("%s: %s\n",
 	   2,
 	   coding_category_id_to_symbol (i),
@@ -3604,7 +3491,7 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out ("detect_coding_type: returning %d (%s)\n",
+    debug_out ("detect_coding_type: returning %d (%s)\n",
 		retval, retval ? "stop" : "keep going");
 #endif /* DEBUG_XEMACS */
     
@@ -3848,6 +3735,146 @@ determine_real_coding_system (Lstream *stream)
   return coding_system;
 }
 
+
+/************************************************************************/
+/*                            Undecided methods                         */
+/************************************************************************/
+
+/* Do autodetection.  We can autodetect the EOL type only, the coding
+   system only, or both.  We only do autodetection when decoding; when
+   encoding, we just pass the data through.
+
+   When doing just EOL detection, a coding system can be specified; if so,
+   we will decode this data through the coding system before doing EOL
+   detection.  The reason for specifying this is so that
+   canonicalize-after-coding works: We will canonicalize the specified
+   coding system into the appropriate EOL type.  When doing both coding and
+   EOL detection, we do similar canonicalization, and also catch situations
+   where the EOL type is overspecified, i.e. the detected coding system
+   specifies an EOL type, and either switch to the equivalent
+   non-EOL-processing coding system (if possible), or terminate EOL
+   detection and use the specified EOL type.  This prevents data from being
+   EOL-processed twice.
+   */
+
+struct undecided_coding_system
+{
+  int do_eol, do_coding;
+  Lisp_Object cs;
+};
+
+struct undecided_coding_stream
+{
+  Lisp_Object actual;
+  /* Either 2 or 3 lstreams here; see undecided_convert */
+  struct chain_coding_stream c;
+
+  struct detection_state *st;
+};
+
+static const struct memory_description undecided_coding_system_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct undecided_coding_system, cs) },
+  { XD_END }
+};
+
+static const struct memory_description undecided_coding_stream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, actual) },
+  { XD_BLOCK_ARRAY, offsetof (struct undecided_coding_stream, c),
+    1, { &chain_coding_stream_description_0 } },
+  { XD_BLOCK_PTR, offsetof (struct undecided_coding_stream, st),
+    1, { &detection_state_description_0 } },
+  { XD_END }
+};
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (undecided);
+
+static void
+undecided_init (Lisp_Object codesys)
+{
+  struct undecided_coding_system *data =
+    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
+
+  data->cs = Qnil;
+}
+
+static void
+undecided_mark (Lisp_Object codesys)
+{
+  struct undecided_coding_system *data =
+    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
+
+  mark_object (data->cs);
+}
+
+static void
+undecided_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
+{
+  struct undecided_coding_system *data =
+    XCODING_SYSTEM_TYPE_DATA (cs, undecided);
+  int need_space = 0;
+
+  write_ascstring (printcharfun, "(");
+  if (data->do_eol)
+    {
+      write_ascstring (printcharfun, "do-eol");
+      need_space = 1;
+    }
+  if (data->do_coding)
+    {
+      if (need_space)
+	write_ascstring (printcharfun, " ");
+      write_ascstring (printcharfun, "do-coding");
+      need_space = 1;
+    }
+  if (!NILP (data->cs))
+    {
+      if (need_space)
+	write_ascstring (printcharfun, " ");
+      write_ascstring (printcharfun, "coding-system=");
+      print_coding_system_in_print_method (data->cs, printcharfun, escapeflag);
+    }      
+  write_ascstring (printcharfun, ")");
+}
+
+static void
+undecided_mark_coding_stream (struct coding_stream *str)
+{
+  mark_object (CODING_STREAM_TYPE_DATA (str, undecided)->actual);
+  chain_mark_coding_stream_1 (&CODING_STREAM_TYPE_DATA (str, undecided)->c);
+}
+
+static int
+undecided_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
+{
+  struct undecided_coding_system *data =
+    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
+
+  if (EQ (key, Qdo_eol))
+    data->do_eol = 1;
+  else if (EQ (key, Qdo_coding))
+    data->do_coding = 1;
+  else if (EQ (key, Qcoding_system))
+    data->cs = get_coding_system_for_text_file (value, 0);
+  else
+    return 0;
+  return 1;
+}
+
+static Lisp_Object
+undecided_getprop (Lisp_Object codesys, Lisp_Object prop)
+{
+  struct undecided_coding_system *data =
+    XCODING_SYSTEM_TYPE_DATA (codesys, undecided);
+
+  if (EQ (prop, Qdo_eol))
+    return data->do_eol ? Qt : Qnil;
+  if (EQ (prop, Qdo_coding))
+    return data->do_coding ? Qt : Qnil;
+  if (EQ (prop, Qcoding_system))
+    return data->cs;
+  return Qunbound;
+}
+
 static void
 undecided_init_coding_stream (struct coding_stream *str)
 {
@@ -3871,7 +3898,7 @@ undecided_init_coding_stream (struct coding_stream *str)
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+    debug_out_lisp ("detected coding system: %s\n", 1, data->actual);
 #endif /* DEBUG_XEMACS */
 }
 
@@ -3999,7 +4026,8 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		  detect_coding_type (data->st, src, n);
 		  data->actual = detected_coding_system (data->st);
 		  /* kludge to prevent infinite recursion */
-		  if (XCODING_SYSTEM(data->actual)->methods->enumtype == undecided_coding_system)
+		  if (XCODING_SYSTEM (data->actual)->methods->enumtype ==
+		      undecided_coding_system)
 		    data->actual = Fget_coding_system (Qbinary);
 		}
 	    }
@@ -4283,8 +4311,11 @@ struct gzip_coding_stream
 		      return LSTREAM_EOF */
 };
 
-static const struct memory_description
-  gzip_coding_system_description[] = {
+static const struct memory_description gzip_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description gzip_coding_stream_description[] = {
   { XD_END }
 };
 
@@ -4511,6 +4542,7 @@ void
 syms_of_file_coding (void)
 {
   INIT_LRECORD_IMPLEMENTATION (coding_system);
+  INIT_LRECORD_IMPLEMENTATION (detection_state);
 
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);
@@ -4649,6 +4681,7 @@ coding_system_type_create (void)
   dump_add_opaque_int (&coding_system_tick);
   dump_add_opaque_int (&coding_detector_count);
   dump_add_opaque_int (&coding_detector_category_count);
+  dump_add_opaque_int (&coding_detector_description_lines_count);
 
   INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
 				 "no-conversion-coding-system-p");

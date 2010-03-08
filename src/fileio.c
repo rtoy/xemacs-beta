@@ -2917,6 +2917,13 @@ under Mule, is very difficult.)
 
   GCPRO4 (filename, val, visit, curbuf);
 
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp
+      ("Called: (insert-file-contents-internal %s %s %s %s %s %s %s)\n",
+       7, filename, visit, start, end, replace, codesys, used_codesys);
+#endif /* DEBUG_XEMACS */
+
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
     begin_multiple_change (buf, BUF_BEG (buf), BUF_Z  (buf));
@@ -3363,11 +3370,18 @@ here because write-region handler writers need to be aware of it.
   struct gcpro ngcpro1, ngcpro2;
   Lisp_Object curbuf = wrap_buffer (current_buffer);
 
-
   /* start, end, visit, and append are never modified in this fun
      so we don't protect them. */
   GCPRO5 (visit_file, filename, codesys, lockname, annotations);
   NGCPRO2 (curbuf, fn);
+
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp
+      ("Called: (write-region-internal %s %s %s %s %s %s %s %s)\n",
+       8, start, end, filename, append, visit, lockname, codesys,
+       mustbenew);
+#endif /* DEBUG_XEMACS */
 
   /* [[ dmoore - if Fexpand_file_name or handlers kill the buffer,
      we should signal an error rather than blissfully continuing

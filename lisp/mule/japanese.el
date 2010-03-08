@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2002 Ben Wing.
+;; Copyright (C) 2000, 2002, 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Japanese
 
@@ -33,48 +33,74 @@
 
 ;;; Code:
 
-(make-charset 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-1"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?O
-		graphic 0
-		short-name "JISX0213-1"
-		long-name "JISX0213-1"
-		))
+(make-internal-charset
+ 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
+ '(dimension
+   2
+   registries ["JISX0213.2000-1"]
+   chars 94
+   columns 2
+   direction l2r
+   final ?O
+   graphic 0
+   short-name "JISX0213-1"
+   long-name "JISX0213-1"
+   tags (jis kanji japanese)
+   ))
 
 ;; JISX0213 Plane 2
-(make-charset 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
-	      '(dimension
-		2
-		registries ["JISX0213.2000-2"]
-		chars 94
-		columns 2
-		direction l2r
-		final ?P
-		graphic 0
-		short-name "JISX0213-2"
-		long-name "JISX0213-2"
-		))
+(make-internal-charset
+ 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
+ '(dimension
+   2
+   registries ["JISX0213.2000-2"]
+   chars 94
+   columns 2
+   direction l2r
+   final ?P
+   graphic 0
+   short-name "JISX0213-2"
+   long-name "JISX0213-2"
+   tags (jis kanji japanese)
+   ))
+
+(define-charset-tag 'japanese-kanji/list
+  :list '(japanese-jisx0208 japanese-jisx0208-1978
+	  japanese-jisx0212 japanese-jisx0213-1 japanese-jisx0213-2))
+
+(define-charset-tag 'japanese/list
+  ;; Careful here, can't just say `japanese' or we will get a circularity
+  :list '(japanese-kanji/list latin-jisx0201 katakana-jisx0201
+	  japanese/language))
 
 ;;; Syntax of Japanese characters.
-(loop for row in '(33 34 40)
-      do (modify-syntax-entry `[japanese-jisx0208 ,row] "_"))
-(loop for char in '(?ー ?゛ ?゜ ?ヽ ?ヾ ?ゝ ?ゞ ?〃 ?仝 ?々 ?〆 ?〇)
-      do (modify-syntax-entry char "w"))
-(modify-syntax-entry ?\（ "(）")
-(modify-syntax-entry ?\［ "(］")
-(modify-syntax-entry ?\｛ "(｝")
-(modify-syntax-entry ?\「 "(」")
-(modify-syntax-entry ?\『 "(』")
-(modify-syntax-entry ?\） ")（")
-(modify-syntax-entry ?\］ ")［")
-(modify-syntax-entry ?\｝ ")｛")
-(modify-syntax-entry ?\」 ")「")
-(modify-syntax-entry ?\』 ")『")
+(loop for row in '(33 34 40) do
+  (loop for col from #x21 to #x7e
+    for ch = (make-char 'japanese-jisx0208 row col)
+    ;; #### This is all messed up.  Under Unicode-internal, there are all
+    ;; sorts of random characters in these rows and it's far from obvious
+    ;; we want to be setting them to have a syntax of _.  We definitely
+    ;; don't want to do that for ASCII or Latin-1 characters -- e.g.
+    ;; JISX0208 0x2140 is Unicode 0x5C "REVERSE SOLIDUS" aka backslash,
+    ;; and setting its syntax to _ messes things up majorly.  We really
+    ;; need to copy the stuff from GNU Emacs 23.1, but first we have to
+    ;; sort out the GPL v3 stuff. --ben
+    if (and ch (>= ch 256))
+    do (modify-syntax-entry ch "_")))
+(loop for char in '(#x3c #x2b #x2c #x33 #x34 #x35 #x36 #x37 #x38 #x39
+		    #x3a #x3b)
+  ;;(?ー ?゛ ?゜ ?ヽ ?ヾ ?ゝ ?ゞ ?〃 ?仝 ?々 ?〆 ?〇)
+  do (modify-syntax-entry (make-char 'japanese-jisx0208 #x21 char) "w"))
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x4a) "(）") ;?（
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x4e) "(］") ;?［
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x50) "(｝") ;?｛
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x56) "(」") ;?「
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x58) "(』") ;?『
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x4b) ")（") ;?）
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x4f) ")［") ;?］
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x51) ")｛") ;?｝
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x57) ")「") ;?」
+(modify-syntax-entry (make-char 'japanese-jisx0208 #x21 #x59) ")『") ;?』
 
 ;;; Character categories S, A, H, K, G, Y, and C
 (define-category ?S "Japanese 2-byte symbol character.")
@@ -174,6 +200,11 @@
 	   kanji-kanji-char    ascii-alphanumeric)))
     (concat " " aletter "\\|" kanji-space-insertable))
   "Regexp for finding points that can have spaces inserted into them for justification")
+
+;; Setup auto-fill-chars for charsets that should invoke auto-filling.
+;; SPACE and NEWLINE are already set.
+(loop for l in '(katakana-jisx0201 japanese-jisx0208 japanese-jisx0212)
+  do (put-char-table l t auto-fill-chars))
 
 ;; Beginning of FSF synching with international/japanese.el.
 
@@ -378,8 +409,7 @@ a similar structure:
  "Japanese" '((setup-function . setup-japanese-environment-internal)
 	      (exit-function . exit-japanese-environment)
 	      (tutorial . "TUTORIAL.ja")
-	      (charset japanese-jisx0208 japanese-jisx0208-1978
-		       japanese-jisx0212 latin-jisx0201 katakana-jisx0201)
+	      (charset japanese/list)
 	      (coding-system iso-2022-jp euc-jp
 			     shift-jis iso-2022-jp-2)
 	      (coding-priority iso-2022-jp euc-jp

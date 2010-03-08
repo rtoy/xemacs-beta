@@ -359,13 +359,17 @@ static struct charset_reporter charset_table[] =
     { &Vcharset_latin_iso8859_15, NULL, NULL },
     { &Vcharset_thai_tis620, "Thai", "th" },
     /* We don't have an arabic charset.  bidi issues, I guess? */
-    /* { &Vcharset_arabic_iso8859_6, "Arabic", "ar" }, */
+    { &Vcharset_arabic_iso8859_6, "Arabic", "ar" },
     { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
     /* #### probably close enough for Ukraine? */
     { &Vcharset_cyrillic_iso8859_5, "Russian", "ru" },
+#ifdef UNICODE_INTERNAL
+    { &Vcharset_chinese_big5, "traditional Chinese", "zh-tw" },
+#else
     /* #### these probably are not quite right */
     { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-tw" },
     { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-tw" },
+#endif
     { NULL, NULL, NULL }
   };
 

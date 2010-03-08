@@ -5,6 +5,7 @@
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -238,7 +239,7 @@ The descriptions are inserted in a buffer, which is then displayed."
     (terpri)))
 
 (defconst predefined-category-list
-  '((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
+  `((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
     (latin-iso8859-2	?l)
     (latin-iso8859-3	?l)
     (latin-iso8859-4	?l)
@@ -253,10 +254,15 @@ The descriptions are inserted in a buffer, which is then displayed."
     (japanese-jisx0208	?j "Japanese 2-byte character set")
     (japanese-jisx0212	?j)
     (chinese-gb2312	?c "Chinese GB (China, PRC) 2-byte character set")
-    (chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
-    (chinese-cns11643-2	?t)
-    (chinese-big5-1	?t)
-    (chinese-big5-2	?t)
+    ;;@@#### This messes up things because it has ASCII and other chars in it.
+    ;;We need to incorporate the GNU Emacs stuff in their characters.el, which has
+    ;;much better category definitions.
+    ;;(chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
+    (chinese-cns11643-2	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
+    ,@(if (find-charset 'chinese-big5-1)
+	  '((chinese-big5-1	?t)
+	    (chinese-big5-2	?t))
+	'((chinese-big5	?t)))
     (korean-ksc5601	?h "Hangul (Korean) 2-byte character set")
     )
   "List of predefined categories.
@@ -321,10 +327,18 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 (defvar kanji-English-Lower  "[ａ-ｚ]")
 (defvar kanji-hiragana "\\cH")
 (defvar kanji-katakana "\\cK")
-(defvar kanji-Greek-Upper "[Α-Ω]")
-(defvar kanji-Greek-Lower "[α-ω]")
-(defvar kanji-Russian-Upper "[А-Я]")
-(defvar kanji-Russian-Lower "[а-я]")
+;; @@#### HACK FIXME.  The Unicode mappings for these double-width Kanji
+;; characters are the regular Greek/Cyrillic equivalents, and so saving/loading
+;; this file using Unicode-internal messes things up.  To get around this
+;; for the moment, decode things on-the-fly.
+(defvar kanji-Greek-Upper
+  (decode-coding-string "[\033$B&!\033(B-\033$B&8\033(B]" 'iso-2022-7bit))
+(defvar kanji-Greek-Lower
+  (decode-coding-string "[\033$B&A\033(B-\033$B&X\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Upper
+  (decode-coding-string "[\033$B'!\033(B-\033$B'A\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Lower
+  (decode-coding-string "[\033$B'Q\033(B-\033$B'q\033(B]" 'iso-2022-7bit))
 (defvar kanji-Kanji-1st-Level  "[亜-腕]")
 (defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
 

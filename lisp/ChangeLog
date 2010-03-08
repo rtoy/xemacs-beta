@@ -1,5 +1,164 @@
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
+	* mule/japanese.el (for):
+	Don't blindly set syntax of entire rows -- check to make sure we aren't
+	changing syntax of Latin-1.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el (reset-coding-categories-to-default):
+	Move some documentation here from file-coding.h.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* mule/vietnamese.el (viscii):
+	Don't have ASCII shadowing; overlapping charsets no longer allowed.
+	
+	* mule/windows.el:
+	* mule/windows.el (make-windows-coding-system):
+	* mule/windows.el (1361):
+	Change `unicode-file' so it takes a filename relative to
+	`data-directory' not a Microsoft-specific subdir.  Fix various charsets
+	that use `unicode-file'.  Put proper bounds and add Unicode conversion
+	file in `korean-johab' and `japanese-windows-10001' (Macintosh
+	Japanese).  Make `windows-875' be `greek' not `latin', and comment
+	out for the moment all the EBCDIC charsets because I didn't feel like
+	fixing `make-windows-coding-system' (see comments in file).
+
+2010-02-27  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charset-tag-property): New.
+	* mule/mule-charset.el (charset-tag-properties): New.
+	* mule/mule-charset.el (charset-tag-to-charset-list):
+	Add a couple of functions `charset-tag-property' and
+	`charset-tag-properties'.  Modify charset-tag-to-charset-list to
+	use these functions.  Also use :from-end property to
+	`remove-duplicates' so that result is "stable" in that later extra
+	elements rather than earlier ones get deleted.  Also reverse the
+	order of charsets associated with a tag so that it matches the
+	order that charsets were added. (Not strictly necessary but principle
+	of least surprised.)
+
+2010-02-27  Ben Wing  <ben@xemacs.org>
+
+	* mule/latin.el (code):
+	Use char codes rather than directly encoding the chars for the
+	remaining few directly encoded chars (latin-15).
+
+2010-02-26  Ben Wing  <ben@xemacs.org>
+
+	* mule/hebrew.el:
+	* mule/hebrew.el ("Hebrew"):
+	* mule/lao.el:
+	* mule/lao.el (make-char):
+	Convert to utf-8.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* mule/thai-util.el:
+	* mule/thai-util.el (l):
+	* mule/thai.el:
+	* mule/thai.el ("Thai"):
+	Convert to utf-8.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* mule/thai.el ("Thai"):
+	* mule/thai.el (thai):
+	Don't set input method as thai-kesmanee, this isn't currently working
+	in quail.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-late.el (eval-when-compile):
+	map-charset-chars interface has changed.
+	
+	* mule/mule-category.el:
+	* mule/mule-category.el (kanji-kanji-char):
+	Separate double-width Kanji Greek and Cyrillic chars don't exist
+	in Unicode-internal, so use decode-coding-string to encode them
+	rather than doing it directly, to avoid problems when saving the
+	file in Unicode-internal.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (map-charset-chars): Removed.
+	map-charset-chars moved to C.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* subr.el:
+	* subr.el (backtrace-in-condition-handler-eliminating-handler):
+	Use minimal matching to try to avoid possible stack-overflow errors.
+	* subr.el (with-trapping-errors):
+	Add :debug argument for calling the debugger.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	Conditionalize on use-unidata-case-tables.
+	
+	* mule/mule-category.el:
+	* mule/mule-category.el (predefined-category-list):
+	Take out chinese-cns11643-1 for the moment, since it makes
+	category ?t include ASCII and other stuff that shouldn't be there,
+	which messes up word-across-newline, which messes up fill-paragraph.
+	
+	* mule/mule-category.el (kanji-Greek-Upper):
+	* mule/mule-category.el (kanji-kanji-char):
+	Bogus changes that will be reverted.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charset-iso-2022-p): New.
+	* mule/mule-charset.el (charset-ccl-program):
+	Add author comment.  New function charset-iso-2022-p.
+	
+	* mule/uni-case-conv.el:
+	* mule/uni-case-conv.el (for):
+	Regenerate; nreverse case table mapping list, see comment in file.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (use-unidata-case-tables):
+	* dumped-lisp.el (preloaded-file-list):
+	New feature `use-unidata-case-tables', to control whether we
+	use the new Unicode case table info from unicode.org.  When we're
+	sure we've gotten this to work and it causes no bugs, get rid of
+	this.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	Turn off when Unicode, relying on uni-case-conv.el.
+	* mule/uni-case-conv.el (for): Regenerate.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Load uni-case-conv.el.  It seems to work now, after all the various
+	search and case-related fixes.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el (format-decode): Remove this temporary function
+	definition, now we check the symbol is bound in fileio.c
+	* version.el (format-decode): Ditto.
+	* format.el (car-less-than-car, cdr-less-than-cdr): Move these
+	here from fileio.c, now they are only called once format.el is
+	available.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* setup-paths.el (paths-find-emacs-roots)
+	(paths-construct-info-path):
+	* packages.el (packages-find-installation-package-directories):
+	#'union doesn't guarantee that it will preserve the relative order
+	of elements in its arguments; use #'delete-duplicates
+	instead. Thank you for the bug reports, Robert Pluim, Stephen
+	Turnbull.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
 	* disp-table.el:
 	* disp-table.el (standard-display-g1):
 	* disp-table.el (standard-display-graphic):
@@ -378,6 +537,258 @@
 
 2010-01-25  Ben Wing  <ben@xemacs.org>
 
+	* mule/cyrillic.el:
+	* mule/cyrillic.el (cyrillic-iso8859-5):
+	* mule/cyrillic.el ("Ukrainian"):
+	* mule/cyrillic.el (cyrillic):
+	* mule/general-early.el:
+	* mule/general-early.el (setup-case-pairs): New.
+	* mule/general-late.el:
+	* mule/greek.el:
+	* mule/greek.el (greek-iso8859-7):
+	* mule/latin.el:
+	* mule/latin.el (setup-case-pairs): Removed.
+	New file mule/general-early.el.  Move setup-case-pairs
+	here from mule/latin.el.  Use in cyrillic.el, latin.el
+	and greek.el to set up old-Mule case pairs, and make it
+	do nothing when Unicode-internal.
+
+	Remove Unicode-style case pairs entirely, as we handle
+	that in uni-case-conv.el.
+
+	* mule/uni-case-conv.el:
+	New file, generated by make-case-conv.py from
+	http://www.unicode.org/Public/UNIDATA/CaseFolding.txt.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Add new mule/general-early and mule/uni-case-conv.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/vietnamese.el (vietnamese-viscii):
+	Fix extraneous quote.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/vietnamese.el (vietnamese-viscii):
+	Use mapping file from libiconv instead of specifying our own.
+	Fixes bug in #xA6 mapping.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyrillic.el (cyrillic-koi8-u):
+	Fix mistake in name of mapping file.
+	
+	* mule/cyrillic.el (cyrillic-koi8-ru):
+	* mule/cyrillic.el (cyrillic-koi8-t):
+	Use mapping files from libiconv instead of specifying our own.
+	
+	* mule/cyrillic.el (cyrillic-koi8-c):
+	Fix mistake in mapping #x8C.
+	
+	* mule/cyrillic.el (for):
+	Fix reversed upper/lower in case mapping for KOI8-C, add SCHWA.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el (initialize-default-unicode-precedence-list):
+	Use `set-default-unicode-precedence-list'.
+	* unicode.el (init-windows-glyph-list-4):
+	Comment fixes.
+	
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Use `set-buffer-unicode-precedence-list'.
+
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (initialize-default-unicode-precedence-list):
+	* unicode.el (init-windows-glyph-list-4): New.
+	* mule/mule-charset.el:
+	Don't create charset `windows-glyph-list-4' in unicode.el;
+	it's too early.  Instead wrap the code in a function
+	init-windows-glyph-list-4 and call from the `Internal' section
+	of mule-charset.el, after the appropriate functions have been
+	defined to handle tags.
+
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* mule/chinese.el:
+	* mule/chinese.el (chinese-big5/list):
+	* mule/chinese.el ('chinese/list): Removed.
+	* mule/chinese.el ('chinese-big5/list): New.
+	* mule/chinese.el ('chinese-gb/list): New.
+	* mule/chinese.el ('chinese-gb-env/list): New.
+	* mule/chinese.el ('chinese-big5-env/list): New.
+	Expand the list tags to include tags for specific sets of
+	charsets (Big5, GB, CNS) and tags for the two major
+	environments.  Put the locale info back in the call to
+	set-language-info-alist and use #' to ensure that a lambda
+	expression gets compiled.
+	
+	* mule/chinese.el ("Chinese-GB"):
+	* mule/chinese.el ("Chinese-BIG5"):
+	Fix the charset property to mention the env lists just created.
+
+	* mule/hebrew.el (iso-8859-8): Fix doc bug mentioning 8859-6
+	instead of 8859-8.
+	
+	* mule/cyrillic.el ("Cyrillic-ISO"):
+	* mule/cyrillic.el ("Russian"):
+	* mule/cyrillic.el ("Cyrillic-ALT"):
+	* mule/devanagari.el ("Devanagari"):
+	* mule/greek.el ("Greek"):
+	* mule/hebrew.el ("Hebrew"):
+	* mule/japanese.el ("Japanese"):
+	* mule/korean.el ("Korean"):
+	* mule/latin.el (for):
+	* mule/thai.el ("Thai"):
+	* mule/vietnamese.el ("Vietnamese"):
+	Fix the charset property to include a general language tag
+	to catch other charsets.
+
+	* mule/japanese.el (japanese/list):
+	Mention *-jisx0201 charsets specifically.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (for):
+	* mule/mule-charset.el (script):
+	* mule/mule-charset.el ('internal): New.
+	Add function tags for left-to-right and right-to-left.
+	Remove the corresponding .../script tags.
+	Remove these tags in various places they were manually added.
+	Add a `control-chars/script' tag and `internal' and `jit' tags.
+	Expand commented-out make-charset* to include a tags key.
+	Make a section for internal charsets and add tags to these
+	charsets now, since we can't add them at initialization time.
+	Also add tags for `latin-iso8859-1' in the `ISO 8859' section.
+	
+	
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Fix up commented-out code and set variable `unicode-precedence-list'
+	with the `charset' info of languages.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (featurep):
+	Comment fixes.
+	
+	* update-elc.el:
+	* update-elc.el (lisp-files-dependent-on-configuration): New.
+	* update-elc.el (preloaded-file-list):
+	Ensure that files with compile-time dependence on
+	(featurep 'unicode-internal) or something similar get recompiled
+	whenever the configuration changes.
+	
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule/chinese.el (big5):
+	Fix safe-charsets to take into account difference between one
+	charset chinese-big5 (Unicode-internal) or two charsets
+	chinese-big5-1/2 (old-Mule).
+	* mule/chinese.el:
+	Use `compiled-when' to introduce compile-time dependence on
+	(find-charset 'chinese-big5-1) to avoid compile-time error in
+	Unicode-internal when this charset isn't present.
+	
+	* mule/general-late.el:
+	We previously introduced compile-time dependence on Unicode-internal
+	in an eval-when-compile expression, so insert a clause that will
+	signal an error if we compile with Unicode-internal and run without,
+	or vice-versa.
+	
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charsets-in-string):
+	* mule/mule-charset.el (charset-registry):
+	* mule/mule-charset.el (set-charset-registry):
+	Unimportant whitespace changes.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Add a comment about ordering relationship between unicode.el
+	and mule-charset.el.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* unicode.el:
+	* unicode.el (featurep):
+	* unicode.el (load-unicode-tables): Removed.
+	Remove the setting of unicode-map info for all charsets but
+	ISO 8859-1, which is created in C.  Remove commented-out
+	code for controlling when we load the tables (run-time or
+	dump-time).  Now we always do it at dump time and it's only
+	for one charset.
+	
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-charset.el:
+	Create all the official charsets here instead of in C code,
+	to make it easier to create them and modify the creation
+	code.  Include unicode-map info in the call to make-charset
+	rather than setting it later.
+
+	* mule/chinese.el:
+	* mule/japanese.el:
+	* mule/mule-charset.el:
+	Move initialization of auto-fill-chars to mule/chinese and
+	mule/japanese.  It was making use of charsets before their
+	creation later in the file, and is really Chinese/Japanese-
+	specific.
+	
+	* mule/mule-charset.el (make-internal-128-byte-charset):
+	Correct doc string.
+	
+	* mule/mule-charset.el (make-iso8859-charset):
+	New function, for creating ISO-8859-* charsets.
+	
+	* mule/mule-charset.el (vietnamese-viscii-lower):
+	* mule/mule-charset.el (vietnamese-viscii-upper):
+	* mule/mule-charset.el (thai-xtis):
+	* mule/mule-charset.el (indian-is13194):
+	* mule/mule-charset.el (indian-1-column):
+	* mule/mule-charset.el (indian-2-column):
+	* mule/mule-charset.el (lao):
+	* mule/mule-charset.el (ethiopic):
+	* mule/mule-charset.el (tibetan-1-column):
+	* mule/mule-charset.el (tibetan):
+	Cosmetic changes.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (error-unless-tests-match): New.
+	* bytecomp-runtime.el (byte-compile-file-being-compiled): New.
+	* bytecomp-runtime.el (compiled-if): New.
+	* bytecomp-runtime.el (compiled-when): New.
+	Add functions for dealing with conditional compilation of different code
+	depending on the presence or absence of features.  Necessary for some
+	Mule code where code is run during compilation (macros or eval-when-compile)
+	but, depending on how the code is written, the code itself will crash
+	either with or without Unicode-internal.
+
+	compiled-if and compiled-when are the basic functions for conditional
+	compilation.  They automatically trigger an error message upon file
+	loading	if, at that time, the test expression that selected which code
+	to compile does	not have the same value as at compile time.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule/thai.el:
+	Fix compile error: Comment accidentally uncommented.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
 	* mule/cyrillic.el (koi8-c):
 	Fix bug in #83 mapping.
 	* mule/vietnamese.el (viscii):
@@ -527,6 +938,24 @@
 	* cl-compat.el (keyword-of):
 	Remove support in our generated code for emacs versions where
 	keywords are not self-quoting.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* mule/general-early.el (setup-case-pairs):
+	Always set up the case pairs for the moment, since we don't
+	dump uni-case-conv.el.
+	
+	* mule/uni-case-conv.el (for):
+	Update with various junk to check for mappings that cross charsets,
+	etc.  Put in for testing purposes.  Take out when the underlying
+	bug is fixed.
+
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Don't dump uni-case-conv.el for the moment, until we squash the
+	underlying bug that makes it screw things up.
 
 2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
