@@ -149,9 +149,9 @@ allocate_ldap (void)
 }
 
 static void
-finalize_ldap (void *header)
+finalize_ldap (Lisp_Object obj)
 {
-  Lisp_LDAP *ldap = (Lisp_LDAP *) header;
+  Lisp_LDAP *ldap = XLDAP (obj);
 
   if (ldap->ld)
     ldap_unbind (ldap->ld);
