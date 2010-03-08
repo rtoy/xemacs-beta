@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct precedence_array
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Encapsulated dynarr listing all the charsets, in order, used for
      converting a Unicode codepoint to a charset codepoint */
@@ -44,7 +44,7 @@ struct precedence_array
   unsigned int has_overriding_ascii :1;
 };
 
-DECLARE_LRECORD (precedence_array, struct precedence_array);
+DECLARE_LISP_OBJECT (precedence_array, struct precedence_array);
 #define XPRECEDENCE_ARRAY(x) XRECORD (x, precedence_array, struct precedence_array)
 #define wrap_precedence_array(p) wrap_record (p, precedence_array)
 #define PRECEDENCE_ARRAYP(x) RECORDP (x, precedence_array)

@@ -3,7 +3,7 @@
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2003 Ben Wing.
+   Copyright (C) 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -96,12 +96,10 @@ mark_scrollbar_instance (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("scrollbar-instance", scrollbar_instance,
-			       0, /*dumpable-flag*/
-			       mark_scrollbar_instance,
-			       internal_object_printer, 0, 0, 0, 
-			       scrollbar_instance_description,
-			       struct scrollbar_instance);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("scrollbar-instance", scrollbar_instance,
+				    mark_scrollbar_instance,
+				    scrollbar_instance_description,
+				    struct scrollbar_instance);
 
 static void
 free_scrollbar_instance (struct scrollbar_instance *instance,
@@ -198,9 +196,8 @@ static struct scrollbar_instance *
 create_scrollbar_instance (struct frame *f, int vertical)
 {
   struct device *d = XDEVICE (f->device);
-  struct scrollbar_instance *instance =
-    ALLOC_LCRECORD_TYPE (struct scrollbar_instance,
-			 &lrecord_scrollbar_instance);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (scrollbar_instance);
+  struct scrollbar_instance *instance = XSCROLLBAR_INSTANCE (obj);
 
   MAYBE_DEVMETH (d, create_scrollbar_instance, (f, vertical, instance));
 
@@ -272,7 +269,8 @@ compute_scrollbar_instance_usage (struct device *d,
 
   while (inst)
     {
-      total += LISPOBJ_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
+      total += lisp_object_storage_size (wrap_scrollbar_instance (inst),
+					 ovstats);
       inst = inst->next;
     }
 
@@ -928,7 +926,7 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 void
 syms_of_scrollbar (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (scrollbar_instance);
+  INIT_LISP_OBJECT (scrollbar_instance);
 
   DEFSYMBOL (Qscrollbar_line_up);
   DEFSYMBOL (Qscrollbar_line_down);

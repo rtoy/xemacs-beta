@@ -289,10 +289,9 @@ static const struct memory_description charset_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-			       1, /* dumpable flag */
-                               mark_charset, print_charset, 0,
-			       0, 0, charset_description, Lisp_Charset);
+DEFINE_DUMPABLE_LISP_OBJECT ("charset", charset,
+			     mark_charset, print_charset, 0,
+			     0, 0, charset_description, Lisp_Charset);
 
 #ifndef UNICODE_INTERNAL
 
@@ -708,7 +707,7 @@ make_charset (int id, int no_init_unicode_tables,
 
   if (!overwrite)
     {
-      obj = wrap_charset (ALLOC_LCRECORD_TYPE (Lisp_Charset, &lrecord_charset));
+      obj = ALLOC_NORMAL_LISP_OBJECT (charset);
 
       if (final)
 	{
@@ -1711,9 +1710,8 @@ static void
 compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 		      struct overhead_stats *ovstats)
 {
-  struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (c, sizeof (*c), ovstats);
+  stats->other   += lisp_object_storage_size (charset, ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }
@@ -1764,7 +1762,7 @@ represents all the memory concerned.
 void
 syms_of_mule_charset (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (charset);
+  INIT_LISP_OBJECT (charset);
 
   DEFSUBR (Fcharsetp);
   DEFSUBR (Ffind_charset);

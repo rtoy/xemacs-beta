@@ -319,21 +319,19 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_coding_system (void *header, int for_disksave)
+finalize_coding_system (Lisp_Object obj)
 {
-  Lisp_Object cs = wrap_coding_system ((Lisp_Coding_System *) header);
   /* Since coding systems never go away, this function is not
      necessary.  But it would be necessary if we changed things
      so that coding systems could go away. */
-  if (!for_disksave) /* see comment in lstream.c */
-    MAYBE_XCODESYSMETH (cs, finalize, (cs));
+  MAYBE_XCODESYSMETH (obj, finalize, (obj));
 }
 #endif /* not NEW_GC */
 
 static Bytecount
-sizeof_coding_system (const void *header)
+sizeof_coding_system (Lisp_Object obj)
 {
-  const Lisp_Coding_System *p = (const Lisp_Coding_System *) header;
+  const Lisp_Coding_System *p = XCODING_SYSTEM (obj);
   return offsetof (Lisp_Coding_System, data) + p->methods->extra_data_size;
 }
 
@@ -381,22 +379,20 @@ const struct sized_memory_description coding_system_empty_extra_description = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					0, 0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
+				     mark_coding_system,
+				     print_coding_system,
+				     0, 0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 #else /* not NEW_GC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					finalize_coding_system,
-					0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
+				     mark_coding_system,
+				     print_coding_system,
+				     finalize_coding_system,
+				     0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 #endif /* not NEW_GC */
 
 /************************************************************************/
@@ -1006,9 +1002,8 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 			Lisp_Object name)
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
-  Lisp_Coding_System *codesys =
-    (Lisp_Coding_System *) BASIC_ALLOC_LCRECORD (total_size,
-						 &lrecord_coding_system);
+  Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (total_size, coding_system);
+  Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;
@@ -1455,12 +1450,8 @@ Use `define-coding-system-alias' instead.
     invalid_operation_2 ("Coding systems not same type",
 			 old_coding_system, new_coding_system);
 
-  {
-    Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
-    Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-    COPY_SIZED_LCRECORD (to, from, sizeof_coding_system (from));
-    to->name = new_name;
-  }
+  copy_lisp_object (new_coding_system, old_coding_system);
+  XCODING_SYSTEM (new_coding_system)->name = new_name;
   return new_coding_system;
 }
 
@@ -3175,7 +3166,7 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
    different defined detectors. */
 
 static Bytecount
-sizeof_detection_state (const void * UNUSED (header))
+sizeof_detection_state (Lisp_Object UNUSED (obj))
 {
   int i;
   Bytecount size = MAX_ALIGN_SIZE (sizeof (struct detection_state));
@@ -3189,11 +3180,9 @@ allocate_detection_state (void)
 {
   int i;
   struct detection_state *block;
-  Bytecount size = sizeof_detection_state (NULL);
+  Bytecount size = sizeof_detection_state (Qnil);
 
-  block =
-    (struct detection_state *) BASIC_ALLOC_LCRECORD (size,
-						     &lrecord_detection_state);
+  block = XDETECTION_STATE (ALLOC_SIZED_LISP_OBJECT (size, detection_state));
 
   size = MAX_ALIGN_SIZE (sizeof (struct detection_state));
   for (i = 0; i < coding_detector_count; i++)
@@ -3239,13 +3228,11 @@ free_detection_state (struct detection_state *st)
     }
 }
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("detection-state", detection_state,
-					0, /*dumpable-flag*/
-					mark_detection_state,
-					internal_object_printer, 0, 0, 0,
-					detection_state_description,
-					sizeof_detection_state,
-					struct detection_state);
+DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT ("detection-state", detection_state,
+					    mark_detection_state,
+					    detection_state_description,
+					    sizeof_detection_state,
+					    struct detection_state);
 
 
 /************************************************************************/
@@ -4541,8 +4528,8 @@ gzip_convert (struct coding_stream *str,
 void
 syms_of_file_coding (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (coding_system);
-  INIT_LRECORD_IMPLEMENTATION (detection_state);
+  INIT_LISP_OBJECT (coding_system);
+  INIT_LISP_OBJECT (detection_state);
 
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);

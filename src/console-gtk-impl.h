@@ -50,7 +50,7 @@ DECLARE_CONSOLE_TYPE (gtk);
 struct gtk_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* Gtk application info. */
   GtkWidget *gtk_app_shell;
@@ -115,7 +115,7 @@ struct gtk_device
 #ifdef NEW_GC
 typedef struct gtk_device Lisp_Gtk_Device;
 
-DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
+DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 
 #define XGTK_DEVICE(x) \
   XRECORD (x, gtk_device, Lisp_Gtk_Device)
@@ -144,7 +144,7 @@ DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
 struct gtk_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame. */
@@ -208,7 +208,7 @@ struct gtk_frame
 #ifdef NEW_GC
 typedef struct gtk_frame Lisp_Gtk_Frame;
 
-DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
+DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 
 #define XGTK_FRAME(x) \
   XRECORD (x, gtk_frame, Lisp_Gtk_Frame)

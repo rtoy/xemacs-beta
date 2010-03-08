@@ -1470,7 +1470,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 The *only* thing that the syms_of_*() functions are allowed to do
 	 is call one of the following:
 
-	 INIT_LRECORD_IMPLEMENTATION()
+	 INIT_LISP_OBJECT()
 	 defsymbol(), DEFSYMBOL(), or DEFSYMBOL_MULTIWORD_PREDICATE()
 	 defsubr() (i.e. DEFSUBR)
 	 deferror(), DEFERROR(), or DEFERROR_STANDARD()
@@ -2025,8 +2025,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - BASIC_ALLOC_LCRECORD()
-	    - ALLOC_LCRECORD_TYPE()
+	    - ALLOC_NORMAL_LISP_OBJECT()
+	    - ALLOC_SIZED_LISP_OBJECT()
 	    - Fcons()
 	    - listN()
             - make_lcrecord_list()
@@ -2318,7 +2318,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
-      reinit_vars_of_extents ();
       reinit_vars_of_file_coding ();
       reinit_vars_of_fileio ();
 #ifdef USE_C_FONT_LOCK

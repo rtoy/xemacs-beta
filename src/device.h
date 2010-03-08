@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct device;
 
-DECLARE_LRECORD (device, struct device);
+DECLARE_LISP_OBJECT (device, struct device);
 #define XDEVICE(x) XRECORD (x, device, struct device)
 #define wrap_device(p) wrap_record (p, device)
 #define DEVICEP(x) RECORDP (x, device)

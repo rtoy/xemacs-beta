@@ -127,7 +127,7 @@ XCHARSET_MAX_CODE (Lisp_Object UNUSED (cs), int dim)
 
 struct Lisp_Charset
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   int id; /* ID for this charset.  If old-Mule, this is the actual leading
 	     byte for this charset; otherwise, an arbitrary unique value. */
@@ -213,7 +213,7 @@ struct Lisp_Charset
 };
 typedef struct Lisp_Charset Lisp_Charset;
 
-DECLARE_LRECORD (charset, Lisp_Charset);
+DECLARE_LISP_OBJECT (charset, Lisp_Charset);
 #define XCHARSET(x) XRECORD (x, charset, Lisp_Charset)
 #define wrap_charset(p) wrap_record (p, charset)
 #define CHARSETP(x) RECORDP (x, charset)

@@ -93,11 +93,9 @@ static const struct memory_description mswindows_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("mswindows-frame", mswindows_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       mswindows_frame_data_description_1,
-			       Lisp_Mswindows_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("mswindows-frame", mswindows_frame,
+				      0, mswindows_frame_data_description_1,
+				      Lisp_Mswindows_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_frame_data_description;
 
@@ -174,8 +172,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
     CHECK_INT (height);
 
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct mswindows_frame,
-				      &lrecord_mswindows_frame);
+  f->frame_data = XMSWINDOWS_FRAME (ALLOC_NORMAL_LISP_OBJECT (mswindows_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct mswindows_frame);
 #endif /* not NEW_GC */
@@ -1212,7 +1209,7 @@ void
 syms_of_frame_mswindows (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (mswindows_frame);
+  INIT_LISP_OBJECT (mswindows_frame);
 #endif /* NEW_GC */
 }
 

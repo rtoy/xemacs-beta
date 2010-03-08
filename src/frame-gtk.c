@@ -103,11 +103,9 @@ static const struct memory_description gtk_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gtk-frame", gtk_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       gtk_frame_data_description_1,
-			       Lisp_Gtk_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("gtk-frame", gtk_frame,
+				      0, gtk_frame_data_description_1,
+				      Lisp_Gtk_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description gtk_frame_data_description;
 
@@ -974,7 +972,7 @@ allocate_gtk_frame_struct (struct frame *f)
 
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct gtk_frame, &lrecord_gtk_frame);
+  f->frame_data = XGTK_FRAME (ALLOC_NORMAL_LISP_OBJECT (gtk_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct gtk_frame);
 #endif /* not NEW_GC */
@@ -1475,7 +1473,7 @@ void
 syms_of_frame_gtk (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gtk_frame);
+  INIT_LISP_OBJECT (gtk_frame);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qtext_widget);

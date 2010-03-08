@@ -1,7 +1,7 @@
 /* Declarations having to do with Mule char tables.
    Copyright (C) 1992 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -49,19 +49,16 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Char_Subtable
 {
-  struct LCRECORD_HEADER lheader;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object ptr[256];
 };
 
-#define ALLOCATE_LEVEL_N_SUB_TABLE()					\
-  wrap_char_subtable (ALLOC_LCRECORD_TYPE				\
-		      (Lisp_Char_Subtable, &lrecord_char_subtable))
+#define ALLOCATE_LEVEL_N_SUB_TABLE() ALLOC_NORMAL_LISP_OBJECT (char_subtable)
 
 #define SUBTAB_STORAGE_SIZE(table, level, stats)			\
-  LISPOBJ_STORAGE_SIZE (XCHAR_SUBTABLE (table),				\
-			sizeof (struct Lisp_Char_Subtable), stats)
+  lisp_object_storage_size (table, stats)
 
-#define FREE_ONE_SUBTABLE(table) FREE_LCRECORD (table)
+#define FREE_ONE_SUBTABLE(table) free_normal_lisp_object (table)
 
 /* If we use split Lisp char subtables, we'd modify the above struct and
    three defines.  If we use "plain" non-Lisp char subtables, we'd modify
@@ -78,7 +75,7 @@ struct Lisp_Char_Subtable
 
 typedef struct Lisp_Char_Subtable Lisp_Char_Subtable;
 
-DECLARE_LRECORD (char_subtable, Lisp_Char_Subtable);
+DECLARE_LISP_OBJECT (char_subtable, Lisp_Char_Subtable);
 #define XCHAR_SUBTABLE(x) XRECORD (x, char_subtable, Lisp_Char_Subtable)
 #define wrap_char_subtable(p) wrap_record (p, char_subtable)
 #define CHAR_SUBTABLEP(x) RECORDP (x, char_subtable)
@@ -143,7 +140,7 @@ enum char_table_type
 
 struct Lisp_Char_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Currently we use the same structure as for the Unicode->charset
      translation tables in unicode.c.  This is extremely fast (constant-
@@ -173,7 +170,7 @@ struct Lisp_Char_Table
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
-DECLARE_LRECORD (char_table, Lisp_Char_Table);
+DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
 #define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)

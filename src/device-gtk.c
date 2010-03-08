@@ -76,11 +76,9 @@ static const struct memory_description gtk_device_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gtk-device", gtk_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       gtk_device_data_description_1,
-			       Lisp_Gtk_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("gtk-device", gtk_device,
+				      0, gtk_device_data_description_1,
+				      Lisp_Gtk_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description gtk_device_data_description;
 
@@ -117,7 +115,7 @@ static void
 allocate_gtk_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct gtk_device, &lrecord_gtk_device);
+  d->device_data = XGTK_DEVICE (ALLOC_NORMAL_LISP_OBJECT (gtk_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct gtk_device);
 #endif /* not NEW_GC */
@@ -689,7 +687,7 @@ void
 syms_of_device_gtk (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gtk_device);
+  INIT_LISP_OBJECT (gtk_device);
 #endif /* NEW_GC */
 
   DEFSUBR (Fgtk_keysym_on_keyboard_p);

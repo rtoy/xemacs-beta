@@ -76,11 +76,9 @@ static const struct memory_description x_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("x-frame", x_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       x_frame_data_description_1,
-			       Lisp_X_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("x-frame", x_frame,
+				      0, x_frame_data_description_1,
+				      Lisp_X_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description x_frame_data_description;
 
@@ -2051,7 +2049,7 @@ allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct x_frame, &lrecord_x_frame);
+  f->frame_data = XX_FRAME (ALLOC_NORMAL_LISP_OBJECT (x_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct x_frame);
 #endif /* not NEW_GC */
@@ -2768,7 +2766,7 @@ void
 syms_of_frame_x (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (x_frame);
+  INIT_LISP_OBJECT (x_frame);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qoverride_redirect);
