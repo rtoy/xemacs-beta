@@ -2059,21 +2059,30 @@ cerrar_el_fulano (Lisp_Object fulano)
 DEFUN ("load-unicode-mapping-table", Fload_unicode_mapping_table,
        2, 6, 0, /*
 Load Unicode tables with the Unicode mapping data in FILENAME for CHARSET.
-Data is text, in the form of one translation per line -- charset
-codepoint followed by Unicode codepoint.  Numbers are decimal or hex
-\(preceded by 0x).  Comments are marked with a #.  Charset codepoints
-for two-dimensional charsets have the first octet stored in the
-high 8 bits of the hex number and the second in the low 8 bits.
+Data is text, in the form of one translation per line.  Lines are of the
+form
+
+CHARSETCODE UNICODECODE
+
+for a single codepoint translation, or
+
+CHARSETCODE1-CHARSETCODE2 UNICODE
+
+for a range of charset codepoints mapping to a range of Unicode codepoints
+beginning at UNICODE.  Numbers are decimal or hex (preceded by 0x).
+Comments are marked with a #.  Charset codepoints for two-dimensional
+charsets have the first octet stored in the high 8 bits of the hex number
+and the second in the low 8 bits.
 
 If START and END are given, only charset codepoints within the given
 range will be processed.  (START and END apply to the codepoints in the
 file, before OFFSET is applied.)
 
-If OFFSET is given, that value will be added to all charset codepoints
-in the file to obtain the internal charset codepoint.  \(We assume
-that octets in the table are in the range 33 to 126 or 32 to 127.  If
-you have a table in ku-ten form, with octets in the range 1 to 94, you
-will have to use an offset of 5140, i.e. 0x2020.)
+If OFFSET is given, that value will be added to all charset codepoints in
+the file to obtain the internal charset codepoint.  (For example, normal
+size-94 charsets have octets in the range 33 to 126.  If you have a table
+in ku-ten form, with octets in the range 1 to 94, you will have to use an
+offset of #x2020.)
 
 FLAGS, if specified, control further how the tables are interpreted
 and are used to special-case certain known format deviations in the
@@ -2151,11 +2160,12 @@ Unicode tables or in the charset:
   while (fgets (line, sizeof (line), file))
     {
       char *p = line;
-      int cp1, cp2, endcount;
+      int cp1from, cp1to, cp1, cp2, endcount;
       int cp1high, cp1low;
       int dummy;
       int scanf_count, garbage_after_scanf;
 
+      /* #### Perhaps we should rewrite this using regular expressions */
       while (*p) /* erase all comments out of the line */
 	{
 	  if (*p == '#')
@@ -2177,10 +2187,24 @@ Unicode tables or in the charset:
 	 interpretation.
 
 	 Also, the return value does NOT include %n storage. */
+
+      /* First check for a range. */
       scanf_count =
 	(!ignore_first_column ?
-	 sscanf (p, "%i %i%n", &cp1, &cp2, &endcount) :
-	 sscanf (p, "%i %i %i%n", &dummy, &cp1, &cp2, &endcount) - 1);
+	 sscanf (p, "%i-%i %i%n", &cp1from, &cp1to, &cp2, &endcount) :
+	 sscanf (p, "%i-%i %i %i%n", &dummy, &cp1from, &cp1to, &cp2,
+		 &endcount) - 1);
+      /* If we didn't find one, try a single codepoint translation. */
+      if (scanf_count < 3)
+	{
+	  scanf_count =
+	    (!ignore_first_column ?
+	     sscanf (p, "%i %i%n", &cp1from, &cp2, &endcount) :
+	     sscanf (p, "%i %i %i%n", &dummy, &cp1from, &cp2, &endcount) - 1);
+	  cp1to = cp1from;
+	}
+      else
+	scanf_count--;
       /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
 	 of numbers beginning 0x0... starting in 04/2004, in an attempt
 	 to fix another bug.  A partial fix for this was put in in
@@ -2214,49 +2238,52 @@ Unicode tables or in the charset:
 			  XSTRING_DATA (filename), line);
 	  continue;
 	}
-      if (cp1 >= st && cp1 <= en)
+      for (cp1 = cp1from; cp1 <= cp1to; cp1++, cp2++)
 	{
-	  cp1 += of;
-	  if (cp1 < 0 || cp1 >= 65536)
+	  if (cp1 >= st && cp1 <= en)
 	    {
-	    out_of_range:
-	      warn_when_safe (Qunicode, Qwarning,
-			      "Out of range first codepoint 0x%x in "
-			      "translation file %s:\n%s",
-			      cp1, XSTRING_DATA (filename), line);
-	      continue;
-	    }
+	      cp1 += of;
+	      if (cp1 < 0 || cp1 >= 65536)
+		{
+		out_of_range:
+		  warn_when_safe (Qunicode, Qwarning,
+				  "Out of range first codepoint 0x%x in "
+				  "translation file %s:\n%s",
+				  cp1, XSTRING_DATA (filename), line);
+		  continue;
+		}
 
-	  cp1high = cp1 >> 8;
-	  cp1low = cp1 & 255;
+	      cp1high = cp1 >> 8;
+	      cp1low = cp1 & 255;
 
 #ifndef UNICODE_INTERNAL
-	  if (big5)
-	    {
-	      Lisp_Object fake_charset;
-	      int c1, c2;
-	      big5_char_to_fake_codepoint (cp1high, cp1low, &fake_charset,
-					   &c1, &c2);
-	      if (NILP (fake_charset))
-		warn_when_safe (Qunicode, Qwarning,
-				"Out of range Big5 codepoint 0x%x in "
-				"translation file %s:\n%s",
-				cp1, XSTRING_DATA (filename), line);
+	      if (big5)
+		{
+		  Lisp_Object fake_charset;
+		  int c1, c2;
+		  big5_char_to_fake_codepoint (cp1high, cp1low, &fake_charset,
+					       &c1, &c2);
+		  if (NILP (fake_charset))
+		    warn_when_safe (Qunicode, Qwarning,
+				    "Out of range Big5 codepoint 0x%x in "
+				    "translation file %s:\n%s",
+				    cp1, XSTRING_DATA (filename), line);
+		  else
+		    set_unicode_conversion (cp2, fake_charset, c1, c2);
+		}
 	      else
-		set_unicode_conversion (cp2, fake_charset, c1, c2);
-	    }
-	  else
 #endif /* not UNICODE_INTERNAL */
-	    {
-	      int l1, l2, h1, h2;
-	      int c1 = cp1high, c2 = cp1low;
+		{
+		  int l1, l2, h1, h2;
+		  int c1 = cp1high, c2 = cp1low;
 
-	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
-
-	      if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
-		goto out_of_range;
-
-	      set_unicode_conversion (cp2, charset, c1, c2);
+		  get_charset_limits (charset, &l1, &l2, &h1, &h2);
+		  
+		  if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
+		    goto out_of_range;
+		  
+		  set_unicode_conversion (cp2, charset, c1, c2);
+		}
 	    }
 	}
     }
