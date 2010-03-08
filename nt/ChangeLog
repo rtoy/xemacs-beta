@@ -1,3 +1,8 @@
+2010-03-08  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak (batch_test_emacs): The test harness no longer
+	resides in $(testdir), per Ben's changes of 2010-02-22.
+
 2010-03-02  Jerry James  <james@xemacs.org>
 
 	* xemacs.mak (INFO_FILES): Removed custom.info.

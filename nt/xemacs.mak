@@ -1658,7 +1658,7 @@ info:	makeinfo-test $(INFO_FILES)
 ########################### Automated tests
 
 testdir = ../tests/automated
-batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testdir)
 
 check:
 	cd $(BLDSRC)
