@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Case_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object downcase_table;
   Lisp_Object upcase_table;
   Lisp_Object case_canon_table;
@@ -38,7 +38,7 @@ struct Lisp_Case_Table
 };
 typedef struct Lisp_Case_Table Lisp_Case_Table;
   
-DECLARE_LRECORD (case_table, Lisp_Case_Table);
+DECLARE_LISP_OBJECT (case_table, Lisp_Case_Table);
 #define XCASE_TABLE(x) XRECORD (x, case_table, Lisp_Case_Table)
 #define wrap_case_table(p) wrap_record (p, case_table)
 #define CASE_TABLEP(x) RECORDP (x, case_table)

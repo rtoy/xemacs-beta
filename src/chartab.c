@@ -130,11 +130,10 @@ mark_char_subtable (Lisp_Object obj)
   return XCHAR_SUBTABLE (obj)->ptr[0];
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("char-subtable", char_subtable,
-			       1, /*dumpable-flag*/
-                               mark_char_subtable, internal_object_printer,
-			       0, 0, 0, char_subtable_description,
-			       Lisp_Char_Subtable);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("char-subtable", char_subtable,
+				      mark_char_subtable,
+				      char_subtable_description,
+				      Lisp_Char_Subtable);
 
 
 /************************************************************************/
@@ -881,13 +880,11 @@ static const struct memory_description char_table_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
-			       1, /*dumpable-flag*/
-                               mark_char_table, print_char_table,
-			       0,
-			       char_table_equal, char_table_hash,
-			       char_table_description,
-			       Lisp_Char_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("char-table", char_table,
+			     mark_char_table, print_char_table, 0,
+			     char_table_equal, char_table_hash,
+			     char_table_description,
+			     Lisp_Char_Table);
 
 /* WARNING: All functions of this nature need to be written extremely
    carefully to avoid crashes during GC.  Cf. prune_specifiers()
@@ -1146,11 +1143,10 @@ sorts of values.  The different char table types are
 */
        (type))
 {
-  Lisp_Char_Table *ct;
-  Lisp_Object obj;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
+  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   enum char_table_type ty = symbol_to_char_table_type (type);
 
-  ct = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ct->type = ty;
   obj = wrap_char_table (ct);
   ct->table = Qunbound;
@@ -1194,7 +1190,8 @@ as CHAR-TABLE.  The values will not themselves be copied.
 #ifdef MIRROR_TABLE
   assert (!ct->mirror_table_p);
 #endif
-  ctnew = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
+  obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
+  ctnew = XCHAR_TABLE (obj);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
@@ -1948,8 +1945,8 @@ word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2)
 void
 syms_of_chartab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (char_table);
-  INIT_LRECORD_IMPLEMENTATION (char_subtable);
+  INIT_LISP_OBJECT (char_table);
+  INIT_LISP_OBJECT (char_subtable);
 
 #ifdef MULE
   DEFSYMBOL (Qcategory_table_p);

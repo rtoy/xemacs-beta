@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct Lisp_Devmode Lisp_Devmode;
 
 
-DECLARE_LRECORD (devmode, Lisp_Devmode);
+DECLARE_LISP_OBJECT (devmode, Lisp_Devmode);
 #define XDEVMODE(x) XRECORD (x, devmode, Lisp_Devmode)
 #define wrap_devmode(p) wrap_record (p, devmode)
 #define DEVMODEP(x) RECORDP (x, devmode)
@@ -210,7 +210,7 @@ EXFUN (Fmswindows_set_charset_code_page, 2);
 
 struct mswindows_dialog_id;
 
-DECLARE_LRECORD (mswindows_dialog_id, struct mswindows_dialog_id);
+DECLARE_LISP_OBJECT (mswindows_dialog_id, struct mswindows_dialog_id);
 #define XMSWINDOWS_DIALOG_ID(x) XRECORD (x, mswindows_dialog_id, struct mswindows_dialog_id)
 #define wrap_mswindows_dialog_id(p) wrap_record (p, mswindows_dialog_id)
 #define MSWINDOWS_DIALOG_IDP(x) RECORDP (x, mswindows_dialog_id)

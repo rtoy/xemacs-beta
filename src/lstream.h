@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 /*                     definition of Lstream object                     */
 /************************************************************************/
 
-DECLARE_LRECORD (lstream, struct lstream);
+DECLARE_LISP_OBJECT (lstream, struct lstream);
 #define XLSTREAM(x) XRECORD (x, lstream, struct lstream)
 #define wrap_lstream(p) wrap_record (p, lstream)
 #define LSTREAMP(x) RECORDP (x, lstream)
@@ -230,7 +230,7 @@ typedef struct lstream_implementation
 
 struct lstream
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   const Lstream_implementation *imp; /* methods for this stream */
   Lstream_buffering buffering; /* type of buffering in use */
   Bytecount buffering_size; /* number of bytes buffered */

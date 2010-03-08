@@ -220,12 +220,11 @@ static const struct memory_description range_table_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
-			       1, /*dumpable-flag*/
-                               mark_range_table, print_range_table, 0,
-			       range_table_equal, range_table_hash,
-			       range_table_description,
-			       Lisp_Range_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("range-table", range_table,
+			     mark_range_table, print_range_table, 0,
+			     range_table_equal, range_table_hash,
+			     range_table_description,
+			     Lisp_Range_Table);
 
 /************************************************************************/
 /*                        Range table operations                        */
@@ -332,11 +331,11 @@ Range tables allow you to efficiently set values for ranges of integers.
 */
        (type))
 {
-  Lisp_Range_Table *rt = ALLOC_LCRECORD_TYPE (Lisp_Range_Table,
-					      &lrecord_range_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
+  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   rt->entries = Dynarr_new (range_table_entry);
   rt->type = range_table_symbol_to_type (type);
-  return wrap_range_table (rt);
+  return obj;
 }
 
 DEFUN ("copy-range-table", Fcopy_range_table, 1, 1, 0, /*
@@ -347,17 +346,19 @@ The values will not themselves be copied.
        (range_table))
 {
   Lisp_Range_Table *rt, *rtnew;
+  Lisp_Object obj;
 
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
 
-  rtnew = ALLOC_LCRECORD_TYPE (Lisp_Range_Table, &lrecord_range_table);
+  obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
+  rtnew = XRANGE_TABLE (obj);
   rtnew->entries = Dynarr_new (range_table_entry);
   rtnew->type = rt->type;
 
   Dynarr_add_many (rtnew->entries, Dynarr_begin (rt->entries),
 		   Dynarr_length (rt->entries));
-  return wrap_range_table (rtnew);
+  return obj;
 }
 
 DEFUN ("get-range-table", Fget_range_table, 2, 3, 0, /*
@@ -902,7 +903,7 @@ unified_range_table_get_range (void *unrangetab, int offset,
 void
 syms_of_rangetab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (range_table);
+  INIT_LISP_OBJECT (range_table);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qrange_tablep);
   DEFSYMBOL (Qrange_table);

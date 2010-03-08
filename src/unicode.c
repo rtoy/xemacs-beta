@@ -1459,12 +1459,9 @@ mark_precedence_array (Lisp_Object obj)
 }
 
 static void
-finalize_precedence_array (void *header, int for_disksave)
+finalize_precedence_array (Lisp_Object obj)
 {
-  struct precedence_array *data = (struct precedence_array *) header;
-
-  if (for_disksave)
-    return;
+  struct precedence_array *data = XPRECEDENCE_ARRAY (obj);
 
   if (data->precdyn)
     {
@@ -1513,23 +1510,19 @@ print_precedence_array (Lisp_Object obj, Lisp_Object printcharfun,
    clearing out any places where they otherwise would occur and recreating
    them when starting up again. */
 
-DEFINE_LRECORD_IMPLEMENTATION ("precedence-array", precedence_array,
-			       0, /*dumpable-flag*/
-                               mark_precedence_array, print_precedence_array,
-			       finalize_precedence_array, 0, 0, 
-			       precedence_array_description,
-			       struct precedence_array);
+DEFINE_NODUMP_LISP_OBJECT ("precedence-array", precedence_array,
+			   mark_precedence_array, print_precedence_array,
+			   finalize_precedence_array, 0, 0, 
+			   precedence_array_description,
+			   struct precedence_array);
 
 /******************** Basic precedence-array functions *******************/
 
 Lisp_Object
 allocate_precedence_array (void)
 {
-  Lisp_Object precedence_array;
-  struct precedence_array *data =
-    ALLOC_LCRECORD_TYPE (struct precedence_array, &lrecord_precedence_array);
-
-  precedence_array = wrap_precedence_array (data);
+  Lisp_Object precedence_array = ALLOC_NORMAL_LISP_OBJECT (precedence_array);
+  struct precedence_array *data = XPRECEDENCE_ARRAY (precedence_array);
   data->precdyn = Dynarr_new (Lisp_Object);
   return precedence_array;
 }
@@ -1624,7 +1617,7 @@ free_precedence_array (Lisp_Object precarray)
 #endif /* ERROR_CHECK_TEXT */
   if (!gc_in_progress)
     /* Will abort if you try to free a Lisp object during GC */
-    FREE_LCRECORD (precarray);
+    free_normal_lisp_object (precarray);
 }
 
 /******************** External precedence-list functions *******************/
@@ -3711,7 +3704,7 @@ void
 syms_of_unicode (void)
 {
 #ifdef MULE
-  INIT_LRECORD_IMPLEMENTATION (precedence_array);
+  INIT_LISP_OBJECT (precedence_array);
 
   DEFSUBR (Fset_default_unicode_precedence_list);
   DEFSUBR (Fdefault_unicode_precedence_list);

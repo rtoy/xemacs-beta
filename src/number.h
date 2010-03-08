@@ -71,12 +71,12 @@ Boston, MA 02111-1301, USA.  */
 
 struct Lisp_Bignum
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bignum data;
 };
 typedef struct Lisp_Bignum Lisp_Bignum;
 
-DECLARE_LRECORD (bignum, Lisp_Bignum);
+DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 #define XBIGNUM(x) XRECORD (x, bignum, Lisp_Bignum)
 #define wrap_bignum(p) wrap_record (p, bignum)
 #define BIGNUMP(x) RECORDP (x, bignum)
@@ -159,12 +159,12 @@ EXFUN (Foddp, 1);
 
 struct Lisp_Ratio
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   ratio data;
 };
 typedef struct Lisp_Ratio Lisp_Ratio;
 
-DECLARE_LRECORD (ratio, Lisp_Ratio);
+DECLARE_LISP_OBJECT (ratio, Lisp_Ratio);
 #define XRATIO(x) XRECORD (x, ratio, Lisp_Ratio)
 #define wrap_ratio(p) wrap_record (p, ratio)
 #define RATIOP(x) RECORDP (x, ratio)
@@ -233,12 +233,12 @@ EXFUN (Fdenominator, 1);
 #ifdef HAVE_BIGFLOAT
 struct Lisp_Bigfloat
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bigfloat bf;
 };
 typedef struct Lisp_Bigfloat Lisp_Bigfloat;
 
-DECLARE_LRECORD (bigfloat, Lisp_Bigfloat);
+DECLARE_LISP_OBJECT (bigfloat, Lisp_Bigfloat);
 #define XBIGFLOAT(x) XRECORD (x, bigfloat, Lisp_Bigfloat)
 #define wrap_bigfloat(p) wrap_record (p, bigfloat)
 #define BIGFLOATP(x) RECORDP (x, bigfloat)

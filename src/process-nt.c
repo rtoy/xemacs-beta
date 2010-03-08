@@ -656,9 +656,8 @@ nt_alloc_process_data (Lisp_Process *p)
 }
 
 static void
-nt_finalize_process_data (Lisp_Process *p, int for_disksave)
+nt_finalize_process_data (Lisp_Process *p)
 {
-  assert (!for_disksave);
   /* If it's still in the list of processes we are waiting on delete
      it.  This can happen if we forcibly delete a process and are unable
      to kill it. */
@@ -1159,7 +1158,7 @@ nt_deactivate_process (Lisp_Process *p,
      of handles when lots of processes are run. (The handle gets closed
      anyway upon GC, but that might be a ways away, esp. if
      deleted-exited-processes is set to nil.) */
-  nt_finalize_process_data (p, 0);
+  nt_finalize_process_data (p);
 }
 
 /*

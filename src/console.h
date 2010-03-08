@@ -79,7 +79,7 @@ enum device_metrics
 
 struct console;
 
-DECLARE_LRECORD (console, struct console);
+DECLARE_LISP_OBJECT (console, struct console);
 #define XCONSOLE(x) XRECORD (x, console, struct console)
 #define wrap_console(p) wrap_record (p, console)
 #define CONSOLEP(x) RECORDP (x, console)

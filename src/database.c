@@ -1,6 +1,6 @@
 /* Database access routines
    Copyright (C) 1996, William M. Perry
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -147,7 +147,7 @@ typedef struct
 
 struct Lisp_Database
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object fname;
   int mode;
   int access_;
@@ -180,7 +180,8 @@ struct Lisp_Database
 static Lisp_Database *
 allocate_database (void)
 {
-  Lisp_Database *db = ALLOC_LCRECORD_TYPE (Lisp_Database, &lrecord_database);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (database);
+  Lisp_Database *db = XDATABASE (obj);
 
   db->fname = Qnil;
   db->live_p = 0;
@@ -235,25 +236,18 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_database (void *header, int for_disksave)
+finalize_database (Lisp_Object obj)
 {
-  Lisp_Database *db = (Lisp_Database *) header;
+  Lisp_Database *db = XDATABASE (obj);
 
-  if (for_disksave)
-    {
-      invalid_operation
-	("Can't dump an emacs containing database objects",
-	 wrap_database (db));
-    }
   db->funcs->close (db);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("database", database,
-			       0, /*dumpable-flag*/
-                               mark_database, print_database,
-			       finalize_database, 0, 0, 
-			       database_description,
-			       Lisp_Database);
+DEFINE_NODUMP_LISP_OBJECT ("database", database,
+			   mark_database, print_database,
+			   finalize_database, 0, 0, 
+			   database_description,
+			   Lisp_Database);
 
 DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
 Close database DATABASE.
@@ -860,7 +854,7 @@ each key and value in the database.
 void
 syms_of_database (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (database);
+  INIT_LISP_OBJECT (database);
 
   DEFSYMBOL (Qdatabasep);
 #ifdef HAVE_DBM

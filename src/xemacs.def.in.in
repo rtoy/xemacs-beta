@@ -36,7 +36,8 @@ EXPORTS
 /* Exported functions */
 acons
 #ifdef NEW_GC
-alloc_lrecord			/* alloc_lrecord_type */
+alloc_lrecord			/* ALLOC_LISP_OBJECT */
+alloc_sized_lrecord		/* ALLOC_SIZED_LISP_OBJECT */
 lrecord_subr			/* DEFSUBR */
 lrecord_symbol_value_forward	/* DEFVAR_SYMVAL_FWD */
 #ifdef DEBUG_XEMACS
@@ -44,7 +45,8 @@ mcpro_1				/* mcpro */
 #endif
 mc_alloc			/* DEFSUBR */
 #else /* not NEW_GC */
-alloc_automanaged_lcrecord	/* old_alloc_lcrecord_type */
+alloc_automanaged_lcrecord	/* ALLOC_LISP_OBJECT */
+old_alloc_sized_lcrecord	/* ALLOC_SIZED_LISP_OBJECT */
 #endif /* not NEW_GC */
 apply1
 #ifdef USE_ASSERTIONS
@@ -128,6 +130,7 @@ error_check_string
 error_check_string_direct_data
 error_check_string_indirect_data
 #endif
+error_check_symbol_value_forward
 #endif /* XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS */
 free_opaque_ptr
 get_coding_system_for_text_file
