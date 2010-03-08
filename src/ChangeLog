@@ -1,3 +1,10 @@
+2010-03-08  Ben Wing  <ben@xemacs.org>
+
+	* unicode.c:
+	Support ranges of charset codepoints mapping onto ranges of
+	Unicode codepoints.  Necessary in order to integrate GNU Emacs
+	mapping tables.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* file-coding.c (output_bytes_in_ascii_and_hex):
