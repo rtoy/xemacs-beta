@@ -421,17 +421,8 @@ Where the new table already has an entry, nothing is copied from the old one."
   ;; check for inheritance.
   (map-char-table
    #'(lambda (key value)
-       (let ((newval (get-range-char-table key new 'multi)))
-	 (cond ((eq newval 'multi)	; OK, dive into the class hierarchy
-		(map-char-table
-		 #'(lambda (key1 value1)
-		     (when (eq ?@ (char-syntax-from-code
-				   (get-range-char-table key new ?@)))
-		       (put-char-table key1 value new))
-		     nil)
-		 new
-		 key))
-	       ((eq ?@ (char-syntax-from-code newval)) ;; class at once
+       (let ((newval (get-char-table key new)))
+	 (cond ((eq ?@ (char-syntax-from-code newval)) ;; class at once
 		(put-char-table key value new))))
        nil)
    old))

@@ -1,11 +1,11 @@
-;;; mule-coding.el --- Coding-system functions for Mule. -*- coding: iso-2022-7bit; -*-
+;;; mule-coding.el --- Coding-system functions for Mule.
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2005 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -157,6 +157,20 @@ The allowable range of REGISTER is 0 through 3."
 (define-coding-system-alias 'iso-2022-7 'iso-2022-7bit)
 
 (make-coding-system
+ 'iso-2022-8bit-preserve 'iso2022
+ "ISO 2022 8-bit, ISO-2022-preserving"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-1
+   short t
+   iso2022-preserve t
+   mnemonic "ISO8-Preserve"
+   documentation "ISO-2022-based 8-bit encoding with I/O preservation.
+This uses private Unicode characters, as necessary, to preserve the particular
+ISO-2022 charset upon output.  This will make such characters unusable
+in normal editing."
+   ))
+
+(make-coding-system
  'iso-2022-8 'iso2022
  "ISO-2022 8-bit"
  '(charset-g0 ascii
@@ -222,13 +236,9 @@ Analogous to `define-translation-table', but updates
 ;; Ideally this would be in latin.el, but code-init.el uses it.
 (make-coding-system
  'iso-8859-1 
- 'fixed-width
+ 'multibyte
  "ISO-8859-1 (Latin-1)"
- (eval-when-compile
-   `(unicode-map 
-     ,(loop
-        for i from #x80 to #xff
-        collect (list i (int-char i))) ;; Identical to Latin-1.
-     mnemonic "Latin 1"
-     documentation "The most used encoding of Western Europe and the Americas."
-     aliases (iso-latin-1 latin-1))))
+ '(charsets (ascii control-1 latin-iso8859-1)
+   mnemonic "Latin 1"
+   documentation "The most used encoding of Western Europe and the Americas."
+   aliases (iso-latin-1 latin-1)))
