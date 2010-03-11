@@ -1,3 +1,10 @@
+2010-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* setup-paths.el (paths-find-emacs-roots)
+	(paths-construct-info-path):
+	Pass :from-end t to the delete-duplicates calls in these
+	functions, now the compiler macro no longer defaults it to t.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* disp-table.el:
