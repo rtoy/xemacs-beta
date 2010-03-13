@@ -148,7 +148,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #define MARKED_SLOT(x) Lisp_Object x;
 #include "keymap-slots.h"
 };
@@ -284,14 +284,14 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   /* This function can GC */
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
-		    (long) XINT (Fkeymap_fullness (obj)), keymap->header.uid);
+		    (long) XINT (Fkeymap_fullness (obj)), NORMAL_LISP_OBJECT_UID (keymap));
 }
 
 static const struct memory_description keymap_description[] = {
@@ -300,12 +300,11 @@ static const struct memory_description keymap_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
-			       1, /*dumpable-flag*/
-                               mark_keymap, print_keymap, 0,
-			       keymap_equal, keymap_hash,
-			       keymap_description,
-			       Lisp_Keymap);
+DEFINE_DUMPABLE_LISP_OBJECT ("keymap", keymap,
+			     mark_keymap, print_keymap, 0,
+			     keymap_equal, keymap_hash,
+			     keymap_description,
+			     Lisp_Keymap);
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */
@@ -777,10 +776,8 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (Elemcount size)
 {
-  Lisp_Object result;
-  Lisp_Keymap *keymap = ALLOC_LCRECORD_TYPE (Lisp_Keymap, &lrecord_keymap);
-
-  result = wrap_keymap (keymap);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (keymap);
+  Lisp_Keymap *keymap = XKEYMAP (obj);
 
 #define MARKED_SLOT(x) keymap->x = Qnil;
 #include "keymap-slots.h"
@@ -795,7 +792,7 @@ make_keymap (Elemcount size)
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
 			      HASH_TABLE_EQ);
     }
-  return result;
+  return obj;
 }
 
 DEFUN ("make-keymap", Fmake_keymap, 0, 1, 0, /*
@@ -4295,7 +4292,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 void
 syms_of_keymap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (keymap);
+  INIT_LISP_OBJECT (keymap);
 
   DEFSYMBOL (Qminor_mode_map_alist);
 

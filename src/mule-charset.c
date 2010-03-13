@@ -1,7 +1,7 @@
 /* Functions to handle multilingual characters.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -141,7 +141,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Charset *cs = XCHARSET (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord
+    printing_unreadable_lisp_object
       (obj, XSTRING_DATA (XSYMBOL (XCHARSET_NAME (obj))->name));
 
   write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S", 4,
@@ -158,7 +158,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
 		    CHARSET_GRAPHIC (cs),
 		    CHARSET_FINAL (cs));
   print_internal (CHARSET_REGISTRIES (cs), printcharfun, 0);
-  write_fmt_string (printcharfun, " 0x%x>", cs->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (cs));
 }
 
 static const struct memory_description charset_description[] = {
@@ -178,10 +178,9 @@ static const struct memory_description charset_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-			       1, /* dumpable flag */
-                               mark_charset, print_charset, 0,
-			       0, 0, charset_description, Lisp_Charset);
+DEFINE_DUMPABLE_LISP_OBJECT ("charset", charset,
+			     mark_charset, print_charset, 0,
+			     0, 0, charset_description, Lisp_Charset);
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object
@@ -196,8 +195,8 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
 
   if (!overwrite)
     {
-      cs = ALLOC_LCRECORD_TYPE (Lisp_Charset, &lrecord_charset);
-      obj = wrap_charset (cs);
+      obj = ALLOC_NORMAL_LISP_OBJECT (charset);
+      cs = XCHARSET (obj);
 
       if (final)
 	{
@@ -1000,9 +999,8 @@ static void
 compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 		      struct overhead_stats *ovstats)
 {
-  struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (c, sizeof (*c), ovstats);
+  stats->other   += lisp_object_storage_size (charset, ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }
@@ -1055,7 +1053,7 @@ represents all the memory concerned.
 void
 syms_of_mule_charset (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (charset);
+  INIT_LISP_OBJECT (charset);
 
   DEFSUBR (Fcharsetp);
   DEFSUBR (Ffind_charset);

@@ -49,18 +49,16 @@ static const struct memory_description tty_device_data_description_1 [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("tty-device", tty_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       tty_device_data_description_1,
-			       Lisp_Tty_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("tty-device", tty_device,
+				      0, tty_device_data_description_1,
+				      Lisp_Tty_Device);
 #endif /* NEW_GC */
 
 static void
 allocate_tty_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct tty_device, &lrecord_tty_device);
+  d->device_data = XTTY_DEVICE (ALLOC_NORMAL_LISP_OBJECT (tty_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct tty_device);
 #endif /* not NEW_GC */
@@ -208,7 +206,7 @@ void
 syms_of_device_tty (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (tty_device);
+  INIT_LISP_OBJECT (tty_device);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qmake_device_early_tty_entry_point);

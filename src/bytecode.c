@@ -1,7 +1,7 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,22 +65,21 @@ static Lisp_Object
 make_compiled_function_args (int totalargs)
 {
   Lisp_Compiled_Function_Args *args;
-  args = (Lisp_Compiled_Function_Args *) 
-    alloc_lrecord 
-    (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
-				   Lisp_Object, args, totalargs),
-     &lrecord_compiled_function_args);
+  args = XCOMPILED_FUNCTION_ARGS
+    (ALLOC_SIZED_LISP_OBJECT 
+     (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				    Lisp_Object, args, totalargs),
+      compiled_function_args));
   args->size = totalargs;
   return wrap_compiled_function_args (args);
 }
 
 static Bytecount
-size_compiled_function_args (const void *lheader)
+size_compiled_function_args (Lisp_Object obj)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
 				       Lisp_Object, args,
-				       ((Lisp_Compiled_Function_Args *) 
-					lheader)->size);
+				       XCOMPILED_FUNCTION_ARGS (obj)->size);
 }
 
 static const struct memory_description compiled_function_args_description[] = {
@@ -90,13 +89,12 @@ static const struct memory_description compiled_function_args_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("compiled-function-args",
-					compiled_function_args,
-					1, /*dumpable-flag*/
-					0, 0, 0, 0, 0,
-					compiled_function_args_description,
-					size_compiled_function_args,
-					Lisp_Compiled_Function_Args);
+DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT ("compiled-function-args",
+					      compiled_function_args,
+					      0,
+					      compiled_function_args_description,
+					      size_compiled_function_args,
+					      Lisp_Compiled_Function_Args);
 #endif /* NEW_GC */
 
 EXFUN (Ffetch_bytecode, 1);
@@ -2374,14 +2372,13 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("compiled-function", compiled_function,
+					mark_compiled_function,
+					print_compiled_function, 0,
+					compiled_function_equal,
+					compiled_function_hash,
+					compiled_function_description,
+					Lisp_Compiled_Function);
 
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
@@ -2756,9 +2753,9 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 void
 syms_of_bytecode (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (compiled_function);
+  INIT_LISP_OBJECT (compiled_function);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (compiled_function_args);
+  INIT_LISP_OBJECT (compiled_function_args);
 #endif /* NEW_GC */
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);

@@ -1,7 +1,7 @@
 /* device functions for mswindows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -75,11 +75,9 @@ static const struct memory_description mswindows_device_data_description_1 [] = 
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("mswindows-device", mswindows_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       mswindows_device_data_description_1,
-			       Lisp_Mswindows_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("mswindows-device", mswindows_device,
+				      0, mswindows_device_data_description_1,
+				      Lisp_Mswindows_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_device_data_description;
 
@@ -96,11 +94,9 @@ static const struct memory_description msprinter_device_data_description_1 [] = 
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("msprinter-device", msprinter_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       msprinter_device_data_description_1,
-			       Lisp_Msprinter_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("msprinter-device", msprinter_device,
+				      0, msprinter_device_data_description_1,
+				      Lisp_Msprinter_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description msprinter_device_data_description;
 
@@ -166,8 +162,7 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_one_device (d);
 
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct mswindows_device,
-				       &lrecord_mswindows_device);
+  d->device_data = XMSWINDOWS_DEVICE (ALLOC_NORMAL_LISP_OBJECT (mswindows_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct mswindows_device);
 #endif /* not NEW_GC */
@@ -523,8 +518,7 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   Extbyte *printer_name;
 
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct msprinter_device,
-				       &lrecord_msprinter_device);
+  d->device_data = XMSPRINTER_DEVICE (ALLOC_NORMAL_LISP_OBJECT (msprinter_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct msprinter_device);
 #endif /* not NEW_GC */
@@ -671,7 +665,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 	     suffix. */
 	  Ibyte new_connext[20];
 
-	  qxesprintf (new_connext, ":%X", d->header.uid);
+	  qxesprintf (new_connext, ":%X", NORMAL_LISP_OBJECT_UID (d));
 	  new_connection = concat2 (devname, build_istring (new_connext));
 	}
       DEVICE_CONNECTION (d) = new_connection;
@@ -1154,28 +1148,19 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<msprinter-settings");
   if (!NILP (dm->printer_name))
     write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
   if (!NILP (dm->device))
     write_fmt_string_lisp (printcharfun, " (currently on %s)", 1, dm->device);
-  write_fmt_string (printcharfun, " 0x%x>", dm->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (dm));
 }
 
 static void
-finalize_devmode (void *header, int for_disksave)
+finalize_devmode (Lisp_Object obj)
 {
-  Lisp_Devmode *dm = (Lisp_Devmode *) header;
-
-  if (for_disksave)
-    {
-      Lisp_Object devmode = wrap_devmode (dm);
-
-      invalid_operation
-	("Cannot dump XEmacs containing an msprinter-settings object",
-	 devmode);
-    }
+  Lisp_Devmode *dm = XDEVMODE (obj);
 
   assert (NILP (dm->device));
 }
@@ -1209,20 +1194,19 @@ hash_devmode (Lisp_Object obj, int depth)
 		internal_hash (dm->printer_name, depth + 1));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("msprinter-settings", devmode,
-			       0, /*dumpable-flag*/
-			       mark_devmode, print_devmode, finalize_devmode,
-			       equal_devmode, hash_devmode, 
-			       devmode_description,
-			       Lisp_Devmode);
+DEFINE_NODUMP_LISP_OBJECT ("msprinter-settings", devmode,
+			   mark_devmode, print_devmode,
+			   finalize_devmode,
+			   equal_devmode, hash_devmode, 
+			   devmode_description,
+			   Lisp_Devmode);
 
 static Lisp_Object
 allocate_devmode (DEVMODEW* src_devmode, int do_copy,
 		  Lisp_Object src_name, struct device *d)
 {
-  Lisp_Devmode *dm;
-
-  dm = ALLOC_LCRECORD_TYPE (Lisp_Devmode, &lrecord_devmode);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (devmode);
+  Lisp_Devmode *dm = XDEVMODE (obj);
 
   if (d)
     dm->device = wrap_device (d);
@@ -1241,7 +1225,7 @@ allocate_devmode (DEVMODEW* src_devmode, int do_copy,
       dm->devmode = src_devmode;
     }
 
-  return wrap_devmode (dm);
+  return obj;
 }
 
 DEFUN ("msprinter-settings-copy", Fmsprinter_settings_copy, 1, 1, 0, /*
@@ -1377,11 +1361,11 @@ values.  Return value is nil if there are no printers installed.
 void
 syms_of_device_mswindows (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (devmode);
+  INIT_LISP_OBJECT (devmode);
 
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (mswindows_device);
-  INIT_LRECORD_IMPLEMENTATION (msprinter_device);
+  INIT_LISP_OBJECT (mswindows_device);
+  INIT_LISP_OBJECT (msprinter_device);
 #endif /* NEW_GC */
 
   DEFSUBR (Fmsprinter_get_settings);

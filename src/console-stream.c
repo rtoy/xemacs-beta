@@ -54,11 +54,9 @@ static const struct memory_description stream_console_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("stream-console", stream_console,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       stream_console_data_description_1,
-			       Lisp_Stream_Console);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("stream-console", stream_console,
+				      0, stream_console_data_description_1,
+				      Lisp_Stream_Console);
 #else /* not NEW_GC */
 const struct sized_memory_description stream_console_data_description = {
   sizeof (struct stream_console), stream_console_data_description_1
@@ -73,8 +71,8 @@ stream_init_console (struct console *con, Lisp_Object UNUSED (params))
 
 #ifdef NEW_GC
   if (CONSOLE_STREAM_DATA (con) == NULL)
-    CONSOLE_STREAM_DATA (con) = alloc_lrecord_type (struct stream_console,
-						    &lrecord_stream_console);
+    CONSOLE_STREAM_DATA (con) =
+      XSTREAM_CONSOLE (ALLOC_NORMAL_LISP_OBJECT (stream_console));
 #else /* not NEW_GC */
   if (CONSOLE_STREAM_DATA (con) == NULL)
     CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);

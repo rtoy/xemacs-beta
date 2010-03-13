@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with gtk, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
    Copyright (C) 2000 William Perry.
 
 This file is part of XEmacs.
@@ -85,8 +85,6 @@ gboolean emacs_gtk_event_handler (GtkWidget *wid /* unused */,
 				  gpointer closure /* unused */);
 
 static int last_quit_check_signal_tick_count;
-
-Lisp_Object Qsans_modifiers;
 
 /*
  * Identify if the keysym is a modifier.  This implementation mirrors x.org's
@@ -1616,7 +1614,6 @@ emacs_gtk_force_event_pending (struct frame* UNUSED (f))
 void
 syms_of_event_gtk (void)
 {
-  DEFSYMBOL (Qsans_modifiers);
 }
 
 void

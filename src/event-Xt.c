@@ -134,8 +134,6 @@ void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
 
 static int last_quit_check_signal_tick_count;
 
-Lisp_Object Qsans_modifiers;
-
 #define THIS_IS_X
 #include "event-xlike-inc.c"
 
@@ -3044,8 +3042,6 @@ emacs_Xt_event_add_widget_actions (XtAppContext ctx)
 void
 syms_of_event_Xt (void)
 {
-  DEFSYMBOL (Qsans_modifiers);
-  DEFSYMBOL (Qself_insert_command);
 }
 
 void

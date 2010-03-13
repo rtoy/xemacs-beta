@@ -188,7 +188,7 @@ enum eol_type
 
 struct Lisp_Coding_System
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   struct coding_system_methods *methods;
 
 #define CODING_SYSTEM_SLOT_DECLARATION
@@ -208,7 +208,7 @@ struct Lisp_Coding_System
 };
 typedef struct Lisp_Coding_System Lisp_Coding_System;
 
-DECLARE_LRECORD (coding_system, Lisp_Coding_System);
+DECLARE_LISP_OBJECT (coding_system, Lisp_Coding_System);
 #define XCODING_SYSTEM(x) XRECORD (x, coding_system, Lisp_Coding_System)
 #define wrap_coding_system(p) wrap_record (p, coding_system)
 #define CODING_SYSTEMP(x) RECORDP (x, coding_system)
@@ -363,14 +363,13 @@ struct coding_system_methods
      stick around until GC time. (File handles can also be closed when EOF
      is signalled; but some data must stick around after this point, for
      the benefit of canonicalize_after_coding.  See the convert method.)
-     Called only once (NOT called at disksave time).  Optional. */
+     Called only once.  Optional. */
   void (*finalize_coding_stream_method) (struct coding_stream *str);
 
   /* Finalize method: Clean up type-specific data (e.g. free allocated
      data) attached to the coding system (i.e. in struct
      TYPE_coding_system), when the coding system is about to be garbage
-     collected. (Currently not called.) Called only once (NOT called at
-     disksave time).  Optional. */
+     collected. (Currently not called.) Called only once.  Optional. */
   void (*finalize_method) (Lisp_Object codesys);
 
   /* Conversion end type method: Does this coding system encode bytes ->
@@ -807,8 +806,7 @@ struct detector
   void (*detect_method) (struct detection_state *st,
 			 const unsigned char *src, Bytecount n);
   /* Finalize detection state method: Clean up any allocated data in the
-     detection state.  Called only once (NOT called at disksave time).
-     Optional. */
+     detection state.  Called only once. Optional. */
   void (*finalize_detection_state_method) (struct detection_state *st);
 };
 

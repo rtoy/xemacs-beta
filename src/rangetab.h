@@ -49,13 +49,13 @@ enum range_table_type
 
 struct Lisp_Range_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   range_table_entry_dynarr *entries;
   enum range_table_type type;
 };
 typedef struct Lisp_Range_Table Lisp_Range_Table;
 
-DECLARE_LRECORD (range_table, Lisp_Range_Table);
+DECLARE_LISP_OBJECT (range_table, Lisp_Range_Table);
 #define XRANGE_TABLE(x) XRECORD (x, range_table, Lisp_Range_Table)
 #define wrap_range_table(p) wrap_record (p, range_table)
 #define RANGE_TABLEP(x) RECORDP (x, range_table)

@@ -992,7 +992,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
@@ -1108,20 +1108,19 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain), print_image_instance,
 		 (ii, printcharfun, escapeflag));
-  write_fmt_string (printcharfun, " 0x%x>", ii->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (ii));
 }
 
 static void
-finalize_image_instance (void *header, int for_disksave)
+finalize_image_instance (Lisp_Object obj)
 {
-  Lisp_Image_Instance *i = (Lisp_Image_Instance *) header;
+  Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
 
   /* objects like this exist at dump time, so don't bomb out. */
   if (IMAGE_INSTANCE_TYPE (i) == IMAGE_NOTHING
       ||
       NILP (IMAGE_INSTANCE_DEVICE (i)))
     return;
-  if (for_disksave) finalose (i);
 
   /* We can't use the domain here, because it might have
      disappeared. */
@@ -1314,21 +1313,19 @@ image_instance_hash (Lisp_Object obj, int depth)
 		 0));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
-			       0, /*dumpable-flag*/
-			       mark_image_instance, print_image_instance,
-			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash,
-			       image_instance_description,
-			       Lisp_Image_Instance);
+DEFINE_NODUMP_LISP_OBJECT ("image-instance", image_instance,
+			   mark_image_instance, print_image_instance,
+			   finalize_image_instance, image_instance_equal,
+			   image_instance_hash,
+			   image_instance_description,
+			   Lisp_Image_Instance);
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 			 Lisp_Object instantiator)
 {
-  Lisp_Image_Instance *lp =
-    ALLOC_LCRECORD_TYPE (Lisp_Image_Instance, &lrecord_image_instance);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (image_instance);
+  Lisp_Image_Instance *lp = XIMAGE_INSTANCE (obj);
 
   /* It's not possible to simply keep a record of the domain in which
      the instance was instantiated. This is because caching may mean
@@ -1351,10 +1348,9 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
   /* So that layouts get done. */
   lp->layout_changed = 1;
 
-  val = wrap_image_instance (lp);
   MARK_GLYPHS_CHANGED;
 
-  return val;
+  return obj;
 }
 
 static enum image_instance_type
@@ -1994,7 +1990,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
      device-specific method to copy the window-system subobject. */
   new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
-  COPY_LCRECORD (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
+  copy_lisp_object (new_, image_instance);
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
@@ -3711,11 +3707,11 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Glyph *glyph = XGLYPH (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
   write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);
-  write_fmt_string (printcharfun, "0x%x>", glyph->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (glyph));
 }
 
 /* Glyphs are equal if all of their display attributes are equal.  We
@@ -3822,14 +3818,14 @@ static const struct memory_description glyph_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
-					  1, /*dumpable-flag*/
-					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash,
-					  glyph_description,
-					  glyph_getprop, glyph_putprop,
-					  glyph_remprop, glyph_plist,
-					  Lisp_Glyph);
+DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("glyph", glyph,
+				     mark_glyph, print_glyph, 0,
+				     glyph_equal, glyph_hash,
+				     glyph_description,
+				     glyph_getprop, glyph_putprop,
+				     glyph_remprop, glyph_plist,
+				     0 /* no disksaver */,
+				     Lisp_Glyph);
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -3837,8 +3833,8 @@ allocate_glyph (enum glyph_type type,
 				      Lisp_Object locale))
 {
   /* This function can GC */
-  Lisp_Object obj = Qnil;
-  Lisp_Glyph *g = ALLOC_LCRECORD_TYPE (Lisp_Glyph, &lrecord_glyph);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (glyph);
+  Lisp_Glyph *g = XGLYPH (obj);
 
   g->type = type;
   g->image = Fmake_specifier (Qimage); /* This function can GC */
@@ -3884,7 +3880,6 @@ allocate_glyph (enum glyph_type type,
     g->face = Qnil;
     g->plist = Qnil;
     g->after_change = after_change;
-    obj = wrap_glyph (g);
 
     set_image_attached_to (g->image, obj, Qimage);
     UNGCPRO;
@@ -4554,7 +4549,7 @@ unmap_subwindow_instance_cache_mapper (Lisp_Object UNUSED (key),
 	  XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))
 	    = delq_no_quit (value,
 			    XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f)));
-	  finalize_image_instance (XIMAGE_INSTANCE (value), 0);
+	  finalize_image_instance (value);
 	}
     }
   return 0;
@@ -4657,7 +4652,7 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
       struct expose_ignore *ei;
 
 #ifdef NEW_GC
-      ei = alloc_lrecord_type (struct expose_ignore, &lrecord_expose_ignore);
+      ei = XEXPOSE_IGNORE (ALLOC_NORMAL_LISP_OBJECT (expose_ignore));
 #else /* not NEW_GC */
       ei = Blocktype_alloc (the_expose_ignore_blocktype);
 #endif /* not NEW_GC */
@@ -5194,8 +5189,8 @@ disable_glyph_animated_timeout (int i)
 void
 syms_of_glyphs (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (glyph);
-  INIT_LRECORD_IMPLEMENTATION (image_instance);
+  INIT_LISP_OBJECT (glyph);
+  INIT_LISP_OBJECT (image_instance);
 
   /* image instantiators */
 

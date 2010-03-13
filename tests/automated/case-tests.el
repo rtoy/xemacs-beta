@@ -109,10 +109,10 @@
 		"¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿àáâãäåæçèéêëìíîïğñòóôõö×øùúûüışßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ÷ØÙÚÛÜİŞÿ"))
        (table (standard-case-table)))
   (dotimes (i 256)
-    (Assert-eq (get-case-table 'downcase (int-to-char i) table)
-		(aref downcase-string i))
-    (Assert-eq (get-case-table 'upcase (int-to-char i) table)
-		(aref upcase-string i))))
+    (Assert (eq (get-case-table 'downcase (int-to-char i) table)
+		(aref downcase-string i)))
+    (Assert (eq (get-case-table 'upcase (int-to-char i) table)
+		(aref upcase-string i)))))
 
 (Check-Error-Message error "Char case must be downcase or upcase"
 		     (get-case-table 'foo ?a (standard-case-table)))
@@ -1507,19 +1507,19 @@ For example, if CH is ?\\u00F1, the return value will be the string
 	;; using downcase and upcase, however, won't necessarily work in
 	;; the presence of such mappings -- that's what the internal canon
 	;; and eqv tables are for.
-	(Assert-equalp lowermulti uppermulti)
-	(Assert-equalp loweruppermulti upperlowermulti)
-	(Assert-equal lower (downcase upper))
-	(Assert-equal upper (upcase lower))
-	(Assert-equal (downcase lower) (downcase (downcase lower)))
-	(Assert-equal (upcase lowerupper) (upcase upperlower))
-	(Assert-equal (downcase lowerupper) (downcase upperlower))
+	(Assert (equalp lowermulti uppermulti))
+	(Assert (equalp loweruppermulti upperlowermulti))
+	(Assert (equal lower (downcase upper)))
+	(Assert (equal upper (upcase lower)))
+	(Assert (equal (downcase lower) (downcase (downcase lower))))
+	(Assert (equal (upcase lowerupper) (upcase upperlower)))
+	(Assert (equal (downcase lowerupper) (downcase upperlower)))
 	;; Individually -- we include multi-mappings since we're using
 	;; `equalp'.
 	(loop
 	  for (uc lc) in uni-mappings do
-	  (Assert-equalp uc lc)
-	  (Assert-equalp (string uc) (string lc)))
+	  (Assert (equalp uc lc))
+	  (Assert (equalp (string uc) (string lc))))
 	)
 
       ;; Here we include multi-mappings -- searching should be able to
@@ -1532,14 +1532,14 @@ For example, if CH is ?\\u00F1, the return value will be the string
 				   (,upperlowermulti ,loweruppermulti))
 	  do
 	  (erase-buffer)
-	  (Assert= (point-min) 1)
-	  (Assert= (point) 1)
+	  (Assert (= (point-min) 1))
+	  (Assert (= (point) 1))
 	  (insert str1)
 	  (let ((point (point))
 		(case-fold-search t))
-	    (Assert= (length str1) (1- point))
+	    (Assert (= (length str1) (1- point)))
 	    (goto-char (point-min))
-	    (Assert-eql (search-forward str2 nil t) point)))
+	    (Assert (eql (search-forward str2 nil t) point))))
 	(loop for (uc lc) in uni-mappings do
 	  (loop for (ch1 ch2) in `((,uc ,lc)
 				   (,lc ,uc))
@@ -1549,8 +1549,8 @@ For example, if CH is ?\\u00F1, the return value will be the string
 	    (insert ch1)
 	    (insert ?1)
 	    (goto-char (point-min))
-	    (Assert-eql (search-forward (char-to-string ch2) nil t) 3
-			(format "Case-folded searching doesn't equate %s and %s"
-				(char-as-unicode-escape ch1)
-				(char-as-unicode-escape ch2))))))
+	    (Assert (eql (search-forward (char-to-string ch2) nil t) 3)
+		    (format "Case-folded searching doesn't equate %s and %s"
+			    (char-as-unicode-escape ch1)
+			    (char-as-unicode-escape ch2))))))
       )))

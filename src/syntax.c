@@ -259,11 +259,9 @@ static const struct memory_description syntax_cache_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       syntax_cache_description_1,
-			       Lisp_Syntax_Cache);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("syntax-cache", syntax_cache,
+				      0, syntax_cache_description_1,
+				      Lisp_Syntax_Cache);
 #else /* not NEW_GC */
 
 const struct sized_memory_description syntax_cache_description = {
@@ -523,8 +521,7 @@ init_buffer_syntax_cache (struct buffer *buf)
 {
   struct syntax_cache *cache;
 #ifdef NEW_GC
-  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
-					  &lrecord_syntax_cache);
+  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
   buf->syntax_cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */
@@ -2393,7 +2390,7 @@ void
 syms_of_syntax (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (syntax_cache);
+  INIT_LISP_OBJECT (syntax_cache);
 #endif /* NEW_GC */
   DEFSYMBOL (Qsyntax_table_p);
   DEFSYMBOL (Qsyntax_table);

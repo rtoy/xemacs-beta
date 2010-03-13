@@ -28,12 +28,12 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct Lisp_Opaque
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Bytecount size;
   max_align_t data[1];
 } Lisp_Opaque;
 
-DECLARE_LRECORD (opaque, Lisp_Opaque);
+DECLARE_LISP_OBJECT (opaque, Lisp_Opaque);
 #define XOPAQUE(x) XRECORD (x, opaque, Lisp_Opaque)
 #define wrap_opaque(p) wrap_record (p, opaque)
 #define OPAQUEP(x) RECORDP (x, opaque)
@@ -54,11 +54,11 @@ Lisp_Object make_opaque (const void *data, Bytecount size);
 
 typedef struct Lisp_Opaque_Ptr
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   void *ptr;
 } Lisp_Opaque_Ptr;
 
-DECLARE_LRECORD (opaque_ptr, Lisp_Opaque_Ptr);
+DECLARE_LISP_OBJECT (opaque_ptr, Lisp_Opaque_Ptr);
 #define XOPAQUE_PTR(x) XRECORD (x, opaque_ptr, Lisp_Opaque_Ptr)
 #define wrap_opaque_ptr(p) wrap_record (p, opaque_ptr)
 #define OPAQUE_PTRP(x) RECORDP (x, opaque_ptr)

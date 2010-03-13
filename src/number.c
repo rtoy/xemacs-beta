@@ -1,5 +1,6 @@
 /* Numeric types for XEmacs.
    Copyright (C) 2004 Jerry James.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -60,13 +61,14 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bignum_finalize (void *header, int for_disksave)
+bignum_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Bignum *num = (struct Lisp_Bignum *) header;
-      bignum_fini (num->data);
-    }
+  struct Lisp_Bignum *num = XBIGNUM (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  bignum_fini (num->data);
 }
 #define BIGNUM_FINALIZE bignum_finalize
 #else
@@ -122,10 +124,10 @@ static const struct memory_description bignum_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 1, 0, bignum_print,
-				     BIGNUM_FINALIZE, bignum_equal,
-				     bignum_hash, bignum_description,
-				     Lisp_Bignum);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bignum", bignum, 0, bignum_print,
+					BIGNUM_FINALIZE, bignum_equal,
+					bignum_hash, bignum_description,
+					Lisp_Bignum);
 
 #endif /* HAVE_BIGNUM */
 
@@ -153,13 +155,14 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-ratio_finalize (void *header, int for_disksave)
+ratio_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Ratio *num = (struct Lisp_Ratio *) header;
-      ratio_fini (num->data);
-    }
+  struct Lisp_Ratio *num = XRATIO (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  ratio_fini (num->data);
 }
 #define RATIO_FINALIZE ratio_finalize
 #else
@@ -184,9 +187,9 @@ static const struct memory_description ratio_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
-				     RATIO_FINALIZE, ratio_equal, ratio_hash,
-				     ratio_description, Lisp_Ratio);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("ratio", ratio, 0, ratio_print,
+				      RATIO_FINALIZE, ratio_equal, ratio_hash,
+				      ratio_description, Lisp_Ratio);
 
 #endif /* HAVE_RATIO */
 
@@ -258,13 +261,14 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bigfloat_finalize (void *header, int for_disksave)
+bigfloat_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Bigfloat *num = (struct Lisp_Bigfloat *) header;
-      bigfloat_fini (num->bf);
-    }
+  struct Lisp_Bigfloat *num = XBIGFLOAT (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  bigfloat_fini (num->bf);
 }
 #define BIGFLOAT_FINALIZE bigfloat_finalize
 #else
@@ -289,10 +293,10 @@ static const struct memory_description bigfloat_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
-				     bigfloat_print, BIGFLOAT_FINALIZE,
-				     bigfloat_equal, bigfloat_hash,
-				     bigfloat_description, Lisp_Bigfloat);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
+					bigfloat_print, BIGFLOAT_FINALIZE,
+					bigfloat_equal, bigfloat_hash,
+					bigfloat_description, Lisp_Bigfloat);
 
 #endif /* HAVE_BIGFLOAT */
 
@@ -762,13 +766,13 @@ void
 syms_of_number (void)
 {
 #ifdef HAVE_BIGNUM
-  INIT_LRECORD_IMPLEMENTATION (bignum);
+  INIT_LISP_OBJECT (bignum);
 #endif
 #ifdef HAVE_RATIO
-  INIT_LRECORD_IMPLEMENTATION (ratio);
+  INIT_LISP_OBJECT (ratio);
 #endif
 #ifdef HAVE_BIGFLOAT
-  INIT_LRECORD_IMPLEMENTATION (bigfloat);
+  INIT_LISP_OBJECT (bigfloat);
 #endif
 
   /* Type predicates */

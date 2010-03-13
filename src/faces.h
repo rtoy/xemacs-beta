@@ -35,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Face
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object name;
   Lisp_Object doc_string;
@@ -121,7 +121,7 @@ typedef struct face_cachel face_cachel;
 struct face_cachel
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former
@@ -240,7 +240,7 @@ struct face_cachel
 #ifdef NEW_GC
 typedef struct face_cachel Lisp_Face_Cachel;
 
-DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
+DECLARE_LISP_OBJECT (face_cachel, Lisp_Face_Cachel);
 
 #define XFACE_CACHEL(x) \
   XRECORD (x, face_cachel, Lisp_Face_Cachel)
@@ -250,7 +250,7 @@ DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
 #define CONCHECK_FACE_CACHEL(x) CONCHECK_RECORD (x, face_cachel)
 #endif /* NEW_GC */
 
-DECLARE_LRECORD (face, Lisp_Face);
+DECLARE_LISP_OBJECT (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
 #define wrap_face(p) wrap_record (p, face)
 #define FACEP(x) RECORDP (x, face)
