@@ -280,8 +280,8 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Object the_specs;
 
   if (print_readably)
-    printing_unreadable_object ("#<%s-specifier 0x%x>",
-				sp->methods->name, sp->header.uid);
+    printing_unreadable_object_fmt ("#<%s-specifier 0x%x>",
+				sp->methods->name, NORMAL_LISP_OBJECT_UID (sp));
 
   write_fmt_string (printcharfun, "#<%s-specifier global=", sp->methods->name);
 #if 0
@@ -302,7 +302,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
       write_fmt_string_lisp (printcharfun, " fallback=%S", 1, sp->fallback);
     }
   unbind_to (count);
-  write_fmt_string (printcharfun, " 0x%x>", sp->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (sp));
 }
 
 #ifndef NEW_GC

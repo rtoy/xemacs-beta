@@ -3088,7 +3088,9 @@ struct Lisp_String
       struct
 	{
 	  /* WARNING: Everything before ascii_begin must agree exactly with
-	     struct lrecord_header */
+	     struct lrecord_header. (Actually, the `free' field in old-GC
+	     overlaps with ascii_begin there; we can get away with this
+	     because in old-GC the `free' field is used only for lcrecords. */
 	  unsigned int type :8;
 #ifdef NEW_GC
 	  unsigned int lisp_readonly :1;
@@ -3938,7 +3940,6 @@ Lisp_Object,Lisp_Object,Lisp_Object
       1, /* mark bit */							\
       1, /* c_readonly bit */						\
       1, /* lisp_readonly bit */					\
-      0  /* unused */                                                   \
     },									\
     min_args,								\
     max_args,								\
@@ -3958,7 +3959,6 @@ Lisp_Object,Lisp_Object,Lisp_Object
       1, /* mark bit */							\
       1, /* c_readonly bit */						\
       1, /* lisp_readonly bit */					\
-      0  /* unused */                                                   \
     },									\
     min_args,								\
     max_args,								\
@@ -5876,10 +5876,10 @@ void internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			      int UNUSED (escapeflag));
 void external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			      int UNUSED (escapeflag));
-MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
+MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object_fmt (const CIbyte *,
 							      ...))
        PRINTF_ARGS (1, 2);
-DECLARE_DOESNT_RETURN (printing_unreadable_lcrecord (Lisp_Object obj,
+DECLARE_DOESNT_RETURN (printing_unreadable_lisp_object (Lisp_Object obj,
 						     const Ibyte *name));
 
 /* Defined in rangetab.c */

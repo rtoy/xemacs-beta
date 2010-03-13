@@ -130,7 +130,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
   Lisp_LDAP *ldap = XLDAP (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<ldap %s>", XSTRING_DATA (ldap->host));
+    printing_unreadable_object_fmt ("#<ldap %s>", XSTRING_DATA (ldap->host));
 
   write_fmt_string_lisp (printcharfun, "#<ldap %S", 1, ldap->host);
   if (!ldap->ld)

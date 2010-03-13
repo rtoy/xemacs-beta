@@ -693,9 +693,9 @@ print_gui_item (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Gui_Item *g = XGUI_ITEM (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string (printcharfun, "#<gui-item 0x%x>", g->header.uid);
+  write_fmt_string (printcharfun, "#<gui-item 0x%x>", NORMAL_LISP_OBJECT_UID (g));
 }
 
 Lisp_Object

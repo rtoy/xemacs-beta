@@ -665,7 +665,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 	     suffix. */
 	  Ibyte new_connext[20];
 
-	  qxesprintf (new_connext, ":%X", d->header.uid);
+	  qxesprintf (new_connext, ":%X", NORMAL_LISP_OBJECT_UID (d));
 	  new_connection = concat2 (devname, build_istring (new_connext));
 	}
       DEVICE_CONNECTION (d) = new_connection;
@@ -1148,13 +1148,13 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<msprinter-settings");
   if (!NILP (dm->printer_name))
     write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
   if (!NILP (dm->device))
     write_fmt_string_lisp (printcharfun, " (currently on %s)", 1, dm->device);
-  write_fmt_string (printcharfun, " 0x%x>", dm->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (dm));
 }
 
 static void

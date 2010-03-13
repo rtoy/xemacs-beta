@@ -5275,8 +5275,8 @@ or out of a function; instead, a @samp{Lisp_Object} should be passed or
 returned (created using @samp{wrap_<type>}, if necessary).
 
 @c #### declaration
-@item DECLARE_LRECORD (<type>, Lisp_<Type>)
-Declares an @samp{lrecord} for @samp{<Type>}, which is the unit of
+@item DECLARE_LISP_OBJECT (<type>, Lisp_<Type>)
+Declares a Lisp object for @samp{<Type>}, which is the unit of
 allocation.
 
 @item #define X<TYPE>(x) XRECORD (x, <type>, Lisp_<Type>)
@@ -5342,24 +5342,24 @@ named @var{foo}:
 
 @enumerate
 @item
-create @var{foo}.h
+Create @var{foo}.h
 @item
-create @var{foo}.c
+Create @var{foo}.c
 @item
-add definitions of @code{syms_of_@var{foo}}, etc. to @file{@var{foo}.c}
+Add definitions of @code{syms_of_@var{foo}}, etc. to @file{@var{foo}.c}
 @item
-add declarations of @code{syms_of_@var{foo}}, etc. to @file{symsinit.h}
+Add declarations of @code{syms_of_@var{foo}}, etc. to @file{symsinit.h}
 @item
-add calls to @code{syms_of_@var{foo}}, etc. to @file{emacs.c}
+Add calls to @code{syms_of_@var{foo}}, etc. to @file{emacs.c}
 @item
-add definitions of macros like @code{CHECK_@var{FOO}} and
+Add definitions of macros like @code{CHECK_@var{FOO}} and
 @code{@var{FOO}P} to @file{@var{foo}.h}
 @item
-add the new type index to @code{enum lrecord_type}
+Add the new type index to @code{enum lrecord_type}
 @item
-add a DEFINE_LRECORD_IMPLEMENTATION call to @file{@var{foo}.c}
+Add a @code{DEFINE_*_LISP_OBJECT()} to @file{@var{foo}.c}
 @item
-add an INIT_LRECORD_IMPLEMENTATION call to @code{syms_of_@var{foo}.c}
+Add an @code{INIT_LISP_OBJECT} call to @code{syms_of_@var{foo}.c}
 @end enumerate
 
 
@@ -5842,11 +5842,12 @@ functions a gcc bug, but the gcc maintainers disagree.
 @cindex inline functions, headers
 @cindex header files, inline functions
 Every header which contains inline functions, either directly by using
-@code{DECLARE_INLINE_HEADER} or indirectly by using @code{DECLARE_LRECORD} must
-be added to @file{inline.c}'s includes to make the optimization
-described above work.  (Optimization note: if all INLINE_HEADER
-functions are in fact inlined in all translation units, then the linker
-can just discard @code{inline.o}, since it contains only unreferenced code).
+@code{DECLARE_INLINE_HEADER} or indirectly by using
+@code{DECLARE_LISP_OBJECT} must be added to @file{inline.c}'s includes
+to make the optimization described above work.  (Optimization note: if
+all INLINE_HEADER functions are in fact inlined in all translation
+units, then the linker can just discard @code{inline.o}, since it
+contains only unreferenced code).
 
 The three golden rules of macros:
 
@@ -8551,10 +8552,7 @@ Frob-block lrecords just have a @code{struct lrecord_header} at their
 beginning.  lcrecords, however, actually have a
 @code{struct old_lcrecord_header}.  This, in turn, has a @code{struct
 lrecord_header} at its beginning, so sanity is preserved; but it also
-has a pointer used to chain all lcrecords together, and a special ID
-field used to distinguish one lcrecord from another. (This field is used
-only for debugging and could be removed, but the space gain is not
-significant.)
+has a pointer used to chain all lcrecords together.
 
 @strong{lcrecords are now obsolete when using the write-barrier-based
 collector.}

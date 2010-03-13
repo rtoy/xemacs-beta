@@ -284,14 +284,14 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   /* This function can GC */
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
-		    (long) XINT (Fkeymap_fullness (obj)), keymap->header.uid);
+		    (long) XINT (Fkeymap_fullness (obj)), NORMAL_LISP_OBJECT_UID (keymap));
 }
 
 static const struct memory_description keymap_description[] = {

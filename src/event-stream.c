@@ -1119,7 +1119,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
   op = XCAR (rest);
   timeout = XTIMEOUT (op);
   /* We make sure to snarf the data out of the timeout object before
-     we free it with free_managed_lcrecord(). */
+     we free it with free_normal_lisp_object(). */
   id = timeout->id;
   *function = timeout->function;
   *object = timeout->object;

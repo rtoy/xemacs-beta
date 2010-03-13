@@ -62,7 +62,7 @@ Lisp_Object Qcharacter_of_keysym, Qascii_character;
 /*                       definition of event object                     */
 /************************************************************************/
 
-/* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
+/* #### Ad-hoc hack.  Should be part of DEFINE_*_GENERAL_LISP_OBJECT. */
 void
 clear_event_resource (void)
 {
@@ -91,12 +91,7 @@ deinitialize_event (Lisp_Object ev)
 void
 zero_event (Lisp_Event *e)
 {
-  /* Preserve the old UID for this event, for tracking it */
-  unsigned int old_uid = e->lheader.uid;
-
-  xzero (*e);
-  set_lheader_implementation (&e->lheader, &lrecord_event);
-  e->lheader.uid = old_uid;
+  zero_nonsized_lisp_object (wrap_event (e));
   set_event_type (e, empty_event);
   SET_EVENT_CHANNEL (e, Qnil);
   SET_EVENT_NEXT (e, Qnil);
@@ -313,7 +308,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_object ("#<event>");
+    printing_unreadable_object_fmt ("#<event>");
 
   switch (XEVENT (obj)->event_type)
     {

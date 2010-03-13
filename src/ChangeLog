@@ -1,3 +1,126 @@
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (alloc_sized_lrecord_1):
+	* alloc.c (alloc_sized_lrecord_array):
+	* alloc.c (old_alloc_sized_lcrecord):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (mark_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (sweep_lcrecords_1):
+	* buffer.c (print_buffer):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* casetab.c:
+	* casetab.c (print_case_table):
+	* console.c (print_console):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* data.c (print_weak_list):
+	* data.c (print_weak_box):
+	* data.c (print_ephemeron):
+	* data.c (ephemeron_equal):
+	* database.c (print_database):
+	* database.c (finalize_database):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c:
+	* elhash.c (print_hash_table):
+	* eval.c (print_subr):
+	* eval.c (print_multiple_value):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* events.c (clear_event_resource):
+	* events.c (zero_event):
+	* events.c (print_event):
+	* extents.c:
+	* extents.c (print_extent):
+	* file-coding.c (print_coding_system):
+	* font-mgr.c:
+	* font-mgr.c (Ffc_init):
+	* frame.c:
+	* frame.c (print_frame):
+	* gc.c:
+	* gc.c (GC_CHECK_NOT_FREE):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* gui.c (print_gui_item):
+	* gui.c (copy_gui_item):
+	* keymap.c (print_keymap):
+	* keymap.c (MARKED_SLOT):
+	* lisp.h:
+	* lisp.h (struct Lisp_String):
+	* lisp.h (DEFUN):
+	* lisp.h (DEFUN_NORETURN):
+	* lrecord.h:
+	* lrecord.h (NORMAL_LISP_OBJECT_UID):
+	* lrecord.h (struct lrecord_header):
+	* lrecord.h (set_lheader_implementation):
+	* lrecord.h (struct old_lcrecord_header):
+	* lrecord.h (struct free_lcrecord_header):
+	* marker.c (print_marker):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* objects.c (finalize_font_instance):
+	* print.c (print_cons):
+	* print.c (printing_unreadable_object_fmt):
+	* print.c (printing_unreadable_lisp_object):
+	* print.c (external_object_printer):
+	* print.c (internal_object_printer):
+	* print.c (debug_p4):
+	* print.c (ext_print_begin):
+	* process.c (print_process):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* scrollbar.c (free_scrollbar_instance):
+	* specifier.c (print_specifier):
+	* specifier.c (finalize_specifier):
+	* symbols.c (guts_of_unbound_marker):
+	* symeval.h:
+	* symeval.h (DEFVAR_SYMVAL_FWD):
+	* tooltalk.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* ui-gtk.c (ffi_object_printer):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* window.c (print_window):
+	* window.c (free_window_mirror):
+	* window.c (debug_print_window):
+	* xemacs.def.in.in:
+	(1) printing_unreadable_object -> printing_unreadable_object_fmt.
+	(2) printing_unreadable_lcrecord -> printing_unreadable_lisp_object
+	    and fix up so it no longer requires an lcrecord.
+
+	These previous changes eliminate most of the remaining places where
+	the terms `lcrecord' and `lrecord' occurred outside of specialized
+	code.
+
+	(3) Fairly major change: Reduce the number of words in an lcrecord
+	from 3 to 2.  The third word consisted of a uid that duplicated the
+	lrecord uid, and a single free bit, which was moved into the lrecord
+	structure.  This reduces the size of the `uid' slot from 21 bits to
+	20 bits.  Arguably this isn't enough -- we could easily have more than
+	1,000,000 or so objects created in a session.  The answer is
+	   (a) It doesn't really matter if we overflow the uid field because
+	       it's only used for debugging, to identify an object uniquely
+	       (or pretty much so).
+	   (b) If we cared about it overflowing and wanted to reduce this,
+	       we could make it so that cons, string, float and certain other
+	       frob-block types that never print out the uid simply don't
+	       store a uid in them and don't increment the lrecord_uid_counter.
+
+	(4) In conjunction with (3), create new macro NORMAL_LISP_OBJECT_UID()
+	    and use it to abstract out the differences between NEWGC and old-GC
+	    in accessing the `uid' value from a "normal Lisp Object pointer".
+
+	(5) In events.c, use zero_nonsized_lisp_object() in place of custom-
+	    written equivalent.  In font-mgr.c use external_object_printer()
+	    in place of custom-written equivalents.
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* number.c (bignum_finalize):

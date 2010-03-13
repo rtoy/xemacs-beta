@@ -104,16 +104,6 @@ finalize_fc_pattern (Lisp_Object obj)
     }
 }
 
-static void
-print_fc_pattern (Lisp_Object obj, Lisp_Object printcharfun,
-		  int UNUSED(escapeflag))
-{
-  struct fc_pattern *c = XFC_PATTERN (obj);
-  if (print_readably)
-    printing_unreadable_object ("#<fc-pattern 0x%x>", c->header.uid);
-  write_fmt_string (printcharfun, "#<fc-pattern 0x%x>", c->header.uid);
-}
-
 /* #### We really need an equal method and a hash method (required if you
    have an equal method).  For the equal method, we can probably use one
    or both of
@@ -144,7 +134,7 @@ static const struct memory_description fcpattern_description [] = {
 };
 
 DEFINE_NODUMP_LISP_OBJECT ("fc-pattern", fc_pattern,
-			   0, print_fc_pattern, finalize_fc_pattern,
+			   0, external_object_printer, finalize_fc_pattern,
 			   0, 0, fcpattern_description,
 			   struct fc_pattern);
 
@@ -1106,24 +1096,14 @@ finalize_fc_config (Lisp_Object obj)
   p->fccfgPtr = 0;
 }
 
-static void
-print_fc_config (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED(escapeflag))
-{
-  struct fc_config *c = XFC_CONFIG (obj);
-  if (print_readably)
-    printing_unreadable_object ("#<fc-config 0x%x>", c->header.uid);
-  write_fmt_string (printcharfun, "#<fc-config 0x%x>", c->header.uid);
-}
-
 static const struct memory_description fcconfig_description [] = {
   /* #### nothing here, is this right?? */
   { XD_END }
 };
 
 DEFINE_NODUMP_LISP_OBJECT ("fc-config", fc_config,
-			   0, print_fc_config, finalize_fc_config, 0, 0,
-			   fcconfig_description,
+			   0, external_object_printer, finalize_fc_config,
+			   0, 0, fcconfig_description,
 			   struct fc_config);
 
 DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
