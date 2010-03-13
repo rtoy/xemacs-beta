@@ -1,6 +1,7 @@
 ;;; -*- coding: iso-8859-1 -*-
 
 ;; Copyright (C) 2000, 2002, 2003 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Yoshiki Hayashi  <yoshiki@xemacs.org>
 ;; Maintainer: Stephen J. Turnbull <stephen@xemacs.org>
@@ -96,40 +97,40 @@
   ;; forward
   (goto-char (point-min))
   ;; Avoid trivial regexp.
-  (Assert-eq 2 (re-search-forward "ä\\|a" nil t))
+  (Assert (eq 2 (re-search-forward "ä\\|a" nil t)))
   (goto-char (point-min))
-  (Assert-eq 2 (re-search-forward "Ä\\|a" nil t))
+  (Assert (eq 2 (re-search-forward "Ä\\|a" nil t)))
   (goto-char (1+ (point-min)))
-  (Assert-eq 3 (re-search-forward "ä\\|a" nil t))
+  (Assert (eq 3 (re-search-forward "ä\\|a" nil t)))
   (goto-char (1+ (point-min)))
-  (Assert-eq 3 (re-search-forward "Ä\\|a" nil t))
+  (Assert (eq 3 (re-search-forward "Ä\\|a" nil t)))
   ;; backward
   (goto-char (point-max))
-  (Assert-eq 2 (re-search-backward "ä\\|a" nil t))
+  (Assert (eq 2 (re-search-backward "ä\\|a" nil t)))
   (goto-char (point-max))
-  (Assert-eq 2 (re-search-backward "Ä\\|a" nil t))
+  (Assert (eq 2 (re-search-backward "Ä\\|a" nil t)))
   (goto-char (1- (point-max)))
-  (Assert-eq 1 (re-search-backward "ä\\|a" nil t))
+  (Assert (eq 1 (re-search-backward "ä\\|a" nil t)))
   (goto-char (1- (point-max)))
-  (Assert-eq 1 (re-search-backward "Ä\\|a" nil t))
+  (Assert (eq 1 (re-search-backward "Ä\\|a" nil t)))
   ;; case sensitive
   (setq case-fold-search nil)
   ;; forward
   (goto-char (point-min))
-  (Assert-eq 2 (re-search-forward "ä\\|a" nil t))
+  (Assert (eq 2 (re-search-forward "ä\\|a" nil t)))
   (goto-char (point-min))
-  (Assert-eq 3 (re-search-forward "Ä\\|a" nil t))
+  (Assert (eq 3 (re-search-forward "Ä\\|a" nil t)))
   (goto-char (1+ (point-min)))
   (Assert (not (re-search-forward "ä\\|a" nil t)))
   (goto-char (1+ (point-min)))
-  (Assert-eq 3 (re-search-forward "Ä\\|a" nil t))
+  (Assert (eq 3 (re-search-forward "Ä\\|a" nil t)))
   ;; backward
   (goto-char (point-max))
-  (Assert-eq 1 (re-search-backward "ä\\|a" nil t))
+  (Assert (eq 1 (re-search-backward "ä\\|a" nil t)))
   (goto-char (point-max))
-  (Assert-eq 2 (re-search-backward "Ä\\|a" nil t))
+  (Assert (eq 2 (re-search-backward "Ä\\|a" nil t)))
   (goto-char (1- (point-max)))
-  (Assert-eq 1 (re-search-backward "ä\\|a" nil t))
+  (Assert (eq 1 (re-search-backward "ä\\|a" nil t)))
   (goto-char (1- (point-max)))
   (Assert (not (re-search-backward "Ä\\|a" nil t))))
 
@@ -217,25 +218,25 @@ baaaa
   (forward-line 1)
   (Assert (not (looking-at "^[a]\\{3,5\\}$")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "a\\{4,4\\}"))
+  (Assert (= 12 (re-search-forward "a\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "b?a\\{4,4\\}"))
+  (Assert (= 12 (re-search-forward "b?a\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 31 (re-search-forward "ba\\{4,4\\}"))
+  (Assert (= 31 (re-search-forward "ba\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 31 (re-search-forward "[b]a\\{4,4\\}"))
+  (Assert (= 31 (re-search-forward "[b]a\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 31 (re-search-forward "\\(b\\)a\\{4,4\\}"))
+  (Assert (= 31 (re-search-forward "\\(b\\)a\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "^a\\{4,4\\}"))
+  (Assert (= 12 (re-search-forward "^a\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "^a\\{4,4\\}$"))
+  (Assert (= 12 (re-search-forward "^a\\{4,4\\}$")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "[a]\\{4,4\\}"))
+  (Assert (= 12 (re-search-forward "[a]\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "^[a]\\{4,4\\}"))
+  (Assert (= 12 (re-search-forward "^[a]\\{4,4\\}")))
   (goto-char (point-min))
-  (Assert= 12 (re-search-forward "^[a]\\{4,4\\}$"))
+  (Assert (= 12 (re-search-forward "^[a]\\{4,4\\}$")))
   )
 
 ;; charset, charset_not
@@ -315,15 +316,15 @@ baaaa
   (Assert (string= (match-string 1) nil)))
 
 ;; Test word boundaries
-(Assert= (string-match "\\<a" " a") 1)
-(Assert= (string-match "a\\>" "a ") 0)
-(Assert= (string-match "\\ba" " a") 1)
-(Assert= (string-match "a\\b" "a ") 0)
+(Assert (= (string-match "\\<a" " a") 1))
+(Assert (= (string-match "a\\>" "a ") 0))
+(Assert (= (string-match "\\ba" " a") 1))
+(Assert (= (string-match "a\\b" "a ") 0))
 ;; should work at target boundaries
-(Assert= (string-match "\\<a" "a") 0)
-(Assert= (string-match "a\\>" "a") 0)
-(Assert= (string-match "\\ba" "a") 0)
-(Assert= (string-match "a\\b" "a") 0)
+(Assert (= (string-match "\\<a" "a") 0))
+(Assert (= (string-match "a\\>" "a") 0))
+(Assert (= (string-match "\\ba" "a") 0))
+(Assert (= (string-match "a\\b" "a") 0))
 ;; Check for weirdness
 (Assert (not (string-match " \\> " "  ")))
 (Assert (not (string-match " \\< " "  ")))
@@ -351,17 +352,17 @@ baaaa
 	  (ch1 (make-char 'japanese-jisx0208 51 65)))
       (Assert (not (string-match "A" (string ch0))))
       (Assert (not (string-match "[A]" (string ch0))))
-      (Assert-eq (string-match "[^A]" (string ch0)) 0)
+      (Assert (eq (string-match "[^A]" (string ch0)) 0))
       (Assert (not (string-match "@A" (string ?@ ch0))))
       (Assert (not (string-match "@[A]" (string ?@ ch0))))
-      (Assert-eq (string-match "@[^A]" (string ?@ ch0)) 0)
+      (Assert (eq (string-match "@[^A]" (string ?@ ch0)) 0))
       (Assert (not (string-match "@?A" (string ?@ ch0))))
       (Assert (not (string-match "A" (string ch1))))
       (Assert (not (string-match "[A]" (string ch1))))
-      (Assert-eq (string-match "[^A]" (string ch1)) 0)
+      (Assert (eq (string-match "[^A]" (string ch1)) 0))
       (Assert (not (string-match "@A" (string ?@ ch1))))
       (Assert (not (string-match "@[A]" (string ?@ ch1))))
-      (Assert-eq (string-match "@[^A]" (string ?@ ch1)) 0)
+      (Assert (eq (string-match "@[^A]" (string ?@ ch1)) 0))
       (Assert (not (string-match "@?A" (string ?@ ch1))))
       )
   )
@@ -408,24 +409,24 @@ baaaa
 ;; fix submitted by sjt 2004-09-08
 ;; trailing comments are values from buggy 21.4.15
 (let ((text "abc"))
-  (Assert-eq 0 (string-match "\\(?:ab+\\)*c" text))	; 2
-  (Assert-eq 0 (string-match "^\\(?:ab+\\)*c" text))	; nil
-  (Assert-eq 0 (string-match "^\\(?:ab+\\)*" text))	; 0
-  (Assert-eq 0 (string-match "^\\(?:ab+\\)c" text))	; 0
-  (Assert-eq 0 (string-match "^\\(?:ab\\)*c" text))	; 0
-  (Assert-eq 0 (string-match "^\\(?:a+\\)*b" text))	; nil
-  (Assert-eq 0 (string-match "^\\(?:a\\)*b" text))	; 0
+  (Assert (eq 0 (string-match "\\(?:ab+\\)*c" text)))	; 2
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)*c" text)))	; nil
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)*" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)c" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:ab\\)*c" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:a+\\)*b" text)))	; nil
+  (Assert (eq 0 (string-match "^\\(?:a\\)*b" text)))	; 0
 )
 
 ;; per Steve Youngs 2004-09-30 <microsoft-free.87ekkjhj7t.fsf@youngs.au.com>
 ;; fix submitted by sjt 2004-10-07
 ;; trailing comments are values from buggy 21.4.pre16
 (let ((text "abc"))
-  (Assert-eq 0 (string-match "\\(?:a\\(b\\)\\)" text))	; 0
+  (Assert (eq 0 (string-match "\\(?:a\\(b\\)\\)" text)))	; 0
   (Assert (string= (match-string 1 text) "b"))			; ab
   (Assert (null (match-string 2 text)))				; b
   (Assert (null (match-string 3 text)))				; nil
-  (Assert-eq 0 (string-match "\\(?:a\\(?:b\\(c\\)\\)\\)" text))	; 0
+  (Assert (eq 0 (string-match "\\(?:a\\(?:b\\(c\\)\\)\\)" text)))	; 0
   (Assert (string= (match-string 1 text) "c"))			; abc
   (Assert (null (match-string 2 text)))				; ab
   (Assert (null (match-string 3 text)))				; c
@@ -440,7 +441,7 @@ baaaa
       (re2 "\\(?:a\\)\\(b\\)\\1")
       (re3 "\\(a\\)\\(?:b\\)\\1"))
 
-  (Assert-eq 0 (string-match re0 text1))
+  (Assert (eq 0 (string-match re0 text1)))
   (Assert (string= text1 (match-string 0 text1)))
   (Assert (string= "a" (match-string 1 text1)))
   (Assert (string= "b" (match-string 2 text1)))
@@ -449,14 +450,14 @@ baaaa
   (Check-Error-Message 'invalid-regexp "Invalid back reference"
 		       (string-match re1 text1))
 
-  (Assert-eq 0 (string-match re2 text1))
+  (Assert (eq 0 (string-match re2 text1)))
   (Assert (string= text1 (match-string 0 text1)))
   (Assert (string= "b" (match-string 1 text1)))
   (Assert (null (match-string 2 text1)))
   (Assert (null (string-match re2 text2)))
 
   (Assert (null (string-match re3 text1)))
-  (Assert-eq 0 (string-match re3 text2))
+  (Assert (eq 0 (string-match re3 text2)))
   (Assert (string= text2 (match-string 0 text2)))
   (Assert (string= "a" (match-string 1 text2)))
   (Assert (null (match-string 2 text2)))
@@ -531,14 +532,14 @@ baaaa
     "-]-----------------------------][]]------------------------"
   (goto-char (point-min))
   (skip-chars-forward (skip-chars-quote "-[]"))
-  (Assert= (point) (point-max))
+  (Assert (= (point) (point-max)))
   (skip-chars-backward (skip-chars-quote "-[]"))
-  (Assert= (point) (point-min))
+  (Assert (= (point) (point-min)))
   ;; Testing in passing for an old bug in #'skip-chars-forward where I
   ;; thought it was impossible to call it with a string containing only ?-
   ;; and ?]: 
-  (Assert= (skip-chars-forward (skip-chars-quote "-]"))
-             (position ?[ (buffer-string) :test #'=))
+  (Assert (= (skip-chars-forward (skip-chars-quote "-]"))
+             (position ?[ (buffer-string) :test #'=)))
   ;; This used to error, incorrectly: 
   (Assert (skip-chars-quote "[-")))
 
@@ -554,16 +555,16 @@ baaaa
 (with-string-as-buffer-contents "aáa"
   (goto-char (point-min))
   (Assert (looking-at "\\="))
-  (Assert= (re-search-forward "\\=") 1)
+  (Assert (= (re-search-forward "\\=") 1))
   (forward-char 1)
   (Assert (looking-at "\\="))
-  (Assert= (re-search-forward "\\=") 2)
+  (Assert (= (re-search-forward "\\=") 2))
   (forward-char 1)
   (Assert (looking-at "\\="))
-  (Assert= (re-search-forward "\\=") 3)
+  (Assert (= (re-search-forward "\\=") 3))
   (forward-char 1)
   (Assert (looking-at "\\="))
-  (Assert= (re-search-forward "\\=") 4))
+  (Assert (= (re-search-forward "\\=") 4)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -584,16 +585,16 @@ baaaa
 ;; Control-1 characters were second-class citizens in regexp ranges
 ;; for a while there.  Addressed in Ben's Mercurial changeset
 ;; 2e15c29cc2b3; attempt to ensure this doesn't happen again.
-(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "a") 0)
-(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "é") nil)
+(Assert (eql (string-match "[\x00-\x7f\x80-\x9f]" "a") 0))
+(Assert (eql (string-match "[\x00-\x7f\x80-\x9f]" "é") nil))
 ;; Gave nil in 21.5 for a couple of years.
-(Assert-eql (string-match "[\x00-\x7f\x80-\x9f]" "\x80") 0)
-(Assert-eql (string-match "[\x00-\x7f]\\|[\x80-\x9f]" "\x80") 0)
+(Assert (eql (string-match "[\x00-\x7f\x80-\x9f]" "\x80") 0))
+(Assert (eql (string-match "[\x00-\x7f]\\|[\x80-\x9f]" "\x80") 0))
 ;; Gave nil
-(Assert-eql (string-match "[\x7f\x80-\x9f]" "\x80") 0)
-(Assert-eql (string-match "[\x80-\x9f]" "\x80") 0)
-(Assert-eql (string-match "[\x7f\x80-\x9e]" "\x80") 0)
+(Assert (eql (string-match "[\x7f\x80-\x9f]" "\x80") 0))
+(Assert (eql (string-match "[\x80-\x9f]" "\x80") 0))
+(Assert (eql (string-match "[\x7f\x80-\x9e]" "\x80") 0))
 ;; Used to succeed even with the bug.
-(Assert-eql (string-match "[\x7f\x80\x9f]" "\x80") 0)
-(Assert-eql (string-match "[\x7e\x80-\x9f]" "\x80") 0)
-(Assert-eql (string-match "[\x7f\x81-\x9f]" "\x81") 0)
+(Assert (eql (string-match "[\x7f\x80\x9f]" "\x80") 0))
+(Assert (eql (string-match "[\x7e\x80-\x9f]" "\x80") 0))
+(Assert (eql (string-match "[\x7f\x81-\x9f]" "\x81") 0))

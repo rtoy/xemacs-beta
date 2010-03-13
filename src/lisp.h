@@ -4737,8 +4737,6 @@ END_C_DECLS
    number of header files that need to be included -- good for a number
    of reasons. --ben */
 
-/*--------------- prototypes for various public c functions ------------*/
-
 /* Prototypes for all init/syms_of/vars_of initialization functions. */
 #include "symsinit.h"
 
@@ -4897,6 +4895,7 @@ extern Lisp_Object QSscratch, Qafter_change_function, Qafter_change_functions;
 extern Lisp_Object Qbefore_change_function, Qbefore_change_functions;
 extern Lisp_Object Qbuffer_or_string_p, Qdefault_directory, Qfirst_change_hook;
 extern Lisp_Object Qpermanent_local, Vafter_change_function;
+extern Lisp_Object Qbuffer_live_p;
 extern Lisp_Object Vafter_change_functions, Vbefore_change_function;
 extern Lisp_Object Vbefore_change_functions, Vbuffer_alist, Vbuffer_defaults;
 extern Lisp_Object Vinhibit_read_only, Vtransient_mark_mode;
@@ -4912,6 +4911,12 @@ extern Lisp_Object Qbyte_code, Qinvalid_byte_code;
 /* Defined in callint.c */
 EXFUN (Fcall_interactively, 3);
 EXFUN (Fprefix_numeric_value, 1);
+extern Lisp_Object Qcall_interactively;
+extern Lisp_Object Qmouse_leave_buffer_hook;
+extern Lisp_Object Qread_from_minibuffer;
+extern Lisp_Object Vcommand_history;
+extern Lisp_Object Vcurrent_prefix_arg;
+extern Lisp_Object Vmark_even_if_inactive;
 
 /* Defined in casefiddle.c */
 EXFUN (Fdowncase, 2);
@@ -4926,12 +4931,28 @@ EXFUN (Fset_standard_case_table, 1);
 
 /* Defined in chartab.c */
 EXFUN (Freset_char_table, 1);
+extern Lisp_Object Qcategory_designator_p;
+extern Lisp_Object Qcategory_table_value_p;
+
+/* Defined in cmdloop.c */
+extern Lisp_Object Qdisabled_command_hook;
+extern Lisp_Object Qreally_early_error_handler;
+extern Lisp_Object Qtop_level;
+extern Lisp_Object Vdisabled_command_hook;
 
 /* Defined in cmds.c */
 EXFUN (Fbeginning_of_line, 2);
 EXFUN (Fend_of_line, 2);
 EXFUN (Fforward_char, 2);
 EXFUN (Fforward_line, 2);
+extern Lisp_Object Qself_insert_command;
+
+/* Defined in console.c */
+extern Lisp_Object Qconsole_live_p;
+extern Lisp_Object Vconsole_list;
+
+/* Defined in console-stream.c */
+extern Lisp_Object Vstdio_str;
 
 /* Defined in data.c */
 EXFUN (Fadd1, 1);
@@ -5008,7 +5029,17 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qstructure_formation_error, Qtext_conversion_error, Qunderflow_error,
     Qvoid_function, Qvoid_variable, Qwrong_number_of_arguments,
     Qwrong_type_argument;
+extern Lisp_Object Qcdr;
+extern Lisp_Object Qerror_lacks_explanatory_string;
+extern Lisp_Object Qfile_error;
+extern Lisp_Object Qsequencep;
 extern MODULE_API Lisp_Object Qinvalid_argument, Qsyntax_error;
+
+/* Defined in device.c */
+extern Lisp_Object Qdevice_live_p;
+
+/* Defined in device-x.c */
+extern Lisp_Object Vx_initial_argv_list;
 
 /* Defined in dired.c */
 Lisp_Object make_directory_hash_table (const Ibyte *);
@@ -5022,6 +5053,7 @@ Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
 				       Lisp_Object name_reloc,
 				       int standard_doc_file);
 Lisp_Object read_doc_string (Lisp_Object);
+extern Lisp_Object Vinternal_doc_file_name;
 
 /* Defined in doprnt.c */
 Bytecount emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
@@ -5094,9 +5126,15 @@ Lisp_Object save_excursion_restore (Lisp_Object);
 Lisp_Object save_restriction_restore (Lisp_Object);
 void widen_buffer (struct buffer *b, int no_clip);
 int beginning_of_line_p (struct buffer *b, Charbpos pt);
-
-/* Defined in emacsfns.c */
 Lisp_Object save_current_buffer_restore (Lisp_Object);
+
+extern Lisp_Object Qformat;
+extern Lisp_Object Qmark;
+extern Lisp_Object Qpoint;
+extern Lisp_Object Qregion_beginning;
+extern Lisp_Object Qregion_end;
+extern Lisp_Object Quser_files_and_directories;
+extern Lisp_Object Vsystem_name;
 
 /* Defined in emacs.c */
 EXFUN_NORETURN (Fkill_emacs, 1);
@@ -5121,12 +5159,31 @@ int debug_can_access_memory (const void *ptr, Bytecount len);
 DECLARE_DOESNT_RETURN (really_abort (void));
 void zero_out_command_line_status_vars (void);
 
+extern Lisp_Object Qsave_buffers_kill_emacs;
+extern Lisp_Object Vcommand_line_args;
+extern Lisp_Object Vconfigure_info_directory;
+extern Lisp_Object Vconfigure_site_directory;
+extern Lisp_Object Vconfigure_site_module_directory;
+extern Lisp_Object Vdata_directory;
+extern Lisp_Object Vdoc_directory;
+extern Lisp_Object Vemacs_major_version;
+extern Lisp_Object Vemacs_minor_version;
+extern Lisp_Object Vexec_directory;
+extern Lisp_Object Vexec_path;
+extern Lisp_Object Vinvocation_directory;
+extern Lisp_Object Vinvocation_name;
+extern Lisp_Object Vmodule_directory;
+extern Lisp_Object Vsite_directory;
+extern Lisp_Object Vsite_module_directory;
+
 /* Defined in emodules.c */
 #ifdef HAVE_SHLIB
 EXFUN (Flist_modules, 0);
 EXFUN (Fload_module, 3);
 extern int unloading_module;
 #endif
+extern Lisp_Object Qdll_error;
+extern Lisp_Object Qmodule;
 
 /* Defined in eval.c */
 MODULE_API EXFUN (Fapply, MANY);
@@ -5439,8 +5496,23 @@ MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const Ascbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
+extern Lisp_Object Qand_optional;
+extern Lisp_Object Qand_rest;
+extern Lisp_Object Qautoload;
+extern Lisp_Object Qcommandp;
+extern Lisp_Object Qdefun;
+extern Lisp_Object Qexit;
+extern Lisp_Object Qinhibit_quit;
+extern Lisp_Object Qinteractive;
+extern Lisp_Object Qmacro;
+extern Lisp_Object Qprogn;
+extern Lisp_Object Qrun_hooks;
+extern Lisp_Object Qvalues;
 extern Lisp_Object Vdebug_on_error;
 extern Lisp_Object Vstack_trace_on_error;
+extern Lisp_Object Vautoload_queue;
+
+extern MODULE_API Lisp_Object Vinhibit_quit, Vquit_flag;
 
 /* Defined in event-stream.c */
 EXFUN (Faccept_process_output, 3);
@@ -5462,6 +5534,19 @@ Lisp_Object enqueue_misc_user_event_pos (Lisp_Object, Lisp_Object,
 					 Lisp_Object, int, int, int, int);
 extern int modifier_keys_are_sticky;
 
+extern Lisp_Object Qdisabled;
+extern Lisp_Object Qsans_modifiers;
+extern Lisp_Object Qself_insert_defer_undo;
+extern Lisp_Object Vcontrolling_terminal;
+extern Lisp_Object Vcurrent_mouse_event;
+extern Lisp_Object Vlast_command;
+extern Lisp_Object Vlast_command_char;
+extern Lisp_Object Vlast_command_event;
+extern Lisp_Object Vlast_input_event;
+extern Lisp_Object Vrecent_keys_ring;
+extern Lisp_Object Vthis_command_keys;
+extern Lisp_Object Vunread_command_event;
+
 /* Defined in event-Xt.c */
 void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
 
@@ -5476,6 +5561,22 @@ Lisp_Object allocate_event (void);
 EXFUN (Fevent_x_pixel, 1);
 EXFUN (Fevent_y_pixel, 1);
 
+extern Lisp_Object Qevent_live_p;
+
+
+/* Defined in extents.c */
+extern Lisp_Object Qend_open;
+extern Lisp_Object Qextent_live_p;
+extern Lisp_Object Qstart_open;
+
+/* Defined in faces.c */
+extern Lisp_Object Qbackground;
+extern Lisp_Object Qbackground_pixmap;
+extern Lisp_Object Qblinking;
+extern Lisp_Object Qdim;
+extern Lisp_Object Qdisplay_table;
+extern Lisp_Object Qforeground;
+extern Lisp_Object Qunderline;
 
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);
@@ -5562,6 +5663,9 @@ Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 int internal_delete_file (Lisp_Object);
 Ibyte *find_end_of_directory_component (const Ibyte *path,
 					Bytecount len);
+
+extern Lisp_Object Qfile_name_sans_extension;
+extern Lisp_Object Vdirectory_sep_char;
 
 /* Defined in filelock.c */
 EXFUN (Funlock_buffer, 0);
@@ -5674,14 +5778,47 @@ Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
 Lisp_Object add_prefix_to_symbol (const Ascbyte *ascii_string,
 				  Lisp_Object symbol);
 
+extern Lisp_Object Qidentity;
+extern Lisp_Object Qstring_lessp;
+extern Lisp_Object Qyes_or_no_p;
+extern Lisp_Object Vfeatures;
+
+/* Defined in frame.c */
+extern Lisp_Object Qframe_live_p;
+
 /* Defined in free-hook.c */
 EXFUN (Freally_free, 1);
+
+/* Defined in general.c */
+#define SYMBOL(fou) extern Lisp_Object fou
+#define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
+#define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
+#define SYMBOL_GENERAL(tout_le_monde, est_fou) \
+  extern Lisp_Object tout_le_monde
+
+#include "general-slots.h"
+
+#undef SYMBOL
+#undef SYMBOL_MODULE_API
+#undef SYMBOL_KEYWORD
+#undef SYMBOL_GENERAL
 
 /* Defined in glyphs.c */
 EXFUN (Fmake_glyph_internal, 1);
 
 Error_Behavior decode_error_behavior_flag (Lisp_Object);
 Lisp_Object encode_error_behavior_flag (Error_Behavior);
+
+extern Lisp_Object Qbuffer_glyph_p;
+extern Lisp_Object Qcolor_pixmap_image_instance_p;
+extern Lisp_Object Qicon_glyph_p;
+extern Lisp_Object Qmono_pixmap_image_instance_p;
+extern Lisp_Object Qnothing_image_instance_p;
+extern Lisp_Object Qpointer_glyph_p;
+extern Lisp_Object Qpointer_image_instance_p;
+extern Lisp_Object Qsubwindow;
+extern Lisp_Object Qsubwindow_image_instance_p;
+extern Lisp_Object Qtext_image_instance_p;
 
 /* Defined in glyphs-shared.c */
 void shared_resource_validate (Lisp_Object instantiator);
@@ -5691,11 +5828,17 @@ Lisp_Object shared_resource_normalize (Lisp_Object inst,
 				       Lisp_Object tag);
 extern Lisp_Object Q_resource_type, Q_resource_id;
 
+/* Defined in glyphs-widget.c */
+extern Lisp_Object Qlayout;
+extern Lisp_Object Qnative_layout;
+
 /* Defined in gui.c */
 DECLARE_DOESNT_RETURN (gui_error (const Ascbyte *reason,
 				  Lisp_Object frob));
 DECLARE_DOESNT_RETURN (gui_error_2 (const Ascbyte *reason,
 				    Lisp_Object frob0, Lisp_Object frob1));
+extern Lisp_Object Qgui_error;
+
 /* Defined in indent.c */
 EXFUN (Findent_to, 3);
 EXFUN (Fvertical_motion, 3);
@@ -5750,8 +5893,21 @@ int isratio_string (const char *);
 # define LOADHIST_ATTACH(x)
 #endif /*! LOADHIST */
 
+extern Lisp_Object Qfeaturep;
+extern Lisp_Object Qload;
+extern Lisp_Object Qread_char;
+extern Lisp_Object Qstandard_input;
+extern Lisp_Object Vcurrent_load_list;
+extern Lisp_Object Vfile_domain;
+extern Lisp_Object Vload_file_name_internal;
+extern Lisp_Object Vload_history;
+extern Lisp_Object Vload_path;
+extern Lisp_Object Vstandard_input;
+
 /* Defined in macros.c */
 EXFUN (Fexecute_kbd_macro, 2);
+
+extern Lisp_Object Vexecuting_macro;
 
 /* Defined in marker.c */
 EXFUN (Fcopy_marker, 2);
@@ -5773,6 +5929,13 @@ int compute_buffer_marker_usage (struct buffer *, struct overhead_stats *);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);
+
+/* Defined in menubar.c */
+extern Lisp_Object Qactivate_menubar_hook;
+extern Lisp_Object Qcurrent_menubar;
+extern Lisp_Object Vactivate_menubar_hook;
+extern Lisp_Object Vblank_menubar;
+extern Lisp_Object Vmenubar_configuration;
 
 /* Defined in minibuf.c */
 extern int minibuf_level;
@@ -5798,10 +5961,26 @@ void message_append (const char *, ...) PRINTF_ARGS (1, 2);
 void message_no_translate (const char *, ...) PRINTF_ARGS (1, 2);
 void clear_message (void);
 
+extern Lisp_Object Qcompletion_ignore_case;
+extern Lisp_Object Vecho_area_buffer;
+extern Lisp_Object Vminibuf_preprompt;
+extern Lisp_Object Vminibuf_prompt;
+extern Lisp_Object Vminibuffer_zero;
+
 /* Defined in mule-charset.c */
 EXFUN (Fmake_charset, 3);
 
 extern Lisp_Object Ql2r, Qr2l;
+extern Lisp_Object Qdirection;
+extern Lisp_Object Qfinal;
+extern Lisp_Object Qgraphic;
+extern Lisp_Object Qlong_name;
+extern Lisp_Object Qregistries;
+extern Lisp_Object Qreverse_direction_charset;
+extern Lisp_Object Qshort_name;
+
+/* Defined in nt.c */
+extern Lisp_Object Vmswindows_get_true_file_attributes;
 
 /* Defined in print.c */
 EXFUN (Fdisplay_error, 2);
@@ -5882,6 +6061,20 @@ MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object_fmt (const CIbyte *
 DECLARE_DOESNT_RETURN (printing_unreadable_lisp_object (Lisp_Object obj,
 						     const Ibyte *name));
 
+extern Lisp_Object Qexternal_debugging_output;
+extern Lisp_Object Qprint_length;
+extern Lisp_Object Qprint_string_length;
+extern Lisp_Object Qstandard_output;
+extern Lisp_Object Vprint_length;
+extern Lisp_Object Vprint_level;
+extern Lisp_Object Vstandard_output;
+
+/* Defined in process.c */
+extern Lisp_Object Qnetwork_error;
+extern MODULE_API Lisp_Object Qprocess_error;
+extern Lisp_Object Vprocess_environment;
+extern Lisp_Object Vshell_file_name;
+
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);
 EXFUN (Fget_range_table, 3);
@@ -5943,6 +6136,9 @@ EXFUN (Fding, 3);
 void init_device_sound (struct device *);
 DECLARE_DOESNT_RETURN (report_sound_error (const Ascbyte *, Lisp_Object));
 
+extern Lisp_Object Qsound_error;
+extern Lisp_Object Vsynchronous_sounds;
+
 /* Defined in specifier.c */
 EXFUN (Fadd_spec_to_specifier, 5);
 EXFUN (Fspecifier_spec_list, 4);
@@ -5985,6 +6181,14 @@ Lisp_Object top_level_value (Lisp_Object);
 void reject_constant_symbols (Lisp_Object sym, Lisp_Object newval,
 			      int function_p,
 			      Lisp_Object follow_past_lisp_magic);
+
+extern Lisp_Object Qconst_specifier;
+extern Lisp_Object Qmakunbound;
+extern Lisp_Object Qset;
+extern Lisp_Object Qvariable_documentation;
+extern Lisp_Object Qvariable_domain;
+extern MODULE_API Lisp_Object Qt, Qunbound;
+extern Lisp_Object Vobarray;
 
 /* Defined in syntax.c */
 Charbpos scan_words (struct buffer *, Charbpos, int);
@@ -6383,6 +6587,9 @@ extern alloca_convert_vals_dynarr *active_alloca_convert;
 MODULE_API int find_pos_of_existing_active_alloca_convert (const char *
 							   srctext);
 
+/* Defined in undo.c */
+extern Lisp_Object Qinhibit_read_only;
+
 /* Defined in unicode.c */
 extern const struct sized_memory_description to_unicode_description;
 extern const struct sized_memory_description from_unicode_description;
@@ -6420,139 +6627,11 @@ int run_time_remap (char *);
 /* Defined in vm-limit.c */
 void memory_warnings (void *, void (*) (const char *));
 
-/*--------------- prototypes for constant symbols  ------------*/
+/* Defined in win32.c */
+extern Lisp_Object Vmswindows_downcase_file_names;
 
-/* #### We should get rid of this and put the prototypes back up there in
-   #### the per-file stuff, where they belong. */
-
-/* Use the following when you have to add a bunch of symbols. */
-
-/*
-
-(defun redo-symbols (beg end)
-  "Snarf any symbols out of the region and print them into a temporary buffer,
-which is displayed when the function finishes.  The symbols are laid out with
-`extern Lisp_Object ' before each one, with as many as can fit on one line
-\(the maximum line width is controlled by the constant `max-line-length' in the
-code)."
-  (interactive "r")
-  (save-excursion
-    (goto-char beg)
-    (let (syms)
-      (while (re-search-forward "\\s-\\(Q[A-Za-z_0-9]+\\)" end t)
-	(push (match-string 1) syms))
-      (setq syms (sort syms #'string-lessp))
-      (with-output-to-temp-buffer "*Symbols*"
-	(let* ((col 0)
-	       (start "extern Lisp_Object ")
-	       (startlen (length start))
-	       ;; with a default-width frame of 80 chars, you can only fit
-	       ;; 79 before wrapping.  you can see this to a lower value if
-	       ;; you don't want it right up against the right margin.
-	       (max-line-length 79))
-	  (dolist (sym syms)
-	    (cond (;; if something already on line (this will always be the
-		   ;; case except the very first iteration), see what
-		   ;; space we've got. (need to take into account 2
-		   ;; for the comma+space, 1 for the semicolon at the
-		   ;; end.) if enough space, do it.
-		   (and (> col 0) (< (+ col (length sym) 2)
-				     (1- max-line-length)))
-		   (princ ", ")
-		   (princ sym)
-		   (incf col 2)
-		   (incf col (length sym)))
-		  (t
-		   ;; either we're first iteration or we ran out of space.
-		   ;; if the latter, terminate the previous line.  this
-		   ;; loop is written on purpose so that it always prints
-		   ;; at least one item, even if that would go over.
-		   (when (> col 0)
-		     (princ ";\n")
-		     (setq col 0))
-		   (princ start)
-		   (incf col startlen)
-		   (princ sym)
-		   (incf col (length sym)))))
-	  ;; finally terminate the last line.
-	  (princ ";\n"))))))
-
-*/
-
-extern Lisp_Object Qactivate_menubar_hook, Qand_optional, Qand_rest, Qautoload,
-  Qbackground, Qbackground_pixmap, Qblinking, Qbuffer_glyph_p, Qbuffer_live_p,
-  Qcall_interactively, Qcategory_designator_p,
-  Qcategory_table_value_p, Qcdr, Qcolor_pixmap_image_instance_p, Qcommandp,
-  Qcompletion_ignore_case, Qconsole_live_p, Qconst_specifier, Qcurrent_menubar,
-  Qdefun, Qdevice_live_p, Qdim, Qdirection, Qdisabled, Qdisabled_command_hook,
-  Qdisplay_table, Qdll_error, Qend_open, Qerror_lacks_explanatory_string,
-  Qevent_live_p, Qexit, Qextent_live_p, Qexternal_debugging_output, Qfeaturep,
-  Qfile_error, Qfile_name_sans_extension, Qfinal, Qforeground, Qformat,
-  Qframe_live_p, Qgraphic, Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit,
-  Qinhibit_read_only, Qinteractive, Qlayout, Qload, Qlong_name, Qmacro,
-  Qmakunbound, Qmark, Qmodule, Qmono_pixmap_image_instance_p,
-  Qmouse_leave_buffer_hook, Qnative_layout, Qnetwork_error,
-  Qnothing_image_instance_p, Qpoint, Qpointer_glyph_p,
-  Qpointer_image_instance_p, Qprint_length, Qprint_string_length, Qprogn,
-  Qread_char, Qread_from_minibuffer, Qreally_early_error_handler,
-  Qregion_beginning, Qregion_end, Qregistries, Qreverse_direction_charset,
-  Qrun_hooks, Qsans_modifiers, Qsave_buffers_kill_emacs, Qself_insert_command,
-  Qself_insert_defer_undo, Qsequencep, Qset, Qshort_name, Qsound_error,
-  Qstandard_input, Qstandard_output, Qstart_open, Qstring_lessp, Qsubwindow,
-  Qsubwindow_image_instance_p, Qtext_image_instance_p, Qtop_level, Qunderline,
-  Quser_files_and_directories, Qvalues, Qvariable_documentation,
-  Qvariable_domain, Qwindow_live_p, Qyes_or_no_p;
-
-extern MODULE_API Lisp_Object Qprocess_error, Qt, Qunbound;
-
-#define SYMBOL(fou) extern Lisp_Object fou
-#define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
-#define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
-#define SYMBOL_GENERAL(tout_le_monde, est_fou) \
-  extern Lisp_Object tout_le_monde
-
-#include "general-slots.h"
-
-#undef SYMBOL
-#undef SYMBOL_MODULE_API
-#undef SYMBOL_KEYWORD
-#undef SYMBOL_GENERAL
-
-/*--------------- prototypes for variables of type Lisp_Object  ------------*/
-
-/* #### We should get rid of this and put the prototypes back up there in
-   #### the per-file stuff, where they belong. */
-
-extern Lisp_Object Vactivate_menubar_hook;
-extern Lisp_Object Vautoload_queue, Vblank_menubar;
-extern Lisp_Object Vcommand_history;
-extern Lisp_Object Vcommand_line_args, Vconfigure_info_directory;
-extern Lisp_Object Vconfigure_site_directory, Vconfigure_site_module_directory;
-extern Lisp_Object Vconsole_list, Vcontrolling_terminal;
-extern Lisp_Object Vcurrent_load_list;
-extern Lisp_Object Vcurrent_mouse_event, Vcurrent_prefix_arg, Vdata_directory;
-extern Lisp_Object Vdirectory_sep_char, Vdisabled_command_hook;
-extern Lisp_Object Vdoc_directory, Vinternal_doc_file_name;
-extern Lisp_Object Vecho_area_buffer, Vemacs_major_version;
-extern Lisp_Object Vemacs_minor_version, Vexec_directory, Vexec_path;
-extern Lisp_Object Vexecuting_macro, Vfeatures, Vfile_domain;
-extern Lisp_Object Vinvocation_directory, Vinvocation_name;
-extern Lisp_Object Vlast_command, Vlast_command_char;
-extern Lisp_Object Vlast_command_event, Vlast_input_event;
-extern Lisp_Object Vload_file_name_internal, Vload_history;
-extern Lisp_Object Vload_path, Vmark_even_if_inactive, Vmenubar_configuration;
-extern Lisp_Object Vminibuf_preprompt, Vminibuf_prompt, Vminibuffer_zero;
-extern Lisp_Object Vmodule_directory, Vmswindows_downcase_file_names;
-extern Lisp_Object Vmswindows_get_true_file_attributes, Vobarray;
-extern Lisp_Object Vprint_length, Vprint_level, Vprocess_environment;
-extern Lisp_Object Vrecent_keys_ring, Vshell_file_name, Vsite_directory;
-extern Lisp_Object Vsite_module_directory;
-extern Lisp_Object Vstandard_input, Vstandard_output, Vstdio_str;
-extern Lisp_Object Vsynchronous_sounds, Vsystem_name;
-extern Lisp_Object Vthis_command_keys, Vunread_command_event;
-extern Lisp_Object Vx_initial_argv_list;
-
-extern MODULE_API Lisp_Object Vinhibit_quit, Vquit_flag;
+/* Defined in window.c */
+extern Lisp_Object Qwindow_live_p;
 
 END_C_DECLS
 
