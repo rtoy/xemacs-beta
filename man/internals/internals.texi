@@ -7756,7 +7756,7 @@ for such objects.  Lisp objects of these types do not need to be
 @code{GCPRO}ed.
 @end itemize
 
-  In the remaining two categories, the type is stored in the object
+In the remaining two categories, the type is stored in the object
 itself.  The tag for all such objects is the generic @dfn{lrecord}
 (Lisp_Type_Record) tag.  The first bytes of the object's structure are an
 integer (actually a char) characterising the object's type and some
@@ -8492,45 +8492,40 @@ collector's output purposes is updated.
 @cindex integers and characters
 @cindex characters, integers and
 
-  Integer and character Lisp objects are created from integers using the
-macros @code{XSETINT()} and @code{XSETCHAR()} or the equivalent
+Integer and character Lisp objects are created from integers using the
 functions @code{make_int()} and @code{make_char()}. (These are actually
 macros on most systems.)  These functions basically just do some moving
 of bits around, since the integral value of the object is stored
 directly in the @code{Lisp_Object}.
-
-  @code{XSETINT()} and the like will truncate values given to them that
-are too big; i.e. you won't get the value you expected but the tag bits
-will at least be correct.
 
 @node Allocation from Frob Blocks, lrecords, Integers and Characters, Allocation of Objects in XEmacs Lisp
 @section Allocation from Frob Blocks
 @cindex allocation from frob blocks
 @cindex frob blocks, allocation from
 
-The uninitialized memory required by a @code{Lisp_Object} of a particular type
-is allocated using
-@code{ALLOCATE_FIXED_TYPE()}.  This only occurs inside of the
-lowest-level object-creating functions in @file{alloc.c}:
-@code{Fcons()}, @code{make_float()}, @code{Fmake_byte_code()},
-@code{Fmake_symbol()}, @code{allocate_extent()},
-@code{allocate_event()}, @code{Fmake_marker()}, and
-@code{make_uninit_string()}.  The idea is that, for each type, there are
-a number of frob blocks (each 2K in size); each frob block is divided up
-into object-sized chunks.  Each frob block will have some of these
-chunks that are currently assigned to objects, and perhaps some that are
-free. (If a frob block has nothing but free chunks, it is freed at the
-end of the garbage collection cycle.)  The free chunks are stored in a
-free list, which is chained by storing a pointer in the first four bytes
-of the chunk. (Except for the free chunks at the end of the last frob
-block, which are handled using an index which points past the end of the
+The uninitialized memory required by a @code{Lisp_Object} of a
+particular type is allocated using @code{ALLOCATE_FIXED_TYPE()}.  This
+only occurs inside of the lowest-level object-creating functions in
+@file{alloc.c}: @code{Fcons()}, @code{make_float()},
+@code{Fmake_byte_code()}, @code{Fmake_symbol()},
+@code{allocate_extent()}, @code{allocate_event()},
+@code{Fmake_marker()}, and @code{make_uninit_string()}.  The idea is
+that, for each type, there are a number of frob blocks (each 2K in
+size); each frob block is divided up into object-sized chunks.  Each
+frob block will have some of these chunks that are currently assigned
+to objects, and perhaps some that are free. (If a frob block has
+nothing but free chunks, it is freed at the end of the garbage
+collection cycle.)  The free chunks are stored in a free list, which
+is chained by storing a pointer in the first four bytes of the
+chunk. (Except for the free chunks at the end of the last frob block,
+which are handled using an index which points past the end of the
 last-allocated chunk in the last frob block.)
 @code{ALLOCATE_FIXED_TYPE()} first tries to retrieve a chunk from the
 free list; if that fails, it calls
 @code{ALLOCATE_FIXED_TYPE_FROM_BLOCK()}, which looks at the end of the
 last frob block for space, and creates a new frob block if there is
-none. (There are actually two versions of these macros, one of which is
-more defensive but less efficient and is used for error-checking.)
+none. (There are actually two versions of these macros, one of which
+is more defensive but less efficient and is used for error-checking.)
 
 @node lrecords, Low-level allocation, Allocation from Frob Blocks, Allocation of Objects in XEmacs Lisp
 @section lrecords
@@ -8541,7 +8536,7 @@ more defensive but less efficient and is used for error-checking.)
 @strong{This node needs updating for the ``new garbage collection
 algorithms'' (KKCC) and the ``incremental'' collector.}
 
-  All lrecords have at the beginning of their structure a @code{struct
+All lrecords have at the beginning of their structure a @code{struct
 lrecord_header}.  This just contains a type number and some flags,
 including the mark bit.  All builtin type numbers are defined as
 constants in @code{enum lrecord_type}, to allow the compiler to generate
@@ -8550,11 +8545,11 @@ more efficient code for @code{@var{type}P}.  The type number, thru the
 lrecord_implementation}, which is a structure containing method pointers
 and such.  There is one of these for each type, and it is a global,
 constant, statically-declared structure that is declared in the
-@code{DEFINE_LRECORD_IMPLEMENTATION()} macro.
+@code{DEFINE_*_LISP_OBJECT()} macro.
 
-  Simple lrecords (of type (b) above) just have a @code{struct
-lrecord_header} at their beginning.  lcrecords, however, actually have a
-@code{struct lcrecord_header}.  This, in turn, has a @code{struct
+Frob-block lrecords just have a @code{struct lrecord_header} at their
+beginning.  lcrecords, however, actually have a
+@code{struct old_lcrecord_header}.  This, in turn, has a @code{struct
 lrecord_header} at its beginning, so sanity is preserved; but it also
 has a pointer used to chain all lcrecords together, and a special ID
 field used to distinguish one lcrecord from another. (This field is used
@@ -8564,25 +8559,24 @@ significant.)
 @strong{lcrecords are now obsolete when using the write-barrier-based
 collector.}
 
-  Simple lrecords are created using @code{ALLOCATE_FIXED_TYPE()}, just
-like for other frob blocks.  The only change is that the implementation
-pointer must be initialized correctly. (The implementation structure for
-an lrecord, or rather the pointer to it, is named @code{lrecord_float},
-@code{lrecord_extent}, @code{lrecord_buffer}, etc.)
+Frob-block objects are created using @code{ALLOC_FROB_BLOCK_LISP_OBJECT()}.
+All this does is call @code{ALLOCATE_FIXED_TYPE()} to allocate an
+object, and @code{set_lheader_implementation()} to initialize the header.
 
-  lcrecords are created using @code{alloc_lcrecord()}.  This takes a
-size to allocate and an implementation pointer. (The size needs to be
-passed because some lcrecords, such as window configurations, are of
-variable size.) This basically just @code{malloc()}s the storage,
-initializes the @code{struct lcrecord_header}, and chains the lcrecord
-onto the head of the list of all lcrecords, which is stored in the
-variable @code{all_lcrecords}.  The calls to @code{alloc_lcrecord()}
-generally occur in the lowest-level allocation function for each lrecord
-type.
+Normal objects (i.e. lcrecords) are created using
+@code{ALLOC_NORMAL_LISP_OBJECT()}, which takes a type name (resolved
+internally to a structure named @code{lrecord_foo} for type
+@code{foo}).  If they are of variable size, however, they are created
+with @code{ALLOC_SIZED_LISP_OBJECT()}, which takes a size to allocate
+in addition to a type.  This basically just @code{malloc()}s the
+storage, initializes the @code{struct lcrecord_header}, and chains the
+lcrecord onto the head of the list of all lcrecords, which is stored
+in the variable @code{all_lcrecords}.  The calls to the above
+allocation macros generally occur in the lowest-level allocation
+function for each lrecord type.
 
-Whenever you create an lrecord, you need to call either
-@code{DEFINE_LRECORD_IMPLEMENTATION()} or
-@code{DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION()}.  This needs to be
+Whenever you create a normal object, you need to call one of the
+@code{DEFINE_*_LISP_OBJECT()} macros.  This needs to be
 specified in a @file{.c} file, at the top level.  What this actually
 does is define and initialize the implementation structure for the
 lrecord. (And possibly declares a function @code{error_check_foo()} that
@@ -8599,26 +8593,73 @@ as how to print it or mark it for garbage collection, so that it's easy
 to add new object types without having to add a specific case for each
 new type in a bunch of different places.
 
-  The difference between @code{DEFINE_LRECORD_IMPLEMENTATION()} and
-@code{DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION()} is that the former is
-used for fixed-size object types and the latter is for variable-size
-object types.  Most object types are fixed-size; some complex
-types, however (e.g. window configurations), are variable-size.
-Variable-size object types have an extra method, which is called
-to determine the actual size of a particular object of that type.
-(Currently this is only used for keeping allocation statistics.)
+The various macros for defining Lisp objects are as follows:
 
-  For the purpose of keeping allocation statistics, the allocation
+@itemize @bullet
+@item
+@code{DEFINE_*_LISP_OBJECT} is for objects with constant size. (Either
+@code{DEFINE_DUMPABLE_LISP_OBJECT} for objects that can be saved in a
+dumped executable, or @code{DEFINE_NODUMP_LISP_OBJECT} for objects
+that cannot be saved -- e.g. that contain pointers to non-persistent
+external objects such as window-system windows.)
+
+@item
+@code{DEFINE_*_SIZABLE_LISP_OBJECT} is for objects whose size varies.
+This includes some simple types such as vectors, bit vectors and
+opaque objects, as well complex types, especially types such as
+specifiers, lstreams or coding systems that have subtypes and include
+subtype-specific data attached to the end of the structure.
+Variable-size objects have an extra method that returns the size of
+the object.  This is not used at allocation (rather, the size is
+specified in the call to the allocation macro), but is used for
+operations such as copying a Lisp object, as well as for keeping
+allocation statistics.
+
+@item
+@code{DEFINE_*_FROB_BLOCK_LISP_OBJECT} is for objects that are
+allocated in large blocks (``frob blocks''), which are parceled up
+individually.  Such objects need special handling in @file{alloc.c}.
+This does not apply to NEW_GC, because it does this automatically.
+
+@item
+@code{DEFINE_*_INTERNAL_LISP_OBJECT} is for ``internal'' objects that
+should never be visible on the Lisp level.  This is a shorthand for
+the most common type of internal objects, which have no equal or hash
+method (since they generally won't appear in hash tables), no
+finalizer and @code{internal_object_printer()} as their print method
+(which prints that the object is internal and shouldn't be visible
+externally).  For internal objects needing a finalizer, equal or hash
+method, or wanting to customize the print method, use the normal
+@code{DEFINE_*_LISP_OBJECT} mechanism for defining these objects.
+
+@item
+@code{DEFINE_*_GENERAL_LISP_OBJECT} is for objects that need to
+provide one of the less common methods that are omitted on most
+objects.  These methods include the methods supporting the unified
+property interface using @code{get}, @code{put}, @code{remprop} and
+@code{object-plist}, and (for dumpable objects only) the
+@code{disksaver} method.
+
+@item
+@code{DEFINE_MODULE_*} is for objects defined in an external module.
+@end itemize
+
+@code{MAKE_LISP_OBJECT} and @code{MAKE_MODULE_LISP_OBJECT} are what
+underlies all of these; they define a structure containing pointers to
+object methods and other info such as the size of the structure
+containing the object.
+
+For the purpose of keeping allocation statistics, the allocation
 engine keeps a list of all the different types that exist.  Note that,
-since @code{DEFINE_LRECORD_IMPLEMENTATION()} is a macro that is
-specified at top-level, there is no way for it to initialize the global
-data structures containing type information, like
+since @code{DEFINE_*_LISP_OBJECT()} is a macro that is
+specified at top-level, there is no way for it to initialize the
+global data structures containing type information, like
 @code{lrecord_implementations_table}.  For this reason a call to
-@code{INIT_LRECORD_IMPLEMENTATION} must be added to the same source file
-containing @code{DEFINE_LRECORD_IMPLEMENTATION}, but instead of to the
-top level, to one of the init functions, typically
-@code{syms_of_@var{foo}.c}.  @code{INIT_LRECORD_IMPLEMENTATION} must be
-called before an object of this type is used.
+@code{INIT_LISP_OBJECT()} must be added to the same source
+file containing @code{DEFINE_*_LISP_OBJECT()}, but instead of
+to the top level, to one of the init functions, typically
+@code{syms_of_@var{foo}.c}.  @code{INIT_LISP_OBJECT()} must
+be called before an object of this type is used.
 
 The type number is also used to index into an array holding the number
 of objects of each type and the total memory allocated for objects of
@@ -8626,24 +8667,25 @@ that type.  The statistics in this array are computed during the sweep
 stage.  These statistics are returned by the call to
 @code{garbage-collect}.
 
-  Note that for every type defined with a @code{DEFINE_LRECORD_*()}
-macro, there needs to be a @code{DECLARE_LRECORD_IMPLEMENTATION()}
-somewhere in a @file{.h} file, and this @file{.h} file needs to be
-included by @file{inline.c}.
+Note that for every type defined with a @code{DEFINE_*_LISP_OBJECT()}
+macro, there needs to be a @code{DECLARE_LISP_OBJECT()} somewhere in a
+@file{.h} file, and this @file{.h} file needs to be included by
+@file{inline.c}.
 
-  Furthermore, there should generally be a set of @code{XFOOBAR()},
-@code{FOOBARP()}, etc. macros in a @file{.h} (or occasionally @file{.c})
-file.  To create one of these, copy an existing model and modify as
-necessary.
+Furthermore, there should generally be a set of @code{XFOOBAR()},
+@code{FOOBARP()}, etc. macros in a @file{.h} (or occasionally
+@file{.c}) file.  To create one of these, copy an existing model and
+modify as necessary.
 
-  @strong{Please note:} If you define an lrecord in an external
-dynamically-loaded module, you must use @code{DECLARE_EXTERNAL_LRECORD},
-@code{DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION}, and
-@code{DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION} instead of the
-non-EXTERNAL forms. These macros will dynamically add new type numbers
-to the global enum that records them, whereas the non-EXTERNAL forms
-assume that the programmer has already inserted the correct type numbers
-into the enum's code at compile-time.
+@strong{Please note:} If you define an lrecord in an external
+dynamically-loaded module, you must use
+@code{DECLARE_MODULE_LISP_OBJECT()},
+@code{DEFINE_MODULE_*_LISP_OBJECT()}, and
+@code{INIT_MODULE_LISP_OBJECT()} instead of the non-MODULE
+forms. These macros will dynamically add new type numbers to the
+global enum that records them, whereas the non-MODULE forms assume
+that the programmer has already inserted the correct type numbers into
+the enum's code at compile-time.
 
   The various methods in the lrecord implementation structure are:
 
@@ -8707,25 +8749,18 @@ operating-system and window-system resources associated with the object
 
 The finalize method can be NULL if nothing needs to be done.
 
-WARNING #1: The finalize method is also called at the end of the dump
-phase; this time with the for_disksave parameter set to non-zero.  The
-object is @emph{not} about to disappear, so you have to make sure to
-@emph{not} free any extra @code{malloc()}ed memory if you're going to
-need it later.  (Also, signal an error if there are any operating-system
-and window-system resources here, because they can't be dumped.)
-
 Finalize methods should, as a rule, set to zero any pointers after
-they've been freed, and check to make sure pointers are not zero before
-freeing.  Although I'm pretty sure that finalize methods are not called
-twice on the same object (except for the @code{for_disksave} proviso),
-we've gotten nastily burned in some cases by not doing this.
+they've been freed, and check to make sure pointers are not zero
+before freeing.  Although I'm pretty sure that finalize methods are
+not called twice on the same object, we've gotten nastily burned in
+some cases by not doing this.
 
-WARNING #2: The finalize method is @emph{only} called for
-lcrecords, @emph{not} for simply lrecords.  If you need a
-finalize method for simple lrecords, you have to stick
+WARNING #1: The finalize method is @emph{only} called for
+normal objects, @emph{not} for frob-block objects.  If you need a
+finalize method for frob-block objects, you have to stick
 it in the @code{ADDITIONAL_FREE_foo()} macro in @file{alloc.c}.
 
-WARNING #3: Things are in an @emph{extremely} bizarre state
+WARNING #2: Things are in an @emph{extremely} bizarre state
 when @code{ADDITIONAL_FREE_foo()} is called, so you have to
 be incredibly careful when writing one of these functions.
 See the comment in @code{gc_sweep()}.  If you ever have to add
@@ -8765,17 +8800,33 @@ To hash two or more values together into a single value, use
 
 @item
 @dfn{getprop}, @dfn{putprop}, @dfn{remprop}, and @dfn{plist} methods.
-These are used for object types that have properties.  I don't feel like
-documenting them here.  If you create one of these objects, you have to
-use different macros to define them,
-i.e. @code{DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS()} or
-@code{DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS()}.
+These are used for object types that have properties, and are called
+when @code{get}, @code{put}, @code{remprop}, and @code{object-plist},
+respectively are called on the object.  If you create one of these
+objects, you have to use a different macro to define them,
+i.e. @code{DEFINE_*_GENERAL_LISP_OBJECT()}.
 
 @item
 A @dfn{size_in_bytes} method, when the object is of variable-size.
-(i.e. declared with a @code{_SEQUENCE_IMPLEMENTATION} macro.)  This should
-simply return the object's size in bytes, exactly as you might expect.
-For an example, see the methods for window configurations and opaques.
+(i.e. declared with a @code{DEFINE_*_SIZABLE_*_LISP_OBJECT} macro.)
+This should simply return the object's size in bytes, exactly as you
+might expect.  For an example, see the methods for lstreams and opaques.
+
+@item
+A @dfn{disksave} method.  This is called at the end of the dump phase.
+It is used for objects that contain pointers or handles to objects
+created in external libraries, such as window-system windows or file
+handles.  Such external objects cannot be dumped, so it is necessary
+to release them at dump time and arrange somehow or other for them to
+be resurrected if necessary later on.
+
+It seems that even non-dumpable objects may be around at dump time,
+and a disksaver may be provided. (In fact, the only object currently
+with a disksaver, lstream, is non-dumpable.)
+
+Objects rarely need to provide this method; most of the time it will
+be NULL.  If you want to provide this method, you have to use the
+@code{DEFINE_*_GENERAL_LISP_OBJECT()} macro to define your object.
 @end enumerate
 
 @node Low-level allocation, Cons, lrecords, Allocation of Objects in XEmacs Lisp

@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct toolbar_button
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object next;
   Lisp_Object frame;
@@ -74,7 +74,7 @@ struct toolbar_button
   int border_width;
 };
 
-DECLARE_LRECORD (toolbar_button, struct toolbar_button);
+DECLARE_LISP_OBJECT (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
 #define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)

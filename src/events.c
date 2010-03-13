@@ -212,59 +212,50 @@ static const struct memory_description event_description [] = {
 
 #ifdef EVENT_DATA_AS_OBJECTS
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("key-data", key_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     key_data_description, 
-				     Lisp_Key_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("key-data", key_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      key_data_description, 
+				      Lisp_Key_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("button-data", button_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     button_data_description, 
-				     Lisp_Button_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("button-data", button_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      button_data_description, 
+				      Lisp_Button_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("motion-data", motion_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     motion_data_description,
-				     Lisp_Motion_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("motion-data", motion_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      motion_data_description,
+				      Lisp_Motion_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("process-data", process_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     process_data_description,
-				     Lisp_Process_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("process-data", process_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      process_data_description,
+				      Lisp_Process_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("timeout-data", timeout_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     timeout_data_description,
-				     Lisp_Timeout_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("timeout-data", timeout_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      timeout_data_description,
+				      Lisp_Timeout_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("eval-data", eval_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     eval_data_description,
-				     Lisp_Eval_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("eval-data", eval_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      eval_data_description,
+				      Lisp_Eval_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("misc-user-data", misc_user_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     misc_user_data_description, 
-				     Lisp_Misc_User_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("misc-user-data", misc_user_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      misc_user_data_description, 
+				      Lisp_Misc_User_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-eval-data", magic_eval_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     magic_eval_data_description, 
-				     Lisp_Magic_Eval_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("magic-eval-data", magic_eval_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      magic_eval_data_description, 
+				      Lisp_Magic_Eval_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-data", magic_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     magic_data_description,
-				     Lisp_Magic_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("magic-data", magic_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      magic_data_description,
+				      Lisp_Magic_Data);
 
 #endif /* EVENT_DATA_AS_OBJECTS */
 
@@ -507,11 +498,11 @@ event_hash (Lisp_Object obj, int depth)
   return 0; /* unreached */
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
-				     0, /*dumpable-flag*/
-				     mark_event, print_event, 0, event_equal,
-				     event_hash, event_description,
-				     Lisp_Event);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("event", event,
+				      mark_event, print_event, 0,
+				      event_equal, event_hash,
+				      event_description,
+				      Lisp_Event);
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
@@ -2556,17 +2547,17 @@ This is in the form of a property list (alternating keyword/value pairs).
 void
 syms_of_events (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (event);
+  INIT_LISP_OBJECT (event);
 #ifdef EVENT_DATA_AS_OBJECTS
-  INIT_LRECORD_IMPLEMENTATION (key_data);
-  INIT_LRECORD_IMPLEMENTATION (button_data);
-  INIT_LRECORD_IMPLEMENTATION (motion_data);
-  INIT_LRECORD_IMPLEMENTATION (process_data);
-  INIT_LRECORD_IMPLEMENTATION (timeout_data);
-  INIT_LRECORD_IMPLEMENTATION (eval_data);
-  INIT_LRECORD_IMPLEMENTATION (misc_user_data);
-  INIT_LRECORD_IMPLEMENTATION (magic_eval_data);
-  INIT_LRECORD_IMPLEMENTATION (magic_data);
+  INIT_LISP_OBJECT (key_data);
+  INIT_LISP_OBJECT (button_data);
+  INIT_LISP_OBJECT (motion_data);
+  INIT_LISP_OBJECT (process_data);
+  INIT_LISP_OBJECT (timeout_data);
+  INIT_LISP_OBJECT (eval_data);
+  INIT_LISP_OBJECT (misc_user_data);
+  INIT_LISP_OBJECT (magic_eval_data);
+  INIT_LISP_OBJECT (magic_data);
 #endif /* EVENT_DATA_AS_OBJECTS */  
 
   DEFSUBR (Fcharacter_to_event);

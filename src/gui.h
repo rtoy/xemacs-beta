@@ -44,7 +44,7 @@ extern int popup_up_p;
    menu item or submenu properties */
 struct Lisp_Gui_Item
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object name;		/* String */
   Lisp_Object callback;		/* Symbol or form */
   Lisp_Object callback_ex;	/* Form taking context arguments */
@@ -60,7 +60,7 @@ struct Lisp_Gui_Item
   Lisp_Object value;		/* Anything you like */
 };
 
-DECLARE_LRECORD (gui_item, Lisp_Gui_Item);
+DECLARE_LISP_OBJECT (gui_item, Lisp_Gui_Item);
 #define XGUI_ITEM(x) XRECORD (x, gui_item, Lisp_Gui_Item)
 #define wrap_gui_item(p) wrap_record (p, gui_item)
 #define GUI_ITEMP(x) RECORDP (x, gui_item)

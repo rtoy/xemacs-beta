@@ -296,7 +296,7 @@ extern int lookup_syntax_properties;
 struct syntax_cache
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int use_code;				/* Whether to use syntax_code or
 					   syntax_table.  This is set
@@ -339,7 +339,7 @@ struct syntax_cache
 #ifdef NEW_GC
 typedef struct syntax_cache Lisp_Syntax_Cache;
 
-DECLARE_LRECORD (syntax_cache, Lisp_Syntax_Cache);
+DECLARE_LISP_OBJECT (syntax_cache, Lisp_Syntax_Cache);
 
 #define XSYNTAX_CACHE(x) \
   XRECORD (x, syntax_cache, Lisp_Syntax_Cache)

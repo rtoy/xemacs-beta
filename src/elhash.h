@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct Lisp_Hash_Table Lisp_Hash_Table;
 
-DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
+DECLARE_LISP_OBJECT (hash_table, Lisp_Hash_Table);
 
 #define XHASH_TABLE(x) XRECORD (x, hash_table, Lisp_Hash_Table)
 #define wrap_hash_table(p) wrap_record (p, hash_table)
@@ -36,7 +36,7 @@ DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
 typedef struct htentry
 {
 #ifdef NEW_GC
-  struct lrecord_header lheader;
+  NORMAL_LISP_OBJECT_HEADER lheader;
 #endif /* NEW_GC */  
   Lisp_Object key;
   Lisp_Object value;
@@ -48,7 +48,7 @@ typedef struct htentry
 
 typedef struct htentry Lisp_Hash_Table_Entry;
 
-DECLARE_LRECORD (hash_table_entry, Lisp_Hash_Table_Entry);
+DECLARE_LISP_OBJECT (hash_table_entry, Lisp_Hash_Table_Entry);
 
 #define XHASH_TABLE_ENTRY(x) \
   XRECORD (x, hash_table_entry, Lisp_Hash_Table_Entry)

@@ -2,7 +2,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -332,10 +332,6 @@ static int is_scrollbar_event (Lisp_Object event);
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
 #define CONCHECK_COMMAND_BUILDER(x) CONCHECK_RECORD (x, command_builder)
 
-#ifndef NEW_GC
-static Lisp_Object Vcommand_builder_free_list;
-#endif /* not NEW_GC */
-
 static const struct memory_description command_builder_description [] = {
   { XD_LISP_OBJECT, offsetof (struct command_builder, current_events) },
   { XD_LISP_OBJECT, offsetof (struct command_builder, most_current_event) },
@@ -358,25 +354,22 @@ mark_command_builder (Lisp_Object obj)
 }
 
 static void
-finalize_command_builder (void *header, int for_disksave)
+finalize_command_builder (Lisp_Object obj)
 {
-  if (!for_disksave)
+  struct command_builder *b = XCOMMAND_BUILDER (obj);
+  if (b->echo_buf)
     {
-      struct command_builder *b = (struct command_builder *) header;
-      if (b->echo_buf)
-	{
-	  xfree (b->echo_buf);
-	  b->echo_buf = 0;
-	}
+      xfree (b->echo_buf);
+      b->echo_buf = 0;
     }
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
-			       0, /*dumpable-flag*/
-                               mark_command_builder, internal_object_printer,
-			       finalize_command_builder, 0, 0, 
-			       command_builder_description,
-			       struct command_builder);
+DEFINE_NODUMP_LISP_OBJECT ("command-builder", command_builder,
+			   mark_command_builder,
+			   internal_object_printer,
+			   finalize_command_builder, 0, 0, 
+			   command_builder_description,
+			   struct command_builder);
 
 static void
 reset_command_builder_event_chain (struct command_builder *builder)
@@ -391,13 +384,7 @@ reset_command_builder_event_chain (struct command_builder *builder)
 Lisp_Object
 allocate_command_builder (Lisp_Object console, int with_echo_buf)
 {
-  Lisp_Object builder_obj =
-#ifdef NEW_GC
-    wrap_pointer_1 (alloc_lrecord_type (struct command_builder,
-					 &lrecord_command_builder));
-#else /* not NEW_GC */
-    alloc_managed_lcrecord (Vcommand_builder_free_list);
-#endif /* not NEW_GC */
+  Lisp_Object builder_obj = ALLOC_NORMAL_LISP_OBJECT (command_builder);
   struct command_builder *builder = XCOMMAND_BUILDER (builder_obj);
 
   builder->console = console;
@@ -468,12 +455,7 @@ free_command_builder (struct command_builder *builder)
       xfree (builder->echo_buf);
       builder->echo_buf = NULL;
     }
-#ifdef NEW_GC
-  free_lrecord (wrap_command_builder (builder));
-#else /* not NEW_GC */
-  free_managed_lcrecord (Vcommand_builder_free_list,
-			 wrap_command_builder (builder));
-#endif /* not NEW_GC */
+  free_normal_lisp_object (wrap_command_builder (builder));
 }
 
 static void
@@ -1037,10 +1019,6 @@ static int timeout_id_tick;
 
 static Lisp_Object pending_timeout_list, pending_async_timeout_list;
 
-#ifndef NEW_GC
-static Lisp_Object Vtimeout_free_list;
-#endif /* not NEW_GC */
-
 static Lisp_Object
 mark_timeout (Lisp_Object obj)
 {
@@ -1055,10 +1033,9 @@ static const struct memory_description timeout_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("timeout", timeout,
-			       1, /*dumpable-flag*/
-			       mark_timeout, internal_object_printer,
-			       0, 0, 0, timeout_description, Lisp_Timeout);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("timeout", timeout,
+				      mark_timeout, timeout_description,
+				      Lisp_Timeout);
 
 /* Generate a timeout and return its ID. */
 
@@ -1068,12 +1045,7 @@ event_stream_generate_wakeup (unsigned int milliseconds,
 			      Lisp_Object function, Lisp_Object object,
 			      int async_p)
 {
-#ifdef NEW_GC
-  Lisp_Object op = 
-    wrap_pointer_1 (alloc_lrecord_type (Lisp_Timeout, &lrecord_timeout));
-#else /* not NEW_GC */
-  Lisp_Object op = alloc_managed_lcrecord (Vtimeout_free_list);
-#endif /* not NEW_GC */
+  Lisp_Object op = ALLOC_NORMAL_LISP_OBJECT (timeout);
   Lisp_Timeout *timeout = XTIMEOUT (op);
   EMACS_TIME current_time;
   EMACS_TIME interval;
@@ -1191,11 +1163,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
       *timeout_list = noseeum_cons (op, *timeout_list);
     }
   else
-#ifdef NEW_GC
-    free_lrecord (op);
-#else /* not NEW_GC */
-    free_managed_lcrecord (Vtimeout_free_list, op);
-#endif /* not NEW_GC */
+    free_normal_lisp_object (op);
 
   UNGCPRO;
   return id;
@@ -1232,11 +1200,7 @@ event_stream_disable_wakeup (int id, int async_p)
 	signal_remove_async_interval_timeout (timeout->interval_id);
       else
 	event_stream_remove_timeout (timeout->interval_id);
-#ifdef NEW_GC
-      free_lrecord (op);
-#else /* not NEW_GC */
-      free_managed_lcrecord (Vtimeout_free_list, op);
-#endif /* not NEW_GC */
+      free_normal_lisp_object (op);
     }
 }
 
@@ -4877,8 +4841,8 @@ CONSOLE defaults to the selected console if omitted.
 void
 syms_of_event_stream (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (command_builder);
-  INIT_LRECORD_IMPLEMENTATION (timeout);
+  INIT_LISP_OBJECT (command_builder);
+  INIT_LISP_OBJECT (timeout);
 
   DEFSYMBOL (Qdisabled);
   DEFSYMBOL (Qcommand_event_p);
@@ -4934,15 +4898,6 @@ reinit_vars_of_event_stream (void)
   recent_keys_ring_index = 0;
   recent_keys_ring_size = 100;
   num_input_chars = 0;
-#ifndef NEW_GC
-  Vtimeout_free_list = make_lcrecord_list (sizeof (Lisp_Timeout),
-					   &lrecord_timeout);
-  staticpro_nodump (&Vtimeout_free_list);
-  Vcommand_builder_free_list =
-    make_lcrecord_list (sizeof (struct command_builder),
-			&lrecord_command_builder);
-  staticpro_nodump (&Vcommand_builder_free_list);
-#endif /* not NEW_GC */
   the_low_level_timeout_blocktype =
     Blocktype_new (struct low_level_timeout_blocktype);
   something_happened = 0;
