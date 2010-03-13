@@ -63,8 +63,8 @@
 	(uninterned (make-symbol name)))
     (Assert (symbolp interned))
     (Assert (symbolp uninterned))
-    (Assert-equal (symbol-name interned) name)
-    (Assert-equal (symbol-name uninterned) name)
+    (Assert (equal (symbol-name interned) name))
+    (Assert (equal (symbol-name uninterned) name))
     (Assert (not (eq interned uninterned)))
     (Assert (not (equal interned uninterned)))))
 
@@ -76,12 +76,12 @@
 	       (Implementation-Incomplete-Expect-Failure
 		(Assert (not (zerop len)))
 		(garbage-collect)
-		(Assert-eq (length (weak-list-list weak-list))
-			    (if (not reversep) 0 len)))
+		(Assert (eq (length (weak-list-list weak-list))
+			    (if (not reversep) 0 len))))
 	     (Assert (not (zerop len)))
 	     (garbage-collect)
-	     (Assert-eq (length (weak-list-list weak-list))
-			 (if (not reversep) 0 len))))))
+	     (Assert (eq (length (weak-list-list weak-list))
+			 (if (not reversep) 0 len)))))))
   (let ((weak-list (make-weak-list))
 	(gc-cons-threshold most-positive-fixnum))
     ;; Symbols created with `make-symbol' and `gensym' should be fresh
@@ -112,7 +112,7 @@
 	string (read (concat "\"" string "\"")))
   (Assert (intern-soft string))
   (Assert (intern-soft symbol))
-  (Assert-eq (intern-soft string) (intern-soft symbol)))
+  (Assert (eq (intern-soft string) (intern-soft symbol))))
 
 (let ((fresh (read (concat "#:" (ts-fresh-symbol-name "foo")))))
   (Assert (not (intern-soft fresh))))
@@ -127,15 +127,15 @@
        (bar3 (nth 5 list)))
   (Assert (symbolp foo))
   (Assert (not (intern-soft foo)))
-  (Assert-equal (symbol-name foo) "foo")
+  (Assert (equal (symbol-name foo) "foo"))
   (Assert (symbolp bar))
   (Assert (not (intern-soft bar)))
-  (Assert-equal (symbol-name bar) "bar")
+  (Assert (equal (symbol-name bar) "bar"))
 
-  (Assert-eq foo foo2)
-  (Assert-eq foo2 foo3)
-  (Assert-eq bar bar2)
-  (Assert-eq bar2 bar3))
+  (Assert (eq foo foo2))
+  (Assert (eq foo2 foo3))
+  (Assert (eq bar bar2))
+  (Assert (eq bar2 bar3)))
 
 ;; Check #N=OBJECT and #N# print syntax.
 (let* ((foo (make-symbol "foo"))
@@ -143,10 +143,10 @@
        (list (list foo foo bar bar foo bar)))
   (let* ((print-gensym nil)
 	 (printed-list (prin1-to-string list)))
-    (Assert-equal printed-list "(foo foo bar bar foo bar)"))
+    (Assert (equal printed-list "(foo foo bar bar foo bar)")))
   (let* ((print-gensym t)
 	 (printed-list (prin1-to-string list)))
-    (Assert-equal printed-list "(#1=#:foo #1# #2=#:bar #2# #1# #2#)")))
+    (Assert (equal printed-list "(#1=#:foo #1# #2=#:bar #2# #1# #2#)"))))
 
 ;;-----------------------------------------------------
 ;; Read-only symbols
@@ -164,18 +164,18 @@
 (let ((foo 0)
       (bar 1))
   (defvaralias 'foo 'bar)
-  (Assert-eq foo bar)
-  (Assert-eq foo 1)
-  (Assert-eq (variable-alias 'foo) 'bar)
+  (Assert (eq foo bar))
+  (Assert (eq foo 1))
+  (Assert (eq (variable-alias 'foo) 'bar))
   (defvaralias 'bar 'foo)
   (Check-Error cyclic-variable-indirection
     (symbol-value 'foo))
   (Check-Error cyclic-variable-indirection
     (symbol-value 'bar))
   (defvaralias 'foo nil)
-  (Assert-eq foo 0)
+  (Assert (eq foo 0))
   (defvaralias 'bar nil)
-  (Assert-eq bar 1))
+  (Assert (eq bar 1)))
 
 ;;-----------------------------------------------------
 ;; Keywords
@@ -187,10 +187,10 @@
 ;; that is interned in the global obarray.
 
 ;; In Elisp, a keyword is interned as any other symbol.
-(Assert-eq (read ":foo") (intern ":foo"))
+(Assert (eq (read ":foo") (intern ":foo")))
 
 ;; A keyword is self-quoting and evaluates to itself.
-(Assert-eq (eval (intern ":foo")) :foo)
+(Assert (eq (eval (intern ":foo")) :foo))
 
 ;; Keywords are recognized as such only if interned in the global
 ;; obarray, and `keywordp' is aware of that.
@@ -208,14 +208,14 @@
 ;; keyword.
 (let* ((fresh-keyword-name (ts-fresh-symbol-name ":foo"))
        (fresh-keyword (intern fresh-keyword-name)))
-  (Assert-eq (symbol-value fresh-keyword) fresh-keyword)
+  (Assert (eq (symbol-value fresh-keyword) fresh-keyword))
   (Assert (keywordp fresh-keyword)))
 
 ;; Likewise, reading a fresh keyword string should produce a regular
 ;; keyword.
 (let* ((fresh-keyword-name (ts-fresh-symbol-name ":foo"))
        (fresh-keyword (read fresh-keyword-name)))
-  (Assert-eq (symbol-value fresh-keyword) fresh-keyword)
+  (Assert (eq (symbol-value fresh-keyword) fresh-keyword))
   (Assert (keywordp fresh-keyword)))
 
 ;;; Assigning to keywords
@@ -236,19 +236,19 @@
 
 ;; But symbols not interned in the global obarray are not real
 ;; keywords (in elisp):
-(Assert-eq (set (intern ":foo" [0]) 5) 5)
+(Assert (eq (set (intern ":foo" [0]) 5) 5))
 
 ;;; Printing keywords
 
 (let ((print-gensym t))
-  (Assert-equal (prin1-to-string :foo)                ":foo")
-  (Assert-equal (prin1-to-string (intern ":foo"))     ":foo")
-  (Assert-equal (prin1-to-string (intern ":foo" [0])) "#::foo"))
+  (Assert (equal (prin1-to-string :foo)                ":foo"))
+  (Assert (equal (prin1-to-string (intern ":foo"))     ":foo"))
+  (Assert (equal (prin1-to-string (intern ":foo" [0])) "#::foo")))
 
 (let ((print-gensym nil))
-  (Assert-equal (prin1-to-string :foo)                ":foo")
-  (Assert-equal (prin1-to-string (intern ":foo"))     ":foo")
-  (Assert-equal (prin1-to-string (intern ":foo" [0])) ":foo"))
+  (Assert (equal (prin1-to-string :foo)                ":foo"))
+  (Assert (equal (prin1-to-string (intern ":foo"))     ":foo"))
+  (Assert (equal (prin1-to-string (intern ":foo" [0])) ":foo")))
 
 ;; #### Add many more tests for printing and reading symbols, as well
 ;; as print-gensym and print-gensym-alist!
@@ -270,17 +270,17 @@
    (lambda (&rest args)
      (throw 'test-tag args)))
   (Assert (not (boundp mysym)))
-  (Assert-equal (catch 'test-tag
+  (Assert (equal (catch 'test-tag
 		   (set mysym 'foo))
-		 `(,mysym (foo) set nil nil))
+		 `(,mysym (foo) set nil nil)))
   (Assert (not (boundp mysym)))
   (dontusethis-set-symbol-value-handler
    mysym
    'set-value
    (lambda (&rest args) (setq save (nth 1 args))))
   (set mysym 'foo)
-  (Assert-equal save '(foo))
-  (Assert-eq (symbol-value mysym) 'foo)
+  (Assert (equal save '(foo)))
+  (Assert (eq (symbol-value mysym) 'foo))
   )
 
 (let ((mysym (make-symbol "test-symbol"))
@@ -290,9 +290,9 @@
    'make-unbound
    (lambda (&rest args)
      (throw 'test-tag args)))
-  (Assert-equal (catch 'test-tag
+  (Assert (equal (catch 'test-tag
 		   (makunbound mysym))
-		 `(,mysym nil makunbound nil nil))
+		 `(,mysym nil makunbound nil nil)))
   (dontusethis-set-symbol-value-handler
    mysym
    'make-unbound
@@ -300,27 +300,27 @@
   (Assert (not (boundp mysym)))
   (set mysym 'bar)
   (Assert (null save))
-  (Assert-eq (symbol-value mysym) 'bar)
+  (Assert (eq (symbol-value mysym) 'bar))
   (makunbound mysym)
   (Assert (not (boundp mysym)))
-  (Assert-eq save 'makunbound)
+  (Assert (eq save 'makunbound))
   )
 
 ;; pathname-coding-system is no more.
 ; (when (featurep 'file-coding)
-;   (Assert-eq pathname-coding-system file-name-coding-system)
+;   (Assert (eq pathname-coding-system file-name-coding-system))
 ;   (let ((val1 file-name-coding-system)
 ; 	(val2 pathname-coding-system))
-;     (Assert-eq val1 val2)
+;     (Assert (eq val1 val2))
 ;     (let ((file-name-coding-system 'no-conversion-dos))
-;       (Assert-eq file-name-coding-system 'no-conversion-dos)
-;       (Assert-eq pathname-coding-system file-name-coding-system))
+;       (Assert (eq file-name-coding-system 'no-conversion-dos))
+;       (Assert (eq pathname-coding-system file-name-coding-system)))
 ;     (let ((pathname-coding-system 'no-conversion-mac))
-;       (Assert-eq file-name-coding-system 'no-conversion-mac)
-;       (Assert-eq pathname-coding-system file-name-coding-system))
-;     (Assert-eq file-name-coding-system pathname-coding-system)
-;     (Assert-eq val1 file-name-coding-system))
-;   (Assert-eq pathname-coding-system file-name-coding-system))
+;       (Assert (eq file-name-coding-system 'no-conversion-mac))
+;       (Assert (eq pathname-coding-system file-name-coding-system)))
+;     (Assert (eq file-name-coding-system pathname-coding-system))
+;     (Assert (eq val1 file-name-coding-system)))
+;   (Assert (eq pathname-coding-system file-name-coding-system)))
 
 
 ;(let ((mysym (make-symbol "test-symbol")))

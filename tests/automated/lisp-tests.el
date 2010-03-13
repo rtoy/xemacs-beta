@@ -1,4 +1,5 @@
 ;; Copyright (C) 1998 Free Software Foundation, Inc. -*- coding: iso-8859-1 -*-
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Martin Buchholz <martin@xemacs.org>
 ;; Maintainer: Martin Buchholz <martin@xemacs.org>
@@ -42,19 +43,19 @@
 (Check-Error wrong-number-of-arguments (setq setq-test-foo 1 setq-test-bar))
 (Check-Error wrong-number-of-arguments (setq-default setq-test-foo))
 (Check-Error wrong-number-of-arguments (setq-default setq-test-foo 1 setq-test-bar))
-(Assert-eq (setq)         nil)
-(Assert-eq (setq-default) nil)
-(Assert-eq (setq         setq-test-foo 42) 42)
-(Assert-eq (setq-default setq-test-foo 42) 42)
-(Assert-eq (setq         setq-test-foo 42 setq-test-bar 99) 99)
-(Assert-eq (setq-default setq-test-foo 42 setq-test-bar 99) 99)
+(Assert (eq (setq)         nil))
+(Assert (eq (setq-default) nil))
+(Assert (eq (setq         setq-test-foo 42) 42))
+(Assert (eq (setq-default setq-test-foo 42) 42))
+(Assert (eq (setq         setq-test-foo 42 setq-test-bar 99) 99))
+(Assert (eq (setq-default setq-test-foo 42 setq-test-bar 99) 99))
 
 (macrolet ((test-setq (expected-result &rest body)
 		      `(progn
 			 (defun test-setq-fun () ,@body)
-			 (Assert-eq ,expected-result (test-setq-fun))
+			 (Assert (eq ,expected-result (test-setq-fun)))
 			 (byte-compile 'test-setq-fun)
-			 (Assert-eq ,expected-result (test-setq-fun)))))
+			 (Assert (eq ,expected-result (test-setq-fun))))))
   (test-setq nil (setq))
   (test-setq nil (setq-default))
   (test-setq 42  (setq         test-setq-var 42))
@@ -69,38 +70,38 @@
       (my-list '(1 2 3 4)))
 
   ;;(Assert (fooooo)) ;; Generate Other failure
-  ;;(Assert-eq 1 2) ;; Generate Assertion failure
+  ;;(Assert (eq 1 2)) ;; Generate Assertion failure
 
   (dolist (sequence (list my-vector my-bit-vector my-string my-list))
     (Assert (sequencep sequence))
-    (Assert-eq 4 (length sequence)))
+    (Assert (eq 4 (length sequence))))
 
   (dolist (array (list my-vector my-bit-vector my-string))
     (Assert (arrayp array)))
 
-  (Assert-eq (elt my-vector 0) 1)
-  (Assert-eq (elt my-bit-vector 0) 1)
-  (Assert-eq (elt my-string 0) ?1)
-  (Assert-eq (elt my-list 0) 1)
+  (Assert (eq (elt my-vector 0) 1))
+  (Assert (eq (elt my-bit-vector 0) 1))
+  (Assert (eq (elt my-string 0) ?1))
+  (Assert (eq (elt my-list 0) 1))
 
   (fillarray my-vector 5)
   (fillarray my-bit-vector 1)
   (fillarray my-string ?5)
 
   (dolist (array (list my-vector my-bit-vector))
-    (Assert-eq 4 (length array)))
+    (Assert (eq 4 (length array))))
 
-  (Assert-eq (elt my-vector 0) 5)
-  (Assert-eq (elt my-bit-vector 0) 1)
-  (Assert-eq (elt my-string 0) ?5)
+  (Assert (eq (elt my-vector 0) 5))
+  (Assert (eq (elt my-bit-vector 0) 1))
+  (Assert (eq (elt my-string 0) ?5))
 
-  (Assert-eq (elt my-vector 3) 5)
-  (Assert-eq (elt my-bit-vector 3) 1)
-  (Assert-eq (elt my-string 3) ?5)
+  (Assert (eq (elt my-vector 3) 5))
+  (Assert (eq (elt my-bit-vector 3) 1))
+  (Assert (eq (elt my-string 3) ?5))
 
   (fillarray my-bit-vector 0)
-  (Assert-eq 4 (length my-bit-vector))
-  (Assert-eq (elt my-bit-vector 2) 0)
+  (Assert (eq 4 (length my-bit-vector)))
+  (Assert (eq (elt my-bit-vector 2) 0))
   )
 
 (defun make-circular-list (length)
@@ -124,22 +125,22 @@
   (Check-Error circular-list (nconc '(1 . 2) (make-circular-list length) 'foo))
   (Check-Error circular-list (nconc '(1 . 2) '(3 . 4) (make-circular-list length) 'foo)))
 
-(Assert-eq (nconc) nil)
-(Assert-eq (nconc nil) nil)
-(Assert-eq (nconc nil nil) nil)
-(Assert-eq (nconc nil nil nil) nil)
+(Assert (eq (nconc) nil))
+(Assert (eq (nconc nil) nil))
+(Assert (eq (nconc nil nil) nil))
+(Assert (eq (nconc nil nil nil) nil))
 
-(let ((x (make-list-012))) (Assert-eq (nconc nil x) x))
-(let ((x (make-list-012))) (Assert-eq (nconc x nil) x))
-(let ((x (make-list-012))) (Assert-eq (nconc nil x nil) x))
-(let ((x (make-list-012))) (Assert-eq (nconc x) x))
-(let ((x (make-list-012))) (Assert-eq (nconc x (make-circular-list 3)) x))
+(let ((x (make-list-012))) (Assert (eq (nconc nil x) x)))
+(let ((x (make-list-012))) (Assert (eq (nconc x nil) x)))
+(let ((x (make-list-012))) (Assert (eq (nconc nil x nil) x)))
+(let ((x (make-list-012))) (Assert (eq (nconc x) x)))
+(let ((x (make-list-012))) (Assert (eq (nconc x (make-circular-list 3)) x)))
 
-(Assert-equal (nconc '(1 . 2) '(3 . 4) '(5 . 6)) '(1 3 5 . 6))
+(Assert (equal (nconc '(1 . 2) '(3 . 4) '(5 . 6)) '(1 3 5 . 6)))
 
 (let ((y (nconc (make-list-012) nil (list 3 4 5) nil)))
-  (Assert-eq (length y) 6)
-  (Assert-eq (nth 3 y) 3))
+  (Assert (eq (length y) 6))
+  (Assert (eq (nth 3 y) 3)))
 
 ;;-----------------------------------------------------
 ;; Test `last'
@@ -150,15 +151,15 @@
 (Check-Error circular-list (last (make-circular-list 1)))
 (Check-Error circular-list (last (make-circular-list 2000)))
 (let ((x (list 0 1 2 3)))
-  (Assert-eq (last nil) nil)
-  (Assert-eq (last x 0) nil)
-  (Assert-eq (last x  ) (cdddr x))
-  (Assert-eq (last x 1) (cdddr x))
-  (Assert-eq (last x 2) (cddr x))
-  (Assert-eq (last x 3) (cdr x))
-  (Assert-eq (last x 4) x)
-  (Assert-eq (last x 9) x)
-  (Assert-eq (last '(1 . 2) 0) 2)
+  (Assert (eq (last nil) nil))
+  (Assert (eq (last x 0) nil))
+  (Assert (eq (last x  ) (cdddr x)))
+  (Assert (eq (last x 1) (cdddr x)))
+  (Assert (eq (last x 2) (cddr x)))
+  (Assert (eq (last x 3) (cdr x)))
+  (Assert (eq (last x 4) x))
+  (Assert (eq (last x 9) x))
+  (Assert (eq (last '(1 . 2) 0) 2))
   )
 
 ;;-----------------------------------------------------
@@ -178,31 +179,31 @@
 (let* ((x (list 0 1 2 3))
        (y (butlast x))
        (z (nbutlast x)))
-  (Assert-eq z x)
+  (Assert (eq z x))
   (Assert (not (eq y x)))
-  (Assert-equal y '(0 1 2))
-  (Assert-equal z y))
+  (Assert (equal y '(0 1 2)))
+  (Assert (equal z y)))
 
 (let* ((x (list 0 1 2 3 4))
        (y (butlast x 2))
        (z (nbutlast x 2)))
-  (Assert-eq z x)
+  (Assert (eq z x))
   (Assert (not (eq y x)))
-  (Assert-equal y '(0 1 2))
-  (Assert-equal z y))
+  (Assert (equal y '(0 1 2)))
+  (Assert (equal z y)))
 
 (let* ((x (list 0 1 2 3))
        (y (butlast x 0))
        (z (nbutlast x 0)))
-  (Assert-eq z x)
+  (Assert (eq z x))
   (Assert (not (eq y x)))
-  (Assert-equal y '(0 1 2 3))
-  (Assert-equal z y))
+  (Assert (equal y '(0 1 2 3)))
+  (Assert (equal z y)))
 
-(Assert-eq (butlast  '(x)) nil)
-(Assert-eq (nbutlast '(x)) nil)
-(Assert-eq (butlast  '()) nil)
-(Assert-eq (nbutlast '()) nil)
+(Assert (eq (butlast  '(x)) nil))
+(Assert (eq (nbutlast '(x)) nil))
+(Assert (eq (butlast  '()) nil))
+(Assert (eq (nbutlast '()) nil))
 
 ;;-----------------------------------------------------
 ;; Test `copy-list'
@@ -212,7 +213,7 @@
 (Check-Error wrong-number-of-arguments (copy-list '(1 2) 1))
 (Check-Error circular-list (copy-list (make-circular-list 1)))
 (Check-Error circular-list (copy-list (make-circular-list 2000)))
-(Assert-eq '() (copy-list '()))
+(Assert (eq '() (copy-list '())))
 (dolist (x '((1) (1 2) (1 2 3) (1 2 . 3)))
   (let ((y (copy-list x)))
     (Assert (and (equal x y) (not (eq x y))))))
@@ -222,24 +223,24 @@
 ;;-----------------------------------------------------
 
 ;; Test `+'
-(Assert-eq (+ 1 1) 2)
-(Assert= (+ 1.0 1.0) 2.0)
-(Assert= (+ 1.0 3.0 0.0) 4.0)
-(Assert= (+ 1 1.0) 2.0)
-(Assert= (+ 1.0 1) 2.0)
-(Assert= (+ 1.0 1 1) 3.0)
-(Assert= (+ 1 1 1.0) 3.0)
+(Assert (eq (+ 1 1) 2))
+(Assert (= (+ 1.0 1.0) 2.0))
+(Assert (= (+ 1.0 3.0 0.0) 4.0))
+(Assert (= (+ 1 1.0) 2.0))
+(Assert (= (+ 1.0 1) 2.0))
+(Assert (= (+ 1.0 1 1) 3.0))
+(Assert (= (+ 1 1 1.0) 3.0))
 (if (featurep 'bignum)
     (progn
       (Assert (bignump (1+ most-positive-fixnum)))
-      (Assert-eq most-positive-fixnum (1- (1+ most-positive-fixnum)))
+      (Assert (eq most-positive-fixnum (1- (1+ most-positive-fixnum))))
       (Assert (bignump (+ most-positive-fixnum 1)))
-      (Assert-eq most-positive-fixnum (- (+ most-positive-fixnum 1) 1))
-      (Assert= (1+ most-positive-fixnum) (- most-negative-fixnum))
+      (Assert (eq most-positive-fixnum (- (+ most-positive-fixnum 1) 1)))
+      (Assert (= (1+ most-positive-fixnum) (- most-negative-fixnum)))
       (Assert (zerop (+ (* 3 most-negative-fixnum) (* 3 most-positive-fixnum)
 			3))))
-  (Assert-eq (1+ most-positive-fixnum) most-negative-fixnum)
-  (Assert-eq (+ most-positive-fixnum 1) most-negative-fixnum))
+  (Assert (eq (1+ most-positive-fixnum) most-negative-fixnum))
+  (Assert (eq (+ most-positive-fixnum 1) most-negative-fixnum)))
 
 (when (featurep 'ratio)
   (let ((threefourths (read "3/4"))
@@ -247,47 +248,47 @@
 	(bigpos (div (+ most-positive-fixnum 2) (1+ most-positive-fixnum)))
 	(bigneg (div (+ most-positive-fixnum 2) most-negative-fixnum))
 	(negone (div (1+ most-positive-fixnum) most-negative-fixnum)))
-    (Assert= negone -1)
-    (Assert= threehalfs (+ threefourths threefourths))
+    (Assert (= negone -1))
+    (Assert (= threehalfs (+ threefourths threefourths)))
     (Assert (zerop (+ bigpos bigneg)))))
 
 ;; Test `-'
 (Check-Error wrong-number-of-arguments (-))
-(Assert-eq (- 0) 0)
-(Assert-eq (- 1) -1)
+(Assert (eq (- 0) 0))
+(Assert (eq (- 1) -1))
 (dolist (one `(1 1.0 ?\1 ,(Int-to-Marker 1)))
-  (Assert= (+ 1 one) 2)
-  (Assert= (+ one) 1)
-  (Assert= (+ one) one)
-  (Assert= (- one) -1)
-  (Assert= (- one one) 0)
-  (Assert= (- one one one) -1)
-  (Assert= (- 0 one) -1)
-  (Assert= (- 0 one one) -2)
-  (Assert= (+ one 1) 2)
+  (Assert (= (+ 1 one) 2))
+  (Assert (= (+ one) 1))
+  (Assert (= (+ one) one))
+  (Assert (= (- one) -1))
+  (Assert (= (- one one) 0))
+  (Assert (= (- one one one) -1))
+  (Assert (= (- 0 one) -1))
+  (Assert (= (- 0 one one) -2))
+  (Assert (= (+ one 1) 2))
   (dolist (zero '(0 0.0 ?\0))
-    (Assert= (+ 1 zero) 1 zero)
-    (Assert= (+ zero 1) 1 zero)
-    (Assert= (- zero) zero zero)
-    (Assert= (- zero) 0 zero)
-    (Assert= (- zero zero) 0 zero)
-    (Assert= (- zero one one) -2 zero)))
+    (Assert (= (+ 1 zero) 1) zero)
+    (Assert (= (+ zero 1) 1) zero)
+    (Assert (= (- zero) zero) zero)
+    (Assert (= (- zero) 0) zero)
+    (Assert (= (- zero zero) 0) zero)
+    (Assert (= (- zero one one) -2) zero)))
 
-(Assert= (- 1.5 1) .5)
-(Assert= (- 1 1.5) (- .5))
+(Assert (= (- 1.5 1) .5))
+(Assert (= (- 1 1.5) (- .5)))
 
 (if (featurep 'bignum)
     (progn
       (Assert (bignump (1- most-negative-fixnum)))
-      (Assert-eq most-negative-fixnum (1+ (1- most-negative-fixnum)))
+      (Assert (eq most-negative-fixnum (1+ (1- most-negative-fixnum))))
       (Assert (bignump (- most-negative-fixnum 1)))
-      (Assert-eq most-negative-fixnum (+ (- most-negative-fixnum 1) 1))
-      (Assert= (1- most-negative-fixnum) (- 0 most-positive-fixnum 2))
-      (Assert-eq (- (- most-positive-fixnum most-negative-fixnum)
+      (Assert (eq most-negative-fixnum (+ (- most-negative-fixnum 1) 1)))
+      (Assert (= (1- most-negative-fixnum) (- 0 most-positive-fixnum 2)))
+      (Assert (eq (- (- most-positive-fixnum most-negative-fixnum)
 		     (* 2 most-positive-fixnum))
-		  1))
-  (Assert-eq (1- most-negative-fixnum) most-positive-fixnum)
-  (Assert-eq (- most-negative-fixnum 1) most-positive-fixnum))
+		  1)))
+  (Assert (eq (1- most-negative-fixnum) most-positive-fixnum))
+  (Assert (eq (- most-negative-fixnum 1) most-positive-fixnum)))
 
 (when (featurep 'ratio)
   (let ((threefourths (read "3/4"))
@@ -295,9 +296,9 @@
 	(bigpos (div (+ most-positive-fixnum 2) (1+ most-positive-fixnum)))
 	(bigneg (div most-positive-fixnum most-negative-fixnum))
 	(negone (div (1+ most-positive-fixnum) most-negative-fixnum)))
-    (Assert= (- negone) 1)
-    (Assert= threefourths (- threehalfs threefourths))
-    (Assert= (- bigpos bigneg) 2)))
+    (Assert (= (- negone) 1))
+    (Assert (= threefourths (- threehalfs threefourths)))
+    (Assert (= (- bigpos bigneg) 2))))
 
 ;; Test `/'
 
@@ -312,180 +313,180 @@
 ;; Other tests for `/'
 (Check-Error wrong-number-of-arguments (/))
 (let (x)
-  (Assert= (/ (setq x 2))   0)
-  (Assert= (/ (setq x 2.0)) 0.5))
+  (Assert (= (/ (setq x 2))   0))
+  (Assert (= (/ (setq x 2.0)) 0.5)))
 
 (dolist (six '(6 6.0 ?\06))
   (dolist (two '(2 2.0 ?\02))
     (dolist (three '(3 3.0 ?\03))
-      (Assert= (/ six two) three (list six two three)))))
+      (Assert (= (/ six two) three) (list six two three)))))
 
 (dolist (three '(3 3.0 ?\03))
-  (Assert= (/ three 2.0) 1.5 three))
+  (Assert (= (/ three 2.0) 1.5) three))
 (dolist (two '(2 2.0 ?\02))
-  (Assert= (/ 3.0 two) 1.5 two))
+  (Assert (= (/ 3.0 two) 1.5) two))
 
 (when (featurep 'bignum)
   (let* ((million 1000000)
 	 (billion (* million 1000))	;; American, not British, billion
 	 (trillion (* billion 1000)))
-    (Assert= (/ billion 1000) (/ trillion million) million 1000000.0)
-    (Assert= (/ billion -1000) (/ trillion (- million)) (- million))
-    (Assert= (/ trillion 1000) billion 1000000000.0)
-    (Assert= (/ trillion -1000) (- billion) -1000000000.0)
-    (Assert= (/ trillion 10) (* 100 billion) 100000000000.0)
-    (Assert= (/ (- trillion) 10) (* -100 billion) -100000000000.0)))
+    (Assert (= (/ billion 1000) (/ trillion million) million 1000000.0))
+    (Assert (= (/ billion -1000) (/ trillion (- million)) (- million)))
+    (Assert (= (/ trillion 1000) billion 1000000000.0))
+    (Assert (= (/ trillion -1000) (- billion) -1000000000.0))
+    (Assert (= (/ trillion 10) (* 100 billion) 100000000000.0))
+    (Assert (= (/ (- trillion) 10) (* -100 billion) -100000000000.0))))
 
 (when (featurep 'ratio)
   (let ((half (div 1 2))
 	(fivefourths (div 5 4))
 	(fivehalfs (div 5 2)))
-    (Assert= half (read "3000000000/6000000000"))
-    (Assert= (/ fivehalfs fivefourths) 2)
-    (Assert= (/ fivefourths fivehalfs) half)
-    (Assert= (- half) (read "-3000000000/6000000000"))
-    (Assert= (/ fivehalfs (- fivefourths)) -2)
-    (Assert= (/ (- fivefourths) fivehalfs) (- half))))
+    (Assert (= half (read "3000000000/6000000000")))
+    (Assert (= (/ fivehalfs fivefourths) 2))
+    (Assert (= (/ fivefourths fivehalfs) half))
+    (Assert (= (- half) (read "-3000000000/6000000000")))
+    (Assert (= (/ fivehalfs (- fivefourths)) -2))
+    (Assert (= (/ (- fivefourths) fivehalfs) (- half)))))
 
 ;; Test `*'
-(Assert= 1 (*))
+(Assert (= 1 (*)))
 
 (dolist (one `(1 1.0 ?\01 ,(Int-to-Marker 1)))
-  (Assert= 1 (* one) one))
+  (Assert (= 1 (* one)) one))
 
 (dolist (two '(2 2.0 ?\02))
-  (Assert= 2 (* two) two))
+  (Assert (= 2 (* two)) two))
 
 (dolist (six '(6 6.0 ?\06))
   (dolist (two '(2 2.0 ?\02))
     (dolist (three '(3 3.0 ?\03))
-      (Assert= (* three two) six (list three two six)))))
+      (Assert (= (* three two) six) (list three two six)))))
 
 (dolist (three '(3 3.0 ?\03))
   (dolist (two '(2 2.0 ?\02))
-    (Assert= (* 1.5 two) three (list two three))
+    (Assert (= (* 1.5 two) three) (list two three))
     (dolist (five '(5 5.0 ?\05))
-      (Assert= 30 (* five two three) (list five two three)))))
+      (Assert (= 30 (* five two three)) (list five two three)))))
 
 (when (featurep 'bignum)
   (let ((64K 65536))
-    (Assert= (* 64K 64K) (read "4294967296"))
-    (Assert= (* (- 64K) 64K) (read "-4294967296"))
+    (Assert (= (* 64K 64K) (read "4294967296")))
+    (Assert (= (* (- 64K) 64K) (read "-4294967296")))
     (Assert (/= (* -1 most-negative-fixnum) most-negative-fixnum))))
 
 (when (featurep 'ratio)
   (let ((half (div 1 2))
 	(fivefourths (div 5 4))
 	(twofifths (div 2 5)))
-    (Assert= (* fivefourths twofifths) half)
-    (Assert= (* half twofifths) (read "3/15"))))
+    (Assert (= (* fivefourths twofifths) half))
+    (Assert (= (* half twofifths) (read "3/15")))))
 
 ;; Test `+'
-(Assert= 0 (+))
+(Assert (= 0 (+)))
 
 (dolist (one `(1 1.0 ?\01 ,(Int-to-Marker 1)))
-  (Assert= 1 (+ one) one))
+  (Assert (= 1 (+ one)) one))
 
 (dolist (two '(2 2.0 ?\02))
-  (Assert= 2 (+ two) two))
+  (Assert (= 2 (+ two)) two))
 
 (dolist (five '(5 5.0 ?\05))
   (dolist (two '(2 2.0 ?\02))
     (dolist (three '(3 3.0 ?\03))
-      (Assert= (+ three two) five (list three two five))
-      (Assert= 10 (+ five two three) (list five two three)))))
+      (Assert (= (+ three two) five) (list three two five))
+      (Assert (= 10 (+ five two three)) (list five two three)))))
 
 ;; Test `max', `min'
 (dolist (one `(1 1.0 ?\01 ,(Int-to-Marker 1)))
-  (Assert= one (max one) one)
-  (Assert= one (max one one) one)
-  (Assert= one (max one one one) one)
-  (Assert= one (min one) one)
-  (Assert= one (min one one) one)
-  (Assert= one (min one one one) one)
+  (Assert (= one (max one)) one)
+  (Assert (= one (max one one)) one)
+  (Assert (= one (max one one one)) one)
+  (Assert (= one (min one)) one)
+  (Assert (= one (min one one)) one)
+  (Assert (= one (min one one one)) one)
   (dolist (two `(2 2.0 ?\02 ,(Int-to-Marker 2)))
-    (Assert= one (min one two) (list one two))
-    (Assert= one (min one two two) (list one two))
-    (Assert= one (min two two one) (list one two))
-    (Assert= two (max one two) (list one two))
-    (Assert= two (max one two two) (list one two))
-    (Assert= two (max two two one) (list one two))))
+    (Assert (= one (min one two)) (list one two))
+    (Assert (= one (min one two two)) (list one two))
+    (Assert (= one (min two two one)) (list one two))
+    (Assert (= two (max one two)) (list one two))
+    (Assert (= two (max one two two)) (list one two))
+    (Assert (= two (max two two one)) (list one two))))
 
 (when (featurep 'bignum)
   (let ((big (1+ most-positive-fixnum))
 	(small (1- most-negative-fixnum)))
-    (Assert= big (max 1 1000000.0 most-positive-fixnum big))
-    (Assert= small (min -1 -1000000.0 most-negative-fixnum small))))
+    (Assert (= big (max 1 1000000.0 most-positive-fixnum big)))
+    (Assert (= small (min -1 -1000000.0 most-negative-fixnum small)))))
 
 (when (featurep 'ratio)
   (let* ((big (1+ most-positive-fixnum))
 	 (small (1- most-negative-fixnum))
 	 (bigr (div (* 5 (1+ most-positive-fixnum)) 4))
 	 (smallr (- bigr)))
-    (Assert= bigr (max 1 1000000.0 most-positive-fixnum big bigr))
-    (Assert= smallr (min -1 -1000000.0 most-negative-fixnum small smallr))))
+    (Assert (= bigr (max 1 1000000.0 most-positive-fixnum big bigr)))
+    (Assert (= smallr (min -1 -1000000.0 most-negative-fixnum small smallr)))))
 
 ;; The byte compiler has special handling for these constructs:
 (let ((three 3) (five 5))
-  (Assert= (+ three five 1) 9)
-  (Assert= (+ 1 three five) 9)
-  (Assert= (+ three five -1) 7)
-  (Assert= (+ -1 three five) 7)
-  (Assert= (+ three 1) 4)
-  (Assert= (+ three -1) 2)
-  (Assert= (+ -1 three) 2)
-  (Assert= (+ -1 three) 2)
-  (Assert= (- three five 1) -3)
-  (Assert= (- 1 three five) -7)
-  (Assert= (- three five -1) -1)
-  (Assert= (- -1 three five) -9)
-  (Assert= (- three 1) 2)
-  (Assert= (- three 2 1) 0)
-  (Assert= (- 2 three 1) -2)
-  (Assert= (- three -1) 4)
-  (Assert= (- three 0) 3)
-  (Assert= (- three 0 five) -2)
-  (Assert= (- 0 three 0 five) -8)
-  (Assert= (- 0 three five) -8)
-  (Assert= (* three 2) 6)
-  (Assert= (* three -1 five) -15)
-  (Assert= (* three 1 five) 15)
-  (Assert= (* three 0 five) 0)
-  (Assert= (* three 2 five) 30)
-  (Assert= (/ three 1) 3)
-  (Assert= (/ three -1) -3)
-  (Assert= (/ (* five five) 2 2) 6)
-  (Assert= (/ 64 five 2) 6))
+  (Assert (= (+ three five 1) 9))
+  (Assert (= (+ 1 three five) 9))
+  (Assert (= (+ three five -1) 7))
+  (Assert (= (+ -1 three five) 7))
+  (Assert (= (+ three 1) 4))
+  (Assert (= (+ three -1) 2))
+  (Assert (= (+ -1 three) 2))
+  (Assert (= (+ -1 three) 2))
+  (Assert (= (- three five 1) -3))
+  (Assert (= (- 1 three five) -7))
+  (Assert (= (- three five -1) -1))
+  (Assert (= (- -1 three five) -9))
+  (Assert (= (- three 1) 2))
+  (Assert (= (- three 2 1) 0))
+  (Assert (= (- 2 three 1) -2))
+  (Assert (= (- three -1) 4))
+  (Assert (= (- three 0) 3))
+  (Assert (= (- three 0 five) -2))
+  (Assert (= (- 0 three 0 five) -8))
+  (Assert (= (- 0 three five) -8))
+  (Assert (= (* three 2) 6))
+  (Assert (= (* three -1 five) -15))
+  (Assert (= (* three 1 five) 15))
+  (Assert (= (* three 0 five) 0))
+  (Assert (= (* three 2 five) 30))
+  (Assert (= (/ three 1) 3))
+  (Assert (= (/ three -1) -3))
+  (Assert (= (/ (* five five) 2 2) 6))
+  (Assert (= (/ 64 five 2) 6)))
 
 
 ;;-----------------------------------------------------
 ;; Logical bit-twiddling operations
 ;;-----------------------------------------------------
-(Assert= (logxor)  0)
-(Assert= (logior)  0)
-(Assert= (logand) -1)
+(Assert (= (logxor)  0))
+(Assert (= (logior)  0))
+(Assert (= (logand) -1))
 
 (Check-Error wrong-type-argument (logxor 3.0))
 (Check-Error wrong-type-argument (logior 3.0))
 (Check-Error wrong-type-argument (logand 3.0))
 
 (dolist (three '(3 ?\03))
-  (Assert-eq 3 (logand three) three)
-  (Assert-eq 3 (logxor three) three)
-  (Assert-eq 3 (logior three) three)
-  (Assert-eq 3 (logand three three) three)
-  (Assert-eq 0 (logxor three three) three)
-  (Assert-eq 3 (logior three three)) three)
+  (Assert (eq 3 (logand three)) three)
+  (Assert (eq 3 (logxor three)) three)
+  (Assert (eq 3 (logior three)) three)
+  (Assert (eq 3 (logand three three)) three)
+  (Assert (eq 0 (logxor three three)) three)
+  (Assert (eq 3 (logior three three))) three)
 
 (dolist (one `(1 ?\01 ,(Int-to-Marker 1)))
   (dolist (two '(2 ?\02))
-    (Assert-eq 0 (logand one two) (list one two))
-    (Assert-eq 3 (logior one two) (list one two))
-    (Assert-eq 3 (logxor one two) (list one two)))
+    (Assert (eq 0 (logand one two)) (list one two))
+    (Assert (eq 3 (logior one two)) (list one two))
+    (Assert (eq 3 (logxor one two)) (list one two)))
   (dolist (three '(3 ?\03))
-    (Assert-eq 1 (logand one three) (list one three))
-    (Assert-eq 3 (logior one three) (list one three))
-    (Assert-eq 2 (logxor one three) (list one three))))
+    (Assert (eq 1 (logand one three)) (list one three))
+    (Assert (eq 3 (logior one three)) (list one three))
+    (Assert (eq 2 (logxor one three)) (list one three))))
 
 ;;-----------------------------------------------------
 ;; Test `%', mod
@@ -501,11 +502,11 @@
 (Check-Error wrong-type-argument (% 10.0 2))
 (Check-Error wrong-type-argument (% 10 2.0))
 
-(flet ((test1 (x) (Assert-eql x (+ (% x 17) (* (/ x 17) 17)) x))
-       (test2 (x) (Assert-eql (- x) (+ (% (- x) 17) (* (/ (- x) 17) 17)) x))
-       (test3 (x) (Assert-eql x (+ (% (- x) 17) (* (/ (- x) 17) 17)) x))
-       (test4 (x) (Assert-eql (% x -17) (- (% (- x) 17)) x))
-       (test5 (x) (Assert-eql (% x -17) (% (- x) 17)) x))
+(flet ((test1 (x) (Assert (eql x (+ (% x 17) (* (/ x 17) 17))) x))
+       (test2 (x) (Assert (eql (- x) (+ (% (- x) 17) (* (/ (- x) 17) 17))) x))
+       (test3 (x) (Assert (eql x (+ (% (- x) 17) (* (/ (- x) 17) 17))) x))
+       (test4 (x) (Assert (eql (% x -17) (- (% (- x) 17))) x))
+       (test5 (x) (Assert (eql (% x -17) (% (- x) 17))) x))
   (test1 most-negative-fixnum)
   (if (featurep 'bignum)
       (progn
@@ -527,54 +528,54 @@
 (macrolet
     ((division-test (seven)
     `(progn
-       (Assert-eq (% ,seven      2)  1)
-       (Assert-eq (% ,seven     -2)  1)
-       (Assert-eq (% (- ,seven)  2) -1)
-       (Assert-eq (% (- ,seven) -2) -1)
+       (Assert (eq (% ,seven      2)  1))
+       (Assert (eq (% ,seven     -2)  1))
+       (Assert (eq (% (- ,seven)  2) -1))
+       (Assert (eq (% (- ,seven) -2) -1))
 
-       (Assert-eq (% ,seven      4)  3)
-       (Assert-eq (% ,seven     -4)  3)
-       (Assert-eq (% (- ,seven)  4) -3)
-       (Assert-eq (% (- ,seven) -4) -3)
+       (Assert (eq (% ,seven      4)  3))
+       (Assert (eq (% ,seven     -4)  3))
+       (Assert (eq (% (- ,seven)  4) -3))
+       (Assert (eq (% (- ,seven) -4) -3))
 
-       (Assert-eq (%  35 ,seven)     0)
-       (Assert-eq (% -35 ,seven)     0)
-       (Assert-eq (%  35 (- ,seven)) 0)
-       (Assert-eq (% -35 (- ,seven)) 0)
+       (Assert (eq (%  35 ,seven)     0))
+       (Assert (eq (% -35 ,seven)     0))
+       (Assert (eq (%  35 (- ,seven)) 0))
+       (Assert (eq (% -35 (- ,seven)) 0))
 
-       (Assert-eq (mod ,seven      2)  1)
-       (Assert-eq (mod ,seven     -2) -1)
-       (Assert-eq (mod (- ,seven)  2)  1)
-       (Assert-eq (mod (- ,seven) -2) -1)
+       (Assert (eq (mod ,seven      2)  1))
+       (Assert (eq (mod ,seven     -2) -1))
+       (Assert (eq (mod (- ,seven)  2)  1))
+       (Assert (eq (mod (- ,seven) -2) -1))
 
-       (Assert-eq (mod ,seven      4)  3)
-       (Assert-eq (mod ,seven     -4) -1)
-       (Assert-eq (mod (- ,seven)  4)  1)
-       (Assert-eq (mod (- ,seven) -4) -3)
+       (Assert (eq (mod ,seven      4)  3))
+       (Assert (eq (mod ,seven     -4) -1))
+       (Assert (eq (mod (- ,seven)  4)  1))
+       (Assert (eq (mod (- ,seven) -4) -3))
 
-       (Assert-eq (mod  35 ,seven)     0)
-       (Assert-eq (mod -35 ,seven)     0)
-       (Assert-eq (mod  35 (- ,seven)) 0)
-       (Assert-eq (mod -35 (- ,seven)) 0)
+       (Assert (eq (mod  35 ,seven)     0))
+       (Assert (eq (mod -35 ,seven)     0))
+       (Assert (eq (mod  35 (- ,seven)) 0))
+       (Assert (eq (mod -35 (- ,seven)) 0))
 
-       (Assert= (mod ,seven      2.0)  1.0)
-       (Assert= (mod ,seven     -2.0) -1.0)
-       (Assert= (mod (- ,seven)  2.0)  1.0)
-       (Assert= (mod (- ,seven) -2.0) -1.0)
+       (Assert (= (mod ,seven      2.0)  1.0))
+       (Assert (= (mod ,seven     -2.0) -1.0))
+       (Assert (= (mod (- ,seven)  2.0)  1.0))
+       (Assert (= (mod (- ,seven) -2.0) -1.0))
 
-       (Assert= (mod ,seven      4.0)  3.0)
-       (Assert= (mod ,seven     -4.0) -1.0)
-       (Assert= (mod (- ,seven)  4.0)  1.0)
-       (Assert= (mod (- ,seven) -4.0) -3.0)
+       (Assert (= (mod ,seven      4.0)  3.0))
+       (Assert (= (mod ,seven     -4.0) -1.0))
+       (Assert (= (mod (- ,seven)  4.0)  1.0))
+       (Assert (= (mod (- ,seven) -4.0) -3.0))
 
-       (Assert-eq (% 0 ,seven) 0)
-       (Assert-eq (% 0 (- ,seven)) 0)
+       (Assert (eq (% 0 ,seven) 0))
+       (Assert (eq (% 0 (- ,seven)) 0))
 
-       (Assert-eq (mod 0 ,seven) 0)
-       (Assert-eq (mod 0 (- ,seven)) 0)
+       (Assert (eq (mod 0 ,seven) 0))
+       (Assert (eq (mod 0 (- ,seven)) 0))
 
-       (Assert= (mod 0.0 ,seven) 0.0)
-       (Assert= (mod 0.0 (- ,seven)) 0.0))))
+       (Assert (= (mod 0.0 ,seven) 0.0))
+       (Assert (= (mod 0.0 (- ,seven)) 0.0)))))
 
   (division-test 7)
   (division-test ?\07)
@@ -600,12 +601,12 @@
 
 ;; One argument always yields t
 (loop for x in `(1 1.0 ,(Int-to-Marker 1) ?z) do
-  (Assert-eq t (=  x) x)
-  (Assert-eq t (<  x) x)
-  (Assert-eq t (>  x) x)
-  (Assert-eq t (>= x) x)
-  (Assert-eq t (<= x) x)
-  (Assert-eq t (/= x) x)
+  (Assert (eq t (=  x)) x)
+  (Assert (eq t (<  x)) x)
+  (Assert (eq t (>  x)) x)
+  (Assert (eq t (>= x)) x)
+  (Assert (eq t (<= x)) x)
+  (Assert (eq t (/= x)) x)
   )
 
 ;; Type checking
@@ -633,7 +634,7 @@
     (Assert (not (< one one two two)) (list one two))
     (Assert (>= two two one one) (list one two))
     (Assert (not (> two two one one)) (list one two))
-    (Assert= one one one one)
+    (Assert (= one one one) one)
     (Assert (not (= one one one two)) (list one two))
     (Assert (not (/= one two one)) (list one two))
     ))
@@ -654,7 +655,7 @@
     (Assert (not (< one one two two)) (list one two))
     (Assert (>= two two one one) (list one two))
     (Assert (not (> two two one one)) (list one two))
-    (Assert= one one one one)
+    (Assert (= one one one) one)
     (Assert (not (= one one one two)) (list one two))
     (Assert (not (/= one two one)) (list one two))
     ))
@@ -674,8 +675,8 @@
 (Assert (<= 1 1))
 
 (Assert (not (eq (point) (point-marker))))
-(Assert= 1 (Int-to-Marker 1))
-(Assert= (point) (point-marker))
+(Assert (= 1 (Int-to-Marker 1)))
+(Assert (= (point) (point-marker)))
 
 (when (featurep 'bignum)
   (let ((big1 (1+ most-positive-fixnum))
@@ -700,8 +701,8 @@
 	(small1 (div (* 10 most-negative-fixnum) 4))
 	(small2 (div (* 5 most-negative-fixnum) 2))
 	(small3 (div (* 7 most-negative-fixnum) 2)))
-    (Assert= big1 big2)
-    (Assert= small1 small2)
+    (Assert (= big1 big2))
+    (Assert (= small1 small2))
     (Assert (< small3 small1 most-negative-fixnum most-positive-fixnum big1
 	       big3))
     (Assert (<= small3 small2 small1 most-negative-fixnum most-positive-fixnum
@@ -737,56 +738,56 @@
 	     remassoc remassq remrassoc remrassq))
 
 (let ((x '((1 . 2) 3 (4 . 5))))
-  (Assert-eq (assoc  1 x) (car x))
-  (Assert-eq (assq   1 x) (car x))
-  (Assert-eq (rassoc 1 x) nil)
-  (Assert-eq (rassq  1 x) nil)
-  (Assert-eq (assoc  2 x) nil)
-  (Assert-eq (assq   2 x) nil)
-  (Assert-eq (rassoc 2 x) (car x))
-  (Assert-eq (rassq  2 x) (car x))
-  (Assert-eq (assoc  3 x) nil)
-  (Assert-eq (assq   3 x) nil)
-  (Assert-eq (rassoc 3 x) nil)
-  (Assert-eq (rassq  3 x) nil)
-  (Assert-eq (assoc  4 x) (caddr x))
-  (Assert-eq (assq   4 x) (caddr x))
-  (Assert-eq (rassoc 4 x) nil)
-  (Assert-eq (rassq  4 x) nil)
-  (Assert-eq (assoc  5 x) nil)
-  (Assert-eq (assq   5 x) nil)
-  (Assert-eq (rassoc 5 x) (caddr x))
-  (Assert-eq (rassq  5 x) (caddr x))
-  (Assert-eq (assoc  6 x) nil)
-  (Assert-eq (assq   6 x) nil)
-  (Assert-eq (rassoc 6 x) nil)
-  (Assert-eq (rassq  6 x) nil))
+  (Assert (eq (assoc  1 x) (car x)))
+  (Assert (eq (assq   1 x) (car x)))
+  (Assert (eq (rassoc 1 x) nil))
+  (Assert (eq (rassq  1 x) nil))
+  (Assert (eq (assoc  2 x) nil))
+  (Assert (eq (assq   2 x) nil))
+  (Assert (eq (rassoc 2 x) (car x)))
+  (Assert (eq (rassq  2 x) (car x)))
+  (Assert (eq (assoc  3 x) nil))
+  (Assert (eq (assq   3 x) nil))
+  (Assert (eq (rassoc 3 x) nil))
+  (Assert (eq (rassq  3 x) nil))
+  (Assert (eq (assoc  4 x) (caddr x)))
+  (Assert (eq (assq   4 x) (caddr x)))
+  (Assert (eq (rassoc 4 x) nil))
+  (Assert (eq (rassq  4 x) nil))
+  (Assert (eq (assoc  5 x) nil))
+  (Assert (eq (assq   5 x) nil))
+  (Assert (eq (rassoc 5 x) (caddr x)))
+  (Assert (eq (rassq  5 x) (caddr x)))
+  (Assert (eq (assoc  6 x) nil))
+  (Assert (eq (assq   6 x) nil))
+  (Assert (eq (rassoc 6 x) nil))
+  (Assert (eq (rassq  6 x) nil)))
 
 (let ((x '(("1" . "2") "3" ("4" . "5"))))
-  (Assert-eq (assoc  "1" x) (car x))
-  (Assert-eq (assq   "1" x) nil)
-  (Assert-eq (rassoc "1" x) nil)
-  (Assert-eq (rassq  "1" x) nil)
-  (Assert-eq (assoc  "2" x) nil)
-  (Assert-eq (assq   "2" x) nil)
-  (Assert-eq (rassoc "2" x) (car x))
-  (Assert-eq (rassq  "2" x) nil)
-  (Assert-eq (assoc  "3" x) nil)
-  (Assert-eq (assq   "3" x) nil)
-  (Assert-eq (rassoc "3" x) nil)
-  (Assert-eq (rassq  "3" x) nil)
-  (Assert-eq (assoc  "4" x) (caddr x))
-  (Assert-eq (assq   "4" x) nil)
-  (Assert-eq (rassoc "4" x) nil)
-  (Assert-eq (rassq  "4" x) nil)
-  (Assert-eq (assoc  "5" x) nil)
-  (Assert-eq (assq   "5" x) nil)
-  (Assert-eq (rassoc "5" x) (caddr x))
-  (Assert-eq (rassq  "5" x) nil)
-  (Assert-eq (assoc  "6" x) nil)
-  (Assert-eq (assq   "6" x) nil)
-  (Assert-eq (rassoc "6" x) nil)
-  (Assert-eq (rassq  "6" x) nil))
+  (Assert (eq (assoc  "1" x) (car x)))
+  (Assert (eq (assq   "1" x) nil))
+  (Assert (eq (rassoc "1" x) nil))
+  (Assert (eq (rassq  "1" x) nil))
+  (Assert (eq (assoc  "2" x) nil))
+  (Assert (eq (assq   "2" x) nil))
+  (Assert (eq (rassoc "2" x) (car x)))
+  (Assert (eq (rassq  "2" x) nil))
+  (Assert (eq (assoc  "3" x) nil))
+  (Assert (eq (assq   "3" x) nil))
+  (Assert (eq (rassoc "3" x) nil))
+  (Assert (eq (rassq  "3" x) nil))
+  (Assert (eq (assoc  "4" x) (caddr x)))
+  (Assert (eq (assq   "4" x) nil))
+  (Assert (eq (rassoc "4" x) nil))
+  (Assert (eq (rassq  "4" x) nil))
+  (Assert (eq (assoc  "5" x) nil))
+  (Assert (eq (assq   "5" x) nil))
+  (Assert (eq (rassoc "5" x) (caddr x)))
+  (Assert (eq (rassq  "5" x) nil))
+  (Assert (eq (assoc  "6" x) nil))
+  (Assert (eq (assq   "6" x) nil))
+  (Assert (eq (rassoc "6" x) nil))
+  (Assert (eq (rassq  "6" x) nil)))
 
 (flet ((a () (list '(1 . 2) 3 '(4 . 5))))
   (Assert (let* ((x (a)) (y (remassoc  1 x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
@@ -868,8 +869,8 @@
 ;;-----------------------------------------------------
 (defmacro check-function-argcounts (fun min max)
   `(progn
-     (Assert-eq (function-min-args ,fun) ,min)
-     (Assert-eq (function-max-args ,fun) ,max)))
+     (Assert (eq (function-min-args ,fun) ,min))
+     (Assert (eq (function-max-args ,fun) ,max))))
 
 (check-function-argcounts 'prog1 1 nil)         ; special form
 (check-function-argcounts 'command-execute 1 3)	; normal subr
@@ -896,7 +897,7 @@
     (list (0 . many))
     (type-of (1 . 1))
     (garbage-collect (0 . 0)))
-  do (Assert-equal (subr-arity (symbol-function function-name)) arity))
+  do (Assert (equal (subr-arity (symbol-function function-name)) arity)))
   
 (Check-Error wrong-type-argument (subr-arity
                                   (lambda () (message "Hi there!"))))
@@ -918,37 +919,37 @@
 ;;-----------------------------------------------------
 ;; Test `type-of'
 ;;-----------------------------------------------------
-(Assert-eq (type-of load-path) 'cons)
-(Assert-eq (type-of obarray) 'vector)
-(Assert-eq (type-of 42) 'integer)
-(Assert-eq (type-of ?z) 'character)
-(Assert-eq (type-of "42") 'string)
-(Assert-eq (type-of 'foo) 'symbol)
-(Assert-eq (type-of (selected-device)) 'device)
+(Assert (eq (type-of load-path) 'cons))
+(Assert (eq (type-of obarray) 'vector))
+(Assert (eq (type-of 42) 'integer))
+(Assert (eq (type-of ?z) 'character))
+(Assert (eq (type-of "42") 'string))
+(Assert (eq (type-of 'foo) 'symbol))
+(Assert (eq (type-of (selected-device)) 'device))
 
 ;;-----------------------------------------------------
 ;; Test mapping functions
 ;;-----------------------------------------------------
 (Check-Error wrong-type-argument (mapcar #'identity (current-buffer)))
-(Assert-equal (mapcar #'identity load-path) load-path)
-(Assert-equal (mapcar #'identity '(1 2 3)) '(1 2 3))
-(Assert-equal (mapcar #'identity "123") '(?1 ?2 ?3))
-(Assert-equal (mapcar #'identity [1 2 3]) '(1 2 3))
-(Assert-equal (mapcar #'identity #*010) '(0 1 0))
+(Assert (equal (mapcar #'identity load-path) load-path))
+(Assert (equal (mapcar #'identity '(1 2 3)) '(1 2 3)))
+(Assert (equal (mapcar #'identity "123") '(?1 ?2 ?3)))
+(Assert (equal (mapcar #'identity [1 2 3]) '(1 2 3)))
+(Assert (equal (mapcar #'identity #*010) '(0 1 0)))
 
 (let ((z 0) (list (make-list 1000 1)))
   (mapc (lambda (x) (incf z x)) list)
-  (Assert-eq 1000 z))
+  (Assert (eq 1000 z)))
 
 (Check-Error wrong-type-argument (mapvector #'identity (current-buffer)))
-(Assert-equal (mapvector #'identity '(1 2 3)) [1 2 3])
-(Assert-equal (mapvector #'identity "123") [?1 ?2 ?3])
-(Assert-equal (mapvector #'identity [1 2 3]) [1 2 3])
-(Assert-equal (mapvector #'identity #*010) [0 1 0])
+(Assert (equal (mapvector #'identity '(1 2 3)) [1 2 3]))
+(Assert (equal (mapvector #'identity "123") [?1 ?2 ?3]))
+(Assert (equal (mapvector #'identity [1 2 3]) [1 2 3]))
+(Assert (equal (mapvector #'identity #*010) [0 1 0]))
 
 (Check-Error wrong-type-argument (mapconcat #'identity (current-buffer) "foo"))
-(Assert-equal (mapconcat #'identity '("1" "2" "3") "|") "1|2|3")
-(Assert-equal (mapconcat #'identity ["1" "2" "3"]  "|") "1|2|3")
+(Assert (equal (mapconcat #'identity '("1" "2" "3") "|") "1|2|3"))
+(Assert (equal (mapconcat #'identity ["1" "2" "3"]  "|") "1|2|3"))
 
 ;; The following 2 functions used to crash XEmacs via mapcar1().
 ;; We don't test the actual values of the mapcar, since they're undefined.
@@ -973,38 +974,38 @@
       (car y))
     x)))
 
-(Assert-eql
+(Assert (eql
  (length (multiple-value-list
           (car (mapcar #'(lambda (argument) (floor argument)) (list pi e)))))
- 1
+ 1)
  "checking multiple values are correctly discarded in mapcar")
 
 ;;-----------------------------------------------------
 ;; Test vector functions
 ;;-----------------------------------------------------
-(Assert-equal [1 2 3] [1 2 3])
-(Assert-equal [] [])
+(Assert (equal [1 2 3] [1 2 3]))
+(Assert (equal [] []))
 (Assert (not (equal [1 2 3] [])))
 (Assert (not (equal [1 2 3] [1 2 4])))
 (Assert (not (equal [0 2 3] [1 2 3])))
 (Assert (not (equal [1 2 3] [1 2 3 4])))
 (Assert (not (equal [1 2 3 4] [1 2 3])))
-(Assert-equal (vector 1 2 3) [1 2 3])
-(Assert-equal (make-vector 3 1) [1 1 1])
+(Assert (equal (vector 1 2 3) [1 2 3]))
+(Assert (equal (make-vector 3 1) [1 1 1]))
 
 ;;-----------------------------------------------------
 ;; Test bit-vector functions
 ;;-----------------------------------------------------
-(Assert-equal #*010 #*010)
-(Assert-equal #* #*)
+(Assert (equal #*010 #*010))
+(Assert (equal #* #*))
 (Assert (not (equal #*010 #*011)))
 (Assert (not (equal #*010 #*)))
 (Assert (not (equal #*110 #*010)))
 (Assert (not (equal #*010 #*0100)))
 (Assert (not (equal #*0101 #*010)))
-(Assert-equal (bit-vector 0 1 0) #*010)
-(Assert-equal (make-bit-vector 3 1) #*111)
-(Assert-equal (make-bit-vector 3 0) #*000)
+(Assert (equal (bit-vector 0 1 0) #*010))
+(Assert (equal (make-bit-vector 3 1) #*111))
+(Assert (equal (make-bit-vector 3 0) #*000))
 
 ;;-----------------------------------------------------
 ;; Test buffer-local variables used as (ugh!) function parameters
@@ -1022,59 +1023,59 @@
 ;; Hrvoje didn't like the next 3 tests so I'm disabling them for now. -sb
 ;; I assume Hrvoje worried about the possibility of infloops. -sjt
 (when test-harness-risk-infloops
-  (Assert-equal (split-string "foo" "") '("" "f" "o" "o" ""))
-  (Assert-equal (split-string "foo" "^") '("" "foo"))
-  (Assert-equal (split-string "foo" "$") '("foo" "")))
-(Assert-equal (split-string "foo,bar" ",") '("foo" "bar"))
-(Assert-equal (split-string ",foo,bar," ",") '("" "foo" "bar" ""))
-(Assert-equal (split-string ",foo,bar," "^,") '("" "foo,bar,"))
-(Assert-equal (split-string ",foo,bar," ",$") '(",foo,bar" ""))
-(Assert-equal (split-string ",foo,,bar," ",") '("" "foo" "" "bar" ""))
-(Assert-equal (split-string "foo,,,bar" ",") '("foo" "" "" "bar"))
-(Assert-equal (split-string "foo,,bar,," ",") '("foo" "" "bar" "" ""))
-(Assert-equal (split-string "foo,,bar" ",+") '("foo" "bar"))
-(Assert-equal (split-string ",foo,,bar," ",+") '("" "foo" "bar" ""))
+  (Assert (equal (split-string "foo" "") '("" "f" "o" "o" "")))
+  (Assert (equal (split-string "foo" "^") '("" "foo")))
+  (Assert (equal (split-string "foo" "$") '("foo" ""))))
+(Assert (equal (split-string "foo,bar" ",") '("foo" "bar")))
+(Assert (equal (split-string ",foo,bar," ",") '("" "foo" "bar" "")))
+(Assert (equal (split-string ",foo,bar," "^,") '("" "foo,bar,")))
+(Assert (equal (split-string ",foo,bar," ",$") '(",foo,bar" "")))
+(Assert (equal (split-string ",foo,,bar," ",") '("" "foo" "" "bar" "")))
+(Assert (equal (split-string "foo,,,bar" ",") '("foo" "" "" "bar")))
+(Assert (equal (split-string "foo,,bar,," ",") '("foo" "" "bar" "" "")))
+(Assert (equal (split-string "foo,,bar" ",+") '("foo" "bar")))
+(Assert (equal (split-string ",foo,,bar," ",+") '("" "foo" "bar" "")))
 ;; Omit nulls, explicit SEPARATORS
 (when test-harness-risk-infloops
-  (Assert-equal (split-string "foo" "" t) '("f" "o" "o"))
-  (Assert-equal (split-string "foo" "^" t) '("foo"))
-  (Assert-equal (split-string "foo" "$" t) '("foo")))
-(Assert-equal (split-string "foo,bar" "," t) '("foo" "bar"))
-(Assert-equal (split-string ",foo,bar," "," t) '("foo" "bar"))
-(Assert-equal (split-string ",foo,bar," "^," t) '("foo,bar,"))
-(Assert-equal (split-string ",foo,bar," ",$" t) '(",foo,bar"))
-(Assert-equal (split-string ",foo,,bar," "," t) '("foo" "bar"))
-(Assert-equal (split-string "foo,,,bar" "," t) '("foo" "bar"))
-(Assert-equal (split-string "foo,,bar,," "," t) '("foo" "bar"))
-(Assert-equal (split-string "foo,,bar" ",+" t) '("foo" "bar"))
-(Assert-equal (split-string ",foo,,bar," ",+" t) '("foo" "bar"))
+  (Assert (equal (split-string "foo" "" t) '("f" "o" "o")))
+  (Assert (equal (split-string "foo" "^" t) '("foo")))
+  (Assert (equal (split-string "foo" "$" t) '("foo"))))
+(Assert (equal (split-string "foo,bar" "," t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,bar," "," t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,bar," "^," t) '("foo,bar,")))
+(Assert (equal (split-string ",foo,bar," ",$" t) '(",foo,bar")))
+(Assert (equal (split-string ",foo,,bar," "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,,bar" "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,bar,," "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,bar" ",+" t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,,bar," ",+" t) '("foo" "bar")))
 ;; "Double-default" case
-(Assert-equal (split-string "foo bar") '("foo" "bar"))
-(Assert-equal (split-string " foo bar ") '("foo" "bar"))
-(Assert-equal (split-string " foo  bar ") '("foo" "bar"))
-(Assert-equal (split-string "foo   bar") '("foo" "bar"))
-(Assert-equal (split-string "foo  bar  ") '("foo" "bar"))
-(Assert-equal (split-string "foobar") '("foobar"))
+(Assert (equal (split-string "foo bar") '("foo" "bar")))
+(Assert (equal (split-string " foo bar ") '("foo" "bar")))
+(Assert (equal (split-string " foo  bar ") '("foo" "bar")))
+(Assert (equal (split-string "foo   bar") '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  ") '("foo" "bar")))
+(Assert (equal (split-string "foobar") '("foobar")))
 ;; Semantics are identical to "double-default" case!  Fool ya?
-(Assert-equal (split-string "foo bar" nil t) '("foo" "bar"))
-(Assert-equal (split-string " foo bar " nil t) '("foo" "bar"))
-(Assert-equal (split-string " foo  bar " nil t) '("foo" "bar"))
-(Assert-equal (split-string "foo   bar" nil t) '("foo" "bar"))
-(Assert-equal (split-string "foo  bar  " nil t) '("foo" "bar"))
-(Assert-equal (split-string "foobar" nil t) '("foobar"))
+(Assert (equal (split-string "foo bar" nil t) '("foo" "bar")))
+(Assert (equal (split-string " foo bar " nil t) '("foo" "bar")))
+(Assert (equal (split-string " foo  bar " nil t) '("foo" "bar")))
+(Assert (equal (split-string "foo   bar" nil t) '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  " nil t) '("foo" "bar")))
+(Assert (equal (split-string "foobar" nil t) '("foobar")))
 ;; Perverse "anti-double-default" case
-(Assert-equal (split-string "foo bar" split-string-default-separators)
-	       '("foo" "bar"))
-(Assert-equal (split-string " foo bar " split-string-default-separators)
-	       '("" "foo" "bar" ""))
-(Assert-equal (split-string " foo  bar " split-string-default-separators)
-	       '("" "foo" "bar" ""))
-(Assert-equal (split-string "foo   bar" split-string-default-separators)
-	       '("foo" "bar"))
-(Assert-equal (split-string "foo  bar  " split-string-default-separators)
-	       '("foo" "bar" ""))
-(Assert-equal (split-string "foobar" split-string-default-separators)
-	       '("foobar"))
+(Assert (equal (split-string "foo bar" split-string-default-separators)
+	       '("foo" "bar")))
+(Assert (equal (split-string " foo bar " split-string-default-separators)
+	       '("" "foo" "bar" "")))
+(Assert (equal (split-string " foo  bar " split-string-default-separators)
+	       '("" "foo" "bar" "")))
+(Assert (equal (split-string "foo   bar" split-string-default-separators)
+	       '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  " split-string-default-separators)
+	       '("foo" "bar" "")))
+(Assert (equal (split-string "foobar" split-string-default-separators)
+	       '("foobar")))
 
 ;;-----------------------------------------------------
 ;; Test split-string-by-char
@@ -1151,50 +1152,50 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 (with-temp-buffer
   (erase-buffer)
-  (Assert-eq (char-before) nil)
-  (Assert-eq (char-before (point)) nil)
-  (Assert-eq (char-before (point-marker)) nil)
-  (Assert-eq (char-before (point) (current-buffer)) nil)
-  (Assert-eq (char-before (point-marker) (current-buffer)) nil)
-  (Assert-eq (char-after) nil)
-  (Assert-eq (char-after (point)) nil)
-  (Assert-eq (char-after (point-marker)) nil)
-  (Assert-eq (char-after (point) (current-buffer)) nil)
-  (Assert-eq (char-after (point-marker) (current-buffer)) nil)
-  (Assert-eq (preceding-char) 0)
-  (Assert-eq (preceding-char (current-buffer)) 0)
-  (Assert-eq (following-char) 0)
-  (Assert-eq (following-char (current-buffer)) 0)
+  (Assert (eq (char-before) nil))
+  (Assert (eq (char-before (point)) nil))
+  (Assert (eq (char-before (point-marker)) nil))
+  (Assert (eq (char-before (point) (current-buffer)) nil))
+  (Assert (eq (char-before (point-marker) (current-buffer)) nil))
+  (Assert (eq (char-after) nil))
+  (Assert (eq (char-after (point)) nil))
+  (Assert (eq (char-after (point-marker)) nil))
+  (Assert (eq (char-after (point) (current-buffer)) nil))
+  (Assert (eq (char-after (point-marker) (current-buffer)) nil))
+  (Assert (eq (preceding-char) 0))
+  (Assert (eq (preceding-char (current-buffer)) 0))
+  (Assert (eq (following-char) 0))
+  (Assert (eq (following-char (current-buffer)) 0))
   (insert "foobar")
-  (Assert-eq (char-before) ?r)
-  (Assert-eq (char-after) nil)
-  (Assert-eq (preceding-char) ?r)
-  (Assert-eq (following-char) 0)
+  (Assert (eq (char-before) ?r))
+  (Assert (eq (char-after) nil))
+  (Assert (eq (preceding-char) ?r))
+  (Assert (eq (following-char) 0))
   (goto-char (point-min))
-  (Assert-eq (char-before) nil)
-  (Assert-eq (char-after) ?f)
-  (Assert-eq (preceding-char) 0)
-  (Assert-eq (following-char) ?f)
+  (Assert (eq (char-before) nil))
+  (Assert (eq (char-after) ?f))
+  (Assert (eq (preceding-char) 0))
+  (Assert (eq (following-char) ?f))
   )
 
 ;;-----------------------------------------------------
 ;; Test plist manipulation functions.
 ;;-----------------------------------------------------
 (let ((sym (make-symbol "test-symbol")))
-  (Assert-eq t (get* sym t t))
-  (Assert-eq t (get  sym t t))
-  (Assert-eq t (getf nil t t))
-  (Assert-eq t (plist-get nil t t))
+  (Assert (eq t (get* sym t t)))
+  (Assert (eq t (get  sym t t)))
+  (Assert (eq t (getf nil t t)))
+  (Assert (eq t (plist-get nil t t)))
   (put sym 'bar 'baz)
-  (Assert-eq 'baz (get sym 'bar))
-  (Assert-eq 'baz (getf '(bar baz) 'bar))
-  (Assert-eq 'baz (getf (symbol-plist sym) 'bar))
-  (Assert-eq 2 (getf '(1 2) 1))
-  (Assert-eq 4 (put sym 3 4))
-  (Assert-eq 4 (get sym 3))
-  (Assert-eq t (remprop sym 3))
-  (Assert-eq nil (remprop sym 3))
-  (Assert-eq 5 (get sym 3 5))
+  (Assert (eq 'baz (get sym 'bar)))
+  (Assert (eq 'baz (getf '(bar baz) 'bar)))
+  (Assert (eq 'baz (getf (symbol-plist sym) 'bar)))
+  (Assert (eq 2 (getf '(1 2) 1)))
+  (Assert (eq 4 (put sym 3 4)))
+  (Assert (eq 4 (get sym 3)))
+  (Assert (eq t (remprop sym 3)))
+  (Assert (eq nil (remprop sym 3)))
+  (Assert (eq 5 (get sym 3 5)))
   )
 
 (loop for obj in
@@ -1203,18 +1204,18 @@ via the hepatic alpha-tocopherol transfer protein")))
 	(make-extent nil nil nil)
 	(make-face 'test-face))
   do
-  (Assert-eq 2 (get obj ?1 2) obj)
-  (Assert-eq 4 (put obj ?3 4) obj)
-  (Assert-eq 4 (get obj ?3) obj)
+  (Assert (eq 2 (get obj ?1 2)) obj)
+  (Assert (eq 4 (put obj ?3 4)) obj)
+  (Assert (eq 4 (get obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
-    (Assert-equal '(?3 4) (object-plist obj) obj))
-  (Assert-eq t (remprop obj ?3) obj)
+    (Assert (equal '(?3 4) (object-plist obj)) obj))
+  (Assert (eq t (remprop obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
-    (Assert-eq '() (object-plist obj) obj))
-  (Assert-eq nil (remprop obj ?3) obj)
+    (Assert (eq '() (object-plist obj)) obj))
+  (Assert (eq nil (remprop obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
-    (Assert-eq '() (object-plist obj) obj))
-  (Assert-eq 5 (get obj ?3 5) obj)
+    (Assert (eq '() (object-plist obj)) obj))
+  (Assert (eq 5 (get obj ?3 5)) obj)
   )
 
 (Check-Error-Message
@@ -1240,15 +1241,15 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 ;; Test subseq
 ;;-----------------------------------------------------
-(Assert-equal (subseq nil 0) nil)
-(Assert-equal (subseq [1 2 3] 0) [1 2 3])
-(Assert-equal (subseq [1 2 3] 1 -1) [2])
-(Assert-equal (subseq "123" 0) "123")
-(Assert-equal (subseq "1234" -3 -1) "23")
-(Assert-equal (subseq #*0011 0) #*0011)
-(Assert-equal (subseq #*0011 -3 3) #*01)
-(Assert-equal (subseq '(1 2 3) 0) '(1 2 3))
-(Assert-equal (subseq '(1 2 3 4) -3 nil) '(2 3 4))
+(Assert (equal (subseq nil 0) nil))
+(Assert (equal (subseq [1 2 3] 0) [1 2 3]))
+(Assert (equal (subseq [1 2 3] 1 -1) [2]))
+(Assert (equal (subseq "123" 0) "123"))
+(Assert (equal (subseq "1234" -3 -1) "23"))
+(Assert (equal (subseq #*0011 0) #*0011))
+(Assert (equal (subseq #*0011 -3 3) #*01))
+(Assert (equal (subseq '(1 2 3) 0) '(1 2 3)))
+(Assert (equal (subseq '(1 2 3 4) -3 nil) '(2 3 4)))
 
 (Check-Error wrong-type-argument (subseq 3 2))
 (Check-Error args-out-of-range (subseq [1 2 3] -42))
@@ -1257,7 +1258,7 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 ;; Time-related tests
 ;;-----------------------------------------------------
-(Assert= (length (current-time-string)) 24)
+(Assert (= (length (current-time-string)) 24))
 
 ;;-----------------------------------------------------
 ;; format test
@@ -1347,20 +1348,20 @@ via the hepatic alpha-tocopherol transfer protein")))
 
 ;;; The following two tests used to use 1000 instead of 100,
 ;;; but that merely found buffer overflow bugs in Solaris sprintf().
-(Assert= 102 (length (format "%.100f" 3.14)))
-(Assert= 100 (length (format "%100f" 3.14)))
+(Assert (= 102 (length (format "%.100f" 3.14))))
+(Assert (= 100 (length (format "%100f" 3.14))))
 
 ;;; Check for 64-bit cleanness on LP64 platforms.
-(Assert= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum)
-(Assert= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum)
-(Assert= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum)
-(Assert= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum)
-(Assert= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum)
-(Assert= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum)
+(Assert (= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
+(Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
 
 ;; These used to crash. 
-(Assert-eql (read (format "%f" 1.2e+302)) 1.2e+302)
-(Assert-eql (read (format "%.1000d" 1)) 1)
+(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
+(Assert (eql (read (format "%.1000d" 1)) 1))
 
 ;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
 ;;; What to do if "%u" is used with a negative number?
@@ -1418,12 +1419,12 @@ via the hepatic alpha-tocopherol transfer protein")))
   (if (= new-char old-char)
       (setq new-char ?/))
   (aset load-file-name 0 new-char)
-  (Assert= new-char (aref load-file-name 0)
+  (Assert (= new-char (aref load-file-name 0))
 	  \"Check that we can modify the string value of load-file-name\"))
 
 (let* ((new-load-file-name \"hi there\")
        (load-file-name new-load-file-name))
-  (Assert-eq new-load-file-name load-file-name
+  (Assert (eq new-load-file-name load-file-name)
 	  \"Checking that we can bind load-file-name successfully.\"))
 
 ")
@@ -1467,137 +1468,137 @@ via the hepatic alpha-tocopherol transfer protein")))
 			 one-fround-result two-fround-result
 			 one-truncate-result two-truncate-result
 			 one-ftruncate-result two-ftruncate-result)
-	 (Assert-equal one-floor-result (multiple-value-list
-					  (floor first))
+	 (Assert (equal one-floor-result (multiple-value-list
+					  (floor first)))
 		 (format "checking (floor %S) gives %S"
 			 first one-floor-result))
-	 (Assert-equal one-floor-result (multiple-value-list
-					  (floor first 1))
+	 (Assert (equal one-floor-result (multiple-value-list
+					  (floor first 1)))
 		 (format "checking (floor %S 1) gives %S"
 			 first one-floor-result))
 	 (Check-Error arith-error (floor first 0))
 	 (Check-Error arith-error (floor first 0.0))
-	 (Assert-equal two-floor-result (multiple-value-list
-					  (floor first second))
+	 (Assert (equal two-floor-result (multiple-value-list
+					  (floor first second)))
 		 (format
 		  "checking (floor %S %S) gives %S"
 		  first second two-floor-result))
-	 (Assert-equal (cl-floor first second)
-			(multiple-value-list (floor first second))
+	 (Assert (equal (cl-floor first second)
+			(multiple-value-list (floor first second)))
 		 (format
 		  "checking (floor %S %S) gives the same as the old code"
 		  first second))
-	 (Assert-equal one-ffloor-result (multiple-value-list
-					   (ffloor first))
+	 (Assert (equal one-ffloor-result (multiple-value-list
+					   (ffloor first)))
 		 (format "checking (ffloor %S) gives %S"
 			 first one-ffloor-result))
-	 (Assert-equal one-ffloor-result (multiple-value-list
-					   (ffloor first 1))
+	 (Assert (equal one-ffloor-result (multiple-value-list
+					   (ffloor first 1)))
 		 (format "checking (ffloor %S 1) gives %S"
 			 first one-ffloor-result))
 	 (Check-Error arith-error (ffloor first 0))
 	 (Check-Error arith-error (ffloor first 0.0))
-	 (Assert-equal two-ffloor-result (multiple-value-list
-					   (ffloor first second))
+	 (Assert (equal two-ffloor-result (multiple-value-list
+					   (ffloor first second)))
 		 (format "checking (ffloor %S %S) gives %S"
 			 first second two-ffloor-result))
-	 (Assert-equal one-ceiling-result (multiple-value-list
-					    (ceiling first))
+	 (Assert (equal one-ceiling-result (multiple-value-list
+					    (ceiling first)))
 		 (format "checking (ceiling %S) gives %S"
 			 first one-ceiling-result))
-	 (Assert-equal one-ceiling-result (multiple-value-list
-					    (ceiling first 1))
+	 (Assert (equal one-ceiling-result (multiple-value-list
+					    (ceiling first 1)))
 		 (format "checking (ceiling %S 1) gives %S"
 			 first one-ceiling-result))
 	 (Check-Error arith-error (ceiling first 0))
 	 (Check-Error arith-error (ceiling first 0.0))
-	 (Assert-equal two-ceiling-result (multiple-value-list
-					    (ceiling first second))
+	 (Assert (equal two-ceiling-result (multiple-value-list
+					    (ceiling first second)))
 		 (format "checking (ceiling %S %S) gives %S"
 			 first second two-ceiling-result))
-	 (Assert-equal (cl-ceiling first second)
-			(multiple-value-list (ceiling first second))
+	 (Assert (equal (cl-ceiling first second)
+			(multiple-value-list (ceiling first second)))
 		 (format
 		  "checking (ceiling %S %S) gives the same as the old code"
 		  first second))
-	 (Assert-equal one-fceiling-result (multiple-value-list
-					     (fceiling first))
+	 (Assert (equal one-fceiling-result (multiple-value-list
+					     (fceiling first)))
 		 (format "checking (fceiling %S) gives %S"
 			 first one-fceiling-result))
-	 (Assert-equal one-fceiling-result (multiple-value-list
-					     (fceiling first 1))
+	 (Assert (equal one-fceiling-result (multiple-value-list
+					     (fceiling first 1)))
 		 (format "checking (fceiling %S 1) gives %S"
 			 first one-fceiling-result))
 	 (Check-Error arith-error (fceiling first 0))
 	 (Check-Error arith-error (fceiling first 0.0))
-	 (Assert-equal two-fceiling-result (multiple-value-list
-					  (fceiling first second))
+	 (Assert (equal two-fceiling-result (multiple-value-list
+					  (fceiling first second)))
 		 (format "checking (fceiling %S %S) gives %S"
 			 first second two-fceiling-result))
-	 (Assert-equal one-round-result (multiple-value-list
-					  (round first))
+	 (Assert (equal one-round-result (multiple-value-list
+					  (round first)))
 		 (format "checking (round %S) gives %S"
 			 first one-round-result))
-	 (Assert-equal one-round-result (multiple-value-list
-					  (round first 1))
+	 (Assert (equal one-round-result (multiple-value-list
+					  (round first 1)))
 		 (format "checking (round %S 1) gives %S"
 			 first one-round-result))
 	 (Check-Error arith-error (round first 0))
 	 (Check-Error arith-error (round first 0.0))
-	 (Assert-equal two-round-result (multiple-value-list
-					  (round first second))
+	 (Assert (equal two-round-result (multiple-value-list
+					  (round first second)))
 		 (format "checking (round %S %S) gives %S"
 			 first second two-round-result))
-	 (Assert-equal one-fround-result (multiple-value-list
-					   (fround first))
+	 (Assert (equal one-fround-result (multiple-value-list
+					   (fround first)))
 		 (format "checking (fround %S) gives %S"
 			 first one-fround-result))
-	 (Assert-equal one-fround-result (multiple-value-list
-					   (fround first 1))
+	 (Assert (equal one-fround-result (multiple-value-list
+					   (fround first 1)))
 		 (format "checking (fround %S 1) gives %S"
 			 first one-fround-result))
 	 (Check-Error arith-error (fround first 0))
 	 (Check-Error arith-error (fround first 0.0))
-	 (Assert-equal two-fround-result (multiple-value-list
-					   (fround first second))
+	 (Assert (equal two-fround-result (multiple-value-list
+					   (fround first second)))
 		 (format "checking (fround %S %S) gives %S"
 			 first second two-fround-result))
-	 (Assert-equal (cl-round first second)
-			(multiple-value-list (round first second))
+	 (Assert (equal (cl-round first second)
+			(multiple-value-list (round first second)))
 		 (format
 		  "checking (round %S %S) gives the same as the old code"
 		  first second))
-	 (Assert-equal one-truncate-result (multiple-value-list
-					     (truncate first))
+	 (Assert (equal one-truncate-result (multiple-value-list
+					     (truncate first)))
 		 (format "checking (truncate %S) gives %S"
 			 first one-truncate-result))
-	 (Assert-equal one-truncate-result (multiple-value-list
-					     (truncate first 1))
+	 (Assert (equal one-truncate-result (multiple-value-list
+					     (truncate first 1)))
 		 (format "checking (truncate %S 1) gives %S"
 			 first one-truncate-result))
 	 (Check-Error arith-error (truncate first 0))
 	 (Check-Error arith-error (truncate first 0.0))
-	 (Assert-equal two-truncate-result (multiple-value-list
-					     (truncate first second))
+	 (Assert (equal two-truncate-result (multiple-value-list
+					     (truncate first second)))
 		 (format "checking (truncate %S %S) gives %S"
 			 first second two-truncate-result))
-	 (Assert-equal (cl-truncate first second)
-			(multiple-value-list (truncate first second))
+	 (Assert (equal (cl-truncate first second)
+			(multiple-value-list (truncate first second)))
 		 (format
 		  "checking (truncate %S %S) gives the same as the old code"
 		  first second))
-	 (Assert-equal one-ftruncate-result (multiple-value-list
-					      (ftruncate first))
+	 (Assert (equal one-ftruncate-result (multiple-value-list
+					      (ftruncate first)))
 		 (format "checking (ftruncate %S) gives %S"
 			 first one-ftruncate-result))
-	 (Assert-equal one-ftruncate-result (multiple-value-list
-					      (ftruncate first 1))
+	 (Assert (equal one-ftruncate-result (multiple-value-list
+					      (ftruncate first 1)))
 		 (format "checking (ftruncate %S 1) gives %S"
 			 first one-ftruncate-result))
 	 (Check-Error arith-error (ftruncate first 0))
 	 (Check-Error arith-error (ftruncate first 0.0))
-	 (Assert-equal two-ftruncate-result (multiple-value-list
-					      (ftruncate first second))
+	 (Assert (equal two-ftruncate-result (multiple-value-list
+					      (ftruncate first second)))
 		 (format "checking (ftruncate %S %S) gives %S"
 			 first second two-ftruncate-result)))
        (Assert-rounding-floating (pie ee)
@@ -2033,34 +2034,34 @@ via the hepatic alpha-tocopherol transfer protein")))
 		 (foo-zero 400 (1+ most-positive-fixnum)))))
    "Checking multiple values are discarded correctly when forced")
   (Check-Error setting-constant (setq multiple-values-limit 20))
-  (Assert-equal '(-1 1)
-	  (multiple-value-list (floor -3 4))
-   "Checking #'multiple-value-list gives a sane result")
+  (Assert (equal '(-1 1)
+		 (multiple-value-list (floor -3 4)))
+	  "Checking #'multiple-value-list gives a sane result")
   (let ((ey 40000)
 	(bee "this is a string")
 	(cee #s(hash-table size 256 data (969 ?\xF9))))
-    (Assert-equal
-     (multiple-value-list (values ey bee cee))
-     (multiple-value-list (values-list (list ey bee cee)))
-     "Checking that #'values and #'values-list are correctly related")
-    (Assert-equal
-     (multiple-value-list (values-list (list ey bee cee)))
-     (multiple-value-list (apply #'values (list ey bee cee)))
-     "Checking #'values-list and #'apply with #values are correctly related"))
-  (Assert= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10
-   "Checking #'multiple-value-call gives reasonable results.")
-  (Assert= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10
-   "Checking #'multiple-value-call correct when first arg multiple.")
-  (Assert= 1 (length (multiple-value-list (prog1 (floor pi) "hi there")))
-   "Checking #'prog1 does not pass back multiple values")
-  (Assert= 2 (length (multiple-value-list
-		 (multiple-value-prog1 (floor pi) "hi there")))
-   "Checking #'multiple-value-prog1 passes back multiple values")
+    (Assert (equal
+	     (multiple-value-list (values ey bee cee))
+	     (multiple-value-list (values-list (list ey bee cee))))
+	    "Checking that #'values and #'values-list are correctly related")
+    (Assert (equal
+	     (multiple-value-list (values-list (list ey bee cee)))
+	     (multiple-value-list (apply #'values (list ey bee cee))))
+	    "Checking #'values-list and #'apply with #values are correctly related"))
+  (Assert (= (multiple-value-call #'+ (floor 5 3) (floor 19 4)) 10)
+	  "Checking #'multiple-value-call gives reasonable results.")
+  (Assert (= (multiple-value-call (values '+ '*) (floor 5 3) (floor 19 4)) 10)
+	  "Checking #'multiple-value-call correct when first arg multiple.")
+  (Assert (= 1 (length (multiple-value-list (prog1 (floor pi) "hi there"))))
+	  "Checking #'prog1 does not pass back multiple values")
+  (Assert (= 2 (length (multiple-value-list
+			(multiple-value-prog1 (floor pi) "hi there"))))
+	  "Checking #'multiple-value-prog1 passes back multiple values")
   (multiple-value-bind (floored remainder this-is-nil)
       (floor pi 1.0)
-    (Assert= floored 3
+    (Assert (= floored 3)
 	    "Checking floored bound correctly")
-    (Assert-eql remainder (- pi 3.0)
+    (Assert (eql remainder (- pi 3.0))
 	    "Checking remainder bound correctly") 
     (Assert (null this-is-nil)
 	    "Checking trailing arg bound but nil"))
@@ -2069,62 +2070,62 @@ via the hepatic alpha-tocopherol transfer protein")))
 	(cee #s(hash-table size 256 data (969 ?\xF9))))
     (multiple-value-setq (ey bee cee)
       (ffloor e 1.0))
-    (Assert-eql 2.0 ey "Checking ey set correctly")
-    (Assert-eql bee (- e 2.0) "Checking bee set correctly")
+    (Assert (eql 2.0 ey) "Checking ey set correctly")
+    (Assert (eql bee (- e 2.0)) "Checking bee set correctly")
     (Assert (null cee) "Checking cee set to nil correctly"))
-  (Assert= 3 (length (multiple-value-list (eval '(values nil t pi))))
-   "Checking #'eval passes back multiple values")
-  (Assert= 2 (length (multiple-value-list (apply #'floor '(5 3))))
-   "Checking #'apply passes back multiple values")
-  (Assert= 2 (length (multiple-value-list (funcall #'floor 5 3)))
-   "Checking #'funcall passes back multiple values")
-  (Assert-equal '(1 2) (multiple-value-list 
-		  (multiple-value-call #'floor (values 5 3)))
-   "Checking #'multiple-value-call passes back multiple values correctly")
-  (Assert= 1 (length (multiple-value-list
-		 (and (multiple-value-function-returning-nil) t)))
-   "Checking multiple values from non-trailing forms discarded by #'and")
-  (Assert= 5 (length (multiple-value-list 
-		 (and t (multiple-value-function-returning-nil))))
-   "Checking multiple values from final forms not discarded by #'and")
-  (Assert= 1 (length (multiple-value-list
-		 (or (multiple-value-function-returning-t) t)))
-   "Checking multiple values from non-trailing forms discarded by #'and")
-  (Assert= 5 (length (multiple-value-list 
-		 (or nil (multiple-value-function-returning-t))))
-   "Checking multiple values from final forms not discarded by #'and")
-  (Assert= 1 (length (multiple-value-list
-		 (cond ((multiple-value-function-returning-t)))))
-   "Checking cond doesn't pass back multiple values in tests.")
-  (Assert-equal (list nil pi e radians-to-degrees degrees-to-radians)
+  (Assert (= 3 (length (multiple-value-list (eval '(values nil t pi)))))
+	  "Checking #'eval passes back multiple values")
+  (Assert (= 2 (length (multiple-value-list (apply #'floor '(5 3)))))
+	  "Checking #'apply passes back multiple values")
+  (Assert (= 2 (length (multiple-value-list (funcall #'floor 5 3))))
+	  "Checking #'funcall passes back multiple values")
+  (Assert (equal '(1 2) (multiple-value-list 
+			 (multiple-value-call #'floor (values 5 3))))
+	  "Checking #'multiple-value-call passes back multiple values correctly")
+  (Assert (= 1 (length (multiple-value-list
+			(and (multiple-value-function-returning-nil) t))))
+	  "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert (= 5 (length (multiple-value-list 
+			(and t (multiple-value-function-returning-nil)))))
+	  "Checking multiple values from final forms not discarded by #'and")
+  (Assert (= 1 (length (multiple-value-list
+			(or (multiple-value-function-returning-t) t))))
+	  "Checking multiple values from non-trailing forms discarded by #'and")
+  (Assert (= 5 (length (multiple-value-list 
+			(or nil (multiple-value-function-returning-t)))))
+	  "Checking multiple values from final forms not discarded by #'and")
+  (Assert (= 1 (length (multiple-value-list
+			(cond ((multiple-value-function-returning-t))))))
+	  "Checking cond doesn't pass back multiple values in tests.")
+  (Assert (equal (list nil pi e radians-to-degrees degrees-to-radians)
+		 (multiple-value-list
+		  (cond (t (multiple-value-function-returning-nil)))))
+	  "Checking cond passes back multiple values in clauses.")
+  (Assert (= 1 (length (multiple-value-list
+			(prog1 (multiple-value-function-returning-nil)))))
+	  "Checking prog1 discards multiple values correctly.")
+  (Assert (= 5 (length (multiple-value-list
+			(multiple-value-prog1
+			 (multiple-value-function-returning-nil)))))
+	  "Checking multiple-value-prog1 passes back multiple values correctly.")
+  (Assert (equal (list t pi e degrees-to-radians radians-to-degrees)
 	  (multiple-value-list
-	   (cond (t (multiple-value-function-returning-nil))))
-   "Checking cond passes back multiple values in clauses.")
-  (Assert= 1 (length (multiple-value-list
-		 (prog1 (multiple-value-function-returning-nil))))
-   "Checking prog1 discards multiple values correctly.")
-  (Assert= 5 (length (multiple-value-list
-		 (multiple-value-prog1
-		  (multiple-value-function-returning-nil))))
-   "Checking multiple-value-prog1 passes back multiple values correctly.")
-  (Assert-equal (list t pi e degrees-to-radians radians-to-degrees)
-	  (multiple-value-list
-	   (catch 'VoN61Lo4Y (function-throwing-multiple-values))))
-  (Assert-equal (list t pi e degrees-to-radians radians-to-degrees)
+	   (catch 'VoN61Lo4Y (function-throwing-multiple-values)))))
+  (Assert (equal (list t pi e degrees-to-radians radians-to-degrees)
 	  (multiple-value-list
 	   (loop
 	     for eye in `(a b c d ,e f g ,nil ,pi)
 	     do (when (null eye)
-		  (return (multiple-value-function-returning-t)))))
+		  (return (multiple-value-function-returning-t))))))
    "Checking #'loop passes back multiple values correctly.")
   (Assert
    (null (or))
    "Checking #'or behaves correctly with zero arguments.")
-  (Assert-eq t (and)
+  (Assert (eq t (and))
    "Checking #'and behaves correctly with zero arguments.")
-  (Assert= (* 3.0 (- pi 3.0))
+  (Assert (= (* 3.0 (- pi 3.0))
       (letf (((values three one-four-one-five-nine) (floor pi)))
-        (* three one-four-one-five-nine))
+        (* three one-four-one-five-nine)))
    "checking letf handles #'values in a basic sense"))
 
 ;; #'equalp tests.
@@ -2152,8 +2153,8 @@ via the hepatic alpha-tocopherol transfer protein")))
     (loop for li in equal-lists do
       (loop for (x . tail) on li do
 	(loop for y in tail do
-	  (Assert-equalp x y)
-	  (Assert-equalp y x)))))
+	  (Assert (equalp x y))
+	  (Assert (equalp y x))))))
 
   (let ((diff-list
 	 `(0 1 2 3 1000 5000000000 5555555555555555555555555555555555555
@@ -2164,73 +2165,73 @@ via the hepatic alpha-tocopherol transfer protein")))
 	   1e+300 1e+301 -1e+300 -1e+301)))
     (loop for (x . tail) on diff-list do
       (loop for y in tail do
-	(Assert-not-equalp x y)
-	(Assert-not-equalp y x))))
+	(Assert (not (equalp x y)))
+	(Assert (not (equalp y x))))))
 
-  (Assert-equalp "hi there" "Hi There"
-		 "checking equalp isn't case-sensitive")
-  (Assert-equalp 99 99.0
-		 "checking equalp compares numerical values of different types")
+  (Assert (equalp "hi there" "Hi There")
+	  "checking equalp isn't case-sensitive")
+  (Assert (equalp 99 99.0)
+	  "checking equalp compares numerical values of different types")
   (Assert (null (equalp 99 ?c))
 	  "checking equalp does not convert characters to numbers")
   ;; Fixed in Hg d0ea57eb3de4.
   (Assert (null (equalp "hi there" [hi there]))
 	  "checking equalp doesn't error with string and non-string")
-  (Assert-equalp "ABCDEEFGH\u00CDJ" string-variable
-		 "checking #'equalp is case-insensitive with an upcased constant") 
-  (Assert-equalp "abcdeefgh\xedj" string-variable
-		 "checking #'equalp is case-insensitive with a downcased constant")
-  (Assert-equalp string-variable string-variable
-		 "checking #'equalp works when handed the same string twice")
-  (Assert-equalp string-variable "aBcDeeFgH\u00Edj"
-		 "check #'equalp is case-insensitive with a variable-cased constant")
-  (Assert-equalp "" (bit-vector) 
-		 "check empty string and empty bit-vector are #'equalp.")
-  (Assert-equalp (string) (bit-vector) 
-		 "check empty string and empty bit-vector are #'equalp, no constants")
-  (Assert-equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
-		 "check string and vector with same contents #'equalp")
-  (Assert-equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
-		 (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
-	     "check string and vector with same contents #'equalp, no constants")
-  (Assert-equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
-		 (string ?h ?i ?\  ?t ?h ?e ?r ?e)
-	     "check string and vector with same contents #'equalp, vector constant")
-  (Assert-equalp [0 1.0 0.0 0 1]
-		 (bit-vector 0 1 0 0 1)
-	     "check vector and bit-vector with same contents #'equalp,\
+  (Assert (equalp "ABCDEEFGH\u00CDJ" string-variable)
+	  "checking #'equalp is case-insensitive with an upcased constant") 
+  (Assert (equalp "abcdeefgh\xedj" string-variable)
+	  "checking #'equalp is case-insensitive with a downcased constant")
+  (Assert (equalp string-variable string-variable)
+	  "checking #'equalp works when handed the same string twice")
+  (Assert (equalp string-variable "aBcDeeFgH\u00Edj")
+	  "check #'equalp is case-insensitive with a variable-cased constant")
+  (Assert (equalp "" (bit-vector)) 
+	  "check empty string and empty bit-vector are #'equalp.")
+  (Assert (equalp (string) (bit-vector)) 
+	  "check empty string and empty bit-vector are #'equalp, no constants")
+  (Assert (equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e))
+	  "check string and vector with same contents #'equalp")
+  (Assert (equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+		  (vector ?h ?i ?\  ?t ?h ?e ?r ?e))
+	  "check string and vector with same contents #'equalp, no constants")
+  (Assert (equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
+		  (string ?h ?i ?\  ?t ?h ?e ?r ?e))
+	  "check string and vector with same contents #'equalp, vector constant")
+  (Assert (equalp [0 1.0 0.0 0 1]
+		 (bit-vector 0 1 0 0 1))
+	  "check vector and bit-vector with same contents #'equalp,\
  vector constant")
-  (Assert-not-equalp [0 2 0.0 0 1]
-		     (bit-vector 0 1 0 0 1)
-	     "check vector and bit-vector with different contents not #'equalp,\
+  (Assert (not (equalp [0 2 0.0 0 1]
+		       (bit-vector 0 1 0 0 1)))
+	  "check vector and bit-vector with different contents not #'equalp,\
  vector constant")
-  (Assert-equalp #*01001
-		 (vector 0 1.0 0.0 0 1)
-	     "check vector and bit-vector with same contents #'equalp,\
+  (Assert (equalp #*01001
+		 (vector 0 1.0 0.0 0 1))
+	  "check vector and bit-vector with same contents #'equalp,\
  bit-vector constant")
-  (Assert-equalp ?\u00E9 Eacute-character
-		 "checking characters are case-insensitive, one constant")
-  (Assert-not-equalp ?\u00E9 (aref (format "%c" ?a) 0)
-		     "checking distinct characters are not equalp, one constant")
-  (Assert-equalp t (and)
-		 "checking symbols are correctly #'equalp")
-  (Assert-not-equalp t (or nil '#:t)
-		     "checking distinct symbols with the same name are not #'equalp")
-  (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		 (let ((aragh (make-char-table 'generic)))
-		   (put-char-table ?\u0080 "hi-there" aragh)
-		   aragh)
-		 "checking #'equalp succeeds correctly, char-tables")
-  (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		 (let ((aragh (make-char-table 'generic)))
-		   (put-char-table ?\u0080 "HI-THERE" aragh)
-		   aragh)
-		 "checking #'equalp succeeds correctly, char-tables")
-  (Assert-not-equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		     (let ((aragh (make-char-table 'generic)))
-		       (put-char-table ?\u0080 "hi there" aragh)
-		       aragh)
-	     "checking #'equalp fails correctly, char-tables"))
+  (Assert (equalp ?\u00E9 Eacute-character)
+	  "checking characters are case-insensitive, one constant")
+  (Assert (not (equalp ?\u00E9 (aref (format "%c" ?a) 0)))
+	  "checking distinct characters are not equalp, one constant")
+  (Assert (equalp t (and))
+	  "checking symbols are correctly #'equalp")
+  (Assert (not (equalp t (or nil '#:t)))
+	  "checking distinct symbols with the same name are not #'equalp")
+  (Assert (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		  (let ((aragh (make-char-table 'generic)))
+		    (put-char-table ?\u0080 "hi-there" aragh)
+		    aragh))
+	  "checking #'equalp succeeds correctly, char-tables")
+  (Assert (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		  (let ((aragh (make-char-table 'generic)))
+		    (put-char-table ?\u0080 "HI-THERE" aragh)
+		    aragh))
+	  "checking #'equalp succeeds correctly, char-tables")
+  (Assert (not (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+		       (let ((aragh (make-char-table 'generic)))
+			 (put-char-table ?\u0080 "hi there" aragh)
+			 aragh)))
+	  "checking #'equalp fails correctly, char-tables")
 
 ;; There are more tests available for equalp here: 
 ;;
@@ -2279,33 +2280,33 @@ via the hepatic alpha-tocopherol transfer protein")))
 	   (1- most-negative-fixnum))
 	 (*-2-most-positive-fixnum ()
 	   (* 2 most-positive-fixnum))) 
-      (Assert-eq
-       (member* (1+ most-positive-fixnum) member*-list)
-       (member* (1+ most-positive-fixnum) member*-list :test #'eql)
-       "checking #'member* correct if #'eql not explicitly specified")
-      (Assert-eq
-       (assoc* (1+ most-positive-fixnum) assoc*-list)
-       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'eql)
-       "checking #'assoc* correct if #'eql not explicitly specified")
-      (Assert-eq
-       (rassoc* (1- most-negative-fixnum) assoc*-list)
-       (rassoc* (1- most-negative-fixnum) assoc*-list :test #'eql)
-       "checking #'rassoc* correct if #'eql not explicitly specified")
-      (Assert-eql (1+most-positive-fixnum) (1+ most-positive-fixnum)
-		  "checking #'eql handles a bignum literal properly.")
-      (Assert-eq 
-       (member* (1+most-positive-fixnum) member*-list)
-       (member* (1+ most-positive-fixnum) member*-list :test #'equal)
-       "checking #'member* compiler macro correct with literal bignum")
-      (Assert-eq
-       (assoc* (1+most-positive-fixnum) assoc*-list)
-       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'equal)
-       "checking #'assoc* compiler macro correct with literal bignum")
+      (Assert (eq
+	       (member* (1+ most-positive-fixnum) member*-list)
+	       (member* (1+ most-positive-fixnum) member*-list :test #'eql))
+	      "checking #'member* correct if #'eql not explicitly specified")
+      (Assert (eq
+	       (assoc* (1+ most-positive-fixnum) assoc*-list)
+	       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'eql))
+	      "checking #'assoc* correct if #'eql not explicitly specified")
+      (Assert (eq
+	       (rassoc* (1- most-negative-fixnum) assoc*-list)
+	       (rassoc* (1- most-negative-fixnum) assoc*-list :test #'eql))
+	      "checking #'rassoc* correct if #'eql not explicitly specified")
+      (Assert (eql (1+most-positive-fixnum) (1+ most-positive-fixnum))
+	      "checking #'eql handles a bignum literal properly.")
+      (Assert (eq 
+	       (member* (1+most-positive-fixnum) member*-list)
+	       (member* (1+ most-positive-fixnum) member*-list :test #'equal))
+	      "checking #'member* compiler macro correct with literal bignum")
+      (Assert (eq
+	       (assoc* (1+most-positive-fixnum) assoc*-list)
+	       (assoc* (1+ most-positive-fixnum) assoc*-list :test #'equal))
+	      "checking #'assoc* compiler macro correct with literal bignum")
       (puthash (setq hashed-bignum (*-2-most-positive-fixnum)) 
 	       (gensym) hashing)
-      (Assert-eq
-       (gethash (* 2 most-positive-fixnum) hashing)
-       (gethash hashed-bignum hashing)
-       "checking hashing works correctly with #'eql tests and bignums"))))
+      (Assert (eq
+	       (gethash (* 2 most-positive-fixnum) hashing)
+	       (gethash hashed-bignum hashing))
+	      "checking hashing works correctly with #'eql tests and bignums"))))
 
 ;;; end of lisp-tests.el
