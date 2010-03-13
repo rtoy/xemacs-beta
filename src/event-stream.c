@@ -243,6 +243,8 @@ int inhibit_input_event_recording;
 
 Lisp_Object Qself_insert_defer_undo;
 
+Lisp_Object Qsans_modifiers;
+
 int in_modal_loop;
 
 /* the number of keyboard characters read.  callint.c wants this. */
@@ -4886,6 +4888,8 @@ syms_of_event_stream (void)
 
   DEFSYMBOL (Qnext_event);
   DEFSYMBOL (Qdispatch_event);
+
+  DEFSYMBOL (Qsans_modifiers);
 }
 
 void

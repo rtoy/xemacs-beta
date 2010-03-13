@@ -1,7 +1,7 @@
 /* Minibuffer input and completion.
    Copyright (C) 1985, 1986, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -991,8 +991,10 @@ reinit_complex_vars_of_minibuf (void)
 #endif
   Vminibuffer_zero
     = Fget_buffer_create (build_ascstring (" *Minibuf-0*"));
+  staticpro_nodump (&Vminibuffer_zero);
   Vecho_area_buffer
     = Fget_buffer_create (build_ascstring (" *Echo Area*"));
+  staticpro_nodump (&Vecho_area_buffer);
 }
 
 void

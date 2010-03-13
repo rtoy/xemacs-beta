@@ -40,6 +40,6 @@
 			(make-temp-name "foo")
 			)
   do
-  (Assert-equal (file-truename (file-truename file)) (file-truename file)))
+  (Assert (equal (file-truename (file-truename file)) (file-truename file))))
 
 

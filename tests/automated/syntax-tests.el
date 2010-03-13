@@ -49,7 +49,7 @@
     (insert string)
     (goto-char point)
     (forward-word 1)
-    (Assert-eq (point) (+ point stop))))
+    (Assert (eq (point) (+ point stop)))))
 
 (with-temp-buffer
   ;; -!- W NW
@@ -77,7 +77,7 @@
   (insert string)
   (let ((point (point)))
     (backward-word 1)
-    (Assert-eq (point) (- point stop))))
+    (Assert (eq (point) (- point stop)))))
 
 (with-temp-buffer
   ;; NW W -!-
@@ -120,7 +120,7 @@
 			 'syntax-table apply-syntax)
       (goto-char point)
       (forward-word 1)
-      (Assert-eq (point) (+ point stop)))))
+      (Assert (eq (point) (+ point stop))))))
 
 ;; test syntax-table extents
 (with-temp-buffer
@@ -143,7 +143,7 @@
   (with-syntax-table (make-syntax-table)
     (insert "foo bar")
     (backward-sexp 1)
-    (Assert-eql (point) 5)))
+    (Assert (eql (point) 5))))
 
 ;; Test forward-comment at buffer boundaries
 ;; #### The second Assert fails (once interpreted, once compiled) on 21.4.9
@@ -156,13 +156,13 @@
     
     (insert "// comment\n")
     (forward-comment -2)
-    (Assert-eq (point) (point-min))
+    (Assert (eq (point) (point-min)))
 
     (let ((point (point)))
       (insert "/* comment */")
       (goto-char point)
       (forward-comment 2)
-      (Assert-eq (point) (point-max))
+      (Assert (eq (point) (point-max)))
 
       ;; this last used to crash
       (parse-partial-sexp point (point-max)))))
@@ -204,7 +204,7 @@
 			 "Unbalanced parentheses"
 			 (backward-up-list-moves-point-from-to 25 nil))
     ;; special-case check that point didn't move
-    (Assert= (point) 25)))
+    (Assert (= (point) 25))))
 
 (loop
   with envvar-not-existing = (symbol-name (gensym "whatever"))

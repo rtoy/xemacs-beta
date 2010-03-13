@@ -1,3 +1,12 @@
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* test-harness.el (test-harness-from-buffer):
+	Undo change of e.g. (Assert (equalp ...)) to (Assert-equalp ...).
+	Get rid of `Assert-equalp' and friends, `Assert-test', and
+	`Assert-test-not'.  Instead, make `Assert' smart enough to do the
+	equivalent functionality when an expression like (Assert (equalp ...))
+	is seen.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* disp-table.el:
