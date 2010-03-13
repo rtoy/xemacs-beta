@@ -217,7 +217,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Database *db = XDATABASE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<database \"%s\" (%s/%s/",
 			 3, db->fname, db->funcs->get_type (db),
@@ -232,7 +232,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
                          XSYMBOL_NAME (XCODING_SYSTEM_NAME
                                        (db->coding_system)));
 
-  write_fmt_string (printcharfun, "0x%x>", db->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (db));
 }
 
 static void

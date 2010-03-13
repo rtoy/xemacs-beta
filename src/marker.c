@@ -60,7 +60,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Marker *marker = XMARKER (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
+    printing_unreadable_object_fmt ("#<marker 0x%lx>", (long) marker);
 
   write_ascstring (printcharfun, GETTEXT ("#<marker "));
   if (!marker->buffer)

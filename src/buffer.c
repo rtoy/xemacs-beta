@@ -302,9 +302,9 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     {
       if (!BUFFER_LIVE_P (b))
-	printing_unreadable_object ("#<killed buffer>");
+	printing_unreadable_object_fmt ("#<killed buffer>");
       else
-	printing_unreadable_object ("#<buffer %s>", XSTRING_DATA (b->name));
+	printing_unreadable_object_fmt ("#<buffer %s>", XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
     write_ascstring (printcharfun, "#<killed buffer>");
@@ -2175,8 +2175,6 @@ do {									 \
 	  1  /* lisp_readonly bit */					 \
 	},								 \
 	0, /* next */							 \
-	0, /* uid  */							 \
-	0  /* free */							 \
       },								 \
       &(buffer_local_flags.field_name),					 \
       forward_type							 \

@@ -395,7 +395,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     write_ascstring (printcharfun, ")");
   else
-    write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
+    write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (ht));
 }
 
 #ifndef NEW_GC

@@ -455,7 +455,7 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
   const Ascbyte *trailer = subr->prompt ? " (interactive)>" : ">";
 
   if (print_readably)
-    printing_unreadable_object ("%s%s%s", header, name, trailer);
+    printing_unreadable_object_fmt ("%s%s%s", header, name, trailer);
 
   write_ascstring (printcharfun, header);
   write_ascstring (printcharfun, name);
@@ -4605,7 +4605,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (print_readably)
     {
-      printing_unreadable_object ("multiple values");
+      printing_unreadable_object_fmt ("multiple values");
     }
 
   write_fmt_string (printcharfun,

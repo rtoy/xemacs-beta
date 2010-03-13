@@ -150,7 +150,7 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Process *process = XPROCESS (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (process->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (process->name));
 
   if (!escapeflag)
     {

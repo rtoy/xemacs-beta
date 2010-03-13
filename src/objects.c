@@ -104,13 +104,13 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<color-instance %s", 1, c->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, c->device);
   if (!NILP (c->device)) /* Vthe_null_color_instance */
     MAYBE_DEVMETH (XDEVICE (c->device), print_color_instance,
 		   (c, printcharfun, escapeflag));
-  write_fmt_string (printcharfun, " 0x%x>", c->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (c));
 }
 
 static void
@@ -319,7 +319,7 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<font-instance %S", 1, f->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, f->device);
   if (!NILP (f->device))
@@ -328,7 +328,7 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		     (f, printcharfun, escapeflag));
 
     }
-  write_fmt_string (printcharfun, " 0x%x>", f->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (f));
 }
 
 static void

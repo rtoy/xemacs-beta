@@ -57,17 +57,13 @@ Boston, MA 02111-1307, USA.  */
    Under NEW_GC, NORMAL_LISP_OBJECT_HEADER also resolves to `struct
    lrecord_header'.  Under old-GC, however, NORMAL_LISP_OBJECT_HEADER
    resolves to a `struct old_lcrecord_header' (note the `c'), which is a
-   larger structure -- on 32-bit machines it occupies 3 machine words
+   larger structure -- on 32-bit machines it occupies 2 machine words
    instead of 1.  Such an object is known internally as an "lcrecord".  The
    first word of `struct old_lcrecord_header' is an embedded `struct
    lrecord_header' with the same information as for frob-block objects;
    that way, all objects can be cast to a `struct lrecord_header' to
-   determine their type or other info.  The other words consist of a
-   pointer, used to thread all lcrecords together in one big linked list,
-   and a 32-bit structure that contains another UID field (#### which
-   should be deleted, as it is redundant; it dates back to the days when
-   the lrecord_header consisted of a pointer to an object's implementation
-   structure rather than an index).
+   determine their type or other info.  The other word is a pointer, used
+   to thread all lcrecords together in one big linked list.
 
    Under old-GC, normal objects (i.e. lcrecords) are allocated in
    individual chunks using the underlying allocator (i.e. xmalloc(), which
@@ -191,6 +187,7 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) 0
+#define NORMAL_LISP_OBJECT_UID(obj) ((obj)->header.uid)
 #else /* not NEW_GC */
 #define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
@@ -198,6 +195,7 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
+#define NORMAL_LISP_OBJECT_UID(obj) ((obj)->header.lheader.uid)
 #endif /* not NEW_GC */
 
 BEGIN_C_DECLS
@@ -238,10 +236,20 @@ struct lrecord_header
   /* 1 if the object is readonly from lisp */
   unsigned int lisp_readonly :1;
 
+  /* The `free' field is currently used only for lcrecords under old-GC.
+     It is a flag that indicates whether this lcrecord is on a "free list".
+     Free lists are used to minimize the number of calls to malloc() when
+     we're repeatedly allocating and freeing a number of the same sort of
+     lcrecord.  Lcrecords on a free list always get marked in a different
+     fashion, so we can use this flag as a sanity check to make sure that
+     free lists only have freed lcrecords and there are no freed lcrecords
+     elsewhere. */
+  unsigned int free :1;
+
   /* The `uid' field is just for debugging/printing convenience.  Having
      this slot doesn't hurt us spacewise, since the bits are unused
      anyway. (The bits are used for strings, though.) */
-  unsigned int uid :21;
+  unsigned int uid :20;
 
 #endif /* not NEW_GC */
 };
@@ -265,6 +273,7 @@ extern int lrecord_uid_counter;
   SLI_header->mark = 0;					\
   SLI_header->c_readonly = 0;				\
   SLI_header->lisp_readonly = 0;			\
+  SLI_header->free = 0;					\
   SLI_header->uid = lrecord_uid_counter++;		\
 } while (0)
 #endif /* not NEW_GC */
@@ -285,20 +294,6 @@ struct old_lcrecord_header
      out of memory chunks, and are able to find all unmarked members
      by sweeping through the elements of the list of chunks.  */
   struct old_lcrecord_header *next;
-
-  /* The `uid' field is just for debugging/printing convenience.
-     Having this slot doesn't hurt us much spacewise, since an
-     lcrecord already has the above slots plus malloc overhead. */
-  unsigned int uid :31;
-
-  /* The `free' field is a flag that indicates whether this lcrecord
-     is on a "free list".  Free lists are used to minimize the number
-     of calls to malloc() when we're repeatedly allocating and freeing
-     a number of the same sort of lcrecord.  Lcrecords on a free list
-     always get marked in a different fashion, so we can use this flag
-     as a sanity check to make sure that free lists only have freed
-     lcrecords and there are no freed lcrecords elsewhere. */
-  unsigned int free :1;
 };
 
 /* Used for lcrecords in an lcrecord-list. */

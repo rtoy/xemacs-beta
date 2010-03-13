@@ -105,12 +105,12 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),
      CASE_TABLE_CANON (ct), CASE_TABLE_EQV (ct));
-  write_fmt_string (printcharfun, "0x%x>", ct->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (ct));
 }
 
 static const struct memory_description case_table_description [] = {

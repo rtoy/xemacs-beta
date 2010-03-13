@@ -327,7 +327,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 		    int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI (obj)->function_name);
   if (XFFI (obj)->n_args)
@@ -796,7 +796,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkObject (");
   if (XGTK_OBJECT (obj)->alive_p)
@@ -1104,7 +1104,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkBoxed (");
   write_cistring (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));

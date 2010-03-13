@@ -160,13 +160,13 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
   struct device *d = XDEVICE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (d->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (d->name));
 
   write_fmt_string (printcharfun, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
 		    DEVICE_TYPE_NAME (d));
   if (DEVICE_LIVE_P (d) && !NILP (DEVICE_CONNECTION (d)))
     write_fmt_string_lisp (printcharfun, " on %S", 1, DEVICE_CONNECTION (d));
-  write_fmt_string (printcharfun, " 0x%x>", d->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (d));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("device", device,

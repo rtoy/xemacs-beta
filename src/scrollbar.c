@@ -112,7 +112,7 @@ free_scrollbar_instance (struct scrollbar_instance *instance,
       struct device *d = XDEVICE (frame->device);
 
       MAYBE_DEVMETH (d, free_scrollbar_instance, (instance));
-      /* not worth calling free_managed_lcrecord() -- scrollbar instances
+      /* not worth calling free_normal_lisp_object() -- scrollbar instances
 	 are not created that frequently and it's dangerous. */
     }
 }

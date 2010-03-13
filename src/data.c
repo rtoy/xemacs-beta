@@ -2614,7 +2614,7 @@ print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
 		 int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
 			 encode_weak_list_type (XWEAK_LIST (obj)->type),
@@ -3090,7 +3090,7 @@ print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
 		int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string (printcharfun, "#<weak-box>"); /* #### fix */
 }
 
@@ -3312,7 +3312,7 @@ print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
 		 int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string (printcharfun, "#<ephemeron>"); /* #### fix */
 }
 

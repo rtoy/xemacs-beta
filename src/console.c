@@ -163,14 +163,14 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun,
   struct console *con = XCONSOLE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (con->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (con->name));
 
   write_fmt_string (printcharfun, "#<%s-console",
 		    !CONSOLE_LIVE_P (con) ? "dead" : CONSOLE_TYPE_NAME (con));
   if (CONSOLE_LIVE_P (con) && !NILP (CONSOLE_CONNECTION (con)))
     write_fmt_string_lisp (printcharfun, " on %S", 1,
 			   CONSOLE_CONNECTION (con));
-  write_fmt_string (printcharfun, " 0x%x>", con->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (con));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("console", console, mark_console,
@@ -1351,8 +1351,6 @@ do {									    \
 	  1  /* lisp_readonly bit */					    \
 	},								    \
 	0, /* next */							    \
-	0, /* uid  */							    \
-	0  /* free */							    \
       },								    \
       &(console_local_flags.field_name),				    \
       forward_type							    \

@@ -1,3 +1,11 @@
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Working with Lisp Objects):
+	* internals/internals.texi (Writing Macros):
+	* internals/internals.texi (lrecords):
+	More rewriting to correspond with changes from
+	*LRECORD* to *LISP_OBJECT*.
+
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Introduction to Allocation):

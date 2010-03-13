@@ -253,7 +253,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun,
     strcpy (buf, "#<PGconn connecting>"); /* evil! */
 
   if (print_readably)
-    printing_unreadable_object ("%s", buf);
+    printing_unreadable_object_fmt ("%s", buf);
   else
     write_cistring (printcharfun, buf);
 }
@@ -401,7 +401,7 @@ print_pgresult (Lisp_Object obj, Lisp_Object printcharfun,
     strcpy (buf, "#<PGresult DEAD>"); /* evil! */
 
   if (print_readably)
-    printing_unreadable_object ("%s", buf);
+    printing_unreadable_object_fmt ("%s", buf);
   else
     write_cistring (printcharfun, buf);
 }

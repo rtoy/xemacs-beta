@@ -309,7 +309,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Object buf;
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<window");
   buf = XWINDOW_BUFFER (obj);
@@ -321,7 +321,8 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
       Lisp_Object name = XBUFFER (buf)->name;
       write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
-  write_fmt_string (printcharfun, " 0x%x>", XWINDOW (obj)->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>",
+		    NORMAL_LISP_OBJECT_UID (XWINDOW (obj)));
 }
 
 static void
@@ -678,7 +679,7 @@ free_window_mirror (struct window_mirror *mir)
 #endif
       free_display_structs (mir);
       mir = mir->next;
-      /* not worth calling free_managed_lcrecord() -- window mirrors
+      /* not worth calling free_normal_lisp_object() -- window mirrors
 	 are not created that frequently and it's dangerous.  we don't
 	 know for sure that there aren't other pointers around -- e.g.
 	 in a scrollbar instance. */
@@ -5406,7 +5407,7 @@ debug_print_window (Lisp_Object window, int level)
     if (!NILP (buffer) && BUFFERP (buffer))
       stderr_out (" on %s", XSTRING_DATA (XBUFFER (buffer)->name));
   }
-  stderr_out (" 0x%x>", XWINDOW (window)->header.uid);
+  stderr_out (" 0x%x>", NORMAL_LISP_OBJECT_UID (XWINDOW (window)));
 
   while (!NILP (child))
     {

@@ -637,12 +637,12 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
   struct frame *frm = XFRAME (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (frm->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (frm->name));
 
   write_fmt_string (printcharfun, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 		    FRAME_TYPE_NAME (frm));
   print_internal (frm->name, printcharfun, 1);
-  write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (frm));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("frame", frame,

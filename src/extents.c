@@ -3231,7 +3231,7 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 
 /* These are the basic helper functions for handling the allocation of
    extent objects.  They are similar to the functions for other
-   lrecord objects.  allocate_extent() is in alloc.c, not here. */
+   frob-block objects.  allocate_extent() is in alloc.c, not here. */
 
 static Lisp_Object
 mark_extent (Lisp_Object obj)
@@ -3333,9 +3333,9 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       if (print_readably)
 	{
 	  if (!EXTENT_LIVE_P (XEXTENT (obj)))
-	    printing_unreadable_object ("#<destroyed extent>");
+	    printing_unreadable_object_fmt ("#<destroyed extent>");
 	  else
-	    printing_unreadable_object ("#<extent 0x%lx>",
+	    printing_unreadable_object_fmt ("#<extent 0x%lx>",
 		   (long) XEXTENT (obj));
 	}
 
@@ -3353,7 +3353,7 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else
     {
       if (print_readably)
-	printing_unreadable_object ("#<extent>");
+	printing_unreadable_object_fmt ("#<extent>");
       write_ascstring (printcharfun, "#<extent");
     }
   write_ascstring (printcharfun, ">");

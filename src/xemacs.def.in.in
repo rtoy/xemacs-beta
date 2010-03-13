@@ -164,7 +164,8 @@ non_ascii_set_itext_ichar	/* set_itext_ichar */
 non_ascii_valid_ichar_p		/* valid_ichar_p */
 #endif
 out_of_memory			/* The postgresql module uses this */
-printing_unreadable_object
+printing_unreadable_lisp_object
+printing_unreadable_object_fmt
 #ifdef XEMACS_DEFS_NEEDS_INLINE_DECLS
 qxestrdup
 qxestrlen

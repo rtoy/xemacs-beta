@@ -1,3 +1,14 @@
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (print_pgresult):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (print_ldap):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c (finalize_pgconn):

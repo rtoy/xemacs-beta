@@ -1,6 +1,6 @@
 /* Definitions of symbol-value forwarding for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -425,11 +425,8 @@ do									\
 	  1, /* mark bit */						\
 	  1, /* c_readonly bit */					\
 	  1, /* lisp_readonly bit */					\
-          0  /* unused */                                               \
 	},								\
 	0, /* next */							\
-	0, /* uid  */							\
-	0  /* free */							\
       },								\
       c_location,							\
       forward_type							\

@@ -3521,8 +3521,6 @@ static const struct symbol_value_magic guts_of_unbound_marker =
       1, /* lisp_readonly bit */
     },
     0, /* next */
-    0, /* uid  */
-    0, /* free */
   },
   0, /* value */
   SYMVAL_UNBOUND_MARKER

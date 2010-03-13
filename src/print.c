@@ -1415,7 +1415,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (EQ (obj, tortoise) && len > 0)
 	  {
 	    if (print_readably)
-	      printing_unreadable_object ("circular list");
+	      printing_unreadable_object_fmt ("circular list");
 	    else
 	      write_ascstring (printcharfun, "... <circular list>");
 	    break;
@@ -1523,7 +1523,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 DOESNT_RETURN
-printing_unreadable_object (const Ascbyte *fmt, ...)
+printing_unreadable_object_fmt (const Ascbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -1537,38 +1537,28 @@ printing_unreadable_object (const Ascbyte *fmt, ...)
 }
 
 DOESNT_RETURN
-printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
+printing_unreadable_lisp_object (Lisp_Object obj, const Ibyte *name)
 {
-  NORMAL_LISP_OBJECT_HEADER *header = (NORMAL_LISP_OBJECT_HEADER *) XPNTR (obj);
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
   const struct lrecord_implementation *imp =
     XRECORD_LHEADER_IMPLEMENTATION (obj);
 
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!imp->frob_block_p);
-#endif
-
   if (name)
-    printing_unreadable_object ("#<%s %s 0x%x>", imp->name, name, header->uid);
+    printing_unreadable_object_fmt ("#<%s %s 0x%x>", imp->name, name, header->uid);
   else
-    printing_unreadable_object ("#<%s 0x%x>", imp->name, header->uid);
+    printing_unreadable_object_fmt ("#<%s 0x%x>", imp->name, header->uid);
 }
 
 void
 external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
-  NORMAL_LISP_OBJECT_HEADER *header = (NORMAL_LISP_OBJECT_HEADER *) XPNTR (obj);
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
   const struct lrecord_implementation *imp =
     XRECORD_LHEADER_IMPLEMENTATION (obj);
 
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!imp->frob_block_p);
-#endif
-
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string (printcharfun, "#<%s 0x%x>", imp->name, header->uid);
 }
@@ -1578,7 +1568,7 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_object
+    printing_unreadable_object_fmt
       ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
        XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
        (unsigned long) XPNTR (obj));
@@ -2428,19 +2418,10 @@ debug_p4 (Lisp_Object obj)
 	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
 		   (EMACS_INT) header);
       else
-#ifdef NEW_GC
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
 		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
-#else /* not NEW_GC */
-	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
-		   LHEADER_IMPLEMENTATION (header)->name,
-		   (EMACS_INT) header,
-		   (EMACS_INT) (LHEADER_IMPLEMENTATION (header)->frob_block_p ?
-				((struct lrecord_header *) header)->uid :
-				((struct old_lcrecord_header *) header)->uid));
-#endif /* not NEW_GC */
     }
 }
 
