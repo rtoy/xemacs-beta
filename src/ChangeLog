@@ -1,3 +1,18 @@
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* redisplay-msw.c:
+	* redisplay-msw.c (mswindows_output_dibitmap_region):
+	* redisplay-msw.c (mswindows_output_pixmap):
+	* redisplay-msw.c (mswindows_clear_region):
+	Have a crack at implementing the `absolute' property for
+	background pixmaps.  It seems to work; however, things don't
+	work quite right in relation to window sizing/moving.  In particular,
+	ideally when you move the window the background should stay in place
+	but it doesn't; instead it moves, and when you hit C-l it gets
+	redrawn in the "proper" place.  When resizing you get some serious
+	jitter, apparently as first the image gets moved then redrawn in
+	the correct offset position.  #### Not sure how to fix this.
+
 2010-03-06  Ben Wing  <ben@xemacs.org>
 
 	* frame.c (change_frame_size_1):
