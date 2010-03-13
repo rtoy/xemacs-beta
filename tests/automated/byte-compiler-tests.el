@@ -92,8 +92,8 @@
  (eval '(let* ((x 1 2)) 3)))
 
 (defmacro before-and-after-compile-equal (&rest form)
-  `(Assert-equal (funcall (quote (lambda () ,@form)))
-    (funcall (byte-compile (quote (lambda () ,@form))))))
+  `(Assert (equal (funcall (quote (lambda () ,@form)))
+		 (funcall (byte-compile (quote (lambda () ,@form)))))))
 
 (defvar simplyamarker (point-min-marker))
 
