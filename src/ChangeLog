@@ -1,5 +1,35 @@
 2010-03-12  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	* lisp.h (redo-symbols): Removed.
+	Put the Lisp variables and symbols where they belong, with other
+	stuff related to the file they're in.
+	
+	* event-Xt.c (THIS_IS_X):
+	* event-Xt.c (syms_of_event_Xt):
+	* event-Xt.c (reinit_vars_of_event_Xt):
+	* event-gtk.c:
+	* event-gtk.c (syms_of_event_gtk):
+	* event-gtk.c (reinit_vars_of_event_gtk):
+	* event-stream.c:
+	* event-stream.c (syms_of_event_stream):
+	* event-stream.c (reinit_vars_of_event_stream):
+	* events.c (reinit_vars_of_events):
+	* events.c (vars_of_events):
+	`sans-modifiers' was defsymbol'ed more than once.  Move it to
+	events-stream.c. `self-insert-command' was defsymbol'ed more than once.
+	Vevent_resource should be staticpro_nodump()ed as it's declared in
+	a reinit_*() method.
+	
+	* lread.c (vars_of_lread):
+	Vfile_domain wasn't staticpro'ed.
+	
+	* minibuf.c:
+	* minibuf.c (reinit_complex_vars_of_minibuf):
+	Vminibuffer_zero and Vecho_area_buffer weren't staticpro'ed.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
 	* redisplay-msw.c:
 	* redisplay-msw.c (mswindows_output_dibitmap_region):
 	* redisplay-msw.c (mswindows_output_pixmap):
