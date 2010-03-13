@@ -80,7 +80,7 @@ Boston, MA 02111-1307, USA.  */
 struct buffer_text
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Ibyte *beg;		/* Actual address of buffer contents. */
   Bytebpos gpt;		/* Index of gap in buffer. */
@@ -144,7 +144,7 @@ struct buffer_text
 #ifdef NEW_GC
 typedef struct buffer_text Lisp_Buffer_Text;
 
-DECLARE_LRECORD (buffer_text, Lisp_Buffer_Text);
+DECLARE_LISP_OBJECT (buffer_text, Lisp_Buffer_Text);
 
 #define XBUFFER_TEXT(x) \
   XRECORD (x, buffer_text, Lisp_Buffer_Text)
@@ -157,7 +157,7 @@ DECLARE_LRECORD (buffer_text, Lisp_Buffer_Text);
 
 struct buffer
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* This structure holds the coordinates of the buffer contents
      in ordinary buffers.  In indirect buffers, this is not used.  */
@@ -268,7 +268,7 @@ struct buffer
 #undef MARKED_SLOT
 };
 
-DECLARE_LRECORD (buffer, struct buffer);
+DECLARE_LISP_OBJECT (buffer, struct buffer);
 #define XBUFFER(x) XRECORD (x, buffer, struct buffer)
 #define wrap_buffer(p) wrap_record (p, buffer)
 #define BUFFERP(x) RECORDP (x, buffer)

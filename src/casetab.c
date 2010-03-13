@@ -105,12 +105,12 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),
      CASE_TABLE_CANON (ct), CASE_TABLE_EQV (ct));
-  write_fmt_string (printcharfun, "0x%x>", ct->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (ct));
 }
 
 static const struct memory_description case_table_description [] = {
@@ -122,16 +122,15 @@ static const struct memory_description case_table_description [] = {
 };
 
 
-DEFINE_LRECORD_IMPLEMENTATION("case-table", case_table,
-			      1, /*dumpable-flag*/
-			      mark_case_table, print_case_table, 0,
-			      0, 0, case_table_description, Lisp_Case_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("case-table", case_table,
+			     mark_case_table, print_case_table, 0,
+			     0, 0, case_table_description, Lisp_Case_Table);
 
 static Lisp_Object
 allocate_case_table (int init_tables)
 {
-  Lisp_Case_Table *ct =
-    ALLOC_LCRECORD_TYPE (Lisp_Case_Table, &lrecord_case_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (case_table);
+  Lisp_Case_Table *ct = XCASE_TABLE (obj);
 
   if (init_tables)
     {
@@ -147,7 +146,7 @@ allocate_case_table (int init_tables)
       SET_CASE_TABLE_CANON (ct, Qnil);
       SET_CASE_TABLE_EQV (ct, Qnil);
     }
-  return wrap_case_table (ct);
+  return obj;
 }
 
 DEFUN ("make-case-table", Fmake_case_table, 0, 0, 0, /*
@@ -512,7 +511,7 @@ See `set-case-table' for more info on case tables.
 void
 syms_of_casetab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (case_table);
+  INIT_LISP_OBJECT (case_table);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcase_tablep);
   DEFSYMBOL (Qdowncase);

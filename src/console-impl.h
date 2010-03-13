@@ -410,7 +410,7 @@ struct console_methods * type##_console_methods
 
 struct console
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Description of this console's methods.  */
   struct console_methods *conmeths;
@@ -454,7 +454,11 @@ struct console
 /* Redefine basic properties more efficiently */
 
 #undef CONSOLE_LIVE_P
-#define CONSOLE_LIVE_P(con) (!EQ (CONSOLE_TYPE (con), Qdead))
+/* The following is the old way, but it can lead to crashes in certain
+   weird circumstances, where you might want to be printing a console via
+   debug_print() */
+/* #define CONSOLE_LIVE_P(con) (!EQ (CONSOLE_TYPE (con), Qdead)) */
+#define CONSOLE_LIVE_P(con) ((con)->contype != dead_console)
 #undef CONSOLE_DEVICE_LIST
 #define CONSOLE_DEVICE_LIST(con) ((con)->device_list)
 

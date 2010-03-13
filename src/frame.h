@@ -60,7 +60,7 @@ extern Lisp_Object Qunsplittable, Quse_backing_store, Qvisible, Qvisual_bell;
 extern Lisp_Object Vframe_icon_title_format, Vframe_title_format;
 extern Lisp_Object Vmouse_motion_handler;
 
-DECLARE_LRECORD (frame, struct frame);
+DECLARE_LISP_OBJECT (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
 #define wrap_frame(p) wrap_record (p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
