@@ -2391,7 +2391,7 @@ typedef struct
 } face_cachel_dynarr;
 
 #ifdef NEW_GC
-DECLARE_LRECORD (face_cachel_dynarr, face_cachel_dynarr);
+DECLARE_LISP_OBJECT (face_cachel_dynarr, face_cachel_dynarr);
 #define XFACE_CACHEL_DYNARR(x) \
   XRECORD (x, face_cachel_dynarr, face_cachel_dynarr)
 #define wrap_face_cachel_dynarr(p) wrap_record (p, face_cachel_dynarr)
@@ -2406,7 +2406,7 @@ typedef struct
 } glyph_cachel_dynarr;
 
 #ifdef NEW_GC
-DECLARE_LRECORD (glyph_cachel_dynarr, glyph_cachel_dynarr);
+DECLARE_LISP_OBJECT (glyph_cachel_dynarr, glyph_cachel_dynarr);
 #define XGLYPH_CACHEL_DYNARR(x) \
   XRECORD (x, glyph_cachel_dynarr, glyph_cachel_dynarr)
 #define wrap_glyph_cachel_dynarr(p) wrap_record (p, glyph_cachel_dynarr)
@@ -2467,7 +2467,7 @@ void stack_like_free (void *val);
 
 struct Lisp_Cons
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   Lisp_Object car_, cdr_;
 };
 typedef struct Lisp_Cons Lisp_Cons;
@@ -2484,7 +2484,7 @@ struct Lisp_Buffer_Cons
 };
 #endif
 
-DECLARE_MODULE_API_LRECORD (cons, Lisp_Cons);
+DECLARE_MODULE_API_LISP_OBJECT (cons, Lisp_Cons);
 #define XCONS(x) XRECORD (x, cons, Lisp_Cons)
 #define wrap_cons(p) wrap_record (p, cons)
 #define CONSP(x) RECORDP (x, cons)
@@ -3022,13 +3022,13 @@ TRUE_LIST_P (Lisp_Object object)
 #ifdef NEW_GC
 struct Lisp_String_Direct_Data
 {
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Bytecount size;
   Ibyte data[1];
 };
 typedef struct Lisp_String_Direct_Data Lisp_String_Direct_Data;
 
-DECLARE_MODULE_API_LRECORD (string_direct_data, Lisp_String_Direct_Data);
+DECLARE_MODULE_API_LISP_OBJECT (string_direct_data, Lisp_String_Direct_Data);
 #define XSTRING_DIRECT_DATA(x) \
   XRECORD (x, string_direct_data, Lisp_String_Direct_Data)
 #define wrap_string_direct_data(p) wrap_record (p, string_direct_data)
@@ -3042,13 +3042,13 @@ DECLARE_MODULE_API_LRECORD (string_direct_data, Lisp_String_Direct_Data);
 
 struct Lisp_String_Indirect_Data
 {
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Bytecount size;
   Ibyte *data;
 };
 typedef struct Lisp_String_Indirect_Data Lisp_String_Indirect_Data;
 
-DECLARE_MODULE_API_LRECORD (string_indirect_data, Lisp_String_Indirect_Data);
+DECLARE_MODULE_API_LISP_OBJECT (string_indirect_data, Lisp_String_Indirect_Data);
 #define XSTRING_INDIRECT_DATA(x) \
   XRECORD (x, string_indirect_data, Lisp_String_Indirect_Data)
 #define wrap_string_indirect_data(p) wrap_record (p, string_indirect_data)
@@ -3123,7 +3123,7 @@ typedef struct Lisp_String Lisp_String;
 #define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
 #endif /* not NEW_GC */
 
-DECLARE_MODULE_API_LRECORD (string, Lisp_String);
+DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
 #define wrap_string(p) wrap_record (p, string)
 #define STRINGP(x) RECORDP (x, string)
@@ -3196,13 +3196,13 @@ DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 
 struct Lisp_Vector
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   long size;
   Lisp_Object contents[1];
 };
 typedef struct Lisp_Vector Lisp_Vector;
 
-DECLARE_LRECORD (vector, Lisp_Vector);
+DECLARE_LISP_OBJECT (vector, Lisp_Vector);
 #define XVECTOR(x) XRECORD (x, vector, Lisp_Vector)
 #define wrap_vector(p) wrap_record (p, vector)
 #define VECTORP(x) RECORDP (x, vector)
@@ -3233,13 +3233,13 @@ DECLARE_LRECORD (vector, Lisp_Vector);
 
 struct Lisp_Bit_Vector
 {
-  struct LCRECORD_HEADER lheader;
+  NORMAL_LISP_OBJECT_HEADER lheader;
   Elemcount size;
   unsigned long bits[1];
 };
 typedef struct Lisp_Bit_Vector Lisp_Bit_Vector;
 
-DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
+DECLARE_LISP_OBJECT (bit_vector, Lisp_Bit_Vector);
 #define XBIT_VECTOR(x) XRECORD (x, bit_vector, Lisp_Bit_Vector)
 #define wrap_bit_vector(p) wrap_record (p, bit_vector)
 #define BIT_VECTORP(x) RECORDP (x, bit_vector)
@@ -3287,7 +3287,7 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 /* For when we want to include a bit vector in another structure, and we
    know it's of a fixed size. */
 #define DECLARE_INLINE_LISP_BIT_VECTOR(numbits) struct {	\
-  struct LCRECORD_HEADER lheader;				\
+  NORMAL_LISP_OBJECT_HEADER lheader;				        \
   Elemcount size;						\
   unsigned long bits[BIT_VECTOR_LONG_STORAGE(numbits)];		\
 }
@@ -3322,7 +3322,7 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 typedef struct Lisp_Symbol Lisp_Symbol;
 struct Lisp_Symbol
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   /* next symbol in this obarray bucket */
   Lisp_Symbol *next;
   Lisp_Object name;
@@ -3338,7 +3338,7 @@ struct Lisp_Symbol
 			 XSTRING_LENGTH (symbol_name (XSYMBOL (sym))))))
 #define KEYWORDP(obj) (SYMBOLP (obj) && SYMBOL_IS_KEYWORD (obj))
 
-DECLARE_MODULE_API_LRECORD (symbol, Lisp_Symbol);
+DECLARE_MODULE_API_LISP_OBJECT (symbol, Lisp_Symbol);
 #define XSYMBOL(x) XRECORD (x, symbol, Lisp_Symbol)
 #define wrap_symbol(p) wrap_record (p, symbol)
 #define SYMBOLP(x) RECORDP (x, symbol)
@@ -3366,7 +3366,7 @@ typedef Lisp_Object (*lisp_fn_t) (void);
 
 struct Lisp_Subr
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   short min_args;
   short max_args;
   /* #### We should make these const Ascbyte * or const Ibyte *, not const
@@ -3378,7 +3378,7 @@ struct Lisp_Subr
 };
 typedef struct Lisp_Subr Lisp_Subr;
 
-DECLARE_LRECORD (subr, Lisp_Subr);
+DECLARE_LISP_OBJECT (subr, Lisp_Subr);
 #define XSUBR(x) XRECORD (x, subr, Lisp_Subr)
 #define wrap_subr(p) wrap_record (p, subr)
 #define SUBRP(x) RECORDP (x, subr)
@@ -3396,7 +3396,7 @@ DECLARE_LRECORD (subr, Lisp_Subr);
 typedef struct Lisp_Marker Lisp_Marker;
 struct Lisp_Marker
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   Lisp_Marker *next;
   Lisp_Marker *prev;
   struct buffer *buffer;
@@ -3404,7 +3404,7 @@ struct Lisp_Marker
   char insertion_type;
 };
 
-DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
+DECLARE_MODULE_API_LISP_OBJECT (marker, Lisp_Marker);
 #define XMARKER(x) XRECORD (x, marker, Lisp_Marker)
 #define wrap_marker(p) wrap_record (p, marker)
 #define MARKERP(x) RECORDP (x, marker)
@@ -3639,12 +3639,12 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
 struct Lisp_Float
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   union { double d; struct Lisp_Float *unused_next_; } data;
 };
 typedef struct Lisp_Float Lisp_Float;
 
-DECLARE_LRECORD (float, Lisp_Float);
+DECLARE_LISP_OBJECT (float, Lisp_Float);
 #define XFLOAT(x) XRECORD (x, float, Lisp_Float)
 #define wrap_float(p) wrap_record (p, float)
 #define FLOATP(x) RECORDP (x, float)
@@ -3727,7 +3727,7 @@ void define_structure_type_keyword (struct structure_type *st,
 
 struct weak_box
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object value;
 
   Lisp_Object next_weak_box; /* don't mark through this! */
@@ -3737,7 +3737,7 @@ void prune_weak_boxes (void);
 Lisp_Object make_weak_box (Lisp_Object value);
 Lisp_Object weak_box_ref (Lisp_Object value);
 
-DECLARE_LRECORD (weak_box, struct weak_box);
+DECLARE_LISP_OBJECT (weak_box, struct weak_box);
 #define XWEAK_BOX(x) XRECORD (x, weak_box, struct weak_box)
 #define XSET_WEAK_BOX(x, v) (XWEAK_BOX (x)->value = (v))
 #define wrap_weak_box(p) wrap_record (p, weak_box)
@@ -3749,7 +3749,7 @@ DECLARE_LRECORD (weak_box, struct weak_box);
 
 struct ephemeron 
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object key;
 
@@ -3774,7 +3774,7 @@ int finish_marking_ephemerons(void);
 Lisp_Object zap_finalize_list(void);
 Lisp_Object make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer);
 
-DECLARE_LRECORD(ephemeron, struct ephemeron);
+DECLARE_LISP_OBJECT(ephemeron, struct ephemeron);
 #define XEPHEMERON(x) XRECORD (x, ephemeron, struct ephemeron)
 #define XEPHEMERON_REF(x) (XEPHEMERON (x)->value)
 #define XEPHEMERON_NEXT(x) (XCDR (XEPHEMERON(x)->cons_chain))
@@ -3808,13 +3808,13 @@ enum weak_list_type
 
 struct weak_list
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object list; /* don't mark through this! */
   enum weak_list_type type;
   Lisp_Object next_weak; /* don't mark through this! */
 };
 
-DECLARE_LRECORD (weak_list, struct weak_list);
+DECLARE_LISP_OBJECT (weak_list, struct weak_list);
 #define XWEAK_LIST(x) XRECORD (x, weak_list, struct weak_list)
 #define wrap_weak_list(p) wrap_record (p, weak_list)
 #define WEAK_LISTP(x) RECORDP (x, weak_list)
@@ -4790,7 +4790,6 @@ extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
-MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
 MODULE_API Lisp_Object build_istring (const Ibyte *);
 MODULE_API Lisp_Object build_cistring (const CIbyte *);
 MODULE_API Lisp_Object build_ascstring (const Ascbyte *);
@@ -6052,7 +6051,10 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
-void internal_object_printer (Lisp_Object, Lisp_Object, int);
+void internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			      int UNUSED (escapeflag));
+void external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			      int UNUSED (escapeflag));
 MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
 							      ...))
        PRINTF_ARGS (1, 2);

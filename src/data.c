@@ -1,7 +1,7 @@
 /* Primitive operations on Lisp data types for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2643,13 +2643,11 @@ weak_list_hash (Lisp_Object obj, int depth)
 Lisp_Object
 make_weak_list (enum weak_list_type type)
 {
-  Lisp_Object result;
-  struct weak_list *wl =
-    ALLOC_LCRECORD_TYPE (struct weak_list, &lrecord_weak_list);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (weak_list);
+  struct weak_list *wl = XWEAK_LIST (result);
 
   wl->list = Qnil;
   wl->type = type;
-  result = wrap_weak_list (wl);
   wl->next_weak = Vall_weak_lists;
   Vall_weak_lists = result;
   return result;
@@ -2663,12 +2661,11 @@ static const struct memory_description weak_list_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("weak-list", weak_list,
-			       1, /*dumpable-flag*/
-			       mark_weak_list, print_weak_list,
-			       0, weak_list_equal, weak_list_hash,
-			       weak_list_description,
-			       struct weak_list);
+DEFINE_DUMPABLE_LISP_OBJECT ("weak-list", weak_list,
+			     mark_weak_list, print_weak_list,
+			     0, weak_list_equal, weak_list_hash,
+			     weak_list_description,
+			     struct weak_list);
 /*
    -- we do not mark the list elements (either the elements themselves
       or the cons cells that hold them) in the normal marking phase.
@@ -3117,10 +3114,8 @@ weak_box_hash (Lisp_Object obj, int depth)
 Lisp_Object
 make_weak_box (Lisp_Object value)
 {
-  Lisp_Object result;
-
-  struct weak_box *wb =
-    ALLOC_LCRECORD_TYPE (struct weak_box, &lrecord_weak_box);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (weak_box);
+  struct weak_box *wb = XWEAK_BOX (result);
 
   wb->value = value;
   result = wrap_weak_box (wb);
@@ -3134,12 +3129,10 @@ static const struct memory_description weak_box_description[] = {
   { XD_END}
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("weak_box", weak_box,
-			       0, /*dumpable-flag*/
-			       mark_weak_box, print_weak_box,
-			       0, weak_box_equal, weak_box_hash,
-			       weak_box_description,
-			       struct weak_box);
+DEFINE_NODUMP_LISP_OBJECT ("weak-box", weak_box, mark_weak_box,
+			   print_weak_box, 0, weak_box_equal,
+			   weak_box_hash, weak_box_description,
+			   struct weak_box);
 
 DEFUN ("make-weak-box", Fmake_weak_box, 1, 1, 0, /*
 Return a new weak box from value CONTENTS.
@@ -3338,24 +3331,23 @@ ephemeron_hash(Lisp_Object obj, int depth)
 }
 
 Lisp_Object
-make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
+make_ephemeron (Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
 {
-  Lisp_Object result, temp = Qnil;
+  Lisp_Object temp = Qnil;
   struct gcpro gcpro1, gcpro2;
-
-  struct ephemeron *eph =
-    ALLOC_LCRECORD_TYPE (struct ephemeron, &lrecord_ephemeron);
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (ephemeron);
+  struct ephemeron *eph = XEPHEMERON (result);
 
   eph->key = Qnil;
   eph->cons_chain = Qnil;
   eph->value = Qnil;
 
-  result = wrap_ephemeron(eph);
+  result = wrap_ephemeron (eph);
   GCPRO2 (result, temp);
 
   eph->key = key;
-  temp = Fcons(value, finalizer);
-  eph->cons_chain = Fcons(temp, Vall_ephemerons);
+  temp = Fcons (value, finalizer);
+  eph->cons_chain = Fcons (temp, Vall_ephemerons);
   eph->value = value;
 
   Vall_ephemerons = result;
@@ -3376,12 +3368,11 @@ static const struct memory_description ephemeron_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("ephemeron", ephemeron,
-			       0, /*dumpable-flag*/
-			       mark_ephemeron, print_ephemeron,
-			       0, ephemeron_equal, ephemeron_hash,
-			       ephemeron_description,
-			       struct ephemeron);
+DEFINE_NODUMP_LISP_OBJECT ("ephemeron", ephemeron,
+			   mark_ephemeron, print_ephemeron,
+			   0, ephemeron_equal, ephemeron_hash,
+			   ephemeron_description,
+			   struct ephemeron);
 
 DEFUN ("make-ephemeron", Fmake_ephemeron, 2, 3, 0, /*
 Return a new ephemeron with key KEY, value VALUE, and finalizer FINALIZER.
@@ -3520,9 +3511,9 @@ init_errors_once_early (void)
 void
 syms_of_data (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (weak_list);
-  INIT_LRECORD_IMPLEMENTATION (ephemeron);
-  INIT_LRECORD_IMPLEMENTATION (weak_box);
+  INIT_LISP_OBJECT (weak_list);
+  INIT_LISP_OBJECT (ephemeron);
+  INIT_LISP_OBJECT (weak_box);
 
   DEFSYMBOL (Qquote);
   DEFSYMBOL (Qlambda);

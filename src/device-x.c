@@ -111,11 +111,9 @@ static const struct memory_description x_device_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("x-device", x_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       x_device_data_description_1,
-			       Lisp_X_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("x-device", x_device,
+				      0, x_device_data_description_1,
+				      Lisp_X_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description x_device_data_description;
 
@@ -230,7 +228,7 @@ static void
 allocate_x_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct x_device, &lrecord_x_device);
+  d->device_data = XX_DEVICE (ALLOC_NORMAL_LISP_OBJECT (x_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct x_device);
 #endif /* not NEW_GC */
@@ -2108,7 +2106,7 @@ void
 syms_of_device_x (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (x_device);
+  INIT_LISP_OBJECT (x_device);
 #endif /* NEW_GC */
 
   DEFSUBR (Fx_debug_mode);

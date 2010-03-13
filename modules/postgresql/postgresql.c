@@ -90,8 +90,10 @@ TODO (in rough order of priority):
    interface to lcrecord handling has changed with 21.2, so unfortunately
    we will need a few snippets of backwards compatibility code.
 */
-#if (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION < 2)
+#if (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION <= 1)
 #define RUNNING_XEMACS_21_1 1
+#elif (EMACS_MAJOR_VERSION == 21) && (EMACS_MINOR_VERSION <= 4)
+#define RUNNING_XEMACS_21_4 1
 #endif
 
 /* #define POSTGRES_LO_IMPORT_IS_VOID 1 */
@@ -262,13 +264,17 @@ allocate_pgconn (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     lrecord_pgconn);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
   Lisp_PGconn *pgconn = ALLOC_LCRECORD_TYPE (Lisp_PGconn,
 					     &lrecord_pgconn);
+#else
+  Lisp_PGconn *pgconn = XPGCONN (ALLOC_NORMAL_LISP_OBJECT (pgconn));
 #endif
   pgconn->pgconn = (PGconn *)NULL;
   return pgconn;
 }
+
+#ifdef RUNNING_XEMACS_21_4
 
 static void
 finalize_pgconn (void *header, int for_disksave)
@@ -286,18 +292,41 @@ finalize_pgconn (void *header, int for_disksave)
     }
 }
 
+#else /* not RUNNING_XEMACS_21_4 */
+
+static void
+finalize_pgconn (void *header)
+{
+  Lisp_PGconn *pgconn = (Lisp_PGconn *)header;
+
+  if (pgconn->pgconn)
+    {
+      PQfinish (pgconn->pgconn);
+      pgconn->pgconn = (PGconn *)NULL;
+    }
+}
+
+#endif /* (not) RUNNING_XEMACS_21_4 */
+
 #ifdef RUNNING_XEMACS_21_1
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       Lisp_PGconn);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       0, /*dumpable-flag*/
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       pgconn_description,
 			       Lisp_PGconn);
+#else
+DEFINE_NODUMP_LISP_OBJECT ("pgconn", pgconn,
+			   mark_pgconn, print_pgconn,
+			   finalize_pgconn,
+			   NULL, NULL,
+			   pgconn_description,
+			   Lisp_PGconn);
 #endif
 /****/
 
@@ -387,13 +416,17 @@ allocate_pgresult (void)
 #ifdef RUNNING_XEMACS_21_1
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 lrecord_pgresult);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
   Lisp_PGresult *pgresult = ALLOC_LCRECORD_TYPE (Lisp_PGresult,
 						 &lrecord_pgresult);
+#else
+  Lisp_PGresult *pgresult = XPGRESULT (ALLOC_NORMAL_LISP_OBJECT (pgresult));
 #endif
   pgresult->pgresult = (PGresult *)NULL;
   return pgresult;
 }
+
+#ifdef RUNNING_XEMACS_21_4
 
 static void
 finalize_pgresult (void *header, int for_disksave)
@@ -411,18 +444,40 @@ finalize_pgresult (void *header, int for_disksave)
     }
 }
 
+#else /* not RUNNING_XEMACS_21_4 */
+
+static void
+finalize_pgresult (void *header)
+{
+  Lisp_PGresult *pgresult = (Lisp_PGresult *)header;
+
+  if (pgresult->pgresult)
+    {
+      PQclear (pgresult->pgresult);
+      pgresult->pgresult = (PGresult *)NULL;
+    }
+}
+
+#endif /* (not) RUNNING_XEMACS_21_4 */
+
 #ifdef RUNNING_XEMACS_21_1
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       Lisp_PGresult);
-#else
+#elif defined (RUNNING_XEMACS_21_4)
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       0, /*dumpable-flag*/
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       pgresult_description,
 			       Lisp_PGresult);
+#else
+DEFINE_NODUMP_LISP_OBJECT ("pgresult", pgresult,
+			   mark_pgresult, print_pgresult, finalize_pgresult,
+			   NULL, NULL,
+			   pgresult_description,
+			   Lisp_PGresult);
 #endif
 
 /***********************/
@@ -1597,8 +1652,8 @@ void
 syms_of_postgresql(void)
 {
 #ifndef RUNNING_XEMACS_21_1
-  INIT_LRECORD_IMPLEMENTATION (pgconn);
-  INIT_LRECORD_IMPLEMENTATION (pgresult);
+  INIT_LISP_OBJECT (pgconn);
+  INIT_LISP_OBJECT (pgresult);
 #endif
   DEFSYMBOL (Qpostgresql);
 
@@ -1870,8 +1925,8 @@ unload_postgresql (void)
 {
 #ifndef RUNNING_XEMACS_21_1
   /* Remove defined types */
-  UNDEF_LRECORD_IMPLEMENTATION (pgconn);
-  UNDEF_LRECORD_IMPLEMENTATION (pgresult);
+  UNDEF_LISP_OBJECT (pgconn);
+  UNDEF_LISP_OBJECT (pgresult);
 #endif
 
   /* Remove staticpro'ing of symbols */

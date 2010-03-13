@@ -1,6 +1,6 @@
 /* LDAP client interface for XEmacs.
    Copyright (C) 1998 Free Software Foundation, Inc.
-   Copyright (C) 2004 Ben Wing.
+   Copyright (C) 2004, 2005, 2010 Ben Wing.
    
 
 This file is part of XEmacs.
@@ -141,7 +141,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 static Lisp_LDAP *
 allocate_ldap (void)
 {
-  Lisp_LDAP *ldap = ALLOC_LCRECORD_TYPE (Lisp_LDAP, &lrecord_ldap);
+  Lisp_LDAP *ldap = XLDAP (ALLOC_NORMAL_LISP_OBJECT (ldap));
 
   ldap->ld = NULL;
   ldap->host = Qnil;
@@ -149,23 +149,19 @@ allocate_ldap (void)
 }
 
 static void
-finalize_ldap (void *header, int for_disksave)
+finalize_ldap (void *header)
 {
   Lisp_LDAP *ldap = (Lisp_LDAP *) header;
-
-  if (for_disksave)
-    invalid_operation ("Can't dump an emacs containing LDAP objects",
-			 make_ldap (ldap));
 
   if (ldap->ld)
     ldap_unbind (ldap->ld);
   ldap->ld = NULL;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap, 0,
-                               mark_ldap, print_ldap, finalize_ldap,
-                               NULL, NULL, ldap_description, Lisp_LDAP);
-
+DEFINE_NODUMP_LISP_OBJECT ("ldap", ldap, mark_ldap,
+			   print_ldap, finalize_ldap,
+			   NULL, NULL, ldap_description,
+			   Lisp_LDAP);
 
 /************************************************************************/
 /*                        Basic ldap accessors                          */
@@ -616,7 +612,6 @@ containing attribute/value string pairs.
   int rc;
   int i, j;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -715,7 +710,6 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   int i, j, rc;
   Lisp_Object mod_op;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -816,7 +810,7 @@ DN is the distinguished name of the entry to delete.
 void
 syms_of_eldap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (ldap);
+  INIT_LISP_OBJECT (ldap);
 
   DEFSYMBOL (Qeldap);
   DEFSYMBOL (Qldapp);
@@ -878,7 +872,7 @@ void
 unload_eldap (void)
 {
   /* Remove defined types */
-  UNDEF_LRECORD_IMPLEMENTATION (ldap);
+  UNDEF_LISP_OBJECT (ldap);
 
   /* Remove staticpro'ing of symbols */
   unstaticpro_nodump (&Qeldap);

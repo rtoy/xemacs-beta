@@ -71,6 +71,33 @@ static const struct memory_description toolbar_button_description [] = {
   { XD_END }
 };
 
+
+static Lisp_Object
+allocate_toolbar_button (struct frame *f, int pushright)
+{
+  struct toolbar_button *tb;
+
+  tb = XTOOLBAR_BUTTON (ALLOC_NORMAL_LISP_OBJECT (toolbar_button));
+  tb->next = Qnil;
+  tb->frame = wrap_frame (f);
+  tb->up_glyph = Qnil;
+  tb->down_glyph = Qnil;
+  tb->disabled_glyph = Qnil;
+  tb->cap_up_glyph = Qnil;
+  tb->cap_down_glyph = Qnil;
+  tb->cap_disabled_glyph = Qnil;
+  tb->callback = Qnil;
+  tb->enabled_p = Qnil;
+  tb->help_string = Qnil;
+
+  tb->pushright = pushright;
+  tb->x = tb->y = tb->width = tb->height = -1;
+  tb->dirty = 1;
+
+  return wrap_toolbar_button (tb);
+}
+
+
 static Lisp_Object
 mark_toolbar_button (Lisp_Object obj)
 {
@@ -88,13 +115,10 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
-			       0, /*dumpable-flag*/
-			       mark_toolbar_button,
-			       default_object_printer,
-			       0, 0, 0,
-			       toolbar_button_description,
-			       struct toolbar_button);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("toolbar-button", toolbar_button,
+				    mark_toolbar_button,
+				    toolbar_button_description,
+				    struct toolbar_button);
 
 DEFUN ("toolbar-button-p", Ftoolbar_button_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar button.
@@ -304,27 +328,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
   buffer = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
 
   if (!tb)
-    {
-      tb = ALLOC_LCRECORD_TYPE (struct toolbar_button, &lrecord_toolbar_button);
-      tb->next = Qnil;
-      tb->frame = wrap_frame (f);
-      tb->up_glyph = Qnil;
-      tb->down_glyph = Qnil;
-      tb->disabled_glyph = Qnil;
-      tb->cap_up_glyph = Qnil;
-      tb->cap_down_glyph = Qnil;
-      tb->cap_disabled_glyph = Qnil;
-      tb->callback = Qnil;
-      tb->enabled_p = Qnil;
-      tb->help_string = Qnil;
-
-      tb->enabled = 0;
-      tb->down = 0;
-      tb->pushright = pushright;
-      tb->blank = 0;
-      tb->x = tb->y = tb->width = tb->height = -1;
-      tb->dirty = 1;
-    }
+    tb = XTOOLBAR_BUTTON (allocate_toolbar_button (f, pushright));
   retval = wrap_toolbar_button (tb);
 
   /* Let's make sure nothing gets mucked up by the potential call to
@@ -1344,7 +1348,7 @@ toolbar_shadows_changed (Lisp_Object UNUSED (specifier),
 void
 syms_of_toolbar (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (toolbar_button);
+  INIT_LISP_OBJECT (toolbar_button);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qtoolbar_buttonp);
   DEFSYMBOL (Q2D);

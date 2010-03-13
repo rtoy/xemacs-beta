@@ -141,14 +141,14 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
-						1, /*dumpable-flag*/
+DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("symbol", symbol,
 						mark_symbol, print_symbol,
 						0, 0, 0, symbol_description,
 						symbol_getprop,
 						symbol_putprop,
 						symbol_remprop,
 						Fsymbol_plist,
+						0 /* no disksaver */,
 						Lisp_Symbol);
 
 /**********************************************************************/
@@ -1115,37 +1115,33 @@ static const struct memory_description symbol_value_forward_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
-			       symbol_value_forward,
-			       1, /*dumpable-flag*/
-			       0,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_forward_description,
-			       struct symbol_value_forward);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-forward",
+			     symbol_value_forward,
+			     0,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_forward_description,
+			     struct symbol_value_forward);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-buffer-local",
-			       symbol_value_buffer_local,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_buffer_local,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_buffer_local_description,
-			       struct symbol_value_buffer_local);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-buffer-local",
+			     symbol_value_buffer_local,
+			     mark_symbol_value_buffer_local,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_buffer_local_description,
+			     struct symbol_value_buffer_local);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-lisp-magic",
-			       symbol_value_lisp_magic,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_lisp_magic,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_lisp_magic_description,
-			       struct symbol_value_lisp_magic);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-lisp-magic",
+			     symbol_value_lisp_magic,
+			     mark_symbol_value_lisp_magic,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_lisp_magic_description,
+			     struct symbol_value_lisp_magic);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
-			       symbol_value_varalias,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_varalias,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_varalias_description,
-			       struct symbol_value_varalias);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-varalias",
+			     symbol_value_varalias,
+			     mark_symbol_value_varalias,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_varalias_description,
+			     struct symbol_value_varalias);
 
 
 /* Getting and setting values of symbols */
@@ -2293,8 +2289,8 @@ sets it.
 
   {
     struct symbol_value_buffer_local *bfwd
-      = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
-			     &lrecord_symbol_value_buffer_local);
+      = XSYMBOL_VALUE_BUFFER_LOCAL
+      (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
     Lisp_Object foo;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2401,8 +2397,8 @@ Use `make-local-hook' instead.
     }
 
   /* Make sure variable is set up to hold per-buffer values */
-  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
-			      &lrecord_symbol_value_buffer_local);
+  bfwd = XSYMBOL_VALUE_BUFFER_LOCAL
+    (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -3193,8 +3189,9 @@ pity, thereby invalidating your code.
   valcontents = XSYMBOL (variable)->value;
   if (!SYMBOL_VALUE_LISP_MAGIC_P (valcontents))
     {
-      bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_lisp_magic,
-				  &lrecord_symbol_value_lisp_magic);
+      bfwd =
+	XSYMBOL_VALUE_LISP_MAGIC
+	(ALLOC_NORMAL_LISP_OBJECT (symbol_value_lisp_magic));
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3411,8 +3408,8 @@ what you're doing.
     invalid_change ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
-  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_varalias,
-			      &lrecord_symbol_value_varalias);
+  bfwd =
+    XSYMBOL_VALUE_VARALIAS (ALLOC_NORMAL_LISP_OBJECT (symbol_value_varalias));
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = aliased;
   bfwd->shadowed = valcontents;
@@ -3535,11 +3532,11 @@ static const struct symbol_value_magic guts_of_unbound_marker =
 void
 init_symbols_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (symbol);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_forward);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_buffer_local);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_lisp_magic);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_varalias);
+  INIT_LISP_OBJECT (symbol);
+  INIT_LISP_OBJECT (symbol_value_forward);
+  INIT_LISP_OBJECT (symbol_value_buffer_local);
+  INIT_LISP_OBJECT (symbol_value_lisp_magic);
+  INIT_LISP_OBJECT (symbol_value_varalias);
 
   reinit_symbols_early ();
 

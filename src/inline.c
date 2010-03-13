@@ -35,8 +35,8 @@ Boston, MA 02111-1307, USA.  */
    */
 
 /* Note to maintainers: This file contains a list of all header files
-   that use the INLINE macro, either directly, or by using DECLARE_LRECORD.
-   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE_HEADER' *.h'' */
+   that use the INLINE macro, either directly, or by using DECLARE_LISP_OBJECT.
+   i.e. the output of ``grep -l -w 'DECLARE_LISP_OBJECT|INLINE_HEADER' *.h'' */
 
 #define DONT_EXTERN_INLINE_HEADER_FUNCTIONS
 
@@ -99,19 +99,26 @@ Boston, MA 02111-1307, USA.  */
 #include "database.h"
 #endif
 
+#include "console-stream-impl.h"
+
 #ifdef HAVE_X_WINDOWS
-#include "glyphs-x.h"
+#include "console-x-impl.h"
 #ifdef HAVE_XFT
 #include "font-mgr.h"
 #endif
 #endif
 
 #ifdef HAVE_MS_WINDOWS
-#include "console-msw.h"
+#include "console-msw-impl.h"
+#endif
+
+#ifdef HAVE_TTY
+#include "console-tty-impl.h"
+#include "objects-tty-impl.h"
 #endif
 
 #ifdef HAVE_GTK
-#include "console-gtk.h"
+#include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
 

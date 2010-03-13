@@ -34,14 +34,14 @@ Boston, MA 02111-1307, USA.  */
 #ifdef NEW_GC
 struct compiled_function_args
 {
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
   long size;
   Lisp_Object args[1];
 };
 
 typedef struct compiled_function_args Lisp_Compiled_Function_Args;
 
-DECLARE_LRECORD (compiled_function_args, Lisp_Compiled_Function_Args);
+DECLARE_LISP_OBJECT (compiled_function_args, Lisp_Compiled_Function_Args);
 
 #define XCOMPILED_FUNCTION_ARGS(x) \
   XRECORD (x, compiled_function_args, Lisp_Compiled_Function_Args)
@@ -83,7 +83,7 @@ DECLARE_LRECORD (compiled_function_args, Lisp_Compiled_Function_Args);
 
 struct Lisp_Compiled_Function
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   unsigned short stack_depth;
   unsigned short specpdl_depth;
   struct
@@ -148,7 +148,7 @@ Lisp_Object execute_optimized_program (const Opbyte *program,
 				       int stack_depth,
 				       Lisp_Object *constants_data);
 
-DECLARE_LRECORD (compiled_function, Lisp_Compiled_Function);
+DECLARE_LISP_OBJECT (compiled_function, Lisp_Compiled_Function);
 #define XCOMPILED_FUNCTION(x) XRECORD (x, compiled_function, \
 				       Lisp_Compiled_Function)
 #define wrap_compiled_function(p) wrap_record (p, compiled_function)

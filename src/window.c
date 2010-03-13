@@ -182,11 +182,9 @@ static const struct memory_description face_cachel_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("face-cachel", face_cachel,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       face_cachel_description_1,
-			       Lisp_Face_Cachel);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("face-cachel", face_cachel,
+				      0, face_cachel_description_1,
+				      Lisp_Face_Cachel);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description face_cachel_description = {
@@ -204,11 +202,9 @@ static const struct memory_description face_cachel_dynarr_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("face-cachel-dynarr", face_cachel_dynarr,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       face_cachel_dynarr_description_1,
-			       face_cachel_dynarr);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("face-cachel-dynarr", face_cachel_dynarr,
+				      0, face_cachel_dynarr_description_1,
+				      face_cachel_dynarr);
 #else /* not NEW_GC */
 static const struct sized_memory_description face_cachel_dynarr_description = {
   sizeof (face_cachel_dynarr),
@@ -222,11 +218,9 @@ static const struct memory_description glyph_cachel_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel", glyph_cachel,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       glyph_cachel_description_1,
-			       Lisp_Glyph_Cachel);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("glyph-cachel", glyph_cachel,
+				      0, glyph_cachel_description_1,
+				      Lisp_Glyph_Cachel);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description glyph_cachel_description = {
@@ -244,11 +238,10 @@ static const struct memory_description glyph_cachel_dynarr_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel-dynarr", glyph_cachel_dynarr,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       glyph_cachel_dynarr_description_1,
-			       glyph_cachel_dynarr);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("glyph-cachel-dynarr",
+				      glyph_cachel_dynarr, 0,
+				      glyph_cachel_dynarr_description_1,
+				      glyph_cachel_dynarr);
 #else /* not NEW_GC */
 static const struct sized_memory_description glyph_cachel_dynarr_description = {
   sizeof (glyph_cachel_dynarr),
@@ -332,9 +325,9 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-finalize_window (void *header, int UNUSED (for_disksave))
+finalize_window (Lisp_Object obj)
 {
-  struct window *w = (struct window *) header;
+  struct window *w = XWINDOW (obj);
 
   if (w->line_start_cache)
     {
@@ -375,10 +368,9 @@ make_saved_buffer_point_cache (void)
   return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window", window,
-			       0, /*dumpable-flag*/
-                               mark_window, print_window, finalize_window,
-			       0, 0, window_description, struct window);
+DEFINE_NODUMP_LISP_OBJECT ("window", window,
+			   mark_window, print_window, finalize_window,
+			   0, 0, window_description, struct window);
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -397,8 +389,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 Lisp_Object
 allocate_window (void)
 {
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
-  Lisp_Object val = wrap_window (p);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
 #include "winslots.h"
@@ -432,7 +424,7 @@ allocate_window (void)
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
 
-  return val;
+  return obj;
 }
 #undef INIT_DISP_VARIABLE
 
@@ -531,19 +523,18 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
-			       0, /*dumpable-flag*/
-                               mark_window_mirror, internal_object_printer,
-			       0, 0, 0, window_mirror_description,
-			       struct window_mirror);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("window-mirror", window_mirror,
+				    mark_window_mirror,
+				    window_mirror_description,
+				    struct window_mirror);
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  struct window_mirror *t =
-    ALLOC_LCRECORD_TYPE (struct window_mirror, &lrecord_window_mirror);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window_mirror);
+  struct window_mirror *t = XWINDOW_MIRROR (obj);
 
   t->frame = f;
   t->current_display_lines = Dynarr_new (display_line);
@@ -2144,7 +2135,7 @@ mark_window_as_deleted (struct window *w)
   /* Free the extra data structures attached to windows immediately so
      they don't sit around consuming excess space.  They will be
      reinitialized by the window-configuration code as necessary. */
-  finalize_window ((void *) w, 0);
+  finalize_window (wrap_window (w));
 
   /* Nobody should be accessing anything in this object any more,
      and making them Qnil allows for better GC'ing in case a pointer
@@ -3872,12 +3863,11 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 static void
 make_dummy_parent (Lisp_Object window)
 {
-  Lisp_Object new_;
   struct window *o = XWINDOW (window);
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
-  new_ = wrap_window (p);
-  COPY_LCRECORD (p, o);
+  copy_lisp_object (obj, window);
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
@@ -3897,13 +3887,13 @@ make_dummy_parent (Lisp_Object window)
     make_image_instance_cache_hash_table ();
 
   /* Put new into window structure in place of window */
-  replace_window (window, new_);
+  replace_window (window, obj);
 
   o->next = Qnil;
   o->prev = Qnil;
   o->vchild = Qnil;
   o->hchild = Qnil;
-  o->parent = new_;
+  o->parent = obj;
 
   p->start[CURRENT_DISP] = Qnil;
   p->start[DESIRED_DISP] = Qnil;
@@ -5185,7 +5175,7 @@ compute_window_mirror_usage (struct window_mirror *mir,
 {
   if (!mir)
     return;
-  stats->other += LISPOBJ_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
+  stats->other += lisp_object_storage_size (wrap_window_mirror (mir), ovstats);
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
@@ -5209,7 +5199,7 @@ compute_window_usage (struct window *w, struct window_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other += LISPOBJ_STORAGE_SIZE (w, sizeof (*w), ovstats);
+  stats->other += lisp_object_storage_size (wrap_window (w), ovstats);
   stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
   stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
   stats->line_start +=
@@ -5442,13 +5432,13 @@ debug_print_windows (struct frame *f)
 void
 syms_of_window (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (window);
-  INIT_LRECORD_IMPLEMENTATION (window_mirror);
+  INIT_LISP_OBJECT (window);
+  INIT_LISP_OBJECT (window_mirror);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (face_cachel);
-  INIT_LRECORD_IMPLEMENTATION (face_cachel_dynarr);
-  INIT_LRECORD_IMPLEMENTATION (glyph_cachel);
-  INIT_LRECORD_IMPLEMENTATION (glyph_cachel_dynarr);
+  INIT_LISP_OBJECT (face_cachel);
+  INIT_LISP_OBJECT (face_cachel_dynarr);
+  INIT_LISP_OBJECT (glyph_cachel);
+  INIT_LISP_OBJECT (glyph_cachel_dynarr);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qwindowp);

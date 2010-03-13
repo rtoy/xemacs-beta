@@ -185,7 +185,7 @@ leading_byte_prefix_p (Ibyte lb)
 
 struct Lisp_Charset
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   int id;
   Lisp_Object name;
@@ -246,7 +246,7 @@ struct Lisp_Charset
 };
 typedef struct Lisp_Charset Lisp_Charset;
 
-DECLARE_LRECORD (charset, Lisp_Charset);
+DECLARE_LISP_OBJECT (charset, Lisp_Charset);
 #define XCHARSET(x) XRECORD (x, charset, Lisp_Charset)
 #define wrap_charset(p) wrap_record (p, charset)
 #define CHARSETP(x) RECORDP (x, charset)

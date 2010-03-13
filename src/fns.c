@@ -119,9 +119,9 @@ bit_vector_hash (Lisp_Object obj, int UNUSED (depth))
 }
 
 static Bytecount
-size_bit_vector (const void *lheader)
+size_bit_vector (Lisp_Object obj)
 {
-  Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, unsigned long, bits,
 				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
 }
@@ -131,15 +131,14 @@ static const struct memory_description bit_vector_description[] = {
 };
 
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
-					1, /*dumpable-flag*/
-					mark_bit_vector,
-					print_bit_vector, 0,
-					bit_vector_equal,
-					bit_vector_hash,
-					bit_vector_description,
-					size_bit_vector,
-					Lisp_Bit_Vector);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("bit-vector", bit_vector,
+				     mark_bit_vector,
+				     print_bit_vector, 0,
+				     bit_vector_equal,
+				     bit_vector_hash,
+				     bit_vector_description,
+				     size_bit_vector,
+				     Lisp_Bit_Vector);
 
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
@@ -4756,7 +4755,7 @@ Lisp_Object Qyes_or_no_p;
 void
 syms_of_fns (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (bit_vector);
+  INIT_LISP_OBJECT (bit_vector);
 
   DEFSYMBOL (Qstring_lessp);
   DEFSYMBOL (Qidentity);

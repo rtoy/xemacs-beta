@@ -382,7 +382,6 @@ void reinit_vars_of_event_tty (void);
 void vars_of_events (void);
 void reinit_vars_of_events (void);
 void vars_of_extents (void);
-void reinit_vars_of_extents (void);
 void vars_of_faces (void);
 void vars_of_file_coding (void);
 void reinit_vars_of_file_coding (void);
