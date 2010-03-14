@@ -895,7 +895,7 @@ batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testd
 
 .PHONY: remove-config-dependent-elcs config-changed
 remove-config-dependent-elcs:
-	$(RM) $(LISP)/mule/chinese.elc $(LISP)/mule/general-late.elc
+	$(RM) $(LISP)/mule/chinese.elc
 config-changed: remove-config-dependent-elcs all
 
 

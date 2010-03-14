@@ -72,50 +72,6 @@
       ;; twice, which is a significant improvement.
       system-type (symbol-value (intern "\u0073ystem-type")))
 
-;; We compute the arguments to set-unicode-query-skip-chars-args at compile
-;; time, but set them at load time, and the values depend on (featurep
-;; 'unicode-internal), so we will have problems if the value of this
-;; expression changes between compile and load time.
-
-(error-unless-tests-match (featurep 'unicode-internal) source-lisp)
-
-;; When this file is being compiled, all the charsets have been loaded, so
-;; we can construct the query-skip-chars-arg string correctly. 
-(set-unicode-query-skip-chars-args
- (eval-when-compile 
-   (if (featurep 'unicode-internal)
-       ;; Under Unicode-internal, all non-private characters can be encoded,
-       ;; other than surrogate code points
-       (format "%c-%c%c-%c" 0 #xD7FF #xE000 #x10FFFF)
-     ;; Under old-Mule, we have to loop over all charsets to see which
-     ;; characters in them map to Unicode code points.
-     (loop
-       for charset in (charset-list)
-       with skip-chars-string = ""
-       if (charset-encodable-p charset)
-       do
-       (block no-ucs-mapping
-	 (map-charset-chars
-	  #'(lambda (range ignored)
-	      (loop
-		with (begin . end) = range
-		while (and begin (>= end begin))
-		do
-		(when (= -1 (char-to-unicode begin))
-		  (return-from no-ucs-mapping))
-		(setq begin (int-to-char (1+ begin)))))
-	  charset)
-	 (setq skip-chars-string
-	       (concat skip-chars-string
-		       (charset-skip-chars-string charset))))
-       finally return skip-chars-string)))
- unicode-invalid-sequence-regexp-range
- (eval-when-compile
-   (concat (loop
-             for i from #x80 to #xFF
-             collect (aref (decode-coding-string (int-char i)
-                                                 'utf-8) 0)))))
-
 ;; At this point in the dump, all the charsets have been loaded.
 ;; Now, set the precedence list. @@#### There should be a better way.
 (initialize-default-unicode-precedence-list)

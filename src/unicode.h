@@ -55,4 +55,49 @@ DECLARE_LISP_OBJECT (precedence_array, struct precedence_array);
 
 #endif /* MULE */
 
+/************************************************************************/
+/*                          Encoding/decoding                           */
+/************************************************************************/
+
+/* Placed here because it's used in both unicode.c and mule-coding.c
+   (ISO-2022 can have embedded UTF-8 in it) */
+struct unicode_coding_stream
+{
+  /* decode */
+  int counter;
+  int indicated_length;
+  int seen_char;
+  int first_surrogate;
+  int ch;
+  /* encode */
+  int wrote_bom;
+};
+
+enum unicode_encoding_type
+{
+  UNICODE_UTF_16,
+  UNICODE_UTF_8,
+  UNICODE_UTF_7,
+  UNICODE_UCS_4,
+  UNICODE_UTF_32
+};
+
+struct coding_stream;
+
+void indicate_invalid_utf_8 (int indicated_length, int counter,
+			     int ch, unsigned_char_dynarr *dst,
+			     struct unicode_coding_stream *data,
+			     int ignore_bom);
+int encode_unicode_to_dynarr (int code, struct coding_stream *str,
+			      const UExtbyte *src,
+			      unsigned_char_dynarr *dst,
+			      enum unicode_encoding_type type,
+			      int little_endian,
+			      int preserve_error_characters);
+void decode_utf_8 (struct unicode_coding_stream *data,
+		   unsigned_char_dynarr *dst, UExtbyte c, int ignore_bom,
+		   int allow_private);
+void decode_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst);
+
+
 #endif /* INCLUDED_unicode_h_ */

@@ -1,3 +1,229 @@
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	OVERALL CHANGES:
+
+	-- New query-coding-region mechanism; instead of a separate
+	mechanism, it simply tries to encode the data and watches for
+	errors.  This requires a new mechanism for signalling errors in
+	encoding methods, and the encoding methods of the various coding
+	systems have to be modified appropriately.  We also need to
+	improve error-handling in Lstreams so we can properly propagate
+	these errors back to the caller.  In particular, previously errors
+	were signalled by returning -1 from reader and writer methods, but
+	this was only possible when no data was read or written.  Now the
+	two (returning amount of data processed and signalling an error)
+	have been separated, at least at the lowest level.  Higher levels
+	still use the "-1 for error when no data processed" convention,
+	but eventually this will change, too.
+
+	-- Some cleanup and refactoring of UTF-8 handling code, especially
+	between unicode.c (`unicode' coding system) and mule-coding.c
+	(`iso2022' coding system).
+	
+	* charset.h: Spacing changes.
+	
+	* event-msw.c (ntpipe_slurp_reader):
+	* event-msw.c (ntpipe_shove_writer):
+	* event-msw.c (winsock_reader):
+	* event-msw.c (winsock_writer):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* lstream.c:
+	* lstream.c (Lstream_really_write):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (Lstream_error_occurred_p):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (make_lisp_buffer_output_stream):
+	* lstream.h:
+	* lstream.h (struct lstream):
+	Lstream reader and writer methods now set a flag to signal an error
+	rather than returning -1.  Modify all such methods and callers
+	(Lstream_really_write(), Lstream_raw_read()) appropriately.
+
+	Add a new function Lstream_write_no_store() for use with the new
+	query-error mechanism below, that doesn't buffer (aka "squirrel
+	away") remaining data when less than all of it was written.
+	(We don't want this buffering when using the query-error mechanism
+	because we purposely want to stop converting each time an error is
+	encountered.) #### This should have a better name and perhaps
+	better interface.  Perhaps we should never squirrel data away when
+	an error occurs.  Currently we don't squirrel if an error occurs
+	and no data was written, but we do if some data was written.
+
+	Add new functions Lstream_error_occurred_p() and
+	Lstream_clear_error_occurred_p() to query/clear the flag indicating
+	that an error occurred.
+
+	#### We should probably further modify the reader/writer interface
+	to separate out returning 0 and encountering EOF.
+
+	Factor out some duplicated code inside of filedesc_writer() into
+	filedesc_write_single_byte().
+	
+	* extents.c:
+	* extents.c (Fset_extent_face):
+	* extents.h:
+	Make map_extents() externally callable and better document the
+	flags to the function.  Add EXFUN declarations for `delete-extent',
+	`extent-face' and `duplicable'.
+	
+	* file-coding.c:
+	* file-coding.c (Fvalid_coding_system_type_p):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (cleanup_query_streams):
+	* file-coding.c (query_coding_1):
+	* file-coding.c (Fquery_coding_region):
+	* file-coding.c (Fquery_coding_string):
+	* file-coding.c (chain_init_coding_streams_1):
+	* file-coding.c (chain_convert):
+	* file-coding.c (chain_get_error_info):
+	* file-coding.c (no_conversion_convert):
+	* file-coding.c (convert_eol_convert):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (internal_convert):
+	* file-coding.c (gzip_convert):
+	* file-coding.c (syms_of_file_coding):
+	* file-coding.c (vars_of_file_coding):
+	* file-coding.c (complex_vars_of_file_coding):
+	* file-coding.h:
+	* file-coding.h (enum handle_coding_error):
+	* file-coding.h (enum coding_system_variant):
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (LSTREAM_FL_NO_CLOSE_OTHER):
+	* intl-win32.c:
+	* intl-win32.c (mswindows_multibyte_to_unicode_convert):
+	* intl-win32.c (complex_vars_of_intl_win32):
+	* lisp.h:
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (parse_iso2022_esc):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	* mule-coding.c (ccl_convert):
+	Eliminate default_query_method and all other stuff related to the
+	old query-coding-region machinery.  Rewrite all the convert
+	methods so that they indicate when an error occurs -- during
+	decoding by inserting "error octets" into the stream of characters
+	and during encoding by making note of where the error occurred in
+	the source and sink streams. (Done using functions such as
+	handle_encoding_error_after_output(),
+	handle_encoding_error_before_output(),
+	handle_standard_encoding_error(), handle_possible_error_octet(),
+	ENCODING_ERROR_RETURN_OR_CONTINUE().) Add flags to
+	make_coding_input_stream() and make_coding_output_stream() that
+	allow different handling of errors -- either ignore them
+	("continue"), stop on error, or stop but ignore invalid-sequence
+	errors. (Generally speaming, invalid-sequence errors are
+	data-preserving whereas unencodable errors are data-losing.)  Add
+	coding_stream_get_error_info() to retrieve error info after an
+	error has occurred.
+
+	Write a new query-coding-region that uses this mechanism; also
+	move query-coding-string into C, since it's only a minor change as
+	everything is now done with streams.
+
+	#### NOTE FIXME: There is still a major problem with the new
+	query-error mechanism when we have a coding system with non-default
+	EOL handling (i.e. `-mac' or `-dos'.)  Internally such a coding
+	system is converted ("canonicalized") into a chain of two coding
+	systems, one which handles the actual conversion and one which
+	handles EOL conversion.  Propagating error positions back through
+	the chain of coding systems is tricky and not yet written.
+	There is some #if 0'ed out code that was a start but it won't
+	get done till the next commit.
+
+	Note also that the order of arguments to the `convert' methods
+	has changed to group the source and its length together.
+	
+	Rename `make-coding-system-internal' back to `make-coding-system'
+	and move its documentation back to C.
+
+	Add a long comment about different properties of coding streams
+	(input vs. output, decoding vs. encoding, byte vs. character source
+	and/or sink).
+
+	Fix documentation on LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING.
+
+	Better document the fields in `struct coding_stream'.  Add new
+	fields to handle the new error mechanism and new error-related flags.
+	
+	* mule-coding.c:
+	* unicode.c (indicate_invalid_utf_8):
+	Move add_unicode_to_dynarr() and indicate_invalid_utf_8()
+	to unicode.c, move handle_possible_error_octet() to file-coding.c.
+	
+	* mule-coding.c (iso2022_decode):
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_convert):
+	Extract duplicated UTF-8-handling code (in unicode_convert() and
+	iso2022_decode(), to handle UTF-8 inside of ISO-2022) to a single
+	function decode_utf_8(), with a flag allow_private to determine
+	whether we allow Unicode codepoints over #x10FFFF (yes with
+	escape-quoted, no otherwise).
+
+	Fix a bug (typo) in handling 4-byte UTF-8 sequences. (Actually
+	turns out not to matter.)
+	
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	Fix some places with poor CONVERR_* error handling.
+	
+	* mule-coding.c (syms_of_mule_coding):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	* mule-coding.c (reinit_coding_system_type_create_mule_coding):
+	* mule-coding.c (vars_of_mule_coding):
+	Eliminate the `fixed-width' coding-system type, replaced by
+	`multibyte'.
+	
+	* rangetab.c (put_range_table):
+	Note in comment that the comparison method should probably be
+	specifiable instead of always `eq'.
+	
+	* text.c (non_ascii_set_itext_ichar):
+	Fix comment about where UTF-8 encoding code is duplicated.
+	
+	* unicode.c:
+	* unicode.c (Fset_unicode_query_skip_chars_args): Removed.
+	* unicode.c (syms_of_unicode):
+	* unicode.c (coding_system_type_create_unicode):
+	* unicode.c (complex_vars_of_unicode):
+	Eliminate some stuff related to the old query-error mechanism.
+	Kill `set-unicode-query-skip-chars-args'.
+	
+	* unicode.c (UNICODE_DECODE_ERROR_OCTET):
+	Rename from DECODE_ERROR_OCTET(), because there is now another
+	DECODE_ERROR_OCTET() that does less.
+	
+	* unicode.c (decode_unicode_to_dynarr):
+	Rename decode_unicode_char to decode_unicode_to_dynarr_0() and
+	extract part of it into decode_unicode_to_dynarr().
+	
+	* unicode.c (encode_unicode_to_dynarr):
+	Rename encode_unicode_char to encode_unicode_to_dynarr() and
+	clean up a lot.
+	
+	* unicode.c (unicode_convert):
+	Get rid of use of `unsigned int' `unsigned char' etc. for
+	integral types and use `int' consistently.
+
+	* lisp.h:
+	* unicode.h:
+	Move `enum unicode_encoding_type' and related prototypes from
+	lisp.h to unicode.h; move `struct unicode_coding_stream' from
+	unicode.c to unicode.h as it's now used in mule-coding.c.
+
+	* Makefile.in.in:
+	general-late.el no longer dependent on whether compiled with
+	--unicode-internal.
+
 2010-03-08  Ben Wing  <ben@xemacs.org>
 
 	* unicode.c:

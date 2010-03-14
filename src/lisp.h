@@ -5723,7 +5723,7 @@ EXFUN (Fencode_coding_region, 4);
 EXFUN (Fencode_shift_jis_char, 1);
 EXFUN (Ffind_coding_system, 1);
 EXFUN (Fget_coding_system, 1);
-EXFUN (Fmake_coding_system_internal, 4);
+EXFUN (Fmake_coding_system, 4);
 EXFUN (Fset_coding_category_system, 2);
 EXFUN (Fset_coding_priority_list, 1);
 EXFUN (Fsubsidiary_coding_system, 2);
@@ -6691,28 +6691,14 @@ extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
 Bytecount compute_from_unicode_table_size (Lisp_Object charset,
-					      struct overhead_stats *stats);
+					   struct overhead_stats *stats);
 Bytecount compute_to_unicode_table_size (Lisp_Object charset,
-					    struct overhead_stats *stats);
+					 struct overhead_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
 void initialize_ascii_control_1_latin_1_unicode_translation (void);
 int decode_unicode (Lisp_Object unicode, enum unicode_allow allow);
 void free_precedence_array (Lisp_Object preclist);
 void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
-
-enum unicode_encoding_type
-{
-  UNICODE_UTF_16,
-  UNICODE_UTF_8,
-  UNICODE_UTF_7,
-  UNICODE_UCS_4,
-  UNICODE_UTF_32
-};
-
-void encode_unicode_char (int code, unsigned_char_dynarr *dst,
-			  enum unicode_encoding_type type,
-			  unsigned int little_endian,
-			  int write_error_characters_as_such);
 
 EXFUN (Fset_charset_tags, 2);
 

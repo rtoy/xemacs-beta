@@ -51,10 +51,10 @@ void get_charset_limits (Lisp_Object charset, int *low0, int *low1, int *high0,
 			 int *high1);
 int get_charset_iso2022_type (Lisp_Object charset);
 void unicode_to_charset_codepoint_raw (int code,
-					     Lisp_Object precarray,
-					     charset_pred predicate,
-					     Lisp_Object *charset, int *c1,
-					     int *c2);
+				       Lisp_Object precarray,
+				       charset_pred predicate,
+				       Lisp_Object *charset, int *c1,
+				       int *c2);
 Ichar old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
 							 int c1, int c2);
 void old_mule_non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,

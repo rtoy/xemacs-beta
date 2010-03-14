@@ -1,3 +1,14 @@
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	* automated/query-coding-tests.el:
+	* automated/query-coding-tests.el (featurep):
+	Lots of changes for new implementation of query-coding-region.  In
+	particular, ISO-2022 now signals errors on invalid escape
+	sequences so need to take that into account when using
+	greek-iso-8bit-with-esc, since 0x1B 0x1C is not a valid escape
+	sequence nor is 0x9B 0x9C.  Also, print out the particular coding
+	system triggering assert failures.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* automated/mule-tests.el (featurep):

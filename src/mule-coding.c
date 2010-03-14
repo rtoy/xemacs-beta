@@ -63,59 +63,6 @@ static Lisp_Object Vshift_jis_precedence, Vbig5_precedence;
 
 
 /************************************************************************/
-/*                          Utility functions                           */
-/************************************************************************/
-
-/* Convert Unicode codepoint UCS into an Ichar and add to the dynarr DST */
-static void
-add_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst)
-{
-  Ibyte work[MAX_ICHAR_LEN];
-  Ichar ch;
-  Bytecount len;
-
-  /* @@#### What about errors? */
-  /* @@#### current_buffer dependency */
-  /* This conversion is used during decoding, so we want to use the
-     standard precedence lists, not the special list we generate and store
-     in data->unicode_precedence (used for encoding only). */
-  ch = buffer_unicode_to_ichar (ucs, current_buffer, CONVERR_SUCCEED);
-  len = set_itext_ichar (work, ch);
-  Dynarr_add_many (dst, work, len);
-}
-
-static int
-handle_possible_error_octet (Ichar ich, unsigned_char_dynarr *dst,
-			     int *code_out)
-{
-  int code = ichar_to_unicode (ich, CONVERR_FAIL);
-  if (code >= 0)
-    {
-      if (code_out)
-	*code_out = code;
-      if (unicode_error_octet_code_p (code))
-	{
-	  Dynarr_add
-	    (dst, (unsigned char)
-	     unicode_error_octet_code_to_octet (code));
-	  return 1;
-	}
-    }
-  else
-    {
-      if (code_out)
-	*code_out = -1;
-    }
-  return 0;
-}
-
-/* Add OCTET as an undecodable literal "error" octet character, stored
-   using a 256-byte range in private Unicode space */
-#define DECODE_ERROR_OCTET(octet, dst) \
-  add_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
-
-
-/************************************************************************/
 /*                          MBCS coding system                          */
 /************************************************************************/
 
@@ -267,12 +214,11 @@ try_to_derive_character (int c1, int c2, int dimension,
 
 static Bytecount
 multibyte_convert (struct coding_stream *str, const UExtbyte *src,
-		   unsigned_char_dynarr *dst, Bytecount n)
+		   Bytecount n, unsigned_char_dynarr *dst)
 {
   struct multibyte_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, multibyte);
   Lisp_Object precarr = data->charset_precedence;
-  Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
     {
@@ -339,8 +285,10 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	      Lisp_Object charset = Qnil;
 	      int c1, c2;
 	      Ichar ich = itext_ichar (str->partial);
-	      if (handle_possible_error_octet (ich, dst, NULL))
-		continue;
+	      if (handle_possible_error_octet (ich, str, src, dst, NULL))
+		{
+		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		}
 
 	      /* Logic here similar to the logic in try_to_derive_character().
 		 Under Unicode-internal, just try directly to derive a
@@ -414,10 +362,12 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 		}
 #endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 
-	      /* If no charset, substitute a ? */
+	      /* If no charset, substitute a ?, and return or continue. */
 	      if (NILP (charset))
-		HANDLE_CHARSET_CODEPOINT_ERROR
-		  ("foo", Qunbound, &charset, &c1, &c2, CONVERR_SUBSTITUTE);
+		{
+		  handle_standard_encoding_error (str, src, dst);
+		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		}
 
 	      /* Finally, add the character */
 	      if (XCHARSET_DIMENSION (charset) == 2)
@@ -427,7 +377,7 @@ multibyte_convert (struct coding_stream *str, const UExtbyte *src,
 	}
     }
   
-  return orign;
+  return src - str->src;
 }
 
 static void
@@ -580,9 +530,6 @@ multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
 /* @@#### Need MBCS detector; but probably need to redo the whole detection
    system to accommodate this properly */
 
-Lisp_Object Qquery_skip_chars, Qinvalid_sequences_skip_chars;
-Lisp_Object Qfixed_width;
-
 
 /************************************************************************/
 /*                          Shift-JIS methods                           */
@@ -635,7 +582,7 @@ byte_shift_jis_katakana_p (int c)
 
 static Bytecount
 shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
-		   unsigned_char_dynarr *dst, Bytecount n)
+		   Bytecount n, unsigned_char_dynarr *dst)
 {
   Bytecount orign = n;
 
@@ -696,8 +643,10 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		  Lisp_Object charset;
 		  int c1, c2;
 		  Ichar ich = itext_ichar (str->partial);
-		  if (handle_possible_error_octet (ich, dst, NULL))
-		    continue;
+		  if (handle_possible_error_octet (ich, str, src, dst, NULL))
+		    {
+		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		    }
 		  ichar_to_charset_codepoint
 		    (ich, Vshift_jis_precedence, &charset, &c1, &c2,
 		     CONVERR_FAIL);
@@ -712,7 +661,10 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		      Dynarr_add (dst, j2);
 		    }
 		  else
-		    Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
+		    {
+		      handle_standard_encoding_error (str, src, dst);
+		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		    }
 		}
 	    }
 	}
@@ -980,7 +932,7 @@ byte_big5_two_byte_2_p (int c)
 
 static Bytecount
 big5_convert (struct coding_stream *str, const UExtbyte *src,
-	      unsigned_char_dynarr *dst, Bytecount n)
+	      Bytecount n, unsigned_char_dynarr *dst)
 {
   Bytecount orign = n;
 
@@ -1041,8 +993,10 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		  Lisp_Object charset;
 		  int c1, c2;
 		  Ichar ich = itext_ichar (str->partial);
-		  if (handle_possible_error_octet (ich, dst, NULL))
-		    continue;
+		  if (handle_possible_error_octet (ich, str, src, dst, NULL))
+		    {
+		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		    }
 		  ichar_to_charset_codepoint
 		    (ich, Vbig5_precedence, &charset, &c1, &c2, CONVERR_FAIL);
 #ifdef UNICODE_INTERNAL
@@ -1062,7 +1016,10 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 		    }
 #endif /* UNICODE_INTERNAL */
 		  else
-		    Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
+		    {
+		      handle_standard_encoding_error (str, src, dst);
+		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		    }
 		}
 	    }
 	}
@@ -1478,6 +1435,9 @@ struct iso2022_coding_stream
   unsigned_char_dynarr *composite_chars;
 #endif
 
+  /* Used for handling UTF-8. */
+  struct unicode_coding_stream unicode;
+
   /**************** for encoding ****************/
 
   /* Whether we need to explicitly designate the charset in the
@@ -1490,10 +1450,6 @@ struct iso2022_coding_stream
      designate a new charset. @@#### It also lists ASCII and Control-1.
      Why? */
   Lisp_Object unicode_precedence;
-
-  /* Used for handling UTF-8. */
-  unsigned char counter;  
-  unsigned char indicated_length;
 };
 
 static const struct memory_description ccs_description_1[] =
@@ -2312,6 +2268,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	  *flags &= ISO_STATE_LOCK;
 	  *flags |= ISO_STATE_UTF_8;
 	  iso->esc = ISO_ESC_NOTHING;
+	  xzero (iso->unicode);
 	  return 1;
 	}
       else if ('@' == c)
@@ -2555,22 +2512,6 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
     }
 }
 
-static inline void
-indicate_invalid_utf_8 (unsigned char indicated_length,
-                        unsigned char counter,
-                        int ch, unsigned_char_dynarr *dst)
-{
-  Binbyte stored = indicated_length - counter; 
-  Binbyte mask = "\x00\x00\xC0\xE0\xF0\xF8\xFC"[indicated_length];
-
-  while (stored > 0)
-    {
-      DECODE_ERROR_OCTET (((ch >> (6 * (stored - 1))) & 0x3f) | mask,
-                          dst);
-      mask = 0x80, stored--;
-    }
-}
-
 /* Convert ISO2022-format data to internal format. */
 
 static Bytecount
@@ -2621,10 +2562,10 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 #else
 		case ISO_ESC_START_COMPOSITE:
 		  {
-		    /* @@#### Handle error? */
-		    charset_codepoint_to_dynarr
-		      (Vcharset_composite, 0, c - '0' + ' ',
-		       dst, CONVERR_SUCCEED);
+		    if (charset_codepoint_to_dynarr
+			(Vcharset_composite, 0, c - '0' + ' ',
+			 dst, CONVERR_FAIL) == 0)
+		      DECODE_ERROR_OCTET (c, dst);
 		    break;
 		  }
 #endif /* ENABLE_COMPOSITE_CHARS */
@@ -2652,9 +2593,6 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	}
       else if (flags & ISO_STATE_UTF_8)
 	{
-	  unsigned char counter = data->counter; 
-          unsigned char indicated_length = data->indicated_length;
-
 	  if (ISO_CODE_ESC == c)
 	    {
 	      /* Allow the escape sequence parser to end the UTF-8 state. */
@@ -2664,126 +2602,31 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	      continue;
 	    }
 
-          if (0 == counter)
+	  /* We allow private codepoints when escape-quoted, because we want
+	     to represent UTF-8 error chars as distinct from the
+	     corresponding ISO 8859-1 characters in escape-quoted.  This is
+	     because escape-quoted is used for auto-saving, and we want
+	     auto saves and similar files to maintain error-octet chars as
+	     such rather than converting them to ASCII or ISO 8859-1.
+
+	     [[ However, we can't differentiate UTF-8 error chars as written
+	     to disk, and UTF-8 errors in escape-quoted.  This is not a big
+	     problem; non-Unicode-chars-encoded-as-UTF-8-in-ISO-2022 is not
+	     deployed, in practice, so if such a sequence of octets occurs,
+	     XEmacs generated it. ]] -- I don't quite understand this. --ben
+	  */
+	  decode_utf_8 (&data->unicode, dst, c, 0,
+			XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (str->codesys));
+
+          if (str->eof && data->unicode.counter)
             {
-              if (0 == (c & 0x80))
-                {
-                  /* ASCII. */
-                  add_unicode_to_dynarr (c, dst);
-                }
-              else if (0 == (c & 0x40))
-                {
-                  /* Highest bit set, second highest not--there's
-                     something wrong. */
-                  DECODE_ERROR_OCTET (c, dst);
-                }
-              else if (0 == (c & 0x20))
-                {
-                  str->ch = c & 0x1f; 
-                  counter = 1;
-                  indicated_length = 2;
-                }
-              else if (0 == (c & 0x10))
-                {
-                  str->ch = c & 0x0f;
-                  counter = 2;
-                  indicated_length = 3;
-                }
-              else if (0 == (c & 0x08))
-                {
-                  str->ch = c & 0x0f;
-                  counter = 3;
-                  indicated_length = 4;
-                }
-              /* We support lengths longer than 4 here, since we want to
-                 represent UTF-8 error chars as distinct from the
-                 corresponding ISO 8859-1 characters in escape-quoted.
-
-                 However, we can't differentiate UTF-8 error chars as
-                 written to disk, and UTF-8 errors in escape-quoted.  This
-                 is not a big problem;
-                 non-Unicode-chars-encoded-as-UTF-8-in-ISO-2022 is not
-                 deployed, in practice, so if such a sequence of octets
-                 occurs, XEmacs generated it.  */
-              else if (0 == (c & 0x04))
-                {
-                  str->ch = c & 0x03;
-                  counter = 4;
-                  indicated_length = 5;
-                }
-              else if (0 == (c & 0x02))
-                {
-                  str->ch = c & 0x01;
-                  counter = 5;
-                  indicated_length = 6;
-                }
-              else
-                {
-                  /* #xFF is not a valid leading byte in any form of
-                     UTF-8. */
-                  DECODE_ERROR_OCTET (c, dst);
-
-                }
+              indicate_invalid_utf_8 (data->unicode.indicated_length, 
+				      data->unicode.counter,
+				      data->unicode.ch,
+				      dst, &data->unicode, 0);
+              data->unicode.counter = 0;
+              data->unicode.ch = 0;
             }
-          else
-            {
-              /* counter != 0 */
-              if ((0 == (c & 0x80)) || (0 != (c & 0x40)))
-                {
-                  indicate_invalid_utf_8(indicated_length, 
-                                         counter, 
-                                         str->ch, dst);
-                  if (c & 0x80)
-                    {
-                      DECODE_ERROR_OCTET (c, dst);
-                    }
-                  else
-                    {
-                      /* The character just read is ASCII. Treat it as
-                         such.  */
-                      add_unicode_to_dynarr (c, dst);
-                    }
-                  str->ch = -1;
-                  counter = 0;
-                }
-              else 
-                {
-                  str->ch = (str->ch << 6) | (c & 0x3f);
-                  counter--;
-
-                  /* Just processed the final byte. Emit the character. */
-                  if (!counter)
-                    {
-                      /* Don't accept over-long sequences, or surrogates. */
-                      if ((str->ch < 0x80) ||
-                          ((str->ch < 0x800) && indicated_length > 2) || 
-                          ((str->ch < 0x10000) && indicated_length > 3) || 
-                          /* We accept values above #x110000 in
-                             escape-quoted, though not in UTF-8. */
-                          /* (str->ch > UNICODE_OFFICIAL_MAX) || */
-                          valid_utf_16_surrogate (str->ch))
-                        {
-                          indicate_invalid_utf_8 (indicated_length, 
-						  counter, 
-						  str->ch, dst);
-                        }
-                      else
-                        {
-                          add_unicode_to_dynarr (str->ch, dst);
-                        }
-                      str->ch = -1;
-                    }
-                }
-            }
-
-          if (str->eof && str->ch >= 0)
-            {
-              DECODE_ERROR_OCTET (str->ch, dst);
-              str->ch  = -1;
-            }
-
-	  data->counter = counter;
-	  data->indicated_length = indicated_length;
 	}
       else if (byte_c0_p (c) || byte_c1_p (c))
 	{ /* Control characters */
@@ -3110,8 +2953,10 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      int c1, c2;
 	      int half = 0;
 	      Ichar ich = itext_ichar (str->partial);
-	      if (handle_possible_error_octet (ich, dst, NULL))
-		continue;
+	      if (handle_possible_error_octet (ich, str, src, dst, NULL))
+		{
+		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		}
 
 	      /* Convert character to a charset codepoint. */
 	      /* First, try the charsets mentioned in the coding system. */
@@ -3154,22 +2999,25 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    {
 		      /* #### Bother! We don't know how to
 			 handle this yet. */
-		      Dynarr_add (dst, CANT_CONVERT_CHAR_WHEN_ENCODING);
+		      handle_standard_encoding_error (str, src, dst);
 		    }
 		  else
 		    {
 		      Ichar emch =
 			charset_codepoint_to_ichar
-			(Vcharset_composite, c1, c2, CONVERR_SUCCEED);
-		      Lisp_Object lstr =
-			composite_char_string (emch);
-		      saved_n = n;
-		      saved_src = src;
-		      in_composite = 1;
-		      src = XSTRING_DATA   (lstr);
-		      n   = XSTRING_LENGTH (lstr);
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, '0'); /* start composing */
+			(Vcharset_composite, c1, c2, CONVERR_FAIL);
+		      if (emch >= 0)
+			{
+			  Lisp_Object lstr =
+			    composite_char_string (emch);
+			  saved_n = n;
+			  saved_src = src;
+			  in_composite = 1;
+			  src = XSTRING_DATA   (lstr);
+			  n   = XSTRING_LENGTH (lstr);
+			  Dynarr_add (dst, ISO_CODE_ESC);
+			  Dynarr_add (dst, '0'); /* start composing */
+			}
 		    }
 #else /* not ENABLE_COMPOSITE_CHARS */
 		  c2 &= 127;
@@ -3207,9 +3055,13 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    }
 
 		  {
-		    /* @@#### Error handling? */
-		    int code = ichar_to_unicode (ich, CONVERR_SUBSTITUTE);
-		    encode_unicode_char (code, dst, UNICODE_UTF_8, 0, 0);
+		    int code = ichar_to_unicode (ich, CONVERR_FAIL);
+		    if (encode_unicode_to_dynarr
+			(code, str, src, dst, UNICODE_UTF_8, 0,
+			 XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)) < 0)
+		      {
+			ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		      }
 		  }
 		}
 
@@ -3364,9 +3216,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 }
 
 static Bytecount
-iso2022_convert (struct coding_stream *str,
-		 const UExtbyte *src,
-		 unsigned_char_dynarr *dst, Bytecount n)
+iso2022_convert (struct coding_stream *str, const UExtbyte *src,
+		 Bytecount n, unsigned_char_dynarr *dst)
 {
   if (str->direction == CODING_DECODE)
     return iso2022_decode (str, src, dst, n);
@@ -4026,7 +3877,7 @@ ccl_mark (Lisp_Object codesys)
 
 static Bytecount
 ccl_convert (struct coding_stream *str, const UExtbyte *src,
-	     unsigned_char_dynarr *dst, Bytecount n)
+	     Bytecount n, unsigned_char_dynarr *dst)
 {
   struct ccl_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, ccl);
@@ -4100,508 +3951,6 @@ ccl_getprop (Lisp_Object coding_system, Lisp_Object prop)
   else
     return Qunbound;
 }
-
-/************************************************************************/
-/*                   FIXED_WIDTH methods                            */
-/************************************************************************/
-
-struct fixed_width_coding_system
-{
-  /* For a fixed_width coding system, these specify the CCL programs
-     used for decoding (input) and encoding (output). */
-  Lisp_Object decode;
-  Lisp_Object encode;
-  Lisp_Object from_unicode;
-  Lisp_Object invalid_sequences_skip_chars;
-  Lisp_Object query_skip_chars;
-
-  /* This is not directly accessible from Lisp; it is a concatenation of the
-     previous two strings, used for simplicity of implementation. */
-  Lisp_Object invalid_and_query_skip_chars;
-};
-
-#define CODING_SYSTEM_FIXED_WIDTH_DECODE(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, fixed_width)->decode)
-#define CODING_SYSTEM_FIXED_WIDTH_ENCODE(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, fixed_width)->encode)
-#define CODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, fixed_width)->from_unicode)
-#define CODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, \
-                            fixed_width)->invalid_sequences_skip_chars)
-#define CODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, fixed_width)->query_skip_chars)
-#define CODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_TYPE_DATA (codesys, \
-                            fixed_width)->invalid_and_query_skip_chars)
-
-#define XCODING_SYSTEM_FIXED_WIDTH_DECODE(codesys) \
-  CODING_SYSTEM_FIXED_WIDTH_DECODE (XCODING_SYSTEM (codesys))
-#define XCODING_SYSTEM_FIXED_WIDTH_ENCODE(codesys) \
-  CODING_SYSTEM_FIXED_WIDTH_ENCODE (XCODING_SYSTEM (codesys))
-#define XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE(codesys) \
-  (CODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (XCODING_SYSTEM (codesys)))
-#define XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS \
-   (XCODING_SYSTEM (codesys)))
-#define XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (XCODING_SYSTEM (codesys)))
-#define XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS(codesys) \
-  (CODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS \
-   (XCODING_SYSTEM(codesys)))
-
-struct fixed_width_coding_stream
-{
-  /* state of the running CCL program */
-  struct ccl_program ccl;
-};
-
-static const struct memory_description
-fixed_width_coding_system_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system, decode) },
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system, encode) },
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system,
-                              from_unicode) },
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system,
-                              invalid_sequences_skip_chars) },
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system,
-                              query_skip_chars) },
-  { XD_LISP_OBJECT, offsetof (struct fixed_width_coding_system,
-                              invalid_and_query_skip_chars) },
-  { XD_END }
-};
-
-static const struct memory_description fixed_width_coding_stream_description[] = {
-  { XD_BLOCK_ARRAY, offsetof (struct fixed_width_coding_stream, ccl),
-    1, { &ccl_program_description } },
-  { XD_END }
-};
-
-DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (fixed_width);
-
-static void
-fixed_width_mark (Lisp_Object codesys)
-{
-  mark_object (XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys));
-  mark_object (XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys));
-  mark_object (XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (codesys));
-  mark_object
-    (XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys));
-  mark_object (XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (codesys) );
-  mark_object
-    (XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS(codesys));
-}
-
-static Bytecount
-fixed_width_convert (struct coding_stream *str, const UExtbyte *src,
-                     unsigned_char_dynarr *dst, Bytecount n)
-{
-  struct fixed_width_coding_stream *data =
-    CODING_STREAM_TYPE_DATA (str, fixed_width);
-  Bytecount orign = n;
-
-  data->ccl.last_block = str->eof;
-  /* When applying a CCL program to a stream, SRC must not be NULL -- this
-     is a special signal to the driver that read and write operations are
-     not allowed.  The code does not actually look at what SRC points to if
-     N == 0. */
-  ccl_driver (&data->ccl, src ? src : (const unsigned char *) "",
-	      /* @@#### allow buffer to be specified */
-	      current_buffer, dst, n, 0,
-	      str->direction == CODING_DECODE ? CCL_MODE_DECODING :
-	      CCL_MODE_ENCODING);
-  return orign;
-}
-
-static void
-fixed_width_init_coding_stream (struct coding_stream *str)
-{
-  struct fixed_width_coding_stream *data =
-    CODING_STREAM_TYPE_DATA (str, fixed_width);
-
-  setup_ccl_program (&data->ccl,
-		     str->direction == CODING_DECODE ?
-		     XCODING_SYSTEM_FIXED_WIDTH_DECODE (str->codesys) :
-		     XCODING_SYSTEM_FIXED_WIDTH_ENCODE (str->codesys));
-}
-
-static void
-fixed_width_mark_coding_stream (struct coding_stream *str)
-{
-  struct fixed_width_coding_stream *data =
-    CODING_STREAM_TYPE_DATA (str, fixed_width);
-
-  mark_ccl_program (&data->ccl);
-}
-
-static void
-fixed_width_rewind_coding_stream (struct coding_stream *str)
-{
-  fixed_width_init_coding_stream (str);
-}
-
-static void
-fixed_width_init (Lisp_Object codesys)
-{
-  XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = Qnil;
-  XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = Qnil;
-  XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (codesys) = Qnil;
-  XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys) = Qnil;
-  XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (codesys)  = Qnil;
-  XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS(codesys) = Qnil;
-}
-
-static int
-fixed_width_putprop (Lisp_Object codesys, Lisp_Object key,
-                     Lisp_Object value)
-{
-  if (EQ (key, Qdecode))
-    {
-      XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys) = get_ccl_program (value);
-    }
-  else if (EQ (key, Qencode))
-    {
-      XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys) = get_ccl_program (value);
-    }
-  else if (EQ (key, Qfrom_unicode))
-    {
-      CHECK_HASH_TABLE (value);
-      XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (codesys) = value; 
-    }
-  else if (EQ (key, Qinvalid_sequences_skip_chars))
-    {
-      CHECK_STRING (value);
-
-      /* Make sure Lisp can't make our data inconsistent: */
-      value = Fcopy_sequence (value);
-
-      XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys)
-        = value;
-
-      XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS (codesys)
-        = concat2 (value,
-                   XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (codesys));
-    }
-  else if (EQ (key, Qquery_skip_chars))
-    {
-      CHECK_STRING (value);
-
-      /* Make sure Lisp can't make our data inconsistent: */
-      value = Fcopy_sequence (value);
-
-      XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (codesys) = value; 
-
-      XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS (codesys)
-        = concat2 (value,
-                   XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS
-                   (codesys));
-    }
-  else
-    {
-      return 0;
-    }
-
-  return 1;
-}
-
-static Lisp_Object
-fixed_width_getprop (Lisp_Object codesys, Lisp_Object prop)
-{
-  if (EQ (prop, Qdecode))
-    {
-      return XCODING_SYSTEM_FIXED_WIDTH_DECODE (codesys);
-    }
-  else if (EQ (prop, Qencode))
-    {
-      return XCODING_SYSTEM_FIXED_WIDTH_ENCODE (codesys);
-    }
-  else if (EQ (prop, Qfrom_unicode))
-    {
-      return XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (codesys); 
-    }
-  else if (EQ (prop, Qinvalid_sequences_skip_chars))
-    {
-      /* Make sure Lisp can't make our data inconsistent: */
-      return
-        Fcopy_sequence
-          (XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys));
-    }
-  else if (EQ (prop, Qquery_skip_chars))
-    {
-      return
-        Fcopy_sequence (XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS (codesys)); 
-    }
-
-  return Qunbound;
-}
-
-static Lisp_Object Vfixed_width_query_ranges_cache;
-
-static Lisp_Object
-fixed_width_skip_chars_data_given_strings (Lisp_Object string,
-                                           Lisp_Object query_skip_chars,
-                                           Lisp_Object
-                                           invalid_sequences_skip_chars,
-                                           Binbyte *fastmap,
-                                           int fastmap_len)
-{
-  Lisp_Object result = Fgethash (string,
-                                 Vfixed_width_query_ranges_cache, 
-                                 Qnil);
-  REGISTER Ibyte *p, *pend;
-  REGISTER Ichar c;
-
-  memset (fastmap, query_coding_unencodable, fastmap_len);
-
-  if (!NILP (result))
-    {
-      int i; 
-      Lisp_Object ranged;
-      assert (RANGE_TABLEP (result));
-      for (i = 0; i < fastmap_len; ++i)
-        {
-          ranged = Fget_range_table (make_int (i), result, Qnil);
-
-          if (EQ (ranged, Qsucceeded))
-            {
-              fastmap [i] = query_coding_succeeded;
-            }
-          else if (EQ (ranged, Qinvalid_sequence))
-            {
-              fastmap [i] = query_coding_invalid_sequence;
-            }
-        }
-      return result; 
-    }
-
-  result = Fmake_range_table (Qstart_closed_end_closed);
-
-  p = XSTRING_DATA (query_skip_chars);
-  pend = p + XSTRING_LENGTH (query_skip_chars);
-
-  while (p != pend)
-    {
-      c = itext_ichar (p);
-
-      INC_IBYTEPTR (p);
-
-      if (c == '\\')
-        {
-          if (p == pend) break;
-          c = itext_ichar (p);
-          INC_IBYTEPTR (p);
-        }
-
-      if (p != pend && *p == '-')
-        {
-          Ichar cend;
-
-          /* Skip over the dash.  */
-          p++;
-          if (p == pend) break;
-          cend = itext_ichar (p);
-
-          Fput_range_table (make_int (c), make_int (cend), Qsucceeded,
-                            result);
-
-          while (c <= cend && c < fastmap_len)
-            {
-              fastmap[c] = query_coding_succeeded;
-              c++;
-            }
-
-          INC_IBYTEPTR (p);
-        }
-      else
-        {
-          if (c < fastmap_len)
-            fastmap[c] = query_coding_succeeded;
-
-          Fput_range_table (make_int (c), make_int (c), Qsucceeded, result);
-        }
-    }
-
-
-  p = XSTRING_DATA (invalid_sequences_skip_chars);
-  pend = p + XSTRING_LENGTH (invalid_sequences_skip_chars);
-
-  while (p != pend)
-    {
-      c = itext_ichar (p);
-
-      INC_IBYTEPTR (p);
-
-      if (c == '\\')
-        {
-          if (p == pend) break;
-          c = itext_ichar (p);
-          INC_IBYTEPTR (p);
-        }
-
-      if (p != pend && *p == '-')
-        {
-          Ichar cend;
-
-          /* Skip over the dash.  */
-          p++;
-          if (p == pend) break;
-          cend = itext_ichar (p);
-
-          Fput_range_table (make_int (c), make_int (cend), Qinvalid_sequence,
-                            result);
-
-          while (c <= cend && c < fastmap_len)
-            {
-              fastmap[c] = query_coding_invalid_sequence;
-              c++;
-            }
-
-          INC_IBYTEPTR (p);
-        }
-      else
-        {
-          if (c < fastmap_len)
-            fastmap[c] = query_coding_invalid_sequence;
-
-          Fput_range_table (make_int (c), make_int (c), Qinvalid_sequence,
-                            result);
-        }
-    }
-
-  Fputhash (string, result, Vfixed_width_query_ranges_cache);
-
-  return result;
-}
-
-static  Lisp_Object
-fixed_width_query (Lisp_Object codesys, struct buffer *buf, 
-                   Charbpos end, int flags)
-{
-  Charbpos pos = BUF_PT (buf), fail_range_start, fail_range_end;
-  Charbpos pos_byte = BYTE_BUF_PT (buf);
-  Lisp_Object skip_chars_range_table, from_unicode, checked_unicode,
-    result = Qnil;
-  enum query_coding_failure_reasons failed_reason,
-    previous_failed_reason = query_coding_succeeded;
-  Binbyte fastmap[0xff];
-
-  from_unicode = XCODING_SYSTEM_FIXED_WIDTH_FROM_UNICODE (codesys);
-
-  skip_chars_range_table =
-    fixed_width_skip_chars_data_given_strings
-        ((flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES ?
-          XCODING_SYSTEM_FIXED_WIDTH_INVALID_AND_QUERY_SKIP_CHARS
-          (codesys) : 
-          XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys)), 
-         XCODING_SYSTEM_FIXED_WIDTH_QUERY_SKIP_CHARS(codesys), 
-         (flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES ?
-          build_ascstring("") :
-          XCODING_SYSTEM_FIXED_WIDTH_INVALID_SEQUENCES_SKIP_CHARS (codesys)),
-         fastmap, (int)(sizeof (fastmap)));
-
-  if (flags & QUERY_METHOD_HIGHLIGHT && 
-      /* If we're being called really early, live without highlights getting
-         cleared properly: */
-      !(UNBOUNDP (XSYMBOL (Qquery_coding_clear_highlights)->function)))
-    {
-      /* It's okay to call Lisp here, the only non-stack object we may have
-         allocated up to this point is skip_chars_range_table, and that's
-         reachable from its entry in Vfixed_width_query_ranges_cache. */
-      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
-             wrap_buffer (buf));
-    }
-
-  while (pos < end)
-    {
-      Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
-      if ((ch < (int) (sizeof(fastmap))) ?
-          (fastmap[ch] == query_coding_succeeded) :
-          (EQ (Qsucceeded, Fget_range_table (make_int (ch),
-                                             skip_chars_range_table, Qnil))))
-        {
-          pos++;
-          INC_BYTEBPOS (buf, pos_byte);
-        }
-      else
-        {
-          fail_range_start = pos;
-          while ((pos < end) &&  
-                 ((!(flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES) &&
-                   EQ (Qinvalid_sequence, Fget_range_table
-                       (make_int (ch), skip_chars_range_table, Qnil))
-                   && (failed_reason = query_coding_invalid_sequence))
-                  || ((NILP ((checked_unicode = 
-                              Fgethash (make_int
-					/* @@#### What happens with
-					   ichar_to_unicode returns -1,
-					   which can happen with
-					   CONVERR_FAIL set? */
-					(ichar_to_unicode
-					 (ch, CONVERR_FAIL)),
-                                        from_unicode, Qnil))))
-                      && (failed_reason = query_coding_unencodable)))
-                 && (previous_failed_reason == query_coding_succeeded
-                     || previous_failed_reason == failed_reason))
-            {
-              pos++;
-              INC_BYTEBPOS (buf, pos_byte);
-              ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
-              previous_failed_reason = failed_reason;
-            }
-
-          if (fail_range_start == pos)
-            {
-              /* The character can actually be encoded; move on. */
-              pos++;
-              INC_BYTEBPOS (buf, pos_byte);
-            }
-          else
-            {
-              assert (previous_failed_reason == query_coding_invalid_sequence
-                      || previous_failed_reason == query_coding_unencodable);
-
-              if (flags & QUERY_METHOD_ERRORP)
-                {
-                  signal_error_2
-		    (Qtext_conversion_error,
-		     "Cannot encode using coding system",
-		     make_string_from_buffer (buf, fail_range_start,
-					      pos - fail_range_start),
-		     XCODING_SYSTEM_NAME (codesys));
-                }
-
-              if (NILP (result))
-                {
-                  result = Fmake_range_table (Qstart_closed_end_open);
-                }
-
-              fail_range_end = pos;
-
-              Fput_range_table (make_int (fail_range_start), 
-                                make_int (fail_range_end),
-                                (previous_failed_reason
-                                 == query_coding_unencodable ?
-                                 Qunencodable : Qinvalid_sequence), 
-                                result);
-              previous_failed_reason = query_coding_succeeded;
-
-              if (flags & QUERY_METHOD_HIGHLIGHT) 
-                {
-                  Lisp_Object extent
-                    = Fmake_extent (make_int (fail_range_start),
-                                    make_int (fail_range_end), 
-                                    wrap_buffer (buf));
-                  
-                  Fset_extent_priority
-                    (extent, make_int (2 + mouse_highlight_priority));
-                  Fset_extent_face (extent, Qquery_coding_warning_face);
-                }
-            }
-        }
-    }
-
-  return result;
-}
 
 
 /************************************************************************/
@@ -4648,10 +3997,6 @@ syms_of_mule_coding (void)
   DEFSYMBOL (Qiso_lock_shift);
 
   DEFSYMBOL (Qcharsets);
-
-  DEFSYMBOL (Qinvalid_sequences_skip_chars);
-  DEFSYMBOL (Qquery_skip_chars);
-  DEFSYMBOL (Qfixed_width);
 }
 
 void
@@ -4701,18 +4046,6 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (ccl, putprop);
   CODING_SYSTEM_HAS_METHOD (ccl, getprop);
 
-  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (fixed_width,
-                                           "fixed-width-coding-system-p");
-  CODING_SYSTEM_HAS_METHOD (fixed_width, mark);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, convert);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, query);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, init);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, init_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, mark_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, rewind_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, putprop);
-  CODING_SYSTEM_HAS_METHOD (fixed_width, getprop);
-
   INITIALIZE_CODING_SYSTEM_TYPE (shift_jis, "shift-jis-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (shift_jis, convert);
 
@@ -4733,7 +4066,6 @@ reinit_coding_system_type_create_mule_coding (void)
 {
   REINITIALIZE_CODING_SYSTEM_TYPE (iso2022);
   REINITIALIZE_CODING_SYSTEM_TYPE (ccl);
-  REINITIALIZE_CODING_SYSTEM_TYPE (fixed_width);
   REINITIALIZE_CODING_SYSTEM_TYPE (shift_jis);
   REINITIALIZE_CODING_SYSTEM_TYPE (big5);
 }
@@ -4746,12 +4078,6 @@ reinit_vars_of_mule_coding (void)
 void
 vars_of_mule_coding (void)
 {
-  /* This needs to be HASH_TABLE_EQ, there's a corner case where
-     HASH_TABLE_EQUAL won't work. */
-  Vfixed_width_query_ranges_cache
-   = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
-  staticpro (&Vfixed_width_query_ranges_cache);
-
   Vshift_jis_precedence = Qnil;
   staticpro (&Vshift_jis_precedence);
 
