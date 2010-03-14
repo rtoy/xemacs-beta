@@ -1,6 +1,6 @@
 /* Generic stream implementation -- header file.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -257,6 +257,12 @@ struct lstream
 
   Bytecount byte_count;
   int flags;
+  /* Whether an error occurred during the most recent operation */
+  unsigned int error_occurred_p:1;
+  /* Whether an error has occurred since the user last reset the
+     error-occurred flag.  This is the value returned by
+     Lstream_error_occurred_p(). */
+  unsigned int public_error_occurred_p:1;
   max_align_t data[1];
 };
 
@@ -303,6 +309,8 @@ Bytecount Lstream_read (Lstream *lstr, void *data,
 				 Bytecount size);
 int Lstream_write (Lstream *lstr, const void *data,
 		   Bytecount size);
+int Lstream_write_no_store (Lstream *lstr, const void *data,
+			    Bytecount size);
 int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
 int Lstream_rewind (Lstream *lstr);
@@ -312,6 +320,9 @@ int Lstream_close (Lstream *lstr);
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
 void Lstream_unset_character_mode (Lstream *lstr);
+int Lstream_error_occurred_p (Lstream *lstr);
+int Lstream_clear_error_occurred_p (Lstream *lstr);
+
 
 /* Lstream_putc: Write out one byte to the stream.  This is a macro
    and so it is very efficient.  The C argument is only evaluated once

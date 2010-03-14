@@ -528,6 +528,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     {
       struct range_table_entry *entry = Dynarr_atp (rt->entries,
 						    insert_me_here - 1);
+      /* #### Shouldn't the comparison method be specifiable instead of
+	 always `eq'? */
       if (EQ (val, entry->val) && entry->last == first)
 	{
 	  entry->last = last;
@@ -543,6 +545,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     {
       struct range_table_entry *entry = Dynarr_atp (rt->entries,
 						    insert_me_here + 1);
+      /* #### Shouldn't the comparison method be specifiable instead of
+	 always `eq'? */
       if (EQ (val, entry->val) && entry->first == last)
 	{
 	  entry->first = first;

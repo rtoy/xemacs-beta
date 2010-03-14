@@ -412,7 +412,8 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
       if (wait_result == WAIT_TIMEOUT)
 	{
 	  errno = EAGAIN;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
     }
 
@@ -426,7 +427,10 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
   if (s->eof_p)
     return 0;
   if (s->error_p || s->die_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   /* Ok, there were no error neither eof - we've got a byte from the
      pipe */
@@ -604,16 +608,19 @@ static Bytecount
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
 		     Bytecount size)
 {
-  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (stream);
 
   if (s->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   s->blocking_p = !s->idle_p;
   if (s->blocking_p)
     return 0;
 
-  if (size>MAX_SHOVE_BUFFER_SIZE)
+  if (size > MAX_SHOVE_BUFFER_SIZE)
     return 0;
 
   memcpy (s->buffer, data, size);
@@ -728,7 +735,8 @@ winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
       if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
 	{
 	  errno = EAGAIN;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
       else
 	{
@@ -749,7 +757,10 @@ winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
   if (str->eof_p)
     return 0;
   if (str->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   /* Return as much of buffer as we have */
   size = min (size, (Bytecount) (str->bufsize - str->charbpos));
@@ -774,7 +785,8 @@ winsock_writer (Lstream *stream, const unsigned char *data,
       if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
 	{
 	  str->blocking_p = 1;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
       else
 	{
@@ -789,7 +801,10 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   str->blocking_p = 0;
 
   if (str->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   if (size == 0)
     return 0;
@@ -813,7 +828,13 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   else
     str->error_p = 1;
 
-  return str->error_p ? -1 : size;
+  if (str->error_p)
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
+
+  return size;
 }
 
 static int
