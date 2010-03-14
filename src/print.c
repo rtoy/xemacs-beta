@@ -355,22 +355,6 @@ external_out (int dest, const CIbyte *fmt, ...)
   va_end (args);
 }
 
-/* Output portably to stderr or its equivalent (i.e. may be a console
-   window under MS Windows), as well as alternate-debugging-output and
-   (under MS Windows) the C debugging output, i.e. OutputDebugString().
-   Works like stderr_out(). */
-
-void
-debug_out (const CIbyte *fmt, ...)
-{
-  int depth =  begin_inhibit_non_essential_conversion_operations ();
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
-  va_end (args);
-  unbind_to (depth);
-}
-
 DOESNT_RETURN
 fatal (const CIbyte *fmt, ...)
 {
@@ -2077,6 +2061,40 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 
+
+DEFUN ("set-device-clear-left-side", Fset_device_clear_left_side, 2, 2, 0, /*
+Set whether to output a newline before the next output to a stream device.
+This will happen only if the most recently-outputted character was not
+a newline -- i.e. it will make sure the left side is "clear" of text.
+*/
+       (device, value))
+{
+  if (!NILP (device))
+    CHECK_LIVE_DEVICE (device);
+  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
+    /* #### This should be per-device */
+    stdout_clear_before_next_output = !NILP (value);
+  return Qnil;
+}
+
+DEFUN ("device-left-side-clear-p", Fdevice_left_side_clear_p, 0, 1, 0, /*
+For stream devices, true if the most recent-outputted character was a newline.
+*/
+       (device))
+{
+  if (!NILP (device))
+    CHECK_LIVE_DEVICE (device);
+  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
+    /* #### This should be per-device */
+    return stdout_needs_newline ? Qt : Qnil;
+  return Qnil;
+}
+
+
+/*************************************************************************/
+/*                    debug-printing: implementation                     */
+/*************************************************************************/
+
 /* Useful on systems or in places where writing to stdout is unavailable or
    not working. */
 
@@ -2132,35 +2150,6 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
-}
-
-
-DEFUN ("set-device-clear-left-side", Fset_device_clear_left_side, 2, 2, 0, /*
-Set whether to output a newline before the next output to a stream device.
-This will happen only if the most recently-outputted character was not
-a newline -- i.e. it will make sure the left side is "clear" of text.
-*/
-       (device, value))
-{
-  if (!NILP (device))
-    CHECK_LIVE_DEVICE (device);
-  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
-    /* #### This should be per-device */
-    stdout_clear_before_next_output = !NILP (value);
-  return Qnil;
-}
-
-DEFUN ("device-left-side-clear-p", Fdevice_left_side_clear_p, 0, 1, 0, /*
-For stream devices, true if the most recent-outputted character was a newline.
-*/
-       (device))
-{
-  if (!NILP (device))
-    CHECK_LIVE_DEVICE (device);
-  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
-    /* #### This should be per-device */
-    return stdout_needs_newline ? Qt : Qnil;
-  return Qnil;
 }
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
@@ -2356,6 +2345,187 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   unbind_to (specdepth);
 }
 
+static int
+ext_print_begin (int dest)
+{
+  int depth = begin_inhibit_non_essential_conversion_operations ();
+  if (dest & EXT_PRINT_ALTERNATE)
+    alternate_do_pointer = 0;
+  if (dest & (EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
+    stdout_clear_before_next_output = 1;
+  return depth;
+}
+
+static void
+ext_print_end (int dest, int depth)
+{
+  if (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
+    external_out (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR |
+			  EXT_PRINT_STDOUT), "\n");
+  unbind_to (depth);
+}
+
+static void
+external_debug_print (Lisp_Object object, int dest)
+{
+  int depth = ext_print_begin (dest);
+  debug_prin1 (object, dest);
+  ext_print_end (dest, depth);
+}
+
+
+/*************************************************************************/
+/*                 debug-printing: external entry points                 */
+/*************************************************************************/
+
+/* All of the following functions output simultaneously to the following
+   destinations:
+
+   (1) stderr
+   (2) alternate_do_string -- a string containing debug output, for situations
+       where stderr may be unavailable (e.g. on MS Windows)
+   (3) on MS Windows, the "debugging output" (output using OutputDebugString,
+       which shows up in a debugger)
+
+   Furthermore, they inhibit DFC-style conversion, so they will work during
+   initialization or death, or when called from within the DFC conversion
+   routines. */
+
+/* Printf-style debugging output. */
+
+void
+debug_out (const CIbyte *fmt, ...)
+{
+  int depth =  begin_inhibit_non_essential_conversion_operations ();
+  va_list args;
+  va_start (args, fmt);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
+  va_end (args);
+  unbind_to (depth);
+}
+
+/* Basic entry point: Print out a Lisp object to the debugging output. */
+
+void
+debug_print (Lisp_Object debug_print_obj)
+{
+  external_debug_print (debug_print_obj, EXT_PRINT_ALL);
+}
+
+/* Printf-style output when the objects being printed are Lisp objects.
+   Calling style is e.g.
+
+   debug_out_lisp ("Called foo(%s %s)\n", 2, arg0, arg1)
+*/
+
+void
+debug_out_lisp (const CIbyte *format, int nargs, ...)
+{
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
+  int i;
+  Ibyte *msgout;
+
+  va_start (va, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  msgout = emacs_vsprintf_malloc_lisp (format, Qnil, nargs, args, NULL);
+  debug_out ("%s", msgout);
+  xfree (msgout);
+  unbind_to (specdepth);
+}
+
+/* Getting tired of typing debug_print() ... */
+void dp (Lisp_Object debug_print_obj);
+void
+dp (Lisp_Object debug_print_obj)
+{
+  debug_print (debug_print_obj);
+}
+
+/* Alternate debug printer: Return a char * pointer to the output */
+char *dpa (Lisp_Object debug_print_obj);
+char *
+dpa (Lisp_Object debug_print_obj)
+{
+  external_debug_print (debug_print_obj, EXT_PRINT_ALTERNATE);
+  
+  return alternate_do_string;
+}
+
+/* Do a backtrace to stderr. */
+void
+debug_backtrace (void)
+{
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
+
+  Fbacktrace (Qexternal_debugging_output, Qt);
+  stderr_out ("\n");
+
+  unbind_to (specdepth);
+}
+
+/* Getting tired of typing debug_backtrace() ... */
+void db (void);
+void
+db (void)
+{
+  debug_backtrace ();
+}
+
+/* Do a "short" backtrace. */
+
+void
+debug_short_backtrace (int length)
+{
+  int first = 1;
+  struct backtrace *bt = backtrace_list;
+
+  debug_out ("   [");
+  while (length > 0 && bt)
+    {
+      if (!first)
+	{
+	  debug_out (", ");
+	}
+      if (COMPILED_FUNCTIONP (*bt->function))
+	{
+#if defined (COMPILED_FUNCTION_ANNOTATION_HACK)
+	  Lisp_Object ann =
+	    compiled_function_annotation (XCOMPILED_FUNCTION (*bt->function));
+#else
+	  Lisp_Object ann = Qnil;
+#endif
+	  if (!NILP (ann))
+	    {
+	      debug_out ("<compiled-function from ");
+	      debug_prin1 (ann, EXT_PRINT_ALL);
+	      debug_out (">");
+	    }
+	  else
+	    {
+	      debug_out ("<compiled-function of unknown origin>");
+	    }
+	}
+      else
+	debug_prin1 (*bt->function, EXT_PRINT_ALL);
+      first = 0;
+      length--;
+      bt = bt->next;
+    }
+  debug_out ("]\n");
+}
+
+/* Somewhat like debug_print() but looks at the contents of the objects
+   directly.  Useful mainly when something has gone seriously wrong and
+   debug_print() crashes. */
+
 void
 debug_p4 (Lisp_Object obj)
 {
@@ -2425,127 +2595,13 @@ debug_p4 (Lisp_Object obj)
     }
 }
 
-static int
-ext_print_begin (int dest)
-{
-  int depth = begin_inhibit_non_essential_conversion_operations ();
-  if (dest & EXT_PRINT_ALTERNATE)
-    alternate_do_pointer = 0;
-  if (dest & (EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
-    stdout_clear_before_next_output = 1;
-  return depth;
-}
-
-static void
-ext_print_end (int dest, int depth)
-{
-  if (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
-    external_out (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR |
-			  EXT_PRINT_STDOUT), "\n");
-  unbind_to (depth);
-}
-
-static void
-external_debug_print (Lisp_Object object, int dest)
-{
-  int depth = ext_print_begin (dest);
-  debug_prin1 (object, dest);
-  ext_print_end (dest, depth);
-}
+/* Same as debug_p4() but output a newline at the end. */
 
 void
 debug_p3 (Lisp_Object obj)
 {
   debug_p4 (obj);
   debug_out ("\n");
-}
-
-void
-debug_print (Lisp_Object debug_print_obj)
-{
-  external_debug_print (debug_print_obj, EXT_PRINT_ALL);
-}
-
-/* Getting tired of typing debug_print() ... */
-void dp (Lisp_Object debug_print_obj);
-void
-dp (Lisp_Object debug_print_obj)
-{
-  debug_print (debug_print_obj);
-}
-
-/* Alternate debug printer: Return a char * pointer to the output */
-char *dpa (Lisp_Object debug_print_obj);
-char *
-dpa (Lisp_Object debug_print_obj)
-{
-  external_debug_print (debug_print_obj, EXT_PRINT_ALTERNATE);
-  
-  return alternate_do_string;
-}
-
-/* Debugging kludge -- unbuffered */
-/* This function provided for the benefit of the debugger.  */
-void
-debug_backtrace (void)
-{
-  /* This function cannot GC, since GC is forbidden */
-  struct debug_bindings bindings;
-  int specdepth = debug_print_enter (&bindings);
-
-  Fbacktrace (Qexternal_debugging_output, Qt);
-  stderr_out ("\n");
-
-  unbind_to (specdepth);
-}
-
-/* Getting tired of typing debug_backtrace() ... */
-void db (void);
-void
-db (void)
-{
-  debug_backtrace ();
-}
-
-void
-debug_short_backtrace (int length)
-{
-  int first = 1;
-  struct backtrace *bt = backtrace_list;
-
-  debug_out ("   [");
-  while (length > 0 && bt)
-    {
-      if (!first)
-	{
-	  debug_out (", ");
-	}
-      if (COMPILED_FUNCTIONP (*bt->function))
-	{
-#if defined (COMPILED_FUNCTION_ANNOTATION_HACK)
-	  Lisp_Object ann =
-	    compiled_function_annotation (XCOMPILED_FUNCTION (*bt->function));
-#else
-	  Lisp_Object ann = Qnil;
-#endif
-	  if (!NILP (ann))
-	    {
-	      debug_out ("<compiled-function from ");
-	      debug_prin1 (ann, EXT_PRINT_ALL);
-	      debug_out (">");
-	    }
-	  else
-	    {
-	      debug_out ("<compiled-function of unknown origin>");
-	    }
-	}
-      else
-	debug_prin1 (*bt->function, EXT_PRINT_ALL);
-      first = 0;
-      length--;
-      bt = bt->next;
-    }
-  debug_out ("]\n");
 }
 
 

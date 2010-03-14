@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "device-impl.h"
 #include "elhash.h"
 #include "extents-impl.h" /* for extent_face */
@@ -1072,13 +1073,6 @@ mark_face_cachels (face_cachel_dynarr *elements)
     {
       struct face_cachel *cachel = Dynarr_atp (elements, elt);
 
-      {
-	int i;
-
-	for (i = 0; i < NUM_LEADING_BYTES; i++)
-	  if (!NILP (cachel->font[i]) && !UNBOUNDP (cachel->font[i]))
-	    mark_object (cachel->font[i]);
-      }
       mark_object (cachel->face);
       mark_object (cachel->foreground);
       mark_object (cachel->background);
@@ -1101,11 +1095,12 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
   Lisp_Object new_val;
   Lisp_Object face = cachel->face;
   int bound = 1, final_stage = 0;
-  int offs = XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE;
+  int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
 
-  if (!UNBOUNDP (cachel->font[offs]) &&
-      bit_vector_bit(FACE_CACHEL_FONT_UPDATED (cachel), offs))
-    return cachel->font[offs];
+
+  if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value)
+      && Stynarr_at (cachel->font_updated, off1))
+    return Stynarr_at (cachel->font, off1).value;
 
   if (UNBOUNDP (face))
     {
@@ -1114,43 +1109,46 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
       struct window *w = XWINDOW (domain);
 
       new_val = Qunbound;
-      set_bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs, 0);
-
-      for (i = 0; i < cachel->nfaces; i++)
+      Stynarr_at (cachel->font_specified, off1) = 0;
+      for (i = 0; i < Stynarr_length (cachel->merged_faces); i++)
 	{
-	  struct face_cachel *oth;
+	  struct face_cachel *oth =
+	    Dynarr_atp (w->face_cachels,
+			FACE_CACHEL_FINDEX_UNSAFE (cachel, i));
+	  int off2;
 
-	  oth = Dynarr_atp (w->face_cachels,
-			    FACE_CACHEL_FINDEX_UNSAFE (cachel, i));
 	  /* Tout le monde aime la recursion */
 	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  off2 = FACE_CACHEL_OFFSET_ENSURE (oth, charset);
 
-	  if (bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(oth), offs))
+	  if (Stynarr_at (oth->font_specified, off2))
 	    {
-	      new_val = oth->font[offs];
-	      set_bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs, 1);
-	      set_bit_vector_bit
-		(FACE_CACHEL_FONT_FINAL_STAGE(cachel), offs,
-		 bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE(oth), offs));
+	      new_val = Stynarr_at (oth->font, off2).value;
+	      Stynarr_at (cachel->font_specified, off1) = 1;
+	      Stynarr_at (cachel->font_final_stage, off1) =
+		Stynarr_at (oth->font_final_stage, off2);
 	      break;
 	    }
 	}
 
-      if (!bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs))
+      if (!Stynarr_at (cachel->font_specified, off1))
 	/* need to do the default face. */
 	{
 	  struct face_cachel *oth =
 	    Dynarr_atp (w->face_cachels, DEFAULT_INDEX);
-	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  int off2;
 
-	  new_val = oth->font[offs];
+	  ensure_face_cachel_contains_charset (oth, domain, charset);
+	  off2 = FACE_CACHEL_OFFSET_ENSURE (oth, charset);
+
+	  new_val = Stynarr_at (oth->font, off2).value;
 	}
 
-      if (!UNBOUNDP (cachel->font[offs]) &&
-	  !EQ (cachel->font[offs], new_val))
+      if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value) &&
+	  !EQ (Stynarr_at (cachel->font, off1).value, new_val))
 	cachel->dirty = 1;
-      set_bit_vector_bit(FACE_CACHEL_FONT_UPDATED(cachel), offs, 1);
-      cachel->font[offs] = new_val;
+      Stynarr_at (cachel->font_updated, off1) = 1;
+      Stynarr_at (cachel->font, off1).value = new_val;
       DEBUG_FACES("just recursed on the unbound face, returning "
 		  "something %s\n", UNBOUNDP(new_val) ? "not bound"
 		  : "bound");
@@ -1243,67 +1241,74 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
       }
   } while (0);
 
-  if (!UNBOUNDP (cachel->font[offs]) && !EQ (new_val, cachel->font[offs]))
+  if (!UNBOUNDP (Stynarr_at (cachel->font, off1).value) &&
+      !EQ (new_val, Stynarr_at (cachel->font, off1).value))
     cachel->dirty = 1;
-
-  set_bit_vector_bit(FACE_CACHEL_FONT_UPDATED(cachel), offs, 1);
-  set_bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE(cachel), offs,
-		     final_stage);
-  set_bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs,
-		     (bound || EQ (face, Vdefault_face)));
-  cachel->font[offs] = new_val;
+  Stynarr_at (cachel->font_updated, off1) = 1;
+  Stynarr_at (cachel->font_final_stage, off1) = final_stage;
+  Stynarr_at (cachel->font, off1).value = new_val;
+  Stynarr_at (cachel->font_specified, off1) =
+    (bound || EQ (face, Vdefault_face));
   return new_val;
 }
 
+static Lisp_Object_dynarr *face_charset_dynarr;
+
 /* Ensure that the given cachel contains updated fonts for all
-   the charsets specified. */
+   the given characters. */
 
 void
 ensure_face_cachel_complete (struct face_cachel *cachel,
-			     Lisp_Object domain, unsigned char *charsets)
+			     Lisp_Object domain, Ichar *ptr,
+			     Charcount len)
 {
   int i;
 
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (charsets[i])
-      {
-	Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
-	assert (CHARSETP (charset));
-	ensure_face_cachel_contains_charset (cachel, domain, charset);
-      }
+  if (!face_charset_dynarr)
+    face_charset_dynarr = Dynarr_new (Lisp_Object);
+  Dynarr_reset (face_charset_dynarr);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 DOMAIN_XBUFFER (domain));
+  for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
+    ensure_face_cachel_contains_charset (cachel, domain,
+					 Dynarr_at (face_charset_dynarr, i));
 }
 
 void
-face_cachel_charset_font_metric_info (struct face_cachel *cachel,
-				      unsigned char *charsets,
-				      struct font_metric_info *fm)
+face_cachel_char_font_metric_info (struct face_cachel *cachel,
+				   Lisp_Object domain,
+				   Ichar *ptr, Charcount len,
+				   struct font_metric_info *fm)
 {
   int i;
+
+  ensure_face_cachel_complete (cachel, domain, ptr, len);
 
   fm->width = 1;
   fm->height = fm->ascent = 1;
   fm->descent = 0;
   fm->proportional_p = 0;
 
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
+  if (!face_charset_dynarr)
+    face_charset_dynarr = Dynarr_new (Lisp_Object);
+  Dynarr_reset (face_charset_dynarr);
+  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+				 DOMAIN_XBUFFER (domain));
+  for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {
-      if (charsets[i])
-	{
-	  Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
-	  Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
-	  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
+      Lisp_Object charset = Dynarr_at (face_charset_dynarr, i);
+      Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
+      Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
 
-	  assert (CHARSETP (charset));
-	  assert (FONT_INSTANCEP (font_instance));
+      assert (FONT_INSTANCEP (font_instance));
 
-	  if (fm->ascent  < (int) fi->ascent)  fm->ascent  = (int) fi->ascent;
-	  if (fm->descent < (int) fi->descent) fm->descent = (int) fi->descent;
-	  fm->height = fm->ascent + fm->descent;
-	  if (fi->proportional_p)
-	    fm->proportional_p = 1;
-	  if (EQ (charset, Vcharset_ascii))
-	    fm->width = fi->width;
-	}
+      if (fm->ascent  < (int) fi->ascent)  fm->ascent  = (int) fi->ascent;
+      if (fm->descent < (int) fi->descent) fm->descent = (int) fi->descent;
+      fm->height = fm->ascent + fm->descent;
+      if (fi->proportional_p)
+	fm->proportional_p = 1;
+      if (EQ (charset, Vcharset_ascii))
+	fm->width = fi->width;
     }
 }
 
@@ -1488,8 +1493,6 @@ static void
 merge_face_cachel_data (struct window *w, face_index findex,
 			struct face_cachel *cachel)
 {
-  int offs;
-
 #define FINDEX_FIELD(field)						\
   Dynarr_atp (w->face_cachels, findex)->field
 
@@ -1515,25 +1518,46 @@ merge_face_cachel_data (struct window *w, face_index findex,
   FROB (reverse);
   FROB (blinking);
 
-  for (offs = 0; offs < NUM_LEADING_BYTES; ++offs)
-    {
-      if (!(bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs))
-	  && bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED
-			    (Dynarr_atp(w->face_cachels, findex)), offs))
-	{
-	  cachel->font[offs] = FINDEX_FIELD (font[offs]);
-	  set_bit_vector_bit(FACE_CACHEL_FONT_SPECIFIED(cachel), offs, 1);
-	  /* Also propagate whether we're translating to Unicode for the
-	     given face.  */
-	  set_bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE(cachel), offs,
-			     bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE
-					    (Dynarr_atp(w->face_cachels,
-							findex)), offs));
-	  cachel->dirty = 1;
-	}
-    }
+
+#define FROB_CHARSET(charset)						\
+  {									\
+    int off1 = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);		\
+    int off2 = FACE_CACHEL_OFFSET (Dynarr_atp (w->face_cachels, findex), \
+				   charset);				\
+    int spec1 = Stynarr_at (cachel->font_specified, off1);		\
+    int spec2 = off2 >= 0 && Stynarr_at (FINDEX_FIELD (font_specified), off2); \
+    if (!spec1 && spec2)						\
+      {									\
+	Stynarr_at (cachel->font, off1).value =				\
+	  Stynarr_at (FINDEX_FIELD (font), off2).value;			\
+	Stynarr_at (cachel->font_specified, off1) = 1;			\
+	/* Also propagate whether we're translating to Unicode for the	\
+	   given face.  */						\
+	Stynarr_at (cachel->font_final_stage, off1) =			\
+	  Stynarr_at (FINDEX_FIELD (font_final_stage), off2);		\
+	cachel->dirty = 1;						\
+      }									\
+  }
+
+  /* The previous code looped over all leading bytes, i.e. all charsets.
+     Since the intention is to propagate charset-specific font information
+     from the window cachel at FINDEX into the given cachel CACHEL, it
+     should be enough to loop over all existing charsets mentioned in the
+     FINDEX font info.  But also do ASCII, just to be on the safe side --
+     the previous-previous code, before the loop was set up, just did ASCII. */
+  FROB_CHARSET (Vcharset_ascii);
+  {
+    int i;
+    for (i = 0; i < Stynarr_length (FINDEX_FIELD (font)); i++)
+      {
+	Lisp_Object_pair *el = Stynarr_atp (FINDEX_FIELD (font), i);
+	FROB_CHARSET (el->key);
+      }
+  }
+
 #undef FROB
 #undef FINDEX_FIELD
+#undef FROB_CHARSET
 
   cachel->updated = 1;
 }
@@ -1546,21 +1570,16 @@ reset_face_cachel (struct face_cachel *cachel)
 {
   xzero (*cachel);
   cachel->face = Qunbound;
-  cachel->nfaces = 0;
-  cachel->merged_faces = 0;
+  Stynarr_init (cachel->merged_faces);
+  Stynarr_init (cachel->font);
+  Stynarr_init (cachel->font_specified);
+  Stynarr_init (cachel->font_updated);
+  Stynarr_init (cachel->font_final_stage);
   cachel->foreground = Qunbound;
   cachel->background = Qunbound;
-  {
-    int i;
-
-    for (i = 0; i < NUM_LEADING_BYTES; i++)
-      cachel->font[i] = Qunbound;
-  }
   cachel->display_table = Qunbound;
   cachel->background_pixmap = Qunbound;
   cachel->background_placement = Qunbound;
-  FACE_CACHEL_FONT_SPECIFIED (cachel)->size = sizeof(cachel->font_specified);
-  FACE_CACHEL_FONT_UPDATED (cachel)->size = sizeof(cachel->font_updated);
 }
 
 /* Retrieve the index to a cachel for window W that corresponds to
@@ -1606,8 +1625,11 @@ reset_face_cachels (struct window *w)
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
 	  struct face_cachel *cachel = Dynarr_atp (w->face_cachels, i);
-	  if (cachel->merged_faces)
-	    Dynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->font);
+	  Stynarr_free (cachel->font_specified);
+	  Stynarr_free (cachel->font_updated);
+	  Stynarr_free (cachel->font_final_stage);
 	}
       Dynarr_reset (w->face_cachels);
       /* #### NOTE: be careful with the order !
@@ -1641,10 +1663,11 @@ mark_face_cachels_as_not_updated (struct window *w)
   for (elt = 0; elt < Dynarr_length (w->face_cachels); elt++)
     {
       struct face_cachel *cachel = Dynarr_atp (w->face_cachels, elt);
+      int i;
 
       cachel->updated = 0;
-      memset(FACE_CACHEL_FONT_UPDATED(cachel)->bits, 0,
-	     BIT_VECTOR_LONG_STORAGE (NUM_LEADING_BYTES));
+      for (i = 0; i < Stynarr_length (cachel->font_updated); i++)
+	Stynarr_at (cachel->font_updated, i) = 0;
     }
 }
 
@@ -1663,9 +1686,10 @@ compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
       total += Dynarr_memory_usage (face_cachels, ovstats);
       for (i = 0; i < Dynarr_length (face_cachels); i++)
 	{
-	  int_dynarr *merged = Dynarr_at (face_cachels, i).merged_faces;
-	  if (merged)
-	    total += Dynarr_memory_usage (merged, ovstats);
+	  struct face_cachel *cachel = Dynarr_atp (face_cachels, i);
+	  /* #### Hack; look inside of the Stynarr struct */
+	  if (cachel->merged_faces.els)
+	    total += Dynarr_memory_usage (cachel->merged_faces.els, ovstats);
 	}
     }
 
@@ -1695,10 +1719,10 @@ compare_merged_face_cachels (struct face_cachel *cachel1,
   int i;
 
   if (!EQ (cachel1->face, cachel2->face)
-      || cachel1->nfaces != cachel2->nfaces)
+      || FACE_CACHEL_NFACES (cachel1) != FACE_CACHEL_NFACES (cachel2))
     return 0;
 
-  for (i = 0; i < cachel1->nfaces; i++)
+  for (i = 0; i < FACE_CACHEL_NFACES (cachel1); i++)
     if (FACE_CACHEL_FINDEX_UNSAFE (cachel1, i)
 	!= FACE_CACHEL_FINDEX_UNSAFE (cachel2, i))
       return 0;
@@ -1761,14 +1785,13 @@ get_extent_fragment_face_cache_index (struct window *w,
       for (i = len - 1; i >= 0; i--)
 	{
 	  EXTENT current = Dynarr_at (ef->extents, i);
-	  int has_findex = 0;
 	  Lisp_Object face = extent_face (current);
 
 	  if (FACEP (face))
 	    {
 	      findex = get_builtin_face_cache_index (w, face);
-	      has_findex = 1;
 	      merge_face_cachel_data (w, findex, &cachel);
+	      Stynarr_add (cachel.merged_faces, findex);
 	    }
 	  /* remember, we're called from within redisplay
 	     so we can't error. */
@@ -1779,33 +1802,9 @@ get_extent_fragment_face_cache_index (struct window *w,
 		{
 		  findex = get_builtin_face_cache_index (w, one_face);
 		  merge_face_cachel_data (w, findex, &cachel);
-
-		  /* code duplication here but there's no clean
-		     way to avoid it. */
-		  if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
-		    {
-		      if (!cachel.merged_faces)
-			cachel.merged_faces = Dynarr_new (int);
-		      Dynarr_add (cachel.merged_faces, findex);
-		    }
-		  else
-		    cachel.merged_faces_static[cachel.nfaces] = findex;
-		  cachel.nfaces++;
+		  Stynarr_add (cachel.merged_faces, findex);
 		}
 	      face = XCDR (face);
-	    }
-
-	  if (has_findex)
-	    {
-	      if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
-		{
-		  if (!cachel.merged_faces)
-		    cachel.merged_faces = Dynarr_new (int);
-		  Dynarr_add (cachel.merged_faces, findex);
-		}
-	      else
-		cachel.merged_faces_static[cachel.nfaces] = findex;
-	      cachel.nfaces++;
 	    }
 	}
 
@@ -1814,13 +1813,17 @@ get_extent_fragment_face_cache_index (struct window *w,
       merge_face_cachel_data (w, findex, &cachel);
 
       findex = get_merged_face_cache_index (w, &cachel);
-      if (cachel.merged_faces &&
+      /* #### Hack; look inside of the Stynarr struct */
+      if (cachel.merged_faces.els &&
 	  /* merged_faces did not get stored and available via return value */
-	  Dynarr_at (w->face_cachels, findex).merged_faces !=
-	  cachel.merged_faces)
+	  Dynarr_at (w->face_cachels, findex).merged_faces.els !=
+	  cachel.merged_faces.els)
 	{
-	  Dynarr_free (cachel.merged_faces);
-	  cachel.merged_faces = 0;
+	  Stynarr_free (cachel.merged_faces);
+	  Stynarr_free (cachel.font);
+	  Stynarr_free (cachel.font_specified);
+	  Stynarr_free (cachel.font_updated);
+	  Stynarr_free (cachel.font_final_stage);
 	}
       return findex;
     }
@@ -2088,25 +2091,33 @@ Return non-nil if STAGE is 'initial.
 Used by the X11 platform font code for giving fallbacks; see
 `define-specifier-tag'.  You shouldn't ever need to call this.
 */
-       (UNUSED(charset), stage))
+       (UNUSED (charset), stage))
 {
-  return EQ(stage, Qinitial) ? Qt : Qnil;
+  return EQ (stage, Qinitial) ? Qt : Qnil;
 }
 
-DEFUN ("specifier-tag-encode-as-utf-8-p",
-       Fspecifier_tag_encode_as_utf_8_p,
-       2, 2, 0, /*
-Return t if and only if (charset-property CHARSET 'encode-as-utf-8)).
+#ifndef UNICODE_INTERNAL
+
+Lisp_Object Qjit_charset;
+
+DEFUN ("specifier-tag-jit-charset-p",
+       Fspecifier_tag_jit_charset_p,
+       1, 1, 0, /*
+Return t if and only if charset is an internal JIT charset.
+These are used for holding Unicode codepoints that don't have any
+equivalent as an encodable charset codepoint.
 
 Used by the X11 platform font code; see `define-specifier-tag'.  You
 shouldn't ever need to call this.
 */
-       (charset, UNUSED(stage)))
+       (charset))
 {
-  /* Used to check that the stage was initial too. */
-  CHECK_CHARSET(charset);
-  return XCHARSET_ENCODE_AS_UTF_8(charset) ? Qt : Qnil;
+  /* Used to take a stage and check that the stage was initial too. */
+  CHECK_CHARSET (charset);
+  return XCHARSET (charset)->jit_charset_p ? Qt : Qnil;
 }
+
+#endif /* not UNICODE_INTERNAL */
 
 #endif /* MULE */
 
@@ -2141,7 +2152,10 @@ syms_of_faces (void)
   DEFSUBR (Fspecifier_tag_two_dimensional_p);
   DEFSUBR (Fspecifier_tag_initial_stage_p);
   DEFSUBR (Fspecifier_tag_final_stage_p);
-  DEFSUBR (Fspecifier_tag_encode_as_utf_8_p);
+#ifndef UNICODE_INTERNAL
+  DEFSYMBOL (Qjit_charset);
+  DEFSUBR (Fspecifier_tag_jit_charset_p);
+#endif /* not UNICODE_INTERNAL */
 #endif /* MULE */
 
   DEFSYMBOL (Qfacep);
@@ -2324,20 +2338,22 @@ complex_vars_of_faces (void)
        these allows for distinct fallback fonts for distinct dimensions of
        character sets and stages.  */
 
-    define_specifier_tag(Qtwo_dimensional, Qnil,
+    define_specifier_tag (Qtwo_dimensional, Qnil,
 			 intern ("specifier-tag-two-dimensional-p"));
 
-    define_specifier_tag(Qone_dimensional, Qnil,
+    define_specifier_tag (Qone_dimensional, Qnil,
 			 intern ("specifier-tag-one-dimensional-p"));
 
-    define_specifier_tag(Qinitial, Qnil,
+    define_specifier_tag (Qinitial, Qnil,
 			 intern ("specifier-tag-initial-stage-p"));
 
-    define_specifier_tag(Qfinal, Qnil,
+    define_specifier_tag (Qfinal, Qnil,
 			 intern ("specifier-tag-final-stage-p"));
 
-    define_specifier_tag (Qencode_as_utf_8, Qnil,
-			  intern("specifier-tag-encode-as-utf-8-p"));
+#ifndef UNICODE_INTERNAL
+    define_specifier_tag (Qjit_charset, Qnil,
+			  intern ("specifier-tag-jit-charset-p"));
+#endif /* not UNICODE_INTERNAL */
 
     /* This tag is used to group those instantiators made available in the
        fallback for the sake of coverage of obscure characters, notably
@@ -2396,6 +2412,7 @@ complex_vars_of_faces (void)
 				build_cistring (*fontptr)),
 			 inst_list);
 
+#ifndef UNICODE_INTERNAL
     /* We need to set the font for the JIT-ucs-charsets separately from the
        final stage, since otherwise it picks up the two-dimensional
        specification (see specifier-tag-two-dimensional-initial-stage-p
@@ -2405,10 +2422,12 @@ complex_vars_of_faces (void)
     inst_list =
       Fcons
       (Fcons
-       (list4(device_symbol, Qencode_as_utf_8, Qinitial, Qx_coverage_instantiator),
+       (list4 (device_symbol, Qjit_charset, Qinitial,
+	       Qx_coverage_instantiator),
 	build_ascstring
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
+#endif /* not UNICODE_INTERNAL */
 
 #endif /* MULE */
 
