@@ -1385,10 +1385,14 @@ character set.  Recognized properties are:
      in `write-region-annotate-functions', i.e. FROM and TO, specifying
      a region of text.
 
-The following properties are used by `default-query-coding-region',
-the default implementation of `query-coding-region'. This
-implementation and these properties are not used by the Unicode coding
-systems, nor by fixed-width coding systems. 
+The following properties can be used to specify characters and/or character
+sets that are "safely" handled by the coding system, i.e. can be encoded
+and decoded properly without data loss.  It is rarely necessary to specify
+this, as almost all coding systems know by themselves which characters can
+be encoded.  The main exceptions currently are when `post-read-conversion'
+and `pre-write-conversion' are specified, and in CCL coding systems.
+Note that most GNU Emacs coding systems specify a `safe-charsets', whereas
+few XEmacs coding systems do; this is a feature.
 
 `safe-chars'
      The value is a char table.  If a character has non-nil value in it,

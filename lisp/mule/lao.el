@@ -1,6 +1,7 @@
 ;;; lao.el --- support for Lao -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 2010 Ben Wing.
 ;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Lao
@@ -40,7 +41,6 @@
  '(charset-g0 ascii
    charset-g1 lao
    mnemonic "Lao"
-   safe-charsets (ascii lao)
    documentation "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"))
 
 (set-language-info-alist

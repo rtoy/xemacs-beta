@@ -1,5 +1,10 @@
 2010-03-14  Ben Wing  <ben@xemacs.org>
 
+	* file-coding.c:
+	Update `make-coding-system' doc string on safe-chars, safe-charsets.
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
 	OVERALL CHANGES:
 
 	-- New query-coding-region mechanism; instead of a separate

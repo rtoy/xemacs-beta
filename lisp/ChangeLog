@@ -1,5 +1,53 @@
 2010-03-14  Ben Wing  <ben@xemacs.org>
 
+	* mule/chinese.el (cn-gb-2312):
+	* mule/chinese.el (big5):
+	* mule/devanagari.el:
+	* mule/devanagari.el (in-is13194-devanagari):
+	* mule/devanagari.el (devanagari):
+	* mule/hebrew.el:
+	* mule/hebrew.el (ctext-hebrew):
+	* mule/hebrew.el ("Hebrew"):
+	* mule/iso-with-esc.el:
+	* mule/iso-with-esc.el (iso-latin-2-with-esc):
+	* mule/iso-with-esc.el (iso-latin-3-with-esc):
+	* mule/iso-with-esc.el (iso-latin-4-with-esc):
+	* mule/iso-with-esc.el (iso-latin-9-with-esc):
+	* mule/iso-with-esc.el (iso-latin-5-with-esc):
+	* mule/iso-with-esc.el (cyrillic-iso-8bit-with-esc):
+	* mule/iso-with-esc.el (hebrew-iso-8bit-with-esc):
+	* mule/iso-with-esc.el (greek-iso-8bit-with-esc):
+	* mule/iso-with-esc.el (arabic-iso-8bit-with-esc):
+	* mule/japanese.el (iso-2022-jp):
+	* mule/japanese.el (jis7):
+	* mule/japanese.el (jis8):
+	* mule/japanese.el (shift-jis):
+	* mule/japanese.el (iso-2022-jp-1978-irv):
+	* mule/japanese.el (euc-jp):
+	* mule/korean.el (iso-2022-int-1):
+	* mule/korean.el (euc-kr):
+	* mule/korean.el (iso-2022-kr):
+	* mule/lao.el:
+	* mule/lao.el (lao):
+	* mule/lao.el ("Lao"):
+	* mule/mule-coding.el:
+	* mule/mule-coding.el (ctext):
+	* mule/mule-coding.el (iso-2022-8bit-ss2):
+	* mule/mule-coding.el (iso-2022-7bit-ss2):
+	* mule/mule-coding.el (iso-2022-jp-2):
+	* mule/mule-coding.el (iso-2022-7bit):
+	* mule/mule-coding.el (iso-2022-8):
+	* mule/mule-coding.el (escape-quoted):
+	* mule/mule-coding.el (iso-2022-lock):
+	* mule/thai.el (thai-tis620):
+	* mule/thai.el (th-tis620):
+	* mule/tibetan.el:
+	* mule/tibetan.el (tibetan-iso-8bit):
+	* code-init.el:
+	Remove `safe-charsets' property from most coding systems.
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
 	* autoload.el (make-autoload):
 	No make-8-bit-coding-system any more.
 	
