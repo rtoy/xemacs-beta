@@ -185,7 +185,6 @@
    charset-g1 chinese-gb2312
    charset-g2 chinese-sisheng
    charset-g3 t
-   safe-charsets (ascii chinese-gb2312 chinese-sisheng)
    mnemonic "Zh-GB/EUC"
    documentation
    "Chinese EUC (Extended Unix Code), the standard Chinese encoding on Unix.
@@ -289,9 +288,6 @@ Uses the GB2312 character set."))
  'big5 'big5
  "Big5"
  `(mnemonic "Zh/Big5"
-   safe-charsets (ascii ,@(if (find-charset 'chinese-big5-1)
-			      '(chinese-big5-1 chinese-big5-2)
-			    '(chinese-big5)))
    documentation
    "A non-modal encoding formed by five large Taiwanese companies
 \(hence \"Big5\") to produce a character set and encoding for

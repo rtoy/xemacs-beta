@@ -1,7 +1,7 @@
 ;;; tibetan.el --- support for Tibetan language -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2010 Ben Wing.
 ;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Tibetan
@@ -98,7 +98,6 @@
  '(charset-g0 ascii
    charset-g1 tibetan
    mnemonic "Tibetan"
-   safe-charsets (ascii tibetan)
    post-read-conversion tibetan-post-read-conversion
    pre-write-conversion tibetan-pre-write-conversion
    documentation "8-bit encoding for ASCII (MSB=0) and TIBETAN (MSB=1)"))

@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001, 2005 Ben Wing.
+;; Copyright (C) 2001, 2005, 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -101,7 +101,6 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    eol-type nil
-   safe-charsets t ;; Reasonable
    mnemonic "CText"))
 
 (make-coding-system
@@ -111,9 +110,6 @@ The allowable range of REGISTER is 0 through 3."
    charset-g1 latin-iso8859-1
    charset-g2 t ;; unspecified but can be used later.
    short t
-   safe-charsets (ascii katakana-jisx0201 japanese-jisx0208-1978
-                  japanese-jisx0208 japanese-jisx0212 japanese-jisx0213-1
-                  japanese-jisx0213-2)
    mnemonic "ISO8/SS"
    documentation "ISO 2022 based 8-bit encoding using SS2 for 96-charset"
    ))
@@ -125,7 +121,6 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
-   safe-charsets t
    mnemonic "ISO7/SS"
    documentation "ISO 2022 based 7-bit encoding using SS2 for 96-charset"
    eol-type nil))
@@ -138,7 +133,6 @@ The allowable range of REGISTER is 0 through 3."
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
-   safe-charsets t
    mnemonic "ISO7/SS"
    eol-type nil))
 
@@ -148,7 +142,6 @@ The allowable range of REGISTER is 0 through 3."
  '(charset-g0 ascii
    seven t
    short t
-   safe-charsets t
    mnemonic "ISO7"
    documentation "ISO-2022-based 7-bit encoding using only G0"
    ))
@@ -176,7 +169,6 @@ in normal editing."
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    short t
-   safe-charsets t
    mnemonic "ISO8"
    documentation "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
    ))
@@ -188,7 +180,6 @@ in normal editing."
    charset-g1 latin-iso8859-1
    eol-type lf
    escape-quoted t
-   safe-charsets t
    mnemonic "ESC/Quot"
    documentation "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
    ))
@@ -200,7 +191,6 @@ in normal editing."
    charset-g1 t ;; unspecified but can be used later.
    seven t
    lock-shift t
-   safe-charsets t
    mnemonic "ISO7/Lock"
    documentation "ISO-2022 coding system using Locking-Shift for 96-charset."
    ))

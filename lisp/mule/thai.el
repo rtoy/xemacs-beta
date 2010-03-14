@@ -48,7 +48,6 @@
  'thai-tis620 'multibyte "Thai/TIS620"
  '(charsets (ascii thai-tis620)
    mnemonic "Thai"
-   safe-charsets (ascii thai-tis620)
    post-read-conversion thai-post-read-conversion
    documentation "8-bit encoding for ASCII (MSB=0) and Thai TIS620 (MSB=1)"))
 

@@ -1,7 +1,7 @@
 ;;; devanagari.el --- support for Devanagari -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1996 Free Software Foundation, Inc.
-;; Copyright (C) 2005 Ben Wing.
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Author: KAWABATA, Taichi <kawabata@is.s.u-tokyo.ac.jp>
 
@@ -51,10 +51,8 @@
    charset-g2 t
    charset-g3 t
    mnemonic "In-13194"
-   safe-charsets (ascii indian-is13194)
    documentation
    "8-bit encoding for ASCII (MSB=0) and IS13194-Devanagari (MSB=1)"
-   safe-charsets (ascii indian-is13194)
    post-read-conversion in-is13194-devanagari-post-read-conversion
    pre-write-conversion in-is13194-devanagari-pre-write-conversion))
 

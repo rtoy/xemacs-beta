@@ -1,18 +1,58 @@
+3-13-10
+
+1. New query method written but doesn't handle
+
+   (a) remaining specifications of `safe-chars' and `safe-charsets'
+   (b) CCL errors
+   (c) most importantly, coding systems with CRLF and CR EOL type
+
+2. Still `make check' problems especially with CCL
+
+3. Consider implementing optimizations:
+
+   (1) In the DFC routines, if the text is entirely ASCII and the coding
+       system passes ASCII through unchanged, then don't do anything
+   (2) UTF-8, especially, and other ASCII-compatible coding systems can
+       use skip_ascii() plus memcpy() to quickly copy chunks of ASCII
+       rather than slowly processing character-by-character.
+
+4. At some point, eliminate Big5 and Shift-JIS coding systems in favor
+   of multibyte.
+
+5. Need to implement multibyte detect; implement a generalized detection
+   routine that looks for non-ASCII characters and also looks for error
+   bytes.
+
 3-2-10
 
 1. Multibyte should use private Unicode codepoints to handle gaps in charsets.
+
+   STATUS: PROBABLY NOT
+
 2. Problems with corruption of foo_coding_stream -- there needs to be a
    description for the coding stream, stored using a "description map" that
    points from the coding stream through the coding system, from coding system
    to the methods, and from the methods to the stream description.
+
+   STATUS: DONE
+
 3. At some point, fix up text.h so that all the stuff in lisp.h about the
    basic of characters and unicode can go in text.h.  Maybe just move text.h
    earlier and remove some of the high-level garbage in text.h that requires
    XSTRING and such into another file.
+
+   STATUS: DONE
+
 4. At some point, eliminate Big5 and Shift-JIS coding systems in favor
    of multibyte.
+
+   STATUS: NOT DONE
+
 5. Need to implement multibyte detect; implement a generalized detection routine
    that looks for non-ASCII characters and also looks for error bytes.
+
+   STATUS: NOT DONE
+
 6. multibyte query: add to foo_convert a `struct convert_error *' argument:
 
    struct convert_error
@@ -34,7 +74,11 @@
    respectively from the return value (total bytes of source processed)
    and size increase in output Dynarr.
 
+   STATUS: PARTIALLY DONE
+
 7. still various `make check' problems
+
+   STATUS: PARTIALLY DONE
 
 
 2-25-10

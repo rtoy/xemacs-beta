@@ -459,17 +459,15 @@ For more information, see `reset-coding-system-defaults' and
 ;; Initialize everything so that the remaining Lisp files can contain
 ;; extended characters.  (They will be in ISO-7 format)
 
-;; !!####!! The Lisp files should all be in UTF-8!!!  That way, all
-;; special characters appear as high bits and there's no problem with
-;; the Lisp parser trying to read a Mule file and getting all screwed
-;; up.  The only other thing then would be characters; we just need to
-;; modify the Lisp parser to read the stuff directly after a ? as
-;; UTF-8 and return a 30-bit value directly, and modify the character
-;; routines a bit to allow such a beast to exist.  MAKE IT A POINT TO
-;; IMPLEMENT THIS AS ONE OF MY FUTURE PROJECTS. --ben
+;; !!####!! @@####The Lisp files should all be in UTF-8!!!  That way, all
+;; special characters appear as high bits and there's no problem with the
+;; Lisp parser trying to read a Mule file and getting all screwed up.  The
+;; only other thing then would be characters; we just need to modify the
+;; Lisp parser to read the stuff directly after a ? as UTF-8 and return a
+;; 30-bit value directly, and modify the character routines a bit to allow
+;; such a beast to exist.  MAKE IT A POINT TO IMPLEMENT THIS AS ONE OF MY
+;; FUTURE PROJECTS. --ben
 
 (reset-language-environment)
-
-(coding-system-put 'raw-text 'safe-charsets '(ascii control-1 latin-iso8859-1))
 
 ;;; code-init.el ends here
