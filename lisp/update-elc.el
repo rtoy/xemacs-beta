@@ -122,11 +122,9 @@
 Files in `additional-dump-dependencies' do not need to be listed here.")
 
 (defvar additional-dump-dependencies
-  (nconc '("loadup.el"
-           "loadup-el.el"
-           "update-elc.el")
-         (if (featurep 'mule)
-             '("mule/make-coding-system")))
+  '("loadup.el"
+    "loadup-el.el"
+    "update-elc.el")
   "Lisp files that are not dumped but which the dump depends on.
 If any of these files are changed, we need to redump.")
 
@@ -136,8 +134,7 @@ If any of these files are changed, we need to redump.")
   "Lisp files that should not trigger auto-autoloads rebuilding.")
 
 (defvar lisp-files-dependent-on-configuration
-  '("mule/general-late"
-    "mule/chinese")
+  '("mule/chinese")
   "Lisp files that need recompilation when XEmacs has been reconfigured.
 These files have macros or `eval-when-compile' expressions that expand
 differently depending on the presence of certain features, especially

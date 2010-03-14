@@ -1,3 +1,34 @@
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (make-autoload):
+	No make-8-bit-coding-system any more.
+	
+	* coding.el (encode-coding-char):
+	query-coding-string no longer accepts characters so convert to string.
+	
+	* coding.el (featurep):
+	Remove autoloading of make-coding-system, it's been moved back
+	into C.
+	
+	* coding.el (query-coding-clear-highlights): Removed.
+	* coding.el (query-coding-string): Removed.
+	Moved into C.
+	
+	* mule/general-late.el:
+	`set-unicode-query-skip-chars-args' no longer needed.
+
+	* mule/make-coding-system.el:
+	* mule/make-coding-system.el (fixed-width-generate-helper): Removed.
+	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.
+	Deleted whole file, along with fixed-width coding system.  Move doc
+	string back into C.
+	
+	* update-elc.el (additional-dump-dependencies):
+	Not make-coding-system.el any more.
+	
+	* update-elc.el (lisp-files-dependent-on-configuration):
+	general-late.el no longer dependent on --unicode-internal or not.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* mule/japanese.el (for):

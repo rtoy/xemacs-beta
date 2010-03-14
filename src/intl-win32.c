@@ -2055,10 +2055,10 @@ convert_unicode_to_multibyte_dynarr (const Extbyte *src, Bytecount n,
 
 static Bytecount
 mswindows_multibyte_to_unicode_convert (struct coding_stream *str,
-					const unsigned char *src,
-					unsigned_char_dynarr *dst,
-					Bytecount n)
+					const UExtbyte *src,
+					Bytecount n, unsigned_char_dynarr *dst)
 {
+  /* @@#### Need to properly handle errors here */
   unsigned char *new_src = (unsigned char *) src;
   int i;
   struct mswindows_multibyte_to_unicode_coding_stream *data =
@@ -2164,7 +2164,8 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte);
 static Bytecount
 mswindows_multibyte_convert (struct coding_stream *UNUSED (str),
 			     const UExtbyte *UNUSED (src),
-			     unsigned_char_dynarr *UNUSED (dst), Bytecount n)
+			     Bytecount n, unsigned_char_dynarr *UNUSED (dst))
+
 {
   Bytecount orign = n;
   /* should never be called; is preprocessed away in the
@@ -2359,7 +2360,7 @@ determine_if_using_unicode (void)
 void
 complex_vars_of_intl_win32 (void)
 {
-  Fmake_coding_system_internal
+  Fmake_coding_system
     (Qmswindows_unicode, Qunicode,
      build_defer_string ("MS Windows Unicode"),
      nconc2 (list4 (Qdocumentation,

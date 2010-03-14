@@ -231,6 +231,13 @@ enum eol_type
   EOL_AUTODETECT
 };
 
+enum handle_coding_error
+{
+  CODING_RETURN_IGNORE_INVALID_SEQUENCE,
+  CODING_RETURN,
+  CODING_CONTINUE,
+};
+
 struct Lisp_Coding_System
 {
   NORMAL_LISP_OBJECT_HEADER header;
@@ -277,7 +284,6 @@ enum coding_system_variant
   big5_coding_system,
   unicode_coding_system,
   multibyte_coding_system,
-  fixed_width_coding_system
 };
 
 struct coding_system_methods
@@ -362,30 +368,8 @@ struct coding_system_methods
      for coding streams, there's the canonicalize_after_coding() method.)
      Required. */
   Bytecount (*convert_method) (struct coding_stream *str,
-			       const unsigned char *src,
-			       unsigned_char_dynarr *dst, Bytecount n);
-
-  /* Query method: Check whether the buffer text between point and END
-     can be encoded by this coding system. Returns
-     either nil (meaning the text can be encoded by the coding system) or a
-     range table object describing the stretches that the coding system
-     cannot encode.
-
-     Possible values for flags are below, search for
-     QUERY_METHOD_IGNORE_INVALID_SEQUENCES.
-
-     Coding systems are expected to be able to behave sensibly with all
-     possible octets on decoding, which is why this method is only available
-     for encoding. */
-  Lisp_Object (*query_method) (Lisp_Object coding_system, struct buffer *buf,
-                               Charbpos end, int flags);
-
-  /* Same as the previous method, but this works in the context of
-     lstreams. (Where the data do need to be copied, unfortunately.)  The
-     intention is to implement the query method for the mswindows-multibyte
-     coding systems in terms of a query_lstream method. */
-  Lisp_Object (*query_lstream_method) (struct coding_stream *str,
-                                       const Ibyte *start, Bytecount n);
+			       const unsigned char *src, Bytecount n,
+			       unsigned_char_dynarr *dst);
 
   /* Coding mark method: Mark any Lisp objects in the type-specific data
      attached to `struct coding_stream'.  Optional. */
@@ -458,23 +442,14 @@ struct coding_system_methods
   Bytecount stream_data_size;
 };
 
-/* Values for flags, as passed to query_method. */
-
-#define QUERY_METHOD_IGNORE_INVALID_SEQUENCES 0x0001
-#define QUERY_METHOD_ERRORP                   0x0002
-#define QUERY_METHOD_HIGHLIGHT                0x0004
-
-enum query_coding_failure_reasons
+enum coding_error
   {
-    query_coding_succeeded = 0,
-    query_coding_unencodable = 1,
-    query_coding_invalid_sequence = 2
+    CODING_SUCCEEDED,
+    CODING_UNENCODABLE,
+    CODING_INVALID_SEQUENCE,
   };
 
 extern Lisp_Object Qquery_coding_warning_face;
-
-Lisp_Object default_query_method (Lisp_Object, struct buffer *, Charbpos,
-                                  int);
 
 /***** Calling a coding-system method *****/
 
@@ -570,7 +545,6 @@ static const struct sized_memory_description			\
   ty##_coding_system_methods->extra_description =			\
     &coding_system_empty_extra_description;				\
   ty##_coding_system_methods->enumtype = ty##_coding_system;		\
-  ty##_coding_system_methods->query_method = default_query_method;      \
   defsymbol_nodump (&ty##_coding_system_methods->predicate_symbol,	\
                     pred_sym);						\
   add_entry_to_coding_system_type_list (ty##_coding_system_methods);	\
@@ -998,6 +972,8 @@ enum encode_decode
 
 struct coding_stream
 {
+  /************ Back pointers to the coding system ************/
+
   /* Enumerated constant listing which type of coding system this is.  This
      duplicates the method structure in XCODING_SYSTEM
      (str->codesys)->methods->type, which formerly was the only way to
@@ -1011,12 +987,16 @@ struct coding_stream
   /* Original coding system, pre-canonicalization. */
   Lisp_Object orig_codesys;
 
+  /************ Pointers to the associated stream(s) ************/
+
   /* Back pointer to current stream. */
   Lstream *us;
 
   /* Stream that we read the unprocessed data from or write the processed
      data to. */
   Lstream *other_end;
+
+  /********* Internal dynarrs used to handle buffering/slippage **********/
 
   /* In order to handle both reading to and writing from a coding stream,
      we phrase the conversion methods like write methods -- we can
@@ -1044,6 +1024,8 @@ struct coding_stream
      data. */
   unsigned_char_dynarr *convert_from;
 
+  /******** Fields used to accumulate a partially-built-up character ********/
+
   /* Hold a partially built-up character.  This is in some respects part
      of the state-dependent data, but it is used in all coding methods. */
   Ibyte partial[MAX_ICHAR_LEN];
@@ -1058,6 +1040,67 @@ struct coding_stream
      really part of the state-dependent data and should be moved there. */
   int ch;
 
+  /********* Information about the encoding taking place **********/
+
+  /* Direction of encoding */
+  enum encode_decode direction;
+
+  /* Source and length of data to convert.  This duplicates information
+     passed in to the conversion method as parameters, and is placed here
+     so that the conversion methods don't have to remember the original
+     values of these parameters. */
+  const unsigned char *src;
+  Bytecount srclen;
+
+  /********* Fields used to implement error handling **********/
+
+  /* (1) Fields automatically set during the conversion process */
+  /* What to do when an error is encountered: Currently only using during
+     encoding (during decoding, just write an error-octet into the Ichar
+     stream). */
+  enum handle_coding_error handle;
+  /* Length of destination dynarr prior to conversion. */
+  Bytecount written_before_convert;
+  /* Total amount written to dynarr, i.e. length of dynarr after conversion
+     (after both non-erroneous and erroneous output written). */
+  Bytecount total_written;
+  /* Total amount of input processed, including erroneous input. */
+  Bytecount total_read;
+
+  /* (2) Fields set by the convert method when an error occurs. */
+  /* Total amount of non-erroneous input processed so far */
+  Bytecount read_good;
+  /* Length of output dynarr reflecting non-erroneous output written so far */
+  Bytecount written_good;
+  /* Type of error that occurred.  Note that this is automatically set to
+     CODING_SUCCEEDED before the convert method is called, so it only needs
+     to be set when an error occurs. */
+  enum coding_error error_occurred;
+
+
+  /********* Miscellaneous flags **********/
+
+  /* If set, this is the last chunk of data being processed.  When this is
+     finished, output any necessary terminating control characters, escape
+     sequences, etc. */
+  unsigned int eof :1;
+
+  /* The following three flags are initialized from flags specified when
+     the coding stream was created. */
+  /* If set, don't close the stream at the other end when being closed. */
+  unsigned int no_close_other :1;
+  /* If set, read only one byte at a time from other end to avoid any
+     possible blocking. */
+  unsigned int one_byte_at_a_time :1;
+  /* If set (the default), and we're a read stream, we init char mode on
+     ourselves as necessary to prevent the caller from getting partial
+     characters. */
+  unsigned int set_char_mode_on_us_when_reading :1;
+
+  /* #### Temporary test to verify that finalizers don't ever get called
+     more than once. */
+  unsigned int finalized :1;
+
   /* Coding-system-specific data holding extra state about the
      conversion.  Logically a struct TYPE_coding_stream; a pointer
      to such a struct, with (when ERROR_CHECK_TYPES is defined)
@@ -1068,26 +1111,6 @@ struct coding_stream
      during the lifetime of the stream).  The size comes from
      methods->stream_data_size.  */
   void *data;
-
-  enum encode_decode direction;
-
-  /* If set, this is the last chunk of data being processed.  When this is
-     finished, output any necessary terminating control characters, escape
-     sequences, etc. */
-  unsigned int eof:1;
-
-  /* If set, don't close the stream at the other end when being closed. */
-  unsigned int no_close_other:1;
-  /* If set, read only one byte at a time from other end to avoid any
-     possible blocking. */
-  unsigned int one_byte_at_a_time:1;
-  /* If set, and we're a read stream, we init char mode on ourselves as
-     necessary to prevent the caller from getting partial characters. (the
-     default) */
-  unsigned int set_char_mode_on_us_when_reading:1;
-
-  /* #### Temporary test */
-  unsigned int finalized:1;
 };
 
 #define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)
@@ -1099,6 +1122,11 @@ struct coding_stream
 # define CODING_STREAM_TYPE_DATA(s, type) \
   ((struct type##_coding_stream *) (s)->data)
 #endif
+
+/* Add OCTET as an undecodable literal "error" octet character, stored
+   using a 256-byte range in private Unicode space */
+#define DECODE_ERROR_OCTET(octet, dst) \
+  decode_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
 
 #define DECODE_OUTPUT_PARTIAL_CHAR(str, dst)	\
 do {						\
@@ -1126,6 +1154,37 @@ do {								\
     }								\
  }                                                              \
 while (0)
+
+/* We can't use do ... while (0) here, because we need to execute `continue',
+   so we can't have a secondary loop surrounding the code, but this if/else
+   statement should be safe even if placed in a context like this:
+
+   if (foo)
+     ENCODING_ERROR_RETURN_OR_CONTINUE(...);
+   else
+     do something else;
+
+   because it will expand to
+
+   if (foo)
+     if (condition)
+       {
+         ...
+         continue;
+       }
+     else return (...);
+   else
+     do something else;
+*/
+#define ENCODING_ERROR_RETURN_OR_CONTINUE(str, src)		\
+if ((str)->handle == CODING_CONTINUE ||				\
+    ((str)->handle == CODING_RETURN_IGNORE_INVALID_SEQUENCE &&	\
+     (str)->error_occurred == CODING_INVALID_SEQUENCE))		\
+  {								\
+    (str)->error_occurred = CODING_SUCCEEDED;			\
+    continue;							\
+  }								\
+else return ((src) - (str->src))
 
 #ifdef MULE
 /* Convert shift-JIS code (sj1, sj2) into JISX0208 position codes (c1, c2). */
@@ -1185,7 +1244,6 @@ DECLARE_CODING_SYSTEM_TYPE (internal);
 DECLARE_CODING_SYSTEM_TYPE (multibyte);
 DECLARE_CODING_SYSTEM_TYPE (iso2022);
 DECLARE_CODING_SYSTEM_TYPE (ccl);
-DECLARE_CODING_SYSTEM_TYPE (fixed_width);
 DECLARE_CODING_SYSTEM_TYPE (shift_jis);
 DECLARE_CODING_SYSTEM_TYPE (big5);
 #endif
@@ -1218,9 +1276,11 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 extern Lisp_Object Vdebug_coding_detection;
 #endif /* DEBUG_XEMACS */
 
-#define LSTREAM_FL_NO_CLOSE_OTHER	(1 << 16)
-#define LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME (1 << 17)
-#define LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING (1 << 18)
+#define LSTREAM_FL_NO_CLOSE_OTHER				(1 << 16)
+#define LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME			(1 << 17)
+#define LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING		(1 << 18)
+#define LSTREAM_FL_STOP_ON_ERROR				(1 << 19)
+#define LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE	(1 << 20)
 
 Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 				      enum encode_decode direction,
@@ -1228,8 +1288,34 @@ Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 Lisp_Object make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
 				       enum encode_decode direction,
 				       int flags);
+void coding_stream_get_error_info (Lstream *stream, enum coding_error *errtype,
+				   Bytecount *good_source,
+				   Bytecount *total_source,
+				   Bytecount *good_sink,
+				   Bytecount *total_sink);
 void set_detection_results (struct detection_state *st, int detector,
 			    int given);
+
+
+void handle_encoding_error_after_output (struct coding_stream *str,
+					 const UExtbyte *src,
+					 unsigned_char_dynarr *dst,
+					 Ichar num_input_err_chars,
+					 Bytecount num_output_err_bytes,
+					 enum coding_error errtype);
+void handle_encoding_error_before_output (struct coding_stream *str,
+					  const UExtbyte *src,
+					  unsigned_char_dynarr *dst,
+					  Ichar num_input_err_chars,
+					  enum coding_error errtype);
+void handle_standard_encoding_error (struct coding_stream *str,
+				     const UExtbyte *src,
+				     unsigned_char_dynarr *dst);
+int handle_possible_error_octet (Ichar ich,
+				 struct coding_stream *str,
+				 const UExtbyte *src,
+				 unsigned_char_dynarr *dst,
+				 int *code_out);
 
 #endif /* INCLUDED_file_coding_h_ */
 

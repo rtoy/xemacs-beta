@@ -1394,7 +1394,7 @@ Bytecount
 non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
 {
 #ifdef UNICODE_INTERNAL
-  /* #### This code is duplicated in encode_unicode_char_1 in unicode.c.
+  /* #### This code is duplicated in encode_unicode_to_dynarr in unicode.c.
      There should be a better way. */
   register Bytecount bytes;
 
