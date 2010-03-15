@@ -1077,6 +1077,17 @@ struct coding_stream
      to be set when an error occurs. */
   enum coding_error error_occurred;
 
+  /* (3) Fields used in converting the above values into cumulative values
+         (offsets from the beginning of of the stream, rather than the
+         beginning of this chunk of data) */
+
+  /* Cumulative including most recent call to conversion method (i.e.
+     including the data up through TOTAL_WRITTEN and TOTAL_READ). */
+  Bytecount new_cumul_read, new_cumul_written;
+  /* Previous values of same -- not including most recent call to conversion
+     method. */
+  Bytecount cumul_read, cumul_written;
+
 
   /********* Miscellaneous flags **********/
 
@@ -1084,18 +1095,6 @@ struct coding_stream
      finished, output any necessary terminating control characters, escape
      sequences, etc. */
   unsigned int eof :1;
-
-  /* The following three flags are initialized from flags specified when
-     the coding stream was created. */
-  /* If set, don't close the stream at the other end when being closed. */
-  unsigned int no_close_other :1;
-  /* If set, read only one byte at a time from other end to avoid any
-     possible blocking. */
-  unsigned int one_byte_at_a_time :1;
-  /* If set (the default), and we're a read stream, we init char mode on
-     ourselves as necessary to prevent the caller from getting partial
-     characters. */
-  unsigned int set_char_mode_on_us_when_reading :1;
 
   /* #### Temporary test to verify that finalizers don't ever get called
      more than once. */
@@ -1276,11 +1275,17 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 extern Lisp_Object Vdebug_coding_detection;
 #endif /* DEBUG_XEMACS */
 
-#define LSTREAM_FL_NO_CLOSE_OTHER				(1 << 16)
-#define LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME			(1 << 17)
-#define LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING		(1 << 18)
-#define LSTREAM_FL_STOP_ON_ERROR				(1 << 19)
-#define LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE	(1 << 20)
+/* Additional flags to make_coding_input_stream() and
+   make_coding_output_stream() that can be passed at creation time. */
+#define LSTR_NO_CLOSE_OTHER				(1 << 16)
+#define LSTR_READ_ONE_BYTE_AT_A_TIME			(1 << 17)
+#define LSTR_NO_INIT_CHAR_MODE_WHEN_READING		(1 << 18)
+#define LSTR_STOP_ON_ERROR				(1 << 19)
+#define LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE	(1 << 20)
+
+/* Used internally */
+#define LSTR_STOP_ON_SOME_ERROR \
+  (LSTR_STOP_ON_ERROR | LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE)
 
 Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 				      enum encode_decode direction,
