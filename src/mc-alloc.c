@@ -417,20 +417,6 @@ EMACS_INT memory_shortage;
 
 /*--- misc functions ---------------------------------------------------*/
 
-/* moved here from alloc.c */
-#ifdef ERROR_CHECK_GC
-static void
-deadbeef_memory (void *ptr, Bytecount size)
-{
-  UINT_32_BIT *ptr4 = (UINT_32_BIT *) ptr;
-  Bytecount beefs = size >> 2;
-
-  /* In practice, size will always be a multiple of four.  */
-  while (beefs--)
-    (*ptr4++) = 0xDEADBEEF; /* -559038737 base 10 */
-}
-#endif /* ERROR_CHECK_GC */
-
 /* Visits all pages (page_headers) hooked into the used heap pages
    list and executes f with the current page header as
    argument. Needed for sweep.  Returns number of processed pages. */

@@ -291,7 +291,8 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
-		    (long) XINT (Fkeymap_fullness (obj)), NORMAL_LISP_OBJECT_UID (keymap));
+		    (long) XINT (Fkeymap_fullness (obj)),
+		    LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description keymap_description[] = {

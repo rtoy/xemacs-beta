@@ -395,25 +395,23 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     write_ascstring (printcharfun, ")");
   else
-    write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (ht));
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 #ifndef NEW_GC
 static void
 free_hentries (htentry *hentries,
 #ifdef ERROR_CHECK_STRUCTURES
-	       size_t size
+	       Elemcount size
 #else /* not ERROR_CHECK_STRUCTURES) */
-	       size_t UNUSED (size)
+	       Elemcount UNUSED (size)
 #endif /* not ERROR_CHECK_STRUCTURES) */
 	       )
 {
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
-  htentry *e, *sentinel;
-
-  for (e = hentries, sentinel = e + size; e < sentinel; e++)
-    * (unsigned long *) e = 0xdeadbeef; /* -559038737 base 10 */
+  deadbeef_memory (hentries,
+		   (Rawbyte *) (hentries + size) - (Rawbyte *) hentries);
 #endif
 
   if (!DUMPEDP (hentries))

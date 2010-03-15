@@ -1108,7 +1108,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain), print_image_instance,
 		 (ii, printcharfun, escapeflag));
-  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (ii));
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static void
@@ -3711,7 +3711,7 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
   write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);
-  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (glyph));
+  write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 
 /* Glyphs are equal if all of their display attributes are equal.  We

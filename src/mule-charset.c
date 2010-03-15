@@ -158,7 +158,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
 		    CHARSET_GRAPHIC (cs),
 		    CHARSET_FINAL (cs));
   print_internal (CHARSET_REGISTRIES (cs), printcharfun, 0);
-  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (cs));
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description charset_description[] = {

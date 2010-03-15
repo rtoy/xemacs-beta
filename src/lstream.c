@@ -64,8 +64,8 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
   Lstream *lstr = XLSTREAM (obj);
 
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%lx>",
-		    lstr->imp->name, (long) lstr);
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%x>",
+		    lstr->imp->name, LISP_OBJECT_UID (obj));
 }
 
 static void

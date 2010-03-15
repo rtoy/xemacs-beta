@@ -1,3 +1,153 @@
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (c_readonly):
+	* alloc.c (deadbeef_memory):
+	* alloc.c (make_compiled_function):
+	* alloc.c (make_button_data):
+	* alloc.c (make_motion_data):
+	* alloc.c (make_process_data):
+	* alloc.c (make_timeout_data):
+	* alloc.c (make_magic_data):
+	* alloc.c (make_magic_eval_data):
+	* alloc.c (make_eval_data):
+	* alloc.c (make_misc_user_data):
+	* alloc.c (noseeum_make_marker):
+	* alloc.c (ADDITIONAL_FREE_string):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* bytecode.c (print_compiled_function):
+	* bytecode.c (mark_compiled_function):
+	* casetab.c:
+	* casetab.c (print_case_table):
+	* console.c:
+	* console.c (print_console):
+	* database.c (print_database):
+	* database.c (finalize_database):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c:
+	* elhash.c (print_hash_table):
+	* eval.c (print_multiple_value):
+	* eval.c (mark_multiple_value):
+	* events.c (deinitialize_event):
+	* events.c (print_event):
+	* events.c (event_equal):
+	* extents.c:
+	* extents.c (soe_dump):
+	* extents.c (soe_insert):
+	* extents.c (soe_delete):
+	* extents.c (soe_move):
+	* extents.c (extent_fragment_update):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* extents.c (vars_of_extents):
+	* frame.c:
+	* frame.c (print_frame):
+	* free-hook.c:
+	* free-hook.c (check_free):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* gui.c:
+	* gui.c (copy_gui_item):
+	* hash.c:
+	* hash.c (NULL_ENTRY):
+	* hash.c (KEYS_DIFFER_P):
+	* keymap.c (print_keymap):
+	* keymap.c (MARKED_SLOT):
+	* lisp.h:
+	* lrecord.h:
+	* lrecord.h (LISP_OBJECT_UID):
+	* lrecord.h (set_lheader_implementation):
+	* lrecord.h (struct old_lcrecord_header):
+	* lstream.c (print_lstream):
+	* lstream.c (finalize_lstream):
+	* marker.c (print_marker):
+	* marker.c (marker_equal):
+	* mc-alloc.c (visit_all_used_page_headers):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* objects.c (finalize_font_instance):
+	* opaque.c (print_opaque):
+	* opaque.c (print_opaque_ptr):
+	* opaque.c (equal_opaque_ptr):
+	* print.c (internal_object_printer):
+	* print.c (enum printing_badness):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* specifier.c (print_specifier):
+	* specifier.c (finalize_specifier):
+	* symbols.c:
+	* symbols.c (print_symbol_value_magic):
+	* tooltalk.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* window.c (print_window):
+	* window.c (debug_print_window):
+	(1) Make lrecord UID's have a separate UID space for each object.
+	Otherwise, with 20-bit UID's, we rapidly wrap around, especially
+	when common objects like conses and strings increment the UID value
+	for every object created. (Originally I tried making two UID spaces,
+	one for objects that always print readably and hence don't display
+	the UID, and one for other objects.  But certain objects like markers
+	for which a UID is displayed are still generated rapidly enough that
+	UID overflow is a serious issue.) This also has the advantage of
+	making UID values smaller, hence easier to remember -- their main
+	purpose is to make it easier to keep track of different objects of
+	the same type when debugging code.  Make sure we dump lrecord UID's
+	so that we don't have problems with pdumped and non-dumped objects
+	having the same UID.
+
+	(2) Display UID's consistently whenever an object (a) doesn't
+	consistently print readably (objects like cons and string, which
+	always print readably, can't display a UID), and (b) doesn't
+	otherwise have a unique property that makes objects of a
+	particular type distinguishable. (E.g. buffers didn't and still
+	don't print an ID, but the buffer name uniquely identifies the
+	buffer.) Some types, such as event, extent, compiled-function,
+	didn't always (or didn't ever) display an ID; others (such as
+	marker, extent, lstream, opaque, opaque-ptr, any object using
+	internal_object_printer()) used to display the actual machine
+	pointer instead.
+
+	(3) Rename NORMAL_LISP_OBJECT_UID to LISP_OBJECT_UID; make it work
+	over all Lisp objects and take a Lisp object, not a struct pointer.
+
+	(4) Some misc cleanups in alloc.c, elhash.c.
+
+	(5) Change code in events.c that "deinitializes" an event so that
+	it doesn't increment the event UID counter in the process.  Also
+	use deadbeef_memory() to overwrite memory instead of doing the same
+	with custom code.  In the process, make deadbeef_memory() in
+	alloc.c always available, and delete extraneous copy in mc-alloc.c.
+	Also capitalize all uses of 0xDEADBEEF.  Similarly in elhash.c
+	call deadbeef_memory().
+
+	(6) Resurrect "debug SOE" code in extents.c.  Make it conditional
+	on DEBUG_XEMACS and on a `debug-soe' variable, rather than on
+	SOE_DEBUG.  Make it output to stderr, not stdout.
+
+	(7) Delete some custom print methods that were identical to
+	external_object_printer().
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* extents.c:
+	* extents.c (soe_dump):
+	* extents.c (soe_insert):
+	* extents.c (soe_delete):
+	* extents.c (soe_move):
+	* extents.c (extent_fragment_update):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* extents.c (vars_of_extents):
+
 2010-03-12  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:

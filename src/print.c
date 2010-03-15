@@ -1569,17 +1569,16 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 {
   if (print_readably)
     printing_unreadable_object_fmt
-      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
-       XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-       (unsigned long) XPNTR (obj));
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name, LISP_OBJECT_UID (obj));
 
   /* Internal objects shouldn't normally escape to the Lisp level;
      that's why we say "XEmacs bug?".  This can happen, however, when
      printing backtraces. */
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-		    (unsigned long) XPNTR (obj));
+		    LISP_OBJECT_UID (obj));
 }
 
 enum printing_badness

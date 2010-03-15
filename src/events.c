@@ -74,14 +74,10 @@ static void
 deinitialize_event (Lisp_Object ev)
 {
   Lisp_Event *event = XEVENT (ev);
-  int i;
-  /* Preserve the old UID for this event, for tracking it */
-  unsigned int old_uid = event->lheader.uid;
 
-  for (i = 0; i < (int) (sizeof (Lisp_Event) / sizeof (int)); i++)
-    ((int *) event) [i] = 0xdeadbeef; /* -559038737 base 10 */
-  set_lheader_implementation (&event->lheader, &lrecord_event);
-  event->lheader.uid = old_uid;
+  deadbeef_memory ((Rawbyte *) event + sizeof (event->lheader),
+		   sizeof (*event) - sizeof (event->lheader));
+
   set_event_type (event, dead_event);
   SET_EVENT_CHANNEL (event, Qnil);
   XSET_EVENT_NEXT (ev, Qnil);
@@ -308,7 +304,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_object_fmt ("#<event>");
+    printing_unreadable_object_fmt ("#<event 0x%x>", LISP_OBJECT_UID (obj));
 
   switch (XEVENT (obj)->event_type)
     {
@@ -366,7 +362,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	write_ascstring (printcharfun, "#<UNKNOWN-EVENT-TYPE");
 	break;
       }
-  write_ascstring (printcharfun, ">");
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int

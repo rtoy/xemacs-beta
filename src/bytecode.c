@@ -2245,7 +2245,8 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  write_ascstring (printcharfun, print_readably ? "#[" : "#<compiled-function ");
+  write_ascstring (printcharfun, print_readably ? "#[" :
+		   "#<compiled-function ");
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (!print_readably)
     {
@@ -2298,7 +2299,10 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     }
 
   UNGCPRO;
-  write_ascstring (printcharfun, print_readably ? "]" : ">");
+  if (print_readably)
+    write_ascstring (printcharfun, "]");
+  else
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 

@@ -187,7 +187,6 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) 0
-#define NORMAL_LISP_OBJECT_UID(obj) ((obj)->header.uid)
 #else /* not NEW_GC */
 #define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
@@ -195,8 +194,9 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
-#define NORMAL_LISP_OBJECT_UID(obj) ((obj)->header.lheader.uid)
 #endif /* not NEW_GC */
+
+#define LISP_OBJECT_UID(obj) (XRECORD_LHEADER (obj)->uid)
 
 BEGIN_C_DECLS
 
@@ -256,25 +256,25 @@ struct lrecord_header
 
 struct lrecord_implementation;
 int lrecord_type_index (const struct lrecord_implementation *implementation);
-extern int lrecord_uid_counter;
+extern int lrecord_uid_counter[];
 
 #ifdef NEW_GC
-#define set_lheader_implementation(header,imp) do {	\
-  struct lrecord_header* SLI_header = (header);		\
-  SLI_header->type = (imp)->lrecord_type_index;		\
-  SLI_header->lisp_readonly = 0;			\
-  SLI_header->free = 0;					\
-  SLI_header->uid = lrecord_uid_counter++;		\
+#define set_lheader_implementation(header,imp) do {			\
+  struct lrecord_header* SLI_header = (header);				\
+  SLI_header->type = (imp)->lrecord_type_index;				\
+  SLI_header->lisp_readonly = 0;					\
+  SLI_header->free = 0;							\
+  SLI_header->uid = lrecord_uid_counter[(imp)->lrecord_type_index]++;   \
 } while (0)
 #else /* not NEW_GC */
-#define set_lheader_implementation(header,imp) do {	\
-  struct lrecord_header* SLI_header = (header);		\
-  SLI_header->type = (imp)->lrecord_type_index;		\
-  SLI_header->mark = 0;					\
-  SLI_header->c_readonly = 0;				\
-  SLI_header->lisp_readonly = 0;			\
-  SLI_header->free = 0;					\
-  SLI_header->uid = lrecord_uid_counter++;		\
+#define set_lheader_implementation(header,imp) do {			\
+  struct lrecord_header* SLI_header = (header);				\
+  SLI_header->type = (imp)->lrecord_type_index;				\
+  SLI_header->mark = 0;							\
+  SLI_header->c_readonly = 0;						\
+  SLI_header->lisp_readonly = 0;					\
+  SLI_header->free = 0;							\
+  SLI_header->uid = lrecord_uid_counter[(imp)->lrecord_type_index]++;   \
 } while (0)
 #endif /* not NEW_GC */
 
