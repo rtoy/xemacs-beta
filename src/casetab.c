@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 1987, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -110,7 +110,7 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),
      CASE_TABLE_CANON (ct), CASE_TABLE_EQV (ct));
-  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (ct));
+  write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description case_table_description [] = {

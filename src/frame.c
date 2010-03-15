@@ -642,7 +642,7 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 		    FRAME_TYPE_NAME (frm));
   print_internal (frm->name, printcharfun, 1);
-  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (frm));
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("frame", frame,

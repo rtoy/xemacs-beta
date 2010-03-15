@@ -166,7 +166,7 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
 		    DEVICE_TYPE_NAME (d));
   if (DEVICE_LIVE_P (d) && !NILP (DEVICE_CONNECTION (d)))
     write_fmt_string_lisp (printcharfun, " on %S", 1, DEVICE_CONNECTION (d));
-  write_fmt_string (printcharfun, " 0x%x>", NORMAL_LISP_OBJECT_UID (d));
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("device", device,

@@ -1105,10 +1105,10 @@ print_symbol_value_magic (Lisp_Object obj, Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%lx>",
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%x>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
 		    XSYMBOL_VALUE_MAGIC_TYPE (obj),
-		    (long) XPNTR (obj));
+		    LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description symbol_value_forward_description[] = {

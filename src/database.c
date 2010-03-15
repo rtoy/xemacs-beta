@@ -232,7 +232,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
                          XSYMBOL_NAME (XCODING_SYSTEM_NAME
                                        (db->coding_system)));
 
-  write_fmt_string (printcharfun, "0x%x>", NORMAL_LISP_OBJECT_UID (db));
+  write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static void

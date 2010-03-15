@@ -4757,6 +4757,7 @@ MODULE_API EXFUN (Fmake_symbol, 1);
 MODULE_API EXFUN (Fmake_vector, 2);
 MODULE_API EXFUN (Fvector, MANY);
 
+void deadbeef_memory (void *ptr, Bytecount size);
 #ifndef NEW_GC
 void release_breathing_space (void);
 #endif /* not NEW_GC */

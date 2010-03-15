@@ -4605,7 +4605,8 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (print_readably)
     {
-      printing_unreadable_object_fmt ("multiple values");
+      printing_unreadable_object_fmt ("#<multiple values 0x%x>",
+				      LISP_OBJECT_UID (obj));
     }
 
   write_fmt_string (printcharfun,
@@ -4635,7 +4636,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
         }
     }
 
-  write_fmt_string (printcharfun, ") 0x%lx>", (unsigned long) XPNTR (obj));
+  write_fmt_string (printcharfun, ") 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static Lisp_Object

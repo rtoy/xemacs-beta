@@ -60,7 +60,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Marker *marker = XMARKER (obj);
 
   if (print_readably)
-    printing_unreadable_object_fmt ("#<marker 0x%lx>", (long) marker);
+    printing_unreadable_object_fmt ("#<marker 0x%x>", LISP_OBJECT_UID (obj));
 
   write_ascstring (printcharfun, GETTEXT ("#<marker "));
   if (!marker->buffer)
@@ -73,7 +73,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
     }
   if (marker->insertion_type)
     write_ascstring (printcharfun, " insertion-type=t");
-  write_fmt_string (printcharfun, " 0x%lx>", (long) marker);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int

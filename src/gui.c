@@ -1,6 +1,6 @@
 /* Generic GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -686,18 +686,6 @@ gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
   return 1;
 }
 
-static void
-print_gui_item (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
-{
-  Lisp_Gui_Item *g = XGUI_ITEM (obj);
-
-  if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-
-  write_fmt_string (printcharfun, "#<gui-item 0x%x>", NORMAL_LISP_OBJECT_UID (g));
-}
-
 Lisp_Object
 copy_gui_item (Lisp_Object gui_item)
 {
@@ -804,7 +792,7 @@ parse_gui_item_tree_list (Lisp_Object list)
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("gui-item", gui_item,
-			   mark_gui_item, print_gui_item,
+			   mark_gui_item, external_object_printer,
 			   0, gui_item_equal,
 			   gui_item_hash,
 			   gui_item_description,

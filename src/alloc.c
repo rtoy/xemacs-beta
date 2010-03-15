@@ -102,6 +102,36 @@ int funcall_allocation_flag;
 Bytecount __temp_alloca_size__;
 Bytecount funcall_alloca_count;
 
+/* All the built-in lisp object types are enumerated in `enum lrecord_type'.
+   Additional ones may be defined by a module (none yet).  We leave some
+   room in `lrecord_implementations_table' for such new lisp object types. */
+const struct lrecord_implementation *lrecord_implementations_table[(int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
+int lrecord_type_count = lrecord_type_last_built_in_type;
+
+/* This is just for use by the printer, to allow things to print uniquely.
+   We have a separate UID space for each object. (Important because the
+   UID is only 20 bits in old-GC, and 22 in NEW_GC.) */
+int lrecord_uid_counter[countof (lrecord_implementations_table)];
+
+/* Non-zero means we're in the process of doing the dump */
+int purify_flag;
+
+/* Non-zero means we're pdumping out or in */
+#ifdef PDUMP
+int in_pdump;
+#endif
+
+#ifdef ERROR_CHECK_TYPES
+
+Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
+
+#endif
+
+/* Very cheesy ways of figuring out how much memory is being used for
+   data. #### Need better (system-dependent) ways. */
+void *minimum_address_seen;
+void *maximum_address_seen;
+
 /* Determine now whether we need to garbage collect or not, to make
    Ffuncall() faster */
 #define INCREMENT_CONS_COUNTER_1(size)		\
@@ -171,28 +201,6 @@ do {								\
   recompute_need_to_garbage_collect ();		\
 } while (0)
 #endif /*not NEW_GC */
-
-/* This is just for use by the printer, to allow things to print uniquely */
-int lrecord_uid_counter;
-
-/* Non-zero means we're in the process of doing the dump */
-int purify_flag;
-
-/* Non-zero means we're pdumping out or in */
-#ifdef PDUMP
-int in_pdump;
-#endif
-
-#ifdef ERROR_CHECK_TYPES
-
-Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
-
-#endif
-
-/* Very cheesy ways of figuring out how much memory is being used for
-   data. #### Need better (system-dependent) ways. */
-void *minimum_address_seen;
-void *maximum_address_seen;
 
 #ifndef NEW_GC
 int
@@ -436,10 +444,7 @@ xfree_1 (void *block)
   MALLOC_END ();
 }
 
-#ifdef ERROR_CHECK_GC
-
-#ifndef NEW_GC
-static void
+void
 deadbeef_memory (void *ptr, Bytecount size)
 {
   UINT_32_BIT *ptr4 = (UINT_32_BIT *) ptr;
@@ -449,14 +454,6 @@ deadbeef_memory (void *ptr, Bytecount size)
   while (beefs--)
     (*ptr4++) = 0xDEADBEEF; /* -559038737 base 10 */
 }
-#endif /* not NEW_GC */
-
-#else /* !ERROR_CHECK_GC */
-
-
-#define deadbeef_memory(ptr, size)
-
-#endif /* !ERROR_CHECK_GC */
 
 #undef xstrdup
 char *
@@ -1953,7 +1950,7 @@ make_compiled_function (void)
   Lisp_Compiled_Function *f;
 
   ALLOC_FROB_BLOCK_LISP_OBJECT (compiled_function, Lisp_Compiled_Function,
-				    f, &lrecord_compiled_function);
+				f, &lrecord_compiled_function);
 
   f->stack_depth = 0;
   f->specpdl_depth = 0;
@@ -2170,7 +2167,8 @@ make_button_data (void)
 {
   Lisp_Button_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (button_data, Lisp_Button_Data, d, &lrecord_button_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (button_data, Lisp_Button_Data, d,
+				&lrecord_button_data);
   zero_nonsized_lisp_object (wrap_button_data (d));
   return wrap_button_data (d);
 }
@@ -2183,7 +2181,8 @@ make_motion_data (void)
 {
   Lisp_Motion_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (motion_data, Lisp_Motion_Data, d, &lrecord_motion_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (motion_data, Lisp_Motion_Data, d,
+				&lrecord_motion_data);
   zero_nonsized_lisp_object (wrap_motion_data (d));
 
   return wrap_motion_data (d);
@@ -2197,7 +2196,8 @@ make_process_data (void)
 {
   Lisp_Process_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (process_data, Lisp_Process_Data, d, &lrecord_process_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (process_data, Lisp_Process_Data, d,
+				&lrecord_process_data);
   zero_nonsized_lisp_object (wrap_process_data (d));
   d->process = Qnil;
 
@@ -2212,7 +2212,8 @@ make_timeout_data (void)
 {
   Lisp_Timeout_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (timeout_data, Lisp_Timeout_Data, d, &lrecord_timeout_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (timeout_data, Lisp_Timeout_Data, d,
+				&lrecord_timeout_data);
   zero_nonsized_lisp_object (wrap_timeout_data (d));
   d->function = Qnil;
   d->object = Qnil;
@@ -2228,7 +2229,8 @@ make_magic_data (void)
 {
   Lisp_Magic_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (magic_data, Lisp_Magic_Data, d, &lrecord_magic_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (magic_data, Lisp_Magic_Data, d,
+				&lrecord_magic_data);
   zero_nonsized_lisp_object (wrap_magic_data (d));
 
   return wrap_magic_data (d);
@@ -2242,7 +2244,8 @@ make_magic_eval_data (void)
 {
   Lisp_Magic_Eval_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (magic_eval_data, Lisp_Magic_Eval_Data, d, &lrecord_magic_eval_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (magic_eval_data, Lisp_Magic_Eval_Data, d,
+				&lrecord_magic_eval_data);
   zero_nonsized_lisp_object (wrap_magic_eval_data (d));
   d->object = Qnil;
 
@@ -2257,7 +2260,8 @@ make_eval_data (void)
 {
   Lisp_Eval_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (eval_data, Lisp_Eval_Data, d, &lrecord_eval_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (eval_data, Lisp_Eval_Data, d,
+				&lrecord_eval_data);
   zero_nonsized_lisp_object (wrap_eval_data (d));
   d->function = Qnil;
   d->object = Qnil;
@@ -2273,7 +2277,8 @@ make_misc_user_data (void)
 {
   Lisp_Misc_User_Data *d;
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (misc_user_data, Lisp_Misc_User_Data, d, &lrecord_misc_user_data);
+  ALLOC_FROB_BLOCK_LISP_OBJECT (misc_user_data, Lisp_Misc_User_Data, d,
+				&lrecord_misc_user_data);
   zero_nonsized_lisp_object (wrap_misc_user_data (d));
   d->function = Qnil;
   d->object = Qnil;
@@ -2312,7 +2317,7 @@ noseeum_make_marker (void)
   Lisp_Marker *p;
 
   NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT (marker, Lisp_Marker, p,
-					    &lrecord_marker);
+					&lrecord_marker);
   p->buffer = 0;
   p->membpos = 0;
   marker_next (p) = 0;
@@ -3356,11 +3361,6 @@ Does not copy symbols.
 /*			   Garbage Collection				*/
 /************************************************************************/
 
-/* All the built-in lisp object types are enumerated in `enum lrecord_type'.
-   Additional ones may be defined by a module (none yet).  We leave some
-   room in `lrecord_implementations_table' for such new lisp object types. */
-const struct lrecord_implementation *lrecord_implementations_table[(int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
-int lrecord_type_count = lrecord_type_last_built_in_type;
 #ifndef USE_KKCC
 /* Object marker functions are in the lrecord_implementation structure.
    But copying them to a parallel array is much more cache-friendly.
@@ -4391,7 +4391,7 @@ sweep_strings (void)
 #define ADDITIONAL_FREE_string(ptr) do {	\
     Bytecount size = ptr->size_;		\
     if (BIG_STRING_SIZE_P (size))		\
-      xfree (ptr->data_);		\
+      xfree (ptr->data_);			\
   } while (0)
 
   SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);
@@ -5117,7 +5117,6 @@ common_init_alloc_early (void)
   funcall_allocation_flag = 0;
   funcall_alloca_count = 0;
 
-  lrecord_uid_counter = 259;
 #ifndef NEW_GC
   debug_string_purity = 0;
 #endif /* not NEW_GC */
@@ -5184,6 +5183,8 @@ init_alloc_once_early (void)
     for (i = 0; i < countof (lrecord_implementations_table); i++)
       lrecord_implementations_table[i] = 0;
   }
+
+  dump_add_opaque (lrecord_uid_counter, sizeof (lrecord_uid_counter));
 
   INIT_LISP_OBJECT (cons);
   INIT_LISP_OBJECT (vector);

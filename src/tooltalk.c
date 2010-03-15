@@ -1,7 +1,7 @@
 /* Tooltalk support for Emacs.
    Copyright (C) 1993, 1994 Sun Microsystems, Inc.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -175,7 +175,7 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string (printcharfun, "#<tooltalk-message id:0x%lx 0x%x>",
-		    (long) (p->m), NORMAL_LISP_OBJECT_UID (p));
+		    (long) (p->m), LISP_OBJECT_UID (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("tooltalk-message", tooltalk_message,
@@ -250,7 +250,7 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string (printcharfun, "#<tooltalk-pattern id:0x%lx 0x%x>",
-		    (long) (p->p), NORMAL_LISP_OBJECT_UID (p));
+		    (long) (p->p), LISP_OBJECT_UID (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("tooltalk-pattern", tooltalk_pattern,

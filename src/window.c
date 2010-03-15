@@ -321,8 +321,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
       Lisp_Object name = XBUFFER (buf)->name;
       write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
-  write_fmt_string (printcharfun, " 0x%x>",
-		    NORMAL_LISP_OBJECT_UID (XWINDOW (obj)));
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static void
@@ -5407,7 +5406,7 @@ debug_print_window (Lisp_Object window, int level)
     if (!NILP (buffer) && BUFFERP (buffer))
       stderr_out (" on %s", XSTRING_DATA (XBUFFER (buffer)->name));
   }
-  stderr_out (" 0x%x>", NORMAL_LISP_OBJECT_UID (XWINDOW (window)));
+  stderr_out (" 0x%x>", LISP_OBJECT_UID (window));
 
   while (!NILP (child))
     {
