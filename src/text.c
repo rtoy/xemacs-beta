@@ -5179,7 +5179,7 @@ Lstream_fput_ichar (Lstream *stream, Ichar ch)
 {
   Ibyte str[MAX_ICHAR_LEN];
   Bytecount len = set_itext_ichar (str, ch);
-  return Lstream_write (stream, str, len);
+  return Lstream_write (stream, str, len) >= 0 ? 0 : -1;
 }
 
 void

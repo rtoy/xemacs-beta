@@ -1,3 +1,121 @@
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* console-tty.c (tty_init_console):
+	* event-msw.c (make_ntpipe_input_stream):
+	* event-msw.c (make_ntpipe_output_stream):
+	* event-msw.c (winsock_closer):
+	* event-msw.c (make_winsock_stream_1):
+	* event-msw.c (make_winsock_input_stream):
+	* event-msw.c (make_winsock_output_stream):
+	* event-msw.c (get_winsock_stream_waitable):
+	* file-coding.c:
+	* file-coding.c (Fautoload_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* file-coding.c (set_coding_character_mode):
+	* file-coding.c (coding_closer):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (make_coding_input_stream):
+	* file-coding.c (make_coding_output_stream):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (query_coding_1):
+	* file-coding.c (chain_canonicalize_after_coding):
+	* file-coding.c (chain_init_coding_streams_1):
+	* file-coding.c (chain_convert):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_get_error_info):
+	* file-coding.c (convert_eol_convert):
+	* file-coding.c (convert_eol_canonicalize_after_coding):
+	* file-coding.c (coding_category_symbol_to_id):
+	* file-coding.c (detection_result_symbol_to_number):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (undecided_print):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (undecided_canonicalize_after_coding):
+	* file-coding.c (detect_coding_stream):
+	* file-coding.c (Fdetect_coding_region):
+	* file-coding.c (gzip_convert):
+	* file-coding.h:
+	* file-coding.h (struct coding_stream):
+	* lstream.c:
+	* lstream.c (finalize_lstream):
+	* lstream.c (disksave_lstream):
+	* lstream.c (Lstream_new):
+	* lstream.c (Lstream_set_character_mode):
+	* lstream.c (Lstream_unset_character_mode):
+	* lstream.c (Lstream_reopen):
+	* lstream.c (Lstream_really_write):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_read_1):
+	* lstream.c (Lstream_pseudo_close):
+	* lstream.c (Lstream_close):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (Lstream_set_error_occurred_p):
+	* lstream.c (struct stdio_stream):
+	* lstream.c (make_stdio_stream_1):
+	* lstream.c (make_stdio_input_stream):
+	* lstream.c (make_stdio_output_stream):
+	* lstream.c (stdio_flusher):
+	* lstream.c (stdio_closer):
+	* lstream.c (struct filedesc_stream):
+	* lstream.c (make_filedesc_stream_1):
+	* lstream.c (make_filedesc_input_stream):
+	* lstream.c (make_filedesc_output_stream):
+	* lstream.c (filedesc_reader):
+	* lstream.c (filedesc_write_single_byte):
+	* lstream.c (filedesc_writer):
+	* lstream.c (filedesc_closer):
+	* lstream.c (filedesc_stream_set_pty_flushing):
+	* lstream.c (make_lisp_string_input_stream):
+	* lstream.c (lisp_string_reader):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (make_resizing_buffer_output_stream):
+	* lstream.c (make_dynarr_output_stream):
+	* lstream.c (struct lisp_buffer_stream):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (make_lisp_buffer_output_stream):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.h:
+	* lstream.h (LSTR_CLOSING):
+	* lstream.h (LSTR_ALLOW_QUIT):
+	* lstream.h (LSTR_PTY_FLUSHING):
+	* lstream.h (LSTR_BLOCKED_OK):
+	* process-unix.c (unix_send_process):
+	* text.c (Lstream_fput_ichar):
+	Cleanups of lstream code in preparation for further changes
+	to query-coding-region mechanism:
+
+	-- Rename Lstream flags from LSTREAM_FL_* to LSTR_*.
+	-- Change Lstream_new() to take flags, ala read(), instead of
+	   an fread()-style mode string.  Update lstream-type-specific flags
+	   so they consistently start at 1 << 16, and eliminate various
+           lstream-type-specific mechanisms for handling flags in favor of
+	   unifying generic and type-specific flags and storing all the flags
+	   in a single `flags' field in the Lstream.
+	-- Add new "cumulative read/written" fields in the coding lstream;
+	   stored, but not used yet.
+	-- Instead of Lstream_write_no_store(), use a flag LSTR_NO_SQUIRREL.
+	   Pass this flag in query_coding_1().  Propagate this flag from a
+	   chain coding stream to the underlying coding streams.  Change
+	   Lstream_write() to return number of bytes written instead of
+	   just 0 or -1.
+	-- Write a long comment about the workings of the chain coding system
+	   and how it interacts with back-propagation of the good_read and
+	   similar error offsets; not finished.
+	-- Write code in chain_convert() to back-propagate error info;
+	   doesn't yet actually convert the offsets properly.
+	-- Add functions Lstream_set_error_occurred_p() and Lstream_is_type().
+	
+
 2010-03-14  Ben Wing  <ben@xemacs.org>
 
 	* file-coding.c:

@@ -327,7 +327,10 @@ slurp_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
 {
-  Lstream *lstr = Lstream_new (lstream_ntpipe_slurp, "r");
+  Lstream *lstr = Lstream_new (lstream_ntpipe_slurp,
+			       LSTR_READ |
+			       LSTR_CLOSE_AT_DISKSAVE);
+
   struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA (lstr);
   DWORD thread_id_unused;
   HANDLE hthread;
@@ -368,7 +371,6 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
   ResumeThread (hthread);
   CloseHandle (hthread);
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
@@ -559,7 +561,9 @@ shove_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 {
-  Lstream *lstr = Lstream_new (lstream_ntpipe_shove, "w");
+  Lstream *lstr = Lstream_new (lstream_ntpipe_shove,
+			       LSTR_WRITE |
+			       LSTR_CLOSE_AT_DISKSAVE);
   struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (lstr);
   DWORD thread_id_unused;
 
@@ -593,7 +597,6 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
   /* Now let it go */
   ResumeThread (s->hthread);
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
@@ -842,7 +845,7 @@ winsock_closer (Lstream *lstr)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
-  if (lstr->flags & LSTREAM_FL_READ)
+  if (lstr->flags & LSTR_READ)
     shutdown (str->s, 0);
   else
     shutdown (str->s, 1);
@@ -869,9 +872,10 @@ winsock_was_blocked_p (Lstream *stream)
 }
 
 static Lisp_Object
-make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
+make_winsock_stream_1 (SOCKET s, LPARAM param, int flags)
 {
-  Lstream *lstr = Lstream_new (lstream_winsock, mode);
+  Lstream *lstr =
+    Lstream_new (lstream_winsock, flags | LSTR_CLOSE_AT_DISKSAVE);
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
   xzero (*str);
@@ -880,26 +884,25 @@ make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
 
   str->ov.hEvent = qxeCreateEvent (NULL, TRUE, FALSE, NULL);
 
-  if (lstr->flags & LSTREAM_FL_READ)
+  if (lstr->flags & LSTR_READ)
     {
       str->buffer = xmalloc (WINSOCK_READ_BUFFER_SIZE);
       winsock_initiate_read (str);
     }
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
 static Lisp_Object
 make_winsock_input_stream (SOCKET s, LPARAM param)
 {
-  return make_winsock_stream_1 (s, param, "r");
+  return make_winsock_stream_1 (s, param, LSTR_READ);
 }
 
 static Lisp_Object
 make_winsock_output_stream (SOCKET s, LPARAM param)
 {
-  return make_winsock_stream_1 (s, param, "w");
+  return make_winsock_stream_1 (s, param, LSTR_WRITE);
 }
 
 static HANDLE

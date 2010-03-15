@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Current primary author: Ben Wing <ben@xemacs.org>
-   
+
    Rewritten by Ben Wing <ben@xemacs.org>, based originally on coding.c
    from Mule 2.? but probably does not share one line of code with that
    original source.  Rewriting work started around Dec. 1994. or Jan. 1995.
@@ -576,7 +576,7 @@ associated coding system object is returned.
 DEFUN ("autoload-coding-system", Fautoload_coding_system, 2, 2, 0, /*
 Define SYMBOL as a coding-system that is loaded on demand.
 
-FORM is a form to evaluate to define the coding-system. 
+FORM is a form to evaluate to define the coding-system.
 */
        (symbol, form))
 {
@@ -627,7 +627,7 @@ FORM is a form to evaluate to define the coding-system.
                 }
               else if (full_name[i] >= 'A'  && full_name[i] <= 'Z')
                 {
-                  eicat_ch (minimal_name, full_name[i] + 
+                  eicat_ch (minimal_name, full_name[i] +
                             ('a' - 'A'));
                 }
             }
@@ -946,7 +946,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
      If the original coding system is not a text-type coding system
      (decodes byte->char), we need to coerce it to one by the appropriate
      wrapping in CANONICAL. */
-  
+
   for (i = 0; i < countof (coding_subsidiary_list); i++)
     {
       const Ascbyte *extension = coding_subsidiary_list[i].extension;
@@ -1062,7 +1062,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 			      ++coding_system_tick);
       name_or_existing = intern_istring (newname);
       xfree (newname);
-      
+
       if (UNBOUNDP (description))
 	{
 	  newname =
@@ -1161,14 +1161,14 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
           }
 	else if (EQ (key, Qsafe_charsets))
           {
-            if (!EQ (Qt, value) 
+            if (!EQ (Qt, value)
                 /* Would be nice to actually do this check, but there are
                    some order conflicts with japanese.el and
                    mule-coding.el  */
                 && 0)
               {
 #ifdef MULE
-                EXTERNAL_LIST_LOOP_2 (safe_charset, value) 
+                EXTERNAL_LIST_LOOP_2 (safe_charset, value)
                   CHECK_CHARSET (Ffind_charset (safe_charset));
 #endif
               }
@@ -1178,9 +1178,9 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	else if (EQ (key, Qcategory))
           {
             Fput (name_or_existing, intern ("coding-system-property"),
-                  Fplist_put (Fget (name_or_existing, 
+                  Fplist_put (Fget (name_or_existing,
                                     intern ("coding-system-property"),
-                                    Qnil), 
+                                    Qnil),
                               Qcategory, value));
           }
 	else if (EQ (key, Qmime_charset))
@@ -1226,7 +1226,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	Lisp_Object newnamesym = intern_istring (newname);
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
 	xfree (newname);
-	
+
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
 	    (csobj,
@@ -1396,16 +1396,16 @@ few XEmacs coding systems do; this is a feature.
 
 `safe-chars'
      The value is a char table.  If a character has non-nil value in it,
-     the character is safely supported by the coding system.  
+     the character is safely supported by the coding system.
      This overrides the `safe-charsets' property.
-   
+
 `safe-charsets'
      The value is a list of charsets safely supported by the coding
      system.  For coding systems based on ISO 2022, XEmacs may try to
      encode characters outside these character sets, but outside of
      East Asia and East Asian coding systems, it is unlikely that
      consumers of the data will understand XEmacs' encoding.
-     The value t means that all XEmacs character sets handles are supported.  
+     The value t means that all XEmacs character sets handles are supported.
 
 The following properties are allowed for FSF compatibility but currently
 ignored:
@@ -1414,15 +1414,15 @@ ignored:
      The value is a translation table to be applied on decoding.  See
      the function `make-translation-table' for the format of translation
      table.  This is not applicable to CCL-based coding systems.
-    
+
 `translation-table-for-encode'
      The value is a translation table to be applied on encoding.  This is
      not applicable to CCL-based coding systems.
-     
+
 `mime-charset'
      The value is a symbol of which name is `MIME-charset' parameter of
      the coding system.
-    
+
 `valid-codes' (meaningful only for a coding system based on CCL)
      The value is a list to indicate valid byte ranges of the encoded
      file.  Each element of the list is an integer or a cons of integer.
@@ -2130,8 +2130,8 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
            we don't know how much data the conversion routine might need
            before it can generate any data of its own (eg, bzip2). */
 	Bytecount readmore =
-	  str->one_byte_at_a_time ? (Bytecount) 1 :
-	    max (size, (Bytecount) 1024);
+	  stream->flags & LSTR_READ_ONE_BYTE_AT_A_TIME ? (Bytecount) 1 :
+	  max (size, (Bytecount) 1024);
 
 	Dynarr_add_many (str->convert_from, 0, readmore);
 	read_size = Lstream_read (str->other_end,
@@ -2169,6 +2169,11 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 
 	str->total_written = Dynarr_length (str->convert_to);
 	str->total_read = processed;
+	str->cumul_read = str->new_cumul_read;
+	str->cumul_written = str->new_cumul_written;
+	str->new_cumul_read += str->total_read;
+	str->new_cumul_written += str->total_written;
+
 	if (str->handle != CODING_CONTINUE &&
 	    str->error_occurred != CODING_SUCCEEDED)
 	  {
@@ -2212,8 +2217,14 @@ coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
 
   size = XCODESYSMETH (str->codesys, convert,
 		       (str, str->src, str->srclen, str->convert_to));
+
   str->total_written = Dynarr_length (str->convert_to);
   str->total_read = size;
+  str->cumul_read = str->new_cumul_read;
+  str->cumul_written = str->new_cumul_written;
+  str->new_cumul_read += str->total_read;
+  str->new_cumul_written += str->total_written;
+
   if (Lstream_write (str->other_end, Dynarr_begin (str->convert_to),
 		     Dynarr_length (str->convert_to)) < 0)
     {
@@ -2264,14 +2275,14 @@ set_coding_character_mode (Lstream *stream)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
   Lstream *stream_to_set =
-    stream->flags & LSTREAM_FL_WRITE ? stream : str->other_end;
+    stream->flags & LSTR_WRITE ? stream : str->other_end;
   if (encode_decode_source_sink_type_is_char
       (str->codesys, CODING_SOURCE, str->direction))
     Lstream_set_character_mode (stream_to_set);
   else
     Lstream_unset_character_mode (stream_to_set);
-  if (str->set_char_mode_on_us_when_reading &&
-      (stream->flags & LSTREAM_FL_READ))
+  if (!(stream->flags & LSTR_NO_INIT_CHAR_MODE_WHEN_READING) &&
+      (stream->flags & LSTR_READ))
     {
       if (encode_decode_source_sink_type_is_char
 	  (str->codesys, CODING_SINK, str->direction))
@@ -2323,7 +2334,7 @@ static int
 coding_closer (Lstream *stream)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
-  if (stream->flags & LSTREAM_FL_WRITE)
+  if (stream->flags & LSTR_WRITE)
     {
       str->eof = 1;
       coding_writer (stream, 0, 0);
@@ -2343,7 +2354,7 @@ coding_closer (Lstream *stream)
       str->convert_from = 0;
     }
 
-  if (str->no_close_other)
+  if (stream->flags & LSTR_NO_CLOSE_OTHER)
     return Lstream_flush (str->other_end);
   else
     return Lstream_close (str->other_end);
@@ -2390,7 +2401,7 @@ coding_stream_coding_system (Lstream *stream)
 }
 
 /* After an error has occurred, return info relevant to the erroneous and
-   non-erroneous input.  This only makes sense if LSTREAM_FL_STOP_ON_ERROR
+   non-erroneous input.  This only makes sense if LSTR_STOP_ON_ERROR
    has been used, and currently only applies during encoding, not decoding.
    (#### This should probably be fixed.) With this flag set, conversion
    stops once an error has been detected, and the input processed so far
@@ -2445,7 +2456,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
      with the data appropriate for the new coding system. */
   if (!NILP (str->codesys))
     {
-      if (lstr->flags & LSTREAM_FL_WRITE)
+      if (lstr->flags & LSTR_WRITE)
 	{
 	  Lstream_flush (lstr);
 	  str->eof = 1;
@@ -2457,7 +2468,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
   str->ch = -1;
-  
+
   if (str->data)
     {
       xfree (str->data);
@@ -2485,10 +2496,9 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
 
 static Lisp_Object
 make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
-		      const char *mode, enum encode_decode direction,
-		      int flags)
+		      enum encode_decode direction, int flags)
 {
-  Lstream *lstr = Lstream_new (lstream_coding, mode);
+  Lstream *lstr = Lstream_new (lstream_coding, flags);
   struct coding_stream *str = CODING_STREAM_DATA (lstr);
 
   codesys = Fget_coding_system (codesys);
@@ -2502,16 +2512,9 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->convert_from = Dynarr_new (unsigned_char);
   str->direction = direction;
 
-  if (flags & LSTREAM_FL_NO_CLOSE_OTHER)
-    str->no_close_other = 1;
-  if (flags & LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME)
-    str->one_byte_at_a_time = 1;
-  if (!(flags & LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING))
-    str->set_char_mode_on_us_when_reading = 1;
-
-  if (flags & LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE)
+  if (flags & LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE)
     str->handle = CODING_RETURN_IGNORE_INVALID_SEQUENCE;
-  else if (flags & LSTREAM_FL_STOP_ON_ERROR)
+  else if (flags & LSTR_STOP_ON_ERROR)
     str->handle = CODING_RETURN;
   else
     str->handle = CODING_CONTINUE;
@@ -2523,18 +2526,18 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
 /*
    FLAGS:
 
-   LSTREAM_FL_NO_CLOSE_OTHER
+   LSTR_NO_CLOSE_OTHER
      Don't close STREAM (the stream at the other end) when this stream is
      closed.
 
-   LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME
+   LSTR_READ_ONE_BYTE_AT_A_TIME
      When reading from STREAM, read and process one byte at a time rather
      than in large chunks.  This is for reading from TTY's, so we don't
      block.  #### We should instead create a non-blocking filedesc stream
      that emulates the behavior as necessary using select(), when the
      fcntls don't work. (As seems to be the case on Cygwin.)
 
-  LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING
+  LSTR_NO_INIT_CHAR_MODE_WHEN_READING
      Normally, character mode is set on an coding input stream when it is
      created.  This ensures that data read from the stream will always
      occur in chunks of entire characters, and will never involve partial
@@ -2547,7 +2550,7 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
      ensures that the data arriving into the convert method of the coding
      stream is always in whole-character chunks.
 
-  LSTREAM_FL_STOP_ON_ERROR, LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
+  LSTR_STOP_ON_ERROR, LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
     These can be set on an input stream but may not be very useful because
     of the inherent "slippage buffering" used to handle the mismatch
     between the fact the convert method writes to a dynarr but the user
@@ -2557,22 +2560,23 @@ Lisp_Object
 make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 			  enum encode_decode direction, int flags)
 {
-  return make_coding_stream_1 (stream, codesys, "r", direction, flags);
+  return make_coding_stream_1 (stream, codesys, direction,
+			       flags | LSTR_READ);
 }
 
 /* FLAGS:
 
-   LSTREAM_FL_NO_CLOSE_OTHER
+   LSTR_NO_CLOSE_OTHER
      Don't close STREAM (the stream at the other end) when this stream is
      closed.
 
-  LSTREAM_FL_STOP_ON_ERROR
+  LSTR_STOP_ON_ERROR
     When an error occurs (currently only during encoding), stop processing
     immediately and record the amount of erroneous and non-erroneous data
     processed both from the source and written out during encoding.
 
-  LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
-    Same as LSTREAM_FL_STOP_ON_ERROR but don't treat an "invalid-sequence"
+  LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
+    Same as LSTR_STOP_ON_ERROR but don't treat an "invalid-sequence"
     error as an error.  Generally, an "invalid-sequence" error means that
     we are able to preserve the erroneous sequence so that e.g. a decode
     operation on a file followed by an encode operation onto another file
@@ -2583,7 +2587,8 @@ Lisp_Object
 make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
 			  enum encode_decode direction, int flags)
 {
-  return make_coding_stream_1 (stream, codesys, "w", direction, flags);
+  return make_coding_stream_1 (stream, codesys, direction,
+			       flags | LSTR_WRITE);
 }
 
 static Lisp_Object
@@ -2619,14 +2624,14 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
   /* Order is IN <---> [TO] -> OUT -> [FROM] -> [AUTODETECT-EOL] -> LB */
   instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
   next = lb_outstream = make_lisp_buffer_output_stream (buf, b, 0);
-  
+
   if (direction == CODING_DECODE &&
       XCODING_SYSTEM_EOL_TYPE (coding_system) == EOL_AUTODETECT)
     next = auto_outstream =
       make_coding_output_stream
 	(XLSTREAM (next), Fget_coding_system (Qconvert_eol_autodetect),
 	 CODING_DECODE, 0);
-    
+
   if (!sink_char)
     next = from_outstream =
       make_coding_output_stream (XLSTREAM (next), Qbinary, CODING_DECODE, 0);
@@ -2864,9 +2869,10 @@ query_coding_1 (Lisp_Object buffer_or_string, Charxpos b, Charxpos e,
     make_coding_output_stream (XLSTREAM (null_outstream),
 			       coding_system,
 			       CODING_ENCODE,
-			       !NILP (ignore_invalid_sequencesp) ?
-			       LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
-			       : LSTREAM_FL_STOP_ON_ERROR);
+			       (!NILP (ignore_invalid_sequencesp) ?
+				LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE
+				: LSTR_STOP_ON_ERROR) |
+			       LSTR_NO_SQUIRREL);
   coding_outstr = XLSTREAM (coding_outstream);
   Lstream_set_buffering (instr, LSTREAM_UNBUFFERED, 0);
   Lstream_set_buffering (coding_outstr, LSTREAM_UNBUFFERED, 0);
@@ -2905,8 +2911,8 @@ query_coding_1 (Lisp_Object buffer_or_string, Charxpos b, Charxpos e,
 	{
 	  Bytecount write_size;
 	  QUIT;
-	  write_size = Lstream_write_no_store (coding_outstr, tempbuf + offset,
-					       read_size);
+	  write_size = Lstream_write (coding_outstr, tempbuf + offset,
+				      read_size);
 	  if (Lstream_error_occurred_p (coding_outstr))
 	    {
 	      Bytecount good_source, total_source, good_sink, total_sink;
@@ -2954,9 +2960,9 @@ query_coding_1 (Lisp_Object buffer_or_string, Charxpos b, Charxpos e,
 		{
                   Lisp_Object extent
                     = Fmake_extent (make_int (errstart),
-                                    make_int (errend), 
+                                    make_int (errend),
                                     buffer_or_string);
-                  
+
                   Fset_extent_priority
                     (extent, make_int (2 + mouse_highlight_priority));
 		  /* #### FIXME! Do we really want this?  The former
@@ -3174,7 +3180,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
      any more. */
   if (str->direction == CODING_ENCODE || !data->initted)
     return us;
-  
+
   chain = Flist (XCODING_SYSTEM_CHAIN_COUNT (us),
 		 XCODING_SYSTEM_CHAIN_CHAIN (us));
 
@@ -3193,7 +3199,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
     return us;
 
   chain = delq_no_quit (Qnil, chain);
-  
+
   if (NILP (XCODING_SYSTEM_PRE_WRITE_CONVERSION (us)) &&
       NILP (XCODING_SYSTEM_POST_READ_CONVERSION (us)))
     {
@@ -3202,7 +3208,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
       if (NILP (XCDR (chain)))
 	return XCAR (chain);
     }
-  
+
   codesys = Fgethash (Fcons (XCODING_SYSTEM_PRE_WRITE_CONVERSION (us),
 			     Fcons (XCODING_SYSTEM_POST_READ_CONVERSION (us),
 				    chain)), Vchain_canonicalize_hash_table,
@@ -3311,16 +3317,9 @@ chain_init_coding_streams_1 (struct coding_stream *str,
 	  (XLSTREAM (lstream_out),
 	   codesys[direction == CODING_ENCODE ? ncodesys - (i + 1) : i],
 	   direction,
-#if 0
-	   /* Need to propagate error-handling flags to the actual coding
-	      streams */
-	   str->handle == CODING_RETURN ? LSTREAM_FL_STOP_ON_ERROR :
-	   str->handle == CODING_RETURN_IGNORE_INVALID_SEQUENCE ?
-	   LSTREAM_FL_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE :
-#else
-	   0
-#endif
-	   );
+	   /* Need to propagate error-handling flags, etc. to the actual
+	      coding streams */
+	   str->us->flags & (LSTR_STOP_ON_SOME_ERROR | LSTR_NO_SQUIRREL));
       lstream_out = data->lstreams[i];
       Lstream_set_buffering (XLSTREAM (lstream_out), LSTREAM_UNBUFFERED,
 			     0);
@@ -3333,6 +3332,7 @@ chain_convert (struct coding_stream *str, const UExtbyte *src,
 	       Bytecount n, unsigned_char_dynarr *dst)
 {
   struct chain_coding_stream *data = CODING_STREAM_TYPE_DATA (str, chain);
+  int chain_count = XCODING_SYSTEM_CHAIN_COUNT (str->codesys);
 
   if (str->eof)
     {
@@ -3346,17 +3346,41 @@ chain_convert (struct coding_stream *str, const UExtbyte *src,
 
   if (!data->initted)
     chain_init_coding_streams_1
-      (str, dst, XCODING_SYSTEM_CHAIN_COUNT (str->codesys),
+      (str, dst, chain_count,
        XCODING_SYSTEM_CHAIN_CHAIN (str->codesys), str->direction);
 
-  if (Lstream_write (XLSTREAM (data->lstreams[0]), src, n) < 0)
-    return -1;
-  return n;
+  {
+    Lstream *lstr0 = XLSTREAM (data->lstreams[0]);
+    Bytecount writeval = Lstream_write (lstr0, src, n);
+    struct coding_stream *str0, *strlast;
+    int i;
+
+    if (Lstream_error_occurred_p (lstr0))
+      {
+	Lstream_set_error_occurred_p (str->us);
+	assert (Lstream_is_type (lstr0, lstream_coding));
+	str0 = CODING_STREAM_DATA (lstr0);
+	for (i = 0; i < chain_count; i++)
+	  if (!Lstream_error_occurred_p (XLSTREAM (data->lstreams[i])))
+	    break;
+	i--;
+	/* #### Properly speaking we would have to propagate the value
+	   of written_good forward, but for the moment we just depend on the
+	   error occurring in the end of the chain. */
+	assert (i == chain_count - 1);
+	str->error_occurred = str0->error_occurred;
+	/* #### We need to implement back-propagation on this value. */
+	str->read_good = str0->read_good;
+	strlast = CODING_STREAM_DATA (XLSTREAM (data->lstreams[i]));
+	str->written_good = strlast->written_good;
+      }
+    return writeval;
+  }
 }
 
 static void
 chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
-{  
+{
   if (data->lstreams)
     {
       /* During GC, these objects are unmarked, and are about to be freed.
@@ -3459,8 +3483,128 @@ chain_getprop (Lisp_Object coding_system, Lisp_Object prop)
     return Qunbound;
 }
 
-#if 0
+/* The idea is as follows:
 
+   (1) query-coding-region is called and passed a coding system like
+       utf-16-dos.  It starts out by creating some Lstreams -- one to
+       read from a buffer (or string if query-coding-string was called),
+       one encoding output stream to encode the data from the buffer
+       (or string), and one null stream (i.e. fixed buffer with zero-sized
+       buffer) to receive the result of encoding, since query-coding-region
+       doesn't care about it.
+
+   (2) utf-16-dos has a `canonical' property that maps to a chain coding
+       system consisting of a length-two chain; on encoding, it looks like
+       data --> convert-eol-crlf --> utf-16 --> output.
+
+   (3) When the encoding output stream was created, it was passed utf-16-dos
+       as the coding system, but it called coding_system_real_canonical(),
+       got back the chain coding system, and set it as the actual coding
+       system used during encoding.
+
+   (4) Also, when the encoding stream was created, it was given flags to
+       tell it to stop encoding when an error was encountered, either all
+       types of errors or only `unencodable' errors.
+
+   (5) Now: What query-coding-region does is:
+       (a) Read a chunk of data from the buffer (or string).
+       (b) Write the data using Lstream_write.  This in turn calls
+           coding_writer(), which takes the data given to it and passes it
+           as the source to the proper convert method, and also passes in a
+           dynarr to serve as the sink for the converted data.  Let's say
+           an error occurs during conversion.  The convert method stops and
+           sets values for good and total source and sink data processed.
+       (c) Make a note of the values of good and total source and sink data.
+           But actually query-coding-region only cares about the source data
+           values, and wants those values converted back so that they
+           correspond to positions in the original buffer or stream.
+       (d) Loop back to (b) until all data in the chunk has been processed.
+       (e) Loop back to (a) until all data in the region or string has been
+           processed.
+
+   (6) Now what happens if the coding system is utf-16-dos?  In this case,
+       the actual coding system handling conversion is a chain of two
+       underlying coding systems, as described above.  When chain_convert()
+       is first called, it creates three underlying Lstreams, two to handle
+       the two coding systems and one to output to the dynarr, as follows
+       (note that "data" on the left side is read from a Lisp-buffer or
+       Lisp-string stream, and "other end" on the right is a null fixed-buffer
+       stream):
+
+                                   surface:
+                                   --------
+
+1 data ->                  lstr0(utf-16-dos/chain)                 -> other end
+2 data ->                     coding_writer()                      -> other end
+3 data ->      chain_convert()       ->     dynarr#3;           <- -> other end
+4 data -> lstr1(convert-eol-cr) -> lstr2(utf-16)
+                                  -> dynarr-stream -> dynarr#3; <- -> other end
+5 data -> coding_writer(lstr1)
+                -> coding_writer(lstr2)
+                         -> dynarr_writer()        -> dynarr#3; <- -> other end
+6 data -> convert_eol_convert() -> dynarr#1;
+          dynarr#1 <- -> unicode_convert() -> dynarr#2;
+                   dynarr#2 <- ->  dynarr_writer() -> dynarr#3; <- -> other end
+
+                                  -----------
+                                  underlying:
+
+
+   (7) One thing apparent from this is that the dynarr-stream created by
+       the chain coding-stream isn't necessary, and it should be possible
+       to eliminate it.
+
+   (8) Now, one thing to notice is that the flags passed to the Lstream at
+       level #1 need to be mirrored in the flags passed to the Lstreams at
+       level #4, in particular so that the utf-16 stream stops converting upon
+       error.
+
+   (9) Furthermore, if no-squirrel behavior is called for in the Lstreams
+       at level #1, it should be called for also in the Lstreams at level #4.
+
+   (10) Now, when unicode_convert() signals an error, convert_eol_convert()
+        has already processed data from the buffer past the error position,
+        and written it into dynarr #1.
+
+   (11) Coding streams keep cumulative values for amount of source and sink
+        data processed, including values for before the latest convert
+        sequence.  So in essence, when we fetch the good and total "source
+        data processed" values, we can convert them into positions relative
+        to the output stream from convert_eol; but we need to back-convert
+        to positions relative to its input stream, i.e. the buffer or string.
+
+   (12) (A further complication is that the buffer may not be in default
+        format -- at least this could be the case once the non-default-buffer-
+        format work is finished.  This would mean that byte positions in the
+        buffer are not the same as those in the stream generated by the
+        Lisp-buffer lstream.  query-coding-region handles this by converting
+        positions to character counts, which is what the caller wants anyway.)
+
+   (13) Because we've already read past the desired buffer position where the
+        error occurred, we basically have to go back to the last place before
+        the error position that we've recorded cumulative source and sink
+        values and reconvert data forward until we reach the desired sink
+        value.  We should do this as low as possible, as this ensures that
+        the data necessary to essentially rewind and rerun is still available.
+        (In some cases it comes from a fixed array in stack space, e.g. in
+        query-coding-region, and if we unwind the stack too much, that array
+        may become invalid.)
+
+   (14) Therefore, we should do it at the same time that we propagate errors
+        back from chained lstreams.  Note that there are two places this
+        happens: In coding_writer() and chain_convert().  In both cases we
+        should notice if the other end is a coding stream and if so, and
+        an error occurred, back-convert the error positions.
+
+   (15) To rerun things, we need to save the conversion state at the time we
+        recorded the last cumulative positions. */
+
+/*
+   (16) 
+ 
+*/
+
+#if 0
 void
 chain_get_error_info (struct coding_stream *str, enum coding_error *errtype,
 		      Bytecount *good_source, Bytecount *total_source,
@@ -3492,7 +3636,6 @@ chain_get_error_info (struct coding_stream *str, enum coding_error *errtype,
   for (i--; i >= 0; i--)
     back-convert offsets through each coding stream;
 }
-
 #endif /* 0 */
 
 static enum source_sink_type
@@ -3736,7 +3879,7 @@ convert_eol_convert (struct coding_stream *str, const UExtbyte *src,
 	{
 	  Bytecount n2 = n;
 	  const Ibyte *src2 = src;
-  
+
 	  for (; n2; n2--)
 	    {
 	      Ibyte c = *src2++;
@@ -3853,7 +3996,7 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
 
   if (str->direction == CODING_ENCODE)
     return str->codesys;
-  
+
   switch (data->actual)
     {
     case EOL_LF: return Fget_coding_system (Qconvert_eol_lf);
@@ -3963,7 +4106,7 @@ coding_category_symbol_to_id (Lisp_Object symbol)
 	if (EQ (Dynarr_at (cats, j).sym, symbol))
 	  return Dynarr_at (cats, j).id;
     }
-  
+
   invalid_constant ("Unrecognized coding category", symbol);
   RETURN_NOT_REACHED (0);
 }
@@ -4024,7 +4167,7 @@ detection_result_symbol_to_number (Lisp_Object symbol)
   FROB (Qquite_improbable, DET_QUITE_IMPROBABLE);
   FROB (Qnearly_impossible, DET_NEARLY_IMPOSSIBLE);
 #undef FROB
-  
+
   invalid_constant ("Unrecognized detection result", symbol);
   return ((enum detection_result) 0); /* not reached */
 }
@@ -4173,7 +4316,7 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
   {
     int not_unlikely = 0;
     int retval;
-    
+
     for (i = 0; i < coding_detector_category_count; i++)
       if (st->categories[i] >= 0)
 	not_unlikely++;
@@ -4189,7 +4332,7 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
     debug_out ("detect_coding_type: returning %d (%s)\n",
 		retval, retval ? "stop" : "keep going");
 #endif /* DEBUG_XEMACS */
-    
+
     return retval;
   }
 }
@@ -4398,7 +4541,7 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
   }
 
   return Qnil;
-} 
+}
 
 static Lisp_Object
 determine_real_coding_system (Lstream *stream)
@@ -4527,7 +4670,7 @@ undecided_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 	write_ascstring (printcharfun, " ");
       write_ascstring (printcharfun, "coding-system=");
       print_coding_system_in_print_method (data->cs, printcharfun, escapeflag);
-    }      
+    }
   write_ascstring (printcharfun, ")");
 }
 
@@ -4583,8 +4726,8 @@ undecided_init_coding_stream (struct coding_stream *str)
   if (str->direction == CODING_DECODE)
     {
       Lstream *lst = str->other_end;
-      
-      if ((lst->flags & LSTREAM_FL_READ) &&
+
+      if ((lst->flags & LSTR_READ) &&
 	  Lstream_seekable_p (lst) &&
 	  csdata->do_coding)
 	/* We can determine the coding system now. */
@@ -4632,7 +4775,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		   Bytecount n, unsigned_char_dynarr *dst)
 {
   int first_time = 0;
-  
+
   if (str->direction == CODING_DECODE)
     {
       /* At this point, we have only the following possibilities:
@@ -4644,7 +4787,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 	 Other possibilities are removed during undecided_canonicalize.
 
 	 Therefore, our substreams are either
-	 
+
 	 lstream_coding -> lstream_dynarr, or
 	 lstream_coding -> lstream_eol -> lstream_dynarr.
 	 */
@@ -4683,7 +4826,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		(XLSTREAM (data->c.lstreams[1]),
 		 LSTREAM_UNBUFFERED, 0);
 	    }
-	      
+
 	  data->c.lstreams[0] =
 	    make_coding_output_stream
 	      (XLSTREAM (data->c.lstreams[1]),
@@ -4772,7 +4915,7 @@ undecided_canonicalize_after_coding (struct coding_stream *str)
 
   if (!data->c.initted)
     return str->codesys;
-  
+
   ret = coding_stream_canonicalize_after_coding
     (XLSTREAM (data->c.lstreams[0]));
   if (NILP (ret))
@@ -4915,13 +5058,13 @@ detect_coding_stream (Lisp_Object stream)
   Lisp_Object binary_instream =
     make_coding_input_stream
       (XLSTREAM (stream), Qbinary,
-       CODING_ENCODE, LSTREAM_FL_NO_CLOSE_OTHER);
+       CODING_ENCODE, LSTR_NO_CLOSE_OTHER);
   Lisp_Object decstream =
-    make_coding_input_stream 
+    make_coding_input_stream
       (XLSTREAM (binary_instream),
        Qundecided, CODING_DECODE, 0);
   Lstream *decstr = XLSTREAM (decstream);
-  
+
   GCPRO3 (decstream, stream, binary_instream);
   /* Read and discard all data; detection happens as a side effect of this,
      and we examine what was detected afterwards. */
@@ -4952,7 +5095,7 @@ type.  Optional arg BUFFER defaults to the current buffer.
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
   lb_instream = make_lisp_buffer_input_stream (buf, b, e, 0);
-  
+
   val = detect_coding_stream (lb_instream);
   Lstream_delete (XLSTREAM (lb_instream));
   return val;
@@ -5113,7 +5256,7 @@ gzip_convert (struct coding_stream *str, const UExtbyte *src,
     {
       if (data->reached_eof)
 	return n;		/* eat the data */
-  
+
       if (!data->stream_initted)
 	{
 	  xzero (data->stream);
@@ -5131,7 +5274,7 @@ gzip_convert (struct coding_stream *str, const UExtbyte *src,
 	 to generate.  Z_OK from the decompressor means input was processed
 	 or output was generated; if neither, we break out of the loop.
 	 Other return values are:
-	 
+
 	 Z_STREAM_END		EOF from decompressor
 	 Z_DATA_ERROR		Corrupted data
 	 Z_BUF_ERROR		No progress possible (this should happen if
@@ -5157,7 +5300,7 @@ gzip_convert (struct coding_stream *str, const UExtbyte *src,
 	  if (zerr != Z_OK)
 	    break;
 	}
-  
+
       if (zerr == Z_STREAM_END)
 	data->reached_eof = 1;
 
@@ -5193,7 +5336,7 @@ gzip_convert (struct coding_stream *str, const UExtbyte *src,
 	 returned.)  Z_OK from the compressor means input was processed or
 	 output was generated; if neither, we break out of the loop.  Other
 	 return values are:
-	 
+
 	 Z_STREAM_END		EOF from compressor
 	 Z_BUF_ERROR		No progress possible (should never happen)
 	 Z_STREAM_ERROR		(should never happen)
@@ -5217,7 +5360,7 @@ gzip_convert (struct coding_stream *str, const UExtbyte *src,
 	  if (zerr != Z_OK)
 	    break;
 	}
-  
+
       if ((Bytecount) data->stream.avail_in < n)
 	return n - data->stream.avail_in;
 
@@ -5715,7 +5858,7 @@ complex_vars_of_file_coding (void)
 
   Fdefine_coding_system_alias (Qfile_name, Qnative);
   Fdefine_coding_system_alias (Qidentity, Qconvert_eol_lf);
-  
+
   /* Need this for bootstrapping */
   coding_category_system[detector_category_no_conversion] =
     Fget_coding_system (Qraw_text);

@@ -75,7 +75,7 @@ finalize_lstream (Lisp_Object obj)
      may get called more than once on the same object. */
   Lstream *lstr = XLSTREAM (obj);
 
-  if (lstr->flags & LSTREAM_FL_IS_OPEN)
+  if (lstr->flags & LSTR_IS_OPEN)
     Lstream_close (lstr);
 
   if (lstr->imp->finalizer)
@@ -91,8 +91,8 @@ disksave_lstream (Lisp_Object lstream)
   Lstream_pseudo_close (lstr);
   return;
 #endif
-  if ((lstr->flags & LSTREAM_FL_IS_OPEN) &&
-      (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE))
+  if ((lstr->flags & LSTR_IS_OPEN) &&
+      (lstr->flags & LSTR_CLOSE_AT_DISKSAVE))
     Lstream_close (lstr);
 }
 
@@ -189,7 +189,7 @@ static int lstream_type_count;
    file). */
 
 Lstream *
-Lstream_new (const Lstream_implementation *imp, const char *mode)
+Lstream_new (const Lstream_implementation *imp, int flags)
 {
   Lstream *p;
 #ifdef NEW_GC
@@ -222,14 +222,8 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
      does the same. */
   p->imp = imp;
   Lstream_set_buffering (p, LSTREAM_BLOCK_BUFFERED, 0);
-  p->flags = LSTREAM_FL_IS_OPEN;
-
-  /* convert mode (one of "r", "w", "rc", "wc") to p->flags */
-  assert (mode[0] == 'r' || mode[0] == 'w');
-  assert (mode[1] == 'c' || mode[1] == '\0');
-  p->flags |= (mode[0] == 'r' ? LSTREAM_FL_READ : LSTREAM_FL_WRITE);
-  if (mode[1] == 'c')
-    p->flags |= LSTREAM_FL_NO_PARTIAL_CHARS;
+  p->flags = flags;
+  p->flags |= LSTR_IS_OPEN;
 
   return p;
 }
@@ -260,7 +254,7 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 void
 Lstream_set_character_mode (Lstream *lstr)
 {
-  lstr->flags |= LSTREAM_FL_NO_PARTIAL_CHARS;
+  lstr->flags |= LSTR_NO_PARTIAL_CHARS;
 }
 
 /* Unset character mode.  See Lstream_set_character_mode(). */
@@ -268,7 +262,7 @@ Lstream_set_character_mode (Lstream *lstr)
 void
 Lstream_unset_character_mode (Lstream *lstr)
 {
-  lstr->flags &= ~LSTREAM_FL_NO_PARTIAL_CHARS;
+  lstr->flags &= ~LSTR_NO_PARTIAL_CHARS;
 }
 
 /* Close the stream (if it's open), and free all memory associated with the
@@ -324,9 +318,9 @@ Lstream_delete (Lstream *lstr)
 void
 Lstream_reopen (Lstream *lstr)
 {
-  if (lstr->flags & LSTREAM_FL_IS_OPEN)
+  if (lstr->flags & LSTR_IS_OPEN)
     Lstream_internal_error ("lstream already open", lstr);
-  lstr->flags |= LSTREAM_FL_IS_OPEN;
+  lstr->flags |= LSTR_IS_OPEN;
 }
 
 /* Try to write as much of DATA as possible to the stream.  Return the
@@ -342,14 +336,14 @@ Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 
   while (size > 0)
     {
-      if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
+      if (! (lstr->flags & LSTR_IS_OPEN))
 	Lstream_internal_error ("lstream not open", lstr);
-      if (! (lstr->flags & LSTREAM_FL_WRITE))
+      if (! (lstr->flags & LSTR_WRITE))
 	Lstream_internal_error ("lstream not open for writing", lstr);
       if (!lstr->imp->writer)
 	Lstream_internal_error ("lstream has no writer", lstr);
 
-      if (lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
+      if (lstr->flags & LSTR_NO_PARTIAL_CHARS)
 	/* It's quite possible for us to get passed an incomplete
 	   character at the end.  We need to spit back that
 	   incomplete character. */
@@ -479,27 +473,26 @@ Lstream_adding (Lstream *lstr, Bytecount num, int force)
 
 /* Write SIZE bytes of DATA to the stream.  Similar to Lstream_write(), but
    does not handle line-buffering correctly.  Returns the amount of data
-   processed, which may be less than SIZE (especially if SQUIRREL_REMAINING
-   is 0).  Does not return -1 on error; query lstr->error_occurred_p to
-   determine if an error occurred.
+   processed, which may be less than SIZE (especially if lstr->flags &
+   LSTR_NO_SQUIRREL).  Does not return -1 on error; query
+   lstr->error_occurred_p to determine if an error occurred.
 
    If SQUIRREL_REMAINING is non-zero, buffer any remaining data provided
-   that no error occurred; next call to Lstream_write() or
-   Lstream_write_no_store() will cause any buffered data to be written
-   before the new data is written.  This is done to deal with the possibility
-   that the stream may be blocking currently and unable to accept data.
-   It happens even when the stream's buffering type is LSTREAM_UNBUFFERED.
+   that no error occurred; next call to Lstream_write() will cause any
+   buffered data to be written before the new data is written.  This is
+   done to deal with the possibility that the stream may be blocking
+   currently and unable to accept data.  It happens even when the stream's
+   buffering type is LSTREAM_UNBUFFERED.
 */
 
 static int
-Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size,
-		 int squirrel_remaining)
+Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size)
 {
   const unsigned char *p = (const unsigned char *) data;
   Bytecount off = 0;
-  if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
+  if (! (lstr->flags & LSTR_IS_OPEN))
     Lstream_internal_error ("lstream not open", lstr);
-  if (! (lstr->flags & LSTREAM_FL_WRITE))
+  if (! (lstr->flags & LSTR_WRITE))
     Lstream_internal_error ("lstream not open for writing", lstr);
 
   if (lstr->buffering == LSTREAM_UNBUFFERED)
@@ -524,7 +517,7 @@ Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size,
 	  off += num_written;
 	}
 
-      if (squirrel_remaining)
+      if (!(lstr->flags & LSTR_NO_SQUIRREL))
 	{
 	  /* squirrel away the rest of the data */
 	  if (off < size)
@@ -587,16 +580,18 @@ Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size,
   return off;
 }
 
-/* Write SIZE bytes of DATA to the stream.  Return value is 0 on success,
-   -1 on error.  -1 is only returned when no bytes could be written; if any
-   bytes could be written, then 0 is returned and any unwritten bytes are
-   buffered and the next call to Lstream_write() will try to write them
+/* Write SIZE bytes of DATA to the stream.  Return value is number of bytes
+   actually written, or -1 if no bytes could be written and an error
+   occurred.  To check whether an error occurred, call
+   Lstream_error_occurred_p().
+
+   Unless LSTR_NO_SQUIRREL was given at creation time, any unwritten bytes
+   are buffered and the next call to Lstream_write() will try to write them
    again. (This buffering happens even when the stream's buffering type is
    LSTREAM_UNBUFFERED, and regardless of how much data is passed in or what
-   the stream's buffering size was set to.  If you don't want this behavior,
-   use Lstream_write_no_store().) */
+   the stream's buffering size was set to.) */
 
-int
+Bytecount
 Lstream_write (Lstream *lstr, const void *data, Bytecount size)
 {
   Bytecount i;
@@ -610,33 +605,13 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
   if (size == 0)
     return 0;
   if (lstr->buffering != LSTREAM_LINE_BUFFERED)
-    return Lstream_write_1 (lstr, data, size, 1) >= 0 ? 0 : -1;
+    return Lstream_write_1 (lstr, data, size);
   for (i = 0; i < size; i++)
     {
       if (Lstream_putc (lstr, p[i]) < 0)
 	break;
     }
-  return i == 0 ? -1 : 0;
-}
-
-/* Write SIZE bytes of DATA to a stream, which must be unbuffered.  Return
-   value is number of bytes actually written, or -1 if no bytes could be
-   written and an error occurred.  To check whether an error occurred, call
-   Lstream_error_occurred_p().
-
-   This is different from Lstream_write() in its return value and in the
-   fact that it does not buffer extra data that could not be written to the
-   stream.  It is useful, for example, in conjunction with coding streams
-   where the caller wants to find out the location of all erroneous bytes
-   in the stream. */
-
-int
-Lstream_write_no_store (Lstream *lstr, const void *data, Bytecount size)
-{
-  assert (lstr->buffering == LSTREAM_UNBUFFERED);
-  if (size == 0)
-    return 0;
-  return Lstream_write_1 (lstr, data, size, 0);
+  return i == 0 ? -1 : i;
 }
 
 int
@@ -651,9 +626,9 @@ Lstream_raw_read (Lstream *lstr, unsigned char *buffer,
 {
   Bytecount retval;
 
-  if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
+  if (! (lstr->flags & LSTR_IS_OPEN))
     Lstream_internal_error ("lstream not open", lstr);
-  if (! (lstr->flags & LSTREAM_FL_READ))
+  if (! (lstr->flags & LSTR_READ))
     Lstream_internal_error ("lstream not open for reading", lstr);
   if (!lstr->imp->reader)
     Lstream_internal_error ("lstream has no reader", lstr);
@@ -759,7 +734,7 @@ Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
 	}
     }
 
-  if ((lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS) &&
+  if ((lstr->flags & LSTR_NO_PARTIAL_CHARS) &&
       !override_no_partial_chars)
     {
       /* It's quite possible for us to get passed an incomplete
@@ -831,7 +806,7 @@ Lstream_seekable_p (Lstream *lstr)
 static int
 Lstream_pseudo_close (Lstream *lstr)
 {
-  if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
+  if (! (lstr->flags & LSTR_IS_OPEN))
     Lstream_internal_error ("lstream is not open", lstr);
 
   /* don't check errors here -- best not to risk file descriptor loss */
@@ -850,7 +825,7 @@ Lstream_close (Lstream *lstr)
 {
   int rc = 0;
 
-  if (lstr->flags & LSTREAM_FL_IS_OPEN)
+  if (lstr->flags & LSTR_IS_OPEN)
     {
       rc = Lstream_pseudo_close (lstr);
       /*
@@ -885,7 +860,7 @@ Lstream_close (Lstream *lstr)
 	  rc = -1;
     }
 
-  lstr->flags &= ~LSTREAM_FL_IS_OPEN;
+  lstr->flags &= ~LSTR_IS_OPEN;
   lstr->byte_count = 0;
   /* Note that Lstream_flush() reset all the buffer indices.  That way,
      the next call to Lstream_putc(), Lstream_getc(), or Lstream_ungetc()
@@ -920,7 +895,7 @@ int
 Lstream_fputc (Lstream *lstr, int c)
 {
   unsigned char ch = (unsigned char) c;
-  int retval = Lstream_write_1 (lstr, &ch, 1, 1) >= 0 ? 0 : -1;
+  int retval = Lstream_write_1 (lstr, &ch, 1) >= 0 ? 0 : -1;
   if (retval == 0 && lstr->buffering == LSTREAM_LINE_BUFFERED && ch == '\n')
     return Lstream_flush_out (lstr);
   return retval;
@@ -958,6 +933,18 @@ Lstream_clear_error_occurred_p (Lstream *lstr)
   return lstr->public_error_occurred_p = 0;
 }
 
+void
+Lstream_set_error_occurred_p (Lstream *lstr)
+{
+  lstr->public_error_occurred_p = 1;
+}
+
+int
+Lstream_is_type (Lstream *lstr, const Lstream_implementation *imp)
+{
+  return lstr->imp == imp;
+}
+
 
 /************************ some stream implementations *********************/
 
@@ -966,7 +953,6 @@ Lstream_clear_error_occurred_p (Lstream *lstr)
 struct stdio_stream
 {
   FILE *file;
-  int closing;
 };
 
 #define STDIO_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, stdio)
@@ -974,26 +960,24 @@ struct stdio_stream
 DEFINE_LSTREAM_IMPLEMENTATION ("stdio", stdio);
 
 static Lisp_Object
-make_stdio_stream_1 (FILE *stream, int flags, const char *mode)
+make_stdio_stream_1 (FILE *stream, int flags)
 {
-  Lstream *lstr = Lstream_new (lstream_stdio, mode);
+  Lstream *lstr = Lstream_new (lstream_stdio, flags | LSTR_CLOSE_AT_DISKSAVE);
   struct stdio_stream *str = STDIO_STREAM_DATA (lstr);
   str->file = stream;
-  str->closing = flags & LSTR_CLOSING;
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
 Lisp_Object
 make_stdio_input_stream (FILE *stream, int flags)
 {
-  return make_stdio_stream_1 (stream, flags, "r");
+  return make_stdio_stream_1 (stream, flags | LSTR_READ);
 }
 
 Lisp_Object
 make_stdio_output_stream (FILE *stream, int flags)
 {
-  return make_stdio_stream_1 (stream, flags, "w");
+  return make_stdio_stream_1 (stream, flags | LSTR_WRITE);
 }
 
 /* [[ #### From reading the Unix 98 specification, it appears that if we
@@ -1067,7 +1051,7 @@ static int
 stdio_flusher (Lstream *stream)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  if (stream->flags & LSTREAM_FL_WRITE)
+  if (stream->flags & LSTR_WRITE)
     return fflush (str->file);
   else
     return 0;
@@ -1077,10 +1061,10 @@ static int
 stdio_closer (Lstream *stream)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  if (str->closing)
+  if (stream->flags & LSTR_CLOSING)
     return retry_fclose (str->file);
   else
-  if (stream->flags & LSTREAM_FL_WRITE)
+  if (stream->flags & LSTR_WRITE)
     return fflush (str->file);
   else
     return 0;
@@ -1097,10 +1081,6 @@ struct filedesc_stream
   int current_pos;
   int end_pos;
   int chars_sans_newline;
-  unsigned int closing :1;
-  unsigned int allow_quit :1;
-  unsigned int blocked_ok :1;
-  unsigned int pty_flushing :1;
   unsigned int blocking_error_p :1;
 };
 
@@ -1113,16 +1093,12 @@ DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", filedesc);
    should start at.  COUNT is the number of bytes to be read (it is
    ignored when writing); -1 for unlimited. */
 static Lisp_Object
-make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
-			const char *mode)
+make_filedesc_stream_1 (int filedesc, int offset, int count, int flags)
 {
-  Lstream *lstr = Lstream_new (lstream_filedesc, mode);
+  Lstream *lstr = Lstream_new (lstream_filedesc,
+			       flags | LSTR_CLOSE_AT_DISKSAVE);
   struct filedesc_stream *fstr = FILEDESC_STREAM_DATA (lstr);
   fstr->fd = filedesc;
-  fstr->closing      = !!(flags & LSTR_CLOSING);
-  fstr->allow_quit   = !!(flags & LSTR_ALLOW_QUIT);
-  fstr->blocked_ok   = !!(flags & LSTR_BLOCKED_OK);
-  fstr->pty_flushing = !!(flags & LSTR_PTY_FLUSHING);
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
   fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
@@ -1131,7 +1107,6 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
     fstr->end_pos = -1;
   else
     fstr->end_pos = fstr->starting_pos + count;
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
@@ -1157,13 +1132,15 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
 Lisp_Object
 make_filedesc_input_stream (int filedesc, int offset, int count, int flags)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "r");
+  return make_filedesc_stream_1 (filedesc, offset, count,
+				 flags | LSTR_READ);
 }
 
 Lisp_Object
 make_filedesc_output_stream (int filedesc, int offset, int count, int flags)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "w");
+  return make_filedesc_stream_1 (filedesc, offset, count,
+				 flags | LSTR_WRITE);
 }
 
 static Bytecount
@@ -1173,7 +1150,7 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   if (str->end_pos >= 0)
     size = min (size, (Bytecount) (str->end_pos - str->current_pos));
-  nread = str->allow_quit ?
+  nread = stream->flags & LSTR_ALLOW_QUIT ?
     read_allowing_quit (str->fd, data, size) :
     retry_read (str->fd, data, size);
   if (nread > 0)
@@ -1207,7 +1184,7 @@ filedesc_write_single_byte (Lstream *stream, struct filedesc_stream *str,
 			    UExtbyte byt, int real_byte,
 			    Bytecount retval, int *return_now)
 {
-  Bytecount retval2 = str->allow_quit ?
+  Bytecount retval2 = stream->flags & LSTR_ALLOW_QUIT ?
     write_allowing_quit (str->fd, &byt, 1) :
     retry_write (str->fd, &byt, 1);
 
@@ -1227,7 +1204,8 @@ filedesc_write_single_byte (Lstream *stream, struct filedesc_stream *str,
 	 condition or set the blocking-error flag. */
       if (retval == 0)
 	{
-	  if (errno_would_block_p (errno) && str->blocked_ok)
+	  if (errno_would_block_p (errno) &&
+	      (stream->flags & LSTR_BLOCKED_OK))
 	    str->blocking_error_p = 1;
 	  else
 	    stream->error_occurred_p = 1;
@@ -1272,7 +1250,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 
      Maybe all the PTY crap here should be moved into another stream
      that does nothing but periodically insert EOF's as necessary. */
-  if (str->pty_flushing)
+  if (stream->flags & LSTR_PTY_FLUSHING)
     {
       /* To make life easy, only send out one line at the most. */
       const unsigned char *ptr;
@@ -1292,12 +1270,13 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 
   /**** start of non-PTY-crap ****/
   if (size > 0)
-    retval = str->allow_quit ?
+    retval = stream->flags & LSTR_ALLOW_QUIT ?
       write_allowing_quit (str->fd, data, size) :
       retry_write (str->fd, data, size);
   else
     retval = 0;
-  if (retval < 0 && errno_would_block_p (errno) && str->blocked_ok)
+  if (retval < 0 && errno_would_block_p (errno) &&
+      (stream->flags & LSTR_BLOCKED_OK))
     {
       str->blocking_error_p = 1;
       return 0;
@@ -1311,7 +1290,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 
   /**** end non-PTY-crap ****/
 
-  if (str->pty_flushing)
+  if (stream->flags & LSTR_PTY_FLUSHING)
     {
       str->chars_sans_newline += retval;
       /* Note that a newline was not among the bytes written out.
@@ -1385,7 +1364,7 @@ static int
 filedesc_closer (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
-  if (str->closing)
+  if (stream->flags & LSTR_CLOSING)
     return retry_close (str->fd);
   else
     return 0;
@@ -1405,7 +1384,7 @@ filedesc_stream_set_pty_flushing (Lstream *stream, int pty_max_bytes,
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   str->pty_max_bytes = pty_max_bytes;
   str->eof_char = eof_char;
-  str->pty_flushing = 1;
+  stream->flags |= LSTR_PTY_FLUSHING;
 }
 
 int
@@ -1447,7 +1426,7 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
   assert (len >= 0);
   assert (offset + len <= XSTRING_LENGTH (string));
 
-  lstr = Lstream_new (lstream_lisp_string, "r");
+  lstr = Lstream_new (lstream_lisp_string, LSTR_READ);
   str = LISP_STRING_STREAM_DATA (lstr);
   str->offset = offset;
   str->end = offset + len;
@@ -1470,7 +1449,7 @@ lisp_string_reader (Lstream *stream, unsigned char *data,
      middle of a character. */
   /* Being in the middle of a character is `normal' unless
      LSTREAM_NO_PARTIAL_CHARS - mrb */
-  if (stream->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
+  if (stream->flags & LSTR_NO_PARTIAL_CHARS)
     VALIDATE_IBYTEPTR_BACKWARD (start);
   offset = start - strstart;
   size = min (size, (Bytecount) (str->end - offset));
@@ -1525,7 +1504,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", fixed_buffer);
 Lisp_Object
 make_fixed_buffer_input_stream (const void *buf, Bytecount size)
 {
-  Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
+  Lstream *lstr = Lstream_new (lstream_fixed_buffer, LSTR_READ);
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->inbuf = (const unsigned char *) buf;
   str->size = size;
@@ -1535,7 +1514,7 @@ make_fixed_buffer_input_stream (const void *buf, Bytecount size)
 Lisp_Object
 make_fixed_buffer_output_stream (void *buf, Bytecount size)
 {
-  Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
+  Lstream *lstr = Lstream_new (lstream_fixed_buffer, LSTR_WRITE);
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->outbuf = (unsigned char *) buf;
   str->size = size;
@@ -1610,7 +1589,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", resizing_buffer);
 Lisp_Object
 make_resizing_buffer_output_stream (void)
 {
-  return wrap_lstream (Lstream_new (lstream_resizing_buffer, "w"));
+  return wrap_lstream (Lstream_new (lstream_resizing_buffer, LSTR_WRITE));
 }
 
 static Bytecount
@@ -1676,7 +1655,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("dynarr", dynarr);
 Lisp_Object
 make_dynarr_output_stream (unsigned_char_dynarr *dyn)
 {
-  Lisp_Object obj = wrap_lstream (Lstream_new (lstream_dynarr, "w"));
+  Lisp_Object obj = wrap_lstream (Lstream_new (lstream_dynarr, LSTR_WRITE));
 
   DYNARR_STREAM_DATA (XLSTREAM (obj))->dyn = dyn;
   return obj;
@@ -1719,7 +1698,6 @@ struct lisp_buffer_stream
   Lisp_Object orig_start;
   /* we use markers to properly deal with insertion/deletion */
   Lisp_Object start, end;
-  int flags;
 };
 
 static const struct memory_description lisp_buffer_lstream_description[] = {
@@ -1734,15 +1712,15 @@ DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("lisp-buffer", lisp_buffer);
 
 static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
-			   int flags, const Ascbyte *mode)
+			   int flags)
 {
   Lstream *lstr;
   struct lisp_buffer_stream *str;
   Charbpos bmin, bmax;
-  int reading = !strcmp (mode, "r");
+  int reading = flags & LSTR_READ;
 
-  /* Make sure the luser didn't pass "w" in. */
-  assert (strcmp (mode, "w"));
+  if (flags & LSTR_WRITE)
+    flags |= LSTR_NO_PARTIAL_CHARS;
 
   if (flags & LSTR_IGNORE_ACCESSIBLE)
     {
@@ -1768,7 +1746,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
       assert (start <= end);
     }
 
-  lstr = Lstream_new (lstream_lisp_buffer, mode);
+  lstr = Lstream_new (lstream_lisp_buffer, flags);
   str = LISP_BUFFER_STREAM_DATA (lstr);
   {
     Lisp_Object marker;
@@ -1790,7 +1768,6 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
       str->end = Qnil;
     str->buffer = buffer;
   }
-  str->flags = flags;
   return wrap_lstream (lstr);
 }
 
@@ -1802,13 +1779,14 @@ make_lisp_buffer_input_stream (struct buffer *buf, Charbpos start,
      created stream, it's not an issue since we can choose how much data
      to copy out and we never copy partial characters out (see
      copy_text_between_formats()). */
-  return make_lisp_buffer_stream_1 (buf, start, end, flags, "r");
+  return make_lisp_buffer_stream_1 (buf, start, end, flags | LSTR_READ);
 }
 
 Lisp_Object
 make_lisp_buffer_output_stream (struct buffer *buf, Charbpos pos, int flags)
 {
-  Lisp_Object lstr = make_lisp_buffer_stream_1 (buf, pos, 0, flags, "wc");
+  Lisp_Object lstr =
+    make_lisp_buffer_stream_1 (buf, pos, 0, flags | LSTR_WRITE);
 
   Lstream_set_character_mode (XLSTREAM (lstr));
   return lstr;
@@ -1828,7 +1806,7 @@ lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
 
   start = byte_marker_position (str->start);
   end = byte_marker_position (str->end);
-  if (!(str->flags & LSTR_IGNORE_ACCESSIBLE))
+  if (!(stream->flags & LSTR_IGNORE_ACCESSIBLE))
     {
       start = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (buf), start,
 				       BYTE_BUF_ZV (buf));
@@ -1840,7 +1818,7 @@ lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
 			       FORMAT_DEFAULT, Qnil, &src_used);
   end = start + src_used;
 
-  if (EQ (buf->selective_display, Qt) && str->flags & LSTR_SELECTIVE)
+  if (EQ (buf->selective_display, Qt) && stream->flags & LSTR_SELECTIVE)
     {
       /* What a kludge.  What a kludge.  What a kludge. */
       Ibyte *p;
