@@ -2163,9 +2163,8 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte);
 
 static Bytecount
 mswindows_multibyte_convert (struct coding_stream *UNUSED (str),
-			     const UExtbyte *UNUSED (src),
+			     const unsigned char *UNUSED (src),
 			     Bytecount n, unsigned_char_dynarr *UNUSED (dst))
-
 {
   Bytecount orign = n;
   /* should never be called; is preprocessed away in the

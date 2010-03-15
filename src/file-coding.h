@@ -1026,16 +1026,6 @@ struct coding_stream
 
   /******** Fields used to accumulate a partially-built-up character ********/
 
-  /* Hold a partially built-up character.  This is in some respects part
-     of the state-dependent data, but it is used in all coding methods. */
-  Ibyte partial[MAX_ICHAR_LEN];
-
-  /* Index into partially built-up character. */
-  int pind;
-
-  /* Number of bytes remaining to be built up in partially built-up char. */
-  int pind_remaining;
-
   /* CH holds a partially built-up character, or -1 for none.  This is
      really part of the state-dependent data and should be moved there. */
   int ch;
@@ -1135,24 +1125,6 @@ do {						\
       str->ch = -1;				\
     }						\
 } while (0)
-
-/* Copy the byte C in string representation into the accumulated partial
-   character in coding_stream STR. */
-#define COPY_PARTIAL_CHAR_BYTE(c, str)				\
-do {								\
-  if (ibyte_first_byte_p (c))					\
-    {								\
-      str->partial[0] = c;					\
-      str->pind = 1;						\
-      str->pind_remaining = rep_bytes_by_first_byte (c) - 1;	\
-    }								\
-  else								\
-    {								\
-      str->partial[str->pind++] = c;				\
-      str->pind_remaining--;					\
-    }								\
- }                                                              \
-while (0)
 
 /* We can't use do ... while (0) here, because we need to execute `continue',
    so we can't have a secondary loop surrounding the code, but this if/else

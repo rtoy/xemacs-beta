@@ -211,173 +211,188 @@ try_to_derive_character (int c1, int c2, int dimension,
   return ich;
 }
 
-
 static Bytecount
-multibyte_convert (struct coding_stream *str, const UExtbyte *src,
-		   Bytecount n, unsigned_char_dynarr *dst)
+multibyte_decode (struct coding_stream *str, const UExtbyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
 {
   struct multibyte_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, multibyte);
   Lisp_Object precarr = data->charset_precedence;
 
-  if (str->direction == CODING_DECODE)
+  while (n--)
     {
-      while (n--)
-	{
-	  UExtbyte c = *src++;
-	  Ichar ich = -1;
+      UExtbyte c = *src++;
+      Ichar ich = -1;
 
-	  if (str->ch >= 0)
+      if (str->ch >= 0)
+	{
+	  /* See if we can derive a two-byte character out of the
+	     specified charsets */
+	  ich = try_to_derive_character (str->ch, c, 2, precarr);
+	  if (ich >= 0)
 	    {
-	      /* See if we can derive a two-byte character out of the
-		 specified charsets */
-	      ich = try_to_derive_character (str->ch, c, 2, precarr);
-	      if (ich >= 0)
-		{
-		  Dynarr_add_ichar (dst, ich);
-		  str->ch = -1;
-		}
-	      else
-		{
-		  /* If not, then the first byte was definitely erroneous,
-		     but we might still be able to derive a character
-		     starting with the second byte. */
-		  DECODE_ERROR_OCTET (str->ch, dst);
-		  str->ch = -1;
-		  goto retry_one_byte;
-		}
+	      Dynarr_add_ichar (dst, ich);
+	      str->ch = -1;
 	    }
 	  else
 	    {
-	    retry_one_byte:
-	      /* See if we can one-byte character out of the specified
-		 charsets */
-	      ich = try_to_derive_character (0, c, 1, precarr);
-	      /* If not, retry as a two-byte character. */
-	      if (ich < 0)
-		{
-		  str->ch = c;
-		  continue;
-		}
-
-	      Dynarr_add_ichar (dst, ich);
-	    }
-	}
-
-      if (str->eof)
-	{
-	  if (str->ch >= 0)
-	    {
-	      /* We have a straggler. */
+	      /* If not, then the first byte was definitely erroneous,
+		 but we might still be able to derive a character
+		 starting with the second byte. */
 	      DECODE_ERROR_OCTET (str->ch, dst);
 	      str->ch = -1;
+	      goto retry_one_byte;
 	    }
 	}
-    }
-  else
-    {
-      while (n--)
+      else
 	{
-	  Ibyte c = *src++;
-	  COPY_PARTIAL_CHAR_BYTE (c, str);
-	  if (!str->pind_remaining)
+	retry_one_byte:
+	  /* See if we can one-byte character out of the specified
+	     charsets */
+	  ich = try_to_derive_character (0, c, 1, precarr);
+	  /* If not, retry as a two-byte character. */
+	  if (ich < 0)
 	    {
-	      Lisp_Object charset = Qnil;
-	      int c1, c2;
-	      Ichar ich = itext_ichar (str->partial);
-	      if (handle_possible_error_octet (ich, str, src, dst, NULL))
-		{
-		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		}
+	      str->ch = c;
+	      continue;
+	    }
 
-	      /* Logic here similar to the logic in try_to_derive_character().
-		 Under Unicode-internal, just try directly to derive a
-		 codepoint.  Under old-Mule, for each charset, first try to
-		 derive a codepoint directly, then through Unicode unification.
-		 */
+	  Dynarr_add_ichar (dst, ich);
+	}
+    }
+
+  if (str->eof)
+    {
+      if (str->ch >= 0)
+	{
+	  /* We have a straggler. */
+	  DECODE_ERROR_OCTET (str->ch, dst);
+	  str->ch = -1;
+	}
+    }
+
+  return src - str->src;
+}
+
+static Bytecount
+multibyte_encode (struct coding_stream *str, const Ibyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
+{
 #ifdef UNICODE_INTERNAL
-	      ichar_to_charset_codepoint (ich, precarr, &charset,
-					  &c1, &c2, CONVERR_FAIL);
-#else
-	      {
-		int i;
-		Lisp_Object_dynarr *precdyn =
-		  XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
-		for (i = 0; i < Dynarr_length (precdyn); i++)
-		  {
-		    Lisp_Object charset2 = Dynarr_at (precdyn, i);
-		    int code;
+  struct multibyte_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, multibyte);
+  Lisp_Object precarr = data->charset_precedence;
+#endif
+  const Ibyte *srcend = src + n;
+  while (src < srcend)
+    {
+      Ichar ich = itext_ichar (src);
+      Lisp_Object charset = Qnil;
+      int c1, c2;
 
-		    if (ichar_to_one_charset_codepoint (ich, charset2,
-							&c1, &c2))
-		      {
-			charset = charset2;
-			break;
-		      }
-		    code = ichar_to_unicode (ich, CONVERR_FAIL);
-		    if (code >= 0)
-		      {
-			if (unicode_to_one_charset_codepoint (code, charset2,
-							      &c1, &c2))
-			  {
-			    charset = charset2;
-			    break;
-			  }
-		      }
+      INC_IBYTEPTR (src);
+
+      if (handle_possible_error_octet (ich, str, src, dst, NULL))
+	{
+	  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	}
+
+      /* Logic here similar to the logic in try_to_derive_character().
+	 Under Unicode-internal, just try directly to derive a
+	 codepoint.  Under old-Mule, for each charset, first try to
+	 derive a codepoint directly, then through Unicode unification.
+      */
+#ifdef UNICODE_INTERNAL
+      ichar_to_charset_codepoint (ich, precarr, &charset,
+				  &c1, &c2, CONVERR_FAIL);
+#else
+      {
+	int i;
+	Lisp_Object_dynarr *precdyn =
+	  XCODING_SYSTEM_MBCS_CHARSETS (str->codesys);
+	for (i = 0; i < Dynarr_length (precdyn); i++)
+	  {
+	    Lisp_Object charset2 = Dynarr_at (precdyn, i);
+	    int code;
+
+	    if (ichar_to_one_charset_codepoint (ich, charset2,
+						&c1, &c2))
+	      {
+		charset = charset2;
+		break;
+	      }
+	    code = ichar_to_unicode (ich, CONVERR_FAIL);
+	    if (code >= 0)
+	      {
+		if (unicode_to_one_charset_codepoint (code, charset2,
+						      &c1, &c2))
+		  {
+		    charset = charset2;
+		    break;
 		  }
 	      }
+	  }
+      }
 #endif /* not UNICODE_INTERNAL */
 
 #ifdef ALLOW_MULTIBYTE_CHARSET_OVERLAP
-	      /* If we've found a conversion, but there is charset overlap
-		 in this coding system, we need to convert the other way to
-		 see whether we get the right result; otherwise, we don't have
-		 a good conversion, because we need to have two-way
-		 reversibility. */
-	      if (!NILP (charset) &&
-		  XCODING_SYSTEM_MBCS_OVERLAP (str->codesys))
-		{
-		  Ichar other_way =
-		    try_to_derive_character (c1, c2,
-					     XCHARSET_DIMENSION (charset),
-					     precarr);
-		  /* Under Unicode-internal, the conversion the other way
-		     needs to produce the same character.  Under old-Mule,
-		     it's OK if the characters are different as long as they
-		     unify under Unicode. */
+      /* If we've found a conversion, but there is charset overlap
+	 in this coding system, we need to convert the other way to
+	 see whether we get the right result; otherwise, we don't have
+	 a good conversion, because we need to have two-way
+	 reversibility. */
+      if (!NILP (charset) &&
+	  XCODING_SYSTEM_MBCS_OVERLAP (str->codesys))
+	{
+	  Ichar other_way =
+	    try_to_derive_character (c1, c2,
+				     XCHARSET_DIMENSION (charset),
+				     precarr);
+	  /* Under Unicode-internal, the conversion the other way
+	     needs to produce the same character.  Under old-Mule,
+	     it's OK if the characters are different as long as they
+	     unify under Unicode. */
 #ifdef UNICODE_INTERNAL
-		  if (ich != other_way)
-		    charset = Qnil;
+	  if (ich != other_way)
+	    charset = Qnil;
 #else
-		  if (ich != other_way)
-		    {
-		      int code = ichar_to_unicode (ich, CONVERR_FAIL);
-		      int other_code = ichar_to_unicode (other_way,
-							 CONVERR_FAIL);
-		      if (!(code >= 0 && other_code >= 0 &&
-			    code == other_code))
-			charset = Qnil;
-		    }
+	  if (ich != other_way)
+	    {
+	      int code = ichar_to_unicode (ich, CONVERR_FAIL);
+	      int other_code = ichar_to_unicode (other_way,
+						 CONVERR_FAIL);
+	      if (!(code >= 0 && other_code >= 0 &&
+		    code == other_code))
+		charset = Qnil;
+	    }
 #endif /* (not) UNICODE_INTERNAL */
-		}
+	}
 #endif /* ALLOW_MULTIBYTE_CHARSET_OVERLAP */
 
-	      /* If no charset, substitute a ?, and return or continue. */
-	      if (NILP (charset))
-		{
-		  handle_standard_encoding_error (str, src, dst);
-		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		}
-
-	      /* Finally, add the character */
-	      if (XCHARSET_DIMENSION (charset) == 2)
-		Dynarr_add (dst, c1);
-	      Dynarr_add (dst, c2);
-	    }
+      /* If no charset, substitute a ?, and return or continue. */
+      if (NILP (charset))
+	{
+	  handle_standard_encoding_error (str, src, dst);
+	  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 	}
+
+      /* Finally, add the character */
+      if (XCHARSET_DIMENSION (charset) == 2)
+	Dynarr_add (dst, c1);
+      Dynarr_add (dst, c2);
     }
   
   return src - str->src;
+}
+
+static Bytecount
+multibyte_convert (struct coding_stream *str, const unsigned char *src,
+		   Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return multibyte_decode (str, (UExtbyte *) src, n, dst);
+  else
+    return multibyte_encode (str, (Ibyte *) src, n, dst);
 }
 
 static void
@@ -581,96 +596,109 @@ byte_shift_jis_katakana_p (int c)
 /* Convert Shift-JIS data to internal format. */
 
 static Bytecount
-shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
-		   Bytecount n, unsigned_char_dynarr *dst)
+shift_jis_decode (struct coding_stream *str, const UExtbyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
 {
   Bytecount orign = n;
 
-  if (str->direction == CODING_DECODE)
+  while (n--)
     {
-      while (n--)
+      UExtbyte c = *src++;
+
+      if (str->ch >= 0)
 	{
-	  UExtbyte c = *src++;
-
-	  if (str->ch >= 0)
+	  /* Previous character was first byte of Shift-JIS Kanji char. */
+	  if (byte_shift_jis_two_byte_2_p (c))
 	    {
-	      /* Previous character was first byte of Shift-JIS Kanji char. */
-	      if (byte_shift_jis_two_byte_2_p (c))
-		{
-		  int e1, e2;
+	      int e1, e2;
 
-		  DECODE_SHIFT_JIS (str->ch, c, e1, e2);
-		  non_ascii_charset_codepoint_to_dynarr
-		    (Vcharset_japanese_jisx0208, e1, e2, dst,
-		     CONVERR_USE_PRIVATE);
-		}
-	      else
-		{
-		  DECODE_ERROR_OCTET (str->ch, dst);
-		  DECODE_ERROR_OCTET (c, dst);
-		}
-	      str->ch = -1;
+	      DECODE_SHIFT_JIS (str->ch, c, e1, e2);
+	      non_ascii_charset_codepoint_to_dynarr
+		(Vcharset_japanese_jisx0208, e1, e2, dst,
+		 CONVERR_USE_PRIVATE);
 	    }
 	  else
 	    {
-	      if (byte_shift_jis_two_byte_1_p (c))
-		str->ch = c;
-	      else if (byte_shift_jis_katakana_p (c))
-		  non_ascii_charset_codepoint_to_dynarr
-		    (Vcharset_katakana_jisx0201, 0, c, dst,
-		     CONVERR_USE_PRIVATE);
-	      else if (byte_ascii_p (c))
-		DECODE_ADD_BINARY_CHAR (c, dst);
-	      else
-		DECODE_ERROR_OCTET (c, dst);
+	      DECODE_ERROR_OCTET (str->ch, dst);
+	      DECODE_ERROR_OCTET (c, dst);
 	    }
+	  str->ch = -1;
 	}
-
-      DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
-    }
-  else
-    {
-      while (n--)
+      else
 	{
-	  Ibyte c = *src++;
-	  if (byte_ascii_p (c))
-	    Dynarr_add (dst, c);
+	  if (byte_shift_jis_two_byte_1_p (c))
+	    str->ch = c;
+	  else if (byte_shift_jis_katakana_p (c))
+	    non_ascii_charset_codepoint_to_dynarr
+	      (Vcharset_katakana_jisx0201, 0, c, dst,
+	       CONVERR_USE_PRIVATE);
+	  else if (byte_ascii_p (c))
+	    DECODE_ADD_BINARY_CHAR (c, dst);
 	  else
-	    {
-	      COPY_PARTIAL_CHAR_BYTE (c, str);
-	      if (!str->pind_remaining)
-		{
-		  Lisp_Object charset;
-		  int c1, c2;
-		  Ichar ich = itext_ichar (str->partial);
-		  if (handle_possible_error_octet (ich, str, src, dst, NULL))
-		    {
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-		  ichar_to_charset_codepoint
-		    (ich, Vshift_jis_precedence, &charset, &c1, &c2,
-		     CONVERR_FAIL);
-		  if (EQ (charset, Vcharset_katakana_jisx0201))
-		    Dynarr_add (dst, c2);
-		  else if (EQ (charset, Vcharset_japanese_jisx0208) ||
-			   EQ (charset, Vcharset_japanese_jisx0208_1978))
-		    {
-		      UExtbyte j1, j2;
-		      ENCODE_SHIFT_JIS (c1, c2, j1, j2);
-		      Dynarr_add (dst, j1);
-		      Dynarr_add (dst, j2);
-		    }
-		  else
-		    {
-		      handle_standard_encoding_error (str, src, dst);
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-		}
-	    }
+	    DECODE_ERROR_OCTET (c, dst);
 	}
     }
-  
+
+  DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
+
   return orign;
+}
+
+static Bytecount
+shift_jis_encode (struct coding_stream *str, const Ibyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
+{
+  const Ibyte *srcend = src + n;
+  while (src < srcend)
+    {
+      Ibyte c = *src;
+      if (byte_ascii_p (c))
+	{
+	  Dynarr_add (dst, c);
+	  src++;
+	}
+      else
+	{
+	  Lisp_Object charset;
+	  int c1, c2;
+	  Ichar ich = itext_ichar (src);
+	  INC_IBYTEPTR (src);
+	  if (handle_possible_error_octet (ich, str, src, dst, NULL))
+	    {
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
+	  ichar_to_charset_codepoint
+	    (ich, Vshift_jis_precedence, &charset, &c1, &c2,
+	     CONVERR_FAIL);
+	  if (EQ (charset, Vcharset_katakana_jisx0201))
+	    Dynarr_add (dst, c2);
+	  else if (EQ (charset, Vcharset_japanese_jisx0208) ||
+		   EQ (charset, Vcharset_japanese_jisx0208_1978))
+	    {
+	      UExtbyte j1, j2;
+	      ENCODE_SHIFT_JIS (c1, c2, j1, j2);
+	      Dynarr_add (dst, j1);
+	      Dynarr_add (dst, j2);
+	    }
+	  else
+	    {
+	      handle_standard_encoding_error (str, src, dst);
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
+	}
+    }
+
+  return src - str->src;
+}
+
+static Bytecount
+shift_jis_convert (struct coding_stream *str, const unsigned char *src,
+		   Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return shift_jis_decode (str, (UExtbyte *) src, n, dst);
+  else
+    return shift_jis_encode (str, (Ibyte *) src, n, dst);
 }
 
 DEFUN ("decode-shift-jis-char", Fdecode_shift_jis_char, 1, 1, 0, /*
@@ -931,101 +959,114 @@ byte_big5_two_byte_2_p (int c)
 /* Convert Big5 data to internal format. */
 
 static Bytecount
-big5_convert (struct coding_stream *str, const UExtbyte *src,
-	      Bytecount n, unsigned_char_dynarr *dst)
+big5_decode (struct coding_stream *str, const UExtbyte *src,
+	     Bytecount n, unsigned_char_dynarr *dst)
 {
   Bytecount orign = n;
 
-  if (str->direction == CODING_DECODE)
+  while (n--)
     {
-      while (n--)
+      UExtbyte c = *src++;
+      if (str->ch >= 0)
 	{
-	  UExtbyte c = *src++;
-	  if (str->ch >= 0)
+	  /* Previous character was first byte of Big5 char. */
+	  if (byte_big5_two_byte_2_p (c))
 	    {
-	      /* Previous character was first byte of Big5 char. */
-	      if (byte_big5_two_byte_2_p (c))
-		{
 #ifdef UNICODE_INTERNAL
-		  non_ascii_charset_codepoint_to_dynarr
-		    (Vcharset_chinese_big5, str->ch, c, dst,
-		     CONVERR_USE_PRIVATE);
+	      non_ascii_charset_codepoint_to_dynarr
+		(Vcharset_chinese_big5, str->ch, c, dst,
+		 CONVERR_USE_PRIVATE);
 #else /* not UNICODE_INTERNAL */
-		  Lisp_Object charset;
-		  int b1, b2;
-		  DECODE_BIG5 (str->ch, c, charset, b1, b2);
-		  non_ascii_charset_codepoint_to_dynarr
-		    (charset, b1, b2, dst, CONVERR_USE_PRIVATE);
+	      Lisp_Object charset;
+	      int b1, b2;
+	      DECODE_BIG5 (str->ch, c, charset, b1, b2);
+	      non_ascii_charset_codepoint_to_dynarr
+		(charset, b1, b2, dst, CONVERR_USE_PRIVATE);
 #endif /* UNICODE_INTERNAL */
-		}
-	      else
-		{
-		  DECODE_ERROR_OCTET (str->ch, dst);
-		  DECODE_ERROR_OCTET (c, dst);
-		}
-	      str->ch = -1;
 	    }
 	  else
 	    {
-	      if (byte_big5_two_byte_1_p (c))
-		str->ch = c;
-	      else if (byte_ascii_p (c))
-		DECODE_ADD_BINARY_CHAR (c, dst);
-	      else
-		DECODE_ERROR_OCTET (c, dst);
+	      DECODE_ERROR_OCTET (str->ch, dst);
+	      DECODE_ERROR_OCTET (c, dst);
 	    }
+	  str->ch = -1;
 	}
+      else
+	{
+	  if (byte_big5_two_byte_1_p (c))
+	    str->ch = c;
+	  else if (byte_ascii_p (c))
+	    DECODE_ADD_BINARY_CHAR (c, dst);
+	  else
+	    DECODE_ERROR_OCTET (c, dst);
+	}
+    }
 
-      DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
-    }
-  else
-    {
-      while (n--)
-	{
-	  Ibyte c = *src++;
-	  if (byte_ascii_p (c))
-	      Dynarr_add (dst, c);
-	  else
-	    {
-	      COPY_PARTIAL_CHAR_BYTE (c, str);
-	      if (!str->pind_remaining)
-		{
-		  Lisp_Object charset;
-		  int c1, c2;
-		  Ichar ich = itext_ichar (str->partial);
-		  if (handle_possible_error_octet (ich, str, src, dst, NULL))
-		    {
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-		  ichar_to_charset_codepoint
-		    (ich, Vbig5_precedence, &charset, &c1, &c2, CONVERR_FAIL);
-#ifdef UNICODE_INTERNAL
-		  if (EQ (charset, Vcharset_chinese_big5))
-		    {
-		      Dynarr_add (dst, c1);
-		      Dynarr_add (dst, c2);
-		    }
-#else /* not UNICODE_INTERNAL */
-		  if (EQ (charset, Vcharset_chinese_big5_1) ||
-		      EQ (charset, Vcharset_chinese_big5_2))
-		    {
-		      UExtbyte b1, b2;
-		      ENCODE_BIG5 (charset, c1, c2, b1, b2);
-		      Dynarr_add (dst, b1);
-		      Dynarr_add (dst, b2);
-		    }
-#endif /* UNICODE_INTERNAL */
-		  else
-		    {
-		      handle_standard_encoding_error (str, src, dst);
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-		}
-	    }
-	}
-    }
+  DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
 
   return orign;
+}
+
+static Bytecount
+big5_encode (struct coding_stream *str, const Ibyte *src,
+	     Bytecount n, unsigned_char_dynarr *dst)
+{
+  const Ibyte *srcend = src + n;
+  while (src < srcend)
+    {
+      Ibyte c = *src;
+      if (byte_ascii_p (c))
+	{
+	  Dynarr_add (dst, c);
+	  src++;
+	}
+      else
+	{
+	  Lisp_Object charset;
+	  int c1, c2;
+	  Ichar ich = itext_ichar (src);
+	  INC_IBYTEPTR (src);
+	  if (handle_possible_error_octet (ich, str, src, dst, NULL))
+	    {
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
+	  ichar_to_charset_codepoint
+	    (ich, Vbig5_precedence, &charset, &c1, &c2, CONVERR_FAIL);
+#ifdef UNICODE_INTERNAL
+	  if (EQ (charset, Vcharset_chinese_big5))
+	    {
+	      Dynarr_add (dst, c1);
+	      Dynarr_add (dst, c2);
+	    }
+#else /* not UNICODE_INTERNAL */
+	  if (EQ (charset, Vcharset_chinese_big5_1) ||
+	      EQ (charset, Vcharset_chinese_big5_2))
+	    {
+	      UExtbyte b1, b2;
+	      ENCODE_BIG5 (charset, c1, c2, b1, b2);
+	      Dynarr_add (dst, b1);
+	      Dynarr_add (dst, b2);
+	    }
+#endif /* UNICODE_INTERNAL */
+	  else
+	    {
+	      handle_standard_encoding_error (str, src, dst);
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
+	}
+    }
+
+  return src - str->src;
+}
+
+static Bytecount
+big5_convert (struct coding_stream *str, const unsigned char *src,
+	      Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return big5_decode (str, (UExtbyte *) src, n, dst);
+  else
+    return big5_encode (str, (Ibyte *) src, n, dst);
 }
 
 static Ichar
@@ -2516,7 +2557,7 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
 
 static Bytecount
 iso2022_decode (struct coding_stream *str, const UExtbyte *src,
-		unsigned_char_dynarr *dst, Bytecount n)
+		Bytecount n, unsigned_char_dynarr *dst)
 {
 #ifdef ENABLE_COMPOSITE_CHARS
   unsigned_char_dynarr *real_dst = dst;
@@ -2867,28 +2908,26 @@ ensure_shift_out (struct coding_stream *str, unsigned_char_dynarr *dst)
 
 static Bytecount
 iso2022_encode (struct coding_stream *str, const Ibyte *src,
-		unsigned_char_dynarr *dst, Bytecount n)
+		Bytecount n, unsigned_char_dynarr *dst)
 {
   Lisp_Object codesys = str->codesys;
   int i;
   struct iso2022_coding_stream *data = CODING_STREAM_TYPE_DATA (str, iso2022);
   unsigned int flags = data->flags;
-  Bytecount orign = n;
+  const Ibyte *srcend = src + n;
 
 #ifdef ENABLE_COMPOSITE_CHARS
   /* flags for handling composite chars.  We do a little switcheroo
      on the source while we're outputting the composite char. */
-  Bytecount saved_n = 0;
   const Ibyte *saved_src = NULL;
+  const Ibyte *saved_srcend = NULL;
   int in_composite = 0;
-#endif /* ENABLE_COMPOSITE_CHARS */
 
-#ifdef ENABLE_COMPOSITE_CHARS
  back_to_square_n:
 #endif
-  while (n--)
+  while (src < srcend)
     {
-      Ibyte c = *src++;
+      Ibyte c = *src;
 
       if (byte_ascii_p (c))
 	{		/* Processing ASCII character */
@@ -2941,246 +2980,245 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      && fit_to_be_escape_quoted (c))
 	    Dynarr_add (dst, ISO_CODE_ESC);
 	  Dynarr_add (dst, c);
+	  src++;
 	}
       else
 	{
 	  /* Processing a non-ASCII character */
-	  COPY_PARTIAL_CHAR_BYTE (c, str);
-	  if (!str->pind_remaining)
+	  Lisp_Object charset;
+	  int c1, c2;
+	  Ichar ich = itext_ichar (src);
+	  int half = 0;
+
+	  INC_IBYTEPTR (src);
+
+	  if (handle_possible_error_octet (ich, str, src, dst, NULL))
 	    {
-	      /* We have a full char. */
-	      Lisp_Object charset;
-	      int c1, c2;
-	      int half = 0;
-	      Ichar ich = itext_ichar (str->partial);
-	      if (handle_possible_error_octet (ich, str, src, dst, NULL))
-		{
-		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		}
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
 
-	      /* Convert character to a charset codepoint. */
-	      /* First, try the charsets mentioned in the coding system. */
-	      ichar_to_charset_codepoint
-		(ich, data->unicode_precedence, &charset, &c1, &c2,
-		 CONVERR_FAIL);
-	      if (NILP (charset))
-		{
-		  /* Then try any ISO2022-compatible charset */
-		  /* @@#### current_buffer dependency */
-		  buffer_filtered_ichar_to_charset_codepoint
-		    (ich, current_buffer, charset_iso2022_compatible,
-		     &charset, &c1, &c2, CONVERR_FAIL);
-		}
-	      /* No point in trying to find a non-ISO2022-compatible
-		 charset -- at this point we will encode in UTF-8
-		 anyway */
+	  /* Convert character to a charset codepoint. */
+	  /* First, try the charsets mentioned in the coding system. */
+	  ichar_to_charset_codepoint
+	    (ich, data->unicode_precedence, &charset, &c1, &c2,
+	     CONVERR_FAIL);
+	  if (NILP (charset))
+	    {
+	      /* Then try any ISO2022-compatible charset */
+	      /* @@#### current_buffer dependency */
+	      buffer_filtered_ichar_to_charset_codepoint
+		(ich, current_buffer, charset_iso2022_compatible,
+		 &charset, &c1, &c2, CONVERR_FAIL);
+	    }
+	  /* No point in trying to find a non-ISO2022-compatible
+	     charset -- at this point we will encode in UTF-8
+	     anyway */
 
-	      /* ---------------------------------------------------- */
-	      /* 1. Are we processing control-1?                      */
-	      /* ---------------------------------------------------- */
+	  /* ---------------------------------------------------- */
+	  /* 1. Are we processing control-1?                      */
+	  /* ---------------------------------------------------- */
 
-	      if (EQ (charset, Vcharset_control_1))
-		{
-		  if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
-		      && fit_to_be_escape_quoted (c2))
-		    Dynarr_add (dst, ISO_CODE_ESC);
-		  /* you asked for it ... */
-		  Dynarr_add (dst, c2);
-		}
+	  if (EQ (charset, Vcharset_control_1))
+	    {
+	      if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
+		  && fit_to_be_escape_quoted (c2))
+		Dynarr_add (dst, ISO_CODE_ESC);
+	      /* you asked for it ... */
+	      Dynarr_add (dst, c2);
+	    }
 
-	      /* ---------------------------------------------------- */
-	      /* 2. Are we processing a composite character?          */
-	      /* ---------------------------------------------------- */
+	  /* ---------------------------------------------------- */
+	  /* 2. Are we processing a composite character?          */
+	  /* ---------------------------------------------------- */
 
-	      else if (EQ (charset, Vcharset_composite))
-		{
+	  else if (EQ (charset, Vcharset_composite))
+	    {
 #ifdef ENABLE_COMPOSITE_CHARS
-		  if (in_composite)
-		    {
-		      /* #### Bother! We don't know how to
-			 handle this yet. */
-		      handle_standard_encoding_error (str, src, dst);
-		    }
-		  else
-		    {
-		      Ichar emch =
-			charset_codepoint_to_ichar
-			(Vcharset_composite, c1, c2, CONVERR_FAIL);
-		      if (emch >= 0)
-			{
-			  Lisp_Object lstr =
-			    composite_char_string (emch);
-			  saved_n = n;
-			  saved_src = src;
-			  in_composite = 1;
-			  src = XSTRING_DATA   (lstr);
-			  n   = XSTRING_LENGTH (lstr);
-			  Dynarr_add (dst, ISO_CODE_ESC);
-			  Dynarr_add (dst, '0'); /* start composing */
-			}
-		    }
-#else /* not ENABLE_COMPOSITE_CHARS */
-		  c2 &= 127;
-		  if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
-					       something else */
-		    {
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, c2 - 32 + '0');
-		    }
-#endif /* (not) ENABLE_COMPOSITE_CHARS */
-		}
-
-	      /* ---------------------------------------------------- */
-	      /* 3. Do we need to represent as UTF-8?                 */
-	      /* ---------------------------------------------------- */
-
-	      /* If no ISO2022-compatible charset found, we must encode as
-		 UTF-8 */
-	      else if (NILP (charset) ||
-		       /* This happens when non-Unicode-internal and the
-			  character is stored in the buffer using an
-			  encodable but non-ISO2022-compatible charset,
-			  e.g. jit-ucs-charset-0 */
-		       (!NILP (charset) &&
-			!charset_iso2022_compatible (charset)))
+	      if (in_composite)
 		{
-		  /* If the character set is to be encoded as UTF-8, the
-		     escape is always the same. */
-		  if (!(flags & ISO_STATE_UTF_8)) 
-		    {
-		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, '%');
-		      Dynarr_add (dst, 'G');
-		      flags |= ISO_STATE_UTF_8;
-		    }
-
-		  {
-		    int code = ichar_to_unicode (ich, CONVERR_FAIL);
-		    if (encode_unicode_to_dynarr
-			(code, str, src, dst, UNICODE_UTF_8, 0,
-			 XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)) < 0)
-		      {
-			ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		      }
-		  }
+		  /* #### Bother! We don't know how to
+		     handle this yet. */
+		  handle_standard_encoding_error (str, src, dst);
 		}
-
-	      /* ---------------------------------------------------- */
-	      /* 4. Found ISO-2022 compatible charset/character.      */
-	      /* ---------------------------------------------------- */
-
 	      else
 		{
-		  /* Now, find the register containing this charset.  If
-		     none, put this charset in an appropriate register and
-		     output an appropriate escape sequence to designate
-		     that the charset is in the register. */
-
-		  int reg;
-
-		  /* End the UTF-8 state. */
-		  if (flags & ISO_STATE_UTF_8)
+		  Ichar emch =
+		    charset_codepoint_to_ichar
+		    (Vcharset_composite, c1, c2, CONVERR_FAIL);
+		  if (emch >= 0)
 		    {
+		      Lisp_Object lstr =
+			composite_char_string (emch);
+		      saved_src = src;
+		      saved_srcend = srcend;
+		      in_composite = 1;
+		      src = XSTRING_DATA (lstr);
+		      srcend = src + XSTRING_LENGTH (lstr);
 		      Dynarr_add (dst, ISO_CODE_ESC);
-		      Dynarr_add (dst, '%');
-		      Dynarr_add (dst, '@');
-		      flags &= ~(ISO_STATE_UTF_8);
+		      Dynarr_add (dst, '0'); /* start composing */
 		    }
+		}
+#else /* not ENABLE_COMPOSITE_CHARS */
+	      c2 &= 127;
+	      if (c2 >= 32 || c2 <= 36) /* Someone might have stuck in
+					   something else */
+		{
+		  Dynarr_add (dst, ISO_CODE_ESC);
+		  Dynarr_add (dst, c2 - 32 + '0');
+		}
+#endif /* (not) ENABLE_COMPOSITE_CHARS */
+	    }
 
-		  ensure_correct_direction (XCHARSET_DIRECTION (charset),
-					    codesys, dst, &flags, 0);
+	  /* ---------------------------------------------------- */
+	  /* 3. Do we need to represent as UTF-8?                 */
+	  /* ---------------------------------------------------- */
 
-		  /* Now determine which register to use. */
-		  reg = -1;
-		  for (i = 0; i < 4; i++)
+	  /* If no ISO2022-compatible charset found, we must encode as
+	     UTF-8 */
+	  else if (NILP (charset) ||
+		   /* This happens when non-Unicode-internal and the
+		      character is stored in the buffer using an
+		      encodable but non-ISO2022-compatible charset,
+		      e.g. jit-ucs-charset-0 */
+		   (!NILP (charset) &&
+		    !charset_iso2022_compatible (charset)))
+	    {
+	      /* If the character set is to be encoded as UTF-8, the
+		 escape is always the same. */
+	      if (!(flags & ISO_STATE_UTF_8)) 
+		{
+		  Dynarr_add (dst, ISO_CODE_ESC);
+		  Dynarr_add (dst, '%');
+		  Dynarr_add (dst, 'G');
+		  flags |= ISO_STATE_UTF_8;
+		}
+
+	      {
+		int code = ichar_to_unicode (ich, CONVERR_FAIL);
+		if (encode_unicode_to_dynarr
+		    (code, str, src, dst, UNICODE_UTF_8, 0,
+		     XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)) < 0)
+		  {
+		    ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		  }
+	      }
+	    }
+
+	  /* ---------------------------------------------------- */
+	  /* 4. Found ISO-2022 compatible charset/character.      */
+	  /* ---------------------------------------------------- */
+
+	  else
+	    {
+	      /* Now, find the register containing this charset.  If
+		 none, put this charset in an appropriate register and
+		 output an appropriate escape sequence to designate
+		 that the charset is in the register. */
+
+	      int reg;
+
+	      /* End the UTF-8 state. */
+	      if (flags & ISO_STATE_UTF_8)
+		{
+		  Dynarr_add (dst, ISO_CODE_ESC);
+		  Dynarr_add (dst, '%');
+		  Dynarr_add (dst, '@');
+		  flags &= ~(ISO_STATE_UTF_8);
+		}
+
+	      ensure_correct_direction (XCHARSET_DIRECTION (charset),
+					codesys, dst, &flags, 0);
+
+	      /* Now determine which register to use. */
+	      reg = -1;
+	      for (i = 0; i < 4; i++)
+		{
+		  if (EQ (charset, data->charset[i]) ||
+		      EQ (charset,
+			  XCODING_SYSTEM_ISO2022_INITIAL_CHARSET
+			  (codesys, i)))
 		    {
-		      if (EQ (charset, data->charset[i]) ||
-			  EQ (charset,
-			      XCODING_SYSTEM_ISO2022_INITIAL_CHARSET
-			      (codesys, i)))
-			{
-			  reg = i;
-			  break;
-			}
+		      reg = i;
+		      break;
 		    }
+		}
 
-		  if (reg == -1)
+	      if (reg == -1)
+		{
+		  if (XCHARSET_GRAPHIC (charset) != 0)
 		    {
-		      if (XCHARSET_GRAPHIC (charset) != 0)
-			{
-			  if (!NILP (data->charset[1]) &&
-			      (!XCODING_SYSTEM_ISO2022_SEVEN (codesys) ||
-			       XCODING_SYSTEM_ISO2022_LOCK_SHIFT (codesys)))
-			    reg = 1;
-			  else if (!NILP (data->charset[2]))
-			    reg = 2;
-			  else if (!NILP (data->charset[3]))
-			    reg = 3;
-			  else
-			    reg = 0;
-			}
+		      if (!NILP (data->charset[1]) &&
+			  (!XCODING_SYSTEM_ISO2022_SEVEN (codesys) ||
+			   XCODING_SYSTEM_ISO2022_LOCK_SHIFT (codesys)))
+			reg = 1;
+		      else if (!NILP (data->charset[2]))
+			reg = 2;
+		      else if (!NILP (data->charset[3]))
+			reg = 3;
 		      else
 			reg = 0;
 		    }
-
-		  iso2022_designate (charset, reg, str, dst);
-
-		  /* Now invoke that register. */
-		  switch (reg)
-		    {
-		    case 0:
-		      ensure_normal_shift (str, dst);
-		      half = 0;
-		      break;
-
-		    case 1:
-		      if (XCODING_SYSTEM_ISO2022_SEVEN (codesys))
-			{
-			  ensure_shift_out (str, dst);
-			  half = 0;
-			}
-		      else
-			half = 1;
-		      break;
-
-		    case 2:
-		      if (XCODING_SYSTEM_ISO2022_SEVEN (str->codesys))
-			{
-			  Dynarr_add (dst, ISO_CODE_ESC);
-			  Dynarr_add (dst, 'N');
-			  half = 0;
-			}
-		      else
-			{
-			  Dynarr_add (dst, ISO_CODE_SS2);
-			  half = 1;
-			}
-		      break;
-
-		    case 3:
-		      if (XCODING_SYSTEM_ISO2022_SEVEN (str->codesys))
-			{
-			  Dynarr_add (dst, ISO_CODE_ESC);
-			  Dynarr_add (dst, 'O');
-			  half = 0;
-			}
-		      else
-			{
-			  Dynarr_add (dst, ISO_CODE_SS3);
-			  half = 1;
-			}
-		      break;
-		  
-		    default:
-		      ABORT ();
-		    }
-		  {
-		    int offset = (half == 0 ? 0 : 0x80);
-		    if (XCHARSET_DIMENSION (charset) == 2)
-		      Dynarr_add (dst, (c1 & 127) + offset);
-		    Dynarr_add (dst, (c2 & 127) + offset);
-		  }
+		  else
+		    reg = 0;
 		}
+
+	      iso2022_designate (charset, reg, str, dst);
+
+	      /* Now invoke that register. */
+	      switch (reg)
+		{
+		case 0:
+		  ensure_normal_shift (str, dst);
+		  half = 0;
+		  break;
+
+		case 1:
+		  if (XCODING_SYSTEM_ISO2022_SEVEN (codesys))
+		    {
+		      ensure_shift_out (str, dst);
+		      half = 0;
+		    }
+		  else
+		    half = 1;
+		  break;
+
+		case 2:
+		  if (XCODING_SYSTEM_ISO2022_SEVEN (str->codesys))
+		    {
+		      Dynarr_add (dst, ISO_CODE_ESC);
+		      Dynarr_add (dst, 'N');
+		      half = 0;
+		    }
+		  else
+		    {
+		      Dynarr_add (dst, ISO_CODE_SS2);
+		      half = 1;
+		    }
+		  break;
+
+		case 3:
+		  if (XCODING_SYSTEM_ISO2022_SEVEN (str->codesys))
+		    {
+		      Dynarr_add (dst, ISO_CODE_ESC);
+		      Dynarr_add (dst, 'O');
+		      half = 0;
+		    }
+		  else
+		    {
+		      Dynarr_add (dst, ISO_CODE_SS3);
+		      half = 1;
+		    }
+		  break;
+		  
+		default:
+		  ABORT ();
+		}
+	      {
+		int offset = (half == 0 ? 0 : 0x80);
+		if (XCHARSET_DIMENSION (charset) == 2)
+		  Dynarr_add (dst, (c1 & 127) + offset);
+		Dynarr_add (dst, (c2 & 127) + offset);
+	      }
 	    }
 	}
     }
@@ -3188,8 +3226,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 #ifdef ENABLE_COMPOSITE_CHARS
   if (in_composite)
     {
-      n = saved_n;
       src = saved_src;
+      srcend = saved_srcend;
       in_composite = 0;
       Dynarr_add (dst, ISO_CODE_ESC);
       Dynarr_add (dst, '1'); /* end composing */
@@ -3197,7 +3235,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
     }
 #endif /* ENABLE_COMPOSITE_CHARS */
 
-  if (!str->pind_remaining && str->eof)
+  if (str->eof)
     {
       restore_left_to_right_direction (codesys, dst, &flags, 0);
       ensure_normal_shift (str, dst);
@@ -3212,17 +3250,17 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
   data->flags = flags;
 
   /* Verbum caro factum est! */
-  return orign;
+  return src - str->src;
 }
 
 static Bytecount
-iso2022_convert (struct coding_stream *str, const UExtbyte *src,
+iso2022_convert (struct coding_stream *str, const unsigned char *src,
 		 Bytecount n, unsigned_char_dynarr *dst)
 {
   if (str->direction == CODING_DECODE)
-    return iso2022_decode (str, src, dst, n);
+    return iso2022_decode (str, (UExtbyte *) src, n, dst);
   else
-    return iso2022_encode (str, src, dst, n);
+    return iso2022_encode (str, (Ibyte *) src, n, dst);
 }
 
 static void
@@ -3876,7 +3914,7 @@ ccl_mark (Lisp_Object codesys)
 }
 
 static Bytecount
-ccl_convert (struct coding_stream *str, const UExtbyte *src,
+ccl_convert (struct coding_stream *str, const unsigned char *src,
 	     Bytecount n, unsigned_char_dynarr *dst)
 {
   struct ccl_coding_stream *data =

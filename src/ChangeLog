@@ -1,5 +1,44 @@
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
+	* file-coding.c:
+	* file-coding.c (coding_rewinder):
+	* file-coding.c (no_conversion_decode):
+	* file-coding.c (no_conversion_encode):
+	* file-coding.c (convert_eol_decode):
+	* file-coding.c (convert_eol_encode):
+	* file-coding.c (undecided_decode):
+	* file-coding.c (internal_convert):
+	* file-coding.c (gzip_decode):
+	* file-coding.c (gzip_encode):
+	* file-coding.c (gzip_convert):
+	* file-coding.h:
+	* file-coding.h (struct coding_stream):
+	* intl-win32.c (mswindows_multibyte_convert):
+	* mule-coding.c:
+	* mule-coding.c (multibyte_decode):
+	* mule-coding.c (multibyte_encode):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (shift_jis_decode):
+	* mule-coding.c (shift_jis_encode):
+	* mule-coding.c (big5_decode):
+	* mule-coding.c (big5_encode):
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	* mule-coding.c (ccl_convert):
+	* unicode.c:
+	* unicode.c (unicode_decode):
+	* unicode.c (unicode_encode):
+	Create separate *_encode() and *_decode() routines, with correct
+	type of the underlying unsigned char * pointers (UExtbyte for
+	external, byte-oriented data vs. Ibyte for internal, character-
+	oriented data).  Eliminate most of the partial-char mechanism for
+	accumulating a partial character during encoding -- it's not
+	necessary since we're always passed data in chunks of whole characters
+	when encoding.  Eliminate COPY_PARTIAL_CHAR_BYTE.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
 	* console-tty.c (tty_init_console):
 	* event-msw.c (make_ntpipe_input_stream):
 	* event-msw.c (make_ntpipe_output_stream):

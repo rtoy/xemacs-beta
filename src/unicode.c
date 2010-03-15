@@ -2780,8 +2780,8 @@ indicate_invalid_utf_8 (int indicated_length, int counter,
 }
 
 static Bytecount
-unicode_convert (struct coding_stream *str, const UExtbyte *src,
-		 Bytecount n, unsigned_char_dynarr *dst)
+unicode_decode (struct coding_stream *str, const UExtbyte *src,
+		Bytecount n, unsigned_char_dynarr *dst)
 {
   struct unicode_coding_stream *data = CODING_STREAM_TYPE_DATA (str, unicode);
   enum unicode_encoding_type type =
@@ -2791,338 +2791,360 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
   int ignore_bom = XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys);
   Bytecount orign = n;
 
-  if (str->direction == CODING_DECODE)
-    {
-      int counter = data->counter;
-      int ch = data->ch;
-      int indicated_length = data->indicated_length;
+  int counter = data->counter;
+  int ch = data->ch;
+  int indicated_length = data->indicated_length;
 
+  switch (type)
+    {
+    case UNICODE_UTF_8:
+      while (n--)
+	{
+	  UExtbyte c = *src++;
+	  decode_utf_8 (data, dst, c, ignore_bom, 0);
+	}
+      counter = data->counter;
+      ch = data->ch;
+      indicated_length = data->indicated_length;
+      break;
+
+    case UNICODE_UTF_16:
+      while (n--)
+	{
+	  UExtbyte c = *src++;
+	  if (little_endian)
+	    ch = (c << counter) | ch;
+	  else
+	    ch = (ch << 8) | c;
+
+	  counter += 8;
+
+	  if (16 == counter)
+	    {
+	      int tempch = ch;
+
+	      if (valid_utf_16_first_surrogate (ch))
+		continue;
+	      ch = 0;
+	      counter = 0;
+	      decode_unicode_to_dynarr_0 (tempch, dst, data, ignore_bom);
+	    }
+	  else if (32 == counter)
+	    {
+	      int tempch;
+
+	      if (little_endian)
+		{
+		  if (!valid_utf_16_last_surrogate (ch >> 16))
+		    {
+		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+						  ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
+						  data, ignore_bom);
+		    }
+		  else
+		    {
+		      tempch = utf_16_surrogates_to_code ((ch & 0xffff),
+							  (ch >> 16));
+		      decode_unicode_to_dynarr_0 (tempch, dst,
+						  data, ignore_bom);
+		    }
+		}
+	      else
+		{
+		  if (!valid_utf_16_last_surrogate (ch & 0xFFFF))
+		    {
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
+						  data, ignore_bom);
+		    }
+		  else 
+		    {
+		      tempch = utf_16_surrogates_to_code ((ch >> 16), 
+							  (ch & 0xffff));
+		      decode_unicode_to_dynarr_0 (tempch, dst,
+						  data, ignore_bom);
+		    }
+		}
+
+	      ch = 0;
+	      counter = 0;
+	    }
+	  else
+	    assert (8 == counter || 24 == counter);
+	}
+      break;
+	  
+    case UNICODE_UCS_4:
+    case UNICODE_UTF_32:
+      while (n--)
+	{
+	  UExtbyte c = *src++;
+	  if (little_endian)
+	    ch = (c << counter) | ch;
+	  else
+	    ch = (ch << 8) | c;
+	  counter += 8;
+	  if (counter == 32)
+	    {
+	      if (ch > UNICODE_OFFICIAL_MAX)
+		{
+		  /* ch is not a legal Unicode character. We're fine
+		     with that in UCS-4, though not in UTF-32. */
+		  if (UNICODE_UCS_4 == type &&
+		      (unsigned long) ch < 0x80000000L)
+		    {
+		      decode_unicode_to_dynarr_0 (ch, dst,
+						  data, ignore_bom);
+		    }
+		  else if (little_endian)
+		    {
+		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data, 
+						  ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
+						  data, ignore_bom);
+		    }
+		  else
+		    {
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
+						  data, ignore_bom);
+		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
+						  data, ignore_bom);
+		    }
+		}
+	      else
+		{
+		  decode_unicode_to_dynarr_0 (ch, dst, data, ignore_bom);
+		}
+	      ch = 0;
+	      counter = 0;
+	    }
+	}
+      break;
+
+    case UNICODE_UTF_7:
+      ABORT ();
+      break;
+
+    default: ABORT ();
+    }
+
+  if (str->eof && counter)
+    {
       switch (type)
 	{
 	case UNICODE_UTF_8:
-	  while (n--)
-	    {
-	      UExtbyte c = *src++;
-	      decode_utf_8 (data, dst, c, ignore_bom, 0);
-	    }
-	  counter = data->counter;
-	  ch = data->ch;
-	  indicated_length = data->indicated_length;
+	  indicate_invalid_utf_8 (indicated_length, 
+				  counter, ch, dst, data, 
+				  ignore_bom);
 	  break;
 
 	case UNICODE_UTF_16:
-	  while (n--)
-	    {
-	      UExtbyte c = *src++;
-	      if (little_endian)
-		ch = (c << counter) | ch;
-	      else
-		ch = (ch << 8) | c;
-
-	      counter += 8;
-
-	      if (16 == counter)
-                {
-		  int tempch = ch;
-
-                  if (valid_utf_16_first_surrogate (ch))
-		    continue;
-		  ch = 0;
-		  counter = 0;
-		  decode_unicode_to_dynarr_0 (tempch, dst, data, ignore_bom);
-		}
-	      else if (32 == counter)
-		{
-		  int tempch;
-
-                  if (little_endian)
-                    {
-                      if (!valid_utf_16_last_surrogate (ch >> 16))
-                        {
-                          UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-						      ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
-						      data, ignore_bom);
-                        }
-                      else
-                        {
-                          tempch = utf_16_surrogates_to_code ((ch & 0xffff),
-							      (ch >> 16));
-                          decode_unicode_to_dynarr_0 (tempch, dst,
-						      data, ignore_bom);
-			}
-                    }
-                  else
-                    {
-                      if (!valid_utf_16_last_surrogate (ch & 0xFFFF))
-                        {
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
-						      data, ignore_bom);
-                        }
-                      else 
-                        {
-                          tempch = utf_16_surrogates_to_code ((ch >> 16), 
-							      (ch & 0xffff));
-                          decode_unicode_to_dynarr_0 (tempch, dst,
-						      data, ignore_bom);
-			}
-                    }
-
-		  ch = 0;
-		  counter = 0;
-                }
-              else
-                assert (8 == counter || 24 == counter);
-	    }
-	  break;
-	  
 	case UNICODE_UCS_4:
 	case UNICODE_UTF_32:
-	  while (n--)
+	  if (8 == counter)
 	    {
-	      UExtbyte c = *src++;
+	      UNICODE_DECODE_ERROR_OCTET (ch, dst, data, ignore_bom);
+	    }
+	  else if (16 == counter)
+	    {
 	      if (little_endian)
-		ch = (c << counter) | ch;
+		{
+		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+					      ignore_bom); 
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+					      ignore_bom); 
+		}
 	      else
-		ch = (ch << 8) | c;
-	      counter += 8;
-	      if (counter == 32)
 		{
-		  if (ch > UNICODE_OFFICIAL_MAX)
-		    {
-                      /* ch is not a legal Unicode character. We're fine
-                         with that in UCS-4, though not in UTF-32. */
-                      if (UNICODE_UCS_4 == type &&
-			  (unsigned long) ch < 0x80000000L)
-                        {
-                          decode_unicode_to_dynarr_0 (ch, dst,
-						      data, ignore_bom);
-			}
-                      else if (little_endian)
-                        {
-                          UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data, 
-						      ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
-						      data, ignore_bom);
-                        }
-                      else
-                        {
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst,
-						      data, ignore_bom);
-                          UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
-						      data, ignore_bom);
-                        }
-		    }
-                  else
-                    {
-                      decode_unicode_to_dynarr_0 (ch, dst, data, ignore_bom);
-                    }
-		  ch = 0;
-		  counter = 0;
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+					      ignore_bom); 
+		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+					      ignore_bom); 
 		}
 	    }
-	  break;
-
-	case UNICODE_UTF_7:
-	  ABORT ();
-	  break;
-
-	default: ABORT ();
-	}
-
-      if (str->eof && counter)
-        {
-          switch (type)
-            {
-	    case UNICODE_UTF_8:
-              indicate_invalid_utf_8 (indicated_length, 
-				      counter, ch, dst, data, 
-				      ignore_bom);
-              break;
-
-            case UNICODE_UTF_16:
-            case UNICODE_UCS_4:
-            case UNICODE_UTF_32:
-              if (8 == counter)
-                {
-                  UNICODE_DECODE_ERROR_OCTET (ch, dst, data, ignore_bom);
-                }
-              else if (16 == counter)
-                {
-                  if (little_endian)
-                    {
-                      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-						  ignore_bom); 
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-						  ignore_bom); 
-                    }
-                  else
-                    {
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-						  ignore_bom); 
-                      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-						  ignore_bom); 
-                    }
-                }
-              else if (24 == counter)
-                {
-                  if (little_endian)
-                    {
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
-						  ignore_bom);
-                      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-						  ignore_bom); 
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-						  ignore_bom); 
-                    }
-                  else
-                    {
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
-						  ignore_bom);
-                      UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
-						  ignore_bom); 
-                      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
-						  ignore_bom); 
-                    }
-                }
-              else assert (0);
-              break;
-            }
-          ch = 0;
-          counter = 0;
-        }
-
-      data->ch = ch;
-      data->counter = counter;
-      data->indicated_length = indicated_length;
-    }
-  else
-    {
-#ifdef ENABLE_COMPOSITE_CHARS
-      /* flags for handling composite chars.  We do a little switcheroo
-	 on the source while we're outputting the composite char. */
-      Bytecount saved_n = 0;
-      const Ibyte *saved_src = NULL;
-      int in_composite = 0;
-
-    back_to_square_n:
-#endif /* ENABLE_COMPOSITE_CHARS */
-
-      if (XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys) && !data->wrote_bom)
-	{
-	  assert (encode_unicode_to_dynarr (0xFEFF, str, src, dst, type,
-					    little_endian, 0) >= 0);
-	  data->wrote_bom = 1;
-	}
-
-      while (n--)
-	{
-	  Ibyte c = *src++;
-
-#ifdef MULE
-	  if (byte_ascii_p (c))
-#endif /* MULE */
-	    assert (encode_unicode_to_dynarr (c, str, src, dst, type,
-					      little_endian, 0) >= 0);
-#ifdef MULE
-	  else
+	  else if (24 == counter)
 	    {
-	      COPY_PARTIAL_CHAR_BYTE (c, str);
-	      if (!str->pind_remaining)
+	      if (little_endian)
 		{
-#ifdef UNICODE_INTERNAL
-		  if (encode_unicode_to_dynarr (non_ascii_itext_ichar
-						(str->partial),
-						str, src, dst, type,
-						little_endian, 0) < 0)
-		    {
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-#else
-		  Lisp_Object charset;
-		  int c1, c2;
-		  itext_to_charset_codepoint_raw (str->partial, Qnil, NULL,
-						  &charset, &c1, &c2);
-#ifdef ENABLE_COMPOSITE_CHARS
-		  if (EQ (charset, Vcharset_composite))
-		    {
-		      if (in_composite)
-			{
-			  /* #### Bother! We don't know how to
-			     handle this yet. */
-			  encode_unicode_to_dynarr (-1, str, src, dst,
-						    type, little_endian, 0);
-			  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-			}
-		      else
-			{
-			  Ichar emch =
-			    charset_codepoint_to_ichar
-			    /* @@#### CONVERR_SUCCEED is wrong, can't handle
-			       errors this way */
-			    (Vcharset_composite, c1, c2, CONVERR_SUCCEED);
-			  Lisp_Object lstr = composite_char_string (emch);
-			  saved_n = n;
-			  saved_src = src;
-			  in_composite = 1;
-			  src = XSTRING_DATA   (lstr);
-			  n   = XSTRING_LENGTH (lstr);
-			}
-		    }
-		  else
-#endif /* ENABLE_COMPOSITE_CHARS */
-		    {
-		      int code =
-			charset_codepoint_to_unicode
-			(charset, c1, c2, CONVERR_FAIL);
-		      if (encode_unicode_to_dynarr (code, str, src, dst, type,
-						    little_endian, 0) < 0)
-			{
-			  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-			}
-		    }
-#endif /* UNICODE_INTERNAL */
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
+					      ignore_bom);
+		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+					      ignore_bom); 
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+					      ignore_bom); 
+		}
+	      else
+		{
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 16) & 0xFF, dst, data,
+					      ignore_bom);
+		  UNICODE_DECODE_ERROR_OCTET ((ch >> 8) & 0xFF, dst, data,
+					      ignore_bom); 
+		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
+					      ignore_bom); 
 		}
 	    }
-#endif /* MULE */
+	  else assert (0);
+	  break;
 	}
-
-#ifdef ENABLE_COMPOSITE_CHARS
-      if (in_composite)
-	{
-	  n = saved_n;
-	  src = saved_src;
-	  in_composite = 0;
-	  goto back_to_square_n; /* Wheeeeeeeee ..... */
-	}
-#endif /* ENABLE_COMPOSITE_CHARS */
-
-      /* La palabra se hizo carne! */
-      /* O verbo fez-se carne! */
-      /* La parole devint chair! */
-      /* Das Wort ward Fleisch! */
-      /* Whatever. */
+      ch = 0;
+      counter = 0;
     }
+
+  data->ch = ch;
+  data->counter = counter;
+  data->indicated_length = indicated_length;
 
   return orign;
+}
+
+static Bytecount
+unicode_encode (struct coding_stream *str, const Ibyte *src,
+		Bytecount n, unsigned_char_dynarr *dst)
+{
+  struct unicode_coding_stream *data = CODING_STREAM_TYPE_DATA (str, unicode);
+  enum unicode_encoding_type type =
+    XCODING_SYSTEM_UNICODE_TYPE (str->codesys);
+  int little_endian =
+    XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
+  const Ibyte *srcend = src + n;
+
+#ifdef ENABLE_COMPOSITE_CHARS
+  /* flags for handling composite chars.  We do a little switcheroo
+     on the source while we're outputting the composite char. */
+  const Ibyte *saved_src = NULL;
+  const Ibyte *saved_srcend = NULL;
+  int in_composite = 0;
+
+ back_to_square_n:
+#endif /* ENABLE_COMPOSITE_CHARS */
+
+  if (XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys) && !data->wrote_bom)
+    {
+      assert (encode_unicode_to_dynarr (0xFEFF, str, src, dst, type,
+					little_endian, 0) >= 0);
+      data->wrote_bom = 1;
+    }
+
+  while (src < srcend)
+    {
+      Ibyte c = *src;
+
+#ifdef MULE
+      if (byte_ascii_p (c))
+#endif /* MULE */
+	{
+	  assert (encode_unicode_to_dynarr (c, str, src, dst, type,
+					    little_endian, 0) >= 0);
+	  src++;
+	}
+#ifdef MULE
+      else
+	{
+	  /* Processing a non-ASCII character */
+#ifndef UNICODE_INTERNAL
+	  Lisp_Object charset;
+	  int c1, c2;
+#endif
+	  Ichar ich = itext_ichar (src);
+          INC_IBYTEPTR (src);
+
+#ifdef UNICODE_INTERNAL
+	  if (encode_unicode_to_dynarr (ich, str, src, dst, type,
+					little_endian, 0) < 0)
+	    {
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+	    }
+#else
+	  ichar_to_charset_codepoint (ich, Qnil, &charset, &c1, &c2,
+				      CONVERR_FAIL);
+#ifdef ENABLE_COMPOSITE_CHARS
+	  if (EQ (charset, Vcharset_composite))
+	    {
+	      if (in_composite)
+		{
+		  /* #### Bother! We don't know how to
+		     handle this yet. */
+		  encode_unicode_to_dynarr (-1, str, src, dst,
+					    type, little_endian, 0);
+		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		}
+	      else
+		{
+		  Ichar emch =
+		    charset_codepoint_to_ichar
+		    /* @@#### CONVERR_SUCCEED is wrong, can't handle
+		       errors this way */
+		    (Vcharset_composite, c1, c2, CONVERR_SUCCEED);
+		  Lisp_Object lstr = composite_char_string (emch);
+		  saved_srcend = srcend;
+		  saved_src = src;
+		  in_composite = 1;
+		  src = XSTRING_DATA (lstr);
+		  srcend = src + XSTRING_LENGTH (lstr);
+		}
+	    }
+	  else
+#endif /* ENABLE_COMPOSITE_CHARS */
+	    {
+	      int code =
+		charset_codepoint_to_unicode
+		(charset, c1, c2, CONVERR_FAIL);
+	      if (encode_unicode_to_dynarr (code, str, src, dst, type,
+					    little_endian, 0) < 0)
+		{
+		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
+		}
+	    }
+#endif /* UNICODE_INTERNAL */
+	}
+#endif /* MULE */
+    }
+
+#ifdef ENABLE_COMPOSITE_CHARS
+  if (in_composite)
+    {
+      src = saved_src;
+      srcend = saved_srcend;
+      in_composite = 0;
+      goto back_to_square_n; /* Wheeeeeeeee ..... */
+    }
+#endif /* ENABLE_COMPOSITE_CHARS */
+
+  /* La palabra se hizo carne! */
+  /* O verbo fez-se carne! */
+  /* La parole devint chair! */
+  /* Das Wort ward Fleisch! */
+  /* Whatever. */
+
+  return src - str->src;
+}
+
+static Bytecount
+unicode_convert (struct coding_stream *str, const unsigned char *src,
+		 Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return unicode_decode (str, (UExtbyte *) src, n, dst);
+  else
+    return unicode_encode (str, (Ibyte *) src, n, dst);
 }
 
 /* DEFINE_DETECTOR (utf_7); */

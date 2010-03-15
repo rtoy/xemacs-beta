@@ -2310,7 +2310,6 @@ coding_rewinder (Lstream *stream)
   MAYBE_XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
 
   str->ch = -1;
-  str->pind_remaining = 0;
   Dynarr_reset (str->convert_to);
   Dynarr_reset (str->convert_from);
   return Lstream_rewind (str->other_end);
@@ -3680,51 +3679,61 @@ DEFINE_CODING_SYSTEM_TYPE (no_conversion);
    contain all 256 possible byte values and that are not to be
    interpreted as being in any particular encoding. */
 static Bytecount
-no_conversion_convert (struct coding_stream *str, const UExtbyte *src,
-		       Bytecount n, unsigned_char_dynarr *dst)
+no_conversion_decode (struct coding_stream *str, const UExtbyte *src,
+		      Bytecount n, unsigned_char_dynarr *dst)
 {
   UExtbyte c;
-  Bytecount orign = n;
 
-  if (str->direction == CODING_DECODE)
+  while (n--)
     {
-      while (n--)
-	{
-	  c = *src++;
+      c = *src++;
 
-	  DECODE_ADD_BINARY_CHAR (c, dst);
-	}
+      DECODE_ADD_BINARY_CHAR (c, dst);
     }
-  else
-    {
+  return src - str->src;
+}
 
-      while (n--)
+static Bytecount
+no_conversion_encode (struct coding_stream *str, const Ibyte *src,
+		      Bytecount n, unsigned_char_dynarr *dst)
+{
+  const Ibyte *srcend = src + n;
+  while (src < srcend)
+    {
+      Ibyte c = *src;
+      if (byte_ascii_p (c))
 	{
-	  c = *src++;
-	  if (byte_ascii_p (c))
-	    Dynarr_add (dst, c);
+	  Dynarr_add (dst, c);
+	  src++;
+	}
 #ifdef MULE
+      else
+	{
+	  Ichar ch = non_ascii_itext_ichar (src);
+	  INC_IBYTEPTR (src);
+	  if (ch < 256)
+	    Dynarr_add (dst, (unsigned char) ch);
 	  else
 	    {
-	      COPY_PARTIAL_CHAR_BYTE (c, str);
-	      if (!str->pind_remaining)
-		{
-		  Ichar ch = non_ascii_itext_ichar (str->partial);
-		  if (ch < 256)
-		    Dynarr_add (dst, (unsigned char) ch);
-		  else
-		    {
-		      /* untranslatable character */
-		      handle_standard_encoding_error (str, src, dst);
-		      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
-		    }
-		}
+	      /* untranslatable character */
+	      handle_standard_encoding_error (str, src, dst);
+	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 	    }
-#endif /* MULE */
 	}
+#endif /* MULE */
     }
 
-  return orign;
+  return src - str->src;
+}
+
+static Bytecount
+no_conversion_convert (struct coding_stream *str, const unsigned char *src,
+		       Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return no_conversion_decode (str, (UExtbyte *) src, n, dst);
+  else
+    return no_conversion_encode (str, (Ibyte *) src, n, dst);
 }
 
 DEFINE_DETECTOR (no_conversion);
@@ -3867,125 +3876,135 @@ convert_eol_init_coding_stream (struct coding_stream *str)
 }
 
 static Bytecount
-convert_eol_convert (struct coding_stream *str, const UExtbyte *src,
+convert_eol_decode (struct coding_stream *str, const Ibyte *src,
+		    Bytecount n, unsigned_char_dynarr *dst)
+{
+  struct convert_eol_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, convert_eol);
+
+  if (data->actual == EOL_AUTODETECT)
+    {
+      Bytecount n2 = n;
+      const Ibyte *src2 = src;
+
+      for (; n2; n2--)
+	{
+	  Ibyte c = *src2++;
+	  if (c == '\n')
+	    {
+	      data->actual = EOL_LF;
+	      break;
+	    }
+	  else if (c == '\r')
+	    {
+	      if (n2 == 1)
+		{
+		  /* If we're seeing a '\r' at the end of the data, then
+		     reject the '\r' right now so it doesn't become an
+		     issue in the code below -- unless we're at the end of
+		     the stream, in which case we can't do that (because
+		     then the '\r' will never get written out), and in any
+		     case we should be recognizing it at EOL_CR format. */
+		  if (str->eof)
+		    data->actual = EOL_CR;
+		  else
+		    n--;
+		  break;
+		}
+	      else if (*src2 == '\n')
+		data->actual = EOL_CRLF;
+	      else
+		data->actual = EOL_CR;
+	      break;
+	    }
+	}
+    }
+
+  /* str->eof is set, the caller reached EOF on the other end and has
+     no new data to give us.  The only data we get is the data we
+     rejected from last time. */
+  if (data->actual == EOL_LF || data->actual == EOL_AUTODETECT ||
+      (str->eof))
+    Dynarr_add_many (dst, src, n);
+  else
+    {
+      const Ibyte *end = src + n;
+      while (1)
+	{
+	  /* Find the next section with no \r and add it. */
+	  const Ibyte *runstart = src;
+	  src = (Ibyte *) memchr (src, '\r', end - src);
+	  if (!src)
+	    src = end;
+	  Dynarr_add_many (dst, runstart, src - runstart);
+	  /* Stop if at end ... */
+	  if (src == end)
+	    break;
+	  /* ... else, translate as necessary. */
+	  src++;
+	  if (data->actual == EOL_CR)
+	    Dynarr_add (dst, '\n');
+	  /* We need to be careful here with CRLF.  If we see a CR at the
+	     end of the data, we don't know if it's part of a CRLF, so we
+	     reject it.  Otherwise: If it's part of a CRLF, eat it and
+	     loop; the following LF gets added next time around.  If it's
+	     not part of a CRLF, add the CR and loop.  The following
+	     character will be processed in the next loop iteration.  This
+	     correctly handles a sequence like CR+CR+LF. */
+	  else if (src == end)
+	    return n - 1;	/* reject the CR at the end; we'll get it again
+				   next time the convert method is called */
+	  else if (*src != '\n')
+	    Dynarr_add (dst, '\r');
+	}
+    }
+
+  return n;
+}
+
+static Bytecount
+convert_eol_encode (struct coding_stream *str, const Ibyte *src,
+		    Bytecount n, unsigned_char_dynarr *dst)
+{
+  enum eol_type subtype =
+    XCODING_SYSTEM_CONVERT_EOL_SUBTYPE (str->codesys);
+  const Ibyte *end = src + n;
+
+  /* We try to be relatively efficient here. */
+  if (subtype == EOL_LF)
+    Dynarr_add_many (dst, src, n);
+  else
+    {
+      while (1)
+	{
+	  /* Find the next section with no \n and add it. */
+	  const Ibyte *runstart = src;
+	  src = (Ibyte *) memchr (src, '\n', end - src);
+	  if (!src)
+	    src = end;
+	  Dynarr_add_many (dst, runstart, src - runstart);
+	  /* Stop if at end ... */
+	  if (src == end)
+	    break;
+	  /* ... else, skip over \n and add its translation. */
+	  src++;
+	  Dynarr_add (dst, '\r');
+	  if (subtype == EOL_CRLF)
+	    Dynarr_add (dst, '\n');
+	}
+    }
+
+  return n;
+}
+
+static Bytecount
+convert_eol_convert (struct coding_stream *str, const unsigned char *src,
 		     Bytecount n, unsigned_char_dynarr *dst)
 {
   if (str->direction == CODING_DECODE)
-    {
-      struct convert_eol_coding_stream *data =
-	CODING_STREAM_TYPE_DATA (str, convert_eol);
-
-      if (data->actual == EOL_AUTODETECT)
-	{
-	  Bytecount n2 = n;
-	  const Ibyte *src2 = src;
-
-	  for (; n2; n2--)
-	    {
-	      Ibyte c = *src2++;
-	      if (c == '\n')
-		{
-		  data->actual = EOL_LF;
-		  break;
-		}
-	      else if (c == '\r')
-		{
-		  if (n2 == 1)
-		    {
-		      /* If we're seeing a '\r' at the end of the data, then
-			 reject the '\r' right now so it doesn't become an
-			 issue in the code below -- unless we're at the end of
-			 the stream, in which case we can't do that (because
-			 then the '\r' will never get written out), and in any
-			 case we should be recognizing it at EOL_CR format. */
-		      if (str->eof)
-			data->actual = EOL_CR;
-		      else
-			n--;
-		      break;
-		    }
-		  else if (*src2 == '\n')
-		    data->actual = EOL_CRLF;
-		  else
-		    data->actual = EOL_CR;
-		  break;
-		}
-	    }
-	}
-
-      /* str->eof is set, the caller reached EOF on the other end and has
-	 no new data to give us.  The only data we get is the data we
-	 rejected from last time. */
-      if (data->actual == EOL_LF || data->actual == EOL_AUTODETECT ||
-	  (str->eof))
-	Dynarr_add_many (dst, src, n);
-      else
-	{
-	  const Ibyte *end = src + n;
-	  while (1)
-	    {
-	      /* Find the next section with no \r and add it. */
-	      const Ibyte *runstart = src;
-	      src = (Ibyte *) memchr (src, '\r', end - src);
-	      if (!src)
-		src = end;
-	      Dynarr_add_many (dst, runstart, src - runstart);
-	      /* Stop if at end ... */
-	      if (src == end)
-		break;
-	      /* ... else, translate as necessary. */
-	      src++;
-	      if (data->actual == EOL_CR)
-		Dynarr_add (dst, '\n');
-	      /* We need to be careful here with CRLF.  If we see a CR at the
-		 end of the data, we don't know if it's part of a CRLF, so we
-		 reject it.  Otherwise: If it's part of a CRLF, eat it and
-		 loop; the following LF gets added next time around.  If it's
-		 not part of a CRLF, add the CR and loop.  The following
-		 character will be processed in the next loop iteration.  This
-		 correctly handles a sequence like CR+CR+LF. */
-	      else if (src == end)
-		return n - 1;	/* reject the CR at the end; we'll get it again
-				   next time the convert method is called */
-	      else if (*src != '\n')
-		Dynarr_add (dst, '\r');
-	    }
-	}
-
-      return n;
-    }
+    return convert_eol_decode (str, (Ibyte *) src, n, dst);
   else
-    {
-      enum eol_type subtype =
-	XCODING_SYSTEM_CONVERT_EOL_SUBTYPE (str->codesys);
-      const Ibyte *end = src + n;
-
-      /* We try to be relatively efficient here. */
-      if (subtype == EOL_LF)
-	Dynarr_add_many (dst, src, n);
-      else
-	{
-	  while (1)
-	    {
-	      /* Find the next section with no \n and add it. */
-	      const Ibyte *runstart = src;
-	      src = (Ibyte *) memchr (src, '\n', end - src);
-	      if (!src)
-		src = end;
-	      Dynarr_add_many (dst, runstart, src - runstart);
-	      /* Stop if at end ... */
-	      if (src == end)
-		break;
-	      /* ... else, skip over \n and add its translation. */
-	      src++;
-	      Dynarr_add (dst, '\r');
-	      if (subtype == EOL_CRLF)
-		Dynarr_add (dst, '\n');
-	    }
-	}
-
-      return n;
-    }
+    return convert_eol_encode (str, (Ibyte *) src, n, dst);
 }
 
 static Lisp_Object
@@ -4771,136 +4790,148 @@ undecided_canonicalize (Lisp_Object codesys)
 }
 
 static Bytecount
-undecided_convert (struct coding_stream *str, const UExtbyte *src,
-		   Bytecount n, unsigned_char_dynarr *dst)
+undecided_decode (struct coding_stream *str, const UExtbyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
 {
   int first_time = 0;
 
-  if (str->direction == CODING_DECODE)
+  /* At this point, we have only the following possibilities:
+
+  do_eol && do_coding
+  do_coding only
+  do_eol only and a coding system was specified
+
+  Other possibilities are removed during undecided_canonicalize.
+
+  Therefore, our substreams are either
+
+  lstream_coding -> lstream_dynarr, or
+  lstream_coding -> lstream_eol -> lstream_dynarr.
+  */
+  struct undecided_coding_system *csdata =
+    XCODING_SYSTEM_TYPE_DATA (str->codesys, undecided);
+  struct undecided_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, undecided);
+
+  if (str->eof)
     {
-      /* At this point, we have only the following possibilities:
-
-	 do_eol && do_coding
-	 do_coding only
-	 do_eol only and a coding system was specified
-
-	 Other possibilities are removed during undecided_canonicalize.
-
-	 Therefore, our substreams are either
-
-	 lstream_coding -> lstream_dynarr, or
-	 lstream_coding -> lstream_eol -> lstream_dynarr.
-	 */
-      struct undecided_coding_system *csdata =
-	XCODING_SYSTEM_TYPE_DATA (str->codesys, undecided);
-      struct undecided_coding_stream *data =
-	CODING_STREAM_TYPE_DATA (str, undecided);
-
-      if (str->eof)
-	{
-	  /* Each will close the next.  We need to close now because more
-	     data may be generated. */
-	  if (data->c.initted)
-	    Lstream_close (XLSTREAM (data->c.lstreams[0]));
-	  return n;
-	}
-
-      if (!data->c.initted)
-	{
-	  data->c.lstream_count = csdata->do_eol ? 3 : 2;
-	  data->c.lstreams = xnew_array (Lisp_Object, data->c.lstream_count);
-
-	  data->c.lstreams[data->c.lstream_count - 1] =
-	    make_dynarr_output_stream (dst);
-	  Lstream_set_buffering
-	    (XLSTREAM (data->c.lstreams[data->c.lstream_count - 1]),
-	     LSTREAM_UNBUFFERED, 0);
-	  if (csdata->do_eol)
-	    {
-	      data->c.lstreams[1] =
-		make_coding_output_stream
-		  (XLSTREAM (data->c.lstreams[data->c.lstream_count - 1]),
-		   Fget_coding_system (Qconvert_eol_autodetect),
-		   CODING_DECODE, 0);
-	      Lstream_set_buffering
-		(XLSTREAM (data->c.lstreams[1]),
-		 LSTREAM_UNBUFFERED, 0);
-	    }
-
-	  data->c.lstreams[0] =
-	    make_coding_output_stream
-	      (XLSTREAM (data->c.lstreams[1]),
-	       /* Substitute binary if we need to detect the encoding */
-	       csdata->do_coding ? Qbinary : csdata->cs,
-	       CODING_DECODE, 0);
-	  Lstream_set_buffering (XLSTREAM (data->c.lstreams[0]),
-				 LSTREAM_UNBUFFERED, 0);
-
-	  first_time = 1;
-	  data->c.initted = 1;
-	}
-
-      /* If necessary, do encoding-detection now.  We do this when we're a
-	 writing stream or a non-seekable reading stream, meaning that we
-	 can't just process the whole input, rewind, and start over. */
-
-      if (csdata->do_coding)
-	{
-	  int actual_was_nil = NILP (data->actual);
-	  if (NILP (data->actual))
-	    {
-	      if (!data->st)
-		data->st = allocate_detection_state ();
-	      if (first_time)
-		/* #### This is cheesy.  What we really ought to do is buffer
-		   up a certain minimum amount of data to get a better result.
-		   */
-		data->actual = look_for_coding_system_magic_cookie (src, n);
-	      if (NILP (data->actual))
-		{
-		  /* #### This is cheesy.  What we really ought to do is buffer
-		     up a certain minimum amount of data so as to get a less
-		     random result when doing subprocess detection. */
-		  detect_coding_type (data->st, src, n);
-		  data->actual = detected_coding_system (data->st);
-		  /* kludge to prevent infinite recursion */
-		  if (XCODING_SYSTEM (data->actual)->methods->enumtype ==
-		      undecided_coding_system)
-		    data->actual = Fget_coding_system (Qbinary);
-		}
-	    }
-	  /* We need to set the detected coding system if we actually have
-	     such a coding system but didn't before.  That is the case
-	     either when we just detected it in the previous code or when
-	     it was detected during undecided_init_coding_stream().  We
-	     can check for that using first_time. */
-	  if (!NILP (data->actual) && (actual_was_nil || first_time))
-	    {
-	      /* If the detected coding system doesn't allow for EOL
-		 autodetection, try to get the equivalent that does;
-		 otherwise, disable EOL detection (overriding whatever
-		 may already have been detected). */
-	      if (XCODING_SYSTEM_EOL_TYPE (data->actual) != EOL_AUTODETECT)
-		{
-		  if (!NILP (XCODING_SYSTEM_SUBSIDIARY_PARENT (data->actual)))
-		    data->actual =
-		      XCODING_SYSTEM_SUBSIDIARY_PARENT (data->actual);
-		  else if (data->c.lstream_count == 3)
-		    set_coding_stream_coding_system
-		      (XLSTREAM (data->c.lstreams[1]),
-		       Fget_coding_system (Qidentity));
-		}
-	      set_coding_stream_coding_system
-		(XLSTREAM (data->c.lstreams[0]), data->actual);
-	    }
-	}
-
-      if (Lstream_write (XLSTREAM (data->c.lstreams[0]), src, n) < 0)
-	return -1;
+      /* Each will close the next.  We need to close now because more
+	 data may be generated. */
+      if (data->c.initted)
+	Lstream_close (XLSTREAM (data->c.lstreams[0]));
       return n;
     }
+
+  if (!data->c.initted)
+    {
+      data->c.lstream_count = csdata->do_eol ? 3 : 2;
+      data->c.lstreams = xnew_array (Lisp_Object, data->c.lstream_count);
+
+      data->c.lstreams[data->c.lstream_count - 1] =
+	make_dynarr_output_stream (dst);
+      Lstream_set_buffering
+	(XLSTREAM (data->c.lstreams[data->c.lstream_count - 1]),
+	 LSTREAM_UNBUFFERED, 0);
+      if (csdata->do_eol)
+	{
+	  data->c.lstreams[1] =
+	    make_coding_output_stream
+	    (XLSTREAM (data->c.lstreams[data->c.lstream_count - 1]),
+	     Fget_coding_system (Qconvert_eol_autodetect),
+	     CODING_DECODE, 0);
+	  Lstream_set_buffering
+	    (XLSTREAM (data->c.lstreams[1]),
+	     LSTREAM_UNBUFFERED, 0);
+	}
+
+      data->c.lstreams[0] =
+	make_coding_output_stream
+	(XLSTREAM (data->c.lstreams[1]),
+	 /* Substitute binary if we need to detect the encoding */
+	 csdata->do_coding ? Qbinary : csdata->cs,
+	 CODING_DECODE, 0);
+      Lstream_set_buffering (XLSTREAM (data->c.lstreams[0]),
+			     LSTREAM_UNBUFFERED, 0);
+
+      first_time = 1;
+      data->c.initted = 1;
+    }
+
+  /* If necessary, do encoding-detection now.  We do this when we're a
+     writing stream or a non-seekable reading stream, meaning that we
+     can't just process the whole input, rewind, and start over. */
+
+  if (csdata->do_coding)
+    {
+      int actual_was_nil = NILP (data->actual);
+      if (NILP (data->actual))
+	{
+	  if (!data->st)
+	    data->st = allocate_detection_state ();
+	  if (first_time)
+	    /* #### This is cheesy.  What we really ought to do is buffer
+	       up a certain minimum amount of data to get a better result.
+	    */
+	    data->actual = look_for_coding_system_magic_cookie (src, n);
+	  if (NILP (data->actual))
+	    {
+	      /* #### This is cheesy.  What we really ought to do is buffer
+		 up a certain minimum amount of data so as to get a less
+		 random result when doing subprocess detection. */
+	      detect_coding_type (data->st, src, n);
+	      data->actual = detected_coding_system (data->st);
+	      /* kludge to prevent infinite recursion */
+	      if (XCODING_SYSTEM (data->actual)->methods->enumtype ==
+		  undecided_coding_system)
+		data->actual = Fget_coding_system (Qbinary);
+	    }
+	}
+      /* We need to set the detected coding system if we actually have
+	 such a coding system but didn't before.  That is the case
+	 either when we just detected it in the previous code or when
+	 it was detected during undecided_init_coding_stream().  We
+	 can check for that using first_time. */
+      if (!NILP (data->actual) && (actual_was_nil || first_time))
+	{
+	  /* If the detected coding system doesn't allow for EOL
+	     autodetection, try to get the equivalent that does;
+	     otherwise, disable EOL detection (overriding whatever
+	     may already have been detected). */
+	  if (XCODING_SYSTEM_EOL_TYPE (data->actual) != EOL_AUTODETECT)
+	    {
+	      if (!NILP (XCODING_SYSTEM_SUBSIDIARY_PARENT (data->actual)))
+		data->actual =
+		  XCODING_SYSTEM_SUBSIDIARY_PARENT (data->actual);
+	      else if (data->c.lstream_count == 3)
+		set_coding_stream_coding_system
+		  (XLSTREAM (data->c.lstreams[1]),
+		   Fget_coding_system (Qidentity));
+	    }
+	  set_coding_stream_coding_system
+	    (XLSTREAM (data->c.lstreams[0]), data->actual);
+	}
+    }
+
+  if (Lstream_write (XLSTREAM (data->c.lstreams[0]), src, n) < 0)
+    return -1;
+  return n;
+}
+
+static Bytecount
+undecided_encode (struct coding_stream *str, const Ibyte *src,
+		  Bytecount n, unsigned_char_dynarr *dst)
+{
+  return no_conversion_encode (str, src, n, dst);
+}
+
+static Bytecount
+undecided_convert (struct coding_stream *str, const unsigned char *src,
+		   Bytecount n, unsigned_char_dynarr *dst)
+{
+  if (str->direction == CODING_DECODE)
+    return undecided_decode (str, (UExtbyte *) src, n, dst);
   else
-    return no_conversion_convert (str, src, n, dst);
+    return undecided_encode (str, (Ibyte *) src, n, dst);
 }
 
 static Lisp_Object
@@ -5113,7 +5144,7 @@ type.  Optional arg BUFFER defaults to the current buffer.
 DEFINE_CODING_SYSTEM_TYPE (internal);
 
 static Bytecount
-internal_convert (struct coding_stream *UNUSED (str), const UExtbyte *src,
+internal_convert (struct coding_stream *UNUSED (str), const unsigned char *src,
 		  Bytecount n, unsigned_char_dynarr *dst)
 {
   Bytecount orign = n;
@@ -5244,131 +5275,148 @@ gzip_rewind_coding_stream (struct coding_stream *str)
 }
 
 static Bytecount
-gzip_convert (struct coding_stream *str, const UExtbyte *src,
-	      Bytecount n, unsigned_char_dynarr *dst)
+gzip_decode (struct coding_stream *str, const UExtbyte *src,
+	     Bytecount n, unsigned_char_dynarr *dst)
 {
   /* @@#### Need to figure out how to properly deal with errors
      here. */
 
   struct gzip_coding_stream *data = CODING_STREAM_TYPE_DATA (str, gzip);
   int zerr;
+
+  if (data->reached_eof)
+    return n;		/* eat the data */
+
+  if (!data->stream_initted)
+    {
+      xzero (data->stream);
+      if (inflateInit (&data->stream) != Z_OK)
+	return LSTREAM_ERROR;
+      data->stream_initted = 1;
+    }
+
+  data->stream.next_in = (Bytef *) src;
+  data->stream.avail_in = n;
+
+  /* Normally we stop when we've fed all data to the decompressor; but
+     if we're at the end of the input, and the decompressor hasn't
+     reported EOF, we need to keep going, as there might be more output
+     to generate.  Z_OK from the decompressor means input was processed
+     or output was generated; if neither, we break out of the loop.
+     Other return values are:
+
+     Z_STREAM_END		EOF from decompressor
+     Z_DATA_ERROR		Corrupted data
+     Z_BUF_ERROR		No progress possible (this should happen if
+     we try to feed it an incomplete file)
+     Z_MEM_ERROR		Out of memory
+     Z_STREAM_ERROR		(should never happen)
+     Z_NEED_DICT		(#### when will this happen?)
+  */
+  while (data->stream.avail_in > 0 || str->eof)
+    {
+      /* Reserve an output buffer of the same size as the input buffer;
+	 if that's not enough, we keep reserving the same size. */
+      Bytecount reserved = n;
+      Dynarr_add_many (dst, 0, reserved);
+      /* Careful here!  Don't retrieve the pointer until after
+	 reserving the space, or it might be bogus */
+      data->stream.next_out =
+	Dynarr_atp (dst, Dynarr_length (dst) - reserved);
+      data->stream.avail_out = reserved;
+      zerr = inflate (&data->stream, Z_NO_FLUSH);
+      /* Lop off the unused portion */
+      Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
+      if (zerr != Z_OK)
+	break;
+    }
+
+  if (zerr == Z_STREAM_END)
+    data->reached_eof = 1;
+
+  if ((Bytecount) data->stream.avail_in < n)
+    return n - data->stream.avail_in;
+
+  if (zerr == Z_OK || zerr == Z_STREAM_END)
+    return 0;
+
+  return LSTREAM_ERROR;
+}
+
+static Bytecount
+gzip_encode (struct coding_stream *str, const UExtbyte *src,
+	     Bytecount n, unsigned_char_dynarr *dst)
+{
+  /* @@#### Need to figure out how to properly deal with errors
+     here. */
+
+  struct gzip_coding_stream *data = CODING_STREAM_TYPE_DATA (str, gzip);
+  int zerr;
+
+  if (!data->stream_initted)
+    {
+      int level = XCODING_SYSTEM_GZIP_LEVEL (str->codesys);
+      xzero (data->stream);
+      if (deflateInit (&data->stream,
+		       level == -1 ? Z_DEFAULT_COMPRESSION : level) !=
+	  Z_OK)
+	return LSTREAM_ERROR;
+      data->stream_initted = 1;
+    }
+
+  data->stream.next_in = (Bytef *) src;
+  data->stream.avail_in = n;
+
+  /* Normally we stop when we've fed all data to the compressor; but if
+     we're at the end of the input, and the compressor hasn't reported
+     EOF, we need to keep going, as there might be more output to
+     generate.  (To signal EOF on our end, we set the FLUSH parameter
+     to Z_FINISH; when all data is output, Z_STREAM_END will be
+     returned.)  Z_OK from the compressor means input was processed or
+     output was generated; if neither, we break out of the loop.  Other
+     return values are:
+
+     Z_STREAM_END		EOF from compressor
+     Z_BUF_ERROR		No progress possible (should never happen)
+     Z_STREAM_ERROR		(should never happen)
+  */
+  while (data->stream.avail_in > 0 || str->eof)
+    {
+      /* Reserve an output buffer of the same size as the input buffer;
+	 if that's not enough, we keep reserving the same size. */
+      Bytecount reserved = n;
+      Dynarr_add_many (dst, 0, reserved);
+      /* Careful here!  Don't retrieve the pointer until after
+	 reserving the space, or it might be bogus */
+      data->stream.next_out =
+	Dynarr_atp (dst, Dynarr_length (dst) - reserved);
+      data->stream.avail_out = reserved;
+      zerr =
+	deflate (&data->stream,
+		 str->eof ? Z_FINISH : Z_NO_FLUSH);
+      /* Lop off the unused portion */
+      Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
+      if (zerr != Z_OK)
+	break;
+    }
+
+  if ((Bytecount) data->stream.avail_in < n)
+    return n - data->stream.avail_in;
+
+  if (zerr == Z_OK || zerr == Z_STREAM_END)
+    return 0;
+
+  return LSTREAM_ERROR;
+}
+
+static Bytecount
+gzip_convert (struct coding_stream *str, const unsigned char *src,
+	      Bytecount n, unsigned_char_dynarr *dst)
+{
   if (str->direction == CODING_DECODE)
-    {
-      if (data->reached_eof)
-	return n;		/* eat the data */
-
-      if (!data->stream_initted)
-	{
-	  xzero (data->stream);
-	  if (inflateInit (&data->stream) != Z_OK)
-	    return LSTREAM_ERROR;
-	  data->stream_initted = 1;
-	}
-
-      data->stream.next_in = (Bytef *) src;
-      data->stream.avail_in = n;
-
-      /* Normally we stop when we've fed all data to the decompressor; but
-	 if we're at the end of the input, and the decompressor hasn't
-	 reported EOF, we need to keep going, as there might be more output
-	 to generate.  Z_OK from the decompressor means input was processed
-	 or output was generated; if neither, we break out of the loop.
-	 Other return values are:
-
-	 Z_STREAM_END		EOF from decompressor
-	 Z_DATA_ERROR		Corrupted data
-	 Z_BUF_ERROR		No progress possible (this should happen if
-	 we try to feed it an incomplete file)
-	 Z_MEM_ERROR		Out of memory
-	 Z_STREAM_ERROR		(should never happen)
-	 Z_NEED_DICT		(#### when will this happen?)
-	 */
-      while (data->stream.avail_in > 0 || str->eof)
-	{
-	  /* Reserve an output buffer of the same size as the input buffer;
-	     if that's not enough, we keep reserving the same size. */
-	  Bytecount reserved = n;
-	  Dynarr_add_many (dst, 0, reserved);
-	  /* Careful here!  Don't retrieve the pointer until after
-	     reserving the space, or it might be bogus */
-	  data->stream.next_out =
-	    Dynarr_atp (dst, Dynarr_length (dst) - reserved);
-	  data->stream.avail_out = reserved;
-	  zerr = inflate (&data->stream, Z_NO_FLUSH);
-	  /* Lop off the unused portion */
-	  Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
-	  if (zerr != Z_OK)
-	    break;
-	}
-
-      if (zerr == Z_STREAM_END)
-	data->reached_eof = 1;
-
-      if ((Bytecount) data->stream.avail_in < n)
-	return n - data->stream.avail_in;
-
-      if (zerr == Z_OK || zerr == Z_STREAM_END)
-	return 0;
-
-      return LSTREAM_ERROR;
-    }
+    return gzip_decode (str, (UExtbyte *) src, n, dst);
   else
-    {
-      if (!data->stream_initted)
-	{
-	  int level = XCODING_SYSTEM_GZIP_LEVEL (str->codesys);
-	  xzero (data->stream);
-	  if (deflateInit (&data->stream,
-			   level == -1 ? Z_DEFAULT_COMPRESSION : level) !=
-	      Z_OK)
-	    return LSTREAM_ERROR;
-	  data->stream_initted = 1;
-	}
-
-      data->stream.next_in = (Bytef *) src;
-      data->stream.avail_in = n;
-
-      /* Normally we stop when we've fed all data to the compressor; but if
-	 we're at the end of the input, and the compressor hasn't reported
-	 EOF, we need to keep going, as there might be more output to
-	 generate.  (To signal EOF on our end, we set the FLUSH parameter
-	 to Z_FINISH; when all data is output, Z_STREAM_END will be
-	 returned.)  Z_OK from the compressor means input was processed or
-	 output was generated; if neither, we break out of the loop.  Other
-	 return values are:
-
-	 Z_STREAM_END		EOF from compressor
-	 Z_BUF_ERROR		No progress possible (should never happen)
-	 Z_STREAM_ERROR		(should never happen)
-	 */
-      while (data->stream.avail_in > 0 || str->eof)
-	{
-	  /* Reserve an output buffer of the same size as the input buffer;
-	     if that's not enough, we keep reserving the same size. */
-	  Bytecount reserved = n;
-	  Dynarr_add_many (dst, 0, reserved);
-	  /* Careful here!  Don't retrieve the pointer until after
-	     reserving the space, or it might be bogus */
-	  data->stream.next_out =
-	    Dynarr_atp (dst, Dynarr_length (dst) - reserved);
-	  data->stream.avail_out = reserved;
-	  zerr =
-	    deflate (&data->stream,
-		     str->eof ? Z_FINISH : Z_NO_FLUSH);
-	  /* Lop off the unused portion */
-	  Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
-	  if (zerr != Z_OK)
-	    break;
-	}
-
-      if ((Bytecount) data->stream.avail_in < n)
-	return n - data->stream.avail_in;
-
-      if (zerr == Z_OK || zerr == Z_STREAM_END)
-	return 0;
-
-      return LSTREAM_ERROR;
-    }
+    return gzip_encode (str, (Ibyte *) src, n, dst);
 }
 
 #endif /* HAVE_ZLIB */
