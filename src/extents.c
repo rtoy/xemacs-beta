@@ -7352,7 +7352,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks only at extents created using the text-property primitives.
-To look at all extents, use `next-single-char-property-change'.
+To look at all extents, use `previous-single-char-property-change'.
 */
        (pos, prop, object, limit))
 {
@@ -7379,7 +7379,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks at all extents.  To look at only extents created using the
-text-property primitives, use `next-single-char-property-change'.
+text-property primitives, use `next-single-property-change'.
 */
        (pos, prop, object, limit))
 {
@@ -7407,7 +7407,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks at all extents.  To look at only extents created using the
-text-property primitives, use `next-single-char-property-change'.
+text-property primitives, use `previous-single-property-change'.
 */
        (pos, prop, object, limit))
 {

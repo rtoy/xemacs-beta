@@ -1,5 +1,12 @@
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
+	* extents.c (Fprevious_single_property_change):
+	* extents.c (Fnext_single_char_property_change):
+	* extents.c (Fprevious_single_char_property_change):
+	Fix see-also portion of documentation string.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	* alloc.c (c_readonly):
 	* alloc.c (deadbeef_memory):
