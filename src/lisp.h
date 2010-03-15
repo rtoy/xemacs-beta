@@ -2389,15 +2389,24 @@ MODULE_API void Dynarr_delete_many (void *d, Elemcount pos, Elemcount len);
 
 /* Delete all elements that are numerically equal to EL. */
 
-#define Dynarr_delete_object(d, el)		\
-do						\
-{						\
-  REGISTER int i;				\
-  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
-    {						\
-      if (el == Dynarr_at (d, i))		\
-	Dynarr_delete_many (d, i, 1);		\
-    }						\
+#define Dynarr_delete_object(d, el)				\
+do								\
+{								\
+  REGISTER int _ddo_i;						\
+  for (_ddo_i = Dynarr_length (d) - 1; _ddo_i >= 0; _ddo_i--)	\
+    {								\
+      if (el == Dynarr_at (d, _ddo_i))				\
+	Dynarr_delete_many (d, _ddo_i, 1);			\
+    }								\
+} while (0)
+
+/* Assuming DST and SRC are dynarrs of the same type, make DST a copy
+   of SRC. */
+#define Dynarr_copy(dst, src)						\
+do									\
+{									\
+  Dynarr_reset (dst);							\
+  Dynarr_add_many (dst, Dynarr_begin (src), Dynarr_length (src));	\
 } while (0)
 
 /************* Dynarr typedefs *************/

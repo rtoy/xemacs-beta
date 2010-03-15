@@ -377,13 +377,29 @@ struct coding_system_methods
 
   /* Init coding stream method: Initialize the type-specific data attached
      to the coding stream (i.e. in struct TYPE_coding_stream), when the
-     coding stream is opened.  The type-specific data will be zeroed out.
-     Optional. */
+     coding stream is opened.  This may be called multiple times -- in
+     particular, upon rewinding a coding stream, if no
+     `rewind_coding_stream' method is called, `init_coding_stream' will be
+     called.  The first time this is called, the type-specific data will be
+     zeroed out, but not when called as a result of a rewind().  Optional. */
   void (*init_coding_stream_method) (struct coding_stream *str);
 
   /* Rewind coding stream method: Reset any necessary type-specific data as
-     a result of the stream being rewound.  Optional. */
+     a result of the stream being rewound.  Optional.  If not specified,
+     the init_coding_stream method will be called upon rewind. */
   void (*rewind_coding_stream_method) (struct coding_stream *str);
+
+  /* Copy coding stream method: Copy any indirect pointers from SRC to DST.
+     SRC and DST are pointers to the type-specific coding-stream data (e.g.
+     `struct iso2022_coding_stream').  At the time this function is called,
+     a destination structure has already been allocated and a bitwise copy
+     performed from the source structure to the destination structure.
+     The purpose of the method is to deal with indirect structures that need
+     to be allocated to avoid being shared between the two structures.  This
+     method is used when doing the equivalent of tell(): To remember how to
+     seek back to a previous position, we have to remember the coding state
+     at that position. */
+  void (*copy_coding_stream_method) (void *dst, void *src);
 
   /* Finalize coding stream method: Clean up the type-specific data
      attached to the coding stream (i.e. in struct TYPE_coding_stream).
@@ -470,6 +486,7 @@ extern Lisp_Object Qquery_coding_warning_face;
   (HAS_CODESYSMETH_P (cs, m) ?				\
    CODESYSMETH (cs, m, args) : (given))
 
+#define HAS_XCODESYSMETH_P(cs, m) HAS_CODESYSMETH_P (XCODING_SYSTEM (cs), m)
 #define XCODESYSMETH(cs, m, args) \
   CODESYSMETH (XCODING_SYSTEM (cs), m, args)
 #define MAYBE_XCODESYSMETH(cs, m, args) \
@@ -1024,12 +1041,6 @@ struct coding_stream
      data. */
   unsigned_char_dynarr *convert_from;
 
-  /******** Fields used to accumulate a partially-built-up character ********/
-
-  /* CH holds a partially built-up character, or -1 for none.  This is
-     really part of the state-dependent data and should be moved there. */
-  int ch;
-
   /********* Information about the encoding taking place **********/
 
   /* Direction of encoding */
@@ -1041,6 +1052,23 @@ struct coding_stream
      values of these parameters. */
   const unsigned char *src;
   Bytecount srclen;
+
+  /********** State of the conversion currently taking place ************/
+
+  /* Coding-system-specific data holding extra state about the
+     conversion.  Logically a struct TYPE_coding_stream; a pointer
+     to such a struct, with (when ERROR_CHECK_TYPES is defined)
+     error-checking that this is really a structure of that type
+     (checking the corresponding coding system type) can be retrieved using
+     CODING_STREAM_TYPE_DATA().  Allocated at the same time that
+     CODESYS is set (which may occur at any time, even multiple times,
+     during the lifetime of the stream).  The size comes from
+     methods->stream_data_size.  */
+  void *data;
+
+  /* Copy of stream state data made before processing some chunk of data,
+     in case we need to redo the chunk */
+  void *data_copy;
 
   /********* Fields used to implement error handling **********/
 
@@ -1089,17 +1117,6 @@ struct coding_stream
   /* #### Temporary test to verify that finalizers don't ever get called
      more than once. */
   unsigned int finalized :1;
-
-  /* Coding-system-specific data holding extra state about the
-     conversion.  Logically a struct TYPE_coding_stream; a pointer
-     to such a struct, with (when ERROR_CHECK_TYPES is defined)
-     error-checking that this is really a structure of that type
-     (checking the corresponding coding system type) can be retrieved using
-     CODING_STREAM_TYPE_DATA().  Allocated at the same time that
-     CODESYS is set (which may occur at any time, even multiple times,
-     during the lifetime of the stream).  The size comes from
-     methods->stream_data_size.  */
-  void *data;
 };
 
 #define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)
@@ -1117,13 +1134,13 @@ struct coding_stream
 #define DECODE_ERROR_OCTET(octet, dst) \
   decode_unicode_to_dynarr ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
 
-#define DECODE_OUTPUT_PARTIAL_CHAR(str, dst)	\
-do {						\
-  if (str->eof && str->ch >= 0)			\
-    {						\
-      DECODE_ERROR_OCTET (str->ch, dst);	\
-      str->ch = -1;				\
-    }						\
+#define DECODE_OUTPUT_PARTIAL_CHAR(str, data, dst)	\
+do {							\
+  if (str->eof && data->ch >= 0)			\
+    {							\
+      DECODE_ERROR_OCTET (data->ch, dst);		\
+      data->ch = -1;					\
+    }							\
 } while (0)
 
 /* We can't use do ... while (0) here, because we need to execute `continue',
