@@ -98,6 +98,9 @@ struct multibyte_coding_stream
      precedence-array object.  We can't store the object in struct
      multibyte_coding_system because it can't currently be dumped. */
   Lisp_Object charset_precedence;
+  /* CH holds a partially built-up character, or -1 for none.
+     Used during decoding. */
+  int ch;
 };
 
 static const struct memory_description multibyte_coding_system_description[] = {
@@ -129,6 +132,7 @@ multibyte_init_coding_stream (struct coding_stream *str)
       add_charset_to_precedence_array (Dynarr_at (charsets, i),
                                        data->charset_precedence);
     }
+  data->ch = -1;
 }
 
 static void
@@ -224,23 +228,23 @@ multibyte_decode (struct coding_stream *str, const UExtbyte *src,
       UExtbyte c = *src++;
       Ichar ich = -1;
 
-      if (str->ch >= 0)
+      if (data->ch >= 0)
 	{
 	  /* See if we can derive a two-byte character out of the
 	     specified charsets */
-	  ich = try_to_derive_character (str->ch, c, 2, precarr);
+	  ich = try_to_derive_character (data->ch, c, 2, precarr);
 	  if (ich >= 0)
 	    {
 	      Dynarr_add_ichar (dst, ich);
-	      str->ch = -1;
+	      data->ch = -1;
 	    }
 	  else
 	    {
 	      /* If not, then the first byte was definitely erroneous,
 		 but we might still be able to derive a character
 		 starting with the second byte. */
-	      DECODE_ERROR_OCTET (str->ch, dst);
-	      str->ch = -1;
+	      DECODE_ERROR_OCTET (data->ch, dst);
+	      data->ch = -1;
 	      goto retry_one_byte;
 	    }
 	}
@@ -253,7 +257,7 @@ multibyte_decode (struct coding_stream *str, const UExtbyte *src,
 	  /* If not, retry as a two-byte character. */
 	  if (ich < 0)
 	    {
-	      str->ch = c;
+	      data->ch = c;
 	      continue;
 	    }
 
@@ -263,11 +267,11 @@ multibyte_decode (struct coding_stream *str, const UExtbyte *src,
 
   if (str->eof)
     {
-      if (str->ch >= 0)
+      if (data->ch >= 0)
 	{
 	  /* We have a straggler. */
-	  DECODE_ERROR_OCTET (str->ch, dst);
-	  str->ch = -1;
+	  DECODE_ERROR_OCTET (data->ch, dst);
+	  data->ch = -1;
 	}
     }
 
@@ -550,8 +554,27 @@ multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
 /*                          Shift-JIS methods                           */
 /************************************************************************/
 
+struct shift_jis_coding_system
+{
+  int dummy;
+};
+
+struct shift_jis_coding_stream
+{
+  /* CH holds a partially built-up character, or -1 for none. */
+  int ch;
+};
+
+static const struct memory_description shift_jis_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description shift_jis_coding_stream_description[] = {
+  { XD_END }
+};
+
 /* Shift-JIS; Hankaku (half-width) KANA is also supported. */
-DEFINE_CODING_SYSTEM_TYPE (shift_jis);
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (shift_jis);
 
 /* Shift-JIS is a coding system encoding three character sets: ASCII, right
    half of JISX0201-Kana, and JISX0208.  An ASCII character is encoded
@@ -599,35 +622,37 @@ static Bytecount
 shift_jis_decode (struct coding_stream *str, const UExtbyte *src,
 		  Bytecount n, unsigned_char_dynarr *dst)
 {
+  struct shift_jis_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, shift_jis);
   Bytecount orign = n;
 
   while (n--)
     {
       UExtbyte c = *src++;
 
-      if (str->ch >= 0)
+      if (data->ch >= 0)
 	{
 	  /* Previous character was first byte of Shift-JIS Kanji char. */
 	  if (byte_shift_jis_two_byte_2_p (c))
 	    {
 	      int e1, e2;
 
-	      DECODE_SHIFT_JIS (str->ch, c, e1, e2);
+	      DECODE_SHIFT_JIS (data->ch, c, e1, e2);
 	      non_ascii_charset_codepoint_to_dynarr
 		(Vcharset_japanese_jisx0208, e1, e2, dst,
 		 CONVERR_USE_PRIVATE);
 	    }
 	  else
 	    {
-	      DECODE_ERROR_OCTET (str->ch, dst);
+	      DECODE_ERROR_OCTET (data->ch, dst);
 	      DECODE_ERROR_OCTET (c, dst);
 	    }
-	  str->ch = -1;
+	  data->ch = -1;
 	}
       else
 	{
 	  if (byte_shift_jis_two_byte_1_p (c))
-	    str->ch = c;
+	    data->ch = c;
 	  else if (byte_shift_jis_katakana_p (c))
 	    non_ascii_charset_codepoint_to_dynarr
 	      (Vcharset_katakana_jisx0201, 0, c, dst,
@@ -639,7 +664,7 @@ shift_jis_decode (struct coding_stream *str, const UExtbyte *src,
 	}
     }
 
-  DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
+  DECODE_OUTPUT_PARTIAL_CHAR (str, data, dst);
 
   return orign;
 }
@@ -699,6 +724,14 @@ shift_jis_convert (struct coding_stream *str, const unsigned char *src,
     return shift_jis_decode (str, (UExtbyte *) src, n, dst);
   else
     return shift_jis_encode (str, (Ibyte *) src, n, dst);
+}
+
+static void
+shift_jis_init_coding_stream (struct coding_stream *str)
+{
+  struct shift_jis_coding_stream *data =
+    CODING_STREAM_TYPE_DATA (str, shift_jis);
+  data->ch = -1;
 }
 
 DEFUN ("decode-shift-jis-char", Fdecode_shift_jis_char, 1, 1, 0, /*
@@ -844,8 +877,27 @@ shift_jis_detect (struct detection_state *st, const UExtbyte *src,
 /*                            Big5 methods                              */
 /************************************************************************/
 
+struct big5_coding_system
+{
+  int dummy;
+};
+
+struct big5_coding_stream
+{
+  /* CH holds a partially built-up character, or -1 for none. */
+  int ch;
+};
+
+static const struct memory_description big5_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description big5_coding_stream_description[] = {
+  { XD_END }
+};
+
 /* BIG5 (used for Mandarin in Taiwan). */
-DEFINE_CODING_SYSTEM_TYPE (big5);
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (big5);
 
 #ifndef UNICODE_INTERNAL
 
@@ -962,39 +1014,40 @@ static Bytecount
 big5_decode (struct coding_stream *str, const UExtbyte *src,
 	     Bytecount n, unsigned_char_dynarr *dst)
 {
+  struct big5_coding_stream *data = CODING_STREAM_TYPE_DATA (str, big5);
   Bytecount orign = n;
 
   while (n--)
     {
       UExtbyte c = *src++;
-      if (str->ch >= 0)
+      if (data->ch >= 0)
 	{
 	  /* Previous character was first byte of Big5 char. */
 	  if (byte_big5_two_byte_2_p (c))
 	    {
 #ifdef UNICODE_INTERNAL
 	      non_ascii_charset_codepoint_to_dynarr
-		(Vcharset_chinese_big5, str->ch, c, dst,
+		(Vcharset_chinese_big5, data->ch, c, dst,
 		 CONVERR_USE_PRIVATE);
 #else /* not UNICODE_INTERNAL */
 	      Lisp_Object charset;
 	      int b1, b2;
-	      DECODE_BIG5 (str->ch, c, charset, b1, b2);
+	      DECODE_BIG5 (data->ch, c, charset, b1, b2);
 	      non_ascii_charset_codepoint_to_dynarr
 		(charset, b1, b2, dst, CONVERR_USE_PRIVATE);
 #endif /* UNICODE_INTERNAL */
 	    }
 	  else
 	    {
-	      DECODE_ERROR_OCTET (str->ch, dst);
+	      DECODE_ERROR_OCTET (data->ch, dst);
 	      DECODE_ERROR_OCTET (c, dst);
 	    }
-	  str->ch = -1;
+	  data->ch = -1;
 	}
       else
 	{
 	  if (byte_big5_two_byte_1_p (c))
-	    str->ch = c;
+	    data->ch = c;
 	  else if (byte_ascii_p (c))
 	    DECODE_ADD_BINARY_CHAR (c, dst);
 	  else
@@ -1002,7 +1055,7 @@ big5_decode (struct coding_stream *str, const UExtbyte *src,
 	}
     }
 
-  DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
+  DECODE_OUTPUT_PARTIAL_CHAR (str, data, dst);
 
   return orign;
 }
@@ -1067,6 +1120,13 @@ big5_convert (struct coding_stream *str, const unsigned char *src,
     return big5_decode (str, (UExtbyte *) src, n, dst);
   else
     return big5_encode (str, (Ibyte *) src, n, dst);
+}
+
+static void
+big5_init_coding_stream (struct coding_stream *str)
+{
+  struct big5_coding_stream *data = CODING_STREAM_TYPE_DATA (str, big5);
+  data->ch = -1;
 }
 
 static Ichar
@@ -1479,18 +1539,15 @@ struct iso2022_coding_stream
   /* Used for handling UTF-8. */
   struct unicode_coding_stream unicode;
 
+  /* CH holds a partially built-up character, or -1 for none. */
+  int ch;
+
   /**************** for encoding ****************/
 
   /* Whether we need to explicitly designate the charset in the
      G? register before using it.  It is initialized from the
      array FORCE_CHARSET_ON_OUTPUT in CODESYS. */
   Boolbyte force_charset_on_output[4];
-
-  /* Unicode precedence used for this conversion.  This lists only the
-     charsets that are currently designated, and is changed when we
-     designate a new charset. @@#### It also lists ASCII and Control-1.
-     Why? */
-  Lisp_Object unicode_precedence;
 };
 
 static const struct memory_description ccs_description_1[] =
@@ -1535,8 +1592,6 @@ static const struct memory_description iso2022_coding_stream_description[] = {
   { XD_BLOCK_PTR, offsetof (struct iso2022_coding_stream, composite_chars),
     1, { &unsigned_char_dynarr_description} },
 #endif
-  { XD_LISP_OBJECT, offsetof (struct iso2022_coding_stream,
-			      unicode_precedence) },
   { XD_END }
 };
 
@@ -1973,7 +2028,7 @@ reset_iso2022_decode (Lisp_Object coding_system,
       Dynarr_reset (data->composite_chars);
     }
 #endif
-  data->unicode_precedence = Qnil;
+  data->ch = -1;
 }
 
 static int
@@ -1987,28 +2042,6 @@ charset_iso2022_compatible (Lisp_Object charset)
    (1) Charsets currently designated should be at the top of the list.
    (2) Then ASCII and Control-1, if not already there. (Hack)
 */
-
-static void
-reset_iso2022_unicode_precedence (struct iso2022_coding_stream *data)
-{
-  int i;
-  if (NILP (data->unicode_precedence))
-    data->unicode_precedence = allocate_precedence_array ();
-  else
-    reset_precedence_array (data->unicode_precedence);
-  begin_precedence_array_generation ();
-  for (i = 0; i < 4; i++)
-    {
-      if (CHARSETP (data->charset[i]))
-	add_charset_to_precedence_array (data->charset[i],
-					 data->unicode_precedence);
-    }
-  /* Also ASCII and Control-1.
-     @@#### Do we really want to do this? */
-  add_charset_to_precedence_array (Vcharset_ascii, data->unicode_precedence);
-  add_charset_to_precedence_array (Vcharset_control_1,
-				  data->unicode_precedence);
-}
 
 static void
 reset_iso2022_encode (Lisp_Object coding_system,
@@ -2026,8 +2059,6 @@ reset_iso2022_encode (Lisp_Object coding_system,
 	XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (coding_system, i);
     }
   data->register_right = 1;
-  data->unicode_precedence = Qnil;
-  reset_iso2022_unicode_precedence (data);
 }
 
 static void
@@ -2046,7 +2077,6 @@ iso2022_mark_iso2022_coding_stream (struct iso2022_coding_stream *data)
   int i;
   for (i = 0; i < 4; i++)
     mark_object (data->charset[i]);
-  mark_object (data->unicode_precedence);
 }
 
 static void
@@ -2054,12 +2084,6 @@ iso2022_mark_coding_stream (struct coding_stream *str)
 {
   struct iso2022_coding_stream *data = CODING_STREAM_TYPE_DATA (str, iso2022);
   iso2022_mark_iso2022_coding_stream (data);
-}
-
-static void
-iso2022_rewind_coding_stream (struct coding_stream *str)
-{
-  iso2022_init_coding_stream (str);
 }
 
 static int
@@ -2630,7 +2654,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	      flags &= ISO_STATE_LOCK;
 	      n++, src--;/* Repeat the loop with the same character. */
 	    }
-	  str->ch = -1;
+	  data->ch = -1;
 	}
       else if (flags & ISO_STATE_UTF_8)
 	{
@@ -2676,9 +2700,9 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 
 	  /* If we were in the middle of a character, dump out the
 	     partial character. */
-	  if (str->ch >= 0)
-	    DECODE_ERROR_OCTET (str->ch, dst);
-	  str->ch = -1;
+	  if (data->ch >= 0)
+	    DECODE_ERROR_OCTET (data->ch, dst);
+	  data->ch = -1;
 
 	  /* If we just saw a single-shift character, dump it out.
 	     This may dump out the wrong sort of single-shift character,
@@ -2724,9 +2748,9 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	       outside the range of the charset.  Insert that char literally
 	       to preserve it for the output. */
 	    {
-	      if (str->ch >= 0)
-		DECODE_ERROR_OCTET (str->ch, dst);
-	      str->ch = -1;
+	      if (data->ch >= 0)
+		DECODE_ERROR_OCTET (data->ch, dst);
+	      data->ch = -1;
 	      DECODE_ERROR_OCTET (c, dst);
 	    }
 	  else
@@ -2746,12 +2770,12 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		    charset = new_charset;
 		}
 
-	      if (XCHARSET_DIMENSION (charset) == 2 && str->ch < 0)
-		str->ch = c;
+	      if (XCHARSET_DIMENSION (charset) == 2 && data->ch < 0)
+		data->ch = c;
 	      else
 		{
 		  int c1, c2;
-		  c1 = XCHARSET_DIMENSION (charset) == 2 ? str->ch & 0x7F : 0;
+		  c1 = XCHARSET_DIMENSION (charset) == 2 ? data->ch & 0x7F : 0;
 		  c2 = c & 0x7F;
 
 		  if (XCHARSET_OFFSET (charset, 0) >= 128)
@@ -2782,11 +2806,11 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		      charset_codepoint_to_dynarr
 			(charset, c1, c2, dst, CONVERR_USE_PRIVATE);
 		    }
-		  str->ch = -1;
+		  data->ch = -1;
 		}
 	    }
 
-	  if (str->ch < 0)
+	  if (data->ch < 0)
 	    flags &= ISO_STATE_LOCK;
 	}
 
@@ -2794,7 +2818,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 
   data->flags = flags;
 
-  DECODE_OUTPUT_PARTIAL_CHAR (str, dst);
+  DECODE_OUTPUT_PARTIAL_CHAR (str, data, dst);
 
   return orign;
 }
@@ -2817,10 +2841,6 @@ iso2022_designate (Lisp_Object charset, int reg,
   int type;
 
   data->charset[reg] = charset;
-  if (!EQ (old_charset, charset))
-    /* If we are changing the set of designated charsets, recalculate
-       the Unicode precedence used to convert characters to ISO2022. */
-    reset_iso2022_unicode_precedence (data);
   if (!CHARSETP (charset))
     /* charset might be an initial nil or t. */
     return;
@@ -2985,7 +3005,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
       else
 	{
 	  /* Processing a non-ASCII character */
-	  Lisp_Object charset;
+	  Lisp_Object charset = Qnil;
 	  int c1, c2;
 	  Ichar ich = itext_ichar (src);
 	  int half = 0;
@@ -2999,9 +3019,29 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 
 	  /* Convert character to a charset codepoint. */
 	  /* First, try the charsets mentioned in the coding system. */
-	  ichar_to_charset_codepoint
-	    (ich, data->unicode_precedence, &charset, &c1, &c2,
-	     CONVERR_FAIL);
+
+	  for (i = 0; i < 4; i++)
+	    {
+	      if (CHARSETP (data->charset[i]) &&
+		  ichar_to_one_charset_codepoint (ich, data->charset[i],
+						  &c1, &c2))
+		{
+		  charset = data->charset[i];
+		  break;
+		}
+	    }
+
+	  /* Also ASCII and Control-1.
+	     @@#### Do we really want to do this? */
+	  if (NILP (charset) &&
+	      ichar_to_one_charset_codepoint (ich, Vcharset_ascii, &c1, &c2))
+	    charset = Vcharset_ascii;
+
+	  if (NILP (charset) &&
+	      ichar_to_one_charset_codepoint (ich, Vcharset_control_1,
+					      &c1, &c2))
+	    charset = Vcharset_control_1;
+
 	  if (NILP (charset))
 	    {
 	      /* Then try any ISO2022-compatible charset */
@@ -3430,25 +3470,35 @@ iso2022_putprop (Lisp_Object codesys,
   return 1;
 }
 
+#ifdef ENABLE_COMPOSITE_CHARS
+
+static void
+iso2022_copy_coding_stream (void *dst, void *src)
+{
+  struct iso2022_coding_stream *dstdata = (struct iso2022_coding_stream *) dst;
+  struct iso2022_coding_stream *srcdata = (struct iso2022_coding_stream *) src;
+
+  if (srcdata->composite_chars)
+    {
+      dstdata->composite_chars = Dynarr_new (unsigned_char);
+      Dynarr_copy (dstdata->composite_chars, srcdata->composite_chars);
+    }
+}
+
 static void
 iso2022_finalize_coding_stream (struct coding_stream *str)
 {
   struct iso2022_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, iso2022);
 
-#ifdef ENABLE_COMPOSITE_CHARS
   if (data->composite_chars)
     {
       Dynarr_free (data->composite_chars);
       data->composite_chars = 0;
     }
-#endif
-  if (!NILP (data->unicode_precedence))
-    {
-      free_precedence_array (data->unicode_precedence);
-      data->unicode_precedence = Qnil;
-    }
 }
+
+#endif /* ENABLE_COMPOSITE_CHARS */
 
 static void
 iso2022_init (Lisp_Object codesys)
@@ -3957,12 +4007,6 @@ ccl_mark_coding_stream (struct coding_stream *str)
 }
 
 static void
-ccl_rewind_coding_stream (struct coding_stream *str)
-{
-  ccl_init_coding_stream (str);
-}
-
-static void
 ccl_init (Lisp_Object codesys)
 {
   XCODING_SYSTEM_CCL_DECODE (codesys) = Qnil;
@@ -4054,10 +4098,12 @@ coding_system_type_create_mule_coding (void)
   INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (iso2022, "iso2022-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (iso2022, mark);
   CODING_SYSTEM_HAS_METHOD (iso2022, convert);
-  CODING_SYSTEM_HAS_METHOD (iso2022, finalize_coding_stream);
   CODING_SYSTEM_HAS_METHOD (iso2022, init_coding_stream);
   CODING_SYSTEM_HAS_METHOD (iso2022, mark_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (iso2022, rewind_coding_stream);
+#ifdef ENABLE_COMPOSITE_CHARS
+  CODING_SYSTEM_HAS_METHOD (iso2022, finalize_coding_stream);
+  CODING_SYSTEM_HAS_METHOD (iso2022, copy_coding_stream);
+#endif /* ENABLE_COMPOSITE_CHARS */
   CODING_SYSTEM_HAS_METHOD (iso2022, init);
   CODING_SYSTEM_HAS_METHOD (iso2022, print);
   CODING_SYSTEM_HAS_METHOD (iso2022, finalize);
@@ -4080,19 +4126,21 @@ coding_system_type_create_mule_coding (void)
   CODING_SYSTEM_HAS_METHOD (ccl, init);
   CODING_SYSTEM_HAS_METHOD (ccl, init_coding_stream);
   CODING_SYSTEM_HAS_METHOD (ccl, mark_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (ccl, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (ccl, putprop);
   CODING_SYSTEM_HAS_METHOD (ccl, getprop);
 
-  INITIALIZE_CODING_SYSTEM_TYPE (shift_jis, "shift-jis-coding-system-p");
+  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (shift_jis,
+					   "shift-jis-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (shift_jis, convert);
+  CODING_SYSTEM_HAS_METHOD (shift_jis, init_coding_stream);
 
   INITIALIZE_DETECTOR (shift_jis);
   DETECTOR_HAS_METHOD (shift_jis, detect);
   INITIALIZE_DETECTOR_CATEGORY (shift_jis, shift_jis);
 
-  INITIALIZE_CODING_SYSTEM_TYPE (big5, "big5-coding-system-p");
+  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (big5, "big5-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (big5, convert);
+  CODING_SYSTEM_HAS_METHOD (big5, init_coding_stream);
 
   INITIALIZE_DETECTOR (big5);
   DETECTOR_HAS_METHOD (big5, detect);

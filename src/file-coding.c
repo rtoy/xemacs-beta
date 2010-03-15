@@ -2215,6 +2215,12 @@ coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
   /* The following is currently always 0, since we called Dynarr_reset() */
   str->written_before_convert = Dynarr_length (str->convert_to);
 
+  /* #### QUERY! Here are in "tell mode" and hence need to tell() and copy
+     the state if
+
+     (1) str->handle is not CODING_CONTINUE
+     (2) other_end is a coding stream */
+
   size = XCODESYSMETH (str->codesys, convert,
 		       (str, str->src, str->srclen, str->convert_to));
 
@@ -2225,6 +2231,23 @@ coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
   str->new_cumul_read += str->total_read;
   str->new_cumul_written += str->total_written;
 
+  /* #### QUERY!
+
+     Error handling:
+
+     #### If we couldn't write anything, do we always seek back to the place
+     before convert() and return 0?  Answer: if we are in tell mode, we
+     seek back to the beginning.  Otherwise, we buffer the data in
+     str->convert_to and try to write again next time.
+
+     #### If some but not all written: If not in tell mode, buffer whatever
+     wasn't written and write it next time.  Otherwise, we need to figure
+     out exactly how much equivalent source data in DATA produced the amount
+     of sink data in STR->CONVERT_TO that was processed.  To do this,
+     seek back to the beginning of DATA and convert one character at a time
+     until the amount of data generated equals the amount in STR->CONVERT_TO
+     that was processed by Lstream_write().
+  */
   if (Lstream_write (str->other_end, Dynarr_begin (str->convert_to),
 		     Dynarr_length (str->convert_to)) < 0)
     {
@@ -2307,9 +2330,11 @@ static int
 coding_rewinder (Lstream *stream)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
-  MAYBE_XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
+  if (HAS_XCODESYSMETH_P (str->codesys, rewind_coding_stream))
+    XCODESYSMETH (str->codesys, rewind_coding_stream, (str));
+  else
+    MAYBE_XCODESYSMETH (str->codesys, init_coding_stream, (str));
 
-  str->ch = -1;
   Dynarr_reset (str->convert_to);
   Dynarr_reset (str->convert_from);
   return Lstream_rewind (str->other_end);
@@ -2466,7 +2491,6 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
     }
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
-  str->ch = -1;
 
   if (str->data)
     {
@@ -2504,7 +2528,6 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   xzero (*str);
   str->codesys = Qnil;
   str->orig_codesys = Qnil;
-  str->ch = -1;
   str->us = lstr;
   str->other_end = stream;
   str->convert_to = Dynarr_new (unsigned_char);
@@ -5268,12 +5291,6 @@ gzip_init_coding_stream (struct coding_stream *str)
   data->reached_eof = 0;
 }
 
-static void
-gzip_rewind_coding_stream (struct coding_stream *str)
-{
-  gzip_init_coding_stream (str);
-}
-
 static Bytecount
 gzip_decode (struct coding_stream *str, const UExtbyte *src,
 	     Bytecount n, unsigned_char_dynarr *dst)
@@ -5632,7 +5649,6 @@ coding_system_type_create (void)
   CODING_SYSTEM_HAS_METHOD (gzip, init);
   CODING_SYSTEM_HAS_METHOD (gzip, print);
   CODING_SYSTEM_HAS_METHOD (gzip, init_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (gzip, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (gzip, putprop);
   CODING_SYSTEM_HAS_METHOD (gzip, getprop);
 #endif

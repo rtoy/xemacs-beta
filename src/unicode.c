@@ -3456,12 +3456,6 @@ unicode_init_coding_stream (struct coding_stream *str)
   xzero (*data);
 }
 
-static void
-unicode_rewind_coding_stream (struct coding_stream *str)
-{
-  unicode_init_coding_stream (str);
-}
-
 static int
 unicode_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
@@ -3616,7 +3610,6 @@ coding_system_type_create_unicode (void)
   CODING_SYSTEM_HAS_METHOD (unicode, print);
   CODING_SYSTEM_HAS_METHOD (unicode, convert);
   CODING_SYSTEM_HAS_METHOD (unicode, init_coding_stream);
-  CODING_SYSTEM_HAS_METHOD (unicode, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (unicode, putprop);
   CODING_SYSTEM_HAS_METHOD (unicode, getprop);
 
