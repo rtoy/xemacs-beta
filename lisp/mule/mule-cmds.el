@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Keywords: mule, multilingual
 
@@ -789,8 +789,8 @@ the language environment for the major languages of Western Europe."
 	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
            (setq first-char (aref string 0))
-           (when (or (and (>= #x00 first-char) (<= first-char #x1f))
-                     (and (>= #x80 first-char) (<= first-char #x9f)))
+           (when (or (and (>= first-char #x00) (<= first-char #x1f))
+                     (and (>= first-char #x80) (<= first-char #x9f)))
 	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
