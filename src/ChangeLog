@@ -143,18 +143,6 @@
 	(7) Delete some custom print methods that were identical to
 	external_object_printer().
 
-2010-03-15  Ben Wing  <ben@xemacs.org>
-
-	* extents.c:
-	* extents.c (soe_dump):
-	* extents.c (soe_insert):
-	* extents.c (soe_delete):
-	* extents.c (soe_move):
-	* extents.c (extent_fragment_update):
-	* extents.c (print_extent_1):
-	* extents.c (print_extent):
-	* extents.c (vars_of_extents):
-
 2010-03-12  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:
