@@ -1,5 +1,11 @@
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
+	* tests.c (Ftest_data_format_conversion):
+	Fix remaining test failures with c-tests -- problem was with the
+	tests, not the code being tested.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
 	* file-coding.c:
 	* file-coding.c (find_coding_system):
 	* file-coding.c (Ffind_coding_system):
