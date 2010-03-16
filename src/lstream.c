@@ -597,6 +597,7 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
   Bytecount i;
   const unsigned char *p = (const unsigned char *) data;
 
+  Lstream_clear_error_occurred_p (lstr);
   /* If the stream is not line-buffered, then we can just call
      Lstream_write_1(), which writes in chunks.  Otherwise, we repeatedly
      call Lstream_putc(), which knows how to handle line buffering.
@@ -754,6 +755,7 @@ Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
 Bytecount
 Lstream_read (Lstream *lstr, void *data, Bytecount size)
 {
+  Lstream_clear_error_occurred_p (lstr);
   return Lstream_read_1 (lstr, data, size, 0);
 }
 
@@ -921,16 +923,20 @@ Lstream_fungetc (Lstream *lstr, int c)
   Lstream_unread (lstr, &ch, 1);
 }
 
+/* Return whether an error occurred during the latest operation.
+   IMPORTANT: Currently this is only guaranteed to work after a call
+   to Lstream_read() or Lstream_write(). */
+
 int
 Lstream_error_occurred_p (Lstream *lstr)
 {
   return lstr->public_error_occurred_p;
 }
 
-int
+void
 Lstream_clear_error_occurred_p (Lstream *lstr)
 {
-  return lstr->public_error_occurred_p = 0;
+  lstr->public_error_occurred_p = 0;
 }
 
 void

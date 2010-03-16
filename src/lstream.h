@@ -320,7 +320,7 @@ void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
 void Lstream_unset_character_mode (Lstream *lstr);
 int Lstream_error_occurred_p (Lstream *lstr);
-int Lstream_clear_error_occurred_p (Lstream *lstr);
+void Lstream_clear_error_occurred_p (Lstream *lstr);
 void Lstream_set_error_occurred_p (Lstream *lstr);
 
 int Lstream_is_type (Lstream *lstr, const Lstream_implementation *imp);
