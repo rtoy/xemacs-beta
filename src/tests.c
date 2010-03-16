@@ -61,6 +61,8 @@ REASON is nil or a string describing the failure (not required).
 
   Extbyte ext_latin[]  = "f\372b\343\340";
 #ifdef UNICODE_INTERNAL
+  /* Internal encoding differs between Unicode-internal (UTF-8) and
+     old-Mule */
   Ibyte int_latin1[] = "f\303\272b\303\243\303\240";
   Ibyte int_latin2[] = "f\303\272b\304\203\305\225";
 #else /* not UNICODE_INTERNAL */
@@ -68,8 +70,17 @@ REASON is nil or a string describing the failure (not required).
   Ibyte int_latin2[] = "f\202\372b\202\343\202\340";
 #endif /* (not) UNICODE_INTERNAL */
 #ifdef MULE
+#ifdef UNICODE_INTERNAL
+  /* We also have differences when rendering Latin-1 text in Latin-2 or
+     vice-versa.  Unicode-internal unifies Latin-1 \372 (#xFA) and Latin-2
+     \372 (#xFA) because they both correspond to the same Unicode value
+     (\372 (#xFA), u with an acute accent) */
+  Extbyte ext_latin12[]= "f\372b\033-A\343\340\033-B";
+  Extbyte ext_untranslatable[]  = "f\372b??";
+#else
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
   Extbyte ext_untranslatable[]  = "f?b??";
+#endif
   Lisp_Object string_latin2 = make_string (int_latin2, sizeof (int_latin2) - 1);
 #endif
   Lisp_Object opaque_latin  = make_opaque (ext_latin,  sizeof (ext_latin) - 1);
