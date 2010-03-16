@@ -265,7 +265,7 @@ multibyte_decode (struct coding_stream *str, const UExtbyte *src,
 	}
     }
 
-  if (str->eof)
+  if (str->st.eof)
     {
       if (data->ch >= 0)
 	{
@@ -2683,7 +2683,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	  decode_utf_8 (&data->unicode, dst, c, 0,
 			XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (str->codesys));
 
-          if (str->eof && data->unicode.counter)
+          if (str->st.eof && data->unicode.counter)
             {
               indicate_invalid_utf_8 (data->unicode.indicated_length, 
 				      data->unicode.counter,
@@ -3275,7 +3275,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
     }
 #endif /* ENABLE_COMPOSITE_CHARS */
 
-  if (str->eof)
+  if (str->st.eof)
     {
       restore_left_to_right_direction (codesys, dst, &flags, 0);
       ensure_normal_shift (str, dst);
@@ -3971,7 +3971,7 @@ ccl_convert (struct coding_stream *str, const unsigned char *src,
     CODING_STREAM_TYPE_DATA (str, ccl);
   Bytecount orign = n;
 
-  data->ccl.last_block = str->eof;
+  data->ccl.last_block = str->st.eof;
   /* When applying a CCL program to a stream, SRC must not be NULL -- this
      is a special signal to the driver that read and write operations are
      not allowed.  The code does not actually look at what SRC points to if

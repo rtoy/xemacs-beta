@@ -520,7 +520,7 @@ error_check_##type##_coding_stream_data (struct coding_stream *s)	\
 )									\
 {									\
   assert (XCODING_SYSTEM_TYPE_P (s->codesys, type));			\
-  return (struct type##_coding_stream *) s->data;			\
+  return (struct type##_coding_stream *) s->st.data;			\
 }									\
 									\
 DECLARE_INLINE_HEADER (							\
@@ -979,6 +979,77 @@ enum encode_decode
   CODING_DECODE
 };
 
+struct coding_stream_state
+{
+  /********** State of the conversion currently taking place ************/
+
+  /* Coding-system-specific data holding extra state about the
+     conversion.  Logically a struct TYPE_coding_stream; a pointer
+     to such a struct, with (when ERROR_CHECK_TYPES is defined)
+     error-checking that this is really a structure of that type
+     (checking the corresponding coding system type) can be retrieved using
+     CODING_STREAM_TYPE_DATA().  Allocated at the same time that
+     CODESYS is set (which may occur at any time, even multiple times,
+     during the lifetime of the stream).  The size comes from
+     methods->stream_data_size.  */
+  void *data;
+
+  /********* Fields used to implement error handling **********/
+
+  /* (1) Fields automatically set during the conversion process */
+  /* What to do when an error is encountered: Currently only using during
+     encoding (during decoding, just write an error-octet into the Ichar
+     stream). */
+  enum handle_coding_error handle;
+  /* Length of destination dynarr prior to conversion. */
+  Bytecount written_before_convert;
+  /* Total amount written by converter to output dynarr (after both
+     non-erroneous and erroneous output written); this is computed by
+     subtracting the value of `written_before_convert' from the length of
+     the output dynarr. */
+  Bytecount total_written;
+  /* Total amount of input processed by converter, including erroneous
+     input. */
+  Bytecount total_read;
+
+  /* (2) Fields set by the convert method when an error occurs. */
+  /* Total amount of non-erroneous input processed by converter */
+  Bytecount good_read;
+  /* Amount of non-erroneous data written by converter to output dynarr;
+     this is computed by subtracting the value of
+     `written_before_convert' from the length of the output dynarr after
+     the non-erroneous data is written but before the erroneous data is
+     written. */
+  Bytecount good_written;
+  /* Type of error that occurred.  Note that this is automatically set to
+     CODING_SUCCEEDED before the convert method is called, so it only needs
+     to be set when an error occurs. */
+  enum coding_error error_occurred;
+
+  /* (3) Fields used in converting the above values into cumulative values
+         (offsets from the beginning of of the stream, rather than the
+         beginning of this chunk of data) */
+
+  /* Cumulative including most recent call to conversion method (i.e.
+     including the data up through TOTAL_WRITTEN and TOTAL_READ). */
+  Bytecount new_cumul_read, new_cumul_written;
+  /* Previous values of same -- not including most recent call to conversion
+     method. */
+  Bytecount cumul_read, cumul_written;
+
+
+  /********* Miscellaneous flags **********/
+
+  /* If set, this is the last chunk of data being processed.  When this is
+     finished, output any necessary terminating control characters, escape
+     sequences, etc. */
+  unsigned int eof :1;
+
+  /* #### Temporary test to verify that finalizers don't ever get called
+     more than once. */
+  unsigned int finalized :1;
+};
+
 /* Data structure attached to an lstream of type `coding',
    containing values specific to the coding process.  Additional
    data is stored in the DATA field below; the exact form of that data
@@ -1053,70 +1124,12 @@ struct coding_stream
   const unsigned char *src;
   Bytecount srclen;
 
-  /********** State of the conversion currently taking place ************/
-
-  /* Coding-system-specific data holding extra state about the
-     conversion.  Logically a struct TYPE_coding_stream; a pointer
-     to such a struct, with (when ERROR_CHECK_TYPES is defined)
-     error-checking that this is really a structure of that type
-     (checking the corresponding coding system type) can be retrieved using
-     CODING_STREAM_TYPE_DATA().  Allocated at the same time that
-     CODESYS is set (which may occur at any time, even multiple times,
-     during the lifetime of the stream).  The size comes from
-     methods->stream_data_size.  */
-  void *data;
-
-  /* Copy of stream state data made before processing some chunk of data,
-     in case we need to redo the chunk */
-  void *data_copy;
-
-  /********* Fields used to implement error handling **********/
-
-  /* (1) Fields automatically set during the conversion process */
-  /* What to do when an error is encountered: Currently only using during
-     encoding (during decoding, just write an error-octet into the Ichar
-     stream). */
-  enum handle_coding_error handle;
-  /* Length of destination dynarr prior to conversion. */
-  Bytecount written_before_convert;
-  /* Total amount written to dynarr, i.e. length of dynarr after conversion
-     (after both non-erroneous and erroneous output written). */
-  Bytecount total_written;
-  /* Total amount of input processed, including erroneous input. */
-  Bytecount total_read;
-
-  /* (2) Fields set by the convert method when an error occurs. */
-  /* Total amount of non-erroneous input processed so far */
-  Bytecount read_good;
-  /* Length of output dynarr reflecting non-erroneous output written so far */
-  Bytecount written_good;
-  /* Type of error that occurred.  Note that this is automatically set to
-     CODING_SUCCEEDED before the convert method is called, so it only needs
-     to be set when an error occurs. */
-  enum coding_error error_occurred;
-
-  /* (3) Fields used in converting the above values into cumulative values
-         (offsets from the beginning of of the stream, rather than the
-         beginning of this chunk of data) */
-
-  /* Cumulative including most recent call to conversion method (i.e.
-     including the data up through TOTAL_WRITTEN and TOTAL_READ). */
-  Bytecount new_cumul_read, new_cumul_written;
-  /* Previous values of same -- not including most recent call to conversion
-     method. */
-  Bytecount cumul_read, cumul_written;
-
-
-  /********* Miscellaneous flags **********/
-
-  /* If set, this is the last chunk of data being processed.  When this is
-     finished, output any necessary terminating control characters, escape
-     sequences, etc. */
-  unsigned int eof :1;
-
-  /* #### Temporary test to verify that finalizers don't ever get called
-     more than once. */
-  unsigned int finalized :1;
+  /* Current state of the conversion process.  This should contain
+     everything state-related, so that copying the contents of this
+     structure (and any indirect pointers) at a particular point in the
+     stream and later on copying them back should allow seeking back to
+     that location. */
+  struct coding_stream_state st;
 };
 
 #define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)
@@ -1126,7 +1139,7 @@ struct coding_stream
    error_check_##type##_coding_stream_data (s)
 #else
 # define CODING_STREAM_TYPE_DATA(s, type) \
-  ((struct type##_coding_stream *) (s)->data)
+  ((struct type##_coding_stream *) (s)->st.data)
 #endif
 
 /* Add OCTET as an undecodable literal "error" octet character, stored
@@ -1136,7 +1149,7 @@ struct coding_stream
 
 #define DECODE_OUTPUT_PARTIAL_CHAR(str, data, dst)	\
 do {							\
-  if (str->eof && data->ch >= 0)			\
+  if (str->st.eof && data->ch >= 0)			\
     {							\
       DECODE_ERROR_OCTET (data->ch, dst);		\
       data->ch = -1;					\
@@ -1164,14 +1177,14 @@ do {							\
    else
      do something else;
 */
-#define ENCODING_ERROR_RETURN_OR_CONTINUE(str, src)		\
-if ((str)->handle == CODING_CONTINUE ||				\
-    ((str)->handle == CODING_RETURN_IGNORE_INVALID_SEQUENCE &&	\
-     (str)->error_occurred == CODING_INVALID_SEQUENCE))		\
-  {								\
-    (str)->error_occurred = CODING_SUCCEEDED;			\
-    continue;							\
-  }								\
+#define ENCODING_ERROR_RETURN_OR_CONTINUE(str, src)			\
+if ((str)->st.handle == CODING_CONTINUE ||				\
+    ((str)->st.handle == CODING_RETURN_IGNORE_INVALID_SEQUENCE &&	\
+     (str)->st.error_occurred == CODING_INVALID_SEQUENCE))		\
+  {									\
+    (str)->st.error_occurred = CODING_SUCCEEDED;			\
+    continue;								\
+  }									\
 else return ((src) - (str->src))
 
 #ifdef MULE

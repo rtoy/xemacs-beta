@@ -2624,8 +2624,8 @@ add_16_bit_char (int code, unsigned_char_dynarr *dst, int little_endian)
    PRESERVE_ERROR_CHARACTERS is non-zero, write out error octets using
    their literal representation as Unicode codepoints, rather than
    converting them to their corresponding ASCII or Latin-1 byte and writing
-   that.  If an error occurs, store the appropriate values for "read_good"
-   and "written_good" into STR, based on SRC (and assuming that one
+   that.  If an error occurs, store the appropriate values for "good_read"
+   and "good_written" into STR, based on SRC (and assuming that one
    erroneous character was read in order to produce the bad Unicode
    codepoint).  CODE can be -1, indicating that the error values should be
    set in STR and the Unicode replacement character (0xFFFD) written out.
@@ -2946,7 +2946,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
     default: ABORT ();
     }
 
-  if (str->eof && counter)
+  if (str->st.eof && counter)
     {
       switch (type)
 	{

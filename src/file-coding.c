@@ -532,11 +532,11 @@ find_coding_system (Lisp_Object coding_system_or_name,
           /* Remove this coding system and its subsidiary coding
              systems from the hash, to avoid calling this code recursively. */
           Fremhash (coding_system_or_name, Vcoding_system_hash_table);
-          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-unix"),
+          Fremhash (add_suffix_to_symbol (coding_system_or_name, "-unix"),
                     Vcoding_system_hash_table);
-          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-dos"),
+          Fremhash (add_suffix_to_symbol (coding_system_or_name, "-dos"),
                     Vcoding_system_hash_table);
-          Fremhash (add_suffix_to_symbol(coding_system_or_name, "-mac"),
+          Fremhash (add_suffix_to_symbol (coding_system_or_name, "-mac"),
                     Vcoding_system_hash_table);
 
           eicpy_ascii (warning_info, "Error autoloading coding system ");
@@ -570,7 +570,7 @@ associated coding system object is returned.
 */
        (coding_system_or_name))
 {
-  return find_coding_system(coding_system_or_name, 1);
+  return find_coding_system (coding_system_or_name, 1);
 }
 
 DEFUN ("autoload-coding-system", Fautoload_coding_system, 2, 2, 0, /*
@@ -596,11 +596,11 @@ FORM is a form to evaluate to define the coding-system.
     }
 
   Fputhash (symbol, form, Vcoding_system_hash_table);
-  Fputhash (add_suffix_to_symbol(symbol, "-unix"), form,
+  Fputhash (add_suffix_to_symbol (symbol, "-unix"), form,
             Vcoding_system_hash_table);
-  Fputhash (add_suffix_to_symbol(symbol, "-dos"), form,
+  Fputhash (add_suffix_to_symbol (symbol, "-dos"), form,
             Vcoding_system_hash_table);
-  Fputhash (add_suffix_to_symbol(symbol, "-mac"), form,
+  Fputhash (add_suffix_to_symbol (symbol, "-mac"), form,
             Vcoding_system_hash_table);
 
   /* Tell the POSIX locale infrastructure about this coding system (though
@@ -635,7 +635,7 @@ FORM is a form to evaluate to define the coding-system.
           if (eilen (minimal_name))
             {
               CHECK_HASH_TABLE (val);
-              Fputhash (eimake_string(minimal_name), symbol, val);
+              Fputhash (eimake_string (minimal_name), symbol, val);
             }
         }
     }
@@ -2063,12 +2063,90 @@ static const struct memory_description coding_lstream_description[] = {
   { XD_LISP_OBJECT, offsetof (struct coding_stream, orig_codesys) },
   { XD_LISP_OBJECT, offsetof (struct coding_stream, codesys) },
   { XD_LISP_OBJECT, offsetof (struct coding_stream, other_end) },
-  { XD_BLOCK_PTR, offsetof (struct coding_stream, data), 1,
+  { XD_BLOCK_PTR, offsetof (struct coding_stream, st.data), 1,
     { coding_stream_extra_description_map } },
   { XD_END }
 };
 
 DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("coding", coding);
+
+static void coding_finalizer (Lstream *stream);
+
+/* Return a copy of the current state of a coding stream in STATE. */
+
+static void
+coding_stream_get_state (Lstream *stream, struct coding_stream_state *state)
+{
+  struct coding_stream *str = CODING_STREAM_DATA (stream);
+  *state = str->st;
+  if (str->st.data)
+    {
+      Bytecount datasize =
+	XCODING_SYSTEM_METHODS (str->codesys)->stream_data_size;
+      state->data = xmalloc (datasize);
+      memcpy (state->data, str->st.data, datasize);
+      MAYBE_XCODESYSMETH (str->codesys, copy_coding_stream,
+			  (state->data, str->st.data));
+    }
+}
+
+/* Set the state of a coding stream previously stored in STATE.
+   WARNING: This does a direct bitwise copy of STATE, but doesn't copy
+   any substructures.  STATE should be assumed to be unusable afterwards. */
+
+static void
+coding_stream_set_state (Lstream *stream, struct coding_stream_state *state)
+{
+  struct coding_stream *str = CODING_STREAM_DATA (stream);
+
+  coding_finalizer (stream);
+  str->st = *state;
+}
+
+/* Minimal wrapper around convert method.  Sets only the SRC, SRCLEN
+   and ST.ERROR_OCCURRED fields.  This is separated out so that it can
+   be called by coding_stream_back_propagate_offset().
+
+   #### Perhaps we should also be setting ST.WRITTEN_BEFORE_CONVERT.
+   Otherwise values of ST.GOOD_WRITTEN will be wrong; however
+   coding_stream_back_propagate_offset() doesn't use this value.
+   */
+
+static inline Bytecount
+coding_stream_call_converter_1 (struct coding_stream *str,
+				const unsigned char *src,
+				Bytecount srclen, unsigned_char_dynarr *dst)
+{
+  str->src = src;
+  str->srclen = srclen;
+  str->st.error_occurred = CODING_SUCCEEDED;
+
+  return
+    XCODESYSMETH (str->codesys, convert, (str, str->src, str->srclen, dst));
+}
+
+/* Call the convert method, setting the various state fields beforehand
+   and afterwards. */
+
+static inline Bytecount
+coding_stream_call_converter (struct coding_stream *str,
+			      const unsigned char *src,
+			      Bytecount srclen, unsigned_char_dynarr *dst)
+{
+  Bytecount processed;
+
+  str->st.written_before_convert = Dynarr_length (dst);
+  processed = coding_stream_call_converter_1 (str, src, srclen, dst);
+
+  str->st.total_written = Dynarr_length (dst) - str->st.written_before_convert;
+  str->st.total_read = processed;
+  str->st.cumul_read = str->st.new_cumul_read;
+  str->st.cumul_written = str->st.new_cumul_written;
+  str->st.new_cumul_read += str->st.total_read;
+  str->st.new_cumul_written += str->st.total_written;
+
+  return processed;
+}
 
 /* Encoding and decoding are parallel operations, so we create just one
    stream for both. "Decoding" may involve the extra step of autodetection
@@ -2118,7 +2196,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
       if (size == 0)
 	break; /* No more room for data */
 
-      if (str->eof)
+      if (str->st.eof)
 	break;
 
       {
@@ -2152,30 +2230,16 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	   output any final stuff it may be holding, any "go back to a sane
 	   state" escape sequences, etc.  The conversion method is free to
 	   look at this flag, and we use it above to stop looping. */
-	str->eof = 1;
+	str->st.eof = 1;
+
       {
-	Bytecount processed;
 	Bytecount to_process = Dynarr_length (str->convert_from);
+	Bytecount processed =
+	  coding_stream_call_converter (str, Dynarr_begin (str->convert_from),
+					to_process, str->convert_to);
 
-	str->src = Dynarr_begin (str->convert_from);
-	str->srclen = to_process;
-	str->error_occurred = CODING_SUCCEEDED;
-	str->written_before_convert = Dynarr_length (str->convert_to);
-
-	/* Convert the data, and save any rejected data in convert_from */
-	processed =
-	  XCODESYSMETH (str->codesys, convert,
-			(str, str->src, str->srclen, str->convert_to));
-
-	str->total_written = Dynarr_length (str->convert_to);
-	str->total_read = processed;
-	str->cumul_read = str->new_cumul_read;
-	str->cumul_written = str->new_cumul_written;
-	str->new_cumul_read += str->total_read;
-	str->new_cumul_written += str->total_written;
-
-	if (str->handle != CODING_CONTINUE &&
-	    str->error_occurred != CODING_SUCCEEDED)
+	if (str->st.handle != CODING_CONTINUE &&
+	    str->st.error_occurred != CODING_SUCCEEDED)
 	  {
 	    /* #### There is no reasonable way to use this information in
 	       the way that query-coding-region does with an output coding
@@ -2200,47 +2264,85 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
   return data - orig_data;
 }
 
+/* Given a coding stream STREAM, and an offset that corresponds to a certain
+   amount of data outputted by the conversion method, figure out how much
+   input data it corresponds to. */
+
+static Bytecount
+coding_stream_back_propagate_offset (Lstream *stream,
+				     Bytecount offset,
+				     const unsigned char *data,
+				     Bytecount size,
+				     unsigned_char_dynarr *dst)
+{
+  struct coding_stream *str = CODING_STREAM_DATA (stream);
+  const Ibyte *src = data;
+  const Ibyte *srcend = data;
+  Dynarr_reset (dst);
+  str->st.written_before_convert = 0;
+  /* Basically, we need to pass one character at a time to the convert
+     method until we've reached the desired amount of output.  However,
+     it's possible that the convert method will process less than the
+     total amount of data given to it -- this is especially true when
+     a very small amount of data is given.  So we keep two pointers --
+     one to the end of data passed in, which we keep incrementing a
+     character at a time, and one to the start of data passed in, which
+     we increment as the convert method processes data.  Normally, the
+     convert method processes everything it's given, so [SRC, SRCEND)
+     brackets exactly one character.  But it may bracket more characters
+     when some of the input data to the converter was rejected.  Note
+     that we keep incrementing SRCEND even if SRC doesn't increase --
+     otherwise we will get into an infinite loop, constantly passing in
+     the same amount of data and getting it rejected. */
+  while (Dynarr_length (dst) < offset)
+    {
+      Bytecount converted;
+      text_checking_assert (src - data <= size);
+      INC_IBYTEPTR (srcend);
+      text_checking_assert (srcend - data <= size);
+      converted = coding_stream_call_converter_1 (str, src, srcend - src, dst);
+      text_checking_assert (converted >= 0);
+      text_checking_assert (str->st.error_occurred == CODING_SUCCEEDED);
+      src += converted;
+      text_checking_assert (src <= srcend);
+    }
+  return src - data;
+}
+
 static Bytecount
 coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
+  int tell_mode;
+  struct coding_stream_state save_state;
+  Bytecount buffered, processed, to_process;
 
-  /* Convert all our data into convert_to, and then attempt to write
-     it all out to the other end. */
-  Dynarr_reset (str->convert_to);
+  /* At this point, if there's any data in convert_to, it's because we
+     weren't able to write it to the other-end Lstream last time.
+     (That means that whenever we *can* write such data, we have to
+     reset the dynarr right then!) */
 
-  str->src = data;
-  str->srclen = size;
-  str->error_occurred = CODING_SUCCEEDED;
-  /* The following is currently always 0, since we called Dynarr_reset() */
-  str->written_before_convert = Dynarr_length (str->convert_to);
+  /* Here are in "tell mode" and hence need copy the state if
 
-  /* #### QUERY! Here are in "tell mode" and hence need to tell() and copy
-     the state if
-
-     (1) str->handle is not CODING_CONTINUE
+     (1) str->st.handle is not CODING_CONTINUE
      (2) other_end is a coding stream */
+  tell_mode = (str->st.handle != CODING_CONTINUE &&
+	       Lstream_is_type (str->other_end, lstream_coding));
 
-  size = XCODESYSMETH (str->codesys, convert,
-		       (str, str->src, str->srclen, str->convert_to));
+  if (tell_mode)
+    coding_stream_get_state (stream, &save_state);
 
-  str->total_written = Dynarr_length (str->convert_to);
-  str->total_read = size;
-  str->cumul_read = str->new_cumul_read;
-  str->cumul_written = str->new_cumul_written;
-  str->new_cumul_read += str->total_read;
-  str->new_cumul_written += str->total_written;
+  buffered = Dynarr_length (str->convert_to);
+  size = coding_stream_call_converter (str, data, size, str->convert_to);
 
-  /* #### QUERY!
+  /* Error handling:
 
-     Error handling:
-
-     #### If we couldn't write anything, do we always seek back to the place
+     If we couldn't write anything, do we always seek back to the place
      before convert() and return 0?  Answer: if we are in tell mode, we
      seek back to the beginning.  Otherwise, we buffer the data in
      str->convert_to and try to write again next time.
 
-     #### If some but not all written: If not in tell mode, buffer whatever
+     If some but not all written: If not in tell mode, buffer whatever
      wasn't written and write it next time.  Otherwise, we need to figure
      out exactly how much equivalent source data in DATA produced the amount
      of sink data in STR->CONVERT_TO that was processed.  To do this,
@@ -2248,21 +2350,74 @@ coding_writer (Lstream *stream, const unsigned char *data, Bytecount size)
      until the amount of data generated equals the amount in STR->CONVERT_TO
      that was processed by Lstream_write().
   */
-  if (Lstream_write (str->other_end, Dynarr_begin (str->convert_to),
-		     Dynarr_length (str->convert_to)) < 0)
+
+  to_process = Dynarr_length (str->convert_to);
+  processed = Lstream_write (str->other_end, Dynarr_begin (str->convert_to),
+			     to_process);
+
+  assert (processed <= to_process);
+
+  if (tell_mode)
     {
-      stream->error_occurred_p = 1;
-      return 0;
+      if (processed < 0)
+	{
+	  coding_stream_set_state (stream, &save_state);
+	  Dynarr_set_length (str->convert_to, buffered);
+	  stream->error_occurred_p = 1;
+	  return 0;
+	}
+      else if (processed <= buffered)
+	{
+	  coding_stream_set_state (stream, &save_state);
+	  Dynarr_delete_many (str->convert_to, 0, processed);
+	  if (Lstream_error_occurred_p (str->other_end))
+	    stream->error_occurred_p = 1;
+	  return 0;
+	}
+      else
+	{
+	  struct coding_stream *oth = CODING_STREAM_DATA (str->other_end);
+
+	  if (oth->st.error_occurred != CODING_SUCCEEDED)
+	    {
+	      unsigned_char_dynarr *tmpdyn = Dynarr_new (unsigned_char);
+	      assert (processed == oth->st.total_read);
+	      coding_stream_set_state (stream, &save_state);
+	      str->st.good_read =
+		coding_stream_back_propagate_offset
+		(stream, oth->st.good_read, data, size, tmpdyn);
+	      assert (str->st.good_read <= size);
+	      str->st.total_read =
+		str->st.good_read +
+		coding_stream_back_propagate_offset
+		(stream, oth->st.total_read - oth->st.good_read,
+		 data + str->st.good_read, size - str->st.good_read, tmpdyn);
+	      str->st.error_occurred = oth->st.error_occurred;
+	      str->st.good_written = oth->st.good_written;
+	      str->st.total_written = oth->st.total_written;
+	      str->st.cumul_read = str->st.new_cumul_read;
+	      str->st.cumul_written = str->st.new_cumul_written;
+	      str->st.new_cumul_read += str->st.total_read;
+	      str->st.new_cumul_written += str->st.total_written;
+	      Dynarr_reset (str->convert_to);
+	      stream->error_occurred_p = 1;
+	      Dynarr_free (tmpdyn);
+	      return str->st.total_read;
+	    }
+	}
     }
-  else
-    {
-      if (str->handle != CODING_CONTINUE &&
-	  str->error_occurred != CODING_SUCCEEDED)
-	stream->error_occurred_p = 1;
-      /* The return value indicates how much of the incoming data was
-	 processed, not how many bytes were written. */
-      return size;
-    }
+
+  /* Normal mode: Not writing to another coding stream, or no special error
+     handling; or tell mode, but we didn't see a condition that we handle
+     specially.  We can't or don't want to back up the coding stream, so we
+     buffer any data we weren't able to write out. */
+  if (processed >= 0)
+    Dynarr_delete_many (str->convert_to, 0, processed);
+  if (Lstream_error_occurred_p (str->other_end) ||
+      (str->st.handle != CODING_CONTINUE &&
+       str->st.error_occurred != CODING_SUCCEEDED))
+    stream->error_occurred_p = 1;
+  return size;
 }
 
 static int
@@ -2360,9 +2515,9 @@ coding_closer (Lstream *stream)
   struct coding_stream *str = CODING_STREAM_DATA (stream);
   if (stream->flags & LSTR_WRITE)
     {
-      str->eof = 1;
+      str->st.eof = 1;
       coding_writer (stream, 0, 0);
-      str->eof = 0;
+      str->st.eof = 0;
     }
   /* It's safe to free the runoff dynarrs now because they are used only
      during conversion.  We need to keep the type-specific data around,
@@ -2389,14 +2544,14 @@ coding_finalizer (Lstream *stream)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
 
-  assert (!str->finalized);
+  assert (!str->st.finalized);
   MAYBE_XCODESYSMETH (str->codesys, finalize_coding_stream, (str));
-  if (str->data)
+  if (str->st.data)
     {
-      xfree (str->data);
-      str->data = 0;
+      xfree (str->st.data);
+      str->st.data = 0;
     }
-  str->finalized = 1;
+  str->st.finalized = 1;
 }
 
 static Lisp_Object
@@ -2424,22 +2579,23 @@ coding_stream_coding_system (Lstream *stream)
   return CODING_STREAM_DATA (stream)->codesys;
 }
 
-/* After an error has occurred, return info relevant to the erroneous and
-   non-erroneous input.  This only makes sense if LSTR_STOP_ON_ERROR
-   has been used, and currently only applies during encoding, not decoding.
-   (#### This should probably be fixed.) With this flag set, conversion
-   stops once an error has been detected, and the input processed so far
-   consists of a chunk of non-erroneous data, followed by a small amount
-   (most often, one character) of erroneous data.  Similarly, the output
-   consists of a chunk of non-erroneous converted data, followed by a small
-   amount (most often, one byte) of erroneous converted data, representing
-   the error-processing mechanism done by the convert method -- for example,
-   writing out the byte value of an error octet encountered in the input, or
-   writing out a '?' to represent an unconvertible character. (Note, if the
-   output is in one of the Unicode formats, the Unicode replacement
-   character 0xFFFD is likely to be used in place of '?'.  Note also that
-   former versions of XEmacs wrote out a '~'.  The '~' still occurs now
-   when a character can't be displayed, but not when it can't be converted.)
+/* Return whether an error occurred during conversion, and if so, return
+   info relevant to the erroneous and non-erroneous input.  This only makes
+   sense if LSTR_STOP_ON_ERROR has been used, and currently only applies
+   during encoding, not decoding.  (#### This should probably be fixed.) 
+   With this flag set, conversion stops once an error has been detected,
+   and the input processed so far consists of a chunk of non-erroneous
+   data, followed by a small amount (most often, one character) of
+   erroneous data.  Similarly, the output consists of a chunk of
+   non-erroneous converted data, followed by a small amount (most often,
+   one byte) of erroneous converted data, representing the error-processing
+   mechanism done by the convert method -- for example, writing out the
+   byte value of an error octet encountered in the input, or writing out a
+   '?' to represent an unconvertible character. (Note, if the output is in
+   one of the Unicode formats, the Unicode replacement character 0xFFFD is
+   likely to be used in place of '?'.  Note also that former versions of
+   XEmacs wrote out a '~'.  The '~' still occurs now when a character can't
+   be displayed, but not when it can't be converted.)
 
    The return values consist of
 
@@ -2450,6 +2606,12 @@ coding_stream_coding_system (Lstream *stream)
 
    See the discussion above for what the source and sink of input and
    output coding streams are.
+
+   Note that if no conversion error occurred, only the value of ERRTYPE
+   will be meaningful.  Also, "conversion error occurred" !=
+   "error occurred during writing to or reading from the stream", because
+   a stream error may also be signalled if an error occurred reading from
+   or writing to the stream on the other end.
 */
 
 void
@@ -2458,12 +2620,11 @@ coding_stream_get_error_info (Lstream *stream, enum coding_error *errtype,
 			      Bytecount *good_sink, Bytecount *total_sink)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
-  assert (str->error_occurred != CODING_SUCCEEDED);
-  *errtype = str->error_occurred;
-  *good_source = str->read_good;
-  *total_source = str->total_read;
-  *good_sink = str->written_good - str->written_before_convert;
-  *total_sink = str->total_written - str->written_before_convert;
+  *errtype = str->st.error_occurred;
+  *good_source = str->st.good_read;
+  *total_source = str->st.total_read;
+  *good_sink = str->st.good_written;
+  *total_sink = str->st.total_written;
 }
 
 /* Change the coding system associated with a stream. */
@@ -2483,23 +2644,23 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
       if (lstr->flags & LSTR_WRITE)
 	{
 	  Lstream_flush (lstr);
-	  str->eof = 1;
+	  str->st.eof = 1;
 	  coding_writer (lstr, 0, 0);
-	  str->eof = 0;
+	  str->st.eof = 0;
 	}
       MAYBE_XCODESYSMETH (str->codesys, finalize_coding_stream, (str));
     }
   str->orig_codesys = codesys;
   str->codesys = coding_system_real_canonical (codesys);
 
-  if (str->data)
+  if (str->st.data)
     {
-      xfree (str->data);
-      str->data = 0;
+      xfree (str->st.data);
+      str->st.data = 0;
     }
   if (XCODING_SYSTEM_METHODS (str->codesys)->stream_data_size)
     {
-      str->data =
+      str->st.data =
 	xmalloc_and_zero (XCODING_SYSTEM_METHODS (str->codesys)->
 			  stream_data_size);
       str->type = XCODING_SYSTEM_METHODS (str->codesys)->enumtype;
@@ -2535,11 +2696,11 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->direction = direction;
 
   if (flags & LSTR_STOP_ON_ERROR_IGNORE_INVALID_SEQUENCE)
-    str->handle = CODING_RETURN_IGNORE_INVALID_SEQUENCE;
+    str->st.handle = CODING_RETURN_IGNORE_INVALID_SEQUENCE;
   else if (flags & LSTR_STOP_ON_ERROR)
-    str->handle = CODING_RETURN;
+    str->st.handle = CODING_RETURN;
   else
-    str->handle = CODING_CONTINUE;
+    str->st.handle = CODING_CONTINUE;
 
   set_coding_stream_coding_system (lstr, codesys);
   return wrap_lstream (lstr);
@@ -2782,9 +2943,11 @@ handle_encoding_error_after_output (struct coding_stream *str,
     {
       DEC_IBYTEPTR (src);
     }
-  str->read_good = src - str->src;
-  str->written_good = Dynarr_length (dst) - num_output_err_bytes;
-  str->error_occurred = errtype;
+  str->st.good_read = src - str->src;
+  str->st.good_written =
+    Dynarr_length (dst) - num_output_err_bytes -
+    str->st.written_before_convert;
+  str->st.error_occurred = errtype;
 }
 
 void
@@ -2798,9 +2961,10 @@ handle_encoding_error_before_output (struct coding_stream *str,
     {
       DEC_IBYTEPTR (src);
     }
-  str->read_good = src - str->src;
-  str->written_good = Dynarr_length (dst);
-  str->error_occurred = errtype;
+  str->st.good_read = src - str->src;
+  str->st.good_written = Dynarr_length (dst) -
+    str->st.written_before_convert;
+  str->st.error_occurred = errtype;
 }
 
 /* A "standard" encoding error means that the most recent character from
@@ -2932,20 +3096,16 @@ query_coding_1 (Lisp_Object buffer_or_string, Charxpos b, Charxpos e,
       while (read_size > 0)
 	{
 	  Bytecount write_size;
+	  Bytecount good_source, total_source, good_sink, total_sink;
+	  enum coding_error errtype;
 	  QUIT;
 	  write_size = Lstream_write (coding_outstr, tempbuf + offset,
 				      read_size);
-	  if (Lstream_error_occurred_p (coding_outstr))
+	  coding_stream_get_error_info
+	    (coding_outstr, &errtype, &good_source, &total_source,
+	     &good_sink, &total_sink);
+	  if (errtype != CODING_SUCCEEDED)
 	    {
-	      Bytecount good_source, total_source, good_sink, total_sink;
-	      enum coding_error errtype;
-
-	      coding_stream_get_error_info
-		(coding_outstr, &errtype, &good_source, &total_source,
-		 &good_sink, &total_sink);
-
-	      Lstream_clear_error_occurred_p (coding_outstr);
-
 	      /* The amount we successfully wrote to the coding stream
 		 should be the same as the total amount read by the coding
 		 stream. */
@@ -3356,7 +3516,7 @@ chain_convert (struct coding_stream *str, const UExtbyte *src,
   struct chain_coding_stream *data = CODING_STREAM_TYPE_DATA (str, chain);
   int chain_count = XCODING_SYSTEM_CHAIN_COUNT (str->codesys);
 
-  if (str->eof)
+  if (str->st.eof)
     {
       /* Each will close the next; there is always at least one stream (the
 	 dynarr stream at the end) if we're initted.  We need to close now
@@ -3374,27 +3534,18 @@ chain_convert (struct coding_stream *str, const UExtbyte *src,
   {
     Lstream *lstr0 = XLSTREAM (data->lstreams[0]);
     Bytecount writeval = Lstream_write (lstr0, src, n);
-    struct coding_stream *str0, *strlast;
-    int i;
+    struct coding_stream *str0;
 
     if (Lstream_error_occurred_p (lstr0))
+      Lstream_set_error_occurred_p (str->us);
+
+    assert (Lstream_is_type (lstr0, lstream_coding));
+    str0 = CODING_STREAM_DATA (lstr0);
+    if (str0->st.error_occurred != CODING_SUCCEEDED)
       {
-	Lstream_set_error_occurred_p (str->us);
-	assert (Lstream_is_type (lstr0, lstream_coding));
-	str0 = CODING_STREAM_DATA (lstr0);
-	for (i = 0; i < chain_count; i++)
-	  if (!Lstream_error_occurred_p (XLSTREAM (data->lstreams[i])))
-	    break;
-	i--;
-	/* #### Properly speaking we would have to propagate the value
-	   of written_good forward, but for the moment we just depend on the
-	   error occurring in the end of the chain. */
-	assert (i == chain_count - 1);
-	str->error_occurred = str0->error_occurred;
-	/* #### We need to implement back-propagation on this value. */
-	str->read_good = str0->read_good;
-	strlast = CODING_STREAM_DATA (XLSTREAM (data->lstreams[i]));
-	str->written_good = strlast->written_good;
+	str->st.error_occurred = str0->st.error_occurred;
+	str->st.good_read = str0->st.good_read;
+	str->st.good_written = str0->st.good_written;
       }
     return writeval;
   }
@@ -3640,7 +3791,7 @@ chain_get_error_info (struct coding_stream *str, enum coding_error *errtype,
     {
       Lstream *lstr = XLSTREAM ((data->lstreams)[i]);
       str1 = CODING_STREAM_DATA (lstr);
-      if (str1->error_occurred != CODING_SUCCEEDED)
+      if (str1-st.error_occurred != CODING_SUCCEEDED)
 	break;
     }
 
@@ -3653,7 +3804,7 @@ chain_get_error_info (struct coding_stream *str, enum coding_error *errtype,
      cumulative offsets into the whole amount of data written, rather than
      offsets into the current dynarr. */
   assert (i == data->lstream_count - 1);
-  *errtype = str1->error_occurred;
+  *errtype = str1-st.error_occurred;
   convert source offsets into cumulative;
   for (i--; i >= 0; i--)
     back-convert offsets through each coding stream;
@@ -3928,7 +4079,7 @@ convert_eol_decode (struct coding_stream *str, const Ibyte *src,
 		     the stream, in which case we can't do that (because
 		     then the '\r' will never get written out), and in any
 		     case we should be recognizing it at EOL_CR format. */
-		  if (str->eof)
+		  if (str->st.eof)
 		    data->actual = EOL_CR;
 		  else
 		    n--;
@@ -3943,11 +4094,11 @@ convert_eol_decode (struct coding_stream *str, const Ibyte *src,
 	}
     }
 
-  /* str->eof is set, the caller reached EOF on the other end and has
+  /* str->st.eof is set, the caller reached EOF on the other end and has
      no new data to give us.  The only data we get is the data we
      rejected from last time. */
   if (data->actual == EOL_LF || data->actual == EOL_AUTODETECT ||
-      (str->eof))
+      (str->st.eof))
     Dynarr_add_many (dst, src, n);
   else
     {
@@ -4283,10 +4434,10 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   ascii[i] = '\0';
   hex[3 * i - 1] = '\0';
 
-  eicpy_ext(eistr_hex, hex, Qbinary);
-  eicpy_ext(eistr_ascii, ascii, Qbinary);
+  eicpy_ext (eistr_hex, hex, Qbinary);
+  eicpy_ext (eistr_ascii, ascii, Qbinary);
 
-  debug_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
+  debug_out ("%s  %s", eidata (eistr_ascii), eidata (eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
@@ -4836,7 +4987,7 @@ undecided_decode (struct coding_stream *str, const UExtbyte *src,
   struct undecided_coding_stream *data =
     CODING_STREAM_TYPE_DATA (str, undecided);
 
-  if (str->eof)
+  if (str->st.eof)
     {
       /* Each will close the next.  We need to close now because more
 	 data may be generated. */
@@ -5330,7 +5481,7 @@ gzip_decode (struct coding_stream *str, const UExtbyte *src,
      Z_STREAM_ERROR		(should never happen)
      Z_NEED_DICT		(#### when will this happen?)
   */
-  while (data->stream.avail_in > 0 || str->eof)
+  while (data->stream.avail_in > 0 || str->st.eof)
     {
       /* Reserve an output buffer of the same size as the input buffer;
 	 if that's not enough, we keep reserving the same size. */
@@ -5397,7 +5548,7 @@ gzip_encode (struct coding_stream *str, const UExtbyte *src,
      Z_BUF_ERROR		No progress possible (should never happen)
      Z_STREAM_ERROR		(should never happen)
   */
-  while (data->stream.avail_in > 0 || str->eof)
+  while (data->stream.avail_in > 0 || str->st.eof)
     {
       /* Reserve an output buffer of the same size as the input buffer;
 	 if that's not enough, we keep reserving the same size. */
@@ -5410,7 +5561,7 @@ gzip_encode (struct coding_stream *str, const UExtbyte *src,
       data->stream.avail_out = reserved;
       zerr =
 	deflate (&data->stream,
-		 str->eof ? Z_FINISH : Z_NO_FLUSH);
+		 str->st.eof ? Z_FINISH : Z_NO_FLUSH);
       /* Lop off the unused portion */
       Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
       if (zerr != Z_OK)
