@@ -1,3 +1,9 @@
+2010-03-18  Mike Sperber  <mike@xemacs.org>
+
+	* configure.ac: Set LATE_PACKAGE_DIRECTORIES_USER_DEFINED if
+	`datadir' was changed; set `with_late_packages' to something
+	sensible for this case.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* configure.ac (XE_COMPLEX_ARG):
