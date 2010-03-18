@@ -1165,7 +1165,7 @@ glyph_index get_glyph_cachel_index (struct window *w, Lisp_Object glyph);
 
 #ifdef MEMORY_USAGE_STATS
 int compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
-				struct overhead_stats *ovstats);
+				struct usage_stats *ustats);
 #endif /* MEMORY_USAGE_STATS */
 
 /************************************************************************/

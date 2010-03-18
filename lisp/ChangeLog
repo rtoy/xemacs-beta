@@ -1,3 +1,8 @@
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	Rewrite to take into account API changes in memory-usage functions.
+
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-cmds.el:

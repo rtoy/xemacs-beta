@@ -477,7 +477,7 @@ gtk_update_frame_scrollbars (struct frame *f)
 static int
 gtk_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				      struct scrollbar_instance *inst,
-				      struct overhead_stats *ovstats)
+				      struct usage_stats *ustats)
 {
   int total = 0;
 
@@ -486,7 +486,7 @@ gtk_compute_scrollbar_instance_usage (struct device *UNUSED (d),
       struct gtk_scrollbar_data *data =
 	(struct gtk_scrollbar_data *) inst->scrollbar_data;
 
-      total += malloced_storage_size (data, sizeof (*data), ovstats);
+      total += malloced_storage_size (data, sizeof (*data), ustats);
       inst = inst->next;
     }
 

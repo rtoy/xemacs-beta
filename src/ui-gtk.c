@@ -807,7 +807,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static Lisp_Object
-object_getprop (Lisp_Object obj, Lisp_Object prop)
+emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
   Lisp_Object prop_name = Qnil;
@@ -871,7 +871,7 @@ object_getprop (Lisp_Object obj, Lisp_Object prop)
 }
 
 static int
-object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
+emacs_gtk_object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
   GtkArgInfo *info = NULL;
   Lisp_Object prop_name = Qnil;
@@ -932,19 +932,14 @@ emacs_gtk_object_finalizer (Lisp_Object obj)
     gtk_object_unref (data->object);
 }
 
-DEFINE_NODUMP_GENERAL_LISP_OBJECT ("GtkObject", emacs_gtk_object,
-				   mark_gtk_object_data,
-				   emacs_gtk_object_printer,
-				   emacs_gtk_object_finalizer,
-				   0, /* equality */
-				   0, /* hash */
-				   gtk_object_data_description,
-				   object_getprop,
-				   object_putprop,
-				   0, /* rem prop */
-				   0, /* plist */
-				   0, /* disksaver */
-				   emacs_gtk_object_data);
+DEFINE_NODUMP_LISP_OBJECT ("GtkObject", emacs_gtk_object,
+			   mark_gtk_object_data,
+			   emacs_gtk_object_printer,
+			   emacs_gtk_object_finalizer,
+			   0, /* equality */
+			   0, /* hash */
+			   gtk_object_data_description,
+			   emacs_gtk_object_data);
 
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)
@@ -1337,6 +1332,14 @@ The cdr is a list of all the magic properties it has.
 }
 
 
+void
+ui_gtk_objects_create (void)
+{
+  OBJECT_HAS_METHOD (emacs_gtk_object, getprop);
+  OBJECT_HAS_METHOD (emacs_gtk_object, putprop);
+  /* #### No remprop or plist methods */
+}
+
 void
 syms_of_ui_gtk (void)
 {
