@@ -1,3 +1,8 @@
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Partially updated with last couple of months worth of changes.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* configure.ac (XE_COMPLEX_ARG):
