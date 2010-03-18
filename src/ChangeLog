@@ -1,3 +1,10 @@
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* tests.c:
+	* tests.c (Ftest_data_format_conversion):
+	Need to GCPRO newly created objects or we'll eventually get
+	a crash due to occurrence of call2().
+
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
 	* extents.c (Fprevious_single_property_change):
