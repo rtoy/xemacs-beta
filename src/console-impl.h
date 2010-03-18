@@ -292,7 +292,7 @@ struct console_methods
 #ifdef MEMORY_USAGE_STATS
   int (*compute_scrollbar_instance_usage_method) (struct device *,
 						  struct scrollbar_instance *,
-						  struct overhead_stats *);
+						  struct usage_stats *);
 #endif
   /* Paint the window's deadbox, a rectangle between window
      borders and two short edges of both scrollbars. */

@@ -422,7 +422,7 @@ Dynarr_free (void *d)
    See the comment above the definition of this structure. */
 
 Bytecount
-Dynarr_memory_usage (void *d, struct overhead_stats *stats)
+Dynarr_memory_usage (void *d, struct usage_stats *stats)
 {
   Bytecount total = 0;
   Dynarr *dy = (Dynarr *) d;

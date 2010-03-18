@@ -5158,101 +5158,63 @@ some_window_value_changed (Lisp_Object UNUSED (specifier),
 
 struct window_stats
 {
-  int face;
-  int glyph;
+  struct usage_stats u;
+  Bytecount face;
+  Bytecount glyph;
+  Bytecount line_start;
+  Bytecount other_redisplay;
 #ifdef HAVE_SCROLLBARS
-  int scrollbar;
+  Bytecount scrollbar;
 #endif
-  int line_start;
-  int other_redisplay;
-  int other;
 };
 
 static void
 compute_window_mirror_usage (struct window_mirror *mir,
 			     struct window_stats *stats,
-			     struct overhead_stats *ovstats)
+			     struct usage_stats *ustats)
 {
   if (!mir)
     return;
-  stats->other += lisp_object_storage_size (wrap_window_mirror (mir), ovstats);
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
 
     stats->scrollbar +=
       compute_scrollbar_instance_usage (d, mir->scrollbar_vertical_instance,
-					ovstats);
+					ustats);
     stats->scrollbar +=
       compute_scrollbar_instance_usage (d, mir->scrollbar_horizontal_instance,
-					ovstats);
+					ustats);
   }
 #endif /* HAVE_SCROLLBARS */
   stats->other_redisplay +=
-    compute_display_line_dynarr_usage (mir->current_display_lines, ovstats);
+    compute_display_line_dynarr_usage (mir->current_display_lines, ustats);
   stats->other_redisplay +=
-    compute_display_line_dynarr_usage (mir->desired_display_lines, ovstats);
+    compute_display_line_dynarr_usage (mir->desired_display_lines, ustats);
 }
 
 static void
 compute_window_usage (struct window *w, struct window_stats *stats,
-		      struct overhead_stats *ovstats)
+		      struct usage_stats *ustats)
 {
-  xzero (*stats);
-  stats->other += lisp_object_storage_size (wrap_window (w), ovstats);
-  stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
-  stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
+  stats->face += compute_face_cachel_usage (w->face_cachels, ustats);
+  stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ustats);
   stats->line_start +=
-    compute_line_start_cache_dynarr_usage (w->line_start_cache, ovstats);
-  compute_window_mirror_usage (find_window_mirror (w), stats, ovstats);
+    compute_line_start_cache_dynarr_usage (w->line_start_cache, ustats);
+  compute_window_mirror_usage (find_window_mirror (w), stats, ustats);
 }
 
-DEFUN ("window-memory-usage", Fwindow_memory_usage, 1, 1, 0, /*
-Return stats about the memory usage of window WINDOW.
-The values returned are in the form of an alist of usage types and byte
-counts.  The byte counts attempt to encompass all the memory used
-by the window (separate from the memory logically associated with a
-buffer or frame), including internal structures and any malloc()
-overhead associated with them.  In practice, the byte counts are
-underestimated because certain memory usage is very hard to determine
-\(e.g. the amount of memory used inside the Xt library or inside the
-X server) and because there is other stuff that might logically
-be associated with a window, buffer, or frame (e.g. window configurations,
-glyphs) but should not obviously be included in the usage counts.
-
-Multiple slices of the total memory usage may be returned, separated
-by a nil.  Each slice represents a particular view of the memory, a
-particular way of partitioning it into groups.  Within a slice, there
-is no overlap between the groups of memory, and each slice collectively
-represents all the memory concerned.
-*/
-       (window))
+static void
+window_memory_usage (Lisp_Object window, struct generic_usage_stats *gustats)
 {
-  struct window_stats stats;
-  struct overhead_stats ovstats;
-  Lisp_Object val = Qnil;
+  struct window_stats *stats = (struct window_stats *) gustats;
 
-  CHECK_WINDOW (window); /* dead windows should be allowed, no? */
-  xzero (ovstats);
-  compute_window_usage (XWINDOW (window), &stats, &ovstats);
-
-  val = acons (Qface_cache,          make_int (stats.face),              val);
-  val = acons (Qglyph_cache,         make_int (stats.glyph),             val);
-#ifdef HAVE_SCROLLBARS
-  val = acons (Qscrollbar_instances, make_int (stats.scrollbar),         val);
-#endif
-  val = acons (Qline_start_cache,    make_int (stats.line_start),        val);
-  val = acons (Qother_redisplay,     make_int (stats.other_redisplay),   val);
-  val = acons (Qother,               make_int (stats.other),             val);
-  val = Fcons (Qnil, val);
-  val = acons (Qactually_requested,  make_int (ovstats.was_requested),   val);
-  val = acons (Qmalloc_overhead,     make_int (ovstats.malloc_overhead), val);
-  val = acons (Qdynarr_overhead,     make_int (ovstats.dynarr_overhead), val);
-
-  return Fnreverse (val);
+  compute_window_usage (XWINDOW (window), stats, &stats->u);
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+
 
 /* Mark all subwindows of a window as deleted.  The argument
    W is actually the subwindow tree of the window in question. */
@@ -5430,6 +5392,14 @@ debug_print_windows (struct frame *f)
 /************************************************************************/
 
 void
+window_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (window, memory_usage);
+#endif
+}
+
+void
 syms_of_window (void)
 {
   INIT_LISP_OBJECT (window);
@@ -5453,7 +5423,6 @@ syms_of_window (void)
   DEFSYMBOL (Qscrollbar_instances);
 #endif
   DEFSYMBOL (Qother_redisplay);
-  /* Qother in general.c */
 #endif
 
   DEFSYMBOL (Qtruncate_partial_width_windows);
@@ -5531,9 +5500,6 @@ syms_of_window (void)
   DEFSUBR (Fscroll_other_window);
   DEFSUBR (Fcenter_to_window_line);
   DEFSUBR (Fmove_to_window_line);
-#ifdef MEMORY_USAGE_STATS
-  DEFSUBR (Fwindow_memory_usage);
-#endif
   DEFSUBR (Fcurrent_pixel_column);
   DEFSUBR (Fcurrent_pixel_row);
 }
@@ -5549,6 +5515,17 @@ reinit_vars_of_window (void)
 void
 vars_of_window (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (window, memusage_stats_list,
+     listu (Qface_cache, Qglyph_cache,
+	    Qline_start_cache, Qother_redisplay,
+#ifdef HAVE_SCROLLBARS
+	    Qscrollbar_instances,
+#endif
+	    Qunbound));
+#endif /* MEMORY_USAGE_STATS */
+
   DEFVAR_BOOL ("scroll-on-clipped-lines", &scroll_on_clipped_lines /*
 *Non-nil means to scroll if point lands on a line which is clipped.
 */ );

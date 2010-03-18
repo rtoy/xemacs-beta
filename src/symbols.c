@@ -141,15 +141,10 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
-DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("symbol", symbol,
-						mark_symbol, print_symbol,
-						0, 0, 0, symbol_description,
-						symbol_getprop,
-						symbol_putprop,
-						symbol_remprop,
-						Fsymbol_plist,
-						0 /* no disksaver */,
-						Lisp_Symbol);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("symbol", symbol,
+					mark_symbol, print_symbol,
+					0, 0, 0, symbol_description,
+					Lisp_Symbol);
 
 /**********************************************************************/
 /*                              Intern				      */
@@ -3527,6 +3522,15 @@ static const struct symbol_value_magic guts_of_unbound_marker =
 };
 #endif /* not NEW_GC */
 
+static void
+reinit_symbol_objects_early (void)
+{
+  OBJECT_HAS_METHOD (symbol, getprop);
+  OBJECT_HAS_METHOD (symbol, putprop);
+  OBJECT_HAS_METHOD (symbol, remprop);
+  OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+}
+
 void
 init_symbols_once_early (void)
 {
@@ -3536,13 +3540,13 @@ init_symbols_once_early (void)
   INIT_LISP_OBJECT (symbol_value_lisp_magic);
   INIT_LISP_OBJECT (symbol_value_varalias);
 
-  reinit_symbols_early ();
+  reinit_symbol_objects_early ();
 
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
   Qnil = Fmake_symbol (make_string_nocopy ((const Ibyte *) "nil", 3));
   XSTRING_PLIST (XSYMBOL (Qnil)->name) = Qnil;
-  XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
+  XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihilo */
   XSYMBOL (Qnil)->plist = Qnil;
 
   Vobarray = make_vector (OBARRAY_SIZE, Qzero);
@@ -3591,6 +3595,7 @@ init_symbols_once_early (void)
 void
 reinit_symbols_early (void)
 {
+  reinit_symbol_objects_early ();
 }
 
 static void

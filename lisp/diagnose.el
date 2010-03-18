@@ -35,16 +35,25 @@
   "Show statistics about memory usage of various sorts in XEmacs."
   (interactive)
   (garbage-collect)
-  (flet ((show-foo-stats (objtypename objlist memfun)
+  (flet ((show-foo-stats (objtypename cleanfun objlist)
 	   (let* ((hash (make-hash-table))
 		  (first t)
 		  types fmt
 		  (objnamelen 25)
 		  (linelen objnamelen)
 		  (totaltotal 0))
-	     (dolist (obj objlist)
+	     (loop for obj in objlist do
 	       (let ((total 0)
-		     (stats (funcall memfun obj)))
+		     (stats (object-memory-usage obj)))
+		 ;; Pop off the slice describing the object itself's
+		 ;; memory
+		 (while (and stats (not (eq t (pop stats)))))
+		 ;; Pop off the slice describing the associated
+		 ;; non-Lisp-Object memory from the allocation
+		 ;; perspective, so we can get to the slice describing
+		 ;; the  memory grouped by type
+		 (while (and stats (pop stats)))
+
 		 (loop for (type . num) in stats while type do
 		   (puthash type (+ num (or (gethash type hash) 0)) hash)
 		   (incf total num)
@@ -68,7 +77,7 @@
 				 (append types (list 'total))))
 		   (princ (make-string linelen ?-))
 		   (princ "\n"))
-		 (let ((objname (format "%s" obj)))
+		 (let ((objname (format "%s" (funcall cleanfun obj))))
 		   (princ (apply 'format fmt (substring objname 0
 							(min (length objname)
 							     (1- objnamelen)))
@@ -94,8 +103,8 @@
 	  (when-fboundp 'charset-list
 	    (setq begin (point))
 	    (incf grandtotal
-		  (show-foo-stats 'charset (charset-list)
-				  #'charset-memory-usage))
+		  (show-foo-stats 'charset 'charset-name
+				  (mapcar 'get-charset (charset-list))))
 	    (when-fboundp 'sort-numeric-fields
 	      (sort-numeric-fields -1
 				   (save-excursion
@@ -108,7 +117,7 @@
 	    (princ "\n"))
 	  (setq begin (point))
 	  (incf grandtotal
-		(show-foo-stats 'buffer (buffer-list) #'buffer-memory-usage))
+		(show-foo-stats 'buffer 'buffer-name (buffer-list)))
 	  (when-fboundp 'sort-numeric-fields
 	    (sort-numeric-fields -1
 				 (save-excursion
@@ -121,10 +130,11 @@
 	  (princ "\n")
 	  (setq begin (point))
 	  (incf grandtotal
-		(show-foo-stats 'window (mapcan #'(lambda (fr)
-						    (window-list fr t))
-						(frame-list))
-				#'window-memory-usage))
+		(show-foo-stats 'window #'(lambda (x)
+					    (buffer-name (window-buffer x)))
+				(mapcan #'(lambda (fr)
+					    (window-list fr t))
+					(frame-list))))
           (when-fboundp #'sort-numeric-fields
             (sort-numeric-fields -1
                                  (save-excursion
