@@ -257,7 +257,7 @@ The `--prefix=PREFIXDIR' option specifies where the installation process
 should put XEmacs and its data files.  This defaults to `/usr/local'.
 - XEmacs (and the other utilities users run) go in PREFIXDIR/bin
   (unless the `--exec-prefix' option says otherwise).
-- The architecture-independent files go in PREFIXDIR/lib/xemacs-VERSION
+- The architecture-independent files go in PREFIXDIR/share/xemacs-VERSION
   (where VERSION is the version number of XEmacs, like `21.0').
 - The architecture-dependent files go in
   PREFIXDIR/lib/xemacs-VERSION/CONFIGURATION-NAME
@@ -283,6 +283,12 @@ for instance.  Therefore, you can specify --without-prefix on the
 configure command line to prevent the installation prefix to become
 part of the generated executable; everything else will continue to
 work as usual.
+
+Unlike previous versions of XEmacs (21.4 or earlier),
+architecture-independent files (in particular, the Lisp files and
+package hierarchies) by default get installed under `/usr/local/share'
+rather than `/usr/local/lib'.  To create a setup as in previous
+versions, use the `--datadir=/usr/local/lib' option to configure.
 
 Configuring Feature Support
 ---------------------------
@@ -567,7 +573,7 @@ are installed in the following directories:
 		`xemacs', `etags', `ctags', `b2m', `emacsclient', `ellcc',
 		`gnuclient', `gnudoit', and `gnuattach'.
 
-`/usr/local/lib/xemacs-VERSION/lisp' holds the Emacs Lisp libraries;
+`/usr/local/share/xemacs-VERSION/lisp' holds the Emacs Lisp libraries;
 		`VERSION' stands for the number of the XEmacs version
 		you are installing, like `18.59' or `19.14'.  Since
 		the lisp libraries change from one version of XEmacs to
@@ -578,14 +584,14 @@ are installed in the following directories:
 
 		XEmacs searches for its lisp files in these
 		directories, and then in
-		`/usr/local/lib/xemacs/site-lisp/*'.
+		`/usr/local/share/xemacs/site-lisp/*'.
 
-`/usr/local/lib/xemacs-VERSION/etc' holds the XEmacs tutorial, the
+`/usr/local/share/xemacs-VERSION/etc' holds the XEmacs tutorial, the
 		Unicode database, and other architecture-independent
 		files XEmacs might need while running.  VERSION is as
 		specified for `.../lisp'.
 
-`/usr/local/lib/xemacs/lock' contains files indicating who is
+`/usr/local/share/xemacs/lock' contains files indicating who is
 		editing what, so XEmacs can detect editing clashes
 		between users.
 
@@ -614,7 +620,7 @@ are installed in the following directories:
 		sub-directory of it, and then in
 		`/usr/local/lib/xemacs/site-modules/*'.
 
-`/usr/local/lib/xemacs-VERSION/info' holds the on-line documentation
+`/usr/local/share/xemacs-VERSION/info' holds the on-line documentation
 		for XEmacs, known as "info files".
 
 `/usr/local/man/man1' holds the man pages for the programs installed
@@ -642,7 +648,7 @@ Here is a complete list of the variables you may want to set.
 
 `datadir' indicates where to put the architecture-independent
 	read-only data files that XEmacs refers to while it runs; it
-	defaults to /usr/local/lib.  We create the following
+	defaults to /usr/local/data.  We create the following
 	subdirectories under `datadir':
 	- `xemacs-VERSION/lisp', containing the XEmacs lisp libraries, and
 
@@ -654,6 +660,13 @@ Here is a complete list of the variables you may want to set.
 	allows you to have several versions of XEmacs installed at the
 	same time; this means that you don't have to make XEmacs
 	unavailable while installing a new version.
+
+`datarootdir' indicates where to put the documentation.  (Usually,
+        this is identical to `datadir'---in the default configuration
+        `datadir' is set to the value of `datarootdir'.)
+        Specifically, the man pages are put in the `man' subdirectory
+        of `datarootdir', and the info pages are put in the
+        `xemacs/info' subdirectory.
 
 `statedir' indicates where to put architecture-independent data files
 	that XEmacs modifies while it runs; it defaults to
@@ -680,7 +693,7 @@ Here is a complete list of the variables you may want to set.
 	XEmacs is installed on.
 
 `infodir' indicates where to put the info files distributed with
-	XEmacs; it defaults to `/usr/local/lib/xemacs-VERSION/info'.
+	XEmacs; it defaults to `/usr/local/share/xemacs-VERSION/info'.
 
 `mandir' indicates where to put the man pages for XEmacs and its
 	utilities (like `etags'); it defaults to
@@ -710,23 +723,23 @@ GNU software; here are some variables specific to XEmacs.
 
 `lispdir' indicates where XEmacs installs and expects its lisp
 	libraries.  Its default value, based on `datadir' (see above),
-	is `/usr/local/lib/xemacs-VERSION/lisp' (where `VERSION' is as
+	is `/usr/local/share/xemacs-VERSION/lisp' (where `VERSION' is as
 	described above).
 
 `sitelispdir' indicates where XEmacs should search for lisp libraries
 	specific to your site. XEmacs checks them in order before
 	checking `lispdir'.  Its default value, based on `datadir'
-	(see above), is `/usr/local/lib/xemacs/site-lisp'.
+	(see above), is `/usr/local/share/xemacs/site-lisp'.
 
 `etcdir' indicates where XEmacs should install and expect the rest of
 	its architecture-independent data, like the tutorial and yow
 	database.  Its default value, based on `datadir'
-	(see above), is `/usr/local/lib/xemacs-VERSION/etc' (where
+	(see above), is `/usr/local/share/xemacs-VERSION/etc' (where
 	`VERSION' is as described above).
 
 `lockdir' indicates the directory where XEmacs keeps track of its
 	locking information.  Its default value, based on `statedir'
-	(see above), is `/usr/local/lib/xemacs/lock'.
+	(see above), is `/usr/local/share/xemacs/lock'.
 
 `archlibdir' indicates where XEmacs installs and expects the
 	executable files and other architecture-dependent data it uses

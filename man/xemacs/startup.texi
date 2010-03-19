@@ -69,10 +69,10 @@ directory.
 
 Moreover, XEmacs expects late hierarchies in the subdirectories
 @file{site-packages}, @file{mule-packages}, and @file{xemacs-packages}
-(in that order) of the @file{<root>/lib/xemacs} subdirectory of one of
+(in that order) of the @file{<root>/share/xemacs} subdirectory of one of
 the installation hierarchies.  (If you run in-place, these are direct
 subdirectories of the build directory.)  Furthermore, XEmacs will also
-search these subdirectories in the @file{<root>/lib/xemacs-<VERSION>}
+search these subdirectories in the @file{<root>/share/xemacs-<VERSION>}
 subdirectory and prefer directories found there.
 
 By default, XEmacs does not have a pre-configured last package
@@ -113,12 +113,14 @@ when looking for them.
 @table @code
 @item version-specific
 @cindex version-specific directories
-directories are specific to the version of XEmacs they belong to and
-typically reside under @file{<root>/lib/xemacs-<VERSION>}.
+directories (such as @file{etc}, the @file{info} of the installed XEmacs
+and its Lisp files in @file{lisp}) are specific to the version of XEmacs
+they belong to and typically reside under
+@file{<root>/share/xemacs-<VERSION>}.
 @item site-specific
 @cindex site-specific directories
-directories are independent of the version of XEmacs they belong to and
-typically reside under @file{<root>/lib/xemacs}
+directories are independent of the version of XEmacs and
+typically reside under @file{<root>/share/xemacs}.
 @item architecture-specific
 @cindex architecture-specific directories
 directories are specific both to the version of XEmacs and the

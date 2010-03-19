@@ -3233,8 +3233,8 @@ make_lcrecord_list (Elemcount size,
 {
   /* Don't use alloc_automanaged_lcrecord() avoid infinite recursion
      allocating this. */
-  struct lcrecord_list *p = (struct lcrecord_list *)
-    old_alloc_lcrecord (&lrecord_lcrecord_list);
+  struct lcrecord_list *p =
+    XLCRECORD_LIST (old_alloc_lcrecord (&lrecord_lcrecord_list));
 
   p->implementation = implementation;
   p->size = size;
@@ -3280,8 +3280,7 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
       return val;
     }
   else
-    return wrap_pointer_1 (old_alloc_sized_lcrecord (list->size,
-						     list->implementation));
+    return old_alloc_sized_lcrecord (list->size, list->implementation);
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list
