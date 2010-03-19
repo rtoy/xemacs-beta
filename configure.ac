@@ -1108,6 +1108,7 @@ then
   AC_DEFINE(INFODIR_USER_DEFINED)
   AC_DEFINE(LISPDIR_USER_DEFINED)
   AC_DEFINE(ETCDIR_USER_DEFINED)
+  AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)
 fi
 
 if test "x$libdir" != "x\${exec_prefix}/lib"
@@ -1128,6 +1129,7 @@ with_sitelispdir='${datadir}/${inststaticdir}/site-lisp'
 inststaticdir='${PROGNAME}'
 instvardir='${PROGNAME}-${version}'
 sitemoduledir='${libdir}/${inststaticdir}/site-modules'
+with_late_packages='${datadir}/${PROGNAME}'
 
 AC_SUBST(inststaticdir)
 AC_SUBST(statedir,$with_statedir)

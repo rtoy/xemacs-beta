@@ -259,6 +259,12 @@
 	Need to GCPRO newly created objects or we'll eventually get
 	a crash due to occurrence of call2().
 
+2010-03-16  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	Fix compilation problems identified by Robert Delius Royar.
+	
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
 	* extents.c (Fprevious_single_property_change):
