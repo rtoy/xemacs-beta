@@ -924,7 +924,24 @@ character set.  Recognized properties are:
 `direction'	`l2r' (left-to-right) or `r2l' (right-to-left).
 		Defaults to `l2r'.
 `unicode-map'   Information describing how to map this charset to/from
-                Unicode.
+                Unicode.  This is either a list
+
+                (FILENAME START END OFFSET FLAGS)
+
+		specifying a filename to load the map from and corresponding
+		arguments to `load-unicode-mapping-table', or a list
+
+		((UNICODE-CODEPOINT CHARSET-CODEPOINT)
+                 (UNICODE-CODEPOINT CHARSET-CODEPOINT)
+                  ...
+                )
+
+                directly specifying Unicode codepoints and corresponding
+		charset codepoints.  In the former format, any of the
+		arguments other than FILENAME can be omitted, as with the
+		arguments to `load-unicode-mapping-table'.  In the latter
+		format, either one or two charset codepoints need to be
+		given, depending on the dimension of the charset.
 `ccl-program'	A compiled CCL program used to convert a character in
 		this charset into an index into the font.  The CCL program
 		is passed the octets of the character, which will be within

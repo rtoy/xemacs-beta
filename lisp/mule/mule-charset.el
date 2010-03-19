@@ -993,46 +993,27 @@ This is intended to be called from `make-charset'."
 ;		  ,@(and unicode-map `(tags ,tags))
 ;		  )))
 
-(defun make-internal-charset (name doc-string props)
-  "Make an internal charset.
-This is the same as `make-charset' except that if a `unicode-map'
-specifies a file name, the name is assumed relative to `data-directory', and
-will be made so."
-  (let ((unicode-map (plist-get props 'unicode-map)))
-    (when (and unicode-map (stringp (car unicode-map)))
-      ;; During loadup, data-directory is nil, but source-directory is
-      ;; defined
-      (let ((data-dir
-	     (or data-directory (expand-file-name "etc" source-directory))))
-	(setq props
-	      (plist-put props 'unicode-map
-			 (cons (expand-file-name (car unicode-map) data-dir)
-			       (cdr unicode-map)))))))
-  (make-charset name doc-string props))
-
-(defun* make-internal-128-byte-charset (name short-name &key long-name
-					doc-string unicode-map tags)
-  "Make an internal one-dimension size-128 charset.
+(defun* make-128-byte-charset (name short-name &key long-name
+			       doc-string unicode-map tags)
+  "Make a one-dimension size-128 charset.
 NAME is a symbol, the charset's name.
 SHORT-NAME is a string describing the charset briefly, and will be used as
 the `short-name' property.
 
 The keys :long-name, :doc-string, :unicode-map and :tags will be used to
 set the associated charset properties.  If unspecified, :long-name defaults
-to `short-name', and :doc-string defaults to :long-name.  If :unicode-map
-specifies a file name, the name is assumed relative to `data-directory',
-and will be made so."
+to `short-name', and :doc-string defaults to :long-name."
   (setq long-name (or long-name short-name))
   (setq doc-string (or doc-string long-name))
-  (make-internal-charset name doc-string
-			 `(dimension 1
-			   offset 128
-			   chars 128
-			   ,@(and unicode-map `(unicode-map ,unicode-map))
-			   short-name ,short-name
-			   long-name ,long-name
-			   ,@(and tags `(tags ,tags))
-			   )))
+  (make-charset name doc-string
+		`(dimension 1
+		  offset 128
+		  chars 128
+		  ,@(and unicode-map `(unicode-map ,unicode-map))
+		  short-name ,short-name
+		  long-name ,long-name
+		  ,@(and tags `(tags ,tags))
+		  )))
 
 ;;;;;;;;;;;;;;;;;;;;; ASCII, Control-1, Composite, etc. ;;;;;;;;;;;;;;;;;;;;
 
@@ -1070,7 +1051,7 @@ and will be made so."
 	 (or doc-string
 	     (format "Right-Hand Part of %s (ISO/IEC %s): %s"
 		     alphabet-name str8859 iso-ir-name))))
-    (make-internal-charset
+    (make-charset
      symbol doc-string
      `(dimension 1
        offset 160
@@ -1120,7 +1101,7 @@ French, and Finnish languages in addition.\"")
 
 ;;;;;;;;;;;;;;;;;;;;; Japanese ;;;;;;;;;;;;;;;;;;;;
 
-(make-internal-charset
+(make-charset
  'katakana-jisx0201
  "Katakana Part of JISX0201.1976"
  '(dimension 1
@@ -1135,7 +1116,7 @@ French, and Finnish languages in addition.\"")
    tags (jis katakana japanese)
    ))
 
-(make-internal-charset
+(make-charset
  'latin-jisx0201
  "Roman Part of JISX0201.1976"
  '(dimension 1
@@ -1151,7 +1132,7 @@ French, and Finnish languages in addition.\"")
    ))
 
 
-(make-internal-charset
+(make-charset
  'japanese-jisx0208-1978
  "JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"
  '(dimension 2
@@ -1166,7 +1147,7 @@ French, and Finnish languages in addition.\"")
    tags (jis kanji japanese)
    ))
 
-(make-internal-charset
+(make-charset
  'japanese-jisx0208
  "JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"
  '(dimension 2
@@ -1180,7 +1161,7 @@ French, and Finnish languages in addition.\"")
    tags (jis kanji japanese)
    ))
 
-(make-internal-charset
+(make-charset
  'japanese-jisx0212
  "JISX0212 Japanese supplement: ISO-IR-159"
  '(dimension 2
@@ -1196,7 +1177,7 @@ French, and Finnish languages in addition.\"")
 
 (when (featurep 'unicode-internal)
   ;; We can support Shift-JIS directly.
-  (make-internal-charset
+  (make-charset
    'japanese-shift-jis
    ;; You could imagine trying to declare this to be an "algorithmic" charset
    ;; with indices shifted in a programmatic way from JIS X 0208:1997.
@@ -1223,7 +1204,7 @@ French, and Finnish languages in addition.\"")
 
 ;;;;;;;;;;;;;;;;;;;;; Chinese ;;;;;;;;;;;;;;;;;;;;
 
-(make-internal-charset
+(make-charset
  'chinese-gb2312
  "GB2312 Chinese simplified: ISO-IR-58"
  '(dimension 2
@@ -1237,7 +1218,7 @@ French, and Finnish languages in addition.\"")
    tags (gb kanji simplified-chinese chinese/language)
    ))
 
-(make-internal-charset
+(make-charset
  'chinese-cns11643-1
  "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
  '(dimension 2
@@ -1258,7 +1239,7 @@ French, and Finnish languages in addition.\"")
    tags (cns kanji traditional-chinese chinese/language)
    ))
 
-(make-internal-charset
+(make-charset
  'chinese-cns11643-2
  "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
  '(dimension 2
@@ -1277,7 +1258,7 @@ French, and Finnish languages in addition.\"")
 
 (if (featurep 'unicode-internal)
     ;; We can support Big5 directly.
-    (make-internal-charset
+    (make-charset
      'chinese-big5
      "Big5 (Chinese traditional)"
      '(dimension 2
@@ -1306,7 +1287,7 @@ French, and Finnish languages in addition.\"")
   ;; and "Big Five Level 2" (rows C9-F9), with the latter containing
   ;; less used characters.  We split the same way then coerce the
   ;; result into a 94x94 block.
-  (make-internal-charset
+  (make-charset
    'chinese-big5-1
    "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
    '(dimension 2
@@ -1319,7 +1300,7 @@ French, and Finnish languages in addition.\"")
      ;; no unicode map, see chinese-big5-2
      tags (kanji traditional-chinese chinese/language)
      ))
-  (make-internal-charset
+  (make-charset
    'chinese-big5-2
    "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
    '(dimension 2
@@ -1345,7 +1326,7 @@ French, and Finnish languages in addition.\"")
 
 ;;;;;;;;;;;;;;;;;;;;; Korean ;;;;;;;;;;;;;;;;;;;;
 
-(make-internal-charset
+(make-charset
  'korean-ksc5601
  "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
  '(dimension 2
@@ -1364,7 +1345,7 @@ French, and Finnish languages in addition.\"")
 
 ;;;;;;;;;;;;;;;;;;;;; Thai ;;;;;;;;;;;;;;;;;;;;
 
-(make-internal-charset
+(make-charset
  'thai-tis620
  "Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"
  '(dimension 1
@@ -1391,7 +1372,7 @@ French, and Finnish languages in addition.\"")
 ;; more than 96 characters.  Since Emacs can't handle it as one
 ;; character set, it is divided into two: lower case letters and upper
 ;; case letters.
-(make-internal-charset
+(make-charset
  'vietnamese-viscii-lower "VISCII1.1 lower-case"
  '(dimension 1
    registries ["VISCII1.1"]
@@ -1405,7 +1386,7 @@ French, and Finnish languages in addition.\"")
    tags (latin vietnamese)
    ))
 
-(make-internal-charset
+(make-charset
  'vietnamese-viscii-upper "VISCII1.1 upper-case"
  '(dimension 1
    registries ["VISCII1.1"]
@@ -1423,7 +1404,7 @@ French, and Finnish languages in addition.\"")
 ; ;; not assigned.  They are automatically converted to each Indian
 ; ;; script which IS-13194 supports.
 
-(make-internal-charset
+(make-charset
  'indian-is13194
  "Generic Indian charset for data exchange with IS 13194"
  '(dimension 1
@@ -1440,7 +1421,7 @@ French, and Finnish languages in addition.\"")
    ))
 
 ;; Actual Glyph for 1-column width.
-(make-internal-charset
+(make-charset
  'indian-1-column
  "Indian charset for 2-column width glyphs"
  '(dimension 2
@@ -1455,7 +1436,7 @@ French, and Finnish languages in addition.\"")
    ))
 
 ;; Actual Glyph for 2-column width.
-(make-internal-charset
+(make-charset
  'indian-2-column
  "Indian charset for 2-column width glyphs"
  '(dimension    2
@@ -1471,7 +1452,7 @@ French, and Finnish languages in addition.\"")
 
 ;; Lao script.
 ;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-(make-internal-charset
+(make-charset
  'lao "Lao characters (ISO10646 0E80..0EDF)"
  '(dimension 1
    registries ["MuleLao-1"]
@@ -1488,7 +1469,7 @@ French, and Finnish languages in addition.\"")
 ;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
 
 ;; Ethiopic characters (Amharic and Tigrinya).
-(make-internal-charset
+(make-charset
  'ethiopic "Ethiopic characters"
  '(dimension 2
    registries ["Ethiopic-Unicode"]
@@ -1501,7 +1482,7 @@ French, and Finnish languages in addition.\"")
    tags (ethiopic)
    ))
 
-(make-internal-charset
+(make-charset
  'tibetan-1-column "Tibetan 1 column glyph"
  '(dimension 2
    registries ["MuleTibetan-1"]
@@ -1515,7 +1496,7 @@ French, and Finnish languages in addition.\"")
    ))
 
 ;; Tibetan script.
-(make-internal-charset
+(make-charset
  'tibetan "Tibetan characters"
  '(dimension 2
    registries ["MuleTibetan-2"]

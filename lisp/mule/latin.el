@@ -298,7 +298,7 @@ when used to write German (or English, of course).  "
 
 ;; Latin-6 (ISO 8859-10) Northern Europe.
 
-(make-internal-charset
+(make-charset
  'latin-iso8859-10
  "Supplementary Set for Latin Alphabet No. 6 (ISO/IEC 8859-10): ISO-IR-157
 \"This set is intended for a version of ISO 4873 using the coding method of
@@ -325,7 +325,7 @@ Northern Europe.\""
 
 ;; Latin-7 (ISO 8859-13) Baltic Rim.
 
-(make-internal-charset
+(make-charset
  'latin-iso8859-13
  "Baltic Rim Supplementary Set (Latin-7) (ISO/IEC 8859-13): ISO-IR-179"
  '(dimension
@@ -354,7 +354,7 @@ Northern Europe.\""
 ;; Never widely used. Current-orthography Gaelic, both Irish and Scots, is
 ;; easily written with Latin-1. Wikipedia says the same about Welsh.
 
-(make-internal-charset
+(make-charset
  'latin-iso8859-14 
  "Celtic Supplementary Latin Set (Latin-8) (ISO/IEC 8859-14): ISO-IR-199
 FIELD OF UTILIZATION: \"Communication and processing of text in the Celtic
@@ -532,7 +532,7 @@ covered).\""
 ;;
 ;; "South-Eastern European." Not, to my knowledge, ever widely used. 
 
-(make-internal-charset
+(make-charset
  'latin-iso8859-16
  "Romanian Character Set for Information Interchange (Latin-10) (ISO/IEC 8859-16): ISO-IR-226
 FIELD OF UTILIZATION: \"Communication, processing, transfer of text in the
@@ -833,7 +833,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
                      ;; Restore the normal case mappings for the characters.
                      (put-case-table-pair ?I ?i (standard-case-table))))
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'latin-macintosh-roman "MacRoman"
  :unicode-map '("unicode/unicode-consortium/VENDORS/APPLE/ROMAN.TXT" #x80)
  :tags '(macintosh latin)

@@ -1,3 +1,51 @@
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_DO_AUTOLOAD):
+	* charset.h (XCHARSET_DO_AUTOLOAD):
+	* lisp.h:
+	Add a `do_autoload' flag indicating whether the Unicode tables need
+	to be autoloaded still.
+
+	In charset_codepoint_to_unicode_raw_1(), autoload Unicode tables
+	if needed.
+	
+	* lisp.h:
+	* lisp.h (XCADDDDDDR):
+	Add X7TH() - X10TH(), as well as X1STCDR() - X10THCDR(), and
+	corresponding XCAD*R and XDD*R macros.
+	
+	* mule-charset.c (Fmake_charset):
+	Document the `unicode-map' property.
+	
+	* unicode.c (get_unicode_conversion_1):
+	Autoload Unicode tables if needed.
+
+	* unicode.c (set_unicode_conversion):
+	Don't try to retrieve previous conversion if we haven't yet autoloaded
+	the Unicode map, or we will trigger an infinite loop.
+
+	* unicode.c (enum load_unicode_flags):
+	* unicode.c (verify_load_unicode_args):
+	New function, to verify arguments to `load-unicode-mapping-table'.
+	Add bit flags to correspond to the `flags' argument.
+
+	* lisp.h:
+	* unicode.c (Fload_unicode_mapping_table):
+	Use verify_load_unicode_args().  If filename is relative, expand it
+	relative to `data-directory' (or `../etc' relative to `lisp-directory'
+	during loadup).  Document this behavior in the docstring.
+	
+	* unicode.c (autoload_charset_unicode_tables):
+	Load charset Unicode tables by calling Fload_unicode_mapping_table().
+	
+	* unicode.c (init_charset_unicode_map):
+	Instead of directly loading the Unicode tables from a file,
+	verify the arguments to `load-unicode-mapping-table', store them,
+	and set the `do_autoload' flag, so that the tables will be autoloaded
+	when needed.
+
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
 	* tests.c (Ftest_data_format_conversion):

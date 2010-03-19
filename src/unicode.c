@@ -986,8 +986,14 @@ set_unicode_conversion_unicode_to_char (int code, Lisp_Object charset,
 static void
 set_unicode_conversion (int code, Lisp_Object charset, int c1, int c2)
 {
-  int old_code = charset_codepoint_to_unicode (charset, c1, c2, CONVERR_FAIL);
+  int old_code = -1;
   int combined_code = (c1 << 8) + c2;
+
+  /* If charset hasn't been autoloaded yet (or we're in the middle of
+     autoloading), then we certainly have no old code, and don't try to
+     convert, or we may get in an infinite autoloading loop. */
+  if (!XCHARSET_DO_AUTOLOAD (charset))
+    old_code = charset_codepoint_to_unicode (charset, c1, c2, CONVERR_FAIL);
 
   ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
   if (code != -1)
@@ -1058,6 +1064,8 @@ get_unicode_conversion_1 (int code, int u1, int u2, int u3, int u4,
 {
   void *table;
 
+  if (XCHARSET_DO_AUTOLOAD (charset))
+    autoload_charset_unicode_tables (charset);
   table = XCHARSET_FROM_UNICODE_TABLE (charset);
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
   if (!table)
@@ -2043,6 +2051,55 @@ CHARSET (see `make-char').
   return Qnil;
 }
 
+enum load_unicode_flags
+{
+  LOAD_UNICODE_IGNORE_FIRST_COLUMN = 1,
+  LOAD_UNICODE_BIG5                = 2
+};
+
+static void
+verify_load_unicode_args (Lisp_Object filename, Lisp_Object start,
+			  Lisp_Object end, Lisp_Object offset,
+			  Lisp_Object flags, int *st, int *en, int *of,
+			  int *flags_out)
+{
+  CHECK_STRING (filename);
+  if (!NILP (start))
+    {
+      CHECK_INT (start);
+      *st = XINT (start);
+    }
+  if (!NILP (end))
+    {
+      CHECK_INT (end);
+      *en = XINT (end);
+    }
+  if (!NILP (offset))
+    {
+      CHECK_INT (offset);
+      *of = XINT (offset);
+    }
+
+  if (!LISTP (flags))
+    flags = list1 (flags);
+
+  *flags_out = 0;
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, flags)
+      {
+	if (EQ (elt, Qignore_first_column))
+	  *flags_out |= LOAD_UNICODE_IGNORE_FIRST_COLUMN;
+#ifndef UNICODE_INTERNAL
+	else if (EQ (elt, Qbig5))
+	  *flags_out |= LOAD_UNICODE_BIG5;
+#endif /* not UNICODE_INTERNAL */
+	else
+	  invalid_constant
+	    ("Unrecognized `load-unicode-mapping-table' flag", elt);
+      }
+  }
+}
+
 /* "cerrar el fulano" = close the so-and-so */
 static Lisp_Object
 cerrar_el_fulano (Lisp_Object fulano)
@@ -2055,6 +2112,13 @@ cerrar_el_fulano (Lisp_Object fulano)
 DEFUN ("load-unicode-mapping-table", Fload_unicode_mapping_table,
        2, 6, 0, /*
 Load Unicode tables with the Unicode mapping data in FILENAME for CHARSET.
+
+If FILENAME is relative, it will be interpreted relative to `data-directory',
+which normally corresponds to the `etc/' directory in the source tree and
+contains architecture-independent XEmacs data files. (During loadup,
+`data-directory' isn't defined and so the directory is determined by looking
+for `../etc' relative to `lisp-directory'.)
+
 Data is text, in the form of one translation per line.  Lines are of the
 form
 
@@ -2099,56 +2163,31 @@ Unicode tables or in the charset:
   struct gcpro gcpro1;
   char line[1025];
   int fondo = specpdl_depth (); /* "fondo" = depth */
-  int ignore_first_column = 0;
-#ifndef UNICODE_INTERNAL
-  int big5 = 0;
-#endif /* not UNICODE_INTERNAL */
+  int flgs;
 
-  CHECK_STRING (filename);
   charset = Fget_charset (charset);
-  if (!NILP (start))
-    {
-      CHECK_INT (start);
-      st = XINT (start);
-    }
-  if (!NILP (end))
-    {
-      CHECK_INT (end);
-      en = XINT (end);
-    }
-  if (!NILP (offset))
-    {
-      CHECK_INT (offset);
-      of = XINT (offset);
-    }
+  verify_load_unicode_args (filename, start, end, offset, flags,
+			    &st, &en, &of, &flgs);
 
-  if (!LISTP (flags))
-    flags = list1 (flags);
-
-  {
-    EXTERNAL_LIST_LOOP_2 (elt, flags)
-      {
-	if (EQ (elt, Qignore_first_column))
-	  ignore_first_column = 1;
 #ifndef UNICODE_INTERNAL
-	else if (EQ (elt, Qbig5))
-	  {
-	    big5 = 1;
-	    /* At this point the charsets haven't been initialzied
-	       yet, so at least set the values for big5-1 and big5-2
-	       so we can use big5_char_to_fake_codepoint(). */
-	    Vcharset_chinese_big5_1 = Fget_charset (Qchinese_big5_1);
-	    Vcharset_chinese_big5_2 = Fget_charset (Qchinese_big5_2);
-	  }
+  if (flgs & LOAD_UNICODE_BIG5)
+    {
+      /* At this point the charsets haven't been initialized
+	 yet, so at least set the values for big5-1 and big5-2
+	 so we can use big5_char_to_fake_codepoint(). */
+      Vcharset_chinese_big5_1 = Fget_charset (Qchinese_big5_1);
+      Vcharset_chinese_big5_2 = Fget_charset (Qchinese_big5_2);
+    }
 #endif /* not UNICODE_INTERNAL */
-	else
-	  invalid_constant
-	    ("Unrecognized `load-unicode-mapping-table' flag", elt);
-      }
-  }
 
   GCPRO1 (filename);
-  filename = Fexpand_file_name (filename, Qnil);
+  if (!NILP (Vdata_directory))
+    filename = Fexpand_file_name (filename, Vdata_directory);
+  else
+    filename = Fexpand_file_name (filename,
+				  Fexpand_file_name
+				  (build_ascstring ("../etc"),
+				   Vlisp_directory));
   file = qxe_fopen (XSTRING_DATA (filename), READ_TEXT);
   if (!file)
     report_file_error ("Cannot open", filename);
@@ -2186,7 +2225,7 @@ Unicode tables or in the charset:
 
       /* First check for a range. */
       scanf_count =
-	(!ignore_first_column ?
+	(!(flgs & LOAD_UNICODE_IGNORE_FIRST_COLUMN) ?
 	 sscanf (p, "%i-%i %i%n", &cp1from, &cp1to, &cp2, &endcount) :
 	 sscanf (p, "%i-%i %i %i%n", &dummy, &cp1from, &cp1to, &cp2,
 		 &endcount) - 1);
@@ -2194,7 +2233,7 @@ Unicode tables or in the charset:
       if (scanf_count < 3)
 	{
 	  scanf_count =
-	    (!ignore_first_column ?
+	    (!(flgs & LOAD_UNICODE_IGNORE_FIRST_COLUMN) ?
 	     sscanf (p, "%i %i%n", &cp1from, &cp2, &endcount) :
 	     sscanf (p, "%i %i %i%n", &dummy, &cp1from, &cp2, &endcount) - 1);
 	  cp1to = cp1from;
@@ -2253,7 +2292,7 @@ Unicode tables or in the charset:
 	      cp1low = cp1 & 255;
 
 #ifndef UNICODE_INTERNAL
-	      if (big5)
+	      if (flgs & LOAD_UNICODE_BIG5)
 		{
 		  Lisp_Object fake_charset;
 		  int c1, c2;
@@ -2293,15 +2332,35 @@ Unicode tables or in the charset:
 }
 
 void
+autoload_charset_unicode_tables (Lisp_Object charset)
+{
+  Lisp_Object map = XCHARSET_UNICODE_MAP (charset);
+  /* We construct the list ourselves, so we know it's length 5 and we know
+     no one has fucked with it */
+  Lisp_Object filename = X1ST (map);
+  Lisp_Object start = X2ND (map);
+  Lisp_Object end = X3RD (map);
+  Lisp_Object offset = X4TH (map);
+  Lisp_Object flags = X5TH (map);
+
+  assert (EQ (Flength (map), make_int (5)));
+  Fload_unicode_mapping_table (filename, charset, start, end, offset, flags);
+  XCHARSET_DO_AUTOLOAD (charset) = 0;
+}
+
+void
 init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 {
+  int autoload = 0;
   Lisp_Object savemap = map;
 
   CHECK_TRUE_LIST (map);
   if (STRINGP (XCAR (map)))
     {
-      Lisp_Object filename = XCAR (map);
-      Lisp_Object start = Qnil, end = Qnil, offset = Qnil, flags = Qnil;
+      Lisp_Object filename = XCAR (map), start = Qnil, end = Qnil,
+	offset = Qnil, flags = Qnil;
+      int st, en, of, flgs;
+
       map = XCDR (map);
       if (!NILP (map))
 	{
@@ -2326,8 +2385,14 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
       if (!NILP (map))
 	invalid_argument ("Unicode map can have at most 5 arguments",
 			  savemap);
-      Fload_unicode_mapping_table (filename, charset, start, end,
-				   offset, flags);
+
+      /* Verify the arguments as much as possible before actually calling
+	 load-unicode-mapping-table, and then make a copy of the arglist so
+	 the user can't mess with it. */
+      verify_load_unicode_args (filename, start, end, offset, flags,
+				&st, &en, &of, &flgs);
+      map = list5 (filename, start, end, offset, flags);
+      autoload = 1;
     }
   else
     {
@@ -2355,7 +2420,8 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 
   /* Only set map after we have gone through everything and gotten
      no errors */
-  XCHARSET_UNICODE_MAP (charset) = savemap;
+  XCHARSET_UNICODE_MAP (charset) = map;
+  XCHARSET_DO_AUTOLOAD (charset) = autoload;
 }
 
 #endif /* MULE */

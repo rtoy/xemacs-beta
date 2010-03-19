@@ -33,7 +33,7 @@
 ;; Fuck this garbage.  Rather than have bogus charsets like this,
 ;; just use the Unicode support.
 ;;; IPA characters for phonetic symbols.
-;(make-internal-charset
+;(make-charset
 ; 'ipa "IPA (International Phonetic Association)"
 ; '(dimension
 ;   1

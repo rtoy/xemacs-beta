@@ -137,6 +137,7 @@ struct Lisp_Charset
   Lisp_Object short_name;
   Lisp_Object long_name;
   Lisp_Object unicode_map;
+  int do_autoload; /* if true, Unicode maps still need to be loaded */
   Lisp_Object tags;
 
   Lisp_Object reverse_direction_charset;
@@ -250,6 +251,7 @@ DECLARE_LISP_OBJECT (charset, Lisp_Charset);
 #define CHARSET_SHORT_NAME(cs)	 ((cs)->short_name)
 #define CHARSET_TO_UNICODE_TABLE(cs) ((cs)->to_unicode_table)
 #define CHARSET_UNICODE_MAP(cs)	 ((cs)->unicode_map)
+#define CHARSET_DO_AUTOLOAD(cs)	 ((cs)->do_autoload)
 #define CHARSET_TAGS(cs)	 ((cs)->tags)
 #define CHARSET_MIN_CODE(cs, dim) CHARSET_OFFSET (cs, dim)
 #define CHARSET_MAX_CODE(cs, dim) \
@@ -275,6 +277,7 @@ DECLARE_LISP_OBJECT (charset, Lisp_Charset);
 #define XCHARSET_SHORT_NAME(cs)	  CHARSET_SHORT_NAME   (XCHARSET (cs))
 #define XCHARSET_TO_UNICODE_TABLE(cs) CHARSET_TO_UNICODE_TABLE (XCHARSET (cs))
 #define XCHARSET_UNICODE_MAP(cs)  CHARSET_UNICODE_MAP         (XCHARSET (cs))
+#define XCHARSET_DO_AUTOLOAD(cs)  CHARSET_DO_AUTOLOAD         (XCHARSET (cs))
 #define XCHARSET_TAGS(cs)         CHARSET_TAGS         (XCHARSET (cs))
 #define XCHARSET_MIN_CODE(cs, dim) CHARSET_MIN_CODE (XCHARSET (cs), dim)
 #define XCHARSET_MAX_CODE(cs, dim) CHARSET_MAX_CODE (XCHARSET (cs), dim)
@@ -508,6 +511,8 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
   int retval;
 
   INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  if (XCHARSET_DO_AUTOLOAD (charset))
+    autoload_charset_unicode_tables (charset);
 #ifdef ALLOW_ALGORITHMIC_CONVERSION_TABLES
   {
     /* Conceivably a good idea not to have this in Unicode-internal, since

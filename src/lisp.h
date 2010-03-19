@@ -2724,12 +2724,34 @@ extern MODULE_API Lisp_Object Qnil;
 #define XCDDDDDR(a) (XCDR (XCDDDDR (a)))
 #define XCADDDDDR(a) (XCAR (XCDDDDDR (a)))
 #define XCDDDDDDR(a) (XCDR (XCDDDDDR (a)))
-#define X1ST(a) XCAR (a)
-#define X2ND(a) XCADR (a)
-#define X3RD(a) XCADDR (a)
-#define X4TH(a) XCADDDR (a)
-#define X5TH(a) XCADDDDR (a)
-#define X6TH(a) XCADDDDDR (a)
+#define XCADDDDDDR(a) (XCAR (XCDDDDDDR (a)))
+#define XCDDDDDDDR(a) (XCDR (XCDDDDDDR (a)))
+#define XCADDDDDDDR(a) (XCAR (XCDDDDDDDR (a)))
+#define XCDDDDDDDDR(a) (XCDR (XCDDDDDDDR (a)))
+#define XCADDDDDDDDR(a) (XCAR (XCDDDDDDDDR (a)))
+#define XCDDDDDDDDDR(a) (XCDR (XCDDDDDDDDR (a)))
+#define XCADDDDDDDDDR(a) (XCAR (XCDDDDDDDDDR (a)))
+#define XCDDDDDDDDDDR(a) (XCDR (XCDDDDDDDDDR (a)))
+#define X1ST(a)  XCAR (a)
+#define X2ND(a)  XCADR (a)
+#define X3RD(a)  XCADDR (a)
+#define X4TH(a)  XCADDDR (a)
+#define X5TH(a)  XCADDDDR (a)
+#define X6TH(a)  XCADDDDDR (a)
+#define X7TH(a)  XCADDDDDDR (a)
+#define X8TH(a)  XCADDDDDDDR (a)
+#define X9TH(a)  XCADDDDDDDDR (a)
+#define X10TH(a) XCADDDDDDDDDR (a)
+#define X1STCDR(a)  XCDR (a)
+#define X2NDCDR(a)  XCDDR (a)
+#define X3RDCDR(a)  XCDDDR (a)
+#define X4THCDR(a)  XCDDDDR (a)
+#define X5THCDR(a)  XCDDDDDR (a)
+#define X6THCDR(a)  XCDDDDDDR (a)
+#define X7THCDR(a)  XCDDDDDDDR (a)
+#define X8THCDR(a)  XCDDDDDDDDR (a)
+#define X9THCDR(a)  XCDDDDDDDDDR (a)
+#define X10THCDR(a) XCDDDDDDDDDDR (a)
 
 #define XSETCAR(a, b) (XCONS (a)->car_ = (b))
 #define XSETCDR(a, b) (XCONS (a)->cdr_ = (b))
@@ -5401,6 +5423,7 @@ extern Lisp_Object Vinvocation_name;
 extern Lisp_Object Vmodule_directory;
 extern Lisp_Object Vsite_directory;
 extern Lisp_Object Vsite_module_directory;
+extern Lisp_Object Vlisp_directory;
 
 /* Defined in emodules.c */
 #ifdef HAVE_SHLIB
@@ -6914,6 +6937,7 @@ void initialize_ascii_control_1_latin_1_unicode_translation (void);
 int decode_unicode (Lisp_Object unicode, enum unicode_allow allow);
 void free_precedence_array (Lisp_Object preclist);
 void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
+void autoload_charset_unicode_tables (Lisp_Object charset);
 
 EXFUN (Fset_charset_tags, 2);
 
