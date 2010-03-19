@@ -51,7 +51,7 @@
 			      dimension chars offset
 			      &key tags ansioem unicode-map)
   (or (listp tags) (setq tags (list tags)))
-  (make-internal-charset
+  (make-charset
    (intern (format "%s-windows-%s" script codepage))
    (format "Windows code page %s (%s)" codepage name)
    `(dimension ,dimension

@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(make-internal-charset
+(make-charset
  'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
  '(dimension
    2
@@ -49,7 +49,7 @@
    ))
 
 ;; JISX0213 Plane 2
-(make-internal-charset
+(make-charset
  'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
  '(dimension
    2

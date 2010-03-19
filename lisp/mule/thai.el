@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(make-internal-charset
+(make-charset
  'thai-iso8859-11
  "Right-Hand Part of Latin/Thai Alphabet (ISO/IEC 8859-11)"
  '(dimension 1

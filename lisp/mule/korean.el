@@ -34,7 +34,7 @@
 ;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
 ;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
 ;; So for our purposes, this is [84 - F9], [31 - FE]
-(make-internal-charset
+(make-charset
  'korean-johab
  "Johab (Korean)"
  '(dimension

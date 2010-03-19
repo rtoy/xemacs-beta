@@ -1,3 +1,57 @@
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* mule/chinese.el (make-chinese-cns11643-charset):
+	* mule/chinese.el (chinese-sisheng):
+	* mule/cyrillic.el (cyrillic-koi8-r):
+	* mule/cyrillic.el (cyrillic-koi8-u):
+	* mule/cyrillic.el (cyrillic-alternativnyj):
+	* mule/cyrillic.el (cyrillic-koi8-ru):
+	* mule/cyrillic.el (cyrillic-koi8-t):
+	* mule/cyrillic.el (cyrillic-koi8-c):
+	* mule/cyrillic.el (cyrillic-koi8-o):
+	* mule/ethiopic.el:
+	* mule/japanese.el (japanese-jisx0213-1):
+	* mule/japanese.el (japanese-jisx0213-2):
+	* mule/korean.el (korean-johab):
+	* mule/latin.el (latin-iso8859-10):
+	* mule/latin.el (latin-iso8859-13):
+	* mule/latin.el (latin-iso8859-14):
+	* mule/latin.el (latin-iso8859-16):
+	* mule/latin.el (latin-macintosh-roman):
+	* mule/misc-lang.el:
+	* mule/mule-charset.el (make-128-byte-charset):
+	* mule/mule-charset.el (make-internal-charset): Removed.
+	* mule/mule-charset.el (make-iso8859-charset):
+	* mule/mule-charset.el (katakana-jisx0201):
+	* mule/mule-charset.el (latin-jisx0201):
+	* mule/mule-charset.el (japanese-jisx0208-1978):
+	* mule/mule-charset.el (japanese-jisx0208):
+	* mule/mule-charset.el (japanese-jisx0212):
+	* mule/mule-charset.el (featurep):
+	* mule/mule-charset.el (chinese-gb2312):
+	* mule/mule-charset.el (chinese-cns11643-1):
+	* mule/mule-charset.el (chinese-cns11643-2):
+	* mule/mule-charset.el (korean-ksc5601):
+	* mule/mule-charset.el (thai-tis620):
+	* mule/mule-charset.el (vietnamese-viscii-lower):
+	* mule/mule-charset.el (vietnamese-viscii-upper):
+	* mule/mule-charset.el (indian-is13194):
+	* mule/mule-charset.el (indian-1-column):
+	* mule/mule-charset.el (indian-2-column):
+	* mule/mule-charset.el (lao):
+	* mule/mule-charset.el (ethiopic):
+	* mule/mule-charset.el (tibetan-1-column):
+	* mule/mule-charset.el (tibetan):
+	* mule/thai.el (thai-iso8859-11):
+	* mule/vietnamese.el:
+	* mule/vietnamese.el (vietnamese-viscii):
+	* mule/windows.el (make-windows-charset):
+	Remove `make-internal-charset', use plain `make-charset' instead.
+	Rename `make-internal-128-byte-charset' to `make-128-byte-charset'.
+	`make-internal-charset' no longer needed because
+	`load-unicode-mapping-tables' now automatically looks relative
+	to `data-directory'.
+
 2010-03-14  Ben Wing  <ben@xemacs.org>
 
 	* mule/chinese.el (cn-gb-2312):

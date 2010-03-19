@@ -123,7 +123,7 @@ See `koi8-r' and `windows-1251'.  "
                   (documentation . "Support for Cyrillic ISO-8859-5."))
  '("Cyrillic"))
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-r "Cyrillic KOI8-R"
  :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-R.TXT" #x80)
  :tags '(koi8 cyrillic russian))
@@ -167,7 +167,7 @@ characters of the opposite case). "
  (remassq 'locale (copy-list (cdr (assoc "Russian" language-info-alist))))
  '("Cyrillic"))
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-u "Cyrillic KOI8-u"
  :unicode-map '("unicode/unicode-consortium/VENDORS/MISC/KOI8-U.TXT" #x80)
  :tags '(koi8 cyrillic ukrainian))
@@ -218,7 +218,7 @@ Russian in KOI8-R.  "))
 Byelorussian in the early 1990s.)"))
  '("Cyrillic"))
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-alternativnyj "Cyrillic Alternativnyj"
  :unicode-map '("unicode/unicode-consortium/VENDORS/MICSFT/PC/CP866.TXT" #x80)
  :tags '(cyrillic))
@@ -243,7 +243,7 @@ Byelorussian in the early 1990s.)"))
                   (documentation . "Support for Cyrillic ALTERNATIVNYJ."))
  '("Cyrillic"))
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-ru "Cyrillic КОИ-8 (Russian, Ukrainian)"
  :unicode-map '("unicode/libiconv/KOI8-RU.TXT" #x80)
  :tags '(koi8 cyrillic russian ukrainian))
@@ -259,7 +259,7 @@ Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
 ;; We should provide an input method and the corresponding language
 ;; environments for the next three coding systems. 
 
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-t "Cyrillic КОИ-8 for Tajik."
  :unicode-map '("unicode/libiconv/KOI8-T.TXT" #x80)
  :tags '(koi8 cyrillic tajik))
@@ -275,7 +275,7 @@ that are necessary for writing Tajik, (забонӣ тоҷикӣ) the main
 language of Tajikistan and a close relative of Persian.  "))
 
 ;; Support fot the languages of the Caucasus.
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-c "Cyrillic KOI-8, Caucasus."
  :unicode-map
  '((#x80 #x0493) ;; CYRILLIC SMALL LETTER GHE WITH STROKE
@@ -417,7 +417,7 @@ language of Tajikistan and a close relative of Persian.  "))
 for that, see koi8-o. "))
 
 ;; Archaic Russian support.
-(make-internal-128-byte-charset
+(make-128-byte-charset
  'cyrillic-koi8-o "Cyrillic Old-orthography Russian"
  :unicode-map
  '((#x80 #x0402) ;; CYRILLIC CAPITAL LETTER DJE

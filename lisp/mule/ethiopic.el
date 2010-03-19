@@ -30,7 +30,7 @@
 ;;; Code:
 
 ;;; Ethiopic characters (Amharic and Tigrinya).
-;(make-internal-charset 'ethiopic "Ethiopic characters" ...
+;(make-charset 'ethiopic "Ethiopic characters" ...
 ;moved to mule-charset.el.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
