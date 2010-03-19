@@ -1763,7 +1763,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       buffer_objects_create ();
       extent_objects_create ();
       face_objects_create ();
+      frame_objects_create ();
       glyph_objects_create ();
+      hash_table_objects_create ();
       lstream_objects_create ();
       mule_charset_objects_create ();
 #ifdef HAVE_GTK
@@ -2108,6 +2110,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_dragdrop ();
 #endif
       vars_of_editfns ();
+      vars_of_elhash ();
       vars_of_emacs ();
       vars_of_eval ();
 

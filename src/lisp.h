@@ -4793,6 +4793,7 @@ MODULE_API Lisp_Object listn (int numargs, ...);
 MODULE_API Lisp_Object listu (Lisp_Object, ...);
 DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
+void finish_object_memory_usage_stats (void);
 extern int purify_flag;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];

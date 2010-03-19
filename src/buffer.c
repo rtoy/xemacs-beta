@@ -1761,9 +1761,20 @@ struct buffer_stats
 static Bytecount
 compute_buffer_text_usage (struct buffer *b, struct usage_stats *ustats)
 {
-  Bytecount was_requested = b->text->z - 1;
-  Bytecount gap = b->text->gap_size + b->text->end_gap_size;
-  Bytecount malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+  Bytecount was_requested, gap, malloc_use;
+
+  /* Killed buffer? */
+  if (!b->text)
+    return 0;
+
+  /* Indirect buffer shares its text with someone else, so don't double-
+     count the text */
+  if (b->base_buffer)
+    return 0;
+
+  was_requested = b->text->z - 1;
+  gap = b->text->gap_size + b->text->end_gap_size;
+  malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
 
   ustats->gap_overhead    += gap;
   ustats->was_requested   += was_requested;
