@@ -1774,6 +1774,7 @@ gc_finish (void)
 #ifdef NEW_GC
   GC_SET_PHASE (FINISH_GC);
 #endif /* NEW_GC */
+  finish_object_memory_usage_stats ();
   consing_since_gc = 0;
 #ifndef DEBUG_XEMACS
   /* Allow you to set it really fucking low if you really want ... */

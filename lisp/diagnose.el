@@ -186,26 +186,40 @@
   (garbage-collect)
   (let ((buffer "*object memory usage statistics*")
 	(plist (object-memory-usage-stats))
-	(fmt "%-30s%10s%10s\n")
+	(fmt "%-30s%10s%10s%18s\n")
 	(grandtotal 0)
 	begin)
   (flet ((show-stats (match-string)
-	(princ (format fmt "object" "count" "storage"))
-	(princ (make-string 50 ?-))
+	(princ (format fmt "object" "count" "storage" "non-Lisp storage"))
+	(princ (make-string 68 ?-))
 	(princ "\n")
 	(let ((total-use 0)
+	      (total-non-lisp-use 0)
 	      (total-use-overhead 0)
 	      (total-count 0))
 	  (map-plist 
 	   #'(lambda (stat num)
-	       (when (string-match match-string
-				   (symbol-name stat))
+	       (when (and (string-match match-string
+					(symbol-name stat))
+			  (let ((match (match-string
+					1 (symbol-name stat))))
+			    (or (< (length match) 9)
+				(not (equal (substring match -9)
+					    "-non-lisp")))))
 		 (let ((storage-use num)
 		       (storage-use-overhead 
 			(plist-get 
 			 plist 
 			 (intern (concat (match-string 1 (symbol-name stat))
 					 "-storage-including-overhead"))))
+		       (non-lisp-storage
+			(or (plist-get
+			     plist
+			     (intern (concat (match-string 1
+							   (symbol-name stat))
+					     "-non-lisp-storage")))
+			    0))
+
 		       (storage-count 
 			(or (loop for str in '("s-used" "es-used" "-used")
 			      for val = (plist-get
@@ -228,19 +242,21 @@
 		   (incf total-use-overhead (if storage-use-overhead 
 						storage-use-overhead 
 					      storage-use))
+		   (incf total-non-lisp-use non-lisp-storage)
 		   (incf total-count (or storage-count 0))
 		   (and (> storage-use 0)
 			(princ (format fmt
 				       (match-string 1 (symbol-name stat)) 
 				       (or storage-count "unknown")
-				       storage-use))))))
+				       storage-use
+				       non-lisp-storage))))))
 	   plist)
 	  (princ "\n")
 	  (princ (format fmt "total" 
-			 total-count total-use-overhead))
+			 total-count total-use-overhead total-non-lisp-use))
 	  (incf grandtotal total-use-overhead)
           (when-fboundp #'sort-numeric-fields
-            (sort-numeric-fields -1
+            (sort-numeric-fields -2
                                  (save-excursion
                                    (goto-char begin)
                                    (forward-line 3)
@@ -252,7 +268,7 @@
       (save-excursion
 	(set-buffer buffer)
 	(setq begin (point))
-	(princ "Allocated with lisp allocator:\n")
+	(princ "Allocated with lisp allocator or related:\n")
 	(show-stats "\\(.*\\)-storage$")
 	(princ (format "\n\ngrand total: %s\n" grandtotal)))
       grandtotal))))

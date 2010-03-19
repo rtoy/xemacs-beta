@@ -544,6 +544,12 @@ struct lrecord_implementation
      on the value placed in `memusage_stats_list'. */
   Elemcount num_extra_memusage_stats;
 
+  /* Number of additional type-specific statistics related to
+     non-Lisp-Object memory usage for this object.  Automatically
+     calculated (see compute_memusage_stats_length()) based on the value
+     placed in `memusage_stats_list'. */
+  Elemcount num_extra_nonlisp_memusage_stats;
+
   /* List of tags to be given to the extra statistics, one per statistic.
      Qnil or Qt can be present to separate off different slices.  Qnil
      separates different slices within the same type of statistics.
@@ -1420,6 +1426,8 @@ do									\
     memusage_stats_list = Qnil;						\
   lrecord_implementations_table[lrecord_type_##type]->			\
     num_extra_memusage_stats = -1;					\
+  lrecord_implementations_table[lrecord_type_##type]->			\
+    num_extra_nonlisp_memusage_stats = -1;				\
   staticpro (&lrecord_implementations_table[lrecord_type_##type]->	\
 	     memusage_stats_list);					\
 } while (0)

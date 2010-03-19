@@ -3624,6 +3624,10 @@ static struct
   int bytes_freed;
   int instances_on_free_list;
   int bytes_on_free_list;
+#ifdef MEMORY_USAGE_STATS
+  Bytecount nonlisp_bytes_in_use;
+  struct generic_usage_stats stats;
+#endif
 } lrecord_stats [countof (lrecord_implementations_table)];
 
 void
@@ -3638,6 +3642,22 @@ tick_lrecord_stats (const struct lrecord_header *h,
     case ALLOC_IN_USE:
       lrecord_stats[type_index].instances_in_use++;
       lrecord_stats[type_index].bytes_in_use += sz;
+#ifdef MEMORY_USAGE_STATS
+      {
+	struct generic_usage_stats stats;
+	Lisp_Object obj = wrap_pointer_1 (h);
+	if (HAS_OBJECT_METH_P (obj, memory_usage))
+	  {
+	    int i;
+	    int total_stats = OBJECT_PROPERTY (obj, num_extra_memusage_stats);
+	    xzero (stats);
+	    OBJECT_METH (obj, memory_usage, (obj, &stats));
+	    for (i = 0; i < total_stats; i++)
+	      lrecord_stats[type_index].stats.othervals[i] +=
+		stats.othervals[i];
+	  }
+      }
+#endif
       break;
     case ALLOC_FREE:
       lrecord_stats[type_index].instances_freed++;
@@ -4517,9 +4537,7 @@ gc_sweep_1 (void)
   sweep_eval_data ();
   sweep_misc_user_data ();
 #endif /* EVENT_DATA_AS_OBJECTS */
-#endif /* not NEW_GC */
 
-#ifndef NEW_GC
 #ifdef PDUMP
   pdump_objects_unmark ();
 #endif
@@ -4659,6 +4677,25 @@ pluralize_and_append (Ascbyte *buf, const Ascbyte *name, const Ascbyte *suffix)
   strcat (buf, suffix);
 }
 
+void
+finish_object_memory_usage_stats (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  int i;
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
+    {
+      struct lrecord_implementation *imp = lrecord_implementations_table[i];
+      if (imp && imp->num_extra_nonlisp_memusage_stats)
+	{
+	  int j;
+	  for (j = 0; j < imp->num_extra_nonlisp_memusage_stats; j++)
+	    lrecord_stats[i].nonlisp_bytes_in_use +=
+	      lrecord_stats[i].stats.othervals[j];
+	}
+    }
+#endif /* MEMORY_USAGE_STATS */
+}
+
 static Lisp_Object
 object_memory_usage_stats (int set_total_gc_usage)
 {
@@ -4667,7 +4704,6 @@ object_memory_usage_stats (int set_total_gc_usage)
   EMACS_INT tgu_val = 0;
 
 #ifdef NEW_GC
-  
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
       if (lrecord_stats[i].instances_in_use != 0)
@@ -4742,6 +4778,13 @@ do {						\
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use, pl);
 	  tgu_val += lrecord_stats[i].bytes_in_use;
+	  if (lrecord_stats[i].nonlisp_bytes_in_use)
+	    {
+	      sprintf (buf, "%s-non-lisp-storage", name);
+	      pl = gc_plist_hack (buf, lrecord_stats[i].nonlisp_bytes_in_use,
+				  pl);
+	      tgu_val += lrecord_stats[i].nonlisp_bytes_in_use;
+	    }
 	  pluralize_and_append (buf, name, "-freed");
           if (lrecord_stats[i].instances_freed != 0)
             pl = gc_plist_hack (buf, lrecord_stats[i].instances_freed, pl);
@@ -4807,6 +4850,9 @@ compute_memusage_stats_length (void)
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
       int len = 0;
+      int nonlisp_len = 0;
+      int seen_break = 0;
+
       struct lrecord_implementation *imp = lrecord_implementations_table[i];
 
       if (!imp)
@@ -4820,11 +4866,18 @@ compute_memusage_stats_length (void)
 	LIST_LOOP_2 (item, imp->memusage_stats_list)
 	  {
 	    if (!NILP (item) && !EQ (item, Qt))
-	      len++;
+	      {
+		len++;
+		if (!seen_break)
+		  nonlisp_len++;
+	      }
+	    else
+	      seen_break++;
 	  }
       }
 
       imp->num_extra_memusage_stats = len;
+      imp->num_extra_nonlisp_memusage_stats = nonlisp_len;
     }
 }
 

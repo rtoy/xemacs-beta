@@ -1,3 +1,9 @@
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-object-memory-usage-stats):
+	Rewrite to take into account non-lisp-storage statistics
+	returned by garbage-collect-1 and friends.
+
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
 	* diagnose.el (show-memory-usage):

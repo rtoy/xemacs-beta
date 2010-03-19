@@ -1,3 +1,53 @@
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (compute_memusage_stats_length):
+	Call new memory-usage mechanism at sweep time to compute extra
+	memory utilization for all objects.  Add up the values element-by-
+	element to get an aggregrate set of statistics, where each is the
+	sum of the values of a single statistic across different objects
+	of the same type.  At end of sweep time, call
+	finish_object_memory_usage_stats() to add up all the aggreggrate
+	stats that are related to non-Lisp memory storage to compute
+	a single value, and add it to the list of values returned by
+	`garbage-collect' and `object-memory-usage-stats'.
+	
+	* buffer.c (compute_buffer_text_usage):
+	Don't crash on buffers without text (killed buffers?) and don't
+	double-count indirect buffers.
+	
+	* elhash.c:
+	* elhash.c (hash_table_objects_create):
+	* elhash.c (vars_of_elhash):
+	* symsinit.h:
+	Add memory-usage method to count the size of `hentries'.
+	
+	* emacs.c (main_1):
+	Call new functions in elhash.c, frame.c at init.
+	
+	* frame.c:
+	* frame.c (compute_frame_usage):
+	* frame.c (frame_memory_usage):
+	* frame.c (frame_objects_create):
+	* symsinit.h:
+	Add memory-usage method to count gutter display structures,
+	subwindow exposures.
+	
+	* gc.c (gc_finish):
+	* lisp.h:
+	Declare finish_object_memory_usage_stats(), call it in gc_finish().
+	
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (INIT_MEMORY_USAGE_STATS):
+	New value in implementation struct to track number of non-Lisp-memory
+	statistics.  Computed in alloc.c.
+	
+
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
