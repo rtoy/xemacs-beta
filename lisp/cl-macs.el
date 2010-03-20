@@ -3609,10 +3609,10 @@ the byte optimizer in those cases."
 ;;	  (t form)))))
 
 (define-compiler-macro notany (&whole form &rest cl-rest)
-  (cons 'not (cons 'some (cdr cl-rest))))
+  `(not (some ,@(cdr form))))
 
 (define-compiler-macro notevery (&whole form &rest cl-rest)
-  (cons 'not (cons 'every (cdr cl-rest))))
+  `(not (every ,@(cdr form))))
 
 (define-compiler-macro constantly (&whole form value &rest more-values)
   (cond
