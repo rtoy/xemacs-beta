@@ -154,9 +154,11 @@ EXFUN (Fextent_property, 3);
 EXFUN (Fput_text_property, 5);
 
 EXFUN (Fdetach_extent, 1);
+EXFUN (Fdelete_extent, 1);
 EXFUN (Fextent_end_position, 1);
 EXFUN (Fextent_object, 1);
 EXFUN (Fextent_properties, 1);
+EXFUN (Fextent_face, 1);
 EXFUN (Fextent_start_position, 1);
 EXFUN (Fget_char_property, 4);
 EXFUN (Fmake_extent, 3);
@@ -169,6 +171,8 @@ EXFUN (Fset_extent_property, 3);
 EXFUN (Fset_extent_priority, 2);
 EXFUN (Fset_extent_face, 2);
 EXFUN (Fmap_extents, 8);
+
+extern Lisp_Object Qduplicable;
 
 enum extent_at_flag
 {
@@ -216,6 +220,12 @@ void detach_all_extents (Lisp_Object object);
 Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
 		       Lisp_Object property, EXTENT before,
 		       enum extent_at_flag at_flag, int all_extents);
+
+typedef int (*map_extents_fun) (EXTENT extent, void *arg);
+
+void map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
+		  void *arg, Lisp_Object obj, EXTENT after,
+		  unsigned int flags);
 
 
 struct extent_fragment *extent_fragment_new (Lisp_Object buffer_or_string,
