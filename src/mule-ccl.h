@@ -1,5 +1,6 @@
 /* Header for CCL (Code Conversion Language) interpreter.
    Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+   Copyright (C) 2010 Ben Wing.
    Licensed to the Free Software Foundation.
 
 This file is part of XEmacs.
@@ -23,12 +24,21 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_mule_ccl_h_
 
 /* Macros for exit status of CCL program.  */
-#define CCL_STAT_SUCCESS	0 /* Terminated successfully.  */
-#define CCL_STAT_SUSPEND_BY_SRC	1 /* Terminated by empty input.  */
-#define CCL_STAT_SUSPEND_BY_DST	2 /* Terminated by output buffer full.  */
-#define CCL_STAT_INVALID_CMD	3 /* Terminated because of invalid
-				     command.  */
-#define CCL_STAT_QUIT		4 /* Terminated because of quit.  */
+enum ccl_status
+  {
+    CCL_STAT_SUCCESS,		/* Terminated successfully.  */
+    CCL_STAT_SUSPEND_BY_SRC,	/* Terminated by empty input.  */
+    CCL_STAT_SUSPEND_BY_DST,	/* Terminated by output buffer full.  */
+    CCL_STAT_QUIT,		/* Terminated because of quit.  */
+    CCL_STAT_INVALID_CMD,	/* Terminated because of invalid
+				   command.  */
+    CCL_STAT_CONVERSION_ERROR,	/* Terminated because of error in
+				   converting to/from characters
+				   or Unicode codepoints */
+    CCL_STAT_INVALID_CHARSET,	/* Terminated because of an invalid charset
+				   (unrecognizable ID, not "7-bit" when a
+				   7-bit charset is wanted, etc.). */
+  };
 
 /* Structure to hold information about running CCL code.  Read
    comments in the file ccl.c for the detail of each field.  */
@@ -69,6 +79,10 @@ struct ccl_program {
 					   line-feed.  */
 #define CCL_CODING_EOL_CR	2	/* Carriage-return only.  */
 
+#ifdef DEBUG_XEMACS
+#define CCL_DEBUG
+#endif
+
 /* If OBJECT is symbol designating a registered CCL program, return it.
    Else if OBJECT is a vector CCL program with no unresolved symbols, return
    it.
@@ -77,7 +91,7 @@ struct ccl_program {
    resolved, if that is currently possible in this XEmacs.
 
    Otherwise, signal `invalid-argument'. */
-extern Lisp_Object get_ccl_program (Lisp_Object object);
+Lisp_Object get_ccl_program (Lisp_Object object);
 
 /* Set up fields of the structure pointed by CCL appropriately for the
    execution of ccl program CCL_PROG (a symbol or a vector).
@@ -86,10 +100,15 @@ extern Lisp_Object get_ccl_program (Lisp_Object object);
    will throw an assertion failure. To avoid this, call get_ccl_program at
    the point that you receive the CCL program from Lisp, and use and store
    its (resolved) result instead. */
-extern int setup_ccl_program (struct ccl_program *, Lisp_Object ccl_prog);
+int setup_ccl_program (struct ccl_program *, Lisp_Object ccl_prog);
 
-extern int ccl_driver (struct ccl_program *, const unsigned char *,
-		       unsigned_char_dynarr *, int, int *, int);
+int ccl_driver (struct ccl_program *, const unsigned char *,
+		struct buffer *, unsigned_char_dynarr *, int, int *,
+		int);
+
+void mark_ccl_program (struct ccl_program *ccl);
+
+extern const struct sized_memory_description ccl_program_description;
 
 EXFUN (Fregister_ccl_program, 2);
 

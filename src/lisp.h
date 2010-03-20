@@ -123,7 +123,6 @@ Boston, MA 02111-1307, USA.  */
 #include <limits>		/* necessary for max()/min() under G++ 4 */
 #endif
 
-
 /************************************************************************/
 /*                            error checking                            */
 /************************************************************************/
@@ -421,6 +420,30 @@ Boston, MA 02111-1307, USA.  */
 #define EFFICIENT_INT_128_BIT INT_128_BIT
 #define EFFICIENT_UINT_128_BIT UINT_128_BIT
 #endif
+
+/* These are easily computable using `dc'.
+   (Just in case you cared, the maximum 256-bit unsigned int is
+   115792089237316195423570985008687907853269984665640564039457584007913 \
+   129639935.  You can get this with
+
+   echo '2 256^ 1-p' | dc
+   )
+*/
+
+#define INT_16_BIT_MAX 32767
+#define INT_32_BIT_MAX 2147483647
+#define INT_64_BIT_MAX 9223372036854775807
+#define INT_128_BIT_MAX 170141183460469231731687303715884105727
+
+#define UINT_16_BIT_MAX 65535
+#define UINT_32_BIT_MAX 4294967295
+#define UINT_64_BIT_MAX 18446744073709551615
+#define UINT_128_BIT_MAX 340282366920938463463374607431768211455
+
+#define INT_16_BIT_MIN -32768
+#define INT_32_BIT_MIN -2147483648
+#define INT_64_BIT_MIN -9223372036854775808
+#define INT_128_BIT_MIN -170141183460469231731687303715884105728
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -1267,10 +1290,6 @@ void assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x,
    assert_equal_failed (__FILE__, __LINE__, (EMACS_INT) x, (EMACS_INT) y, \
                         #x, #y))
 #else
-/* This used to be ((void) (0)) but that triggers lots of unused variable
-   warnings.  It's pointless to force all that code to be rewritten, with
-   added ifdefs.  Any reasonable compiler will eliminate an expression with
-   no effects. */
 # define assert(x) disabled_assert (x)
 # define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
 # define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
@@ -1360,10 +1379,37 @@ extern MODULE_API int regex_malloc_disallowed;
 /* Do stack or heap alloca() depending on size.
 
 NOTE: The use of a global temporary like this is unsafe if ALLOCA() occurs
-twice anywhere in the same expression; but that seems highly unlikely.  The
-alternative is to force all callers to declare a local temporary if the
-expression has side effects -- something easy to forget. */
+twice anywhere in the same expression.  The alternative is to force all
+callers to declare a local temporary if the argument to ALLOCA() has side
+effects -- something easy to forget.
 
+Normally, the use of ALLOCA() twice in the same expression is unlikely,
+but it can certainly occur in conjunction with the DFC macros.  To fix this,
+we do two things:
+
+  (1) Under GCC, there's an extended syntax we can use that avoids the problem
+      with global temporaries.
+  (2) For other compilers, we provide a special two-argument version that
+      is passed the size twice and uses each argument once and in a guaranteed
+      order.  This is useful in cases where the size argument to ALLOCA()
+      has side effects -- as is the case with the DFC macros. */
+
+/* #define TEST_MULTIUSE_ALLOCA */
+
+#if defined (__GNUC__) && !defined (TEST_MULTIUSE_ALLOCA)
+#define USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#endif
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define ALLOCA(size)						\
+  ({ Bytecount temp_alloca_size;				\
+     REGEX_MALLOC_CHECK ();					\
+     temp_alloca_size = (size);					\
+     temp_alloca_size  > MAX_ALLOCA_VS_C_ALLOCA ?		\
+       xemacs_c_alloca (temp_alloca_size) :			\
+       (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+	alloca (temp_alloca_size)); })
+#else /* not USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 #define ALLOCA(size)					\
   (REGEX_MALLOC_CHECK (),				\
    __temp_alloca_size__ = (size),			\
@@ -1371,15 +1417,42 @@ expression has side effects -- something easy to forget. */
    xemacs_c_alloca (__temp_alloca_size__) :		\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
     alloca (__temp_alloca_size__)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
+
+/* Version of ALLOCA() that can be safely used multiple times within
+   a single expression.  Regular ALLOCA() is not safe in this way since it
+   uses a global temporary variable.  However, regular ALLOCA() under GCC
+   *IS* safe since it uses a GCC extension that allows arbitrary code to
+   be made into an expression.  For non-GCC, we define a special
+   MULTIUSE_ALLOCA() that is safe for multiple use in function calls and
+   avoids global temporaries.  To do that, however, it needs to be able to
+   retrieve the size twice -- hence the two arguments.  MULTIUSE_ALLOCA()
+   is guaranteed to evaluate SIZE prior to SIZEAGAIN.  If the first SIZE
+   expression has no side effects, just make SIZEAGAIN be the same as
+   SIZE; otherwise, SIZEAGAIN may have to be different. */
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define MULTIUSE_ALLOCA(size, sizeagain) ALLOCA(size)
+#else
+#define MULTIUSE_ALLOCA(size, sizeagain)		\
+  (REGEX_MALLOC_CHECK (),				\
+   (size)  > MAX_ALLOCA_VS_C_ALLOCA ?			\
+   xemacs_c_alloca (sizeagain) :			\
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+    alloca (sizeagain)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 
 /* Version of ALLOCA() that is guaranteed to work inside of function calls
    (i.e., we call the C alloca if regular alloca() is broken inside of
    function calls). */
 #ifdef BROKEN_ALLOCA_IN_FUNCTION_CALLS
 #define ALLOCA_FUNCALL_OK(size) xemacs_c_alloca (size)
-#else
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) xemacs_c_alloca (size)
+#else /* not BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 #define ALLOCA_FUNCALL_OK(size) ALLOCA (size)
-#endif
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) \
+  MULTIUSE_ALLOCA (size, sizeagain)
+#endif /* (not) BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 
 MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
 
@@ -1409,6 +1482,14 @@ xmalloc_and_record_unwind (Bytecount size)
 /* -------------- convenience functions for memory allocation ------------- */
 
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
+/* This is a hack.  Here below we have the standard "portable" definition of
+   offsetof().  Normally we just use offsetof(), but under g++ (but not gcc)
+   complains about using offsetof when the `field' argument is not constant,
+   e.g. it's an array reference using a variable as the index.  So in that
+   case, which happens in file-coding.h, we fall back to portable_offsetof().
+   Fuck me harder!!!! --ben */
+#define portable_offsetof(st, m) \
+    ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
 #define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
 #define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
@@ -1421,6 +1502,7 @@ xmalloc_and_record_unwind (Bytecount size)
 #define alloca_itexts(num) alloca_array (Itext, num)
 #define alloca_ibytes(num) alloca_array (Ibyte, num)
 #define alloca_extbytes(num) alloca_array (Extbyte, num)
+#define alloca_chbytes(num) alloca_array (Chbyte, num)
 #define alloca_rawbytes(num) alloca_array (Rawbyte, num)
 #define alloca_binbytes(num) alloca_array (Binbyte, num)
 #define alloca_ascbytes(num) alloca_array (Ascbyte, num)
@@ -1439,6 +1521,16 @@ do {						\
   Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
   *_bsta_ = alloca_ibytes (1 + _bsta_3);	\
   memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
+} while (0)
+
+/* Make an alloca'd copy of a Extbyte * */
+#define EXTBYTE_STRING_TO_ALLOCA(p, lval)	\
+do {						\
+  Extbyte **_esta_ = (Extbyte **) &(lval);	\
+  const Extbyte *_esta_2 = (p);			\
+  Bytecount _esta_3 = strlen (_esta_2);		\
+  *_esta_ = alloca_extbytes (1 + _esta_3);	\
+  memcpy (*_esta_, _esta_2, 1 + _esta_3);	\
 } while (0)
 
 /* ----------------- convenience functions for reallocation --------------- */
@@ -2303,15 +2395,24 @@ MODULE_API void Dynarr_delete_many (void *d, Elemcount pos, Elemcount len);
 
 /* Delete all elements that are numerically equal to EL. */
 
-#define Dynarr_delete_object(d, el)		\
-do						\
-{						\
-  REGISTER int i;				\
-  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
-    {						\
-      if (el == Dynarr_at (d, i))		\
-	Dynarr_delete_many (d, i, 1);		\
-    }						\
+#define Dynarr_delete_object(d, el)				\
+do								\
+{								\
+  REGISTER int _ddo_i;						\
+  for (_ddo_i = Dynarr_length (d) - 1; _ddo_i >= 0; _ddo_i--)	\
+    {								\
+      if (el == Dynarr_at (d, _ddo_i))				\
+	Dynarr_delete_many (d, _ddo_i, 1);			\
+    }								\
+} while (0)
+
+/* Assuming DST and SRC are dynarrs of the same type, make DST a copy
+   of SRC. */
+#define Dynarr_copy(dst, src)						\
+do									\
+{									\
+  Dynarr_reset (dst);							\
+  Dynarr_add_many (dst, Dynarr_begin (src), Dynarr_length (src));	\
 } while (0)
 
 /************* Dynarr typedefs *************/
@@ -2439,6 +2540,113 @@ typedef struct
   Dynarr_declare (Lisp_Object *);
 } Lisp_Object_ptr_dynarr;
 
+typedef struct
+{
+  Lisp_Object key, value;
+} Lisp_Object_pair;
+
+typedef struct
+{
+  Dynarr_declare (Lisp_Object_pair);
+} Lisp_Object_pair_dynarr;
+
+
+/************************************************************************/
+/**           Stynarrs (static Dynarrs) and other allocators           **/
+/************************************************************************/
+
+/* A static Dynarr is, besides being an oxymoron, a combination of a
+   small static array with a Dynarr.  Typical size of the small array is
+   4 or 6.  This is used when you rarely expect your array to grow beyond
+   a certain size, but you would like to allow for this.  Stretchy arrays
+   are sometimes used for this, but they require that your whole data object
+   be resized, and handling them with pdump is difficult.  Typically a static
+   Dynarr is declared as one field of a struct, or it can be a local array.
+
+   #### It might be simpler to use *either* the static array *or* the
+   Dynarr, but not both at the same time, as we do currently.  We'd have
+   to either modify the pdump handling to involve a union, or zero out
+   the elements in the static array when we switch to the Dynarr. */
+
+/* Declare a static Dynarr variable declaration NAME, containing elements of
+   type TYPE, with NUM_STATIC static elements.  If you never use more than
+   these, no allocation will occur.  Before using, initialize with
+   Stynarr_init(d). */
+#define Stynarr_declare(name, type, num_static)	\
+struct						\
+{						\
+  type##_dynarr *els;				\
+  int nels;					\
+  type els_static[num_static];			\
+} name
+
+typedef struct
+{
+  void *els;
+  int nels;
+} Stynarr;
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+int
+Stynarr_verify_pos (void *st, int pos, const Ascbyte *file, int line)
+)
+{
+  Stynarr *sty = (Stynarr *) st;
+  /* #### See comment above in Dynarr_verify_pos() about accessing just
+     past end of the real used memory block using Stynarr_atp(). */
+  assert_at_line (pos >= 0 && pos < sty->nels, file, line);
+  return pos;
+}
+#else
+#define Stynarr_verify_pos(st, pos, file, line) (pos)
+#endif /* ERROR_CHECK_TYPES */
+
+#define Stynarr_init(d) (xzero (d))
+#define Stynarr_reset(d) ((d).nels = 0)
+#define Stynarr_free(d)				\
+do {						\
+  if ((d).els)					\
+    {						\
+      Dynarr_free ((d).els);			\
+      (d).els = 0;				\
+    }						\
+  (d).nels = 0;					\
+} while (0)
+#define Stynarr_num_static(d) countof ((d).els_static)
+#define Stynarr_elsize(d) sizeof ((d).els_static[0])
+/* WARNING! The following two macros evaluate POS multiply.
+   We write them this way so that Stynarr_at() is an lvalue. */
+#define Stynarr_atp(d, pos)						\
+  (Stynarr_verify_pos (&d, pos, __FILE__, __LINE__) < Stynarr_num_static (d) \
+   ? &((d).els_static[pos]) :						\
+   Dynarr_atp ((d).els, pos - Stynarr_num_static (d)))
+#define Stynarr_at(d, pos) (*(Stynarr_atp (d, pos)))
+#define Stynarr_add(d, el)						\
+do {									\
+  if ((d).nels < Stynarr_num_static (d))				\
+    (d).els_static[(d).nels++] = (el);					\
+  else									\
+    {									\
+      if (!(d).els)							\
+	VOIDP_CAST ((d).els) = Dynarr_newf (Stynarr_elsize (d));	\
+      Dynarr_add ((d).els, el);						\
+      (d).nels++;							\
+    }									\
+} while (0)
+
+#define Stynarr_length(d) ((d).nels)
+
+MODULE_API void Stynarr_insert_many_1 (void *d, const void *els, int len,
+				       int start, int num_static,
+				       int elsize, int staticoff);
+
+#define Stynarr_insert_many(d, els, len, start)		\
+  Stynarr_insert_many_1 (&d, els, len, start,		\
+			 Stynarr_num_static (d),	\
+			 Stynarr_elsize (d),		\
+			 offsetof (d, (d).els_static))
+
 
 /************* Stack-like malloc/free: Another allocator *************/
 
@@ -2522,16 +2730,43 @@ extern MODULE_API Lisp_Object Qnil;
 #define XCDDDDDR(a) (XCDR (XCDDDDR (a)))
 #define XCADDDDDR(a) (XCAR (XCDDDDDR (a)))
 #define XCDDDDDDR(a) (XCDR (XCDDDDDR (a)))
-#define X1ST(a) XCAR (a)
-#define X2ND(a) XCADR (a)
-#define X3RD(a) XCADDR (a)
-#define X4TH(a) XCADDDR (a)
-#define X5TH(a) XCADDDDR (a)
-#define X6TH(a) XCADDDDDR (a)
+#define XCADDDDDDR(a) (XCAR (XCDDDDDDR (a)))
+#define XCDDDDDDDR(a) (XCDR (XCDDDDDDR (a)))
+#define XCADDDDDDDR(a) (XCAR (XCDDDDDDDR (a)))
+#define XCDDDDDDDDR(a) (XCDR (XCDDDDDDDR (a)))
+#define XCADDDDDDDDR(a) (XCAR (XCDDDDDDDDR (a)))
+#define XCDDDDDDDDDR(a) (XCDR (XCDDDDDDDDR (a)))
+#define XCADDDDDDDDDR(a) (XCAR (XCDDDDDDDDDR (a)))
+#define XCDDDDDDDDDDR(a) (XCDR (XCDDDDDDDDDR (a)))
+#define X1ST(a)  XCAR (a)
+#define X2ND(a)  XCADR (a)
+#define X3RD(a)  XCADDR (a)
+#define X4TH(a)  XCADDDR (a)
+#define X5TH(a)  XCADDDDR (a)
+#define X6TH(a)  XCADDDDDR (a)
+#define X7TH(a)  XCADDDDDDR (a)
+#define X8TH(a)  XCADDDDDDDR (a)
+#define X9TH(a)  XCADDDDDDDDR (a)
+#define X10TH(a) XCADDDDDDDDDR (a)
+#define X1STCDR(a)  XCDR (a)
+#define X2NDCDR(a)  XCDDR (a)
+#define X3RDCDR(a)  XCDDDR (a)
+#define X4THCDR(a)  XCDDDDR (a)
+#define X5THCDR(a)  XCDDDDDR (a)
+#define X6THCDR(a)  XCDDDDDDR (a)
+#define X7THCDR(a)  XCDDDDDDDR (a)
+#define X8THCDR(a)  XCDDDDDDDDR (a)
+#define X9THCDR(a)  XCDDDDDDDDDR (a)
+#define X10THCDR(a) XCDDDDDDDDDDR (a)
 
 #define XSETCAR(a, b) (XCONS (a)->car_ = (b))
 #define XSETCDR(a, b) (XCONS (a)->cdr_ = (b))
 #define LISTP(x) (CONSP(x) || NILP(x))
+
+#define CHECK_NIL(x) do {			\
+  if (!NILP (x))				\
+    dead_wrong_type_argument (Qnull, x);	\
+} while (0)
 
 #define CHECK_LIST(x) do {			\
   if (!LISTP (x))				\
@@ -3484,14 +3719,14 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
-#ifdef ERROR_CHECK_TYPES
-
 /* NOTE: There are basic functions for converting between a character and
    the string representation of a character in text.h, as well as lots of
    other character-related stuff.  There are other functions/macros for
    working with Ichars in charset.h, for retrieving the charset of an
    Ichar, the length of an Ichar when converted to text, etc.
 */
+
+#ifdef ERROR_CHECK_TYPES
 
 DECLARE_INLINE_HEADER (
 int
@@ -3543,7 +3778,7 @@ Lisp_Object
 make_char (Ichar val)
 )
 {
-  type_checking_assert (valid_ichar_p (val));
+  ASSERT_VALID_ICHAR (val);
   /* This is defined in lisp-union.h or lisp-disunion.h */
   return make_char_1 (val);
 }
@@ -5046,6 +5281,9 @@ extern Lisp_Object Qsequencep;
 extern MODULE_API Lisp_Object Qinvalid_argument, Qsyntax_error;
 
 /* Defined in device.c */
+Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
+				     Lisp_Object object);
+
 extern Lisp_Object Qdevice_live_p;
 
 /* Defined in device-x.c */
@@ -5096,6 +5334,16 @@ Bytecount emacs_vsprintf (Ibyte *output, const CIbyte *format,
 Bytecount emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
+
+/* Defined in dynarr.c */
+extern const struct sized_memory_description int_dynarr_description;
+extern const struct sized_memory_description unsigned_char_description;
+extern const struct sized_memory_description unsigned_char_dynarr_description;
+extern const struct sized_memory_description lisp_object_description;
+extern const struct sized_memory_description Lisp_Object_dynarr_description;
+extern const struct sized_memory_description Lisp_Object_pair_description;
+extern const struct sized_memory_description Lisp_Object_pair_dynarr_description;
+void mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn);
 
 /* Defined in editfns.c */
 EXFUN (Fbobp, 1);
@@ -5185,6 +5433,7 @@ extern Lisp_Object Vinvocation_name;
 extern Lisp_Object Vmodule_directory;
 extern Lisp_Object Vsite_directory;
 extern Lisp_Object Vsite_module_directory;
+extern Lisp_Object Vlisp_directory;
 
 /* Defined in emodules.c */
 #ifdef HAVE_SHLIB
@@ -5330,6 +5579,13 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const Ascbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const Ascbyte *reason,
 				       Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error (const CIbyte *reason,
+					      Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error_2 (const CIbyte *reason,
+						Lisp_Object frob1,
+						Lisp_Object frob2));
+void maybe_text_conversion_error (const CIbyte *, Lisp_Object, Lisp_Object,
+				  Error_Behavior);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -5600,18 +5856,16 @@ EXFUN (Fcoding_system_p, 1);
 EXFUN (Fcoding_system_property, 2);
 EXFUN (Fcoding_system_type, 1);
 EXFUN (Fcopy_coding_system, 2);
-EXFUN (Fdecode_big5_char, 1);
 EXFUN (Fdecode_coding_region, 4);
 EXFUN (Fdecode_shift_jis_char, 1);
 EXFUN (Fdefine_coding_system_alias, 2);
 EXFUN (Fdetect_coding_region, 3);
 EXFUN (Fdefault_encoding_detection_enabled_p, 0);
-EXFUN (Fencode_big5_char, 1);
 EXFUN (Fencode_coding_region, 4);
 EXFUN (Fencode_shift_jis_char, 1);
 EXFUN (Ffind_coding_system, 1);
 EXFUN (Fget_coding_system, 1);
-EXFUN (Fmake_coding_system_internal, 4);
+EXFUN (Fmake_coding_system, 4);
 EXFUN (Fset_coding_category_system, 2);
 EXFUN (Fset_coding_priority_list, 1);
 EXFUN (Fsubsidiary_coding_system, 2);
@@ -5798,6 +6052,12 @@ extern Lisp_Object Qframe_live_p;
 
 /* Defined in free-hook.c */
 EXFUN (Freally_free, 1);
+
+/* Defined in gc.c */
+extern const struct sized_memory_description int_description;
+extern const struct sized_memory_description unsigned_char_description;
+extern const struct sized_memory_description lisp_object_description;
+extern const struct sized_memory_description Lisp_Object_pair_description;
 
 /* Defined in general.c */
 #define SYMBOL(fou) extern Lisp_Object fou
@@ -5992,6 +6252,77 @@ extern Lisp_Object Qshort_name;
 /* Defined in nt.c */
 extern Lisp_Object Vmswindows_get_true_file_attributes;
 
+EXFUN (Ffind_charset, 1);
+EXFUN (Fget_charset, 1);
+EXFUN (Fcharset_list, 0);
+EXFUN (Fcharset_name, 1);
+EXFUN (Fcharset_id, 1);
+
+#ifdef MULE
+extern Lisp_Object Vcharset_ascii;
+extern Lisp_Object Vcharset_control_1;
+extern Lisp_Object Vcharset_latin_iso8859_1;
+extern Lisp_Object Vcharset_latin_iso8859_2;
+extern Lisp_Object Vcharset_latin_iso8859_3;
+extern Lisp_Object Vcharset_latin_iso8859_4;
+extern Lisp_Object Vcharset_thai_tis620;
+extern Lisp_Object Vcharset_arabic_iso8859_6;
+extern Lisp_Object Vcharset_greek_iso8859_7;
+extern Lisp_Object Vcharset_hebrew_iso8859_8;
+extern Lisp_Object Vcharset_katakana_jisx0201;
+extern Lisp_Object Vcharset_latin_jisx0201;
+extern Lisp_Object Vcharset_cyrillic_iso8859_5;
+extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_latin_iso8859_15;
+extern Lisp_Object Vcharset_chinese_sisheng;
+extern Lisp_Object Vcharset_japanese_jisx0208_1978;
+extern Lisp_Object Vcharset_chinese_gb2312;
+extern Lisp_Object Vcharset_japanese_jisx0208;
+extern Lisp_Object Vcharset_korean_ksc5601;
+extern Lisp_Object Vcharset_japanese_jisx0212;
+extern Lisp_Object Vcharset_chinese_cns11643_1;
+extern Lisp_Object Vcharset_chinese_cns11643_2;
+#ifdef UNICODE_INTERNAL
+extern Lisp_Object Vcharset_chinese_big5;
+extern Lisp_Object Vcharset_japanese_shift_jis;
+#else
+extern Lisp_Object Vcharset_chinese_big5_1;
+extern Lisp_Object Vcharset_chinese_big5_2;
+#endif /* UNICODE_INTERNAL */
+extern Lisp_Object Vcharset_composite;
+#endif /* MULE */
+
+extern Lisp_Object
+  Qlatin_iso8859_1,
+  Qlatin_iso8859_2,
+  Qlatin_iso8859_3,
+  Qlatin_iso8859_4,
+  Qthai_tis620,
+  Qarabic_iso8859_6,
+  Qgreek_iso8859_7,
+  Qhebrew_iso8859_8,
+  Qkatakana_jisx0201,
+  Qlatin_jisx0201,
+  Qcyrillic_iso8859_5,
+  Qlatin_iso8859_9,
+  Qlatin_iso8859_15,
+  Qjapanese_jisx0208_1978,
+  Qchinese_gb2312,
+  Qjapanese_jisx0208,
+  Qkorean_ksc5601,
+  Qjapanese_jisx0212,
+  Qchinese_cns11643_1,
+  Qchinese_cns11643_2,
+#ifdef UNICODE_INTERNAL
+  Qchinese_big5,
+  Qjapanese_shift_jis,
+#else /* not UNICODE_INTERNAL */
+  Qchinese_big5_1,
+  Qchinese_big5_2,
+#endif /* UNICODE_INTERNAL */
+  Qchinese_sisheng,
+  Qcomposite;
+
 /* Defined in print.c */
 EXFUN (Fdisplay_error, 2);
 EXFUN (Ferror_message_string, 1);
@@ -6005,11 +6336,6 @@ Lisp_Object prin1_to_string (Lisp_Object, int);
 /* Lower-level ways to output data: */
 void default_object_printer (Lisp_Object, Lisp_Object, int);
 void print_internal (Lisp_Object, Lisp_Object, int);
-void debug_print (Lisp_Object);
-void debug_p4 (Lisp_Object obj);
-void debug_p3 (Lisp_Object obj);
-void debug_short_backtrace (int);
-void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
@@ -6031,6 +6357,12 @@ void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void debug_out_lisp (const CIbyte *, int nargs, ...);
+void debug_print (Lisp_Object);
+void debug_p4 (Lisp_Object obj);
+void debug_p3 (Lisp_Object obj);
+void debug_short_backtrace (int);
+void debug_backtrace (void);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */
@@ -6217,12 +6549,14 @@ long get_random (void);
 void seed_random (long arg);
 
 /* Defined in text.c */
-void find_charsets_in_ibyte_string (unsigned char *charsets,
-				      const Ibyte *str,
-				      Bytecount len);
-void find_charsets_in_ichar_string (unsigned char *charsets,
-				     const Ichar *str,
-				     Charcount len);
+void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
+				    const Ibyte *str, Bytecount len,
+				    struct buffer *buf);
+void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
+				    const Ichar *str, Charcount len,
+				    struct buffer *buf);
+void find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
+			      struct buffer *buf, Charbpos pos, Charcount len);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
 int ichar_string_displayed_columns (const Ichar *str, Charcount len);
 Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
@@ -6315,43 +6649,20 @@ Charxpos buffer_or_string_clip_to_absolute_char (Lisp_Object object,
 						 Charxpos pos);
 Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
 						 Bytexpos pos);
-
+void internal_to_external_charset_codepoint (Lisp_Object charset,
+					     int int_c1, int int_c2,
+					     int *ext_c1, int *ext_c2,
+					     int munge_codepoints);
+Lisp_Object get_external_charset_codepoint (Lisp_Object charset,
+					    Lisp_Object arg1, Lisp_Object arg2,
+					    int *a1, int *a2,
+					    int munge_codepoints);
+enum converr decode_handle_error (Lisp_Object err, int allow_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS
-
 Ichar lookup_composite_char (Ibyte *str, int len);
 Lisp_Object composite_char_string (Ichar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
-
-EXFUN (Ffind_charset, 1);
-EXFUN (Fget_charset, 1);
-EXFUN (Fcharset_list, 0);
-
-extern Lisp_Object Vcharset_ascii;
-extern Lisp_Object Vcharset_control_1;
-extern Lisp_Object Vcharset_latin_iso8859_1;
-extern Lisp_Object Vcharset_latin_iso8859_2;
-extern Lisp_Object Vcharset_latin_iso8859_3;
-extern Lisp_Object Vcharset_latin_iso8859_4;
-extern Lisp_Object Vcharset_thai_tis620;
-extern Lisp_Object Vcharset_greek_iso8859_7;
-extern Lisp_Object Vcharset_arabic_iso8859_6;
-extern Lisp_Object Vcharset_hebrew_iso8859_8;
-extern Lisp_Object Vcharset_katakana_jisx0201;
-extern Lisp_Object Vcharset_latin_jisx0201;
-extern Lisp_Object Vcharset_cyrillic_iso8859_5;
-extern Lisp_Object Vcharset_latin_iso8859_9;
-extern Lisp_Object Vcharset_latin_iso8859_15;
-extern Lisp_Object Vcharset_japanese_jisx0208_1978;
-extern Lisp_Object Vcharset_chinese_gb2312;
-extern Lisp_Object Vcharset_japanese_jisx0208;
-extern Lisp_Object Vcharset_korean_ksc5601;
-extern Lisp_Object Vcharset_japanese_jisx0212;
-extern Lisp_Object Vcharset_chinese_cns11643_1;
-extern Lisp_Object Vcharset_chinese_cns11643_2;
-extern Lisp_Object Vcharset_chinese_big5_1;
-extern Lisp_Object Vcharset_chinese_big5_2;
-extern Lisp_Object Vcharset_composite;
 
 Ichar Lstream_get_ichar_1 (Lstream *stream, int first_char);
 int Lstream_fput_ichar (Lstream *stream, Ichar ch);
@@ -6597,6 +6908,11 @@ extern alloca_convert_vals_dynarr *active_alloca_convert;
 MODULE_API int find_pos_of_existing_active_alloca_convert (const char *
 							   srctext);
 
+#ifdef UNICODE_INTERNAL
+extern int firstbyte_mask[];
+extern unsigned int utf8_offsets_by_rep_bytes[];
+#endif /* UNICODE_INTERNAL */
+
 /* Defined in undo.c */
 extern Lisp_Object Qinhibit_read_only;
 
@@ -6605,7 +6921,20 @@ extern const struct sized_memory_description to_unicode_description;
 extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
-void recalculate_unicode_precedence (void);
+Lisp_Object allocate_precedence_array (void);
+void reset_precedence_array (Lisp_Object precarray);
+void begin_precedence_array_generation (void);
+void add_charset_to_precedence_array (Lisp_Object charset,
+				     Lisp_Object preclist);
+void add_charsets_to_precedence_array (Lisp_Object list,
+				       Lisp_Object precarray);
+void charset_created_recalculate_unicode_precedence (void);
+void disksave_clear_unicode_precedence (void);
+Lisp_Object simple_convert_predence_list_to_array (Lisp_Object charsets);
+Lisp_Object decode_buffer_or_precedence_list (Lisp_Object preclist);
+int unicode_precedence_list_changed (Lisp_Object sym, Lisp_Object *val,
+				     Lisp_Object in_object, int flags);
+extern Lisp_Object Vdefault_unicode_precedence_array;
 extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
@@ -6614,6 +6943,13 @@ Bytecount compute_from_unicode_table_size (Lisp_Object charset,
 Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 					 struct usage_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
+void initialize_ascii_control_1_latin_1_unicode_translation (void);
+int decode_unicode (Lisp_Object unicode, enum unicode_allow allow);
+void free_precedence_array (Lisp_Object preclist);
+void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
+void autoload_charset_unicode_tables (Lisp_Object charset);
+
+EXFUN (Fset_charset_tags, 2);
 
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);
