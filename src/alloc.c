@@ -3649,7 +3649,7 @@ tick_lrecord_stats (const struct lrecord_header *h,
 		    enum lrecord_alloc_status status)
 {
   int type_index = h->type;
-  Bytecount obj = wrap_pointer_1 (h);
+  Lisp_Object obj = wrap_pointer_1 (h);
   Bytecount sz = lisp_object_size (obj);
   Bytecount sz_with_overhead = lisp_object_storage_size (obj, NULL);
   Bytecount overhead = sz_with_overhead - sz;
