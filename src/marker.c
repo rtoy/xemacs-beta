@@ -497,25 +497,15 @@ Return t if there are markers pointing at POSITION in the current buffer.
 
 #ifdef MEMORY_USAGE_STATS
 
-int
-compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
+Bytecount
+compute_buffer_marker_usage (struct buffer *b, struct usage_stats *ustats)
 {
   Lisp_Marker *m;
-  int total = 0;
-  int overhead;
+  Bytecount total = 0;
 
   for (m = BUF_MARKERS (b); m; m = m->next)
-    total += sizeof (Lisp_Marker);
-  ovstats->was_requested += total;
-#ifdef NEW_GC
-  overhead = mc_alloced_storage_size (total, 0) - total;
-#else /* not NEW_GC */
-  overhead = fixed_type_block_overhead (total);
-#endif /* not NEW_GC */
-  /* #### claiming this is all malloc overhead is not really right,
-     but it has to go somewhere. */
-  ovstats->malloc_overhead += overhead;
-  return total + overhead;
+    total += lisp_object_storage_size (wrap_marker (m), ustats);
+  return total;
 }
 
 #endif /* MEMORY_USAGE_STATS */

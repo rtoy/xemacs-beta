@@ -62,7 +62,7 @@ Lisp_Object Qcharacter_of_keysym, Qascii_character;
 /*                       definition of event object                     */
 /************************************************************************/
 
-/* #### Ad-hoc hack.  Should be part of DEFINE_*_GENERAL_LISP_OBJECT. */
+/* #### Ad-hoc hack.  Should be an object method. */
 void
 clear_event_resource (void)
 {

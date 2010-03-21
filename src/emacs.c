@@ -1464,7 +1464,26 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
+    }
+#ifdef PDUMP
+  else if (!restart)	      /* after successful pdump_load()
+				 (note, we are inside ifdef PDUMP) */
+    {
+      reinit_alloc_early ();
+      reinit_gc_early ();
+      reinit_symbols_early ();
+#ifndef NEW_GC
+      reinit_opaque_early ();
+#endif /* not NEW_GC */
+      reinit_eistring_early ();
+#ifdef WITH_NUMBER_TYPES
+      reinit_vars_of_number ();
+#endif
+    }
+#endif /* PDUMP */
 
+  if (!initialized)
+    {
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
@@ -1549,6 +1568,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_intl ();
       syms_of_keymap ();
       syms_of_lread ();
+      syms_of_lstream ();
       syms_of_macros ();
       syms_of_marker ();
       syms_of_md5 ();
@@ -1732,7 +1752,32 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
       syms_of_postgresql ();
 #endif
+    }
 
+  if (!initialized
+#ifdef PDUMP
+      || !restart
+#endif
+      )
+    {
+      buffer_objects_create ();
+      extent_objects_create ();
+      face_objects_create ();
+      frame_objects_create ();
+      glyph_objects_create ();
+      hash_table_objects_create ();
+      lstream_objects_create ();
+#ifdef MULE
+      mule_charset_objects_create ();
+#endif
+#ifdef HAVE_GTK
+      ui_gtk_objects_create ();
+#endif
+      window_objects_create ();
+    }
+
+  if (!initialized)
+    {
       /* Now create the subtypes for the types that have them.
 	 We do this before the vars_*() because more symbols
 	 may get initialized here. */
@@ -1896,17 +1941,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   else if (!restart)	      /* after successful pdump_load()
 				 (note, we are inside ifdef PDUMP) */
     {
-      reinit_alloc_early ();
-      reinit_gc_early ();
-      reinit_symbols_early ();
-#ifndef NEW_GC
-      reinit_opaque_early ();
-#endif /* not NEW_GC */
-      reinit_eistring_early ();
-#ifdef WITH_NUMBER_TYPES
-      reinit_vars_of_number ();
-#endif
-
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
       reinit_console_type_create_tty ();
@@ -2078,6 +2112,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_dragdrop ();
 #endif
       vars_of_editfns ();
+      vars_of_elhash ();
       vars_of_emacs ();
       vars_of_eval ();
 
@@ -2305,6 +2340,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     {
       /* Now do additional vars_of_*() initialization that happens both
 	 at dump time and after pdump load. */
+      reinit_vars_of_alloc ();
       reinit_vars_of_buffer ();
       reinit_vars_of_bytecode ();
       reinit_vars_of_console ();

@@ -144,14 +144,12 @@ const struct sized_memory_description lstream_empty_extra_description = {
   0, lstream_empty_extra_description_1
 };
 
-DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT ("stream", lstream,
-					   mark_lstream, print_lstream,
-					   finalize_lstream,
-					   0, 0, /* no equal or hash */
-					   lstream_description,
-					   0, 0, 0, 0, /* no property meths */
-					   disksave_lstream,
-					   sizeof_lstream, Lstream);
+DEFINE_NODUMP_SIZABLE_LISP_OBJECT ("stream", lstream,
+				   mark_lstream, print_lstream,
+				   finalize_lstream,
+				   0, 0, /* no equal or hash */
+				   lstream_description,
+				   sizeof_lstream, Lstream);
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the
@@ -1822,6 +1820,18 @@ lisp_buffer_stream_startpos (Lstream *stream)
 /************************************************************************/
 
 void
+syms_of_lstream (void)
+{
+  INIT_LISP_OBJECT (lstream);
+}
+
+void
+lstream_objects_create (void)
+{
+  OBJECT_HAS_PREMETHOD (lstream, disksave);
+}
+
+void
 lstream_type_create (void)
 {
   LSTREAM_HAS_METHOD (stdio, reader);
@@ -1877,5 +1887,4 @@ reinit_vars_of_lstream (void)
 void
 vars_of_lstream (void)
 {
-  INIT_LISP_OBJECT (lstream);
 }

@@ -964,7 +964,7 @@ get_free_list_size_value (EMACS_INT free_index)
 
 #ifdef MEMORY_USAGE_STATS
 Bytecount
-mc_alloced_storage_size (Bytecount claimed_size, struct overhead_stats *stats)
+mc_alloced_storage_size (Bytecount claimed_size, struct usage_stats *stats)
 {
   size_t used_size = 
     get_used_list_size_value (get_used_list_index (claimed_size));

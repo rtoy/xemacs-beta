@@ -3462,20 +3462,17 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
-DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("extent", extent,
-						mark_extent,
-						print_extent,
-						/* NOTE: If you declare a
-						   finalization method here,
-						   it will NOT be called.
-						   Shaft city. */
-						0,
-						extent_equal, extent_hash,
-						extent_description,
-						extent_getprop, extent_putprop,
-						extent_remprop, extent_plist,
-						0 /* no disksaver */,
-						struct extent);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("extent", extent,
+					mark_extent,
+					print_extent,
+					/* NOTE: If you declare a
+					   finalization method here,
+					   it will NOT be called.
+					   Shaft city. */
+					0,
+					extent_equal, extent_hash,
+					extent_description,
+					struct extent);
 
 /************************************************************************/
 /*			basic extent accessors				*/
@@ -7419,7 +7416,7 @@ text-property primitives, use `previous-single-property-change'.
 
 int
 compute_buffer_extent_usage (struct buffer *UNUSED (b),
-			     struct overhead_stats *UNUSED (ovstats))
+			     struct usage_stats *UNUSED (ustats))
 {
   /* #### not yet written */
   return 0;
@@ -7431,6 +7428,15 @@ compute_buffer_extent_usage (struct buffer *UNUSED (b),
 /************************************************************************/
 /*				initialization				*/
 /************************************************************************/
+
+void
+extent_objects_create (void)
+{
+  OBJECT_HAS_METHOD (extent, getprop);
+  OBJECT_HAS_METHOD (extent, putprop);
+  OBJECT_HAS_METHOD (extent, remprop);
+  OBJECT_HAS_METHOD (extent, plist);
+}
 
 void
 syms_of_extents (void)

@@ -49,7 +49,7 @@ REASON is nil or a string describing the failure (not required).
        ())
 {
   void *ptr; Bytecount len;
-  Lisp_Object string, opaque, conversion_result = Qnil;
+  Lisp_Object string = Qnil, opaque = Qnil, conversion_result = Qnil;
 
   Ibyte int_foo[] = "\n\nfoo\nbar";
   Extbyte ext_unix[]= "\n\nfoo\nbar";
@@ -72,6 +72,20 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
   int autodetect_eol_p =
     !NILP (Fsymbol_value (intern ("eol-detection-enabled-p")));
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro ngcpro1, ngcpro2, ngcpro3;
+#ifdef MULE
+  struct gcpro ngcpro4;
+#endif
+
+  /* DFC conversion inhibits GC, but we have a call2() below which calls
+     Lisp, which can trigger GC, so we need to GC-protect everything here. */
+  GCPRO5 (string, opaque, conversion_result, opaque_dos, string_foo);
+#ifdef MULE
+  NGCPRO4 (string_latin2, opaque_latin, opaque0_latin, string_latin1);
+#else
+  NGCPRO3 (opaque_latin, opaque0_latin, string_latin1);
+#endif
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
@@ -541,6 +555,8 @@ REASON is nil or a string describing the failure (not required).
 		      Qbinary);
   DFC_CHECK_DATA (ptr, len, ext_dos, "DOS Lisp opaque, ALLOCA, binary");
 
+  NUNGCPRO;
+  UNGCPRO;
   return conversion_result;
 }
 

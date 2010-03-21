@@ -105,13 +105,22 @@ Bytecount funcall_alloca_count;
 /* All the built-in lisp object types are enumerated in `enum lrecord_type'.
    Additional ones may be defined by a module (none yet).  We leave some
    room in `lrecord_implementations_table' for such new lisp object types. */
-const struct lrecord_implementation *lrecord_implementations_table[(int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
+struct lrecord_implementation *lrecord_implementations_table[(int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 int lrecord_type_count = lrecord_type_last_built_in_type;
 
 /* This is just for use by the printer, to allow things to print uniquely.
    We have a separate UID space for each object. (Important because the
    UID is only 20 bits in old-GC, and 22 in NEW_GC.) */
 int lrecord_uid_counter[countof (lrecord_implementations_table)];
+
+#ifndef USE_KKCC
+/* Object marker functions are in the lrecord_implementation structure.
+   But copying them to a parallel array is much more cache-friendly.
+   This hack speeds up (garbage-collect) by about 5%. */
+Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Object);
+#endif /* not USE_KKCC */
+
+struct gcpro *gcprolist;
 
 /* Non-zero means we're in the process of doing the dump */
 int purify_flag;
@@ -126,6 +135,12 @@ int in_pdump;
 Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
 
 #endif
+
+#ifdef MEMORY_USAGE_STATS
+Lisp_Object Qobject_actually_requested, Qobject_malloc_overhead;
+Lisp_Object Qother_memory_actually_requested, Qother_memory_malloc_overhead;
+Lisp_Object Qother_memory_dynarr_overhead, Qother_memory_gap_overhead;
+#endif /* MEMORY_USAGE_STATS */
 
 /* Very cheesy ways of figuring out how much memory is being used for
    data. #### Need better (system-dependent) ways. */
@@ -511,7 +526,7 @@ static struct
 } lrecord_stats [countof (lrecord_implementations_table)];
 
 void
-init_lrecord_stats ()
+init_lrecord_stats (void)
 {
   xzero (lrecord_stats);
 }
@@ -760,8 +775,8 @@ disksave_object_finalization_1 (void)
 	  debug_print (wrap_pointer_1 (header));
 	}
 #endif
-      if (imp->disksaver && !objh->free)
-	(imp->disksaver) (wrap_pointer_1 (header));
+      if (imp->disksave && !objh->free)
+	(imp->disksave) (wrap_pointer_1 (header));
     }
 #endif /* not NEW_GC */
 }
@@ -838,37 +853,6 @@ zero_nonsized_lisp_object (Lisp_Object obj)
 
   zero_sized_lisp_object (obj, lisp_object_size (obj));
 }
-
-#ifdef MEMORY_USAGE_STATS
-
-Bytecount
-lisp_object_storage_size (Lisp_Object obj, struct overhead_stats *ovstats)
-{
-#ifndef NEW_GC
-  const struct lrecord_implementation *imp =
-    XRECORD_LHEADER_IMPLEMENTATION (obj);
-#endif /* not NEW_GC */
-  Bytecount size = lisp_object_size (obj);
-
-#ifdef NEW_GC
-  return mc_alloced_storage_size (size, ovstats);
-#else
-  if (imp->frob_block_p)
-    {
-      Bytecount overhead = fixed_type_block_overhead (size);
-      if (ovstats)
-	{
-	  ovstats->was_requested += size;
-	  ovstats->malloc_overhead += overhead;
-	}
-      return size + overhead;
-    }
-  else
-    return malloced_storage_size (XPNTR (obj), size, ovstats);
-#endif
-}
-
-#endif /* MEMORY_USAGE_STATS */
 
 void
 free_normal_lisp_object (Lisp_Object obj)
@@ -1479,6 +1463,46 @@ list6 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2, Lisp_Object obj3,
   /* This cannot GC. */
   return Fcons (obj0, Fcons (obj1, Fcons (obj2, Fcons (obj3, Fcons (obj4, Fcons (obj5, Qnil))))));
 }
+
+/* Return a list of arbitrary length, terminated by Qunbound. */
+
+Lisp_Object
+listu (Lisp_Object first, ...)
+{
+  Lisp_Object obj = Qnil;
+  Lisp_Object val;
+  va_list va;
+
+  va_start (va, first);
+  val = first;
+  while (!UNBOUNDP (val))
+    {
+      obj = Fcons (val, obj);
+      val = va_arg (va, Lisp_Object);
+    }
+  va_end (va);
+  return Fnreverse (obj);
+}
+
+/* Return a list of arbitrary length, with length specified and remaining
+   args making up the list. */
+
+Lisp_Object
+listn (int num_args, ...)
+{
+  int i;
+  Lisp_Object obj = Qnil;
+  va_list va;
+
+  va_start (va, num_args);
+  for (i = 0; i < num_args; i++)
+    obj = Fcons (va_arg (va, Lisp_Object), obj);
+  va_end (va);
+  return Fnreverse (obj);
+}
+
+/* Return a list of arbitrary length, with length specified and an array
+   of elements. */
 
 DEFUN ("make-list", Fmake_list, 2, 2, 0, /*
 Return a new list of length LENGTH, with each element being OBJECT.
@@ -2434,16 +2458,11 @@ string_plist (Lisp_Object string)
    standard way to do finalization when using
    SWEEP_FIXED_TYPE_BLOCK(). */
 
-DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT ("string", string,
-						mark_string, print_string,
-						0, string_equal, 0,
-						string_description,
-						string_getprop,
-						string_putprop,
-						string_remprop,
-						string_plist,
-						0 /* no disksaver */,
-						Lisp_String);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("string", string,
+					mark_string, print_string,
+					0, string_equal, 0,
+					string_description,
+					Lisp_String);
 #endif /* not NEW_GC */
 
 #ifdef NEW_GC
@@ -2484,17 +2503,9 @@ static struct string_chars_block *current_string_chars_block;
 #endif /* not NEW_GC */
 
 #ifdef NEW_GC
-DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("string", string,
-				     mark_string, print_string,
-				     0,
-				     string_equal, 0,
-				     string_description,
-				     string_getprop,
-				     string_putprop,
-				     string_remprop,
-				     string_plist,
-				     0 /* no disksaver */,
-				     Lisp_String);
+DEFINE_DUMPABLE_LISP_OBJECT ("string", string, mark_string, print_string,
+			     0, string_equal, 0,
+			     string_description, Lisp_String);
 
 
 static const struct memory_description string_direct_data_description[] = {
@@ -3357,17 +3368,8 @@ Does not copy symbols.
 
 
 /************************************************************************/
-/*			   Garbage Collection				*/
+/*                           Staticpro, MCpro                           */
 /************************************************************************/
-
-#ifndef USE_KKCC
-/* Object marker functions are in the lrecord_implementation structure.
-   But copying them to a parallel array is much more cache-friendly.
-   This hack speeds up (garbage-collect) by about 5%. */
-Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Object);
-#endif /* not USE_KKCC */
-
-struct gcpro *gcprolist;
 
 /* We want the staticpro list relocated, but not the pointers found
    therein, because they refer to locations in the global data segment, not
@@ -3506,10 +3508,6 @@ unstaticpro_nodump (Lisp_Object *varaddress)
 
 #endif /* not DEBUG_XEMACS */
 
-
-
-
-
 #ifdef NEW_GC
 static const struct memory_description mcpro_description_1[] = {
   { XD_END }
@@ -3571,47 +3569,124 @@ mcpro (Lisp_Object varaddress)
 #endif /* not DEBUG_XEMACS */
 #endif /* NEW_GC */
 
+
+/************************************************************************/
+/*                        Allocation Statistics                         */
+/************************************************************************/
 
 #ifndef NEW_GC
 static int gc_count_num_short_string_in_use;
 static Bytecount gc_count_string_total_size;
 static Bytecount gc_count_short_string_total_size;
+static Bytecount gc_count_long_string_storage_including_overhead;
 
 /* static int gc_count_total_records_used, gc_count_records_total_size; */
 
 
-/* stats on lcrecords in use - kinda kludgy */
+/* stats on objects in use */
 
 static struct
 {
-  int instances_in_use;
-  int bytes_in_use;
-  int instances_freed;
-  int bytes_freed;
-  int instances_on_free_list;
-  int bytes_on_free_list;
+  Elemcount instances_in_use;
+  Bytecount bytes_in_use;
+  Bytecount bytes_in_use_overhead;
+  Elemcount instances_freed;
+  Bytecount bytes_freed;
+  Bytecount bytes_freed_overhead;
+  Elemcount instances_on_free_list;
+  Bytecount bytes_on_free_list;
+  Bytecount bytes_on_free_list_overhead;
+#ifdef MEMORY_USAGE_STATS
+  Bytecount nonlisp_bytes_in_use;
+  struct generic_usage_stats stats;
+#endif
 } lrecord_stats [countof (lrecord_implementations_table)];
+
+static void
+clear_lrecord_stats (void)
+{
+  xzero (lrecord_stats);
+  gc_count_num_short_string_in_use = 0;
+  gc_count_string_total_size = 0;
+  gc_count_short_string_total_size = 0;
+  gc_count_long_string_storage_including_overhead = 0;
+}
+
+/* Keep track of extra statistics for strings -- length of the string
+   characters for short and long strings, number of short and long strings. */
+static void
+tick_string_stats (Lisp_String *p, int from_sweep)
+{
+  Bytecount size = p->size_;
+  gc_count_string_total_size += size;
+  if (!BIG_STRING_SIZE_P (size))
+    {
+      gc_count_short_string_total_size += size;
+      gc_count_num_short_string_in_use++;
+    }
+  else
+    gc_count_long_string_storage_including_overhead +=
+      malloced_storage_size (p->data_, p->size_, NULL);
+  /* During the sweep stage, we count the total number of strings in use.
+     This gets those not stored in pdump storage.  For pdump storage, we
+     need to bump the number of strings in use so as to get an accurate
+     count of all strings in use (pdump or not).  But don't do this when
+     called from the sweep stage, or we will double-count. */
+  if (!from_sweep)
+    gc_count_num_string_in_use++;
+}
+
+/* As objects are sweeped, we record statistics about their memory usage.
+   Currently, all lcrecords are processed this way as well as any frob-block
+   objects that were saved and restored as a result of the pdump process.
+   (See pdump_objects_unmark().) Other frob-block objects do NOT get their
+   statistics noted this way -- instead, as the frob blocks are swept,
+   COPY_INTO_LRECORD_STATS() is called, and notes statistics about the
+   frob blocks. */
 
 void
 tick_lrecord_stats (const struct lrecord_header *h,
 		    enum lrecord_alloc_status status)
 {
   int type_index = h->type;
-  Bytecount sz = detagged_lisp_object_size (h);
+  Bytecount obj = wrap_pointer_1 (h);
+  Bytecount sz = lisp_object_size (obj);
+  Bytecount sz_with_overhead = lisp_object_storage_size (obj, NULL);
+  Bytecount overhead = sz_with_overhead - sz;
 
   switch (status)
     {
     case ALLOC_IN_USE:
       lrecord_stats[type_index].instances_in_use++;
       lrecord_stats[type_index].bytes_in_use += sz;
+      lrecord_stats[type_index].bytes_in_use_overhead += overhead;
+      if (STRINGP (obj))
+	tick_string_stats (XSTRING (obj), 0);
+#ifdef MEMORY_USAGE_STATS
+      {
+	struct generic_usage_stats stats;
+	if (HAS_OBJECT_METH_P (obj, memory_usage))
+	  {
+	    int i;
+	    int total_stats = OBJECT_PROPERTY (obj, num_extra_memusage_stats);
+	    xzero (stats);
+	    OBJECT_METH (obj, memory_usage, (obj, &stats));
+	    for (i = 0; i < total_stats; i++)
+	      lrecord_stats[type_index].stats.othervals[i] +=
+		stats.othervals[i];
+	  }
+      }
+#endif
       break;
     case ALLOC_FREE:
       lrecord_stats[type_index].instances_freed++;
       lrecord_stats[type_index].bytes_freed += sz;
+      lrecord_stats[type_index].bytes_freed_overhead += overhead;
       break;
     case ALLOC_ON_FREE_LIST:
       lrecord_stats[type_index].instances_on_free_list++;
       lrecord_stats[type_index].bytes_on_free_list += sz;
+      lrecord_stats[type_index].bytes_on_free_list_overhead += overhead;
       break;
     default:
       ABORT ();
@@ -3629,9 +3704,14 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
   else
     tick_lrecord_stats (h, free_p ? ALLOC_FREE : ALLOC_IN_USE);
 }
+
 #endif /* not NEW_GC */
 
 
+/************************************************************************/
+/*                 Garbage Collection -- Sweep/Compact                  */
+/************************************************************************/
+
 #ifndef NEW_GC
 /* Free all unmarked records */
 static void
@@ -3692,19 +3772,26 @@ sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
   /* *total = total_size; */
 }
 
+static Bytecount fixed_type_block_overhead (Bytecount size,
+					    Bytecount per_block);
+
 /* And the Lord said: Thou shalt use the `c-backslash-region' command
    to make macros prettier. */
 
 #define COUNT_FROB_BLOCK_USAGE(type)					\
   EMACS_INT s = 0;							\
+  EMACS_INT s_overhead = 0;						\
   struct type##_block *x = current_##type##_block;			\
   while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
+  s_overhead = fixed_type_block_overhead (s, sizeof (struct type##_block)); \
   DO_NOTHING
 
 #define COPY_INTO_LRECORD_STATS(type)				\
 do {								\
   COUNT_FROB_BLOCK_USAGE (type);				\
   lrecord_stats[lrecord_type_##type].bytes_in_use += s;		\
+  lrecord_stats[lrecord_type_##type].bytes_in_use_overhead +=	\
+    s_overhead;							\
   lrecord_stats[lrecord_type_##type].instances_on_free_list +=	\
     gc_count_num_##type##_freelist;				\
   lrecord_stats[lrecord_type_##type].instances_in_use +=	\
@@ -4370,20 +4457,12 @@ debug_string_purity_print (Lisp_Object p)
 static void
 sweep_strings (void)
 {
-  int num_small_used = 0;
-  Bytecount num_small_bytes = 0, num_bytes = 0;
   int debug = debug_string_purity;
 
 #define UNMARK_string(ptr) do {				\
     Lisp_String *p = (ptr);				\
-    Bytecount size = p->size_;				\
     UNMARK_RECORD_HEADER (&(p->u.lheader));		\
-    num_bytes += size;					\
-    if (!BIG_STRING_SIZE_P (size))			\
-      {							\
-	num_small_bytes += size;			\
-        num_small_used++;				\
-      }							\
+    tick_string_stats (p, 1);				\
     if (debug)						\
       debug_string_purity_print (wrap_string (p));	\
   } while (0)
@@ -4394,10 +4473,6 @@ sweep_strings (void)
   } while (0)
 
   SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);
-
-  gc_count_num_short_string_in_use = num_small_used;
-  gc_count_string_total_size = num_bytes;
-  gc_count_short_string_total_size = num_small_bytes;
 }
 #endif /* not NEW_GC */
 
@@ -4407,7 +4482,7 @@ gc_sweep_1 (void)
 {
   /* Reset all statistics to 0.  They will be incremented when
      sweeping lcrecords, frob-block lrecords and dumped objects. */
-  xzero (lrecord_stats);
+  clear_lrecord_stats ();
 
   /* Free all unmarked records.  Do this at the very beginning,
      before anything else, so that the finalize methods can safely
@@ -4483,16 +4558,17 @@ gc_sweep_1 (void)
   sweep_eval_data ();
   sweep_misc_user_data ();
 #endif /* EVENT_DATA_AS_OBJECTS */
-#endif /* not NEW_GC */
 
-#ifndef NEW_GC
 #ifdef PDUMP
   pdump_objects_unmark ();
 #endif
 }
 #endif /* not NEW_GC */
+
 
-/* Clearing for disksave. */
+/************************************************************************/
+/*           "Disksave Finalization" -- Preparing for Dumping           */
+/************************************************************************/
 
 void
 disksave_object_finalization (void)
@@ -4625,6 +4701,31 @@ pluralize_and_append (Ascbyte *buf, const Ascbyte *name, const Ascbyte *suffix)
   strcat (buf, suffix);
 }
 
+void
+finish_object_memory_usage_stats (void)
+{
+  /* Here we add up the aggregate values for each statistic, previously
+     computed during tick_lrecord_stats(), to get a single combined value
+     of non-Lisp memory usage for all objects of each type.  We can't
+     do this if NEW_GC because nothing like tick_lrecord_stats() gets
+     called -- instead, statistics are computed when objects are allocated,
+     which is too early to be calling the memory_usage() method. */
+#if defined (MEMORY_USAGE_STATS) && !defined (NEW_GC)
+  int i;
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
+    {
+      struct lrecord_implementation *imp = lrecord_implementations_table[i];
+      if (imp && imp->num_extra_nonlisp_memusage_stats)
+	{
+	  int j;
+	  for (j = 0; j < imp->num_extra_nonlisp_memusage_stats; j++)
+	    lrecord_stats[i].nonlisp_bytes_in_use +=
+	      lrecord_stats[i].stats.othervals[j];
+	}
+    }
+#endif /* defined (MEMORY_USAGE_STATS) && !defined (NEW_GC) */
+}
+
 static Lisp_Object
 object_memory_usage_stats (int set_total_gc_usage)
 {
@@ -4633,7 +4734,6 @@ object_memory_usage_stats (int set_total_gc_usage)
   EMACS_INT tgu_val = 0;
 
 #ifdef NEW_GC
-  
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
       if (lrecord_stats[i].instances_in_use != 0)
@@ -4664,38 +4764,6 @@ object_memory_usage_stats (int set_total_gc_usage)
 
 #else /* not NEW_GC */
 
-#define HACK_O_MATIC(type, name, pl)		\
-do {						\
-  COUNT_FROB_BLOCK_USAGE (type);		\
-  tgu_val += s;					\
-  (pl) = gc_plist_hack ((name), s, (pl));	\
-} while (0)
-
-#define FROB(type)				\
-do {						\
-  COUNT_FROB_BLOCK_USAGE (type);		\
-  tgu_val += s;					\
-} while (0)
-
-  FROB (extent);
-  FROB (event);
-  FROB (marker);
-  FROB (float);
-#ifdef HAVE_BIGNUM
-  FROB (bignum);
-#endif /* HAVE_BIGNUM */
-#ifdef HAVE_RATIO
-  FROB (ratio);
-#endif /* HAVE_RATIO */
-#ifdef HAVE_BIGFLOAT
-  FROB (bigfloat);
-#endif /* HAVE_BIGFLOAT */
-  FROB (compiled_function);
-  FROB (symbol);
-  FROB (cons);
-
-#undef FROB
-
   for (i = 0; i < lrecord_type_count; i++)
     {
       if (lrecord_stats[i].bytes_in_use != 0
@@ -4705,9 +4773,21 @@ do {						\
           Ascbyte buf[255];
           const Ascbyte *name = lrecord_implementations_table[i]->name;
 
+          sprintf (buf, "%s-storage-overhead", name);
+          pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use_overhead, pl);
+	  tgu_val += lrecord_stats[i].bytes_in_use_overhead;
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use, pl);
 	  tgu_val += lrecord_stats[i].bytes_in_use;
+#ifdef MEMORY_USAGE_STATS
+	  if (lrecord_stats[i].nonlisp_bytes_in_use)
+	    {
+	      sprintf (buf, "%s-non-lisp-storage", name);
+	      pl = gc_plist_hack (buf, lrecord_stats[i].nonlisp_bytes_in_use,
+				  pl);
+	      tgu_val += lrecord_stats[i].nonlisp_bytes_in_use;
+	    }
+#endif /* MEMORY_USAGE_STATS */
 	  pluralize_and_append (buf, name, "-freed");
           if (lrecord_stats[i].instances_freed != 0)
             pl = gc_plist_hack (buf, lrecord_stats[i].instances_freed, pl);
@@ -4720,21 +4800,32 @@ do {						\
         }
     }
 
-  HACK_O_MATIC (string, "string-header-storage", pl);
+  pl = gc_plist_hack ("long-string-chars-storage-overhead",
+                      gc_count_long_string_storage_including_overhead -
+		      (gc_count_string_total_size
+		       - gc_count_short_string_total_size), pl);
+  pl = gc_plist_hack ("long-string-chars-storage",
+                      gc_count_string_total_size
+		      - gc_count_short_string_total_size, pl);
+  do
+    {
+      COUNT_FROB_BLOCK_USAGE (string_chars);
+      tgu_val += s + s_overhead;
+      pl = gc_plist_hack ("short-string-chars-storage-overhead", s_overhead, pl);
+      pl = gc_plist_hack ("short-string-chars-storage", s, pl);
+    }
+  while (0);
+
   pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
 		      - gc_count_short_string_total_size, pl);
-  HACK_O_MATIC (string_chars, "short-string-storage", pl);
   pl = gc_plist_hack ("short-strings-total-length",
                       gc_count_short_string_total_size, pl);
-  pl = gc_plist_hack ("strings-free", gc_count_num_string_freelist, pl);
   pl = gc_plist_hack ("long-strings-used",
                       gc_count_num_string_in_use
 		      - gc_count_num_short_string_in_use, pl);
   pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
-
-#undef HACK_O_MATIC
 
 #endif /* NEW_GC */
 
@@ -4747,7 +4838,7 @@ do {						\
   return pl;
 }
 
-DEFUN("object-memory-usage-stats", Fobject_memory_usage_stats, 0, 0 ,"", /*
+DEFUN ("object-memory-usage-stats", Fobject_memory_usage_stats, 0, 0, 0, /*
 Return statistics about memory usage of Lisp objects.
 */
        ())
@@ -4756,6 +4847,137 @@ Return statistics about memory usage of Lisp objects.
 }
 
 #endif /* ALLOC_TYPE_STATS */
+
+#ifdef MEMORY_USAGE_STATS
+
+/* Compute the number of extra memory-usage statistics associated with an
+   object.  We can't compute this at the time INIT_LISP_OBJECT() is called
+   because the value of the `memusage_stats_list' property is generally
+   set afterwards.  So we compute the values for all types of objects
+   after all objects have been initialized. */
+
+static void
+compute_memusage_stats_length (void)
+{
+  int i;
+
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
+    {
+      int len = 0;
+      int nonlisp_len = 0;
+      int seen_break = 0;
+
+      struct lrecord_implementation *imp = lrecord_implementations_table[i];
+
+      if (!imp)
+	continue;
+      /* For some of the early objects, Qnil was not yet initialized at
+	 the time of object initialization, so it came up as Qnull_pointer.
+	 Fix that now. */
+      if (EQ (imp->memusage_stats_list, Qnull_pointer))
+	imp->memusage_stats_list = Qnil;
+      {
+	LIST_LOOP_2 (item, imp->memusage_stats_list)
+	  {
+	    if (!NILP (item) && !EQ (item, Qt))
+	      {
+		len++;
+		if (!seen_break)
+		  nonlisp_len++;
+	      }
+	    else
+	      seen_break++;
+	  }
+      }
+
+      imp->num_extra_memusage_stats = len;
+      imp->num_extra_nonlisp_memusage_stats = nonlisp_len;
+    }
+}
+
+DEFUN ("object-memory-usage", Fobject_memory_usage, 1, 1, 0, /*
+Return stats about the memory usage of OBJECT.
+The values returned are in the form of an alist of usage types and byte
+counts.  The byte counts attempt to encompass all the memory used
+by the object (separate from the memory logically associated with any
+other object), including internal structures and any malloc()
+overhead associated with them.  In practice, the byte counts are
+underestimated because certain memory usage is very hard to determine
+\(e.g. the amount of memory used inside the Xt library or inside the
+X server).
+
+Multiple slices of the total memory usage may be returned, separated
+by a nil.  Each slice represents a particular view of the memory, a
+particular way of partitioning it into groups.  Within a slice, there
+is no overlap between the groups of memory, and each slice collectively
+represents all the memory concerned.  The rightmost slice typically
+represents the total memory used plus malloc and dynarr overhead.
+
+Slices describing other Lisp objects logically associated with the
+object may be included, separated from other slices by `t' and from
+each other by nil if there is more than one.
+
+#### We have to figure out how to handle the memory used by the object
+itself vs. the memory used by substructures.  Probably the memory_usage
+method should return info only about substructures and related Lisp
+objects, since the caller can always find and all info about the object
+itself.
+*/
+       (object))
+{
+  struct generic_usage_stats gustats;
+  struct usage_stats object_stats;
+  int i;
+  Lisp_Object val = Qnil;
+  Lisp_Object stats_list = OBJECT_PROPERTY (object, memusage_stats_list);
+
+  xzero (object_stats);
+  lisp_object_storage_size (object, &object_stats);
+
+  val = acons (Qobject_actually_requested,
+	       make_int (object_stats.was_requested), val);
+  val = acons (Qobject_malloc_overhead,
+	       make_int (object_stats.malloc_overhead), val);
+  assert (!object_stats.dynarr_overhead);
+  assert (!object_stats.gap_overhead);
+
+  if (!NILP (stats_list))
+    {
+      xzero (gustats);
+      MAYBE_OBJECT_METH (object, memory_usage, (object, &gustats));
+
+      val = Fcons (Qt, val);
+      val = acons (Qother_memory_actually_requested,
+		   make_int (gustats.u.was_requested), val);
+      val = acons (Qother_memory_malloc_overhead,
+		   make_int (gustats.u.malloc_overhead), val);
+      if (gustats.u.dynarr_overhead)
+	val = acons (Qother_memory_dynarr_overhead,
+		     make_int (gustats.u.dynarr_overhead), val);
+      if (gustats.u.gap_overhead)
+	val = acons (Qother_memory_gap_overhead,
+		     make_int (gustats.u.gap_overhead), val);
+      val = Fcons (Qnil, val);
+
+      i = 0;
+      {
+	LIST_LOOP_2 (item, stats_list)
+	  {
+	    if (NILP (item) || EQ (item, Qt))
+	      val = Fcons (item, val);
+	    else
+	      {
+		val = acons (item, make_int (gustats.othervals[i]), val);
+		i++;
+	      }
+	  }
+      }
+    }
+
+  return Fnreverse (val);
+}
+
+#endif /* MEMORY_USAGE_STATS */
 
 /* Debugging aids.  */
 
@@ -4857,7 +5079,7 @@ returned number tends to be much greater than reality.
 }
 
 #ifdef ALLOC_TYPE_STATS
-DEFUN ("object-memory-usage", Fobject_memory_usage, 0, 0, 0, /*
+DEFUN ("total-object-memory-usage", Ftotal_object_memory_usage, 0, 0, 0, /*
 Return total number of bytes used for object storage in XEmacs.
 This may be helpful in debugging XEmacs's memory usage.
 See also `consing-since-gc' and `object-memory-usage-stats'.
@@ -4900,7 +5122,6 @@ recompute_funcall_allocation_flag (void)
     need_to_signal_post_gc;
 }
 
-
 int
 object_dead_p (Lisp_Object obj)
 {
@@ -4913,7 +5134,7 @@ object_dead_p (Lisp_Object obj)
 	  (EXTENTP  (obj) && !EXTENT_LIVE_P  (XEXTENT  (obj))));
 }
 
-#ifdef MEMORY_USAGE_STATS
+#ifdef ALLOC_TYPE_STATS
 
 /* Attempt to determine the actual amount of space that is used for
    the block allocated starting at PTR, supposedly of size "CLAIMED_SIZE".
@@ -4949,7 +5170,7 @@ object_dead_p (Lisp_Object obj)
 
 Bytecount
 malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
-		       struct overhead_stats *stats)
+		       struct usage_stats *stats)
 {
   Bytecount orig_claimed_size = claimed_size;
 
@@ -5007,25 +5228,60 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 }
 
 #ifndef NEW_GC
-Bytecount
-fixed_type_block_overhead (Bytecount size)
+static Bytecount
+fixed_type_block_overhead (Bytecount size, Bytecount per_block)
 {
-  Bytecount per_block = TYPE_ALLOC_SIZE (cons, unsigned char);
   Bytecount overhead = 0;
   Bytecount storage_size = malloced_storage_size (0, per_block, 0);
   while (size >= per_block)
     {
       size -= per_block;
-      overhead += sizeof (void *) + per_block - storage_size;
+      overhead += storage_size - per_block;
     }
   if (rand () % per_block < size)
-    overhead += sizeof (void *) + per_block - storage_size;
+    overhead += storage_size - per_block;
   return overhead;
 }
 #endif /* not NEW_GC */
-#endif /* MEMORY_USAGE_STATS */
+
+Bytecount
+lisp_object_storage_size (Lisp_Object obj, struct usage_stats *ustats)
+{
+#ifndef NEW_GC
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
+#endif /* not NEW_GC */
+  Bytecount size = lisp_object_size (obj);
+
+#ifdef NEW_GC
+  return mc_alloced_storage_size (size, ustats);
+#else
+  if (imp->frob_block_p)
+    {
+      Bytecount overhead =
+	/* #### Always using cons_block is incorrect but close; only
+	   string_chars_block is significantly different in size, and
+	   it won't ever be seen in this function */
+	fixed_type_block_overhead (size, sizeof (struct cons_block));
+      if (ustats)
+	{
+	  ustats->was_requested += size;
+	  ustats->malloc_overhead += overhead;
+	}
+      return size + overhead;
+    }
+  else
+    return malloced_storage_size (XPNTR (obj), size, ustats);
+#endif
+}
+
+#endif /* ALLOC_TYPE_STATS */
 
 
+/************************************************************************/
+/*                            Initialization                            */
+/************************************************************************/
+
 /* Initialization */
 static void
 common_init_alloc_early (void)
@@ -5055,6 +5311,7 @@ common_init_alloc_early (void)
 #ifndef NEW_GC
   init_string_chars_alloc ();
   init_string_alloc ();
+  /* #### Is it intentional that this is called twice? --ben */
   init_string_chars_alloc ();
   init_cons_alloc ();
   init_symbol_alloc ();
@@ -5163,6 +5420,15 @@ init_alloc_early (void)
 #endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
 }
 
+static void
+reinit_alloc_objects_early (void)
+{
+  OBJECT_HAS_METHOD (string, getprop);
+  OBJECT_HAS_METHOD (string, putprop);
+  OBJECT_HAS_METHOD (string, remprop);
+  OBJECT_HAS_METHOD (string, plist);
+}
+
 void
 reinit_alloc_early (void)
 {
@@ -5170,6 +5436,7 @@ reinit_alloc_early (void)
 #ifndef NEW_GC
   init_lcrecord_lists ();
 #endif /* not NEW_GC */
+  reinit_alloc_objects_early ();
 }
 
 void
@@ -5184,18 +5451,6 @@ init_alloc_once_early (void)
   }
 
   dump_add_opaque (lrecord_uid_counter, sizeof (lrecord_uid_counter));
-
-  INIT_LISP_OBJECT (cons);
-  INIT_LISP_OBJECT (vector);
-  INIT_LISP_OBJECT (string);
-#ifdef NEW_GC
-  INIT_LISP_OBJECT (string_indirect_data);
-  INIT_LISP_OBJECT (string_direct_data);
-#endif /* NEW_GC */
-#ifndef NEW_GC
-  INIT_LISP_OBJECT (lcrecord_list);
-  INIT_LISP_OBJECT (free);
-#endif /* not NEW_GC */
 
   staticpros = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros, 1410); /* merely a small optimization */
@@ -5220,12 +5475,36 @@ init_alloc_once_early (void)
 #else /* not NEW_GC */
   init_lcrecord_lists ();
 #endif /* not NEW_GC */
+
+  INIT_LISP_OBJECT (cons);
+  INIT_LISP_OBJECT (vector);
+  INIT_LISP_OBJECT (string);
+
+#ifdef NEW_GC
+  INIT_LISP_OBJECT (string_indirect_data);
+  INIT_LISP_OBJECT (string_direct_data);
+#endif /* NEW_GC */
+#ifndef NEW_GC
+  INIT_LISP_OBJECT (lcrecord_list);
+  INIT_LISP_OBJECT (free);
+#endif /* not NEW_GC */
+
+  reinit_alloc_objects_early ();
 }
 
 void
 syms_of_alloc (void)
 {
   DEFSYMBOL (Qgarbage_collecting);
+
+#ifdef MEMORY_USAGE_STATS
+  DEFSYMBOL (Qobject_actually_requested);
+  DEFSYMBOL (Qobject_malloc_overhead);
+  DEFSYMBOL (Qother_memory_actually_requested);
+  DEFSYMBOL (Qother_memory_malloc_overhead);
+  DEFSYMBOL (Qother_memory_dynarr_overhead);
+  DEFSYMBOL (Qother_memory_gap_overhead);
+#endif /* MEMORY_USAGE_STATS */
 
   DEFSUBR (Fcons);
   DEFSUBR (Flist);
@@ -5242,8 +5521,11 @@ syms_of_alloc (void)
   DEFSUBR (Fpurecopy);
 #ifdef ALLOC_TYPE_STATS
   DEFSUBR (Fobject_memory_usage_stats);
-  DEFSUBR (Fobject_memory_usage);
+  DEFSUBR (Ftotal_object_memory_usage);
 #endif /* ALLOC_TYPE_STATS */
+#ifdef MEMORY_USAGE_STATS
+  DEFSUBR (Fobject_memory_usage);
+#endif /* MEMORY_USAGE_STATS */
   DEFSUBR (Fgarbage_collect);
 #if 0
   DEFSUBR (Fmemory_limit);
@@ -5254,6 +5536,14 @@ syms_of_alloc (void)
   DEFSUBR (Fvalgrind_leak_check);
   DEFSUBR (Fvalgrind_quick_leak_check);
 #endif
+}
+
+void
+reinit_vars_of_alloc (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  compute_memusage_stats_length ();
+#endif /* MEMORY_USAGE_STATS */
 }
 
 void

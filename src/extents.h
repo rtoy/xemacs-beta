@@ -238,7 +238,7 @@ void sledgehammer_extent_check (Lisp_Object obj);
 
 #ifdef MEMORY_USAGE_STATS
 int compute_buffer_extent_usage (struct buffer *b,
-				 struct overhead_stats *ovstats);
+				 struct usage_stats *ustats);
 #endif
 
 #endif /* INCLUDED_extents_h_ */

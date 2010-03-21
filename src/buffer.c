@@ -1752,76 +1752,51 @@ the normal hook `change-major-mode-hook'.
 
 struct buffer_stats
 {
-  int text;
-  int markers;
-  int extents;
-  int other;
+  struct usage_stats u;
+  Bytecount text;
+  Bytecount markers;
+  Bytecount extents;
 };
 
 static Bytecount
-compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
+compute_buffer_text_usage (struct buffer *b, struct usage_stats *ustats)
 {
-  int was_requested = b->text->z - 1;
-  Bytecount gap = b->text->gap_size + b->text->end_gap_size;
-  Bytecount malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+  Bytecount was_requested, gap, malloc_use;
 
-  ovstats->gap_overhead    += gap;
-  ovstats->was_requested   += was_requested;
-  ovstats->malloc_overhead += malloc_use - (was_requested + gap);
+  /* Killed buffer? */
+  if (!b->text)
+    return 0;
+
+  /* Indirect buffer shares its text with someone else, so don't double-
+     count the text */
+  if (b->base_buffer)
+    return 0;
+
+  was_requested = b->text->z - 1;
+  gap = b->text->gap_size + b->text->end_gap_size;
+  malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+
+  ustats->gap_overhead    += gap;
+  ustats->was_requested   += was_requested;
+  ustats->malloc_overhead += malloc_use - (was_requested + gap);
   return malloc_use;
 }
 
 static void
 compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
-		      struct overhead_stats *ovstats)
+		      struct usage_stats *ustats)
 {
-  xzero (*stats);
-  stats->other   += lisp_object_storage_size (wrap_buffer (b), ovstats);
-  stats->text    += compute_buffer_text_usage   (b, ovstats);
-  stats->markers += compute_buffer_marker_usage (b, ovstats);
-  stats->extents += compute_buffer_extent_usage (b, ovstats);
+  stats->text    += compute_buffer_text_usage   (b, ustats);
+  stats->markers += compute_buffer_marker_usage (b, ustats);
+  stats->extents += compute_buffer_extent_usage (b, ustats);
 }
 
-DEFUN ("buffer-memory-usage", Fbuffer_memory_usage, 1, 1, 0, /*
-Return stats about the memory usage of buffer BUFFER.
-The values returned are in the form of an alist of usage types and byte
-counts.  The byte counts attempt to encompass all the memory used
-by the buffer (separate from the memory logically associated with a
-buffer or frame), including internal structures and any malloc()
-overhead associated with them.  In practice, the byte counts are
-underestimated because certain memory usage is very hard to determine
-\(e.g. the amount of memory used inside the Xt library or inside the
-X server) and because there is other stuff that might logically
-be associated with a window, buffer, or frame (e.g. window configurations,
-glyphs) but should not obviously be included in the usage counts.
-
-Multiple slices of the total memory usage may be returned, separated
-by a nil.  Each slice represents a particular view of the memory, a
-particular way of partitioning it into groups.  Within a slice, there
-is no overlap between the groups of memory, and each slice collectively
-represents all the memory concerned.
-*/
-       (buffer))
+static void
+buffer_memory_usage (Lisp_Object buffer, struct generic_usage_stats *gustats)
 {
-  struct buffer_stats stats;
-  struct overhead_stats ovstats;
-  Lisp_Object val = Qnil;
+  struct buffer_stats *stats = (struct buffer_stats *) gustats;
 
-  CHECK_BUFFER (buffer); /* dead buffers should be allowed, no? */
-  xzero (ovstats);
-  compute_buffer_usage (XBUFFER (buffer), &stats, &ovstats);
-
-  val = acons (Qtext,    make_int (stats.text),    val);
-  val = acons (Qmarkers, make_int (stats.markers), val);
-  val = acons (Qextents, make_int (stats.extents), val);
-  val = acons (Qother,   make_int (stats.other),   val);
-  val = Fcons (Qnil, val);
-  val = acons (Qactually_requested, make_int (ovstats.was_requested),   val);
-  val = acons (Qmalloc_overhead,    make_int (ovstats.malloc_overhead), val);
-  val = acons (Qgap_overhead,       make_int (ovstats.gap_overhead),    val);
-  val = acons (Qdynarr_overhead,    make_int (ovstats.dynarr_overhead), val);
-
-  return Fnreverse (val);
+  compute_buffer_usage (XBUFFER (buffer), stats, &stats->u);
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -1905,6 +1880,14 @@ The values returned are in the form of a plist of properties and values.
 
 
 void
+buffer_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (buffer, memory_usage);
+#endif
+}
+
+void
 syms_of_buffer (void)
 {
   INIT_LISP_OBJECT (buffer);
@@ -1969,9 +1952,6 @@ syms_of_buffer (void)
   DEFSUBR (Fbarf_if_buffer_read_only);
   DEFSUBR (Fbury_buffer);
   DEFSUBR (Fkill_all_local_variables);
-#ifdef MEMORY_USAGE_STATS
-  DEFSUBR (Fbuffer_memory_usage);
-#endif
 #if defined (DEBUG_XEMACS) && defined (MULE)
   DEFSUBR (Fbuffer_char_byte_converion_info);
   DEFSUBR (Fstring_char_byte_converion_info);
@@ -1994,6 +1974,11 @@ void
 vars_of_buffer (void)
 {
   /* This function can GC */
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (buffer, memusage_stats_list, list3 (Qtext, Qmarkers, Qextents));
+#endif /* MEMORY_USAGE_STATS */
+
   staticpro (&QSFundamental);
   staticpro (&QSscratch);
 

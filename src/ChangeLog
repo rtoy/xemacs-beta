@@ -1,3 +1,306 @@
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (init_lrecord_stats):
+	* alloc.c (free_normal_lisp_object):
+	* alloc.c (struct):
+	* alloc.c (clear_lrecord_stats):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (COUNT_FROB_BLOCK_USAGE):
+	* alloc.c (COPY_INTO_LRECORD_STATS):
+	* alloc.c (sweep_strings):
+	* alloc.c (UNMARK_string):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (object_dead_p):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* emacs.c (main_1):
+	* lisp.h:
+	* lrecord.h:
+	Export lisp_object_storage_size() and malloced_storage_size() even
+	when not MEMORY_USAGE_STATS, to get the non-MEMORY_USAGE_STATS
+	build to compile.
+
+	Don't export fixed_type_block_overhead() any more.
+
+	Some code cleanup, rearrangement, add some section headers.
+
+	Clean up various bugs especially involving computation of overhead
+	and double-counting certain usage in total_gc_usage.  Add
+	statistics computing the overhead used by all types.  Don't add a
+	special entry for string headers in the object-memory-usage-stats
+	because it's already present as just "string".  But do count the
+	overhead used by long strings.  Don't try to call the
+	memory_usage() methods when NEW_GC because there's nowhere obvious
+	in the sweep stage to make the calls.
+	
+	* marker.c (compute_buffer_marker_usage):
+	Just use lisp_object_storage_size() rather than trying to
+	reimplement it.
+
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (compute_memusage_stats_length):
+	Call new memory-usage mechanism at sweep time to compute extra
+	memory utilization for all objects.  Add up the values element-by-
+	element to get an aggregrate set of statistics, where each is the
+	sum of the values of a single statistic across different objects
+	of the same type.  At end of sweep time, call
+	finish_object_memory_usage_stats() to add up all the aggreggrate
+	stats that are related to non-Lisp memory storage to compute
+	a single value, and add it to the list of values returned by
+	`garbage-collect' and `object-memory-usage-stats'.
+	
+	* buffer.c (compute_buffer_text_usage):
+	Don't crash on buffers without text (killed buffers?) and don't
+	double-count indirect buffers.
+	
+	* elhash.c:
+	* elhash.c (hash_table_objects_create):
+	* elhash.c (vars_of_elhash):
+	* symsinit.h:
+	Add memory-usage method to count the size of `hentries'.
+	
+	* emacs.c (main_1):
+	Call new functions in elhash.c, frame.c at init.
+	
+	* frame.c:
+	* frame.c (compute_frame_usage):
+	* frame.c (frame_memory_usage):
+	* frame.c (frame_objects_create):
+	* symsinit.h:
+	Add memory-usage method to count gutter display structures,
+	subwindow exposures.
+	
+	* gc.c (gc_finish):
+	* lisp.h:
+	Declare finish_object_memory_usage_stats(), call it in gc_finish().
+	
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (INIT_MEMORY_USAGE_STATS):
+	New value in implementation struct to track number of non-Lisp-memory
+	statistics.  Computed in alloc.c.
+	
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (listu):
+	* alloc.c (listn):
+	* alloc.c (Fobject_memory_usage_stats):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (Ftotal_object_memory_usage):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (reinit_alloc_objects_early):
+	* alloc.c (reinit_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (reinit_vars_of_alloc):
+	* buffer.c:
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_text_usage):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (buffer_memory_usage):
+	* buffer.c (buffer_objects_create):
+	* buffer.c (syms_of_buffer):
+	* buffer.c (vars_of_buffer):
+	* console-impl.h (struct console_methods):
+	* dynarr.c (Dynarr_memory_usage):
+	* emacs.c (main_1):
+	* events.c (clear_event_resource):
+	* extents.c:
+	* extents.c (compute_buffer_extent_usage):
+	* extents.c (extent_objects_create):
+	* extents.h:
+	* faces.c:
+	* faces.c (compute_face_cachel_usage):
+	* faces.c (face_objects_create):
+	* faces.h:
+	* general-slots.h:
+	* glyphs.c:
+	* glyphs.c (compute_glyph_cachel_usage):
+	* glyphs.c (glyph_objects_create):
+	* glyphs.h:
+	* lisp.h:
+	* lisp.h (struct usage_stats):
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE):
+	* lrecord.h (DEFINE_DUMPABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (MAKE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (MAKE_MODULE_LISP_OBJECT):
+	* lrecord.h (INIT_LISP_OBJECT):
+	* lrecord.h (INIT_MODULE_LISP_OBJECT):
+	* lrecord.h (UNDEF_LISP_OBJECT):
+	* lrecord.h (UNDEF_MODULE_LISP_OBJECT):
+	* lrecord.h (DECLARE_LISP_OBJECT):
+	* lrecord.h (DECLARE_MODULE_API_LISP_OBJECT):
+	* lrecord.h (DECLARE_MODULE_LISP_OBJECT):
+	* lstream.c:
+	* lstream.c (syms_of_lstream):
+	* lstream.c (vars_of_lstream):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	* mule-charset.c:
+	* mule-charset.c (struct charset_stats):
+	* mule-charset.c (compute_charset_usage):
+	* mule-charset.c (charset_memory_usage):
+	* mule-charset.c (mule_charset_objects_create):
+	* mule-charset.c (syms_of_mule_charset):
+	* mule-charset.c (vars_of_mule_charset):
+	* redisplay.c:
+	* redisplay.c (compute_rune_dynarr_usage):
+	* redisplay.c (compute_display_block_dynarr_usage):
+	* redisplay.c (compute_glyph_block_dynarr_usage):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* redisplay.c (compute_line_start_cache_dynarr_usage):
+	* redisplay.h:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	* scrollbar.h:
+	* symbols.c:
+	* symbols.c (reinit_symbol_objects_early):
+	* symbols.c (init_symbols_once_early):
+	* symbols.c (reinit_symbols_early):
+	* symbols.c (defsymbol_massage_name_1):
+	* symsinit.h:
+	* ui-gtk.c:
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	* ui-gtk.c (emacs_gtk_object_putprop):
+	* ui-gtk.c (ui_gtk_objects_create):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* unicode.c (compute_from_unicode_table_size):
+	* unicode.c (compute_to_unicode_table_size):
+	* window.c:
+	* window.c (struct window_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_memory_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	* window.h:
+	Redo memory-usage mechanism, make it general; add way of dynamically
+	initializing Lisp object types -- OBJECT_HAS_METHOD(), similar to
+	CONSOLE_HAS_METHOD().
+
+	(1) Create OBJECT_HAS_METHOD(), OBJECT_HAS_PROPERTY() etc. for
+	specifying that a Lisp object type has a particular method or
+	property.  Call such methods with OBJECT_METH, MAYBE_OBJECT_METH,
+	OBJECT_METH_OR_GIVEN; retrieve properties with OBJECT_PROPERTY.
+	Methods that formerly required a DEFINE_*GENERAL_LISP_OBJECT() to
+	specify them (getprop, putprop, remprop, plist, disksave) now
+	instead use the dynamic-method mechanism.  The main benefit of
+	this is that new methods or properties can be added without
+	requiring that the declaration statements of all existing methods
+	be modified.  We have to make the `struct lrecord_implementation'
+	non-const, but I don't think this should have any effect on speed --
+	the only possible method that's really speed-critical is the
+	mark method, and we already extract those out into a separate
+	(non-const) array for increased cache locality.
+
+	Object methods need to be reinitialized after pdump, so we put
+	them in separate functions such as face_objects_create(),
+	extent_objects_create() and call them appropriately from emacs.c
+	The only current object property (`memusage_stats_list') that
+	objects can specify is a Lisp object and gets staticpro()ed so it
+	only needs to be set during dump time, but because it references
+	symbols that might not exist in a syms_of_() function, we
+	initialize it in vars_of_().  There is also an object property
+	(`num_extra_memusage_stats') that is automatically initialized based
+	on `memusage_stats_list'; we do that in reinit_vars_of_alloc(),
+	which is called after all vars_of_() functions are called.
+
+	`disksaver' method was renamed `disksave' to correspond with the
+	name normally given to the function (e.g. disksave_lstream()).
+
+	(2) Generalize the memory-usage mechanism in `buffer-memory-usage',
+	`window-memory-usage', `charset-memory-usage' into an object-type-
+	specific mechanism called by a single function
+	`object-memory-usage'.  (Former function `object-memory-usage'
+	renamed to `total-object-memory-usage').  Generalize the mechanism
+	of different "slices" so that we can have different "classes" of
+	memory described and different "slices" onto each class; `t'
+	separates classes, `nil' separates slices.  Currently we have
+	three classes defined: the memory of an object itself,
+	non-Lisp-object memory associated with the object (e.g. arrays or
+	dynarrs stored as fields in the object), and Lisp-object memory
+	associated with the object (other internal Lisp objects stored in
+	the object).  This isn't completely finished yet and we might need
+	to further separate the "other internal Lisp objects" class into
+	two classes.
+
+	The memory-usage mechanism uses a `struct usage_stats' (renamed
+	from `struct overhead_stats') to describe a malloc-view onto a set
+	of allocated memory (listing how much was requested and various
+	types of overhead) and a more general `struct generic_usage_stats'
+	(with a `struct usage_stats' in it) to hold all statistics about
+	object memory.  `struct generic_usage_stats' contains an array of
+	32 Bytecounts, which are statistics of unspecified semantics.  The
+	intention is that individual types declare a corresponding struct
+	(e.g. `struct window_stats') with the same structure but with
+	specific fields in place of the array, corresponding to specific
+	statistics.  The number of such statistics is an object property
+	computed from the list of tags (Lisp symbols describing the
+	statistics) stored in `memusage_stats_list'.  The idea here is to
+	allow particular object types to customize the number and
+	semantics of the statistics where completely avoiding consing.
+	This doesn't matter so much yet, but the intention is to have the
+	memory usage of all objects computed at the end of GC, at the same
+	time as other statistics are currently computed.  The values for
+	all statistics for a single type would be added up to compute
+	aggregate values for all objects of a specific type.  To make this
+	efficient, we can't allow any memory allocation at all.
+
+	(3) Create some additional functions for creating lists that
+	specify the elements directly as args rather than indirectly through
+	an array: listn() (number of args given), listu() (list terminated
+	by Qunbound).
+
+	(4) Delete a bit of remaining unused C window_config stuff, also
+	unused lrecord_type_popup_data.
+	
+	
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* tests.c:
+	* tests.c (Ftest_data_format_conversion):
+	Need to GCPRO newly created objects or we'll eventually get
+	a crash due to occurrence of call2().
+
 2010-03-16  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (make_lcrecord_list):
@@ -148,18 +451,6 @@
 
 	(7) Delete some custom print methods that were identical to
 	external_object_printer().
-
-2010-03-15  Ben Wing  <ben@xemacs.org>
-
-	* extents.c:
-	* extents.c (soe_dump):
-	* extents.c (soe_insert):
-	* extents.c (soe_delete):
-	* extents.c (soe_move):
-	* extents.c (extent_fragment_update):
-	* extents.c (print_extent_1):
-	* extents.c (print_extent):
-	* extents.c (vars_of_extents):
 
 2010-03-12  Ben Wing  <ben@xemacs.org>
 
