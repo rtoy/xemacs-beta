@@ -1592,8 +1592,6 @@ enum font_specifier_matchspec_stages
 /*                misc             */
 /* ------------------------------- */
 
-#ifdef MEMORY_USAGE_STATS
-
 /* This structure is used to keep statistics on the amount of memory
    in use.
 
@@ -1613,15 +1611,19 @@ enum font_specifier_matchspec_stages
    the fields to 0, and add any existing values to whatever was there
    before; this way, you can get a cumulative effect. */
 
-struct overhead_stats
+struct usage_stats
 {
-  int was_requested;
-  int malloc_overhead;
-  int dynarr_overhead;
-  int gap_overhead;
+  Bytecount was_requested;
+  Bytecount malloc_overhead;
+  Bytecount dynarr_overhead;
+  Bytecount gap_overhead;
 };
 
-#endif /* MEMORY_USAGE_STATS */
+struct generic_usage_stats
+{
+  struct usage_stats u;
+  Bytecount othervals[32];
+};
 
 
 /************************************************************************/
@@ -2175,8 +2177,8 @@ Dynarr_set_length_and_zero (void *d, Elemcount len)
 #define Dynarr_reset(d) Dynarr_set_lengthr (d, 0)
 
 #ifdef MEMORY_USAGE_STATS
-struct overhead_stats;
-Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
+struct usage_stats;
+Bytecount Dynarr_memory_usage (void *d, struct usage_stats *stats);
 #endif
 
 /************* Adding/deleting elements to/from a dynarr *************/
@@ -4779,12 +4781,15 @@ MODULE_API Lisp_Object list2 (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object,
 			      Lisp_Object);
-MODULE_API Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-			      Lisp_Object);
-MODULE_API Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+MODULE_API Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object,
 			      Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object listn (int numargs, ...);
+MODULE_API Lisp_Object listu (Lisp_Object, ...);
 DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
+void finish_object_memory_usage_stats (void);
 extern int purify_flag;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];
@@ -4830,10 +4835,7 @@ extern int need_to_signal_post_gc;
 extern Lisp_Object Qpost_gc_hook, Qgarbage_collecting;
 void recompute_funcall_allocation_flag (void);
 
-#ifdef MEMORY_USAGE_STATS
-Bytecount malloced_storage_size (void *, Bytecount, struct overhead_stats *);
-Bytecount fixed_type_block_overhead (Bytecount);
-#endif
+Bytecount malloced_storage_size (void *, Bytecount, struct usage_stats *);
 
 #ifdef EVENT_DATA_AS_OBJECTS
 Lisp_Object make_key_data (void);
@@ -5926,7 +5928,7 @@ void unchain_marker (Lisp_Object);
 Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
 Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 #ifdef MEMORY_USAGE_STATS
-int compute_buffer_marker_usage (struct buffer *, struct overhead_stats *);
+Bytecount compute_buffer_marker_usage (struct buffer *, struct usage_stats *);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);
@@ -6601,9 +6603,9 @@ extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
 Bytecount compute_from_unicode_table_size (Lisp_Object charset,
-					      struct overhead_stats *stats);
+					   struct usage_stats *stats);
 Bytecount compute_to_unicode_table_size (Lisp_Object charset,
-					    struct overhead_stats *stats);
+					 struct usage_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
 
 /* Defined in undo.c */

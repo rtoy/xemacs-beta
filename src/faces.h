@@ -281,7 +281,7 @@ face_index merge_face_list_to_cache_index (struct window *w,
 
 #ifdef MEMORY_USAGE_STATS
 int compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
-			       struct overhead_stats *ovstats);
+			       struct usage_stats *ustats);
 #endif /* MEMORY_USAGE_STATS */
 
 EXFUN (Fface_name, 1);

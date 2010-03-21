@@ -280,6 +280,28 @@ hash_table_hash (Lisp_Object hash_table, int UNUSED (depth))
   return XHASH_TABLE (hash_table)->count;
 }
 
+#ifdef MEMORY_USAGE_STATS
+
+struct hash_table_stats
+{
+  struct usage_stats u;
+  Bytecount hentries;
+};
+
+static void
+hash_table_memory_usage (Lisp_Object hashtab,
+			 struct generic_usage_stats *gustats)
+{
+  Lisp_Hash_Table *ht = XHASH_TABLE (hashtab);
+  struct hash_table_stats *stats = (struct hash_table_stats *) gustats;
+  stats->hentries +=
+    malloced_storage_size (ht->hentries,
+			   sizeof (htentry) * (ht->size + 1),
+			   &stats->u);
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
 
 /* Printing hash tables.
 
@@ -1805,6 +1827,14 @@ The value is returned as (HIGH . LOW).
 /************************************************************************/
 
 void
+hash_table_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (hash_table, memory_usage);
+#endif
+}
+
+void
 syms_of_elhash (void)
 {
   DEFSUBR (Fhash_table_p);
@@ -1851,6 +1881,15 @@ syms_of_elhash (void)
   DEFKEYWORD (Q_rehash_threshold);
   DEFKEYWORD (Q_weakness);
   DEFKEYWORD (Q_type); /* obsolete */
+}
+
+void
+vars_of_elhash (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (hash_table, memusage_stats_list, list1 (intern ("hash-entries")));
+#endif /* MEMORY_USAGE_STATS */
 }
 
 void

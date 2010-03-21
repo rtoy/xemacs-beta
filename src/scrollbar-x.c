@@ -697,7 +697,7 @@ x_update_frame_scrollbars (struct frame *f)
 static int
 x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				    struct scrollbar_instance *inst,
-				    struct overhead_stats *ovstats)
+				    struct usage_stats *ustats)
 {
   int total = 0;
 
@@ -706,9 +706,9 @@ x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
       struct x_scrollbar_data *data =
 	(struct x_scrollbar_data *) inst->scrollbar_data;
 
-      total += malloced_storage_size (data, sizeof (*data), ovstats);
+      total += malloced_storage_size (data, sizeof (*data), ustats);
       total += malloced_storage_size (data->name, 1 + strlen (data->name),
-				      ovstats);
+				      ustats);
       inst = inst->next;
     }
 

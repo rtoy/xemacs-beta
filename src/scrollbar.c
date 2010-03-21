@@ -260,17 +260,17 @@ release_scrollbar_instance (struct frame *f, int vertical,
 int
 compute_scrollbar_instance_usage (struct device *d,
 				  struct scrollbar_instance *inst,
-				  struct overhead_stats *ovstats)
+				  struct usage_stats *ustats)
 {
   int total = 0;
 
   if (HAS_DEVMETH_P(d, compute_scrollbar_instance_usage))
-    total += DEVMETH (d, compute_scrollbar_instance_usage, (d, inst, ovstats));
+    total += DEVMETH (d, compute_scrollbar_instance_usage, (d, inst, ustats));
 
   while (inst)
     {
       total += lisp_object_storage_size (wrap_scrollbar_instance (inst),
-					 ovstats);
+					 ustats);
       inst = inst->next;
     }
 

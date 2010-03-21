@@ -9665,50 +9665,50 @@ mark_subwindows_state_changed (void)
 /***************************************************************************/
 
 static int
-compute_rune_dynarr_usage (rune_dynarr *dyn, struct overhead_stats *ovstats)
+compute_rune_dynarr_usage (rune_dynarr *dyn, struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 static int
 compute_display_block_dynarr_usage (display_block_dynarr *dyn,
-				    struct overhead_stats *ovstats)
+				    struct usage_stats *ustats)
 {
   int total, i;
 
   if (!dyn)
     return 0;
 
-  total = Dynarr_memory_usage (dyn, ovstats);
+  total = Dynarr_memory_usage (dyn, ustats);
   for (i = 0; i < Dynarr_largest (dyn); i++)
-    total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ovstats);
+    total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ustats);
 
   return total;
 }
 
 static int
 compute_glyph_block_dynarr_usage (glyph_block_dynarr *dyn,
-				  struct overhead_stats *ovstats)
+				  struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 int
 compute_display_line_dynarr_usage (display_line_dynarr *dyn,
-				   struct overhead_stats *ovstats)
+				   struct usage_stats *ustats)
 {
   int total, i;
 
   if (!dyn)
     return 0;
 
-  total = Dynarr_memory_usage (dyn, ovstats);
+  total = Dynarr_memory_usage (dyn, ustats);
   for (i = 0; i < Dynarr_largest (dyn); i++)
     {
       struct display_line *dl = &Dynarr_at (dyn, i);
-      total += compute_display_block_dynarr_usage(dl->display_blocks, ovstats);
-      total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ovstats);
-      total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ovstats);
+      total += compute_display_block_dynarr_usage(dl->display_blocks, ustats);
+      total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ustats);
+      total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ustats);
     }
 
   return total;
@@ -9716,9 +9716,9 @@ compute_display_line_dynarr_usage (display_line_dynarr *dyn,
 
 int
 compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
-				       struct overhead_stats *ovstats)
+				       struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 #endif /* MEMORY_USAGE_STATS */

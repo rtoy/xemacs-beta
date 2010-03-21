@@ -3818,14 +3818,11 @@ static const struct memory_description glyph_description[] = {
   { XD_END }
 };
 
-DEFINE_DUMPABLE_GENERAL_LISP_OBJECT ("glyph", glyph,
-				     mark_glyph, print_glyph, 0,
-				     glyph_equal, glyph_hash,
-				     glyph_description,
-				     glyph_getprop, glyph_putprop,
-				     glyph_remprop, glyph_plist,
-				     0 /* no disksaver */,
-				     Lisp_Glyph);
+DEFINE_DUMPABLE_LISP_OBJECT ("glyph", glyph,
+			     mark_glyph, print_glyph, 0,
+			     glyph_equal, glyph_hash,
+			     glyph_description,
+			     Lisp_Glyph);
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -4477,12 +4474,12 @@ mark_glyph_cachels_as_clean (struct window* w)
 
 int
 compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
-			    struct overhead_stats *ovstats)
+			    struct usage_stats *ustats)
 {
   int total = 0;
 
   if (glyph_cachels)
-    total += Dynarr_memory_usage (glyph_cachels, ovstats);
+    total += Dynarr_memory_usage (glyph_cachels, ustats);
 
   return total;
 }
@@ -5185,6 +5182,15 @@ disable_glyph_animated_timeout (int i)
 /*****************************************************************************
  *                              initialization                               *
  *****************************************************************************/
+
+void
+glyph_objects_create (void)
+{
+  OBJECT_HAS_METHOD (glyph, getprop);
+  OBJECT_HAS_METHOD (glyph, putprop);
+  OBJECT_HAS_METHOD (glyph, remprop);
+  OBJECT_HAS_METHOD (glyph, plist);
+}
 
 void
 syms_of_glyphs (void)

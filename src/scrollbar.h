@@ -67,7 +67,7 @@ void update_window_scrollbars (struct window *w,
 #ifdef MEMORY_USAGE_STATS
 int compute_scrollbar_instance_usage (struct device *d,
 				      struct scrollbar_instance *inst,
-				      struct overhead_stats *ovstats);
+				      struct usage_stats *ustats);
 #endif
 
 extern Lisp_Object Vscrollbar_width, Vscrollbar_height;

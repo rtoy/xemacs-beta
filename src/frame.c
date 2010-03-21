@@ -4064,11 +4064,66 @@ icon_glyph_changed (Lisp_Object UNUSED (glyph), Lisp_Object UNUSED (property),
 }
 
 
+#ifdef MEMORY_USAGE_STATS
+
+struct frame_stats
+{
+  struct usage_stats u;
+  Bytecount gutter;
+  Bytecount expose_ignore;
+  Bytecount other;
+};
+
+static void
+compute_frame_usage (struct frame *f, struct frame_stats *stats,
+		     struct usage_stats *ustats)
+{
+  enum edge_pos edge;
+  EDGE_POS_LOOP (edge)
+    {
+      stats->gutter +=
+	compute_display_line_dynarr_usage (f->current_display_lines[edge],
+					   ustats);
+      stats->gutter +=
+	compute_display_line_dynarr_usage (f->desired_display_lines[edge],
+					   ustats);
+    }
+  {
+    struct expose_ignore *e;
+
+    for (e = f->subwindow_exposures; e; e = e->next)
+      stats->expose_ignore += malloced_storage_size (e, sizeof (*e), ustats);
+  }
+
+#if 0
+  stats->other += FRAMEMETH (f, frame_memory_usage, (f, ustats));
+#endif
+}
+
+static void
+frame_memory_usage (Lisp_Object frame, struct generic_usage_stats *gustats)
+{
+  struct frame_stats *stats = (struct frame_stats *) gustats;
+
+  compute_frame_usage (XFRAME (frame), stats, &stats->u);
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
 /***************************************************************************/
 /*									   */
 /*                              initialization                             */
 /*									   */
 /***************************************************************************/
+
+void
+frame_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (frame, memory_usage);
+#endif
+}
 
 void
 init_frame (void)
@@ -4216,6 +4271,12 @@ syms_of_frame (void)
 void
 vars_of_frame (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (frame, memusage_stats_list, list3 (Qgutter, intern ("expose-ignore"),
+					Qother));
+#endif /* MEMORY_USAGE_STATS */
+
   /* */
   Vframe_being_created = Qnil;
   staticpro (&Vframe_being_created);

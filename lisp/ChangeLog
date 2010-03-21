@@ -1,3 +1,22 @@
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	Further changes to correspond with changes in the C code;
+	add an additional column showing the overhead used with each type,
+	and add it into the grand total memory usage.
+
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-object-memory-usage-stats):
+	Rewrite to take into account non-lisp-storage statistics
+	returned by garbage-collect-1 and friends.
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	Rewrite to take into account API changes in memory-usage functions.
+
 2010-03-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (notany, notevery):

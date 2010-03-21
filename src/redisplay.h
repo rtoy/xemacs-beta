@@ -777,9 +777,9 @@ void redisplay_glyph_changed (Lisp_Object glyph, Lisp_Object property,
 
 #ifdef MEMORY_USAGE_STATS
 int compute_display_line_dynarr_usage (display_line_dynarr *dyn,
-				       struct overhead_stats *ovstats);
+				       struct usage_stats *ustats);
 int compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
-					   struct overhead_stats *ovstats);
+					   struct usage_stats *ustats);
 #endif
 
 

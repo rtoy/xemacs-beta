@@ -126,7 +126,7 @@ EMACS_INT mc_finalize_for_disksave (void);
 /* Returns the real size, including overhead, which is actually alloced
    for an object with given claimed_size. */
 Bytecount mc_alloced_storage_size (Bytecount claimed_size,
-				   struct overhead_stats *stats);
+				   struct usage_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
 
 

@@ -147,6 +147,7 @@ void syms_of_intl_win32 (void);
 void syms_of_intl_x (void);
 void syms_of_keymap (void);
 void syms_of_lread (void);
+void syms_of_lstream (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
 void syms_of_mc_alloc (void);
@@ -201,6 +202,21 @@ void syms_of_widget (void);
 void syms_of_widget_accessors (void);
 void syms_of_win32 (void);
 void syms_of_window (void);
+
+/* Initialize dynamic properties of objects (i.e. those properties not
+   initialized statically through a DEFINE_*_LISP_OBJECT declaration).
+   Dump time and post-pdump-load-time. */
+
+void buffer_objects_create (void);
+void extent_objects_create (void);
+void face_objects_create (void);
+void frame_objects_create (void);
+void glyph_objects_create (void);
+void hash_table_objects_create (void);
+void lstream_objects_create (void);
+void mule_charset_objects_create (void);
+void ui_gtk_objects_create (void);
+void window_objects_create (void);
 
 /* Initialize the console types (dump-time only for console_type_(),
    post-pdump-load-time only for reinit_). */
@@ -329,6 +345,7 @@ void init_provide_once (void);
 
 void vars_of_abbrev (void);
 void vars_of_alloc (void);
+void reinit_vars_of_alloc (void);
 void vars_of_balloon_x (void);
 void vars_of_buffer (void);
 void reinit_vars_of_buffer (void);
@@ -366,6 +383,7 @@ void vars_of_doc (void);
 void vars_of_dragdrop (void);
 void vars_of_editfns (void);
 EXTERN_C void vars_of_eldap (void);
+void vars_of_elhash (void);
 void vars_of_emacs (void);
 void vars_of_eval (void);
 void reinit_vars_of_eval (void);
