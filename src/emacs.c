@@ -1767,7 +1767,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       glyph_objects_create ();
       hash_table_objects_create ();
       lstream_objects_create ();
+#ifdef MULE
       mule_charset_objects_create ();
+#endif
 #ifdef HAVE_GTK
       ui_gtk_objects_create ();
 #endif
