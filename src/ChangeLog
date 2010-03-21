@@ -1,3 +1,31 @@
+2010-03-21  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (c_readonly):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (inc_lrecord_stats):
+	* alloc.c (dec_lrecord_stats):
+	* alloc.c (pluralize_word):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (Fgarbage_collect):
+	* mc-alloc.c:
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	No functionality change here.  Collect the allocations-statistics
+	code that was scattered throughout alloc.c into one place.  Add
+	remaining section headings so that all sections have headings
+	clearly identifying the start of the section and its purpose.
+	Expose mc_alloced_storage_size() even when not MEMORY_USAGE_STATS;
+	this fixes build problems and is related to the export of
+	lisp_object_storage_size() and malloced_storage_size() when
+	non-MEMORY_USAGE_STATS in the previous change set.
+
 2010-03-20  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
