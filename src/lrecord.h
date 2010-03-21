@@ -2022,10 +2022,8 @@ struct usage_stats;
 MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
 MODULE_API void zero_sized_lisp_object (Lisp_Object obj, Bytecount size);
 MODULE_API void zero_nonsized_lisp_object (Lisp_Object obj);
-#ifdef MEMORY_USAGE_STATS
 Bytecount lisp_object_storage_size (Lisp_Object obj,
 				    struct usage_stats *ustats);
-#endif /* MEMORY_USAGE_STATS */
 void free_normal_lisp_object (Lisp_Object obj);
 
 

@@ -1592,8 +1592,6 @@ enum font_specifier_matchspec_stages
 /*                misc             */
 /* ------------------------------- */
 
-#ifdef MEMORY_USAGE_STATS
-
 /* This structure is used to keep statistics on the amount of memory
    in use.
 
@@ -1626,8 +1624,6 @@ struct generic_usage_stats
   struct usage_stats u;
   Bytecount othervals[32];
 };
-
-#endif /* MEMORY_USAGE_STATS */
 
 
 /************************************************************************/
@@ -4839,10 +4835,7 @@ extern int need_to_signal_post_gc;
 extern Lisp_Object Qpost_gc_hook, Qgarbage_collecting;
 void recompute_funcall_allocation_flag (void);
 
-#ifdef MEMORY_USAGE_STATS
 Bytecount malloced_storage_size (void *, Bytecount, struct usage_stats *);
-Bytecount fixed_type_block_overhead (Bytecount);
-#endif
 
 #ifdef EVENT_DATA_AS_OBJECTS
 Lisp_Object make_key_data (void);
@@ -5935,7 +5928,7 @@ void unchain_marker (Lisp_Object);
 Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
 Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 #ifdef MEMORY_USAGE_STATS
-int compute_buffer_marker_usage (struct buffer *, struct usage_stats *);
+Bytecount compute_buffer_marker_usage (struct buffer *, struct usage_stats *);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);

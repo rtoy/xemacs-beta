@@ -1,3 +1,45 @@
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (init_lrecord_stats):
+	* alloc.c (free_normal_lisp_object):
+	* alloc.c (struct):
+	* alloc.c (clear_lrecord_stats):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (COUNT_FROB_BLOCK_USAGE):
+	* alloc.c (COPY_INTO_LRECORD_STATS):
+	* alloc.c (sweep_strings):
+	* alloc.c (UNMARK_string):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (object_dead_p):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* emacs.c (main_1):
+	* lisp.h:
+	* lrecord.h:
+	Export lisp_object_storage_size() and malloced_storage_size() even
+	when not MEMORY_USAGE_STATS, to get the non-MEMORY_USAGE_STATS
+	build to compile.
+
+	Don't export fixed_type_block_overhead() any more.
+
+	Some code cleanup, rearrangement, add some section headers.
+
+	Clean up various bugs especially involving computation of overhead
+	and double-counting certain usage in total_gc_usage.  Add
+	statistics computing the overhead used by all types.  Don't add a
+	special entry for string headers in the object-memory-usage-stats
+	because it's already present as just "string".  But do count the
+	overhead used by long strings.  Don't try to call the
+	memory_usage() methods when NEW_GC because there's nowhere obvious
+	in the sweep stage to make the calls.
+	
+	* marker.c (compute_buffer_marker_usage):
+	Just use lisp_object_storage_size() rather than trying to
+	reimplement it.
+
 2010-03-19  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

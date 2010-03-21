@@ -113,6 +113,15 @@ int lrecord_type_count = lrecord_type_last_built_in_type;
    UID is only 20 bits in old-GC, and 22 in NEW_GC.) */
 int lrecord_uid_counter[countof (lrecord_implementations_table)];
 
+#ifndef USE_KKCC
+/* Object marker functions are in the lrecord_implementation structure.
+   But copying them to a parallel array is much more cache-friendly.
+   This hack speeds up (garbage-collect) by about 5%. */
+Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Object);
+#endif /* not USE_KKCC */
+
+struct gcpro *gcprolist;
+
 /* Non-zero means we're in the process of doing the dump */
 int purify_flag;
 
@@ -517,7 +526,7 @@ static struct
 } lrecord_stats [countof (lrecord_implementations_table)];
 
 void
-init_lrecord_stats ()
+init_lrecord_stats (void)
 {
   xzero (lrecord_stats);
 }
@@ -844,37 +853,6 @@ zero_nonsized_lisp_object (Lisp_Object obj)
 
   zero_sized_lisp_object (obj, lisp_object_size (obj));
 }
-
-#ifdef MEMORY_USAGE_STATS
-
-Bytecount
-lisp_object_storage_size (Lisp_Object obj, struct usage_stats *ustats)
-{
-#ifndef NEW_GC
-  const struct lrecord_implementation *imp =
-    XRECORD_LHEADER_IMPLEMENTATION (obj);
-#endif /* not NEW_GC */
-  Bytecount size = lisp_object_size (obj);
-
-#ifdef NEW_GC
-  return mc_alloced_storage_size (size, ustats);
-#else
-  if (imp->frob_block_p)
-    {
-      Bytecount overhead = fixed_type_block_overhead (size);
-      if (ustats)
-	{
-	  ustats->was_requested += size;
-	  ustats->malloc_overhead += overhead;
-	}
-      return size + overhead;
-    }
-  else
-    return malloced_storage_size (XPNTR (obj), size, ustats);
-#endif
-}
-
-#endif /* MEMORY_USAGE_STATS */
 
 void
 free_normal_lisp_object (Lisp_Object obj)
@@ -3390,17 +3368,8 @@ Does not copy symbols.
 
 
 /************************************************************************/
-/*			   Garbage Collection				*/
+/*                           Staticpro, MCpro                           */
 /************************************************************************/
-
-#ifndef USE_KKCC
-/* Object marker functions are in the lrecord_implementation structure.
-   But copying them to a parallel array is much more cache-friendly.
-   This hack speeds up (garbage-collect) by about 5%. */
-Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Object);
-#endif /* not USE_KKCC */
-
-struct gcpro *gcprolist;
 
 /* We want the staticpro list relocated, but not the pointers found
    therein, because they refer to locations in the global data segment, not
@@ -3539,10 +3508,6 @@ unstaticpro_nodump (Lisp_Object *varaddress)
 
 #endif /* not DEBUG_XEMACS */
 
-
-
-
-
 #ifdef NEW_GC
 static const struct memory_description mcpro_description_1[] = {
   { XD_END }
@@ -3604,47 +3569,102 @@ mcpro (Lisp_Object varaddress)
 #endif /* not DEBUG_XEMACS */
 #endif /* NEW_GC */
 
+
+/************************************************************************/
+/*                        Allocation Statistics                         */
+/************************************************************************/
 
 #ifndef NEW_GC
 static int gc_count_num_short_string_in_use;
 static Bytecount gc_count_string_total_size;
 static Bytecount gc_count_short_string_total_size;
+static Bytecount gc_count_long_string_storage_including_overhead;
 
 /* static int gc_count_total_records_used, gc_count_records_total_size; */
 
 
-/* stats on lcrecords in use - kinda kludgy */
+/* stats on objects in use */
 
 static struct
 {
-  int instances_in_use;
-  int bytes_in_use;
-  int instances_freed;
-  int bytes_freed;
-  int instances_on_free_list;
-  int bytes_on_free_list;
+  Elemcount instances_in_use;
+  Bytecount bytes_in_use;
+  Bytecount bytes_in_use_overhead;
+  Elemcount instances_freed;
+  Bytecount bytes_freed;
+  Bytecount bytes_freed_overhead;
+  Elemcount instances_on_free_list;
+  Bytecount bytes_on_free_list;
+  Bytecount bytes_on_free_list_overhead;
 #ifdef MEMORY_USAGE_STATS
   Bytecount nonlisp_bytes_in_use;
   struct generic_usage_stats stats;
 #endif
 } lrecord_stats [countof (lrecord_implementations_table)];
 
+static void
+clear_lrecord_stats (void)
+{
+  xzero (lrecord_stats);
+  gc_count_num_short_string_in_use = 0;
+  gc_count_string_total_size = 0;
+  gc_count_short_string_total_size = 0;
+  gc_count_long_string_storage_including_overhead = 0;
+}
+
+/* Keep track of extra statistics for strings -- length of the string
+   characters for short and long strings, number of short and long strings. */
+static void
+tick_string_stats (Lisp_String *p, int from_sweep)
+{
+  Bytecount size = p->size_;
+  gc_count_string_total_size += size;
+  if (!BIG_STRING_SIZE_P (size))
+    {
+      gc_count_short_string_total_size += size;
+      gc_count_num_short_string_in_use++;
+    }
+  else
+    gc_count_long_string_storage_including_overhead +=
+      malloced_storage_size (p->data_, p->size_, NULL);
+  /* During the sweep stage, we count the total number of strings in use.
+     This gets those not stored in pdump storage.  For pdump storage, we
+     need to bump the number of strings in use so as to get an accurate
+     count of all strings in use (pdump or not).  But don't do this when
+     called from the sweep stage, or we will double-count. */
+  if (!from_sweep)
+    gc_count_num_string_in_use++;
+}
+
+/* As objects are sweeped, we record statistics about their memory usage.
+   Currently, all lcrecords are processed this way as well as any frob-block
+   objects that were saved and restored as a result of the pdump process.
+   (See pdump_objects_unmark().) Other frob-block objects do NOT get their
+   statistics noted this way -- instead, as the frob blocks are swept,
+   COPY_INTO_LRECORD_STATS() is called, and notes statistics about the
+   frob blocks. */
+
 void
 tick_lrecord_stats (const struct lrecord_header *h,
 		    enum lrecord_alloc_status status)
 {
   int type_index = h->type;
-  Bytecount sz = detagged_lisp_object_size (h);
+  Bytecount obj = wrap_pointer_1 (h);
+  Bytecount sz = lisp_object_size (obj);
+  Bytecount sz_with_overhead = lisp_object_storage_size (obj, NULL);
+  Bytecount overhead = sz_with_overhead - sz;
 
   switch (status)
     {
     case ALLOC_IN_USE:
       lrecord_stats[type_index].instances_in_use++;
       lrecord_stats[type_index].bytes_in_use += sz;
+      lrecord_stats[type_index].bytes_in_use_overhead += overhead;
+      if (STRINGP (obj))
+	tick_string_stats (XSTRING (obj), 0);
 #ifdef MEMORY_USAGE_STATS
       {
 	struct generic_usage_stats stats;
-	Lisp_Object obj = wrap_pointer_1 (h);
 	if (HAS_OBJECT_METH_P (obj, memory_usage))
 	  {
 	    int i;
@@ -3661,10 +3681,12 @@ tick_lrecord_stats (const struct lrecord_header *h,
     case ALLOC_FREE:
       lrecord_stats[type_index].instances_freed++;
       lrecord_stats[type_index].bytes_freed += sz;
+      lrecord_stats[type_index].bytes_freed_overhead += overhead;
       break;
     case ALLOC_ON_FREE_LIST:
       lrecord_stats[type_index].instances_on_free_list++;
       lrecord_stats[type_index].bytes_on_free_list += sz;
+      lrecord_stats[type_index].bytes_on_free_list_overhead += overhead;
       break;
     default:
       ABORT ();
@@ -3682,9 +3704,14 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
   else
     tick_lrecord_stats (h, free_p ? ALLOC_FREE : ALLOC_IN_USE);
 }
+
 #endif /* not NEW_GC */
 
 
+/************************************************************************/
+/*                 Garbage Collection -- Sweep/Compact                  */
+/************************************************************************/
+
 #ifndef NEW_GC
 /* Free all unmarked records */
 static void
@@ -3745,19 +3772,26 @@ sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
   /* *total = total_size; */
 }
 
+static Bytecount fixed_type_block_overhead (Bytecount size,
+					    Bytecount per_block);
+
 /* And the Lord said: Thou shalt use the `c-backslash-region' command
    to make macros prettier. */
 
 #define COUNT_FROB_BLOCK_USAGE(type)					\
   EMACS_INT s = 0;							\
+  EMACS_INT s_overhead = 0;						\
   struct type##_block *x = current_##type##_block;			\
   while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
+  s_overhead = fixed_type_block_overhead (s, sizeof (struct type##_block)); \
   DO_NOTHING
 
 #define COPY_INTO_LRECORD_STATS(type)				\
 do {								\
   COUNT_FROB_BLOCK_USAGE (type);				\
   lrecord_stats[lrecord_type_##type].bytes_in_use += s;		\
+  lrecord_stats[lrecord_type_##type].bytes_in_use_overhead +=	\
+    s_overhead;							\
   lrecord_stats[lrecord_type_##type].instances_on_free_list +=	\
     gc_count_num_##type##_freelist;				\
   lrecord_stats[lrecord_type_##type].instances_in_use +=	\
@@ -4423,20 +4457,12 @@ debug_string_purity_print (Lisp_Object p)
 static void
 sweep_strings (void)
 {
-  int num_small_used = 0;
-  Bytecount num_small_bytes = 0, num_bytes = 0;
   int debug = debug_string_purity;
 
 #define UNMARK_string(ptr) do {				\
     Lisp_String *p = (ptr);				\
-    Bytecount size = p->size_;				\
     UNMARK_RECORD_HEADER (&(p->u.lheader));		\
-    num_bytes += size;					\
-    if (!BIG_STRING_SIZE_P (size))			\
-      {							\
-	num_small_bytes += size;			\
-        num_small_used++;				\
-      }							\
+    tick_string_stats (p, 1);				\
     if (debug)						\
       debug_string_purity_print (wrap_string (p));	\
   } while (0)
@@ -4447,10 +4473,6 @@ sweep_strings (void)
   } while (0)
 
   SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);
-
-  gc_count_num_short_string_in_use = num_small_used;
-  gc_count_string_total_size = num_bytes;
-  gc_count_short_string_total_size = num_small_bytes;
 }
 #endif /* not NEW_GC */
 
@@ -4460,7 +4482,7 @@ gc_sweep_1 (void)
 {
   /* Reset all statistics to 0.  They will be incremented when
      sweeping lcrecords, frob-block lrecords and dumped objects. */
-  xzero (lrecord_stats);
+  clear_lrecord_stats ();
 
   /* Free all unmarked records.  Do this at the very beginning,
      before anything else, so that the finalize methods can safely
@@ -4542,8 +4564,11 @@ gc_sweep_1 (void)
 #endif
 }
 #endif /* not NEW_GC */
+
 
-/* Clearing for disksave. */
+/************************************************************************/
+/*           "Disksave Finalization" -- Preparing for Dumping           */
+/************************************************************************/
 
 void
 disksave_object_finalization (void)
@@ -4679,7 +4704,13 @@ pluralize_and_append (Ascbyte *buf, const Ascbyte *name, const Ascbyte *suffix)
 void
 finish_object_memory_usage_stats (void)
 {
-#ifdef MEMORY_USAGE_STATS
+  /* Here we add up the aggregate values for each statistic, previously
+     computed during tick_lrecord_stats(), to get a single combined value
+     of non-Lisp memory usage for all objects of each type.  We can't
+     do this if NEW_GC because nothing like tick_lrecord_stats() gets
+     called -- instead, statistics are computed when objects are allocated,
+     which is too early to be calling the memory_usage() method. */
+#if defined (MEMORY_USAGE_STATS) && !defined (NEW_GC)
   int i;
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
@@ -4692,7 +4723,7 @@ finish_object_memory_usage_stats (void)
 	      lrecord_stats[i].stats.othervals[j];
 	}
     }
-#endif /* MEMORY_USAGE_STATS */
+#endif /* defined (MEMORY_USAGE_STATS) && !defined (NEW_GC) */
 }
 
 static Lisp_Object
@@ -4733,38 +4764,6 @@ object_memory_usage_stats (int set_total_gc_usage)
 
 #else /* not NEW_GC */
 
-#define HACK_O_MATIC(type, name, pl)		\
-do {						\
-  COUNT_FROB_BLOCK_USAGE (type);		\
-  tgu_val += s;					\
-  (pl) = gc_plist_hack ((name), s, (pl));	\
-} while (0)
-
-#define FROB(type)				\
-do {						\
-  COUNT_FROB_BLOCK_USAGE (type);		\
-  tgu_val += s;					\
-} while (0)
-
-  FROB (extent);
-  FROB (event);
-  FROB (marker);
-  FROB (float);
-#ifdef HAVE_BIGNUM
-  FROB (bignum);
-#endif /* HAVE_BIGNUM */
-#ifdef HAVE_RATIO
-  FROB (ratio);
-#endif /* HAVE_RATIO */
-#ifdef HAVE_BIGFLOAT
-  FROB (bigfloat);
-#endif /* HAVE_BIGFLOAT */
-  FROB (compiled_function);
-  FROB (symbol);
-  FROB (cons);
-
-#undef FROB
-
   for (i = 0; i < lrecord_type_count; i++)
     {
       if (lrecord_stats[i].bytes_in_use != 0
@@ -4774,9 +4773,13 @@ do {						\
           Ascbyte buf[255];
           const Ascbyte *name = lrecord_implementations_table[i]->name;
 
+          sprintf (buf, "%s-storage-overhead", name);
+          pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use_overhead, pl);
+	  tgu_val += lrecord_stats[i].bytes_in_use_overhead;
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lrecord_stats[i].bytes_in_use, pl);
 	  tgu_val += lrecord_stats[i].bytes_in_use;
+#ifdef MEMORY_USAGE_STATS
 	  if (lrecord_stats[i].nonlisp_bytes_in_use)
 	    {
 	      sprintf (buf, "%s-non-lisp-storage", name);
@@ -4784,6 +4787,7 @@ do {						\
 				  pl);
 	      tgu_val += lrecord_stats[i].nonlisp_bytes_in_use;
 	    }
+#endif /* MEMORY_USAGE_STATS */
 	  pluralize_and_append (buf, name, "-freed");
           if (lrecord_stats[i].instances_freed != 0)
             pl = gc_plist_hack (buf, lrecord_stats[i].instances_freed, pl);
@@ -4796,21 +4800,32 @@ do {						\
         }
     }
 
-  HACK_O_MATIC (string, "string-header-storage", pl);
+  pl = gc_plist_hack ("long-string-chars-storage-overhead",
+                      gc_count_long_string_storage_including_overhead -
+		      (gc_count_string_total_size
+		       - gc_count_short_string_total_size), pl);
+  pl = gc_plist_hack ("long-string-chars-storage",
+                      gc_count_string_total_size
+		      - gc_count_short_string_total_size, pl);
+  do
+    {
+      COUNT_FROB_BLOCK_USAGE (string_chars);
+      tgu_val += s + s_overhead;
+      pl = gc_plist_hack ("short-string-chars-storage-overhead", s_overhead, pl);
+      pl = gc_plist_hack ("short-string-chars-storage", s, pl);
+    }
+  while (0);
+
   pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
 		      - gc_count_short_string_total_size, pl);
-  HACK_O_MATIC (string_chars, "short-string-storage", pl);
   pl = gc_plist_hack ("short-strings-total-length",
                       gc_count_short_string_total_size, pl);
-  pl = gc_plist_hack ("strings-free", gc_count_num_string_freelist, pl);
   pl = gc_plist_hack ("long-strings-used",
                       gc_count_num_string_in_use
 		      - gc_count_num_short_string_in_use, pl);
   pl = gc_plist_hack ("short-strings-used",
                       gc_count_num_short_string_in_use, pl);
-
-#undef HACK_O_MATIC
 
 #endif /* NEW_GC */
 
@@ -5107,7 +5122,6 @@ recompute_funcall_allocation_flag (void)
     need_to_signal_post_gc;
 }
 
-
 int
 object_dead_p (Lisp_Object obj)
 {
@@ -5120,7 +5134,7 @@ object_dead_p (Lisp_Object obj)
 	  (EXTENTP  (obj) && !EXTENT_LIVE_P  (XEXTENT  (obj))));
 }
 
-#ifdef MEMORY_USAGE_STATS
+#ifdef ALLOC_TYPE_STATS
 
 /* Attempt to determine the actual amount of space that is used for
    the block allocated starting at PTR, supposedly of size "CLAIMED_SIZE".
@@ -5214,25 +5228,60 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 }
 
 #ifndef NEW_GC
-Bytecount
-fixed_type_block_overhead (Bytecount size)
+static Bytecount
+fixed_type_block_overhead (Bytecount size, Bytecount per_block)
 {
-  Bytecount per_block = TYPE_ALLOC_SIZE (cons, unsigned char);
   Bytecount overhead = 0;
   Bytecount storage_size = malloced_storage_size (0, per_block, 0);
   while (size >= per_block)
     {
       size -= per_block;
-      overhead += sizeof (void *) + per_block - storage_size;
+      overhead += storage_size - per_block;
     }
   if (rand () % per_block < size)
-    overhead += sizeof (void *) + per_block - storage_size;
+    overhead += storage_size - per_block;
   return overhead;
 }
 #endif /* not NEW_GC */
-#endif /* MEMORY_USAGE_STATS */
+
+Bytecount
+lisp_object_storage_size (Lisp_Object obj, struct usage_stats *ustats)
+{
+#ifndef NEW_GC
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
+#endif /* not NEW_GC */
+  Bytecount size = lisp_object_size (obj);
+
+#ifdef NEW_GC
+  return mc_alloced_storage_size (size, ustats);
+#else
+  if (imp->frob_block_p)
+    {
+      Bytecount overhead =
+	/* #### Always using cons_block is incorrect but close; only
+	   string_chars_block is significantly different in size, and
+	   it won't ever be seen in this function */
+	fixed_type_block_overhead (size, sizeof (struct cons_block));
+      if (ustats)
+	{
+	  ustats->was_requested += size;
+	  ustats->malloc_overhead += overhead;
+	}
+      return size + overhead;
+    }
+  else
+    return malloced_storage_size (XPNTR (obj), size, ustats);
+#endif
+}
+
+#endif /* ALLOC_TYPE_STATS */
 
 
+/************************************************************************/
+/*                            Initialization                            */
+/************************************************************************/
+
 /* Initialization */
 static void
 common_init_alloc_early (void)

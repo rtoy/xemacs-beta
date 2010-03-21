@@ -159,9 +159,7 @@
 			     (princ (format fmt
 					    (match-string 1 (symbol-name stat))
 					    num)))
-			   (when (eq stat 'long-strings-total-length)
-			     (incf total num)
-			     (princ (format fmt stat num))))
+			   )
 		       (sixth (garbage-collect)))
 	    (princ "\n")
 	    (princ (format fmt "total" total))
@@ -186,77 +184,83 @@
   (garbage-collect)
   (let ((buffer "*object memory usage statistics*")
 	(plist (object-memory-usage-stats))
-	(fmt "%-30s%10s%10s%18s\n")
+	(fmt "%-30s%10s%10s%10s%18s\n")
 	(grandtotal 0)
 	begin)
   (flet ((show-stats (match-string)
-	(princ (format fmt "object" "count" "storage" "non-Lisp storage"))
-	(princ (make-string 68 ?-))
+	(princ (format fmt "object" "count" "storage" "overhead"
+		       "non-Lisp storage"))
+	(princ (make-string 78 ?-))
 	(princ "\n")
 	(let ((total-use 0)
 	      (total-non-lisp-use 0)
 	      (total-use-overhead 0)
+	      (total-use-with-overhead 0)
 	      (total-count 0))
 	  (map-plist 
 	   #'(lambda (stat num)
-	       (when (and (string-match match-string
-					(symbol-name stat))
-			  (let ((match (match-string
-					1 (symbol-name stat))))
-			    (or (< (length match) 9)
-				(not (equal (substring match -9)
-					    "-non-lisp")))))
-		 (let ((storage-use num)
-		       (storage-use-overhead 
-			(plist-get 
-			 plist 
-			 (intern (concat (match-string 1 (symbol-name stat))
-					 "-storage-including-overhead"))))
-		       (non-lisp-storage
-			(or (plist-get
-			     plist
-			     (intern (concat (match-string 1
-							   (symbol-name stat))
-					     "-non-lisp-storage")))
-			    0))
-
-		       (storage-count 
-			(or (loop for str in '("s-used" "es-used" "-used")
-			      for val = (plist-get
-					 plist
-					 (intern
-					  (concat (match-string
-						   1 (symbol-name stat)) 
-						  str)))
-			      if val
-			      return val)
-			    (plist-get 
-			     plist 
-			     (intern 
-			      (concat (substring
-				       (match-string 1 (symbol-name stat))
-				       0 -1)
-				      "ies-used")))
-			    )))
-		   (incf total-use storage-use)
-		   (incf total-use-overhead (if storage-use-overhead 
-						storage-use-overhead 
-					      storage-use))
-		   (incf total-non-lisp-use non-lisp-storage)
-		   (incf total-count (or storage-count 0))
-		   (and (> storage-use 0)
-			(princ (format fmt
-				       (match-string 1 (symbol-name stat)) 
-				       (or storage-count "unknown")
-				       storage-use
-				       non-lisp-storage))))))
+	       (let ((symmatch
+		      (and (string-match match-string (symbol-name stat))
+			   (match-string 1 (symbol-name stat)))))
+		 (when (and symmatch (or (< (length symmatch) 9)
+					 (not (equal (substring symmatch -9)
+						     "-non-lisp"))))
+		   (let* ((storage-use num)
+			  (storage-use-overhead
+			   (or (plist-get 
+				plist 
+				(intern (concat symmatch
+						"-storage-overhead")))
+			       0))
+			  (storage-use-with-overhead
+			   (or (plist-get 
+				plist 
+				(intern (concat
+					 symmatch
+					 "-storage-including-overhead")))
+			       (+ storage-use storage-use-overhead)))
+			  (storage-use-overhead
+			   (- storage-use-with-overhead storage-use))
+			  (non-lisp-storage
+			   (or (plist-get
+				plist
+				(intern (concat symmatch
+						"-non-lisp-storage")))
+			       0))
+			  (storage-count 
+			   (or (loop for str in '("s-used" "es-used" "-used")
+				 for val = (plist-get
+					    plist
+					    (intern
+					     (concat symmatch str)))
+				 if val
+				 return val)
+			       (plist-get 
+				plist 
+				(intern 
+				 (concat (substring symmatch 0 -1)
+					 "ies-used")))
+			       )))
+		     (incf total-use storage-use)
+		     (incf total-use-overhead storage-use-overhead)
+		     (incf total-use-with-overhead storage-use-with-overhead)
+		     (incf total-non-lisp-use non-lisp-storage)
+		     (incf total-count (or storage-count 0))
+		     (and (> storage-use-with-overhead 0)
+			  (princ (format fmt symmatch 
+					 (or storage-count "unknown")
+					 storage-use
+					 storage-use-overhead
+					 non-lisp-storage)))))))
 	   plist)
 	  (princ "\n")
 	  (princ (format fmt "total" 
-			 total-count total-use-overhead total-non-lisp-use))
-	  (incf grandtotal total-use-overhead)
+			 total-count total-use total-use-overhead
+			 total-non-lisp-use))
+	  (incf grandtotal total-use-with-overhead)
+	  (incf grandtotal total-non-lisp-use)
           (when-fboundp #'sort-numeric-fields
-            (sort-numeric-fields -2
+            (sort-numeric-fields -3
                                  (save-excursion
                                    (goto-char begin)
                                    (forward-line 3)
