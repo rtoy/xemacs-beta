@@ -1,3 +1,8 @@
+2010-03-22  Vin Shelton  <acs@xemacs.org>
+
+	* window.c (vars_of_window): Move HAVE_SCROLLBARS test so the code
+	can compile under Visual Studio 6.
+
 2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (tick_lrecord_stats):

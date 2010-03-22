@@ -5516,14 +5516,20 @@ void
 vars_of_window (void)
 {
 #ifdef MEMORY_USAGE_STATS
+#ifdef HAVE_SCROLLBARS
   OBJECT_HAS_PROPERTY
     (window, memusage_stats_list,
      listu (Qface_cache, Qglyph_cache,
 	    Qline_start_cache, Qother_redisplay,
-#ifdef HAVE_SCROLLBARS
 	    Qscrollbar_instances,
-#endif
 	    Qunbound));
+#else
+  OBJECT_HAS_PROPERTY
+    (window, memusage_stats_list,
+     listu (Qface_cache, Qglyph_cache,
+	    Qline_start_cache, Qother_redisplay,
+	    Qunbound));
+#endif
 #endif /* MEMORY_USAGE_STATS */
 
   DEFVAR_BOOL ("scroll-on-clipped-lines", &scroll_on_clipped_lines /*
