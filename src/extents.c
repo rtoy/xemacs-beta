@@ -321,8 +321,6 @@ typedef struct stack_of_extents
 /*           map-extents           */
 /* ------------------------------- */
 
-typedef int (*map_extents_fun) (EXTENT extent, void *arg);
-
 typedef int Endpoint_Index;
 
 #define memxpos_to_startind(x, start_open) \
@@ -402,15 +400,6 @@ Lisp_Object Qpaste_function;
 
 static Lisp_Object canonicalize_extent_property (Lisp_Object prop,
 						 Lisp_Object value);
-
-typedef struct
-{
-  Lisp_Object key, value;
-} Lisp_Object_pair;
-typedef struct
-{
-  Dynarr_declare (Lisp_Object_pair);
-} Lisp_Object_pair_dynarr;
 
 static void extent_properties (EXTENT e, Lisp_Object_pair_dynarr *props);
 
@@ -1840,10 +1829,60 @@ map_extents_unwind (Lisp_Object obj)
    needs to be marked for garbage-collection, and a static array
    cannot be used because map_extents() needs to be reentrant).
    Furthermore, the results might be a little less sensible than
-   the logic below. */
+   the logic below.
 
 
-static void
+   The meaning of the flags are as follows:
+
+   ME_END_CLOSED
+   ME_START_OPEN
+   ME_ALL_EXTENTS_CLOSED
+   ME_ALL_EXTENTS_OPEN
+   ME_ALL_EXTENTS_CLOSED_OPEN
+   ME_ALL_EXTENTS_OPEN_CLOSED
+   ME_ALL_EXTENTS_MASK
+   ME_START_IN_REGION
+   ME_END_IN_REGION
+   ME_START_AND_END_IN_REGION
+   ME_START_OR_END_IN_REGION
+   ME_IN_REGION_MASK
+   ME_NEGATE_IN_REGION
+	These correspond to flags given to the Lisp `map-extents' function.
+
+   ME_INCLUDE_INTERNAL
+	#### Document me -- something to do with the "internal" extent used
+	to keep track of the endpoints when text might be modified.
+
+   ME_MIGHT_THROW
+	The mapping function might cause a non-local exit (e.g. signal an
+	error or exit using `throw').
+
+   ME_MIGHT_MODIFY_TEXT
+	The mapping function might modify the text of the buffer or string
+	in question.
+
+   ME_MIGHT_MODIFY_EXTENTS
+	The mapping function might modify the text of the buffer or string
+	in question.
+
+   ME_MIGHT_MOVE_SOE
+	The mapping function might cause the SOE (stack of extents) to move.
+	Basically, this means that soe_move() might be called, which happens
+	when `map-extents' or map_extents() is called recursively, or when
+	an extent fragment is updated (this is done by redisplay), or when
+	a function such as `next-extent-change' is called.  Generally, if
+	you call any function that involves searching for extents, or
+	that indirectly calls another function that searches for extents,
+	you might move the SOE.  When in doubt, specify this flag, as it
+	will guarantee correct results at the cost of some speed.
+
+   ME_MIGHT_CALL_ELISP
+	The mapping function might call Lisp.  Essentially this means that
+	any of the previous operations might happen.
+   */
+
+
+void
 map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 	     void *arg, Lisp_Object obj, EXTENT after,
 	     unsigned int flags)
@@ -4929,7 +4968,7 @@ list.
 */
        (extent, face))
 {
-  EXTENT e = decode_extent(extent, 0);
+  EXTENT e = decode_extent (extent, 0);
   Lisp_Object orig_face = face;
 
   /* retrieve the ancestor for efficiency and proper redisplay noting. */
