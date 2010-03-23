@@ -204,7 +204,7 @@ Lisp_Object
 case_table_char (Lisp_Object ch, Lisp_Object table)
 {
   Lisp_Object ct_char;
-  ct_char = get_char_table (XCHAR (ch), table);
+  ct_char = get_char_table_lisp (XCHAR (ch), table);
   if (NILP (ct_char))
     return ch;
   else
@@ -300,21 +300,22 @@ Return a new case table which is a copy of CASE-TABLE
 }
 
 static int
-compute_canon_mapper (Lisp_Object UNUSED (table), Ichar code, Lisp_Object val,
-		      void * arg)
+compute_canon_mapper (Lisp_Object UNUSED (table), Ichar code, void *val,
+		      void *arg)
 {
   Lisp_Object casetab = GET_LISP_FROM_VOID (arg);
   SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), code,
 		    TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
 				  TRT_TABLE_OF (XCASE_TABLE_UPCASE (casetab),
-						XCHAR (val))));
+						XCHAR (GET_LISP_FROM_VOID
+						       (val)))));
 
   return 0;
 }
 
 static int
 initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar code,
-			    Lisp_Object UNUSED (val), void * arg)
+			    void * UNUSED (val), void *arg)
 {
   Lisp_Object trt = GET_LISP_FROM_VOID (arg);
   SET_TRT_TABLE_OF (trt, code, code);
@@ -324,10 +325,10 @@ initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar code,
 
 static int
 compute_up_or_eqv_mapper (Lisp_Object UNUSED (table), Ichar code,
-			  Lisp_Object val, void * arg)
+			  void *val, void *arg)
 {
   Lisp_Object inverse = GET_LISP_FROM_VOID (arg);
-  Ichar toch = XCHAR (val);
+  Ichar toch = XCHAR (GET_LISP_FROM_VOID (val));
 
   if (code != toch)
     {

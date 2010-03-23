@@ -1,3 +1,115 @@
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (init_blank_chartab_tables_1):
+	* chartab.c (init_blank_chartab_tables):
+	* chartab.c (copy_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (struct ptemap):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (check_non_category_char_table):
+	* chartab.c (make_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fchar_table_default):
+	* chartab.c (Fget_char_table):
+	* chartab.c (check_valid_char_table_value):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (Fremove_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (Fmap_char_table):
+	* chartab.c (init_blank_category_chartab_tables):
+	* chartab.c (category_table_equal):
+	* chartab.c (category_table_hash):
+	* chartab.c (mark_category_table):
+	* chartab.c (print_category_table):
+	* chartab.c (Fmake_category_table):
+	* chartab.c (check_category_table):
+	* chartab.c (check_char_in_category):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	* chartab.c (Fcopy_category_table):
+	* chartab.c (struct slow_map_category_table_arg):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (Fmap_category_table):
+	* chartab.c (word_boundary_p):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (ALLOCATE_LEVEL_N_SUBTAB):
+	* chartab.h (FREE_ONE_SUBTAB):
+	* chartab.h (SUBTAB_EQ):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CATEGORY_DESIGNATORP):
+	* cmds.c:
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c:
+	* editfns.c (Ftranslate_region):
+	* elhash.c:
+	* elhash.c (print_hash_table_data):
+	* glyphs.c (display_table_entry):
+	* lisp.h:
+	* lrecord.h (enum lrecord_type):
+	* print.c:
+	* print.c (vars_of_print):
+	* rangetab.c (print_range_table):
+	* regex.c (re_match_2_internal):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.h:
+	Rewrite category tables to reduce memory usage.  Instead of a
+	regular char table with pointers to bit vectors, we now have a
+	category-table object holding a set of 12 special char tables,
+	each of which reserves only 8 bits instead of 32 or 64 for each
+	value, corresponding to 8 tags.  #### It might make sense to
+	reserve even less space per char table, but we'd have to do some
+	trickiness to stuff multiple values into a single byte.
+
+	Add a variable `print-table-nonreadably-length' controlling the
+	number of entries printed in char, range, and hash tables when
+	`print-readably' is nil; defaults to 20. (When `print-readably'
+	is t, we print everything out.)
+
+	Renames:
+	
+	get_char_table -> get_char_table_lisp
+	get_char_table_raw -> get_char_table_lisp_raw
+	get_char_table_1 -> get_char_table_lisp_1
+
+	We also add a new get_char_table and get_char_table_raw that
+	return a void * pointer, which holds either a Lisp_Object or
+	a bit array of 8 bits or whatever, for category char tables.
+
+	To handle these new category tables, we have two new object
+	types: category tables and category subtables (which sit at
+	the lowest level of the page tables inside a char table, to
+	hold the 8-bit-wide bit arrays).
+	
 2010-03-19  Ben Wing  <ben@xemacs.org>
 
 	* charset.h:

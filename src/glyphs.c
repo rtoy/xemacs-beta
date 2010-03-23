@@ -5057,12 +5057,12 @@ display_table_entry (Ichar ch, Lisp_Object face_table,
       else if (CHAR_TABLEP (table)
 	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_CHAR)
 	{
-	  return get_char_table (ch, table);
+	  return get_char_table_lisp (ch, table);
 	}
       else if (CHAR_TABLEP (table)
 	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_GENERIC)
 	{
-	  Lisp_Object gotit = get_char_table (ch, table);
+	  Lisp_Object gotit = get_char_table_lisp (ch, table);
 	  if (!NILP (gotit))
 	    return gotit;
 	  else

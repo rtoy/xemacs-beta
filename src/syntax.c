@@ -680,13 +680,13 @@ syntax table.
 Lisp_Object
 syntax_match (Lisp_Object syntax_table, Ichar ch)
 {
-  Lisp_Object code = get_char_table (ch, syntax_table);
+  Lisp_Object code = get_char_table_lisp (ch, syntax_table);
   Lisp_Object code2 = code;
 
   if (CONSP (code))
     code2 = XCAR (code);
   if (SYNTAX_FROM_CODE (XINT (code2)) == Sinherit)
-    code = get_char_table (ch, Vstandard_syntax_table);
+    code = get_char_table_lisp (ch, Vstandard_syntax_table);
 
   return CONSP (code) ? XCDR (code) : Qnil;
 }
@@ -2293,7 +2293,7 @@ copy_to_mirrortab (Lisp_Object UNUSED (table), Ichar ch,
   if (CONSP (val))
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
-    put_char_table_1 (mirrortab, ch, val);
+    put_char_table (mirrortab, ch, val);
   return 0;
 }
 
@@ -2306,10 +2306,10 @@ copy_if_not_already_present (Lisp_Object UNUSED (table), Ichar ch,
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
     {
-      Lisp_Object existing = get_char_table_raw (ch, mirrortab);
+      Lisp_Object existing = get_char_table_lisp_raw (ch, mirrortab);
       if (UNBOUNDP (existing))
 	/* nothing at all */
-	put_char_table_1 (mirrortab, ch, val);
+	put_char_table (mirrortab, ch, val);
     }
 
   return 0;

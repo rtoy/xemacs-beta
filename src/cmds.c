@@ -1,6 +1,6 @@
 /* Simple built-in editing commands.
    Copyright (C) 1985, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -444,7 +444,7 @@ internal_self_insert (Ichar c1, int noautofill)
         }
     }
   if ((CHAR_TABLEP (Vauto_fill_chars)
-       ? !NILP (get_char_table (c1, Vauto_fill_chars))
+       ? !NILP (get_char_table_lisp (c1, Vauto_fill_chars))
        : (c1 == ' ' || c1 == '\n'))
       && !noautofill
       && !NILP (buf->auto_fill_function))
@@ -553,6 +553,6 @@ A char-table for characters which invoke auto-filling.
 Such characters have value t in this table.
 */);
   Vauto_fill_chars = Fmake_char_table (Qgeneric);
-  put_char_table_1 (Vauto_fill_chars, ' ', Qt);
-  put_char_table_1 (Vauto_fill_chars, '\n', Qt);
+  put_char_table (Vauto_fill_chars, ' ', Qt);
+  put_char_table (Vauto_fill_chars, '\n', Qt);
 }
