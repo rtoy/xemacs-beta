@@ -1,7 +1,7 @@
 /* Lisp functions pertaining to editing.
    Copyright (C) 1985-1987, 1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1935,7 +1935,7 @@ Returns the number of substitutions performed.
 
       for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	{
-	  Lisp_Object replacement = get_char_table (oc, table);
+	  Lisp_Object replacement = get_char_table_lisp (oc, table);
 	retry2:
 	  if (CHAR_OR_CHAR_INTP (replacement))
 	    {

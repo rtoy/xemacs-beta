@@ -594,16 +594,122 @@ MODULE_API void Dynarr_delete_many (void *d, Elemcount pos, Elemcount len);
 
 /* Delete all elements that are numerically equal to EL. */
 
-#define Dynarr_delete_object(d, el)		\
-do						\
-{						\
-  REGISTER int i;				\
-  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
-    {						\
-      if (el == Dynarr_at (d, i))		\
-	Dynarr_delete_many (d, i, 1);		\
-    }						\
+#define Dynarr_delete_object(d, el)				\
+do								\
+{								\
+  REGISTER int _ddo_i;						\
+  for (_ddo_i = Dynarr_length (d) - 1; _ddo_i >= 0; _ddo_i--)	\
+    {								\
+      if (el == Dynarr_at (d, _ddo_i))				\
+	Dynarr_delete_many (d, _ddo_i, 1);			\
+    }								\
 } while (0)
+
+/* Assuming DST and SRC are dynarrs of the same type, make DST a copy
+   of SRC. */
+#define Dynarr_copy(dst, src)						\
+do									\
+{									\
+  Dynarr_reset (dst);							\
+  Dynarr_add_many (dst, Dynarr_begin (src), Dynarr_length (src));	\
+} while (0)
+
+
+/************************************************************************/
+/**                     Stynarrs (static Dynarrs)                      **/
+/************************************************************************/
+
+/* A static Dynarr is, besides being an oxymoron, a combination of a
+   small static array with a Dynarr.  Typical size of the small array is
+   4 or 6.  This is used when you rarely expect your array to grow beyond
+   a certain size, but you would like to allow for this.  Stretchy arrays
+   are sometimes used for this, but they require that your whole data object
+   be resized, and handling them with pdump is difficult.  Typically a static
+   Dynarr is declared as one field of a struct, or it can be a local array.
+
+   #### It might be simpler to use *either* the static array *or* the
+   Dynarr, but not both at the same time, as we do currently.  We'd have
+   to either modify the pdump handling to involve a union, or zero out
+   the elements in the static array when we switch to the Dynarr. */
+
+/* Declare a static Dynarr variable declaration NAME, containing elements of
+   type TYPE, with NUM_STATIC static elements.  If you never use more than
+   these, no allocation will occur.  Before using, initialize with
+   Stynarr_init(d). */
+#define Stynarr_declare(name, type, num_static)	\
+struct						\
+{						\
+  type##_dynarr *els;				\
+  int nels;					\
+  type els_static[num_static];			\
+} name
+
+typedef struct
+{
+  void *els;
+  int nels;
+} Stynarr;
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+int
+Stynarr_verify_pos (void *st, int pos, const Ascbyte *file, int line)
+)
+{
+  Stynarr *sty = (Stynarr *) st;
+  /* #### See comment above in Dynarr_verify_pos() about accessing just
+     past end of the real used memory block using Stynarr_atp(). */
+  assert_at_line (pos >= 0 && pos < sty->nels, file, line);
+  return pos;
+}
+#else
+#define Stynarr_verify_pos(st, pos, file, line) (pos)
+#endif /* ERROR_CHECK_TYPES */
+
+#define Stynarr_init(d) (xzero (d))
+#define Stynarr_reset(d) ((d).nels = 0)
+#define Stynarr_free(d)				\
+do {						\
+  if ((d).els)					\
+    {						\
+      Dynarr_free ((d).els);			\
+      (d).els = 0;				\
+    }						\
+  (d).nels = 0;					\
+} while (0)
+#define Stynarr_num_static(d) countof ((d).els_static)
+#define Stynarr_elsize(d) sizeof ((d).els_static[0])
+/* WARNING! The following two macros evaluate POS multiply.
+   We write them this way so that Stynarr_at() is an lvalue. */
+#define Stynarr_atp(d, pos)						\
+  (Stynarr_verify_pos (&d, pos, __FILE__, __LINE__) < Stynarr_num_static (d) \
+   ? &((d).els_static[pos]) :						\
+   Dynarr_atp ((d).els, pos - Stynarr_num_static (d)))
+#define Stynarr_at(d, pos) (*(Stynarr_atp (d, pos)))
+#define Stynarr_add(d, el)						\
+do {									\
+  if ((d).nels < Stynarr_num_static (d))				\
+    (d).els_static[(d).nels++] = (el);					\
+  else									\
+    {									\
+      if (!(d).els)							\
+	VOIDP_CAST ((d).els) = Dynarr_newf (Stynarr_elsize (d));	\
+      Dynarr_add ((d).els, el);						\
+      (d).nels++;							\
+    }									\
+} while (0)
+
+#define Stynarr_length(d) ((d).nels)
+
+MODULE_API void Stynarr_insert_many_1 (void *d, const void *els, int len,
+				       int start, int num_static,
+				       int elsize, int staticoff);
+
+#define Stynarr_insert_many(d, els, len, start)		\
+  Stynarr_insert_many_1 (&d, els, len, start,		\
+			 Stynarr_num_static (d),	\
+			 Stynarr_elsize (d),		\
+			 offsetof (d, (d).els_static))
 
 
 /************************************************************************/
