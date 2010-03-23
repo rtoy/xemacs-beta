@@ -196,16 +196,14 @@ ldap_objs=$(BLDMODULES)/ldap/eldap.o
 #endif
 
 #ifdef MULE
-mule_objs=mule-ccl.o mule-charset.o mule-coding.o
-#endif
-
+mule_objs=mule-charset.o mule-coding.o mule-ccl.o
 #if defined(HAVE_CANNA) && !defined(HAVE_SHLIB)
-mule_canna_objs=$(BLDMODULES)/canna/canna_api.o
+mule_objs += $(BLDMODULES)/canna/canna_api.o
 #endif
-
 #ifdef HAVE_WNN
-mule_wnn_objs=mule-wnnfns.o
+mule_objs += mule-wnnfns.o
 #endif
+#endif /* MULE */
 
 #ifdef WITH_GMP
 number_objs=number-gmp.o number.o
@@ -290,10 +288,10 @@ objs=\
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
- $(new_gc_objs) $(vdb_objs) \
- macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
- $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
- opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
+ $(new_gc_objs) $(vdb_objs) macros.o marker.o md5.o minibuf.o \
+ $(mswindows_objs) $(mswindows_gui_objs) $(mule_objs) \
+ $(number_objs) objects.o opaque.o\
+ $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\
@@ -897,7 +895,7 @@ batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testd
 
 .PHONY: remove-config-dependent-elcs config-changed
 remove-config-dependent-elcs:
-	rm $(LISP)/mule/chinese.elc $(LISP)/mule/general-late.elc
+	$(RM) $(LISP)/mule/chinese.elc
 config-changed: remove-config-dependent-elcs all
 
 
@@ -1065,3 +1063,11 @@ FRC.unicode-encapsulate:
 unicode-encapsulate: FRC.unicode-encapsulate
 	cd $(SRC) && \
 	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
+
+###################### Case-table generation
+
+.PHONY: make-case-conv
+FRC.make-case-conv:
+make-case-conv: FRC.make-case-conv
+	cd $(SRC) && \
+	python ../lib-src/make-case-conv.py > ../lisp/mule/uni-case-conv.el
