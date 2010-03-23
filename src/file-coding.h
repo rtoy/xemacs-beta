@@ -933,10 +933,9 @@ do {							\
    pointing to the value of data_offset[detector_foo] -- but to do this we
    have to declare data_offset[detector_foo] as an XD_BYTECOUNT. */
 
-#define INITIALIZE_DETECTOR_WITH_DESCRIPTION(Detector)			\
+#define INITIALIZE_DETECTOR_DESCRIPTION(Detector)			\
 do {									\
   struct memory_description *desc;					\
-  INITIALIZE_DETECTOR (Detector);					\
   desc =								\
     &detection_state_description[coding_detector_description_lines_count++]; \
   desc->type = XD_BYTECOUNT;						\
@@ -953,6 +952,17 @@ do {									\
   desc =								\
     &detection_state_description[coding_detector_description_lines_count]; \
   desc->type = XD_END;							\
+} while (0)
+
+#define INITIALIZE_DETECTOR_WITH_DESCRIPTION(Detector)			\
+do {									\
+  INITIALIZE_DETECTOR (Detector);					\
+  INITIALIZE_DETECTOR_DESCRIPTION (Detector);				\
+} while (0)
+
+#define REINITIALIZE_DETECTOR_WITH_DESCRIPTION(Detector)		\
+do {									\
+  INITIALIZE_DETECTOR_DESCRIPTION (Detector);				\
 } while (0)
 
 #define DETECTOR_HAS_METHOD(Detector, Meth)				\

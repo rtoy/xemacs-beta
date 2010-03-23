@@ -832,7 +832,7 @@ zero_nonsized_lisp_object (Lisp_Object obj)
 }
 
 void
-free_normal_lisp_object (Lisp_Object obj)
+free_normal_lisp_object (Lisp_Object UNUSED_IF_NEW_GC (obj))
 {
 #ifndef NEW_GC
   const struct lrecord_implementation *imp =

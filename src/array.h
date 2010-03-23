@@ -636,18 +636,17 @@ do									\
    type TYPE, with NUM_STATIC static elements.  If you never use more than
    these, no allocation will occur.  Before using, initialize with
    Stynarr_init(d). */
-#define Stynarr_declare(name, type, num_static)	\
-struct						\
-{						\
+#define Stynarr_declare(type, num_static)	\
   type##_dynarr *els;				\
   int nels;					\
+  int nels_static;				\
   type els_static[num_static];			\
-} name
 
 typedef struct
 {
   void *els;
   int nels;
+  int nels_static;
 } Stynarr;
 
 #ifdef ERROR_CHECK_TYPES
@@ -666,8 +665,15 @@ Stynarr_verify_pos (void *st, int pos, const Ascbyte *file, int line)
 #define Stynarr_verify_pos(st, pos, file, line) (pos)
 #endif /* ERROR_CHECK_TYPES */
 
-#define Stynarr_init(d) (xzero (d))
-#define Stynarr_reset(d) ((d).nels = 0)
+#define Stynarr_init(d)				\
+do {						\
+  xzero (d);					\
+} while (0)
+#define Stynarr_reset(d)			\
+do {						\
+  (d).nels = 0;					\
+  (d).nels_static = 0;				\
+} while (0)
 #define Stynarr_free(d)				\
 do {						\
   if ((d).els)					\
@@ -676,6 +682,7 @@ do {						\
       (d).els = 0;				\
     }						\
   (d).nels = 0;					\
+  (d).nels_static = 0;				\
 } while (0)
 #define Stynarr_num_static(d) countof ((d).els_static)
 #define Stynarr_elsize(d) sizeof ((d).els_static[0])
@@ -689,7 +696,10 @@ do {						\
 #define Stynarr_add(d, el)						\
 do {									\
   if ((d).nels < Stynarr_num_static (d))				\
-    (d).els_static[(d).nels++] = (el);					\
+    {									\
+      (d).els_static[(d).nels++] = (el);				\
+      (d).nels_static++;						\
+    }									\
   else									\
     {									\
       if (!(d).els)							\
@@ -701,6 +711,18 @@ do {									\
 
 #define Stynarr_length(d) ((d).nels)
 
+/* Describe a Stynarr of type BASE_TYPE, with SUB_DESC describing the
+   elements making up the Stynarr and SUB_DYNARR_DESC describing a
+   Dynarr of the elements making up the Stynarr. */
+#define XD_STYNARR_DESC(base_type, sub_desc, sub_dynarr_desc)	\
+  { XD_BLOCK_PTR, offsetof (base_type, els),			\
+    1, {sub_dynarr_desc} },					\
+  { XD_INT,        offsetof (base_type, nels_static) },		\
+  { XD_BLOCK_ARRAY, offsetof (base_type, els_static),		\
+    XD_INDIRECT (1, 0), {sub_desc} }
+
+#if 0
+
 MODULE_API void Stynarr_insert_many_1 (void *d, const void *els, int len,
 				       int start, int num_static,
 				       int elsize, int staticoff);
@@ -710,6 +732,8 @@ MODULE_API void Stynarr_insert_many_1 (void *d, const void *els, int len,
 			 Stynarr_num_static (d),	\
 			 Stynarr_elsize (d),		\
 			 offsetof (d, (d).els_static))
+
+#endif /* 0 */
 
 
 /************************************************************************/

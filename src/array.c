@@ -518,30 +518,32 @@ mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn)
 /*                              static dynarrs                               */
 /*****************************************************************************/
 
+#if 0 /* #### not yet finished */
+
 /* Add a number of contiguous elements to the array starting at START. */
 void
 Stynarr_insert_many_1 (void *d, const void *els, int len, int start,
 		       int num_static, int elsize, int staticoff)
 {
-  Stynarr *dy = (Stynarr *) d;
-  type_checking_assert (start >= 0 && start <= dy->nels);
+  Stynarr *sty = (Stynarr *) d;
+  type_checking_assert (start >= 0 && start <= sty->nels);
   /* If we'll need Dynarr space, make sure the Dynarr is there */
-  if (len + dy->nels > num_static && !dy->els)
-    VOIDP_CAST (dy->els) = Dynarr_newf (elsize);
+  if (len + sty->nels > num_static && !sty->els)
+    VOIDP_CAST (sty->els) = Dynarr_newf (elsize);
   /* Entirely within Dynarr? */
   if (start >= num_static)
-    Dynarr_insert_many (dy->els, els, len, start - num_static);
+    Dynarr_insert_many (sty->els, els, len, start - num_static);
   /* Entirely within static part? */
-  else if (len + dy->nels <= num_static)
+  else if (len + sty->nels <= num_static)
     {
-      if (start != dy->nels)
+      if (start != sty->nels)
 	{
-	  memmove ((char *) dy + staticoff + (start + len)*elsize,
-		   (char *) dy + staticoff + start*elsize,
-		   (dy->nels - start)*elsize);
+	  memmove ((char *) sty + staticoff + (start + len)*elsize,
+		   (char *) sty + staticoff + start*elsize,
+		   (sty->nels - start)*elsize);
 	}
       if (els)
-	memcpy ((char *) dy + staticoff + start*elsize, els, len*elsize);
+	memcpy ((char *) sty + staticoff + start*elsize, els, len*elsize);
     }
   /* Else, partly within static, partly within Dynarr */
   else
@@ -549,7 +551,11 @@ Stynarr_insert_many_1 (void *d, const void *els, int len, int start,
       /* #### Finish me */
       ABORT ();
     }
+  sty->nels += len;
+  sty->nels_static = min (len, num_static);
 }
+
+#endif /* 0 */
 
 
 /*****************************************************************************/
