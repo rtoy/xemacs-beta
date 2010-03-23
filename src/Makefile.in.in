@@ -274,13 +274,12 @@ vdb_objs=vdb-fake.o
 ## if they all come out null.
 
 objs=\
- abbrev.o alloc.o alloca.o \
+ abbrev.o alloc.o alloca.o array.o \
  $(balloon_help_objs) blocktype.o buffer.o bytecode.o \
  callint.o casefiddle.o casetab.o chartab.o \
  $(clash_detection_objs) cmdloop.o cmds.o $(coding_system_objs) console.o \
  console-stream.o\
  data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\
- dynarr.o \
  editfns.o elhash.o emacs.o emodules.o eval.o events.o\
  event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \

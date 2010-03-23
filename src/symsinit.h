@@ -72,6 +72,7 @@ void init_eval_semi_early (void);
 
 void syms_of_abbrev (void);
 void syms_of_alloc (void);
+void syms_of_array (void);
 void syms_of_balloon_x (void);
 void syms_of_buffer (void);
 void syms_of_bytecode (void);
