@@ -557,8 +557,13 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
       EMACS_INT offset = lispdesc_indirect_count (desc[pos].offset, desc, obj);
       if (offset == max_offset)
 	{
+#if 0
+	  /* This can legitimately happen with gap arrays -- if there are
+	     no elements in the array, and the gap size is 0, then both
+	     parts of the array will be of size 0 and in the same place. */
 	  stderr_out ("Two relocatable elements at same offset?\n");
 	  ABORT ();
+#endif
 	}
       else if (offset > max_offset)
 	{

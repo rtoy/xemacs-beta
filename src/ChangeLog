@@ -1,3 +1,65 @@
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (objs):
+	* array.c:
+	* array.c (gap_array_adjust_markers):
+	* array.c (gap_array_move_gap):
+	* array.c (gap_array_make_gap):
+	* array.c (gap_array_insert_els):
+	* array.c (gap_array_delete_els):
+	* array.c (gap_array_make_marker):
+	* array.c (gap_array_delete_marker):
+	* array.c (gap_array_delete_all_markers):
+	* array.c (gap_array_clone):
+	* array.h:
+	* depend:
+	* emacs.c (main_1):
+	* extents.c:
+	* extents.c (EXTENT_GAP_ARRAY_AT):
+	* extents.c (extent_list_num_els):
+	* extents.c (extent_list_locate):
+	* extents.c (extent_list_at):
+	* extents.c (extent_list_delete_all):
+	* extents.c (allocate_extent_list):
+	* extents.c (syms_of_extents):
+	* extents.h:
+	* extents.h (XEXTENT_LIST_MARKER):
+	* lisp.h:
+	* rangetab.c:
+	* rangetab.c (mark_range_table):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* rangetab.c (range_table_hash):
+	* rangetab.c (verify_range_table):
+	* rangetab.c (get_range_table_pos):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fclear_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (unified_range_table_bytes_needed):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (unified_range_table_lookup):
+	* rangetab.h:
+	* rangetab.h (struct range_table_entry):
+	* rangetab.h (struct Lisp_Range_Table):
+	* rangetab.h (rangetab_gap_array_at):
+	* symsinit.h:
+	Rename dynarr.c to array.c.  Move gap array from extents.c to array.c.
+	Extract dynarr, gap array and stack-like malloc into new file array.h.
+	Rename GAP_ARRAY_NUM_ELS -> gap_array_length().  Add gap_array_at(),
+	gap_array_atp().
+
+	Rewrite range table code to use gap arrays.  Make put_range_table()
+	smarter so that its operation is O(log n) for adding a localized
+	range.
+
+	* gc.c (lispdesc_block_size_1):
+	Don't ABORT() when two elements are located at the same place.
+	This will happen with a size-0 gap array -- both parts of the array
+	(before and after gap) are in the same place.
+
 2010-03-21  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

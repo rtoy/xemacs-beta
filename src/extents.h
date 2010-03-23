@@ -50,25 +50,6 @@ DECLARE_LISP_OBJECT (extent_info, struct extent_info);
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
 #ifdef NEW_GC
-struct gap_array_marker;
-
-DECLARE_LISP_OBJECT (gap_array_marker, struct gap_array_marker);
-#define XGAP_ARRAY_MARKER(x) \
-  XRECORD (x, gap_array_marker, struct gap_array_marker)
-#define wrap_gap_array_marker(p) wrap_record (p, gap_array_marker)
-#define GAP_ARRAY_MARKERP(x) RECORDP (x, gap_array_marker)
-#define CHECK_GAP_ARRAY_MARKER(x) CHECK_RECORD (x, gap_array_marker)
-#define CONCHECK_GAP_ARRAY_MARKER(x) CONCHECK_RECORD (x, gap_array_marker)
-
-struct gap_array;
-
-DECLARE_LISP_OBJECT (gap_array, struct gap_array);
-#define XGAP_ARRAY(x) XRECORD (x, gap_array, struct gap_array)
-#define wrap_gap_array(p) wrap_record (p, gap_array)
-#define GAP_ARRAYP(x) RECORDP (x, gap_array)
-#define CHECK_GAP_ARRAY(x) CHECK_RECORD (x, gap_array)
-#define CONCHECK_GAP_ARRAY(x) CONCHECK_RECORD (x, gap_array)
-
 struct extent_list_marker;
 
 DECLARE_LISP_OBJECT (extent_list_marker, struct extent_list_marker);

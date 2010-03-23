@@ -231,88 +231,6 @@ Boston, MA 02111-1307, USA.  */
 #include "gutter.h"
 
 /* ------------------------------- */
-/*            gap array            */
-/* ------------------------------- */
-
-/* Note that this object is not extent-specific and should perhaps be
-   moved into another file. */
-
-/* Holds a marker that moves as elements in the array are inserted and
-   deleted, similar to standard markers. */
-
-typedef struct gap_array_marker
-{
-#ifdef NEW_GC
-  NORMAL_LISP_OBJECT_HEADER header;
-#endif /* NEW_GC */
-  int pos;
-  struct gap_array_marker *next;
-} Gap_Array_Marker;
-
-
-/* Holds a "gap array", which is an array of elements with a gap located
-   in it.  Insertions and deletions with a high degree of locality
-   are very fast, essentially in constant time.  Array positions as
-   used and returned in the gap array functions are independent of
-   the gap. */
-
-/* Layout of gap array:
-
-   <------ gap ------><---- gapsize ----><----- numels - gap ---->
-   <---------------------- numels + gapsize --------------------->
-
-   For marking purposes, we use two extra variables computed from
-   the others -- the offset to the data past the gap, plus the number
-   of elements in that data:
-
-   offset_past_gap = elsize * (gap + gapsize)
-   els_past_gap = numels - gap
-*/
-
-
-typedef struct gap_array
-{
-#ifdef NEW_GC
-  NORMAL_LISP_OBJECT_HEADER header;
-#endif /* NEW_GC */
-  Elemcount gap;
-  Elemcount gapsize;
-  Elemcount numels;
-  Bytecount elsize;
-  /* Redundant numbers computed from the others, for marking purposes */
-  Bytecount offset_past_gap;
-  Elemcount els_past_gap;
-  Gap_Array_Marker *markers;
-  /* this is a stretchy array */
-  char array[1];
-} Gap_Array;
-
-#ifndef NEW_GC
-static Gap_Array_Marker *gap_array_marker_freelist;
-#endif /* not NEW_GC */
-
-/* Convert a "memory position" (i.e. taking the gap into account) into
-   the address of the element at (i.e. after) that position.  "Memory
-   positions" are only used internally and are of type Memxpos.
-   "Array positions" are used externally and are of type int. */
-#define GAP_ARRAY_MEMEL_ADDR(ga, memel) ((ga)->array + (ga)->elsize*(memel))
-
-/* Number of elements currently in a gap array */
-#define GAP_ARRAY_NUM_ELS(ga) ((ga)->numels)
-
-#define GAP_ARRAY_ARRAY_TO_MEMORY_POS(ga, pos) \
-  ((pos) <= (ga)->gap ? (pos) : (pos) + (ga)->gapsize)
-
-#define GAP_ARRAY_MEMORY_TO_ARRAY_POS(ga, pos) \
-  ((pos) <= (ga)->gap ? (pos) : (pos) - (ga)->gapsize)
-
-/* Convert an array position into the address of the element at
-   (i.e. after) that position. */
-#define GAP_ARRAY_EL_ADDR(ga, pos) ((pos) < (ga)->gap ? \
-  GAP_ARRAY_MEMEL_ADDR(ga, pos) : \
-  GAP_ARRAY_MEMEL_ADDR(ga, (pos) + (ga)->gapsize))
-
-/* ------------------------------- */
 /*          extent list            */
 /* ------------------------------- */
 
@@ -379,7 +297,7 @@ static Extent_List_Marker *extent_list_marker_freelist;
 #define EXTENT_E_LESS_EQUAL(e1,e2) \
   EXTENT_E_LESS_EQUAL_VALS (e1, extent_start (e2), extent_end (e2))
 
-#define EXTENT_GAP_ARRAY_AT(ga, pos) (* (EXTENT *) GAP_ARRAY_EL_ADDR(ga, pos))
+#define EXTENT_GAP_ARRAY_AT(ga, pos) gap_array_at (ga, pos, EXTENT)
 
 /* ------------------------------- */
 /*     buffer-extent primitives    */
@@ -510,271 +428,6 @@ int debug_soe;
 
 
 /************************************************************************/
-/*                       Generalized gap array                          */
-/************************************************************************/
-
-/* This generalizes the "array with a gap" model used to store buffer
-   characters.  This is based on the stuff in insdel.c and should
-   probably be merged with it.  This is not extent-specific and should
-   perhaps be moved into a separate file. */
-
-/* ------------------------------- */
-/*        internal functions       */
-/* ------------------------------- */
-
-/* Adjust the gap array markers in the range (FROM, TO].  Parallel to
-   adjust_markers() in insdel.c. */
-
-static void
-gap_array_adjust_markers (Gap_Array *ga, Memxpos from,
-			  Memxpos to, Elemcount amount)
-{
-  Gap_Array_Marker *m;
-
-  for (m = ga->markers; m; m = m->next)
-    m->pos = do_marker_adjustment (m->pos, from, to, amount);
-}
-
-static void
-gap_array_recompute_derived_values (Gap_Array *ga)
-{
-  ga->offset_past_gap = ga->elsize * (ga->gap + ga->gapsize);
-  ga->els_past_gap = ga->numels - ga->gap;
-}
-
-/* Move the gap to array position POS.  Parallel to move_gap() in
-   insdel.c but somewhat simplified. */
-
-static void
-gap_array_move_gap (Gap_Array *ga, Elemcount pos)
-{
-  Elemcount gap = ga->gap;
-  Elemcount gapsize = ga->gapsize;
-
-  if (pos < gap)
-    {
-      memmove (GAP_ARRAY_MEMEL_ADDR (ga, pos + gapsize),
-	       GAP_ARRAY_MEMEL_ADDR (ga, pos),
-	       (gap - pos)*ga->elsize);
-      gap_array_adjust_markers (ga, (Memxpos) pos, (Memxpos) gap,
-				gapsize);
-    }
-  else if (pos > gap)
-    {
-      memmove (GAP_ARRAY_MEMEL_ADDR (ga, gap),
-	       GAP_ARRAY_MEMEL_ADDR (ga, gap + gapsize),
-	       (pos - gap)*ga->elsize);
-      gap_array_adjust_markers (ga, (Memxpos) (gap + gapsize),
-				(Memxpos) (pos + gapsize), - gapsize);
-    }
-  ga->gap = pos;
-
-  gap_array_recompute_derived_values (ga);
-}
-
-/* Make the gap INCREMENT characters longer.  Parallel to make_gap() in
-   insdel.c.  The gap array may be moved, so assign the return value back
-   to the array pointer. */
-
-static Gap_Array *
-gap_array_make_gap (Gap_Array *ga, Elemcount increment)
-{
-  Elemcount real_gap_loc;
-  Elemcount old_gap_size;
-
-  /* If we have to get more space, get enough to last a while.  We use
-     a geometric progression that saves on realloc space. */
-  increment += 100 + ga->numels / 8;
-
-#ifdef NEW_GC
-  ga = (Gap_Array *) mc_realloc (ga,
-				 offsetof (Gap_Array, array) +
-				 (ga->numels + ga->gapsize + increment) *
-				 ga->elsize);
-#else /* not NEW_GC */
-  ga = (Gap_Array *) xrealloc (ga,
-			       offsetof (Gap_Array, array) +
-			       (ga->numels + ga->gapsize + increment) *
-			       ga->elsize);
-#endif /* not NEW_GC */
-  if (ga == 0)
-    memory_full ();
-
-  real_gap_loc = ga->gap;
-  old_gap_size = ga->gapsize;
-
-  /* Call the newly allocated space a gap at the end of the whole space.  */
-  ga->gap = ga->numels + ga->gapsize;
-  ga->gapsize = increment;
-
-  /* Move the new gap down to be consecutive with the end of the old one.
-     This adjusts the markers properly too.  */
-  gap_array_move_gap (ga, real_gap_loc + old_gap_size);
-
-  /* Now combine the two into one large gap.  */
-  ga->gapsize += old_gap_size;
-  ga->gap = real_gap_loc;
-
-  gap_array_recompute_derived_values (ga);
-
-  return ga;
-}
-
-/* ------------------------------- */
-/*        external functions       */
-/* ------------------------------- */
-
-/* Insert NUMELS elements (pointed to by ELPTR) into the specified
-   gap array at POS.  The gap array may be moved, so assign the
-   return value back to the array pointer. */
-
-static Gap_Array *
-gap_array_insert_els (Gap_Array *ga, Elemcount pos, void *elptr,
-		      Elemcount numels)
-{
-  assert (pos >= 0 && pos <= ga->numels);
-  if (ga->gapsize < numels)
-    ga = gap_array_make_gap (ga, numels - ga->gapsize);
-  if (pos != ga->gap)
-    gap_array_move_gap (ga, pos);
-
-  memcpy (GAP_ARRAY_MEMEL_ADDR (ga, ga->gap), (char *) elptr,
-	  numels*ga->elsize);
-  ga->gapsize -= numels;
-  ga->gap += numels;
-  ga->numels += numels;
-  gap_array_recompute_derived_values (ga);
-  /* This is the equivalent of insert-before-markers.
-
-     #### Should only happen if marker is "moves forward at insert" type.
-     */
-
-  gap_array_adjust_markers (ga, pos - 1, pos, numels);
-  return ga;
-}
-
-/* Delete NUMELS elements from the specified gap array, starting at FROM. */
-
-static void
-gap_array_delete_els (Gap_Array *ga, Elemcount from, Elemcount numdel)
-{
-  Elemcount to = from + numdel;
-  Elemcount gapsize = ga->gapsize;
-
-  assert (from >= 0);
-  assert (numdel >= 0);
-  assert (to <= ga->numels);
-
-  /* Make sure the gap is somewhere in or next to what we are deleting.  */
-  if (to < ga->gap)
-    gap_array_move_gap (ga, to);
-  if (from > ga->gap)
-    gap_array_move_gap (ga, from);
-
-  /* Relocate all markers pointing into the new, larger gap
-     to point at the end of the text before the gap.  */
-  gap_array_adjust_markers (ga, to + gapsize, to + gapsize,
-			    - numdel - gapsize);
-
-  ga->gapsize += numdel;
-  ga->numels -= numdel;
-  ga->gap = from;
-  gap_array_recompute_derived_values (ga);
-}
-
-static Gap_Array_Marker *
-gap_array_make_marker (Gap_Array *ga, Elemcount pos)
-{
-  Gap_Array_Marker *m;
-
-  assert (pos >= 0 && pos <= ga->numels);
-#ifdef NEW_GC
-    m = XGAP_ARRAY_MARKER (ALLOC_NORMAL_LISP_OBJECT (gap_array_marker));
-#else /* not NEW_GC */
-  if (gap_array_marker_freelist)
-    {
-      m = gap_array_marker_freelist;
-      gap_array_marker_freelist = gap_array_marker_freelist->next;
-    }
-  else
-    m = xnew (Gap_Array_Marker);
-#endif /* not NEW_GC */
-
-  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
-  m->next = ga->markers;
-  ga->markers = m;
-  return m;
-}
-
-static void
-gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
-{
-  Gap_Array_Marker *p, *prev;
-
-  for (prev = 0, p = ga->markers; p && p != m; prev = p, p = p->next)
-    ;
-  assert (p);
-  if (prev)
-    prev->next = p->next;
-  else
-    ga->markers = p->next;
-#ifndef NEW_GC
-  m->next = gap_array_marker_freelist;
-  m->pos = 0xDEADBEEF; /* -559038737 base 10 */
-  gap_array_marker_freelist = m;
-#endif /* not NEW_GC */
-}
-
-#ifndef NEW_GC
-static void
-gap_array_delete_all_markers (Gap_Array *ga)
-{
-  Gap_Array_Marker *p, *next;
-
-  for (p = ga->markers; p; p = next)
-    {
-      next = p->next;
-      p->next = gap_array_marker_freelist;
-      p->pos = 0xDEADBEEF; /* -559038737 as an int */
-      gap_array_marker_freelist = p;
-    }
-}
-#endif /* not NEW_GC */
-
-static void
-gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
-{
-  assert (pos >= 0 && pos <= ga->numels);
-  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
-}
-
-#define gap_array_marker_pos(ga, m) \
-  GAP_ARRAY_MEMORY_TO_ARRAY_POS (ga, (m)->pos)
-
-static Gap_Array *
-make_gap_array (Elemcount elsize)
-{
-#ifdef NEW_GC
-  Gap_Array *ga = XGAP_ARRAY (ALLOC_SIZED_LISP_OBJECT (sizeof (Gap_Array),
-						       gap_array));
-#else /* not NEW_GC */
-  Gap_Array *ga = xnew_and_zero (Gap_Array);
-#endif /* not NEW_GC */
-  ga->elsize = elsize;
-  return ga;
-}
-
-#ifndef NEW_GC
-static void
-free_gap_array (Gap_Array *ga)
-{
-  gap_array_delete_all_markers (ga);
-  xfree (ga);
-}
-#endif /* not NEW_GC */
-
-
-/************************************************************************/
 /*                       Extent list primitives                         */
 /************************************************************************/
 
@@ -791,7 +444,7 @@ free_gap_array (Gap_Array *ga)
 */
 
 /* Number of elements in an extent list */
-#define extent_list_num_els(el) GAP_ARRAY_NUM_ELS (el->start)
+#define extent_list_num_els(el) gap_array_length (el->start)
 
 /* Return the position at which EXTENT is located in the specified extent
    list (in the display order if ENDP is 0, in the e-order otherwise).
@@ -805,7 +458,7 @@ static int
 extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
 {
   Gap_Array *ga = endp ? el->end : el->start;
-  int left = 0, right = GAP_ARRAY_NUM_ELS (ga);
+  int left = 0, right = gap_array_length (ga);
   int oldfoundpos, foundpos;
   int found;
 
@@ -825,7 +478,7 @@ extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
   /* Now we're at the beginning of all equal extents. */
   found = 0;
   oldfoundpos = foundpos = left;
-  while (foundpos < GAP_ARRAY_NUM_ELS (ga))
+  while (foundpos < gap_array_length (ga))
     {
       EXTENT e = EXTENT_GAP_ARRAY_AT (ga, foundpos);
       if (e == extent)
@@ -880,7 +533,7 @@ extent_list_at (Extent_List *el, Memxpos pos, int endp)
 {
   Gap_Array *ga = endp ? el->end : el->start;
 
-  assert (pos >= 0 && pos < GAP_ARRAY_NUM_ELS (ga));
+  assert (pos >= 0 && pos < gap_array_length (ga));
   return EXTENT_GAP_ARRAY_AT (ga, pos);
 }
 
@@ -917,8 +570,8 @@ extent_list_delete (Extent_List *el, EXTENT extent)
 static void
 extent_list_delete_all (Extent_List *el)
 {
-  gap_array_delete_els (el->start, 0, GAP_ARRAY_NUM_ELS (el->start));
-  gap_array_delete_els (el->end, 0, GAP_ARRAY_NUM_ELS (el->end));
+  gap_array_delete_els (el->start, 0, gap_array_length (el->start));
+  gap_array_delete_els (el->end, 0, gap_array_length (el->end));
 }
 
 static Extent_List_Marker *
@@ -980,8 +633,8 @@ allocate_extent_list (void)
 #else /* not NEW_GC */
   Extent_List *el = xnew (Extent_List);
 #endif /* not NEW_GC */
-  el->start = make_gap_array (sizeof (EXTENT));
-  el->end = make_gap_array (sizeof (EXTENT));
+  el->start = make_gap_array (sizeof (EXTENT), 1);
+  el->end = make_gap_array (sizeof (EXTENT), 1);
   el->markers = 0;
   return el;
 }
@@ -1080,66 +733,7 @@ static void free_soe (struct stack_of_extents *soe);
 #endif /* not NEW_GC */
 static void soe_invalidate (Lisp_Object obj);
 
-extern const struct sized_memory_description gap_array_marker_description;
-
-static const struct memory_description gap_array_marker_description_1[] = { 
-#ifdef NEW_GC
-  { XD_LISP_OBJECT, offsetof (Gap_Array_Marker, next) },
-#else /* not NEW_GC */
-  { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
-    { &gap_array_marker_description } },
-#endif /* not NEW_GC */
-  { XD_END }
-};
-
-#ifdef NEW_GC
-DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("gap-array-marker", gap_array_marker,
-				    0, gap_array_marker_description_1,
-				    struct gap_array_marker);
-#else /* not NEW_GC */
-const struct sized_memory_description gap_array_marker_description = {
-  sizeof (Gap_Array_Marker),
-  gap_array_marker_description_1
-};
-#endif /* not NEW_GC */
-
-static const struct memory_description lispobj_gap_array_description_1[] = { 
-  { XD_ELEMCOUNT, offsetof (Gap_Array, gap) },
-  { XD_BYTECOUNT, offsetof (Gap_Array, offset_past_gap) },
-  { XD_ELEMCOUNT, offsetof (Gap_Array, els_past_gap) },
-#ifdef NEW_GC
-  { XD_LISP_OBJECT, offsetof (Gap_Array, markers) },
-#else /* not NEW_GC */
-  { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
-    { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
-#endif /* not NEW_GC */
-  { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
-    { &lisp_object_description } },
-  { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
-    XD_INDIRECT (2, 0), { &lisp_object_description } },
-  { XD_END }
-};
-
-#ifdef NEW_GC
-
-static Bytecount
-size_gap_array (Lisp_Object obj)
-{
-  Gap_Array *ga = XGAP_ARRAY (obj);
-  return offsetof (Gap_Array, array) + (ga->numels + ga->gapsize) * ga->elsize;
-}
-
-DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT ("gap-array", gap_array,
-					    0,
-					    lispobj_gap_array_description_1,
-					    size_gap_array,
-					    struct gap_array);
-#else /* not NEW_GC */
-static const struct sized_memory_description lispobj_gap_array_description = {
-  sizeof (Gap_Array),
-  lispobj_gap_array_description_1
-};
-
+#ifndef NEW_GC
 extern const struct sized_memory_description extent_list_marker_description;
 #endif /* not NEW_GC */
 
@@ -7445,8 +7039,6 @@ syms_of_extents (void)
   INIT_LISP_OBJECT (extent_info);
   INIT_LISP_OBJECT (extent_auxiliary);
 #ifdef NEW_GC
-  INIT_LISP_OBJECT (gap_array_marker);
-  INIT_LISP_OBJECT (gap_array);
   INIT_LISP_OBJECT (extent_list_marker);
   INIT_LISP_OBJECT (extent_list);
   INIT_LISP_OBJECT (stack_of_extents);

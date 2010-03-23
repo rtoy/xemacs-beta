@@ -1508,6 +1508,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef NEW_GC
       syms_of_vdb ();
 #endif /* NEW_GC */
+      syms_of_array ();
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
