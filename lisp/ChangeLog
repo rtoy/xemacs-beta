@@ -1,3 +1,12 @@
+2010-03-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-win-xfree86.el (x-win-init-xfree86):
+	If iso-left-tab (something ISO-specified and portable in theory;
+	in practice only seen with XFree86 and derived non-US layouts)
+	exists on the keyboard layout, make it equivalent to shift-tab,
+	addressing the issue FKtPp sees in
+	http://mid.gmane.org/1269358206.4873.1.camel@fktpp-laptop .
+
 2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (cl-prettyprint):
