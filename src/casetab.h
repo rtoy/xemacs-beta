@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 2000 Yoshiki Hayashi.
-   Copyright (C) 2002, 2005 Ben Wing.
+   Copyright (C) 2002, 2005, 2010 Ben Wing.
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -109,7 +109,7 @@ TRT_TABLE_OF (Lisp_Object table, Ichar ch)
 )
 {
   Lisp_Object TRT_char;
-  TRT_char = get_char_table (ch, table);
+  TRT_char = get_char_table_lisp (ch, table);
   if (NILP (TRT_char))
     return ch;
   else

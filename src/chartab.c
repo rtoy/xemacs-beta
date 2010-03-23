@@ -34,9 +34,11 @@ Boston, MA 02111-1307, USA.  */
    Jareth Hein: fixed a couple of bugs in the implementation, and
    	     added regex support for categories with check_category_at
    Ben Wing: Drastic rewrite, October 2005, for Unicode-internal support.
-   The old implementation used an ugly system indexed by charset ID,
-   with `char-table-entry' objects.  The implementation of map_char_table()
-   was long and nasty.  The new system uses page tables, as in unicode.c.
+             The old implementation used an ugly system indexed by charset
+             ID, with `char-table-entry' objects.  The implementation of
+             map_char_table() was long and nasty.  The new system uses page
+             tables, as in unicode.c.
+   Ben Wing: Redo category tables for improved memory usage, March 2010.
  */
 
 #include <config.h>
@@ -52,9 +54,8 @@ Lisp_Object Qchar_tablep, Qchar_table;
 Lisp_Object Vall_syntax_tables;
 
 #ifdef MULE
-Lisp_Object Qcategory_table_p;
+Lisp_Object Qcategory_tablep;
 Lisp_Object Qcategory_designator_p;
-Lisp_Object Qcategory_table_value_p;
 
 Lisp_Object Vstandard_category_table;
 
@@ -71,29 +72,34 @@ static int check_valid_char_table_value (Lisp_Object value,
 			                 Error_Behavior errb);
 
 
-/* A char table maps from ranges of characters to values.
+/* A char table maps from characters to values.
 
-   Implementing a general data structure that maps from arbitrary
-   ranges of numbers to values is tricky to do efficiently.  As it
-   happens, it should suffice (and is usually more convenient, anyway)
-   when dealing with characters to restrict the sorts of ranges that
-   can be assigned values, as follows:
+   We used to use a complicated structure that allowed certain types of
+   ranges (all characters in a charset or all characters in a particular
+   row of a charset, where a "row" means all characters with the same first
+   octet) to be directly assigned values.  With the change to Unicode as an
+   internal representation, it no longer makes sense to special-case for
+   charsets, and so the implementation was changed to use page tables,
+   similarly to how Unicode conversion maps are handled.
 
-   1) All characters.
-   2) All characters in a charset.
-   3) All characters in a particular row of a charset, where a "row"
-      means all characters with the same first byte.
-   4) A particular character in a charset.
+   Another possibility would be to use range tables.  I think GNU Emacs
+   allows char tables of both kinds, or something similar, although I don't
+   know how it chooses one or the other.
 
-   We use char tables to generalize the 256-element vectors now
-   littering the Emacs code.
+   The type of value stored is normally a Lisp_Object.  However, for
+   category tables we instead store bit arrays.  The bit arrays may also be
+   smaller than the 32 (or 64) bits used to store a Lisp object pointer.
+   Generally, this is more efficient than using 32 bits, as it's often only
+   a single category that touches a whole lot of characters.
 
-   Possible uses (all should be converted at some point):
+   Possible uses:
 
    1) category tables
    2) syntax tables
    3) display tables
    4) case tables
+
+
    5) keyboard-translate-table?
 
    We provide an
@@ -102,7 +108,7 @@ static int check_valid_char_table_value (Lisp_Object value,
    */
 
 /************************************************************************/
-/*                         Char Table tables                            */
+/*                         Char Table subtables                         */
 /************************************************************************/
 
 /* We use the same code from unicode.c.
@@ -135,31 +141,56 @@ DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("char-subtable", char_subtable,
 				      char_subtable_description,
 				      Lisp_Char_Subtable);
 
+#ifdef MULE
+
+/************************************************************************/
+/*                       Category Table subtables                       */
+/************************************************************************/
+
+static SUBTAB_TYPE category_chartab_blank[5];
+
+static const struct memory_description category_subtable_description[] = {
+  { XD_END }
+};
+
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("category-subtable", category_subtable,
+				      0, category_subtable_description,
+				      Lisp_Category_Subtable);
+
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                      Char table implementation                       */
 /************************************************************************/
 
 static void
-init_blank_chartab_tables (void)
+init_blank_chartab_tables_1 (Lisp_Object *blank, int catp)
 {
   int i;
 
-  chartab_blank[1] = ALLOCATE_LEVEL_1_SUB_TABLE ();
-  chartab_blank[2] = ALLOCATE_LEVEL_N_SUB_TABLE ();
-  chartab_blank[3] = ALLOCATE_LEVEL_N_SUB_TABLE ();
-  chartab_blank[4] = ALLOCATE_LEVEL_N_SUB_TABLE ();
+  blank[1] = ALLOCATE_LEVEL_1_SUBTAB (catp);
+  blank[2] = ALLOCATE_LEVEL_N_SUBTAB ();
+  blank[3] = ALLOCATE_LEVEL_N_SUBTAB ();
+  blank[4] = ALLOCATE_LEVEL_N_SUBTAB ();
   for (i = 0; i < 256; i++)
     {
-      LISPOBJ_ARRAY_FROM_SUBTAB (chartab_blank[1])[i] = Qunbound;
-      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[2])[i] = chartab_blank[1];
-      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[3])[i] = chartab_blank[2];
-      SUBTAB_ARRAY_FROM_SUBTAB (chartab_blank[4])[i] = chartab_blank[3];
+      if (!catp)
+	BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (blank[1])[i] = Qunbound;
+      SUBTAB_ARRAY_FROM_SUBTAB (blank[2])[i] = blank[1];
+      SUBTAB_ARRAY_FROM_SUBTAB (blank[3])[i] = blank[2];
+      SUBTAB_ARRAY_FROM_SUBTAB (blank[4])[i] = blank[3];
     }
 }
 
+static void
+init_blank_chartab_tables (void)
+{
+  init_blank_chartab_tables_1 (chartab_blank, 0);
+}
+
 static SUBTAB_TYPE
-copy_chartab_table (SUBTAB_TYPE table, int level)
+copy_chartab_table (SUBTAB_TYPE table, int level, int catp)
 {
   SUBTAB_TYPE newtab;
   Bytecount size;
@@ -168,16 +199,18 @@ copy_chartab_table (SUBTAB_TYPE table, int level)
   /* WARNING: sizeof (Lisp_Object) maybe != sizeof (SUBTAB_TYPE). */
   if (level == 1)
     {
-      size = sizeof (Lisp_Object);
-      newtab = ALLOCATE_LEVEL_1_SUB_TABLE ();
-      memcpy (LISPOBJ_ARRAY_FROM_SUBTAB (newtab),
-	      LISPOBJ_ARRAY_FROM_SUBTAB (table),
+      size = (catp
+	      ? sizeof (CATEGORY_TAB_BASE_TYPE)
+	      : sizeof (CHARTAB_BASE_TYPE));
+      newtab = ALLOCATE_LEVEL_1_SUBTAB (catp);
+      memcpy (BASE_TYPE_ARRAY_FROM_SUBTAB (newtab, catp),
+	      BASE_TYPE_ARRAY_FROM_SUBTAB (table, catp),
 	      256 * size);
     }
   else
     {
       size = sizeof (SUBTAB_TYPE);
-      newtab = ALLOCATE_LEVEL_N_SUB_TABLE ();
+      newtab = ALLOCATE_LEVEL_N_SUBTAB ();
       memcpy (SUBTAB_ARRAY_FROM_SUBTAB (newtab),
 	      SUBTAB_ARRAY_FROM_SUBTAB (table),
 	      256 * size);
@@ -189,8 +222,8 @@ copy_chartab_table (SUBTAB_TYPE table, int level)
       SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (newtab);
       for (i = 0; i < 256; i++)
 	{
-	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
-	    tab[i] = copy_chartab_table (tab[i], level - 1);
+	  if (!SUBTAB_EQ (tab[i], SUBTAB_BLANK (catp)[level - 1]))
+	    tab[i] = copy_chartab_table (tab[i], level - 1, catp);
 	}
     }
 
@@ -198,13 +231,13 @@ copy_chartab_table (SUBTAB_TYPE table, int level)
 }
 
 static SUBTAB_TYPE
-create_new_chartab_table (int level)
+create_new_chartab_table (int level, int catp)
 {
-  return copy_chartab_table (chartab_blank[level], level);
+  return copy_chartab_table (SUBTAB_BLANK (catp)[level], level, catp);
 }
 
 static void
-free_chartab_table (SUBTAB_TYPE table, int level)
+free_chartab_table (SUBTAB_TYPE table, int level, int catp)
 {
   if (level >= 2)
     {
@@ -213,12 +246,12 @@ free_chartab_table (SUBTAB_TYPE table, int level)
 
       for (i = 0; i < 256; i++)
 	{
-	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
-	    free_chartab_table (tab[i], level - 1);
+	  if (!SUBTAB_EQ (tab[i], SUBTAB_BLANK (catp)[level - 1]))
+	    free_chartab_table (tab[i], level - 1, catp);
 	}
     }
 
-  FREE_ONE_SUBTABLE (table);
+  FREE_ONE_SUBTAB (table);
 }
 
 #ifdef MEMORY_USAGE_STATS
@@ -232,7 +265,7 @@ struct char_table_stats
 };
 
 static Bytecount
-compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
+compute_chartab_table_size_1 (SUBTAB_TYPE table, int level, int catp,
 			      struct usage_stats *stats)
 {
   Bytecount size = 0;
@@ -243,8 +276,9 @@ compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
       SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
       for (i = 0; i < 256; i++)
 	{
-	  if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
-	    size += compute_chartab_table_size_1 (tab[i], level - 1, stats);
+	  if (!SUBTAB_EQ (tab[i], SUBTAB_BLANK (catp)[level - 1]))
+	    size += compute_chartab_table_size_1 (tab[i], level - 1,
+						  catp, stats);
 	}
     }
 
@@ -253,20 +287,22 @@ compute_chartab_table_size_1 (SUBTAB_TYPE table, int level,
 }
 
 static Bytecount
-compute_chartab_table_size (Lisp_Object chartab,
+compute_chartab_table_size (Lisp_Object chartab, int catp,
 			    struct usage_stats *stats)
 {
   return (compute_chartab_table_size_1
 	  (XCHAR_TABLE_TABLE (chartab),
 	   XCHAR_TABLE_LEVELS (chartab),
-	   stats));
+	   catp, stats));
 }
 
 static void
 compute_char_table_usage (Lisp_Object chartab, struct char_table_stats *stats,
 			  struct usage_stats *ovstats)
 {
-  stats->page_tables += compute_chartab_table_size (chartab, ovstats);
+  stats->page_tables +=
+    compute_chartab_table_size (chartab, XCHAR_TABLE_CATEGORY_P (chartab),
+				ovstats);
 }
 
 
@@ -281,8 +317,12 @@ char_table_memory_usage (Lisp_Object char_table,
 
 #endif /* MEMORY_USAGE_STATS */
 
+/* Note: for category tables, VAL must be an integer.  The lower 8 bits
+   specify a bit to set or reset.  The upper bits specify an operation
+   to perform and are an `enum put_category_operation'. */
+
 void
-put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
+put_char_table (Lisp_Object chartab, Ichar ch, Lisp_Object val)
 {
   /* #### NOTE NOTE NOTE!
 
@@ -328,6 +368,7 @@ put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
 #ifndef MAXIMIZE_CHAR_TABLE_DEPTH
   int code_levels;
 #endif
+  int catp = XCHAR_TABLE_CATEGORY_P (chartab);
 
   text_checking_assert (valid_ichar_p (ch));
   CHARTAB_BREAKUP_CHAR_CODE ((int) ch, u4, u3, u2, u1, code_levels);
@@ -348,7 +389,7 @@ put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
 	  if (levels < i)
 	    {
 	      SUBTAB_TYPE old_table = XCHAR_TABLE_TABLE (chartab);
-	      SUBTAB_TYPE table = create_new_chartab_table (i);
+	      SUBTAB_TYPE table = create_new_chartab_table (i, catp);
 	      XCHAR_TABLE_TABLE (chartab) = table;
 	      SUBTAB_ARRAY_FROM_SUBTAB (table)[0] = old_table;
 	    }
@@ -377,9 +418,9 @@ put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
 	  }
 
 	if (SUBTAB_EQ (SUBTAB_ARRAY_FROM_SUBTAB (table)[ind],
-		       chartab_blank[i - 1]))
+		       SUBTAB_BLANK (catp)[i - 1]))
 	  SUBTAB_ARRAY_FROM_SUBTAB (table)[ind] =
-	    create_new_chartab_table (i - 1);
+	    create_new_chartab_table (i - 1, catp);
 	table = SUBTAB_ARRAY_FROM_SUBTAB (table)[ind];
       }
   }
@@ -399,8 +440,45 @@ put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
       case 4: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u4];
       case 3: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u3];
       case 2: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u2];
-      case 1: LISPOBJ_ARRAY_FROM_SUBTAB (table)[u1] = val;
+      case 1:
+	if (catp)
+	  {
+#ifdef MULE
+	    int ind = XINT (val);
+	    enum put_category_operation op =
+	      (enum put_category_operation) (ind >> 8);
+	    ind &= 0xFF;
+	    switch (op)
+	      {
+	      case PUT_CATEGORY_SET:
+		BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table)[u1] |=
+		  BIT_INDEX_TO_SET_MASK (ind);
+		break;
+		
+	      case PUT_CATEGORY_UNSET:
+		BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table)[u1] &=
+		  BIT_INDEX_TO_CLEAR_MASK (ind);
+		break;
+
+	      case PUT_CATEGORY_RESET:
+		BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table)[u1] = 0;
+		break;
+
+	      case PUT_CATEGORY_RESET_AND_SET:
+		BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table)[u1] =
+		  BIT_INDEX_TO_SET_MASK (ind);
+		break;
+	      default:
+		ABORT ();
+	      }
+#else
+	    ABORT ();
+#endif /* (not) MULE */
+	  }
+	else
+	  BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table)[u1] = val;
 #else /* The old way */
+	/* #### Won't work with category char tables */
       case 1: ((Lisp_Object *) table)[u1] = val; break;
       case 2: ((Lisp_Object **) table)[u2][u1] = val; break;
       case 3: ((Lisp_Object ***) table)[u3][u2][u1] = val; break;
@@ -421,13 +499,14 @@ put_char_table_1 (Lisp_Object chartab, Ichar ch, Lisp_Object val)
 static int
 map_chartab_table (SUBTAB_TYPE table, int level, int offset, int start,
 		   int end, Lisp_Object chartab,
-		   int (*fn) (Lisp_Object chartab, Ichar code, Lisp_Object val,
+		   int (*fn) (Lisp_Object chartab, Ichar code, void *val,
 			      void *arg),
 		   void *arg)
 {
   int i;
   int startind = max (0, (start - offset) >> ((level - 1) * 8));
   int endind = min (255, (end - offset) >> ((level - 1) * 8));
+  int catp = XCHAR_TABLE_CATEGORY_P (chartab);
 
   structure_checking_assert (startind <= 255);
   structure_checking_assert (endind >= 0);
@@ -437,14 +516,33 @@ map_chartab_table (SUBTAB_TYPE table, int level, int offset, int start,
     {
     case 1:
       {
-	Lisp_Object *tab = LISPOBJ_ARRAY_FROM_SUBTAB (table);
-	for (i = startind; i <= endind; i++)
+	if (catp)
 	  {
-	    if (!UNBOUNDP (tab[i]))
+	    CATEGORY_TAB_BASE_TYPE *tab =
+	      BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table);
+	    for (i = startind; i <= endind; i++)
 	      {
-		int retval = (fn) (chartab, offset + i, tab[i], arg);
-		if (retval)
-		  return retval;
+		if (tab[i])
+		  {
+		    int retval = (fn) (chartab, offset + i,
+				       (void *) (EMACS_INT) tab[i], arg);
+		    if (retval)
+		      return retval;
+		  }
+	      }
+	  }
+	else
+	  {
+	    Lisp_Object *tab = BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table);
+	    for (i = startind; i <= endind; i++)
+	      {
+		if (!UNBOUNDP (tab[i]))
+		  {
+		    int retval = (fn) (chartab, offset + i,
+				       STORE_LISP_IN_VOID (tab[i]), arg);
+		    if (retval)
+		      return retval;
+		  }
 	      }
 	  }
 	break;
@@ -456,7 +554,7 @@ map_chartab_table (SUBTAB_TYPE table, int level, int offset, int start,
 	SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
 	for (i = startind; i <= endind; i++)
 	  {
-	    if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]))
+	    if (!SUBTAB_EQ (tab[i], SUBTAB_BLANK (catp)[level - 1]))
 	      {
 		int retval =
 		  map_chartab_table (tab[i], level - 1,
@@ -482,7 +580,7 @@ map_chartab_table (SUBTAB_TYPE table, int level, int offset, int start,
    */
 
 static int
-check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
+check_if_blank (SUBTAB_TYPE table, int level, int start, int depth, int catp)
 {
   int i;
 
@@ -490,13 +588,25 @@ check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
     {
     case 1:
       {
-	Lisp_Object *tab = LISPOBJ_ARRAY_FROM_SUBTAB (table);
-	for (i = start; i < 256; i++)
+	if (catp)
 	  {
-	    if (!UNBOUNDP (tab[i]))
-	      return 0;
+	    CATEGORY_TAB_BASE_TYPE *tab =
+	      BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table);
+	    for (i = start; i < 256; i++)
+	      if (tab[i])
+		return 0;
+	    break;
 	  }
-	break;
+	else
+	  {
+	    CHARTAB_BASE_TYPE *tab = BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table);
+	    for (i = start; i < 256; i++)
+	      {
+		if (!UNBOUNDP (tab[i]))
+		  return 0;
+	      }
+	    break;
+	  }
       }
     case 2:
     case 3:
@@ -505,8 +615,8 @@ check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
 	SUBTAB_ARRAY_TYPE tab = SUBTAB_ARRAY_FROM_SUBTAB (table);
 	for (i = start; i < 256; i++)
 	  {
-	    if (!SUBTAB_EQ (tab[i], chartab_blank[level - 1]) &&
-		!check_if_blank (tab[i], level - 1, 0, depth))
+	    if (!SUBTAB_EQ (tab[i], SUBTAB_BLANK (catp)[level - 1]) &&
+		!check_if_blank (tab[i], level - 1, 0, depth, catp))
 	      return 0;
 	  }
 	break;
@@ -520,7 +630,7 @@ check_if_blank (SUBTAB_TYPE table, int level, int start, int depth)
 
 static int
 chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
-		      int depth, int foldcase)
+		      int depth, int foldcase, int catp)
 {
   int i;
 
@@ -528,14 +638,29 @@ chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
     {
     case 1:
       {
-	Lisp_Object *tab1 = LISPOBJ_ARRAY_FROM_SUBTAB (table1);
-	Lisp_Object *tab2 = LISPOBJ_ARRAY_FROM_SUBTAB (table2);
-	for (i = 0; i < 256; i++)
+	if (catp)
 	  {
-	    if (!internal_equal_0 (tab1[i], tab2[i], depth + 1, foldcase))
+	    CATEGORY_TAB_BASE_TYPE *tab1 =
+	      BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table1);
+	    CATEGORY_TAB_BASE_TYPE *tab2 =
+	      BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table2);
+	    if (memcmp (tab1, tab2, 256 * sizeof (CATEGORY_TAB_BASE_TYPE)))
 	      return 0;
+	    break;
 	  }
-	break;
+	else
+	  {
+	    CHARTAB_BASE_TYPE *tab1 =
+	      BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table1);
+	    CHARTAB_BASE_TYPE *tab2 =
+	      BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table2);
+	    for (i = 0; i < 256; i++)
+	      {
+		if (!internal_equal_0 (tab1[i], tab2[i], depth + 1, foldcase))
+		  return 0;
+	      }
+	    break;
+	  }
       }
     case 2:
     case 3:
@@ -545,23 +670,23 @@ chartab_tables_equal (SUBTAB_TYPE table1, SUBTAB_TYPE table2, int level,
 	SUBTAB_ARRAY_TYPE tab2 = SUBTAB_ARRAY_FROM_SUBTAB (table2);
 	for (i = 0; i < 256; i++)
 	  {
-	    if (SUBTAB_EQ (tab1[i], chartab_blank[level - 1]) &&
-		SUBTAB_EQ (tab2[i], chartab_blank[level - 1]))
+	    if (SUBTAB_EQ (tab1[i], SUBTAB_BLANK (catp)[level - 1]) &&
+		SUBTAB_EQ (tab2[i], SUBTAB_BLANK (catp)[level - 1]))
 	      ;
-	    else if (SUBTAB_EQ (tab1[i], chartab_blank[level - 1]))
+	    else if (SUBTAB_EQ (tab1[i], SUBTAB_BLANK (catp)[level - 1]))
 	      {
-		if (!check_if_blank (tab2[i], level - 1, 0, depth))
+		if (!check_if_blank (tab2[i], level - 1, 0, depth, catp))
 		  return 0;
 	      }
-	    else if (SUBTAB_EQ (tab2[i], chartab_blank[level - 1]))
+	    else if (SUBTAB_EQ (tab2[i], SUBTAB_BLANK (catp)[level - 1]))
 	      {
-		if (!check_if_blank (tab1[i], level - 1, 0, depth))
+		if (!check_if_blank (tab1[i], level - 1, 0, depth, catp))
 		  return 0;
 	      }
 	    else
 	      {
 		if (!chartab_tables_equal (tab1[1], tab2[1], level - 1,
-					   depth, foldcase))
+					   depth, foldcase, catp))
 		  return 0;
 	      }
 	  }
@@ -594,6 +719,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
      currently set. */
 
   SUBTAB_TYPE table;
+  int catp = XCHAR_TABLE_CATEGORY_P (obj1);
 
   if (XCHAR_TABLE_TYPE (obj1) != XCHAR_TABLE_TYPE (obj2))
     return 0;
@@ -624,7 +750,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
       int i;
       for (i = XCHAR_TABLE_LEVELS (obj1); i > XCHAR_TABLE_LEVELS (obj2); i--)
 	{
-	  if (!check_if_blank (table, i, 1, depth))
+	  if (!check_if_blank (table, i, 1, depth, catp))
 	    return 0;
 	  table = SUBTAB_ARRAY_FROM_SUBTAB (table)[0];
 	}
@@ -635,7 +761,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
   return chartab_tables_equal (table,
 			       XCHAR_TABLE_TABLE (obj2),
 			       XCHAR_TABLE_LEVELS (obj2),
-			       depth, foldcase);
+			       depth, foldcase, catp);
 }
 
 /* Characters likely to have case pairs or special syntax -- e.g. comment
@@ -646,6 +772,16 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
    up in char tables than others. */
 static const Ascbyte *likely_test = "\t\n\r\f\016\025\0330128!@#$%^&*`'_+=-,.<>?;:/~()[]{}\\\"acehijlnortuxyzADEGIKMOQSVY";
 
+static inline Hashcode
+hash_raw_chartab_val (Ichar ch, Lisp_Object chartab, int depth, int catp)
+{
+  void *val = get_char_table_raw (ch, chartab);
+  if (catp)
+    return (Hashcode) val;
+  else
+    return internal_hash (GET_LISP_FROM_VOID (val), depth + 1);
+}
+
 static Hashcode
 char_table_hash (Lisp_Object obj, int depth)
 {
@@ -654,15 +790,15 @@ char_table_hash (Lisp_Object obj, int depth)
 					   depth + 1));
   const Ascbyte *p;
   Ichar ch;
+  int catp = XCHAR_TABLE_CATEGORY_P (obj);
 
   /* Hash those most likely to have values */
   for (p = likely_test; *p; p++)
-    hashval = HASH2 (hashval, internal_hash
-		     (get_char_table_raw ((Ichar) *p, obj), depth + 1));
+    hashval = HASH2 (hashval,
+		     hash_raw_chartab_val ((Ichar) *p, obj, depth, catp));
   /* Hash some random Latin characters */
   for (ch = 130; ch <= 255; ch += 5)
-    hashval = HASH2 (hashval, internal_hash
-		     (get_char_table_raw (ch, obj), depth + 1));
+    hashval = HASH2 (hashval, hash_raw_chartab_val (ch, obj, depth, catp));
   /* Don't bother trying to hash higher stuff if there is none. */
   if (XCHAR_TABLE_LEVELS (obj) > 1)
     {
@@ -675,20 +811,16 @@ char_table_hash (Lisp_Object obj, int depth)
 	 change if the Unicode-to-charset tables are changed. */
       /* Hash some random extended Latin characters */
       for (ch = 260; ch <= 500; ch += 10)
-	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
-						 depth + 1));
+	hashval = HASH2 (hashval, hash_raw_chartab_val (ch, obj, depth, catp));
       /* Hash some higher characters */
       for (ch = 500; ch <= 4000; ch += 50)
-	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
-						 depth + 1));
+	hashval = HASH2 (hashval, hash_raw_chartab_val (ch, obj, depth, catp));
       /* Hash some random CJK characters */
       for (ch = 0x4E00; ch <= 0x9FFF; ch += 791)
-	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
-						 depth + 1));
+	hashval = HASH2 (hashval, hash_raw_chartab_val (ch, obj, depth, catp));
       /* Hash some random Hangul characters */
       for (ch = 0xAC00; ch <= 0xD7AF; ch += 791)
-	hashval = HASH2 (hashval, internal_hash (get_char_table_raw (ch, obj),
-						 depth + 1));
+	hashval = HASH2 (hashval, hash_raw_chartab_val (ch, obj, depth, catp));
 #elif defined (MULE)
 /* 0xA1 is usually the first alphabetic character and differs across
    charsets, whereas 0xA0 is no-break-space across many of them.
@@ -696,18 +828,16 @@ char_table_hash (Lisp_Object obj, int depth)
    Unicode-internal. */
 #define FROB1(cs)							\
   hashval = HASH2 (hashval,						\
-		   internal_hash (get_char_table_raw			\
-				  (charset_codepoint_to_ichar_raw	\
-				   (cs, 0, 0xA1),			\
-				   obj), depth + 1))
+		   hash_raw_chartab_val (charset_codepoint_to_ichar_raw	\
+                                         (cs, 0, 0xA1),			\
+				         obj, depth, catp))
 /* 0x3021 is the first CJK character in a number of different CJK charsets
    and differs across them. */
 #define FROB2(cs)							\
   hashval = HASH2 (hashval,						\
-		   internal_hash (get_char_table_raw			\
-				  (charset_codepoint_to_ichar_raw	\
-				   (cs, 0x30, 0x21),			\
-				   obj), depth + 1))
+		   hash_raw_chartab_val (charset_codepoint_to_ichar_raw	\
+				         (cs, 0x30, 0x21),		\
+				         obj, depth, catp))
       FROB1 (Vcharset_latin_iso8859_2);
       FROB1 (Vcharset_latin_iso8859_3);
       FROB1 (Vcharset_latin_iso8859_4);
@@ -757,7 +887,8 @@ init_chartab_tables (Lisp_Object chartab)
      foo otherwise. */
   XCHAR_TABLE_LEVELS (chartab) = CHARTAB_LEVELS (1);
   XCHAR_TABLE_TABLE (chartab) =
-    create_new_chartab_table (XCHAR_TABLE_LEVELS (chartab));
+    create_new_chartab_table (XCHAR_TABLE_LEVELS (chartab),
+			      XCHAR_TABLE_CATEGORY_P (chartab));
 }
 
 static void
@@ -766,7 +897,8 @@ free_chartab_tables (Lisp_Object chartab)
   if (!UNBOUNDP (XCHAR_TABLE_TABLE (chartab)))
     {
       free_chartab_table (XCHAR_TABLE_TABLE (chartab),
-			  XCHAR_TABLE_LEVELS (chartab));
+			  XCHAR_TABLE_LEVELS (chartab),
+			  XCHAR_TABLE_CATEGORY_P (chartab));
       XCHAR_TABLE_TABLE (chartab) = Qunbound;
     }
 }
@@ -808,17 +940,29 @@ struct ptemap
 {
   Lisp_Object printcharfun;
   int first;
+  int num_printed;
+  int max;
 };
 
 static int
-print_table_entry (Lisp_Object UNUSED (table), Ichar ch,
-		   Lisp_Object val, void *arg)
+print_table_entry (Lisp_Object table, Ichar ch, void *val, void *arg)
 {
   struct ptemap *a = (struct ptemap *) arg;
+  QUIT;
   if (!a->first)
     write_ascstring (a->printcharfun, " ");
   a->first = 0;
-  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, make_char (ch), val);
+  if (a->num_printed > a->max)
+    {
+      write_ascstring (a->printcharfun, "...");
+      return 1;
+    }
+  write_fmt_string_lisp (a->printcharfun, "%s ", 1, make_char (ch));
+  if (XCHAR_TABLE_CATEGORY_P (table))
+    write_fmt_string (a->printcharfun, "#x%lx", (long) val);
+  else
+    write_fmt_string_lisp (a->printcharfun, "%S", 1, GET_LISP_FROM_VOID (val));
+  a->num_printed++;
   return 0;
 }
 
@@ -832,12 +976,27 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 
   range.type = CHARTAB_RANGE_ALL;
   arg.printcharfun = printcharfun;
+  arg.num_printed = 0;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
-			 1, char_table_type_to_symbol (ct->type));
+  if (print_readably)
+    {
+      write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
+			     1, char_table_type_to_symbol (ct->type));
+      arg.max = INT_MAX;
+    }
+  else
+    {
+      write_fmt_string_lisp (printcharfun, "#<char-table type %s data (",
+			     1, char_table_type_to_symbol (ct->type));
+      arg.max = INTP (Vprint_table_nonreadably_length) ?
+	XINT (Vprint_table_nonreadably_length) : INT_MAX;
+    }
   map_char_table (obj, &range, print_table_entry, &arg);
-  write_ascstring (printcharfun, "))");
+  if (print_readably)
+    write_ascstring (printcharfun, "))");
+  else
+    write_ascstring (printcharfun, ")>");
 
   /* #### need to print and read the default; but that will allow the
      default to be modified, which we don't (yet) support -- but FSF does */
@@ -939,6 +1098,15 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
       outrange->charset = Fget_charset (range);
     }
 #endif /* MULE */
+}
+
+static void
+check_non_category_char_table (Lisp_Object chartab)
+{
+  CHECK_CHAR_TABLE (chartab);
+  if (XCHAR_TABLE_CATEGORY_P (chartab))
+    invalid_operation ("Can't perform this operation on a category char-table",
+		       chartab);
 }
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
@@ -1048,6 +1216,49 @@ Reset CHAR-TABLE to its default state.
   return Qnil;
 }
 
+static Lisp_Object
+make_char_table (Lisp_Object type, int internal_p)
+{
+  Lisp_Object obj;
+  Lisp_Char_Table *ct;
+  enum char_table_type ty;
+
+  if (EQ (type, Qcategory) && !internal_p)
+    invalid_operation ("Can't directly create category-type char tables",
+		       Qunbound);
+
+  obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
+  ct = XCHAR_TABLE (obj);
+  ty = symbol_to_char_table_type (type);
+
+  ct->type = ty;
+  obj = wrap_char_table (ct);
+  ct->table = Qunbound;
+#ifdef MIRROR_TABLE
+  if (ty == CHAR_TABLE_TYPE_SYNTAX)
+    {
+      /* Qgeneric not Qsyntax because a syntax table has a mirror table
+	 and we don't want infinite recursion */
+      ct->mirror_table = Fmake_char_table (Qgeneric);
+      set_char_table_default (ct->mirror_table, make_int (Sword));
+      XCHAR_TABLE (ct->mirror_table)->mirror_table_p = 1;
+      XCHAR_TABLE (ct->mirror_table)->mirror_table = obj;
+    }
+  else
+    ct->mirror_table = Qnil;
+#endif /* MIRROR_TABLE */
+  ct->next_table = Qnil;
+  ct->parent = Qnil;
+  ct->default_ = Qnil;
+  if (ty == CHAR_TABLE_TYPE_SYNTAX)
+    {
+      ct->next_table = Vall_syntax_tables;
+      Vall_syntax_tables = obj;
+    }
+  Freset_char_table (obj);
+  return obj;
+}
+
 DEFUN ("make-char-table", Fmake_char_table, 1, 1, 0, /*
 Return a new, empty char table of type TYPE.
 
@@ -1087,7 +1298,8 @@ Each char table type is used for a different purpose and allows different
 sorts of values.  The different char table types are
 
 `category'
-	Used for category tables, which specify the regexp categories that a
+	Used internally for category tables.  These are a special type of
+        char tables , which specify the regexp categories that a
 	character is in.  The valid values are nil or a bit vector of 95
 	elements, and values default to nil.  Higher-level Lisp functions
 	are provided for working with category tables.  Currently categories
@@ -1117,36 +1329,7 @@ sorts of values.  The different char table types are
 */
        (type))
 {
-  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
-  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  enum char_table_type ty = symbol_to_char_table_type (type);
-
-  ct->type = ty;
-  obj = wrap_char_table (ct);
-  ct->table = Qunbound;
-#ifdef MIRROR_TABLE
-  if (ty == CHAR_TABLE_TYPE_SYNTAX)
-    {
-      /* Qgeneric not Qsyntax because a syntax table has a mirror table
-	 and we don't want infinite recursion */
-      ct->mirror_table = Fmake_char_table (Qgeneric);
-      set_char_table_default (ct->mirror_table, make_int (Sword));
-      XCHAR_TABLE (ct->mirror_table)->mirror_table_p = 1;
-      XCHAR_TABLE (ct->mirror_table)->mirror_table = obj;
-    }
-  else
-    ct->mirror_table = Qnil;
-#endif /* MIRROR_TABLE */
-  ct->next_table = Qnil;
-  ct->parent = Qnil;
-  ct->default_ = Qnil;
-  if (ty == CHAR_TABLE_TYPE_SYNTAX)
-    {
-      ct->next_table = Vall_syntax_tables;
-      Vall_syntax_tables = obj;
-    }
-  Freset_char_table (obj);
-  return obj;
+  return make_char_table (type, 0);
 }
 
 DEFUN ("copy-char-table", Fcopy_char_table, 1, 1, 0, /*
@@ -1170,7 +1353,8 @@ as CHAR-TABLE.  The values will not themselves be copied.
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
   ctnew->levels = ct->levels;
-  ctnew->table = copy_chartab_table (ct->table, ct->levels);
+  ctnew->table = copy_chartab_table (ct->table, ct->levels,
+				     CHAR_TABLE_CATEGORY_P (ct));
   obj = wrap_char_table (ctnew);
 
 #ifdef MIRROR_TABLE
@@ -1202,7 +1386,7 @@ does not exist, the default is returned.
 */
        (char_table))
 {
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   return XCHAR_TABLE (char_table)->default_;
 }
 
@@ -1213,7 +1397,7 @@ Currently, the default value for syntax tables cannot be changed.
 */
        (char_table, default_))
 {
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   if (XCHAR_TABLE_TYPE (char_table) == CHAR_TABLE_TYPE_SYNTAX)
     invalid_change ("Can't change default for syntax tables", char_table);
   check_valid_char_table_value (default_, XCHAR_TABLE_TYPE (char_table),
@@ -1227,10 +1411,10 @@ Find value for CHARACTER in CHAR-TABLE.
 */
        (character, char_table))
 {
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   CHECK_CHAR_COERCE_INT (character);
 
-  return get_char_table (XCHAR (character), char_table);
+  return get_char_table_lisp (XCHAR (character), char_table);
 }
     
 static int
@@ -1255,10 +1439,10 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
 
 #ifdef MULE
     case CHAR_TABLE_TYPE_CATEGORY:
-      if (!ERRB_EQ (errb, ERROR_ME))
-	return CATEGORY_TABLE_VALUEP (value);
-      CHECK_CATEGORY_TABLE_VALUE (value);
-      break;
+      maybe_signal_error (Qinvalid_operation,
+			  "Can't set category char tables in this fashion",
+			  value, Qchar_table, errb);
+      return 0;
 #endif /* MULE */
 
     case CHAR_TABLE_TYPE_GENERIC:
@@ -1331,8 +1515,8 @@ Signal an error if VALUE is not a valid value for CHAR-TABLE-TYPE.
 /* Assign VAL to all characters in RANGE in char table TABLE. */
 
 void
-put_char_table (Lisp_Object table, struct chartab_range *range,
-		Lisp_Object val)
+put_char_table_range (Lisp_Object table, struct chartab_range *range,
+		      Lisp_Object val)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
 #ifdef MULE
@@ -1359,7 +1543,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 	    {
 	      Ichar ch = charset_codepoint_to_ichar_raw (range->charset, i, j);
 	      if (ch >= 0)
-		put_char_table_1 (table, ch, val);
+		put_char_table (table, ch, val);
 	    }
       }
       break;
@@ -1376,7 +1560,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 
 	    /* QUIT every CHAR_INTERVAL_FOR_QUIT characters */
 	    for (j = i; j <= stop; j++)
-	      put_char_table_1 (table, j, val);
+	      put_char_table (table, j, val);
 	    QUIT;
 	  }
       }
@@ -1384,7 +1568,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
       break;
 
     case CHARTAB_RANGE_CHAR:
-      put_char_table_1 (table, range->ch, val);
+      put_char_table (table, range->ch, val);
       break;
     }
 
@@ -1414,15 +1598,15 @@ See `make-char-table'.
   Lisp_Char_Table *ct;
   struct chartab_range rainj;
 
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   ct = XCHAR_TABLE (char_table);
   check_valid_char_table_value (value, ct->type, ERROR_ME);
   decode_char_table_range (range, &rainj);
   if (rainj.type == CHARTAB_RANGE_ALL)
-    invalid_argument ("Can't currently set all characters in a char table",
-                      range);
+    invalid_operation ("Can't currently set all characters in a char table",
+		       range);
   value = canonicalize_char_table_value (value, ct->type);
-  put_char_table (char_table, &rainj, value);
+  put_char_table_range (char_table, &rainj, value);
   return Qnil;
 }
 
@@ -1446,7 +1630,7 @@ With all values removed, the default value will be returned by
 {
   struct chartab_range rainj;
 
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   decode_char_table_range (range, &rainj);
   if (rainj.type == CHARTAB_RANGE_ALL)
     {
@@ -1454,7 +1638,7 @@ With all values removed, the default value will be returned by
       init_chartab_tables (char_table);
     }
   else
-    put_char_table (char_table, &rainj, Qunbound);
+    put_char_table_range (char_table, &rainj, Qunbound);
   return Qnil;
 }
 
@@ -1466,13 +1650,14 @@ With all values removed, the default value will be returned by
 int
 map_char_table (Lisp_Object table,
 		struct chartab_range *range,
-		int (*fn) (Lisp_Object table, Ichar code, Lisp_Object val,
+		int (*fn) (Lisp_Object table, Ichar code, void *val,
 			   void *arg),
 		void *arg)
 {
 #ifdef MULE
   int l1, h1, l2, h2;
 #endif
+  int catp = XCHAR_TABLE_CATEGORY_P (table);
   int levels = XCHAR_TABLE_LEVELS (table);
   /* Compute maximum allowed value for this table, which may be less than
      the range we have been requested to map over. */
@@ -1513,8 +1698,8 @@ map_char_table (Lisp_Object table,
 	      Ichar ch = charset_codepoint_to_ichar_raw (range->charset, i, j);
 	      if (ch >= 0)
 		{
-		  Lisp_Object val = get_char_table (ch, table);
-		  if (!UNBOUNDP (val))
+		  void *val = get_char_table (ch, table);
+		  if (catp ? !!val : !UNBOUNDP (GET_LISP_FROM_VOID (val)))
 		    {
 		      int retval = (fn) (table, ch, val, arg);
 		      if (retval)
@@ -1529,9 +1714,9 @@ map_char_table (Lisp_Object table,
 
     case CHARTAB_RANGE_CHAR:
       {
-	Lisp_Object val = get_char_table (range->ch, table);
+	void *val = get_char_table (range->ch, table);
 
-	if (!UNBOUNDP (val))
+	if (catp ? !!val : !UNBOUNDP (GET_LISP_FROM_VOID (val)))
 	  return (fn) (table, range->ch, val, arg);
 	else
 	  return 0;
@@ -1552,12 +1737,13 @@ struct slow_map_char_table_arg
 
 static int
 slow_map_char_table_fun (Lisp_Object UNUSED (table),
-			 Ichar ch, Lisp_Object val, void *arg)
+			 Ichar ch, void *val, void *arg)
 {
   struct slow_map_char_table_arg *closure =
     (struct slow_map_char_table_arg *) arg;
 
-  closure->retval = call2 (closure->function, make_char (ch), val);
+  closure->retval = call2 (closure->function, make_char (ch),
+			   GET_LISP_FROM_VOID (val));
   return !NILP (closure->retval);
 }
 
@@ -1578,7 +1764,7 @@ range, a charset or a vector giving a charset and a row in that charset.
   struct gcpro gcpro1, gcpro2;
   struct chartab_range rainj;
 
-  CHECK_CHAR_TABLE (char_table);
+  check_non_category_char_table (char_table);
   if (NILP (range))
     range = Qt;
   decode_char_table_range (range, &rainj);
@@ -1687,16 +1873,85 @@ chartab_instantiate (Lisp_Object data)
 
 
 /************************************************************************/
-/*                     Category Tables, specifically                    */
+/*                           Category Tables                            */
 /************************************************************************/
 
-DEFUN ("category-table-p", Fcategory_table_p, 1, 1, 0, /*
-Return t if OBJECT is a category table.
-A category table is a type of char table used for keeping track of
-categories.  Categories are used for classifying characters for use
-in regexps -- you can refer to a category rather than having to use
-a complicated [] expression (and category lookups are significantly
-faster).
+static void
+init_blank_category_chartab_tables (void)
+{
+  init_blank_chartab_tables_1 (category_chartab_blank, 1);
+}
+
+static int
+category_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
+		      int foldcase)
+{
+  int i;
+
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    if (!internal_equal_0 (XCATEGORY_TABLE_TABLES (obj1)[i],
+			   XCATEGORY_TABLE_TABLES (obj2)[i],
+			   depth + 1, foldcase))
+      return 0;
+  return 1;
+}
+
+static Hashcode
+category_table_hash (Lisp_Object obj, int depth)
+{
+  int i;
+  Hashcode hashval = 0;
+
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    hashval = HASH2 (hashval,
+		     internal_hash (XCATEGORY_TABLE_TABLES (obj)[i],
+				    depth + 1));
+
+  return hashval;
+}
+
+static Lisp_Object
+mark_category_table (Lisp_Object obj)
+{
+  int i;
+
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    mark_object (XCATEGORY_TABLE_TABLES (obj)[i]);
+  return Qnil;
+}
+
+static void
+print_category_table (Lisp_Object obj, Lisp_Object printcharfun,
+		      int UNUSED (escapeflag))
+{
+  int i;
+
+  /* #### Eventually need to print properly and readably */
+  write_ascstring (printcharfun, "#<category-table");
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    write_fmt_string_lisp (printcharfun, " %s", 1,
+			   XCATEGORY_TABLE_TABLES (obj)[i]);
+  write_ascstring (printcharfun, ">");
+}
+
+static const struct memory_description category_table_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Category_Table, tables),
+    CHAR_TABLES_PER_CATEGORY_TABLE },
+  { XD_END }
+};
+
+DEFINE_DUMPABLE_LISP_OBJECT ("category-table", category_table,
+			     mark_category_table, print_category_table, 0,
+			     category_table_equal, category_table_hash,
+			     category_table_description,
+			     Lisp_Category_Table);
+
+DEFUN ("make-category-table", Fmake_category_table, 0, 0, 0, /*
+Construct a new and empty category table and return it.
+A category table is a table used for keeping track of categories.
+Categories are used for classifying characters for use in regexps -- you
+can refer to a category rather than having to use a complicated []
+expression (and category lookups are significantly faster).
 
 There are 95 different categories available, one for each printable
 character (including space) in the ASCII charset.  Each category
@@ -1706,19 +1961,25 @@ a category designator.
 
 A category table specifies, for each character, the categories that
 the character is in.  Note that a character can be in more than one
-category.  More specifically, a category table maps from a character
-to either the value nil (meaning the character is in no categories)
-or a 95-element bit vector, specifying for each of the 95 categories
-whether the character is in that category.
+category.
+*/
+       ())
+{
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (category_table);
+  int i;
 
-Special Lisp functions are provided that abstract this, so you do not
-have to directly manipulate bit vectors.
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    XCATEGORY_TABLE_TABLES (obj)[i] = make_char_table (Qcategory, 1);
+  return obj;
+}
+
+DEFUN ("category-table-p", Fcategory_table_p, 1, 1, 0, /*
+Return t if OBJECT is a category table.
+See `make-category-table' for more information.
 */
        (object))
 {
-  return (CHAR_TABLEP (object) &&
-	  XCHAR_TABLE_TYPE (object) == CHAR_TABLE_TYPE_CATEGORY) ?
-    Qt : Qnil;
+  return (CATEGORY_TABLEP (object) ? Qt : Qnil);
 }
 
 static Lisp_Object
@@ -1726,24 +1987,25 @@ check_category_table (Lisp_Object object, Lisp_Object default_)
 {
   if (NILP (object))
     object = default_;
-  while (NILP (Fcategory_table_p (object)))
-    object = wrong_type_argument (Qcategory_table_p, object);
+  CHECK_CATEGORY_TABLE (object);
   return object;
 }
 
-int
-check_category_char (Ichar ch, Lisp_Object table,
-		     int designator, int not_p)
-{
-  REGISTER Lisp_Object temp;
-  if (NILP (Fcategory_table_p (table)))
-    wtaerror ("Expected category table", table);
-  temp = get_char_table (ch, table);
-  if (NILP (temp))
-    return not_p;
+/* Check whether character CH is in the category specified by DESIGNATOR
+   in category table TABLE.  If NOT_P is non-zero, reverse the sense of the
+   check, i.e. return non-zero if character CH is *not* in the category. */
 
-  designator -= ' ';
-  return bit_vector_bit (XBIT_VECTOR (temp), designator) ? !not_p : not_p;
+int
+check_char_in_category (Ichar ch, Lisp_Object table, int designator, int not_p)
+{
+  CATEGORY_TAB_BASE_TYPE val;
+  Lisp_Object chartab;
+
+  chartab =
+    XCATEGORY_TABLE_TABLES (table)[DESIGNATOR_TO_CHAR_TABLE (designator)];
+  val = (CATEGORY_TAB_BASE_TYPE) (EMACS_INT) get_char_table_raw (ch, chartab);
+  return BIT_IS_SET_IN_ARRAY (val, DESIGNATOR_TO_BIT_INDEX (designator)) ?
+    !not_p : not_p;
 }
 
 DEFUN ("check-category-at", Fcheck_category_at, 2, 4, 0, /*
@@ -1765,7 +2027,7 @@ use, and defaults to BUFFER's category table.
   des = XCHAR (designator);
   ctbl = check_category_table (category_table, buf->category_table);
   ch = BUF_FETCH_CHAR (buf, XINT (position));
-  return check_category_char (ch, ctbl, des, 0) ? Qt : Qnil;
+  return check_char_in_category (ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
 DEFUN ("char-in-category-p", Fchar_in_category_p, 2, 3, 0, /*
@@ -1784,7 +2046,7 @@ and defaults to the current buffer's category table.
   CHECK_CHAR (character);
   ch = XCHAR (character);
   ctbl = check_category_table (category_table, current_buffer->category_table);
-  return check_category_char (ch, ctbl, des, 0) ? Qt : Qnil;
+  return check_char_in_category (ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
 DEFUN ("category-table", Fcategory_table, 0, 1, 0, /*
@@ -1812,7 +2074,7 @@ CATEGORY-TABLE defaults to the standard category table.
        (category_table))
 {
   if (NILP (Vstandard_category_table))
-    return Fmake_char_table (Qcategory);
+    return Fmake_category_table ();
 
   category_table =
     check_category_table (category_table, Vstandard_category_table);
@@ -1833,6 +2095,46 @@ BUFFER defaults to the current buffer if omitted.
   return category_table;
 }
 
+DEFUN ("modify-category-entry-internal", Fmodify_category_entry_internal,
+       2, 4, 0, /*
+  "Add a category to the categories associated with CHAR-RANGE.
+CHAR-RANGE is a single character or a range of characters,
+ as per `put-char-table'.
+The category is given by a designator character.
+The changes are made in CATEGORY-TABLE, which defaults to the current
+ buffer's category table.
+If optional fourth argument RESET is non-nil, previous categories associated
+ with CHAR-RANGE are removed before adding the specified category.
+
+NOTE: This function is identical to `modify-category-entry' except that it
+doesn't check to make sure that DESIGNATOR passes `defined-category-p', i.e.
+that it is a category previously created with `define-category'.
+*/
+       (char_range, designator, category_table, reset))
+{
+  struct chartab_range rainj;
+  int ind;
+
+  decode_char_table_range (char_range, &rainj);
+  category_table = check_category_table (category_table,
+					 Fcategory_table (Qnil));
+  CHECK_CATEGORY_DESIGNATOR (designator);
+  ind = DESIGNATOR_TO_BIT_INDEX (XCHAR (designator));
+  if (!NILP (reset))
+    {
+      int i;
+
+      for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+	put_char_table_range (XCATEGORY_TABLE_TABLES (category_table)[i],
+			      &rainj, make_int (PUT_CATEGORY_RESET << 8));
+    }
+  put_char_table_range
+    (XCATEGORY_TABLE_TABLES (category_table)
+     [DESIGNATOR_TO_CHAR_TABLE (XCHAR (designator))],
+     &rainj, make_int ((PUT_CATEGORY_SET << 8) + ind));
+  return Qnil;
+}
+
 DEFUN ("category-designator-p", Fcategory_designator_p, 1, 1, 0, /*
 Return t if OBJECT is a category designator (a char in the range ' ' to '~').
 */
@@ -1841,25 +2143,71 @@ Return t if OBJECT is a category designator (a char in the range ' ' to '~').
   return CATEGORY_DESIGNATORP (object) ? Qt : Qnil;
 }
 
-DEFUN ("category-table-value-p", Fcategory_table_value_p, 1, 1, 0, /*
-Return t if OBJECT is a category table value.
-Valid values are nil or a bit vector of size 95.
-*/
-       (object))
+struct slow_map_category_table_arg
 {
-  return CATEGORY_TABLE_VALUEP (object) ? Qt : Qnil;
+  Lisp_Object function;
+  Lisp_Object retval;
+  int tablenum;
+};
+
+static int
+slow_map_category_table_fun (Lisp_Object UNUSED (table),
+			     Ichar ch, void *val, void *arg)
+{
+  struct slow_map_category_table_arg *closure =
+    (struct slow_map_category_table_arg *) arg;
+  CATEGORY_TAB_BASE_TYPE baseval = (CATEGORY_TAB_BASE_TYPE) (EMACS_INT) val;
+  int ind;
+
+  for (ind = 0; ind < BITS_PER_CATEGORY_SUBTABLE; ind++)
+    if (BIT_IS_SET_IN_ARRAY (baseval, ind))
+      {
+	closure->retval = call2 (closure->function, make_char (ch),
+				 make_char
+				 (BIT_INDEX_TO_DESIGNATOR
+				  (closure->tablenum, ind)));
+	if (!NILP (closure->retval))
+	  return 1;
+      }
+  return 0;
 }
 
+DEFUN ("map-category-table", Fmap_category_table, 2, 3, 0, /*
+Map FUNCTION over CATEGORY-TABLE until it returns non-nil; return that value.
+FUNCTION is called with two arguments, a character and a category designator.
+FUNCTION will only be called for pairs (CHARACTER, DESIGNATOR) that have
+been previously set.
 
-#define CATEGORYP(x) \
-  (CHARP (x) && XCHAR (x) >= 0x20 && XCHAR (x) <= 0x7E)
+RANGE specifies a subrange to map over.  If omitted or t, it defaults to
+the entire table.  Other possible values are the same as can be passed to
+`put-char-table': an individual character, a cons specifying a character
+range, a charset or a vector giving a charset and a row in that charset.
+*/
+       (function, category_table, range))
+{
+  struct slow_map_category_table_arg slarg;
+  struct gcpro gcpro1, gcpro2;
+  struct chartab_range rainj;
+  int i;
 
-#define CATEGORY_SET(c)	get_char_table (c, current_buffer->category_table)
+  CHECK_CATEGORY_TABLE (category_table);
+  if (NILP (range))
+    range = Qt;
+  decode_char_table_range (range, &rainj);
+  slarg.function = function;
+  slarg.retval = Qnil;
+  GCPRO2 (slarg.function, slarg.retval);
 
-/* Return 1 if CATEGORY_SET contains CATEGORY, else return 0.
-   The faster version of `!NILP (Faref (category_set, category))'.  */
-#define CATEGORY_MEMBER(category, category_set)		 	\
-  (bit_vector_bit(XBIT_VECTOR (category_set), category - 32))
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    {
+      slarg.tablenum = i;
+      map_char_table (XCATEGORY_TABLE_TABLES (category_table)[i],
+		      &rainj, slow_map_category_table_fun, &slarg);
+    }
+  UNGCPRO;
+
+  return slarg.retval;
+}
 
 /* Return 1 if there is a word boundary between two word-constituent
    characters C1 and C2 if they appear in this order, else return 0.
@@ -1869,9 +2217,9 @@ Valid values are nil or a bit vector of size 95.
 int
 word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2)
 {
-  Lisp_Object category_set1, category_set2;
   Lisp_Object tail;
   int default_result;
+  Lisp_Object table = buf->category_table;
 
 #ifdef ENABLE_COMPOSITE_CHARS
   if (COMPOSITE_CHAR_P (c1))
@@ -1893,22 +2241,15 @@ word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2)
       default_result = 1;
     }
 
-  category_set1 = CATEGORY_SET (c1);
-  if (NILP (category_set1))
-    return default_result;
-  category_set2 = CATEGORY_SET (c2);
-  if (NILP (category_set2))
-    return default_result;
-
   for (; CONSP (tail); tail = XCDR (tail))
     {
       Lisp_Object elt = XCAR (tail);
 
       if (CONSP (elt)
-	  && CATEGORYP (XCAR (elt))
-	  && CATEGORYP (XCDR (elt))
-	  && CATEGORY_MEMBER (XCHAR (XCAR (elt)), category_set1)
-	  && CATEGORY_MEMBER (XCHAR (XCDR (elt)), category_set2))
+	  && CATEGORY_DESIGNATORP (XCAR (elt))
+	  && CATEGORY_DESIGNATORP (XCDR (elt))
+	  && check_char_in_category (c1, table, XCHAR (XCAR (elt)), 0)
+	  && check_char_in_category (c2, table, XCHAR (XCDR (elt)), 0))
 	return !default_result;
     }
   return default_result;
@@ -1931,9 +2272,10 @@ syms_of_chartab (void)
   INIT_LISP_OBJECT (char_subtable);
 
 #ifdef MULE
-  DEFSYMBOL (Qcategory_table_p);
+  INIT_LISP_OBJECT (category_table);
+  INIT_LISP_OBJECT (category_subtable);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qcategory_tablep);
   DEFSYMBOL (Qcategory_designator_p);
-  DEFSYMBOL (Qcategory_table_value_p);
 #endif /* MULE */
 
   DEFSYMBOL (Qchar_table);
@@ -1960,6 +2302,7 @@ syms_of_chartab (void)
   DEFSUBR (Fmap_char_table);
 
 #ifdef MULE
+  DEFSUBR (Fmake_category_table);
   DEFSUBR (Fcategory_table_p);
   DEFSUBR (Fcategory_table);
   DEFSUBR (Fstandard_category_table);
@@ -1968,7 +2311,8 @@ syms_of_chartab (void)
   DEFSUBR (Fcheck_category_at);
   DEFSUBR (Fchar_in_category_p);
   DEFSUBR (Fcategory_designator_p);
-  DEFSUBR (Fcategory_table_value_p);
+  DEFSUBR (Fmodify_category_entry_internal);
+  DEFSUBR (Fmap_category_table);
 #endif /* MULE */
 
 }
@@ -1986,11 +2330,18 @@ vars_of_chartab (void)
   dump_add_weak_object_chain (&Vall_syntax_tables);
 
   init_blank_chartab_tables ();
-
   staticpro (&chartab_blank[1]);
   staticpro (&chartab_blank[2]);
   staticpro (&chartab_blank[3]);
   staticpro (&chartab_blank[4]);
+
+#ifdef MULE
+  init_blank_category_chartab_tables ();
+  staticpro (&category_chartab_blank[1]);
+  staticpro (&category_chartab_blank[2]);
+  staticpro (&category_chartab_blank[3]);
+  staticpro (&category_chartab_blank[4]);
+#endif
 }
 
 void

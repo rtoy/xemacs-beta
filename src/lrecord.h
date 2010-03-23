@@ -329,6 +329,8 @@ enum lrecord_type
   lrecord_type_bit_vector,		/* Lisp_Bit_Vector */
   lrecord_type_buffer,			/* struct buffer */
   lrecord_type_case_table,		/* Lisp_Case_Table */
+  lrecord_type_category_subtable,	/* Lisp_Category_Subtable */
+  lrecord_type_category_table,		/* Lisp_Category_Table */
   lrecord_type_char_subtable,		/* Lisp_Char_Subtable */
   lrecord_type_char_table,		/* Lisp_Char_Table */
   lrecord_type_charset,			/* Lisp_Charset */

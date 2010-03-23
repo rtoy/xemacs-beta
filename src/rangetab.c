@@ -102,18 +102,32 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
+  int maxlen;
 
   if (print_readably)
-    write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
-			   1, range_table_type_to_symbol (rt->type));
+    {
+      write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
+			     1, range_table_type_to_symbol (rt->type));
+      maxlen = INT_MAX;
+    }
   else
-    write_ascstring (printcharfun, "#<range-table ");
+    {
+      write_ascstring (printcharfun, "#<range-table ");
+      maxlen = INTP (Vprint_table_nonreadably_length) ?
+	XINT (Vprint_table_nonreadably_length) : INT_MAX;
+    }
   for (i = 0; i < Dynarr_length (rt->entries); i++)
     {
       struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
       int so, ec;
+      QUIT;
       if (i > 0)
 	write_ascstring (printcharfun, " ");
+      if (i > maxlen)
+	{
+	  write_ascstring (printcharfun, "...");
+	  break;
+	}
       switch (rt->type)
 	{
 	case RANGE_START_CLOSED_END_OPEN: so = 0, ec = 0; break;

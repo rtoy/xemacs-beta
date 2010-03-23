@@ -1,3 +1,15 @@
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-category.el (modify-category-entry):
+	* mule/mule-category.el (char-category-list):
+	* mule/mule-category.el (describe-category):
+	* mule/mule-category.el (make-category-table): Removed.
+	* mule/mule-category.el (describe-category-table):
+	* mule/mule-category.el (describe-category-code):
+	Category tables are now a separate object type.  Various changes
+	necessary.  Some functions moved into C (make-category-table,
+	modify-category-entry-internal).
+
 2010-03-19  Ben Wing  <ben@xemacs.org>
 
 	* mule/chinese.el (make-chinese-cns11643-charset):

@@ -93,6 +93,10 @@ Lisp_Object Qprint_string_length;
 
 Lisp_Object Vprint_level;
 
+/* Maximum length of char tables, range tables, etc. to print; noninteger
+   means effectively infinity */
+Lisp_Object Vprint_table_nonreadably_length;
+
 /* Label to use when making echo-area messages. */
 
 Lisp_Object Vprint_message_label;
@@ -2690,6 +2694,14 @@ Maximum length of string to print before abbreviating.
 A value of nil means no limit.
 */ );
   Vprint_string_length = Qnil;
+
+  DEFVAR_LISP ("print-table-nonreadably-length",
+	       &Vprint_table_nonreadably_length /*
+Maximum length of table objects to print before abbreviating.
+This applies only when printing non-readably (i.e. `print-readably' is nil).
+A value of nil means no limit.
+*/ );
+  Vprint_table_nonreadably_length = make_int (20);
 
   DEFVAR_LISP ("print-level", &Vprint_level /*
 Maximum depth of list nesting to print before abbreviating.

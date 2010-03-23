@@ -1296,6 +1296,33 @@ void assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x,
 # define assert_equal(x, y) disabled_assert ((x) == (y))
 #endif
 
+
+/************************************************************************/
+/**                       Simple bit operations                        **/
+/************************************************************************/
+
+#define BIT_INDEX_TO_SET_MASK(ind) (1 << (ind))
+#define BIT_INDEX_TO_CLEAR_MASK(ind) \
+  ((CATEGORY_TAB_BASE_TYPE) ~BIT_INDEX_TO_SET_MASK (ind))
+
+
+/* Set bit number BIT in bit-array ARRAY. */
+#define SET_BIT_IN_ARRAY(array, bit)		\
+do {						\
+  (array) |= BIT_INDEX_TO_SET_MASK (bit);	\
+} while (0)
+
+/* Clear bit number BIT in bit-array ARRAY. */
+#define CLEAR_BIT_IN_ARRAY(array, bit)		\
+do {						\
+  (array) &= BIT_INDEX_TO_CLEAR_MASK (bit);	\
+} while (0)
+
+/* Test whether bit number BIT is set in bit-array ARRAY. */
+#define BIT_IS_SET_IN_ARRAY(array, bit) \
+  ((array) & BIT_INDEX_TO_SET_MASK (bit))
+
+
 /************************************************************************/
 /**                         Memory allocation                          **/
 /************************************************************************/
@@ -5177,7 +5204,6 @@ EXFUN (Fset_standard_case_table, 1);
 /* Defined in chartab.c */
 EXFUN (Freset_char_table, 1);
 extern Lisp_Object Qcategory_designator_p;
-extern Lisp_Object Qcategory_table_value_p;
 
 /* Defined in cmdloop.c */
 extern Lisp_Object Qdisabled_command_hook;
@@ -6410,6 +6436,7 @@ extern Lisp_Object Qstandard_output;
 extern Lisp_Object Vprint_length;
 extern Lisp_Object Vprint_level;
 extern Lisp_Object Vstandard_output;
+extern Lisp_Object Vprint_table_nonreadably_length;
 
 /* Defined in process.c */
 extern Lisp_Object Qnetwork_error;

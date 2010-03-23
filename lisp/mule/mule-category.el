@@ -94,23 +94,8 @@ The changes are made in CATEGORY-TABLE, which defaults to the current
  buffer's category table.
 If optional fourth argument RESET is non-nil, previous categories associated
  with CHAR-RANGE are removed before adding the specified category."
-  (or category-table (setq category-table (category-table)))
-  (check-argument-type 'category-table-p category-table)
   (check-argument-type 'defined-category-p designator)
-  (if reset
-      ;; clear all existing stuff.
-      (put-char-table char-range nil category-table))
-  (map-char-table
-   #'(lambda (key value)
-       ;; make sure that this range has a bit-vector assigned to it
-       (if (not (bit-vector-p value))
-	   (setq value (make-bit-vector 95 0))
-	 (setq value (copy-sequence value)))
-       ;; set the appropriate bit in that vector.
-       (aset value (- designator 32) 1)
-       ;; put the vector back, thus assuring we have a unique setting for this range
-       (put-char-table key value category-table))
-   category-table char-range))
+  (modify-category-entry-internal char-range designator category-table reset))
 
 (defun char-category-list (character &optional category-table)
   "Return a list of the categories that CHARACTER is in.
@@ -118,26 +103,12 @@ CATEGORY-TABLE defaults to the current buffer's category table.
 The categories are given by their designators."
   (or category-table (setq category-table (category-table)))
   (check-argument-type 'category-table-p category-table)
-  (let ((vec (get-char-table character category-table)))
-    (if (null vec) nil
-      (let ((a 32) list)
-	(while (< a 127)
-	  (if (= 1 (aref vec (- a 32)))
-	      (setq list (cons (make-char 'ascii a) list)))
-	  (setq a (1+ a)))
-	(nreverse list)))))
-
-;; implemented in C, file chartab.c (97/3/14 jhod@po.iijnet.or.jp)
-;(defun char-in-category-p (char category &optional table)
-;  "Return non-nil if CHAR is in CATEGORY.
-;TABLE defaults to the current buffer's category table.
-;Categories are specified by their designators."
-;  (or table (setq table (category-table)))
-;  (check-argument-type 'category-table-p table)
-;  (check-argument-type 'category-designator-p category)
-;  (let ((vec (get-char-table char table)))
-;    (if (null vec) nil
-;      (= 1 (aref vec (- category 32))))))
+  (let (list)
+    (map-category-table
+     #'(lambda (char desig)
+	 (push desig list))
+     category-table character)
+    (nreverse list)))
 
 (put 'with-category-table 'lisp-indent-function 1)
 
@@ -147,10 +118,6 @@ The categories are given by their designators."
      (unwind-protect
 	 (progn ,@body)
        (set-category-table current-category-table))))
-
-(defun make-category-table ()
-  "Construct a new and empty category table and return it."
-  (make-char-table 'category))
 
 (defun describe-category ()
   "Describe the category specifications in the category table.
@@ -164,54 +131,65 @@ The descriptions are inserted in a buffer, which is then displayed."
   (let (first-char
 	last-char
 	prev-val
-	(describe-one
-	 (lambda (first last value stream)
-	   (if (and (bit-vector-p value)
-		    (> (reduce '+ value) 0))
-	       (progn
-		 (if (equal first last)
+	(chartab (make-char-table 'generic)))
+    (flet ((describe-one (first last value stream)
+	     (if (and (bit-vector-p value)
+		      (> (reduce '+ value) 0))
+		 (progn
+		   (if (equal first last)
+		       (cond ((vectorp first)
+			      (princ (format "%s, row %d"
+					     (charset-name
+					      (aref first 0))
+					     (aref first 1))
+				     stream))
+			     ((charsetp first)
+			      (princ (charset-name first) stream))
+			     (t (princ first stream)))
 		     (cond ((vectorp first)
-			    (princ (format "%s, row %d"
+			    (princ (format "%s, rows %d .. %d"
 					   (charset-name
 					    (aref first 0))
-					   (aref first 1))
+					   (aref first 1)
+					   (aref last 1))
 				   stream))
-			   ((charsetp first)
-			    (princ (charset-name first) stream))
-			   (t (princ first stream)))
-		   (cond ((vectorp first)
-			  (princ (format "%s, rows %d .. %d"
-					 (charset-name
-					  (aref first 0))
-					 (aref first 1)
-					 (aref last 1))
-				 stream))
-			 (t
-			  (princ (format "%s .. %s" first last)
-				 stream))))
-		 (describe-category-code value stream))))))
-    (map-char-table
-     (lambda (range value)
-       (if (and (or
-		 (and (characterp range)
-		      (characterp first-char)
-		      (eq (char-charset range) (char-charset first-char))
-		      (= (char-to-int last-char) (1- (char-to-int range))))
-		 (and (vectorp range)
-		      (vectorp first-char)
-		      (eq (aref range 0) (aref first-char 0))
-		      (= (aref last-char 1) (1- (aref range 1))))
-		 (equal value prev-val)))
-	   (setq last-char range)
-	 (if first-char
-	     (progn
-	       (funcall describe-one first-char last-char prev-val stream)
-	       (setq first-char nil)))
-	 (funcall describe-one range range value stream))
-       nil)
-     table)
-    (if first-char
-	(funcall describe-one first-char last-char prev-val stream))))
+			   (t
+			    (princ (format "%s .. %s" first last)
+				   stream))))
+		   (describe-category-code value stream)))))
+      ;; We want to list things character-by-character.  So convert to the
+      ;; old bit-vector format, listing the designators for each character.
+      (map-category-table
+       #'(lambda (char desig)
+	   (let ((bitvec (get-char-table char chartab)))
+	     (unless bitvec
+	       (setq bitvec (make-bit-vector 95 0))
+	       (put-char-table char bitvec chartab))
+	     (aset bitvec (- desig #x20) 1))
+	   nil)
+       table)
+      (map-char-table
+       #'(lambda (range value)
+	   (if (and (or
+		     (and (characterp range)
+			  (characterp first-char)
+			  (eq (char-charset range) (char-charset first-char))
+			  (= (char-to-int last-char) (1- (char-to-int range))))
+		     (and (vectorp range)
+			  (vectorp first-char)
+			  (eq (aref range 0) (aref first-char 0))
+			  (= (aref last-char 1) (1- (aref range 1))))
+		     (equal value prev-val)))
+	       (setq last-char range)
+	     (if first-char
+		 (progn
+		   (describe-one first-char last-char prev-val stream)
+		   (setq first-char nil)))
+	     (describe-one range range value stream))
+	   nil)
+       chartab)
+      (if first-char
+	  (describe-one first-char last-char prev-val stream)))))
 
 (defun describe-category-code (code stream)
   (let ((standard-output (or stream standard-output)))

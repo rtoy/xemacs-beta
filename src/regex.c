@@ -6482,8 +6482,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    REGEX_PREFETCH ();
 	    emch = itext_ichar_fmt (d, fmt, lispobj);
 	    INC_IBYTEPTR_FMT (d, fmt);
-	    if (check_category_char (emch, BUFFER_CATEGORY_TABLE (lispbuf),
-				     mcnt, should_succeed))
+	    if (check_char_in_category (emch, BUFFER_CATEGORY_TABLE (lispbuf),
+					mcnt, should_succeed))
 	      goto fail;
 	    SET_REGS_MATCHED ();
 	  }
