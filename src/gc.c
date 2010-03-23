@@ -671,7 +671,7 @@ kkcc_backtrace_1 (int size, int detailed)
 {
   int i;
   stderr_out ("KKCC mark stack backtrace :\n");
-  for (i = kkcc_bt_depth - 1; i >= kkcc_bt_depth - size; i--)
+  for (i = kkcc_bt_depth - 1; i >= kkcc_bt_depth - size && i >= 0; i--)
     {
       Lisp_Object obj = wrap_pointer_1 (kkcc_bt[i].obj);
       stderr_out (" [%d] ", i);

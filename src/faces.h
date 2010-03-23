@@ -114,6 +114,21 @@ struct Lisp_Face
 
 #define NUM_STATIC_CACHEL_FACES 4
 
+typedef struct
+{
+  Stynarr_declare (int, NUM_STATIC_CACHEL_FACES);
+} int_stynarr;
+
+typedef struct
+{
+  Stynarr_declare (unsigned_char, NUM_STATIC_CACHEL_FACES);
+} unsigned_char_stynarr;
+
+typedef struct
+{
+  Stynarr_declare (Lisp_Object_pair, NUM_STATIC_CACHEL_FACES);
+} Lisp_Object_pair_stynarr;
+
 typedef struct face_cachel face_cachel;
 struct face_cachel
 {
@@ -146,7 +161,7 @@ struct face_cachel
      The order of the faces here is decreasing extent priority. */
   Lisp_Object face;
 
-  Stynarr_declare (merged_faces, int, NUM_STATIC_CACHEL_FACES);
+  int_stynarr merged_faces;
 
   /* The values stored here are computed by calling specifier_instance()
      on the appropriate specifiers.  This means that we will have either
@@ -165,7 +180,7 @@ struct face_cachel
      rare that there will be very many charsets associated with this cachel
      (at most 128 in the previous scheme, and many fewer in practice, often
      only one). */
-  Stynarr_declare (font, Lisp_Object_pair, NUM_STATIC_CACHEL_FACES);
+  Lisp_Object_pair_stynarr font;
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
@@ -180,7 +195,7 @@ struct face_cachel
 
   /* Used when merging to tell if the above field represents an actual
      value of this face or a fallback value. */
-  Stynarr_declare (font_specified, unsigned_char, NUM_STATIC_CACHEL_FACES);
+  unsigned_char_stynarr font_specified;
   unsigned int foreground_specified :1;
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
@@ -222,12 +237,12 @@ struct face_cachel
      storing a "blank font" if the instantiation fails. */
   unsigned int dirty :1;
   unsigned int updated :1;
-  Stynarr_declare (font_updated, unsigned_char, NUM_STATIC_CACHEL_FACES);
+  unsigned_char_stynarr font_updated;
 
   /* Whether the font for the charset in question was determined in the
      "final stage"; that is, the last stage Lisp code could specify it,
      after the initial stage and before the fallback. */ 
-  Stynarr_declare (font_final_stage, unsigned_char, NUM_STATIC_CACHEL_FACES);
+  unsigned_char_stynarr font_final_stage;
 };
 
 #ifdef NEW_GC

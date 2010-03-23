@@ -3573,6 +3573,7 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
       xfree (data->lstreams);
+      data->lstreams = 0;
     }
 }
 
@@ -3586,7 +3587,10 @@ static void
 chain_finalize (Lisp_Object c)
 {
   if (XCODING_SYSTEM_CHAIN_CHAIN (c))
-    xfree (XCODING_SYSTEM_CHAIN_CHAIN (c));
+    {
+      xfree (XCODING_SYSTEM_CHAIN_CHAIN (c));
+      XCODING_SYSTEM_CHAIN_CHAIN (c) = 0;
+    }
 }
 
 static int
@@ -4206,8 +4210,8 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
 /************************************************************************/
 
 /* All `struct detection_state's are the same size, but we can't easily
-   compute the size at compile time because it depends on all of the
-   different defined detectors. */
+   compute the size at compile time (anyone said C++ template magic?)
+   because it depends on all of the different defined detectors. */
 
 static Bytecount
 sizeof_detection_state (Lisp_Object UNUSED (obj))
@@ -4239,11 +4243,6 @@ allocate_detection_state (void)
 }
 
 struct memory_description detection_state_description[MAX_DETECTORS + 1];
-
-const static struct sized_memory_description detection_state_description_0 =
-  {
-    0, detection_state_description
-  };
 
 static Lisp_Object
 mark_detection_state (Lisp_Object obj)
@@ -4812,8 +4811,7 @@ static const struct memory_description undecided_coding_stream_description[] = {
   { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, actual) },
   { XD_BLOCK_ARRAY, offsetof (struct undecided_coding_stream, c),
     1, { &chain_coding_stream_description_0 } },
-  { XD_BLOCK_PTR, offsetof (struct undecided_coding_stream, st),
-    1, { &detection_state_description_0 } },
+  { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, st) },
   { XD_END }
 };
 
@@ -5737,7 +5735,6 @@ coding_system_type_create (void)
   dump_add_opaque_int (&coding_system_tick);
   dump_add_opaque_int (&coding_detector_count);
   dump_add_opaque_int (&coding_detector_category_count);
-  dump_add_opaque_int (&coding_detector_description_lines_count);
 
   INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
 				 "no-conversion-coding-system-p");

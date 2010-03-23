@@ -1,3 +1,12 @@
+2010-03-23  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-category.el (describe-category-table):
+	* mule/mule-category.el (describe-category-code):
+	* mule/mule-category.el (predefined-category-list):
+	Switch the representation in `describe-category' from bit vectors
+	to lists of designators; fix the routines so that they correctly
+	print out ranges of characters with the same designators.
+
 2010-03-22  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-category.el (modify-category-entry):

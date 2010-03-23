@@ -133,8 +133,7 @@ The descriptions are inserted in a buffer, which is then displayed."
 	prev-val
 	(chartab (make-char-table 'generic)))
     (flet ((describe-one (first last value stream)
-	     (if (and (bit-vector-p value)
-		      (> (reduce '+ value) 0))
+	     (if value
 		 (progn
 		   (if (equal first last)
 		       (cond ((vectorp first)
@@ -157,63 +156,61 @@ The descriptions are inserted in a buffer, which is then displayed."
 			    (princ (format "%s .. %s" first last)
 				   stream))))
 		   (describe-category-code value stream)))))
-      ;; We want to list things character-by-character.  So convert to the
-      ;; old bit-vector format, listing the designators for each character.
+      ;; We want to list things character-by-character.  So create a char table
+      ;; whose entries are lists of the designators of the categories
+      ;; that include that character.
+      (message "Mapping over category table ...")
       (map-category-table
        #'(lambda (char desig)
-	   (let ((bitvec (get-char-table char chartab)))
-	     (unless bitvec
-	       (setq bitvec (make-bit-vector 95 0))
-	       (put-char-table char bitvec chartab))
-	     (aset bitvec (- desig #x20) 1))
+	   (let ((list (get-char-table char chartab)))
+	     (put-char-table char (cons desig list) chartab))
 	   nil)
        table)
+      (message "Mapping over char table ...")
       (map-char-table
        #'(lambda (range value)
-	   (if (and (or
-		     (and (characterp range)
-			  (characterp first-char)
-			  (eq (char-charset range) (char-charset first-char))
-			  (= (char-to-int last-char) (1- (char-to-int range))))
-		     (and (vectorp range)
-			  (vectorp first-char)
-			  (eq (aref range 0) (aref first-char 0))
-			  (= (aref last-char 1) (1- (aref range 1))))
-		     (equal value prev-val)))
-	       (setq last-char range)
-	     (if first-char
-		 (progn
-		   (describe-one first-char last-char prev-val stream)
-		   (setq first-char nil)))
-	     (describe-one range range value stream))
+	   (cond ((null first-char)
+		  (setq first-char range
+			last-char range
+			prev-val value))
+		 ((and (or
+			(and (characterp range)
+			     (characterp last-char)
+			     (eq (char-charset range)
+				 (char-charset last-char))
+			     (= (char-to-int last-char)
+				(1- (char-to-int range))))
+			(and (vectorp range)
+			     (vectorp last-char)
+			     (eq (aref range 0) (aref last-char 0))
+			     (= (aref last-char 1) (1- (aref range 1)))))
+		       (equal value prev-val))
+		  (setq last-char range))
+		 (t
+		  (describe-one first-char last-char prev-val stream)
+		  (setq first-char range
+			last-char range
+			prev-val value)))
 	   nil)
        chartab)
       (if first-char
 	  (describe-one first-char last-char prev-val stream)))))
 
 (defun describe-category-code (code stream)
-  (let ((standard-output (or stream standard-output)))
+  (let ((standard-output (or stream standard-output))
+	(code (nreverse code)))
     (princ "\tin categories: ")
-    (if (not (bit-vector-p code))
+    (if (null code)
 	(princ "(none)")
-      (let ((i 0)
-	    already-matched)
-	(while (< i 95)
-	  (if (= 1 (aref code i))
-	      (progn
-		(if (not already-matched)
-		    (setq already-matched t)
-		  (princ " "))
-		(princ (int-to-char (+ 32 i)))))
-	  (setq i (1+ i)))
-	(if (not already-matched)
-	    (princ "(none)")))
-      (let ((i 0))
-	(while (< i 95)
-	  (if (= 1 (aref code i))
-	      (princ (format "\n\t\tmeaning: %s"
-			    (category-doc-string (int-to-char (+ 32 i))))))
-	  (setq i (1+ i)))))
+      (let (already-matched)
+	(loop for c in code do
+	  (if (not already-matched)
+	      (setq already-matched t)
+	    (princ " "))
+	  (princ c))
+	(loop for c in code do
+	  (princ (format "\n\t\tmeaning: %s"
+			 (category-doc-string c))))))
     (terpri)))
 
 (defconst predefined-category-list

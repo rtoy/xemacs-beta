@@ -3909,7 +3909,10 @@ iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
   if (data->iso)
-    xfree (data->iso);
+    {
+      xfree (data->iso);
+      data->iso = 0;
+    }
 }
 
 
@@ -4154,6 +4157,7 @@ reinit_coding_system_type_create_mule_coding (void)
   REINITIALIZE_CODING_SYSTEM_TYPE (ccl);
   REINITIALIZE_CODING_SYSTEM_TYPE (shift_jis);
   REINITIALIZE_CODING_SYSTEM_TYPE (big5);
+  REINITIALIZE_DETECTOR_WITH_DESCRIPTION (iso2022);
 }
 
 void

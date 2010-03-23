@@ -150,22 +150,50 @@ do {						\
 
 
 
+static const struct memory_description int_stynarr_description_1[] = {
+  XD_STYNARR_DESC (int_stynarr, &int_description, &int_dynarr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description int_stynarr_description = {
+  sizeof (int_stynarr),
+  int_stynarr_description_1
+};
+
+static const struct memory_description unsigned_char_stynarr_description_1[] =
+{
+  XD_STYNARR_DESC (unsigned_char_stynarr, &unsigned_char_description,
+		   &unsigned_char_dynarr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description unsigned_char_stynarr_description = {
+  sizeof (unsigned_char_stynarr),
+  unsigned_char_stynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_stynarr_description_1[] = {
+  XD_STYNARR_DESC (Lisp_Object_pair_stynarr, &Lisp_Object_pair_description,
+		   &Lisp_Object_pair_dynarr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_stynarr_description = {
+  sizeof (Lisp_Object_pair_stynarr),
+  Lisp_Object_pair_stynarr_description_1
+};
+
 static const struct memory_description face_cachel_description_1[] = {
-  /* #### Hack; look inside of the Stynarr structs */
-  { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces.els),
-    1, { &int_dynarr_description } },
-  { XD_BLOCK_PTR, offsetof (face_cachel, font_specified.els),
-    1, { &unsigned_char_dynarr_description } },
-  { XD_BLOCK_PTR, offsetof (face_cachel, font_updated.els),
-    1, { &unsigned_char_dynarr_description } },
-  { XD_BLOCK_PTR, offsetof (face_cachel, font_final_stage.els),
-    1, { &unsigned_char_dynarr_description } },
-  /* Even if the whole static part isn't filled, this is OK, because those
-     values will be set to Qzero */
-  { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font),
-    countof (((struct face_cachel *) 0)->font.els_static) },
-  { XD_BLOCK_PTR, offsetof (face_cachel, font.els),
-    1, { &Lisp_Object_pair_dynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, merged_faces),
+    1, { &int_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_specified),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_updated),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_final_stage),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font),
+    1, { &Lisp_Object_pair_stynarr_description } },
   { XD_LISP_OBJECT, offsetof (face_cachel, face) },
   { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background) },
