@@ -187,6 +187,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) 0
+#define IF_NEW_GC(x) x
+#define IF_OLD_GC(x) 0
 #else /* not NEW_GC */
 #define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
@@ -194,6 +196,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
+#define IF_NEW_GC(x) 0
+#define IF_OLD_GC(x) x
 #endif /* not NEW_GC */
 
 #define LISP_OBJECT_UID(obj) (XRECORD_LHEADER (obj)->uid)
@@ -310,7 +314,9 @@ enum lrecord_type
   /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward,      /*  0 */
+  /* Don't assign any type to 0, so in case we come across zeroed memory
+     it will be more obvious when printed */
+  lrecord_type_symbol_value_forward = 1,
   lrecord_type_symbol_value_varalias,
   lrecord_type_symbol_value_lisp_magic,
   lrecord_type_symbol_value_buffer_local,
@@ -974,16 +980,27 @@ void tick_lrecord_stats (const struct lrecord_header *h,
 
     XD_LISP_OBJECT
 
-  A Lisp object.  This is also the type to use for pointers to other lrecords
+  A Lisp_Object.  This is also the type to use for pointers to other lrecords
   (e.g. struct frame *).
 
     XD_LISP_OBJECT_ARRAY
 
-  An array of Lisp objects or (equivalently) pointers to lrecords.
+  An array of Lisp_Objects or (equivalently) pointers to lrecords.
   The parameter (i.e. third element) is the count.  This would be declared
   as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
   use XD_BLOCK_PTR, whose description parameter is a sized_memory_description
   consisting of only XD_LISP_OBJECT and XD_END.
+
+    XD_INLINE_LISP_OBJECT_BLOCK_PTR
+
+  An pointer to a contiguous block of inline Lisp objects -- i.e., the Lisp
+  object itself rather than a Lisp_Object pointer is stored in the block.
+  This is used only under NEW_GC and is useful for increased efficiency when
+  an array of the same kind of object is needed.  Examples of the use of this
+  type are Lisp dynarrs, where the array elements are inline Lisp objects
+  rather than non-Lisp structures, as is normally the case; and hash tables,
+  where the key/value pairs are encapsulated as hash-table-entry objects and
+  an array of inline hash-table-entry objects is stored.
 
     XD_LO_LINK
 
@@ -1150,7 +1167,7 @@ enum memory_description_type
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
 #ifdef NEW_GC
-  XD_LISP_OBJECT_BLOCK_PTR,
+  XD_INLINE_LISP_OBJECT_BLOCK_PTR,
 #endif /* NEW_GC */
   XD_LO_LINK,
   XD_OPAQUE_PTR,
@@ -1200,10 +1217,9 @@ enum data_description_entry_flags
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
-  XD_FLAG_FREE_LISP_OBJECT = 8
+  XD_FLAG_FREE_LISP_OBJECT = 8,
 #endif /* not NEW_GC */
 #if 0
-  ,
   /* Suggestions for other possible flags: */
 
   /* Eliminate XD_UNION_DYNAMIC_SIZE and replace it with a flag, like this. */
@@ -1215,7 +1231,7 @@ enum data_description_entry_flags
      expanded and we need to stick a pointer in the second slot (although
      we could still ensure that the second slot in the first entry was NULL
      or <0). */
-  XD_FLAG_DESCRIPTION_MAP = 32
+  XD_FLAG_DESCRIPTION_MAP = 32,
 #endif
 };
 
@@ -1258,20 +1274,20 @@ struct opaque_convert_functions
 
      This function must put a pointer to the opaque result in *data
      and its size in *size. */
-  void (*convert)(const void *object, void **data, Bytecount *size);
+  void (*convert) (const void *object, void **data, Bytecount *size);
 
   /* Post-conversion cleanup.  Optional (null if not provided).
 
      When provided it will be called post-dumping to free any storage
      allocated for the conversion results. */
-  void (*convert_free)(const void *object, void *data, Bytecount size);
+  void (*convert_free) (const void *object, void *data, Bytecount size);
 
   /* De-conversion.
 
      At reload time, rebuilds the object from the converted form.
      "object" is 0 for the PTR case, return is ignored in the DATA
      case. */
-  void *(*deconvert)(void *object, void *data, Bytecount size);
+  void *(*deconvert) (void *object, void *data, Bytecount size);
 
 };
 

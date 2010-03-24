@@ -1838,8 +1838,10 @@ uninit_buffer_text (struct buffer *b)
     {
       BUFFER_FREE (b->text->beg);
       xfree (b->text->changes);
+      b->text->changes = 0;
     }
   xfree (b->changes);
+  b->changes = 0;
 
 #ifdef REGION_CACHE_NEEDS_WORK
   if (b->newline_cache)

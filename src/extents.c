@@ -853,19 +853,13 @@ mark_extent_info (Lisp_Object obj)
   return Qnil;
 }
 
-#ifdef NEW_GC
-DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-info", extent_info,
-				    mark_extent_info, 
-				    extent_info_description,
-				    struct extent_info);
-#else /* not NEW_GC */
+#ifndef NEW_GC
+
 static void
 finalize_extent_info (Lisp_Object obj)
 {
   struct extent_info *data = XEXTENT_INFO (obj);
 
-  data->soe = 0;
-  data->extents = 0;
   if (data->soe)
     {
       free_soe (data->soe);
@@ -878,12 +872,13 @@ finalize_extent_info (Lisp_Object obj)
     }
 }
 
+#endif /* not NEW_GC */
+
 DEFINE_NODUMP_LISP_OBJECT ("extent-info", extent_info,
 			   mark_extent_info, internal_object_printer,
-			   finalize_extent_info, 0, 0, 
+			   IF_OLD_GC (finalize_extent_info), 0, 0, 
 			   extent_info_description,
 			   struct extent_info);
-#endif /* not NEW_GC */
 
 static Lisp_Object
 allocate_extent_info (void)

@@ -219,7 +219,10 @@ tty_finalize_color_instance (Lisp_Color_Instance *UNUSED_IF_NEW_GC (c))
 {
 #ifndef NEW_GC
   if (c->data)
-    xfree (c->data);
+    {
+      xfree (c->data);
+      c->data = 0;
+    }
 #endif /* not NEW_GC */
 }
 
@@ -314,7 +317,10 @@ tty_finalize_font_instance (Lisp_Font_Instance *UNUSED_IF_NEW_GC (f))
 {
 #ifndef NEW_GC
   if (f->data)
-    xfree (f->data);
+    {
+      xfree (f->data);
+      f->data = 0;
+    }
 #endif /* not NEW_GC */
 }
 
