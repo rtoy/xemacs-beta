@@ -442,22 +442,13 @@ const struct sized_memory_description specifier_empty_extra_description = {
   0, specifier_empty_extra_description_1
 };
 
-#ifdef NEW_GC
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("specifier", specifier,
 				     mark_specifier, print_specifier,
-				     0, specifier_equal, specifier_hash,
-				     specifier_description,
-				     sizeof_specifier,
-				     Lisp_Specifier);
-#else /* not NEW_GC */
-DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("specifier", specifier,
-				     mark_specifier, print_specifier,
-				     finalize_specifier,
+				     IF_OLD_GC (finalize_specifier),
 				     specifier_equal, specifier_hash,
 				     specifier_description,
 				     sizeof_specifier,
 				     Lisp_Specifier);
-#endif /* not NEW_GC */
 
 /************************************************************************/
 /*                       Creating specifiers                            */

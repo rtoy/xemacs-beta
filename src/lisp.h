@@ -4233,21 +4233,6 @@ void free_alist (Lisp_Object);
 void free_marker (Lisp_Object);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
-#ifndef NEW_GC
-#ifdef USE_KKCC
-#ifdef DEBUG_XEMACS
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-void kkcc_backtrace (void);
-#else
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-#define kkcc_backtrace()
-#endif
-#endif /* USE_KKCC */
-#endif /* not NEW_GC */
 int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;

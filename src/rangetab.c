@@ -196,6 +196,25 @@ range_table_hash (Lisp_Object obj, int depth)
   return hash;
 }
 
+#ifndef NEW_GC
+
+/* #### This leaks memory under NEW_GC.  To fix this, convert to Lisp object
+   gap array. */
+
+static void
+finalize_range_table (Lisp_Object obj)
+{
+  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  if (rt->entries)
+    {
+      if (!DUMPEDP (rt->entries))
+	free_gap_array (rt->entries);
+      rt->entries = 0;
+    }
+}
+
+#endif /* not NEW_GC */
+
 static const struct memory_description rte_description_1[] = {
   { XD_LISP_OBJECT, offsetof (range_table_entry, val) },
   { XD_END }
@@ -222,7 +241,8 @@ static const struct memory_description range_table_description[] = {
 };
 
 DEFINE_DUMPABLE_LISP_OBJECT ("range-table", range_table,
-			     mark_range_table, print_range_table, 0,
+			     mark_range_table, print_range_table,
+			     IF_OLD_GC (finalize_range_table),
 			     range_table_equal, range_table_hash,
 			     range_table_description,
 			     Lisp_Range_Table);

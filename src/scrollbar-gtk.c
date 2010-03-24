@@ -3,6 +3,7 @@
    Copyright (C) 1994 Amdhal Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,6 +66,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 	}
 
       xfree (instance->scrollbar_data);
+      instance->scrollbar_data = 0;
     }
 }
 

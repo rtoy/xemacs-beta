@@ -766,6 +766,7 @@ free_argc_argv (Wexttext **argv)
   while (argv[elt])
     {
       xfree (argv[elt]);
+      argv[elt] = 0;
       elt++;
     }
   xfree (argv);

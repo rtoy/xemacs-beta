@@ -111,18 +111,13 @@ finalize_marker (Lisp_Object obj)
 {
   unchain_marker (obj);
 }
+#endif /* NEW_GC */
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
 					mark_marker, print_marker,
-					finalize_marker,
+					IF_NEW_GC (finalize_marker),
 					marker_equal, marker_hash,
 					marker_description, Lisp_Marker);
-#else /* not NEW_GC */
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
-					mark_marker, print_marker, 0,
-					marker_equal, marker_hash,
-					marker_description, Lisp_Marker);
-#endif /* not NEW_GC */
 
 /* Operations on markers. */
 

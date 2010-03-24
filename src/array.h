@@ -72,7 +72,7 @@ typedef struct dynarr
 
 #ifdef NEW_GC
 #define XD_LISP_DYNARR_DESC(base_type, sub_desc)			\
-  { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
+  { XD_INLINE_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
     XD_INDIRECT(1, 0), {sub_desc} },					\
   { XD_INT,        offsetof (base_type, len_) },			\
   { XD_INT_RESET,  offsetof (base_type, largest_), XD_INDIRECT(1, 0) },	\
@@ -764,4 +764,4 @@ Gap_Array *make_gap_array (Elemcount elsize, int USED_IF_NEW_GC (do_lisp));
 Gap_Array *gap_array_clone (Gap_Array *ga);
 void free_gap_array (Gap_Array *ga);
 
-#endif /* INCLUDED_lrecordt_h_ */
+#endif /* INCLUDED_array_h_ */

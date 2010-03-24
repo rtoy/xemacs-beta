@@ -1,3 +1,132 @@
+2010-03-24  Ben Wing  <ben@xemacs.org>
+
+	* array.h:
+	* array.h (XD_LISP_DYNARR_DESC):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one_mc):
+	* elhash.c:
+	* gc.c (lispdesc_one_description_line_size):
+	* gc.c (kkcc_marking):
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* lrecord.h (enum memory_description_type):
+	* lrecord.h (enum data_description_entry_flags):
+	* lrecord.h (struct opaque_convert_functions):
+	Rename XD_LISP_OBJECT_BLOCK_PTR to XD_INLINE_LISP_OBJECT_BLOCK_PTR
+	and document it in lrecord.h.
+
+	* data.c:
+	* data.c (finish_marking_weak_lists):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* elhash.c (MARK_OBJ):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (struct):
+	* gc.c (kkcc_bt_push):
+	* gc.c (kkcc_gc_stack_push):
+	* gc.c (kkcc_gc_stack_push_lisp_object):
+	* gc.c (kkcc_gc_stack_repush_dirty_object):
+	* gc.c (KKCC_DO_CHECK_FREE):
+	* gc.c (mark_object_maybe_checking_free):
+	* gc.c (mark_struct_contents):
+	* gc.c (mark_lisp_object_block_contents):
+	* gc.c (register_for_finalization):
+	* gc.c (mark_object):
+	* gc.h:
+	* lisp.h:
+	* profile.c:
+	* profile.c (mark_profiling_info_maphash):
+	Clean up KKCC code related to DEBUG_XEMACS.  Rename
+	kkcc_backtrace() to kkcc_backtrace_1() and add two params: a
+	`size' arg to control how many stack elements to print and a
+	`detailed' arg to control whether Lisp objects are printed using
+	`debug_print()'.  Create front-ends to kkcc_backtrace_1() --
+	kkcc_detailed_backtrace(), kkcc_short_backtrace(),
+	kkcc_detailed_backtrace_full(), kkcc_short_backtrace_full(), as
+	well as shortened versions kbt(), kbts(), kbtf(), kbtsf() -- to
+	call it with various parameter values.  Add an `is_lisp' field to
+	the stack and backtrace structures and use it to keep track of
+	whether an object pushed onto the stack is a Lisp object or a
+	non-Lisp structure; in kkcc_backtrace_1(), don't try to print a
+	non-Lisp structure as a Lisp object.
+	
+	* elhash.c:
+	* extents.c:
+	* file-coding.c:
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* marker.c:
+	* marker.c (Fmarker_buffer):
+	* mule-coding.c:
+	* number.c:
+	* rangetab.c:
+	* specifier.c:
+	New macros IF_OLD_GC(), IF_NEW_GC() to simplify declaration of
+	Lisp objects when a finalizer may exist in one but not the other.
+	Use them appropriately.
+
+	* extents.c (finalize_extent_info):
+	Don't zero out data->soe and data->extents before trying to free,
+	else we get memory leaks.
+	
+	* lrecord.h (enum lrecord_type):
+	Make the first lrecord type have value 1 not 0 so that 0 remains
+	without implementation and attempts to interpret zeroed memory
+	as a Lisp object will be more obvious.
+
+	* array.c (Dynarr_free):
+	* device-msw.c (msprinter_delete_device):
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (tty_delete_device):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-x.c:
+	* emacs.c (free_argc_argv):
+	* emodules.c (attempt_module_delete):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize_coding_stream):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* imgproc.c:
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (uninit_buffer_text):
+	* mule-coding.c (iso2022_finalize_detection_state):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (tty_font_list):
+	* process.c:
+	* process.c (finalize_process):
+	* redisplay.c (add_propagation_runes):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance):
+	* scrollbar-gtk.c (gtk_release_scrollbar_instance):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (unshow_that_mofo):
+	* scrollbar-x.c (x_free_scrollbar_instance):
+	* scrollbar-x.c (x_release_scrollbar_instance):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* syntax.c:
+	* syntax.c (uninit_buffer_syntax_cache):
+	* text.h (eifree):
+	If possible, whenever we call xfree() on a field in a structure,
+	set the field to 0 afterwards.  A lot of code is written so that
+	it checks the value being freed to see if it is non-zero before
+	freeing it -- doing this and setting the value to 0 afterwards
+	ensures (a) we won't try to free twice if the cleanup code is
+	called twice; (b) if the object itself stays around, KKCC won't
+	crash when attempting to mark the freed field.
+
+	* rangetab.c:
+	Add a finalization method when not NEW_GC to avoid memory leaks.
+	(#### We still get memory leaks when NEW_GC; need to convert gap
+	array to Lisp object).
+
 2010-03-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (objs):

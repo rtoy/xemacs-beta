@@ -3,7 +3,7 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -102,6 +102,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
       assert (!NILP (ptr));
       DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
       xfree (sb->scrollbar_data);
+      sb->scrollbar_data = 0;
     }
 }
 
