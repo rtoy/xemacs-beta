@@ -39,6 +39,11 @@ Boston, MA 02111-1307, USA.  */
              map_char_table() was long and nasty.  The new system uses page
              tables, as in unicode.c.
    Ben Wing: Redo category tables for improved memory usage, March 2010.
+             Change from a system that used 96-bit bit vectors listing the
+             category membership for each character, stored in a generic
+             char table, to a special `category-table' object with 12
+             subtables, each directly storing an 8-bit bit array in place
+             of the Lisp_Object pointer.
  */
 
 #include <config.h>

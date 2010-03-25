@@ -2508,7 +2508,9 @@ Unicode tables or in the charset:
 			goto out_of_range;
 		    }
 
+#ifndef UNICODE_INTERNAL
 		do_it:
+#endif
 		  if (stage == 0)
 		    {
 		      if (c2 < to_unicode_min_val[c1])
