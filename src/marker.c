@@ -493,13 +493,13 @@ Return t if there are markers pointing at POSITION in the current buffer.
 #ifdef MEMORY_USAGE_STATS
 
 Bytecount
-compute_buffer_marker_usage (struct buffer *b, struct usage_stats *ustats)
+compute_buffer_marker_usage (struct buffer *b)
 {
   Lisp_Marker *m;
   Bytecount total = 0;
 
   for (m = BUF_MARKERS (b); m; m = m->next)
-    total += lisp_object_storage_size (wrap_marker (m), ustats);
+    total += lisp_object_memory_usage (wrap_marker (m));
   return total;
 }
 

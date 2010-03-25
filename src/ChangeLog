@@ -1,3 +1,95 @@
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	* alloc.c (compute_memusage_stats_length):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	Add fields to the `lrecord_implementation' structure to list an
+	offset into the array of extra statistics in a
+	`struct generic_usage_stats' and a length, listing the first slice
+	of ancillary Lisp-object memory.  Compute automatically in
+	compute_memusage_stats_length().  Use to add an entry
+	`FOO-lisp-ancillary-storage' for object type FOO.
+
+	Don't crash when an int or char is given to object-memory-usage,
+	signal an error instead.
+
+	Add functions lisp_object_memory_usage_full() and
+	lisp_object_memory_usage() to compute the total memory usage of an
+	object (sum of object, non-Lisp attached, and Lisp ancillary
+	memory).
+	
+	* array.c:
+	* array.c (gap_array_memory_usage):
+	* array.h:
+	Add function to return memory usage of a gap array.
+	
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (vars_of_buffer):
+	* extents.c (compute_buffer_extent_usage):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* extents.h:
+	* lisp.h:
+	Remove `struct usage_stats' arg from compute_buffer_marker_usage()
+	and compute_buffer_extent_usage() -- these are ancillary Lisp
+	objects and don't get accumulated into `struct usage_stats';
+	change the value of `memusage_stats_list' so that `markers' and
+	`extents' memory is in Lisp-ancillary, where it belongs.
+
+	In compute_buffer_marker_usage(), use lisp_object_memory_usage()
+	rather than lisp_object_storage_size().
+	
+	* casetab.c:
+	* casetab.c (case_table_memory_usage):
+	* casetab.c (vars_of_casetab):
+	* emacs.c (main_1):
+	Add memory usage stats for case tables.
+	
+	* lisp.h:
+	Add comment explaining the `struct generic_usage_stats' more,
+	as well as the new fields in lrecord_implementation.
+
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c:
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c:
+	* scrollbar.c (struct scrollbar_instance_stats):
+	* scrollbar.c (compute_all_scrollbar_instance_usage):
+	* scrollbar.c (scrollbar_instance_memory_usage):
+	* scrollbar.c (scrollbar_objects_create):
+	* scrollbar.c (vars_of_scrollbar):
+	* scrollbar.h:
+	* symsinit.h:
+	* window.c:
+	* window.c (find_window_mirror_maybe):
+	* window.c (struct window_mirror_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (window_mirror_memory_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	Redo memory-usage associated with windows, window mirrors, and
+	scrollbar instances.  Should fix crash in find_window_mirror,
+	among other things.  Properly assign memo ry to object memory,
+	non-Lisp extra memory, and Lisp ancillary memory.  For example,
+	redisplay structures are non-Lisp memory hanging off a window
+	mirror, not a window; make it an ancillary Lisp-object field.
+	Window mirrors and scrollbar instances have their own statistics,
+	among other things.
+	 
 2010-03-24  Ben Wing  <ben@xemacs.org>
 
 	* array.h:
@@ -6,7 +98,7 @@
 	* dumper.c (pdump_store_new_pointer_offsets):
 	* dumper.c (pdump_reloc_one_mc):
 	* elhash.c:
-	* gc.c (lispdesc_one_description_line_size):
+	* gc.c  (lispdesc_one_description_line_size):
 	* gc.c (kkcc_marking):
 	* lrecord.h:
 	* lrecord.h (IF_NEW_GC):

@@ -177,6 +177,7 @@ static struct
   Bytecount bytes_on_free_list_overhead;
 #ifdef MEMORY_USAGE_STATS
   Bytecount nonlisp_bytes_in_use;
+  Bytecount lisp_ancillary_bytes_in_use;
   struct generic_usage_stats stats;
 #endif
 } lrecord_stats [countof (lrecord_implementations_table)];
@@ -3888,6 +3889,14 @@ finish_object_memory_usage_stats (void)
 	    lrecord_stats[i].nonlisp_bytes_in_use +=
 	      lrecord_stats[i].stats.othervals[j];
 	}
+      if (imp && imp->num_extra_lisp_ancillary_memusage_stats)
+	{
+	  int j;
+	  for (j = 0; j < imp->num_extra_lisp_ancillary_memusage_stats; j++)
+	    lrecord_stats[i].lisp_ancillary_bytes_in_use +=
+	      lrecord_stats[i].stats.othervals
+	      [j + imp->offset_lisp_ancillary_memusage_stats];
+	}
     }
 #endif /* defined (MEMORY_USAGE_STATS) && !defined (NEW_GC) */
 }
@@ -4041,6 +4050,14 @@ object_memory_usage_stats (int set_total_gc_usage)
 				  pl);
 	      tgu_val += lrecord_stats[i].nonlisp_bytes_in_use;
 	    }
+	  if (lrecord_stats[i].lisp_ancillary_bytes_in_use)
+	    {
+	      sprintf (buf, "%s-lisp-ancillary-storage", name);
+	      pl = gc_plist_hack (buf, lrecord_stats[i].
+				  lisp_ancillary_bytes_in_use,
+				  pl);
+	      tgu_val += lrecord_stats[i].lisp_ancillary_bytes_in_use;
+	    }
 #endif /* MEMORY_USAGE_STATS */
 	  pluralize_and_append (buf, name, "-freed");
           if (lrecord_stats[i].instances_freed != 0)
@@ -4175,7 +4192,13 @@ itself.
   struct usage_stats object_stats;
   int i;
   Lisp_Object val = Qnil;
-  Lisp_Object stats_list = OBJECT_PROPERTY (object, memusage_stats_list);
+  Lisp_Object stats_list;
+
+  if (INTP (object) || CHARP (object))
+    invalid_argument ("No memory associated with immediate objects (int or char)",
+		      object);
+
+  stats_list = OBJECT_PROPERTY (object, memusage_stats_list);
 
   xzero (object_stats);
   lisp_object_storage_size (object, &object_stats);
@@ -4223,6 +4246,80 @@ itself.
   return Fnreverse (val);
 }
 
+/* Compute total memory usage associated with an object, including
+
+   (a) Storage (including overhead) allocated to the object itself
+   (b) Storage (including overhead) for ancillary non-Lisp structures attached
+       to the object
+   (c) Storage (including overhead) for ancillary Lisp objects attached
+       to the object
+
+   Store the three types of memory into the return values provided they
+   aren't NULL, and return a sum of the three values.  Also store the
+   structure of individual statistics into STATS if non-zero.
+
+   Note that the value for type (c) is the sum of all three types of
+   memory associated with the ancillary Lisp objects.
+*/
+
+Bytecount
+lisp_object_memory_usage_full (Lisp_Object object, Bytecount *storage_size,
+			       Bytecount *extra_nonlisp_storage,
+			       Bytecount *extra_lisp_ancillary_storage,
+			       struct generic_usage_stats *stats)
+{
+  Bytecount total;
+  struct lrecord_implementation *imp = XRECORD_LHEADER_IMPLEMENTATION (object);
+
+  total = lisp_object_storage_size (object, NULL);
+  if (storage_size)
+    *storage_size = total;
+
+  if (HAS_OBJECT_METH_P (object, memory_usage))
+    {
+      int i;
+      struct generic_usage_stats gustats;
+      Bytecount sum;
+
+      xzero (gustats);
+      OBJECT_METH (object, memory_usage, (object, &gustats));
+
+      if (stats)
+	*stats = gustats;
+
+      sum = 0;
+      for (i = 0; i < imp->num_extra_nonlisp_memusage_stats; i++)
+	sum += gustats.othervals[i];
+      total += sum;
+      if (extra_nonlisp_storage)
+	*extra_nonlisp_storage = sum;
+
+      sum = 0;
+      for (i = 0; i < imp->num_extra_lisp_ancillary_memusage_stats; i++)
+	sum += gustats.othervals[imp->offset_lisp_ancillary_memusage_stats +
+				 i];
+      total += sum;
+      if (extra_lisp_ancillary_storage)
+	*extra_lisp_ancillary_storage = sum;
+    }
+  else
+    {
+      if (extra_nonlisp_storage)
+	*extra_nonlisp_storage = 0;
+      if (extra_lisp_ancillary_storage)
+	*extra_lisp_ancillary_storage = 0;
+    }
+
+  return total;
+}
+
+
+Bytecount
+lisp_object_memory_usage (Lisp_Object object)
+{
+  return lisp_object_memory_usage_full (object, NULL, NULL, NULL, NULL);
+}
+
 #endif /* MEMORY_USAGE_STATS */
 
 #ifdef ALLOC_TYPE_STATS
@@ -4258,10 +4355,6 @@ compute_memusage_stats_length (void)
 
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
-      int len = 0;
-      int nonlisp_len = 0;
-      int seen_break = 0;
-
       struct lrecord_implementation *imp = lrecord_implementations_table[i];
 
       if (!imp)
@@ -4272,21 +4365,44 @@ compute_memusage_stats_length (void)
       if (EQ (imp->memusage_stats_list, Qnull_pointer))
 	imp->memusage_stats_list = Qnil;
       {
+	Elemcount len = 0;
+	Elemcount nonlisp_len = 0;
+	Elemcount lisp_len = 0;
+	Elemcount lisp_offset = 0;
+	int group_num = 0;
+	int slice_num = 0;
+
 	LIST_LOOP_2 (item, imp->memusage_stats_list)
 	  {
-	    if (!NILP (item) && !EQ (item, Qt))
+	    if (EQ (item, Qt))
 	      {
-		len++;
-		if (!seen_break)
-		  nonlisp_len++;
+		group_num++;
+		if (group_num == 1)
+		  lisp_offset = len;
+		slice_num = 0;
+	      }
+	    else if (EQ (item, Qnil))
+	      {
+		slice_num++;
 	      }
 	    else
-	      seen_break++;
+	      {
+		if (slice_num == 0)
+		  {
+		    if (group_num == 0)
+		      nonlisp_len++;
+		    else if (group_num == 1)
+		      lisp_len++;
+		  }
+		len++;
+	      }
 	  }
-      }
 
-      imp->num_extra_memusage_stats = len;
-      imp->num_extra_nonlisp_memusage_stats = nonlisp_len;
+	imp->num_extra_memusage_stats = len;
+	imp->num_extra_nonlisp_memusage_stats = nonlisp_len;
+	imp->num_extra_lisp_ancillary_memusage_stats = lisp_len;
+	imp->offset_lisp_ancillary_memusage_stats = lisp_offset;
+      }
     }
 }
 

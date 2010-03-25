@@ -1,3 +1,12 @@
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	Further changes to correspond with changes in the C code;
+	add an additional column in show-object-memory-usage-stats showing
+	the ancillary Lisp overhead used with each type; shrink columns for
+	windows in show-memory-usage to get it to fit in 79 chars.
+
 2010-03-20  Ben Wing  <ben@xemacs.org>
 
 	* diagnose.el (show-memory-usage):

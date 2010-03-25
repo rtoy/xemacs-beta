@@ -940,6 +940,59 @@ free_gap_array (Gap_Array *ga)
 }
 #endif /* not NEW_GC */
 
+#ifdef MEMORY_USAGE_STATS
+
+/* Return memory usage for gap array GA.  The returned value is the total
+   amount of bytes actually being used for the gap array, including all
+   overhead.  The extra amount of space in the gap array that is used
+   for the gap is counted in GAP_OVERHEAD, not in WAS_REQUESTED.
+   If NEW_GC, space for gap-array markers is returned through MARKER_ANCILLARY;
+   otherwise it's added into the gap array usage. */
+
+Bytecount
+gap_array_memory_usage (Gap_Array *ga, struct usage_stats *stats,
+			Bytecount *marker_ancillary)
+{
+  Bytecount total = 0;
+
+  /* We have to be a bit tricky here because not all of the
+     memory that malloc() will claim as "requested" was actually
+     requested -- some of it makes up the gap. */
+
+  Bytecount size = gap_array_byte_size (ga);
+  Bytecount gap_size = ga->gapsize * ga->elsize;
+  Bytecount malloc_used = malloced_storage_size (ga, size, 0);
+  total += malloc_used;
+  stats->was_requested += size - gap_size;
+  stats->gap_overhead += gap_size;
+  stats->malloc_overhead += malloc_used - size;
+
+#ifdef NEW_GC
+  {
+    Bytecount marker_usage = 0;
+    Gap_Array_Marker *p;
+
+    for (p = ga->markers; p; p = p->next)
+      marker_usage += lisp_object_memory_usage (wrap_gap_array_marker (p));
+    if (marker_ancillary)
+      *marker_ancillary = marker_usage;
+  }
+#else
+  {
+    Gap_Array_Marker *p;
+
+    for (p = ga->markers; p; p = p->next)
+      total += malloced_storage_size (p, sizeof (p), stats);
+    if (marker_ancillary)
+      *marker_ancillary = 0;
+  }
+#endif /* (not) NEW_GC */
+  
+  return total;
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
 
 /*****************************************************************************/
 /*                              Initialization                               */

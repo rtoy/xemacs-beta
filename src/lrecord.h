@@ -514,8 +514,8 @@ struct lrecord_implementation
 
   /**********************************************************************/
   /* Remaining stuff is not assignable statically using
-     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD
-     or the like. */
+     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD,
+     OBJECT_HAS_PROPERTY or the like. */
 
   /* These functions allow any object type to have builtin property
      lists that can be manipulated from the lisp level with
@@ -542,34 +542,73 @@ struct lrecord_implementation
 
 #ifdef MEMORY_USAGE_STATS
   /* Return memory-usage information about the object in question, stored
-     into STATS. */
+     into STATS.
+
+     Two types of information are stored: storage (including overhead) for
+     ancillary non-Lisp structures attached to the object, and storage
+     (including overhead) for ancillary Lisp objects attached to the
+     object.  The third type of memory-usage information (storage for the
+     object itself) is not noted here, because it's computed automatically
+     by the calling function.  Also, the computed storage for ancillary
+     Lisp objects is the sum of all three source of memory associated with
+     the Lisp object: the object itself, ancillary non-Lisp structures and
+     ancillary Lisp objects.  Note also that the `struct usage_stats u' at
+     the beginning of the STATS structure is for ancillary non-Lisp usage
+     *ONLY*; do not store any memory into it related to ancillary Lisp
+     objects.
+
+     Note that it may be subjective which Lisp objects are considered
+     "attached" to the object.  Some guidelines:
+
+     -- Lisp objects which are "internal" to the main object and not
+        accessible except through the main object should be included
+     -- Objects linked by a weak reference should *NOT* be included
+  */
   void (*memory_usage) (Lisp_Object obj, struct generic_usage_stats *stats);
-
-  /* Number of additional type-specific statistics related to memory usage.
-     Automatically calculated (see compute_memusage_stats_length()) based
-     on the value placed in `memusage_stats_list'. */
-  Elemcount num_extra_memusage_stats;
-
-  /* Number of additional type-specific statistics related to
-     non-Lisp-Object memory usage for this object.  Automatically
-     calculated (see compute_memusage_stats_length()) based on the value
-     placed in `memusage_stats_list'. */
-  Elemcount num_extra_nonlisp_memusage_stats;
 
   /* List of tags to be given to the extra statistics, one per statistic.
      Qnil or Qt can be present to separate off different slices.  Qnil
-     separates different slices within the same type of statistics.
-     Qt separates slices corresponding to different types of statistics.
+     separates different slices within the same group of statistics.
+     These represent different ways of partitioning the same memory space.
+     Qt separates different groups; these represent different spaces of
+     memory.
+
      If Qt is not present, all slices describe extra non-Lisp-Object memory
-     associated with a Lisp object.  If Qt is present, slices after Qt
-     describe non-Lisp-Object memory and slices before Qt describe
-     Lisp-Object memory logically associated with the object.  For example,
-     if the object is a table, then Lisp-Object memory might be the entries
-     in the table.  This info is only advisory since it will duplicate
-     memory described elsewhere and since it may not be possible to be
-     completely accurate if the same object occurs multiple times in the
-     table. */
+     associated with a Lisp object.  If Qt is present, slices before Qt
+     describe non-Lisp-Object memory, as before, and slices after Qt
+     describe ancillary Lisp-Object memory logically associated with the
+     object.  For example, if the object is a table, then ancillary
+     Lisp-Object memory might be the entries in the table.  This info is
+     only advisory since it will duplicate memory described elsewhere and
+     since it may not be possible to be completely accurate, e.g. it may
+     not be clear what to count in "ancillary objects", and the value may
+     be too high if the same object occurs multiple times in the table. */
   Lisp_Object memusage_stats_list;
+
+  /* --------------------------------------------------------------------- */
+
+  /* The following are automatically computed based on the value in
+     `memusage_stats_list' (see compute_memusage_stats_length()). */
+
+  /* Total number of additional type-specific statistics related to memory
+     usage. */
+  Elemcount num_extra_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing non-Lisp-Object memory usage for this
+     object.  These stats occur starting at offset 0. */
+  Elemcount num_extra_nonlisp_memusage_stats;
+
+  /* The offset into the extra statistics at which the Lisp-Object
+     memory-usage statistics begin. */
+  Elemcount offset_lisp_ancillary_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing Lisp-Object memory usage for this
+     object.  These stats occur starting at offset
+     `offset_lisp_ancillary_memusage_stats'. */
+  Elemcount num_extra_lisp_ancillary_memusage_stats;
+
 #endif /* MEMORY_USAGE_STATS */
 };
 
@@ -2040,6 +2079,12 @@ MODULE_API void zero_sized_lisp_object (Lisp_Object obj, Bytecount size);
 MODULE_API void zero_nonsized_lisp_object (Lisp_Object obj);
 Bytecount lisp_object_storage_size (Lisp_Object obj,
 				    struct usage_stats *ustats);
+Bytecount lisp_object_memory_usage_full (Lisp_Object object,
+					 Bytecount *storage_size,
+					 Bytecount *extra_nonlisp_storage,
+					 Bytecount *extra_lisp_storage,
+					 struct generic_usage_stats *stats);
+Bytecount lisp_object_memory_usage (Lisp_Object object);
 void free_normal_lisp_object (Lisp_Object obj);
 
 
