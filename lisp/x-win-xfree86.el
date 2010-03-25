@@ -77,6 +77,9 @@
 	     nil nil nil nil nil ?/ nil nil nil nil nil nil nil nil 
 	     nil nil nil nil nil ?=])
 
+  (when (x-keysym-on-keyboard-p 'iso-left-tab device) 
+    (define-key function-key-map 'iso-left-tab [(shift tab)]))
+
   (loop for (key sane-key) in
     '((f13 f1)
       (f14 f2)
