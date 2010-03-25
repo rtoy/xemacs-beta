@@ -47,6 +47,13 @@ Boston, MA 02111-1307, USA.  */
 #define CHARSET_MIN_OFFSET 0
 #define CHARSET_MAX_SIZE 256
 
+/* When building up a table bit-by-bit, if we discover that the existing
+   offset and/or length are too small to hold a conversion, we choose the
+   smallest values of offset and length that are a multiple of the following
+   value.  This ensures that we get reasonable space-saving while avoiding
+   the thrashing that would come from steadily resizing one-index-by-one. */
+#define CHARSET_INDEX_MULTIPLE 32
+
 void get_charset_limits (Lisp_Object charset, int *low0, int *low1, int *high0,
 			 int *high1);
 int get_charset_iso2022_type (Lisp_Object charset);
@@ -356,6 +363,14 @@ charset_by_attributes (int type, int final, int dir)
 
 #ifdef MULE
 
+/* Structure at the lowest level; offset and length, plus a variable-sized
+   array of LENGTH values. */
+typedef struct to_unicode_base
+{
+  int offset, len;
+  int array[1];
+} to_unicode_base;
+
 DECLARE_INLINE_HEADER (
 int
 valid_charset_codepoint_p (Lisp_Object charset, int c1, int c2)
@@ -397,8 +412,6 @@ do								\
 while (0)
 
 #endif /* MULE */
-
-
 
 #define ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR(charset, c1, c2)	\
 do									\
@@ -509,6 +522,7 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
 )
 {
   int retval;
+  to_unicode_base *table;
 
   INLINE_ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
   if (XCHARSET_DO_AUTOLOAD (charset))
@@ -530,12 +544,15 @@ charset_codepoint_to_unicode_raw_1 (Lisp_Object charset, int c1, int c2
 #endif /* ALLOW_ALGORITHMIC_CONVERSION_TABLES */
 #ifndef MAXIMIZE_UNICODE_TABLE_DEPTH
   if (XCHARSET_DIMENSION (charset) == 1)
-    retval = ((int *) XCHARSET_TO_UNICODE_TABLE (charset))
-      [c2- CHARSET_MIN_OFFSET];
+      table = (to_unicode_base *) XCHARSET_TO_UNICODE_TABLE (charset);
   else
 #endif /* not MAXIMIZE_UNICODE_TABLE_DEPTH */
-    retval = ((int **) XCHARSET_TO_UNICODE_TABLE (charset))
-      [c1 - CHARSET_MIN_OFFSET][c2 - CHARSET_MIN_OFFSET];
+    table = ((to_unicode_base **) XCHARSET_TO_UNICODE_TABLE (charset))
+      [c1 - CHARSET_MIN_OFFSET];
+  if (c2 < table->offset || c2 >= table->offset + table->len)
+    retval = -1;
+  else
+    retval = table->array[c2 - table->offset];
   ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR (retval);
   return retval;
 }
