@@ -2254,6 +2254,7 @@ word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2)
     }
   return default_result;
 }
+
 #endif /* MULE */
 
 

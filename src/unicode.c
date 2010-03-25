@@ -57,12 +57,13 @@ Boston, MA 02111-1307, USA.  */
 
    We currently use the following format for tables:
 
-   If dimension == 1, to_unicode_table is a CHARSET_MAX_SIZE-element array
-   of ints (Unicode code points); else, it's a CHARSET_MAX_SIZE-element
-   array of int * pointers, each of which points to a
-   CHARSET_MAX_SIZE-element array of ints.  If no elements in a row have
-   been filled in, the pointer will point to a default empty table; that
-   way, memory usage is more reasonable but lookup still fast.
+   If dimension == 1, to_unicode_table is a `struct to_unicode_base', which
+   simply encapsulates an offset, a length and an array of ints (Unicode
+   code points) of size `length'; else, it's a CHARSET_MAX_SIZE-element
+   array of to_unicode_base * pointers, each of which points to a `struct
+   to_unicode_base'.  If no elements in a row have been filled in, the
+   pointer will point to a default empty table; that way, memory usage is
+   more reasonable but lookup still fast.
 
    -- If from_unicode_levels == 1, from_unicode_table is a 256-element
    array of UINT_16_BITs (octet 1 in high byte, octet 2 in low byte; we don't
@@ -81,6 +82,17 @@ Boston, MA 02111-1307, USA.  */
 
    Just as for to_unicode_table, we use default tables to fill in all
    entries with no values in them.
+
+   For the to_unicode_tables, where do the values for offset and length
+   come from?
+
+   (1) Blank tables always use the minimum offset (CHARSET_MIN_OFFSET, i.e. 0)
+       and maximum length (CHARSET_MAX_SIZE, i.e. 256).
+   (2) Tables initialized in one fell swoop using `load-unicode-mapping-table'
+       calculate the exact values for offset and length necessary to hold all
+       the translations.
+   (3) Tables initialized bit-by-bit 
+
 
    #### An obvious space-saving optimization is to use variable-sized
    tables, where each table instead of just being a 256-element array, is a
@@ -256,12 +268,12 @@ Lisp_Object Vcharset_descr;
    We use UINT_16_BIT to store a charset codepoint, up to 256x256,
    unsigned to avoid problems.
 */
-static int *to_unicode_blank_1;
-static int **to_unicode_blank_2;
 
-/* The lowest table is always null.  We do it this way so that the table index
-   corresponds to the number of levels of the table, i.e. how many indices
-   before you get an actual value rather than a pointer. */
+/* For both of these, the lowest table is always null.  We do it this way
+   so that the table index corresponds to the number of levels of the
+   table, i.e. how many indices before you get an actual value rather than
+   a pointer. */
+static void *to_unicode_blank[3];
 static void *from_unicode_blank[5];
 
 static const struct memory_description to_unicode_level_0_desc_1[] = {
@@ -272,8 +284,19 @@ static const struct sized_memory_description to_unicode_level_0_desc = {
   sizeof (int), to_unicode_level_0_desc_1
 };
 
+static const struct memory_description to_unicode_base_desc_1[] = {
+  { XD_INT,	    offsetof (to_unicode_base, len) },
+  { XD_BLOCK_ARRAY, offsetof (to_unicode_base, array), XD_INDIRECT (0, 0),
+    { &to_unicode_level_0_desc } },
+  { XD_END }
+};
+
+static const struct sized_memory_description to_unicode_base_desc = {
+  0, to_unicode_base_desc_1
+};
+
 static const struct memory_description to_unicode_level_1_desc_1[] = {
-  { XD_BLOCK_PTR, 0, CHARSET_MAX_SIZE, { &to_unicode_level_0_desc } },
+  { XD_BLOCK_PTR, 0, 1, { &to_unicode_base_desc } },
   { XD_END }
 };
 
@@ -415,6 +438,33 @@ decode_unicode (Lisp_Object unicode, enum unicode_allow allow)
 
 #ifdef MULE
 
+static Bytecount
+needed_sizeof_to_unicode_base (int len)
+{
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (to_unicode_base, int,
+				       array, len);
+}
+
+
+static to_unicode_base *
+allocate_to_unicode_base (int len)
+{
+  Bytecount size = needed_sizeof_to_unicode_base (len);
+  return (to_unicode_base *) xmalloc_and_zero (size);
+}
+
+static Bytecount
+sizeof_to_unicode_base (to_unicode_base *table)
+{
+  return needed_sizeof_to_unicode_base (table->len);
+}
+
+static to_unicode_base **
+allocate_to_unicode_level_2 (void)
+{
+  return xnew_array (to_unicode_base *, CHARSET_MAX_SIZE);
+}
+
 static void
 init_blank_unicode_tables (void)
 {
@@ -434,13 +484,14 @@ init_blank_unicode_tables (void)
       ((void **) from_unicode_blank[4])[i] = from_unicode_blank[3];
     }
 
-  to_unicode_blank_1 = xnew_array (int, CHARSET_MAX_SIZE);
-  to_unicode_blank_2 = xnew_array (int *, CHARSET_MAX_SIZE);
+  to_unicode_blank[0] = NULL;
+  to_unicode_blank[1] = allocate_to_unicode_base (CHARSET_MAX_SIZE);
+  to_unicode_blank[2] = allocate_to_unicode_level_2 ();
   for (i = 0; i < CHARSET_MAX_SIZE; i++)
     {
       /* Likewise for BADVAL_TO_TABLE */
-      to_unicode_blank_1[i] = BADVAL_TO_TABLE;
-      to_unicode_blank_2[i] = to_unicode_blank_1;
+      ((to_unicode_base *) to_unicode_blank[1])->array[i] = BADVAL_TO_TABLE;
+      ((void **) to_unicode_blank[2])[i] = to_unicode_blank[1];
     }
 }
 
@@ -498,18 +549,8 @@ find_badval_for_charset (Lisp_Object charset)
 void
 init_charset_unicode_tables (Lisp_Object charset)
 {
-  if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
-    {
-      int *to_table = xnew_array (int, CHARSET_MAX_SIZE);
-      memcpy (to_table, to_unicode_blank_1, CHARSET_MAX_SIZE * sizeof (int));
-      XCHARSET_TO_UNICODE_TABLE (charset) = to_table;
-    }
-  else
-    {
-      int **to_table = xnew_array (int *, CHARSET_MAX_SIZE);
-      memcpy (to_table, to_unicode_blank_2, CHARSET_MAX_SIZE * sizeof (int *));
-      XCHARSET_TO_UNICODE_TABLE (charset) = to_table;
-    }
+  XCHARSET_TO_UNICODE_TABLE (charset) =
+    to_unicode_blank[TO_TABLE_SIZE_FROM_CHARSET (charset)];
 
 #ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
   XCHARSET_FROM_UNICODE_TABLE (charset) = create_new_from_unicode_table (4);
@@ -525,16 +566,16 @@ init_charset_unicode_tables (Lisp_Object charset)
 static void
 free_from_unicode_table (void *table, int level)
 {
+  if (table == from_unicode_blank[level])
+    return;
+
   if (level >= 2)
     {
       void **tab = (void **) table;
       int i;
 
       for (i = 0; i < 256; i++)
-	{
-	  if (tab[i] != from_unicode_blank[level - 1])
-	    free_from_unicode_table (tab[i], level - 1);
-	}
+	free_from_unicode_table (tab[i], level - 1);
     }
 
   xfree (table);
@@ -543,16 +584,16 @@ free_from_unicode_table (void *table, int level)
 static void
 free_to_unicode_table (void *table, int level)
 {
+  if (table == to_unicode_blank[level])
+    return;
+
   if (level == 2)
     {
+      to_unicode_base **tab = (to_unicode_base **) table;
       int i;
-      int **tab = (int **) table;
 
       for (i = 0; i < CHARSET_MAX_SIZE; i++)
-	{
-	  if (tab[i] != to_unicode_blank_1)
-	    free_to_unicode_table (tab[i], 1);
-	}
+	free_to_unicode_table (tab[i], 1);
     }
 
   xfree (table);
@@ -577,16 +618,15 @@ compute_from_unicode_table_size_1 (void *table, int level,
 {
   Bytecount size = 0;
 
+  if (table == from_unicode_blank[level])
+    return 0;
+
   if (level >= 2)
     {
       int i;
       void **tab = (void **) table;
       for (i = 0; i < 256; i++)
-	{
-	  if (tab[i] != from_unicode_blank[level - 1])
-	    size += compute_from_unicode_table_size_1 (tab[i], level - 1,
-						       stats);
-	}
+	size += compute_from_unicode_table_size_1 (tab[i], level - 1, stats);
     }
 
   size += malloced_storage_size (table,
@@ -602,23 +642,23 @@ compute_to_unicode_table_size_1 (void *table, int level,
 {
   Bytecount size = 0;
 
+  if (table == to_unicode_blank[level])
+    return 0;
+
   if (level == 2)
     {
       int i;
-      int **tab = (int **) table;
+      void **tab = (void **) table;
 
       for (i = 0; i < CHARSET_MAX_SIZE; i++)
-	{
-	  if (tab[i] != to_unicode_blank_1)
-	    size += compute_to_unicode_table_size_1 (tab[i], 1, stats);
-	}
+	size += compute_to_unicode_table_size_1 (tab[i], 1, stats);
     }
 
-  size += malloced_storage_size (table,
-				 CHARSET_MAX_SIZE *
-				 (level == 1 ? sizeof (int) :
-				  sizeof (void *)),
-				 stats);
+  size +=
+    malloced_storage_size
+    (table,
+     level == 1 ? sizeof_to_unicode_base ((to_unicode_base *) table) :
+     (Bytecount) (CHARSET_MAX_SIZE * sizeof (void *)), stats);
   return size;
 }
 
@@ -665,8 +705,8 @@ assert_not_any_blank_table (void *tab)
   assert (tab != from_unicode_blank[2]);
   assert (tab != from_unicode_blank[3]);
   assert (tab != from_unicode_blank[4]);
-  assert (tab != to_unicode_blank_1);
-  assert (tab != to_unicode_blank_2);
+  assert (tab != to_unicode_blank[1]);
+  assert (tab != to_unicode_blank[2]);
   assert (tab);
 }
 
@@ -675,6 +715,9 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
 			       int codetop)
 {
   int i;
+
+  if (table == from_unicode_blank[level])
+    return;
 
   switch (level)
     {
@@ -692,16 +735,16 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
 		assert_codepoint_in_range (charset, c1, c2);
 		if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
 		  {
-		    int *to_table =
-		      (int *) XCHARSET_TO_UNICODE_TABLE (charset);
+		    to_unicode_base *to_table =
+		      (to_unicode_base *) XCHARSET_TO_UNICODE_TABLE (charset);
 		    assert_not_any_blank_table (to_table);
 		    assert (to_table[c2 - CHARSET_MIN_OFFSET] ==
 			    (codetop << 8) + i);
 		  }
 		else
 		  {
-		    int **to_table =
-		      (int **) XCHARSET_TO_UNICODE_TABLE (charset);
+		    to_unicode_base **to_table =
+		      (to_unicode_base **) XCHARSET_TO_UNICODE_TABLE (charset);
 		    assert_not_any_blank_table (to_table);
 		    assert_not_any_blank_table
 		      (to_table[c1 - CHARSET_MIN_OFFSET]);
@@ -718,11 +761,8 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
       {
 	void **tab = (void **) table;
 	for (i = 0; i < 256; i++)
-	  {
-	    if (tab[i] != from_unicode_blank[level - 1])
-	      sledgehammer_check_from_table (charset, tab[i], level - 1,
-					     (codetop << 8) + i);
-	  }
+	  sledgehammer_check_from_table (charset, tab[i], level - 1,
+					 (codetop << 8) + i);
 	break;
       }
     default:
@@ -734,8 +774,11 @@ static void
 sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 			     int codetop)
 {
-  int i;
+  int i, j;
   int low1, low2, high1, high2;
+
+  if (table == to_unicode_blank[level])
+    return;
 
   get_charset_limits (charset, &low1, &low2, &high1, &high2);
 
@@ -743,25 +786,29 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
     {
     case 1:
       {
-	int *tab = (int *) table;
+	to_unicode_base *tab = (to_unicode_base *) table;
 
 	if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 2)
 	  /* This means we're traversing a nested table */
 	  low1 = low2, high1 = high2;
-	for (i = 0; i < CHARSET_MAX_SIZE; i++)
+	/* Make sure no out-of-range offsets or lengths */
+	assert (tab->offset >= CHARSET_MIN_OFFSET);
+	assert (tab->len <= CHARSET_MAX_SIZE);
+	for (j = tab->offset; j < tab->offset + tab->len; j++)
 	  {
+	    i = j - tab->offset;
 	    /* Make sure no out-of-bounds characters were set */
-	    if (i + CHARSET_MIN_OFFSET < low1 ||
-		i + CHARSET_MIN_OFFSET > high1)
-	      assert (tab[i] == BADVAL_TO_TABLE);
-	    if (tab[i] != BADVAL_TO_TABLE)
+	    if (j  < low1 || j  > high1)
+	      assert (tab->array[i] == BADVAL_TO_TABLE);
+	    if (tab->array[i] != BADVAL_TO_TABLE)
 	      {
 		int u4, u3, u2, u1, levels;
 		UINT_16_BIT val;
 		void *frtab = XCHARSET_FROM_UNICODE_TABLE (charset);
 
-		assert (tab[i] >= 0);
-		UNICODE_BREAKUP_CHAR_CODE (tab[i], u4, u3, u2, u1, levels);
+		assert (tab->array[i] >= 0);
+		UNICODE_BREAKUP_CHAR_CODE (tab->array[i], u4, u3, u2, u1,
+					   levels);
 #ifdef MAXIMIZE_UNICODE_TABLE_DEPTH
 		levels = 4;
 #endif /* MAXIMIZE_UNICODE_TABLE_DEPTH */
@@ -779,13 +826,13 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 
 		if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
 		  {
-		    assert (i + CHARSET_MIN_OFFSET == (val >> 8));
+		    assert (j == (val >> 8));
 		    assert (0 == (val & 0xFF));
 		  }
 		else
 		  {
 		    assert (codetop + CHARSET_MIN_OFFSET == (val >> 8));
-		    assert (i + CHARSET_MIN_OFFSET == (val & 0xFF));
+		    assert (j == (val & 0xFF));
 		  }
 
 		switch (XCHARSET_FROM_UNICODE_LEVELS (charset))
@@ -813,16 +860,15 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
       }
     case 2:
       {
-	int **tab = (int **) table;
+	to_unicode_base **tab = (to_unicode_base **) table;
 
 	for (i = 0; i < CHARSET_MAX_SIZE; i++)
 	  {
 	    /* Make sure no out-of-bounds characters were set */
 	    if (i + CHARSET_MIN_OFFSET < low1 ||
 		i + CHARSET_MIN_OFFSET > high1)
-	      assert (tab[i] == to_unicode_blank_1);
-	    if (tab[i] != to_unicode_blank_1)
-	      sledgehammer_check_to_table (charset, tab[i], 1, i);
+	      assert (tab[i] == to_unicode_blank[1]);
+	    sledgehammer_check_to_table (charset, tab[i], 1, i);
 	  }
 	break;
       }
@@ -850,8 +896,8 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 
   for (i = 0; i < CHARSET_MAX_SIZE; i++)
     {
-      assert (to_unicode_blank_1[i] == BADVAL_TO_TABLE);
-      assert (to_unicode_blank_2[i] == to_unicode_blank_1);
+      assert (to_unicode_blank[1]->array[i] == BADVAL_TO_TABLE);
+      assert (to_unicode_blank[2][i] == to_unicode_blank[1]);
     }
 
   assert (from_level >= 1 && from_level <= 4);
@@ -867,32 +913,136 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 
 #endif /* SLEDGEHAMMER_CHECK_UNICODE */
 
+/* Ensure that non-blank tables exist down to the level of row C1 in
+   CHARSET's to-Unicode tables, and ensure that the table for row C1
+   can hold values in the range given by OFFSET and LEN.  If EXACT,
+   resize to exactly that size; otherwise, resize to values that are
+   rounded up or down towards a multiple of CHARSET_INDEX_MULTIPLE. */
+
+static void
+ensure_to_unicode_holds_range (Lisp_Object charset, int c1, int offset,
+			       int len, int exact)
+{
+  to_unicode_base **store_to_table;
+
+  if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
+    store_to_table =
+      (to_unicode_base **) &XCHARSET_TO_UNICODE_TABLE (charset);
+  else
+    {
+      to_unicode_base **to_table_2 =
+	(to_unicode_base **) XCHARSET_TO_UNICODE_TABLE (charset);
+
+      if (to_table_2 == to_unicode_blank[2])
+	{
+	  to_table_2 = allocate_to_unicode_level_2 ();
+	  XCHARSET_TO_UNICODE_TABLE (charset) = to_table_2;
+	  memcpy (to_table_2, to_unicode_blank[2],
+		  CHARSET_MAX_SIZE * sizeof (to_unicode_base *));
+	}
+	
+      store_to_table = &to_table_2[c1 - CHARSET_MIN_OFFSET];
+    }
+
+  /* Resize the table if necessary before storing the value */
+  {
+    /* New values for min and max that will be used to resize the table.
+       "Past max" means 1+max; essentially, [NEW_MIN, NEW_PAST_MAX) is
+       a half-open interval. */
+    int new_min, new_past_max;
+    int existing; /* Table already exists or not? */
+    to_unicode_base *to_table = *store_to_table;
+    int i;
+
+    /* Do we need to create the table? */
+    if (*store_to_table == to_unicode_blank[1])
+      {
+	existing = 0;
+	to_table = NULL;
+	new_min = offset;
+	new_past_max = offset + len;
+	goto need_resize;
+      }
+
+    /* Do we need to resize the table? */
+    if (offset < to_table->offset ||
+	offset + len > to_table->offset + to_table->len)
+      {
+	existing = 1;
+	/* Get existing min/max values and expand as necessary to cover c2 */
+	new_min = to_table->offset;
+	new_past_max = to_table->offset + to_table->len;
+	if (offset < new_min)
+	  new_min = offset;
+	if (offset + len > new_past_max)
+	  new_past_max = offset + len;
+
+      need_resize:
+	if (!exact)
+	  {
+	    /* Expand values to a multiple of CHARSET_INDEX_MULTIPLE */
+	    new_min -= (new_min % CHARSET_INDEX_MULTIPLE);
+	    new_past_max +=
+	      CHARSET_INDEX_MULTIPLE - (new_past_max % CHARSET_INDEX_MULTIPLE);
+	  }
+
+	/* Realloc */
+	to_table =
+	  (to_unicode_base *)
+	  xrealloc (to_table,
+		    needed_sizeof_to_unicode_base (new_past_max - new_min));
+
+	/* We need to fill in any newly created slots with BADVAL_TO_TABLE.
+	   We also have to preserve existing values and may need to move
+	   them if we changed the offset.  Note that we may end up doing
+	   two memmoves(), once during reallocation and the other below,
+	   but that's the way it goes.  We don't really care that much
+	   how fast adding values to the table is, since we do that only
+	   at initialization time. */
+	if (existing)
+	  {
+	    if (new_min != to_table->offset)
+	      memmove (&to_table->array[to_table->offset - new_min],
+		       to_table->array,
+		       sizeof (int) * to_table->len);
+	    for (i = new_min; i < to_table->offset; i++)
+	      to_table->array[i - new_min] = BADVAL_TO_TABLE;
+	    for (i = to_table->offset + to_table->len; i < new_past_max; i++)
+	      to_table->array[i - new_min] = BADVAL_TO_TABLE;
+
+	  }
+	else
+	  {
+	    for (i = new_min; i < new_past_max; i++)
+	      to_table->array[i - new_min] = BADVAL_TO_TABLE;
+	  }
+	to_table->offset = new_min;
+	to_table->len = new_past_max - new_min;
+	*store_to_table = to_table;
+      }
+  }
+}
+
 static void
 set_unicode_conversion_char_to_unicode (int code, Lisp_Object charset,
 					int c1, int c2)
 {
+  to_unicode_base *to_table;
+
   /* First, the char -> unicode translation */
+  ensure_to_unicode_holds_range (charset, c1, c2, 1, 0);
 
   if (TO_TABLE_SIZE_FROM_CHARSET (charset) == 1)
-    {
-      int *to_table = (int *) XCHARSET_TO_UNICODE_TABLE (charset);
-      to_table[c2 - CHARSET_MIN_OFFSET] = code;
-    }
+    to_table = (to_unicode_base *) XCHARSET_TO_UNICODE_TABLE (charset);
   else
     {
-      int **to_table_2 = (int **) XCHARSET_TO_UNICODE_TABLE (charset);
-      int *to_table_1;
-
-      to_table_1 = to_table_2[c1 - CHARSET_MIN_OFFSET];
-      if (to_table_1 == to_unicode_blank_1)
-	{
-	  to_table_1 = xnew_array (int, CHARSET_MAX_SIZE);
-	  memcpy (to_table_1, to_unicode_blank_1,
-		  CHARSET_MAX_SIZE * sizeof (int));
-	  to_table_2[c1 - CHARSET_MIN_OFFSET] = to_table_1;
-	}
-      to_table_1[c2 - CHARSET_MIN_OFFSET] = code;
+      to_unicode_base **to_table_2 =
+	(to_unicode_base **) XCHARSET_TO_UNICODE_TABLE (charset);
+      to_table = to_table_2[c1 - CHARSET_MIN_OFFSET];
     }
+
+  /* Then, store the value */
+  to_table->array[c2 - to_table->offset] = code;
 }
 
 static void
@@ -2165,6 +2315,12 @@ Unicode tables or in the charset:
   char line[1025];
   int fondo = specpdl_depth (); /* "fondo" = depth */
   int flgs;
+  int stage;
+  int to_unicode_min_val[256], to_unicode_max_val[256];
+#ifndef UNICODE_INTERNAL
+  int big5_other_unicode_min_val[256], big5_other_unicode_max_val[256];
+#endif
+  int i;
 
   /* This may be called to autoload the Unicode tables, from a function
      that converts between Unicode and charset codepoints.  It's not at all
@@ -2183,8 +2339,20 @@ Unicode tables or in the charset:
 	 so we can use big5_char_to_fake_codepoint(). */
       Vcharset_chinese_big5_1 = Fget_charset (Qchinese_big5_1);
       Vcharset_chinese_big5_2 = Fget_charset (Qchinese_big5_2);
+
+      for (i = 0; i < 256; i++)
+	{
+	  big5_other_unicode_min_val[i] = 255;
+	  big5_other_unicode_max_val[i] = 0;
+	}
     }
 #endif /* not UNICODE_INTERNAL */
+
+  for (i = 0; i < 256; i++)
+    {
+      to_unicode_min_val[i] = 255;
+      to_unicode_max_val[i] = 0;
+    }
 
   if (!NILP (Vdata_directory))
     filename = Fexpand_file_name (filename, Vdata_directory);
@@ -2193,143 +2361,195 @@ Unicode tables or in the charset:
 				  Fexpand_file_name
 				  (build_ascstring ("../etc"),
 				   Vlisp_directory));
-  file = qxe_fopen (XSTRING_DATA (filename), READ_TEXT);
-  if (!file)
-    report_file_error ("Cannot open", filename);
-  record_unwind_protect (cerrar_el_fulano, make_opaque_ptr (file));
-  while (fgets (line, sizeof (line), file))
+  for (stage = 0; stage < 2; stage++)
     {
-      char *p = line;
-      int cp1from, cp1to, cp1, cp2, endcount;
-      int cp1high, cp1low;
-      int dummy;
-      int scanf_count, garbage_after_scanf;
-
-      /* #### Perhaps we should rewrite this using regular expressions */
-      while (*p) /* erase all comments out of the line */
+      file = qxe_fopen (XSTRING_DATA (filename), READ_TEXT);
+      if (!file)
+	report_file_error ("Cannot open", filename);
+      record_unwind_protect (cerrar_el_fulano, make_opaque_ptr (file));
+      while (fgets (line, sizeof (line), file))
 	{
-	  if (*p == '#')
-	    *p = '\0';
-	  else
-	    p++;
-	}
-      /* see if line is nothing but whitespace and skip if so;
-         count ^Z among this because it appears at the end of some
-         Microsoft translation tables. */
-      p = line + strspn (line, " \t\n\r\f\032");
-      if (!*p)
-	continue;
-      /* NOTE: It appears that MS Windows and Newlib sscanf() have
-	 different interpretations for whitespace (== "skip all whitespace
-	 at processing point"): Newlib requires at least one corresponding
-	 whitespace character in the input, but MS allows none.  The
-	 following would be easier to write if we could count on the MS
-	 interpretation.
+	  char *p = line;
+	  int cp1from, cp1to, cp1, cp2, endcount;
+	  int cp1high, cp1low;
+	  int dummy;
+	  int scanf_count, garbage_after_scanf;
 
-	 Also, the return value does NOT include %n storage. */
+	  /* #### Perhaps we should rewrite this using regular expressions */
+	  while (*p) /* erase all comments out of the line */
+	    {
+	      if (*p == '#')
+		*p = '\0';
+	      else
+		p++;
+	    }
+	  /* see if line is nothing but whitespace and skip if so;
+	     count ^Z among this because it appears at the end of some
+	     Microsoft translation tables. */
+	  p = line + strspn (line, " \t\n\r\f\032");
+	  if (!*p)
+	    continue;
+	  /* NOTE: It appears that MS Windows and Newlib sscanf() have
+	     different interpretations for whitespace (== "skip all whitespace
+	     at processing point"): Newlib requires at least one corresponding
+	     whitespace character in the input, but MS allows none.  The
+	     following would be easier to write if we could count on the MS
+	     interpretation.
 
-      /* First check for a range. */
-      scanf_count =
-	(!(flgs & LOAD_UNICODE_IGNORE_FIRST_COLUMN) ?
-	 sscanf (p, "%i-%i %i%n", &cp1from, &cp1to, &cp2, &endcount) :
-	 sscanf (p, "%i-%i %i %i%n", &dummy, &cp1from, &cp1to, &cp2,
-		 &endcount) - 1);
-      /* If we didn't find one, try a single codepoint translation. */
-      if (scanf_count < 3)
-	{
+	     Also, the return value does NOT include %n storage. */
+
+	  /* First check for a range. */
 	  scanf_count =
 	    (!(flgs & LOAD_UNICODE_IGNORE_FIRST_COLUMN) ?
-	     sscanf (p, "%i %i%n", &cp1from, &cp2, &endcount) :
-	     sscanf (p, "%i %i %i%n", &dummy, &cp1from, &cp2, &endcount) - 1);
-	  cp1to = cp1from;
-	}
-      else
-	scanf_count--;
-      /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
-	 of numbers beginning 0x0... starting in 04/2004, in an attempt
-	 to fix another bug.  A partial fix for this was put in in
-	 06/2004, but as of 10/2004 the value of ENDCOUNT returned in
-	 such case is still wrong.  If this gets fixed soon, remove
-	 this code. --ben */
-      if (endcount > (int) strlen (p))
-	/* We know we have a broken sscanf in this case!!! */
-	garbage_after_scanf = 0;
-      else
-	{
-#ifndef CYGWIN_SCANF_BUG
-	  garbage_after_scanf =
-	    *(p + endcount + strspn (p + endcount, " \t\n\r\f\032"));
-#else
-	  garbage_after_scanf = 0;
-#endif
-	}
-
-      /* #### Hack.  A number of the CP###.TXT files from Microsoft contain
-	 lines with a charset codepoint and no corresponding Unicode
-	 codepoint, representing undefined values in the code page.
-
-	 Skip them so we don't get a raft of warnings. */
-      if (scanf_count == 1 && !garbage_after_scanf)
-	continue;
-      if (scanf_count < 2 || garbage_after_scanf)
-	{
-	  warn_when_safe (Qunicode, Qwarning,
-			  "Unrecognized line in translation file %s:\n%s",
-			  XSTRING_DATA (filename), line);
-	  continue;
-	}
-      for (cp1 = cp1from; cp1 <= cp1to; cp1++, cp2++)
-	{
-	  if (cp1 >= st && cp1 <= en)
+	     sscanf (p, "%i-%i %i%n", &cp1from, &cp1to, &cp2, &endcount) :
+	     sscanf (p, "%i-%i %i %i%n", &dummy, &cp1from, &cp1to, &cp2,
+		     &endcount) - 1);
+	  /* If we didn't find one, try a single codepoint translation. */
+	  if (scanf_count < 3)
 	    {
-	      cp1 += of;
-	      if (cp1 < 0 || cp1 >= 65536)
-		{
-		out_of_range:
-		  warn_when_safe (Qunicode, Qwarning,
-				  "Out of range first codepoint 0x%x in "
-				  "translation file %s:\n%s",
-				  cp1, XSTRING_DATA (filename), line);
-		  continue;
-		}
+	      scanf_count =
+		(!(flgs & LOAD_UNICODE_IGNORE_FIRST_COLUMN) ?
+		 sscanf (p, "%i %i%n", &cp1from, &cp2, &endcount) :
+		 sscanf (p, "%i %i %i%n", &dummy, &cp1from, &cp2, &endcount) - 1);
+	      cp1to = cp1from;
+	    }
+	  else
+	    scanf_count--;
+	  /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
+	     of numbers beginning 0x0... starting in 04/2004, in an attempt
+	     to fix another bug.  A partial fix for this was put in in
+	     06/2004, but as of 10/2004 the value of ENDCOUNT returned in
+	     such case is still wrong.  If this gets fixed soon, remove
+	     this code. --ben */
+	  if (endcount > (int) strlen (p))
+	    /* We know we have a broken sscanf in this case!!! */
+	    garbage_after_scanf = 0;
+	  else
+	    {
+#ifndef CYGWIN_SCANF_BUG
+	      garbage_after_scanf =
+		*(p + endcount + strspn (p + endcount, " \t\n\r\f\032"));
+#else
+	      garbage_after_scanf = 0;
+#endif
+	    }
 
-	      cp1high = cp1 >> 8;
-	      cp1low = cp1 & 255;
+	  /* #### Hack.  A number of the CP###.TXT files from Microsoft contain
+	     lines with a charset codepoint and no corresponding Unicode
+	     codepoint, representing undefined values in the code page.
+
+	     Skip them so we don't get a raft of warnings. */
+	  if (scanf_count == 1 && !garbage_after_scanf)
+	    continue;
+	  if (scanf_count < 2 || garbage_after_scanf)
+	    {
+	      if (stage == 0)
+		warn_when_safe
+		  (Qunicode, Qwarning,
+		   "Unrecognized line in translation file %s:\n%s",
+		   XSTRING_DATA (filename), line);
+	      continue;
+	    }
+	  for (cp1 = cp1from; cp1 <= cp1to; cp1++, cp2++)
+	    {
+	      if (cp1 >= st && cp1 <= en)
+		{
+		  int c1, c2;
+		  cp1 += of;
+		  if (cp1 < 0 || cp1 >= 65536)
+		    {
+		    out_of_range:
+		      if (stage == 0)
+			warn_when_safe (Qunicode, Qwarning,
+					"Out of range first codepoint 0x%x "
+					"in translation file %s:\n%s",
+					cp1, XSTRING_DATA (filename), line);
+		      continue;
+		    }
+
+		  cp1high = cp1 >> 8;
+		  cp1low = cp1 & 255;
 
 #ifndef UNICODE_INTERNAL
-	      if (flgs & LOAD_UNICODE_BIG5)
-		{
-		  Lisp_Object fake_charset;
-		  int c1, c2;
-		  big5_char_to_fake_codepoint (cp1high, cp1low, &fake_charset,
-					       &c1, &c2);
-		  if (NILP (fake_charset))
-		    warn_when_safe (Qunicode, Qwarning,
-				    "Out of range Big5 codepoint 0x%x in "
-				    "translation file %s:\n%s",
-				    cp1, XSTRING_DATA (filename), line);
+		  if (flgs & LOAD_UNICODE_BIG5)
+		    {
+		      big5_char_to_fake_codepoint (cp1high, cp1low,
+						   &charset, &c1, &c2);
+		      if (NILP (charset))
+			{
+			  if (stage == 0)
+			    warn_when_safe (Qunicode, Qwarning,
+					    "Out of range Big5 codepoint 0x%x "
+					    "in translation file %s:\n%s",
+					    cp1, XSTRING_DATA (filename),
+					    line);
+			}
+		      else if (EQ (charset, Vcharset_chinese_big5_1))
+			goto do_it;
+		      else if (stage == 0)
+			{
+			  if (c2 < big5_other_unicode_min_val[c1])
+			    big5_other_unicode_min_val[c1] = c2;
+			  if (c2 > big5_other_unicode_max_val[c1])
+			    big5_other_unicode_max_val[c1] = c2;
+			}
+		      else
+			set_unicode_conversion (cp2, charset, c1, c2);
+		    }
 		  else
-		    set_unicode_conversion (cp2, fake_charset, c1, c2);
-		}
-	      else
 #endif /* not UNICODE_INTERNAL */
-		{
-		  int l1, l2, h1, h2;
-		  int c1 = cp1high, c2 = cp1low;
+		    {
+		      int l1, l2, h1, h2;
+		      c1 = cp1high, c2 = cp1low;
 
-		  get_charset_limits (charset, &l1, &l2, &h1, &h2);
+		      get_charset_limits (charset, &l1, &l2, &h1, &h2);
 		  
-		  if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
-		    goto out_of_range;
-		  
-		  set_unicode_conversion (cp2, charset, c1, c2);
+		      if (c1 < l1 || c1 > h1 || c2 < l2 || c2 > h2)
+			goto out_of_range;
+		    }
+
+		do_it:
+		  if (stage == 0)
+		    {
+		      if (c2 < to_unicode_min_val[c1])
+			to_unicode_min_val[c1] = c2;
+		      if (c2 > to_unicode_max_val[c1])
+			to_unicode_max_val[c1] = c2;
+		    }
+		  else
+		    set_unicode_conversion (cp2, charset, c1, c2);
 		}
 	    }
 	}
-    }
 
-  if (ferror (file))
-    report_file_error ("IO error when reading", filename);
+      if (ferror (file))
+	report_file_error ("IO error when reading", filename);
+
+      /* If first stage, close file; we will open it again in the second
+	 stage.  Otherwise, we close the file when we unbind. */
+      if (stage == 0)
+	{
+	  fclose (file);
+#ifndef UNICODE_INTERNAL
+	  if (flgs & LOAD_UNICODE_BIG5)
+	    {
+	      for (i = 0; i < 256; i++)
+		if (big5_other_unicode_min_val[i] <=
+		    big5_other_unicode_max_val[i])
+		  ensure_to_unicode_holds_range
+		    (Vcharset_chinese_big5_2, i, big5_other_unicode_min_val[i],
+		     big5_other_unicode_max_val[i] -
+		     big5_other_unicode_min_val[i] + 1, 1);
+	      charset = Vcharset_chinese_big5_1;
+	    }
+#endif
+	  for (i = 0; i < 256; i++)
+	    if (to_unicode_min_val[i] <= to_unicode_max_val[i])
+	      ensure_to_unicode_holds_range
+		(charset, i, to_unicode_min_val[i],
+		 to_unicode_max_val[i] - to_unicode_min_val[i] + 1, 1);
+	}
+    }
 
   unbind_to (fondo); /* close file, permit GC */
   return Qnil;
@@ -3759,9 +3979,9 @@ vars_of_unicode (void)
      we would have to make use of a description with an XD_BLOCK_ARRAY
      in it. */
 
-  dump_add_root_block (&to_unicode_blank_1, sizeof (void *),
+  dump_add_root_block (&to_unicode_blank[1], sizeof (void *),
 		       to_unicode_level_1_desc_1);
-  dump_add_root_block (&to_unicode_blank_2, sizeof (void *),
+  dump_add_root_block (&to_unicode_blank[2], sizeof (void *),
 		       to_unicode_level_2_desc_1);
 
   dump_add_root_block (&from_unicode_blank[1], sizeof (void *),

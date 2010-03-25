@@ -1,3 +1,37 @@
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (to_unicode_base):
+	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR):
+	* unicode.c:
+	* unicode.c (needed_sizeof_to_unicode_base):
+	* unicode.c (init_blank_unicode_tables):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (free_from_unicode_table):
+	* unicode.c (free_to_unicode_table):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* unicode.c (assert_not_any_blank_table):
+	* unicode.c (sledgehammer_check_from_table):
+	* unicode.c (sledgehammer_check_to_table):
+	* unicode.c (sledgehammer_check_unicode_tables):
+	* unicode.c (ensure_to_unicode_holds_range):
+	* unicode.c (set_unicode_conversion_char_to_unicode):
+	At the lowest level of the charset to-Unicode tables, store a
+	`struct to_unicode_base *' of variable size, instead of a fixed
+	size-256 array.  Since large charsets are usually of size 94x94,
+	the lowest levels will consist of 94-element arrays instead of
+	256-element arrays, saving more than half of the memory needed.
+	This makes the memory usage for these tables comparable to what
+	it was when charsets were not allowed to be larger than 96x96.
+
+	Also, when initializing the to-Unicode tables, start with a
+	blank table at level-2 rather than a 256-element table, and
+	change functions that process the to-Unicode tables so they
+	can handle this.  Change the functions that handle from-Unicode
+	tables similarly, although we haven't yet made the corresponding
+	change to the from-Unicode tables themselves.
+
 2010-03-23  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c (free_normal_lisp_object): Fix unused var warning.
