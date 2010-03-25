@@ -1,5 +1,12 @@
 2010-03-25  Ben Wing  <ben@xemacs.org>
 
+	* chartab.c: Expand comment at top about recent change involving
+	category tables.
+	* unicode.c: #ifdnef UNICODE_INTERNAL around a label to avoid a
+	"label" unused" warning.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
 	* charset.h:
 	* charset.h (to_unicode_base):
 	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR):
