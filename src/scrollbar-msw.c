@@ -424,23 +424,15 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 
 #ifdef MEMORY_USAGE_STATS
 
-static int
+static Bytecount
 mswindows_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 					    struct scrollbar_instance *inst,
 					    struct usage_stats *ustats)
 {
-  int total = 0;
+  struct mswindows_scrollbar_data *data =
+    (struct mswindows_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct mswindows_scrollbar_data *data =
-	(struct mswindows_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ustats);
-      inst = inst->next;
-    }
-
-  return total;
+  return malloced_storage_size (data, sizeof (*data), ustats);
 }
 
 #endif /* MEMORY_USAGE_STATS */

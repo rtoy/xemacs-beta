@@ -7003,9 +7003,8 @@ text-property primitives, use `previous-single-property-change'.
 
 #ifdef MEMORY_USAGE_STATS
 
-int
-compute_buffer_extent_usage (struct buffer *UNUSED (b),
-			     struct usage_stats *UNUSED (ustats))
+Bytecount
+compute_buffer_extent_usage (struct buffer *UNUSED (b))
 {
   /* #### not yet written */
   return 0;

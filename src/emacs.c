@@ -1763,6 +1763,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       )
     {
       buffer_objects_create ();
+      casetab_objects_create ();
       extent_objects_create ();
       face_objects_create ();
       frame_objects_create ();
@@ -1771,6 +1772,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       lstream_objects_create ();
 #ifdef MULE
       mule_charset_objects_create ();
+#endif
+#ifdef HAVE_SCROLLBARS
+      scrollbar_objects_create ();
 #endif
 #ifdef HAVE_GTK
       ui_gtk_objects_create ();
@@ -2094,6 +2098,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
+      vars_of_casetab ();
       vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();

@@ -508,6 +508,38 @@ See `set-case-table' for more info on case tables.
 }
 
 
+#ifdef MEMORY_USAGE_STATS
+
+struct case_table_stats
+{
+  struct usage_stats u;
+  /* Ancillary Lisp */
+  Bytecount downcase, upcase, case_canon, case_eqv;
+};
+
+static void
+case_table_memory_usage (Lisp_Object casetab,
+			 struct generic_usage_stats *gustats)
+{
+  struct case_table_stats *stats = (struct case_table_stats *) gustats;
+
+  stats->downcase = lisp_object_memory_usage (XCASE_TABLE_DOWNCASE (casetab));
+  stats->upcase = lisp_object_memory_usage (XCASE_TABLE_UPCASE (casetab));
+  stats->case_canon = lisp_object_memory_usage (XCASE_TABLE_CANON (casetab));
+  stats->case_eqv = lisp_object_memory_usage (XCASE_TABLE_EQV (casetab));
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
+void
+casetab_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (case_table, memory_usage);
+#endif
+}
+
 void
 syms_of_casetab (void)
 {
@@ -527,6 +559,19 @@ syms_of_casetab (void)
   DEFSUBR (Fcopy_case_table);
   DEFSUBR (Fset_case_table);
   DEFSUBR (Fset_standard_case_table);
+}
+
+void
+vars_of_casetab (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY (case_table, memusage_stats_list,
+		       list5 (Qt,
+			      intern ("downcase"),
+			      intern ("upcase"),
+			      intern ("case-canon"),
+			      intern ("case-eqv")));
+#endif /* MEMORY_USAGE_STATS */
 }
 
 void

@@ -763,5 +763,7 @@ void gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos);
 Gap_Array *make_gap_array (Elemcount elsize, int USED_IF_NEW_GC (do_lisp));
 Gap_Array *gap_array_clone (Gap_Array *ga);
 void free_gap_array (Gap_Array *ga);
+Bytecount gap_array_memory_usage (Gap_Array *ga, struct usage_stats *stats,
+				  Bytecount *marker_ancillary);
 
 #endif /* INCLUDED_array_h_ */

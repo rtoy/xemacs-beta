@@ -209,6 +209,7 @@ void syms_of_window (void);
    Dump time and post-pdump-load-time. */
 
 void buffer_objects_create (void);
+void casetab_objects_create (void);
 void extent_objects_create (void);
 void face_objects_create (void);
 void frame_objects_create (void);
@@ -216,6 +217,7 @@ void glyph_objects_create (void);
 void hash_table_objects_create (void);
 void lstream_objects_create (void);
 void mule_charset_objects_create (void);
+void scrollbar_objects_create (void);
 void ui_gtk_objects_create (void);
 void window_objects_create (void);
 
@@ -354,6 +356,7 @@ void vars_of_bytecode (void);
 void reinit_vars_of_bytecode (void);
 void vars_of_callint (void);
 EXTERN_C void vars_of_canna_api (void);
+void vars_of_casetab (void);
 void vars_of_chartab (void);
 void vars_of_cmdloop (void);
 void vars_of_cmds (void);

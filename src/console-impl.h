@@ -1,5 +1,5 @@
 /* Define console object for XEmacs.
-   Copyright (C) 1996, 2002, 2003, 2005 Ben Wing
+   Copyright (C) 1996, 2002, 2003, 2005, 2010 Ben Wing
 
 This file is part of XEmacs.
 
@@ -290,9 +290,10 @@ struct console_methods
 						   scrollbar_instance *);
   void (*scrollbar_pointer_changed_in_window_method) (struct window *w);
 #ifdef MEMORY_USAGE_STATS
-  int (*compute_scrollbar_instance_usage_method) (struct device *,
-						  struct scrollbar_instance *,
-						  struct usage_stats *);
+  Bytecount (*compute_scrollbar_instance_usage_method)
+    (struct device *,
+     struct scrollbar_instance *,
+     struct usage_stats *);
 #endif
   /* Paint the window's deadbox, a rectangle between window
      borders and two short edges of both scrollbars. */
