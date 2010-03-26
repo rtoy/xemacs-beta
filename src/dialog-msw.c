@@ -441,6 +441,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
 	{
 	  ret = tstr_to_local_file_format (pd.unknown_fname);
 	  xfree (pd.unknown_fname);
+	  pd.unknown_fname = 0;
 	}
       else while (1)
 	signal_quit ();

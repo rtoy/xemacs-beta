@@ -1738,6 +1738,18 @@ struct usage_stats
   Bytecount gap_overhead;
 };
 
+/* Generic version of usage stats structure including extra non-Lisp and
+   Lisp storage associated with the object, but not including the memory
+   used to hold the object itself.  Up to 32 statistics are allowed,
+   in addition to the statistics in `U', which store another slice onto the
+   ancillary non-Lisp storage.
+
+   Normally, each object creates its own version of this structure, e.g.
+   `struct window_stats', which parallels the structure in beginning with
+   a `struct usage_stats' and followed by Bytecount fields, so that a
+   pointer to that structure can be cast to a pointer of this structure
+   and sensible results gotten. */
+
 struct generic_usage_stats
 {
   struct usage_stats u;
@@ -4388,21 +4400,6 @@ void free_alist (Lisp_Object);
 void free_marker (Lisp_Object);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
-#ifndef NEW_GC
-#ifdef USE_KKCC
-#ifdef DEBUG_XEMACS
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-void kkcc_backtrace (void);
-#else
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-#define kkcc_backtrace()
-#endif
-#endif /* USE_KKCC */
-#endif /* not NEW_GC */
 int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
@@ -5530,7 +5527,7 @@ void unchain_marker (Lisp_Object);
 Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
 Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 #ifdef MEMORY_USAGE_STATS
-Bytecount compute_buffer_marker_usage (struct buffer *, struct usage_stats *);
+Bytecount compute_buffer_marker_usage (struct buffer *b);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);

@@ -190,6 +190,7 @@ finalize_process (Lisp_Object obj)
     {
       MAYBE_PROCMETH (finalize_process_data, (p));
       xfree (p->process_data);
+      p->process_data = 0;
     }
 }
 

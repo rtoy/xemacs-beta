@@ -70,9 +70,6 @@ bignum_finalize (Lisp_Object obj)
      zero after finalizing. */
   bignum_fini (num->data);
 }
-#define BIGNUM_FINALIZE bignum_finalize
-#else
-#define BIGNUM_FINALIZE 0
 #endif
 
 static int
@@ -125,10 +122,9 @@ static const struct memory_description bignum_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bignum", bignum, 0, bignum_print,
-					BIGNUM_FINALIZE, bignum_equal,
-					bignum_hash, bignum_description,
-					Lisp_Bignum);
-
+					IF_NEW_GC (bignum_finalize),
+					bignum_equal, bignum_hash,
+					bignum_description, Lisp_Bignum); 
 #endif /* HAVE_BIGNUM */
 
 Lisp_Object Qbignump;
@@ -164,10 +160,7 @@ ratio_finalize (Lisp_Object obj)
      zero after finalizing. */
   ratio_fini (num->data);
 }
-#define RATIO_FINALIZE ratio_finalize
-#else
-#define RATIO_FINALIZE 0
-#endif
+#endif /* not NEW_GC */
 
 static int
 ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
@@ -188,7 +181,8 @@ static const struct memory_description ratio_description[] = {
 };
 
 DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("ratio", ratio, 0, ratio_print,
-				      RATIO_FINALIZE, ratio_equal, ratio_hash,
+				      IF_NEW_GC (ratio_finalize),
+				      ratio_equal, ratio_hash,
 				      ratio_description, Lisp_Ratio);
 
 #endif /* HAVE_RATIO */
@@ -270,10 +264,7 @@ bigfloat_finalize (Lisp_Object obj)
      zero after finalizing. */
   bigfloat_fini (num->bf);
 }
-#define BIGFLOAT_FINALIZE bigfloat_finalize
-#else
-#define BIGFLOAT_FINALIZE 0
-#endif
+#endif /* not NEW_GC */
 
 static int
 bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
@@ -294,7 +285,8 @@ static const struct memory_description bigfloat_description[] = {
 };
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
-					bigfloat_print, BIGFLOAT_FINALIZE,
+					bigfloat_print,
+					IF_NEW_GC (bigfloat_finalize),
 					bigfloat_equal, bigfloat_hash,
 					bigfloat_description, Lisp_Bigfloat);
 

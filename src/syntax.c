@@ -558,8 +558,11 @@ void
 uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 {
 #ifndef NEW_GC
-  xfree (buf->syntax_cache);
-  buf->syntax_cache = 0;
+  if (buf->syntax_cache)
+    {
+      xfree (buf->syntax_cache);
+      buf->syntax_cache = 0;
+    }
 #endif /* not NEW_GC */
 }
 
