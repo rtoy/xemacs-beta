@@ -1,3 +1,10 @@
+2010-03-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-display):
+	Behave better on builds without database support, and for
+	characters where no font is available. Especially relevant on
+	Win32.
+
 2010-03-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-win-xfree86.el (x-win-init-xfree86):

@@ -257,14 +257,6 @@ East Asian Han characters and their associated information."
 		 file))
 
 ;; XEmacs additions, from here until `describe-char-unicode-data'
-(defcustom describe-char-use-cache t
-  "Whether `describe-char' should use a DBM or Berkeley DB cache.
-This speeds up navigation of `describe-char-unicodedata-file', and makes
-navigation of `describe-char-unihan-file' reasonable."
-  :group 'mule
-  :type '(choice (const :tag "None" nil)
-		 file))
-
 (defcustom describe-char-unihan-file nil
   "Location of Unihan file.
 This the Unihan.txt file from the Unicode Consortium, used for diagnostics.
@@ -289,6 +281,14 @@ pre-initialized cache; see `unidata-initialize-unihan-database'.  "
   (or (and (featurep 'dbm) 'dbm)
       (and (featurep 'berkeley-db) 'berkeley-db))
   "The DB format to use for the `describe-char' cache, or nil if no cache.")
+
+(defcustom describe-char-use-cache (not (null unidata-database-format))
+  "Whether `describe-char' should use a DBM or Berkeley DB cache.
+This speeds up navigation of `describe-char-unicodedata-file', and makes
+navigation of `describe-char-unihan-file' reasonable."
+  :group 'mule
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defvar describe-char-unihan-field-descriptions
   #s(hash-table :test equal :data 
@@ -967,14 +967,17 @@ character)")
          (ccl (or (and (charset-property charset 'encode-as-utf-8)
                        ccl-encode-to-ucs-2)
                   (charset-property charset 'ccl-program)))
-         (ccl-vector (make-vector 8 0)))
+         (ccl-vector (make-vector 8 0))
+         font-instance)
     (if (display-graphic-p (selected-frame))
         (list
-         (font-instance-name
-          (face-font-instance (or (get-char-property pos 'face)
-                                  'default)
-                              (selected-window)
-                              charset))
+         (if (setq font-instance 
+                   (face-font-instance (or (get-char-property pos 'face)
+                                           'default)
+                                       (selected-window)
+                                       charset))
+             (font-instance-name font-instance)
+           "[no font available]")
          (cond 
           ((and ccl (eq 'x (frame-type frame)))
            (setq char (split-char char))
