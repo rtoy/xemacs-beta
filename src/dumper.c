@@ -800,7 +800,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    break;
 	  }
 #ifdef NEW_GC
-	case XD_LISP_OBJECT_BLOCK_PTR:
+	case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	  {
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
@@ -1073,7 +1073,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		break;
 	      }
 #ifdef NEW_GC
-	    case XD_LISP_OBJECT_BLOCK_PTR:
+	    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 #endif /* NEW_GC */
 	    case XD_OPAQUE_DATA_PTR:
 	    case XD_ASCII_STRING:
@@ -1314,7 +1314,7 @@ pdump_reloc_one_mc (void *data, const struct memory_description *desc)
 	case XD_LONG:
 	case XD_INT_RESET:
 	  break;
-	case XD_LISP_OBJECT_BLOCK_PTR:
+	case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	case XD_OPAQUE_DATA_PTR:
 	case XD_ASCII_STRING:
 	case XD_BLOCK_PTR:

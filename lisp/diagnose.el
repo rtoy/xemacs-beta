@@ -35,11 +35,12 @@
   "Show statistics about memory usage of various sorts in XEmacs."
   (interactive)
   (garbage-collect)
-  (flet ((show-foo-stats (objtypename cleanfun objlist)
+  (flet ((show-foo-stats (objtypename statname-plist cleanfun objlist
+			  &optional objnamelen)
 	   (let* ((hash (make-hash-table))
 		  (first t)
-		  types fmt
-		  (objnamelen 25)
+		  types origtypes fmt
+		  (objnamelen (or objnamelen 25))
 		  (linelen objnamelen)
 		  (totaltotal 0))
 	     (loop for obj in objlist do
@@ -54,19 +55,22 @@
 		 ;; the  memory grouped by type
 		 (while (and stats (pop stats)))
 
-		 (loop for (type . num) in stats while type do
+		 (loop for (type . num) in (remq t stats) while type do
+		   (if first (push type origtypes))
+		   (setq type (getf statname-plist type type))
 		   (puthash type (+ num (or (gethash type hash) 0)) hash)
 		   (incf total num)
 		   (if first (push type types)))
 		 (incf totaltotal total)
 		 (when first
 		   (setq types (nreverse types))
+		   (setq origtypes (nreverse origtypes))
 		   (setq fmt (concat
 			      (format "%%-%ds" objnamelen)
 			      (mapconcat
 			       #'(lambda (type)
 				   (let ((fieldlen
-					  (max 8 (+ 2 (length
+					  (max 7 (+ 2 (length
 						       (symbol-name type))))))
 				     (incf linelen fieldlen)
 				     (format "%%%ds" fieldlen)))
@@ -83,7 +87,7 @@
 							     (1- objnamelen)))
 				 (nconc (mapcar #'(lambda (type)
 						    (cdr (assq type stats)))
-						types)
+						origtypes)
 					(list total)))))
 		 (setq first nil)))
 	     (princ "\n")
@@ -103,7 +107,7 @@
 	  (when-fboundp 'charset-list
 	    (setq begin (point))
 	    (incf grandtotal
-		  (show-foo-stats 'charset 'charset-name
+		  (show-foo-stats 'charset nil 'charset-name
 				  (mapcar 'get-charset (charset-list))))
 	    (when-fboundp 'sort-numeric-fields
 	      (sort-numeric-fields -1
@@ -117,7 +121,7 @@
 	    (princ "\n"))
 	  (setq begin (point))
 	  (incf grandtotal
-		(show-foo-stats 'buffer 'buffer-name (buffer-list)))
+		(show-foo-stats 'buffer nil 'buffer-name (buffer-list)))
 	  (when-fboundp 'sort-numeric-fields
 	    (sort-numeric-fields -1
 				 (save-excursion
@@ -130,11 +134,19 @@
 	  (princ "\n")
 	  (setq begin (point))
 	  (incf grandtotal
-		(show-foo-stats 'window #'(lambda (x)
-					    (buffer-name (window-buffer x)))
+		(show-foo-stats 'window
+				'(line-start-cache line-st.
+				  face-cache face
+				  glyph-cache glyph
+				  redisplay-structs redisplay
+				  scrollbar-instances scrollbar
+				  window-mirror mirror)
+				#'(lambda (x)
+				    (buffer-name (window-buffer x)))
 				(mapcan #'(lambda (fr)
 					    (window-list fr t))
-					(frame-list))))
+					(frame-list))
+				16))
           (when-fboundp #'sort-numeric-fields
             (sort-numeric-fields -1
                                  (save-excursion
@@ -152,9 +164,14 @@
 	    (princ (make-string 40 ?-))
 	    (princ "\n")
 	    (map-plist #'(lambda (stat num)
-			   (when (string-match 
-				  "\\(.*\\)-storage$"
-				  (symbol-name stat))
+			   (when (and
+				  (not
+				   (string-match 
+				    "\\(.*\\)-ancillary-storage$"
+				    (symbol-name stat)))
+				  (string-match 
+				   "\\(.*\\)-storage$"
+				   (symbol-name stat)))
 			     (incf total num)
 			     (princ (format fmt
 					    (match-string 1 (symbol-name stat))
@@ -184,12 +201,14 @@
   (garbage-collect)
   (let ((buffer "*object memory usage statistics*")
 	(plist (object-memory-usage-stats))
-	(fmt "%-30s%10s%10s%10s%18s\n")
+	(fmt "%-28s%10s%10s%10s%10s%10s\n")
 	(grandtotal 0)
 	begin)
   (flet ((show-stats (match-string)
-	(princ (format fmt "object" "count" "storage" "overhead"
-		       "non-Lisp storage"))
+	(princ (format "%28s%10s%40s\n" "" ""
+		       "--------------storage---------------"))
+	(princ (format fmt "object" "count" "object" "overhead"
+		       "non-Lisp" "ancillary"))
 	(princ (make-string 78 ?-))
 	(princ "\n")
 	(let ((total-use 0)
@@ -202,9 +221,13 @@
 	       (let ((symmatch
 		      (and (string-match match-string (symbol-name stat))
 			   (match-string 1 (symbol-name stat)))))
-		 (when (and symmatch (or (< (length symmatch) 9)
-					 (not (equal (substring symmatch -9)
-						     "-non-lisp"))))
+		 (when (and symmatch
+			    (or (< (length symmatch) 9)
+				(not (equal (substring symmatch -9)
+					    "-non-lisp")))
+			    (or (< (length symmatch) 15)
+				(not (equal (substring symmatch -15)
+					    "-lisp-ancillary"))))
 		   (let* ((storage-use num)
 			  (storage-use-overhead
 			   (or (plist-get 
@@ -226,6 +249,12 @@
 				plist
 				(intern (concat symmatch
 						"-non-lisp-storage")))
+			       0))
+			  (lisp-ancillary-storage
+			   (or (plist-get
+				plist
+				(intern (concat symmatch
+						"-lisp-ancillary-storage")))
 			       0))
 			  (storage-count 
 			   (or (loop for str in '("s-used" "es-used" "-used")
@@ -251,19 +280,20 @@
 					 (or storage-count "unknown")
 					 storage-use
 					 storage-use-overhead
-					 non-lisp-storage)))))))
+					 non-lisp-storage
+					 lisp-ancillary-storage)))))))
 	   plist)
 	  (princ "\n")
 	  (princ (format fmt "total" 
 			 total-count total-use total-use-overhead
-			 total-non-lisp-use))
+			 total-non-lisp-use ""))
 	  (incf grandtotal total-use-with-overhead)
 	  (incf grandtotal total-non-lisp-use)
           (when-fboundp #'sort-numeric-fields
-            (sort-numeric-fields -3
+            (sort-numeric-fields -4
                                  (save-excursion
                                    (goto-char begin)
-                                   (forward-line 3)
+                                   (forward-line 4)
                                    (point))
                                  (save-excursion
                                    (forward-line -2)

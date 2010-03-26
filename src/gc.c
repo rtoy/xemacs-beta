@@ -410,7 +410,7 @@ lispdesc_indirect_count_1 (EMACS_INT code,
     default:
       stderr_out ("Unsupported count type : %d (line = %d, code = %ld)\n",
 		  idesc[line].type, line, (long) code);
-#if defined(USE_KKCC) && defined(DEBUG_XEMACS)
+#if defined (USE_KKCC) && defined (DEBUG_XEMACS)
       if (gc_in_progress)
 	kkcc_detailed_backtrace ();
 #endif
@@ -465,7 +465,7 @@ lispdesc_one_description_line_size (void *rdata,
     case XD_OPAQUE_PTR:
       return sizeof (void *);
 #ifdef NEW_GC
-    case XD_LISP_OBJECT_BLOCK_PTR:
+    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 #endif /* NEW_GC */
     case XD_BLOCK_PTR:
       {
@@ -645,6 +645,7 @@ typedef struct
   void *obj;
   const struct memory_description *desc;
   int pos;
+  int is_lisp;
 } kkcc_bt_stack_entry;
 
 static kkcc_bt_stack_entry *kkcc_bt;
@@ -666,6 +667,10 @@ kkcc_bt_init (void)
     }
 }
 
+/* Workhorse backtrace function.  Not static because may potentially be
+   called from a debugger. */
+
+void kkcc_backtrace_1 (int size, int detailed);
 void
 kkcc_backtrace_1 (int size, int detailed)
 {
@@ -675,16 +680,20 @@ kkcc_backtrace_1 (int size, int detailed)
     {
       Lisp_Object obj = wrap_pointer_1 (kkcc_bt[i].obj);
       stderr_out (" [%d] ", i);
-      if ((XRECORD_LHEADER (obj)->type >= lrecord_type_last_built_in_type)
-	  || (!LRECORDP (obj))
-	  || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
-	{
-	  stderr_out ("non Lisp Object");
-	}
+      if (!kkcc_bt[i].is_lisp)
+	stderr_out ("non Lisp Object");
+      else if (!LRECORDP (obj))
+	stderr_out ("Lisp Object, non-record");
+      else if (XRECORD_LHEADER (obj)->type >= lrecord_type_last_built_in_type
+	       || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
+	stderr_out ("WARNING! Bad Lisp Object type %d",
+		    XRECORD_LHEADER (obj)->type);
       else
+	stderr_out ("%s", XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
+      if (detailed && kkcc_bt[i].is_lisp)
 	{
-	  stderr_out ("%s",
-		      XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
+	  stderr_out (" ");
+	  debug_print (obj);
 	}
       if (detailed)
 	{
@@ -704,11 +713,18 @@ kkcc_backtrace_1 (int size, int detailed)
     }
 }
 
-void
-kkcc_short_backtrace (void)
-{
-  kkcc_backtrace_1 (100, 0);
-}
+/* Various front ends onto kkcc_backtrace_1(), meant to be called from
+   a debugger.
+
+   The variants are:
+
+   normal vs _full(): Normal displays up to the topmost 100 items on the
+   stack, whereas full displays all items (even if there are thousands)
+
+   _detailed_() vs _short_(): Detailed here means print out the actual
+   Lisp objects on the stack using debug_print() in addition to their type,
+   whereas short means only show the type
+*/
 
 void
 kkcc_detailed_backtrace (void)
@@ -716,16 +732,55 @@ kkcc_detailed_backtrace (void)
   kkcc_backtrace_1 (100, 1);
 }
 
+void kkcc_short_backtrace (void);
+void
+kkcc_short_backtrace (void)
+{
+  kkcc_backtrace_1 (100, 0);
+}
+
+void kkcc_detailed_backtrace_full (void);
+void
+kkcc_detailed_backtrace_full (void)
+{
+  kkcc_backtrace_1 (kkcc_bt_depth, 1);
+}
+
+void kkcc_short_backtrace_full (void);
 void
 kkcc_short_backtrace_full (void)
 {
   kkcc_backtrace_1 (kkcc_bt_depth, 0);
 }
 
+/* Short versions for ease in calling from a debugger */
+
+void kbt (void);
 void
-kkcc_detailed_backtrace_full (void)
+kbt (void)
 {
-  kkcc_backtrace_1 (kkcc_bt_depth, 1);
+  kkcc_detailed_backtrace ();
+}
+
+void kbts (void);
+void
+kbts (void)
+{
+  kkcc_short_backtrace ();
+}
+
+void kbtf (void);
+void
+kbtf (void)
+{
+  kkcc_detailed_backtrace_full ();
+}
+
+void kbtsf (void);
+void
+kbtsf (void)
+{
+  kkcc_short_backtrace_full ();
 }
 
 static void
@@ -751,13 +806,14 @@ kkcc_bt_free (void)
 }
 
 static void
-kkcc_bt_push (void *obj, const struct memory_description *desc, 
-	      int level, int pos)
+kkcc_bt_push (void *obj, const struct memory_description *desc,
+	      int is_lisp DECLARE_KKCC_DEBUG_ARGS)
 {
   kkcc_bt_depth = level;
   kkcc_bt[kkcc_bt_depth].obj = obj;
   kkcc_bt[kkcc_bt_depth].desc = desc;
   kkcc_bt[kkcc_bt_depth].pos = pos;
+  kkcc_bt[kkcc_bt_depth].is_lisp = is_lisp;
   kkcc_bt_depth++;
   if (kkcc_bt_depth >= kkcc_bt_stack_size)
     kkcc_bt_stack_realloc ();
@@ -765,7 +821,7 @@ kkcc_bt_push (void *obj, const struct memory_description *desc,
 
 #else /* not DEBUG_XEMACS */
 #define kkcc_bt_init()
-#define kkcc_bt_push(obj, desc, level, pos)
+#define kkcc_bt_push(obj, desc)
 #endif /* not DEBUG_XEMACS */
 
 /* Object memory descriptions are in the lrecord_implementation structure.
@@ -782,6 +838,7 @@ typedef struct
 #ifdef DEBUG_XEMACS
   int level;
   int pos;
+  int is_lisp;
 #endif
 } kkcc_gc_stack_entry;
 
@@ -857,12 +914,8 @@ kkcc_gc_stack_realloc (void)
 }
 
 static void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc,
-		    int level, int pos)
-#else
-kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc)
-#endif
+kkcc_gc_stack_push (void *data, const struct memory_description *desc
+		    DECLARE_KKCC_DEBUG_ARGS)
 {
 #ifdef NEW_GC
   GC_STAT_ENQUEUED;
@@ -879,12 +932,44 @@ kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc)
 }
 
 #ifdef DEBUG_XEMACS
-#define kkcc_gc_stack_push(data, desc, level, pos)	\
-  kkcc_gc_stack_push_1 (data, desc, level, pos)
-#else
-#define kkcc_gc_stack_push(data, desc, level, pos)	\
-  kkcc_gc_stack_push_1 (data, desc)
-#endif
+
+static inline void
+kkcc_gc_stack_push_0 (void *data, const struct memory_description *desc,
+		      int is_lisp DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push (data, desc KKCC_DEBUG_ARGS);
+  kkcc_gc_stack_ptr[kkcc_gc_stack_rear].is_lisp = is_lisp;
+}
+
+static inline void
+kkcc_gc_stack_push_lisp (void *data, const struct memory_description *desc
+			 DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push_0 (data, desc, 1 KKCC_DEBUG_ARGS);
+}
+
+static inline void
+kkcc_gc_stack_push_nonlisp (void *data, const struct memory_description *desc
+			    DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push_0 (data, desc, 0 KKCC_DEBUG_ARGS);
+}
+
+#else /* not DEBUG_XEMACS */
+
+static inline void
+kkcc_gc_stack_push_lisp (void *data, const struct memory_description *desc)
+{
+  kkcc_gc_stack_push (data, desc);
+}
+
+static inline void
+kkcc_gc_stack_push_nonlisp (void *data, const struct memory_description *desc)
+{
+  kkcc_gc_stack_push (data, desc);
+}
+
+#endif /* (not) DEBUG_XEMACS */
 
 static kkcc_gc_stack_entry *
 kkcc_gc_stack_pop (void)
@@ -908,11 +993,7 @@ kkcc_gc_stack_pop (void)
 }
 
 void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos)
-#else
-kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj)
-#endif
+kkcc_gc_stack_push_lisp_object (Lisp_Object obj DECLARE_KKCC_DEBUG_ARGS)
 {
   if (XTYPE (obj) == Lisp_Type_Record)
     {
@@ -927,26 +1008,15 @@ kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj)
 #else /* not NEW_GC */
 	  MARK_RECORD_HEADER (lheader);
 #endif /* not NEW_GC */
-	  kkcc_gc_stack_push ((void *) lheader, desc, level, pos);
+	  kkcc_gc_stack_push_lisp ((void *) lheader, desc KKCC_DEBUG_ARGS);
 	}
     }
 }
 
 #ifdef NEW_GC
-#ifdef DEBUG_XEMACS
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-#else
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-#endif
 
 void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj, int level, int pos)
-#else
-kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj)
-#endif
+kkcc_gc_stack_repush_dirty_object (Lisp_Object obj DECLARE_KKCC_DEBUG_ARGS)
 {
   if (XTYPE (obj) == Lisp_Type_Record)
     {
@@ -956,7 +1026,7 @@ kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj)
       GC_CHECK_LHEADER_INVARIANTS (lheader);
       desc = RECORD_DESCRIPTION (lheader);
       MARK_GREY (lheader);
-      kkcc_gc_stack_push ((void*) lheader, desc, level, pos);
+      kkcc_gc_stack_push_lisp ((void*) lheader, desc KKCC_DEBUG_ARGS);
     }
 }
 #endif /* NEW_GC */
@@ -972,48 +1042,23 @@ do								\
     }								\
 } while (0)
 #else
-#define KKCC_DO_CHECK_FREE(obj, allow_free)
+#define KKCC_DO_CHECK_FREE(obj, allow_free) DO_NOTHING
 #endif
 
-#ifdef ERROR_CHECK_GC
-#ifdef DEBUG_XEMACS
-static void
-mark_object_maybe_checking_free_1 (Lisp_Object obj, int allow_free,
-				 int level, int pos)
-#else
-static void
-mark_object_maybe_checking_free_1 (Lisp_Object obj, int allow_free)
-#endif
+static inline void
+mark_object_maybe_checking_free (Lisp_Object obj, int allow_free
+				 DECLARE_KKCC_DEBUG_ARGS)
 {
   KKCC_DO_CHECK_FREE (obj, allow_free);
-  kkcc_gc_stack_push_lisp_object (obj, level, pos);
+  kkcc_gc_stack_push_lisp_object (obj KKCC_DEBUG_ARGS);
 }
-
-#ifdef DEBUG_XEMACS
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) \
-  mark_object_maybe_checking_free_1 (obj, allow_free, level, pos)
-#else
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) \
-  mark_object_maybe_checking_free_1 (obj, allow_free)
-#endif
-#else /* not ERROR_CHECK_GC */
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) 	\
-  kkcc_gc_stack_push_lisp_object (obj, level, pos)
-#endif /* not ERROR_CHECK_GC */
-
 
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
 static void
-#ifdef DEBUG_XEMACS
-mark_struct_contents_1 (const void *data,
+mark_struct_contents (const void *data,
 		      const struct sized_memory_description *sdesc,
-		      int count, int level, int pos)
-#else
-mark_struct_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count)
-#endif
+		      int count DECLARE_KKCC_DEBUG_ARGS)
 {
   int i;
   Bytecount elsize;
@@ -1021,33 +1066,19 @@ mark_struct_contents_1 (const void *data,
 
   for (i = 0; i < count; i++)
     {
-      kkcc_gc_stack_push (((char *) data) + elsize * i, sdesc->description,
-			  level, pos);
+      kkcc_gc_stack_push_nonlisp (((char *) data) + elsize * i,
+				  sdesc->description
+				  KKCC_DEBUG_ARGS);
     }
 }
-
-#ifdef DEBUG_XEMACS
-#define mark_struct_contents(data, sdesc, count, level, pos) \
-  mark_struct_contents_1 (data, sdesc, count, level, pos)
-#else
-#define mark_struct_contents(data, sdesc, count, level, pos) \
-  mark_struct_contents_1 (data, sdesc, count)
-#endif
-
 
 #ifdef NEW_GC
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
 static void
-#ifdef DEBUG_XEMACS
-mark_lisp_object_block_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count, int level, int pos)
-#else
-mark_lisp_object_block_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count)
-#endif
+mark_lisp_object_block_contents (const void *data,
+				 const struct sized_memory_description *sdesc,
+				 int count DECLARE_KKCC_DEBUG_ARGS)
 {
   int i;
   Bytecount elsize;
@@ -1065,19 +1096,12 @@ mark_lisp_object_block_contents_1 (const void *data,
 	  if (! MARKED_RECORD_HEADER_P (lheader)) 
 	    {
 	      MARK_GREY (lheader);
-	      kkcc_gc_stack_push ((void *) lheader, desc, level, pos);
+	      kkcc_gc_stack_push_lisp ((void *) lheader, desc KKCC_DEBUG_ARGS);
 	    }
 	}
     }
 }
 
-#ifdef DEBUG_XEMACS
-#define mark_lisp_object_block_contents(data, sdesc, count, level, pos) \
-  mark_lisp_object_block_contents_1 (data, sdesc, count, level, pos)
-#else
-#define mark_lisp_object_block_contents(data, sdesc, count, level, pos) \
-  mark_lisp_object_block_contents_1 (data, sdesc, count)
-#endif
 #endif /* not NEW_GC */
 
 /* This function implements the KKCC mark algorithm.
@@ -1104,8 +1128,11 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
       desc = stack_entry->desc;
 #ifdef DEBUG_XEMACS
       level = stack_entry->level + 1;
+      kkcc_bt_push (data, desc, stack_entry->is_lisp, stack_entry->level,
+		    stack_entry->pos);
+#else
+      kkcc_bt_push (data, desc);
 #endif
-      kkcc_bt_push (data, desc, stack_entry->level, stack_entry->pos);
 
 #ifdef NEW_GC
       /* Mark black if object is currently grey.  This first checks,
@@ -1156,11 +1183,12 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		if (EQ (*stored_obj, Qnull_pointer))
 		  break;
 #ifdef NEW_GC
-		mark_object_maybe_checking_free (*stored_obj, 0, level, pos);
+		mark_object_maybe_checking_free (*stored_obj, 0
+						 KKCC_DEBUG_ARGS);
 #else /* not NEW_GC */
 		mark_object_maybe_checking_free
-		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
-		   level, pos);
+		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT
+		   KKCC_DEBUG_ARGS);
 #endif /* not NEW_GC */
 		break;
 	      }
@@ -1179,17 +1207,17 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		      break;
 #ifdef NEW_GC
 		    mark_object_maybe_checking_free 
-		      (*stored_obj, 0, level, pos);
+		      (*stored_obj, 0 KKCC_DEBUG_ARGS);
 #else /* not NEW_GC */
 		    mark_object_maybe_checking_free
-		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
-		       level, pos);
+		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT
+		       KKCC_DEBUG_ARGS);
 #endif /* not NEW_GC */
 		  }
 		break;
 	      }
 #ifdef NEW_GC
-	    case XD_LISP_OBJECT_BLOCK_PTR:
+	    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	      {
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
@@ -1198,7 +1226,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		const char *dobj = * (const char **) rdata;
 		if (dobj)
 		  mark_lisp_object_block_contents 
-		    (dobj, sdesc, count, level, pos);
+		    (dobj, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 #endif /* NEW_GC */
@@ -1210,7 +1238,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		  lispdesc_indirect_description (data, desc1->data2.descr);
 		const char *dobj = * (const char **) rdata;
 		if (dobj)
-		  mark_struct_contents (dobj, sdesc, count, level, pos);
+		  mark_struct_contents (dobj, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 	    case XD_BLOCK_ARRAY:
@@ -1220,7 +1248,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		const struct sized_memory_description *sdesc =
 		  lispdesc_indirect_description (data, desc1->data2.descr);
 		      
-		mark_struct_contents (rdata, sdesc, count, level, pos);
+		mark_struct_contents (rdata, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 	    case XD_UNION:
@@ -1455,7 +1483,7 @@ register_for_finalization (void)
     }
   /* Keep objects alive that need to be finalized by marking
      Vfinalizers_to_run transitively. */
-  kkcc_gc_stack_push_lisp_object (Vfinalizers_to_run, 0, -1);
+  kkcc_gc_stack_push_lisp_object_0 (Vfinalizers_to_run);
   kkcc_marking (0);
 }
 
@@ -1677,7 +1705,7 @@ gc_mark_root_set (
   /* Mark all the special slots that serve as the roots of accessibility. */
 
 #ifdef USE_KKCC
-# define mark_object(obj) kkcc_gc_stack_push_lisp_object (obj, 0, -1)
+# define mark_object(obj) kkcc_gc_stack_push_lisp_object_0 (obj)
 #endif /* USE_KKCC */
 
   { /* staticpro() */
