@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 2000 Yoshiki Hayashi.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2005, 2010 Ben Wing.
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -22,6 +22,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef INCLUDED_casetab_h_
 #define INCLUDED_casetab_h_
+
+/* These are needed for LOWERCASEP, NOCASEP, UPCASE, DOWNCASE below */
+#include "buffer.h"
+#include "chartab.h"
 
 struct Lisp_Case_Table
 {
@@ -84,5 +88,107 @@ XCASE_TABLE_UPDATE (Lisp_Object table)
   SET_CASE_TABLE_EQV (XCASE_TABLE (ct),  p)
 
 extern Lisp_Object Vstandard_case_table;
+
+
+/************************************************************************/
+/*                         Case conversion                              */
+/************************************************************************/
+
+/* A "trt" table is a mapping from characters to other characters,
+   typically used to convert between uppercase and lowercase.
+   */
+
+/* The _1 macros are named as such because they assume that you have
+   already guaranteed that the character values are all in the range
+   0 - 255.  Bad lossage will happen otherwise. */
+
+#define MAKE_TRT_TABLE() Fmake_char_table (Qgeneric)
+DECLARE_INLINE_HEADER (
+Ichar
+TRT_TABLE_OF (Lisp_Object table, Ichar ch)
+)
+{
+  Lisp_Object TRT_char;
+  TRT_char = get_char_table (ch, table);
+  if (NILP (TRT_char))
+    return ch;
+  else
+    return XCHAR (TRT_char);
+}
+#define SET_TRT_TABLE_OF(table, ch1, ch2)	\
+  Fput_char_table (make_char (ch1), make_char (ch2), table)
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+BUFFER_CASE_TABLE (struct buffer *buf)
+)
+{
+  return buf ? buf->case_table : current_buffer->case_table;
+  /* When buf=0, was Vstandard_case_table, but this sucks.  If I set a
+     different case table in this buffer, operations that use a case table
+     by default should use the current one. */
+}
+
+/* Macros used below. */
+#define DOWNCASE_TABLE_OF(buf, c)	\
+  TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (BUFFER_CASE_TABLE (buf)), c)
+#define UPCASE_TABLE_OF(buf, c)		\
+  TRT_TABLE_OF (XCASE_TABLE_UPCASE (BUFFER_CASE_TABLE (buf)), c)
+#define CANON_TABLE_OF(buf, c)	\
+  TRT_TABLE_OF (XCASE_TABLE_CANON (BUFFER_CASE_TABLE (buf)), c)
+
+/* 1 if CH is upper case.  */
+
+DECLARE_INLINE_HEADER (
+int
+UPPERCASEP (struct buffer *buf, Ichar ch)
+)
+{
+  return DOWNCASE_TABLE_OF (buf, ch) != ch;
+}
+
+/* 1 if CH is lower case.  */
+
+DECLARE_INLINE_HEADER (
+int
+LOWERCASEP (struct buffer *buf, Ichar ch)
+)
+{
+  return (UPCASE_TABLE_OF   (buf, ch) != ch &&
+	  DOWNCASE_TABLE_OF (buf, ch) == ch);
+}
+
+/* 1 if CH is neither upper nor lower case.  */
+
+DECLARE_INLINE_HEADER (
+int
+NOCASEP (struct buffer *buf, Ichar ch)
+)
+{
+  return UPCASE_TABLE_OF (buf, ch) == ch;
+}
+
+/* Upcase a character, or make no change if that cannot be done.  */
+
+DECLARE_INLINE_HEADER (
+Ichar
+UPCASE (struct buffer *buf, Ichar ch)
+)
+{
+  return (DOWNCASE_TABLE_OF (buf, ch) == ch) ? UPCASE_TABLE_OF (buf, ch) : ch;
+}
+
+/* Upcase a character known to be not upper case.  Unused. */
+
+#define UPCASE1(buf, ch) UPCASE_TABLE_OF (buf, ch)
+
+/* Downcase a character, or make no change if that cannot be done. */
+
+#define DOWNCASE(buf, ch) DOWNCASE_TABLE_OF (buf, ch)
+
+/* Convert a character to a canonical representation, so that case-independent
+   comparisons will work. */
+
+#define CANONCASE(buf, ch) CANON_TABLE_OF (buf, ch)
 
 #endif /* INCLUDED_casetab_h_ */

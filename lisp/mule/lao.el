@@ -1,6 +1,7 @@
-;;; lao.el --- support for Lao -*- coding: iso-2022-7bit; -*-
+;;; lao.el --- support for Lao -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 2010 Ben Wing.
 ;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Lao
@@ -28,21 +29,6 @@
 
 ;;; Code:
 
-;; Lao script.
-;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
-	      '(dimension
-		1
-		registries ["MuleLao-1"]
-		chars 94
-		columns 1
-		direction l2r
-		final ?1
-		graphic 0
-		short-name "Lao"
-		long-name "Lao"
-		))
-
 ; (make-coding-system
 ;  'lao 2 ?L
 ;  "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"
@@ -55,7 +41,6 @@
  '(charset-g0 ascii
    charset-g1 lao
    mnemonic "Lao"
-   safe-charsets (ascii lao)
    documentation "8-bit encoding for ASCII (MSB=0) and LAO (MSB=1)"))
 
 (set-language-info-alist
@@ -68,11 +53,11 @@
 	 (features lao-util)
 	 (documentation . t)))
 
-(put-char-table ?(1;(B t use-default-ascent)
-(put-char-table ?(1=(B t use-default-ascent)
-(put-char-table ?(1?(B t use-default-ascent)
-(put-char-table ?(1B(B t use-default-ascent)
-(put-char-table ?(1\(B t ignore-relative-composition)
+(put-char-table (make-char 'lao #x3b) t use-default-ascent) ;?ປ
+(put-char-table (make-char 'lao #x3d) t use-default-ascent) ;?ຝ
+(put-char-table (make-char 'lao #x3f) t use-default-ascent) ;?ຟ
+(put-char-table (make-char 'lao #x42) t use-default-ascent) ;?ຢ
+(put-char-table (make-char 'lao #x5c) t ignore-relative-composition) ;?ຼ
 
 ;; Register a function to compose Lao characters.
 (put-char-table 'lao
