@@ -188,6 +188,40 @@ enum converr
 */
 
 /* ---------------------------------------------------------------------- */
+/*                           UTF-16 properties                            */
+/* ---------------------------------------------------------------------- */
+
+/* Assuming a Unicode codepoint is in range i.e. [0, 7FFFFFFF], does it
+   correspond to a UTF-16 surrogate, a UTF-16 leading surrogate, or a
+   UTF-16 trailing surrogate?  Note that these are written to work properly
+   on any Unicode codepoint, not just those in the UTF-16 range. */
+
+#define valid_unicode_leading_surrogate(ch) (((ch) & 0x7FFFFC00) == 0xD800)
+#define valid_unicode_trailing_surrogate(ch) (((ch) & 0x7FFFFC00) == 0xDC00)
+#define valid_unicode_surrogate(ch) (((ch) & 0x7FFFF800) == 0xD800)
+
+#define FIRST_UTF_16_SURROGATE 0xD800
+#define LAST_UTF_16_SURROGATE 0xDFFF
+
+/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
+   algorithm. 
+ 
+   (They also give another, really verbose one, as part of their explanation
+   of the various planes of the encoding, but we won't use that.) */
+ 
+#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
+#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
+
+#define utf_16_surrogates_to_code(lead, trail) \
+  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
+
+#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
+    int __ctu16s_code = (codepoint);				\
+    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
+    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
+} while (0)
+
+/* ---------------------------------------------------------------------- */
 /*                     Validating Unicode code points                     */
 /* ---------------------------------------------------------------------- */
 
@@ -214,20 +248,25 @@ int
 valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_allow allow)
 )
 {
+  if (ch < 0)
+    return 0;
   if (allow == UNICODE_ALLOW_PRIVATE)
     {
 #if SIZEOF_EMACS_INT > 4
       /* On 64-bit machines, we could have a value too large */
-      return ch >= 0 && ch <= UNICODE_PRIVATE_MAX;
+      if (ch > UNICODE_PRIVATE_MAX)
+	return 0;
 #else
-      return ch >= 0;
+      DO_NOTHING;
 #endif
     }
   else
     {
       text_checking_assert (allow == UNICODE_OFFICIAL_ONLY);
-      return ch <= UNICODE_OFFICIAL_MAX && ch >= 0;
+      if (ch > UNICODE_OFFICIAL_MAX)
+	return 0;
     }
+  return !valid_unicode_surrogate (ch);
 }
 
 #define ASSERT_VALID_UNICODE_CODEPOINT(code)				\
@@ -271,32 +310,6 @@ unicode_error_octet_code_p (int code)
 
 #define unicode_error_octet_code_to_octet(code) \
   ((unsigned char) ((code) & 0xFF))
-
-/* ---------------------------------------------------------------------- */
-/*                           UTF-16 properties                            */
-/* ---------------------------------------------------------------------- */
-
-#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
-#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
-#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
-
-/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
-   algorithm. 
- 
-   (They also give another, really verbose one, as part of their explanation
-   of the various planes of the encoding, but we won't use that.) */
- 
-#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
-#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
-
-#define utf_16_surrogates_to_code(lead, trail) \
-  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
-
-#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
-    int __ctu16s_code = (codepoint);				\
-    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
-    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
-} while (0)
 
 
 /****************************************************************************/
@@ -508,6 +521,19 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
 #endif
 
+/* Ichar is defined to be a 32-bit integer.  However, non-negative Ichar
+   values need to be storable as a Lisp character, which is unsigned.  If
+   we have 64-bit EMACS_INTs, then we have 62 bits available to hold a
+   character, more than enough to hold the 31 bits of nonnegativeness
+   available in a 32-bit integer.  However, if we have 32-bit EMACS_INTs,
+   then we have only 30 bits available to hold a character. so Ichars have
+   to be restricted to 30 bits of nonnegativeness. */
+#if SIZEOF_EMACS_INT > 4
+#define ICHAR_MAX INT_32_BIT_MAX
+#else
+#define ICHAR_MAX 0x3FFFFFFF
+#endif
+
 /* Return whether the given Ichar is valid.
  */
 
@@ -517,7 +543,8 @@ valid_ichar_p (Ichar ch)
 )
 {
 #ifdef UNICODE_INTERNAL
-  return valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
+  return ch <= ICHAR_MAX &&
+    valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
 #else
   return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
 #endif /* UNICODE_INTERNAL */
@@ -788,6 +815,9 @@ DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
     }
 #endif /* (not) defined (UNICODE_INTERNAL) */
 }
+
+Ichar round_up_to_valid_ichar (int charpos);
+Ichar round_down_to_valid_ichar (int charpos);
 
 /************************************************************************/
 /*                         Unicode conversion                           */

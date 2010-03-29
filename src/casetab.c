@@ -204,7 +204,7 @@ Lisp_Object
 case_table_char (Lisp_Object ch, Lisp_Object table)
 {
   Lisp_Object ct_char;
-  ct_char = get_char_table_lisp (XCHAR (ch), table);
+  ct_char = get_char_table (XCHAR (ch), table);
   if (NILP (ct_char))
     return ch;
   else
@@ -300,41 +300,53 @@ Return a new case table which is a copy of CASE-TABLE
 }
 
 static int
-compute_canon_mapper (Lisp_Object UNUSED (table), Ichar code, void *val,
-		      void *arg)
+compute_canon_mapper (Lisp_Object UNUSED (table), Ichar from,
+		      Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object casetab = GET_LISP_FROM_VOID (arg);
-  SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), code,
-		    TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
-				  TRT_TABLE_OF (XCASE_TABLE_UPCASE (casetab),
-						XCHAR (GET_LISP_FROM_VOID
-						       (val)))));
+  Ichar code;
+
+  for (code = from; code <= to; code++)
+    if (valid_ichar_p (code))
+      SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), code,
+			TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
+				      TRT_TABLE_OF (XCASE_TABLE_UPCASE
+						    (casetab),
+						    XCHAR (val))));
 
   return 0;
 }
 
 static int
-initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar code,
-			    void * UNUSED (val), void *arg)
+initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar from,
+			    Ichar to, Lisp_Object UNUSED (val), void *arg)
 {
   Lisp_Object trt = GET_LISP_FROM_VOID (arg);
-  SET_TRT_TABLE_OF (trt, code, code);
+  Ichar code;
+
+  for (code = from; code <= to; code++)
+    if (valid_ichar_p (code))
+      SET_TRT_TABLE_OF (trt, code, code);
   
   return 0;
 }
 
 static int
-compute_up_or_eqv_mapper (Lisp_Object UNUSED (table), Ichar code,
-			  void *val, void *arg)
+compute_up_or_eqv_mapper (Lisp_Object UNUSED (table), Ichar from,
+			  Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object inverse = GET_LISP_FROM_VOID (arg);
-  Ichar toch = XCHAR (GET_LISP_FROM_VOID (val));
+  Ichar code;
+  Ichar toch = XCHAR (val);
 
-  if (code != toch)
+  for (code = from; code <= to; code++)
     {
-      Ichar c = TRT_TABLE_OF (inverse, toch);
-      SET_TRT_TABLE_OF (inverse, toch, code);
-      SET_TRT_TABLE_OF (inverse, code, c);
+      if (valid_ichar_p (code) && code != toch)
+	{
+	  Ichar c = TRT_TABLE_OF (inverse, toch);
+	  SET_TRT_TABLE_OF (inverse, toch, code);
+	  SET_TRT_TABLE_OF (inverse, code, c);
+	}
     }
   
   return 0;

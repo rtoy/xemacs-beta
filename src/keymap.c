@@ -3691,7 +3691,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	    {
 	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
-	      return make_int (1);
+	      return Qone;
 	    }
 	  else if (firstonly)
 	    return raw_keys_to_keys (so_far, keys_count + 1);

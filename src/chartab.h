@@ -34,16 +34,30 @@ Boston, MA 02111-1307, USA.  */
 /*                            Basic Char Table Format                   */
 /************************************************************************/
 
-/* Things are written this way because at one point I designed the
-   subtables so they could either be stored as "plain tables" (as direct
-   256-element arrays), as unified Lisp objects (where the header and
-   following array is a single unit) or as split Lisp object (with a
-   wrapper Lisp object around a separately allocated table).  The plain
-   tables are the fastest and most memory efficient of the three, but
-   can't be used with KKCC. (KKCC doesn't keep track of
+/* See the comment at the top of chartab.c for a description of the format
+   of char tables.
+
+   At one point I designed the subtables so they could either be stored as
+   "plain tables" (as direct 256-element arrays), as unified Lisp objects
+   (where the header and following array is a single unit) or as split Lisp
+   objects (with a wrapper Lisp object around a separately allocated
+   table).  The plain tables are the fastest and most memory efficient of
+   the three, but can't be used with KKCC. (KKCC doesn't keep track of
    whether it has already traversed non-Lisp-object arrays, and thus
    traverses the shared "blank" subtables numerous times when marking,
-   making it become *extremely* slow.) */
+   making it become *extremely* slow.) Furthermore, they preclude the
+   possibility of storing a non-table Lisp object at some level to indicate
+   that all characters spanned by that entry have the same value.  At this
+   point, the assumption that subtables are Lisp objects is completely
+   built in to the code.  However, it would still be possible to implement
+   split Lisp objects without too much difficulty, due to the macros that
+   wrap the operations of fetching the actual array of a subtable, creating
+   a subtable, and freeing a subtable.  The potential advantage of split
+   Lisp tables compared with plain tables is that the plain tables take up
+   slightly more than a power of two in size, which makes them maximally
+   inefficient for certain implementations of malloc(), e.g. gmalloc.c,
+   which will round them up to the next power of two and hence use almost
+   twice the space necessary to store the object. */
 
 struct Lisp_Char_Subtable
 {
@@ -52,7 +66,7 @@ struct Lisp_Char_Subtable
 };
 
 /* Definition of the non-level-1 subtables, which are always `char subtables'
-   whether or not we have a category table or other char table. */
+   whether or not we have a category char table or other char table. */
 
 #define ALLOCATE_LEVEL_N_SUBTAB() ALLOC_NORMAL_LISP_OBJECT (char_subtable)
 #define SUBTAB_STORAGE_SIZE(table, level, stats)			\
@@ -61,37 +75,18 @@ struct Lisp_Char_Subtable
 
 /* If we use split Lisp char subtables, we'd modify the above struct and
    three defines (ALLOCATE_LEVEL_N_SUBTAB, SUBTAB_STORAGE_SIZE,
-   FREE_ONE_SUBTAB).  If we use "plain" non-Lisp char subtables, we'd
-   modify the three macros above and the various macros below as well, and
-   omit the definition of a Lisp subtable object. */
+   FREE_ONE_SUBTAB). */
 
-#define SUBTAB_EQ(a, b) EQ (a, b)
-#define SUBTAB_TYPE Lisp_Object
-#define SUBTAB_ARRAY_TYPE SUBTAB_TYPE *
 #define SUBTAB_ARRAY_FROM_SUBTAB(tab) (XCHAR_SUBTABLE (tab)->ptr)
 
+/* WARNING: Evaluates arguments more than once. */
+#define SUBTAB_TABLE_P(tab, catp) \
+  (CHAR_SUBTABLEP (tab) || (catp && BIT_VECTORP (tab)))
+
 /* Definition of the level-1 subtables, which are either `char subtables'
-   or `category subtables'. */
+   or bit vectors. */
 
-#ifdef MULE
-#define ALLOCATE_LEVEL_1_SUBTAB(catp)					\
-  ((catp) ? ALLOCATE_CATEGORY_SUBTABLE () : ALLOCATE_LEVEL_N_SUBTAB ())
-#define BASE_TYPE_ARRAY_FROM_SUBTAB(tab, catp)			\
-  (catp ? (void *) BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (tab) :	\
-          (void *) BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (tab))
-#define SUBTAB_BLANK(catp) (catp ? category_chartab_blank : chartab_blank)
-#else
-#define ALLOCATE_LEVEL_1_SUBTAB(catp)		\
-  (assert (!catp), ALLOCATE_LEVEL_N_SUBTAB ())
-#define BASE_TYPE_ARRAY_FROM_SUBTAB(tab, catp)	\
-  (assert (!catp), BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (tab))
-#define SUBTAB_BLANK(catp) (assert (!catp), chartab_blank)
-#endif /* (not) MULE */
-
-/* Specialization of above code to level-1 char subtables. */
-
-#define CHARTAB_BASE_TYPE Lisp_Object
-#define BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB(tab) (XCHAR_SUBTABLE (tab)->ptr)
+#define ALLOCATE_LEVEL_1_CATEGORY_SUBTAB() make_bit_vector (256, Qzero)
 
 typedef struct Lisp_Char_Subtable Lisp_Char_Subtable;
 
@@ -110,18 +105,34 @@ DECLARE_LISP_OBJECT (char_subtable, Lisp_Char_Subtable);
 #define MAXIMIZE_CHAR_TABLE_DEPTH
 #endif
 
+/* Return number of table levels required to store a character. */
+
+#define GET_CHAR_LEVELS(ch, levels)		\
+do {						\
+  int _cl_ch = (ch);				\
+  (levels) = (_cl_ch <= 0xFF ?     1 :		\
+	      _cl_ch <= 0xFFFF ?   2 :		\
+	      _cl_ch <= 0xFFFFFF ? 3 :		\
+	                           4);		\
+} while (0)
+
 /* Break up a 32-bit character code into 8-bit parts. */
 
-#ifdef MAXIMIZE_CHAR_TABLE_DEPTH
-# define CHARTAB_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
+#define GET_CHAR_BYTES(ch, u1, u2, u3, u4)			\
 do {								\
-  int buc_val = (val);						\
+  int _gcb_ch = (ch);						\
 								\
-  (u1) = buc_val >> 24;						\
-  (u2) = (buc_val >> 16) & 255;					\
-  (u3) = (buc_val >> 8) & 255;					\
-  (u4) = buc_val & 255;						\
+  (u1) = _gcb_ch >> 24;						\
+  (u2) = (_gcb_ch >> 16) & 255;					\
+  (u3) = (_gcb_ch >> 8) & 255;					\
+  (u4) = _gcb_ch & 255;						\
 } while (0)
+
+
+#ifdef MAXIMIZE_CHAR_TABLE_DEPTH
+
+# define CHARTAB_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels) \
+  GET_CHAR_BYTES (val, u1, u2, u3, u4)
 /* Define the current chartab levels given an expr indicating the level value.
    This is an optimization designed to cause compiler simplfication of code
    due to constant expression in if, switch, etc. statements. */
@@ -130,21 +141,17 @@ do {								\
 # else
 #  define CHARTAB_LEVELS(expr) 1
 # endif
+
 #else /* not MAXIMIZE_CHAR_TABLE_DEPTH */
+
 # define CHARTAB_BREAKUP_CHAR_CODE(val, u1, u2, u3, u4, levels)	\
 do {								\
   int buc_val = (val);						\
-								\
-  (u1) = buc_val >> 24;						\
-  (u2) = (buc_val >> 16) & 255;					\
-  (u3) = (buc_val >> 8) & 255;					\
-  (u4) = buc_val & 255;						\
-  (levels) = (buc_val <= 0xFF ? 1 :				\
-	      buc_val <= 0xFFFF ? 2 :				\
-	      buc_val <= 0xFFFFFF ? 3 :				\
-	      4);						\
+  GET_CHAR_BYTES (buc_val, u1, u2, u3, u4);			\
+  GET_CHAR_LEVELS (buc_val, levels);				\
 } while (0)
 # define CHARTAB_LEVELS(expr) (expr)
+
 #endif /* not MAXIMIZE_CHAR_TABLE_DEPTH */
 
 enum char_table_type
@@ -171,7 +178,7 @@ struct Lisp_Char_Table
      Possibly, we could/should allow the type to be chosen at creation
      time as a parameter to `make-char-table'. */
 
-  SUBTAB_TYPE table;
+  Lisp_Object table;
   int levels;
   Lisp_Object default_;
   Lisp_Object parent; /* #### not yet implemented */
@@ -229,12 +236,12 @@ DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 enum chartab_range_type
 {
   CHARTAB_RANGE_ALL,
+  CHARTAB_RANGE_RANGE,
+  CHARTAB_RANGE_CHAR,
 #ifdef MULE
   CHARTAB_RANGE_CHARSET,
   CHARTAB_RANGE_ROW,
 #endif
-  CHARTAB_RANGE_RANGE,
-  CHARTAB_RANGE_CHAR
 };
 
 struct chartab_range
@@ -246,22 +253,12 @@ struct chartab_range
 };
 
 void set_char_table_default (Lisp_Object table, Lisp_Object value);
-
-enum put_category_operation
-{
-  PUT_CATEGORY_SET,
-  PUT_CATEGORY_UNSET,
-  PUT_CATEGORY_RESET,
-  PUT_CATEGORY_RESET_AND_SET
-};
-
-void put_char_table (Lisp_Object chartab, Ichar ch, Lisp_Object val);
-void put_char_table_range (Lisp_Object table, struct chartab_range *range,
-			   Lisp_Object val);
+void put_char_table (Lisp_Object chartab, Ichar start, Ichar end,
+		     Lisp_Object val);
 int map_char_table (Lisp_Object table,
 		    struct chartab_range *range,
-		    int (*fn) (Lisp_Object table, Ichar code, void *val,
-			       void *arg),
+		    int (*fn) (Lisp_Object table, Ichar from, Ichar to,
+			       Lisp_Object val, void *arg),
 		    void *arg);
 void prune_syntax_tables (void);
 int word_boundary_p (struct buffer *buf, Ichar c1, Ichar c2);
@@ -320,48 +317,7 @@ extern Lisp_Object Vall_syntax_tables;
 
 */
 
-/* Specialization of general level-1 subtable code to category subtables. */
-
-#define BITS_PER_CATEGORY_SUBTABLE 8
-#define BITS_PER_CATEGORY_TABLE 96
-
-#if BITS_PER_CATEGORY_SUBTABLE == 8
-#define CATEGORY_DIVIDE_SHIFT 3
-#define CATEGORY_MOD_AND 0x7
-#define CATEGORY_TAB_BASE_TYPE unsigned char
-#elif BITS_PER_CATEGORY_SUBTABLE == 16
-#define CATEGORY_DIVIDE_SHIFT 4
-#define CATEGORY_MOD_AND 0xF
-#define CATEGORY_TAB_BASE_TYPE UINT_16_BIT
-#elif BITS_PER_CATEGORY_SUBTABLE == 32
-#define CATEGORY_DIVIDE_SHIFT 5
-#define CATEGORY_MOD_AND 0x1F
-#define CATEGORY_TAB_BASE_TYPE UINT_32_BIT
-#else
-#error "Invalid value for BITS_PER_CATEGORY_SUBTABLE"
-#endif
-
-#define CHAR_TABLES_PER_CATEGORY_TABLE \
-  (BITS_PER_CATEGORY_TABLE / BITS_PER_CATEGORY_SUBTABLE)
-
-struct Lisp_Category_Subtable
-{
-  NORMAL_LISP_OBJECT_HEADER header;
-  CATEGORY_TAB_BASE_TYPE ptr[256];
-};
-typedef struct Lisp_Category_Subtable Lisp_Category_Subtable;
-
-#define ALLOCATE_CATEGORY_SUBTABLE() \
-  ALLOC_NORMAL_LISP_OBJECT (category_subtable)
-#define BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB(tab) \
-  (XCATEGORY_SUBTABLE (tab)->ptr)
-
-DECLARE_LISP_OBJECT (category_subtable, Lisp_Category_Subtable);
-#define XCATEGORY_SUBTABLE(x) XRECORD (x, category_subtable, Lisp_Category_Subtable)
-#define wrap_category_subtable(p) wrap_record (p, category_subtable)
-#define CATEGORY_SUBTABLEP(x) RECORDP (x, category_subtable)
-#define CHECK_CATEGORY_SUBTABLE(x) CHECK_RECORD (x, category_subtable)
-#define CONCHECK_CATEGORY_SUBTABLE(x) CONCHECK_RECORD (x, category_subtable)
+#define CHAR_TABLES_PER_CATEGORY_TABLE 95
 
 struct Lisp_Category_Table
 {
@@ -381,7 +337,7 @@ DECLARE_LISP_OBJECT (category_table, Lisp_Category_Table);
 #define XCATEGORY_TABLE_TABLES(ct) CATEGORY_TABLE_TABLES (XCATEGORY_TABLE (ct))
 
 int check_char_in_category (Ichar ch, Lisp_Object ctbl, int designator,
-			 int not_p);
+			    int not_p);
 
 extern Lisp_Object Vstandard_category_table;
 
@@ -401,32 +357,8 @@ extern Lisp_Object Vstandard_category_table;
 
 /* Return the index of the char table storing the setting for this
    designator */
-#define DESIGNATOR_TO_CHAR_TABLE(desig) \
-  (((desig) - 0x20) >> CATEGORY_DIVIDE_SHIFT)
-/* Return the bit index into the value of type CATEGORY_TAB_BASE_TYPE
-   corresponding to the given designator */
-#define DESIGNATOR_TO_BIT_INDEX(desig) \
-  (((desig) - 0x20) & CATEGORY_MOD_AND)
-/* Given a char table number and an index, return the corresponding
-   designator */
-#define BIT_INDEX_TO_DESIGNATOR(tablenum, ind) \
-  ((tablenum) * BITS_PER_CATEGORY_SUBTABLE + (ind) + 0x20)
-
-
-/* Return the OR (set) mask for this designator in the integral value of
-   type CATEGORY_TAB_BASE_TYPE */
-#define DESIGNATOR_TO_OR_MASK(desig) \
-  BIT_INDEX_TO_SET_MASK (DESIGNATOR_TO_BIT_INDEX (desig))
-/* Return the AND (clear) mask for this designator in the integral value of
-   type CATEGORY_TAB_BASE_TYPE */
-#define DESIGNATOR_TO_AND_MASK(desig) \
-  BIT_INDEX_TO_CLEAR_MASK (DESIGNATOR_TO_BIT_INDEX (desig))
-
-#else /* not MULE */
-
-#define CATEGORY_TAB_BASE_TYPE unsigned char
-#define BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB(tab) \
-  ((CATEGORY_TAB_BASE_TYPE *) NULL)
+#define DESIGNATOR_TO_CHAR_TABLE(desig) ((desig) - 0x20)
+#define CHAR_TABLE_TO_DESIGNATOR(tabnum) ((tabnum) + 0x20)
 
 #endif /* MULE */
 
@@ -436,11 +368,10 @@ extern Lisp_Object Vstandard_category_table;
 /************************************************************************/
 
 /* Get the raw value of CHARTAB for character CH.  If the character's value
-   has not been set, return NULL (for a category char table) or the void *
-   equivalent of Qunbound (for other char tables). */
+   has not been set, return Qunbound. */
 
 DECLARE_INLINE_HEADER (
-void *
+Lisp_Object
 get_char_table_raw (Ichar ch, Lisp_Object chartab)
 )
 {
@@ -468,11 +399,11 @@ get_char_table_raw (Ichar ch, Lisp_Object chartab)
   /* If not that many levels even in the table, then value definitely not
      in the table */
   if (levels < code_levels)
-    return catp ? NULL : STORE_LISP_IN_VOID (Qunbound);
+    return Qunbound;
 #endif /* not MAXIMIZE_CHAR_TABLE_DEPTH */
 
   {
-    register SUBTAB_TYPE table = XCHAR_TABLE_TABLE (chartab);
+    register Lisp_Object table = XCHAR_TABLE_TABLE (chartab);
     /* We are really helping the compiler here.  CHARTAB_LEVELS() will
        evaluate to a constant when MAXIMIZE_CHAR_TABLE_DEPTH is true,
        so any reasonable optimizing compiler should eliminate the
@@ -480,56 +411,37 @@ get_char_table_raw (Ichar ch, Lisp_Object chartab)
     switch (CHARTAB_LEVELS (levels))
       {
 	/* Fall through */
-      case 4: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u4];
-      case 3: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u3];
-      case 2: table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u2];
+      case 4:
+	if (!CHAR_SUBTABLEP (table))
+	  return table;
+	table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u4];
+      case 3:
+	if (!CHAR_SUBTABLEP (table))
+	  return table;
+	table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u3];
+      case 2:
+	if (!CHAR_SUBTABLEP (table))
+	  return table;
+	table = SUBTAB_ARRAY_FROM_SUBTAB (table)[u2];
       case 1:
 	if (catp)
-	  return (void *) (EMACS_INT) \
-            BASE_TYPE_ARRAY_FROM_CATEGORY_SUBTAB (table)[u1];
-	else
-	  return
-	    STORE_LISP_IN_VOID (BASE_TYPE_ARRAY_FROM_CHAR_SUBTAB (table)[u1]);
+	  {
+	    type_checking_assert (!CHAR_SUBTABLEP (table));
+	    if (!BIT_VECTORP (table))
+	      return table;
+	    return make_int (bit_vector_bit (XBIT_VECTOR (table), u1));
+	  }
+	if (!CHAR_SUBTABLEP (table))
+	  return table;
+	return SUBTAB_ARRAY_FROM_SUBTAB (table)[u1];
       }
   }
 
   ABORT (); /* Should never happen */
-  return NULL;
+  return Qunbound;
 }
 
-/* Same as get_char_table_raw() but return the default value for
-   non-category char tables if the value is not set. */
-
-DECLARE_INLINE_HEADER (
-void *
-get_char_table (Ichar ch, Lisp_Object chartab)
-)
-{
-  void *retval = get_char_table_raw (ch, chartab);
-  if (XCHAR_TABLE_CATEGORY_P (chartab))
-    return retval;
-  else
-    {
-      if (!EQ (GET_LISP_FROM_VOID (retval), Qunbound))
-	return retval;
-      else
-	return STORE_LISP_IN_VOID (XCHAR_TABLE_DEFAULT (chartab));
-    }
-}
-
-/* Given a non-category char table, return the raw value of CHARTAB for
-   character CH.  This will be a Lisp object, since we don't have to worry
-   about category char tables. */
-DECLARE_INLINE_HEADER (
-Lisp_Object
-get_char_table_lisp_raw (Ichar ch, Lisp_Object chartab)
-)
-{
-  type_checking_assert (!XCHAR_TABLE_CATEGORY_P (chartab));
-  return GET_LISP_FROM_VOID (get_char_table_raw (ch, chartab));
-}
-
-/* Same as get_char_table_lisp but don't trip an assert that we aren't
+/* Same as get_char_table() but don't trip an assert that we aren't
    retrieving the value for a mirror table. (Normally we have this assert
    in place to make sure that mirror tables don't escape to where they
    shouldn't be.  But some code really does need to access the mirror value
@@ -537,30 +449,28 @@ get_char_table_lisp_raw (Ichar ch, Lisp_Object chartab)
    tables. */
 DECLARE_INLINE_HEADER (
 Lisp_Object
-get_char_table_lisp_1 (Ichar ch, Lisp_Object chartab)
+get_char_table_1 (Ichar ch, Lisp_Object chartab)
 )
 {
-  Lisp_Object retval;
-  retval = get_char_table_lisp_raw (ch, chartab);
+  Lisp_Object retval = get_char_table_raw (ch, chartab);
   if (!EQ (retval, Qunbound))
     return retval;
   else
     return XCHAR_TABLE_DEFAULT (chartab);
 }
 
-/* Get the value of CHARTAB for character CH.  TABLE must not be a
-   category-table char table.  If the character's value has not been set,
-   this returns the default value for the char table. */
+/* Get the value of CHARTAB for character CH.  If the character's value has
+   not been set, this returns the default value for the char table. */
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-get_char_table_lisp (Ichar ch, Lisp_Object table)
+get_char_table (Ichar ch, Lisp_Object table)
 )
 {
 #ifdef MIRROR_TABLE
   type_checking_assert (!XCHAR_TABLE (table)->mirror_table_p);
 #endif /* MIRROR_TABLE */
-  return get_char_table_lisp_1 (ch, table);
+  return get_char_table_1 (ch, table);
 }
 
 #endif /* INCLUDED_chartab_h_ */

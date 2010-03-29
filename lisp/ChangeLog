@@ -1,3 +1,16 @@
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-category.el (describe-category-table):
+	map-category-table and map-char-table can pass in a range, not
+	just a char; fix calling code accordingly.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* derived.el:
+	* derived.el (derived-mode-merge-syntax-tables):
+	map-char-table can pass in a range, not just a char; fix calling
+	code accordingly.
+
 2010-03-23  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-category.el (describe-category-table):

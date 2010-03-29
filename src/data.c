@@ -1737,7 +1737,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = Qone;
     }
   else
     {
@@ -1807,7 +1807,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = Qone;
     }
   else
     {

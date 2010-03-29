@@ -3990,11 +3990,11 @@ auto_save_error (Lisp_Object UNUSED (condition_object),
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   return Qnil;
 }
 
@@ -4189,7 +4189,7 @@ Non-nil second argument means save only current buffer.
 		     and prevent any more warnings.  */
 		  b->saved_size = make_int (-1);
 		  if (!gc_in_progress)
-		    Fsleep_for (make_int (1));
+		    Fsleep_for (Qone);
 		  continue;
 		}
 	      set_buffer_internal (b);

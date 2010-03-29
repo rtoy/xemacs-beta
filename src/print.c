@@ -1986,7 +1986,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  tem = make_int (XINT (XCDR (XCAR (Vprint_gensym_alist))) + 1);
 		}
 	      else
-		tem = make_int (1);
+		tem = Qone;
 	      Vprint_gensym_alist = Fcons (Fcons (obj, tem), Vprint_gensym_alist);
 
 	      write_ascstring (printcharfun, "#");

@@ -1,6 +1,6 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- non-union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -73,6 +73,7 @@ Boston, MA 02111-1307, USA.  */
  XUINT     The value bits of a Lisp_Object storing an integer, unsigned
  INTP      Non-zero if this Lisp_Object is an integer
  Qzero     Lisp Integer 0
+ Qone      Lisp Integer 1
  EQ        Non-zero if two Lisp_Objects are identical, not merely equal. */
 
 
@@ -107,10 +108,11 @@ make_int_verify (EMACS_INT val)
 #define INTP(x) ((EMACS_UINT)(x) & Lisp_Type_Int_Bit)
 #define INT_PLUS(x,y)  ((x)+(y)-Lisp_Type_Int_Bit)
 #define INT_MINUS(x,y) ((x)-(y)+Lisp_Type_Int_Bit)
-#define INT_PLUS1(x)   INT_PLUS  (x, make_int (1))
-#define INT_MINUS1(x)  INT_MINUS (x, make_int (1))
+#define INT_PLUS1(x)   INT_PLUS  (x, Qone)
+#define INT_MINUS1(x)  INT_MINUS (x, Qone)
 
 #define Qzero make_int (0)
+#define Qone make_int (1)
 #define Qnull_pointer ((Lisp_Object) 0)
 #define EQ(x,y) ((x) == (y))
 
