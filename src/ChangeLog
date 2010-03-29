@@ -1,3 +1,180 @@
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c:
+	* abbrev.c (describe_abbrev):
+	* alloc.c:
+	* alloc.c (common_init_alloc_early):
+	* callint.c (Fprefix_numeric_value):
+	* callint.c (syms_of_callint):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (Fdiv):
+	* data.c (Fquo):
+	* event-stream.c (vars_of_event_stream):
+	* fileio.c (auto_save_error):
+	* fileio.c (Fdo_auto_save):
+	* fns.c:
+	* fns.c (bump_string_modiff):
+	* keymap.c (where_is_recursive_mapper):
+	* lisp.h (ONEP):
+	* lisp-disunion.h:
+	* lisp-disunion.h (INT_PLUS1):
+	* lisp-disunion.h (Qone):
+	* lisp-union.h:
+	* lisp-union.h (INT_MINUS):
+	* macros.c (Fstart_kbd_macro):
+	* marker.c (init_buffer_markers):
+	* marker.c (uninit_buffer_markers):
+	* minibuf.c (read_minibuffer_internal_unwind):
+	* number.c (Fdenominator):
+	* number.c (bigfloat_print):
+	* print.c (print_symbol):
+	* process-unix.c (get_internet_address):
+	* scrollbar.c (Fscrollbar_line_up):
+	* scrollbar.c (Fscrollbar_line_down):
+	* symbols.c:
+	* symbols.c (Fuser_variable_p):
+	* syntax.c (reset_buffer_syntax_cache_range):
+	* sysdep.c (init_system_name):
+	* tests.c (Ftest_hash_tables):
+	* unicode.c (allocate_jit_ucs_charset):
+	* window.c (temp_output_buffer_show):
+	* window.c (specifier_vars_of_window):
+	Create Qone, similar to Qzero, along with ONEP.  Use it.
+
+	* alloc.c (clone_bit_vector):
+	* lisp.h:
+	New function.
+	
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (check_chartab_invariants):
+	* chartab.c (clone_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (char_table_memory_usage):
+	* chartab.c (put_chartab_table):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fget_char_table):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (chartab_data_validate):
+	* chartab.c (chartab_instantiate):
+	* chartab.c (category_table_equal):
+	* chartab.c (check_char_in_category):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (SUBTAB_ARRAY_FROM_SUBTAB):
+	* chartab.h (ALLOCATE_LEVEL_1_CATEGORY_SUBTAB):
+	* chartab.h (GET_CHAR_BYTES):
+	* chartab.h (struct Lisp_Char_Table):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CHAR_TABLES_PER_CATEGORY_TABLE):
+	* chartab.h (DESIGNATOR_TO_CHAR_TABLE):
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c (Ftranslate_region):
+	* glyphs.c (display_table_entry):
+	* lrecord.h (enum lrecord_type):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.h:
+	* text.c:
+	* text.c (old_mule_round_up_to_valid_ichar):
+	* text.c (old_mule_round_down_to_valid_ichar):
+	* text.c (Fchar_octet):
+	Redo char tables and category tables again:
+
+	(1) In a category table, store one char table per bit.  These char
+	tables are category char tables, and at level 1 instead of storing
+	a category subtable they store a size-256 bit vector.
+	Accordingly, the `category-subtable' object has been removed. All
+	the junk that involved multiplexing integral and Lisp_Object
+	values into a void * pointer has been removed.  Now we're back to
+	always just using Lisp_Object pointers.
+
+	Accordingly, we rename/merge functions:
+
+	get_char_table_lisp merged into get_char_table
+	get_char_table_lisp_raw merged into get_char_table_raw
+	get_char_table_lisp_1 -> get_char_table_1
+
+	(2) We now efficiently store ranges of characters, not just single
+	characters.  Essentially, at any level of the char tables, we can
+	store a non-table Lisp object, indicating that all the characters
+	spanned by that entry have the value of the given object.  Accordingly,
+	put_char_table() now takes a range, and the function passed to
+	map_char_table() is given a range.  Various places where
+	map_char_table() is called have been changed.
+
+	This also means that there is no more need for blank tables of the
+	sort that still exist in the Unicode tables.
+	
+	IMPORTANT: The ranges passed in to put_char_table() may encompass
+	non-characters, especially in old-Mule where there are lots of gaps
+	in the representation of characters.  put_char_table() simply stores
+	the ranges as-is, and does not try to avoid storing values for
+	non-characters.  This doesn't affect get_char_table(), but it
+	definitely does affect map_char_table().  To deal with this, we
+	create new functions round_up_to_valid_ichar() and
+	round_down_to_valid_ichar() that are used to take raw ranges in
+	map_char_table() and coerce them into possibly smaller ranges where
+	the characters on both ends are valid characters.  It may still be
+	the case that characters within the range are invalid.
+
+	This also means that if you copy a table in Lisp using
+	`map-char-table', the new table may not be `equal' to the first table
+	-- essentially, the "junk" areas where non-characters lie may be
+	set in the original table but unset in the new table, and
+	char_table_equal() isn't smart enough to ignore those "junk" areas.
+	Possibly this can be fixed by making map_char_table() expand its
+	ranges to the maximum extent.
+
+	* text.h:
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_decode):
+
+	Rename the following functions and make them work correctly when
+	passed any Unicode codepoint:
+
+	valid_utf_16_first_surrogate() -> valid_unicode_leading_surrogate()
+	valid_utf_16_last_surrogate() -> valid_unicode_trailing_surrogate()
+	valid_utf_16_surrogate() -> valid_unicode_surrogate()
+
+	Change the definition of valid_unicode_codepoint_p() to reject
+	codepoints in the surrogate area.  This also affects valid_ichar_p().
+	Also make valid_ichar_p() reject characters that don't fit into
+	30 bits, which is as much as we can store.  Create ICHAR_MAX to
+	represent the maximum Ichar that fits in 30 bits.
+	Use the newer definition of valid_unicode_codepoint_p() in
+	decode_utf_8() rather than manually duplicating it.
+
 2010-03-25  Ben Wing  <ben@xemacs.org>
 
 	* chartab.c: Expand comment at top about recent change involving

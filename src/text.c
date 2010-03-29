@@ -1762,8 +1762,128 @@ old_mule_unicode_to_ichar (int code, Lisp_Object precarray,
   return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
 }
 
+static Ichar
+old_mule_round_up_to_valid_ichar (int charpos)
+{
+  int i, dim;
+
+  /* Within a particular dimension (1 or 2), charset ID order corresponds
+     to character order.  Furthermore, all dimension-1 characters are less
+     than all dimension-2 characters.  This is not the case with charset
+     ID's, however.  So we have to loop twice over the range of encodable
+     ID's, once per dimension.  We could shorten things somewhat by using
+     more specific knowledge about exactly which ID's are assigned to which
+     dimensions, but that would be more fragile, and it's unlikely that
+     this way takes a significant amount of time as there are only 225 or
+     so possible encodable ID's. */
+  for (dim = 1; dim <= 2; dim++)
+    {
+      for (i = MIN_ENCODABLE_CHARSET_ID; i <= MAX_ENCODABLE_CHARSET_ID; i++)
+	{
+	  Lisp_Object charset = charset_by_encodable_id (i);
+	  if (!NILP (charset) && XCHARSET_DIMENSION (charset) == dim)
+	    {
+	      int l1, l2, h1, h2;
+	      Ichar minchar, maxchar;
+	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
+	      minchar = charset_codepoint_to_ichar (charset, l1, l2,
+						    CONVERR_ABORT);
+	      maxchar = charset_codepoint_to_ichar (charset, h1, h2,
+						    CONVERR_ABORT);
+	      /* Either we are between charsets, or in a gap within a
+		 charset. */
+	      if (i < minchar)
+		/* We are between charsets */
+		return minchar;
+	      if (i < maxchar)
+		{
+		  /* We are in a gap.  The gaps aren't more than 34 characters
+		     wide, so just move up till we find the end of the gap. */
+		  while (!valid_ichar_p (charpos))
+		    charpos++;
+		  return charpos;
+		}
+	    }
+	}
+    }
+
+  return -1;
+}
+
+static Ichar
+old_mule_round_down_to_valid_ichar (int charpos)
+{
+  int i, dim;
+
+  for (dim = 2; dim >= 1; dim--)
+    {
+      for (i = MAX_ENCODABLE_CHARSET_ID; i >= MIN_ENCODABLE_CHARSET_ID; i--)
+	{
+	  Lisp_Object charset = charset_by_encodable_id (i);
+	  if (!NILP (charset) && XCHARSET_DIMENSION (charset) == dim)
+	    {
+	      int l1, l2, h1, h2;
+	      Ichar minchar, maxchar;
+	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
+	      minchar = charset_codepoint_to_ichar (charset, l1, l2,
+						    CONVERR_ABORT);
+	      maxchar = charset_codepoint_to_ichar (charset, h1, h2,
+						    CONVERR_ABORT);
+	      if (i > maxchar)
+		return maxchar;
+	      if (i > minchar)
+		{
+		  while (!valid_ichar_p (charpos))
+		    charpos--;
+		  return charpos;
+		}
+	    }
+	}
+    }
+
+  return -1;
+}
+
 #endif /* not UNICODE_INTERNAL */
 
+/* Take a possibly invalid Ichar value (must be >= 0) and move upwards as
+   necessary until we find the first valid Ichar.  Return -1 if we're above
+   all valid Ichars. */
+
+Ichar
+round_up_to_valid_ichar (int charpos)
+{
+  text_checking_assert (charpos >= 0);
+  if (valid_ichar_p (charpos))
+    return (Ichar) charpos;
+#ifdef UNICODE_INTERNAL
+  if (valid_unicode_surrogate (charpos))
+    return (Ichar) (LAST_UTF_16_SURROGATE + 1);
+  text_checking_assert (charpos > ICHAR_MAX);
+  return -1;
+#else
+  return old_mule_round_up_to_valid_ichar (charpos);
+#endif
+}
+
+/* Take a possibly invalid Ichar value (must be >= 0) and move downwards as
+   necessary until we find the first valid Ichar. */
+
+Ichar
+round_down_to_valid_ichar (int charpos)
+{
+  text_checking_assert (charpos >= 0);
+  if (valid_ichar_p (charpos))
+    return (Ichar) charpos;
+#ifdef UNICODE_INTERNAL
+  if (charpos > ICHAR_MAX)
+    return ICHAR_MAX;
+  text_checking_assert (valid_unicode_surrogate (charpos));
+  return (Ichar) (FIRST_UTF_16_SURROGATE - 1);
+#else
+  return old_mule_round_down_to_valid_ichar (charpos);
+#endif
+}
 
 /* Convert a charset codepoint (guaranteed not to be ASCII) into a
    character in the internal string representation.  Return number
@@ -5899,7 +6019,7 @@ has only one dimension.
 
   if (NILP (n) || EQ (n, Qzero))
     return make_int (c1);
-  else if (EQ (n, make_int (1)))
+  else if (EQ (n, Qone))
     return make_int (c2);
   else
     invalid_constant ("Octet number must be 0 or 1", n);

@@ -2,6 +2,7 @@
 ;;; (formerly mode-clone.el)
 
 ;; Copyright (C) 1993, 1994, 1999, 2003 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: David Megginson (dmeggins@aix1.uottawa.ca)
 ;; Maintainer: XEmacs Development Team
@@ -421,9 +422,24 @@ Where the new table already has an entry, nothing is copied from the old one."
   ;; check for inheritance.
   (map-char-table
    #'(lambda (key value)
-       (let ((newval (get-char-table key new)))
-	 (cond ((eq ?@ (char-syntax-from-code newval)) ;; class at once
-		(put-char-table key value new))))
+       ;; KEY may be a character or range.  To deal with a range, map over
+       ;; KEY in the new table and remember each (KEY2, VALUE2) pair seen;
+       ;; then set (KEY, VALUE) in the new table, and then set each (KEY2,
+       ;; VALUE2) pair.  That way, the existing values override the new
+       ;; values for places where an existing value has been set.
+       (if (characterp key)
+	   (let ((newval (get-char-table key new)))
+	     (cond ((eq ?@ (char-syntax-from-code newval)) ;; class at once
+		    (put-char-table key value new))))
+	 (let (list)
+	   (map-char-table
+	    #'(lambda (key2 value2)
+		(push (cons key2 value2) list)
+		nil)
+	    new key)
+	   (put-char-table key value new)
+	   (loop for (k . v) in (nreverse list) do
+	     (put-char-table k v new))))
        nil)
    old))
 

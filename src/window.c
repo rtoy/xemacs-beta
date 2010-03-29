@@ -3894,9 +3894,9 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       w = XWINDOW (window);
       w->hscroll = 0;
       w->modeline_hscroll = 0;
-      set_marker_restricted (w->start[CURRENT_DISP], make_int (1), buf);
-      set_marker_restricted (w->pointm[CURRENT_DISP], make_int (1), buf);
-      set_marker_restricted (w->sb_point, make_int (1), buf);
+      set_marker_restricted (w->start[CURRENT_DISP], Qone, buf);
+      set_marker_restricted (w->pointm[CURRENT_DISP], Qone, buf);
+      set_marker_restricted (w->sb_point, Qone, buf);
     }
 }
 
@@ -5769,7 +5769,7 @@ This is a specifier; use `set-specifier' to change it.
   {
     Lisp_Object fb = Qnil;
 #ifdef HAVE_TTY
-    fb = Fcons (Fcons (list1 (Qtty), make_int (1)), fb);
+    fb = Fcons (Fcons (list1 (Qtty), Qone), fb);
 #endif
 #ifdef HAVE_GTK
     fb = Fcons (Fcons (list1 (Qgtk), make_int (3)), fb);

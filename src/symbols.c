@@ -2889,7 +2889,7 @@ this error if you really want to avoid this.
       return Qnil;
     }
 
-  assert (EQ (make_int (1), mapped));
+  assert (EQ (Qone, mapped));
 
   return Qt;
 }
@@ -3503,6 +3503,9 @@ If the current binding is global (the default), the value is nil.
 
 #ifndef Qzero
 Lisp_Object Qzero;
+#endif
+#ifndef Qone
+Lisp_Object Qone;
 #endif
 #ifndef Qnull_pointer
 Lisp_Object Qnull_pointer;

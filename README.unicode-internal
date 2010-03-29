@@ -1,3 +1,15 @@
+3-28-10
+
+TODO:
+
+(1) Get crash resizing jit charset to-unicode tables because they are dumped
+and you can't xrealloc() dumped data. Fix it.
+
+(2) Test char/category tables.  Copy a table, see if it is `equal'.
+Copy a table using `map-*'; loop over chars, see if all chars hae same
+value in both tables. (Might not be `equal' under old-Mule due to gaps
+between valid characters.
+
 3-13-10
 
 1. New query method written but doesn't handle

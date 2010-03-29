@@ -433,7 +433,7 @@ bump_string_modiff (Lisp_Object str)
   if (CONSP (*ptr) && INTP (XCAR (*ptr)))
     XCAR (*ptr) = make_int (1+XINT (XCAR (*ptr)));
   else
-    *ptr = Fcons (make_int (1), *ptr);
+    *ptr = Fcons (Qone, *ptr);
 }
 
 

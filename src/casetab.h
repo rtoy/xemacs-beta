@@ -109,7 +109,7 @@ TRT_TABLE_OF (Lisp_Object table, Ichar ch)
 )
 {
   Lisp_Object TRT_char;
-  TRT_char = get_char_table_lisp (ch, table);
+  TRT_char = get_char_table (ch, table);
   if (NILP (TRT_char))
     return ch;
   else

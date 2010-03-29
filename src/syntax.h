@@ -154,9 +154,9 @@ SYNTAX_CODE (Lisp_Object table, Ichar c)
 #ifdef MIRROR_TABLE
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
   update_mirror_syntax_if_dirty (table);
-  return XINT (get_char_table_lisp_1 (c, table));
+  return XINT (get_char_table_1 (c, table));
 #else
-  code = get_char_table_lisp (c, table);
+  code = get_char_table (c, table);
 
   /* #### It's possible this code will be time consuming because of getting
      run in an inner-loop.  But it's all inlined. */
@@ -165,7 +165,7 @@ SYNTAX_CODE (Lisp_Object table, Ichar c)
     code = XCAR (code);
   if (SYNTAX_FROM_CODE (XINT (code)) == Sinherit)
     {
-      code = get_char_table_lisp (c, Vstandard_syntax_table);
+      code = get_char_table (c, Vstandard_syntax_table);
       if (CONSP (code))
 	code = XCAR (code);
     }
@@ -184,7 +184,7 @@ SYNTAX_CODE_1 (Lisp_Object table, Ichar c)
 )
 {
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
-  return (enum syntaxcode) XINT (get_char_table_lisp_1 (c, table));
+  return (enum syntaxcode) XINT (get_char_table_1 (c, table));
 }
 
 #endif /* NOT_WORTH_THE_EFFORT */

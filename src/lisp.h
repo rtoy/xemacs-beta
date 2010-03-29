@@ -3012,6 +3012,7 @@ DECLARE_MODULE_API_LISP_OBJECT (marker, Lisp_Marker);
 /*-------------------basic int (no connection to char)------------------*/
 
 #define ZEROP(x) EQ (x, Qzero)
+#define ONEP(x) EQ (x, Qone)
 
 #ifdef ERROR_CHECK_TYPES
 
@@ -4358,6 +4359,7 @@ MODULE_API Lisp_Object vector2 (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object make_bit_vector (Elemcount, Lisp_Object);
 Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Elemcount);
+Lisp_Object clone_bit_vector (Lisp_Object bitvec);
 Lisp_Object noseeum_make_marker (void);
 #ifndef NEW_GC
 void garbage_collect_1 (void);

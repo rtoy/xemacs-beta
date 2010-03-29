@@ -162,8 +162,18 @@ The descriptions are inserted in a buffer, which is then displayed."
       (message "Mapping over category table ...")
       (map-category-table
        #'(lambda (char desig)
-	   (let ((list (get-char-table char chartab)))
-	     (put-char-table char (cons desig list) chartab))
+	   (if (characterp char)
+	       (let ((list (get-char-table char chartab)))
+		 (put-char-table char (cons desig list) chartab))
+	     (let (list)
+	       (map-char-table
+		#'(lambda (char2 desig2)
+		    (push (cons char2 desig2) list)
+		    nil)
+		chartab char)
+	       (put-char-table char (list desig) chartab)
+	       (loop for (char2 . desig2) in (nreverse list) do
+		 (put-char-table char2 (cons desig desig2) chartab))))
 	   nil)
        table)
       (message "Mapping over char table ...")

@@ -295,8 +295,8 @@ static void
 reset_buffer_syntax_cache_range (struct syntax_cache *cache,
 				 Lisp_Object buffer, int infinite)
 {
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
+  Fset_marker (cache->start, Qone, buffer);
+  Fset_marker (cache->end, Qone, buffer);
   Fset_marker_insertion_type (cache->start, Qt);
   Fset_marker_insertion_type (cache->end, Qnil);
   /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
@@ -683,13 +683,13 @@ syntax table.
 Lisp_Object
 syntax_match (Lisp_Object syntax_table, Ichar ch)
 {
-  Lisp_Object code = get_char_table_lisp (ch, syntax_table);
+  Lisp_Object code = get_char_table (ch, syntax_table);
   Lisp_Object code2 = code;
 
   if (CONSP (code))
     code2 = XCAR (code);
   if (SYNTAX_FROM_CODE (XINT (code2)) == Sinherit)
-    code = get_char_table_lisp (ch, Vstandard_syntax_table);
+    code = get_char_table (ch, Vstandard_syntax_table);
 
   return CONSP (code) ? XCDR (code) : Qnil;
 }
@@ -2288,31 +2288,39 @@ to the current buffer.
    */
 
 static int
-copy_to_mirrortab (Lisp_Object UNUSED (table), Ichar ch,
-		   Lisp_Object val, void *arg)
+copy_to_mirrortab (Lisp_Object UNUSED (table), Ichar from,
+		   Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = GET_LISP_FROM_VOID (arg);
 
   if (CONSP (val))
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
-    put_char_table (mirrortab, ch, val);
+    put_char_table (mirrortab, from, to, val);
   return 0;
 }
 
 static int
-copy_if_not_already_present (Lisp_Object UNUSED (table), Ichar ch,
-			     Lisp_Object val, void *arg)
+copy_if_not_already_present (Lisp_Object UNUSED (table), Ichar from,
+			     Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = GET_LISP_FROM_VOID (arg);
+
   if (CONSP (val))
     val = XCAR (val);
   if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
     {
-      Lisp_Object existing = get_char_table_lisp_raw (ch, mirrortab);
-      if (UNBOUNDP (existing))
-	/* nothing at all */
-	put_char_table (mirrortab, ch, val);
+      Ichar ch;
+      for (ch = from; ch <= to; ch++)
+	{
+	  if (valid_ichar_p (ch))
+	    {
+	      Lisp_Object existing = get_char_table_raw (ch, mirrortab);
+	      if (UNBOUNDP (existing))
+		/* nothing at all */
+		put_char_table (mirrortab, ch, ch, val);
+	    }
+	}
     }
 
   return 0;
@@ -2334,12 +2342,14 @@ update_just_this_syntax_table (Lisp_Object table)
      entries don't already exist in that table. (The copying step requires
      another mapping.)
      */
-  map_char_table (table, &range, copy_to_mirrortab, STORE_LISP_IN_VOID (mirrortab));
+  map_char_table (table, &range, copy_to_mirrortab,
+		  STORE_LISP_IN_VOID (mirrortab));
   /* second clause catches bootstrapping problems when initializing the
      standard syntax table */
   if (!EQ (table, Vstandard_syntax_table) && !NILP (Vstandard_syntax_table))
     map_char_table (Vstandard_syntax_table, &range,
-		    copy_if_not_already_present, STORE_LISP_IN_VOID (mirrortab));
+		    copy_if_not_already_present,
+		    STORE_LISP_IN_VOID (mirrortab));
   /* The resetting made the default be Qnil.  Put it back to Sword. */
   set_char_table_default (mirrortab, make_int (Sword));
   XCHAR_TABLE (mirrortab)->dirty = 0;

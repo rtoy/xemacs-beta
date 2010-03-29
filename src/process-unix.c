@@ -466,7 +466,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       if (! (host_info_ptr == 0 && h_errno == TRY_AGAIN))
 #endif
 	break;
-      Fsleep_for (make_int (1));
+      Fsleep_for (Qone);
     }
   if (host_info_ptr)
     {

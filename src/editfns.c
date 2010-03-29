@@ -1935,7 +1935,7 @@ Returns the number of substitutions performed.
 
       for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	{
-	  Lisp_Object replacement = get_char_table_lisp (oc, table);
+	  Lisp_Object replacement = get_char_table (oc, table);
 	retry2:
 	  if (CHAR_OR_CHAR_INTP (replacement))
 	    {

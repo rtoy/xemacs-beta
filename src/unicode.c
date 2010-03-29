@@ -1298,7 +1298,7 @@ allocate_jit_ucs_charset (void)
 
   Vcurrent_jit_charset = Fmake_charset 
     (intern (setname), Vcharset_descr, 
-     nconc2 (list6 (Qcolumns, make_int (1), Qchars,
+     nconc2 (list6 (Qcolumns, Qone, Qchars,
 		    make_int (96),
 		    Qdimension, make_int (2)),
 	     list4 (Qregistries, Qunicode_registries,
@@ -2875,10 +2875,13 @@ decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
 		case 5: invalid = data->ch < 0x200000; break;
 		case 6: invalid = data->ch < 0x4000000; break;
 		}
-	      if (invalid || valid_utf_16_surrogate (data->ch) ||
-		  /* We accept values above #x10FFFF in
-		     escape-quoted, though not in UTF-8. */
-		  (!allow_private && data->ch > UNICODE_OFFICIAL_MAX))
+	      /* We accept values above #x10FFFF in
+		 escape-quoted, though not in UTF-8. */
+	      if (invalid ||
+		  !valid_unicode_codepoint_p (data->ch,
+					      allow_private ?
+					      UNICODE_ALLOW_PRIVATE :
+					      UNICODE_OFFICIAL_ONLY))
 		{
 		  indicate_invalid_utf_8 (data->indicated_length, 
 					  data->counter, 
@@ -3115,7 +3118,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 	    {
 	      int tempch = ch;
 
-	      if (valid_utf_16_first_surrogate (ch))
+	      if (valid_unicode_leading_surrogate (ch))
 		continue;
 	      ch = 0;
 	      counter = 0;
@@ -3127,7 +3130,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 
 	      if (little_endian)
 		{
-		  if (!valid_utf_16_last_surrogate (ch >> 16))
+		  if (!valid_unicode_trailing_surrogate (ch >> 16))
 		    {
 		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
 						  ignore_bom);
@@ -3148,7 +3151,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 		}
 	      else
 		{
-		  if (!valid_utf_16_last_surrogate (ch & 0xFFFF))
+		  if (!valid_unicode_trailing_surrogate (ch & 0xFFFF))
 		    {
 		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
 						  data, ignore_bom);

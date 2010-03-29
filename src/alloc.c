@@ -1907,6 +1907,17 @@ make_bit_vector_from_byte_vector (unsigned char *bytevec, Elemcount length)
   return wrap_bit_vector (p);
 }
 
+Lisp_Object
+clone_bit_vector (Lisp_Object bitvec)
+{
+  Elemcount len = bit_vector_length (XBIT_VECTOR (bitvec));
+  Elemcount num_longs = BIT_VECTOR_LONG_STORAGE (len);
+  Lisp_Object newvec = make_bit_vector (len, Qzero);
+  memcpy (XBIT_VECTOR (newvec)->bits, XBIT_VECTOR (bitvec)->bits,
+	  num_longs * sizeof (long));
+  return newvec;
+}
+
 DEFUN ("make-bit-vector", Fmake_bit_vector, 2, 2, 0, /*
 Return a new bit vector of length LENGTH. with each bit set to BIT.
 BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
@@ -5439,6 +5450,9 @@ common_init_alloc_early (void)
 {
 #ifndef Qzero
   Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
+#endif
+#ifndef Qone
+  Qone = make_int (1);	/* Only used if Lisp_Object is a union type */
 #endif
 
 #ifndef Qnull_pointer

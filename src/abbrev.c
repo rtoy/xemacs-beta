@@ -1,6 +1,6 @@
 /* Primitives for word-abbrev mode.
    Copyright (C) 1985, 1986, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -440,7 +440,7 @@ write_abbrev (Lisp_Object sym, Lisp_Object stream)
 static void
 describe_abbrev (Lisp_Object sym, Lisp_Object stream)
 {
-  Lisp_Object one, count, system_flag;
+  Lisp_Object count, system_flag;
   /* This function can GC */
   struct buffer *buf = current_buffer;
 
@@ -458,23 +458,22 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
   if (NILP (XSYMBOL_VALUE (sym)))
     return;
 
-  one = make_int (1);
   Fprin1 (Fsymbol_name (sym), stream);
 
   if (!NILP (system_flag))
     {
       buffer_insert_ascstring (buf, " (sys)");
-      Findent_to (make_int (20), one, Qnil);
+      Findent_to (make_int (20), Qone, Qnil);
     }
   else
-    Findent_to (make_int (15), one, Qnil);
+    Findent_to (make_int (15), Qone, Qnil);
 
   Fprin1 (count, stream);
-  Findent_to (make_int (20), one, Qnil);
+  Findent_to (make_int (20), Qone, Qnil);
   Fprin1 (XSYMBOL_VALUE (sym), stream);
   if (!NILP (XSYMBOL (sym)->function))
     {
-      Findent_to (make_int (45), one, Qnil);
+      Findent_to (make_int (45), Qone, Qnil);
       Fprin1 (XSYMBOL (sym)->function, stream);
     }
   buffer_insert_ascstring (buf, "\n");
