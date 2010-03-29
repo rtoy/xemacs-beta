@@ -1,3 +1,14 @@
+2010-03-28  Ben Wing  <ben@xemacs.org>
+
+	* window.c (find_window_mirror_internal):
+	Stop looking if no window mirror, and return 0.
+	
+	* window.c (window_display_lines):
+	* window.c (window_display_buffer):
+	* window.c (set_window_display_buffer):
+	Don't need to update window mirror before calling find_window_mirror
+	because does the updating automatically.
+
 2010-03-25  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
