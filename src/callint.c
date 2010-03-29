@@ -988,7 +988,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.
        (raw))
 {
   if (NILP (raw))
-    return make_int (1);
+    return Qone;
   if (EQ (raw, Qminus))
     return make_int (-1);
   if (INTP (raw))
@@ -996,7 +996,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.
   if (CONSP (raw) && INTP (XCAR (raw)))
     return XCAR (raw);
 
-  return make_int (1);
+  return Qone;
 }
 
 void

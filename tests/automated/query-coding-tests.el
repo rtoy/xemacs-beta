@@ -1,4 +1,5 @@
 ;; Copyright (C) 2008 Free Software Foundation, Inc. -*- coding: iso-8859-1 -*-
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe <kehoea@parhasard.net>
 ;; Maintainer: Aidan Kehoe <kehoea@parhasard.net>
@@ -71,16 +72,16 @@
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region (point-min) (point-max) coding-system)
           (Assert (eq t query-coding-succeeded)
-                  (format "checking query-coding-region ASCII-transparency, %s"
-                          coding-system))
+		  (format "checking query-coding-region ASCII-transparency, %s"
+			  coding-system))
           (Assert (null query-coding-table)
                   (format "checking query-coding-region ASCII-transparency, %s"
                           coding-system)))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-string ascii-chars-string coding-system)
           (Assert (eq t query-coding-succeeded)
-                  (format "checking query-coding-string ASCII-transparency, %s"
-                          coding-system))
+		  (format "checking query-coding-string ASCII-transparency, %s"
+			  coding-system))
           (Assert (null query-coding-table)
                   (format "checking query-coding-string ASCII-transparency, %s"
                           coding-system))))
@@ -90,20 +91,19 @@
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'iso-8859-1-unix)
         (Assert (eq t query-coding-succeeded)
-                "checking query-coding-region iso-8859-1-transparency")
+		"checking query-coding-region iso-8859-1-transparency")
         (Assert (null query-coding-table)
                 "checking query-coding-region iso-8859-1-transparency"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-8859-1-unix)
         (Assert (eq t query-coding-succeeded)
-                "checking query-coding-string iso-8859-1-transparency")
+		"checking query-coding-string iso-8859-1-transparency")
         (Assert (null query-coding-table)
                 "checking query-coding-string iso-8859-1-transparency"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-latin-1-with-esc-unix)
-        (Assert
-         (eq t query-coding-succeeded)
-         "checking query-coding-region iso-latin-1-with-esc-transparency")
+        (Assert (eq t query-coding-succeeded)
+		"checking query-coding-region iso-latin-1-with-esc-transparency")
         (Assert
          (null query-coding-table)
          "checking query-coding-region iso-latin-1-with-esc-transparency"))
@@ -114,11 +114,10 @@
         (Assert
          (null query-coding-succeeded)
          "checking that query-coding-region fails, U+20AC, iso-8859-1")
-        (Assert
-         (equal query-coding-table
-                #s(range-table type start-closed-end-open data
-                               ((257 258) unencodable)))
-         "checking query-coding-region fails correctly, U+20AC, iso-8859-1"))
+        (Assert (equal query-coding-table
+		       #s(range-table type start-closed-end-open data
+				      ((257 258) unencodable)))
+		"checking query-coding-region fails correctly, U+20AC, iso-8859-1"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max)
                                'iso-latin-1-with-esc-unix)
@@ -263,47 +262,56 @@ iso-latin-with-esc-unix-1"))
       (delete-region (point-min) (point-max))
       (insert latin-1-chars-string)
       (decode-coding-region (point-min) (point-max) 'greek-iso-8bit-with-esc)
-      (dolist (coding-system
-               '(utf-16-mac ucs-4-mac utf-16-little-endian-bom-dos ucs-4-dos
-                 utf-16-little-endian-mac utf-16-bom-unix
-                 utf-16-little-endian ucs-4 utf-16-dos
-                 ucs-4-little-endian-dos utf-16-bom-mac utf-16-bom
-                 utf-16-unix utf-32-unix utf-32-little-endian
-                 utf-32-dos utf-32 utf-32-little-endian-dos utf-8-bom
-                 utf-16-bom-dos ucs-4-unix
-                 utf-16-little-endian-bom-unix utf-8-bom-mac
-                 utf-32-little-endian-unix utf-16
-                 utf-16-little-endian-dos utf-16-little-endian-bom-mac
-                 utf-8-bom-dos ucs-4-little-endian-mac utf-8-bom-unix
-                 utf-32-little-endian-mac utf-8-dos utf-8-unix
-                 utf-32-mac utf-8-mac utf-16-little-endian-unix
-                 ucs-4-little-endian ucs-4-little-endian-unix utf-8
-                 utf-16-little-endian-bom))
-        (multiple-value-bind (query-coding-succeeded query-coding-table)
+      (loop for coding-system in
+	'(utf-16-mac ucs-4-mac utf-16-little-endian-bom-dos ucs-4-dos
+	  utf-16-little-endian-mac utf-16-bom-unix
+	  utf-16-little-endian ucs-4 utf-16-dos
+	  ucs-4-little-endian-dos utf-16-bom-mac utf-16-bom
+	  utf-16-unix utf-32-unix utf-32-little-endian
+	  utf-32-dos utf-32 utf-32-little-endian-dos utf-8-bom
+	  utf-16-bom-dos ucs-4-unix
+	  utf-16-little-endian-bom-unix utf-8-bom-mac
+	  utf-32-little-endian-unix utf-16
+	  utf-16-little-endian-dos utf-16-little-endian-bom-mac
+	  utf-8-bom-dos ucs-4-little-endian-mac utf-8-bom-unix
+	  utf-32-little-endian-mac utf-8-dos utf-8-unix
+	  utf-32-mac utf-8-mac utf-16-little-endian-unix
+	  ucs-4-little-endian ucs-4-little-endian-unix utf-8
+	  utf-16-little-endian-bom)
+        do
+	(multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region (point-min) (point-max) coding-system)
           (Assert (null query-coding-succeeded)
-                  "checking unicode coding systems fail with unmapped chars")
+		  (format "checking %s fails with unmapped chars"
+			  coding-system))
           (Assert (equal query-coding-table
-                         #s(range-table type start-closed-end-open data
-                                        ((173 174) unencodable
-                                         (209 210) unencodable
-                                         (254 255) unencodable)))
-                  "checking unicode coding systems fail with unmapped chars"))
+			 #s(range-table type start-closed-end-open data
+					((26 27) invalid-sequence
+					 (154 155) invalid-sequence
+					 (173 174) unencodable
+					 (209 210) unencodable
+					 (254 255) unencodable)))
+		  (format "checking %s fails with unmapped chars"
+			  coding-system)))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
-            (query-coding-region (point-min) 173 coding-system)
+            (query-coding-region (point-min) 173 coding-system nil t)
           (Assert (eq t query-coding-succeeded)
-                  "checking unicode coding systems succeed sans unmapped chars")
+		  (format "checking %s succeeds sans unmapped chars"
+			  coding-system))
           (Assert
            (null query-coding-table)
-           "checking unicode coding systems succeed sans unmapped chars"))
+           (format "checking %s succeeds sans unmapped chars"
+		   coding-system)))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region 174 209 coding-system)
           (Assert
            (eq t query-coding-succeeded)
-           "checking unicode coding systems succeed sans unmapped chars, again")
+           (format "checking %s succeeds sans unmapped chars, again"
+		   coding-system))
           (Assert
            (null query-coding-table)
-           "checking unicode coding systems succeed sans unmapped chars again"))
+           (format "checking %s succeeds sans unmapped chars again"
+		   coding-system)))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region 210 254 coding-system)
           (Assert (eq t query-coding-succeeded))
@@ -316,17 +324,18 @@ iso-latin-with-esc-unix-1"))
           (text-conversion-error
            (setq text-conversion-error-signalled t)))
         (Assert text-conversion-error-signalled
-                "checking that unicode coding systems error correctly")
+                (format "checking that %s errors correctly" coding-system))
         (setq text-conversion-error-signalled nil)
         (condition-case nil
             (query-coding-region (point-min) 173 coding-system
 				 (current-buffer)
-				 nil t)
+				 t t)
           (text-conversion-error
            (setq text-conversion-error-signalled t)))
         (Assert
          (null text-conversion-error-signalled)
-         "checking that unicode coding systems do not error when unnecessary"))
+         (format "checking that %s does not error when unnecessary"
+		 coding-system)))
 
       (delete-region (point-min) (point-max))
       (insert (decode-coding-string "\xff\xff\xff\xff"
