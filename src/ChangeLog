@@ -1,5 +1,11 @@
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
+	* unicode.c (ensure_to_unicode_holds_range):
+	If memory is dumped, allocate a new block and copy the existing one,
+	rather than trying to realloc.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
 	* abbrev.c:
 	* abbrev.c (describe_abbrev):
 	* alloc.c:
