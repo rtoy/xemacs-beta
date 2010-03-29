@@ -242,7 +242,7 @@ clone_chartab_table (Lisp_Object table, int level, int catp)
 }
 
 static Lisp_Object
-create_new_chartab_table (int level, int catp)
+create_new_chartab_table (int level, int catp, Lisp_Object set)
 {
   Lisp_Object newtab;
 
@@ -254,7 +254,7 @@ create_new_chartab_table (int level, int catp)
     int i;
     Lisp_Object *tab = SUBTAB_ARRAY_FROM_SUBTAB (newtab);
     for (i = 0; i < 256; i++)
-      tab[i] = Qunbound;
+      tab[i] = set;
   }
 
   return newtab;
@@ -375,7 +375,7 @@ put_chartab_table (Lisp_Object *table, int level, int catp,
   structure_checking_assert (startind <= endind);
 
   if (!SUBTAB_TABLE_P (*table, catp))
-    *table = create_new_chartab_table (level, catp);
+    *table = create_new_chartab_table (level, catp, *table);
 
   /* As usual, have to special-case for category tables.  If we see
      a bit vector, then necessarily we're at level 1. */
@@ -485,7 +485,7 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
 	  for (i = levels + 1; i <= code_levels; i++)
 	    {
 	      Lisp_Object old_table = XCHAR_TABLE_TABLE (chartab);
-	      Lisp_Object table = create_new_chartab_table (i, catp);
+	      Lisp_Object table = create_new_chartab_table (i, catp, Qunbound);
 	      XCHAR_TABLE_TABLE (chartab) = table;
 	      SUBTAB_ARRAY_FROM_SUBTAB (table)[0] = old_table;
 	    }
@@ -500,6 +500,59 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
 		     XCHAR_TABLE_CATEGORY_P (chartab), 0, start, end, val);
 }
 
+struct map_chartab_range
+{
+  Ichar start, end;
+  Lisp_Object val;
+};
+
+static inline int
+really_call_map_chartab_fun (int (*fn) (Lisp_Object chartab, Ichar from,
+					Ichar to, Lisp_Object val, void *arg),
+			     Lisp_Object chartab, Ichar from, Ichar to,
+			     Lisp_Object val, void *arg)
+{
+  from = round_up_to_valid_ichar (from);
+  to = round_down_to_valid_ichar (to);
+  if (from <= to && from >= 0)
+    {
+      int retval =
+	(fn) (chartab, from, to, val, arg);
+      if (retval)
+	return retval;
+    }
+  return 0;
+}
+
+static inline int
+call_map_chartab_fun (int (*fn) (Lisp_Object chartab, Ichar from, Ichar to,
+				 Lisp_Object val, void *arg),
+		      Lisp_Object chartab, Ichar from, Ichar to,
+		      Lisp_Object val, void *arg,
+		      struct map_chartab_range *range)
+{
+  if (range->start == -1)
+    {
+      range->start = from;
+      range->end = to;
+      range->val = val;
+    }
+  else if (range->end == from - 1 && EQ (range->val, val))
+    range->end = to;
+  else
+    {
+      int retval =
+	really_call_map_chartab_fun (fn, chartab, range->start, range->end,
+				     range->val, arg);
+      if (retval)
+	return retval;
+      range->start = from;
+      range->end = to;
+      range->val = val;
+    }
+  return 0;
+}
+
 /* Map over all characters in the range [START, END].  TABLE is the table
    value at this level -- either an array of 256 elements, a bit vector of
    256 elements (for category char tables, at level 1), or some other
@@ -507,7 +560,8 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
    value.  Qunbound as a value means that the characters spanned by this
    entry all have no defined value.  LEVEL is the depth (1 - 4).  OFFSET is
    the character offset corresponding to this table.  CHARTAB is the
-   char-table object being mapped over.  The FN will be called with
+   char-table object being mapped over.  RANGE is used to group together
+   adjacent ranges into a single larger range.  The FN will be called with
    CHARTAB, the code of the character in question, its value, and the value
    of ARG.  Stops mapping the first time that FN returns non-zero, and
    returns that value.  Returns zero if mapping got all the way to the
@@ -518,7 +572,7 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
 		   Ichar end, Lisp_Object chartab,
 		   int (*fn) (Lisp_Object chartab, Ichar from, Ichar to,
 			      Lisp_Object val, void *arg),
-		   void *arg)
+		   void *arg, struct map_chartab_range *range)
 {
   int i;
   int startind, endind;
@@ -532,7 +586,6 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
   if (!SUBTAB_TABLE_P (table, catp))
     {
       Ichar from, to;
-      int retval;
 
       if (level == 0)
 	{
@@ -541,14 +594,7 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
 	}
       from = max (start, offset);
       to = min (end, offset + chartab_span_top[level]);
-      from = round_up_to_valid_ichar (from);
-      to = round_down_to_valid_ichar (to);
-      if (from <= to && from >= 0)
-	{
-	  retval = (fn) (chartab, from, to, table, arg);
-	  return retval;
-	}
-      return 0;
+      return call_map_chartab_fun (fn, chartab, from, to, table, arg, range);
     }
 
 
@@ -565,7 +611,8 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
 	  if (bit_vector_bit (XBIT_VECTOR (table), i) &&
 	      valid_ichar_p (offset + i))
 	    {
-	      int retval = (fn) (chartab, offset + i, offset + i, Qone, arg);
+	      int retval = call_map_chartab_fun (fn, chartab, offset + i,
+						 offset + i, Qone, arg, range);
 	      if (retval)
 		return retval;
 	    }
@@ -580,7 +627,7 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
 	int retval =
 	  map_chartab_table (tab[i], level - 1,
 			     offset + (i << ((level - 1) * 8)),
-			     start, end, chartab, fn, arg);
+			     start, end, chartab, fn, arg, range);
 	if (retval)
 	  return retval;
       }
@@ -588,6 +635,27 @@ map_chartab_table (Lisp_Object table, int level, int offset, Ichar start,
 
   return 0;
 }
+
+/* Call map_chartab_table().  Then, if there's a range still needing
+   to have FN called on, do it. */
+
+static int
+map_chartab_table_0 (Lisp_Object table, int level, int offset, Ichar start,
+		     Ichar end, Lisp_Object chartab,
+		     int (*fn) (Lisp_Object chartab, Ichar from, Ichar to,
+				Lisp_Object val, void *arg),
+		     void *arg, struct map_chartab_range *range)
+{
+  int retval = map_chartab_table (table, level, offset, start, end,
+				  chartab, fn, arg, range);
+  if (retval)
+    return retval;
+  if (range->start != -1)
+    return really_call_map_chartab_fun (fn, chartab, range->start, range->end,
+					range->val, arg);
+  return 0;
+}
+
 
 /* Check whether the given table is entirely blank.  TABLE is LEVEL levels
    deep.  Start checking at START (this will normally be 1, since we don't
@@ -993,7 +1061,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     write_ascstring (printcharfun, "))");
   else
-    write_ascstring (printcharfun, ")>");
+    write_fmt_string (printcharfun, ") 0x%x>", LISP_OBJECT_UID (obj));
 
   /* [[ #### need to print and read the default; but that will allow the
      default to be modified, which we don't (yet) support -- but FSF does ]]
@@ -1664,20 +1732,25 @@ map_char_table (Lisp_Object table,
   /* Compute maximum allowed value for this table, which may be less than
      the range we have been requested to map over. */
   int maxval = chartab_span_top[levels];
+  struct map_chartab_range rainj;
+
+  rainj.start = -1;
+  rainj.end = -1;
+  rainj.val = Qunbound;
+
   switch (range->type)
     {
     case CHARTAB_RANGE_ALL:
-      return map_chartab_table (XCHAR_TABLE_TABLE (table),
-				XCHAR_TABLE_LEVELS (table),
-				0, 0, maxval,
-                                table, fn, arg);
+      return map_chartab_table_0 (XCHAR_TABLE_TABLE (table),
+				  XCHAR_TABLE_LEVELS (table),
+				  0, 0, maxval, table, fn, arg, &rainj);
 
     case CHARTAB_RANGE_RANGE:
-      return map_chartab_table (XCHAR_TABLE_TABLE (table),
-				XCHAR_TABLE_LEVELS (table),
-				0, min (range->ch, maxval),
-				min (range->chtop, maxval),
-				table, fn, arg);
+      return map_chartab_table_0 (XCHAR_TABLE_TABLE (table),
+				  XCHAR_TABLE_LEVELS (table),
+				  0, min (range->ch, maxval),
+				  min (range->chtop, maxval),
+				  table, fn, arg, &rainj);
 
 
     case CHARTAB_RANGE_CHAR:
@@ -1685,7 +1758,8 @@ map_char_table (Lisp_Object table,
 	Lisp_Object val = get_char_table_raw (range->ch, table);
 
 	if (!UNBOUNDP (val))
-	  return (fn) (table, range->ch, range->ch, val, arg);
+	  return really_call_map_chartab_fun (fn, table, range->ch, range->ch,
+					      val, arg);
 	else
 	  return 0;
       }
@@ -1715,7 +1789,9 @@ map_char_table (Lisp_Object table,
 		  Lisp_Object val = get_char_table_raw (ch, table);
 		  if (!UNBOUNDP (val))
 		    {
-		      int retval = (fn) (table, ch, ch, val, arg);
+		      int retval =
+			really_call_map_chartab_fun (fn, table, ch, ch, val,
+						     arg);
 		      if (retval)
 			return retval;
 		    }
@@ -1732,10 +1808,10 @@ map_char_table (Lisp_Object table,
 	Ichar to = charset_codepoint_to_ichar_raw (range->charset, h1, h2);
 	text_checking_assert (from >= 0);
 	text_checking_assert (to >= 0);
-	return map_chartab_table (XCHAR_TABLE_TABLE (table),
-				  XCHAR_TABLE_LEVELS (table),
-				  0, min (from, maxval), min (to, maxval),
-				  table, fn, arg);
+	return map_chartab_table_0 (XCHAR_TABLE_TABLE (table),
+				    XCHAR_TABLE_LEVELS (table),
+				    0, min (from, maxval), min (to, maxval),
+				    table, fn, arg, &rainj);
       }
 #endif /* (not) UNICODE_INTERNAL */
 #endif /* MULE */
@@ -1935,7 +2011,7 @@ print_category_table (Lisp_Object obj, Lisp_Object printcharfun,
   for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
     write_fmt_string_lisp (printcharfun, " %s", 1,
 			   XCATEGORY_TABLE_TABLES (obj)[i]);
-  write_ascstring (printcharfun, ">");
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description category_table_description[] = {
@@ -2075,12 +2151,18 @@ CATEGORY-TABLE defaults to the standard category table.
 */
        (category_table))
 {
-  if (NILP (Vstandard_category_table))
-    return Fmake_category_table ();
+  Lisp_Object obj;
+  int i;
 
   category_table =
     check_category_table (category_table, Vstandard_category_table);
-  return Fcopy_char_table (category_table);
+
+  obj = ALLOC_NORMAL_LISP_OBJECT (category_table);
+
+  for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
+    XCATEGORY_TABLE_TABLES (obj)[i] =
+      Fcopy_char_table (XCATEGORY_TABLE_TABLES (category_table)[i]);
+  return obj;
 }
 
 DEFUN ("set-category-table", Fset_category_table, 1, 2, 0, /*
@@ -2350,10 +2432,7 @@ complex_vars_of_chartab (void)
 {
 #ifdef MULE
   /* Set this now, so first buffer creation can refer to it. */
-  /* Make it nil before calling copy-category-table
-     so that copy-category-table will know not to try to copy from garbage */
-  Vstandard_category_table = Qnil;
-  Vstandard_category_table = Fcopy_category_table (Qnil);
+  Vstandard_category_table = Fmake_category_table ();
   staticpro (&Vstandard_category_table);
 
   DEFVAR_LISP ("word-combining-categories", &Vword_combining_categories /*

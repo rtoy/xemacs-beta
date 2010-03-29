@@ -5,10 +5,14 @@ TODO:
 (1) Get crash resizing jit charset to-unicode tables because they are dumped
 and you can't xrealloc() dumped data. Fix it.
 
+STATUS: DONE
+
 (2) Test char/category tables.  Copy a table, see if it is `equal'.
 Copy a table using `map-*'; loop over chars, see if all chars hae same
 value in both tables. (Might not be `equal' under old-Mule due to gaps
-between valid characters.
+between valid characters.)
+
+STATUS: DONE
 
 3-13-10
 
@@ -18,7 +22,11 @@ between valid characters.
    (b) CCL errors
    (c) most importantly, coding systems with CRLF and CR EOL type
 
+STATUS: 1(c) DONE
+
 2. Still `make check' problems especially with CCL
+
+STATUS: DONE
 
 3. Consider implementing optimizations:
 
