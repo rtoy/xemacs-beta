@@ -1,3 +1,9 @@
+2010-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* hyper-apropos.el (hyper-apropos-get-doc):
+	Use help.el's #'function-arglist, #'function-documentation,
+	#'symbol-file in this function, instead of rolling our own.
+
 2010-03-25  Ben Wing  <ben@xemacs.org>
 
 	* diagnose.el (show-memory-usage):
