@@ -1792,10 +1792,10 @@ old_mule_round_up_to_valid_ichar (int charpos)
 						    CONVERR_ABORT);
 	      /* Either we are between charsets, or in a gap within a
 		 charset. */
-	      if (i < minchar)
+	      if (charpos < minchar)
 		/* We are between charsets */
 		return minchar;
-	      if (i < maxchar)
+	      if (charpos < maxchar)
 		{
 		  /* We are in a gap.  The gaps aren't more than 34 characters
 		     wide, so just move up till we find the end of the gap. */
@@ -1829,9 +1829,9 @@ old_mule_round_down_to_valid_ichar (int charpos)
 						    CONVERR_ABORT);
 	      maxchar = charset_codepoint_to_ichar (charset, h1, h2,
 						    CONVERR_ABORT);
-	      if (i > maxchar)
+	      if (charpos > maxchar)
 		return maxchar;
-	      if (i > minchar)
+	      if (charpos > minchar)
 		{
 		  while (!valid_ichar_p (charpos))
 		    charpos--;

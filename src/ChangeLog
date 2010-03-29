@@ -1,5 +1,38 @@
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
+	Fix bugs, make map-char-table smarter.
+
+	* chartab.c:
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (put_chartab_table):
+	* chartab.c (put_char_table):
+	Setting a new range that partially overlapped an existing range
+	didn't work.
+	
+	* chartab.c (struct map_chartab_range):
+	* chartab.c (map_chartab_table):
+	* chartab.c (map_char_table):
+	Group together adjacent ranges.  This should significantly reduce
+	the number of times the mapping function is called and hide the
+	page-table implementation.
+	
+	* chartab.c (print_char_table):
+	* chartab.c (print_category_table):
+	When printing char tables and category tables, print the UID.
+	
+	* chartab.c (Fcopy_category_table):
+	`copy-category-table' was broken.
+
+	* chartab.c (complex_vars_of_chartab):
+	Create a category table using `make-category-table', not
+	`copy-category-table'.
+	
+	* text.c (old_mule_round_up_to_valid_ichar):
+	* text.c (old_mule_round_down_to_valid_ichar):
+	Fix bug preventing this from working properly.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
 	* unicode.c (ensure_to_unicode_holds_range):
 	If memory is dumped, allocate a new block and copy the existing one,
 	rather than trying to realloc.
