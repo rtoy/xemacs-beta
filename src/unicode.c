@@ -950,6 +950,7 @@ ensure_to_unicode_holds_range (Lisp_Object charset, int c1, int offset,
        "Past max" means 1+max; essentially, [NEW_MIN, NEW_PAST_MAX) is
        a half-open interval. */
     int new_min, new_past_max;
+    Bytecount new_size;
     int existing; /* Table already exists or not? */
     to_unicode_base *to_table = *store_to_table;
     int i;
@@ -987,10 +988,15 @@ ensure_to_unicode_holds_range (Lisp_Object charset, int c1, int offset,
 	  }
 
 	/* Realloc */
-	to_table =
-	  (to_unicode_base *)
-	  xrealloc (to_table,
-		    needed_sizeof_to_unicode_base (new_past_max - new_min));
+	new_size = needed_sizeof_to_unicode_base (new_past_max - new_min);
+	if (DUMPEDP (to_table))
+	  {
+	    to_unicode_base *new_to_table = xmalloc (new_size);
+	    memcpy (new_to_table, to_table, sizeof_to_unicode_base (to_table));
+	    to_table = new_to_table;
+	  }
+	else
+	  to_table = (to_unicode_base *)  xrealloc (to_table, new_size);
 
 	/* We need to fill in any newly created slots with BADVAL_TO_TABLE.
 	   We also have to preserve existing values and may need to move
